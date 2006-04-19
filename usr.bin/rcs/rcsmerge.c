@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.26 2006/04/14 16:28:24 ray Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.27 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -29,17 +29,17 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static int kflag = RCS_KWEXP_ERR;
-
 int
 rcsmerge_main(int argc, char **argv)
 {
-	int i, ch;
+	int i, ch, flags, kflag;
 	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
 	RCSFILE *file;
 	RCSNUM *rev1, *rev2;
 	BUF *bp;
 
+	flags = 0;
+	kflag = RCS_KWEXP_ERR;
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;
 
@@ -62,7 +62,7 @@ rcsmerge_main(int argc, char **argv)
 			break;
 		case 'q':
 			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
-			verbose = 0;
+			flags |= QUIET;
 			break;
 		case 'r':
 			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
@@ -111,7 +111,7 @@ rcsmerge_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
 			continue;
 
-		if (verbose == 1)
+		if (!(flags & QUIET))
 			fprintf(stderr, "RCS file: %s\n", fpath);
 
 		if (rev1 != NULL) {
@@ -138,7 +138,7 @@ rcsmerge_main(int argc, char **argv)
 			continue;
 		}
 
-		if (verbose == 1) {
+		if (!(flags & QUIET)) {
 			(void)rcsnum_tostr(rev1, r1, sizeof(r1));
 			(void)rcsnum_tostr(rev2, r2, sizeof(r2));
 
@@ -148,7 +148,7 @@ rcsmerge_main(int argc, char **argv)
 		}
 
 		if ((bp = cvs_diff3(file, argv[i], rev1, rev2,
-		    verbose)) == NULL) {
+		    !(flags & QUIET))) == NULL) {
 			cvs_log(LP_ERR, "failed to merge");
 			rcs_close(file);
 			continue;

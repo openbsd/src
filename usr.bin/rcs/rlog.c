@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.46 2006/04/15 19:35:19 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.47 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -79,7 +79,9 @@ rlog_main(int argc, char **argv)
 			Nflag = 1;
 			break;
 		case 'q':
-			verbose = 0;
+			/*
+			 * kept for compatibility
+			 */
 			break;
 		case 'R':
 			Rflag = 1;

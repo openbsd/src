@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.50 2006/04/14 23:32:01 deraadt Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.51 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -32,6 +32,7 @@
 static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *);
 static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *);
 
+static int flags = 0;
 static int kflag = RCS_KWEXP_ERR;
 
 int
@@ -68,7 +69,7 @@ rcsdiff_main(int argc, char **argv)
 			diff_format = D_RCSDIFF;
 			break;
 		case 'q':
-			verbose = 0;
+			flags |= QUIET;
 			break;
 		case 'u':
 			strlcat(diffargs, " -u", sizeof(diffargs));
@@ -126,7 +127,7 @@ rcsdiff_main(int argc, char **argv)
 				fatal("bad revision number");
 		}
 
-		if (verbose == 1) {
+		if (!(flags & QUIET)) {
 			fprintf(stderr, "%s\n", RCS_DIFF_DIV);
 			fprintf(stderr, "RCS file: %s\n", fpath);
 		}
@@ -197,7 +198,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	}
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
-	if (verbose == 1) {
+	if (!(flags & QUIET)) {
 		fprintf(stderr, "retrieving revision %s\n", rbuf);
 		fprintf(stderr, "%s -r%s %s\n", diffargs, rbuf, filename);
 	}
@@ -273,7 +274,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	diff_rev2 = rev2;
 
 	rcsnum_tostr(rev1, rbuf1, sizeof(rbuf1));
-	if (verbose == 1)
+	if (!(flags & QUIET))
 		fprintf(stderr, "retrieving revision %s\n", rbuf1);
 
 	if ((b1 = rcs_getrev(file, rev1)) == NULL) {
@@ -286,7 +287,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	tv[1].tv_sec = tv[0].tv_sec;
 
 	rcsnum_tostr(rev2, rbuf2, sizeof(rbuf2));
-	if (verbose == 1)
+	if (!(flags & QUIET))
 		fprintf(stderr, "retrieving revision %s\n", rbuf2);
 
 	if ((b2 = rcs_getrev(file, rev2)) == NULL) {
@@ -298,7 +299,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	tv2[0].tv_sec = (long)rcs_rev_getdate(file, rev2);
 	tv2[1].tv_sec = tv2[0].tv_sec;
 
-	if (verbose == 1)
+	if (!(flags & QUIET))
 		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));

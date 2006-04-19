@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.78 2006/04/15 16:28:07 pat Exp $	*/
+/*	$OpenBSD: co.c,v 1.79 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -92,7 +92,7 @@ checkout_main(int argc, char **argv)
 			break;
 		case 'q':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			verbose = 0;
+			flags |= QUIET;
 			break;
 		case 'r':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -158,7 +158,7 @@ checkout_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
-		if (verbose == 1)
+		if (!(flags & QUIET))
 			printf("%s  -->  %s\n", fpath,
 			    (pipeout == 1) ? "standard output" : argv[i]);
 
@@ -197,7 +197,7 @@ checkout_main(int argc, char **argv)
 			continue;
 		}
 
-		if (verbose == 1)
+		if (!(flags & QUIET))
 			printf("done\n");
 
 		rcs_close(file);
@@ -343,11 +343,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if (verbose == 1 && !(flags & NEWFILE) &&
+	if (!(flags & QUIET) && !(flags & NEWFILE) &&
 	    !(flags & CO_REVERT) && file->rf_ndelta != 0)
 		printf("revision %s", buf);
 
-	if (verbose == 1 && (flags & CO_REVERT))
+	if (!(flags & QUIET) && (flags & CO_REVERT))
 		printf("done");
 
 	if (file->rf_ndelta != 0) {
@@ -388,7 +388,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		mode |= S_IWUSR;
 
 		if (file->rf_ndelta != 0) {
-			if (verbose == 1 && !(flags & NEWFILE) &&
+			if (!(flags & QUIET) && !(flags & NEWFILE) &&
 			    !(flags & CO_REVERT))
 				printf(" (locked)");
 		}
@@ -405,7 +405,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 
 		if (file->rf_ndelta != 0) {
-			if (verbose == 1 && !(flags & NEWFILE) &&
+			if (!(flags & QUIET) && !(flags & NEWFILE) &&
 			    !(flags & CO_REVERT))
 				printf(" (unlocked)");
 		}
@@ -416,14 +416,14 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		cvs_log(LP_WARN, "no revisions, so nothing can be %s",
 		    (flags & CO_LOCK) ? "locked" : "unlocked");
 	} else if (file->rf_ndelta != 0) {
-		if (verbose == 1 && !(flags & NEWFILE))
+		if (!(flags & QUIET) && !(flags & NEWFILE))
 			printf("\n");
 	}
 
 	if (flags & CO_LOCK) {
 		if (rcs_errno != RCS_ERR_DUPENT)
 			lcount++;
-		if (verbose == 1 && lcount > 1 && !(flags & CO_REVERT))
+		if (!(flags & QUIET) && lcount > 1 && !(flags & CO_REVERT))
 			cvs_log(LP_WARN, "%s: warning: You now have %d locks.",
 			    file->rf_path, lcount);
 	}
@@ -449,7 +449,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		printf("remove it? [ny](n): ");
 		/* default is n */
 		if (cvs_yesno() == -1) {
-			if (verbose == 1 && isatty(STDIN_FILENO))
+			if (!(flags & QUIET) && isatty(STDIN_FILENO))
 				cvs_log(LP_ERR,
 				    "writable %s exists; checkout aborted",
 				    dst);

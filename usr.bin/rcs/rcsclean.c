@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.36 2006/04/17 04:50:08 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.37 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -64,7 +64,7 @@ rcsclean_main(int argc, char **argv)
 			break;
 		case 'q':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			verbose = 0;
+			flags |= QUIET;
 			break;
 		case 'r':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -185,7 +185,7 @@ rcsclean_file(char *fname, const char *rev_str)
 
 	if (match == 1) {
 		if (uflag == 1 && !TAILQ_EMPTY(&(file->rf_locks))) {
-			if (verbose == 1 && nflag == 0) {
+			if (!(flags & QUIET) && nflag == 0) {
 				printf("rcs -u%s %s\n",
 				    rcsnum_tostr(rev, numb, sizeof(numb)),
 				    fpath);
@@ -194,7 +194,7 @@ rcsclean_file(char *fname, const char *rev_str)
 		}
 
 		if (TAILQ_EMPTY(&(file->rf_locks))) {
-			if (verbose == 1)
+			if (!(flags & QUIET))
 				printf("rm -f %s\n", fname);
 
 			if (nflag == 0)

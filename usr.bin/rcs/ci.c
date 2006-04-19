@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.153 2006/04/18 03:35:57 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.154 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -69,7 +69,7 @@ static int	 checkin_attach_symbol(struct checkin_params *);
 static int	 checkin_checklock(struct checkin_params *);
 static char	*checkin_diff_file(struct checkin_params *);
 static char	*checkin_getdesc(void);
-static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *);
+static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *, int);
 static int	 checkin_init(struct checkin_params *);
 static int	 checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
     char **);
@@ -169,7 +169,7 @@ checkin_main(int argc, char **argv)
 				fatal("invalid symbol `%s'", pb.symbol);
 			break;
 		case 'q':
-			verbose = 0;
+			pb.flags |= QUIET;
 			break;
 		case 'r':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -269,7 +269,7 @@ checkin_main(int argc, char **argv)
 		if (pb.file == NULL)
 			fatal("failed to open rcsfile '%s'", pb.fpath);
 
-		if (verbose == 1)
+		if (!(pb.flags & QUIET))
 			printf("%s  <--  %s\n", pb.fpath, pb.filename);
 
 		/* XXX - Should we rcsnum_free(pb.newrev)? */
@@ -300,7 +300,7 @@ checkin_main(int argc, char **argv)
 		rcs_close(pb.file);
 	}
 
-	if (verbose == 1 && status == 0)
+	if (!(pb.flags & QUIET) && status == 0)
 		printf("done\n");
 
 	return (status);
@@ -377,7 +377,7 @@ out:
  * Returns pointer to a char array on success, NULL on failure.
  */
 static char *
-checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
+checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 {
 	char   *rcs_msg, nrev[16], prev[16];
 	const char *prompt =
@@ -394,7 +394,7 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		rcsnum_tostr(rev2, nrev, sizeof(nrev));
 	rcsnum_free(tmprev);
 
-	if (verbose == 1)
+	if (!(flags & QUIET))
 		printf("new revision: %s; previous revision: %s\n", nrev,
 		    prev);
 
@@ -519,7 +519,8 @@ checkin_update(struct checkin_params *pb)
 
 	/* If no log message specified, get it interactively. */
 	if (pb->flags & INTERACTIVE)
-		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
+		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev,
+		    pb->flags);
 
 	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0) {
 		if (rcs_errno != RCS_ERR_NOENT)
@@ -667,7 +668,8 @@ skipdesc:
 	 * emulate odd GNU behaviour and fetch log message.
 	 */
 	if (fetchlog == 1) {
-		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
+		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev,
+		    pb->flags);
 		rcsnum_free(pb->frev);
 	}
 
@@ -734,7 +736,7 @@ skipdesc:
 	}
 
 
-	if (verbose == 1) {
+	if (!(pb->flags & QUIET)) {
 		fprintf(stderr, "initial revision: %s\n",
 		    rcsnum_tostr(pb->newrev, numb, sizeof(numb)));
 	}
@@ -757,7 +759,7 @@ checkin_attach_symbol(struct checkin_params *pb)
 {
 	char rbuf[16];
 	int ret;
-	if (verbose == 1)
+	if (!(pb->flags & QUIET))
 		printf("symbol: %s\n", pb->symbol);
 	if (pb->flags & CI_SYMFORCE) {
 		if (rcs_sym_remove(pb->file, pb->symbol) < 0) {

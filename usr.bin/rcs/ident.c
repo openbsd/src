@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.15 2006/04/14 01:11:07 deraadt Exp $	*/
+/*	$OpenBSD: ident.c,v 1.16 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #define VALDELIM	':'	/* values delimiter */
 
 static int found = 0;
+static int flags = 0;
 
 static void	ident_file(const char *, FILE *);
 static void	ident_line(FILE *);
@@ -45,7 +46,7 @@ ident_main(int argc, char **argv)
 	while ((ch = rcs_getopt(argc, argv, "qV")) != -1) {
 		switch(ch) {
 		case 'q':
-			verbose = 0;
+			flags |= QUIET;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -95,7 +96,7 @@ ident_file(const char *filename, FILE *fp)
 			ident_line(fp);
 	}
 
-	if (found == 0 && verbose == 1)
+	if (found == 0 && !(flags & QUIET))
 		fprintf(stderr, "ident warning: no id keywords in %s\n",
 		    filename);
 

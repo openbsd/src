@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.49 2006/04/18 03:35:57 ray Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.50 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -64,10 +64,10 @@
 #define INTERACTIVE	(1<<18)
 #define NEWFILE		(1<<19)
 #define PRESERVETIME	(1<<20)
+#define QUIET		(1<<21)
 
 extern char	*__progname;
 extern const char	rcs_version[];
-extern int	verbose;
 extern int	pipeout;
 
 extern int	 rcs_optind;

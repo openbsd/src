@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.107 2006/04/18 03:35:57 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.108 2006/04/19 06:53:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,7 +35,6 @@
 			"or end of file:\nNOTE: This is NOT the log message!\n"
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
-int verbose = 1;
 int pipeout = 0;
 
 int	 flags;
@@ -561,7 +560,7 @@ rcs_main(int argc, char **argv)
 			orange = xstrdup(rcs_optarg);
 			break;
 		case 'q':
-			verbose = 0;
+			rcsflags |= QUIET;
 			break;
 		case 't':
 			descfile = rcs_optarg;
@@ -612,7 +611,7 @@ rcs_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
-		if (verbose == 1)
+		if (!(rcsflags & QUIET))
 			printf("RCS file: %s\n", fpath);
 
 		if ((file = rcs_open(fpath, flags, fmode)) == NULL)
@@ -730,7 +729,7 @@ rcs_main(int argc, char **argv)
 				fatal("%s: can't lock nonexisting revision %s",
 				    fpath, rev_str);
 			if (rcs_lock_add(file, username, rev) != -1 &&
-			    verbose == 1)
+			    !(rcsflags & QUIET))
 				printf("%s locked\n", rev_str);
 			rcsnum_free(rev);
 		}
@@ -756,7 +755,7 @@ rcs_main(int argc, char **argv)
 				fatal("%s: can't unlock nonexisting revision %s",
 				    fpath, rev_str);
 			if (rcs_lock_remove(file, username, rev) == -1 &&
-			    verbose == 1)
+			    !(rcsflags & QUIET))
 				cvs_log(LP_ERR,
 				    "%s: warning: No locks are set.", fpath);
 			rcsnum_free(rev);
@@ -784,7 +783,7 @@ rcs_main(int argc, char **argv)
 		if (rcsflags & PRESERVETIME)
 			rcs_set_mtime(fpath, rcs_mtime);
 
-		if (verbose == 1)
+		if (!(rcsflags & QUIET))
 			printf("done\n");
 	}
 
