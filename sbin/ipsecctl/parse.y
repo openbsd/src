@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2006/04/19 15:49:49 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.60 2006/04/19 16:10:50 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,7 +202,7 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
-%token	TYPE DENY BYPASS LOCAL PROTO
+%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ
 %token	<v.string>		STRING
 %type	<v.string>		string
 %type	<v.dir>			dir
@@ -322,7 +322,7 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 				errx(1, "flowrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
-			if ($8 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
+			if ($3 == IPSEC_INOUT) {
 				r = reverse_rule(r);
 				r->nr = ipsec->rule_nr++;
 
@@ -480,13 +480,25 @@ ids		: /* empty */			{
 		;
 
 type		: /* empty */			{
-			$$ = TYPE_UNKNOWN;
+			$$ = TYPE_REQUIRE;
+		}
+		| TYPE USE			{
+			$$ = TYPE_USE;
+		}
+		| TYPE ACQUIRE			{
+			$$ = TYPE_ACQUIRE;
+		}
+		| TYPE REQUIRE			{
+			$$ = TYPE_REQUIRE;
 		}
 		| TYPE DENY			{
 			$$ = TYPE_DENY;
 		}
 		| TYPE BYPASS			{
 			$$ = TYPE_BYPASS;
+		}
+		| TYPE DONTACQ			{
+			$$ = TYPE_DONTACQ;
 		}
 		;
 
@@ -718,6 +730,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "acquire",		ACQUIRE },
 		{ "active",		ACTIVE },
 		{ "ah",			AH },
 		{ "any",		ANY },
@@ -726,6 +739,7 @@ lookup(char *s)
 		{ "bypass",		BYPASS },
 		{ "comp",		COMPXF },
 		{ "deny",		DENY },
+		{ "dontacq",		DONTACQ },
 		{ "dstid",		DSTID },
 		{ "dynamic",		DYNAMIC },
 		{ "enc",		ENCXF },
@@ -746,6 +760,7 @@ lookup(char *s)
 		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
+		{ "require",		REQUIRE },
 		{ "rsa",		RSA },
 		{ "spi",		SPI },
 		{ "srcid",		SRCID },
@@ -754,6 +769,7 @@ lookup(char *s)
 		{ "transport",		TRANSPORT },
 		{ "tunnel",		TUNNEL },
 		{ "type",		TYPE },
+		{ "use",		USE }
 	};
 	const struct keywords	*p;
 
@@ -1628,16 +1644,12 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_addr_wrap *src,
 	r->src = src;
 	r->dst = dst;
 
-	if (type != TYPE_UNKNOWN) {
+	if (type == TYPE_DENY || type == TYPE_BYPASS) {
 		r->flowtype = type;
 		return (r);
 	}
 
-	if (r->direction == IPSEC_IN)
-		r->flowtype = TYPE_USE;
-	else
-		r->flowtype = TYPE_REQUIRE;
-
+	r->flowtype = type;
 	r->local = local;
 	if (peer == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
@@ -1689,33 +1701,35 @@ reverse_rule(struct ipsec_rule *rule)
 
 	reverse->type |= RULE_FLOW;
 
-	if (rule->direction == (u_int8_t)IPSEC_OUT) {
+	/* Reverse direction */
+	if (rule->direction == (u_int8_t)IPSEC_OUT)
 		reverse->direction = (u_int8_t)IPSEC_IN;
-		reverse->flowtype = TYPE_USE;
-	} else {
+	else
 		reverse->direction = (u_int8_t)IPSEC_OUT;
-		reverse->flowtype = TYPE_REQUIRE;
-	}
 
+	reverse->flowtype = rule->flowtype;
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	if (rule->local)
 		reverse->local = copyhost(rule->local);
-	reverse->peer = copyhost(rule->peer);
+	if (rule->peer)
+		reverse->peer = copyhost(rule->peer);
 	reverse->satype = rule->satype;
 	reverse->proto = rule->proto;
 
-	reverse->auth = calloc(1, sizeof(struct ipsec_auth));
-	if (reverse->auth == NULL)
-		err(1, "reverse_rule: calloc");
-	if (rule->auth->dstid && (reverse->auth->dstid =
-	    strdup(rule->auth->dstid)) == NULL)
-		err(1, "reverse_rule: strdup");
-	if (rule->auth->srcid && (reverse->auth->srcid =
-	    strdup(rule->auth->srcid)) == NULL)
-		err(1, "reverse_rule: strdup");
-	reverse->auth->idtype = rule->auth->idtype;
-	reverse->auth->type = rule->auth->type;
+	if (rule->auth) {
+		reverse->auth = calloc(1, sizeof(struct ipsec_auth));
+		if (reverse->auth == NULL)
+			err(1, "reverse_rule: calloc");
+		if (rule->auth->dstid && (reverse->auth->dstid =
+		    strdup(rule->auth->dstid)) == NULL)
+			err(1, "reverse_rule: strdup");
+		if (rule->auth->srcid && (reverse->auth->srcid =
+		    strdup(rule->auth->srcid)) == NULL)
+			err(1, "reverse_rule: strdup");
+		reverse->auth->idtype = rule->auth->idtype;
+		reverse->auth->type = rule->auth->type;
+	}
 
 	return reverse;
 }

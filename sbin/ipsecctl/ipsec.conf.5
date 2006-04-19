@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.41 2006/04/19 15:49:49 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.42 2006/04/19 16:10:50 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -155,6 +155,10 @@ the
 specification can be left out.
 .It Ar type Aq Ar modifier
 This optional parameter sets up special flows using the modifiers
+.Ar require ,
+.Ar use ,
+.Ar acquire ,
+.Ar dontacq ,
 .Ar bypass
 or
 .Ar deny .
