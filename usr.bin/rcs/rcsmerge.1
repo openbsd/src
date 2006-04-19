@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsmerge.1,v 1.5 2006/03/06 14:44:51 jmc Exp $
+.\"	$OpenBSD: rcsmerge.1,v 1.6 2006/04/19 11:16:14 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,6 @@
 .Nd merge RCS revisions
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Fl AEeV
 .Op Fl k Ns Ar mode
 .Op Fl p Ns Op Ar rev
@@ -30,13 +29,19 @@
 .Op Fl r Ns Ar rev
 .Op Fl x Ns Ar suffixes
 .Op Fl z Ns Ar tz
-.Ar file ...
-.Ek
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
 program merges changes between two revisions of an RCS file into
 the corresponding working file.
+.Pp
+.Nm
+also supports
+keyword substitution \(en
+see the
+.Xr rcs 1
+man page for more information.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
