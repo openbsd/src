@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2005/09/06 19:21:57 miod Exp $
+#	$OpenBSD: GENERIC,v 1.50 2006/04/19 22:09:38 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -40,7 +40,6 @@ pcctwo0 at mainbus0 addr 0xfff00000		# MVME187
 bussw0	at mainbus0 addr 0xfff00000		# MVME197
 sram0	at mainbus0 addr 0xffe00000		# MVME187
 pcctwo0 at bussw0 offset 0x00000		# MVME197
-clock0	at pcctwo0 ipl 5
 nvram0	at pcctwo0 offset 0xc0000
 vme0	at pcctwo0 offset 0x40000
 ie0	at pcctwo0 offset 0x46000 ipl 1
@@ -53,7 +52,6 @@ memc1	at pcctwo0 offset 0x43100
 
 # MVME188 devices
 syscon0 at mainbus0 addr 0xfff00000		# MVME188
-clock0	at syscon0 ipl 5
 nvram0	at syscon0 offset 0x80000
 dart0	at syscon0 offset 0x82000 ipl 3
 vme0	at syscon0 offset 0x85000

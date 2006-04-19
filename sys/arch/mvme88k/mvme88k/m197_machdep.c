@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.8 2006/04/13 21:16:17 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.9 2006/04/19 22:09:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -264,10 +264,11 @@ m197_bootstrap()
 	extern void set_tcfp(void);
 
 	cmmu = &cmmu88110;
-	md_interrupt_func_ptr = &m197_ext_int;
-	md_getipl = &m197_getipl;
-	md_setipl = &m197_setipl;
-	md_raiseipl = &m197_raiseipl;
+	md_interrupt_func_ptr = m197_ext_int;
+	md_getipl = m197_getipl;
+	md_setipl = m197_setipl;
+	md_raiseipl = m197_raiseipl;
+	md_init_clocks = m1x7_init_clocks;
 
 	set_tcfp(); /* Set Time Critical Floating Point Mode */
 }

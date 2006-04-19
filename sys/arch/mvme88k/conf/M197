@@ -1,4 +1,4 @@
-#	$OpenBSD: M197,v 1.28 2005/09/06 19:21:57 miod Exp $
+#	$OpenBSD: M197,v 1.29 2006/04/19 22:09:38 miod Exp $
 
 machine mvme88k m88k
 
@@ -24,7 +24,6 @@ bussw0	at mainbus0 addr 0xfff00000
 pcctwo0 at bussw0 offset 0x00000
 
 # ------------------------------ pcctwo devices -------------------------
-clock0	at pcctwo0 ipl 5
 vme0	at pcctwo0 offset 0x40000
 nvram0	at pcctwo0 offset 0xc0000
 ie0	at pcctwo0 offset 0x46000 ipl 1

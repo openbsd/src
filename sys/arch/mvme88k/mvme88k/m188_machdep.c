@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.17 2006/04/19 19:54:21 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.18 2006/04/19 22:09:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -29,6 +29,72 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ */
+/*
+ * Copyright (c) 1999 Steve Murphree, Jr.
+ * Copyright (c) 1995 Theo de Raadt
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1995 Nivas Madhur
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  */
 /*
  * Mach Operating System
@@ -63,12 +129,15 @@
 
 #include <mvme88k/dev/sysconreg.h>
 
+#include <mvme88k/mvme88k/clockvar.h>
+
 void	m188_reset(void);
 u_int	safe_level(u_int mask, u_int curlevel);
 
 void	m188_bootstrap(void);
 void	m188_ext_int(u_int, struct trapframe *);
 u_int	m188_getipl(void);
+void	m188_init_clocks(void);
 vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
 u_int	m188_setipl(u_int);
@@ -158,10 +227,11 @@ m188_bootstrap()
 	extern struct cmmu_p cmmu8820x;
 
 	cmmu = &cmmu8820x;
-	md_interrupt_func_ptr = &m188_ext_int;
-	md_getipl = &m188_getipl;
-	md_setipl = &m188_setipl;
-	md_raiseipl = &m188_raiseipl;
+	md_interrupt_func_ptr = m188_ext_int;
+	md_getipl = m188_getipl;
+	md_setipl = m188_setipl;
+	md_raiseipl = m188_raiseipl;
+	md_init_clocks = m188_init_clocks;
 
 	/* clear and disable all interrupts */
 	*(volatile u_int32_t *)MVME188_IENALL = 0;
@@ -491,4 +561,265 @@ out:
 	 * was taken.
 	 */
 	m188_setipl(eframe->tf_mask);
+}
+
+/*
+ * Clock routines
+ */
+
+void	m188_cio_init(unsigned);
+u_int	read_cio(int);
+void	write_cio(int, u_int);
+
+int	m188_clockintr(void *);
+int	m188_statintr(void *);
+
+struct simplelock m188_cio_lock;
+
+#define	CIO_LOCK	simple_lock(&m188_cio_lock)
+#define	CIO_UNLOCK	simple_unlock(&m188_cio_lock)
+
+/*
+ * Notes on the MVME188 clock usage:
+ *
+ * We have two sources for timers:
+ * - two counter/timers in the DUART (MC68681/MC68692)
+ * - three counter/timers in the Zilog Z8536
+ *
+ * However:
+ * - Z8536 CT#3 is reserved as a watchdog device; and its input is
+ *   user-controllable with jumpers on the SYSCON board, so we can't
+ *   really use it.
+ * - When using the Z8536 in timer mode, it _seems_ like it resets at
+ *   0xffff instead of the initial count value...
+ * - Despite having per-counter programmable interrupt vectors, the
+ *   SYSCON logic forces fixed vectors for the DUART and the Z8536 timer
+ *   interrupts.
+ * - The DUART timers keep counting down from 0xffff even after
+ *   interrupting, and need to be manually stopped, then restarted, to
+ *   resume counting down the initial count value.
+ *
+ * Also, while the Z8536 has a very reliable 4MHz clock source, the
+ * 3.6864MHz clock source of the DUART timers does not seem to be correct.
+ *
+ * As a result, clock is run on a Z8536 counter, kept in counter mode and
+ * retriggered every interrupt, while statclock is run on a DUART counter,
+ * but in practice runs at an average 96Hz instead of the expected 100Hz.
+ *
+ * It should be possible to run statclock on the Z8536 counter #2, but
+ * this would make interrupt handling more tricky, in the case both
+ * counters interrupt at the same time...
+ */
+
+#define	DART_ISR		0xfff82017	/* interrupt status */
+#define	DART_IVR		0xfff82033	/* interrupt vector */
+#define	DART_STARTC		0xfff8203b	/* start counter cmd */
+#define	DART_STOPC		0xfff8203f	/* stop counter cmd */
+#define	DART_ACR		0xfff82013	/* auxiliary control */
+#define	DART_CTUR		0xfff8201b	/* counter/timer MSB */
+#define	DART_CTLR		0xfff8201f	/* counter/timer LSB */
+#define	DART_OPCR		0xfff82037	/* output port config*/
+
+void
+m188_init_clocks(void)
+{
+	volatile u_int8_t imr;
+	int statint, minint;
+
+	simple_lock_init(&m188_cio_lock);
+
+#ifdef DIAGNOSTIC
+	if (1000000 % hz) {
+		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
+		hz = 100;
+	}
+#endif
+	tick = 1000000 / hz;
+
+	m188_cio_init(tick);
+
+	if (stathz == 0)
+		stathz = hz;
+#ifdef DIAGNOSTIC
+	if (1000000 % stathz) {
+		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		stathz = 100;
+	}
+#endif
+	profhz = stathz;		/* always */
+
+	/*
+	 * The DUART runs at 3.6864 MHz, CT#1 will run in PCLK/16 mode.
+	 */
+	statint = (3686400 / 16) / stathz;
+	minint = statint / 2 + 100;
+	while (statvar > minint)
+		statvar >>= 1;
+	statmin = statint - (statvar >> 1);
+
+	/* clear the counter/timer output OP3 while we program the DART */
+	*(volatile u_int8_t *)DART_OPCR = 0x00;
+	/* set interrupt vec */
+	*(volatile u_int8_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
+	/* do the stop counter/timer command */
+	imr = *(volatile u_int8_t *)DART_STOPC;
+	/* set counter/timer to counter mode, PCLK/16 */
+	*(volatile u_int8_t *)DART_ACR = 0x30;
+	*(volatile u_int8_t *)DART_CTUR = (statint >> 8);
+	*(volatile u_int8_t *)DART_CTLR = (statint & 0xff);
+	/* set the counter/timer output OP3 */
+	*(volatile u_int8_t *)DART_OPCR = 0x04;
+	/* give the start counter/timer command */
+	imr = *(volatile u_int8_t *)DART_STARTC;
+
+	clock_ih.ih_fn = m188_clockintr;
+	clock_ih.ih_arg = 0;
+	clock_ih.ih_wantframe = 1;
+	clock_ih.ih_ipl = IPL_CLOCK;
+	sysconintr_establish(SYSCV_TIMER2, &clock_ih, "clock");
+
+	statclock_ih.ih_fn = m188_statintr;
+	statclock_ih.ih_arg = 0;
+	statclock_ih.ih_wantframe = 1;
+	statclock_ih.ih_ipl = IPL_CLOCK;
+	sysconintr_establish(SYSCV_TIMER1, &statclock_ih, "stat");
+}
+
+#include "bugtty.h"
+#if NBUGTTY > 0
+#include <mvme88k/dev/bugttyfunc.h>
+#endif
+
+int
+m188_clockintr(void *eframe)
+{
+	CIO_LOCK;
+	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
+
+	hardclock(eframe);
+#if NBUGTTY > 0
+	bugtty_chkinput();
+#endif /* NBUGTTY */
+
+	/* restart counter */
+	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	CIO_UNLOCK;
+
+	return (1);
+}
+
+int
+m188_statintr(void *eframe)
+{
+	volatile u_int8_t tmp;
+	u_long newint, r, var;
+
+	/* stop counter and acknowledge interrupt */
+	tmp = *(volatile u_int8_t *)DART_STOPC;
+	tmp = *(volatile u_int8_t *)DART_ISR;
+
+	statclock((struct clockframe *)eframe);
+
+	/*
+	 * Compute new randomized interval.  The intervals are uniformly
+	 * distributed on [statint - statvar / 2, statint + statvar / 2],
+	 * and therefore have mean statint, giving a stathz frequency clock.
+	 */
+	var = statvar;
+	do {
+		r = random() & (var - 1);
+	} while (r == 0);
+	newint = statmin + r;
+
+	/* setup new value and restart counter */
+	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
+	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
+	tmp = *(volatile u_int8_t *)DART_STARTC;
+
+	return (1);
+}
+
+/* Write CIO register */
+void
+write_cio(int reg, u_int val)
+{
+	int s;
+	volatile int i;
+	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
+
+	s = splclock();
+	CIO_LOCK;
+
+	i = *cio_ctrl;				/* goto state 1 */
+	*cio_ctrl = 0;				/* take CIO out of RESET */
+	i = *cio_ctrl;				/* reset CIO state machine */
+
+	*cio_ctrl = (reg & 0xff);		/* select register */
+	*cio_ctrl = (val & 0xff);		/* write the value */
+
+	CIO_UNLOCK;
+	splx(s);
+}
+
+/* Read CIO register */
+u_int
+read_cio(int reg)
+{
+	int c, s;
+	volatile int i;
+	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
+
+	s = splclock();
+	CIO_LOCK;
+
+	/* select register */
+	*cio_ctrl = (reg & 0xff);
+	/* delay for a short time to allow 8536 to settle */
+	for (i = 0; i < 100; i++)
+		;
+	/* read the value */
+	c = *cio_ctrl;
+	CIO_UNLOCK;
+	splx(s);
+	return (c & 0xff);
+}
+
+/*
+ * Initialize the CTC (8536)
+ * Only the counter/timers are used - the IO ports are un-comitted.
+ */
+void
+m188_cio_init(unsigned period)
+{
+	volatile int i;
+
+	CIO_LOCK;
+
+	/* Start by forcing chip into known state */
+	read_cio(CIO_MICR);
+	write_cio(CIO_MICR, CIO_MICR_RESET);	/* Reset the CTC */
+	for (i = 0; i < 1000; i++)	 	/* Loop to delay */
+		;
+
+	/* Clear reset and start init seq. */
+	write_cio(CIO_MICR, 0x00);
+
+	/* Wait for chip to come ready */
+	while ((read_cio(CIO_MICR) & CIO_MICR_RJA) == 0)
+		;
+
+	/* Initialize the 8536 for real */
+	write_cio(CIO_MICR,
+	    CIO_MICR_MIE /* | CIO_MICR_NV */ | CIO_MICR_RJA | CIO_MICR_DLC);
+	write_cio(CIO_CTMS1, CIO_CTMS_CSC);	/* Continuous count */
+	write_cio(CIO_PDCB, 0xff);		/* set port B to input */
+
+	period <<= 1;	/* CT#1 runs at PCLK/2, hence 2MHz */
+	write_cio(CIO_CT1MSB, period >> 8);
+	write_cio(CIO_CT1LSB, period);
+	/* enable counter #1 */
+	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
+	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+
+	CIO_UNLOCK;
 }

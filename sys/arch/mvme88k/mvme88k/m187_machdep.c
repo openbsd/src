@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.8 2006/04/13 21:16:17 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.9 2006/04/19 22:09:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -245,8 +245,9 @@ m187_bootstrap()
 	extern struct cmmu_p cmmu8820x;
 
 	cmmu = &cmmu8820x;
-	md_interrupt_func_ptr = &m187_ext_int;
-	md_getipl = &m187_getipl;
-	md_setipl = &m187_setipl;
-	md_raiseipl = &m187_raiseipl;
+	md_interrupt_func_ptr = m187_ext_int;
+	md_getipl = m187_getipl;
+	md_setipl = m187_setipl;
+	md_raiseipl = m187_raiseipl;
+	md_init_clocks = m1x7_init_clocks;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.11 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.12 2006/04/19 22:09:40 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -69,5 +69,9 @@
 #define TOD_CAL_DAY	0xFFFC1FFD 	/* days */
 #define TOD_CAL_MON	0xFFFC1FFE 	/* months */
 #define TOD_CAL_YEAR	0xFFFC1FFF 	/* years */
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+void	m1x7_init_clocks(void);
+#endif
 
 #endif	/* __MACHINE_MVME1X7_H__ */

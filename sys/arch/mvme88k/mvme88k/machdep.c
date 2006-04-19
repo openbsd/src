@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.178 2006/04/15 15:43:36 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.179 2006/04/19 22:09:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -993,6 +993,12 @@ mvme_bootstrap()
 	brdtyp = brdid.model;
 
 	/*
+	 * Use the BUG as console for now. After autoconf, we'll switch to
+	 * real hardware.
+	 */
+	cn_tab = &bootcons;
+
+	/*
 	 * Set up interrupt and fp exception handlers based on the machine.
 	 */
 	switch (brdtyp) {
@@ -1015,12 +1021,6 @@ mvme_bootstrap()
 	default:
 		panic("Sorry, this kernel does not support MVME%x", brdtyp);
 	}
-
-	/*
-	 * Use the BUG as console for now. After autoconf, we'll switch to
-	 * real hardware.
-	 */
-	cn_tab = &bootcons;
 
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
