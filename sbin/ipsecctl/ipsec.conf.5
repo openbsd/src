@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.40 2006/04/13 11:55:07 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.41 2006/04/19 15:49:49 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -134,17 +134,18 @@ This rule applies for packets with source address
 .Aq Ar src
 and destination address
 .Aq Ar dst .
-All addresses are specified in CIDR notation.
+All addresses are specified either in CIDR notation or as FQDN.
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
 The
 .Ar local
-parameter specifies the address of the local endpoint of this particular
+parameter specifies the address or FQDN of the local endpoint of this
 flow and can be usually left out.
 The
 .Ar peer
-parameter specifies the address of the remote endpoint of this flow.
+parameter specifies the address or FQDN of the remote endpoint of this
+flow.
 For host-to-host connections where
 .Aq Ar dst
 is identical to
@@ -397,7 +398,7 @@ This rule applies for packets with source address
 .Aq Ar src
 and destination address
 .Aq Ar dst .
-All addresses are specified in CIDR notation.
+All addresses are specified either in CIDR notation or as FQDN.
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
@@ -408,7 +409,8 @@ or have aliases.
 Usually this parameter can be left out.
 The
 .Ar peer
-parameter specifies the address of the remote endpoint of this particular flow.
+parameter specifies the address or FQDN of the remote endpoint of this
+particular flow.
 For host-to-host connections where
 .Aq Ar dst
 is identical to
@@ -531,7 +533,7 @@ This rule applies for packets with source address
 .Aq Ar src
 and destination address
 .Aq Ar dst .
-All addresses are specified in CIDR notation.
+All addresses are specified either in CIDR notation or as FQDN.
 The parameter
 .Ar spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.

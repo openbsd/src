@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.58 2006/04/13 11:55:07 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.59 2006/04/19 15:49:49 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -115,6 +116,7 @@ struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr_wrap	*host(const char *);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
+struct ipsec_addr_wrap	*host_dns(const char *, int, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
 void			 ifa_load(void);
 int			 ifa_exists(const char *);
@@ -1173,14 +1175,18 @@ host(const char *s)
 		cont = 0;
 
 	/* IPv4 address? */
-	if (cont && (ipa = host_v4(s, mask)) != NULL)
+	if (cont && (ipa = host_v4(s, v4mask)) != NULL)
 		cont = 0;
 
 #if notyet
 	/* IPv6 address? */
-	if (cont && (ipa = host_dns(ps, v4mask, 0)) != NULL)
+	if (cont && (ipa = host_v6(s, v6mask)) != NULL)
 		cont = 0;
 #endif
+	
+	/* dns lookup */
+	if (cont && (ipa = host_dns(s, v4mask, 0)) != NULL)
+		cont = 0;
 	free(ps);
 
 	if (ipa == NULL || cont == 1) {
@@ -1219,6 +1225,45 @@ host_v4(const char *s, int mask)
 	set_ipmask(ipa, bits);
 	if (bits != (ipa->af == AF_INET ? 32 : 128))
 		ipa->netaddress = 1;
+
+	return (ipa);
+}
+
+struct ipsec_addr_wrap *
+host_dns(const char *s, int v4mask, int v6mask)
+{
+	struct ipsec_addr_wrap	*ipa = NULL;
+	struct addrinfo	 	 hints, *res0, *res;
+	int		 	 error;
+	int			 bits = 32;
+
+	bzero(&hints, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(s, NULL, &hints, &res0);
+	if (error)
+		return (NULL);
+
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_family != AF_INET)
+			continue;
+		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
+		if (ipa == NULL)
+			err(1, "host_dns: calloc");
+		memcpy(&ipa->address.v4,
+		    &((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr,
+		    sizeof(struct in_addr));
+		ipa->name = strdup(inet_ntoa(ipa->address.v4));
+		if (ipa->name == NULL)
+			err(1, "host_dns: strdup");
+		ipa->af = AF_INET;
+
+		set_ipmask(ipa, bits);
+		if (bits != (ipa->af == AF_INET ? 32 : 128))
+			ipa->netaddress = 1;
+		break;
+	}
+	freeaddrinfo(res0);
 
 	return (ipa);
 }
