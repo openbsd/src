@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.98 2006/04/14 21:52:47 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.99 2006/04/19 14:19:30 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -204,9 +204,6 @@
 	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
-#ifndef MULTIPROCESSOR
-	.globl	_C_LABEL(curpcb)
-#endif
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
