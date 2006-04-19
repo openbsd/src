@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.59 2005/12/27 18:31:12 miod Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.60 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -279,9 +279,7 @@ nfs_mountroot()
 	/*
 	 * Link it into the mount list.
 	 */
-	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
 	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.10 2005/10/10 15:55:07 pedro Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.11 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -220,11 +220,10 @@ ntfs_mountroot()
 		return (error);
 	}
 
-	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
 	(void)ntfs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
+
 	return (0);
 }
 

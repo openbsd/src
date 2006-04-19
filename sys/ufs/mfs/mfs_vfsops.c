@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.30 2006/03/28 13:18:17 pedro Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.31 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -118,15 +118,15 @@ mfs_mountroot(void)
 		free(mfsp, M_MFSNODE);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr((time_t)0);
+
 	return (0);
 }
 

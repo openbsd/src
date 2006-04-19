@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.21 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.22 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -657,10 +657,10 @@ freebsd_sys_getfsstat(p, v, retval)
 	maxcount = SCARG(uap, bufsize) / sizeof(struct freebsd_statfs);
 	sfsp = (caddr_t)SCARG(uap, buf);
 	count = 0;
-	simple_lock(&mountlist_slock);
+
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -673,7 +673,6 @@ freebsd_sys_getfsstat(p, v, retval)
 			    (flags == MNT_WAIT ||
 			     flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
-				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
  				continue;
@@ -689,15 +688,15 @@ freebsd_sys_getfsstat(p, v, retval)
 			sfsp += sizeof(fsb);
 		}
 		count++;
-		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+
 	if (sfsp && count > maxcount)
 		*retval = maxcount;
 	else
 		*retval = count;
+
 	return (0);
 }
 

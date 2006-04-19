@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.122 2006/01/09 12:43:16 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.123 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ struct freelst vnode_hold_list;	/* list of vnodes referencing buffers */
 struct freelst vnode_free_list;	/* vnode free list */
 
 struct mntlist mountlist;	/* mounted filesystem list */
-struct simplelock mountlist_slock;
 static struct simplelock mntid_slock;
 struct simplelock mntvnode_slock;
 struct simplelock vnode_free_list_slock;
@@ -136,7 +135,6 @@ vntblinit(void)
 	TAILQ_INIT(&vnode_free_list);
 	simple_lock_init(&vnode_free_list_slock);
 	CIRCLEQ_INIT(&mountlist);
-	simple_lock_init(&mountlist_slock);
 	/*
 	 * Initialize the filesystem syncer.
 	 */
@@ -264,15 +262,13 @@ vfs_getvfs(fsid_t *fsid)
 {
 	struct mount *mp;
 
-	simple_lock(&mountlist_slock);
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
 		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1]) {
-			simple_unlock(&mountlist_slock);
 			return (mp);
 		}
 	}
-	simple_unlock(&mountlist_slock);
+
 	return ((struct mount *)0);
 }
 
@@ -1334,10 +1330,10 @@ printlockedvnodes(void)
 	struct vnode *vp;
 
 	printf("Locked vnodes\n");
-	simple_lock(&mountlist_slock);
+
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1345,11 +1341,9 @@ printlockedvnodes(void)
 			if (VOP_ISLOCKED(vp))
 				vprint((char *)0, vp);
 		}
-		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
  	}
-	simple_unlock(&mountlist_slock);
 
 }
 #endif
@@ -1415,10 +1409,9 @@ sysctl_vnode(char *where, size_t *sizep, struct proc *p)
 	}
 	ewhere = where + *sizep;
 
-	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1459,14 +1452,12 @@ again:
 		}
 
 		simple_unlock(&mntvnode_slock);
-		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 
-	simple_unlock(&mountlist_slock);
-
 	*sizep = bp - where;
+
 	return (0);
 }
 

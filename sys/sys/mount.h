@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.68 2006/03/31 13:05:23 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.69 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -577,7 +577,6 @@ int	vfs_rootmountalloc(char *, char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 void	vfs_unmountall(void);
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;
-extern	struct simplelock mountlist_slock;
 
 struct	mount *getvfs(fsid_t *);	    /* return vfs given fsid */
 					    /* process mount export info */

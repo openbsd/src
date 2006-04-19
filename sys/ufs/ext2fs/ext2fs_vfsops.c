@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.44 2005/12/14 22:03:01 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.45 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -151,9 +151,8 @@ ext2fs_mountroot()
 		vrele(rootvp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.38 2006/01/22 00:40:02 miod Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.39 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -112,12 +112,12 @@ cd9660_mountroot()
                 free(mp, M_MOUNT);
                 return (error);
         }
-	simple_lock(&mountlist_slock);
+
         CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
         (void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(0);
+
         return (0);
 }
 

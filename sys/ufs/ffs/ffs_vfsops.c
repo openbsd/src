@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.91 2006/04/12 03:46:52 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.92 2006/04/19 11:55:55 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -141,15 +141,15 @@ ffs_mountroot(void)
 		vrele(rootvp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(fs->fs_time);
+
 	return (0);
 }
 
