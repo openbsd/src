@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsdiff.1,v 1.17 2006/03/06 14:41:04 jmc Exp $
+.\"	$OpenBSD: rcsdiff.1,v 1.18 2006/04/19 10:45:34 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,6 @@
 .Nd compare RCS revisions
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Fl cnquV
 .Op Fl k Ns Ar mode
 .Oo
@@ -31,12 +30,32 @@
 .Oc
 .Op Fl x Ns Ar suffixes
 .Op Fl z Ns Ar tz
-.Ar file ...
-.Ek
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
-program is used to compare two revisions of each RCS file given.
+program is used to compare revisions of RCS files,
+in much the same way as the
+.Xr diff 1
+utility.
+Differences between two specific revisions can be requested,
+as well as differences between the current working file and
+the latest revision of the default branch.
+.Pp
+It is not possible to display differences between entire directories,
+or differences between more than two files.
+All diffs produced are in the standard diff format,
+unless the
+.Fl u
+option is specified,
+which produces unified diffs.
+.Pp
+.Nm
+also supports
+keyword substitution \(en
+see the
+.Xr cvs 1
+man page for more information.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
