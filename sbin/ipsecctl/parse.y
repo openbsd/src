@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2006/04/19 17:19:45 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.62 2006/04/19 17:28:28 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,6 +121,7 @@ struct ipsec_addr_wrap	*host_if(const char *, int);
 void			 ifa_load(void);
 int			 ifa_exists(const char *);
 struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
+struct ipsec_addr_wrap	*ifa_grouplookup(const char *);
 void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
@@ -1356,9 +1357,22 @@ int
 ifa_exists(const char *ifa_name)
 {
 	struct addr_node	*n;
+	struct ifgroupreq	 ifgr;
+	int			 s;
 
 	if (iftab == NULL)
 		ifa_load();
+
+	/* check wether this is a group */
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "ifa_exists: socket");
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == 0) {
+		close(s);
+		return (1);
+	}
+	close(s);
 
 	for (n = iftab; n; n = n->next) {
 		if (n->af == AF_LINK && !strncmp(n->addr.name, ifa_name,
@@ -1370,6 +1384,42 @@ ifa_exists(const char *ifa_name)
 }
 
 struct ipsec_addr_wrap *
+ifa_grouplookup(const char *ifa_name)
+{
+	struct ifg_req		*ifg;
+	struct ifgroupreq	 ifgr;
+	int			 s;
+	size_t			 len;
+	struct ipsec_addr_wrap	*ipa = NULL;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "socket");
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
+		close(s);
+		return (NULL);
+	}
+
+	len = ifgr.ifgr_len;
+	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+		err(1, "calloc");
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+		err(1, "ioctl");
+
+	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
+	    ifg++) {
+		len -= sizeof(struct ifg_req);
+		if ((ipa = ifa_lookup(ifg->ifgrq_member)) != NULL)
+			break;
+	}
+	free(ifgr.ifgr_groups);
+	close(s);
+
+	return (ipa);
+}
+
+struct ipsec_addr_wrap *
 ifa_lookup(const char *ifa_name)
 {
 	struct addr_node	*p = NULL;
@@ -1377,6 +1427,9 @@ ifa_lookup(const char *ifa_name)
 
 	if (iftab == NULL)
 		ifa_load();
+
+	if ((ipa = ifa_grouplookup(ifa_name)) != NULL)
+		return (ipa);	
 
 	for (p = iftab; p; p = p->next) {
 		if (p->af != AF_INET)
