@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.55 2006/03/24 14:43:51 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.56 2006/04/19 21:57:14 deraadt Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -208,6 +208,8 @@ mouse devices.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr udcf 4
+Gude ADS Expert mouseCLOCK DCF77 time signal receiver.
 .It Xr ugen 4
 Generic driver for unknown
 .Tn USB
@@ -522,53 +524,9 @@ Human Interface Devices
 .Xr usbhidaction 1 ,
 .Xr usbhidctl 1 ,
 .Xr ioctl 2 ,
-.Xr usbhid 3 ,
-.Xr atu 4 ,
-.Xr aue 4 ,
-.Xr axe 4 ,
-.Xr cardbus 4 ,
-.Xr cdce 4 ,
-.Xr cue 4 ,
-.Xr eisa 4 ,
-.Xr intro 4 ,
-.Xr isa 4 ,
-.Xr isapnp 4 ,
-.Xr kue 4 ,
-.Xr pci 4 ,
-.Xr pcmcia 4 ,
-.Xr scsi 4 ,
-.Xr tpms 4 ,
-.Xr uaudio 4 ,
-.Xr ubsa 4 ,
-.Xr ubt 4 ,
-.Xr ucom 4 ,
-.Xr udav 4 ,
-.Xr udsbr 4 ,
-.Xr ueagle 4 ,
-.Xr uftdi 4 ,
-.Xr ugen 4 ,
-.Xr uhid 4 ,
-.Xr uhidev 4 ,
-.Xr uipaq 4 ,
-.Xr ukbd 4 ,
-.Xr ulpt 4 ,
-.Xr umass 4 ,
-.Xr umct 4 ,
-.Xr umidi 4 ,
-.Xr umodem 4 ,
-.Xr ums 4 ,
-.Xr umsm 4 ,
-.Xr upl 4 ,
-.Xr uplcom 4 ,
-.Xr ural 4 ,
-.Xr urio 4 ,
-.Xr url 4 ,
-.Xr uscanner 4 ,
-.Xr usscanner 4 ,
-.Xr uvisor 4 ,
-.Xr uvscom 4 ,
-.Xr uyap 4 ,
-.Xr wi 4 ,
+.Xr ohci 4 ,
+.Xr ohci 4 ,
+.Xr ehci 4 ,
 .Xr config 8 ,
 .Xr usbdevs 8
 .Pp
