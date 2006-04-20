@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.94 2006/03/30 12:11:37 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.95 2006/04/20 11:21:17 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1212,13 +1212,8 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
 #define msec(u)	(((u) + 500) / 1000)		/* usec to msec */
 
-	printf("%s\n", "\
- recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
-	printf("%8lu%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
-	printf("%8lu%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
-	printf("%8lu%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
-	printf("%8lu%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
-	printf("%8lu%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
+	printf("%s\n", "     use  hopcount       mtu    expire");
+	printf("%8lu  ", rtm->rtm_rmx.rmx_pksent);
 	printf("%8lu%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
 	printf("%8lu%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 	if (rtm->rtm_rmx.rmx_expire)
