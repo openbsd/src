@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.131 2006/03/04 04:57:18 jsg Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.132 2006/04/20 07:38:44 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.128 2006/03/04 04:56:53 jsg Exp 
+ *		OpenBSD: pcmciadevs,v 1.129 2006/04/20 07:38:20 brad Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -206,6 +206,8 @@
 /* Belkin */
 #define	PCMCIA_CIS_BELKIN_F5D5020	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BELKIN_F5D5020	0x2328
+#define	PCMCIA_CIS_BELKIN_F5D6020	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BELKIN_F5D6020	0x3302
 
 /* BreezeCOM */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
