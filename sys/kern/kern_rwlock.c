@@ -1,4 +1,5 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.5 2006/01/06 07:05:12 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.6 2006/04/20 14:36:24 pedro Exp $	*/
+
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -175,7 +176,7 @@ rw_enter_diag(struct rwlock *rwl, int flags)
 		break;
 	case RW_DOWNGRADE:
 		/*
-		 * If we're downgrading, we much hold the write lock.
+		 * If we're downgrading, we must hold the write lock.
 		 */
 		if (RW_PROC(curproc) != RW_PROC(rwl->rwl_owner))
 			panic("rw_enter: not holder");
