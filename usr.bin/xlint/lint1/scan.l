@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.28 2006/03/13 21:12:32 moritz Exp $	*/
+/*	$OpenBSD: scan.l,v 1.29 2006/04/20 16:29:48 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.28 2006/03/13 21:12:32 moritz Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.29 2006/04/20 16:29:48 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1061,6 +1061,7 @@ comment(void)
 		{ "FALLTHROUGH",	0,	fallthru	},
 		{ "LINTLIBRARY",	0,	lintlib		},
 		{ "LINTED",		0,	linted		},
+		{ "LINTUSED",		0,	lintused	},
 		{ "LONGLONG",		0,	longlong	},
 		{ "NOSTRICT",		0,	linted		},
 		{ "NOTREACHED",		0,	notreach	},
@@ -1166,6 +1167,7 @@ clrwflgs(void)
 	nowarn = 0;
 	quadflg = 1;
 	ccflg = 0;
+	usedflg = 0;
 }
 
 /*

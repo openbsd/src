@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.17 2005/12/10 18:42:45 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.18 2006/04/20 16:29:48 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.17 2005/12/10 18:42:45 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.18 2006/04/20 16:29:48 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1667,6 +1667,9 @@ idecl(sym_t *decl, int initflg)
 {
 	initerr = 0;
 	initsym = decl;
+
+	if (usedflg)
+		setuflg(decl, 0, 0);
 
 	switch (dcs->d_ctx) {
 	case EXTERN:

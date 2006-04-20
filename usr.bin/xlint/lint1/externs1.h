@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.11 2006/04/18 02:59:40 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.12 2006/04/20 16:29:48 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -226,6 +226,7 @@ extern	int	ccflg;
 extern	int	llibflg;
 extern	int	nowarn;
 extern	int	noretflg;
+extern	int	usedflg;
 extern	int	plibflg;
 extern	int	quadflg;
 
@@ -253,6 +254,7 @@ extern	void	doreturn(tnode_t *);
 extern	void	glclup(int);
 extern	void	argsused(int);
 extern	void	noreturn(int);
+extern	void	lintused(int);
 extern	void	constcond(int);
 extern	void	fallthru(int);
 extern	void	notreach(int);

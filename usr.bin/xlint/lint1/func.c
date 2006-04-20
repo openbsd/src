@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.13 2006/04/20 03:40:29 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.14 2006/04/20 16:29:48 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.13 2006/04/20 03:40:29 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.14 2006/04/20 16:29:48 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -88,6 +88,12 @@ pos_t	aupos;
  * to 1. Otherwise it is set to 0.
  */
 int	noretflg = 0;
+
+/*
+ * If the following symbol should be marked as having been used, even if
+ * lint thinks otherwise, usedflg is set to 1. Otherwise it is set to 0.
+ */
+int	usedflg = 0;
 
 /*
  * Number of arguments of the following function definition whose types
@@ -1126,6 +1132,17 @@ void
 noreturn(int n)
 {
 	noretflg = 1;
+}
+
+/*
+ * LINTUSED comment
+ *
+ * Mark a symbol as used, so lint2 does not complain.
+ */
+void
+lintused(int n)
+{
+	usedflg = 1;
 }
 
 /*
