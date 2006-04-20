@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.1 2006/04/19 21:12:49 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.2 2006/04/20 10:12:00 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -33,9 +33,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
-#include "udcf.h"
-
-#if NUDCF > 0
 #ifdef UDCF_DEBUG
 #define DPRINTFN(n, x)	do { if (udcfdebug > (n)) printf x; } while (0)
 int udcfdebug = 0;
@@ -98,7 +95,7 @@ struct udcf_softc {
 	int			 sc_utc_next;	/* index to sc_utc */
 };
 
-int	t1, t2, t3, t4, t5, t6, t7;	/* timeouts in hz */
+static int	t1, t2, t3, t4, t5, t6, t7;	/* timeouts in hz */
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -109,6 +106,9 @@ void	udcf_sl_intr(void *);
 void	udcf_bv_probe(void *);
 void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
+
+int	udcfopen(dev_t, int, int, usb_proc_ptr);
+int	udcfclose(dev_t, int, int, usb_proc_ptr);
 
 USB_DECLARE_DRIVER(udcf);
 
@@ -590,5 +590,3 @@ udcfclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	return (0);
 }
-
-#endif /* NUDCF > 0 */

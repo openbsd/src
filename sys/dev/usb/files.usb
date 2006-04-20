@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.53 2006/04/19 21:12:49 mbalmer Exp $
+#	$OpenBSD: files.usb,v 1.54 2006/04/20 10:12:00 mbalmer Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -99,7 +99,7 @@ file	dev/usb/umass_scsi.c		umass & (scsibus | atapiscsi)
 # Gude Expert mouseCLOCK DCF77 time signal station receiver
 device	udcf
 attach	udcf at uhub
-file	dev/usb/udcf.c			udcf			needs-flag
+file	dev/usb/udcf.c			udcf
 
 # Diamond Multimedia Rio 500
 device	urio
