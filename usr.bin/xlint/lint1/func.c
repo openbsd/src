@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.12 2006/04/18 02:59:40 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.13 2006/04/20 03:40:29 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.12 2006/04/18 02:59:40 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.13 2006/04/20 03:40:29 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -936,7 +936,17 @@ dobreak(void)
 			ci->c_break = 1;
 	}
 
-	if (bflag)
+	/* Don't warn about unreachable breaks in a switch, e.g.:
+	 *
+	 * switch (foo) {
+	 * case 1:
+	 *     return 1;
+	 *     break;
+	 * case 2:
+	 *     // etc...
+	 * }
+	 */
+	if (bflag && !ci->c_switch)
 		chkreach();
 
 	reached = rchflg = 0;
