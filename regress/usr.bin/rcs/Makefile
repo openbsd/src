@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2006/04/17 15:52:18 xsa Exp $
+#	$OpenBSD: Makefile,v 1.22 2006/04/20 17:17:22 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -481,6 +481,24 @@ test-rlog-lflag: clean
 	@echo rev2 | ${CI} -q file
 	@${RLOG} -l file | fgrep -q 'revision 1.2' ||	\
 	    case "$$?" in 1) exit 0;; esac && exit 1
+
+# Test various cases for the -r flag
+test-rlog-rflag: clean
+	@touch file
+	@echo "foo" > file
+	@echo "descr" | ${CI} -q -m"first rev" -d'2006-01-01 00:00:00+00' \
+		-wfoo file
+	@${CO} -q -l file
+	@echo "foo" >> file
+	@${CI} -q -m"second rev" -d'2006-01-01 00:00:00+00' -wfoo file
+	@${CO} -q -l file
+	@echo "foo" >> file
+	@${CI} -q -m"third rev" -d'2006-01-01 00:00:00+00' -wfoo file
+
+	@${RLOG} -r1.1 file | diff -u ${.CURDIR}/rlog-rflag1.out -
+	@${RLOG} -r1.1:1.3 file | diff -u ${.CURDIR}/rlog-rflag2.out -
+	@${RLOG} -r1.2: file | diff -u ${.CURDIR}/rlog-rflag3.out -
+	@${RLOG} -r:1.1 file | diff -u ${.CURDIR}/rlog-rflag4.out -
 
 test-ci-nofile:
 	@${CI} -q nonexistent || case "$$?" in 1) exit 0;; esac && exit 1
