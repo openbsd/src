@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.9 2005/12/03 16:53:15 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.10 2006/04/20 20:27:38 miod Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -1007,7 +1007,7 @@ nextbyte:
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
-			if (sc->sc_dleft < 0) {
+			if ((long)sc->sc_dleft < 0) {
 				sc_link = acb->xs->sc_link;
 				printf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
