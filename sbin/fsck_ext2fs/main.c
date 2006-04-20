@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2005/02/03 05:03:50 jaredy Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2006/04/20 02:24:38 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #if 0
 static char rcsid[] = "$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2005/02/03 05:03:50 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2006/04/20 02:24:38 deraadt Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.14 2005/02/03 05:03:50 jaredy Exp $"
 #include "extern.h"
 #include "fsutil.h"
 
-int	returntosingle;
+volatile sig_atomic_t	returntosingle;
 
 int	main(int, char *[]);
 

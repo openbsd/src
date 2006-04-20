@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.17 2006/04/20 02:24:38 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "fsutil.h"
 #include "fsck.h"
@@ -50,8 +51,6 @@
 long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(char *, daddr_t);
-
-extern int returntosingle;
 
 int
 ftypeok(struct ext2fs_dinode *dp)
@@ -93,7 +92,7 @@ reply(char *question)
 		return (1);
 	}
 	do {
-		printf("%s? [Fyn] ", question);
+		printf("%s? [Fyn?] ", question);
 		(void) fflush(stdout);
 		c = getc(stdin);
 		if (c == 'F') {
@@ -430,12 +429,12 @@ getpathname(char *namebuf, size_t buflen, ino_t curdir, ino_t ino)
 	memcpy(namebuf, cp, (size_t)(&namebuf[buflen] - cp));
 }
 
+/*ARGSUSED*/
 void
-catch(int n)
+catch(int signo)
 {
-	/* XXX signal race */
-	ckfini(0);
-	exit(12);
+	ckfini(0);			/* XXX signal race */
+	_exit(12);
 }
 
 /*
@@ -443,12 +442,16 @@ catch(int n)
  * a special exit after filesystem checks complete
  * so that reboot sequence may be interrupted.
  */
+/*ARGSUSED*/
 void
-catchquit(int n)
+catchquit(int signo)
 {
+	extern volatile sig_atomic_t returntosingle;
+	char buf[1024];
 
-	/* XXX signal race */
-	printf("returning to single-user after filesystem check\n");
+	snprintf(buf, sizeof buf,
+	    "returning to single-user after filesystem check\n");
+	write(STDOUT_FILENO, buf, strlen(buf));
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
 }
@@ -457,14 +460,16 @@ catchquit(int n)
  * Ignore a single quit signal; wait and flush just in case.
  * Used by child processes in preen.
  */
+/*ARGSUSED*/
 void
-voidquit(int n)
+voidquit(int signo)
 {
+	int save_errno = errno;
 
-	/* XXX signal race */
 	sleep(1);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_DFL);
+	errno = save_errno;
 }
 
 /*
