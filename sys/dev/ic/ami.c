@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.149 2006/04/20 13:02:26 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.150 2006/04/20 13:32:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1835,7 +1835,6 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		if ((am = ami_allocmem(sc, size)) == NULL) {
 			error = ENOMEM;
 			goto memerr;
-			return (ENOMEM);
 		}
 		idata = AMIMEM_KVA(am);
 	}
