@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.10 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: scores.c,v 1.11 2006/04/20 03:25:36 ray Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -412,14 +412,14 @@ printem(int level, int offset, struct highscore *hs, int n, const char *me)
 
 	for (row = 0; row < n; row++) {
 		sp = &hs[row];
-		(void)snprintf(buf, 100,
+		(void)snprintf(buf, sizeof(buf),
 		    "%3d%c %6d  %-31s (%6d on %d)\n",
 		    row + offset, sp->hs_time ? '*' : ' ',
 		    sp->hs_score * sp->hs_level,
 		    sp->hs_name, sp->hs_score, sp->hs_level);
 		/* Print leaders every three lines */
 		if ((row + 1) % 3 == 0) {
-			for (i = 0; i < 100; i++)
+			for (i = 0; i < sizeof(buf); i++)
 				if (buf[i] == ' ')
 					buf[i] = '_';
 		}
