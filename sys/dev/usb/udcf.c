@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.2 2006/04/20 10:12:00 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.3 2006/04/20 21:04:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -62,11 +62,8 @@ struct utc {
 
 struct udcf_softc {
 	USBBASEDEVICE		 sc_dev;	/* base device */
-
 	usbd_device_handle	 sc_udev;	/* USB device */
-
 	usbd_interface_handle	 sc_iface;	/* data interface */
-
 	int			 sc_refcnt;
 	u_char			 sc_dying;	/* disconnecting */
 
@@ -106,9 +103,6 @@ void	udcf_sl_intr(void *);
 void	udcf_bv_probe(void *);
 void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
-
-int	udcfopen(dev_t, int, int, usb_proc_ptr);
-int	udcfclose(dev_t, int, int, usb_proc_ptr);
 
 USB_DECLARE_DRIVER(udcf);
 
@@ -257,7 +251,6 @@ fishy:
 USB_DETACH(udcf)
 {
 	struct udcf_softc	*sc = (struct udcf_softc *)self;
-	int			 maj, mn;
 	int			 s;
 
 	sc->sc_dying = 1;
@@ -278,16 +271,6 @@ USB_DETACH(udcf)
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
 	splx(s);
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == udcfopen)
-			break;
-
-	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
-	DPRINTF(("udcf_detach: maj=%d mn=%d\n", maj, mn));
-	vdevgone(maj, mn, mn, VCHR);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
@@ -561,32 +544,5 @@ udcf_activate(device_ptr_t self, enum devact act)
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
-}
-
-int
-udcfopen(dev_t dev, int flag, int mode, usb_proc_ptr tp)
-{
-	int			 unit = minor(dev);
-	struct udcf_softc	*sc;
-
-	if (unit >= udcf_cd.cd_ndevs)
-		return (ENXIO);
-	sc = udcf_cd.cd_devs[unit];
-	if (sc == NULL)
-		return (ENXIO);
-
-	if (sc->sc_dying)
-		return (EIO);
-
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
-		return (ENXIO);
-
-	return (0);
-}
-
-int
-udcfclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
-{
 	return (0);
 }
