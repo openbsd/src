@@ -1,0 +1,3 @@
+test-17.c:26: warning: statement not reached
+test-17.c:36: warning: statement not reached
+Lint pass2:
