@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.147 2006/04/20 04:39:11 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.148 2006/04/20 12:14:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -730,7 +730,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
 	/* struct scsi_xfer *xs = ccb->ccb_xs; */
 	u_int32_t i;
-	u_int8_t status, ready;
+	u_int8_t status;
 
 	if (sc->sc_dis_poll)
 		return (1); /* fail */
@@ -815,23 +815,8 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 		return (1);
 	}
 
-	ready = sc->sc_mbox->acc_cmplidl[0];
-
 	for (i = 0; i < AMI_MAXSTATACK; i++)
 		sc->sc_mbox->acc_cmplidl[i] = 0xff;
-#if 0
-	/* FIXME */
-	/* am I a scsi command? if so complete it */
-	if (xs) {
-		printf("sc ");
-		if (!ami_done(sc, ready))
-			status = 0;
-		else
-			status = 1; /* failed */
-	} else /* need to clean up ccb ourselves */
-		ami_put_ccb(ccb);
-#endif
-
 
 	return (status);
 }
