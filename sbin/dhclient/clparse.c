@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.27 2006/04/18 19:17:54 deraadt Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.28 2006/04/20 15:54:34 deraadt Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -136,22 +136,26 @@ read_client_leases(void)
 
 /*
  * client-declaration :==
- *	SEND option-decl |
- *	DEFAULT option-decl |
- *	SUPERSEDE option-decl |
- *	PREPEND option-decl |
- *	APPEND option-decl |
+ *	TOK_SEND option-decl |
+ *	TOK_DEFAULT option-decl |
+ *	TOK_SUPERSEDE option-decl |
+ *	TOK_APPEND option-decl 
+ *	TOK_PREPEND option-decl |
+ *	TOK_MEDIA string-list |
  *	hardware-declaration |
- *	REQUEST option-list |
- *	REQUIRE option-list |
- *	TIMEOUT number |
- *	RETRY number |
- *	REBOOT number |
- *	SELECT_TIMEOUT number |
- *	SCRIPT string |
+ *	TOK_REQUEST option-list |
+ *	TOK_REQUIRE option-list |
+ *	TOK_TIMEOUT number |
+ *	TOK_RETRY number |
+ *	TOK_SELECT_TIMEOUT number |
+ *	TOK_REBOOT number |
+ *	TOK_BACKOFF_CUTOFF number |
+ *	TOK_INITIAL_INTERVAL number |
+ *	TOK_SCRIPT string |
  *	interface-declaration |
- *	LEASE client-lease-statement |
- *	ALIAS client-lease-statement
+ *	TOK_LEASE client-lease-statement |
+ *	TOK_ALIAS client-lease-statement |
+ *	TOK_REJECT reject-statement
  */
 void
 parse_client_statement(FILE *cfile)
