@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios_intr_fixup.c,v 1.2 2006/04/15 12:34:51 kettenis Exp $	*/
+/*	$OpenBSD: mpbios_intr_fixup.c,v 1.3 2006/04/20 21:38:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -64,11 +64,17 @@ mpbios_icu_lookup(pcireg_t id)
 
 #define NFORCE4_PNPIRQ1	0x7c
 #define NFORCE4_PNPIRQ2	0x80
+#define  NFORCE4_USB2_SHIFT	12
+#define  NFORCE4_USB2_MASK	(0xf << NFORCE4_USB2_SHIFT)
 #define  NFORCE4_SATA1_SHIFT	28
 #define  NFORCE4_SATA1_MASK	(0xf << NFORCE4_SATA1_SHIFT)
 #define  NFORCE4_SATA2_SHIFT	24
 #define  NFORCE4_SATA2_MASK	(0xf << NFORCE4_SATA2_SHIFT)
 #define NFORCE4_PNPIRQ3	0x84
+#define  NFORCE4_USB1_SHIFT	0
+#define  NFORCE4_USB1_MASK	(0xf << NFORCE4_USB1_SHIFT)
+#define  NFORCE4_LAN_SHIFT	8
+#define  NFORCE4_LAN_MASK	(0xf << NFORCE4_LAN_SHIFT)
 
 void
 nforce4_mpbios_fixup(pci_chipset_tag_t pc, pcitag_t tag)
@@ -79,12 +85,23 @@ nforce4_mpbios_fixup(pci_chipset_tag_t pc, pcitag_t tag)
 	pci_decompose_tag (pc, tag, &bus, NULL, NULL);
 
 	reg = pci_conf_read(pc, tag, NFORCE4_PNPIRQ2);
+	pin = (reg & NFORCE4_USB2_MASK) >> NFORCE4_USB2_SHIFT;
+	if (pin != 0)
+		mpbios_pin_fixup(bus, 2, PCI_INTERRUPT_PIN_B, pin);
 	pin = (reg & NFORCE4_SATA1_MASK) >> NFORCE4_SATA1_SHIFT;
 	if (pin != 0)
-		mpbios_pin_fixup(bus, 7, 1, pin);
+		mpbios_pin_fixup(bus, 7, PCI_INTERRUPT_PIN_A, pin);
 	pin = (reg & NFORCE4_SATA2_MASK) >> NFORCE4_SATA2_SHIFT;
 	if (pin != 0)
-		mpbios_pin_fixup(bus, 8, 1, pin);
+		mpbios_pin_fixup(bus, 8, PCI_INTERRUPT_PIN_A, pin);
+
+	reg = pci_conf_read(pc, tag, NFORCE4_PNPIRQ3);
+	pin = (reg & NFORCE4_USB1_MASK) >> NFORCE4_USB1_SHIFT;
+	if (pin != 0)
+		mpbios_pin_fixup(bus, 2, PCI_INTERRUPT_PIN_A, pin);
+	pin = (reg & NFORCE4_LAN_MASK) >> NFORCE4_LAN_SHIFT;
+	if (pin != 0)
+		mpbios_pin_fixup(bus, 10, PCI_INTERRUPT_PIN_A, pin);
 }
 
 /*
