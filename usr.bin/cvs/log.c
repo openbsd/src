@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.33 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.34 2006/04/20 12:13:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -171,17 +171,14 @@ cvs_log_filter(u_int how, u_int level)
  * The <fmt> argument should not have a terminating newline, as this is taken
  * care of by the logging facility.
  */
-int
+void
 cvs_log(u_int level, const char *fmt, ...)
 {
-	int ret;
 	va_list vap;
 
 	va_start(vap, fmt);
-	ret = cvs_vlog(level, fmt, vap);
+	cvs_vlog(level, fmt, vap);
 	va_end(vap);
-
-	return (ret);
 }
 
 
@@ -191,7 +188,7 @@ cvs_log(u_int level, const char *fmt, ...)
  * The <fmt> argument should not have a terminating newline, as this is taken
  * care of by the logging facility.
  */
-int
+void
 cvs_vlog(u_int level, const char *fmt, va_list vap)
 {
 	int ecp;
@@ -203,11 +200,11 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 #endif
 
 	if (level > LP_MAX)
-		return (-1);
+		fatal("cvs_vlog failed");
 
 	/* apply any filters */
 	if (CVS_LOG_FLTRGET(level))
-		return (0);
+		return;
 
 	if (level == LP_ERRNO)
 		ecp = errno;
@@ -281,8 +278,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	/* preserve it just in case we changed it? */
 	if (level == LP_ERRNO)
 		errno = ecp;
-
-	return (0);
 }
 
 

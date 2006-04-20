@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.17 2006/03/15 21:34:59 niallo Exp $	*/
+/*	$OpenBSD: log.h,v 1.18 2006/04/20 12:13:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -59,8 +59,8 @@
 void	cvs_log_init(u_int, u_int);
 void	cvs_log_cleanup(void);
 int	cvs_log_filter(u_int, u_int);
-int	cvs_log(u_int, const char *, ...) __attribute__((format(printf, 2, 3)));
-int	cvs_vlog(u_int, const char *, va_list);
+void	cvs_log(u_int, const char *, ...) __attribute__((format(printf, 2, 3)));
+void	cvs_vlog(u_int, const char *, va_list);
 int	cvs_printf(const char *, ...) __attribute__((format(printf, 1, 2)));
 void	fatal(const char *, ...) __dead __attribute__((format(printf, 1,2)));
 
