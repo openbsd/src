@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.30 2006/03/31 09:57:26 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.31 2006/04/20 20:00:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.30 2006/03/31 09:57:26 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.31 2006/04/20 20:00:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1080,7 +1080,7 @@ sigchld(int signo)
 int
 main(int argc, char *argv[])
 {
-	int	i, ch, ret;
+	int	i, ch;
 	int	p[2];
 	char	*q;
 
