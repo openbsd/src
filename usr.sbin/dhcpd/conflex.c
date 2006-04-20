@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.7 2006/04/18 19:18:31 deraadt Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.8 2006/04/20 19:50:08 deraadt Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -355,9 +355,9 @@ static const struct keywords {
 	{ "token-ring",				TOK_TOKEN_RING },
 	{ "uid",				TOK_UID },
 	{ "unknown-clients",			TOK_UNKNOWN_CLIENTS },
-	{ "user-class",				TOK_USER_CLASS },
 	{ "use-host-decl-names",		TOK_USE_HOST_DECL_NAMES },
 	{ "use-lease-addr-for-default-route",	TOK_USE_LEASE_ADDR_FOR_DEFAULT_ROUTE },
+	{ "user-class",				TOK_USER_CLASS },
 	{ "vendor-class",			TOK_VENDOR_CLASS }
 };
 
