@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.80 2006/03/27 23:15:46 djm Exp $ */
+/* $OpenBSD: sftp.c,v 1.81 2006/04/20 21:53:44 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -1361,23 +1361,12 @@ connect_to_server(char *path, char **args, int *in, int *out)
 {
 	int c_in, c_out;
 
-#ifdef USE_PIPES
-	int pin[2], pout[2];
-
-	if ((pipe(pin) == -1) || (pipe(pout) == -1))
-		fatal("pipe: %s", strerror(errno));
-	*in = pin[0];
-	*out = pout[1];
-	c_in = pout[0];
-	c_out = pin[1];
-#else /* USE_PIPES */
 	int inout[2];
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, inout) == -1)
 		fatal("socketpair: %s", strerror(errno));
 	*in = *out = inout[0];
 	c_in = c_out = inout[1];
-#endif /* USE_PIPES */
 
 	if ((sshpid = fork()) == -1)
 		fatal("fork: %s", strerror(errno));
