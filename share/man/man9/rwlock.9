@@ -1,0 +1,85 @@
+.\" $OpenBSD: rwlock.9,v 1.1 2006/04/20 20:32:31 pedro Exp $
+.\"
+.\" Copyright (c) 2006 Pedro Martelletto <pedro@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 19, 2006
+.Dt RWLOCK 9
+.Os
+.Sh NAME
+.Nm rwlock ,
+.Nm rw_init ,
+.Nm rw_enter_read ,
+.Nm rw_enter_write ,
+.Nm rw_exit_read ,
+.Nm rw_exit_write
+.Nd interface to read/write locks
+.Sh SYNOPSIS
+.Fd #include <sys/rwlock.h>
+.Ft void
+.Fn rw_init "struct rwlock *rwl"
+.Ft void
+.Fn rw_enter_read "struct rwlock *rwl"
+.Ft void
+.Fn rw_enter_write "struct rwlock *rwl"
+.Ft void
+.Fn rw_exit_read "struct rwlock *rwl"
+.Ft void
+.Fn rw_exit_write "struct rwlock *rwl"
+.Sh DESCRIPTION
+The
+.Nm
+set of functions provides a multiple-reader, single-writer locking mechanism to
+ensure mutual exclusion between different processes.
+.Pp
+The
+.Fn rw_init
+function is used to initiate the lock pointed to by
+.Fa rwl .
+.Pp
+The
+.Fn rw_enter_read
+function acquires a read lock, sleeping if necessary.
+.Pp
+The
+.Fn rw_enter_write
+function acquires a write lock, sleeping if necessary.
+.Pp
+The
+.Fn rw_exit_read
+function releases a read lock.
+.Pp
+The
+.Fn rw_exit_write
+function releases a write lock.
+.Pp
+Read locks can be acquired while the write lock is not held, and may coexist in
+distinct processes at any time.
+A write lock, however, can only be acquired when there are no read locks held,
+granting exclusive access to a single process.
+.Sh SEE ALSO
+.Xr lockmgr 9 ,
+.Xr spl 9
+.Sh HISTORY
+The
+.Nm
+functions first appeared in
+.Ox 3.5 .
+.Sh AUTHORS
+The
+.Nm
+functions were written by
+.An Artur Grabowski
+.Aq art@openbsd.org .
