@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.18 2005/06/10 16:40:45 pvalchev Exp $	*/
+/*	$OpenBSD: reader.c,v 1.19 2006/04/20 04:22:10 cloder Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -1250,7 +1250,7 @@ end_rule(void)
     if (!last_was_action && plhs[nrules]->tag)
     {
 	for (i = nitems - 1; pitem[i]; --i) continue;
-	if (pitem[i+1] == 0 || pitem[i+1]->tag != plhs[nrules]->tag)
+	if (pitem[i] == 0 || pitem[i]->tag != plhs[nrules]->tag)
 	    default_action_warning();
     }
 
