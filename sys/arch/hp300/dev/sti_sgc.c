@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.7 2006/04/16 21:03:43 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.8 2006/04/20 20:26:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -116,8 +116,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		sc->memt = sc->iot = iot;
 		sc->romh = ioh;
 
-		if (sti_attach_common(sc, STI_CODEBASE_M68K) != 0)
-			return;
+		sti_attach_common(sc, STI_CODEBASE_M68K);
 	}
 
 	sti_end_attach(sc);
