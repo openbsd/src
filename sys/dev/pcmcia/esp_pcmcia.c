@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.5 2005/01/27 17:04:55 millert Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.6 2006/04/20 20:30:28 miod Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -196,13 +196,14 @@ esp_pcmcia_attach(parent, self, aux)
 		goto iomap_failed;
 	}
 
-	printf(" port 0x%lx/%d", esc->sc_pcioh.addr, esc->sc_pcioh.size);
+	printf(" port 0x%lx/%lu", esc->sc_pcioh.addr,
+	    (u_long)esc->sc_pcioh.size);
 
 	esp_pcmcia_init(esc);
 
 	esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
-	    ncr53c9x_intr, &esc->sc_ncr53c9x, esc->sc_dev.dv_xname);
-	intrstr = pcmcia_intr_string(psc->sc_pf, esc->sc_ih);
+	    ncr53c9x_intr, &esc->sc_ncr53c9x, sc->sc_dev.dv_xname);
+	intrstr = pcmcia_intr_string(esc->sc_pf, esc->sc_ih);
 	if (esc->sc_ih == NULL) {
 		printf(", %s\n", intrstr);
 		goto iomap_failed;

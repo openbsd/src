@@ -1,4 +1,4 @@
-/*	$OpenBSD: gtp.c,v 1.2 2005/08/09 04:10:11 mickey Exp $	*/
+/*	$OpenBSD: gtp.c,v 1.3 2006/04/20 20:30:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
@@ -134,7 +134,6 @@ gtp_attach(struct device *parent, struct device *self, void *aux)
 	struct gtp_softc *sc = (struct gtp_softc *) self;
 	struct pci_attach_args *pa = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	pci_chipset_tag_t pc = pa->pa_pc;
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->tea.iot,
 	    &sc->tea.ioh, NULL, NULL, 0)) {
