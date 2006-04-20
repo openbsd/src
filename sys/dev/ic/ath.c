@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.47 2006/03/25 22:41:42 djm Exp $  */
+/*      $OpenBSD: ath.c,v 1.48 2006/04/20 20:29:56 miod Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2730,7 +2730,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		 * Re-enable rx framework.
 		 */
 		if (ath_startrecv(sc) != 0) {
-			printf("%s: ath_chan_set: unable to restart recv ",
+			printf("%s: ath_chan_set: unable to restart recv "
 			    "logic\n", ifp->if_xname);
 			return EIO;
 		}
