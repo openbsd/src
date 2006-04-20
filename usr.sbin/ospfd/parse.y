@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2006/03/15 13:29:45 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2006/04/20 17:04:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -63,14 +63,19 @@ void	 clear_config(struct ospfd_conf *xconf);
 int	 check_file_secrecy(int fd, const char *fname);
 u_int32_t	get_rtr_id(void);
 
-static struct {
+struct config_defaults {
 	u_int32_t	dead_interval;
 	u_int16_t	transmit_delay;
 	u_int16_t	hello_interval;
 	u_int16_t	rxmt_interval;
 	u_int16_t	metric;
 	u_int8_t	priority;
-} defaults;
+};
+
+struct config_defaults	 globaldefs;
+struct config_defaults	 areadefs;
+struct config_defaults	 ifacedefs;
+struct config_defaults	*defs;
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -167,58 +172,7 @@ varset		: STRING '=' string		{
 		}
 		;
 
-conf_main	: METRIC number {
-			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
-				yyerror("metric out of range (%d-%d)",
-				    MIN_METRIC, MAX_METRIC);
-				YYERROR;
-			}
-			defaults.metric = $2;
-		}
-		| ROUTERPRIORITY number {
-			if ($2 < MIN_PRIORITY || $2 > MAX_PRIORITY) {
-				yyerror("router-priority out of range (%d-%d)",
-				    MIN_PRIORITY, MAX_PRIORITY);
-				YYERROR;
-			}
-			defaults.priority = $2;
-		}
-		| ROUTERDEADTIME number {
-			if ($2 < MIN_RTR_DEAD_TIME || $2 > MAX_RTR_DEAD_TIME) {
-				yyerror("router-dead-time out of range (%d-%d)",
-				    MIN_RTR_DEAD_TIME, MAX_RTR_DEAD_TIME);
-				YYERROR;
-			}
-			defaults.dead_interval = $2;
-		}
-		| TRANSMITDELAY number {
-			if ($2 < MIN_TRANSMIT_DELAY ||
-			    $2 > MAX_TRANSMIT_DELAY) {
-				yyerror("transmit-delay out of range (%d-%d)",
-				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
-				YYERROR;
-			}
-			defaults.transmit_delay = $2;
-		}
-		| HELLOINTERVAL number {
-			if ($2 < MIN_HELLO_INTERVAL ||
-			    $2 > MAX_HELLO_INTERVAL) {
-				yyerror("hello-interval out of range (%d-%d)",
-				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
-				YYERROR;
-			}
-			defaults.hello_interval = $2;
-		}
-		| RETRANSMITINTERVAL number {
-			if ($2 < MIN_RXMT_INTERVAL || $2 > MAX_RXMT_INTERVAL) {
-				yyerror("retransmit-interval out of range "
-				    "(%d-%d)", MIN_RXMT_INTERVAL,
-				    MAX_RXMT_INTERVAL);
-				YYERROR;
-			}
-			defaults.rxmt_interval = $2;
-		}
-		| ROUTERID STRING {
+conf_main	: ROUTERID STRING {
 			if (!inet_aton($2, &conf->rtr_id)) {
 				yyerror("error parsing router-id");
 				free($2);
@@ -272,6 +226,7 @@ conf_main	: METRIC number {
 			}
 			conf->spf_hold_time = $2;
 		}
+		| defaults
 		;
 
 authmd		: AUTHMD number STRING {
@@ -333,6 +288,58 @@ authkey		: AUTHKEY STRING {
 		}
 		;
 
+defaults	: METRIC number {
+			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
+				yyerror("metric out of range (%d-%d)",
+				    MIN_METRIC, MAX_METRIC);
+				YYERROR;
+			}
+			defs->metric = $2;
+		}
+		| ROUTERPRIORITY number {
+			if ($2 < MIN_PRIORITY || $2 > MAX_PRIORITY) {
+				yyerror("router-priority out of range (%d-%d)",
+				    MIN_PRIORITY, MAX_PRIORITY);
+				YYERROR;
+			}
+			defs->priority = $2;
+		}
+		| ROUTERDEADTIME number {
+			if ($2 < MIN_RTR_DEAD_TIME || $2 > MAX_RTR_DEAD_TIME) {
+				yyerror("router-dead-time out of range (%d-%d)",
+				    MIN_RTR_DEAD_TIME, MAX_RTR_DEAD_TIME);
+				YYERROR;
+			}
+			defs->dead_interval = $2;
+		}
+		| TRANSMITDELAY number {
+			if ($2 < MIN_TRANSMIT_DELAY ||
+			    $2 > MAX_TRANSMIT_DELAY) {
+				yyerror("transmit-delay out of range (%d-%d)",
+				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
+				YYERROR;
+			}
+			defs->transmit_delay = $2;
+		}
+		| HELLOINTERVAL number {
+			if ($2 < MIN_HELLO_INTERVAL ||
+			    $2 > MAX_HELLO_INTERVAL) {
+				yyerror("hello-interval out of range (%d-%d)",
+				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
+				YYERROR;
+			}
+			defs->hello_interval = $2;
+		}
+		| RETRANSMITINTERVAL number {
+			if ($2 < MIN_RXMT_INTERVAL || $2 > MAX_RXMT_INTERVAL) {
+				yyerror("retransmit-interval out of range "
+				    "(%d-%d)", MIN_RXMT_INTERVAL,
+				    MAX_RXMT_INTERVAL);
+				YYERROR;
+			}
+			defs->rxmt_interval = $2;
+		}
+
 optnl		: '\n' optnl
 		|
 		;
@@ -349,8 +356,12 @@ area		: AREA STRING {
 			}
 			free($2);
 			area = conf_get_area(id);
+
+			memcpy(&areadefs, defs, sizeof(areadefs));
+			defs = &areadefs;
 		} '{' optnl areaopts_l '}' {
 			area = NULL;
+			defs = &globaldefs;
 		}
 		;
 
@@ -359,57 +370,7 @@ areaopts_l	: areaopts_l areaoptsl
 		;
 
 areaoptsl	: interface nl
-		| METRIC number nl {
-			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
-				yyerror("metric out of range (%d-%d)",
-				    MIN_METRIC, MAX_METRIC);
-				YYERROR;
-			}
-			area->metric = $2;
-		}
-		| ROUTERPRIORITY number nl {
-			if ($2 < MIN_PRIORITY || $2 > MAX_PRIORITY) {
-				yyerror("router-priority out of range (%d-%d)",
-				    MIN_PRIORITY, MAX_PRIORITY);
-				YYERROR;
-			}
-			area->priority = $2;
-		}
-		| ROUTERDEADTIME number nl {
-			if ($2 < MIN_RTR_DEAD_TIME || $2 > MAX_RTR_DEAD_TIME) {
-				yyerror("router-dead-time out of range (%d-%d)",
-				    MIN_RTR_DEAD_TIME, MAX_RTR_DEAD_TIME);
-				YYERROR;
-			}
-			area->dead_interval = $2;
-		}
-		| TRANSMITDELAY number nl {
-			if ($2 < MIN_TRANSMIT_DELAY ||
-			    $2 > MAX_TRANSMIT_DELAY) {
-				yyerror("transmit-delay out of range (%d-%d)",
-				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
-				YYERROR;
-			}
-			area->transmit_delay = $2;
-		}
-		| HELLOINTERVAL number nl {
-			if ($2 < MIN_HELLO_INTERVAL ||
-			    $2 > MAX_HELLO_INTERVAL) {
-				yyerror("hello-interval out of range (%d-%d)",
-				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
-				YYERROR;
-			}
-			area->hello_interval = $2;
-		}
-		| RETRANSMITINTERVAL number nl {
-			if ($2 < MIN_RXMT_INTERVAL || $2 > MAX_RXMT_INTERVAL) {
-				yyerror("retransmit-interval out of range "
-				    "(%d-%d)", MIN_RXMT_INTERVAL,
-				    MAX_RXMT_INTERVAL);
-				YYERROR;
-			}
-			area->rxmt_interval = $2;
-		}
+		| defaults nl
 		;
 
 interface	: INTERFACE STRING	{
@@ -427,8 +388,20 @@ interface	: INTERFACE STRING	{
 			iface->area = area;
 			LIST_INSERT_HEAD(&area->iface_list,
 			    iface, entry);
+
+			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
+			defs = &ifacedefs;
 		} interface_block {
+			iface->dead_interval = defs->dead_interval;
+			iface->transmit_delay = defs->transmit_delay;
+			iface->hello_interval = defs->hello_interval;
+			iface->rxmt_interval = defs->rxmt_interval;
+			iface->metric = defs->metric;
+			iface->priority = defs->priority;
+
 			iface = NULL;
+			/* interface is always part of an area */
+			defs = &areadefs;
 		}
 		;
 
@@ -446,57 +419,7 @@ interfaceoptsl	: authmd nl
 		| authmdkeyid nl
 		| authtype nl
 		| PASSIVE nl		{ iface->passive = 1; }
-		| METRIC number nl {
-			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
-				yyerror("metric out of range (%d-%d)",
-				    MIN_METRIC, MAX_METRIC);
-				YYERROR;
-			}
-			iface->metric = $2;
-		}
-		| ROUTERPRIORITY number nl {
-			if ($2 < MIN_PRIORITY || $2 > MAX_PRIORITY) {
-				yyerror("router-priority out of range (%d-%d)",
-				    MIN_PRIORITY, MAX_PRIORITY);
-				YYERROR;
-			}
-			iface->priority = $2;
-		}
-		| ROUTERDEADTIME number nl {
-			if ($2 < MIN_RTR_DEAD_TIME || $2 > MAX_RTR_DEAD_TIME) {
-				yyerror("router-dead-time out of range (%d-%d)",
-				    MIN_RTR_DEAD_TIME, MAX_RTR_DEAD_TIME);
-				YYERROR;
-			}
-			iface->dead_interval = $2;
-		}
-		| TRANSMITDELAY number nl {
-			if ($2 < MIN_TRANSMIT_DELAY ||
-			    $2 > MAX_TRANSMIT_DELAY) {
-				yyerror("transmit-delay out of range (%d-%d)",
-				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
-				YYERROR;
-			}
-			iface->transmit_delay = $2;
-		}
-		| HELLOINTERVAL number nl {
-			if ($2 < MIN_HELLO_INTERVAL ||
-			    $2 > MAX_HELLO_INTERVAL) {
-				yyerror("hello-interval out of range (%d-%d)",
-				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
-				YYERROR;
-			}
-			iface->hello_interval = $2;
-		}
-		| RETRANSMITINTERVAL number nl {
-			if ($2 < MIN_RXMT_INTERVAL || $2 > MAX_RXMT_INTERVAL) {
-				yyerror("retransmit-interval out of range "
-				    "(%d-%d)", MIN_RXMT_INTERVAL,
-				    MAX_RXMT_INTERVAL);
-				YYERROR;
-			}
-			iface->rxmt_interval = $2;
-		}
+		| defaults nl
 		;
 
 %%
@@ -765,12 +688,14 @@ parse_config(char *filename, int opts)
 		return (NULL);
 	}
 
-	defaults.dead_interval = DEFAULT_RTR_DEAD_TIME;
-	defaults.transmit_delay = DEFAULT_TRANSMIT_DELAY;
-	defaults.hello_interval = DEFAULT_HELLO_INTERVAL;
-	defaults.rxmt_interval = DEFAULT_RXMT_INTERVAL;
-	defaults.metric = DEFAULT_METRIC;
-	defaults.priority = DEFAULT_PRIORITY;
+	bzero(&globaldefs, sizeof(globaldefs));
+	defs = &globaldefs;
+	defs->dead_interval = DEFAULT_RTR_DEAD_TIME;
+	defs->transmit_delay = DEFAULT_TRANSMIT_DELAY;
+	defs->hello_interval = DEFAULT_HELLO_INTERVAL;
+	defs->rxmt_interval = DEFAULT_RXMT_INTERVAL;
+	defs->metric = DEFAULT_METRIC;
+	defs->priority = DEFAULT_PRIORITY;
 
 	conf->options = OSPF_OPTION_E;
 	conf->spf_delay = DEFAULT_SPF_DELAY;
@@ -924,13 +849,6 @@ conf_get_area(struct in_addr id)
 	a = area_new();
 	LIST_INSERT_HEAD(&conf->area_list, a, entry);
 
-	a->dead_interval = defaults.dead_interval;
-	a->transmit_delay = defaults.transmit_delay;
-	a->hello_interval = defaults.hello_interval;
-	a->rxmt_interval = defaults.rxmt_interval;
-	a->metric = defaults.metric;
-	a->priority = defaults.priority;
-
 	a->id.s_addr = id.s_addr;
 
 	return (a);
@@ -951,12 +869,6 @@ conf_get_if(struct kif *kif)
 			}
 
 	i = if_new(kif);
-	i->dead_interval = area->dead_interval;
-	i->transmit_delay = area->transmit_delay;
-	i->hello_interval = area->hello_interval;
-	i->rxmt_interval = area->rxmt_interval;
-	i->metric = area->metric;
-	i->priority = area->priority;
 	i->auth_keyid = 1;
 
 	return (i);
