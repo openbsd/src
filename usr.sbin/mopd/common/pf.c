@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.13 2006/04/17 16:23:01 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.14 2006/04/20 08:52:52 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: pf.c,v 1.13 2006/04/17 16:23:01 deraadt Exp $";
+    "$OpenBSD: pf.c,v 1.14 2006/04/20 08:52:52 maja Exp $";
 #endif
 
 #include <stdio.h>
@@ -69,7 +69,7 @@ extern int promisc;
  * In this case the driver can handle both Ethernet type II and
  * IEEE 802.3 frames (SNAP) in a single pfOpen.
  */
-
+/* ARGSUSED */
 int
 pfTrans(char *interface)
 {
@@ -79,6 +79,7 @@ pfTrans(char *interface)
 /*
  * Open and initialize packet filter.
  */
+/* ARGSUSED */
 int
 pfInit(char *interface, int mode, u_short protocol, int typ)
 {
@@ -122,13 +123,13 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 		return (-1);
 	}
 	strncpy(ifr.ifr_name, interface, sizeof ifr.ifr_name);
-	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
+	if (ioctl(fd, BIOCSETIF, &ifr) < 0) {
 		syslog(LOG_ERR,"pfInit: BIOCSETIF: %m");
 		return (-1);
 	}
 	/* Check that the data link layer is an Ethernet; this code won't work
 	 * with anything else. */
-	if (ioctl(fd, BIOCGDLT, (caddr_t)&dlt) < 0) {
+	if (ioctl(fd, BIOCGDLT, &dlt) < 0) {
 		syslog(LOG_ERR,"pfInit: BIOCGDLT: %m");
 		return (-1);
 	}
@@ -138,7 +139,7 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 	}
 	if (promisc)
 		/* Set promiscuous mode. */
-		if (ioctl(fd, BIOCPROMISC, (caddr_t)0) < 0) {
+		if (ioctl(fd, BIOCPROMISC, 0) < 0) {
 			syslog(LOG_ERR,"pfInit: BIOCPROMISC: %m");
 			return (-1);
 		}
@@ -147,13 +148,13 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 	insns[1].k = protocol;
 	insns[3].k = protocol;
 
-	if (ioctl(fd, BIOCSETF, (caddr_t) & filter) < 0) {
+	if (ioctl(fd, BIOCSETF, &filter) < 0) {
 		syslog(LOG_ERR,"pfInit: BIOCSETF: %m");
 		return (-1);
 	}
 
 	/* XXX set the same write filter (for protocol only) */
-	if (ioctl(fd, BIOCSETWF, (caddr_t) & filter) < 0) {
+	if (ioctl(fd, BIOCSETWF, &filter) < 0) {
 		syslog(LOG_ERR,"pfInit: BIOCSETWF: %m");
 		return (-1);
 	}
@@ -170,6 +171,7 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 /*
  * Add a Multicast address to the interface
  */
+/* ARGSUSED */
 int
 pfAddMulti(int s, char *interface, char *addr)
 {
@@ -189,7 +191,7 @@ pfAddMulti(int s, char *interface, char *addr)
 		syslog(LOG_ERR, "pfAddMulti: socket: %m");
 		return (-1);
 	}
-	if (ioctl(fd, SIOCADDMULTI, (caddr_t)&ifr) < 0) {
+	if (ioctl(fd, SIOCADDMULTI, &ifr) < 0) {
 		syslog(LOG_ERR, "pfAddMulti: SIOCADDMULTI: %m");
 		close(fd);
 		return (-1);
@@ -202,6 +204,7 @@ pfAddMulti(int s, char *interface, char *addr)
 /*
  * Delete a Multicast address from the interface
  */
+/* ARGSUSED */
 int
 pfDelMulti(int s, char *interface, char *addr)
 {
@@ -222,7 +225,7 @@ pfDelMulti(int s, char *interface, char *addr)
 		syslog(LOG_ERR, "pfDelMulti: socket: %m");
 		return (-1);
 	}
-	if (ioctl(fd, SIOCDELMULTI, (caddr_t)&ifr) < 0) {
+	if (ioctl(fd, SIOCDELMULTI, &ifr) < 0) {
 		syslog(LOG_ERR, "pfAddMulti: SIOCDELMULTI: %m");
 		close(fd);
 		return (-1);

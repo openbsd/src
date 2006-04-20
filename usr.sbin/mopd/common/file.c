@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2006/04/17 16:23:01 deraadt Exp $ */
+/*	$OpenBSD: file.c,v 1.10 2006/04/20 08:52:52 maja Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: file.c,v 1.9 2006/04/17 16:23:01 deraadt Exp $";
+    "$OpenBSD: file.c,v 1.10 2006/04/20 08:52:52 maja Exp $";
 #endif
 
 #include "os.h"
@@ -55,62 +55,62 @@ static const char rcsid[] =
 #endif
 
 void
-mopFilePutLX(u_char *buf, int index, u_long value, int cnt)
+mopFilePutLX(u_char *buf, int idx, u_long value, int cnt)
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
-		buf[index + i] = value % 256;
+		buf[idx+i] = value % 256;
 		value = value / 256;
 	}
 }
 
 void
-mopFilePutBX(u_char *buf, int index, u_long value, int cnt)
+mopFilePutBX(u_char *buf, int idx, u_long value, int cnt)
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
-		buf[index + cnt - 1 - i] = value % 256;
+		buf[idx+cnt-1-i] = value % 256;
 		value = value / 256;
 	}
 }
 
 u_long
-mopFileGetLX(void *buffer, int index, int cnt)
+mopFileGetLX(void *buffer, int idx, int cnt)
 {
 	u_long	 ret = 0;
 	int	 i;
 	u_char	*buf = (u_char *)buffer;
 
 	for (i = 0; i < cnt; i++)
-		ret = ret*256 + buf[index+cnt - 1 - i];
+		ret = ret*256 + buf[idx+cnt-1-i];
 
 	return (ret);
 }
 
 u_long
-mopFileGetBX(void *buffer, int index, int cnt)
+mopFileGetBX(void *buffer, int idx, int cnt)
 {
 	u_long	 ret = 0;
 	int	 i;
 	u_char	*buf = (u_char *)buffer;
 
 	for (i = 0; i < cnt; i++)
-		ret = ret*256 + buf[index + i];
+		ret = ret*256 + buf[idx+i];
 
 	return (ret);
 }
 
 void
-mopFileSwapX(void *buffer, int index, int cnt)
+mopFileSwapX(void *buffer, int idx, int cnt)
 {
 	int	 i;
 	u_char	 c;
 	u_char	*buf = (u_char *)buffer;
 
 	for (i = 0; i < (cnt / 2); i++) {
-		c = buf[index + i];
-		buf[index + i] = buf[index + cnt - 1 - i];
-		buf[index + cnt - 1 - i] = c;
+		c = buf[idx+i];
+		buf[idx+i] = buf[idx+cnt-1-i];
+		buf[idx+cnt-1-i] = c;
 	}
 
 }
@@ -197,19 +197,16 @@ GetMopFileInfo(int fd, u_long *load, u_long *xfr)
 			printf("BASIC-Plus Image, not supported\n");
 #endif
 			return (-1);
-			break;
 		case IHD_C_ALIAS:		/* Alias		     */
 #ifdef INFO
 			printf("Alias, not supported\n");
 #endif
 			return (-1);
-			break;
 		case IHD_C_CLI:			/* Image is CLI		     */
 #ifdef INFO
 			printf("CLI, not supported\n");
 #endif
 			return (-1);
-			break;
 		case IHD_C_PMAX:		/* PMAX system image	     */
 			isd = header[IHD_W_SIZE+1] * 256 + header[IHD_W_SIZE];
 			iha = header[IHD_W_ACTIVOFF+1] * 256 +
