@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.20 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.21 2006/04/20 03:24:12 ray Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -160,6 +160,7 @@ main(int argc, char *argv[])
 	char *keys;
 	int level = 2;
 	char key_write[6][10];
+	const char *errstr;
 	int ch, i, j;
 
 	keys = "jkl pq";
@@ -169,7 +170,7 @@ main(int argc, char *argv[])
 	setegid(gid);
 
 	classic = showpreview = 0;
-	while ((ch = getopt(argc, argv, "chk:l:ps")) != -1)
+	while ((ch = getopt(argc, argv, "ck:l:ps")) != -1)
 		switch(ch) {
 		case 'c':
 			/*
@@ -184,8 +185,9 @@ main(int argc, char *argv[])
 				usage();
 			break;
 		case 'l':
-			level = atoi(optarg);
-			if (level < MINLEVEL || level > MAXLEVEL)
+			level = (int)strtonum(optarg, MINLEVEL, MAXLEVEL,
+			    &errstr);
+			if (errstr)
 				errx(1, "level must be from %d to %d",
 				    MINLEVEL, MAXLEVEL);
 			break;
@@ -195,8 +197,6 @@ main(int argc, char *argv[])
 		case 's':
 			showscores(0);
 			exit(0);
-		case '?':
-		case 'h':
 		default:
 			usage();
 		}
