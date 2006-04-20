@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.148 2006/04/20 12:14:54 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.149 2006/04/20 13:02:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -176,7 +176,7 @@ ami_get_ccb(struct ami_softc *sc)
 {
 	struct ami_ccb *ccb;
 
-	ccb = TAILQ_LAST(&sc->sc_ccb_freeq, ami_queue_head);
+	ccb = TAILQ_FIRST(&sc->sc_ccb_freeq);
 	if (ccb) {
 		TAILQ_REMOVE(&sc->sc_ccb_freeq, ccb, ccb_link);
 		ccb->ccb_state = AMI_CCB_READY;

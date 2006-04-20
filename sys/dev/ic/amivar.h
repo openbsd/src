@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.46 2006/04/20 04:39:11 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.47 2006/04/20 13:02:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -71,7 +71,7 @@ struct ami_ccb {
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 };
 
-typedef TAILQ_HEAD(ami_queue_head, ami_ccb)	ami_queue_head;
+TAILQ_HEAD(ami_ccb_list, ami_ccb);
 
 struct ami_rawsoftc {
 	struct scsi_link	sc_link;
@@ -111,7 +111,7 @@ struct ami_softc {
 	paddr_t			sc_mbox_pa;
 
 	struct ami_ccb		sc_ccbs[AMI_MAXCMDS];
-	ami_queue_head		sc_ccb_freeq, sc_ccb_preq, sc_ccb_runq;
+	struct ami_ccb_list	sc_ccb_freeq, sc_ccb_preq, sc_ccb_runq;
 
 	struct ami_mem		*sc_ccbmem_am;
 
