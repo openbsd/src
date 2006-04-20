@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.41 2005/10/31 20:22:36 otto Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.42 2006/04/20 14:43:32 pedro Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -700,10 +700,6 @@ nfs_doio(bp, p)
 	    else
 		iomode = NFSV3WRITE_FILESYNC;
 	    bp->b_flags |= B_WRITEINPROG;
-#ifdef fvdl_debug
-	    printf("nfs_doio(%x): bp %x doff %d dend %d\n", 
-		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
-#endif
 	    error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
 
 	    rw_enter_write(&np->n_commitlock);
