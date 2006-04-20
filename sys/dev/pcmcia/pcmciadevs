@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.128 2006/03/04 04:56:53 jsg Exp $
+	$OpenBSD: pcmciadevs,v 1.129 2006/04/20 07:38:20 brad Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -169,6 +169,7 @@ product BAY EMOBILITY_11B	0x080a e-Mobility 11Mb
 
 /* Belkin */
 product BELKIN F5D5020		0x2328 F5D5020
+product BELKIN F5D6020		0x3302 F5D6020
 
 /* BreezeCOM */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
