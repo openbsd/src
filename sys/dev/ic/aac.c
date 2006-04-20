@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.28 2006/02/06 22:11:32 jmc Exp $	*/
+/*	$OpenBSD: aac.c,v 1.29 2006/04/20 20:31:12 miod Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1806,7 +1806,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 {
 
 	if (datasize > AAC_FIB_DATASIZE) {
-		printf("aac_sync_fib 1: datasize=%d AAC_FIB_DATASIZE\n",
+		printf("aac_sync_fib 1: datasize=%d AAC_FIB_DATASIZE %lu\n",
 		    datasize, AAC_FIB_DATASIZE);
 		return(EINVAL);
 	}

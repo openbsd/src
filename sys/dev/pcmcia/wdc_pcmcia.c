@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.16 2005/01/27 17:04:56 millert Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.17 2006/04/20 20:31:13 miod Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -333,11 +333,11 @@ wdc_pcmcia_attach(parent, self, aux)
 		goto iomapaux_failed;
 	}
 
-	printf(" port 0x%lx/%d",
-	    sc->sc_pioh.addr, sc->sc_pioh.size);
+	printf(" port 0x%lx/%lu",
+	    sc->sc_pioh.addr, (u_long)sc->sc_pioh.size);
 	if (cfe->num_iospace > 1 && sc->sc_auxpioh.size > 0)
-		printf(",0x%lx/%d",
-		    sc->sc_auxpioh.addr, sc->sc_auxpioh.size);
+		printf(",0x%lx/%lu",
+		    sc->sc_auxpioh.addr, (u_long)sc->sc_auxpioh.size);
 
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
 	sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.29 2005/11/26 14:31:26 krw Exp $	*/
+/*	$OpenBSD: ises.c,v 1.30 2006/04/20 20:31:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -1552,7 +1552,7 @@ ises_hrng_init(struct ises_softc *sc)
 	/* ACK the response */
 	WRITE_REG(sc, ISES_A_OQS, 0);
 	DELAY(1);
-	printf(", rng active", sc->sc_dv.dv_xname);
+	printf(", rng active");
 
 #ifdef ISESDEBUG
 	/* Benchmark the HRNG. */

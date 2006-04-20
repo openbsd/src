@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.14 2006/03/27 20:54:15 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2743,7 +2743,8 @@ rt2560_init(struct ifnet *ifp)
 	/* for CardBus, power on the socket */
 	if (!(sc->sc_flags & RT2560_ENABLED)) {
 		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
-			printf("%s: could not enable device\n");
+			printf("%s: could not enable device\n",
+			    sc->sc_dev.dv_xname);
 			return EIO;
 		}
 		sc->sc_flags |= RT2560_ENABLED;

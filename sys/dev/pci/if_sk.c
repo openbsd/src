@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.98 2006/04/17 10:11:29 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.99 2006/04/20 20:31:12 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1244,7 +1244,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%d bytes)\n",
+		printf(": can't map dma buffers (%z bytes)\n",
 		       sizeof(struct sk_ring_data));
 		goto fail_1;
 	}

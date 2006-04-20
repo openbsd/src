@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.4 2005/12/15 23:17:23 krw Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.5 2006/04/20 20:31:12 miod Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -167,7 +167,7 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
 			printf(": waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
+			    reg & PCI_PMCSR_STATE_MASK);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
@@ -179,7 +179,7 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 			 */
 			printf(
 			    ": unable to wake up from power state D3, "
-			    "reboot required.\n", sc->sc_dev.dv_xname);
+			    "reboot required.\n");
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
@@ -204,8 +204,7 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf(": unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to map device registers\n");
 		return;
 	}
 
@@ -215,8 +214,7 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);

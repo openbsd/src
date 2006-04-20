@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.10 2005/04/01 21:42:36 canacar Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.11 2006/04/20 20:31:12 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -555,7 +555,7 @@ sdla_intr_disestablish(void *phw)
 {
 	sdlahw_t	*hw = (sdlahw_t*)phw;
 
-	log(LOG_INFO, "%d: Disestablish interrupt is not defined!\n",
+	log(LOG_INFO, "%s: Disestablish interrupt is not defined!\n",
 	    hw->devname);
 	return (EINVAL);
 }

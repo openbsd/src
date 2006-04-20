@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.17 2005/12/13 05:56:22 canacar Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.18 2006/04/20 20:31:12 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -485,7 +485,7 @@ wan_xilinx_up(struct ifnet *ifp)
 	sc->dma_mtu = xilinx_valid_mtu(ifp->if_mtu+100);
 
 	if (!sc->dma_mtu) {
-		log(LOG_INFO, "%s:%s: Error invalid MTU %d\n",
+		log(LOG_INFO, "%s:%s: Error invalid MTU %lu\n",
 		    card->devname, sc->if_name, ifp->if_mtu);
 		return (EINVAL);
 	}
@@ -1832,7 +1832,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 	if (ADDR_MASK(mtod(m, caddr_t), 0x03)) {
 		/* The mbuf should already be aligned */
 		log(LOG_INFO, "%s: TX packet not aligned!\n",
-		    sc->if_name, MAX_XILINX_TX_DMA_SIZE);
+		    sc->if_name);
 		m_freem(m);
 		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
 		return (EINVAL);

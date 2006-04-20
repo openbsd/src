@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.33 2005/12/03 21:11:48 brad Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.34 2006/04/20 20:31:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -192,7 +192,7 @@ wihap_init(struct wi_softc *sc)
 	struct wihap_info *whi = &sc->wi_hostap_info;
 
 	if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
-		printf("wihap_init: sc=0x%x whi=0x%x\n", sc, whi);
+		printf("wihap_init: sc=%p whi=%p\n", sc, whi);
 
 	bzero(whi, sizeof(struct wihap_info));
 
@@ -279,7 +279,7 @@ wihap_shutdown(struct wi_softc *sc)
 	int i, s;
 
 	if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
-		printf("wihap_shutdown: sc=0x%x whi=0x%x\n", sc, whi);
+		printf("wihap_shutdown: sc=%p whi=%p\n", sc, whi);
 
 	if (!(whi->apflags & WIHAPFL_ACTIVE))
 		return;
@@ -295,7 +295,7 @@ wihap_shutdown(struct wi_softc *sc)
 	    sta != TAILQ_END(&whi->sta_list); sta = next) {
 		timeout_del(&sta->tmo);
 		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
-			printf("wihap_shutdown: FREE(sta=0x%x)\n", sta);
+			printf("wihap_shutdown: FREE(sta=%p)\n", sta);
 		next = TAILQ_NEXT(sta, list);
 		if (sta->challenge)
 			FREE(sta->challenge, M_TEMP);

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.12 2006/03/27 17:07:10 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.13 2006/04/20 20:31:12 miod Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -2002,7 +2002,7 @@ ixgb_print_hw_stats(struct ixgb_softc *sc)
 		bus_speed == ixgb_bus_speed_100 ? "100MHz" :
 		bus_speed == ixgb_bus_speed_133 ? "133MHz" :
 		"UNKNOWN");
-	printf("ixgb%d: PCI_Bus_Speed = %s\n", unit,
+	printf("%s: PCI_Bus_Speed = %s\n", unit,
 		buf_speed);
 
 	snprintf(buf_type, sizeof(buf_type),

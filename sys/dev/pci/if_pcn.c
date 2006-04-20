@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.10 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.11 2006/04/20 20:31:12 miod Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": unable to map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);

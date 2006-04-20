@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.48 2006/03/25 22:41:43 djm Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.49 2006/04/20 20:31:12 miod Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1289,7 +1289,8 @@ rl_attach(sc)
 	for (i = 0; i < RL_TX_LIST_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &sc->rl_cdata.rl_tx_dmamap[i]) != 0) {
-			printf("%s: can't create tx maps\n");
+			printf("%s: can't create tx maps\n",
+			    sc->sc_dev.dv_xname);
 			/* XXX free any allocated... */
 			return (1);
 		}

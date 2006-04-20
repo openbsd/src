@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.58 2006/02/13 06:15:32 brad Exp $	*/
+/*	$OpenBSD: auich.c,v 1.59 2006/04/20 20:31:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -423,7 +423,8 @@ auich_attach(parent, self, aux)
 	}
 	if (bus_dmamap_load_raw(sc->dmat, sc->dmalist_map, sc->dmalist_seg,
 	    segs, dmasz, BUS_DMA_NOWAIT)) {
-		printf(": failed to load dmalist map: %d segs %u size\n", segs, dmasz);
+		printf(": failed to load dmalist map: %d segs %lu size\n",
+		    segs, (u_long)dmasz);
 		bus_dmamap_destroy(sc->dmat, sc->dmalist_map);
 		bus_dmamem_unmap(sc->dmat, sc->dmalist_kva, dmasz);
 		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);

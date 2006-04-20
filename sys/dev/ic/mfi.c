@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.20 2006/04/20 14:01:08 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.21 2006/04/20 20:31:12 miod Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -306,8 +306,8 @@ mfi_transition_firmware(struct mfi_softc *sc)
 				break;
 		}
 		if (fw_state == cur_state) {
-			printf("%s: firmware stuck in state %#x\n", fw_state,
-			    DEVNAME(sc));
+			printf("%s: firmware stuck in state %#x\n",
+			    DEVNAME(sc), fw_state);
 			return (1);
 		}
 	}
