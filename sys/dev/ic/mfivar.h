@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.11 2006/04/17 16:46:39 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.12 2006/04/20 14:01:08 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -79,7 +79,7 @@ struct mfi_ccb {
 	TAILQ_ENTRY(mfi_ccb)	ccb_link;
 };
 
-typedef TAILQ_HEAD(mfi_queue_head, mfi_ccb)	mfi_queue_head;
+TAILQ_HEAD(mfi_ccb_list, mfi_ccb);
 
 struct mfi_softc {
 	struct device		sc_dev;
@@ -109,7 +109,7 @@ struct mfi_softc {
 	/* sense memory */
 	struct mfi_mem		*sc_sense;
 
-	mfi_queue_head		sc_ccb_freeq;
+	struct mfi_ccb_list	sc_ccb_freeq;
 };
 
 int	mfi_attach(struct mfi_softc *sc);
