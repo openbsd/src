@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.127 2005/10/05 17:38:58 norby Exp $
+.\"	$OpenBSD: sysctl.8,v 1.128 2006/04/21 10:51:08 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -55,6 +55,13 @@ The state to be retrieved or set is described using a
 .Dq Management Information Base
 .Pq MIB
 style name, described as a dotted set of components.
+.Pp
+When retreiving a variable,
+a subset of the MIB name may be specified to retreive a list of
+variables in that subset.
+For example, to list all the machdep variables:
+.Pp
+.Dl $ sysctl machdep
 .Pp
 When setting a variable,
 the MIB name should be followed by an equal sign and the new value.
