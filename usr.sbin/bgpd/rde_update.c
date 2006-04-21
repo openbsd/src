@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.50 2006/04/04 12:03:26 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.51 2006/04/21 08:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,6 @@ int		up_generate_mp_reach(struct rde_peer *, struct update_attr *,
 		    struct rde_aspath *, sa_family_t);
 int		up_generate_attr(struct rde_peer *, struct update_attr *,
 		    struct rde_aspath *, sa_family_t);
-int		up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
 
 /* update stuff. */
 struct update_prefix {
