@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.42 2005/12/03 03:40:52 brad Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.43 2006/04/21 07:29:11 jolan Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -141,6 +141,7 @@ struct uhci_pipe {
 		/* Interrupt pipe */
 		struct {
 			int npoll;
+			int isread;
 			uhci_soft_qh_t **qhs;
 		} intr;
 		/* Bulk pipe */
@@ -2050,6 +2051,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
 	usbd_status err;
+	int isread, endpt;
 	int i, s;
 
 	if (sc->sc_dying)
@@ -2063,8 +2065,16 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 		panic("uhci_device_intr_transfer: a request");
 #endif
 
-	err = uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
-				   &xfer->dmabuf, &data, &dataend);
+	endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	sqh = upipe->u.bulk.sqh;
+
+	upipe->u.intr.isread = isread;
+
+	err = uhci_alloc_std_chain(upipe, sc, xfer->length, isread,
+				   xfer->flags, &xfer->dmabuf, &data,
+				   &dataend);
+
 	if (err)
 		return (err);
 	dataend->td.td_status |= htole32(UHCI_TD_IOC);
@@ -2647,7 +2657,8 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 		DPRINTFN(5,("uhci_device_intr_done: requeing\n"));
 
 		/* This alloc cannot fail since we freed the chain above. */
-		uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
+		uhci_alloc_std_chain(upipe, sc, xfer->length,
+				     upipe->u.intr.isread, xfer->flags,
 				     &xfer->dmabuf, &data, &dataend);
 		dataend->td.td_status |= htole32(UHCI_TD_IOC);
 
