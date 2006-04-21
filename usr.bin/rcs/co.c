@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.79 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.80 2006/04/21 07:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -88,7 +88,7 @@ checkout_main(int argc, char **argv)
 			break;
 		case 'p':
 			rcs_setrevstr(&rev_str, rcs_optarg);
-			pipeout = 1;
+			flags |= PIPEOUT;
 			break;
 		case 'q':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -160,7 +160,7 @@ checkout_main(int argc, char **argv)
 
 		if (!(flags & QUIET))
 			printf("%s  -->  %s\n", fpath,
-			    (pipeout == 1) ? "standard output" : argv[i]);
+			    (flags & PIPEOUT) ? "standard output" : argv[i]);
 
 		if ((flags & CO_LOCK) && (kflag & RCS_KWEXP_VAL)) {
 			cvs_log(LP_ERR, "%s: cannot combine -kv and -l", fpath);
@@ -428,7 +428,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			    file->rf_path, lcount);
 	}
 
-	if (pipeout == 0 && stat(dst, &st) == 0 && !(flags & FORCE)) {
+	if (!(flags & PIPEOUT) && stat(dst, &st) == 0 && !(flags & FORCE)) {
 		/*
 		 * XXX - Not sure what is "right".  If we go according
 		 * to GNU's behavior, an existing file with no writable
@@ -459,7 +459,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if (pipeout == 1) {
+	if (flags & PIPEOUT) {
 		cvs_buf_putc(bp, '\0');
 		content = cvs_buf_release(bp);
 		printf("%s", content);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.108 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.109 2006/04/21 07:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,7 +35,6 @@
 			"or end of file:\nNOTE: This is NOT the log message!\n"
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
-int pipeout = 0;
 
 int	 flags;
 int	 rcsflags;

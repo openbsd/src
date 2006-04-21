@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.50 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.51 2006/04/21 07:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -63,12 +63,12 @@
 #define FORCE		(1<<17)
 #define INTERACTIVE	(1<<18)
 #define NEWFILE		(1<<19)
-#define PRESERVETIME	(1<<20)
-#define QUIET		(1<<21)
+#define PIPEOUT		(1<<20)
+#define PRESERVETIME	(1<<21)
+#define QUIET		(1<<22)
 
 extern char	*__progname;
 extern const char	rcs_version[];
-extern int	pipeout;
 
 extern int	 rcs_optind;
 extern char	*rcs_optarg;

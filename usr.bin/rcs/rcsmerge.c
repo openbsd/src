@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.27 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.28 2006/04/21 07:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -58,7 +58,7 @@ rcsmerge_main(int argc, char **argv)
 			break;
 		case 'p':
 			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
-			pipeout = 1;
+			flags |= PIPEOUT;
 			break;
 		case 'q':
 			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
@@ -144,7 +144,7 @@ rcsmerge_main(int argc, char **argv)
 
 			fprintf(stderr, "Merging differences between %s and "
 			    "%s into %s%s\n", r1, r2, argv[i],
-			    (pipeout == 1) ? "; result to stdout":"");
+			    (flags & PIPEOUT) ? "; result to stdout":"");
 		}
 
 		if ((bp = cvs_diff3(file, argv[i], rev1, rev2,
@@ -154,7 +154,7 @@ rcsmerge_main(int argc, char **argv)
 			continue;
 		}
 
-		if (pipeout == 1) {
+		if (flags & PIPEOUT) {
 			cvs_buf_putc(bp, '\0');
 			fcont = cvs_buf_release(bp);
 			printf("%s", fcont);
