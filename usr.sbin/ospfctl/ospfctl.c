@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.32 2006/03/26 09:47:54 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.33 2006/04/21 16:36:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -332,19 +332,16 @@ get_ifms_type(int mediatype)
 	switch (mediatype) {
 	case IFT_ETHER:
 		return (IFM_ETHER);
-		break;
 	case IFT_FDDI:
 		return (IFM_FDDI);
-		break;
 	case IFT_ISO88025:
 		return (IFM_TOKEN);
-		break;
 	case IFT_CARP:
 		return (IFM_CARP);
-		break;
+	case IFT_PPP:
+		return (IFM_TDM);
 	default:
 		return (0);
-		break;
 	}
 }
 
@@ -1180,7 +1177,7 @@ get_media_descr(int media_type)
 		if (media_type == p->ifmt_word)
 			return (p->ifmt_string);
 
-	return ("unknown media");
+	return ("unknown");
 }
 
 const char *
@@ -1200,7 +1197,7 @@ get_linkstate(int media_type, int link_state)
 			return (p->ifms_string[link_state == LINK_STATE_UP]);
 		}
 
-	return ("unknown link state");
+	return ("unknown");
 }
 
 void
