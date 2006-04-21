@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.7 2006/04/17 00:48:14 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.8 2006/04/21 07:38:25 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -668,16 +668,3 @@ struct mfi_ctrl_info {
 	char			mci_package_version[0x60];
 	uint8_t			mci_pad[0x800 - 0x6a0];
 } __packed;
-
-#define MFI_IMSG0	0x10	/* Inbound message 0 */
-#define MFI_IMSG1	0x14	/* Inbound message 1 */
-#define MFI_OMSG0	0x18	/* Outbound message 0 */
-#define MFI_OMSG1	0x1c	/* Outbound message 1 */
-#define MFI_IDB		0x20	/* Inbound doorbell */
-#define MFI_ISTS	0x24	/* Inbound interrupt status */
-#define MFI_IMSK	0x28	/* Inbound interrupt mask */
-#define MFI_ODB		0x2c	/* Outbound doorbell */
-#define MFI_OSTS	0x30	/* Outbound interrupt status */
-#define MFI_OMSK	0x34	/* Outbound interrupt mask */
-#define MFI_IQP		0x40	/* Inbound queue port */
-#define MFI_OQP		0x44	/* Outbound queue port */
