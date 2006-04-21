@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.4 2006/04/20 08:11:53 jmc Exp $
+.\" $OpenBSD: udcf.4,v 1.5 2006/04/21 16:46:34 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -27,10 +27,16 @@ The
 .Nm
 driver provides support for the Gude ADS Expert mouseCLOCK, a receiver for the
 German DCF77 time signal station.
+.Nm
+implements a time delta sensor and the delta (in msec) between the received
+time information and the local time can be accessed through the
+.Xr sysctl 8
+interface.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhub 4 ,
-.Xr usb 4
+.Xr usb 4 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
