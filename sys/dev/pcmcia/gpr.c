@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.11 2005/01/27 17:04:55 millert Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.12 2006/04/21 17:52:54 uwe Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -204,12 +204,11 @@ gpr_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_TTY, gpr_intr, sc,
 	    sc->sc_dev.dv_xname);
-	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
+	intrstr = pcmcia_intr_string(sc->sc_pf, sc->sc_ih);
 	printf("%s%s\n", *intrstr ? ", " : "", intrstr);
 	if (sc->sc_ih != NULL)
 		return;
 
-fail_intr:
 	pcmcia_mem_unmap(pa->pf, sc->sc_memwin);
 fail_mem_map:
 	pcmcia_mem_free(pa->pf, &sc->sc_pmemh);
