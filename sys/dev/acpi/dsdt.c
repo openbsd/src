@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.40 2006/04/16 22:23:37 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.41 2006/04/21 23:03:04 joris Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1179,10 +1179,10 @@ aml_find_name(struct acpi_softc *sc, struct aml_node *root, const char *name)
 
 	for (ret = NULL; root && !ret; root = root->sibling) {
 		if ((sname = root->name) != NULL) {
-			if (*sname == AMLOP_ROOTCHAR) 
+			if (*sname == AMLOP_ROOTCHAR)
 				sname++;
 
-			while (*sname == AMLOP_PARENTPREFIX) 
+			while (*sname == AMLOP_PARENTPREFIX)
 				sname++;
 
 			if (!strcmp(name, sname))
@@ -1196,7 +1196,7 @@ aml_find_name(struct acpi_softc *sc, struct aml_node *root, const char *name)
 }
 
 int
-aml_eval_name(struct acpi_softc *sc, struct aml_node *root, const char *name, 
+aml_eval_name(struct acpi_softc *sc, struct aml_node *root, const char *name,
     struct aml_value *result, struct aml_value *env)
 {
 	root = aml_find_name(sc, root, name);
@@ -1220,7 +1220,7 @@ aml_str2int(const char *str, int len, int radix)
 	while (*str && len--) {
 		cb = *(str++);
 		rval *= radix;
-		if (cb >= 'A' && cb <= 'F' && radix == 16) 
+		if (cb >= 'A' && cb <= 'F' && radix == 16)
 			rval += (cb - 'A');
 		else if (cb >= 'a' && cb <= 'f' && radix == 16)
 			rval += (cb - 'a');
@@ -1239,7 +1239,7 @@ aml_str2int(const char *str, int len, int radix)
  * dstPos/srcPos are bit positions within destination/source buffers
  */
 void
-aml_bufcpy(u_int8_t *pDst, int dstPos, const u_int8_t *pSrc, int srcPos, 
+aml_bufcpy(u_int8_t *pDst, int dstPos, const u_int8_t *pSrc, int srcPos,
     int len)
 {
 	int		idx;
@@ -1263,7 +1263,7 @@ aml_bufcmp(const u_int8_t *abuf, int alen, const u_int8_t *bbuf, int blen)
 
 	while (alen && blen) {
 		rc = *(abuf++) - *(bbuf++);
-		if (rc != 0) 
+		if (rc != 0)
 			return (rc < 0) ? AMLOP_LLESS : AMLOP_LGREATER;
 		alen--;
 		blen--;
@@ -1860,7 +1860,7 @@ aml_parse_bufferfield(struct acpi_context *ctx, int size, int bitlen, int opcode
 		rv->v_field.type = opcode;
 		rv->v_field.ref1 = aml_eparseval(ctx, 1);
 		rv->v_field.bitpos = aml_eparseint(ctx, AML_ANYINT) * size;
-		rv->v_field.bitlen = (opcode == AMLOP_CREATEFIELD) ? 
+		rv->v_field.bitlen = (opcode == AMLOP_CREATEFIELD) ?
 			aml_eparseint(ctx, AML_ANYINT) : bitlen;
 
 		aml_addvname(ctx, aml_parse_name(ctx), opcode, rv);
@@ -1870,7 +1870,7 @@ aml_parse_bufferfield(struct acpi_context *ctx, int size, int bitlen, int opcode
 
 /* Set node value */
 struct aml_value *
-aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs, 
+aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
 		  struct aml_value *rhs, int64_t rval)
 {
 	struct aml_value *tmp;
@@ -2221,7 +2221,7 @@ aml_domatch(struct acpi_context *ctx)
 }
 
 
-/* Parse AMLOP_XXXX 
+/* Parse AMLOP_XXXX
  *
  * This is the guts of the evaluator
  */
@@ -2964,7 +2964,7 @@ aml_walkroot(void)
 }
 
 int
-aml_find_node(struct aml_node *node, const char *name, 
+aml_find_node(struct aml_node *node, const char *name,
 	      void (*cbproc)(struct aml_node *, void *arg),
 	      void *arg)
 {
@@ -3002,9 +3002,9 @@ aml_eisaid(u_int32_t pid)
 	return id;
 }
 
-struct acpi_context *acpi_alloccontext(struct acpi_softc *sc, 
+struct acpi_context *acpi_alloccontext(struct acpi_softc *sc,
 				       struct aml_node *node,
-				       int argc, 
+				       int argc,
 				       struct aml_value *argv)
 {
 	struct acpi_context *ctx;
