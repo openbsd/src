@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.22 2006/04/21 21:39:32 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.23 2006/04/21 21:43:59 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -269,7 +269,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 
 	fw_state = mfi_read(sc, MFI_OMSG0) & MFI_STATE_MASK;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_mfi: %#x\n", DEVNAME(sc),
+	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_firmware: %#x\n", DEVNAME(sc),
 	    fw_state);
 
 	while (fw_state != MFI_STATE_READY) {
