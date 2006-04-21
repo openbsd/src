@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.196 2006/04/04 12:03:26 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.197 2006/04/21 08:51:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -692,8 +692,6 @@ void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
-int		 msgbuf_writebound(struct msgbuf *);
-int		 msgbuf_unbounded(struct msgbuf *msgbuf);
 
 /* log.c */
 void		 log_init(int);
