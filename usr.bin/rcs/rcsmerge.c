@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.29 2006/04/21 14:18:26 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.30 2006/04/21 17:17:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -104,7 +104,7 @@ rcsmerge_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
+		if (rcs_statfile(argv[i], fpath, sizeof(fpath), flags) < 0)
 			continue;
 
 		if ((file = rcs_open(fpath, RCS_READ)) == NULL)

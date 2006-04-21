@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.155 2006/04/21 14:18:26 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.156 2006/04/21 17:17:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -234,7 +234,8 @@ checkin_main(int argc, char **argv)
 		 * Test for existence of ,v file. If we are expected to
 		 * create one, set NEWFILE flag.
 		 */
-		if (rcs_statfile(pb.filename, pb.fpath, sizeof(pb.fpath)) < 0) {
+		if (rcs_statfile(pb.filename, pb.fpath,
+		    sizeof(pb.fpath), pb.flags) < 0) {
 			if (pb.openflags & RCS_CREATE)
 				pb.flags |= NEWFILE;
 			else {

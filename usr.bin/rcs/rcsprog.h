@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.52 2006/04/21 14:18:26 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.53 2006/04/21 17:17:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -31,6 +31,7 @@
 
 #include "log.h"
 #include "rcs.h"
+#include "rcsutil.h"
 #include "worklist.h"
 #include "util.h"
 #include "xmalloc.h"
@@ -111,16 +112,6 @@ void	rcsmerge_usage(void);
 int	rcs_init(char *, char **, int);
 int	rcs_getopt(int, char **, const char *);
 int	rcs_main(int, char **);
-void	rcs_set_mtime(const char *, time_t);
-char	*rcs_choosefile(const char *);
-int	rcs_statfile(char *, char *, size_t);
-time_t	rcs_get_mtime(const char *);
-RCSNUM	*rcs_getrevnum(const char *, RCSFILE *);
-char	*rcs_prompt(const char *);
-u_int	rcs_rev_select(RCSFILE *, char *);
-void	rcs_set_rev(const char *, RCSNUM **);
-void	rcs_setrevstr(char **, char *);
-void	rcs_setrevstr2(char **, char **, char *);
 void	rcs_usage(void);
 void	(*usage)(void);
 

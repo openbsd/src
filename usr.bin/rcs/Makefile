@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2006/04/02 02:42:33 ray Exp $
+#	$OpenBSD: Makefile,v 1.31 2006/04/21 17:17:29 xsa Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
@@ -6,8 +6,8 @@ PROG=	rcs
 MAN=	ci.1 co.1 ident.1 rcs.1 rcsclean.1 rcsdiff.1 rcsmerge.1 rlog.1
 
 SRCS=	ci.c co.c ident.c rcsclean.c rcsdiff.c rcsmerge.c rcsprog.c rlog.c \
-	buf.c date.y diff.c diff3.c fatal.c log.c rcs.c rcsnum.c rcstime.c \
-	util.c worklist.c xmalloc.c
+	rcsutil.c buf.c date.y diff.c diff3.c fatal.c log.c rcs.c rcsnum.c \
+	rcstime.c util.c worklist.c xmalloc.c
 
 CPPFLAGS+=-I${.CURDIR}/../cvs -DRCSPROG
 
