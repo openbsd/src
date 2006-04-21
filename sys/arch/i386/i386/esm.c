@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.40 2006/02/20 07:48:30 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.41 2006/04/21 09:33:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -86,7 +86,7 @@ enum sensor_type esm_typemap[] = {
 };
 
 struct esm_sensor_map {
-	enum sensor_type	type;
+	enum esm_sensor_type	type;
 	long			arg;
 	const char		*name;
 };
