@@ -1,4 +1,4 @@
- /*	$OpenBSD: test-17.c,v 1.1 2006/04/20 03:39:14 cloder Exp $	*/
+ /*	$OpenBSD: test-17.c,v 1.2 2006/04/21 02:37:28 cloder Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -26,6 +26,11 @@ main(int argc, char* argv[])
 			break; /* should warn */
 		}
 		break;
+	case 3:
+		switch (a) {
+		case 0:
+			break;
+		}
 	default:
 		break;
 	}
@@ -40,5 +45,6 @@ main(int argc, char* argv[])
 		break;
 	}
 
+	break;
 	return a;
 }
