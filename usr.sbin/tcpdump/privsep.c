@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.22 2005/09/23 15:42:51 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.23 2006/04/21 23:09:34 cloder Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -755,6 +755,7 @@ may_read(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			return (1);
 		default:
@@ -778,6 +779,7 @@ must_read(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			_exit(0);
 		default:
@@ -800,6 +802,7 @@ must_write(int fd, const void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			_exit(0);
 		default:

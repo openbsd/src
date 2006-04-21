@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.51 2006/04/17 23:49:59 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.52 2006/04/21 23:09:34 cloder Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.51 2006/04/17 23:49:59 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.52 2006/04/21 23:09:34 cloder Exp $ (LBL)";
 #endif
 
 /*
@@ -500,6 +500,7 @@ main(int argc, char **argv)
 }
 
 /* make a clean exit on interrupts */
+/* ARGSUSED */
 RETSIGTYPE
 cleanup(int signo)
 {
@@ -529,6 +530,7 @@ cleanup(int signo)
 	_exit(0);
 }
 
+/* ARGSUSED */
 RETSIGTYPE
 gotchld(int signo)
 {

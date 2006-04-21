@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.10 2005/12/17 17:24:30 stevesk Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.11 2006/04/21 23:09:34 cloder Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ospf.c,v 1.10 2005/12/17 17:24:30 stevesk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ospf.c,v 1.11 2006/04/21 23:09:34 cloder Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -223,7 +223,7 @@ ospf_print_lsa(register const struct lsa *lsap)
 
 			case RLA_TYPE_VIRTUAL:
 				printf(" virt");
-				/* Fall through */
+				/* FALLTHROUGH */
 
 			case RLA_TYPE_ROUTER:
 				printf(" nbrid %s if %s",
@@ -281,7 +281,7 @@ ospf_print_lsa(register const struct lsa *lsap)
 		TCHECK(lsap->lsa_un.un_nla.nla_mask);
 		printf(" mask %s",
 		    ipaddr_string(&lsap->lsa_un.un_sla.sla_mask));
-		/* Fall through */
+		/* FALLTHROUGH */
 
 	case LS_TYPE_SUM_ABR:
 		TCHECK(lsap->lsa_un.un_sla.sla_tosmetric);
