@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.4 2006/03/22 21:16:00 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.5 2006/04/21 20:13:26 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -180,7 +180,7 @@ void mp_print_isa_intr (int intr);
 void mpbios_cpu(const u_int8_t *, struct device *);
 void mpbios_bus(const u_int8_t *, struct device *);
 void mpbios_ioapic(const u_int8_t *, struct device *);
-void mpbios_int(const u_int8_t *, int, struct mp_intr_map *);
+int mpbios_int(const u_int8_t *, int, struct mp_intr_map *);
 
 const void *mpbios_map(paddr_t, int, struct mp_map *);
 void mpbios_unmap(struct mp_map *);
@@ -606,7 +606,6 @@ mpbios_scan(self)
 		memset(mp_busses, 0, sizeof(struct mp_bus) * mp_nbus);
 		mp_intrs = malloc(sizeof(struct mp_intr_map)*intr_cnt,
 		    M_DEVBUF, M_NOWAIT);
-		mp_nintr = intr_cnt;
 
 		/* re-walk the table, recording info of interest */
 		position = (const u_int8_t *) mp_cth + sizeof(*mp_cth);
@@ -631,17 +630,20 @@ mpbios_scan(self)
 					for (sc = ioapics ; sc != NULL;
 					     sc = sc->sc_next) {
 						ie.dst_apic_id = sc->sc_apicid;
-						mpbios_int((char *)&ie, type,
-						    &mp_intrs[cur_intr++]);						}
+						if (mpbios_int((char *)&ie,
+						    type, &mp_intrs[cur_intr]) == 0)
+							cur_intr++;
+					}
 				} else {
-					mpbios_int(position, type,
-					    &mp_intrs[cur_intr++]);
+					if (mpbios_int(position, type,
+					    &mp_intrs[cur_intr]) == 0)
+						cur_intr++;
 				}
 				break;
 			case MPS_MCT_LINT:
-				mpbios_int(position, type,
-				    &mp_intrs[cur_intr]);
-				cur_intr++;
+				if (mpbios_int(position, type,
+				    &mp_intrs[cur_intr]) == 0)
+					cur_intr++;
 				break;
 			default:
 				printf("%s: unknown entry type %x in MP config table\n",
@@ -652,11 +654,14 @@ mpbios_scan(self)
 
 			(u_char*)position += mp_conf[type].length;
 		}
+		mp_nintr = cur_intr;
+
 		if (mp_verbose && mp_cth->ext_len)
 			printf("%s: MP WARNING: %d bytes of extended entries not examined\n",
 			    self->dv_xname,
 			    mp_cth->ext_len);
 	}
+
 	/* Clean up. */
 	mp_fps = NULL;
 	mpbios_unmap (&mp_fp_map);
@@ -999,7 +1004,7 @@ static const char flagtype_fmt[] = "\177\020"
 		"f\0\2pol\0" "=\1Act Hi\0" "=\3Act Lo\0"
 		"f\2\2trig\0" "=\1Edge\0" "=\3Level\0";
 
-void
+int
 mpbios_int(ent, enttype, mpi)
 	const u_int8_t *ent;
 	int enttype;
@@ -1032,8 +1037,6 @@ mpbios_int(ent, enttype, mpi)
 		mpb = &nmi_bus;
 		break;
 	}
-	mpi->next = mpb->mb_intrs;
-	mpb->mb_intrs = mpi;
 	mpi->bus = mpb;
 	mpi->bus_pin = dev;
 	mpi->global_int = -1;
@@ -1044,7 +1047,7 @@ mpbios_int(ent, enttype, mpi)
 	if (mpb->mb_intr_cfg == NULL) {
 		printf("mpbios: can't find bus %d for apic %d pin %d\n",
 		    bus, id, pin);
-		return;
+		return (1);
 	}
 
 	(*mpb->mb_intr_cfg)(entry, &mpi->redir);
@@ -1053,7 +1056,7 @@ mpbios_int(ent, enttype, mpi)
 		sc = ioapic_find(id);
 		if (sc == NULL) {
 			printf("mpbios: can't find ioapic %d\n", id);
-			return;
+			return (1);
 		}
 
 		/*
@@ -1066,7 +1069,7 @@ mpbios_int(ent, enttype, mpi)
 			if (sc2 != sc) {
 				printf("mpbios: bad pin %d for apic %d\n",
 				    pin, id);
-				return;
+				return (1);
 			}
 			printf("mpbios: WARNING: pin %d for apic %d too high; "
 			       "assuming ACPI global int value\n", pin, id);
@@ -1113,4 +1116,9 @@ mpbios_int(ent, enttype, mpi)
 
 		printf(" (type 0x%x flags 0x%x)\n", type, flags);
 	}
+
+	mpi->next = mpb->mb_intrs;
+	mpb->mb_intrs = mpi;
+
+	return (0);
 }
