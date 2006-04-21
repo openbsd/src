@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.11 2006/04/20 20:31:12 miod Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.12 2006/04/21 14:16:08 mickey Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -647,8 +647,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, pcn_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
