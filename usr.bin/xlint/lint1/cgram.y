@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.18 2006/04/20 16:29:48 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.19 2006/04/21 23:17:10 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.18 2006/04/20 16:29:48 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.19 2006/04/21 23:17:10 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -742,13 +742,6 @@ enums_with_opt_comma:
 		$$ = $1;
 	  }
 	| enums T_COMMA {
-		if (sflag) {
-			/* trailing "," prohibited in enum declaration */
-			error(54);
-		} else {
-			/* trailing "," prohibited in enum declaration */
-			warning(54);
-		}
 		$$ = $1;
 	  }
 	;
