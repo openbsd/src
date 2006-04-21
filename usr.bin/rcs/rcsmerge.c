@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.28 2006/04/21 07:06:25 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.29 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -50,8 +50,7 @@ rcsmerge_main(int argc, char **argv)
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
-				cvs_log(LP_ERR,
-				    "invalid RCS keyword expansion mode");
+				warnx("invalid RCS keyword expansion mode");
 				(usage)();
 				exit(1);
 			}
@@ -93,13 +92,13 @@ rcsmerge_main(int argc, char **argv)
 	argv += rcs_optind;
 
 	if (argc < 0) {
-		cvs_log(LP_ERR, "no input file");
+		warnx("no input file");
 		(usage)();
 		exit(1);
 	}
 
 	if (rev_str1 == NULL) {
-		cvs_log(LP_ERR, "no base revision number given");
+		warnx("no base revision number given");
 		(usage)();
 		exit(1);
 	}
@@ -149,7 +148,7 @@ rcsmerge_main(int argc, char **argv)
 
 		if ((bp = cvs_diff3(file, argv[i], rev1, rev2,
 		    !(flags & QUIET))) == NULL) {
-			cvs_log(LP_ERR, "failed to merge");
+			warnx("failed to merge");
 			rcs_close(file);
 			continue;
 		}
@@ -162,7 +161,7 @@ rcsmerge_main(int argc, char **argv)
 		} else {
 			/* XXX mode */
 			if (cvs_buf_write(bp, argv[i], 0644) < 0)
-				cvs_log(LP_ERR, "failed to write new file");
+				warnx("cvs_buf_write failed");
 
 			cvs_buf_free(bp);
 		}

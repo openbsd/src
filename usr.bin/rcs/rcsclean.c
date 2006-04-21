@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.37 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.38 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,8 +52,7 @@ rcsclean_main(int argc, char **argv)
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
-				cvs_log(LP_ERR,
-				    "invalid RCS keyword expansion mode");
+				warnx("invalid RCS keyword expansion mode");
 				(usage)();
 				exit(1);
 			}
@@ -98,7 +97,7 @@ rcsclean_main(int argc, char **argv)
 
 	if (argc == 0) {
 		if ((dirp = opendir(".")) == NULL) {
-			cvs_log(LP_ERRNO, "failed to open directory '.'");
+			warn("opendir");
 			(usage)();
 			exit(1);
 		}
@@ -109,7 +108,7 @@ rcsclean_main(int argc, char **argv)
 			rcsclean_file(dp->d_name, rev_str);
 		}
 
-		closedir(dirp);
+		(void)closedir(dirp);
 	} else
 		for (i = 0; i < argc; i++)
 			rcsclean_file(argv[i], rev_str);
@@ -153,17 +152,16 @@ rcsclean_file(char *fname, const char *rev_str)
 	if (rev_str == NULL)
 		rev = file->rf_head;
 	else if ((rev = rcs_getrevnum(rev_str, file)) == NULL) {
-		cvs_log(LP_ERR, "%s: Symbolic name `%s' is undefined.",
-		    fpath, rev_str);
+		warnx("%s: Symbolic name `%s' is undefined.", fpath, rev_str);
 		goto out;
 	}
 
 	if ((b1 = rcs_getrev(file, rev)) == NULL) {
-		cvs_log(LP_ERR, "failed to get needed revision");
+		warnx("failed to get needed revision");
 		goto out;
 	}
 	if ((b2 = cvs_buf_load(fname, 0)) == NULL) {
-		cvs_log(LP_ERRNO, "failed to load '%s'", fname);
+		warnx("failed to load `%s'", fname);
 		goto out;
 	}
 

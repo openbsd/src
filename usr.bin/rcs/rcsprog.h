@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.51 2006/04/21 07:06:25 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.52 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -26,6 +26,8 @@
 
 #ifndef RCSPROG_H
 #define RCSPROG_H
+
+#include <err.h>
 
 #include "log.h"
 #include "rcs.h"

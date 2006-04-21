@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.80 2006/04/21 07:06:25 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.81 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -68,15 +68,14 @@ checkout_main(int argc, char **argv)
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
-				cvs_log(LP_ERR,
-				    "invalid RCS keyword expansion mode");
+				warnx("invalid RCS keyword expansion mode");
 				(usage)();
 				exit(1);
 			}
 			break;
 		case 'l':
 			if (flags & CO_UNLOCK) {
-				cvs_log(LP_ERR, "warning: -u overridden by -l");
+				warnx("warning: -u overridden by -l");
 				flags &= ~CO_UNLOCK;
 			}
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -107,7 +106,7 @@ checkout_main(int argc, char **argv)
 		case 'u':
 			rcs_setrevstr(&rev_str, rcs_optarg);
 			if (flags & CO_LOCK) {
-				cvs_log(LP_ERR, "warning: -l overridden by -u");
+				warnx("warning: -l overridden by -u");
 				flags &= ~CO_LOCK;
 			}
 			flags |= CO_UNLOCK;
@@ -144,15 +143,13 @@ checkout_main(int argc, char **argv)
 	argv += rcs_optind;
 
 	if (argc == 0) {
-		cvs_log(LP_ERR, "no input file");
+		warnx("no input file");
 		(usage)();
 		exit (1);
 	}
 
-	if ((username = getlogin()) == NULL) {
-		cvs_log(LP_ERRNO, "failed to get username");
-		exit (1);
-	}
+	if ((username = getlogin()) == NULL)
+		fatal("getlogin failed");
 
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
@@ -163,7 +160,7 @@ checkout_main(int argc, char **argv)
 			    (flags & PIPEOUT) ? "standard output" : argv[i]);
 
 		if ((flags & CO_LOCK) && (kflag & RCS_KWEXP_VAL)) {
-			cvs_log(LP_ERR, "%s: cannot combine -kv and -l", fpath);
+			warnx("%s: cannot combine -kv and -l", fpath);
 			continue;
 		}
 
@@ -287,8 +284,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	rdp = NULL;
 	if (file->rf_ndelta != 0 && frev == file->rf_head) {
 		if (lcount > 1) {
-			cvs_log(LP_WARN,
-			    "multiple revisions locked by %s; "
+			warnx("multiple revisions locked by %s; "
 			    "please specify one", lockname);
 			return (-1);
 		}
@@ -338,7 +334,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				    sizeof(msg));
 			}
 
-			cvs_log(LP_ERR, msg, buf, rdp->rd_locker);
+			warnx(msg, buf, rdp->rd_locker);
 			return (-1);
 		}
 	}
@@ -352,7 +348,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (file->rf_ndelta != 0) {
 		if ((bp = rcs_getrev(file, rev)) == NULL) {
-			cvs_log(LP_ERR, "cannot find revision `%s'", buf);
+			warnx("cannot find revision `%s'", buf);
 			return (-1);
 		}
 	} else {
@@ -413,7 +409,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (file->rf_ndelta == 0 &&
 	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
-		cvs_log(LP_WARN, "no revisions, so nothing can be %s",
+		warnx("no revisions, so nothing can be %s",
 		    (flags & CO_LOCK) ? "locked" : "unlocked");
 	} else if (file->rf_ndelta != 0) {
 		if (!(flags & QUIET) && !(flags & NEWFILE))
@@ -424,7 +420,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (rcs_errno != RCS_ERR_DUPENT)
 			lcount++;
 		if (!(flags & QUIET) && lcount > 1 && !(flags & CO_REVERT))
-			cvs_log(LP_WARN, "%s: warning: You now have %d locks.",
+			warnx("%s: warning: You now have %d locks.",
 			    file->rf_path, lcount);
 	}
 
@@ -450,11 +446,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		/* default is n */
 		if (cvs_yesno() == -1) {
 			if (!(flags & QUIET) && isatty(STDIN_FILENO))
-				cvs_log(LP_ERR,
-				    "writable %s exists; checkout aborted",
-				    dst);
+				warnx("writable %s exists; "
+				    "checkout aborted", dst);
 			else
-				cvs_log(LP_ERR, "checkout aborted");
+				warnx("checkout aborted");
 			return (-1);
 		}
 	}
@@ -466,7 +461,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		xfree(content);
 	} else {
 		if (cvs_buf_write(bp, dst, mode) < 0) {
-			cvs_log(LP_ERR, "failed to write revision to file");
+			warnx("failed to write revision to file");
 			cvs_buf_free(bp);
 			return (-1);
 		}
@@ -477,7 +472,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 			tv[1].tv_sec = tv[0].tv_sec;
 			if (utimes(dst, (const struct timeval *)&tv) < 0)
-				cvs_log(LP_ERRNO, "error setting utimes");
+				warn("utimes");
 		}
 	}
 
@@ -498,7 +493,7 @@ checkout_err_nobranch(RCSFILE *file, const char *author, const char *date,
 	if (!(flags & CO_STATE))
 		state = NULL;
 
-	cvs_log(LP_ERR, "%s: No revision on branch has%s%s%s%s%s%s.",
+	warnx("%s: No revision on branch has%s%s%s%s%s%s.",
 	    file->rf_path,
 	    date ? " a date before " : "",
 	    date ? date : "",

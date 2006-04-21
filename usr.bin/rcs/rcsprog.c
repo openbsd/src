@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.109 2006/04/21 07:06:25 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.110 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -95,7 +95,7 @@ rcs_get_mtime(const char *filename)
 	time_t mtime;
 
 	if (stat(filename, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat `%s'", filename);
+		warn("%s", filename);
 		return (-1);
 	}
 	mtime = (time_t)st.st_mtimespec.tv_sec;
@@ -208,9 +208,9 @@ rcs_getopt(int argc, char **argv, const char *optstr)
 	}
 
 	if (ret == 0)
-		cvs_log(LP_ERR, "unknown option -%c", opt);
+		warnx("unknown option -%c", opt);
 	else if (ret == 1)
-		cvs_log(LP_ERR, "missing argument for option -%c", opt);
+		warnx("missing argument for option -%c", opt);
 
 	return (ret);
 }
@@ -352,7 +352,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 	if (stat(rcspath, &st) == -1 && !(flags & RCS_CREATE)) {
 		if (strcmp(__progname, "rcsclean") != 0 &&
 		    strcmp(__progname, "ci") != 0)
-			cvs_log(LP_ERRNO, "%s", rcspath);
+			warn("%s", rcspath);
 		xfree(rcspath);
 		return (-1);
 	}
@@ -374,7 +374,7 @@ rcs_setrevstr(char **str, char *new_str)
 	if (new_str == NULL)
 		return;
 	if (*str != NULL)
-		cvs_log(LP_WARN, "redefinition of revision number");
+		warnx("redefinition of revision number");
 	*str = new_str;
 }
 
@@ -423,7 +423,6 @@ main(int argc, char **argv)
 
 	ret = -1;
 	rcs_optind = 1;
-	cvs_log_init(LD_STD, 0);
 	SLIST_INIT(&rcs_temp_files);
 
 	cmd_argc = 0;
@@ -432,7 +431,7 @@ main(int argc, char **argv)
 		ret = rcs_init(rcsinit, cmd_argv + 1,
 		    RCS_CMD_MAXARG - 1);
 		if (ret < 0) {
-			cvs_log(LP_ERRNO, "failed to prepend RCSINIT options");
+			warnx("failed to prepend RCSINIT options");
 			exit (1);
 		}
 
@@ -526,15 +525,14 @@ rcs_main(int argc, char **argv)
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
-				cvs_log(LP_ERR,
-				    "invalid keyword substitution mode `%s'",
-				    rcs_optarg);
+				warnx("invalid keyword substitution "
+				    "mode `%s'", rcs_optarg);
 				exit(1);
 			}
 			break;
 		case 'L':
 			if (lkmode == RCS_LOCK_LOOSE)
-				cvs_log(LP_WARN, "-U overriden by -L");
+				warnx("-U overriden by -L");
 			lkmode = RCS_LOCK_STRICT;
 			break;
 		case 'l':
@@ -570,7 +568,7 @@ rcs_main(int argc, char **argv)
 			break;
 		case 'U':
 			if (lkmode == RCS_LOCK_STRICT)
-				cvs_log(LP_WARN, "-L overriden by -U");
+				warnx("-L overriden by -U");
 			lkmode = RCS_LOCK_LOOSE;
 			break;
 		case 'u':
@@ -601,7 +599,7 @@ rcs_main(int argc, char **argv)
 	argv += rcs_optind;
 
 	if (argc == 0) {
-		cvs_log(LP_ERR, "no input file");
+		warnx("no input file");
 		(usage)();
 		exit(1);
 	}
@@ -629,22 +627,20 @@ rcs_main(int argc, char **argv)
 
 		if (logstr != NULL) {
 			if ((logmsg = strchr(logstr, ':')) == NULL) {
-				cvs_log(LP_ERR, "missing log message");
+				warnx("missing log message");
 				rcs_close(file);
 				continue;
 			}
 
 			*logmsg++ = '\0';
 			if ((logrev = rcsnum_parse(logstr)) == NULL) {
-				cvs_log(LP_ERR,
-				    "'%s' bad revision number", logstr);
+				warnx("'%s' bad revision number", logstr);
 				rcs_close(file);
 				continue;
 			}
 
 			if (rcs_rev_setlog(file, logrev, logmsg) < 0) {
-				cvs_log(LP_ERR,
-				    "failed to set logmsg for '%s' to '%s'",
+				warnx("failed to set logmsg for '%s' to '%s'",
 				    logstr, logmsg);
 				rcs_close(file);
 				rcsnum_free(logrev);
@@ -718,7 +714,7 @@ rcs_main(int argc, char **argv)
 				rev = rcsnum_alloc();
 				rcsnum_cpy(file->rf_head, rev, 0);
 			} else if ((rev = rcsnum_parse(lrev)) == NULL) {
-				cvs_log(LP_ERR, "unable to unlock file");
+				warnx("unable to unlock file");
 				rcs_close(file);
 				continue;
 			}
@@ -744,7 +740,7 @@ rcs_main(int argc, char **argv)
 				rev = rcsnum_alloc();
 				rcsnum_cpy(file->rf_head, rev, 0);
 			} else if ((rev = rcsnum_parse(urev)) == NULL) {
-				cvs_log(LP_ERR, "unable to unlock file");
+				warnx("unable to unlock file");
 				rcs_close(file);
 				continue;
 			}
@@ -755,8 +751,7 @@ rcs_main(int argc, char **argv)
 				    fpath, rev_str);
 			if (rcs_lock_remove(file, username, rev) == -1 &&
 			    !(rcsflags & QUIET))
-				cvs_log(LP_ERR,
-				    "%s: warning: No locks are set.", fpath);
+				warnx("%s: warning: No locks are set.", fpath);
 			rcsnum_free(rev);
 		}
 
@@ -828,8 +823,8 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 		if (rcs_sym_remove(file, symname) < 0) {
 			if (rcs_errno == RCS_ERR_NOENT &&
 			    !(rcsflags & RCSPROG_NFLAG))
-				cvs_log(LP_WARN,
-				    "can't delete nonexisting symbol %s", symname);
+				warnx("can't delete nonexisting symbol %s",
+				    symname);
 		} else {
 			if (rcsflags & RCSPROG_NFLAG)
 				rm = 0;

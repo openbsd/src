@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.154 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.155 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -218,7 +218,7 @@ checkin_main(int argc, char **argv)
 	argv += rcs_optind;
 
 	if (argc == 0) {
-		cvs_log(LP_ERR, "no input file");
+		warnx("no input file");
 		(usage)();
 		exit(1);
 	}
@@ -238,13 +238,13 @@ checkin_main(int argc, char **argv)
 			if (pb.openflags & RCS_CREATE)
 				pb.flags |= NEWFILE;
 			else {
-				cvs_log(LP_ERR, "No existing RCS file");
+				warnx("No existing RCS file");
 				status = 1;
 				continue;
 			}
 		} else {
 			if (pb.flags & CI_INIT) {
-				cvs_log(LP_ERR, "%s already exists", pb.fpath);
+				warnx("%s already exists", pb.fpath);
 				status = 1;
 				continue;
 			}
@@ -324,17 +324,17 @@ checkin_diff_file(struct checkin_params *pb)
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 
 	if ((b1 = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
-		cvs_log(LP_ERR, "failed to load file: '%s'", pb->filename);
+		warnx("failed to load file: `%s'", pb->filename);
 		goto out;
 	}
 
 	if ((b2 = rcs_getrev(pb->file, pb->frev)) == NULL) {
-		cvs_log(LP_ERR, "failed to load revision");
+		warnx("failed to load revision");
 		goto out;
 	}
 
 	if ((b3 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL) {
-		cvs_log(LP_ERR, "failed to allocated buffer for diff");
+		warnx("failed to allocated buffer for diff");
 		goto out;
 	}
 
@@ -466,8 +466,7 @@ checkin_update(struct checkin_params *pb)
 	 */
 	if (pb->newrev != NULL &&
 	    rcsnum_cmp(pb->newrev, pb->frev, 0) > 0) {
-		cvs_log(LP_ERR,
-		    "%s: revision %s too low; must be higher than %s",
+		warnx("%s: revision %s too low; must be higher than %s",
 		    pb->file->rf_path,
 		    rcsnum_tostr(pb->newrev, numb1, sizeof(numb1)),
 		    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
@@ -504,7 +503,7 @@ checkin_update(struct checkin_params *pb)
 
 	/* Get RCS patch */
 	if ((pb->deltatext = checkin_diff_file(pb)) == NULL) {
-		cvs_log(LP_ERR, "failed to get diff");
+		warnx("failed to get diff");
 		goto fail;
 	}
 
@@ -524,9 +523,9 @@ checkin_update(struct checkin_params *pb)
 
 	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0) {
 		if (rcs_errno != RCS_ERR_NOENT)
-			cvs_log(LP_WARN, "failed to remove lock");
+			warnx("failed to remove lock");
 		else if (!(pb->flags & CO_LOCK))
-			cvs_log(LP_WARN, "previous revision was not locked; "
+			warnx("previous revision was not locked; "
 			    "ignoring -l option");
 	}
 
@@ -538,7 +537,7 @@ checkin_update(struct checkin_params *pb)
 	if (rcs_rev_add(pb->file,
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
 	    pb->rcs_msg, pb->date, pb->author) != 0) {
-		cvs_log(LP_ERR, "failed to add new revision");
+		warnx("failed to add new revision");
 		goto fail;
 	}
 
@@ -650,8 +649,7 @@ checkin_init(struct checkin_params *pb)
 		} else {
 			dp = cvs_buf_load(pb->description, BUF_AUTOEXT);
 			if (dp == NULL) {
-				cvs_log(LP_ERR,
-				    "failed to load description file '%s'",
+				warnx("failed to load description file '%s'",
 				    pb->description);
 				goto fail;
 			}
@@ -686,7 +684,7 @@ skipdesc:
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
 	    (pb->rcs_msg == NULL ? "Initial revision" : pb->rcs_msg),
 	    pb->date, pb->author) != 0) {
-		cvs_log(LP_ERR, "failed to add new revision");
+		warnx("failed to add new revision");
 		goto fail;
 	}
 
@@ -702,7 +700,7 @@ skipdesc:
 
 	/* New head revision has to contain entire file; */
 	if (rcs_deltatext_set(pb->file, pb->file->rf_head, filec) == -1) {
-		cvs_log(LP_ERR, "failed to set new head revision");
+		warnx("failed to set new head revision");
 		goto fail;
 	}
 
@@ -764,8 +762,8 @@ checkin_attach_symbol(struct checkin_params *pb)
 	if (pb->flags & CI_SYMFORCE) {
 		if (rcs_sym_remove(pb->file, pb->symbol) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT) {
-				cvs_log(LP_ERR,
-				    "problem removing symbol: %s", pb->symbol);
+				warnx("problem removing symbol: %s",
+				    pb->symbol);
 				return (-1);
 			}
 		}
@@ -774,13 +772,10 @@ checkin_attach_symbol(struct checkin_params *pb)
 	    (rcs_errno == RCS_ERR_DUPENT)) {
 		rcsnum_tostr(rcs_sym_getrev(pb->file, pb->symbol),
 		    rbuf, sizeof(rbuf));
-		cvs_log(LP_ERR,
-		    "symbolic name %s already bound to %s",
-		    pb->symbol, rbuf);
+		warnx("symbolic name %s already bound to %s", pb->symbol, rbuf);
 		return (-1);
 	} else if (ret == -1) {
-		cvs_log(LP_ERR, "problem adding symbol: %s",
-		    pb->symbol);
+		warnx("problem adding symbol: %s", pb->symbol);
 		return (-1);
 	}
 	return (0);
@@ -800,9 +795,7 @@ checkin_revert(struct checkin_params *pb)
 	char rbuf[16];
 
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
-	cvs_log(LP_WARN,
-	    "file is unchanged; reverting to previous revision %s",
-	    rbuf);
+	warnx("file is unchanged; reverting to previous revision %s", rbuf);
 	pb->flags |= CO_REVERT;
 	(void)unlink(pb->filename);
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
@@ -810,7 +803,7 @@ checkin_revert(struct checkin_params *pb)
 		    pb->flags, pb->username, pb->author, NULL, NULL);
 	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0)
 		if (rcs_errno != RCS_ERR_NOENT)
-			cvs_log(LP_WARN, "failed to remove lock");
+			warnx("failed to remove lock");
 }
 
 /*
@@ -830,8 +823,7 @@ checkin_checklock(struct checkin_params *pb)
 			return (0);
 	}
 
-	cvs_log(LP_ERR,
-	    "%s: no lock set by %s", pb->file->rf_path, pb->username);
+	warnx("%s: no lock set by %s", pb->file->rf_path, pb->username);
 	return (-1);
 }
 
@@ -848,7 +840,7 @@ checkin_mtimedate(struct checkin_params *pb)
 {
 	struct stat sb;
 	if (stat(pb->filename, &sb) != 0) {
-		cvs_log(LP_ERRNO, "failed to stat `%s'", pb->filename);
+		warn("%s", pb->filename);
 		return (-1);
 	}
 	pb->date = (time_t)sb.st_mtimespec.tv_sec;

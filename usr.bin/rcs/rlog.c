@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.47 2006/04/19 06:53:41 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.48 2006/04/21 14:18:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -126,13 +126,13 @@ rlog_main(int argc, char **argv)
 	argv += rcs_optind;
 
 	if (argc == 0) {
-		cvs_log(LP_ERR, "no input file");
+		warnx("no input file");
 		(usage)();
 		exit(1);
 	}
 
 	if (hflag == 1 && tflag == 1) {
-		cvs_log(LP_WARN, "warning: -t overrides -h.");
+		warnx("warning: -t overrides -h.");
 		hflag = 0;
 	}
 
