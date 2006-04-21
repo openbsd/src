@@ -5612,6 +5612,12 @@
 ./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/rssadapt.0
 ./usr/share/man/cat9/runtime.0
+./usr/share/man/cat9/rw_enter_read.0
+./usr/share/man/cat9/rw_enter_write.0
+./usr/share/man/cat9/rw_exit_read.0
+./usr/share/man/cat9/rw_exit_write.0
+./usr/share/man/cat9/rw_init.0
+./usr/share/man/cat9/rwlock.0
 ./usr/share/man/cat9/scanc.0
 ./usr/share/man/cat9/setdisklabel.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
