@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.110 2006/04/21 14:18:26 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.111 2006/04/21 14:42:12 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -501,6 +501,11 @@ rcs_main(int argc, char **argv)
 	flags = RCS_RDWR|RCS_PARSE_FULLY;
 	lrev = urev = descfile = nflag = NULL;
 	logstr = alist = comment = elist = orange = NULL;
+
+	/* match GNU */
+	if (1 < argc && argv[1][0] != '-')
+		warnx("warning: No options were given; "
+		    "this usage is obsolescent.");
 
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
 		switch (ch) {
