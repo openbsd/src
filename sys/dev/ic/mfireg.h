@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.8 2006/04/21 07:38:25 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.9 2006/04/21 21:39:32 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -261,7 +261,7 @@ union mfi_sgl_frame {
 } __packed;
 
 struct mfi_init_frame {
-	struct mfi_frame_header	header;
+	struct mfi_frame_header	mif_header;
 	uint32_t		mif_qinfo_new_addr_lo;
 	uint32_t		mif_qinfo_new_addr_hi;
 	uint32_t		mif_qinfo_old_addr_lo;

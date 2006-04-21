@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.21 2006/04/20 20:31:12 miod Exp $ */
+/* $OpenBSD: mfi.c,v 1.22 2006/04/21 21:39:32 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -78,6 +78,10 @@ void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
 struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
 void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
 int		mfi_transition_firmware(struct mfi_softc *);
+int		mfi_initialize_firmware(struct mfi_softc *);
+
+int		mfi_despatch_cmd(struct mfi_softc *, struct mfi_ccb *);
+int		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
 
 struct mfi_ccb *
 mfi_get_ccb(struct mfi_softc *sc)
@@ -111,6 +115,7 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_xs = NULL;
 	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
+	ccb->ccb_extra_frames = 0;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
 }
@@ -259,8 +264,8 @@ mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
 int
 mfi_transition_firmware(struct mfi_softc *sc)
 {
-	int32_t fw_state, cur_state;
-	int max_wait, i;
+	int32_t			fw_state, cur_state;
+	int			max_wait, i;
 
 	fw_state = mfi_read(sc, MFI_OMSG0) & MFI_STATE_MASK;
 
@@ -315,6 +320,44 @@ mfi_transition_firmware(struct mfi_softc *sc)
 	return (0);
 }
 
+int
+mfi_initialize_firmware(struct mfi_softc *sc)
+{
+	struct mfi_ccb		*ccb;
+	struct mfi_init_frame	*init;
+	struct mfi_init_qinfo	*qinfo;
+
+	DNPRINTF(MFI_D_CMD, "mfi_initialize_firmware\n");
+
+	if ((ccb = mfi_get_ccb(sc)) == NULL)
+		return (1);
+
+	init = &ccb->ccb_frame->mfr_init;
+	qinfo = (struct mfi_init_qinfo *)((uint8_t *)init + MFI_FRAME_SIZE);
+
+	memset(qinfo, 0, sizeof *qinfo);
+	qinfo->miq_rq_entries = sc->sc_max_cmds + 1;
+	qinfo->miq_rq_addr_lo = MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_reply_q);
+	qinfo->miq_pi_addr_lo = MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_producer);
+	qinfo->miq_ci_addr_lo = MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_consumer);
+
+	init->mif_header.mfh_cmd = MFI_CMD_INIT;
+	init->mif_header.mfh_data_len = sizeof *qinfo;
+	init->mif_qinfo_new_addr_lo = ccb->ccb_pframe + MFI_FRAME_SIZE;
+
+	if (mfi_poll(sc, ccb)) {
+		printf("%s: mfi_initialize_firmware failed\n", DEVNAME(sc));
+		return (1);
+	}
+
+	mfi_put_ccb(ccb);
+
+	return (0);
+}
+
 void
 mfiminphys(struct buf *bp)
 {
@@ -329,7 +372,7 @@ mfiminphys(struct buf *bp)
 int
 mfi_attach(struct mfi_softc *sc)
 {
-	uint32_t	status, frames;
+	uint32_t		status, frames;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_attach\n", DEVNAME(sc));
 
@@ -383,6 +426,12 @@ mfi_attach(struct mfi_softc *sc)
 		goto noinit;
 	}
 
+	/* kickstart firmware with all addresses and pointers */
+	if (mfi_initialize_firmware(sc)) {
+		printf("%s: could not initialize firmware\n", DEVNAME(sc));
+		goto noinit;
+	}
+
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
@@ -395,6 +444,45 @@ noframe:
 	mfi_freemem(sc, sc->sc_pcq);
 nopcq:
 	return (1);
+}
+
+int
+mfi_despatch_cmd(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	DNPRINTF(MFI_D_CMD, "mfi_despatch_cmd\n");
+
+	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) | ccb->ccb_extra_frames);
+
+	return(0);
+}
+
+int
+mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	struct mfi_frame_header	*hdr;
+	int			to = 0;
+
+	DNPRINTF(MFI_D_CMD, "mfi_poll\n");
+
+	hdr = &ccb->ccb_frame->mfr_header;
+	hdr->mfh_cmd_status = 0xff;
+	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
+
+	mfi_despatch_cmd(sc, ccb);
+
+	while (hdr->mfh_cmd_status == 0xff) {
+		delay(1000);
+		if (to++ > 5000) /* XXX 5 seconds busywait sucks */
+			break;
+	}
+	if (hdr->mfh_cmd_status == 0xff) {
+		printf("%s: timeout on ccb %d\n", DEVNAME(sc),
+		    hdr->mfh_context);
+		ccb->ccb_flags |= MFI_CCB_F_ERR;
+		return (1);
+	}
+	
+	return (0);
 }
 
 int
