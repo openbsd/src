@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.8 2005/08/10 16:32:06 aanriot Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.9 2006/04/21 08:35:00 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -26,8 +26,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility retrieves hardware sensor monitoring data like fan speeds,
-temperatures and voltages, via
+utility retrieves sensor monitoring data like fan speeds,
+temperatures, voltages, and
+.Xr ami 4
+logical disk status via
 .Xr sysctl 3 .
 If the data is out of given limits, an alert is sent using
 .Xr syslog 3

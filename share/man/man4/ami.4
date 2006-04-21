@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.32 2006/02/24 09:57:55 jmc Exp $
+.\"	$OpenBSD: ami.4,v 1.33 2006/04/21 08:35:00 jmc Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -96,6 +96,18 @@ device or one of the daughter
 devices as implemented in the
 .Xr bioctl 8
 utility.
+Logical disk status is exposed under the
+.Va hw.sensors
+.Xr sysctl 8
+and can be monitored using
+.Xr sensorsd 8 .
+For example:
+.Bd -literal -offset indent
+$ sysctl hw.sensors
+hw.sensors.0=sd0, ami0 0, drive online, OK
+hw.sensors.1=sd1, ami0 1, degraded, WARN
+hw.sensors.2=sd2, ami0 2, failed, CRITICAL
+.Ed
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
@@ -103,7 +115,9 @@ utility.
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
-.Xr bioctl 8
+.Xr bioctl 8 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
