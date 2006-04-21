@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.49 2006/01/21 12:27:58 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.50 2006/04/21 22:21:54 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -105,7 +105,6 @@ BSS(lowram, 4)
 BSS(esym, 4)
 BSS(emini, 4)
 BSS(smini, 4)
-BSS(needprom, 4)
 BSS(promvbr, 4)
 BSS(promcall, 4)
 
@@ -273,9 +272,6 @@ is162:
 
 #ifdef MVME167
 is167:
-|	RELOC(needprom,a0)		| this machine needs the prom mapped!
-|	movl	#1,a0@
-
 	RELOC(memsize1x7, a1)		| how much memory?
 	jbsr	a1@
 
@@ -325,10 +321,6 @@ is172:
 
 #ifdef MVME177
 is177:
-
-|	RELOC(needprom,a0)		| this machine needs the prom mapped!
-|	movl	#1,a0@
-	
 	RELOC(memsize1x7, a1)		| how much memory?
 	jbsr	a1@
         
@@ -490,29 +482,11 @@ Lstploaddone:
 	cmpl	#MMU_68040,a0@		| 68040 or 68060?
 	jgt	Lmotommu2		| no, skip
 
-	RELOC(needprom,a0)
-	cmpl	#0,a0@
-	beq	1f
-	/*
-	 * this machine needs the prom mapped. we use the translation
-	 * registers to map it in.. and the ram it needs.
-	 */
-	movel	#0xff00a044,d0		| map top 16meg 1/1 for bug eprom exe
-	.long	0x4e7b0004		| movc d0,itt0
-	moveq	#0,d0			| ensure itt1 is disabled
-	.long	0x4e7b0005		| movc d0,itt1
-	movel	#0xff00a040,d0		| map top 16meg 1/1 for bug io access
-	.long	0x4e7b0006		| movc d0,dtt0
-	moveq	#0,d0			| ensure dtt1 is disabled
-	.long	0x4e7b0007		| movc d0,dtt1
-	bra	2f
-1:
 	moveq	#0,d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc d0,itt0
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0006		| movc d0,dtt0
 	.long	0x4e7b0007		| movc d0,dtt1
-2:
 
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha

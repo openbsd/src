@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.28 2005/11/27 14:19:07 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.29 2006/04/21 22:21:53 miod Exp $
 
 # config file for mvme68k
 
@@ -34,10 +34,6 @@ device	cl: tty
 attach	cl at pcctwo
 file	arch/mvme68k/dev/cl.c			cl needs-count
 
-device	bugtty: tty
-attach	bugtty at mainbus
-file	arch/mvme68k/dev/bugtty.c		bugtty needs-count
-file	arch/mvme68k/dev/bug.c			bugtty
 
 device	vme {}
 attach	vme at pcc, mc, pcctwo

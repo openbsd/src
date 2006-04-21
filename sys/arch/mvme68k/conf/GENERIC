@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2005/11/27 14:19:06 miod Exp $
+#	$OpenBSD: GENERIC,v 1.28 2006/04/21 22:21:53 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -75,8 +75,6 @@ memc0	at pcctwo0 offset 0x43000
 memc1	at pcctwo0 offset 0x43100
 sram0	at mainbus0 addr 0xffe00000
 
-bugtty0 at mainbus0
-
 vmes0	at vme0
 
 vs*	at vmes0 addr 0xffff9000 ipl 2 vec 0x80
@@ -104,7 +102,3 @@ ss*	at scsibus?
 safte*	at scsibus?
 ses*	at scsibus?
 uk*	at scsibus?
-
-#si0	at vmes0 addr 0xff200000 ipl 2 vec 0x40
-#nxdc0	at vmes0 addr 0xff00ee80 ipl 2 vec 0x44
-#xd*	at xdc?

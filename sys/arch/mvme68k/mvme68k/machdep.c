@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2005/12/17 07:31:26 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.95 2006/04/21 22:21:54 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -91,7 +91,6 @@
 #include <sys/evcount.h>
 
 #include <machine/autoconf.h>
-#include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
 #include <machine/prom.h>
@@ -99,7 +98,9 @@
 #include <machine/pte.h>
 #include <machine/reg.h>
 
+#ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
+#endif
  
 #include <dev/cons.h>
 
@@ -157,27 +158,6 @@ extern struct emul emul_hpux;
 extern struct emul emul_sunos;
 #endif
 
-/* 
- *  XXX this is to fake out the console routines, while 
- *  booting. New and improved! :-) smurph
- */
-void bootcnprobe(struct consdev *);
-void bootcninit(struct consdev *);
-void bootcnputc(dev_t, int);
-int  bootcngetc(dev_t);
-extern void nullcnpollc(dev_t, int);
-
-#define bootcnpollc nullcnpollc
-
-static struct consdev bootcons = {
-	NULL, 
-	NULL, 
-	bootcngetc, 
-	bootcnputc,
-	bootcnpollc, 
-	NULL,
-	makedev(14,0), 
-	1};
 
 void dumpsys(void);
 void initvectors(void);
@@ -207,37 +187,31 @@ mvme68k_init()
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-			  atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 
 	/* 
 	 * Put machine specific exception vectors in place.
 	 */
 	initvectors();
-
-	/* startup fake console driver.  It will be replaced by consinit() */
-	cn_tab = &bootcons;
 }
 
 /*
  * Console initialization: called early on from main,
- * before vm init or startup.  Do enough configuration
- * to choose and initialize a console.
+ * before vm init or startup, but already running virtual.
+ * Do enough configuration to choose and initialize a console.
  */
 void
 consinit()
 {
-	extern void db_machine_init(void);
-
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	cn_tab = NULL;	/* Get rid of fake console driver */
 	cninit();
 
 #ifdef DDB
-
 	db_machine_init();
 	ddb_init();
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -1066,62 +1040,24 @@ memsize162()
 	struct mcreg *mc = (struct mcreg *)0xfff42000;
 
 	switch (mc->mc_memoptions & MC_MEMOPTIONS_DRAMMASK) {
-		case MC_MEMOPTIONS_DRAM1M:
-			return (1*1024*1024);
-		case MC_MEMOPTIONS_DRAM2M:
-			return (2*1024*1024);
-		case MC_MEMOPTIONS_DRAM4M:
-			return (4*1024*1024);
-		case MC_MEMOPTIONS_DRAM4M2:
-			return (4*1024*1024);
-		case MC_MEMOPTIONS_DRAM8M:
-			return (8*1024*1024);
-		case MC_MEMOPTIONS_DRAM16M:
-			return (16*1024*1024);
-		default:
-			/*
-			 * XXX if the machine has no MC-controlled memory,
-			 * perhaps it has a MCECC or MEMC040 controller?
-			 */
-			return (memsize1x7());
+	case MC_MEMOPTIONS_DRAM1M:
+		return (1*1024*1024);
+	case MC_MEMOPTIONS_DRAM2M:
+		return (2*1024*1024);
+	case MC_MEMOPTIONS_DRAM4M:
+		return (4*1024*1024);
+	case MC_MEMOPTIONS_DRAM4M2:
+		return (4*1024*1024);
+	case MC_MEMOPTIONS_DRAM8M:
+		return (8*1024*1024);
+	case MC_MEMOPTIONS_DRAM16M:
+		return (16*1024*1024);
+	default:
+		/*
+		 * XXX if the machine has no MC-controlled memory,
+		 * perhaps it has a MCECC or MEMC040 controller?
+		 */
+		return (memsize1x7());
 	}
 }
 #endif
-
-/*
- * Boot console routines: 
- * Enables printing of boot messages before consinit().
- */
-
-void
-bootcnprobe(cp)
-	struct consdev *cp;
-{
-	cp->cn_dev = makedev(14, 0);
-	cp->cn_pri = CN_NORMAL;
-}
-
-void
-bootcninit(cp)
-	struct consdev *cp;
-{
-	/* Nothing to do */
-}
-
-int
-bootcngetc(dev)
-	dev_t dev;
-{
-	return (bug_inchr());
-}
-
-void
-bootcnputc(dev, c)
-	dev_t dev;
-	int c;
-{
-	char cc = (char)c;
-	if (cc == '\n')
-		bug_outchr('\r');
-	bug_outchr(cc);
-}

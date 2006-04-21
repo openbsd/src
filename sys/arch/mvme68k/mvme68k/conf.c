@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2004/02/10 01:31:21 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.38 2006/04/21 22:21:54 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -117,7 +117,6 @@ cdev_decl(fd);
 #include "zs.h"
 #include "cl.h"
 #include "wl.h"
-#include "bugtty.h"
 
 /* open, close, write, ioctl */
 #define	cdev_lp_init(c,n) { \
@@ -168,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mdev_init(NFLASH,flash),	/* 11: /dev/flashX */
 	cdev_tty_init(NZS,zs),		/* 12: SCC serial (tty[a-d]) */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD2400 serial (tty0[0-3]) */
-	cdev_tty_init(NBUGTTY,bugtty),	/* 14: BUGtty (ttyB) */
+	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
@@ -304,8 +303,6 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 cons_decl(zs);
 #define clcnpollc      nullcnpollc
 cons_decl(cl);
-#define bugttycnpollc      nullcnpollc
-cons_decl(bugtty);
 
 struct	consdev constab[] = {
 #if NZS > 0
@@ -313,9 +310,6 @@ struct	consdev constab[] = {
 #endif
 #if NCL > 0
 	cons_init(cl),
-#endif
-#if NBUGTTY > 0
-	cons_init(bugtty),
 #endif
 	{ 0 },
 };
