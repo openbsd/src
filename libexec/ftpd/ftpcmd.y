@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.48 2004/12/11 08:38:26 moritz Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.49 2006/04/21 17:42:50 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.48 2004/12/11 08:38:26 moritz Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.49 2006/04/21 17:42:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -499,7 +499,7 @@ cmd
 		}
 	| SITE SP UMASK check_login CRLF
 		{
-			int oldmask;
+			mode_t oldmask;
 
 			if ($4) {
 				oldmask = umask(0);
@@ -509,7 +509,7 @@ cmd
 		}
 	| SITE SP UMASK check_login SP octal_number CRLF
 		{
-			int oldmask;
+			mode_t oldmask;
 
 			if ($4) {
 				if (($6 == -1) || ($6 > 0777)) {
@@ -726,11 +726,11 @@ host_long_port4
 			char *a, *p;
 
 			/* reject invalid LPRT command */
-			if ($1 != 4 || $3 != 4
-			 || $5 < 0 || $5 > 255 || $7 < 0 || $7 > 255
-			 || $9 < 0 || $9 > 255 || $11 < 0 || $11 > 255
-			 || $13 != 2
-			 || $15 < 0 || $15 > 255 || $17 < 0 || $17 > 255) {
+			if ($1 != 4 || $3 != 4 ||
+			    $5 < 0 || $5 > 255 || $7 < 0 || $7 > 255 ||
+			    $9 < 0 || $9 > 255 || $11 < 0 || $11 > 255 ||
+			    $13 != 2 ||
+			    $15 < 0 || $15 > 255 || $17 < 0 || $17 > 255) {
 				$$ = 1;
 			} else {
 				data_dest.su_sin.sin_len =
@@ -756,17 +756,17 @@ host_long_port6
 			char *a, *p;
 
 			/* reject invalid LPRT command */
-			if ($1 != 6 || $3 != 16
-			 || $5 < 0 || $5 > 255 || $7 < 0 || $7 > 255
-			 || $9 < 0 || $9 > 255 || $11 < 0 || $11 > 255
-			 || $13 < 0 || $13 > 255 || $15 < 0 || $15 > 255
-			 || $17 < 0 || $17 > 255 || $19 < 0 || $19 > 255
-			 || $21 < 0 || $21 > 255 || $23 < 0 || $23 > 255
-			 || $25 < 0 || $25 > 255 || $27 < 0 || $27 > 255
-			 || $29 < 0 || $29 > 255 || $31 < 0 || $31 > 255
-			 || $33 < 0 || $33 > 255 || $35 < 0 || $35 > 255
-			 || $37 != 2
-			 || $39 < 0 || $39 > 255 || $41 < 0 || $41 > 255) {
+			if ($1 != 6 || $3 != 16 ||
+			    $5 < 0 || $5 > 255 || $7 < 0 || $7 > 255 ||
+			    $9 < 0 || $9 > 255 || $11 < 0 || $11 > 255 ||
+			    $13 < 0 || $13 > 255 || $15 < 0 || $15 > 255 ||
+			    $17 < 0 || $17 > 255 || $19 < 0 || $19 > 255 ||
+			    $21 < 0 || $21 > 255 || $23 < 0 || $23 > 255 ||
+			    $25 < 0 || $25 > 255 || $27 < 0 || $27 > 255 ||
+			    $29 < 0 || $29 > 255 || $31 < 0 || $31 > 255 ||
+			    $33 < 0 || $33 > 255 || $35 < 0 || $35 > 255 ||
+			    $37 != 2 ||
+			    $39 < 0 || $39 > 255 || $41 < 0 || $41 > 255) {
 				$$ = 1;
 			} else {
 				data_dest.su_sin6.sin6_len =
@@ -1164,6 +1164,7 @@ getline(s, n, iop)
 	return (s);
 }
 
+/*ARGSUSED*/
 void
 toolong(signo)
 	int signo;
@@ -1329,8 +1330,8 @@ yylex()
 				cbuf[cpos] = c;
 				return (NUMBER);
 			}
-			if (strncasecmp(&cbuf[cpos], "ALL", 3) == 0
-			 && !isalnum(cbuf[cpos + 3])) {
+			if (strncasecmp(&cbuf[cpos], "ALL", 3) == 0 &&
+			    !isalnum(cbuf[cpos + 3])) {
 				cpos += 3;
 				return ALL;
 			}
@@ -1413,7 +1414,7 @@ upper(s)
 
 	for (p = s; *p; p++) {
 		if (islower(*p))
-			*p = toupper(*p);
+			*p = (char)toupper(*p);
 	}
 }
 
