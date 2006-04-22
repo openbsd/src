@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.4 2006/04/21 16:13:14 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.5 2006/04/22 22:12:31 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <sys/sensors.h>
 
+#include <dev/clock_subr.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
@@ -40,28 +41,9 @@ int udcfdebug = 0;
 #else
 #define DPRINTFN(n, x)
 #endif
-#define DPRINTF(x) DPRINTFN(0, x)
+#define DPRINTF(x)	DPRINTFN(0, x)
 
-#define SECSPERMIN	60
-#define MINSPERHOUR	60
-#define HOURSPERDAY	24
-#define DAYSPERWEEK	7
-#define DAYSPERNYEAR	365
-#define DAYSPERLYEAR	366
-#define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
-#define MONSPERYEAR	12
-#define BASE_YEAR	2006
-#define JAN1_2006	1136073600L	/* 2006/01/01 00:00:00 UTC */
-#define LEAPS_2006	486		/* num of leap years till 2006 */
-
-#define isleap(y)	(((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
-#define leaps(y)	((y) / 4 - (y) / 100 + (y) / 400 - LEAPS_2006)
-
-static const int	mon_lengths[2][12] = {
-	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
-	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
-};
+#define SECSPERDAY	((long) 60 * 60 * 24)
 
 #define UDCF_READ_REQ	0xc0
 #define UDCF_READ_IDX	0x1f
@@ -84,9 +66,11 @@ struct udcf_softc {
 	struct timeout		sc_db_to;	/* debounce */
 	struct timeout		sc_mg_to;	/* minute-gap detect */
 	struct timeout		sc_sl_to;	/* signal-loss detect */
+	struct timeout		sc_it_to;	/* invalidate time */
 	struct usb_task		sc_bv_task;
 	struct usb_task		sc_mg_task;
 	struct usb_task		sc_sl_task;
+	struct usb_task		sc_it_task;
 
 	usb_device_request_t	sc_req;
 
@@ -97,12 +81,13 @@ struct udcf_softc {
 	int			sc_level;
 	time_t			sc_last_mg;
 
-	long			sc_next;	/* the time to become valid next */
+	struct timeval		sc_last;	/* when we last had a valid time */
+	time_t			sc_next;	/* the time to become valid next */
 
 	struct sensor		sc_sensor;
 };
 
-static int	t1, t2, t3, t4, t5, t6, t7;	/* timeouts in hz */
+static int	t1, t2, t3, t4, t5, t6, t7, t8;	/* timeouts in hz */
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -110,9 +95,11 @@ void	udcf_probe(void *);
 void	udcf_bv_intr(void *);
 void	udcf_mg_intr(void *);
 void	udcf_sl_intr(void *);
+void	udcf_it_intr(void *);
 void	udcf_bv_probe(void *);
 void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
+void	udcf_it_probe(void *);
 
 USB_DECLARE_DRIVER(udcf);
 
@@ -217,11 +204,13 @@ USB_ATTACH(udcf)
 	usb_init_task(&sc->sc_bv_task, udcf_bv_probe, sc);
 	usb_init_task(&sc->sc_mg_task, udcf_mg_probe, sc);
 	usb_init_task(&sc->sc_sl_task, udcf_sl_probe, sc);
+	usb_init_task(&sc->sc_it_task, udcf_it_probe, sc);
 
 	timeout_set(&sc->sc_to, udcf_intr, sc);
 	timeout_set(&sc->sc_bv_to, udcf_bv_intr, sc);
 	timeout_set(&sc->sc_mg_to, udcf_mg_intr, sc);
 	timeout_set(&sc->sc_sl_to, udcf_sl_intr, sc);
+	timeout_set(&sc->sc_it_to, udcf_it_intr, sc);
 
 	/* convert timevals to hz */
 
@@ -248,6 +237,9 @@ USB_ATTACH(udcf)
 
 	t.tv_sec = 8L;
 	t6 = tvtohz(&t);
+
+	t.tv_sec = SECSPERDAY;
+	t8 = tvtohz(&t);
 
 	/* Give the receiver some slack to stabilize */
 	timeout_add(&sc->sc_to, t3);
@@ -336,6 +328,18 @@ udcf_sl_intr(void *xsc)
 }
 
 /*
+ * invalidate time delta in the sensor if we did not receive time for
+ * more then MAXVALID seconds.
+ */
+
+void
+udcf_it_intr(void *xsc)
+{
+	struct udcf_softc *sc = xsc;
+	usb_add_task(sc->sc_udev, &sc->sc_it_task);
+}
+
+/*
  * udcf_probe runs in a process context.  If Bit 0 is set, the transmitter
  * emits at full power.  During the low-power emission we decode a zero bit.
  */
@@ -344,7 +348,6 @@ void
 udcf_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
-	struct timeval		 now;
 	unsigned char		 data;
 	int			 actlen;
 
@@ -368,10 +371,15 @@ udcf_probe(void *xsc)
 			} else {
 				/* provide the time delta */
 
-				microtime(&now);
-				sc->sc_sensor.value = (now.tv_sec - sc->sc_next) * 1000 +
-				    now.tv_usec / 1000;
+				microtime(&sc->sc_last);
+				sc->sc_sensor.value = (sc->sc_last.tv_sec - sc->sc_next)
+				    * 1000 + sc->sc_last.tv_usec / 1000;
 				sc->sc_sensor.status = SENSOR_S_OK;
+
+				/* retrigger the invalidation timer */
+
+				timeout_del(&sc->sc_it_to);
+				timeout_add(&sc->sc_it_to, t8);
 			}
 			sc->sc_tbits = 0LL;
 			sc->sc_mask = 1LL;
@@ -424,16 +432,13 @@ udcf_mg_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
 
-	int			 wday;
+	struct clock_ymdhms	 ymdhm;
 	int			 minute_bits, hour_bits, day_bits;
-	int			 month_bits, year_bits;
+	int			 month_bits, year_bits, wday;
 	int			 p1, p2, p3;
 	int			 p1_bit, p2_bit, p3_bit;
 	int			 r_bit, a1_bit, a2_bit, z1_bit, z2_bit;
 	int			 s_bit, m_bit;
-	int			 year, mon, mday, hour, min;
-	int			 nyears, lyears, days, leap;
-	int			 n;
 
 	u_int32_t		 parity = 0x6996;
 
@@ -445,7 +450,6 @@ udcf_mg_probe(void *xsc)
 	} else {
 		if (time_second - sc->sc_last_mg < 57) {
 			DPRINTF(("unexpected gap, resync\n"));
-			sc->sc_sensor.status = SENSOR_S_UNKNOWN;
 			sc->sc_sync = 1;
 			timeout_del(&sc->sc_to);
 			timeout_add(&sc->sc_to, t5);
@@ -496,40 +500,22 @@ udcf_mg_probe(void *xsc)
 
 				/* Decode valid time */
 
-				min = (minute_bits & 0x0f) +
-				    (minute_bits >> 4) * 10;
-				hour = (hour_bits & 0x0f) +
-				    (hour_bits >> 4) * 10;
-				mday = (day_bits & 0x0f) +
-				    (day_bits >> 4) * 10;
-				mon = (month_bits & 0x0f) +
-				    (month_bits >> 4) * 10 - 1;
-				year = 2000 + (year_bits & 0x0f) +
-				    (year_bits >> 4) * 10;
+				ymdhm.dt_min = FROMBCD(minute_bits);
+				ymdhm.dt_hour = FROMBCD(hour_bits);
+				ymdhm.dt_day = FROMBCD(day_bits);
+				ymdhm.dt_mon = FROMBCD(month_bits);
+				ymdhm.dt_year = 2000 + FROMBCD(year_bits);
+				ymdhm.dt_sec = 0;
+
+				sc->sc_next = clock_ymdhms_to_secs(&ymdhm);
 
 				/* convert to coordinated universal time */
-				hour -= z1_bit ? 2 : 1;
-				if (hour < 0)
-					hour += 24;
 
-				if (year > BASE_YEAR)
-					lyears = leaps(year - 1);
-				else
-					lyears = 0;
-				nyears = year - BASE_YEAR - lyears;
-				leap = isleap(year);
-
-				days = nyears * DAYSPERNYEAR + lyears * DAYSPERLYEAR;
-				for (n = 0; n < mon; n++)
-					days += mon_lengths[leap][n];
-				days += mday - 1;
-
-				sc->sc_next = JAN1_2006 + days * SECSPERDAY +
-				    hour * SECSPERHOUR + min * SECSPERMIN;
+				sc->sc_next -= z1_bit ? 7200 : 3600;
 
 				DPRINTF(("\n%02d.%02d.%04d %02d:%02d:00 UTC",
-				    mday, mon + 1, year, hour,
-				    min));
+				    ymdhm.dt_day, ymdhm.dt_mon + 1, ymdhm.dt_year,
+				    ymdhm.dt_hour, ymdhm.dt_min));
 				DPRINTF((z1_bit ? ", dst" : ""));
 				DPRINTF((r_bit ? ", reserve antenna" : ""));
 				DPRINTF((a1_bit ? ", dst chg announced" : ""));
@@ -558,12 +544,26 @@ udcf_sl_probe(void *xsc)
 		return;
 
 	DPRINTF(("signal loss, resync\n"));
-	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
 	sc->sc_sync = 1;
 	timeout_del(&sc->sc_to);
 	timeout_add(&sc->sc_to, t5);
 	timeout_del(&sc->sc_sl_to);
 	timeout_add(&sc->sc_sl_to, t6);
+}
+
+/* invalidate time delta */
+
+void
+udcf_it_probe(void *xsc)
+{
+	struct udcf_softc *sc = xsc;
+
+	if (sc->sc_dying)
+		return;
+
+	DPRINTF(("invalidating time delta\n"));
+	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+	sc->sc_sensor.value = 0LL;
 }
 
 int
