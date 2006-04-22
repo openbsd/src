@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.38 2006/03/30 09:53:43 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.39 2006/04/22 19:43:07 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ void	 rt_ifmsg(struct ifnet *);
 void	 rt_ifannouncemsg(struct ifnet *, int);
 void	 rt_maskedcopy(struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *);
-void	 rt_missmsg(int, struct rt_addrinfo *, int, int);
+void	 rt_missmsg(int, struct rt_addrinfo *, int, struct ifnet *, int);
 void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 int	 rt_setgate(struct rtentry *, struct sockaddr *,
 			 struct sockaddr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.85 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.86 2006/04/22 19:43:07 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -630,7 +630,7 @@ in_losing(inp)
 		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
+		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, rt->rt_ifp, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags,

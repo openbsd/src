@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.37 2006/03/22 14:37:45 henning Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.38 2006/04/22 19:43:07 claudio Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ nd6_rtmsg(cmd, rt)
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
-	rt_missmsg(cmd, &info, rt->rt_flags, 0);
+	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0);
 }
 
 void

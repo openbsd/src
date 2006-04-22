@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.70 2006/03/22 14:37:44 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.71 2006/04/22 19:43:06 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ miss:
 		if (report) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
-			rt_missmsg(msgtype, &info, 0, err);
+			rt_missmsg(msgtype, &info, 0, NULL, err);
 		}
 	}
 	splx(s);
@@ -289,7 +289,7 @@ rtalloc1(struct sockaddr *dst, int report)
 				    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 			}
-			rt_missmsg(RTM_ADD, &info, rt->rt_flags, 0);
+			rt_missmsg(RTM_ADD, &info, rt->rt_flags, rt->rt_ifp, 0);
 		} else
 			rt->rt_refcnt++;
 	} else {
@@ -304,7 +304,7 @@ miss:
 		if (report && dst->sa_family != PF_KEY) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
-			rt_missmsg(msgtype, &info, 0, err);
+			rt_missmsg(msgtype, &info, 0, NULL, err);
 		}
 	}
 	splx(s);
@@ -455,7 +455,7 @@ out:
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
 	info.rti_info[RTAX_AUTHOR] = src;
-	rt_missmsg(RTM_REDIRECT, &info, flags, error);
+	rt_missmsg(RTM_REDIRECT, &info, flags, ifa->ifa_ifp, error);
 }
 
 /*
@@ -466,6 +466,7 @@ rtdeletemsg(struct rtentry *rt)
 {
 	int			error;
 	struct rt_addrinfo	info;
+	struct ifnet		*ifp;
 
 	/*
 	 * Request the new route so that the entry is not actually
@@ -477,9 +478,10 @@ rtdeletemsg(struct rtentry *rt)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
+	ifp = rt->rt_ifp;
 	error = rtrequest1(RTM_DELETE, &info, &rt);
 
-	rt_missmsg(RTM_DELETE, &info, info.rti_flags, error);
+	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifp, error);
 
 	/* Adjust the refcount */
 	if (error == 0 && rt->rt_refcnt <= 0) {

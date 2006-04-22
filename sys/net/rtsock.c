@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.57 2006/03/31 17:30:39 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.58 2006/04/22 19:43:07 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -639,7 +639,8 @@ again:
  * destination.
  */
 void
-rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
+rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, struct ifnet *ifp,
+    int error)
 {
 	struct rt_msghdr	*rtm;
 	struct mbuf		*m;
@@ -654,6 +655,8 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
 	rtm->rtm_flags = RTF_DONE | flags;
 	rtm->rtm_errno = error;
 	rtm->rtm_addrs = rtinfo->rti_addrs;
+	if (ifp != NULL)
+		rtm->rtm_index = ifp->if_index;
 	if (sa == NULL)
 		route_proto.sp_protocol = 0;
 	else
