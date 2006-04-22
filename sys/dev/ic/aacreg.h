@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.7 2005/11/18 05:39:10 nate Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.8 2006/04/22 02:36:26 brad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1341,6 +1341,21 @@ enum {
 
 #define AAC_RX_MAILBOX		0x50	/* mailbox (20 bytes) */
 #define AAC_RX_FWSTATUS		0x6c
+
+/*
+ * Register definitions for the Adaptec 'Rocket' RAID-On-Chip adapters.
+ * Unsurprisingly, it's quite similar to the i960!
+ */
+
+#define AAC_RKT_IDBR		0x20	/* inbound doorbell register */
+#define AAC_RKT_IISR		0x24	/* inbound interrupt status register */
+#define AAC_RKT_IIMR		0x28	/* inbound interrupt mask register */
+#define AAC_RKT_ODBR		0x2c	/* outbound doorbell register */
+#define AAC_RKT_OISR		0x30	/* outbound interrupt status register */
+#define AAC_RKT_OIMR		0x34	/* outbound interrupt mask register */
+
+#define AAC_RKT_MAILBOX		0x1000	/* mailbox */
+#define AAC_RKT_FWSTATUS	0x101c	/* Firmware Status (mailbox 7) */
 
 /*
  * Common bit definitions for the doorbell registers.

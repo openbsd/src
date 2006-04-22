@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.17 2005/11/21 20:11:47 deraadt Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.18 2006/04/22 02:36:28 brad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -68,6 +68,8 @@ void	aac_pci_attach(struct device *, struct device *, void *);
 #define PCI_PRODUCT_ADP2_AACASR2200S   0x0285
 #define PCI_PRODUCT_ADP2_AACASR2120S   0x0286
 #define PCI_PRODUCT_ADP2_AACADPSATA2C  0x0289
+#define PCI_PRODUCT_ADP2_AACASR2230S   0x028c
+#define PCI_PRODUCT_ADP2_AACASR2130S   0x028d
 #define PCI_PRODUCT_ADP2_AACADPSATA4C  0x0290
 #define PCI_PRODUCT_ADP2_AACADPSATA6C  0x0291
 #define PCI_PRODUCT_ADP2_AACADPSATA8C  0x0292
@@ -83,6 +85,8 @@ struct aac_sub_ident {
 	char *desc;
 } aac_sub_identifiers[] = {
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACADPSATA2C, "Adaptec 1210SA" }, /* guess */
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2130S, "Adaptec 2130S" },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2230S, "Adaptec 2230S" },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACADPSATA4C, "Adaptec 2410SA" },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACADPSATA6C, "Adaptec 2610SA" },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACADPSATA8C, "Adaptec 2810SA" }, /* guess */
@@ -168,6 +172,10 @@ struct aac_ident {
 	    PCI_PRODUCT_ADP2_ASR2120S, AAC_HWIF_I960RX },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
 	    PCI_PRODUCT_ADP2_ASR2200S, AAC_HWIF_I960RX },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2120S, PCI_VENDOR_ADP2,
+	    PCI_PRODUCT_ADP2_AACASR2130S, AAC_HWIF_RKT },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2120S, PCI_VENDOR_ADP2,
+	    PCI_PRODUCT_ADP2_AACASR2230S, AAC_HWIF_RKT },
 	{ 0, 0, 0, 0 }
 };
 
@@ -289,7 +297,6 @@ aac_pci_attach(parent, self, aux)
 					    ("set hardware up for i960Rx"));
 					sc->aac_if = aac_rx_interface;
 					break;
-
 				case AAC_HWIF_STRONGARM:
 					AAC_DPRINTF(AAC_D_MISC,
 					    ("set hardware up for StrongARM"));
@@ -299,6 +306,14 @@ aac_pci_attach(parent, self, aux)
 					AAC_DPRINTF(AAC_D_MISC,
 					   ("set hardware up for Falcon/PPC"));
 					sc->aac_if = aac_fa_interface;
+					break;
+				case AAC_HWIF_RKT:
+					AAC_DPRINTF(AAC_D_MISC,
+					   ("set hardware up for Rocket/MIPS"));
+					sc->aac_if = aac_rkt_interface;
+					break;
+				default:
+					sc->aac_hwif = AAC_HWIF_UNKNOWN;
 					break;
 				}
 				break;
