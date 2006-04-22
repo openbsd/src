@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.1 2006/03/04 11:31:18 espie Exp $
+# $OpenBSD: Replace.pm,v 1.2 2006/04/22 10:31:44 bernd Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -547,7 +547,7 @@ sub figure_out_libs
 			      todelete => $dummy,
 			      empty => $empty});
 			require OpenBSD::Delete;
-			OpenBSD::Delete::validate_plist($dummy, $state);
+			OpenBSD::Delete::validate_plist($p, $state);
 		} else {
 			print "none found\n" if $state->{verbose};
 		}
