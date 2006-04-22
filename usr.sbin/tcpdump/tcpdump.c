@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.52 2006/04/21 23:09:34 cloder Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.53 2006/04/22 17:24:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.52 2006/04/21 23:09:34 cloder Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.53 2006/04/22 17:24:33 moritz Exp $ (LBL)";
 #endif
 
 /*
@@ -223,7 +223,6 @@ main(int argc, char **argv)
 	u_char *pcap_userdata;
 	u_int dlt = (u_int) -1;
 
-	/* state: STATE_INIT */
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -232,6 +231,7 @@ main(int argc, char **argv)
 	if (priv_init(argc, argv))
 		error("Failed to setup privsep");
 
+	/* state: STATE_INIT */
 	if (abort_on_misalignment(ebuf, sizeof(ebuf)) < 0)
 		error("%s", ebuf);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.23 2006/04/21 23:09:34 cloder Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.24 2006/04/22 17:24:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -60,7 +60,7 @@ enum priv_state {
 	STATE_INIT,		/* initial state */
 	STATE_BPF,		/* input file/device opened */
 	STATE_FILTER,		/* filter applied */
-	STATE_RUN,		/* running and accepting network traffic */
+	STATE_RUN		/* running and accepting network traffic */
 };
 
 #define ALLOW(action)	(1 << (action))
@@ -77,8 +77,7 @@ static const int allowed_max[] = {
 			ALLOW(PRIV_ETHER_NTOHOST) | ALLOW(PRIV_INIT_DONE),
 	/* RUN */	ALLOW(PRIV_GETHOSTBYADDR) | ALLOW(PRIV_ETHER_NTOHOST) |
 			ALLOW(PRIV_GETRPCBYNUMBER) | ALLOW(PRIV_GETLINES) |
-			ALLOW(PRIV_LOCALTIME),
-	/* QUIT */	0
+			ALLOW(PRIV_LOCALTIME)
 };
 
 /*
@@ -89,8 +88,7 @@ static int allowed_ext[] = {
 	/* INIT */	ALLOW(PRIV_SETFILTER),
 	/* BPF */	ALLOW(PRIV_SETFILTER),
 	/* FILTER */	ALLOW(PRIV_GETSERVENTRIES),
-	/* RUN */	ALLOW(PRIV_GETLINES) | ALLOW(PRIV_LOCALTIME),
-	/* QUIT */	0
+	/* RUN */	ALLOW(PRIV_GETLINES) | ALLOW(PRIV_LOCALTIME)
 };
 
 struct ftab {

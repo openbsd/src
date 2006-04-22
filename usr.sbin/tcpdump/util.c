@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2006/03/13 19:05:56 moritz Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2006/04/22 17:24:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.20 2006/03/13 19:05:56 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.21 2006/04/22 17:24:33 moritz Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -295,6 +295,7 @@ read_infile(char *fname)
 		error("short read %s (%ld != %lu)", fname, (long)cc,
 		    (unsigned long)bs);
 	cp[bs] = '\0';
+	close(fd);
 
 	return (cp);
 }
