@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.53 2006/04/22 17:24:33 moritz Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.54 2006/04/22 19:26:05 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.53 2006/04/22 17:24:33 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.54 2006/04/22 19:26:05 moritz Exp $ (LBL)";
 #endif
 
 /*
@@ -219,7 +219,6 @@ main(int argc, char **argv)
 	char ebuf[PCAP_ERRBUF_SIZE], *WFileName = NULL;
 	pcap_handler printer;
 	struct bpf_program *fcode;
-	RETSIGTYPE (*oldhandler)(int);
 	u_char *pcap_userdata;
 	u_int dlt = (u_int) -1;
 
@@ -450,13 +449,6 @@ main(int argc, char **argv)
 	}
 	init_addrtoname(localnet, netmask);
 
-	setsignal(SIGTERM, cleanup);
-	setsignal(SIGINT, cleanup);
-	setsignal(SIGCHLD, gotchld);
-	/* Cooperate with nohup(1) XXX is this still necessary/working? */
-	if ((oldhandler = setsignal(SIGHUP, cleanup)) != SIG_DFL)
-		(void)setsignal(SIGHUP, oldhandler);
-
 	if (WFileName) {
 		pcap_dumper_t *p;
 
@@ -652,6 +644,19 @@ default_print(register const u_char *bp, register u_int length)
 			(void)printf(" %02x", *(u_char *)sp);
 		}
 	}
+}
+
+void
+set_slave_signals(void)
+{
+	RETSIGTYPE (*oldhandler)(int);
+
+	setsignal(SIGTERM, cleanup);
+	setsignal(SIGINT, cleanup);
+	setsignal(SIGCHLD, gotchld);
+	/* Cooperate with nohup(1) XXX is this still necessary/working? */
+	if ((oldhandler = setsignal(SIGHUP, cleanup)) != SIG_DFL)
+		(void)setsignal(SIGHUP, oldhandler);
 }
 
 __dead void

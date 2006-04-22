@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.24 2006/04/22 17:24:33 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.25 2006/04/22 19:26:05 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -107,6 +107,8 @@ int		priv_fd = -1;
 volatile	pid_t child_pid = -1;
 static volatile	sig_atomic_t cur_state = STATE_INIT;
 
+extern void	set_slave_signals(void);
+
 static void	impl_open_bpf(int, int *);
 static void	impl_open_dump(int, const char *);
 static void	impl_open_output(int, const char *);
@@ -134,6 +136,7 @@ priv_init(int argc, char **argv)
 	char *cmdbuf, *infile = NULL;
 	char *RFileName = NULL;
 	char *WFileName = NULL;
+	sigset_t allsigs, oset;
 
 	if (geteuid() != 0)
 		errx(1, "need root privileges");
@@ -145,6 +148,9 @@ priv_init(int argc, char **argv)
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
 		err(1, "socketpair() failed");
+
+	sigfillset(&allsigs);
+	sigprocmask(SIG_BLOCK, &allsigs, &oset);
 
 	child_pid = fork();
 	if (child_pid < 0)
@@ -173,8 +179,14 @@ priv_init(int argc, char **argv)
 
 		close(socks[0]);
 		priv_fd = socks[1];
+
+		set_slave_signals();
+		sigprocmask(SIG_SETMASK, &oset, NULL);
+
 		return (0);
 	}
+
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 
 	/* Child - drop suid privileges */
 	gid = getgid();
