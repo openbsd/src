@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_msg.c,v 1.9 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: vs_msg.c,v 1.10 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -409,13 +409,13 @@ vs_output(sp, mtype, line, llen)
 	GS *gp;
 	VI_PRIVATE *vip;
 	size_t chlen, notused;
-	int ch, len, rlen, tlen;
+	int ch, len, tlen;
 	const char *p, *t;
 	char *cbp, *ecbp, cbuf[128];
 
 	gp = sp->gp;
 	vip = VIP(sp);
-	for (p = line, rlen = llen; llen > 0;) {
+	for (p = line; llen > 0;) {
 		/* Get the next physical line. */
 		if ((p = memchr(line, '\n', llen)) == NULL)
 			len = llen;

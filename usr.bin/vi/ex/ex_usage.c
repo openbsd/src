@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_usage.c,v 1.5 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_usage.c,v 1.6 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -146,11 +146,9 @@ ex_viusage(sp, cmdp)
 	SCR *sp;
 	EXCMD *cmdp;
 {
-	GS *gp;
 	VIKEYS const *kp;
 	int key;
 
-	gp = sp->gp;
 	switch (cmdp->argc) {
 	case 1:
 		if (cmdp->argv[0]->len != 1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_print.c,v 1.7 2006/03/11 06:58:00 ray Exp $	*/
+/*	$OpenBSD: ex_print.c,v 1.8 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -101,14 +101,12 @@ ex_print(sp, cmdp, fp, tp, flags)
 	MARK *fp, *tp;
 	u_int32_t flags;
 {
-	GS *gp;
 	recno_t from, to;
 	size_t col, len;
 	char *p, buf[10];
 
 	NEEDFILE(sp, cmdp);
 
-	gp = sp->gp;
 	for (from = fp->lno, to = tp->lno; from <= to; ++from) {
 		col = 0;
 
@@ -223,12 +221,10 @@ ex_prchars(sp, p, colp, len, flags, repeatc)
 	int repeatc;
 {
 	CHAR_T ch, *kp;
-	GS *gp;
 	size_t col, tlen, ts;
 
 	if (O_ISSET(sp, O_LIST))
 		LF_SET(E_C_LIST);
-	gp = sp->gp;
 	ts = O_VAL(sp, O_TABSTOP);
 	for (col = *colp; len--;)
 		if ((ch = *p++) == '\t' && !LF_ISSET(E_C_LIST))

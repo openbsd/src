@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.20 2006/03/15 23:43:27 pvalchev Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.21 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1492,7 +1492,6 @@ txt_abbrev(sp, tp, pushcp, isinfoline, didsubp, turnoffp)
 	CHAR_T *pushcp;
 	int isinfoline, *didsubp, *turnoffp;
 {
-	VI_PRIVATE *vip;
 	CHAR_T ch, *p;
 	SEQ *qp;
 	size_t len, off;
@@ -1501,8 +1500,6 @@ txt_abbrev(sp, tp, pushcp, isinfoline, didsubp, turnoffp)
 	*didsubp = 0;
 	if (tp->cno == tp->offset)
 		return (0);
-
-	vip = VIP(sp);
 
 	/*
 	 * Find the start of the "word".
@@ -1850,7 +1847,6 @@ txt_backup(sp, tiqh, tp, flagsp)
 	TEXT *tp;
 	u_int32_t *flagsp;
 {
-	VI_PRIVATE *vip;
 	TEXT *ntp;
 
 	/* Get a handle on the previous TEXT structure. */
@@ -1865,7 +1861,6 @@ txt_backup(sp, tiqh, tp, flagsp)
 	ntp->len = ntp->sv_len;
 
 	/* Handle appending to the line. */
-	vip = VIP(sp);
 	if (ntp->owrite == 0 && ntp->insert == 0) {
 		ntp->lb[ntp->len] = CH_CURSOR;
 		++ntp->insert;
@@ -2708,7 +2703,6 @@ txt_resolve(sp, tiqh, flags)
 	TEXTH *tiqh;
 	u_int32_t flags;
 {
-	VI_PRIVATE *vip;
 	TEXT *tp;
 	recno_t lno;
 	int changed;
@@ -2720,7 +2714,6 @@ txt_resolve(sp, tiqh, flags)
 	 * change, we have to redisplay it, otherwise the information cached
 	 * about the line will be wrong.
 	 */
-	vip = VIP(sp);
 	tp = CIRCLEQ_FIRST(tiqh);
 
 	if (LF_ISSET(TXT_AUTOINDENT))
@@ -2764,12 +2757,9 @@ txt_showmatch(sp, tp)
 	SCR *sp;
 	TEXT *tp;
 {
-	GS *gp;
 	VCS cs;
 	MARK m;
 	int cnt, endc, startc;
-
-	gp = sp->gp;
 
 	/*
 	 * Do a refresh first, in case we haven't done one in awhile,
@@ -2835,16 +2825,13 @@ txt_margin(sp, tp, wmtp, didbreak, flags)
 	int *didbreak;
 	u_int32_t flags;
 {
-	VI_PRIVATE *vip;
 	size_t len, off;
-	char *p, *wp;
+	char *p;
 
 	/* Find the nearest previous blank. */
 	for (off = tp->cno - 1, p = tp->lb + off, len = 0;; --off, --p, ++len) {
-		if (isblank(*p)) {
-			wp = p + 1;
+		if (isblank(*p))
 			break;
-		}
 
 		/*
 		 * If reach the start of the line, there's nowhere to break.
@@ -2871,7 +2858,6 @@ txt_margin(sp, tp, wmtp, didbreak, flags)
 	 * line -- it's going to be used to set the cursor value when we
 	 * move to the new line.
 	 */
-	vip = VIP(sp);
 	wmtp->lb = p + 1;
 	wmtp->offset = len;
 	wmtp->insert = LF_ISSET(TXT_APPENDEOL) ?  tp->insert - 1 : tp->insert;

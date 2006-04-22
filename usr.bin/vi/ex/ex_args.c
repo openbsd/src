@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_args.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_args.c,v 1.6 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -262,7 +262,6 @@ ex_args(sp, cmdp)
 	SCR *sp;
 	EXCMD *cmdp;
 {
-	GS *gp;
 	int cnt, col, len, sep;
 	char **ap;
 
@@ -271,7 +270,6 @@ ex_args(sp, cmdp)
 		return (0);
 	}
 
-	gp = sp->gp;
 	col = len = sep = 0;
 	for (cnt = 1, ap = sp->argv; *ap != NULL; ++ap) {
 		col += len = strlen(*ap) + sep + (ap == sp->cargv ? 2 : 0);

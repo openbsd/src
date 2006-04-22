@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.14 2006/01/08 21:10:05 miod Exp $	*/
+/*	$OpenBSD: ex.c,v 1.15 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -53,7 +53,6 @@ int
 ex(spp)
 	SCR **spp;
 {
-	EX_PRIVATE *exp;
 	GS *gp;
 	MSGS *mp;
 	SCR *sp;
@@ -62,7 +61,6 @@ ex(spp)
 
 	sp = *spp;
 	gp = sp->gp;
-	exp = EXP(sp);
 
 	/* Start the ex screen. */
 	if (ex_init(sp))
@@ -1617,8 +1615,6 @@ ex_range(sp, ecp, errp)
 	int *errp;
 {
 	enum { ADDR_FOUND, ADDR_NEED, ADDR_NONE } addr;
-	GS *gp;
-	EX_PRIVATE *exp;
 	MARK m;
 	int isaddr;
 
@@ -1645,8 +1641,6 @@ ex_range(sp, ecp, errp)
 	 * addresses.  For consistency, we make it true for leading semicolon
 	 * addresses as well.
 	 */
-	gp = sp->gp;
-	exp = EXP(sp);
 	for (addr = ADDR_NONE, ecp->addrcnt = 0; ecp->clen > 0;)
 		switch (*ecp->cp) {
 		case '%':		/* Entire file. */
@@ -1820,15 +1814,10 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 	int *isaddrp, *errp;
 {
 	enum nresult nret;
-	EX_PRIVATE *exp;
-	GS *gp;
 	long total, val;
 	int isneg;
 	int (*sf)(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
 	char *endp;
-
-	gp = sp->gp;
-	exp = EXP(sp);
 
 	*isaddrp = *errp = 0;
 	F_CLR(ecp, E_DELTA);

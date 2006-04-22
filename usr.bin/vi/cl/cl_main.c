@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.16 2006/03/11 06:58:00 ray Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.17 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -113,8 +113,6 @@ main(argc, argv)
 	 */
 	if (ip_arg != NULL)
 		exit (ip_main(argc, argv, gp, ip_arg));
-#else
-	ip_arg = argv[0];
 #endif
 		
 	/* Create and initialize the CL_PRIVATE structure. */

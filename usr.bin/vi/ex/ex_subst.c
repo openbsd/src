@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.14 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.15 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -360,7 +360,7 @@ s(sp, cmdp, s, re, flags)
 	regmatch_t match[10];
 	size_t blen, cnt, last, lbclen, lblen, len, llen;
 	size_t offset, saved_offset, scno;
-	int cflag, lflag, nflag, pflag, rflag;
+	int lflag, nflag, pflag, rflag;
 	int didsub, do_eol_match, eflags, empty_ok, eval;
 	int linechanged, matched, quit, rval;
 	unsigned long ul;
@@ -398,7 +398,7 @@ s(sp, cmdp, s, re, flags)
 	 * just take it them in whatever order the user gives them.  (The ex
 	 * usage statement doesn't reflect this.)
 	 */
-	cflag = lflag = nflag = pflag = rflag = 0;
+	lflag = nflag = pflag = rflag = 0;
 	if (s == NULL)
 		goto noargs;
 	for (lno = OOBLNO; *s != '\0'; ++s)

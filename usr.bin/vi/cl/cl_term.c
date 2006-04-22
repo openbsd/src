@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.14 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.15 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -206,10 +206,10 @@ cl_pfmap(sp, stype, from, flen, to, tlen)
 	size_t flen, tlen;
 {
 	size_t nlen;
-	char *p, keyname[64];
+	char *p, key_name[64];
 
-	(void)snprintf(keyname, sizeof(keyname), "kf%d", atoi(from + 1));
-	if ((p = tigetstr(keyname)) == NULL ||
+	(void)snprintf(key_name, sizeof(key_name), "kf%d", atoi(from + 1));
+	if ((p = tigetstr(key_name)) == NULL ||
 	    p == (char *)-1 || strlen(p) == 0)
 		p = NULL;
 	if (p == NULL) {
@@ -217,11 +217,11 @@ cl_pfmap(sp, stype, from, flen, to, tlen)
 		return (1);
 	}
 
-	nlen = snprintf(keyname,
-	    sizeof(keyname), "function key %d", atoi(from + 1));
-	if (nlen >= sizeof(keyname))
-		nlen = sizeof(keyname) - 1;
-	return (seq_set(sp, keyname, nlen,
+	nlen = snprintf(key_name,
+	    sizeof(key_name), "function key %d", atoi(from + 1));
+	if (nlen >= sizeof(key_name))
+		nlen = sizeof(key_name) - 1;
+	return (seq_set(sp, key_name, nlen,
 	    p, strlen(p), to, tlen, stype, SEQ_NOOVERWRITE | SEQ_SCREEN));
 }
 

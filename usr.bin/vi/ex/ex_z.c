@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_z.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_z.c,v 1.5 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@ ex_z(sp, cmdp)
 	SCR *sp;
 	EXCMD *cmdp;
 {
-	MARK abs;
+	MARK mark_abs;
 	recno_t cnt, equals, lno;
 	int eofcheck;
 
@@ -98,9 +98,9 @@ ex_z(sp, cmdp)
 		 * !!!
 		 * Historically, z. set the absolute cursor mark.
 		 */
-		abs.lno = sp->lno;
-		abs.cno = sp->cno;
-		(void)mark_set(sp, ABSMARK1, &abs, 1);
+		mark_abs.lno = sp->lno;
+		mark_abs.cno = sp->cno;
+		(void)mark_set(sp, ABSMARK1, &mark_abs, 1);
 		break;
 	case E_C_EQUAL:		/* Center with hyphens. */
 		/*

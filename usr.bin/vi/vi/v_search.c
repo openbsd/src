@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_search.c,v 1.9 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: v_search.c,v 1.10 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -428,7 +428,6 @@ v_correct(sp, vp, isdelta)
 	VICMD *vp;
 	int isdelta;
 {
-	dir_t dir;
 	MARK m;
 	size_t len;
 
@@ -473,9 +472,7 @@ v_correct(sp, vp, isdelta)
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-		dir = BACKWARD;
-	} else
-		dir = FORWARD;
+	}
 
 	/*
 	 * BACKWARD:

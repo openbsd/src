@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.12 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -100,14 +100,12 @@ argv_exp1(sp, excp, cmd, cmdlen, is_bang)
 	size_t cmdlen;
 	int is_bang;
 {
-	EX_PRIVATE *exp;
 	size_t blen, len;
 	char *bp, *p, *t;
 
 	GET_SPACE_RET(sp, bp, blen, 512);
 
 	len = 0;
-	exp = EXP(sp);
 	if (argv_fexp(sp, excp, cmd, cmdlen, bp, &len, &bp, &blen, is_bang)) {
 		FREE_SPACE(sp, bp, blen);
 		return (1);

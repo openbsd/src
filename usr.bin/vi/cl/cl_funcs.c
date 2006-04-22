@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.11 2006/03/11 06:58:00 ray Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.12 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -46,11 +46,8 @@ cl_addstr(sp, str, len)
 	const char *str;
 	size_t len;
 {
-	CL_PRIVATE *clp;
 	size_t oldy, oldx;
 	int iv;
-
-	clp = CLP(sp);
 
 	/*
 	 * If ex isn't in control, it's the last line of the screen and
@@ -285,10 +282,7 @@ cl_deleteln(sp)
 	CHAR_T ch;
 	size_t col, lno, spcnt;
 #endif
-	CL_PRIVATE *clp;
 	size_t oldy, oldx;
-
-	clp = CLP(sp);
 
 	/*
 	 * This clause is required because the curses screen uses reverse
@@ -564,11 +558,9 @@ cl_suspend(sp, allowedp)
 {
 	struct termios t;
 	CL_PRIVATE *clp;
-	GS *gp;
 	size_t oldy, oldx;
 	int changed;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 	*allowedp = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.17 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.18 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -185,10 +185,8 @@ cl_vi_init(sp)
 	SCR *sp;
 {
 	CL_PRIVATE *clp;
-	GS *gp;
 	char *o_cols, *o_lines, *o_term, *ttype;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 
 	/* If already initialized, just set the terminal modes. */

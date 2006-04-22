@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.8 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.9 2006/04/22 03:09:15 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -74,7 +74,7 @@ ex_g_setup(sp, cmdp, cmd)
 {
 	CHAR_T *ptrn, *p, *t;
 	EXCMD *ecp;
-	MARK abs;
+	MARK abs_mark;
 	RANGE *rp;
 	busy_t btype;
 	recno_t start, end;
@@ -160,9 +160,9 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 	re = &sp->re_c;
 
 	/* The global commands always set the previous context mark. */
-	abs.lno = sp->lno;
-	abs.cno = sp->cno;
-	if (mark_set(sp, ABSMARK1, &abs, 1))
+	abs_mark.lno = sp->lno;
+	abs_mark.cno = sp->cno;
+	if (mark_set(sp, ABSMARK1, &abs_mark, 1))
 		return (1);
 
 	/* Get an EXCMD structure. */
