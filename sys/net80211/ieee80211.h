@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.10 2005/09/08 13:24:52 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.11 2006/04/22 16:19:57 fgsch Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -447,7 +447,7 @@ enum {
 #define	IEEE80211_RATE_SIZE			8	/* 802.11 standard */
 #define	IEEE80211_RATE_MAXSIZE			15	/* max rates we'll handle */
 
-/* EPR information element flags */
+/* ERP information element flags */
 #define	IEEE80211_ERP_NON_ERP_PRESENT		0x01
 #define	IEEE80211_ERP_USE_PROTECTION		0x02
 #define	IEEE80211_ERP_BARKER_MODE		0x04
