@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.12 2006/03/15 20:20:40 miod Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.13 2006/04/22 11:37:06 miod Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -174,7 +174,7 @@ wdscattach(parent, self, aux)
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr) 
 		bootpart = -1;
-	config_found(parent, &sc->sc_link, scsiprint);
+	config_found(self, &sc->sc_link, scsiprint);
 	bootpart = tmp;		/* restore old value */
 }
 
