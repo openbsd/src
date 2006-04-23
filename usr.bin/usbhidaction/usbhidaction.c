@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.6 2004/10/27 18:16:57 jaredy Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.7 2006/04/23 08:51:24 fgsch Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -140,6 +140,11 @@ main(int argc, char **argv)
 	fd = open(dev, O_RDWR);
 	if (fd < 0)
 		err(1, "%s", dev);
+
+	/* Avoid passing the device file descriptor to executed commands */
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		err(1, "fcntl(F_SETFD, FD_CLOEXEC)");
+
 	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) < 0)
 		reportid = -1;
 	repd = hid_get_report_desc(fd);
