@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.21 2005/06/15 20:53:32 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.22 2006/04/23 19:33:28 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ const struct cardbus_matchid dc_cardbus_devices[] = {
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500 },
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500MX },
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200 },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DRP32TXD },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200 },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200 },
 	{ PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX },
@@ -157,6 +158,7 @@ dc_cardbus_attach(parent, self, aux)
 	case PCI_VENDOR_ADMTEK:
 	case PCI_VENDOR_ACCTON:
 	case PCI_VENDOR_ABOCOM:
+	case PCI_VENDOR_DLINK:
 	case PCI_VENDOR_LINKSYS:
 	case PCI_VENDOR_HAWKING:
 	case PCI_VENDOR_MICROSOFT:
@@ -165,6 +167,7 @@ dc_cardbus_attach(parent, self, aux)
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_FE2500 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_FE2500MX ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_PCM200 ||
+		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_DLINK_DRP32TXD ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_LINKSYS_PCMPC200 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_LINKSYS_PCM200 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_HAWKING_PN672TX ||
