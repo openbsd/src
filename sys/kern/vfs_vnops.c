@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.49 2006/04/23 17:30:56 pedro Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.50 2006/04/23 17:35:08 pedro Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -484,7 +484,6 @@ vn_closefile(struct file *fp, struct proc *p)
 		fp->f_cred, p));
 }
 
-/*ARGSUSED*/
 int
 vn_kqfilter(struct file *fp, struct knote *kn)
 {
