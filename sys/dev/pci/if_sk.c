@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.99 2006/04/20 20:31:12 miod Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.100 2006/04/23 21:02:58 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -285,7 +285,7 @@ sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
 	DPRINTFN(9, ("sk_xmac_miibus_readreg\n"));
 
 	if (sc_if->sk_phytype == SK_PHYTYPE_XMAC && phy != 0)
-		return(0);
+		return (0);
 
 	SK_XM_WRITE_2(sc_if, XM_PHY_ADDR, reg|(phy << 8));
 	SK_XM_READ_2(sc_if, XM_PHY_DATA);
@@ -300,11 +300,11 @@ sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
 		if (i == SK_TIMEOUT) {
 			printf("%s: phy failed to come ready\n",
 			    sc_if->sk_dev.dv_xname);
-			return(0);
+			return (0);
 		}
 	}
 	DELAY(1);
-	return(SK_XM_READ_2(sc_if, XM_PHY_DATA));
+	return (SK_XM_READ_2(sc_if, XM_PHY_DATA));
 }
 
 void
@@ -351,18 +351,15 @@ sk_xmac_miibus_statchg(struct device *dev)
 	 * duplex mode accordingly.
 	 */
 	if (sc_if->sk_phytype != SK_PHYTYPE_XMAC) {
-		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
+		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 			SK_XM_SETBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_GMIIFDX);
-		} else {
+		else
 			SK_XM_CLRBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_GMIIFDX);
-		}
 	}
 }
 
 int
-sk_marv_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+sk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	u_int16_t val;
@@ -373,7 +370,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 	     sc_if->sk_phytype != SK_PHYTYPE_MARV_FIBER)) {
 		DPRINTFN(9, ("sk_marv_miibus_readreg (skip) phy=%d, reg=%#x\n",
 			     phy, reg));
-		return(0);
+		return (0);
 	}
 
         SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
@@ -389,7 +386,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 	if (i == SK_TIMEOUT) {
 		printf("%s: phy failed to come ready\n",
 		       sc_if->sk_dev.dv_xname);
-		return 0;
+		return (0);
 	}
         
  	DPRINTFN(9, ("sk_marv_miibus_readreg: i=%d, timeout=%d\n", i,
@@ -400,13 +397,11 @@ sk_marv_miibus_readreg(dev, phy, reg)
 	DPRINTFN(9, ("sk_marv_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
 		     phy, reg, val));
 
-	return val;
+	return (val);
 }
 
 void
-sk_marv_miibus_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	int i;
@@ -429,8 +424,7 @@ sk_marv_miibus_writereg(dev, phy, reg, val)
 }
 
 void
-sk_marv_miibus_statchg(dev)
-	struct device *dev;
+sk_marv_miibus_statchg(struct device *dev)
 {
 	DPRINTFN(9, ("sk_marv_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
@@ -602,14 +596,14 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
 			printf("%s: failed alloc of %dth mbuf\n",
 			    sc_if->sk_dev.dv_xname, i);
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 	}
 
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
 
-	return(0);
+	return (0);
 }
 
 int
@@ -672,7 +666,7 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		
 		/* Allocate the jumbo buffer */
 		buf = sk_jalloc(sc_if);
@@ -680,7 +674,7 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 			m_freem(m_new);
 			DPRINTFN(1, ("%s jumbo allocation failed -- packet "
 			    "dropped!\n", sc_if->arpcom.ac_if.if_xname));
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 
 		/* Attach the buffer to the mbuf */
@@ -708,7 +702,7 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 
 	SK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -869,7 +863,7 @@ sk_ifmedia_upd(struct ifnet *ifp)
 
 	sk_init(sc_if);
 	mii_mediachg(&sc_if->sk_mii);
-	return(0);
+	return (0);
 }
 
 /*
@@ -899,23 +893,18 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if ((error = ether_ioctl(ifp, &sc_if->arpcom, command, data)) > 0) {
 		splx(s);
-		return error;
+		return (error);
 	}
 
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			sk_init(sc_if);
 #ifdef INET
-		case AF_INET:
-			sk_init(sc_if);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc_if->arpcom, ifa);
-			break;
 #endif /* INET */
-		default:
-			sk_init(sc_if);
-			break;
-		}
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
@@ -964,10 +953,11 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
 					break;
 				}
-
 				sk_setmulti(sc_if);
-			} else
-				sk_init(sc_if);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					sk_init(sc_if);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				sk_stop(sc_if);
@@ -1003,7 +993,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	splx(s);
 
-	return(error);
+	return (error);
 }
 
 /*
@@ -1098,7 +1088,7 @@ sk_probe(struct device *parent, void *match, void *aux)
 	struct skc_attach_args *sa = aux;
 
 	if (sa->skc_port != SK_PORT_A && sa->skc_port != SK_PORT_B)
-		return(0);
+		return (0);
 
 	switch (sa->skc_type) {
 	case SK_GENESIS:
@@ -1685,7 +1675,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	entry = SIMPLEQ_FIRST(&sc_if->sk_txmap_head);
 	if (entry == NULL) {
 		DPRINTFN(2, ("sk_encap: no txmap available\n"));
-		return ENOBUFS;
+		return (ENOBUFS);
 	}
 	txmap = entry->dmamap;
 
@@ -1704,7 +1694,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	if (bus_dmamap_load_mbuf(sc->sc_dmatag, txmap, m_head,
 	    BUS_DMA_NOWAIT)) {
 		DPRINTFN(2, ("sk_encap: dmamap failed\n"));
-		return(ENOBUFS);
+		return (ENOBUFS);
 	}
 
 	DPRINTFN(2, ("sk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
@@ -1716,7 +1706,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		if ((SK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2) {
 			DPRINTFN(2, ("sk_encap: too few descriptors free\n"));
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
 		f->sk_data_lo = txmap->dm_segs[i].ds_addr;
@@ -1764,7 +1754,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	DPRINTFN(2, ("sk_encap: completed successfully\n"));
 
-	return(0);
+	return (0);
 }
 
 void
@@ -1826,7 +1816,7 @@ sk_watchdog(struct ifnet *ifp)
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
-	ifp->if_flags &= ~IFF_RUNNING;
+
 	sk_init(sc_if);
 }
 
@@ -2376,17 +2366,15 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	    *(u_int16_t *)(&sc_if->arpcom.ac_enaddr[4]));
 	SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_USE_STATION);
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
-	} else {
+	else
 		SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
-	}
 
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_NOBROAD);
-	} else {
+	else
 		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_NOBROAD);
-	}
 
 	/* We don't need the FCS appended to the packet. */
 	SK_XM_SETBIT_2(sc_if, XM_RXCMD, XM_RXCMD_STRIPFCS);
@@ -2463,8 +2451,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	sc_if->sk_link = 1;
 }
 
-void sk_init_yukon(sc_if)
-	struct sk_if_softc	*sc_if;
+void sk_init_yukon(struct sk_if_softc *sc_if)
 {
 	u_int32_t		phy;
 	u_int16_t		reg;
@@ -2605,11 +2592,6 @@ sk_init(void *xsc_if)
 
 	s = splnet();
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		splx(s);
-		return;
-	}
-
 	/* Cancel pending I/O and free all RX/TX buffers. */
 	sk_stop(sc_if);
 
@@ -2733,7 +2715,6 @@ sk_init(void *xsc_if)
 		reg &= ~(YU_GPCR_SPEED_EN | YU_GPCR_DPLX_EN);
 		SK_YU_WRITE_2(sc_if, YUKON_GPCR, reg);
 	}
-
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
