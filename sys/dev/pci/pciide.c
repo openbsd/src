@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.234 2006/04/17 01:51:37 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.235 2006/04/23 15:08:34 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	},
 	{ PCI_PRODUCT_INTEL_82801FBM_SATA,  /* Intel 82801FBM (ICH6M) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
-	  piix_chip_map
+	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FB_SATA, /* Intel 82801FB (ICH6) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
@@ -2176,25 +2176,17 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	if (interface == 0) {
-		WDCDEBUG_PRINT(("piixsata_chip_map interface == 0\n"),
-		    DEBUG_PROBE);
-		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
-		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
-	}
-
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
-	printf("\n");
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA |
 		    WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.UDMA_cap = 6;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 6;
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
@@ -2249,13 +2241,24 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	}
 
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
+
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+		if (cp->hw_ok != 0)
+			sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+
+		if (cp->hw_ok == 0)
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
 	}
 }
 
