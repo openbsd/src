@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.48 2005/12/04 19:04:13 pedro Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.49 2006/04/23 17:30:56 pedro Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -179,10 +179,16 @@ vn_writechk(struct vnode *vp)
 	 */
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		switch (vp->v_type) {
-		case VREG: case VDIR: case VLNK:
+		case VREG:
+		case VDIR:
+		case VLNK:
 			return (EROFS);
-		case VNON: case VCHR: case VSOCK:
-		case VFIFO: case VBAD: case VBLK:
+		case VNON:
+		case VCHR:
+		case VSOCK:
+		case VFIFO:
+		case VBAD:
+		case VBLK:
 			break;
 		}
 	}
