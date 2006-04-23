@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.152 2006/04/22 18:55:36 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.153 2006/04/23 15:32:09 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -575,11 +575,8 @@ ami_attach(struct ami_softc *sc)
 	else
 		sc->sc_ioctl = ami_ioctl;
 
-	/* XXX */
-	/*
 	if (sensor_task_register(sc, ami_refresh, 10))
 		printf("%s: unable to register update task\n", DEVNAME(sc));
-	*/
 #endif /* NBIO > 0 */
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
@@ -2451,11 +2448,8 @@ ami_refresh(void *arg)
 	}
 
 	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *sc->sc_bd,
-	    sc->sc_bd)) {
-		sc->sc_sens_ld[i].value = 0xffff; /* unknown */
-		sc->sc_sens_ld[i].status = SENSOR_S_UNKNOWN;
+	    sc->sc_bd))
 		return;
-	}
 
 	for (i = 0; i < sc->sc_nunits; i++) {
 		switch (sc->sc_bd->ald[i].adl_status) {
