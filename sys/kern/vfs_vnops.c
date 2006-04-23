@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.50 2006/04/23 17:35:08 pedro Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.51 2006/04/23 17:36:09 pedro Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -416,8 +416,7 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 					 p->p_ucred, p);
 		if (com == FIONBIO || com == FIOASYNC)  /* XXX */
 			return (0);			/* XXX */
-		/* fall into... */
-
+		/* FALLTHROUGH */
 	default:
 		return (ENOTTY);
 		
