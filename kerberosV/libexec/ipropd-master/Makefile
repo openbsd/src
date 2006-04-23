@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.7 2003/07/14 16:14:44 mho Exp $
+# $OpenBSD: Makefile,v 1.8 2006/04/23 20:46:55 biorn Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
 PROG=	ipropd-master
-MAN=	${PROG}.8
-NOMAN=
+MAN=	iprop.8
+MLINKS+=iprop.8 ipropd-master.8
+MLINKS+=iprop.8 ipropd-slave.8
 
 SRCS=	ipropd_master.c
 SRCS+=	${PRINTVER}
