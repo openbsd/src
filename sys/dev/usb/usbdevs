@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.192 2006/04/16 04:01:12 brad Exp $
+$OpenBSD: usbdevs,v 1.193 2006/04/23 19:16:14 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -462,6 +462,7 @@ vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor SITECOM2		0x9016	Sitecom
 vendor HP2		0xf003	Hewlett Packard
+
 /*
  * List of known products.  Grouped by vendor.
  */
@@ -839,6 +840,7 @@ product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
 
 /* Dell products */
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+product DELL BLUETOOTH350	0x8103	Bluetooth 350
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS
@@ -1672,7 +1674,7 @@ product ROLAND SD80             0x0029  SD-80 MIDI Synth
 product ROLAND UA700            0x002b  UA-700 Audio I/F
 
 /* Rockfire products */
-product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
+product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
 
 /* Sagem products */
 product SAGEM SERIAL		0x0027	Serial
