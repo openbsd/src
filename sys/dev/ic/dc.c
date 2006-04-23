@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.92 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: dc.c,v 1.93 2006/04/23 19:44:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1023,8 +1023,9 @@ dc_setfilt_admtek(sc)
 	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Init our MAC address */
-	CSR_WRITE_4(sc, DC_AL_PAR0, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]));
-	CSR_WRITE_4(sc, DC_AL_PAR1, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[4]));
+	CSR_WRITE_4(sc, DC_AL_PAR0, ac->ac_enaddr[3] << 24 |
+	    ac->ac_enaddr[2] << 16 | ac->ac_enaddr[1] << 8 | ac->ac_enaddr[0]);
+	CSR_WRITE_4(sc, DC_AL_PAR1, ac->ac_enaddr[5] << 8 | ac->ac_enaddr[4]);
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -1652,6 +1653,7 @@ dc_attach(sc)
 {
 	struct ifnet *ifp;
 	int mac_offset, tmp, i;
+	u_int32_t reg;
 
 	/*
 	 * Get station address from the EEPROM.
@@ -1681,10 +1683,14 @@ dc_attach(sc)
 		break;
 	case DC_TYPE_AL981:
 	case DC_TYPE_AN983:
-		*(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]) =
-			CSR_READ_4(sc, DC_AL_PAR0);
-		*(u_int16_t *)(&sc->sc_arpcom.ac_enaddr[4]) =
-			CSR_READ_4(sc, DC_AL_PAR1);
+		reg = CSR_READ_4(sc, DC_AL_PAR0);
+		sc->sc_arpcom.ac_enaddr[0] = (reg & 0xff);
+		sc->sc_arpcom.ac_enaddr[1] = (reg >> 8) & 0xff;
+		sc->sc_arpcom.ac_enaddr[2] = (reg >> 16) & 0xff;
+		sc->sc_arpcom.ac_enaddr[3] = (reg >> 24) & 0xff;
+		reg = CSR_READ_4(sc, DC_AL_PAR1);
+		sc->sc_arpcom.ac_enaddr[4] = (reg & 0xff);
+		sc->sc_arpcom.ac_enaddr[5] = (reg >> 8) & 0xff;
 		break;
 	case DC_TYPE_CONEXANT:
 		bcopy(&sc->dc_srom + DC_CONEXANT_EE_NODEADDR,
