@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsdiff.1,v 1.20 2006/04/19 12:57:02 jmc Exp $
+.\"	$OpenBSD: rcsdiff.1,v 1.21 2006/04/24 08:40:01 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -24,10 +24,7 @@
 .Nm
 .Op Fl cnquV
 .Op Fl k Ns Ar mode
-.Oo
-.Fl r Ns Ar rev
-.Op Fl r Ns Ar rev2
-.Oc
+.Op Fl r Ns Ar rev
 .Op Fl x Ns Ar suffixes
 .Op Fl z Ns Ar tz
 .Ar
@@ -69,11 +66,13 @@ Specify the keyword substitution mode.
 .It Fl n
 Produces a diff in the same format that is used in the RCS files.
 .It Fl r Ns Ar rev
-If one -r option is given, the diff is generated between the
-working file and
+Produces a diff with respect to revision
 .Ar rev .
-If two -r options are given, the diff is generated between the
-two revisions specified.
+This option should be specified twice to generate a diff
+between two specific revisions.
+If only one revision is specified,
+diffing is done between that revision and
+the latest revision of the default branch.
 .It Fl q
 Be quiet about reporting.
 .It Fl u
