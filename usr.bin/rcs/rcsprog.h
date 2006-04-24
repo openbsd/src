@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.53 2006/04/21 17:17:29 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.54 2006/04/24 04:51:57 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,10 +59,10 @@
 #define RCSPROG_EFLAG	(1<<12)
 #define RCSPROG_LFLAG	(1<<13)
 #define RCSPROG_NFLAG	(1<<14)
-#define RCSPROG_TFLAG	(1<<15)
-#define RCSPROG_UFLAG	(1<<16)
+#define RCSPROG_UFLAG	(1<<15)
 
 /* shared flags  */
+#define DESCRIPTION	(1<<16)
 #define FORCE		(1<<17)
 #define INTERACTIVE	(1<<18)
 #define NEWFILE		(1<<19)

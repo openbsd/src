@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.112 2006/04/21 17:17:29 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.113 2006/04/24 04:51:57 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,9 +31,6 @@
 #define RCS_CMD_MAXARG	128
 #define RCSPROG_OPTSTRING	"A:a:b::c:e::ik:Ll::m:Mn:N:o:qt::TUu::Vx::z::"
 
-#define DESC_PROMPT	"enter description, terminated with single '.' "      \
-			"or end of file:\nNOTE: This is NOT the log message!\n"
-
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 
 int	 rcsflags;
@@ -60,7 +57,6 @@ struct rcs_prog {
 struct cvs_wklhead rcs_temp_files;
 
 void sighdlr(int);
-static void  rcs_set_description(RCSFILE *, const char *);
 static void  rcs_attach_symbol(RCSFILE *, const char *);
 
 /* ARGSUSED */
@@ -260,7 +256,7 @@ rcs_main(int argc, char **argv)
 			break;
 		case 't':
 			descfile = rcs_optarg;
-			rcsflags |= RCSPROG_TFLAG;
+			rcsflags |= DESCRIPTION;
 			break;
 		case 'T':
 			rcsflags |= PRESERVETIME;
@@ -313,7 +309,7 @@ rcs_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, flags, fmode)) == NULL)
 			continue;
 
-		if (rcsflags & RCSPROG_TFLAG)
+		if (rcsflags & DESCRIPTION)
 			rcs_set_description(file, descfile);
 		else if (flags & RCS_CREATE)
 			rcs_set_description(file, NULL);
@@ -539,33 +535,4 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 			    symname, rbuf);
 		}
 	}
-}
-
-/*
- * Load description from <in> to <file>.
- * If <in> starts with a `-', <in> is taken as the description.
- * Otherwise <in> is the name of the file containing the description.
- * If <in> is NULL, the description is read from stdin.
- */
-static void
-rcs_set_description(RCSFILE *file, const char *in)
-{
-	BUF *bp;
-	char *content;
-
-	/* Description is in file <in>. */
-	if (in != NULL && *in != '-') {
-		bp = cvs_buf_load(in, BUF_AUTOEXT);
-		cvs_buf_putc(bp, '\0');
-		content = cvs_buf_release(bp);
-	/* Description is in <in>. */
-	} else if (in != NULL)
-		/* Skip leading `-'. */
-		content = xstrdup(in + 1);
-	/* Get description from stdin. */
-	else
-		content = rcs_prompt(DESC_PROMPT);
-
-	rcs_desc_set(file, content);
-	xfree(content);
 }

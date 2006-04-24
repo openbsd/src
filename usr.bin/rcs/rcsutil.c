@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.1 2006/04/21 17:17:29 xsa Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.2 2006/04/24 04:51:57 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -442,4 +442,36 @@ rcs_rev_select(RCSFILE *file, char *range)
 		xfree(rnum.rn_id);
 
 	return (nrev);
+}
+
+/*
+ * Load description from <in> to <file>.
+ * If <in> starts with a `-', <in> is taken as the description.
+ * Otherwise <in> is the name of the file containing the description.
+ * If <in> is NULL, the description is read from stdin.
+ */
+void
+rcs_set_description(RCSFILE *file, const char *in)
+{
+	BUF *bp;
+	char *content;
+	const char *prompt =
+	    "enter description, terminated with single '.' or end of file:\n"
+	    "NOTE: This is NOT the log message!\n";
+
+	/* Description is in file <in>. */
+	if (in != NULL && *in != '-') {
+		bp = cvs_buf_load(in, BUF_AUTOEXT);
+		cvs_buf_putc(bp, '\0');
+		content = cvs_buf_release(bp);
+	/* Description is in <in>. */
+	} else if (in != NULL)
+		/* Skip leading `-'. */
+		content = xstrdup(in + 1);
+	/* Get description from stdin. */
+	else
+		content = rcs_prompt(prompt);
+
+	rcs_desc_set(file, content);
+	xfree(content);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.156 2006/04/21 17:17:29 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.157 2006/04/24 04:51:57 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-#define CI_OPTSTRING	"d::f::I::i::j::k::l::M::m::N:n:qr::s:Tt:u::Vw:x::z::"
+#define CI_OPTSTRING	"d::f::I::i::j::k::l::M::m::N:n:qr::s:Tt::u::Vw:x::z::"
 #define DATE_NOW	-1
 #define DATE_MTIME	-2
 
@@ -68,7 +68,6 @@ struct checkin_params {
 static int	 checkin_attach_symbol(struct checkin_params *);
 static int	 checkin_checklock(struct checkin_params *);
 static char	*checkin_diff_file(struct checkin_params *);
-static char	*checkin_getdesc(void);
 static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *, int);
 static int	 checkin_init(struct checkin_params *);
 static int	 checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
@@ -184,9 +183,11 @@ checkin_main(int argc, char **argv)
 			pb.flags |= PRESERVETIME;
 			break;
 		case 't':
-			if (pb.description != NULL)
-				xfree(pb.description);
-			pb.description = xstrdup(rcs_optarg);
+			/* Ignore bare -t; kept for backwards compatibility. */
+			if (rcs_optarg == NULL)
+				break;
+			pb.description = rcs_optarg;
+			pb.flags |= DESCRIPTION;
 			break;
 		case 'u':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -266,9 +267,11 @@ checkin_main(int argc, char **argv)
 		}
 
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
-
 		if (pb.file == NULL)
 			fatal("failed to open rcsfile '%s'", pb.fpath);
+
+		if (pb.flags & DESCRIPTION)
+			rcs_set_description(pb.file, pb.description);
 
 		if (!(pb.flags & QUIET))
 			printf("%s  <--  %s\n", pb.fpath, pb.filename);
@@ -402,26 +405,6 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 	rcs_msg = rcs_prompt(prompt);
 
 	return (rcs_msg);
-}
-
-
-/*
- * checkin_getdesc()
- *
- * Get file description interactively.
- * Returns pointer to a char array on success, NULL on failure.
- */
-static char *
-checkin_getdesc()
-{
-	char *description;
-	const char *prompt =
-	    "enter description, terminated with single '.' or end of file:\n"
-	    "NOTE: This is NOT the log message!\n";
-
-	description = rcs_prompt(prompt);
-
-	return (description);
 }
 
 /*
@@ -609,10 +592,9 @@ fail:
 static int
 checkin_init(struct checkin_params *pb)
 {
-	BUF *bp, *dp;
+	BUF *bp;
 	char *filec, numb[64];
 	int fetchlog = 0;
-	const char *rcs_desc;
 	struct stat st;
 
 	filec = NULL;
@@ -642,23 +624,7 @@ checkin_init(struct checkin_params *pb)
 
 	/* Get description from user */
 	if (pb->description == NULL)
-		rcs_desc = (const char *)checkin_getdesc();
-	else {
-		if (*pb->description == '-') {
-			pb->description++;
-			rcs_desc = (const char *)pb->description;
-		} else {
-			dp = cvs_buf_load(pb->description, BUF_AUTOEXT);
-			if (dp == NULL) {
-				warnx("failed to load description file '%s'",
-				    pb->description);
-				goto fail;
-			}
-			cvs_buf_putc(dp, '\0');
-			rcs_desc = (const char *)cvs_buf_release(dp);
-		}
-	}
-	rcs_desc_set(pb->file, rcs_desc);
+		rcs_set_description(pb->file, NULL);
 
 skipdesc:
 
