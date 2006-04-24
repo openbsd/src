@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsclean.1,v 1.14 2006/04/19 11:12:54 jmc Exp $
+.\"	$OpenBSD: rcsclean.1,v 1.15 2006/04/24 16:20:33 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .Op Fl k Ns Ar mode
 .Op Fl n Ns Op Ar rev
 .Op Fl q Ns Op Ar rev
-.Op Fl r Ns Ar rev
+.Op Fl r Ns Op Ar rev
 .Op Fl u Ns Op Ar rev
 .Op Fl x Ns Ar suffixes
 .Op Fl z Ns Ar tz
@@ -34,7 +34,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to remove files that are not being worked on.
+program is used to clean up (remove) files that are not being worked on.
+Only checked out files from the current working directory are removed \(en
+.Nm
+does not remove files from the RCS repository.
+.Pp
+Files may be selected by revision or,
+where no revision is specified,
+the latest revision of the default branch is used.
 .Pp
 .Nm
 also supports
@@ -54,12 +61,20 @@ When this option is specified,
 will show you what it would normally do without doing it.
 .It Fl q Ns Op Ar rev
 Be quiet about reporting.
-.It Fl r Ns Ar rev
-Specify the revision for comparison.
+.It Fl r Ns Op Ar rev
+Remove revision
+.Ar rev .
+If
+.Ar rev
+does not match the revision of the currently checked out file,
+.Nm
+will do nothing.
 .It Fl T
 Preserve the modification time of RCS files.
 .It Fl u Ns Op Ar rev
-Unlock the revision if it's not locked and has not been changed.
+Unlock the revision if it's currently locked.
+This is only possible if no changes have been made to the file
+since it was checked out.
 .It Fl V
 Print RCS's version number.
 .It Fl x Ns Ar suffixes
