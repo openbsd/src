@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.79 2005/11/06 13:07:47 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.80 2006/04/24 15:08:48 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -659,7 +659,7 @@ geteblk(int size)
 {
 	struct buf *bp;
 
-	while ((bp = getnewbuf(0, 0)) == 0)
+	while ((bp = getnewbuf(0, 0)) == NULL)
 		;
 	SET(bp->b_flags, B_INVAL);
 	binshash(bp, &invalhash);
@@ -777,14 +777,14 @@ getnewbuf(int slpflag, int slptimeo)
 		needbuffer++;
 		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
 		splx(s);
-		return (0);
+		return (NULL);
 	}
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN])) == NULL) {
 		/* wait for a free buffer of any kind */
 		nobuffers = 1;
 		tsleep(&nobuffers, slpflag|(PRIBIO-3), "getnewbuf", slptimeo);
 		splx(s);
-		return (0);
+		return (NULL);
 	}
 
 	bremfree(bp);
@@ -813,7 +813,7 @@ getnewbuf(int slpflag, int slptimeo)
 	bp->b_flags = B_BUSY;
 	bp->b_dev = NODEV;
 	bp->b_blkno = bp->b_lblkno = 0;
-	bp->b_iodone = 0;
+	bp->b_iodone = NULL;
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = 0;
