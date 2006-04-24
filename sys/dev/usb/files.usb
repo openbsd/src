@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.54 2006/04/20 10:12:00 mbalmer Exp $
+#	$OpenBSD: files.usb,v 1.55 2006/04/24 02:27:10 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -80,6 +80,10 @@ file	dev/usb/ukbdmap.c		ukbd
 device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+device	uep: wsmousedev
+attach	uep at uhub
+file	dev/usb/uep.c			uep			needs-flag
 
 # Printers
 device	ulpt
