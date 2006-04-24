@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 2006/04/24 14:30:07 drahn Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
 
-#ifdef GPROF
+#if defined(PROF) || defined(GPROF)
 # define _PROF_PROLOGUE	\
 	pushl %ebp; movl %esp,%ebp; call PIC_PLT(mcount); popl %ebp
 #else
@@ -102,6 +102,7 @@
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	NASENTRY(y)	_ENTRY(_ASM_LABEL(y))
 
 #define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
 
