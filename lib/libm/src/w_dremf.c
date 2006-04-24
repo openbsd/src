@@ -9,8 +9,7 @@
 #include "math_private.h"
 
 float
-dremf(x, y)
-	float x, y;
+dremf(float x, float y)
 {
 	return remainderf(x, y);
 }
