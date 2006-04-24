@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ci.1,v 1.27 2006/04/19 11:08:23 jmc Exp $
+.\"	$OpenBSD: ci.1,v 1.28 2006/04/24 22:06:49 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -72,6 +72,14 @@ using the
 .Fl x
 option.
 .Pp
+Files may be selected by revision or,
+where no revision is specified,
+the latest revision of the default branch is used.
+Revisions are specified either by using the
+.Fl r
+option or
+by appending the revision number to any option that supports it.
+.Pp
 .Nm
 also supports
 keyword substitution \(en
@@ -89,9 +97,8 @@ If
 .Ar date
 is not specified, use the working file's last modification time.
 .It Fl f Ns Op Ar rev
-Force check-in - optionally to
-.Ar rev
-- even if no changes have been made to the working file.
+Force check-in
+\(en even if no changes have been made to the working file.
 .It Fl I
 Interactive mode.
 .It Fl i Ns Op Ar rev

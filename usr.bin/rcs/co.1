@@ -1,4 +1,4 @@
-.\"	$OpenBSD: co.1,v 1.24 2006/04/19 11:08:23 jmc Exp $
+.\"	$OpenBSD: co.1,v 1.25 2006/04/24 22:06:49 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -67,6 +67,14 @@ option.
 During this time,
 no other users may check out the file whilst it is locked.
 .Pp
+Files may be selected by revision or,
+where no revision is specified,
+the latest revision of the default branch is used.
+Revisions are specified either by using the
+.Fl r
+option or
+by appending the revision number to any option that supports it.
+.Pp
 .Nm
 also supports
 keyword substitution \(en
@@ -96,17 +104,11 @@ retrieved revision.
 Print the latest revision no later than
 .Ar rev
 to standard output.
-If
-.Ar rev
-is not specified, print HEAD.
 .It Fl q Ns Op Ar rev
 Be quiet about reporting.
 .It Fl r Ns Op Ar rev
 Retrieve the latest revision no later than
 .Ar rev .
-If
-.Ar rev
-is not specified, retrieve HEAD.
 .It Fl s Ns Ar state
 Retrieve revision of the specified
 .Ar state
