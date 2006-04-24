@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.81 2006/04/18 18:26:13 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.82 2006/04/24 19:23:42 otto Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -487,14 +487,16 @@ map_pages(size_t pages)
 	u_long		idx, pidx, lidx;
 	caddr_t		result, tail;
 	u_long		index, lindex;
+	void 		*pdregion = NULL;
+	size_t		dirs, cnt;
 
 	pages <<= malloc_pageshift;
 	result = MMAP(pages + malloc_guard);
 	if (result == MAP_FAILED) {
-		errno = ENOMEM;
 #ifdef MALLOC_EXTRA_SANITY
 		wrtwarning("(ES): map_pages fails");
 #endif /* MALLOC_EXTRA_SANITY */
+		errno = ENOMEM;
 		return (NULL);
 	}
 	index = ptr2index(result);
@@ -510,19 +512,31 @@ map_pages(size_t pages)
 		malloc_brk = tail;
 		last_index = lindex;
 	}
-	/* Insert directory pages, if needed. */
-	pdir_lookup(index, &pi);
 
+	dirs = lidx - pidx;
+
+	/* Insert directory pages, if needed. */
+	if (pdir_lookup(index, &pi) != 0)
+		dirs++;
+
+	if (dirs > 0) {
+		pdregion = MMAP(malloc_pagesize * dirs);
+		if (pdregion == MAP_FAILED) {
+			munmap(result, tail - result);
+#ifdef MALLOC_EXTRA_SANITY
+		wrtwarning("(ES): map_pages fails");
+#endif
+			errno = ENOMEM;
+			return (NULL);
+		}
+	}
+
+	cnt = 0;
 	for (idx = pidx, spi = pi; idx <= lidx; idx++) {
 		if (pi == NULL || PD_IDX(pi->dirnum) != idx) {
-			if ((pd = MMAP(malloc_pagesize)) == MAP_FAILED) {
-				errno = ENOMEM;		/* XXX */
-				munmap(result, (size_t)(tail - result));
-#ifdef MALLOC_EXTRA_SANITY
-				wrtwarning("(ES): map_pages fails");
-#endif /* MALLOC_EXTRA_SANITY */
-				return (NULL);
-			}
+			pd = (struct pginfo **)((char *)pdregion +
+			    cnt * malloc_pagesize);
+			cnt++;
 			memset(pd, 0, malloc_pagesize);
 			pi = (struct pdinfo *) ((caddr_t) pd + pdi_off);
 			pi->base = pd;
@@ -561,6 +575,13 @@ map_pages(size_t pages)
 		spi = pi;
 		pi = spi->next;
 	}
+#ifdef MALLOC_EXTRA_SANITY
+	if (cnt > dirs)
+		wrtwarning("(ES): cnt > dirs");
+#endif /* MALLOC_EXTRA_SANITY */
+	if (cnt < dirs)
+		munmap((char *)pdregion + cnt * malloc_pagesize,
+		    (dirs - cnt) * malloc_pagesize);
 
 	return (result);
 }
