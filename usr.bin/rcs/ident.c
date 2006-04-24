@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.17 2006/04/21 14:18:26 xsa Exp $	*/
+/*	$OpenBSD: ident.c,v 1.18 2006/04/24 16:16:56 jmc Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -149,5 +149,5 @@ ident_line(FILE *fp)
 void
 ident_usage(void)
 {
-	fprintf(stderr, "usage: ident [-qV] [file ...]\n");
+	fprintf(stderr, "usage: ident [-qV] file ...\n");
 }
