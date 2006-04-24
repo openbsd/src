@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.15 2003/06/02 20:18:30 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.16 2006/04/24 14:28:34 drahn Exp $
  */
 
 #include <machine/asm.h>
@@ -47,12 +47,12 @@
 
 #ifdef __STDC__
 #define	SYSENTRY(x)					\
-			ENTRY(_thread_sys_ ## x)	\
+			ENTRY(_thread_sys_ ## x);	\
 			.weak _C_LABEL(x);		\
 			_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
 #else /* ! __STDC__ */
 #define	SYSENTRY(x)					\
-			ENTRY(_thread_sys_/**/x)	\
+			ENTRY(_thread_sys_/**/x);	\
 			.weak _C_LABEL(x);		\
 			_C_LABEL(x) = _C_LABEL(_thread_sys_/**/x)
 #endif /* ! __STDC__ */
