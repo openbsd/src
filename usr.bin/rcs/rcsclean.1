@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsclean.1,v 1.15 2006/04/24 16:20:33 jmc Exp $
+.\"	$OpenBSD: rcsclean.1,v 1.16 2006/04/24 18:06:59 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -42,6 +42,10 @@ does not remove files from the RCS repository.
 Files may be selected by revision or,
 where no revision is specified,
 the latest revision of the default branch is used.
+Revisions are specified either explicitly using the
+.Fl r
+option or implicitly
+by appending the revision number to any option that supports it.
 .Pp
 .Nm
 also supports
