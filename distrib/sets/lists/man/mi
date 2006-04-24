@@ -2168,6 +2168,9 @@
 ./usr/share/man/cat8/intro.0
 ./usr/share/man/cat8/iopctl.0
 ./usr/share/man/cat8/iostat.0
+./usr/share/man/cat8/iprop.0
+./usr/share/man/cat8/ipropd-master.0
+./usr/share/man/cat8/ipropd-slave.0
 ./usr/share/man/cat8/ipsecadm.0
 ./usr/share/man/cat8/ipsecctl.0
 ./usr/share/man/cat8/isakmpd.0
@@ -2177,6 +2180,7 @@
 ./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/kgmon.0
 ./usr/share/man/cat8/kpasswdd.0
+./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/ktutil.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/ldconfig.0
