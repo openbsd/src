@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.39 2006/04/21 17:17:29 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.40 2006/04/24 08:10:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,7 +52,7 @@ rcsclean_main(int argc, char **argv)
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
-				warnx("invalid RCS keyword expansion mode");
+				warnx("invalid RCS keyword substitution mode");
 				(usage)();
 				exit(1);
 			}
