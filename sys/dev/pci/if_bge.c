@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.141 2006/04/21 03:22:18 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.142 2006/04/24 00:00:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3052,6 +3052,7 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_status |= IFM_ACTIVE;
 		} else {
 			ifmr->ifm_active |= IFM_NONE;
+			return;
 		}
 		ifmr->ifm_active |= IFM_1000_SX;
 		if (CSR_READ_4(sc, BGE_MAC_MODE) & BGE_MACMODE_HALF_DUPLEX)
