@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2006/04/20 17:04:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.29 2006/04/24 20:18:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -64,11 +64,15 @@ int	 check_file_secrecy(int fd, const char *fname);
 u_int32_t	get_rtr_id(void);
 
 struct config_defaults {
+	char		auth_key[MAX_SIMPLE_AUTH_LEN];
+	struct auth_md_head	 md_list;
 	u_int32_t	dead_interval;
 	u_int16_t	transmit_delay;
 	u_int16_t	hello_interval;
 	u_int16_t	rxmt_interval;
 	u_int16_t	metric;
+	enum auth_type	auth_type;
+	u_int8_t	auth_keyid;
 	u_int8_t	priority;
 };
 
@@ -243,7 +247,7 @@ authmd		: AUTHMD number STRING {
 				free($3);
 				YYERROR;
 			}
-			md_list_add(iface, $2, $3);
+			md_list_add(&defs->md_list, $2, $3);
 			free($3);
 		}
 
@@ -253,7 +257,7 @@ authmdkeyid	: AUTHMDKEYID number {
 				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
 				YYERROR;
 			}
-			iface->auth_keyid = $2;
+			defs->auth_keyid = $2;
 		}
 
 authtype	: AUTHTYPE STRING {
@@ -271,7 +275,7 @@ authtype	: AUTHTYPE STRING {
 				YYERROR;
 			}
 			free($2);
-			iface->auth_type = type;
+			defs->auth_type = type;
 		}
 		;
 
@@ -282,8 +286,8 @@ authkey		: AUTHKEY STRING {
 					free($2);
 					YYERROR;
 			}
-			strncpy(iface->auth_key, $2,
-			    sizeof(iface->auth_key));
+			strncpy(defs->auth_key, $2,
+			    sizeof(defs->auth_key));
 			free($2);
 		}
 		;
@@ -339,6 +343,11 @@ defaults	: METRIC number {
 			}
 			defs->rxmt_interval = $2;
 		}
+		| authtype
+		| authkey
+		| authmdkeyid
+		| authmd
+		;
 
 optnl		: '\n' optnl
 		|
@@ -358,9 +367,11 @@ area		: AREA STRING {
 			area = conf_get_area(id);
 
 			memcpy(&areadefs, defs, sizeof(areadefs));
+			md_list_copy(&areadefs.md_list, &defs->md_list);
 			defs = &areadefs;
 		} '{' optnl areaopts_l '}' {
 			area = NULL;
+			md_list_clr(&defs->md_list);
 			defs = &globaldefs;
 		}
 		;
@@ -390,6 +401,7 @@ interface	: INTERFACE STRING	{
 			    iface, entry);
 
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
+			md_list_copy(&ifacedefs.md_list, &defs->md_list);
 			defs = &ifacedefs;
 		} interface_block {
 			iface->dead_interval = defs->dead_interval;
@@ -398,7 +410,12 @@ interface	: INTERFACE STRING	{
 			iface->rxmt_interval = defs->rxmt_interval;
 			iface->metric = defs->metric;
 			iface->priority = defs->priority;
-
+			iface->auth_type = defs->auth_type;
+			iface->auth_keyid = defs->auth_keyid;
+			memcpy(iface->auth_key, defs->auth_key,
+			    sizeof(iface->auth_key));
+			md_list_copy(&iface->auth_md_list, &defs->md_list);
+			md_list_clr(&defs->md_list);
 			iface = NULL;
 			/* interface is always part of an area */
 			defs = &areadefs;
@@ -414,11 +431,7 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl
 		| interfaceoptsl
 		;
 
-interfaceoptsl	: authmd nl
-		| authkey nl
-		| authmdkeyid nl
-		| authtype nl
-		| PASSIVE nl		{ iface->passive = 1; }
+interfaceoptsl	: PASSIVE nl		{ iface->passive = 1; }
 		| defaults nl
 		;
 
@@ -690,6 +703,7 @@ parse_config(char *filename, int opts)
 
 	bzero(&globaldefs, sizeof(globaldefs));
 	defs = &globaldefs;
+	TAILQ_INIT(&defs->md_list);
 	defs->dead_interval = DEFAULT_RTR_DEAD_TIME;
 	defs->transmit_delay = DEFAULT_TRANSMIT_DELAY;
 	defs->hello_interval = DEFAULT_HELLO_INTERVAL;
@@ -736,6 +750,9 @@ parse_config(char *filename, int opts)
 			free(sym);
 		}
 	}
+
+	/* free global config defaults */
+	md_list_clr(&globaldefs.md_list);
 
 	if (errors) {
 		clear_config(conf);

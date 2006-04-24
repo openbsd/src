@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.9 2006/03/08 15:35:07 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.10 2006/04/24 20:18:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -27,6 +27,8 @@
 #include "ospf.h"
 #include "log.h"
 #include "ospfe.h"
+
+struct auth_md *md_list_find(struct auth_md_head *, u_int8_t);
 
 int
 auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
@@ -71,8 +73,8 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		 * (iface->auth_keyid). This allows for key rotation to new
 		 * keys without taking down the network.
 		 */
-		if ((md = md_list_find(iface, ospf_hdr->auth_key.crypt.keyid))
-		    == NULL) {
+		if ((md = md_list_find(&iface->auth_md_list,
+		    ospf_hdr->auth_key.crypt.keyid)) == NULL) {
 			log_debug("auth_validate: keyid %d not configured, "
 			    "interface %s", ospf_hdr->auth_key.crypt.keyid,
 			    iface->name);
@@ -170,7 +172,8 @@ auth_gen(struct buf *buf, struct iface *iface)
 		iface->crypt_seq_num++;
 
 		/* insert plaintext key */
-		if ((md = md_list_find(iface, iface->auth_keyid)) == NULL) {
+		if ((md = md_list_find(&iface->auth_md_list,
+		    iface->auth_keyid)) == NULL) {
 			log_debug("auth_validate: keyid %d not configured, "
 			    "interface %s", iface->auth_keyid, iface->name);
 			return (-1);
@@ -197,17 +200,11 @@ auth_gen(struct buf *buf, struct iface *iface)
 
 /* md list */
 void
-md_list_init(struct iface *iface)
+md_list_add(struct auth_md_head *head, u_int8_t keyid, char *key)
 {
-	TAILQ_INIT(&iface->auth_md_list);
-}
+	struct auth_md	*md;
 
-void
-md_list_add(struct iface *iface, u_int8_t keyid, char *key)
-{
-	struct auth_md	*m, *md;
-
-	if ((md = md_list_find(iface, keyid)) != NULL) {
+	if ((md = md_list_find(head, keyid)) != NULL) {
 		/* update key */
 		strncpy(md->key, key, sizeof(md->key));
 		return;
@@ -218,33 +215,43 @@ md_list_add(struct iface *iface, u_int8_t keyid, char *key)
 
 	md->keyid = keyid;
 	strncpy(md->key, key, sizeof(md->key));
-
-	TAILQ_FOREACH(m, &iface->auth_md_list, entry) {
-		if (m->keyid > keyid) {
-			TAILQ_INSERT_BEFORE(m, md, entry);
-			return;
-		}
-	}
-	TAILQ_INSERT_TAIL(&iface->auth_md_list, md, entry);
+	TAILQ_INSERT_TAIL(head, md, entry);
 }
 
 void
-md_list_clr(struct iface *iface)
+md_list_copy(struct auth_md_head *to, struct auth_md_head *from)
+{
+	struct auth_md	*m, *md;
+
+	TAILQ_INIT(to);
+	
+	TAILQ_FOREACH(m, from, entry) {
+		if ((md = calloc(1, sizeof(struct auth_md))) == NULL)
+			fatalx("md_list_add");
+
+		md->keyid = m->keyid;
+		strncpy(md->key, m->key, sizeof(md->key));
+		TAILQ_INSERT_TAIL(to, md, entry);
+	}
+}
+
+void
+md_list_clr(struct auth_md_head *head)
 {
 	struct auth_md	*m;
 
-	while ((m = TAILQ_FIRST(&iface->auth_md_list)) != NULL) {
-		TAILQ_REMOVE(&iface->auth_md_list, m, entry);
+	while ((m = TAILQ_FIRST(head)) != NULL) {
+		TAILQ_REMOVE(head, m, entry);
 		free(m);
 	}
 }
 
 struct auth_md *
-md_list_find(struct iface *iface, u_int8_t keyid)
+md_list_find(struct auth_md_head *head, u_int8_t keyid)
 {
 	struct auth_md	*m;
 
-	TAILQ_FOREACH(m, &iface->auth_md_list, entry)
+	TAILQ_FOREACH(m, head, entry)
 		if (m->keyid == keyid)
 			return (m);
 

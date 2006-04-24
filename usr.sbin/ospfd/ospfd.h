@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.55 2006/04/20 17:04:30 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.56 2006/04/24 20:18:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -309,6 +309,7 @@ struct auth_md {
 
 /* lsa list used in RDE and OE */
 TAILQ_HEAD(lsa_head, lsa_entry);
+TAILQ_HEAD(auth_md_head, auth_md);
 
 struct iface {
 	LIST_ENTRY(iface)	 entry;
@@ -317,7 +318,7 @@ struct iface {
 	struct event		 lsack_tx_timer;
 
 	LIST_HEAD(, nbr)	 nbr_list;
-	TAILQ_HEAD(, auth_md)	 auth_md_list;
+	struct auth_md_head	 auth_md_list;
 	struct lsa_head		 ls_ack_list;
 
 	char			 name[IF_NAMESIZE];
