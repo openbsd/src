@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.157 2006/04/24 04:51:57 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.158 2006/04/24 21:30:47 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -55,6 +55,8 @@
 
 extern struct rcs_kw rcs_expkw[];
 
+static int workfile_fd;
+
 struct checkin_params {
 	int flags, openflags;
 	mode_t fmode;
@@ -73,7 +75,7 @@ static int	 checkin_init(struct checkin_params *);
 static int	 checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
     char **);
 static int	 checkin_keywordtype(char *);
-static int	 checkin_mtimedate(struct checkin_params *);
+static void	 checkin_mtimedate(struct checkin_params *);
 static void	 checkin_parsekeyword(char *, RCSNUM **, time_t *, char **,
     char **);
 static int	 checkin_update(struct checkin_params *);
@@ -231,6 +233,9 @@ checkin_main(int argc, char **argv)
 	for (i = 0; i < argc; i++) {
 		pb.filename = argv[i];
 
+		if ((workfile_fd = open(pb.filename, O_RDONLY)) == -1)
+			fatal("%s: %s", pb.filename, strerror(errno));
+
 		/*
 		 * Test for existence of ,v file. If we are expected to
 		 * create one, set NEWFILE flag.
@@ -242,16 +247,19 @@ checkin_main(int argc, char **argv)
 			else {
 				warnx("No existing RCS file");
 				status = 1;
+				(void)close(workfile_fd);
 				continue;
 			}
 		} else {
 			if (pb.flags & CI_INIT) {
 				warnx("%s already exists", pb.fpath);
 				status = 1;
+				(void)close(workfile_fd);
 				continue;
 			}
 			pb.openflags &= ~RCS_CREATE;
 		}
+
 		/*
 		 * If we are to create a new ,v file, we must decide where it
 		 * should go.
@@ -260,6 +268,7 @@ checkin_main(int argc, char **argv)
 			char *fpath = rcs_choosefile(pb.filename);
 			if (fpath == NULL) {
 				status = 1;
+				(void)close(workfile_fd);
 				continue;
 			}
 			strlcpy(pb.fpath, fpath, sizeof(pb.fpath));
@@ -284,12 +293,17 @@ checkin_main(int argc, char **argv)
 
 		if (!(pb.flags & NEWFILE))
 			pb.flags |= CI_SKIPDESC;
+
 		/* XXX - support for commiting to a file without revisions */
 		if (pb.file->rf_ndelta == 0) {
 			pb.flags |= NEWFILE;
 			pb.file->rf_flags |= RCS_CREATE;
 		}
 
+		/*
+		 * workfile_fd will be closed in checkin_init or
+		 * checkin_update
+		 */
 		if (pb.flags & NEWFILE) {
 			if (checkin_init(&pb) == -1)
 				status = 1;
@@ -461,9 +475,8 @@ checkin_update(struct checkin_params *pb)
 	 * Set the date of the revision to be the last modification
 	 * time of the working file if -d has no argument.
 	 */
-	if (pb->date == DATE_MTIME &&
-	    (checkin_mtimedate(pb) < 0))
-		goto fail;
+	if (pb->date == DATE_MTIME)
+		checkin_mtimedate(pb);
 
 	/* Date from argv/mtime must be more recent than HEAD */
 	if (pb->date != DATE_NOW) {
@@ -549,8 +562,8 @@ checkin_update(struct checkin_params *pb)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
 	/* Maintain RCSFILE permissions */
-	if (stat(pb->filename, &st) == -1)
-		goto fail;
+	if (fstat(workfile_fd, &st))
+		fatal("%s: %s", pb->filename, strerror(errno));
 
 	/* Strip all the write bits */
 	pb->file->rf_mode = st.st_mode &
@@ -558,6 +571,7 @@ checkin_update(struct checkin_params *pb)
 
 	xfree(pb->deltatext);
 	xfree(filec);
+	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
 
 	/* Write out RCSFILE before calling checkout_rev() */
@@ -642,9 +656,8 @@ skipdesc:
 	 * Set the date of the revision to be the last modification
 	 * time of the working file if -d has no argument.
 	 */
-	if (pb->date == DATE_MTIME &&
-	    (checkin_mtimedate(pb) < 0))
-		goto fail;
+	if (pb->date == DATE_MTIME)
+		checkin_mtimedate(pb);
 
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
@@ -681,13 +694,15 @@ skipdesc:
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
 	/* Inherit RCSFILE permissions from file being checked in */
-	if (stat(pb->filename, &st) == -1)
-		goto fail;
+	if (fstat(workfile_fd, &st))
+		fatal("%s: %s", pb->filename, strerror(errno));
+
 	/* Strip all the write bits */
 	pb->file->rf_mode = st.st_mode &
 	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 
 	xfree(filec);
+	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
 
 	/* Write out RCSFILE before calling checkout_rev() */
@@ -699,7 +714,6 @@ skipdesc:
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 	}
-
 
 	if (!(pb->flags & QUIET)) {
 		fprintf(stderr, "initial revision: %s\n",
@@ -764,6 +778,7 @@ checkin_revert(struct checkin_params *pb)
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 	warnx("file is unchanged; reverting to previous revision %s", rbuf);
 	pb->flags |= CO_REVERT;
+	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 		checkout_rev(pb->file, pb->frev, pb->filename,
@@ -799,19 +814,16 @@ checkin_checklock(struct checkin_params *pb)
  *
  * Set the date of the revision to be the last modification
  * time of the working file.
- *
- * On success, return 0. On error return -1.
  */
-static int
+static void
 checkin_mtimedate(struct checkin_params *pb)
 {
 	struct stat sb;
-	if (stat(pb->filename, &sb) != 0) {
-		warn("%s", pb->filename);
-		return (-1);
-	}
+
+	if (fstat(workfile_fd, &sb))
+		fatal("%s: %s", pb->filename, strerror(errno));
+
 	pb->date = (time_t)sb.st_mtimespec.tv_sec;
-	return (0);
 }
 
 /*
