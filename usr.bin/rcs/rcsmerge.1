@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsmerge.1,v 1.7 2006/04/24 08:18:06 jmc Exp $
+.\"	$OpenBSD: rcsmerge.1,v 1.8 2006/04/24 13:32:10 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .Nd merge RCS revisions
 .Sh SYNOPSIS
 .Nm
-.Op Fl AEeV
+.Op Fl EeV
 .Op Fl k Ns Ar mode
 .Op Fl p Ns Op Ar rev
 .Op Fl q Ns Op Ar rev
@@ -45,13 +45,9 @@ man page for more information.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
-.It Fl A
-Most verbose output.
 .It Fl E
-Less information than
-.Fl A .
-This is the default.
-See
+Default merge:
+see
 .Xr diff3 1
 for details.
 .It Fl e
@@ -109,7 +105,7 @@ overwriting the working copy:
 .Xr rcsdiff 1 ,
 .Xr rlog 1
 .Sh STANDARDS
-The flag
-.Op Fl T
-has no effect and is provided
+The flags
+.Op Fl AT
+have no effect and are provided
 for compatibility only.
