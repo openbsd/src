@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.10 2006/04/02 01:36:07 jsg Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.11 2006/04/25 09:09:42 jsg Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.5 2001/01/05 15:29:40 bouyer Exp $	*/
 
 /*
@@ -146,6 +146,10 @@ static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02, 0x01, 0x02, 0x01};
 #define ICH6_SATA_MAP_CMB_MASK	0x03 /* Combined mode bits */
 #define ICH6_SATA_MAP_CMB_PRI	0x01 /* Combined mode, IDE Primary */
 #define ICH6_SATA_MAP_CMB_SEC	0x02 /* Combined mode, IDE Secondary */
+#define ICH7_SATA_MAP_SMS_MASK	0xc0 /* SATA Mode Select */
+#define ICH7_SATA_MAP_SMS_IDE	0x00
+#define ICH7_SATA_MAP_SMS_AHCI	0x40
+#define ICH7_SATA_MAP_SMS_RAID	0x80
 
 
 #endif	/* !_DEV_PCI_PCIIDE_PIIX_REG_H_ */

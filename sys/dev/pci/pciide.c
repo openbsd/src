@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.235 2006/04/23 15:08:34 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.236 2006/04/25 09:09:42 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -442,7 +442,15 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
 	},
-	{ PCI_PRODUCT_INTEL_82801GBM_SATA, /* Intel 82801GB (ICH7M) SATA */
+	{ PCI_PRODUCT_INTEL_82801GR_AHCI, /* Intel 82801GR (ICH7R) AHCI */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801GBM_SATA, /* Intel 82801GBM (ICH7M) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801GBM_AHCI, /* Intel 82801GBM (ICH7M) AHCI */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
 	}
@@ -2171,7 +2179,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
 	bus_size_t cmdsize, ctlsize;
-	u_int8_t reg;
+	u_int8_t reg, ich7 = 0;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -2217,14 +2225,17 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    PCIIDE_INTERFACE_PCI(1);
 		}
 		break;
+	/* ICH 7 */
+	case PCI_PRODUCT_INTEL_82801GB_SATA:
+	case PCI_PRODUCT_INTEL_82801GR_SATA:
+	case PCI_PRODUCT_INTEL_82801GR_AHCI:
+	case PCI_PRODUCT_INTEL_82801GBM_SATA:
+	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
+		ich7 = 1;
 	/* ICH 6 */
 	case PCI_PRODUCT_INTEL_82801FB_SATA:
 	case PCI_PRODUCT_INTEL_82801FR_SATA:
 	case PCI_PRODUCT_INTEL_82801FBM_SATA:
-	/* ICH 7 */
-	case PCI_PRODUCT_INTEL_82801GB_SATA:
-	case PCI_PRODUCT_INTEL_82801GR_SATA:
-	case PCI_PRODUCT_INTEL_82801GBM_SATA:
 		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP) &
 		    ICH6_SATA_MAP_CMB_MASK;
 		if (reg != ICH6_SATA_MAP_CMB_PRI &&
@@ -2233,6 +2244,15 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    ICH5_SATA_PI);
 			reg |= ICH5_SATA_PI_PRI_NATIVE |
 			    ICH5_SATA_PI_SEC_NATIVE;
+
+			/*
+			 * Ask for SATA IDE Mode, we don't need to do this
+			 * for the combined mode case as combined mode is
+			 * only allowed in IDE Mode
+			 */
+			if (ich7)
+				reg &= ~ICH7_SATA_MAP_SMS_MASK;
+
 			pciide_pci_write(pa->pa_pc, pa->pa_tag,
 			    ICH5_SATA_PI, reg);
 			interface |= PCIIDE_INTERFACE_PCI(0) |
