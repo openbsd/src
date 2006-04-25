@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.13 2006/03/30 14:28:28 norby Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.14 2006/04/25 15:49:35 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -348,8 +348,6 @@ void	rsvp_input(struct mbuf *, int, int);
 #else
 int	ip_mforward(struct mbuf *, struct ifnet *);
 #endif /* RSVP_ISI */
-
-void	ipip_mroute_input(struct mbuf *, ...);
 
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_MROUTE_H_ */

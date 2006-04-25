@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.36 2006/03/25 22:41:48 djm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.37 2006/04/25 15:49:35 claudio Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -184,15 +184,6 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	}
 
 	ipo = mtod(m, struct ip *);
-
-#ifdef MROUTING
-	if (ipo->ip_v == IPVERSION && ipo->ip_p == IPPROTO_IPV4) {
-		if (IN_MULTICAST(((struct ip *)((char *) ipo + iphlen))->ip_dst.s_addr)) {
-			ipip_mroute_input (m, iphlen);
-			return;
-		}
-	}
-#endif /* MROUTING */
 
 	/* Keep outer ecn field. */
 	switch (v >> 4) {

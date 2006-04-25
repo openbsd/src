@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.42 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.43 2006/04/25 15:49:35 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -318,13 +318,6 @@ static vifi_t reg_vif_num = VIFI_INVALID;
  */
 static vifi_t	   numvifs = 0;
 static int have_encap_tunnel = 0;
-
-/*
- * one-back cache used by ipip_mroute_input to locate a tunnel's vif
- * given a datagram's src ip address.
- */
-static struct in_addr last_encap_src;
-static struct vif *last_encap_vif;
 
 /*
  * whether or not special PIM assert processing is enabled.
@@ -854,25 +847,8 @@ add_vif(struct mbuf *m)
 	}
 
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
-		if (vifcp->vifc_flags & VIFF_SRCRT) {
-			log(LOG_ERR, "Source routed tunnels not supported.\n");
-			return (EOPNOTSUPP);
-		}
-
-		/* Create a fake encapsulation interface. */
-		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
-		bzero(ifp, sizeof(*ifp));
-		snprintf(ifp->if_xname, sizeof ifp->if_xname,
-		    "mdecap%d", vifcp->vifc_vifi);
-
-		/* Prepare cached route entry. */
-		bzero(&vifp->v_route, sizeof(vifp->v_route));
-
-		/*
-		 * Tell ipip_mroute_input() to start looking at
-		 * encapsulated packets.
-		 */
-		have_encap_tunnel = 1;
+		/* tunnels are no longer supported use gif(4) instead */
+		return (EOPNOTSUPP);
 #ifdef PIM
 	} else if (vifcp->vifc_flags & VIFF_REGISTER) {
 		ifp = &multicast_register_if;
@@ -971,11 +947,7 @@ reset_vif(struct vif *vifp)
 	}
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
-		free(vifp->v_ifp, M_MRTABLE);
-		if (vifp == last_encap_vif) {
-			last_encap_vif = NULL;
-			last_encap_src = zeroin_addr;
-		}
+		/* empty */
 	} else if (vifp->v_flags & VIFF_REGISTER) {
 #ifdef PIM
 		reg_vif_num = VIFI_INVALID;
@@ -1924,82 +1896,6 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 		tbf_send_packet(vifp, mb_copy);
 	else
 		tbf_control(vifp, mb_copy, ip, ntohs(ip_copy->ip_len));
-}
-
-/*
- * De-encapsulate a packet and feed it back through ip input (this
- * routine is called whenever IP gets a packet with proto type
- * ENCAP_PROTO and a local destination address).
- */
-void
-ipip_mroute_input(struct mbuf *m, ...)
-{
-	int hlen;
-	struct ip *ip = mtod(m, struct ip *);
-	int s;
-	struct ifqueue *ifq;
-	struct vif *vifp;
-	va_list ap;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	va_end(ap);
-
-	if (!have_encap_tunnel) {
-		rip_input(m, 0);
-		return;
-	}
-
-	/*
-	 * dump the packet if we don't have an encapsulating tunnel
-	 * with the source.
-	 * Note:  This code assumes that the remote site IP address
-	 * uniquely identifies the tunnel (i.e., that this site has
-	 * at most one tunnel with the remote site).
-	 */
-	if (!in_hosteq(ip->ip_src, last_encap_src)) {
-		struct vif *vife;
-
-		vifp = viftable;
-		vife = vifp + numvifs;
-		for (; vifp < vife; vifp++)
-			if (vifp->v_flags & VIFF_TUNNEL &&
-			    in_hosteq(vifp->v_rmt_addr, ip->ip_src))
-				break;
-		if (vifp == vife) {
-			mrtstat.mrts_cant_tunnel++; /*XXX*/
-			m_freem(m);
-			if (mrtdebug)
-				log(LOG_DEBUG,
-				    "ip_mforward: no tunnel with %x\n",
-				    ntohl(ip->ip_src.s_addr));
-			return;
-		}
-		last_encap_vif = vifp;
-		last_encap_src = ip->ip_src;
-	} else
-		vifp = last_encap_vif;
-
-	m->m_data += hlen;
-	m->m_len -= hlen;
-	m->m_pkthdr.len -= hlen;
-	m->m_pkthdr.rcvif = vifp->v_ifp;
-	ifq = &ipintrq;
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
-		/*
-		 * normally we would need a "schednetisr(NETISR_IP)"
-		 * here but we were called by ip_input and it is going
-		 * to loop back & try to dequeue the packet we just
-		 * queued as soon as we return so we avoid the
-		 * unnecessary software interrrupt.
-		 */
-	}
-	splx(s);
 }
 
 /*
