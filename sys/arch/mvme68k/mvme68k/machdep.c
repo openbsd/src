@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2006/04/25 05:40:15 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.97 2006/04/25 06:12:23 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -109,6 +109,8 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_var.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -203,8 +205,6 @@ mvme68k_init()
 void
 consinit()
 {
-	extern void db_machine_init(void);
-
 	/*
 	 * Initialize the console before we print anything out.
 	 */
