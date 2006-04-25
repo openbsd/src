@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2004/01/28 02:50:28 espie Exp $
+#	$OpenBSD: Makefile,v 1.39 2006/04/25 11:47:43 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -49,6 +49,8 @@ regress: check
 # kludge for people who forget to make depend
 var.o: varhashconsts.h
 cond.o: condhashconsts.h
+var.ln: varhashconsts.h
+cond.ln: condhashconsts.h
 
 .if make(install)
 SUBDIR+= PSD.doc
