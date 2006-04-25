@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.3 2006/03/09 09:43:03 claudio Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.4 2006/04/25 08:22:14 claudio Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/types.h>
 
 #include "ospfd.h"
+#include "log.h"
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -51,13 +52,17 @@
  * In particular, it should not be this one.
  */
 u_int16_t
-in_cksum(void *p, int len)
+in_cksum(void *p, size_t l)
 {
 	unsigned int sum = 0;
-	int oddbyte = 0, v = 0;
+	int len, oddbyte = 0, v = 0;
 	u_char *cp = p;
 
-	/* we assume < 2^16 bytes being summed */
+	/* ensure that < 2^16 bytes being summed */
+	if (l >= (1 << 16))
+		fatalx("in_cksum: packet to big");
+	len = (int)l;
+
 	while (len > 0) {
 		if (oddbyte) {
 			sum += v + *cp++;
