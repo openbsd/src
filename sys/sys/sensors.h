@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.16 2006/04/20 21:00:20 deraadt Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.17 2006/04/25 03:14:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -80,6 +80,7 @@ struct sensor {
 	int flags;			/* sensor flags */
 #define SENSOR_FINVALID		0x0001	/* sensor is invalid */
 #define SENSOR_FUNKNOWN		0x0002	/* sensor value is unknown */
+	struct timeval tv;		/* sensor value last change time */
 };
 
 #ifdef _KERNEL
