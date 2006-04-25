@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.35 2006/04/18 04:10:05 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.36 2006/04/25 01:25:41 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.35 2006/04/18 04:10:05 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.36 2006/04/25 01:25:41 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1723,7 +1723,7 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		if (ptn->tn_op == CON && isityp(nt) && styp(nt) == styp(ot) &&
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
-		} else {
+		} else if (ptn->tn_op != CON) {
 			/* %s arg #%d: converted from '%s' to '%s' */
 			warning(259, funcname(farg->fa_func), arg,
 			    tyname(tn->tn_type), tyname(tp));
@@ -1761,17 +1761,21 @@ iiconv(op_t op, farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 	}
 #endif
 
-	if (psize(nt) < psize(ot) &&
-	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
-	     aflag > 1)) {
-		/* conversion from '%s' to '%s' may lose accuracy */
-		if (aflag) {
-			if (op == FARG) {
-				warning(298, funcname(farg->fa_func), arg,
-				    tyname(tn->tn_type), tyname(tp));
-			} else {
-				warning(132, tyname(tn->tn_type), tyname(tp));
-			}
+	if (rank(nt) < rank(ot)) {
+		/* coercion from greater to lesser width */
+		if (op == FARG) {
+			warning(298, funcname(farg->fa_func), arg,
+			    tyname(tn->tn_type), tyname(tp));
+		} else {
+			warning(132, tyname(tn->tn_type), tyname(tp));
+		}
+	} else if (isutyp(nt) != isutyp(ot) && rank(nt) == rank(ot)) {
+		/* coercion to same width but with signedness change */
+		if (op == FARG) {
+			warning(298, funcname(farg->fa_func), arg,
+			    tyname(tn->tn_type), tyname(tp));
+		} else {
+			warning(132, tyname(tn->tn_type), tyname(tp));
 		}
 	}
 }

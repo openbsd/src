@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint.h,v 1.4 2006/03/08 07:18:51 moritz Exp $	*/
+/*	$OpenBSD: lint.h,v 1.5 2006/04/25 01:25:41 cloder Exp $	*/
 /*	$NetBSD: lint.h,v 1.2 1995/07/03 21:24:18 cgd Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ typedef	struct {
 	int	tt_sz;			/* size in bits */
 	int	tt_psz;			/* size, different from tt_sz
 					   if pflag is set */
+	int	tt_rank;		/* rank (C99), similar to tt_psz */
 	tspec_t	tt_styp;		/* signed counterpart */
 	tspec_t	tt_utyp;		/* unsigned counterpart */
 	u_int	tt_isityp : 1;		/* 1 if integer type */
@@ -88,6 +89,7 @@ typedef	struct {
 
 #define size(t)		(ttab[t].tt_sz)
 #define psize(t)	(ttab[t].tt_psz)
+#define rank(t)		(ttab[t].tt_rank)
 #define styp(t)		(ttab[t].tt_styp)
 #define utyp(t)		(ttab[t].tt_utyp)
 #define isityp(t)	(ttab[t].tt_isityp)
