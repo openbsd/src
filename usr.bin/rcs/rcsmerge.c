@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.33 2006/04/24 13:32:10 jmc Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.34 2006/04/25 03:25:42 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -43,7 +43,7 @@ rcsmerge_main(int argc, char **argv)
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;
 
-	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r:TVx::z:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r::TVx::z:")) != -1) {
 		switch (ch) {
 		case 'A': case 'E': case 'e':
 			break;
@@ -64,7 +64,8 @@ rcsmerge_main(int argc, char **argv)
 			flags |= QUIET;
 			break;
 		case 'r':
-			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
+			rcs_setrevstr2(&rev_str1, &rev_str2,
+			    rcs_optarg ? rcs_optarg : "");
 			break;
 		case 'T':
 			/*
@@ -122,9 +123,13 @@ rcsmerge_main(int argc, char **argv)
 			rev2 = NULL;
 		}
 
-		if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
+		if (strcmp(rev_str1, "") == 0) {
+			rev1 = rcsnum_alloc();
+			rcsnum_cpy(file->rf_head, rev1, 0);
+		} else if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
 			fatal("invalid revision: %s", rev_str1);
-		if (rev_str2 != NULL) {
+
+		if (rev_str2 != NULL && strcmp(rev_str2, "") != 0) {
 			if ((rev2 = rcs_getrevnum(rev_str2, file)) == NULL)
 				fatal("invalid revision: %s", rev_str2);
 		} else {
