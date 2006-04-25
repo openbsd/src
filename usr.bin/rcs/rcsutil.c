@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.3 2006/04/25 13:36:36 xsa Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.4 2006/04/25 13:55:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -285,7 +285,7 @@ void
 rcs_set_rev(const char *str, RCSNUM **rev)
 {
 	if (str == NULL || (*rev = rcsnum_parse(str)) == NULL)
-		errx(1, "bad revision number '%s'", str);
+		errx(1, "bad revision number `%s'", str);
 }
 
 /*

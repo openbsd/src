@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.115 2006/04/25 13:36:35 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.116 2006/04/25 13:55:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -329,13 +329,13 @@ rcs_main(int argc, char **argv)
 
 			*logmsg++ = '\0';
 			if ((logrev = rcsnum_parse(logstr)) == NULL) {
-				warnx("'%s' bad revision number", logstr);
+				warnx("`%s' bad revision number", logstr);
 				rcs_close(file);
 				continue;
 			}
 
 			if (rcs_rev_setlog(file, logrev, logmsg) < 0) {
-				warnx("failed to set logmsg for '%s' to '%s'",
+				warnx("failed to set logmsg for `%s' to `%s'",
 				    logstr, logmsg);
 				rcs_close(file);
 				rcsnum_free(logrev);

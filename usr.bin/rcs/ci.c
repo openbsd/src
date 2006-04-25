@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.160 2006/04/25 13:36:35 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.161 2006/04/25 13:55:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -277,7 +277,7 @@ checkin_main(int argc, char **argv)
 
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
 		if (pb.file == NULL)
-			errx(1, "failed to open rcsfile '%s'", pb.fpath);
+			errx(1, "failed to open rcsfile `%s'", pb.fpath);
 
 		if (pb.flags & DESCRIPTION)
 			rcs_set_description(pb.file, pb.description);
