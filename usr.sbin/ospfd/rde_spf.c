@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.52 2006/03/22 16:01:20 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.53 2006/04/25 19:27:36 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -35,8 +35,6 @@ RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
-void		 spf_dump(struct area *);	/* XXX */
-void		 cand_list_dump(void);		/* XXX */
 void		 calc_next_hop(struct vertex *, struct vertex *);
 void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
 		     u_int32_t, struct in_addr, struct in_addr, enum path_type,
@@ -44,35 +42,6 @@ void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
 struct rt_node	*rt_lookup(enum dst_type, in_addr_t);
 void		 rt_invalidate(struct area *);
 int		 linked(struct vertex *, struct vertex *);
-
-void
-spf_dump(struct area *area)
-{
-	struct lsa_tree	*tree = &area->lsa_tree;
-	struct vertex	*v;
-	struct vertex	*p;	/* parent */
-	struct in_addr	 addr;
-
-	log_debug("spf_dump:");
-	RB_FOREACH(v, lsa_tree, tree) {
-		addr.s_addr = htonl(v->ls_id);
-		log_debug("    id %s type %d cost %d", inet_ntoa(addr),
-		     v->type, v->cost);
-		log_debug("    nexthop: %s", inet_ntoa(v->nexthop));
-
-#if 1
-		log_debug("    --------------------------------------------");
-		p = v->prev;
-		while (p != NULL) {
-			addr.s_addr = htonl(p->ls_id);
-			log_debug("        id %15s type %d cost %d",
-			    inet_ntoa(addr), p->type, p->cost);
-			p = p->prev;
-		}
-	log_debug("");
-#endif
-	}
-}
 
 void
 spf_calc(struct area *area)
@@ -184,8 +153,6 @@ spf_calc(struct area *area)
 				cand_list_add(w);
 			}
 		}
-
-		/* cand_list_dump(); */
 
 		/* get next vertex */
 		v = cand_list_pop();
@@ -466,21 +433,6 @@ cand_list_add(struct vertex *v)
 		}
 	}
 	TAILQ_INSERT_TAIL(&cand_list, v, cand);
-}
-
-void
-cand_list_dump(void)
-{
-	struct vertex	*c = NULL;
-	struct in_addr	 addr;
-
-	log_debug("cand_list_dump:");
-	TAILQ_FOREACH(c, &cand_list, cand) {
-		addr.s_addr = htonl(c->ls_id);
-		log_debug("    id %s type %d cost %d", inet_ntoa(addr),
-		     c->type, c->cost);
-	}
-	log_debug("");
 }
 
 struct vertex *
