@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.19 2006/03/24 03:44:14 ray Exp $	*/
+/*	$OpenBSD: cal.c,v 1.20 2006/04/25 05:18:26 tedu Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.19 2006/03/24 03:44:14 ray Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.20 2006/04/25 05:18:26 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,6 +137,7 @@ main(int argc, char *argv[])
 	struct tm *local_time;
 	time_t now;
 	int ch, month, year, yflag;
+	const char *errstr;
 
 	yflag = year = 0;
 	while ((ch = getopt(argc, argv, "jy")) != -1)
@@ -170,7 +171,8 @@ main(int argc, char *argv[])
 			local_time = localtime(&now);
 			year = local_time->tm_year + TM_YEAR_BASE;
 		} else {
-			if ((year = atoi(*argv)) < 1 || year > 9999)
+			year = strtonum(*argv, 1, 9999, &errstr);
+			if (errstr)
 				errx(1, "illegal year value: use 1-9999");
 		}
 		break;
