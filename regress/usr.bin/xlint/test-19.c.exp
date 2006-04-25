@@ -1,0 +1,179 @@
+test-19.c:44: warning: c1 arg #1: conversion from 'unsigned char' to 'char' may lose accuracy
+test-19.c:45: warning: c1 arg #1: conversion from 'short' to 'char' may lose accuracy
+test-19.c:46: warning: c1 arg #1: conversion from 'unsigned short' to 'char' may lose accuracy
+test-19.c:47: warning: c1 arg #1: conversion from 'int' to 'char' may lose accuracy
+test-19.c:48: warning: c1 arg #1: conversion from 'unsigned int' to 'char' may lose accuracy
+test-19.c:49: warning: c1 arg #1: conversion from 'long' to 'char' may lose accuracy
+test-19.c:50: warning: c1 arg #1: conversion from 'unsigned long' to 'char' may lose accuracy
+test-19.c:51: warning: c1 arg #1: conversion from 'long long' to 'char' may lose accuracy
+test-19.c:52: warning: c1 arg #1: conversion from 'unsigned long long' to 'char' may lose accuracy
+test-19.c:57: warning: uc1 arg #1: conversion from 'char' to 'unsigned char' may lose accuracy
+test-19.c:59: warning: uc1 arg #1: conversion from 'short' to 'unsigned char' may lose accuracy
+test-19.c:60: warning: uc1 arg #1: conversion from 'unsigned short' to 'unsigned char' may lose accuracy
+test-19.c:61: warning: uc1 arg #1: conversion from 'int' to 'unsigned char' may lose accuracy
+test-19.c:62: warning: uc1 arg #1: conversion from 'unsigned int' to 'unsigned char' may lose accuracy
+test-19.c:63: warning: uc1 arg #1: conversion from 'long' to 'unsigned char' may lose accuracy
+test-19.c:64: warning: uc1 arg #1: conversion from 'unsigned long' to 'unsigned char' may lose accuracy
+test-19.c:65: warning: uc1 arg #1: conversion from 'long long' to 'unsigned char' may lose accuracy
+test-19.c:66: warning: uc1 arg #1: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy
+test-19.c:74: warning: s1 arg #1: conversion from 'unsigned short' to 'short' may lose accuracy
+test-19.c:75: warning: s1 arg #1: conversion from 'int' to 'short' may lose accuracy
+test-19.c:76: warning: s1 arg #1: conversion from 'unsigned int' to 'short' may lose accuracy
+test-19.c:77: warning: s1 arg #1: conversion from 'long' to 'short' may lose accuracy
+test-19.c:78: warning: s1 arg #1: conversion from 'unsigned long' to 'short' may lose accuracy
+test-19.c:79: warning: s1 arg #1: conversion from 'long long' to 'short' may lose accuracy
+test-19.c:80: warning: s1 arg #1: conversion from 'unsigned long long' to 'short' may lose accuracy
+test-19.c:87: warning: us1 arg #1: conversion from 'short' to 'unsigned short' may lose accuracy
+test-19.c:89: warning: us1 arg #1: conversion from 'int' to 'unsigned short' may lose accuracy
+test-19.c:90: warning: us1 arg #1: conversion from 'unsigned int' to 'unsigned short' may lose accuracy
+test-19.c:91: warning: us1 arg #1: conversion from 'long' to 'unsigned short' may lose accuracy
+test-19.c:92: warning: us1 arg #1: conversion from 'unsigned long' to 'unsigned short' may lose accuracy
+test-19.c:93: warning: us1 arg #1: conversion from 'long long' to 'unsigned short' may lose accuracy
+test-19.c:94: warning: us1 arg #1: conversion from 'unsigned long long' to 'unsigned short' may lose accuracy
+test-19.c:104: warning: i1 arg #1: converted from 'unsigned int' to 'int'
+test-19.c:104: warning: i1 arg #1: conversion from 'unsigned int' to 'int' may lose accuracy
+test-19.c:105: warning: i1 arg #1: converted from 'long' to 'int'
+test-19.c:105: warning: i1 arg #1: conversion from 'long' to 'int' may lose accuracy
+test-19.c:106: warning: i1 arg #1: converted from 'unsigned long' to 'int'
+test-19.c:106: warning: i1 arg #1: conversion from 'unsigned long' to 'int' may lose accuracy
+test-19.c:107: warning: i1 arg #1: converted from 'long long' to 'int'
+test-19.c:107: warning: i1 arg #1: conversion from 'long long' to 'int' may lose accuracy
+test-19.c:108: warning: i1 arg #1: converted from 'unsigned long long' to 'int'
+test-19.c:108: warning: i1 arg #1: conversion from 'unsigned long long' to 'int' may lose accuracy
+test-19.c:109: warning: i1 arg #1: converted from 'float' to 'int'
+test-19.c:110: warning: i1 arg #1: converted from 'double' to 'int'
+test-19.c:111: warning: i1 arg #1: converted from 'long double' to 'int'
+test-19.c:113: warning: ui1 arg #1: converted from 'char' to 'unsigned int'
+test-19.c:114: warning: ui1 arg #1: converted from 'unsigned char' to 'unsigned int'
+test-19.c:115: warning: ui1 arg #1: converted from 'short' to 'unsigned int'
+test-19.c:116: warning: ui1 arg #1: converted from 'unsigned short' to 'unsigned int'
+test-19.c:117: warning: ui1 arg #1: converted from 'int' to 'unsigned int'
+test-19.c:117: warning: ui1 arg #1: conversion from 'int' to 'unsigned int' may lose accuracy
+test-19.c:119: warning: ui1 arg #1: converted from 'long' to 'unsigned int'
+test-19.c:119: warning: ui1 arg #1: conversion from 'long' to 'unsigned int' may lose accuracy
+test-19.c:120: warning: ui1 arg #1: converted from 'unsigned long' to 'unsigned int'
+test-19.c:120: warning: ui1 arg #1: conversion from 'unsigned long' to 'unsigned int' may lose accuracy
+test-19.c:121: warning: ui1 arg #1: converted from 'long long' to 'unsigned int'
+test-19.c:121: warning: ui1 arg #1: conversion from 'long long' to 'unsigned int' may lose accuracy
+test-19.c:122: warning: ui1 arg #1: converted from 'unsigned long long' to 'unsigned int'
+test-19.c:122: warning: ui1 arg #1: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy
+test-19.c:123: warning: ui1 arg #1: converted from 'float' to 'unsigned int'
+test-19.c:124: warning: ui1 arg #1: converted from 'double' to 'unsigned int'
+test-19.c:125: warning: ui1 arg #1: converted from 'long double' to 'unsigned int'
+test-19.c:127: warning: f1 arg #1: converted from 'char' to 'float'
+test-19.c:128: warning: f1 arg #1: converted from 'unsigned char' to 'float'
+test-19.c:129: warning: f1 arg #1: converted from 'short' to 'float'
+test-19.c:130: warning: f1 arg #1: converted from 'unsigned short' to 'float'
+test-19.c:131: warning: f1 arg #1: converted from 'int' to 'float'
+test-19.c:132: warning: f1 arg #1: converted from 'unsigned int' to 'float'
+test-19.c:133: warning: f1 arg #1: converted from 'long' to 'float'
+test-19.c:134: warning: f1 arg #1: converted from 'unsigned long' to 'float'
+test-19.c:135: warning: f1 arg #1: converted from 'long long' to 'float'
+test-19.c:136: warning: f1 arg #1: converted from 'unsigned long long' to 'float'
+test-19.c:138: warning: f1 arg #1: converted from 'double' to 'float'
+test-19.c:139: warning: f1 arg #1: converted from 'long double' to 'float'
+test-19.c:141: warning: l1 arg #1: converted from 'char' to 'long'
+test-19.c:142: warning: l1 arg #1: converted from 'unsigned char' to 'long'
+test-19.c:143: warning: l1 arg #1: converted from 'short' to 'long'
+test-19.c:144: warning: l1 arg #1: converted from 'unsigned short' to 'long'
+test-19.c:145: warning: l1 arg #1: converted from 'int' to 'long'
+test-19.c:146: warning: l1 arg #1: converted from 'unsigned int' to 'long'
+test-19.c:148: warning: l1 arg #1: converted from 'unsigned long' to 'long'
+test-19.c:148: warning: l1 arg #1: conversion from 'unsigned long' to 'long' may lose accuracy
+test-19.c:149: warning: l1 arg #1: converted from 'long long' to 'long'
+test-19.c:149: warning: l1 arg #1: conversion from 'long long' to 'long' may lose accuracy
+test-19.c:150: warning: l1 arg #1: converted from 'unsigned long long' to 'long'
+test-19.c:150: warning: l1 arg #1: conversion from 'unsigned long long' to 'long' may lose accuracy
+test-19.c:151: warning: l1 arg #1: converted from 'float' to 'long'
+test-19.c:152: warning: l1 arg #1: converted from 'double' to 'long'
+test-19.c:153: warning: l1 arg #1: converted from 'long double' to 'long'
+test-19.c:155: warning: ul1 arg #1: converted from 'char' to 'unsigned long'
+test-19.c:156: warning: ul1 arg #1: converted from 'unsigned char' to 'unsigned long'
+test-19.c:157: warning: ul1 arg #1: converted from 'short' to 'unsigned long'
+test-19.c:158: warning: ul1 arg #1: converted from 'unsigned short' to 'unsigned long'
+test-19.c:159: warning: ul1 arg #1: converted from 'int' to 'unsigned long'
+test-19.c:160: warning: ul1 arg #1: converted from 'unsigned int' to 'unsigned long'
+test-19.c:161: warning: ul1 arg #1: converted from 'long' to 'unsigned long'
+test-19.c:161: warning: ul1 arg #1: conversion from 'long' to 'unsigned long' may lose accuracy
+test-19.c:163: warning: ul1 arg #1: converted from 'long long' to 'unsigned long'
+test-19.c:163: warning: ul1 arg #1: conversion from 'long long' to 'unsigned long' may lose accuracy
+test-19.c:164: warning: ul1 arg #1: converted from 'unsigned long long' to 'unsigned long'
+test-19.c:164: warning: ul1 arg #1: conversion from 'unsigned long long' to 'unsigned long' may lose accuracy
+test-19.c:165: warning: ul1 arg #1: converted from 'float' to 'unsigned long'
+test-19.c:166: warning: ul1 arg #1: converted from 'double' to 'unsigned long'
+test-19.c:167: warning: ul1 arg #1: converted from 'long double' to 'unsigned long'
+test-19.c:169: warning: d1 arg #1: converted from 'char' to 'double'
+test-19.c:170: warning: d1 arg #1: converted from 'unsigned char' to 'double'
+test-19.c:171: warning: d1 arg #1: converted from 'short' to 'double'
+test-19.c:172: warning: d1 arg #1: converted from 'unsigned short' to 'double'
+test-19.c:173: warning: d1 arg #1: converted from 'int' to 'double'
+test-19.c:174: warning: d1 arg #1: converted from 'unsigned int' to 'double'
+test-19.c:175: warning: d1 arg #1: converted from 'long' to 'double'
+test-19.c:176: warning: d1 arg #1: converted from 'unsigned long' to 'double'
+test-19.c:177: warning: d1 arg #1: converted from 'long long' to 'double'
+test-19.c:178: warning: d1 arg #1: converted from 'unsigned long long' to 'double'
+test-19.c:181: warning: d1 arg #1: converted from 'long double' to 'double'
+test-19.c:183: warning: ll1 arg #1: converted from 'char' to 'long long'
+test-19.c:184: warning: ll1 arg #1: converted from 'unsigned char' to 'long long'
+test-19.c:185: warning: ll1 arg #1: converted from 'short' to 'long long'
+test-19.c:186: warning: ll1 arg #1: converted from 'unsigned short' to 'long long'
+test-19.c:187: warning: ll1 arg #1: converted from 'int' to 'long long'
+test-19.c:188: warning: ll1 arg #1: converted from 'unsigned int' to 'long long'
+test-19.c:189: warning: ll1 arg #1: converted from 'long' to 'long long'
+test-19.c:190: warning: ll1 arg #1: converted from 'unsigned long' to 'long long'
+test-19.c:192: warning: ll1 arg #1: converted from 'unsigned long long' to 'long long'
+test-19.c:192: warning: ll1 arg #1: conversion from 'unsigned long long' to 'long long' may lose accuracy
+test-19.c:193: warning: ll1 arg #1: converted from 'float' to 'long long'
+test-19.c:194: warning: ll1 arg #1: converted from 'double' to 'long long'
+test-19.c:195: warning: ll1 arg #1: converted from 'long double' to 'long long'
+test-19.c:197: warning: ull1 arg #1: converted from 'char' to 'unsigned long long'
+test-19.c:198: warning: ull1 arg #1: converted from 'unsigned char' to 'unsigned long long'
+test-19.c:199: warning: ull1 arg #1: converted from 'short' to 'unsigned long long'
+test-19.c:200: warning: ull1 arg #1: converted from 'unsigned short' to 'unsigned long long'
+test-19.c:201: warning: ull1 arg #1: converted from 'int' to 'unsigned long long'
+test-19.c:202: warning: ull1 arg #1: converted from 'unsigned int' to 'unsigned long long'
+test-19.c:203: warning: ull1 arg #1: converted from 'long' to 'unsigned long long'
+test-19.c:204: warning: ull1 arg #1: converted from 'unsigned long' to 'unsigned long long'
+test-19.c:205: warning: ull1 arg #1: converted from 'long long' to 'unsigned long long'
+test-19.c:205: warning: ull1 arg #1: conversion from 'long long' to 'unsigned long long' may lose accuracy
+test-19.c:207: warning: ull1 arg #1: converted from 'float' to 'unsigned long long'
+test-19.c:208: warning: ull1 arg #1: converted from 'double' to 'unsigned long long'
+test-19.c:209: warning: ull1 arg #1: converted from 'long double' to 'unsigned long long'
+test-19.c:211: warning: ld1 arg #1: converted from 'char' to 'long double'
+test-19.c:212: warning: ld1 arg #1: converted from 'unsigned char' to 'long double'
+test-19.c:213: warning: ld1 arg #1: converted from 'short' to 'long double'
+test-19.c:214: warning: ld1 arg #1: converted from 'unsigned short' to 'long double'
+test-19.c:215: warning: ld1 arg #1: converted from 'int' to 'long double'
+test-19.c:216: warning: ld1 arg #1: converted from 'unsigned int' to 'long double'
+test-19.c:217: warning: ld1 arg #1: converted from 'long' to 'long double'
+test-19.c:218: warning: ld1 arg #1: converted from 'unsigned long' to 'long double'
+test-19.c:219: warning: ld1 arg #1: converted from 'long long' to 'long double'
+test-19.c:220: warning: ld1 arg #1: converted from 'unsigned long long' to 'long double'
+test-19.c:221: warning: ld1 arg #1: converted from 'float' to 'long double'
+test-19.c:222: warning: ld1 arg #1: converted from 'double' to 'long double'
+test-19.c:230: warning: uc1 arg #1: conversion of negative constant to unsigned type
+test-19.c:238: warning: us1 arg #1: conversion of negative constant to unsigned type
+test-19.c:246: warning: ui1 arg #1: conversion of negative constant to unsigned type
+test-19.c:258: warning: ul1 arg #1: conversion of negative constant to unsigned type
+test-19.c:270: warning: ull1 arg #1: conversion of negative constant to unsigned type
+test-19.c:283: warning: uc1 arg #1: conversion of negative constant to unsigned type
+test-19.c:291: warning: us1 arg #1: conversion of negative constant to unsigned type
+test-19.c:299: warning: ui1 arg #1: conversion of negative constant to unsigned type
+test-19.c:311: warning: ul1 arg #1: conversion of negative constant to unsigned type
+test-19.c:323: warning: ull1 arg #1: conversion of negative constant to unsigned type
+test-19.c:336: warning: uc1 arg #1: conversion of 'float' to 'unsigned char' is out of range
+test-19.c:344: warning: us1 arg #1: conversion of 'float' to 'unsigned short' is out of range
+test-19.c:352: warning: ui1 arg #1: conversion of 'float' to 'unsigned int' is out of range
+test-19.c:364: warning: ul1 arg #1: conversion of 'float' to 'unsigned long' is out of range
+test-19.c:376: warning: ull1 arg #1: conversion of 'float' to 'unsigned long long' is out of range
+test-19.c:389: warning: uc1 arg #1: conversion of 'double' to 'unsigned char' is out of range
+test-19.c:397: warning: us1 arg #1: conversion of 'double' to 'unsigned short' is out of range
+test-19.c:405: warning: ui1 arg #1: conversion of 'double' to 'unsigned int' is out of range
+test-19.c:417: warning: ul1 arg #1: conversion of 'double' to 'unsigned long' is out of range
+test-19.c:429: warning: ull1 arg #1: conversion of 'double' to 'unsigned long long' is out of range
+test-19.c:442: warning: uc1 arg #1: conversion of 'long double' to 'unsigned char' is out of range
+test-19.c:450: warning: us1 arg #1: conversion of 'long double' to 'unsigned short' is out of range
+test-19.c:458: warning: ui1 arg #1: conversion of 'long double' to 'unsigned int' is out of range
+test-19.c:470: warning: ul1 arg #1: conversion of 'long double' to 'unsigned long' is out of range
+test-19.c:482: warning: ull1 arg #1: conversion of 'long double' to 'unsigned long long' is out of range
+Lint pass2:
