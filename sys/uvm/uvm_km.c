@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.49 2006/03/06 19:11:03 mickey Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.50 2006/04/25 08:31:00 mickey Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -962,6 +962,8 @@ uvm_km_page_init(void)
 	if (!uvm_km_pages_lowat) {
 		/* based on physmem, calculate a good value here */
 		uvm_km_pages_lowat = physmem / 256;
+		if (uvm_km_pages_lowat > 2048)
+			uvm_km_pages_lowat = 2048;
 		if (uvm_km_pages_lowat < 128)
 			uvm_km_pages_lowat = 128;
 	}
