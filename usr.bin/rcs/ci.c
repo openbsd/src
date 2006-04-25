@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.158 2006/04/24 21:30:47 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.159 2006/04/25 07:57:10 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -562,7 +562,7 @@ checkin_update(struct checkin_params *pb)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
 	/* Maintain RCSFILE permissions */
-	if (fstat(workfile_fd, &st))
+	if (fstat(workfile_fd, &st) == -1)
 		fatal("%s: %s", pb->filename, strerror(errno));
 
 	/* Strip all the write bits */
@@ -694,7 +694,7 @@ skipdesc:
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
 	/* Inherit RCSFILE permissions from file being checked in */
-	if (fstat(workfile_fd, &st))
+	if (fstat(workfile_fd, &st) == -1)
 		fatal("%s: %s", pb->filename, strerror(errno));
 
 	/* Strip all the write bits */
@@ -820,7 +820,7 @@ checkin_mtimedate(struct checkin_params *pb)
 {
 	struct stat sb;
 
-	if (fstat(workfile_fd, &sb))
+	if (fstat(workfile_fd, &sb) == -1)
 		fatal("%s: %s", pb->filename, strerror(errno));
 
 	pb->date = (time_t)sb.st_mtimespec.tv_sec;
