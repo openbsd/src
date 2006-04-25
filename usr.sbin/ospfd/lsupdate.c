@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.29 2006/03/13 09:36:06 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.30 2006/04/25 08:24:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -418,12 +418,7 @@ ls_retrans_list_clr(struct nbr *nbr)
 	nbr->ls_ret_cnt = 0;
 }
 
-int
-ls_retrans_list_empty(struct nbr *nbr)
-{
-	return (TAILQ_EMPTY(&nbr->ls_retrans_list));
-}
-
+/* ARGSUSED */
 void
 ls_retrans_timer(int fd, short event, void *bula)
 {
