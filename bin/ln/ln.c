@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.13 2005/12/02 20:36:56 cloder Exp $	*/
+/*	$OpenBSD: ln.c,v 1.14 2006/04/25 04:38:26 deraadt Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: ln.c,v 1.13 2005/12/02 20:36:56 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.14 2006/04/25 04:38:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ int	sflag;				/* Symbolic, not hard, link. */
 int (*linkf)(const char *, const char *);
 
 int	linkit(char *, char *, int);
-void	usage(void);
+void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])
