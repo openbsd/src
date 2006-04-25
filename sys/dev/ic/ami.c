@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.153 2006/04/23 15:32:09 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.154 2006/04/25 13:32:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1241,6 +1241,7 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 		ami_put_ccb(ccb);
 		scsi_done(xs);
 		splx(s);
+		return;
 	}
 
 	/* reuse the ccb for the sysflush command */
