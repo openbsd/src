@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.138 2006/04/25 03:14:46 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.139 2006/04/25 04:37:01 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.138 2006/04/25 03:14:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.139 2006/04/25 04:37:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2192,7 +2192,7 @@ print_sensor(struct sensor *s)
 			printf("drive %s", name);
 			break;
 		case SENSOR_TIMEDELTA:
-			printf("%.2f secs", s->value / 1000.0);
+			printf("%.2f secs", s->value / 1000000000.0);
 			break;
 		default:
 			printf("unknown");
