@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.41 2006/04/24 16:20:33 jmc Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.42 2006/04/25 03:21:16 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -47,7 +47,7 @@ rcsclean_main(int argc, char **argv)
 
 	rev_str = NULL;
 
-	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:Tu::Vx::")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:n::q::r::Tu::Vx::")) != -1) {
 		switch (ch) {
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
