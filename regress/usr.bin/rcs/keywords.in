@@ -1,0 +1,15 @@
+$Author: ray $
+$Date: 2006/04/25 01:42:54 $
+$Header: /home/cvs/src/regress/usr.bin/rcs/keywords.in,v 1.1 2006/04/25 01:42:54 ray Exp $
+$Id: keywords.in,v 1.1 2006/04/25 01:42:54 ray Exp $
+$Log: keywords.in,v $
+Revision 1.1  2006/04/25 01:42:54  ray
+Regression tests for keywords for ci.
+
+OK xsa@
+
+$Name:  $
+$RCSfile: keywords.in,v $
+$Revision: 1.1 $
+$Source: /home/cvs/src/regress/usr.bin/rcs/keywords.in,v $
+$State: Exp $
