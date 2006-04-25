@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.19 2005/07/11 15:40:43 fgsch Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.20 2006/04/25 05:45:20 tedu Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.19 2005/07/11 15:40:43 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.20 2006/04/25 05:45:20 tedu Exp $";
 #endif /* not lint and not SMALL */
 
 #include <stdio.h>

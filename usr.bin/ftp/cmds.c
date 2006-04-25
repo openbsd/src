@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.49 2005/10/12 06:50:42 otto Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.50 2006/04/25 05:45:20 tedu Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.49 2005/10/12 06:50:42 otto Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.50 2006/04/25 05:45:20 tedu Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -779,12 +779,13 @@ sethash(int argc, char *argv[])
 	else if (strcasecmp(argv[1], "off") == 0)
 		hash = 0;
 	else {
-		long nmark;
-		char *ep;
+		int nmark;
+		const char *errstr;
 
-		nmark = strtol(argv[1], &ep, 10);
-		if (nmark < 1 || nmark > INT_MAX || *ep != '\0') {
-			fprintf(ttyout, "%s: bad bytecount value.\n", argv[1]);
+		nmark = strtonum(argv[1], 1, INT_MAX, &errstr);
+		if (errstr) {
+			fprintf(ttyout, "bytecount value is %s: %s\n",
+			    errstr, argv[1]);
 			code = -1;
 			return;
 		}
@@ -940,17 +941,17 @@ setdebug(int argc, char *argv[])
 		else if (strcasecmp(argv[1], "off") == 0)
 			debug = 0;
 		else {
-			char *ep;
-			long val;
+			const char *errstr;
+			int val;
 
-			val = strtol(argv[1], &ep, 10);
-			if (val < 0 || val > INT_MAX || *ep != '\0') {
-				fprintf(ttyout, "%s: bad debugging value.\n",
-				    argv[1]);
+			val = strtonum(argv[1], 0, INT_MAX, &errstr);
+			if (errstr) {
+				fprintf(ttyout, "debugging value is %s: %s\n",
+				    errstr, argv[1]);
 				code = -1;
 				return;
 			}
-			debug = (int)val;
+			debug = val;
 		}
 	} else
 		debug = !debug;

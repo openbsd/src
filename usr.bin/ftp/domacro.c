@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.11 2004/07/20 03:50:25 deraadt Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.12 2006/04/25 05:45:20 tedu Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: domacro.c,v 1.11 2004/07/20 03:50:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: domacro.c,v 1.12 2006/04/25 05:45:20 tedu Exp $";
 #endif /* not lint and not SMALL */
 
 #include <ctype.h>

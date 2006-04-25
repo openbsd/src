@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.59 2005/09/21 22:31:47 fgsch Exp $	*/
+/*	$OpenBSD: main.c,v 1.60 2006/04/25 05:45:20 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -60,13 +60,13 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: main.c,v 1.59 2005/09/21 22:31:47 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.60 2006/04/25 05:45:20 tedu Exp $";
 #endif /* not lint and not SMALL */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.17 2004/09/16 04:39:16 deraadt Exp $	*/
+/*	$OpenBSD: complete.c,v 1.18 2006/04/25 05:45:20 tedu Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.17 2004/09/16 04:39:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: complete.c,v 1.18 2006/04/25 05:45:20 tedu Exp $";
 #endif /* not lint */
 
 /*
