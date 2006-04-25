@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.16 2006/03/13 09:36:06 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.17 2006/04/25 08:33:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -35,7 +35,7 @@ void	 start_ls_ack_tx_timer_now(struct iface *);
 
 /* link state acknowledgement packet handling */
 int
-send_ls_ack(struct iface *iface, struct in_addr addr, void *data, int len)
+send_ls_ack(struct iface *iface, struct in_addr addr, void *data, size_t len)
 {
 	struct sockaddr_in	 dst;
 	struct buf		*buf;
@@ -206,6 +206,7 @@ ls_ack_list_empty(struct iface *iface)
 }
 
 /* timers */
+/* ARGSUSED */
 void
 ls_ack_tx_timer(int fd, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.29 2006/04/25 08:24:45 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.30 2006/04/25 08:33:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -152,7 +152,7 @@ int	 if_set_mcast_loop(int);
 
 /* lsack.c */
 int	 delay_lsa_ack(struct iface *, struct lsa_hdr *);
-int	 send_ls_ack(struct iface *, struct in_addr, void *data, int len);
+int	 send_ls_ack(struct iface *, struct in_addr, void *, size_t);
 void	 recv_ls_ack(struct nbr *, char *, u_int16_t);
 int	 lsa_hdr_check(struct nbr *, struct lsa_hdr *);
 void	 ls_ack_list_add(struct iface *, struct lsa_hdr *);
