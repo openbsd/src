@@ -1,6 +1,4 @@
 test-17.c:26: warning: statement not reached
 test-17.c:34: warning: fallthrough on default statement
 test-17.c:41: warning: statement not reached
-test-17.c:48: break outside loop or switch
-test-17.c:49: warning: statement not reached
 Lint pass2:
