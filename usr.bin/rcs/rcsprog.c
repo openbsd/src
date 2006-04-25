@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.114 2006/04/24 08:10:41 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.115 2006/04/25 13:36:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -404,7 +404,7 @@ rcs_main(int argc, char **argv)
 			char rev_str[16];
 
 			if ((username = getlogin()) == NULL)
-				fatal("could not get username");
+				err(1, "getlogin");
 			if (lrev == NULL) {
 				rev = rcsnum_alloc();
 				rcsnum_cpy(file->rf_head, rev, 0);
@@ -416,8 +416,8 @@ rcs_main(int argc, char **argv)
 			rcsnum_tostr(rev, rev_str, sizeof(rev_str));
 			/* Make sure revision exists. */
 			if (rcs_findrev(file, rev) == NULL)
-				fatal("%s: can't lock nonexisting revision %s",
-				    fpath, rev_str);
+				errx(1, "%s: cannot lock nonexisting "
+				    "revision %s", fpath, rev_str);
 			if (rcs_lock_add(file, username, rev) != -1 &&
 			    !(rcsflags & QUIET))
 				printf("%s locked\n", rev_str);
@@ -430,7 +430,7 @@ rcs_main(int argc, char **argv)
 			char rev_str[16];
 
 			if ((username = getlogin()) == NULL)
-				fatal("could not get username");
+				err(1, "getlogin");
 			if (urev == NULL) {
 				rev = rcsnum_alloc();
 				rcsnum_cpy(file->rf_head, rev, 0);
@@ -442,8 +442,8 @@ rcs_main(int argc, char **argv)
 			rcsnum_tostr(rev, rev_str, sizeof(rev_str));
 			/* Make sure revision exists. */
 			if (rcs_findrev(file, rev) == NULL)
-				fatal("%s: can't unlock nonexisting revision %s",
-				    fpath, rev_str);
+				errx(1, "%s: cannot unlock nonexisting "
+				    "revision %s", fpath, rev_str);
 			if (rcs_lock_remove(file, username, rev) == -1 &&
 			    !(rcsflags & QUIET))
 				warnx("%s: warning: No locks are set.", fpath);
@@ -508,7 +508,7 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 
 	if (rev == NULL && rm != 1) {
 		if ((rev = rcsnum_parse(rnum)) == NULL)
-			fatal("bad revision %s", rnum);
+			errx(1, "bad revision %s", rnum);
 	}
 
 	if (rcsflags & RCSPROG_NFLAG)
@@ -518,7 +518,7 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 		if (rcs_sym_remove(file, symname) < 0) {
 			if (rcs_errno == RCS_ERR_NOENT &&
 			    !(rcsflags & RCSPROG_NFLAG))
-				warnx("can't delete nonexisting symbol %s",
+				warnx("cannot delete nonexisting symbol %s",
 				    symname);
 		} else {
 			if (rcsflags & RCSPROG_NFLAG)
@@ -531,7 +531,7 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 		    rcs_errno == RCS_ERR_DUPENT) {
 			rcsnum_tostr(rcs_sym_getrev(file, symname),
 			    rbuf, sizeof(rbuf));
-			fatal("symbolic name %s already bound to %s",
+			errx(1, "symbolic name %s already bound to %s",
 			    symname, rbuf);
 		}
 	}

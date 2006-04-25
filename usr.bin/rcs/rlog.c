@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.49 2006/04/21 17:17:29 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.50 2006/04/25 13:36:36 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -179,7 +179,7 @@ rlog_file(const char *fname, RCSFILE *file)
 		nrev = file->rf_ndelta;
 
 	if ((workfile = basename(fname)) == NULL)
-		fatal("failed to get basename of '%s'", fname);
+		err(1, "basename");
 
 	/*
 	 * In case they specified 'foo,v' as argument.
@@ -305,7 +305,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			cvs_argv_destroy(wargv);
 		} else {
 			if ((author = getlogin()) == NULL)
-				fatal("getlogin failed");
+				err(1, "getlogin");
 
 			if (strcmp(rdp->rd_author, author) == 0)
 				found++;

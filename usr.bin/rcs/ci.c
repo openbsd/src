@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.159 2006/04/25 07:57:10 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.160 2006/04/25 13:36:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -121,7 +121,7 @@ checkin_main(int argc, char **argv)
 			if (rcs_optarg == NULL)
 				pb.date = DATE_MTIME;
 			else if ((pb.date = cvs_date_parse(rcs_optarg)) <= 0)
-				fatal("invalid date");
+				errx(1, "invalid date");
 			break;
 		case 'f':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -156,7 +156,7 @@ checkin_main(int argc, char **argv)
 		case 'm':
 			pb.rcs_msg = rcs_optarg;
 			if (pb.rcs_msg == NULL)
-				fatal("missing message for -m option");
+				errx(1, "missing message for -m option");
 			pb.flags &= ~INTERACTIVE;
 			break;
 		case 'N':
@@ -167,7 +167,7 @@ checkin_main(int argc, char **argv)
 				xfree(pb.symbol);
 			pb.symbol = xstrdup(rcs_optarg);
 			if (rcs_sym_check(pb.symbol) != 1)
-				fatal("invalid symbol `%s'", pb.symbol);
+				errx(1, "invalid symbol `%s'", pb.symbol);
 			break;
 		case 'q':
 			pb.flags |= QUIET;
@@ -179,7 +179,7 @@ checkin_main(int argc, char **argv)
 		case 's':
 			pb.state = rcs_optarg;
 			if (rcs_state_check(pb.state) < 0)
-				fatal("invalid state `%s'", pb.state);
+				errx(1, "invalid state `%s'", pb.state);
 			break;
 		case 'T':
 			pb.flags |= PRESERVETIME;
@@ -227,14 +227,14 @@ checkin_main(int argc, char **argv)
 	}
 
 	if ((pb.username = getlogin()) == NULL)
-		fatal("getlogin failed");
+		err(1, "getlogin");
 
 
 	for (i = 0; i < argc; i++) {
 		pb.filename = argv[i];
 
 		if ((workfile_fd = open(pb.filename, O_RDONLY)) == -1)
-			fatal("%s: %s", pb.filename, strerror(errno));
+			err(1, "%s", pb.filename);
 
 		/*
 		 * Test for existence of ,v file. If we are expected to
@@ -277,7 +277,7 @@ checkin_main(int argc, char **argv)
 
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
 		if (pb.file == NULL)
-			fatal("failed to open rcsfile '%s'", pb.fpath);
+			errx(1, "failed to open rcsfile '%s'", pb.fpath);
 
 		if (pb.flags & DESCRIPTION)
 			rcs_set_description(pb.file, pb.description);
@@ -289,7 +289,7 @@ checkin_main(int argc, char **argv)
 		if (rev_str != NULL)
 			if ((pb.newrev = rcs_getrevnum(rev_str, pb.file)) ==
 			    NULL)
-				fatal("invalid revision: %s", rev_str);
+				errx(1, "invalid revision: %s", rev_str);
 
 		if (!(pb.flags & NEWFILE))
 			pb.flags |= CI_SKIPDESC;
@@ -492,7 +492,7 @@ checkin_update(struct checkin_params *pb)
 			t_head = localtime(&head_date);
 			strftime(dbuf2, sizeof(dbuf2), fmt, t_head);
 
-			fatal("%s: Date %s preceeds %s in revision %s.",
+			errx(1, "%s: Date %s preceeds %s in revision %s.",
 			    pb->file->rf_path, dbuf1, dbuf2,
 			    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
 		}
@@ -528,7 +528,7 @@ checkin_update(struct checkin_params *pb)
 
 	/* Current head revision gets the RCS patch as rd_text */
 	if (rcs_deltatext_set(pb->file, pb->frev, pb->deltatext) == -1)
-		fatal("failed to set new rd_text for head rev");
+		errx(1, "failed to set new rd_text for head rev");
 
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
@@ -544,13 +544,13 @@ checkin_update(struct checkin_params *pb)
 	 */
 	if (pb->newrev != NULL) {
 		if (rcs_head_set(pb->file, pb->newrev) < 0)
-			fatal("rcs_head_set failed");
+			errx(1, "rcs_head_set failed");
 	} else
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
 	if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1)
-		fatal("failed to set new head revision");
+		errx(1, "failed to set new head revision");
 
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL &&
@@ -563,7 +563,7 @@ checkin_update(struct checkin_params *pb)
 
 	/* Maintain RCSFILE permissions */
 	if (fstat(workfile_fd, &st) == -1)
-		fatal("%s: %s", pb->filename, strerror(errno));
+		err(1, "%s", pb->filename);
 
 	/* Strip all the write bits */
 	pb->file->rf_mode = st.st_mode &
@@ -674,7 +674,7 @@ skipdesc:
 	 */
 	if (pb->newrev != NULL) {
 		if (rcs_head_set(pb->file, pb->newrev) < 0)
-			fatal("rcs_head_set failed");
+			errx(1, "rcs_head_set failed");
 	} else
 		pb->newrev = pb->file->rf_head;
 
@@ -695,7 +695,7 @@ skipdesc:
 
 	/* Inherit RCSFILE permissions from file being checked in */
 	if (fstat(workfile_fd, &st) == -1)
-		fatal("%s: %s", pb->filename, strerror(errno));
+		err(1, "%s", pb->filename);
 
 	/* Strip all the write bits */
 	pb->file->rf_mode = st.st_mode &
@@ -821,7 +821,7 @@ checkin_mtimedate(struct checkin_params *pb)
 	struct stat sb;
 
 	if (fstat(workfile_fd, &sb) == -1)
-		fatal("%s: %s", pb->filename, strerror(errno));
+		err(1, "%s", pb->filename);
 
 	pb->date = (time_t)sb.st_mtimespec.tv_sec;
 }
@@ -886,7 +886,7 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
 					if (*c == '$') {
 						end = c - start + 2;
 						if (end >= sizeof(buf))
-							fatal("keyword buffer"
+							errx(1, "keyword buffer"
 							    " too small!");
 						strlcpy(buf, start, end);
 						checkin_parsekeyword(buf, rev,
@@ -968,7 +968,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		/* only parse revision if one is not already set */
 		if (*rev == NULL) {
 			if ((*rev = rcsnum_parse(tokens[2])) == NULL)
-				fatal("could not parse rcsnum");
+				errx(1, "could not parse rcsnum");
 		}
 		*author = xstrdup(tokens[5]);
 		*state = xstrdup(tokens[6]);
@@ -978,7 +978,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		strlcat(datestring, " ", len);
 		strlcat(datestring, tokens[4], len);
 		if ((*date = cvs_date_parse(datestring)) <= 0)
-		    fatal("could not parse date\n");
+		    errx(1, "could not parse date");
 		xfree(datestring);
 		break;
 	case KW_TYPE_AUTHOR:
@@ -1003,7 +1003,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		strlcat(datestring, " ", len);
 		strlcat(datestring, tokens[2], len);
 		if ((*date = cvs_date_parse(datestring)) <= 0)
-		    fatal("could not parse date\n");
+		    errx(1, "could not parse date");
 		xfree(datestring);
 		break;
 	case KW_TYPE_STATE:
@@ -1026,7 +1026,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 				tokens[i++] = p;
 		}
 		if ((*rev = rcsnum_parse(tokens[1])) == NULL)
-			fatal("could not parse rcsnum");
+			errx(1, "could not parse rcsnum");
 		break;
 	}
 }

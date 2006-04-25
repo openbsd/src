@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.2 2006/04/24 04:51:57 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.3 2006/04/25 13:36:36 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -69,7 +69,7 @@ rcs_set_mtime(const char *filename, time_t mtime)
 	tv[1].tv_sec = tv[0].tv_sec;
 
 	if (utimes(filename, tv) == -1)
-		fatal("error setting utimes: %s", strerror(errno));
+		err(1, "utimes");
 }
 
 int
@@ -259,7 +259,7 @@ rcs_statfile(char *fname, char *out, size_t len, int flags)
 	char *rcspath;
 
 	if ((rcspath = rcs_choosefile(fname)) == NULL)
-		fatal("rcs_statfile: path truncation");
+		errx(1, "rcs_statfile: path truncation");
 
 	/* Error out if file not found and we are not creating one. */
 	if (stat(rcspath, &st) == -1 && !(flags & RCS_CREATE)) {
@@ -271,7 +271,7 @@ rcs_statfile(char *fname, char *out, size_t len, int flags)
 	}
 
 	if (strlcpy(out, rcspath, len) >= len)
-		fatal("rcs_statfile: path truncation");
+		errx(1, "rcs_statfile: path truncation");
 
 	xfree(rcspath);
 
@@ -285,7 +285,7 @@ void
 rcs_set_rev(const char *str, RCSNUM **rev)
 {
 	if (str == NULL || (*rev = rcsnum_parse(str)) == NULL)
-		fatal("bad revision number '%s'", str);
+		errx(1, "bad revision number '%s'", str);
 }
 
 /*
@@ -315,7 +315,7 @@ rcs_setrevstr2(char **str1, char **str2, char *new_str)
 	else if (*str2 == NULL)
 		*str2 = new_str;
 	else
-		fatal("too many revision numbers");
+		errx(1, "too many revision numbers");
 }
 
 /*
@@ -398,13 +398,13 @@ rcs_rev_select(RCSFILE *file, char *range)
 		revrange = cvs_strsplit(revargv->argv[i], ":");
 		if (revrange->argv[0] == NULL)
 			/* should not happen */
-			fatal("invalid revision range: %s", revargv->argv[i]);
+			errx(1, "invalid revision range: %s", revargv->argv[i]);
 		else if (revrange->argv[1] == NULL)
 			lstr = rstr = revrange->argv[0];
 		else {
 			if (revrange->argv[2] != NULL)
-				fatal("invalid revision range: %s",
-					revargv->argv[i]);
+				errx(1, "invalid revision range: %s",
+				    revargv->argv[i]);
 			lstr = revrange->argv[0];
 			rstr = revrange->argv[1];
 			if (strcmp(lstr, "") == 0)
@@ -416,11 +416,11 @@ rcs_rev_select(RCSFILE *file, char *range)
 		if (lstr == NULL)
 			lstr = RCS_HEAD_INIT;
 		if (rcsnum_aton(lstr, &ep, &lnum) == 0 || (*ep != '\0'))
-			fatal("invalid revision: %s", lstr);
+			errx(1, "invalid revision: %s", lstr);
 
 		if (rstr != NULL) {
 			if (rcsnum_aton(rstr, &ep, &rnum) == 0 || (*ep != '\0'))
-				fatal("invalid revision: %s", rstr);
+				errx(1, "invalid revision: %s", rstr);
 		} else
 			rcsnum_cpy(file->rf_head, &rnum, 0);
 

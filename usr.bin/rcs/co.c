@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.83 2006/04/24 08:10:41 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.84 2006/04/25 13:36:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -119,7 +119,7 @@ checkout_main(int argc, char **argv)
 			/* if no argument, assume current user */
 			if (rcs_optarg == NULL) {
 				if ((author = getlogin()) == NULL)
-					fatal("getlogin failed");
+					err(1, "getlogin");
 			} else {
 				author = xstrdup(rcs_optarg);
 				warg = 1;
@@ -149,7 +149,7 @@ checkout_main(int argc, char **argv)
 	}
 
 	if ((username = getlogin()) == NULL)
-		fatal("getlogin failed");
+		err(1, "getlogin");
 
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath), flags) < 0)
@@ -174,13 +174,13 @@ checkout_main(int argc, char **argv)
 
 		if (rev_str != NULL) {
 			if ((rev = rcs_getrevnum(rev_str, file)) == NULL)
-				fatal("invalid revision: %s", rev_str);
+				errx(1, "invalid revision: %s", rev_str);
 		} else {
 			/* no revisions in RCS file, generate empty 0.0 */
 			if (file->rf_ndelta == 0) {
 				rev = rcsnum_parse("0.0");
 				if (rev == NULL)
-					fatal("failed to generate rev 0.0");
+					errx(1, "failed to generate rev 0.0");
 			} else {
 				rev = rcsnum_alloc();
 				rcsnum_cpy(file->rf_head, rev, 0);
@@ -365,7 +365,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	 * File inherits permissions from its ,v file
 	 */
 	if (stat(file->rf_path, &st) == -1)
-		fatal("could not stat rcsfile");
+		err(1, "%s", file->rf_path);
 
 	mode = st.st_mode;
 

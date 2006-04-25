@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.55 2006/04/24 08:40:01 jmc Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.56 2006/04/25 13:36:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -119,11 +119,11 @@ rcsdiff_main(int argc, char **argv)
 
 		if (rev_str1 != NULL) {
 			if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
-				fatal("bad revision number");
+				errx(1, "bad revision number");
 		}
 		if (rev_str2 != NULL) {
 			if ((rev2 = rcs_getrevnum(rev_str2, file)) == NULL)
-				fatal("bad revision number");
+				errx(1, "bad revision number");
 		}
 
 		if (!(flags & QUIET)) {
