@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.44 2006/04/16 11:40:55 henning Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.45 2006/04/25 08:03:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -51,8 +51,8 @@ struct iface	*find_vlink(struct abr_rtr *);
 struct ospfd_conf	*oeconf = NULL;
 struct imsgbuf		*ibuf_main;
 struct imsgbuf		*ibuf_rde;
-struct ctl_conn		*ctl_conn;
 
+/* ARGSUSED */
 void
 ospfe_sig_handler(int sig, short event, void *bula)
 {
@@ -63,7 +63,6 @@ ospfe_sig_handler(int sig, short event, void *bula)
 		/* NOTREACHED */
 	default:
 		fatalx("unexpected signal");
-		/* NOTREACHED */
 	}
 }
 
@@ -238,6 +237,7 @@ ospfe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
 	return (imsg_compose(ibuf_rde, type, peerid, pid, data, datalen));
 }
 
+/* ARGSUSED */
 void
 ospfe_dispatch_main(int fd, short event, void *bula)
 {
@@ -323,6 +323,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	imsg_event_add(ibuf);
 }
 
+/* ARGSUSED */
 void
 ospfe_dispatch_rde(int fd, short event, void *bula)
 {
@@ -812,8 +813,7 @@ orig_rtr_lsa(struct area *area)
 	if (oeconf->redistribute_flags && (oeconf->options & OSPF_OPTION_E))
 		lsa_rtr.flags |= OSPF_RTR_E;
 
-	border = area_border_router(oeconf);
-
+	border = (area_border_router(oeconf) != 0);
 	if (border != oeconf->border) {
 		oeconf->border = border;
 		orig_rtr_lsa_all(area);
