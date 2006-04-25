@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.6 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.7 2006/04/25 05:52:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -176,8 +176,8 @@ at_ifawithnet( sat, ifa )
 	}
 	nr = (struct netrange *)(sat2->sat_zero);
 	if( (nr->nr_phase == 2 )
-	 && (nr->nr_firstnet <= sat->sat_addr.s_net)
-	 && (nr->nr_lastnet >= sat->sat_addr.s_net)) {
+	 && (ntohs(nr->nr_firstnet) <= ntohs(sat->sat_addr.s_net))
+	 && (ntohs(nr->nr_lastnet) >= ntohs(sat->sat_addr.s_net))) {
 	    break;
 	}
     }
