@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.8 2003/06/25 21:12:50 deraadt Exp $	*/
+/*	$OpenBSD: test.c,v 1.9 2006/04/25 04:39:04 deraadt Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: test.c,v 1.8 2003/06/25 21:12:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: test.c,v 1.9 2006/04/25 04:39:04 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -331,7 +331,7 @@ static int
 filstat(char *nm, enum token mode)
 {
 	struct stat s;
-	int i;
+	mode_t i;
 
 	if (mode == FILSYM) {
 #ifdef S_IFLNK
