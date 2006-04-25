@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.169 2006/04/14 02:49:43 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.170 2006/04/25 10:31:39 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1467,7 +1467,8 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	if (prevrdp != NULL && nextrdp != NULL) {
 		rcsnum_cpy(prevrdp->rd_num, nextrdp->rd_next, 0);
 	} else if (prevrdp != NULL) {
-		rcs_head_set(rf, prevrdp->rd_num);
+		if (rcs_head_set(rf, prevrdp->rd_num) < 0)
+			fatal("rcs_head_set failed");
 	} else if (nextrdp != NULL) {
 		rcsnum_free(nextrdp->rd_next);
 		nextrdp->rd_next = rcsnum_alloc();
