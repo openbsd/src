@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.30 2006/03/22 16:01:20 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.31 2006/04/25 08:06:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -458,7 +458,7 @@ lsa_find_net(struct area *area, u_int32_t ls_id)
 	return (NULL);
 }
 
-int
+u_int16_t
 lsa_num_links(struct vertex *v)
 {
 	switch (v->type) {

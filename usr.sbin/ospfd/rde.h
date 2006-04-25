@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.28 2006/03/22 16:01:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.29 2006/04/25 08:06:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -114,7 +114,7 @@ void		 lsa_del(struct rde_nbr *, struct lsa_hdr *);
 void		 lsa_age(struct vertex *);
 struct vertex	*lsa_find(struct area *, u_int8_t, u_int32_t, u_int32_t);
 struct vertex	*lsa_find_net(struct area *area, u_int32_t);
-int		 lsa_num_links(struct vertex *);
+u_int16_t	 lsa_num_links(struct vertex *);
 void		 lsa_snap(struct area *, u_int32_t);
 void		 lsa_dump(struct lsa_tree *, int, pid_t);
 void		 lsa_merge(struct rde_nbr *, struct lsa *, struct vertex *);
