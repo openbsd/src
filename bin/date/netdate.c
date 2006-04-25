@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdate.c,v 1.15 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: netdate.c,v 1.16 2006/04/25 15:41:07 deraadt Exp $	*/
 /*	$NetBSD: netdate.c,v 1.10 1995/09/07 06:21:06 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: netdate.c,v 1.15 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: netdate.c,v 1.16 2006/04/25 15:41:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ netsettime(time_t tval)
 		warn("connect");
 		goto bad;
 	}
-	if (send(s, (char *)&msg, sizeof(struct tsp), 0) < 0) {
+	if (send(s, &msg, sizeof(struct tsp), 0) < 0) {
 		if (errno != ECONNREFUSED)
 			warn("send");
 		goto bad;
@@ -132,7 +132,7 @@ netsettime(time_t tval)
 	waittime = WAITACK;
 
 	fdsn = howmany(s+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+	if ((fdsp = malloc(fdsn)) == NULL)
 		err(1, "malloc");
 loop:
 	tout.tv_sec = waittime;
@@ -144,7 +144,7 @@ loop:
 
 	length = sizeof(error);
 	if (!getsockopt(s,
-	    SOL_SOCKET, SO_ERROR, (char *)&error, &length) && error) {
+	    SOL_SOCKET, SO_ERROR, &error, &length) && error) {
 		if (error != ECONNREFUSED)
 			warn("send (delayed error)");
 		goto bad;

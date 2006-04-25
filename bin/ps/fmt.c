@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.7 2004/01/08 18:18:35 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.8 2006/04/25 15:41:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -57,7 +57,7 @@ fmt_puts(const char *s, int *leftp)
 		return;
 	len = strlen(s) * 4 + 1;
 	if (len > maxlen) {
-		int newmaxlen = maxlen;
+		size_t newmaxlen = maxlen;
 
 		if (newmaxlen == 0)
 			newmaxlen = getpagesize();

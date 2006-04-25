@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.22 2006/01/25 06:13:27 tedu Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.23 2006/04/25 15:41:07 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static const char rcsid[] = "$OpenBSD: chmod.c,v 1.22 2006/01/25 06:13:27 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: chmod.c,v 1.23 2006/04/25 15:41:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,8 @@ main(int argc, char *argv[])
 	FTSENT *p;
 	void *set;
 	long val;
-	int oct, omode;
+	int oct;
+	mode_t omode;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	uid_t uid;
 	gid_t gid;
@@ -251,6 +252,7 @@ done:
 			 */
 			if (ischflags || ischmod || !hflag)
 				continue;
+			break;
 		default:
 			break;
 		}
@@ -302,7 +304,7 @@ a_uid(const char *s, int silent)
 		return (pw->pw_uid);
 
 	/* UID was given. */
-	uid = strtonum(s, 0, UID_MAX, &errstr);
+	uid = (uid_t)strtonum(s, 0, UID_MAX, &errstr);
 	if (errstr) {
 		if (silent)
 			return ((uid_t)-1);
@@ -332,7 +334,7 @@ a_gid(const char *s)
 		return (gr->gr_gid);
 
 	/* GID was given. */
-	gid = strtonum(s, 0, GID_MAX, &errstr);
+	gid = (gid_t)strtonum(s, 0, GID_MAX, &errstr);
 	if (errstr)
 		errx(1, "group is %s: %s", errstr, s);
 

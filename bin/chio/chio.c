@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.11 2002/07/04 04:26:39 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.12 2006/04/25 15:41:05 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ do_move(char *cname, int argc, char *argv[])
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOMOVE, (char *)&cmd))
+	if (ioctl(changer_fd, CHIOMOVE, &cmd))
 		err(1, "%s: CHIOMOVE", changer_name);
 
 	return (0);
@@ -290,7 +290,7 @@ do_exchange(char *cname, int argc, char *argv[])
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOEXCHANGE, (char *)&cmd))
+	if (ioctl(changer_fd, CHIOEXCHANGE, &cmd))
 		err(1, "%s: CHIOEXCHANGE", changer_name);
 
 	return (0);
@@ -348,7 +348,7 @@ do_position(char *cname, int argc, char *argv[])
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOPOSITION, (char *)&cmd))
+	if (ioctl(changer_fd, CHIOPOSITION, &cmd))
 		err(1, "%s: CHIOPOSITION", changer_name);
 
 	return (0);
@@ -372,7 +372,7 @@ do_params(char *cname, int argc, char *argv[])
 
 	/* Get params from changer and display them. */
 	bzero(&data, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, (char *)&data))
+	if (ioctl(changer_fd, CHIOGPARAMS, &data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	printf("%s: %d slot%s, %d drive%s, %d picker%s",
@@ -404,7 +404,7 @@ do_getpicker(char *cname, int argc, char *argv[])
 	}
 
 	/* Get current picker from changer and display it. */
-	if (ioctl(changer_fd, CHIOGPICKER, (char *)&picker))
+	if (ioctl(changer_fd, CHIOGPICKER, &picker))
 		err(1, "%s: CHIOGPICKER", changer_name);
 
 	printf("%s: current picker: %d\n", changer_name, picker);
@@ -432,7 +432,7 @@ do_setpicker(char *cname, int argc, char *argv[])
 	picker = parse_element_unit(*argv);
 
 	/* Set the changer picker. */
-	if (ioctl(changer_fd, CHIOSPICKER, (char *)&picker))
+	if (ioctl(changer_fd, CHIOSPICKER, &picker))
 		err(1, "%s: CHIOSPICKER", changer_name);
 
 	return (0);
@@ -448,8 +448,9 @@ do_status(char *cname, int argc, char *argv[])
 	struct changer_element_status cmd;
 	struct changer_params data;
 	u_int8_t *statusp;
-	int i, count, chet, schet, echet;
+	int i, chet, schet, echet;
 	char *description;
+	size_t count;
 
 #ifdef lint
 	count = 0;
@@ -476,7 +477,7 @@ do_status(char *cname, int argc, char *argv[])
 	 * counts.
 	 */
 	bzero(&data, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, (char *)&data))
+	if (ioctl(changer_fd, CHIOGPARAMS, &data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	if (argc)
@@ -520,7 +521,7 @@ do_status(char *cname, int argc, char *argv[])
 		}
 
 		/* Allocate storage for the status bytes. */
-		if ((statusp = (u_int8_t *)malloc(count)) == NULL)
+		if ((statusp = malloc(count)) == NULL)
 			errx(1, "can't allocate status storage");
 
 		bzero(statusp, count);
@@ -529,7 +530,7 @@ do_status(char *cname, int argc, char *argv[])
 		cmd.ces_type = chet;
 		cmd.ces_data = statusp;
 
-		if (ioctl(changer_fd, CHIOGSTATUS, (char *)&cmd)) {
+		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
 			free(statusp);
 			err(1, "%s: CHIOGSTATUS", changer_name);
 		}

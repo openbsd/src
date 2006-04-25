@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.40 2004/11/24 19:17:10 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.41 2006/04/25 15:41:07 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.40 2004/11/24 19:17:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.41 2006/04/25 15:41:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,9 +117,9 @@ main(int argc, char *argv[])
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	size_t size;
 
-	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
-	    ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
-	    ioctl(STDIN_FILENO,  TIOCGWINSZ, (char *)&ws) == -1) ||
+	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
+	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
+	    ioctl(STDIN_FILENO,  TIOCGWINSZ, &ws) == -1) ||
 	    ws.ws_col == 0)
 		termwidth = 79;
 	else

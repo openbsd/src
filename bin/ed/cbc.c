@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.13 2004/05/08 07:05:19 deraadt Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.14 2006/04/25 15:41:07 deraadt Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -40,7 +40,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.13 2004/05/08 07:05:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.14 2006/04/25 15:41:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,10 +85,6 @@ typedef char Desbuf[8];
 /*
  * global variables and related macros
  */
-
-enum { 					/* encrypt, decrypt, authenticate */
-	MODE_ENCRYPT, MODE_DECRYPT, MODE_AUTHENTICATE
-} mode = MODE_ENCRYPT;
 
 Desbuf ivec;				/* initialization vector */
 Desbuf pvec;				/* padding vector */

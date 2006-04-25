@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.16 2003/10/18 19:15:43 jmc Exp $	*/
+/*	$OpenBSD: buf.c,v 1.17 2006/04/25 15:41:07 deraadt Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.16 2003/10/18 19:15:43 jmc Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.17 2006/04/25 15:41:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ get_sbuf_line(line_t *lp)
 	/* out of position */
 	if (sfseek != lp->seek) {
 		sfseek = lp->seek;
-		if (fseek(sfp, sfseek, SEEK_SET) < 0) {
+		if (fseeko(sfp, sfseek, SEEK_SET) < 0) {
 			perror(NULL);
 			seterrmsg("cannot seek temp file");
 			return NULL;

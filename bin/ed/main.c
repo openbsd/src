@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2006/04/17 16:17:03 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2006/04/25 15:41:07 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.29 2006/04/17 16:17:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.30 2006/04/25 15:41:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -387,7 +387,7 @@ next_addr(void)
 				addr = addr_last;
 				break;
 			}
-			/* FALL THROUGH */
+			/* FALLTHROUGH */
 		default:
 			if (ibufp == hd)
 				return EOF;
@@ -533,7 +533,7 @@ exec_command(void)
 	case 'e':
 		if (modified && !scripted)
 			return EMOD;
-		/* fall through */
+		/* FALLTHROUGH */
 	case 'E':
 		if (addr_cnt > 0) {
 			seterrmsg("unexpected address");
@@ -1452,7 +1452,7 @@ handle_winch(int signo)
 	struct winsize ws;		/* window size structure */
 
 	sigflags &= ~(1 << (signo - 1));
-	if (ioctl(0, TIOCGWINSZ, (char *) &ws) >= 0) {
+	if (ioctl(0, TIOCGWINSZ, &ws) >= 0) {
 		if (ws.ws_row > 2)
 			rows = ws.ws_row - 2;
 		if (ws.ws_col > 8)
