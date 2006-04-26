@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.202 2006/04/06 20:25:14 marco Exp $
+#	$OpenBSD: files.pci,v 1.203 2006/04/26 15:53:08 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -103,6 +103,12 @@ file	dev/pci/opl_eso.c		opl_eso
 device	auich: audio, auconv, mulaw, ac97
 attach	auich at pci
 file	dev/pci/auich.c			auich
+
+# Intel 82801 HDA
+device	azalia: audio, auconv, mulaw, ac97
+attach	azalia at pci
+file	dev/pci/azalia.c		azalia
+file	dev/pci/azalia_codec.c		azalia
 
 # Creative Labs EMU10k1 (SBLive! series and PCI512)
 device	emu: audio, auconv, mulaw, ac97
