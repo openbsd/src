@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.66 2006/04/20 14:43:32 pedro Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.67 2006/04/26 21:37:37 pedro Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2013,6 +2013,7 @@ nfs_readdir(v)
 			dp->d_reclen -= NFS_DIRENT_OVERHEAD;
 
 			if (uio->uio_resid < dp->d_reclen) {
+				eof = 0;
 				done = 1;
 				break;
 			}
