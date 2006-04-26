@@ -1,4 +1,4 @@
- /*	$OpenBSD: test-19.c,v 1.1 2006/04/25 01:31:15 cloder Exp $	*/
+ /*	$OpenBSD: test-19.c,v 1.2 2006/04/26 16:16:43 cloder Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -487,6 +487,7 @@ main(int argc, char* argv[])
 	ld1(0.0L);
 	ld1(1.0L);
 
+	ul1(4 * I);
 
 	return 0;
 }

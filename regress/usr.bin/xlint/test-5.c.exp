@@ -1,4 +1,4 @@
-test-5.c:34: warning: foo arg #1: converted from 'int' to 'unsigned long long'
-test-5.c:35: warning: foobar arg #1: conversion of 'long long' to 'int' is out of range
-test-5.c:36: warning: bar arg #1: conversion of negative constant to unsigned type
+test-5.c:34: warning: foo() arg #1: converted from 'int' to 'unsigned long long'
+test-5.c:35: warning: foobar() arg #1: conversion of 'long long' to 'int' is out of range
+test-5.c:36: warning: bar() arg #1: conversion of negative constant to unsigned type
 Lint pass2:
