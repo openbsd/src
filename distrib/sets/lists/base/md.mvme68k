@@ -1021,6 +1021,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/autrivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/auviavar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/azalia.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_audio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_card.ph

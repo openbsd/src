@@ -477,6 +477,7 @@
 ./usr/include/dev/pci/autrireg.h
 ./usr/include/dev/pci/autrivar.h
 ./usr/include/dev/pci/auviavar.h
+./usr/include/dev/pci/azalia.h
 ./usr/include/dev/pci/bktr
 ./usr/include/dev/pci/bktr/bktr_audio.h
 ./usr/include/dev/pci/bktr/bktr_card.h
