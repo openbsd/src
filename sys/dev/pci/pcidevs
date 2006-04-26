@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1061 2006/04/26 00:50:15 marco Exp $
+$OpenBSD: pcidevs,v 1.1062 2006/04/26 15:10:29 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -774,6 +774,9 @@ product ATI IXP_IDE_400		0x4376	IXP400 IDE
 product ATI IXP_MODEM_400	0x4378	IXP400 Modem
 product ATI IXP_SATA_400_1	0x4379	IXP400 SATA
 product ATI IXP_SATA_400_2	0x437a	IXP400 SATA
+product ATI IXP_SATA_600_1	0x4380	IXP600 SATA
+product ATI IXP_SATA_600_2	0x4381	IXP600 SATA
+product ATI IXP_IDE_600		0x438c	IXP600 IDE
 product ATI MACH64_ET		0x4554	Mach64 ET
 product ATI RAGEPRO		0x4742	Rage Pro
 product ATI MACH64_GD		0x4744	Mach64 GD
