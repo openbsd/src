@@ -1,0 +1,72 @@
+.\"	$OpenBSD: azalia.4,v 1.1 2006/04/26 15:59:26 jason Exp $
+.\"	$NetBSD: azalia.4,v 1.2 2005/06/22 04:19:09 kent Exp $
+.\"
+.\" Copyright (c) 2005 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by TAMURA Kent
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 22, 2005
+.Dt AZALIA 4
+.Os
+.Sh NAME
+.Nm azalia
+.Nd Generic High Definition Audio device driver
+.Sh SYNOPSIS
+.Cd "azalia* at pci? dev ? function ?"
+.Cd "audio* at audiobus?"
+.Sh DESCRIPTION
+The
+.Nm
+device driver is expected to support any PCI device which is
+compliant to the High Definition Audio Specification 1.0.
+Known supported devices are Intel 82801F (ICH6),
+and Intel 82801G (ICH7).
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr pci 4
+.Pa http://www.intel.com/standards/hdaudio/
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 3.0 .
+.Ox
+support first appeared in
+.Ox 4.0 .
+.Sh BUGS
+S/PDIF support is not implemented.
+.Pp
+Non-PCM encodings such as Float32 and AC-3 are not supported.
+.Pp
+There is no way to use 20bit or 24bit precision because of a
+limitation of the MI audio framework.
