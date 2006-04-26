@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.23 2006/04/21 21:43:59 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.24 2006/04/26 01:25:37 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -327,7 +327,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	struct mfi_init_frame	*init;
 	struct mfi_init_qinfo	*qinfo;
 
-	DNPRINTF(MFI_D_CMD, "mfi_initialize_firmware\n");
+	DNPRINTF(MFI_D_CMD, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL)
 		return (1);
@@ -449,7 +449,7 @@ nopcq:
 int
 mfi_despatch_cmd(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
-	DNPRINTF(MFI_D_CMD, "mfi_despatch_cmd\n");
+	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n", DEVNAME(sc));
 
 	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) | ccb->ccb_extra_frames);
 
@@ -462,7 +462,7 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	struct mfi_frame_header	*hdr;
 	int			to = 0;
 
-	DNPRINTF(MFI_D_CMD, "mfi_poll\n");
+	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(sc));
 
 	hdr = &ccb->ccb_frame->mfr_header;
 	hdr->mfh_cmd_status = 0xff;
