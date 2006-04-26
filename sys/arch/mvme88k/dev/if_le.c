@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.12 2006/01/11 07:22:00 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.13 2006/04/26 21:06:08 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -30,9 +30,6 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 10/30/93
  */
-
-/* This card lives in D16 space */
-#define	__BUS_SPACE_RESTRICT_D16__
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +74,6 @@ void vleetheraddr(struct am7990_softc *);
 void vleinit(struct am7990_softc *);
 void vlereset(struct am7990_softc *);
 int vle_intr(void *);
-void vle_copyfrombuf_contig(struct am7990_softc *, void *, int, int);
-void vle_copytobuf_contig(struct am7990_softc *, void *, int, int);
-void vle_zerobuf_contig(struct am7990_softc *, int, int);
 
 /* send command to the nvram controller */
 void
@@ -213,38 +207,6 @@ vle_intr(sc)
 	return (rc);
 }
 
-void
-vle_copytobuf_contig(sc, from, boff, len)
-	struct am7990_softc *sc;
-	void *from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	d16_bcopy(from, buf + boff, len);
-}
-
-void
-vle_copyfrombuf_contig(sc, to, boff, len)
-	struct am7990_softc *sc;
-	void *to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	d16_bcopy(buf + boff, to, len);
-}
-
-void
-vle_zerobuf_contig(sc, boff, len)
-	struct am7990_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	d16_bzero(buf + boff, len);
-}
-
 int
 lematch(parent, vcf, args)
 	struct device *parent;
@@ -343,11 +305,11 @@ leattach(parent, self, aux)
 	sc->sc_rdcsr = vlerdcsr;
 	sc->sc_wrcsr = vlewrcsr;
 	sc->sc_hwinit = vleinit;
-	sc->sc_copytodesc = vle_copytobuf_contig;
-	sc->sc_copyfromdesc = vle_copyfrombuf_contig;
-	sc->sc_copytobuf = vle_copytobuf_contig;
-	sc->sc_copyfrombuf = vle_copyfrombuf_contig;
-	sc->sc_zerobuf = vle_zerobuf_contig;
+	sc->sc_copytodesc = am7990_copytobuf_contig;
+	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+	sc->sc_copytobuf = am7990_copytobuf_contig;
+	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+	sc->sc_zerobuf = am7990_zerobuf_contig;
 
 	/* get Ethernet address */
 	vleetheraddr(sc);

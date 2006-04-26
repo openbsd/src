@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lereg.h,v 1.3 2004/05/17 08:36:22 miod Exp $ */
+/*	$OpenBSD: if_lereg.h,v 1.4 2006/04/26 21:06:08 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -45,11 +45,11 @@ struct vlereg1 {
 	volatile u_int16_t	ler1_ear;	/* ethernet address register */
 };
 
-#define	NVRAM_EN	0x0008	/* NVRAM enable bit              */
-#define	INTR_EN		0x0010	/* Interrupt enable bit          */
-#define	PARITYB		0x0020	/* Parity clear bit              */
-#define	HW_RS		0x0040	/* Hardware reset bit            */
-#define	SYSFAILB	0x0080	/* SYSFAIL bit                   */
+#define	NVRAM_EN	0x0008	/* NVRAM enable bit (active low) */
+#define	INTR_EN		0x0010	/* interrupt enable bit (active low) */
+#define	PARITYB		0x0020	/* parity error clear bit */
+#define	HW_RS		0x0040	/* hardware reset bit (active low) */
+#define	SYSFAILB	0x0080	/* SYSFAIL bit */
 
 #define	NVRAM_RWEL	0xe0	/* Reset write enable latch      */
 #define	NVRAM_STO	0x60	/* Store ram to eeprom           */
@@ -76,13 +76,9 @@ struct vlereg1 {
 #define	DISABLE_INTR	WRITE_CSR_OR(INTR_EN)
 #define	RESET_HW \
 	do { \
-		WRITE_CSR_AND(0xff00); \
 		WRITE_CSR_AND(HW_RS); \
 		CDELAY; \
 	} while (0)
 #define	SET_VEC(x) \
-	do { \
-		reg1->ler1_vec = 0; \
-		reg1->ler1_vec |= (x); \
-	} while (0)
+	reg1->ler1_vec |= (x)
 #define	SYSFAIL_CL	WRITE_CSR_AND(SYSFAILB)
