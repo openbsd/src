@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crash.8,v 1.22 2004/08/14 06:25:58 david Exp $
+.\"	$OpenBSD: crash.8,v 1.23 2006/04/26 07:48:40 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -283,7 +283,7 @@ Go to the kernel build directory, i.e.,
 Do the following:
 .Bd -literal -offset indent
 # rm foo.o
-# make -n foo.o | sed 's,-c,-g -c,' | sh
+# DEBUG=-g make foo.o
 # objdump -S foo.o | less
 .Ed
 .Pp
