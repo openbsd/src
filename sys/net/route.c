@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.71 2006/04/22 19:43:06 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.72 2006/04/26 17:02:13 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -368,6 +368,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	u_int32_t		*stat = NULL;
 	struct rt_addrinfo	 info;
 	struct ifaddr		*ifa;
+	struct ifnet		*ifp = NULL;
 
 	splassert(IPL_SOFTNET);
 
@@ -376,6 +377,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 		error = ENETUNREACH;
 		goto out;
 	}
+	ifp = ifa->ifa_ifp;
 	rt = rtalloc1(dst, 0);
 	/*
 	 * If the redirect isn't from our current router for this dst,
@@ -455,7 +457,7 @@ out:
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
 	info.rti_info[RTAX_AUTHOR] = src;
-	rt_missmsg(RTM_REDIRECT, &info, flags, ifa->ifa_ifp, error);
+	rt_missmsg(RTM_REDIRECT, &info, flags, ifp, error);
 }
 
 /*
