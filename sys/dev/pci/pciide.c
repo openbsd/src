@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.236 2006/04/25 09:09:42 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.237 2006/04/26 15:15:46 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -889,6 +889,10 @@ const struct pciide_product_desc pciide_ati_products[] = {
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_2,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
+	},
+	{ PCI_PRODUCT_ATI_IXP_IDE_600,
+	  0,
+	  ixp_chip_map
 	}
 };
 
