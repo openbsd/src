@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.25 2005/10/03 21:11:14 krw Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.26 2006/04/26 07:53:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -229,7 +229,6 @@
 #define	AMI_SYSFLUSH	0xfe	/* flush system */
 
 /* command structures */
-#pragma pack(1)
 struct ami_iocmd {
 	u_int8_t	acc_cmd;
 	u_int8_t	acc_id;
@@ -242,7 +241,7 @@ struct ami_iocmd {
 			u_int8_t	amb_ldn;	/* logical drive no */
 			u_int8_t	amb_nsge;
 			u_int8_t	amb_reserved;
-		} _ami_mbox;
+		} __packed _ami_mbox;
 
 #define	acc_io		_._ami_io
 		struct {
@@ -251,7 +250,7 @@ struct ami_iocmd {
 			u_int8_t	aio_pad[4];
 			u_int32_t	aio_data;
 			u_int8_t	aio_pad1[3];
-		} _ami_io;
+		} __packed _ami_io;
 
 #define	acc_passthru	_._ami_passthru
 		struct {
@@ -261,7 +260,7 @@ struct ami_iocmd {
 			u_int8_t	apt_dummy2;
 			u_int8_t	apt_dummy3;
 			u_int8_t	apt_reserved;
-		} _ami_passthru;
+		} __packed _ami_passthru;
 
 #define	acc_ldrv	_._ami_ldrv
 		struct {
@@ -271,8 +270,8 @@ struct ami_iocmd {
 			u_int8_t	ald_ldrv;
 			u_int8_t	ald_dummy2;
 			u_int8_t	ald_reserved;
-		} _ami_ldrv;
-	} _;
+		} __packed _ami_ldrv;
+	} __packed _;
 	u_int8_t	acc_busy;
 	u_int8_t	acc_nstat;
 	u_int8_t	acc_status;
@@ -281,12 +280,12 @@ struct ami_iocmd {
 	u_int8_t	acc_poll;
 	u_int8_t	acc_ack;
 	u_int8_t	acc_pad[0x3e];	/* pad to 128 bytes */
-};
+} __packed;
 
 struct ami_sgent {
 	u_int32_t	asg_addr;
 	u_int32_t	asg_len;
-};
+} __packed;
 
 struct ami_iocmd64 {
 	u_int8_t	acc_cmd;
@@ -299,7 +298,7 @@ struct ami_iocmd64 {
 			u_int8_t	amb_ldn;	/* logical drive no */
 			u_int8_t	amb_nsge;	/* high bit == 1 */
 			u_int8_t	amb_reserved;
-		} _ami_mbox;
+		} __packed _ami_mbox;
 
 		struct {
 			u_int8_t	aio_channel;
@@ -307,7 +306,7 @@ struct ami_iocmd64 {
 			u_int8_t	aio_pad[4];
 			u_int32_t	aio_data;
 			u_int8_t	aio_pad1[3];
-		} _ami_io;
+		} __packed _ami_io;
 
 		struct {
 			u_int16_t	apt_dummy0;
@@ -316,7 +315,7 @@ struct ami_iocmd64 {
 			u_int8_t	apt_dummy2;
 			u_int8_t	apt_dummy3;
 			u_int8_t	apt_reserved;
-		} _ami_passthru;
+		} __packed _ami_passthru;
 
 		struct {
 			u_int16_t	ald_dummy0;
@@ -325,8 +324,8 @@ struct ami_iocmd64 {
 			u_int8_t	ald_ldrv;
 			u_int8_t	ald_dummy2;
 			u_int8_t	ald_reserved;
-		} _ami_ldrv;
-	} _;
+		} __packed _ami_ldrv;
+	} __packed _;
 	u_int8_t	acc_busy;
 	u_int32_t	acc_data_l;
 	u_int32_t	acc_data_h;
@@ -337,13 +336,13 @@ struct ami_iocmd64 {
 	u_int8_t	acc_poll;
 	u_int8_t	acc_ack;
 	u_int8_t	acc_pad[0x32];	/* pad to 128 bytes */
-};
+} __packed;
 
 struct ami_sgent64 {
 	u_int32_t	asg_addr_l;
 	u_int32_t	asg_addr_h;
 	u_int32_t	asg_len;
-};
+} __packed;
 
 struct ami_passthrough {
 	u_int8_t	apt_param;
@@ -367,7 +366,7 @@ struct ami_passthrough {
 	u_int8_t	apt_scsistat;
 	u_int32_t	apt_data;
 	u_int32_t	apt_datalen;
-};
+} __packed;
 
 struct ami_inquiry {
 	u_int8_t	ain_maxcmd;
@@ -409,12 +408,11 @@ struct ami_inquiry {
 #define	AMI_SIGN762	0xfffc0003
 #define	AMI_SIGNT5	0xfffb0004
 #define	AMI_SIGN466	0xfffa0005
-};
+} __packed;
 
 #define MAX_NOTIFY_SIZE	0x80
 #define CUR_NOTIFY_SIZE (sizeof(struct ami_notify))
-struct ami_notify
-{
+struct ami_notify {
 	u_int32_t	ano_eventcounter;	/* incremented for changes */
 
 	u_int8_t	ano_paramcounter;	/* param change */
@@ -491,7 +489,7 @@ struct ami_notify
 #define AMI_FCLOOP_ACTIVE		1
 #define AMI_FCLOOP_TRANSIENT		2
 	u_int8_t	ano_fclstatersvd;
-};
+} __packed;
 
 struct ami_fc_einquiry {
 	u_int32_t	ain_size;	/* size of this structure */
@@ -518,7 +516,7 @@ struct ami_fc_einquiry {
 	u_int16_t	ain_pdfmtinp[AMI_BIG_MAX_PDRIVES];
 	u_int8_t	ain_pdrates [80];	/* pdrv xfer rates */
 	u_int8_t	ain_pad[263];		/* pad to 1k */
-};
+} __packed;
 
 struct ami_fc_prodinfo {
 	u_int32_t	api_size;	/* size of this structure */
@@ -535,7 +533,7 @@ struct ami_fc_prodinfo {
 	u_int16_t	api_ssid;
 	u_int16_t	api_ssvid;
 	u_int8_t	api_nnotify;
-};
+} __packed;
 
 struct ami_diskarray {
 	u_int8_t	ada_nld;
@@ -555,17 +553,17 @@ struct ami_diskarray {
 			struct {
 				u_int8_t	add_channel;
 				u_int8_t	add_target;
-			} ads_devs[AMI_MAX_DEVDEPTH];
-		} adl_spans[AMI_MAX_SPANDEPTH];
-	} ada_ldrv[AMI_MAX_LDRIVES];
+			} __packed ads_devs[AMI_MAX_DEVDEPTH];
+		} __packed adl_spans[AMI_MAX_SPANDEPTH];
+	} __packed ada_ldrv[AMI_MAX_LDRIVES];
 	struct {
 		u_int8_t	adp_type;	/* SCSI device type */
 		u_int8_t	adp_ostatus;	/* status during config */
 		u_int8_t	adp_tagdepth;	/* level of tagging */
 		u_int8_t	adp_sneg;	/* sync negotiation */
 		u_int32_t	adp_size;
-	} ada_pdrv[AMI_MAX_PDRIVES];
-};
+	} __packed ada_pdrv[AMI_MAX_PDRIVES];
+} __packed;
 
 struct ami_big_diskarray {
 	u_int8_t	ada_nld;
@@ -588,9 +586,9 @@ struct ami_big_diskarray {
 			struct {
 				u_int8_t	add_channel;
 				u_int8_t	add_target;
-			} ads_devs[AMI_BIG_MAX_DEVDEPTH];
-		} adl_spans[AMI_BIG_MAX_SPANDEPTH];
-	} ada_ldrv[AMI_BIG_MAX_LDRIVES];
+			} __packed ads_devs[AMI_BIG_MAX_DEVDEPTH];
+		} __packed adl_spans[AMI_BIG_MAX_SPANDEPTH];
+	} __packed ada_ldrv[AMI_BIG_MAX_LDRIVES];
 #define apd ada_pdrv
 	struct {
 		u_int8_t	adp_type;	/* SCSI device type */
@@ -598,8 +596,8 @@ struct ami_big_diskarray {
 		u_int8_t	adp_tagdepth;	/* level of tagging */
 		u_int8_t	adp_sneg;	/* sync negotiation */
 		u_int32_t	adp_size;
-	} ada_pdrv[AMI_BIG_MAX_PDRIVES];
-};
+	} __packed ada_pdrv[AMI_BIG_MAX_PDRIVES];
+} __packed;
 
 struct ami_scsisense {
 	u_int8_t	ase_end;
@@ -613,8 +611,8 @@ struct ami_scsisense {
 		u_int16_t	asd_cmdspec0;
 		u_int16_t	asd_cmdspec1;
 		u_int16_t	asd_asc_ascq;
-	} ase_dump[5];
-};
+	} __packed ase_dump[5];
+} __packed;
 
 struct ami_escsisense {
 	u_int8_t	ase_end;
@@ -629,13 +627,13 @@ struct ami_escsisense {
 		u_int16_t	asd_cmdspec1;
 		u_int16_t	asd_asc_ascq;
 		u_int16_t	asd_extarea;
-	} ase_dump[5];
-};
+	} __packed ase_dump[5];
+} __packed;
 
 struct ami_cachestats {
 	u_int32_t	acs_total;
 	u_int32_t	acs_hits;
-};
+} __packed;
 
 struct ami_drivehistory {
 	struct {
@@ -643,7 +641,7 @@ struct ami_drivehistory {
 #define	AMI_ADHERR_TIMEOUT(e)	((e) & 15)
 #define	AMI_ADHERR_PARITY(e)	(((e) >> 4) & 15)
 		u_int8_t	adh_throttle;
-	} adh_err[3][16];	/* channels * drives */
+	} __packed adh_err[3][16];	/* channels * drives */
 	u_int8_t	adh_failidx;
 	struct {
 		u_int8_t	adh_tag;
@@ -661,8 +659,8 @@ struct ami_drivehistory {
 #define	AMI_ADHERR_OTHER	8
 
 #define	AMI_FAILHISTORY		10
-	} adh_fail[AMI_FAILHISTORY];
-};
+	} __packed adh_fail[AMI_FAILHISTORY];
+} __packed;
 
 struct ami_inq_data {
 	u_int8_t	aid_peri;
@@ -680,6 +678,4 @@ struct ami_inq_data {
 	u_int8_t	aid_proctype;
 
 	u_int8_t	resv2[20];
-};
-
-#pragma pack()
+} __packed;
