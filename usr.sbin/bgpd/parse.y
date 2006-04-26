@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.187 2006/04/18 19:26:55 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.188 2006/04/26 17:13:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2432,7 +2432,7 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				yyerror("community is already set");
 			else
 				yyerror("redefining set parameter %s",
-				    filterset_names[s->type]);
+				    filterset_name(s->type));
 			return (-1);
 		}
 	}

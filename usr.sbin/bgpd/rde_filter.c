@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.47 2006/04/04 12:03:26 henning Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.48 2006/04/26 17:13:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -449,7 +449,7 @@ filterset_free(struct filter_set_head *sh)
 int
 filterset_cmp(struct filter_set *a, struct filter_set *b)
 {
-	if (strcmp(filterset_names[a->type], filterset_names[b->type]))
+	if (strcmp(filterset_name(a->type), filterset_name(b->type)))
 		return (a->type - b->type);
 
 	if (a->type == ACTION_SET_COMMUNITY) {	/* a->type == b->type */
@@ -567,3 +567,40 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 	return (1);
 }
 
+const char *
+filterset_name(enum action_types type)
+{
+	switch (type) {
+	case ACTION_SET_LOCALPREF:
+	case ACTION_SET_RELATIVE_LOCALPREF:
+		return ("localpref");
+	case ACTION_SET_MED:
+	case ACTION_SET_RELATIVE_MED:
+		return ("metric");
+	case ACTION_SET_WEIGHT:
+	case ACTION_SET_RELATIVE_WEIGHT:
+		return ("weight");
+	case ACTION_SET_PREPEND_SELF:
+		return ("prepend-self");
+	case ACTION_SET_PREPEND_PEER:
+		return ("prepend-peer");
+	case ACTION_SET_NEXTHOP:
+	case ACTION_SET_NEXTHOP_REJECT:
+	case ACTION_SET_NEXTHOP_BLACKHOLE:
+	case ACTION_SET_NEXTHOP_NOMODIFY:
+	case ACTION_SET_NEXTHOP_SELF:
+		return ("nexthop");
+	case ACTION_SET_COMMUNITY:
+		return ("community");
+	case ACTION_DEL_COMMUNITY:
+		return ("community delete");
+	case ACTION_PFTABLE:
+	case ACTION_PFTABLE_ID:
+		return ("pftable");
+	case ACTION_RTLABEL:
+	case ACTION_RTLABEL_ID:
+		return ("rtlabel");
+	}
+
+	fatalx("filterset_name: got lost");
+}
