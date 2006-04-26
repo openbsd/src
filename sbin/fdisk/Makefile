@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.30 2005/02/16 20:39:38 millert Exp $
+#	$OpenBSD: Makefile,v 1.31 2006/04/26 17:10:43 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -38,12 +38,12 @@ CLEANFILES+=manual.c
 
 .ifdef NOMAN
 manual.c:
-	(echo 'const char manpage[] = {'; \
+	(echo 'const unsigned char manpage[] = {'; \
 	echo 'no manual' | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .else
 manual.c:	fdisk.cat8
-	(echo 'const char manpage[] = {'; \
+	(echo 'const unsigned char manpage[] = {'; \
 	cat fdisk.cat8 | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .endif

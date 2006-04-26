@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.102 2006/04/14 16:38:42 pedro Exp $	*/
+/*	$OpenBSD: editor.c,v 1.103 2006/04/26 17:09:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.102 2006/04/14 16:38:42 pedro Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.103 2006/04/26 17:09:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -295,7 +295,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		case 'M': {
 			sig_t opipe = signal(SIGPIPE, SIG_IGN);
 			char *pager, *cmd = NULL;
-			extern const char manpage[];
+			extern const u_char manpage[];
 			extern const int manpage_sz;
 
 			if ((pager = getenv("PAGER")) == NULL || *pager == '\0')
