@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.154 2006/04/25 13:32:03 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.155 2006/04/26 22:41:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1022,11 +1022,11 @@ ami_poll(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	s = splbio();
 	error = sc->sc_poll(sc, &ccb->ccb_cmd);
-	splx(s);
-
 	if (error)
 		ccb->ccb_flags |= AMI_CCB_F_ERR;
+
 	ccb->ccb_done(sc, ccb);
+	splx(s);
 
 	return (error);
 }
@@ -1086,10 +1086,10 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 	return;
 
 err:
-	splx(s);
 	ccb->ccb_flags |= AMI_CCB_F_ERR;
 	ccb->ccb_state = AMI_CCB_READY;
 	ccb->ccb_done(sc, ccb);
+	splx(s);
 }
 
 void
@@ -1100,22 +1100,18 @@ ami_stimeout(void *v)
 	struct ami_iocmd *cmd = &ccb->ccb_cmd;
 	int s;
 
+	s = splbio();
 	switch (ccb->ccb_state) {
 	case AMI_CCB_PREQUEUED:
 		/* command never ran, cleanup is easy */
-		s = splbio();
 		TAILQ_REMOVE(&sc->sc_ccb_preq, ccb, ccb_link);
 		ccb->ccb_flags |= AMI_CCB_F_ERR;
-		splx(s);
 		break;
 
 	case AMI_CCB_QUEUED:
 		/* XXX create a list to save ccb to and print the whole list */
 		printf("%s: timeout ccb %d\n", DEVNAME(sc), cmd->acc_id);
-		s = splbio();
 		TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
-		/* do not reuse the ccb since its still on the hw */
-		splx(s);
 		break;
 
 	default:
@@ -1123,13 +1119,13 @@ ami_stimeout(void *v)
 	}
 
 	ccb->ccb_done(sc, ccb);
+	splx(s);
 }
 
 int
 ami_done(struct ami_softc *sc, int idx)
 {
 	struct ami_ccb *ccb = &sc->sc_ccbs[idx - 1];
-	int s;
 
 	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", ccb->ccb_cmd.acc_id));
 
@@ -1139,10 +1135,8 @@ ami_done(struct ami_softc *sc, int idx)
 		return (1);
 	}
 
-	s = splbio();
 	ccb->ccb_state = AMI_CCB_READY;
 	TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
-	splx(s);
 
 	ccb->ccb_done(sc, ccb);
 
@@ -1156,7 +1150,6 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 	struct scsi_link *link = xs->sc_link;
 	struct ami_rawsoftc *rsc = link->adapter_softc;
 	u_int8_t target = link->target, type;
-	int s;
 
 	if (xs->data != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
@@ -1186,17 +1179,14 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 			rsc->sc_proctarget = target;
 	}
 
-	s = splbio();
 	ami_put_ccb(ccb);
 	scsi_done(xs);
-	splx(s);
 }
 
 void
 ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
-	int s;
 
 	if (xs->data != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
@@ -1218,10 +1208,8 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 	if (ccb->ccb_flags & AMI_CCB_F_ERR)
 		xs->error = XS_DRIVER_STUFFUP;
 
-	s = splbio();
 	ami_put_ccb(ccb);
 	scsi_done(xs);
-	splx(s);
 }
 
 void
@@ -1229,7 +1217,6 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	struct ami_iocmd *cmd = &ccb->ccb_cmd;
-	int s;
 
 	timeout_del(&xs->stimeout);
 	if (ccb->ccb_flags & AMI_CCB_F_ERR) {
@@ -1237,10 +1224,8 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 
-		s = splbio();
 		ami_put_ccb(ccb);
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1255,7 +1240,6 @@ void
 ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
-	int s;
 
 	timeout_del(&xs->stimeout);
 	xs->resid = 0;
@@ -1263,10 +1247,8 @@ ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
 	if (ccb->ccb_flags & AMI_CCB_F_ERR)
 		xs->error = XS_DRIVER_STUFFUP;
 
-	s = splbio();
 	ami_put_ccb(ccb);
 	scsi_done(xs);
-	splx(s);
 }
 
 void
@@ -1278,11 +1260,7 @@ ami_done_ioctl(struct ami_softc *sc, struct ami_ccb *ccb)
 void
 ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 {
-	int s;
-
-	s = splbio();
 	ami_put_ccb(ccb);
-	splx(s);
 }
 
 void
@@ -1640,14 +1618,12 @@ ami_intr(void *v)
 	struct ami_softc *sc = v;
 	struct ami_iocmd mbox;
 	int i, rv = 0;
-	int s;
 
 	if (TAILQ_EMPTY(&sc->sc_ccb_runq))
 		return (0);
 
 	AMI_DPRINTF(AMI_D_INTR, ("intr "));
 
-	s = splbio();
 	while ((sc->sc_done)(sc, &mbox)) {
 		AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 		for (i = 0; i < mbox.acc_nstat; i++ ) {
@@ -1659,8 +1635,6 @@ ami_intr(void *v)
 				rv |= 1;
 		}
 	}
-
-	splx(s);
 
 	if (rv)
 		ami_runqueue(sc);
