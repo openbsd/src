@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.179 2006/04/19 22:09:40 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.180 2006/04/26 20:49:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -900,8 +900,15 @@ nmihand(void *frame)
 {
 #ifdef DDB
 	printf("Abort switch pressed\n");
-	if (db_console)
-		Debugger();
+	if (db_console) {
+		/*
+		 * We can't use Debugger() here, as we are coming from an
+		 * exception handler, and can't assume anything about the
+		 * state we are in. Invoke the post-trap ddb entry directly.
+		 */
+		extern void m88k_db_trap(int, struct trapframe *);
+		m88k_db_trap(T_KDB_ENTRY, (struct trapframe *)frame);
+	}
 #endif
 }
 
