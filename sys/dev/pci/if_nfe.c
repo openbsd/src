@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.54 2006/04/07 12:38:12 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.55 2006/04/26 01:20:28 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -302,7 +302,6 @@ nfe_power(int why, void *arg)
 	if (why == PWR_RESUME) {
 		ifp = &sc->sc_arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP) {
-			ifp->if_flags &= ~IFF_RUNNING;
 			nfe_init(ifp);
 			if (ifp->if_flags & IFF_RUNNING)
 				nfe_start(ifp);
@@ -472,14 +471,12 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		nfe_init(ifp);
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			nfe_init(ifp);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif
-		default:
 			break;
 		}
 		break;
@@ -502,10 +499,12 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 */
 			if ((ifp->if_flags & IFF_RUNNING) &&
 			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 				nfe_setmulti(sc);
-			else
-				nfe_init(ifp);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					nfe_init(ifp);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				nfe_stop(ifp, 1);
@@ -1006,7 +1005,6 @@ nfe_watchdog(struct ifnet *ifp)
 
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
-	ifp->if_flags &= ~IFF_RUNNING;
 	nfe_init(ifp);
 
 	ifp->if_oerrors++;
@@ -1017,9 +1015,6 @@ nfe_init(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 	uint32_t tmp;
-
-	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
 
 	nfe_stop(ifp, 0);
 
