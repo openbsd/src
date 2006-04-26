@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.15 2006/04/21 02:38:36 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.16 2006/04/26 15:57:41 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.15 2006/04/21 02:38:36 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.16 2006/04/26 15:57:41 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -58,7 +58,7 @@ int	reached = 1;
 int	rchflg;
 
 /*
- * In conjunction with reached ontrols printing of "fallthrough on ..."
+ * In conjunction with reached controls printing of "fallthrough on ..."
  * warnings.
  * Reset by each statement and set by FALLTHROUGH, switch (switch1())
  * and case (label()).
@@ -124,7 +124,7 @@ pos_t	scflpos;
 int	plibflg;
 
 /*
- * Nonzero means that no warnings about constands in conditional
+ * Nonzero means that no warnings about constants in conditional
  * context are printed.
  */
 int	ccflg;
@@ -203,7 +203,7 @@ chkreach(void)
  * Called after a function declaration which introduces a function definition
  * and before an (optional) old style argument declaration list.
  *
- * Puts all symbols declared in the Prototype or in an old style argument
+ * Puts all symbols declared in the prototype or in an old style argument
  * list back to the symbol table.
  *
  * Does the usual checking of storage class, type (return value),
