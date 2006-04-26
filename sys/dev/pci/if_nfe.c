@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.56 2006/04/26 01:33:38 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.57 2006/04/26 02:07:29 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -813,8 +813,8 @@ nfe_txeof(struct nfe_softc *sc)
 				goto skip;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
-				printf("%s: tx v1 error 0x%04x\n",
-				    sc->sc_dev.dv_xname, flags);
+				printf("%s: tx v1 error 0x%04b\n",
+				    sc->sc_dev.dv_xname, flags, NFE_V1_TXERR);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -823,8 +823,8 @@ nfe_txeof(struct nfe_softc *sc)
 				goto skip;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
-				printf("%s: tx v2 error 0x%04x\n",
-				    sc->sc_dev.dv_xname, flags);
+				printf("%s: tx v2 error 0x%04b\n",
+				    sc->sc_dev.dv_xname, flags, NFE_V2_TXERR);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
