@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.135 2006/03/22 13:30:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.136 2006/04/26 20:00:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,8 +40,7 @@ void		sighdlr(int);
 __dead void	usage(void);
 int		main(int, char *[]);
 int		check_child(pid_t, const char *);
-int		send_filterset(struct imsgbuf *, struct filter_set_head *,
-		    int);
+int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 		    struct peer **, struct filter_head *);
 int		dispatch_imsg(struct imsgbuf *, int);
@@ -398,12 +397,12 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-send_filterset(struct imsgbuf *i, struct filter_set_head *set, int id)
+send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 {
 	struct filter_set	*s;
 
 	TAILQ_FOREACH(s, set, entry)
-		if (imsg_compose(i, IMSG_FILTER_SET, id, 0, -1, s,
+		if (imsg_compose(i, IMSG_FILTER_SET, 0, 0, -1, s,
 		    sizeof(struct filter_set)) == -1)
 			return (-1);
 	return (0);
@@ -459,7 +458,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &n->net, sizeof(struct network_config)) == -1)
 			return (-1);
-		if (send_filterset(ibuf_rde, &n->net.attrset, 0) == -1)
+		if (send_filterset(ibuf_rde, &n->net.attrset) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1,
 		    NULL, 0) == -1)
@@ -478,7 +477,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
-		if (send_filterset(ibuf_rde, &r->set, 0) == -1)
+		if (send_filterset(ibuf_rde, &r->set) == -1)
 			return (-1);
 		TAILQ_REMOVE(rules_l, r, entry);
 		filterset_free(&r->set);
@@ -712,7 +711,7 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 	if (type == IMSG_NETWORK_REMOVE)
 		return (1);
 
-	if (send_filterset(ibuf_rde, h, 0) == -1)
+	if (send_filterset(ibuf_rde, h) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);
