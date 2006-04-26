@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.14 2004/06/17 22:09:11 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.15 2006/04/26 03:01:48 cloder Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -132,7 +132,7 @@ struct {
 };
 
 static char **scp;	/* scanner - pointer at arglist */
-static char scc;	/* scanner - count of remaining arguments */
+static int scc;		/* scanner - count of remaining arguments */
 static char *sct;	/* scanner - next char pointer in current argument */
 static int need;	/* scanner - need to advance to next argument */
 static char *sc_token;	/* scanner - token buffer */
@@ -141,7 +141,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.14 2004/06/17 22:09:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.15 2006/04/26 03:01:48 cloder Exp $";
 #endif
 
 /*
@@ -341,10 +341,13 @@ plus(struct tm *tm)
 	switch (token()) {
 	case WEEKS:
 		delay *= 7;
+		/* FALLTHROUGH */
 	case DAYS:
 		delay *= 24;
+		/* FALLTHROUGH */
 	case HOURS:
 		delay *= 60;
+		/* FALLTHROUGH */
 	case MINUTES:
 		if (expectplur != sc_tokplur)
 			fprintf(stderr, "%s: pluralization is wrong\n",
@@ -644,8 +647,10 @@ parsetime(int argc, char **argv)
 		 */
 	case TEATIME:
 		hr += 4;
+		/* FALLTHROUGH */
 	case NOON:
 		hr += 12;
+		/* FALLTHROUGH */
 	case MIDNIGHT:
 		if (runtime.tm_hour >= hr) {
 			runtime.tm_mday++;
@@ -655,6 +660,7 @@ parsetime(int argc, char **argv)
 		runtime.tm_min = 0;
 		token();
 		/* fall through to month setting */
+		/* FALLTHROUGH */
 	default:
 		if (month(&runtime) != 0)
 			return (-1);

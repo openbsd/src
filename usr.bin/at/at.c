@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.45 2006/03/22 21:51:39 robert Exp $	*/
+/*	$OpenBSD: at.c,v 1.46 2006/04/26 03:01:48 cloder Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.45 2006/03/22 21:51:39 robert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.46 2006/04/26 03:01:48 cloder Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -68,7 +68,7 @@ static void writefile(const char *, time_t, char);
 static void list_jobs(int, char **, int, int);
 static time_t ttime(const char *);
 static int check_permission(void);
-static void panic(const char *);
+static __dead void panic(const char *);
 static void perr(const char *);
 static void perr2(const char *, const char *);
 static __dead void usage(void);
@@ -134,6 +134,7 @@ perr2(const char *a, const char *b)
 	perr(b);
 }
 
+/* ARGSUSED */
 static void
 sigc(int signo)
 {
@@ -147,6 +148,7 @@ sigc(int signo)
 	_exit(ERROR_EXIT);
 }
 
+/* ARGSUSED */
 static void
 alarmc(int signo)
 {
@@ -417,8 +419,8 @@ writefile(const char *cwd, time_t runtimer, char queue)
 static int
 byctime(const void *v1, const void *v2)
 {
-	const struct atjob *j1 = *(struct atjob **)v1;
-	const struct atjob *j2 = *(struct atjob **)v2;
+	const struct atjob *j1 = *(const struct atjob **)v1;
+	const struct atjob *j2 = *(const struct atjob **)v2;
 
 	return (j1->ctime - j2->ctime);
 }
@@ -639,7 +641,7 @@ process_jobs(int argc, char **argv, int what)
 	struct passwd *pw;
 	time_t runtimer;
 	uid_t *uids;
-	char **jobs, *ep, queue;
+	char **jobs, *ep;
 	long l;
 	FILE *fp;
 	DIR *spool;
@@ -701,7 +703,6 @@ process_jobs(int argc, char **argv, int what)
 		    l < 0 || l >= INT_MAX)
 			continue;
 		runtimer = (time_t)l;
-		queue = *(ep + 1);
 
 		/* Check runtimer against argv; argc==0 means do all. */
 		job_matches = (argc == 0) ? 1 : 0;
