@@ -1,4 +1,4 @@
-/*	$OpenBSD: cradle.c,v 1.2 2005/03/10 22:22:19 deraadt Exp $	*/
+/*	$OpenBSD: cradle.c,v 1.3 2006/04/26 20:19:25 sturm Exp $	*/
 
 /*
  * Copyright (c) 2003 Marius Aamodt Eriksen <marius@monkey.org>
@@ -84,12 +84,14 @@ struct client {
 TAILQ_HEAD(client_head, client) clientq;
 
 /* fake signal handler */
+/* ARGSUSED */
 static void
 sigusr1_handler(int sig)
 {
 	got_sigusr1 = 1;
 }
 
+/* ARGSUSED */
 static void
 gensig_cb(int sig, short ev, void *data)
 {
@@ -247,6 +249,7 @@ cradle_start(char *path, char *uipath, char *guipath)
 	connected = 1;
 }
 
+/* ARGSUSED */
 static void
 listen_cb(int fd, short which, void *arg)
 {
@@ -299,6 +302,7 @@ listen_cb(int fd, short which, void *arg)
 		err(1, "event_add()");
 }
 
+/* ARGSUSED */
 static void
 msg_cb(int fd, short which, void *arg)
 {
@@ -373,6 +377,7 @@ msg_cb(int fd, short which, void *arg)
 /*
  * Hack to catch "idle" EOFs from the UI
  */
+/* ARGSUSED */
 static void
 ui_cb(int fd, short which, void *arg)
 {

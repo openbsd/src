@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.50 2006/03/06 10:44:10 djm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.51 2006/04/26 20:19:25 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -238,6 +238,7 @@ intercept_register_pfreecb(void (*cb)(int, void *), void *arg)
 	return (0);
 }
 
+/* ARGSUSED */
 static void
 sigusr1_handler(int signum)
 {                                                                              

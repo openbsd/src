@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.51 2006/03/18 19:03:23 robert Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.52 2006/04/26 20:19:25 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -400,6 +400,7 @@ policyfree_cb(int policynr, void *arg)
 	systrace_freepolicy(policy);
 }
 
+/* ARGSUSED */
 static void
 child_handler(int sig)
 {

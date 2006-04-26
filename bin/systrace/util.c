@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2006/04/26 20:19:25 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -59,6 +59,7 @@ strescape(char *str)
 			if (p >= sizeof(escape) - 1)
 				errx(1, "%s: string too long: %s",
 				    __func__, str);
+			/* FALLTHROUGH */
 		default:
 			escape[p++] = a;
 		}
