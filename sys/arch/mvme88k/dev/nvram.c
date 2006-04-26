@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.25 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.26 2006/04/26 21:14:00 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -79,29 +79,15 @@ nvrammatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-#if 0
 	struct confargs *ca = args;
 	bus_space_handle_t ioh;
 	int rc;
-#endif
-	struct mvmeprom_time rtc;
 
-	bugrtcrd(&rtc);
-#if 0
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0)
 		return (0);
-	if (badvaddr(bus_space_vaddr(ca->ca_iot, ioh), 1)) {
-#ifdef DEBUG
-		printf("==> nvram: address 0x%x failed check\n", ca->ca_paddr);
-#endif
-		rc = 0;
-	} else
-		rc = 1;
+	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 1) == 0;
 	bus_space_unmap(ca->ca_iot, ioh, PAGE_SIZE);
-	return rc;
-#else
-	return 1;
-#endif
+	return (rc);
 }
 
 void
@@ -112,19 +98,22 @@ nvramattach(parent, self, args)
 	struct confargs *ca = args;
 	struct nvramsoftc *sc = (struct nvramsoftc *)self;
 	bus_space_handle_t ioh;
+	vsize_t maplen;
 
 	if (brdtyp == BRD_188) {
 		sc->sc_len = MK48T02_SIZE;
+		maplen = sc->sc_len * 4;
 		sc->sc_regs = M188_NVRAM_TOD_OFF;
 	} else {
 		sc->sc_len = MK48T08_SIZE;
+		maplen = sc->sc_len;
 		sc->sc_regs = SBC_NVRAM_TOD_OFF;
 	}
 
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_base = ca->ca_paddr;
 
-	if (bus_space_map(sc->sc_iot, sc->sc_base, round_page(sc->sc_len),
+	if (bus_space_map(sc->sc_iot, sc->sc_base, round_page(maplen),
 	    0, &ioh) != 0) {
 		printf(": can't map memory!\n");
 		return;
@@ -452,6 +441,13 @@ nvramopen(dev, flag, mode, p)
 	if (minor(dev) >= nvram_cd.cd_ndevs ||
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
+
+#ifdef MVME188
+	/* for now, do not allow userland to access the nvram on 188. */
+	if (brdtyp == BRD_188)
+		return (ENXIO);
+#endif
+
 	return (0);
 }
 
@@ -503,11 +499,6 @@ nvramrw(dev, uio, flags)
 	    sc->sc_len, uio, flags));
 }
 
-/*
- * If the NVRAM is of the 2K variety, an extra 2K of who-knows-what
- * will also be mmap'd, due to PAGE_SIZE being 4K. Usually, the NVRAM
- * repeats, so userland gets two copies back-to-back.
- */
 paddr_t
 nvrammmap(dev, off, prot)
 	dev_t dev;
