@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.35 2006/04/25 13:36:35 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.36 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -151,7 +151,7 @@ rcsmerge_main(int argc, char **argv)
 			    (flags & PIPEOUT) ? "; result to stdout":"");
 		}
 
-		if ((bp = cvs_diff3(file, argv[i], rev1, rev2,
+		if ((bp = rcs_diff3(file, argv[i], rev1, rev2,
 		    !(flags & QUIET))) == NULL) {
 			warnx("failed to merge");
 			rcs_close(file);
@@ -159,16 +159,16 @@ rcsmerge_main(int argc, char **argv)
 		}
 
 		if (flags & PIPEOUT) {
-			cvs_buf_putc(bp, '\0');
-			fcont = cvs_buf_release(bp);
+			rcs_buf_putc(bp, '\0');
+			fcont = rcs_buf_release(bp);
 			printf("%s", fcont);
 			xfree(fcont);
 		} else {
 			/* XXX mode */
-			if (cvs_buf_write(bp, argv[i], 0644) < 0)
-				warnx("cvs_buf_write failed");
+			if (rcs_buf_write(bp, argv[i], 0644) < 0)
+				warnx("rcs_buf_write failed");
 
-			cvs_buf_free(bp);
+			rcs_buf_free(bp);
 		}
 		rcs_close(file);
 	}

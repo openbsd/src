@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.43 2006/04/25 13:36:35 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.44 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -160,22 +160,22 @@ rcsclean_file(char *fname, const char *rev_str)
 		warnx("failed to get needed revision");
 		goto out;
 	}
-	if ((b2 = cvs_buf_load(fname, 0)) == NULL) {
+	if ((b2 = rcs_buf_load(fname, 0)) == NULL) {
 		warnx("failed to load `%s'", fname);
 		goto out;
 	}
 
 	/* If buffer lengths are the same, compare contents as well. */
-	if (cvs_buf_len(b1) != cvs_buf_len(b2))
+	if (rcs_buf_len(b1) != rcs_buf_len(b2))
 		match = 0;
 	else {
 		size_t len, n;
 
-		len = cvs_buf_len(b1);
+		len = rcs_buf_len(b1);
 
 		match = 1;
 		for (n = 0; n < len; ++n)
-			if (cvs_buf_getc(b1, n) != cvs_buf_getc(b2, n)) {
+			if (rcs_buf_getc(b1, n) != rcs_buf_getc(b2, n)) {
 				match = 0;
 				break;
 			}
@@ -205,9 +205,9 @@ rcsclean_file(char *fname, const char *rev_str)
 
 out:
 	if (b1 != NULL)
-		cvs_buf_free(b1);
+		rcs_buf_free(b1);
 	if (b2 != NULL)
-		cvs_buf_free(b2);
+		rcs_buf_free(b2);
 	if (file != NULL)
 		rcs_close(file);
 }

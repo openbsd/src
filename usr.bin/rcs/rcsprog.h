@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.54 2006/04/24 04:51:57 ray Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.55 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,6 @@
 
 #include <err.h>
 
-#include "log.h"
 #include "rcs.h"
 #include "rcsutil.h"
 #include "worklist.h"
@@ -77,10 +76,10 @@ extern int	 rcs_optind;
 extern char	*rcs_optarg;
 extern char	*rcs_suffixes;
 extern char	*rcs_tmpdir;
-extern struct cvs_wklhead rcs_temp_files;
+extern struct rcs_wklhead rcs_temp_files;
 
 /* date.y */
-time_t  cvs_date_parse(const char *);
+time_t  rcs_date_parse(const char *);
 
 /* ci.c */
 int	checkin_main(int, char **);

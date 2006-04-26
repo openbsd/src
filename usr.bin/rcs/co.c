@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.84 2006/04/25 13:36:35 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.85 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -252,7 +252,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	rcsdate = givendate = -1;
 	if (date != NULL)
-		givendate = cvs_date_parse(date);
+		givendate = rcs_date_parse(date);
 
 	if (file->rf_ndelta == 0)
 		printf("no revisions present; generating empty revision 0.0\n");
@@ -292,7 +292,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list) {
 			if (date != NULL) {
 				fdate = asctime(&rdp->rd_date);
-				rcsdate = cvs_date_parse(fdate);
+				rcsdate = rcs_date_parse(fdate);
 				if (givendate <= rcsdate)
 					continue;
 			}
@@ -352,7 +352,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			return (-1);
 		}
 	} else {
-		bp = cvs_buf_alloc(1, 0);
+		bp = rcs_buf_alloc(1, 0);
 	}
 
 	/*
@@ -444,7 +444,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		    ", and you do not own it");
 		printf("remove it? [ny](n): ");
 		/* default is n */
-		if (cvs_yesno() == -1) {
+		if (rcs_yesno() == -1) {
 			if (!(flags & QUIET) && isatty(STDIN_FILENO))
 				warnx("writable %s exists; "
 				    "checkout aborted", dst);
@@ -455,17 +455,17 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	if (flags & PIPEOUT) {
-		cvs_buf_putc(bp, '\0');
-		content = cvs_buf_release(bp);
+		rcs_buf_putc(bp, '\0');
+		content = rcs_buf_release(bp);
 		printf("%s", content);
 		xfree(content);
 	} else {
-		if (cvs_buf_write(bp, dst, mode) < 0) {
+		if (rcs_buf_write(bp, dst, mode) < 0) {
 			warnx("failed to write revision to file");
-			cvs_buf_free(bp);
+			rcs_buf_free(bp);
 			return (-1);
 		}
-		cvs_buf_free(bp);
+		rcs_buf_free(bp);
 		if (flags & CO_REVDATE) {
 			struct timeval tv[2];
 			memset(&tv, 0, sizeof(tv));

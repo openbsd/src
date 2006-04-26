@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.116 2006/04/25 13:55:49 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.117 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,7 +54,7 @@ struct rcs_prog {
 	{ "ident",	ident_main,	ident_usage	},
 };
 
-struct cvs_wklhead rcs_temp_files;
+struct rcs_wklhead rcs_temp_files;
 
 void sighdlr(int);
 static void  rcs_attach_symbol(RCSFILE *, const char *);
@@ -63,7 +63,7 @@ static void  rcs_attach_symbol(RCSFILE *, const char *);
 void
 sighdlr(int sig)
 {
-	cvs_worklist_clean(&rcs_temp_files, cvs_worklist_unlink);
+	rcs_worklist_clean(&rcs_temp_files, rcs_worklist_unlink);
 	_exit(1);
 }
 
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 		}
 
 	/* clean up temporary files */
-	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
+	rcs_worklist_run(&rcs_temp_files, rcs_worklist_unlink);
 
 	exit(ret);
 	/* NOTREACHED */
@@ -359,26 +359,26 @@ rcs_main(int argc, char **argv)
 
 		/* entries to add to the access list */
 		if (alist != NULL) {
-			struct cvs_argvector *aargv;
+			struct rcs_argvector *aargv;
 
-			aargv = cvs_strsplit(alist, ",");
+			aargv = rcs_strsplit(alist, ",");
 			for (j = 0; aargv->argv[j] != NULL; j++)
 				rcs_access_add(file, aargv->argv[j]);
 
-			cvs_argv_destroy(aargv);
+			rcs_argv_destroy(aargv);
 		}
 
 		if (comment != NULL)
 			rcs_comment_set(file, comment);
 
 		if (elist != NULL) {
-			struct cvs_argvector *eargv;
+			struct rcs_argvector *eargv;
 
-			eargv = cvs_strsplit(elist, ",");
+			eargv = rcs_strsplit(elist, ",");
 			for (j = 0; eargv->argv[j] != NULL; j++)
 				rcs_access_remove(file, eargv->argv[j]);
 
-			cvs_argv_destroy(eargv);
+			rcs_argv_destroy(eargv);
 		} else if (rcsflags & RCSPROG_EFLAG) {
 			struct rcs_access *rap;
 

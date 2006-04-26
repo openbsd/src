@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.56 2006/04/25 13:36:35 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.57 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -211,7 +211,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 	tv[1].tv_sec = tv[0].tv_sec;
 
-	if ((b2 = cvs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
+	if ((b2 = rcs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
 		warnx("failed to load file: `%s'", filename);
 		goto out;
 	}
@@ -225,9 +225,9 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	cvs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b1, path1, 0600);
 
-	cvs_buf_free(b1);
+	rcs_buf_free(b1);
 	b1 = NULL;
 
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
@@ -235,22 +235,22 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	cvs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b2, path2, 0600);
 
-	cvs_buf_free(b2);
+	rcs_buf_free(b2);
 	b2 = NULL;
 
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	cvs_diffreg(path1, path2, NULL);
+	rcs_diffreg(path1, path2, NULL);
 	ret = 0;
 
 out:
 	if (b1 != NULL)
-		cvs_buf_free(b1);
+		rcs_buf_free(b1);
 	if (b2 != NULL)
-		cvs_buf_free(b2);
+		rcs_buf_free(b2);
 
 	return (ret);
 }
@@ -303,9 +303,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	cvs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b1, path1, 0600);
 
-	cvs_buf_free(b1);
+	rcs_buf_free(b1);
 	b1 = NULL;
 
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
@@ -313,22 +313,22 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	cvs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b2, path2, 0600);
 
-	cvs_buf_free(b2);
+	rcs_buf_free(b2);
 	b2 = NULL;
 
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	cvs_diffreg(path1, path2, NULL);
+	rcs_diffreg(path1, path2, NULL);
 	ret = 0;
 
 out:
 	if (b1 != NULL)
-		cvs_buf_free(b1);
+		rcs_buf_free(b1);
 	if (b2 != NULL)
-		cvs_buf_free(b2);
+		rcs_buf_free(b2);
 
 	return (ret);
 }

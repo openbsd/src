@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.4 2006/04/25 13:55:49 xsa Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.5 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -349,7 +349,7 @@ rcs_prompt(const char *prompt)
 	size_t len;
 	char *buf;
 
-	bp = cvs_buf_alloc(0, BUF_AUTOEXT);
+	bp = rcs_buf_alloc(0, BUF_AUTOEXT);
 	if (isatty(STDIN_FILENO))
 		(void)fprintf(stderr, "%s", prompt);
 	if (isatty(STDIN_FILENO))
@@ -359,14 +359,14 @@ rcs_prompt(const char *prompt)
 		if (buf[0] == '.' && (len == 1 || buf[1] == '\n'))
 			break;
 		else
-			cvs_buf_append(bp, buf, len);
+			rcs_buf_append(bp, buf, len);
 
 		if (isatty(STDIN_FILENO))
 			(void)fprintf(stderr, ">> ");
 	}
-	cvs_buf_putc(bp, '\0');
+	rcs_buf_putc(bp, '\0');
 
-	return (cvs_buf_release(bp));
+	return (rcs_buf_release(bp));
 }
 
 u_int
@@ -377,7 +377,7 @@ rcs_rev_select(RCSFILE *file, char *range)
 	char *ep;
 	char *lstr, *rstr;
 	struct rcs_delta *rdp;
-	struct cvs_argvector *revargv, *revrange;
+	struct rcs_argvector *revargv, *revrange;
 	RCSNUM lnum, rnum;
 
 	nrev = 0;
@@ -393,9 +393,9 @@ rcs_rev_select(RCSFILE *file, char *range)
 		return (0);
 	}
 
-	revargv = cvs_strsplit(range, ",");
+	revargv = rcs_strsplit(range, ",");
 	for (i = 0; revargv->argv[i] != NULL; i++) {
-		revrange = cvs_strsplit(revargv->argv[i], ":");
+		revrange = rcs_strsplit(revargv->argv[i], ":");
 		if (revrange->argv[0] == NULL)
 			/* should not happen */
 			errx(1, "invalid revision range: %s", revargv->argv[i]);
@@ -424,7 +424,7 @@ rcs_rev_select(RCSFILE *file, char *range)
 		} else
 			rcsnum_cpy(file->rf_head, &rnum, 0);
 
-		cvs_argv_destroy(revrange);
+		rcs_argv_destroy(revrange);
 
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
 			if (rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0 &&
@@ -434,7 +434,7 @@ rcs_rev_select(RCSFILE *file, char *range)
 				nrev++;
 			}
 	}
-	cvs_argv_destroy(revargv);
+	rcs_argv_destroy(revargv);
 
 	if (lnum.rn_id != NULL)
 		xfree(lnum.rn_id);
@@ -461,9 +461,9 @@ rcs_set_description(RCSFILE *file, const char *in)
 
 	/* Description is in file <in>. */
 	if (in != NULL && *in != '-') {
-		bp = cvs_buf_load(in, BUF_AUTOEXT);
-		cvs_buf_putc(bp, '\0');
-		content = cvs_buf_release(bp);
+		bp = rcs_buf_load(in, BUF_AUTOEXT);
+		rcs_buf_putc(bp, '\0');
+		content = rcs_buf_release(bp);
 	/* Description is in <in>. */
 	} else if (in != NULL)
 		/* Skip leading `-'. */

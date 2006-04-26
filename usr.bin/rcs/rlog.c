@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.50 2006/04/25 13:36:36 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.51 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -250,7 +250,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 	int i, found;
 	struct tm t;
 	char *author, numb[64], *fmt, timeb[64];
-	struct cvs_argvector *largv, *sargv, *wargv;
+	struct rcs_argvector *largv, *sargv, *wargv;
 
 	i = found = 0;
 	author = NULL;
@@ -264,7 +264,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			/* if locker is empty, no need to go further. */
 			if (rdp->rd_locker == NULL)
 				return;
-			largv = cvs_strsplit(llist, ",");
+			largv = rcs_strsplit(llist, ",");
 			for (i = 0; largv->argv[i] != NULL; i++) {
 				if (strcmp(rdp->rd_locker, largv->argv[i])
 				    == 0) {
@@ -273,13 +273,13 @@ rlog_rev_print(struct rcs_delta *rdp)
 				}
 				found = 0;
 			}
-			cvs_argv_destroy(largv);
+			rcs_argv_destroy(largv);
 		}
 	}
 
 	/* -sstates */
 	if (slist != NULL) {
-		sargv = cvs_strsplit(slist, ",");
+		sargv = rcs_strsplit(slist, ",");
 		for (i = 0; sargv->argv[i] != NULL; i++) {
 			if (strcmp(rdp->rd_state, sargv->argv[i]) == 0) {
 				found++;
@@ -287,13 +287,13 @@ rlog_rev_print(struct rcs_delta *rdp)
 			}
 			found = 0;
 		}
-		cvs_argv_destroy(sargv);
+		rcs_argv_destroy(sargv);
 	}
 
 	/* -w[logins] */
 	if (wflag == 1) {
 		if (wlist != NULL) {
-			wargv = cvs_strsplit(wlist, ",");
+			wargv = rcs_strsplit(wlist, ",");
 			for (i = 0; wargv->argv[i] != NULL; i++) {
 				if (strcmp(rdp->rd_author, wargv->argv[i])
 				    == 0) {
@@ -302,7 +302,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 				}
 				found = 0;
 			}
-			cvs_argv_destroy(wargv);
+			rcs_argv_destroy(wargv);
 		} else {
 			if ((author = getlogin()) == NULL)
 				err(1, "getlogin");

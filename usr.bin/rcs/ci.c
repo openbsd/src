@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.161 2006/04/25 13:55:49 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.162 2006/04/26 02:55:13 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -120,7 +120,7 @@ checkin_main(int argc, char **argv)
 		case 'd':
 			if (rcs_optarg == NULL)
 				pb.date = DATE_MTIME;
-			else if ((pb.date = cvs_date_parse(rcs_optarg)) <= 0)
+			else if ((pb.date = rcs_date_parse(rcs_optarg)) <= 0)
 				errx(1, "invalid date");
 			break;
 		case 'f':
@@ -341,7 +341,7 @@ checkin_diff_file(struct checkin_params *pb)
 	deltatext = NULL;
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 
-	if ((b1 = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
+	if ((b1 = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		warnx("failed to load file: `%s'", pb->filename);
 		goto out;
 	}
@@ -351,39 +351,39 @@ checkin_diff_file(struct checkin_params *pb)
 		goto out;
 	}
 
-	if ((b3 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL) {
+	if ((b3 = rcs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL) {
 		warnx("failed to allocated buffer for diff");
 		goto out;
 	}
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	cvs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b1, path1, 0600);
 
-	cvs_buf_free(b1);
+	rcs_buf_free(b1);
 	b1 = NULL;
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	cvs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b2, path2, 0600);
 
-	cvs_buf_free(b2);
+	rcs_buf_free(b2);
 	b2 = NULL;
 
 	diff_format = D_RCSDIFF;
-	cvs_diffreg(path1, path2, b3);
+	rcs_diffreg(path1, path2, b3);
 
-	cvs_buf_putc(b3, '\0');
-	deltatext = (char *)cvs_buf_release(b3);
+	rcs_buf_putc(b3, '\0');
+	deltatext = (char *)rcs_buf_release(b3);
 	b3 = NULL;
 
 out:
 	if (b1 != NULL)
-		cvs_buf_free(b1);
+		rcs_buf_free(b1);
 	if (b2 != NULL)
-		cvs_buf_free(b2);
+		rcs_buf_free(b2);
 	if (b3 != NULL)
-		cvs_buf_free(b3);
+		rcs_buf_free(b3);
 
 	return (deltatext);
 }
@@ -445,11 +445,11 @@ checkin_update(struct checkin_params *pb)
 	pb->frev = pb->file->rf_head;
 
 	/* Load file contents */
-	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
+	if ((bp = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
 		goto fail;
 
-	cvs_buf_putc(bp, '\0');
-	filec = (char *)cvs_buf_release(bp);
+	rcs_buf_putc(bp, '\0');
+	filec = (char *)rcs_buf_release(bp);
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev))
@@ -622,11 +622,11 @@ checkin_init(struct checkin_params *pb)
 	}
 
 	/* Load file contents */
-	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
+	if ((bp = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
 		goto fail;
 
-	cvs_buf_putc(bp, '\0');
-	filec = (char *)cvs_buf_release(bp);
+	rcs_buf_putc(bp, '\0');
+	filec = (char *)rcs_buf_release(bp);
 
 	/* Get default values from working copy if -k specified */
 	if (pb->flags & CI_KEYWORDSCAN)
@@ -977,7 +977,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		strlcpy(datestring, tokens[3], len);
 		strlcat(datestring, " ", len);
 		strlcat(datestring, tokens[4], len);
-		if ((*date = cvs_date_parse(datestring)) <= 0)
+		if ((*date = rcs_date_parse(datestring)) <= 0)
 		    errx(1, "could not parse date");
 		xfree(datestring);
 		break;
@@ -1002,7 +1002,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		strlcpy(datestring, tokens[1], len);
 		strlcat(datestring, " ", len);
 		strlcat(datestring, tokens[2], len);
-		if ((*date = cvs_date_parse(datestring)) <= 0)
+		if ((*date = rcs_date_parse(datestring)) <= 0)
 		    errx(1, "could not parse date");
 		xfree(datestring);
 		break;
