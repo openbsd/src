@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2005/12/11 21:45:30 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2006/04/26 20:38:37 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -434,7 +434,7 @@ void
 pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 {
 	int spl;
-	pt_entry_t *pte;
+	pt_entry_t opte, *pte;
 	vaddr_t va;
 	paddr_t pa;
 	boolean_t kflush;
@@ -473,20 +473,24 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		 * the modified bit and/or the reference bit by any other cpu.
 		 * XXX
 		 */
-		*pte = (invalidate_pte(pte) & ~CACHE_MASK) | mode;
+		opte = invalidate_pte(pte);
+		*pte = (opte & ~CACHE_MASK) | mode;
 		flush_atc_entry(users, va, kflush);
 
 		/*
-		 * Data cache should be copied back and invalidated.
+		 * Data cache should be copied back and invalidated if
+		 * the old mapping was cached.
 		 */
-		pa = ptoa(PG_PFNUM(*pte));
+		if ((opte & CACHE_MASK) != CACHE_INH) {
+			pa = ptoa(PG_PFNUM(opte));
 #ifdef MULTIPROCESSOR
-		for (cpu = 0; cpu < MAX_CPUS; cpu++)
-			if (m88k_cpus[cpu].ci_alive != 0)
+			for (cpu = 0; cpu < MAX_CPUS; cpu++)
+				if (m88k_cpus[cpu].ci_alive != 0)
 #else
-		cpu = cpu_number();
+			cpu = cpu_number();
 #endif
-				cmmu_flush_cache(cpu, pa, PAGE_SIZE);
+					cmmu_flush_cache(cpu, pa, PAGE_SIZE);
+		}
 	}
 	PMAP_UNLOCK(pmap);
 	splx(spl);
