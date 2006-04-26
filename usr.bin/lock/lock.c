@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.22 2006/04/26 02:32:41 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.23 2006/04/26 02:35:08 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.22 2006/04/26 02:32:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.23 2006/04/26 02:35:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 			usemine = 1;
 			break;
 		case 't':
-			sectimeout = strtonum(optarg, 1, INT_MAX, &errstr);
+			sectimeout = (int)strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "timeout %s: %s", errstr, optarg);
 			break;
@@ -214,8 +214,9 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+/*ARGSUSED*/
 void
-hi(int dummy)
+hi(int signo)
 {
 	char buf[1024], buf2[1024];
 	time_t now;
@@ -227,13 +228,14 @@ hi(int dummy)
 		(void)snprintf(buf2, sizeof buf2, " timeout in %d:%d minutes",
 		    (nexttime - now) / 60, (nexttime - now) % 60);
 	}
-	snprintf(buf, sizeof buf, "%s: type in the unlock key.%s\n",
+	(void)snprintf(buf, sizeof buf, "%s: type in the unlock key.%s\n",
 	    __progname, buf2);
 	(void) write(STDERR_FILENO, buf, strlen(buf));
 }
 
+/*ARGSUSED*/
 void
-bye(int dummy)
+bye(int signo)
 {
 
 	if (!no_timeout)
