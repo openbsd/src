@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.21 2005/07/14 14:42:28 jmc Exp $	*/
+/*	$OpenBSD: lock.c,v 1.22 2006/04/26 02:32:41 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.21 2005/07/14 14:42:28 jmc Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.22 2006/04/26 02:32:41 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -92,6 +92,7 @@ main(int argc, char *argv[])
 	char *p, *style, *nstyle, *ttynam;
 	struct itimerval ntimer, otimer;
 	int ch, sectimeout, usemine;
+	const char *errstr;
 	struct passwd *pw;
 	struct tm *timp;
 	time_t curtime;
@@ -120,8 +121,9 @@ main(int argc, char *argv[])
 			usemine = 1;
 			break;
 		case 't':
-			if ((sectimeout = atoi(optarg)) <= 0)
-				errx(1, "illegal timeout value: %s", optarg);
+			sectimeout = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "timeout %s: %s", errstr, optarg);
 			break;
 		case 'p':
 			usemine = 1;
@@ -129,7 +131,6 @@ main(int argc, char *argv[])
 		case 'n':
 			no_timeout = 1;
 			break;
-		case '?':
 		default:
 			(void)fprintf(stderr,
 			    "usage: %s [-np] [-a style] [-t timeout]\n",
