@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.117 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.118 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -174,6 +174,7 @@ rcs_usage(void)
 int
 rcs_main(int argc, char **argv)
 {
+	int fd, ofd;
 	int i, j, ch, flags, kflag, lkmode;
 	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
 	char *logstr, *logmsg, *nflag, *descfile;
@@ -196,11 +197,13 @@ rcs_main(int argc, char **argv)
 		warnx("warning: No options were given; "
 		    "this usage is obsolescent.");
 
+	ofd = -1;
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'A':
-			if (rcs_statfile(rcs_optarg, ofpath,
-			    sizeof(ofpath), flags) < 0)
+			ofd = rcs_statfile(rcs_optarg, ofpath,
+			    sizeof(ofpath), flags);
+			if (ofd < 0)
 				exit(1);
 			rcsflags |= CO_ACLAPPEND;
 			break;
@@ -300,13 +303,14 @@ rcs_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath), flags) < 0)
+		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
+		if (fd < 0 && !(flags & RCS_CREATE))
 			continue;
 
 		if (!(rcsflags & QUIET))
 			printf("RCS file: %s\n", fpath);
 
-		if ((file = rcs_open(fpath, flags, fmode)) == NULL)
+		if ((file = rcs_open(fpath, fd, flags, fmode)) == NULL)
 			continue;
 
 		if (rcsflags & DESCRIPTION)
@@ -315,7 +319,7 @@ rcs_main(int argc, char **argv)
 			rcs_set_description(file, NULL);
 
 		if (rcsflags & PRESERVETIME)
-			rcs_mtime = rcs_get_mtime(file->rf_path);
+			rcs_mtime = rcs_get_mtime(file);
 
 		if (nflag != NULL)
 			rcs_attach_symbol(file, nflag);
@@ -348,13 +352,14 @@ rcs_main(int argc, char **argv)
 		/* entries to add from <oldfile> */
 		if (rcsflags & CO_ACLAPPEND) {
 			/* XXX */
-			if ((oldfile = rcs_open(ofpath, RCS_READ)) == NULL)
+			if ((oldfile = rcs_open(ofpath, ofd, RCS_READ)) == NULL)
 				exit(1);
 
 			TAILQ_FOREACH(acp, &(oldfile->rf_access), ra_list)
 				rcs_access_add(file, acp->ra_name);
 
 			rcs_close(oldfile);
+			ofd = -1;
 		}
 
 		/* entries to add to the access list */
@@ -467,10 +472,12 @@ rcs_main(int argc, char **argv)
 			}
 		}
 
-		rcs_close(file);
+		rcs_write(file);
 
 		if (rcsflags & PRESERVETIME)
-			rcs_set_mtime(fpath, rcs_mtime);
+			rcs_set_mtime(file, rcs_mtime);
+
+		rcs_close(file);
 
 		if (!(rcsflags & QUIET))
 			printf("done\n");
@@ -484,6 +491,9 @@ rcs_main(int argc, char **argv)
 
 	if (orange != NULL)
 		xfree(orange);
+
+	if (ofd != -1)
+		(void)close(ofd);
 
 	return (0);
 }

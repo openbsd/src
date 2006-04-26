@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.51 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.52 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -58,7 +58,7 @@ rlog_main(int argc, char **argv)
 {
 	RCSFILE *file;
 	int Rflag;
-	int i, ch;
+	int i, ch, fd;
 	char fpath[MAXPATHLEN];
 
 	rcsnum_flags |= RCSNUM_NO_MAGIC;
@@ -137,10 +137,12 @@ rlog_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath), 0) < 0)
+		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), 0);
+		if (fd < 0)
 			continue;
 
-		if ((file = rcs_open(fpath, RCS_READ|RCS_PARSE_FULLY)) == NULL)
+		if ((file = rcs_open(fpath, fd,
+		    RCS_READ|RCS_PARSE_FULLY)) == NULL)
 			continue;
 
 		if (Lflag == 1 && TAILQ_EMPTY(&(file->rf_locks))) {

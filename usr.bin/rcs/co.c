@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.85 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.86 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,7 @@ static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
 int
 checkout_main(int argc, char **argv)
 {
-	int i, ch, flags, kflag, status, warg;
+	int fd, i, ch, flags, kflag, status, warg;
 	RCSNUM *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
@@ -152,7 +152,8 @@ checkout_main(int argc, char **argv)
 		err(1, "getlogin");
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath), flags) < 0)
+		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
+		if (fd < 0)
 			continue;
 
 		if (!(flags & QUIET))
@@ -161,14 +162,16 @@ checkout_main(int argc, char **argv)
 
 		if ((flags & CO_LOCK) && (kflag & RCS_KWEXP_VAL)) {
 			warnx("%s: cannot combine -kv and -l", fpath);
+			(void)close(fd);
 			continue;
 		}
 
-		if ((file = rcs_open(fpath, RCS_RDWR|RCS_PARSE_FULLY)) == NULL)
+		if ((file = rcs_open(fpath, fd,
+		    RCS_RDWR|RCS_PARSE_FULLY)) == NULL)
 			continue;
 
 		if (flags & PRESERVETIME)
-			rcs_mtime = rcs_get_mtime(file->rf_path);
+			rcs_mtime = rcs_get_mtime(file);
 
 		rcs_kwexp_set(file, kflag);
 
@@ -197,11 +200,12 @@ checkout_main(int argc, char **argv)
 		if (!(flags & QUIET))
 			printf("done\n");
 
-		rcs_close(file);
 		rcsnum_free(rev);
 
+		rcs_write(file);
 		if (flags & PRESERVETIME)
-			rcs_set_mtime(fpath, rcs_mtime);
+			rcs_set_mtime(file, rcs_mtime);
+		rcs_close(file);
 	}
 
 	if (author != NULL && warg)
@@ -240,7 +244,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 {
 	BUF *bp;
 	u_int i;
-	int lcount;
+	int fd, lcount;
 	char buf[16];
 	mode_t mode = 0444;
 	struct stat st;
@@ -364,10 +368,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	/*
 	 * File inherits permissions from its ,v file
 	 */
-	if (stat(file->rf_path, &st) == -1)
-		err(1, "%s", file->rf_path);
-
-	mode = st.st_mode;
+	if (file->fd != -1) {
+		if (fstat(file->fd, &st) == -1)
+			err(1, "%s", file->rf_path);
+		mode = st.st_mode;
+	}
 
 	if (flags & CO_LOCK) {
 		if (file->rf_ndelta != 0) {
@@ -379,8 +384,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		/* Strip all write bits from mode */
-		mode = st.st_mode &
-		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+		if (file->fd != -1) {
+			mode = st.st_mode &
+			    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+		}
+
 		mode |= S_IWUSR;
 
 		if (file->rf_ndelta != 0) {
@@ -397,8 +405,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		/* Strip all write bits from mode */
-		mode = st.st_mode &
-		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+		if (file->fd != -1) {
+			mode = st.st_mode &
+			    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+		}
 
 		if (file->rf_ndelta != 0) {
 			if (!(flags & QUIET) && !(flags & NEWFILE) &&
@@ -424,7 +434,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			    file->rf_path, lcount);
 	}
 
-	if (!(flags & PIPEOUT) && stat(dst, &st) == 0 && !(flags & FORCE)) {
+	if (!(flags & PIPEOUT) && stat(dst, &st) != -1 && !(flags & FORCE)) {
 		/*
 		 * XXX - Not sure what is "right".  If we go according
 		 * to GNU's behavior, an existing file with no writable
@@ -460,20 +470,33 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		printf("%s", content);
 		xfree(content);
 	} else {
-		if (rcs_buf_write(bp, dst, mode) < 0) {
+		(void)unlink(dst);
+
+		if ((fd = open(dst, O_WRONLY|O_CREAT|O_TRUNC, mode)) < 0)
+			err(1, "%s", dst);
+
+		if (rcs_buf_write_fd(bp, fd) < 0) {
 			warnx("failed to write revision to file");
 			rcs_buf_free(bp);
+			(void)close(fd);
 			return (-1);
 		}
+
+		if (fchmod(fd, mode) == -1)
+			warn("%s", dst);
+
 		rcs_buf_free(bp);
+
 		if (flags & CO_REVDATE) {
 			struct timeval tv[2];
 			memset(&tv, 0, sizeof(tv));
 			tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 			tv[1].tv_sec = tv[0].tv_sec;
-			if (utimes(dst, (const struct timeval *)&tv) < 0)
+			if (futimes(fd, (const struct timeval *)&tv) < 0)
 				warn("utimes");
 		}
+
+		(void)close(fd);
 	}
 
 	return (0);

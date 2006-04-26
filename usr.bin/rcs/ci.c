@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.162 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.163 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -100,6 +100,7 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
+	int fd;
 	int i, ch, status;
 	char *rev_str;
 	struct checkin_params pb;
@@ -229,7 +230,6 @@ checkin_main(int argc, char **argv)
 	if ((pb.username = getlogin()) == NULL)
 		err(1, "getlogin");
 
-
 	for (i = 0; i < argc; i++) {
 		pb.filename = argv[i];
 
@@ -240,8 +240,10 @@ checkin_main(int argc, char **argv)
 		 * Test for existence of ,v file. If we are expected to
 		 * create one, set NEWFILE flag.
 		 */
-		if (rcs_statfile(pb.filename, pb.fpath,
-		    sizeof(pb.fpath), pb.flags) < 0) {
+		fd = rcs_statfile(pb.filename, pb.fpath, sizeof(pb.fpath),
+		    pb.flags);
+
+		if (fd < 0) {
 			if (pb.openflags & RCS_CREATE)
 				pb.flags |= NEWFILE;
 			else {
@@ -254,6 +256,7 @@ checkin_main(int argc, char **argv)
 			if (pb.flags & CI_INIT) {
 				warnx("%s already exists", pb.fpath);
 				status = 1;
+				(void)close(fd);
 				(void)close(workfile_fd);
 				continue;
 			}
@@ -264,18 +267,11 @@ checkin_main(int argc, char **argv)
 		 * If we are to create a new ,v file, we must decide where it
 		 * should go.
 		 */
-		if (pb.flags & NEWFILE) {
-			char *fpath = rcs_choosefile(pb.filename);
-			if (fpath == NULL) {
-				status = 1;
-				(void)close(workfile_fd);
-				continue;
-			}
-			strlcpy(pb.fpath, fpath, sizeof(pb.fpath));
-			xfree(fpath);
-		}
+		if (pb.flags & NEWFILE)
+			fd = rcs_choosefile(pb.filename,
+			    pb.fpath, sizeof(pb.fpath));
 
-		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
+		pb.file = rcs_open(pb.fpath, fd, pb.openflags, pb.fmode);
 		if (pb.file == NULL)
 			errx(1, "failed to open rcsfile `%s'", pb.fpath);
 

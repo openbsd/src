@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.36 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.37 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -32,7 +32,7 @@
 int
 rcsmerge_main(int argc, char **argv)
 {
-	int i, ch, flags, kflag;
+	int fd, i, ch, flags, kflag;
 	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
 	RCSFILE *file;
 	RCSNUM *rev1, *rev2;
@@ -105,10 +105,11 @@ rcsmerge_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath), flags) < 0)
+		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
+		if (fd < 0)
 			continue;
 
-		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
+		if ((file = rcs_open(fpath, fd, RCS_READ)) == NULL)
 			continue;
 
 		if (!(flags & QUIET))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.2 2006/04/26 15:08:25 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.3 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -236,25 +236,12 @@ static void	rcs_strprint(const u_char *, size_t, FILE *);
 static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
                     size_t, int);
 
-/*
- * rcs_open()
- *
- * Open a file containing RCS-formatted information.  The file's path is
- * given in <path>, and the opening flags are given in <flags>, which is either
- * RCS_READ, RCS_WRITE, or RCS_RDWR.  If the open requests write access and
- * the file does not exist, the RCS_CREATE flag must also be given, in which
- * case it will be created with the mode specified in a third argument of
- * type mode_t.  If the file exists and RCS_CREATE is passed, the open will
- * fail.
- * Returns a handle to the opened file on success, or NULL on failure.
- */
 RCSFILE *
-rcs_open(const char *path, int flags, ...)
+rcs_open(const char *path, int fd, int flags, ...)
 {
-	int ret, mode;
+	int mode;
 	mode_t fmode;
 	RCSFILE *rfp;
-	struct stat st;
 	va_list vap;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkr;
@@ -262,19 +249,11 @@ rcs_open(const char *path, int flags, ...)
 	fmode = S_IRUSR|S_IRGRP|S_IROTH;
 	flags &= 0xffff;	/* ditch any internal flags */
 
-	if (((ret = stat(path, &st)) == -1) && errno == ENOENT) {
-		if (flags & RCS_CREATE) {
-			va_start(vap, flags);
-			mode = va_arg(vap, int);
-			va_end(vap);
-			fmode = (mode_t)mode;
-		} else {
-			rcs_errno = RCS_ERR_NOENT;
-			return (NULL);
-		}
-	} else if (ret == 0 && (flags & RCS_CREATE)) {
-		warnx("RCS file `%s' exists", path);
-		return (NULL);
+	if (flags & RCS_CREATE) {
+		va_start(vap, flags);
+		mode = va_arg(vap, int);
+		va_end(vap);
+		fmode = (mode_t)mode;
 	}
 
 	rfp = xcalloc(1, sizeof(*rfp));
@@ -282,6 +261,7 @@ rcs_open(const char *path, int flags, ...)
 	rfp->rf_path = xstrdup(path);
 	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
 	rfp->rf_mode = fmode;
+	rfp->fd = fd;
 
 	TAILQ_INIT(&(rfp->rf_delta));
 	TAILQ_INIT(&(rfp->rf_access));
@@ -1731,8 +1711,8 @@ rcs_parse_init(RCSFILE *rfp)
 	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
 
-	if ((pdp->rp_file = fopen(rfp->rf_path, "r")) == NULL)
-		err(1, "%s", rfp->rf_path);
+	if ((pdp->rp_file = fdopen(rfp->fd, "r")) == NULL)
+		err(1, "fopen: `%s'", rfp->rf_path);
 
 	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;

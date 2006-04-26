@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.57 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.58 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,7 +38,7 @@ static int kflag = RCS_KWEXP_ERR;
 int
 rcsdiff_main(int argc, char **argv)
 {
-	int i, ch, status;
+	int fd, i, ch, status;
 	RCSNUM *rev1, *rev2;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], *rev_str1, *rev_str2;
@@ -109,10 +109,12 @@ rcsdiff_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath), flags) < 0)
+		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
+		if (fd < 0)
 			continue;
 
-		if ((file = rcs_open(fpath, RCS_READ|RCS_PARSE_FULLY)) == NULL)
+		if ((file = rcs_open(fpath, fd,
+		    RCS_READ|RCS_PARSE_FULLY)) == NULL)
 			continue;
 
 		rcs_kwexp_set(file, kflag);
@@ -173,13 +175,13 @@ rcsdiff_usage(void)
 static int
 rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 {
-	int ret;
+	int ret, fd;
 	time_t t;
+	struct stat st;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
 	char rbuf[64];
 	struct tm *tb;
-	struct stat st;
 	struct timeval tv[2], tv2[2];
 
 	memset(&tv, 0, sizeof(tv));
@@ -191,7 +193,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	diff_rev1 = rev;
 	diff_rev2 = NULL;
 
-	if (stat(filename, &st) == -1) {
+	if ((fd = open(filename, O_RDONLY)) == -1) {
 		warn("%s", filename);
 		goto out;
 	}
@@ -217,6 +219,9 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	}
 
 	/* XXX - GNU uses GMT */
+	if (fstat(fd, &st) == -1)
+		err(1, "%s", filename);
+
 	tb = gmtime(&st.st_mtime);
 	t = mktime(tb);
 
@@ -247,6 +252,8 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	ret = 0;
 
 out:
+	if (fd != -1)
+		(void)close(fd);
 	if (b1 != NULL)
 		rcs_buf_free(b1);
 	if (b2 != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.5 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.6 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -38,15 +38,16 @@
  * Returns last modified time on success, or -1 on failure.
  */
 time_t
-rcs_get_mtime(const char *filename)
+rcs_get_mtime(RCSFILE *file)
 {
 	struct stat st;
 	time_t mtime;
 
-	if (stat(filename, &st) == -1) {
-		warn("%s", filename);
+	if (fstat(file->fd, &st) == -1) {
+		warn("%s", file->rf_path);
 		return (-1);
 	}
+
 	mtime = (time_t)st.st_mtimespec.tv_sec;
 
 	return (mtime);
@@ -58,7 +59,7 @@ rcs_get_mtime(const char *filename)
  * Set <filename> last modified time to <mtime> if it's not set to -1.
  */
 void
-rcs_set_mtime(const char *filename, time_t mtime)
+rcs_set_mtime(RCSFILE *file, time_t mtime)
 {
 	static struct timeval tv[2];
 
@@ -68,7 +69,7 @@ rcs_set_mtime(const char *filename, time_t mtime)
 	tv[0].tv_sec = mtime;
 	tv[1].tv_sec = tv[0].tv_sec;
 
-	if (utimes(filename, tv) == -1)
+	if (futimes(file->fd, tv) == -1)
 		err(1, "utimes");
 }
 
@@ -137,9 +138,10 @@ rcs_getopt(int argc, char **argv, const char *optstr)
  *
  * Returns pointer to a char array on success, NULL on failure.
  */
-char *
-rcs_choosefile(const char *filename)
+int
+rcs_choosefile(const char *filename, char *out, size_t len)
 {
+	int fd;
 	struct stat sb;
 	char *p, *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
 	    *ret, *suffixes, rcspath[MAXPATHLEN];
@@ -148,13 +150,16 @@ rcs_choosefile(const char *filename)
 	if (rcs_suffixes == NULL)
 		rcs_suffixes = RCS_DEFAULT_SUFFIX;
 
+	fd = -1;
+
 	/*
 	 * If `filename' contains a directory, `rcspath' contains that
 	 * directory, including a trailing slash.  Otherwise `rcspath'
 	 * contains an empty string.
 	 */
 	if (strlcpy(rcspath, filename, sizeof(rcspath)) >= sizeof(rcspath))
-		return (NULL);
+		errx(1, "rcs_choosefile: truncation");
+
 	/* If `/' is found, end string after `/'. */
 	if ((ptr = strrchr(rcspath, '/')) != NULL)
 		*(++ptr) = '\0';
@@ -164,33 +169,36 @@ rcs_choosefile(const char *filename)
 	/* Append RCS/ to `rcspath' if it exists. */
 	if (strlcpy(rcsdir, rcspath, sizeof(rcsdir)) >= sizeof(rcsdir) ||
 	    strlcat(rcsdir, RCSDIR, sizeof(rcsdir)) >= sizeof(rcsdir))
-		return (NULL);
+		errx(1, "rcs_choosefile: truncation");
+
 	if (stat(rcsdir, &sb) == 0 && (sb.st_mode & S_IFDIR))
-		if (strlcpy(rcspath, rcsdir, sizeof(rcspath)) >= sizeof(rcspath) ||
+		if (strlcpy(rcspath, rcsdir, sizeof(rcspath))
+		    >= sizeof(rcspath) ||
 		    strlcat(rcspath, "/", sizeof(rcspath)) >= sizeof(rcspath))
-			return (NULL);
+			errx(1, "rcs_choosefile: truncation");
 
 	/* Name of file without path. */
 	if ((ptr = strrchr(filename, '/')) == NULL) {
 		if (strlcpy(name, filename, sizeof(name)) >= sizeof(name))
-			return (NULL);
+			errx(1, "rcs_choosefile: truncation");
 	} else {
 		/* Skip `/'. */
 		if (strlcpy(name, ptr + 1, sizeof(name)) >= sizeof(name))
-			return (NULL);
+			errx(1, "rcs_choosefile: truncation");
 	}
 
 	/* Name of RCS file without an extension. */
 	if (strlcat(rcspath, name, sizeof(rcspath)) >= sizeof(rcspath))
-		return (NULL);
+		errx(1, "rcs_choosefile: truncation");
 
 	/*
 	 * If only the empty suffix was given, use existing rcspath.
 	 * This ensures that there is at least one suffix for strsep().
 	 */
 	if (strcmp(rcs_suffixes, "") == 0) {
-		ret = xstrdup(rcspath);
-		return (ret);
+		fd = open(rcspath, O_RDONLY);
+		strlcpy(out, rcspath, len);
+		return (fd);
 	}
 
 	/*
@@ -205,10 +213,16 @@ rcs_choosefile(const char *filename)
 
 		if ((p = strrchr(rcspath, ',')) != NULL) {
 			if (!strcmp(p, ext)) {
-				if (stat(rcspath, &sb) == 0) {
-					ret = xstrdup(rcspath);
-					goto out;
-				}
+				if ((fd = open(rcspath, O_RDONLY)) == -1)
+					continue;
+
+				if (fstat(fd, &sb) == -1)
+					err(1, "%s", rcspath);
+
+				if (strlcpy(out, rcspath, len) >= len)
+					errx(1, "rcs_choosefile; truncation");
+
+				return (fd);
 			}
 
 			continue;
@@ -217,16 +231,22 @@ rcs_choosefile(const char *filename)
 		/* Construct RCS file path. */
 		if (strlcpy(fpath, rcspath, sizeof(fpath)) >= sizeof(fpath) ||
 		    strlcat(fpath, ext, sizeof(fpath)) >= sizeof(fpath))
-			goto out;
+			errx(1, "rcs_choosefile: truncation");
 
 		/* Don't use `filename' as RCS file. */
 		if (strcmp(fpath, filename) == 0)
 			continue;
 
-		if (stat(fpath, &sb) == 0) {
-			ret = xstrdup(fpath);
-			goto out;
-		}
+		if ((fd = open(fpath, O_RDONLY)) == -1)
+			continue;
+
+		if (fstat(fd, &sb) == -1)
+			err(1, "%s", fpath);
+
+		if (strlcpy(out, fpath, len) >= len)
+			errx(1, "rcs_choosefile: truncation");
+
+		return (fd);
 	}
 
 	/*
@@ -238,13 +258,14 @@ rcs_choosefile(const char *filename)
 	 */
 	if (strlcat(rcspath, suffixes, sizeof(rcspath)) >=
 	    sizeof(rcspath))
-		goto out;
-	ret = xstrdup(rcspath);
+		errx(1, "rcs_choosefile: truncation");
 
-out:
-	/* `ret' may be NULL, which indicates an error. */
 	xfree(suffixes);
-	return (ret);
+
+	fd = open(rcspath, O_RDONLY);
+	strlcpy(out, rcspath, len);
+
+	return (fd);
 }
 
 /*
@@ -255,27 +276,17 @@ out:
 int
 rcs_statfile(char *fname, char *out, size_t len, int flags)
 {
-	struct stat st;
-	char *rcspath;
+	int fd;
 
-	if ((rcspath = rcs_choosefile(fname)) == NULL)
-		errx(1, "rcs_statfile: path truncation");
-
-	/* Error out if file not found and we are not creating one. */
-	if (stat(rcspath, &st) == -1 && !(flags & RCS_CREATE)) {
+	fd = rcs_choosefile(fname, out, len);
+	if (fd == -1 && !(flags & RCS_CREATE)) {
 		if (strcmp(__progname, "rcsclean") != 0 &&
 		    strcmp(__progname, "ci") != 0)
-			warn("%s", rcspath);
-		xfree(rcspath);
+			warn("%s", out);
 		return (-1);
 	}
 
-	if (strlcpy(out, rcspath, len) >= len)
-		errx(1, "rcs_statfile: path truncation");
-
-	xfree(rcspath);
-
-	return (0);
+	return (fd);
 }
 
 /*

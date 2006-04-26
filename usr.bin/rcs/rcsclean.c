@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.44 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.45 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -127,7 +127,7 @@ rcsclean_usage(void)
 static void
 rcsclean_file(char *fname, const char *rev_str)
 {
-	int match;
+	int fd, match;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], numb[64];
 	RCSNUM *rev;
@@ -138,14 +138,14 @@ rcsclean_file(char *fname, const char *rev_str)
 	file = NULL;
 	rev = NULL;
 
-	if (rcs_statfile(fname, fpath, sizeof(fpath), flags) < 0)
+	if ((fd = rcs_statfile(fname, fpath, sizeof(fpath), flags)) < 0)
 		goto out;
 
-	if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
+	if ((file = rcs_open(fpath, fd, RCS_RDWR)) == NULL)
 		goto out;
 
 	if (flags & PRESERVETIME)
-		rcs_mtime = rcs_get_mtime(file->rf_path);
+		rcs_mtime = rcs_get_mtime(file);
 
 	rcs_kwexp_set(file, kflag);
 
@@ -200,8 +200,9 @@ rcsclean_file(char *fname, const char *rev_str)
 		}
 	}
 
+	rcs_write(file);
 	if (flags & PRESERVETIME)
-		rcs_set_mtime(fpath, rcs_mtime);
+		rcs_set_mtime(file, rcs_mtime);
 
 out:
 	if (b1 != NULL)

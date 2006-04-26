@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.h,v 1.2 2006/04/24 04:51:57 ray Exp $	*/
+/*	$OpenBSD: rcsutil.h,v 1.3 2006/04/26 21:55:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -31,10 +31,10 @@
 
 /* rcsutil.c */
 int	 rcs_getopt(int, char **, const char *);
-void	 rcs_set_mtime(const char *, time_t);
-char	*rcs_choosefile(const char *);
+void	 rcs_set_mtime(RCSFILE *, time_t);
+int	 rcs_choosefile(const char *, char *, size_t);
 int	 rcs_statfile(char *, char *, size_t, int);
-time_t	 rcs_get_mtime(const char *);
+time_t	 rcs_get_mtime(RCSFILE *);
 RCSNUM	*rcs_getrevnum(const char *, RCSFILE *);
 char	*rcs_prompt(const char *);
 u_int	 rcs_rev_select(RCSFILE *, char *);
