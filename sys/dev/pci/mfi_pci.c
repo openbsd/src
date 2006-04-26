@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.2 2006/04/07 17:00:42 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.3 2006/04/26 00:51:40 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -48,10 +48,17 @@ static const
 struct	mfi_pci_device {
 	pcireg_t	mpd_vendor;
 	pcireg_t	mpd_product;
-	u_int32_t	mpd_flags;
+	pcireg_t	mpd_subvendor;
+	pcireg_t	mpd_subproduct;
+	char		*mpd_model;
+	uint32_t	mpd_flags;
 } mfi_pci_devices[] = {
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MSAS,		0 },
-	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5I	,		0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MSAS,
+	  0,			0,		"",			0 },
+	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
+	  PCI_VENDOR_DELL,	0x1f01,		"Dell PERC 5/i",	0 },
+	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
+	  PCI_VENDOR_DELL,	0x1f02,		"Dell Perc 5/e",	0 },
 	{ 0 }
 };
 
@@ -97,19 +104,29 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t	ih;
 	bus_size_t		size;
 	pcireg_t		csr;
+	uint32_t		subsysid, i;
+
+	printf(": ");
+	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++)
+		if (mfi_pci_devices[i].mpd_subvendor == PCI_VENDOR(subsysid) &&
+		    mfi_pci_devices[i].mpd_subproduct == PCI_PRODUCT(subsysid)){
+				printf("%s ", mfi_pci_devices[i].mpd_model);
+				break;
+		}
 
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFI_BAR);
 	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, MFI_BAR, csr, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &size, MFI_PCI_MEMSIZE)) {
-		printf(": can't map controller pci space\n");
+		printf("can't map controller pci space\n");
 		return;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": can't map interrupt\n");
+		printf("can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
 	}
@@ -117,7 +134,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
-		printf(": can't establish interrupt");
+		printf("can't establish interrupt");
 		if (intrstr)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -125,7 +142,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": %s\n", intrstr);
+	printf("%s\n", intrstr);
 
 	if (mfi_attach(sc)) {
 		printf("%s: can't attach", DEVNAME(sc));
