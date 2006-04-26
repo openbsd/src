@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.42 2006/04/17 18:27:30 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.43 2006/04/26 20:48:06 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -285,7 +285,7 @@ vmeattach(parent, self, args)
 	{
 		u_int8_t sconc;
 
-		vmevecbase = 0x80;  /* Hard coded for MVME188 */
+		vmevecbase = 0x60;  /* Hard coded for MVME188 */
 		sconc = *(volatile u_int8_t *)MVME188_GLOBAL1;
 		if (ISSET(sconc, M188_SYSCON))
 			printf(": system controller");
@@ -452,16 +452,6 @@ vmerw(sc, uio, flags, bus)
  * interrupts (just can't share the same irq).
  * Obviously no check is made to see if another cpu is using that
  * interrupt. If you share you will lose.
- */
-
-/*
- * All VME bus devices will use a vector starting with VBR1 + 0x10
- * and determined by intr_findvec(). (in machdep.c) vmeintr_establish()
- * should be called with the 'vec' argument = 0 to 'auto vector' a
- * VME device.
- *
- * The 8 SW interrupters will start with VBR1.  The rest will start
- * with VBR0< 4) & 0xFF.
  */
 
 int
