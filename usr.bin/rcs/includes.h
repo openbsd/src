@@ -1,4 +1,4 @@
-/*	$OpenBSD: includes.h,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: includes.h,v 1.2 2006/04/26 07:56:31 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -42,19 +42,15 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <libgen.h>
-#include <md5.h>
 #include <pwd.h>
 #include <regex.h>
-#include <search.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <zlib.h>
 
 #endif	/* INCLUDES_H */
