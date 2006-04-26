@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2006/01/01 00:41:02 millert Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2006/04/26 21:09:50 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -56,6 +56,9 @@ typedef const struct mvme88k_bus_space_tag *bus_space_tag_t;
 
 #define	BUS_SPACE_BARRIER_READ	0
 #define	BUS_SPACE_BARRIER_WRITE	1
+
+#define	BUS_SPACE_MAP_CACHEABLE	0x01
+#define	BUS_SPACE_MAP_LINEAR	0x02
 
 /* 
  * General bus_space function set
@@ -709,14 +712,14 @@ bus_space_copy_4(bus_space_tag_t tag, bus_space_handle_t h1, bus_addr_t o1,
 	}
 }
 
+#endif	/* __BUS_SPACE_RESTRICT_D16__ */
+
 /*
  * Extra D16 access functions (see vme.c)
  */
 
 void d16_bcopy(const void *, void *, size_t);
 void d16_bzero(void *, size_t);
-
-#endif	/* __BUS_SPACE_RESTRICT_D16__ */
 
 /*
  * Bus DMA implementation

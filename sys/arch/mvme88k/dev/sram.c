@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.17 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: sram.c,v 1.18 2006/04/26 21:09:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -85,7 +85,8 @@ sramattach(parent, self, args)
 	sc->sc_base = ca->ca_paddr;
 	sc->sc_len = 128 * 1024;		/* always 128K */
 
-	if (bus_space_map(sc->sc_iot, sc->sc_base, sc->sc_len, 0, &ioh) != 0) {
+	if (bus_space_map(sc->sc_iot, sc->sc_base, sc->sc_len,
+	    BUS_SPACE_MAP_LINEAR, &ioh) != 0) {
 		printf(": can't map memory!\n");
 		return;
 	}

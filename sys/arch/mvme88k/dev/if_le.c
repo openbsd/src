@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.13 2006/04/26 21:06:08 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.14 2006/04/26 21:09:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -288,7 +288,8 @@ leattach(parent, self, aux)
 	}
 
 	paddr = VLEMEMBASE - (card * VLEMEMSIZE);
-	if (bus_space_map(iot, paddr, VLEMEMSIZE, 0, &memh) != 0) {
+	if (bus_space_map(iot, paddr, VLEMEMSIZE, BUS_SPACE_MAP_LINEAR,
+	    &memh) != 0) {
 		printf(": can't map buffers!\n");
 		bus_space_unmap(iot, ioh, PAGE_SIZE);
 		return;
