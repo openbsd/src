@@ -1,4 +1,4 @@
-.\"	$OpenBSD: azalia.4,v 1.2 2006/04/26 16:06:38 jason Exp $
+.\"	$OpenBSD: azalia.4,v 1.3 2006/04/26 20:25:37 jmc Exp $
 .\"	$NetBSD: azalia.4,v 1.2 2005/06/22 04:19:09 kent Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,18 +48,19 @@
 The
 .Nm
 device driver is expected to support any PCI device which is
-compliant to the High Definition Audio Specification 1.0.
-Known supported devices are Intel 82801F (ICH6),
+compliant with the High Definition Audio Specification 1.0.
+Known supported devices are Intel 82801F (ICH6)
 and Intel 82801G (ICH7).
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr pci 4
+.Pp
 .Pa http://www.intel.com/standards/hdaudio/
 .Sh HISTORY
 The
 .Nm
-device driver appeared in
-.Nx 3.0 .
+device driver first appeared in
+NetBSD 3.0.
 .Ox
 support first appeared in
 .Ox 4.0 .
@@ -68,5 +69,5 @@ S/PDIF support is not implemented.
 .Pp
 Non-PCM encodings such as Float32 and AC-3 are not supported.
 .Pp
-There is no way to use 20bit or 24bit precision because of a
+There is no way to use 20-bit or 24-bit precision because of a
 limitation of the MI audio framework.
