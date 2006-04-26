@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.2 2006/04/26 08:07:12 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.3 2006/04/26 15:08:25 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -99,7 +99,7 @@ rcs_buf_load(const char *path, u_int flags)
 	}
 
 	if (fstat(fd, &st) == -1)
-		err(1, "rcs_buf_load: fstat: %s", path);
+		err(1, "%s", path);
 
 	buf = rcs_buf_alloc((size_t)st.st_size, flags);
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
@@ -107,7 +107,7 @@ rcs_buf_load(const char *path, u_int flags)
 		ret = read(fd, bp, len);
 		if (ret == -1) {
 			rcs_buf_free(buf);
-			err(1, "rcs_buf_load: read: %s", strerror(errno));
+			err(1, "rcs_buf_load");
 		} else if (ret == 0)
 			break;
 
@@ -346,7 +346,7 @@ rcs_buf_write(BUF *b, const char *path, mode_t mode)
 		if (errno == EACCES && unlink(path) != -1)
 			goto open;
 		else
-			err(1, "open: `%s'", path);
+			err(1, "%s", path);
 	}
 
 	if (rcs_buf_write_fd(b, fd) == -1) {
@@ -375,7 +375,7 @@ rcs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 	int fd;
 
 	if ((fd = mkstemp(template)) == -1)
-		err(1, "mkstemp: `%s'", template);
+		err(1, "%s", template);
 
 	rcs_worklist_add(template, &rcs_temp_files);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.2 2006/04/26 15:08:25 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -399,12 +399,11 @@ rcs_write(RCSFILE *rfp)
 
 	strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn));
 	if ((fd = mkstemp(fn)) == -1)
-		err(1, "mkstemp: `%s'", fn);
+		err(1, "%s", fn);
 
 	if ((fp = fdopen(fd, "w+")) == NULL) {
-		fd = errno;
-		unlink(fn);
-		err(1, "fdopen: %s", fn);
+		(void)unlink(fn);
+		err(1, "%s", fn);
 	}
 
 	if (rfp->rf_head != NULL)
@@ -1733,7 +1732,7 @@ rcs_parse_init(RCSFILE *rfp)
 	pdp->rp_pttype = RCS_TOK_ERR;
 
 	if ((pdp->rp_file = fopen(rfp->rf_path, "r")) == NULL)
-		err(1, "fopen: `%s'", rfp->rf_path);
+		err(1, "%s", rfp->rf_path);
 
 	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;

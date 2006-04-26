@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.2 2006/04/26 15:08:25 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1385,7 +1385,7 @@ diff_output(const char *fmt, ...)
 	i = vasprintf(&str, fmt, vap);
 	va_end(vap);
 	if (i == -1)
-		err(1, "diff_output:");
+		err(1, "diff_output");
 	if (diffbuf != NULL)
 		rcs_buf_append(diffbuf, str, strlen(str));
 	else
