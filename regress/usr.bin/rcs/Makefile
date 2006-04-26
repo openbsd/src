@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2006/04/25 02:15:33 ray Exp $
+#	$OpenBSD: Makefile,v 1.25 2006/04/26 18:42:09 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -10,6 +10,8 @@ RCSCLEAN?=	rcsclean
 RCSDIFF?=	rcsdiff
 RCSMERGE?=	rcsmerge
 RLOG?=		rlog
+
+DIFF=		diff -u
 
 CLEANFILES=	RCS blah.c blah.c,v description file file,v newfile	\
 		newfile,v test test,v
@@ -150,12 +152,12 @@ test-ci-wflag:
 test-rcsdiff-uflag:
 	@echo "a line for rcsdiff test" >> test
 	@${RCSDIFF} -q -u test | tail -n 5 |		\
-	    diff -u ${.CURDIR}/rcsdiff-uflag.out -
+	    ${DIFF} ${.CURDIR}/rcsdiff-uflag.out -
 
 # Testing 'rcsdiff -u -r1.2 test'
 test-rcsdiff-rflag:
 	@${RCSDIFF} -q -u -r1.2 test | tail -n +3 |	\
-	    diff -u ${.CURDIR}/rcsdiff-rflag.out -
+	    ${DIFF} ${.CURDIR}/rcsdiff-rflag.out -
 
 # Testing 'rcs -m1.2:logmessage'
 test-rcs-mflag:
@@ -235,7 +237,7 @@ test-rcsmerge:
 	@${CI} -q -l -m"third rev" blah.c
 
 	@${RCSMERGE} -q -r1.1 -r1.3 -p blah.c |				\
-	    diff -u ${.CURDIR}/rcsmerge.out -
+	    ${DIFF} ${.CURDIR}/rcsmerge.out -
 
 test-rcsmerge-symbols: clean
 	@mkdir RCS
@@ -247,7 +249,7 @@ test-rcsmerge-symbols: clean
 	@${CI} -q -l -nsym3 -m"third rev" blah.c
 
 	@${RCSMERGE} -q -rsym1 -rsym3 -p blah.c |		\
-	    diff -u ${.CURDIR}/rcsmerge.out -
+	    ${DIFF} ${.CURDIR}/rcsmerge.out -
 
 test-rcsdiff:
 	@rm -rf blah.c,v
@@ -260,7 +262,7 @@ test-rcsdiff:
 	@${CI} -q -l -m"third rev" blah.c
 
 	@${RCSDIFF} -q -r1.1 -r1.3 -u blah.c | tail -n +3 |		\
-	    diff -u ${.CURDIR}/rcsdiff.out -
+	    ${DIFF} ${.CURDIR}/rcsdiff.out -
 
 test-rcsdiff-symbols: clean
 	@mkdir RCS
@@ -272,7 +274,7 @@ test-rcsdiff-symbols: clean
 	@${CI} -q -l -nsym3 -m"third rev" blah.c
 
 	@${RCSDIFF} -q -rsym1 -rsym3 -u blah.c | tail -n +3 |		\
-	    diff -u ${.CURDIR}/rcsdiff.out -
+	    ${DIFF} ${.CURDIR}/rcsdiff.out -
 
 # Testing 'ci -d'2037-01-12 04:00:00+00' -l test
 test-ci-dflag: clean
@@ -313,18 +315,18 @@ test-comma:
 test-rcs-aflag: clean
 	@echo "." | ${RCS} -q -i test
 	@${RCS} -q -afoo,bar,baz test
-	@${RLOG} test | diff -u ${.CURDIR}/rcs-aflag.out -
+	@${RLOG} test | ${DIFF} ${.CURDIR}/rcs-aflag.out -
 
 # Testing 'rcs -efoo,bar,baz'
 test-rcs-eflag: test-rcs-aflag
 	@${RCS} -q -efoo,bar,baz test
-	@${RLOG} test | diff -u ${.CURDIR}/rcs-eflag.out -
+	@${RLOG} test | ${DIFF} ${.CURDIR}/rcs-eflag.out -
 
 # Testing  'rcs -Atest newfile'
 test-rcs-Aflag: test-rcs-aflag
 	@echo "." | ${RCS} -q -i newfile
 	@${RCS} -q -Atest newfile
-	@${RLOG} newfile | diff -u ${.CURDIR}/rcs-Aflag.out -
+	@${RLOG} newfile | ${DIFF} ${.CURDIR}/rcs-Aflag.out -
 
 test-rcs-tflag-stdin: clean
 	@echo 'This is a description.' | ${RCS} -q -i -t file
@@ -495,10 +497,10 @@ test-rlog-rflag: clean
 	@echo "foo" >> file
 	@${CI} -q -m"third rev" -d'2006-01-01 00:00:00+00' -wfoo file
 
-	@${RLOG} -r1.1 file | diff -u ${.CURDIR}/rlog-rflag1.out -
-	@${RLOG} -r1.1:1.3 file | diff -u ${.CURDIR}/rlog-rflag2.out -
-	@${RLOG} -r1.2: file | diff -u ${.CURDIR}/rlog-rflag3.out -
-	@${RLOG} -r:1.1 file | diff -u ${.CURDIR}/rlog-rflag4.out -
+	@${RLOG} -r1.1 file | ${DIFF} ${.CURDIR}/rlog-rflag1.out -
+	@${RLOG} -r1.1:1.3 file | ${DIFF} ${.CURDIR}/rlog-rflag2.out -
+	@${RLOG} -r1.2: file | ${DIFF} ${.CURDIR}/rlog-rflag3.out -
+	@${RLOG} -r:1.1 file | ${DIFF} ${.CURDIR}/rlog-rflag4.out -
 
 test-ci-nofile:
 	@${CI} -q nonexistent || case "$$?" in 1) exit 0;; esac && exit 1
