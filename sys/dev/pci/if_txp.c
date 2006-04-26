@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.80 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.81 2006/04/26 15:47:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1077,6 +1077,10 @@ txp_alloc_rings(sc)
 	for (i = 0; i < RXBUF_ENTRIES; i++) {
 		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
 		    M_DEVBUF, M_NOWAIT);
+
+		/* stash away pointer */
+		bcopy(&sd, (u_long *)&sc->sc_rxbufs[i].rb_vaddrlo, sizeof(sd));
+
 		if (sd == NULL)
 			break;
 
@@ -1102,9 +1106,6 @@ txp_alloc_rings(sc)
 		}
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-
-		/* stash away pointer */
-		bcopy(&sd, (u_long *)&sc->sc_rxbufs[i].rb_vaddrlo, sizeof(sd));
 
 		sc->sc_rxbufs[i].rb_paddrlo =
 		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
@@ -1165,6 +1166,11 @@ txp_alloc_rings(sc)
 bail:
 	txp_dma_free(sc, &sc->sc_zero_dma);
 bail_rxbufring:
+	for (i = 0; i < RXBUF_ENTRIES; i++) {
+		bcopy((u_long *)&sc->sc_rxbufs[i].rb_vaddrlo, &sd, sizeof(sd));
+		if (sd)
+			free(sd, M_DEVBUF);
+	}
 	txp_dma_free(sc, &sc->sc_rxbufring_dma);
 bail_rspring:
 	txp_dma_free(sc, &sc->sc_rspring_dma);
