@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 2005/12/11 21:45:30 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 2006/04/26 20:41:19 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -207,9 +207,10 @@ vmapbuf(bp, len)
 	vsize_t len;
 {
 	caddr_t addr;
-	vaddr_t kva, off;
+	vaddr_t ova, kva, off;
 	paddr_t pa;
 	struct pmap *pmap;
+	u_int pg;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -228,7 +229,7 @@ vmapbuf(bp, len)
 	 * when the address gets a new mapping.
 	 */
 
-	kva = uvm_km_valloc_wait(phys_map, len);
+	ova = kva = uvm_km_valloc_wait(phys_map, len);
 
 	/*
 	 * Flush the TLB for the range [kva, kva + off]. Strictly speaking,
@@ -239,19 +240,17 @@ vmapbuf(bp, len)
 	cmmu_flush_tlb(cpu_number(), 1, kva, btoc(len));
 
 	bp->b_data = (caddr_t)(kva + off);
-	while (len > 0) {
+	for (pg = atop(len); pg != 0; pg--) {
 		if (pmap_extract(pmap, (vaddr_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
 			   VM_PROT_READ | VM_PROT_WRITE,
 			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		/* make sure snooping will be possible... */
-		pmap_cache_ctrl(pmap_kernel(), kva, kva + PAGE_SIZE,
-		    CACHE_GLOBAL);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
-		len -= PAGE_SIZE;
 	}
+	/* make sure snooping will be possible... */
+	pmap_cache_ctrl(pmap_kernel(), ova, ova + len, CACHE_GLOBAL);
 	pmap_update(pmap_kernel());
 }
 
