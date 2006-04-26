@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.5 2006/04/26 00:57:58 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.6 2006/04/26 01:18:20 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -75,7 +75,7 @@ mfi_pci_find_device(void *aux) {
 		}
 	}
 
-	return (1);
+	return (-1);
 }
 
 int
