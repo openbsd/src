@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.55 2006/04/26 01:20:28 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.56 2006/04/26 01:33:38 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -477,8 +477,6 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 #endif
-			break;
-		}
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN ||
