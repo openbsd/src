@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.99 2006/04/19 14:19:30 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.100 2006/04/27 15:37:51 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -200,6 +200,7 @@
 	.globl	_C_LABEL(cpu_cache_ecx), _C_LABEL(cpu_cache_edx)
 	.globl	_C_LABEL(cold), _C_LABEL(cnvmem), _C_LABEL(extmem)
 	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(nkptp_max)
 	.globl	_C_LABEL(boothowto), _C_LABEL(bootdev), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(gdt)
@@ -531,9 +532,9 @@ try586:	/* Use the `cpuid' instruction. */
  *			      0          1       2      3
  */
 #define	PROC0PDIR	((0)		* NBPG)
-#define	PROC0STACK	((1)		* NBPG)
-#define	SYSMAP		((1+UPAGES)	* NBPG)
-#define	TABLESIZE	((1+UPAGES) * NBPG) /* + _C_LABEL(nkpde) * NBPG */
+#define	PROC0STACK	((4)		* NBPG)
+#define	SYSMAP		((4+UPAGES)	* NBPG)
+#define	TABLESIZE	((4+UPAGES) * NBPG) /* + _C_LABEL(nkpde) * NBPG */
 
 	/* Clear the BSS. */
 	movl	$RELOC(_C_LABEL(edata)),%edi
@@ -572,9 +573,9 @@ try586:	/* Use the `cpuid' instruction. */
 	jge	1f
 	movl	$NKPTP_MIN,%ecx			# set at min
 	jmp	2f
-1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
+1:	cmpl	RELOC(_C_LABEL(nkptp_max)),%ecx	# larger than max?
 	jle	2f
-	movl	$NKPTP_MAX,%ecx
+	movl	RELOC(_C_LABEL(nkptp_max)),%ecx
 2:	movl	%ecx,RELOC(_C_LABEL(nkpde))	# and store it back
 
 	/* Clear memory for bootstrap tables. */
@@ -659,6 +660,8 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
 	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
+	addl	$NBPG, %eax				# pte for ptd[1]
+	movl	%eax,(PROC0PDIR+(PDSLOT_PTE+1)*4)(%esi)	# recursive PD slot
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(_C_LABEL(PTDpaddr))
@@ -2309,6 +2312,40 @@ ENTRY(i686_pagezero)
 	popl	%edi
 	ret
 #endif
+
+#ifndef SMALL_KERNEL
+/*
+ * int cpu_paenable(void *);
+ */
+ENTRY(cpu_paenable)
+	movl	$-1, %eax
+	testl	$CPUID_PAE, _C_LABEL(cpu_feature)
+	jz	1f
+
+	pushl	%esi
+	pushl	%edi
+	movl	12(%esp), %esi
+	movl	%cr3, %edi
+	orl	$0xfe0, %edi	/* PDPT will be in the last four slots! */
+	movl	%edi, %cr3
+	addl	$KERNBASE, %edi	/* and make it back virtual again */
+	movl	$8, %ecx
+	cld
+	rep
+	movsl
+	movl	%cr4, %eax
+	orl	$CR4_PAE, %eax
+	movl	%eax, %cr4	/* BANG!!! */
+	movl	12(%esp), %eax
+	subl	$KERNBASE, %eax
+	movl	%eax, %cr3	/* reload real PDPT */
+
+	xorl	%eax, %eax
+	popl	%edi
+	popl	%esi
+1:
+	ret
+#endif /* !SMALL_KERNEL */
 
 #if NLAPIC > 0 
 #include <i386/i386/apicvec.s>

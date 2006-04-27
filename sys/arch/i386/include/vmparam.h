@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.34 2006/03/15 17:56:06 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.35 2006/04/27 15:37:53 mickey Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -91,22 +91,23 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)((PDSLOT_PTE<<PDSHIFT) - USPACE))
-#define VM_MAX_ADDRESS		((vaddr_t)((PDSLOT_PTE<<PDSHIFT) + \
-				    (PDSLOT_PTE<<PGSHIFT)))
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0xcf800000)
+#define VM_MAX_ADDRESS		(vm_max_address)
+extern vaddr_t vm_max_address;
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_APTE<<PDSHIFT))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xff800000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define	VM_PHYSSEG_MAX	5	/* actually we could have this many segments */
+#define	VM_PHYSSEG_MAX	8	/* actually we could have this many segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 
-#define VM_NFREELIST		2
+#define VM_NFREELIST		3
 #define VM_FREELIST_DEFAULT	0
 #define VM_FREELIST_FIRST16	1
+#define VM_FREELIST_ABOVE4G	2
 
 /*
  * pmap specific data stored in the vm_physmem[] array 

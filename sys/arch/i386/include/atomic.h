@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.2 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.3 2006/04/27 15:37:53 mickey Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -43,6 +43,13 @@
 #define _ATOMIC_H_
 
 #ifndef _LOCORE
+
+static __inline u_int64_t
+i386_atomic_testset_uq (volatile u_int64_t *ptr, u_int64_t val) {
+    __asm__ volatile ("\n1:\tlock; cmpxchg8b (%1); jnz 1b" : "+A" (val) :
+	"r" (ptr), "b" ((u_int32_t)val), "c" ((u_int32_t)(val >> 32)));
+    return val;
+}
 
 static __inline u_int32_t
 i386_atomic_testset_ul (volatile u_int32_t *ptr, unsigned long val) {

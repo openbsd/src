@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.8 2005/11/22 12:52:55 mickey Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.9 2006/04/27 15:37:50 mickey Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /* 
@@ -63,28 +63,19 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	char	*dst;
-
-	pt_entry_t *ptep0 = 0;
-	pt_entry_t	oldmap0 = { 0 };
-	vaddr_t	addr1;
-	pt_entry_t *ptep1 = 0;
-	pt_entry_t	oldmap1 = { 0 };
 	extern char	etext;
+	u_int32_t bits, bits1;
+	vaddr_t	addr1 = 0;
+	char	*dst;
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vaddr_t)&etext) {
-		ptep0 = kvtopte(addr);
-		oldmap0 = *ptep0;
-		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
+		bits = pmap_pte_setbits(addr, PG_RW, 0) & PG_RW;
 
 		addr1 = trunc_page(addr + size - 1);
-		if (trunc_page(addr) != addr1) {
+		if (trunc_page(addr) != addr1)
 			/* data crosses a page boundary */
-			ptep1 = kvtopte(addr1);
-			oldmap1 = *ptep1;
-			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
-		}
+			bits1 = pmap_pte_setbits(addr1, PG_RW, 0) & PG_RW;
 		tlbflush();
 	}
 
@@ -93,10 +84,10 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	while (size-- > 0)
 		*dst++ = *data++;
 
-	if (ptep0) {
-		*ptep0 = oldmap0;
-		if (ptep1)
-			*ptep1 = oldmap1;
+	if (addr1) {
+		pmap_pte_setbits(addr, 0, bits);
+		if (bits1)
+			pmap_pte_setbits(addr1, 0, bits1);
 		tlbflush();
 	}
 }

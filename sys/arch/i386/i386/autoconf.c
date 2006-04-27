@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.57 2006/03/15 20:04:36 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.58 2006/04/27 15:37:50 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
@@ -108,6 +109,9 @@ cpu_configure()
 
 	gdt_init();		/* XXX - pcibios uses gdt stuff */
 
+#ifndef SMALL_KERNEL
+	pmap_bootstrap_pae();
+#endif
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("cpu_configure: mainbus not configured");
 

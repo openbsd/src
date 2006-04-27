@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.1 2003/04/17 03:42:14 drahn Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.2 2006/04/27 15:37:53 mickey Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
 #define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
 
-#define LOADADDR(a)		((((u_long)(a)) + offset)&0xfffffff)
+#define LOADADDR(a)		(((u_long)(a) + (u_long)offset)&0xfffffff)
 #define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))

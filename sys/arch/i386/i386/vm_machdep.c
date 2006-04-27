@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2005/11/25 14:07:17 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2006/04/27 15:37:51 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -242,8 +242,7 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t ofpte, otpte;
+	u_int32_t ofpte, otpte;
 #ifdef MULTIPROCESSOR
 	u_int32_t cpumask = 0;
 #endif
@@ -252,13 +251,12 @@ pagemove(from, to, size)
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
-	fpte = kvtopte((vaddr_t)from);
-	tpte = kvtopte((vaddr_t)to);
 	while (size > 0) {
-		ofpte = *fpte;
-		otpte = *tpte;
-		*tpte++ = *fpte;
-		*fpte++ = 0;
+		ofpte = pmap_pte_bits((vaddr_t)from);
+		otpte = pmap_pte_bits((vaddr_t)to);
+		pmap_pte_set((vaddr_t)to,
+		    pmap_pte_paddr((vaddr_t)from), ofpte);
+		pmap_pte_set((vaddr_t)from, 0, 0);
 #if defined(I386_CPU) && !defined(MULTIPROCESSOR)
 		if (cpu_class != CPUCLASS_386)
 #endif

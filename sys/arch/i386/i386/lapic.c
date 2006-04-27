@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.7 2006/03/13 18:42:16 mickey Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.8 2006/04/27 15:37:51 mickey Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -77,9 +77,8 @@ void
 lapic_map(lapic_base)
 	paddr_t lapic_base;
 {
-	int s;
-	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
+	int s;
 
 	disable_intr();
 	s = lapic_tpr;
@@ -93,8 +92,7 @@ lapic_map(lapic_base)
 	 * might have changed the value of cpu_number()..
 	 */
 
-	pte = kvtopte(va);
-	*pte = lapic_base | PG_RW | PG_V | PG_N;
+	pmap_pte_set(va, lapic_base, PG_RW | PG_V | PG_N);
 	invlpg(va);
 
 #ifdef MULTIPROCESSOR

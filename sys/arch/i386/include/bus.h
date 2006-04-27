@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.38 2006/04/27 15:17:16 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.39 2006/04/27 15:37:53 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -741,7 +741,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 #define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_64BIT		0x040	/* large memory high segment is ok */
 #define	BUS_DMA_24BIT		0x080	/* isadma map */
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
@@ -771,7 +771,10 @@ typedef struct i386_bus_dmamap		*bus_dmamap_t;
  */
 struct i386_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
+	paddr_t		ds_addr2;	/* replacement store */
 	bus_size_t	ds_len;		/* length of transfer */
+	vaddr_t		ds_va;		/* mapped loaded data */
+	vaddr_t		ds_va2;		/* mapped replacement data */
 };
 typedef struct i386_bus_dma_segment	bus_dma_segment_t;
 
@@ -862,6 +865,11 @@ struct i386_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
+
+	struct vm_page	**_dm_pages;	/* replacement pages */
+	vaddr_t		_dm_pgva;	/* those above -- mapped */
+	int		_dm_npages;	/* number of pages allocated */
+	int		_dm_nused;	/* number of pages replaced */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
