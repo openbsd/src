@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.18 2006/04/08 02:22:54 krw Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.19 2006/04/27 18:09:52 espie Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -221,25 +221,28 @@ emitobjs(FILE *fp)
 	struct objects *oi;
 	int lpos, len, sp;
 
-	if (fputs("OBJS=", fp) < 0)
+	if (fputs("LINTS=", fp) < 0)
 		return (1);
 	sp = '\t';
 	lpos = 7;
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
-		len = strlen(fi->fi_base) + 2;
+		len = strlen(fi->fi_base) + 3;
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
 				return (1);
 			sp = '\t';
 			lpos = 7;
 		}
-		if (fprintf(fp, "%c%s.o", sp, fi->fi_base) < 0)
+		if (fprintf(fp, "%c%s.ln", sp, fi->fi_base) < 0)
 			return (1);
 		lpos += len + 1;
 		sp = ' ';
 	}
+	if (fputs("\n\nOBJS=\t${LINTS:.ln=.o}", fp) < 0)
+		return (1);
+	lpos = 7 + strlen("${LINTS:.ln=.o}");
 	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
@@ -345,7 +348,7 @@ emitfiles(FILE *fp, int suffix)
  * Emit the make-rules.
  */
 static int
-emitrules(FILE *fp)
+emitrules1(FILE *fp, const char *suffix, const char *rule_prefix, int ruleindex)
 {
 	struct files *fi;
 	const char *cp, *fpath;
@@ -357,11 +360,11 @@ emitrules(FILE *fp)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
 			return (1);
-		if (fprintf(fp, "%s.o: %s%s\n", fi->fi_base,
+		if (fprintf(fp, "%s%s: %s%s\n", fi->fi_base, suffix,
 		    *fpath != '/' ? "$S/" : "", fpath) < 0)
 			return (1);
-		if ((cp = fi->fi_mkrule) == NULL) {
-			cp = "NORMAL";
+		if ((cp = fi->fi_mkrule[ruleindex]) == NULL) {
+			cp = rule_prefix;
 			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
@@ -373,6 +376,12 @@ emitrules(FILE *fp)
 			return (1);
 	}
 	return (0);
+}
+
+static int
+emitrules(FILE *fp)
+{
+	return emitrules1(fp, ".o", "NORMAL", 0) || emitrules1(fp, ".ln", "LINT", 1);
 }
 
 /*

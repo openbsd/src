@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.18 2006/03/10 07:54:44 otto Exp $	*/
+/*	$OpenBSD: scan.l,v 1.19 2006/04/27 18:09:52 espie Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ at		return AT;
 attach		return ATTACH;
 build		return BUILD;
 compile-with	return COMPILE_WITH;
+lint-with	return LINT_WITH;
 config		return CONFIG;
 define		return DEFINE;
 defopt		return DEFOPT;
