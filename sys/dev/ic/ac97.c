@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.59 2005/12/28 14:36:25 fgsch Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.60 2006/04/27 21:40:00 matthieu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1132,7 +1132,11 @@ ac97_alc655_init(struct ac97_softc *as)
 	u_int16_t misc;
 
 	ac97_read(as, AC97_AV_REG_MISC, &misc);
-	misc |= AC97_AV_MISC_SPDIFEN;
+	if (as->host_flags & AC97_HOST_DONT_ENABLE_SPDIF) {
+		misc &= ~AC97_AV_MISC_SPDIFEN;
+	} else	{
+		misc |= AC97_AV_MISC_SPDIFEN;
+	}
 	misc &= ~AC97_AV_MISC_VREFDIS;
 	ac97_write(as, AC97_AV_REG_MISC, misc);
 

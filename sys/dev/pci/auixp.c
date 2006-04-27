@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.5 2006/04/13 15:48:45 brad Exp $ */
+/* $OpenBSD: auixp.c,v 1.6 2006/04/27 21:40:01 matthieu Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1568,11 +1568,14 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 {
 	bus_space_tag_t      iot;
 	bus_space_handle_t   ioh;
+	pcireg_t subdev;
 	struct auixp_codec  *codec;
 	int timeout, codec_nr;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
+	subdev = pci_conf_read(sc->sc_pct, sc->sc_tag, PCI_SUBSYS_ID_REG);
+
 	/* ATI IXP can have upto 3 codecs; mark all codecs as not existing */
 	sc->sc_codec_not_ready_bits = 0;
 	sc->sc_num_codecs = 0;
@@ -1613,6 +1616,11 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 		codec->host_if.write  = auixp_write_codec;
 		codec->host_if.reset  = auixp_reset_codec;
 		codec->host_if.flags  = auixp_flags_codec;
+		switch (subdev) {
+		case 0x1311462: /* MSI S270 */
+			codec->codec_flags = AC97_HOST_DONT_ENABLE_SPDIF;
+			break;
+		}
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC0_NOT_READY)) {

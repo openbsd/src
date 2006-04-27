@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.18 2005/06/06 21:12:44 mjc Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.19 2006/04/27 21:40:00 matthieu Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -35,7 +35,8 @@ struct ac97_codec_if;
 enum ac97_host_flags {
 	AC97_HOST_DONT_READ = 0x1,
 	AC97_HOST_DONT_READANY = 0x2,
-	AC97_HOST_SWAPPED_CHANNELS = 0x4
+	AC97_HOST_SWAPPED_CHANNELS = 0x4,
+	AC97_HOST_DONT_ENABLE_SPDIF = 0x8
 };
 
 struct ac97_host_if {
