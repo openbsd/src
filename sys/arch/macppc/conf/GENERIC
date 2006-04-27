@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.132 2006/04/23 12:03:47 kettenis Exp $g
+#	$OpenBSD: GENERIC,v 1.133 2006/04/27 15:52:53 mbalmer Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -254,6 +254,7 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
+udcf*	at uhub?		# Gude Expert mouseCLOCK
 
 # I2C bus support
 iic*		at ki2c?
