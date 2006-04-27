@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.10 2006/04/27 20:19:31 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.11 2006/04/27 20:21:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,6 +60,7 @@
 #include <machine/mvme197.h>
 
 #include <mvme88k/dev/busswreg.h>
+#include <mvme88k/mvme88k/clockvar.h>
 
 void	m197_bootstrap(void);
 void	m197_ext_int(u_int, struct trapframe *);

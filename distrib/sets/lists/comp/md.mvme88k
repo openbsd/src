@@ -185,7 +185,6 @@
 ./usr/include/mvme88k/mvme187.h
 ./usr/include/mvme88k/mvme188.h
 ./usr/include/mvme88k/mvme197.h
-./usr/include/mvme88k/mvme1x7.h
 ./usr/include/mvme88k/param.h
 ./usr/include/mvme88k/pcb.h
 ./usr/include/mvme88k/pmap.h

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme187.h,v 1.7 2006/04/27 20:19:31 miod Exp $ */
+/*	$OpenBSD: mvme187.h,v 1.8 2006/04/27 20:21:19 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -62,7 +62,5 @@
 #define M187_IACK	0xfffe0000	/* interrupt ACK base */
 
 #define MEM_CTLR	0xfff43000	/* MEMC040 mem controller */
-
-#include <machine/mvme1x7.h>
 
 #endif	/* __MACHINE_MVME187_H__ */

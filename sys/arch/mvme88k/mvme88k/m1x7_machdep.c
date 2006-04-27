@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.2 2006/04/27 20:19:31 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.3 2006/04/27 20:21:19 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -77,7 +77,6 @@
 
 #include <machine/bus.h>
 
-#include <machine/mvme1x7.h>
 #include <mvme88k/dev/pcctwovar.h>
 #include <mvme88k/dev/pcctworeg.h>
 
