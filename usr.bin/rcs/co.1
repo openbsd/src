@@ -1,4 +1,4 @@
-.\"	$OpenBSD: co.1,v 1.25 2006/04/24 22:06:49 jmc Exp $
+.\"	$OpenBSD: co.1,v 1.26 2006/04/27 09:58:12 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -66,14 +66,6 @@ it will have to be locked using the
 option.
 During this time,
 no other users may check out the file whilst it is locked.
-.Pp
-Files may be selected by revision or,
-where no revision is specified,
-the latest revision of the default branch is used.
-Revisions are specified either by using the
-.Fl r
-option or
-by appending the revision number to any option that supports it.
 .Pp
 .Nm
 also supports
