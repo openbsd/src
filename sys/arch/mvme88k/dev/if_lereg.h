@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lereg.h,v 1.4 2006/04/26 21:06:08 miod Exp $ */
+/*	$OpenBSD: if_lereg.h,v 1.5 2006/04/27 06:27:03 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -80,5 +80,5 @@ struct vlereg1 {
 		CDELAY; \
 	} while (0)
 #define	SET_VEC(x) \
-	reg1->ler1_vec |= (x)
+	reg1->ler1_vec = (x)
 #define	SYSFAIL_CL	WRITE_CSR_AND(SYSFAILB)
