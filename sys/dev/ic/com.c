@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.110 2006/03/27 06:14:52 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.111 2006/04/27 19:31:44 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1217,6 +1217,10 @@ comintr(arg)
 
 		if (msr != sc->sc_msr) {
 			delta = msr ^ sc->sc_msr;
+
+			ttytstamp(tp, sc->sc_msr & MSR_CTS, msr & MSR_CTS,
+			    sc->sc_msr & MSR_DCD, msr & MSR_DCD);
+
 			sc->sc_msr = msr;
 			if (ISSET(delta, MSR_DCD)) {
 				if (!ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&

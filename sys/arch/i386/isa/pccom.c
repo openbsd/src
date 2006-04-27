@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.50 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.51 2006/04/27 19:31:43 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1447,6 +1447,10 @@ comintr(arg)
 		}
 		msr = bus_space_read_1(iot, ioh, com_msr);
 		delta = msr ^ sc->sc_msr;
+
+		ttytstamp(tp, sc->sc_msr & MSR_CTS, msr & MSR_CTS,
+		    sc->sc_msr & MSR_DCD, msr & MSR_DCD);
+
 		if (!ISSET(delta, MSR_DCD | MSR_CTS | MSR_RI | MSR_DSR))
 			continue;
 		sc->sc_msr = msr;

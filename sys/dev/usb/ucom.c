@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.28 2006/03/27 08:19:39 dlg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.29 2006/04/27 19:31:44 deraadt Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -785,6 +785,10 @@ ucom_status_change(struct ucom_softc *sc)
 		old_msr = sc->sc_msr;
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
 		    &sc->sc_lsr, &sc->sc_msr);
+
+		ttytstamp(tp, old_msr & UMSR_CTS, sc->sc_msr & UMSR_CTS,
+		    old_msr & UMSR_DCD, sc->sc_msr & UMSR_DCD);
+
 		if (ISSET((sc->sc_msr ^ old_msr), UMSR_DCD))
 			(*LINESW(tp, l_modem))(tp,
 			    ISSET(sc->sc_msr, UMSR_DCD));
