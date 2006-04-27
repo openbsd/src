@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme187.h,v 1.6 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: mvme187.h,v 1.7 2006/04/27 20:19:31 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -46,18 +46,22 @@
 #ifndef __MACHINE_MVME187_H__
 #define __MACHINE_MVME187_H__
 
-#define BUG187_START	0xFF800000	/* start of BUG PROM */
-#define BUG187_SIZE	0x003FFFFF	/* size of BUG PROM */
-#define SRAM_START	0xFFE00000	/* start of sram used by bug */
-#define SRAM_SIZE	0x0001FFFF	/* size of sram */
+#define BUG187_START	0xff800000	/* start of BUG PROM */
+#define BUG187_SIZE	0x00400000	/* size of BUG PROM */
+#define SRAM_START	0xffe00000	/* start of sram used by bug */
+#define SRAM_SIZE	0x00020000	/* size of sram */
+#define OBIO187_START	0xfff40000	/* start of local IO */
+#define OBIO187_SIZE	0x000b0000	/* size of obio space */
 
-#define SBC_CMMU_I	0xFFF77000	/* Single Board Computer code CMMU */
-#define SBC_CMMU_D	0xFFF7F000	/* Single Board Computer data CMMU */
+#define SBC_CMMU_I	0xfff77000	/* Single Board Computer code CMMU */
+#define SBC_CMMU_D	0xfff7f000	/* Single Board Computer data CMMU */
 
-#define M187_ILEVEL	0xFFF4203E	/* interrupt priority level */
-#define M187_IMASK	0xFFF4203F	/* interrupt mask level */
+#define M187_ILEVEL	0xfff4203e	/* interrupt priority level */
+#define M187_IMASK	0xfff4203f	/* interrupt mask level */
 #define M187_ISRC	0x00000000	/* interrupt mask src (NULL) */
-#define M187_IACK	0xFFFE0000	/* interrupt ACK base */
+#define M187_IACK	0xfffe0000	/* interrupt ACK base */
+
+#define MEM_CTLR	0xfff43000	/* MEMC040 mem controller */
 
 #include <machine/mvme1x7.h>
 

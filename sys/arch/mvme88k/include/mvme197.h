@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.5 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.6 2006/04/27 20:19:31 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -46,15 +46,17 @@
 #ifndef __MACHINE_MVME197_H__
 #define __MACHINE_MVME197_H__
 
-#define	FLASH_START	0xFF800000	/* start of flash memory area */
-#define	FLASH_SIZE	0x003FFFFF
-#define BUG197_START	0xFFF80000	/* start of BUG PROM (in OBIO) */
-#define BUG197_SIZE	0x0003FFFF
+#define	FLASH_START	0xff800000	/* start of flash memory area */
+#define	FLASH_SIZE	0x00400000
+#define BUG197_START	0xfff80000	/* start of BUG PROM (in OBIO) */
+#define BUG197_SIZE	0x00040000
+#define OBIO197_START	0xfff00000	/* start of local IO */
+#define OBIO197_SIZE	0x000d0000	/* size of obio space */
 
-#define M197_ILEVEL	0xFFF00064	/* interrupt priority level */
-#define M197_IMASK	0xFFF00065	/* interrupt mask level */
-#define M197_ISRC	0xFFF0006F	/* interrupt SRC */
-#define M197_IACK	0xFFF00100	/* interrupt ACK base */
+#define M197_ILEVEL	0xfff00064	/* interrupt priority level */
+#define M197_IMASK	0xfff00065	/* interrupt mask level */
+#define M197_ISRC	0xfff0006f	/* interrupt SRC */
+#define M197_IACK	0xfff00100	/* interrupt ACK base */
 
 #include <machine/mvme1x7.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.9 2006/04/19 22:09:40 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.10 2006/04/27 20:19:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -137,12 +137,12 @@ m197_startup()
 	/*
 	 * Grab the OBIO space that we hardwired in pmap_bootstrap
 	 */
-	obiova = OBIO_START;
-	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO_SIZE,
+	obiova = OBIO197_START;
+	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO197_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	        UVM_ADV_NORMAL, 0));
-	if (obiova != OBIO_START)
+	if (obiova != OBIO197_START)
 		panic("obiova %lx: OBIO not free", obiova);
 }
 

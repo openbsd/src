@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.12 2006/04/19 22:09:40 miod Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.13 2006/04/27 20:19:31 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -46,15 +46,11 @@
 #ifndef __MACHINE_MVME1X7_H__
 #define __MACHINE_MVME1X7_H__
 
-#define OBIO_START	0xFFF00000	/* start of local IO */
-#define OBIO_SIZE	0x000EFFFF	/* size of obio space */
-
 #define INT_PRI_LEVEL	0xFFF4203E	/* interrupt priority level */
 #define INT_MASK_LEVEL	0xFFF4203F	/* interrupt mask level */
 
 #define LOCAL_IO_DEVS	0xFFF00000	/* local IO devices */
 
-#define MEM_CTLR	0xFFF43000	/* MEMC040 mem controller */
 #define SCC_ADDR	0xFFF45000 	/* Cirrus Chip */
 #define LANCE_ADDR	0xFFF46000 	/* 82596CA */
 #define SCSI_ADDR	0xFFF47000 	/* NCR 710 address */

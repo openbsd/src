@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.1 2006/04/19 22:09:40 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.2 2006/04/27 20:19:31 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -103,14 +103,13 @@ m1x7_init_clocks(void)
 	tick = 1000000 / hz;
 
 	/* profclock */
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CTL) = 0;
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CMP) =
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) = 0;
+	*(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T1CMP) =
 	    pcc2_timer_us2lim(tick);
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1COUNT) = 0;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CTL) =
+	*(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T1COUNT) = 0;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
-	    PROF_RESET;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1ICR) = PROF_RESET;
 
 	if (stathz == 0)
 		stathz = hz;
@@ -128,14 +127,13 @@ m1x7_init_clocks(void)
 		statvar >>= 1;
 
 	/* statclock */
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2CTL) = 0;
+	*(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T2CMP) =
 	    pcc2_timer_us2lim(statint);
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
+	*(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T2COUNT) = 0;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
-	    STAT_RESET;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2ICR) = STAT_RESET;
 
 	statmin = statint - (statvar >> 1);
 
@@ -163,8 +161,7 @@ m1x7_init_clocks(void)
 int
 m1x7_clockintr(void *eframe)
 {
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
-	    PROF_RESET;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1ICR) = PROF_RESET;
 
 	hardclock(eframe);
 #if NBUGTTY > 0
@@ -179,8 +176,7 @@ m1x7_statintr(void *eframe)
 {
 	u_long newint, r, var;
 
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
-	    STAT_RESET;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2ICR) = STAT_RESET;
 
 	statclock((struct clockframe *)eframe);
 
@@ -195,13 +191,12 @@ m1x7_statintr(void *eframe)
 	} while (r == 0);
 	newint = statmin + r;
 
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2CTL) = 0;
+	*(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T2CMP) =
 	    pcc2_timer_us2lim(newint);
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
-	    STAT_RESET;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
+	*(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T2COUNT) = 0;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2ICR) = STAT_RESET;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T2CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC;
 	return (1);
 }

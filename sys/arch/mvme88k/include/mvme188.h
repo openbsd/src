@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.25 2006/04/17 18:28:19 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.26 2006/04/27 20:19:31 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -50,10 +50,8 @@
 #define MVME188_EPROM_SIZE	0x00080000
 #define MVME188_SRAM		0xffe00000
 #define MVME188_SRAM_SIZE	0x00020000
-#define MVME188_UTILITY		0xff000000
-#define MVME188_UTILITY_SIZE	0x01000000
-#define UTIL_START		0xffc00000  /* start of MVME188 utility space */
-#define UTIL_SIZE		0x003fffff  /* size of MVME188 utility space */
+#define MVME188_UTILITY		0xfff00000
+#define MVME188_UTILITY_SIZE	0x00090000
 
 /*
  * MVME188 declarations for hardware level device registers and such.

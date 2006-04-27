@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.9 2006/04/19 22:09:40 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.10 2006/04/27 20:19:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -72,7 +72,6 @@ void	m187_startup(void);
 
 vaddr_t obiova;
 vaddr_t bugromva;
-vaddr_t sramva;
 
 /*
  * Figure out how much memory is available, by querying the memory controllers.
@@ -97,17 +96,6 @@ void
 m187_startup()
 {
 	/*
-	 * Grab the SRAM space that we hardwired in pmap_bootstrap
-	 */
-	sramva = SRAM_START;
-	uvm_map(kernel_map, (vaddr_t *)&sramva, SRAM_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, 0));
-	if (sramva != SRAM_START)
-		panic("sramva %lx: SRAM not free", sramva);
-
-	/*
 	 * Grab the BUGROM space that we hardwired in pmap_bootstrap
 	 */
 	bugromva = BUG187_START;
@@ -121,12 +109,12 @@ m187_startup()
 	/*
 	 * Grab the OBIO space that we hardwired in pmap_bootstrap
 	 */
-	obiova = OBIO_START;
-	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO_SIZE,
+	obiova = OBIO187_START;
+	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO187_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	        UVM_ADV_NORMAL, 0));
-	if (obiova != OBIO_START)
+	if (obiova != OBIO187_START)
 		panic("obiova %lx: OBIO not free", obiova);
 }
 

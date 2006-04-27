@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctworeg.h,v 1.7 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: pcctworeg.h,v 1.8 2006/04/27 20:19:28 miod Exp $ */
 
 /*
  * Memory map for PCC2 chip found in MVME1x7 boards.
@@ -7,7 +7,7 @@
  * two-bytes (16 bits), or four-bytes (32 bits).
  */
 
-#define	PCC2_BASE		0x00042000
+#define	PCC2_BASE		0xfff42000
 #define PCC2_SIZE		0x0040
 
 #define	PCCTWO_CHIPID		0x0000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.21 2005/04/27 14:07:38 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.22 2006/04/27 20:19:31 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,8 +34,8 @@
 #include <machine/cmmu.h>
 #include <machine/pmap_table.h>
 
-#define	R	VM_PROT_READ
-#define	RW	(VM_PROT_READ | VM_PROT_WRITE)
+#define	R	UVM_PROT_R
+#define	RW	UVM_PROT_RW
 #define	CW	CACHE_WT
 #define	CI	CACHE_INH
 #define	CG	CACHE_GLOBAL
@@ -45,8 +45,8 @@
 #include <machine/mvme187.h>
 const pmap_table_entry
 m187_board_table[] = {
-	{ BUG187_START, BUG187_START, round_page(BUG187_SIZE), RW, CI },
-	{ OBIO_START  , OBIO_START  , round_page(OBIO_SIZE)  , RW, CI },
+	{ BUG187_START,		BUG187_START,	BUG187_SIZE,	RW, CI },
+	{ OBIO187_START,	OBIO187_START,	OBIO187_SIZE,	RW, CI },
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
 #endif
@@ -55,8 +55,8 @@ m187_board_table[] = {
 #include <machine/mvme188.h>
 const pmap_table_entry
 m188_board_table[] = {
-	{ MVME188_UTILITY, MVME188_UTILITY,
-	    round_page(MVME188_UTILITY_SIZE), RW, CI },
+	{ MVME188_EPROM,	MVME188_EPROM,	MVME188_EPROM_SIZE, RW, CI },
+	{ MVME188_UTILITY,	MVME188_UTILITY, MVME188_UTILITY_SIZE, RW, CI },
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
 #endif
@@ -65,8 +65,9 @@ m188_board_table[] = {
 #include <machine/mvme197.h>
 const pmap_table_entry
 m197_board_table[] = {
-	{ FLASH_START, FLASH_START, round_page(FLASH_SIZE), RW, CI },
-	{ OBIO_START , OBIO_START , round_page(OBIO_SIZE) , RW, CI },
+	/* We need flash 1:1 mapped to access the 88410 chip underneath */
+	{ FLASH_START,		FLASH_START,	FLASH_SIZE,	RW, CI },
+	{ OBIO197_START,	OBIO197_START,	OBIO197_SIZE,	RW, CI },
 	/* No need to mention BUG here - it is contained inside OBIO */
 	{ 0, 0, 0xffffffff, 0, 0 },
 };

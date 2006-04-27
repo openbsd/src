@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.18 2005/12/11 21:45:31 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.19 2006/04/27 20:19:28 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -40,11 +40,14 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 
+#ifdef MVME187
+#include <machine/mvme187.h>
+#endif
 #ifdef MVME188
 #include <machine/mvme188.h>
 #endif
-#if defined(MVME187) || defined(MVME197)
-#include <machine/mvme1x7.h>
+#ifdef MVME197
+#include <machine/mvme197.h>
 #endif
 
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -97,11 +100,13 @@ mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
 #ifdef MVME187
 		case BRD_187:
 		case BRD_8120:
+			threshold = OBIO187_START;
+			break;
 #endif
 #ifdef MVME197
 		case BRD_197:
 #endif
-			threshold = OBIO_START;
+			threshold = OBIO197_START;
 			break;
 		}
 	}
