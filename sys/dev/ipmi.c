@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.35 2006/04/20 20:31:10 miod Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.36 2006/04/27 15:28:21 mickey Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -855,7 +855,7 @@ smbios_map(paddr_t pa, size_t len, struct smbios_mem_map *handle)
 
 	handle->pa = pa;
 	handle->baseva = va;
-	handle->va = (u_int8_t *)(va + (pa & PGOFSET));
+	handle->va = (u_int8_t *)(va + ((u_long)pa & PGOFSET));
 	handle->vsize = pgend - pgstart;
 
 	do {
