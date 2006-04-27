@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.26 2006/04/26 21:14:00 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.27 2006/04/27 20:13:42 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -25,18 +25,14 @@
  * SUCH DAMAGE.
  */
 
-/*
- * 8/22/2000 BH Cleaned up year 2000 problems with calendar hardware.
- * This code will break again in 2068 or so - come dance on my grave.
- */
-
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
 
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
@@ -59,6 +55,10 @@ struct nvramsoftc {
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_regs;
 	size_t			sc_len;
+
+#ifdef MVME188
+	u_int8_t		*sc_nvram;
+#endif
 };
 
 void    nvramattach(struct device *, struct device *, void *);
@@ -72,7 +72,9 @@ struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL
 };
 
-u_long chiptotime(int, int, int, int, int, int);
+u_long	chiptotime(int, int, int, int, int, int);
+int	nvram188read(struct nvramsoftc *, struct uio *, int);
+int	nvram188write(struct nvramsoftc *, struct uio *, int);
 
 int
 nvrammatch(parent, vcf, args)
@@ -100,21 +102,26 @@ nvramattach(parent, self, args)
 	bus_space_handle_t ioh;
 	vsize_t maplen;
 
-	if (brdtyp == BRD_188) {
+	switch (brdtyp) {
+#ifdef MVME188
+	case BRD_188:
 		sc->sc_len = MK48T02_SIZE;
 		maplen = sc->sc_len * 4;
 		sc->sc_regs = M188_NVRAM_TOD_OFF;
-	} else {
+		break;
+#endif
+	default:
 		sc->sc_len = MK48T08_SIZE;
 		maplen = sc->sc_len;
 		sc->sc_regs = SBC_NVRAM_TOD_OFF;
+		break;
 	}
 
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_base = ca->ca_paddr;
 
 	if (bus_space_map(sc->sc_iot, sc->sc_base, round_page(maplen),
-	    0, &ioh) != 0) {
+	    BUS_SPACE_MAP_LINEAR, &ioh) != 0) {
 		printf(": can't map memory!\n");
 		return;
 	}
@@ -170,8 +177,8 @@ microtime(tvp)
  * This code is defunct after 2068.
  * Will Unix still be here then??
  */
-const short dayyr[12] =
-{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+const int dayyr[12] =
+{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
 u_long
 chiptotime(sec, min, hour, day, mon, year)
@@ -283,7 +290,7 @@ inittodr(base)
 	int sec, min, hour, day, mon, year;
 	int badbase = 0, waszero = base == 0;
 
-	if (base < 5 * SECYR) {
+	if (base < 35 * SECYR) {
 		/*
 		 * If base is 0, assume filesystem time is just unknown
 		 * in stead of preposterous. Don't bark.
@@ -291,7 +298,7 @@ inittodr(base)
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		base = 36 * SECYR + 109 * SECDAY + 22 * 3600;
 		badbase = 1;
 	}
 
@@ -442,12 +449,6 @@ nvramopen(dev, flag, mode, p)
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
 
-#ifdef MVME188
-	/* for now, do not allow userland to access the nvram on 188. */
-	if (brdtyp == BRD_188)
-		return (ENXIO);
-#endif
-
 	return (0);
 }
 
@@ -458,6 +459,9 @@ nvramclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	/*
+	 * On MVME188, it might be worth free()ing the NVRAM copy here.
+	 */
 	return (0);
 }
 
@@ -487,13 +491,31 @@ nvramioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-nvramrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+nvramread(dev_t dev, struct uio *uio, int flags)
+{
+	int unit = minor(dev);
+	struct nvramsoftc *sc = (struct nvramsoftc *)nvram_cd.cd_devs[unit];
+
+#ifdef MVME188
+	if (brdtyp == BRD_188)
+		return (nvram188read(sc, uio, flags));
+#endif
+
+	return (memdevrw(bus_space_vaddr(sc->sc_iot, sc->sc_ioh),
+	    sc->sc_len, uio, flags));
+}
+
+/*ARGSUSED*/
+int
+nvramwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
+
+#ifdef MVME188
+	if (brdtyp == BRD_188)
+		return (nvram188write(sc, uio, flags));
+#endif
 
 	return (memdevrw(bus_space_vaddr(sc->sc_iot, sc->sc_ioh),
 	    sc->sc_len, uio, flags));
@@ -511,8 +533,109 @@ nvrammmap(dev, off, prot)
 	if (minor(dev) != 0)
 		return (-1);
 
+#ifdef MVME188
+	/* disallow mmap on MVME188 due to non-linear layout */
+	if (brdtyp == BRD_188)
+		return (-1);
+#endif
+
 	/* allow access only in RAM */
 	if (off < 0 || off > sc->sc_len)
 		return (-1);
 	return (atop(sc->sc_base + off));
 }
+
+#ifdef MVME188
+
+int	read_nvram(struct nvramsoftc *);
+
+/*
+ * Build a local copy of the NVRAM contents.
+ */
+int
+read_nvram(struct nvramsoftc *sc)
+{
+	u_int cnt;
+	u_int8_t *dest;
+	u_int32_t *src;
+
+	if (sc->sc_nvram == NULL) {
+		sc->sc_nvram = (u_int8_t *)malloc(sc->sc_len, M_DEVBUF, 
+		    M_WAITOK | M_CANFAIL);
+		if (sc->sc_nvram == NULL)
+			return (EAGAIN);
+	}
+
+	dest = sc->sc_nvram;
+	src = (u_int32_t *)bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
+	cnt = sc->sc_len;
+	while (cnt-- != 0)
+		*dest++ = (u_int8_t)*src++;
+
+	return (0);
+}
+
+/*
+ * Specific memdevrw wrappers to cope with the 188 design.
+ */
+
+int
+nvram188read(struct nvramsoftc *sc, struct uio *uio, int flags)
+{
+	int rc;
+
+	/*
+	 * Get a copy of the NVRAM contents.
+	 */
+	rc = read_nvram(sc);
+	if (rc != 0)
+		return (rc);
+
+	/*
+	 * Move data from our NVRAM copy to the user.
+	 */
+	return (memdevrw(sc->sc_nvram, sc->sc_len, uio, flags));
+}
+
+int
+nvram188write(struct nvramsoftc *sc, struct uio *uio, int flags)
+{
+	u_int cnt;
+	u_int8_t *src;
+	u_int32_t *dest;
+	int rc;
+
+	/*
+	 * Get a copy of the NVRAM contents.
+	 */
+	rc = read_nvram(sc);
+	if (rc != 0)
+		return (rc);
+
+	/*
+	 * Move data from the user to our NVRAM copy.
+	 */
+	rc = memdevrw(sc->sc_nvram, sc->sc_len, uio, flags);
+	if (rc != 0) {
+		/* reset NVRAM copy contents */
+		read_nvram(sc);
+		return (rc);
+	}
+
+	/*
+	 * Update the NVRAM. This could be optimized by only working on
+	 * the areas which have been modified by the user.
+	 */
+	src = sc->sc_nvram;
+	dest = (u_int32_t *)bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
+	cnt = sc->sc_len;
+	while (cnt-- != 0) {
+		if ((*dest & 0xff) != *src)
+			*dest = (u_int32_t)*src;
+		dest++;
+		src++;
+	}
+
+	return (0);
+}
+#endif

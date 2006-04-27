@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2004/04/15 21:36:00 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2006/04/27 20:13:44 miod Exp $	*/
 /*
  * Copyright (c) 2002, Miodrag Vallat.
  * All rights reserved.
@@ -36,8 +36,6 @@ cdev_decl(mm);
 cdev_decl(vmel);
 cdev_decl(vmes);
 
-#define	nvramread  nvramrw
-#define	nvramwrite nvramrw
 cdev_decl(nvram);
 
 #define	sramread  sramrw
