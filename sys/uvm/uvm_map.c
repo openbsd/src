@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.77 2006/01/16 13:11:05 mickey Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.78 2006/04/27 15:23:56 mickey Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3790,8 +3790,9 @@ uvm_page_printit(pg, full, pr)
 	(*pr)("PAGE %p:\n", pg);
 	snprintf(pgbuf, sizeof(pgbuf), "%b", pg->flags, page_flagbits);
 	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pqflags, page_pqflagbits);
-	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%lx\n",
-	    pgbuf, pqbuf, pg->version, pg->wire_count, (long)pg->phys_addr);
+	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%llx\n",
+	    pgbuf, pqbuf, pg->version, pg->wire_count,
+	    (long long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
 	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
