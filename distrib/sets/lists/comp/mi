@@ -345,7 +345,6 @@
 ./usr/include/dev/ic/siopvar_common.h
 ./usr/include/dev/ic/smc83c170reg.h
 ./usr/include/dev/ic/smc83c170var.h
-./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc91cxxreg.h
 ./usr/include/dev/ic/smc91cxxvar.h
 ./usr/include/dev/ic/smc93cx6var.h
