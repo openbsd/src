@@ -1,4 +1,4 @@
- /*	$OpenBSD: test-19.c,v 1.2 2006/04/26 16:16:43 cloder Exp $	*/
+ /*	$OpenBSD: test-19.c,v 1.3 2006/04/27 20:55:08 otto Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -7,7 +7,7 @@
  */
 #include <limits.h>
 
-void c1		(char c){ c++; }
+void c1		(signed char c){ c++; }
 void uc1	(unsigned char uc) { uc++; }
 void s1		(short s) { s++; }
 void us1	(unsigned short us) { us++; }
@@ -25,7 +25,7 @@ void ld1	(long double ld) { ld++; }
 int
 main(int argc, char* argv[])
 {
-	char C = 1;
+	signed char C = 1;
 	unsigned char UC = 1;
 	short S = 1;
 	unsigned short US = 1;
