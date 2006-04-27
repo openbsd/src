@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.3 2006/04/26 21:55:22 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.4 2006/04/27 07:59:33 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,9 +27,9 @@
 #include "includes.h"
 
 #include "diff.h"
-#include "util.h"
 #include "rcs.h"
 #include "rcsprog.h"
+#include "rcsutil.h"
 #include "xmalloc.h"
 
 #define RCS_BUFSIZE	16384

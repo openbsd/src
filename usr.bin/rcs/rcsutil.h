@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.h,v 1.3 2006/04/26 21:55:22 joris Exp $	*/
+/*	$OpenBSD: rcsutil.h,v 1.4 2006/04/27 07:59:33 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -29,18 +29,44 @@
 
 #include "rcs.h"
 
+struct rcs_line {
+	char			*l_line;
+	int			 l_lineno;
+	TAILQ_ENTRY(rcs_line)	 l_list;
+};
+
+TAILQ_HEAD(rcs_tqh, rcs_line);
+
+struct rcs_lines {
+	int		 l_nblines;
+	char		*l_data;
+	struct rcs_tqh	 l_lines;
+};
+
+struct rcs_argvector {
+	char *str;
+	char **argv;
+};
+
 /* rcsutil.c */
-int	 rcs_getopt(int, char **, const char *);
-void	 rcs_set_mtime(RCSFILE *, time_t);
-int	 rcs_choosefile(const char *, char *, size_t);
-int	 rcs_statfile(char *, char *, size_t, int);
-time_t	 rcs_get_mtime(RCSFILE *);
-RCSNUM	*rcs_getrevnum(const char *, RCSFILE *);
-char	*rcs_prompt(const char *);
-u_int	 rcs_rev_select(RCSFILE *, char *);
-void	 rcs_set_description(RCSFILE *, const char *);
-void	 rcs_set_rev(const char *, RCSNUM **);
-void	 rcs_setrevstr(char **, char *);
-void	 rcs_setrevstr2(char **, char **, char *);
+int			 rcs_getopt(int, char **, const char *);
+void			 rcs_set_mtime(RCSFILE *, time_t);
+int			 rcs_choosefile(const char *, char *, size_t);
+int			 rcs_statfile(char *, char *, size_t, int);
+time_t			 rcs_get_mtime(RCSFILE *);
+RCSNUM			*rcs_getrevnum(const char *, RCSFILE *);
+char			*rcs_prompt(const char *);
+u_int			 rcs_rev_select(RCSFILE *, char *);
+void			 rcs_set_description(RCSFILE *, const char *);
+void			 rcs_set_rev(const char *, RCSNUM **);
+void			 rcs_setrevstr(char **, char *);
+void			 rcs_setrevstr2(char **, char **, char *);
+BUF			*rcs_patchfile(const char *, const char *,
+			    int (*p)(struct rcs_lines *, struct rcs_lines *));
+struct rcs_lines	*rcs_splitlines(const char *);
+void			 rcs_freelines(struct rcs_lines *);
+int			 rcs_yesno(void);
+struct rcs_argvector	*rcs_strsplit(char *, const char *);
+void			 rcs_argv_destroy(struct rcs_argvector *);
 
 #endif	/* RCSUTIL_H */
