@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.20 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.21 2006/04/27 19:30:28 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -130,6 +130,7 @@ struct tty {
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
 	struct timeout t_rstrt_to;	/* restart timeout */
+	struct timeval t_tv;		/* timestamp */
 };
 
 /*
@@ -193,6 +194,11 @@ struct itty {
 #define	TS_LNCH		0x04000		/* Next character is literal. */
 #define	TS_TYPEN	0x08000		/* Retyping suspended input (PENDIN). */
 #define	TS_LOCAL	(TS_BKSL | TS_CNTTB | TS_ERASE | TS_LNCH | TS_TYPEN)
+
+#define TS_TSTAMPDCDSET	0x10000		/* update timestamp on DCD set */
+#define TS_TSTAMPDCDCLR	0x20000		/* update timestamp on DCD clr */
+#define TS_TSTAMPCTSSET	0x40000		/* update timestamp on CTS set */
+#define TS_TSTAMPCTSCLR	0x80000		/* update timestamp on CTS clr */
 
 /* Character type information. */
 #define	ORDINARY	0
@@ -286,6 +292,7 @@ int	 ttysleep(struct tty *tp,
 	    void *chan, int pri, char *wmesg, int timeout);
 int	 ttywait(struct tty *tp);
 int	 ttywflush(struct tty *tp);
+void	 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd);
 
 void	tty_init(void);
 struct tty *ttymalloc(void);

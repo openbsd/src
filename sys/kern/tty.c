@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.69 2005/12/21 12:43:49 jsg Exp $	*/
+/*	$OpenBSD: tty.c,v 1.70 2006/04/27 19:30:28 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -835,6 +835,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
 		break;
+	case TIOCGTSTAMP:
+		s = spltty();
+		*(struct timeval *)data = tp->t_tv;
+		splx(s);
+		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
 		if (!isctty(p, tp) && suser(p, 0))
 			return (ENOTTY);
@@ -1006,6 +1011,25 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			pgsignal(tp->t_pgrp, SIGWINCH, 1);
 		}
 		break;
+	case TIOCSTSTAMP: {
+		struct tstamps *ts = (struct tstamps *)data;
+
+		s = spltty();
+		CLR(tp->t_flags, TS_TSTAMPDCDSET);
+		CLR(tp->t_flags, TS_TSTAMPCTSSET);
+		CLR(tp->t_flags, TS_TSTAMPDCDCLR);
+		CLR(tp->t_flags, TS_TSTAMPCTSCLR);
+		if (ISSET(ts->ts_set, TIOCM_CAR))
+			SET(tp->t_flags, TS_TSTAMPDCDSET);
+		if (ISSET(ts->ts_set, TIOCM_CTS))
+			SET(tp->t_flags, TS_TSTAMPCTSSET);
+		if (ISSET(ts->ts_clr, TIOCM_CAR))
+			SET(tp->t_flags, TS_TSTAMPDCDCLR);
+		if (ISSET(ts->ts_clr, TIOCM_CTS))
+			SET(tp->t_flags, TS_TSTAMPCTSCLR);
+		splx(s);
+		break;
+	}
 	default:
 #ifdef COMPAT_OLDTTY
 		return (ttcompat(tp, cmd, data, flag, p));
@@ -2314,4 +2338,20 @@ sysctl_tty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	}
 	/* NOTREACHED */
+}
+
+void
+ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd)
+{
+	int doit = 0;
+
+	if (ncts ^ octs) {
+		doit = (ncts && ISSET(tp->t_flags, TS_TSTAMPCTSSET)) ||
+		    (!ncts && ISSET(tp->t_flags, TS_TSTAMPCTSCLR));
+	} else if (ndcd ^ odcd) {
+		doit = (ndcd && ISSET(tp->t_flags, TS_TSTAMPDCDSET)) ||
+		    (!ndcd && ISSET(tp->t_flags, TS_TSTAMPDCDCLR));
+	}
+	if (doit)
+		microtime(&tp->t_tv);
 }

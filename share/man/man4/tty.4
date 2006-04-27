@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.25 2005/04/08 19:48:13 jmc Exp $
+.\"	$OpenBSD: tty.4,v 1.26 2006/04/27 19:30:27 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -437,6 +437,23 @@ represent modem state as described above; however, each bit which is on
 in
 .Fa state
 is cleared in the terminal.
+.It Dv TIOCGTSTAMP Fa struct timeval *timeval
+Return the (single) timestamp.
+.It Dv TIOCSTSTAMP Fa struct tstamp *tstamps
+Chooses the conditions which will cause the current system time to be
+immediately copied to the terminal timestamp storage.
+This is often used to determine exactly the moment at which one or
+more of these events occurred, though only one can be monitored.
+Only
+.Dv TIOCM_CTS
+and
+.Dv TIOCM_CAR
+are honoured in
+.Va tstamps.ts_set
+and
+.Va tstamps.ts_clr ;
+these indicate which raising and lowering events on the respective lines
+should cause a timestamp capture.
 .It Dv TIOCSFLAGS Fa int *state
 The bits in the integer pointed to by
 .Fa state
