@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.39 2006/04/27 09:49:50 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.40 2006/04/27 09:53:31 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -226,25 +226,25 @@ Suffixes should be separated by the
 character.
 .El
 .Sh KEYWORD SUBSTITUTION
-As long as you edit source files inside a working directory you
-can always find out the state of your files via the
+As long as source files are edited inside a working directory,
+their state can be determined using the
 .Xr cvs 1
 .Ic status
 or
 .Ic log
 commands, but as soon as files get exported from
-your local working copy, it becomes harder to identify which
+a local working copy, it becomes harder to identify which
 revisions they are.
 .Pp
 .Nm
 and
 .Xr cvs 1
-can use a mechanism known as
+use a mechanism known as
 .Sq keyword substitution
 to help identify the files.
 Embedded strings of the form $keyword$ and $keyword:...$ in a file
-are replaced with strings of the form $keyword: value$ whenever you
-obtain a new revision of the file.
+are replaced with strings of the form $keyword: value$ whenever
+a new revision of the file is obtained.
 The possible keywords are as follows:
 .Bl -tag -width "XrevisionXX" -offset "XXX"
 .It $\&Author$
