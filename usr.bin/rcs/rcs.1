@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.37 2006/04/27 07:54:15 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.38 2006/04/27 09:48:34 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -82,6 +82,25 @@ Revisions are specified either by using the
 .Fl r
 option or
 by appending the revision number to any option that supports it.
+.Pp
+.Nm
+supports the notion of
+.Em state .
+The state is an arbitrary string of characters used to describe a file
+(or a specific revision of a file).
+States can be set or changed using the
+.Fl s
+option, for RCS tools which support it.
+The state of a file/revision can be modified without having to check in
+a new file/revision.
+The default state is
+.Sq Exp
+(Experimental).
+Examples of states could be
+.Sq Dev ,
+.Sq Reviewed ,
+or
+.Sq Stab .
 .Pp
 .Nm
 also supports
