@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.36 2006/04/26 08:42:00 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.37 2006/04/27 07:54:15 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,7 @@
 .Nd RCS file management program
 .Sh SYNOPSIS
 .Nm
-.Op Fl ehIiLMqTUV
+.Op Fl ehIiLqTUV
 .Op Fl A Ns Ar oldfile
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
@@ -131,15 +131,6 @@ Enable strict locking on the RCS files.
 Lock revision
 .Ar rev
 on the RCS files.
-.It Fl M
-Disable mail warnings when breaking a user's lock.
-Normally,
-.Nm
-will send a mail to the lock owner when his lock is removed by a call
-to
-.Nm
-.Fl u .
-This option is currently ignored.
 .It Fl m Ns Ar rev : Ns Ar msg
 Replace revision
 .Ar rev Ns 's
@@ -409,9 +400,9 @@ for more information.
 OpenRCS is compatible with
 Walter Tichy's original RCS implementation.
 .Pp
-The flag
-.Op Fl z
-has no effect and is provided
+The flags
+.Op Fl Mz
+have no effect and are provided
 for compatibility only.
 .Sh HISTORY
 The OpenRCS project is a BSD-licensed rewrite of the original
