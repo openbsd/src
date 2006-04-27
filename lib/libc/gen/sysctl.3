@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.149 2006/03/31 17:31:56 claudio Exp $
+.\"	$OpenBSD: sysctl.3,v 1.150 2006/04/27 07:34:39 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -181,9 +181,10 @@ More information is also available in
 .It Dv DBCTL_CONSOLE
 When this variable is set, an architecture dependent magic key sequence
 on the console or a debugger button will permit entry into the kernel debugger.
-As described in
-.Xr securelevel 7 ,
-a security level greater than 1 blocks modification of this variable.
+When running with a
+.Xr securelevel 7
+greater than 0,
+this variable may not be raised.
 .It Dv DBCTL_LOG
 When set, ddb output is also logged in the kernel message buffer.
 .It Dv DBCTL_MAXLINE
@@ -200,9 +201,10 @@ This variable is also available as the ddb
 variable.
 .It Dv DBCTL_PANIC
 When this variable is set, system panics may drop into the kernel debugger.
-As described in
-.Xr securelevel 7 ,
-a security level greater than 1 blocks modification of this variable.
+When running with a
+.Xr securelevel 7
+greater than 0,
+this variable may not be raised.
 .It Dv DBCTL_RADIX
 Determines the default radix or base for non-prefixed numbers
 entered into
