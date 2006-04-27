@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.6 2006/04/27 08:23:30 mbalmer Exp $
+.\" $OpenBSD: udcf.4,v 1.7 2006/04/27 14:19:30 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -35,7 +35,8 @@ interface.
 .Sh CLOCK TYPE
 The driver automatically detects if it is receiving the German DCF77 timecode
 or the Swiss HBG timecode and indicates the clock type in the sensor
-description.  This value will not be changed once set, even when the receiver
+description.
+This value will not be changed once set, even when the receiver
 module is changed at runtime.
 .Bl -tag -width "DCFXX"
 .It DCF77
