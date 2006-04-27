@@ -1,7 +1,7 @@
 //
 // dpme.h - Disk Partition Map Entry (dpme)
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 // This file describes structures and values related to the standard
 // Apple SCSI disk partitioning scheme.
@@ -45,10 +45,10 @@
 //
 // Defines
 //
-#define	BLOCK0_SIGNATURE	0x4552	/* Signature value.         */
+#define	BLOCK0_SIGNATURE	0x4552	/* i.e. 'ER' */
 
 #define	DPISTRLEN	32
-#define	DPME_SIGNATURE	0x504D
+#define	DPME_SIGNATURE	0x504D		/* i.e. 'PM' */
 
 // A/UX only stuff (tradition!)
 #define	dpme_bzb	dpme_boot_args

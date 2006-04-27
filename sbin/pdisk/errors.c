@@ -1,7 +1,7 @@
 //
 // errors.c - error & help routines
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 
 /*
@@ -27,6 +27,7 @@
 
 // for *printf()
 #include <stdio.h>
+#include <errno.h>
 
 // for exit()
 #ifndef __linux__
@@ -78,7 +79,7 @@ extern const char * const sys_errlist[];
 void
 init_program_name(char **argv)
 {
-#if defined(__linux__) || defined(__OpenBSD__)
+#if defined(__linux__) || defined(__unix__)
     if ((program_name = strrchr(argv[0], '/')) != (char *)NULL) {
 	program_name++;
     } else {
@@ -93,25 +94,24 @@ init_program_name(char **argv)
 void
 do_help()
 {
-#ifndef __OpenBSD__
-    printf("\t%s [-h|--help]\n", program_name);
-    printf("\t%s [-v|--version]\n", program_name);
-    printf("\t%s [-l|--list [name ...]]\n", program_name);
-    printf("\t%s [-r|--readonly] name ...\n", program_name);
-    printf("\t%s [-i|--interactive]\n", program_name);
-#else
     printf("\t%s [-h]\n", program_name);
     printf("\t%s [-v]\n", program_name);
-    printf("\t%s [-l [name ...]]\n", program_name);
+    printf("\t%s [-l] name [...]\n", program_name);
     printf("\t%s [-r] name ...\n", program_name);
     printf("\t%s [-i]\n", program_name);
-#endif
-    printf("\t%s name ...\n", program_name);
+    printf("\t%s name [...]\n", program_name);
+/*
+	{"debug",	no_argument,		0,	'd'},
+	{"abbr",	no_argument,		0,	'a'},
+	{"fs",		no_argument,		0,	'f'},
+	{"logical",	no_argument,		0,	kLogicalOption},
+	{"compute_size", no_argument,		0,	'c'},
+*/
 }
 
 
 void
-usage(char *kind)
+usage(const char *kind)
 {
     error(-1, "bad usage - %s\n", kind);
     hflag = 1;
@@ -124,7 +124,7 @@ usage(char *kind)
 // the perror(3) message.
 //
 void
-fatal(int value, char *fmt, ...)
+fatal(int value, const char *fmt, ...)
 {
     va_list ap;
 
@@ -133,7 +133,7 @@ fatal(int value, char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 
-#if defined(__linux__) || defined(NeXT) || defined(__OpenBSD__)
+#if defined(__linux__) || defined(NeXT) || defined(__unix__)
     if (value > 0 && value < sys_nerr) {
 	fprintf(stderr, "  (%s)\n", sys_errlist[value]);
     } else {
@@ -141,9 +141,6 @@ fatal(int value, char *fmt, ...)
     }
 #else
     fprintf(stderr, "\n");
-#endif
-
-#if !defined(__linux__) && !defined(__OpenBSD__)
     printf("Processing stopped: Choose 'Quit' from the file menu to quit.\n\n");
 #endif
     exit(value);
@@ -156,7 +153,7 @@ fatal(int value, char *fmt, ...)
 // the perror(3) message.
 //
 void
-error(int value, char *fmt, ...)
+error(int value, const char *fmt, ...)
 {
     va_list ap;
 
@@ -165,7 +162,7 @@ error(int value, char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 
-#if defined(__linux__) || defined(NeXT) || defined(__OpenBSD__)
+#if defined(__linux__) || defined(NeXT) || defined(__unix__)
     if (value > 0 && value < sys_nerr) {
 	fprintf(stderr, "  (%s)\n", sys_errlist[value]);
     } else {

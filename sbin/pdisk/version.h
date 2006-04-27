@@ -1,7 +1,7 @@
 /*
  * version.h - version number for pdisk program
  *
- * Written by Eryk Vershen (eryk@apple.com)
+ * Written by Eryk Vershen
  */
 
 /*
@@ -47,17 +47,17 @@
  * version will be represented by a larger number.
  */
 
-#define	VERSION	"0.7a3"
-#define RELEASE_DATE "18 February 1998"
+#define	VERSION	"0.8a2"
+#define RELEASE_DATE "16 May 2000"
 
 #define	kVersionMajor	0x00		/* ie. N has two BCD digits */
-#define	kVersionMinor	0x7		/* ie. M has a single BCD digit */
+#define	kVersionMinor	0x8		/* ie. M has a single BCD digit */
 #define kVersionBugFix	0x0		/* ie. X has a single BCD digit */
 #define	kVersionStage	alpha		/* ie. y is one of the set - */
 					/*    {development,alpha,beta,final}
 					 * also, release is a synonym for final
 					 */
-#define	kVersionDelta	0x03		/* ie. Z has two BCD digits */
+#define	kVersionDelta	0x02		/* ie. Z has two BCD digits */
 
 
 /*

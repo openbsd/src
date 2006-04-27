@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.31 2006/01/22 13:53:14 miod Exp $
+dnl	$OpenBSD: install,v 1.32 2006/04/27 19:52:21 martin Exp $
 OpenBSDInstallShortPrelude
 
 OpenBSDInstallPart2
@@ -18,10 +18,69 @@ OpenBSDBootMsgs
 
 OpenBSDInstallPart3
 
-dnl XXX describe pdisk too
+	Next you will have to edit or create a disk label for the disk
+	OpenBSD is being installed on.  You will first be given an
+	opportunity to run pdisk and create OpenBSD partitions.
+
+	You will be issued a command prompt allowing you to modify the
+	partition table.  The most common operation, and the example presented
+	here, deals with the creation of partitions for OpenBSD.
+
+	Before editing, the partition table may look like the following:
+
+	 #:                type name              length   base     ( size )
+ 	 1: Apple_partition_map Apple                 63 @ 1
+ 	 2:      Apple_Driver43*Macintosh             54 @ 64
+ 	 3:      Apple_Driver43*Macintosh             74 @ 118
+ 	 4:       Apple_Patches Patch Partition      512 @ 192
+ 	 5:           Apple_HFS untitled           61440 @ 704      ( 30.0M)
+ 	 6:          Apple_Free Extra           17711380 @ 62144    (  8.4G)
+
+	After editing the table, it should look like:
+	 #:                type name              length   base     ( size )^M
+ 	 1: Apple_partition_map Apple                 63 @ 1
+ 	 2:      Apple_Driver43*Macintosh             54 @ 64
+ 	 3:      Apple_Driver43*Macintosh             74 @ 118
+	 4:       Apple_Patches Patch Partition      512 @ 192
+ 	 5:           Apple_HFS untitled           61440 @ 704      ( 30.0M)
+ 	 6:     Apple_UNIX_SVR2 OpenBSD_Root     2097152 @ 62144    (  1.0G) S0 RUFS k0 /
+ 	 7:     Apple_UNIX_SVR2 OpenBSD_Swap      262144 @ 2159296  (128.0M) S1  SFS k0 (swap)
+ 	 8:     Apple_UNIX_SVR2 OpenBSD_Usr      8388608 @ 2421440  (  4.0G) S2  UFS k0 /usr
+ 	 9:     Apple_UNIX_SVR2 OpenBSD_Tmp      2097152 @ 10810048 (  1.0G) S2  UFS k0
+	 10:     Apple_UNIX_SVR2 OpenBSD_Var      4866323 @ 12907200 (  2.3G) S2  UFS k0
+
+	This will likely be different based on the number of partitions
+	created on the disk by the Apple partition editor.
+	It is _VERY_ important to not change the start, sizes, or types of
+	partitions other than the ones that are to be used by OpenBSD,
+	including the Apple_Driver.* and Apple_partition_map.  The pdisk
+	tool will automatically adjust the Apple_Free partition.
+
+	---
+	Command (? for help): c
+	First block: 62144
+	Length in blocks: 2097152
+	Name of partition: OpenBSD_Root
+	Available partition slices for Apple_UNIX_SVR2:
+  	  a   root partition
+  	  b   swap partition
+  	  c   do not set any bzb bits
+	  g   user partition
+	Other lettered values will create user partitions
+	Select a slice for default bzb values: a
+	---
+
+	For the OpenBSD_Root slice, chose a bzb value of 'a', for
+	OpenBSD_Swap 'b'.  For any other slice do not set any bzb value ('c')
+	except for OpenBSD_Usr, which can be set to 'g'.
+
 OpenBSDInstallPart4
 
-dnl XXX same here.
+	OpenBSD/MACHINE can share a disk with Mac OS by using
+	an HFS partitioned disk. For proper layout, the disk should be
+	partitioned with Mac OS first with unused space where OpenBSD can
+	be installed.
+
 OpenBSDInstallPart5(sd0)
 
 OpenBSDInstallNet({:­CD-ROM, NFS, -:})

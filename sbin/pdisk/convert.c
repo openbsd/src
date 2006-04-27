@@ -1,7 +1,7 @@
 //
 // convert.c - Little-endian conversion
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 // See comments in convert.h
 //
@@ -33,6 +33,7 @@
 #define LITTLE_ENDIAN 1234
 #define BIG_ENDIAN 4321
 #define BYTE_ORDER 4321
+//#define BYTE_ORDER 1234
 #endif
 
 #include "convert.h"

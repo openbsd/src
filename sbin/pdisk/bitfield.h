@@ -1,7 +1,7 @@
 //
 // bitfield.h - extract and set bit fields
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 // Bitfields are not particularly transportable between big and little
 // endian machines.  Big endian machines lay out bitfields starting

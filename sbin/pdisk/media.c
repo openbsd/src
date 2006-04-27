@@ -1,7 +1,7 @@
 /*
  * media.c -
  *
- * Written by Eryk Vershen (eryk@apple.com)
+ * Written by Eryk Vershen
  */
 
 /*
@@ -52,7 +52,7 @@
 /*
  * Global Variables
  */
-static media_kind = 0;
+static long media_kind = 0;
 
 /*
  * Forward declarations
@@ -166,7 +166,9 @@ os_reload_media(MEDIA m)
 }
 
 
+#if !defined(__linux__) && !defined(__unix__)
 #pragma mark -
+#endif
 
 
 

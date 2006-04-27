@@ -1,31 +1,39 @@
 Product name:	pdisk
-Version:	0.7
-Ship date:	18 February 1998
-Company name:	Apple Computer
-Author name:	Eryk Vershen <eryk@apple.com>
+Version:	0.8
+Ship date:	16 May 2000
+Company name:	n/a
+Author name:	Eryk Vershen
 
-Description:	A low-level Apple partition table editor for (Mk)Linux.
+Description:	A low-level Apple partition table editor for Linux.
 		A MacOS version exists for "standalone" use.
 
-What's New:	Added support for ATA/IDE disks without LBA capability
+What's New:	Clean up sources - fix naming, delete old email addresses
+		Added support for display of Mac volume names
+		Added cvt_pt target (for LinuxPPC team)
+		Fix block 0 display to show logical offset of drivers
+		Require confirmation of quit without write
+		Fix iteration to not complain about missing devices
+		Warn when creating/writing a map with more than 15 entries
+		Make initial window larger in Mac version
+		Fix ATA support to scan buses correctly
+		Fix linux names (in MacOS) to work right with many devices
+		Change so WORM devices are considered 'CDs'
+
+Last time:	Added support for ATA/IDE disks without LBA capability
 		Fixed bug - create partition with unmodified size failed
 		Added support for new (DR3) MkLinux names - show MkLinux
 		name when displaying under another name and allow the
 		MkLinux name to be used on input.
 
-Last time:	MacOS version handles IDE/ATA and ATAPI devices.
-		Added interactive mode
-		Added ability to rename a partition
-		Added 68k target to MacOS CodeWarrior project
-		
-Requirements:	MkLinux - just run the binary
-		Linux -	recompile for your hardware
+Requirements:	Linux PPC - just run the binary
 		MacOS - Distributed binaries for PowerPC or 68000
 			I haven't tried it except on 7.6.1 and 8.0
 
 Price:		Free
 
 Legalese:	
+    Modifications copyright 2000 by Eryk Vershen
+
     Copyright 1996,1997,1998 by Apple Computer, Inc.
     All Rights Reserved
 
@@ -46,10 +54,7 @@ Legalese:
     WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-Contact Info:	Go to <http://www.mklinux.org> to find out about MkLinux.
-		Go to the Faq-O-Matic (there should be a pointer or three
-		in the MkLinux pages) and search for 'pdisk'.
-		You can send mail to the author. There is  no guarantee of
+Contact Info:	You can send mail to the author. There is  no guarantee of
 		a response, but it is your best hope of getting a bug fixed
 		or a feature added.
 
@@ -63,9 +68,8 @@ READ the html file or the man page.
 Finding out about apple partitioning
 ------------------------------------
 The best curently available documentation on the Apple disk partitioning scheme
-is "Inside Macintosh: Devices" pages 3-12 to 3-15 combined with the info
-in "Inside Macintosh - Volume V" pages V-576 to V-582.  This, unfortunately,
-does not cover everything.
+is "Technote 1189: The Monster Disk Drive Technote".  This release is not
+completely in sync with that technote.  Maybe next time.
 		
 
 Building the macintosh application
@@ -100,6 +104,7 @@ but is simply an HFS volume.
 Bootable CD-ROMs have even stranger partition maps since two are laid down:
 one at 2K offsets and one at 512-byte offsets.  If you notice that these
 overlap then you begin to get an idea of how weird these maps can be.
+Apple refers to this "technique" as ghost partitioning.
 
 The documentation in Inside Macintosh is only partially correct.
 The boot-arguments field was left out.  A/UX used the boot arguments field
@@ -139,6 +144,4 @@ Good luck,
 
 -eryk vershen
  software mechanic
-
- work:      eryk@apple.com
- non-work:  eryk@cfcl.com
+ eryk@cfcl.com

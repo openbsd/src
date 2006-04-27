@@ -1,7 +1,7 @@
 //
 // convert.h - Little-endian conversion
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 // The approach taken to conversion is fairly simply.
 // Keep the in-memory copy in the machine's normal form and

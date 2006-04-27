@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.12 2005/04/25 01:32:16 martin Exp $
+.\"	$OpenBSD: pdisk.8,v 1.13 2006/04/27 19:52:21 martin Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -19,7 +19,7 @@
 .\" NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 26, 1997
+.Dd April 11, 2006
 .Dt PDISK 8
 .Os
 .Sh NAME
@@ -27,7 +27,6 @@
 .Nd HFS(DPME) partition maintenance program
 .Sh SYNOPSIS
 .Nm pdisk
-.Op Fl c
 .Op Fl h
 .Op Fl i
 .Op Fl l
@@ -58,11 +57,6 @@ is usually one of the following:
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
-Causes
-.Nm
-to always ignore the device size listed in the partition table
-and compute the device size by other means.
 .It Fl h
 Prints a rather lame set of help messages for the
 .Nm
@@ -169,6 +163,7 @@ other arguments.
 The
 .Em n
 (name) command allows the name of a partition to be changed.
+The name must not contain any spaces.
 Note that the various "Apple_Driver" partitions depend
 on the name field for proper functioning.
 I am not aware of any other partition types with this limitation.
@@ -201,13 +196,22 @@ disk and the kernel where
 must be issued to cause the kernel to reinterpret the new label.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
-.Xr fdisk 8
+.Xr fdisk 8 ,
+.Xr newfs 8
+.Sh HISTORY
+The
+.Nm
+utility was originally developed for MkLinux.
 .Sh AUTHORS
-.An Eryk Vershen Aq eryk@apple.com .
+.An Eryk Vershen
 .Sh BUGS
 Some people believe there should really be just one disk partitioning utility.
 .Pp
 .Nm
 should be able to create HFS partitions that work.
+.Pp
+Filesystem volume names are out of place in a partition utility.
+This utility supports HFS volume names, but not volume names
+of any other filesystem types.
 .Pp
 Even more help should be available during user input.

@@ -52,3 +52,17 @@ A short history of pdisk
 		name when displaying under another name and allow the
 		MkLinux name to be used on input.
 		Released version 0.7
+
+02-04/2000 -	Clean up sources - fix naming, delete old email addresses
+		Added support for display of Mac volume names
+		Added cvt_pt target (for LinuxPPC team)
+		Fix block 0 display to show logical offset of drivers
+		Require confirmation of quit without write
+		Fix iteration to not complain about missing devices
+		Warn when creating/writing a map with more than 15 entries
+		Make initial window larger in Mac version
+		Fix ATA support to scan buses correctly
+		Fix linux names (in MacOS) to work correctly with many devices
+		Change so WORM devices are considered 'CDs'
+
+05/2000 - 	Released version 0.8

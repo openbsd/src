@@ -1,7 +1,7 @@
 //
 // bitfield.c - extract and set bit fields
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 // See comments in bitfield.h
 //

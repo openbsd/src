@@ -1,7 +1,7 @@
 //
 // pdisk.h - general header for pdisk program
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 
 /*

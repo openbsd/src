@@ -1,7 +1,7 @@
 //
 // validate.c -
 //
-// Written by Eryk Vershen (eryk@apple.com)
+// Written by Eryk Vershen
 //
 
 /*
@@ -300,7 +300,7 @@ print_range_list(range_list *list)
 {
     range_list *cur;
     int printed;
-    char *s;
+    const char *s = NULL;
 
     if (list == 0) {
 	printf("Empty range list\n");
@@ -399,6 +399,7 @@ validate_map(partition_map_header *map)
     // XXX size & count match DeviceCapacity
     // XXX number of descriptors matches array size
     // XXX each descriptor wholly contained in a partition
+    // XXX the range below here is in physical blocks but the map is in logical blocks!!!
     add_range(&list, 1, b0->sbBlkCount-1, 0);	/* subtract one since args are base & len */
 
 check_map:

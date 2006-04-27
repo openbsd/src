@@ -1,7 +1,7 @@
 /*
  * util.c -
  *
- * Written by Eryk Vershen (eryk@apple.com)
+ * Written by Eryk Vershen
  */
 
 /*
@@ -105,8 +105,8 @@ TrapAvailable(short theTrap)
 int
 istrncmp(const char *x, const char *y, long len)
 {
-    unsigned char *p = (unsigned char *)x;
-    unsigned char *q = (unsigned char *)y;
+    const unsigned char *p = (const unsigned char *)x;
+    const unsigned char *q = (const unsigned char *)y;
 
     while (len > 0) {
 	if (tolower(*p) != tolower(*q)) {
@@ -141,21 +141,21 @@ get_version_string(void)
     if (kVersionBugFix != 0) {
 	if (kVersionStage == final) {
 	    if (asprintf(&dynamic_version, "%d.%d.%d", kVersionMajor,
-	        kVersionMinor, kVersionBugFix) == -1)
+		kVersionMinor, kVersionBugFix) == -1)
 		    err(1, "asprintf");
 	} else {
 	    if (asprintf(&dynamic_version, "%d.%d.%d%c%d", kVersionMajor,
-	        kVersionMinor, kVersionBugFix, stage, kVersionDelta) == -1)
-		    err(1, "asprintf");
+		kVersionMinor, kVersionBugFix, stage, kVersionDelta) == -1)
+		   err(1, "asprintf");
 	}
     } else {
 	if (kVersionStage == final) {
 	    if (asprintf(&dynamic_version, "%d.%d", kVersionMajor,
-	        kVersionMinor) == -1)
+		kVersionMinor) == -1)
 		    err(1, "asprintf");
 	} else {
 	    if (asprintf(&dynamic_version, "%d.%d%c%d", kVersionMajor,
-	        kVersionMinor, stage, kVersionDelta) == -1)
+		kVersionMinor, stage, kVersionDelta) == -1)
 		    err(1, "asprintf");
 	}
     }

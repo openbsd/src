@@ -1,7 +1,7 @@
 /*
  * deblock_media.c -
  *
- * Written by Eryk Vershen (eryk@apple.com)
+ * Written by Eryk Vershen
  */
 
 /*

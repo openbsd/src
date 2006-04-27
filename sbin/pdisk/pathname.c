@@ -1,7 +1,7 @@
 /*
  * pathname.c -
  *
- * Written by Eryk Vershen (eryk@apple.com)
+ * Written by Eryk Vershen
  */
 
 /*
@@ -62,7 +62,7 @@
  */
 
 /*
- * Note that open_pathname_as_media() and get_mklinux_name() have almost
+ * Note that open_pathname_as_media() and get_linux_name() have almost
  * identical structures.  If one changes the other must also!
  */
 MEDIA
@@ -76,10 +76,12 @@ open_pathname_as_media(char *path, int oflag)
     if (strncmp("/dev/", path, 5) == 0) {
 	if (strncmp("/dev/scsi", path, 9) == 0) {
 	    if (path[9] >= '0' && path[9] <= '7' && path[10] == 0) {
+		// scsi[0-7]
 		id = path[9] - '0';
 		m = open_old_scsi_as_media(id);
 	    } else if (path[9] >= '0' && path[9] <= '7' && path[10] == '.'
 		    && path[11] >= '0' && path[11] <= '7' && path[12] == 0) {
+		// scsi[0-7].[0-7]
 		id = path[11] - '0';
 		bus = path[9] - '0';
 		m = open_scsi_as_media(bus, id);
@@ -87,28 +89,40 @@ open_pathname_as_media(char *path, int oflag)
 	} else if (strncmp("/dev/ata", path, 8) == 0
 		|| strncmp("/dev/ide", path, 8) == 0) {
 	    if (path[8] >= '0' && path[8] <= '7' && path[9] == 0) {
+		// ata[0-7], ide[0-7]
 		bus = path[8] - '0';
 		m = open_ata_as_media(bus, 0);
 	    } else if (path[8] >= '0' && path[8] <= '7' && path[9] == '.'
 		    && path[10] >= '0' && path[10] <= '1' && path[11] == 0) {
+		// ata[0-7].[0-1], ide[0-7].[0-1]
 		id = path[10] - '0';
 		bus = path[8] - '0';
 		m = open_ata_as_media(bus, id);
 	    }
 	} else if (strncmp("/dev/sd", path, 7) == 0) {
 	    if (path[7] >= 'a' && path[7] <= 'z' && path[8] == 0) {
+		// sd[a-z]
 		id = path[7] - 'a';
-		m = open_mklinux_scsi_as_media(id, 0);
+		m = open_linux_scsi_as_media(id, 0);
+	    } else if (path[7] >= 'a' && path[7] <= 'z' && path[8] == '.'
+		    && path[9] >= 'a' && path[9] <= 'z' && path[10] == 0) {
+		// sd[a-z][a-z]
+		bus = path[7] - 'a';
+		id = path[9] - 'a';
+		id += bus * 26;
+		m = open_linux_scsi_as_media(id, 0);
 	    }
 	} else if (strncmp("/dev/scd", path, 8) == 0) {
 	    if (path[8] >= '0' && path[8] <= '9' && path[9] == 0) {
+		// scd[0-9]
 		id = path[8] - '0';
-		m = open_mklinux_scsi_as_media(id, 1);
+		m = open_linux_scsi_as_media(id, 1);
 	    }
 	} else if (strncmp("/dev/hd", path, 7) == 0) {
 	    if (path[7] >= 'a' && path[7] <= 'z' && path[8] == 0) {
+		// hd[a-z]
 		id = path[7] - 'a';
-		m = open_mklinux_ata_as_media(id);
+		m = open_linux_ata_as_media(id);
 	    }
 	}
     } else
@@ -122,7 +136,7 @@ open_pathname_as_media(char *path, int oflag)
 
 
 char *
-get_mklinux_name(char *path)
+get_linux_name(char *path)
 {
     char	*result = 0;
 #if !defined(__linux__) && !defined(__unix__)
@@ -133,27 +147,31 @@ get_mklinux_name(char *path)
 	if (strncmp("/dev/scsi", path, 9) == 0) {
 	    if (path[9] >= '0' && path[9] <= '7' && path[10] == 0) {
 		/* old scsi */
+		// scsi[0-7]
 		id = path[9] - '0';
-		result = mklinux_old_scsi_name(id);
+		result = linux_old_scsi_name(id);
 	    } else if (path[9] >= '0' && path[9] <= '7' && path[10] == '.'
 		    && path[11] >= '0' && path[11] <= '7' && path[12] == 0) {
 		/* new scsi */
+		// scsi[0-7].[0-7]
 		id = path[11] - '0';
 		bus = path[9] - '0';
-		result = mklinux_scsi_name(bus, id);
+		result = linux_scsi_name(bus, id);
 	    }
 	} else if (strncmp("/dev/ata", path, 8) == 0
 		|| strncmp("/dev/ide", path, 8) == 0) {
 	    if (path[8] >= '0' && path[8] <= '7' && path[9] == 0) {
 		/* ata/ide - master device */
+		// ata[0-7], ide[0-7]
 		bus = path[8] - '0';
-		result = mklinux_ata_name(bus, 0);
+		result = linux_ata_name(bus, 0);
 	    } else if (path[8] >= '0' && path[8] <= '7' && path[9] == '.'
 		    && path[10] >= '0' && path[10] <= '1' && path[11] == 0) {
 		/* ata/ide */
+		// ata[0-7].[0-1], ide[0-7].[0-1]
 		id = path[10] - '0';
 		bus = path[8] - '0';
-		result = mklinux_ata_name(bus, id);
+		result = linux_ata_name(bus, id);
 	    }
 	}
     }
@@ -175,17 +193,17 @@ MEDIA_ITERATOR
 next_media_kind(long *state)
 {
     MEDIA_ITERATOR result;
-    long index;
+    long ix;
 
     result = 0;
-    index = *state;
+    ix = *state;
 
-    switch (index) {
+    switch (ix) {
     case 0:
 #if defined(__linux__) || defined(__unix__)
 	result = create_file_iterator();
 #endif
-	index = 1;
+	ix = 1;
 	if (result != 0) {
 		break;
 	}
@@ -195,7 +213,7 @@ next_media_kind(long *state)
 #if !defined(__linux__) && !defined(__unix__)
 	result = create_ata_iterator();
 #endif
-	index = 2;
+	ix = 2;
 	if (result != 0) {
 		break;
 	}
@@ -205,7 +223,7 @@ next_media_kind(long *state)
 #if !defined(__linux__) && !defined(__unix__)
 	result = create_scsi_iterator();
 #endif
-	index = 3;
+	ix = 3;
 	if (result != 0) {
 		break;
 	}
@@ -216,7 +234,7 @@ next_media_kind(long *state)
 	break;
     }
 
-    *state = index;
+    *state = ix;
     return result;
 }
 
