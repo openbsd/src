@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.96 2006/04/19 11:00:53 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.97 2006/04/27 12:46:56 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
@@ -170,6 +170,35 @@ version,
 watch,
 watchers.
 The commands are fully explained in this section.
+.Pp
+Files may be selected by
+.Em revision
+or, where no revision is specified,
+the latest revision of the default branch is used.
+Revisions are specified either by using the
+.Fl r
+option or
+by appending the revision number to any option that supports it.
+.Pp
+.Nm
+supports the notion of
+.Em state .
+The state is an arbitrary string of characters used to describe a file
+(or a specific revision of a file).
+States can be set or changed using the
+.Fl s
+option, for CVS tools which support it.
+The state of a file/revision can be modified without having to
+.Ic commit
+a new file/revision.
+The default state is
+.Sq Exp
+(Experimental).
+Examples of states could be
+.Sq Dev ,
+.Sq Reviewed ,
+or
+.Sq Stab .
 .Ss add
 Before a file is known to
 .Nm ,
@@ -289,23 +318,6 @@ Quiet mode.
 .Ar state Ns Op : Ns Ar rev
 .Xc
 Change state of a revision.
-If the revision is not specified, the last revision of the default
-branch changes state.
-The
-.Ic state
-is a string of characters of your choice.
-The state of a revision can be modified without having to
-.Ic commit
-a new revision.
-The default
-.Ic state
-is
-.Sq Exp
-(Experimental).
-For instance, you could also use
-.Sq Dev
-or
-.Sq Reviewed .
 .It Fl t Ar file \*(Ba Ar str
 Change the descriptive text.
 The descriptive text is taken from the
