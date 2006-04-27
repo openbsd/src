@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.5 2006/04/21 16:46:34 mbalmer Exp $
+.\" $OpenBSD: udcf.4,v 1.6 2006/04/27 08:23:30 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -19,19 +19,51 @@
 .Os
 .Sh NAME
 .Nm udcf
-.Nd Gude ADS Expert mouseCLOCK DCF77 time signal receiver
+.Nd Gude ADS Expert mouseCLOCK DCF77/HBG time signal station receiver
 .Sh SYNOPSIS
 .Cd "udcf* at uhub?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the Gude ADS Expert mouseCLOCK, a receiver for the
-German DCF77 time signal station.
+German DCF77 and the Swiss HBG time signal stations.
 .Nm
-implements a time delta sensor and the delta (in msec) between the received
-time information and the local time can be accessed through the
+implements a time delta sensor and the delta (in nanoseconds) between the
+received time information and the local time can be accessed through the
 .Xr sysctl 8
 interface.
+.Sh CLOCK TYPE
+The driver automatically detects if it is receiving the German DCF77 timecode
+or the Swiss HBG timecode and indicates the clock type in the sensor
+description.  This value will not be changed once set, even when the receiver
+module is changed at runtime.
+.Bl -tag -width "DCFXX"
+.It DCF77
+German DCF77 time signal station
+(77.5 kHz longwave transmitter located in Mainflingen near Frankfurt)
+.It HBG
+Swiss HBG time signal station
+(75 kHz longwave transmitter located in Prangins near Geneva)
+.El
+.Sh SENSOR STATES
+The quality of the time delta is reported as the sensor status:
+.Bl -tag -width "CRITICALXX"
+.It OK
+The time information is valid and the receiver is fully synchronized to the
+time signal station.
+The time delta is safe to use for applications like
+.Xr ntpd 8 .
+.It WARN
+The time information is valid, but there has been a reception or parity error.
+The sensor value is adjusted using the local clock for at most 15 minutes.
+The time delta should be used with care.
+.It CRITICAL
+No valid time information has been received for more than 15 minutes.
+This is an indication that hardware should be checked
+to see if it is still functional.
+The time delta will eventually degrade to a lie
+as all computer internal clocks have a drift.
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhub 4 ,
@@ -42,3 +74,9 @@ The
 .Nm
 driver first appeared in
 .Ox 4.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Marc Balmer Aq mbalmer@openbsd.org .
