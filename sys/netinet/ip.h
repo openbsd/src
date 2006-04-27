@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.11 2005/12/10 01:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ip.h,v 1.12 2006/04/27 02:19:32 tedu Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -45,11 +45,11 @@
  * Structure of an internet header, naked of options.
  */
 struct ip {
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 	u_int     ip_hl:4,		/* header length */
 		  ip_v:4;		/* version */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 	u_int     ip_v:4,		/* version */
 		  ip_hl:4;		/* header length */
 #endif
@@ -141,11 +141,11 @@ struct	ip_timestamp {
 	u_int8_t ipt_code;		/* IPOPT_TS */
 	u_int8_t ipt_len;		/* size of structure (variable) */
 	u_int8_t ipt_ptr;		/* index of current entry */
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 	u_int    ipt_flg:4,		/* flags, see below */
 		 ipt_oflw:4;		/* overflow counter */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 	u_int    ipt_oflw:4,		/* overflow counter */
 		 ipt_flg:4;		/* flags, see below */
 #endif

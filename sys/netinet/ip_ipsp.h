@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.132 2006/01/13 10:11:23 mpf Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.133 2006/04/27 02:19:32 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -414,7 +414,7 @@ struct ipsecinit {
 
 #define	IPSEC_ZEROES_SIZE	256	/* Larger than an IP6 extension hdr. */
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 static __inline u_int64_t
 htonq(u_int64_t q)
 {
@@ -427,7 +427,7 @@ htonq(u_int64_t q)
 
 #define	ntohq(_x)	htonq(_x)
 
-#elif BYTE_ORDER == BIG_ENDIAN
+#elif _BYTE_ORDER == _BIG_ENDIAN
 
 #define	htonq(_x)	(_x)
 #define	ntohq(_x)	htonq(_x)

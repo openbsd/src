@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim.h,v 1.1 2005/01/14 14:51:28 mcbride Exp $	*/
+/*	$OpenBSD: pim.h,v 1.2 2006/04/27 02:19:32 tedu Exp $	*/
 /*	$NetBSD: pim.h,v 1.1 2004/09/04 23:32:29 manu Exp $	*/
 
 /*
@@ -48,11 +48,11 @@
 #include <sys/types.h>
 
 #ifndef _PIM_VT
-#ifndef BYTE_ORDER
-# error BYTE_ORDER is not defined!
+#ifndef _BYTE_ORDER
+# error _BYTE_ORDER is not defined!
 #endif
-#if (BYTE_ORDER != BIG_ENDIAN) && (BYTE_ORDER != LITTLE_ENDIAN)
-# error BYTE_ORDER must be defined to either BIG_ENDIAN or LITTLE_ENDIAN
+#if (_BYTE_ORDER != _BIG_ENDIAN) && (_BYTE_ORDER != _LITTLE_ENDIAN)
+# error _BYTE_ORDER must be defined to either _BIG_ENDIAN or _LITTLE_ENDIAN
 #endif
 #endif /* ! _PIM_VT */
 
@@ -63,11 +63,11 @@ struct pim {
 #ifdef _PIM_VT
 	uint8_t		pim_vt;		/* PIM version and message type	*/
 #else /* ! _PIM_VT   */
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 	u_int		pim_vers:4,	/* PIM protocol version		*/
 			pim_type:4;	/* PIM message type		*/
 #endif
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 	u_int		pim_type:4,	/* PIM message type		*/
 			pim_vers:4;	/* PIM protocol version		*/
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.19 2005/12/10 01:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.20 2006/04/27 02:19:32 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -57,11 +57,11 @@
  */
 
 struct carp_header {
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 	u_int		carp_type:4,
 			carp_version:4;
 #endif
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 	u_int		carp_version:4,
 			carp_type:4;
 #endif
