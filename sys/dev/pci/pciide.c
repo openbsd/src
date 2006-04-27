@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.238 2006/04/26 23:52:06 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.239 2006/04/27 00:34:19 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -451,6 +451,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GBM_AHCI, /* Intel 82801GBM (ICH7M) AHCI */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801GHM_RAID, /* Intel 82801GHM (ICH7-M DH) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
 	}
@@ -2231,6 +2235,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801GR_AHCI:
 	case PCI_PRODUCT_INTEL_82801GBM_SATA:
 	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
+	case PCI_PRODUCT_INTEL_82801GHM_RAID:
 		ich7 = 1;
 	/* ICH 6 */
 	case PCI_PRODUCT_INTEL_82801FB_SATA:
