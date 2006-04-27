@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.37 2006/04/27 20:37:33 otto Exp $	*/
+/*	$OpenBSD: tree.c,v 1.38 2006/04/27 20:46:44 otto Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.37 2006/04/27 20:37:33 otto Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.38 2006/04/27 20:46:44 otto Exp $";
 #endif
 
 #include <stdlib.h>
@@ -940,7 +940,7 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 			}
 		}
 
-		/* right shift of %d-bit quantity by %d bits */
+		/* right shift of %d-bit quantity by %lld bits */
 		if (rn->tn_op == CON && size(olt) <= rn->tn_val->v_quad)
 			warning(310, size(olt), rn->tn_val->v_quad);
 
