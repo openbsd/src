@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.51 2006/01/16 13:11:05 mickey Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.52 2006/04/27 15:21:19 mickey Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -293,7 +293,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * pages).
 	 */
 	 
-	pagecount = ((freepages + 1) << PAGE_SHIFT) /
+	pagecount = (((paddr_t)freepages + 1) << PAGE_SHIFT) /
 	    (PAGE_SIZE + sizeof(struct vm_page));
 	pagearray = (vm_page_t)uvm_pageboot_alloc(pagecount *
 	    sizeof(struct vm_page));
