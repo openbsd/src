@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.29 2005/11/23 10:00:12 mpf Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.30 2006/04/27 15:17:19 mickey Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -128,7 +128,8 @@ isadmaattach(parent, self, aux)
 	for (i = 0; i < 8; i++) {
 		sz = (i & 4) ? 1 << 17 : 1 << 16;
 		if ((bus_dmamap_create(sc->sc_dmat, sz, 1, sz, sz,
-		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &isadma_dmam[i])) != 0)
+		    BUS_DMA_24BIT|BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    &isadma_dmam[i])) != 0)
 			panic("isadmaattach: can not create DMA map");
 	}
 #endif

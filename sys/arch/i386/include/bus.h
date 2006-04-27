@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.37 2005/05/25 18:29:58 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.38 2006/04/27 15:17:16 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -742,7 +742,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
 #define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_24BIT		0x080	/* isadma map */
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */

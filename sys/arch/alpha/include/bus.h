@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.22 2006/04/04 21:20:40 brad Exp $	*/
+/*	$OpenBSD: bus.h,v 1.23 2006/04/27 15:17:07 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ struct alpha_bus_space {
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
 #define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_24BIT		0x080	/* isadma map */
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
