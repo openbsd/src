@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.3 2006/02/20 05:14:09 marco Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.4 2006/04/28 13:00:51 dim Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -57,7 +57,7 @@ acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)
 		return (ENOMEM);
 
 	handle->baseva = va;
-	handle->va = (u_int8_t *)(va + (pa & PGOFSET));
+	handle->va = (u_int8_t *)(va + (u_long)(pa & PGOFSET));
 	handle->vsize = endpa - pgpa;
 	handle->pa = pa;
 
