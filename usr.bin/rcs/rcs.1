@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.41 2006/04/27 10:19:23 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.42 2006/04/28 22:26:07 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,7 @@
 .Nd RCS file management program
 .Sh SYNOPSIS
 .Nm
-.Op Fl ehIiLqTUV
+.Op Fl eIiLqTUV
 .Op Fl A Ns Ar oldfile
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
@@ -136,8 +136,6 @@ from the access list of the RCS files.
 If
 .Ar users
 is not specified, all users are removed from the access list.
-.It Fl h
-Display the program's usage and exit.
 .It Fl I
 Interactive mode.
 .It Fl i
