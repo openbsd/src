@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2006/04/26 18:42:09 xsa Exp $
+#	$OpenBSD: Makefile,v 1.26 2006/04/28 20:11:45 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -501,6 +501,16 @@ test-rlog-rflag: clean
 	@${RLOG} -r1.1:1.3 file | ${DIFF} ${.CURDIR}/rlog-rflag2.out -
 	@${RLOG} -r1.2: file | ${DIFF} ${.CURDIR}/rlog-rflag3.out -
 	@${RLOG} -r:1.1 file | ${DIFF} ${.CURDIR}/rlog-rflag4.out -
+
+test-rlog-zflag: clean
+	@touch file
+	@echo "foo" > file
+	@echo "descr" | ${CI} -q -m"first rev" -d'2006-01-01 00:00:00+00' \
+		-wfoo file
+	@${RLOG} -zLT file | ${DIFF} ${.CURDIR}/rlog-zflag1.out -
+	@${RLOG} -z+03:14:23 file | ${DIFF} ${.CURDIR}/rlog-zflag2.out -
+	@${RLOG} -z+03:14 file | ${DIFF} ${.CURDIR}/rlog-zflag3.out -
+	@${RLOG} -z+0314 file | ${DIFF} ${.CURDIR}/rlog-zflag4.out -
 
 test-ci-nofile:
 	@${CI} -q nonexistent || case "$$?" in 1) exit 0;; esac && exit 1
