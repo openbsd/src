@@ -1,0 +1,17 @@
+
+RCS file: file,v
+Working file: file
+head: 1.1
+branch:
+locks: strict
+access list:
+symbolic names:
+keyword substitution: kv
+total revisions: 1;	selected revisions: 1
+description:
+descr
+----------------------------
+revision 1.1
+date: 2005-12-31 20:45:37-03:14:23;  author: foo;  state: Exp;
+first rev
+=============================================================================
