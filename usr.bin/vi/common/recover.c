@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.9 2003/07/02 00:21:16 avsm Exp $	*/
+/*	$OpenBSD: recover.c,v 1.10 2006/04/28 19:48:15 jaredy Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -815,6 +815,7 @@ rcv_gets(buf, len, fd)
 
 	if ((nr = read(fd, buf, len - 1)) == -1)
 		return (NULL);
+	buf[nr] = '\0';
 	if ((p = strchr(buf, '\n')) == NULL)
 		return (NULL);
 	(void)lseek(fd, (off_t)((p - buf) + 1), SEEK_SET);
