@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.30 2006/04/22 02:36:26 brad Exp $	*/
+/*	$OpenBSD: aac.c,v 1.31 2006/04/28 02:51:27 brad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -81,7 +81,6 @@ struct scsi_xfer;
 void	aac_copy_internal_data(struct scsi_xfer *, u_int8_t *, size_t);
 char   *aac_describe_code(struct aac_code_lookup *, u_int32_t);
 void	aac_describe_controller(struct aac_softc *);
-void	aac_enqueue(struct aac_softc *, struct scsi_xfer *, int);
 int	aac_enqueue_fib(struct aac_softc *, int, struct aac_command *);
 int	aac_dequeue_fib(struct aac_softc *, int, u_int32_t *,
 			struct aac_fib **);
@@ -90,8 +89,6 @@ int	aac_enqueue_response(struct aac_softc *sc, int queue,
 
 void	aac_eval_mapping(u_int32_t, int *, int *, int *);
 void	aac_print_printf(struct aac_softc *);
-void	aac_host_command(struct aac_softc *);
-void	aac_host_response(struct aac_softc *);
 int	aac_init(struct aac_softc *);
 int	aac_check_firmware(struct aac_softc *);
 void	aac_internal_cache_cmd(struct scsi_xfer *);
@@ -121,7 +118,6 @@ void	aac_add_container(struct aac_softc *, struct aac_mntinforesp *, int);
 void	aac_shutdown(void *);
 int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
     u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
-void	aac_watchdog(void *);
 
 struct cfdriver aac_cd = {
 	NULL, "aac", DV_DULL
