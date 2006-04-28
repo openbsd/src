@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.68 2006/04/28 10:17:34 martin Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.69 2006/04/28 17:18:13 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1885,7 +1885,7 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
+		if (!(ifp->if_flags & IFF_RUNNING))
 			sis_init(sc);
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -1910,13 +1910,14 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI) {
 				sis_setmulti(sc);
 			} else {
-				if ((ifp->if_flags & IFF_RUNNING) == 0)
+				if (!(ifp->if_flags & IFF_RUNNING))
 					sis_init(sc);
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				sis_stop(sc);
 		}
+		sc->sc_if_flags = ifp->if_flags;
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
