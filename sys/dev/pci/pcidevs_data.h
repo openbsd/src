@@ -6551,6 +6551,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "NCP130 Rev A2",
 	},
 	{
+	    PCI_VENDOR_NATINST, PCI_PRODUCT_NATINST_PCIGPIB,
+	    "PCI-GPIB",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
 	    "DP83810 10/100",
 	},
@@ -11421,6 +11425,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_DIAMOND,
 	    "Diamond Multimedia",
+	},
+	{
+	    PCI_VENDOR_NATINST,
+	    "National Instruments",
 	},
 	{
 	    PCI_VENDOR_CMDTECH,

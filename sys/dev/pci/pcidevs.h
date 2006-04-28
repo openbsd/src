@@ -113,6 +113,7 @@
 #define	PCI_VENDOR_SUN	0x108e		/* Sun */
 #define	PCI_VENDOR_INTERGRAPH	0x1091		/* Intergraph */
 #define	PCI_VENDOR_DIAMOND	0x1092		/* Diamond Multimedia */
+#define	PCI_VENDOR_NATINST	0x1093		/* National Instruments */
 #define	PCI_VENDOR_CMDTECH	0x1095		/* CMD Technology */
 #define	PCI_VENDOR_QUANTUMDESIGNS	0x1098		/* Quantum Designs */
 #define	PCI_VENDOR_BROOKTREE	0x109e		/* Brooktree */
@@ -2216,6 +2217,9 @@
 /* National Datacomm Corp products */
 #define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 */
 #define	PCI_PRODUCT_NDC_NCP130A2	0x0131		/* NCP130 Rev A2 */
+
+/* National Instruments */
+#define	PCI_PRODUCT_NATINST_PCIGPIB	0xc801		/* PCI-GPIB */
 
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */
