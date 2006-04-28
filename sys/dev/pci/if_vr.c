@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.61 2006/03/25 22:41:46 djm Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.62 2006/04/28 06:32:31 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1209,7 +1209,6 @@ vr_intr(void *arg)
 
 		if ((status & VR_ISR_BUSERR) || (status & VR_ISR_TX_UNDERRUN)) {
 			vr_reset(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
 			vr_init(sc);
 			break;
 		}
@@ -1378,11 +1377,6 @@ vr_init(void *xsc)
 
 	s = splnet();
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		splx(s);
-		return;
-	}
-
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
@@ -1491,12 +1485,10 @@ vr_ifmedia_upd(struct ifnet *ifp)
 {
 	struct vr_softc		*sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_flags &= ~IFF_RUNNING;
+	if (ifp->if_flags & IFF_UP)
 		vr_init(sc);
-	}
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1531,16 +1523,12 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		vr_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			vr_init(sc);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-#endif	/* INET */
-		default:
-			break;
-		}
+#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -1557,10 +1545,12 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				    VR_RXCFG_RX_PROMISC);
 				vr_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI)
+			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI) {
 				vr_setmulti(sc);
-			else
-				vr_init(sc);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					vr_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				vr_stop(sc);
