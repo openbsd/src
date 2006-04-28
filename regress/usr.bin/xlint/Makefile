@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.23 2006/04/27 20:41:19 otto Exp $
+# $OpenBSD: Makefile,v 1.24 2006/04/28 18:31:13 otto Exp $
 
 TEST_MODULES=	1 2 3 4 5 6 7 8 9 10 12 13 14 15 16 17 18 19 20
 LINT=		lint
-LINTFLAGS?=	-chapbx
+LINTFLAGS?=	-chabx
 
 .for i in ${TEST_MODULES}
 REGRESS_TARGETS+= test-${i}
