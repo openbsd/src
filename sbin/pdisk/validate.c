@@ -29,11 +29,7 @@
 // for *printf()
 #include <stdio.h>
 // for malloc(), free()
-#ifndef __linux__
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 // for O_RDONLY
 #include <fcntl.h>
 // for errno

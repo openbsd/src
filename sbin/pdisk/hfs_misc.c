@@ -12,11 +12,7 @@
 #include <stdio.h>
 
 // for malloc(), calloc() & free()
-#ifndef __linux__
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 
 // for strncpy() & strcmp()
 #include <string.h>

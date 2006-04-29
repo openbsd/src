@@ -78,29 +78,6 @@ clear_memory(void *dataPtr, unsigned long size)
 }
 
 
-#if !defined(__linux__) && !defined(__unix__)
-/* (see Inside Mac VI 3-8) */
-int
-TrapAvailable(short theTrap)
-{
-	TrapType                trapType;
-	
-	trapType = GetTrapType(theTrap);
-	
-	if (trapType == ToolTrap) {
-	    theTrap &= 0x07FF;
-	    if (theTrap >= NumToolboxTraps())
-		theTrap = _Unimplemented;
-	}
-	
-	return (
-	    NGetTrapAddress(theTrap, trapType)
-	    != NGetTrapAddress(_Unimplemented, ToolTrap)
-	);
-}
-#endif
-
-
 /* Ascii case-insensitive string comparison */
 int
 istrncmp(const char *x, const char *y, long len)

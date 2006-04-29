@@ -29,11 +29,7 @@
 #include <stdio.h>
 
 // for malloc() & free()
-#if !defined(__linux__)
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 // for strncpy()
 #include <string.h>
 // for va_start(), etc.
@@ -51,7 +47,6 @@
 #define BAD_DIGIT 17	/* must be greater than any base */
 #define	STRING_CHUNK	16
 #define UNGET_MAX_COUNT 10
-#ifndef __linux__
 #ifndef __unix__
 #define SCSI_FD 8
 #endif
@@ -61,7 +56,6 @@
 #else
 #define loff_t long
 #define llseek lseek
-#endif
 #endif
 
 

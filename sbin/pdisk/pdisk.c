@@ -33,16 +33,8 @@
 #if defined(__linux__) || defined(__OpenBSD__)
 #include <getopt.h>
 #endif
-#ifdef __linux__
-#include <malloc.h>
-#else
 // for malloc() & free()
 #include <stdlib.h>
-#if !defined(__unix__)
-// for SIOUXsettings
-#include <SIOUX.h>
-#endif
-#endif
 
 #ifdef __unix__
 #include <unistd.h>
@@ -54,12 +46,6 @@
 #include <fcntl.h>
 // for errno
 #include <errno.h>
-
-#ifdef __linux__
-#include <sys/ioctl.h>
-#include <linux/fs.h>
-#include <linux/hdreg.h>
-#endif
 
 #include "pdisk.h"
 #include "io.h"
@@ -143,9 +129,6 @@ int get_options(int argc, char **argv);
 void interact(void);
 void print_edit_notes(void);
 void print_expert_notes(void);
-#ifdef __linux__
-void print_top_notes(void);
-#endif
 
 
 //
@@ -206,12 +189,8 @@ main(int argc, char **argv)
 		dump(argv[name_index++]);
 	    }
 	} else {
-#ifdef __linux__
-	    list_all_disks();
-#else
 	    usage("no device argument");
 	    do_help();
-#endif
 	}
     } else if (name_index < argc) {
 	while (name_index < argc) {
@@ -234,21 +213,6 @@ main(int argc, char **argv)
 }
 
 
-#ifdef __linux__
-void
-print_top_notes()
-{
-    printf("Notes:\n");
-    printf("  Disks have fake names of the form /dev/scsi<bus>.<id>\n");
-    printf("  For example, /dev/scsi0.1, /dev/scsi1.3, and so on.\n");
-    printf("  Linux style names are also allowed (i.e /dev/sda or /dev/hda).\n");
-    printf("  Due to some technical problems these names may not match\n");
-    printf("  the 'real' linux names.\n");
-    printf("\n");
-}
-#endif
-
-
 void
 interact()
 {
@@ -262,9 +226,6 @@ interact()
 
 	switch (command) {
 	case '?':
-#ifdef __linux__
-	    print_top_notes();
-#endif
 	    // fall through
 	case 'H':
 	case 'h':
@@ -272,9 +233,6 @@ interact()
 	    printf("  h    print help\n");
 	    printf("  v    print the version number and release date\n");
 	    printf("  l    list device's map\n");
-#ifdef __linux__
-	    printf("  L    list all devices' maps\n");
-#endif
 	    printf("  e    edit device's map\n");
 	    printf("  E    (edit map with specified block size)\n");
 	    printf("  r    toggle readonly flag\n");
@@ -296,11 +254,6 @@ interact()
 	case 'v':
 	    printf("version " VERSION " (" RELEASE_DATE ")\n");
 	    break;
-#ifdef __linux__
-	case 'L':
-	    list_all_disks();
-	    break;
-#endif
 	case 'l':
 	    if (get_string_argument("Name of device: ", &name, 1) == 0) {
 		bad_input("Bad name");
@@ -549,12 +502,6 @@ edit(char *name, int ask_logical_size)
 
     printf("Edit %s -\n", name);
 
-#if 0 /* this check is not found in linux fdisk-0.1 */
-    if (map != NULL && map->blocks_in_map > MAX_LINUX_MAP) {
-	error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
-    }
-#endif
-
     while (get_command("Command (? for help): ", first_get, &command)) {
 	first_get = 0;
 	order = 1;
@@ -711,12 +658,6 @@ do_create_partition(partition_map_header *map, int get_type)
     }
     if (get_type == 0) {
 	add_partition_to_map(name, kUnixType, base, length, map);
-#if 0 /* this check is not found in linux fdisk-0.1 */
-	if (map->blocks_in_map > MAX_LINUX_MAP) {
-	    error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
-	}
-	goto xit1;
-#endif
     } else if (get_string_argument("Type of partition: ", &type_name, 1) == 0) {
 	bad_input("Bad type");
 	goto xit1;
@@ -730,11 +671,6 @@ do_create_partition(partition_map_header *map, int get_type)
 	    goto xit2;
 	}
 	add_partition_to_map(name, type_name, base, length, map);
-#if 0 /* this check is not found in linux fdisk-0.1 */
-	if (map->blocks_in_map > MAX_LINUX_MAP) {
-	    error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
-	}
-#endif
     }
 #ifdef __m68k__
     do_update_dpme(find_entry_by_base(base,map));
@@ -957,11 +893,6 @@ do_write_partition_map(partition_map_header *map)
 	bad_input("The map is not writable.");
 	return;
     }
-#if 0 /* this check is not found in linux fdisk-0.1 */
-    if (map->blocks_in_map > MAX_LINUX_MAP) {
-	error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
-    }
-#endif
     printf("Writing the map destroys what was there before. ");
     if (get_okay("Is that okay? [n/y]: ", 0) != 1) {
 	return;

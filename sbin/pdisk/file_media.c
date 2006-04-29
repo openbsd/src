@@ -38,17 +38,8 @@
 // for errno
 #include <errno.h>
 
-#ifdef __linux__
-#include <sys/ioctl.h>
-#include <linux/fs.h>
-#include <linux/hdreg.h>
-#include <sys/stat.h>
-#else
-#ifdef __unix__
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#endif
-#endif
 
 #include "file_media.h"
 #include "errors.h"
@@ -220,11 +211,6 @@ open_file_as_media(char *file, int oflag)
 	    a->m.kind = file_info.kind;
 	    a->m.grain = compute_block_size(fd);
 	    off = llseek(fd, (loff_t)0, SEEK_END);	/* seek to end of media */
-#if !defined(__linux__) && !defined(__unix__)
-	    if (off <= 0) {
-		off = 1; /* XXX not right? */
-	    }
-#endif
 	    //printf("file size = %Ld\n", off);
 	    a->m.size_in_bytes = (long long) off;
 	    a->m.do_read = read_file_media;
@@ -300,7 +286,7 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     long rtn_value;
     loff_t off;
     int t;
-	
+
     a = (FILE_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -352,11 +338,7 @@ os_reload_file_media(MEDIA m)
 {
     FILE_MEDIA a;
     long rtn_value;
-#if defined(__linux__)
-    int i;
-    int saved_errno;
-#endif
-	
+
     a = (FILE_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -367,41 +349,10 @@ os_reload_file_media(MEDIA m)
 	/* okay - nothing to do */
 	rtn_value = 1;
     } else {
-#ifdef __linux__
-	sync();
-	sleep(2);
-	if ((i = ioctl(a->fd, BLKRRPART)) != 0) {
-	    saved_errno = errno;
-	} else {
-	    // some kernel versions (1.2.x) seem to have trouble
-	    // rereading the partition table, but if asked to do it
-	    // twice, the second time works. - biro@yggdrasil.com */
-	    sync();
-	    sleep(2);
-	    if ((i = ioctl(a->fd, BLKRRPART)) != 0) {
-		saved_errno = errno;
-	    }
-	}
-
-	// printf("Syncing disks.\n");
-	sync();
-	sleep(4);		/* for sync() */
-
-	if (i < 0) {
-	    error(saved_errno, "Re-read of partition table failed");
-	    printf("Reboot your system to ensure the "
-		    "partition table is updated.\n");
-	}
-#endif
 	rtn_value = 1;
     }
     return rtn_value;
 }
-
-
-#if !defined(__linux__) && !defined(__unix__)
-#pragma mark -
-#endif
 
 
 FILE_MEDIA_ITERATOR

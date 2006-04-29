@@ -29,11 +29,7 @@
 #include <stdio.h>
 
 // for malloc(), calloc() & free()
-#ifndef __linux__
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 
 // for strncpy() & strcmp()
 #include <string.h>
@@ -349,21 +345,6 @@ write_partition_map(partition_map_header *map)
 	    error(errno, "Unable to write block %d", i);
 	}
     }
-
-#ifdef __linux__
-	// zap the block after the map (if possible) to get around a bug.
-    if (map->maximum_in_map > 0 &&  i < map->maximum_in_map) {
-	i += 1;
-	block = (char *) malloc(PBLOCK_SIZE);
-	if (block != NULL) {
-	    if (read_block(map, i, block)) {
-		block[0] = 0;
-		write_block(map, i, block);
-	    }
-	    free(block);
-	}
-    }
-#endif
 
     if (interactive)
 	printf("The partition table has been altered!\n\n");

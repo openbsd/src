@@ -29,12 +29,7 @@
 #include <stdio.h>
 
 // for malloc() & free()
-#ifndef __linux__
 #include <stdlib.h>
-//#include <unistd.h>
-#else
-#include <malloc.h>
-#endif
 
 // for strcmp()
 #include <string.h>

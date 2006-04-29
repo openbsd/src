@@ -30,9 +30,7 @@
 #include <errno.h>
 
 // for exit()
-#ifndef __linux__
 #include <stdlib.h>
-#endif
 // for strrchr
 #include <string.h>
 
