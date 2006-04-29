@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2006/04/14 08:24:42 biorn Exp $
+# $OpenBSD: Makefile,v 1.10 2006/04/29 12:35:56 biorn Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -120,8 +120,9 @@ MLINKS+=gss_acquire_cred.3 gss_accept_sec_context.3 \
 	gss_acquire_cred.3 gss_inquire_mechs_for_name.3 \
 	gss_acquire_cred.3 gss_inquire_names_for_mech.3 \
 	gss_acquire_cred.3 gss_krb5_ccache_name.3 \
-	gss_acquire_cred.3 gss_krb5_copy_ccache.3 \
 	gss_acquire_cred.3 gss_krb5_compat_des3_mic.3 \
+	gss_acquire_cred.3 gss_krb5_copy_ccache.3 \
+	gss_acquire_cred.3 gsskrb5_extract_authz_data_from_sec_context.3 \
 	gss_acquire_cred.3 gss_krb5_get_tkt_flags.3 \
 	gss_acquire_cred.3 gss_process_context_token.3 \
 	gss_acquire_cred.3 gss_release_buffer.3 \

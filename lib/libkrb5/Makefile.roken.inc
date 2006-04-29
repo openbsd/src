@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.roken.inc,v 1.3 2006/04/14 08:24:41 biorn Exp $
+# $OpenBSD: Makefile.roken.inc,v 1.4 2006/04/29 12:35:56 biorn Exp $
 
 .PATH:	${KRB5SRC}/lib/roken
 
@@ -27,6 +27,7 @@ SRCS+=	base64.c \
 
 MAN+=	getarg.3
 MLINKS+=getarg.3 arg_printusage.3
+
 MAN+=	parse_time.3
 MLINKS+=parse_time.3 print_time_table.3
 MLINKS+=parse_time.3 unparse_time.3
@@ -47,7 +48,6 @@ MLINKS+=rtbl.3 rtbl_add_column_entry.3
 MLINKS+=rtbl.3 rtbl_add_column_entry_by_id.3
 MLINKS+=rtbl.3 rtbl_new_row.3
 MLINKS+=rtbl.3 rtbl_format.3
-
 
 # There is a net_write.c and net_read.c both in lib/roken and lib/krb5.
 roken_net_write.c:      ${KRB5SRC}/lib/roken/net_write.c
