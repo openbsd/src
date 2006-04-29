@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.9 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: file.h,v 1.10 2006/04/29 16:26:56 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,12 +23,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.9 2004/04/14 20:37:28 henning Exp $
+ *	$OpenBSD: file.h,v 1.10 2006/04/29 16:26:56 maja Exp $
  *
  */
 
 #ifndef _FILE_H_
 #define _FILE_H_
+
+#define INFO_PRINT 1
 
 void	mopFilePutLX(u_char *, int, u_long, int);
 void	mopFilePutBX(u_char *, int, u_long, int);
@@ -36,12 +38,12 @@ u_long	mopFileGetLX(void *, int, int);
 u_long	mopFileGetBX(void *, int, int);
 void	mopFileSwapX(void *, int, int);
 int	CheckMopFile(int);
-int	GetMopFileInfo(int, u_long *, u_long *);
+int	GetMopFileInfo(int, u_long *, u_long *, int);
 int	CheckAOutFile(int);
 int	GetAOutFileInfo(int, u_long *, u_long *, u_long *, u_long *,
-			u_long *, u_long *, u_long *, u_long *, int *);
+			u_long *, u_long *, u_long *, u_long *, int *, int);
 int	GetFileInfo(int, u_long *, u_long *, int *, u_long *, u_long *,
-		    u_long *, u_long *, u_long *, u_long *);
+		    u_long *, u_long *, u_long *, u_long *, int);
 ssize_t mopFileRead(struct dllist *, u_char *);
 
 #endif /* _FILE_H_ */

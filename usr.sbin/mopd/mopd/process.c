@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.16 2006/04/17 18:55:36 maja Exp $ */
+/*	$OpenBSD: process.c,v 1.17 2006/04/29 16:26:56 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: process.c,v 1.16 2006/04/17 18:55:36 maja Exp $";
+    "$OpenBSD: process.c,v 1.17 2006/04/29 16:26:56 maja Exp $";
 #endif
 
 #include "os.h"
@@ -196,7 +196,7 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 	    &dllist[slot].xferaddr, &dllist[slot].aout,
 	    &dllist[slot].a_text, &dllist[slot].a_text_fill,
 	    &dllist[slot].a_data, &dllist[slot].a_data_fill,
-	    &dllist[slot].a_bss,  &dllist[slot].a_bss_fill);
+	    &dllist[slot].a_bss,  &dllist[slot].a_bss_fill, 0);
 
 	dllist[slot].nloadaddr = dllist[slot].loadaddr;
 	dllist[slot].lseek     = lseek(dllist[slot].ldfd, 0L, SEEK_CUR);

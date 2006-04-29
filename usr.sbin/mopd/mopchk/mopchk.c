@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.11 2006/04/17 10:30:31 maja Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.12 2006/04/29 16:26:56 maja Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mopchk.c,v 1.11 2006/04/17 10:30:31 maja Exp $";
+static const char rcsid[] = "$OpenBSD: mopchk.c,v 1.12 2006/04/29 16:26:56 maja Exp $";
 #endif
 
 /*
@@ -42,8 +42,7 @@ static const char rcsid[] = "$OpenBSD: mopchk.c,v 1.11 2006/04/17 10:30:31 maja 
 #include "common/file.h"
 
 /*
- * The list of all interfaces that are being listened to.  rarp_loop()
- * "selects" on the descriptors in this list.
+ * The list of all interfaces that are being listened to.
  */
 struct if_info *iflist;
 
@@ -127,8 +126,8 @@ main(argc, argv)
 		} else {
 			err = CheckAOutFile(fd);
 			if (err == 0) {
-				if (GetAOutFileInfo(fd, 0, 0, 0, 0,
-						    0, 0, 0, 0, &aout) < 0) {
+				if (GetAOutFileInfo(fd, 0, 0, 0, 0, 0, 0, 0, 0,
+						    &aout, INFO_PRINT) < 0) {
 					printf("Some failure in GetAOutFileInfo\n");
 					aout = -1;
 				}
@@ -138,7 +137,7 @@ main(argc, argv)
 			if (aout == -1)
 				err = CheckMopFile(fd);
 			if (aout == -1 && err == 0) {
-				if (GetMopFileInfo(fd, 0, 0) < 0) {
+				if (GetMopFileInfo(fd, 0, 0, INFO_PRINT) < 0) {
 					printf("Some failure in GetMopFileInfo\n");
 				}
 			};

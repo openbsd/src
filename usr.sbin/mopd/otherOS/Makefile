@@ -1,7 +1,7 @@
 #  Copyright (c) 1993-1994 Mats O Jansson, Stockholm, Sweden
 #  All rights reserved.
 #
-# @(#) $OpenBSD: Makefile,v 1.4 2002/06/10 21:05:25 maja Exp $
+# @(#) $OpenBSD: Makefile,v 1.5 2006/04/29 16:26:56 maja Exp $
 
 # Script (or program) that returns the machine and os types,
 # or jsut edit in the name yourself.
@@ -13,7 +13,7 @@ CCOPT = -O
 INCLUDES = -I..
 #rs6000-aix3#DEFINES = -D_AIX -D_BSD
 
-#mopchk#SPEC_FLAGS=	-DINFO -DNODL -DNOAOUT
+#mopchk#SPEC_FLAGS=	-DNODL -DNOAOUT
 #mopd#SPEC_FLAGS=	-DNOAOUT
 #mopprobe#SPEC_FLAGS=	-DNODL
 #moptrace#SPEC_FLAGS=
