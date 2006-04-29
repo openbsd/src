@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.195 2006/04/28 10:32:05 jsg Exp $
+$OpenBSD: usbdevs,v 1.196 2006/04/29 02:00:34 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -399,13 +399,17 @@ vendor ITEGNO		0x0eba	iTegno
 vendor AIRPRIME		0x0f3d	Airprime
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
+vendor DYNASTREAM	0x0fcf	Dynastream Innovations
 vendor QUALCOMM2	0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor AUDIOVOX		0x106c	Audiovox
+vendor SILABS2		0x10a6	SILABS2
+vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
+vendor SILABS		0x10c4	Silicon Labs
 vendor ANALOG		0x1110	Analog Devices
 vendor JRC		0x1145	Japan Radio Company
 vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
@@ -440,6 +444,7 @@ vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor GIGASET		0x1690	Gigaset
+vendor JABLOTRON	0x16d6	Jablotron
 vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
@@ -885,6 +890,9 @@ product DLINK DSB650		0xabc1	10/100 ethernet
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
 
+/* Dynastream Innovations */
+product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
+
 /* EasyDisk products */
 product EASYDISK EASYDISK	0x0005	Flash Disk
 
@@ -1171,6 +1179,9 @@ product IRIVER IFP_5XX		0x1105	iFP-5xx
 
 /* iTegno products */
 product ITEGNO WM1080A		0x1080	WM1080A
+
+/* Jablotron products */
+product JABLOTRON PC60B		0x0001	PC-60B
 
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet
@@ -1771,6 +1782,16 @@ product SIIG2 US2308		0x0421	Serial
 product SILICOM U2E		0x0001	U2E
 product SILICOM GPE		0x0002	Psion Dacom Gold Port Ethernet
 
+/* Silicon Labs products */
+product SILABS POLOLU		0x803b	Pololu Serial
+product SILABS CRUMB128		0x807a	Crumb128
+product SILABS DEGREECONT	0x80ca	Degree Controls
+product SILABS SUNNTO		0x80f6	Suunto sports
+product SILABS DESKTOPMOBILE	0x813d	Burnside Desktop mobile
+product SILABS IPLINK1220	0x815e	IP-Link 1220
+product SILABS2 DCU11CLONE	0xaa26	DCU-11 clone
+product SILABS CP210X		0xea60	CP210x Serial
+
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
@@ -1948,6 +1969,9 @@ product USR HEINEKEN_B		0x00f7	USR9000	SureConnect ADSL
 product USR HEINEKEN_B_NF	0x00f8	USR9000	SureConnect ADSL
 product USR MILLER_B		0x00f9	USR9000	SureConnect ADSL
 product USR MILLER_B_NF		0x00fa	USR9000	SureConnect ADSL
+
+/* USI products */
+product USI MC60		0x10c5	MC60 Serial
 
 /* ViewSonic products */
 product VIEWSONIC G773HUB	0x00fe	G773 Monitor Hub
