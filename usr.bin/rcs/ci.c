@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.166 2006/04/29 05:31:28 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.167 2006/04/29 06:32:00 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -841,65 +841,47 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
     char **state)
 {
 	size_t end;
-	u_int j, found;
+	u_int j;
 	char *c, *kwstr, *start, buf[128];
 
-	c = start = kwstr = NULL;
+	kwstr = NULL;
 
-	found = 0;
+	for (c = data; (c = strchr(c, '$')) != NULL;) {
+		size_t len;
 
-	for (c = data; *c != '\0'; c++) {
-		if (*c == '$') {
-			start = c;
-			c++;
-			if (!isalpha(*c)) {
-				c = start;
-				continue;
-			}
-			/* look for any matching keywords */
-			found = 0;
-			for (j = 0; j < 10; j++) {
-				if (!strncmp(c, rcs_expkw[j].kw_str,
-				    strlen(rcs_expkw[j].kw_str))) {
-					found = 1;
-					kwstr = rcs_expkw[j].kw_str;
-					break;
-				}
-			}
+		start = c;
+		c++;
+		if (!isalpha(*c))
+			continue;
 
-			/* unknown keyword, continue looking */
-			if (found == 0) {
-				c = start;
-				continue;
-			}
-
-			c += strlen(kwstr);
-			if (*c != ':' && *c != '$') {
-				c = start;
-				continue;
-			}
-
-			if (*c == ':') {
-				while (*c++) {
-					if (*c == '$') {
-						end = c - start + 2;
-						if (strlcpy(buf, start, end) >= end)
-							errx(1, "keyword buffer"
-							    " too small!");
-						checkin_parsekeyword(buf, rev,
-						    date, author, state);
-						break;
-					}
-				}
-
-				if (*c != '$') {
-					c = start;
-					continue;
-				}
+		/* look for any matching keywords */
+		for (j = 0; j < 10; j++) {
+			len = strlen(rcs_expkw[j].kw_str);
+			if (strncmp(c, rcs_expkw[j].kw_str, len) != 0) {
+				kwstr = rcs_expkw[j].kw_str;
+				break;
 			}
 		}
+
+		/* unknown keyword, continue looking */
+		if (kwstr == NULL)
+			continue;
+
+		c += len;
+		if (*c != ':')
+			continue;
+
+		/* Find end of line or end of keyword. */
+		c += strcspn(c, "$\n");
+		if (*c != '$')
+			continue;
+
+		end = c - start + 2;
+		if (strlcpy(buf, start, end) >= end)
+			errx(1, "keyword buffer too small!");
+		checkin_parsekeyword(buf, rev, date, author, state);
 	}
-	if (found == 0)
+	if (kwstr == NULL)
 		return (-1);
 	else
 		return (0);
