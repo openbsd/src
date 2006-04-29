@@ -201,21 +201,13 @@ dump_partition_map(partition_map_header *map, int disk_order)
     int max_type_length;
     int max_name_length;
     int digits;
-    char *alternate;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
 	return;
     }
-    alternate = get_linux_name(map->name);
-    if (alternate) {
-	printf("\nPartition map (with %d byte blocks) on '%s' (%s)\n",
-		map->logical_block, map->name, alternate);
-	free(alternate);
-    } else {
-	printf("\nPartition map (with %d byte blocks) on '%s'\n",
-		map->logical_block, map->name);
-    }
+    printf("\nPartition map (with %d byte blocks) on '%s'\n",
+	map->logical_block, map->name);
 
     digits = number_of_digits(get_max_base_or_length(map));
     if (digits < 6) {

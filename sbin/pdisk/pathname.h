@@ -57,6 +57,5 @@
 MEDIA open_pathname_as_media(char *path, int oflag);
 MEDIA_ITERATOR first_media_kind(long *state);
 MEDIA_ITERATOR next_media_kind(long *state);
-char *get_linux_name(char *name);
 
 #endif /* __pathname__ */

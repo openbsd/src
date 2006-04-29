@@ -61,10 +61,6 @@
  * Routines
  */
 
-/*
- * Note that open_pathname_as_media() and get_linux_name() have almost
- * identical structures.  If one changes the other must also!
- */
 MEDIA
 open_pathname_as_media(char *path, int oflag)
 {
@@ -72,15 +68,6 @@ open_pathname_as_media(char *path, int oflag)
 
     m = open_file_as_media(path, oflag);
     return m;
-}
-
-
-char *
-get_linux_name(char *path)
-{
-    char	*result = 0;
-
-    return result;
 }
 
 
