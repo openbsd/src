@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.51 2005/12/21 01:40:24 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.52 2006/04/29 14:40:44 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -177,9 +177,9 @@ machine_init(struct statics *statics)
 	if (cp_time == NULL || cp_old == NULL || cp_diff == NULL)
 		err(1, NULL);
 	for (cpu = 0; cpu < ncpu; cpu++) {
-		cp_time[cpu] = malloc(CPUSTATES * sizeof(int64_t));
-		cp_old[cpu] = malloc(CPUSTATES * sizeof(int64_t));
-		cp_diff[cpu] = malloc(CPUSTATES * sizeof(int64_t));
+		cp_time[cpu] = calloc(CPUSTATES, sizeof(int64_t));
+		cp_old[cpu] = calloc(CPUSTATES, sizeof(int64_t));
+		cp_diff[cpu] = calloc(CPUSTATES, sizeof(int64_t));
 		if (cp_time[cpu] == NULL || cp_old[cpu] == NULL ||
 		    cp_diff[cpu] == NULL)
 			err(1, NULL);
