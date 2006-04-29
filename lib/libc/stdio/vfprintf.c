@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.37 2006/01/13 17:56:18 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.38 2006/04/29 23:00:23 tedu Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #include "local.h"
 #include "fvwrite.h"
 
-static void __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
+static int __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
     size_t *argtablesiz);
 static int __grow_type_table(unsigned char **typetable, int *tablesize);
 
@@ -154,12 +154,12 @@ static int exponent(char *, int, int);
 int
 vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 {
-	char *fmt;	/* format string */
-	int ch;	/* character from fmt */
-	int n, m, n2;	/* handy integers (short term usage) */
-	char *cp;	/* handy char pointer (short term usage) */
-	struct __siov *iovp;/* for PRINT macro */
-	int flags;	/* flags as above */
+	char *fmt;		/* format string */
+	int ch;			/* character from fmt */
+	int n, m, n2;		/* handy integers (short term usage) */
+	char *cp;		/* handy char pointer (short term usage) */
+	struct __siov *iovp;	/* for PRINT macro */
+	int flags;		/* flags as above */
 	int ret;		/* return value accumulator */
 	int width;		/* width from format (%8d), or 0 */
 	int prec;		/* precision from format (%.3d), or -1 */
@@ -516,15 +516,16 @@ reswitch:	switch (ch) {
 					size = expt;
 					if (prec || flags & ALT)
 						size += prec + 1;
-				} else	/* "0.X" */
+				} else { /* "0.X" */
 					size = prec + 2;
+				}
 			} else if (expt >= ndig) {	/* fixed g fmt */
 				size = expt;
 				if (flags & ALT)
 					++size;
-			} else
-				size = ndig + (expt > 0 ?
-					1 : 2 - expt);
+			} else {
+				size = ndig + (expt > 0 ?  1 : 2 - expt);
+			}
 
 			if (softsign)
 				sign = '-';
@@ -585,10 +586,12 @@ reswitch:	switch (ch) {
 					size = p - cp;
 					if (size > prec)
 						size = prec;
-				} else
+				} else {
 					size = prec;
-			} else
+				}
+			} else {
 				size = strlen(cp);
+			}
 			sign = '\0';
 			break;
 		case 'U':
@@ -754,11 +757,13 @@ number:			if ((dprec = prec) >= 0)
 					PRINT(ox, 2);
 					if (_double) {
 						PRINT(cp, ndig-1);
-					} else	/* 0.[0..] */
+					} else {/* 0.[0..] */
 						/* __dtoa irregularity */
 						PAD(ndig - 1, zeroes);
-				} else	/* XeYYY */
+					}
+				} else { /* XeYYY */
 					PRINT(cp, 1);
+				}
 				PRINT(expstr, expsize);
 			}
 		}
@@ -822,15 +827,15 @@ error:
  * used since we are attempting to make snprintf thread safe, and alloca is
  * problematic since we have nested functions..)
  */
-static void
+static int
 __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
     size_t *argtablesiz)
 {
-	char *fmt;	/* format string */
-	int ch;	/* character from fmt */
-	int n, n2;	/* handy integer (short term usage) */
-	char *cp;	/* handy char pointer (short term usage) */
-	int flags;	/* flags as above */
+	char *fmt;		/* format string */
+	int ch;			/* character from fmt */
+	int n, n2;		/* handy integer (short term usage) */
+	char *cp;		/* handy char pointer (short term usage) */
+	int flags;		/* flags as above */
 	unsigned char *typetable; /* table of types */
 	unsigned char stattypetable[STATIC_ARG_TBL_SIZE];
 	int tablesize;		/* current size of type table */
@@ -1043,8 +1048,10 @@ done:
 	 */
 	if (tablemax >= STATIC_ARG_TBL_SIZE) {
 		*argtablesiz = sizeof (va_list) * (tablemax + 1);
-		*argtable = (va_list *)mmap(NULL, *argtablesiz,
+		*argtable = mmap(NULL, *argtablesiz,
 		    PROT_WRITE|PROT_READ, MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (*argtable == MAP_FAILED)
+			return (-1);
 	}
 
 #if 0
@@ -1130,6 +1137,7 @@ done:
 		munmap(typetable, *argtablesiz);
 		typetable = NULL;
 	}
+	return (0);
 }
 
 /*
@@ -1142,24 +1150,24 @@ __grow_type_table(unsigned char **typetable, int *tablesize)
 	int newsize = *tablesize * 2;
 
 	if (*tablesize == STATIC_ARG_TBL_SIZE) {
-		*typetable = (unsigned char *)mmap(NULL,
-		    sizeof (unsigned char) * newsize, PROT_WRITE|PROT_READ,
+		*typetable = mmap(NULL, newsize, PROT_WRITE|PROT_READ,
 		    MAP_ANON|MAP_PRIVATE, -1, 0);
-		/* XXX unchecked */
+		if (*typetable == MAP_FAILED)
+			return (-1);
 		bcopy(oldtable, *typetable, *tablesize);
 	} else {
-		unsigned char *new = (unsigned char *)mmap(NULL,
-		    sizeof (unsigned char) * newsize, PROT_WRITE|PROT_READ,
+		unsigned char *new = mmap(NULL, newsize, PROT_WRITE|PROT_READ,
 		    MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (new == MAP_FAILED)
+			return (-1);
 		memmove(new, *typetable, *tablesize);
 		munmap(*typetable, *tablesize);
 		*typetable = new;
-		/* XXX unchecked */
 	}
 	memset(*typetable + *tablesize, T_UNUSED, (newsize - *tablesize));
 
 	*tablesize = newsize;
-	return(0);
+	return (0);
 }
 
  
@@ -1193,7 +1201,7 @@ cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch,
 	} else
 		*sign = '\000';
 	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
-	if ((ch != 'g' && ch != 'G') || flags & ALT) {	/* Print trailing zeros */
+	if ((ch != 'g' && ch != 'G') || flags & ALT) {/* Print trailing zeros */
 		bp = digits + ndigits;
 		if (ch == 'f') {
 			if (*digits == '0' && value)
@@ -1220,8 +1228,7 @@ exponent(char *p0, int exp, int fmtch)
 	if (exp < 0) {
 		exp = -exp;
 		*p++ = '-';
-	}
-	else
+	} else
 		*p++ = '+';
 	t = expbuf + MAXEXP;
 	if (exp > 9) {
@@ -1229,9 +1236,9 @@ exponent(char *p0, int exp, int fmtch)
 			*--t = to_char(exp % 10);
 		} while ((exp /= 10) > 9);
 		*--t = to_char(exp);
-		for (; t < expbuf + MAXEXP; *p++ = *t++);
-	}
-	else {
+		for (; t < expbuf + MAXEXP; *p++ = *t++)
+			/* nothing */;
+	} else {
 		*p++ = '0';
 		*p++ = to_char(exp);
 	}
