@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.81 2006/04/17 18:33:00 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.82 2006/04/29 12:04:26 djm Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -510,9 +510,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "max6646";	/* max6647/8/9, max6692 */
 		else if ((addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
 		    (iicprobe(0x02) & 0x2b) == 0 &&
-		    (iicprobe(0x03) & 0x0f) == 0 && iicprobe(0x04) <= 0x09)
+		    (iicprobe(0x03) & 0x0f) == 0 && iicprobe(0x04) <= 0x09) {
 			name = "max6657";	/* max6658, max6659 */
-		else if ((addr >= 0x48 && addr <= 0x4f) &&
+			skip_fc = 1;
+		} else if ((addr >= 0x48 && addr <= 0x4f) &&
 		    (iicprobe(0x02) & 0x2b) == 0 &&
 		    (iicprobe(0x03) & 0x0f) == 0)
 			name = "max6642";
