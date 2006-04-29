@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.1 2006/04/29 02:15:06 jsg Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.2 2006/04/29 02:58:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -95,6 +95,7 @@ Static void	uslcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 Static void	uslcom_set(void *, int, int, int);
 Static int	uslcom_param(void *, int, struct termios *);
 Static int	uslcom_open(void *sc, int portno);
+Static void	uslcom_close(void *, int);
 Static void	uslcom_break(void *sc, int portno, int onoff);
 
 struct ucom_methods uslcom_methods = {
@@ -103,7 +104,7 @@ struct ucom_methods uslcom_methods = {
 	uslcom_param,
 	NULL,
 	uslcom_open,
-	NULL,
+	uslcom_close,
 	NULL,
 	NULL,
 };
@@ -269,6 +270,23 @@ uslcom_open(void *vsc, int portno)
 		return (EIO);
 
 	return (0);
+}
+
+Static void
+uslcom_close(void *vsc, int portno)
+{
+	struct uslcom_softc *sc = vsc;
+	usb_device_request_t req;
+
+	if (sc->sc_dying)
+		return;
+
+	req.bmRequestType = USLCOM_WRITE;
+	req.bRequest = USLCOM_UART;
+	USETW(req.wValue, USLCOM_UART_DISABLE);
+	USETW(req.wIndex, portno);
+	USETW(req.wLength, 0);
+	usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
 Static void
