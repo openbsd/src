@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2006/04/28 20:24:20 xsa Exp $
+#	$OpenBSD: Makefile,v 1.28 2006/04/29 05:36:25 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -63,6 +63,7 @@ LTESTS= ci-initial \
 	rcs-iflag \
 	rlog-lflag \
 	ci-nofile \
+	#ci-keywords \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -514,6 +515,15 @@ test-rlog-zflag: clean
 
 test-ci-nofile:
 	@${CI} -q nonexistent || case "$$?" in 1) exit 0;; esac && exit 1
+
+test-ci-keywords: clean
+	@mkdir RCS
+	@sed 's/.*/$$&$$/' ${.CURDIR}/keywords.in > file
+	@sed 's/^[A-Z][A-Z]*[a-z][a-z]*: .*/$$&$$/' ${.CURDIR}/keywords.out > keywords.out
+	@echo . | ${CI} -q -u file
+	@sed -e 's,${USER},USER,' -e "s/\($$[A-Z][a-z]*: \).*file,v/\1file,v/" \
+	    -e 's,[0-9][0-9][0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9],YYYY/MM/DD HH:MI:SS,' \
+	    file | diff -u keywords.out -
 
 clean:
 	@rm -rf ${CLEANFILES}
