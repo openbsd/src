@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.164 2006/04/29 04:59:48 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.165 2006/04/29 05:10:16 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -87,7 +87,7 @@ checkin_usage(void)
 	fprintf(stderr,
 	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-I[rev]] [-i[rev]]\n"
 	    "	  [-j[rev]] [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg]\n"
-	    "	  [-Nsymbol] [-nsymbol] [-r[rev]] [-sstate] [-tfile|str]\n"
+	    "	  [-Nsymbol] [-nsymbol] [-r[rev]] [-sstate] [-tstr]\n"
 	    "	  [-u[rev]] [-wusername] [-xsuffixes] [-ztz] file ...\n");
 }
 

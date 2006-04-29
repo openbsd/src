@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.42 2006/04/28 22:26:07 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.43 2006/04/29 05:10:16 ray Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -45,8 +45,7 @@
 .Op Fl o Ns Ar rev
 .Oo Fl s Ns Ar state Ns
 .Op : Ns Ar rev Oc
-.Oo Fl t Ns Ar file Ns \*(Ba
-.Ar str Oc
+.Op Fl t Ns Ar str
 .Op Fl u Ns Op Ar rev
 .Op Fl x Ns Ar suffixes
 .Ar
@@ -197,17 +196,15 @@ to the identifier
 The specified value may not contain a space character.
 .It Fl T
 Preserve the modification time of RCS files.
-.Sm off
-.It Fl t Ar file \*(Ba Ar str
-.Sm on
+.It Fl t Ns Ar str
 Change the descriptive text.
-The descriptive text is taken from the
-.Ar file
-specified as argument or from the string
+The argument
 .Ar str
-given as argument if it is preceded by the
-.Sq -
-character.
+is interpreted as the name of a file containing
+the descriptive text or,
+if prefixed with a
+.Sq - ,
+the actual descriptive text itself.
 If no argument is used, the descriptive text is taken from standard input
 terminated by end-of-file or by a line containing the
 .Sq \&.
