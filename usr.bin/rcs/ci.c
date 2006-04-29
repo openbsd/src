@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.163 2006/04/26 21:55:22 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.164 2006/04/29 04:59:48 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -483,9 +483,9 @@ checkin_update(struct checkin_params *pb)
 
 			fmt = "%Y/%m/%d %H:%M:%S";
 
-			t = localtime(&pb->date);
+			t = gmtime(&pb->date);
 			strftime(dbuf1, sizeof(dbuf1), fmt, t);
-			t_head = localtime(&head_date);
+			t_head = gmtime(&head_date);
 			strftime(dbuf2, sizeof(dbuf2), fmt, t_head);
 
 			errx(1, "%s: Date %s preceeds %s in revision %s.",
