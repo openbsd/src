@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.1 2006/04/28 08:34:31 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.2 2006/04/29 21:31:15 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -125,7 +125,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 			vput(lvp);
 			*lvpp = NULL;
 			*uvpp = NULL;
-			return error;
+			return (error);
 		}
 	}
 
@@ -152,7 +152,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 		vput(lvp);
 		*lvpp = NULL;
 		*uvpp = NULL;
-		return error;
+		return (error);
 	}
 	uvp = *uvpp;
 
@@ -160,7 +160,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 	if (bufp == NULL) {
 		vrele(lvp);
 		*lvpp = NULL;
-		return 0;
+		return (0);
 	}
 	
 	fileno = va.va_fileid;
@@ -254,7 +254,7 @@ out:
 	vrele(lvp);
 	*lvpp = NULL;
 	free(dirbuf, M_TEMP);
-	return error;
+	return (error);
 }
 
 /*
@@ -293,7 +293,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp,
 			*lvpp = NULL;
 			*uvpp = NULL;
 		}
-		return error;
+		return (error);
 	}
 	uvp = *uvpp;
 	vpid = uvp->v_id;
@@ -330,7 +330,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp,
 		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 
 		if (!error)
-			return -1;
+			return (-1);
 	}
 	vrele(lvp);
 	*lvpp = NULL;
@@ -463,7 +463,7 @@ out:
 	if (lvp)
 		vput(lvp);
 	vrele(rvp);
-	return error;
+	return (error);
 }
 
 /*
@@ -481,9 +481,9 @@ vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
 	error = getcwd_common(lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, p);
 
 	if (!error)
-		return 1;
+		return (1);
 	else
-		return 0;
+		return (0);
 }
 
 /*
@@ -502,9 +502,9 @@ proc_isunder(struct proc *p1, struct proc *p2)
 	if (r1 == NULL)
 		return (r2 == NULL);
 	else if (r2 == NULL)
-		return 1;
+		return (1);
 	else
-		return vn_isunder(r1, r2, p2);
+		return (vn_isunder(r1, r2, p2));
 }
 
 /*
@@ -531,7 +531,7 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 	if (len > MAXPATHLEN*4)
 		len = MAXPATHLEN*4;
 	else if (len < 2)
-		return ERANGE;
+		return (ERANGE);
 
 	path = (char *)malloc(len, M_TEMP, M_WAITOK);
 
@@ -556,5 +556,5 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 
 out:
 	free(path, M_TEMP);
-	return error;
+	return (error);
 }
