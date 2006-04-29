@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.56 2006/04/24 02:35:26 deraadt Exp $
+#	$OpenBSD: files.usb,v 1.57 2006/04/29 02:15:06 jsg Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -195,6 +195,11 @@ file	dev/usb/uvscom.c		uvscom
 device	ubsa: ucombus
 attach	ubsa at uhub
 file	dev/usb/ubsa.c			ubsa
+
+# Silicon Laboratories CP210x serial
+device	uslcom: ucombus
+attach	uslcom at uhub
+file	dev/usb/uslcom.c		uslcom
 
 # iPAQ PDAs
 # Generic ipaq support
