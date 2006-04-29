@@ -1,4 +1,4 @@
-/* $OpenBSD: dirhash.h,v 1.3 2004/02/02 19:34:39 tedu Exp $	*/
+/* $OpenBSD: dirhash.h,v 1.4 2006/04/29 23:09:45 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
  *
@@ -83,8 +83,6 @@
     ((dh)->dh_hash[(slot) >> DH_BLKOFFSHIFT][(slot) & DH_BLKOFFMASK])
 
 struct dirhash {
-	struct rwlock dh_mtx;	/* protects all fields except dh_list */
-
 	doff_t	**dh_hash;	/* the hash array (2-level) */
 	int	dh_narrays;	/* number of entries in dh_hash */
 	int	dh_hlen;	/* total slots in the 2-level hash array */
