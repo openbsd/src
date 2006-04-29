@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.2 2006/04/29 05:31:28 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -106,11 +106,15 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 		return (buf);
 	}
 
-	strlcpy(buf, rcsnum_itoa(nump->rn_id[0], buf, blen), blen);
+	if (strlcpy(buf, rcsnum_itoa(nump->rn_id[0], buf, blen), blen) >= blen)
+		errx(1, "rcsnum_tostr: string truncated");
 	for (i = 1; i < nump->rn_len; i++) {
-		strlcat(buf, ".", blen);
-		strlcat(buf, rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp)),
-		    blen);
+		const char *str;
+
+		str = rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp));
+		if (strlcat(buf, ".", blen) >= blen ||
+		    strlcat(buf, str, blen) >= blen)
+			errx(1, "rcsnum_tostr: string truncated");
 	}
 
 	return (buf);

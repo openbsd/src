@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.2 2006/04/27 07:59:33 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.3 2006/04/29 05:31:28 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.2 2006/04/27 07:59:33 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.3 2006/04/29 05:31:28 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -186,13 +186,13 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	d2 = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	diffb = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
 
-	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
+	if (strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1) ||
+	    strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2) ||
+	    strlcpy(path3, "/tmp/diff3.XXXXXXXXXX", sizeof(path3)) >= sizeof(path3))
+		errx(1, "rcs_diff3: string truncated");
+
 	rcs_buf_write_stmp(b1, path1, 0600);
-
-	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
 	rcs_buf_write_stmp(b2, path2, 0600);
-
-	strlcpy(path3, "/tmp/diff3.XXXXXXXXXX", sizeof(path3));
 	rcs_buf_write_stmp(b3, path3, 0600);
 
 	rcs_buf_free(b2);
@@ -201,13 +201,15 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	rcs_diffreg(path1, path3, d1);
 	rcs_diffreg(path2, path3, d2);
 
-	strlcpy(dp13, "/tmp/d13.XXXXXXXXXX", sizeof(dp13));
+	if (strlcpy(dp13, "/tmp/d13.XXXXXXXXXX", sizeof(dp13)) >= sizeof(dp13))
+		errx(1, "rcs_diff3: string truncated");
 	rcs_buf_write_stmp(d1, dp13, 0600);
 
 	rcs_buf_free(d1);
 	d1 = NULL;
 
-	strlcpy(dp23, "/tmp/d23.XXXXXXXXXX", sizeof(dp23));
+	if (strlcpy(dp23, "/tmp/d23.XXXXXXXXXX", sizeof(dp23)) >= sizeof(dp23))
+		errx(1, "rcs_diff3: string truncated");
 	rcs_buf_write_stmp(d2, dp23, 0600);
 
 	rcs_buf_free(d2);
@@ -281,22 +283,23 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	if (argc < 5)
 		return (-1);
 
-	strlcpy(f1mark, "<<<<<<< ", sizeof(f1mark));
-	strlcat(f1mark, fmark, sizeof(f1mark));
+	if (strlcpy(f1mark, "<<<<<<< ", sizeof(f1mark)) >= sizeof(f1mark) ||
+	    strlcat(f1mark, fmark, sizeof(f1mark)) >= sizeof(f1mark))
+		errx(1, "diff3_internal: string truncated");
 
-	strlcpy(f3mark, ">>>>>>> ", sizeof(f3mark));
-	strlcat(f3mark, rmark, sizeof(f3mark));
+	if (strlcpy(f3mark, ">>>>>>> ", sizeof(f3mark)) >= sizeof(f3mark) ||
+	    strlcat(f3mark, rmark, sizeof(f3mark)) >= sizeof(f3mark))
+		errx(1, "diff3_internal: strlcat");
 
 	increase();
 	m = readin(argv[0], &d13);
 	n = readin(argv[1], &d23);
 
-	for (i = 0; i <= 2; i++) {
+	for (i = 0; i <= 2; i++)
 		if ((fp[i] = fopen(argv[i + 2], "r")) == NULL) {
 			warn("%s", argv[i + 2]);
 			return (-1);
 		}
-	}
 
 	return (merge(m, n));
 }

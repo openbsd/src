@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.4 2006/04/27 07:59:33 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.5 2006/04/29 05:31:28 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -358,7 +358,7 @@ int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], fn[19] = "";
+	char buf[1024], numbuf[64], fn[20] = "";
 	void *bp;
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
@@ -377,12 +377,17 @@ rcs_write(RCSFILE *rfp)
 	/* Write operations need the whole file parsed */
 	rcs_parse_deltatexts(rfp, NULL);
 
-	strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn));
+	if (strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn)) >= sizeof(fn))
+		errx(1, "rcs_write: string truncated");
 	if ((fd = mkstemp(fn)) == -1)
 		err(1, "%s", fn);
 
 	if ((fp = fdopen(fd, "w+")) == NULL) {
+		int saved_errno;
+
+		saved_errno = errno;
 		(void)unlink(fn);
+		errno = saved_errno;
 		err(1, "%s", fn);
 	}
 
@@ -407,9 +412,10 @@ rcs_write(RCSFILE *rfp)
 	fprintf(fp, "symbols");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
-		strlcpy(buf, symp->rs_name, sizeof(buf));
-		strlcat(buf, ":", sizeof(buf));
-		strlcat(buf, numbuf, sizeof(buf));
+		if (strlcpy(buf, symp->rs_name, sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, ":", sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, numbuf, sizeof(buf)) >= sizeof(buf))
+			errx(1, "rcs_write: string overflow");
 		fprintf(fp, "\n\t%s", buf);
 	}
 	fprintf(fp, ";\n");
@@ -2084,7 +2090,9 @@ rcs_parse_deltatext(RCSFILE *rfp)
 	}
 
 	rdp->rd_text = xmalloc(RCS_TOKLEN(rfp) + 1);
-	strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1));
+	if (strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1)) >=
+	    RCS_TOKLEN(rfp) + 1)
+		errx(1, "rcs_parse_deltatext: strlcpy");
 	rdp->rd_tlen = RCS_TOKLEN(rfp);
 
 	return (1);
@@ -2369,7 +2377,9 @@ rcs_gettok(RCSFILE *rfp)
 
 	if (pdp->rp_pttype != RCS_TOK_ERR) {
 		type = pdp->rp_pttype;
-		strlcpy(pdp->rp_buf, pdp->rp_ptok, pdp->rp_blen);
+		if (strlcpy(pdp->rp_buf, pdp->rp_ptok, pdp->rp_blen) >=
+		    pdp->rp_blen)
+			errx(1, "rcs_gettok: strlcpy");
 		pdp->rp_pttype = RCS_TOK_ERR;
 		return (type);
 	}
@@ -2483,7 +2493,9 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
 		return (-1);
 
 	pdp->rp_pttype = type;
-	strlcpy(pdp->rp_ptok, tok, sizeof(pdp->rp_ptok));
+	if (strlcpy(pdp->rp_ptok, tok, sizeof(pdp->rp_ptok)) >=
+	    sizeof(pdp->rp_ptok))
+		errx(1, "rcs_pushtok: strlcpy");
 	return (0);
 }
 
@@ -2633,10 +2645,12 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			expbuf[0] = '\0';
 
 			if (mode & RCS_KWEXP_NAME) {
-				strlcat(expbuf, "$", sizeof(expbuf));
-				strlcat(expbuf, kwstr, sizeof(expbuf));
-				if (mode & RCS_KWEXP_VAL)
-					strlcat(expbuf, ": ", sizeof(expbuf));
+				if (strlcat(expbuf, "$", sizeof(expbuf)) >= sizeof(expbuf) ||
+				    strlcat(expbuf, kwstr, sizeof(expbuf)) >= sizeof(expbuf))
+					errx(1, "rcs_expand_keywords: string truncated");
+				if ((mode & RCS_KWEXP_VAL) &&
+				    strlcat(expbuf, ": ", sizeof(expbuf)) >= sizeof(expbuf))
+					errx(1, "rcs_expand_keywords: string truncated");
 			}
 
 			/*
@@ -2646,20 +2660,18 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			if (mode & RCS_KWEXP_VAL) {
 				if (kwtype & RCS_KW_RCSFILE) {
 					if (!(kwtype & RCS_KW_FULLPATH))
-						strlcat(expbuf,
-						    basename(rcsfile),
-						    sizeof(expbuf));
+						(void)strlcat(expbuf, basename(rcsfile), sizeof(expbuf));
 					else
-						strlcat(expbuf, rcsfile,
-						    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+						(void)strlcat(expbuf, rcsfile, sizeof(expbuf));
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_REVISION) {
-					rcsnum_tostr(rdp->rd_num, buf,
-					    sizeof(buf));
-					strlcat(buf, " ", sizeof(buf));
-					strlcat(expbuf, buf, sizeof(expbuf));
+					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
+					if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf) ||
+					    strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(buf))
+						errx(1, "rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_DATE) {
@@ -2669,38 +2681,42 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 						fmt = "%Y/%m/%d %H:%M:%S ";
 
 					strftime(buf, sizeof(buf), fmt, &tb);
-					strlcat(expbuf, buf, sizeof(expbuf));
+					if (strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_AUTHOR) {
-					strlcat(expbuf, rdp->rd_author,
-					    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, rdp->rd_author, sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_STATE) {
-					strlcat(expbuf, rdp->rd_state,
-					    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, rdp->rd_state, sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 				}
 
 				/* order does not matter anymore below */
 				if (kwtype & RCS_KW_LOG)
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 
 				if (kwtype & RCS_KW_SOURCE) {
-					strlcat(expbuf, rcsfile,
-					    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, rcsfile, sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_NAME)
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						errx(1, "rcs_expand_keywords: string truncated");
 			}
 
 			/* end the expansion */
 			if (mode & RCS_KWEXP_NAME)
-				strlcat(expbuf, "$", sizeof(expbuf));
+				if (strlcat(expbuf, "$", sizeof(expbuf)) >= sizeof(expbuf))
+					errx(1, "rcs_expand_keywords: string truncated");
 
 			sizdiff = strlen(expbuf) - (end - start);
 			tbuf = xstrdup(end);
@@ -2718,8 +2734,9 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				start = data + start_offset;
 				c = data + c_offset;
 			}
-			strlcpy(start, expbuf, len);
-			strlcat(data, tbuf, len);
+			if (strlcpy(start, expbuf, len) >= len ||
+			    strlcat(data, tbuf, len) >= len)
+				errx(1, "rcs_expand_keywords: string truncated");
 			xfree(tbuf);
 			i += strlen(expbuf);
 		}
@@ -2887,7 +2904,7 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 
 	if (!(expmode & RCS_KWEXP_NONE)) {
 		if ((rdp = rcs_findrev(rf, rev)) == NULL)
-		    errx(1, "could not fetch revision");
+			errx(1, "could not fetch revision");
 		rcs_buf_putc(bp, '\0');
 		len = rcs_buf_len(bp);
 		tbuf = rcs_buf_release(bp);

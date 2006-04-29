@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.165 2006/04/29 05:10:16 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.166 2006/04/29 05:31:28 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -352,15 +352,17 @@ checkin_diff_file(struct checkin_params *pb)
 		goto out;
 	}
 
-	strlcpy(path1, rcs_tmpdir, sizeof(path1));
-	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
+	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
+	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
+		errx(1, "path truncated");
 	rcs_buf_write_stmp(b1, path1, 0600);
 
 	rcs_buf_free(b1);
 	b1 = NULL;
 
-	strlcpy(path2, rcs_tmpdir, sizeof(path2));
-	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
+	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
+	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
+		errx(1, "path truncated");
 	rcs_buf_write_stmp(b2, path2, 0600);
 
 	rcs_buf_free(b2);
@@ -881,10 +883,9 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
 				while (*c++) {
 					if (*c == '$') {
 						end = c - start + 2;
-						if (end >= sizeof(buf))
+						if (strlcpy(buf, start, end) >= end)
 							errx(1, "keyword buffer"
 							    " too small!");
-						strlcpy(buf, start, end);
 						checkin_parsekeyword(buf, rev,
 						    date, author, state);
 						break;
@@ -970,11 +971,12 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		*state = xstrdup(tokens[6]);
 		len = strlen(tokens[3]) + strlen(tokens[4]) + 2;
 		datestring = xmalloc(len);
-		strlcpy(datestring, tokens[3], len);
-		strlcat(datestring, " ", len);
-		strlcat(datestring, tokens[4], len);
+		if (strlcpy(datestring, tokens[3], len) >= len ||
+		    strlcat(datestring, " ", len) >= len ||
+		    strlcat(datestring, tokens[4], len) >= len)
+			errx(1, "date too long");
 		if ((*date = rcs_date_parse(datestring)) <= 0)
-		    errx(1, "could not parse date");
+			errx(1, "could not parse date");
 		xfree(datestring);
 		break;
 	case KW_TYPE_AUTHOR:
@@ -995,11 +997,12 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		}
 		len = strlen(tokens[1]) + strlen(tokens[2]) + 2;
 		datestring = xmalloc(len);
-		strlcpy(datestring, tokens[1], len);
-		strlcat(datestring, " ", len);
-		strlcat(datestring, tokens[2], len);
+		if (strlcpy(datestring, tokens[1], len) >= len ||
+		    strlcat(datestring, " ", len) >= len ||
+		    strlcat(datestring, tokens[2], len) >= len)
+			errx(1, "date too long");
 		if ((*date = rcs_date_parse(datestring)) <= 0)
-		    errx(1, "could not parse date");
+			errx(1, "could not parse date");
 		xfree(datestring);
 		break;
 	case KW_TYPE_STATE:

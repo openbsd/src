@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.86 2006/04/26 21:55:22 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.87 2006/04/29 05:31:28 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -330,12 +330,14 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (file->rf_ndelta != 0 && rdp->rd_locker != NULL) {
 		if (strcmp(lockname, rdp->rd_locker)) {
-			strlcpy(msg, "Revision %s is already locked by %s; ",
-			    sizeof(msg));
+			if (strlcpy(msg, "Revision %s is already locked by %s; ",
+			    sizeof(msg)) >= sizeof(msg))
+				errx(1, "msg too long");
 
 			if (flags & CO_UNLOCK) {
-				strlcat(msg, "use co -r or rcs -u",
-				    sizeof(msg));
+				if (strlcat(msg, "use co -r or rcs -u",
+				    sizeof(msg)) >= sizeof(msg))
+					errx(1, "msg too long");
 			}
 
 			warnx(msg, buf, rdp->rd_locker);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.58 2006/04/26 21:55:22 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.59 2006/04/29 05:31:28 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -47,12 +47,15 @@ rcsdiff_main(int argc, char **argv)
 	rev_str1 = rev_str2 = NULL;
 	status = 0;
 
-	strlcpy(diffargs, "diff", sizeof(diffargs));
+	if (strlcpy(diffargs, "diff", sizeof(diffargs)) >= sizeof(diffargs))
+		errx(1, "diffargs too long");
 
 	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx::z::")) != -1) {
 		switch (ch) {
 		case 'c':
-			strlcat(diffargs, " -c", sizeof(diffargs));
+			if (strlcat(diffargs, " -c", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(1, "diffargs too long");
 			diff_format = D_CONTEXT;
 			break;
 		case 'k':
@@ -64,15 +67,13 @@ rcsdiff_main(int argc, char **argv)
 			}
 			break;
 		case 'n':
-			strlcat(diffargs, " -n", sizeof(diffargs));
+			if (strlcat(diffargs, " -n", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(1, "diffargs too long");
 			diff_format = D_RCSDIFF;
 			break;
 		case 'q':
 			flags |= QUIET;
-			break;
-		case 'u':
-			strlcat(diffargs, " -u", sizeof(diffargs));
-			diff_format = D_UNIFIED;
 			break;
 		case 'r':
 			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
@@ -81,6 +82,12 @@ rcsdiff_main(int argc, char **argv)
 			/*
 			 * kept for compatibility
 			 */
+			break;
+		case 'u':
+			if (strlcat(diffargs, " -u", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(1, "diffargs too long");
+			diff_format = D_UNIFIED;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -228,8 +235,9 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	tv2[0].tv_sec = t;
 	tv2[1].tv_sec = t;
 
-	strlcpy(path1, rcs_tmpdir, sizeof(path1));
-	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
+	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
+	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
+		errx(1, "path too long");
 	rcs_buf_write_stmp(b1, path1, 0600);
 
 	rcs_buf_free(b1);
@@ -238,8 +246,9 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		warn("utimes");
 
-	strlcpy(path2, rcs_tmpdir, sizeof(path2));
-	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
+	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
+	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
+		errx(1, "path too long");
 	rcs_buf_write_stmp(b2, path2, 0600);
 
 	rcs_buf_free(b2);
@@ -308,8 +317,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	if (!(flags & QUIET))
 		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
-	strlcpy(path1, rcs_tmpdir, sizeof(path1));
-	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
+	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
+	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
+		errx(1, "path too long");
 	rcs_buf_write_stmp(b1, path1, 0600);
 
 	rcs_buf_free(b1);
@@ -318,8 +328,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		warn("utimes");
 
-	strlcpy(path2, rcs_tmpdir, sizeof(path2));
-	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
+	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
+	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
+		errx(1, "path too long");
 	rcs_buf_write_stmp(b2, path2, 0600);
 
 	rcs_buf_free(b2);
