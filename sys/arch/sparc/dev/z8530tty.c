@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.6 2006/04/27 19:31:43 deraadt Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.7 2006/04/29 19:55:31 naddy Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -1380,6 +1380,7 @@ zstty_stint(cs, force)
 	int force;
 {
 	struct zstty_softc *zst = cs->cs_private;
+	struct tty *tp = zst->zst_tty;
 	u_char rr0, delta;
 
 	rr0 = zs_read_csr(cs);
