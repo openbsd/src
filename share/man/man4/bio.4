@@ -1,6 +1,7 @@
-.\"	$OpenBSD: bio.4,v 1.13 2005/11/11 09:35:19 jmc Exp $
+.\"	$OpenBSD: bio.4,v 1.14 2006/04/30 04:38:44 marco Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
+.\" Copyright (c) 2006 Marco Peereboom
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm bio
-.Nd ioctl tunnel pseudo-device
+.Nd Block IO ioctl tunnel pseudo-device
 .Sh SYNOPSIS
 .Cd "pseudo-device bio" Op Ar count
 .Sh DESCRIPTION
@@ -64,24 +65,31 @@ device:
 Locate a named device and give back a cookie to the application
 for subsequent ioctl calls.
 The cookie is used to tunnel further ioctls to the right device.
+.It Dv BIOCINQ
+Retrieve number of volumes and physical disks for a specific device.
+.It Dv BIOCDISK
+Retrieve detailed information for the specified physical disk.
+Information returned can include status, size, channel, target, lun,
+vendor name, serial number and processor device (ses or safte).
+.It Dv BIOCVOL
+Retrieve detailed information for the specified volume.
+Information returned can include status, size, RAID level, number of disks,
+device name association (sd?) and vendor name.
 .It Dv BIOCALARM
 Control the alarm beeper on the device.
+Supported states are: disable alarm, enable alarm, silence alarm, status and
+test alarm.
+.Pp
+Note:  These options might not be supported on all hardware.
 .It Dv BIOCBLINK
-Blink an LED on one of the drives (to be replaced).
-.It Dv BIOCCAPABILITIES
-Return information about ioctl commands, RAID levels, and other
-features supported.
-.It Dv BIOCPING
-Check on the device to see if it's alive.
-Increments a counter to signify the OK condition.
-.It Dv BIOCSCSICMD
-Tunnel a SCSI command into one of the buses on the device.
-May not be supported if the device doesn't employ SCSI.
-.It Dv BIOCSTARTSTOP
-Start or Stop one of the component drives.
-.It Dv BIOCSTATUS
-Retrieve device status including physical drives, logical drives,
-and battery module.
+Blink an LED of the specified physical disk.
+Supported blink states are: blink LED, unblink LED & blink alarm LED.
+.Pp
+Note:  This option is only supported if the disk is governed by ses(4) or
+safte(4) and the hardware supports hardware blinking.
+.It Dv BIOCSETSTATE
+Alter the state of specified physical disk.
+Supported states are: create hot-spare, online disk & offline disk.
 .El
 .Sh FILES
 .Bl -tag -width /dev/bio -compact
@@ -93,9 +101,20 @@ ioctl tunnel device
 .Xr ami 4 ,
 .Xr ciss 4 ,
 .Xr gdt 4 ,
-.Xr bioctl 8
+.Xr bioctl 8,
+.Xr scsi 4 ,
+.Xr ses 4 ,
+.Xr safte 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 3.2 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Niklas Hallqvist Aq niklas@openbsd.org .
+The API was written by
+.An Marco Peereboom Aq marco@openbsd.org .
