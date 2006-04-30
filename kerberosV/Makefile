@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.12 2003/07/14 16:14:43 mho Exp $
+# $OpenBSD: Makefile,v 1.13 2006/04/30 10:22:00 biorn Exp $
 
-SUBDIR	= usr.bin lib libexec usr.sbin doc
+SUBDIR	= usr.bin libexec usr.sbin doc
 
 .include <bsd.subdir.mk>
