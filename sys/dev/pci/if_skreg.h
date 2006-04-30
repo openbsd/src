@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.29 2006/04/30 02:00:21 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.30 2006/04/30 04:17:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -319,7 +319,6 @@
 #define SK_YUKON_EC		0xB6
 #define SK_YUKON_FE		0xB7
 
-#define SK_YUKON_FAMILY(x) ((x) & 0xB0)
 #define SK_IS_GENESIS(sc) \
     ((sc)->sk_type == SK_GENESIS)
 #define SK_IS_YUKON(sc) \

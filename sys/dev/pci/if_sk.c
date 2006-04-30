@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.103 2006/04/30 03:13:43 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.104 2006/04/30 04:17:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -515,7 +515,7 @@ allmulti:
 			 * into the perfect filter. For all others,
 			 * use the hash table.
 			 */
-			if (sc->sk_type == SK_GENESIS && i < XM_RXFILT_MAX) {
+			if (SK_IS_GENESIS(sc) && i < XM_RXFILT_MAX) {
 				sk_setfilt(sc_if, enm->enm_addrlo, i);
 				i++;
 			}
@@ -1029,21 +1029,21 @@ void sk_reset(struct sk_softc *sc)
 
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_MASTER_RESET);
-	if (SK_YUKON_FAMILY(sc->sk_type))
+	if (SK_IS_YUKON(sc))
 		CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_SET);
 
 	DELAY(1000);
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_SW_UNRESET);
 	DELAY(2);
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_MASTER_UNRESET);
-	if (SK_YUKON_FAMILY(sc->sk_type))
+	if (SK_IS_YUKON(sc))
 		CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_CLEAR);
 
 	DPRINTFN(2, ("sk_reset: sk_csr=%x\n", CSR_READ_2(sc, SK_CSR)));
 	DPRINTFN(2, ("sk_reset: sk_link_ctrl=%x\n",
 		     CSR_READ_2(sc, SK_LINK_CTRL)));
 
-	if (sc->sk_type == SK_GENESIS) {
+	if (SK_IS_GENESIS(sc)) {
 		/* Configure packet arbiter */
 		sk_win_write_2(sc, SK_PKTARB_CTL, SK_PKTARBCTL_UNRESET);
 		sk_win_write_2(sc, SK_RXPA1_TINIT, SK_PKTARB_TIMEOUT);
@@ -1295,7 +1295,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
  	DPRINTFN(2, ("sk_attach: 1\n"));
 
 	sc_if->sk_mii.mii_ifp = ifp;
-	if (sc->sk_type == SK_GENESIS) {
+	if (SK_IS_GENESIS(sc)) {
 		sc_if->sk_mii.mii_readreg = sk_xmac_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_xmac_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_xmac_miibus_statchg;
@@ -1429,7 +1429,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);
 
 	/* bail out here if chip is not recognized */
-	if (sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
+	if (! SK_IS_GENESIS(sc) && ! SK_IS_YUKON(sc)) {
 		printf(": unknown chip type: %d\n", sc->sk_type);
 		goto fail_1;
 	}
@@ -1456,7 +1456,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	sk_reset(sc);
 
 	skrs = sk_win_read_1(sc, SK_EPROM0);
-	if (sc->sk_type == SK_GENESIS) {
+	if (SK_IS_GENESIS(sc)) {
 		/* Read and save RAM size and RAMbuffer offset */
 		switch(skrs) {
 		case SK_RAMSIZE_512K_64:
@@ -2256,7 +2256,7 @@ sk_intr(void *xsc)
 		/* Then MAC interrupts. */
 		if (sc_if0 && (status & SK_ISR_MAC1) &&
 		    (ifp0->if_flags & IFF_RUNNING)) {
-			if (sc->sk_type == SK_GENESIS)
+			if (SK_IS_GENESIS(sc))
 				sk_intr_xmac(sc_if0);
 			else
 				sk_intr_yukon(sc_if0);
@@ -2264,7 +2264,7 @@ sk_intr(void *xsc)
 
 		if (sc_if1 && (status & SK_ISR_MAC2) &&
 		    (ifp1->if_flags & IFF_RUNNING)) {
-			if (sc->sk_type == SK_GENESIS)
+			if (SK_IS_GENESIS(sc))
 				sk_intr_xmac(sc_if1);
 			else
 				sk_intr_yukon(sc_if1);
@@ -2596,7 +2596,7 @@ sk_init(void *xsc_if)
 	/* Cancel pending I/O and free all RX/TX buffers. */
 	sk_stop(sc_if);
 
-	if (sc->sk_type == SK_GENESIS) {
+	if (SK_IS_GENESIS(sc)) {
 		/* Configure LINK_SYNC LED */
 		SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_ON);
 		SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL,
@@ -2630,7 +2630,7 @@ sk_init(void *xsc_if)
 	}
 	mii_mediachg(mii);
 
-	if (sc->sk_type == SK_GENESIS) {
+	if (SK_IS_GENESIS(sc)) {
 		/* Configure MAC FIFOs */
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_UNRESET);
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_END, SK_FIFO_END);
@@ -2703,14 +2703,14 @@ sk_init(void *xsc_if)
 	/* Start BMUs. */
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_RX_START);
 
-	if (sc->sk_type == SK_GENESIS) {
+	if (SK_IS_GENESIS(sc)) {
 		/* Enable XMACs TX and RX state machines */
 		SK_XM_CLRBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_IGNPAUSE);
 		SK_XM_SETBIT_2(sc_if, XM_MMUCMD,
 			       XM_MMUCMD_TX_ENB|XM_MMUCMD_RX_ENB);
 	}
 
-	if (SK_YUKON_FAMILY(sc->sk_type)) {
+	if (SK_IS_YUKON(sc)) {
 		u_int16_t reg = SK_YU_READ_2(sc_if, YUKON_GPCR);
 		reg |= YU_GPCR_TXEN | YU_GPCR_RXEN;
 #if 0
