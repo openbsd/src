@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.13 2006/04/20 16:06:32 martin Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.14 2006/04/30 00:35:40 brad Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
@@ -259,34 +259,34 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate memory for the MDL, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
-		return;
+		goto fail_0;
 	}
 	if ((error = bus_dmamem_map(esc->sc_dmat, &seg, rseg,
 	    sizeof(u_int32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map the MDL memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		goto fail_0;
+		goto fail_1;
 	}
 	if ((error = bus_dmamap_create(esc->sc_dmat, 
 	    sizeof(u_int32_t) * MDL_SIZE, 1, sizeof(u_int32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
 		printf("%s: unable to map_create for the MDL, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		goto fail_1;
+		goto fail_2;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
 	     esc->sc_mdladdr, sizeof(u_int32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to load for the MDL, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		goto fail_2;
+		goto fail_3;
 	}
 
 	/* map and establish interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail_3;
+		goto fail_4;
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -297,7 +297,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail_3;
+		goto fail_4;
 	}
 	if (intrstr != NULL)
 		printf(": %s\n", intrstr);
@@ -312,15 +312,17 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail_3:
+fail_4:
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_mdldmap);
-fail_2:
+fail_3:
 	bus_dmamap_destroy(esc->sc_dmat, esc->sc_mdldmap);
-fail_1:
+fail_2:
 	bus_dmamem_unmap(esc->sc_dmat, (caddr_t)esc->sc_mdldmap,
 	    sizeof(uint32_t) * MDL_SIZE);
-fail_0:
+fail_1:
 	bus_dmamem_free(esc->sc_dmat, &seg, rseg);
+fail_0:
+	bus_dmamap_destroy(esc->sc_dmat, esc->sc_xfermap);
 }
 
 /*
