@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.38 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.39 2006/04/30 05:37:27 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -134,7 +134,6 @@ int lge_newbuf(struct lge_softc *, struct lge_rx_desc *,
 			     struct mbuf *);
 int lge_encap(struct lge_softc *, struct mbuf *, u_int32_t *);
 void lge_rxeof(struct lge_softc *, int);
-void lge_rxeoc(struct lge_softc *);
 void lge_txeof(struct lge_softc *);
 int lge_intr(void *);
 void lge_tick(void *);
@@ -979,16 +978,6 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 	sc->lge_cdata.lge_rx_cons = i;
 }
 
-void
-lge_rxeoc(struct lge_softc *sc)
-{
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-	ifp->if_flags &= ~IFF_RUNNING;
-	lge_init(sc);
-}
-
 /*
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
@@ -1101,7 +1090,7 @@ lge_intr(void *arg)
 			lge_rxeof(sc, LGE_RX_DMACNT(status));
 
 		if (status & LGE_ISR_RXCMDFIFO_EMPTY)
-			lge_rxeoc(sc);
+			lge_init(sc);
 
 		if (status & LGE_ISR_PHY_INTR) {
 			sc->lge_link = 0;
@@ -1234,9 +1223,6 @@ lge_init(void *xsc)
 	int			s;
 
 	s = splnet();
-
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1404,17 +1390,12 @@ lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			lge_init(sc);
 #ifdef INET
-		case AF_INET:
-			lge_init(sc);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
 #endif /* INET */
-		default:
-			lge_init(sc);
-			break;
-                }
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
@@ -1430,14 +1411,19 @@ lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				CSR_WRITE_4(sc, LGE_MODE1,
 				    LGE_MODE1_SETRST_CTL1|
 				    LGE_MODE1_RX_PROMISC);
+				lge_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->lge_if_flags & IFF_PROMISC) {
 				CSR_WRITE_4(sc, LGE_MODE1,
 				    LGE_MODE1_RX_PROMISC);
+				lge_setmulti(sc);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    (ifp->if_flags ^ sc->lge_if_flags) & IFF_ALLMULTI) {
+				lge_setmulti(sc);
 			} else {
-				ifp->if_flags &= ~IFF_RUNNING;
-				lge_init(sc);
+				if (!(ifp->if_flags & IFF_RUNNING))
+					lge_init(sc);
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -1484,7 +1470,6 @@ lge_watchdog(struct ifnet *ifp)
 
 	lge_stop(sc);
 	lge_reset(sc);
-	ifp->if_flags &= ~IFF_RUNNING;
 	lge_init(sc);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
