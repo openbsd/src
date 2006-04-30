@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.135 2006/04/27 16:10:01 mbalmer Exp $g
+#	$OpenBSD: GENERIC,v 1.136 2006/04/30 20:21:53 brad Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -285,9 +285,9 @@ ep*		at pcmcia?	# PCMCIA based 3C5xx ethernet
 an*		at pcmcia?	# Cisco/Aironet
 wi*		at pcmcia?	# WaveLAN IEEE 802.11DS
 dc*		at cardbus?	# 21143, "tulip" clone ethernet
-#fxp*		at cardbus?	# Intel PRO/100 ethernet
+fxp*		at cardbus?	# Intel PRO/100 ethernet
 xl*		at cardbus?	# 3C575/3C656 ethernet
-#rl*		at cardbus?	# RealTek 81[23]9 ethernet
+rl*		at cardbus?	# RealTek 81[23]9 ethernet
 rtw*		at cardbus?	# Realtek 8180
 wdc*		at pcmcia?
 com*		at pcmcia?
