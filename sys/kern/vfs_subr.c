@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.123 2006/04/19 11:55:55 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.124 2006/04/30 14:20:07 sturm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ vntblinit(void)
  *     fail.
  */
 int
-vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp)
+vfs_busy(struct mount *mp, int flags)
 {
 	int lkflags;
 
@@ -173,9 +173,7 @@ vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp)
 	 */
 	lkflags |= LK_SLEEPFAIL;
 
-	if (interlkp)
-		lkflags |= LK_INTERLOCK;
-	if (lockmgr(&mp->mnt_lock, lkflags, interlkp))
+	if (lockmgr(&mp->mnt_lock, lkflags, NULL))
 		return (ENOENT);
 	return (0);
 }
@@ -215,7 +213,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	(void)vfs_busy(mp, LK_NOWAIT, NULL);
+	(void)vfs_busy(mp, LK_NOWAIT);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vfc = vfsp;
 	mp->mnt_op = vfsp->vfc_vfsops;
@@ -1166,7 +1164,7 @@ vgonel(struct vnode *vp, struct proc *p)
 		 */
 		mp = vp->v_specmountpoint;
 		if (mp != NULL) {
-			if (!vfs_busy(mp, LK_EXCLUSIVE, NULL)) {
+			if (!vfs_busy(mp, LK_EXCLUSIVE)) {
 				flags = MNT_FORCE | MNT_DOOMED;
 				dounmount(mp, flags, p, NULL);
 			}
@@ -1333,7 +1331,7 @@ printlockedvnodes(void)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
+		if (vfs_busy(mp, LK_NOWAIT)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1411,7 +1409,7 @@ sysctl_vnode(char *where, size_t *sizep, struct proc *p)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
+		if (vfs_busy(mp, LK_NOWAIT)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1712,7 +1710,7 @@ vfs_unmountall(void)
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
-		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL)) != 0)
+		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT)) != 0)
 			continue;
 		if ((error = dounmount(mp, MNT_FORCE, curproc, NULL)) != 0) {
 			printf("unmount of %s failed with error %d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_25.c,v 1.9 2006/04/19 11:55:55 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls_25.c,v 1.10 2006/04/30 14:20:07 sturm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -181,7 +181,7 @@ compat_25_sys_getfsstat(p, v, retval)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
+		if (vfs_busy(mp, LK_NOWAIT)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.133 2006/04/19 11:55:55 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.134 2006/04/30 14:20:07 sturm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			if (flag & MNT_NOEXEC)
 				SCARG(uap, flags) |= MNT_NOEXEC;
 		}
-		if ((error = vfs_busy(mp, LK_NOWAIT, NULL)) != 0) {
+		if ((error = vfs_busy(mp, LK_NOWAIT)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -238,7 +238,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	/* This error never happens, but it makes auditing easier */
-	if ((error = vfs_busy(mp, LK_NOWAIT, NULL)))
+	if ((error = vfs_busy(mp, LK_NOWAIT)))
 		return (error);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
@@ -405,7 +405,7 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp, LK_EXCLUSIVE, NULL))
+	if (vfs_busy(mp, LK_EXCLUSIVE))
 		return (EBUSY);
 
 	return (dounmount(mp, SCARG(uap, flags), p, vp));
@@ -474,7 +474,7 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
+		if (vfs_busy(mp, LK_NOWAIT)) {
 			nmp = CIRCLEQ_PREV(mp, mnt_list);
 			continue;
 		}
@@ -629,7 +629,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, NULL)) {
+		if (vfs_busy(mp, LK_NOWAIT)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -705,7 +705,7 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
-		if (vfs_busy(mp, 0, NULL))
+		if (vfs_busy(mp, 0))
 			continue;
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);

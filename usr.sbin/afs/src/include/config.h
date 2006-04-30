@@ -882,7 +882,7 @@
 #define HAVE_THREE_ARGUMENT_VOP_LOCK 1
 
 /* define if vfs_busy takes three arguments */
-#define HAVE_THREE_ARGUMENT_VFS_BUSY 1
+/* #undef HAVE_THREE_ARGUMENT_VFS_BUSY */
 
 /* define if vfs_busy takes four arguments */
 /* #undef HAVE_FOUR_ARGUMENT_VFS_BUSY */
@@ -901,6 +901,9 @@
 
 /* define if vfs_getnewfsid takes two arguments */
 /* #undef HAVE_TWO_ARGUMENT_VFS_GETNEWFSID */
+
+/* define if vfs_busy takes two arguments */
+#define HAVE_TWO_ARGUMENT_VFS_BUSY 1
 
 /* define if lockmgr takes four arguments */
 #define HAVE_FOUR_ARGUMENT_LOCKMGR 1

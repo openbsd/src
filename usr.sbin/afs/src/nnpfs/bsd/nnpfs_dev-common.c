@@ -113,7 +113,10 @@ nnpfs_devopen_common(dev_t dev)
     return 0;
 }
 
-#if defined(HAVE_THREE_ARGUMENT_VFS_BUSY)
+#if defined(HAVE_TWO_ARGUMENT_VFS_BUSY)
+#define nnpfs_vfs_busy(mp, flags, lock, proc) vfs_busy((mp), (flags))
+#define nnpfs_vfs_unbusy(mp, proc) vfs_unbusy((mp))
+#elif defined(HAVE_THREE_ARGUMENT_VFS_BUSY)
 #define nnpfs_vfs_busy(mp, flags, lock, proc) vfs_busy((mp), (flags), (lock))
 #define nnpfs_vfs_unbusy(mp, proc) vfs_unbusy((mp))
 #elif defined(HAVE_FOUR_ARGUMENT_VFS_BUSY)

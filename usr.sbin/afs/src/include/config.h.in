@@ -1291,6 +1291,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* define if vfs_getnewfsid takes two arguments */
 #undef HAVE_TWO_ARGUMENT_VFS_GETNEWFSID
 
+/* define if vfs_busy takes two arguments */
+#undef HAVE_TWO_ARGUMENT_VFS_BUSY
+
 /* define if vget takes two arguments */
 #undef HAVE_TWO_ARGUMENT_VGET
 
