@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.101 2006/04/30 02:00:21 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.102 2006/04/30 02:28:49 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1816,6 +1816,8 @@ sk_watchdog(struct ifnet *ifp)
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
+
+	ifp->if_oerrors++;
 
 	sk_init(sc_if);
 }
