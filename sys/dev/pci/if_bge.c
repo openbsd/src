@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.142 2006/04/24 00:00:21 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.143 2006/04/30 05:42:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3086,12 +3086,12 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
+		if (!(ifp->if_flags & IFF_RUNNING))
 			bge_init(sc);
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
+#endif /* INET */
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN ||
@@ -3129,7 +3129,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI) {
 				bge_setmulti(sc);
 			} else {
-				if ((ifp->if_flags & IFF_RUNNING) == 0)
+				if (!(ifp->if_flags & IFF_RUNNING))
 					bge_init(sc);
 			}
 		} else {
