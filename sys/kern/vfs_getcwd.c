@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.3 2006/04/30 00:08:13 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.4 2006/04/30 00:34:34 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -344,14 +344,13 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp,
 #define GETCWD_CHECK_ACCESS 0x0001
 
 static int
-getcwd_common(struct vnode *lvp, struct vnode *rvp,
-    char **bpp, char *bufp, int limit, int flags, struct proc *p)
+getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
+    int limit, int flags, struct proc *p)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct vnode *uvp = NULL;
 	char *bp = NULL;
-	int error;
-	int perms = VEXEC;
+	int error, perms = VEXEC;
 
 	if (rvp == NULL) {
 		rvp = fdp->fd_rdir;
@@ -362,52 +361,41 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp,
 	VREF(rvp);
 	VREF(lvp);
 
-	/*
-	 * Error handling invariant:
-	 * Before a `goto out':
-	 *	lvp is either NULL, or locked and held.
-	 *	uvp is either NULL, or locked and held.
-	 */
-
 	error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (error) {
 		vrele(lvp);
 		lvp = NULL;
 		goto out;
 	}
+
 	if (bufp)
 		bp = *bpp;
-	/*
-	 * this loop will terminate when one of the following happens:
-	 *	- we hit the root
-	 *	- getdirentries or lookup fails
-	 *	- we run out of space in the buffer.
-	 */
+
 	if (lvp == rvp) {
 		if (bp)
 			*(--bp) = '/';
 		goto out;
 	}
+
+	/*
+	 * This loop will terminate when we hit the root, VOP_READDIR() or
+	 * VOP_LOOKUP() fails, or we run out of space in the user buffer.
+	 */
 	do {
 		if (lvp->v_type != VDIR) {
 			error = ENOTDIR;
 			goto out;
 		}
-		
-		/*
-		 * access check here is optional, depending on
-		 * whether or not caller cares.
-		 */
+
+		/* Check for access if caller cares */
 		if (flags & GETCWD_CHECK_ACCESS) {
 			error = VOP_ACCESS(lvp, perms, p->p_ucred, p);
 			if (error)
 				goto out;
 			perms = VEXEC|VREAD;
 		}
-		
-		/*
-		 * step up if we're a covered vnode..
-		 */
+
+		/* Step up if we're a covered vnode */
 		while (lvp->v_flag & VROOT) {
 			struct vnode *tvp;
 
@@ -416,63 +404,69 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp,
 			
 			tvp = lvp;
 			lvp = lvp->v_mount->mnt_vnodecovered;
+
 			vput(tvp);
-			/*
-			 * hodie natus est radici frater
-			 */
+
 			if (lvp == NULL) {
 				error = ENOENT;
 				goto out;
 			}
+
 			VREF(lvp);
+
 			error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
-			if (error != 0) {
+			if (error) {
 				vrele(lvp);
 				lvp = NULL;
 				goto out;
 			}
 		}
-		/*
-		 * Look in the name cache; if that fails, look in the
-		 * directory..
-		 */
+
+		/* Look in the name cache */
 		error = getcwd_getcache(&lvp, &uvp, &bp, bufp);
-		if (error == -1)
+
+		if (error == -1) {
+			/* If that fails, look in the directory */
 			error = getcwd_scandir(&lvp, &uvp, &bp, bufp, p);
+		}
+
 		if (error)
 			goto out;
-#ifdef DIAGNOSTIC		
+
+#ifdef DIAGNOSTIC
 		if (lvp != NULL)
 			panic("getcwd: oops, forgot to null lvp");
 		if (bufp && (bp <= bufp)) {
 			panic("getcwd: oops, went back too far");
 		}
-#endif		
+#endif
+
 		if (bp)
 			*(--bp) = '/';
+
 		lvp = uvp;
 		uvp = NULL;
 		limit--;
+
 	} while ((lvp != rvp) && (limit > 0)); 
 
 out:
+
 	if (bpp)
 		*bpp = bp;
+
 	if (uvp)
 		vput(uvp);
+
 	if (lvp)
 		vput(lvp);
+
 	vrele(rvp);
+
 	return (error);
 }
 
-/*
- * Check if one directory can be found inside another in the directory
- * hierarchy.
- *
- * Intended to be used in chroot, chdir, fchdir, etc., to ensure that
- * chroot() actually means something.
- */
+/* Check if a directory can be found inside another in the hierarchy */
 static int
 vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
 {
@@ -482,8 +476,8 @@ vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
 
 	if (!error)
 		return (1);
-	else
-		return (0);
+
+	return (0);
 }
 
 /* True if p1's root directory is equal to or under p2's root directory */
