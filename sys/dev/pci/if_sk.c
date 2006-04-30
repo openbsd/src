@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.100 2006/04/23 21:02:58 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.101 2006/04/30 02:00:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2712,7 +2712,10 @@ sk_init(void *xsc_if)
 	if (SK_YUKON_FAMILY(sc->sk_type)) {
 		u_int16_t reg = SK_YU_READ_2(sc_if, YUKON_GPCR);
 		reg |= YU_GPCR_TXEN | YU_GPCR_RXEN;
-		reg &= ~(YU_GPCR_SPEED_EN | YU_GPCR_DPLX_EN);
+#if 0
+		/* XXX disable 100Mbps and full duplex mode? */
+		reg &= ~(YU_GPCR_SPEED | YU_GPCR_DPLX_DIS);
+#endif
 		SK_YU_WRITE_2(sc_if, YUKON_GPCR, reg);
 	}
 

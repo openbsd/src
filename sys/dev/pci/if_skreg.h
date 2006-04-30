@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.28 2006/02/09 11:14:56 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.29 2006/04/30 02:00:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1007,24 +1007,30 @@
 #define SK_RXMF1_END		0x0C40
 #define SK_RXMF1_THRESHOLD	0x0C44
 #define SK_RXMF1_CTRL_TEST	0x0C48
+#define SK_RXMF1_FLUSH_MASK	0x0C4C
+#define SK_RXMF1_FLUSH_THRESHOLD	0x0C50
 #define SK_RXMF1_WRITE_PTR	0x0C60
 #define SK_RXMF1_WRITE_LEVEL	0x0C68
 #define SK_RXMF1_READ_PTR	0x0C70
 #define SK_RXMF1_READ_LEVEL	0x0C78
 
+/* Receive MAC FIFO 1 Control/Test */
 #define SK_RFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
 #define SK_RFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
 #define SK_RFCTL_WR_PTR_STEP	0x00001000	/* Write pointer increment */
 #define SK_RFCTL_RD_PTR_TST_ON	0x00000400	/* Read pointer test on */
 #define SK_RFCTL_RD_PTR_TST_OFF	0x00000200	/* Read pointer test off */
 #define SK_RFCTL_RD_PTR_STEP	0x00000100	/* Read pointer increment */
-#define SK_RFCTL_RX_FIFO_OVER	0x00000040	/* Clear IRQ RX FIFO Overrun */
+#define SK_RFCTL_FIFO_FLUSH_OFF	0x00000080	/* RX FIFO Flsuh mode off */
+#define SK_RFCTL_FIFO_FLUSH_ON	0x00000040	/* RX FIFO Flush mode on */
+#define SK_RFCTL_RX_FIFO_OVER	0x00000020	/* Clear IRQ RX FIFO Overrun */
 #define SK_RFCTL_FRAME_RX_DONE	0x00000010	/* Clear IRQ Frame RX Done */
 #define SK_RFCTL_OPERATION_ON	0x00000008	/* Operational mode on */
 #define SK_RFCTL_OPERATION_OFF	0x00000004	/* Operational mode off */
 #define SK_RFCTL_RESET_CLEAR	0x00000002	/* MAC FIFO Reset Clear */
 #define SK_RFCTL_RESET_SET	0x00000001	/* MAC FIFO Reset Set */
 
+#define SK_RFCTL_FIFO_THRESHOLD	0x0a	/* flush threshold (default) */
 
 /* Block 25 -- RX MAC FIFO 2 regisrers and LINK_SYNC counter */
 #define SK_RXF2_END		0x0C80
@@ -1085,7 +1091,7 @@
 #define SK_TXLED1_CTL		0x0D28
 #define SK_TXLED1_TST		0x0D29
 
-/* Receive MAC FIFO 1 (Yukon Only) */
+/* Transmit MAC FIFO 1 (Yukon Only) */
 #define SK_TXMF1_END		0x0D40
 #define SK_TXMF1_THRESHOLD	0x0D44
 #define SK_TXMF1_CTRL_TEST	0x0D48
@@ -1096,6 +1102,7 @@
 #define SK_TXMF1_RESTART_PTR	0x0D74
 #define SK_TXMF1_READ_LEVEL	0x0D78
 
+/* Transmit MAC FIFO Control/Test */
 #define SK_TFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
 #define SK_TFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
 #define SK_TFCTL_WR_PTR_STEP	0x00001000	/* Write pointer increment */
@@ -1153,6 +1160,8 @@
 #define SK_DPT_INIT		0x0e00	/* Initial value 24 bits */
 #define SK_DPT_TIMER		0x0e04	/* Mul of 78.12MHz clk (24b) */
 
+#define SK_DPT_TIMER_MAX	0x00ffffffff	/* 214.75ms at 78.125MHz */
+
 #define SK_DPT_TIMER_CTRL	0x0e08	/* Timer Control 16 bits */
 #define SK_DPT_TCTL_STOP	0x0001	/* Stop Timer */
 #define SK_DPT_TCTL_START	0x0002	/* Start Timer */
@@ -1168,7 +1177,7 @@
 #define SK_GMAC_CTRL		0x0f00	/* GMAC Control Register */
 #define SK_GPHY_CTRL		0x0f04	/* GPHY Control Register */
 #define SK_GMAC_ISR		0x0f08	/* GMAC Interrupt Source Register */
-#define SK_GMAC_IMR		0x0f08	/* GMAC Interrupt Mask Register */
+#define SK_GMAC_IMR		0x0f0c	/* GMAC Interrupt Mask Register */
 #define SK_LINK_CTRL		0x0f10	/* Link Control Register (LCR) */
 #define SK_WOL_CTRL		0x0f20	/* Wake on LAN Control Register */
 #define SK_MAC_ADDR_LOW		0x0f24	/* Mack Address Registers LOW */
@@ -1396,6 +1405,11 @@ struct sk_type {
 	char			*sk_name;
 };
 
+#define SK_ADDR_LO(x)	((u_int64_t) (x) & 0xffffffff)
+#define SK_ADDR_HI(x)	((u_int64_t) (x) >> 32)
+
+#define SK_RING_ALIGN	64
+
 /* RX queue descriptor data structure */
 struct sk_rx_desc {
 	u_int32_t		sk_ctl;
@@ -1455,7 +1469,7 @@ struct sk_tx_desc {
 #define SK_TXSTAT	\
 	(SK_OPCODE_DEFAULT|SK_TXCTL_EOF_INTR|SK_TXCTL_LASTFRAG|SK_TXCTL_OWN)
 
-#define SK_RXBYTES(x)		(x) & 0x0000FFFF;
+#define SK_RXBYTES(x)		((x) & 0x0000FFFF);
 #define SK_TXBYTES		SK_RXBYTES
 
 #define SK_TX_RING_CNT		512
@@ -1492,7 +1506,7 @@ struct sk_tx_desc {
 
 #define YU_GPSR_SPEED		0x8000	/* speed 0 - 10Mbps, 1 - 100Mbps */
 #define YU_GPSR_DUPLEX		0x4000	/* 0 - half duplex, 1 - full duplex */
-#define YU_GPSR_FCTL_TX		0x2000	/* flow control */
+#define YU_GPSR_FCTL_TX		0x2000	/* Tx flow control, 1 - disabled */
 #define YU_GPSR_LINK		0x1000	/* link status (down/up) */
 #define YU_GPSR_PAUSE		0x0800	/* flow control enable/disable */
 #define YU_GPSR_TX_IN_PROG	0x0400	/* transmit in progress */
@@ -1501,25 +1515,26 @@ struct sk_tx_desc {
 #define YU_GPSR_MII_PHY_STC	0x0020	/* MII PHY status change */
 #define YU_GPSR_GIG_SPEED	0x0010	/* Gigabit Speed (0 - use speed bit) */
 #define YU_GPSR_PARTITION	0x0008	/* partition mode */
-#define YU_GPSR_FCTL_RX		0x0004	/* flow control enable/disable */
-#define YU_GPSR_PROMS_EN	0x0002	/* promiscuous mode enable/disable */
+#define YU_GPSR_FCTL_RX		0x0004	/* Rx flow control, 1 - disabled  */
+#define YU_GPSR_PROMS_EN	0x0002	/* promiscuous mode, 1 - enabled */
 
 /* General Purpose Control Register (GPCR) */
 #define YUKON_GPCR		0x0004
 
-#define YU_GPCR_FCTL_TX		0x2000	/* Transmit flow control 802.3x */
+#define YU_GPCR_FCTL_TX_DIS	0x2000	/* Disable Tx flow control 802.3x */
 #define YU_GPCR_TXEN		0x1000	/* Transmit Enable */
 #define YU_GPCR_RXEN		0x0800	/* Receive Enable */
-#define YU_GPCR_LPBK		0x0200	/* Loopback Enable */
+#define YU_GPCR_BURSTEN		0x0400	/* Burst Mode Enable */
+#define YU_GPCR_LPBK		0x0200	/* MAC Loopback Enable */
 #define YU_GPCR_PAR		0x0100	/* Partition Enable */
-#define YU_GPCR_GIG		0x0080	/* Gigabit Speed */
+#define YU_GPCR_GIG		0x0080	/* Gigabit Speed 1000Mbps */
 #define YU_GPCR_FLP		0x0040	/* Force Link Pass */
 #define YU_GPCR_DUPLEX		0x0020	/* Duplex Enable */
-#define YU_GPCR_FCTL_RX		0x0010	/* Receive flow control 802.3x */
-#define YU_GPCR_SPEED		0x0008	/* Port Speed */
-#define YU_GPCR_DPLX_EN		0x0004	/* Enable Auto-Update for duplex */
-#define YU_GPCR_FCTL_EN		0x0002	/* Enabel Auto-Update for 802.3x */
-#define YU_GPCR_SPEED_EN	0x0001	/* Enable Auto-Update for speed */
+#define YU_GPCR_FCTL_RX_DIS	0x0010	/* Disable Rx flow control 802.3x */
+#define YU_GPCR_SPEED		0x0008	/* Port Speed 100Mbps */
+#define YU_GPCR_DPLX_DIS	0x0004	/* Disable Auto-Update for duplex */
+#define YU_GPCR_FCTL_DIS	0x0002	/* Disable Auto-Update for 802.3x */
+#define YU_GPCR_SPEED_DIS	0x0001	/* Disable Auto-Update for speed */
 
 /* Transmit Control Register (TCR) */
 #define YUKON_TCR		0x0008
@@ -1639,6 +1654,24 @@ struct sk_tx_desc {
 
 #define YU_PAR_MIB_CLR		0x0020	/* MIB Counters Clear Mode */
 #define YU_PAR_LOAD_TSTCNT	0x0010	/* Load count 0xfffffff0 into cntr */
+
+/* Receive status */
+#define YU_RXSTAT_FOFL		0x00000001	/* Rx FIFO overflow */
+#define YU_RXSTAT_CRCERR	0x00000002	/* CRC error */
+#define YU_RXSTAT_FRAGMENT	0x00000008	/* fragment */
+#define YU_RXSTAT_LONGERR	0x00000010	/* too long packet */
+#define YU_RXSTAT_MIIERR	0x00000020	/* MII error */
+#define YU_RXSTAT_BADFC		0x00000040	/* bad flow-control packet */
+#define YU_RXSTAT_GOODFC	0x00000080	/* good flow-control packet */
+#define YU_RXSTAT_RXOK		0x00000100	/* receice OK (Good packet) */
+#define YU_RXSTAT_BROADCAST	0x00000200	/* broadcast packet */
+#define YU_RXSTAT_MULTICAST	0x00000400	/* multicast packet */
+#define YU_RXSTAT_RUNT		0x00000800	/* undersize packet */
+#define YU_RXSTAT_JABBER	0x00001000	/* jabber packet */
+#define YU_RXSTAT_VLAN		0x00002000	/* VLAN packet */
+#define YU_RXSTAT_LENSHIFT	16
+
+#define	YU_RXSTAT_BYTES(x)	((x) >> YU_RXSTAT_LENSHIFT)
 
 /*
  * Registers and data structures for the XaQti Corporation XMAC II
@@ -1925,6 +1958,9 @@ struct sk_tx_desc {
 #define XM_RXSTAT_VLAN_LEV1	0x00010000
 #define XM_RXSTAT_VLAN_LEV2	0x00020000
 #define XM_RXSTAT_LEN		0xFFFC0000
+#define XM_RXSTAT_LENSHIFT	18
+
+#define XM_RXSTAT_BYTES(x)	((x) >> XM_RXSTAT_LENSHIFT)
 
 /*
  * XMAC PHY registers, indirectly accessed through
