@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.136 2006/04/30 20:21:53 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.137 2006/04/30 20:38:57 brad Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -83,7 +83,7 @@ an*		at pci?		# Cisco/Aironet
 atw*		at pci?		# ADMtek ADM8211 (802.11)
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 ral*		at pci?		# Ralink RT2500/RT2501/RT2600
-#rtw*		at pci?		# Realtek 8180
+rtw*		at pci?		# Realtek 8180
 vr*		at pci?		# VIA Rhine ethernet
 musycc*		at pci?		# Conexant HDLC controller
 art*		at musycc?	# Accoom Artery E1/T1 cards
