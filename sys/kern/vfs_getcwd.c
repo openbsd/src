@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.2 2006/04/29 21:31:15 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.3 2006/04/30 00:08:13 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -486,13 +486,7 @@ vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
 		return (0);
 }
 
-/*
- * Returns true if proc p1's root directory equal to or under p2's
- * root directory.
- *
- * Intended to be used from ptrace/procfs sorts of things.
- */
-
+/* True if p1's root directory is equal to or under p2's root directory */
 int
 proc_isunder(struct proc *p1, struct proc *p2)
 {
@@ -501,39 +495,27 @@ proc_isunder(struct proc *p1, struct proc *p2)
 
 	if (r1 == NULL)
 		return (r2 == NULL);
-	else if (r2 == NULL)
+
+	if (r2 == NULL)
 		return (1);
-	else
-		return (vn_isunder(r1, r2, p2));
+
+	return (vn_isunder(r1, r2, p2));
 }
 
-/*
- * Find pathname of process's current directory.
- *
- * Use vfs vnode-to-name reverse cache; if that fails, fall back
- * to reading directory contents.
- */
-
+/* Find pathname of a process's current directory */
 int
 sys___getcwd(struct proc *p, void *v, register_t *retval) 
 {
-	register struct sys___getcwd_args /* {
-		syscallarg(char *) buf;
-		syscallarg(size_t) len;
-	} */ *uap = v;
+	struct sys___getcwd_args *uap = v;
+	int error, lenused, len = SCARG(uap, len);
+	char *path, *bp, *bend;
 
-	int     error;
-	char   *path;
-	char   *bp, *bend;
-	int     len = SCARG(uap, len);
-	int	lenused;
-
-	if (len > MAXPATHLEN*4)
-		len = MAXPATHLEN*4;
+	if (len > MAXPATHLEN * 4)
+		len = MAXPATHLEN * 4;
 	else if (len < 2)
 		return (ERANGE);
 
-	path = (char *)malloc(len, M_TEMP, M_WAITOK);
+	path = (char *) malloc(len, M_TEMP, M_WAITOK);
 
 	bp = &path[len];
 	bend = bp;
@@ -549,12 +531,15 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 
 	if (error)
 		goto out;
+
 	lenused = bend - bp;
 	*retval = lenused;
-	/* put the result into user buffer */
+
+	/* Put the result into user buffer */
 	error = copyout(bp, SCARG(uap, buf), lenused);
 
 out:
 	free(path, M_TEMP);
+
 	return (error);
 }
