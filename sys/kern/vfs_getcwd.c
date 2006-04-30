@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.4 2006/04/30 00:34:34 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.5 2006/04/30 01:03:51 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -50,69 +50,35 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
-#include <ufs/ufs/dir.h>	/* XXX only for DIRBLKSIZ */
+#include <ufs/ufs/dir.h>	/* only for DIRBLKSIZ */
 
 #include <sys/syscallargs.h>
 
-static int getcwd_scandir(struct vnode **, struct vnode **,
-    char **, char *, struct proc *);
+static int getcwd_scandir(struct vnode **, struct vnode **, char **, char *,
+    struct proc *);
 static int getcwd_getcache(struct vnode **, struct vnode **, char **, char *);
-static int getcwd_common(struct vnode *, struct vnode *,
-    char **, char *, int, int, struct proc *);
-
+static int getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
+    int, struct proc *);
 static int vn_isunder(struct vnode *, struct vnode *, struct proc *);
 
-#define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN+1) + 4)
+#define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN + 1) + 4)
 
-/*
- * Vnode variable naming conventions in this file:
- *
- * rvp: the current root we're aiming towards.
- * lvp, *lvpp: the "lower" vnode
- * uvp, *uvpp: the "upper" vnode.
- *
- * Since all the vnodes we're dealing with are directories, and the
- * lookups are going *up* in the filesystem rather than *down*, the
- * usual "pvp" (parent) or "dvp" (directory) naming conventions are
- * too confusing.
- */
-
-/*
- * XXX: is EINVAL the right thing to return if a directory is
- *      malformed?
- */
-
-
-/*
- * Find parent vnode of *lvpp, return in *uvpp
- *
- * If we care about the name, scan it looking for name of directory
- * entry pointing at lvp.
- *
- * Place the name in the buffer which starts at bufp, immediately
- * before *bpp, and move bpp backwards to point at the start of it.
- *
- * On entry, *lvpp is a locked vnode reference; on exit, it is vput and NULL'ed
- * On exit, *uvpp is either NULL or is a locked vnode reference.
- */
+/* Find parent vnode of *lvpp, return in *uvpp */
 static int
-getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
-    char **bpp, char *bufp, struct proc *p)
+getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
+    char *bufp, struct proc *p)
 {
-	int     error = 0;
-	int     eofflag;
-	off_t   off;
-	int     tries;
+	int eofflag, tries, dirbuflen, len, reclen, error = 0;
+	off_t off;
 	struct uio uio;
 	struct iovec iov;
-	char   *dirbuf = NULL;
-	int	dirbuflen;
-	ino_t   fileno;
+	char *dirbuf = NULL;
+	ino_t fileno;
 	struct vattr va;
 	struct vnode *uvp = NULL;
 	struct vnode *lvp = *lvpp;	
 	struct componentname cn;
-	int len, reclen;
+
 	tries = 0;
 
 	/*
@@ -129,10 +95,6 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 		}
 	}
 
-	/*
-	 * Ok, we have to do it the hard way..
-	 * Next, get parent vnode using lookup of ..
-	 */
 	cn.cn_nameiop = LOOKUP;
 	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY;
 	cn.cn_proc = p;
@@ -142,11 +104,8 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 	cn.cn_namelen = 2;
 	cn.cn_hash = 0;
 	cn.cn_consume = 0;
-	
-	/*
-	 * At this point, lvp is locked and will be unlocked by the lookup.
-	 * On successful return, *uvpp will be locked
-	 */
+
+	/* Get parent vnode using lookup of '..' */
 	error = VOP_LOOKUP(lvp, uvpp, &cn);
 	if (error) {
 		vput(lvp);
@@ -154,6 +113,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 		*uvpp = NULL;
 		return (error);
 	}
+
 	uvp = *uvpp;
 
 	/* If we don't care about the pathname, we're done */
@@ -162,20 +122,22 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 		*lvpp = NULL;
 		return (0);
 	}
-	
+
 	fileno = va.va_fileid;
 
 	dirbuflen = DIRBLKSIZ;
+
 	if (dirbuflen < va.va_blocksize)
 		dirbuflen = va.va_blocksize;
-	dirbuf = (char *)malloc(dirbuflen, M_TEMP, M_WAITOK);
+
+	dirbuf = (char *) malloc(dirbuflen, M_TEMP, M_WAITOK);
 
 	off = 0;
+
 	do {
 		char   *cpos;
 		struct dirent *dp;
 
-		/* call VOP_READDIR of parent */
 		iov.iov_base = dirbuf;
 		iov.iov_len = dirbuflen;
 
@@ -189,47 +151,35 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 
 		eofflag = 0;
 
+		/* Call VOP_READDIR of parent */
 		error = VOP_READDIR(uvp, &uio, p->p_ucred, &eofflag, 0, 0);
 
 		off = uio.uio_offset;
 
-		/*
-		 * Try again if NFS tosses its cookies.
-		 */
+		/* Try again if NFS tosses its cookies */
 		if (error == EINVAL && tries < 3) {
 			tries++;
 			off = 0;
 			continue;
-		} else if (error != 0) {
-			/*
-			 * We simply bail on error, even if we don't
-			 * have eofflag yet.  This is the exact
-			 * behavior of the old userland getcwd()
-			 */
-			goto out;
+		} else if (error) {
+			goto out; /* Old userland getcwd() behaviour */
 		}
 
-		/* No error */
 		cpos = dirbuf;
 		tries = 0;
 
-		/* scan directory page looking for matching vnode */ 
+		/* Scan directory page looking for matching vnode */ 
 		for (len = (dirbuflen - uio.uio_resid); len > 0;
 		     len -= reclen) {
 			dp = (struct dirent *)cpos;
 			reclen = dp->d_reclen;
 
-			/* check for malformed directory.. */
+			/* Check for malformed directory */
 			if (reclen < DIRENT_MINSIZE) {
 				error = EINVAL;
 				goto out;
 			}
-			/*
-			 * XXX should perhaps do VOP_LOOKUP to
-			 * check that we got back to the right place,
-			 * but getting the locking games for that
-			 * right would be heinous.
-			 */
+
 			if (dp->d_fileno == fileno) {
 				char *bp = *bpp;
 				bp -= dp->d_namlen;
@@ -238,11 +188,14 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 					error = ERANGE;
 					goto out;
 				}
+
 				bcopy(dp->d_name, bp, dp->d_namlen);
 				error = 0;
 				*bpp = bp;
+
 				goto out;
 			}
+
 			cpos += reclen;
 		}
 
@@ -251,41 +204,26 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp,
 	error = ENOENT;
 
 out:
+
 	vrele(lvp);
 	*lvpp = NULL;
+
 	free(dirbuf, M_TEMP);
+
 	return (error);
 }
 
-/*
- * Look in the vnode-to-name reverse cache to see if
- * we can find things the easy way.
- *
- * XXX vget failure path is untested.
- *
- * On entry, *lvpp is a locked vnode reference.
- * On exit, one of the following is the case:
- *	0) Both *lvpp and *uvpp are NULL and failure is returned.
- * 	1) *uvpp is NULL, *lvpp remains locked and -1 is returned (cache miss)
- *      2) *uvpp is a locked vnode reference, *lvpp is vput and NULL'ed
- *	   and 0 is returned (cache hit)
- */
-
+/* Do a lookup in the vnode-to-name reverse */
 static int
-getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp,
-    char **bpp, char *bufp)
+getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
+    char *bufp)
 {
 	struct vnode *lvp, *uvp = NULL;
-	int error;
-	int vpid;
 	struct proc *p = curproc;
-	
+	int error, vpid;
+
 	lvp = *lvpp;
 
-	/*
-	 * This returns 0 on a cache hit, -1 on a clean cache miss, or
-	 * an errno on other failure.
-	 */
 	error = cache_revlookup(lvp, uvpp, bpp, bufp);
 	if (error) {
 		if (error != -1) {
@@ -293,56 +231,49 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp,
 			*lvpp = NULL;
 			*uvpp = NULL;
 		}
+
 		return (error);
 	}
+
 	uvp = *uvpp;
 	vpid = uvp->v_id;
 
-	/*
-	 * Since we're going up, we have to release the current lock
-	 * before we take the parent lock.
-	 */
 
+	/* Release current lock before acquiring the parent lock */
 	VOP_UNLOCK(lvp, 0, p);
 
 	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (error != 0)
+	if (error)
 		*uvpp = NULL;
+
 	/*
-	 * Verify that vget succeeded, and check that vnode capability
+	 * Verify that vget() succeeded, and check that vnode capability
 	 * didn't change while we were waiting for the lock.
-	 *
-	 * XXX: this is kind of nasty to have to check here.  It
-	 * should really be done in cache_revlookup() (see comments
-	 * there, too).
 	 */
 	if (error || (vpid != uvp->v_id)) {
 		/*
-		 * Oops, we missed.  If the vget failed, or the
-		 * capability changed, try to get our lock back; if
-		 * that works, tell caller to try things the hard way,
-		 * otherwise give up.
+		 * Try to get our lock back. If that works, tell the caller to
+		 * try things the hard way, otherwise give up.
 		 */
 		if (!error)
 			vput(uvp);
+
 		*uvpp = NULL;
 		
 		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
-
 		if (!error)
 			return (-1);
 	}
+
 	vrele(lvp);
 	*lvpp = NULL;
+
 	return (error);
 }
 
-/*
- * common routine shared by sys___getcwd() and vn_isunder()
- */
-
 #define GETCWD_CHECK_ACCESS 0x0001
 
+/* Common routine shared by sys___getcwd() and vn_isunder() */
 static int
 getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
     int limit, int flags, struct proc *p)
