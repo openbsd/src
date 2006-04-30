@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.14 2006/04/30 04:38:44 marco Exp $
+.\"	$OpenBSD: bio.4,v 1.15 2006/04/30 08:55:11 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" Copyright (c) 2006 Marco Peereboom
@@ -83,13 +83,13 @@ test alarm.
 Note:  These options might not be supported on all hardware.
 .It Dv BIOCBLINK
 Blink an LED of the specified physical disk.
-Supported blink states are: blink LED, unblink LED & blink alarm LED.
+Supported blink states are: blink LED, unblink LED and blink alarm LED.
 .Pp
 Note:  This option is only supported if the disk is governed by ses(4) or
 safte(4) and the hardware supports hardware blinking.
 .It Dv BIOCSETSTATE
 Alter the state of specified physical disk.
-Supported states are: create hot-spare, online disk & offline disk.
+Supported states are: create hot-spare, online disk and offline disk.
 .El
 .Sh FILES
 .Bl -tag -width /dev/bio -compact
@@ -101,10 +101,10 @@ ioctl tunnel device
 .Xr ami 4 ,
 .Xr ciss 4 ,
 .Xr gdt 4 ,
-.Xr bioctl 8,
+.Xr safte 4 ,
 .Xr scsi 4 ,
 .Xr ses 4 ,
-.Xr safte 4
+.Xr bioctl 8
 .Sh HISTORY
 The
 .Nm
