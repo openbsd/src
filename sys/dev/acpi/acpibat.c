@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.20 2006/03/05 04:47:25 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.21 2006/04/30 05:22:27 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -330,7 +330,7 @@ acpibat_getbst(struct acpibat_softc *sc)
 {
 	struct aml_value	res, env;
 	struct acpi_context	*ctx;
-	int			rv;
+	int			rv = 0;
 
 	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
@@ -342,12 +342,14 @@ acpibat_getbst(struct acpibat_softc *sc)
 		dnprintf(10, "%s: no _BST\n",
 		    DEVNAME(sc));
 		printf("_bst fails\n");
+		rv = EINVAL;
 		goto out;
 	}
 
 	if (res.length != 4) {
 		printf("%s: invalid _BST, battery status not saved\n",
 		    DEVNAME(sc));
+		rv = EINVAL;
 		goto out;
 	}
 
