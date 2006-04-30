@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.102 2006/04/30 02:28:49 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.103 2006/04/30 03:13:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2216,18 +2216,17 @@ sk_intr(void *xsc)
 	u_int32_t		status;
 	int			claimed = 0;
 
+	status = CSR_READ_4(sc, SK_ISSR);
+	if (status == 0 || status == 0xffffffff)
+		return (0);
+
 	if (sc_if0 != NULL)
 		ifp0 = &sc_if0->arpcom.ac_if;
 	if (sc_if1 != NULL)
 		ifp1 = &sc_if1->arpcom.ac_if;
 
-	for (;;) {
-		status = CSR_READ_4(sc, SK_ISSR);
-		DPRINTFN(2, ("sk_intr: status=%#x\n", status));
-
-		if (!(status & sc->sk_intrmask))
-			break;
-
+	status &= sc->sk_intrmask;
+	if ((status & sc->sk_intrmask) != 0) {
 		claimed = 1;
 
 		/* Handle receive interrupts first. */
