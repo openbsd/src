@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.31 2006/03/12 17:29:48 martin Exp $
+#	$OpenBSD: RAMDISK,v 1.32 2006/04/30 21:59:50 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -157,9 +157,11 @@ scsibus* at ami?
 #scsibus* at trm?
 
 # I2O
-#iop*	at pci?	# I2O
-#ioprbs*	at iop?			# Random block storage
+#iop*	at pci?			# I2O processor
+#ioprbs*	at iop?			# I2O arrays
 #scsibus* at ioprbs?
+#iopsp*	at iop?			# I2O SCSI pass-through
+#scsibus* at iopsp?
 
 sd*	at scsibus?		# SCSI disk drives
 #st*	at scsibus?		# SCSI tape drives
