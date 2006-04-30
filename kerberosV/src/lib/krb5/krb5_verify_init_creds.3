@@ -38,7 +38,7 @@
 .Nm krb5_verify_init_creds_opt_init ,
 .Nm krb5_verify_init_creds_opt_set_ap_req_nofail ,
 .Nm krb5_verify_init_creds
-.Nd verifies a credential cache is correct by using a local keytab.
+.Nd verifies a credential cache is correct by using a local keytab
 .Sh LIBRARY
 Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
@@ -75,7 +75,7 @@ from the local keytab, if
 .Dv NULL
 is passed in, the code will guess the local hostname and use that to
 form host/hostname/GUESSED-REALM-FOR-HOSTNAME.
-.Fa creds 
+.Fa creds
 is the credential that
 .Nm krb5_verify_init_creds
 should verify.
@@ -97,7 +97,7 @@ doesn't exists in the local keytab or in the KDC's database, if its
 true, the error will be ignored.  Note that this use is possible
 insecure.
 .Sh SEE ALSO
-.Xr krb5 3,
-.Xr krb5_init_creds 3 ,
+.Xr krb5 3 ,
+.Xr krb5_get_init_creds 3 ,
 .Xr krb5_verify_user 3 ,
 .Xr krb5.conf 5
