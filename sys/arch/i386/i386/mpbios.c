@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.9 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.10 2006/04/30 17:38:26 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -175,7 +175,7 @@ void	mp_print_isa_intr (int);
 void	mpbios_cpu(const u_int8_t *, struct device *);
 void	mpbios_bus(const u_int8_t *, struct device *);
 void	mpbios_ioapic(const u_int8_t *, struct device *);
-void	mpbios_int(const u_int8_t *, struct mp_intr_map *);
+int	mpbios_int(const u_int8_t *, struct mp_intr_map *);
 
 const void *mpbios_map(paddr_t, int, struct mp_map *);
 static __inline void mpbios_unmap(struct mp_map *);
@@ -652,7 +652,9 @@ mpbios_scan(self)
 				break;
 			case MPS_MCT_IOINT:
 			case MPS_MCT_LINT:
-				mpbios_int(position, &mp_intrs[mp_nintrs++]);
+				if (mpbios_int(position,
+				    &mp_intrs[mp_nintrs]) == 0)
+					mp_nintrs++;
 				break;
 			default:
 				printf("%s: unknown entry type %x "
@@ -705,9 +707,12 @@ mpbios_invent(int irq, int type, int bus)
 	e.dst_apic_id = mp_busses[bus].mb_intrs->ioapic->sc_apicid;
 	e.dst_apic_int = irq;
 
-	mpbios_int((const u_int8_t *)&e, (mip = &mp_intrs[mp_nintrs++]));
+	if (mpbios_int((const u_int8_t *)&e, &mp_intrs[mp_nintrs]) == 0) {
+		mip = &mp_intrs[mp_nintrs++];
+		return (mip->ioapic_ih | irq);
+	}
 
-	return (mip->ioapic_ih | irq);
+	return irq;
 }
 
 void
@@ -1056,7 +1061,7 @@ static const char flagtype_fmt[] = "\177\020"
 		"f\0\2pol\0" "=\1Act Hi\0" "=\3Act Lo\0"
 		"f\2\2trig\0" "=\1Edge\0" "=\3Level\0";
 
-void
+int
 mpbios_int(ent, mpi)
 	const u_int8_t *ent;
 	struct mp_intr_map *mpi;
@@ -1091,8 +1096,6 @@ mpbios_int(ent, mpi)
 		mpb = &nmi_bus;
 		break;
 	}
-	mpi->next = mpb->mb_intrs;
-	mpb->mb_intrs = mpi;
 	mpi->bus = mpb;
 	mpi->bus_pin = dev;
 
@@ -1105,7 +1108,7 @@ mpbios_int(ent, mpi)
 	if (mpb->mb_intr_cfg == NULL) {
 		printf("mpbios: can't find bus %d for apic %d pin %d\n",
 		    bus, id, pin);
-		return;
+		return (1);
 	}
 
 	(*mpb->mb_intr_cfg)(&rw_entry, &mpi->redir);
@@ -1114,7 +1117,7 @@ mpbios_int(ent, mpi)
 		sc = ioapic_find(id);
 		if (sc == NULL) {
 			printf("mpbios: can't find ioapic %d\n", id);
-			return;
+			return (1);
 		}
 
 		mpi->ioapic = sc;
@@ -1143,6 +1146,7 @@ mpbios_int(ent, mpi)
 			lapic_ints[pin] = mpi;
 		}
 	}
+
 	if (mp_verbose) {
 		printf("%s: int%d attached to %s",
 		    sc ? sc->sc_dev.dv_xname : "local apic", pin,
@@ -1150,10 +1154,13 @@ mpbios_int(ent, mpi)
 		if (mpb->mb_idx != -1)
 			printf("%d", mpb->mb_idx);
 
-		if (mpb != NULL)
-
 		(*(mpb->mb_intr_print))(dev);
 
 		printf(" (type 0x%x flags 0x%x)\n", type, flags);
 	}
+
+	mpi->next = mpb->mb_intrs;
+	mpb->mb_intrs = mpi;
+
+	return (0);
 }
