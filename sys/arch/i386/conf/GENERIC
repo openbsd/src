@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.486 2006/04/29 02:15:06 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.487 2006/04/30 20:06:24 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -641,9 +641,11 @@ safe*	at pci?			# SafeNet SafeXcel 1141/1741
 #ises*	at pci?			# Pijnenburg PCC-ISES
 
 # I2O
-iop*	at pci?			# I2O
-ioprbs*	at iop?			# Random block storage
+iop*	at pci?			# I2O processor
+ioprbs*	at iop?			# I2O arrays
 scsibus* at ioprbs?
+iopsp*	at iop?			# I2O SCSI pass-through
+scsibus* at iopsp?
 
 # GPIO ``pin bus'' drivers
 #gpioiic* at gpio? offset 0 mask 0x3	# I2C bus bit-banging

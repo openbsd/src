@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.87 2006/04/14 21:52:47 weingart Exp $
+#	$OpenBSD: RAMDISKB,v 1.88 2006/04/30 20:06:24 brad Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -199,9 +199,11 @@ wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
 
 # I2O
-iop*	at pci?			# I2O
-ioprbs*	at iop?			# Random block storage
+iop*	at pci?			# I2O processor
+ioprbs*	at iop?			# I2O arrays
 scsibus* at ioprbs?
+iopsp*	at iop?			# I2O SCSI pass-through
+scsibus* at iopsp?
 
 # ATAPI<->SCSI
 atapiscsi* at wdc?
