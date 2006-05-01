@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.13 2006/04/20 20:31:12 miod Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.14 2006/05/01 21:03:42 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -360,16 +360,12 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFADDR (Set Interface "
 			       "Addr)");
 		ifp->if_flags |= IFF_UP;
-		ixgb_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			ixgb_init(sc);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->interface_data, ifa);
-			break;
 #endif /* INET */
-		default:
-			break;
-		}
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
@@ -544,9 +540,7 @@ ixgb_intr(void *arg)
 	struct ifnet	*ifp;
 	u_int32_t	reg_icr;
 	boolean_t	rxdmt0 = FALSE;
-	int s, claimed = 0;
-
-	s = splnet();
+	int claimed = 0;
 
 	ifp = &sc->interface_data.ac_if;
 
@@ -583,7 +577,6 @@ ixgb_intr(void *arg)
 	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ixgb_start(ifp);
 
-	splx(s);
 	return (claimed);
 }
 
@@ -672,8 +665,9 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	/*
 	 * Map the packet for DMA.
 	 */
-	if (bus_dmamap_create(sc->txtag, IXGB_MAX_JUMBO_FRAME_SIZE, 32,
-	    IXGB_MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &q.map)) {
+	if (bus_dmamap_create(sc->txtag, IXGB_MAX_JUMBO_FRAME_SIZE,
+	    IXGB_MAX_SCATTER, IXGB_MAX_JUMBO_FRAME_SIZE, 0,
+	    BUS_DMA_NOWAIT, &q.map)) {
 		sc->no_tx_map_avail++;
 		return (ENOMEM);
 	}
