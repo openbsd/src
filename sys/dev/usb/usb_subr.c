@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.41 2005/11/21 18:16:44 millert Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.42 2006/05/01 01:34:10 krw Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -859,7 +859,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 {
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
-	int found, i, confi, nifaces;
+	int found, i, confi, nifaces, len;
 	usbd_status err;
 	device_ptr_t dv;
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
@@ -932,13 +932,15 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
-		dev->subdevs = malloc((nifaces+1) * sizeof dv, M_USB,M_NOWAIT);
+		len = (nifaces+1) * sizeof dv;
+		dev->subdevs = malloc(len, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL) {
 #if defined(__FreeBSD__)
 			device_delete_child(parent, bdev);
 #endif
 			return (USBD_NOMEM);
 		}
+		bzero(dev->subdevs, len);
 
 		found = 0;
 		for (i = 0; i < nifaces; i++) {
@@ -951,7 +953,6 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 
 			if (dv != NULL) {
 				dev->subdevs[found++] = dv;
-				dev->subdevs[found] = 0;
 				ifaces[i] = 0; /* consumed */
 
 #if defined(__FreeBSD__)
