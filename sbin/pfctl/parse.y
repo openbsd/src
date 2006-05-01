@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.496 2006/04/06 21:54:56 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.497 2006/05/01 12:24:32 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -117,6 +117,12 @@ struct node_icmp {
 	struct node_icmp	*tail;
 };
 
+struct node_matchtag {
+	char			 tagname[PF_TAG_NAME_SIZE];
+	struct node_matchtag	*next;
+	struct node_matchtag	*tail;
+};
+
 enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
 	    PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_CONN,
 	    PF_STATE_OPT_MAX_SRC_CONN_RATE, PF_STATE_OPT_MAX_SRC_NODES,
@@ -197,7 +203,7 @@ struct filter_opts {
 	char			*label;
 	struct node_qassign	 queues;
 	char			*tag;
-	char			*match_tag;
+	struct node_matchtag	*match_tags;
 	u_int8_t		 match_tag_not;
 } filter_opts;
 
@@ -276,7 +282,7 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_proto *, struct node_os*, struct node_host *,
 	    struct node_port *, struct node_host *, struct node_port *,
 	    struct node_uid *, struct node_gid *, struct node_icmp *,
-	    const char *);
+	    struct node_matchtag *, const char *);
 int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw bwspec, struct node_queue_opt *);
 int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
@@ -386,6 +392,7 @@ typedef struct {
 		struct table_opts	 table_opts;
 		struct pool_opts	 pool_opts;
 		struct node_hfsc_opts	 hfsc_opts;
+		struct node_matchtag	*matchtag_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -456,6 +463,7 @@ typedef struct {
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
+%type  <v.matchtag_opts>       matchtag matchtag_list matchtag_item
 %type	<v.tagged>		tagged
 %%
 
@@ -616,13 +624,6 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			r.af = $5;
 			r.prob = $8.prob;
 
-			if ($8.match_tag)
-				if (strlcpy(r.match_tagname, $8.match_tag,
-				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
-					yyerror("tag too long, max %u chars",
-					    PF_TAG_NAME_SIZE - 1);
-					YYERROR;
-				}
 			r.match_tag_not = $8.match_tag_not;
 
 			decide_address_family($7.src.host, &r.af);
@@ -630,7 +631,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    0, 0, 0, $2);
+			    0, 0, 0, $8.match_tags, $2);
 			free($2);
 		}
 		| NATANCHOR string interface af proto fromto {
@@ -650,7 +651,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			expand_rule(&r, $3, NULL, $5, $6.src_os,
 			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
-			    0, 0, 0, $2);
+			    0, 0, 0, 0, $2);
 			free($2);
 		}
 		| RDRANCHOR string interface af proto fromto {
@@ -691,7 +692,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			expand_rule(&r, $3, NULL, $5, $6.src_os,
 			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
-			    0, 0, 0, $2);
+			    0, 0, 0, 0, $2);
 			free($2);
 		}
 		| BINATANCHOR string interface af proto fromto {
@@ -803,7 +804,7 @@ scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 
 			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    NULL, NULL, NULL, "");
+			    NULL, NULL, NULL, NULL, "");
 		}
 		;
 
@@ -945,7 +946,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				if (h != NULL)
 					expand_rule(&r, j, NULL, NULL, NULL, h,
 					    NULL, NULL, NULL, NULL, NULL,
-					    NULL, "");
+					    NULL, NULL, "");
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
 					bzero(&r, sizeof(r));
@@ -964,7 +965,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					if (h != NULL)
 						expand_rule(&r, NULL, NULL,
 						    NULL, NULL, h, NULL, NULL,
-						    NULL, NULL, NULL, NULL, "");
+						    NULL, NULL, NULL, NULL,
+						    NULL, "");
 				} else
 					free(hh);
 			}
@@ -1536,13 +1538,6 @@ pfrule		: action dir logquick interface route af proto fromto
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
-			if ($9.match_tag)
-				if (strlcpy(r.match_tagname, $9.match_tag,
-				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
-					yyerror("tag too long, max %u chars",
-					    PF_TAG_NAME_SIZE - 1);
-					YYERROR;
-				}
 			r.match_tag_not = $9.match_tag_not;
 			if (rule_label(&r, $9.label))
 				YYERROR;
@@ -1833,7 +1828,7 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			expand_rule(&r, $4, $5.host, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    $9.uid, $9.gid, $9.icmpspec, "");
+			    $9.uid, $9.gid, $9.icmpspec, $9.match_tags, "");
 		}
 		;
 
@@ -1919,9 +1914,13 @@ filter_opt	: USER uids {
 		| TAG string				{
 			filter_opts.tag = $2;
 		}
-		| not TAGGED string			{
-			filter_opts.match_tag = $3;
+		| not matchtag 				{ 
+			filter_opts.match_tags = $2; 
 			filter_opts.match_tag_not = $1;
+			if ($1 && ($2 != $2->tail)) {
+				yyerror("cannot negate tag list");
+				YYERROR;
+			}
 		}
 		| PROBABILITY STRING			{
 			char	*e;
@@ -1944,6 +1943,38 @@ filter_opt	: USER uids {
 			}
 			filter_opts.prob = (u_int32_t)p;
 			free($2);
+		}
+		;
+
+matchtag	: TAGGED matchtag_item		{ 
+			$$ = $2; 
+		}
+		| TAGGED '{' matchtag_list '}' 		{ 
+			$$ = $3;
+		}
+		;
+
+matchtag_list	: matchtag_item				{ $$ = $1; }
+		| matchtag_list comma matchtag_item 	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
+		;
+
+matchtag_item	: STRING 				{
+			$$ = calloc(1, sizeof (struct node_matchtag));
+			if ($$ == NULL)
+				err(1, "matchtag_item: calloc");
+			if ((strlcpy($$->tagname,$1,PF_TAG_NAME_SIZE)) >=
+				 PF_TAG_NAME_SIZE) {
+				yyerror("tag too long, max %u chars",
+				    PF_TAG_NAME_SIZE - 1);
+				YYERROR;
+			}
+			free($1);
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -3385,7 +3416,7 @@ natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 
 			expand_rule(&r, $2, $8 == NULL ? NULL : $8->host, $4,
 			    $5.src_os, $5.src.host, $5.src.port, $5.dst.host,
-			    $5.dst.port, 0, 0, 0, "");
+			    $5.dst.port, 0, 0, 0, 0, "");
 			free($8);
 		}
 		;
@@ -4362,14 +4393,13 @@ expand_rule(struct pf_rule *r,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
     struct node_uid *uids, struct node_gid *gids, struct node_icmp *icmp_types,
-    const char *anchor_call)
+    struct node_matchtag *match_tags, const char *anchor_call)
 {
 	sa_family_t		 af = r->af;
 	int			 added = 0, error = 0;
 	char			 ifname[IF_NAMESIZE];
 	char			 label[PF_RULE_LABEL_SIZE];
 	char			 tagname[PF_TAG_NAME_SIZE];
-	char			 match_tagname[PF_TAG_NAME_SIZE];
 	struct pf_pooladdr	*pa;
 	struct node_host	*h;
 	u_int8_t		 flags, flagset, keep_state;
@@ -4377,9 +4407,6 @@ expand_rule(struct pf_rule *r,
 	if (strlcpy(label, r->label, sizeof(label)) >= sizeof(label))
 		errx(1, "expand_rule: strlcpy");
 	if (strlcpy(tagname, r->tagname, sizeof(tagname)) >= sizeof(tagname))
-		errx(1, "expand_rule: strlcpy");
-	if (strlcpy(match_tagname, r->match_tagname, sizeof(match_tagname)) >=
-	    sizeof(match_tagname))
 		errx(1, "expand_rule: strlcpy");
 	flags = r->flags;
 	flagset = r->flagset;
@@ -4395,6 +4422,7 @@ expand_rule(struct pf_rule *r,
 	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
 	LOOP_THROUGH(struct node_uid, uid, uids,
 	LOOP_THROUGH(struct node_gid, gid, gids,
+	LOOP_THROUGH(struct node_matchtag, match_tag, match_tags,
 
 		r->af = af;
 		/* for link-local IPv6 address, interface must match up */
@@ -4430,7 +4458,9 @@ expand_rule(struct pf_rule *r,
 		if (strlcpy(r->tagname, tagname, sizeof(r->tagname)) >=
 		    sizeof(r->tagname))
 			errx(1, "expand_rule: strlcpy");
-		if (strlcpy(r->match_tagname, match_tagname,
+		if (!match_tag->tagname)
+			errx(1, "expand_rule: no tagname");
+		if (strlcpy(r->match_tagname, match_tag->tagname,
 		    sizeof(r->match_tagname)) >= sizeof(r->match_tagname))
 			errx(1, "expand_rule: strlcpy");
 		expand_label(r->label, PF_RULE_LABEL_SIZE, r->ifname, r->af,
@@ -4519,7 +4549,7 @@ expand_rule(struct pf_rule *r,
 			added++;
 		}
 
-	))))))))));
+	)))))))))));
 
 	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_proto, protos);
@@ -4532,6 +4562,7 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_gid, gids);
 	FREE_LIST(struct node_icmp, icmp_types);
 	FREE_LIST(struct node_host, rpool_hosts);
+	FREE_LIST(struct node_matchtag, match_tags);
 
 	if (!added)
 		yyerror("rule expands to no valid combination");
