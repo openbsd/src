@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.5 2006/04/30 01:03:51 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.6 2006/05/01 20:03:06 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -54,17 +54,18 @@
 
 #include <sys/syscallargs.h>
 
-static int getcwd_scandir(struct vnode **, struct vnode **, char **, char *,
+int getcwd_scandir(struct vnode **, struct vnode **, char **, char *,
     struct proc *);
-static int getcwd_getcache(struct vnode **, struct vnode **, char **, char *);
-static int getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
-    int, struct proc *);
-static int vn_isunder(struct vnode *, struct vnode *, struct proc *);
+int getcwd_common(struct vnode *, struct vnode *, char **, char *, int, int,
+    struct proc *);
+
+int getcwd_getcache(struct vnode **, struct vnode **, char **, char *);
+int vn_isunder(struct vnode *, struct vnode *, struct proc *);
 
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN + 1) + 4)
 
 /* Find parent vnode of *lvpp, return in *uvpp */
-static int
+int
 getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp, struct proc *p)
 {
@@ -214,7 +215,7 @@ out:
 }
 
 /* Do a lookup in the vnode-to-name reverse */
-static int
+int
 getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp)
 {
@@ -274,7 +275,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 #define GETCWD_CHECK_ACCESS 0x0001
 
 /* Common routine shared by sys___getcwd() and vn_isunder() */
-static int
+int
 getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
     int limit, int flags, struct proc *p)
 {
@@ -398,7 +399,7 @@ out:
 }
 
 /* Check if a directory can be found inside another in the hierarchy */
-static int
+int
 vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
 {
 	int error;
