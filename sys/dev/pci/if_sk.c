@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.104 2006/04/30 04:17:48 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.105 2006/05/01 16:51:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -173,6 +173,7 @@ u_int32_t sk_yukon_hash(caddr_t);
 void sk_setfilt(struct sk_if_softc *, caddr_t, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
+void sk_yukon_tick(void *);
 void sk_rxcsum(struct ifnet *, struct mbuf *, const u_int16_t, const u_int16_t);
 
 #ifdef SK_DEBUG
@@ -1319,8 +1320,11 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	else
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	timeout_set(&sc_if->sk_tick_ch, sk_tick, sc_if);
-	timeout_add(&sc_if->sk_tick_ch, hz);
+	if (SK_IS_GENESIS(sc)) {
+		timeout_set(&sc_if->sk_tick_ch, sk_tick, sc_if);
+		timeout_add(&sc_if->sk_tick_ch, hz);
+	} else
+		timeout_set(&sc_if->sk_tick_ch, sk_yukon_tick, sc_if);
 
 	/*
 	 * Call MI attach routines.
@@ -2119,6 +2123,16 @@ sk_tick(void *xsc_if)
 }
 
 void
+sk_yukon_tick(void *xsc_if)
+{
+	struct sk_if_softc *sc_if = xsc_if;  
+	struct mii_data *mii = &sc_if->sk_mii;
+
+	mii_tick(mii);
+	timeout_add(&sc_if->sk_tick_ch, hz);
+}
+
+void
 sk_intr_bcom(struct sk_if_softc *sc_if)
 {
 	struct mii_data *mii = &sc_if->sk_mii;
@@ -2722,6 +2736,9 @@ sk_init(void *xsc_if)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	if (SK_IS_YUKON(sc))
+		timeout_add(&sc_if->sk_tick_ch, hz);
 
 	splx(s);
 }
