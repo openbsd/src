@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.145 2006/04/27 15:37:48 mickey Exp $
+#	$OpenBSD: files.i386,v 1.146 2006/05/01 17:01:14 kettenis Exp $
 #
 # new style config file for i386 architecture
 #
@@ -285,6 +285,7 @@ file	arch/i386/i386/apmcall.S	apm
 # Intel SMP specification 1.4
 define	mpbios
 file	arch/i386/i386/mpbios.c		mpbios needs-flag
+file	arch/i386/i386/mpbios_intr_fixup.c	mpbios & pci
 
 # CPUS
 define	cpu {[apid = -1]}
