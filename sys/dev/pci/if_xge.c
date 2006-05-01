@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.2 2006/05/01 01:11:49 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.3 2006/05/01 01:31:48 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -858,8 +858,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * such as IFF_PROMISC are handled.
 		 */
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				xge_init(ifp);
+			xge_init(ifp);
                 } else {
 			if (ifp->if_flags & IFF_RUNNING)
 				xge_stop(ifp, 0);
