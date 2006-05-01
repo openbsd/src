@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2006/04/29 05:36:25 ray Exp $
+#	$OpenBSD: Makefile,v 1.29 2006/05/01 18:43:41 niallo Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -56,6 +56,7 @@ LTESTS= ci-initial \
 	rcs-tflag-stdin3 \
 	rcs-tflag-inline \
 	rcs-tflag-file \
+	rcs-oflag \
 	rcs-lock-unlock \
 	co-lock-filemodes \
 	co-unlock-filemodes \
@@ -352,6 +353,34 @@ test-rcs-tflag-file: clean
 	@${RCS} -q -i -tdescription file
 	@fgrep -q 'This is a description.' file,v
 
+# Testing deletion of ranges
+test-rcs-oflag: clean
+	@cp ${.CURDIR}/rev3 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@${CO} -q -l blah.c
+	@echo "blah2" >> blah.c
+	@echo "blah2" | ${CI} -q blah.c
+	@${CO} -q -l blah.c
+	@echo "blah3" >> blah.c
+	@echo "blah3" | ${CI} -q blah.c
+	@${CO} -q -l blah.c
+	@echo "blah4" >> blah.c
+	@echo "blah4" | ${CI} -q blah.c
+	@${CO} -q -l blah.c
+	@echo "blah5" >> blah.c
+	@echo "blah5" | ${CI} -q blah.c
+	@${CO} -q -l blah.c
+	@echo "blah6" >> blah.c
+	@echo "blah6" | ${CI} -q blah.c
+	@${CO} -q -l blah.c
+	@${RCS} -q -o1.3:1.5 blah.c
+	@fgrep -q '1.3' blah.c,v || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+	@fgrep -q '1.4' blah.c,v || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+	@fgrep -q '1.5' blah.c,v || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+	
 test-rcs-lock-unlock: clean
 	@touch file
 	@mkdir -p RCS
