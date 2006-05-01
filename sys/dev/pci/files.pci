@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.203 2006/04/26 15:53:08 jason Exp $
+#	$OpenBSD: files.pci,v 1.204 2006/05/01 00:34:12 brad Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -320,6 +320,11 @@ attach	ixgb at pci
 file	dev/pci/if_ixgb.c		ixgb   
 file	dev/pci/ixgb_ee.c		ixgb
 file	dev/pci/ixgb_hw.c		ixgb
+
+# Neterion Xframe 10 Gigabit ethernet 
+device	xge: ether, ifnet, ifmedia
+attach	xge  at pci
+file	dev/pci/if_xge.c		xge
 
 # DEC/Intel 21143 and "tulip" clone ethernet
 attach	dc at pci with dc_pci
