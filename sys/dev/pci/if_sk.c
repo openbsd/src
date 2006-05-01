@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.105 2006/05/01 16:51:39 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.106 2006/05/01 18:31:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2210,12 +2210,21 @@ sk_intr_xmac(struct sk_if_softc	*sc_if)
 }
 
 void
-sk_intr_yukon(sc_if)
-	struct sk_if_softc *sc_if;
+sk_intr_yukon(struct sk_if_softc *sc_if)
 {
-	int status;
+	u_int8_t status;
 
-	status = SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
+	status = SK_IF_READ_1(sc_if, 0, SK_GMAC_ISR);
+	/* RX overrun */
+	if ((status & SK_GMAC_INT_RX_OVER) != 0) {
+		SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST,
+		    SK_RFCTL_RX_FIFO_OVER);
+	}
+	/* TX underrun */
+	if ((status & SK_GMAC_INT_TX_UNDER) != 0) {
+		SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST,
+		    SK_TFCTL_TX_FIFO_UNDER);
+	}
 
 	DPRINTFN(2, ("sk_intr_yukon status=%#x\n", status));
 }
@@ -2468,7 +2477,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 
 void sk_init_yukon(struct sk_if_softc *sc_if)
 {
-	u_int32_t		phy;
+	u_int32_t		phy, v;
 	u_int16_t		reg;
 	struct sk_softc		*sc;
 	int			i;
@@ -2579,13 +2588,28 @@ void sk_init_yukon(struct sk_if_softc *sc_if)
 	SK_YU_WRITE_2(sc_if, YUKON_RIMR, 0);
 	SK_YU_WRITE_2(sc_if, YUKON_TRIMR, 0);
 
+	/* Configure RX MAC FIFO Flush Mask */
+	v = YU_RXSTAT_FOFL | YU_RXSTAT_CRCERR | YU_RXSTAT_MIIERR |
+	    YU_RXSTAT_BADFC | YU_RXSTAT_GOODFC | YU_RXSTAT_RUNT |
+	    YU_RXSTAT_JABBER;
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_MASK, v);
+
+	/* Disable RX MAC FIFO Flush for YUKON-Lite Rev. A0 only */
+	if (sc->sk_type == SK_YUKON_LITE && sc->sk_rev == SK_YUKON_LITE_REV_A0)
+		v = SK_TFCTL_OPERATION_ON;
+	else
+		v = SK_TFCTL_OPERATION_ON | SK_RFCTL_FIFO_FLUSH_ON;
 	/* Configure RX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_CLEAR);
-	SK_IF_WRITE_4(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON);
-	
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, v);
+
+	/* Increase flush threshould to 64 bytes */
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD,
+	    SK_RFCTL_FIFO_THRESHOLD + 1);
+
 	/* Configure TX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_CLEAR);
-	SK_IF_WRITE_4(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON);
+	SK_IF_WRITE_2(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON);
 		
 	DPRINTFN(6, ("sk_init_yukon: end\n"));
 }
