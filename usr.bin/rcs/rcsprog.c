@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.122 2006/04/29 05:31:28 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.123 2006/05/01 18:07:00 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -457,11 +457,14 @@ rcs_main(int argc, char **argv)
 		}
 
 		if (orange != NULL) {
-			struct rcs_delta *rdp;
+			struct rcs_delta *rdp, *nrdp;
 			char b[16];
 
 			rcs_rev_select(file, orange);
-			TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
+			for (rdp = TAILQ_FIRST(&(file->rf_delta));
+			    rdp != NULL; rdp = nrdp) {
+				nrdp = TAILQ_NEXT(rdp, rd_list);
+
 				/*
 				 * Delete selected revisions.
 				 */
