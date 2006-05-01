@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.106 2006/05/01 18:31:11 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.107 2006/05/01 18:47:34 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2069,10 +2069,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, SK_TX_RING_CNT);
 	}
-	if (sc_if->sk_cdata.sk_tx_cnt == 0)
-		ifp->if_timer = 0;
-	else /* nudge chip to keep tx ring moving */
-		CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
+	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? 5 : 0;
 
 	if (sc_if->sk_cdata.sk_tx_cnt < SK_TX_RING_CNT - 2)
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -2649,6 +2646,25 @@ sk_init(void *xsc_if)
 			      SK_TXLEDCTL_COUNTER_START);
 	}
 
+	/*
+	 * Configure descriptor poll timer
+	 *
+	 * SK-NET GENESIS data sheet says that possibility of losing Start
+	 * transmit command due to CPU/cache related interim storage problems
+	 * under certain conditions. The document recommends a polling
+	 * mechanism to send a Start transmit command to initiate transfer
+	 * of ready descriptors regulary. To cope with this issue sk(4) now
+	 * enables descriptor poll timer to initiate descriptor processing
+	 * periodically as defined by SK_DPT_TIMER_MAX. However sk(4) still
+	 * issue SK_TXBMU_TX_START to Tx BMU to get fast execution of Tx
+	 * command instead of waiting for next descriptor polling time.
+	 * The same rule may apply to Rx side too but it seems that is not
+	 * needed at the moment.
+	 * Since sk(4) uses descriptor polling as a last resort there is no
+	 * need to set smaller polling time than maximum allowable one.
+	 */
+	SK_IF_WRITE_4(sc_if, 0, SK_DPT_INIT, SK_DPT_TIMER_MAX);
+
 	/* Configure I2C registers */
 
 	/* Configure XMAC(s) */
@@ -2758,6 +2774,11 @@ sk_init(void *xsc_if)
 		SK_YU_WRITE_2(sc_if, YUKON_GPCR, reg);
 	}
 
+	/* Activate descriptor polling timer */
+	SK_IF_WRITE_4(sc_if, 0, SK_DPT_TIMER_CTRL, SK_DPT_TCTL_START);
+	/* start transfer of Tx descriptors */
+	CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -2774,12 +2795,38 @@ sk_stop(struct sk_if_softc *sc_if)
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
 	struct sk_txmap_entry	*dma;
 	int			i;
+	u_int32_t		val;
 
 	DPRINTFN(2, ("sk_stop\n"));
 
 	timeout_del(&sc_if->sk_tick_ch);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+
+	/* stop Tx descriptor polling timer */
+	SK_IF_WRITE_4(sc_if, 0, SK_DPT_TIMER_CTRL, SK_DPT_TCTL_STOP);
+	/* stop transfer of Tx descriptors */
+	CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_STOP);
+	for (i = 0; i < SK_TIMEOUT; i++) {
+		val = CSR_READ_4(sc, sc_if->sk_tx_bmu);
+		if ((val & SK_TXBMU_TX_STOP) == 0)
+			break;
+		DELAY(1);
+	}
+	if (i == SK_TIMEOUT)
+		printf("%s: cannot stop transfer of Tx descriptors\n",
+		      sc_if->sk_dev.dv_xname);
+	/* stop transfer of Rx descriptors */
+	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_RX_STOP);
+	for (i = 0; i < SK_TIMEOUT; i++) {
+		val = SK_IF_READ_4(sc_if, 0, SK_RXQ1_BMU_CSR);
+		if ((val & SK_RXBMU_RX_STOP) == 0)
+			break;
+		DELAY(1);
+	}
+	if (i == SK_TIMEOUT)
+		printf("%s: cannot stop transfer of Rx descriptors\n",
+		      sc_if->sk_dev.dv_xname);
 
 	if (sc_if->sk_phytype == SK_PHYTYPE_BCOM) {
 		u_int32_t		val;
