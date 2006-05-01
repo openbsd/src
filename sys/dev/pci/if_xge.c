@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.1 2006/05/01 00:34:12 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.2 2006/05/01 01:11:49 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -304,14 +304,14 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, XGE_PIF_BAR);
 	if (pci_mapreg_map(pa, XGE_PIF_BAR, memtype, 0,
 	    &sc->sc_st, &sc->sc_sh, 0, 0, 0)) {
-		printf("%s: unable to map PIF BAR registers\n", XNAME);
+		printf(": unable to map PIF BAR registers\n");
 		return;
 	}
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, XGE_TXP_BAR);
 	if (pci_mapreg_map(pa, XGE_TXP_BAR, memtype, 0,
 	    &sc->sc_txt, &sc->sc_txh, 0, 0, 0)) {
-		printf("%s: unable to map TXP BAR registers\n", XNAME);
+		printf(": unable to map TXP BAR registers\n");
 		return;
 	}
 
@@ -331,8 +331,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
-		printf("%s: failed configuring endian, %llx != %llx!\n",
-		    XNAME, (unsigned long long)val, SWAPPER_MAGIC);
+		printf(": failed configuring endian, %llx != %llx!\n",
+		    (unsigned long long)val, SWAPPER_MAGIC);
 		return;
 	}
 
@@ -369,8 +369,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
-		printf("%s: failed configuring endian2, %llx != %llx!\n",
-		    XNAME, (unsigned long long)val, SWAPPER_MAGIC);
+		printf(": failed configuring endian2, %llx != %llx!\n",
+		    (unsigned long long)val, SWAPPER_MAGIC);
 		return;
 	}
 
@@ -398,7 +398,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	 * Get memory for transmit descriptor lists.
 	 */
 	if (xge_alloc_txmem(sc)) {
-		printf("%s: failed allocating txmem.\n", XNAME);
+		printf(": failed allocating txmem.\n");
 		return;
 	}
 
@@ -423,7 +423,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < NTXDESCS; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_MTU,
 		    NTXFRAGS, MCLBYTES, 0, 0, &sc->sc_txm[i])) {
-			printf("%s: cannot create TX DMA maps\n", XNAME);
+			printf(": cannot create TX DMA maps\n");
 			return;
 		}
 	}
@@ -436,7 +436,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	/* allocate rx descriptor memory */
 	if (xge_alloc_rxmem(sc)) {
-		printf("%s: failed allocating rxmem\n", XNAME);
+		printf(": failed allocating rxmem\n");
 		return;
 	}
 
@@ -444,7 +444,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < NRXREAL; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_MTU,
 		    NRXFRAGS, MCLBYTES, 0, 0, &sc->sc_rxm[i])) {
-			printf("%s: cannot create RX DMA maps\n", XNAME);
+			printf(": cannot create RX DMA maps\n");
 			return;
 		}
 	}
@@ -531,8 +531,6 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_add(&sc->xena_media, IFM_ETHER|IFM_1000_SX, 0, NULL);
 	ifmedia_set(&sc->xena_media, IFM_ETHER|IFM_1000_SX);
 
-	printf(", address %s\n", ether_sprintf(enaddr));
-
 	ifp = &sc->sc_arpcom.ac_if;
 	strlcpy(ifp->if_xname, XNAME, IFNAMSIZ);
 	strlcpy(sc->sc_arpcom.ac_enaddr, enaddr, ETHER_ADDR_LEN);
@@ -556,18 +554,17 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	 * Setup interrupt vector before initializing.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n",
-		    XNAME);
+		printf(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	if ((sc->sc_ih =
 	    pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc, XNAME)) == NULL) {
-		printf("%s: unable to establish interrupt at %s\n",
-		    XNAME, intrstr ? intrstr : "<unknown>");
+		printf(": unable to establish interrupt at %s\n",
+		    intrstr ? intrstr : "<unknown>");
 		return;
 	    }
-	printf("%s: interrupting at %s\n", XNAME, intrstr);
+	printf(": %s, address %s\n", intrstr, ether_sprintf(enaddr));
 }
 
 void
