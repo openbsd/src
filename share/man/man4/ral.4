@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.50 2006/04/05 05:30:34 jsg Exp $
+.\" $OpenBSD: ral.4,v 1.51 2006/05/01 09:42:45 damien Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -465,11 +465,12 @@ The
 driver was written by
 .An Damien Bergamini Aq damien@openbsd.org .
 .Sh CAVEATS
-PCI
+Some PCI
 .Nm
 adapters seem to strictly require a system supporting PCI 2.2 or greater and
 will likely not work in systems based on older revisions of the PCI
 specification.
+Check your board PCI version before purchasing the card.
 .Pp
 The
 .Nm ural
