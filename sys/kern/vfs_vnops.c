@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.51 2006/04/23 17:36:09 pedro Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.52 2006/05/01 21:50:48 pedro Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -505,4 +505,18 @@ vn_access(struct vnode *vp, int mode)
 	VOP_UNLOCK(vp, 0, p);
 
 	return (error);
+}
+
+/* Check if a directory can be found inside another in the hierarchy */
+int
+vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
+{
+	int error;
+
+	error = vfs_getcwd_common(lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, p);
+
+	if (!error)
+		return (1);
+
+	return (0);
 }

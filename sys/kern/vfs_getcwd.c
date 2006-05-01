@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.7 2006/05/01 21:08:44 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.8 2006/05/01 21:50:48 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -388,20 +388,6 @@ out:
 	vrele(rvp);
 
 	return (error);
-}
-
-/* Check if a directory can be found inside another in the hierarchy */
-int
-vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
-{
-	int error;
-
-	error = vfs_getcwd_common(lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, p);
-
-	if (!error)
-		return (1);
-
-	return (0);
 }
 
 /* True if p1's root directory is equal to or under p2's root directory */
