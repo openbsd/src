@@ -1233,6 +1233,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vicvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vrreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_wbreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_xgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/isesreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ixgb_ee.ph

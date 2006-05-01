@@ -548,6 +548,7 @@
 ./usr/include/dev/pci/if_vicvar.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_wbreg.h
+./usr/include/dev/pci/if_xgereg.h
 ./usr/include/dev/pci/isesreg.h
 ./usr/include/dev/pci/isesvar.h
 ./usr/include/dev/pci/ixgb_ee.h
