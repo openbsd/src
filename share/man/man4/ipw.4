@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipw.4,v 1.17 2005/06/09 09:03:38 jmc Exp $
+.\" $OpenBSD: ipw.4,v 1.18 2006/05/01 09:35:21 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -158,11 +158,10 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh FILES
-The driver needs some firmware files,
+The driver needs at least version 1.3 of the following firmware files,
 which are loaded on demand when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/ipw-license
 .It Pa /etc/firmware/ipw-bss
 .It Pa /etc/firmware/ipw-ibss
 .It Pa /etc/firmware/ipw-monitor
@@ -176,6 +175,12 @@ includes the driver, the firmware files cannot be included and
 users have to find these files on their own.
 The official person to state your views to about this issue is
 peter.engelbrecht@intel.com at (858) 391 1857.
+.Pp
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Pp
+.Pa http://damien.bergamini.free.fr/packages/openbsd/ipw-firmware-1.3.tgz
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5

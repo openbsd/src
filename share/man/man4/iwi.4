@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.22 2006/04/03 09:39:53 dim Exp $
+.\" $OpenBSD: iwi.4,v 1.23 2006/05/01 09:35:21 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -185,7 +185,6 @@ The driver needs at least version 3.0 of the following firmware files,
 which are loaded on demand when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/iwi-license
 .It Pa /etc/firmware/iwi-bss
 .It Pa /etc/firmware/iwi-ibss
 .It Pa /etc/firmware/iwi-monitor
@@ -204,7 +203,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Pp
-.Pa http://damien.bergamini.free.fr/iwifw/OpenBSD/iwi-firmware-3.0.tgz
+.Pa http://damien.bergamini.free.fr/packages/openbsd/iwi-firmware-3.0.tgz
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
