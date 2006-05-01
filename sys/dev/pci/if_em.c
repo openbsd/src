@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.116 2006/04/28 18:22:29 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.117 2006/05/01 16:38:19 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -902,8 +902,9 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	/*
 	 * Map the packet for DMA.
 	 */
-	if (bus_dmamap_create(sc->txtag, MAX_JUMBO_FRAME_SIZE, 32,
-	    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &q.map)) {
+	if (bus_dmamap_create(sc->txtag, MAX_JUMBO_FRAME_SIZE,
+	    EM_MAX_SCATTER, MAX_JUMBO_FRAME_SIZE, 0,
+	    BUS_DMA_NOWAIT, &q.map)) {
 		sc->no_tx_map_avail++;
 		return (ENOMEM);
 	}
