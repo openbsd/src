@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.43 2006/04/29 05:10:16 ray Exp $
+.\"	$OpenBSD: rcs.1,v 1.44 2006/05/01 14:53:24 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -74,41 +74,6 @@ and
 See the respective manual pages for more information
 about these utilities.
 .Pp
-Files may be selected by
-.Em revision
-or, where no revision is specified,
-the latest revision of the default branch is used.
-Revisions are specified either by using the
-.Fl r
-option or
-by appending the revision number to any option that supports it.
-.Pp
-.Nm
-supports the notion of
-.Em state .
-The state is an arbitrary string of characters used to describe a file
-(or a specific revision of a file).
-States can be set or changed using the
-.Fl s
-option, for RCS tools which support it.
-The state of a file/revision can be modified without having to check in
-a new file/revision.
-The default state is
-.Sq Exp
-(Experimental).
-Examples of states could be
-.Sq Dev ,
-.Sq Reviewed ,
-or
-.Sq Stab .
-.Pp
-.Nm
-also supports
-keyword substitution \(en
-see
-.Sx KEYWORD SUBSTITUTION ,
-below, for more information.
-.Pp
 The following options are supported:
 .Bl -tag -width "-e usersXX"
 .It Fl A Ns Ar oldfile
@@ -144,7 +109,7 @@ If the RCS file has no path prefix, try to first create it in the
 subdirectory or, if that fails, in the current directory.
 Files created this way contain no revision.
 .It Fl k Ns Ar mode
-Specify the keyword substitution mode.
+Specify the keyword substitution mode (see below).
 .It Fl L
 Enable strict locking on the RCS files.
 .It Fl l Ns Op Ar rev
@@ -192,7 +157,8 @@ Be quiet about reporting.
 Sets the state of revision
 .Ar rev
 to the identifier
-.Ar state .
+.Ar state
+(see below).
 The specified value may not contain a space character.
 .It Fl T
 Preserve the modification time of RCS files.
@@ -223,6 +189,74 @@ Suffixes should be separated by the
 .Sq /
 character.
 .El
+.Sh BRANCHES AND REVISIONS
+Files may be selected by
+.Em revision
+or, where no revision is specified,
+the latest revision of the default
+.Em branch
+is used.
+Revisions are specified either by using the
+.Fl r
+option or
+by appending the revision number to any option that supports it.
+Branches are selected using the
+.Fl b
+option.
+.Pp
+A file's revision consists of two elements:
+release number and level number.
+For example, revision 2.3 of a file denotes release 2, level 3.
+Levels may also be subdivided into sublevels:
+this might happen, for example,
+if a parallel development is forked from a lower level revision.
+The primary levels and the sublevels belong to separate branches:
+the primary levels belong to a branch called HEAD,
+while sublevels belong to branches specified by revision.
+.Pp
+.Nm
+also supports the notion of
+.Em state .
+The state is an arbitrary string of characters used to describe a file
+(or a specific revision of a file).
+States can be set or changed using the
+.Fl s
+option, for RCS tools which support it.
+The state of a file/revision can be modified without having to check in
+a new file/revision.
+The default state is
+.Sq Exp
+(Experimental).
+Examples of states could be
+.Sq Dev ,
+.Sq Reviewed ,
+or
+.Sq Stab .
+.Pp
+In order to make large groups of RCS files more manageable,
+RCS tools have the ability to select files by their
+.Em symbolic name .
+Thus files can be selected by their symbolic name,
+rather than numerical revision.
+.Xr ci 1
+.Fl N
+and
+.Fl n
+are used to set symbolic names for files.
+.Pp
+The following methods of file selection are therefore available:
+revision number, state, and symbolic name.
+For options which take as argument
+.Ar rev
+or
+.Ar state ,
+any of these methods may be used.
+Some examples:
+.Bd -literal -offset indent
+$ co -r"myproject" foo.c
+$ rcs -m1.3:update foo.c
+$ ci -s"Exp" bar.c
+.Ed
 .Sh KEYWORD SUBSTITUTION
 As long as source files are edited inside a working directory,
 their state can be determined using the
