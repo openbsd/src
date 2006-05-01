@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.44 2006/05/01 14:53:24 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.45 2006/05/01 15:36:55 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -85,8 +85,10 @@ Add the usernames specified in the comma-separated list
 .Ar users
 to the access list of the RCS files.
 .It Fl b Ns Op Ar rev
-Set the default branch to
+Set the default branch (see below) to
 .Ar rev .
+If no argument is specified,
+the default branch is set to the highest numbered branch.
 .It Fl c Ns Ar string
 Set comment leader to
 .Ar string .
