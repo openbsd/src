@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.16 2006/04/20 20:31:12 miod Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -138,7 +138,6 @@ void		rt2661_set_chan(struct rt2661_softc *,
 void		rt2661_set_bssid(struct rt2661_softc *, const uint8_t *);
 void		rt2661_set_macaddr(struct rt2661_softc *, const uint8_t *);
 void		rt2661_update_promisc(struct rt2661_softc *);
-int		rt2661_wme_update(struct ieee80211com *);
 void		rt2661_update_slot(struct rt2661_softc *);
 const char	*rt2661_get_rf(int);
 void		rt2661_read_eeprom(struct rt2661_softc *);
