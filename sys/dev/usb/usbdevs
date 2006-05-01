@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.196 2006/04/29 02:00:34 jsg Exp $
+$OpenBSD: usbdevs,v 1.197 2006/05/01 22:42:17 pedro Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1471,6 +1471,7 @@ product NEC2 HUB2_0		0x0058	USB2.0 Hub
 
 /* NEODIO products */
 product NEODIO ND3050		0x3050	6-in-1 Flash Device Controller
+product NEODIO ND3260		0x3260	8-in-1 Flash Device Controller
 product NEODIO ND5010		0x5010	Multi-format Flash Controller
 
 /* NetChip Technology Products */
