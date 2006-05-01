@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.18 2006/04/24 16:16:56 jmc Exp $	*/
+/*	$OpenBSD: ident.c,v 1.19 2006/05/01 23:03:07 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -107,43 +107,50 @@ static void
 ident_line(FILE *fp)
 {
 	int c;
-	char *p, linebuf[1024];
+	BUF *bp;
+	char *keyw;
+	size_t len;
 
-	p = linebuf;
+	bp = rcs_buf_alloc(512, BUF_AUTOEXT);
 
 	while ((c = getc(fp)) != VALDELIM) {
 		if (c == EOF && (feof(fp) | ferror(fp)))
-			return;
+			goto out;
 
 		if (isalpha(c))
-			*(p++) = c;
+			rcs_buf_putc(bp, c);
 		else
-			return;
+			goto out;
 	}
 
-	*(p++) = VALDELIM;
+	rcs_buf_putc(bp, VALDELIM);
 
 	while ((c = getc(fp)) != KEYDELIM) {
 		if (c == EOF && (feof(fp) | ferror(fp)))
-			return;
+			goto out;
 
 		if (c == '\n')
-			return;
+			goto out;
 
-		*(p++) = c;
+		rcs_buf_putc(bp, c);
 	}
 
-	if (p[-1] != ' ')
-		return;
+	len = rcs_buf_len(bp);
+	if (rcs_buf_getc(bp, len - 1) != ' ')
+		goto out;
 
 	/* append trailing KEYDELIM */
-	*(p++) = c;
-	*p = '\0';
+	rcs_buf_putc(bp, c);
+	rcs_buf_putc(bp, '\0');
+	keyw = rcs_buf_release(bp);
+	bp = NULL;
 
 	found++;
-	printf("     %c%s\n", KEYDELIM, linebuf);
+	printf("     %c%s\n", KEYDELIM, keyw);
 
-	return;
+out:
+	if (bp != NULL)
+		rcs_buf_free(bp);
 }
 
 void
