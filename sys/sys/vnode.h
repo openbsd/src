@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.67 2006/04/08 11:30:16 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.68 2006/05/01 21:08:44 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -436,6 +436,14 @@ int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
 #ifdef DIAGNOSTIC
 void	vprint(char *, struct vnode *);
 #endif
+
+/* vfs_getcwd.c */
+int vfs_getcwd_scandir(struct vnode **, struct vnode **, char **, char *,
+    struct proc *);
+int vfs_getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
+    int, struct proc *);
+int vfs_getcwd_getcache(struct vnode **, struct vnode **, char **, char *);
+
 int	vop_generic_bwrite(void *ap);
 int	vn_access(struct vnode *, int);
 void	vn_update(void);
@@ -448,6 +456,7 @@ int	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, size_t *aresid, struct proc *p);
 int	vn_lock(struct vnode *vp, int flags, struct proc *p);
+int	vn_isunder(struct vnode *, struct vnode *, struct proc *);
 
 int	vop_generic_abortop(void *);
 int	vop_generic_islocked(void *);

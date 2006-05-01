@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.6 2006/05/01 20:03:06 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.7 2006/05/01 21:08:44 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -54,19 +54,11 @@
 
 #include <sys/syscallargs.h>
 
-int getcwd_scandir(struct vnode **, struct vnode **, char **, char *,
-    struct proc *);
-int getcwd_common(struct vnode *, struct vnode *, char **, char *, int, int,
-    struct proc *);
-
-int getcwd_getcache(struct vnode **, struct vnode **, char **, char *);
-int vn_isunder(struct vnode *, struct vnode *, struct proc *);
-
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN + 1) + 4)
 
 /* Find parent vnode of *lvpp, return in *uvpp */
 int
-getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
+vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp, struct proc *p)
 {
 	int eofflag, tries, dirbuflen, len, reclen, error = 0;
@@ -216,7 +208,7 @@ out:
 
 /* Do a lookup in the vnode-to-name reverse */
 int
-getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
+vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp)
 {
 	struct vnode *lvp, *uvp = NULL;
@@ -276,7 +268,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 /* Common routine shared by sys___getcwd() and vn_isunder() */
 int
-getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
+vfs_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
     int limit, int flags, struct proc *p)
 {
 	struct filedesc *fdp = p->p_fd;
@@ -355,11 +347,11 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		}
 
 		/* Look in the name cache */
-		error = getcwd_getcache(&lvp, &uvp, &bp, bufp);
+		error = vfs_getcwd_getcache(&lvp, &uvp, &bp, bufp);
 
 		if (error == -1) {
 			/* If that fails, look in the directory */
-			error = getcwd_scandir(&lvp, &uvp, &bp, bufp, p);
+			error = vfs_getcwd_scandir(&lvp, &uvp, &bp, bufp, p);
 		}
 
 		if (error)
@@ -404,7 +396,7 @@ vn_isunder(struct vnode *lvp, struct vnode *rvp, struct proc *p)
 {
 	int error;
 
-	error = getcwd_common(lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, p);
+	error = vfs_getcwd_common(lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, p);
 
 	if (!error)
 		return (1);
@@ -452,7 +444,7 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 	 * Since each entry takes up at least 2 bytes in the output
 	 * buffer, limit it to N/2 vnodes for an N byte buffer.
 	 */
-	error = getcwd_common(p->p_fd->fd_cdir, NULL, &bp, path, len/2,
+	error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, path, len/2,
 	    GETCWD_CHECK_ACCESS, p);
 
 	if (error)
