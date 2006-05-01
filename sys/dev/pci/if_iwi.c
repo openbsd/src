@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.66 2006/04/02 20:30:19 dim Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.67 2006/05/01 08:39:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -2101,6 +2101,8 @@ iwi_init(struct ifnet *ifp)
 	size_t size;
 	int i, error;
 
+	iwi_stop(ifp, 0);
+
 	if ((error = iwi_reset(sc)) != 0) {
 		printf("%s: could not reset adapter\n", sc->sc_dev.dv_xname);
 		goto fail1;
@@ -2129,7 +2131,7 @@ iwi_init(struct ifnet *ifp)
 	}
 
 	if (size < sizeof (struct iwi_firmware_hdr)) {
-		printf("%s: firmware image too short: %zu bytes\n",
+		printf("%s: firmware image too short: %u bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;
@@ -2147,7 +2149,7 @@ iwi_init(struct ifnet *ifp)
 
 	if (size < sizeof (struct iwi_firmware_hdr) + letoh32(hdr->bootsz) +
 	    letoh32(hdr->ucodesz) + letoh32(hdr->mainsz)) {
-		printf("%s: firmware image too short: %zu bytes\n",
+		printf("%s: firmware image too short: %u bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;
@@ -2213,13 +2215,13 @@ iwi_init(struct ifnet *ifp)
 		goto fail1;
 	}
 
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_begin_scan(ifp);
 	else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-
-	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_flags |= IFF_RUNNING;
 
 	return 0;
 
