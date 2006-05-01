@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.170 2006/04/25 10:31:39 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.171 2006/05/01 18:17:39 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1163,7 +1163,7 @@ BUF*
 rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 {
 	u_int i, numlen;
-	int isbranch, lookonbranch;
+	int isbranch, lookonbranch, found;
 	size_t len;
 	void *bp;
 	RCSNUM *crev, *rev, *brev;
@@ -1235,6 +1235,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	/* Apply patches backwards to get the right version.
 	 */
 	do {
+		found = 0;
+		
 		if (rcsnum_cmp(rfp->rf_head, rev, 0) == 0)
 			break;
 
@@ -1257,9 +1259,12 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 
 				if (i == numlen) {
 					crev = rb->rb_num;
+					found = 1;
 					break;
 				}
 			}
+			if (found == 0)
+				crev = rdp->rd_next;
 		} else {
 			crev = rdp->rd_next;
 		}
