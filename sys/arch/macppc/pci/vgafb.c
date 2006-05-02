@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.29 2006/04/28 20:21:42 matthieu Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.30 2006/05/02 21:02:03 matthieu Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ vgafb_mmap(void *v, off_t offset, int prot)
 			break;
 		}
 #endif	
-		if (offset >= 0xa0000 && offset < 0xb0000)
+		if (offset >= 0xa0000 && offset < 0xc0000)
 			h = offset;
 		/* XXX the following are probably wrong. 
 		   we want physical addresses here, not virtual ones */
