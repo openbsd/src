@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.19 2006/04/18 03:29:47 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.20 2006/05/02 16:14:51 pat Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -328,16 +328,16 @@ k7_powernow_init(void)
 
 	ci = curcpu();
 
-	cstate = malloc(sizeof(struct k7pnow_cpu_state), M_DEVBUF, M_NOWAIT);
-	if (!cstate)
-		return;
-
 	cpuid(0x80000000, regs);
 	if (regs[0] < 0x80000007)
 		return;
 
 	cpuid(0x80000007, regs);
 	if (!(regs[3] & AMD_PN_FID_VID))
+		return;
+
+	cstate = malloc(sizeof(struct k7pnow_cpu_state), M_DEVBUF, M_NOWAIT);
+	if (!cstate)
 		return;
 
 	cstate->flags = 0;	
