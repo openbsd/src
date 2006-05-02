@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.67 2005/08/02 12:40:42 pascoe Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.68 2006/05/02 10:08:45 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2049,7 +2049,7 @@ pfr_attach_table(struct pf_ruleset *rs, char *name)
 	bzero(&tbl, sizeof(tbl));
 	strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name));
 	if (ac != NULL)
-		strlcpy(tbl.pfrt_anchor, ac->name, sizeof(tbl.pfrt_anchor));
+		strlcpy(tbl.pfrt_anchor, ac->path, sizeof(tbl.pfrt_anchor));
 	kt = pfr_lookup_table(&tbl);
 	if (kt == NULL) {
 		kt = pfr_create_ktable(&tbl, time_second, 1);

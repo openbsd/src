@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.497 2006/05/01 12:24:32 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.498 2006/05/02 10:08:45 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -734,7 +734,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 loadrule	: LOAD ANCHOR string FROM string	{
 			struct loadanchors	*loadanchor;
 
-			if (strlen($3) >= MAXPATHLEN) {
+			if (strlen(pf->anchor) + 1 + strlen($3) >= MAXPATHLEN) {
 				yyerror("anchorname %s too long, max %u\n",
 				    $3, MAXPATHLEN - 1);
 				free($3);
@@ -743,8 +743,13 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			loadanchor = calloc(1, sizeof(struct loadanchors));
 			if (loadanchor == NULL)
 				err(1, "loadrule: calloc");
-			if ((loadanchor->anchorname = strdup($3)) == NULL)
-				err(1, "loadrule: strdup");
+			if ((loadanchor->anchorname = malloc(MAXPATHLEN)) == NULL)
+				err(1, "loadrule: malloc");
+			if (pf->anchor[0])
+				snprintf(loadanchor->anchorname, MAXPATHLEN, "%s/%s",
+				    pf->anchor, $3);
+			else
+				strlcpy(loadanchor->anchorname, $3, MAXPATHLEN);
 			if ((loadanchor->filename = strdup($5)) == NULL)
 				err(1, "loadrule: strdup");
 
