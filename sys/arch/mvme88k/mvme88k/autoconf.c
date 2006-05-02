@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2006/01/11 07:22:01 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2006/05/02 21:43:09 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,7 +60,6 @@
 
 struct	device *parsedisk(char *, int, int, dev_t *);
 void	setroot(void);
-char	buginchr(void);
 void	dumpconf(void);
 int	findblkmajor(struct device *);
 struct device *getdisk(char *, int, int, dev_t *);

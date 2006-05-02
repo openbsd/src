@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.18 2006/04/19 22:09:40 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.19 2006/05/02 21:43:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -685,11 +685,6 @@ m188_init_clocks(void)
 	sysconintr_establish(SYSCV_TIMER1, &statclock_ih, "stat");
 }
 
-#include "bugtty.h"
-#if NBUGTTY > 0
-#include <mvme88k/dev/bugttyfunc.h>
-#endif
-
 int
 m188_clockintr(void *eframe)
 {
@@ -697,9 +692,6 @@ m188_clockintr(void *eframe)
 	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
 	hardclock(eframe);
-#if NBUGTTY > 0
-	bugtty_chkinput();
-#endif /* NBUGTTY */
 
 	/* restart counter */
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);

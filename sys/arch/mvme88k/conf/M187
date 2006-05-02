@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.33 2006/04/19 22:09:38 miod Exp $
+#	$OpenBSD: M187,v 1.34 2006/05/02 21:43:07 miod Exp $
 
 machine mvme88k m88k
 
@@ -20,7 +20,6 @@ config	bsd swap on generic
 mainbus0 at root
 
 # ------------------------------ mainbus devices ------------------------
-bugtty0 at mainbus0
 pcctwo0 at mainbus0 addr 0xfff00000
 sram0	at mainbus0 addr 0xffe00000
 

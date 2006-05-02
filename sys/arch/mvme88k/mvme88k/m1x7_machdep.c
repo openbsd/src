@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.3 2006/04/27 20:21:19 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.4 2006/05/02 21:43:09 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -149,11 +149,6 @@ m1x7_init_clocks(void)
 	pcctwointr_establish(PCC2V_TIMER2, &statclock_ih, "stat");
 }
 
-#include "bugtty.h"
-#if NBUGTTY > 0
-#include <mvme88k/dev/bugttyfunc.h>
-#endif
-
 /*
  * clockintr: ack intr and call hardclock
  */
@@ -163,9 +158,6 @@ m1x7_clockintr(void *eframe)
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1ICR) = PROF_RESET;
 
 	hardclock(eframe);
-#if NBUGTTY > 0
-	bugtty_chkinput();
-#endif /* NBUGTTY */
 
 	return (1);
 }

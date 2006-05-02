@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2006/05/02 21:43:09 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -65,7 +65,6 @@ cdev_decl(xfs_dev);
 #include "vmes.h"
 #include "dart.h"
 #include "cl.h"
-#include "bugtty.h"
 #include "vx.h"
 
 #ifdef notyet
@@ -149,7 +148,7 @@ struct cdevsw	cdevsw[] =
 #endif /* notyet */
 	cdev_tty_init(NDART,dart),	/* 12: MVME188 serial (tty[a-b]) */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD1400 serial (tty0[0-3]) */
-	cdev_tty_init(NBUGTTY,bugtty),	/* 14: BUGtty (ttyB) */
+	cdev_notdef(),			/* 14 */
 	cdev_tty_init(NVX,vx),		/* 15: MVME332XT serial/lpt ttyv[0-7][a-i] */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
@@ -286,8 +285,6 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
  */
 #include <dev/cons.h>
 
-#define bugttycnpollc	nullcnpollc
-cons_decl(bugtty);
 #define clcnpollc	nullcnpollc
 cons_decl(cl);
 #define dartcnpollc	nullcnpollc
@@ -299,9 +296,6 @@ struct	consdev constab[] = {
 #endif
 #if NCL > 0
 	cons_init(cl),
-#endif
-#if NBUGTTY > 0
-	cons_init(bugtty),
 #endif
 	{ 0 },
 };

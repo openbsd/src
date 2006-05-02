@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.40 2006/04/19 22:09:38 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.41 2006/05/02 21:43:07 miod Exp $
 #
 maxpartitions 16
 
@@ -36,11 +36,6 @@ file	arch/mvme88k/dev/cl.c				cl needs-count
 device	dart: tty
 attach	dart at syscon
 file	arch/mvme88k/dev/dart.c				dart needs-count
-
-# fallback console, only if no cl or dart is available
-device	bugtty: tty
-attach	bugtty at mainbus
-file	arch/mvme88k/dev/bugtty.c			bugtty needs-count
 
 include	"../../../scsi/files.scsi"
 

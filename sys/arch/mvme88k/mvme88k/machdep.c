@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.180 2006/04/26 20:49:58 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.181 2006/05/02 21:43:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -195,9 +195,6 @@ extern struct user *proc0paddr;
 
 /*
  * This is to fake out the console routines, while booting.
- * We could use directly the bugtty console, but we want to be able to
- * configure a kernel without bugtty since we do not necessarily need a
- * full-blown console driver.
  */
 cons_decl(boot);
 #define bootcnpollc nullcnpollc
@@ -1161,9 +1158,10 @@ bootcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	if ((char)c == '\n')
-		bugoutchr('\r');
-	bugoutchr((char)c);
+	if (c == '\n')
+		bugpcrlf();
+	else
+		bugoutchr(c);
 }
 
 #define SIGSYS_MAX	501

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.16 2005/12/11 21:45:31 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.17 2006/05/02 21:43:08 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ sysbug_vector()
 	BUG_UNLOCK();							\
 }
 
-static void
+void
 bugpcrlf(void)
 {
 	u_int psr;
@@ -108,53 +108,13 @@ buginchr(void)
 }
 
 void
-bugoutchr(unsigned char c)
+bugoutchr(int c)
 {
 	u_int psr;
-	unsigned char cc;
-
-	if ((cc = c) == '\n') {
-		bugpcrlf();
-		return;
-	}
 
 	BUGCTXT();
-	__asm__ __volatile__ ("or r2,r0,%0" : : "r" (cc));
+	__asm__ __volatile__ ("or r2,r0,%0" : : "r" (c));
 	MVMEPROM_CALL(MVMEPROM_OUTCHR);
-	OSCTXT();
-}
-
-/* return 1 if not empty else 0 */
-int
-buginstat(void)
-{
-	u_int psr;
-	int ret;
-
-	BUGCTXT();
-	MVMEPROM_CALL(MVMEPROM_INSTAT);
-	__asm__ __volatile__  ("or %0,r0,r2" : "=r" (ret));
-	OSCTXT();
-	return ((ret & 0x08) >> 3);
-}
-
-void
-bugoutstr(char *s, char *se)
-{
-	u_int psr;
-
-	BUGCTXT();
-	MVMEPROM_CALL(MVMEPROM_OUTSTR);
-	OSCTXT();
-}
-
-void
-bugrtcrd(struct mvmeprom_time *rtc)
-{
-	u_int psr;
-
-	BUGCTXT();
-	MVMEPROM_CALL(MVMEPROM_RTC_RD);
 	OSCTXT();
 }
 
