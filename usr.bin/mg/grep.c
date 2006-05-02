@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.27 2006/04/03 00:19:32 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.28 2006/05/02 17:10:25 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -39,8 +39,7 @@ int		 next_error(int, int);
 static int	 grep(int, int);
 static int	 compile(int, int);
 static int	 gid(int, int);
-static struct buffer	*compile_mode(const char *, const char *, const char *);
-static int	 getbufcwd(char *, size_t);
+static struct buffer	*compile_mode(const char *, const char *);
 static int	 xlint(int, int);
 
 void grep_init(void);
@@ -88,14 +87,6 @@ grep(int f, int n)
 	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
-	char	 path[NFILEN];
-
-	/* get buffer cwd */
-	if (getbufcwd(path, sizeof(path)) == FALSE) {
-		ewprintf("Failed. "
-		    "Can't get working directory of current buffer.");
-		return (FALSE);
-	}
 
 	(void)strlcpy(cprompt, "grep -n ", sizeof(cprompt));
 	if ((bufp = eread("Run grep: ", cprompt, NFILEN,
@@ -105,7 +96,7 @@ grep(int f, int n)
 		return (FALSE);
 	(void)snprintf(command, sizeof(command), "%s /dev/null", bufp);
 
-	if ((bp = compile_mode("*grep*", command, path)) == NULL)
+	if ((bp = compile_mode("*grep*", command)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -122,14 +113,6 @@ xlint(int f, int n)
 	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
-	char	 path[NFILEN];
-
-	/* get buffer cwd */
-	if (getbufcwd(path, sizeof(path)) == FALSE) {
-		ewprintf("Failed. "
-		    "Can't get working directory of current buffer.");
-		return (FALSE);
-	}
 
 	(void)strlcpy(cprompt, "make lint ", sizeof(cprompt));
 	if ((bufp = eread("Run lint: ", cprompt, NFILEN,
@@ -139,7 +122,7 @@ xlint(int f, int n)
 		return (FALSE);
 	(void)snprintf(command, sizeof(command), "%s 2>&1", bufp);
 
-	if ((bp = compile_mode("*lint*", command, path)) == NULL)
+	if ((bp = compile_mode("*lint*", command)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -156,14 +139,6 @@ compile(int f, int n)
 	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
-	char	 path[NFILEN];
-
-	/* get buffer cwd */
-	if (getbufcwd(path, sizeof(path)) == FALSE) {
-		ewprintf("Failed. "
-		    "Can't get working directory of current buffer.");
-		return (FALSE);
-	}
 
 	(void)strlcpy(cprompt, compile_last_command, sizeof(cprompt));
 	if ((bufp = eread("Compile command: ", cprompt, NFILEN,
@@ -177,7 +152,7 @@ compile(int f, int n)
 
 	(void)snprintf(command, sizeof(command), "%s 2>&1", bufp);
 
-	if ((bp = compile_mode("*compile*", command, path)) == NULL)
+	if ((bp = compile_mode("*compile*", command)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -197,14 +172,6 @@ gid(int f, int n)
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	int	 i, j;
-	char	 path[NFILEN];
-
-	/* get buffer cwd */
-	if (getbufcwd(path, sizeof(path)) == FALSE) {
-		ewprintf("Failed. "
-		    "Can't get working directory of current buffer.");
-		return (FALSE);
-	}
 
 	/* catch ([^\s(){}]+)[\s(){}]* */
 
@@ -241,7 +208,7 @@ gid(int f, int n)
 		return (FALSE);
 	(void)snprintf(command, sizeof(command), "gid %s", cprompt);
 
-	if ((bp = compile_mode("*gid*", command, path)) == NULL)
+	if ((bp = compile_mode("*gid*", command)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -251,7 +218,7 @@ gid(int f, int n)
 }
 
 struct buffer *
-compile_mode(const char *name, const char *command, const char *path)
+compile_mode(const char *name, const char *command)
 {
 	struct buffer	*bp;
 	FILE	*fpipe;
@@ -266,14 +233,16 @@ compile_mode(const char *name, const char *command, const char *path)
 	if (bclear(bp) != TRUE)
 		return (NULL);
 
-	addlinef(bp, "cd %s", path);
+	if (getbufcwd(bp->b_cwd, sizeof(bp->b_cwd)) != TRUE)
+		return (NULL);
+	addlinef(bp, "cd %s", bp->b_cwd);
 	addline(bp, command);
 	addline(bp, "");
 
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		panic("Can't get current directory!");
-	if (chdir(path) == -1) {
-		ewprintf("Can't change dir to %s", path);
+	if (chdir(bp->b_cwd) == -1) {
+		ewprintf("Can't change dir to %s", bp->b_cwd);
 		return (NULL);
 	}
 	if ((fpipe = popen(command, "r")) == NULL) {
@@ -321,7 +290,7 @@ compile_goto_error(int f, int n)
 	struct mgwin	*wp;
 	char	*fname, *line, *lp, *ln;
 	int	 lineno, len;
-	char	*adjf;
+	char	*adjf, path[NFILEN];
 	const char *errstr;
 	struct line	*last;
 
@@ -350,8 +319,15 @@ compile_goto_error(int f, int n)
 	lineno = (int)strtonum(ln, INT_MIN, INT_MAX, &errstr);
 	if (errstr)
 		goto fail;
-
-	adjf = adjustname(fname);
+	
+	if (fname && fname[0] != '/') {
+		(void)strlcpy(path, curbp->b_cwd, sizeof(path));
+		if (strlcat(path, fname, sizeof(path)) >= sizeof(path))
+			goto fail;
+		adjf = path;
+	} else {
+		adjf = adjustname(fname);
+	}
 	free(line);
 
 	if (adjf == NULL)
@@ -396,34 +372,4 @@ next_error(int f, int n)
 	curwp->w_flag |= WFMOVE;
 
 	return (compile_goto_error(f, n));
-}
-
-/*
- * Return the working directory for the current buffer, terminated
- * with a '/'. First, try to extract it from the current buffer's
- * filename. If that fails, use global cwd.
- */
-static int
-getbufcwd(char *path, size_t plen)
-{
-	char *dname, cwd[NFILEN];
-	if (plen == 0)
-		goto error;
-
-	if (curbp->b_fname && curbp->b_fname[0] != '\0' &&
-	    (dname = dirname(curbp->b_fname)) != NULL) {
-		if (strlcpy(path, dname, plen) >= plen)
-			goto error;
-		if (strlcat(path, "/", plen) >= plen)
-			goto error;
-	} else {
-		if ((dname = getcwd(cwd, sizeof(cwd))) == NULL)
-			goto error;
-		if (strlcpy(path, dname, plen) >= plen)
-			goto error;
-	}
-	return (TRUE);
-error:
-	path = NULL;
-	return (FALSE);
 }

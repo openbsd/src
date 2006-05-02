@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.85 2006/04/06 05:28:17 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.86 2006/05/02 17:10:25 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -249,6 +249,7 @@ struct buffer {
 	char		 b_nwnd;	/* Count of windows on buffer	 */
 	char		 b_flag;	/* Flags			 */
 	char		 b_fname[NFILEN]; /* File name			 */
+	char		 b_cwd[NFILEN]; /* working directory		 */
 	struct fileinfo	 b_fi;		/* File attributes		 */
 	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list		*/
 	int		 b_undopos;	/* Where we were during last undo */
@@ -316,6 +317,7 @@ int		 charswaiting(void);
 void		 dirinit(void);
 int		 changedir(int, int);
 int		 showcwdir(int, int);
+int		 getcwdir(char *, size_t);
 
 /* dired.c */
 struct buffer	*dired_(char *);
@@ -375,7 +377,7 @@ struct mgwin   *wpopup(void);
 
 /* buffer.c */
 int		 togglereadonly(int, int);
-struct buffer  *bfind(const char *, int);
+struct buffer   *bfind(const char *, int);
 int		 poptobuffer(int, int);
 int		 killbuffer(struct buffer *);
 int		 killbuffer_cmd(int, int);
@@ -386,12 +388,13 @@ int		 addlinef(struct buffer *, char *, ...);
 int		 anycb(int);
 int		 bclear(struct buffer *);
 int		 showbuffer(struct buffer *, struct mgwin *, int);
-int		 baugname(char *, const char *, size_t);
-struct mgwin   *popbuf(struct buffer *);
+int		 augbname(char *, const char *, size_t);
+struct mgwin    *popbuf(struct buffer *);
 int		 bufferinsert(int, int);
 int		 usebuffer(int, int);
 int		 notmodified(int, int);
 int		 popbuftop(struct buffer *);
+int		 getbufcwd(char *, size_t);
 
 /* display.c */
 int		vtresize(int, int, int);

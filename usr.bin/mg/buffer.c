@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.56 2006/04/06 05:28:17 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.57 2006/05/02 17:10:25 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -13,6 +13,7 @@
 #include "kbd.h"		/* needed for modes */
 
 static struct buffer  *makelist(void);
+static struct buffer *bnew(void);
 
 /* ARGSUSED */
 int
@@ -457,16 +458,13 @@ anycb(int f)
 /*
  * Search for a buffer, by name.
  * If not found, and the "cflag" is TRUE,
- * create a buffer and put it in the list of
- * all buffers. Return pointer to the BUFFER
- * block for the buffer.
+ * create a new buffer. Return pointer to the found
+ * (or new) buffer.
  */
 struct buffer *
 bfind(const char *bname, int cflag)
 {
 	struct buffer	*bp;
-	struct line	*lp;
-	int		 i;
 
 	bp = bheadp;
 	while (bp != NULL) {
@@ -477,18 +475,34 @@ bfind(const char *bname, int cflag)
 	if (cflag != TRUE)
 		return (NULL);
 
-	bp = calloc(1, sizeof(struct buffer));
-	if (bp == NULL) {
-		ewprintf("Can't get %d bytes", sizeof(struct buffer));
-		return (NULL);
-	}
+	bp = bnew();
+
 	if ((bp->b_bname = strdup(bname)) == NULL) {
 		ewprintf("Can't get %d bytes", strlen(bname) + 1);
 		free(bp);
 		return (NULL);
 	}
+
+	return (bp);
+}
+
+/*
+ * Create a new buffer and put it in the list of
+ * all buffers. 
+ */
+static struct buffer *
+bnew()
+{
+	struct buffer *bp;
+	struct line	*lp;
+	int		 i;
+
+	bp = calloc(1, sizeof(struct buffer));
+	if (bp == NULL) {
+		ewprintf("Can't get %d bytes", sizeof(struct buffer));
+		return (NULL);
+	}
 	if ((lp = lalloc(0)) == NULL) {
-		free(bp->b_bname);
 		free(bp);
 		return (NULL);
 	}
@@ -509,11 +523,13 @@ bfind(const char *bname, int cflag)
 		bp->b_modes[i] = defb_modes[i];
 	} while (i++ < defb_nmodes);
 	bp->b_fname[0] = '\0';
+	bp->b_cwd[0] = '\0';
 	bzero(&bp->b_fi, sizeof(bp->b_fi));
 	lp->l_fp = lp;
 	lp->l_bp = lp;
 	bp->b_bufp = bheadp;
 	bheadp = bp;
+
 	return (bp);
 }
 
@@ -602,7 +618,7 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
  * include the number, if necessary.
  */
 int
-baugname(char *bn, const char *fn, size_t bs)
+augbname(char *bn, const char *fn, size_t bs)
 {
 	int 	 count;
 	size_t	 remain, len;
@@ -741,3 +757,30 @@ popbuftop(struct buffer *bp)
 	return (popbuf(bp) != NULL);
 }
 #endif
+
+/*
+ * Return the working directory for the current buffer, terminated
+ * with a '/'. First, try to extract it from the current buffer's
+ * filename. If that fails, use global cwd.
+ */
+int
+getbufcwd(char *path, size_t plen)
+{
+	char cwd[NFILEN];
+
+	if (plen == 0)
+		return (FALSE);
+
+	if (curbp->b_cwd[0] != '\0') {
+		(void)strlcpy(path, curbp->b_cwd, plen);
+	} else {
+		if (getcwdir(cwd, sizeof(cwd)) == FALSE)
+			goto error;
+		(void)strlcpy(path, cwd, plen);
+	}
+	return (TRUE);
+error:
+	path[0] = '\0';
+	return (FALSE);
+}
+

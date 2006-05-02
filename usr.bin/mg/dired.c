@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.35 2005/12/20 05:04:28 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.36 2006/05/02 17:10:25 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -630,7 +630,8 @@ dired_(char *dname)
 		return (NULL);
 	}
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
-	(void) strlcpy(bp->b_fname, dname, sizeof(bp->b_fname));
+	(void)strlcpy(bp->b_fname, dname, sizeof(bp->b_fname));
+	(void)strlcpy(bp->b_cwd, dname, sizeof(bp->b_cwd));
 	if ((bp->b_modes[1] = name_mode("dired")) == NULL) {
 		bp->b_modes[0] = name_mode("fundamental");
 		ewprintf("Could not find mode dired");

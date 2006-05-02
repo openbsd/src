@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2005/12/20 05:04:28 kjell Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2006/05/02 17:10:25 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,8 +11,7 @@
 
 #include "def.h"
 
-char		*wdir;
-static char	 cwd[NFILEN];
+static char	 mgcwd[NFILEN];
 
 /*
  * Initialize anything the directory management routines need.
@@ -20,11 +19,12 @@ static char	 cwd[NFILEN];
 void
 dirinit(void)
 {
-	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL) {
+	mgcwd[0] = '\0';
+	if (getcwd(mgcwd, sizeof(mgcwd)) == NULL) {
 		ewprintf("Can't get current directory!");
 		chdir("/");
-		(void)strlcpy(cwd, "/", sizeof(cwd));
 	}
+	(void)strlcat(mgcwd, "/", sizeof(mgcwd));
 }
 
 /*
@@ -34,10 +34,10 @@ dirinit(void)
 int
 changedir(int f, int n)
 {
-	char	bufc[NPAT], *bufp;
+	char	bufc[NFILEN], *bufp;
 
-	(void)strlcpy(bufc, wdir, sizeof(bufc));
-	if ((bufp = eread("Change default directory: ", bufc, NPAT,
+	(void)strlcpy(bufc, mgcwd, sizeof(bufc));
+	if ((bufp = eread("Change default directory: ", bufc, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -46,9 +46,9 @@ changedir(int f, int n)
 		ewprintf("Can't change dir to %s", bufc);
 		return (FALSE);
 	} else {
-		if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
+		if ((bufp = getcwd(mgcwd, sizeof(mgcwd))) == NULL)
 			panic("Can't get current directory!");
-		ewprintf("Current directory is now %s", wdir);
+		ewprintf("Current directory is now %s", bufp);
 		return (TRUE);
 	}
 }
@@ -60,6 +60,15 @@ changedir(int f, int n)
 int
 showcwdir(int f, int n)
 {
-	ewprintf("Current directory: %s", wdir);
+	ewprintf("Current directory: %s", mgcwd);
+	return (TRUE);
+}
+
+int
+getcwdir(char *buf, size_t len)
+{
+	if (strlcpy(buf, mgcwd, len) >= len)
+		return (FALSE);
+
 	return (TRUE);
 }

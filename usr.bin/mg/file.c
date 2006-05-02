@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.53 2006/04/06 05:28:17 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.54 2006/05/02 17:10:25 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,9 +6,9 @@
  *	File commands.
  */
 
-#include "def.h"
-
 #include <libgen.h>
+
+#include "def.h"
 
 /*
  * Insert a file into the current buffer.  Real easy - just call the
@@ -20,7 +20,10 @@ fileinsert(int f, int n)
 {
 	char	 fname[NFILEN], *bufp, *adjf;
 
-	bufp = eread("Insert file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
+	if (getbufcwd(fname, sizeof(fname)) != TRUE)
+		fname[0] = '\0';
+	bufp = eread("Insert file: ", fname, NFILEN,
+	    EFNEW | EFCR | EFFILE | EFDEF);
 	if (bufp == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -42,19 +45,11 @@ int
 filevisit(int f, int n)
 {
 	struct buffer	*bp;
-	char	 fname[NFILEN], *bufp, *adjf, *slash;
+	char	 fname[NFILEN], *bufp, *adjf;
 	int	 status;
 
-	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		if (strlcpy(fname, curbp->b_fname, sizeof(fname)) >= sizeof(fname))
-			return (FALSE);
-		if ((slash = strrchr(fname, '/')) != NULL) {
-			*(slash + 1) = '\0';
-		}
-	}
-	else
+	if (getbufcwd(fname, sizeof(fname)) != TRUE)
 		fname[0] = '\0';
-
 	bufp = eread("Find file: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE | EFDEF);
 	if (bufp == NULL)
@@ -88,18 +83,11 @@ int
 filevisitalt(int f, int n)
 {
 	struct buffer	*bp;
-	char	 fname[NFILEN], *bufp, *adjf, *slash;
+	char	 fname[NFILEN], *bufp, *adjf;
 	int	 status;
 
-	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		if (strlcpy(fname, curbp->b_fname, sizeof(fname)) >= sizeof(fname))
-			return (FALSE);
-		if ((slash = strrchr(fname, '/')) != NULL) {
-			*(slash + 1) = '\0';
-		}
-	} else
+	if (getbufcwd(fname, sizeof(fname)) != TRUE)
 		fname[0] = '\0';
-
 	bufp = eread("Find alternate file: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE | EFDEF);
 	if (bufp == NULL)
@@ -152,8 +140,10 @@ poptofile(int f, int n)
 	char	 fname[NFILEN], *adjf, *bufp;
 	int	 status;
 
+	if (getbufcwd(fname, sizeof(fname)) != TRUE)
+		fname[0] = '\0';
 	if ((bufp = eread("Find file in other window: ", fname, NFILEN,
-	    EFNEW | EFCR | EFFILE)) == NULL)
+	    EFNEW | EFCR | EFFILE | EFDEF)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
@@ -194,7 +184,7 @@ findbuffer(char *fn)
 			return (bp);
 	}
 	/* Not found. Create a new one, adjusting name first */
-	if (baugname(bname, fname, sizeof(bname)) == FALSE)
+	if (augbname(bname, fname, sizeof(bname)) == FALSE)
 		return (NULL);
 
 	bp = bfind(bname, TRUE);
@@ -305,8 +295,12 @@ insertfile(char *fname, char *newname, int replacebuf)
 
 	/* cheap */
 	bp = curbp;
-	if (newname != NULL)
-		(void)strlcpy(bp->b_fname, newname, sizeof bp->b_fname);
+	if (newname != NULL) {
+		(void)strlcpy(bp->b_fname, newname, sizeof(bp->b_fname));
+		(void)strlcpy(bp->b_cwd, dirname(newname),
+		    sizeof(bp->b_cwd));
+		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
+	}
 
 	/* hard file open */
 	if ((s = ffropen(fname, (replacebuf == TRUE) ? bp : NULL)) == FIOERR)
@@ -331,6 +325,9 @@ insertfile(char *fname, char *newname, int replacebuf)
 		undo_enable(x);
 		curbp = bp;
 		return (showbuffer(bp, curwp, WFHARD | WFMODE));
+	} else {
+		(void)strlcpy(bp->b_cwd, dirname(fname), sizeof(bp->b_cwd));
+		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));
 	}
 	opos = curwp->w_doto;
 
@@ -474,8 +471,10 @@ filewrite(int f, int n)
 	char	 fname[NFILEN], bn[NBUFN];
 	char	*adjfname, *bufp;
 
+	if (getbufcwd(fname, sizeof(fname)) != TRUE)
+		fname[0] = '\0';
 	if ((bufp = eread("Write file: ", fname, NFILEN,
-	    EFNEW | EFCR | EFFILE)) == NULL)
+	    EFDEF | EFNEW | EFCR | EFFILE)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
@@ -487,8 +486,10 @@ filewrite(int f, int n)
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
 		(void)strlcpy(curbp->b_fname, adjfname, sizeof(curbp->b_fname));
+		if (getbufcwd(curbp->b_cwd, sizeof(curbp->b_cwd)) != TRUE)
+			(void)strlcpy(curbp->b_cwd, "/", sizeof(curbp->b_cwd));
 		free(curbp->b_bname);
-		if (baugname(bn, basename(curbp->b_fname), sizeof(bn))
+		if (augbname(bn, basename(curbp->b_fname), sizeof(bn))
 		    == FALSE)
 			return (FALSE);
 		if ((curbp->b_bname = strdup(bn)) == NULL)
