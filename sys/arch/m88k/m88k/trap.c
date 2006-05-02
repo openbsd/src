@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2005/12/11 21:45:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2006/05/02 21:44:39 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -238,16 +238,16 @@ m88100_trap(unsigned type, struct trapframe *frame)
 #if defined(DDB)
 	case T_KDB_BREAK:
 		s = splhigh();
-		db_enable_interrupt(psr);
+		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_break_trap(T_KDB_BREAK, (db_regs_t*)frame);
-		db_disable_interrupt(psr);
+		set_psr(psr);
 		splx(s);
 		return;
 	case T_KDB_ENTRY:
 		s = splhigh();
-		db_enable_interrupt(psr);
+		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_entry_trap(T_KDB_ENTRY, (db_regs_t*)frame);
-		db_disable_interrupt(psr);
+		set_psr(psr);
 		splx(s);
 		return;
 #endif /* DDB */
@@ -661,23 +661,23 @@ m88110_trap(unsigned type, struct trapframe *frame)
 #ifdef DDB
 	case T_KDB_TRACE:
 		s = splhigh();
-		db_enable_interrupt(psr);
+		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_break_trap(T_KDB_TRACE, (db_regs_t*)frame);
-		db_disable_interrupt(psr);
+		set_psr(psr);
 		splx(s);
 		return;
 	case T_KDB_BREAK:
 		s = splhigh();
-		db_enable_interrupt(psr);
+		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_break_trap(T_KDB_BREAK, (db_regs_t*)frame);
-		db_disable_interrupt(psr);
+		set_psr(psr);
 		splx(s);
 		return;
 	case T_KDB_ENTRY:
 		s = splhigh();
-		db_enable_interrupt(psr);
+		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_entry_trap(T_KDB_ENTRY, (db_regs_t*)frame);
-		db_disable_interrupt(psr);
+		set_psr(psr);
 		/* skip one instruction */
 		if (frame->tf_exip & 1)
 			frame->tf_exip = frame->tf_enip;
@@ -688,10 +688,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 #if 0
 	case T_ILLFLT:
 		s = splhigh();
-		db_enable_interrupt(psr);
+		set_psr((psr = get_psr()) & ~PSR_IND);
 		ddb_error_trap(type == T_ILLFLT ? "unimplemented opcode" :
 		       "error fault", (db_regs_t*)frame);
-		db_disable_interrupt(psr);
+		set_psr(psr);
 		splx(s);
 		return;
 #endif /* 0 */

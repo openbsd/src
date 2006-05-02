@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.7 2005/11/20 22:07:07 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.8 2006/05/02 21:44:37 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -108,9 +108,6 @@ int	m88k_print_instruction(u_int, long);	/* db_disasm.c */
 #define DB_MACHINE_COMMANDS
 
 #define	DB_AOUT_SYMBOLS
-
-#define	db_enable_interrupt(psr)	set_psr(((psr) = get_psr()) & ~PSR_IND)
-#define	db_disable_interrupt(psr)	set_psr(psr)
 
 #endif	/* DDB */
 #endif	/* _LOCORE */
