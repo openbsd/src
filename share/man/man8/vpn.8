@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.108 2006/03/10 04:29:49 david Exp $
+.\" $OpenBSD: vpn.8,v 1.109 2006/05/02 21:14:43 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -154,11 +154,11 @@ One practical method of generating them is by using the
 device.
 To produce 160 bits (20 bytes) of randomness, for example, do:
 .Bd -literal -offset indent
-# openssl rand 20 | hexdump -e '20/1 "%02x"'
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
 or:
 .Bd -literal -offset indent -compact
-# openssl rand 20 | perl -pe 's/./unpack("H2",$&)/ges'
+$ openssl rand 20 | perl -pe 's/./unpack("H2",$&)/ges'
 .Ed
 .Pp
 Different cipher types may require different sized keys.
@@ -186,8 +186,8 @@ algorithms.
 The following would create suitable keys for a 3DES encryption key
 and SHA-1 authentication key:
 .Bd -literal -offset indent
-# openssl rand 24 | hexdump -e '24/1 "%02x"' \*(Gt enc_key
-# openssl rand 20 | hexdump -e '20/1 "%02x"' \*(Gt auth_key
+$ openssl rand 24 | hexdump -e '24/1 "%02x"' \*(Gt enc_key
+$ openssl rand 20 | hexdump -e '20/1 "%02x"' \*(Gt auth_key
 .Ed
 .Pp
 The 3DES encryption key needs 192 bits (3x64), or 24 bytes.
