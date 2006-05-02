@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.24 2006/01/06 18:53:06 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.25 2006/05/02 05:28:07 hugh Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.24 2006/01/06 18:53:06 millert Exp $
+ *	$OpenBSD: extern.h,v 1.25 2006/05/02 05:28:07 hugh Exp $
  */
 
 struct name;
@@ -107,8 +107,6 @@ int	 deltype(void *);
 void	 demail(void);
 void	 dointr(void);
 int	 dosh(void *);
-int	 dot_lock(const char *, int, FILE *, const char *);
-void	 dot_unlock(const char *);
 int	 echo(void *);
 int	 edit1(int *, int);
 int	 editor(void *);
