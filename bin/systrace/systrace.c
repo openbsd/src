@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.52 2006/04/26 20:19:25 sturm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.53 2006/05/02 19:49:05 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -268,7 +268,8 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	struct filterq *pflq = NULL;
 	short action = ICPOLICY_PERMIT;
 	short future;
-	int len, off, dolog = 0;
+	int off, dolog = 0;
+	size_t len;
 
 	if (policynr == -1)
 		goto out;

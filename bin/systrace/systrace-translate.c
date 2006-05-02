@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.19 2006/03/12 20:56:10 sturm Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.20 2006/05/02 19:49:05 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -536,7 +536,8 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *arg;
 	char buf[_POSIX2_LINE_MAX], *p;
-	int i, off = 0, len;
+	int i, off = 0;
+	size_t len;
 	extern struct intercept_system intercept;
 
 	i = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.21 2004/07/07 07:31:40 marius Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.22 2006/05/02 19:49:05 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -51,7 +51,7 @@ struct intercept_system {
 	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
 	int (*getarg)(int, void *, int, void **);
-	int (*answer)(int, pid_t, u_int32_t, short, int, short,
+	int (*answer)(int, pid_t, u_int16_t, short, int, short,
 	    struct elevate *);
 	int (*newpolicy)(int);
 	int (*assignpolicy)(int, pid_t, int);
@@ -92,7 +92,7 @@ struct intercept_pid {
 	pid_t pid;
 	pid_t ppid;		/* parent pid */
 
-	short policynr;
+	int policynr;
 	int execve_code;
 	short execve_policy;
 	char *name;		/* name of current process image */

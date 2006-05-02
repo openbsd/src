@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.29 2006/01/01 11:48:45 sturm Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.30 2006/05/02 19:49:05 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -138,7 +138,7 @@ static int obsd_syscall_number(const char *, const char *);
 static short obsd_translate_policy(short);
 static short obsd_translate_flags(short);
 static int obsd_translate_errno(int);
-static int obsd_answer(int, pid_t, u_int32_t, short, int, short,
+static int obsd_answer(int, pid_t, u_int16_t, short, int, short,
     struct elevate *);
 static int obsd_newpolicy(int);
 static int obsd_assignpolicy(int, pid_t, int);
@@ -364,7 +364,7 @@ obsd_translate_errno(int nerrno)
 }
 
 static int
-obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
+obsd_answer(int fd, pid_t pid, u_int16_t seqnr, short policy, int nerrno,
     short flags, struct elevate *elevate)
 {
 	struct systrace_answer ans;

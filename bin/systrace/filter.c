@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.31 2006/04/26 20:19:25 sturm Exp $	*/
+/*	$OpenBSD: filter.c,v 1.32 2006/05/02 19:49:05 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -140,7 +140,7 @@ filter_match(struct intercept_pid *icpid, struct intercept_tlq *tls,
 int
 filter_predicate(struct intercept_pid *icpid, struct predicate *pdc)
 {
-	int pidnr, pdcnr;
+	id_t pidnr, pdcnr;
 	int res = 0;
 
 	if (!pdc->p_flags)
