@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.40 2006/03/10 11:31:41 moritz Exp $	*/
+/*	$OpenBSD: print.c,v 1.41 2006/05/02 05:25:19 hugh Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.40 2006/03/10 11:31:41 moritz Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.41 2006/05/02 05:25:19 hugh Exp $";
 #endif
 #endif /* not lint */
 
@@ -291,6 +291,14 @@ pri(const struct kinfo_proc2 *kp, VARENT *ve)
 
 	v = ve->var;
 	(void)printf("%*d", v->width, kp->p_priority - PZERO);
+}
+
+void
+pnice(const struct kinfo_proc2 *kp, VARENT *ve)
+{
+	VAR *v;
+	v = ve->var;
+	(void)printf("%*d", v->width, kp->p_nice - NZERO);
 }
 
 void

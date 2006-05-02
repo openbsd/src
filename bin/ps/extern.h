@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 2005/01/07 20:41:13 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 2006/05/02 05:25:19 hugh Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@ void	 pmem(const struct kinfo_proc2 *, VARENT *);
 void	 pri(const struct kinfo_proc2 *, VARENT *);
 void	 printheader(void);
 void	 pvar(const struct kinfo_proc2 *kp, VARENT *);
+void	 pnice(const struct kinfo_proc2 *kp, VARENT *);
 void	 rgname(const struct kinfo_proc2 *, VARENT *);
 void	 rssize(const struct kinfo_proc2 *, VARENT *);
 void	 runame(const struct kinfo_proc2 *, VARENT *);
