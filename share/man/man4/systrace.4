@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.15 2004/11/09 23:23:56 jaredy Exp $
+.\"	$OpenBSD: systrace.4,v 1.16 2006/05/03 05:09:54 sturm Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -109,7 +109,7 @@ struct str_msg_ask {
 };
 
 struct str_msg_child {
-	pid_t new_pid;
+	pid_t new_pid;		/* -1 if child exited */
 };
 .Ed
 .Pp
@@ -126,7 +126,9 @@ SYSTR_FLAGS_RESULT.
 .It SYSTR_MSG_EMUL
 This message is sent whenever the emulation of a process changes.
 .It SYSTR_MSG_CHILD
-This message is sent whenever a process gains a child.
+This message is sent whenever a process gains or loses a child.
+In the latter case, the event is raised when the child exits, but
+not when it is reaped.
 .It SYSTR_MSG_UGID
 This message is sent whenever the effective UID or GID has changed
 during the execution of a system call.
