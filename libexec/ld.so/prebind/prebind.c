@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.2 2006/05/03 19:38:06 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.3 2006/05/03 19:49:21 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -290,10 +290,13 @@ load_file(const char *filename, int lib)
 			printf("%s: wrong arch\n", filename);
 		goto done;
 	}
-	if (lib == 0) {
-		if (pehdr->e_type != ET_EXEC)
+
+	if ((lib == 0) && (pehdr->e_type != ET_EXEC))
 			goto done;
-	}
+
+	if ((lib == 1 || lib == 2) && (pehdr->e_type != ET_DYN))
+		goto done;
+		
 
 	pexe = buf;
 	if (pehdr->e_shstrndx == 0) {
