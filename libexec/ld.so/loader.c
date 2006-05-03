@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.100 2005/11/09 16:41:29 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.101 2006/05/03 16:10:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -43,6 +43,7 @@
 #include "resolve.h"
 #include "sod.h"
 #include "stdlib.h"
+#include "dl_prebind.h"
 
 /*
  * Local decls.
@@ -66,6 +67,8 @@ char *_dl_traceld;
 char *_dl_debug;
 char *_dl_showmap;
 char *_dl_norandom;
+char *_dl_noprebind;
+char *_dl_prebind_validate;
 
 struct r_debug *_dl_debug_map;
 
@@ -204,6 +207,8 @@ _dl_setup_env(char **envp)
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
 	_dl_debug = _dl_getenv("LD_DEBUG", envp);
 	_dl_norandom = _dl_getenv("LD_NORANDOM", envp);
+	_dl_noprebind = _dl_getenv("LD_NOPREBIND", envp); 
+	_dl_prebind_validate = _dl_getenv("LD_PREBINDVALIDATE", envp); 
 
 	/*
 	 * Don't allow someone to change the search paths if he runs
@@ -332,6 +337,8 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 	return(0);
 }
 
+ 
+
 /*
  * This is the dynamic loader entrypoint. When entering here, depending
  * on architecture type, the stack and registers are set up according
@@ -405,6 +412,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			_dl_add_object(exe_obj);
 		} else if (phdp->p_type == PT_INTERP) {
 			us = _dl_strdup((char *)phdp->p_vaddr);
+		} else if ((phdp->p_type == PT_LOAD) && 
+		    (phdp->p_flags & 0x08000000)) {
+//			dump_prelink(phdp->p_vaddr, phdp->p_memsz);
+			prebind_load_exe(phdp, exe_obj);
 		}
 		phdp++;
 	}
@@ -441,9 +452,13 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
+
+	_dl_prebind_pre_resolve();
 	failed = 0;
 	if (_dl_traceld == NULL)
 		failed = _dl_rtld(_dl_objects);
+
+	_dl_prebind_post_resolve();
 
 	if (_dl_debug || _dl_traceld)
 		_dl_show_objects();
@@ -738,14 +753,14 @@ _dl_rtld(elf_object_t *object)
 	sz = 0;
 	if (object->nchains < DL_SM_SYMBUF_CNT) {
 		_dl_symcache = _dl_sm_symcache_buffer;
-		DL_DEB(("using static buffer for %d entries\n",
-		    object->nchains));
+//		DL_DEB(("using static buffer for %d entries\n",
+//		    object->nchains));
 		_dl_memset(_dl_symcache, 0,
 		    sizeof (sym_cache) * object->nchains);
 	} else {
 		sz = ELF_ROUND(sizeof (sym_cache) * object->nchains,
 		    _dl_pagesz);
-		DL_DEB(("allocating symcache sz %x with mmap\n", sz));
+//		DL_DEB(("allocating symcache sz %x with mmap\n", sz));
 
 		_dl_symcache = (void *)_dl_mmap(0, sz, PROT_READ|PROT_WRITE,
 		    MAP_PRIVATE|MAP_ANON, -1, 0);
@@ -754,11 +769,14 @@ _dl_rtld(elf_object_t *object)
 			_dl_symcache = NULL;
 		}
 	}
+	prebind_symcache(object, SYM_NOTPLT);
+
 	/*
 	 * Do relocation information first, then GOT.
 	 */
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
+	prebind_symcache(object, SYM_PLT);
 	_dl_md_reloc_got(object, !(_dl_bindnow ||
 	    object->obj_flags & RTLD_NOW));
 
@@ -772,7 +790,6 @@ _dl_rtld(elf_object_t *object)
 
 	return (fails);
 }
-
 void
 _dl_call_init(elf_object_t *object)
 {

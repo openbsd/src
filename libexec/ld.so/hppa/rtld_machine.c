@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.11 2005/09/22 04:07:11 deraadt Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.12 2006/05/03 16:10:52 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -105,8 +105,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
 	rela = (Elf_RelA *)(object->Dyn.info[rel]);
 
+#ifdef DEBUG
 	DL_DEB(("object %s relasz %x, numrela %x loff %x\n",
 	    object->load_name, object->Dyn.info[relasz], numrela, loff));
+#endif
 
 	if (rela == NULL)
 		return (0);
@@ -118,18 +120,22 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	if (object->dyn.init && !((Elf_Addr)object->dyn.init & 2)) {
 		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.init,
 		    object->dyn.pltgot);
+#ifdef DEBUG
 		DL_DEB(("PLABEL32: %p:%p(_init) -> 0x%x in %s\n",
 		    object->dyn.init, object->dyn.pltgot,
 		    addr, object->load_name));
+#endif
 		object->dyn.init = (void *)addr;
 	}
 
 	if (object->dyn.fini && !((Elf_Addr)object->dyn.fini & 2)) {
 		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.fini,
 		    object->dyn.pltgot);
+#ifdef DEBUG
 		DL_DEB(("PLABEL32: %p:%p(_fini) -> 0x%x in %s\n",
 		    object->dyn.fini, object->dyn.pltgot,
 		    addr, object->load_name));
+#endif
 		object->dyn.fini = (void *)addr;
 	}
 
@@ -163,7 +169,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			ooff = _dl_find_symbol_bysym(object,
 			    ELF_R_SYM(rela->r_info), &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
-			    ((type == RELOC_DIR32) ? SYM_NOTPLT : SYM_PLT),
+			    ((type == RELOC_IPLT) ? SYM_PLT: SYM_NOTPLT),
 			    sym, &sobj);
 			if (this == NULL) {
 				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
@@ -172,16 +178,20 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			}
 		}
 
+#ifdef DEBUG
 		DL_DEB(("*pt=%x r_addend=%x r_sym=%x\n",
 		    *pt, rela->r_addend, ELF_R_SYM(rela->r_info)));
+#endif
 
 		switch (type) {
 		case RELOC_DIR32:
 			if (ELF_R_SYM(rela->r_info) && sym->st_name) {
 				*pt = ooff + this->st_value + rela->r_addend;
+#ifdef DEBUG
 				DL_DEB(("[%x]DIR32: %s:%s -> 0x%x in %s\n",
 				    i, symn, object->load_name,
 				    *pt, sobj->load_name));
+#endif
 			} else {
 				/*
 				 * XXX should objects ever get their
@@ -194,8 +204,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 					*pt += loff;
 				else
 					*pt += loff + rela->r_addend;
+#ifdef DEBUG
 				DL_DEB(("[%x]DIR32: %s @ 0x%x\n", i,
 				    object->load_name, *pt));
+#endif
 			}
 			break;
 
@@ -208,13 +220,17 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				*pt = _dl_md_plabel(sobj->load_offs +
 				    this->st_value + rela->r_addend,
 				    sobj->dyn.pltgot);
+#ifdef DEBUG
 				DL_DEB(("[%x]PLABEL32: %s:%s -> 0x%x in %s\n",
 				    i, symn, object->load_name,
 				    *pt, sobj->load_name));
+#endif
 			} else {
 				*pt = loff + rela->r_addend;
+#ifdef DEBUG
 				DL_DEB(("[%x]PLABEL32: %s @ 0x%x\n", i,
 				    object->load_name, *pt));
+#endif
 			}
 			break;
 
@@ -222,14 +238,18 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			if (ELF_R_SYM(rela->r_info)) {
 				pt[0] = ooff + this->st_value + rela->r_addend;
 				pt[1] = (Elf_Addr)sobj->dyn.pltgot;
+#ifdef DEBUG
 				DL_DEB(("[%x]IPLT: %s:%s -> 0x%x:0x%x in %s\n",
 				    i, symn, object->load_name,
 				    pt[0], pt[1], sobj->load_name));
+#endif
 			} else {
 				pt[0] = loff + rela->r_addend;
 				pt[1] = (Elf_Addr)object->dyn.pltgot;
+#ifdef DEBUG
 				DL_DEB(("[%x]IPLT: %s @ 0x%x:0x%x\n", i,
 				    object->load_name, pt[0], pt[1]));
+#endif
 			}
 			break;
 
@@ -243,10 +263,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			if (cpysrc) {
 				_dl_bcopy((void *)(ooff + cpysrc->st_value),
 				    pt, sym->st_size);
+#ifdef DEBUG
 				DL_DEB(("[%x]COPY: %s[%x]:%s -> %p[%x] in %s\n",
 				    i, symn, ooff + cpysrc->st_value,
 				    object->load_name, pt, sym->st_size,
 				    sobj->load_name));
+#endif
 			} else
 				DL_DEB(("[%x]COPY: no sym\n", i));
 			break;

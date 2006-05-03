@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.31 2006/05/03 15:48:16 drahn Exp $
+#	$OpenBSD: Makefile,v 1.32 2006/05/03 16:10:51 drahn Exp $
 
-SUBDIR=ldconfig ldd
+SUBDIR=ldconfig ldd prebind prebind_strip
+#SUBDIR+=prebind prebind_strip
 VPATH=${.CURDIR}/../../lib/libc/string
 
 SRCS=	ldasm.S loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
-SRCS+=	util.c sod.c strsep.c strtol.c dir.c library_subr.c
+SRCS+=	util.c sod.c strsep.c strtol.c dir.c library_subr.c dl_prebind.c
 .if (${MACHINE_ARCH} == "i386")
 SRCS+=	library_mquery.c
 .else

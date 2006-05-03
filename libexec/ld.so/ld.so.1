@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.8 2005/08/16 12:01:43 tom Exp $
+.\"	$OpenBSD: ld.so.1,v 1.9 2006/05/03 16:10:51 drahn Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -181,6 +181,14 @@ non-standard filesystem layout.
 When set, be verbose about what
 .Nm
 does.
+.Pp
+.It Ev LD_NOPREBIND=
+When set, ignore any prebind data associated with the program or libraries.
+.Pp
+.It Ev LD_PREBINDVALIDATE=
+When set, perform symbol relocation without of the given binary
+and the associated libraries, compare the results against the prebind
+values, then exit.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact

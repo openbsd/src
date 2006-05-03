@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.3 2005/09/22 04:07:11 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.4 2006/05/03 16:10:52 drahn Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -333,6 +333,25 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    : "=r" (status)
 	    : "I" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
 	    "r" (oldplen), "r" (newp), "r" (newlen)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+extern inline int
+_dl_gettimeofday(struct timeval* tp, struct timezone *tzp)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile (
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
+	    "syscall\n\t"
+	    "beq   $7,$0,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "I" (SYS_gettimeofday), "r" (tp), "r" (tzp)
 	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;

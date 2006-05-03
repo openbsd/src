@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.14 2004/05/25 15:56:18 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.15 2006/05/03 16:10:52 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -318,6 +318,18 @@ _dl_sigprocmask:
 1:
 	retl
 	 clr	%o0
+
+
+	.section ".text"
+	.align 4
+	.global _dl_gettimeofday
+	.type _dl_gettimeofday,@function
+_dl_gettimeofday:
+	mov SYS_gettimeofday | SYSCALL_G2RFLAG, %g1	! calling sys_gettimeofday
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 /*
  * V8 sparc .{,u}{mul,div,rem} replacements.

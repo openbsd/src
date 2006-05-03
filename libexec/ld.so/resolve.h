@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.50 2005/11/09 16:41:29 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.51 2006/05/03 16:10:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -135,6 +135,8 @@ struct elf_object {
 
 	/* object that caused this module to be loaded, used in symbol lookup */
 	elf_object_t	*load_object;
+
+	void *prebind_data;
 
 	/* for object confirmation */
 	dev_t	dev;

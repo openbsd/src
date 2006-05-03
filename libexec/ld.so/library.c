@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.52 2005/11/09 16:41:29 kurt Exp $ */
+/*	$OpenBSD: library.c,v 1.53 2006/05/03 16:10:51 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include "dl_prebind.h"
 
 #include "syscall.h"
 #include "archdep.h"
@@ -73,7 +74,6 @@ _dl_unload_shlib(elf_object_t *object)
 	}
 }
 
-
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags)
 {
@@ -87,6 +87,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
 	struct stat sb;
+	void *prebind_data;
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
@@ -236,11 +237,15 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			}
 		}
 	}
+
+	prebind_data = prebind_load_fd(libfile, libname);
+	
 	_dl_close(libfile);
 
 	dynp = (Elf_Dyn *)((unsigned long)dynp + loff);
 	object = _dl_finalize_object(libname, dynp, 0, type, libaddr, loff);
 	if (object) {
+		object->prebind_data = prebind_data;
 		object->load_size = maxva - minva;	/*XXX*/
 		object->load_list = load_list;
 		/* set inode, dev from stat info */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.46 2005/11/09 16:41:29 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.47 2006/05/03 16:10:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,6 +35,7 @@
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+#include "dl_prebind.h"
 
 elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
@@ -249,6 +250,7 @@ sym_cache *_dl_symcache;
 int _dl_symcachestat_hits;
 int _dl_symcachestat_lookups;
 
+
 Elf_Addr
 _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
     const Elf_Sym **this, int flags, const Elf_Sym *ref_sym, const elf_object_t **pobj)
@@ -270,6 +272,8 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 		*this = _dl_symcache[symidx].sym;
 		if (pobj)
 			*pobj = sobj;
+		if (_dl_prebind_validate) /* XXX */
+			prebind_validate(req_obj, symidx, flags, ref_sym);
 		return sobj->load_offs;
 	}
 
@@ -283,6 +287,15 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 		*pobj = sobj;
 
 	if (_dl_symcache != NULL && symidx < req_obj->nchains) {
+#if 0
+		DL_DEB(("cache miss %d %p %p, %p %p %s %s %d %d %s\n",
+		    symidx,
+		    _dl_symcache[symidx].sym, *this,
+		    _dl_symcache[symidx].obj, sobj, sobj->load_name,
+		    sobj->dyn.strtab + (*this)->st_name,
+		    _dl_symcache[symidx].flags, flags, req_obj->load_name));
+#endif
+
 		_dl_symcache[symidx].sym = *this;
 		_dl_symcache[symidx].obj = sobj;
 		_dl_symcache[symidx].flags = flags;

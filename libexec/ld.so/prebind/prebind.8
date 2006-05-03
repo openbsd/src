@@ -1,0 +1,60 @@
+.\"	$OpenBSD: prebind.8,v 1.1 2006/05/03 16:10:52 drahn Exp $
+.\"
+.\" Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 1, 2006
+.Dt PREBIND 8
+.Os
+.Sh NAME
+.Nm prebind
+.Nd cache symbol lookup information to speed up dynamic linking.
+.Sh SYNOPSIS
+.Nm prebind
+.Op Fl mv
+.Op Ar file/dir ...
+.Sh DESCRIPTION
+Parse each of the specified files or directories and process each ELF file
+(ELF file found in the directory) and the associated DT_NEEDED libraries
+and write symbol resolution hint information to each binary and library.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl m
+Merge the results of this prebind cache with the prebind information
+previously on any libraries referenced.
+.It Fl v
+Be verbose when running prebind, prints out information about
+the file/library that is bein processed.
+.Pp
+.Sh BUGS and CAVEATS
+Prebind uses a lot of memory depending on how many files/libraries
+are being processed. 
+Handling of binaries where a required library has been removed is poor.
+.Sh SEE AlSO
+.Xr ld.so 1
+.Xr prebind_strip 1
+.Sh STANDARDS
+None
+.Sh HISTORY
+A
+.Nm
+utility first appeared in OpenBSD 4.0.
+.Nm
+is based loosely on Prelinking, however prelink removes the security
+feature of libraries appearing a random order on each invocation, thus
+it was incompatible with OpenBSD's Goals.
+.Nm
+was written as attempt to improve the speed of dynamic linking
+without the penalty of loss of security features.

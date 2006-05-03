@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.23 2004/05/25 15:56:19 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.24 2006/05/03 16:10:52 drahn Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -315,3 +315,11 @@ _ENTRY(_dl_sysctl)
 	t ST_SYSCALL					! off to wonderland
 	retl
 	 sub %g0, %o0, %o0				! error: result = -errno
+
+_ENTRY(_dl_gettimeofday)
+	mov SYS_gettimeofday | SYSCALL_G2RFLAG, %g1	! calling sys_gettimeofday
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
+

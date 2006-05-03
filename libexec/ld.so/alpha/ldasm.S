@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.16 2004/05/25 15:56:18 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.17 2006/05/03 16:10:51 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -306,3 +306,10 @@ LEAF_NOPROFILE(_dl_sysctl, 4)
 	call_pal PAL_OSF1_callsys
 	RET
 END(_dl_sysctl)
+
+LEAF_NOPROFILE(_dl_gettimeofday, 2)
+	ldiq	v0, SYS_gettimeofday
+	call_pal PAL_OSF1_callsys
+	RET
+END(_dl_gettimeofday)
+

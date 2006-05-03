@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.19 2004/01/12 02:21:21 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.20 2006/05/03 16:10:52 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,6 +32,7 @@
 
 #include <sys/syscall.h>
 #include <sys/signal.h>
+#include <sys/time.h>
 
 
 static off_t	_dl_lseek(int, off_t, int);
@@ -352,5 +353,26 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    : "0", "3", "4", "5", "6", "7", "8");
 	return status;
 }
+static inline int
+_dl_gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+	register int status;
+
+	__asm__ volatile ("li    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    "mr   %0,3\n\t"
+	    : "=r" (status)
+	    : "I" (SYS_gettimeofday), "r" (tp), "r" (tzp)
+	    : "0", "3", "4" );
+	return status;
+}
+
 
 #endif /*__DL_SYSCALL_H__*/
+

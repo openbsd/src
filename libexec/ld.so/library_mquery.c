@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.32 2005/11/09 16:41:29 kurt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.33 2006/05/03 16:10:51 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include "dl_prebind.h"
 
 #include "syscall.h"
 #include "archdep.h"
@@ -92,6 +93,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	int size;
 	Elf_Addr load_end = 0;
 	struct stat sb;
+	void *prebind_data;
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
@@ -273,12 +275,16 @@ retry:
 			    _dl_pagesz - (ld->size & align));
 		load_end = (Elf_Addr)ld->start + ROUND_PG(ld->size);
 	}
+
+	prebind_data = prebind_load_fd(libfile, libname);
+
 	_dl_close(libfile);
 
 	dynp = (Elf_Dyn *)((unsigned long)dynp + LOFF);
 	object = _dl_finalize_object(libname, dynp, 0, type,
 	    (Elf_Addr)lowld->start, LOFF);
 	if (object) {
+		object->prebind_data = prebind_data;
 		object->load_size = (Elf_Addr)load_end - (Elf_Addr)lowld->start;
 		object->load_list = lowld;
 		/* set inode, dev from stat info */
