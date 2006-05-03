@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.41 2005/04/23 09:36:47 jmc Exp $
+.\"	$OpenBSD: systrace.1,v 1.42 2006/05/03 05:16:26 sturm Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -134,7 +134,9 @@ knows about.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl i
-Inherits the policy \- child processes inherit policy of the parent binary.
+Inherits the policy after a call to
+.Xr execve 2 .
+If this option is not specified, a new program will get its own policy.
 .It Fl p Ar pid
 Specifies the pid of a process that
 .Nm
