@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.38 2006/02/10 21:45:41 kettenis Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.39 2006/05/03 02:18:47 jsg Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -209,6 +209,8 @@ struct wdc_softc { /* Per controller state */
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void            (*irqack)(struct channel_softc *);
 
+	void		(*reset)(struct channel_softc *);
+
 	/* Driver callback to probe for drives */
 	void (*drv_probe)(struct channel_softc *);
 };
@@ -287,6 +289,7 @@ void  wdccommandext(struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
 	u_int16_t);
 void  wdccommandshort(struct channel_softc *, int, int);
 void  wdctimeout(void *arg);
+void  wdc_do_reset(struct channel_softc *);
 
 int   wdc_addref(struct channel_softc *);
 void  wdc_delref(struct channel_softc *);

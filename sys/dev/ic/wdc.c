@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.89 2006/02/10 21:45:41 kettenis Exp $     */
+/*      $OpenBSD: wdc.c,v 1.90 2006/05/03 02:18:47 jsg Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -100,7 +100,6 @@
 struct pool wdc_xfer_pool;
 
 void  __wdcerror(struct channel_softc *, char *);
-void  __wdcdo_reset(struct channel_softc *);
 int   __wdcwait_reset(struct channel_softc *, int);
 void  __wdccommand_done(struct channel_softc *, struct wdc_xfer *);
 void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);
@@ -684,7 +683,7 @@ wdcprobe(chp)
 	}
 
 	/* reset the channel */
-	__wdcdo_reset(chp);
+	chp->wdc->reset(chp);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
 	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
@@ -786,6 +785,9 @@ wdcattach(chp)
 
 	if (!cold)
 		at_poll = AT_WAIT;
+
+	if (chp->wdc->reset == NULL)
+		chp->wdc->reset = wdc_do_reset;
 
 	timeout_set(&chp->ch_timo, wdctimeout, chp);
 
@@ -1064,7 +1066,7 @@ wdcreset(chp, verb)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
-	__wdcdo_reset(chp);
+	chp->wdc->reset(chp);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
@@ -1083,7 +1085,7 @@ wdcreset(chp, verb)
 }
 
 void
-__wdcdo_reset(struct channel_softc *chp)
+wdc_do_reset(struct channel_softc *chp)
 {
 	wdc_set_drive(chp, 0);
 	DELAY(10);
