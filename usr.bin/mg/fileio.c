@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.71 2006/05/03 21:15:59 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.72 2006/05/03 22:19:41 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,17 +8,20 @@
 #include "def.h"
 
 
+#include <sys/dir.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/wait.h>
-#include "kbd.h"
-#include <limits.h>
-#include <sys/stat.h>
-#include <sys/dir.h>
-#include <string.h>
+
 #include <fcntl.h>
+#include <limits.h>
+#include <pwd.h>
+#include <string.h>
 #include <unistd.h>
+
+#include "kbd.h"
 
 static FILE	*ffp;
 
@@ -235,16 +238,6 @@ fbackupfile(const char *fn)
  * name or case adjustments.  The same file should be referred to even if the
  * working directory changes.
  */
-#ifdef SYMBLINK
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifndef MAXLINK
-#define MAXLINK 8		/* maximum symbolic links to follow */
-#endif
-#endif
-#include <pwd.h>
-extern char	*wdir;
-
 char *
 adjustname(const char *fn)
 {
@@ -413,12 +406,15 @@ make_file_list(char *buf)
 	char		 prefixx[NFILEN + 1];
 
 	/*
-	 * We need three different strings: dir - the name of the directory
-	 * containing what the user typed. Must be a real unix file name,
-	 * e.g. no ~user, etc..  Must not end in /. prefix - the portion of
-	 * what the user typed that is before the names we are going to find
-	 * in the directory.  Must have a trailing / if the user typed it.
-	 * names from the directory. We open dir, and return prefix
+	 * We need three different strings: 
+
+	 * dir - the name of the directory containing what the user typed.
+	 *  Must be a real unix file name, e.g. no ~user, etc..
+	 *  Must not end in /.
+	 * prefix - the portion of what the user typed that is before the
+	 *  names we are going to find in the directory.  Must have a
+	 * trailing / if the user typed it.
+	 * names from the directory - We open dir, and return prefix
 	 * concatenated with names.
 	 */
 
