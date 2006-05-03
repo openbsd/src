@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.3 2006/05/03 19:49:21 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.4 2006/05/03 19:58:40 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -143,10 +143,8 @@ load_file_or_dir(char *name)
 	int ret;
 
 	ret = lstat(name, &sb);
-	printf("ret\n");
 	if (ret != 0)
 		return;
-	printf("file or dir mode %d\n", sb.st_mode & S_IFMT);
 	switch(sb.st_mode & S_IFMT) {
 	case S_IFREG:
 		load_exe(name);
