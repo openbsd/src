@@ -1,4 +1,28 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 2005/12/02 20:01:33 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2006/05/03 18:14:52 miod Exp $	*/
+/*
+ * Copyright (c) 2006, Miodrag Vallat
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -31,7 +55,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -40,537 +64,758 @@
 #include <ddb/db_output.h>	/* db_printf() */
 #include <ddb/db_interface.h>
 
-static const char *instwidth[4] = {
-	".d", "  ", ".h", ".b"
+void	oimmed(int, u_int32_t, const char *, vaddr_t);
+void	ctrlregs(int, u_int32_t, const char *, vaddr_t);
+void	sindou(int, u_int32_t, const char *, vaddr_t);
+void	jump(int, u_int32_t, const char *, vaddr_t);
+void	instset(int, u_int32_t, const char *, vaddr_t);
+void	obranch(int, u_int32_t, const char *, vaddr_t);
+void	brcond(int, u_int32_t, const char *, vaddr_t);
+void	otrap(int, u_int32_t, const char *, vaddr_t);
+void	obit(int, u_int32_t, const char *, vaddr_t);
+void	bitman(int, u_int32_t, const char *, vaddr_t);
+void	immem(int, u_int32_t, const char *, vaddr_t);
+void	nimmem(int, u_int32_t, const char *, vaddr_t);
+void	lognim(int, u_int32_t, const char *, vaddr_t);
+void	onimmed(int, u_int32_t, const char *, vaddr_t);
+void	pinst(int, u_int32_t, const char *, vaddr_t);
+
+void	printcmp(int, u_int);
+void	printcond(u_int);
+void	symofset(u_int, u_int, vaddr_t);
+const char *cregname(int, u_int, u_int);
+
+/*
+ * Common instruction modifiers
+ */
+
+static const char *instwidth[] = {
+	".d", "  ", ".h", ".b", ".x"	/* see nimmem() for use of last value */
 };
-
-static const char *condname[6] = {
-	"gt0 ", "eq0 ", "ge0 ", "lt0 ", "ne0 ", "le0 "
+static const char *xinstwidth[4] = {
+	".d", "  ", ".x", ".?"
 };
-
-#ifdef M88100
-static const char *m88100_ctrlreg[64] = {
-	"cr0(PID)   ",
-	"cr1(PSR)   ",
-	"cr2(EPSR)  ",
-	"cr3(SSBR)  ",
-	"cr4(SXIP)  ",
-	"cr5(SNIP)  ",
-	"cr6(SFIP)  ",
-	"cr7(VBR)   ",
-	"cr8(DMT0)  ",
-	"cr9(DMD0)  ",
-	"cr10(DMA0) ",
-	"cr11(DMT1) ",
-	"cr12(DMD1) ",
-	"cr13(DMA1) ",
-	"cr14(DMT2) ",
-	"cr15(DMD2) ",
-	"cr16(DMA2) ",
-	"cr17(SR0)  ",
-	"cr18(SR1)  ",
-	"cr19(SR2)  ",
-	"cr20(SR3)  ",
-	"fcr0(FPECR)",
-	"fcr1(FPHS1)",
-	"fcr2(FPLS1)",
-	"fcr3(FPHS2)",
-	"fcr4(FPLS2)",
-	"fcr5(FPPT) ",
-	"fcr6(FPRH) ",
-	"fcr7(FPRL) ",
-	"fcr8(FPIT) ",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	"fcr62(FPSR)",
-	"fcr63(FPCR)"
+static const char *cmpname[] = {
+	NULL,
+	NULL,
+	"eq",
+	"ne",
+	"gt",
+	"le",
+	"lt",
+	"ge",
+	"hi",
+	"ls",
+	"lo",
+	"hs",
+	"be",
+	"nb",
+	"he",
+	"nh"
 };
-#endif
-#ifdef M88110
-static const char *m88110_ctrlreg[64] = {
-	"cr0(PID)   ",
-	"cr1(PSR)   ",
-	"cr2(EPSR)  ",
+static const char *condname[0x1f] = {
 	NULL,
-	"cr4(EXIP)  ",
-	"cr5(ENIP)  ",
-	NULL,
-	"cr7(VBR)   ",
+	"gt",	/* 00001 */
+	"eq",	/* 00010 */
+	"ge",	/* 00011 */
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	"cr14(RES1) ",
-	"cr15(RES2) ",
-	"cr16(SRX)  ",
-	"cr17(SR0)  ",
-	"cr18(SR1)  ",
-	"cr19(SR2)  ",
-	"cr20(SR3)  ",
-	"fcr0(FPECR)",
 	NULL,
 	NULL,
-	NULL,
-	"cr25(ICMD) ",
-	"cr26(ICTL) ",
-	"cr27(ISAR) ",
-	"cr28(ISAP) ",
-	"cr29(IUAP) ",
-	"cr30(IIR)  ",
-	"cr31(IBP)  ",
-	"cr32(IPPU) ",
-	"cr33(IPPL) ",
-	"cr34(ISR)  ",
-	"cr35(ILAR) ",
-	"cr36(IPAR) ",
-	NULL,
-	NULL,
-	NULL,
-	"cr40(DCMD) ",
-	"cr41(DCTL) ",
-	"cr42(DSAR) ",
-	"cr43(DSAP) ",
-	"cr44(DUAP) ",
-	"cr45(DIR)  ",
-	"cr46(DBP)  ",
-	"cr47(DPPU) ",
-	"cr48(DPPL) ",
-	"cr49(DSR)  ",
-	"cr50(DLAR) ",
-	"cr51(DPAR) ",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL,
-	"fcr62(FPSR)",
-	"fcr63(FPCR)"
+	"lt",	/* 01100 */
+	"ne",	/* 01101 */
+	"le"	/* 01110 */
 };
-#endif
-#if defined(M88100) && defined(M88110)
-#define	ctrlreg	(CPU_IS88100 ? m88100_ctrlreg : m88110_ctrlreg)
-#elif defined(M88100)
-#define	ctrlreg	m88100_ctrlreg
-#else
-#define	ctrlreg	m88110_ctrlreg
-#endif
+static const char sodname[4] = "sdx?";
 
-#define printval(x) \
-	do { \
-		if ((x) < 0) \
-			db_printf("-0x%X", -(x)); \
-		else \
-			db_printf("0x%X", (x));	\
-	} while (0)
+/*
+ * Descriptive control register names
+ */
 
-/* prototypes */
-void oimmed(int, const char *, long);
-void ctrlregs(int, const char *, long);
-void printsod(int);
-void sindou(int, const char *, long);
-void jump(int, const char *, long);
-void instset(int, const char *, long);
-void symofset(int, int, int);
-void obranch(int, const char *, long);
-void brcond(int, const char *, long);
-void otrap(int, const char *, long);
-void obit(int, const char *, long);
-void bitman(int, const char *, long);
-void immem(int, const char *, long);
-void nimmem(int, const char *, long);
-void lognim(int, const char *, long);
-void onimmed(int, const char *, long);
-
-/* Handlers immediate integer arithmetic instructions */
-void
-oimmed(int inst, const char *opcode, long iadr)
-{
-	int Linst = inst & 0177777;
-	int Hinst = inst >> 16;
-	int H6inst = Hinst >> 10;
-	int rs1 = Hinst & 037;
-	int rd = (Hinst >> 5) & 037;
-
-	if (H6inst > 017 && H6inst < 030 && (H6inst & 01) == 1)
-		db_printf("\t%s.u", opcode);
-	else
-		db_printf("\t%s  ", opcode);
-	db_printf("\t\tr%-3d,r%-3d,", rd, rs1);
-	printval(Linst);
-}
-
-/* Handles instructions dealing with control registers */
-void
-ctrlregs(int inst, const char *opcode, long iadr)
-{
-	int L6inst = (inst >> 11) & 037;
-	int creg = (inst >> 5) & 077;
-	int rd = (inst >> 21) & 037;
-	int rs1 = (inst >> 16) & 037;
-
-	db_printf("\t%s", opcode);
-
-	if (L6inst == 010 || L6inst == 011)
-		db_printf("\t\tr%-3d,%s", rd, ctrlreg[creg]);
-	else if (L6inst == 020 || L6inst == 021)
-		db_printf("\t\tr%-3d,%s", rs1, ctrlreg[creg]);
-	else
-		db_printf("\t\tr%-3d,r%-3d,%s", rd, rs1, ctrlreg[creg]);
-}
-
-void
-printsod(int t)
-{
-	if (t == 0)
-		db_printf("s");
-	else
-		db_printf("d");
-}
-
-/* Handles floating point instructions */
-void
-sindou(int inst, const char *opcode, long iadr)
-{
-	int rs2 = inst & 037;
-	int td = (inst >> 5) & 03;
-	int t2 = (inst >> 7) & 03;
-	int t1 = (inst >> 9) & 03;
-	int rs1 = (inst >> 16) & 037;
-	int rd = (inst >> 21) & 037;
-	int checkbits = (inst >> 11) & 037;
-
-	db_printf("\t%s.", opcode);
-	printsod(td);
-	if ((checkbits > 010 && checkbits < 014) || checkbits == 04) {
-		printsod(t2);
-		db_printf(" ");
-		if (checkbits == 012 || checkbits == 013)
-			db_printf("\t\tr%-3d,r%-3d", rd, rs2);
-		else
-			db_printf("\t\tr%-3d,r%-3d", rd, rs2);
-	} else {
-		printsod(t1);
-		printsod(t2);
-		db_printf("\t\tr%-3d,r%-3d,r%-3d", rd, rs1, rs2);
+static const char *m88100_ctrlreg[2][64] = {
+	{	/* main unit */
+		"cr0 #PID",
+		"cr1 #PSR",
+		"cr2 #EPSR",
+		"cr3 #SSBR",
+		"cr4 #SXIP",
+		"cr5 #SNIP",
+		"cr6 #SFIP",
+		"cr7 #VBR",
+		"cr8 #DMT0",
+		"cr9 #DMD0",
+		"cr10 #DMA0",
+		"cr11 #DMT1",
+		"cr12 #DMD1",
+		"cr13 #DMA1",
+		"cr14 #DMT2",
+		"cr15 #DMD2",
+		"cr16 #DMA2",
+		"cr17 #SR0",
+		"cr18 #SR1",
+		"cr19 #SR2",
+		"cr20 #SR3",
+	},
+	{	/* SFU1 = FPU */
+		"fcr0 #FPECR",
+		"fcr1 #FPHS1",
+		"fcr2 #FPLS1",
+		"fcr3 #FPHS2",
+		"fcr4 #FPLS2",
+		"fcr5 #FPPT",
+		"fcr6 #FPRH",
+		"fcr7 #FPRL",
+		"fcr8 #FPIT",
+		NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL,
+		"fcr62 #FPSR",
+		"fcr63 #FPCR"
 	}
-}
+};
 
+static const char *m88110_ctrlreg[2][64] = {
+	{	/* main unit */
+		"cr0 #PID",
+		"cr1 #PSR",
+		"cr2 #EPSR",
+		NULL,
+		"cr4 #EXIP",
+		"cr5 #ENIP",
+		NULL,
+		"cr7 #VBR",
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		"cr14 #RES1",
+		"cr15 #RES2",
+		"cr16 #SRX",
+		"cr17 #SR0",
+		"cr18 #SR1",
+		"cr19 #SR2",
+		"cr20 #SR3",
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		"cr25 #ICMD",
+		"cr26 #ICTL",
+		"cr27 #ISAR",
+		"cr28 #ISAP",
+		"cr29 #IUAP",
+		"cr30 #IIR",
+		"cr31 #IBP",
+		"cr32 #IPPU",
+		"cr33 #IPPL",
+		"cr34 #ISR",
+		"cr35 #ILAR",
+		"cr36 #IPAR",
+		NULL,
+		NULL,
+		NULL,
+		"cr40 #DCMD",
+		"cr41 #DCTL",
+		"cr42 #DSAR",
+		"cr43 #DSAP",
+		"cr44 #DUAP",
+		"cr45 #DIR",
+		"cr46 #DBP",
+		"cr47 #DPPU",
+		"cr48 #DPPL",
+		"cr49 #DSR",
+		"cr50 #DLAR",
+		"cr51 #DPAR",
+	},
+	{	/* SFU1 = FPU */
+		"fcr0 #FPECR",
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		NULL,
+		"fcr62 #FPSR",
+		"fcr63 #FPCR"
+	}
+};
+
+/* print a comparison code */
 void
-jump(int inst, const char *opcode, long iadr)
+printcmp(int cpu, u_int code)
 {
-	int rs2 = inst & 037;
-	int Nbit = (inst >> 10) & 01;
+	const char *cmp;
 
-	db_printf("\t%s", opcode);
-	if (Nbit == 1)
-		db_printf(".n");
+	if (cpu == CPU_88100 && code > 11)
+		cmp = NULL;
 	else
-		db_printf("  ");
-	db_printf("\t\tr%-3d", rs2);
+		cmp = cmpname[code];
+	if (cmp != NULL)
+		db_printf("%s(%d)", cmp, code);
+	else
+		db_printf("%d", code);
 }
 
-/* Handles ff1, ff0, tbnd and rte instructions */
+/* print a condition mnemnonic */
 void
-instset(int inst, const char *opcode, long iadr)
+printcond(u_int match)
 {
-	int rs2 = inst & 037;
-	int rs1 = (inst >> 16) & 037;
-	int rd = (inst >> 21) & 037;
-	int checkbits = (inst >> 10) & 077;
-	int H6inst = (inst >> 26) & 077;
+	const char *cond;
 
-	db_printf("\t%s", opcode);
-	if (H6inst == 076) {
-		db_printf("\t\tr%-3d,", rs1);
-		printval(inst & 0177777);
-	} else if (checkbits == 072 || checkbits == 073)
-		db_printf("\t\tr%-3d,r%-3d", rd, rs2);
-	else if (checkbits == 076)
-		db_printf("\t\tr%-3d,r%-3d", rs1, rs2);
+	cond = condname[match];
+	if (cond != NULL)
+		db_printf("%s0", cond);
+	else
+		db_printf("%d", match);
+}
+
+const char *
+cregname(int cpu, u_int sfu, u_int regno)
+{
+	static char unnamed[20];
+	const char *regname;
+
+	switch (sfu) {
+	case 0:	/* main unit */
+	case 1:	/* SFU1 = FPU */
+		regname = cpu != CPU_88100 ?
+		    m88110_ctrlreg[sfu][regno] : m88100_ctrlreg[sfu][regno];
+		if (regname == NULL) {
+			snprintf(unnamed, sizeof unnamed,
+			    sfu == 0 ? "cr%d" : "fcr%d", regno);
+			regname = unnamed;
+		}
+		break;
+	default:	/* can't happen */
+		snprintf(unnamed, sizeof unnamed,
+		    "sfu%dcr%d", sfu, regno);
+		regname = unnamed;
+		break;
+	}
+
+	return (regname);
 }
 
 void
-symofset(int disp, int bit, int iadr)
+symofset(u_int disp, u_int bit, vaddr_t iadr)
 {
-	long addr;
+	vaddr_t addr;
 
 	if (disp & (1 << (bit - 1))) {
 		/* negative value */
-		addr = iadr + ((disp << 2) | (~0 << bit));
+		addr = iadr + ((disp << 2) | (~0U << bit));
 	} else {
 		addr = iadr + (disp << 2);
 	}
 	db_printsym(addr, DB_STGY_PROC, db_printf);
 }
 
+/* Handles immediate integer arithmetic instructions */
 void
-obranch(int inst, const char *opcode, long iadr)
+oimmed(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int cond = (inst >> 26) & 01;
-	int disp = inst & 0377777777;
+	int32_t Linst = inst & 0xffff;
+	u_int32_t H6inst = inst >> 26;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rd = (inst >> 21) & 0x1f;
 
-	if (cond == 0)
-		db_printf("\t%s\t\t", opcode);
+	switch (H6inst) {
+	case 0x11:	/* and.u */
+	case 0x13:	/* mask.u */
+	case 0x15:	/* xor.u */
+	case 0x17:	/* or.u */
+		db_printf("\t%s.u", opcode);
+		break;
+	default:
+		db_printf("\t%s  ", opcode);
+		break;
+	}
+	db_printf("\t\tr%d, r%d, 0x%04x", rd, rs1, Linst);
+}
+
+/* Handles instructions dealing with control registers */
+void
+ctrlregs(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
+{
+	u_int32_t dir = (inst >> 14) & 0x03;
+	u_int32_t sfu = (inst >> 11) & 0x07;
+	u_int32_t creg = (inst >> 5) & 0x3f;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+
+	db_printf("\t%s\t\t", opcode);
+
+	switch (dir) {
+	case 0x01:	/* ldcr, fldcr */
+		db_printf("r%d, %s", rd, cregname(cpu, sfu, creg));
+		break;
+	case 0x02:	/* stcr, fstcr */
+		db_printf("r%d, %s", rs1, cregname(cpu, sfu, creg));
+		break;
+	default:
+	case 0x03:	/* xcr, fxcr */
+		db_printf("r%d, r%d, %s",
+		    rd, rs1, cregname(cpu, sfu, creg));
+		break;
+	}
+}
+
+/* Handles floating point instructions */
+void
+sindou(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
+{
+	u_int32_t rs2 = inst & 0x1f;
+	u_int32_t td = (inst >> 5) & 0x03;
+	u_int32_t t2 = (inst >> 7) & 0x03;
+	u_int32_t t1 = (inst >> 9) & 0x03;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t checkbits = (inst >> 11) & 0x0f;
+	u_int32_t rf = (inst >> 15) & 0x01;
+
+	/* do not display a specific fcmpu.s encoding as non-existing fcmpu.d */
+	if (checkbits == 0x07)
+		td = 0;
+
+	/* do not display dot modifiers for mov.x */
+	if (checkbits == 0x08) {
+		db_printf("\t%s", opcode);
+	} else {
+		db_printf("\t%s.%c", opcode, sodname[td]);
+	}
+
+	switch (checkbits) {
+	default:
+	case 0x00:	/* fmul */
+	case 0x05:	/* fadd */
+	case 0x06:	/* fsub */
+	case 0x0e:	/* fdiv */
+		db_printf("%c%c\t\t", sodname[t1], sodname[t2]);
+		if (rf != 0)
+			db_printf("x%d,x%d,x%d", rd, rs1, rs2);
+		else
+			db_printf("r%d,r%d,r%d", rd, rs1, rs2);
+		break;
+	case 0x01:	/* fcvt */
+	case 0x0f:	/* fsqrt */
+		db_printf("%c \t\t", sodname[t2]);
+		if (rf != 0)
+			db_printf("x%d, x%d", rd, rs2);
+		else
+			db_printf("r%d, r%d", rd, rs2);
+		break;
+	case 0x04:	/* flt */
+		db_printf("%c \t\t", sodname[t2]);
+		if ((inst & 0x200) != 0)	/* does not use the RF bit... */
+			db_printf("x%d, x%d", rd, rs2);
+		else
+			db_printf("r%d, r%d", rd, rs2);
+		break;
+	case 0x07:	/* fcmp, fcmpu */
+		db_printf("%c%c\t\t", sodname[t1], sodname[t2]);
+		db_printf("r%d, ", rd);
+		if (rf != 0)
+			db_printf("x%d, x%d", rs1, rs2);
+		else
+			db_printf("r%d, r%d", rs1, rs2);
+		break;
+	case 0x08:	/* mov */
+		if (rf != 0 && t1 == 0x01) {	/* mov.x, displayed as mov */
+			db_printf("   \t\t");
+			db_printf("x%d, x%d", rd, rs2);
+		} else {
+			db_printf(".%c \t\t", sodname[t2]);
+
+			if (t1 == 0)
+				db_printf("r%d, x%d", rd, rs2);
+			else
+				db_printf("x%d, r%d", rd, rs2);
+		}
+		break;
+	case 0x09:	/* int */
+	case 0x0a:	/* nint */
+	case 0x0b:	/* trnc */
+		db_printf("%c \t\t", sodname[t2]);
+		if (rf != 0)
+			db_printf("r%d, x%d", rd, rs2);
+		else
+			db_printf("r%d, r%d", rd, rs2);
+		break;
+	}
+}
+
+void
+jump(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
+{
+	u_int32_t rs2 = inst & 0x1f;
+
+	db_printf("\t%s", opcode);
+	if ((inst & (1 << 10)) != 0)
+		db_printf(".n");
 	else
-		db_printf("\t%s.n\t\t", opcode);
+		db_printf("  ");
+	db_printf("\t\tr%d", rs2);
+}
+
+/* Handles ff1, ff0, tbnd and rte instructions */
+void
+instset(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
+{
+	u_int32_t rs2 = inst & 0x1f;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t checkbits = (inst >> 10) & 0x3f;
+	u_int32_t H6inst = (inst >> 26) & 0x3f;
+
+	db_printf("\t%s", opcode);
+	if (H6inst == 0x3e) { /* tbnd with imm16 */
+		db_printf("\t\tr%d, 0x%04x", rs1, inst & 0xffff);
+	} else {
+		switch (checkbits) {
+		case 0x3a:	/* ff1 */
+		case 0x3b:	/* ff0 */
+			db_printf("\t\tr%d,r%d", rd, rs2);
+			break;
+		case 0x3e:	/* tbnd */
+			db_printf("\t\tr%d,r%d", rs1, rs2);
+			break;
+		case 0x3f:	/* rte, illop */
+			if (rs2 != 0)
+				db_printf("%d", rs2);
+			break;
+		}
+	}
+}
+
+/* Handles unconditionnal branches */
+void
+obranch(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
+{
+	u_int32_t disp = inst & 0x3ffffff;
+
+	db_printf("\t%s", opcode);
+	if ((inst & (1 << 26)) != 0)
+		db_printf(".n");
+	else
+		db_printf("  ");
+	db_printf("\t\t");
 	symofset(disp, 26, iadr);
 }
 
 /* Handles branch on conditions instructions */
 void
-brcond(int inst, const char *opcode, long iadr)
+brcond(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int cond = (inst >> 26) & 1;
-	int match = (inst >> 21) & 037;
-	int rs = (inst >> 16) & 037;
-	int disp = inst & 0177777;
+	u_int32_t match = (inst >> 21) & 0x1f;
+	u_int32_t rs = (inst >> 16) & 0x1f;
+	u_int32_t disp = inst & 0xffff;
 
-	if (cond == 0)
-		db_printf("\t%s\t\t", opcode);
+	db_printf("\t%s", opcode);
+	if ((inst & (1 << 26)) != 0)
+		db_printf(".n");
 	else
-		db_printf("\t%s.n\t\t", opcode);
-	if (((inst >> 27) & 03) == 1) {
-		switch (match) {
-		case 1:
-			db_printf("%s,", condname[0]);
-			break;
-		case 2:
-			db_printf("%s,", condname[1]);
-			break;
-		case 3:
-			db_printf("%s,", condname[2]);
-			break;
-		case 12:
-			db_printf("%s,", condname[3]);
-			break;
-		case 13:
-			db_printf("%s,", condname[4]);
-			break;
-		case 14:
-			db_printf("%s,", condname[5]);
-			break;
-		default:
-			printval(match);
-			db_printf(",");
-			break;
-		}
-	} else {
-		printval(match);
-		db_printf(",");
-	}
+		db_printf("  ");
+	db_printf("\t\t");
 
-	db_printf("r%-3d,", rs);
+	if (((inst >> 27) & 0x03) == 1)	/* bcnd */
+		printcond(match);
+	else
+		printcmp(cpu, match);
+
+	db_printf(", r%d, ", rs);
 	symofset(disp, 16, iadr);
 }
 
+/* Handles trap instructions */
 void
-otrap(int inst, const char *opcode, long iadr)
+otrap(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int vecno = inst & 0777;
-	int match = (inst >> 21) & 037;
-	int rs = (inst >> 16) & 037;
+	u_int32_t vecno = inst & 0x1ff;
+	u_int32_t match = (inst >> 21) & 0x1f;
+	u_int32_t rs = (inst >> 16) & 0x1f;
 
 	db_printf("\t%s\t", opcode);
-	if (((inst >> 12) & 017) == 0xe) {
-		switch (match) {
-		case 1:
-			db_printf("%s,", condname[0]);
-			break;
-		case 2:
-			db_printf("%s,", condname[1]);
-			break;
-		case 3:
-			db_printf("%s,", condname[2]);
-			break;
-		case 12:
-			db_printf("%s,", condname[3]);
-			break;
-		case 13:
-			db_printf("%s,", condname[4]);
-			break;
-		case 14:
-			db_printf("%s,", condname[5]);
-			break;
-		default:
-			printval(match);
-			db_printf(",");
-			break;
-		}
-	} else {
-		printval(match);
-		db_printf(",");
-	}
-	db_printf("\tr%-3d,", rs);
-	printval(vecno);
+	if (((inst >> 12) & 0x0f) == 0xe)	/* tcnd */
+		printcond(match);
+	else
+		printcmp(cpu, match);
+	db_printf(", r%d, 0x%x", rs, vecno);
 }
 
 /* Handles 10 bit immediate bit field operations */
 void
-obit(int inst, const char *opcode, long iadr)
+obit(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int rs = (inst >> 16) & 037;
-	int rd = (inst >> 21) & 037;
-	int width = (inst >> 5) & 037;
-	int offset = inst & 037;
+	u_int32_t rs = (inst >> 16) & 0x1f;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t width = (inst >> 5) & 0x1f;
+	u_int32_t offset = inst & 0x1f;
 
-	db_printf("\t%s\t\tr%-3d,r%-3d,", opcode, rd, rs);
-	if (((inst >> 10) & 077) != 052)
-		printval(width);
-	db_printf("<");
-	printval(offset);
-	db_printf(">");
+	db_printf("\t%s\t\tr%d, r%d, ", opcode, rd, rs);
+	if (((inst >> 10) & 0x3f) != 0x2a)	/* rot */
+		db_printf("%d", width);
+	db_printf("<%d>", offset);
 }
 
 /* Handles triadic mode bit field instructions */
 void
-bitman(int inst, const char *opcode, long iadr)
+bitman(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int rs1 = (inst >> 16) & 037;
-	int rd = (inst >> 21) & 037;
-	int rs2 = inst & 037;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs2 = inst & 0x1f;
 
-	db_printf("\t%s\t\tr%-3d,r%-3d,r%-3d", opcode, rd, rs1, rs2);
+	db_printf("\t%s\t\tr%d, r%d, r%d", opcode, rd, rs1, rs2);
 }
 
 /* Handles immediate load/store/exchange instructions */
 void
-immem(int inst, const char *opcode, long iadr)
+immem(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int immed = inst & 0xFFFF;
-	int rd = (inst >> 21) & 037;
-	int rs = (inst >> 16) & 037;
-	int st_lda = (inst >> 28) & 03;
-	int aryno = (inst >> 26) & 03;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs = (inst >> 16) & 0x1f;
+	u_int32_t st_lda = (inst >> 28) & 0x03;
+	u_int32_t aryno = (inst >> 26) & 0x03;
+	int rf = 0;
 	char c = ' ';
 
 	switch (st_lda) {
-	case 0:
-		if (aryno == 0 || aryno == 01)
-			opcode = "xmem";
-		else
+	case 0x00:
+		if ((aryno & 0x02) != 0) {	/* 0x02, 0x03: ld.hu, ld.bu */
 			opcode = "ld";
-		if (aryno == 0)
-			aryno = 03;
-		if (aryno != 01)
 			c = 'u';
+		} else {
+			if (cpu == CPU_88100) {
+				opcode = "xmem";
+				if (aryno == 0) {	/* xmem.bu */
+					aryno = 3;
+					c = 'u';
+				}
+			} else {
+				/* opcode = "ld"; */
+				rf = 1;
+			}
+		}
 		break;
-	case 1:
-		opcode = "ld";
+
+	case 0x03:
+		if (cpu != CPU_88100) {
+			rf = 1;
+			switch (st_lda) {
+			case 0x00:		/* ld.x */
+				aryno = 2;
+				break;
+			case 0x03:		/* st, st.d, st.x */
+				break;
+			}
+		}
 		break;
 	}
 
-	db_printf("\t%s%s%c\t\tr%-3d,r%-3d,",
-	    opcode, instwidth[aryno], c, rd, rs);
-	printval(immed);
+	db_printf("\t%s%s%c\t\t", opcode,
+	    rf != 0 ? xinstwidth[aryno] : instwidth[aryno], c);
+	if (rf != 0)
+		db_printf("x%d, r%d, ", rd, rs);
+	else
+		db_printf("r%d, r%d, ", rd, rs);
+	db_printf("0x%x", inst & 0xffff);
 }
 
 /* Handles triadic mode load/store/exchange instructions */
 void
-nimmem(int inst, const char *opcode, long iadr)
+nimmem(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int scaled = (inst >> 9) & 01;
-	int rd = (inst >> 21) & 037;
-	int rs1 = (inst >> 16) & 037;
-	int rs2 = inst & 037;
-	int st_lda = (inst >> 12) & 03;
-	int aryno = (inst >> 10) & 03;
+	u_int32_t scaled = (inst >> 9) & 0x01;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rs2 = inst & 0x1f;
+	u_int32_t st_lda = (inst >> 12) & 0x03;
+	u_int32_t aryno = (inst >> 10) & 0x03;
 	char c = ' ';
-	const char *user;
+	int rf = 0, wt = 0, usr = 0;
 
 	switch (st_lda) {
-	case 0:
-		if (aryno == 0 || aryno == 01)
-			opcode = "xmem";
-		else
-			opcode = "ld";
-		if (aryno == 0)
-			aryno = 03;
-		if (aryno != 01)
+	case 0x00:
+		switch (aryno) {
+		case 0x00:			/* xmem.bu */
+			aryno = 3;
 			c = 'u';
+			/* FALLTHROUGH */
+		case 0x01:			/* xmem */
+			opcode = "xmem";
+			break;
+		default:
+		case 0x02:			/* ld.hu */
+		case 0x03:			/* ld.bu */
+			opcode = "ld";
+			c = 'u';
+			break;
+		}
 		break;
-	case 1:
+	case 0x01:
 		opcode = "ld";
+		if (cpu != CPU_88100) {
+			if ((inst & (1 << 26)) == 0)
+				rf = 1;
+		}
+		break;
+	case 0x02:	/* st */
+		if (cpu != CPU_88100) {
+			if ((inst & (1 << 26)) == 0)
+				rf = 1;
+			if ((inst & (1 << 7)) != 0)
+				wt = 1;
+		}
+		break;
+	case 0x03:
+		if (cpu != CPU_88100) {
+			/* cheat instwidth for lda.x */
+			if (aryno == 3)
+				aryno = 4;
+		}
 		break;
 	}
 
+	if (st_lda != 0x03 && (inst & (1 << 8)) != 0)
+		usr = 1;
 
-	if (st_lda != 03 && ((inst >> 8) & 01) != 0)
-		user = ".usr";
+	db_printf("\t%s%s%c%s%s\t",
+	    opcode, rf != 0 ? xinstwidth[aryno] : instwidth[aryno], c,
+	    usr != 0 ? ".usr" : "    ", wt != 0 ? ".wt" : "   ");
+	if (rf != 0)
+		db_printf("x%d, r%d", rd, rs1);
 	else
-		user = "    ";
+		db_printf("r%d, r%d", rd, rs1);
 
-	db_printf("\t%s%s%c%s\tr%-3d,r%-3d",
-	    opcode, instwidth[aryno], c, user, rd, rs1);
-
-	if (scaled)
-		db_printf("[r%-3d]", rs2);
+	if (scaled != 0)
+		db_printf("[r%d]", rs2);
 	else
-		db_printf(",r%-3d", rs2);
+		db_printf(", r%d", rs2);
 }
 
 /* Handles triadic mode logical instructions */
 void
-lognim(int inst, const char *opcode, long iadr)
+lognim(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int rd = (inst >> 21) & 037;
-	int rs1 = (inst >> 16) & 037;
-	int rs2 = inst & 037;
-	int complemt = (inst >> 10) & 01;
-	char *c = "  ";
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rs2 = inst & 0x1f;
 
-	if (complemt)
-		c = ".c";
+	db_printf("\t%s", opcode);
+	if ((inst & (1 << 10)) != 0)
+		db_printf(".c");
 
-	db_printf("\t%s%s\t\tr%-3d,r%-3d,r%-3d", opcode, c, rd, rs1, rs2);
+	db_printf("\t\tr%d, r%d, r%d", rd, rs1, rs2);
 }
 
 /* Handles triadic mode arithmetic instructions */
 void
-onimmed(int inst, const char *opcode, long iadr)
+onimmed(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {
-	int rd = (inst >> 21) & 037;
-	int rs1 = (inst >> 16) & 037;
-	int rs2 = inst & 037;
-	int carry = (inst >> 8) & 03;
-	int nochar = (inst >> 10) & 07;
-	int nodecode = (inst >> 11) & 01;
-	const char *tab, *c;
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rs2 = inst & 0x1f;
+	u_int32_t carry = (inst >> 8) & 0x03;
 
-	if (nochar > 02)
-		tab = "\t\t";
-	else
-		tab = "\t";
+	db_printf("\t%s", opcode);
 
-	if (!nodecode) {
+	if ((inst & (1 << 11)) == 0) {
 		switch (carry) {
-		case 01:
-			c = ".co ";
+		case 0x01:
+			db_printf(".co");
 			break;
-		case 02:
-			c = ".ci ";
+		case 0x02:
+			db_printf(".ci");
 			break;
-		case 03:
-			c = ".cio";
-			break;
-		default:
-			c = "    ";
+		case 0x03:
+			db_printf(".cio");
 			break;
 		}
-	} else
-		c = "    ";
+	} else {
+		if (cpu != CPU_88100 && carry == 0x01)
+			db_printf(".d");
+	}
 
-	db_printf("\t%s%s%sr%-3d,r%-3d,r%-3d", opcode, c, tab, rd, rs1, rs2);
+	db_printf("\tr%d, r%d, r%d", rd, rs1, rs2);
+}
+
+/* Handles 88110 SFU2 instructions */
+void
+pinst(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
+{
+	u_int32_t rd = (inst >> 21) & 0x1f;
+	u_int32_t rs1 = (inst >> 16) & 0x1f;
+	u_int32_t rs2 = inst & 0x1f;
+	u_int32_t tfield = (inst >> 5) & 0x03;
+	u_int32_t pfunc = (inst >> 11) & 0x1f;
+	const char *saturation[] = { NULL, ".u", ".us", ".s" };
+
+	db_printf("\t%s", opcode);
+
+	switch (pfunc) {
+	case 0x0c:	/* ppack */
+		db_printf(".%d", (inst >> 5) & 0x3c);
+		break;
+	case 0x0e:	/* prot */
+		break;
+	default:	/* other instructions have an S field or zero */
+	    {
+		u_int32_t sfield = (inst >> 7) & 0x03;
+
+		if (sfield != 0)
+			db_printf("%s", saturation[sfield]);
+	    }
+		break;
+	}
+
+	if (tfield != 0 || pfunc == 0x0d /* punpk */) {
+		if (tfield != 3)
+			db_printf(".%c", "nbh"[tfield]);
+	}
+
+	switch (pfunc) {
+	case 0x0d:	/* punpk */
+		db_printf("\tr%d, r%d", rd, rs1);
+		break;
+	case 0x0e:	/* prot with immediate */
+		db_printf("\tr%d, r%d, %d", rd, rs1, (inst >> 5) & 0x3f);
+		break;
+	default:
+		db_printf("\tr%d, r%d, r%d", rd, rs1, rs2);
+		break;
+	}
 }
 
 static const struct opdesc {
-	u_int mask, match;
-	void (*opfun)(int, const char *, long);
-	const char *farg;
-} opdecode[] = {
+	u_int32_t mask, match;
+	void (*opfun)(int, u_int32_t, const char *, vaddr_t);
+	const char *opcode;
+} opdecode_88100[] = {
 	/* ORDER IS IMPORTANT BELOW */
-	{ 0xf0000000,	0x00000000,	immem,		NULL },
-	{ 0xf0000000,	0x10000000,	immem,		NULL },
+	{ 0xf0000000,	0x00000000,	immem,		NULL },	/* xmem/ld */
+	{ 0xf0000000,	0x10000000,	immem,		"ld" },
 	{ 0xf0000000,	0x20000000,	immem,		"st" },
 	{ 0xf0000000,	0x30000000,	immem,		"lda" },
 
@@ -622,14 +867,10 @@ static const struct opdesc {
 	{ 0xfc00fe00,	0xf000d800,	otrap,		"tb1" },
 	{ 0xfc00fe00,	0xf000e800,	otrap,		"tcnd" },
 
-	{ 0xfc00f2e0,	0xf4000000,	nimmem,		NULL },
-	{ 0xfc00f2e0,	0xf4000200,	nimmem,		NULL },
-	{ 0xfc00f2e0,	0xf4001000,	nimmem,		NULL },
-	{ 0xfc00f2e0,	0xf4001200,	nimmem,		NULL },
-	{ 0xfc00f2e0,	0xf4002000,	nimmem,		"st" },
-	{ 0xfc00f2e0,	0xf4002200,	nimmem,		"st" },
-	{ 0xfc00f2e0,	0xf4003000,	nimmem,		"lda" },
-	{ 0xfc00f2e0,	0xf4003200,	nimmem,		"lda" },
+	{ 0xfc00f0e0,	0xf4000000,	nimmem,		NULL },	/* xmem/ld */
+	{ 0xfc00f0e0,	0xf4001000,	nimmem,		"ld" },
+	{ 0xfc00f0e0,	0xf4002000,	nimmem,		"st" },
+	{ 0xfc00f0e0,	0xf4003000,	nimmem,		"lda" },
 
 	{ 0xfc00fbe0,	0xf4004000,	lognim,		"and" },
 	{ 0xfc00fbe0,	0xf4005000,	lognim,		"xor" },
@@ -660,36 +901,150 @@ static const struct opdesc {
 	{ 0xfc00ffe0,	0xf400fc00,	instset,	"rte" },
 	{ 0xfc000000,	0xf8000000,	instset,	"tbnd" },
 	{ 0,		0,		NULL,		NULL }
+}, opdecode_88110[] = {
+	/* ORDER IS IMPORTANT BELOW */
+	{ 0xe0000000,	0x00000000,	immem,		"ld" },
+	{ 0xf0000000,	0x20000000,	immem,		"st" },
+	{ 0xfc000000,	0x3c000000,	immem,		"ld" },
+	{ 0xf0000000,	0x30000000,	immem,		"st" },
+
+	{ 0xf8000000,	0x40000000,	oimmed,		"and" },
+	{ 0xf8000000,	0x48000000,	oimmed,		"mask" },
+	{ 0xf8000000,	0x50000000,	oimmed,		"xor" },
+	{ 0xf8000000,	0x58000000,	oimmed,		"or" },
+	{ 0xfc000000,	0x60000000,	oimmed,		"addu" },
+	{ 0xfc000000,	0x64000000,	oimmed,		"subu" },
+	{ 0xfc000000,	0x68000000,	oimmed,		"divu" },
+	{ 0xfc000000,	0x6c000000,	oimmed,		"mulu" },
+	{ 0xfc000000,	0x70000000,	oimmed,		"add" },
+	{ 0xfc000000,	0x74000000,	oimmed,		"sub" },
+	{ 0xfc000000,	0x78000000,	oimmed,		"divs" },
+	{ 0xfc000000,	0x7c000000,	oimmed,		"cmp" },
+
+	{ 0xfc1ff81f,	0x80004000,	ctrlregs,	"ldcr" },
+	{ 0xfc1ff81f,	0x80004800,	ctrlregs,	"fldcr" },
+	{ 0xffe0f800,	0x80008000,	ctrlregs,	"stcr" },
+	{ 0xffe0f800,	0x80008800,	ctrlregs,	"fstcr" },
+	{ 0xfc00f800,	0x8000c000,	ctrlregs,	"xcr" },
+	{ 0xfc00f800,	0x8000c800,	ctrlregs,	"fxcr" },
+
+	{ 0xfc007800,	0x84000000,	sindou,		"fmul" },
+	{ 0xfc1f7e00,	0x84000800,	sindou,		"fcvt" },
+	{ 0xfc1ffd80,	0x84002000,	sindou,		"flt" },
+	{ 0xfc007800,	0x84002800,	sindou,		"fadd" },
+	{ 0xfc007800,	0x84003000,	sindou,		"fsub" },
+	{ 0xfc007860,	0x84003800,	sindou,		"fcmp" },
+	{ 0xfc007860,	0x84003820,	sindou,		"fcmpu" },
+	{ 0xfc1ffe60,	0x8400c000,	sindou,		"mov" },
+	{ 0xfc17fe60,	0x84004200,	sindou,		"mov" },
+	{ 0xfc1f7e60,	0x84004800,	sindou,		"int" },
+	{ 0xfc1f7e60,	0x84005000,	sindou,		"nint" },
+	{ 0xfc1f7e60,	0x84005800,	sindou,		"trnc" },
+	{ 0xfc007800,	0x84007000,	sindou,		"fdiv" },
+	{ 0xfc1f7e00,	0x84007800,	sindou,		"fsqrt" },
+
+	{ 0xfc00ffe0,	0x88000000,	pinst,		"pmul" },
+	{ 0xfc00ff80,	0x88002000,	pinst,		"padd" },
+	{ 0xfc00fe00,	0x88002000,	pinst,		"padds" },
+	{ 0xfc00ff80,	0x88003000,	pinst,		"psub" },
+	{ 0xfc00fe00,	0x88003000,	pinst,		"psubs" },
+	{ 0xfc00ffe0,	0x88003860,	pinst,		"pcmp" },
+	{ 0xfc00f800,	0x88006000,	pinst,		"ppack" },
+	{ 0xfc00ff9f,	0x88006800,	pinst,		"punpk" },
+	{ 0xfc00f87f,	0x88007000,	pinst,		"prot" },
+	{ 0xfc00ffe0,	0x88007800,	pinst,		"prot" },
+
+	{ 0xf8000000,	0xc0000000,	obranch,	"br" },
+	{ 0xf8000000,	0xc8000000,	obranch,	"bsr" },
+
+	{ 0xf8000000,	0xd0000000,	brcond,		"bb0" },
+	{ 0xf8000000,	0xd8000000,	brcond,		"bb1" },
+	{ 0xf8000000,	0xe8000000,	brcond,		"bcnd" },
+
+	{ 0xfc00fc00,	0xf0008000,	obit,		"clr" },
+	{ 0xfc00fc00,	0xf0008800,	obit,		"set" },
+	{ 0xfc00fc00,	0xf0009000,	obit,		"ext" },
+	{ 0xfc00fc00,	0xf0009800,	obit,		"extu" },
+	{ 0xfc00fc00,	0xf000a000,	obit,		"mak" },
+	{ 0xfc00ffe0,	0xf000a800,	obit,		"rot" },
+
+	{ 0xfc00fe00,	0xf000d000,	otrap,		"tb0" },
+	{ 0xfc00fe00,	0xf000d800,	otrap,		"tb1" },
+	{ 0xfc00fe00,	0xf000e800,	otrap,		"tcnd" },
+
+	{ 0xfc00f0e0,	0xf4000000,	nimmem,		NULL },	/* ld/xmem */
+	{ 0xf800f0e0,	0xf0001000,	nimmem,		"ld" },
+	{ 0xf800f060,	0xf0002000,	nimmem,		"st" },
+	{ 0xfc00f2e0,	0xf4003200,	nimmem,		"lda" },
+
+	{ 0xfc00fbe0,	0xf4004000,	lognim,		"and" },
+	{ 0xfc00fbe0,	0xf4005000,	lognim,		"xor" },
+	{ 0xfc00fbe0,	0xf4005800,	lognim,		"or" },
+
+	{ 0xfc00fce0,	0xf4006000,	onimmed,	"addu" },
+	{ 0xfc00fce0,	0xf4006400,	onimmed,	"subu" },
+	{ 0xfc00fee0,	0xf4006800,	onimmed,	"divu" },
+	{ 0xfc00fee0,	0xf4006c00,	onimmed,	"mulu" },
+	{ 0xfc00ffe0,	0xf4006e00,	onimmed,	"muls" },
+	{ 0xfc00fce0,	0xf4007000,	onimmed,	"add" },
+	{ 0xfc00fce0,	0xf4007400,	onimmed,	"sub" },
+	{ 0xfc00ffe0,	0xf4007800,	onimmed,	"divs" },
+	{ 0xfc00ffe0,	0xf4007c00,	onimmed,	"cmp" },
+
+	{ 0xfc00ffe0,	0xf4008000,	bitman,		"clr" },
+	{ 0xfc00ffe0,	0xf4008800,	bitman,		"set" },
+	{ 0xfc00ffe0,	0xf4009000,	bitman,		"ext" },
+	{ 0xfc00ffe0,	0xf4009800,	bitman,		"extu" },
+	{ 0xfc00ffe0,	0xf400a000,	bitman,		"mak" },
+	{ 0xfc00ffe0,	0xf400a800,	bitman,		"rot" },
+
+	{ 0xfffffbe0,	0xf400c000,	jump,		"jmp" },
+	{ 0xfffffbe0,	0xf400c800,	jump,		"jsr" },
+
+	{ 0xfc1fffe0,	0xf400e800,	instset,	"ff1" },
+	{ 0xfc1fffe0,	0xf400ec00,	instset,	"ff0" },
+	{ 0xffe0ffe0,	0xf400f800,	instset,	"tbnd" },
+	{ 0xffffffff,	0xf400fc00,	instset,	"rte" },
+	{ 0xfffffffc,	0xf400fc00,	instset,	"illop" },
+	{ 0xffe00000,	0xf8000000,	instset,	"tbnd" },
+	{ 0,		0,		NULL,		NULL }
 };
 
-int
-m88k_print_instruction(u_int iadr, long inst)
+void
+m88k_print_instruction(int cpu, u_int iadr, u_int32_t inst)
 {
 	const struct opdesc *p;
 
 	/*
-	 * This messes up "orb" instructions ever so slightly,
+	 * This messes up "or.b" instructions ever so slightly,
 	 * but keeps us in sync between routines...
 	 */
 	if (inst == 0) {
-		db_printf("\t.word 0");
+		db_printf("\t.word\t0\n");
 	} else {
-		for (p = opdecode; p->mask; p++)
+		p = cpu != CPU_88100 ? opdecode_88110 : opdecode_88100;
+		while (p->mask != 0) {
 			if ((inst & p->mask) == p->match) {
-				(*p->opfun)(inst, p->farg, iadr);
-				break;
+				(*p->opfun)(cpu, inst, p->opcode, iadr);
+				db_printf("\n");
+				return;
 			}
-		if (!p->mask)
-			db_printf("\t.word 0x%x", inst);
+			p++;
+		}
+		db_printf("\t.word\t0x%x\n", inst);
 	}
-
-	return (iadr + 4);
 }
 
 db_addr_t
 db_disasm(db_addr_t loc, boolean_t altfmt)
 {
-	m88k_print_instruction(loc, db_get_value(loc, 4, FALSE));
-	db_printf("\n");
+	int cpu;
+
+	if (altfmt)
+		cpu = CPU_IS88100 ? CPU_88110 : CPU_88100;
+	else
+		cpu = cputyp;
+
+	m88k_print_instruction(cpu, loc, db_get_value(loc, 4, FALSE));
 	return (loc + 4);
 }

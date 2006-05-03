@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2006/05/02 21:44:37 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.9 2006/05/03 18:14:51 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -75,7 +75,7 @@ int	inst_load(u_int);
 int	inst_store(u_int);
 int	ddb_break_trap(int, db_regs_t *);
 int	ddb_entry_trap(int, db_regs_t *);
-int	m88k_print_instruction(u_int, long);	/* db_disasm.c */
+void	m88k_print_instruction(int, u_int, u_int32_t);	/* db_disasm.c */
 
 /*
  * inst_call(ins) - is the instruction a function call.
