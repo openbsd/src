@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.70 2006/04/03 00:40:56 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.71 2006/05/03 21:15:59 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -404,7 +404,8 @@ struct list *
 make_file_list(char *buf)
 {
 	char		*dir, *file, *cp;
-	int		 len, preflen, ret;
+	size_t		 len, preflen;
+	int		 ret;
 	DIR		*dirp;
 	struct dirent	*dent;
 	struct list	*last, *current;
@@ -424,11 +425,11 @@ make_file_list(char *buf)
 	/* first we get a directory name we can look up */
 	/*
 	 * Names ending in . are potentially odd, because adjustname will
-	 * treat foo/.. as a reference to another directory, whereas we are
+	 * treat foo/bar/.. as a foo/, whereas we are
 	 * interested in names starting with ..
 	 */
 	len = strlen(buf);
-	if (buf[len - 1] == '.') {
+	if (len && buf[len - 1] == '.') {
 		buf[len - 1] = 'x';
 		dir = adjustname(buf);
 		buf[len - 1] = '.';
@@ -440,7 +441,7 @@ make_file_list(char *buf)
 	 * If the user typed a trailing / or the empty string
 	 * he wants us to use his file spec as a directory name.
 	 */
-	if (buf[0] && buf[strlen(buf) - 1] != '/') {
+	if (len && buf[len - 1] != '/') {
 		file = strrchr(dir, '/');
 		if (file) {
 			*file = '\0';
@@ -468,7 +469,7 @@ make_file_list(char *buf)
 	 * SV files are fairly short.  For BSD, something more general would
 	 * be required.
 	 */
-	if ((preflen + MAXNAMLEN) > NFILEN)
+	if (preflen > NFILEN - MAXNAMLEN)
 		return (NULL);
 
 	/* loop over the specified directory, making up the list of files */
