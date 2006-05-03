@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.5 2006/05/03 22:14:44 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.6 2006/05/03 22:20:55 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -545,11 +545,21 @@ elf_load_object (void *pexe, const char *name)
 		}
 
 		str = malloc(object->dyn.strsz);
+		if (str == NULL) {
+			printf("unable to allocate strtab for %s\n",
+			    name);
+			exit(10);
+		}
 		bcopy(object->dyn.strtab, str, object->dyn.strsz);
 		object->dyn.strtab = str;
 		strt = str;
 
 		sym = malloc(object->nchains * sizeof(Elf_Sym));
+		if (sym == NULL) {
+			printf("unable to allocate symtab for %s\n",
+			    name);
+			exit(10);
+		}
 		bcopy(object->dyn.symtab, sym,
 		    object->nchains * sizeof(Elf_Sym));
 		object->dyn.symtab = sym;
@@ -557,6 +567,11 @@ elf_load_object (void *pexe, const char *name)
 
 		if (object->dyn.relsz != 0) {
 			rel = malloc(object->dyn.relsz);
+			if (rel == NULL) {
+				printf("unable to allocate rel reloc for %s\n",
+				    name);
+				exit(10);
+			}
 			bcopy(object->dyn.rel, rel, object->dyn.relsz);
 			object->dyn.rel = rel;
 		} else {
@@ -564,6 +579,11 @@ elf_load_object (void *pexe, const char *name)
 		}
 		if (object->dyn.relasz != 0) {
 			rela = malloc(object->dyn.relasz);
+			if (rela == NULL) {
+				printf("unable to allocate rela reloc for %s\n",
+				    name);
+				exit(10);
+			}
 			bcopy(object->dyn.rela, rela, object->dyn.relasz);
 			object->dyn.rela = rela;
 		} else {
@@ -571,14 +591,25 @@ elf_load_object (void *pexe, const char *name)
 		}
 		if (object->dyn.pltrelsz != 0) {
 			plt = malloc(object->dyn.pltrelsz);
+			if (plt == NULL) {
+				printf("unable to allocate plt reloc for %s\n",
+				    name);
+				exit(10);
+			}
 			bcopy((void*)object->dyn.jmprel, plt,
 			    object->dyn.pltrelsz);
 			object->dyn.jmprel = (long)plt;
 		} else {
 			object->dyn.jmprel = NULL;
 		}
-		if (object->dyn.rpath != NULL)
+		if (object->dyn.rpath != NULL){
 			object->dyn.rpath = strdup(object->dyn.rpath);
+			if (object->dyn.rpath == NULL) {
+				printf("unable to allocate rpath for %s\n",
+				    name);
+				exit(10);
+			}
+		}
 
 
 	object->dyn.needed = (Elf_Addr)needed_list;
