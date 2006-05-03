@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.4 2005/11/20 22:07:09 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.5 2006/05/03 18:12:52 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -65,10 +65,9 @@ inst_load(u_int ins)
 		return (2);
 
 	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-		if ((ins & 0xf400c0e0) == 0xf4000000)	/* is load/xmem */
-			/* look at bits 15-5, but mask bits 8-9 */
-			switch ((ins & 0x0000fce0) >> 5) {
-/* XXX previous test implies these values can never hit -- miod */
+		if ((ins & 0x0000c0e0) == 0x00000000)	/* is ld/st/xmem */
+			/* look at bits 15-10 */
+			switch ((ins & 0x0000fc00) >> 10) {
 			case 0x0: /* xmem byte */
 			case 0x1: /* xmem word */
 			case 0x2: /* unsigned half word */
@@ -107,10 +106,9 @@ inst_store(u_int ins)
 		return (2);
 
 	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-		/* check bits 15,14,12,7,6,5 are all 0 */
-		if ((ins & 0x0000d0e0) == 0)
-			/* decode bits 10-13 */
-			switch ((ins & 0x00003c00) >> 10) {
+		if ((ins & 0x0000c0e0) == 0x00000000)	/* is ld/st/xmem */
+			/* look at bits 15-10 */
+			switch ((ins & 0x0000fc00) >> 10) {
 			case 0x0: /* xmem byte imm */
 			case 0x1: /* xmem word imm */
 			case 0x9: /* store word */
