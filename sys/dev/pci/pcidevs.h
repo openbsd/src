@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1065 2006/04/29 07:37:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1066 2006/05/03 00:35:01 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2270,6 +2270,7 @@
 
 /* Neterion products */
 #define	PCI_PRODUCT_NETERION_XFRAME	0x5831		/* Xframe 10GbE */
+#define	PCI_PRODUCT_NETERION_XFRAME_2	0x5832		/* Xframe-II 10GbE */
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */
