@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.c,v 1.1 2006/05/03 16:10:52 drahn Exp $ */
+/* $OpenBSD: debug.c,v 1.2 2006/05/03 22:14:44 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -108,8 +108,8 @@ elf_dump_footer(struct prebind_footer *footer)
 	printf("pltsymcache_cnt %d\n", footer->pltsymcache_cnt);
 	printf("fixup_cnt %d\n", footer->fixup_cnt);
 	printf("numlibs %d\n", footer->numlibs);
-	printf("id0 %d\n", footer->id0);
-	printf("id1 %d\n", footer->id1);
+	printf("id0 %x\n", footer->id0);
+	printf("id1 %x\n", footer->id1);
 	printf("orig_size %lld\n", (long long)footer->orig_size);
 	printf("version %d\n", footer->prebind_version);
 	printf("bind_id %c%c%c%c\n", footer->bind_id[0],

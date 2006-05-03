@@ -1,4 +1,4 @@
-/* $OpenBSD: objarray.c,v 1.1 2006/05/03 16:10:52 drahn Exp $ */
+/* $OpenBSD: objarray.c,v 1.2 2006/05/03 22:14:44 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -63,6 +63,8 @@ elf_add_object_curbin_list(struct elf_object *object)
 	ol = malloc(sizeof (struct objlist));
 	ol->object = object;
 	TAILQ_INSERT_TAIL(&(curbin->curbin_list), ol, list);
+	if ( load_object == NULL)
+		load_object = object; 
 	ol->load_prog = load_object;
 
 #if 0
@@ -116,7 +118,9 @@ elf_sum_reloc()
 #if 0
 			printf("\tprog %d %s\n", ol->load_prog->dyn.null,
 			    ol->load_prog->load_name);
-			printf("cache:\n");
+			printf("cache: %p %p %s\n",
+			     objarray[i].symcache, ol->cache,
+			     ol->object->load_name );
 #endif
 
 			elf_copy_syms(objarray[i].symcache,
@@ -439,6 +443,7 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 	u_int32_t *maptab = NULL;
 	u_int32_t footer_offset;
 	int i;
+	size_t len;
 
 	/* open the file */
 	fd = open(object->load_name, O_RDWR);
@@ -451,7 +456,7 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 		}
 	}
 	lseek(fd, -((off_t)sizeof(struct prebind_footer)), SEEK_END);
-	read(fd, &footer, sizeof(struct prebind_footer));
+	len = read(fd, &footer, sizeof(struct prebind_footer));
 
 	if (footer.bind_id[0] == BIND_ID0 &&
 	    footer.bind_id[1] == BIND_ID1 &&
@@ -644,6 +649,7 @@ elf_fixup_prog_load(int fd, struct prebind_footer *footer,
 	ehdr->e_phnum++;
 
 done:
+	msync(buf, 8192, MS_SYNC);
 	munmap(buf, 8192);
 }
 
@@ -674,9 +680,10 @@ elf_clear_prog_load(int fd, struct elf_object *object)
 	if ((phdr[loadsection].p_type != PT_LOAD) ||
 	    ((phdr[loadsection].p_flags & 0x08000000) == 0)) {
 		/* doesn't look like ours */
-		printf("mapped, %s id doesn't match %lx\n",
+		printf("mapped, %s id doesn't match %lx %d %d\n",
 		    object->load_name,
-		    (long)(phdr[loadsection].p_vaddr));
+		    (long)(phdr[loadsection].p_vaddr),
+		    phdr[loadsection].p_flags, loadsection);
 		goto done;
 	}
 
@@ -686,6 +693,7 @@ elf_clear_prog_load(int fd, struct elf_object *object)
 	ehdr->e_phnum--;
 
 done:
+	msync(buf, 8192, MS_SYNC);
 	munmap(buf, 8192);
 }
 void
@@ -804,13 +812,13 @@ elf_calc_fixups(struct proglist *pl, struct objlist *ol, int libidx)
 }
 
 void
-elf_add_object(struct elf_object *object, int lib)
+elf_add_object(struct elf_object *object, int objtype)
 {
 	struct objarray_list *newarray;
 	struct objlist *ol;
 	ol = malloc(sizeof (struct objlist));
 	ol->object = object;
-	if (lib)
+	if (objtype != OBJTYPE_EXE)
 		TAILQ_INSERT_TAIL(&library_list, ol, list);
 	if (objarray_cnt+1 >= objarray_sz) {
 		objarray_sz += 512;
@@ -913,7 +921,6 @@ write_txtbusy_file(char *name)
 	void *buf;
 	size_t len, wlen;
 
-printf("txtbusy processing %s\n", name);
 	err = lstat(name, &sb);	/* get mode of old file (preserve mode) */
 	if (err != 0)
 		return -1; /* stat shouldn't fail but if it does */
@@ -931,9 +938,7 @@ printf("txtbusy processing %s\n", name);
 	buf = malloc(BUFSZ);
 
 	fd = open(prebind_name, O_RDWR|O_CREAT|O_TRUNC, sb.st_mode);
-	printf("opened %s %d mode %o\n", prebind_name, fd, sb.st_mode);
 	oldfd = open(name, O_RDONLY);
-	printf("opened %s %d\n", name, oldfd);
 	while ((len = read(oldfd,  buf, BUFSZ)) > 0) {
 		wlen = write(fd, buf, len);
 		if (wlen != len) {

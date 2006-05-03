@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.4 2006/05/03 19:58:40 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.5 2006/05/03 22:14:44 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -93,11 +93,12 @@ char * elf_find_shlib(struct sod *sodp, const char *searchpath,
 elf_object_t * elf_tryload_shlib(const char *libname);
 int elf_match_file(struct sod *sodp, char *name, int namelen);
 void elf_init_objarray(void);
-void elf_add_object(struct elf_object *object, int lib);
+void elf_add_object(struct elf_object *object, int objtype);
 void elf_print_objarray(void);
 
 struct elf_object * elf_lookup_object(const char *name);
-struct elf_object * elf_lookup_object_devino(dev_t dev, ino_t inode);
+struct elf_object * elf_lookup_object_devino(dev_t dev, ino_t inode,
+    int objtype);
 void elf_free_curbin_list(struct elf_object *obj);
 void elf_resolve_curbin(void);
 struct proglist *elf_newbin(void);
@@ -150,7 +151,8 @@ load_file_or_dir(char *name)
 		load_exe(name);
 		break;
 	case S_IFDIR:
-		printf("loading dir %s\n", name);
+		if (verbose > 0)
+			printf("loading dir %s\n", name);
 		load_dir(name);
 		break;
 	default:
@@ -204,15 +206,16 @@ load_exe(char *name)
 	curbin = elf_newbin();
 	if (verbose > 0)
 		printf("processing %s\n", name);
-	object = load_file(name, 0);
-	if (load_object != NULL) {
+	object = load_file(name, OBJTYPE_EXE);
+	if (object != NULL && load_object != NULL &&
+	    object->load_object == NULL) {
 		TAILQ_FOREACH(ol, &(curbin->curbin_list), list) {
 			fail = load_obj_needed(ol->object);
 			if (fail != 0)
 				break;  /* XXX */
 
 		}
-		interp = load_file(curbin->interp, 2);
+		interp = load_file(curbin->interp, OBJTYPE_DLO);
 
 		/* slight abuse of this field */
 		object->load_object = interp;
@@ -228,11 +231,13 @@ load_exe(char *name)
 		if (load_object != NULL) {
 			load_object = NULL;
 		}
+	} else {
+		free (curbin);
 	}
 }
 
 struct elf_object *
-load_file(const char *filename, int lib)
+load_file(const char *filename, int objtype)
 {
 	int fd = -1;
 	void *buf = NULL;
@@ -266,7 +271,7 @@ load_file(const char *filename, int lib)
 		goto done;
 	}
 
-	obj = elf_lookup_object_devino( ifstat.st_dev, ifstat.st_ino);
+	obj = elf_lookup_object_devino( ifstat.st_dev, ifstat.st_ino, objtype);
 	if (obj != NULL)
 		goto done;
 
@@ -289,10 +294,11 @@ load_file(const char *filename, int lib)
 		goto done;
 	}
 
-	if ((lib == 0) && (pehdr->e_type != ET_EXEC))
+	if ((objtype == OBJTYPE_EXE) && (pehdr->e_type != ET_EXEC))
 			goto done;
 
-	if ((lib == 1 || lib == 2) && (pehdr->e_type != ET_DYN))
+	if ((objtype == OBJTYPE_LIB || objtype == OBJTYPE_DLO) &&
+	    (pehdr->e_type != ET_DYN))
 		goto done;
 		
 
@@ -319,24 +325,25 @@ printf("e_shstrndx %x\n\n", pehdr->e_shstrndx);
 
 	obj = elf_load_object(pexe, filename);
 
-
-
 	munmap(buf, ifstat.st_size);
 	buf = NULL;
 
 	if (obj != NULL) {
+		obj->obj_type = objtype;
+
 		obj->dev = ifstat.st_dev;
 		obj->inode = ifstat.st_ino;
 		if (load_object == NULL)
 			load_object = obj;
 
-		elf_add_object(obj, lib);
+		elf_add_object(obj, objtype);
 	
 #ifdef DEBUG1
 	dump_info(obj);
 #endif
 	}
-	if (lib == 1 && merge_mode == 1) {
+	if ((objtype == OBJTYPE_LIB || objtype == OBJTYPE_DLO)
+	    && merge_mode == 1) {
 		/*
 		 * for libraries, check if old prebind info exists
 		 * and load it if we are in merge mode
@@ -396,7 +403,7 @@ main(int argc, char **argv)
 	for (i = 0; i < argc; i++) {
 		load_file_or_dir(argv[i]);
 	}
-	if (verbose > 1) {
+	if (verbose > 4) {
 		elf_print_objarray();
 		elf_print_prog_list(&prog_list);
 	}
@@ -904,7 +911,7 @@ elf_tryload_shlib(const char *libname)
 	struct elf_object *object;
 	object = elf_lookup_object(libname);
 	if (object == NULL) {
-		object = load_file(libname, 1);
+		object = load_file(libname, OBJTYPE_LIB);
 	}
 	if (object == NULL)
 		printf("tryload_shlib %s\n", libname);
@@ -974,8 +981,6 @@ elf_newbin(void)
 	TAILQ_INIT(&(proglist->curbin_list));
 	return proglist;
 }
-
-
 
 /*
  * Copy the contents of a libraries symbol cache instance into 
@@ -1085,18 +1090,24 @@ elf_lookup_object(const char *name)
 }
 
 struct elf_object *
-elf_lookup_object_devino(dev_t dev, ino_t inode)
+elf_lookup_object_devino(dev_t dev, ino_t inode, int objtype)
 {
 	struct objlist *ol;
 	TAILQ_FOREACH(ol, &(curbin->curbin_list), list) {
 		if (ol->object->dev == dev && 
-		    ol->object->inode == inode)
+		    ol->object->inode == inode) {
+			if (ol->object->obj_type != objtype)
+				return NULL;
 			return ol->object;
+		}
 	}
 	TAILQ_FOREACH(ol, &library_list, list) {
 		if (ol->object->dev == dev && 
 		    ol->object->inode == inode) {
-			elf_add_object_curbin_list(ol->object);
+			if (ol->object->obj_type != objtype)
+				return NULL;
+			if (objtype != OBJTYPE_EXE)
+				elf_add_object_curbin_list(ol->object);
 			return ol->object;
 		}
 	}
