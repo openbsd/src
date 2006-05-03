@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.42 2005/12/15 01:37:32 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.43 2006/05/03 21:51:29 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -268,9 +268,9 @@ Do not skip padding to the next long word boundary for unconditional jumps.
 Use
 .Tn Motorola
 assembly syntax.
-.\" .It m88k
-.\" Decode instructions for the opposite CPU (i.e. m88110 when running on an
-.\" m88100 processor, and the opposite).
+.It m88k
+Decode instructions for the opposite CPU model (e.g. m88110 when running on an
+m88100 processor).
 .It vax
 Don't assume that each external label is a procedure entry mask.
 .El
