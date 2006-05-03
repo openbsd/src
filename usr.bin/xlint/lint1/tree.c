@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.38 2006/04/27 20:46:44 otto Exp $	*/
+/*	$OpenBSD: tree.c,v 1.39 2006/05/03 18:22:41 otto Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.38 2006/04/27 20:46:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.39 2006/05/03 18:22:41 otto Exp $";
 #endif
 
 #include <stdlib.h>
@@ -79,6 +79,7 @@ static	tnode_t	*chkfarg(tnode_t *, tnode_t *);
 static	tnode_t	*parg(farg_t *, tnode_t *);
 static	int	chkdbz(op_t, tnode_t *);
 static	void	nulleff(tnode_t *);
+static	int	nulleffexpr(tnode_t *);
 static	void	chkaidx(tnode_t *, int);
 static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
@@ -3389,41 +3390,51 @@ nulleff(tnode_t *tn)
 {
 	if (!hflag)
 		return;
-
-	while (!modtab[tn->tn_op].m_sideeff) {
-		if (tn->tn_op == CVT && tn->tn_type->t_tspec == VOID) {
-			tn = tn->tn_left;
-		} else if (tn->tn_op == LOGAND || tn->tn_op == LOGOR) {
-			/*
-			 * && and || have a side effect if the right operand
-			 * has a side effect.
-			 */
-			tn = tn->tn_right;
-		} else if (tn->tn_op == QUEST) {
-			/*
-			 * ? has a side effect if at least one of its right
-			 * operands has a side effect
-			 */
-			tn = tn->tn_right;
-		} else if (tn->tn_op == COLON || tn->tn_op == COMMA) {
-			/*
-			 * : and , have a side effect if at least one of the
-			 * operands has a side effect
-			 */
-			if (modtab[tn->tn_left->tn_op].m_sideeff) {
-				tn = tn->tn_left;
-			} else if (modtab[tn->tn_right->tn_op].m_sideeff) {
-				tn = tn->tn_right;
-			} else {
-				break;
-			}
-		} else {
-			break;
-		}
-	}
-	if (!modtab[tn->tn_op].m_sideeff)
+	if (nulleffexpr(tn)) {
 		/* expression has null effect */
 		warning(129);
+	}
+}
+
+static int
+nulleffexpr(tnode_t *tn)
+{
+	int r1, r2;
+
+	if (modtab[tn->tn_op].m_sideeff)
+		return (0);
+
+	switch (tn->tn_op) {
+	case CVT:
+		if (tn->tn_type->t_tspec == VOID)
+			return (0);
+		else
+			return (nulleffexpr(tn->tn_left));
+	case LOGAND:
+	case LOGOR:
+		/*
+		 * && and || have a null effect if the right operand
+		 * has null effect.
+		 */
+		return (nulleffexpr(tn->tn_right));
+	case QUEST:
+		/*
+		 * ? has null effect if both of its right * operands
+		 * have null effect
+		 */
+		return (nulleffexpr(tn->tn_right));
+	case COLON:
+	case COMMA:
+		/*
+		 * : and , have null effect if both of the operands have
+		 * null effect
+		 */
+		r1 = nulleffexpr(tn->tn_left);
+		r2 = nulleffexpr(tn->tn_right);
+		return (r1 && r2);
+	default:
+		return (1);
+	}
 }
 
 /*
