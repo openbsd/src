@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.8 2004/05/25 15:56:18 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.9 2006/05/03 15:37:50 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -77,15 +77,25 @@ _dl_start:
 	popl	%ecx			# %ecx = obj_main - XXXDSR
 	jmp	*%eax
 
-	.section	".text"
-	.align		4
-	.global _dl_close
-	.type _dl_close,@function
-_dl_close:
-	mov	$SYS_close, %eax
-	int	$0x80
-	jb	1f
+
+/* copied from lib/libc/arch/i386/SYS.h - XXX */
+#define __DO_SYSCALL(x)                                 \
+	movl $__CONCAT(SYS_, x),%eax;         \
+	int $0x80
+
+
+#define DL_SYSCALL(n) DL_SYSCALL2(n,n)
+#define DL_SYSCALL2(n,c)					\
+	.section	".text"					;\
+	.align		4					;\
+	.global		__CONCAT(_dl_,n)			;\
+	.type		__CONCAT(_dl_,n)%function		;\
+__CONCAT(_dl_,n):						;\
+	__DO_SYSCALL(c)						;\
+	jb	.L_cerr						;\
 	ret
+
+DL_SYSCALL(close)
 
 	.section	".text"
 	.align		4
@@ -97,137 +107,20 @@ _dl_exit:
 	ret
 
 
-	.section	".text"
-	.align		4
-	.global _dl_issetugid
-	.type _dl_issetugid,@function
-_dl_issetugid:
-	mov	$SYS_issetugid, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
+DL_SYSCALL(issetugid)
+DL_SYSCALL2(_syscall,__syscall)
+DL_SYSCALL(munmap)
+DL_SYSCALL(mprotect)
+DL_SYSCALL(open)
+DL_SYSCALL(read)
+DL_SYSCALL(write)
+DL_SYSCALL(stat)
+DL_SYSCALL(fstat)
+DL_SYSCALL(fcntl)
+DL_SYSCALL2(sysctl,__sysctl)
+DL_SYSCALL(getdirentries)
 
-
-	.section	".text"
-	.align		4
-	.global _dl__syscall
-	.type _dl__syscall,@function
-_dl__syscall:
-	mov	$SYS___syscall, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_munmap
-	.type _dl_munmap,@function
-_dl_munmap:
-	mov	$SYS_munmap, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_mprotect
-	.type _dl_mprotect,@function
-_dl_mprotect:
-	mov	$SYS_mprotect, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_open
-	.type _dl_open,@function
-_dl_open:
-	mov	$SYS_open, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_read
-	.type _dl_read,@function
-_dl_read:
-	mov	$SYS_read, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_write
-	.type _dl_write,@function
-_dl_write:
-	mov	$SYS_write, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_stat
-	.type _dl_stat,@function
-_dl_stat:
-	mov	$SYS_stat, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_fstat
-	.type _dl_fstat,@function
-_dl_fstat:
-	mov	$SYS_fstat, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_fcntl
-	.type _dl_fcntl,@function
-_dl_fcntl:
-	mov	$SYS_fcntl, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-	.section	".text"
-	.align		4
-	.global _dl_sysctl
-	.type _dl_sysctl,@function
-_dl_sysctl:
-	mov	$SYS___sysctl, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-
-	.section	".text"
-	.align		4
-	.global _dl_getdirentries
-	.type _dl_getdirentries,@function
-_dl_getdirentries:
-	mov	$SYS_getdirentries, %eax
-	int	$0x80
-	jb	1f		 /* error: result = -errno */
-	ret
-
-1:
+.L_cerr:
 	/* error: result = -errno; - handled here. */
 	neg	%eax
 	ret
