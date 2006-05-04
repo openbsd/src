@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2006/05/02 21:44:39 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2006/05/04 19:38:45 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -102,6 +102,7 @@ const char *trap_type[] = {
 	"Error Exception",
 	"Non-Maskable Exception",
 };
+
 const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
 #ifdef M88100
@@ -1696,6 +1697,10 @@ splassert_check(int wantipl, const char *func)
  * This routine attempts to recover these (valid) statements, by simulating
  * the split form of the instruction. If it fails, it returns the appropriate
  * signal number to deliver.
+ *
+ * Note that we do not attempt to do anything for .d.usr instructions - the
+ * kernel never issues such instructions, and they cause a privileged
+ * isntruction exception from userland.
  */
 int
 double_reg_fixup(struct trapframe *frame)
@@ -1718,19 +1723,9 @@ double_reg_fixup(struct trapframe *frame)
 		    + frame->tf_r[(instr & 0x1f)];
 		store = 0;
 		break;
-	case 0xf4001200:	/* ld.d rD, rS1[rS2] */
-		addr = frame->tf_r[(instr >> 16) & 0x1f]
-		    + (frame->tf_r[(instr & 0x1f)] << 3);
-		store = 0;
-		break;
 	case 0xf4002000:	/* st.d rD, rS1, rS2 */
 		addr = frame->tf_r[(instr >> 16) & 0x1f]
 		    + frame->tf_r[(instr & 0x1f)];
-		store = 1;
-		break;
-	case 0xf4002200:	/* st.d rD, rS1[rS2] */
-		addr = frame->tf_r[(instr >> 16) & 0x1f]
-		    + (frame->tf_r[(instr & 0x1f)] << 3);
 		store = 1;
 		break;
 	default:
