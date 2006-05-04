@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.65 2005/12/03 03:40:52 brad Exp $ */
+/*	$OpenBSD: ohci.c,v 1.66 2006/05/04 14:21:30 jolan Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -3010,8 +3010,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	ohci_softc_t *sc = (ohci_softc_t *)dev->bus;
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *data, *tail;
-	int len;
-	int s;
+	int s, len, isread, endpt;
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
@@ -3026,6 +3025,8 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 #endif
 
 	len = xfer->length;
+	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
 	data = opipe->tail.td;
 	tail = ohci_alloc_std(sc);
@@ -3034,7 +3035,8 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	tail->xfer = NULL;
 
 	data->td.td_flags = htole32(
-		OHCI_TD_IN | OHCI_TD_NOCC |
+		isread ? OHCI_TD_IN : OHCI_TD_OUT |
+		OHCI_TD_NOCC |
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
 		data->td.td_flags |= htole32(OHCI_TD_R);
