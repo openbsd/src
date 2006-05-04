@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.5 2004/08/10 17:07:20 aoyama Exp $	*/
+/*	$OpenBSD: board.h,v 1.6 2006/05/04 19:27:36 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -118,12 +118,12 @@
 #define  INT_SET_LV0	U(0xFC000000) 	/* enable interrupts */
 #define  INT_SLAVE_MASK	U(0x84000000) 	/* slave can only enable 6 and 1 */
 #define	 INT_CLOCK_MASK	0xBFFFFFFF 	/* mask clock */
-#define  INT_LV6	U(0x00800000) 	/* level 6 enebled */
-#define  INT_LV5	U(0x00400000) 	/* level 5 enebled */
-#define  INT_LV4	U(0x00200000) 	/* level 4 enebled */
-#define  INT_LV3	U(0x00100000) 	/* level 3 enebled */
-#define  INT_LV2	U(0x00080000) 	/* level 2 enebled */
-#define  INT_LV1	U(0x00040000) 	/* level 1 enebled */
+#define  INT_LV6	U(0x00800000) 	/* level 6 enabled */
+#define  INT_LV5	U(0x00400000) 	/* level 5 enabled */
+#define  INT_LV4	U(0x00200000) 	/* level 4 enabled */
+#define  INT_LV3	U(0x00100000) 	/* level 3 enabled */
+#define  INT_LV2	U(0x00080000) 	/* level 2 enabled */
+#define  INT_LV1	U(0x00040000) 	/* level 1 enabled */
 #define  INT_ST		U(0xE0000000) 	/* interrupt status */
 #define  INT_MASK_LV0	INT_LV6 | INT_LV5 | INT_LV4 | INT_LV3 | INT_LV2 | INT_LV1
 #define  INT_MASK_LV1	INT_LV6 | INT_LV5 | INT_LV4 | INT_LV3 | INT_LV2
