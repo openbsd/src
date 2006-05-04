@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.15 2006/04/19 18:32:39 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.16 2006/05/04 19:41:06 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -120,17 +120,19 @@ NEW_BINUTILS?=	Yes
 .endif
 
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
-.if ${NEW_BINUTILS:L} == "yes"
 	(cd ${.CURDIR}/gnu/usr.bin/binutils; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
 	    TARGET_ARCH=${TARGET_ARCH} \
 	    ${MAKE} -f Makefile.bsd-wrapper depend && \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
 	    TARGET_ARCH=${TARGET_ARCH} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
 	    ${MAKE} -f Makefile.bsd-wrapper install)
-.else
+.if ${NEW_BINUTILS:L} != "yes"
 	(cd ${.CURDIR}/gnu/usr.bin/gas; \
 	    TARGET_MACHINE_ARCH=${TARGET_ARCH} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} depend all; \
