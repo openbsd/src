@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.14 2004/10/10 03:29:29 mickey Exp $	*/
+/*	$OpenBSD: paste.c,v 1.15 2006/05/04 05:55:33 ray Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,9 +40,10 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.14 2004/10/10 03:29:29 mickey Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.15 2006/05/04 05:55:33 ray Exp $";
 #endif /* not lint */
 
+#include <sys/queue.h>
 #include <sys/types.h>
 #include <err.h>
 #include <errno.h>
@@ -95,45 +96,40 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-typedef struct _list {
-	struct _list *next;
+struct list {
+	SIMPLEQ_ENTRY(list) entries;
 	FILE *fp;
 	int cnt;
 	char *name;
-} LIST;
+};
 
 void
 parallel(char **argv)
 {
-	LIST *lp;
+	SIMPLEQ_HEAD(, list) head = SIMPLEQ_HEAD_INITIALIZER(head);
+	struct list *lp;
 	int cnt;
 	char ch, *p;
-	LIST *head, *tmp;
 	int opencnt, output;
 	char *buf, *lbuf;
 	size_t len;
 
-	for (cnt = 0, head = NULL; (p = *argv); ++argv, ++cnt) {
-		if (!(lp = (LIST *)malloc((u_int)sizeof(LIST))))
+	for (cnt = 0; (p = *argv); ++argv, ++cnt) {
+		if (!(lp = malloc(sizeof(struct list))))
 			err(1, "malloc");
 
 		if (p[0] == '-' && !p[1])
 			lp->fp = stdin;
 		else if (!(lp->fp = fopen(p, "r")))
 			err(1, "%s", p);
-		lp->next = NULL;
 		lp->cnt = cnt;
 		lp->name = p;
-		if (!head)
-			head = tmp = lp;
-		else {
-			tmp->next = lp;
-			tmp = lp;
-		}
+		SIMPLEQ_INSERT_TAIL(&head, lp, entries);
 	}
 
 	for (opencnt = cnt; opencnt;) {
-		for (output = 0, lp = head; lp; lp = lp->next) {
+		output = 0;
+		SIMPLEQ_FOREACH(lp, &head, entries) {
 			lbuf = NULL;
 			if (!lp->fp) {
 				if (output && lp->cnt &&
