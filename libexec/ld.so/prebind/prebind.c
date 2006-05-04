@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.6 2006/05/03 22:20:55 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.7 2006/05/04 16:56:07 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1045,59 +1045,60 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
     struct elf_object *obj, struct elf_object *prog, int nsyms)
 {
 	int i;
+	int lib_prog_ref;
 	for (i = 0; i < nsyms; i++) {
-		if (scache[i].obj != NULL && 
-		    (scache[i].obj->dyn.null != prog->dyn.null ||
-		    obj->dyn.null == prog->dyn.null) &&
-		    scache[i].obj != prog->load_object) {
-			if (tcache[i].obj != NULL) {
-				if (scache[i].obj != tcache[i].obj) {
-					if (verbose > 2) {
-						printf("sym mismatch %d: "
-						   "obj %d: sym %ld %s "
-						   "nobj %s oobj %s\n",
-						    i, (int)scache[i].obj->dyn.null,
-						    scache[i].sym -
-						    scache[i].obj->dyn.symtab,
-						    scache[i].sym->st_name +
-						    scache[i].obj->dyn.strtab,
-						    scache[i].obj->load_name,
-						    tcache[i].obj->load_name);
-					}
+		if (scache[i].obj == NULL)
+			continue;
+
+		lib_prog_ref = (obj != prog && scache[i].obj == prog);
+
+		if (tcache[i].obj != NULL || lib_prog_ref) {
+			if (scache[i].obj != tcache[i].obj || lib_prog_ref) {
+				if (verbose > 2) {
+					printf("sym mismatch %d: "
+					   "obj %d: sym %ld %s "
+					   "nobj %s oobj %s\n",
+					    i, (int)scache[i].obj->dyn.null,
+					    scache[i].sym -
+					    scache[i].obj->dyn.symtab,
+					    scache[i].sym->st_name +
+					    scache[i].obj->dyn.strtab,
+					    scache[i].obj->load_name,
+					    tcache[i].obj->load_name);
+				}
 
 #if 0
-					if (tcache[i].obj != badobj)
-						printf("%s: %s conflict\n", 
-						    obj->load_name,
-						    scache[i].sym->st_name +
-						    scache[i].obj->dyn.strtab);
-#endif
-					tcache[i].obj = badobj;
-					tcache[i].sym = NULL;
-				}
-			} else {
-				if (scache[i].obj != prog) {
-#if 0
-					printf("%s: %s copying\n",
+				if (tcache[i].obj != badobj)
+					printf("%s: %s conflict\n", 
 					    obj->load_name,
 					    scache[i].sym->st_name +
 					    scache[i].obj->dyn.strtab);
 #endif
-					tcache[i].sym = scache[i].sym;
-					tcache[i].obj = scache[i].obj;
-				}
+				tcache[i].obj = badobj;
+				tcache[i].sym = NULL;
 			}
+		} else {
+			if (scache[i].obj != prog) {
+#if 0
+				printf("%s: %s copying\n",
+				    obj->load_name,
+				    scache[i].sym->st_name +
+				    scache[i].obj->dyn.strtab);
+#endif
+				tcache[i].sym = scache[i].sym;
+				tcache[i].obj = scache[i].obj;
+			}
+		}
 
 #if 0
-			printf("symidx %d: obj %d sym %ld %s\n",
-			    i, scache[i].obj->dyn.null,
-			    scache[i].sym -
-			    scache[i].obj->dyn.symtab,
-			    scache[i].sym->st_name +
-			    scache[i].obj->dyn.strtab
-			    );
+		printf("symidx %d: obj %d sym %ld %s\n",
+		    i, scache[i].obj->dyn.null,
+		    scache[i].sym -
+		    scache[i].obj->dyn.symtab,
+		    scache[i].sym->st_name +
+		    scache[i].obj->dyn.strtab
+		    );
 #endif
-		}
 	}
 }
 
