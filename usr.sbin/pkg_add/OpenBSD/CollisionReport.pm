@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.8 2006/02/06 21:55:58 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.9 2006/05/04 08:36:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -29,6 +29,7 @@ sub collision_report($$)
 	my %todo = map {($_->fullname(), $_->{md5})} @$list;
 	my $bypkg = {};
 	my $clueless_bat = 0;
+	my $clueless_bat2 = 0;
 	
 	print "Collision: the following files already exist\n";
 	for my $name (keys %todo) {
@@ -67,6 +68,9 @@ sub collision_report($$)
 	    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/) {
 	    	$clueless_bat = $pkg;
 	    }
+	    if ($pkg =~ m/^\.libs-*$/) {
+	    	$clueless_bat2 = $pkg;
+	    }
 	}
 	if (%todo) {
 		require OpenBSD::md5;
@@ -89,6 +93,12 @@ sub collision_report($$)
 		print "The package name $clueless_bat suggests that a former installation\n";
 		print "of a similar package got interrupted.  It is likely that\n";
 		print "\tpkg_delete $clueless_bat\n";
+		print "will solve the problem\n";
+	}
+	if ($clueless_bat2) {
+		print "The package name $clueless_bat2 suggests remaining libraries\n";
+		print "from a former package update.  It is likely that\n";
+		print "\tpkg_delete $clueless_bat2\n";
 		print "will solve the problem\n";
 	}
 }
