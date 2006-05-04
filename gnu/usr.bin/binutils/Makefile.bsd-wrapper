@@ -1,19 +1,19 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.64 2005/01/25 13:24:51 mickey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.65 2006/05/04 19:40:38 miod Exp $
 
 NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sparc sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .  if !empty(NEW_BINUTILS:M${_arch})
-USING_NEW_BINUTILS=yes
+USING_NEW_BINUTILS?=yes
 .else
-USING_NEW_BINUTILS=no
+USING_NEW_BINUTILS?=no
 .  endif
 .endfor
 
 SUBDIRS=
 CONF_SUBDIRS=
 
-.if ${USING_NEW_BINUTILS} == "yes"
+.if ${USING_NEW_BINUTILS:L} == "yes"
 CONF_SUBDIRS+=	opcodes bfd
 SUBDIRS+=	opcodes bfd
 INST_SUBDIRS+=	opcodes bfd
@@ -36,7 +36,7 @@ SUBDIRS+=	gdb
 INST_SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
 
-.if ${USING_NEW_BINUTILS} == "yes"
+.if ${USING_NEW_BINUTILS:L} == "yes"
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
@@ -76,7 +76,7 @@ all:	config.status
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
 	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
-.if ${USING_NEW_BINUTILS} != "yes"
+.if ${USING_NEW_BINUTILS:L} != "yes"
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 	    LDFLAGS=${LDSTATIC} objdump
@@ -101,7 +101,7 @@ do-config: .USE
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
-.if ${USING_NEW_BINUTILS} == "yes"
+.if ${USING_NEW_BINUTILS:L} == "yes"
 	# We need to generate as.1 and ld.1 immediately after config.status
 	# for the manpage machinery to work properly.
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
@@ -125,7 +125,7 @@ install: maninstall
 	    INSTALL_MODULES='${INSTALL_MODULES}' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
-.if ${USING_NEW_BINUTILS} != "yes"
+.if ${USING_NEW_BINUTILS:L} != "yes"
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
 		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
@@ -145,7 +145,7 @@ c++filt.1: binutils/cxxfilt.man
 	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/cxxfilt.man >$@
 
 includes:
-.if ${USING_NEW_BINUTILS} == "yes"
+.if ${USING_NEW_BINUTILS:L} == "yes"
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.CURDIR}/include/bfdlink.h ${DESTDIR}/usr/include
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
