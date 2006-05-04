@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.1 2006/05/03 16:10:51 drahn Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.2 2006/05/04 15:03:31 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -204,6 +204,9 @@ prebind_symcache(elf_object_t *object, int plt)
 		obj = obj->next;
 	}
 
+	if (cur_obj == -1)
+		return;	/* unable to find object ? */
+
 	if (objarray == NULL) {
 		if (i <= NUM_STATIC_OBJS) {
 			objarray = &objarray_static[0];
@@ -253,6 +256,9 @@ prebind_symcache(elf_object_t *object, int plt)
 			idx = s->obj_idx;
 		else
 			idx = idxtolib[s->obj_idx];
+
+		if (idx == -1) /* somehow  an invalid object ref happend */
+			continue;
 #if 0
 		DL_DEB(("%s:", object->load_name));
 		DL_DEB(("symidx %d: obj %d %d sym %d flags %x\n",
