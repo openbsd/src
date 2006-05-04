@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.10 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: dh.c,v 1.11 2006/05/04 14:37:51 djm Exp $	 */
 /* $EOM: dh.c,v 1.5 1999/04/17 23:20:22 niklas Exp $	 */
 
 /*
@@ -59,6 +59,8 @@ dh_create_exchange(struct group *group, u_int8_t *buf)
 		return -1;
 	if (group->operation(group, group->a, group->gen, group->c))
 		return -1;
+	if (group->validate_public(group, group->a))
+		return -1;
 	group->getraw(group, group->a, buf);
 	return 0;
 }
@@ -74,6 +76,8 @@ dh_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 	if (group->setraw(group, group->b, exchange, group->getlen(group)))
 		return -1;
 	if (group->operation(group, group->a, group->b, group->c))
+		return -1;
+	if (group->validate_public(group, group->a))
 		return -1;
 	group->getraw(group, group->a, secret);
 	return 0;

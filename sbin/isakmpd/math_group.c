@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.27 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: math_group.c,v 1.28 2006/05/04 14:37:51 djm Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -47,12 +47,14 @@ void	modp_getraw(struct group *, math_mp_t, u_int8_t *);
 int	modp_setraw(struct group *, math_mp_t, u_int8_t *, int);
 int	modp_setrandom(struct group *, math_mp_t);
 int	modp_operation(struct group *, math_mp_t, math_mp_t, math_mp_t);
+int	modp_validate_public(struct group *, math_mp_t);
 
 int	ec2n_getlen(struct group *);
 void	ec2n_getraw(struct group *, ec2np_ptr, u_int8_t *);
 int	ec2n_setraw(struct group *, ec2np_ptr, u_int8_t *, int);
 int	ec2n_setrandom(struct group *, ec2np_ptr);
 int	ec2n_operation(struct group *, ec2np_ptr, ec2np_ptr, ec2np_ptr);
+int	ec2n_validate_public(struct group *, ec2np_ptr);
 
 struct ec2n_group {
 	ec2np_t         gen;	/* Generator */
@@ -298,7 +300,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	{
 		MODP, OAKLEY_GRP_2, 0, &oakley_modp[1], 0, 0, 0, 0, 0,
@@ -306,7 +309,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	{
 		EC2N, OAKLEY_GRP_3, 0, &oakley_ec2n[0], 0, 0, 0, 0, 0,
@@ -314,7 +318,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) ec2n_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) ec2n_setraw,
 		(int (*) (struct group *, void *)) ec2n_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) ec2n_operation
+		(int (*) (struct group *, void *, void *, void *)) ec2n_operation,
+		(int (*) (struct group *, void *)) ec2n_validate_public
 	},
 	{
 		EC2N, OAKLEY_GRP_4, 0, &oakley_ec2n[1], 0, 0, 0, 0, 0,
@@ -322,7 +327,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) ec2n_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) ec2n_setraw,
 		(int (*) (struct group *, void *)) ec2n_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) ec2n_operation
+		(int (*) (struct group *, void *, void *, void *)) ec2n_operation,
+		(int (*) (struct group *, void *)) ec2n_validate_public
 	},
 	{
 		MODP, OAKLEY_GRP_5, 0, &oakley_modp[2], 0, 0, 0, 0, 0,
@@ -330,7 +336,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	/* XXX Higher EC2N group go here... */
 	/* XXX group 6 to 13 are not yet defined (draft-ike-ecc) */
@@ -372,7 +379,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	{
 		MODP, OAKLEY_GRP_15, 0, &oakley_modp[4], 0, 0, 0, 0, 0,
@@ -380,7 +388,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	{
 		MODP, OAKLEY_GRP_16, 0, &oakley_modp[5], 0, 0, 0, 0, 0,
@@ -388,7 +397,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	{
 		MODP, OAKLEY_GRP_17, 0, &oakley_modp[6], 0, 0, 0, 0, 0,
@@ -396,7 +406,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 	{
 		MODP, OAKLEY_GRP_18, 0, &oakley_modp[7], 0, 0, 0, 0, 0,
@@ -404,7 +415,8 @@ struct group    groups[] = {
 		(void (*) (struct group *, void *, u_int8_t *)) modp_getraw,
 		(int (*) (struct group *, void *, u_int8_t *, int)) modp_setraw,
 		(int (*) (struct group *, void *)) modp_setrandom,
-		(int (*) (struct group *, void *, void *, void *)) modp_operation
+		(int (*) (struct group *, void *, void *, void *)) modp_operation,
+		(int (*) (struct group *, void *)) modp_validate_public
 	},
 };
 
@@ -697,16 +709,11 @@ modp_getraw(struct group *grp, math_mp_t v, u_int8_t *d)
 }
 
 int
-modp_setraw(struct group *grp, math_mp_t d, u_int8_t *s, int l)
+modp_setraw(struct group *group, math_mp_t d, u_int8_t *s, int l)
 {
-        u_int32_t       i;
+	if (BN_bin2bn(s, l, d) == NULL)
+		return (-1);
 
-	/* XXX bin2bn?  */
-	BN_set_word(d, 0);
-	for (i = 0; i < l; i++) {
-		BN_mul_word(d, 256);
-		BN_add_word(d, s[i]);
-	}
 	return 0;
 }
 
@@ -738,6 +745,44 @@ modp_operation(struct group *group, math_mp_t d, math_mp_t a, math_mp_t e)
 	BN_mod_exp(d, a, e, grp->p, ctx);
 	BN_CTX_free(ctx);
 	return 0;
+}
+
+int
+modp_validate_public(struct group *group, math_mp_t pub_exp)
+{
+	struct modp_group *grp = (struct modp_group *)group->group;
+	int i, len, bits_set;
+	math_mp_t tmp;
+
+	/*
+	 * Sanity checks from RFC2142 section 2.3.1.1:
+	 * Ensure that peer does not send us <0, 0, 1, p-1 or >= p
+	 */
+	if (BN_cmp(pub_exp, BN_value_one()) != 1)	/* pub_exp <= 1 */
+		return (-1);
+	if ((tmp = BN_new()) == NULL)
+		return (-1);
+	if (!BN_sub(tmp, grp->p, BN_value_one()) ||
+	    BN_cmp(pub_exp, tmp) != -1) {		/* pub_exp > p-2 */
+		BN_clear_free(tmp);
+		return (-1);
+	}
+	BN_clear_free(tmp);
+
+	/*
+	 * Another sanity check: when the generator is 2 and the
+	 * population count of the public exponent is 1, then 
+	 * computing log_g(pub_exp) is trivial.
+	 */
+	len = BN_num_bits(pub_exp);
+	for (bits_set = i = 0; i < len; i++) {
+		if (BN_is_bit_set(pub_exp, i))
+			bits_set++;
+	}
+	if (bits_set <= 1)
+		return (-1);
+
+	return (0);
 }
 
 int
@@ -823,4 +868,11 @@ ec2n_operation(struct group *grp, ec2np_ptr d, ec2np_ptr a, ec2np_ptr e)
 			return -1;
 
 	return ec2np_mul(d, a, ex, group->grp);
+}
+
+int
+ec2n_validate_public(struct group *grp, ec2np_ptr p)
+{
+	/* XXX: needs similar checks to modp_validate_public() */
+	return (0);
 }
