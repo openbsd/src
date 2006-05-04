@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.7 2006/05/04 16:56:07 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.8 2006/05/04 20:58:58 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -68,6 +68,11 @@ char *shstrtab;
 /* powerpc uses  RELOC_JMP_SLOT */
 /* sparc uses  RELOC_JMP_SLOT */
 /* sparc64 uses  RELOC_JMP_SLOT */
+#if defined(__sparc__) && !defined(__sparc64__)
+/* ARGH, our sparc/include/reloc.h is wrong (for the moment) */
+#undef RELOC_JMP_SLOT
+#define RELOC_JMP_SLOT 21
+#endif
 
 #include "prebind_struct.h"
 struct proglist *curbin;
@@ -790,14 +795,12 @@ elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
 
 	hint = elf_find_shlib(req_sod, libpath, ignore_hints);
 	if (hint != NULL) {
-#if 1
 		if (req_sod->sod_minor < sod->sod_minor)
 			printf("warning: lib%s.so.%d.%d: "
 			    "minor version >= %d expected, "
 			    "using it anyway\n",
 			    (char *)sod->sod_name, sod->sod_major,
 			    req_sod->sod_minor, sod->sod_minor);
-#endif
 		object = elf_tryload_shlib(hint);
 	}
 	return object;
@@ -1278,10 +1281,10 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 	}
 	if (found == 1) {
 #if 0
-		printf("object %s sym %s, ref_object %s %s\n", 
+		printf("object %s sym %s, ref_object %s %s %d %d\n", 
 		    object->load_name, name,
 		    ref_object->load_name,
-		    (flags & SYM_PLT) ? "plt" : "got");
+		    (flags & SYM_PLT) ? "plt" : "got", type, RELOC_JMP_SLOT);
 
 #endif
 		idx = ELF_R_SYM(rela->r_info);
@@ -1360,7 +1363,7 @@ elf_reloc(struct elf_object *object, struct symcache_noflag *symcache,
 	Elf_Rel *rel;
 	Elf_RelA *rela;
         numrel = object->dyn.relsz / sizeof(Elf_Rel);
-#if 0
+#ifdef DEBUG1
 	printf("rel relocations: %d\n", numrel);
 #endif
 	rel = object->dyn.rel;
@@ -1387,6 +1390,9 @@ elf_reloc(struct elf_object *object, struct symcache_noflag *symcache,
 	if (numrel) {
 		numrel = object->dyn.pltrelsz / sizeof(Elf_Rel);
 		rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
+#ifdef DEBUG1
+		printf("rel plt relocations: %d\n", numrel);
+#endif
 		for (i = 0; i < numrel; i++) {
 			const char *s;
 			sym = object->dyn.symtab + ELF_R_SYM(rel[i].r_info);
@@ -1410,7 +1416,7 @@ elf_reloc(struct elf_object *object, struct symcache_noflag *symcache,
 	}
 
 	numrela = object->dyn.relasz / sizeof(Elf_RelA);
-#if 0
+#ifdef DEBUG1
 	printf("rela relocations: %d\n", numrela);
 #endif
 	rela = object->dyn.rela;
@@ -1436,6 +1442,9 @@ elf_reloc(struct elf_object *object, struct symcache_noflag *symcache,
 	}
 	if (numrela) {
 		numrela = object->dyn.pltrelsz / sizeof(Elf_RelA);
+#ifdef DEBUG1
+		printf("rela plt relocations: %d\n", numrela);
+#endif
 		rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 
 		for (i = 0; i < numrela; i++) {
