@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: ieee.h,v 1.2 2006/05/04 19:28:43 miod Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,9 +38,6 @@
  *
  *	@(#)ieee.h	8.1 (Berkeley) 6/11/93
  */
-/*
- * Stolen from sparc port
- */
 
 /*
  * ieee.h defines the machine-dependent layout of the machine's IEEE
@@ -76,21 +73,14 @@
  *
  * -149 == -127 - 23 + 1.
  */
-#ifndef __MACHINE_IEEE_H__
-#define __MACHINE_IEEE_H__
 #define	SNG_EXPBITS	8
 #define	SNG_FRACBITS	23
 
 #define	DBL_EXPBITS	11
 #define	DBL_FRACBITS	52
 
-#ifdef notyet
-#define	E80_EXPBITS	15
-#define	E80_FRACBITS	64
-#endif
-
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
+#define	EXT_FRACBITS	64
 
 struct ieee_single {
 	u_int	sng_sign:1;
@@ -108,9 +98,8 @@ struct ieee_double {
 struct ieee_ext {
 	u_int	ext_sign:1;
 	u_int	ext_exp:15;
-	u_int	ext_frach:16;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
+	u_int	ext_lead:1;
+	u_int	ext_frach:31;
 	u_int	ext_fracl;
 };
 
@@ -130,7 +119,7 @@ struct ieee_ext {
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
-#define	EXT_QUIETNAN	(1 << 15)
+#define	EXT_QUIETNAN	(1 << 30)
 #endif
 
 /*
@@ -139,4 +128,3 @@ struct ieee_ext {
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
 #define	EXT_EXP_BIAS	16383
-#endif /* __MACHINE_IEEE_H__ */
