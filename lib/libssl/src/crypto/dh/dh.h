@@ -130,6 +130,10 @@ struct dh_st
 #define DH_UNABLE_TO_CHECK_GENERATOR	0x04
 #define DH_NOT_SUITABLE_GENERATOR	0x08
 
+/* DH_check_pub_key error codes */
+#define DH_CHECK_PUBKEY_TOO_SMALL	0x01
+#define DH_CHECK_PUBKEY_TOO_LARGE	0x02
+
 /* primes p where (p-1)/2 is prime too are called "safe"; we define
    this for backward compatibility: */
 #define DH_CHECK_P_NOT_STRONG_PRIME	DH_CHECK_P_NOT_SAFE_PRIME
@@ -168,6 +172,7 @@ void *DH_get_ex_data(DH *d, int idx);
 DH *	DH_generate_parameters(int prime_len,int generator,
 		void (*callback)(int,int,void *),void *cb_arg);
 int	DH_check(const DH *dh,int *codes);
+int	DH_check_pub_key(const DH *dh,const BIGNUM *pub_key, int *codes);
 int	DH_generate_key(DH *dh);
 int	DH_compute_key(unsigned char *key,const BIGNUM *pub_key,DH *dh);
 DH *	d2i_DHparams(DH **a,const unsigned char **pp, long length);
@@ -200,6 +205,7 @@ void ERR_load_DH_strings(void);
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101
 #define DH_R_NO_PRIVATE_VALUE				 100
+#define DH_R_INVALID_PUBKEY				 102
 
 #ifdef  __cplusplus
 }
