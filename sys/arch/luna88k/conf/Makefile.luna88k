@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.6 2005/09/26 13:56:15 aoyama Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.7 2006/05/04 19:24:11 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -181,8 +181,6 @@ assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o machdep.o: Makefile
-process.o locore_asm_routines.o eh.o: assym.h
-m88100_fp.o : assym.h
 
 locore.o: ${LUNA88K}/luna88k/locore.S assym.h
 	${NORMAL_S}
