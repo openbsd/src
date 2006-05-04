@@ -20,7 +20,7 @@
 named \- Internet domain name server
 .SH SYNOPSIS
 .sp
-\fBnamed\fR [ \fB-4\fR ]  [ \fB-6\fR ]  [ \fB-c \fIconfig-file\fB\fR ]  [ \fB-d \fIdebug-level\fB\fR ]  [ \fB-f\fR ]  [ \fB-g\fR ]  [ \fB-n \fI#cpus\fB\fR ]  [ \fB-p \fIport\fB\fR ]  [ \fB-s\fR ]  [ \fB-t \fIdirectory\fB\fR ]  [ \fB-u \fIuser\fB\fR ]  [ \fB-v\fR ]  [ \fB-x \fIcache-file\fB\fR ] 
+\fBnamed\fR [ \fB-4\fR ]  [ \fB-6\fR ]  [ \fB-c \fIconfig-file\fB\fR ]  [ \fB-d \fIdebug-level\fB\fR ]  [ \fB-f\fR ]  [ \fB-g\fR ]  [ \fB-i \fIpid_file\fB\fR ] [ \fB-n \fI#cpus\fB\fR ]  [ \fB-p \fIport\fB\fR ]  [ \fB-s\fR ]  [ \fB-t \fIdirectory\fB\fR ]  [ \fB-u \fIuser\fB\fR ]  [ \fB-v\fR ]  [ \fB-x \fIcache-file\fB\fR ]
 .SH "DESCRIPTION"
 .PP
 \fBnamed\fR is a Domain Name System (DNS) server,
@@ -28,7 +28,7 @@ part of the BIND 9 distribution from ISC. For more
 information on the DNS, see RFCs 1033, 1034, and 1035.
 .PP
 When invoked without arguments, \fBnamed\fR will
-fork into two processes for privilege separation. 
+fork into two processes for privilege separation.
 \fBchroot()\fR to \fI/var/named\fR,
 read the default configuration file
 \fI/var/named/etc/named.conf\fR, read any initial
@@ -69,6 +69,10 @@ Run the server in the foreground (i.e. do not daemonize).
 \fB-g\fR
 Run the server in the foreground and force all logging
 to \fIstderr\fR.
+.TP
+\fB-i \fIpid_file\fB\fR
+Specifies the file that contains the process ID of \fBnamed\fR.
+The default is \fI/var/run/named.pid\fR.
 .TP
 \fB-n \fI#cpus\fB\fR
 Create \fI#cpus\fR worker threads
