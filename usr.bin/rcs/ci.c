@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.167 2006/04/29 06:32:00 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.168 2006/05/04 07:06:58 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -329,7 +329,7 @@ checkin_main(int argc, char **argv)
 static char *
 checkin_diff_file(struct checkin_params *pb)
 {
-	char path1[MAXPATHLEN], path2[MAXPATHLEN];
+	char *path1, *path2;
 	BUF *b1, *b2, *b3;
 	char rbuf[64], *deltatext;
 
@@ -352,17 +352,13 @@ checkin_diff_file(struct checkin_params *pb)
 		goto out;
 	}
 
-	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
-	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
-		errx(1, "path truncated");
+	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(b1, path1, 0600);
 
 	rcs_buf_free(b1);
 	b1 = NULL;
 
-	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
-	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
-		errx(1, "path truncated");
+	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(b2, path2, 0600);
 
 	rcs_buf_free(b2);
@@ -382,6 +378,10 @@ out:
 		rcs_buf_free(b2);
 	if (b3 != NULL)
 		rcs_buf_free(b3);
+	if (path1 != NULL)
+		xfree(path1);
+	if (path2 != NULL)
+		xfree(path2);
 
 	return (deltatext);
 }

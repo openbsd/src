@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.6 2006/05/01 18:17:39 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.7 2006/05/04 07:06:58 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -358,7 +358,7 @@ int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], fn[20] = "";
+	char buf[1024], numbuf[64], *fn;
 	void *bp;
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
@@ -367,9 +367,10 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_lock *lkp;
 	ssize_t nread, nwritten;
 	size_t len;
-	int fd, from_fd, to_fd;
+	int fd, from_fd, to_fd, ret;
 
 	from_fd = to_fd = fd = -1;
+	ret = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return (0);
@@ -377,8 +378,8 @@ rcs_write(RCSFILE *rfp)
 	/* Write operations need the whole file parsed */
 	rcs_parse_deltatexts(rfp, NULL);
 
-	if (strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn)) >= sizeof(fn))
-		errx(1, "rcs_write: string truncated");
+	(void)xasprintf(&fn, "%s/rcs.XXXXXXXXXX", rcs_tmpdir);
+
 	if ((fd = mkstemp(fn)) == -1)
 		err(1, "%s", fn);
 
@@ -514,16 +515,14 @@ rcs_write(RCSFILE *rfp)
 			}
 
 			if ((from_fd = open(fn, O_RDONLY)) == -1) {
-				warn("failed to open `%s'",
-				    rfp->rf_path);
-				return (-1);
+				warn("failed to open `%s'", rfp->rf_path);
+				goto out;
 			}
 
 			if ((to_fd = open(rfp->rf_path,
 			    O_WRONLY|O_TRUNC|O_CREAT)) == -1) {
 				warn("failed to open `%s'", fn);
-				close(from_fd);
-				return (-1);
+				goto out;
 			}
 
 			bp = xmalloc(MAXBSIZE);
@@ -541,34 +540,37 @@ rcs_write(RCSFILE *rfp)
 err:				if (unlink(rfp->rf_path) == -1)
 					warn("failed to unlink `%s'",
 					    rfp->rf_path);
-				close(from_fd);
-				close(to_fd);
 				xfree(bp);
-				return (-1);
+				goto out;
 			}
-
-			close(from_fd);
-			close(to_fd);
 			xfree(bp);
 
 			if (unlink(fn) == -1) {
 				warn("failed to unlink `%s'", fn);
-				return (-1);
+				goto out;
 			}
 		} else {
 			warn("failed to access temp RCS output file");
-			return (-1);
+			goto out;
 		}
 	}
 
 	if (chmod(rfp->rf_path, rfp->rf_mode) == -1) {
 		warn("failed to chmod `%s'", rfp->rf_path);
-		return (-1);
+		goto out;
 	}
 
 	rfp->rf_flags |= RCS_SYNCED;
 
-	return (0);
+	ret = 0;
+out:
+	(void)close(from_fd);
+	(void)close(to_fd);
+
+	if (fn != NULL)
+		xfree(fn);
+
+	return (ret);
 }
 
 /*
@@ -1341,13 +1343,9 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 int
 rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
-	size_t len;
-	char *tmpdir;
-	char *newdeltatext, path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
+	char *newdeltatext, *path_tmp1, *path_tmp2;
 	struct rcs_delta *rdp, *prevrdp, *nextrdp;
 	BUF *nextbuf, *prevbuf, *newdiff;
-
-	tmpdir = rcs_tmpdir;
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
@@ -1383,27 +1381,11 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		newdiff = rcs_buf_alloc(64, BUF_AUTOEXT);
 
 		/* calculate new diff */
-		len = strlcpy(path_tmp1, tmpdir, sizeof(path_tmp1));
-		if (len >= sizeof(path_tmp1))
-			errx(1, "path truncation in rcs_rev_remove");
-
-		len = strlcat(path_tmp1, "/diff1.XXXXXXXXXX",
-		    sizeof(path_tmp1));
-		if (len >= sizeof(path_tmp1))
-			errx(1, "path truncation in rcs_rev_remove");
-
+		(void)xasprintf(&path_tmp1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 		rcs_buf_write_stmp(nextbuf, path_tmp1, 0600);
 		rcs_buf_free(nextbuf);
 
-		len = strlcpy(path_tmp2, tmpdir, sizeof(path_tmp2));
-		if (len >= sizeof(path_tmp2))
-			errx(1, "path truncation in rcs_rev_remove");
-
-		len = strlcat(path_tmp2, "/diff2.XXXXXXXXXX",
-		    sizeof(path_tmp2));
-		if (len >= sizeof(path_tmp2))
-			errx(1, "path truncation in rcs_rev_remove");
-
+		(void)xasprintf(&path_tmp2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 		rcs_buf_write_stmp(prevbuf, path_tmp2, 0600);
 		rcs_buf_free(prevbuf);
 
@@ -1443,6 +1425,11 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 
 	if (newdeltatext != NULL)
 		xfree(newdeltatext);
+
+	if (path_tmp1 != NULL)
+		xfree(path_tmp1);
+	if (path_tmp2 != NULL)
+		xfree(path_tmp2);
 
 	return (0);
 }

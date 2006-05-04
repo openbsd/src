@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.4 2006/05/03 07:10:39 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.5 2006/05/04 07:06:58 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.4 2006/05/03 07:10:39 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.5 2006/05/04 07:06:58 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -159,8 +159,7 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	int argc;
 	char *data, *patch;
 	char *argv[5], r1[16], r2[16];
-	char path1[MAXPATHLEN], path2[MAXPATHLEN], path3[MAXPATHLEN];
-	char dp13[MAXPATHLEN], dp23[MAXPATHLEN];
+	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
@@ -185,17 +184,9 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	d2 = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	diffb = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
 
-	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
-	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
-		errx(1, "rcs_diff3: string truncated");
-
-	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
-	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
-		errx(1, "rcs_diff3: string truncated");
-
-	if (strlcpy(path3, rcs_tmpdir, sizeof(path3)) >= sizeof(path3) ||
-	    strlcat(path3, "/diff3.XXXXXXXXXX", sizeof(path3)) >= sizeof(path3))
-		errx(1, "rcs_diff3: string truncated");
+	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
+	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
+	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", rcs_tmpdir);
 
 	rcs_buf_write_stmp(b1, path1, 0600);
 	rcs_buf_write_stmp(b2, path2, 0600);
@@ -207,19 +198,13 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	rcs_diffreg(path1, path3, d1);
 	rcs_diffreg(path2, path3, d2);
 
-	if (strlcpy(dp13, rcs_tmpdir, sizeof(dp13)) >= sizeof(dp13) ||
-	    strlcat(dp13, "/d13.XXXXXXXXXX" , sizeof(dp13)) >= sizeof(dp13))
-		errx(1, "rcs_diff3: string truncated");
-
+	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(d1, dp13, 0600);
 
 	rcs_buf_free(d1);
 	d1 = NULL;
 
-	if (strlcpy(dp23, rcs_tmpdir, sizeof(dp23)) >= sizeof(dp23) ||
-	    strlcat(dp23, "/d23.XXXXXXXXXX", sizeof(dp23)) >= sizeof(dp23))
-		errx(1, "rcs_diff3: string truncated");
-
+	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(d2, dp23, 0600);
 
 	rcs_buf_free(d2);
@@ -276,6 +261,17 @@ out:
 	(void)unlink(path3);
 	(void)unlink(dp13);
 	(void)unlink(dp23);
+
+	if (path1 != NULL)
+		xfree(path1);
+	if (path2 != NULL)
+		xfree(path2);
+	if (path3 != NULL)
+		xfree(path3);
+	if (dp13 != NULL)
+		xfree(dp13);
+	if (dp23 != NULL)
+		xfree(dp23);
 
 	return (diffb);
 }

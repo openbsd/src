@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.59 2006/04/29 05:31:28 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.60 2006/05/04 07:06:58 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -185,7 +185,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	int ret, fd;
 	time_t t;
 	struct stat st;
-	char path1[MAXPATHLEN], path2[MAXPATHLEN];
+	char *path1, *path2;
 	BUF *b1, *b2;
 	char rbuf[64];
 	struct tm *tb;
@@ -235,9 +235,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	tv2[0].tv_sec = t;
 	tv2[1].tv_sec = t;
 
-	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
-	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
-		errx(1, "path too long");
+	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(b1, path1, 0600);
 
 	rcs_buf_free(b1);
@@ -246,9 +244,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		warn("utimes");
 
-	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
-	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
-		errx(1, "path too long");
+	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(b2, path2, 0600);
 
 	rcs_buf_free(b2);
@@ -267,6 +263,10 @@ out:
 		rcs_buf_free(b1);
 	if (b2 != NULL)
 		rcs_buf_free(b2);
+	if (path1 != NULL)
+		xfree(path1);
+	if (path2 != NULL)
+		xfree(path2);
 
 	return (ret);
 }
@@ -275,7 +275,7 @@ static int
 rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 {
 	int ret;
-	char path1[MAXPATHLEN], path2[MAXPATHLEN];
+	char *path1, *path2;
 	BUF *b1, *b2;
 	char rbuf1[64], rbuf2[64];
 	struct timeval tv[2], tv2[2];
@@ -317,9 +317,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	if (!(flags & QUIET))
 		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
-	if (strlcpy(path1, rcs_tmpdir, sizeof(path1)) >= sizeof(path1) ||
-	    strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1)) >= sizeof(path1))
-		errx(1, "path too long");
+	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(b1, path1, 0600);
 
 	rcs_buf_free(b1);
@@ -328,9 +326,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		warn("utimes");
 
-	if (strlcpy(path2, rcs_tmpdir, sizeof(path2)) >= sizeof(path2) ||
-	    strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2)) >= sizeof(path2))
-		errx(1, "path too long");
+	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(b2, path2, 0600);
 
 	rcs_buf_free(b2);
@@ -347,6 +343,10 @@ out:
 		rcs_buf_free(b1);
 	if (b2 != NULL)
 		rcs_buf_free(b2);
+	if (path1 != NULL)
+		xfree(path1);
+	if (path2 != NULL)
+		xfree(path2);
 
 	return (ret);
 }
