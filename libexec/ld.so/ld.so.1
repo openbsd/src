@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.9 2006/05/03 16:10:51 drahn Exp $
+.\"	$OpenBSD: ld.so.1,v 1.10 2006/05/04 01:55:00 drahn Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -186,9 +186,8 @@ does.
 When set, ignore any prebind data associated with the program or libraries.
 .Pp
 .It Ev LD_PREBINDVALIDATE=
-When set, perform symbol relocation without of the given binary
-and the associated libraries, compare the results against the prebind
-values, then exit.
+When set, perform symbol relocation of the given binary and the associated
+libraries, compare the results against the prebind values, then exit.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact
