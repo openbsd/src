@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2006/05/03 18:14:52 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2006/05/04 19:32:21 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -138,38 +138,38 @@ static const char sodname[4] = "sdx?";
 
 static const char *m88100_ctrlreg[2][64] = {
 	{	/* main unit */
-		"cr0 #PID",
-		"cr1 #PSR",
-		"cr2 #EPSR",
-		"cr3 #SSBR",
-		"cr4 #SXIP",
-		"cr5 #SNIP",
-		"cr6 #SFIP",
-		"cr7 #VBR",
-		"cr8 #DMT0",
-		"cr9 #DMD0",
-		"cr10 #DMA0",
-		"cr11 #DMT1",
-		"cr12 #DMD1",
-		"cr13 #DMA1",
-		"cr14 #DMT2",
-		"cr15 #DMD2",
-		"cr16 #DMA2",
-		"cr17 #SR0",
-		"cr18 #SR1",
-		"cr19 #SR2",
-		"cr20 #SR3",
+		"PID",
+		"PSR",
+		"EPSR",
+		"SSBR",
+		"SXIP",
+		"SNIP",
+		"SFIP",
+		"VBR",
+		"DMT0",
+		"DMD0",
+		"DMA0",
+		"DMT1",
+		"DMD1",
+		"DMA1",
+		"DMT2",
+		"DMD2",
+		"DMA2",
+		"SR0",
+		"SR1",
+		"SR2",
+		"SR3",
 	},
 	{	/* SFU1 = FPU */
-		"fcr0 #FPECR",
-		"fcr1 #FPHS1",
-		"fcr2 #FPLS1",
-		"fcr3 #FPHS2",
-		"fcr4 #FPLS2",
-		"fcr5 #FPPT",
-		"fcr6 #FPRH",
-		"fcr7 #FPRL",
-		"fcr8 #FPIT",
+		"FPECR",
+		"FPHS1",
+		"FPLS1",
+		"FPHS2",
+		"FPLS2",
+		"FPPT",
+		"FPRH",
+		"FPRL",
+		"FPIT",
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
@@ -182,68 +182,68 @@ static const char *m88100_ctrlreg[2][64] = {
 		NULL, NULL, NULL, NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		NULL,
-		"fcr62 #FPSR",
-		"fcr63 #FPCR"
+		"FPSR",
+		"FPCR"
 	}
 };
 
 static const char *m88110_ctrlreg[2][64] = {
 	{	/* main unit */
-		"cr0 #PID",
-		"cr1 #PSR",
-		"cr2 #EPSR",
+		"PID",
+		"PSR",
+		"EPSR",
 		NULL,
-		"cr4 #EXIP",
-		"cr5 #ENIP",
+		"EXIP",
+		"ENIP",
 		NULL,
-		"cr7 #VBR",
-		NULL,
-		NULL,
+		"VBR",
 		NULL,
 		NULL,
 		NULL,
 		NULL,
-		"cr14 #RES1",
-		"cr15 #RES2",
-		"cr16 #SRX",
-		"cr17 #SR0",
-		"cr18 #SR1",
-		"cr19 #SR2",
-		"cr20 #SR3",
+		NULL,
+		NULL,
+		"RES1",
+		"RES2",
+		"SRX",
+		"SR0",
+		"SR1",
+		"SR2",
+		"SR3",
 		NULL,
 		NULL,
 		NULL,
 		NULL,
-		"cr25 #ICMD",
-		"cr26 #ICTL",
-		"cr27 #ISAR",
-		"cr28 #ISAP",
-		"cr29 #IUAP",
-		"cr30 #IIR",
-		"cr31 #IBP",
-		"cr32 #IPPU",
-		"cr33 #IPPL",
-		"cr34 #ISR",
-		"cr35 #ILAR",
-		"cr36 #IPAR",
+		"ICMD",
+		"ICTL",
+		"ISAR",
+		"ISAP",
+		"IUAP",
+		"IIR",
+		"IBP",
+		"IPPU",
+		"IPPL",
+		"ISR",
+		"ILAR",
+		"IPAR",
 		NULL,
 		NULL,
 		NULL,
-		"cr40 #DCMD",
-		"cr41 #DCTL",
-		"cr42 #DSAR",
-		"cr43 #DSAP",
-		"cr44 #DUAP",
-		"cr45 #DIR",
-		"cr46 #DBP",
-		"cr47 #DPPU",
-		"cr48 #DPPL",
-		"cr49 #DSR",
-		"cr50 #DLAR",
-		"cr51 #DPAR",
+		"DCMD",
+		"DCTL",
+		"DSAR",
+		"DSAP",
+		"DUAP",
+		"DIR",
+		"DBP",
+		"DPPU",
+		"DPPL",
+		"DSR",
+		"DLAR",
+		"DPAR",
 	},
 	{	/* SFU1 = FPU */
-		"fcr0 #FPECR",
+		"FPECR",
 		NULL, NULL, NULL, NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
@@ -257,12 +257,12 @@ static const char *m88110_ctrlreg[2][64] = {
 		NULL, NULL, NULL, NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		NULL,
-		"fcr62 #FPSR",
-		"fcr63 #FPCR"
+		"FPSR",
+		"FPCR"
 	}
 };
 
-/* print a comparison code */
+/* print a comparison code */		/* XXX favors cmp vs fcmp or pcmp */
 void
 printcmp(int cpu, u_int code)
 {
@@ -294,7 +294,7 @@ printcond(u_int match)
 const char *
 cregname(int cpu, u_int sfu, u_int regno)
 {
-	static char unnamed[20];
+	static char regbuf[20];
 	const char *regname;
 
 	switch (sfu) {
@@ -302,20 +302,20 @@ cregname(int cpu, u_int sfu, u_int regno)
 	case 1:	/* SFU1 = FPU */
 		regname = cpu != CPU_88100 ?
 		    m88110_ctrlreg[sfu][regno] : m88100_ctrlreg[sfu][regno];
-		if (regname == NULL) {
-			snprintf(unnamed, sizeof unnamed,
+		if (regname == NULL)
+			snprintf(regbuf, sizeof regbuf,
 			    sfu == 0 ? "cr%d" : "fcr%d", regno);
-			regname = unnamed;
-		}
+		else
+			snprintf(regbuf, sizeof regbuf,
+			    sfu == 0 ? "cr%d (%s)" : "fcr%d (%s)",
+			    regno, regname);
 		break;
 	default:	/* can't happen */
-		snprintf(unnamed, sizeof unnamed,
-		    "sfu%dcr%d", sfu, regno);
-		regname = unnamed;
+		snprintf(regbuf, sizeof regbuf, "sfu%dcr%d", sfu, regno);
 		break;
 	}
 
-	return (regname);
+	return (regbuf);
 }
 
 void
