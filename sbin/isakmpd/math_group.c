@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.29 2006/05/05 00:19:21 djm Exp $	 */
+/* $OpenBSD: math_group.c,v 1.30 2006/05/05 09:29:35 djm Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -755,7 +755,7 @@ modp_validate_public(struct group *group, math_mp_t pub_exp)
 	math_mp_t tmp;
 
 	/*
-	 * Sanity checks from RFC2409 section 2.3.1.1:
+	 * Sanity checks from RFC2412 section 2.3.1.1:
 	 * Ensure that peer does not send us <0, 0, 1, p-1 or >= p
 	 */
 	if (BN_cmp(pub_exp, BN_value_one()) != 1)	/* pub_exp <= 1 */
