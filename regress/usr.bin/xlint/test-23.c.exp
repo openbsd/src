@@ -1,0 +1,17 @@
+test-23.c:52: warning: possible pointer alignment problem
+test-23.c:52: warning: pointer casts may be troublesome
+test-23.c:53: warning: possible pointer alignment problem
+test-23.c:53: warning: pointer casts may be troublesome
+test-23.c:54: warning: possible pointer alignment problem
+test-23.c:54: warning: pointer casts may be troublesome
+test-23.c:56: warning: pointer casts may be troublesome
+test-23.c:59: warning: possible pointer alignment problem
+test-23.c:59: warning: pointer casts may be troublesome
+test-23.c:60: warning: possible pointer alignment problem
+test-23.c:60: warning: pointer casts may be troublesome
+test-23.c:61: warning: possible pointer alignment problem
+test-23.c:61: warning: pointer casts may be troublesome
+test-23.c:62: warning: possible pointer alignment problem
+test-23.c:62: warning: pointer casts may be troublesome
+Lint pass2:
+test-23.c:14: f defined, but never used
