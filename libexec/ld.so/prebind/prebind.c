@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.9 2006/05/05 05:20:47 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.10 2006/05/05 13:52:41 jmc Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -405,7 +405,7 @@ void __dead
 usage()
 {
 	extern char *__progname;
-	printf("%s [-v] {programlist}\n", __progname);
+	printf("%s [-mv] {programlist}\n", __progname);
 	exit(1);
 }
 

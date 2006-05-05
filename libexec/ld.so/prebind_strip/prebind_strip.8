@@ -1,4 +1,4 @@
-.\"	$OpenBSD: prebind_strip.8,v 1.2 2006/05/04 15:33:15 drahn Exp $
+.\"	$OpenBSD: prebind_strip.8,v 1.3 2006/05/05 13:52:42 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
 .\"
@@ -19,27 +19,30 @@
 .Os
 .Sh NAME
 .Nm prebind_strip
-.Nd Remove prebind info from binaries and libraries.
+.Nd remove prebind info from binaries and libraries
 .Sh SYNOPSIS
 .Nm prebind_strip
-.Op Ar file ...
+.Op Ar
 .Sh DESCRIPTION
-Remove any prebind information from a binary or shared library.
-After this is run the library length and md5 should match the original value.
-.Sh SEE AlSO
-.Xr ld.so 1
+.Nm
+removes any prebind information from a binary or shared library.
+After this is run, the library length and md5 should match the original value.
+.Sh SEE ALSO
+.Xr ld.so 1 ,
 .Xr prebind 8
 .Sh STANDARDS
 None
 .Sh HISTORY
-A
+The
 .Nm
-utility first appeared in 
-.Ox 4.0.
+utility first appeared in
+.Ox 4.0 .
 .Nm
 is based loosely on Prelinking, however prelink removes the security
-feature of libraries appearing a random order on each invocation, thus
-it was incompatible with OpenBSD's Goals.
+feature of libraries appearing in random order on each invocation, thus
+it was incompatible with
+.Ox Ns 's
+goals.
 .Nm
-was written as attempt to improve the speed of dynamic linking
+was written as an attempt to improve the speed of dynamic linking
 without the penalty of loss of security features.
