@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.21 2006/04/25 01:25:40 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.22 2006/05/05 06:47:28 otto Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.21 2006/04/25 01:25:40 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.22 2006/05/05 06:47:28 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -823,10 +823,13 @@ length(type_t *tp, const char *name)
 	int	elem, elsz;
 
 	elem = 1;
-	while (tp->t_tspec == ARRAY) {
+	while (tp && tp->t_tspec == ARRAY) {
 		elem *= tp->t_dim;
 		tp = tp->t_subt;
 	}
+	if (tp == NULL)
+		return (-1);
+
 	switch (tp->t_tspec) {
 	case FUNC:
 		/* compiler takes size of function */
@@ -864,8 +867,11 @@ getbound(type_t *tp)
 	int	a;
 	tspec_t	t;
 
-	while (tp->t_tspec == ARRAY)
+	while (tp && tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
+
+	if (tp == NULL)
+		return (-1);
 
 	if ((t = tp->t_tspec) == STRUCT || t == UNION) {
 		a = tp->t_str->align;
@@ -1220,8 +1226,10 @@ addptr(sym_t *decl, pqinf_t *pi)
 	pqinf_t	*npi;
 
 	tpp = &decl->s_type;
-	while (*tpp != dcs->d_type)
+	while (*tpp && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
+	if (*tpp == NULL)
+		return (decl);
 
 	while (pi != NULL) {
 		*tpp = tp = getblk(sizeof (type_t));
@@ -1246,8 +1254,10 @@ addarray(sym_t *decl, int dim, int n)
 	type_t	**tpp, *tp;
 
 	tpp = &decl->s_type;
-	while (*tpp != dcs->d_type)
+	while (*tpp && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
+	if (*tpp == NULL)
+	    return (decl);
 
 	*tpp = tp = getblk(sizeof (type_t));
 	tp->t_tspec = ARRAY;
@@ -1300,8 +1310,10 @@ addfunc(sym_t *decl, sym_t *args)
 	}
 
 	tpp = &decl->s_type;
-	while (*tpp != dcs->d_nxt->d_type)
+	while (*tpp && *tpp != dcs->d_nxt->d_type)
 		tpp = &(*tpp)->t_subt;
+	if (*tpp == NULL)
+	    return (decl);
 
 	*tpp = tp = getblk(sizeof (type_t));
 	tp->t_tspec = FUNC;
