@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.60 2006/05/04 07:06:58 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.61 2006/05/05 15:47:36 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -45,7 +45,7 @@ rcsdiff_main(int argc, char **argv)
 
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;
-	status = 0;
+	status = D_SAME;
 
 	if (strlcpy(diffargs, "diff", sizeof(diffargs)) >= sizeof(diffargs))
 		errx(1, "diffargs too long");
@@ -143,18 +143,14 @@ rcsdiff_main(int argc, char **argv)
 		diff_file = argv[i];
 
 		/* No revisions given. */
-		if (rev_str1 == NULL) {
-			if (rcsdiff_file(file, file->rf_head, argv[i]) < 0)
-				status = 2;
+		if (rev_str1 == NULL)
+			status = rcsdiff_file(file, file->rf_head, argv[i]);
 		/* One revision given. */
-		} else if (rev_str2 == NULL) {
-			if (rcsdiff_file(file, rev1, argv[i]) < 0)
-				status = 2;
+		else if (rev_str2 == NULL)
+			status = rcsdiff_file(file, rev1, argv[i]);
 		/* Two revisions given. */
-		} else {
-			if (rcsdiff_rev(file, rev1, rev2) < 0)
-				status = 2;
-		}
+		else
+			status = rcsdiff_rev(file, rev1, rev2);
 
 		rcs_close(file);
 
@@ -194,7 +190,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
 
-	ret = -1;
+	ret = D_ERROR;
 	b1 = b2 = NULL;
 
 	diff_rev1 = rev;
@@ -253,8 +249,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	rcs_diffreg(path1, path2, NULL);
-	ret = 0;
+	ret = rcs_diffreg(path1, path2, NULL);
 
 out:
 	if (fd != -1)
@@ -280,7 +275,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	char rbuf1[64], rbuf2[64];
 	struct timeval tv[2], tv2[2];
 
-	ret = -1;
+	ret = D_ERROR;
 	b1 = b2 = NULL;
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
@@ -335,8 +330,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	rcs_diffreg(path1, path2, NULL);
-	ret = 0;
+	ret = rcs_diffreg(path1, path2, NULL);
 
 out:
 	if (b1 != NULL)

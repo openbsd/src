@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: diff.h,v 1.2 2006/05/05 15:47:36 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -64,13 +64,11 @@
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
 
-#ifndef CVS_DIFF_H
-#define CVS_DIFF_H
+#ifndef RCS_DIFF_H
+#define RCS_DIFF_H
 
 #include "buf.h"
 #include "rcs.h"
-
-#define CVS_DIFF_DEFCTX	3	/* default context length */
 
 /*
  * Output format options
@@ -87,14 +85,7 @@
  */
 #define	D_SAME		0	/* Files are the same */
 #define	D_DIFFER	1	/* Files are different */
-#define	D_BINARY	2	/* Binary files are different */
-#define	D_COMMON	3	/* Subdirectory common to both dirs */
-#define	D_ONLY		4	/* Only exists in one directory */
-#define	D_MISMATCH1	5	/* path1 was a dir, path2 a file */
-#define	D_MISMATCH2	6	/* path1 was a file, path2 a dir */
-#define	D_ERROR		7	/* An error occurred */
-#define	D_SKIPPED1	8	/* path1 was a special file */
-#define	D_SKIPPED2	9	/* path2 was a special file */
+#define	D_ERROR		2	/* An error occurred */
 
 struct rcs_lines;
 
@@ -111,4 +102,4 @@ extern BUF	*diffbuf;
 extern RCSNUM	*diff_rev1;
 extern RCSNUM	*diff_rev2;
 
-#endif
+#endif	/* RCS_DIFF_H */

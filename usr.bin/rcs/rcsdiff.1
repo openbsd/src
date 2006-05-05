@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsdiff.1,v 1.21 2006/04/24 08:40:01 jmc Exp $
+.\"	$OpenBSD: rcsdiff.1,v 1.22 2006/05/05 15:47:36 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -113,6 +113,19 @@ Compare revision 1.7 and 1.8 of file
 and ignore differences in keyword values:
 .Pp
 .Dl $ rcsdiff -kk -r1.7 -r1.8 foo.c
+.Sh DIAGNOSTICS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It 0
+No differences were found.
+.It 1
+Differences were found.
+.It 2
+An error occurred.
+.El
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,

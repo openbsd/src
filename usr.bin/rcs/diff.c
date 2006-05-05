@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.3 2006/04/29 05:31:28 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.4 2006/05/05 15:47:36 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -334,7 +334,7 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out)
 	}
 
 	if (!asciifile(f1) || !asciifile(f2)) {
-		rval = D_BINARY;
+		rval = D_ERROR;
 		goto closem;
 	}
 
