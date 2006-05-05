@@ -200,56 +200,70 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #define BSIZE		(MAXWRITE+4)
 
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    , \
-			 l|=((DES_LONG)(*((c)++)))<< 8L, \
-			 l|=((DES_LONG)(*((c)++)))<<16L, \
-			 l|=((DES_LONG)(*((c)++)))<<24L)
+			 l|=((DES_LONG)(*((c)++)))<< 8, \
+			 l|=((DES_LONG)(*((c)++)))<<16, \
+			 l|=((DES_LONG)(*((c)++)))<<24)
 
 /* NOTE - c is not incremented as per c2l */
 #define c2ln(c,l1,l2,n)	{ \
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((DES_LONG)(*(--(c))))<<24L; \
-			case 7: l2|=((DES_LONG)(*(--(c))))<<16L; \
-			case 6: l2|=((DES_LONG)(*(--(c))))<< 8L; \
+			case 8: l2 =((DES_LONG)(*(--(c))))<<24; \
+			/* FALLTHROUGH */ \
+			case 7: l2|=((DES_LONG)(*(--(c))))<<16; \
+			/* FALLTHROUGH */ \
+			case 6: l2|=((DES_LONG)(*(--(c))))<< 8; \
+			/* FALLTHROUGH */ \
 			case 5: l2|=((DES_LONG)(*(--(c))));     \
-			case 4: l1 =((DES_LONG)(*(--(c))))<<24L; \
-			case 3: l1|=((DES_LONG)(*(--(c))))<<16L; \
-			case 2: l1|=((DES_LONG)(*(--(c))))<< 8L; \
+			/* FALLTHROUGH */ \
+			case 4: l1 =((DES_LONG)(*(--(c))))<<24; \
+			/* FALLTHROUGH */ \
+			case 3: l1|=((DES_LONG)(*(--(c))))<<16; \
+			/* FALLTHROUGH */ \
+			case 2: l1|=((DES_LONG)(*(--(c))))<< 8; \
+			/* FALLTHROUGH */ \
 			case 1: l1|=((DES_LONG)(*(--(c))));     \
 				} \
 			}
 
 #define l2c(l,c)	(*((c)++)=(unsigned char)(((l)     )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24L)&0xff))
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
 /* replacements for htonl and ntohl since I have no idea what to do
  * when faced with machines with 8 byte longs. */
 #define HDRSIZE 4
 
-#define n2l(c,l)	(l =((DES_LONG)(*((c)++)))<<24L, \
-			 l|=((DES_LONG)(*((c)++)))<<16L, \
-			 l|=((DES_LONG)(*((c)++)))<< 8L, \
+#define n2l(c,l)	(l =((DES_LONG)(*((c)++)))<<24, \
+			 l|=((DES_LONG)(*((c)++)))<<16, \
+			 l|=((DES_LONG)(*((c)++)))<< 8, \
 			 l|=((DES_LONG)(*((c)++))))
 
-#define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
+#define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)     )&0xff))
 
 /* NOTE - c is not incremented as per l2c */
 #define l2cn(l1,l2,c,n)	{ \
 			c+=n; \
 			switch (n) { \
-			case 8: *(--(c))=(unsigned char)(((l2)>>24L)&0xff); \
-			case 7: *(--(c))=(unsigned char)(((l2)>>16L)&0xff); \
-			case 6: *(--(c))=(unsigned char)(((l2)>> 8L)&0xff); \
+			case 8: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
+			/* FALLTHROUGH */ \
+			case 7: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
+			/* FALLTHROUGH */ \
+			case 6: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
+			/* FALLTHROUGH */ \
 			case 5: *(--(c))=(unsigned char)(((l2)     )&0xff); \
-			case 4: *(--(c))=(unsigned char)(((l1)>>24L)&0xff); \
-			case 3: *(--(c))=(unsigned char)(((l1)>>16L)&0xff); \
-			case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); \
+			/* FALLTHROUGH */ \
+			case 4: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
+			/* FALLTHROUGH */ \
+			case 3: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
+			/* FALLTHROUGH */ \
+			case 2: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
+			/* FALLTHROUGH */ \
 			case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); \
 				} \
 			}
@@ -269,7 +283,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 	{ DES_LONG tmp; LOAD_DATA(R,S,u,t,E0,E1,tmp); }
 
 #define LOAD_DATA(R,S,u,t,E0,E1,tmp) \
-	t=R^(R>>16L); \
+	t=R^(R>>16); \
 	u=t&E0; t&=E1; \
 	tmp=(u<<16); u^=R^s[S  ]; u^=tmp; \
 	tmp=(t<<16); t^=R^s[S+1]; t^=tmp
@@ -297,25 +311,25 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #define D_ENCRYPT(LL,R,S) { \
 	unsigned int u1,u2,u3; \
 	LOAD_DATA(R,S,u,t,E0,E1,u1); \
-	u2=(int)u>>8L; \
+	u2=(int)u>>8; \
 	u1=(int)u&0xfc; \
 	u2&=0xfc; \
 	t=ROTATE(t,4); \
-	u>>=16L; \
+	u>>=16; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP      +u1); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x200+u2); \
-	u3=(int)(u>>8L); \
+	u3=(int)(u>>8); \
 	u1=(int)u&0xfc; \
 	u3&=0xfc; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x400+u1); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x600+u3); \
-	u2=(int)t>>8L; \
+	u2=(int)t>>8; \
 	u1=(int)t&0xfc; \
 	u2&=0xfc; \
-	t>>=16L; \
+	t>>=16; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x100+u1); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x300+u2); \
-	u3=(int)t>>8L; \
+	u3=(int)t>>8; \
 	u1=(int)t&0xfc; \
 	u3&=0xfc; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x500+u1); \
@@ -325,25 +339,25 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #define D_ENCRYPT(LL,R,S) { \
 	unsigned int u1,u2,s1,s2; \
 	LOAD_DATA(R,S,u,t,E0,E1,u1); \
-	u2=(int)u>>8L; \
+	u2=(int)u>>8; \
 	u1=(int)u&0xfc; \
 	u2&=0xfc; \
 	t=ROTATE(t,4); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP      +u1); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x200+u2); \
-	s1=(int)(u>>16L); \
-	s2=(int)(u>>24L); \
+	s1=(int)(u>>16); \
+	s2=(int)(u>>24); \
 	s1&=0xfc; \
 	s2&=0xfc; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x400+s1); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x600+s2); \
-	u2=(int)t>>8L; \
+	u2=(int)t>>8; \
 	u1=(int)t&0xfc; \
 	u2&=0xfc; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x100+u1); \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x300+u2); \
-	s1=(int)(t>>16L); \
-	s2=(int)(t>>24L); \
+	s1=(int)(t>>16); \
+	s2=(int)(t>>24); \
 	s1&=0xfc; \
 	s2&=0xfc; \
 	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x500+s1); \
@@ -355,13 +369,13 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 	t=ROTATE(t,4); \
 	LL^= \
 	*(DES_LONG *)((unsigned char *)des_SP      +((u     )&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x200+((u>> 8L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x400+((u>>16L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x600+((u>>24L)&0xfc))^ \
+	*(DES_LONG *)((unsigned char *)des_SP+0x200+((u>> 8)&0xfc))^ \
+	*(DES_LONG *)((unsigned char *)des_SP+0x400+((u>>16)&0xfc))^ \
+	*(DES_LONG *)((unsigned char *)des_SP+0x600+((u>>24)&0xfc))^ \
 	*(DES_LONG *)((unsigned char *)des_SP+0x100+((t     )&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x300+((t>> 8L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x500+((t>>16L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x700+((t>>24L)&0xfc)); }
+	*(DES_LONG *)((unsigned char *)des_SP+0x300+((t>> 8)&0xfc))^ \
+	*(DES_LONG *)((unsigned char *)des_SP+0x500+((t>>16)&0xfc))^ \
+	*(DES_LONG *)((unsigned char *)des_SP+0x700+((t>>24)&0xfc)); }
 #endif
 
 #else /* original version */
@@ -371,26 +385,26 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #define D_ENCRYPT(LL,R,S) {\
 	unsigned int u1,u2,u3; \
 	LOAD_DATA(R,S,u,t,E0,E1,u1); \
-	u>>=2L; \
+	u>>=2; \
 	t=ROTATE(t,6); \
-	u2=(int)u>>8L; \
+	u2=(int)u>>8; \
 	u1=(int)u&0x3f; \
 	u2&=0x3f; \
-	u>>=16L; \
+	u>>=16; \
 	LL^=des_SPtrans[0][u1]; \
 	LL^=des_SPtrans[2][u2]; \
-	u3=(int)u>>8L; \
+	u3=(int)u>>8; \
 	u1=(int)u&0x3f; \
 	u3&=0x3f; \
 	LL^=des_SPtrans[4][u1]; \
 	LL^=des_SPtrans[6][u3]; \
-	u2=(int)t>>8L; \
+	u2=(int)t>>8; \
 	u1=(int)t&0x3f; \
 	u2&=0x3f; \
-	t>>=16L; \
+	t>>=16; \
 	LL^=des_SPtrans[1][u1]; \
 	LL^=des_SPtrans[3][u2]; \
-	u3=(int)t>>8L; \
+	u3=(int)t>>8; \
 	u1=(int)t&0x3f; \
 	u3&=0x3f; \
 	LL^=des_SPtrans[5][u1]; \
@@ -400,26 +414,26 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #define D_ENCRYPT(LL,R,S) {\
 	unsigned int u1,u2,s1,s2; \
 	LOAD_DATA(R,S,u,t,E0,E1,u1); \
-	u>>=2L; \
+	u>>=2; \
 	t=ROTATE(t,6); \
-	u2=(int)u>>8L; \
+	u2=(int)u>>8; \
 	u1=(int)u&0x3f; \
 	u2&=0x3f; \
 	LL^=des_SPtrans[0][u1]; \
 	LL^=des_SPtrans[2][u2]; \
-	s1=(int)u>>16L; \
-	s2=(int)u>>24L; \
+	s1=(int)u>>16; \
+	s2=(int)u>>24; \
 	s1&=0x3f; \
 	s2&=0x3f; \
 	LL^=des_SPtrans[4][s1]; \
 	LL^=des_SPtrans[6][s2]; \
-	u2=(int)t>>8L; \
+	u2=(int)t>>8; \
 	u1=(int)t&0x3f; \
 	u2&=0x3f; \
 	LL^=des_SPtrans[1][u1]; \
 	LL^=des_SPtrans[3][u2]; \
 	s1=(int)t>>16; \
-	s2=(int)t>>24L; \
+	s2=(int)t>>24; \
 	s1&=0x3f; \
 	s2&=0x3f; \
 	LL^=des_SPtrans[5][s1]; \
@@ -432,14 +446,14 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 	LOAD_DATA_tmp(R,S,u,t,E0,E1); \
 	t=ROTATE(t,4); \
 	LL^=\
-		des_SPtrans[0][(u>> 2L)&0x3f]^ \
-		des_SPtrans[2][(u>>10L)&0x3f]^ \
-		des_SPtrans[4][(u>>18L)&0x3f]^ \
-		des_SPtrans[6][(u>>26L)&0x3f]^ \
-		des_SPtrans[1][(t>> 2L)&0x3f]^ \
-		des_SPtrans[3][(t>>10L)&0x3f]^ \
-		des_SPtrans[5][(t>>18L)&0x3f]^ \
-		des_SPtrans[7][(t>>26L)&0x3f]; }
+		des_SPtrans[0][(u>> 2)&0x3f]^ \
+		des_SPtrans[2][(u>>10)&0x3f]^ \
+		des_SPtrans[4][(u>>18)&0x3f]^ \
+		des_SPtrans[6][(u>>26)&0x3f]^ \
+		des_SPtrans[1][(t>> 2)&0x3f]^ \
+		des_SPtrans[3][(t>>10)&0x3f]^ \
+		des_SPtrans[5][(t>>18)&0x3f]^ \
+		des_SPtrans[7][(t>>26)&0x3f]; }
 #endif
 #endif
 

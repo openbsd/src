@@ -209,28 +209,28 @@ des_key_schedule schedule;
 	for (i=0; i<ITERATIONS; i++)
 		{
 		if (shifts2[i])
-			{ c=((c>>2L)|(c<<26L)); d=((d>>2L)|(d<<26L)); }
+			{ c=((c>>2)|(c<<26)); d=((d>>2)|(d<<26)); }
 		else
-			{ c=((c>>1L)|(c<<27L)); d=((d>>1L)|(d<<27L)); }
+			{ c=((c>>1)|(c<<27)); d=((d>>1)|(d<<27)); }
 		c&=0x0fffffffL;
 		d&=0x0fffffffL;
 		/* could be a few less shifts but I am to lazy at this
 		 * point in time to investigate */
 		s=	des_skb[0][ (c    )&0x3f                ]|
-			des_skb[1][((c>> 6)&0x03)|((c>> 7L)&0x3c)]|
-			des_skb[2][((c>>13)&0x0f)|((c>>14L)&0x30)]|
-			des_skb[3][((c>>20)&0x01)|((c>>21L)&0x06) |
-						  ((c>>22L)&0x38)];
+			des_skb[1][((c>> 6)&0x03)|((c>> 7)&0x3c)]|
+			des_skb[2][((c>>13)&0x0f)|((c>>14)&0x30)]|
+			des_skb[3][((c>>20)&0x01)|((c>>21)&0x06) |
+						  ((c>>22)&0x38)];
 		t=	des_skb[4][ (d    )&0x3f                ]|
-			des_skb[5][((d>> 7L)&0x03)|((d>> 8L)&0x3c)]|
-			des_skb[6][ (d>>15L)&0x3f                ]|
-			des_skb[7][((d>>21L)&0x0f)|((d>>22L)&0x30)];
+			des_skb[5][((d>> 7)&0x03)|((d>> 8)&0x3c)]|
+			des_skb[6][ (d>>15)&0x3f                ]|
+			des_skb[7][((d>>21)&0x0f)|((d>>22)&0x30)];
 
 		/* table contained 0213 4657 */
-		t2=((t<<16L)|(s&0x0000ffffL))&0xffffffffL;
+		t2=((t<<16)|(s&0x0000ffffL))&0xffffffffL;
 		*(k++)=ROTATE(t2,30)&0xffffffffL;
 
-		t2=((s>>16L)|(t&0xffff0000L));
+		t2=((s>>16)|(t&0xffff0000L));
 		*(k++)=ROTATE(t2,26)&0xffffffffL;
 		}
 	return(0);
