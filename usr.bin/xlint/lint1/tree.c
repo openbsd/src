@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.39 2006/05/03 18:22:41 otto Exp $	*/
+/*	$OpenBSD: tree.c,v 1.40 2006/05/05 20:00:35 otto Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.39 2006/05/03 18:22:41 otto Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.40 2006/05/05 20:00:35 otto Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1849,7 +1849,7 @@ ppconv(op_t op, tnode_t *tn, type_t *tp)
 	}
 	if (((nt == STRUCT || nt == UNION) &&
 	     tp->t_subt->t_str != tn->tn_type->t_subt->t_str) ||
-	    psize(nt) != psize(ot)) {
+	    (psize(nt) != CHAR_BIT && psize(nt) != psize(ot))) {
 		if (cflag) {
 			/* pointer casts may be troublesome */
 			warning(247);
