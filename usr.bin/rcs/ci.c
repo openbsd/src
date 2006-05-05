@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.168 2006/05/04 07:06:58 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.169 2006/05/05 01:29:59 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -508,7 +508,7 @@ checkin_update(struct checkin_params *pb)
 	 */
 	if (!(pb->flags & FORCE) && (strlen(pb->deltatext) < 1)) {
 		checkin_revert(pb);
-		goto fail;
+		goto out;
 	}
 
 	/* If no log message specified, get it interactively. */
@@ -567,8 +567,6 @@ checkin_update(struct checkin_params *pb)
 	pb->file->rf_mode = st.st_mode &
 	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 
-	xfree(pb->deltatext);
-	xfree(filec);
 	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
 
@@ -585,6 +583,11 @@ checkin_update(struct checkin_params *pb)
 		xfree(pb->rcs_msg);
 		pb->rcs_msg = NULL;
 	}
+
+out:
+	xfree(pb->deltatext);
+	xfree(filec);
+
 	return (0);
 
 fail:
@@ -781,9 +784,6 @@ checkin_revert(struct checkin_params *pb)
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 		checkout_rev(pb->file, pb->frev, pb->filename,
 		    pb->flags, pb->username, pb->author, NULL, NULL);
-	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0)
-		if (rcs_errno != RCS_ERR_NOENT)
-			warnx("failed to remove lock");
 }
 
 /*

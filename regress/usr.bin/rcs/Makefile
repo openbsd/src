@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2006/05/05 01:11:37 ray Exp $
+#	$OpenBSD: Makefile,v 1.31 2006/05/05 01:29:59 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -64,6 +64,7 @@ LTESTS= ci-initial \
 	rcs-iflag \
 	rlog-lflag \
 	ci-nofile \
+	ci-revert \
 	#ci-keywords \
 
 .for t in ${LTESTS}
@@ -544,6 +545,14 @@ test-rlog-zflag: clean
 
 test-ci-nofile:
 	@${CI} -q nonexistent || case "$$?" in 1) exit 0;; esac && exit 1
+
+test-ci-revert: clean
+	@mkdir RCS
+	@touch file
+	@echo . | ${CI} -q -l file
+	@${CI} -q -mm -l file
+	@# Make sure reverting doesn't unlock file.
+	@${CI} -q -mm -l file
 
 test-ci-keywords: clean
 	@mkdir RCS

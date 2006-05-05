@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.87 2006/04/29 05:31:28 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.88 2006/05/05 01:29:59 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -231,7 +231,7 @@ checkout_usage(void)
 
 /*
  * Checkout revision <rev> from RCSFILE <file>, writing it to the path <dst>
- * Currenly recognised <flags> are CO_LOCK, CO_UNLOCK and CO_REVDATE.
+ * Currently recognised <flags> are CO_LOCK, CO_UNLOCK and CO_REVDATE.
  *
  * Looks up revision based upon <lockname>, <author>, <state> and <date>
  *
@@ -349,9 +349,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	    !(flags & CO_REVERT) && file->rf_ndelta != 0)
 		printf("revision %s", buf);
 
-	if (!(flags & QUIET) && (flags & CO_REVERT))
-		printf("done");
-
 	if (file->rf_ndelta != 0) {
 		if ((bp = rcs_getrev(file, rev)) == NULL) {
 			warnx("cannot find revision `%s'", buf);
@@ -424,7 +421,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		warnx("no revisions, so nothing can be %s",
 		    (flags & CO_LOCK) ? "locked" : "unlocked");
 	} else if (file->rf_ndelta != 0) {
-		if (!(flags & QUIET) && !(flags & NEWFILE))
+		/* XXX - Not a good way to detect if a newline is needed. */
+		if (!(flags & QUIET) && !(flags & NEWFILE) &&
+		    !(flags & CO_REVERT))
 			printf("\n");
 	}
 
