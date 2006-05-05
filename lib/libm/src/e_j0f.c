@@ -63,7 +63,7 @@ __ieee754_j0f(float x)
 	 * j0(x) = 1/sqrt(pi) * (P(0,x)*cc - Q(0,x)*ss) / sqrt(x)
 	 * y0(x) = 1/sqrt(pi) * (P(0,x)*ss + Q(0,x)*cc) / sqrt(x)
 	 */
-		if(ix>0x80000000) z = (invsqrtpi*cc)/sqrtf(x);
+		if(ix>0x80000000U) z = (invsqrtpi*cc)/sqrtf(x);
 		else {
 		    u = pzerof(x); v = qzerof(x);
 		    z = invsqrtpi*(u*cc-v*ss)/sqrtf(x);
@@ -137,7 +137,7 @@ __ieee754_y0f(float x)
                     if ((s*c)<zero) cc = z/ss;
                     else            ss = z/cc;
                 }
-                if(ix>0x80000000) z = (invsqrtpi*ss)/sqrtf(x);
+                if(ix>0x80000000U) z = (invsqrtpi*ss)/sqrtf(x);
                 else {
                     u = pzerof(x); v = qzerof(x);
                     z = invsqrtpi*(u*ss+v*cc)/sqrtf(x);
