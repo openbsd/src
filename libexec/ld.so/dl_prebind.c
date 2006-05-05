@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.3 2006/05/05 04:45:02 drahn Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.4 2006/05/05 14:34:27 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -384,6 +384,9 @@ prebind_free(elf_object_t *object)
 
 		object->prebind_data = NULL;
 		_dl_prog_prebind_map = NULL;
+
+		if (_dl_bindnow == prebind_bind_now)
+			_dl_bindnow = NULL;
 	}
 }
 
