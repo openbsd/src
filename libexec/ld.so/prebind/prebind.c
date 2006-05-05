@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.8 2006/05/04 20:58:58 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.9 2006/05/05 05:20:47 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -139,6 +139,7 @@ int merge_mode;	 /* merge (do not overwrite) existing prebind library info */
 struct elf_object *load_object;
 
 struct elf_object * load_file(const char *filename, int lib);
+int elf_check_note(void *buf, Elf_Phdr *phdr);
 void load_dir(char *name);
 void load_exe(char *name);
 
@@ -220,10 +221,14 @@ load_exe(char *name)
 				break;  /* XXX */
 
 		}
-		interp = load_file(curbin->interp, OBJTYPE_DLO);
+		if (fail == 0) {
+			interp = load_file(curbin->interp, OBJTYPE_DLO);
+			object->load_object = interp;
+			if (interp == NULL)
+				fail = 1;
+		}
 
 		/* slight abuse of this field */
-		object->load_object = interp;
 
 		if (fail == 0) {
 			elf_resolve_curbin();
@@ -247,14 +252,13 @@ load_file(const char *filename, int objtype)
 	int fd = -1;
 	void *buf = NULL;
 	struct stat ifstat;
-	Elf_Ehdr *pehdr;
-	Elf_Shdr *pshdr;
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shdr;
+	Elf_Phdr *phdr;
 	char *pexe;
-#ifdef DEBUG1
-	int i;
-#endif
 	struct elf_object *obj = NULL;
-
+	int note_found;
+	int i;
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1) {
@@ -287,45 +291,59 @@ load_file(const char *filename, int objtype)
 		goto done;
 	}
 
-	pehdr = (Elf_Ehdr *) buf;
+	ehdr = (Elf_Ehdr *) buf;
 
-	if (IS_ELF(*pehdr) == 0) {
+	if (IS_ELF(*ehdr) == 0) {
 		goto done;
 	}
 
-	if( pehdr->e_machine !=  ELF_TARG_MACH) {
+	if( ehdr->e_machine !=  ELF_TARG_MACH) {
 		if (verbose > 0)
 			printf("%s: wrong arch\n", filename);
 		goto done;
 	}
 
-	if ((objtype == OBJTYPE_EXE) && (pehdr->e_type != ET_EXEC))
+	if (objtype == OBJTYPE_EXE) {
+		if (ehdr->e_type != ET_EXEC)
 			goto done;
 
+		note_found = 0;
+
+		phdr = (Elf_Phdr *)((char *)buf + ehdr->e_phoff);
+		for (i = 0; i < ehdr->e_phnum; i++) {
+			if (phdr[i].p_type == PT_NOTE) {
+				note_found = elf_check_note(buf,&phdr[i]);
+				break;
+			}
+		}
+		if (note_found == 0)
+			goto done; /* no OpenBSD note found */
+	}
+
 	if ((objtype == OBJTYPE_LIB || objtype == OBJTYPE_DLO) &&
-	    (pehdr->e_type != ET_DYN))
+	    (ehdr->e_type != ET_DYN))
 		goto done;
 		
 
 	pexe = buf;
-	if (pehdr->e_shstrndx == 0) {
+	if (ehdr->e_shstrndx == 0) {
 		goto done;
 	}
-	pshdr = (Elf_Shdr *) (pexe + pehdr->e_shoff +
-	    (pehdr->e_shstrndx * pehdr->e_shentsize));
+	shdr = (Elf_Shdr *) (pexe + ehdr->e_shoff +
+	    (ehdr->e_shstrndx * ehdr->e_shentsize));
 
 	
 #if 0
-printf("e_ehsize %x\n", pehdr->e_ehsize);
-printf("e_phoff %x\n", pehdr->e_phoff);
-printf("e_shoff %x\n", pehdr->e_shoff);
-printf("e_phentsize %x\n", pehdr->e_phentsize);
-printf("e_phnum %x\n", pehdr->e_phnum);
-printf("e_shentsize %x\n", pehdr->e_shentsize);
-printf("e_shstrndx %x\n\n", pehdr->e_shstrndx);
+printf("e_ehsize %x\n", ehdr->e_ehsize);
+printf("e_phoff %x\n", ehdr->e_phoff);
+printf("e_shoff %x\n", ehdr->e_shoff);
+printf("e_phentsize %x\n", ehdr->e_phentsize);
+printf("e_phnum %x\n", ehdr->e_phnum);
+printf("e_shentsize %x\n", ehdr->e_shentsize);
+printf("e_shstrndx %x\n\n", ehdr->e_shstrndx);
 #endif
 
-	shstrtab = (char *) (pexe + pshdr->sh_offset);
+	shstrtab = (char *) (pexe + shdr->sh_offset);
 
 
 	obj = elf_load_object(pexe, filename);
@@ -362,6 +380,25 @@ done:
 	if (fd != -1)
 		close (fd);
 	return obj;
+}
+
+int
+elf_check_note(void *buf, Elf_Phdr *phdr)
+{
+	Elf_Ehdr *ehdr;
+
+	ehdr = (Elf_Ehdr *) buf;
+	u_long address = phdr->p_offset;
+	u_int *plong = (u_int *)((char *)buf + address);
+	char *osname = (char *)buf + address + sizeof(*plong) * 3;
+
+	if (plong[0] == 8 /* OpenBSD\0 */ &&
+	    plong[1] == 4 /* ??? */ &&
+	    plong[2] == 1 /* type_osversion */ &&
+	    strcmp("OpenBSD", osname) == 0)
+		return 1;
+
+	return 0;
 }
 
 void __dead 
@@ -1060,14 +1097,13 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 				if (verbose > 2) {
 					printf("sym mismatch %d: "
 					   "obj %d: sym %ld %s "
-					   "nobj %s oobj %s\n",
+					   "nobj %s\n",
 					    i, (int)scache[i].obj->dyn.null,
 					    scache[i].sym -
 					    scache[i].obj->dyn.symtab,
 					    scache[i].sym->st_name +
 					    scache[i].obj->dyn.strtab,
-					    scache[i].obj->load_name,
-					    tcache[i].obj->load_name);
+					    scache[i].obj->load_name);
 				}
 
 #if 0
