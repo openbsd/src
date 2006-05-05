@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2006/04/18 02:59:40 cloder Exp $	*/
+/*	$OpenBSD: init.c,v 1.9 2006/05/05 06:46:17 otto Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.8 2006/04/18 02:59:40 cloder Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.9 2006/05/05 06:46:17 otto Exp $";
 #endif
 
 #include <stdlib.h>
@@ -461,7 +461,7 @@ strginit(tnode_t *tn)
 	 * Check if we have an array type which can be initialized by
 	 * the string.
 	 */
-	if (istk->i_subt->t_tspec == ARRAY) {
+	if (istk->i_subt != NULL && istk->i_subt->t_tspec == ARRAY) {
 		t = istk->i_subt->t_subt->t_tspec;
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
