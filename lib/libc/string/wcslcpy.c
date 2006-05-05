@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcslcpy.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcslcpy.c,v 1.4 2006/05/05 15:27:38 millert Exp $	*/
 /*	$NetBSD: wcslcpy.c,v 1.2 2001/01/03 14:33:02 lukem Exp $	*/
 /*	from OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 	*/
 
@@ -45,11 +45,11 @@ wcslcpy(wchar_t *dst, const wchar_t *src, size_t siz)
 	size_t n = siz;
 
 	/* Copy as many bytes as will fit */
-	if (n != 0 && --n != 0) {
-		do {
-			if ((*d++ = *s++) == 0)
+	if (n != 0) {
+		while (--n != 0) {
+			if ((*d++ = *s++) == '\0')
 				break;
-		} while (--n != 0);
+		}
 	}
 
 	/* Not enough room in dst, add NUL and traverse rest of src */
