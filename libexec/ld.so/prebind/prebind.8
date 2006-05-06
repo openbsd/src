@@ -1,4 +1,4 @@
-.\"	$OpenBSD: prebind.8,v 1.3 2006/05/05 13:52:41 jmc Exp $
+.\"	$OpenBSD: prebind.8,v 1.4 2006/05/06 20:16:17 drahn Exp $
 .\"
 .\" Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
 .\"
@@ -35,13 +35,25 @@ and writes symbol resolution hint information to each binary and library.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl m
-Merge the results of this prebind cache with the prebind information
-previously on any libraries referenced.
+Merge into existing prebound libraries.
+This prebinds new binaries without modifying or updating the libraries
+(if prebind data is present), allowing old prebound binaries to continue
+to use the old prebind data.
 .It Fl v
 Be verbose when running
 .Nm :
 prints out information about the file/library that is being processed.
 .El
+.Sh DESIGN
+.Nm
+will add data to the programs specified and any libraries they reference
+to speed up dynamic linking.
+Since version information is stored in the libraries to validate the
+prebind info, running prebind on a subset of programs it was previously
+run on will invalidate the prebind info for those excluded binaries.
+The 
+.Pq Fl m
+option it will preserve the old prebind info in any library if present.
 .Sh SEE ALSO
 .Xr ld.so 1 ,
 .Xr prebind_strip 8
