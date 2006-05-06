@@ -1,3 +1,44 @@
+Release 2.0.0 Wed Jan 11 2006
+        - We no longer use the "check" library for C unit testing; we
+          always use the (partial) internal implementation of the API.
+        - Report XML_NS setting via XML_GetFeatureList().
+        - Fixed headers for use from C++.
+        - XML_GetCurrentLineNumber() and  XML_GetCurrentColumnNumber()
+          now return unsigned integers.
+        - Added XML_LARGE_SIZE switch to enable 64-bit integers for
+          byte indexes and line/column numbers.
+        - Updated to use libtool 1.5.22 (the most recent).
+        - Added support for AmigaOS.
+        - Some mostly minor bug fixes. SF issues include: 1006708,
+          1021776, 1023646, 1114960, 1156398, 1221160, 1271642.
+
+Release 1.95.8 Fri Jul 23 2004
+        - Major new feature: suspend/resume.  Handlers can now request
+          that a parse be suspended for later resumption or aborted
+          altogether.  See "Temporarily Stopping Parsing" in the
+          documentation for more details.
+        - Some mostly minor bug fixes, but compilation should no
+          longer generate warnings on most platforms.  SF issues
+          include: 827319, 840173, 846309, 888329, 896188, 923913,
+          928113, 961698, 985192.
+
+Release 1.95.7 Mon Oct 20 2003
+        - Fixed enum XML_Status issue (reported on SourceForge many
+          times), so compilers that are properly picky will be happy.
+        - Introduced an XMLCALL macro to control the calling
+          convention used by the Expat API; this macro should be used
+          to annotate prototypes and definitions of callback
+          implementations in code compiled with a calling convention
+          other than the default convention for the host platform.
+        - Improved ability to build without the configure-generated
+          expat_config.h header.  This is useful for applications
+          which embed Expat rather than linking in the library.
+        - Fixed a variety of bugs: see SF issues 458907, 609603,
+          676844, 679754, 692878, 692964, 695401, 699323, 699487,
+          820946.
+        - Improved hash table lookups.
+        - Added more regression tests and improved documentation.
+
 Release 1.95.6 Tue Jan 28 2003
         - Added XML_FreeContentModel().
         - Added XML_MemMalloc(), XML_MemRealloc(), XML_MemFree().
