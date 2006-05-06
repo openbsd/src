@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.72 2006/02/23 23:54:59 miod Exp $
+#	$OpenBSD: files.alpha,v 1.73 2006/05/06 05:30:01 brad Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -235,6 +235,11 @@ device	pceb: isabus, eisabus, cy82c693
 attach	pceb at pci
 file	arch/alpha/pci/sio.c			sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c		sio | pceb
+
+device	hme: ether, ifnet, mii, ifmedia
+file	dev/ic/hme.c			hme
+attach	hme at pci with hme_pci 
+file	dev/pci/if_hme_pci.c		hme_pci
 
 #
 # ISA PnP
