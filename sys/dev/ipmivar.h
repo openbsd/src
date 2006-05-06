@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.10 2006/01/05 21:28:29 marco Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.11 2006/05/06 15:05:19 wilfried Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -199,45 +199,6 @@ struct dmd_ipmi {
 	u_int8_t	dmd_if_rev;		/* IPMI Interface Revision */
 } __packed;
 
-
-#define APP_NETFN			0x06
-#define APP_GET_DEVICE_ID		0x01
-#define APP_RESET_WATCHDOG		0x22
-#define APP_SET_WATCHDOG_TIMER		0x24
-#define APP_GET_WATCHDOG_TIMER		0x25
-
-#define TRANSPORT_NETFN			0xC
-#define BRIDGE_NETFN			0x2
-
-#define STORAGE_NETFN			0x0A
-#define STORAGE_RESERVE_SDR		0x22
-#define STORAGE_GET_SDR			0x23
-#define STORAGE_ADD_SDR			0x24
-#define STORAGE_ADD_PARTIAL_SDR		0x25
-#define STORAGE_DELETE_SDR		0x26
-#define STORAGE_RESERVE_SEL		0x42
-#define STORAGE_GET_SEL			0x43
-#define STORAGE_ADD_SEL			0x44
-#define STORAGE_ADD_PARTIAL_SEL		0x45
-#define STORAGE_DELETE_SEL		0x46
-#define STORAGE_CLEAR_SEL		0x47
-
-#define SE_NETFN			0x04
-#define SE_GET_SDR_INFO			0x20
-#define SE_GET_SDR			0x21
-#define SE_RESERVE_SDR			0x22
-#define SE_GET_SENSOR_FACTOR		0x23
-#define SE_SET_SENSOR_HYSTERESIS	0x24
-#define SE_GET_SENSOR_HYSTERESIS	0x25
-#define SE_SET_SENSOR_THRESHOLD		0x26
-#define SE_GET_SENSOR_THRESHOLD		0x27
-#define SE_SET_SENSOR_EVENT_ENABLE	0x28
-#define SE_GET_SENSOR_EVENT_ENABLE	0x29
-#define SE_REARM_SENSOR_EVENTS		0x2A
-#define SE_GET_SENSOR_EVENT_STATUS	0x2B
-#define SE_GET_SENSOR_READING		0x2D
-#define SE_SET_SENSOR_TYPE		0x2E
-#define SE_GET_SENSOR_TYPE		0x2F
 
 #define APP_NETFN			0x06
 #define APP_GET_DEVICE_ID		0x01
