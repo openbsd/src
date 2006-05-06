@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.11 2006/05/05 16:46:03 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.12 2006/05/06 21:01:30 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1066,12 +1066,7 @@ elf_newbin(void)
  * It probably would be interesting to modify this to keep the most
  * common entry as a library cache, and only have a fixup in programs
  * where the symbol is overridden.
- *
- * Note 1: If 'merge' mode is ever written, this will need to keep
- * the 'cached' copies symbols and do fixups for the rest, regardless
- * of conflicts
- *
- * Note 2: This is run once each for the (got)symcache and pltsymcache
+ * This is run once each for the (got)symcache and pltsymcache
  */
 
 struct elf_object badobj_store;
@@ -1117,8 +1112,25 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 					    scache[i].sym->st_name +
 					    scache[i].obj->dyn.strtab);
 #endif
-				tcache[i].obj = badobj;
-				tcache[i].sym = NULL;
+				/*
+				 * if one of the symbol entries
+				 * happens to be a self reference
+				 * go ahead and keep that reference
+				 * prevents some instances of fixups
+				 * for every binary, eg one program
+				 * overriding malloc() will not make
+				 * ever binary have a fixup for libc
+				 * references to malloc()
+				 */
+				if (scache[i].obj == obj) {
+					tcache[i].obj = scache[i].obj;
+					tcache[i].sym = scache[i].sym;
+				} else if (tcache[i].obj == obj) {
+					/* no change necessary */
+				} else {
+					tcache[i].obj = badobj;
+					tcache[i].sym = NULL;
+				}
 			}
 		} else {
 			if (scache[i].obj != prog) {
@@ -1128,8 +1140,8 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 				    scache[i].sym->st_name +
 				    scache[i].obj->dyn.strtab);
 #endif
-				tcache[i].sym = scache[i].sym;
 				tcache[i].obj = scache[i].obj;
+				tcache[i].sym = scache[i].sym;
 			}
 		}
 
