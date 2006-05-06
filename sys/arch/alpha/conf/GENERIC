@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.170 2006/05/06 05:30:01 brad Exp $
+#	$OpenBSD: GENERIC,v 1.171 2006/05/06 05:37:02 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -187,6 +187,7 @@ gdt*	at pci?				# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 twe*	at pci?				# 3ware Escalade RAID controllers
 scsibus* at twe?
+##
 
 #BROKEN: adv and twe have 64-bit problems
 #adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI
@@ -229,11 +230,12 @@ ath*	at pci?				# Atheros AR5k (802.11)
 musycc*	at pci?				# Conexant HDLC controller
 art*	at musycc?			# Accoom Artery E1/T1 cards
 
-#UNTESTED:  the following section of drivers is untested on alpha.
+#UNTESTED:  the following drivers are untested.
 en*	at pci?				# ENI PCI ATM (untested)
 wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 an*	at pci?				# Cisco/Aironet 802.11DS
+##
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics
@@ -364,6 +366,7 @@ sv*	at pci?				# S3 SonicVibes (S3 617)
 cmpci*	at pci?				# C-Media CMI8338/8738
 fms*	at pci?				# Forte Media FM801
 auvia*	at pci?				# VIA VT82C686A
+##
 
 # OPL[23] FM synthesizers
 opl*	at eso?
