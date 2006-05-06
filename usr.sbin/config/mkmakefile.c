@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.19 2006/04/27 18:09:52 espie Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.20 2006/05/06 11:31:46 espie Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -220,6 +220,7 @@ emitobjs(FILE *fp)
 	struct files *fi;
 	struct objects *oi;
 	int lpos, len, sp;
+	const char *fpath;
 
 	if (fputs("LINTS=", fp) < 0)
 		return (1);
@@ -227,6 +228,11 @@ emitobjs(FILE *fp)
 	lpos = 7;
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		if ((fpath = srcpath(fi)) == NULL)
+			return (1);
+		len = strlen(fpath);
+		if (fpath[len - 1] == 's' || fpath[len - 1] == 'S')
 			continue;
 		len = strlen(fi->fi_base) + 3;
 		if (lpos + len > 72) {
@@ -243,6 +249,26 @@ emitobjs(FILE *fp)
 	if (fputs("\n\nOBJS=\t${LINTS:.ln=.o}", fp) < 0)
 		return (1);
 	lpos = 7 + strlen("${LINTS:.ln=.o}");
+	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		if ((fpath = srcpath(fi)) == NULL)
+			return (1);
+		len = strlen(fpath);
+		if (fpath[len - 1] != 's' && fpath[len - 1] != 'S')
+			continue;
+		len = strlen(fi->fi_base) + 3;
+		if (lpos + len > 72) {
+			if (fputs(" \\\n", fp) < 0)
+				return (1);
+			sp = '\t';
+			lpos = 7;
+		}
+		if (fprintf(fp, "%c%s.o", sp, fi->fi_base) < 0)
+			return (1);
+		lpos += len + 1;
+		sp = ' ';
+	}
 	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
