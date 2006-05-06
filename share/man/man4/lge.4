@@ -1,4 +1,4 @@
-.\" $OpenBSD: lge.4,v 1.17 2005/11/19 23:28:21 brad Exp $
+.\" $OpenBSD: lge.4,v 1.18 2006/05/06 04:39:13 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <william.paul@windriver.com>. All rights reserved.
@@ -40,6 +40,7 @@
 .Nd "Level 1 LXT1001 NetCellerator PCI Gigabit Ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "lge* at pci?"
+.Cd "xmphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -121,6 +122,7 @@ the network connection (cable).
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr xmphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
