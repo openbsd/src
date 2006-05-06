@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.19 2006/05/02 21:43:09 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.20 2006/05/06 22:17:20 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -175,8 +175,6 @@ const unsigned int int_mask_val[INT_LEVEL] = {
 	MASK_LVL_7
 };
 
-vaddr_t utilva;
-
 /*
  * Figure out how much memory is available, by querying the MBus registers.
  *
@@ -209,16 +207,6 @@ m188_memsize()
 void
 m188_startup()
 {
-	/*
-	 * Grab the UTIL space that we hardwired in pmap_bootstrap().
-	 */
-	utilva = MVME188_UTILITY;
-	uvm_map(kernel_map, (vaddr_t *)&utilva, MVME188_UTILITY_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, 0));
-	if (utilva != MVME188_UTILITY)
-		panic("utilva %lx: UTILITY area not free", utilva);
 }
 
 void

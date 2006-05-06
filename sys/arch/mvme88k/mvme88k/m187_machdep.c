@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.11 2006/04/27 20:21:19 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.12 2006/05/06 22:17:20 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -71,7 +71,6 @@ u_int	m187_raiseipl(u_int);
 u_int	m187_setipl(u_int);
 void	m187_startup(void);
 
-vaddr_t obiova;
 vaddr_t bugromva;
 
 /*
@@ -106,17 +105,6 @@ m187_startup()
 	        UVM_ADV_NORMAL, 0));
 	if (bugromva != BUG187_START)
 		panic("bugromva %lx: BUGROM not free", bugromva);
-
-	/*
-	 * Grab the OBIO space that we hardwired in pmap_bootstrap
-	 */
-	obiova = OBIO187_START;
-	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO187_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, 0));
-	if (obiova != OBIO187_START)
-		panic("obiova %lx: OBIO not free", obiova);
 }
 
 /*
