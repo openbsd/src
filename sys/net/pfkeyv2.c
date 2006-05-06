@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.109 2005/12/06 14:25:21 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.110 2006/05/06 17:43:47 mcbride Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1733,11 +1733,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					pfkeyv2_socket->flags |=
 					    PFKEYV2_SOCKETFLAGS_PROMISC;
 					npromisc++;
+				} else {
+					pfkeyv2_socket->flags &=
+					    ~PFKEYV2_SOCKETFLAGS_PROMISC;
+					npromisc--;
 				}
-			} else {
-				pfkeyv2_socket->flags &=
-				    ~PFKEYV2_SOCKETFLAGS_PROMISC;
-				npromisc--;
 			}
 		}
 	
