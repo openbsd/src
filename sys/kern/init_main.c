@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.129 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.130 2006/05/06 23:02:36 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -392,7 +392,15 @@ main(void *framep)
 #endif
 
 #if !defined(NO_PROPOLICE)
-	arc4random_bytes(__guard, sizeof(__guard));
+	{
+		volatile long newguard[8];
+		int i;
+
+		arc4random_bytes((long *)newguard, sizeof(newguard));
+
+		for (i = sizeof(__guard)/sizeof(__guard[0]) - 1; i; i--)
+			__guard[i] = newguard[i];
+	}
 #endif
 
 	/* init exec and emul */
