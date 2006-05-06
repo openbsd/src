@@ -1,4 +1,4 @@
-/* $OpenBSD: objarray.c,v 1.2 2006/05/03 22:14:44 drahn Exp $ */
+/* $OpenBSD: objarray.c,v 1.3 2006/05/06 20:31:05 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -173,7 +173,7 @@ int
 elf_prep_lib_prebind(struct elf_object *object)
 {
 	int numlibs = 0;
-	int ret;
+	int ret = 0;
 	int i;
 	int ref_obj;
 	int *libmap;
@@ -270,9 +270,11 @@ elf_prep_lib_prebind(struct elf_object *object)
 	}
 #endif
 
-	ret = elf_write_lib(object, nameidx, nametab, nametablen, numlibs,
-	    0, NULL, NULL, NULL, NULL,
-	    symcachetab, symcache_cnt, pltsymcachetab, pltsymcache_cnt);
+	/* skip writing lib if using old prebind data */
+	if (objarray[object->dyn.null].oprebind_data == NULL)
+		ret = elf_write_lib(object, nameidx, nametab, nametablen,
+		    numlibs, 0, NULL, NULL, NULL, NULL, symcachetab,
+		    symcache_cnt, pltsymcachetab, pltsymcache_cnt);
 
 	free (nameidx);
 	free (nametab);
