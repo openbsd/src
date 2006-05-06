@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: init.c,v 1.2 2004/04/07 13:11:36 espie Exp $ */
+/*	$OpenBSD: init.c,v 1.3 2006/05/06 10:52:34 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -55,6 +55,7 @@ Init(void)
 	Suff_Init();
 }
 
+#ifdef CLEANUP
 void
 End(void)
 {
@@ -66,3 +67,4 @@ End(void)
 	Dir_End();
 	Job_End();
 }
+#endif

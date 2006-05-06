@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.67 2006/02/26 18:06:15 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.68 2006/05/06 10:52:34 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -753,6 +753,7 @@ main(int argc, char **argv)
 	if (objdir != curdir)
 	    free(objdir);
 	free(curdir);
+	End();
 #endif
 	if (queryFlag && outOfDate)
 		return 1;
