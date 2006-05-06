@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.19 2006/04/27 20:19:28 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.20 2006/05/06 16:59:28 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -40,6 +40,9 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 
+#ifdef M88100
+#include <machine/m8820x.h>
+#endif
 #ifdef MVME187
 #include <machine/mvme187.h>
 #endif
@@ -91,24 +94,14 @@ mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
 	static bus_addr_t threshold = 0;
 
 	if (threshold == 0) {
-		switch (brdtyp) {
-#ifdef MVME188
-		case BRD_188:
-			threshold = MVME188_UTILITY;
-			break;
-#endif
-#ifdef MVME187
-		case BRD_187:
-		case BRD_8120:
-			threshold = OBIO187_START;
-			break;
+#ifdef M88100
+		if (CPU_IS88100)
+			threshold = BATC8_VA;	/* hardwired BATC */
 #endif
 #ifdef MVME197
-		case BRD_197:
-#endif
+		if (CPU_IS88110)
 			threshold = OBIO197_START;
-			break;
-		}
+#endif
 	}
 
 	if (addr >= threshold)
@@ -284,12 +277,6 @@ mainbus_attach(parent, self, args)
 	 * Display cpu/mmu details for the main processor.
 	 */
 	cpu_configuration_print(1);
-
-	/* XXX
-	 * should have a please-attach-first list for mainbus,
-	 * to ensure that the pcc/vme2/mcc chips are attached
-	 * first.
-	 */
 
 	(void)config_search(mainbus_scan, self, args);
 }

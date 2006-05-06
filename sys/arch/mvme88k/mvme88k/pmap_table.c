@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.22 2006/04/27 20:19:31 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.23 2006/05/06 16:59:28 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -46,7 +46,9 @@
 const pmap_table_entry
 m187_board_table[] = {
 	{ BUG187_START,		BUG187_START,	BUG187_SIZE,	RW, CI },
+#if 0	/* mapped by the hardcoded BATC entries */
 	{ OBIO187_START,	OBIO187_START,	OBIO187_SIZE,	RW, CI },
+#endif
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
 #endif
@@ -56,7 +58,9 @@ m187_board_table[] = {
 const pmap_table_entry
 m188_board_table[] = {
 	{ MVME188_EPROM,	MVME188_EPROM,	MVME188_EPROM_SIZE, RW, CI },
+#if 0	/* mapped by the hardcoded BATC entries */
 	{ MVME188_UTILITY,	MVME188_UTILITY, MVME188_UTILITY_SIZE, RW, CI },
+#endif
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
 #endif

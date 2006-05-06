@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.6 2005/12/04 12:20:19 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.7 2006/05/06 16:59:26 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -169,6 +169,16 @@
 #define	MC88200_CACHE_SHIFT	4
 #define	MC88200_CACHE_LINE	(1 << MC88200_CACHE_SHIFT)
 
+/*
+ * Hardwired BATC information
+ */
+
+#define	BATC8			0xfff7ffb5
+#define	BATC9			0xfffffff5
+
+#define	BATC8_VA		0xfff00000
+#define	BATC9_VA		0xfff80000
+
 #define NBSG    	(1 << (PDT_BITS + PG_BITS))	/* segment size */
 
 #ifndef _LOCORE
@@ -193,8 +203,8 @@ extern struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
 extern u_int cmmu_shift;
 extern u_int max_cmmus;
 
-void m8820x_setup_board_config(void);
-cpuid_t m8820x_cpu_number(void);
+void	m8820x_setup_board_config(void);
+cpuid_t	m8820x_cpu_number(void);
 
 #endif	/* _LOCORE */
 #endif	/* __M88K_M8820X_H__ */

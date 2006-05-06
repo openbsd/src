@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2006/04/26 20:38:37 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2006/05/06 16:59:28 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -58,6 +58,9 @@
 #include <machine/cpu.h>
 #include <machine/lock.h>
 #include <machine/pmap_table.h>
+#ifdef M88100
+#include <machine/m8820x.h>
+#endif
 
 #include <uvm/uvm.h>
 
@@ -1858,6 +1861,19 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #ifdef DIAGNOSTIC
 	if (pmap == NULL)
 		panic("pmap_extract: pmap is NULL");
+#endif
+
+#ifdef M88100
+	/*
+	 * 88100-based designs have two hardwired BATC entries which map
+	 * the upper 1MB 1:1 in supervisor space.
+	 */
+	if (CPU_IS88100) {
+		if (va >= BATC8_VA && pmap == pmap_kernel()) {
+			*pap = va;
+			return (TRUE);
+		}
+	}
 #endif
 
 	spl = splvm();
