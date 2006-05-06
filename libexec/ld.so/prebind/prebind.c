@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.12 2006/05/06 21:01:30 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.13 2006/05/06 22:06:26 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -387,18 +387,18 @@ elf_check_note(void *buf, Elf_Phdr *phdr)
 {
 	Elf_Ehdr *ehdr;
 	u_long address;
-	u_int *plong;
+	u_int *pint;
 	char *osname;
 
 	ehdr = (Elf_Ehdr *)buf;
 	address = phdr->p_offset;
-	plong = (u_int *)((char *)buf + address);
-	osname = (char *)buf + address + sizeof(*plong) * 3;
+	pint = (u_int *)((char *)buf + address);
+	osname = (char *)buf + address + sizeof(*pint) * 3;
 
 
-	if (plong[0] == 8 /* OpenBSD\0 */ &&
-	    plong[1] == 4 /* ??? */ &&
-	    plong[2] == 1 /* type_osversion */ &&
+	if (pint[0] == 8 /* OpenBSD\0 */ &&
+	    pint[1] == 4 /* ??? */ &&
+	    pint[2] == 1 /* type_osversion */ &&
 	    strcmp("OpenBSD", osname) == 0)
 		return 1;
 
