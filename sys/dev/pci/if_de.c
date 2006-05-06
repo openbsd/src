@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.88 2006/03/25 22:41:44 djm Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.89 2006/05/06 02:57:30 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -146,7 +146,6 @@ static int tulip_intr_shared(void *arg);
 static int tulip_intr_normal(void *arg);
 static void tulip_init(tulip_softc_t * const sc);
 static void tulip_reset(tulip_softc_t * const sc);
-static void tulip_ifstart_one(struct ifnet *ifp);
 static void tulip_ifstart(struct ifnet *ifp);
 static struct mbuf *tulip_txput(tulip_softc_t * const sc, struct mbuf *m);
 static void tulip_txput_setup(tulip_softc_t * const sc);
@@ -3864,6 +3863,9 @@ tulip_txput(
     u_int32_t d_status;
     bus_dmamap_t map;
     int error;
+    struct ifnet *ifp = &sc->tulip_if;
+    struct mbuf *ombuf = m;
+    int compressed = 0;
 
 #if defined(TULIP_DEBUG)
     if ((sc->tulip_cmdmode & TULIP_CMD_TXRUN) == 0) {
@@ -3924,6 +3926,26 @@ tulip_txput(
 	     * entries that we can use for one packet, so we have
 	     * to recopy it into one mbuf and then try again.
 	     */
+	    struct mbuf *tmp;
+	    /*
+	     * tulip_mbuf_compress() frees the original mbuf.
+	     * thus, we have to remove the mbuf from the queue
+	     * before calling it.
+	     * we don't have to worry about space shortage
+	     * after compressing the mbuf since the compressed
+	     * mbuf will take only two segs.
+	     */
+	     if (compressed) {
+		 /* should not happen */
+#ifdef TULIP_DEBUG
+		 printf("tulip_txput: compress called twice!\n");
+#endif
+		 goto finish;
+	    }
+	    IFQ_DEQUEUE(&ifp->if_snd, tmp);
+	    if (tmp != ombuf)
+		 panic("tulip_txput: different mbuf dequeued!");
+	    compressed = 1;
 	    m = tulip_mbuf_compress(m);
 	    if (m == NULL) {
 #if defined(TULIP_DEBUG)
@@ -3992,6 +4014,14 @@ tulip_txput(
      * The descriptors have been filled in.  Now get ready
      * to transmit.
      */
+    if (!compressed && (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) == 0) {
+	/* remove the mbuf from the queue */
+	struct mbuf *tmp;
+	IFQ_DEQUEUE(&ifp->if_snd, tmp);
+	if (tmp != ombuf)
+	    panic("tulip_txput: different mbuf dequeued!");
+    }
+
     IF_ENQUEUE(&sc->tulip_txq, m);
     m = NULL;
 
@@ -4263,6 +4293,12 @@ tulip_ifioctl(
 }
 
 /*
+ * the original dequeueing policy is dequeue-and-prepend if something
+ * goes wrong.  when altq is used, it is changed to peek-and-dequeue.
+ * the modification becomes a bit complicated since tulip_txput() might
+ * copy and modify the mbuf passed.
+ */
+/*
  * These routines gets called at device spl (from ether_output).
  */
 
@@ -4278,36 +4314,21 @@ tulip_ifstart(
 	if ((sc->tulip_flags & (TULIP_WANTSETUP|TULIP_TXPROBE_ACTIVE)) == TULIP_WANTSETUP)
 	    tulip_txput_setup(sc);
 
-	while (sc->tulip_if.if_snd.ifq_head != NULL) {
-	    struct mbuf *m;
-	    IF_DEQUEUE(&sc->tulip_if.if_snd, m);
-	    if ((m = tulip_txput(sc, m)) != NULL) {
-		IF_PREPEND(&sc->tulip_if.if_snd, m);
+	while (!IFQ_IS_EMPTY(&sc->tulip_if.if_snd)) {
+	    struct mbuf *m, *m0;
+	    IFQ_POLL(&sc->tulip_if.if_snd, m);
+	    if (m == NULL)
+		break;
+	    if ((m0 = tulip_txput(sc, m)) != NULL) {
+		if (m0 != m)
+		    /* should not happen */
+		    printf("tulip_if_start: txput failed!\n");
 		break;
 	    }
 	}
-	if (sc->tulip_if.if_snd.ifq_head == NULL)
-	    sc->tulip_if.if_start = tulip_ifstart_one;
     }
 
     TULIP_PERFEND(ifstart);
-}
-
-static void
-tulip_ifstart_one(
-    struct ifnet * const ifp)
-{
-    TULIP_PERFSTART(ifstart_one)
-    tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
-
-    if ((sc->tulip_if.if_flags & IFF_RUNNING)
-	    && sc->tulip_if.if_snd.ifq_head != NULL) {
-	struct mbuf *m;
-	IF_DEQUEUE(&sc->tulip_if.if_snd, m);
-	if ((m = tulip_txput(sc, m)) != NULL)
-	    IF_PREPEND(&sc->tulip_if.if_snd, m);
-    }
-    TULIP_PERFEND(ifstart_one);
 }
 
 static void
@@ -4370,7 +4391,6 @@ tulip_ifwatchdog(
     TULIP_PERFMERGE(sc, perf_ifioctl_cycles);
     TULIP_PERFMERGE(sc, perf_ifwatchdog_cycles);
     TULIP_PERFMERGE(sc, perf_timeout_cycles);
-    TULIP_PERFMERGE(sc, perf_ifstart_one_cycles);
     TULIP_PERFMERGE(sc, perf_txput_cycles);
     TULIP_PERFMERGE(sc, perf_txintr_cycles);
     TULIP_PERFMERGE(sc, perf_rxintr_cycles);
@@ -4380,7 +4400,6 @@ tulip_ifwatchdog(
     TULIP_PERFMERGE(sc, perf_ifioctl);
     TULIP_PERFMERGE(sc, perf_ifwatchdog);
     TULIP_PERFMERGE(sc, perf_timeout);
-    TULIP_PERFMERGE(sc, perf_ifstart_one);
     TULIP_PERFMERGE(sc, perf_txput);
     TULIP_PERFMERGE(sc, perf_txintr);
     TULIP_PERFMERGE(sc, perf_rxintr);
@@ -4430,6 +4449,7 @@ tulip_attach(
 
     tulip_reset(sc);
 
+    IFQ_SET_READY(&ifp->if_snd);
     if_attach(ifp);
     ether_ifattach(ifp);
 }

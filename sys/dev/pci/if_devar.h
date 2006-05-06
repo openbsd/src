@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.24 2005/11/15 10:43:35 mickey Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.25 2006/05/06 02:57:30 brad Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -572,7 +572,6 @@ struct _tulip_softc_t {
     struct tulip_perfstats {
 	u_quad_t perf_intr_cycles;
 	u_quad_t perf_ifstart_cycles;
-	u_quad_t perf_ifstart_one_cycles;
 	u_quad_t perf_ifioctl_cycles;
 	u_quad_t perf_ifwatchdog_cycles;
 	u_quad_t perf_timeout_cycles;
@@ -582,7 +581,6 @@ struct _tulip_softc_t {
 	u_quad_t perf_rxget_cycles;
 	unsigned perf_intr;
 	unsigned perf_ifstart;
-	unsigned perf_ifstart_one;
 	unsigned perf_ifioctl;
 	unsigned perf_ifwatchdog;
 	unsigned perf_timeout;
