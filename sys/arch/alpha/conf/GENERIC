@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.168 2006/03/27 21:34:31 brad Exp $
+#	$OpenBSD: GENERIC,v 1.169 2006/05/06 01:20:32 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -176,9 +176,11 @@ scsibus* at siop?
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 
-#UNTESTED: the following three drivers are untested.
+#UNTESTED: the following drivers are untested.
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
+ciss*	at pci?				# Compaq Smart ARRAY [56]* RAID controllers
+scsibus* at ciss?
 dpt*	at pci?				# DPT SmartCache/SmartRAID PCI
 scsibus* at dpt?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
