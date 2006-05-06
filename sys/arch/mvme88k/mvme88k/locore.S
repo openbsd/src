@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.47 2006/04/18 22:08:05 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.48 2006/05/06 22:16:28 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -123,16 +123,17 @@ ASLOCAL(main_start)
 	st	r8,  r13, lo16(_C_LABEL(brdtyp))
 
 	/* set cputyp */
-	cmp	r2,  r8, BRD_197	/* r8 contains brdtyp */
-	bb1	ne, r2, 1f	/* if it's a '197, CPU is 88110 */
-	or.u	r13, r0,  hi16(CPU_88110)
-	or	r8,  r13, lo16(CPU_88110)
-	br	2f
+	ldcr	r1,  PID
+	extu	r2,  r1, 8<8>
+	bcnd.n	eq0, r2, 1f
+	 or.u	r13, r0,  hi16(_C_LABEL(cputyp))
+	or.u	r8,  r0,  hi16(CPU_88110)
+	br.n	2f
+	 or	r8,  r8,  lo16(CPU_88110)
 1:
-	or.u	r13, r0,  hi16(CPU_88100)
-	or	r8,  r13, lo16(CPU_88100)
+	or.u	r8,  r0,  hi16(CPU_88100)
+	or	r8,  r8,  lo16(CPU_88100)
 2:
-	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
 	st	r8,  r13, lo16(_C_LABEL(cputyp))
 
 	/*
