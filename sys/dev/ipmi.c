@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.36 2006/04/27 15:28:21 mickey Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.37 2006/05/06 15:04:38 wilfried Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1360,6 +1360,8 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 
 	case SENSOR_FANRPM:
 		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 0);
+		if (((s1->units1>>3)&0x7) == 0x3)
+			psensor->i_sensor.value *= 60; // RPS -> RPM
 		break;
 	default:
 		break;
