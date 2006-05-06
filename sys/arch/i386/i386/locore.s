@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.100 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.101 2006/05/06 14:42:32 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -253,6 +253,7 @@ _C_LABEL(bootargv):	.long	0	# /boot argv
 _C_LABEL(bootdev):	.long	0	# device we booted from
 _C_LABEL(proc0paddr):	.long	0
 _C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
+_C_LABEL(PTDsize):	.long	NBPG	# size of PTD, for libkvm
 
 	.space 512
 tmpstk:
@@ -2339,6 +2340,8 @@ ENTRY(cpu_paenable)
 	movl	12(%esp), %eax
 	subl	$KERNBASE, %eax
 	movl	%eax, %cr3	/* reload real PDPT */
+	movl	$4*NBPG, %eax
+	movl	%eax, _C_LABEL(PTDsize)
 
 	xorl	%eax, %eax
 	popl	%edi
