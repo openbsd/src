@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.30 2006/04/21 18:24:08 cloder Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.31 2006/05/06 20:47:58 espie Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.30 2006/04/21 18:24:08 cloder Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.31 2006/05/06 20:47:58 espie Exp $";
 #endif
 
 #include <sys/param.h>
@@ -277,6 +277,7 @@ int
 main(int argc, char *argv[])
 {
 	int	c;
+	int	fd;
 	char	flgbuf[3], *tmp, *s;
 	size_t	len;
 	struct	utsname un;
@@ -292,10 +293,11 @@ main(int argc, char *argv[])
 
 	if (asprintf(&cppout, "%slint0.XXXXXXXXXX", tmpdir) == -1)
 		err(1, NULL);
-	if (mktemp(cppout) == NULL) {
+	if ((fd = mkstemp(cppout)) == -1) {
 		warn("can't make temp");
 		terminate(-1);
 	}
+	close(fd);
 
 	p1out = xcalloc(1, sizeof (char *));
 	p2in = xcalloc(1, sizeof (char *));
@@ -518,6 +520,7 @@ fname(const char *name)
 	char	**args, *ofn, *path;
 	size_t	len;
 	int	error;
+	int	fd;
 
 	bn = lbasename(name, '/');
 	suff = lbasename(bn, '.');
@@ -549,10 +552,11 @@ fname(const char *name)
 	} else {
 		if (asprintf(&ofn, "%slint1.XXXXXXXXXX", tmpdir) == -1)
 			err(1, NULL);
-		if (mktemp(ofn) == NULL) {
+		if ((fd  = mkstemp(ofn)) == -1) {
 			warn("can't make temp");
 			terminate(-1);
 		}
+		close(fd);
 	}
 	if (!iflag)
 		appcstrg(&p1out, ofn);
