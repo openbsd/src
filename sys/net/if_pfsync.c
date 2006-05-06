@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.62 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.63 2006/05/06 18:31:00 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1540,15 +1540,10 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	int			 s;
 
 	/* check for invalid values */
-	pt->spi = htonl(pt->spi);
-	if (pt->spi <= SPI_RESERVED_MAX ||
+	if (ntohl(pt->spi) <= SPI_RESERVED_MAX ||
 	    (pt->dst.sa.sa_family != AF_INET &&
 	     pt->dst.sa.sa_family != AF_INET6))
 		goto bad;
-
-	if (pt->dst.sa.sa_family == AF_INET)
-		pt->dst.sin.sin_addr.s_addr =
-		    htonl(pt->dst.sin.sin_addr.s_addr);
 
 	s = spltdb();
 	tdb = gettdb(pt->spi, &pt->dst, pt->sproto);
@@ -1649,18 +1644,11 @@ pfsync_update_tdb(struct tdb *tdb)
 			    tdb->tdb_sproto);
 
 			for (i = 0; !pt && i < h->count; i++) {
-				/* XXX Ugly, u is network ordered. */
-				if (u->dst.sa.sa_family == AF_INET)
-					u->dst.sin.sin_addr.s_addr =
-					    ntohl(u->dst.sin.sin_addr.s_addr);
-				if (tdb_hash(ntohl(u->spi), &u->dst,
+				if (tdb_hash(u->spi, &u->dst,
 				    u->sproto) == hash) {
 					pt = u;
 					pt->updates++;
 				}
-				if (u->dst.sa.sa_family == AF_INET)
-					u->dst.sin.sin_addr.s_addr =
-					    htonl(u->dst.sin.sin_addr.s_addr);
 				u++;
 			}
 		}
@@ -1674,11 +1662,8 @@ pfsync_update_tdb(struct tdb *tdb)
 		h->count++;
 		bzero(pt, sizeof(*pt));
 
-		pt->spi = htonl(tdb->tdb_spi);
+		pt->spi = tdb->tdb_spi;
 		memcpy(&pt->dst, &tdb->tdb_dst, sizeof pt->dst);
-		if (pt->dst.sa.sa_family == AF_INET)
-			pt->dst.sin.sin_addr.s_addr =
-			    htonl(pt->dst.sin.sin_addr.s_addr);
 		pt->sproto = tdb->tdb_sproto;
 	}
 
