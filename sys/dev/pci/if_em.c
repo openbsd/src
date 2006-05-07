@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.117 2006/05/01 16:38:19 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.118 2006/05/07 06:42:43 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1669,8 +1669,6 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 	dma->dma_size = size;
 	return (0);
 
-/* fail_4: */
-	bus_dmamap_unload(dma->dma_tag, dma->dma_map);
 fail_3:
 	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, size);
 fail_2:
@@ -1679,17 +1677,27 @@ fail_1:
 	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
 fail_0:
 	dma->dma_map = NULL;
-	/* dma->dma_tag = NULL; */
+	dma->dma_tag = NULL;
+
 	return (r);
 }
 
 void
 em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 {
-	bus_dmamap_unload(dma->dma_tag, dma->dma_map);
-	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
-	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
-	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
+	if (dma->dma_tag == NULL)
+		return;
+
+	if (dma->dma_map != NULL) {
+		bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0,
+		    dma->dma_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dma->dma_tag, dma->dma_map);
+		bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
+		bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
+		bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
+	}
+	dma->dma_tag = NULL;
 }
 
 /*********************************************************************
