@@ -1,4 +1,4 @@
-/* $OpenBSD: objarray.c,v 1.3 2006/05/06 20:31:05 drahn Exp $ */
+/* $OpenBSD: objarray.c,v 1.4 2006/05/07 15:36:43 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -838,6 +838,7 @@ elf_add_object(struct elf_object *object, int objtype)
 	objarray[objarray_cnt].obj = object;
 	objarray[objarray_cnt].id0 = arc4random(); /* XXX FIX */
 	objarray[objarray_cnt].id1 = arc4random();
+	objarray[objarray_cnt].oprebind_data = NULL;
 	objarray_cnt++;
 
 	elf_add_object_curbin_list(object);
