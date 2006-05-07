@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2006/03/14 22:42:01 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.32 2006/05/07 18:58:53 robert Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -636,11 +636,11 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-#ifdef DEBUG
-	extern int pmapdebugflag;
-	int opmapdebugflag = pmapdebugflag;
+#ifdef PMAPDEBUG
+	extern int pmapdebug;
+	int opmapdebug = pmapdebug;
 
-	pmapdebugflag = 0;	/* Shut up pmap debug during bootstrap */
+	pmapdebug = 0;	/* Shut up pmap debug during bootstrap */
 #endif
 
 	/*
@@ -699,8 +699,8 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-#ifdef DEBUG
-	pmapdebugflag = opmapdebugflag;
+#ifdef PMAPDEBUG
+	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %d\n", ptoa(uvmexp.free));
 	printf("using %d buffers containing %d bytes of memory\n",
