@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.101 2006/05/06 14:42:32 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.102 2006/05/07 11:30:51 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -202,7 +202,7 @@
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(nkptp_max)
 	.globl	_C_LABEL(boothowto), _C_LABEL(bootdev), _C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr), _C_LABEL(PTDsize)
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
 	.globl	_C_LABEL(lapic_tpr)
