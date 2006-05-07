@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.1 2006/04/20 20:32:31 pedro Exp $
+.\" $OpenBSD: rwlock.9,v 1.2 2006/05/07 20:15:06 tedu Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@openbsd.org>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/rwlock.h>
 .Ft void
-.Fn rw_init "struct rwlock *rwl"
+.Fn rw_init "struct rwlock *rwl" "const char *name"
 .Ft void
 .Fn rw_enter_read "struct rwlock *rwl"
 .Ft void
