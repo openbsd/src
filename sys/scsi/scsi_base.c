@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.99 2006/02/06 17:37:28 jmc Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.100 2006/05/07 00:20:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ scsi_init()
 
 /*
  * Get a scsi transfer structure for the caller. Charge the structure
- * to the device that is referenced by the sc_link structure. If the 
+ * to the device that is referenced by the sc_link structure. If the
  * sc_link structure has no 'credits' then the device already has the
  * maximum number or outstanding operations under way. In this stage,
  * wait on the structure so that when one is freed, we are awoken again
@@ -122,7 +122,7 @@ scsi_get_xs(sc_link, flags)
 			/* Bail out on getting a signal. */
 			sc_link->flags &= ~SDEV_WAITING;
 			return (NULL);
-		}	
+		}
 	}
 	SC_DEBUG(sc_link, SDEV_DB3, ("calling pool_get\n"));
 	xs = pool_get(&scsi_xfer_pool,
@@ -304,7 +304,7 @@ scsi_test_unit_ready(sc_link, retries, flags)
  * Do a scsi operation asking a device what it is.
  * Use the scsi_cmd routine in the switch table.
  */
-int 
+int
 scsi_inquire(sc_link, inqbuf, flags)
 	struct scsi_link *sc_link;
 	struct scsi_inquiry_data *inqbuf;
@@ -338,7 +338,7 @@ scsi_inquire(sc_link, inqbuf, flags)
 /*
  * Prevent or allow the user to remove the media
  */
-int 
+int
 scsi_prevent(sc_link, type, flags)
 	struct scsi_link *sc_link;
 	int type, flags;
@@ -358,7 +358,7 @@ scsi_prevent(sc_link, type, flags)
 /*
  * Get scsi driver to send a "start up" command
  */
-int 
+int
 scsi_start(sc_link, type, flags)
 	struct scsi_link *sc_link;
 	int type, flags;
@@ -396,7 +396,7 @@ scsi_mode_sense(sc_link, byte2, page, data, len, flags, timeout)
 	scsi_cmd.byte2 = byte2;
 	scsi_cmd.page = page;
 
-	if (len > 0xff) 
+	if (len > 0xff)
 		len = 0xff;
 	scsi_cmd.length = len;
 
@@ -459,7 +459,7 @@ scsi_mode_sense_page(hdr, page_len)
 	if ((total_length - header_length) < page_len)
 		return (NULL);
 		
-	return ((u_char *)hdr + header_length);	
+	return ((u_char *)hdr + header_length);
 }
 
 void *
@@ -491,7 +491,7 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	struct scsi_direct_blk_desc *direct;
 	struct scsi_blk_desc *general;
 	int error, blk_desc_len, offset;
-	
+
 	*page_data = NULL;
 
 	if (density)
@@ -503,7 +503,7 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	if (big)
 		*big = 0;
 
-	if ((sc_link->flags & SDEV_ATAPI) == 0 || 
+	if ((sc_link->flags & SDEV_ATAPI) == 0 ||
 	    (sc_link->inqdata.device & SID_TYPE) == T_SEQUENTIAL) {
 		/*
 		 * Try 6 byte mode sense request first. Some devices don't
@@ -521,8 +521,8 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 			offset = sizeof(struct scsi_mode_header);
 			blk_desc_len = buf->hdr.blk_desc_len;
 			goto blk_desc;
-		}	
-	}	
+		}
+	}
 
 	/*
 	 * Try 10 byte mode sense request. Don't bother with SMS_DBD or
@@ -552,7 +552,7 @@ blk_desc:
 		/*
 		 * XXX What other device types return general block descriptors?
 		 */
-		general = (struct scsi_blk_desc *)&buf->buf[offset];	
+		general = (struct scsi_blk_desc *)&buf->buf[offset];
 		if (density)
 			*density = general->density;
 		if (block_size)
@@ -634,7 +634,7 @@ scsi_mode_select_big(sc_link, byte2, data, flags, timeout)
 /*
  * This routine is called by the scsi interrupt when the transfer is complete.
  */
-void 
+void
 scsi_done(xs)
 	struct scsi_xfer *xs;
 {
@@ -734,19 +734,19 @@ scsi_execute_xs(xs)
 	 * Do the transfer. If we are polling we will return:
 	 * COMPLETE,  Was poll, and scsi_done has been called
 	 * TRY_AGAIN_LATER, Adapter short resources, try again
-	 * 
+	 *
 	 * if under full steam (interrupts) it will return:
 	 * SUCCESSFULLY_QUEUED, will do a wakeup when complete
 	 * TRY_AGAIN_LATER, (as for polling)
 	 * After the wakeup, we must still check if it succeeded
-	 * 
+	 *
 	 * If we have a SCSI_NOSLEEP (typically because we have a buf)
 	 * we just return.  All the error processing and the buffer
 	 * code both expect us to return straight to them, so as soon
 	 * as the command is queued, return.
 	 */
 
-	/* 
+	/*
 	 * We save the flags here because the xs structure may already
 	 * be freed by scsi_done by the time adapter->scsi_cmd returns.
 	 *
@@ -814,7 +814,7 @@ retry:
  * long the data is supposed to be. If we have  a buf
  * to associate with the transfer, we need that too.
  */
-int 
+int
 scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
     retries, timeout, bp, flags)
 	struct scsi_link *sc_link;
@@ -855,7 +855,7 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	return error;
 }
 
-int 
+int
 sc_err1(xs)
 	struct scsi_xfer *xs;
 {
@@ -936,7 +936,7 @@ scsi_delay(xs, seconds)
 	case SCSI_POLL:
 		delay(1000000 * seconds);
 		return (ERESTART);
-	case SCSI_NOSLEEP:	
+	case SCSI_NOSLEEP:
 		/* Retry the command immediately since we can't delay. */
 		return (ERESTART);
 	case (SCSI_POLL | SCSI_NOSLEEP):
@@ -944,12 +944,12 @@ scsi_delay(xs, seconds)
 		return (EIO);
 	}
 	
-	while (seconds-- > 0)	
+	while (seconds-- > 0)
 		if (tsleep(&lbolt, PRIBIO, "scbusy", 0))
 			/* Signal == abort xs. */
 			return (EIO);
 
-	return (ERESTART);		
+	return (ERESTART);
 }
 
 /*
@@ -958,7 +958,7 @@ scsi_delay(xs, seconds)
  *
  * THIS IS THE DEFAULT ERROR HANDLER
  */
-int 
+int
 scsi_interpret_sense(xs)
 	struct scsi_xfer *xs;
 {
@@ -1032,7 +1032,7 @@ scsi_interpret_sense(xs)
 		    			    ("not ready: busy (%#x)\n",
 					    sense->add_sense_code_qual));
 					return (scsi_delay(xs, 1));
-				}	
+				}
 				break;
 			case 0x3a:	/* Medium not present */
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
@@ -1095,7 +1095,7 @@ sc_print_addr(sc_link)
 	    sc_link->device_softc ?
 	    ((struct device *)sc_link->device_softc)->dv_xname : "probe",
 	    ((struct device *)sc_link->adapter_softc)->dv_xname,
-	    sc_link->target, sc_link->lun);		
+	    sc_link->target, sc_link->lun);
 }
 
 static const char *sense_keys[16] = {
@@ -1442,7 +1442,7 @@ static const struct {
 	{ 0x3F, 0x10, "Medium Loadable" },
 	{ 0x3F, 0x11, "Medium Auxiliary Memory Accessible" },
 	{ 0x40, 0x00, "RAM FAILURE (Should Use 40 NN)" },
-	/* 
+	/*
 	 * ASC 0x40 also has an ASCQ range from 0x80 to 0xFF.
 	 * 0x40 0xNN DIAGNOSTIC FAILURE ON COMPONENT NN
 	 */
@@ -1470,9 +1470,9 @@ static const struct {
 	{ 0x4B, 0x05, "Data Offset Error" },
 	{ 0x4B, 0x06, "Initiator Response Timeout" },
 	{ 0x4C, 0x00, "Logical Unit Failed Self-Configuration" },
-	/* 
+	/*
 	 * ASC 0x4D has an ASCQ range from 0x00 to 0xFF.
-	 * 0x4D 0xNN TAGGED OVERLAPPED COMMANDS (NN = TASK TAG) 
+	 * 0x4D 0xNN TAGGED OVERLAPPED COMMANDS (NN = TASK TAG)
 	 */
 	{ 0x4E, 0x00, "Overlapped Commands Attempted" },
 	{ 0x50, 0x00, "Write Append Error" },
@@ -1641,7 +1641,7 @@ static const struct {
 	{ 0x6F, 0x03, "Read Of Scrambled Sector Without Authentication" },
 	{ 0x6F, 0x04, "Media Region Code Is Mismatched To Logical Unit Region" },
 	{ 0x6F, 0x05, "Drive Region Must Be Permanent/Region Reset Count Error" },
-	/* 
+	/*
 	 * ASC 0x70 has an ASCQ range from 0x00 to 0xFF.
 	 * 0x70 0xNN DECOMPRESSION EXCEPTION SHORT ALGORITHM ID Of NN
 	 */
@@ -1669,7 +1669,7 @@ asc2ascii(asc, ascq, result, len)
 	size_t len;
 {
 	int i;
-	
+
 	/* Check for a dynamically built description. */
 	switch (asc) {
 	case 0x40:
@@ -1681,7 +1681,7 @@ asc2ascii(asc, ascq, result, len)
 		break;
 	case 0x4d:
 		snprintf(result, len,
-	 	    "Tagged Overlapped Commands (0x%02x = TASK TAG)", ascq); 
+	 	    "Tagged Overlapped Commands (0x%02x = TASK TAG)", ascq);
 		return;
 	case 0x70:
 		snprintf(result, len,
@@ -1719,7 +1719,7 @@ scsi_print_sense(xs)
 	printf("%sCheck Condition (error %#x) on opcode 0x%x\n",
 	    (serr == 0x71) ? "DEFERRED " : "", serr, xs->cmd->opcode);
 
-	if (serr != 0x70 && serr != 0x71) {	
+	if (serr != 0x70 && serr != 0x71) {
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsi_sense_data_unextended *usense =
 			    (struct scsi_sense_data_unextended *)sense;
