@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.20 2006/05/06 22:17:20 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.21 2006/05/07 15:40:16 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -401,7 +401,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		level = safe_level(cur_mask, old_spl);
 
 #ifdef DIAGNOSTIC
-		if (old_spl >= level) {
+		if (level != IPL_ABORT && level <= old_spl) {
 			int i;
 
 			printf("safe level %d <= old level %d\n", level, old_spl);
