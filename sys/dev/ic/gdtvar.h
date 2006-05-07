@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.11 2006/05/07 20:34:09 marco Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.12 2006/05/07 23:18:59 marco Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -320,6 +320,8 @@ struct gdt_softc {
 	u_int8_t sc_bus_id[GDT_MAXBUS];
 	u_int8_t sc_more_proc;
 
+	u_int32_t sc_total_disks;
+
 	struct {
 		u_int8_t hd_present;
 		u_int8_t hd_is_logdrv;
@@ -344,7 +346,7 @@ struct gdt_softc {
 		u_int8_t	ra_local_no;	/* local channel number */
 		u_int8_t	ra_io_cnt[GDT_MAXID];	/* current IO count */
 		u_int32_t	ra_address;	/* channel address */
-		u_int32_t	ra_id_lis[GDT_MAXID];	/* IDs of phys disks */
+		u_int32_t	ra_id_list[GDT_MAXID];	/* IDs of phys disks */
 	} sc_raw[GDT_MAXBUS];			/* SCSI channels */
 
 	struct {
@@ -438,7 +440,7 @@ static __inline__ u_int8_t
 gdt_dec8(addr)
 	u_int8_t *addr;
 {
-	return *addr;
+	return *(u_int8_t *)addr;
 }
 
 static __inline__ u_int16_t

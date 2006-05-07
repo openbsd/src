@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtreg.h,v 1.3 2003/06/03 20:49:28 deraadt Exp $	*/
+/*	$OpenBSD: gdtreg.h,v 1.4 2006/05/07 23:18:59 marco Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -95,10 +95,10 @@
 #define GDT_IOCHAN_DESC		0x5d	/* description of IO channel */
 #define GDT_IOCHAN_RAW_DESC	0x5e	/* description of raw IO channel */
 
-#define GDT_L_CTRL_PATTERN	0x20000000	/* SCSI IOCTL mask */
+#define GDT_L_CTRL_PATTERN	0x20000000L	/* SCSI IOCTL mask */
 #define GDT_ARRAY_INFO		0x12		/* array drive info */
 #define GDT_ARRAY_DRV_LIST	0x0f		/* array drive list */
-#define GDT_LA_CTRL_PATTERN	0x10000000	/* array IOCTL mask */
+#define GDT_LA_CTRL_PATTERN	0x10000000L	/* array IOCTL mask */
 #define GDT_CACHE_DRV_CNT	0x01		/* cache drive count */
 #define GDT_CACHE_DRV_LIST	0x02		/* cache drive list */
 #define GDT_CACHE_INFO		0x04		/* cache info */
@@ -106,9 +106,9 @@
 #define GDT_CACHE_DRV_INFO	0x07		/* cache drive info */
 #define GDT_BOARD_FEATURES	0x15		/* controller features */
 #define GDT_BOARD_INFO		0x28		/* controller info */
-#define GDT_HOST_GET		0x10001		/* get host drive list */
-#define GDT_IO_CHANNEL		0x20000		/* default IO channel */
-#define GDT_INVALID_CHANNEL	0xffff		/* invalid channel */
+#define GDT_HOST_GET		0x10001L	/* get host drive list */
+#define GDT_IO_CHANNEL		0x20000L	/* default IO channel */
+#define GDT_INVALID_CHANNEL	0xffffL		/* invalid channel */
 
 /* XXX not belonging here */
 /* IOCTLs */
@@ -233,6 +233,13 @@
 #define GDT_GETCH_SIOP_ID	0x08	/* u_int8_t, SCSI processor ID */
 #define GDT_GETCH_SIOP_STATE	0x09	/* u_int8_t, SCSI processor state */
 #define GDT_GETCH_SZ		0x0a
+
+/* Get SCSI drive numbers */
+#define GDT_GETSCSI_CHAN	0x00	/* u_int32_t, scsi channel number */
+#define GDT_GETSCSI_CNT		0x04	/* u_int32_t, nr of entries */
+#define GDT_GETSCSI_LIST	0x08	/* u_int32_t, minor device nr */
+#define GDT_GETSCSI_LIST_SZ	0x04
+#define GDT_GETSCSI_SZ		(GDT_GETSCSI_LIST_SZ * GDT_MAXID)
 
 /* Cache info/config IOCTL structures */
 #define GDT_CPAR_VERSION	0x00	/* u_int32_t, firmware version */

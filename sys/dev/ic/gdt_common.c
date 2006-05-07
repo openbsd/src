@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.34 2006/05/07 20:46:00 marco Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.35 2006/05/07 23:18:59 marco Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -312,7 +312,7 @@ gdt_attach(gdt)
 
 	/* Read more information */
 	if (gdt->sc_more_proc) {
-		int bus;
+		int bus, j;
 		/* physical drives, channel addresses */
 		/* step 1: get magical bus number from firmware */
 		gdt_enc32(gdt->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
@@ -322,7 +322,7 @@ gdt_attach(gdt)
 		gdt_enc32(gdt->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
 		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
 		    GDT_IOCHAN_DESC, GDT_INVALID_CHANNEL,
-		    GDT_IOC_HDR_SZ + GDT_IOC_SZ)) {
+		    GDT_IOC_HDR_SZ + GDT_IOC_SZ * GDT_MAXBUS)) {
 			GDT_DPRINTF(GDT_D_INFO, ("method 1\n"));
 			for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
 				gdt->sc_raw[bus].ra_address =
@@ -352,6 +352,52 @@ gdt_attach(gdt)
 				    gdt->sc_raw[bus].ra_address,
 				    gdt->sc_raw[bus].ra_local_no));
 			}
+		}
+		/* step 2: use magical bus number to get nr of phys disks */
+		for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
+			gdt_enc32(gdt->sc_scratch + GDT_GETCH_CHANNEL_NO,
+			    gdt->sc_raw[bus].ra_local_no);
+			if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+			    GDT_SCSI_CHAN_CNT | GDT_L_CTRL_PATTERN,
+			    gdt->sc_raw[bus].ra_address | GDT_INVALID_CHANNEL,
+			    GDT_GETCH_SZ)) {
+				gdt->sc_raw[bus].ra_phys_cnt =
+				    gdt_dec32(gdt->sc_scratch +
+				    GDT_GETCH_DRIVE_CNT);
+				GDT_DPRINTF(GDT_D_INFO, ("chan: %d disks: %d\n",
+				    bus, gdt->sc_raw[bus].ra_phys_cnt));
+			}
+
+			/* step 3: get scsi disk nr */
+			if (gdt->sc_raw[bus].ra_phys_cnt > 0) {
+				gdt_enc32(gdt->sc_scratch +
+				    GDT_GETSCSI_CHAN,
+				    gdt->sc_raw[bus].ra_local_no);
+				gdt_enc32(gdt->sc_scratch +
+				    GDT_GETSCSI_CNT,
+				    gdt->sc_raw[bus].ra_phys_cnt);
+				if (gdt_internal_cmd(gdt, GDT_CACHESERVICE,
+				    GDT_IOCTL,
+				    GDT_SCSI_DR_LIST | GDT_L_CTRL_PATTERN,
+				    gdt->sc_raw[bus].ra_address |
+				    GDT_INVALID_CHANNEL,
+				    GDT_GETSCSI_SZ))
+					for (j = 0;
+					    j < gdt->sc_raw[bus].ra_phys_cnt;
+					    j++) {
+						gdt->sc_raw[bus].ra_id_list[j] =
+						    gdt_dec32(gdt->sc_scratch +
+						    GDT_GETSCSI_LIST +
+						    GDT_GETSCSI_LIST_SZ * j);
+						GDT_DPRINTF(GDT_D_INFO,
+						    ("  diskid: %d\n",
+						    gdt->sc_raw[bus].ra_id_list[j]));
+					}
+				else
+					gdt->sc_raw[bus].ra_phys_cnt = 0;
+			}
+			/* add found disks to grand total */
+			gdt->sc_total_disks += gdt->sc_raw[bus].ra_phys_cnt;
 		}
 	} /* if (gdt->sc_more_proc) */
 
@@ -1464,7 +1510,7 @@ int
 gdt_ioctl_inq(struct gdt_softc *sc, struct bioc_inq *bi)
 {
 	bi->bi_novol = sc->sc_ndevs;
-	bi->bi_nodisk = 0;
+	bi->bi_nodisk = sc->sc_total_disks;
 
 	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
 
