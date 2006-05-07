@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.33 2006/05/07 20:34:08 marco Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.34 2006/05/07 20:46:00 marco Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -314,6 +314,7 @@ gdt_attach(gdt)
 	if (gdt->sc_more_proc) {
 		int bus;
 		/* physical drives, channel addresses */
+		/* step 1: get magical bus number from firmware */
 		gdt_enc32(gdt->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
 		gdt->sc_scratch[GDT_IOC_LIST_ENTRIES] = GDT_MAXBUS;
 		gdt->sc_scratch[GDT_IOC_FIRST_CHAN] = 0;
@@ -321,7 +322,7 @@ gdt_attach(gdt)
 		gdt_enc32(gdt->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
 		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
 		    GDT_IOCHAN_DESC, GDT_INVALID_CHANNEL,
-		    GDT_IOC_HDR_SZ + GDT_RAWIOC_SZ)) {
+		    GDT_IOC_HDR_SZ + GDT_IOC_SZ)) {
 			GDT_DPRINTF(GDT_D_INFO, ("method 1\n"));
 			for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
 				gdt->sc_raw[bus].ra_address =
@@ -352,7 +353,6 @@ gdt_attach(gdt)
 				    gdt->sc_raw[bus].ra_local_no));
 			}
 		}
-
 	} /* if (gdt->sc_more_proc) */
 
 	if (!gdt_internal_cmd(gdt, GDT_SCSIRAWSERVICE, GDT_INIT, 0, 0, 0)) {
