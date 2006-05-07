@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.32 2005/12/03 16:53:16 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.33 2006/05/07 20:34:08 marco Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -76,7 +76,12 @@ int	gdt_internal_cmd(struct gdt_softc *, u_int8_t, u_int16_t,
     u_int32_t, u_int32_t, u_int32_t);
 #if NBIO > 0
 int	gdt_ioctl(struct device *, u_long, caddr_t);
-#endif
+int	gdt_ioctl_inq(struct gdt_softc *, struct bioc_inq *);
+int	gdt_ioctl_vol(struct gdt_softc *, struct bioc_vol *);
+int	gdt_ioctl_disk(struct gdt_softc *, struct bioc_disk *);
+int	gdt_ioctl_alarm(struct gdt_softc *, struct bioc_alarm *);
+int	gdt_ioctl_setstate(struct gdt_softc *, struct bioc_setstate *);
+#endif /* NBIO > 0 */
 int	gdt_raw_scsi_cmd(struct scsi_xfer *);
 int	gdt_scsi_cmd(struct scsi_xfer *);
 void	gdt_start_ccbs(struct gdt_softc *);
@@ -123,10 +128,10 @@ gdt_attach(gdt)
 
 	if (bus_dmamem_alloc(gdt->sc_dmat, GDT_SCRATCH_SZ, PAGE_SIZE, 0,
 	    &gdt->sc_scratch_seg, 1, &nsegs, BUS_DMA_NOWAIT))
-	    panic("%s: bus_dmamem_alloc failed", gdt->sc_dev.dv_xname);
+	    panic("%s: bus_dmamem_alloc failed", DEVNAME(gdt));
 	if (bus_dmamem_map(gdt->sc_dmat, &gdt->sc_scratch_seg, 1,
 	    GDT_SCRATCH_SZ, &gdt->sc_scratch, BUS_DMA_NOWAIT))
-	    panic("%s: bus_dmamem_map failed", gdt->sc_dev.dv_xname);
+	    panic("%s: bus_dmamem_map failed", DEVNAME(gdt));
 
 	gdt_clear_events(gdt);
 
@@ -145,7 +150,7 @@ gdt_attach(gdt)
 		    &gdt->sc_ccbs[i].gc_dmamap_xfer);
 		if (error) {
 			printf("%s: cannot create ccb dmamap (%d)",
-			    gdt->sc_dev.dv_xname, error);
+			    DEVNAME(gdt), error);
 			return (1);
 		}
 		(void)gdt_ccb_set_cmd(gdt->sc_ccbs + i, GDT_GCF_UNUSED);
@@ -307,8 +312,48 @@ gdt_attach(gdt)
 
 	/* Read more information */
 	if (gdt->sc_more_proc) {
-		/* XXX Not implemented yet */
-	}
+		int bus;
+		/* physical drives, channel addresses */
+		gdt_enc32(gdt->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
+		gdt->sc_scratch[GDT_IOC_LIST_ENTRIES] = GDT_MAXBUS;
+		gdt->sc_scratch[GDT_IOC_FIRST_CHAN] = 0;
+		gdt->sc_scratch[GDT_IOC_LAST_CHAN] = GDT_MAXBUS - 1;
+		gdt_enc32(gdt->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
+		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+		    GDT_IOCHAN_DESC, GDT_INVALID_CHANNEL,
+		    GDT_IOC_HDR_SZ + GDT_RAWIOC_SZ)) {
+			GDT_DPRINTF(GDT_D_INFO, ("method 1\n"));
+			for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
+				gdt->sc_raw[bus].ra_address =
+				    gdt_dec32(gdt->sc_scratch +
+				    GDT_IOC_HDR_SZ +
+				    GDT_IOC_SZ * bus +
+				    GDT_IOC_ADDRESS);
+				gdt->sc_raw[bus].ra_local_no =
+				    gdt_dec8(gdt->sc_scratch +
+				    GDT_IOC_HDR_SZ +
+				    GDT_IOC_SZ * bus +
+				    GDT_IOC_LOCAL_NO);
+				GDT_DPRINTF(GDT_D_INFO, (
+				    "bus: %d address: %x local: %x\n",
+				    bus,
+				    gdt->sc_raw[bus].ra_address,
+				    gdt->sc_raw[bus].ra_local_no));
+			}
+		} else {
+			GDT_DPRINTF(GDT_D_INFO, ("method 2\n"));
+			for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
+				gdt->sc_raw[bus].ra_address = GDT_IO_CHANNEL;
+				gdt->sc_raw[bus].ra_local_no = bus;
+				GDT_DPRINTF(GDT_D_INFO, (
+				    "bus: %d address: %x local: %x\n",
+				    bus,
+				    gdt->sc_raw[bus].ra_address,
+				    gdt->sc_raw[bus].ra_local_no));
+			}
+		}
+
+	} /* if (gdt->sc_more_proc) */
 
 	if (!gdt_internal_cmd(gdt, GDT_SCSIRAWSERVICE, GDT_INIT, 0, 0, 0)) {
 		printf("raw service initialization error %d\n",
@@ -377,18 +422,18 @@ gdt_attach(gdt)
 	printf("dpmem %x %d-bus %d cache device%s\n", gdt->sc_dpmembase,
 	    gdt->sc_bus_cnt, cdev_cnt, cdev_cnt == 1 ? "" : "s");
 	printf("%s: ver %x, cache %s, strategy %d, writeback %s, blksz %d\n",
-	    gdt->sc_dev.dv_xname, gdt->sc_cpar.cp_version,
+	    DEVNAME(gdt), gdt->sc_cpar.cp_version,
 	    gdt->sc_cpar.cp_state ? "on" : "off", gdt->sc_cpar.cp_strategy,
 	    gdt->sc_cpar.cp_write_back ? "on" : "off",
 	    gdt->sc_cpar.cp_block_size);
 #if 1
-	printf("%s: raw feat %x cache feat %x\n", gdt->sc_dev.dv_xname,
+	printf("%s: raw feat %x cache feat %x\n", DEVNAME(gdt),
 	    gdt->sc_raw_feat, gdt->sc_cache_feat);
 #endif
 
 #if NBIO > 0
 	if (bio_register(&gdt->sc_dev, gdt_ioctl) != 0)
-		panic("%s: controller registration failed", gdt->sc_dev.dv_xname);
+		panic("%s: controller registration failed", DEVNAME(gdt));
 #endif
 	gdt_cnt++;
 
@@ -602,7 +647,7 @@ gdt_scsi_cmd(xs)
 				    gdt->sc_hdr[target].hd_size) {
 					printf(
 					    "%s: out of bounds %u-%u >= %u\n",
-					    gdt->sc_dev.dv_xname, blockno,
+					    DEVNAME(gdt), blockno,
 					    blockcnt,
 					    gdt->sc_hdr[target].hd_size);
 					/*
@@ -641,7 +686,7 @@ gdt_scsi_cmd(xs)
 				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 				if (error) {
 					printf("%s: gdt_scsi_cmd: ",
-					    gdt->sc_dev.dv_xname);
+					    DEVNAME(gdt));
 					if (error == EFBIG)
 						printf(
 						    "more than %d dma segs\n",
@@ -670,7 +715,7 @@ gdt_scsi_cmd(xs)
 				if (!gdt_wait(gdt, ccb, ccb->gc_timeout)) {
 					GDT_UNLOCK_GDT(gdt, lock);
 					printf("%s: command %d timed out\n",
-					    gdt->sc_dev.dv_xname,
+					    DEVNAME(gdt),
 					    ccb->gc_cmd_index);
 					return (TRY_AGAIN_LATER);
 				}
@@ -801,7 +846,7 @@ gdt_exec_ccb(ccb)
 	if (gdt->sc_cmd_cnt > 0 &&
 	    gdt->sc_cmd_off + gdt->sc_cmd_len + GDT_DPMEM_COMMAND_OFFSET >
 	    gdt->sc_ic_all_size) {
-		printf("%s: DPMEM overflow\n", gdt->sc_dev.dv_xname);
+		printf("%s: DPMEM overflow\n", DEVNAME(gdt));
 		gdt_free_ccb(gdt, ccb);
 		xs->error = XS_BUSY;
 #if 1 /* XXX */
@@ -915,10 +960,42 @@ int
 gdt_raw_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
+	struct scsi_link *link = xs->sc_link;
+	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_ccb *ccb;
+	int s;
+
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_raw_scsi_cmd "));
 
-	/* XXX Not yet implemented */
+	s = GDT_LOCK_GDT(gdt);
+
+	if (xs->cmdlen > 12 /* XXX create #define */) {
+		GDT_DPRINTF(GDT_D_CMD, ("CDB too big %p ", xs));
+		bzero(&xs->sense, sizeof(xs->sense));
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
+		xs->error = XS_SENSE;
+		scsi_done(xs);
+		GDT_UNLOCK_GDT(gdt, s);
+		return (COMPLETE);
+	}
+
+	if ((ccb = gdt_get_ccb(gdt, xs->flags)) == NULL) {
+		GDT_DPRINTF(GDT_D_CMD, ("no ccb available for %p ", xs));
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		GDT_UNLOCK_GDT(gdt, s);
+		return (COMPLETE);
+	}
+
 	xs->error = XS_DRIVER_STUFFUP;
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+	gdt_free_ccb(gdt, ccb);
+
+	GDT_UNLOCK_GDT(gdt, s);
+
 	return (COMPLETE);
 }
 
@@ -1033,7 +1110,7 @@ gdt_intr(arg)
 
 	case GDT_SPEZINDEX:
 		printf("%s: uninitialized or unknown service (%d %d)\n",
-		    gdt->sc_dev.dv_xname, ctx.info, ctx.info2);
+		    DEVNAME(gdt), ctx.info, ctx.info2);
 		chain = 0;
 		goto finish;
 	}
@@ -1145,7 +1222,7 @@ gdt_internal_cmd(gdt, service, opcode, arg1, arg2, arg3)
 		ccb = gdt_get_ccb(gdt, SCSI_NOSLEEP);
 		if (ccb == NULL) {
 			printf("%s: no free command index found\n",
-			    gdt->sc_dev.dv_xname);
+			    DEVNAME(gdt));
 			return (0);
 		}
 		ccb->gc_service = service;
@@ -1342,6 +1419,84 @@ gdt_watchdog(arg)
 
 #if NBIO > 0
 int
+gdt_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct gdt_softc *sc = (struct gdt_softc *)dev;
+	int error = 0;
+
+	GDT_DPRINTF(GDT_D_IOCTL, ("%s: ioctl ", DEVNAME(sc)));
+
+	switch (cmd) {
+	case BIOCINQ:
+		GDT_DPRINTF(GDT_D_IOCTL, ("inq "));
+		error = gdt_ioctl_inq(sc, (struct bioc_inq *)addr);
+		break;
+
+	case BIOCVOL:
+		GDT_DPRINTF(GDT_D_IOCTL, ("vol "));
+		error = gdt_ioctl_vol(sc, (struct bioc_vol *)addr);
+		break;
+
+	case BIOCDISK:
+		GDT_DPRINTF(GDT_D_IOCTL, ("disk "));
+		error = gdt_ioctl_disk(sc, (struct bioc_disk *)addr);
+		break;
+
+	case BIOCALARM:
+		GDT_DPRINTF(GDT_D_IOCTL, ("alarm "));
+		error = gdt_ioctl_alarm(sc, (struct bioc_alarm *)addr);
+		break;
+
+	case BIOCSETSTATE:
+		GDT_DPRINTF(GDT_D_IOCTL, ("setstate "));
+		error = gdt_ioctl_setstate(sc, (struct bioc_setstate *)addr);
+		break;
+
+	default:
+		GDT_DPRINTF(GDT_D_IOCTL, (" invalid ioctl\n"));
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+int
+gdt_ioctl_inq(struct gdt_softc *sc, struct bioc_inq *bi)
+{
+	bi->bi_novol = sc->sc_ndevs;
+	bi->bi_nodisk = 0;
+
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
+
+	return (0);
+}
+
+int
+gdt_ioctl_vol(struct gdt_softc *sc, struct bioc_vol *bv)
+{
+	return (1); /* XXX not yet */
+}
+
+int
+gdt_ioctl_disk(struct gdt_softc *sc, struct bioc_disk *bd)
+{
+	return (1); /* XXX not yet */
+}
+
+int
+gdt_ioctl_alarm(struct gdt_softc *sc, struct bioc_alarm *ba)
+{
+	return (1); /* XXX not yet */
+}
+
+int
+gdt_ioctl_setstate(struct gdt_softc *sc, struct bioc_setstate *bs)
+{
+	return (1); /* XXX not yet */
+}
+
+#if 0
+int
 gdt_ioctl(dev, cmd, addr)
 	struct device *dev;
 	u_long cmd;
@@ -1465,4 +1620,5 @@ gdt_ioctl(dev, cmd, addr)
 	}
 	return (error);
 }
-#endif
+#endif /* 0 */
+#endif /* NBIO > 0 */

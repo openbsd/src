@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.10 2005/05/26 23:44:44 jason Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.11 2006/05/07 20:34:09 marco Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -29,6 +29,7 @@
  * from both ICP-Vortex and Öko.neT.  I want to thank them for their support.
  */
 
+#define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 #define GDT_CMD_RESERVE	4	/* Internal driver cmd reserve. */
 
 #define GDT_IOCTL_DUMMY _IOWR('B', 32, struct gdt_dummy)
@@ -202,6 +203,7 @@ typedef struct gdt_statist {
 #ifdef _KERNEL
 
 /* Debugging */
+/* #define GDT_DEBUG	GDT_D_IOCTL | GDT_D_INFO */
 #ifdef GDT_DEBUG
 #define GDT_DPRINTF(mask, args) if (gdt_debug & (mask)) printf args
 #define GDT_D_INTR	0x01
@@ -209,6 +211,8 @@ typedef struct gdt_statist {
 #define GDT_D_CMD	0x04
 #define GDT_D_QUEUE	0x08
 #define GDT_D_IO	0x10
+#define GDT_D_IOCTL	0x20
+#define GDT_D_INFO	0x40
 extern int gdt_debug;
 #else
 #define GDT_DPRINTF(mask, args)
@@ -335,6 +339,15 @@ struct gdt_softc {
 	} sc_hdr[GDT_MAX_HDRIVES];
 
 	struct {
+		u_int8_t	ra_lock;	/* chan locked? (hot plug */
+		u_int8_t	ra_phys_cnt;	/* physical disk count */
+		u_int8_t	ra_local_no;	/* local channel number */
+		u_int8_t	ra_io_cnt[GDT_MAXID];	/* current IO count */
+		u_int32_t	ra_address;	/* channel address */
+		u_int32_t	ra_id_lis[GDT_MAXID];	/* IDs of phys disks */
+	} sc_raw[GDT_MAXBUS];			/* SCSI channels */
+
+	struct {
 		u_int32_t cp_version;
 		u_int16_t cp_state;
 		u_int16_t cp_strategy;
@@ -401,6 +414,7 @@ int	gdt_intr(void *);
 /* These all require correctly aligned buffers */
 static __inline__ void gdt_enc16(u_int8_t *, u_int16_t);
 static __inline__ void gdt_enc32(u_int8_t *, u_int32_t);
+static __inline__ u_int8_t gdt_dec8(u_int8_t *);
 static __inline__ u_int16_t gdt_dec16(u_int8_t *);
 static __inline__ u_int32_t gdt_dec32(u_int8_t *);
 
@@ -418,6 +432,13 @@ gdt_enc32(addr, value)
 	u_int32_t value;
 {
 	*(u_int32_t *)addr = htole32(value);
+}
+
+static __inline__ u_int8_t
+gdt_dec8(addr)
+	u_int8_t *addr;
+{
+	return *addr;
 }
 
 static __inline__ u_int16_t
