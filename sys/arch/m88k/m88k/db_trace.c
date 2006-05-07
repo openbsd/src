@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2005/11/20 22:07:09 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2006/05/07 15:47:12 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -49,8 +49,6 @@ unsigned br_dest(unsigned addr, u_int inst)
 	return (addr + inst);
 }
 
-/* #define TRACE_DEBUG */
-
 int frame_is_sane(db_regs_t *regs, int);
 const char *m88k_exception_name(unsigned vector);
 unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
@@ -69,26 +67,6 @@ unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
 
 /* st r1, r31, IMM */
 #define ST_R1_R31_IMM(I)    (((I) & 0xffff0000) == 0x243f0000U)
-
-#ifdef TRACE_DEBUG
-static int trace_flags;
-#define TRACE_DEBUG_FLAG		0x01
-#define TRACE_SHOWCALLPRESERVED_FLAG	0x02
-#define TRACE_SHOWADDRESS_FLAG		0x04
-#define TRACE_SHOWFRAME_FLAG		0x08
-#define TRACE_USER_FLAG			0x10
-#define DEBUGGING_ON (trace_flags & TRACE_DEBUG_FLAG)
-#define SHOW_INSTRUCTION(Addr, Inst, Note) \
-do { \
-	if (DEBUGGING_ON) { \
-		db_printf("%s0x%x: (0x%08x) ", Note, (unsigned)(Addr), Inst); \
-		m88k_print_instruction((unsigned)(Addr), Inst); \
-		db_printf("\n"); \
-	} \
-} while (0)
-#else
-#define SHOW_INSTRUCTION(Addr, Inst, Note)	do { /* nothing */ } while (0)
-#endif
 
 extern label_t *db_recover;
 
@@ -190,7 +168,6 @@ m88k_instruction_info(unsigned instruction)
 	for (ptr = &control[0]; ptr < &control[ctrl_count]; ptr++)
 		if ((instruction & ptr->mask) == ptr->value)
 			return ptr->flags;
-	SHOW_INSTRUCTION(0, instruction, "bad m88k_instruction_info");
 	return 0;
 }
 
@@ -341,17 +318,9 @@ static void
 save_reg(int reg, unsigned value)
 {
 	reg &= 0x1f;
-#ifdef TRACE_DEBUG
-	if (DEBUGGING_ON)
-		db_printf("save_reg(%d, %x)\n", reg, value);
-#endif
-	if (trashed_list & reg_bit(reg)) {
-#ifdef TRACE_DEBUG
-		if (DEBUGGING_ON)
-			db_printf("<trashed>\n");
-#endif
+	if (trashed_list & reg_bit(reg))
 		return;	/* don't save trashed registers */
-	}
+
 	saved_reg[reg] = value;
 	global_saved_list |= reg_bit(reg);
 	local_saved_list |= reg_bit(reg);
@@ -509,11 +478,6 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 	unsigned ret_addr;	    /* address to which we return */
 	unsigned tried_to_save_r1 = 0;
 
-#ifdef TRACE_DEBUG
-	if (DEBUGGING_ON)
-		(*pr)("\n>>>stack_decode(addr=%x, stack=%x)\n", addr, *stack);
-#endif
-
 	/* get what we hope will be the db_sym_t for the function name */
 	proc = db_search_symbol(addr, DB_STGY_PROC, &offset_from_proc);
 	if (offset_from_proc == addr) /* i.e. no symbol found */
@@ -529,10 +493,6 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 		db_symbol_values(proc, &names, &function_addr);
 		if (names == 0)
 			return 0;
-#ifdef TRACE_DEBUG
-		if (DEBUGGING_ON)
-			(*pr)("name %s address 0x%x\n", names, function_addr);
-#endif
 	} else {
 		int instructions_to_check = 400;
 		/*
@@ -571,23 +531,11 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 			 * right in front of us, we know this doesn't have one so
 			 * we just return failure....
 			 */
-			if (JMP_R1(inst) || JMPN_R1(inst)) {
-#ifdef TRACE_DEBUG
-				if (DEBUGGING_ON)
-					(*pr)("ran into a [jmp r1] at %x (addr=%x)\n",
-					    check_addr, addr);
-#endif
+			if (JMP_R1(inst) || JMPN_R1(inst))
 				return 0;
-			}
 		}
-		if (instructions_to_check < 0) {
-#ifdef TRACE_DEBUG
-			if (DEBUGGING_ON)
-				(*pr)("couldn't find func start (addr=%x)\n",
-				    addr);
-#endif
+		if (instructions_to_check < 0)
 			return 0; /* bummer, couldn't find it */
-		}
 		function_addr = check_addr;
 	}
 
@@ -597,29 +545,12 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 	 *		subu r31, r31, ####
 	 * then we're done.
 	 */
-	if (addr == function_addr) {
-#ifdef TRACE_DEBUG
-		if (DEBUGGING_ON)
-			(*pr)("at start of func\n");
-#endif
+	if (addr == function_addr)
 		return 0;
-	}
-	if (!db_trace_get_val(function_addr, &inst)) {
-#ifdef TRACE_DEBUG
-		if (DEBUGGING_ON)
-			(*pr)("couldn't read %x at line %d\n",
-			    function_addr, __LINE__);
-#endif
+	if (!db_trace_get_val(function_addr, &inst))
 		return 0;
-	}
-	SHOW_INSTRUCTION(function_addr, inst, "start of function: ");
-	if (!SUBU_R31_R31_IMM(inst)) {
-#ifdef TRACE_DEBUG
-		if (DEBUGGING_ON)
-			(*pr)("<not subu,r31,r31,imm>\n");
-#endif
+	if (!SUBU_R31_R31_IMM(inst))
 		return 0;
-	}
 
 	/* add the size of this frame to the stack (for the next frame) */
 	*stack += IMM16VAL(inst);
@@ -641,16 +572,8 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 		unsigned flags;
 
 		/* read the instruction */
-		if (!db_trace_get_val(check_addr, &instruction)) {
-#ifdef TRACE_DEBUG
-			if (DEBUGGING_ON)
-				(*pr)("couldn't read %x at line %d\n",
-				    check_addr, __LINE__);
-#endif
+		if (!db_trace_get_val(check_addr, &instruction))
 			break;
-		}
-
-		SHOW_INSTRUCTION(check_addr, instruction, "prolog: ");
 
 		/* find out the particulars about this instruction */
 		flags = m88k_instruction_info(instruction);
@@ -700,20 +623,10 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 			(*pr)("    <return value of next fcn unreadable in %08x>\n",
 				  tried_to_save_r1);
 		}
-#ifdef TRACE_DEBUG
-		if (DEBUGGING_ON)
-			(*pr)("didn't save r1\n");
-#endif
 		return 0;
 	}
 
 	ret_addr = saved_reg_value(1);
-
-#ifdef TRACE_DEBUG
-	if (DEBUGGING_ON)
-		(*pr)("Return value is = %x, function_addr is %x.\n",
-		    ret_addr, function_addr);
-#endif
 
 	if (ret_addr != 0) {
 		switch (is_jump_source_ok(ret_addr, function_addr)) {
@@ -721,10 +634,6 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 			break; /* excellent */
 
 		case JUMP_SOURCE_IS_BAD:
-#ifdef TRACE_DEBUG
-			if (DEBUGGING_ON)
-				(*pr)("jump is bad\n");
-#endif
 			return 0; /* bummer */
 
 		case JUMP_SOURCE_IS_UNLIKELY:
@@ -761,20 +670,12 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	/* if user space and no user space trace specified, puke */
 	if (ft == 2)
 		return;
-#ifdef TRACE_DEBUG
-	if (!(trace_flags & TRACE_USER_FLAG))
-		return;
-#endif
 
 	/* fetch address */
 	where = PC_REGS(regs);
 	stack = regs->r[31];
 	(*pr)("stack base = 0x%x\n", stack);
 	(*pr)("(0) "); /* depth of trace */
-#ifdef TRACE_DEBUG
-	if (trace_flags & TRACE_SHOWADDRESS_FLAG)
-		(*pr)("%08x ", where);
-#endif
 	db_printsym(where, DB_STGY_PROC, pr);
 	clear_global_saved_regs();
 
@@ -782,13 +683,8 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	if ((where = stack_decode(where, &stack, pr)) == 0) {
 		where = regs->r[1];
 		(*pr)("(stackless)");
-	} else {
+	} else
 		print_args();
-#ifdef TRACE_DEBUG
-		if (trace_flags & TRACE_SHOWFRAME_FLAG)
-			(*pr)(" [frame 0x%x]", stack);
-#endif
-	}
 	(*pr)("\n");
 	if (note) {
 		(*pr)("   %s\n", note);
@@ -802,44 +698,12 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		 * changed from the last exception frame are shown, as others
 		 * can be gotten at by looking at the exception frame.
 		 */
-#ifdef TRACE_DEBUG
-		if (trace_flags & TRACE_SHOWCALLPRESERVED_FLAG) {
-			int r, title_printed = 0;
-
-			for (r = FIRST_CALLPRESERVED_REG; r<=LAST_CALLPRESERVED_REG; r++) {
-				if (have_global_reg(r)) {
-					unsigned value = saved_reg_value(r);
-					if (title_printed == 0) {
-						title_printed = 1;
-						(*pr)("[in next func:");
-					}
-					if (value == 0)
-						(*pr)(" r%d", r);
-					else if (value <= 9)
-						(*pr)(" r%d=%x", r, value);
-					else
-						(*pr)(" r%d=x%x", r, value);
-				}
-			}
-			if (title_printed)
-				(*pr)("]\n");
-		}
-#endif
-
 		(*pr)("(%d)%c", depth++, next_address_likely_wrong ? '?' : ' ');
 		next_address_likely_wrong = 0;
 
-#ifdef TRACE_DEBUG
-		if (trace_flags & TRACE_SHOWADDRESS_FLAG)
-			(*pr)("%08x ", where);
-#endif
 		db_printsym(where, DB_STGY_PROC, pr);
 		where = stack_decode(where, &stack, pr);
 		print_args();
-#ifdef TRACE_DEBUG
-		if (trace_flags & TRACE_SHOWFRAME_FLAG)
-			(*pr)(" [frame 0x%x]", stack);
-#endif
 		(*pr)("\n");
 		if (note) {
 			(*pr)("   %s\n", note);
@@ -853,12 +717,6 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	/* take last top of stack, and try to find an exception frame near it */
 
 	i = FRAME_PLAY;
-
-#ifdef TRACE_DEBUG
-	if (DEBUGGING_ON)
-		(*pr)("(searching for exception frame at 0x%x)\n", stack);
-#endif
-
 	while (i) {
 		/*
 		 * On the stack, a pointer to the exception frame is written
@@ -906,49 +764,10 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 				db_stack_trace_cmd2(&frame->tf_regs, pr);
 				return;
 			}
-#ifdef TRACE_DEBUG
-			else if (DEBUGGING_ON)
-				(*pr)("pair matched, but frame at 0x%x looks insane\n",
-				    stack + 8);
-#endif
 		}
 		stack += 8;
 		i--;
 	}
-
-	/*
-	 * If we go here, crawling back on the stack failed to find us
-	 * a previous exception frame. Look for a user frame pointer
-	 * pointed to by a word 8 bytes off of the top of the stack
-	 * if the "u" option was specified.
-	 */
-#ifdef TRACE_DEBUG
-	if (trace_flags & TRACE_USER_FLAG) {
-		struct trapframe *user;
-
-		/* Make sure we are back on the right page */
-		stack -= 4 * FRAME_PLAY;
-		stack = stack & ~(KERNEL_STACK_SIZE-1);	/* point to the bottom */
-		stack += KERNEL_STACK_SIZE - 8;
-
-		if (badwordaddr((vaddr_t)stack) ||
-		    badwordaddr((vaddr_t)stack + sizeof(int)))
-			return;
-
-		db_read_bytes((vaddr_t)stack, 2*sizeof(int), (char *)pair);
-		if (pair[0] != pair[1])
-			return;
-
-		/* have a hit */
-		user = *((struct trapframe **)stack);
-
-		if (frame_is_sane(&user->tf_regs, 1) == 2) {
-			(*pr)("---------------- %s [EF : 0x%x] -------------\n",
-			    m88k_exception_name(user->tf_vector), user);
-			db_stack_trace_cmd2(&user->tf_regs, pr);
-		}
-	}
-#endif
 }
 
 /*
@@ -976,42 +795,17 @@ db_stack_trace_print(db_expr_t addr,
 
 	arg.num = addr;
 
-#ifdef TRACE_DEBUG
-	trace_flags = 0; /* flags will be set via modifers */
-#endif
-
 	while (modif && *modif) {
 		switch (*modif++) {
-#ifdef TRACE_DEBUG
-		case 'd':
-			trace_flags |= TRACE_DEBUG_FLAG;
-			break;
-#endif
-
 		case 's': style = Stack  ; break;
 		case 'f': style = Frame  ; break;
-#ifdef TRACE_DEBUG
-		case 'p': trace_flags |= TRACE_SHOWCALLPRESERVED_FLAG; break;
-		case 'a': trace_flags |= TRACE_SHOWADDRESS_FLAG; break;
-		case 'F': trace_flags |= TRACE_SHOWFRAME_FLAG; break;
-		case 'u': trace_flags |= TRACE_USER_FLAG; break;
-#endif
 		default:
 			(*pr)("unknown trace modifier [%c]\n", modif[-1]);
 			/*FALLTHROUGH*/
 		case 'h':
 			(*pr)("usage: trace/[MODIFIER]  [ARG]\n");
-#ifdef TRACE_DEBUG
-			(*pr)("  u = include user trace\n");
-			(*pr)("  F = print stack frames\n");
-			(*pr)("  a = show return addresses\n");
-			(*pr)("  p = show call-preserved registers\n");
-#endif
 			(*pr)("  s = ARG is a stack pointer\n");
 			(*pr)("  f = ARG is a frame pointer\n");
-#ifdef TRACE_DEBUG
-			(*pr)("  d = trace-debugging output\n");
-#endif
 			return;
 		}
 	}
