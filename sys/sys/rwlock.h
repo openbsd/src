@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.5 2006/01/06 06:50:31 tedu Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.6 2006/05/07 20:12:41 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -73,6 +73,7 @@ struct proc;
 
 struct rwlock {
 	__volatile unsigned long rwl_owner;
+	const char *rwl_name;
 };
 
 #define RWLOCK_INITIALIZER	{ 0 }
@@ -87,7 +88,7 @@ struct rwlock {
 #define RWLOCK_READER_SHIFT	3UL
 #define RWLOCK_READ_INCR	(1UL << RWLOCK_READER_SHIFT)
 
-void rw_init(struct rwlock *);
+void rw_init(struct rwlock *, const char *);
 
 void rw_enter_read(struct rwlock *);
 void rw_enter_write(struct rwlock *);

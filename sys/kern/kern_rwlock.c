@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.6 2006/04/20 14:36:24 pedro Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.7 2006/05/07 20:12:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -198,9 +198,10 @@ rw_exit_diag(struct rwlock *rwl, int owner)
 #endif
 
 void
-rw_init(struct rwlock *rwl)
+rw_init(struct rwlock *rwl, const char *name)
 {
 	rwl->rwl_owner = 0;
+	rwl->rwl_name = name;
 }
 
 /*
@@ -230,7 +231,7 @@ retry:
 
 		rw_enter_diag(rwl, flags);
 
-		if ((error = tsleep(rwl, prio, "rwlock", 0)) != 0)
+		if ((error = tsleep(rwl, prio, rwl->rwl_name, 0)) != 0)
 			return (error);
 		if (flags & RW_SLEEPFAIL)
 			return (EAGAIN);

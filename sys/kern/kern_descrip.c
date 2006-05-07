@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.73 2006/01/06 18:28:33 jmc Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.74 2006/05/07 20:12:41 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -847,7 +847,7 @@ fdinit(struct proc *p)
 		if (newfdp->fd_fd.fd_rdir)
 			VREF(newfdp->fd_fd.fd_rdir);
 	}
-	rw_init(&newfdp->fd_fd.fd_lock);
+	rw_init(&newfdp->fd_fd.fd_lock, "fdlock");
 
 	/* Create the file descriptor table. */
 	newfdp->fd_fd.fd_refcnt = 1;

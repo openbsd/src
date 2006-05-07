@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.6 2006/04/22 02:36:26 brad Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.7 2006/05/07 20:12:41 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -218,7 +218,7 @@ extern struct aac_interface aac_rkt_interface;
 /* Define the OS version specific locks */
 typedef struct rwlock aac_lock_t;
 #define AAC_LOCK_INIT(l, s)	do { \
-    rw_init((l)); \
+    rw_init((l), "aaclock"); \
     AAC_DPRINTF(AAC_D_LOCK, ("%s: init lock @%s: %d\n", \
 	        sc->aac_dev.dv_xname, __FUNCTION__, __LINE__)); \
 } while (0)
