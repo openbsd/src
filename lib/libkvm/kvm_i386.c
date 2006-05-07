@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.17 2006/04/27 15:44:05 mickey Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.18 2006/05/07 12:57:21 kettenis Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.17 2006/04/27 15:44:05 mickey Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.18 2006/05/07 12:57:21 kettenis Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,18 +70,16 @@ static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.17 2006/04/27 15:44:05 mickey Exp
 struct vmstate {
 	void *PTD;
 	paddr_t pg_frame;
+	paddr_t pt_mask;
 	int size;
 	int pte_size;
 };
 
-#undef pdei
-#define	pdei(vm,v)	((v) >> ((vm)->size == NBPG? 22 : 21))
-#undef ptei
-#define	ptei(vm,v)	((v) >> ((vm)->size == NBPG? 22 : 21))
+#define	pdei(vm,v)	((v) >> ((vm)->size == NBPG ? 22 : 21))
+#define	ptei(vm,v)	(((v) & (vm)->pt_mask) >> PGSHIFT)
 #define	PDE(vm,v)	\
-    ((vm)->size == NBPG? ((u_int32_t *)(vm)->PTD)[pdei(vm,v)] : \
+    ((vm)->size == NBPG ? ((u_int32_t *)(vm)->PTD)[pdei(vm,v)] : \
     ((u_int64_t *)(vm)->PTD)[pdei(vm,v)])
-#undef PG_FRAME
 #define	PG_FRAME(vm)	((vm)->pg_frame)
 #define	pte_size(vm)	((vm)->pte_size)
 
@@ -100,7 +98,7 @@ _kvm_freevtop(kvm_t *kd)
 int
 _kvm_initvtop(kvm_t *kd)
 {
-	struct nlist nlist[3];
+	struct nlist nl[3];
 	struct vmstate *vm;
 	paddr_t pa;
 	int ps;
@@ -112,30 +110,32 @@ _kvm_initvtop(kvm_t *kd)
 
 	vm->PTD = NULL;
 
-	nlist[0].n_name = "_PTDpaddr";
-	nlist[1].n_name = "_PTDsize";
-	nlist[2].n_name = NULL;
+	nl[0].n_name = "_PTDpaddr";
+	nl[1].n_name = "_PTDsize";
+	nl[2].n_name = NULL;
 
-	if (kvm_nlist(kd, nlist) != 0) {
+	if (kvm_nlist(kd, nl) != 0) {
 		_kvm_err(kd, kd->program, "bad namelist");
 		return (-1);
 	}
 
 	if (_kvm_pread(kd, kd->pmfd, &ps, sizeof ps,
-	    _kvm_pa2off(kd, nlist[1].n_value - KERNBASE)) != sizeof ps)
+	    _kvm_pa2off(kd, nl[1].n_value - KERNBASE)) != sizeof ps)
 		return (-1);
 
 	pa = 0;
 	if (ps == NBPG) {
 		vm->pg_frame = 0xfffff000;
+		vm->pt_mask = 0x003ff000;
 		vm->pte_size = 4;
 	} else {
 		vm->pg_frame = 0xffffff000ULL;
+		vm->pt_mask = 0x001ff000;
 		vm->pte_size = 8;
 	}
 
 	if (_kvm_pread(kd, kd->pmfd, &pa, vm->pte_size,
-	    _kvm_pa2off(kd, nlist[0].n_value - KERNBASE)) != sizeof pa)
+	    _kvm_pa2off(kd, nl[0].n_value - KERNBASE)) != vm->pte_size)
 		return (-1);
 
 	vm->PTD = _kvm_malloc(kd, ps);
@@ -148,6 +148,7 @@ _kvm_initvtop(kvm_t *kd)
 		return (-1);
 	}
 
+	vm->size = ps;
 	return (0);
 }
 
@@ -160,7 +161,6 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	u_long offset, pte_pa;
 	struct vmstate *vm;
 	paddr_t pte;
-	int i;
 
 	if (!kd->vmst) {
 		_kvm_err(kd, 0, "vatop called before initvtop");
@@ -190,6 +190,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	    (ptei(vm, va) * pte_size(vm));
 
 	/* XXX READ PHYSICAL XXX */
+	pte = 0;
 	if (_kvm_pread(kd, kd->pmfd, &pte, pte_size(vm),
 	    (off_t)_kvm_pa2off(kd, pte_pa)) != pte_size(vm))
 		goto invalid;
