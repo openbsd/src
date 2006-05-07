@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2005/12/01 22:24:49 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.5 2006/05/07 15:48:01 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -38,7 +38,7 @@
  * is the top (end) of the user stack.
  */
 #define	USRTEXT		0x1000			/* Start of user text */
-#define	USRSTACK	0x80000000		/* Start of user stack */
+#define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -68,16 +68,18 @@
 #define SHMMAXPGS	1024
 #endif
 
-#define	VM_MIN_ADDRESS		((vaddr_t) 0)
-#define	VM_MAX_ADDRESS		((vaddr_t) 0xffc00000)
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MAX_ADDRESS		((vaddr_t)0xffc00000)
 #define VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
 
-/* on vme188, max = 0xf0000000 */
+/*
+ * Although user and supervisor address spaces are separate, we limit
+ * ourselves to 512KB KVM because the kernel page table is statically
+ * allocated.
+ */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x20000000)
 
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0x20000000)
-
-#define KERNEL_STACK_SIZE	(3 * PAGE_SIZE)	/* kernel stack size */
 #define INTSTACK_SIZE		(4 * PAGE_SIZE)	/* interrupt stack size */
 
 /* virtual sizes (bytes) for various kernel submaps */
