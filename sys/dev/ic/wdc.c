@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.90 2006/05/03 02:18:47 jsg Exp $     */
+/*      $OpenBSD: wdc.c,v 1.91 2006/05/07 03:00:14 jsg Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1306,7 +1306,7 @@ wdc_probe_caps(drvp, params)
 		/* Skip ATA modes detection for native SATA drives */
 		drvp->PIO_mode = drvp->PIO_cap = 4;
 		drvp->DMA_mode = drvp->DMA_cap = 2;
-		drvp->UDMA_mode = drvp->UDMA_cap = 5;
+		drvp->UDMA_mode = drvp->UDMA_cap = 6;
 		drvp->drive_flags |= DRIVE_SATA | DRIVE_MODE | DRIVE_UDMA;
 		drvp->ata_vers = 4;
 		return;
