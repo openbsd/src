@@ -70,7 +70,7 @@
 ./usr/lib/libasn1.so.16.0
 ./usr/lib/libc.so.39.0
 ./usr/lib/libcom_err.so.16.0
-./usr/lib/libcrypto.so.12.0
+./usr/lib/libcrypto.so.12.1
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
