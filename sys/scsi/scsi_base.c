@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.100 2006/05/07 00:20:05 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.101 2006/05/07 20:50:21 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -516,8 +516,18 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 		 */
 		error = scsi_mode_sense(sc_link, 0, page, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
-		if (error == 0 && buf->hdr.data_length > 2) {
+		if (error == 0) {
 			*page_data = scsi_mode_sense_page(&buf->hdr, page_len);
+			if (*page_data == NULL)
+				/*
+				 * XXX
+				 * Page data may be invalid (e.g. all zeros)
+				 * but we accept the device's word that this is
+				 * the best it can do. Some devices will freak
+				 * out if their word is not accepted and 
+				 * MODE_SENSE_BIG is attempted.
+				 */
+				return (0);
 			offset = sizeof(struct scsi_mode_header);
 			blk_desc_len = buf->hdr.blk_desc_len;
 			goto blk_desc;
