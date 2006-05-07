@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.93 2006/04/23 19:44:31 kettenis Exp $	*/
+/*	$OpenBSD: dc.c,v 1.94 2006/05/07 03:56:25 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2542,6 +2542,9 @@ dc_intr(arg)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
+	if ((CSR_READ_4(sc, DC_ISR) & DC_INTRS) == 0)
+		return (claimed);
+
 	/* Suppress unwanted interrupts */
 	if (!(ifp->if_flags & IFF_UP)) {
 		if (CSR_READ_4(sc, DC_ISR) & DC_INTRS)
@@ -2552,8 +2555,9 @@ dc_intr(arg)
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, DC_IMR, 0x00000000);
 
-	while(((status = CSR_READ_4(sc, DC_ISR)) & DC_INTRS) &&
-	    status != 0xFFFFFFFF) {
+	while (((status = CSR_READ_4(sc, DC_ISR)) & DC_INTRS) &&
+	    status != 0xFFFFFFFF &&
+	    (ifp->if_flags & IFF_RUNNING)) {
 
 		claimed = 1;
 		CSR_WRITE_4(sc, DC_ISR, status);
