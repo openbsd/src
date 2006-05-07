@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.32 2005/09/30 18:04:45 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.33 2006/05/07 20:24:45 pedro Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 .Sh NAME
 .Nm pool_init ,
 .Nm pool_destroy ,
-.Nm pool_set_drain_hook ,
 .Nm pool_get ,
 .Nm pool_put ,
 .Nm pool_prime ,
@@ -71,12 +70,6 @@
 .Ft void
 .Fo pool_destroy
 .Fa "struct pool *pp"
-.Fc
-.Ft void
-.Fo pool_set_drain_hook
-.Fa "struct pool *pp"
-.Fa "void (*fn)(void *, int)"
-.Fa "void *arg"
 .Fc
 .Ft void *
 .Fn pool_get "struct pool *pp" "int flags"
@@ -176,22 +169,6 @@ function destroys a resource pool.
 It takes a single argument
 .Fa pp
 identifying the pool resource instance.
-.Ss SETTING DRAIN CALLBACK
-The
-.Fn pool_set_drain_hook
-function can be used to specify a function that will be called when
-memory is running low.
-The callback
-.Fa fn
-will be called with the arguments
-.Fa arg
-which is the third argument to
-.Fn pool_set_drain_hook
-and
-.Fa flags
-which will have
-.Dv PR_WAITOK
-set if the drain hook is allowed to sleep.
 .Ss ALLOCATING ITEMS FROM A POOL
 .Fn pool_get
 allocates an item from the pool and returns a pointer to it.
