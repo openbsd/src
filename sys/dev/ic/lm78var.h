@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.5 2006/01/26 22:07:14 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.6 2006/05/07 17:45:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -124,7 +124,7 @@ struct lm_sensor {
 	u_int8_t bank;
 	u_int8_t reg;
 	void (*refresh)(struct lm_softc *, int);
-	u_int rfact;
+	int rfact;
 };
 
 struct lm_softc {

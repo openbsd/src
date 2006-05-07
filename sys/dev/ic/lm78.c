@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.8 2006/04/28 19:20:18 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.9 2006/05/07 17:45:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -32,6 +32,17 @@
 #define DPRINTF(x)
 #endif
 
+/*
+ * LM78-compatible chips can typically measure voltages up to 4.096 V.
+ * To measure higher voltages the input is attenuated with (external)
+ * resistors.  Negative voltages are measured using inverting op amps
+ * and resistors.  So we have to convert the sensor values back to
+ * real voltages by applying the appropriate resistor factor.
+ */
+#define RFACT_NONE	10000
+#define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
+#define NRFACT(x, y)	(-RFACT_NONE * (x) / (y))
+
 struct cfdriver lm_cd = {
 	NULL, "lm", DV_DULL
 };
@@ -44,14 +55,12 @@ void lm_setup_sensors(struct lm_softc *, struct lm_sensor *);
 void lm_refresh(void *);
 
 void lm_refresh_sensor_data(struct lm_softc *);
-void lm_refresh_volts(struct lm_softc *, int);
-void lm_refresh_nvolts(struct lm_softc *, int);
+void lm_refresh_volt(struct lm_softc *, int);
 void lm_refresh_temp(struct lm_softc *, int);
 void lm_refresh_fanrpm(struct lm_softc *, int);
 
 void wb_refresh_sensor_data(struct lm_softc *);
-void wb_refresh_n12volts(struct lm_softc *, int);
-void wb_refresh_n5volts(struct lm_softc *, int);
+void wb_refresh_nvolt(struct lm_softc *, int);
 void wb_refresh_temp(struct lm_softc *, int);
 void wb_refresh_fanrpm(struct lm_softc *, int);
 void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
@@ -70,13 +79,13 @@ struct lm_chip lm_chips[] = {
 
 struct lm_sensor lm78_sensors[] = {
 	/* Voltage */
-	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 40000 },
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_nvolts, 40000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_nvolts, 16667 },
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(68, 100) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(30, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_volt, NRFACT(240, 60) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volt, NRFACT(100, 60) },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -91,15 +100,15 @@ struct lm_sensor lm78_sensors[] = {
 
 struct lm_sensor w83627hf_sensors[] = {
 	/* Voltage */
-	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
-	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 15151 },
-	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(17, 33) },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -116,13 +125,13 @@ struct lm_sensor w83627hf_sensors[] = {
 
 struct lm_sensor w83637hf_sensors[] = {
 	/* Voltage */
-	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 38000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16667 },
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x24, wb_refresh_n12volts, 10000 },
-	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 16667 },
-	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(28, 10) },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 51) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x24, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(34, 51) },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -139,14 +148,14 @@ struct lm_sensor w83637hf_sensors[] = {
 
 struct lm_sensor w83697hf_sensors[] = {
 	/* Voltage */
-	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V",SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
-	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 15151 },
-	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(17, 33) },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -159,15 +168,20 @@ struct lm_sensor w83697hf_sensors[] = {
 	{ NULL }
 };
 
+/*
+ * The datasheet doesn't mention the (internal) resistors used for the
+ * +5V, but using the values from the W83782D datasheets seems to
+ * provide sensible results.
+ */
 struct lm_sensor w83781d_sensors[] = {
 	/* Voltage */
-	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 15050 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_nvolts, 34768 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_nvolts, 15050 },
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_volt, NRFACT(2100, 604) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volt, NRFACT(909, 604) },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -184,15 +198,15 @@ struct lm_sensor w83781d_sensors[] = {
 
 struct lm_sensor w83782d_sensors[] = {
 	/* Voltage */
-	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
-	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 15151 },
-	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(17, 33) },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -209,12 +223,12 @@ struct lm_sensor w83782d_sensors[] = {
 
 struct lm_sensor w83783s_sensors[] = {
 	/* Voltage */
-	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -230,16 +244,16 @@ struct lm_sensor w83783s_sensors[] = {
 
 struct lm_sensor w83791d_sensors[] = {
 	/* Voltage */
-	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
-	{ "5VSB", SENSOR_VOLTS_DC, 0, 0xb0, lm_refresh_volts, 15151 },
-	{ "VBAT", SENSOR_VOLTS_DC, 0, 0xb1, lm_refresh_volts, 10000 },
-	{ "VINR1", SENSOR_VOLTS_DC, 0, 0xb2, lm_refresh_volts, 10000 },
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, 10000 },
+	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
+	{ "5VSB", SENSOR_VOLTS_DC, 0, 0xb0, lm_refresh_volt, RFACT(17, 33) },
+	{ "VBAT", SENSOR_VOLTS_DC, 0, 0xb1, lm_refresh_volt, RFACT_NONE },
+	{ "VINR1", SENSOR_VOLTS_DC, 0, 0xb2, lm_refresh_volt, RFACT_NONE },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -258,15 +272,15 @@ struct lm_sensor w83791d_sensors[] = {
 
 struct lm_sensor w83792d_sensors[] = {
 	/* Voltage */
-	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x23, wb_refresh_n5volts, 10000 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volts, 16800 },
-	{ "5VSB", SENSOR_VOLTS_DC, 0, 0xb0, lm_refresh_volts, 15151 },
-	{ "VBAT", SENSOR_VOLTS_DC, 0, 0xb1, lm_refresh_volts, 10000 },
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x23, wb_refresh_nvolt, RFACT(120, 56) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volt, RFACT(34, 50) },
+	{ "5VSB", SENSOR_VOLTS_DC, 0, 0xb0, lm_refresh_volt, RFACT(17, 33) },
+	{ "VBAT", SENSOR_VOLTS_DC, 0, 0xb1, lm_refresh_volt, RFACT_NONE },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -287,13 +301,13 @@ struct lm_sensor w83792d_sensors[] = {
 
 struct lm_sensor as99127f_sensors[] = {
 	/* Voltage */
-	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
-	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000  },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
-	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
-	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -404,7 +418,7 @@ wb_match(struct lm_softc *sc)
 	sc->lm_writereg(sc, WB_BANKSEL, 0);
 	vendid |= sc->lm_readreg(sc, WB_VENDID);
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
-	DPRINTF(("winbond vend id 0x%x\n", j));
+	DPRINTF((" winbond vend id 0x%x\n", j));
 	if (vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS)
 		return 0;
 
@@ -413,7 +427,7 @@ wb_match(struct lm_softc *sc)
 	devid = sc->lm_readreg(sc, LM_CHIPID);
 	sc->chipid = sc->lm_readreg(sc, WB_BANK0_CHIPID);
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
-	DPRINTF(("winbond chip id 0x%x\n", sc->chipid));
+	DPRINTF((" winbond chip id 0x%x\n", sc->chipid));
 	switch(sc->chipid) {
 	case WB_CHIPID_W83627HF:
 		printf(": W83627HF\n");
@@ -453,9 +467,9 @@ wb_match(struct lm_softc *sc)
 		break;
 	case WB_CHIPID_W83792D:
 		if (devid >= 0x10 && devid <= 0x29)
-			printf(": W83782D rev %c\n", 'A' + devid - 0x10);
+			printf(": W83792D rev %c\n", 'A' + devid - 0x10);
 		else
-			printf(": W83782D rev 0x%x\n", devid);
+			printf(": W83792D rev 0x%x\n", devid);
 		lm_setup_sensors(sc, w83792d_sensors);
 		break;
 	case WB_CHIPID_AS99127F:
@@ -489,7 +503,7 @@ lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
 		    sizeof(sc->sensors[i].device));
 		sc->sensors[i].type = sensors[i].type;
 		strlcpy(sc->sensors[i].desc, sensors[i].desc,
-		     sizeof(sc->sensors[i].desc));
+		    sizeof(sc->sensors[i].desc));
 		sc->sensors[i].rfact = sensors[i].rfact;
 		sc->numsensors++;
 	}
@@ -514,7 +528,7 @@ lm_refresh_sensor_data(struct lm_softc *sc)
 }
 
 void
-lm_refresh_volts(struct lm_softc *sc, int n)
+lm_refresh_volt(struct lm_softc *sc, int n)
 {
 	struct sensor *sensor = &sc->sensors[n];
 	int data;
@@ -523,19 +537,6 @@ lm_refresh_volts(struct lm_softc *sc, int n)
 	sensor->value = (data << 4);
 	sensor->value *= sensor->rfact;
 	sensor->value /= 10;
-}
-
-void
-lm_refresh_nvolts(struct lm_softc *sc, int n)
-{
-	struct sensor *sensor = &sc->sensors[n];
-	int data;
-
-	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
-	sensor->value = (data << 4);
-	sensor->value *= sensor->rfact;
-	sensor->value /= 10;
-	sensor->value *= -1;
 }
 
 void
@@ -613,27 +614,16 @@ wb_refresh_sensor_data(struct lm_softc *sc)
 }
 
 void
-wb_refresh_n12volts(struct lm_softc *sc, int n)
+wb_refresh_nvolt(struct lm_softc *sc, int n)
 {
 	struct sensor *sensor = &sc->sensors[n];
 	int data;
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
-	sensor->value = (((data << 4) * 1000) - (WB_VREF * 806)) / 194;
+	sensor->value = ((data << 4) - WB_VREF);
 	sensor->value *= sensor->rfact;
 	sensor->value /= 10;
-}
-
-void
-wb_refresh_n5volts(struct lm_softc *sc, int n)
-{
-	struct sensor *sensor = &sc->sensors[n];
-	int data;
-
-	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
-	sensor->value = (((data << 4) * 1000) - (WB_VREF * 682)) / 318;
-	sensor->value *= sensor->rfact;
-	sensor->value /= 10;
+	sensor->value += WB_VREF * 1000;
 }
 
 void
