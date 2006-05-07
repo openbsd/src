@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.18 2004/07/29 09:18:17 mickey Exp $	*/
+/*	$OpenBSD: pool.h,v 1.19 2006/05/07 20:06:50 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -183,8 +183,6 @@ struct pool {
 
 	const char	*pr_entered_file; /* reentrancy check */
 	long		pr_entered_line;
-	void		(*pr_drain_hook)(void *, int);
-	void		*pr_drain_hook_arg;
 };
 
 #ifdef _KERNEL
@@ -195,15 +193,9 @@ extern struct pool_allocator pool_allocator_nointr;
 /* previous interrupt safe allocator, allocates from kmem */
 extern struct pool_allocator pool_allocator_kmem;
 
-int		pool_allocator_drain(struct pool_allocator *, struct pool *,
-		    int);
-
 void		pool_init(struct pool *, size_t, u_int, u_int, int,
 		    const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
-
-void		pool_set_drain_hook(struct pool *, void (*)(void *, int),
-		    void *);
 
 void		*pool_get(struct pool *, int);
 void		pool_put(struct pool *, void *);
@@ -225,7 +217,6 @@ int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 int		pool_sethardlimit(struct pool *, unsigned, const char *, int);
-void		pool_drain(void *);
 
 #ifdef DDB
 /*

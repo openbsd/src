@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.74 2006/03/17 04:21:57 brad Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.75 2006/05/07 20:06:50 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -114,9 +114,6 @@ mbinit(void)
 {
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", NULL);
-
-	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
-	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
 
 	nmbclust_update();
 

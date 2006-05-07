@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.25 2002/05/24 13:10:53 art Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.26 2006/05/07 20:06:50 tedu Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -221,9 +221,6 @@ uvm_pageout(void *arg)
 		    &uvm.pagedaemon_lock, FALSE, "pgdaemon", 0);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
-
-		/* drain pool resources */
-		pool_drain(0);
 
 		/*
 		 * now lock page queues and recompute inactive count
