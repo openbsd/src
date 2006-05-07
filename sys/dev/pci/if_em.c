@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.118 2006/05/07 06:42:43 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.119 2006/05/07 07:06:23 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -578,7 +578,6 @@ em_watchdog(struct ifnet *ifp)
 
 	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
-	ifp->if_flags &= ~IFF_RUNNING;
 	em_init(sc);
 
 	sc->watchdog_events++;
@@ -1007,9 +1006,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		em_82547_move_tail_locked(sc);
 	} else {
 		E1000_WRITE_REG(&sc->hw, TDT, i);
-		if (sc->hw.mac_type == em_82547) {
+		if (sc->hw.mac_type == em_82547)
 			em_82547_update_fifo_head(sc, m_head->m_pkthdr.len);
-		}
 	}
 
 	return (0);
@@ -1129,9 +1127,8 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 		sc->tx_fifo_reset_cnt++;
 
 		return (TRUE);
-	} else {
+	} else
 		return (FALSE);
-	}
 }
 
 void
@@ -1247,9 +1244,8 @@ em_local_timer(void *arg)
 	em_check_for_link(&sc->hw);
 	em_update_link_status(sc);
 	em_update_stats_counters(sc);	
-	if (em_display_debug_stats && ifp->if_flags & IFF_RUNNING) {
+	if (em_display_debug_stats && ifp->if_flags & IFF_RUNNING)
 		em_print_hw_stats(sc);
-	}
 	em_smartspeed(sc);
 
 	timeout_add(&sc->timer_handle, hz);
@@ -1370,7 +1366,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 	}
 
 	if (sc->hw.mac_type > em_82543) {
-		/* Figure our where our IO BAR is ? */
+		/* Figure out where our I/O BAR is ? */
 		for (rid = PCI_MAPREG_START; rid < PCI_MAPREG_END;) {
 			val = pci_conf_read(pa->pa_pc, pa->pa_tag, rid);
 			if (PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_IO) {
@@ -1895,7 +1891,6 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	int curr_txd;
 
 	if (mp->m_pkthdr.csum_flags) {
-
 		if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
@@ -1903,7 +1898,6 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 				return;
 			else
 				sc->active_checksum_context = OFFLOAD_TCP_IP;
-
 		} else if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
@@ -2062,9 +2056,8 @@ em_get_buf(int i, struct em_softc *sc, struct mbuf *nmp)
 		mp->m_next = NULL;
 	}
 
-	if (ifp->if_mtu <= ETHERMTU) {
+	if (ifp->if_mtu <= ETHERMTU)
 		m_adj(mp, ETHER_ALIGN);
-	}
 
 	rx_buffer = &sc->rx_buffer_area[i];
 
@@ -2219,7 +2212,6 @@ em_initialize_receive_unit(struct em_softc *sc)
 	if (sc->hw.tbi_compatibility_on == TRUE)
 		reg_rctl |= E1000_RCTL_SBP;
 
-
 	switch (sc->rx_buffer_len) {
 	default:
 	case EM_RXBUFFER_2048:
@@ -2335,10 +2327,8 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 			if (desc_len < ETHER_CRC_LEN) {
 				len = 0;
 				prev_len_adj = ETHER_CRC_LEN - desc_len;
-			}
-			else {
+			} else
 				len = desc_len - ETHER_CRC_LEN;
-			}
 		} else {
 			eop = 0;
 			len = desc_len;
@@ -2525,17 +2515,15 @@ em_receive_checksum(struct em_softc *sc, struct em_rx_desc *rx_desc,
 			/* IP Checksum Good */
 			mp->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
 
-		} else {
+		} else
 			mp->m_pkthdr.csum_flags = 0;
-		}
 	}
 
 	if (rx_desc->status & E1000_RXD_STAT_TCPCS) {
 		/* Did it pass? */        
-		if (!(rx_desc->errors & E1000_RXD_ERR_TCPE)) {
+		if (!(rx_desc->errors & E1000_RXD_ERR_TCPE))
 			mp->m_pkthdr.csum_flags |=
 				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
-		}
 	}
 }
 
