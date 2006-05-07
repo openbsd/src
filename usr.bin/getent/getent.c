@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.3 2006/03/12 22:40:39 millert Exp $	*/
+/*	$OpenBSD: getent.c,v 1.4 2006/05/07 21:18:55 otto Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -431,7 +431,7 @@ services(int argc, char *argv[])
 				*proto++ = '\0';
 			id = strtonum(argv[i], 0, UINT_MAX, &err);
 			if (!err)
-				se = getservbyport((int)id, proto);
+				se = getservbyport(htons((u_short)id), proto);
 			else
 				se = getservbyname(argv[i], proto);
 			if (se != NULL)
