@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.5 2006/05/04 07:06:58 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.6 2006/05/08 10:19:34 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.5 2006/05/04 07:06:58 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.6 2006/05/08 10:19:34 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -171,12 +171,12 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 		goto out;
 
 	if (verbose == 1)
-		printf("Retrieving revision %s\n", r1);
+		(void)fprintf(stderr, "retrieving revision %s\n", r1);
 	if ((b2 = rcs_getrev(rf, rev1)) == NULL)
 		goto out;
 
 	if (verbose == 1)
-		printf("Retrieving revision %s\n", r2);
+		(void)fprintf(stderr, "retrieving revision %s\n", r2);
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
@@ -235,11 +235,8 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	if ((diffb = rcs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
 
-	if (verbose == 1 && diff3_conflicts != 0) {
-		warnx("%d conflict%s found during merge, "
-		    "please correct.", diff3_conflicts,
-		    (diff3_conflicts > 1) ? "s" : "");
-	}
+	if (verbose == 1 && diff3_conflicts != 0)
+		warnx("warning: overlaps or other problems during merge");
 
 	xfree(data);
 	xfree(patch);
