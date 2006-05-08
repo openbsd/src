@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_pcctwo.c,v 1.4 2006/04/15 22:29:49 miod Exp $	*/
+/*	$OpenBSD: osiop_pcctwo.c,v 1.5 2006/05/08 14:36:10 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -69,7 +69,7 @@ osiop_pcctwo_match(struct device *parent, void *cf, void *aux)
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, OSIOP_NREGS, 0, &ioh) != 0)
 		return (0);
-	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
+	rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
 	if (rc == 0) {
 		bus_space_unmap(ca->ca_iot, ioh, OSIOP_NREGS);
 		return (1);
@@ -77,7 +77,7 @@ osiop_pcctwo_match(struct device *parent, void *cf, void *aux)
 
 	/*
 	 * For some reason, if the SCSI hardware is not ``warmed'' by the
-	 * BUG (netboot or boot from external SCSI controller), badvaddr()
+	 * BUG (netboot or boot from external SCSI controller), badaddr()
 	 * will always fail, although the hardware is there.
 	 * Since the BUG will do the right thing, we'll defer a dummy read
 	 * from the controller and retry.
@@ -94,7 +94,7 @@ osiop_pcctwo_match(struct device *parent, void *cf, void *aux)
 		dio.blk_cnt = 1;
 		bugdiskrd(&dio);
 
-		rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
+		rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
 	}
 
 	bus_space_unmap(ca->ca_iot, ioh, OSIOP_NREGS);

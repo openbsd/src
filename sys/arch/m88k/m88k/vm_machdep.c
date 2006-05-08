@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2006/04/26 20:41:19 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2006/05/08 14:36:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -58,7 +58,6 @@
 #include <machine/mmu.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/trap.h>
 
 extern void proc_do_uret(struct proc *);
@@ -276,31 +275,6 @@ vunmapbuf(bp, len)
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
-}
-
-int
-badvaddr(vaddr_t va, int size)
-{
-	volatile int x;
-
-	if (badaddr(va, size)) {
-		return -1;
-	}
-
-	switch (size) {
-	case 1:
-		x = *(unsigned char *volatile)va;
-		break;
-	case 2:
-		x = *(unsigned short *volatile)va;
-		break;
-	case 4:
-		x = *(unsigned long *volatile)va;
-		break;
-	default:
-                return -1;
-	}
-	return (0);
 }
 
 /*

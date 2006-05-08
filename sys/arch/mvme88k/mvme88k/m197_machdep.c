@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.11 2006/04/27 20:21:19 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.12 2006/05/08 14:36:10 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -54,7 +54,6 @@
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/mvme197.h>
@@ -97,7 +96,7 @@ m197_memsize()
 		unsigned save;
 
 		/* if can't access, we've reached the end */
-		if (badwordaddr((vaddr_t)look)) {
+		if (badaddr((vaddr_t)look, 4)) {
 #if defined(DEBUG)
 			printf("%x\n", look);
 #endif

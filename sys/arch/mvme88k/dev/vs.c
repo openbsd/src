@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.61 2006/03/15 20:20:40 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.62 2006/05/08 14:36:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -56,7 +56,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cmmu.h>
-#include <machine/param.h>
+#include <machine/cpu.h>
 
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
@@ -125,7 +125,7 @@ vsmatch(struct device *device, void *cf, void *args)
 
 	if (bus_space_map(iot, ca->ca_paddr, S_SHORTIO, 0, &ioh) != 0)
 		return 0;
-	rc = badvaddr((vaddr_t)bus_space_vaddr(iot, ioh), 1);
+	rc = badaddr((vaddr_t)bus_space_vaddr(iot, ioh), 1);
 	bus_space_unmap(iot, ioh, S_SHORTIO);
 
 	return rc == 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2005/12/11 21:45:30 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2006/05/08 14:36:09 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -41,7 +41,6 @@
 #include <machine/cmmu.h>
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
-#include <machine/locore.h>
 #include <machine/cpu.h>
 #ifdef M88100
 #include <machine/m88100.h>
@@ -209,8 +208,8 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		return;
 	}
 
-	if (badwordaddr((vaddr_t)s) ||
-	    badwordaddr((vaddr_t)(&((db_regs_t*)s)->fpit))) {
+	if (badaddr((vaddr_t)s, 4) ||
+	    badaddr((vaddr_t)(&((db_regs_t*)s)->fpit), 4)) {
 		db_printf("frame at %8p is unreadable\n", s);
 		return;
 	}

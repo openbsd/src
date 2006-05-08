@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.51 2006/04/15 22:29:49 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.52 2006/05/08 14:36:10 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -39,7 +39,6 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
@@ -230,7 +229,7 @@ clprobe(parent, self, aux)
 		if (bus_space_map(ca->ca_iot, ca->ca_paddr, CD2400_SIZE,
 		    0, &ioh) != 0)
 			return 0;
-		rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 1);
+		rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 1);
 		bus_space_unmap(ca->ca_iot, ioh, CD2400_SIZE);
 		return rc == 0;
 	}

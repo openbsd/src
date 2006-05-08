@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.45 2005/12/04 12:20:19 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.46 2006/05/08 14:36:10 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -31,9 +31,6 @@
 
 #include <machine/asm_macro.h>
 #include <machine/cpu.h>
-#ifdef DEBUG
-#include <machine/locore.h>
-#endif
 
 #include <machine/cmmu.h>
 #include <machine/m8820x.h>
@@ -143,7 +140,7 @@ m8820x_setup_board_config()
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		volatile unsigned *cr = m8820x_cmmu[cmmu_num].cmmu_regs;
-		if (badwordaddr((vaddr_t)cr) == 0) {
+		if (badaddr((vaddr_t)cr, 4) == 0) {
 			int type;
 
 			type = CMMU_TYPE(cr[CMMU_IDR]);

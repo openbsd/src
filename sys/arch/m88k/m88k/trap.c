@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2006/05/08 14:03:35 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2006/05/08 14:36:09 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -62,7 +62,6 @@
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #ifdef M88100
 #include <machine/m88100.h>		/* DMT_xxx */
 #include <machine/m8820x.h>		/* CMMU_PFSR_xxx */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.36 2006/05/08 14:03:35 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.37 2006/05/08 14:36:10 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -66,7 +66,6 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/lock.h>
-#include <machine/locore.h>
 #include <machine/m88110.h>
 #include <machine/m88410.h>
 #include <machine/psl.h>

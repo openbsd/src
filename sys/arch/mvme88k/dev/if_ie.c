@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.40 2006/04/17 13:39:48 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.41 2006/05/08 14:36:10 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -343,7 +343,7 @@ iematch(parent, vcf, args)
 {
 	struct confargs *ca = args;
 
-	if (badvaddr(ca->ca_paddr, 1)) {
+	if (badaddr(ca->ca_paddr, 1)) {
 		return(0);
 	}
 

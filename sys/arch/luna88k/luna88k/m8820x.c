@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.10 2005/12/04 12:20:17 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.11 2006/05/08 14:36:09 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -89,7 +89,7 @@
 #include <machine/asm_macro.h>
 #include <machine/board.h>
 #include <machine/cmmu.h>
-#include <machine/locore.h>
+#include <machine/cpu.h>
 #include <machine/m8820x.h>
 
 /*
@@ -115,7 +115,7 @@ m8820x_setup_board_config()
 	 */
 	cmmu = m8820x_cmmu;
 	for (max_cmmus = 0; max_cmmus < 8; max_cmmus++, cmmu++) {
-		if (badwordaddr((vaddr_t)cmmu->cmmu_regs) != 0)
+		if (badaddr((vaddr_t)cmmu->cmmu_regs, 4) != 0)
 			break;
 	}
 
@@ -129,7 +129,7 @@ m8820x_setup_board_config()
 	 */
 	for (num = 0; num < max_cmmus; num++) {
 		volatile unsigned *cr = m8820x_cmmu[num].cmmu_regs;
-		if (badwordaddr((vaddr_t)cr) == 0) {
+		if (badaddr((vaddr_t)cr, 4) == 0) {
 			int type;
 
 			type = CMMU_TYPE(cr[CMMU_IDR]);
@@ -179,7 +179,7 @@ m8820x_cpu_number()
 		}
 
 		/* access faulting address */
-		badwordaddr((vaddr_t)ILLADDRESS);
+		badaddr((vaddr_t)ILLADDRESS, 4);
 
 		/* check which CMMU is reporting the fault  */
 		for (cmmu = 0; cmmu < max_cmmus; cmmu++) {

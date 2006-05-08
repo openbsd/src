@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2006/05/08 14:03:34 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2006/05/08 14:36:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -85,7 +85,6 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
-#include <machine/locore.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/m88100.h>
@@ -109,6 +108,7 @@ void	consinit(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(void);
+u_int	getipl(void);
 vaddr_t	get_slave_stack(void);
 void	identifycpu(void);
 void	luna88k_bootstrap(void);
@@ -323,7 +323,7 @@ size_memory()
 		unsigned save;
 
 		/* if can't access, we've reached the end */
-		if (badwordaddr((vaddr_t)look)) {
+		if (badaddr((vaddr_t)look, 4)) {
 #if defined(DEBUG)
 			printf("%x\n", look);
 #endif
@@ -1348,10 +1348,10 @@ setlevel(unsigned int level)
 	luna88k_curspl[cpu] = level;
 }
 
-unsigned
+u_int
 getipl(void)
 {
-	unsigned int curspl, psr;
+	u_int curspl, psr;
 
 	disable_interrupt(psr);
 	curspl = luna88k_curspl[cpu_number()];

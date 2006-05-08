@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.16 2005/07/18 02:43:25 fgsch Exp $ */
+/*	$OpenBSD: bussw.c,v 1.17 2006/05/08 14:36:10 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -26,16 +26,11 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <machine/psl.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/mioctl.h>
-#include <machine/vmparam.h>
 
 #include <mvme88k/dev/busswreg.h>
 
@@ -78,7 +73,7 @@ bussw_match(parent, vcf, args)
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, BS_SIZE, 0, &ioh) != 0)
 		return 0;
-	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
+	rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
 	if (rc == 0) {
 		chipid = bus_space_read_1(ca->ca_iot, ioh, BS_CHIPID);
 		if (chipid != BUSSWITCH_ID) {

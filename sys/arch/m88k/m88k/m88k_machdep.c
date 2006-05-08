@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.15 2006/05/08 14:03:34 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.16 2006/05/08 14:36:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -58,7 +58,6 @@
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/reg.h>
 #ifdef M88100
 #include <machine/m88100.h>
@@ -449,6 +448,13 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 	default:
 #ifdef M88110
 	case CPU_88110:
+	    {
+		extern void m88110_sigsys(void);
+		extern void m88110_syscall_handler(void);
+		extern void m88110_cache_flush_handler(void);
+		extern void m88110_stepbpt(void);
+		extern void m88110_userbpt(void);
+
 		for (; num < 512; num++)
 			SET_VECTOR(num, m88110_sigsys);
 
@@ -456,10 +462,18 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		SET_VECTOR(451, m88110_cache_flush_handler);
 		SET_VECTOR(504, m88110_stepbpt);
 		SET_VECTOR(511, m88110_userbpt);
+	    }
 		break;
 #endif
 #ifdef M88100
 	case CPU_88100:
+	    {
+		extern void sigsys(void);
+		extern void syscall_handler(void);
+		extern void cache_flush_handler(void);
+		extern void stepbpt(void);
+		extern void userbpt(void);
+
 		for (; num < 512; num++)
 			SET_VECTOR(num, sigsys);
 
@@ -467,6 +481,7 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		SET_VECTOR(451, cache_flush_handler);
 		SET_VECTOR(504, stepbpt);
 		SET_VECTOR(511, userbpt);
+	    }
 		break;
 #endif
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.182 2006/05/08 14:03:35 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.183 2006/05/08 14:36:10 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -73,7 +73,6 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
-#include <machine/locore.h>
 #include <machine/reg.h>
 
 #include <dev/cons.h>
@@ -93,9 +92,11 @@ void	consinit(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
+u_int	getipl(void);
 void	identifycpu(void);
 void	mvme_bootstrap(void);
 void	mvme88k_vector_init(u_int32_t *, u_int32_t *);
+void	myetheraddr(u_char *);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 void	secondary_pre_main(void);
@@ -103,15 +104,15 @@ void	_doboot(void);
 
 extern void setlevel(unsigned int);
 
-extern void m187_bootstrap(void);
-extern vaddr_t m187_memsize(void);
-extern void m187_startup(void);
-extern void m188_bootstrap(void);
-extern vaddr_t m188_memsize(void);
-extern void m188_startup(void);
-extern void m197_bootstrap(void);
-extern vaddr_t m197_memsize(void);
-extern void m197_startup(void);
+extern void	m187_bootstrap(void);
+extern vaddr_t	m187_memsize(void);
+extern void	m187_startup(void);
+extern void	m188_bootstrap(void);
+extern vaddr_t	m188_memsize(void);
+extern void	m188_startup(void);
+extern void	m197_bootstrap(void);
+extern vaddr_t	m197_memsize(void);
+extern void	m197_startup(void);
 
 intrhand_t intr_handlers[NVMEINTR];
 
@@ -973,6 +974,22 @@ myetheraddr(cp)
 	bcopy(&brdid.etheraddr, cp, 6);
 }
 
+void
+mvme88k_vector_init(u_int32_t *vbr, u_int32_t *vectors)
+{
+	extern void vector_init(u_int32_t *, u_int32_t *);	/* gross */
+
+	/* Save BUG vector */
+	bugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
+	bugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
+
+	vector_init(vbr, vectors);
+
+	/* Save new BUG vector */
+	sysbugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
+	sysbugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
+}
+
 /*
  * Called from locore.S during boot,
  * this is the first C code that's run.
@@ -1159,7 +1176,7 @@ bootcnputc(dev, c)
 		bugoutchr(c);
 }
 
-unsigned
+u_int
 getipl(void)
 {
 	u_int curspl, psr;
@@ -1206,20 +1223,4 @@ raiseipl(unsigned level)
 
 	set_psr(psr);
 	return curspl;
-}
-
-void
-mvme88k_vector_init(u_int32_t *vbr, u_int32_t *vectors)
-{
-	extern void vector_init(u_int32_t *, u_int32_t *);	/* gross */
-
-	/* Save BUG vector */
-	bugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
-	bugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
-
-	vector_init(vbr, vectors);
-
-	/* Save new BUG vector */
-	sysbugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
-	sysbugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
 }

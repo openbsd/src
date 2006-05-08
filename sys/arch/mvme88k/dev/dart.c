@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.47 2006/04/17 13:30:02 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.48 2006/05/08 14:36:10 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,6 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 
 #include <dev/cons.h>
 
@@ -131,7 +130,7 @@ dartmatch(struct device *parent, void *cf, void *aux)
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, DART_SIZE, 0, &ioh) != 0)
 		return (0);
-	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
+	rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
 	bus_space_unmap(ca->ca_iot, ca->ca_paddr, DART_SIZE);
 
 	return (rc == 0);

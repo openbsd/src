@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2006/04/17 16:08:01 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.15 2006/05/08 14:36:09 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -133,6 +133,8 @@ void	cpu_boot_secondary_processors(void);
 
 #endif	/* MULTIPROCESSOR */
 
+void	set_cpu_number(cpuid_t);
+
 /*
  * The md code may hardcode this in some very specific situations.
  */
@@ -233,7 +235,7 @@ struct switchframe {
 	void	*sf_proc;		/* proc pointer */
 };
 
-int badvaddr(vaddr_t, int);
+int	badaddr(vaddr_t addr, int size);
 
 #endif /* _KERNEL */
 #endif /* __M88K_CPU_H__ */

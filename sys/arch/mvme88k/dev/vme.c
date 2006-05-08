@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.43 2006/04/26 20:48:06 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.44 2006/05/08 14:36:10 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -38,7 +38,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/locore.h>
 
 #include "pcctwo.h"
 #include "syscon.h"
@@ -96,11 +95,7 @@ vme_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 {
 	vaddr_t map;
 
-#if 0
-	map = iomap_mapin(addr, size, 0);
-#else
 	map = (vaddr_t)mapiodev((paddr_t)addr, size);
-#endif
 	if (map == NULL)
 		return ENOMEM;
 
@@ -111,11 +106,7 @@ vme_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 void
 vme_unmap(bus_space_handle_t handle, bus_size_t size)
 {
-#if 0
-	iomap_mapout(handle, size);
-#else
 	unmapiodev((vaddr_t)handle, size);
-#endif
 }
 
 int

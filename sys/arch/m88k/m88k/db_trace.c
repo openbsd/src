@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 2006/05/07 15:47:12 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 2006/05/08 14:36:09 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -29,8 +29,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <machine/cpu.h>
 #include <machine/db_machdep.h>
-#include <machine/locore.h>
 
 #include <ddb/db_variables.h>	/* db_variable, DB_VAR_GET, etc.  */
 #include <ddb/db_output.h>	/* db_printf                      */
@@ -204,7 +204,7 @@ int
 frame_is_sane(db_regs_t *regs, int quiet)
 {
 	/* no good if we can't read the whole frame */
-	if (badwordaddr((vaddr_t)regs) || badwordaddr((vaddr_t)&regs->fpit)) {
+	if (badaddr((vaddr_t)regs, 4) || badaddr((vaddr_t)&regs->fpit, 4)) {
 		if (quiet == 0)
 			db_printf("[WARNING: frame at %p : unreadable]\n", regs);
 		return 0;
@@ -739,8 +739,8 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		 * Here we are just looking for kernel exception frames.
 		 */
 
-		if (badwordaddr((vaddr_t)stack) ||
-		    badwordaddr((vaddr_t)(stack + 4)))
+		if (badaddr((vaddr_t)stack, 4) ||
+		    badaddr((vaddr_t)(stack + 4), 4))
 			break;
 
 		db_read_bytes((vaddr_t)stack, 2 * sizeof(int), (char *)pair);
@@ -749,7 +749,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		if (pair[0] == pair[1]) {
 			if (pair[0] != stack+8) {
 #if 0
-				if (!badwordaddr((vaddr_t)pair[0]) &&
+				if (!badaddr((vaddr_t)pair[0], 4) &&
 				    pair[0] != 0)
 					(*pr)("stack_trace:found pair 0x%x but != to stack+8\n",
 					    pair[0]);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.33 2006/04/15 15:43:36 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.34 2006/05/08 14:36:10 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -46,12 +46,12 @@
 #ifdef _KERNEL
 
 /* board dependent pointers */
-extern void (*md_interrupt_func_ptr)(u_int, struct trapframe *);
+extern void	(*md_interrupt_func_ptr)(u_int, struct trapframe *);
 #define	md_interrupt_func	(*md_interrupt_func_ptr)
-extern u_int (*md_getipl)(void);
-extern u_int (*md_setipl)(u_int);
-extern u_int (*md_raiseipl)(u_int);
-extern void (*md_init_clocks)(void);
+extern u_int	(*md_getipl)(void);
+extern u_int	(*md_setipl)(u_int);
+extern u_int	(*md_raiseipl)(u_int);
+extern void	(*md_init_clocks)(void);
 
 struct intrhand {
 	SLIST_ENTRY(intrhand) ih_link;
@@ -74,7 +74,8 @@ int	intr_establish(int, struct intrhand *, const char *);
 typedef SLIST_HEAD(, intrhand) intrhand_t;
 extern intrhand_t intr_handlers[NVMEINTR];
 
-void nmihand(void *);
+void	doboot(void);
+void	nmihand(void *);
 
 #endif /* _KERNEL */
 

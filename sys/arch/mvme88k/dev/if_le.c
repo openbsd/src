@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.14 2006/04/26 21:09:48 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.15 2006/05/08 14:36:10 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -219,7 +219,7 @@ lematch(parent, vcf, args)
 
 	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0)
 		return 0;
-	rc = badvaddr((vaddr_t)bus_space_vaddr(iot, ioh), 2);
+	rc = badaddr((vaddr_t)bus_space_vaddr(iot, ioh), 2);
 	bus_space_unmap(iot, ioh, PAGE_SIZE);
 
 	return rc == 0;

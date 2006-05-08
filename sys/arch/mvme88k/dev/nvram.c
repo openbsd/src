@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.27 2006/04/27 20:13:42 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.28 2006/05/08 14:36:10 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -87,7 +87,7 @@ nvrammatch(parent, vcf, args)
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0)
 		return (0);
-	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 1) == 0;
+	rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 1) == 0;
 	bus_space_unmap(ca->ca_iot, ioh, PAGE_SIZE);
 	return (rc);
 }

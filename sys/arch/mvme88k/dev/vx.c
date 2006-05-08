@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.36 2004/07/30 19:02:06 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.37 2006/05/08 14:36:10 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -175,7 +175,7 @@ vxmatch(struct device *parent, void *self, void *aux)
 	if (bus_space_map(iot, ca->ca_paddr, 0x10000, 0, &ioh) != 0)
 		return 0;
 	vx_reg = (struct vxreg *)bus_space_vaddr(iot, ioh);
-	rc = badvaddr((vaddr_t)&vx_reg->ipc_cr, 1);
+	rc = badaddr((vaddr_t)&vx_reg->ipc_cr, 1);
 	bus_space_unmap(iot, ioh, 0x10000);
 
 	return rc == 0;

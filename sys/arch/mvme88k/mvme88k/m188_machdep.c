@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.21 2006/05/07 15:40:16 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.22 2006/05/08 14:36:10 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -120,7 +120,6 @@
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 

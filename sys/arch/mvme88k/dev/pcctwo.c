@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.28 2006/04/27 20:19:28 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.29 2006/05/08 14:36:10 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -87,7 +87,7 @@ pcctwomatch(parent, vcf, args)
 	if (bus_space_map(ca->ca_iot, PCC2_BASE, PCC2_SIZE,
 	    0, &ioh) != 0)
 		return 0;
-	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
+	rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
 	if (rc == 0) {
 		chipid = bus_space_read_1(ca->ca_iot, ioh, PCCTWO_CHIPID);
 		if (chipid != PCC2_ID) {
