@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.c,v 1.3 2006/05/08 20:34:36 deraadt Exp $ */
+/* $OpenBSD: debug.c,v 1.4 2006/05/08 20:39:44 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -39,33 +39,34 @@
 void
 dump_info(struct elf_object *object)
 {
-	int i;
+	int numrel, numrela, i;
 	const Elf_Sym   *symt;
         const char      *strt;
-	int numrel;
-	int numrela;
 	Elf_Word *needed_list;
 
 	symt = object->dyn.symtab;
         strt = object->dyn.strtab;
 
 	for (i = 0; i < object->nchains; i++) {
-		char * type;
 		const Elf_Sym *sym = symt + i;
+		char *type;
 
-		switch(ELF_ST_TYPE(sym->st_info)) {
+		switch (ELF_ST_TYPE(sym->st_info)) {
 		case STT_FUNC:
-			type =  "func"; break;
+			type =  "func";
+			break;
 		case STT_OBJECT:
-			type =  "object"; break;
+			type =  "object";
+			break;
 		case STT_NOTYPE:
-			type =  "notype"; break;
+			type =  "notype";
+			break;
 		default:
 			type = "UNKNOWN";
 		}
 		printf("symbol %d [%s] type %s value %x\n", i,
-			strt + sym->st_name,
-			type, sym->st_value);
+		    strt + sym->st_name,
+		    type, sym->st_value);
 	}
 
         numrel = object->dyn.relsz / sizeof(Elf_Rel);
@@ -113,7 +114,7 @@ elf_dump_footer(struct prebind_footer *footer)
 	printf("orig_size %lld\n", (long long)footer->orig_size);
 	printf("version %d\n", footer->prebind_version);
 	printf("bind_id %c%c%c%c\n", footer->bind_id[0],
-	   footer->bind_id[1], footer->bind_id[2], footer->bind_id[3]);
+	    footer->bind_id[1], footer->bind_id[2], footer->bind_id[3]);
 }
 
 
@@ -122,6 +123,7 @@ dump_symcachetab(struct symcachetab *symcachetab, int symcache_cnt,
     struct elf_object *object, int id)
 {
 	int i;
+
 	printf("symcache for %s\n", object->load_name);
 	for (i = 0; i < symcache_cnt; i++) {
 		printf("symidx %d: obj %d sym %d\n",
@@ -136,6 +138,7 @@ elf_print_prog_list (prog_list_ty *prog_list)
 {
 	struct elf_object *object;
 	struct proglist *pl;
+
 	TAILQ_FOREACH(pl, prog_list, list) {
 		object = TAILQ_FIRST(&(pl->curbin_list))->object;
 		printf("bin: %s\n", object->load_name);
@@ -147,6 +150,7 @@ void
 elf_print_curbin_list(struct proglist *bin)
 {
 	struct objlist *ol;
+
 	TAILQ_FOREACH(ol, &(bin->curbin_list), list) {
 		printf("\t%s\n", ol->object->load_name);
 	}

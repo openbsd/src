@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.15 2006/05/08 20:37:01 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.16 2006/05/08 20:39:44 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -152,7 +152,7 @@ load_file_or_dir(char *name)
 	ret = lstat(name, &sb);
 	if (ret != 0)
 		return;
-	switch(sb.st_mode & S_IFMT) {
+	switch (sb.st_mode & S_IFMT) {
 	case S_IFREG:
 		load_exe(name);
 		break;
