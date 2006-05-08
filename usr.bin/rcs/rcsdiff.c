@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.61 2006/05/05 15:47:36 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.62 2006/05/08 09:48:12 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -63,7 +63,7 @@ rcsdiff_main(int argc, char **argv)
 			if (RCS_KWEXP_INVAL(kflag)) {
 				warnx("invalid RCS keyword substitution mode");
 				(usage)();
-				exit(1);
+				exit(D_ERROR);
 			}
 			break;
 		case 'n':
@@ -102,7 +102,7 @@ rcsdiff_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit (1);
+			exit (D_ERROR);
 		}
 	}
 
@@ -112,7 +112,7 @@ rcsdiff_main(int argc, char **argv)
 	if (argc == 0) {
 		warnx("no input file");
 		(usage)();
-		exit(1);
+		exit(D_ERROR);
 	}
 
 	for (i = 0; i < argc; i++) {
