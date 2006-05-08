@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_strip.c,v 1.2 2006/05/05 02:51:16 drahn Exp $ */
+/* $OpenBSD: prebind_strip.c,v 1.3 2006/05/08 20:34:36 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -169,9 +169,9 @@ prebind_cat(int fd, struct prebind_footer *footer, char *name)
 	int err = 0;
 	int loadsection;
 
-	if (strcmp(name, "-") == 0) 
+	if (strcmp(name, "-") == 0)
 		outfd = 1;
-	else 
+	else
 		outfd = open(name, O_RDWR|O_CREAT|O_TRUNC, 0644);
 
 	if (outfd == -1) {
@@ -191,7 +191,7 @@ prebind_cat(int fd, struct prebind_footer *footer, char *name)
 	while (remlen > 0) {
 		if (remlen > BUFSZ)
 			rlen = BUFSZ;
-		else 
+		else
 			rlen = remlen;
 		len = read(fd, buf, rlen);
 		if (len <= 0) {
@@ -222,6 +222,6 @@ prebind_cat(int fd, struct prebind_footer *footer, char *name)
 			break;
 		}
 	}
-		
+
 	return err;
 }

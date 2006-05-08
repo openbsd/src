@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.c,v 1.2 2006/05/03 22:14:44 drahn Exp $ */
+/* $OpenBSD: debug.c,v 1.3 2006/05/08 20:34:36 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -36,7 +36,7 @@
 #include "prebind_struct.h"
 
 #ifdef DEBUG1
-void 
+void
 dump_info(struct elf_object *object)
 {
 	int i;

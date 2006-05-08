@@ -1,4 +1,4 @@
-.\"	$OpenBSD: prebind.8,v 1.4 2006/05/06 20:16:17 drahn Exp $
+.\"	$OpenBSD: prebind.8,v 1.5 2006/05/08 20:34:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
 .\"
@@ -51,7 +51,7 @@ to speed up dynamic linking.
 Since version information is stored in the libraries to validate the
 prebind info, running prebind on a subset of programs it was previously
 run on will invalidate the prebind info for those excluded binaries.
-The 
+The
 .Pq Fl m
 option it will preserve the old prebind info in any library if present.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.13 2006/05/06 22:06:26 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.14 2006/05/08 20:34:36 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -184,7 +184,7 @@ load_dir(char *name)
 		case DT_UNKNOWN:
 			/*
 			 * NFS will return unknown, since load_file
-			 * does stat the file, this just 
+			 * does stat the file, this just
 			 */
 			asprintf(&buf, "%s/%s", name, dp->d_name);
 			lstat(buf, &sb);
@@ -323,7 +323,7 @@ load_file(const char *filename, int objtype)
 	if ((objtype == OBJTYPE_LIB || objtype == OBJTYPE_DLO) &&
 	    (ehdr->e_type != ET_DYN))
 		goto done;
-		
+
 
 	pexe = buf;
 	if (ehdr->e_shstrndx == 0) {
@@ -332,7 +332,7 @@ load_file(const char *filename, int objtype)
 	shdr = (Elf_Shdr *) (pexe + ehdr->e_shoff +
 	    (ehdr->e_shstrndx * ehdr->e_shentsize));
 
-	
+
 #if 0
 printf("e_ehsize %x\n", ehdr->e_ehsize);
 printf("e_phoff %x\n", ehdr->e_phoff);
@@ -360,7 +360,7 @@ printf("e_shstrndx %x\n\n", ehdr->e_shstrndx);
 			load_object = obj;
 
 		elf_add_object(obj, objtype);
-	
+
 #ifdef DEBUG1
 	dump_info(obj);
 #endif
@@ -405,7 +405,7 @@ elf_check_note(void *buf, Elf_Phdr *phdr)
 	return 0;
 }
 
-void __dead 
+void __dead
 usage()
 {
 	extern char *__progname;
@@ -521,7 +521,7 @@ elf_load_object (void *pexe, const char *name)
 			object->obj_flags = RTLD_NOW;
 		if (dynp->d_tag == DT_NEEDED)
 			needed_cnt++;
-			
+
 		dynp++;
 	}
 
@@ -688,7 +688,7 @@ elf_free_object(struct elf_object *object)
 }
 
 /*
- * translate an object address into a file offset for the 
+ * translate an object address into a file offset for the
  * file assuming that the file is mapped at base.
  */
 void
@@ -724,7 +724,7 @@ load_obj_needed(struct elf_object *object)
 	int i;
 	Elf_Word *needed_list;
 	int err;
-	
+
 	needed_list = (Elf_Word *)object->dyn.needed;
 	for (i = 0; needed_list[i] != NULL; i++) {
 		if (verbose > 1)
@@ -772,7 +772,7 @@ load_lib(const char *name, struct elf_object *parent)
 fullpathagain:
 		object = elf_load_shlib_hint(&sod, &req_sod,
 			ignore_hints, lpath);
-		if (object != NULL) 
+		if (object != NULL)
 			goto fullpathdone;
 
 		if (try_any_minor == 0) {
@@ -1058,7 +1058,7 @@ elf_newbin(void)
 }
 
 /*
- * Copy the contents of a libraries symbol cache instance into 
+ * Copy the contents of a libraries symbol cache instance into
  * the 'global' symbol cache for that library
  * this will currently resolve conflicts between mismatched
  * libraries by flagging any mismatches as invalid
@@ -1072,7 +1072,7 @@ elf_newbin(void)
 struct elf_object badobj_store;
 struct elf_object *badobj = &badobj_store;
 
-/* 
+/*
  * copy the symbols found in a library symcache to the 'master/common'
  * symbol table note that this will skip copying the following references
  * 1. non-existing entries
@@ -1107,7 +1107,7 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 
 #if 0
 				if (tcache[i].obj != badobj)
-					printf("%s: %s conflict\n", 
+					printf("%s: %s conflict\n",
 					    obj->load_name,
 					    scache[i].sym->st_name +
 					    scache[i].obj->dyn.strtab);
@@ -1165,7 +1165,6 @@ elf_lookup_object(const char *name)
 		if (strcmp (name, ol->object->load_name) == 0) {
 			return ol->object;
 		}
-			
 	}
 	TAILQ_FOREACH(ol, &library_list, list) {
 		if (strcmp (name, ol->object->load_name) == 0) {
@@ -1181,7 +1180,7 @@ elf_lookup_object_devino(dev_t dev, ino_t inode, int objtype)
 {
 	struct objlist *ol;
 	TAILQ_FOREACH(ol, &(curbin->curbin_list), list) {
-		if (ol->object->dev == dev && 
+		if (ol->object->dev == dev &&
 		    ol->object->inode == inode) {
 			if (ol->object->obj_type != objtype)
 				return NULL;
@@ -1189,7 +1188,7 @@ elf_lookup_object_devino(dev_t dev, ino_t inode, int objtype)
 		}
 	}
 	TAILQ_FOREACH(ol, &library_list, list) {
-		if (ol->object->dev == dev && 
+		if (ol->object->dev == dev &&
 		    ol->object->inode == inode) {
 			if (ol->object->obj_type != objtype)
 				return NULL;
@@ -1224,7 +1223,7 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 		h = (h << 4) + *p++;
 		if ((g = h & 0xf0000000))
 			h ^= g >> 24;
-		h &= ~g; 
+		h &= ~g;
 	}
 
 	type = ELF_R_TYPE(rel->r_info);
@@ -1239,7 +1238,7 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 #if 0
 			printf("found sym %s in obj %s\n", name, ol->object->load_name);
 #endif
-			ref_object = ol->object; 
+			ref_object = ol->object;
 			break;
 		}
 
@@ -1258,7 +1257,7 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 	}
 	if (found == 1) {
 #if 0
-		printf("object %s sym %s, ref_object %s flags %d\n", 
+		printf("object %s sym %s, ref_object %s flags %d\n",
 		    object->load_name, name,
 		    ref_object->load_name, flags);
 #endif
@@ -1298,7 +1297,7 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 		h = (h << 4) + *p++;
 		if ((g = h & 0xf0000000))
 			h ^= g >> 24;
-		h &= ~g; 
+		h &= ~g;
 	}
 
 	type = ELF_R_TYPE(rela->r_info);
@@ -1315,7 +1314,7 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 #if 0
 			printf("found sym %s in obj %s\n", name, ol->object->load_name);
 #endif
-			ref_object = ol->object; 
+			ref_object = ol->object;
 			break;
 		}
 
@@ -1333,7 +1332,7 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 	}
 	if (found == 1) {
 #if 0
-		printf("object %s sym %s, ref_object %s %s %d %d\n", 
+		printf("object %s sym %s, ref_object %s %s %d %d\n",
 		    object->load_name, name,
 		    ref_object->load_name,
 		    (flags & SYM_PLT) ? "plt" : "got", type, RELOC_JMP_SLOT);

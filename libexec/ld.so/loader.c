@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.101 2006/05/03 16:10:51 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.102 2006/05/08 20:34:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -207,8 +207,8 @@ _dl_setup_env(char **envp)
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
 	_dl_debug = _dl_getenv("LD_DEBUG", envp);
 	_dl_norandom = _dl_getenv("LD_NORANDOM", envp);
-	_dl_noprebind = _dl_getenv("LD_NOPREBIND", envp); 
-	_dl_prebind_validate = _dl_getenv("LD_PREBINDVALIDATE", envp); 
+	_dl_noprebind = _dl_getenv("LD_NOPREBIND", envp);
+	_dl_prebind_validate = _dl_getenv("LD_PREBINDVALIDATE", envp);
 
 	/*
 	 * Don't allow someone to change the search paths if he runs
@@ -337,7 +337,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 	return(0);
 }
 
- 
+
 
 /*
  * This is the dynamic loader entrypoint. When entering here, depending
@@ -412,7 +412,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			_dl_add_object(exe_obj);
 		} else if (phdp->p_type == PT_INTERP) {
 			us = _dl_strdup((char *)phdp->p_vaddr);
-		} else if ((phdp->p_type == PT_LOAD) && 
+		} else if ((phdp->p_type == PT_LOAD) &&
 		    (phdp->p_flags & 0x08000000)) {
 //			dump_prelink(phdp->p_vaddr, phdp->p_memsz);
 			prebind_load_exe(phdp, exe_obj);

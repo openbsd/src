@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2006/05/03 16:10:52 drahn Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/05/08 20:34:36 deraadt Exp $
 
 SRCS=	prebind.c sod.c debug.c objarray.c
-.if (${MACHINE} == "mips64") 
+.if (${MACHINE} == "mips64")
 NOPROG=
 .else
 PROG=	prebind

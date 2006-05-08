@@ -1,4 +1,4 @@
-/* $OpenBSD: objarray.c,v 1.4 2006/05/07 15:36:43 drahn Exp $ */
+/* $OpenBSD: objarray.c,v 1.5 2006/05/08 20:34:36 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -64,7 +64,7 @@ elf_add_object_curbin_list(struct elf_object *object)
 	ol->object = object;
 	TAILQ_INSERT_TAIL(&(curbin->curbin_list), ol, list);
 	if ( load_object == NULL)
-		load_object = object; 
+		load_object = object;
 	ol->load_prog = load_object;
 
 #if 0
@@ -468,7 +468,7 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 		ftruncate(fd, footer.orig_size);
 		elf_clear_prog_load(fd, object);
 	}
-	
+
 	if (fstat(fd, &ifstat) == -1) {
 		perror(object->load_name);
 		exit(10);
@@ -481,7 +481,7 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 	/* verify dev/inode - do we care about last modified? */
 
 	/* pieces to store on lib
-	 * 
+	 *
 	 * offset to footer
 	 * nameidx		- numlibs * sizeof nameidx
 	 * symcache		- symcache_cnt * sizeof (symcache_idx)
@@ -602,7 +602,7 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 		printf("%s: prebind info %d bytes old size %lld, growth %f\n",
 		    object->load_name, footer.prebind_size, footer.orig_size,
 		    (double)(footer.prebind_size) / footer.orig_size);
-			
+
 	if (verbose > 1)
 		elf_dump_footer(&footer);
 
@@ -964,7 +964,7 @@ write_txtbusy_file(char *name)
 	return fd;
 }
 
-void 
+void
 elf_load_existing_prebind(struct elf_object *object, int fd)
 {
 	struct prebind_footer footer;
@@ -1013,7 +1013,7 @@ copy_oldsymcache(int objidx)
 	    calloc(sizeof(struct symcache_noflag), object->nchains);
 	objarray[objidx].pltsymcache =
 	    calloc(sizeof(struct symcache_noflag), object->nchains);
-		
+
 	if (objarray[objidx].symcache == NULL ||
 	    objarray[objidx].pltsymcache == NULL) {
 		printf("out of memory allocating symcache\n");
@@ -1038,11 +1038,11 @@ copy_oldsymcache(int objidx)
 			    objarray[j].id1 == nameidx[i].id1) {
 				found = 1;
 				idxtolib[i] = j;
-				if (strcmp(objarray[j].obj->load_name, 
+				if (strcmp(objarray[j].obj->load_name,
 				    &nametab[nameidx[i].name]) != 0) {
 					printf("warning filename mismatch"
-					    " [%s] [%s]\n",	
-					    objarray[j].obj->load_name, 
+					    " [%s] [%s]\n",
+					    objarray[j].obj->load_name,
 					    &nametab[nameidx[i].name]);
 				}
 			}
@@ -1054,7 +1054,7 @@ copy_oldsymcache(int objidx)
 		goto done;
 
 	/* build idxtolibs */
-	
+
 	tcache = objarray[objidx].symcache;
 	symcache = prebind_map + footer->symcache_idx;
 

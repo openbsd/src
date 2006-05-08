@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.4 2006/05/05 14:34:27 drahn Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.5 2006/05/08 20:34:36 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -65,7 +65,7 @@ _dl_prebind_data_to_footer(void *prebind_data)
 	offset = *poffset;
 	c += offset;
 	footer = (void *)c;
-	
+
 	return footer;
 }
 
@@ -234,18 +234,18 @@ prebind_symcache(elf_object_t *object, int plt)
 	nameidx = prebind_map + footer->nameidx_idx;;
 	if (plt) {
 		symcachetab = prebind_map + footer->pltsymcache_idx;
-		symcache_cnt = footer->pltsymcache_cnt; 
+		symcache_cnt = footer->pltsymcache_cnt;
 //		DL_DEB(("loading plt %d\n", symcache_cnt));
 	} else {
 		symcachetab = prebind_map + footer->symcache_idx;
-		symcache_cnt = footer->symcache_cnt; 
+		symcache_cnt = footer->symcache_cnt;
 //		DL_DEB(("loading got %d\n", symcache_cnt));
 	}
 	nametab = prebind_map + footer->nametab_idx;
 
 	libmap = _dl_prog_prebind_map + prog_footer->libmap_idx;
 	idxtolib  = _dl_prog_prebind_map + libmap[cur_obj];
-	
+
 	for (i = 0; i < symcache_cnt; i++) {
 		struct elf_object *tobj;
 		const Elf_Sym *sym;
@@ -336,7 +336,7 @@ prebind_symcache(elf_object_t *object, int plt)
 #if 0
 			DL_DEB(("symidx %d: obj %d sym %d flags %x\n",
 				f->sym, f->targobj_idx,
-				f->sym_idx, 
+				f->sym_idx,
 			        SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt));
 #endif
 			tobj =  objarray[f->targobj_idx];
@@ -563,7 +563,7 @@ prebind_dump_fixup(struct fixup *fixup, u_int32_t numfixups)
 	for (i = 0; i < numfixups; i++) {
 		f = &(fixup[i]);
 
-		_dl_printf("idx %d targobj %d sym idx %d\n", 
+		_dl_printf("idx %d targobj %d sym idx %d\n",
 		    f->sym, f->targobj_idx, f->sym_idx);
 
 	}
