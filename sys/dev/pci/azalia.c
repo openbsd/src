@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.6 2006/05/08 04:18:43 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.7 2006/05/08 20:36:59 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -511,7 +511,7 @@ azalia_attach(azalia_t *az)
 	uint16_t gcap;
 	uint16_t statests;
 
-	printf("%s: High Definition Audio, rev. %d.%d\n",
+	printf("%s: host: High Definition Audio rev. %d.%d\n",
 	    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
 	gcap = AZ_READ_2(az, GCAP);
 	az->nistreams = HDA_GCAP_ISS(gcap);
