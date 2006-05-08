@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.25 2005/10/11 19:57:17 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.26 2006/05/08 19:28:21 kjell Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -75,7 +75,7 @@ Repeat next command 4 times
 Kill to end of line (placing into kill buffer).
 .It ^Y
 Yank kill buffer into current location.
-.It ^@
+.It ^SPC
 Set mark.
 .It ^W
 Kill region
@@ -93,7 +93,7 @@ Start of buffer.
 End of buffer.
 .Pp
 .It ^X^C
-Quit (you will be asked if you want to save files).
+Save buffers and quit.
 .It ^X-O
 Next window.
 .It ^X-N
@@ -101,6 +101,8 @@ Next window.
 .It ^X-P
 Previous window.
 .It ^X-U
+Undo.
+.It ^_
 Undo.
 .El
 .Pp
