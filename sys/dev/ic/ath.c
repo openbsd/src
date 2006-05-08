@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.48 2006/04/20 20:29:56 miod Exp $  */
+/*      $OpenBSD: ath.c,v 1.49 2006/05/08 18:32:11 pedro Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -255,6 +255,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	if (ah->ah_radio_5ghz_revision >= AR5K_SREV_RAD_UNSUPP ||
 	    ah->ah_radio_2ghz_revision >= AR5K_SREV_RAD_UNSUPP) {
 		printf(": RF radio not supported\n");
+		error = EOPNOTSUPP;
 		goto bad;
 	}
 
