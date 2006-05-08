@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.35 2006/05/07 23:18:59 marco Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.36 2006/05/08 19:52:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -465,7 +465,8 @@ gdt_attach(gdt)
 		gdt->sc_link.openings = (GDT_MAXCMDS - GDT_CMD_RESERVE) /
 		    gdt->sc_ndevs;
 
-	printf("dpmem %x %d-bus %d cache device%s\n", gdt->sc_dpmembase,
+	printf("dpmem %llx %d-bus %d cache device%s\n",
+	    (long long)gdt->sc_dpmembase,
 	    gdt->sc_bus_cnt, cdev_cnt, cdev_cnt == 1 ? "" : "s");
 	printf("%s: ver %x, cache %s, strategy %d, writeback %s, blksz %d\n",
 	    DEVNAME(gdt), gdt->sc_cpar.cp_version,

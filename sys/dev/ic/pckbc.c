@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.11 2005/12/29 12:31:29 martin Exp $ */
+/* $OpenBSD: pckbc.c,v 1.12 2006/05/08 19:52:13 deraadt Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -769,7 +769,9 @@ pckbc_cmdresponse(t, slot, data)
 				/* try again last command */
 				goto restart;
 			} else {
+#ifdef PCKBCDEBUG
 				printf("pckbc: cmd failed\n");
+#endif
 				cmd->status = EIO;
 				/* dequeue */
 			}
