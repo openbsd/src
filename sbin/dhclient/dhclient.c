@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.82 2006/03/06 10:45:56 djm Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.83 2006/05/08 17:25:59 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 		while (!interface_link_status(ifi->name)) {
 			fprintf(stderr, ".");
 			fflush(stderr);
-			if (++i > 10) {
+			if (++i > ifi->client->config->link_timeout) {
 				fprintf(stderr, " giving up\n");
 				exit(1);
 			}

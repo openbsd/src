@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.28 2006/04/20 15:54:34 deraadt Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.29 2006/05/08 17:25:59 deraadt Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -64,6 +64,7 @@ read_client_conf(void)
 	new_parse(path_dhclient_conf);
 
 	/* Set some defaults... */
+	config->link_timeout = 10;
 	config->timeout = 60;
 	config->select_interval = 0;
 	config->reboot_timeout = 10;
@@ -202,6 +203,9 @@ parse_client_statement(FILE *cfile)
 		memset(config->required_options, 0,
 		    sizeof(config->required_options));
 		parse_option_list(cfile, config->required_options);
+		return;
+	case TOK_LINK_TIMEOUT:
+		parse_lease_time(cfile, &config->link_timeout);
 		return;
 	case TOK_TIMEOUT:
 		parse_lease_time(cfile, &config->timeout);

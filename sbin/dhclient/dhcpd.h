@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.47 2005/08/05 16:23:30 moritz Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.48 2006/05/08 17:25:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -156,6 +156,7 @@ struct client_config {
 	int			 requested_option_count;
 	time_t			 timeout;
 	time_t			 initial_interval;
+	time_t			 link_timeout;
 	time_t			 retry_interval;
 	time_t			 select_interval;
 	time_t			 reboot_timeout;

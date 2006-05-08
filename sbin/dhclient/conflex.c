@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.11 2006/04/18 19:17:54 deraadt Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.12 2006/05/08 17:25:59 deraadt Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -327,6 +327,7 @@ static const struct keywords {
 	{ "initial-interval",			TOK_INITIAL_INTERVAL },
 	{ "interface",				TOK_INTERFACE },
 	{ "lease",				TOK_LEASE },
+	{ "link-timeout",			TOK_LINK_TIMEOUT },
 	{ "media",				TOK_MEDIA },
 	{ "medium",				TOK_MEDIUM },
 	{ "option",				TOK_OPTION },
