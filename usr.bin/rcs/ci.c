@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.169 2006/05/05 01:29:59 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.170 2006/05/08 16:56:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -365,7 +365,8 @@ checkin_diff_file(struct checkin_params *pb)
 	b2 = NULL;
 
 	diff_format = D_RCSDIFF;
-	rcs_diffreg(path1, path2, b3);
+	if (rcs_diffreg(path1, path2, b3) == D_ERROR)
+		goto out;
 
 	rcs_buf_putc(b3, '\0');
 	deltatext = (char *)rcs_buf_release(b3);

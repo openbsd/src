@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.6 2006/05/08 10:19:34 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.7 2006/05/08 16:56:40 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.6 2006/05/08 10:19:34 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.7 2006/05/08 16:56:40 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -163,6 +163,7 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
+	dp13 = dp23 = path1 = path2 = path3 = NULL;
 
 	rcsnum_tostr(rev1, r1, sizeof(r1));
 	rcsnum_tostr(rev2, r2, sizeof(r2));
@@ -195,8 +196,12 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	rcs_buf_free(b2);
 	b2 = NULL;
 
-	rcs_diffreg(path1, path3, d1);
-	rcs_diffreg(path2, path3, d2);
+	if ((rcs_diffreg(path1, path3, d1) == D_ERROR) ||
+	    (rcs_diffreg(path2, path3, d2) == D_ERROR)) {
+		rcs_buf_free(diffb);
+		diffb = NULL;
+		goto out;
+	}
 
 	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
 	rcs_buf_write_stmp(d1, dp13, 0600);
