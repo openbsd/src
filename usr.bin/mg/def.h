@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.86 2006/05/02 17:10:25 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.87 2006/05/08 21:24:24 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -328,7 +328,7 @@ int		 filevisit(int, int);
 int		 filevisitalt(int, int);
 int		 filevisitro(int, int);
 int		 poptofile(int, int);
-struct buffer  *findbuffer(char *);
+struct buffer	*findbuffer(char *);
 int		 readin(char *);
 int		 insertfile(char *, char *, int);
 int		 filewrite(int, int);
