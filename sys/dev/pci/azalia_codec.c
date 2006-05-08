@@ -1,5 +1,5 @@
-/*	$OpenBSD: azalia_codec.c,v 1.4 2006/05/08 04:28:33 brad Exp $	*/
-/*	$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.5 2006/05/08 04:33:54 brad Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.7 2006/01/16 14:28:38 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ static int	alc260_init_widget(const codec_t *, widget_t *, nid_t);
 static int	alc880_init_dacgroup(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
 static int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
+static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 static int	stac9221_init_dacgroup(codec_t *);
 
 
@@ -77,6 +78,11 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
 		this->name = "Realtek ALC882";
 		this->init_dacgroup = alc882_init_dacgroup;
 		this->init_widget = alc882_init_widget;
+		break;
+	case 0x11d41981:
+		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
+		this->name = "Analog Devices AD1981HD";
+		this->init_widget = ad1981hd_init_widget;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
@@ -405,6 +411,48 @@ alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 		strlcpy(w->name, "hp", sizeof(w->name));
 		break;
 	case 0x1c:
+		strlcpy(w->name, AudioNcd, sizeof(w->name));
+		break;
+	case 0x1d:
+		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
+		break;
+	}
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Analog Device AD1981HD
+ * ---------------------------------------------------------------- */
+
+static int
+ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	switch (nid) {
+	case 0x05:
+		strlcpy(w->name, AudioNline "out", sizeof(w->name));
+		break;
+	case 0x06:
+		strlcpy(w->name, "hp", sizeof(w->name));
+		break;
+	case 0x07:
+		strlcpy(w->name, AudioNmono, sizeof(w->name));
+		break;
+	case 0x08:
+		strlcpy(w->name, AudioNmicrophone, sizeof(w->name));
+		break;
+	case 0x09:
+		strlcpy(w->name, AudioNline "in", sizeof(w->name));
+		break;
+	case 0x0d:
+		strlcpy(w->name, "beep", sizeof(w->name));
+		break;
+	case 0x17:
+		strlcpy(w->name, AudioNaux, sizeof(w->name));
+		break;
+	case 0x18:
+		strlcpy(w->name, AudioNmicrophone "2", sizeof(w->name));
+		break;
+	case 0x19:
 		strlcpy(w->name, AudioNcd, sizeof(w->name));
 		break;
 	case 0x1d:
