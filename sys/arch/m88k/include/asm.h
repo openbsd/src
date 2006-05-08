@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 2005/12/03 14:30:05 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 2006/05/08 14:03:34 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -200,10 +200,6 @@
 #define	DMT_DAS_BIT		14
 #define	DMT_DREG_OFFSET		7
 #define	DMT_DREG_WIDTH		5
-
-/* exception vector marker */
-#define	UNKNOWN_HANDLER		0xffffffff
-#define	END_OF_VECTOR_LIST	0xfffffffe
 
 #endif	/* _KERNEL */
 

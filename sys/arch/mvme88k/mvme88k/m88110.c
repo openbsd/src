@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.35 2005/12/11 21:45:31 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.36 2006/05/08 14:03:35 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -70,7 +70,6 @@
 #include <machine/m88110.h>
 #include <machine/m88410.h>
 #include <machine/psl.h>
-#include <machine/trap.h>
 
 #include <mvme88k/dev/busswreg.h>
 

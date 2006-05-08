@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2006/05/04 19:38:45 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2006/05/08 14:03:35 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -488,15 +488,10 @@ user_fault:
 		fault_type = FPE_INTOVF;
 		break;
 	case T_FPEPFLT+T_USER:
-	case T_FPEIFLT+T_USER:
 		sig = SIGFPE;
 		break;
 	case T_SIGSYS+T_USER:
 		sig = SIGSYS;
-		break;
-	case T_SIGTRAP+T_USER:
-		sig = SIGTRAP;
-		fault_type = TRAP_TRACE;
 		break;
 	case T_STEPBPT+T_USER:
 #ifdef PTRACE
@@ -641,24 +636,31 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		break;
 		/*NOTREACHED*/
 
-	case T_197_READ+T_USER:
-	case T_197_READ:
+	case T_110_DRM+T_USER:
+	case T_110_DRM:
+#ifdef DEBUG
 		printf("DMMU read miss: Hardware Table Searches should be enabled!\n");
+#endif
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
-	case T_197_WRITE+T_USER:
-	case T_197_WRITE:
+	case T_110_DWM+T_USER:
+	case T_110_DWM:
+#ifdef DEBUG
 		printf("DMMU write miss: Hardware Table Searches should be enabled!\n");
+#endif
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
-	case T_197_INST+T_USER:
-	case T_197_INST:
+	case T_110_IAM+T_USER:
+	case T_110_IAM:
+#ifdef DEBUG
 		printf("IMMU miss: Hardware Table Searches should be enabled!\n");
+#endif
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
+
 #ifdef DDB
 	case T_KDB_TRACE:
 		s = splhigh();
@@ -1010,15 +1012,10 @@ m88110_user_fault:
 		fault_type = FPE_INTOVF;
 		break;
 	case T_FPEPFLT+T_USER:
-	case T_FPEIFLT+T_USER:
 		sig = SIGFPE;
 		break;
 	case T_SIGSYS+T_USER:
 		sig = SIGSYS;
-		break;
-	case T_SIGTRAP+T_USER:
-		sig = SIGTRAP;
-		fault_type = TRAP_TRACE;
 		break;
 	case T_STEPBPT+T_USER:
 #ifdef PTRACE

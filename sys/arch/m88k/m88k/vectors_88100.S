@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors_88100.S,v 1.2 2004/07/02 08:32:07 miod Exp $	*/
+/*	$OpenBSD: vectors_88100.S,v 1.3 2006/05/08 14:03:35 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991, 1992 Carnegie Mellon University
@@ -28,15 +28,15 @@
 
 #include <machine/asm.h>
 
-#define	UNDEFINED16	\
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER; \
-	word UNKNOWN_HANDLER; word UNKNOWN_HANDLER;
+#define	UNKNOWN16	\
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler); \
+	VECTOR(unknown_handler); VECTOR(unknown_handler);
 
 	data
 GLOBAL(vector_list)
@@ -51,38 +51,39 @@ GLOBAL(vector_list)
 	VECTOR(divide_handler)			/* 08 */
 	VECTOR(overflow_handler)		/* 09 */
 	VECTOR(error_handler)			/* 0a */
-	word UNKNOWN_HANDLER			/* 0b */
-	word UNKNOWN_HANDLER			/* 0c */
-	word UNKNOWN_HANDLER			/* 0d */
-	word UNKNOWN_HANDLER			/* 0e */
-	word UNKNOWN_HANDLER			/* 0f */
-	UNDEFINED16				/* 1x */
-	UNDEFINED16				/* 2x */
-	UNDEFINED16				/* 3x */
-	UNDEFINED16				/* 4x */
-	UNDEFINED16				/* 5x */
-	UNDEFINED16				/* 6x */
-	word UNKNOWN_HANDLER			/* 70 */
-	word UNKNOWN_HANDLER			/* 71 */
+	VECTOR(unknown_handler)			/* 0b */
+	VECTOR(unknown_handler)			/* 0c */
+	VECTOR(unknown_handler)			/* 0d */
+	VECTOR(unknown_handler)			/* 0e */
+	VECTOR(unknown_handler)			/* 0f */
+	UNKNOWN16				/* 1x */
+	UNKNOWN16				/* 2x */
+	UNKNOWN16				/* 3x */
+	UNKNOWN16				/* 4x */
+	UNKNOWN16				/* 5x */
+	UNKNOWN16				/* 6x */
+	VECTOR(unknown_handler)			/* 70 */
+	VECTOR(unknown_handler)			/* 71 */
 	VECTOR(fp_precise_handler)		/* 72 */
 	VECTOR(fp_imprecise_handler)		/* 73 */
 	VECTOR(unimplemented_handler)		/* 74 */
-	word UNKNOWN_HANDLER			/* 75 */
+	VECTOR(unknown_handler)			/* 75 */
 	VECTOR(unimplemented_handler)		/* 76 */
-	word UNKNOWN_HANDLER			/* 77 */
+	VECTOR(unknown_handler)			/* 77 */
 	VECTOR(unimplemented_handler)		/* 78 */
-	word UNKNOWN_HANDLER			/* 79 */
+	VECTOR(unknown_handler)			/* 79 */
 	VECTOR(unimplemented_handler)		/* 7a */
-	word UNKNOWN_HANDLER			/* 7b */
+	VECTOR(unknown_handler)			/* 7b */
 	VECTOR(unimplemented_handler)		/* 7c */
-	word UNKNOWN_HANDLER			/* 7d */
+	VECTOR(unknown_handler)			/* 7d */
 	VECTOR(unimplemented_handler)		/* 7e */
-	word UNKNOWN_HANDLER			/* 7f */
+	VECTOR(unknown_handler)			/* 7f */
 	VECTOR(syscall_handler)			/* 80 */
 	VECTOR(syscall_handler)			/* 81 */
+#ifdef DDB
 	VECTOR(break)				/* 82 */
 	VECTOR(trace)				/* 83 */
 	VECTOR(entry)				/* 84 */
-GLOBAL(vector_list_end)
-	word END_OF_VECTOR_LIST
+#endif
+	word	0
 

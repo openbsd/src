@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.16 2005/12/11 21:45:30 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.17 2006/05/08 14:03:34 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -532,11 +532,6 @@ GLOBAL(sigsys)
 	CALL(m88100_trap, T_SIGSYS, r30)
 	DONE88100
 
-GLOBAL(sigtrap)
-	PREP88100("sigtrap", 510,,)
-	CALL(m88100_trap, T_SIGTRAP, r30)
-	DONE88100
-
 GLOBAL(stepbpt)
 	PREP88100("stepbpt", 504,,)
 	CALL(m88100_trap, T_STEPBPT, r30)
@@ -561,21 +556,6 @@ GLOBAL(trace)
 GLOBAL(entry)
 	PREP88100("kdb", 132,,)
 	CALL(m88100_trap, T_KDB_ENTRY, r30)
-	DONE88100
-#else
-GLOBAL(break)
-	PREP88100("break", 130,,)
-	CALL(m88100_trap, T_UNKNOWNFLT, r30)
-	DONE88100
-
-GLOBAL(trace)
-	PREP88100("trace", 131,,)
-	CALL(m88100_trap, T_UNKNOWNFLT, r30)
-	DONE88100
-
-GLOBAL(entry)
-	PREP88100("unknown", 132,,)
-	CALL(m88100_trap, T_UNKNOWNFLT, r30)
 	DONE88100
 #endif
 
@@ -1909,20 +1889,20 @@ GLOBAL(m88110_nonmaskable)
 
 /* MVME197 data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
-	PREP88110("MVME197 read miss", 12,)
-	CALL(m88110_trap, T_197_READ, r30)
+	PREP88110("MVME197 data read miss", 12,)
+	CALL(m88110_trap, T_110_DRM, r30)
 	DONE88110
 
 /* MVME197 data MMU write miss handler */
 GLOBAL(m88110_data_write_miss)
-	PREP88110("MVME197 write miss", 13,)
-	CALL(m88110_trap, T_197_WRITE, r30)
+	PREP88110("MVME197 data write miss", 13,)
+	CALL(m88110_trap, T_110_DRM, r30)
 	DONE88110
 
 /* MVME197 inst MMU ATC miss handler */
 GLOBAL(m88110_inst_atc_miss)
-	PREP88110("MVME197 inst miss", 14,)
-	CALL(m88110_trap, T_197_INST, r30)
+	PREP88110("MVME197 inst ATC miss", 14,)
+	CALL(m88110_trap, T_110_IAM, r30)
 	DONE88110
 
 /* trap 450: system calls */
@@ -1943,11 +1923,6 @@ GLOBAL(m88110_cache_flush_handler)
 GLOBAL(m88110_sigsys)
 	PREP88110("sigsys", 501,)
 	CALL(m88110_trap, T_SIGSYS, r30)
-	DONE88110
-
-GLOBAL(m88110_sigtrap)
-	PREP88110("sigtrap", 510,)
-	CALL(m88110_trap, T_SIGTRAP, r30)
 	DONE88110
 
 GLOBAL(m88110_stepbpt)
@@ -1974,21 +1949,6 @@ GLOBAL(m88110_trace)
 GLOBAL(m88110_entry)
 	PREP88110("kdb", 132,)
 	CALL(m88110_trap, T_KDB_ENTRY, r30)
-	DONE88110
-#else
-GLOBAL(m88110_break)
-	PREP88110("break", 130,)
-	CALL(m88110_trap, T_UNKNOWNFLT, r30)
-	DONE88110
-
-GLOBAL(m88110_trace)
-	PREP88110("trace", 131,)
-	CALL(m88110_trap, T_UNKNOWNFLT, r30)
-	DONE88110
-
-GLOBAL(m88110_entry)
-	PREP88110("unknown", 132,)
-	CALL(m88110_trap, T_UNKNOWNFLT, r30)
 	DONE88110
 #endif
 

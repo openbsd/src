@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.9 2006/05/03 18:14:51 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.10 2006/05/08 14:03:34 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -98,11 +98,7 @@ void	m88k_print_instruction(int, u_int, u_int32_t);	/* db_disasm.c */
 
 /* breakpoint/watchpoint foo */
 #define IS_BREAKPOINT_TRAP(type,code) ((type)==T_KDB_BREAK)
-#if 0
-#define IS_WATCHPOINT_TRAP(type,code) ((type)==T_KDB_WATCH)
-#else
 #define IS_WATCHPOINT_TRAP(type,code) 0
-#endif /* T_WATCHPOINT */
 
 /* machine specific commands have been added to ddb */
 #define DB_MACHINE_COMMANDS

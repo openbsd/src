@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.181 2006/05/02 21:43:09 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.182 2006/05/08 14:03:35 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -75,7 +75,6 @@
 #include <machine/kcore.h>
 #include <machine/locore.h>
 #include <machine/reg.h>
-#include <machine/trap.h>
 
 #include <dev/cons.h>
 
@@ -89,10 +88,6 @@
 #include <ddb/db_var.h>
 #endif /* DDB */
 
-typedef struct {
-	unsigned word_one, word_two;
-} m88k_exception_vector_area;
-
 caddr_t	allocsys(caddr_t);
 void	consinit(void);
 void	dumpconf(void);
@@ -100,10 +95,10 @@ void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
 void	identifycpu(void);
 void	mvme_bootstrap(void);
+void	mvme88k_vector_init(u_int32_t *, u_int32_t *);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 void	secondary_pre_main(void);
-void	vector_init(m88k_exception_vector_area *, unsigned *);
 void	_doboot(void);
 
 extern void setlevel(unsigned int);
@@ -1164,81 +1159,6 @@ bootcnputc(dev, c)
 		bugoutchr(c);
 }
 
-#define SIGSYS_MAX	501
-#define SIGTRAP_MAX	510
-
-#define EMPTY_BR	0xc0000000	/* empty "br" instruction */
-#define NO_OP 		0xf4005800	/* "or r0, r0, r0" */
-
-#define BRANCH(FROM, TO) \
-	(EMPTY_BR | ((vaddr_t)(TO) - (vaddr_t)(FROM)) >> 2)
-
-#define SET_VECTOR(NUM, VALUE) \
-	do { \
-		vector[NUM].word_one = NO_OP; \
-		vector[NUM].word_two = BRANCH(&vector[NUM].word_two, VALUE); \
-	} while (0)
-
-/*
- * vector_init(vector, vector_init_list)
- *
- * This routine sets up the m88k vector table for the running processor.
- * It is called with a very little stack, and interrupts disabled,
- * so don't call any other functions!
- */
-void
-vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
-{
-	unsigned num;
-	unsigned vec;
-
-	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST;
-	    num++) {
-		if (vec != UNKNOWN_HANDLER)
-			SET_VECTOR(num, vec);
-	}
-
-	/* Save BUG vector */
-	bugvec[0] = vector[MVMEPROM_VECTOR].word_one;
-	bugvec[1] = vector[MVMEPROM_VECTOR].word_two;
-
-#ifdef M88110
-	if (CPU_IS88110) {
-		for (; num <= SIGSYS_MAX; num++)
-			SET_VECTOR(num, m88110_sigsys);
-
-		for (; num <= SIGTRAP_MAX; num++)
-			SET_VECTOR(num, m88110_sigtrap);
-
-		SET_VECTOR(450, m88110_syscall_handler);
-		SET_VECTOR(451, m88110_cache_flush_handler);
-		SET_VECTOR(504, m88110_stepbpt);
-		SET_VECTOR(511, m88110_userbpt);
-	}
-#endif
-#ifdef M88100
-	if (CPU_IS88100) {
-		for (; num <= SIGSYS_MAX; num++)
-			SET_VECTOR(num, sigsys);
-
-		for (; num <= SIGTRAP_MAX; num++)
-			SET_VECTOR(num, sigtrap);
-
-		SET_VECTOR(450, syscall_handler);
-		SET_VECTOR(451, cache_flush_handler);
-		SET_VECTOR(504, stepbpt);
-		SET_VECTOR(511, userbpt);
-	}
-#endif
-
-	/* GCC will by default produce explicit trap 503 for division by zero */
-	SET_VECTOR(503, vector_init_list[T_ZERODIV]);
-
-	/* Save new BUG vector */
-	sysbugvec[0] = vector[MVMEPROM_VECTOR].word_one;
-	sysbugvec[1] = vector[MVMEPROM_VECTOR].word_two;
-}
-
 unsigned
 getipl(void)
 {
@@ -1286,4 +1206,20 @@ raiseipl(unsigned level)
 
 	set_psr(psr);
 	return curspl;
+}
+
+void
+mvme88k_vector_init(u_int32_t *vbr, u_int32_t *vectors)
+{
+	extern void vector_init(u_int32_t *, u_int32_t *);	/* gross */
+
+	/* Save BUG vector */
+	bugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
+	bugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
+
+	vector_init(vbr, vectors);
+
+	/* Save new BUG vector */
+	sysbugvec[0] = vbr[MVMEPROM_VECTOR * 2 + 0];
+	sysbugvec[1] = vbr[MVMEPROM_VECTOR * 2 + 1];
 }

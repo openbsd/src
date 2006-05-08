@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.7 2005/12/03 16:52:14 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.8 2006/05/08 14:03:34 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -21,7 +21,6 @@ void set_cpu_number(cpuid_t);
 /* eh.S */
 
 void sigsys(void);
-void sigtrap(void);
 void stepbpt(void);
 void userbpt(void);
 void syscall_handler(void);
