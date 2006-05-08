@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.139 2006/03/15 21:02:09 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.140 2006/05/08 22:51:18 gwk Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -557,6 +557,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * hardware related system variables.
  */
+char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
+
 int
 hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
@@ -628,6 +630,33 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (cpu_setperf(perflevel));
 		else
 			return (0);
+	case HW_VENDOR:
+		if (hw_vendor)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    hw_vendor));
+		else
+			return (EOPNOTSUPP);
+	case HW_PRODUCT:
+		if (hw_prod)
+			return (sysctl_rdstring(oldp, oldlenp, newp, hw_prod));
+		else
+			return (EOPNOTSUPP);
+	case HW_VERSION:
+		if (hw_ver)
+			return (sysctl_rdstring(oldp, oldlenp, newp, hw_ver));
+		else
+			return (EOPNOTSUPP);
+	case HW_SERIALNO:
+		if (hw_serial)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    hw_serial));
+		else
+			return (EOPNOTSUPP);
+	case HW_UUID:
+		if (hw_uuid)
+			return (sysctl_rdstring(oldp, oldlenp, newp, hw_uuid));
+		else
+			return (EOPNOTSUPP);
 	default:
 		return (EOPNOTSUPP);
 	}

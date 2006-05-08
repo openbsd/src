@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.87 2006/03/15 21:02:04 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.88 2006/05/08 22:51:18 gwk Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -546,7 +546,12 @@ struct kinfo_proc2 {
 #define	HW_SENSORS	11		/* node: hardware monitors */
 #define	HW_CPUSPEED	12		/* get CPU frequency */
 #define	HW_SETPERF	13		/* set CPU performance % */
-#define	HW_MAXID	14		/* number of valid hw ids */
+#define	HW_VENDOR	14		/* string: vendor name */
+#define	HW_PRODUCT	15		/* string: product name */
+#define	HW_VERSION	16		/* string: hardware version */
+#define	HW_SERIALNO	17		/* string: hardware serial number */
+#define	HW_UUID		18		/* string: universal unique id */
+#define	HW_MAXID	19		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -563,6 +568,11 @@ struct kinfo_proc2 {
 	{ "sensors", CTLTYPE_NODE}, \
 	{ "cpuspeed", CTLTYPE_INT }, \
 	{ "setperf", CTLTYPE_INT }, \
+	{ "vendor", CTLTYPE_STRING }, \
+	{ "product", CTLTYPE_STRING }, \
+	{ "version", CTLTYPE_STRING }, \
+	{ "serialno", CTLTYPE_STRING }, \
+	{ "uuid", CTLTYPE_STRING }, \
 }
 
 /*

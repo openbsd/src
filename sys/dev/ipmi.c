@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.37 2006/05/06 15:04:38 wilfried Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.38 2006/05/08 22:51:18 gwk Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -39,6 +39,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/smbiosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -137,7 +138,6 @@ struct ipmi_sensors_head ipmi_sensor_list =
 
 struct timeout ipmi_timeout;
 
-void	smbios_ipmi_probe(void *, void *);
 void	dumpb(const char *, int, const u_int8_t *);
 
 int	read_sensor(struct ipmi_softc *, struct ipmi_sensor *);
@@ -173,21 +173,12 @@ void	*cmn_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 int	getbits(u_int8_t *, int, int);
 int	ipmi_sensor_type(int, int, int);
 
+void	ipmi_smbios_probe(struct smbios_ipmi *, struct ipmi_attach_args *);
 void	ipmi_refresh_sensors(struct ipmi_softc *sc);
 int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
 void	ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
 
-struct smbios_mem_map {
-	vaddr_t		baseva;
-	u_int8_t	*va;
-	size_t		vsize;
-	paddr_t		pa;
-};
-
-void	*smbios_map(paddr_t, size_t, struct smbios_mem_map *);
-void	smbios_unmap(struct smbios_mem_map *);
 void	*scan_sig(long, long, int, int, const void *);
-int	scan_smbios(u_int8_t, void (*)(void *, void *), void *);
 
 int	ipmi_test_threshold(u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
@@ -843,87 +834,6 @@ scan_sig(long start, long end, int skip, int len, const void *data)
 	return (NULL);
 }
 
-void *
-smbios_map(paddr_t pa, size_t len, struct smbios_mem_map *handle)
-{
-	paddr_t pgstart = trunc_page(pa);
-	paddr_t pgend	= round_page(pa + len);
-	vaddr_t va = uvm_km_valloc(kernel_map, pgend-pgstart);
-
-	if (va == 0)
-		return NULL;
-
-	handle->pa = pa;
-	handle->baseva = va;
-	handle->va = (u_int8_t *)(va + ((u_long)pa & PGOFSET));
-	handle->vsize = pgend - pgstart;
-
-	do {
-		pmap_kenter_pa(va, pgstart, VM_PROT_READ);
-		va += NBPG;
-		pgstart += NBPG;
-	} while (pgstart < pgend);
-
-	return handle->va;
-}
-
-void
-smbios_unmap(struct smbios_mem_map *handle)
-{
-	pmap_kremove(handle->baseva, handle->vsize);
-	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
-}
-
-/* Scan SMBIOS for table type */
-int
-scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg)
-{
-	struct smbiosanchor	*romhdr;
-	struct smhdr		*smhdr;
-	u_int8_t		*offset;
-	int			nmatch, num;
-	struct smbios_mem_map	smm;
-
-	/* Scan for SMBIOS Table Signature */
-	romhdr = (struct smbiosanchor *)scan_sig(0xF0000, 0xFFFFF, 16, 4,
-	    "_SM_");
-	if (romhdr == NULL)
-		return (0);
-
-	dbg_printf(1, "SMBIOS Version %d.%d at 0x%lx, %d entries\n",
-	    romhdr->smr_smbios_majver, romhdr->smr_smbios_minver,
-	    romhdr->smr_table_address, romhdr->smr_count);
-
-	/* Map SMBIOS Table start address */
-	nmatch = 0;
-	offset = smbios_map(romhdr->smr_table_address,
-	    romhdr->smr_count * romhdr->smr_maxsize, &smm);
-	if (offset == NULL)
-		return (0);
-
-	for (num = 0; num < romhdr->smr_count; num++) {
-		smhdr = (struct smhdr *)offset;
-		if (smhdr->smh_type == SMBIOS_TYPE_END ||
-		    smhdr->smh_length == 0)
-			break;
-
-		/* found a match here */
-		if (smhdr->smh_type == mtype) {
-			smcb(&smhdr[1], arg);
-			nmatch++;
-		}
-		/* Search for end of string table, marked by '\0\0' */
-		offset += smhdr->smh_length;
-		while (offset[0] || offset[1])
-			offset++;
-
-		offset += 2;
-	}
-	smbios_unmap(&smm);
-
-	return (nmatch);
-}
-
 void
 dumpb(const char *lbl, int len, const u_int8_t *data)
 {
@@ -937,10 +847,8 @@ dumpb(const char *lbl, int len, const u_int8_t *data)
 }
 
 void
-smbios_ipmi_probe(void *ptr, void *arg)
+ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 {
-	struct ipmi_attach_args *ia = arg;
-	struct smbios_ipmi	*pipmi = (struct smbios_ipmi *)ptr;
 
 	dbg_printf(1, "%02x %02x %02x %02x %08llx %02x %02x\n",
 	    pipmi->smipmi_if_type,
@@ -1661,13 +1569,16 @@ int
 ipmi_probe(void *aux)
 {
 	struct ipmi_attach_args *ia = aux;
+	struct dmd_ipmi *pipmi;
+	struct smbtable tbl;
 
-	if (scan_smbios(SMBIOS_TYPE_IPMI, smbios_ipmi_probe, ia) == 0) {
-		struct dmd_ipmi *pipmi;
-
-		/* XXX hack to find Dell PowerEdge 8450 */
+	tbl.cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_IPMIDEV, &tbl))
+		ipmi_smbios_probe(tbl.tblhdr, ia);
+	else {
 		pipmi = (struct dmd_ipmi *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
 		    "IPMI");
+		/* XXX hack to find Dell PowerEdge 8450 */
 		if (pipmi == NULL) {
 			/* no IPMI found */
 			return (0);

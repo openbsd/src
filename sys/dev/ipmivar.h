@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.11 2006/05/06 15:05:19 wilfried Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.12 2006/05/08 22:51:18 gwk Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -141,55 +141,6 @@ int	smic_probe(struct ipmi_softc *);
 int	smic_reset(struct ipmi_softc *);
 int	smic_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
 int	smic_recvmsg(struct ipmi_softc *, int, int *, u_int8_t *);
-
-#define SMBIOS_TYPE_IPMI		0x26
-#define SMBIOS_TYPE_END			0x7F
-
-struct smbiosanchor {
-	u_int8_t	smr_smtag[4];		/* Signature '_SM_' */
-	u_int8_t	smr_ep_cksum;		/* Chcksum Entry Point struct */
-	u_int8_t	smr_length;		/* Length of Anchor structure */
-	u_int8_t	smr_smbios_majver;	/* SMBIOS Major Version */
-	u_int8_t	smr_smbios_minver;	/* SMBIOS Minor Version */
-	u_int16_t	smr_maxsize;		/* Max size of SMHDR entry */
-	u_int8_t	smr_eprev;		/* SMBIOS Entry Revision (00) */
-	u_int8_t	smr_format[5];		/* Should be Zero */
-	u_int8_t	smr_dmitag[5];		/* Signature '_DMI_' */
-	u_int8_t	smr_iep_cksum;		/* Chcksum of Intermediate Entry
-						 * Point * structure */
-	u_int16_t	smr_table_length;	/* Length of SMBIOS Table */
-	u_int32_t	smr_table_address;	/* Phys addr of SMBIOS Table */
-	u_int16_t	smr_count;		/* # of entries in SMBIOS Tbl */
-	u_int8_t	smr_bcdrev;		/* BCD SMBIOS Revision */
-} __packed;
-
-struct smhdr {
-	u_int8_t	smh_type;		/* SMBIOS Header Type */
-	u_int8_t	smh_length;		/* SMBIOS Header Length */
-	u_int16_t	smh_handle;		/* SMBIOS Header Handle */
-} __packed;
-
-struct smbios_ipmi {
-	u_int8_t	smipmi_if_type;		/* IPMI Interface Type */
-	u_int8_t	smipmi_if_rev;		/* BCD IPMI Revision */
-	u_int8_t	smipmi_i2c_address;	/* I2C address of BMC */
-	u_int8_t	smipmi_nvram_address;	/* I2C address of NVRAM
-						 * storage */
-	u_int64_t	smipmi_base_address;	/* Base address of BMC (BAR
-						 * format) */
-	u_int8_t	smipmi_base_flags;	/* Flags field:
-						 * bit 7:6 : register spacing
-						 *   00 = byte
-						 *   01 = dword
-						 *   02 = word
-						 * bit 4 : Lower bit BAR
-						 * bit 3 : IRQ valid
-						 * bit 2 : N/A
-						 * bit 1 : Interrupt polarity
-						 * bit 0 : Interrupt trigger
-						 */
-	u_int8_t	smipmi_irq;		/* IRQ if applicable */
-} __packed;
 
 struct dmd_ipmi {
 	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */

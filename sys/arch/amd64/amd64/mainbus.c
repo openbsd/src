@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2006/04/14 21:33:56 marco Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.8 2006/05/08 22:51:17 gwk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include "isa.h"
 #include "acpi.h"
 #include "ipmi.h"
+#include "bios.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -58,6 +59,10 @@
 
 #if NIPMI > 0
 #include <dev/ipmivar.h>
+#endif
+
+#if NBIOS > 0
+#include <machine/biosvar.h>
 #endif
 
 int	mainbus_match(struct device *, void *, void *);
@@ -84,6 +89,9 @@ union mainbus_attach_args {
 #endif	
 #if NIPMI > 0
 	struct ipmi_attach_args mba_iaa;
+#endif
+#if NBIOS > 0
+	struct bios_attach_args mba_bios;
 #endif
 };
 
@@ -147,6 +155,15 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NPCI > 0
 	pci_mode = pci_mode_detect();
+#endif
+
+#if NBIOS > 0
+	{
+		mba.mba_bios.bios_dev = "bios";
+		mba.mba_bios.bios_iot = X86_BUS_SPACE_IO;
+		mba.mba_bios.bios_memt = X86_BUS_SPACE_MEM;
+		config_found(self, &mba.mba_bios, mainbus_print);
+	}
 #endif
 
 #if NACPI > 0

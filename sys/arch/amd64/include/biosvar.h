@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: biosvar.h,v 1.5 2005/12/13 23:13:45 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.6 2006/05/08 22:51:18 gwk Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -42,6 +42,7 @@
 #define	BIOSF_BIOS32	0x0001
 #define	BIOSF_PCIBIOS	0x0002
 #define	BIOSF_PROMSCAN	0x0004
+#define BIOSF_SMBIOS	0x0006
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
@@ -110,6 +111,7 @@ struct bios32_entry {
 	((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 #define	BIOS32_SIGNATURE	BIOS32_MAKESIG('_', '3', '2', '_')
 #define	PCIBIOS_SIGNATURE	BIOS32_MAKESIG('$', 'P', 'C', 'I')
+#define	SMBIOS_SIGNATURE	BIOS32_MAKESIG('_', 'S', 'M', '_')
 
 /*
  * CTL_BIOS definitions.
