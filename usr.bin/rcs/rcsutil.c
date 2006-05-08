@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.8 2006/04/29 05:31:28 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.9 2006/05/08 21:55:39 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -284,7 +284,7 @@ rcs_statfile(char *fname, char *out, size_t len, int flags)
 	if (fd == -1 && !(flags & RCS_CREATE)) {
 		if (strcmp(__progname, "rcsclean") != 0 &&
 		    strcmp(__progname, "ci") != 0)
-			warn("%s", out);
+			warnx("%s", out);
 		return (-1);
 	}
 
