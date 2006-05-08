@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.3 2006/05/08 03:53:57 brad Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.4 2006/05/08 04:11:31 brad Exp $	*/
 /*	$NetBSD: azalia.h,v 1.3 2005/09/29 04:14:03 kent Exp $	*/
 
 /*-
@@ -507,6 +507,10 @@ typedef struct {
 #define MI_TARGET_ADC		0x105
 #define MI_TARGET_VOLUME	0x106
 } mixer_item_t;
+
+#define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \
+					 (nid >= (codec)->wstart &&   \
+					  nid < (codec)->wend))
 
 typedef struct {
 	int nconv;
