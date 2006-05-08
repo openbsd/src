@@ -1,3 +1,4 @@
+/*	$OpenBSD: azalia.h,v 1.3 2006/05/08 03:53:57 brad Exp $	*/
 /*	$NetBSD: azalia.h,v 1.3 2005/09/29 04:14:03 kent Exp $	*/
 
 /*-
