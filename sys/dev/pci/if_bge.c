@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.143 2006/04/30 05:42:31 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.144 2006/05/08 20:08:02 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -851,7 +851,7 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 			m_freem(m_new);
 			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
 		}
-		return(ENOMEM);
+		return (ENOMEM);
 
 	}
 
@@ -2573,9 +2573,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		int shortfall = 8 - mlen ;
 
 		totlen += mlen;
-		if (mlen == 0) {
+		if (mlen == 0)
 			continue;
-		}
 		if (mlen >= 8)
 			continue;
 
@@ -2586,8 +2585,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 
 		/* Internal frag. If fits in prev, copy it there. */
 		if (prev && !M_READONLY(prev) &&
-		      M_TRAILINGSPACE(prev) >= m->m_len) {
-		  	bcopy(m->m_data,
+		    M_TRAILINGSPACE(prev) >= m->m_len) {
+			bcopy(m->m_data,
 			      prev->m_data+prev->m_len,
 			      mlen);
 			prev->m_len += mlen;
@@ -2596,21 +2595,19 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			prev->m_next = m_free(m);
 			m = prev;
 			continue;
-		}
-		else if (m->m_next != NULL && !M_READONLY(m) &&
-			     M_TRAILINGSPACE(m) >= shortfall &&
-			     m->m_next->m_len >= (8 + shortfall)) {
-		    /* m is writable and have enough data in next, pull up. */
+		} else if (m->m_next != NULL && !M_READONLY(m) &&
+			   M_TRAILINGSPACE(m) >= shortfall &&
+			   m->m_next->m_len >= (8 + shortfall)) {
+			/* m is writable and have enough data in next, pull up. */
 
-		  	bcopy(m->m_next->m_data,
+			bcopy(m->m_next->m_data,
 			      m->m_data+m->m_len,
 			      shortfall);
 			m->m_len += shortfall;
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;
-		}
-		else if (m->m_next == NULL || 1) {
-		  	/* Got a runt at the very end of the packet.
+		} else if (m->m_next == NULL || 1) {
+			/* Got a runt at the very end of the packet.
 			 * borrow data from the tail of the preceding mbuf and
 			 * update its length in-place. (The original data is still
 			 * valid, so we can do this even if prev is not writable.)
@@ -2628,11 +2625,12 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			if (!M_READONLY(m)) {
 				if (M_LEADINGSPACE(m) < shorfall) {
 					void *m_dat;
+
 					m_dat = (m->m_flags & M_PKTHDR) ?
-					  m->m_pktdat : m->dat;
+					    m->m_pktdat : m->dat;
 					memmove(m_dat, mtod(m, void*), m->m_len);
 					m->m_data = m_dat;
-				    }
+				}
 			} else
 #endif	/* just do the safe slow thing */
 			{
@@ -2641,7 +2639,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 
 				MGET(n, M_NOWAIT, MT_DATA);
 				if (n == NULL)
-				   return ENOBUFS;
+					return (ENOBUFS);
 				KASSERT(m->m_len + shortfall < MLEN
 					/*,
 					  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
@@ -2673,7 +2671,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 }
 
 /*
- * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
+ * Encapsulate an mbuf chain in the tx ring by coupling the mbuf data
  * pointers to descriptors.
  */
 int
@@ -2718,11 +2716,11 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	 * at the end of a chain, we can pad.  Otherwise, copy.
 	 */
 	if (bge_compact_dma_runt(m_head) != 0)
-		return ENOBUFS;
+		return (ENOBUFS);
 doit:
 	dma = SLIST_FIRST(&sc->txdma_list);
 	if (dma == NULL)
-		return ENOBUFS;
+		return (ENOBUFS);
 	dmamap = dma->dmamap;
 
 	/*
@@ -2761,7 +2759,7 @@ doit:
 	}
 
 	if (i < dmamap->dm_nsegs)
-		return ENOBUFS;
+		return (ENOBUFS);
 
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -2799,7 +2797,7 @@ bge_start(struct ifnet *ifp)
 
 	prodidx = sc->bge_tx_prodidx;
 
-	while(sc->bge_cdata.bge_tx_chain[prodidx] == NULL) {
+	while (sc->bge_cdata.bge_tx_chain[prodidx] == NULL) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
@@ -2905,11 +2903,10 @@ bge_init(void *xsc)
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	} else {
+	else
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	}
 
 	/* Disable hardware decapsulation of vlan frames. */
 	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
