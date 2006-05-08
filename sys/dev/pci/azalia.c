@@ -1,5 +1,5 @@
-/*	$OpenBSD: azalia.c,v 1.5 2006/05/08 04:11:31 brad Exp $	*/
-/*	$NetBSD: azalia.c,v 1.15 2005/09/29 04:14:03 kent Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.6 2006/05/08 04:18:43 brad Exp $	*/
+/*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
