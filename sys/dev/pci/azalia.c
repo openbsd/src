@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.3 2006/05/08 03:52:37 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.4 2006/05/08 03:59:09 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.15 2005/09/29 04:14:03 kent Exp $	*/
 
 /*-
@@ -1392,6 +1392,7 @@ azalia_mixer_init(codec_t *this)
 	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 
 	/* register classes */
+	DPRINTF(("%s: register classes\n", __func__));
 #define AZ_CLASS_INPUT	0
 #define AZ_CLASS_OUTPUT	1
 #define AZ_CLASS_RECORD	2
@@ -1440,6 +1441,7 @@ azalia_mixer_init(codec_t *this)
 	FOR_EACH_WIDGET(this, i) {
 		const widget_t *w;
 
+		DPRINTF(("%s: process w[%d]\n", __func__, i));
 		w = &this->w[i];
 
 		if (w->type == COP_AWTYPE_AUDIO_INPUT)
@@ -1448,6 +1450,7 @@ azalia_mixer_init(codec_t *this)
 		/* selector */
 		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
+			DPRINTF(("%s: selector %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.source", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -1462,6 +1465,8 @@ azalia_mixer_init(codec_t *this)
 			m->target = MI_TARGET_CONNLIST;
 			for (j = 0; j < w->nconnections && j < 32; j++) {
 				d->un.e.member[j].ord = j;
+				DPRINTF(("%s: selector %d=%s\n", __func__, j,
+				    this->w[w->connections[j]].name));
 				strlcpy(d->un.e.member[j].label.name,
 				    this->w[w->connections[j]].name,
 				    MAX_AUDIO_DEV_LEN);
@@ -1474,6 +1479,7 @@ azalia_mixer_init(codec_t *this)
 		if (w->widgetcap & COP_AWCAP_OUTAMP &&
 		    w->outamp_cap & COP_AMPCAP_MUTE) {
 			MIXER_REG_PROLOG;
+			DPRINTF(("%s: output mute %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.mute", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -1502,6 +1508,7 @@ azalia_mixer_init(codec_t *this)
 		if (w->widgetcap & COP_AWCAP_OUTAMP
 		    && COP_AMPCAP_NUMSTEPS(w->outamp_cap)) {
 			MIXER_REG_PROLOG;
+			DPRINTF(("%s: output gain %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s", w->name);
 			d->type = AUDIO_MIXER_VALUE;
@@ -1532,8 +1539,11 @@ azalia_mixer_init(codec_t *this)
 		/* input mute */
 		if (w->widgetcap & COP_AWCAP_INAMP &&
 		    w->inamp_cap & COP_AMPCAP_MUTE) {
+			DPRINTF(("%s: input mute %s\n", __func__, w->name));
 			for (j = 0; j < w->nconnections; j++) {
 				MIXER_REG_PROLOG;
+				DPRINTF(("%s: input mute %s.%s\n", __func__,
+				    w->name, this->w[w->connections[j]].name));
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s.%s.mute", w->name,
 				    this->w[w->connections[j]].name);
@@ -1561,8 +1571,11 @@ azalia_mixer_init(codec_t *this)
 		/* input gain */
 		if (w->widgetcap & COP_AWCAP_INAMP
 		    && COP_AMPCAP_NUMSTEPS(w->inamp_cap)) {
+			DPRINTF(("%s: input gain %s\n", __func__, w->name));
 			for (j = 0; j < w->nconnections; j++) {
 				MIXER_REG_PROLOG;
+				DPRINTF(("%s: input gain %s.%s\n", __func__,
+				    w->name, this->w[w->connections[j]].name));
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s.%s", w->name,
 				    this->w[w->connections[j]].name);
@@ -1596,6 +1609,7 @@ azalia_mixer_init(codec_t *this)
 		    w->d.pin.cap & COP_PINCAP_OUTPUT &&
 		    w->d.pin.cap & COP_PINCAP_INPUT) {
 			MIXER_REG_PROLOG;
+			DPRINTF(("%s: pin dir %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.dir", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -1617,6 +1631,7 @@ azalia_mixer_init(codec_t *this)
 		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
 		    w->d.pin.cap & COP_PINCAP_HEADPHONE) {
 			MIXER_REG_PROLOG;
+			DPRINTF(("%s: hpboost %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.boost", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -1638,6 +1653,7 @@ azalia_mixer_init(codec_t *this)
 		if (w->type == COP_AWTYPE_VOLUME_KNOB &&
 		    w->d.volume.cap & COP_VKCAP_DELTA) {
 			MIXER_REG_PROLOG;
+			DPRINTF(("%s: volume knob %s\n", __func__, w->name));
 			strlcpy(d->label.name, w->name, sizeof(d->label.name));
 			d->type = AUDIO_MIXER_VALUE;
 			d->mixer_class = AZ_CLASS_OUTPUT;
@@ -1659,6 +1675,7 @@ azalia_mixer_init(codec_t *this)
 	/* if the codec has multiple DAC groups, create "inputs.usingdac" */
 	if (this->ndacgroups > 1) {
 		MIXER_REG_PROLOG;
+		DPRINTF(("%s: create inputs.usingdac\n", __func__));
 		strlcpy(d->label.name, "usingdac", sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_INPUT;
@@ -1682,6 +1699,7 @@ azalia_mixer_init(codec_t *this)
 	/* if the codec has multiple ADCs, create "record.usingadc" */
 	if (this->nadcs > 1) {
 		MIXER_REG_PROLOG;
+		DPRINTF(("%s: create inputs.usingadc\n", __func__));
 		strlcpy(d->label.name, "usingadc", sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_RECORD;
@@ -1698,6 +1716,7 @@ azalia_mixer_init(codec_t *this)
 	}
 
 	/* unmute all */
+	DPRINTF(("%s: unmute\n", __func__));
 	for (i = 0; i < this->nmixers; i++) {
 		mixer_ctrl_t mc;
 
@@ -1717,6 +1736,7 @@ azalia_mixer_init(codec_t *this)
 	 * green=front, orange=surround, gray=c/lfe, black=side --> output
 	 * blue=line-in, pink=mic-in --> input
 	 */
+	DPRINTF(("%s: process bidirectional pins\n", __func__));
 	for (i = 0; i < this->nmixers; i++) {
 		mixer_ctrl_t mc;
 
@@ -1738,6 +1758,7 @@ azalia_mixer_init(codec_t *this)
 	}
 
 	/* set unextreme volume */
+	DPRINTF(("%s: set volume\n", __func__));
 	for (i = 0; i < this->nmixers; i++) {
 		mixer_ctrl_t mc;
 
