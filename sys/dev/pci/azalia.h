@@ -490,6 +490,7 @@ typedef struct {
 		} volume;
 	} d;
 } widget_t;
+#define	WIDGET_CHANNELS(w)	((w)->widgetcap & COP_AWCAP_STEREO ? 2 : 1)
 
 typedef struct {
 	mixer_devinfo_t devinfo;
