@@ -5825,7 +5825,6 @@
 ./usr/share/man/cat9/pool_init.0
 ./usr/share/man/cat9/pool_prime.0
 ./usr/share/man/cat9/pool_put.0
-./usr/share/man/cat9/pool_set_drain_hook.0
 ./usr/share/man/cat9/pool_sethardlimit.0
 ./usr/share/man/cat9/pool_sethiwat.0
 ./usr/share/man/cat9/pool_setlowat.0
