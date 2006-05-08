@@ -212,6 +212,7 @@
 ./usr/include/i386/segments.h
 ./usr/include/i386/setjmp.h
 ./usr/include/i386/signal.h
+./usr/include/i386/smbiosvar.h
 ./usr/include/i386/specialreg.h
 ./usr/include/i386/spinlock.h
 ./usr/include/i386/stdarg.h

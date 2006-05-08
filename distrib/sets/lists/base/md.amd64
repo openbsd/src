@@ -690,6 +690,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/segments.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/setjmp.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/signal.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/smbiosvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/specialreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/spinlock.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/stdarg.ph

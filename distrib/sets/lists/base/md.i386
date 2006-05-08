@@ -1623,6 +1623,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/segments.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/setjmp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/signal.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/smbiosvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/specialreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/spinlock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/stdarg.ph

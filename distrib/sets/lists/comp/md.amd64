@@ -63,6 +63,7 @@
 ./usr/include/amd64/segments.h
 ./usr/include/amd64/setjmp.h
 ./usr/include/amd64/signal.h
+./usr/include/amd64/smbiosvar.h
 ./usr/include/amd64/specialreg.h
 ./usr/include/amd64/spinlock.h
 ./usr/include/amd64/stdarg.h
