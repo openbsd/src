@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.39 2006/05/08 09:59:09 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.40 2006/05/08 11:56:16 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -92,7 +92,7 @@ rcsmerge_main(int argc, char **argv)
 	argc -= rcs_optind;
 	argv += rcs_optind;
 
-	if (argc < 0) {
+	if (argc < 1) {
 		warnx("no input file");
 		(usage)();
 		exit(D_ERROR);
