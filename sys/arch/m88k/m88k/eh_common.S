@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.17 2006/05/08 14:03:34 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.18 2006/05/08 14:34:01 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -236,6 +236,11 @@
 	bsr.n	_C_LABEL(NAME); \
 	 or	r3, r0, ARG2
 
+/* Invoke a function and return elsewhere */
+#define	XCALL(NAME, RET) \
+	bsr.n	NAME; \
+	 addu	r1, r1, RET - . - 4
+
 /*
  * Some registers used during the setting up of the new exception frame.
  * Don't choose r1, r30, or r31 for any of them.
@@ -333,9 +338,10 @@
  * processing.  It is used in the following manner:
  *
  *	ASGLOBAL(foo_handler)
- *		PREP88100("foo", 11, SSBR_Stuff, Precheck_Stuff)
- *		CALL(trapXXX, T_FOO_FAULT, r31)
- *		DONE88100
+ *		PREP881x0("foo", 11, SSBR_Stuff, Precheck_Stuff)
+ *		or	r2, r0, T_FOO_FAULT
+ *		or	r3, r0, r30
+ *		XCALL(trapXXX, return_code)
  *
  * This defines the exception handler for the "foo" exception.
  * The arguments are:
@@ -350,16 +356,16 @@
  *	This is for the data access exception only. See it for
  *	more info.
  *
- * What's in between PREP881x0() and DONE881x0() (usually a CALL)
+ * What's in between PREP881x0() and return_code() (usually a XCALL)
  * is the actual servicing of the interrupt.  During this time, any
  * register may be used freely as they've all been saved in the
- * exception frame (which is pointed to by r31).
+ * exception frame (which is pointed to by r30).
  */
 
 #ifdef M88100
 #define PREP88100(NAME, NUM, SSBR_STUFF, FLAG_PRECHECK) \
 	xcr	FLAGS, FLAGS, SR1			; \
-	FLAG_PRECHECK					; \
+	FLAG_PRECHECK					  \
 	/* the bsr later clobbers r1, so save now */	  \
 	stcr	r1, SR2	/* r1 now free */		; \
 	/* set or clear the FLAG_FROM_KERNEL bit */	  \
@@ -374,7 +380,7 @@
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
 	/* Clear any bits in the SSBR (held in TMP) */	  \
 	/* SSBR_STUFF may be empty, though.         */	  \
-	SSBR_STUFF					; \
+	SSBR_STUFF					  \
 	/* call setup_phase_two to restart the FPU  */	  \
 	/* and to save all general registers.       */	  \
 	bsr	_ASM_LABEL(m88100_setup_phase_two)
@@ -382,9 +388,9 @@
 
 #ifdef M88110
 #define PREP88110(NAME, NUM, FLAG_PRECHECK) \
-	SAVE_CTX					; \
+	SAVE_CTX					  \
 	xcr	FLAGS, FLAGS, SR1			; \
-	FLAG_PRECHECK					; \
+	FLAG_PRECHECK					  \
 	/* the bsr later clobbers r1, so save now */	; \
 	stcr	r1, SR2	/* r1 now free */		; \
 	/* set or clear the FLAG_FROM_KERNEL bit */	; \
@@ -404,41 +410,39 @@
 
 /* Some defines for use with PREP88100() */
 #define	Clear_SSBR_Dest \
-	bsr	_ASM_LABEL(clear_dest_ssbr_bit)
+	bsr	_ASM_LABEL(clear_dest_ssbr_bit);
 #define	M88100_Data_Precheck \
 	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
-	    _ASM_LABEL(m88100_ignore_data_exception)
+	    _ASM_LABEL(m88100_ignore_data_exception);
 #define	M88110_Data_Precheck \
 	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
-	    _ASM_LABEL(m88110_ignore_data_exception)
-
-#define	DONE88100 \
-	br	_ASM_LABEL(m88100_return_code)
-#define	DONE88110 \
-	br	_ASM_LABEL(m88110_return_code)
+	    _ASM_LABEL(m88110_ignore_data_exception);
 
 #ifdef M88100
 /*
- * MVME18x exception handlers
+ * 88100 exception handlers
  */
 
 /* unknown exception handler */
 GLOBAL(unknown_handler)
 	PREP88100("unknown", 0,,)
-	CALL(m88100_trap, T_UNKNOWNFLT, r30)
-	DONE88100
+	or	r2, r0, T_UNKNOWNFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* interrupt exception handler */
 GLOBAL(interrupt_handler)
 	PREP88100("interrupt", 1,,)
-	CALL(m88100_trap, T_INT, r30)
-	DONE88100
+	or	r2, r0, T_INT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* instruction access exception handler */
 GLOBAL(instruction_access_handler)
 	PREP88100("inst", 2,,)
-	CALL(m88100_trap, T_INSTFLT, r30)
-	DONE88100
+	or	r2, r0, T_INSTFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /*
  * data access exception handler --
@@ -447,19 +451,21 @@ GLOBAL(instruction_access_handler)
 GLOBAL(data_exception_handler)
 	PREP88100("data", 3,, M88100_Data_Precheck)
 	/* No need to call m88100_trap(T_DATAFLT) as PREP will do this for us */
-	DONE88100
+	br	_ASM_LABEL(m88100_return_code)
 
 /* misaligned access exception handler */
 GLOBAL(misaligned_handler)
 	PREP88100("misalign", 4, Clear_SSBR_Dest,)
-	CALL(m88100_trap, T_MISALGNFLT, r30)
-	DONE88100
+	or	r2, r0, T_MISALGNFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* unimplemented opcode exception handler */
 GLOBAL(unimplemented_handler)
 	PREP88100("unimp", 5,,)
-	CALL(m88100_trap, T_ILLFLT, r30)
-	DONE88100
+	or	r2, r0, T_ILLFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /*
  * Some versions of the chip have a bug whereby false privilege
@@ -473,90 +479,96 @@ GLOBAL(privilege_handler)
 	 ldcr	r1, SR2		/* restore r1 */
 	RTE
 1:	PREP88100("privilege", 6, Clear_SSBR_Dest,)
-	CALL(m88100_trap, T_PRIVINFLT, r30)
-	DONE88100
+	or	r2, r0, T_PRIVINFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* bounds checking exception handler */
 GLOBAL(bounds_handler)
 	PREP88100("bounds", 7, Clear_SSBR_Dest,)
-	CALL(m88100_trap, T_BNDFLT, r30)
-	DONE88100
+	or	r2, r0, T_BNDFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* integer divide-by-zero exception handler */
 GLOBAL(divide_handler)
 	PREP88100("divide", 8, Clear_SSBR_Dest,)
-	CALL(m88100_trap, T_ZERODIV, r30)
-	DONE88100
+	or	r2, r0, T_ZERODIV
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* integer overflow exception handler */
 GLOBAL(overflow_handler)
 	PREP88100("overflow", 9,,)
-	CALL(m88100_trap, T_OVFFLT, r30)
-	DONE88100
+	or	r2, r0, T_OVFFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 /* Floating-point precise handler */
 #define	FPp_SSBR_STUFF \
-	bsr	_ASM_LABEL(clear_FPp_ssbr_bit)
+	bsr	_ASM_LABEL(clear_FPp_ssbr_bit);
 GLOBAL(fp_precise_handler)
 	PREP88100("FPU precise", 114, FPp_SSBR_STUFF,)
-	bsr.n	_ASM_LABEL(m88100_Xfp_precise)
-	 or	r3, r0, r30
-	DONE88100
+	or	r3, r0, r30
+	XCALL(_ASM_LABEL(m88100_Xfp_precise), _ASM_LABEL(m88100_return_code))
 
 /* Floating-point imprecise handler */
 #define	FPi_SSBR_STUFF \
-	bsr	_ASM_LABEL(clear_FPi_ssbr_bit)
+	bsr	_ASM_LABEL(clear_FPi_ssbr_bit);
 GLOBAL(fp_imprecise_handler)
 	PREP88100("FPU imprecise", 115, FPi_SSBR_STUFF,)
-	bsr.n	_ASM_LABEL(Xfp_imprecise)
-	 or	r3, r0, r30
-	DONE88100
+	or	r3, r0, r30
+	XCALL(_ASM_LABEL(Xfp_imprecise), _ASM_LABEL(m88100_return_code))
 
 /* trap 450: system calls */
 GLOBAL(syscall_handler)
 	PREP88100("syscall", 450,,)
 	ld	r2, r30, GENREG_OFF(13)
-	bsr.n	_C_LABEL(m88100_syscall)
-	 or	r3, r0, r30
-	DONE88100
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_syscall), _ASM_LABEL(m88100_return_code))
 
 /* trap 451: cache flush (necessary for trampolines) */
 GLOBAL(cache_flush_handler)
 	PREP88100("cache_flush", 451,,)
-	bsr.n	_C_LABEL(cache_flush)
-	 or	r2, r0, r30
-	DONE88100
+	or	r2, r0, r30
+	XCALL(_C_LABEL(cache_flush), _ASM_LABEL(m88100_return_code))
 
 GLOBAL(sigsys)
 	PREP88100("sigsys", 501,,)
-	CALL(m88100_trap, T_SIGSYS, r30)
-	DONE88100
+	or	r2, r0, T_SIGSYS
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 GLOBAL(stepbpt)
 	PREP88100("stepbpt", 504,,)
-	CALL(m88100_trap, T_STEPBPT, r30)
-	DONE88100
+	or	r2, r0, T_STEPBPT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 GLOBAL(userbpt)
 	PREP88100("userbpt", 511,,)
-	CALL(m88100_trap, T_USERBPT, r30)
-	DONE88100
+	or	r2, r0, T_USERBPT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 #ifdef DDB
 GLOBAL(break)
 	PREP88100("break", 130,,)
-	CALL(m88100_trap, T_KDB_BREAK, r30)
-	DONE88100
+	or	r2, r0, T_KDB_BREAK
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 GLOBAL(trace)
 	PREP88100("trace", 131,,)
-	CALL(m88100_trap, T_KDB_TRACE, r30)
-	DONE88100
+	or	r2, r0, T_KDB_TRACE
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 
 GLOBAL(entry)
 	PREP88100("kdb", 132,,)
-	CALL(m88100_trap, T_KDB_ENTRY, r30)
-	DONE88100
+	or	r2, r0, T_KDB_ENTRY
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(m88100_return_code))
 #endif
 
 /*
@@ -1806,150 +1818,164 @@ ASLOCAL(no_ast)
 
 #ifdef M88110
 /*
- * MVME197 exception handlers
+ * 88110 exception handlers
  */
 
 /* unknown exception handler */
 GLOBAL(m88110_unknown_handler)
 	PREP88110("unknown", 0,)
-	CALL(m88110_trap, T_UNKNOWNFLT, r30)
-	DONE88110
+	or	r2, r0, T_UNKNOWNFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* interrupt exception handler */
 GLOBAL(m88110_interrupt_handler)
 	PREP88110("interrupt", 1,)
-	CALL(m88110_trap, T_INT, r30)
-	DONE88110
+	or	r2, r0, T_INT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* instruction access exception handler */
 GLOBAL(m88110_instruction_access_handler)
 	PREP88110("inst", 2,)
-	CALL(m88110_trap, T_INSTFLT, r30)
-	DONE88110
+	or	r2, r0, T_INSTFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 /*
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
  */
 GLOBAL(m88110_data_exception_handler)
 	PREP88110("data", 3, M88110_Data_Precheck)
-	CALL(m88110_trap, T_DATAFLT, r30)
-	DONE88110
+	or	r2, r0, T_DATAFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* misaligned access exception handler */
 GLOBAL(m88110_misaligned_handler)
 	PREP88110("misalign", 4,)
-	CALL(m88110_trap, T_MISALGNFLT, r30)
-	DONE88110
+	or	r2, r0, T_MISALGNFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* unimplemented opcode exception handler */
 GLOBAL(m88110_unimplemented_handler)
 	PREP88110("unimp", 5,)
-	CALL(m88110_trap, T_ILLFLT, r30)
-	DONE88110
+	or	r2, r0, T_ILLFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* privilege exception handler */
 GLOBAL(m88110_privilege_handler)
 	PREP88110("privilege", 6,)
-	CALL(m88110_trap, T_PRIVINFLT, r30)
-	DONE88110
+	or	r2, r0, T_PRIVINFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
-/*
- * I'm not sure what the trap(T_BNDFLT,...) does, but it doesn't send
- * a signal to the process...
- */
+/* bounds checking exception handler */
 GLOBAL(m88110_bounds_handler)
 	PREP88110("bounds", 7,)
-	CALL(m88110_trap, T_BNDFLT, r30)
-	DONE88110
+	or	r2, r0, T_BNDFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* integer divide-by-zero exception handler */
 GLOBAL(m88110_divide_handler)
 	PREP88110("divide", 8,)
-	CALL(m88110_trap, T_ZERODIV, r30)
-	DONE88110
+	or	r2, r0, T_ZERODIV
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* integer overflow exception handler */
 GLOBAL(m88110_overflow_handler)
 	PREP88110("overflow", 9,)
-	CALL(m88110_trap, T_OVFFLT, r30)
-	DONE88110
+	or	r2, r0, T_OVFFLT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* Floating-point precise handler */
 GLOBAL(m88110_fp_precise_handler)
 	PREP88110("FPU precise", 114,)
-	bsr.n	_ASM_LABEL(m88110_Xfp_precise)
-	 or	r3, r0, r30
-	DONE88110
+	or	r3, r0, r30
+	XCALL(_ASM_LABEL(m88110_Xfp_precise), _ASM_LABEL(m88110_return_code))
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
 GLOBAL(m88110_nonmaskable)
-	PREP88110("MVME197 non-mask", 11,)
-	CALL(m88110_trap, T_NON_MASK, r30)
-	DONE88110
+	PREP88110("NMI", 11,)
+	or	r2, r0, T_NON_MASK
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
-/* MVME197 data MMU read miss handler */
+/* software walk data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
-	PREP88110("MVME197 data read miss", 12,)
-	CALL(m88110_trap, T_110_DRM, r30)
-	DONE88110
+	PREP88110("88110 data read miss", 12,)
+	or	r2, r0, T_110_DRM
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
-/* MVME197 data MMU write miss handler */
+/* software walk data MMU write miss handler */
 GLOBAL(m88110_data_write_miss)
-	PREP88110("MVME197 data write miss", 13,)
-	CALL(m88110_trap, T_110_DRM, r30)
-	DONE88110
+	PREP88110("88110 data write miss", 13,)
+	or	r2, r0, T_110_DWM
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
-/* MVME197 inst MMU ATC miss handler */
+/* software walk inst MMU ATC miss handler */
 GLOBAL(m88110_inst_atc_miss)
-	PREP88110("MVME197 inst ATC miss", 14,)
-	CALL(m88110_trap, T_110_IAM, r30)
-	DONE88110
+	PREP88110("88110 inst ATC miss", 14,)
+	or	r2, r0, T_110_IAM
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 /* trap 450: system calls */
 GLOBAL(m88110_syscall_handler)
 	PREP88110("syscall", 450,)
 	ld	r2, r30, GENREG_OFF(13)
-	bsr.n	_C_LABEL(m88110_syscall)
-	 or	r3, r0, r30
-	DONE88110
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_syscall), _ASM_LABEL(m88110_return_code))
 
 /* trap 451: cache flush (necessary for trampolines) */
 GLOBAL(m88110_cache_flush_handler)
 	PREP88110("cache_flush", 451,)
-	bsr.n	_C_LABEL(cache_flush)
-	 or	r2, r0, r30
-	DONE88110
+	or	r2, r0, r30
+	XCALL(_C_LABEL(cache_flush), _ASM_LABEL(m88110_return_code))
 
 GLOBAL(m88110_sigsys)
 	PREP88110("sigsys", 501,)
-	CALL(m88110_trap, T_SIGSYS, r30)
-	DONE88110
+	or	r2, r0, T_SIGSYS
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 GLOBAL(m88110_stepbpt)
 	PREP88110("stepbpt", 504,)
-	CALL(m88110_trap, T_STEPBPT, r30)
-	DONE88110
+	or	r2, r0, T_STEPBPT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 GLOBAL(m88110_userbpt)
 	PREP88110("userbpt", 511,)
-	CALL(m88110_trap, T_USERBPT, r30)
-	DONE88110
+	or	r2, r0, T_USERBPT
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 #ifdef DDB
 GLOBAL(m88110_break)
 	PREP88110("break", 130,)
-	CALL(m88110_trap, T_KDB_BREAK, r30)
-	DONE88110
+	or	r2, r0, T_KDB_BREAK
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 GLOBAL(m88110_trace)
 	PREP88110("trace", 131,)
-	CALL(m88110_trap, T_KDB_TRACE, r30)
-	DONE88110
+	or	r2, r0, T_KDB_TRACE
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 
 GLOBAL(m88110_entry)
 	PREP88110("kdb", 132,)
-	CALL(m88110_trap, T_KDB_ENTRY, r30)
-	DONE88110
+	or	r2, r0, T_KDB_ENTRY
+	or	r3, r0, r30
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(m88110_return_code))
 #endif
 
 /*
