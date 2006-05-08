@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.59 2006/05/08 22:51:18 gwk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.60 2006/05/08 22:53:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -91,7 +91,7 @@ u_int32_t	bios_cksumlen;
 struct bios32_entry bios32_entry;
 struct smbios_entry smbios_entry;
 #ifdef MULTIPROCESSOR
-void	       *bios_smpinfo;
+void		*bios_smpinfo;
 #endif
 
 void		smbios_info(char*);
@@ -103,8 +103,8 @@ bios_diskinfo_t *bios_getdiskinfo(dev_t);
  */
 extern char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
 const char * smbios_uninfo[] = {
-        "System",
-        "Not Specified"
+	"System",
+	"Not Specified"
 };
 
 
@@ -160,7 +160,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	/* see if we have BIOS32 extensions */
 	if (!(flags & BIOSF_BIOS32)) {
 		for (va = ISA_HOLE_VADDR(BIOS32_START);
-		     va < (u_int8_t *)ISA_HOLE_VADDR(BIOS32_END); va += 16) {
+		    va < (u_int8_t *)ISA_HOLE_VADDR(BIOS32_END); va += 16) {
 			bios32_header_t h = (bios32_header_t)va;
 			u_int8_t cksum;
 			int i;
@@ -184,7 +184,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/* see if we have SMBIOS extentions */	
+	/* see if we have SMBIOS extentions */
 	if (!(flags & BIOSF_SMBIOS)) {
 		for (va = ISA_HOLE_VADDR(SMBIOS_START);
 		    va < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); va+= 16) {
@@ -210,13 +210,13 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			if (chksum != 0)
 				continue;
 
-			pa = trunc_page(sh->addr); 
+			pa = trunc_page(sh->addr);
 			end = round_page(sh->addr + sh->size);
 			eva = uvm_km_valloc(kernel_map, end-pa);
 			if (eva == 0)
 				break;
 
-			smbios_entry.addr = (u_int8_t *)(eva + 
+			smbios_entry.addr = (u_int8_t *)(eva +
 			    (sh->addr & PGOFSET));
 			smbios_entry.len = sh->size;
 			smbios_entry.mjr = sh->majrev;
@@ -225,10 +225,10 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 	    		for (; pa < end; pa+= NBPG, eva+= NBPG)
 				pmap_kenter_pa(eva, pa, VM_PROT_READ);
-			
-			printf(", SMBIOS rev. %d.%d @ 0x%lx (%d entries)", 
+
+			printf(", SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 			    sh->majrev, sh->minrev, sh->addr, sh->count);
-		
+
 			smbios_info(sc->sc_dev.dv_xname);
 			break;
 		}
@@ -274,8 +274,8 @@ biosattach(struct device *parent, struct device *self, void *aux)
 		volatile u_int8_t *eva;
 
 		for (str = NULL, va = ISA_HOLE_VADDR(0xc0000),
-		     eva = ISA_HOLE_VADDR(0xf0000);
-		     va < eva; va += 512) {
+		    eva = ISA_HOLE_VADDR(0xf0000);
+		    va < eva; va += 512) {
 			extern struct extent *iomem_ex;
 			bios_romheader_t romh = (bios_romheader_t)va;
 			u_int32_t off, len;
@@ -452,8 +452,8 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	setgdt(slot, (caddr_t)va, BIOS32_END, SDT_MEMERA, SEL_KPL, 1, 0);
 
 	for (pa = trunc_page(BIOS32_START),
-	     va += trunc_page(BIOS32_START);
-	     pa < endpa; pa += NBPG, va += NBPG) {
+	    va += trunc_page(BIOS32_START);
+	    pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
@@ -628,7 +628,7 @@ bios_getdiskinfo(dev_t dev)
  * smbios_find_table with the same arguments.
  */
 int
-smbios_find_table(u_int8_t type, struct smbtable *st) 
+smbios_find_table(u_int8_t type, struct smbtable *st)
 {
 	u_int8_t *va, *end;
 	struct smbtblhdr *hdr;
@@ -660,7 +660,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	for (; va + sizeof(struct smbtblhdr) < end && tcount <=
 	    smbios_entry.count; tcount++) {
 		hdr = (struct smbtblhdr *) va;
-		printf("SMBIOS (%d)@%p type: %d", tcount, va, hdr->type);  
+		printf("SMBIOS (%d)@%p type: %d", tcount, va, hdr->type);
 		if (hdr->type == type) {
 			ret = 1;
 			st->hdr = hdr;
@@ -702,7 +702,7 @@ smbios_get_string(struct smbtable *st, u_int8_t indx)
 }
 
 void
-smbios_info(char * str) 
+smbios_info(char * str)
 {
 	struct smbtable stbl, btbl;
 	struct smbios_sys *sys;
@@ -724,7 +724,7 @@ smbios_info(char * str)
 	sys = (struct smbios_sys *)stbl.tblhdr;
 	if (havebb)
 		board = (struct smbios_board *)btbl.tblhdr;
-	/* 
+	/*
 	 * Some smbios implementations have no system vendor or product strings,
 	 * some have very uninformative data which is harder to work around
 	 * and we must rely upon various heuristics to detect this. In both
