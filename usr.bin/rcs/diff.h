@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.2 2006/05/05 15:47:36 xsa Exp $	*/
+/*	$OpenBSD: diff.h,v 1.3 2006/05/08 18:36:04 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -86,6 +86,11 @@
 #define	D_SAME		0	/* Files are the same */
 #define	D_DIFFER	1	/* Files are different */
 #define	D_ERROR		2	/* An error occurred */
+
+/*
+ * Status values for rcs_diff3() return values
+ */
+#define D_OVERLAPS	1	/* Overlaps during merge */
 
 struct rcs_lines;
 

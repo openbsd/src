@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.40 2006/05/08 11:56:16 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.41 2006/05/08 18:36:04 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -32,7 +32,7 @@
 int
 rcsmerge_main(int argc, char **argv)
 {
-	int fd, i, ch, flags, kflag;
+	int fd, i, ch, flags, kflag, status;
 	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
 	RCSFILE *file;
 	RCSNUM *rev1, *rev2;
@@ -40,6 +40,7 @@ rcsmerge_main(int argc, char **argv)
 
 	flags = 0;
 	kflag = RCS_KWEXP_ERR;
+	status = 0;
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;
 
@@ -159,6 +160,9 @@ rcsmerge_main(int argc, char **argv)
 			continue;
 		}
 
+		if (diff3_conflicts != 0)
+			status = D_OVERLAPS;
+
 		if (flags & PIPEOUT) {
 			rcs_buf_putc(bp, '\0');
 			fcont = rcs_buf_release(bp);
@@ -174,7 +178,7 @@ rcsmerge_main(int argc, char **argv)
 		rcs_close(file);
 	}
 
-	return (0);
+	return (status);
 }
 
 void
