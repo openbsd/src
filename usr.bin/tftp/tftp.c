@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.15 2003/09/24 20:21:40 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.16 2006/05/08 13:02:51 claudio Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftp.c,v 1.15 2003/09/24 20:21:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tftp.c,v 1.16 2006/05/08 13:02:51 claudio Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -42,16 +42,16 @@ static const char rcsid[] = "$OpenBSD: tftp.c,v 1.15 2003/09/24 20:21:40 deraadt
 /*
  * TFTP User Program -- Protocol Machines
  */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>
-
 #include <arpa/tftp.h>
 
 #include <errno.h>
-#include <setjmp.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -62,27 +62,44 @@ static const char rcsid[] = "$OpenBSD: tftp.c,v 1.15 2003/09/24 20:21:40 deraadt
 #include "extern.h"
 #include "tftpsubs.h"
 
+#define	PKTSIZE	SEGSIZE + 4
 
-extern  struct sockaddr_in peeraddr;	/* filled in by main */
-extern  int     f;			/* the opened socket */
-extern  int     trace;
-extern  int     verbose;
-extern  int     rexmtval;
-extern  int     maxtimeout;
+extern struct sockaddr_in	peeraddr;	/* filled in by main */
+extern int			f;		/* the opened socket */
+extern int			trace;
+extern int			verbose;
+extern int			rexmtval;
+extern int			maxtimeout;
+extern FILE			*file;
+extern volatile sig_atomic_t	intrflag;
 
-#define PKTSIZE    SEGSIZE+4
-char    ackbuf[PKTSIZE];
-int	timeout;
-jmp_buf	toplevel;
-jmp_buf	timeoutbuf;
+char	ackbuf[PKTSIZE];
 
-static void nak(int);
-static int makerequest(int, const char *, struct tftphdr *, const char *);
-static void printstats(const char *, unsigned long);
-static void startclock(void);
-static void stopclock(void);
-static void timer(int);
-static void tpacket(const char *, struct tftphdr *, int);
+struct timeval	tstart;
+struct timeval	tstop;
+
+struct errmsg {
+	int	e_code;
+	char	*e_msg;
+} errmsgs[] = {
+	{ EUNDEF,	"Undefined error code" },
+	{ ENOTFOUND,	"File not found" },
+	{ EACCESS,	"Access violation" },
+	{ ENOSPACE,	"Disk full or allocation exceeded" },
+	{ EBADOP,	"Illegal TFTP operation" },
+	{ EBADID,	"Unknown transfer ID" },
+	{ EEXISTS,	"File already exists" },
+	{ ENOUSER,	"No such user" },
+	{ -1,		NULL }
+};
+
+static int	makerequest(int, const char *, struct tftphdr *, const char *);
+static void	nak(int);
+static void 	tpacket(const char *, struct tftphdr *, int);
+static void	startclock(void);
+static void	stopclock(void);
+static void	printstats(const char *, unsigned long);
+static void	printtimeout(void);
 
 /*
  * Send the requested file.
@@ -90,12 +107,12 @@ static void tpacket(const char *, struct tftphdr *, int);
 void
 sendfile(int fd, char *name, char *mode)
 {
-	struct tftphdr *dp, *ap;	   /* data and ack packets */
-	volatile int block, size, convert;
-	volatile unsigned long amount;
+	struct tftphdr *dp, *ap;	/* data and ack packets */
 	struct sockaddr_in from;
-	int n, fromlen;
-	FILE *file;
+	struct pollfd pfd[1];
+	unsigned long amount;
+	int convert;			/* true if converting crlf -> lf */
+	int n, nfds, error, fromlen, timeouts, block, size;
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
@@ -105,12 +122,11 @@ sendfile(int fd, char *name, char *mode)
 	block = 0;
 	amount = 0;
 
-	signal(SIGALRM, timer);
 	do {
-		if (block == 0)
+		/* read data from file */
+		if (!block)
 			size = makerequest(WRQ, name, dp, mode) - 4;
 		else {
-		/*	size = read(fd, dp->th_data, SEGSIZE);	 */
 			size = readit(file, &dp, convert);
 			if (size < 0) {
 				nak(errno + 100);
@@ -119,66 +135,93 @@ sendfile(int fd, char *name, char *mode)
 			dp->th_opcode = htons((u_short)DATA);
 			dp->th_block = htons((u_short)block);
 		}
-		timeout = 0;
-		(void) setjmp(timeoutbuf);
-send_data:
-		if (trace)
-			tpacket("sent", dp, size + 4);
-		n = sendto(f, dp, size + 4, 0,
-		    (struct sockaddr *)&peeraddr, sizeof(peeraddr));
-		if (n != size + 4) {
-			warn("sendto");
-			goto abort;
-		}
-		read_ahead(file, convert);
-		for ( ; ; ) {
-			alarm(rexmtval);
-			do {
-				fromlen = sizeof(from);
-				n = recvfrom(f, ackbuf, sizeof(ackbuf), 0,
-				    (struct sockaddr *)&from, &fromlen);
-			} while (n <= 0);
-			alarm(0);
-			if (n < 0) {
+
+		/* send data to server and wait for server ACK */
+		for (timeouts = 0, error = 0; !intrflag;) {
+			if (timeouts == maxtimeout) {
+				printtimeout();
+				goto abort;
+			}
+
+			if (!error) {
+				if (trace)
+					tpacket("sent", dp, size + 4);
+				if (sendto(f, dp, size + 4, 0,
+		    		    (struct sockaddr *)&peeraddr,
+				    sizeof(peeraddr)) != size + 4) {
+					warn("sendto");
+					goto abort;
+				}
+				read_ahead(file, convert);
+			}
+			error = 0;
+
+			pfd[0].fd = f;
+			pfd[0].events = POLLIN;
+			nfds = poll(pfd, 1, rexmtval * 1000);
+			if (nfds == 0) {
+				timeouts++;
+				continue;
+			}
+			if (nfds == -1) {
+				error = 1;
+				if (errno == EINTR)
+					continue;
+				warn("poll");
+				goto abort;
+			}
+			fromlen = sizeof(from);
+			n = recvfrom(f, ackbuf, sizeof(ackbuf), 0,
+			    (struct sockaddr *)&from, &fromlen);
+			if (n == 0) {
+				warn("recvfrom");
+				goto abort;
+			}
+			if (n == -1) {
+				error = 1;
+				if (errno == EINTR)
+					continue;
 				warn("recvfrom");
 				goto abort;
 			}
 			peeraddr.sin_port = from.sin_port;	/* added */
 			if (trace)
 				tpacket("received", ap, n);
-			/* should verify packet came from server */
 			ap->th_opcode = ntohs(ap->th_opcode);
 			ap->th_block = ntohs(ap->th_block);
+
 			if (ap->th_opcode == ERROR) {
-				printf("Error code %d: %s\n", ap->th_code,
-				    ap->th_msg);
+				printf("Error code %d: %s\n",
+				    ap->th_code, ap->th_msg);
 				goto abort;
 			}
 			if (ap->th_opcode == ACK) {
 				int j;
-
-				if (ap->th_block == block) {
+				if (ap->th_block == block)
 					break;
-				}
-				/* On an error, try to synchronize
-				 * both sides.
-				 */
+				/* re-synchronize with other side */
 				j = synchnet(f);
 				if (j && trace)
 					printf("discarded %d packets\n", j);
-				if (ap->th_block == (block-1))
-					goto send_data;
+				if (ap->th_block == (block - 1))
+					continue;
 			}
+			error = 1;	/* received packet does not match */
 		}
+
 		if (block > 0)
 			amount += size;
 		block++;
-	} while (size == SEGSIZE || block == 1);
+	} while ((size == SEGSIZE || block == 1) && !intrflag);
+
 abort:
 	fclose(file);
 	stopclock();
-	if (amount > 0)
+	if (amount > 0) {
+		if (intrflag)
+			putchar('\n');
 		printstats("Sent", amount);
+	}
 }
 
 /*
@@ -187,25 +230,25 @@ abort:
 void
 recvfile(int fd, char *name, char *mode)
 {
-	struct tftphdr *dp, *ap;
-	volatile int block, size, firsttrip;
-	volatile unsigned long amount;
+	struct tftphdr *dp, *ap;	/* data and ack packets */
 	struct sockaddr_in from;
-	int n, fromlen;
-	FILE *file;
-	volatile int convert;		/* true if converting crlf -> lf */
+	struct pollfd pfd[1];
+	unsigned long amount;
+	int convert;			/* true if converting crlf -> lf */
+	int n, nfds, error, fromlen, timeouts, block, size, firsttrip;
 
-	startclock();
-	dp = w_init();
+	startclock();		/* start stat's clock */
+	dp = w_init();		/* reset fillbuf/read-ahead code */
 	ap = (struct tftphdr *)ackbuf;
 	file = fdopen(fd, "w");
 	convert = !strcmp(mode, "netascii");
+	n = 0;
 	block = 1;
-	firsttrip = 1;
 	amount = 0;
+	firsttrip = 1;
 
-	signal(SIGALRM, timer);
 	do {
+		/* create new ACK packet */
 		if (firsttrip) {
 			size = makerequest(RRQ, name, ap, mode);
 			firsttrip = 0;
@@ -215,75 +258,104 @@ recvfile(int fd, char *name, char *mode)
 			size = 4;
 			block++;
 		}
-		timeout = 0;
-		(void) setjmp(timeoutbuf);
-send_ack:
-		if (trace)
-			tpacket("sent", ap, size);
-		if (sendto(f, ackbuf, size, 0, (struct sockaddr *)&peeraddr,
-		    sizeof(peeraddr)) != size) {
-			alarm(0);
-			warn("sendto");
-			goto abort;
-		}
-		write_behind(file, convert);
-		for ( ; ; ) {
-			alarm(rexmtval);
-			do  {
-				fromlen = sizeof(from);
-				n = recvfrom(f, dp, PKTSIZE, 0,
-				    (struct sockaddr *)&from, &fromlen);
-			} while (n <= 0);
-			alarm(0);
-			if (n < 0) {
+
+		/* send ACK to server and wait for server data */
+		for (timeouts = 0, error = 0; !intrflag;) {
+			if (timeouts == maxtimeout) {
+				printtimeout();
+				goto abort;
+			}
+
+			if (!error) {
+				if (trace)
+					tpacket("sent", ap, size);
+				if (sendto(f, ackbuf, size, 0,
+			    	    (struct sockaddr *)&peeraddr,
+				    sizeof(peeraddr)) != size) {
+					warn("sendto");
+					goto abort;
+				}
+				write_behind(file, convert);
+			}
+			error = 0;
+
+			pfd[0].fd = f;
+			pfd[0].events = POLLIN;
+			nfds = poll(pfd, 1, rexmtval * 1000);
+			if (nfds == 0) {
+				timeouts++;
+				continue;
+			}
+			if (nfds == -1) {
+				error = 1;
+				if (errno == EINTR)
+					continue;
+				warn("poll");
+				goto abort;
+			}
+			fromlen = sizeof(from);
+			n = recvfrom(f, dp, PKTSIZE, 0,
+			    (struct sockaddr *)&from, &fromlen);
+			if (n == 0) {
+				warn("recvfrom");
+				goto abort;
+			}
+			if (n == -1) {
+				error = 1;
+				if (errno == EINTR)
+					continue;
 				warn("recvfrom");
 				goto abort;
 			}
 			peeraddr.sin_port = from.sin_port;	/* added */
 			if (trace)
 				tpacket("received", dp, n);
-			/* should verify client address */
 			dp->th_opcode = ntohs(dp->th_opcode);
 			dp->th_block = ntohs(dp->th_block);
+
 			if (dp->th_opcode == ERROR) {
-				printf("Error code %d: %s\n", dp->th_code,
-				    dp->th_msg);
+				printf("Error code %d: %s\n",
+				    dp->th_code, dp->th_msg);
 				goto abort;
 			}
 			if (dp->th_opcode == DATA) {
 				int j;
-
-				if (dp->th_block == block) {
-					break;		/* have next packet */
-				}
-				/* On an error, try to synchronize
-				 * both sides.
-				 */
+				if (dp->th_block == block)
+					break;
+				/* re-synchronize with other side */
 				j = synchnet(f);
 				if (j && trace)
 					printf("discarded %d packets\n", j);
-				if (dp->th_block == (block-1))
-					goto send_ack;	/* resend ack */
+				if (dp->th_block == (block - 1))
+					continue;
 			}
+			error = 1;	/* received packet does not match */
 		}
-	/*	size = write(fd, dp->th_data, n - 4); */
+
+		/* write data to file */
 		size = writeit(file, &dp, n - 4, convert);
 		if (size < 0) {
 			nak(errno + 100);
 			break;
 		}
 		amount += size;
-	} while (size == SEGSIZE);
-abort:						/* ok to ack, since user */
-	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
+	} while (size == SEGSIZE && !intrflag);
+
+abort:
+	/* ok to ack, since user has seen err msg */
+	ap->th_opcode = htons((u_short)ACK);
 	ap->th_block = htons((u_short)block);
 	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peeraddr,
 	    sizeof(peeraddr));
-	write_behind(file, convert);		/* flush last buffer */
+	write_behind(file, convert);	/* flush last buffer */
+
 	fclose(file);
 	stopclock();
-	if (amount > 0)
+	if (amount > 0) {
+		if (intrflag)
+			putchar('\n');
 		printstats("Received", amount);
+	}
 }
 
 static int
@@ -302,21 +374,6 @@ makerequest(int request, const char *name, struct tftphdr *tp,
 	len += strlen(mode) + 1;
 	return (cp + len - (char *)tp);
 }
-
-struct errmsg {
-	int	e_code;
-	char	*e_msg;
-} errmsgs[] = {
-	{ EUNDEF,	"Undefined error code" },
-	{ ENOTFOUND,	"File not found" },
-	{ EACCESS,	"Access violation" },
-	{ ENOSPACE,	"Disk full or allocation exceeded" },
-	{ EBADOP,	"Illegal TFTP operation" },
-	{ EBADID,	"Unknown transfer ID" },
-	{ EEXISTS,	"File already exists" },
-	{ ENOUSER,	"No such user" },
-	{ -1,		NULL }
-};
 
 /*
  * Send a nak packet (error message).
@@ -355,7 +412,7 @@ static void
 tpacket(const char *s, struct tftphdr *tp, int n)
 {
 	static char *opcodes[] =
-	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
+	    { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
 	char *cp, *file;
 	u_short op = ntohs(tp->th_opcode);
 
@@ -363,8 +420,8 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 		printf("%s opcode=%x ", s, op);
 	else
 		printf("%s %s ", s, opcodes[op]);
-	switch (op) {
 
+	switch (op) {
 	case RRQ:
 	case WRQ:
 		n -= 2;
@@ -372,36 +429,28 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 		cp = strchr(cp, '\0');
 		printf("<file=%s, mode=%s>\n", file, cp + 1);
 		break;
-
 	case DATA:
 		printf("<block=%d, %d bytes>\n", ntohs(tp->th_block), n - 4);
 		break;
-
 	case ACK:
 		printf("<block=%d>\n", ntohs(tp->th_block));
 		break;
-
 	case ERROR:
 		printf("<code=%d, msg=%s>\n", ntohs(tp->th_code), tp->th_msg);
 		break;
 	}
 }
 
-struct timeval tstart;
-struct timeval tstop;
-
 static void
 startclock(void)
 {
-
-	(void)gettimeofday(&tstart, NULL);
+	(void) gettimeofday(&tstart, NULL);
 }
 
 static void
 stopclock(void)
 {
-
-	(void)gettimeofday(&tstop, NULL);
+	(void) gettimeofday(&tstop, NULL);
 }
 
 static void
@@ -410,26 +459,17 @@ printstats(const char *direction, unsigned long amount)
 	double delta;
 
 	/* compute delta in 1/10's second units */
-	delta = ((tstop.tv_sec*10.)+(tstop.tv_usec/100000)) -
-		((tstart.tv_sec*10.)+(tstart.tv_usec/100000));
-	delta = delta/10.;      /* back to seconds */
+	delta = ((tstop.tv_sec * 10.) + (tstop.tv_usec / 100000)) -
+	    ((tstart.tv_sec * 10.) + (tstart.tv_usec / 100000));
+	delta = delta / 10.;	/* back to seconds */
 	printf("%s %lu bytes in %.1f seconds", direction, amount, delta);
 	if (verbose)
-		printf(" [%.0f bits/sec]", (amount*8.)/delta);
+		printf(" [%.0f bits/sec]", (amount * 8.) / delta);
 	putchar('\n');
 }
 
 static void
-timer(int sig)
+printtimeout(void)
 {
-	int save_errno = errno;
-
-	timeout += rexmtval;
-	if (timeout >= maxtimeout) {
-		printf("Transfer timed out.\n");
-		errno = save_errno;
-		longjmp(toplevel, -1);
-	}
-	errno = save_errno;
-	longjmp(timeoutbuf, 1);
+	printf("Transfer timed out.\n");
 }
