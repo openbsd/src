@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.53 2005/09/04 18:21:38 pvalchev Exp $
+.\" $OpenBSD: ports.7,v 1.54 2006/05/08 11:16:20 steven Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -403,7 +403,7 @@ available flavors in the
 .Pa pkg/DESCR
 file.
 .Pp
-For example, the shells/bash port comes with a flavor called
+For example, the misc/screen port comes with a flavor called
 .Ic static .
 This changes the building process so a statically compiled version of
 the program will be built.
@@ -412,7 +412,7 @@ the package name will be extended with a dash-separated list of
 the selected flavors.
 .Pp
 In this instance, the corresponding package will be called
-.Ic bash-1.14.7p1-static .
+.Ic screen-4.0.2-static .
 .Pp
 To build a port with a specific flavor, just pass
 .Ev FLAVOR
@@ -425,7 +425,7 @@ $ env FLAVOR="static" make package
 .Pp
 and of course, use the same settings for the subsequent invocations of make:
 .Bd -literal -offset indent
-$ env FLAVOR="static" make package
+$ env FLAVOR="static" make install
 $ env FLAVOR="static" make clean
 .Ed
 .Pp
