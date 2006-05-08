@@ -114,7 +114,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		for(; pa < end; pa+= NBPG, va+= NBPG)
 			pmap_kenter_pa(va, pa, VM_PROT_READ);
 		
-		printf(": SMBIOS rev. %d.%d @ 0x%lx (%d entries)", 
+		printf(": SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 		    hdr->majrev, hdr->minrev, hdr->addr, hdr->count);
 		smbios_info(sc->sc_dev.dv_xname);
 		break;
@@ -133,7 +133,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
  * smbios_find_table with the same arguments.
  */
 int
-smbios_find_table(u_int8_t type, struct smbtable *st) 
+smbios_find_table(u_int8_t type, struct smbtable *st)
 {
 	u_int8_t *va, *end;
 	struct smbtblhdr *hdr;
@@ -203,7 +203,7 @@ smbios_get_string(struct smbtable *st, u_int8_t indx)
 }
 
 void
-smbios_info(char * str) 
+smbios_info(char * str)
 {
 	struct smbtable stbl, btbl;
 	struct smbios_sys *sys;
@@ -225,7 +225,7 @@ smbios_info(char * str)
 	sys = (struct smbios_sys *)stbl.tblhdr;
 	if (havebb)
 		board = (struct smbios_board *)btbl.tblhdr;
-	/* 
+	/*
 	 * Some smbios implementations have no system vendor or product strings,
 	 * some have very uninformative data which is harder to work around
 	 * and we must rely upon various heuristics to detect this. In both
