@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.3 2006/05/08 04:24:47 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.4 2006/05/08 04:28:33 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@ static int	azalia_codec_add_dacgroup(codec_t *, int, uint32_t);
 static int	azalia_codec_find_pin(const codec_t *, int, int, uint32_t);
 static int	azalia_codec_find_dac(const codec_t *, int, int);
 static int	alc260_init_dacgroup(codec_t *);
+static int	alc260_init_widget(const codec_t *, widget_t *, nid_t);
 static int	alc880_init_dacgroup(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
 static int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
@@ -66,6 +67,7 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
 		this->init_dacgroup = alc260_init_dacgroup;
+		this->init_widget = alc260_init_widget;
 		break;
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
@@ -277,6 +279,54 @@ alc260_init_dacgroup(codec_t *this)
 	return 0;
 }
 
+static int
+alc260_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	switch (nid) {
+	case 0x0b:		/* selector for 0x12 */
+		strlcpy(w->name, AudioNmicrophone "1", sizeof(w->name));
+		break;
+	case 0x0c:		/* selector for 0x13 */
+		strlcpy(w->name, AudioNmicrophone "2", sizeof(w->name));
+		break;
+	case 0x0d:		/* selector for 0x14 */
+		strlcpy(w->name, AudioNline "1", sizeof(w->name));
+		break;
+	case 0x0e:		/* selector for 0x15 */
+		strlcpy(w->name, AudioNline "2", sizeof(w->name));
+		break;
+	case 0x0f:
+		strlcpy(w->name, AudioNline, sizeof(w->name));
+		break;
+	case 0x10:
+		/* AudioNheadphone is too long */
+		strlcpy(w->name, "hp", sizeof(w->name));
+		break;
+	case 0x11:
+		strlcpy(w->name, AudioNmono, sizeof(w->name));
+		break;
+	case 0x12:
+		strlcpy(w->name, AudioNmicrophone "1", sizeof(w->name));
+		break;
+	case 0x13:
+		strlcpy(w->name, AudioNmicrophone "2", sizeof(w->name));
+		break;
+	case 0x14:
+		strlcpy(w->name, AudioNline "1", sizeof(w->name));
+		break;
+	case 0x15:
+		strlcpy(w->name, AudioNline "2", sizeof(w->name));
+		break;
+	case 0x16:
+		strlcpy(w->name, AudioNcd, sizeof(w->name));
+		break;
+	case 0x17:
+		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
+		break;
+	}
+	return 0;
+}
+
 /* ----------------------------------------------------------------
  * Realtek ALC880
  * ---------------------------------------------------------------- */
@@ -311,7 +361,7 @@ alc882_init_dacgroup(codec_t *this)
 		{4, {0x02, 0x04, 0x03, 0x05}}, /* analog 8ch */
 		{1, {0x06}},	/* digital */
 		{1, {0x25}}};	/* another analog */
-		
+
 	this->ndacgroups = 3;
 	this->dacgroups[0] = dacs[0];
 	this->dacgroups[1] = dacs[1];
