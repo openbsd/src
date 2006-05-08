@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.40 2005/12/02 20:17:21 kurt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.41 2006/05/08 20:37:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -380,7 +380,7 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 			src_loff = _dl_find_symbol(symn, &cpysrc,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND| SYM_NOTPLT,
 			    sym, object, NULL);
-			if(cpysrc != NULL) {
+			if (cpysrc != NULL) {
 				size = sym->st_size;
 				if (sym->st_size != cpysrc->st_size) {
 					_dl_printf("symbols size differ [%s] \n",

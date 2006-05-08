@@ -1,4 +1,4 @@
-/* $OpenBSD: objarray.c,v 1.5 2006/05/08 20:34:36 deraadt Exp $ */
+/* $OpenBSD: objarray.c,v 1.6 2006/05/08 20:37:01 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -199,7 +199,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 
 	nametablen = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (symcache[i].sym == NULL)
+		if (symcache[i].sym == NULL)
 			continue;
 		ref_obj = symcache[i].obj->dyn.null;
 		symcache_cnt++;
@@ -214,7 +214,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 
 	symcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (symcache[i].sym == NULL)
+		if (symcache[i].sym == NULL)
 			continue;
 		symcachetab[symcache_cnt].idx = i;
 		symcachetab[symcache_cnt].obj_idx =
@@ -224,7 +224,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 		symcache_cnt++;
 	}
 	for (i = 0; i < object->nchains; i++) {
-		if  (pltsymcache[i].sym == NULL)
+		if (pltsymcache[i].sym == NULL)
 			continue;
 		ref_obj = pltsymcache[i].obj->dyn.null;
 		pltsymcache_cnt++;
@@ -239,7 +239,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 
 	pltsymcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (pltsymcache[i].sym == NULL)
+		if (pltsymcache[i].sym == NULL)
 			continue;
 		pltsymcachetab[pltsymcache_cnt].idx = i;
 		pltsymcachetab[pltsymcache_cnt].obj_idx =
@@ -333,7 +333,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 	/* do got */
 	symcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (symcache[i].sym != NULL)
+		if (symcache[i].sym != NULL)
 			symcache_cnt++;
 	}
 
@@ -341,7 +341,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 
 	symcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (symcache[i].sym == NULL)
+		if (symcache[i].sym == NULL)
 			continue;
 		symcachetab[symcache_cnt].idx = i;
 		symcachetab[symcache_cnt].obj_idx =
@@ -354,14 +354,14 @@ elf_prep_bin_prebind(struct proglist *pl)
 	/* now do plt */
 	pltsymcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (pltsymcache[i].sym != NULL)
+		if (pltsymcache[i].sym != NULL)
 			pltsymcache_cnt++;
 	}
 	pltsymcachetab = calloc(pltsymcache_cnt , sizeof(struct symcachetab));
 
 	pltsymcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
-		if  (pltsymcache[i].sym == NULL)
+		if (pltsymcache[i].sym == NULL)
 			continue;
 		pltsymcachetab[pltsymcache_cnt].idx = i;
 		pltsymcachetab[pltsymcache_cnt].obj_idx =
@@ -396,7 +396,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 	pl->libmapcnt = calloc(numlibs, sizeof(u_int32_t));
 
 	/* have to do both got and plt fixups */
-	for(i = 0; i < numlibs; i++) {
+	for (i = 0; i < numlibs; i++) {
 		for (j = 0; j < pl->fixupcnt[2*i]; j++) {
 			pl->fixup[2*i][j].targobj_idx =
 			    libmap[pl->fixup[2*i][j].targobj_idx];
@@ -674,7 +674,7 @@ elf_clear_prog_load(int fd, struct elf_object *object)
 	ehdr = (Elf_Ehdr *) buf;
 	phdr = (Elf_Phdr *)((char *)buf + ehdr->e_phoff);
 
-	if(ehdr->e_type != ET_EXEC) {
+	if (ehdr->e_type != ET_EXEC) {
 		goto done;
 	}
 

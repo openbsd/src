@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_strip.c,v 1.3 2006/05/08 20:34:36 deraadt Exp $ */
+/* $OpenBSD: prebind_strip.c,v 1.4 2006/05/08 20:37:01 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -137,7 +137,7 @@ prebind_remove_load_section(int fd, char *name)
 
 	loadsection = ehdr->e_phnum - 1;
 
-	if(ehdr->e_type != ET_EXEC ||
+	if (ehdr->e_type != ET_EXEC ||
 	    (phdr[loadsection].p_flags & 0x08000000) == 0) {
 		goto done;
 	}

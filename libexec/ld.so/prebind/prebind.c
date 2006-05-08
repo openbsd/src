@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.14 2006/05/08 20:34:36 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.15 2006/05/08 20:37:01 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -271,7 +271,7 @@ load_file(const char *filename, int objtype)
 		goto done;
 	}
 
-        if  ((ifstat.st_mode & S_IFMT) != S_IFREG)
+        if ((ifstat.st_mode & S_IFMT) != S_IFREG)
 		goto done;
 
 	if (ifstat.st_size < sizeof (Elf_Ehdr)) {
@@ -297,7 +297,7 @@ load_file(const char *filename, int objtype)
 		goto done;
 	}
 
-	if( ehdr->e_machine !=  ELF_TARG_MACH) {
+	if (ehdr->e_machine !=  ELF_TARG_MACH) {
 		if (verbose > 0)
 			printf("%s: wrong arch\n", filename);
 		goto done;
@@ -699,9 +699,9 @@ map_to_virt(Elf_Phdr *phdr, Elf_Ehdr *ehdr, Elf_Addr base, u_long *vaddr)
 	for (i = 0; i < ehdr->e_phnum; i++) {
 		switch (phdr[i].p_type) {
 		case PT_LOAD:
-			if(phdr[i].p_vaddr > *vaddr)
+			if (phdr[i].p_vaddr > *vaddr)
 				continue;
-			if(phdr[i].p_vaddr + phdr[i].p_memsz < *vaddr)
+			if (phdr[i].p_vaddr + phdr[i].p_memsz < *vaddr)
 				continue;
 #ifdef DEBUG1
 			printf("input address %lx translated to ", *vaddr);
@@ -754,8 +754,9 @@ load_lib(const char *name, struct elf_object *parent)
 
 	ignore_hints = 0;
 
-	if(strchr(name, '/')) {
+	if (strchr(name, '/')) {
 		char *lpath, *lname;
+
 		lpath = strdup(name);
 		lname = strrchr(lpath, '/');
 		if (lname == NULL || lname[1] == '\0') {

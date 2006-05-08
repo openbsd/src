@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.5 2006/05/08 20:34:36 deraadt Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.6 2006/05/08 20:37:01 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -629,7 +629,7 @@ dump_prelink(Elf_Addr base, u_long size)
 
 	prebind_dump_symcache(symcachetab, footer->symcache_cnt);
 	prebind_dump_nameidx(nameidx, footer->numlibs, nametab);
-	for(i = 0; i < footer->fixup_cnt; i++) {
+	for (i = 0; i < footer->fixup_cnt; i++) {
 		_dl_printf("fixup %d cnt %d idx %d\n", i, fixupcnt[i], fixupidx[i]);
 		fixup = prebind_map + fixupidx[i];
 		prebind_dump_fixup(fixup, fixupcnt[i]);

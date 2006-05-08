@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2004/09/23 12:42:05 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2006/05/08 20:37:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -55,7 +55,7 @@ do {									\
 #define RELOC_RELA(rela, sym, ptr, val)					\
 do {									\
 	_dl_exit(20);	/* We don't do RELA now */			\
-} while(0)
+} while (0)
 
 struct elf_object;
 
@@ -95,7 +95,7 @@ do {									\
 		sp++;							\
 	}								\
 	__dynld->status |= STAT_GOT_DONE;				\
-} while(0)
+} while (0)
 
 #define GOT_PERMS PROT_READ
 

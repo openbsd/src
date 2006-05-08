@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.102 2006/05/08 20:34:36 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.103 2006/05/08 20:37:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -249,7 +249,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 	int depflags;
 
 	dynobj = object;
-	while(dynobj) {
+	while (dynobj) {
 		DL_DEB(("examining: '%s'\n", dynobj->load_name));
 		libcount = 0;
 
