@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.62 2006/05/08 09:48:12 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.63 2006/05/08 09:59:09 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -48,14 +48,14 @@ rcsdiff_main(int argc, char **argv)
 	status = D_SAME;
 
 	if (strlcpy(diffargs, "diff", sizeof(diffargs)) >= sizeof(diffargs))
-		errx(1, "diffargs too long");
+		errx(D_ERROR, "diffargs too long");
 
 	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx::z::")) != -1) {
 		switch (ch) {
 		case 'c':
 			if (strlcat(diffargs, " -c", sizeof(diffargs)) >=
 			    sizeof(diffargs))
-				errx(1, "diffargs too long");
+				errx(D_ERROR, "diffargs too long");
 			diff_format = D_CONTEXT;
 			break;
 		case 'k':
@@ -69,7 +69,7 @@ rcsdiff_main(int argc, char **argv)
 		case 'n':
 			if (strlcat(diffargs, " -n", sizeof(diffargs)) >=
 			    sizeof(diffargs))
-				errx(1, "diffargs too long");
+				errx(D_ERROR, "diffargs too long");
 			diff_format = D_RCSDIFF;
 			break;
 		case 'q':
@@ -86,7 +86,7 @@ rcsdiff_main(int argc, char **argv)
 		case 'u':
 			if (strlcat(diffargs, " -u", sizeof(diffargs)) >=
 			    sizeof(diffargs))
-				errx(1, "diffargs too long");
+				errx(D_ERROR, "diffargs too long");
 			diff_format = D_UNIFIED;
 			break;
 		case 'V':
@@ -128,11 +128,11 @@ rcsdiff_main(int argc, char **argv)
 
 		if (rev_str1 != NULL) {
 			if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
-				errx(1, "bad revision number");
+				errx(D_ERROR, "bad revision number");
 		}
 		if (rev_str2 != NULL) {
 			if ((rev2 = rcs_getrevnum(rev_str2, file)) == NULL)
-				errx(1, "bad revision number");
+				errx(D_ERROR, "bad revision number");
 		}
 
 		if (!(flags & QUIET)) {
@@ -223,7 +223,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	/* XXX - GNU uses GMT */
 	if (fstat(fd, &st) == -1)
-		err(1, "%s", filename);
+		err(D_ERROR, "%s", filename);
 
 	tb = gmtime(&st.st_mtime);
 	t = mktime(tb);

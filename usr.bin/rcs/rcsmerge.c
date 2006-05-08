@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.38 2006/05/08 09:48:12 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.39 2006/05/08 09:59:09 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -128,11 +128,11 @@ rcsmerge_main(int argc, char **argv)
 			rev1 = rcsnum_alloc();
 			rcsnum_cpy(file->rf_head, rev1, 0);
 		} else if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
-			errx(1, "invalid revision: %s", rev_str1);
+			errx(D_ERROR, "invalid revision: %s", rev_str1);
 
 		if (rev_str2 != NULL && strcmp(rev_str2, "") != 0) {
 			if ((rev2 = rcs_getrevnum(rev_str2, file)) == NULL)
-				errx(1, "invalid revision: %s", rev_str2);
+				errx(D_ERROR, "invalid revision: %s", rev_str2);
 		} else {
 			rev2 = rcsnum_alloc();
 			rcsnum_cpy(file->rf_head, rev2, 0);
