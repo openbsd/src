@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.2 2006/05/08 03:53:57 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.3 2006/05/08 04:24:47 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $	*/
 
 /*-
@@ -79,6 +79,11 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = stac9221_init_dacgroup;
+		break;
+	case 0x83847683:
+		this->name = "Sigmatel STAC9221D";
+		this->init_dacgroup = stac9221_init_dacgroup;
+		break;
 	default:
 		this->name = NULL;
 		this->init_dacgroup = azalia_codec_init_dacgroup;
@@ -360,7 +365,7 @@ alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 }
 
 /* ----------------------------------------------------------------
- * Sigmatel STAC9221
+ * Sigmatel STAC9221 and STAC9221D
  * ---------------------------------------------------------------- */
 
 static int
