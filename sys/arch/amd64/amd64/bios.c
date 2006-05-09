@@ -53,8 +53,8 @@ struct smbios_entry smbios_entry;
  */
 extern char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
 const char * smbios_uninfo[] = {
-        "System",
-        "Not Specified"
+	"System",
+	"Not Specified"
 };
 
 int
@@ -111,9 +111,9 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		smbios_entry.min = hdr->minrev;
 		smbios_entry.count = hdr->count;
 
-		for(; pa < end; pa+= NBPG, va+= NBPG)
+		for (; pa < end; pa+= NBPG, va+= NBPG)
 			pmap_kenter_pa(va, pa, VM_PROT_READ);
-		
+
 		printf(": SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 		    hdr->majrev, hdr->minrev, hdr->addr, hdr->count);
 		smbios_info(sc->sc_dev.dv_xname);
