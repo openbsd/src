@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.7 2006/05/08 17:25:59 deraadt Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.8 2006/05/09 06:00:27 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -157,9 +157,9 @@ It defaults to ten seconds.
 .It Ic link-timeout Ar time ;
 The
 .Ic link-timeout
-statement sets the amount of time too wait for an interface link before timing
-out. Theres a default value of 10 and the special value 0 says that dhclient
-should not wait for a link state change before timing out.
+statement sets the amount of time to wait for an interface link before timing
+out. The default value is 10, but the special value 0 requests that dhclient
+not wait for a link state change before timing out.
 .El
 .Sh LEASE REQUIREMENTS AND REQUESTS
 The DHCP protocol allows the client to request that the server send it
