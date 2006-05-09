@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.46 2006/05/08 22:51:18 gwk Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.47 2006/05/09 15:16:58 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -39,7 +39,7 @@
 #define	BIOSF_BIOS32	0x0001
 #define	BIOSF_PCIBIOS	0x0002
 #define	BIOSF_PROMSCAN	0x0004
-#define BIOSF_SMBIOS	0x0006
+#define	BIOSF_SMBIOS	0x0008
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
