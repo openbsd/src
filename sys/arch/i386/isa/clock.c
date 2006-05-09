@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.34 2006/02/12 19:55:39 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.35 2006/05/09 09:40:50 otto Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -392,7 +392,7 @@ calibrate_cyclecounter()
 	__asm __volatile("rdtsc" : "=A" (last_count));
 	delay(1000000);
 	__asm __volatile("rdtsc" : "=A" (count));
-	pentium_mhz = ((count - last_count) + 500000) / 1000000;
+	pentium_mhz = ((count - last_count) + 999999) / 1000000;
 }
 #endif
 
