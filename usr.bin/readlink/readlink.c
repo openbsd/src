@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.20 2006/05/08 22:33:04 ray Exp $
+ * $OpenBSD: readlink.c,v 1.21 2006/05/09 17:03:51 ray Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -83,6 +83,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-n] [-f] symlink\n", __progname);
+	fprintf(stderr, "usage: %s [-fn] symlink\n", __progname);
 	exit(1);
 }
