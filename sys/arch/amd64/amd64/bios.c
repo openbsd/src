@@ -61,10 +61,10 @@ int
 bios_match(struct device *parent, void *match , void *aux)
 {
 	struct bios_attach_args *bia = aux;
+
 	/* only one */
 	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
 		return 0;
-
 	return 1;
 }
 
@@ -87,7 +87,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		i = hdr->len;
 		for (chksum = 0; i--; chksum += p[i])
-		;
+			;
 		if (chksum != 0)
 			continue;
 		p += 0x10;
@@ -119,7 +119,6 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		smbios_info(sc->sc_dev.dv_xname);
 		break;
 	}
-
 	printf("\n");
 }
 
@@ -180,7 +179,6 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 				break;
 		va+=2;
 	}
-
 	return ret;
 }
 
@@ -234,8 +232,8 @@ smbios_info(char * str)
 	 * information.
 	 */
 	if ((hw_vendor = smbios_get_string(&stbl, sys->vendor)) != NULL) {
-		for (i = 0; i < sizeof(smbios_uninfo) / sizeof(smbios_uninfo[0])
-		    ; i++) {
+		for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]);
+		    i++) {
 			if ((strncmp(hw_vendor, smbios_uninfo[i],
 			    strlen(smbios_uninfo[i]))) == 0) {
 				if (havebb)
@@ -247,8 +245,8 @@ smbios_info(char * str)
 	} else
 		hw_vendor = smbios_get_string(&btbl, board->vendor);
 	if ((hw_prod = smbios_get_string(&stbl, sys->product)) != NULL) {
-		for (i = 0; i < sizeof(smbios_uninfo) / sizeof(smbios_uninfo[0])
-		    ; i++) {
+		for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]);
+		    i++) {
 			if ((strncmp(hw_prod, smbios_uninfo[i],
 			    strlen(smbios_uninfo[i]))) == 0) {
 				if (havebb)
