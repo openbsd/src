@@ -76,7 +76,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	paddr_t pa, end;
 	u_int8_t *p;
 
-	/* see if we have SMBIOS extentions */	
+	/* see if we have SMBIOS extentions */
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
 	    p < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		struct smbhdr * hdr = (struct smbhdr *)p;
