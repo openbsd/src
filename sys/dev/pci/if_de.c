@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.89 2006/05/06 02:57:30 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.90 2006/05/09 20:58:56 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ static int tulip_intr_shared(void *arg);
 static int tulip_intr_normal(void *arg);
 static void tulip_init(tulip_softc_t * const sc);
 static void tulip_reset(tulip_softc_t * const sc);
+static void tulip_ifstart_one(struct ifnet *ifp);
 static void tulip_ifstart(struct ifnet *ifp);
 static struct mbuf *tulip_txput(tulip_softc_t * const sc, struct mbuf *m);
 static void tulip_txput_setup(tulip_softc_t * const sc);
@@ -4326,9 +4327,34 @@ tulip_ifstart(
 		break;
 	    }
 	}
+#ifdef ALTQ
+	if (0) /* don't switch to the one packet mode */
+#else
+	if (IFQ_IS_EMPTY(&sc->tulip_if.if_snd))
+#endif
+	    sc->tulip_if.if_start = tulip_ifstart_one;
     }
 
     TULIP_PERFEND(ifstart);
+}
+
+static void
+tulip_ifstart_one(
+    struct ifnet * const ifp)
+{
+    TULIP_PERFSTART(ifstart_one)
+    tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
+
+    if ((sc->tulip_if.if_flags & IFF_RUNNING)
+	    && !IFQ_IS_EMPTY(&sc->tulip_if.if_snd)) {
+	struct mbuf *m, *m0;
+	IFQ_POLL(&sc->tulip_if.if_snd, m);
+	if (m != NULL && (m0 = tulip_txput(sc, m)) != NULL)
+	    if (m0 != m)
+		/* should not happen */
+		printf("tulip_if_start_one: txput failed!\n");
+    }
+    TULIP_PERFEND(ifstart_one);
 }
 
 static void
@@ -4391,6 +4417,7 @@ tulip_ifwatchdog(
     TULIP_PERFMERGE(sc, perf_ifioctl_cycles);
     TULIP_PERFMERGE(sc, perf_ifwatchdog_cycles);
     TULIP_PERFMERGE(sc, perf_timeout_cycles);
+    TULIP_PERFMERGE(sc, perf_ifstart_one_cycles);
     TULIP_PERFMERGE(sc, perf_txput_cycles);
     TULIP_PERFMERGE(sc, perf_txintr_cycles);
     TULIP_PERFMERGE(sc, perf_rxintr_cycles);
@@ -4400,6 +4427,7 @@ tulip_ifwatchdog(
     TULIP_PERFMERGE(sc, perf_ifioctl);
     TULIP_PERFMERGE(sc, perf_ifwatchdog);
     TULIP_PERFMERGE(sc, perf_timeout);
+    TULIP_PERFMERGE(sc, perf_ifstart_one);
     TULIP_PERFMERGE(sc, perf_txput);
     TULIP_PERFMERGE(sc, perf_txintr);
     TULIP_PERFMERGE(sc, perf_rxintr);
