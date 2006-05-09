@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.35 2006/04/20 20:31:13 miod Exp $ */
+/*	$OpenBSD: ses.c,v 1.36 2006/05/09 05:51:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -433,17 +433,17 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 
 			case SES_T_POWERSUPPLY:
 				stype = SENSOR_INDICATOR;
-				fmt = "psu%d";
+				fmt = "PSU%d";
 				break;
 
 			case SES_T_COOLING:
 				stype = SENSOR_PERCENT;
-				fmt = "fan%d";
+				fmt = "Fan%d";
 				break;
 
 			case SES_T_TEMP:
 				stype = SENSOR_TEMP;
-				fmt = "temp%d";
+				fmt = "Temp%d";
 				break;
 
 			default:
