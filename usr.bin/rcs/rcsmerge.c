@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.42 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.43 2006/05/09 14:03:55 jmc Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -184,6 +184,6 @@ void
 rcsmerge_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rcsmerge [-EeV] [-kmode] [-p[rev]] [-q[rev]]\n"
+	    "usage: rcsmerge [-EV] [-kmode] [-p[rev]] [-q[rev]]\n"
 	    "                [-xsuffixes] [-ztz] -rrev file ...\n");
 }

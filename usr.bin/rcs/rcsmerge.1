@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsmerge.1,v 1.11 2006/05/08 10:02:02 xsa Exp $
+.\"	$OpenBSD: rcsmerge.1,v 1.12 2006/05/09 14:03:55 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .Nd merge RCS revisions
 .Sh SYNOPSIS
 .Nm
-.Op Fl EeV
+.Op Fl EV
 .Op Fl k Ns Ar mode
 .Op Fl p Ns Op Ar rev
 .Op Fl q Ns Op Ar rev
@@ -50,10 +50,6 @@ Default merge:
 see
 .Xr diff3 1
 for details.
-.It Fl e
-Same as
-.Fl E
-but does not warn about conflicts.
 .It Fl k Ns Ar mode
 Specify the keyword substitution mode.
 .It Fl p Ns Op Ar rev
@@ -119,6 +115,6 @@ An error occurred.
 .Xr rlog 1
 .Sh STANDARDS
 The flags
-.Op Fl AT
+.Op Fl AeT
 have no effect and are provided
 for compatibility only.
