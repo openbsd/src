@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.179 2006/02/19 23:45:01 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.180 2006/05/09 21:17:13 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1462,6 +1462,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -1537,6 +1539,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -1585,6 +1589,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -1627,6 +1633,8 @@ cat5
 alpha
 ..
 amd64
+..
+aviion
 ..
 cats
 ..
@@ -1681,6 +1689,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -1723,6 +1733,8 @@ cat9
 alpha
 ..
 amd64
+..
+aviion
 ..
 cats
 ..
@@ -1767,6 +1779,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -1810,6 +1824,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 i386
@@ -1826,6 +1842,8 @@ ps3
 alpha
 ..
 amd64
+..
+aviion
 ..
 cats
 ..
@@ -1875,6 +1893,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -1917,6 +1937,8 @@ ps5
 alpha
 ..
 amd64
+..
+aviion
 ..
 cats
 ..
@@ -1971,6 +1993,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -2014,6 +2038,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -2056,6 +2082,8 @@ man1
 alpha
 ..
 amd64
+..
+aviion
 ..
 cats
 ..
@@ -2115,6 +2143,8 @@ alpha
 ..
 amd64
 ..
+aviion
+..
 cats
 ..
 hp300
@@ -2172,6 +2202,8 @@ man8
 alpha
 ..
 amd64
+..
+aviion
 ..
 cats
 ..

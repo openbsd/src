@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.12 2006/01/04 20:40:00 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2006/05/09 21:17:13 miod Exp $
 
-.if ${MACHINE} != "mvme68k" && ${MACHINE} != "mvme88k"
+.if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
+    ${MACHINE} != "mvme88k"
 PROG=	kbd
 COPTS+=	-Os
 

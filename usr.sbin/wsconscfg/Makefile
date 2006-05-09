@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.20 2006/01/04 20:39:06 miod Exp $
+#	$OpenBSD: Makefile,v 1.21 2006/05/09 21:17:13 miod Exp $
 
-.if ${MACHINE} != "mvme68k" && ${MACHINE} != "mvme88k" && \
-    ${MACHINE} != "vax"
+.if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
+    ${MACHINE} != "mvme88k" && ${MACHINE} != "vax"
 
 PROG=	wsconscfg
 SRCS=	wsconscfg.c

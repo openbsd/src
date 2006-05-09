@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.46 2006/01/19 03:30:04 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.47 2006/05/09 21:17:13 miod Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,6 +171,7 @@
 .	if "\\$3"amd64" .as vT \ (AMD64)
 .	if "\\$3"amiga" .as vT \ (Amiga)
 .	if "\\$3"arc" .as vT \ (ARC)
+.	if "\\$3"aviion" .as vT \ (AViiON)
 .	if "\\$3"cats" .as vT \ (Cats)
 .	if "\\$3"hp300" .as vT \ (HP300)
 .	if "\\$3"hppa" .as vT \ (HPPA)
@@ -250,6 +251,9 @@
 .	if "\\$2"1.4"  .as oS \01.4
 .	if "\\$2"1.5"  .as oS \01.5
 .	if "\\$2"1.6"  .as oS \01.6
+.	if "\\$2"2.0"  .as oS \02.0
+.	if "\\$2"3.0"  .as oS \03.0
+.	if "\\$2"4.0"  .as oS \04.0
 .\}
 .if "\\$1"OpenBSD" \{\
 .	ds oS OpenBSD

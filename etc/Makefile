@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.232 2006/01/04 20:38:59 miod Exp $
+#	$OpenBSD: Makefile,v 1.233 2006/05/09 21:17:13 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -21,8 +21,8 @@ BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
 	moduli pf.os sensorsd.conf ifstated.conf
 
-.if ${MACHINE} != "mvme68k" && ${MACHINE} != "mvme88k" && \
-    ${MACHINE} != "vax"
+.if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
+    ${MACHINE} != "mvme88k" && ${MACHINE} != "vax"
 BIN1+=	wsconsctl.conf
 .endif
 
@@ -328,6 +328,7 @@ snap_md:
 
 MAKEDEVARCHS+= alpha
 MAKEDEVARCHS+= amd64
+MAKEDEVARCHS+= aviion
 MAKEDEVARCHS+= cats
 MAKEDEVARCHS+= hp300
 MAKEDEVARCHS+= hppa
@@ -378,7 +379,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.232 2006/01/04 20:38:59 miod Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.233 2006/05/09 21:17:13 miod Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \

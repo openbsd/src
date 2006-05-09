@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.25 2006/01/04 20:39:03 miod Exp $
+#	$OpenBSD: Makefile,v 1.26 2006/05/09 21:17:13 miod Exp $
 
-.if ${MACHINE} != "mvme68k" && ${MACHINE} != "mvme88k" && \
-    ${MACHINE} != "vax"
+.if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
+    ${MACHINE} != "mvme88k" && ${MACHINE} != "vax"
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
