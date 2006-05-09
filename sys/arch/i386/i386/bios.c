@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.60 2006/05/08 22:53:10 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.61 2006/05/09 00:35:29 gwk Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -660,7 +660,6 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	for (; va + sizeof(struct smbtblhdr) < end && tcount <=
 	    smbios_entry.count; tcount++) {
 		hdr = (struct smbtblhdr *) va;
-		printf("SMBIOS (%d)@%p type: %d", tcount, va, hdr->type);
 		if (hdr->type == type) {
 			ret = 1;
 			st->hdr = hdr;
@@ -671,12 +670,10 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 		if (hdr->type == SMBIOS_TYPE_EOT)
 			break;
 		va+= hdr->size;
-		printf(" size: %d strings@%p", hdr->size, va);
 		for (; va + 1 < end; va++)
 			if (*va == NULL && *(va + 1) == NULL)
 				break;
 		va+=2;
-		printf(" end@%p\n", va);
 	}
 
 	printf("\n");
