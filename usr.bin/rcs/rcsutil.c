@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.9 2006/05/08 21:55:39 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.10 2006/05/09 12:31:27 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -144,7 +144,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	int fd;
 	struct stat sb;
 	char *p, *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
-	    *ret, *suffixes, rcspath[MAXPATHLEN];
+	    *suffixes, rcspath[MAXPATHLEN];
 
 	/* If -x flag was not given, use default. */
 	if (rcs_suffixes == NULL)
@@ -209,7 +209,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	 * extension.
 	 */
 	suffixes = xstrdup(rcs_suffixes);
-	for (ret = NULL, next = suffixes; (ext = strsep(&next, "/")) != NULL;) {
+	for (next = suffixes; (ext = strsep(&next, "/")) != NULL;) {
 		char fpath[MAXPATHLEN];
 
 		if ((p = strrchr(rcspath, ',')) != NULL) {
@@ -251,9 +251,6 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	}
 
 	/*
-	 * `ret' is still NULL.  No RCS file with any extension exists
-	 * so we use the first extension.
-	 *
 	 * `suffixes' should now be NUL separated, so the first
 	 * extension can be read just by reading `suffixes'.
 	 */
