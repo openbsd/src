@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.66 2006/04/11 13:29:37 henning Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.67 2006/05/09 19:43:02 mpf Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -611,14 +611,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof vlr)))
 			break;
-		if (vlr.vlr_parent[0] == '\0')
-			break;
-
-		pr = ifunit(vlr.vlr_parent);
-		if (pr == NULL) {
-			error = ENOENT;
-			break;
-		}
 		/*
 		 * Don't let the caller set up a VLAN priority
 		 * outside the range 0-7
@@ -627,16 +619,14 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-
 		ifv->ifv_prio = vlr.vlr_tag;
 		break;
 	case SIOCGETVLANPRIO:
 		bzero(&vlr, sizeof vlr);
-		if (ifv->ifv_p) {
+		if (ifv->ifv_p)
 			strlcpy(vlr.vlr_parent, ifv->ifv_p->if_xname,
                             sizeof(vlr.vlr_parent));
-			vlr.vlr_tag = ifv->ifv_prio;
-		}
+		vlr.vlr_tag = ifv->ifv_prio;
 		error = copyout(&vlr, ifr->ifr_data, sizeof vlr);
 		break;
 	case SIOCSIFFLAGS:
