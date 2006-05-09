@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.53 2006/04/28 12:30:25 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.54 2006/05/09 12:33:42 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -104,7 +104,6 @@ rlog_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
-			/* NOTREACHED */
 		case 'w':
 			wflag = 1;
 			wlist = rcs_optarg;

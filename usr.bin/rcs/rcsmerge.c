@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.41 2006/05/08 18:36:04 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.42 2006/05/09 12:33:42 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -76,7 +76,6 @@ rcsmerge_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
-			/* NOTREACHED */
 		case 'x':
 			/* Use blank extension if none given. */
 			rcs_suffixes = rcs_optarg ? rcs_optarg : "";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.19 2006/05/01 23:03:07 joris Exp $	*/
+/*	$OpenBSD: ident.c,v 1.20 2006/05/09 12:33:42 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -51,7 +51,6 @@ ident_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
-			/* NOTREACHED */
 		default:
 			(usage)();
 			exit(1);
