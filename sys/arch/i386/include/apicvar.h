@@ -1,4 +1,4 @@
-/*	$OpenBSD: apicvar.h,v 1.2 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: apicvar.h,v 1.3 2006/05/09 18:41:22 kettenis Exp $	*/
 /* $NetBSD: apicvar.h,v 1.1.2.3 2000/02/27 20:25:00 sommerfeld Exp $ */
 
 /*-
@@ -50,6 +50,7 @@ struct apic_attach_args {
 #define IOAPIC_PICMODE		0x01
 #define IOAPIC_VWIRE		0x02
 	paddr_t apic_address;
+	int apic_vecbase;
 };
 
 void apic_format_redir(char *, char *, int, u_int32_t, u_int32_t);

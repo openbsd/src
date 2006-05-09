@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.11 2006/05/01 17:01:14 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.12 2006/05/09 18:41:22 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -1058,7 +1058,8 @@ mpbios_ioapic(ent, self)
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
 	aaa.apic_address = (u_long)entry->apic_address;
-	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
+	aaa.apic_vecbase = -1;
+	aaa.flags = (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 
 	config_found_sm(self, &aaa, mp_print, mp_match);
 }

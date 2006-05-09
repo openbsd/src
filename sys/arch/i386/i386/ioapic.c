@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.8 2006/04/08 20:50:38 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.9 2006/05/09 18:41:22 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -114,6 +114,7 @@ int ioapic_cold = 1;
 
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
+static int ioapic_vecbase;
 
 void ioapic_set_id(struct ioapic_softc *);
 
@@ -179,6 +180,24 @@ ioapic_find(int apicid)
 			return (sc);
 
 	return (NULL);
+}
+
+/*
+ * For the case the I/O APICs were configured using ACPI, there must
+ * be an option to match global ACPI interrupts with APICs.
+ */
+struct ioapic_softc *
+ioapic_find_bybase(int vec)
+{
+	struct ioapic_softc *sc;
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		if (vec >= sc->sc_apic_vecbase &&
+		    vec < (sc->sc_apic_vecbase + sc->sc_apic_sz))
+			return sc;
+	}
+
+	return NULL;
 }
 
 static __inline void
@@ -265,6 +284,17 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_apic_vers = (ver_sz & IOAPIC_VER_MASK) >> IOAPIC_VER_SHIFT;
 	sc->sc_apic_sz = (ver_sz & IOAPIC_MAX_MASK) >> IOAPIC_MAX_SHIFT;
 	sc->sc_apic_sz++;
+
+	if (aaa->apic_vecbase != -1)
+		sc->sc_apic_vecbase = aaa->apic_vecbase;
+	else {
+		/*
+		 * XXX this assumes ordering of ioapics in the table.
+		 * Only needed for broken BIOS workaround (see mpbios.c)
+		 */
+		sc->sc_apic_vecbase = ioapic_vecbase;
+		ioapic_vecbase += sc->sc_apic_sz;
+	}
 
 	if (mp_verbose) {
 		printf(", %s mode",
