@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.9 2006/03/04 19:33:21 miod Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.10 2006/05/09 18:49:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -207,19 +207,6 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-#ifdef __sparc64__
-	/*
-	 * XXX We get data_access_error exceptions on Blade 100 and
-	 * Blade 150 machines with 233KHz clock.  We should
-	 * investigate wether changing the clock speed to 74KHz fixes
-	 * the problem.
-	 */
-	if ((reg & ALIPM_SMB_HOSTC_CLOCK) != ALIPM_SMB_HOSTC_74K) {
-		printf(", disabling to avoid hardware failure\n");
-		return;
-	}
-#endif
-
 	printf("\n");
 
 	/* Attach I2C bus */
@@ -286,10 +273,14 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS,
 	    ALIPM_SMB_HS_DONE | ALIPM_SMB_HS_FAILED |
 	    ALIPM_SMB_HS_BUSERR | ALIPM_SMB_HS_DEVERR);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS, 1,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Wait until bus is idle */
 	for (retries = 1000; retries > 0; retries--) {
 		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS, 1,
+		    BUS_SPACE_BARRIER_READ);
 		if (st & (ALIPM_SMB_HS_IDLE | ALIPM_SMB_HS_FAILED |
 		    ALIPM_SMB_HS_BUSERR | ALIPM_SMB_HS_DEVERR))
 			break;
@@ -339,12 +330,18 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC, ctl);
 
 	/* Start transaction */
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, ALIPM_SMB_SIZE,
+	    BUS_SPACE_BARRIER_WRITE);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_START, 0xff);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, ALIPM_SMB_SIZE,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Poll for completion */
 	DELAY(ALIPM_DELAY);
 	for (retries = 1000; retries > 0; retries--) {
 		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS, 1,
+		    BUS_SPACE_BARRIER_READ);
 		if (st & (ALIPM_SMB_HS_IDLE | ALIPM_SMB_HS_FAILED |
 		    ALIPM_SMB_HS_BUSERR | ALIPM_SMB_HS_DEVERR))
 			break;
@@ -355,7 +352,11 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		    sc->sc_dev.dv_xname, st, ALIPM_SMB_HS_BITS);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC,
 		    ALIPM_SMB_HC_RESET);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, ALIPM_SMB_SIZE,
+		     BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS, 1,
+		    BUS_SPACE_BARRIER_READ);
 		error = ETIMEDOUT;
 		goto done;
 	}
@@ -363,7 +364,11 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if ((st & ALIPM_SMB_HS_DONE) == 0) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC,
 		     ALIPM_SMB_HC_KILL);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, ALIPM_SMB_SIZE,
+		     BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS, 1,
+		    BUS_SPACE_BARRIER_READ);
 		if ((st & ALIPM_SMB_HS_FAILED) == 0)
 			printf("%s: error st 0x%b\n", sc->sc_dev.dv_xname,
 			    st, ALIPM_SMB_HS_BITS);
@@ -379,12 +384,18 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_READ_P(op)) {
 		/* Read data */
 		b = buf;
-		if (len > 0)
+		if (len > 0) {
 			b[0] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 			    ALIPM_SMB_HD0);
-		if (len > 1)
+			bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+			    ALIPM_SMB_HD0, 1, BUS_SPACE_BARRIER_READ);
+		}
+		if (len > 1) {
 			b[1] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 			    ALIPM_SMB_HD1);
+			bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+			    ALIPM_SMB_HD1, 1, BUS_SPACE_BARRIER_READ);
+		}
 	}
 
 done:
