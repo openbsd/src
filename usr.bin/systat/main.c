@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2006/04/12 05:07:52 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2006/05/09 17:09:22 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.33 2006/04/12 05:07:52 ray Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.34 2006/05/09 17:09:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'w':
-			naptime = (u_int)strtonum(optarg, 0, 1000, &errstr);
+			naptime = (u_int)strtonum(optarg, 1, 1000, &errstr);
 			if (errstr)
 				errx(1, "interval %s: %s", errstr, optarg);
 			break;
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
-			naptime = (u_int)strtonum(argv[0], 0, 1000, &errstr);
+			naptime = (u_int)strtonum(argv[0], 1, 1000, &errstr);
 			if (errstr)
 				naptime = 5;
 		} else {
