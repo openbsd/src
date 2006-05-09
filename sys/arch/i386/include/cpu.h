@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.75 2006/04/27 15:37:53 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.76 2006/05/09 09:38:35 otto Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -261,9 +261,9 @@ extern u_quad_t pentium_base_tsc;
 		if (pentium_mhz) {					\
 			__asm __volatile("cli\n"			\
 					 "rdtsc\n"			\
-					 "sti\n"			\
 					 : "=A" (pentium_base_tsc)	\
 					 : );				\
+			__asm __volatile("sti"); 			\
 		}							\
 	} while (0)
 #endif
