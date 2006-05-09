@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2006/05/09 18:07:40 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/05/09 21:15:18 deraadt Exp $
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
 
 NOPROG=
 NOMAN=
-NOOBJ=
+NOOBJ=		
 
-SUBDIR=
+SUBDIR=		stand
 
 TAVIION=	$S/arch/aviion/tags
 SAVIION=	$S/arch/aviion/aviion/*.[ch] \
