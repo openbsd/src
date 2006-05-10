@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1066 2006/05/03 00:35:01 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1067 2006/05/10 17:08:59 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8127,10 +8127,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "200H",
 	},
 	{
-	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2,
-	    "200HV2",
-	},
-	{
 	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0,
 	    "400H/800H",
 	},
@@ -8139,12 +8135,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "800H",
 	},
 	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2,
+	    "200HV2",
+	},
+	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_VSCOM_PCI011H,
 	    "011H",
 	},
 	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,
+	    "OX16PCI954",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41092,
+	    "Exsys EX-41092",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXCB950,
+	    "OXCB950",
+	},
+	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,
 	    "Exsys EX-41098",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954P,
+	    "OX16PCI954 Parallel",
 	},
 	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952,
@@ -8153,14 +8169,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952P,
 	    "OX16PCI952 Parallel",
-	},
-	{
-	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,
-	    "OX16PCI954",
-	},
-	{
-	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954P,
-	    "OX16PCI954 Parallel",
 	},
 	{
 	    PCI_VENDOR_PDC, PCI_PRODUCT_PDC_QSTOR_SATA,
