@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.21 2006/04/12 19:41:08 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.22 2006/05/10 17:36:12 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -226,8 +226,12 @@ main(int argc, char *argv[])
 
 	fd = open_socket(sockname);
 
-	if (!strcmp(__progname, "zzz"))
-		return (do_zzz(fd, action));
+	if (!strcmp(__progname, "zzz")) {
+		if (fd < 0)
+			err(1, "cannot connect to apmd");
+		else
+			return (do_zzz(fd, action));
+	}
 
 	bzero(&reply, sizeof reply);
 	reply.batterystate.battery_state = APM_BATT_UNKNOWN;
