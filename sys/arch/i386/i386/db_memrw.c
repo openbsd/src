@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.9 2006/04/27 15:37:50 mickey Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.10 2006/05/10 13:45:37 mickey Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /* 
@@ -85,9 +85,9 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 		*dst++ = *data++;
 
 	if (addr1) {
-		pmap_pte_setbits(addr, 0, bits);
-		if (bits1)
-			pmap_pte_setbits(addr1, 0, bits1);
+		pmap_pte_setbits(addr, 0, bits ^ PG_RW);
+		if (trunc_page(addr) != addr1)
+			pmap_pte_setbits(addr1, 0, bits1 ^ PG_RW);
 		tlbflush();
 	}
 }
