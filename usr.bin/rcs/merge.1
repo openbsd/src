@@ -1,0 +1,91 @@
+.\"	$OpenBSD: merge.1,v 1.1 2006/05/10 14:28:17 xsa Exp $
+.\"
+.\" Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd May 09, 2006
+.Dt MERGE 1
+.Os
+.Sh NAME
+.Nm merge
+.Nd 3-way file merge
+.Sh SYNOPSIS
+.Nm
+.Op Fl EepqV
+.Op Fl L Ar label
+.Ar file1 file2 file3
+.Sh DESCRIPTION
+The
+.Nm
+program merges changes leading from
+.Ar file2
+to
+.Ar file3
+into
+.Ar file1 .
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Fl E
+Default merge:
+see
+.Xr diff3 1
+for details.
+.It Fl e
+Same as
+.Fl E
+but does not warn about conflicts.
+.It Fl L Ar label
+Specifies labels to be used in place of corresponding file names
+in conflicts reports.
+May be given up to three times.
+.It Fl p
+Print result to standard output.
+.It Fl q
+Be quiet about reporting.
+.It Fl V
+Print RCS's version number.
+.El
+.Sh EXAMPLES
+Using labels:
+.Bd -literal -offset indent
+$ merge -q -p -L one -L two -L three file1 file2 file3
+<<<<<<< one
+=======
+bar
+>>>>>>> three
+.Ed
+.Sh DIAGNOSTICS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It 0
+No overlaps.
+.It 1
+Overlaps were found.
+.It 2
+An error occurred.
+.El
+.Sh SEE ALSO
+.Xr co 1 ,
+.Xr diff 1 ,
+.Xr diff3 1 ,
+.Xr rcsmerge 1
+.Sh STANDARDS
+The flag
+.Op Fl A
+has no effect and is provided
+for compatibility only.
