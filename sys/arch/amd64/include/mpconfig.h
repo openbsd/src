@@ -1,3 +1,4 @@
+/*	$OpenBSD: mpconfig.h,v 1.3 2006/05/10 01:39:04 krw Exp $	*/
 /*	$NetBSD: mpconfig.h,v 1.2 2003/05/11 00:05:52 fvdl Exp $	*/
 
 /*
