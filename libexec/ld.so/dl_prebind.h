@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.h,v 1.1 2006/05/03 16:10:51 drahn Exp $ */
+/* $OpenBSD: dl_prebind.h,v 1.2 2006/05/10 03:26:50 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -18,19 +18,19 @@
 #include <sys/exec_elf.h>
 #include "resolve.h"
 #include "prebind.h"
+
 extern char *_dl_noprebind;
 extern char *_dl_prebind_validate;
-void _dl_prebind_pre_resolve(void);
-void _dl_prebind_post_resolve(void);
-void *prebind_load_fd(int fd, const char *name);
-void prebind_load_exe(Elf_Phdr *phdp, elf_object_t *exe_obj);
+void	_dl_prebind_pre_resolve(void);
+void	_dl_prebind_post_resolve(void);
+void	*prebind_load_fd(int fd, const char *name);
+void	prebind_load_exe(Elf_Phdr *phdp, elf_object_t *exe_obj);
 
-void
-prebind_validate(elf_object_t *req_obj, unsigned int symidx, int flags,
-    const Elf_Sym *ref_sym);
+void	prebind_validate(elf_object_t *req_obj, unsigned int symidx, int flags,
+	    const Elf_Sym *ref_sym);
 extern char *_dl_prebind_validate; /* XXX */
 
-void prebind_symcache(elf_object_t *object, int pltflag);
-void prebind_free(elf_object_t *object);
+void	prebind_symcache(elf_object_t *object, int pltflag);
+void	prebind_free(elf_object_t *object);
 
 extern struct prebind_footer *footer;
