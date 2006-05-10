@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.171 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.172 2006/05/10 01:10:23 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -346,7 +346,7 @@ checkin_diff_file(struct checkin_params *pb)
 		goto out;
 	}
 
-	if ((b3 = rcs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL) {
+	if ((b3 = rcs_buf_alloc(128, BUF_AUTOEXT)) == NULL) {
 		warnx("failed to allocated buffer for diff");
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.7 2006/05/08 16:56:40 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.8 2006/05/10 01:10:23 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.7 2006/05/08 16:56:40 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.8 2006/05/10 01:10:23 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -181,9 +181,9 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
-	d1 = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
-	d2 = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
-	diffb = rcs_buf_alloc((size_t)128, BUF_AUTOEXT);
+	d1 = rcs_buf_alloc(128, BUF_AUTOEXT);
+	d2 = rcs_buf_alloc(128, BUF_AUTOEXT);
+	diffb = rcs_buf_alloc(128, BUF_AUTOEXT);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
@@ -772,7 +772,7 @@ edscript(int n)
 		(void)fseek(fp[2], (long)de[n].new.from, 0);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, (size_t)1, (size_t)j,
+			if (fread(block, 1, (size_t)j,
 			    fp[2]) != (size_t)j)
 				return (-1);
 			block[j] = '\0';
