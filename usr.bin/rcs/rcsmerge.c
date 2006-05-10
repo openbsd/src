@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.43 2006/05/09 14:03:55 jmc Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.44 2006/05/10 12:05:33 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -32,7 +32,7 @@
 int
 rcsmerge_main(int argc, char **argv)
 {
-	int fd, i, ch, flags, kflag, status;
+	int fd, ch, flags, kflag, status;
 	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
 	RCSFILE *file;
 	RCSNUM *rev1, *rev2;
@@ -40,7 +40,7 @@ rcsmerge_main(int argc, char **argv)
 
 	flags = 0;
 	kflag = RCS_KWEXP_ERR;
-	status = 0;
+	status = D_ERROR;
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;
 
@@ -92,90 +92,87 @@ rcsmerge_main(int argc, char **argv)
 	argc -= rcs_optind;
 	argv += rcs_optind;
 
-	if (argc < 1) {
-		warnx("no input file");
-		(usage)();
-		exit(D_ERROR);
-	}
-
 	if (rev_str1 == NULL) {
 		warnx("no base revision number given");
 		(usage)();
 		exit(D_ERROR);
 	}
 
-	for (i = 0; i < argc; i++) {
-		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
-		if (fd < 0)
-			continue;
-
-		if ((file = rcs_open(fpath, fd, RCS_READ)) == NULL)
-			continue;
-
-		if (!(flags & QUIET))
-			fprintf(stderr, "RCS file: %s\n", fpath);
-
-		if (rev1 != NULL) {
-			rcsnum_free(rev1);
-			rev1 = NULL;
-		}
-		if (rev2 != NULL) {
-			rcsnum_free(rev2);
-			rev2 = NULL;
-		}
-
-		if (strcmp(rev_str1, "") == 0) {
-			rev1 = rcsnum_alloc();
-			rcsnum_cpy(file->rf_head, rev1, 0);
-		} else if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
-			errx(D_ERROR, "invalid revision: %s", rev_str1);
-
-		if (rev_str2 != NULL && strcmp(rev_str2, "") != 0) {
-			if ((rev2 = rcs_getrevnum(rev_str2, file)) == NULL)
-				errx(D_ERROR, "invalid revision: %s", rev_str2);
-		} else {
-			rev2 = rcsnum_alloc();
-			rcsnum_cpy(file->rf_head, rev2, 0);
-		}
-
-		if (rcsnum_cmp(rev1, rev2, 0) == 0) {
-			rcs_close(file);
-			continue;
-		}
-
-		if (!(flags & QUIET)) {
-			(void)rcsnum_tostr(rev1, r1, sizeof(r1));
-			(void)rcsnum_tostr(rev2, r2, sizeof(r2));
-
-			fprintf(stderr, "Merging differences between %s and "
-			    "%s into %s%s\n", r1, r2, argv[i],
-			    (flags & PIPEOUT) ? "; result to stdout":"");
-		}
-
-		if ((bp = rcs_diff3(file, argv[i], rev1, rev2,
-		    !(flags & QUIET))) == NULL) {
-			warnx("failed to merge");
-			rcs_close(file);
-			continue;
-		}
-
-		if (diff3_conflicts != 0)
-			status = D_OVERLAPS;
-
-		if (flags & PIPEOUT) {
-			rcs_buf_putc(bp, '\0');
-			fcont = rcs_buf_release(bp);
-			printf("%s", fcont);
-			xfree(fcont);
-		} else {
-			/* XXX mode */
-			if (rcs_buf_write(bp, argv[i], 0644) < 0)
-				warnx("rcs_buf_write failed");
-
-			rcs_buf_free(bp);
-		}
-		rcs_close(file);
+	if (argc < 1) {
+		warnx("no input file");
+		(usage)();
+		exit(D_ERROR);
 	}
+
+	if (argc > 2 || (argc == 2 && argv[1] != NULL))
+		warnx("warning: excess arguments ignored");
+
+	if ((fd = rcs_statfile(argv[0], fpath, sizeof(fpath), flags)) < 0)
+		return (status);
+
+	if (!(flags & QUIET))
+		(void)fprintf(stderr, "RCS file: %s\n", fpath);
+
+	if ((file = rcs_open(fpath, fd, RCS_READ)) == NULL)
+		return (status);
+
+	if (strcmp(rev_str1, "") == 0) {
+		rev1 = rcsnum_alloc();
+		rcsnum_cpy(file->rf_head, rev1, 0);
+	} else if ((rev1 = rcs_getrevnum(rev_str1, file)) == NULL)
+		errx(D_ERROR, "invalid revision: %s", rev_str1);
+
+	if (rev_str2 != NULL && strcmp(rev_str2, "") != 0) {
+		if ((rev2 = rcs_getrevnum(rev_str2, file)) == NULL)
+			errx(D_ERROR, "invalid revision: %s", rev_str2);
+	} else {
+		rev2 = rcsnum_alloc();
+		rcsnum_cpy(file->rf_head, rev2, 0);
+	}
+
+	if (rcsnum_cmp(rev1, rev2, 0) == 0)
+		goto out;
+
+	if ((bp = rcs_diff3(file, argv[0], rev1, rev2,
+	    !(flags & QUIET))) == NULL) {
+		warnx("failed to merge");
+		goto out;
+	}
+
+	if (!(flags & QUIET)) {
+		(void)rcsnum_tostr(rev1, r1, sizeof(r1));
+		(void)rcsnum_tostr(rev2, r2, sizeof(r2));
+
+		(void)fprintf(stderr, "Merging differences between %s and "
+		    "%s into %s%s\n", r1, r2, argv[0],
+		    (flags & PIPEOUT) ? "; result to stdout":"");
+	}
+
+	if (diff3_conflicts != 0)
+		status = D_OVERLAPS;
+	else
+		status = 0;
+
+	if (flags & PIPEOUT) {
+		rcs_buf_putc(bp, '\0');
+		fcont = rcs_buf_release(bp);
+		printf("%s", fcont);
+		xfree(fcont);
+	} else {
+		/* XXX mode */
+		if (rcs_buf_write(bp, argv[0], 0644) < 0)
+			warnx("rcs_buf_write failed");
+
+		rcs_buf_free(bp);
+	}
+
+out:
+	rcs_close(file);
+
+	if (rev1 != NULL)
+		rcsnum_free(rev1);
+	if (rev2 != NULL)
+		rcsnum_free(rev2);
 
 	return (status);
 }
