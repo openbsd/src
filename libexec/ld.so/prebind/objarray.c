@@ -1,4 +1,4 @@
-/* $OpenBSD: objarray.c,v 1.6 2006/05/08 20:37:01 deraadt Exp $ */
+/* $OpenBSD: objarray.c,v 1.7 2006/05/10 23:03:53 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -60,7 +60,7 @@ void
 elf_add_object_curbin_list(struct elf_object *object)
 {
 	struct objlist *ol;
-	ol = malloc(sizeof (struct objlist));
+	ol = xmalloc(sizeof (struct objlist));
 	ol->object = object;
 	TAILQ_INSERT_TAIL(&(curbin->curbin_list), ol, list);
 	if ( load_object == NULL)
@@ -77,7 +77,7 @@ void
 elf_init_objarray(void)
 {
 	objarray_sz = 512;
-	objarray = malloc(sizeof (objarray[0]) * objarray_sz);
+	objarray = xmalloc(sizeof (objarray[0]) * objarray_sz);
 }
 
 void
@@ -101,16 +101,10 @@ elf_sum_reloc()
 			copy_oldsymcache(i);
 			continue;
 		}
-		objarray[i].symcache = calloc(sizeof(struct symcache_noflag),
+		objarray[i].symcache = xcalloc(sizeof(struct symcache_noflag),
 		    objarray[i].obj->nchains);
-		objarray[i].pltsymcache = calloc(sizeof(struct symcache_noflag),
-		    objarray[i].obj->nchains);
-
-		if (objarray[i].symcache == NULL ||
-		    objarray[i].pltsymcache == NULL) {
-			printf("out of memory allocating symcache\n");
-			exit (20);
-		}
+		objarray[i].pltsymcache = xcalloc(sizeof(
+		    struct symcache_noflag), objarray[i].obj->nchains);
 
 		TAILQ_FOREACH(ol, &(objarray[i].inst_list),
 		    inst_list) {
@@ -148,9 +142,9 @@ elf_sum_reloc()
 			numobjs++;
 		}
 		pl->nobj = numobjs;
-		pl->libmap = calloc(numobjs, sizeof (u_int32_t *));
-		pl->fixup = calloc(2 * numobjs, sizeof (struct fixup *));
-		pl->fixupcnt = calloc(2 * numobjs, sizeof (int));
+		pl->libmap = xcalloc(numobjs, sizeof (u_int32_t *));
+		pl->fixup = xcalloc(2 * numobjs, sizeof (struct fixup *));
+		pl->fixupcnt = xcalloc(2 * numobjs, sizeof (int));
 
 		numobjs = 0;
 		TAILQ_FOREACH(ol, &(pl->curbin_list), list) {
@@ -190,8 +184,8 @@ elf_prep_lib_prebind(struct elf_object *object)
 
 	symcache = objarray[object->dyn.null].symcache;
 	pltsymcache = objarray[object->dyn.null].pltsymcache;
-	libmap = calloc(objarray_cnt, sizeof (int));
-	idxtolib = calloc(objarray_cnt, sizeof (int));
+	libmap = xcalloc(objarray_cnt, sizeof (int));
+	idxtolib = xcalloc(objarray_cnt, sizeof (int));
 	objarray[object->dyn.null].idxtolib = idxtolib;
 
 	for (i = 0; i < objarray_cnt; i++)
@@ -210,7 +204,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 		nametablen += strlen(symcache[i].obj->load_name) + 1;
 		numlibs++;
 	}
-	symcachetab = calloc(symcache_cnt , sizeof(struct symcachetab));
+	symcachetab = xcalloc(symcache_cnt , sizeof(struct symcachetab));
 
 	symcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
@@ -235,7 +229,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 		nametablen += strlen(pltsymcache[i].obj->load_name) + 1;
 		numlibs++;
 	}
-	pltsymcachetab = calloc(pltsymcache_cnt , sizeof(struct symcachetab));
+	pltsymcachetab = xcalloc(pltsymcache_cnt , sizeof(struct symcachetab));
 
 	pltsymcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
@@ -251,8 +245,8 @@ elf_prep_lib_prebind(struct elf_object *object)
 
 	objarray[object->dyn.null].numlibs = numlibs;
 
-	nameidx = calloc(numlibs, sizeof (struct nameidx));
-	nametab = malloc(nametablen);
+	nameidx = xcalloc(numlibs, sizeof (struct nameidx));
+	nametab = xmalloc(nametablen);
 
 	nametablen = 0;
 	for (i = 0; i < numlibs; i++) {
@@ -309,8 +303,8 @@ elf_prep_bin_prebind(struct proglist *pl)
 	object = TAILQ_FIRST(&(pl->curbin_list))->object;
 	symcache = objarray[object->dyn.null].symcache;
 	pltsymcache = objarray[object->dyn.null].pltsymcache;
-	libmap = calloc(objarray_cnt, sizeof (int));
-	idxtolib = calloc(pl->nobj, sizeof (int));
+	libmap = xcalloc(objarray_cnt, sizeof (int));
+	idxtolib = xcalloc(pl->nobj, sizeof (int));
 
 	for (i = 0; i < objarray_cnt; i++)
 		libmap[i] = -1;
@@ -324,7 +318,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 		nametablen += strlen(ol->object->load_name) + 1;
 		libmap[ref_obj] = numlibs;
 		idxtolib[numlibs] = ref_obj;
-#if 0
+#if 1
 	printf("obj :%d, idx %d %s\n", numlibs, ref_obj, ol->object->load_name);
 #endif
 		numlibs++;
@@ -337,7 +331,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 			symcache_cnt++;
 	}
 
-	symcachetab = calloc(symcache_cnt , sizeof(struct symcachetab));
+	symcachetab = xcalloc(symcache_cnt , sizeof(struct symcachetab));
 
 	symcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
@@ -357,7 +351,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 		if (pltsymcache[i].sym != NULL)
 			pltsymcache_cnt++;
 	}
-	pltsymcachetab = calloc(pltsymcache_cnt , sizeof(struct symcachetab));
+	pltsymcachetab = xcalloc(pltsymcache_cnt , sizeof(struct symcachetab));
 
 	pltsymcache_cnt = 0;
 	for (i = 0; i < object->nchains; i++) {
@@ -371,11 +365,10 @@ elf_prep_bin_prebind(struct proglist *pl)
 		pltsymcache_cnt++;
 	}
 
-	nameidx = calloc(numlibs, sizeof (struct nameidx));
-	nametab = malloc(nametablen);
+	objarray[object->dyn.null].numlibs = numlibs;
 
-	if (nameidx == NULL || nametab == NULL)
-		perror("buffers");
+	nameidx = xcalloc(numlibs, sizeof (struct nameidx));
+	nametab = xmalloc(nametablen);
 
 	nametablen = 0;
 	for (i = 0; i < numlibs; i++) {
@@ -393,7 +386,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 		printf("\tlib %s\n", &nametab[nameidx[i].name]);
 	}
 #endif
-	pl->libmapcnt = calloc(numlibs, sizeof(u_int32_t));
+	pl->libmapcnt = xcalloc(numlibs, sizeof(u_int32_t));
 
 	/* have to do both got and plt fixups */
 	for (i = 0; i < numlibs; i++) {
@@ -407,8 +400,9 @@ elf_prep_bin_prebind(struct proglist *pl)
 		}
 
 		pl->libmapcnt[i] = objarray[idxtolib[i]].numlibs;
-		for (j = 0; j < objarray[idxtolib[i]].numlibs; j++)
-			pl->libmap[i][j] = libmap[pl->libmap[i][j]];
+		if (i != 0)
+			for (j = 0; j < objarray[idxtolib[i]].numlibs; j++)
+				pl->libmap[i][j] = libmap[pl->libmap[i][j]];
 	}
 
 	ret = elf_write_lib(object, nameidx, nametab, nametablen, numlibs,
@@ -511,14 +505,14 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 		next_start += 2*nfixup * sizeof(u_int32_t);
 		footer.fixupcnt_idx = next_start;
 		next_start += 2*nfixup * sizeof(u_int32_t);
-		fixuptab = calloc( 2*nfixup, sizeof(u_int32_t));
+		fixuptab = xcalloc( 2*nfixup, sizeof(u_int32_t));
 		for ( i = 0; i < 2*nfixup; i++) {
 			fixuptab[i] = next_start;
 			next_start += fixupcnt[i] * sizeof(struct fixup);
 		}
 		footer.libmap_idx = next_start;
 		next_start += 2*nfixup * sizeof(u_int32_t);
-		maptab = calloc( 2*nfixup, sizeof(u_int32_t));
+		maptab = xcalloc( 2*nfixup, sizeof(u_int32_t));
 		maptab[0] = next_start;
 		for (i = 1; i < nfixup; i++) {
 			maptab[i] = next_start;
@@ -729,7 +723,7 @@ elf_calc_fixups(struct proglist *pl, struct objlist *ol, int libidx)
 			numfixups++;
 		}
 	}
-	pl->fixup[2*libidx] = calloc(numfixups, sizeof (struct fixup));
+	pl->fixup[2*libidx] = xcalloc(numfixups, sizeof (struct fixup));
 
 	numfixups = 0;
 	for (i = 0; i < ol->object->nchains; i++) {
@@ -775,7 +769,7 @@ elf_calc_fixups(struct proglist *pl, struct objlist *ol, int libidx)
 			numfixups++;
 		}
 	}
-	pl->fixup[2*libidx+1] = calloc(numfixups, sizeof (struct fixup));
+	pl->fixup[2*libidx+1] = xcalloc(numfixups, sizeof (struct fixup));
 
 	numfixups = 0;
 	for (i = 0; i < ol->object->nchains; i++) {
@@ -800,7 +794,7 @@ elf_calc_fixups(struct proglist *pl, struct objlist *ol, int libidx)
 	}
 	pl->fixupcnt[2*libidx+1] = numfixups;
 
-	pl->libmap[libidx] = calloc( objarray[objidx].numlibs,
+	pl->libmap[libidx] = xcalloc( objarray[objidx].numlibs,
 	    sizeof(u_int32_t));
 
 	for (i = 0; i < objarray[objidx].numlibs; i++) {
@@ -818,7 +812,7 @@ elf_add_object(struct elf_object *object, int objtype)
 {
 	struct objarray_list *newarray;
 	struct objlist *ol;
-	ol = malloc(sizeof (struct objlist));
+	ol = xmalloc(sizeof (struct objlist));
 	ol->object = object;
 	if (objtype != OBJTYPE_EXE)
 		TAILQ_INSERT_TAIL(&library_list, ol, list);
@@ -839,6 +833,7 @@ elf_add_object(struct elf_object *object, int objtype)
 	objarray[objarray_cnt].id0 = arc4random(); /* XXX FIX */
 	objarray[objarray_cnt].id1 = arc4random();
 	objarray[objarray_cnt].oprebind_data = NULL;
+	objarray[objarray_cnt].numlibs = 0;
 	objarray_cnt++;
 
 	elf_add_object_curbin_list(object);
@@ -938,7 +933,7 @@ write_txtbusy_file(char *name)
 
 	/* allocate a 256k buffer to copy the file */
 #define BUFSZ (256 * 1024)
-	buf = malloc(BUFSZ);
+	buf = xmalloc(BUFSZ);
 
 	fd = open(prebind_name, O_RDWR|O_CREAT|O_TRUNC, sb.st_mode);
 	oldfd = open(name, O_RDONLY);
@@ -1010,15 +1005,9 @@ copy_oldsymcache(int objidx)
 	prebind_map = objarray[object->dyn.null].oprebind_data;
 
 	objarray[objidx].symcache =
-	    calloc(sizeof(struct symcache_noflag), object->nchains);
+	    xcalloc(sizeof(struct symcache_noflag), object->nchains);
 	objarray[objidx].pltsymcache =
-	    calloc(sizeof(struct symcache_noflag), object->nchains);
-
-	if (objarray[objidx].symcache == NULL ||
-	    objarray[objidx].pltsymcache == NULL) {
-		printf("out of memory allocating symcache\n");
-		exit (20);
-	}
+	    xcalloc(sizeof(struct symcache_noflag), object->nchains);
 
 	poffset = (u_int32_t *)prebind_map;
 	c = prebind_map;
@@ -1029,7 +1018,7 @@ copy_oldsymcache(int objidx)
 	nameidx = prebind_map + footer->nameidx_idx;
 	nametab = prebind_map + footer->nametab_idx;
 
-	idxtolib = calloc(footer->numlibs, sizeof(int));
+	idxtolib = xcalloc(footer->numlibs, sizeof(int));
 	found = 0;
 	for (i = 0; i < footer->numlibs; i++) {
 		found = 0;
@@ -1078,4 +1067,31 @@ copy_oldsymcache(int objidx)
 done:
 	free (idxtolib);
 	/* munmap(prebind_map, size);*/
+}
+
+void *
+xmalloc(size_t size)
+{
+	void *ret;
+
+	ret = malloc(size);
+	if (ret == NULL) {
+		printf("unable to allocate memory\n");
+		exit (20);
+	}
+	return ret;
+}
+
+void *
+xcalloc(size_t nmemb, size_t size)
+{
+	void *ret;
+
+	ret = calloc(nmemb, size);
+	if (ret == NULL) {
+		printf("unable to allocate memory\n");
+		abort();
+		exit (20);
+	}
+	return ret;
 }
