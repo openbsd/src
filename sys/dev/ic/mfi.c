@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.24 2006/04/26 01:25:37 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.25 2006/05/10 21:48:50 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -38,7 +38,7 @@
 
 #if NBIO > 0
 #include <dev/biovar.h>
-#endif
+#endif /* NBIO > 0 */
 
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0
@@ -82,6 +82,17 @@ int		mfi_initialize_firmware(struct mfi_softc *);
 
 int		mfi_despatch_cmd(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
+int		mfi_start_xs(struct mfi_softc *, struct mfi_ccb *,
+		    struct scsi_xfer *);
+
+#if NBIO > 0
+int		mfi_ioctl(struct device *, u_long, caddr_t);
+int		mfi_ioctl_inq(struct mfi_softc *, struct bioc_inq *);
+int		mfi_ioctl_vol(struct mfi_softc *, struct bioc_vol *);
+int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
+int		mfi_ioctl_alarm(struct mfi_softc *, struct bioc_alarm *);
+int		mfi_ioctl_setstate(struct mfi_softc *, struct bioc_setstate *);
+#endif /* NBIO > 0 */
 
 struct mfi_ccb *
 mfi_get_ccb(struct mfi_softc *sc)
@@ -363,7 +374,7 @@ mfiminphys(struct buf *bp)
 {
 	DNPRINTF(MFI_D_MISC, "mfiminphys: %d\n", bp->b_bcount);
 
-#define MFI_MAXFER 4096
+	/* XXX currently using MFI_MAXFER = MAXPHYS */
 	if (bp->b_bcount > MFI_MAXFER)
 		bp->b_bcount = MFI_MAXFER;
 	minphys(bp);
@@ -434,6 +445,15 @@ mfi_attach(struct mfi_softc *sc)
 
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
+
+#if NBIO > 0
+	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
+		panic("%s: controller registration failed", DEVNAME(sc));
+	else
+		sc->sc_ioctl = mfi_ioctl;
+#endif /* NBIO > 0 */
+
+	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
 	return (0);
 noinit:
@@ -528,29 +548,135 @@ mfi_intr(void *arg)
 }
 
 int
+mfi_scsi_cmd(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct mfi_softc	*sc = link->adapter_softc;
+	/* struct device		*dev = link->device_softc; */
+	struct mfi_ccb		*ccb;
+	u_int8_t		target = link->target;
+
+	DNPRINTF(MFI_D_CMD, "mfi_scsi_cmd\n");
+
+	/* only issue IO through this path, create seperate path for mgmt */
+
+	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
+	    link->lun != 0) {
+		DNPRINTF(MFI_D_CMD, "%s: invalid target %d ",
+		    DEVNAME(sc), target);
+		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	xs->error = XS_NOERROR;
+
+
+	switch (xs->cmd->opcode) {
+	case READ_COMMAND:	/* IO path */
+	case READ_BIG:
+	case WRITE_COMMAND:
+	case WRITE_BIG:
+		break;
+
+	default:		/* the rest is a DCDB */
+		break;
+	}
+
+	return (mfi_start_xs(sc, ccb, xs));
+}
+
+int mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
+    struct scsi_xfer *xs)
+{
+	return (1); /* XXX not yet */
+}
+
+int
 mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
     struct proc *p)
 {
+	struct mfi_softc *sc = (struct mfi_softc *)link->adapter_softc;
+
 	DNPRINTF(MFI_D_IOCTL, "mfi_scsi_ioctl\n");
-#if 0
-	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
 
 	if (sc->sc_ioctl)
 		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
 	else
 		return (ENOTTY);
-#endif
-		return (ENOTTY);
+}
+
+#if NBIO > 0
+int
+mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct mfi_softc *sc = (struct mfi_softc *)dev;
+	int error = 0;
+
+	DNPRINTF(MFI_D_IOCTL, "%s: ioctl ", DEVNAME(sc));
+
+	switch (cmd) {
+	case BIOCINQ:
+		DNPRINTF(MFI_D_IOCTL, "inq ");
+		error = mfi_ioctl_inq(sc, (struct bioc_inq *)addr);
+		break;
+
+	case BIOCVOL:
+		DNPRINTF(MFI_D_IOCTL, "vol ");
+		error = mfi_ioctl_vol(sc, (struct bioc_vol *)addr);
+		break;
+
+	case BIOCDISK:
+		DNPRINTF(MFI_D_IOCTL, "disk ");
+		error = mfi_ioctl_disk(sc, (struct bioc_disk *)addr);
+		break;
+
+	case BIOCALARM:
+		DNPRINTF(MFI_D_IOCTL, "alarm ");
+		error = mfi_ioctl_alarm(sc, (struct bioc_alarm *)addr);
+		break;
+
+	case BIOCSETSTATE:
+		DNPRINTF(MFI_D_IOCTL, "setstate ");
+		error = mfi_ioctl_setstate(sc, (struct bioc_setstate *)addr);
+		break;
+
+	default:
+		DNPRINTF(MFI_D_IOCTL, " invalid ioctl\n");
+		error = EINVAL;
+	}
+
+	return (error);
 }
 
 int
-mfi_scsi_cmd(struct scsi_xfer *xs)
+mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 {
-	DNPRINTF(MFI_D_CMD, "mfi_scsi_cmd\n");
-#if 0
-	struct scsi_link *link = xs->sc_link;
-	struct ami_softc *sc = link->adapter_softc;
-	struct device *dev = link->device_softc;
-#endif
-	return (0);
+	return (ENOTTY); /* XXX not yet */
 }
+
+int
+mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
+{
+	return (ENOTTY); /* XXX not yet */
+}
+
+int
+mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
+{
+	return (ENOTTY); /* XXX not yet */
+}
+
+int
+mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
+{
+	return (ENOTTY); /* XXX not yet */
+}
+
+int
+mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
+{
+	return (ENOTTY); /* XXX not yet */
+}
+#endif /* NBIO > 0 */

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.9 2006/04/21 21:39:32 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.10 2006/05/10 21:48:50 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -21,6 +21,7 @@
 #define MFI_OSTS_INTR_VALID			0x00000002 /* valid interrupt */
 #define MFI_INVALID_CTX				0xffffffff
 #define MFI_ENABLE_INTR				0x01
+#define MFI_MAXFER				MAXPHYS	/* XXX bogus */
 
 /* register offsets */
 #define MFI_IMSG0				0x10 /* inbound msg 0 */

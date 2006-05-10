@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.13 2006/04/21 21:39:32 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.14 2006/05/10 21:48:50 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -92,6 +92,16 @@ struct mfi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/* save some useful information for logical drives */
+	struct {
+		uint32_t	ld_present;
+		quad_t		ld_size;	/* READ CAPICITY */
+		char		ld_dev[16];	/* device name sd? */
+	}			sc_ld[MFI_MAX_LD];
+
+	/* scsi ioctl from sd device */
+	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
 	/* firmware determined max and totals */
 	uint32_t		sc_max_cmds;
