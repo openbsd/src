@@ -1,3 +1,4 @@
+/*	$OpenBSD: spl.S,v 1.5 2006/05/10 12:36:39 krw Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
