@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.12 2006/02/20 08:38:18 otto Exp $ */
+/*	$OpenBSD: edit.c,v 1.13 2006/05/10 14:32:51 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -42,11 +42,9 @@ edit(const char *filename)
 		execlp(editor, editor, filename, (void *)NULL);
 		warn("could not execute editor: %s", editor);
 		cleanup(filename);
-		/* NOTREACHED */
 	case -1:
 		warn("could not fork");
 		cleanup(filename);
-		/* NOTREACHED */
 	}
 
 	/* parent */
@@ -54,14 +52,12 @@ edit(const char *filename)
 	if (waitpid(pid, &status, 0) == -1) {
 		warn("waitpid");
 		cleanup(filename);
-		/* NOTREACHED */
 	}
 
 	/* Check that editor terminated normally. */
 	if (!WIFEXITED(status)) {
 		warn("%s terminated abnormally", editor);
 		cleanup(filename);
-		/* NOTREACHED */
 	}
 }
 
@@ -137,7 +133,6 @@ RIGHT:
 	if (!(file = fopen(filename, "r"))) {
 		warn("could not open edited file: %s", filename);
 		cleanup(filename);
-		/* NOTREACHED */
 	}
 
 	/* Copy temporary file contents to output file. */
@@ -148,7 +143,6 @@ RIGHT:
 		    (ferror(file) || !feof(file))) {
 			warnx("error reading edited file: %s", filename);
 			cleanup(filename);
-			/* NOTREACHED */
 		}
 
 		/*
@@ -163,7 +157,6 @@ RIGHT:
 		if (nwritten != nread) {
 			warnx("error writing to output file");
 			cleanup(filename);
-			/* NOTREACHED */
 		}
 	}
 
