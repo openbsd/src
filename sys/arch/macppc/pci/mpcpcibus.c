@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.31 2006/03/13 20:10:49 brad Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.32 2006/05/10 00:07:40 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -978,10 +978,4 @@ mpc_cfg_read_4(struct pcibr_config *cp, u_int32_t reg)
 	_v_ = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, 0);
 	splx(s);
 	return(_v_);
-}
-
-int
-pci_intr_line(pci_intr_handle_t ih)
-{
-	return (ih);
 }
