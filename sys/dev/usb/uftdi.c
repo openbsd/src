@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.27 2006/05/11 14:38:46 jason Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.28 2006/05/11 14:53:11 jason Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -143,9 +143,14 @@ USB_MATCH(uftdi)
 	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
 	     uaa->product == USB_PRODUCT_FTDI_SEMC_DSS20 ||
+	     uaa->product == USB_PRODUCT_FTDI_MHAM_KW ||
+	     uaa->product == USB_PRODUCT_FTDI_MHAM_YS ||
 	     uaa->product == USB_PRODUCT_FTDI_MHAM_Y6 ||
 	     uaa->product == USB_PRODUCT_FTDI_MHAM_Y8 ||
-	     uaa->product == USB_PRODUCT_FTDI_MHAM_USBII ||
+	     uaa->product == USB_PRODUCT_FTDI_MHAM_IC ||
+	     uaa->product == USB_PRODUCT_FTDI_MHAM_DB9 ||
+	     uaa->product == USB_PRODUCT_FTDI_MHAM_RS232 ||
+	     uaa->product == USB_PRODUCT_FTDI_MHAM_Y9 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK202_24 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK204_24 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200 ||
@@ -236,9 +241,14 @@ USB_ATTACH(uftdi)
 		case USB_PRODUCT_FTDI_LCD_CFA_632:
 		case USB_PRODUCT_FTDI_LCD_CFA_633:
 		case USB_PRODUCT_FTDI_LCD_CFA_634:
+		case USB_PRODUCT_FTDI_MHAM_KW:
+		case USB_PRODUCT_FTDI_MHAM_YS:
 		case USB_PRODUCT_FTDI_MHAM_Y6:
 		case USB_PRODUCT_FTDI_MHAM_Y8:
-		case USB_PRODUCT_FTDI_MHAM_USBII:
+		case USB_PRODUCT_FTDI_MHAM_IC:
+		case USB_PRODUCT_FTDI_MHAM_DB9:
+		case USB_PRODUCT_FTDI_MHAM_RS232:
+		case USB_PRODUCT_FTDI_MHAM_Y9:
 		case USB_PRODUCT_SEALEVEL_USBSERIAL:
 			sc->sc_type = UFTDI_TYPE_8U232AM;
 			sc->sc_hdrlen = 0;
