@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.61 2006/05/09 00:35:29 gwk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.63 2006/05/11 23:19:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -102,7 +102,7 @@ bios_diskinfo_t *bios_getdiskinfo(dev_t);
  * used by hw_sysctl
  */
 extern char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
-const char * smbios_uninfo[] = {
+const char *smbios_uninfo[] = {
 	"System",
 	"Not Specified"
 };
@@ -131,7 +131,7 @@ biosprobe(struct device *parent, void *match, void *aux)
 void
 biosattach(struct device *parent, struct device *self, void *aux)
 {
-	struct bios_softc *sc = (struct bios_softc *) self;
+	struct bios_softc *sc = (struct bios_softc *)self;
 #if (NPCI > 0 && NPCIBIOS > 0) || NAPM > 0
 	struct bios_attach_args *bia = aux;
 #endif
@@ -648,7 +648,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 		if ((u_int8_t *)st->hdr >= va && (u_int8_t *)st->hdr < end) {
 			hdr = st->hdr;
 			if (hdr->type == type) {
-				va = (u_int8_t *) hdr + hdr->size;
+				va = (u_int8_t *)hdr + hdr->size;
 				for (; va + 1 < end; va++)
 					if (*va == NULL && *(va + 1) == NULL)
 						break;
@@ -659,7 +659,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	}
 	for (; va + sizeof(struct smbtblhdr) < end && tcount <=
 	    smbios_entry.count; tcount++) {
-		hdr = (struct smbtblhdr *) va;
+		hdr = (struct smbtblhdr *)va;
 		if (hdr->type == type) {
 			ret = 1;
 			st->hdr = hdr;
@@ -676,7 +676,6 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 		va+=2;
 	}
 
-	printf("\n");
 	return ret;
 }
 
@@ -693,7 +692,7 @@ smbios_get_string(struct smbtable *st, u_int8_t indx)
 		while (*va++)
 			;
 	if (i == indx)
-		ret = (char *) va;
+		ret = (char *)va;
 
 	return ret;
 }
@@ -730,8 +729,8 @@ smbios_info(char * str)
 	 * information.
 	 */
 	if ((hw_vendor = smbios_get_string(&stbl, sys->vendor)) != NULL) {
-		for (i = 0; i < sizeof(smbios_uninfo) / sizeof(smbios_uninfo[0])
-		    ; i++) {
+		for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]);
+		    i++) {
 			if ((strncmp(hw_vendor, smbios_uninfo[i],
 			    strlen(smbios_uninfo[i]))) == 0) {
 				if (havebb)
@@ -743,13 +742,13 @@ smbios_info(char * str)
 	} else
 		hw_vendor = smbios_get_string(&btbl, board->vendor);
 	if ((hw_prod = smbios_get_string(&stbl, sys->product)) != NULL) {
-		for (i = 0; i < sizeof(smbios_uninfo) / sizeof(smbios_uninfo[0])
-		    ; i++) {
+		for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]);
+		    i++) {
 			if ((strncmp(hw_prod, smbios_uninfo[i],
 			    strlen(smbios_uninfo[i]))) == 0) {
 				if (havebb)
 					hw_prod = smbios_get_string(&btbl,
-				   		board->product);
+				   	    board->product);
 				break;
 			}
 		}
