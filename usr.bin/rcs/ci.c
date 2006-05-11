@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.172 2006/05/10 01:10:23 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.173 2006/05/11 08:24:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -278,7 +278,8 @@ checkin_main(int argc, char **argv)
 			rcs_set_description(pb.file, pb.description);
 
 		if (!(pb.flags & QUIET))
-			printf("%s  <--  %s\n", pb.fpath, pb.filename);
+			(void)fprintf(stderr,
+			    "%s  <--  %s\n", pb.fpath, pb.filename);
 
 		/* XXX - Should we rcsnum_free(pb.newrev)? */
 		if (rev_str != NULL)
@@ -314,7 +315,7 @@ checkin_main(int argc, char **argv)
 	}
 
 	if (!(pb.flags & QUIET) && status == 0)
-		printf("done\n");
+		(void)fprintf(stderr, "done\n");
 
 	return (status);
 }
@@ -777,7 +778,11 @@ checkin_revert(struct checkin_params *pb)
 	char rbuf[16];
 
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
-	warnx("file is unchanged; reverting to previous revision %s", rbuf);
+
+	if (!(pb->flags & QUIET))
+		(void)fprintf(stderr, "file is unchanged; reverting "
+		    "to previous revision %s\n", rbuf);
+
 	pb->flags |= CO_REVERT;
 	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
