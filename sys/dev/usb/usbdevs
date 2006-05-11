@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.198 2006/05/11 14:37:04 jason Exp $
+$OpenBSD: usbdevs,v 1.199 2006/05/11 14:52:44 jason Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -976,9 +976,14 @@ product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial
 product FTDI SERIAL_2232C	0x6010	2232C Serial
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
-product FTDI MHAM_Y6		0xeeea	microHAM Y6
-product FTDI MHAM_Y8		0xeeeb	microHAM Y8
-product FTDI MHAM_USBII		0xeeef	microHAM USB-II
+product FTDI MHAM_KW		0xeee8	KW
+product FTDI MHAM_YS		0xeee9	YS
+product FTDI MHAM_Y6		0xeeea	Y6
+product FTDI MHAM_Y8		0xeeeb	Y8
+product FTDI MHAM_IC		0xeeec	IC
+product FTDI MHAM_DB9		0xeeed	DB9
+product FTDI MHAM_RS232		0xeeee	RS232
+product FTDI MHAM_Y9		0xeeef	Y9
 product	FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24	0xfa03	Matrix Orbital LK202-24 LCD
 product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
