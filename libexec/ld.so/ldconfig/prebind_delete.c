@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.1 2006/05/11 22:03:22 deraadt Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.2 2006/05/11 22:19:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include "../prebind.h"
+#include "prebind.h"
 
 #define BUFSZ (256 * 1024)
 
