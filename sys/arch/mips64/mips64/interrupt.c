@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.20 2006/03/04 19:33:21 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.21 2006/05/11 19:57:45 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -230,7 +230,7 @@ void
 set_intr(int pri, intrmask_t mask,
 	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *))
 {
-	if (!idle_mask & (SOFT_INT_MASK >> 8))
+	if (!(idle_mask & (SOFT_INT_MASK >> 8)))
 		evcount_attach(&soft_count, "soft", (void *)&soft_irq, &evcount_intr);
 	if (pri < 0 || pri >= NLOWINT) {
 		panic("set_intr: to high priority");
