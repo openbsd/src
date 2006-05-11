@@ -1,4 +1,4 @@
-.\"	$OpenBSD: prebind.8,v 1.5 2006/05/08 20:34:36 deraadt Exp $
+.\"	$OpenBSD: prebind.8,v 1.6 2006/05/11 21:05:22 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
 .\"
@@ -32,6 +32,18 @@ parses each of the specified files or directories and processes each ELF file
 libraries,
 and writes symbol resolution hint information to each binary and library.
 .Pp
+.Nm
+will add data to the programs specified and any libraries they reference
+to speed up dynamic linking.
+Since version information is stored in the libraries to validate the
+prebind info, running
+.Nm
+on a subset of programs it was previously
+run on will invalidate the prebind info for those excluded binaries.
+The
+.Fl m
+option will preserve the old prebind info in any library if present.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl m
@@ -44,16 +56,6 @@ Be verbose when running
 .Nm :
 prints out information about the file/library that is being processed.
 .El
-.Sh DESIGN
-.Nm
-will add data to the programs specified and any libraries they reference
-to speed up dynamic linking.
-Since version information is stored in the libraries to validate the
-prebind info, running prebind on a subset of programs it was previously
-run on will invalidate the prebind info for those excluded binaries.
-The
-.Pq Fl m
-option it will preserve the old prebind info in any library if present.
 .Sh SEE ALSO
 .Xr ld.so 1 ,
 .Xr prebind_strip 8
