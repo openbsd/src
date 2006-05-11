@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.31 2005/12/09 09:09:52 jsg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.32 2006/05/11 18:58:59 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ void
 disk_attach(struct disk *diskp)
 {
 
-	if (!diskp->dk_flags & DKF_CONSTRUCTED)
+	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
 		disk_construct(diskp, diskp->dk_name);
 
 	/*
