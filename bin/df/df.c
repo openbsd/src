@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.43 2005/02/20 01:34:56 pedro Exp $	*/
+/*	$OpenBSD: df.c,v 1.44 2006/05/11 15:06:51 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.43 2005/02/20 01:34:56 pedro Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.44 2006/05/11 15:06:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,8 @@ main(int argc, char *argv[])
 		mntsize = regetmntinfo(&mntbuf, mntsize);
 	} else {
 		mntbuf = calloc(argc, sizeof(struct statfs));
+		if (mntbuf == NULL)
+			err(1, NULL);
 		mntsize = 0;
 		for (; *argv; argv++) {
 			if (stat(*argv, &stbuf) < 0) {
