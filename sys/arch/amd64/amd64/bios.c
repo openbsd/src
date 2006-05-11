@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.6 2006/05/10 12:36:39 krw Exp $	*/
+/*	$OpenBSD: bios.c,v 1.7 2006/05/11 23:22:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -53,7 +53,8 @@ struct smbios_entry smbios_entry;
  * used by hw_sysctl
  */
 extern char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
-const char * smbios_uninfo[] = {
+
+const char *smbios_uninfo[] = {
 	"System",
 	"Not Specified"
 };
@@ -153,7 +154,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 		if ((u_int8_t *)st->hdr >= va && (u_int8_t *)st->hdr < end) {
 			hdr = st->hdr;
 			if (hdr->type == type) {
-				va = (u_int8_t *) hdr + hdr->size;
+				va = (u_int8_t *)hdr + hdr->size;
 				for (; va + 1 < end; va++)
 					if (*va == NULL && *(va + 1) == NULL)
 						break;
@@ -164,7 +165,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	}
 	for (; va + sizeof(struct smbtblhdr) < end && tcount <=
 	    smbios_entry.count; tcount++) {
-		hdr = (struct smbtblhdr *) va;
+		hdr = (struct smbtblhdr *)va;
 		if (hdr->type == type) {
 			ret = 1;
 			st->hdr = hdr;
@@ -196,7 +197,7 @@ smbios_get_string(struct smbtable *st, u_int8_t indx)
 		while (*va++)
 			;
 	if (i == indx)
-		ret = (char *) va;
+		ret = (char *)va;
 
 	return ret;
 }
