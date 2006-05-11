@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.3 2004/06/15 23:36:55 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.4 2006/05/11 13:21:12 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -238,7 +238,7 @@ viac3_crypto_process(struct cryptop *crp)
 	}
 	crd = crp->crp_desc;
 	if (crd == NULL || crd->crd_next != NULL ||
-	    crd->crd_alg != CRYPTO_AES_CBC || 
+	    crd->crd_alg != CRYPTO_AES_CBC ||
 	    (crd->crd_len % 16) != 0) {
 		err = EINVAL;
 		goto out;

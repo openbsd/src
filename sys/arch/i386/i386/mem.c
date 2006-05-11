@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.28 2005/11/13 14:23:26 martin Exp $ */
+/*	$OpenBSD: mem.c,v 1.29 2006/05/11 13:21:11 mickey Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -241,12 +241,12 @@ mmmmap(dev, off, prot)
 			else
 				return -1;
 		case 2:
-			/* Allow mapping of the whole 1st megabyte 
+			/* Allow mapping of the whole 1st megabyte
 			   for x86emu */
-			if (off <= BIOS_END || 
+			if (off <= BIOS_END ||
 			    (unsigned)off > (unsigned)ctob(physmem))
 				return atop(off);
-			else 
+			else
 				return -1;
 		default:
 			return -1;
@@ -283,7 +283,7 @@ mmioctl(dev, cmd, data, flags, p)
  * This is basically just an ioctl shim for mem_range_attr_get
  * and mem_range_attr_set.
  */
-static int 
+static int
 mem_ioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -317,7 +317,7 @@ mem_ioctl(dev, cmd, data, flags, p)
 				       M_MEMDESC, M_WAITOK);
 			error = mem_range_attr_get(md, &nd);
 			if (!error)
-				error = copyout(md, mo->mo_desc, 
+				error = copyout(md, mo->mo_desc,
 					nd * sizeof(struct mem_range_desc));
 			free(md, M_MEMDESC);
 		} else {

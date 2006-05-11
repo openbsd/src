@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.4 2006/03/10 21:09:22 mickey Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.5 2006/05/11 13:21:11 mickey Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -71,7 +71,7 @@ void i386_ipi_flush_fpu(struct cpu_info *);
 #define i386_ipi_flush_fpu 0
 #endif
 
-void (*ipifunc[I386_NIPI])(struct cpu_info *) = 
+void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
 #if 0 && (defined(I586_CPU) || defined(I686_CPU))

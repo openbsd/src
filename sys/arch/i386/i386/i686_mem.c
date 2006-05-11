@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.6 2003/05/04 04:29:03 tedu Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.7 2006/05/11 13:21:11 mickey Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -107,7 +107,7 @@ int i686_mtrrtomrt[] = {
 #define MTRRTOMRTLEN (sizeof(i686_mtrrtomrt) / sizeof(i686_mtrrtomrt[0]))
 
 int
-i686_mtrr2mrt(int val) 
+i686_mtrr2mrt(int val)
 {
 	if (val < 0 || val >= MTRRTOMRTLEN)
 		return MDF_UNKNOWN;
@@ -118,7 +118,7 @@ i686_mtrr2mrt(int val)
  * i686 MTRR conflicts. Writeback and uncachable may overlap.
  */
 int
-i686_mtrrconflict(int flag1, int flag2) 
+i686_mtrrconflict(int flag1, int flag2)
 {
 
 	flag1 &= MDF_ATTRMASK;
@@ -214,7 +214,7 @@ i686_mrfetch(sc)
 			i686_mtrr2mrt(msrv & 0xff);
 		mrd->mr_base = msrv & 0x0000000ffffff000LL;
 		msrv = rdmsr(msr + 1);
-		mrd->mr_flags = (msrv & 0x800) ? 
+		mrd->mr_flags = (msrv & 0x800) ?
 			(mrd->mr_flags | MDF_ACTIVE) :
 			(mrd->mr_flags & ~MDF_ACTIVE);
 		/* Compute the range from the mask. Ick. */
@@ -305,7 +305,7 @@ i686_mrstoreone(arg)
 			omsrv = rdmsr(msr);
 			for (j = 7; j >= 0; j--) {
 				msrv = msrv << 8;
-				msrv |= i686_mrt2mtrr((mrd + j)->mr_flags, 
+				msrv |= i686_mrt2mtrr((mrd + j)->mr_flags,
 						      omsrv >> (j*8));
 			}
 			wrmsr(msr, msrv);
@@ -385,7 +385,7 @@ i686_mtrrfixsearch(sc, addr)
  * Try to satisfy the given range request by manipulating the fixed MTRRs that
  * cover low memory.
  *
- * Note that we try to be generous here; we'll bloat the range out to the 
+ * Note that we try to be generous here; we'll bloat the range out to the
  * next higher/lower boundary to avoid the consumer having to know too much
  * about the mechanisms here.
  *
@@ -394,7 +394,7 @@ i686_mtrrfixsearch(sc, addr)
 int
 i686_mrsetlow(sc, mrd, arg)
 	struct mem_range_softc 	*sc;
-	struct mem_range_desc 	*mrd; 
+	struct mem_range_desc 	*mrd;
 	int 			*arg;
 {
 	struct mem_range_desc	*first_md, *last_md, *curr_md;
@@ -434,9 +434,9 @@ i686_mrsetvariable(sc, mrd, arg)
 {
 	struct mem_range_desc	*curr_md, *free_md;
 	int			 i;
-    
-	/* 
-	 * Scan the currently active variable descriptors, look for 
+
+	/*
+	 * Scan the currently active variable descriptors, look for
 	 * one we exactly match (straight takeover) and for possible
 	 * accidental overlaps.
 	 * Keep track of the first empty variable descriptor in case we
@@ -455,7 +455,7 @@ i686_mrsetvariable(sc, mrd, arg)
 					return(EBUSY);
 				/* check we aren't doing something risky */
 				if (!(mrd->mr_flags & MDF_FORCE) &&
-				    ((curr_md->mr_flags & MDF_ATTRMASK) 
+				    ((curr_md->mr_flags & MDF_ATTRMASK)
 				    == MDF_UNKNOWN))
 					return (EACCES);
 				/* Ok, just hijack this entry */
@@ -465,7 +465,7 @@ i686_mrsetvariable(sc, mrd, arg)
 			/* non-exact overlap ? */
 			if (mroverlap(curr_md, mrd)) {
 				/* between conflicting region types? */
-				if (i686_mtrrconflict(curr_md->mr_flags, 
+				if (i686_mtrrconflict(curr_md->mr_flags,
 						      mrd->mr_flags))
 					return(EINVAL);
 			}
@@ -541,7 +541,7 @@ i686_mrset(sc, mrd, arg)
 }
 
 /*
- * Work out how many ranges we support, initialise storage for them, 
+ * Work out how many ranges we support, initialise storage for them,
  * fetch the initial settings.
  */
 void
@@ -569,8 +569,8 @@ i686_mrinit(sc)
 		nmdesc += MTRR_N64K + MTRR_N16K + MTRR_N4K;
 	}
 	
-	sc->mr_desc = 
-		(struct mem_range_desc *)malloc(nmdesc * sizeof(struct mem_range_desc), 
+	sc->mr_desc =
+		(struct mem_range_desc *)malloc(nmdesc * sizeof(struct mem_range_desc),
 						M_MEMDESC, M_WAITOK);
 	bzero(sc->mr_desc, nmdesc * sizeof(struct mem_range_desc));
 	sc->mr_ndesc = nmdesc;
@@ -596,8 +596,8 @@ i686_mrinit(sc)
 		}
 	}
 	
-	/* 
-	 * Get current settings, anything set now is considered to have 
+	/*
+	 * Get current settings, anything set now is considered to have
 	 * been set by the firmware. (XXX has something already played here?)
 	 */
 	i686_mrfetch(sc);

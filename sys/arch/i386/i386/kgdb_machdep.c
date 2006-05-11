@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.5 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.6 2006/05/11 13:21:11 mickey Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.6 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ kgdb_acc(va, len)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(type)
 	int type;
 {

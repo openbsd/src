@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.22 2006/01/12 22:39:21 weingart Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.23 2006/05/11 13:21:12 mickey Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -342,7 +342,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 		fp = (struct svr4_sigframe *)tf->tf_esp - 1;
 	}
 
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 * Notes:
 	 * 	- we always build the whole argument list, even when we
@@ -360,7 +360,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
 #ifdef DEBUG_SVR4
-	printf("sig = %d, sip %p, ucp = %p, handler = %p\n", 
+	printf("sig = %d, sip %p, ucp = %p, handler = %p\n",
 	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
 #endif
 

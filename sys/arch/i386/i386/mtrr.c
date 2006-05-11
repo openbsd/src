@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.6 2002/03/14 01:26:32 millert Exp $ */
+/* $OpenBSD: mtrr.c,v 1.7 2006/05/11 13:21:11 mickey Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -63,8 +63,8 @@ mtrrattach (num)
 		   ((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
 		    (strcmp(cpu_vendor, "AuthenticAMD") == 0))) {
 		mem_range_softc.mr_op = &i686_mrops;
-	    
-	} 
+
+	}
 	/* Initialise memory range handling */
 	if (mem_range_softc.mr_op != NULL)
 		mem_range_softc.mr_op->init(&mem_range_softc);

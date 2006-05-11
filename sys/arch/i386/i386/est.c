@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.13 2006/02/27 14:13:10 marco Exp $ */
+/*	$OpenBSD: est.c,v 1.14 2006/05/11 13:21:11 mickey Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -32,7 +32,7 @@
  * Pentium M processors.
  *
  * Reference documentation:
- *   
+ *
  * - IA-32 Intel Architecture Software Developer's Manual, Volume 3:
  *   System Programming Guide.
  *   Section 13.14, Enhanced Intel SpeedStep technology.
@@ -51,7 +51,7 @@
  *   Encoding of MSR_PERF_CTL and MSR_PERF_STATUS.
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
- 
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static const struct fq_info pentium_m_n723[] = {
 	{ 1000,  940 },
 	{  900,  908 },
 	{  800,  876 },
-	{  600,  812 } 
+	{  600,  812 }
 };
 
 /* Intel Pentium M processor 733 1.1 GHz */
@@ -287,7 +287,7 @@ static const struct fq_info pentium_m_n765[] = {
 	{ 1200, 1132 },
 	{ 1000, 1084 },
 	{  800, 1036 },
-	{  600,  988 } 
+	{  600,  988 }
 };
 
 /* Intel Pentium M processor 770 2.13 GHz */

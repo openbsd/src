@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.20 2006/05/02 16:14:51 pat Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.21 2006/05/11 13:21:11 mickey Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -279,7 +279,7 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 	 * range for the pst tables; 16 byte blocks
 	 */
 	for (p = (u_int8_t *)ISA_HOLE_VADDR(BIOS_START);
-	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p+= 
+	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p+=
 	    BIOS_STEP) {
 		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
 			psb = (struct psb_s *)p;
@@ -360,7 +360,7 @@ k7_powernow_init(void)
 			    ci->ci_dev.dv_xname, techname, pentium_mhz);
 			for (i = cstate->n_states; i > 0; i--) {
 				state = &cstate->state_table[i-1];
-				printf(" %d", state->freq); 
+				printf(" %d", state->freq);
 			}
 			printf(" Mhz\n");	
 			

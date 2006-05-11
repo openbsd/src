@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.5 2002/03/14 01:26:32 millert Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.6 2006/05/11 13:21:11 mickey Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -78,7 +78,7 @@ struct mem_range_ops k6_mrops = {
 };
 
 __inline int
-k6_mrmake(desc, mtrr) 
+k6_mrmake(desc, mtrr)
 	struct mem_range_desc 	*desc;
 	u_int32_t 		*mtrr;
 {
@@ -93,7 +93,7 @@ k6_mrmake(desc, mtrr)
 		return EOPNOTSUPP;
 
 	for (bit = ffs(desc->mr_len >> 17) - 1; bit < 15; bit++)
-		len |= 1 << bit; 
+		len |= 1 << bit;
 	wc = (desc->mr_flags & MDF_WRITECOMBINE) ? 1 : 0;
 	uc = (desc->mr_flags & MDF_UNCACHEABLE) ? 1 : 0;
 
@@ -102,7 +102,7 @@ k6_mrmake(desc, mtrr)
 }
 
 void
-k6_mrinit(sc) 
+k6_mrinit(sc)
 	struct mem_range_softc *sc;
 {
 	u_int64_t reg;
@@ -135,7 +135,7 @@ k6_mrinit(sc)
 }
 
 int
-k6_mrset(sc, desc, arg) 
+k6_mrset(sc, desc, arg)
 	struct mem_range_softc 	*sc;
 	struct mem_range_desc 	*desc;
 	int 			*arg;

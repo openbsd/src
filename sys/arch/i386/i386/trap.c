@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.73 2006/04/15 02:52:40 weingart Exp $	*/
+/*	$OpenBSD: trap.c,v 1.74 2006/05/11 13:21:12 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -126,11 +126,11 @@ userret(p, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) { 
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}                   
+	}
 
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority;
 }
@@ -318,7 +318,7 @@ trap(frame)
 		case 0x0f:	/* 0x0f prefix */
 			switch (*(u_char *)(frame.tf_eip+1)) {
 			case 0xa1:		/* popl %fs */
-				vframe = (void *)((int)&frame.tf_esp - 
+				vframe = (void *)((int)&frame.tf_esp -
 				    offsetof(struct trapframe, tf_fs));
 				resume = (int)resume_pop_fs;
 				break;

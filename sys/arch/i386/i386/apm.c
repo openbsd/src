@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.68 2006/04/15 20:43:36 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.69 2006/05/11 13:21:11 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -663,8 +663,8 @@ apm_cpu_idle(void)
 		return;
 	}
 		
-	/* 
-	 * We call the bios APM_IDLE routine here only when we 
+	/*
+	 * We call the bios APM_IDLE routine here only when we
 	 * have been idle for some time - otherwise we just hlt.
 	 */
 

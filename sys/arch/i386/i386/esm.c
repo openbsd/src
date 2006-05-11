@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.41 2006/04/21 09:33:10 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.42 2006/05/11 13:21:11 mickey Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -804,7 +804,7 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 	}
 
 	printf("%s: %s%s%s %d.%d\n", DEVNAME(sc),
-	    name ? name : "", name ? " " : "", fname, 
+	    name ? name : "", name ? " " : "", fname,
 	    devmap->rev_major, devmap->rev_minor);
 
 	esm_make_sensors(sc, devmap, sensor_map, mapsize);

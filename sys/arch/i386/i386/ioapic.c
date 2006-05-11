@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.9 2006/05/09 18:41:22 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.10 2006/05/11 13:21:11 mickey Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ u_int16_t ioapic_id_map = (1 << IOAPIC_ID_MAX) - 1;
  * When we renumber I/O APICs we provide a mapping vector giving us the new
  * ID out of the old BIOS supplied one.  Each item must be able to hold IDs
  * in [0, IOAPIC_ID_MAX << 1), since we use an extra bit to tell if the ID
- * has actually been remapped.  
+ * has actually been remapped.
  */
 u_int8_t ioapic_id_remap[IOAPIC_ID_MAX];
 
@@ -422,8 +422,8 @@ apic_set_redir(struct ioapic_softc *sc, int pin)
 		 * XXX will want to distribute interrupts across cpu's
 		 * eventually.  most likely, we'll want to vector each
 		 * interrupt to a specific CPU and load-balance across
-		 * cpu's.  but there's no point in doing that until after 
-		 * most interrupts run without the kernel lock.  
+		 * cpu's.  but there's no point in doing that until after
+		 * most interrupts run without the kernel lock.
 		 */
 		redhi |= (ioapic_bsp_id << IOAPIC_REDHI_DEST_SHIFT);
 
@@ -510,7 +510,7 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 			    sc->sc_dev.dv_xname, pin, maxlevel);
 		}
 		apic_maxlevel[nvector] = maxlevel;
-		/* 
+		/*
 		 * XXX want special handler for the maxlevel != minlevel
 		 * case here!
 		 */

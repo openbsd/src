@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.102 2006/05/07 11:30:51 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.103 2006/05/11 13:21:11 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
 
 #include <dev/isa/isareg.h>
 
-#if NLAPIC > 0 
+#if NLAPIC > 0
 #include <machine/i82489reg.h>
 #endif
 
@@ -100,16 +100,16 @@
 #define	PUSH_CURPROC(treg)				\
 	GET_CPUINFO(treg)			;	\
 	pushl	CPU_INFO_CURPROC(treg)
-       
+
 #define	CLEAR_CURPROC(treg)				\
 	GET_CPUINFO(treg)			;	\
 	movl	$0,CPU_INFO_CURPROC(treg)
-       
+
 #define	SET_CURPROC(proc,cpu)				\
 	GET_CPUINFO(cpu)			;	\
 	movl	proc,CPU_INFO_CURPROC(cpu)	;	\
 	movl	cpu,P_CPU(proc)
-       
+
 #define	GET_CURPCB(reg)					\
 	GET_CPUINFO(reg)			;	\
 	movl	CPU_INFO_CURPCB(reg),reg
@@ -126,7 +126,7 @@
 #define	CHECK_ASTPENDING(treg)				\
 	GET_CPUINFO(treg)			;	\
 	cmpl	$0,CPU_INFO_ASTPENDING(treg)
-               
+
 #define	CLEAR_ASTPENDING(cireg)				\
 	movl	$0,CPU_INFO_ASTPENDING(cireg)
 
@@ -1811,7 +1811,7 @@ switch_restored:
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
 #ifdef MULTIPROCESSOR
-	/* 
+	/*
 	 * If our floating point registers are on a different CPU,
 	 * clear CR0_TS so we'll trap rather than reuse bogus state.
 	 */
@@ -1839,7 +1839,7 @@ switch_return:
 	call	_C_LABEL(printf)
 	addl	$0xc,%esp
 #endif
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call    _C_LABEL(sched_unlock_idle)
 #endif
 	/*
@@ -2044,8 +2044,8 @@ IDTVEC(intrspurious)
 	 * The Pentium Pro local APIC may erroneously call this vector for a
 	 * default IR7.  Just ignore it.
 	 *
-	 * (The local APIC does this when CPL is raised while it's on the 
-	 * way to delivering an interrupt.. presumably enough has been set 
+	 * (The local APIC does this when CPL is raised while it's on the
+	 * way to delivering an interrupt.. presumably enough has been set
 	 * up that it's inconvenient to abort delivery completely..)
 	 */
 	iret
@@ -2089,7 +2089,7 @@ NENTRY(resume_pop_es)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%gs
 NENTRY(resume_pop_gs)
-	pushl	%fs     
+	pushl	%fs
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
 NENTRY(resume_pop_fs)
@@ -2120,7 +2120,7 @@ calltrap:
 	jmp	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
-#else 
+#else
 1:	cmpl	CPL,%ebx
 	jne	3f
 	INTRFASTEXIT
@@ -2350,7 +2350,7 @@ ENTRY(cpu_paenable)
 	ret
 #endif /* !SMALL_KERNEL */
 
-#if NLAPIC > 0 
+#if NLAPIC > 0
 #include <i386/i386/apicvec.s>
 #endif
 

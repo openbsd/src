@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.1 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.2 2006/05/11 13:21:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -153,7 +153,7 @@
  *
  * the first level table is called "page directory index" and consists
  * of 4 page directory index entries (PDIE) each 64 bits in size.
- * 
+ *
  * the second level table is called a "page directory" and it contains
  * 512 page directory entries (PDEs).   each PDE is
  * 8 bytes (a long long), so a PD fits in a single 4K page.   this page is
@@ -483,7 +483,7 @@ extern struct lock pmap_main_lock;
 #define	PDSHIFT		21		/* page directory address shift */
 #define	PT_MASK		0x001ff000	/* page table address bits */
 #undef	NBPD
-#define	NBPD		(1U << PDSHIFT)	/* # bytes mapped by PD (2MB) */ 
+#define	NBPD		(1U << PDSHIFT)	/* # bytes mapped by PD (2MB) */
 
 /*
  *
@@ -491,7 +491,7 @@ extern struct lock pmap_main_lock;
 #undef	PDSLOT_PTE
 #define	PDSLOT_PTE	(1660U)	/* 1660: for recursive PDP map */
 #undef	PDSLOT_KERN
-#define	PDSLOT_KERN	(1664U)	/* 1664: start of kernel space */  
+#define	PDSLOT_KERN	(1664U)	/* 1664: start of kernel space */
 #undef	PDSLOT_APTE
 #define	PDSLOT_APTE	(2044U)	/* 2044: alternative recursive slot */
 

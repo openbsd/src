@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.353 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.354 2006/05/11 13:21:11 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1344,7 +1344,7 @@ natsem6x86_cpureset(void)
 	 * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
 	 *    to reset IDE controller, IDE bus, and PCI bus, and
 	 *    to trigger a system-wide reset.
-	 * 
+	 *
 	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
 	 * sections 6.3.1, 6.3.2, and 6.4.1.
 	 */
@@ -1438,7 +1438,7 @@ amd_family6_setup(struct cpu_info *ci)
 		k8_powernow_init();
 		break;
 	}
-#endif 
+#endif
 #endif
 }
 
