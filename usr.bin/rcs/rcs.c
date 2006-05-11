@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.8 2006/05/08 16:56:40 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.9 2006/05/11 07:34:26 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,6 +214,7 @@ int rcs_errno = RCS_ERR_NOERR;
 char *timezone_flag = NULL;
 
 int		rcs_patch_lines(struct rcs_lines *, struct rcs_lines *);
+static int	rcs_movefile(char *, char *, mode_t, u_int);
 static void	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
@@ -352,28 +353,24 @@ rcs_close(RCSFILE *rfp)
  *
  * Write the contents of the RCS file handle <rfp> to disk in the file whose
  * path is in <rf_path>.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
 	char buf[1024], numbuf[64], *fn;
-	void *bp;
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
-	ssize_t nread, nwritten;
 	size_t len;
-	int fd, from_fd, to_fd, ret;
+	int fd, from_fd, to_fd;
 
 	from_fd = to_fd = fd = -1;
-	ret = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
-		return (0);
+		return;
 
 	/* Write operations need the whole file parsed */
 	rcs_parse_deltatexts(rfp, NULL);
@@ -499,76 +496,89 @@ rcs_write(RCSFILE *rfp)
 		}
 		fputs("@\n", fp);
 	}
-	fclose(fp);
+	(void)fclose(fp);
 
-	/*
-	 * We try to use rename() to atomically put the new file in place.
-	 * If that fails, we try a copy.
-	 */
-	if (rename(fn, rfp->rf_path) == -1) {
-		if (errno == EXDEV) {
-			/* rename() not supported so we have to copy. */
-			if (chmod(rfp->rf_path, S_IWUSR) == -1 &&
-			    !(rfp->rf_flags & RCS_CREATE)) {
-				errx(1, "chmod(%s, 0%o) failed",
-				    rfp->rf_path, S_IWUSR);
-			}
-
-			if ((from_fd = open(fn, O_RDONLY)) == -1) {
-				warn("failed to open `%s'", rfp->rf_path);
-				goto out;
-			}
-
-			if ((to_fd = open(rfp->rf_path,
-			    O_WRONLY|O_TRUNC|O_CREAT)) == -1) {
-				warn("failed to open `%s'", fn);
-				goto out;
-			}
-
-			bp = xmalloc(MAXBSIZE);
-			for (;;) {
-				if ((nread = read(from_fd, bp, MAXBSIZE)) == 0)
-					break;
-				if (nread == -1)
-					goto err;
-				nwritten = write(to_fd, bp, (size_t)nread);
-				if (nwritten == -1 || nwritten != nread)
-					goto err;
-			}
-
-			if (nread < 0) {
-err:				if (unlink(rfp->rf_path) == -1)
-					warn("failed to unlink `%s'",
-					    rfp->rf_path);
-				xfree(bp);
-				goto out;
-			}
-			xfree(bp);
-
-			if (unlink(fn) == -1) {
-				warn("failed to unlink `%s'", fn);
-				goto out;
-			}
-		} else {
-			warn("failed to access temp RCS output file");
-			goto out;
-		}
-	}
-
-	if (chmod(rfp->rf_path, rfp->rf_mode) == -1) {
-		warn("failed to chmod `%s'", rfp->rf_path);
-		goto out;
+	if (rcs_movefile(fn, rfp->rf_path, rfp->rf_mode, rfp->rf_flags) == -1) {
+		(void)unlink(fn);
+		errx(1, "rcs_movefile failed");
 	}
 
 	rfp->rf_flags |= RCS_SYNCED;
 
-	ret = 0;
-out:
-	(void)close(from_fd);
-	(void)close(to_fd);
-
 	if (fn != NULL)
 		xfree(fn);
+}
+
+/*
+ * rcs_movefile()
+ *
+ * Move a file using rename(2) if possible and copying if not.
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
+{
+	FILE *src, *dst;
+	size_t nread, nwritten;
+	char *buf;
+	int ret;
+
+	ret = -1;
+
+	if (rename(from, to) == 0) {
+		if (chmod(to, perm) == -1) {
+			warn("%s", to);
+			return (-1);
+		}
+		return (0);
+	} else if (errno != EXDEV) {
+		warn("failed to access temp RCS output file");
+		return (-1);
+	}
+
+	if ((chmod(to, S_IWUSR) == -1) && !(to_flags & RCS_CREATE)) {
+		warnx("chmod(%s, 0%o) failed", to, S_IWUSR);
+		return (-1);
+	}
+
+	/* different filesystem, have to copy the file */
+	if ((src = fopen(from, "r")) == NULL) {
+		warn("%s", from);
+		return (-1);
+	}
+	if ((dst = fopen(to, "w")) == NULL) {
+		warn("%s", to);
+		return (-1);
+	}
+	if (fchmod(fileno(dst), perm)) {
+		warn("%s", to);
+		(void)unlink(to);
+		return (-1);
+	}
+
+	buf = xmalloc(MAXBSIZE);
+	while ((nread = fread(buf, sizeof(char), MAXBSIZE, src)) != 0) {
+		if (ferror(src)) {
+			warnx("failed to read `%s'", from);
+			(void)unlink(to);
+			goto out;
+		}
+		nwritten = fwrite(buf, sizeof(char), nread, dst);
+		if (nwritten != nread) {
+			warnx("failed to write `%s'", to);
+			(void)unlink(to);
+			goto out;
+		}
+	}
+
+	ret = 0;
+
+	(void)fclose(src);
+	(void)fclose(dst);
+	(void)unlink(from);
+
+out:
+	xfree(buf);
 
 	return (ret);
 }
