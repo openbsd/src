@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.5 2006/05/10 01:10:23 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.6 2006/05/11 08:40:34 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -313,25 +313,18 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out)
 		goto closem;
 	}
 
-	if (stat(file1, &stb1) < 0) {
+	if (fstat(fileno(f1), &stb1) < 0) {
 		warn("%s", file1);
 		goto closem;
 	}
 
-	if (stat(file2, &stb2) < 0) {
+	if (fstat(fileno(f2), &stb2) < 0) {
 		warn("%s", file2);
 		goto closem;
 	}
 
-	switch (files_differ(f1, f2)) {
-	case 0:
+	if (files_differ(f1, f2) != 1)
 		goto closem;
-	case 1:
-		break;
-	default:
-		/* error */
-		goto closem;
-	}
 
 	if (!asciifile(f1) || !asciifile(f2)) {
 		rval = D_ERROR;
@@ -829,7 +822,7 @@ output(FILE *f1, FILE *f2)
 	}
 }
 
-static __inline void
+static void
 range(int a, int b, char *separator)
 {
 	diff_output("%d", a > b ? b : a);
@@ -837,7 +830,7 @@ range(int a, int b, char *separator)
 		diff_output("%s%d", separator, b);
 }
 
-static __inline void
+static void
 uni_range(int a, int b)
 {
 	if (a < b)
