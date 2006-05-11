@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.32 2006/05/11 06:52:04 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.33 2006/05/11 07:13:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static const char rcsid[] = "$OpenBSD: kdump.c,v 1.32 2006/05/11 06:52:04 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: kdump.c,v 1.33 2006/05/11 07:13:17 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ static const char rcsid[] = "$OpenBSD: kdump.c,v 1.32 2006/05/11 06:52:04 tedu E
 #include <sys/errno.h>
 #undef _KERNEL
 
+#include <ctype.h>
 #include <err.h>
 #include <signal.h>
 #include <stdio.h>
@@ -347,8 +348,8 @@ ioctldecode(u_long cmd)
 		*dir++ = 'R';
 	*dir = '\0';
 
-	printf(decimal ? ",_IO%s('%c',%ld" : ",_IO%s('%c',%#lx",
-	    dirbuf, (cmd >> 8) & 0xff, cmd & 0xff);
+	printf(decimal ? ",_IO%s('%c',%lu" : ",_IO%s('%c',%#lx",
+	    dirbuf, (int)((cmd >> 8) & 0xff), cmd & 0xff);
 	if ((cmd & IOC_VOID) == 0)
 		printf(decimal ? ",%ld)" : ",%#lx)", (cmd >> 16) & 0xff);
 	else
