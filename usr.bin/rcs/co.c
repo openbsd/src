@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.89 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.90 2006/05/11 09:43:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -156,7 +156,7 @@ checkout_main(int argc, char **argv)
 			continue;
 
 		if (!(flags & QUIET))
-			printf("%s  -->  %s\n", fpath,
+			(void)fprintf(stderr, "%s  -->  %s\n", fpath,
 			    (flags & PIPEOUT) ? "standard output" : argv[i]);
 
 		if ((flags & CO_LOCK) && (kflag & RCS_KWEXP_VAL)) {
@@ -197,7 +197,7 @@ checkout_main(int argc, char **argv)
 		}
 
 		if (!(flags & QUIET))
-			printf("done\n");
+			(void)fprintf(stderr, "done\n");
 
 		rcsnum_free(rev);
 
@@ -257,8 +257,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	if (date != NULL)
 		givendate = rcs_date_parse(date);
 
-	if (file->rf_ndelta == 0)
-		printf("no revisions present; generating empty revision 0.0\n");
+	if (file->rf_ndelta == 0 && !(flags & QUIET))
+		(void)fprintf(stderr,
+		    "no revisions present; generating empty revision 0.0\n");
 
 	/* XXX rcsnum_cmp()
 	 * Check out the latest revision if <frev> is greater than HEAD
@@ -415,15 +416,15 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if (file->rf_ndelta == 0 &&
+	if (file->rf_ndelta == 0 && !(flags & QUIET) &&
 	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
-		warnx("no revisions, so nothing can be %s",
+		(void)fprintf(stderr, "no revisions, so nothing can be %s",
 		    (flags & CO_LOCK) ? "locked" : "unlocked");
 	} else if (file->rf_ndelta != 0) {
 		/* XXX - Not a good way to detect if a newline is needed. */
 		if (!(flags & QUIET) && !(flags & NEWFILE) &&
 		    !(flags & CO_REVERT))
-			printf("\n");
+			(void)fprintf(stderr, "\n");
 	}
 
 	if (flags & CO_LOCK) {

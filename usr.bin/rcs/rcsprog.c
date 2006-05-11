@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.124 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.125 2006/05/11 09:43:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -307,7 +307,7 @@ rcs_main(int argc, char **argv)
 			continue;
 
 		if (!(rcsflags & QUIET))
-			printf("RCS file: %s\n", fpath);
+			(void)fprintf(stderr, "RCS file: %s\n", fpath);
 
 		if ((file = rcs_open(fpath, fd, flags, fmode)) == NULL)
 			continue;
@@ -468,7 +468,10 @@ rcs_main(int argc, char **argv)
 				 */
 				if (rdp->rd_flags & RCS_RD_SELECT) {
 					rcsnum_tostr(rdp->rd_num, b, sizeof(b));
-					printf("deleting revision %s\n", b);
+					if (!(rcsflags & QUIET)) {
+						(void)fprintf(stderr, "deleting"
+						    " revision %s\n", b);
+					}
 					(void)rcs_rev_remove(file, rdp->rd_num);
 				}
 			}
@@ -482,7 +485,7 @@ rcs_main(int argc, char **argv)
 		rcs_close(file);
 
 		if (!(rcsflags & QUIET))
-			printf("done\n");
+			(void)fprintf(stderr, "done\n");
 	}
 
 	if (logstr != NULL)
