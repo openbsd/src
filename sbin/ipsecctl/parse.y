@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2006/04/20 09:03:23 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.64 2006/05/11 20:40:12 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1559,7 +1559,7 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 			return (0);
 		}
 		if (xfs->authxf || xfs->encxf) {
-			yyerror("no encryption or authenticaion with ipcomp");
+			yyerror("no encryption or authentication with ipcomp");
 			return (0);
 		}
 		if (!xfs->compxf)
@@ -1571,7 +1571,7 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 			return (0);
 		}
 		if (xfs->authxf || xfs->encxf || xfs->compxf) {
-			yyerror("no encryption, authenticaion or compression"
+			yyerror("no encryption, authentication or compression"
 			    " with ipip");
 			return (0);
 		}
