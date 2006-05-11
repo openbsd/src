@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.34 2006/05/11 07:15:08 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.35 2006/05/11 07:24:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static const char rcsid[] = "$OpenBSD: kdump.c,v 1.34 2006/05/11 07:15:08 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: kdump.c,v 1.35 2006/05/11 07:24:03 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -543,7 +543,7 @@ ktrgenio(struct ktr_genio *ktr, int len)
 		putchar('\t');
 		col = 8;
 		for (i = 0; i < datalen; i++) {
-			printf("%02x", dp[i] & 0xff);
+			printf("%02x", dp[i]);
 			col += 3;
 			if (i < datalen - 1) {
 				if (col + 3 > screenwidth) {
@@ -566,7 +566,7 @@ ktrgenio(struct ktr_genio *ktr, int len)
 				if (i+j >= datalen)
 					printf("   ");
 				else
-					printf("%02x ", dp[i+j] & 0xff);
+					printf("%02x ", dp[i+j]);
 			}
 			putchar(' ');
 			for (j = 0; j < bpl; j++) {
