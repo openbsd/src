@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.5 2006/05/08 04:18:43 brad Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.6 2006/05/11 23:34:35 brad Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -424,9 +424,6 @@
 
 #define CORB_NID_ROOT		0
 #define HDA_MAX_CHANNELS	16
-
-
-#define PCI_SUBCLASS_HDAUDIO	0x03
 
 /* memory-mapped types */
 typedef struct {

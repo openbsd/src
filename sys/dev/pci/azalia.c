@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.7 2006/05/08 20:36:59 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.8 2006/05/11 23:34:35 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -355,7 +355,7 @@ azalia_pci_match(struct device *parent, void *match, void *aux)
 
 	pa = aux;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MULTIMEDIA
-	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_HDAUDIO)
+	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MULTIMEDIA_HDAUDIO)
 		return 1;
 	return 0;
 }
