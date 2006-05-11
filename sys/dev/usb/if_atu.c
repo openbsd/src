@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.69 2006/03/25 22:41:46 djm Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.70 2006/05/11 18:50:19 miod Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -963,7 +963,7 @@ atu_internal_firmware(void *arg)
 
 	DPRINTFN(15, ("%s: sending remap\n", USBDEVNAME(sc->atu_dev)));
 	err = atu_usb_request(sc, DFU_REMAP, 0, 0, 0, NULL);
-	if ((err) && (! sc->atu_quirk & ATU_QUIRK_NO_REMAP)) {
+	if ((err) && (!ISSET(sc->atu_quirk, ATU_QUIRK_NO_REMAP))) {
 		DPRINTF(("%s: remap failed!\n", USBDEVNAME(sc->atu_dev)));
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.12 2006/03/14 19:26:30 miod Exp $ */
+/*	$OpenBSD: aria.c,v 1.13 2006/05/11 18:50:18 miod Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -1061,12 +1061,12 @@ aria_cont(addr)
 
 	DPRINTF(("aria_cont\n"));
 
-	if (!sc->sc_record&(1<<0) && (sc->sc_open&ARIAR_OPEN_RECORD)) {
+	if (!(sc->sc_record&(1<<0)) && (sc->sc_open&ARIAR_OPEN_RECORD)) {
 		aria_sendcmd(sc->sc_iobase, ARIADSPC_START_REC,  ARIAR_RECORD_CHAN, -1, -1);
 		sc->sc_record |= ~(1<<ARIAR_RECORD_CHAN);
 	}
 
-	if (!sc->sc_play&(1<<ARIAR_PLAY_CHAN) && (sc->sc_open&ARIAR_OPEN_PLAY)) {
+	if (!(sc->sc_play&(1<<ARIAR_PLAY_CHAN)) && (sc->sc_open&ARIAR_OPEN_PLAY)) {
 		aria_sendcmd(sc->sc_iobase, ARIADSPC_START_PLAY, 1, -1, -1);
 		sc->sc_play |= ~(1<<ARIAR_PLAY_CHAN);
 	}
