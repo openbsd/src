@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.6 2004/09/20 17:51:07 miod Exp $ */
+/*	$OpenBSD: common.h,v 1.7 2006/05/11 05:18:38 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: common.h,v 1.6 2004/09/20 17:51:07 miod Exp $
+ *	$OpenBSD: common.h,v 1.7 2006/05/11 05:18:38 maja Exp $
  *
  */
 
@@ -69,13 +69,13 @@ struct dllist {
 	struct if_info *ii;		/* interface pointer		*/
 	u_char	eaddr[6];		/* targets ethernet address	*/
 	int	ldfd;			/* filedescriptor for loadfile	*/
-	u_short	dl_bsz;			/* Data Link Buffer Size	*/
+	u_long	dl_bsz;			/* Data Link Buffer Size	*/
 	int	timeout;		/* Timeout counter		*/
 	u_char	count;			/* Packet Counter		*/
 	u_long	loadaddr;		/* Load Address			*/
 	u_long	xferaddr;		/* Transfer Address		*/
 	u_long	nloadaddr;		/* Next Load Address		*/
-	long	lseek;			/* Seek before last read	*/
+	off_t	lseek;			/* Seek before last read	*/
 	int	aout;			/* Is it an a.out file		*/
 	u_long	a_text;			/* Size of text segment		*/
 	u_long	a_text_fill;		/* Size of text segment fill	*/
@@ -83,7 +83,7 @@ struct dllist {
 	u_long	a_data_fill;		/* Size of data segment fill	*/
 	u_long	a_bss;			/* Size of bss segment		*/
 	u_long	a_bss_fill;		/* Size of bss segment fill	*/
-	long	a_lseek;		/* Keep track of pos in newfile */
+	off_t	a_lseek;		/* Keep track of pos in newfile */
 };
 
 #endif /* _COMMON_H_ */

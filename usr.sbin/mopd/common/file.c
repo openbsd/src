@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.11 2006/04/29 16:26:56 maja Exp $ */
+/*	$OpenBSD: file.c,v 1.12 2006/05/11 05:18:38 maja Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: file.c,v 1.11 2006/04/29 16:26:56 maja Exp $";
+    "$OpenBSD: file.c,v 1.12 2006/05/11 05:18:38 maja Exp $";
 #endif
 
 #include "os.h"
@@ -61,8 +61,8 @@ mopFilePutLX(u_char *buf, int idx, u_long value, int cnt)
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
-		buf[idx+i] = value % 256;
-		value = value / 256;
+		buf[idx+i] = (u_char)(value % 256);
+		value = (u_char)(value / 256);
 	}
 }
 
@@ -71,7 +71,7 @@ mopFilePutBX(u_char *buf, int idx, u_long value, int cnt)
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
-		buf[idx+cnt-1-i] = value % 256;
+		buf[idx+cnt-1-i] = (u_char)(value % 256);
 		value = value / 256;
 	}
 }
@@ -128,7 +128,7 @@ CheckMopFile(int fd)
 
 	lseek(fd, 0, SEEK_SET);
 
-	image_type = header[IHD_W_ALIAS+1] * 256 + header[IHD_W_ALIAS];
+	image_type = (short)mopFileGetLX(header,IHD_W_ALIAS,2);
 
 	switch (image_type) {
 		case IHD_C_NATIVE:		/* Native mode image (VAX)   */
@@ -150,28 +150,24 @@ int
 GetMopFileInfo(int fd, u_long *load, u_long *xfr, int info)
 {
 	u_char	header[512];
-	short	image_type;
-	u_long	load_addr, xfr_addr, isd, iha, hbcnt, isize;
+	short	image_type, isd, iha;
+	u_long	load_addr, xfr_addr, isize, hbcnt;
 
 	if (read(fd, header, 512) != 512)
 		return (-1);
 
-	image_type = header[IHD_W_ALIAS+1] * 256 + header[IHD_W_ALIAS];
+	image_type = (short)mopFileGetLX(header,IHD_W_ALIAS,2);
 
 	switch (image_type) {
 		case IHD_C_NATIVE:		/* Native mode image (VAX)   */
-			isd = header[IHD_W_SIZE + 1] * 256 + header[IHD_W_SIZE];
-			iha = header[IHD_W_ACTIVOFF + 1] * 256 +
-			    header[IHD_W_ACTIVOFF];
+			isd = (short)mopFileGetLX(header,IHD_W_SIZE,2);
+			iha = (short)mopFileGetLX(header,IHD_W_ACTIVOFF,2);
 			hbcnt = header[IHD_B_HDRBLKCNT];
-			isize = (header[isd + ISD_W_PAGCNT + 1] * 256 +
-			    header[isd + ISD_W_PAGCNT]) * 512;
-			load_addr = ((header[isd + ISD_V_VPN + 1] * 256 +
-			    header[isd+ISD_V_VPN]) & ISD_M_VPN) * 512;
-			xfr_addr = (header[iha + IHA_L_TFRADR1 + 3] * 0x1000000+
-			    header[iha + IHA_L_TFRADR1 + 2] * 0x10000 +
-			    header[iha + IHA_L_TFRADR1 + 1] * 0x100 +
-			    header[iha + IHA_L_TFRADR1]) & 0x7fffffff;
+			isize = mopFileGetLX(header,isd+ISD_W_PAGCNT,2) * 512;
+			load_addr = (mopFileGetLX(header,isd+ISD_V_VPN,2) &
+			    ISD_M_VPN) * 512;
+			xfr_addr = mopFileGetLX(header,iha+IHA_L_TFRADR1,4) &
+			    0x7fffffff;
 			if (info == INFO_PRINT) {
 				printf("Native Image (VAX)\n");
 				printf("Header Block Count: %lu\n", hbcnt);
@@ -181,11 +177,10 @@ GetMopFileInfo(int fd, u_long *load, u_long *xfr, int info)
 			}
 			break;
 		case IHD_C_RSX:			/* RSX image produced by TKB */
-			hbcnt = header[L_BBLK + 1] * 256 + header[L_BBLK];
-			isize = (header[L_BLDZ + 1] * 256 + header[L_BLDZ]) *
-			    64;
-			load_addr = header[L_BSA+1] * 256 + header[L_BSA];
-			xfr_addr  = header[L_BXFR+1] * 256 + header[L_BXFR];
+			hbcnt = mopFileGetLX(header,L_BBLK,2);
+			isize = mopFileGetLX(header,L_BLDZ,2) * 64;
+			load_addr = mopFileGetLX(header,L_BSA,2);
+			xfr_addr = mopFileGetLX(header,L_BXFR,2);
 			if (info == INFO_PRINT) {
 				printf("RSX Image\n");
 				printf("Header Block Count: %lu\n",hbcnt);
@@ -210,18 +205,12 @@ GetMopFileInfo(int fd, u_long *load, u_long *xfr, int info)
 			}
 			return (-1);
 		case IHD_C_PMAX:		/* PMAX system image	     */
-			isd = header[IHD_W_SIZE+1] * 256 + header[IHD_W_SIZE];
-			iha = header[IHD_W_ACTIVOFF+1] * 256 +
-			    header[IHD_W_ACTIVOFF];
+			isd = (short)mopFileGetLX(header,IHD_W_SIZE,2);
+			iha = (short)mopFileGetLX(header,IHD_W_ACTIVOFF,2);
 			hbcnt = header[IHD_B_HDRBLKCNT];
-			isize = (header[isd + ISD_W_PAGCNT + 1] * 256 +
-			    header[isd + ISD_W_PAGCNT]) * 512;
-			load_addr = (header[isd + ISD_V_VPN + 1] * 256 +
-				     header[isd + ISD_V_VPN]) * 512;
-			xfr_addr = (header[iha + IHA_L_TFRADR1 + 3] * 0x1000000+
-				    header[iha + IHA_L_TFRADR1 + 2] * 0x10000 +
-				    header[iha + IHA_L_TFRADR1 + 1] * 0x100 +
-				    header[iha + IHA_L_TFRADR1]);
+			isize = mopFileGetLX(header,isd+ISD_W_PAGCNT,2) * 512;
+			load_addr = mopFileGetLX(header,isd+ISD_V_VPN,2) * 512;
+			xfr_addr = mopFileGetLX(header,iha+IHA_L_TFRADR1,4);
 			if (info == INFO_PRINT) {
 				printf("PMAX Image \n");
 				printf("Header Block Count: %lu\n", hbcnt);
@@ -231,18 +220,9 @@ GetMopFileInfo(int fd, u_long *load, u_long *xfr, int info)
 			}
 			break;
 		case IHD_C_ALPHA:		/* ALPHA system image	     */
-			isd = (header[EIHD_L_ISDOFF + 3] * 0x1000000 +
-			       header[EIHD_L_ISDOFF + 2] * 0x10000 +
-			       header[EIHD_L_ISDOFF + 1] * 0x100 +
-			       header[EIHD_L_ISDOFF]);
-			hbcnt = (header[EIHD_L_HDRBLKCNT + 3] * 0x1000000 +
-				 header[EIHD_L_HDRBLKCNT + 2] * 0x10000 +
-				 header[EIHD_L_HDRBLKCNT + 1] * 0x100 +
-				 header[EIHD_L_HDRBLKCNT]);
-			isize = (header[isd+EISD_L_SECSIZE + 3] * 0x1000000 +
-				 header[isd+EISD_L_SECSIZE + 2] * 0x10000 +
-				 header[isd+EISD_L_SECSIZE + 1] * 0x100 +
-				 header[isd+EISD_L_SECSIZE]);
+			isd = (short)mopFileGetLX(header,EIHD_L_ISDOFF,4);
+			hbcnt = mopFileGetLX(header,EIHD_L_HDRBLKCNT,4);
+			isize = mopFileGetLX(header,isd+EISD_L_SECSIZE,4);
 			load_addr = 0;
 			xfr_addr = 0;
 			if (info == INFO_PRINT) {
@@ -331,10 +311,10 @@ getMID(int old_mid, int new_mid)
 	return (mid);
 }
 
-int
+u_int
 getCLBYTES(int mid)
 {
-	int	clbytes;
+	u_int	clbytes;
 
 	switch (mid) {
 #ifdef MID_VAX
@@ -388,12 +368,12 @@ CheckAOutFile(int fd)
 	struct exec	ex, ex_swap;
 	int		mid = -1;
 
-	if (read(fd, &ex, sizeof(ex)) != sizeof(ex))
+	if (read(fd, &ex, sizeof(ex)) != (ssize_t)sizeof(ex))
 		return (-1);
 
 	lseek(fd, 0, SEEK_SET);
 
-	if (read(fd, &ex_swap, sizeof(ex_swap)) != sizeof(ex_swap))
+	if (read(fd, &ex_swap, sizeof(ex_swap)) != (ssize_t)sizeof(ex_swap))
 		return (-1);
 
 	lseek(fd, 0, SEEK_SET);
@@ -422,12 +402,12 @@ GetAOutFileInfo(int fd, u_long *load, u_long *xfr, u_long *a_text,
 	int		mid = -1;
 	u_long		magic, clbytes, clofset;
 
-	if (read(fd, &ex, sizeof(ex)) != sizeof(ex))
+	if (read(fd, &ex, sizeof(ex)) != (ssize_t)sizeof(ex))
 		return (-1);
 
 	lseek(fd, 0, SEEK_SET);
 
-	if (read(fd, &ex_swap, sizeof(ex_swap)) != sizeof(ex_swap))
+	if (read(fd, &ex_swap, sizeof(ex_swap)) != (ssize_t)sizeof(ex_swap))
 		return (-1);
 
 	mopFileSwapX(&ex_swap, 0, 4);
@@ -463,13 +443,13 @@ GetAOutFileInfo(int fd, u_long *load, u_long *xfr, u_long *a_text,
 #ifdef MID_ARM6
 	case MID_ARM6:
 #endif
-		ex.a_text   = mopFileGetLX(&ex_swap,  4, 4);
-		ex.a_data   = mopFileGetLX(&ex_swap,  8, 4);
-		ex.a_bss    = mopFileGetLX(&ex_swap, 12, 4);
-		ex.a_syms   = mopFileGetLX(&ex_swap, 16, 4);
-		ex.a_entry  = mopFileGetLX(&ex_swap, 20, 4);
-		ex.a_trsize = mopFileGetLX(&ex_swap, 24, 4);
-		ex.a_drsize = mopFileGetLX(&ex_swap, 28, 4);
+		ex.a_text   = (u_int)mopFileGetLX(&ex_swap,  4, 4);
+		ex.a_data   = (u_int)mopFileGetLX(&ex_swap,  8, 4);
+		ex.a_bss    = (u_int)mopFileGetLX(&ex_swap, 12, 4);
+		ex.a_syms   = (u_int)mopFileGetLX(&ex_swap, 16, 4);
+		ex.a_entry  = (u_int)mopFileGetLX(&ex_swap, 20, 4);
+		ex.a_trsize = (u_int)mopFileGetLX(&ex_swap, 24, 4);
+		ex.a_drsize = (u_int)mopFileGetLX(&ex_swap, 28, 4);
 		break;
 #ifdef MID_M68K
 	case MID_M68K:
@@ -481,13 +461,13 @@ GetAOutFileInfo(int fd, u_long *load, u_long *xfr, u_long *a_text,
 #ifdef MID_MIPS
 	case MID_MIPS:
 #endif
-		ex.a_text  = mopFileGetBX(&ex_swap,  4, 4);
-		ex.a_data  = mopFileGetBX(&ex_swap,  8, 4);
-		ex.a_bss   = mopFileGetBX(&ex_swap, 12, 4);
-		ex.a_syms  = mopFileGetBX(&ex_swap, 16, 4);
-		ex.a_entry = mopFileGetBX(&ex_swap, 20, 4);
-		ex.a_trsize= mopFileGetBX(&ex_swap, 24, 4);
-		ex.a_drsize= mopFileGetBX(&ex_swap, 28, 4);
+		ex.a_text   = (u_int)mopFileGetBX(&ex_swap,  4, 4);
+		ex.a_data   = (u_int)mopFileGetBX(&ex_swap,  8, 4);
+		ex.a_bss    = (u_int)mopFileGetBX(&ex_swap, 12, 4);
+		ex.a_syms   = (u_int)mopFileGetBX(&ex_swap, 16, 4);
+		ex.a_entry  = (u_int)mopFileGetBX(&ex_swap, 20, 4);
+		ex.a_trsize = (u_int)mopFileGetBX(&ex_swap, 24, 4);
+		ex.a_drsize = (u_int)mopFileGetBX(&ex_swap, 28, 4);
 		break;
 	default:
 		break;
@@ -661,9 +641,9 @@ ssize_t
 mopFileRead(struct dllist *dlslot, u_char *buf)
 {
 	ssize_t len, outlen;
-	int	bsz;
-	long	pos, notdone, total;
-
+	u_long	bsz, total, notdone;
+	off_t	pos;
+	
 	if (dlslot->aout == -1)
 		len = read(dlslot->ldfd,buf,dlslot->dl_bsz);
 	else {
@@ -673,84 +653,84 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 
 		total = dlslot->a_text;
 
-		if (pos < total) {
-			notdone = total - pos;
+		if (pos < (off_t)total) {
+			notdone = total - (u_long)pos;
 			if (notdone <= bsz)
 				outlen = read(dlslot->ldfd,&buf[len],notdone);
 			else
 				outlen = read(dlslot->ldfd,&buf[len],bsz);
 			len = len + outlen;
 			pos = pos + outlen;
-			bsz = bsz - outlen;
+			bsz = bsz - (u_long)outlen;
 		}
 
 		total = total + dlslot->a_text_fill;
 
-		if ((bsz > 0) && (pos < total)) {
-			notdone = total - pos;
+		if ((bsz > 0) && (pos < (off_t)total)) {
+			notdone = total - (u_long)pos;
 			if (notdone <= bsz)
-				outlen = notdone;
+				outlen = (ssize_t)notdone;
 			else
-				outlen = bsz;
-			bzero(&buf[len],outlen);
+				outlen = (ssize_t)bsz;
+			bzero(&buf[len],(u_long)outlen);
 			len = len + outlen;
 			pos = pos + outlen;
-			bsz = bsz - outlen;
+			bsz = bsz - (u_long)outlen;
 		}
 
 		total = total + dlslot->a_data;
 
-		if ((bsz > 0) && (pos < total)) {
-			notdone = total - pos;
+		if ((bsz > 0) && (pos < (off_t)total)) {
+			notdone = total - (u_long)pos;
 			if (notdone <= bsz)
 				outlen = read(dlslot->ldfd,&buf[len],notdone);
 			else
 				outlen = read(dlslot->ldfd,&buf[len],bsz);
 			len = len + outlen;
 			pos = pos + outlen;
-			bsz = bsz - outlen;
+			bsz = bsz - (u_long)outlen;
 		}
 
 		total = total + dlslot->a_data_fill;
 
-		if ((bsz > 0) && (pos < total)) {
-			notdone = total - pos;
+		if ((bsz > 0) && (pos < (off_t)total)) {
+			notdone = total - (u_long)pos;
 			if (notdone <= bsz)
-				outlen = notdone;
+				outlen = (ssize_t)notdone;
 			else
-				outlen = bsz;
-			bzero(&buf[len],outlen);
+				outlen = (ssize_t)bsz;
+			bzero(&buf[len],(u_long)outlen);
 			len = len + outlen;
 			pos = pos + outlen;
-			bsz = bsz - outlen;
+			bsz = bsz - (u_long)outlen;
 		}
 
 		total = total + dlslot->a_bss;
 
-		if ((bsz > 0) && (pos < total)) {
-			notdone = total - pos;
+		if ((bsz > 0) && (pos < (off_t)total)) {
+			notdone = total - (u_long)pos;
 			if (notdone <= bsz)
-				outlen = notdone;
+				outlen = (ssize_t)notdone;
 			else
-				outlen = bsz;
-			bzero(&buf[len],outlen);
+				outlen = (ssize_t)bsz;
+			bzero(&buf[len],(u_long)outlen);
 			len = len + outlen;
 			pos = pos + outlen;
-			bsz = bsz - outlen;
+			bsz = bsz - (u_long)outlen;
 		}
 
 		total = total + dlslot->a_bss_fill;
 
-		if ((bsz > 0) && (pos < total)) {
-			notdone = total - pos;
+		if ((bsz > 0) && (pos < (off_t)total)) {
+			notdone = total - (u_long)pos;
 			if (notdone <= bsz)
-				outlen = notdone;
+				outlen = (ssize_t)notdone;
 			else
-				outlen = bsz;
-			bzero(&buf[len],outlen);
+				outlen = (ssize_t)bsz;
+			bzero(&buf[len],(u_long)outlen);
 			len = len + outlen;
 			pos = pos + outlen;
-			bsz = bsz - outlen;
+			bsz = bsz - (u_long)outlen;
 		}
 
 		dlslot->a_lseek = pos;
