@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.12 2003/09/03 12:12:47 jmc Exp $
+.\"	$OpenBSD: kdump.1,v 1.13 2006/05/11 06:49:00 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,6 +104,10 @@ Selects which tracepoints to display. See the
 option of
 .Xr ktrace 1
 for the definitions of the flags.
+.It Fl x
+Display I/O data in hexadecimal.
+.It Fl X
+Display I/O data with hexadecimal data and printable ASCII characters side by side.
 .El
 .Sh FILES
 .Bl -tag -width ktrace.out -compact

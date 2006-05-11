@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.30 2005/12/31 20:56:37 miod Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.31 2006/05/11 06:49:00 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.30 2005/12/31 20:56:37 miod Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.31 2006/05/11 06:49:00 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ static char *rcsid = "$OpenBSD: kdump.c,v 1.30 2005/12/31 20:56:37 miod Exp $";
 #include "kdump.h"
 #include "extern.h"
 
-int timestamp, decimal, fancy = 1, tail, maxdata;
+int timestamp, decimal, iohex, fancy = 1, tail, maxdata;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid = -1;
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
 	current = &emulations[0];	/* native */
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:nRp:Tt:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:nRp:Tt:xX")) != -1)
 		switch (ch) {
 		case 'e':
 			setemul(optarg);
@@ -206,6 +206,12 @@ main(int argc, char *argv[])
 			trpoints = getpoints(optarg);
 			if (trpoints < 0)
 				errx(1, "unknown trace point in %s", optarg);
+			break;
+		case 'x':
+			iohex = 1;
+			break;
+		case 'X':
+			iohex = 2;
 			break;
 		default:
 			usage();
@@ -512,10 +518,10 @@ static void
 ktrgenio(struct ktr_genio *ktr, int len)
 {
 	char *dp = (char *)ktr + sizeof (struct ktr_genio);
-	int datalen = len - sizeof (struct ktr_genio);
+	int i, j, datalen = len - sizeof (struct ktr_genio);
 	static int screenwidth = 0;
-	int col = 0, width;
-	char visbuf[5], *cp;
+	int col = 0, width, bpl;
+	char visbuf[5], *cp, c;
 
 	if (screenwidth == 0) {
 		struct winsize ws;
@@ -530,10 +536,54 @@ ktrgenio(struct ktr_genio *ktr, int len)
 		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
 	if (maxdata && datalen > maxdata)
 		datalen = maxdata;
+	if (iohex && !datalen)
+		return;
+	if (iohex == 1) {
+		putchar('\t');
+		col = 8;
+		for (i = 0; i < datalen; i++) {
+			printf("%02x", dp[i] & 0xff);
+			col += 3;
+			if (i < datalen - 1) {
+				if (col + 3 > screenwidth) {
+					printf("\n\t");
+					col = 8;
+				} else
+					putchar(' ');
+			}
+		}
+		putchar('\n');
+		return;
+	}
+	if (iohex == 2) {
+		bpl = (screenwidth - 13)/4;
+		if (bpl <= 0)
+			bpl = 1;
+		for (i = 0; i < datalen; i += bpl) {
+			printf("   %04x:  ", i);
+			for (j = 0; j < bpl; j++) {
+				if (i+j >= datalen)
+					printf("   ");
+				else
+					printf("%02x ", dp[i+j] & 0xff);
+			}
+			putchar(' ');
+			for (j = 0; j < bpl; j++) {
+				if (i+j >= datalen)
+					break;
+				c = dp[i+j];
+				if (!isprint(c))
+					c = '.';
+				putchar(c);
+			}
+			putchar('\n');
+		}
+		return;
+	}
 	(void)printf("       \"");
 	col = 8;
 	for (; datalen > 0; datalen--, dp++) {
-		(void) vis(visbuf, *dp, VIS_CSTYLE, *(dp+1));
+		(void)vis(visbuf, *dp, VIS_CSTYLE, *(dp+1));
 		cp = visbuf;
 
 		/*
@@ -605,7 +655,7 @@ usage(void)
 
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
-	    "[-dnlRT] [-e emulation] [-p pid] [-f trfile] [-m maxdata] "
+	    "[-dnlRTxX] [-e emulation] [-p pid] [-f trfile] [-m maxdata] "
 	    "[-t [ceinsw]]\n", __progname);
 	exit(1);
 }
