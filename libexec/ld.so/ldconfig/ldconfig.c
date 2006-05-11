@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.18 2006/04/11 15:21:40 ray Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.19 2006/05/11 22:03:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -59,6 +59,8 @@
 extern char			*__progname;
 
 static int			verbose;
+static int			delete;
+static int			doprebind;
 static int			nostd;
 static int			justread;
 static int			merge;
@@ -85,13 +87,21 @@ static int	buildhints(void);
 static int	readhints(void);
 static void	listhints(void);
 
+void
+usage(void)
+{
+	fprintf(stderr,
+	    "usage: %s [-DmRrsUv] [path ...]\n", __progname);
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
 	int i, c;
 	int rval = 0;
 
-	while ((c = getopt(argc, argv, "RUmrsv")) != -1) {
+	while ((c = getopt(argc, argv, "DRmrsUv")) != -1) {
 		switch (c) {
 		case 'R':
 			rescan = 1;
@@ -111,10 +121,14 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose = 1;
 			break;
+		case 'D':
+			delete = 1;
+			break;
+//		case 'P':
+//			doprebind = 1;
+			break;
 		default:
-			fprintf(stderr,
-			    "usage: %s [-mRrsUv] [dir ...]\n", __progname);
-			exit(1);
+			usage();
 			break;
 		}
 	}
@@ -124,6 +138,12 @@ main(int argc, char *argv[])
 
 	dir_list = xmalloc(1);
 	*dir_list = '\0';
+
+	if (delete) {
+		if (rescan || unconfig || merge || justread || nostd || doprebind)
+			errx(1, "cannot mix -U -R -r -s -P options with -D");
+		exit (prebind_delete(&argv[optind], verbose));
+	}
 
 	if (justread || merge || rescan) {
 		if ((rval = readhints()) != 0)
@@ -135,9 +155,14 @@ main(int argc, char *argv[])
 		add_search_path(dir_list);
 		dir_list = xrealloc(dir_list, 1);
 		*dir_list = '\0';
-	} else
-		if (!nostd)
-			std_search_path();
+	} else if (!nostd)
+		std_search_path();
+
+//	if (doprebind) {
+//		if (rescan || unconfig || justread || nostd)
+//			errx(1, "cannot mix other options with -P");
+//		exit (prebind(&argv[optind], verbose, merge));
+//	}
 
 	if (unconfig) {
 		if (optind < argc)

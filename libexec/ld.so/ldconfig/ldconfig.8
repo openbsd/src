@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.17 2005/12/31 15:08:22 jmc Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.18 2006/05/11 22:03:22 deraadt Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -37,8 +37,8 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl mRrsUv
-.Op Ar directory Ar ...
+.Op Fl DmRrsUv
+.Op Ar path Ar ...
 .Sh DESCRIPTION
 .Nm
 is used to prepare a set of
@@ -91,6 +91,8 @@ for further information.
 The following options are recognized by
 .Nm ldconfig :
 .Bl -tag -width indent
+.It Fl D
+Remove any prebind information in the specified binary or shared library.
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
 the existing hints file.
@@ -118,7 +120,19 @@ This option cannot be used with
 .It Fl v
 Switch on verbose mode.
 .El
-.Sh Security
+.Sh PREBINDING
+Prebinding is loosely based on an earlier concept called Prelinking, which
+also accelerated
+.Xr ld.so 1
+performance but simultaneously impaired address space randomization.
+When prebinding information is added to libraries and programs using
+.Fl P ,
+program startup can be significantly improved because
+.Xr ld.so 1
+can initialize the shared library environment much faster.
+Prebinding information adds a small amount of data to the end of each
+specified library and program.
+.Sh SECURITY
 Special care must be taken when loading shared libraries into the address
 space of
 .Ev set-user-Id
