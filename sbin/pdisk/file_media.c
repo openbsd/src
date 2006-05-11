@@ -48,18 +48,9 @@
 /*
  * Defines
  */
-#ifdef __linux__
-#define LOFF_MAX 9223372036854775807LL
-extern __loff_t llseek (int __fd, __loff_t __offset, int __whence);
-#elif defined(__OpenBSD__) || defined(__APPLE__)
 #define loff_t off_t
 #define llseek lseek
 #define LOFF_MAX LLONG_MAX
-#else
-#define loff_t long
-#define llseek lseek
-#define LOFF_MAX LONG_MAX
-#endif
 
 
 /*
@@ -195,9 +186,7 @@ open_file_as_media(char *file, int oflag)
     FILE_MEDIA	a;
     int			fd;
     loff_t off;
-#if defined(__linux__) || defined(__unix__)
     struct stat info;
-#endif
 	
     if (file_inited == 0) {
 	    file_init();
@@ -219,13 +208,11 @@ open_file_as_media(char *file, int oflag)
 	    a->m.do_os_reload = os_reload_file_media;
 	    a->fd = fd;
 	    a->regular_file = 0;
-#if defined(__linux__) || defined(__unix__)
 	    if (fstat(fd, &info) < 0) {
 		error(errno, "can't stat file '%s'", file);
 	    } else {
 		a->regular_file = S_ISREG(info.st_mode);
 	    }
-#endif
 	} else {
 	    close(fd);
 	}
@@ -487,14 +474,12 @@ step_file_iterator(MEDIA_ITERATOR m)
 			bump = 1;
 		    } else if ((fd = open(result, O_RDONLY)) >= 0) {
 			close(fd);
-#if defined(__linux__) || defined(__unix__)
 		    } else if (errno == ENXIO || errno == ENODEV) {
 			if (a->style == kATA_Devices) {
 			    bump = -1;
 			} else {
 			    bump = 1;
 			}
-#endif
 		    }
 		    if (bump) {
 			if (bump > 0) {

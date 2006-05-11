@@ -47,16 +47,8 @@
 #define BAD_DIGIT 17	/* must be greater than any base */
 #define	STRING_CHUNK	16
 #define UNGET_MAX_COUNT 10
-#ifndef __unix__
-#define SCSI_FD 8
-#endif
-#ifdef NeXT
-#define loff_t off_t
-#define llseek lseek
-#else
 #define loff_t long
 #define llseek lseek
-#endif
 
 
 //

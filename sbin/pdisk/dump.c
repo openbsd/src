@@ -62,9 +62,7 @@ typedef struct names {
     const char *full;
 } NAMES;
 
-#ifdef __unix__
 typedef unsigned long OSType;
-#endif
 
 typedef struct PatchDescriptor {
     OSType		patchSig;
@@ -397,9 +395,7 @@ list_all_disks()
     	while ((name = step_media_iterator(iter)) != 0) {
 
 	    if ((m = open_pathname_as_media(name, O_RDONLY)) == 0) {
-#if defined(__linux__) || defined(__unix__)
 		error(errno, "can't open file '%s'", name);
-#endif
 	    } else {
 		close_media(m);
 

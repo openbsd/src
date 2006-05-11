@@ -27,14 +27,10 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __linux__
-#include <endian.h>
-#else
 #define LITTLE_ENDIAN 1234
 #define BIG_ENDIAN 4321
 #define BYTE_ORDER 4321
 //#define BYTE_ORDER 1234
-#endif
 
 #include "convert.h"
 

@@ -59,11 +59,6 @@
 // Global Variables
 //
 char *program_name;
-#ifdef NeXT
-extern int errno;
-extern int sys_nerr;
-extern const char * const sys_errlist[];
-#endif
 
 
 //
@@ -77,15 +72,11 @@ extern const char * const sys_errlist[];
 void
 init_program_name(char **argv)
 {
-#if defined(__linux__) || defined(__unix__)
     if ((program_name = strrchr(argv[0], '/')) != (char *)NULL) {
 	program_name++;
     } else {
 	program_name = argv[0];
     }
-#else
-    program_name = "pdisk";
-#endif
 }
 
 
@@ -131,16 +122,11 @@ fatal(int value, const char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 
-#if defined(__linux__) || defined(NeXT) || defined(__unix__)
     if (value > 0 && value < sys_nerr) {
 	fprintf(stderr, "  (%s)\n", sys_errlist[value]);
     } else {
 	fprintf(stderr, "\n");
     }
-#else
-    fprintf(stderr, "\n");
-    printf("Processing stopped: Choose 'Quit' from the file menu to quit.\n\n");
-#endif
     exit(value);
 }
 
@@ -160,13 +146,9 @@ error(int value, const char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 
-#if defined(__linux__) || defined(NeXT) || defined(__unix__)
     if (value > 0 && value < sys_nerr) {
 	fprintf(stderr, "  (%s)\n", sys_errlist[value]);
     } else {
 	fprintf(stderr, "\n");
     }
-#else
-    fprintf(stderr, "\n");
-#endif
 }

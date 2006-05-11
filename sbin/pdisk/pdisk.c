@@ -30,15 +30,10 @@
 // for printf()
 #include <stdio.h>
 
-#if defined(__linux__) || defined(__OpenBSD__)
 #include <getopt.h>
-#endif
 // for malloc() & free()
 #include <stdlib.h>
-
-#ifdef __unix__
 #include <unistd.h>
-#endif
 
 // for strncpy() & strlen()
 #include <string.h>
@@ -137,17 +132,7 @@ void print_expert_notes(void);
 int
 main(int argc, char **argv)
 {
-#if defined(__linux__) || defined(__unix__)
     int name_index;
-#else
-    SIOUXSettings.rows = 100;
-    printf("This app uses the SIOUX console library\n");
-    printf("Choose 'Quit' from the file menu to quit.\n\n");
-    printf("Use fake disk names (/dev/scsi<bus>.<id>; i.e. /dev/scsi0.1, /dev/scsi1.3, etc.).\n\n");
-
-    SIOUXSettings.autocloseonquit = 0;	/* Do we close the SIOUX window on program termination ... */
-    SIOUXSettings.asktosaveonclose = 0;	/* Do we offer to save on a close ... */
-#endif
     char *versionstr;
 
     init_program_name(argv);
@@ -171,7 +156,6 @@ main(int argc, char **argv)
 	free(versionstr); 
     }
 
-#if defined(__linux__) || defined(__unix__)
     name_index = get_options(argc, argv);
 
     if (vflag) {
@@ -201,15 +185,6 @@ main(int argc, char **argv)
  	do_help();
     }
     return 0;
-#else
-    interactive = 1;
-
-    interact();
-
-    SIOUXSettings.autocloseonquit = 1;
-    //printf("Processing stopped: Choose 'Quit' from the file menu to quit.\n\n");
-    return (0);
-#endif
 }
 
 
@@ -355,12 +330,10 @@ interact()
 }
 
 
-#if defined(__linux__) || defined(__unix__)
 int
 get_options(int argc, char **argv)
 {
     int c;
-#if defined(__linux__) || defined(__OpenBSD__)
     static struct option long_options[] =
     {
 	// name		has_arg			&flag	val
@@ -377,11 +350,7 @@ get_options(int argc, char **argv)
 	{0, 0, 0, 0}
     };
     int option_index = 0;
-#else
-    extern int opterr;		/* who does error messages */
-    extern int optopt;		/* char that caused the error */
     int getopt_error;		/* getopt choked */
-#endif
     extern int optind;		/* next argv index */
     extern char *optarg;	/* pointer to argument */
     int flag = 0;
@@ -398,23 +367,16 @@ get_options(int argc, char **argv)
     cflag = CFLAG_DEFAULT;
     fflag = FFLAG_DEFAULT;
 
-#if defined(__linux__) || defined(__OpenBSD__)
     optind = 0;	// reset option scanner logic
     while ((c = getopt_long(argc, argv, "hlvdraLicf", long_options,
 	    &option_index)) >= 0)
-#else
-    opterr = 0;			/* tell getopt to be quiet */
-    while ((c = getopt(argc, argv, "hlvdraLicf")) != EOF)
-#endif
 	{
-#if !(defined(__linux__) || defined(__OpenBSD__))
 	if (c == '?') {
 	    getopt_error = 1;
 	    c = optopt;
 	} else {
 	    getopt_error = 0;
 	}
-#endif
 	switch (c) {
 	case kLongOption:
 	    // option_index would be used here
@@ -466,7 +428,6 @@ get_options(int argc, char **argv)
     }
     return optind;
 }
-#endif
 
 
 void

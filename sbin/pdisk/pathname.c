@@ -90,9 +90,7 @@ next_media_kind(long *state)
 
     switch (ix) {
     case 0:
-#if defined(__linux__) || defined(__unix__)
 	result = create_file_iterator();
-#endif
 	ix = 1;
 	if (result != 0) {
 		break;
