@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.24 2005/05/23 22:54:55 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.25 2006/05/11 01:19:08 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -101,7 +101,6 @@ main(int argc, char *argv[])
 			error("calloc");
 		strlcpy(tmp->name, argv[0], sizeof(tmp->name));
 		tmp->next = interfaces;
-		tmp->flags = INTERFACE_REQUESTED;
 		interfaces = tmp;
 		argc--;
 		argv++;
@@ -121,7 +120,7 @@ main(int argc, char *argv[])
 		exit(0);
 
 	db_startup();
-	discover_interfaces(DISCOVER_SERVER);
+	discover_interfaces();
 	icmp_startup(1, lease_pinged);
 
 	if ((pw = getpwnam("_dhcp")) == NULL)

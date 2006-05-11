@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.16 2004/10/31 10:43:38 canacar Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.17 2006/05/11 01:19:08 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -242,14 +242,6 @@ struct lease_state {
 #define CLASS_DECL	4
 #define	GROUP_DECL	5
 
-/* Possible modes in which discover_interfaces can run. */
-
-#define DISCOVER_RUNNING	0
-#define DISCOVER_SERVER		1
-#define DISCOVER_UNCONFIGURED	2
-#define DISCOVER_RELAY		3
-#define DISCOVER_REQUESTED	4
-
 /* Group of declarations that share common parameters. */
 struct group {
 	struct group *next;
@@ -436,9 +428,6 @@ struct interface_info {
 	size_t rbuf_len;		/* Length of data in buffer. */
 
 	struct ifreq *ifp;		/* Pointer to ifreq struct. */
-	u_int32_t flags;		/* Control flags... */
-#define INTERFACE_REQUESTED 1
-#define INTERFACE_AUTOMATIC 2
 
 	/* Only used by DHCP client code. */
 	struct client_state *client;
@@ -723,7 +712,7 @@ extern struct protocol *protocols;
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 extern struct timeout *timeouts;
-void discover_interfaces(int);
+void discover_interfaces(void);
 void dispatch(void);
 int locate_network(struct packet *);
 void got_one(struct protocol *);

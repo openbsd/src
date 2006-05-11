@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.17 2006/03/16 15:44:40 claudio Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.18 2006/05/11 01:19:08 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -64,14 +64,14 @@ static int interface_status(struct interface_info *ifinfo);
    subnet it's on, and add it to the list of interfaces. */
 
 void
-discover_interfaces(int state)
+discover_interfaces(void)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
 	struct subnet *subnet;
 	struct shared_network *share;
 	struct sockaddr_in foo;
-	int ir;
+	int ir = 0;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
 #ifdef ALIAS_NAMES_PERMUTED
@@ -81,15 +81,12 @@ discover_interfaces(int state)
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
 
-	/* If we already have a list of interfaces, and we're running as
-	   a DHCP server, the interfaces were requested. */
-	if (interfaces && (state == DISCOVER_SERVER ||
-	    state == DISCOVER_RELAY || state == DISCOVER_REQUESTED))
-		ir = 0;
-	else if (state == DISCOVER_UNCONFIGURED)
-		ir = INTERFACE_REQUESTED | INTERFACE_AUTOMATIC;
-	else
-		ir = INTERFACE_REQUESTED;
+	/*
+	 * If we already have a list of interfaces, the interfaces were
+	 * requested.
+	 */
+	if (interfaces != NULL)
+		ir = 1;
 
 	/* Cycle through the list of interfaces looking for IP addresses. */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
@@ -101,8 +98,7 @@ discover_interfaces(int state)
 		 */
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
-		    (!(ifa->ifa_flags & IFF_UP) &&
-		    state != DISCOVER_UNCONFIGURED))
+		    (!(ifa->ifa_flags & IFF_UP)))
 			continue;
 
 		/* See if we've seen an interface that matches this one. */
@@ -110,9 +106,13 @@ discover_interfaces(int state)
 			if (!strcmp(tmp->name, ifa->ifa_name))
 				break;
 
+		/* If we are looking for specific interfaces, ignore others. */
+		if (tmp == NULL && ir)
+			continue;
+
 		/* If there isn't already an interface by this name,
 		   allocate one. */
-		if (!tmp) {
+		if (tmp == NULL) {
 			tmp = ((struct interface_info *)dmalloc(sizeof *tmp,
 			    "discover_interfaces"));
 			if (!tmp)
@@ -120,7 +120,6 @@ discover_interfaces(int state)
 				    "record interface", ifa->ifa_name);
 			strlcpy(tmp->name, ifa->ifa_name, sizeof(tmp->name));
 			tmp->next = interfaces;
-			tmp->flags = ir;
 			tmp->noifmedia = tmp->dead = tmp->errors = 0;
 			interfaces = tmp;
 		}
@@ -206,27 +205,18 @@ discover_interfaces(int state)
 	/* Now cycle through all the interfaces we found, looking for
 	   hardware addresses. */
 
-	/* If we're just trying to get a list of interfaces that we might
-	   be able to configure, we can quit now. */
-	if (state == DISCOVER_UNCONFIGURED)
-		return;
-
 	/* Weed out the interfaces that did not have IP addresses. */
 	last = NULL;
 	for (tmp = interfaces; tmp; tmp = next) {
 		next = tmp->next;
-		if ((tmp->flags & INTERFACE_AUTOMATIC) &&
-		    state == DISCOVER_REQUESTED)
-			tmp->flags &=
-			    ~(INTERFACE_AUTOMATIC | INTERFACE_REQUESTED);
-		if (!tmp->ifp || !(tmp->flags & INTERFACE_REQUESTED)) {
-			if ((tmp->flags & INTERFACE_REQUESTED) != ir)
-				error("%s: not found", tmp->name);
+		if (!tmp->ifp) {
+			if (ir)
+				warning("%s: not found", tmp->name);
+			/* Remove tmp from the list of interfaces. */	
 			if (!last)
 				interfaces = interfaces->next;
 			else
 				last->next = tmp->next;
-
 			continue;
 		}
 		last = tmp;
@@ -234,7 +224,7 @@ discover_interfaces(int state)
 		memcpy(&foo, &tmp->ifp->ifr_addr, sizeof tmp->ifp->ifr_addr);
 
 		/* We must have a subnet declaration for each interface. */
-		if (!tmp->shared_network && (state == DISCOVER_SERVER)) {
+		if (!tmp->shared_network) {
 			warning("No subnet declaration for %s (%s).",
 			    tmp->name, inet_ntoa(foo.sin_addr));
 			warning("Please write a subnet declaration in your %s",
@@ -262,6 +252,9 @@ discover_interfaces(int state)
 		if_register_receive(tmp);
 		if_register_send(tmp);
 	}
+
+	if (interfaces == NULL)
+		error("No interfaces to listen on.");
 
 	/* Now register all the remaining interfaces as protocols. */
 	for (tmp = interfaces; tmp; tmp = tmp->next)
