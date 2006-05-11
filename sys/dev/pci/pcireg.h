@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.28 2005/12/31 04:11:40 dlg Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.29 2006/05/11 23:29:12 brad Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -184,6 +184,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MULTIMEDIA_VIDEO		0x00
 #define	PCI_SUBCLASS_MULTIMEDIA_AUDIO		0x01
 #define	PCI_SUBCLASS_MULTIMEDIA_TELEPHONY	0x02
+#define	PCI_SUBCLASS_MULTIMEDIA_HDAUDIO		0x03
 #define	PCI_SUBCLASS_MULTIMEDIA_MISC		0x80
 
 /* 0x05 memory subclasses */
