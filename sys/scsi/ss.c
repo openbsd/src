@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.53 2005/12/17 20:29:16 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.54 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -92,14 +92,14 @@ struct quirkdata {
 	 */
 	int	(*vendor_unique_sw)(struct ss_softc *, struct scan_io *,
 					struct scsi_set_window *, void *);
-	/* 
+	/*
 	 * If the scanner requires use of GET_BUFFER_STATUS before READ
 	 * it can be called from ss_minphys().
 	 */
 	void	(*special_minphys)(struct ss_softc *, struct buf *);
 
 	/*
-	 * 
+	 *
 	 */
 	int	(*compute_sizes)(void);
 };
@@ -243,7 +243,7 @@ const struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 	 }},
 #endif
 };
-       
+
 
 int ssmatch(struct device *, void *, void *);
 void ssattach(struct device *, struct device *, void *);

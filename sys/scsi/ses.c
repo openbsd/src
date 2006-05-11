@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.36 2006/05/09 05:51:54 deraadt Exp $ */
+/*	$OpenBSD: ses.c,v 1.37 2006/05/11 00:45:59 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -75,7 +75,7 @@ struct ses_softc {
 		SES_ENC_STD,
 		SES_ENC_DELL
 	}			sc_enctype;
-	
+
 	u_char			*sc_buf;
 	ssize_t			sc_buflen;
 
@@ -278,8 +278,8 @@ ses_read_config(struct ses_softc *sc)
 #endif
 
 	if (cold)
- 		flags |= SCSI_AUTOCONF;
- 
+		flags |= SCSI_AUTOCONF;
+
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), buf, SES_BUFLEN, 2, 3000, NULL, flags) != 0) {
 		free(buf, M_DEVBUF);
@@ -592,7 +592,7 @@ ses_write_config(struct ses_softc *sc)
 
 	if (cold)
 		flags |= SCSI_AUTOCONF;
- 
+
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_buf, sc->sc_buflen, 2, 3000, NULL, flags) != 0)
 		return (1);

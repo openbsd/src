@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.34 2005/09/11 17:34:27 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.35 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -333,7 +333,7 @@ struct scsi_mode_header_big {
 	u_int8_t medium_type;
 	u_int8_t dev_spec;
 	u_int8_t reserved;
-#define LONGLBA	0x01	
+#define LONGLBA	0x01
 	u_int8_t reserved2;
 	u_int8_t blk_desc_len[2];
 };
@@ -388,7 +388,7 @@ struct scsi_status_iu_header {
 #define SCSI_OK			0x00
 #define SCSI_CHECK		0x02
 #define SCSI_COND_MET		0x04
-#define SCSI_BUSY		0x08	
+#define SCSI_BUSY		0x08
 #define SCSI_INTERM		0x10
 #define SCSI_INTERM_COND_MET	0x14
 #define SCSI_RESV_CONFLICT	0x18

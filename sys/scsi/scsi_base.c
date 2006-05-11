@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.101 2006/05/07 20:50:21 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.102 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ char   *scsi_decode_sense(struct scsi_sense_data *, int);
 #define	DECODE_SENSE_KEY	1
 #define	DECODE_ASC_ASCQ		2
 #define DECODE_SKSV		3
- 
+
 struct pool scsi_xfer_pool;
 
 /*
@@ -147,7 +147,7 @@ scsi_get_xs(sc_link, flags)
  * return the struct to the free pool and credit the device with it
  * If another process is waiting for an xs, do a wakeup, let it proceed
  */
-void 
+void
 scsi_free_xs(xs)
 	struct scsi_xfer *xs;
 {
@@ -259,7 +259,7 @@ scsi_size(sc_link, flags, blksize)
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
 		    error));
 		return (0);
-	}	
+	}
 
 	max_addr = _4btol(rdcap.addr);
 	if (blksize)
@@ -275,14 +275,14 @@ scsi_size(sc_link, flags, blksize)
 		printf("only the first 4,294,967,295 sectors will be used.\n");
 		return (0xffffffffUL);
 	}
-	
+
 	return (max_addr + 1);
 }
 
 /*
  * Get scsi driver to send a "are you ready?" command
  */
-int 
+int
 scsi_test_unit_ready(sc_link, retries, flags)
 	struct scsi_link *sc_link;
 	int retries;
@@ -458,7 +458,7 @@ scsi_mode_sense_page(hdr, page_len)
 
 	if ((total_length - header_length) < page_len)
 		return (NULL);
-		
+
 	return ((u_char *)hdr + header_length);
 }
 
@@ -953,7 +953,7 @@ scsi_delay(xs, seconds)
 		/* Invalid combination! */
 		return (EIO);
 	}
-	
+
 	while (seconds-- > 0)
 		if (tsleep(&lbolt, PRIBIO, "scbusy", 0))
 			/* Signal == abort xs. */

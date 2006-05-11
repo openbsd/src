@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.50 2005/09/11 17:34:27 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.51 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ st_loadquirks(st)
 /*
  * open the device.
  */
-int 
+int
 stopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
@@ -953,7 +953,7 @@ done:
  * continues to be drained.
  * ststart() is called at splbio
  */
-void 
+void
 ststart(v)
 	void *v;
 {
@@ -1441,10 +1441,10 @@ st_mode_sense(st, flags)
 	if (error != 0) {
 		free(data, M_TEMP);
 		return (error);
-	}	
+	}
 
 	/* It is valid for no page0 to be available. */
-	
+
 	if (big)
 		dev_spec = data->hdr_big.dev_spec;
 	else
@@ -1454,7 +1454,7 @@ st_mode_sense(st, flags)
 		st->flags |= ST_READONLY;
 	else
 		st->flags &= ~ST_READONLY;
-	
+
 	st->numblks = block_count;
 	st->media_blksize = block_size;
 	st->media_density = density;
@@ -1467,7 +1467,7 @@ st_mode_sense(st, flags)
 	    ("%sbuffered\n", dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 
 	sc_link->flags |= SDEV_MEDIA_LOADED;
-	
+
 	free(data, M_TEMP);
 	return (0);
 }
@@ -1494,7 +1494,7 @@ st_mode_select(st, flags)
 	if (outbuf == NULL) {
 		free(inbuf, M_TEMP);
 		return (ENOMEM);
-	}		
+	}
 
 	/*
 	 * This quirk deals with drives that have only one valid mode and think
@@ -1514,7 +1514,7 @@ st_mode_select(st, flags)
 		free(inbuf, M_TEMP);
 		free(outbuf, M_TEMP);
 		return (0);
-	}	
+	}
 
 	bzero(outbuf, sizeof(*outbuf));
 	bzero(&general, sizeof(general));
@@ -1580,7 +1580,7 @@ st_mode_select(st, flags)
 	    sizeof(general));
 
 	error = scsi_mode_select_big(st->sc_link, 0, &outbuf->hdr_big,
-	    flags, ST_CTL_TIME); 
+	    flags, ST_CTL_TIME);
 	free(inbuf, M_TEMP);
 	free(outbuf, M_TEMP);
 	return (error);

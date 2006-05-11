@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.9 2005/08/23 23:44:28 dlg Exp $ */
+/* $OpenBSD: ses.h,v 1.10 2006/05/11 00:45:59 krw Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -96,7 +96,7 @@ struct ses_enc_desc {
 	u_int8_t	vendor_id[8];
 	u_int8_t	prod_id[16];
 	u_int8_t	prod_rev[4];
- 	u_int8_t	vendor[0];
+	u_int8_t	vendor[0];
 } __packed;
 
 /* type descriptor header */
@@ -201,7 +201,7 @@ struct ses_status {
 #define SES_S_COOL_IDENT(d)	((d)->f1 & (1<<6)) /* identify */
 #define SES_S_COOL_SPEED_MASK	0x03
 #define SES_S_COOL_SPEED(d)	((d)->f2 + \
-    ((u_int16_t)((d)->f2 & SES_S_COOL_SPEED_MASK) << 8)) 
+    ((u_int16_t)((d)->f2 & SES_S_COOL_SPEED_MASK) << 8))
 #define SES_S_COOL_FACTOR	10
 #define SES_S_COOL_CODE(d)	((d)->f3 & 0x7) /* actual speed code */
 #define SES_S_COOL_C_STOPPED	0x0 /* stopped */

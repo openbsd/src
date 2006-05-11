@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.63 2005/12/02 16:24:08 marco Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.64 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct scsi_xfer;
 struct scsi_link;
 
 /*
- * Temporary hack 
+ * Temporary hack
  */
 extern int scsi_autoconf;
 

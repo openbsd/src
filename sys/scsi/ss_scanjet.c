@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.28 2006/01/17 20:22:38 miod Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.29 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ scanjet_attach(ss, sa)
 	/* now install special handlers */
 	ss->special = scanjet_special;
 
-	/* 
+	/*
 	 * fill in the rest of the scan_io struct by calling
 	 * set_window and compute_sizes routines
 	 */
@@ -274,7 +274,7 @@ scanjet_trigger_scanner(ss)
 		uprintf("%s: trigger_scanner failed\n", ss->sc_dev.dv_xname);
 		return (error);
 	}
-	
+
 	return (0);
 }
 
@@ -319,7 +319,7 @@ scanjet_read(ss, bp)
 /*
  * Do a synchronous write.  Used to send control messages.
  */
-int 
+int
 scanjet_ctl_write(ss, buf, size, flags)
 	struct ss_softc *ss;
 	char *buf;
@@ -374,7 +374,7 @@ static void show_es(char *es)
 }
 #endif
 
-/* 
+/*
  * simulate SCSI_SET_WINDOW for ScanJets
  */
 int
@@ -398,9 +398,9 @@ scanjet_set_window(ss, flags)
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;
-		/* 
+		/*
 		 * Use line art mode (\033*aoT) and make image data be
-		 * min-is-white ala PBM (\033*a0I).		
+		 * min-is-white ala PBM (\033*a0I).
 		 */
 		strlcat(escape_codes, "\033*a0T\033*a0I", sizeof escape_codes);
 		break;
@@ -414,7 +414,7 @@ scanjet_set_window(ss, flags)
 		break;
 	case SIM_GRAYSCALE:
 		ss->sio.scan_bits_per_pixel = 8;
-		/* 
+		/*
 		 * Use grayscale mode (\033*a4T) and make image data be
 		 * min-is-black ala PGM (\033*a1I)
 		 */
@@ -436,7 +436,7 @@ scanjet_set_window(ss, flags)
 	 * If the escape sequence has been truncated at this point, appending
 	 * the next sequence will also cause truncation, and this time we pay
 	 * attention.
-	 */ 
+	 */
 	len = strlen(escape_codes);
 	n = snprintf(escape_codes + len, sizeof escape_codes - len,
 	    "\033*a%dG\033*a%dL\033*a%dK",

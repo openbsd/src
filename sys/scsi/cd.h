@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.10 2006/03/05 14:58:10 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.11 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct scsi_read_cd_capacity {
 struct scsi_load_unload {
 	u_int8_t opcode;
 	u_int8_t reserved;
-#define	IMMED	0x1	
+#define	IMMED	0x1
 	u_int8_t reserved2[2];
 	u_int8_t options;
 #define START	0x1

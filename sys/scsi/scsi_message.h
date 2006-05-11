@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_message.h,v 1.7 2004/10/17 05:36:43 krw Exp $	*/
+/*	$OpenBSD: scsi_message.h,v 1.8 2006/05/11 00:45:59 krw Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -27,12 +27,12 @@
 #define MSG_ORDERED_Q_TAG	0x22 /* O/O */
 #define MSG_IGN_WIDE_RESIDUE	0x23 /* O/O */
 
-/* Identify message */		     /* M/M */	
-#define MSG_IDENTIFYFLAG	0x80 
-#define MSG_IDENTIFY_DISCFLAG	0x40 
+/* Identify message */		     /* M/M */
+#define MSG_IDENTIFYFLAG	0x80
+#define MSG_IDENTIFY_DISCFLAG	0x40
 #define MSG_IDENTIFY(lun, disc)	(((disc) ? 0xc0 : MSG_IDENTIFYFLAG) | (lun))
 #define MSG_ISIDENTIFY(m)	((m) & MSG_IDENTIFYFLAG)
-#define MSG_IDENTIFY_LUNMASK	0x01F 
+#define MSG_IDENTIFY_LUNMASK	0x01F
 
 /* Extended messages (opcode and length) */
 #define MSG_EXT_SDTR		0x01
@@ -43,7 +43,7 @@
 
 #define MSG_EXT_WDTR_BUS_8_BIT  0x00
 #define MSG_EXT_WDTR_BUS_16_BIT 0x01
-#define MSG_EXT_WDTR_BUS_32_BIT 0x02 
+#define MSG_EXT_WDTR_BUS_32_BIT 0x02
 
 #define MSG_EXT_PPR		0x04
 #define MSG_EXT_PPR_LEN		0x06

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.12 2005/06/05 21:03:50 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.13 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -573,6 +573,6 @@ mustek_compute_sizes(ss)
 
 	ss->sio.scan_lines =
 	    (ss->sio.scan_height * ss->sio.scan_y_resolution) / 1200;
-	ss->sio.scan_window_size = ss->sio.scan_lines * 
+	ss->sio.scan_window_size = ss->sio.scan_lines *
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
 }

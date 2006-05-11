@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.104 2006/03/15 20:20:42 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.105 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -671,7 +671,7 @@ sdstart(v)
 		 *  fit in a "small" cdb, use it.
 		 */
 		if (!(sc_link->flags & SDEV_ATAPI) &&
-		    !(sc_link->quirks & SDEV_ONLYBIG) && 
+		    !(sc_link->quirks & SDEV_ONLYBIG) &&
 		    ((blkno & 0x1fffff) == blkno) &&
 		    ((nblks & 0xff) == nblks)) {
 			/*
@@ -1376,12 +1376,12 @@ sd_get_parms(sd, dp, flags)
 					blksize = _2btol(flex->bytes_s);
 				if (dp->disksize == 0)
 					dp->disksize = heads * cyls * sectors;
-			}	
+			}
 		}
 		break;
 	}
 
-validate:	
+validate:
 	if (buf)
 		free(buf, M_TEMP);
 

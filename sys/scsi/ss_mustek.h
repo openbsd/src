@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.h,v 1.6 2005/06/05 21:03:50 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.h,v 1.7 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: ss_mustek.h,v 1.2 1996/03/19 03:08:37 mycroft Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ struct mustek_get_status_cmd {
 
 struct mustek_get_status_data {
 #define MUSTEK_READY 0
-#define MUSTEK_BUSY  -1	
+#define MUSTEK_BUSY  -1
 	u_int8_t ready_busy;		/* 0 = ready */
 	u_int8_t bytes_per_line[2];	/* LSB */
 	u_int8_t lines[3];		/* LSB */

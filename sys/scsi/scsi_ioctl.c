@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.23 2006/04/20 20:31:13 miod Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.24 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -30,11 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Contributed by HD Associates (hd@world.std.com).
  * Copyright (c) 1992, 1993 HD Associates
  *
- * Berkeley style copyright.  
+ * Berkeley style copyright.
  */
 
 #include <sys/types.h>
@@ -345,7 +345,7 @@ scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
-		sca->type = (sc_link->flags & SDEV_ATAPI) 
+		sca->type = (sc_link->flags & SDEV_ATAPI)
 			? TYPE_ATAPI : TYPE_SCSI;
 		sca->scbus = sc_link->scsibus;
 		sca->target = sc_link->target;
@@ -358,7 +358,7 @@ scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 	case SCIOCCOMMAND:
 		if (scsi_readsafe_cmd[((scsireq_t *)addr)->cmd[0]])
 			break;
-		/* FALLTHROUGH */	
+		/* FALLTHROUGH */
 	case SCIOCDEBUG:
 	case SCIOCREPROBE:
 	case OSCIOCREPROBE:
@@ -366,9 +366,9 @@ scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 		if ((flag & FWRITE) == 0)
 			return (EPERM);
 		break;
-	default:	
+	default:
 		if (sc_link->adapter->ioctl)
-			return ((sc_link->adapter->ioctl)(sc_link, cmd, addr, 
+			return ((sc_link->adapter->ioctl)(sc_link, cmd, addr,
 			    flag, p));
 		else
 			return (ENOTTY);
@@ -390,7 +390,7 @@ scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 			si->si_uio.uio_resid = screq->datalen;
 			si->si_uio.uio_offset = 0;
 			si->si_uio.uio_segflg = UIO_USERSPACE;
-			si->si_uio.uio_rw = 
+			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
 			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,

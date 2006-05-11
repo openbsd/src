@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.8 2005/04/06 02:51:13 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.9 2006/05/11 00:45:59 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Dummy driver for a device we can't identify.
  * Originally by Julian Elischer (julian@tfs.com)
  */
@@ -130,7 +130,7 @@ ukopen(dev, flag, fmt, p)
 	uk = uk_cd.cd_devs[unit];
 	if (!uk)
 		return ENXIO;
-		
+
 	sc_link = uk->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
