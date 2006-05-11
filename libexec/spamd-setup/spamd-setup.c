@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.26 2006/03/26 23:54:00 kjell Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.27 2006/05/11 15:37:21 dhill Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -76,9 +76,9 @@ int		  fileget(char *);
 int		  open_file(char *, char *);
 char		 *fix_quoted_colons(char *);
 void		  do_message(FILE *, char *);
-struct bl	 *add_blacklist(struct bl *, int *, int *, gzFile, int);
+struct bl	 *add_blacklist(struct bl *, size_t *, size_t *, gzFile, int);
 int		  cmpbl(const void *, const void *);
-struct cidr	**collapse_blacklist(struct bl *, int);
+struct cidr	**collapse_blacklist(struct bl *, size_t);
 int		  configure_spamd(u_short, char *, char *, struct cidr **);
 int		  configure_pf(struct cidr **);
 int		  getlist(char **, char *, struct blacklist *, struct blacklist *);
@@ -341,7 +341,8 @@ open_file(char *method, char *file)
 char *
 fix_quoted_colons(char *buf)
 {
-	int nbs = 0, i = 0, j = 0, in = 0;
+	int in = 0;
+	size_t nbs, i, j = 0;
 	char *newbuf, last, *tmp;
 
 	nbs = strlen(buf) + 128;
@@ -382,7 +383,8 @@ fix_quoted_colons(char *buf)
 void
 do_message(FILE *sdc, char *msg)
 {
-	int i, n, bu = 0, bs = 0, len;
+	size_t i, bs = 0, bu = 0, len;
+	ssize_t n;	
 	char *buf = NULL, last, *tmp;
 	int fd;
 
@@ -439,7 +441,7 @@ do_message(FILE *sdc, char *msg)
 			break;
 		case '"':
 			fputc('\\', sdc);
-			/* fall through */
+			/* FALLTHROUGH */
 		default:
 			fputc(buf[i], sdc);
 			last = '\0';
@@ -452,7 +454,7 @@ do_message(FILE *sdc, char *msg)
 
 /* retrieve a list from fd. add to blacklist bl */
 struct bl *
-add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
+add_blacklist(struct bl *bl, size_t *blc, size_t *bls, gzFile gzf, int white)
 {
 	int i, n, start, bu = 0, bs = 0, serrno = 0;
 	char *buf = NULL, *tmp;
@@ -530,7 +532,7 @@ cmpbl(const void *a, const void *b)
  * printable form to pfctl or spamd.
  */
 struct cidr **
-collapse_blacklist(struct bl *bl, int blc)
+collapse_blacklist(struct bl *bl, size_t blc)
 {
 	int bs = 0, ws = 0, state=0, cli, i;
 	u_int32_t bstart = 0;
@@ -668,7 +670,8 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
     struct blacklist *blistnew)
 {
 	char *buf, *method, *file, *message;
-	int blc, bls, fd, black = 0;
+	int fd, black = 0;
+	size_t blc, bls;
 	struct bl *bl = NULL;
 	gzFile gzf;
 
@@ -745,7 +748,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		blist->bls = bls;
 	}
 	if (debug)
-		fprintf(stderr, "%slist %s %d entries\n",
+		fprintf(stderr, "%slist %s %zu entries\n",
 		    black ? "black" : "white", name, blc / 2);
 	return (black);
 }
