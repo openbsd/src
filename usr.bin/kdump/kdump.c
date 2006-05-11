@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.31 2006/05/11 06:49:00 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.32 2006/05/11 06:52:04 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.31 2006/05/11 06:49:00 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: kdump.c,v 1.32 2006/05/11 06:52:04 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -517,11 +517,11 @@ ktremul(char *cp, int len)
 static void
 ktrgenio(struct ktr_genio *ktr, int len)
 {
-	char *dp = (char *)ktr + sizeof (struct ktr_genio);
+	unsigned char *dp = (unsigned char *)ktr + sizeof (struct ktr_genio);
 	int i, j, datalen = len - sizeof (struct ktr_genio);
 	static int screenwidth = 0;
 	int col = 0, width, bpl;
-	char visbuf[5], *cp, c;
+	unsigned char visbuf[5], *cp, c;
 
 	if (screenwidth == 0) {
 		struct winsize ws;
