@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.1.1.1 2006/05/09 18:23:59 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.2 2006/05/11 19:50:30 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -58,14 +58,17 @@
  * AV400 VME mappings
  */
 
+#define	AV400_VME32_BASE	0x00000000
 #define	AV400_VME32_START1	0x10000000
 #define	AV400_VME32_END1	0x7fffffff
 #define	AV400_VME32_START2	0x90000000
 #define	AV400_VME32_END2	0xfdffffff
-#define	AV400_VME24_START	0xfe000000
-#define	AV400_VME24_END		0xfeffffff
-#define	AV400_VME16_START	0xffff0000
-#define	AV400_VME16_END		0xffffffff
+#define	AV400_VME24_BASE	0xfe000000
+#define	AV400_VME24_START	0x00000000
+#define	AV400_VME24_END		0x00ffffff
+#define	AV400_VME16_BASE	0xffff0000
+#define	AV400_VME16_START	0x00000000
+#define	AV400_VME16_END		0x0000ffff
 
 #define	AV400_ISVMEA32(addr) \
 	(((addr) >= AV400_VME32_START1 && (addr) < AV400_VME32_END1 + 1U) || \
