@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.43 2006/04/25 15:49:35 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.44 2006/05/11 20:12:50 hshoexer Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -3138,7 +3138,7 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
      */
     ip_outer->ip_tos = ip->ip_tos;
     if (ntohs(ip->ip_off) & IP_DF)
-	ip_outer->ip_off |= IP_DF;
+	ip_outer->ip_off |= htons(IP_DF);
     pimhdr = (struct pim_encap_pimhdr *)((caddr_t)ip_outer
 					 + sizeof(pim_encap_iphdr));
     *pimhdr = pim_encap_pimhdr;
