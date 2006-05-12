@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma_bounce.c,v 1.5 2002/06/25 21:33:21 miod Exp $	*/
+/*	$OpenBSD: isadma_bounce.c,v 1.6 2006/05/12 20:48:19 brad Exp $	*/
 /* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -262,6 +262,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	/* ...so isadma_bounce_dmamap_sync() knows we're bouncing */
 	cookie->id_flags |= ID_IS_BOUNCING;
+	map->_dm_window = t;
 	return (0);
 }
 
@@ -333,6 +334,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 
 	/* ...so isadma_bounce_dmamap_sync() knows we're bouncing */
 	cookie->id_flags |= ID_IS_BOUNCING;
+	map->_dm_window = t;
 	return (0);
 }
 

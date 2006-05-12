@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.7 2006/04/13 14:41:08 brad Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.8 2006/05/12 20:48:19 brad Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -216,6 +216,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/* Give the next window a chance. */
 		error = bus_dmamap_load(t->_next_window, map, buf, buflen,
@@ -265,6 +266,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg;
+		map->_dm_window = t;
 	} else {
 		/* Need to back out what we've done so far. */
 		map->dm_nsegs = seg - 1;
@@ -342,4 +344,5 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 	/* Mark the mapping invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 }

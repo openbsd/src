@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.17 2006/04/13 14:41:08 brad Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.18 2006/05/12 20:48:19 brad Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -106,6 +106,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 
 	*dmamp = map;
 	return (0);
@@ -268,6 +269,7 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/*
 		 * Give the next window a chance.
@@ -319,6 +321,7 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/*
 		 * Give the next window a chance.
@@ -382,6 +385,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_window = t;
 	} else if (t->_next_window != NULL) {
 		/*
 		 * Give the next window a chance.
@@ -423,6 +427,7 @@ _bus_dmamap_unload(t, map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 }
 
 /*
