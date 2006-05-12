@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.18 2006/05/12 16:37:59 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.1 2006/05/12 23:20:52 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -79,7 +79,6 @@ obj_list_ty library_list =
 prog_list_ty prog_list =
     TAILQ_HEAD_INITIALIZER(prog_list);
 
-
 struct objarray_list {
 	struct elf_object *obj;
 	struct symcache_noflag *symcache;
@@ -94,13 +93,12 @@ struct objarray_list {
 	TAILQ_HEAD(, objlist) inst_list;
 } *objarray;
 
-int objarray_cnt;
-int objarray_sz;
+int	objarray_cnt;
+int	objarray_sz;
 
-int write_txtbusy_file(char *name);
-void copy_oldsymcache(int objidx, void *prebind_data);
-void elf_load_existing_prebind(struct elf_object *object, int fd);
-
+int	write_txtbusy_file(char *name);
+void	copy_oldsymcache(int objidx, void *prebind_data);
+void	elf_load_existing_prebind(struct elf_object *object, int fd);
 
 struct elf_object * elf_load_object(void *pexe, const char *name);
 void elf_free_object(struct elf_object *object);
@@ -134,7 +132,6 @@ void add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj, int idx,
 
 void elf_dump_footer(struct prebind_footer *footer);
 
-
 void elf_fixup_prog_load(int fd, struct prebind_footer *footer,
     struct elf_object *object);
 void elf_clear_prog_load(int fd, struct elf_object *object);
@@ -153,50 +150,22 @@ int elf_find_symbol_obj(elf_object_t *object, const char *name,
     unsigned long hash, int flags, const Elf_Sym **this,
     const Elf_Sym **weak_sym, elf_object_t **weak_object);
 
-int verbose;	 /* how verbose to be when operating */
-int merge_mode;	 /* merge (do not overwrite) existing prebind library info */
-
 struct elf_object *load_object;
 
-struct elf_object * load_file(const char *filename, int lib);
+struct elf_object *load_file(const char *filename, int lib);
 int elf_check_note(void *buf, Elf_Phdr *phdr);
 void load_file_or_dir(char *name);
 void load_dir(char *name);
 void load_exe(char *name);
-void __dead usage();
 
 int
-main(int argc, char **argv)
+prebind(char **argv)
 {
 	int i;
-	int ch;
-	extern int optind;
-
-	/* GETOPT */
-	while ((ch = getopt(argc, argv, "mv")) != -1) {
-		switch (ch) {
-		case 'm':
-			merge_mode = 1;
-			break;
-		case 'v':
-			verbose++;
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 0) {
-		usage();
-		/* NOTREACHED */
-	}
 
 	elf_init_objarray();
 
-	for (i = 0; i < argc; i++)
+	for (i = 0; argv[i]; i++)
 		load_file_or_dir(argv[i]);
 
 	if (verbose > 4) {
@@ -206,16 +175,7 @@ main(int argc, char **argv)
 	elf_sum_reloc();
 
 	printf("total new blocks %lld\n", prebind_blocks);
-
-	return 0;
-}
-
-void __dead
-usage()
-{
-	extern char *__progname;
-	printf("%s [-mv] {programlist}\n", __progname);
-	exit(1);
+	return (0);
 }
 
 /*
@@ -260,9 +220,9 @@ load_file_or_dir(char *name)
 void
 load_dir(char *name)
 {
-	DIR *dirp;
 	struct dirent *dp;
 	struct stat sb;
+	DIR *dirp;
 	char *buf;
 
 	dirp = opendir(name);
@@ -361,15 +321,14 @@ load_exe(char *name)
 struct elf_object *
 load_file(const char *filename, int objtype)
 {
+	struct elf_object *obj = NULL;
+	int fd = -1, i, note_found;
 	struct stat ifstat;
+	void *buf = NULL;
 	Elf_Ehdr *ehdr;
 	Elf_Shdr *shdr;
 	Elf_Phdr *phdr;
 	char *pexe;
-	struct elf_object *obj = NULL;
-	void *buf = NULL;
-	int fd = -1, i;
-	int note_found;
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1) {
@@ -431,7 +390,6 @@ load_file(const char *filename, int objtype)
 	    (ehdr->e_type != ET_DYN))
 		goto done;
 
-
 	pexe = buf;
 	if (ehdr->e_shstrndx == 0)
 		goto done;
@@ -440,7 +398,6 @@ load_file(const char *filename, int objtype)
 	    (ehdr->e_shstrndx * ehdr->e_shentsize));
 
 	shstrtab = (char *)(pexe + shdr->sh_offset);
-
 
 	obj = elf_load_object(pexe, filename);
 
@@ -461,8 +418,8 @@ load_file(const char *filename, int objtype)
 		dump_info(obj);
 #endif
 	}
-	if ((objtype == OBJTYPE_LIB || objtype == OBJTYPE_DLO)
-	    && merge_mode == 1) {
+	if ((objtype == OBJTYPE_LIB || objtype == OBJTYPE_DLO) &&
+	    merge == 1) {
 		/*
 		 * for libraries and dynamic linker, check if old prebind
 		 * info exists and load it if we are in merge mode
@@ -495,7 +452,6 @@ elf_check_note(void *buf, Elf_Phdr *phdr)
 	pint = (u_int *)((char *)buf + address);
 	osname = (char *)buf + address + sizeof(*pint) * 3;
 
-
 	if (pint[0] == 8 /* OpenBSD\0 */ &&
 	    pint[1] == 4 /* ??? */ &&
 	    pint[2] == 1 /* type_osversion */ &&
@@ -508,7 +464,6 @@ elf_check_note(void *buf, Elf_Phdr *phdr)
 struct elf_object *
 elf_load_object(void *pexe, const char *name)
 {
-	int i;
 	struct elf_object *object;
 	Elf_Dyn *dynp = NULL, *odynp;
 	Elf_Ehdr *ehdr;
@@ -517,7 +472,7 @@ elf_load_object(void *pexe, const char *name)
         const char	*strt;
 	Elf_Addr loff;
 	Elf_Word *needed_list;
-	int needed_cnt = 0;
+	int needed_cnt = 0, i;
 
 	object = calloc(1, sizeof (struct elf_object));
 	if (object == NULL) {
@@ -698,10 +653,7 @@ elf_load_object(void *pexe, const char *name)
 				exit(10);
 			}
 		}
-
-
-	object->dyn.needed = (Elf_Addr)needed_list;
-
+		object->dyn.needed = (Elf_Addr)needed_list;
 	}
 
 #ifdef DEBUG1
@@ -716,7 +668,7 @@ elf_load_object(void *pexe, const char *name)
 void
 elf_free_object(struct elf_object *object)
 {
-	free (object->load_name);
+	free(object->load_name);
 	if (object->dyn.hash != NULL)
 		free(object->dyn.hash);
 	free((void *)object->dyn.strtab);
@@ -788,7 +740,6 @@ load_obj_needed(struct elf_object *object)
 	return 0;
 }
 
-
 /*
  * allocate a proglist entry for a new binary
  * so that it is available for libraries to reference
@@ -838,7 +789,6 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 	for (i = 0; i < nsyms; i++) {
 		if (scache[i].obj == NULL)
 			continue;
-
 
 		if (tcache[i].obj != NULL) {
 			lib_prog_ref = (obj != prog && scache[i].obj == prog);
@@ -895,7 +845,7 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 
 	if (flags)
 		tcache = objarray[obj->dyn.null].pltsymcache;
-	else 
+	else
 		tcache = objarray[obj->dyn.null].symcache;
 
 	if (tcache[idx].obj != NULL) {
@@ -961,7 +911,6 @@ add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 
 	pl = objarray[prog->dyn.null].proglist;
 
-
 	libidx = -1;
 	for (i = 0; i < pl->nobj; i++) {
 		if (pl->libmap[0][i] == obj->dyn.null) {
@@ -973,7 +922,6 @@ add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 		printf("unable to find object\n");
 		return;
 	}
-
 
 	/* have to check for duplicate patches */
 	for (i = 0; i < pl->fixupcnt[libidx]; i++) {
@@ -987,10 +935,9 @@ add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 		    ref_obj->dyn.strtab + ref_sym->st_name,
 		    pl->fixupcnt[libidx]);
 
-
 	if (pl->fixupcntalloc[libidx] < pl->fixupcnt[libidx] + 1) {
-		pl->fixupcntalloc[libidx]  += 16;
-		pl->fixup[libidx] = realloc(pl->fixup[libidx], 
+		pl->fixupcntalloc[libidx] += 16;
+		pl->fixup[libidx] = realloc(pl->fixup[libidx],
 		    sizeof (struct fixup) * pl->fixupcntalloc[libidx]);
 		if (pl->fixup[libidx] == NULL)  {
 			printf("realloc fixup, out of memory\n");
@@ -1254,7 +1201,6 @@ elf_reloc(struct elf_object *object)
 	struct symcache_noflag *symcache;
 	struct symcache_noflag *pltsymcache;
 
-
         numrel = object->dyn.relsz / sizeof(Elf_Rel);
 #ifdef DEBUG1
 	printf("rel relocations: %d\n", numrel);
@@ -1424,7 +1370,7 @@ elf_add_object_curbin_list(struct elf_object *object)
 	ol = xmalloc(sizeof (struct objlist));
 	ol->object = object;
 	TAILQ_INSERT_TAIL(&(curbin->curbin_list), ol, list);
-	if ( load_object == NULL)
+	if (load_object == NULL)
 		load_object = object;
 	ol->load_prog = load_object;
 
@@ -1688,7 +1634,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 		}
 
 		pl->libmapcnt[i] = objarray[idxtolib[i]].numlibs;
-		pl->libmap[i] = xcalloc( objarray[idxtolib[i]].numlibs,
+		pl->libmap[i] = xcalloc(objarray[idxtolib[i]].numlibs,
 		    sizeof(u_int32_t));
 		if (i != 0) {
 			for (j = 0; j < objarray[idxtolib[i]].numlibs; j++) {
@@ -1710,11 +1656,11 @@ elf_prep_bin_prebind(struct proglist *pl)
 	free(nameidx);
 	free(nametab);
 	free(libmap);
-
 	return ret;
 }
 
 int64_t prebind_blocks;
+
 int
 elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
     char *nametab, int nametablen, int numlibs,
@@ -1723,16 +1669,13 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
     struct symcachetab *symcachetab, int symcache_cnt,
     struct symcachetab *pltsymcachetab, int pltsymcache_cnt)
 {
-	off_t base_offset;
+	u_int32_t footer_offset, *maptab = NULL;
+	u_int32_t next_start, *fixuptab = NULL;
 	struct prebind_footer footer;
 	struct stat ifstat;
-	int fd;
-	u_int32_t next_start;
-	u_int32_t *fixuptab = NULL;
-	u_int32_t *maptab = NULL;
-	u_int32_t footer_offset;
-	int i;
+	off_t base_offset;
 	size_t len;
+	int fd, i;
 
 	/* open the file */
 	fd = open(object->load_name, O_RDWR);
@@ -1798,20 +1741,19 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 		next_start += 2*nfixup * sizeof(u_int32_t);
 		footer.fixupcnt_idx = next_start;
 		next_start += 2*nfixup * sizeof(u_int32_t);
-		fixuptab = xcalloc( 2*nfixup, sizeof(u_int32_t));
-		for ( i = 0; i < 2*nfixup; i++) {
+		fixuptab = xcalloc(2*nfixup, sizeof(u_int32_t));
+		for (i = 0; i < 2*nfixup; i++) {
 			fixuptab[i] = next_start;
 			next_start += fixupcnt[i] * sizeof(struct fixup);
 		}
 		footer.libmap_idx = next_start;
 		next_start += 2*nfixup * sizeof(u_int32_t);
-		maptab = xcalloc( 2*nfixup, sizeof(u_int32_t));
+		maptab = xcalloc(2*nfixup, sizeof(u_int32_t));
 		maptab[0] = next_start;
 		for (i = 1; i < nfixup; i++) {
 			maptab[i] = next_start;
 			next_start += libmapcnt[i] * sizeof(u_int32_t);
 		}
-
 
 	}
 	footer.nametab_idx = next_start;
@@ -2153,15 +2095,11 @@ copy_oldsymcache(int objidx, void *prebind_map)
 	struct elf_object *tobj;
 	struct symcache_noflag *tcache;
 	struct symcachetab *symcache;
-	int i, j;
-	int found;
-	char *c;
+	int i, j, found, *idxtolib;
+	char *c, *nametab;
 	u_int32_t offset;
 	u_int32_t *poffset;
 	struct nameidx *nameidx;
-	char *nametab;
-	int *idxtolib;
-
 
 	object = objarray[objidx].obj;
 
@@ -2223,31 +2161,4 @@ copy_oldsymcache(int objidx, void *prebind_map)
 done:
 	free (idxtolib);
 	/* munmap(prebind_map, size);*/
-}
-
-void *
-xmalloc(size_t size)
-{
-	void *ret;
-
-	ret = malloc(size);
-	if (ret == NULL) {
-		printf("unable to allocate memory\n");
-		exit (20);
-	}
-	return ret;
-}
-
-void *
-xcalloc(size_t nmemb, size_t size)
-{
-	void *ret;
-
-	ret = calloc(nmemb, size);
-	if (ret == NULL) {
-		printf("unable to allocate memory\n");
-		abort();
-		exit (20);
-	}
-	return ret;
 }

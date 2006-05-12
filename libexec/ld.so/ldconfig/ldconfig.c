@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.19 2006/05/11 22:03:22 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.20 2006/05/12 23:20:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -58,12 +58,12 @@
 
 extern char			*__progname;
 
-static int			verbose;
+int				verbose;
 static int			delete;
 static int			doprebind;
 static int			nostd;
 static int			justread;
-static int			merge;
+int				merge;
 static int			rescan;
 static int			unconfig;
 
@@ -91,7 +91,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-DmRrsUv] [path ...]\n", __progname);
+	    "usage: %s [-DmPrRsUv] [path ...]\n", __progname);
 	exit(1);
 }
 
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 	int i, c;
 	int rval = 0;
 
-	while ((c = getopt(argc, argv, "DRmrsUv")) != -1) {
+	while ((c = getopt(argc, argv, "DmPrRsUv")) != -1) {
 		switch (c) {
 		case 'R':
 			rescan = 1;
@@ -124,8 +124,8 @@ main(int argc, char *argv[])
 		case 'D':
 			delete = 1;
 			break;
-//		case 'P':
-//			doprebind = 1;
+		case 'P':
+			doprebind = 1;
 			break;
 		default:
 			usage();
@@ -138,12 +138,6 @@ main(int argc, char *argv[])
 
 	dir_list = xmalloc(1);
 	*dir_list = '\0';
-
-	if (delete) {
-		if (rescan || unconfig || merge || justread || nostd || doprebind)
-			errx(1, "cannot mix -U -R -r -s -P options with -D");
-		exit (prebind_delete(&argv[optind], verbose));
-	}
 
 	if (justread || merge || rescan) {
 		if ((rval = readhints()) != 0)
@@ -158,11 +152,15 @@ main(int argc, char *argv[])
 	} else if (!nostd)
 		std_search_path();
 
-//	if (doprebind) {
-//		if (rescan || unconfig || justread || nostd)
-//			errx(1, "cannot mix other options with -P");
-//		exit (prebind(&argv[optind], verbose, merge));
-//	}
+	if (delete) {
+		if (rescan || unconfig || merge || justread || nostd || doprebind)
+			errx(1, "cannot mix -U -R -r -s -P options with -D");
+		exit (prebind_delete(&argv[optind]));
+	} else if (doprebind) {
+		if (rescan || unconfig || justread || nostd)
+			errx(1, "cannot mix other options with -P");
+		exit (prebind(&argv[optind]));
+	}
 
 	if (unconfig) {
 		if (optind < argc)

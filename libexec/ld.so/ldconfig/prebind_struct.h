@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_struct.h,v 1.5 2006/05/12 16:37:59 drahn Exp $ */
+/* $OpenBSD: prebind_struct.h,v 1.1 2006/05/12 23:20:53 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -76,10 +76,12 @@ void elf_fixup_prog_load(int fd, struct prebind_footer *footer,
 void elf_dump_footer(struct prebind_footer *footer);
 
 extern int verbose;
+extern int merge;
+
 extern int64_t prebind_blocks;
 extern struct elf_object *load_object;
 struct elf_object *elf_lookup_object(const char *name);
-struct elf_object * load_file(const char *filename, int objtype);
+struct elf_object *load_file(const char *filename, int objtype);
 
 void elf_load_existing_prebind(struct elf_object *object, int fd);
 

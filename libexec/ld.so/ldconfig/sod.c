@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.1 2006/05/03 16:10:52 drahn Exp $	*/
+/*	$OpenBSD: sod.c,v 1.1 2006/05/12 23:20:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg

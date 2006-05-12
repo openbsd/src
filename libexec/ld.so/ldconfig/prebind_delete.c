@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.2 2006/05/11 22:19:23 deraadt Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.3 2006/05/12 23:20:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/exec_elf.h>
+#include <elf_abi.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -30,18 +31,20 @@
 
 #define BUFSZ (256 * 1024)
 
-int	strip_prebind(char *file, int verbose);
-int	prebind_remove_load_section(int fd, char *name, int verbose);
+int	strip_prebind(char *file);
+int	prebind_remove_load_section(int fd, char *name);
 int	prebind_newfile(int fd, char *name, struct stat *st,
-	    struct prebind_footer *footer, int verbose);
+	    struct prebind_footer *footer);
+
+extern	int verbose;
 
 int
-prebind_delete(char **argv, int verbose)
+prebind_delete(char **argv)
 {
 	extern char *__progname;
 
 	while (*argv) {
-		if (strip_prebind(*argv, verbose) == -1)
+		if (strip_prebind(*argv) == -1)
 			return (1);
 		argv++;
 	}
@@ -49,7 +52,7 @@ prebind_delete(char **argv, int verbose)
 }
 
 int
-strip_prebind(char *file, int verbose)
+strip_prebind(char *file)
 {
 	struct prebind_footer footer;
 	extern char *__progname;
@@ -83,9 +86,9 @@ strip_prebind(char *file, int verbose)
 	}
 
 	if (rdonly) {
-		fd = prebind_newfile(fd, file, &st, &footer, verbose);
+		fd = prebind_newfile(fd, file, &st, &footer);
 	} else {
-		prebind_remove_load_section(fd, file, verbose);
+		prebind_remove_load_section(fd, file);
 		ftruncate(fd, footer.orig_size);
 	}
 
@@ -100,7 +103,7 @@ done:
 }
 
 int
-prebind_remove_load_section(int fd, char *name, int verbose)
+prebind_remove_load_section(int fd, char *name)
 {
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdr;
@@ -141,7 +144,7 @@ done:
 
 int
 prebind_newfile(int infd, char *name, struct stat *st,
-    struct prebind_footer *footer, int verbose)
+    struct prebind_footer *footer)
 {
 	struct timeval tv[2];
 	char *newname, *buf;
@@ -188,7 +191,7 @@ prebind_newfile(int infd, char *name, struct stat *st,
 	free(buf);
 
 	/* now back track, and delete the header */
-	if (prebind_remove_load_section(outfd, newname, verbose) == -1)
+	if (prebind_remove_load_section(outfd, newname) == -1)
 		goto fail;
 	if (ftruncate(outfd, footer->orig_size) == -1)
 		goto fail;
