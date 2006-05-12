@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.17 2004/11/21 17:01:39 grange Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.18 2006/05/12 20:24:39 brad Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,		},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,		},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	},
+	{ "hdaudio",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,		},
 	{ 0 },
 };
