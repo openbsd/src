@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_struct.h,v 1.3 2006/05/10 23:03:53 drahn Exp $ */
+/* $OpenBSD: prebind_struct.h,v 1.4 2006/05/12 15:12:42 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -34,6 +34,7 @@ struct proglist {
 	TAILQ_HEAD(, objlist) curbin_list;
 	struct fixup **fixup;
 	int *fixupcnt;
+	int *fixupcntalloc;
 	int nobj;
 	u_int32_t **libmap;
 	u_int32_t *libmapcnt;
@@ -54,7 +55,6 @@ void elf_print_curbin_list(struct proglist *bin);
 void elf_print_prog_list (prog_list_ty *prog_list);
 
 
-/* objarray */
 void elf_add_object_curbin_list(struct elf_object *object);
 
 void elf_copy_syms(struct symcache_noflag *tcache,
@@ -78,6 +78,11 @@ void elf_fixup_prog_load(int fd, struct prebind_footer *footer,
 void elf_dump_footer(struct prebind_footer *footer);
 
 extern int verbose;
+extern int64_t prebind_blocks;
+extern struct elf_object *load_object;
+struct elf_object *elf_lookup_object(const char *name);
+struct elf_object * load_file(const char *filename, int objtype);
+
 void elf_load_existing_prebind(struct elf_object *object, int fd);
 
 void *xmalloc(size_t);
