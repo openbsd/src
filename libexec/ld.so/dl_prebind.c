@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.7 2006/05/10 03:26:50 deraadt Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.8 2006/05/12 22:14:04 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -283,14 +283,14 @@ prebind_symcache(elf_object_t *object, int plt)
 			f = &(fixup[i]);
 #if 0
 			DL_DEB(("symidx %d: obj %d sym %d flags %x\n",
-			    f->sym, f->targobj_idx, f->sym_idx, f->flags));
+			    f->sym, f->obj_idx, f->sym_idx, f->flags));
 #endif
-			tobj = objarray[f->targobj_idx];
+			tobj = objarray[f->obj_idx];
 			sym = tobj->dyn.symtab + f->sym_idx;
 			str = tobj->dyn.strtab + sym->st_name;
 #ifdef DEBUG2
 			DL_DEB(("symidx %d: obj %d %s sym %d %s flags %d %x\n",
-			    f->sym, f->targobj_idx, tobj->load_name,
+			    f->sym, f->obj_idx, tobj->load_name,
 			    f->sym_idx, str, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt,
 			    object->load_addr + sym->st_value));
 #endif
@@ -318,15 +318,15 @@ prebind_symcache(elf_object_t *object, int plt)
 			f = &(fixup[i]);
 #if 0
 			DL_DEB(("symidx %d: obj %d sym %d flags %x\n",
-			    f->sym, f->targobj_idx, f->sym_idx,
+			    f->sym, f->obj_idx, f->sym_idx,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt));
 #endif
-			tobj = objarray[f->targobj_idx];
+			tobj = objarray[f->obj_idx];
 			sym = tobj->dyn.symtab + f->sym_idx;
 			str = tobj->dyn.strtab + sym->st_name;
 #ifdef DEBUG2
 			DL_DEB(("symidx %d: obj %d %s sym %d %s flags %d %x\n",
-			    f->sym, f->targobj_idx, tobj->load_name,
+			    f->sym, f->obj_idx, tobj->load_name,
 			    f->sym_idx, str, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt,
 			    object->load_addr + sym->st_value));
 #endif
@@ -544,8 +544,8 @@ prebind_dump_fixup(struct fixup *fixup, u_int32_t numfixups)
 	for (i = 0; i < numfixups; i++) {
 		f = &(fixup[i]);
 
-		_dl_printf("idx %d targobj %d sym idx %d\n",
-		    f->sym, f->targobj_idx, f->sym_idx);
+		_dl_printf("idx %d obj %d sym idx %d\n",
+		    f->sym, f->obj_idx, f->sym_idx);
 
 	}
 }
