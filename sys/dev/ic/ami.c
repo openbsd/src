@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.155 2006/04/26 22:41:08 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.156 2006/05/12 20:51:25 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -47,6 +47,8 @@
 
 #include "bio.h"
 
+/* #define	AMI_DEBUG */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -70,8 +72,6 @@
 #include <dev/biovar.h>
 #include <sys/sensors.h>
 #endif
-
-/*#define	AMI_DEBUG */
 
 #ifdef AMI_DEBUG
 #define	AMI_DPRINTF(m,a)	do { if (ami_debug & (m)) printf a; } while (0)
@@ -2095,11 +2095,18 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 				    sc->sc_rawsoftcs[ch].sc_procdev,
 				    sizeof(bd->bd_procdev));
 
-				if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
-				    && p->apd[i].adp_type == 0)
+				if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE)
 					bd->bd_status = BIOC_SDHOTSPARE;
 				else
 					bd->bd_status = BIOC_SDUNUSED;
+
+#ifdef AMI_DEBUG
+				if (p->apd[i].adp_type != 0)
+					printf("invalid disk type: %d %d "
+					    "%x inquiry type: %x\n",
+					    ch, tg, p->apd[i].adp_type,
+					    inqbuf.device);
+#endif /* AMI_DEBUG */
 
 				error = 0;
 				goto bail;
@@ -2346,9 +2353,8 @@ int ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
 int
 ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 {
-	int func;
-	struct ami_big_diskarray *p;
 	struct scsi_inquiry_data inqbuf;
+	int func;
 	int off;
 
 	switch (bs->bs_status) {
@@ -2361,20 +2367,11 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 		break;
 
 	case BIOC_SSHOTSPARE:
-		p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-		if (!p)
-			return (ENOMEM);
-
-		if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p))
-			goto bail;
-
 		off = bs->bs_channel * AMI_MAX_TARGET + bs->bs_target;
 
 		if (ami_drv_inq(sc, bs->bs_channel, bs->bs_target, 0,
 		    &inqbuf))
-			goto bail;
-
-		free(p, M_DEVBUF);
+			return (EINVAL);
 
 		func = AMI_STATE_SPARE;
 		break;
@@ -2390,11 +2387,6 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 		return (EINVAL);
 
 	return (0);
-
-bail:
-	free(p, M_DEVBUF);
-
-	return (EINVAL);
 }
 
 void
