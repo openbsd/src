@@ -1,4 +1,4 @@
-/* $OpenBSD: etc.c,v 1.6 2006/05/12 23:20:52 deraadt Exp $ */
+/* $OpenBSD: etc.c,v 1.7 2006/05/12 23:35:16 deraadt Exp $ */
 
 /* Public Domain */
 
@@ -44,15 +44,12 @@ xrealloc(void *ptr, size_t size)
 void *
 xcalloc(size_t nmemb, size_t size)
 {
-	void *ret;
+	void *ptr;
 
-	ret = calloc(nmemb, size);
-	if (ret == NULL) {
-		printf("unable to allocate memory\n");
-		abort();
-		exit (20);
-	}
-	return ret;
+	ptr = calloc(nmemb, size);
+	if (ptr == NULL)
+		err(1, OOM_MSG);
+	return ptr;
 }
 
 char *
