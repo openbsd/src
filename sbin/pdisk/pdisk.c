@@ -30,7 +30,6 @@
 // for printf()
 #include <stdio.h>
 
-#include <getopt.h>
 // for malloc() & free()
 #include <stdlib.h>
 #include <unistd.h>
@@ -334,25 +333,8 @@ int
 get_options(int argc, char **argv)
 {
     int c;
-    static struct option long_options[] =
-    {
-	// name		has_arg			&flag	val
-	{"help",	no_argument,		0,	'h'},
-	{"list",	optional_argument,	0,	kListOption},
-	{"version",	no_argument,		0,	'v'},
-	{"debug",	no_argument,		0,	'd'},
-	{"readonly",	no_argument,		0,	'r'},
-	{"abbr",	no_argument,		0,	'a'},
-	{"fname",	no_argument,		0,	'f'},
-	{"logical",	no_argument,		0,	kLogicalOption},
-	{"interactive",	no_argument,		0,	'i'},
-	{"compute_size", no_argument,		0,	'c'},
-	{0, 0, 0, 0}
-    };
-    int option_index = 0;
-    int getopt_error;		/* getopt choked */
-    extern int optind;		/* next argv index */
-    extern char *optarg;	/* pointer to argument */
+    extern int optind;
+    extern char *optarg;
     int flag = 0;
 
     lflag = LFLAG_DEFAULT;
@@ -365,30 +347,13 @@ get_options(int argc, char **argv)
     pflag = PFLAG_DEFAULT;
     interactive = INTERACT_DEFAULT;
     cflag = CFLAG_DEFAULT;
-    fflag = FFLAG_DEFAULT;
 
-    optind = 0;	// reset option scanner logic
-    while ((c = getopt_long(argc, argv, "hlvdraLicf", long_options,
-	    &option_index)) >= 0)
-	{
-	if (c == '?') {
-	    getopt_error = 1;
-	    c = optopt;
-	} else {
-	    getopt_error = 0;
-	}
+    optind = 1; // reset option scanner logic
+    while ((c = getopt(argc, argv, "hlvdric")) != -1) {
 	switch (c) {
-	case kLongOption:
-	    // option_index would be used here
-	    break;
 	case 'h':
 	    hflag = (HFLAG_DEFAULT)?0:1;
 	    break;
-	case kListOption:
-	    if (optarg != NULL) {
-		lfile = optarg;
-	    }
-	    // fall through
 	case 'l':
 	    lflag = (LFLAG_DEFAULT)?0:1;
 	    break;
@@ -404,20 +369,15 @@ get_options(int argc, char **argv)
 	case 'r':
 	    rflag = (RFLAG_DEFAULT)?0:1;
 	    break;
-	case 'f':
-	    fflag = (FFLAG_DEFAULT)?0:1;
-	    break;
 	case 'i':
 	    interactive = (INTERACT_DEFAULT)?0:1;
 	    break;
 	case 'a':
 	    aflag = (AFLAG_DEFAULT)?0:1;
 	    break;
-	case 'L':
 	case kLogicalOption:
 	    pflag = (PFLAG_DEFAULT)?0:1;
 	    break;
-	case kBadOption:
 	default:
 	    flag = 1;
 	    break;
