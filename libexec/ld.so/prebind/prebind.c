@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.17 2006/05/12 15:12:42 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.18 2006/05/12 16:37:59 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -98,7 +98,7 @@ int objarray_cnt;
 int objarray_sz;
 
 int write_txtbusy_file(char *name);
-void copy_oldsymcache(int objidx);
+void copy_oldsymcache(int objidx, void *prebind_data);
 void elf_load_existing_prebind(struct elf_object *object, int fd);
 
 
@@ -116,6 +116,7 @@ int elf_match_file(struct sod *sodp, char *name, int namelen);
 void elf_init_objarray(void);
 void elf_add_object(struct elf_object *object, int objtype);
 void elf_print_objarray(void);
+void elf_reloc(struct elf_object *object);
 
 struct elf_object * elf_lookup_object(const char *name);
 struct elf_object * elf_lookup_object_devino(dev_t dev, ino_t inode,
@@ -438,17 +439,6 @@ load_file(const char *filename, int objtype)
 	shdr = (Elf_Shdr *)(pexe + ehdr->e_shoff +
 	    (ehdr->e_shstrndx * ehdr->e_shentsize));
 
-
-#if 0
-printf("e_ehsize %x\n", ehdr->e_ehsize);
-printf("e_phoff %x\n", ehdr->e_phoff);
-printf("e_shoff %x\n", ehdr->e_shoff);
-printf("e_phentsize %x\n", ehdr->e_phentsize);
-printf("e_phnum %x\n", ehdr->e_phnum);
-printf("e_shentsize %x\n", ehdr->e_shentsize);
-printf("e_shstrndx %x\n\n", ehdr->e_shstrndx);
-#endif
-
 	shstrtab = (char *)(pexe + shdr->sh_offset);
 
 
@@ -607,10 +597,6 @@ elf_load_object(void *pexe, const char *name)
 		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
 	if (object->Dyn.info[DT_REL])
 		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_REL]);
-#if 0
-	if (object->Dyn.info[DT_SONAME])
-		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_SONAME]);
-#endif
 	if (object->Dyn.info[DT_JMPREL])
 		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_JMPREL]);
 
@@ -869,13 +855,6 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 					    scache[i].obj->load_name);
 				}
 
-#if 0
-				if (tcache[i].obj != badobj)
-					printf("%s: %s conflict\n",
-					    obj->load_name,
-					    scache[i].sym->st_name +
-					    scache[i].obj->dyn.strtab);
-#endif
 				/*
 				 * if one of the symbol entries
 				 * happens to be a self reference
@@ -898,26 +877,10 @@ elf_copy_syms(struct symcache_noflag *tcache, struct symcache_noflag *scache,
 			}
 		} else {
 			if (scache[i].obj != prog) {
-#if 0
-				printf("%s: %s copying\n",
-				    obj->load_name,
-				    scache[i].sym->st_name +
-				    scache[i].obj->dyn.strtab);
-#endif
 				tcache[i].obj = scache[i].obj;
 				tcache[i].sym = scache[i].sym;
 			}
 		}
-
-#if 0
-		printf("symidx %d: obj %d sym %ld %s\n",
-		    i, scache[i].obj->dyn.null,
-		    scache[i].sym -
-		    scache[i].obj->dyn.symtab,
-		    scache[i].sym->st_name +
-		    scache[i].obj->dyn.strtab
-		    );
-#endif
 	}
 }
 
@@ -929,11 +892,6 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 	struct elf_object *prog;
 
 	prog = TAILQ_FIRST(&(curbin->curbin_list))->object;
-
-#if 0
-	printf("inserting symbol obj %s %d to %s\n",
-		obj->load_name, idx, ref_obj->load_name);
-#endif
 
 	if (flags)
 		tcache = objarray[obj->dyn.null].pltsymcache;
@@ -955,13 +913,6 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 				    ref_obj->load_name);
 			}
 
-#if 0
-			if (tcache[idx].obj != badobj)
-				printf("%s: %s conflict\n",
-				    obj->load_name,
-				    ref_sym->st_name +
-				    ref_obj->dyn.strtab);
-#endif
 			/*
 			 * if one of the symbol entries
 			 * happens to be a self reference
@@ -992,12 +943,6 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 		}
 	} else {
 		if (ref_obj != prog) {
-#if 0
-			printf("%s: %s copying\n",
-			    obj->load_name,
-			    ref_sym->st_name +
-			    ref_obj->dyn.strtab);
-#endif
 			tcache[idx].obj = ref_obj;
 			tcache[idx].sym = ref_sym;
 		} else {
@@ -1005,16 +950,6 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 			ref_sym, flags);
 		}
 	}
-
-#if 0
-	printf("symidx %d: obj %d sym %ld %s\n",
-	    i, ref_obj->dyn.null,
-	    ref_sym -
-	    ref_obj->dyn.symtab,
-	    ref_sym->st_name +
-	    ref_obj->dyn.strtab
-	    );
-#endif
 }
 
 void
@@ -1077,10 +1012,6 @@ add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj, int idx,
 
 	TAILQ_FOREACH(ol, &(objarray[obj->dyn.null].inst_list), inst_list) {
 		if (ol->load_prog == prog) {
-#if 0
-			printf("obj %s has references to %s (skipping)\n",
-			  obj->load_name, prog->load_name);
-#endif
 			continue;
 		}
 		/* process here */
@@ -1168,9 +1099,6 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 		found = elf_find_symbol_obj(ol->object, name, h, flags, &sym,
 		    &weak_sym, &weak_obj);
 		if (found) {
-#if 0
-			printf("found sym %s in obj %s\n", name, ol->object->load_name);
-#endif
 			ref_object = ol->object;
 			break;
 		}
@@ -1183,17 +1111,8 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 		found = 1;
 		ref_object = weak_obj;
 		ref_sym = weak_sym;
-#if 0
-		printf("found sym %s in obj %s %d\n", name,
-		     weak_obj->load_name, flags);
-#endif
 	}
 	if (found == 1) {
-#if 0
-		printf("object %s sym %s, ref_object %s flags %d\n",
-		    object->load_name, name,
-		    ref_object->load_name, flags);
-#endif
 		idx = ELF_R_SYM(rel->r_info);
 		if (flags & SYM_PLT) {
 			pltsymcache[idx].obj = ref_object;
@@ -1202,12 +1121,6 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 			symcache[idx].obj = ref_object;
 			symcache[idx].sym = ref_sym;
 		}
-
-#if 0
-		/* direct insert into global symcache */
-		insert_sym_objcache(object, idx, ref_object, ref_sym,
-		    flags & SYM_PLT);
-#endif
 	} else {
 		printf("symbol not found %s\n", name);
 	}
@@ -1250,9 +1163,6 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 		found = elf_find_symbol_obj(ol->object, name, h, flags, &sym,
 		    &weak_sym, &weak_obj);
 		if (found) {
-#if 0
-			printf("found sym %s in obj %s\n", name, ol->object->load_name);
-#endif
 			ref_object = ol->object;
 			break;
 		}
@@ -1265,18 +1175,8 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 		found = 1;
 		ref_object = weak_obj;
 		ref_sym = weak_sym;
-#if 0
-		printf("found weak sym %s in obj %s\n", name, weak_obj->load_name);
-#endif
 	}
 	if (found == 1) {
-#if 0
-		printf("object %s sym %s, ref_object %s %s %d %d\n",
-		    object->load_name, name,
-		    ref_object->load_name,
-		    (flags & SYM_PLT) ? "plt" : "got", type, RELOC_JMP_SLOT);
-
-#endif
 		idx = ELF_R_SYM(rela->r_info);
 		if (flags & SYM_PLT) {
 			pltsymcache[idx].obj = ref_object;
@@ -1285,11 +1185,6 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 			symcache[idx].obj = ref_object;
 			symcache[idx].sym = ref_sym;
 		}
-#if 0
-		/* direct insert into global symcache */
-		insert_sym_objcache(object, idx, ref_object, ref_sym,
-		    flags & SYM_PLT);
-#endif
 	} else {
 		printf("symbol not found %s\n", name);
 	}
@@ -1348,15 +1243,18 @@ elf_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
 }
 
 void
-elf_reloc(struct elf_object *object, struct symcache_noflag *symcache,
-    struct symcache_noflag *pltsymcache)
+elf_reloc(struct elf_object *object)
 {
-	int numrel;
-	int numrela;
-	int i;
 	const Elf_Sym *sym;
 	Elf_Rel *rel;
 	Elf_RelA *rela;
+	int numrel;
+	int numrela;
+	int i;
+	struct symcache_noflag *symcache;
+	struct symcache_noflag *pltsymcache;
+
+
         numrel = object->dyn.relsz / sizeof(Elf_Rel);
 #ifdef DEBUG1
 	printf("rel relocations: %d\n", numrel);
@@ -1515,7 +1413,7 @@ elf_resolve_curbin(void)
 		numobj++;
 	}
 	TAILQ_FOREACH(ol, &(curbin->curbin_list), list) {
-		elf_reloc(ol->object, ol->cache, ol->pltcache);
+		elf_reloc(ol->object);
 	}
 }
 
@@ -1530,11 +1428,8 @@ elf_add_object_curbin_list(struct elf_object *object)
 		load_object = object;
 	ol->load_prog = load_object;
 
-#if 0
-	printf("adding object %s %d with prog %s\n", object->load_name,
-	    object->dyn.null, load_object->load_name);
-#endif
-	TAILQ_INSERT_TAIL(&(objarray[object->dyn.null].inst_list), ol, inst_list);
+	TAILQ_INSERT_TAIL(&(objarray[object->dyn.null].inst_list), ol,
+	    inst_list);
 }
 void
 elf_init_objarray(void)
@@ -1546,100 +1441,12 @@ elf_init_objarray(void)
 void
 elf_sum_reloc()
 {
-	int i, numobjs;
+	int numobjs;
 	int err = 0;
 	struct objlist *ol;
 	struct proglist *pl;
-#if 0
-	struct symcache_noflag *lcache;
-	struct symcache_noflag *lpcache;
-#endif
-
-	for (i = 0; i < objarray_cnt; i++) {
-#if 0
-		printf("%3d: %d obj %s\n", i, objarray[i].obj->dyn.null,
-		    objarray[i].obj->load_name);
-#endif
-		if (TAILQ_EMPTY(&objarray[i].inst_list)) {
-			printf("skipping %s\n", objarray[i].obj->load_name);
-			continue;
-		}
-#if 0 /* early alloc */
-		lcache = objarray[i].symcache;
-		lpcache = objarray[i].pltsymcache;
-		objarray[i].symcache = xcalloc(sizeof(struct symcache_noflag),
-		    objarray[i].obj->nchains);
-		objarray[i].pltsymcache = xcalloc(sizeof(
-		    struct symcache_noflag), objarray[i].obj->nchains);
-
-		if (objarray[i].oprebind_data != NULL) {
-			copy_oldsymcache(i);
-			continue;
-		}
-#endif
-
-#if 0
-		TAILQ_FOREACH(ol, &(objarray[i].inst_list), inst_list) {
-
-#if 0
-			printf("\tprog %d %s\n", ol->load_prog->dyn.null,
-			    ol->load_prog->load_name);
-			printf("cache: %p %p %s\n",
-			     objarray[i].symcache, ol->cache,
-			     ol->object->load_name );
-#endif
-
-			elf_copy_syms(objarray[i].symcache,
-			    ol->cache,
-			    ol->object,
-			    ol->load_prog,
-			    ol->object->nchains);
-
-			elf_copy_syms(objarray[i].pltsymcache,
-			    ol->pltcache,
-			    ol->object,
-			    ol->load_prog,
-			    ol->object->nchains);
-		}
-#endif
-
-/* check results */
-#if 0
-		{
-			int j;
-			for (j = 0; j < objarray[i].obj->nchains; j++) {
-				if (lcache[j].obj !=
-				    objarray[i].symcache[j].obj ||
-				    lcache[j].sym !=
-				    objarray[i].symcache[j].sym) 
-					printf("symbol mismatch l obj %s idx %d"
-					    "newobj %s oldobj %s\n",
-					    ol->object->load_name, j, 
-					    lcache[j].obj->load_name,
-				    	    objarray[i].symcache[j].obj->load_name);
-
-				if (lpcache[j].obj !=
-				    objarray[i].pltsymcache[j].obj ||
-				    lpcache[j].sym !=
-				    objarray[i].pltsymcache[j].sym) 
-					printf("symbol mismatch p obj %s idx %d"
-					    "newobj %s oldobj %s\n",
-					    ol->object->load_name, j, 
-					    lpcache[j].obj->load_name,
-				    	    objarray[i].pltsymcache[j].obj->load_name);
-
-			}
-			free(lcache);
-			free(lpcache);
-		}
-#endif
-	}
-
 
 	TAILQ_FOREACH(ol, &library_list, list) {
-#if 0
-		printf("processing lib %s\n", ol->object->load_name);
-#endif
 		err += elf_prep_lib_prebind(ol->object);
 	}
 	TAILQ_FOREACH(pl, &prog_list, list) {
@@ -1648,25 +1455,11 @@ elf_sum_reloc()
 			numobjs++;
 		}
 		pl->nobj = numobjs;
-#if 0
-		pl->libmap = xcalloc(numobjs, sizeof (u_int32_t *));
-		pl->fixup = xcalloc(2 * numobjs, sizeof (struct fixup *));
-		pl->fixupcnt = xcalloc(2 * numobjs, sizeof (int));
+	}
 
-		numobjs = 0;
-		TAILQ_FOREACH(ol, &(pl->curbin_list), list) {
-			elf_calc_fixups(pl, ol, numobjs);
-			numobjs++;
-		}
-#endif
-	}
-	TAILQ_FOREACH(pl, &prog_list, list) {
+	TAILQ_FOREACH(pl, &prog_list, list)
 		err += elf_prep_bin_prebind(pl);
-#if 0
-		printf("processing binary %s\n",
-		    TAILQ_FIRST(&pl->curbin_list)->object->load_name);
-#endif
-	}
+
 	if (err != 0)
 		printf("failures %d\n", err);
 }
@@ -1709,7 +1502,6 @@ elf_prep_lib_prebind(struct elf_object *object)
 			continue;
 		libmap[ref_obj] = numlibs;
 		idxtolib[numlibs] = ref_obj;
-		printf("lib %s obj %d refobj %d\n", object->load_name, numlibs, ref_obj);
 		nametablen += strlen(symcache[i].obj->load_name) + 1;
 		numlibs++;
 	}
@@ -1735,9 +1527,6 @@ elf_prep_lib_prebind(struct elf_object *object)
 			continue;
 		libmap[ref_obj] = numlibs;
 		idxtolib[numlibs] = ref_obj;
-#if 0
-		printf("lib %s obj %d refobj %d\n", object->load_name, numlibs, ref_obj);
-#endif
 		nametablen += strlen(pltsymcache[i].obj->load_name) + 1;
 		numlibs++;
 	}
@@ -1770,11 +1559,6 @@ elf_prep_lib_prebind(struct elf_object *object)
 		    objarray[idxtolib[i]].obj->load_name,
 		    nametablen - nameidx[i].name);
 	}
-#if 0
-	for (i = 0; i < numlibs; i++) {
-		printf("\tlib %s\n", &nametab[nameidx[i].name]);
-	}
-#endif
 
 	/* skip writing lib if using old prebind data */
 	if (objarray[object->dyn.null].oprebind_data == NULL)
@@ -1830,9 +1614,6 @@ elf_prep_bin_prebind(struct proglist *pl)
 		nametablen += strlen(ol->object->load_name) + 1;
 		libmap[ref_obj] = numlibs;
 		idxtolib[numlibs] = ref_obj;
-#if 1
-	printf("obj :%d, idx %d %s\n", numlibs, ref_obj, ol->object->load_name);
-#endif
 		numlibs++;
 	}
 
@@ -1842,9 +1623,6 @@ elf_prep_bin_prebind(struct proglist *pl)
 		if (symcache[i].sym != NULL)
 			symcache_cnt++;
 	}
-#if 0
-	printf("program has symcache size %d\n", symcache_cnt);
-#endif
 
 	symcachetab = xcalloc(symcache_cnt , sizeof(struct symcachetab));
 
@@ -1896,11 +1674,6 @@ elf_prep_bin_prebind(struct proglist *pl)
 		    objarray[idxtolib[i]].obj->load_name,
 		    nametablen - nameidx[i].name);
 	}
-#if 1
-	for (i = 0; i < numlibs; i++) {
-		printf("\tlib %s\n", &nametab[nameidx[i].name]);
-	}
-#endif
 	pl->libmapcnt = xcalloc(numlibs, sizeof(u_int32_t));
 
 	/* have to do both got and plt fixups */
@@ -1918,20 +1691,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 		pl->libmap[i] = xcalloc( objarray[idxtolib[i]].numlibs,
 		    sizeof(u_int32_t));
 		if (i != 0) {
-#if 0
-			printf("prog %s: lib %d numlibs %d\n",
-			    objarray[idxtolib[i]].obj->load_name, i,
-			    objarray[idxtolib[i]].numlibs);
-#endif
 			for (j = 0; j < objarray[idxtolib[i]].numlibs; j++) {
-#if 1
-				printf("prog %s: lib %s %d: %d %d %d\n",
-				    object->load_name,
-				    objarray[idxtolib[i]].obj->load_name, j,
-				    pl->libmap[i][j],
-				    objarray[idxtolib[i]].idxtolib[j],
-				    libmap[objarray[idxtolib[i]].idxtolib[j]] );
-#endif
 				pl->libmap[i][j] =
 				    libmap[objarray[idxtolib[i]].idxtolib[j]];
 			}
@@ -2226,123 +1986,6 @@ done:
 	munmap(buf, 8192);
 }
 
-#if 0
-void
-elf_calc_fixups(struct proglist *pl, struct objlist *ol, int libidx)
-{
-	int i;
-	int numfixups;
-	int objidx;
-	int prog;
-	struct symcache_noflag *symcache;
-	struct elf_object *prog_obj;
-	struct elf_object *interp;
-
-	objidx = ol->object->dyn.null,
-
-	prog_obj = TAILQ_FIRST(&(pl->curbin_list))->object;
-	interp = prog_obj->load_object;
-	prog = prog_obj->dyn.null;
-	if (verbose > 3)
-		printf("fixup GOT %s\n", ol->object->load_name);
-	symcache = objarray[objidx].symcache;
-
-	numfixups = 0;
-	for (i = 0; i < ol->object->nchains; i++) {
-		/*
-		 * this assumes if the same object is found, the same
-		 * symbol will be found as well
-		 */
-		if (ol->cache[i].obj != symcache[i].obj &&
-		    symcache[i].obj != interp) {
-			numfixups++;
-		}
-	}
-	pl->fixup[2*libidx] = xcalloc(numfixups, sizeof (struct fixup));
-
-	numfixups = 0;
-	for (i = 0; i < ol->object->nchains; i++) {
-		/*
-		 * this assumes if the same object is found, the same
-		 * symbol will be found as well
-		 */
-		if (ol->cache[i].obj != NULL &&
-		    ol->cache[i].obj != symcache[i].obj) {
-			struct fixup *f = &(pl->fixup[2*libidx][numfixups]);
-			f->sym = i;
-			f->obj_idx = ol->cache[i].obj->dyn.null;
-			f->sym_idx = ol->cache[i].sym -
-			    ol->cache[i].obj->dyn.symtab;
-			if (verbose > 3) {
-				printf("obj %d idx %d targobj %d, sym idx %d\n",
-				    i,
-				    f->sym, f->obj_idx, f->sym_idx);
-			}
-
-			numfixups++;
-		}
-	}
-	pl->fixupcnt[2*libidx] = numfixups;
-#if 0
-	printf("prog %s obj %s had %d got fixups\n", prog_obj->load_name,
-	    ol->object->load_name, numfixups);
-#endif
-
-	if (verbose > 3)
-		printf("fixup PLT %s\n", ol->object->load_name);
-	/* now PLT */
-
-	symcache = objarray[objidx].pltsymcache;
-
-	numfixups = 0;
-	for (i = 0; i < ol->object->nchains; i++) {
-		/*
-		 * this assumes if the same object is found, the same
-		 * symbol will be found as well
-		 */
-		if (ol->pltcache[i].obj != symcache[i].obj) {
-			numfixups++;
-		}
-	}
-	pl->fixup[2*libidx+1] = xcalloc(numfixups, sizeof (struct fixup));
-
-	numfixups = 0;
-	for (i = 0; i < ol->object->nchains; i++) {
-		/*
-		 * this assumes if the same object is found, the same
-		 * symbol will be found as well
-		 */
-		if (ol->pltcache[i].obj != symcache[i].obj) {
-			struct fixup *f = &(pl->fixup[2*libidx+1][numfixups]);
-			f->sym = i;
-			f->obj_idx = ol->pltcache[i].obj->dyn.null;
-			f->sym_idx = ol->pltcache[i].sym -
-			    ol->pltcache[i].obj->dyn.symtab;
-			if (verbose > 3) {
-				printf("obj %d idx %d targobj %d, sym idx %d\n",
-				    i,
-				    f->sym, f->obj_idx, f->sym_idx);
-			}
-
-			numfixups++;
-		}
-	}
-	pl->fixupcnt[2*libidx+1] = numfixups;
-
-	pl->libmap[libidx] = xcalloc( objarray[objidx].numlibs,
-	    sizeof(u_int32_t));
-
-	for (i = 0; i < objarray[objidx].numlibs; i++) {
-		pl->libmap[libidx][i] = objarray[objidx].idxtolib[i];
-	}
-#if 0
-	printf("prog %s obj %s had %d plt fixups\n", prog_obj->load_name,
-	    ol->object->load_name, numfixups);
-#endif
-
-}
-#endif
-
 void
 elf_add_object(struct elf_object *object, int objtype)
 {
@@ -2363,27 +2006,17 @@ elf_add_object(struct elf_object *object, int objtype)
 			exit(20);
 		}
 	}
-#if 0
-	printf("adding object %d %s\n", objarray_cnt, object->load_name);
-#endif
 	object->dyn.null = objarray_cnt; /* Major abuse, I know */
 	TAILQ_INIT(&(objarray[objarray_cnt].inst_list));
 	objarray[objarray_cnt].obj = object;
 	objarray[objarray_cnt].id0 = arc4random();
 	objarray[objarray_cnt].id1 = arc4random();
-#if 1 /* early alloc */
+
 	objarray[objarray_cnt].symcache = xcalloc(
 	    sizeof(struct symcache_noflag), object->nchains);
 	objarray[objarray_cnt].pltsymcache = xcalloc(
 	    sizeof(struct symcache_noflag), object->nchains);
 
-#if 0
-	if (objarray[i].oprebind_data != NULL) {
-		copy_oldsymcache(i);
-		continue;
-	}
-#endif
-#endif
 	objarray[objarray_cnt].oprebind_data = NULL;
 	objarray[objarray_cnt].proglist = NULL;
 	objarray[objarray_cnt].numlibs = 0;
@@ -2433,32 +2066,6 @@ elf_print_objarray(void)
 		TAILQ_FOREACH(ol, &(objarray[i].inst_list),
 		    inst_list) {
 			printf("\tprog %s\n", ol->load_prog->load_name);
-#if 0
-			printf("got cache:\n");
-			for (j = 0; j < ol->object->nchains; j++) {
-				if (ol->cache[j].obj != NULL) {
-					printf("symidx %d: obj %d sym %ld %s\n",
-					    j, (int)ol->cache[j].obj->dyn.null,
-					    ol->cache[j].sym -
-					    ol->cache[j].obj->dyn.symtab,
-					    ol->cache[j].sym->st_name +
-					    ol->cache[j].obj->dyn.strtab
-					    );
-				}
-			}
-			printf("plt cache:\n");
-			for (j = 0; j < ol->object->nchains; j++) {
-				if (ol->pltcache[j].obj != NULL) {
-					printf("symidx %d: obj %d sym %ld %s\n",
-					    j, (int)ol->pltcache[j].obj->dyn.null,
-					    ol->pltcache[j].sym -
-					    ol->pltcache[j].obj->dyn.symtab,
-					    ol->pltcache[j].sym->st_name +
-					    ol->pltcache[j].obj->dyn.strtab
-					    );
-				}
-			}
-#endif
 		}
 	}
 }
@@ -2535,11 +2142,12 @@ elf_load_existing_prebind(struct elf_object *object, int fd)
 	objarray[object->dyn.null].oprebind_data = prebind_data;
 	objarray[object->dyn.null].id0 = footer.id0;
 	objarray[object->dyn.null].id1 = footer.id1;
+
+	copy_oldsymcache(object->dyn.null, prebind_data);
 }
 void
-copy_oldsymcache(int objidx)
+copy_oldsymcache(int objidx, void *prebind_map)
 {
-	void *prebind_map;
 	struct prebind_footer *footer;
 	struct elf_object *object;
 	struct elf_object *tobj;
@@ -2556,8 +2164,6 @@ copy_oldsymcache(int objidx)
 
 
 	object = objarray[objidx].obj;
-
-	prebind_map = objarray[object->dyn.null].oprebind_data;
 
 	poffset = (u_int32_t *)prebind_map;
 	c = prebind_map;
