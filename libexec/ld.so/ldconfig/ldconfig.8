@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.19 2006/05/12 10:01:54 jmc Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.20 2006/05/12 23:23:20 deraadt Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl DmRrsUv
+.Op Fl DmPRrsUv
 .Op Ar path ...
 .Sh DESCRIPTION
 .Nm
@@ -99,6 +99,10 @@ the existing hints file.
 The default action is to build the hints file afresh.
 This option cannot be used with
 .Fl U .
+.It Fl P
+Create and append prebind information to all executables found in
+the specified directories, and also all shared libraries which are
+required by those executables.
 .It Fl R
 Rescan the previously configured directories.
 This opens the hints file and fetches the directory list from the header.
