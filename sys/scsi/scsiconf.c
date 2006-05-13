@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.101 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.102 2006/05/13 18:31:34 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -705,7 +705,7 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 		sc_link->flags |= SDEV_REMOVABLE;
 
 	sa.sa_sc_link = sc_link;
-	sa.sa_inqbuf = &inqbuf;
+	sa.sa_inqbuf = &sc_link->inqdata;
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)scsi, &sa)) == 0) {
 		scsibusprint(&sa, scsi->sc_dev.dv_xname);
