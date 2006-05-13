@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.42 2005/07/15 09:12:04 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.43 2006/05/13 15:56:41 deraadt Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -210,11 +210,10 @@ The expression would have a form of:
 .Pp
 .Dl [+-]<size>@<address>
 .Pp
-Meaning to add(+) or exempt(-) the specified by the
+Meaning to add(+) or exempt(-) the amount of memory specified by
 .Ar <size>
-amount of memory at the location specified by the
-.Ar <address>
-argument.
+at the location specified by
+.Ar <address> .
 Both size and base address could be specified as octal,
 decimal, or hexadecimal numbers, as accepted by the
 .Xr strtoul 3
