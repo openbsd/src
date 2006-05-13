@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.3 2006/05/01 01:31:48 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.4 2006/05/13 05:02:37 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ struct xge_softc {
 	bus_space_tag_t sc_txt;
 	bus_space_handle_t sc_txh;
 	void *sc_ih;
+	int xge_type;			/* chip type */
 
 	struct ifmedia xena_media;
 	pcireg_t sc_pciregs[16];
@@ -271,8 +272,15 @@ struct cfdriver xge_cd = {
  */
 #define XGE_MAX_MTU		9600
 
+#define XGE_TYPE_XENA		1	/* Xframe-I */
+#define XGE_TYPE_HERC		2	/* Xframe-II */
+
+#define XGE_PCISIZE_XENA	26
+#define XGE_PCISIZE_HERC	64
+
 const struct pci_matchid xge_devices[] = {
 	{ PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME },
+	{ PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAMEII }
 };
 
 int
@@ -294,11 +302,19 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint64_t val;
-	int i;
+	int i, pcisize;
 
 	sc = (struct xge_softc *)self;
 
 	sc->sc_dmat = pa->pa_dmat;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETERION_XFRAME) {
+		sc->xge_type = XGE_TYPE_XENA;
+		pcisize = XGE_PCISIZE_XENA;
+	} else {
+		sc->xge_type = XGE_TYPE_HERC;
+		pcisize = XGE_PCISIZE_HERC;
+	}
 
 	/* Get BAR0 address */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, XGE_PIF_BAR);
@@ -316,7 +332,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Save PCI config space */
-	for (i = 0; i < 64; i += 4)
+	for (i = 0; i < pcisize; i += 4)
 		sc->sc_pciregs[i/4] = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -349,9 +365,9 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Reset the chip and restore the PCI registers.
 	 */
-	PIF_WCSR(SW_RESET, 0xa5a5a50000000000ULL);
+	PIF_WCSR(SW_RESET, XGXS_RESET(0xA5));
 	DELAY(500000);
-	for (i = 0; i < 64; i += 4)
+	for (i = 0; i < pcisize; i += 4)
 		pci_conf_write(pa->pa_pc, pa->pa_tag, i, sc->sc_pciregs[i/4]);
 
 	/*
@@ -484,7 +500,10 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/* XXXX snoop configuration? */
 
 	/* 19, set chip memory assigned to the queue */
-	PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 64)); /* all 64M to queue 0 */
+	if (sc->xge_type == XGE_TYPE_XENA)
+		PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 64)); /* all 64M to queue 0 */
+	else
+		PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 32)); /* all 32M to queue 0 */
 
 	/* 20, setup RLDRAM parameters */
 	/* do not touch it for now */
