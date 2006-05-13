@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.11 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.12 2006/05/13 19:04:30 brad Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -126,6 +126,7 @@ wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 		bcopy(ifname, ifp->if_xname, strlen(ifname));
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_mtu = PP_MTU;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	common->protocol = IF_PROTO_CISCO;
