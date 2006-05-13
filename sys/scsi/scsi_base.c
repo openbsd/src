@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.102 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.103 2006/05/13 18:11:03 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -890,7 +890,7 @@ sc_err1(xs)
 		if ((error = scsi_interpret_sense(xs)) == ERESTART)
 			goto retry;
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
-		    ("scsi_interpret_sense returned %d\n", error));
+		    ("scsi_interpret_sense returned %#x\n", error));
 		break;
 
 	case XS_BUSY:
