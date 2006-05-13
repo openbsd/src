@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.22 2006/03/25 22:41:45 djm Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.23 2006/05/13 19:10:02 brad Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -1342,6 +1342,7 @@ lmc_attach(lmc_softc_t * const sc)
 	ifp->if_watchdog = lmc_watchdog;
 	ifp->if_timer = 1;
 	ifp->if_mtu = LMC_MTU;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
   
 	if_attach(ifp);
