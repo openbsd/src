@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.c,v 1.1 2006/05/12 23:20:52 deraadt Exp $ */
+/* $OpenBSD: debug.c,v 1.2 2006/05/13 05:58:42 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -31,7 +31,9 @@
 #include "resolve.h"
 #include "link.h"
 #include "sod.h"
+#ifndef __mips64
 #include "machine/reloc.h"
+#endif
 #include "prebind.h"
 #include "prebind_struct.h"
 
@@ -40,12 +42,12 @@ void
 dump_info(struct elf_object *object)
 {
 	int numrel, numrela, i;
-	const Elf_Sym   *symt;
-        const char      *strt;
+	const Elf_Sym	*symt;
+	const char	*strt;
 	Elf_Word *needed_list;
 
 	symt = object->dyn.symtab;
-        strt = object->dyn.strtab;
+	strt = object->dyn.strtab;
 
 	for (i = 0; i < object->nchains; i++) {
 		const Elf_Sym *sym = symt + i;
@@ -53,13 +55,13 @@ dump_info(struct elf_object *object)
 
 		switch (ELF_ST_TYPE(sym->st_info)) {
 		case STT_FUNC:
-			type =  "func";
+			type = "func";
 			break;
 		case STT_OBJECT:
-			type =  "object";
+			type = "object";
 			break;
 		case STT_NOTYPE:
-			type =  "notype";
+			type = "notype";
 			break;
 		default:
 			type = "UNKNOWN";
@@ -69,27 +71,27 @@ dump_info(struct elf_object *object)
 		    type, sym->st_value);
 	}
 
-        numrel = object->dyn.relsz / sizeof(Elf_Rel);
+	numrel = object->dyn.relsz / sizeof(Elf_Rel);
 	numrela = object->dyn.relasz / sizeof(Elf_RelA);
-
 	printf("numrel %d numrela %d\n", numrel, numrela);
 
 	printf("rel relocations:\n");
 	for (i = 0; i < numrel ; i++) {
-		Elf_Rel *rel =  object->dyn.rel;
+		Elf_Rel *rel = object->dyn.rel;
+
 		printf("%d: %x sym %x type %d\n", i, rel[i].r_offset,
 		    ELF_R_SYM(rel[i].r_info), ELF_R_TYPE(rel[i].r_info));
 	}
 	printf("rela relocations:\n");
 	for (i = 0; i < numrela ; i++) {
-		Elf_RelA *rela =  object->dyn.rela;
+		Elf_RelA *rela = object->dyn.rela;
+
 		printf("%d: %x sym %x type %d\n", i, rela[i].r_offset,
 		    ELF_R_SYM(rela[i].r_info), ELF_R_TYPE(rela[i].r_info));
 	}
 	needed_list = (Elf_Addr *)object->dyn.needed;
-	for (i = 0; needed_list[i] != NULL; i++) {
+	for (i = 0; needed_list[i] != NULL; i++)
 		printf("NEEDED %s\n", needed_list[i] + strt);
-	}
 
 }
 #endif

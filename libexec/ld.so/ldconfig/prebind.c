@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.1 2006/05/12 23:20:52 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.2 2006/05/13 05:59:28 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -32,10 +32,11 @@
 #include "resolve.h"
 #include "link.h"
 #include "sod.h"
-#ifndef __mips64__
+#ifndef __mips64
 #include "machine/reloc.h"
 #endif
 #include "prebind.h"
+#include "ld.h"
 
 /* seems to make sense to limit how big of file can be dealt with */
 #define MAX_FILE_SIZE (512 * 1024 * 1024)
@@ -58,7 +59,7 @@ char *shstrtab;
 #ifdef __i386__
 #define RELOC_JMP_SLOT	RELOC_JUMP_SLOT
 #endif
-#ifdef __mips64__
+#ifdef __mips64
 #define RELOC_JMP_SLOT	0		/* XXX mips64 doesnt have PLT reloc */
 #endif
 /* powerpc uses RELOC_JMP_SLOT */
@@ -118,37 +119,35 @@ void elf_reloc(struct elf_object *object);
 
 struct elf_object * elf_lookup_object(const char *name);
 struct elf_object * elf_lookup_object_devino(dev_t dev, ino_t inode,
-    int objtype);
-void elf_free_curbin_list(struct elf_object *obj);
-void elf_resolve_curbin(void);
+	    int objtype);
+void	elf_free_curbin_list(struct elf_object *obj);
+void	elf_resolve_curbin(void);
 struct proglist *elf_newbin(void);
-void elf_sum_reloc();
-int elf_prep_lib_prebind(struct elf_object *object);
-int elf_prep_bin_prebind(struct proglist *pl);
-void add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
-     const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag);
-void add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj, int idx,
-     const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag);
+void	elf_sum_reloc();
+int	elf_prep_lib_prebind(struct elf_object *object);
+int	elf_prep_bin_prebind(struct proglist *pl);
+void	add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
+	    const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag);
+void	add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj, int idx,
+	    const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag);
 
-void elf_dump_footer(struct prebind_footer *footer);
+void	elf_dump_footer(struct prebind_footer *footer);
 
-void elf_fixup_prog_load(int fd, struct prebind_footer *footer,
-    struct elf_object *object);
-void elf_clear_prog_load(int fd, struct elf_object *object);
+void	elf_fixup_prog_load(int fd, struct prebind_footer *footer,
+	    struct elf_object *object);
+void	elf_clear_prog_load(int fd, struct elf_object *object);
 
-void
-elf_find_symbol_rel(const char *s, struct elf_object *object,
-    Elf_Rel *rel, struct symcache_noflag *symcache,
-    struct symcache_noflag *pltsymcache);
+void	elf_find_symbol_rel(const char *s, struct elf_object *object,
+	    Elf_Rel *rel, struct symcache_noflag *symcache,
+	    struct symcache_noflag *pltsymcache);
 
-void
-elf_find_symbol_rela(const char *s, struct elf_object *object,
-    Elf_RelA *rela, struct symcache_noflag *symcache,
-    struct symcache_noflag *pltsymcache);
+void	elf_find_symbol_rela(const char *s, struct elf_object *object,
+	    Elf_RelA *rela, struct symcache_noflag *symcache,
+	    struct symcache_noflag *pltsymcache);
 
-int elf_find_symbol_obj(elf_object_t *object, const char *name,
-    unsigned long hash, int flags, const Elf_Sym **this,
-    const Elf_Sym **weak_sym, elf_object_t **weak_object);
+int	elf_find_symbol_obj(elf_object_t *object, const char *name,
+	    unsigned long hash, int flags, const Elf_Sym **this,
+	    const Elf_Sym **weak_sym, elf_object_t **weak_object);
 
 struct elf_object *load_object;
 
@@ -341,7 +340,7 @@ load_file(const char *filename, int objtype)
 		goto done;
 	}
 
-        if ((ifstat.st_mode & S_IFMT) != S_IFREG)
+	if ((ifstat.st_mode & S_IFMT) != S_IFREG)
 		goto done;
 
 	if (ifstat.st_size < sizeof (Elf_Ehdr))
@@ -469,7 +468,7 @@ elf_load_object(void *pexe, const char *name)
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdr;
 	const Elf_Sym	*symt;
-        const char	*strt;
+	const char	*strt;
 	Elf_Addr loff;
 	Elf_Word *needed_list;
 	int needed_cnt = 0, i;
@@ -494,7 +493,7 @@ elf_load_object(void *pexe, const char *name)
 		case PT_INTERP:
 			/* XXX can only occur in programs */
 			curbin->interp = strdup((char *)((char *)pexe +
-			     phdr[i].p_offset));
+			    phdr[i].p_offset));
 		default:
 			break;
 		}
@@ -556,7 +555,7 @@ elf_load_object(void *pexe, const char *name)
 		map_to_virt(phdr, ehdr, loff, &object->Dyn.info[DT_JMPREL]);
 
 	symt = object->dyn.symtab;
-        strt = object->dyn.strtab;
+	strt = object->dyn.strtab;
 
 	{
 		Elf_Sym *sym;
@@ -884,7 +883,7 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 				ref_sym, flags);
 			} else {
 				add_fixup_oldprog(prog, obj, idx,
-				     tcache[idx].obj, tcache[idx].sym, flags);
+				    tcache[idx].obj, tcache[idx].sym, flags);
 				tcache[idx].obj = badobj;
 				tcache[idx].sym = NULL;
 				add_fixup_prog(prog, obj, idx, ref_obj,
@@ -904,7 +903,7 @@ insert_sym_objcache(struct elf_object *obj, int idx,
 
 void
 add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
-     const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag)
+    const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag)
 {
 	struct proglist *pl;
 	int i, libidx, cnt;
@@ -953,9 +952,9 @@ add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 
 void
 add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj, int idx,
-     const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag)
+    const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag)
 {
-        struct objlist *ol;
+	struct objlist *ol;
 
 	TAILQ_FOREACH(ol, &(objarray[obj->dyn.null].inst_list), inst_list) {
 		if (ol->load_prog == prog) {
@@ -1201,7 +1200,7 @@ elf_reloc(struct elf_object *object)
 	struct symcache_noflag *symcache;
 	struct symcache_noflag *pltsymcache;
 
-        numrel = object->dyn.relsz / sizeof(Elf_Rel);
+	numrel = object->dyn.relsz / sizeof(Elf_Rel);
 #ifdef DEBUG1
 	printf("rel relocations: %d\n", numrel);
 #endif
@@ -1367,6 +1366,7 @@ void
 elf_add_object_curbin_list(struct elf_object *object)
 {
 	struct objlist *ol;
+
 	ol = xmalloc(sizeof (struct objlist));
 	ol->object = object;
 	TAILQ_INSERT_TAIL(&(curbin->curbin_list), ol, list);
@@ -2075,18 +2075,18 @@ elf_load_existing_prebind(struct elf_object *object, int fd)
 	if (footer.bind_id[0] != BIND_ID0 ||
 	    footer.bind_id[1] != BIND_ID1 ||
 	    footer.bind_id[2] != BIND_ID2 ||
-	    footer.bind_id[3] != BIND_ID3) {
+	    footer.bind_id[3] != BIND_ID3)
 		return;
-	}
 
-        prebind_data = mmap(0, footer.prebind_size, PROT_READ,
-		    MAP_FILE, fd, footer.prebind_base);
+	prebind_data = mmap(0, footer.prebind_size, PROT_READ,
+	    MAP_FILE, fd, footer.prebind_base);
 	objarray[object->dyn.null].oprebind_data = prebind_data;
 	objarray[object->dyn.null].id0 = footer.id0;
 	objarray[object->dyn.null].id1 = footer.id1;
 
 	copy_oldsymcache(object->dyn.null, prebind_data);
 }
+
 void
 copy_oldsymcache(int objidx, void *prebind_map)
 {
@@ -2137,7 +2137,6 @@ copy_oldsymcache(int objidx, void *prebind_map)
 		goto done;
 
 	/* build idxtolibs */
-
 	tcache = objarray[objidx].symcache;
 	symcache = prebind_map + footer->symcache_idx;
 
