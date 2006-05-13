@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.128 2006/05/13 04:46:15 brad Exp $
+#	$OpenBSD: GENERIC,v 1.129 2006/05/13 21:15:11 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -240,8 +240,8 @@ scsibus* at mpt?
 #scsibus* at dpt?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
-#twe*	at pci?				# 3ware Escalade RAID controllers
-#scsibus* at twe?
+twe*	at pci?				# 3ware Escalade RAID controllers
+scsibus* at twe?
 #aac*	at pci?				# Adaptec FSA RAID controllers
 #scsibus* at aac?
 ami*	at pci?				# AMI MegaRAID controllers
