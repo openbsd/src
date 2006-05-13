@@ -414,6 +414,7 @@ extern void		sbss_section PARAMS ((void));
       if (TARGET_64BIT)						\
 	{							\
 	  builtin_define ("__mips64");     			\
+	  builtin_define ("__mips64__");			\
 	  builtin_define_std ("R4000");				\
 	  builtin_define ("_R4000");				\
 	}							\
