@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.4 2006/05/13 05:02:37 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.5 2006/05/13 05:12:38 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -280,7 +280,7 @@ struct cfdriver xge_cd = {
 
 const struct pci_matchid xge_devices[] = {
 	{ PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME },
-	{ PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAMEII }
+	{ PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME_2 }
 };
 
 int
