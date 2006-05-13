@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.27 2006/02/25 13:38:25 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.28 2006/05/13 18:25:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -442,6 +442,7 @@ main(int argc, char *argv[])
 	 */
 	if ((cfg->c_debug = debug) == 0) {
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+		tzset();
 		daemon(0, 0);
 	}
 
