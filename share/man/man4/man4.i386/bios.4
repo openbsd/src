@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bios.4,v 1.9 2003/06/06 10:29:42 jmc Exp $
+.\"	$OpenBSD: bios.4,v 1.10 2006/05/13 00:03:50 tom Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Sh DESCRIPTION
 .Ox
 provides support for PC firmware, aka BIOS and some of its functions,
-currently: APM subsystem, BIOS 32 extensions, PCI BIOS subsystem.
+currently: APM subsystem, BIOS32 extensions, PCI BIOS subsystem.
 .Pp
 The
 .Nm
@@ -51,23 +51,32 @@ ROM images and reserves the space from being used by various
 ISA devices, for example
 .Xr pcic 4 .
 .Pp
-Flags is a bit mask each bit of which specifies which functions
+Flags is a bit mask, each bit of which specifies which functions
 of the driver to disable.
 .Bl -tag -width 0x0001
 .It 0x0001
-BIOS 32 attachment.
+BIOS32 attachment.
 .Pp
-Do not probe and attach to BIOS 32 extensions, which is one of
+Do not probe or attach to BIOS32 extensions.
+BIOS32 is one of
 the interfaces to the PCI BIOS configuration tables.
 .It 0x0002
 PCI BIOS attachment.
 .Pp
-Do not probe and attach the
+Do not probe or attach the
 .Xr pcibios 4
 device, which performs certain PCI configuration tasks.
 .It 0x0004
 Do not perform the scan for ROM images in the ISA memory hole
 (0xc0000 - 0xf0000 physical addresses).
+.It 0x0008
+SMBIOS attachment.
+.Pp
+Do not probe or attach to SMBIOS.
+SMBIOS provides greater detail about system hardware configuration
+and is required to attach
+.Xr ipmi 4
+on most systems.
 .El
 .Sh SEE ALSO
 .Xr apm 4 ,
