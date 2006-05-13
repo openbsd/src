@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.63 2006/05/06 18:31:00 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.64 2006/05/13 05:23:45 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1640,12 +1640,12 @@ pfsync_update_tdb(struct tdb *tdb)
 			 */
 			struct pfsync_tdb *u =
 			    (void *)((char *)h + PFSYNC_HDRLEN);
-			int hash = tdb_hash(tdb->tdb_spi, &tdb->tdb_dst,
-			    tdb->tdb_sproto);
 
 			for (i = 0; !pt && i < h->count; i++) {
-				if (tdb_hash(u->spi, &u->dst,
-				    u->sproto) == hash) {
+				if (tdb->tdb_spi == u->spi &&
+				    tdb->tdb_sproto == u->sproto &&
+			            !bcmp(&tdb->tdb_dst, &u->dst,
+				    SA_LEN(&u->dst.sa))) {
 					pt = u;
 					pt->updates++;
 				}
