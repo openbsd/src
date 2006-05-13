@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.34 2006/05/08 14:36:10 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.35 2006/05/13 16:05:50 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@ struct intrhand {
 };
 
 int	intr_establish(int, struct intrhand *, const char *);
+int	intr_findvec(int, int, int);
 
 /*
  * There are 256 possible vectors on a mvme88k platform (including
