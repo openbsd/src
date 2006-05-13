@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.1 2006/05/12 23:20:52 deraadt Exp $ */
+/* $OpenBSD: library.c,v 1.2 2006/05/13 16:33:40 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -47,8 +47,7 @@ int
 load_lib(const char *name, struct elf_object *parent)
 {
 	struct sod sod, req_sod;
-	int ignore_hints;
-	int try_any_minor = 0;
+	int ignore_hints, try_any_minor = 0;
 	struct elf_object *object = NULL;
 
 #if 0
@@ -58,6 +57,7 @@ load_lib(const char *name, struct elf_object *parent)
 
 	if(strchr(name, '/')) {
 		char *lpath, *lname;
+
 		lpath = strdup(name);
 		lname = strrchr(lpath, '/');
 		if (lname == NULL || lname[1] == '\0') {
@@ -74,7 +74,7 @@ load_lib(const char *name, struct elf_object *parent)
 fullpathagain:
 		object = elf_load_shlib_hint(&sod, &req_sod,
 			ignore_hints, lpath);
-		if (object != NULL) 
+		if (object != NULL)
 			goto fullpathdone;
 
 		if (try_any_minor == 0) {
@@ -97,7 +97,7 @@ fullpathdone:
 again:
 	if (parent->dyn.rpath != NULL) {
 		object = elf_load_shlib_hint(&sod, &req_sod,
-			ignore_hints, parent->dyn.rpath);
+		    ignore_hints, parent->dyn.rpath);
 		if (object != NULL)
 			goto done;
 	}
@@ -107,8 +107,7 @@ again:
 		if (object != NULL)
 			goto done;
 	}
-	object = elf_load_shlib_hint(&sod, &req_sod,
-		ignore_hints, NULL);
+	object = elf_load_shlib_hint(&sod, &req_sod, ignore_hints, NULL);
 
 	if (try_any_minor == 0) {
 		try_any_minor = 1;
@@ -155,11 +154,11 @@ char *
 elf_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 {
 	char *hint, lp[PATH_MAX + 10], *path;
+	struct sod tsod, bsod;		/* transient and best sod */
 	struct dirent *dp;
 	const char *pp;
 	int match, len;
 	DIR *dd;
-	struct sod tsod, bsod;		/* transient and best sod */
 
 	/* if we are to search default directories, and hints
 	 * are not to be used, search the standard path from ldconfig
@@ -287,9 +286,9 @@ elf_tryload_shlib(const char *libname)
 {
 	struct elf_object *object;
 	object = elf_lookup_object(libname);
-	if (object == NULL) {
+
+	if (object == NULL)
 		object = load_file(libname, OBJTYPE_LIB);
-	}
 	if (object == NULL)
 		printf("tryload_shlib %s\n", libname);
 	return object;
@@ -325,11 +324,10 @@ elf_match_file(struct sod *sodp, char *name, int namelen)
 	_dl_build_sod(name, &lsod);
 
 	match = 0;
-	if ((strcmp((char *)lsod.sod_name, (char *)sodp->sod_name) == 0) &&
-	    (lsod.sod_library == sodp->sod_library) &&
-	    ((sodp->sod_major == -1) || (sodp->sod_major == lsod.sod_major)) &&
-	    ((sodp->sod_minor == -1) ||
-	    (lsod.sod_minor >= sodp->sod_minor))) {
+	if (strcmp((char *)lsod.sod_name, (char *)sodp->sod_name) == 0 &&
+	    lsod.sod_library == sodp->sod_library &&
+	    (sodp->sod_major == -1 || sodp->sod_major == lsod.sod_major) &&
+	    (sodp->sod_minor == -1 || lsod.sod_minor >= sodp->sod_minor)) {
 		match = 1;
 
 		/* return version matched */

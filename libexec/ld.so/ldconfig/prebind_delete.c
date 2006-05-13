@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.3 2006/05/12 23:20:52 deraadt Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.4 2006/05/13 16:33:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -41,8 +41,6 @@ extern	int verbose;
 int
 prebind_delete(char **argv)
 {
-	extern char *__progname;
-
 	while (*argv) {
 		if (strip_prebind(*argv) == -1)
 			return (1);

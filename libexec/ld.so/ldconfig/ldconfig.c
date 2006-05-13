@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.20 2006/05/12 23:20:52 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.21 2006/05/13 16:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -207,7 +207,7 @@ dodir(char *dir, int silent)
 	}
 
 	while ((dp = readdir(dd)) != NULL) {
-		int n;
+		size_t n;
 		char *cp;
 
 		/* Check for `lib' prefix */
@@ -317,11 +317,12 @@ hinthash(char *cp, int vmajor, int vminor)
 int
 buildhints(void)
 {
-	int strtab_sz = 0, nhints = 0, fd, i, n, ret = -1, str_index = 0;
+	int strtab_sz = 0, nhints = 0, fd, i, ret = -1, str_index = 0;
 	struct hints_bucket *blist;
 	struct hints_header hdr;
 	struct shlib_list *shp;
-	char *strtab, *tmpfile;
+	char *strtab, *tmpfilenam;
+	size_t n;
 
 	for (shp = shlib_head; shp; shp = shp->next) {
 		strtab_sz += 1 + strlen(shp->name);
@@ -347,12 +348,12 @@ buildhints(void)
 
 	/* Allocate buckets and string table */
 	blist = (struct hints_bucket *)xmalloc(n);
-	bzero((char *)blist, n);
+	bzero(blist, n);
 	for (i = 0; i < hdr.hh_nbucket; i++)
 		/* Empty all buckets */
 		blist[i].hi_next = -1;
 
-	strtab = (char *)xmalloc(strtab_sz);
+	strtab = xmalloc(strtab_sz);
 
 	/* Enter all */
 	for (shp = shlib_head; shp; shp = shp->next) {
@@ -362,20 +363,20 @@ buildhints(void)
 		    hdr.hh_nbucket);
 
 		if (bp->hi_pathx) {
-			int	i;
+			int	j;
 
-			for (i = 0; i < hdr.hh_nbucket; i++) {
-				if (blist[i].hi_pathx == 0)
+			for (j = 0; j < hdr.hh_nbucket; j++) {
+				if (blist[j].hi_pathx == 0)
 					break;
 			}
-			if (i == hdr.hh_nbucket) {
+			if (j == hdr.hh_nbucket) {
 				warnx("Bummer!");
 				goto out;
 			}
 			while (bp->hi_next != -1)
 				bp = &blist[bp->hi_next];
-			bp->hi_next = i;
-			bp = blist + i;
+			bp->hi_next = j;
+			bp = blist + j;
 		}
 
 		/* Insert strings in string table */
@@ -397,13 +398,12 @@ buildhints(void)
 	str_index += 1 + strlen(dir_list);
 
 	/* Sanity check */
-	if (str_index != strtab_sz) {
+	if (str_index != strtab_sz)
 		errx(1, "str_index(%d) != strtab_sz(%d)", str_index, strtab_sz);
-	}
 
-	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXXXXXX", "");
-	if ((fd = mkstemp(tmpfile)) == -1) {
-		warn("%s", tmpfile);
+	tmpfilenam = concat(_PATH_LD_HINTS, ".XXXXXXXXXX", "");
+	if ((fd = mkstemp(tmpfilenam)) == -1) {
+		warn("%s", tmpfilenam);
 		goto out;
 	}
 	fchmod(fd, 0444);
@@ -433,7 +433,7 @@ buildhints(void)
 		goto out;
 	}
 
-	if (rename(tmpfile, _PATH_LD_HINTS) != 0) {
+	if (rename(tmpfilenam, _PATH_LD_HINTS) != 0) {
 		warn("%s", _PATH_LD_HINTS);
 		goto out;
 	}
@@ -467,7 +467,7 @@ readhints(void)
 		return -1;
 	}
 
-	msize =  (long)sb.st_size;
+	msize = (long)sb.st_size;
 	addr = mmap(0, msize, PROT_READ, MAP_PRIVATE, fd, 0);
 
 	if (addr == MAP_FAILED) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.8 2003/07/06 20:04:00 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.9 2006/05/13 16:33:40 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -70,7 +70,8 @@ char	*standard_search_dirs[] = {
 void
 add_search_dir(char *name)
 {
-	int i, len;
+	size_t len;
+	int i;
 
 	len = strlen(name);
 
@@ -82,8 +83,8 @@ add_search_dir(char *name)
 		    !strncmp(search_dirs[i], name, len))
 				return;
 	n_search_dirs++;
-	search_dirs = (char **)
-	    xrealloc(search_dirs, n_search_dirs * sizeof search_dirs[0]);
+	search_dirs = (char **)xrealloc(search_dirs,
+	    n_search_dirs * sizeof search_dirs[0]);
 	search_dirs[n_search_dirs - 1] = xmalloc(++len);
 	(void)strlcpy(search_dirs[n_search_dirs - 1], name, len);
 }
@@ -91,7 +92,8 @@ add_search_dir(char *name)
 void
 remove_search_dir(char *name)
 {
-	int	i, len;
+	size_t	len;
+	int	i;
 
 	len = strlen(name);
 
@@ -125,21 +127,6 @@ add_search_path(char *path)
 	path = dup = strdup(path);
 	while ((cp = strsep(&path, ":")) != NULL)
 		add_search_dir(cp);
-	free(dup);
-}
-
-static void
-remove_search_path(char *path)
-{
-	char	*cp, *dup;
-
-	if (path == NULL)
-		return;
-
-	/* Remove search directories from `path' */
-	path = dup = strdup(path);
-	while ((cp = strsep(&path, ":")) != NULL)
-		remove_search_dir(cp);
 	free(dup);
 }
 
@@ -207,89 +194,4 @@ cmpndewey(int d1[], int n1, int d2[], int n2)
 		return 1;
 	errx(1, "cmpndewey: cant happen");
 	return 0;
-}
-
-/*
- * Search directories for a shared library matching the given
- * major and minor version numbers.
- *
- * MAJOR == -1 && MINOR == -1	--> find highest version
- * MAJOR != -1 && MINOR == -1   --> find highest minor version
- * MAJOR == -1 && MINOR != -1   --> invalid
- * MAJOR != -1 && MINOR != -1   --> find highest micro version
- */
-
-/* Not interested in devices right now... */
-#undef major
-#undef minor
-
-static char *
-findshlib(char *name, int *majorp, int *minorp, int do_dot_a)
-{
-	int major = *majorp, minor = *minorp, ndewey, i, len;
-	int dewey[MAXDEWEY], tmp[MAXDEWEY];
-	char *lname;
-
-	len = strlen(name) + sizeof("lib");
-	lname = (char *)alloca(len);
-	snprintf(lname, len, "lib%s", name);
-
-	ndewey = 0;
-
-	for (i = 0; i < n_search_dirs; i++) {
-		struct dirent *dp;
-		char *path = NULL;
-		DIR *dd;
-
-		dd = opendir(search_dirs[i]);
-		if (dd == NULL)
-			continue;
-
-		while ((dp = readdir(dd)) != NULL) {
-			int	n;
-
-			if (do_dot_a && path == NULL &&
-			    dp->d_namlen == len + 2 &&
-			    strncmp(dp->d_name, lname, len) == 0 &&
-			    (dp->d_name+len)[0] == '.' &&
-			    (dp->d_name+len)[1] == 'a')
-				path = concat(search_dirs[i], "/", dp->d_name);
-
-			if (dp->d_namlen < len + 4)
-				continue;
-			if (strncmp(dp->d_name, lname, len) != 0)
-				continue;
-			if (strncmp(dp->d_name+len, ".so.", 4) != 0)
-				continue;
-
-			if ((n = getdewey(tmp, dp->d_name+len+4)) == 0)
-				continue;
-
-			/* skip inappropriate versions. */
-			if (major != -1) {
-				if (tmp[0] != major)
-					continue;
-				if (n != 1 && minor != -1 && tmp[1] < minor)
-					continue;
-			}
-
-			if (cmpndewey(tmp, n, dewey, ndewey) <= 0)
-				continue;
-
-			/* We have a better version */
-			if (path)
-				free(path);
-			path = concat(search_dirs[i], "/", dp->d_name);
-			bcopy(tmp, dewey, sizeof(dewey));
-			ndewey = n;
-			*majorp = dewey[0];
-			*minorp = dewey[1];
-		}
-		closedir(dd);
-
-		/* There's a lib in this dir; take it. */
-		if (path != NULL)
-			return path;
-	}
-	return NULL;
 }

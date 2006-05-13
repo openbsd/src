@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.2 2006/05/13 05:59:28 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.3 2006/05/13 16:33:40 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -494,6 +494,7 @@ elf_load_object(void *pexe, const char *name)
 			/* XXX can only occur in programs */
 			curbin->interp = strdup((char *)((char *)pexe +
 			    phdr[i].p_offset));
+			break;
 		default:
 			break;
 		}
@@ -525,7 +526,7 @@ elf_load_object(void *pexe, const char *name)
 		dynp++;
 	}
 
-	needed_list = calloc((needed_cnt + 1), (sizeof (Elf_Word)));
+	needed_list = calloc((needed_cnt + 1), sizeof(Elf_Word));
 	if (needed_list == NULL) {
 		printf("unable to allocate needed_list for %s\n", name);
 		exit(10);
@@ -705,7 +706,7 @@ map_to_virt(Elf_Phdr *phdr, Elf_Ehdr *ehdr, Elf_Addr base, u_long *vaddr)
 			printf("%lx, base %lx %lx %llx\n", *vaddr, base,
 			    phdr[i].p_vaddr, phdr[i].p_offset );
 #endif
-
+			break;
 		default:
 			break;
 		}
