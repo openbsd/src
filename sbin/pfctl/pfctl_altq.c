@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.88 2006/04/08 02:04:48 ray Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.89 2006/05/14 15:52:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -223,8 +223,8 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 		pa->ifbandwidth = bw->bw_absolute;
 	else
 		if ((rate = getifspeed(pa->ifname)) == 0) {
-			fprintf(stderr, "cannot determine interface bandwidth "
-			    "for %s, specify an absolute bandwidth\n",
+			fprintf(stderr, "interface %s does not know its bandwidth, "
+			    "please specify an absolute bandwidth\n",
 			    pa->ifname);
 			errors++;
 		} else if ((pa->ifbandwidth = eval_bwspec(bw, rate)) == 0)
