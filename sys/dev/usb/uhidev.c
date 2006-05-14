@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.13 2006/03/07 04:41:19 krw Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.14 2006/05/14 12:00:04 matthieu Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -95,6 +95,8 @@ USB_MATCH(uhidev)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
+		return (UMATCH_NONE);
+	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_HID)
 		return (UMATCH_NONE);
 	if (uaa->matchlvl)
 		return (uaa->matchlvl);
