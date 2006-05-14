@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.82 2006/04/24 19:23:42 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.83 2006/05/14 19:53:40 otto Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1158,6 +1158,10 @@ imalloc(size_t size)
 	if (suicide)
 		abort();
 
+	/* does not matter if malloc_bytes fails */
+	if (px == NULL)
+		px = malloc_bytes(sizeof *px);
+
 	if (malloc_ptrguard && size == PTR_SIZE) {
 		ptralloc = 1;
 		size = malloc_pagesize;
@@ -1405,8 +1409,8 @@ free_pages(void *ptr, u_long index, struct pginfo * info)
 		mprotect(ptr, l, PROT_NONE);
 
 	/* Add to free-list. */
-	if (px == NULL)
-		px = imalloc(sizeof *px);	/* This cannot fail... */
+	if (px == NULL && (px = malloc_bytes(sizeof *px)) == NULL)
+			goto not_return;
 	px->page = ptr;
 	px->pdir = spi;
 	px->size = l;
@@ -1766,6 +1770,11 @@ ifree(void *ptr)
 		free_pages(ptr, index, info);
 	else
 		free_bytes(ptr, index, info);
+
+	/* does not matter if malloc_bytes fails */
+	if (px == NULL)
+		px = malloc_bytes(sizeof *px);
+
 	return;
 }
 
