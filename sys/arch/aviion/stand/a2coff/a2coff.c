@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.1.1.1 2006/05/09 18:22:59 miod Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.2 2006/05/14 17:49:54 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -190,7 +190,6 @@ main(int argc, char *argv[])
 
 	strncpy(escn[0].s_name, ".text", sizeof escn[0].s_name);
 	escn[0].s_paddr = N_TXTADDR(head);	/* ignored, 1:1 mapping */
-	escn[0].s_vaddr = N_TXTADDR(head);
 	escn[0].s_size = round(head.a_text, 8);
 	escn[0].s_scnptr = round(sizeof(ehead) + sizeof(escn), 0x10);
 	escn[0].s_relptr = 0;
@@ -200,7 +199,6 @@ main(int argc, char *argv[])
 
 	strncpy(escn[1].s_name, ".data", sizeof escn[1].s_name);
 	escn[1].s_paddr = N_DATADDR(head);		/* ignored, 1:1 mapping */
-	escn[1].s_vaddr = N_DATADDR(head);
 	escn[1].s_scnptr = escn[0].s_scnptr + escn[0].s_size;
 	escn[1].s_size = round(head.a_data + head.a_bss, 8);
 	escn[1].s_relptr = 0;
@@ -210,13 +208,20 @@ main(int argc, char *argv[])
 
 	strncpy(escn[2].s_name, ".bss", sizeof escn[2].s_name);
 	escn[2].s_paddr = N_BSSADDR(head) + head.a_bss;	/* ignored, 1:1 mapping */
-	escn[2].s_vaddr = N_BSSADDR(head) + head.a_bss;
 	escn[2].s_scnptr = 0;		/* nothing in the file */
 	escn[2].s_size = 0;
 	escn[2].s_relptr = 0;
 	escn[2].s_lnnoptr = 0;
 	escn[2].s_nlnno = 0;
 	escn[2].s_flags = 0x80;	/* STYP_BSS */
+
+	/* adjust load addresses */
+	escn[0].s_paddr += (head.a_entry & ~(__LDPGSZ - 1)) - __LDPGSZ;
+	escn[1].s_paddr += (head.a_entry & ~(__LDPGSZ - 1)) - __LDPGSZ;
+	escn[2].s_paddr += (head.a_entry & ~(__LDPGSZ - 1)) - __LDPGSZ;
+	escn[0].s_vaddr = escn[0].s_paddr;
+	escn[1].s_vaddr = escn[1].s_paddr;
+	escn[2].s_vaddr = escn[2].s_paddr;
 
 	n = write(outfd, &escn, sizeof(escn));
 	if (n < sizeof(escn))
@@ -226,8 +231,10 @@ main(int argc, char *argv[])
 	 * Copy text section
 	 */
 
+#ifdef DEBUG
 	printf("copying %s: source %lx dest %lx size %x\n",
 	    escn[0].s_name, N_TXTOFF(head), escn[0].s_scnptr, head.a_text);
+#endif
 	lseek(outfd, escn[0].s_scnptr, SEEK_SET);
 	lseek(infd, N_TXTOFF(head), SEEK_SET);
 	copybits(infd, outfd, head.a_text);
@@ -236,8 +243,10 @@ main(int argc, char *argv[])
 	 * Copy data section
 	 */
 
+#ifdef DEBUG
 	printf("copying %s: source %lx dest %lx size %x\n",
 	    escn[1].s_name, N_DATOFF(head), escn[1].s_scnptr, head.a_data);
+#endif
 	lseek(outfd, escn[1].s_scnptr, SEEK_SET);
 	lseek(infd, N_DATOFF(head), SEEK_SET);
 	copybits(infd, outfd, head.a_data);
@@ -246,8 +255,10 @@ main(int argc, char *argv[])
 	 * ``Copy'' bss section
 	 */
 
+#ifdef DEBUG
 	printf("copying %s: size %lx\n",
 	    escn[2].s_name, round(head.a_data + head.a_bss, 8) - head.a_data);
+#endif
 	zerobits(outfd, round(head.a_data + head.a_bss, 8) - head.a_data);
 
 	close(infd);
