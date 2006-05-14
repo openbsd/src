@@ -261,8 +261,6 @@
 ./usr/include/dev/ic/if_wi_ieee.h
 ./usr/include/dev/ic/if_wireg.h
 ./usr/include/dev/ic/if_wivar.h
-./usr/include/dev/ic/if_wpireg.h
-./usr/include/dev/ic/if_wpivar.h
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/intersil7170.h
 ./usr/include/dev/ic/isp_inline.h
@@ -550,6 +548,8 @@
 ./usr/include/dev/pci/if_vicvar.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_wbreg.h
+./usr/include/dev/pci/if_wpireg.h
+./usr/include/dev/pci/if_wpivar.h
 ./usr/include/dev/pci/if_xgereg.h
 ./usr/include/dev/pci/isesreg.h
 ./usr/include/dev/pci/isesvar.h

@@ -946,8 +946,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wi_ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wivar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wpireg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wpivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/intersil7170.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/isp_inline.ph
@@ -1235,6 +1233,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vicvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vrreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_wbreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_wpireg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_wpivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_xgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/isesreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/isesvar.ph
