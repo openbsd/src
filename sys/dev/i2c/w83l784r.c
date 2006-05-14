@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.6 2006/03/18 05:00:19 brad Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.7 2006/05/14 12:40:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -39,9 +39,9 @@
 #define W83L784R_TEMP23		0x00
 
 /* W83L785R registers */
-#define W83L785R_1_5V		0x21
-#define W83L785R_2_5V		0x22
-#define W83L785R_3_3V		0x23
+#define W83L785R_2_5V		0x21
+#define W83L785R_1_5V		0x22
+#define W83L785R_VCC		0x23
 #define W83L785R_TEMP2		0x26
 #define W83L785R_FANDIV		0x47
 
@@ -52,13 +52,23 @@
 
 #define WBENV_MAX_SENSORS  9
 
+/*
+ * The W83L784R/W83L785R can measure voltages up to 4.096/2.048 V.
+ * To measure higher voltages the input is attenuated with (external)
+ * resistors.  So we have to convert the sensor values back to real
+ * voltages by applying the appropriate resistor factor.
+ */
+#define RFACT_NONE	10000
+#define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
+
 struct wbenv_softc;
 
 struct wbenv_sensor {
 	char *desc;
 	enum sensor_type type;
-	int reg;
+	u_int8_t reg;
 	void (*refresh)(struct wbenv_softc *, int);
+	int rfact;
 };
 
 struct wbenv_softc {
@@ -79,7 +89,8 @@ void	wbenv_attach(struct device *, struct device *, void *);
 void	wbenv_setup_sensors(struct wbenv_softc *, struct wbenv_sensor *);
 void	wbenv_refresh(void *);
 
-void	wbenv_refresh_volts(struct wbenv_softc *, int);
+void	w83l784r_refresh_volt(struct wbenv_softc *, int);
+void	w83l785r_refresh_volt(struct wbenv_softc *, int);
 void	wbenv_refresh_temp(struct wbenv_softc *, int);
 void	w83l784r_refresh_temp(struct wbenv_softc *, int);
 void	w83l784r_refresh_fanrpm(struct wbenv_softc *, int);
@@ -98,10 +109,10 @@ struct cfdriver wbenv_cd = {
 
 struct wbenv_sensor w83l784r_sensors[] =
 {
-	{ "VCore", SENSOR_VOLTS_DC, W83L784R_VCORE, wbenv_refresh_volts },
-	{ "VBAT", SENSOR_VOLTS_DC, W83L784R_VBAT, wbenv_refresh_volts },
-	{ "+3.3V", SENSOR_VOLTS_DC, W83L784R_3_3V, wbenv_refresh_volts },
-	{ "+5V", SENSOR_VOLTS_DC, W83L784R_VCC, wbenv_refresh_volts },
+	{ "VCore", SENSOR_VOLTS_DC, W83L784R_VCORE, w83l784r_refresh_volt, RFACT_NONE },
+	{ "VBAT", SENSOR_VOLTS_DC, W83L784R_VBAT, w83l784r_refresh_volt, RFACT(232, 99) },
+	{ "+3.3V", SENSOR_VOLTS_DC, W83L784R_3_3V, w83l784r_refresh_volt, RFACT_NONE },
+	{ "+5V", SENSOR_VOLTS_DC, W83L784R_VCC, w83l784r_refresh_volt, RFACT(50, 34) },
 	{ "Temp1", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
 	{ "Temp2", SENSOR_TEMP, 1, w83l784r_refresh_temp },
 	{ "Temp3", SENSOR_TEMP, 2, w83l784r_refresh_temp },
@@ -113,10 +124,10 @@ struct wbenv_sensor w83l784r_sensors[] =
 
 struct wbenv_sensor w83l785r_sensors[] =
 {
-	{ "VCore", SENSOR_VOLTS_DC, W83L784R_VCORE, wbenv_refresh_volts },
-	{ "+1.5V", SENSOR_VOLTS_DC, W83L785R_1_5V, wbenv_refresh_volts },
-	{ "+2.5V", SENSOR_VOLTS_DC, W83L785R_2_5V, wbenv_refresh_volts },
-	{ "+3.3V", SENSOR_VOLTS_DC, W83L785R_3_3V, wbenv_refresh_volts },
+	{ "VCore", SENSOR_VOLTS_DC, W83L784R_VCORE, w83l785r_refresh_volt, RFACT_NONE },
+	{ "+2.5V", SENSOR_VOLTS_DC, W83L785R_2_5V, w83l785r_refresh_volt, RFACT(100, 100) },
+	{ "+1.5V", SENSOR_VOLTS_DC, W83L785R_1_5V, w83l785r_refresh_volt, RFACT_NONE },
+	{ "+3.3V", SENSOR_VOLTS_DC, W83L785R_VCC, w83l785r_refresh_volt, RFACT(20, 40) },
 	{ "Temp1", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
 	{ "Temp2", SENSOR_TEMP, W83L785R_TEMP2, wbenv_refresh_temp },
 	{ "Fan1", SENSOR_FANRPM, W83L784R_FAN1, w83l785r_refresh_fanrpm },
@@ -253,17 +264,27 @@ wbenv_refresh(void *arg)
 }
 
 void
-wbenv_refresh_volts(struct wbenv_softc *sc, int n)
+w83l784r_refresh_volt(struct wbenv_softc *sc, int n)
 {
 	struct sensor *sensor = &sc->sc_sensors[n];
 	int data, reg = sc->sc_wbenv_sensors[n].reg;
 
 	data = wbenv_readreg(sc, reg);
-	sensor->value = (data << 4);
-	if (reg == W83L784R_VCC && sc->sc_chip_id == WBENV_CHIPID_W83L784R)
-		sensor->value *= 1000 * (50 + 34) / 50;
-	else
-		sensor->value *= 1000;
+	sensor->value = (data << 4); /* 16 mV LSB */
+	sensor->value *= sensor->rfact;
+	sensor->value /= 10;
+}
+
+void
+w83l785r_refresh_volt(struct wbenv_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sc_sensors[n];
+	int data, reg = sc->sc_wbenv_sensors[n].reg;
+
+	data = wbenv_readreg(sc, reg);
+	sensor->value = (data << 3); /* 8 mV LSB */
+	sensor->value *= sensor->rfact;
+	sensor->value /= 10;
 }
 
 void
