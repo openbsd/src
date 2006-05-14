@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.345 2006/05/01 15:17:41 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.346 2006/05/14 15:51:42 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -801,7 +801,9 @@ gigabits per second, respectively.
 The value must not exceed the interface bandwidth.
 If
 .Ar bandwidth
-is not specified, the interface bandwidth is used.
+is not specified, the interface bandwidth is used
+(but take note that some interfaces do not know their bandwidth,
+or can adapt their bandwidth rates).
 .It Ar qlimit Aq Ar limit
 The maximum number of packets held in the queue.
 The default is 50.
