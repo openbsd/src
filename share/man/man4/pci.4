@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.146 2006/05/13 05:35:43 brad Exp $
+.\"	$OpenBSD: pci.4,v 1.147 2006/05/14 19:07:04 miod Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -301,6 +301,9 @@ Winbond W89C840F Ethernet interfaces.
 .It Xr wi 4
 WaveLAN/IEEE and PRISM-II IEEE 802.11b wireless network interfaces behind
 a PLX 905x-based dumb PCMCIA->PCI bridge.
+.It Xr wpi 4
+.Tn Intel
+PRO/Wireless 3945ABG IEEE 802.11a/b/g wireless network adapters.
 .It Xr xge 4
 Neterion Xframe-I/II Ten Gigabit Ethernet interfaces.
 .It Xr xl 4
@@ -620,6 +623,7 @@ driver.
 .Xr wb 4 ,
 .Xr wdt 4 ,
 .Xr wi 4 ,
+.Xr wpi 4 ,
 .Xr xge 4 ,
 .Xr xl 4 ,
 .Xr yds 4
