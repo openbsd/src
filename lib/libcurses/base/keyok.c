@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyok.c,v 1.3 2001/01/22 18:01:37 millert Exp $	*/
+/*	$OpenBSD: keyok.c,v 1.4 2006/05/14 09:01:06 espie Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -33,6 +33,7 @@
  ****************************************************************************/
 
 #include <curses.priv.h>
+#include <limits.h>
 
 MODULE_ID("$From: keyok.c,v 1.5 2000/12/10 02:43:26 tom Exp $")
 
@@ -54,22 +55,25 @@ keyok(int c, bool flag)
     char *s;
 
     T((T_CALLED("keyok(%d,%d)"), c, flag));
-    if (flag) {
-	while ((s = _nc_expand_try(SP->_key_ok, c, &count, 0)) != 0
-	       && _nc_remove_key(&(SP->_key_ok), c)) {
-	    _nc_add_to_try(&(SP->_keytry), s, c);
-	    free(s);
-	    code = OK;
-	    count = 0;
-	}
-    } else {
-	while ((s = _nc_expand_try(SP->_keytry, c, &count, 0)) != 0
-	       && _nc_remove_key(&(SP->_keytry), c)) {
-	    _nc_add_to_try(&(SP->_key_ok), s, c);
-	    free(s);
-	    code = OK;
-	    count = 0;
-	}
+    if (c >= 0 && c <= (int)USHRT_MAX) {
+	    unsigned short k = (unsigned short) c;
+	    if (flag) {
+		while ((s = _nc_expand_try(SP->_key_ok, k, &count, 0)) != 0
+		       && _nc_remove_key(&(SP->_key_ok), k)) {
+		    _nc_add_to_try(&(SP->_keytry), s, k);
+		    free(s);
+		    code = OK;
+		    count = 0;
+		}
+	    } else {
+		while ((s = _nc_expand_try(SP->_keytry, k, &count, 0)) != 0
+		       && _nc_remove_key(&(SP->_keytry), k)) {
+		    _nc_add_to_try(&(SP->_key_ok), s, k);
+		    free(s);
+		    code = OK;
+		    count = 0;
+		}
+	    }
     }
     returnCode(code);
 }
