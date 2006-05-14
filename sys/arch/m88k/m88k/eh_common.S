@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.18 2006/05/08 14:34:01 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.19 2006/05/14 08:37:39 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -327,7 +327,7 @@
 	ld	r1 , r31, GENREG_OFF(1)		; \
 	ld	r2 , r31, GENREG_OFF(2)		; \
 	ld	r3 , r31, GENREG_OFF(3)		; \
-	ld	r31, r31, GENREG_OFF(31)
+	ld	r31, r31, GENREG_OFF(31)	;
 #endif
 
 /*
