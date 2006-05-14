@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.8 2006/05/14 21:11:10 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.9 2006/05/14 21:41:25 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -651,6 +651,9 @@ xge_init(struct ifnet *ifp)
 		return 1;
 	}
 
+	/* set MRU */
+	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(XGE_MAX_MTU));
+
 	/* 56, enable the transmit laser */
 	val = PIF_RCSR(ADAPTER_CONTROL);
 	val |= EOI_TX_ON;
@@ -861,13 +864,10 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU) {
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU)
 			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
-			PIF_WCSR(RMAC_MAX_PYLD_LEN,
-			    RMAC_PYLD_LEN(ifr->ifr_mtu));
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-		}
 		break;
 	case SIOCSIFFLAGS:
 		/*
