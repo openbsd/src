@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.5 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.6 2006/05/14 21:11:07 robert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ enum {
 
 #define __va_ellipsis ...
 
-#ifdef __mips64
+#ifdef __mips64__
 #define __va_rounded_size(__TYPE)  \
   (((sizeof (__TYPE) + 8 - 1) / 8) * 8)
 #else
@@ -97,7 +97,7 @@ enum {
   (((sizeof (__TYPE) + sizeof (int) - 1) / sizeof (int)) * sizeof (int))
 #endif
 
-#ifdef __mips64
+#ifdef __mips64__
 #define __va_reg_size 8
 #else
 #define __va_reg_size 4
@@ -105,7 +105,7 @@ enum {
 
 #if defined (__mips_eabi)
 #if ! defined (__mips_soft_float) && ! defined (__mips_single_float)
-#ifdef __mips64
+#ifdef __mips64__
 #define va_start(__AP, __LASTARG)					\
   (__AP.__gp_regs = ((char *) __builtin_next_arg (__LASTARG)		\
 		     - (__builtin_args_info (2) < 8			\
@@ -113,7 +113,7 @@ enum {
 			: 0)),						\
    __AP.__fp_left = 8 - __builtin_args_info (3),			\
    __AP.__fp_regs = __AP.__gp_regs - __AP.__fp_left * __va_reg_size)
-#else /* ! defined (__mips64) */
+#else /* ! defined (__mips64__) */
 #define va_start(__AP, __LASTARG)					\
   (__AP.__gp_regs = ((char *) __builtin_next_arg (__LASTARG)		\
 		     - (__builtin_args_info (2) < 8			\
@@ -122,7 +122,7 @@ enum {
    __AP.__fp_left = (8 - __builtin_args_info (3)) / 2,			\
    __AP.__fp_regs = __AP.__gp_regs - __AP.__fp_left * 8,		\
    __AP.__fp_regs = (char *) ((int) __AP.__fp_regs & -8))
-#endif /* ! defined (__mips64) */
+#endif /* ! defined (__mips64__) */
 #else /* ! (! defined (__mips_soft_float) && ! defined (__mips_single_float) ) */
 #define va_start(__AP, __LASTARG)					\
   (__AP = ((__gnuc_va_list) __builtin_next_arg (__LASTARG)		\
@@ -142,7 +142,7 @@ void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
 #if defined (__mips_eabi)
 
 #if ! defined (__mips_soft_float) && ! defined (__mips_single_float)
-#ifdef __mips64
+#ifdef __mips64__
 #define __va_next_addr(__AP, __type)					\
   ((__builtin_classify_type (*(__type *) 0) == __real_type_class	\
     && __AP.__fp_left > 0)						\
@@ -163,7 +163,7 @@ void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
 	  - __va_rounded_size (__type)))))
 #endif
 #else /* ! (! defined (__mips_soft_float) && ! defined (__mips_single_float)) */
-#ifdef __mips64
+#ifdef __mips64__
 #define __va_next_addr(__AP, __type)					\
   ((__AP += __va_reg_size) - __va_reg_size)
 #else
@@ -203,11 +203,11 @@ void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
 
 /* We cast to void * and then to TYPE * because this avoids
    a warning about increasing the alignment requirement.  */
-/* The __mips64 cases are reversed from the 32 bit cases, because the standard
+/* The __mips64__ cases are reversed from the 32 bit cases, because the standard
    32 bit calling convention left-aligns all parameters smaller than a word,
-   whereas the __mips64 calling convention does not (and hence they are
+   whereas the __mips64__ calling convention does not (and hence they are
    right aligned).  */
-#ifdef __mips64
+#ifdef __mips64__
 #ifdef __MIPSEB__
 #define va_arg(__AP, __type)                                    \
   ((__type *) (void *) (__AP = (char *)                         \
@@ -220,7 +220,7 @@ void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
    *(__type *) (void *) (__AP - __va_rounded_size (__type)))
 #endif
 
-#else /* not __mips64 */
+#else /* not __mips64__ */
 
 #ifdef __MIPSEB__
 /* For big-endian machines.  */
