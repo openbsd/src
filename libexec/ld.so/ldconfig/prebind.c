@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.3 2006/05/13 16:33:40 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.4 2006/05/14 21:09:47 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -32,7 +32,7 @@
 #include "resolve.h"
 #include "link.h"
 #include "sod.h"
-#ifndef __mips64
+#ifndef __mips64__
 #include "machine/reloc.h"
 #endif
 #include "prebind.h"
@@ -59,7 +59,7 @@ char *shstrtab;
 #ifdef __i386__
 #define RELOC_JMP_SLOT	RELOC_JUMP_SLOT
 #endif
-#ifdef __mips64
+#ifdef __mips64__
 #define RELOC_JMP_SLOT	0		/* XXX mips64 doesnt have PLT reloc */
 #endif
 /* powerpc uses RELOC_JMP_SLOT */
