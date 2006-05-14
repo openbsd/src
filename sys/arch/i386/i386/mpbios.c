@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.12 2006/05/09 18:41:22 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.13 2006/05/14 19:07:46 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -1078,7 +1078,7 @@ mpbios_int(ent, mpi)
 {
 	const struct mpbios_int *entry = (const struct mpbios_int *)ent;
 	struct mpbios_int rw_entry = *entry;
-	struct ioapic_softc *sc = NULL;
+	struct ioapic_softc *sc = NULL, *sc2;
 
 	struct mp_intr_map *altmpi;
 	struct mp_bus *mpb;
@@ -1128,6 +1128,23 @@ mpbios_int(ent, mpi)
 		if (sc == NULL) {
 			printf("mpbios: can't find ioapic %d\n", id);
 			return (1);
+		}
+
+		/*
+		 * XXX workaround for broken BIOSs that put the ACPI
+		 * global interrupt number in the entry, not the pin
+		 * number.
+		 */
+		if (pin >= sc->sc_apic_sz) {
+			sc2 = ioapic_find_bybase(pin);
+			if (sc2 != sc) {
+				printf("mpbios: bad pin %d for apic %d\n",
+				    pin, id);
+				return (1);
+			}
+			printf("mpbios: WARNING: pin %d for apic %d too high; "
+			       "assuming ACPI global int value\n", pin, id);
+			pin -= sc->sc_apic_vecbase;
 		}
 
 		mpi->ioapic = sc;
