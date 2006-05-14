@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.44 2006/05/10 12:05:33 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.45 2006/05/14 15:23:10 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -134,10 +134,8 @@ rcsmerge_main(int argc, char **argv)
 		goto out;
 
 	if ((bp = rcs_diff3(file, argv[0], rev1, rev2,
-	    !(flags & QUIET))) == NULL) {
-		warnx("failed to merge");
-		goto out;
-	}
+	    !(flags & QUIET))) == NULL)
+		errx(D_ERROR, "failed to merge");
 
 	if (!(flags & QUIET)) {
 		(void)rcsnum_tostr(rev1, r1, sizeof(r1));
