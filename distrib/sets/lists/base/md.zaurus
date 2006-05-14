@@ -885,6 +885,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wi_ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wivar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wpireg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/if_wpivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/intersil7170.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/isp_inline.ph

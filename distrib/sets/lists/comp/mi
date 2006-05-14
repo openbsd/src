@@ -261,6 +261,8 @@
 ./usr/include/dev/ic/if_wi_ieee.h
 ./usr/include/dev/ic/if_wireg.h
 ./usr/include/dev/ic/if_wivar.h
+./usr/include/dev/ic/if_wpireg.h
+./usr/include/dev/ic/if_wpivar.h
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/intersil7170.h
 ./usr/include/dev/ic/isp_inline.h

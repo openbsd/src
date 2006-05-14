@@ -1,4 +1,3 @@
-./usr/share/man/ps2/aviion
 ./usr/share/doc/html
 ./usr/share/info/amdref.info
 ./usr/share/info/amdref.info-1
@@ -1788,6 +1787,7 @@
 ./usr/share/man/cat4/wdc.0
 ./usr/share/man/cat4/we.0
 ./usr/share/man/cat4/wi.0
+./usr/share/man/cat4/wpi.0
 ./usr/share/man/cat4/wscons.0
 ./usr/share/man/cat4/wsdisplay.0
 ./usr/share/man/cat4/wskbd.0
@@ -2622,6 +2622,7 @@
 ./usr/share/man/ps2
 ./usr/share/man/ps2/alpha
 ./usr/share/man/ps2/amd64
+./usr/share/man/ps2/aviion
 ./usr/share/man/ps2/cats
 ./usr/share/man/ps2/i386
 ./usr/share/man/ps2/zaurus
