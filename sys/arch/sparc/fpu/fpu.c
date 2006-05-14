@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.11 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.12 2006/05/14 21:58:05 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.6 1997/07/29 10:09:51 fair Exp $	*/
 
 /*
@@ -87,11 +87,11 @@ static u_char fpu_codes[] = {
 };
 
 static int fpu_types[] = {
-	FPE_FLTRES,
-	FPE_FLTDIV,
-	FPE_FLTUND,
-	FPE_FLTOVF,
-	FPE_FLTINV,
+	X1(FPE_FLTRES),
+	X2(FPE_FLTDIV),
+	X4(FPE_FLTUND),
+	X8(FPE_FLTOVF),
+	X16(FPE_FLTINV)
 };
 
 /*
@@ -128,7 +128,7 @@ fpu_cleanup(p, fs)
 	case FSR_TT_IEEE:
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		trapsignal(p, SIGFPE, fpu_codes[i - 1], fpu_types[i - i], sv);
+		trapsignal(p, SIGFPE, fpu_codes[i - 1], fpu_types[i - 1], sv);
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
