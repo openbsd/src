@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.52 2005/11/27 13:12:00 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.53 2006/05/14 08:56:25 matthieu Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -4245,6 +4245,7 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .Cm openssl rand
 .Op Fl base64
 .Op Fl engine Ar id
+.Op Fl hex
 .Op Fl out Ar file
 .Op Fl rand Ar file ...
 .Ar num
@@ -4285,6 +4286,8 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl hex
+Specify hexadecimal output.
 .It Fl out Ar file
 Write to
 .Ar file
