@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.6 2006/05/14 19:55:51 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.7 2006/05/14 20:19:23 deraadt Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp = &sc->sc_arpcom.ac_if;
 	strlcpy(ifp->if_xname, XNAME, IFNAMSIZ);
-	strlcpy(sc->sc_arpcom.ac_enaddr, enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_arpcom.ac_enaddr, enaddr, ETHER_ADDR_LEN);
 	ifp->if_baudrate = 1000000000;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -620,9 +620,7 @@ xge_enable(struct xge_softc *sc)
 	val = PIF_RCSR(ADAPTER_CONTROL);
 	val |= LED_ON;
 	PIF_WCSR(ADAPTER_CONTROL, val);
-#if 0
 	printf("%s: link up\n", XNAME);
-#endif
 
 }
 
@@ -709,9 +707,7 @@ xge_intr(void *pv)
 
 	if ((val = PIF_RCSR(MAC_RMAC_ERR_REG)) & RMAC_LINK_STATE_CHANGE_INT) {
 		/* Wait for quiescence */
-#if 0
 		printf("%s: link down\n", XNAME);
-#endif
 		while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 			;
 		PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
