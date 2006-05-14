@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.7 2006/05/14 20:19:23 deraadt Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.8 2006/05/14 21:11:10 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -832,7 +832,7 @@ xge_intr(void *pv)
 
 	}
 
-	return 0;
+	return 1;
 }
 
 int 
