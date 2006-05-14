@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.43 2006/01/21 12:20:53 miod Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.44 2006/05/14 14:07:20 krw Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -428,6 +428,7 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 		for (dev->dv_unit = cf->cf_starunit1;
 		    dev->dv_unit < cf->cf_unit; dev->dv_unit++)
 			if (cd->cd_ndevs == 0 ||
+			    dev->dv_unit >= cd->cd_ndevs ||
 			    cd->cd_devs[dev->dv_unit] == NULL)
 				break;
 	} else
