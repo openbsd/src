@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.9 2006/05/14 21:41:25 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.10 2006/05/14 21:51:22 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -670,6 +670,8 @@ xge_init(struct ifnet *ifp)
 	PIF_WCSR(RXPIC_INT_MASK, 0);
 	PIF_WCSR(MAC_INT_MASK, MAC_TMAC_INT); /* only from RMAC */
 	PIF_WCSR(MAC_RMAC_ERR_MASK, ~RMAC_LINK_STATE_CHANGE_INT);
+
+	xge_mcast_filter(sc);
 
 	/* Done... */
 	ifp->if_flags |= IFF_RUNNING;
