@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.67 2005/08/10 13:48:36 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.68 2006/05/14 22:33:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -184,7 +184,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 
-		i = 1;
+		i = PFD_MAX;
 		TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
 			pfd[i].fd = la->fd;
 			pfd[i].events = POLLIN;
