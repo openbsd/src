@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.h,v 1.5 2006/05/01 21:01:11 brad Exp $ */
+/* $OpenBSD: if_ixgb.h,v 1.6 2006/05/14 22:24:23 brad Exp $ */
 
 #ifndef _IXGB_H_DEFINED_
 #define _IXGB_H_DEFINED_
@@ -84,12 +84,12 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Tunables */
 
 /*
- * TxDescriptors Valid Range: 64-4096 Default Value: 2048 This value is the
+ * TxDescriptors Valid Range: 64-4096 Default Value: 4096 This value is the
  * number of transmit descriptors allocated by the driver. Increasing this
  * value allows the driver to queue more transmits. Each descriptor is 16
  * bytes.
  */
-#define IXGB_MAX_TXD			2048
+#define IXGB_MAX_TXD			4096
 
 /*
  * RxDescriptors Valid Range: 64-4096 Default Value: 1024 This value is the
