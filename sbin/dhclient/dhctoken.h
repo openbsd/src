@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.4 2006/05/08 17:25:59 deraadt Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.5 2006/05/15 08:10:57 fkr Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -62,7 +62,7 @@
 #define TOK_SCRIPT		275
 #define TOK_INTERFACE		276
 #define TOK_RENEW		277
-#define	TOK_REBIND		278
+#define TOK_REBIND		278
 #define TOK_EXPIRE		279
 #define TOK_BOOTP		280
 #define TOK_DENY		281
@@ -71,8 +71,8 @@
 #define TOK_MEDIUM		284
 #define TOK_ALIAS		285
 #define TOK_REBOOT		286
-#define	TOK_BACKOFF_CUTOFF	287
-#define	TOK_INITIAL_INTERVAL	288
+#define TOK_BACKOFF_CUTOFF	287
+#define TOK_INITIAL_INTERVAL	288
 #define TOK_SUPERSEDE		289
 #define TOK_APPEND		290
 #define TOK_PREPEND		291
