@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.125 2006/05/11 09:43:19 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.126 2006/05/15 06:58:03 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -52,6 +52,7 @@ struct rcs_prog {
 	{ "rcsmerge",	rcsmerge_main,	rcsmerge_usage	},
 	{ "rlog",	rlog_main,	rlog_usage	},
 	{ "ident",	ident_main,	ident_usage	},
+	{ "merge",	merge_main,	merge_usage	},
 };
 
 struct rcs_wklhead rcs_temp_files;

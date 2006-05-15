@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.57 2006/04/27 07:59:33 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.58 2006/05/15 06:58:03 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -91,6 +91,10 @@ void	checkout_usage(void);
 /* ident.c */
 int	ident_main(int, char **);
 void	ident_usage(void);
+
+/* merge.c */
+int	merge_main(int, char **);
+void	merge_usage(void);
 
 /* rcsclean.c */
 int	rcsclean_main(int, char **);

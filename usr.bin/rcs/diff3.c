@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.8 2006/05/10 01:10:23 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.9 2006/05/15 06:58:03 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.8 2006/05/10 01:10:23 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.9 2006/05/15 06:58:03 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -152,6 +152,123 @@ static void increase(void);
 static int diff3_internal(int, char **, const char *, const char *);
 
 int diff3_conflicts = 0;
+
+/*
+ * For merge(1).
+ */
+BUF *
+merge_diff3(char **av, int flags)
+{
+	int argc;
+	char *data, *patch;
+	char *argv[5], *dp13, *dp23, *path1, *path2, *path3;
+	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
+
+	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
+	dp13 = dp23 = path1 = path2 = path3 = NULL;
+
+	if ((b1 = rcs_buf_load(av[0], BUF_AUTOEXT)) == NULL)
+		goto out;
+	if ((b2 = rcs_buf_load(av[1], BUF_AUTOEXT)) == NULL)
+		goto out;
+	if ((b3 = rcs_buf_load(av[2], BUF_AUTOEXT)) == NULL)
+		goto out;
+
+	d1 = rcs_buf_alloc(128, BUF_AUTOEXT);
+	d2 = rcs_buf_alloc(128, BUF_AUTOEXT);
+	diffb = rcs_buf_alloc(128, BUF_AUTOEXT);
+
+	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
+	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
+	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", rcs_tmpdir);
+
+	rcs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b3, path3, 0600);
+
+	rcs_buf_free(b2);
+	b2 = NULL;
+
+	if ((rcs_diffreg(path1, path3, d1) == D_ERROR) ||
+	    (rcs_diffreg(path2, path3, d2) == D_ERROR)) {
+		rcs_buf_free(diffb);
+		diffb = NULL;
+		goto out;
+	}
+
+	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
+	rcs_buf_write_stmp(d1, dp13, 0600);
+
+	rcs_buf_free(d1);
+	d1 = NULL;
+
+	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", rcs_tmpdir);
+	rcs_buf_write_stmp(d2, dp23, 0600);
+
+	rcs_buf_free(d2);
+	d2 = NULL;
+
+	argc = 0;
+	diffbuf = diffb;
+	argv[argc++] = dp13;
+	argv[argc++] = dp23;
+	argv[argc++] = path1;
+	argv[argc++] = path2;
+	argv[argc++] = path3;
+
+	diff3_conflicts = diff3_internal(argc, argv, av[0], av[2]);
+	if (diff3_conflicts < 0) {
+		rcs_buf_free(diffb);
+		diffb = NULL;
+		goto out;
+	}
+
+	rcs_buf_putc(diffb, '\0');
+	rcs_buf_putc(b1, '\0');
+
+	patch = rcs_buf_release(diffb);
+	data = rcs_buf_release(b1);
+	diffb = b1 = NULL;
+
+	if ((diffb = rcs_patchfile(data, patch, ed_patch_lines)) == NULL)
+		goto out;
+
+	if (!(flags & QUIET) && diff3_conflicts != 0)
+		warnx("warning: overlaps or other problems during merge");
+
+	xfree(data);
+	xfree(patch);
+out:
+	if (b1 != NULL)
+		rcs_buf_free(b1);
+	if (b2 != NULL)
+		rcs_buf_free(b2);
+	if (b3 != NULL)
+		rcs_buf_free(b3);
+	if (d1 != NULL)
+		rcs_buf_free(d1);
+	if (d2 != NULL)
+		rcs_buf_free(d2);
+
+	(void)unlink(path1);
+	(void)unlink(path2);
+	(void)unlink(path3);
+	(void)unlink(dp13);
+	(void)unlink(dp23);
+
+	if (path1 != NULL)
+		xfree(path1);
+	if (path2 != NULL)
+		xfree(path2);
+	if (path3 != NULL)
+		xfree(path3);
+	if (dp13 != NULL)
+		xfree(dp13);
+	if (dp23 != NULL)
+		xfree(dp23);
+
+	return (diffb);
+}
 
 BUF *
 rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)

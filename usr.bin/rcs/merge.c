@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.1 2006/05/10 14:28:17 xsa Exp $	*/
+/*	$OpenBSD: merge.c,v 1.2 2006/05/15 06:58:03 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -32,12 +32,15 @@
 int
 merge_main(int argc, char **argv)
 {
-	int ch, flags, labels;
-	char *label[3];
+	int ch, flags, labels, status;
+	char *fcont;
+	const char *label[3];
+	BUF *bp;
 	extern char *optarg;
 	extern int optind;
 
 	flags = labels = 0;
+	status = D_ERROR;
 
 	/*
 	 * Using getopt(3) and not rcs_getopt() because merge(1)
@@ -76,7 +79,32 @@ merge_main(int argc, char **argv)
 		exit(D_ERROR);
 	}
 
-	return (0);
+	for (; labels < 3; labels++)
+		label[labels] = argv[labels];
+
+	/* XXX handle labels */
+	if ((bp = merge_diff3(argv, flags)) == NULL)
+		errx(D_ERROR, "failed to merge");
+
+	if (diff3_conflicts != 0)
+		status = D_OVERLAPS;
+	else
+		status = 0;
+
+	if (flags & PIPEOUT) {
+		rcs_buf_putc(bp, '\0');
+		fcont = rcs_buf_release(bp);
+		(void)printf("%s", fcont);
+		xfree(fcont);
+	} else {
+		/* XXX */
+		if (rcs_buf_write(bp, argv[0], 0644) < 0)
+			warnx("rcs_buf_write failed");
+
+		rcs_buf_free(bp);
+	}
+
+	return (status);
 }
 
 void
