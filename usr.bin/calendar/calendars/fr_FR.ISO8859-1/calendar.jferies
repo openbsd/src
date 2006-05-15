@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.jferies,v 1.2 2004/01/16 18:43:28 mickey Exp $	*/
+/*	$OpenBSD: calendar.jferies,v 1.3 2006/05/15 15:24:19 aanriot Exp $	*/
 
 /*
  * Jours fériés
@@ -39,7 +39,7 @@ Easter+50	Lundi de Pentecôte
 10/SundayLast	Passage à l'heure d'hiver
 
 /* Divers */
-May Sun+2 	Fêtes des mères
-June Sun+2	Fêtes des pères
+05/SundayLast	Fêtes des mères
+June Sun+3	Fêtes des pères
 
 #endif /*! _fr_FR_ISO8859_1_jferies_ */
