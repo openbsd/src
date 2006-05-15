@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.40 2006/05/15 00:46:55 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.41 2006/05/15 01:10:07 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -298,8 +298,8 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask, u_int8_t value,
 		tsleep(sc, PWAIT, lbl, 0);
 
 	if (sc->sc_retries > sc->sc_max_retries) {
-		printf("bmc_io_wait fails : v=%.2x m=%.2x b=%.2x %s\n",
-		    v, mask, value, lbl);
+		printf("%s: bmc_io_wait fails : v=%.2x m=%.2x b=%.2x %s\n",
+		    DEVNAME(sc), v, mask, value, lbl);
 		return (-1);
 	}
 
@@ -320,8 +320,8 @@ bmc_io_wait_cold(struct ipmi_softc *sc, int offset, u_int8_t mask,
 		delay(50);
 	}
 
-	printf("bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
-	    v, mask, value, lbl);
+	printf("%s: bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
+	    DEVNAME(sc), v, mask, value, lbl);
 	return (-1);
 
 }
@@ -633,7 +633,8 @@ kcs_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t value, const char *lbl)
 		bmc_write(sc, _KCS_COMMAND_REGISTER, KCS_GET_STATUS);
 		while (bmc_read(sc, _KCS_STATUS_REGISTER) & KCS_IBF)
 			;
-		printf(" error code: %x\n", bmc_read(sc, _KCS_DATAIN_REGISTER));
+		printf("%s: error code: %x\n", DEVNAME(sc),
+		    bmc_read(sc, _KCS_DATAIN_REGISTER));
 	}
 
 	return (v & KCS_STATE_MASK);
@@ -997,7 +998,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 		    txlen, data, &txlen);
 
 	if (buf == NULL) {
-		printf("sendcmd malloc fails\n");
+		printf("%s: sendcmd malloc fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	rc = sc->sc_if->sendmsg(sc, txlen, buf);
@@ -1015,8 +1016,8 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	/* Need three extra bytes: netfn/cmd/ccode + data */
 	buf = malloc(maxlen + 3, M_DEVBUF, M_WAITOK);
 	if (buf == NULL) {
-		printf("ipmi_recvcmd: malloc fails\n");
-		return -1;
+		printf("%s: ipmi_recvcmd: malloc fails\n", DEVNAME(sc));
+		return (-1);
 	}
 	/* Receive message from interface, copy out result data */
 	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf))
@@ -1053,11 +1054,11 @@ get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
 	cmd[5] = length;
 	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_GET_SDR, 6,
 	    cmd)) {
-		printf("sendcmd fails\n");
+		printf("%s: sendcmd fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	if (ipmi_recvcmd(sc, 8 + length, &len, cmd)) {
-		printf("getSdrPartial: recvcmd fails\n");
+		printf("%s: getSdrPartial: recvcmd fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	if (nxtRecordId)
@@ -1081,16 +1082,16 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	/* Reserve SDR */
 	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_RESERVE_SDR,
 	    0, NULL)) {
-		printf("reserve send fails\n");
+		printf("%s: reserve send fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	if (ipmi_recvcmd(sc, sizeof(resid), &len, &resid)) {
-		printf("reserve recv fails\n");
+		printf("%s: reserve recv fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	/* Get SDR Header */
 	if (get_sdr_partial(sc, recid, resid, 0, sizeof shdr, &shdr, nxtrec)) {
-		printf("get header fails\n");
+		printf("%s: get header fails\n", DEVNAME(sc));
 		return (-1);
 	}
 	/* Allocate space for entire SDR Length of SDR in header does not
@@ -1110,7 +1111,8 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 
 		if (get_sdr_partial(sc, recid, resid, offset, len,
 		    psdr + offset, NULL)) {
-			printf("get chunk : %d,%d fails\n", offset, len);
+			printf("%s: get chunk : %d,%d fails\n", DEVNAME(sc),
+			    offset, len);
 			return (-1);
 		}
 	}
@@ -1504,7 +1506,8 @@ ipmi_refresh_sensors(struct ipmi_softc *sc)
 
 	SLIST_FOREACH(psensor, &ipmi_sensor_list, list)
 		if (read_sensor(sc, psensor))
-			printf("error reading: %s\n", psensor->i_sensor.desc);
+			printf("%s: error reading: %s\n", DEVNAME(sc), 
+			    psensor->i_sensor.desc);
 }
 
 int
@@ -1524,7 +1527,8 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
 	    0, &sc->sc_ioh)) {
-		printf("ipmi: bus_space_map(%x %x %x 0 %p) failed\n",
+		printf("%s: bus_space_map(%x %x %x 0 %p) failed\n",
+		    DEVNAME(sc),
 		    sc->sc_iot, ia->iaa_if_iobase,
 		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh);
 		return (-1);
