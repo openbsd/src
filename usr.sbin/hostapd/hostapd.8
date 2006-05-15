@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.8,v 1.10 2005/12/18 17:54:12 reyk Exp $
+.\" $OpenBSD: hostapd.8,v 1.11 2006/05/15 20:53:02 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -68,6 +68,15 @@ If the
 .Nm
 receives ADD.notify messages it will request the Host AP
 remove a station which has been associated to another access point.
+.Pp
+.Nm
+may also handle dynamic roaming of IP addresses and routes in
+addition to the standard IAPP ADD.notify behaviour.
+See the section called
+.Em IP Roaming
+in
+.Xr hostapd.conf 5
+for details.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds

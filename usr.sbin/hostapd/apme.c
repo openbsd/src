@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.11 2006/01/31 10:55:02 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.12 2006/05/15 20:53:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -125,6 +125,10 @@ hostapd_apme_term(struct hostapd_apme *apme)
 	close(apme->a_raw);
 
 	TAILQ_REMOVE(&cfg->c_apmes, apme, a_entries);
+
+	/* Remove all dynamic roaming addresses */
+	if (cfg->c_flags & HOSTAPD_CFG_F_PRIV)
+		hostapd_roaming_term(apme);
 
 	hostapd_log(HOSTAPD_LOG_DEBUG,
 	    "%s: Host AP interface removed\n", apme->a_iface);
@@ -254,6 +258,7 @@ void
 hostapd_apme_frame(struct hostapd_apme *apme, u_int8_t *buf, u_int len)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct hostapd_apme *other_apme;
 	struct hostapd_node node;
 	struct ieee80211_frame *wh;
@@ -311,9 +316,14 @@ hostapd_apme_frame(struct hostapd_apme *apme, u_int8_t *buf, u_int len)
 	TAILQ_FOREACH(other_apme, &cfg->c_apmes, a_entries) {
 		if (apme == other_apme)
 			continue;
+		if (iapp->i_flags & HOSTAPD_IAPP_F_ROAMING)
+			hostapd_roaming_del(other_apme, &node);
 		if (hostapd_apme_delnode(other_apme, &node) == 0)
 			cfg->c_stats.cn_tx_apme++;
 	}
+
+	if (iapp->i_flags & HOSTAPD_IAPP_F_ROAMING)
+		hostapd_roaming_add(apme, &node);
 
 	hostapd_iapp_add_notify(apme, &node);
 

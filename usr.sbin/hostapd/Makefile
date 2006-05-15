@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2005/07/30 17:18:24 reyk Exp $
+# $OpenBSD: Makefile,v 1.5 2006/05/15 20:53:02 reyk Exp $
 
 PROG=		hostapd
-SRCS=		privsep.c apme.c handle.c iapp.c llc.c hostapd.c print-802_11.c parse.y
+SRCS=		privsep.c apme.c handle.c iapp.c llc.c hostapd.c \
+		print-802_11.c roaming.c parse.y
 MAN=		hostapd.8 hostapd.conf.5
 LDADD=		${LIBEVENT}
 CFLAGS+=	-Wall -I${.CURDIR}

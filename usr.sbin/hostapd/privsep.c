@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.18 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.19 2006/05/15 20:53:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -57,6 +57,8 @@ enum hostapd_cmd_types {
 	PRIV_APME_GETNODE,	/* Get a node from the Host AP */
 	PRIV_APME_ADDNODE,	/* Delete a node from the Host AP */
 	PRIV_APME_DELNODE,	/* Delete a node from the Host AP */
+	PRIV_APME_ADDROAMING,	/* Add a route to the kernel */
+	PRIV_APME_DELROAMING,	/* Delete a route from the kernel */
 	PRIV_LLC_SEND_XID	/* Send IEEE 802.3 LLC XID frame */
 };
 
@@ -152,6 +154,8 @@ hostapd_priv_init(struct hostapd_config *cfg)
 			hostapd_fatal("unable to open ioctl socket\n");
 	}
 
+	hostapd_roaming_init(cfg);
+
 	setproctitle("[priv]");
 
 	/* Start a new event listener */
@@ -193,7 +197,7 @@ hostapd_priv(int fd, short sig, void *arg)
 	struct ieee80211_nodereq nr;
 	struct ifreq ifr;
 	unsigned long request;
-	int ret, cmd;
+	int ret = 0, cmd;
 
 	/* Terminate the event if we got an invalid signal */
 	if (sig != EV_READ)
@@ -284,6 +288,19 @@ hostapd_priv(int fd, short sig, void *arg)
 
 		/* Send a LLC XID frame to reset possible switch ports */
 		ret = hostapd_llc_send_xid(cfg, &node);
+		hostapd_must_write(fd, &ret, sizeof(int));
+		break;
+
+	case PRIV_APME_ADDROAMING:
+	case PRIV_APME_DELROAMING:
+		hostapd_log(HOSTAPD_LOG_DEBUG,
+		    "[priv]: msg PRIV_APME_[ADD|DEL]ROAMING received\n");
+
+		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
+
+		if ((apme = hostapd_priv_getapme(fd, cfg)) == NULL)
+			break;
+		ret = hostapd_roaming(apme, &node, cmd == PRIV_APME_ADDROAMING);
 		hostapd_must_write(fd, &ret, sizeof(int));
 		break;
 
@@ -393,6 +410,32 @@ hostapd_priv_llc_xid(struct hostapd_config *cfg, struct hostapd_node *node)
 
 	if (ret == 0)
 		cfg->c_stats.cn_tx_llc++;
+	return (ret);
+}
+
+int
+hostapd_priv_roaming(struct hostapd_apme *apme, struct hostapd_node *node,
+    int add)
+{
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	int ret, cmd;
+
+	if (priv_fd < 0)
+		hostapd_fatal("%s: called from privileged portion\n", __func__);
+
+	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
+		hostapd_fatal("%s: Host AP is not available\n", __func__);
+
+	if (add)
+		cmd = PRIV_APME_ADDROAMING;
+	else
+		cmd = PRIV_APME_DELROAMING;
+	hostapd_must_write(priv_fd, &cmd, sizeof(int));
+	hostapd_must_write(priv_fd, node, sizeof(struct hostapd_node));
+	hostapd_must_write(priv_fd, &apme->a_iface, IFNAMSIZ);
+
+	hostapd_must_read(priv_fd, &ret, sizeof(int));
+
 	return (ret);
 }
 

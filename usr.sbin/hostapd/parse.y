@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2005/12/29 04:33:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2006/05/15 20:53:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -134,7 +134,7 @@ u_int negative;
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
-%token	ADDRESS PORT ON NOTIFY TTL INCLUDE
+%token	ADDRESS PORT ON NOTIFY TTL INCLUDE ROUTE ROAMING
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -196,6 +196,26 @@ option		: SET HOSTAP INTERFACE hostapifaces
 			free($4);
 		}
 		| SET IAPP MODE iappmode
+		| SET IAPP ADDRESS ROAMING TABLE table
+		{
+			if ((hostapd_cfg.c_iapp.i_addr_tbl =
+			    hostapd_table_lookup(&hostapd_cfg, $6)) == NULL) {
+				yyerror("undefined table <%s>", $6);
+				free($6);
+				YYERROR;
+			}
+			free($6);
+		}
+		| SET IAPP ROUTE ROAMING TABLE table
+		{
+			if ((hostapd_cfg.c_iapp.i_route_tbl =
+			    hostapd_table_lookup(&hostapd_cfg, $6)) == NULL) {
+				yyerror("undefined table <%s>", $6);
+				free($6);
+				YYERROR;
+			}
+			free($6);
+		}
 		| SET IAPP HANDLE SUBTYPE iappsubtypes
 		;
 
@@ -313,6 +333,14 @@ iappsubtype	: not ADD NOTIFY
 		| not RADIOTAP
 		{
 			HOSTAPD_IAPP_FLAG(RADIOTAP);
+		}
+		| not ROUTE ROAMING
+		{
+			HOSTAPD_IAPP_FLAG(ROAMING_ROUTE);
+		}
+		| not ADDRESS ROAMING
+		{
+			HOSTAPD_IAPP_FLAG(ROAMING_ADDRESS);
 		}
 		;
 
@@ -1050,6 +1078,8 @@ lookup(char *token)
 		{ "resend",		RESEND },
 		{ "reserved",		RESERVED },
 		{ "response",		RESPONSE },
+		{ "roaming",		ROAMING },
+		{ "route",		ROUTE },
 		{ "rsn",		RSN },
 		{ "sec",		SEC },
 		{ "set",		SET },

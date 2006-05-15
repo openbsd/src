@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.14 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.15 2006/05/15 20:53:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -258,17 +258,22 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 		 * any allocated resources. Otherwise the received
 		 * ADD.notify message will be ignored.
 		 */
-		if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
+		if (iapp->i_flags & HOSTAPD_IAPP_F_ADD &&
+		    cfg->c_flags & HOSTAPD_CFG_F_APME) {
 			TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
-				if ((ret = hostapd_apme_delnode(apme,
+				if (iapp->i_flags & HOSTAPD_IAPP_F_ROAMING)
+					hostapd_roaming_del(apme, &node);
+				if (iapp->i_flags & HOSTAPD_IAPP_F_ADD_NOTIFY &&
+				    (ret = hostapd_apme_delnode(apme,
 				    &node)) == 0)
 					cfg->c_stats.cn_tx_apme++;
 			}
 		} else
 			ret = 0;
 
-		hostapd_log(HOSTAPD_LOG, "%s: %s ADD notification "
-		    "for %s at %s\n",
+		hostapd_log(iapp->i_flags & HOSTAPD_IAPP_F_ADD ?
+		    HOSTAPD_LOG : HOSTAPD_LOG_VERBOSE,
+		    "%s: %s ADD notification for %s at %s\n",
 		    iapp->i_iface, ret == 0 ?
 		    "received" : "ignored",
 		    etheraddr_string(node.ni_macaddr),

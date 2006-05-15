@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.30 2006/03/10 18:10:16 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.31 2006/05/15 20:53:02 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -39,9 +39,12 @@ addresses easily, with increased performance and flexibility.
 .It Sy Global Configuration
 Global runtime settings for
 .Xr hostapd 8 .
-.It Sy Event rules
+.It Sy Event Rules
 Event rules provide a powerful mechanism to trigger certain actions
 when receiving specified IEEE 802.11 frames.
+.It Sy IP Roaming
+The concepts and details about the optional IP based roaming in
+.Xr hostapd 8 .
 .El
 .Pp
 Comments can be put anywhere in the file using a hash mark
@@ -147,6 +150,15 @@ It is important that the IAPP interface is on a trusted
 network because there is no authentication and an attacker could force
 disassociation of selected stations on all listening access points.
 .It Xo
+.Ic set iapp
+.Op Ic address \*(Ba\ route
+.Ic roaming table
+.Aq Ar table
+.Xc
+Specify a table used for
+.Em IP Roaming
+lookups of link layer address to IP address or subnet assignments.
+.It Xo
 .Ic set iapp handle subtype
 .Ar subtype \*(Ba\ \&
 .Pf { Ar subtype0 , subtype1 , ... No }
@@ -170,6 +182,13 @@ Receive
 .Em radiotap
 messages.
 This option is enabled by default.
+.It Xo
+.Op Ic not
+.Op Ic address \*(Ba\ route
+.Ic roaming
+.Xc
+Enable dynamic roaming of IP addresses or routes.
+These options are disabled by default.
 .El
 .Pp
 .It Ic set iapp mode Ar mode
@@ -649,6 +668,82 @@ hostap handle on ath0 type management subtype auth with resend
 hostap handle type management subtype auth from <blacklist> \e
     with node delete &from
 .Ed
+.Sh IP ROAMING
+In a traditional wireless network, multiple access points are
+members of a single layer 3 broadcast domain.
+The traffic is bridged between physical collision domains,
+as with the
+.Xr bridge 4
+interface in
+.Ox .
+This may cause problems in large wireless networks with a heavy load
+of broadcast traffic, like broadcasted ARP, DHCP or ICMP requests.
+.Pp
+.Xr hostapd 8
+implements IP based roaming to build wireless networks
+without the requirement of a single broadcast domain.
+This works as follows:
+.Pp
+.Bl -enum -compact
+.It
+Every access point running
+.Xr hostapd 8
+is a router to an individual internal broadcast domain,
+.Em without
+using the
+.Xr bridge 4
+interface.
+.It
+An increased multicast TTL is used for IAPP communication
+between access points in multiple network segments.
+Multicast routing is required in the network infrastructure,
+like an
+.Ox
+router running
+.Xr mrouted 8 .
+.It
+The configuration file
+.Nm
+is used to assign IP subnets to link layer addresses.
+If a station with the specified link layer address successfully
+associates to the access point,
+.Xr hostapd 8
+will configure the specified IP address and subnet on
+the wireless interface.
+.It
+The
+IAPP
+.Em ADD.notify
+message is used to notify other access points running
+.Xr hostapd 8
+to remove the station and any assigned IP addresses or subnets from
+the wireless interface.
+.It
+A dynamic routing daemon like
+.Xr ospfd 8
+or
+.Xr bgpd 8
+running on the access point will be used to announce the
+new IP route to the internal network and routers.
+.El
+.Pp
+For example:
+.Bd -literal -offset indent
+# Assign IP addresses to layer 2 addresses
+table <clients> {
+	00:02:6f:42:d0:01 -> 172.23.5.1/30
+	00:05:4e:45:d3:b8 -> 172.23.5.4/30
+	00:04:2e:12:03:e0 -> 172.23.5.8/30
+}
+
+# Global options
+set hostap interface ath0
+set hostap mode radiotap
+set iapp interface sis0
+set iapp address roaming table <clients>
+set iapp handle subtype address roaming
+set iapp mode multicast ttl 2
+.Ed
 .Sh FILES
 .Bl -tag -width "/etc/hostapd.conf" -compact
 .It Pa /etc/hostapd.conf
@@ -661,3 +756,8 @@ The
 .Xr hostapd 8
 program was written by
 .An Reyk Floeter Aq reyk@openbsd.org .
+.Sh CAVEATS
+.Em IP Roaming
+requires statically assigned IP addresses of stations and does
+not support DHCP at present.
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.16 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.17 2006/05/15 20:53:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -268,8 +268,17 @@ struct hostapd_iapp {
 
 #define HOSTAPD_IAPP_F_ADD_NOTIFY	0x01
 #define HOSTAPD_IAPP_F_RADIOTAP		0x02
+#define HOSTAPD_IAPP_F_ROAMING_ADDRESS	0x04
+#define HOSTAPD_IAPP_F_ROAMING_ROUTE	0x08
 #define HOSTAPD_IAPP_F_DEFAULT							\
 	(HOSTAPD_IAPP_F_ADD_NOTIFY | HOSTAPD_IAPP_F_RADIOTAP)
+#define HOSTAPD_IAPP_F_ROAMING							\
+	(HOSTAPD_IAPP_F_ROAMING_ROUTE | HOSTAPD_IAPP_F_ROAMING_ADDRESS)
+#define HOSTAPD_IAPP_F_ADD		\
+	(HOSTAPD_IAPP_F_ADD_NOTIFY | HOSTAPD_IAPP_F_ROAMING)
+
+	struct hostapd_table		*i_addr_tbl;
+	struct hostapd_table		*i_route_tbl;
 };
 
 struct hostapd_config {
@@ -277,6 +286,9 @@ struct hostapd_config {
 	u_int				c_apme_dlt;
 
 	struct hostapd_iapp		c_iapp;
+
+	int				c_rtsock;
+	int				c_rtseq;
 
 	u_int8_t			c_flags;
 
@@ -355,6 +367,8 @@ int	 hostapd_priv_apme_getnode(struct hostapd_apme *,
 	    struct hostapd_node *);
 int	 hostapd_priv_apme_setnode(struct hostapd_apme *,
 	    struct hostapd_node *node, int);
+int	 hostapd_priv_roaming(struct hostapd_apme *, struct hostapd_node *,
+	    int);
 
 void	 hostapd_apme_init(struct hostapd_apme *);
 int	 hostapd_apme_deauth(struct hostapd_apme *);
@@ -386,6 +400,14 @@ int	 hostapd_llc_send_xid(struct hostapd_config *, struct hostapd_node *);
 int	 hostapd_handle_input(struct hostapd_apme *, u_int8_t *, u_int);
 
 void	 hostapd_print_ieee80211(u_int, u_int, u_int8_t *, u_int);
+
+void	 hostapd_roaming_init(struct hostapd_config *);
+void	 hostapd_roaming_term(struct hostapd_apme *);
+int	 hostapd_roaming(struct hostapd_apme *, struct hostapd_node *, int);
+int	 hostapd_roaming_add(struct hostapd_apme *,
+	    struct hostapd_node *node);
+int	 hostapd_roaming_del(struct hostapd_apme *,
+	    struct hostapd_node *node);
 
 __END_DECLS
 
