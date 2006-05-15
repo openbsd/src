@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2006/05/11 20:40:12 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.65 2006/05/15 08:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -364,7 +364,7 @@ proto		: /* empty */			{ $$ = 0; }
 				$$ = p->p_proto;
 			} else {
 				errstr = NULL;
-				proto = strtonum($2, 1, 255, &errstr);
+				proto = strtonum($2, 0, 255, &errstr);
 				if (errstr)
 					errx(1, "unknown protocol: %s", $2);
 				$$ = proto;
@@ -537,7 +537,7 @@ transforms	:					{
 			    sizeof(struct ipsec_transforms))) == NULL)
 				err(1, "transforms: calloc");
 		}
-		    transforms_l			
+		    transforms_l
 			{ $$ = ipsec_transforms; }
 		| /* empty */				{
 			if (($$ = calloc(1,
@@ -1200,7 +1200,7 @@ host(const char *s)
 	if (cont && (ipa = host_v6(s, v6mask)) != NULL)
 		cont = 0;
 #endif
-	
+
 	/* dns lookup */
 	if (cont && (ipa = host_dns(s, v4mask, 0)) != NULL)
 		cont = 0;
@@ -1250,8 +1250,8 @@ struct ipsec_addr_wrap *
 host_dns(const char *s, int v4mask, int v6mask)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
-	struct addrinfo	 	 hints, *res0, *res;
-	int		 	 error;
+	struct addrinfo		 hints, *res0, *res;
+	int			 error;
 	int			 bits = 32;
 
 	bzero(&hints, sizeof(struct addrinfo));
@@ -1429,7 +1429,7 @@ ifa_lookup(const char *ifa_name)
 		ifa_load();
 
 	if ((ipa = ifa_grouplookup(ifa_name)) != NULL)
-		return (ipa);	
+		return (ipa);
 
 	for (p = iftab; p; p = p->next) {
 		if (p->af != AF_INET)
