@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.59 2005/12/01 15:21:16 tom Exp $
+.\"	$OpenBSD: spamd.8,v 1.60 2006/05/15 16:47:48 jcs Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -36,6 +36,7 @@
 .Op Fl b Ar address
 .Op Fl c Ar maxcon
 .Op Fl G Ar passtime:greyexp:whiteexp
+.Op Fl h Ar hostname
 .Op Fl n Ar name
 .Op Fl p Ar port
 .Op Fl r Ar reply
@@ -96,6 +97,8 @@ to 864 (hours, approximately 36 days).
 Greylisting mode; see
 .Sx GREYLISTING
 below.
+.It Fl h Ar hostname
+The hostname that is reported in the SMTP banner.
 .It Fl n Ar name
 The SMTP version banner that is reported upon initial connection.
 .It Fl p Ar port
