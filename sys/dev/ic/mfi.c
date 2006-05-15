@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.26 2006/05/15 23:20:56 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.27 2006/05/15 23:28:41 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -745,8 +745,6 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	ccb->ccb_frame_size += sc->sc_frames_size * ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
 
-	mfi_despatch_cmd(sc, ccb);
-
 	if (ccb->ccb_xs->flags & SCSI_POLL) {
 		if (mfi_poll(sc, ccb)) {
 			printf("%s: mfi_poll failed\n", DEVNAME(sc));
@@ -757,6 +755,8 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 		mfi_put_ccb(ccb);
 		return (COMPLETE);
 	}
+
+	mfi_despatch_cmd(sc, ccb);
 
 	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: queued %d\n", DEVNAME(sc),
 	    ccb->ccb_dmamap->dm_nsegs);
