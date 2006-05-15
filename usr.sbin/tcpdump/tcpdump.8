@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.61 2006/05/15 08:56:46 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.62 2006/05/15 09:01:39 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -252,6 +252,9 @@ is
 Print each packet
 .Pq minus its link-level header
 in hex and ASCII.
+The smaller of the entire packet or
+.Ar snaplen
+bytes will be printed.
 .It Fl x
 Print each packet
 .Pq minus its link-level header
