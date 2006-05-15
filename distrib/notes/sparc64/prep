@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.19 2006/03/23 06:10:20 deraadt Exp $
+dnl	$OpenBSD: prep,v 1.20 2006/05/15 10:07:16 robert Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -108,14 +108,18 @@ dnl	Sun Fire V880	112186
 	Ultra 80	109082
 dnl	Ultra 450	106122
 
-Get the patch installation notes from SunSolve, as
-    ftp://sunsolve.sun.com/pub/patches/104169.readme
+Get the patch installation notes from Sun's FTP site, as
+    ftp://ftp.sun.com/patchroot/all_unsigned/104169-08.README
 (replace 104169 with the correct patch number).
 Check the Patch-ID# line in this readme file to get the patch filename, for
 example 104169-08. The patch filename will then be either
-    ftp://sunsolve.sun.com/pub/patches/104169-08.tar.Z
+    ftp://ftp.sun.com/patchroot/all_unsigned/104169-08.tar.Z
 or
-    ftp://sunsolve.sun.com/pub/patches/104169-08.zip
+    ftp://ftp.sun.com/patchroot/all_unsigned/104169-08.zip
+
+You can also use SunSolve to get the patches by entering the
+correct Patch-ID# to the corresponding field at
+    http://sunsolve.sun.com/pub-cgi/show.pl?target=patchpage
 
 Follow the patch installation notes very carefully. You will need to open
 your machine in order to apply this patch.
