@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.43 2006/05/13 15:56:41 deraadt Exp $
+.\"	$OpenBSD: boot.8,v 1.44 2006/05/15 09:10:52 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -202,11 +202,11 @@ These are defined for i386 architecture:
 Prints a list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
 .It Nm memory
-If used without any arguments this command will print out
+If used without any arguments, this command will print out
 the memory configuration as determined through BIOS routines.
-Otherwise the arguments would specify the expressions to modify the
+Otherwise the arguments specify how to modify the
 memory configuration.
-The expression would have a form of:
+They take the form of:
 .Pp
 .Dl [+-]<size>@<address>
 .Pp
@@ -214,27 +214,28 @@ Meaning to add(+) or exempt(-) the amount of memory specified by
 .Ar <size>
 at the location specified by
 .Ar <address> .
-Both size and base address could be specified as octal,
+Both size and base address can be specified as octal,
 decimal, or hexadecimal numbers, as accepted by the
 .Xr strtoul 3
 routine.
-Memory segments are not required to be adjacent to each other,
+.Pp
+Memory segments are not required to be adjacent to each other;
 the only requirement is that there is real physical memory under
 the range added.
-For example:
+The following example
+adds 32M of memory right after the first 16M:
 .Bd -unfilled -offset indent
 machine mem +0x2000000@0x1000000
 .Ed
 .Pp
-would add 32M of memory right after the first 16M.
-The other useful command would be to withdraw a range
-of memory from OS usage (might be wrongfully reported as
+Another useful command is to withdraw a range
+of memory from OS usage (it may have been wrongfully reported as
 useful by the BIOS).
+This example
+effectively excludes the 15\(en16M range from the map of useful memory:
 .Bd -unfilled -offset indent
 machine mem -0x100000@0xf00000
 .Ed
-.Pp
-which effectively excludes 15-16M range from the map of useful memory.
 .It Nm regs
 Prints contents of processor registers if compiled with
 .Em DEBUG .
