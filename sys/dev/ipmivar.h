@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.13 2006/05/15 00:46:55 marco Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.14 2006/05/15 00:50:57 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -76,30 +76,30 @@ struct ipmi_if {
 };
 
 struct ipmi_softc {
-	struct device	    sc_dev;
+	struct device		sc_dev;
 
-	struct ipmi_if	    *sc_if;		/* Interface layer */
-	int		    sc_if_iospacing;	/* Spacing of I/O ports */
-	int		    sc_if_rev;		/* IPMI Revision */
+	struct ipmi_if		*sc_if;			/* Interface layer */
+	int			sc_if_iospacing;	/* Spacing of I/O ports */
+	int			sc_if_rev;		/* IPMI Revision */
 
-	void		    *sc_ih;		/* Interrupt/IO handles */
-	bus_space_tag_t	    sc_iot;
-	bus_space_handle_t  sc_ioh;
+	void			*sc_ih;			/* Interrupt/IO handles */
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 
-	int		    sc_btseq;
+	int			sc_btseq;
 
-	int		    sc_wdog_period;
+	int			sc_wdog_period;
 
-	struct ipmi_thread  *sc_thread;
+	struct ipmi_thread	*sc_thread;
 
-	struct timeout      sc_timeout;
-	int                 sc_max_retries;
-	int                 sc_retries;
-	int                 sc_wakeup;
+	struct timeout		sc_timeout;
+	int			sc_max_retries;
+	int			sc_retries;
+	int			sc_wakeup;
 
-	struct lock         sc_lock;
+	struct lock		sc_lock;
 
-	struct ipmi_bmc_args *sc_iowait_args;
+	struct ipmi_bmc_args	*sc_iowait_args;
 };
 
 struct ipmi_thread {
@@ -107,16 +107,16 @@ struct ipmi_thread {
 	volatile int	    running;
 };
 
-#define IPMI_WDOG_MASK          0x03
-#define IPMI_WDOG_DISABLED      0x00
-#define IPMI_WDOG_REBOOT        0x01
-#define IPMI_WDOG_PWROFF        0x02
-#define IPMI_WDOG_PWRCYCLE      0x03
+#define IPMI_WDOG_MASK		0x03
+#define IPMI_WDOG_DISABLED	0x00
+#define IPMI_WDOG_REBOOT	0x01
+#define IPMI_WDOG_PWROFF	0x02
+#define IPMI_WDOG_PWRCYCLE	0x03
 
-#define IPMI_WDOG_PRE_DISABLED  0x00
-#define IPMI_WDOG_PRE_SMI       0x01
-#define IPMI_WDOG_PRE_NMI       0x02
-#define IPMI_WDOG_PRE_INTERRUPT 0x03
+#define IPMI_WDOG_PRE_DISABLED	0x00
+#define IPMI_WDOG_PRE_SMI	0x01
+#define IPMI_WDOG_PRE_NMI	0x02
+#define IPMI_WDOG_PRE_INTERRUPT	0x03
 
 struct ipmi_watchdog {
 	u_int8_t		wdog_timer;
