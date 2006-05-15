@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.12 2006/02/16 19:40:43 matthieu Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.13 2006/05/15 08:27:19 dim Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -150,6 +150,8 @@ agp_i810_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 		break;
 	case PCI_PRODUCT_INTEL_82915G_IV:
 	case PCI_PRODUCT_INTEL_82915GM_IGD:
+	case PCI_PRODUCT_INTEL_82945G_IGD_1:
+	case PCI_PRODUCT_INTEL_82945GM_IGD:
 		isc->chiptype = CHIP_I915;
 		break;
 	}
