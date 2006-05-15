@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.43 2006/03/22 13:19:19 ray Exp $ */
+/* $OpenBSD: http_main.c,v 1.44 2006/05/15 16:49:14 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2250,7 +2250,7 @@ static void child_main(int child_num_arg)
      * set up rlimits to keep apache+scripting from leaking horribly
      */
     if (ap_max_cpu_per_child != 0){
-	rlp.rlim_cur = rlp.rlim_cur = ap_max_cpu_per_child ;
+	rlp.rlim_cur = rlp.rlim_max = ap_max_cpu_per_child;
 	if (setrlimit(RLIMIT_CPU, &rlp) == -1){
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 		"setrlimit: unable to set CPU limit to %d",
@@ -2259,7 +2259,7 @@ static void child_main(int child_num_arg)
 	}
     }
     if (ap_max_data_per_child != 0){
-	rlp.rlim_cur = rlp.rlim_cur = ap_max_data_per_child ;
+	rlp.rlim_cur = rlp.rlim_max = ap_max_data_per_child;
 	if (setrlimit(RLIMIT_DATA, &rlp) == -1){
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 		"setrlimit: unable to set data limit to %d",
@@ -2268,7 +2268,7 @@ static void child_main(int child_num_arg)
 	}
     }
     if (ap_max_nofile_per_child != 0){
-	rlp.rlim_cur = rlp.rlim_cur = ap_max_nofile_per_child ;
+	rlp.rlim_cur = rlp.rlim_max = ap_max_nofile_per_child;
 	if (setrlimit(RLIMIT_NOFILE, &rlp) == -1){
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 		"setrlimit: unable to set open file limit to %d",
@@ -2277,7 +2277,7 @@ static void child_main(int child_num_arg)
 	}
     }
     if (ap_max_rss_per_child != 0){
-	rlp.rlim_cur = rlp.rlim_cur = ap_max_rss_per_child ;
+	rlp.rlim_cur = rlp.rlim_max = ap_max_rss_per_child;
 	if (setrlimit(RLIMIT_RSS, &rlp) == -1){
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 		"setrlimit: unable to set RSS limit to %d",
@@ -2286,7 +2286,7 @@ static void child_main(int child_num_arg)
 	}
     }
     if (ap_max_stack_per_child != 0){
-	rlp.rlim_cur = rlp.rlim_cur = ap_max_stack_per_child ;
+	rlp.rlim_cur = rlp.rlim_max = ap_max_stack_per_child;
 	if (setrlimit(RLIMIT_STACK, &rlp) == -1){
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 		"setrlimit: unable to set stack size limit to %d",
