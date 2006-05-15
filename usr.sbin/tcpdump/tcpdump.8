@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.60 2006/03/26 19:16:06 camield Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.61 2006/05/15 08:56:46 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -249,9 +249,9 @@ Standard output is used if
 is
 .Ql - .
 .It Fl X
-Like
-.Fl x
-but dumps the packet in emacs-hexl like format.
+Print each packet
+.Pq minus its link-level header
+in hex and ASCII.
 .It Fl x
 Print each packet
 .Pq minus its link-level header
