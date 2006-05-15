@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.8,v 1.11 2006/05/15 20:53:02 reyk Exp $
+.\" $OpenBSD: hostapd.8,v 1.12 2006/05/15 21:09:49 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -136,4 +136,11 @@ the
 driver still uses its own Host AP code in
 .Fn if_wi_hostap ,
 which is not supported by
+.Nm .
+.Pp
+The IEEE 802.11 WLAN protocol lacks authentication of management
+frames and is vulnerable to various Denial-of-Service and
+Man-in-the-Middle attacks.
+That should be considered when implementing wireless networks
+with
 .Nm .
