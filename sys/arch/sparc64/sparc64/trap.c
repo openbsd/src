@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2006/02/05 19:53:34 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2006/05/15 21:56:54 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -685,13 +685,17 @@ badtrap:
 		savefpstate(p->p_md.md_fpstate);
 		fpproc = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
-		if (p->p_md.md_fpstate->fs_qsize == 0) {
+		if (type == T_FP_OTHER && p->p_md.md_fpstate->fs_qsize == 0) {
+			/*
+			 * Push the faulting instruction on the queue;
+			 * we might need to emulate it.
+			 */
 			copyin((caddr_t)pc, &p->p_md.md_fpstate->fs_queue[0].fq_instr, sizeof(int));
+			p->p_md.md_fpstate->fs_queue[0].fq_addr = (int *)pc;
 			p->p_md.md_fpstate->fs_qsize = 1;
-			fpu_cleanup(p, p->p_md.md_fpstate);
 			ADVANCE;
-		} else
-			fpu_cleanup(p, p->p_md.md_fpstate);
+		}
+		fpu_cleanup(p, p->p_md.md_fpstate);
 		/* fpu_cleanup posts signals if needed */
 #if 0		/* ??? really never??? */
 		ADVANCE;
