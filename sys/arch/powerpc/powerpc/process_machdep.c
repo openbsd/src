@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.10 2005/10/09 14:52:12 drahn Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.11 2006/05/15 21:02:44 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -69,6 +69,24 @@ process_read_regs(struct proc *p, struct reg *regs)
 	return (0);
 }
 
+int
+process_read_fpregs(struct proc *p, struct fpreg *regs)
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	if (!(pcb->pcb_flags & PCB_FPU)) {
+		bzero(regs->fpr, sizeof(regs->fpr));
+		regs->fpscr = 0;
+	} else {
+		if (p == fpuproc)
+			save_fpu();
+		bcopy(pcb->pcb_fpu.fpr, regs->fpr, sizeof(regs->fpr));
+		regs->fpscr = *(u_int64_t *)&pcb->pcb_fpu.fpcsr;
+	}
+
+	return (0);
+}
+
 #ifdef PTRACE
 
 /*
@@ -121,6 +139,24 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->ctr  = regs->cnt;
 	tf->xer  = regs->xer;
 	/*  regs->mq = 0; what should this really be? */
+
+	return (0);
+}
+
+int
+process_write_fpregs(struct proc *p, struct fpreg *regs)
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	u_int64_t fpscr = regs->fpscr;
+
+	if (p == fpuproc) {	/* release the fpu */
+		save_fpu();
+		fpuproc = NULL;
+	}
+
+	bcopy(regs->fpr, pcb->pcb_fpu.fpr, sizeof(regs->fpr));
+	pcb->pcb_fpu.fpcsr = *(double *)&fpscr;
+	pcb->pcb_flags |= PCB_FPU;
 
 	return (0);
 }
