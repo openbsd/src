@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.11 2006/05/14 22:19:04 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.12 2006/05/15 00:41:51 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ struct xge_softc {
 	bus_space_handle_t sc_txh;
 	void *sc_ih;
 	int xge_type;			/* chip type */
+	void *sc_shutdownhook;
 
 	struct ifmedia xena_media;
 	pcireg_t sc_pciregs[16];
@@ -186,6 +187,7 @@ int xge_alloc_txmem(struct xge_softc *);
 int xge_alloc_rxmem(struct xge_softc *);
 void xge_start(struct ifnet *);
 void xge_stop(struct ifnet *, int);
+void xge_shutdown(void *);
 int xge_add_rxbuf(struct xge_softc *, int);
 void xge_mcast_filter(struct xge_softc *);
 int xge_setup_xgxs(struct xge_softc *);
@@ -569,6 +571,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	sc->sc_shutdownhook = shutdownhook_establish(xge_shutdown, sc);
+
 	/*
 	 * Setup interrupt vector before initializing.
 	 */
@@ -692,6 +696,15 @@ xge_stop(struct ifnet *ifp, int disable)
 
 	while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 		;
+}
+
+void
+xge_shutdown(void *pv)
+{
+	struct xge_softc *sc = (struct xge_softc *)pv;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	xge_stop(ifp, 1);
 }
 
 int
@@ -845,7 +858,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct xge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
-	struct ifaddr  *ifa = (struct ifaddr *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
