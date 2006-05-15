@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.39 2006/05/12 02:11:53 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.40 2006/05/15 00:46:55 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1337,16 +1337,19 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 {
 	struct sdrtype1	*s1 = (struct sdrtype1 *) psensor->i_sdr;
 	u_int8_t	data[8];
-	int		rxlen;
+	int		rxlen, rv = -1;
+
+	if (!cold)
+		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 	memset(data, 0, sizeof(data));
 	data[0] = psensor->i_num;
 	if (ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun, SE_NETFN,
 	    SE_GET_SENSOR_READING, 1, data))
-		return (-1);
+		goto done;
 
 	if (ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
-		return (-1);
+		goto done;
 
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], psensor->i_sensor.desc);
@@ -1356,8 +1359,11 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 		psensor->i_sensor.flags |= SENSOR_FINVALID;
 	}
 	psensor->i_sensor.status = ipmi_sensor_status(sc, psensor, data);
-
-	return (0);
+	rv = 0;
+done:
+	if (!cold)
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	return (rv);
 }
 
 int
@@ -1672,10 +1678,13 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdog_period = 0;
 	wdog_register(sc, ipmi_watchdog);
 
+	/* lock around read_sensor so that no one messes with the bmc regs */
+	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
+
 	/* setup ticker */
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
-	sc->sc_max_retries = 50; /* XXX 50ms the right value? */
+	sc->sc_max_retries = 100; /* XXX 1 second the right value? */
 	timeout_set(&sc->sc_timeout, _bmc_io_wait, sc);
 }
 
