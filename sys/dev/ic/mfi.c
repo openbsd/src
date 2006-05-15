@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.25 2006/05/10 21:48:50 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.26 2006/05/15 23:20:56 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -84,6 +84,10 @@ int		mfi_despatch_cmd(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_start_xs(struct mfi_softc *, struct mfi_ccb *,
 		    struct scsi_xfer *);
+
+/* LD commands */
+int		mfi_ld_inquiry(struct scsi_xfer *);
+void		mfi_done_ld_inquiry(struct mfi_softc *, struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
@@ -443,9 +447,6 @@ mfi_attach(struct mfi_softc *sc)
 		goto noinit;
 	}
 
-	/* enable interrupts */
-	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
-
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
 		panic("%s: controller registration failed", DEVNAME(sc));
@@ -453,7 +454,35 @@ mfi_attach(struct mfi_softc *sc)
 		sc->sc_ioctl = mfi_ioctl;
 #endif /* NBIO > 0 */
 
+	sc->sc_max_ld = MFI_MAX_LD;
+
+	/* XXX fake one ld for now */
+	sc->sc_ld_cnt = 2;
+	sc->sc_ld[0].ld_present = 1;
+	sc->sc_ld[1].ld_present = 1;
+	sc->sc_max_ld = 2;
+
+	if (sc->sc_ld_cnt)
+		sc->sc_link.openings = sc->sc_max_cmds / sc->sc_ld_cnt;
+	else
+		sc->sc_link.openings = sc->sc_max_cmds;
+
+	sc->sc_link.device = &mfi_dev;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &mfi_switch;
+	sc->sc_link.adapter_target = sc->sc_max_ld;
+	sc->sc_link.adapter_buswidth = sc->sc_max_ld;
+#if 0
+	printf(", FW %s, BIOS v%s, %dMB RAM\n"
+	    "%s: %d channels, %d %ss, %d logical drives\n",
+	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory, DEVNAME(sc),
+	    sc->sc_channels, sc->sc_targets, p, sc->sc_ld_cnt);
+#endif
+
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	/* enable interrupts */
+	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
 	return (0);
 noinit:
@@ -547,6 +576,55 @@ mfi_intr(void *arg)
 	return (claimed);
 }
 
+void
+mfi_done_ld_inquiry(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	struct scsi_xfer	*xs = ccb->ccb_xs;
+	struct scsi_link	*link = xs->sc_link;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_inquiry_done: %.0x\n",
+	    DEVNAME(sc), link->target);
+}
+
+int
+mfi_ld_inquiry(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct mfi_softc	*sc = link->adapter_softc;
+	struct mfi_ccb		*ccb;
+	struct mfi_pass_frame	*pf;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_inquiry: %.0x\n",
+	    DEVNAME(sc), link->target);
+
+	if ((ccb = mfi_get_ccb(sc)) == NULL)
+		return (TRY_AGAIN_LATER);
+
+	pf = &ccb->ccb_frame->mfr_pass;
+	pf->mpf_header.mfh_cmd = MFI_CMD_LD_SCSI_IO;
+	pf->mpf_header.mfh_target_id = link->target;
+	pf->mpf_header.mfh_lun_id = 0;
+	pf->mpf_header.mfh_cdb_len = 6;
+	pf->mpf_header.mfh_timeout = 0;
+	pf->mpf_header.mfh_data_len= sizeof(struct scsi_inquiry_data); /* XXX */
+	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
+
+	pf->mpf_sense_addr_hi = 0;
+	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
+
+	memset(pf->mpf_cdb, 0, 16);
+	pf->mpf_cdb[0] = INQUIRY;
+	pf->mpf_cdb[4] = sizeof(struct scsi_inquiry_data);
+
+	ccb->ccb_done = mfi_done_ld_inquiry;
+	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
+	ccb->ccb_sgl = &pf->mpf_sgl;
+	ccb->ccb_direction = MFI_DATA_IN;
+	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
+
+	return (mfi_start_xs(sc, ccb, xs));
+}
+
 int
 mfi_scsi_cmd(struct scsi_xfer *xs)
 {
@@ -556,13 +634,14 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	struct mfi_ccb		*ccb;
 	u_int8_t		target = link->target;
 
-	DNPRINTF(MFI_D_CMD, "mfi_scsi_cmd\n");
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %.0x\n",
+	    DEVNAME(sc), xs->cmd->opcode);
 
 	/* only issue IO through this path, create seperate path for mgmt */
 
 	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
 	    link->lun != 0) {
-		DNPRINTF(MFI_D_CMD, "%s: invalid target %d ",
+		DNPRINTF(MFI_D_CMD, "%s: invalid target %d\n",
 		    DEVNAME(sc), target);
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
@@ -572,32 +651,124 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	xs->error = XS_NOERROR;
 
-
 	switch (xs->cmd->opcode) {
-	case READ_COMMAND:	/* IO path */
+	/* IO path */
+	case READ_COMMAND:
 	case READ_BIG:
 	case WRITE_COMMAND:
 	case WRITE_BIG:
 		break;
 
-	default:		/* the rest is a DCDB */
-		break;
+	/* DCDB */
+	case INQUIRY:
+		return (mfi_ld_inquiry(xs));
+		/* NOTREACHED */
+
+	case SYNCHRONIZE_CACHE:
+	case TEST_UNIT_READY:
+	case START_STOP:
+#if 0
+	case VERIFY:
+#endif
+	case PREVENT_ALLOW:
+	case REQUEST_SENSE:
+	case READ_CAPACITY:
+		DNPRINTF(MFI_D_CMD, "%s: not implemented yet %.0x\n",
+		    DEVNAME(sc), xs->cmd->opcode);
+		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
+		scsi_done(xs);
+		return (COMPLETE);
+		/* NOTREACHED */
+
+	/* illegal opcode */
+	default:
+		bzero(&xs->sense, sizeof(xs->sense));
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* invalid opcode */
+		xs->error = XS_SENSE;
+		xs->flags |= ITSDONE;
+		scsi_done(xs);
+		return (COMPLETE);
+		/* NOTREACHED */
 	}
 
 	return (mfi_start_xs(sc, ccb, xs));
 }
 
-int mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
+int
+mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
     struct scsi_xfer *xs)
 {
-	return (1); /* XXX not yet */
+	struct mfi_frame_header	*hdr;
+	bus_dma_segment_t	*sgd;
+	union mfi_sgl		*sgl;
+	int			error, i;
+
+	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs:\n", DEVNAME(sc));
+
+	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
+	    xs->data, xs->datalen, NULL,
+	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error) {
+		if (error == EFBIG)
+			printf("more than %d dma segs\n", sc->sc_max_sgl);
+		else
+			printf("error %d loading dma map\n", error);
+
+		mfi_put_ccb(ccb);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	hdr = &ccb->ccb_frame->mfr_header;
+	sgl = ccb->ccb_sgl;
+	sgd = ccb->ccb_dmamap->dm_segs;
+	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
+		sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
+		sgl->sg32[i].len = htole32(sgd[i].ds_len);
+	}
+
+	if (ccb->ccb_direction == MFI_DATA_IN) {
+		hdr->mfh_flags |= MFI_FRAME_DIR_READ;
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	} else {
+		hdr->mfh_flags |= MFI_FRAME_DIR_WRITE;
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	}
+
+	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
+	ccb->ccb_frame_size += sc->sc_frames_size * ccb->ccb_dmamap->dm_nsegs;
+	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
+
+	mfi_despatch_cmd(sc, ccb);
+
+	if (ccb->ccb_xs->flags & SCSI_POLL) {
+		if (mfi_poll(sc, ccb)) {
+			printf("%s: mfi_poll failed\n", DEVNAME(sc));
+			xs->error = XS_DRIVER_STUFFUP;
+		}
+		DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs complete %d\n",
+		    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
+		mfi_put_ccb(ccb);
+		return (COMPLETE);
+	}
+
+	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: queued %d\n", DEVNAME(sc),
+	    ccb->ccb_dmamap->dm_nsegs);
+
+	return (SUCCESSFULLY_QUEUED);
 }
 
 int
 mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
     struct proc *p)
 {
-	struct mfi_softc *sc = (struct mfi_softc *)link->adapter_softc;
+	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
 
 	DNPRINTF(MFI_D_IOCTL, "mfi_scsi_ioctl\n");
 
@@ -611,7 +782,7 @@ mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 int
 mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
-	struct mfi_softc *sc = (struct mfi_softc *)dev;
+	struct mfi_softc	*sc = (struct mfi_softc *)dev;
 	int error = 0;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: ioctl ", DEVNAME(sc));

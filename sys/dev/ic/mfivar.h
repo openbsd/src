@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.14 2006/05/10 21:48:50 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.15 2006/05/15 23:20:57 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -57,12 +57,19 @@ struct mfi_ccb {
 
 	union mfi_frame		*ccb_frame;
 	paddr_t			ccb_pframe;
+	uint32_t		ccb_frame_size;
 	uint32_t		ccb_extra_frames;
 
 	struct mfi_sense	*ccb_sense;
 	paddr_t			ccb_psense;
 
 	bus_dmamap_t		ccb_dmamap;
+
+	union mfi_sgl		*ccb_sgl;
+
+	uint32_t		ccb_direction;
+#define MFI_DATA_IN	0
+#define MFI_DATA_OUT	1
 
 	struct scsi_xfer	*ccb_xs;
 
@@ -106,6 +113,8 @@ struct mfi_softc {
 	/* firmware determined max and totals */
 	uint32_t		sc_max_cmds;
 	uint32_t		sc_max_sgl;
+	uint32_t		sc_max_ld;
+	uint32_t		sc_ld_cnt;
 
 	/* all commands */
 	struct mfi_ccb		*sc_ccb;
