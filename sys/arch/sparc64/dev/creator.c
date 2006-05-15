@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.34 2005/04/05 21:49:33 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.35 2006/05/15 21:38:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -47,6 +47,8 @@
 #include <sparc64/dev/creatorreg.h>
 #include <sparc64/dev/creatorvar.h>
 
+int	creator_match(struct device *, void *, void *);
+void	creator_attach(struct device *, struct device *, void *);
 int	creator_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	creator_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
@@ -82,13 +84,74 @@ struct cfdriver creator_cd = {
 	NULL, "creator", DV_DULL
 };
 
-void
-creator_attach(struct creator_softc *sc)
+struct cfattach creator_ca = {
+	sizeof(struct creator_softc), creator_match, creator_attach
+};
+
+int
+creator_match(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
+	struct mainbus_attach_args *ma = aux;
+
+	if (strcmp(ma->ma_name, "SUNW,ffb") == 0 ||
+	    strcmp(ma->ma_name, "SUNW,afb") == 0)
+		return (1);
+	return (0);
+}
+
+void
+creator_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct creator_softc *sc = (struct creator_softc *)self;
+	struct mainbus_attach_args *ma = aux;
+	extern int fbnode;
+	int i, nregs;
 	char *model;
 	int btype;
 
-	printf(":");
+	sc->sc_bt = ma->ma_bustag;
+
+	nregs = min(ma->ma_nreg, FFB_NREGS);
+
+	if (nregs <= FFB_REG_DFB24) {
+		printf(": no dfb24 regs found\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_DFB24].ur_paddr,
+	    ma->ma_reg[FFB_REG_DFB24].ur_len, BUS_SPACE_MAP_LINEAR,
+	    &sc->sc_pixel_h)) {
+		printf(": failed to map dfb24\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_FBC].ur_paddr,
+	    ma->ma_reg[FFB_REG_FBC].ur_len, 0, &sc->sc_fbc_h)) {
+		printf(": failed to map fbc\n");
+		goto unmap_dfb24;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_DAC].ur_paddr,
+	    ma->ma_reg[FFB_REG_DAC].ur_len, 0, &sc->sc_dac_h)) {
+		printf(": failed to map dac\n");
+		goto unmap_fbc;
+	}
+
+	for (i = 0; i < nregs; i++) {
+		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
+		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
+	}
+	sc->sc_nreg = nregs;
+
+	sc->sc_console = (fbnode == ma->ma_node);
+	sc->sc_node = ma->ma_node;
+
+	if (strcmp(ma->ma_name, "SUNW,afb") == 0)
+		sc->sc_type = FFB_AFB;
 
 	/*
 	 * Prom reports only the length of the fcode header, we need
@@ -99,11 +162,11 @@ creator_attach(struct creator_softc *sc)
 	if (sc->sc_type == FFB_CREATOR) {
 		btype = getpropint(sc->sc_node, "board_type", 0);
 		if ((btype & 7) == 3)
-			printf(" Creator3D");
+			printf(": Creator3D");
 		else
-			printf(" Creator");
+			printf(": Creator");
 	} else
-		printf(" Elite3D");
+		printf(": Elite3D");
 
 	model = getpropstring(sc->sc_node, "model");
 	if (model == NULL || strlen(model) == 0)
@@ -140,6 +203,14 @@ creator_attach(struct creator_softc *sc)
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &creator_accessops, sc->sc_console);
+	return;
+
+unmap_fbc:
+	bus_space_unmap(sc->sc_bt, sc->sc_fbc_h,
+	    ma->ma_reg[FFB_REG_FBC].ur_len);
+unmap_dfb24:
+	bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
+	    ma->ma_reg[FFB_REG_DFB24].ur_len);
 }
 
 int

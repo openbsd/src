@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.66 2006/03/04 10:29:24 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.67 2006/05/15 21:38:34 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -72,13 +72,8 @@ attach	sbus at xbox with sbus_xbox
 file	arch/sparc64/dev/sbus.c			sbus
 
 device	creator: wsemuldisplaydev, rasops32, wsemul_sun
+attach	creator at mainbus, upa
 file	arch/sparc64/dev/creator.c		creator
-
-attach	creator at mainbus with creator_mainbus
-file	arch/sparc64/dev/creator_mainbus.c	creator_mainbus
-
-attach	creator at upa with creator_upa
-file	arch/sparc64/dev/creator_upa.c		creator_upa
 
 include	"dev/pci/files.pci"
 major	{wd = 12}
