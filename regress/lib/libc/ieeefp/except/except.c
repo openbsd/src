@@ -1,4 +1,4 @@
-/*	$OpenBSD: except.c,v 1.9 2004/12/22 00:54:39 david Exp $	*/
+/*	$OpenBSD: except.c,v 1.10 2006/05/15 14:00:22 kettenis Exp $	*/
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -96,6 +96,12 @@ main(int argc, char *argv[])
 	} else {
 		errx(1, "unrecognized condition %s", argv[1]);
 	}
+
+	/*
+	 * attempt to trigger the exception on machines where
+	 * floating-point exceptions are deferred.
+	 */
+	x = one * one;
 
 	errx(1, "signal wasn't caught");
 }
