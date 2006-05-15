@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.10 2003/07/07 15:37:07 jason Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.11 2006/05/15 21:43:23 miod Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -116,7 +116,11 @@ le_ledma_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
+	bus_space_barrier(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, 2,
+	    BUS_SPACE_BARRIER_WRITE);
 	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP, val);
+	bus_space_barrier(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP, 2,
+	    BUS_SPACE_BARRIER_WRITE);
 
 #if defined(SUN4M)
 	/*
@@ -138,6 +142,8 @@ le_ledma_rdcsr(struct am7990_softc *sc, u_int16_t port)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
+	bus_space_barrier(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, 2,
+	    BUS_SPACE_BARRIER_WRITE);
 	return (bus_space_read_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP));
 }
 
