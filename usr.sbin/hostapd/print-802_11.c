@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.2 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.3 2006/05/15 16:07:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -69,9 +69,9 @@ int vflag = 1, eflag = 1;
 int	 ieee80211_hdr(struct ieee80211_frame *);
 void	 ieee80211_print_element(u_int8_t *, u_int);
 void	 ieee80211_print_essid(u_int8_t *, u_int);
-int	 ieee80211_elements(struct ieee80211_frame *, u_int);
-int	 ieee80211_frame(struct ieee80211_frame *, u_int);
-int	 ieee80211_print(struct ieee80211_frame *, u_int);
+int	 ieee80211_elements(struct ieee80211_frame *);
+int	 ieee80211_frame(struct ieee80211_frame *);
+int	 ieee80211_print(struct ieee80211_frame *);
 u_int	 ieee80211_any2ieee(u_int, u_int);
 void	 ieee802_11_if_print(u_int8_t *, u_int);
 void	 ieee802_11_radio_if_print(u_int8_t *, u_int);
@@ -169,13 +169,12 @@ ieee80211_print_essid(u_int8_t *essid, u_int len)
 }
 
 int
-ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
+ieee80211_elements(struct ieee80211_frame *wh)
 {
-	u_int8_t *buf, *frm;
+	u_int8_t *frm;
 	u_int8_t *tstamp, *bintval, *capinfo;
 	int i;
 
-	buf = (u_int8_t *)wh;
 	frm = (u_int8_t *)&wh[1];
 
 	tstamp = frm;
@@ -327,7 +326,7 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 }
 
 int
-ieee80211_frame(struct ieee80211_frame *wh, u_int len)
+ieee80211_frame(struct ieee80211_frame *wh)
 {
 	u_int8_t subtype, type, *frm;
 
@@ -348,7 +347,7 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 		switch (subtype) {
 		case IEEE80211_FC0_SUBTYPE_BEACON:
 		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-			if (ieee80211_elements(wh, len) != 0)
+			if (ieee80211_elements(wh) != 0)
 				goto trunc;
 			break;
 		case IEEE80211_FC0_SUBTYPE_AUTH:
@@ -423,13 +422,13 @@ ieee80211_any2ieee(u_int freq, u_int flags)
 }
 
 int
-ieee80211_print(struct ieee80211_frame *wh, u_int len)
+ieee80211_print(struct ieee80211_frame *wh)
 {
 	if (eflag)
 		if (ieee80211_hdr(wh))
 			return (1);
 
-	return (ieee80211_frame(wh, len));
+	return (ieee80211_frame(wh));
 }
 
 void
@@ -439,7 +438,7 @@ ieee802_11_if_print(u_int8_t *buf, u_int len)
 
 	snapend = buf + len;
 
-	if (ieee80211_print(wh, len) != 0)
+	if (ieee80211_print(wh) != 0)
 		PRINTF("[|802.11]");
 
 	PRINTF("\n");
@@ -466,7 +465,7 @@ ieee802_11_radio_if_print(u_int8_t *buf, u_int len)
 	}
 
 	wh = (struct ieee80211_frame *)(buf + rh_len);
-	if (len <= rh_len || ieee80211_print(wh, len - rh_len))
+	if (len <= rh_len || ieee80211_print(wh))
 		PRINTF("[|802.11]");
 
 	t = (u_int8_t*)buf + sizeof(struct ieee80211_radiotap_header);
