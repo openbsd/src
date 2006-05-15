@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.11 2006/05/08 14:36:09 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.12 2006/05/15 21:40:04 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -99,7 +99,7 @@ void
 m8820x_setup_board_config()
 {
 	struct m8820x_cmmu *cmmu;
-	int num;
+	u_int num;
 
 	m8820x_cmmu[0].cmmu_regs = (void *)CMMU_I0;
 	m8820x_cmmu[1].cmmu_regs = (void *)CMMU_D0;
@@ -111,15 +111,17 @@ m8820x_setup_board_config()
 	m8820x_cmmu[7].cmmu_regs = (void *)CMMU_D3;
 
 	/*
-	 * Probe all CMMU address to discover if the CPU slots are populated.
+	 * Probe CMMU address to discover which CPU slots are populated.
+	 * Actually, we'll simply check how many upper slots we can ignore,
+	 * and keep using badaddr() to cope with unpopulated slots.
 	 */
-	cmmu = m8820x_cmmu;
-	for (max_cmmus = 0; max_cmmus < 8; max_cmmus++, cmmu++) {
+	cmmu = m8820x_cmmu + 7;
+	for (max_cmmus = 7; max_cmmus != 0; max_cmmus--, cmmu--) {
 		if (badaddr((vaddr_t)cmmu->cmmu_regs, 4) != 0)
 			break;
 	}
 
-	max_cpus = max_cmmus >> 1;
+	max_cpus = 1 + (max_cmmus >> 1);
 	max_cmmus = max_cpus << 1;
 	cmmu_shift = 1;	/* fixed 2:1 configuration */
 
@@ -146,11 +148,18 @@ m8820x_setup_board_config()
 	 * Now that we know which CMMUs are there, report every association
 	 */
 	for (num = 0; num < max_cpus; num++) {
+		volatile unsigned *cr;
 		int type;
 
-		type = CMMU_TYPE(m8820x_cmmu[num << cmmu_shift].
-		    cmmu_regs[CMMU_IDR]);
+ 		cr = m8820x_cmmu[num << cmmu_shift].cmmu_regs;
+		if (badaddr((vaddr_t)cr, 4) != 0)
+			continue;
 
+#ifdef MULTIPROCESSOR
+		m88k_cpus[num].ci_alive = 1;	/* This cpu installed... */
+#endif
+
+		type = CMMU_TYPE(cr[CMMU_IDR]);
 		printf("CPU%d is associated to %d MC8820%c CMMUs\n",
 		    num, 1 << cmmu_shift, type == M88204_ID ? '4' : '0');
 	}

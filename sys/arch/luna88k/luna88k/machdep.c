@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2006/05/08 14:36:09 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2006/05/15 21:40:04 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -109,14 +109,13 @@ void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(void);
 u_int	getipl(void);
-vaddr_t	get_slave_stack(void);
 void	identifycpu(void);
 void	luna88k_bootstrap(void);
 u_int	safe_level(u_int, u_int);
 void	savectx(struct pcb *);
+void	secondary_main(void);
+void	secondary_pre_main(void);
 void	setlevel(unsigned int);
-void	slave_pre_main(void);
-int	slave_main(void);
 
 vaddr_t size_memory(void);
 void powerdown(void);
@@ -847,43 +846,59 @@ abort:
 	}
 }
 
-/* gets an interrupt stack for slave processors */
-vaddr_t
-get_slave_stack()
+#ifdef MULTIPROCESSOR
+
+/*
+ * Secondary CPU early initialization routine.
+ * Determine CPU number and set it, then allocate the idle pcb (and stack).
+ *
+ * Running on a minimal stack here, with interrupts disabled; do nothing fancy.
+ */
+void
+secondary_pre_main()
 {
-	vaddr_t addr;
+	struct cpu_info *ci;
 
-	addr = (vaddr_t)uvm_km_zalloc(kernel_map, INTSTACK_SIZE);
+	set_cpu_number(cmmu_cpu_number());
+	ci = curcpu();
 
-	if (addr == NULL)
-		panic("Cannot allocate slave stack for cpu %d",
-		    cpu_number());
+	/*
+	 * Setup CMMUs and translation tables (shared with the master cpu).
+	 */
+	pmap_bootstrap_cpu(ci->ci_cpuid);
 
-	return addr;
+	/*
+	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
+	 */
+	ci->ci_idle_pcb = (struct pcb *)uvm_km_zalloc(kernel_map, USPACE);
+	if (ci->ci_idle_pcb == NULL) {
+		printf("cpu%d: unable to allocate idle stack\n", ci->ci_cpuid);
+	}
 }
 
 /*
- * Slave CPU pre-main routine.
- * Determine CPU number and set it.
+ * Further secondary CPU initialization.
  *
- * Running on an interrupt stack here; do nothing fancy.
+ * We are now running on our idle stack, with proper page tables.
+ * There is nothing to do but display some details about the CPU and its CMMUs.
  */
 void
-slave_pre_main()
+secondary_main()
 {
-	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
-	splhigh();
-	set_psr(get_psr() & ~PSR_IND);
+	struct cpu_info *ci = curcpu();
+
+	cpu_configuration_print(0);
+
+	microuptime(&ci->ci_schedstate.spc_runtime);
+
+	/*
+	 * Upon return, the secondary cpu bootstrap code in locore will
+	 * enter the idle loop, waiting for some food to process on this
+	 * processor.
+	 */
 }
 
-/* dummy main routine for slave processors */
-int
-slave_main()
-{
-	printf("slave CPU%d started\n", cpu_number());
-	while (1); /* spin forever */
-	return 0;
-}
+#endif	/* MULTIPROCESSOR */
 
 /*
  *	Device interrupt handler for LUNA88K
@@ -1088,20 +1103,6 @@ luna88k_bootstrap()
 	proc0.p_addr = proc0paddr;
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
-
-	/*
-	 * We may have more than one CPU, so mention which one is the master.
-	 * We will also want to spin up slave CPUs on the long run...
-	 */
-	printf("CPU%d is master CPU\n", master_cpu);
-
-#if 0
-	int i;
-	for (i = 0; i < MAX_CPUS; i++) {
-		if (!spin_cpu(i))
-			printf("CPU%d started\n", i);
-	}
-#endif
 
 	avail_start = first_addr;
 	avail_end = last_addr;

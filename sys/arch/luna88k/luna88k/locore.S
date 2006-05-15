@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2005/12/03 18:20:48 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2006/05/15 21:40:04 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -61,10 +61,10 @@
 #include "ksyms.h"
 
 #include <machine/asm.h>
-#include <machine/trap.h>
 #include <machine/m88100.h>
-#include <machine/psl.h>
 #include <machine/param.h>
+#include <machine/psl.h>
+#include <machine/trap.h>
 #include <machine/vmparam.h>
 
 /*
@@ -77,63 +77,20 @@
 
 GLOBAL(kernelstart)
 GLOBAL(kernel_text)
-GLOBAL(start)
 ASGLOBAL(start)
-	br	_C_LABEL(start_text)
-	br	_C_LABEL(start_text)
-	br	_C_LABEL(start_text)
-	br	_C_LABEL(start_text)
-
-	/* This is the *real* start upon poweron or reset */
-GLOBAL(start_text)
 	/*
-	 * XXX: OpenBSD/luna88k does not have its native boot
-	 * loader, so no args are passed ...
-	 * (below is the comment for mvme88k.)
-	 * 
-	 * Args passed by boot loader
-	 * 	r2 howto
-	 *	r3 boot controller address
-	 *	r4 esym
-	 *	r5 start of mini
-	 *	r6 end miniroot
-	 *	r7 ((Clun << 8) ; Dlun & FF) -> bootdev
-	 *	r8 cpu type (0x187, 0x188, 0x197)
+	 * A few identical jump instructions to make sure the pipeline is
+	 * in a good state. Probably overkill, but it's cheap.
 	 */
-#if 0 /* not yet */
-/*
- * (*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini,kernel.emini,
- *  bootdev, brdtyp);
- */
-	or.u	r13, r0,  hi16(_C_LABEL(boothowto))
-	st	r2,  r13, lo16(_C_LABEL(boothowto))
-	or.u	r13, r0,  hi16(_C_LABEL(bootaddr))
-	st	r3,  r13, lo16(_C_LABEL(bootaddr))
-	or.u	r13, r0,  hi16(_C_LABEL(first_addr))
-	st	r4,  r13, lo16(_C_LABEL(first_addr))
-#if defined(DDB) || NKSYMS > 0
-	or.u	r13, r0,  hi16(_C_LABEL(esym))
-	st	r4,  r13, lo16(_C_LABEL(esym))
-#endif
-	or.u	r13, r0,  hi16(_C_LABEL(bootdev))
-	st	r7,  r13, lo16(_C_LABEL(bootdev))
-	or.u	r13, r0,  hi16(_C_LABEL(brdtyp))
-	st	r8,  r13, lo16(_C_LABEL(brdtyp))
+ 	br	_ASM_LABEL(main_start)
+	br	_ASM_LABEL(main_start)
+	br	_ASM_LABEL(main_start)
+	br	_ASM_LABEL(main_start)
 
-	/* set cputyp */
-	cmp	r2,  r8, BRD_197	/* r8 contains brdtyp */
-	bb1	ne, r2, 1f	/* if it's a '197, CPU is 88110 */
-	or.u	r13, r0,  hi16(CPU_88110)
-	or	r8,  r13, lo16(CPU_88110)
-	br	2f
-1:
-	or.u	r13, r0,  hi16(CPU_88100)
-	or	r8,  r13, lo16(CPU_88100)
-2:
-	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
-	st	r8,  r13, lo16(_C_LABEL(cputyp))
-#endif /* not yet */
-
+	/*
+	 * Startup code common to all processors.
+	 */
+ASLOCAL(main_start)
 	/*
 	 * CPU Initialization
 	 *
@@ -181,7 +138,7 @@ GLOBAL(start_text)
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE
 
-	/* clear BSS. Boot loader might have already done this... */
+	/* clear BSS. PROM might have already done this... */
 	or.u	r2, r0, hi16(_C_LABEL(edata))
 	or	r2, r2, lo16(_C_LABEL(edata))
 	or.u	r4, r0, hi16(_C_LABEL(end))
@@ -190,36 +147,11 @@ GLOBAL(start_text)
 	 subu	r3, r4, r2
 
 	/*
-	 * First time to count how many CPUs to attach
+	 * Now we will compete with the other processors to see which one
+	 * will be elected as the main one.
 	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(initialized_cpu_lock))
-	or	r11, r11, lo16(_ASM_LABEL(initialized_cpu_lock))
-1:
-	FLUSH_PIPELINE
-	or	r22, r0,  1
-	xmem	r22, r11, r0	/* If r22 gets 0, we have the lock.. */
-	bcnd	eq0, r22, 3f	/* ..but if not, we must wait */
-2:
-	/* just watch the lock until it looks clear */
-	ld	r22, r11, r0
-	bcnd	eq0, r22, 1b
-	br	2b		/* looks clear -- try to grab */
-3:
-	FLUSH_PIPELINE
-	or.u	r11, r0,  hi16(_ASM_LABEL(initialized_cpus))
-	ld	r22, r11, lo16(_ASM_LABEL(initialized_cpus))
-	add	r23, r22, 1
-	st	r23, r11, lo16(_ASM_LABEL(initialized_cpus))
-
-	or.u	r11, r0,  hi16(_ASM_LABEL(initialized_cpu_lock))
-	st	r0,  r11, lo16(_ASM_LABEL(initialized_cpu_lock))
-	/*
-	 * Now we view with any other processors to see who's the master.
-	 * We first try to obtain a lock to see who's allowed
-	 * to check/set the master lock.
-	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(inter_processor_lock))
-	or	r11, r11, lo16(_ASM_LABEL(inter_processor_lock))
+	or.u	r11, r0,  hi16(_ASM_LABEL(cpu_mutex))
+	or	r11, r11, lo16(_ASM_LABEL(cpu_mutex))
 1:
 	FLUSH_PIPELINE
 	or	r22, r0,  1
@@ -237,29 +169,36 @@ GLOBAL(start_text)
 	bcnd	eq0, r2, 3b
 	br	1b			/* looks clear -- try to grab */
 4:
-	/* now try to grab the master_processor_chosen prize */
+#ifdef MULTIPROCESSOR
+	/* now try to grab the master_mpu prize */
 	FLUSH_PIPELINE
-	or.u	r11, r0,  hi16(_ASM_LABEL(master_processor_chosen))
-	or	r11, r11, lo16(_ASM_LABEL(master_processor_chosen))
+	or.u	r11, r0,  hi16(_ASM_LABEL(master_mpu))
+	or	r11, r11, lo16(_ASM_LABEL(master_mpu))
 	or	r22, r0,  1
 	xmem	r22, r11, r0
 
 	/*
-	 * If r22 is not clear we're a slave,
-	 * otherwise we're first and the master.
+	 * If r22 is not clear we're a secondary,
+	 * otherwise we're first and the main.
 	 *
 	 * Note that we haven't released the interprocessor lock....
 	 * We'll do that when we're ready for another CPU to go.
-	 * (if we're the master, we'll do that in master_start below.
-	 *  if we're a slave, we'll do it in slave_start below).
 	 */
-	bcnd	ne0, r22, _ASM_LABEL(slave_start)
-	/* fall through to master start if that's appropriate */
-
-ASLOCAL(master_start)
+	bcnd	ne0, r22, _ASM_LABEL(secondary_init)
+#else
 	/*
-	 * Switch to interrupt stack
+	 * On non-MP kernels, the main processor will never release
+	 * cpu_mutex, thus secondary processors will spin trying to
+	 * acquire the lock, with interrupts disabled.
 	 */
+#endif
+	/* fall through to main_init if that's appropriate */
+
+	/*
+	 * Main processor specific initialization (with cpu_mutex held).
+	 */
+ASLOCAL(main_init)
+	/* Switch to interrupt stack */
 	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
 
@@ -324,6 +263,7 @@ ASLOCAL(master_start)
 
 	/* call main() - no arguments although main() still defines one */
 	bsr	_C_LABEL(main)
+
 	or.u	r2, r0, hi16(_ASM_LABEL(main_panic))
 	bsr.n	_C_LABEL(panic)
 	 or	r2, r2, lo16(_ASM_LABEL(main_panic))
@@ -335,44 +275,57 @@ ASLOCAL(main_panic)
 	text
 	.align	8
 
-/*
- *	slave CPUs starts here
- */
-ASLOCAL(slave_start)
+#ifdef MULTIPROCESSOR
 	/*
-	 * While holding the inter_processor_lock, the slave cpu can use
-	 * the slavestack to call slave_pre_main and determine its cpu number.
-	 * After that, however, it should switch over to the interrupt stack
-	 * associated with its cpu.
+	 * Secondary processor specific initialization (with cpu_mutex held).
+	 */
+ASLOCAL(secondary_init)
+	/*
+	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
+	 * to call secondary_pre_main() to determine its cpu number.
+	 * After that, however, it should allocate its own stack and switch
+	 * to it.
 	 */
 
-	/* r31 <-- slavestack */
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
-	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
-
-	bsr.n	_C_LABEL(slave_pre_main)	/* set cpu number */
-	 clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
-
-	bsr	_C_LABEL(get_slave_stack)
-	addu	r31, r2, INTSTACK_SIZE
+	bsr.n	_C_LABEL(secondary_pre_main)	/* set cpu number */
+	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
 	/*
-	 * SR1 now contains our cpu number. We can now release the
-	 * inter_processor_lock, as we are done with the slavestack.
-	 * We also have an interrupt stack
+	 * Release cpu_mutex; we have a race with other secondary CPUs here
+	 * because the stack has not been switched yet. However, since our
+	 * interrupts are disabled, the worst we can get is an NMI, and, oh
+	 * well, it means we're in deep trouble anyway.
 	 */
+	or.u	r10, r0, hi16(_ASM_LABEL(cpu_mutex))
+	st	r0, r10, lo16(_ASM_LABEL(cpu_mutex))
 
-	or.u	r10, r0, hi16(_ASM_LABEL(inter_processor_lock))
-	st	r0, r10, lo16(_ASM_LABEL(inter_processor_lock))
+	ldcr	r2, CPU
+1:
+	ld	r3, r2, CI_CURPCB
+	bcnd	eq0, r3, 1b
 
-	br	_C_LABEL(slave_main)	/* does not return */
+	br.n	_C_LABEL(secondary_main)
+	 add	r31, r3, USIZE 		/* switch to idle stack */
 
-GLOBAL(spin_cpu)
-	or.u	r3,   r0,  hi16(_C_LABEL(start_text))
-	or	r3,   r3,  lo16(_C_LABEL(start_text))
-	or	r9,   r0,  0x100		/* .FORKMPU */
-	tb0	0,    r0,  0x200-16		/* call 188Bug */
-	jmp	r1
+	/*
+	 * At this point, the CPU has been correctly initialized and has
+	 * identified itself on the console.
+	 * All it needs now is to jump to the idle loop and wait for work to
+	 * be offered.
+	 */
+	br	_ASM_LABEL(cpu_switch_search)
+
+GLOBAL(cpu_boot_secondary_processors)
+	/*
+	 * Release the cpu_mutex; secondary processors will now have their
+	 * chance to initialize.
+	 */
+	or.u	r2,  r0,  hi16(_ASM_LABEL(cpu_mutex))
+	jmp.n	r1
+	 st	r0,  r2,  lo16(_ASM_LABEL(cpu_mutex))
+
+#endif	/* MULTIPROCESSOR */
 
 /*
  * void delay(int count)
@@ -406,17 +359,14 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 ASGLOBAL(intstack)
 	space	USIZE
 ASGLOBAL(intstack_end)
-ASGLOBAL(slavestack)
+
+#ifdef MULTIPROCESSOR
 	space	PAGE_SIZE	/* 4K, small, interim stack */
-ASGLOBAL(slavestack_end)
+ASLOCAL(slavestack_end)
+#endif
 
 /*
- * When a process exits and its u. area goes away, we set curpcb to point
- * to this `u.', leaving us with something to use for an interrupt stack,
- * and letting all the register save code have a pcb_uw to examine.
- * This is also carefully arranged (to come just before u0, so that
- * process 0's kernel stack can quietly overrun into it during bootup, if
- * we feel like doing that).
+ * Main processor's idle pcb and stack.
  * Should be page aligned.
  */
 	.align	PAGE_SIZE
@@ -425,8 +375,7 @@ GLOBAL(idle_u)
 
 /*
  * Process 0's u.
- *
- * This must be page aligned
+ * Should be page aligned.
  */
 	.align	PAGE_SIZE
 ASLOCAL(u0)
@@ -434,19 +383,13 @@ ASLOCAL(u0)
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 
-GLOBAL(ret_addr)
-	word 0
-/* XMEM spin lock -- to count CPUs */
-ASLOCAL(initialized_cpu_lock)
-	word 0
-/* CPU counter to initialize */
-ASLOCAL(initialized_cpus)
-	word 0
+#ifdef MULTIPROCESSOR
 /* The first processor that XMEMs this becomes the master */
-ASLOCAL(master_processor_chosen)
+ASLOCAL(master_mpu)
 	word 0
-/* XMEM spin lock -- controls access to master_processor_chosen */
-ASLOCAL(inter_processor_lock)
+#endif
+/* XMEM spin lock -- controls access to master_mpu */
+ASLOCAL(cpu_mutex)
 	word 0
 
 #if defined(DDB) || NKSYMS > 0
