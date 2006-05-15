@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.24 2006/04/13 11:55:07 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.25 2006/05/15 07:50:26 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -149,7 +149,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	default:
 		warnx("illegal satype %d", satype);
 		return (-1);
-	};
+	}
 	fprintf(fd, "-");
 
 	if (qmxfs->encxf) {
@@ -172,7 +172,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		default:
 			warnx("illegal transform %s", qmxfs->encxf->name);
 			return (-1);
-		};
+		}
 	} else
 		fprintf(fd, "AES");
 	fprintf(fd, "-");
@@ -200,7 +200,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		default:
 			warnx("illegal transform %s", qmxfs->authxf->name);
 			return (-1);
-		};
+		}
 	} else
 		fprintf(fd, "SHA2-256");
 	fprintf(fd, "-PFS-SUITE force\n");
@@ -237,7 +237,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		default:
 			warnx("illegal transform %s", mmxfs->encxf->name);
 			return (-1);
-		};
+		}
 	} else
 		fprintf(fd, "AES");
 	fprintf(fd, "-");
@@ -253,7 +253,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		default:
 			warnx("illegal transform %s", mmxfs->authxf->name);
 			return (-1);
-		};
+		}
 	} else
 		fprintf(fd, "SHA");
 
