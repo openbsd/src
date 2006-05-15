@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.27 2006/05/15 23:28:41 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.28 2006/05/15 23:31:24 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -130,7 +130,10 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_xs = NULL;
 	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
+	ccb->ccb_direction = 0;
+	ccb->ccb_frame_size = 0;
 	ccb->ccb_extra_frames = 0;
+	ccb->ccb_sgl = NULL;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
 }
