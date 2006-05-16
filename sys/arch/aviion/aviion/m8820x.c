@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.1.1.1 2006/05/08 16:34:47 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.2 2006/05/16 23:23:00 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2006, Miodrag Vallat.
  *
@@ -134,6 +134,13 @@ hardprobe:
 		case 0x0a:	/* 1 CPU, 2 CMMU */
 			scc.cpucount = 1;
 			break;
+		case 3:		/* 2 CPUs, 12 CMMUs */
+		case 7:		/* 1 CPU, 6 CMMU */
+			printf("MAYDAY, 6:1 CMMU configuration (whoami %x)"
+			    " but no CPUCONFIG information\n", whoami);
+			scm_halt();
+			/* NOTREACHED */
+			break;
 		default:
 			printf("unrecognized CMMU configuration, whoami %x\n",
 			    whoami);
@@ -217,11 +224,13 @@ m8820x_cpu_number()
 	whoami = *(volatile u_int32_t *)AV400_WHOAMI;
 	switch ((whoami & 0xf0) >> 4) {
 	case 0:
+	case 3:
 	case 5:
 		for (cpu = 0; cpu < 4; cpu++)
 			if (whoami & (1 << cpu))
 				return (cpu);
 		break;
+	case 7:
 	case 0x0a:
 		/* for single processors, this field of whoami is undefined */
 		return (0);
