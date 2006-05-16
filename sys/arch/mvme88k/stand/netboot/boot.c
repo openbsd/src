@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.7 2006/05/16 22:51:30 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -62,15 +62,10 @@
 #include "stand.h"
 #include "libsa.h"
 
-
-/*
- * Boot device is derived from ROM provided information.
- */
-#define LOADADDR	0x10000
-
 extern	char *version;
 char	line[80];
 
+int
 main()
 {
 	char *cp, *file;
@@ -92,7 +87,7 @@ main()
 			if (line[0]) {
 				bugargs.arg_start = line;
 				cp = line;
-				while (cp < (line + sizeof(line) - 1) && *cp) 
+				while (cp < (line + sizeof(line) - 1) && *cp)
 					cp++;
 				bugargs.arg_end = cp;
 				ret =parse_args(&file, &howto);
@@ -106,4 +101,6 @@ main()
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}
+	_rtt();
+	return (0);
 }

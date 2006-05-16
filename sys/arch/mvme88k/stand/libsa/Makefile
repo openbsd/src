@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2004/01/26 19:48:34 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2006/05/16 22:51:30 miod Exp $
 
 LIB=sa
-
-CLEANFILES+=SRT0.o SRT1.o
 
 NOPIC=nopic
 NOPROFILE=noprofile
@@ -13,7 +11,7 @@ DIR_SA=$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
 SRC_net= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
-	 rarp.c bootparam.c 
+	 rarp.c bootparam.c
 
 SRC_sa=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
 	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
@@ -34,14 +32,14 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_mvme} ${SRC_here} ${SRC_kern}
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 #DEFS= -DCOMPAT_UFS
-DEFS= -D__INTERNAL_LIBSA_CREAD 
-#-DNETIF_DEBUG
+DEFS= -D__INTERNAL_LIBSA_CREAD
+#DEFS+=-DNETIF_DEBUG
 INCL= -I${.CURDIR} -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
 CFLAGS+= ${XCFLAGS} ${COPTS} ${DEFS} ${DBG} ${INCL}
 
-.PATH:  ${DIR_SA} ${DIR_KERN} 
+.PATH:  ${DIR_SA} ${DIR_KERN}
 
-all: libsa.a SRT0.o SRT1.o
+all: libsa.a
 
 install:
 

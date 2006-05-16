@@ -1,91 +1,62 @@
-/*	$OpenBSD: crt.c,v 1.5 2003/10/02 13:24:39 miod Exp $ */
+/*	$OpenBSD: crt.c,v 1.6 2006/05/16 22:51:30 miod Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
-struct mvmeprom_args bugargs = { 1 };	       /* not BSS */
+#include "stand.h"
+#include "libbug.h"
 
-asm (".text");
-/* pseudo reset vector */
-asm (STACK_ASM_OP);	/* initial sp value */
-asm (".long _start");	/* initial ip value */
+struct mvmeprom_args bugargs;
+
+__asm__ (".text");
+__asm__ (STACK_ASM_OP);		/* initial sp value */
+__asm__ (".long _start");	/* initial ip value */
+
+extern void main(void);
 
 void
-start()
+start(u_int dev_lun, u_int ctrl_lun, u_int flags, u_int ctrl_addr, u_int entry,
+    u_int conf_blk, char *arg_start, char *arg_end)
 {
-	extern int edata, end;
-	struct mvmeprom_brdid *id, *mvmeprom_brdid();
+	extern u_int edata, end;
+	char *nbarg_start;
+	char *nbarg_end;
+	u_int dummy;
 
-	/* 
-	 * This code enables the SFU1 and is used for single stage 
+	/*
+	 * Save r10 and r11 first. We can't put declare them as arguments
+	 * since the normal calling convention would put them on the stack.
+	 */
+	__asm__ __volatile__ ("or %0, r0, r10" : "=r" (nbarg_start) : :
+	    "r10", "r11");
+	__asm__ __volatile__ ("or %0, r0, r11" : "=r" (nbarg_end) : :
+	    "r10", "r11");
+
+	/*
+	 * This code enables the SFU1 and is used for single stage
 	 * bootstraps or the first stage of a two stage bootstrap.
-	 * Do not use r10 to enable the SFU1. This wipes out
-	 * the netboot args.  Not cool at all... r25 seems free. 
+	 * Do not use lower registers to enable the SFU1. This wipes out
+	 * the args.  Not cool at all... r25 seems free.
 	 */
-	asm("|	enable SFU1");
-	asm("	ldcr	r25,cr1" ::: "r25");
-	asm("	clr	r25,r25,1<3>"); /* bit 3 is SFU1D */
-	asm("	stcr	r25,cr1");
-
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_DEVLUN :
-	    "=r" (bugargs.dev_lun));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_CTRLLUN :
-	    "=r" (bugargs.ctrl_lun));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_FLAGS :
-	    "=r" (bugargs.flags));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_CTRLADDR :
-	    "=r" (bugargs.ctrl_addr));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_ENTRY :
-	    "=r" (bugargs.entry));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_CONFBLK :
-	    "=r" (bugargs.conf_blk));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_ARGSTART :
-	    "=r" (bugargs.arg_start));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_ARGEND :
-	    "=r" (bugargs.arg_end));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_NBARGSTART :
-	    "=r" (bugargs.nbarg_start));
-	__asm__ __volatile__ ("or %0, r0, " MVMEPROM_REG_NBARGEND :
-	    "=r" (bugargs.nbarg_end));
-	*bugargs.arg_end = 0;      
-
-	id = mvmeprom_brdid();
-	bugargs.cputyp = id->model;
-
-#ifdef notyet /* STAGE1 */
-	/* 
-	 * Initialize PSR and CMMU to a known, stable state. 
-	 * This has to be done early for MVME197.
-	 * Per EB162 mc88110 engineering bulletin.
-	 */
-	if (bugargs.cputyp == 0x197) {
-		asm("|	init MVME197");
-		asm("|	1. PSR");
-		asm("or.u   r2,r0,0xA200");
-		asm("or     r2,r2,0x03E2");
-		asm("stcr   r2,cr1");
-		asm("|	2. ICTL");
-		asm("or     r2,r0,r0");
-		asm("or     r2,r2,0x8000");
-		asm("or     r2,r2,0x0040");
-		asm("stcr   r2,cr26");
-		asm("|	3. DCTL");
-		asm("or     r2,r0,r0");
-		asm("or     r2,r2,0x2000");
-		asm("or     r2,r2,0x0040");
-		asm("stcr   r2,cr41");
-		asm("|	4. init cache");
-		asm("or     r2,r0,0x01");
-		asm("stcr   r2,cr25");
-		asm("stcr   r2,cr40");
-	}
-#endif
+	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (dummy));
+	__asm__ __volatile__ ("clr %0, %0, 1<3>; stcr %0, cr1" : "+r" (dummy));
 
 	memset(&edata, 0, ((int)&end - (int)&edata));
 
-	asm  ("|	main()");
+	bugargs.dev_lun = dev_lun;
+	bugargs.ctrl_lun = ctrl_lun;
+	bugargs.flags = flags;
+	bugargs.ctrl_addr = ctrl_addr;
+	bugargs.entry = entry;
+	bugargs.conf_blk = conf_blk;
+	bugargs.arg_start = arg_start;
+	bugargs.arg_end = arg_end;
+	bugargs.nbarg_start = nbarg_start;
+	bugargs.nbarg_end = nbarg_end;
+	*bugargs.arg_end = '\0';
+
 	main();
-	mvmeprom_return();
+	_rtt();
 	/* NOTREACHED */
 }
 
@@ -95,27 +66,13 @@ __main()
 }
 
 void
-bugexec(void (*addr)(void))
+bugexec(void (*addr)())
 {
-	__asm__ __volatile__ ("or " MVMEPROM_REG_DEVLUN ", r0, %0" ::
-	    "r" (bugargs.dev_lun));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_CTRLLUN ", r0, %0" ::
-	    "r" (bugargs.ctrl_lun));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_FLAGS ", r0, %0" ::
-	    "r" (bugargs.flags));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_CTRLADDR ", r0, %0" ::
-	    "r" (bugargs.ctrl_addr));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_ENTRY ", r0, %0" ::
-	    "r" (bugargs.entry));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_CONFBLK ", r0, %0" ::
-	    "r" (bugargs.conf_blk));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_ARGSTART ", r0, %0" ::
-	    "r" (bugargs.arg_start));
-	__asm__ __volatile__ ("or " MVMEPROM_REG_ARGEND ", r0, %0" ::
-	    "r" (bugargs.arg_end));
+	(*addr)(bugargs.dev_lun, bugargs.ctrl_lun, bugargs.flags,
+	    bugargs.ctrl_addr, bugargs.entry, bugargs.conf_blk,
+	    bugargs.arg_start, bugargs.arg_end);
 
-	(*addr)();
-	printf("bugexec: 0x%x returned!\n", addr);
+	printf("bugexec: %p returned!\n", addr);
 
 	_rtt();
 }

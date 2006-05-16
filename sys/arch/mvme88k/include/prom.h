@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.15 2005/12/11 21:45:31 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.16 2006/05/16 22:51:28 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -168,34 +168,9 @@ struct mvmeprom_dskio {
 };
 #define MVMEPROM_BLOCK_SIZE	256
 
-struct mvmeprom_args {
-        u_int	dev_lun;
-        u_int	ctrl_lun;
-        u_int	flags;
-        u_int	ctrl_addr;
-        u_int	entry;
-        u_int	conf_blk;
-        char	*arg_start;
-        char	*arg_end;
-	char	*nbarg_start;
-	char	*nbarg_end;
-	u_int	cputyp;
-};
-
 extern unsigned long bugvec[2], sysbugvec[2];	/* BUG trap vector copies */
 
 #endif	/* _LOCORE */
-
-#define MVMEPROM_REG_DEVLUN	"r2"
-#define MVMEPROM_REG_CTRLLUN	"r3"
-#define MVMEPROM_REG_FLAGS	"r4"
-#define MVMEPROM_REG_CTRLADDR	"r5"
-#define MVMEPROM_REG_ENTRY	"r6"
-#define MVMEPROM_REG_CONFBLK	"r7"
-#define MVMEPROM_REG_ARGSTART	"r8"
-#define MVMEPROM_REG_ARGEND	"r9"
-#define MVMEPROM_REG_NBARGSTART	"r10"
-#define MVMEPROM_REG_NBARGEND	"r11"
 
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x4000

@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 2005/09/11 13:36:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/05/16 22:51:30 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
 
 S=	${.CURDIR}/../../../..
-DEFS= -DSUN_BOOTPARAMS 
-#-DNETIF_DEBUG
+DEFS=
+#DEFS+=-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${S} -I${S}/lib/libsa
 CFLAGS+=${DEFS} ${INCPATH} ${COPTS}
@@ -19,8 +19,7 @@ CLEANFILES+=tftpboot tftpboot.bin
 SRCS=   boot.c conf.c version.c tftpfs.c netdev.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
-LDFLAGS+= -s -N -T ${STAGE2_RELOC} 
-#LDFLAGS+= -nostdlib -s -N -Ttext ${RELOC}
+LDFLAGS+= -s -N -T ${STAGE2_RELOC}
 
 all:	tftpboot.bin
 

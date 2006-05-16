@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.11 2004/11/11 21:44:42 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.12 2006/05/16 22:51:30 miod Exp $	*/
 
 
 /*-
@@ -59,12 +59,12 @@ exec_mvme(file, flag)
 	int     flag;
 {
 	char *loadaddr;
-	register int io;
+	int io;
 	struct exec x;
 	int cc, magic;
 	void (*entry)();
-	register char *cp;
-	register int *ip;
+	char *cp;
+	int *ip;
 	int bootdev;
 
 #ifdef DEBUG
@@ -87,11 +87,11 @@ exec_mvme(file, flag)
 	}
 
 	/*
-	 * note: on the mvme ports, the kernel is linked in such a way that 
-	 * its entry point is the first item in .text, and thus a_entry can 
+	 * note: on the mvme ports, the kernel is linked in such a way that
+	 * its entry point is the first item in .text, and thus a_entry can
 	 * be used to determine both the load address and the entry point.
 	 * (also note that we make use of the fact that the kernel will live
-	 *  in a VA == PA range of memory ... otherwise we would take 
+	 *  in a VA == PA range of memory ... otherwise we would take
 	 *  loadaddr as a parameter and let the kernel relocate itself!)
 	 *
 	 * note that ZMAGIC files included the a.out header in the text area
@@ -184,12 +184,13 @@ exec_mvme(file, flag)
 			goto shread;
 		cp += cc;
 	}
-	printf("=0x%x\n", cp - loadaddr);
+	printf("=0x%lx\n", cp - loadaddr);
 	close(io);
 
 	printf("Start @ 0x%x\n", (int)entry);
 	printf("Controller Address 0x%x\n", bugargs.ctrl_addr);
-	if (flag & RB_HALT) mvmeprom_return();
+	if (flag & RB_HALT)
+		_rtt();
 
 	bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
 
