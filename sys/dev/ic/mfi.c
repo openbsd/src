@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.29 2006/05/16 01:02:42 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.30 2006/05/16 01:15:29 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -823,7 +823,7 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	if (ccb->ccb_direction == MFI_DATA_IN) {
 		hdr->mfh_flags |= MFI_FRAME_DIR_READ;
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	} else {
 		hdr->mfh_flags |= MFI_FRAME_DIR_WRITE;
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
