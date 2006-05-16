@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.33 2006/05/16 22:51:10 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.34 2006/05/16 23:05:25 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -647,31 +647,6 @@ mfi_generic_scsi(struct scsi_xfer *xs)
 		ccb->ccb_direction = 0;
 	}
 
-	/* XXX don't do this here, make something generic */
-	if (xs->cmd->opcode == TEST_UNIT_READY) {
-		if (ccb->ccb_xs->flags & SCSI_POLL) {
-			if (mfi_poll(sc, ccb)) {
-				printf("%s: mfi_poll generic failed\n",
-				    DEVNAME(sc));
-				bzero(&xs->sense, sizeof(xs->sense));
-				xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-				xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-				xs->sense.add_sense_code = 0x20; /* invalid opcode */
-				xs->error = XS_SENSE;
-				xs->flags |= ITSDONE;
-				scsi_done(xs);
-				return (COMPLETE);
-			}
-			DNPRINTF(MFI_D_DMA, "%s: mfi_generic complete %d\n",
-			    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
-			mfi_put_ccb(ccb);
-
-			return (COMPLETE);
-		}
-
-		mfi_despatch_cmd(sc, ccb);
-	}
-
 	return (mfi_start_xs(sc, ccb, xs));
 }
 
@@ -740,6 +715,9 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: %p %p %d\n", DEVNAME(sc), xs,
 	    xs->data, xs->datalen);
 
+	if (!xs->data)
+		goto skipsgl;
+
 	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
 	    xs->data, xs->datalen, NULL,
 	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
@@ -791,12 +769,18 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	    ccb->ccb_dmamap->dm_nsegs,
 	    ccb->ccb_extra_frames);
 
+skipsgl:
 	if (xs->flags & SCSI_POLL) {
 		if (mfi_poll(sc, ccb)) {
 			printf("%s: mfi_poll failed\n", DEVNAME(sc));
-			xs->error = XS_DRIVER_STUFFUP;
+			bzero(&xs->sense, sizeof(xs->sense));
+			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+			xs->sense.add_sense_code = 0x20; /* invalid opcode */
+			xs->error = XS_SENSE;
 			xs->flags |= ITSDONE;
 			scsi_done(xs);
+			return (COMPLETE);
 		}
 		DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs complete %d\n",
 		    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
