@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.12 2006/02/24 00:26:16 brad Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.13 2006/05/16 02:32:39 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -96,7 +96,6 @@ const struct pci_matchid rl_pci_devices[] = {
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS },
 	{ PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BS21 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129 },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139 },
 	{ PCI_VENDOR_TTTECH, PCI_PRODUCT_TTTECH_MC322 }
 };
 
@@ -106,6 +105,13 @@ rl_pci_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
+	struct pci_attach_args *pa = aux;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139 &&
+	    PCI_REVISION(pa->pa_class) == 0x10)
+		return (1);
+
 	return (pci_matchbyid((struct pci_attach_args *)aux, rl_pci_devices,
 	    sizeof(rl_pci_devices)/sizeof(rl_pci_devices[0])));
 }

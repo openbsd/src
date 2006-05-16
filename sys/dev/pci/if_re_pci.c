@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.6 2006/03/27 17:43:25 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.7 2006/05/16 02:32:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -97,6 +97,12 @@ re_pci_probe(struct device *parent, void *match, void *aux)
 
 	subid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
+	/* C+ mode 8139's */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139 &&
+	    PCI_REVISION(pa->pa_class) == 0x20)
+		return (1);
+
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
 	    subid == RE_LINKSYS_EG1032_SUBID)
@@ -189,7 +195,11 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RL_ENABLED;
-	sc->rl_type = RL_8169;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)
+		sc->rl_type = RL_8139;
+	else
+		sc->rl_type = RL_8169;
 
 	/* Call bus-independent attach routine */
 	re_attach_common(sc);
