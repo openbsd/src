@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.34 2006/05/16 23:05:25 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.35 2006/05/16 23:11:48 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -640,12 +640,11 @@ mfi_generic_scsi(struct scsi_xfer *xs)
 	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
 	ccb->ccb_sgl = &pf->mpf_sgl;
-	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
 		ccb->ccb_direction = xs->flags & SCSI_DATA_IN ?
 		    MFI_DATA_IN : MFI_DATA_OUT;
-	} else {
+	else
 		ccb->ccb_direction = 0;
-	}
 
 	return (mfi_start_xs(sc, ccb, xs));
 }
