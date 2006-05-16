@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtvid.c,v 1.3 2004/12/27 15:23:46 drahn Exp $ */
+/*	$OpenBSD: prtvid.c,v 1.4 2006/05/16 22:52:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -45,7 +45,7 @@ main(argc, argv)
 	    (char *)&(pvid->vid_osa_u) - (char *)pvid);
 	printf("vid_osa_l	%x	%x\n", pvid->vid_osa_l,
 	    (char *)&(pvid->vid_osa_l) - (char *)pvid);
-	printf("vid_vd 		%x	%x\n", pvid->vid_vd, 
+	printf("vid_vd 		%x	%x\n", pvid->vid_vd,
 	    (char *)&(pvid->vid_vd) - (char *)pvid);
 	printf("vid_cas		%x	%x\n", pvid->vid_cas,
 	    (char *)&(pvid->vid_cas) - (char *)pvid);

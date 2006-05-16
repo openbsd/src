@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2003/06/02 23:27:53 millert Exp $ */
+/*	$OpenBSD: clock.c,v 1.4 2006/05/16 22:52:26 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ static struct clockreg *clockreg = (struct clockreg *) CLOCK_ADDR;
 const short dayyr[12] =
     {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-static u_long 
+static u_long
 chiptotime(sec, min, hour, day, mon, year)
 	register int sec, min, hour, day, mon, year;
 {
@@ -100,7 +100,7 @@ chiptotime(sec, min, hour, day, mon, year)
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
-u_long 
+u_long
 time()
 {
 	register struct clockreg *cl = clockreg;

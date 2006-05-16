@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_le.c,v 1.3 2003/06/04 16:36:15 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.4 2006/05/16 22:52:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -65,7 +65,7 @@ struct {
 	int     next_tmd;
 }       le_softc;
 
-void 
+void
 le_error(str, ler1)
 	char   *str;
 	struct lereg1 *ler1;
@@ -87,7 +87,7 @@ le_error(str, ler1)
 	}
 }
 
-void 
+void
 le_reset(myea)
 	u_char *myea;
 {
@@ -164,7 +164,7 @@ le_reset(myea)
 	ler1->ler1_rdp = LE_C0_STRT;
 }
 
-int 
+int
 le_poll(pkt, len)
 	void   *pkt;
 	int     len;
@@ -217,7 +217,7 @@ cleanup:
 	return length;
 }
 
-int 
+int
 le_put(pkt, len)
 	u_char *pkt;
 	size_t  len;
@@ -277,7 +277,7 @@ le_put(pkt, len)
 	return len;
 }
 
-int 
+int
 le_get(pkt, len, timeout)
 	u_char *pkt;
 	size_t  len;
@@ -312,7 +312,7 @@ le_get(pkt, len, timeout)
 	return cc;
 }
 
-void 
+void
 le_init()
 {
 	caddr_t addr;
@@ -340,7 +340,7 @@ le_init()
 	le_reset(myea);
 }
 
-void 
+void
 le_end()
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;

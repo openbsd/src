@@ -1,7 +1,7 @@
-/*	$OpenBSD: libsa.h,v 1.3 2002/03/14 01:26:40 millert Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.4 2006/05/16 22:52:26 miod Exp $	*/
 
 /*
- * libsa prototypes 
+ * libsa prototypes
  */
 
 #include "libbug.h"

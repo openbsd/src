@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2001/07/04 08:09:29 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2006/05/16 22:52:26 miod Exp $	*/
 
 
 #include <sys/types.h>
@@ -60,6 +60,6 @@ getsecs()
 	struct mvmeprom_time m;
 
 	mvmeprom_rtc_rd(&m);
-	return (chiptotime(m.sec_BCD, m.min_BCD, m.hour_BCD, m.day_BCD, 
+	return (chiptotime(m.sec_BCD, m.min_BCD, m.hour_BCD, m.day_BCD,
 			m.month_BCD, m.year_BCD));
 }

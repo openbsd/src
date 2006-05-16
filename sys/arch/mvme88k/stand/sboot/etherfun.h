@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherfun.h,v 1.2 2001/07/04 08:09:31 niklas Exp $	*/
+/*	$OpenBSD: etherfun.h,v 1.3 2006/05/16 22:52:26 miod Exp $	*/
 
 /*
  *
@@ -118,9 +118,9 @@ struct ether_arp *rarp = (struct ether_arp *)
 struct ip *iph = (struct ip *)(buf + sizeof(struct ether_header));
 struct udp *udph = (struct udp *)
 	(buf + sizeof(struct ether_header) + sizeof(struct ip));
-char *tftp_r = buf + sizeof(struct ether_header) + sizeof(struct ip) + 
+char *tftp_r = buf + sizeof(struct ether_header) + sizeof(struct ip) +
 	sizeof(struct udp);
-struct tftph *tftp_a = (struct tftph *)(buf + sizeof(struct ether_header) + 
+struct tftph *tftp_a = (struct tftph *)(buf + sizeof(struct ether_header) +
 	sizeof(struct ip) + sizeof(struct udp));
-struct tftphr *tftp = (struct tftphr *)(buf + sizeof(struct ether_header) + 
+struct tftphr *tftp = (struct tftphr *)(buf + sizeof(struct ether_header) +
 	sizeof(struct ip) + sizeof(struct udp));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.4 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: sboot.h,v 1.5 2006/05/16 22:52:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -70,12 +70,12 @@ int le_put(u_char *, size_t);
 
 /* etherfun */
 #define READ 0
-#define ACKN 1 
+#define ACKN 1
 void do_rev_arp(void);
 int get_rev_arp(void);
 int rev_arp(void);
 void do_send_tftp(int);
-int do_get_file(void); 
+int do_get_file(void);
 void tftp_file(char *, u_long);
 
 /* clock */
@@ -86,7 +86,7 @@ u_long oc_cksum(void *, u_long, u_long);
 
 #define CONS_ZS_ADDR (0xfffe3002)
 #define CLOCK_ADDR (0xfffe07f8)
-#define LOAD_ADDR 0x7000 
+#define LOAD_ADDR 0x7000
 
 unsigned char myea[6];                /* my ether addr */
 unsigned char myip[4];

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.11 2005/09/11 13:36:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2006/05/16 22:52:26 miod Exp $
 
 SIZE?=	size
 
@@ -24,7 +24,7 @@ LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
 BOOTS=	bootst stboot
-ALL=	${BOOTS} 
+ALL=	${BOOTS}
 
 all: ${ALL}
 

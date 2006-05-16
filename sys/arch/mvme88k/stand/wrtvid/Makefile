@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1998/08/22 08:52:53 smurph Exp $ 
+#	$OpenBSD: Makefile,v 1.3 2006/05/16 22:52:26 miod Exp $
 PROG=	wrtvid
 NOMAN=
 
