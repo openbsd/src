@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.23 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.24 2006/05/16 20:23:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -346,8 +346,9 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	trunk_ether_cmdmulti(tp, SIOCADDMULTI);
 
 	/* Register callback for physical link state changes */
-	tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
-	    trunk_port_state, tp);
+	if (ifp->if_linkstatehooks != NULL)
+		tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+		    trunk_port_state, tp);
 
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
@@ -397,7 +398,8 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_tp = NULL;
 
-	hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
+	if (ifp->if_linkstatehooks != NULL)
+		hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
 
 	/* Finally, remove the port from the trunk */
 	SLIST_REMOVE(&tr->tr_ports, tp, trunk_port, tp_entries);
