@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_ulimit1.c,v 1.1 2006/04/18 19:03:30 otto Exp $	*/
+/*	$OpenBSD: malloc_ulimit1.c,v 1.2 2006/05/16 05:47:13 otto Exp $	*/
 
 /* Public Domain, 2006, Otto Moerbeek <otto@drijf.net> */
 
@@ -40,4 +40,5 @@ main()
 		free(p);
 		free(malloc(4096));
 	}
+	return (0);
 }
