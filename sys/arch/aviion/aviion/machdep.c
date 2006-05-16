@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.1.1.1 2006/05/09 18:09:02 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.2 2006/05/16 23:22:10 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -420,6 +420,7 @@ allocsys(v)
 __dead void
 doboot()
 {
+	printf("Rebooting system...\n\n");
 	cmmu_shutdown();
 	scm_reboot(NULL);
 	/*NOTREACHED*/
@@ -468,6 +469,7 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
+		printf("System halted.\n\n");
 		cmmu_shutdown();
 		scm_halt();
 	}
