@@ -1,4 +1,4 @@
-/*	$OpenBSD: rawfs.c,v 1.3 2006/01/16 18:03:54 deraadt Exp $ */
+/*	$OpenBSD: rawfs.c,v 1.4 2006/05/16 22:52:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -159,14 +159,15 @@ rawfs_get_block(f)
 	struct open_file *f;
 {
 	struct cfile *fs;
-	int error, len;
+	int error;
+	size_t len;
 
 	fs = (struct cfile *)f->f_fsdata;
 	fs->fs_ptr = fs->fs_buf;
 
 	twiddle();
 	error = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-		fs->fs_nextblk, RAWFS_BSIZE,	fs->fs_buf, &len);
+		fs->fs_nextblk, RAWFS_BSIZE, fs->fs_buf, &len);
 
 	if (!error) {
 		fs->fs_len = len;

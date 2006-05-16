@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.2 2002/03/14 01:26:40 millert Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.3 2006/05/16 22:52:09 miod Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -56,7 +56,8 @@ devopen(f, fname, file)
 	char **file;
 {
 	register struct bugsc_softc *pp = &bugsc_softc[0];
-	int	error, i, dn = 0, pn = 0;
+	size_t i;
+	int error, pn = 0;
 	char	*dev, *cp;
 	static	char iobuf[MAXBSIZE];
 	struct disklabel sdlabel;
@@ -233,6 +234,6 @@ cputobsdlabel(lp, clp)
 	lp->d_bbsize = clp->bbsize;
 	lp->d_sbsize = clp->sbsize;
 	bcopy(clp->vid_4, &(lp->d_partitions[0]),sizeof (struct partition) * 4);
-	bcopy(clp->cfg_4, &(lp->d_partitions[4]), sizeof (struct partition) 
+	bcopy(clp->cfg_4, &(lp->d_partitions[4]), sizeof (struct partition)
 		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 }

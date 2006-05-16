@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdev.c,v 1.1 2004/01/26 19:48:34 miod Exp $ */
+/*	$OpenBSD: netdev.c,v 1.2 2006/05/16 22:52:09 miod Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <machine/prom.h>
+#include <string.h>
 
 #include "stand.h"
 #include "tftpfs.h"

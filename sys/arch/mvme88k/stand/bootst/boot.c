@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 2006/05/16 22:52:09 miod Exp $ */
 /*-
  * Changes Copyright (c) 1998 steve Murphree, Jr.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,8 +38,6 @@
 #include "stand.h"
 #include "libsa.h"
 
-#define LOADADDR	0x10000
-
 extern char *version;
 extern int errno;
 
@@ -47,7 +45,7 @@ int main()
 {
 	static char dnm[32] = "2";
 	char line[80];
-	char *cp, *filename;
+	char *filename;
 	int bflag = 0;
 	printf(">> OpenBSD/mvme88k tapeboot [%s]\n", version);
 

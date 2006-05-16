@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.3 1999/01/11 05:11:46 millert Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.4 2006/05/16 22:52:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -63,6 +63,7 @@
 #include "netif.h"
 #include "config.h"
 #include "bootparam.h"
+#include "nfs.h"
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
@@ -71,6 +72,8 @@ char rootpath[FNAME_SIZE];
 
 int netdev_sock = -1;
 static int open_count;
+
+int	net_mountroot(struct open_file *, char *);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -105,6 +108,7 @@ net_close(f)
 		if (--open_count == 0)
 			netif_close(netdev_sock);
 	f->f_devdata = NULL;
+	return (0);
 }
 
 int

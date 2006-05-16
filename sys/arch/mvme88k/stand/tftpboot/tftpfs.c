@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.c,v 1.1 2004/01/26 19:48:34 miod Exp $	*/
+/*	$OpenBSD: tftpfs.c,v 1.2 2006/05/16 22:52:09 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -41,6 +41,7 @@
 #include <lib/libkern/libkern.h>
 
 #include "stand.h"
+#include "tftpfs.h"
 
 /*
  * In-core open file.
@@ -59,8 +60,6 @@ struct tftp_file {
 #define TFTP_BLOCK_NO(x)	((x >> TFTP_BLOCK_SHIFT) + 1)
 #define TFTP_BLOCK_OFF(x)	(x % TFTP_BLOCK_SIZE)
 
-static int	read_inode(ino_t, struct open_file *);
-static int	block_map(struct open_file *, daddr_t, daddr_t *);
 static int	tftp_read_file(struct open_file *, char **, size_t *);
 #ifdef COMPAT_UFS
 static void	ffs_oldfscompat(struct fs *);
@@ -91,7 +90,7 @@ tftp_read_file(f, buf_p, size_p)
 	block_size = TFTP_BLOCK_SIZE;
 
 	if (file_block == fp->f_buf_blkno + 1) {
-		/* 
+		/*
 		 * Normal, incremental block transfer.
 		 */
 		rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
@@ -102,8 +101,8 @@ tftp_read_file(f, buf_p, size_p)
 			twiddle();
 		fp->f_buf_blkno = file_block;
 	} else if (file_block > fp->f_buf_blkno + 1) {
-		/* 
-		 * Read ahead to the requested block;  If we need  
+		/*
+		 * Read ahead to the requested block;  If we need
 		 * those we skipped, see below.
 		 */
 		for (i = (fp->f_buf_blkno + 1); i <= file_block; i++) {
@@ -114,8 +113,8 @@ tftp_read_file(f, buf_p, size_p)
 		}
 		fp->f_buf_blkno = file_block;
 	} else if (file_block < fp->f_buf_blkno) {
-		/* 
-		 * Uh oh...  We can't rewind.  Reopen the file 
+		/*
+		 * Uh oh...  We can't rewind.  Reopen the file
 		 * and start again.
 		 */
 		char filename[64];

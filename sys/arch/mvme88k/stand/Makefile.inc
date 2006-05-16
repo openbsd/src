@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2005/12/30 02:03:49 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2006/05/16 22:52:07 miod Exp $
 
 MDEC_DIR?=/usr/mdec
-CFLAGS+=	-fno-stack-protector -mmemcpy
+CFLAGS+=-Wall -Werror -fno-stack-protector -mmemcpy
 
 # Load addresses for first and second stage bootstraps
 STAGE1_RELOC=0x009F0000

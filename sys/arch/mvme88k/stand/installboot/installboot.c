@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.8 2003/08/25 23:36:46 tedu Exp $ */
+/*	$OpenBSD: installboot.c,v 1.9 2006/05/16 22:52:09 miod Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -55,12 +55,12 @@ char  cdev[80];
 
 struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
-	{"_block_size"},
+	{ { "_block_size" } },
 #define X_BLOCK_COUNT	1
-	{"_block_count"},
+	{ { "_block_count" } },
 #define X_BLOCK_TABLE	2
-	{"_block_table"},
-	{NULL}
+	{ { "_block_table" } },
+	{ { NULL } }
 };
 
 int *block_size_p;		/* block size var. in prototype image */
@@ -140,7 +140,7 @@ main(argc, argv)
 
 	/* XXX - Paranoia: Make sure size is aligned! */
 	if (protosize & (DEV_BSIZE - 1))
-		err(1, "proto bootblock bad size=%d", protosize);
+		err(1, "proto bootblock bad size=%ld", protosize);
 
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
@@ -252,7 +252,7 @@ loadprotoblocks(fname, size)
 	if (verbose) {
 		printf("%s: entry point %#x\n", fname, eh.a_entry);
 		printf("proto bootblock size %ld\n", *size);
-		printf("room for %d filesystem blocks at %#x\n",
+		printf("room for %d filesystem blocks at %#lx\n",
 			maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
@@ -399,13 +399,11 @@ char *bootproto;
 	struct cpu_disklabel *pcpul;
 	struct stat stat;
 	unsigned int exe_addr;
-	unsigned short exe_addr_u;
-	unsigned short exe_addr_l;
 
 	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
 	bzero(pcpul, sizeof(struct cpu_disklabel));
 
-	if (verbose) 
+	if (verbose)
 		printf("modifying vid.\n");
 
 	exe_file = open(bootproto, O_RDONLY, 0444);
@@ -417,7 +415,7 @@ char *bootproto;
 	f = opendev(dkname, O_RDWR, OPENDEV_PART, &specname);
 
 	if (lseek(f, 0, SEEK_SET) < 0 ||
-		    read(f, pcpul, sizeof(struct cpu_disklabel)) 
+		    read(f, pcpul, sizeof(struct cpu_disklabel))
 			< sizeof(struct cpu_disklabel))
 			    err(4, "%s", specname);
 
@@ -462,7 +460,7 @@ char *bootproto;
 	pcpul->cfg_psm = 0x200;
 
 	if (!nowrite) {
-	    if (lseek(f, 0, SEEK_SET) < 0 || 
+	    if (lseek(f, 0, SEEK_SET) < 0 ||
 		write(f, pcpul, sizeof(struct cpu_disklabel))
 		    < sizeof(struct cpu_disklabel))
 		    	err(4, "%s", specname);

@@ -1,8 +1,8 @@
-/*	$OpenBSD: parse_args.c,v 1.4 2003/06/04 16:36:15 deraadt Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.5 2006/05/16 22:52:09 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -61,7 +61,7 @@ parse_args(filep, flagp)
 
 	if (bugargs.arg_start != bugargs.arg_end) {
 		ptr = bugargs.arg_start;
-		while (c = *ptr) {
+		while ((c = *ptr) != '\0') {
 			while (c == ' ')
 				c = *++ptr;
 			if (c == '\0')

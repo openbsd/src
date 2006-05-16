@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: boot.c,v 1.8 2006/05/16 22:52:09 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -49,10 +49,10 @@ int
 main()
 {
 	char *cp, *file;
-	int     io, flag, ret;
-	int     ask = 0;
+	int flag, ret;
+	int ask = 0;
 
-	printf("\n>> OpenBSD/mvme88k bootsd [%s]\n", version);
+	printf(">> OpenBSD/mvme88k bootsd [%s]\n", version);
 
 	ret = parse_args(&file, &flag);
 	for (;;) {

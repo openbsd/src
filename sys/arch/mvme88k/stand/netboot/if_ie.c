@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_ie.c,v 1.7 2003/06/04 16:36:15 deraadt Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.8 2006/05/16 22:52:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -45,6 +45,7 @@
 #include "libsa.h"
 #include "netif.h"
 #include "config.h"
+#include "net.h"
 
 #include "i82586.h"
 #include "if_iereg.h"
@@ -61,6 +62,7 @@ int ie_poll(struct iodesc *, void *, int);
 int ie_probe(struct netif *, void *);
 int ie_put(struct iodesc *, void *, size_t);
 void ie_reset(struct netif *, u_char *);
+extern void machdep_common_ether(u_char *);
 
 struct netif_stats ie_stats;
 
@@ -144,6 +146,7 @@ ie_error(nif, str, ier)
 	panic("ie%d: unknown error", nif->nif_unit);
 }
 
+void
 ieack(ier, iem)
 	volatile struct iereg *ier;
 	struct iemem *iem;
@@ -162,7 +165,7 @@ ie_reset(nif, myea)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	int     timo = 10000, stat, i;
+	int     timo = 10000, i;
 	volatile int t;
 	u_int   a;
 
@@ -290,10 +293,8 @@ ie_poll(desc, pkt, len)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	u_char *p = pkt;
 	static int slot;
 	int     length = 0;
-	u_int   a;
 	u_short status;
 
 	asm(".word	0xf518\n");
@@ -359,8 +360,6 @@ ie_put(desc, pkt, len)
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
 	u_char *p = pkt;
-	int     timo = 10000, stat, i;
-	volatile int t;
 	u_int   a;
 	int     xx = 0;
 
@@ -400,7 +399,7 @@ ie_put(desc, pkt, len)
 	ier->ie_attention = 1;	/* chan attention! */
 
 	if (ie_debug) {
-		printf("ie%d: send %d to %x:%x:%x:%x:%x:%x\n",
+		printf("ie%d: send %ld to %x:%x:%x:%x:%x:%x\n",
 		    desc->io_netif->nif_unit, len,
 		    p[0], p[1], p[2], p[3], p[4], p[5]);
 	}

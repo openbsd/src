@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.5 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.6 2006/05/16 22:52:09 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -61,22 +61,26 @@
  * in terms of 512-byte blocks.  Each non-zero value
  * will result in a read of block_size bytes.
  */
-int     	block_size = 512;	/* default */
+size_t     	block_size = 512;	/* default */
 int     	block_count = MAXBLOCKNUM;	/* length of table */
 daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 
 extern		char *version;
 
+int	copyboot(struct open_file *, char *);
 
+int
 main()
 {
-	struct open_file	f;
-	char	*addr;
-	int n, error;
+	struct open_file f;
+	char *addr;
+	int error;
 
-	printf("Boot: bug device: ctrl=%d, dev=%d\n", 
+	printf("\nbootxx: first level bootstrap program [%s]\n", version);
+#ifdef DEBUG
+	printf("boot device: ctrl=%d, dev=%d\n",
 		bugargs.ctrl_lun, bugargs.dev_lun);
-	printf("\nbootxx: first level bootstrap program [%s]\n\n", version);
+#endif
 
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
@@ -92,14 +96,14 @@ main()
 	}
 	/* copyboot had a problem... */
 	_rtt();
+	return (0);
 }
 
 int
-copyboot(fp, addr)
-	struct open_file	*fp;
-	char			*addr;
+copyboot(struct open_file *fp, char *addr)
 {
-	int	n, i, blknum;
+	size_t n;
+	int i, blknum;
 	struct exec *x;
 
 	addr -= sizeof(struct exec); /* assume OMAGIC, verify below */
@@ -119,8 +123,7 @@ copyboot(fp, addr)
 		printf("bootxx: read block # %d = %d\n", i, blknum);
 #endif
 		if ((fp->f_dev->dv_strategy)(fp->f_devdata, F_READ,
-					   blknum, block_size, addr, &n))
-		{
+		    blknum, block_size, addr, &n)) {
 			printf("bootxx: read failed\n");
 			return -1;
 		}
