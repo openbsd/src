@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.31 2006/05/16 01:58:46 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.32 2006/05/16 15:50:51 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -183,6 +183,13 @@ mfi_init_ccb(struct mfi_softc *sc)
 			goto destroy;
 		}
 
+		DNPRINTF(MFI_D_CCB,
+		    "ccb(%d): %p frame: %x (%x) sense: %x (%x) map: %x\n",
+		    ccb->ccb_frame->mfr_header.mfh_context, ccb,
+		    ccb->ccb_frame, ccb->ccb_pframe,
+		    ccb->ccb_sense, ccb->ccb_psense,
+		    ccb->ccb_dmamap);
+
 		/* add ccb to queue */
 		mfi_put_ccb(ccb);
 	}
@@ -255,6 +262,9 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	if (bus_dmamap_load(sc->sc_dmat, mm->am_map, mm->am_kva, size, NULL,
 	    BUS_DMA_NOWAIT) != 0)
 		goto unmap;
+
+	DNPRINTF(MFI_D_MEM, "  kva: %p  dva: %p  map: %p\n",
+	    mm->am_kva, mm->am_map->dm_segs[0].ds_addr, mm->am_map);
 
 	memset(mm->am_kva, 0, size);
 	return (mm);
@@ -349,7 +359,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	struct mfi_init_frame	*init;
 	struct mfi_init_qinfo	*qinfo;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
+	DNPRINTF(MFI_D_MISC, "%s: mfi_initialize_firmware\n", DEVNAME(sc));
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL)
 		return (1);
@@ -359,16 +369,21 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 
 	memset(qinfo, 0, sizeof *qinfo);
 	qinfo->miq_rq_entries = sc->sc_max_cmds + 1;
-	qinfo->miq_rq_addr_lo = MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_reply_q);
-	qinfo->miq_pi_addr_lo = MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_producer);
-	qinfo->miq_ci_addr_lo = MFIMEM_DVA(sc->sc_pcq) +
-	    offsetof(struct mfi_prod_cons, mpc_consumer);
+	qinfo->miq_rq_addr_lo = htole32(MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_reply_q));
+	qinfo->miq_pi_addr_lo = htole32(MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_producer));
+	qinfo->miq_ci_addr_lo = htole32(MFIMEM_DVA(sc->sc_pcq) +
+	    offsetof(struct mfi_prod_cons, mpc_consumer));
 
 	init->mif_header.mfh_cmd = MFI_CMD_INIT;
 	init->mif_header.mfh_data_len = sizeof *qinfo;
-	init->mif_qinfo_new_addr_lo = ccb->ccb_pframe + MFI_FRAME_SIZE;
+	init->mif_qinfo_new_addr_lo = htole32(ccb->ccb_pframe + MFI_FRAME_SIZE);
+
+	DNPRINTF(MFI_D_MISC, "%s: entries: %x rq: %x pi: %x ci: %x\n",
+	    DEVNAME(sc),
+	    qinfo->miq_rq_entries, qinfo->miq_rq_addr_lo,
+	    qinfo->miq_pi_addr_lo, qinfo->miq_ci_addr_lo);
 
 	if (mfi_poll(sc, ccb)) {
 		printf("%s: mfi_initialize_firmware failed\n", DEVNAME(sc));
