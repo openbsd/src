@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.1 2006/05/14 19:00:48 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.2 2006/05/16 05:57:44 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1733,7 +1733,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
 	WPI_WRITE(sc, WPI_TX_WIDX, ring->qid << 8 | ring->cur);
 
-	return async ? 0 : tsleep(cmd, PCATCH, "iwicmd", hz);
+	return async ? 0 : tsleep(cmd, PCATCH, "wpicmd", hz);
 }
 
 /*
