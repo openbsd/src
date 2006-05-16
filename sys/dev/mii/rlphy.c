@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.22 2006/02/12 00:12:11 maja Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.23 2006/05/16 02:24:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -90,7 +90,8 @@ rlphymatch(struct device *parent, void *match, void *aux)
 	    MII_MODEL(ma->mii_id2) != 0)
 		return (0);
 
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "rl") != 0)
+	if ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "re") != 0) &&
+	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "rl") != 0))
 		return (0);
 
 	/*
