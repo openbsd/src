@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.32 2006/05/16 15:50:51 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.33 2006/05/16 22:51:10 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -86,12 +86,8 @@ int		mfi_start_xs(struct mfi_softc *, struct mfi_ccb *,
 		    struct scsi_xfer *);
 
 /* LD commands */
-int		mfi_ld_inquiry(struct scsi_xfer *);
-void		mfi_done_ld_inquiry(struct mfi_softc *, struct mfi_ccb *);
-int		mfi_ld_tur(struct scsi_xfer *);
-void		mfi_done_ld_tur(struct mfi_softc *, struct mfi_ccb *);
-int		mfi_ld_readcap(struct scsi_xfer *);
-void		mfi_done_ld_readcap(struct mfi_softc *, struct mfi_ccb *);
+int		mfi_generic_scsi(struct scsi_xfer *);
+void		mfi_done_generic_scsi(struct mfi_softc *, struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
@@ -163,15 +159,15 @@ mfi_init_ccb(struct mfi_softc *sc)
 		/* select i'th frame */
 		ccb->ccb_frame = (union mfi_frame *)
 		    (MFIMEM_KVA(sc->sc_frames) + sc->sc_frames_size * i);
-		ccb->ccb_pframe = htole32(
-		    MFIMEM_DVA(sc->sc_frames) + sc->sc_frames_size * i);
+		ccb->ccb_pframe =
+		    MFIMEM_DVA(sc->sc_frames) + sc->sc_frames_size * i;
 		ccb->ccb_frame->mfr_header.mfh_context = i;
 
 		/* select i'th sense */
 		ccb->ccb_sense = (struct mfi_sense *)
 		    (MFIMEM_KVA(sc->sc_sense) + MFI_SENSE_SIZE * i);
-		ccb->ccb_psense = htole32(
-		    (MFIMEM_DVA(sc->sc_sense) + MFI_SENSE_SIZE * i));
+		ccb->ccb_psense =
+		    (MFIMEM_DVA(sc->sc_sense) + MFI_SENSE_SIZE * i);
 
 		/* create a dma map for transfer */
 		error = bus_dmamap_create(sc->sc_dmat,
@@ -478,7 +474,7 @@ mfi_attach(struct mfi_softc *sc)
 
 	sc->sc_max_ld = MFI_MAX_LD;
 
-	/* XXX fake one ld for now */
+	/* XXX fake two lds for now */
 	sc->sc_ld_cnt = 2;
 	sc->sc_ld[0].ld_present = 1;
 	sc->sc_ld[1].ld_present = 1;
@@ -522,7 +518,8 @@ mfi_despatch_cmd(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n", DEVNAME(sc));
 
-	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) | ccb->ccb_extra_frames);
+	mfi_write(sc, MFI_IQP, htole32((ccb->ccb_pframe >> 3) |
+	    ccb->ccb_extra_frames));
 
 	return(0);
 }
@@ -599,24 +596,26 @@ mfi_intr(void *arg)
 }
 
 void
-mfi_done_ld_inquiry(struct mfi_softc *sc, struct mfi_ccb *ccb)
+mfi_done_generic_scsi(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
+#ifdef MFI_DEBUG
 	struct scsi_xfer	*xs = ccb->ccb_xs;
 	struct scsi_link	*link = xs->sc_link;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_done_inquiry: %.0x\n",
 	    DEVNAME(sc), link->target);
+#endif /* MFI_DEBUG */
 }
 
 int
-mfi_ld_inquiry(struct scsi_xfer *xs)
+mfi_generic_scsi(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_softc	*sc = link->adapter_softc;
 	struct mfi_ccb		*ccb;
 	struct mfi_pass_frame	*pf;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_inquiry: %d\n",
+	DNPRINTF(MFI_D_CMD, "%s: mfi_generic_scsi: %d\n",
 	    DEVNAME(sc), link->target);
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL)
@@ -626,138 +625,52 @@ mfi_ld_inquiry(struct scsi_xfer *xs)
 	pf->mpf_header.mfh_cmd = MFI_CMD_LD_SCSI_IO;
 	pf->mpf_header.mfh_target_id = link->target;
 	pf->mpf_header.mfh_lun_id = 0;
-	pf->mpf_header.mfh_cdb_len = 6;
+	pf->mpf_header.mfh_cdb_len = xs->cmdlen;
 	pf->mpf_header.mfh_timeout = 0;
-	pf->mpf_header.mfh_data_len= sizeof(struct scsi_inquiry_data); /* XXX */
+	pf->mpf_header.mfh_data_len= xs->datalen; /* XXX */
 	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
 
 	pf->mpf_sense_addr_hi = 0;
 	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
 
 	memset(pf->mpf_cdb, 0, 16);
-	pf->mpf_cdb[0] = INQUIRY;
-	pf->mpf_cdb[4] = sizeof(struct scsi_inquiry_data);
+	memcpy(pf->mpf_cdb, &xs->cmdstore, xs->cmdlen);
 
-	ccb->ccb_done = mfi_done_ld_inquiry;
+	ccb->ccb_done = mfi_done_generic_scsi;
 	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
-	ccb->ccb_sgl = &pf->mpf_sgl;
-	ccb->ccb_direction = MFI_DATA_IN;
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
-
-	return (mfi_start_xs(sc, ccb, xs));
-}
-
-void
-mfi_done_ld_tur(struct mfi_softc *sc, struct mfi_ccb *ccb)
-{
-	struct scsi_xfer	*xs = ccb->ccb_xs;
-	struct scsi_link	*link = xs->sc_link;
-
-	DNPRINTF(MFI_D_CMD, "%s: mfi_done_ld_tur: %.0x\n",
-	    DEVNAME(sc), link->target);
-}
-
-int
-mfi_ld_tur(struct scsi_xfer *xs)
-{
-	struct scsi_link	*link = xs->sc_link;
-	struct mfi_softc	*sc = link->adapter_softc;
-	struct mfi_ccb		*ccb;
-	struct mfi_pass_frame	*pf;
-
-	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_tur: %d\n",
-	    DEVNAME(sc), link->target);
-
-	if ((ccb = mfi_get_ccb(sc)) == NULL)
-		return (TRY_AGAIN_LATER);
-
-	pf = &ccb->ccb_frame->mfr_pass;
-	pf->mpf_header.mfh_cmd = MFI_CMD_LD_SCSI_IO;
-	pf->mpf_header.mfh_target_id = link->target;
-	pf->mpf_header.mfh_lun_id = 0;
-	pf->mpf_header.mfh_cdb_len = 6;
-	pf->mpf_header.mfh_timeout = 0;
-	pf->mpf_header.mfh_data_len= 0;
-	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
-
-	pf->mpf_sense_addr_hi = 0;
-	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
-
-	memset(pf->mpf_cdb, 0, 16);
-	pf->mpf_cdb[0] = TEST_UNIT_READY;
-
-	ccb->ccb_done = mfi_done_ld_tur;
-	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
 	ccb->ccb_sgl = &pf->mpf_sgl;
-	ccb->ccb_direction = 0;
-	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
-
-	/* XXX don't do this here, make something generic */
-	if (ccb->ccb_xs->flags & SCSI_POLL) {
-		if (mfi_poll(sc, ccb)) {
-			printf("%s: mfi_poll failed\n", DEVNAME(sc));
-			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
-			scsi_done(xs);
-		}
-		DNPRINTF(MFI_D_DMA, "%s: mfi_ld_tur complete %d\n",
-		    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
-		mfi_put_ccb(ccb);
-		return (COMPLETE);
+	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		ccb->ccb_direction = xs->flags & SCSI_DATA_IN ?
+		    MFI_DATA_IN : MFI_DATA_OUT;
+	} else {
+		ccb->ccb_direction = 0;
 	}
 
-	mfi_despatch_cmd(sc, ccb);
+	/* XXX don't do this here, make something generic */
+	if (xs->cmd->opcode == TEST_UNIT_READY) {
+		if (ccb->ccb_xs->flags & SCSI_POLL) {
+			if (mfi_poll(sc, ccb)) {
+				printf("%s: mfi_poll generic failed\n",
+				    DEVNAME(sc));
+				bzero(&xs->sense, sizeof(xs->sense));
+				xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+				xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+				xs->sense.add_sense_code = 0x20; /* invalid opcode */
+				xs->error = XS_SENSE;
+				xs->flags |= ITSDONE;
+				scsi_done(xs);
+				return (COMPLETE);
+			}
+			DNPRINTF(MFI_D_DMA, "%s: mfi_generic complete %d\n",
+			    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
+			mfi_put_ccb(ccb);
 
-	DNPRINTF(MFI_D_DMA, "%s: mfi_ld_tur: queued %d\n", DEVNAME(sc),
-	    ccb->ccb_dmamap->dm_nsegs);
+			return (COMPLETE);
+		}
 
-	return (SUCCESSFULLY_QUEUED);
-}
-
-void
-mfi_done_ld_readcap(struct mfi_softc *sc, struct mfi_ccb *ccb)
-{
-	struct scsi_xfer	*xs = ccb->ccb_xs;
-	struct scsi_link	*link = xs->sc_link;
-
-	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_done_readcap: %.0x\n",
-	    DEVNAME(sc), link->target);
-}
-
-int
-mfi_ld_readcap(struct scsi_xfer *xs)
-{
-	struct scsi_link	*link = xs->sc_link;
-	struct mfi_softc	*sc = link->adapter_softc;
-	struct mfi_ccb		*ccb;
-	struct mfi_pass_frame	*pf;
-
-	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_readcap: %d\n",
-	    DEVNAME(sc), link->target);
-
-	if ((ccb = mfi_get_ccb(sc)) == NULL)
-		return (TRY_AGAIN_LATER);
-
-	pf = &ccb->ccb_frame->mfr_pass;
-	pf->mpf_header.mfh_cmd = MFI_CMD_LD_SCSI_IO;
-	pf->mpf_header.mfh_target_id = link->target;
-	pf->mpf_header.mfh_lun_id = 0;
-	pf->mpf_header.mfh_cdb_len = 6;
-	pf->mpf_header.mfh_timeout = 0;
-	pf->mpf_header.mfh_data_len= sizeof(struct scsi_read_capacity);
-	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
-
-	pf->mpf_sense_addr_hi = 0;
-	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
-
-	memset(pf->mpf_cdb, 0, 16);
-	pf->mpf_cdb[0] = READ_CAPACITY; /* XXX other drivers use READCAP 16 */
-
-	ccb->ccb_done = mfi_done_ld_readcap;
-	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
-	ccb->ccb_sgl = &pf->mpf_sgl;
-	ccb->ccb_direction = MFI_DATA_IN;
-	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
+		mfi_despatch_cmd(sc, ccb);
+	}
 
 	return (mfi_start_xs(sc, ccb, xs));
 }
@@ -805,49 +718,9 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	case WRITE_BIG:
 		break;
 
-	/* DCDB */
-	case INQUIRY:
-		return (mfi_ld_inquiry(xs));
-		/* NOTREACHED */
-
-	case TEST_UNIT_READY:
-		return (mfi_ld_tur(xs));
-		/* NOTREACHED */
-
-	case START_STOP:
-		DNPRINTF(MFI_D_CMD, "%s: start stop complete %d\n",
-		    DEVNAME(sc), target);
-		return (COMPLETE);
-		
-	case READ_CAPACITY:
-		return (mfi_ld_readcap(xs));
-		/* NOTREACHED */
-
-#if 0
-	case VERIFY:
-#endif
-	case SYNCHRONIZE_CACHE:
-	case PREVENT_ALLOW:
-	case REQUEST_SENSE:
-		DNPRINTF(MFI_D_CMD, "%s: not implemented yet %02x\n",
-		    DEVNAME(sc), xs->cmd->opcode);
-		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return (COMPLETE);
-		/* NOTREACHED */
-
-	/* illegal opcode */
+	/* hand it of to the firmware and let it deal with it */
 	default:
-		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-		xs->sense.add_sense_code = 0x20; /* invalid opcode */
-		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return (COMPLETE);
-		/* NOTREACHED */
+		return (mfi_generic_scsi(xs));
 	}
 
 	DNPRINTF(MFI_D_CMD, "%s: start io %d\n", DEVNAME(sc), target);
@@ -864,7 +737,8 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	union mfi_sgl		*sgl;
 	int			error, i;
 
-	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: %p\n", DEVNAME(sc), xs);
+	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: %p %p %d\n", DEVNAME(sc), xs,
+	    xs->data, xs->datalen);
 
 	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
 	    xs->data, xs->datalen, NULL,
@@ -888,6 +762,8 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
 		sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
 		sgl->sg32[i].len = htole32(sgd[i].ds_len);
+		DNPRINTF(MFI_D_DMA, "%s: addr: %x  len: %x\n", DEVNAME(sc),
+		    sgl->sg32[i].addr, sgl->sg32[i].len);
 	}
 
 	if (ccb->ccb_direction == MFI_DATA_IN) {
@@ -901,8 +777,19 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	}
 
 	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
-	ccb->ccb_frame_size += sc->sc_frames_size * ccb->ccb_dmamap->dm_nsegs;
+	/* for 64 bit io make the sizeof a variable to hold whatever sg size */
+	ccb->ccb_frame_size += sizeof(struct mfi_sg32) *
+	    ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
+
+	DNPRINTF(MFI_D_DMA, "%s: sg_count: %d  frame_size: %d  frames_size: %d"
+	    "  dm_nsegs: %d  extra_frames: %d\n",
+	    DEVNAME(sc),
+	    hdr->mfh_sg_count,
+	    ccb->ccb_frame_size,
+	    sc->sc_frames_size,
+	    ccb->ccb_dmamap->dm_nsegs,
+	    ccb->ccb_extra_frames);
 
 	if (xs->flags & SCSI_POLL) {
 		if (mfi_poll(sc, ccb)) {
@@ -913,6 +800,7 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 		}
 		DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs complete %d\n",
 		    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
+
 		mfi_put_ccb(ccb);
 		return (COMPLETE);
 	}
