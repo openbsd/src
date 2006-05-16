@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.30 2006/05/16 01:15:29 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.31 2006/05/16 01:58:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -90,6 +90,8 @@ int		mfi_ld_inquiry(struct scsi_xfer *);
 void		mfi_done_ld_inquiry(struct mfi_softc *, struct mfi_ccb *);
 int		mfi_ld_tur(struct scsi_xfer *);
 void		mfi_done_ld_tur(struct mfi_softc *, struct mfi_ccb *);
+int		mfi_ld_readcap(struct scsi_xfer *);
+void		mfi_done_ld_readcap(struct mfi_softc *, struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
@@ -630,6 +632,16 @@ mfi_ld_inquiry(struct scsi_xfer *xs)
 	return (mfi_start_xs(sc, ccb, xs));
 }
 
+void
+mfi_done_ld_tur(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	struct scsi_xfer	*xs = ccb->ccb_xs;
+	struct scsi_link	*link = xs->sc_link;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_done_ld_tur: %.0x\n",
+	    DEVNAME(sc), link->target);
+}
+
 int
 mfi_ld_tur(struct scsi_xfer *xs)
 {
@@ -665,6 +677,7 @@ mfi_ld_tur(struct scsi_xfer *xs)
 	ccb->ccb_direction = 0;
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
 
+	/* XXX don't do this here, make something generic */
 	if (ccb->ccb_xs->flags & SCSI_POLL) {
 		if (mfi_poll(sc, ccb)) {
 			printf("%s: mfi_poll failed\n", DEVNAME(sc));
@@ -687,13 +700,51 @@ mfi_ld_tur(struct scsi_xfer *xs)
 }
 
 void
-mfi_done_ld_tur(struct mfi_softc *sc, struct mfi_ccb *ccb)
+mfi_done_ld_readcap(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	struct scsi_xfer	*xs = ccb->ccb_xs;
 	struct scsi_link	*link = xs->sc_link;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_done_ld_tur: %.0x\n",
+	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_done_readcap: %.0x\n",
 	    DEVNAME(sc), link->target);
+}
+
+int
+mfi_ld_readcap(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct mfi_softc	*sc = link->adapter_softc;
+	struct mfi_ccb		*ccb;
+	struct mfi_pass_frame	*pf;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_readcap: %d\n",
+	    DEVNAME(sc), link->target);
+
+	if ((ccb = mfi_get_ccb(sc)) == NULL)
+		return (TRY_AGAIN_LATER);
+
+	pf = &ccb->ccb_frame->mfr_pass;
+	pf->mpf_header.mfh_cmd = MFI_CMD_LD_SCSI_IO;
+	pf->mpf_header.mfh_target_id = link->target;
+	pf->mpf_header.mfh_lun_id = 0;
+	pf->mpf_header.mfh_cdb_len = 6;
+	pf->mpf_header.mfh_timeout = 0;
+	pf->mpf_header.mfh_data_len= sizeof(struct scsi_read_capacity);
+	pf->mpf_header.mfh_sense_len = MFI_SENSE_SIZE;
+
+	pf->mpf_sense_addr_hi = 0;
+	pf->mpf_sense_addr_lo = htole32(ccb->ccb_psense);
+
+	memset(pf->mpf_cdb, 0, 16);
+	pf->mpf_cdb[0] = READ_CAPACITY; /* XXX other drivers use READCAP 16 */
+
+	ccb->ccb_done = mfi_done_ld_readcap;
+	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
+	ccb->ccb_sgl = &pf->mpf_sgl;
+	ccb->ccb_direction = MFI_DATA_IN;
+	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
+
+	return (mfi_start_xs(sc, ccb, xs));
 }
 
 int
@@ -753,13 +804,16 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		    DEVNAME(sc), target);
 		return (COMPLETE);
 		
-	case SYNCHRONIZE_CACHE:
+	case READ_CAPACITY:
+		return (mfi_ld_readcap(xs));
+		/* NOTREACHED */
+
 #if 0
 	case VERIFY:
 #endif
+	case SYNCHRONIZE_CACHE:
 	case PREVENT_ALLOW:
 	case REQUEST_SENSE:
-	case READ_CAPACITY:
 		DNPRINTF(MFI_D_CMD, "%s: not implemented yet %02x\n",
 		    DEVNAME(sc), xs->cmd->opcode);
 		xs->error = XS_DRIVER_STUFFUP;
@@ -808,6 +862,7 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 
 		mfi_put_ccb(ccb);
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		return (COMPLETE);
 	}
@@ -834,7 +889,7 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	ccb->ccb_frame_size += sc->sc_frames_size * ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
 
-	if (ccb->ccb_xs->flags & SCSI_POLL) {
+	if (xs->flags & SCSI_POLL) {
 		if (mfi_poll(sc, ccb)) {
 			printf("%s: mfi_poll failed\n", DEVNAME(sc));
 			xs->error = XS_DRIVER_STUFFUP;
