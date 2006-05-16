@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.53 2005/09/21 22:31:47 fgsch Exp $
+.\" 	$OpenBSD: ftp.1,v 1.54 2006/05/16 16:20:42 deraadt Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -54,6 +54,12 @@
 .Op Fl o Ar output
 .Sm off
 .No http:// Ar host Oo : Ar port
+.Oc No / Ar file
+.Sm on
+.Nm ftp
+.Op Fl o Ar output
+.Sm off
+.No https:// Ar host Oo : Ar port
 .Oc No / Ar file
 .Sm on
 .Nm ftp
@@ -1136,6 +1142,12 @@ An HTTP URL, retrieved using the HTTP protocol.
 If
 .Ev http_proxy
 is defined, it is used as a URL to an HTTP proxy server.
+.It https://host[:port]/file
+An HTTPS URL, retrieved using the HTTPS protocol.
+If
+.Ev http_proxy
+is defined, this HTTPS proxy server will be used to fetch the
+file using the CONNECT method.
 .El
 .Pp
 If a classic format or an FTP URL format has a trailing
@@ -1492,7 +1504,7 @@ Directory to put temporary files.
 URL of FTP proxy to use when making FTP URL requests
 (if not defined, use the standard FTP protocol).
 .It Ev http_proxy
-URL of HTTP proxy to use when making HTTP URL requests.
+URL of HTTP proxy to use when making HTTP or HTTPS URL requests.
 .El
 .Sh PORT ALLOCATION
 For active mode data connections,

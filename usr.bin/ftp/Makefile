@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.20 2003/11/20 23:32:26 tedu Exp $
+#	$OpenBSD: Makefile,v 1.21 2006/05/16 16:20:42 deraadt Exp $
 
-# Define SMALL to disable command line editing
+# Define SMALL to disable command line editing and https support
 #CFLAGS+=-DSMALL
 
 # Uncomment the following to provide defaults for gate-ftp operation
@@ -17,7 +17,7 @@ SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c ruserpass.c \
 
 CPPFLAGS+= -DINET6
 
-LDADD+=	-ledit -lcurses -lutil
+LDADD+=	-ledit -lcurses -lutil -lssl -lcrypto
 DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBUTIL}
 LDSTATIC= ${STATIC}
 
