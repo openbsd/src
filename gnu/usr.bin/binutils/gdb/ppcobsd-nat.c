@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/powerpc.
 
-   Copyright 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,14 +16,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
 
+#include "gdb_assert.h"
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -37,8 +38,37 @@
 #include "inf-ptrace.h"
 #include "bsd-kvm.h"
 
-/* OpenBSD/powerpc doesn't have PT_GETFPREGS/PT_SETFPREGS like
-   NetBSD/powerpc and FreeBSD/powerpc.  */
+/* OpenBSD/powerpc didn't have PT_GETFPREGS/PT_SETFPREGS until release
+   4.0.  On older releases the floating-point registers are handled by
+   PT_GETREGS/PT_SETREGS, but fpscr wasn't available..  */
+
+#ifdef PT_GETFPREGS
+
+/* Returns true if PT_GETFPREGS fetches this register.  */
+
+static int
+getfpregs_supplies (int regnum)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+
+  /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
+     point registers.  Traditionally, GDB's register set has still
+     listed the floating point registers for such machines, so this
+     code is harmless.  However, the new E500 port actually omits the
+     floating point registers entirely from the register set --- they
+     don't even have register numbers assigned to them.
+
+     It's not clear to me how best to update this code, so this assert
+     will alert the first person to encounter the NetBSD/E500
+     combination to the problem.  */
+  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
+
+  return ((regnum >= tdep->ppc_fp0_regnum
+           && regnum < tdep->ppc_fp0_regnum + ppc_num_fprs)
+	  || regnum == tdep->ppc_fpscr_regnum);
+}
+
+#endif /* PT_GETFPREGS */
 
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
@@ -52,8 +82,26 @@ ppcobsd_fetch_registers (int regnum)
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
-  ppcobsd_supply_gregset (&ppcobsd_gregset, current_regcache, -1,
-			  &regs, sizeof regs);
+  ppc_supply_gregset (&ppcobsd_gregset, current_regcache, -1,
+		      &regs, sizeof regs);
+#ifndef PT_GETFPREGS
+  ppc_supply_fpregset (&ppcobsd_gregset, current_regcache, -1,
+		       &regs, sizeof regs);
+#endif
+
+#ifdef PT_GETFPREGS
+  if (regnum == -1 || getfpregs_supplies (regnum))
+    {
+      struct fpreg fpregs;
+
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+	perror_with_name (_("Couldn't get floating point status"));
+
+      ppc_supply_fpregset (&ppcobsd_fpregset, current_regcache, -1,
+			   &fpregs, sizeof fpregs);
+    }
+#endif
 }
 
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
@@ -68,12 +116,34 @@ ppcobsd_store_registers (int regnum)
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
-  ppcobsd_collect_gregset (&ppcobsd_gregset, current_regcache,
-			   regnum, &regs, sizeof regs);
+  ppc_collect_gregset (&ppcobsd_gregset, current_regcache,
+		       regnum, &regs, sizeof regs);
+#ifndef PT_GETFPREGS
+  ppc_collect_fpregset (&ppcobsd_gregset, current_regcache,
+			regnum, &regs, sizeof regs);
+#endif
 
   if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't write registers"));
+
+#ifdef PT_GETFPREGS
+  if (regnum == -1 || getfpregs_supplies (regnum))
+    {
+      struct fpreg fpregs;
+
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+	perror_with_name (_("Couldn't get floating point status"));
+
+      ppc_collect_fpregset (&ppcobsd_fpregset, current_regcache,
+			    regnum, &fpregs, sizeof fpregs);
+
+      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+	perror_with_name (_("Couldn't write floating point status"));
+    }
+#endif
 }
 
 
@@ -141,6 +211,10 @@ _initialize_ppcobsd_nat (void)
   /* Floating-point registers.  */
   ppcobsd_reg_offsets.f0_offset = offsetof (struct reg, fpr);
   ppcobsd_reg_offsets.fpscr_offset = -1;
+#ifdef PT_GETFPREGS
+  ppcobsd_fpreg_offsets.f0_offset = offsetof (struct fpreg, fpr);
+  ppcobsd_fpreg_offsets.fpscr_offset = offsetof (struct fpreg, fpscr);
+#endif
 
   /* AltiVec registers.  */
   ppcobsd_reg_offsets.vr0_offset = offsetof (struct vreg, vreg);

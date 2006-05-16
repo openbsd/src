@@ -373,4 +373,7 @@ enum
     ppc_spr_pbu2      = 1023
   };
 
+/* Instruction size.  */
+#define PPC_INSN_SIZE 4
+
 #endif
