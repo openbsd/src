@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.106 2006/01/13 10:11:23 mpf Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.107 2006/05/16 12:39:21 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -927,7 +927,6 @@ udp_output(struct mbuf *m, ...)
 	struct in_addr laddr;
 	int s = 0, error = 0;
 	va_list ap;
-	int pcbflags = 0;
 
 	va_start(ap, m);
 	inp = va_arg(ap, struct inpcb *);
@@ -950,12 +949,6 @@ udp_output(struct mbuf *m, ...)
 	}
 
 	if (addr) {
-		/*
-		 * Save current PCB flags because they may change during
-		 * temporary connection.
-		 */
-		pcbflags = inp->inp_flags;
-
 		laddr = inp->inp_laddr;
 		if (inp->inp_faddr.s_addr != INADDR_ANY) {
 			error = EISCONN;
@@ -1023,9 +1016,8 @@ udp_output(struct mbuf *m, ...)
 
 bail:
 	if (addr) {
-		in_pcbdisconnect(inp);
-		inp->inp_flags = pcbflags;
 		inp->inp_laddr = laddr;
+		in_pcbdisconnect(inp);
 		splx(s);
 	}
 	if (control)
@@ -1176,13 +1168,13 @@ udp_usrreq(so, req, m, addr, control)
 		}
 
 		s = splsoftnet();
-		in_pcbdisconnect(inp);
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			inp->inp_laddr6 = in6addr_any;
 		else
 #endif /* INET6 */
 			inp->inp_laddr.s_addr = INADDR_ANY;
+		in_pcbdisconnect(inp);
 
 		splx(s);
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
