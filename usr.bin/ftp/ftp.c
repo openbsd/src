@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.63 2006/05/16 16:20:42 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.64 2006/05/16 23:43:16 ray Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.63 2006/05/16 16:20:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.64 2006/05/16 23:43:16 ray Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -331,7 +331,7 @@ int
 getreply(int expecteof)
 {
 	char current_line[BUFSIZ];	/* last line of previous reply */
-	int c, n, line;
+	int c, n, lineno;
 	int dig;
 	int originalcode = 0, continuation = 0;
 	sig_t oldintr;
@@ -340,7 +340,7 @@ getreply(int expecteof)
 
 	memset(current_line, 0, sizeof(current_line));
 	oldintr = signal(SIGINT, cmdabort);
-	for (line = 0 ;; line++) {
+	for (lineno = 0 ;; lineno++) {
 		dig = n = code = 0;
 		cp = current_line;
 		while ((c = fgetc(cin)) != '\n') {
@@ -422,7 +422,7 @@ getreply(int expecteof)
 			(void)putc(c, ttyout);
 			(void)fflush (ttyout);
 		}
-		if (line == 0) {
+		if (lineno == 0) {
 			size_t len = cp - current_line;
 
 			if (len > sizeof(reply_string))
@@ -1433,7 +1433,7 @@ noport:
 
 	if (sendport) {
 		char hname[NI_MAXHOST], pbuf[NI_MAXSERV];
-		int af;
+		int af_tmp;
 		union sockunion tmp;
 
 		tmp = data_addr;
@@ -1447,14 +1447,14 @@ noport:
 		case AF_INET6:
 			if (tmp.su_family == AF_INET6)
 				tmp.su_sin6.sin6_scope_id = 0;
-			af = (tmp.su_family == AF_INET) ? 1 : 2;
+			af_tmp = (tmp.su_family == AF_INET) ? 1 : 2;
 			if (getnameinfo((struct sockaddr *)&tmp,
 			    tmp.su_len, hname, sizeof(hname),
 			    pbuf, sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
 				result = ERROR;
 			} else {
 				result = command("EPRT |%d|%s|%s|",
-				    af, hname, pbuf);
+				    af_tmp, hname, pbuf);
 				if (result != COMPLETE) {
 					epsv4bad = 1;
 					if (debug) {

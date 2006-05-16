@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.12 2006/04/25 05:45:20 tedu Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.13 2006/05/16 23:43:16 ray Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: domacro.c,v 1.12 2006/04/25 05:45:20 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: domacro.c,v 1.13 2006/05/16 23:43:16 ray Exp $";
 #endif /* not lint and not SMALL */
 
 #include <ctype.h>
@@ -100,7 +100,7 @@ TOP:
 					}
 					break;
 				}
-				/* intentional drop through */
+				/* FALLTHROUGH */
 			    default:
 				*cp2++ = *cp1;
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.19 2006/04/25 05:45:20 tedu Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.20 2006/05/16 23:43:16 ray Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
 #ifndef SMALL
-static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.19 2006/04/25 05:45:20 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.20 2006/05/16 23:43:16 ray Exp $";
 #endif /* SMALL */
 #endif
 #endif /* not lint */
@@ -112,7 +112,7 @@ next:
 
 	case DEFAULT:
 		usedefault = 1;
-		/* FALL THROUGH */
+		/* FALLTHROUGH */
 
 	case MACH:
 		if (!usedefault) {

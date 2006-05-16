@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.61 2006/05/16 16:20:42 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.62 2006/05/16 23:43:16 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.61 2006/05/16 16:20:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.62 2006/05/16 23:43:16 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -119,11 +119,11 @@ static int
 url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path;
-	char *hosttail, *cause = "unknown", *line, *host, *port, *buf = NULL;
+	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
-	char * volatile proxy = NULL;
+	char * volatile proxyurl = NULL;
 	volatile int s = -1, out;
 	volatile sig_t oldintr;
 	FILE *fin = NULL;
@@ -137,24 +137,24 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 #endif
 	SSL *ssl = NULL;
 
-	line = strdup(origline);
-	if (line == NULL)
+	newline = strdup(origline);
+	if (newline == NULL)
 		errx(1, "Can't allocate memory to parse URL");
-	if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
-		host = line + sizeof(HTTP_URL) - 1;
-	else if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
-		host = line + sizeof(FTP_URL) - 1;
+	if (strncasecmp(newline, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+		host = newline + sizeof(HTTP_URL) - 1;
+	else if (strncasecmp(newline, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
+		host = newline + sizeof(FTP_URL) - 1;
 		isftpurl = 1;
-	} else if (strncasecmp(line, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
-		host = line + sizeof(FILE_URL) - 1;
+	} else if (strncasecmp(newline, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
+		host = newline + sizeof(FILE_URL) - 1;
 		isfileurl = 1;
 #ifndef SMALL
-	} else if (strncasecmp(line, HTTPS_URL, sizeof(HTTPS_URL) - 1) == 0) {
-		host = line + sizeof(HTTPS_URL) - 1;
+	} else if (strncasecmp(newline, HTTPS_URL, sizeof(HTTPS_URL) - 1) == 0) {
+		host = newline + sizeof(HTTPS_URL) - 1;
 		ishttpsurl = 1;
 #endif
 	} else
-		errx(1, "url_get: Invalid URL '%s'", line);
+		errx(1, "url_get: Invalid URL '%s'", newline);
 
 	if (isfileurl) {
 		path = host;
@@ -196,13 +196,13 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 				errx(1, "Can't allocate memory for https path/host.");
 		}
 #endif
-		proxy = strdup(proxyenv);
-		if (proxy == NULL)
+		proxyurl = strdup(proxyenv);
+		if (proxyurl == NULL)
 			errx(1, "Can't allocate memory for proxy URL.");
-		if (strncasecmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
-			host = proxy + sizeof(HTTP_URL) - 1;
-		else if (strncasecmp(proxy, FTP_URL, sizeof(FTP_URL) - 1) == 0)
-			host = proxy + sizeof(FTP_URL) - 1;
+		if (strncasecmp(proxyurl, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+			host = proxyurl + sizeof(HTTP_URL) - 1;
+		else if (strncasecmp(proxyurl, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+			host = proxyurl + sizeof(FTP_URL) - 1;
 		else {
 			warnx("Malformed proxy URL: %s", proxyenv);
 			goto cleanup_url_get;
@@ -215,7 +215,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 		path = strchr(host, '/');	/* remove trailing / on host */
 		if (!EMPTYSTRING(path))
 			*path++ = '\0';
-		path = line;
+		path = newline;
 	}
 
 	if (isfileurl) {
@@ -391,7 +391,7 @@ again:
 	if (ishttpsurl) {
 		if (proxyenv && sslpath) {
 			ishttpsurl = 0;
-			proxy = NULL;
+			proxyurl = NULL;
 			path = sslpath;
 		}
 		SSL_library_init();
@@ -423,7 +423,7 @@ again:
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.
 	 */
-	if (proxy) {
+	if (proxyurl) {
 		if (verbose)
 			fprintf(ttyout, " (via %s)\n", proxyenv);
 		/*
@@ -503,7 +503,7 @@ again:
 	free(buf);
 	filesize = -1;
 
-	while (1) {
+	for (;;) {
 		if ((buf = ftp_readline(fin, ssl, &len)) == NULL) {
 			warn("Receiving HTTP reply");
 			goto cleanup_url_get;
@@ -534,9 +534,9 @@ again:
 				fclose(fin);
 			else if (s != -1)
 				close(s);
-			if (proxy)
-				free(proxy);
-			free(line);
+			if (proxyurl)
+				free(proxyurl);
+			free(newline);
 			rval = url_get(cp, proxyenv, outfile);
 			if (buf)
 				free(buf);
@@ -638,9 +638,9 @@ cleanup_url_get:
 		close(s);
 	if (buf)
 		free(buf);
-	if (proxy)
-		free(proxy);
-	free(line);
+	if (proxyurl)
+		free(proxyurl);
+	free(newline);
 	return (rval);
 }
 
@@ -690,8 +690,8 @@ int
 auto_fetch(int argc, char *argv[], char *outfile)
 {
 	char *xargv[5];
-	char *cp, *line, *host, *dir, *file, *portnum;
-	char *user, *pass, *pathstart;
+	char *cp, *url, *host, *dir, *file, *portnum;
+	char *username, *pass, *pathstart;
 	char *ftpproxy, *httpproxy;
 	int rval, xargc;
 	volatile int argpos;
@@ -716,29 +716,29 @@ auto_fetch(int argc, char *argv[], char *outfile)
 	/*
 	 * Loop through as long as there's files to fetch.
 	 */
-	for (rval = 0; (rval == 0) && (argpos < argc); free(line), argpos++) {
+	for (rval = 0; (rval == 0) && (argpos < argc); free(url), argpos++) {
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
-		host = dir = file = portnum = user = pass = NULL;
+		host = dir = file = portnum = username = pass = NULL;
 
 		/*
 		 * We muck with the string, so we make a copy.
 		 */
-		line = strdup(argv[argpos]);
-		if (line == NULL)
+		url = strdup(argv[argpos]);
+		if (url == NULL)
 			errx(1, "Can't allocate memory for auto-fetch.");
 
 		/*
 		 * Try HTTP URL-style arguments first.
 		 */
-		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
+		if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
 #ifndef SMALL
 		    /* even if we compiled without SSL, url_get will check */
-		    strncasecmp(line, HTTPS_URL, sizeof(HTTPS_URL) -1) == 0 ||
+		    strncasecmp(url, HTTPS_URL, sizeof(HTTPS_URL) -1) == 0 ||
 #endif
-		    strncasecmp(line, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
+		    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 			redirect_loop = 0;
-			if (url_get(line, httpproxy, outfile) == -1)
+			if (url_get(url, httpproxy, outfile) == -1)
 				rval = argpos + 1;
 			continue;
 		}
@@ -748,12 +748,12 @@ auto_fetch(int argc, char *argv[], char *outfile)
 		 * set, use url_get() instead of standard ftp.
 		 * Finally, try host:file.
 		 */
-		host = line;
-		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
+		host = url;
+		if (strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 			char *passend, *passagain, *userend;
 
 			if (ftpproxy) {
-				if (url_get(line, ftpproxy, outfile) == -1)
+				if (url_get(url, ftpproxy, outfile) == -1)
 					rval = argpos + 1;
 				continue;
 			}
@@ -767,7 +767,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 			passend = strchr(host, '@');
 			if (passend && userend && userend < passend &&
 			    (!dir || passend < dir)) {
-				user = host;
+				username = host;
 				pass = userend + 1;
 				host = passend + 1;
 				*userend = *passend = '\0';
@@ -778,13 +778,13 @@ auto_fetch(int argc, char *argv[], char *outfile)
 					goto bad_ftp_url;
 				}
 
-				if (EMPTYSTRING(user) || EMPTYSTRING(pass)) {
+				if (EMPTYSTRING(username) || EMPTYSTRING(pass)) {
 bad_ftp_url:
 					warnx("Invalid URL: %s", argv[argpos]);
 					rval = argpos + 1;
 					continue;
 				}
-				user = urldecode(user);
+				username = urldecode(username);
 				pass = urldecode(pass);
 			}
 
@@ -864,7 +864,7 @@ bad_ftp_url:
 		if (debug)
 			fprintf(ttyout,
 			    "user %s:%s host %s port %s dir %s file %s\n",
-			    user, pass, host, portnum, dir, file);
+			    username, pass, host, portnum, dir, file);
 
 		/*
 		 * Set up the connection.
@@ -881,12 +881,12 @@ bad_ftp_url:
 			xargc = 3;
 		}
 		oautologin = autologin;
-		if (user != NULL)
+		if (username != NULL)
 			autologin = 0;
 		setpeer(xargc, xargv);
 		autologin = oautologin;
 		if ((connected == 0) ||
-		    ((connected == 1) && !ftp_login(host, user, pass))) {
+		    ((connected == 1) && !ftp_login(host, username, pass))) {
 			warnx("Can't connect or login to host `%s'", host);
 			rval = argpos + 1;
 			continue;
