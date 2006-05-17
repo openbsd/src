@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1067 2006/05/10 17:08:59 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1068 2006/05/17 19:53:07 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2269,8 +2269,8 @@
 #define	PCI_PRODUCT_NEOMAGIC_NM256ZX	0x8006		/* MagicMedia 256ZX */
 
 /* Neterion products */
-#define	PCI_PRODUCT_NETERION_XFRAME	0x5831		/* Xframe 10GbE */
-#define	PCI_PRODUCT_NETERION_XFRAME_2	0x5832		/* Xframe-II 10GbE */
+#define	PCI_PRODUCT_NETERION_XFRAME	0x5831		/* Xframe */
+#define	PCI_PRODUCT_NETERION_XFRAME_2	0x5832		/* Xframe-II */
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */

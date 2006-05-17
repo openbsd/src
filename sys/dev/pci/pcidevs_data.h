@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1067 2006/05/10 17:08:59 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1068 2006/05/17 19:53:07 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6720,11 +6720,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME,
-	    "Xframe 10GbE",
+	    "Xframe",
 	},
 	{
 	    PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME_2,
-	    "Xframe-II 10GbE",
+	    "Xframe-II",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
