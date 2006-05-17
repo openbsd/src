@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.12 2006/05/16 22:51:30 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.13 2006/05/17 06:21:34 miod Exp $	*/
 
 
 /*-
@@ -66,9 +66,12 @@ exec_mvme(file, flag)
 	char *cp;
 	int *ip;
 	int bootdev;
+	struct mvmeprom_brdid *id;
+
+	id = mvmeprom_brdid();
 
 #ifdef DEBUG
-	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
+	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, id->model);
 #endif
 
 	io = open(file, 0);
@@ -194,7 +197,7 @@ exec_mvme(file, flag)
 
 	bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
 
-	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, bugargs.cputyp);
+	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, id->model);
 	printf("exec: kernel returned!\n");
 	return;
 
