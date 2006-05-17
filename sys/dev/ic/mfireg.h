@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.12 2006/05/17 21:50:21 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.13 2006/05/17 23:40:26 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -282,6 +282,7 @@ struct mfi_init_qinfo {
 	uint32_t		miq_ci_addr_hi;
 } __packed;
 
+#define MFI_IO_FRAME_SIZE	40
 struct mfi_io_frame {
 	struct mfi_frame_header	mif_header;
 	uint32_t		mif_sense_addr_lo;
@@ -300,7 +301,7 @@ struct mfi_pass_frame {
 	union mfi_sgl		mpf_sgl;
 } __packed;
 
-#define MFI_DCMD_FRAME_SIZE 40
+#define MFI_DCMD_FRAME_SIZE	40
 struct mfi_dcmd_frame {
 	struct mfi_frame_header mdf_header;
 	uint32_t		mdf_opcode;

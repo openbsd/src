@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.37 2006/05/17 21:50:21 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.38 2006/05/17 23:40:26 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -87,6 +87,9 @@ int		mfi_despatch_cmd(struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_ccb *, int);
 
 /* LD commands */
+int		mfi_scsi_io(struct mfi_ccb *, struct scsi_xfer *, uint32_t,
+		    uint32_t);
+void		mfi_scsi_io_done(struct mfi_ccb *);
 int		mfi_scsi_ld(struct mfi_ccb *, struct scsi_xfer *);
 void		mfi_scsi_ld_done(struct mfi_ccb *);
 
@@ -183,7 +186,7 @@ mfi_init_ccb(struct mfi_softc *sc)
 		}
 
 		DNPRINTF(MFI_D_CCB,
-		    "ccb(%d): %p frame: %x (%x) sense: %x (%x) map: %x\n",
+		    "ccb(%d): %p frame: %#x (%#x) sense: %#x (%#x) map: %#x\n",
 		    ccb->ccb_frame->mfr_header.mfh_context, ccb,
 		    ccb->ccb_frame, ccb->ccb_pframe,
 		    ccb->ccb_sense, ccb->ccb_psense,
@@ -379,7 +382,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	init->mif_header.mfh_data_len = sizeof *qinfo;
 	init->mif_qinfo_new_addr_lo = htole32(ccb->ccb_pframe + MFI_FRAME_SIZE);
 
-	DNPRINTF(MFI_D_MISC, "%s: entries: %x rq: %x pi: %x ci: %x\n",
+	DNPRINTF(MFI_D_MISC, "%s: entries: %#x rq: %#x pi: %#x ci: %#x\n",
 	    DEVNAME(sc),
 	    qinfo->miq_rq_entries, qinfo->miq_rq_addr_lo,
 	    qinfo->miq_pi_addr_lo, qinfo->miq_ci_addr_lo);
@@ -457,7 +460,7 @@ mfi_get_info(struct mfi_softc *sc)
 	    sc->sc_info.mci_max_lds,
 	    sc->sc_info.mci_product_name);
 
-	printf("%s: serial %s present %.x fw time %d max_cmds %d max_sg %d\n",
+	printf("%s: serial %s present %#x fw time %d max_cmds %d max_sg %d\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_serial_number,
 	    sc->sc_info.mci_hw_present,
@@ -492,14 +495,14 @@ mfi_get_info(struct mfi_softc *sc)
 	    sc->sc_info.mci_cluster_allowed,
 	    sc->sc_info.mci_cluster_active);
 
-	printf("%s: max_strps_io %d raid_lvl %.x adapt_ops %.x ld_ops %.x\n",
+	printf("%s: max_strps_io %d raid_lvl %#x adapt_ops %#x ld_ops %#x\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_max_strips_per_io,
 	    sc->sc_info.mci_raid_levels,
 	    sc->sc_info.mci_adapter_ops,
 	    sc->sc_info.mci_ld_ops);
 
-	printf("%s: strp_sz_min %d strp_sz_max %d pd_ops %.x pd_mix %.x\n",
+	printf("%s: strp_sz_min %d strp_sz_max %d pd_ops %#x pd_mix %#x\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_stripe_sz_ops.min,
 	    sc->sc_info.mci_stripe_sz_ops.max,
@@ -547,14 +550,14 @@ mfi_get_info(struct mfi_softc *sc)
 	    sc->sc_info.mci_properties.mcp_restore_hotspare_on_insertion,
 	    sc->sc_info.mci_properties.mcp_expose_encl_devices);
 
-	printf("%s: vendor %.x device %.x subvendor %.x subdevice %.x\n",
+	printf("%s: vendor %#x device %#x subvendor %#x subdevice %#x\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_pci.mip_vendor,
 	    sc->sc_info.mci_pci.mip_device,
 	    sc->sc_info.mci_pci.mip_subvendor,
 	    sc->sc_info.mci_pci.mip_subdevice);
 
-	printf("%s: type %.x port_count %d port_addr ",
+	printf("%s: type %#x port_count %d port_addr ",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_host.mih_type,
 	    sc->sc_info.mci_host.mih_port_count);
@@ -630,7 +633,7 @@ mfi_attach(struct mfi_softc *sc)
 	/* XXX hack, fix this */
 	if (MFIMEM_DVA(sc->sc_frames) & 0x3f) {
 		printf("%s: improper frame alignment (%#x) FIXME\n",
-		    DEVNAME(sc), MFIMEM_DVA(sc->sc_pcq));
+		    DEVNAME(sc), MFIMEM_DVA(sc->sc_frames));
 		goto noframe;
 	}
 
@@ -749,8 +752,9 @@ mfi_intr(void *arg)
 {
 	struct mfi_softc	*sc = arg;
 	struct mfi_prod_cons	*pcq;
+	struct mfi_ccb		*ccb;
 	uint32_t		status, producer, consumer, ctx;
-	int			s, claimed = 0;
+	int			claimed = 0;
 
 	status = mfi_read(sc, MFI_OSTS);
 	if ((status & MFI_OSTS_INTR_VALID) == 0)
@@ -758,14 +762,16 @@ mfi_intr(void *arg)
 	/* write status back to acknowledge interrupt */
 	mfi_write(sc, MFI_OSTS, status);
 
-	DNPRINTF(MFI_D_INTR, "%s: mfi_intr\n", DEVNAME(sc));
+	DNPRINTF(MFI_D_INTR, "%s: mfi_intr %#x %#x\n", DEVNAME(sc), sc, pcq);
 
 	pcq = MFIMEM_KVA(sc->sc_pcq);
 	producer = pcq->mpc_producer;
 	consumer = pcq->mpc_consumer;
 
-	s = splbio();
 	while (consumer != producer) {
+		DNPRINTF(MFI_D_INTR, "%s: mfi_intr pi %#x ci %#x\n",
+		    DEVNAME(sc), producer, consumer);
+
 		ctx = pcq->mpc_reply_q[consumer];
 		pcq->mpc_reply_q[consumer] = MFI_INVALID_CTX;
 		if (ctx == MFI_INVALID_CTX)
@@ -773,13 +779,17 @@ mfi_intr(void *arg)
 			    DEVNAME(sc), producer, consumer);
 		else {
 			/* XXX remove from queue and call scsi_done */
+			ccb = &sc->sc_ccb[ctx];
+			DNPRINTF(MFI_D_INTR, "%s: mfi_intr context %#x\n",
+			    DEVNAME(sc), ctx);
+			ccb->ccb_done(ccb);
+
 			claimed = 1;
 		}
 		consumer++;
-		if (consumer == sc->sc_max_cmds)
+		if (consumer == (sc->sc_max_cmds + 1))
 			consumer = 0;
 	}
-	splx(s);
 
 	pcq->mpc_consumer = consumer;
 
@@ -787,15 +797,128 @@ mfi_intr(void *arg)
 }
 
 void
+mfi_scsi_io_done(struct mfi_ccb *ccb)
+{
+	struct scsi_xfer	*xs = ccb->ccb_xs;
+	struct mfi_softc	*sc = ccb->ccb_sc;
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io_done %#x\n", DEVNAME(sc), ccb);
+
+	if (xs->data != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (xs->flags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	if (hdr->mfh_cmd_status == MFI_STAT_OK)
+		xs->error = XS_DRIVER_STUFFUP;
+	else if (hdr->mfh_scsi_status != 0) {
+		bzero(&xs->sense, sizeof(xs->sense));
+		memcpy(&xs->sense, ccb->ccb_sense,
+		    sizeof(struct scsi_sense_data));
+#if 0
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* invalid opcode */
+#endif
+		xs->error = XS_SENSE;
+		xs->flags |= ITSDONE;
+	}
+
+	xs->resid = 0;
+	xs->flags |= ITSDONE;
+
+	mfi_put_ccb(ccb);
+	scsi_done(xs);
+}
+
+int
+mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint32_t blockno,
+    uint32_t blockcnt)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct mfi_io_frame	*io;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io: %d\n",
+	    DEVNAME((struct mfi_softc *)link->adapter_softc), link->target);
+
+	if (!xs->data)
+		return (1);
+
+	io = &ccb->ccb_frame->mfr_io;
+	if (xs->flags & SCSI_DATA_IN) {
+		io->mif_header.mfh_cmd = MFI_CMD_LD_READ;
+		ccb->ccb_direction = MFI_DATA_IN;
+	} else {
+		io->mif_header.mfh_cmd = MFI_CMD_LD_WRITE;
+		ccb->ccb_direction = MFI_DATA_OUT;
+	}
+	io->mif_header.mfh_target_id = link->target;
+	io->mif_header.mfh_timeout = 0;
+	io->mif_header.mfh_flags = 0;
+	io->mif_header.mfh_sense_len = MFI_SENSE_SIZE;
+	io->mif_header.mfh_data_len= blockcnt;
+	io->mif_lba_hi = 0;
+	io->mif_lba_lo = blockno;
+	io->mif_sense_addr_lo = htole32(ccb->ccb_psense);
+	io->mif_sense_addr_hi = 0;
+
+	ccb->ccb_done = mfi_scsi_io_done;
+	ccb->ccb_xs = xs;
+	ccb->ccb_frame_size = MFI_IO_FRAME_SIZE;
+	ccb->ccb_sgl = &io->mif_sgl;
+	ccb->ccb_data = xs->data;
+	ccb->ccb_len = xs->datalen;
+
+	if (mfi_create_sgl(ccb, xs->flags & SCSI_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+		return (1);
+
+	return (0);
+}
+
+void
 mfi_scsi_ld_done(struct mfi_ccb *ccb)
 {
-#ifdef MFI_DEBUG
 	struct scsi_xfer	*xs = ccb->ccb_xs;
-	struct scsi_link	*link = xs->sc_link;
+	struct mfi_softc	*sc = ccb->ccb_sc;
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_done_inquiry: %.0x\n",
-	    DEVNAME(ccb->ccb_sc), link->target);
-#endif /* MFI_DEBUG */
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld_done %#x\n", DEVNAME(sc), ccb);
+
+	if (xs->data != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (xs->flags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	if (hdr->mfh_cmd_status == MFI_STAT_OK)
+		xs->error = XS_DRIVER_STUFFUP;
+	else if (hdr->mfh_scsi_status != 0) {
+		bzero(&xs->sense, sizeof(xs->sense));
+		memcpy(&xs->sense, ccb->ccb_sense,
+		    sizeof(struct scsi_sense_data));
+#if 0
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* invalid opcode */
+#endif
+		xs->error = XS_SENSE;
+		xs->flags |= ITSDONE;
+	}
+
+	xs->resid = 0;
+	xs->flags |= ITSDONE;
+
+	mfi_put_ccb(ccb);
+	scsi_done(xs);
 }
 
 int
@@ -852,19 +975,22 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	struct mfi_softc	*sc = link->adapter_softc;
 	/* struct device		*dev = link->device_softc; */
 	struct mfi_ccb		*ccb;
-	u_int8_t		target = link->target;
+	struct scsi_rw		*rw;
+	struct scsi_rw_big	*rwb;
+	uint32_t		blockno, blockcnt;
+	uint8_t			target = link->target;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %02x\n",
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
 
 	/* only issue IO through this path, create seperate path for mgmt */
-
+#if 0
 	if (!cold) {
 		DNPRINTF(MFI_D_CMD, "%s: no interrupt io yet %02x\n",
 		    DEVNAME(sc), xs->cmd->opcode);
 		goto stuffup;
 	}
-
+#endif
 	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
 	    link->lun != 0) {
 		DNPRINTF(MFI_D_CMD, "%s: invalid target %d\n",
@@ -879,10 +1005,26 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->cmd->opcode) {
 	/* IO path */
-	case READ_COMMAND:
 	case READ_BIG:
-	case WRITE_COMMAND:
 	case WRITE_BIG:
+		rwb = (struct scsi_rw_big *)xs->cmd;
+		blockno = _4btol(rwb->addr);
+		blockcnt = _2btol(rwb->length);
+		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
+			mfi_put_ccb(ccb);
+			goto stuffup;
+		}
+		break;
+
+	case READ_COMMAND:
+	case WRITE_COMMAND:
+		rw = (struct scsi_rw *)xs->cmd;
+		blockno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
+		blockcnt = rw->length ? rw->length : 0x100;
+		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
+			mfi_put_ccb(ccb);
+			goto stuffup;
+		}
 		break;
 
 	/* hand it of to the firmware and let it deal with it */
@@ -941,7 +1083,7 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	union mfi_sgl		*sgl;
 	int			error, i;
 
-	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl %x\n", DEVNAME(sc),
+	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl %#x\n", DEVNAME(sc),
 	    ccb->ccb_data);
 
 	if (!ccb->ccb_data)
@@ -964,7 +1106,7 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
 		sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
 		sgl->sg32[i].len = htole32(sgd[i].ds_len);
-		DNPRINTF(MFI_D_DMA, "%s: addr: %x  len: %x\n",
+		DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
 		    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
 	}
 
