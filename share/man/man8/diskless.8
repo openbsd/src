@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.29 2006/05/17 21:33:07 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.30 2006/05/17 21:38:44 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -44,7 +44,7 @@ This file provides a general description of the interactions between
 a client and its server when a client is booting over the network.
 The general description is followed by specific instructions for
 configuring a server for diskless Sun clients.
-.Sh OPERATION
+.Pp
 When booting a system over the network, there are three
 phases of interaction between client and server:
 .Pp
@@ -135,7 +135,7 @@ If the kernel is configured for swap on NFS,
 it uses the same mechanism as for root, but uses the NFS
 getattr function to determine the size of the swap area.
 .El
-.Sh CONFIGURATION
+.Sh EXAMPLES
 Before a client can boot over the network,
 its server must be configured correctly.
 This example will demonstrate how a Sun client
@@ -309,19 +309,19 @@ myserver:/usr /usr nfs rw 0 0
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width /usr/mdec/rbootd -compact
-.It Pa /etc/bootparams
-client root and swap pathnames
-.It Pa /etc/ethers
-Ethernet addresses of known clients
-.It Pa /etc/exports
-exported NFS mount points
-.It Pa /etc/rbootd.conf
-configuration file for HP Remote Boot Daemon
-.It Pa /tftpboot
-location of boot programs loaded by the Sun PROM
-.It Pa /usr/mdec/rbootd
-location of boot programs loaded by the HP Boot ROM
+.Bl -tag -width "/usr/mdec/rbootdXX" -compact
+.It /etc/bootparams
+Client root and swap pathnames.
+.It /etc/ethers
+Ethernet addresses of known clients.
+.It /etc/exports
+Exported NFS mount points.
+.It /etc/rbootd.conf
+Configuration file for HP Remote Boot Daemon.
+.It /tftpboot
+Location of boot programs loaded by the Sun PROM.
+.It /usr/mdec/rbootd
+Location of boot programs loaded by the HP Boot ROM.
 .El
 .Sh SEE ALSO
 .Xr bootparams 5 ,
