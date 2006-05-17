@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.4 2006/05/13 16:33:40 deraadt Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.5 2006/05/17 02:59:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -33,8 +33,7 @@
 
 int	strip_prebind(char *file);
 int	prebind_remove_load_section(int fd, char *name);
-int	prebind_newfile(int fd, char *name, struct stat *st,
-	    struct prebind_footer *footer);
+int	prebind_newfile(int fd, char *name, struct stat *st, off_t orig_size);
 
 extern	int verbose;
 
@@ -84,7 +83,7 @@ strip_prebind(char *file)
 	}
 
 	if (rdonly) {
-		fd = prebind_newfile(fd, file, &st, &footer);
+		fd = prebind_newfile(fd, file, &st, footer.orig_size);
 	} else {
 		prebind_remove_load_section(fd, file);
 		ftruncate(fd, footer.orig_size);
@@ -141,8 +140,7 @@ done:
 }
 
 int
-prebind_newfile(int infd, char *name, struct stat *st,
-    struct prebind_footer *footer)
+prebind_newfile(int infd, char *name, struct stat *st, off_t orig_size)
 {
 	struct timeval tv[2];
 	char *newname, *buf;
@@ -191,7 +189,8 @@ prebind_newfile(int infd, char *name, struct stat *st,
 	/* now back track, and delete the header */
 	if (prebind_remove_load_section(outfd, newname) == -1)
 		goto fail;
-	if (ftruncate(outfd, footer->orig_size) == -1)
+	if (orig_size != (off_t)-1 &&
+	    ftruncate(outfd, orig_size) == -1)
 		goto fail;
 
 	/* move new file into place */
