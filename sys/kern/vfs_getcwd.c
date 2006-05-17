@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.8 2006/05/01 21:50:48 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.9 2006/05/17 12:52:12 pedro Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -123,7 +123,7 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	if (dirbuflen < va.va_blocksize)
 		dirbuflen = va.va_blocksize;
 
-	dirbuf = (char *) malloc(dirbuflen, M_TEMP, M_WAITOK);
+	dirbuf = malloc(dirbuflen, M_TEMP, M_WAITOK);
 
 	off = 0;
 
@@ -419,7 +419,7 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 	else if (len < 2)
 		return (ERANGE);
 
-	path = (char *) malloc(len, M_TEMP, M_WAITOK);
+	path = malloc(len, M_TEMP, M_WAITOK);
 
 	bp = &path[len];
 	bend = bp;
