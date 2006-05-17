@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.45 2006/05/17 03:43:03 krw Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.46 2006/05/17 23:56:03 krw Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -593,6 +593,7 @@ config_detach(struct device *dev, int flags)
 		free(cd->cd_devs, M_DEVBUF);
 		cd->cd_devs = NULL;
 		cd->cd_ndevs = 0;
+		cf->cf_unit = 0;
 	}
 
 #if NHOTPLUG > 0
