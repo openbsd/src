@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.26 2006/05/17 21:10:45 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.27 2006/05/17 21:24:04 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -59,7 +59,9 @@ The kernel does NFS mounts for root and swap.
 .Pp
 Each of these phases are described in further detail below.
 .Pp
-In phase 1, the PROM loads a boot program.
+In
+.Em phase 1 ,
+the PROM loads a boot program.
 PROM designs vary widely, so this phase is inherently
 machine-specific.
 Sun and Motorola machines use
@@ -78,62 +80,66 @@ Other machines may load a
 network boot program either from diskette or
 using a special PROM on the network card.
 .Pp
-In phase 2, the boot program loads a kernel.
+In
+.Em phase 2 ,
+the boot program loads a kernel.
 Operation in this phase depends on the design of the boot program.
 The boot program:
 .Pp
-.Bl -tag -width 2.2 -compact
-.It 2.1
+.Bl -enum -compact
+.It
 gets the client IP address using
 .Tn RARP .
-.It 2.2
+.It
 gets the client name and server
 .Tn IP
 address by broadcasting an
 .Tn RPC / BOOTPARAMS / WHOAMI
 request with the client IP address.
-.It 2.3
+.It
 gets the server path for this client's
 root using an
 .Tn RPC / BOOTPARAMS / GETFILE
 request with the client name.
-.It 2.4
+.It
 gets the root file handle by calling
 .Xr mountd 8
 with the server path for the client root.
-.It 2.5
+.It
 gets the kernel file handle by calling
 .Tn NFS
 lookup on the root file handle.
-.It 2.6
+.It
 loads the kernel using
 .Tn NFS
 read calls on the kernel file handle.
-.It 2.7
+.It
 transfers control to the kernel entry point.
 .El
 .Pp
-In phase 3, the kernel does NFS mounts for root and swap.
+In
+.Em phase 3 ,
+the kernel does NFS mounts for root and swap.
 The kernel repeats much of the work done by the boot program
 because there is no standard way for the boot program to pass
 the information it gathered on to the kernel.
 The procedure used by the kernel is as follows:
 .Pp
-.Bl -tag -width 2.2 -compact
-.It 3.1
+.Bl -enum -compact
+.It
 The kernel finds a boot server using the same procedure
-as described in steps 2.1 and 2.2 above.
-.It 3.2
+as described in steps 1 and 2 of phase 2, above.
+.It
 The kernel gets the
 .Tn NFS
 file handle for root using the same procedure
-as described in steps 2.3 through 2.5 above.
-.It 3.3
+as described in steps 3, 4, and 5 of phase 2, above.
+.It
 The kernel calls the
 .Tn NFS
 getattr function to get the last-modified time of the root
 directory, and uses it to check the system clock.
-.It 3.4
+.It
 If the kernel is configured for swap on
 .Tn NFS ,
 it uses the same mechanism as for root, but uses the
