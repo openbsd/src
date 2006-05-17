@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.17 2006/05/17 16:00:53 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.18 2006/05/17 21:50:21 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -114,11 +114,12 @@ struct mfi_softc {
 	/* scsi ioctl from sd device */
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
-	/* firmware determined max and totals */
+	/* firmware determined max, totals and other information*/
 	uint32_t		sc_max_cmds;
 	uint32_t		sc_max_sgl;
 	uint32_t		sc_max_ld;
 	uint32_t		sc_ld_cnt;
+	struct mfi_ctrl_info	sc_info;
 
 	/* all commands */
 	struct mfi_ccb		*sc_ccb;

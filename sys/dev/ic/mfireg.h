@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.11 2006/05/15 23:20:57 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.12 2006/05/17 21:50:21 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -300,6 +300,7 @@ struct mfi_pass_frame {
 	union mfi_sgl		mpf_sgl;
 } __packed;
 
+#define MFI_DCMD_FRAME_SIZE 40
 struct mfi_dcmd_frame {
 	struct mfi_frame_header mdf_header;
 	uint32_t		mdf_opcode;
