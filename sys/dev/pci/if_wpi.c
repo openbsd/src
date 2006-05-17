@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.2 2006/05/16 05:57:44 miod Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.3 2006/05/17 19:50:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -91,6 +91,9 @@ int		wpi_match(struct device *, void *, void *);
 void		wpi_attach(struct device *, struct device *, void *);
 int		wpi_detach(struct device *, int);
 void		wpi_power(int, void *);
+int		wpi_dma_contig_alloc(struct wpi_softc *, struct wpi_dma_info *,
+		    void **, bus_size_t, bus_size_t, int);
+void		wpi_dma_contig_free(struct wpi_softc *, struct wpi_dma_info *);
 int		wpi_alloc_shared(struct wpi_softc *);
 void		wpi_free_shared(struct wpi_softc *);
 int		wpi_alloc_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
@@ -266,7 +269,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps =
-	    IEEE80211_C_SCANALL |	/* h/w scan */
 	    IEEE80211_C_WEP |		/* s/w WEP */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
@@ -410,115 +412,112 @@ wpi_power(int why, void *arg)
 	}
 }
 
+int
+wpi_dma_contig_alloc(struct wpi_softc *sc, struct wpi_dma_info *dma,
+    void **kvap, bus_size_t size, bus_size_t alignment, int flags)
+{
+	int nsegs, error;
+
+	dma->size = size;
+
+	error = bus_dmamap_create(sc->sc_dmat, dma->size, 1, dma->size, 0,
+	    flags, &dma->map);
+	if (error != 0) {
+		printf("%s: could not create DMA map\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, dma->size, alignment, 0,
+	    &dma->seg, 1, &nsegs, flags);
+	if (error != 0) {
+		printf("%s: could not allocate DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &dma->seg, 1, dma->size,
+	    &dma->vaddr, flags);
+	if (error != 0) {
+		printf("%s: could not map DMA memory\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamap_load_raw(sc->sc_dmat, dma->map, &dma->seg, 1,
+	    dma->size, flags);
+	if (error != 0) {
+		printf("%s: could not load DMA memory\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	bzero(dma->vaddr, dma->size);
+
+	dma->paddr = dma->map->dm_segs[0].ds_addr;
+	*kvap = dma->vaddr;
+
+	return 0;
+
+fail:	wpi_dma_contig_free(sc, dma);
+	return error;
+}
+
+void
+wpi_dma_contig_free(struct wpi_softc *sc, struct wpi_dma_info *dma)
+{
+	if (dma->map != NULL) {
+		if (dma->vaddr != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, dma->map);
+			bus_dmamem_unmap(sc->sc_dmat, dma->vaddr, dma->size);
+			bus_dmamem_free(sc->sc_dmat, &dma->seg, 1);
+			dma->vaddr = NULL;
+		}
+		bus_dmamap_destroy(sc->sc_dmat, dma->map);
+		dma->map = NULL;
+	}
+}
+
 /*
  * Allocate a shared page between host and NIC.
  */
 int
 wpi_alloc_shared(struct wpi_softc *sc)
 {
-	int nsegs, error;
-
-	error = bus_dmamap_create(sc->sc_dmat, sizeof (struct wpi_shared), 1,
-	    sizeof (struct wpi_shared), 0, BUS_DMA_NOWAIT, &sc->shmap);
-	if (error != 0) {
-		printf("%s: could not create shared area DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
+	int error;
 
 	/* must be aligned on a 4K-page boundary */
-	error = bus_dmamem_alloc(sc->sc_dmat, sizeof (struct wpi_shared),
-	    PAGE_SIZE, 0, &sc->shseg, 1, &nsegs, BUS_DMA_NOWAIT);
+	error = wpi_dma_contig_alloc(sc, &sc->shared_dma,
+	    (void **)&sc->shared, sizeof (struct wpi_shared), PAGE_SIZE,
+	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate shared area DMA memory\n",
 		    sc->sc_dev.dv_xname);
-		goto fail;
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &sc->shseg, nsegs,
-	    sizeof (struct wpi_shared), (caddr_t *)&sc->shared,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map shared area DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->shmap, sc->shared,
-	    sizeof (struct wpi_shared), NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not load shared area DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	bzero(sc->shared, sizeof (struct wpi_shared));
-
-	return 0;
-
-fail:	wpi_free_shared(sc);
 	return error;
 }
 
 void
 wpi_free_shared(struct wpi_softc *sc)
 {
-	if (sc->shared != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, sc->shmap);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->shared,
-		    sizeof (struct wpi_shared));
-		bus_dmamem_free(sc->sc_dmat, &sc->shseg, 1);
-	}
-	if (sc->shmap != NULL)
-		bus_dmamap_destroy(sc->sc_dmat, sc->shmap);
+	wpi_dma_contig_free(sc, &sc->shared_dma);
 }
 
 int
 wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
 	struct wpi_rx_data *data;
-	int i, nsegs, error;
+	int i, error;
 
 	ring->cur = 0;
 
-	error = bus_dmamap_create(sc->sc_dmat,
-	    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc), 1,
-	    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc), 0, BUS_DMA_NOWAIT,
-	    &ring->map);
-	if (error != 0) {
-		printf("%s: could not create rx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat,
+	error = wpi_dma_contig_alloc(sc, &ring->desc_dma,
+	    (void **)&ring->desc,
 	    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc),
-	    WPI_RING_DMA_ALIGN, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	    WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate rx ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc),
-	    (caddr_t *)&ring->desc, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map rx ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, ring->map, ring->desc,
-	    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc), NULL,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not load rx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	bzero(ring->desc, WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc));
 
 	/*
 	 * Allocate Rx buffers.
@@ -598,14 +597,7 @@ wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 	struct wpi_rx_data *data;
 	int i;
 
-	if (ring->desc != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
-		    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc));
-		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
-	}
-	if (ring->map != NULL)
-		bus_dmamap_destroy(sc->sc_dmat, ring->map);
+	wpi_dma_contig_free(sc, &ring->desc_dma);
 
 	for (i = 0; i < WPI_RX_RING_COUNT; i++) {
 		data = &ring->data[i];
@@ -623,91 +615,32 @@ wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int count,
     int qid)
 {
 	struct wpi_tx_data *data;
-	int i, nsegs, error;
+	int i, error;
 
 	ring->qid = qid;
 	ring->count = count;
 	ring->queued = 0;
 	ring->cur = 0;
 
-	error = bus_dmamap_create(sc->sc_dmat,
-	    count * sizeof (struct wpi_tx_desc), 1,
-	    count * sizeof (struct wpi_tx_desc), 0, BUS_DMA_NOWAIT,
-	    &ring->map);
-	if (error != 0) {
-		printf("%s: could not create tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat,
-	    count * sizeof (struct wpi_tx_desc), WPI_RING_DMA_ALIGN, 0,
-	    &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	error = wpi_dma_contig_alloc(sc, &ring->desc_dma,
+	    (void **)&ring->desc, count * sizeof (struct wpi_tx_desc),
+	    WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate tx ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * sizeof (struct wpi_tx_desc), (caddr_t *)&ring->desc,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map tx ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, ring->map, ring->desc,
-	    count * sizeof (struct wpi_tx_desc), NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not load tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	bzero(ring->desc, count * sizeof (struct wpi_tx_desc));
-
 	/* update shared page with ring's base address */
-	sc->shared->txbase[qid] = htole32(ring->map->dm_segs[0].ds_addr);
+	sc->shared->txbase[qid] = htole32(ring->desc_dma.paddr);
 
-	error = bus_dmamap_create(sc->sc_dmat,
-	    count * sizeof (struct wpi_tx_cmd), 1,
-	    count * sizeof (struct wpi_tx_cmd), 0, BUS_DMA_NOWAIT,
-	    &ring->cmd_map);
-	if (error != 0) {
-		printf("%s: could not create tx cmd DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat,
-	    count * sizeof (struct wpi_tx_cmd), PAGE_SIZE, 0, &ring->cmd_seg,
-	    1, &nsegs, BUS_DMA_NOWAIT);
+	error = wpi_dma_contig_alloc(sc, &ring->cmd_dma, (void **)&ring->cmd,
+	    count * sizeof (struct wpi_tx_cmd), 4, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate tx cmd DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &ring->cmd_seg, nsegs,
-	    count * sizeof (struct wpi_tx_cmd), (caddr_t *)&ring->cmd,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map tx cmd DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, ring->cmd_map, ring->cmd,
-	    count * sizeof (struct wpi_tx_cmd), NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not load tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
-	bzero(ring->cmd, count * sizeof (struct wpi_tx_cmd));
 
 	ring->data = malloc(count * sizeof (struct wpi_tx_data), M_DEVBUF,
 	    M_NOWAIT);
@@ -780,23 +713,8 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 	struct wpi_tx_data *data;
 	int i;
 
-	if (ring->desc != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
-		    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc));
-		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
-	}
-	if (ring->map != NULL)
-		bus_dmamap_destroy(sc->sc_dmat, ring->map);
-
-	if (ring->cmd != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, ring->cmd_map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->cmd,
-		    ring->count * sizeof (struct wpi_tx_cmd));
-		bus_dmamem_free(sc->sc_dmat, &ring->cmd_seg, 1);
-	}
-	if (ring->cmd_map != NULL)
-		bus_dmamap_destroy(sc->sc_dmat, ring->cmd_map);
+	wpi_dma_contig_free(sc, &ring->desc_dma);
+	wpi_dma_contig_free(sc, &ring->cmd_dma);
 
 	if (ring->data != NULL) {
 		for (i = 0; i < ring->count; i++) {
@@ -936,6 +854,10 @@ wpi_mem_write_region_4(struct wpi_softc *sc, uint16_t addr,
 		wpi_mem_write(sc, addr, *data);
 }
 
+/*
+ * Read 16 bits from the EEPROM.  We access EEPROM through the MAC instead of
+ * using the traditional bit-bang method.
+ */
 uint16_t
 wpi_read_prom_word(struct wpi_softc *sc, uint32_t addr)
 {
@@ -1078,7 +1000,7 @@ wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
 	if (ntries == 100) {
 		printf("%s: timeout transferring firmware\n",
 		    sc->sc_dev.dv_xname);
-		error = EIO;
+		error = ETIMEDOUT;
 	}
 
 	WPI_WRITE(sc, WPI_TX_CREDIT(6), 0);
@@ -1121,7 +1043,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	tail = (struct wpi_rx_tail *)((caddr_t)(head + 1) + letoh16(head->len));
 
 	DPRINTFN(4, ("rx intr: idx=%d len=%d stat len=%d rssi=%d rate=%x "
-	    "chan=%d tstamp=%lld\n", ring->cur, letoh32(desc->len),
+	    "chan=%d tstamp=%llu\n", ring->cur, letoh32(desc->len),
 	    letoh16(head->len), (int8_t)stat->rssi, head->rate, head->chan,
 	    letoh64(tail->tstamp)));
 
@@ -1231,7 +1153,10 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	ieee80211_release_node(ic, txdata->ni);
 	txdata->ni = NULL;
 
-	ifp->if_opackets++;
+	if ((letoh32(stat->status) & 0xff) != 1)
+		ifp->if_oerrors++;
+	else
+		ifp->if_opackets++;
 	ring->queued--;
 
 	sc->sc_tx_timer = 0;
@@ -1305,6 +1230,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 			DPRINTF(("state changed to %x\n", letoh32(*status)));
 
 			if (letoh32(*status) & 1) {
+				/* the radio button has to be pushed */
 				printf("%s: Radio transmitter is off\n",
 				    sc->sc_dev.dv_xname);
 			}
@@ -1317,6 +1243,9 @@ wpi_notif_intr(struct wpi_softc *sc)
 
 			DPRINTFN(2, ("scanning channel %d status %x\n",
 			    scan->chan, letoh32(scan->status)));
+
+			/* fix current channel */
+			ic->ic_bss->ni_chan = &ic->ic_channels[scan->chan];
 			break;
 		}
 		case WPI_STOP_SCAN:
@@ -1355,7 +1284,7 @@ wpi_intr(void *arg)
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		ifp->if_flags &= ~IFF_UP;
 		wpi_stop(ifp, 1);
-		r = 0;	/* don't process any other interrupt */
+		return 1;
 	}
 
 	if (r & WPI_RX_INTR)
@@ -1523,19 +1452,17 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	    ring->qid, ring->cur, m0->m_pkthdr.len, data->map->dm_nsegs));
 
 	/* first scatter/gather segment is used by the tx data command */
-	memset(desc, 0, sizeof (struct wpi_tx_desc));
-	desc->segs[0].physaddr = htole32(ring->cmd_map->dm_segs[0].ds_addr +
+	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 |
+	    (1 + data->map->dm_nsegs) << 24);
+	desc->segs[0].physaddr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
-	desc->segs[0].len = htole32(
-	    (4 + sizeof (struct wpi_cmd_data) + 3) & ~3);
+	desc->segs[0].len = htole32(4 + sizeof (struct wpi_cmd_data));
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
 		desc->segs[i].physaddr =
 		    htole32(data->map->dm_segs[i - 1].ds_addr);
 		desc->segs[i].len =
 		    htole32(data->map->dm_segs[i - 1].ds_len);
 	}
-	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 |
-	    (1 + data->map->dm_nsegs) << 24);
 
 	ring->queued++;
 
@@ -1677,18 +1604,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = 0;
 		break;
 
-	case SIOCG80211AUTH:
-		((struct ieee80211_auth *)data)->i_authtype = sc->authmode;
-		break;
-
-	case SIOCS80211AUTH:
-		/* only super-user can do that! */
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-
-		sc->authmode = ((struct ieee80211_auth *)data)->i_authtype;
-		break;
-
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
@@ -1714,6 +1629,8 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	struct wpi_tx_desc *desc;
 	struct wpi_tx_cmd *cmd;
 
+	KASSERT(size <= sizeof cmd->data);
+
 	desc = &ring->desc[ring->cur];
 	cmd = &ring->cmd[ring->cur]; 
 
@@ -1723,9 +1640,8 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	cmd->idx = ring->cur;
 	bcopy(buf, cmd->data, size);
 
-	bzero(desc, sizeof (struct wpi_tx_desc));
 	desc->flags = htole32(WPI_PAD32(size) << 28 | 1 << 24);
-	desc->segs[0].physaddr = htole32(ring->cmd_map->dm_segs[0].ds_addr +
+	desc->segs[0].physaddr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
 	desc->segs[0].len = htole32(4 + size);
 
@@ -1804,7 +1720,7 @@ wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
 {
 	struct wpi_cmd_tsf tsf;
 
-	memset(&tsf, 0, sizeof tsf);
+	bzero(&tsf, sizeof tsf);
 	tsf.tstamp = 0;
 	tsf.bintval = htole16(ni->ni_intval);
 	tsf.binitval = htole32(102400);	/* XXX */
@@ -1837,7 +1753,7 @@ wpi_auth(struct wpi_softc *sc)
 	}
 
 	/* add default node */
-	memset(&node, 0, sizeof node);
+	bzero(&node, sizeof node);
 	IEEE80211_ADDR_COPY(node.bssid, ni->ni_bssid);
 	node.id = WPI_ID_BSSID;
 	node.rate = 10;	/* 1Mb/s */
@@ -1903,9 +1819,9 @@ wpi_scan(struct wpi_softc *sc)
 	cmd->idx = ring->cur;
 
 	hdr = (struct wpi_scan_hdr *)cmd->data;
-	memset(hdr, 0, sizeof (struct wpi_scan_hdr));
+	bzero(hdr, sizeof (struct wpi_scan_hdr));
 	hdr->first = 1;
-	hdr->nchan = 13;
+	hdr->nchan = 14;
 	hdr->len = hdr->nchan * sizeof (struct wpi_scan_chan);
 	hdr->quiet = htole16(5);
 	hdr->threshold = htole16(1);
@@ -2195,7 +2111,6 @@ wpi_init(struct ifnet *ifp)
 	u_char *fw;
 	size_t size;
 	uint32_t tmp;
-	bus_addr_t pshared;
 	int i, qid, ntries, error;
 
 	wpi_reset(sc);
@@ -2210,13 +2125,11 @@ wpi_init(struct ifnet *ifp)
 	wpi_power_up(sc);
 	wpi_hw_config(sc);
 
-	pshared = sc->shmap->dm_segs[0].ds_addr;
-
 	/* init Rx ring */
 	wpi_mem_lock(sc);
-	WPI_WRITE(sc, WPI_RX_BASE, sc->rxq.map->dm_segs[0].ds_addr);
+	WPI_WRITE(sc, WPI_RX_BASE, sc->rxq.desc_dma.paddr);
 	WPI_WRITE(sc, WPI_RX_RIDX_PTR,
-	    (uint32_t)&((struct wpi_shared *)pshared)->next);
+	    (uint32_t)&((struct wpi_shared *)sc->shared_dma.paddr)->next);
 	WPI_WRITE(sc, WPI_RX_WIDX, (WPI_RX_RING_COUNT - 1) & ~7);
 	WPI_WRITE(sc, WPI_RX_CONFIG, 0xa9601010);
 	wpi_mem_unlock(sc);
@@ -2231,7 +2144,7 @@ wpi_init(struct ifnet *ifp)
 	wpi_mem_write(sc, WPI_MEM_MAGIC4, 4);
 	wpi_mem_write(sc, WPI_MEM_MAGIC5, 5);
 
-	WPI_WRITE(sc, WPI_TX_BASE_PTR, pshared);
+	WPI_WRITE(sc, WPI_TX_BASE_PTR, sc->shared_dma.paddr);
 	WPI_WRITE(sc, WPI_MSG_CONFIG, 0xffff05a5);
 
 	for (qid = 0; qid < 6; qid++) {
@@ -2329,7 +2242,7 @@ wpi_init(struct ifnet *ifp)
 	if (ntries == 1000) {
 		printf("%s: timeout waiting for thermal sensors calibration\n",
 		    sc->sc_dev.dv_xname);
-		error = EIO;
+		error = ETIMEDOUT;
 		goto fail1;
 	}
 	DPRINTF(("temperature %d\n", (int)WPI_READ(sc, WPI_TEMPERATURE)));
