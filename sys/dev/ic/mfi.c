@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.35 2006/05/16 23:11:48 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.36 2006/05/17 16:00:52 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -73,21 +73,21 @@ struct mfi_ccb	*mfi_get_ccb(struct mfi_softc *);
 void		mfi_put_ccb(struct mfi_ccb *);
 int		mfi_init_ccb(struct mfi_softc *);
 
-u_int32_t	mfi_read(struct mfi_softc *, bus_size_t);
-void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
 struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
 void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
+
 int		mfi_transition_firmware(struct mfi_softc *);
 int		mfi_initialize_firmware(struct mfi_softc *);
+u_int32_t	mfi_read(struct mfi_softc *, bus_size_t);
+void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
+int		mfi_poll(struct mfi_ccb *);
+int		mfi_despatch_cmd(struct mfi_ccb *);
 
-int		mfi_despatch_cmd(struct mfi_softc *, struct mfi_ccb *);
-int		mfi_poll(struct mfi_softc *, struct mfi_ccb *);
-int		mfi_start_xs(struct mfi_softc *, struct mfi_ccb *,
-		    struct scsi_xfer *);
+int		mfi_create_sgl(struct mfi_ccb *, int);
 
 /* LD commands */
-int		mfi_generic_scsi(struct scsi_xfer *);
-void		mfi_done_generic_scsi(struct mfi_softc *, struct mfi_ccb *);
+int		mfi_scsi_ld(struct mfi_ccb *, struct scsi_xfer *);
+void		mfi_scsi_ld_done(struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
@@ -134,6 +134,8 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_frame_size = 0;
 	ccb->ccb_extra_frames = 0;
 	ccb->ccb_sgl = NULL;
+	ccb->ccb_data = NULL;
+	ccb->ccb_len = 0;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
 }
@@ -381,7 +383,7 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	    qinfo->miq_rq_entries, qinfo->miq_rq_addr_lo,
 	    qinfo->miq_pi_addr_lo, qinfo->miq_ci_addr_lo);
 
-	if (mfi_poll(sc, ccb)) {
+	if (mfi_poll(ccb)) {
 		printf("%s: mfi_initialize_firmware failed\n", DEVNAME(sc));
 		return (1);
 	}
@@ -514,29 +516,30 @@ nopcq:
 }
 
 int
-mfi_despatch_cmd(struct mfi_softc *sc, struct mfi_ccb *ccb)
+mfi_despatch_cmd(struct mfi_ccb *ccb)
 {
-	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n", DEVNAME(sc));
+	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n",
+	    DEVNAME(ccb->ccb_sc));
 
-	mfi_write(sc, MFI_IQP, htole32((ccb->ccb_pframe >> 3) |
+	mfi_write(ccb->ccb_sc, MFI_IQP, htole32((ccb->ccb_pframe >> 3) |
 	    ccb->ccb_extra_frames));
 
 	return(0);
 }
 
 int
-mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
+mfi_poll(struct mfi_ccb *ccb)
 {
 	struct mfi_frame_header	*hdr;
 	int			to = 0;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(sc));
+	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(ccb->ccb_sc));
 
 	hdr = &ccb->ccb_frame->mfr_header;
 	hdr->mfh_cmd_status = 0xff;
 	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
 
-	mfi_despatch_cmd(sc, ccb);
+	mfi_despatch_cmd(ccb);
 
 	while (hdr->mfh_cmd_status == 0xff) {
 		delay(1000);
@@ -544,7 +547,7 @@ mfi_poll(struct mfi_softc *sc, struct mfi_ccb *ccb)
 			break;
 	}
 	if (hdr->mfh_cmd_status == 0xff) {
-		printf("%s: timeout on ccb %d\n", DEVNAME(sc),
+		printf("%s: timeout on ccb %d\n", DEVNAME(ccb->ccb_sc),
 		    hdr->mfh_context);
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
 		return (1);
@@ -596,30 +599,25 @@ mfi_intr(void *arg)
 }
 
 void
-mfi_done_generic_scsi(struct mfi_softc *sc, struct mfi_ccb *ccb)
+mfi_scsi_ld_done(struct mfi_ccb *ccb)
 {
 #ifdef MFI_DEBUG
 	struct scsi_xfer	*xs = ccb->ccb_xs;
 	struct scsi_link	*link = xs->sc_link;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_ld_done_inquiry: %.0x\n",
-	    DEVNAME(sc), link->target);
+	    DEVNAME(ccb->ccb_sc), link->target);
 #endif /* MFI_DEBUG */
 }
 
 int
-mfi_generic_scsi(struct scsi_xfer *xs)
+mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct mfi_softc	*sc = link->adapter_softc;
-	struct mfi_ccb		*ccb;
 	struct mfi_pass_frame	*pf;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_generic_scsi: %d\n",
-	    DEVNAME(sc), link->target);
-
-	if ((ccb = mfi_get_ccb(sc)) == NULL)
-		return (TRY_AGAIN_LATER);
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld: %d\n",
+	    DEVNAME((struct mfi_softc *)link->adapter_softc), link->target);
 
 	pf = &ccb->ccb_frame->mfr_pass;
 	pf->mpf_header.mfh_cmd = MFI_CMD_LD_SCSI_IO;
@@ -636,17 +634,27 @@ mfi_generic_scsi(struct scsi_xfer *xs)
 	memset(pf->mpf_cdb, 0, 16);
 	memcpy(pf->mpf_cdb, &xs->cmdstore, xs->cmdlen);
 
-	ccb->ccb_done = mfi_done_generic_scsi;
-	ccb->ccb_xs = xs; /* XXX here or in mfi_start_xs? */
+	ccb->ccb_done = mfi_scsi_ld_done;
+	ccb->ccb_xs = xs;
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
 	ccb->ccb_sgl = &pf->mpf_sgl;
+
 	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
 		ccb->ccb_direction = xs->flags & SCSI_DATA_IN ?
 		    MFI_DATA_IN : MFI_DATA_OUT;
 	else
 		ccb->ccb_direction = 0;
 
-	return (mfi_start_xs(sc, ccb, xs));
+	if (xs->data) {
+		ccb->ccb_data = xs->data;
+		ccb->ccb_len = xs->datalen;
+
+		if (mfi_create_sgl(ccb, xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+			return (1);
+	}
+
+	return (0);
 }
 
 int
@@ -666,21 +674,18 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	if (!cold) {
 		DNPRINTF(MFI_D_CMD, "%s: no interrupt io yet %02x\n",
 		    DEVNAME(sc), xs->cmd->opcode);
-		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return (COMPLETE);
+		goto stuffup;
 	}
 
 	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
 	    link->lun != 0) {
 		DNPRINTF(MFI_D_CMD, "%s: invalid target %d\n",
 		    DEVNAME(sc), target);
-		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return (COMPLETE);
+		goto stuffup;
 	}
+
+	if ((ccb = mfi_get_ccb(sc)) == NULL)
+		return (TRY_AGAIN_LATER);
 
 	xs->error = XS_NOERROR;
 
@@ -694,43 +699,74 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	/* hand it of to the firmware and let it deal with it */
 	default:
-		return (mfi_generic_scsi(xs));
+		if (mfi_scsi_ld(ccb, xs)) {
+			mfi_put_ccb(ccb);
+			goto stuffup;
+		}
+		break;
 	}
 
 	DNPRINTF(MFI_D_CMD, "%s: start io %d\n", DEVNAME(sc), target);
 
-	return (mfi_start_xs(sc, ccb, xs));
+	if (xs->flags & SCSI_POLL) {
+		if (mfi_poll(ccb)) {
+			/* XXX check for sense in ccb->ccb_sense? */
+			printf("%s: mfi_scsi_cmd poll failed\n",
+			    DEVNAME(sc));
+			mfi_put_ccb(ccb);
+			bzero(&xs->sense, sizeof(xs->sense));
+			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+			xs->sense.add_sense_code = 0x20; /* invalid opcode */
+			xs->error = XS_SENSE;
+			xs->flags |= ITSDONE;
+			scsi_done(xs);
+			return (COMPLETE);
+		}
+		DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd poll complete %d\n",
+		    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
+
+		mfi_put_ccb(ccb);
+		return (COMPLETE);
+	}
+
+	mfi_despatch_cmd(ccb);
+
+	DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd queued %d\n", DEVNAME(sc),
+	    ccb->ccb_dmamap->dm_nsegs);
+
+	return (SUCCESSFULLY_QUEUED);
+
+stuffup:
+	xs->error = XS_DRIVER_STUFFUP;
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+	return (COMPLETE);
 }
 
 int
-mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
-    struct scsi_xfer *xs)
+mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 {
+	struct mfi_softc	*sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr;
 	bus_dma_segment_t	*sgd;
 	union mfi_sgl		*sgl;
 	int			error, i;
 
-	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: %p %p %d\n", DEVNAME(sc), xs,
-	    xs->data, xs->datalen);
+	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl\n", DEVNAME(sc));
 
-	if (!xs->data)
-		goto skipsgl;
+	if (!ccb->ccb_data)
+		return (1);
 
 	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
-	    xs->data, xs->datalen, NULL,
-	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	    ccb->ccb_data, ccb->ccb_len, NULL, flags);
 	if (error) {
 		if (error == EFBIG)
-			printf("more than %d dma segs\n", sc->sc_max_sgl);
+			printf("more than %d dma segs\n",
+			    sc->sc_max_sgl);
 		else
 			printf("error %d loading dma map\n", error);
-
-		mfi_put_ccb(ccb);
-		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return (COMPLETE);
+		return (1);
 	}
 
 	hdr = &ccb->ccb_frame->mfr_header;
@@ -739,8 +775,8 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
 		sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
 		sgl->sg32[i].len = htole32(sgd[i].ds_len);
-		DNPRINTF(MFI_D_DMA, "%s: addr: %x  len: %x\n", DEVNAME(sc),
-		    sgl->sg32[i].addr, sgl->sg32[i].len);
+		DNPRINTF(MFI_D_DMA, "%s: addr: %x  len: %x\n",
+		    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
 	}
 
 	if (ccb->ccb_direction == MFI_DATA_IN) {
@@ -768,32 +804,7 @@ mfi_start_xs(struct mfi_softc *sc, struct mfi_ccb *ccb,
 	    ccb->ccb_dmamap->dm_nsegs,
 	    ccb->ccb_extra_frames);
 
-skipsgl:
-	if (xs->flags & SCSI_POLL) {
-		if (mfi_poll(sc, ccb)) {
-			printf("%s: mfi_poll failed\n", DEVNAME(sc));
-			bzero(&xs->sense, sizeof(xs->sense));
-			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-			xs->sense.add_sense_code = 0x20; /* invalid opcode */
-			xs->error = XS_SENSE;
-			xs->flags |= ITSDONE;
-			scsi_done(xs);
-			return (COMPLETE);
-		}
-		DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs complete %d\n",
-		    DEVNAME(sc), ccb->ccb_dmamap->dm_nsegs);
-
-		mfi_put_ccb(ccb);
-		return (COMPLETE);
-	}
-
-	mfi_despatch_cmd(sc, ccb);
-
-	DNPRINTF(MFI_D_DMA, "%s: mfi_start_xs: queued %d\n", DEVNAME(sc),
-	    ccb->ccb_dmamap->dm_nsegs);
-
-	return (SUCCESSFULLY_QUEUED);
+	return (0);
 }
 
 int

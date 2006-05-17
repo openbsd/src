@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.16 2006/05/16 22:51:10 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.17 2006/05/17 16:00:53 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -67,14 +67,18 @@ struct mfi_ccb {
 
 	union mfi_sgl		*ccb_sgl;
 
+	/* data for sgl */
+	void			*ccb_data;
+	uint32_t		ccb_len;
+
 	uint32_t		ccb_direction;
-#define MFI_DATA_IN	0
-#define MFI_DATA_OUT	1
+#define MFI_DATA_NONE	0
+#define MFI_DATA_IN	1
+#define MFI_DATA_OUT	2
 
 	struct scsi_xfer	*ccb_xs;
 
-	void			(*ccb_done)(struct mfi_softc *sc,
-				    struct mfi_ccb *ccb);
+	void			(*ccb_done)(struct mfi_ccb *);
 
 	volatile enum {
 		MFI_CCB_FREE,
