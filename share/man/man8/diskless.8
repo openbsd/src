@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.28 2006/05/17 21:29:35 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.29 2006/05/17 21:33:07 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -78,28 +78,35 @@ In
 .Em phase 2 ,
 the boot program loads a kernel.
 Operation in this phase depends on the design of the boot program.
-The boot program:
+The procedure used by the boot program is as follows:
 .Pp
 .Bl -enum -compact
 .It
+The boot program
 gets the client IP address using RARP.
 .It
+The boot program
 gets the client name and server IP address by broadcasting an
 RPC/BOOTPARAMS/WHOAMI request with the client IP address.
 .It
+The boot program
 gets the server path for this client's root
 using an RPC/BOOTPARAMS/GETFILE request with the client name.
 .It
+The boot program
 gets the root file handle by calling
 .Xr mountd 8
 with the server path for the client root.
 .It
+The boot program
 gets the kernel file handle by calling
 NFS lookup on the root file handle.
 .It
+The boot program
 loads the kernel using
 NFS read calls on the kernel file handle.
 .It
+The boot program
 transfers control to the kernel entry point.
 .El
 .Pp
