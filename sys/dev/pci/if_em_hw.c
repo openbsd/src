@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.17 2006/04/18 19:06:02 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.18 2006/05/17 20:45:52 brad Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -6062,7 +6062,7 @@ em_get_cable_length(struct em_hw *hw,
 {
     int32_t ret_val;
     uint16_t agc_value = 0;
-    uint16_t cur_agc, min_agc = IGP01E1000_AGC_LENGTH_TABLE_SIZE;
+    uint16_t cur_agc, min_agc = IGP01E1000_AGC_LENGTH_TABLE_SIZE - 1;
     uint16_t max_agc = 0;
     uint16_t i, phy_data;
     uint16_t cable_length;
