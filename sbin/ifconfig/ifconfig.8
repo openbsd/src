@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.119 2006/04/12 14:15:03 aanriot Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.120 2006/05/17 03:29:55 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -86,6 +86,36 @@
 .Oo
 .Cm pppoeac
 .Ar access-concentrator
+.Oc
+.Nm
+.Ar sppp-interface
+.Oo
+.Cm authproto
+.Ar proto
+.Oc
+.Oo
+.Cm authname
+.Ar name
+.Oc
+.Oo
+.Cm authkey
+.Ar key
+.Oc
+.Oo
+.Cm peerproto
+.Ar proto
+.Oc
+.Oo
+.Cm peername
+.Ar name
+.Oc
+.Oo
+.Cm peerkey
+.Ar key
+.Oc
+.Oo
+.Oo Fl Oc Ns Cm peerflag
+.Ar flag
 .Oc
 .Nm ifconfig
 .Ar trunk-interface
@@ -314,6 +344,23 @@ Internet
 addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of ARP.
+.It Cm authproto Ar proto
+(PPP devices only)
+Set the PPP authentication protocol on the specified
+.Xr sppp 4
+interface acting as a client.
+The protocol name can be either
+.Ql chap ,
+.Ql pap ,
+or
+.Ql none .
+In the latter case, authentication will be turned off.
+.It Cm authname
+(PPP devices only)
+Set the client name for the PPP authentication protocol.
+.It Cm authkey
+(PPP devices only)
+Set the client key or password for the PPP authentication protocol.
 .It Cm broadcast Ar addr
 (inet only)
 Specify the address to use to represent broadcasts to the
@@ -598,6 +645,45 @@ If the driver is a
 pseudo-device, set the authentication key to
 .Ar passphrase .
 There is no passphrase by default.
+.It Cm peerflag Ar flag
+(PPP devices only)
+Set a specified PPP flag for the remote authenticator.
+The flag name can be either
+.Ql callin
+or
+.Ql norechallenge .
+The
+.Ql callin
+flag will require the remote peer to authenticate only when he's
+calling in, but not when the peer is called by the local client.
+This is required for some peers that do not implement the
+authentication protocols symmetrically.
+The
+.Ql norechallenge
+flag is only meaningful with the CHAP protocol to not re-challenge
+once the the initial CHAP handshake was successful.
+This is used to work around broken peer implementations that can't
+grok being re-challenged once the connection is up.
+.It Fl peerflag Ar flag
+(PPP devices only)
+Remove a specified PPP flag for the remote authenticator.
+.It Cm peerproto Ar proto
+(PPP devices only)
+Set the PPP authentication protocol on the specified
+.Xr sppp 4
+interface acting as an authenticator.
+The protocol name can be either
+.Ql chap ,
+.Ql pap ,
+or
+.Ql none .
+In the latter case, authentication will be turned off.
+.It Cm peername
+(PPP devices only)
+Set the authenticator name for the PPP authentication protocol.
+.It Cm peerkey
+(PPP devices only)
+Set the authenticator key or password for the PPP authentication protocol.
 .It Cm phase Ar n
 The argument
 .Ar n
@@ -678,7 +764,7 @@ traffic can be protected using
 .Xr ipsec 4 .
 .It Fl syncpeer
 If the driver is a
-.Xr pfsync 4
+.Xr pfsync 4;5A
 pseudo-device, broadcast the packets using multicast.
 .It Cm tentative
 (inet6 only)
@@ -878,6 +964,7 @@ tried to alter an interface's configuration.
 .Xr ppp 4 ,
 .Xr pppoe 4 ,
 .Xr sl 4 ,
+.Xr sppp 4 ,
 .Xr trunk 4 ,
 .Xr tun 4 ,
 .Xr vlan 4 ,

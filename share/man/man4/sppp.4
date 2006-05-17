@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.9 2003/05/05 13:51:58 jmc Exp $
+.\" $OpenBSD: sppp.4,v 1.10 2006/05/17 03:29:55 reyk Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -137,7 +137,7 @@ and it will do exactly what you would want it to.
 The PAP and CHAP authentication protocols as described in RFC 1334,
 and RFC 1994 resp., are also implemented.
 Their parameters are being controlled by the
-.Xr spppcontrol 8
+.Xr ifconfig 8
 utility.
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -157,11 +157,54 @@ The keepalive facility detected the line being unresponsive.
 Keepalive must be explicitly requested by the lower layers in order to
 take place.
 .El
+.Sh EXAMPLES
+Display the settings for pppoe0.
+The interface is currently in the
+.Em establish
+phase and tries to connect to the remote peer,
+other possible PPP phases are
+.Em dead ,
+.Em authenticate ,
+.Em network ,
+or
+.Em terminate .
+Both ends of the connection use the CHAP protocol, the local client
+tells the remote peer the system name
+.Ql uriah ,
+and the peer is expected to authenticate by the name
+.Ql ifb-gw .
+Once the initial CHAP handshake was successful, no further CHAP
+challenges will be transmitted.
+There are supposedly some known CHAP secrets for both ends of the link
+which are not displayed.
+.Bd -literal -offset indent
+$ ifconfig pppoe0                                                              
+pppoe0: flags=8851<UP,POINTOPOINT,RUNNING,SIMPLEX,MULTICAST> mtu 1492
+        dev: em0 state: PADI sent
+        sid: 0x0 PADI retries: 0 PADR retries: 0
+        sppp: phase establish authproto chap authname "uriah" \e
+		peerproto chap peername "ifb-gw" norechallenge 
+        groups: pppoe
+        inet 0.0.0.0 --> 0.0.0.1 netmask 0xffffffff 
+.Ed
+.Pp
+A possible call to
+.Xr ifconfig 8
+that could have been used to bring the interface into the state shown
+by the previous example:
+.Bd -literal -offset indent
+# ifconfig pppoe0 0.0.0.0 0.0.0.1 netmask 0xffffffff \e
+	pppoedev em0 \e
+	authproto chap authname uriah authkey "some secret" \e
+	peerproto chap peername "ifb-gw" peerkey "another" \e
+	peerflag norechallenge \e
+	up
+.Ed
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr ifconfig 8 ,
 .Xr ppp 8 ,
-.Xr spppcontrol 8
+.Xr pppoe 4
 .Rs
 .%A W. Simpson, Editor
 .%T "The Point-to-Point Protocol (PPP)"
@@ -193,11 +236,25 @@ was written in 1994 at Cronyx Ltd., Moscow by
 rewrote a large part in 1997 in order
 to fully implement the state machine as described in RFC 1661, so it
 could also be used for dialup lines.
-He also wrote this man page.
+He also wrote the initial version of this man page.
 Serge later on wrote a basic implementation for PAP and CHAP, which
 served as the base for the current implementation, done again by
 .ie t J\(:org Wunsch.
 .el Joerg Wunsch.
+.Pp
+.ie t Reyk Fl\(:oter
+.el Reyk Floeter
+implemented
+.Nm
+support for
+.Xr ifconfig 8
+in 
+.Ox 4.0
+in order to remove the original
+.Ql spppcontrol
+utility, which has been previously used to configure and display the
+.Nm
+settings.
 .Sh BUGS
 Many.
 .Pp
@@ -213,7 +270,7 @@ If the negotiation doesn't converge, this can cause an endless loop.
 The various parameters that should be adjustable per RFC 1661 are
 currently hard-coded into the kernel, and should be made accessible
 through
-.Xr spppcontrol 8 .
+.Xr ifconfig 8 .
 .Pp
 .Em Passive
 mode has not been tested extensively.

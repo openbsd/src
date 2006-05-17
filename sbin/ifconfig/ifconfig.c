@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.159 2006/03/23 14:20:09 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.160 2006/05/17 03:29:55 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -88,6 +88,8 @@
 #include <net/if_pfsync.h>
 #include <net/if_pppoe.h>
 #include <net/if_trunk.h>
+#include <net/if_sppp.h>
+#include <net/ppp_defs.h>
 
 #include <netatalk/at.h>
 
@@ -207,6 +209,17 @@ void	setpppoe_dev(const char *,int);
 void	setpppoe_svc(const char *,int);
 void	setpppoe_ac(const char *,int);
 void	pppoe_status(void);
+void	setspppproto(const char *, int);
+void	setspppname(const char *, int);
+void	setspppkey(const char *, int);
+void	setsppppeerproto(const char *, int);
+void	setsppppeername(const char *, int);
+void	setsppppeerkey(const char *, int);
+void	setsppppeerflag(const char *, int);
+void	unsetsppppeerflag(const char *, int);
+void	spppinfo(struct spppreq *);
+void	sppp_status(void);
+void	sppp_printproto(const char *, struct sauth *);
 void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
@@ -328,6 +341,14 @@ const struct	cmd {
 	{ "trunkport",	NEXTARG,	0,		settrunkport },
 	{ "-trunkport",	NEXTARG,	0,		unsettrunkport },
 	{ "trunkproto",	NEXTARG,	0,		settrunkproto },
+	{ "authproto",	NEXTARG,	0,		setspppproto },
+	{ "authname",	NEXTARG,	0,		setspppname },
+	{ "authkey",	NEXTARG,	0,		setspppkey },
+	{ "peerproto",	NEXTARG,	0,		setsppppeerproto },
+	{ "peername",	NEXTARG,	0,		setsppppeername },
+	{ "peerkey",	NEXTARG,	0,		setsppppeerkey },
+	{ "peerflag",	NEXTARG,	0,		setsppppeerflag },
+	{ "-peerflag",	NEXTARG,	0,		unsetsppppeerflag },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
@@ -2159,6 +2180,7 @@ status(int link, struct sockaddr_dl *sdl)
 	pfsync_status();
 	pppoe_status();
 	timeslot_status();
+	sppp_status();
 	trunk_status();
 #endif
 	getifgroups();
@@ -3269,6 +3291,188 @@ setpppoe_ac(const char *val, int d)
 }
 
 void
+spppinfo(struct spppreq *spr)
+{
+	bzero(spr, sizeof(struct spppreq));
+
+	ifr.ifr_data = (caddr_t)spr;
+	spr->cmd = (int)SPPPIOGDEFS;
+	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
+		err(1, "SIOCGIFGENERIC(SPPPIOGDEFS)");
+}
+
+void
+setspppproto(const char *val, int d)
+{
+	struct spppreq spr;
+	struct sauth *auth;
+
+	spppinfo(&spr);
+	auth = d == 0 ? &spr.defs.myauth : &spr.defs.hisauth;
+	if (strcmp(val, "pap") == 0)
+		auth->proto = PPP_PAP;
+	else if (strcmp(val, "chap") == 0)
+		auth->proto = PPP_CHAP;
+	else if (strcmp(val, "none") == 0)
+		auth->proto = 0;
+	else
+		errx(1, "setpppproto");
+
+	spr.cmd = (int)SPPPIOSDEFS;
+	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
+		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+}
+
+void
+setsppppeerproto(const char *val, int d)
+{
+	setspppproto(val, 1);
+}
+
+void
+setspppname(const char *val, int d)
+{
+	struct spppreq spr;
+	struct sauth *auth;
+
+	spppinfo(&spr);
+	auth = d == 0 ? &spr.defs.myauth : &spr.defs.hisauth;
+	if (auth->proto == 0)
+		errx(1, "unspecified protocol");
+	if (strlcpy((char *)auth->name, val, AUTHNAMELEN) >= AUTHNAMELEN)
+		errx(1, "setspppname");
+
+	spr.cmd = (int)SPPPIOSDEFS;
+	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
+		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+}
+
+void
+setsppppeername(const char *val, int d)
+{
+	setspppname(val, 1);
+}
+
+void
+setspppkey(const char *val, int d)
+{
+	struct spppreq spr;
+	struct sauth *auth;
+
+	spppinfo(&spr);
+	auth = d == 0 ? &spr.defs.myauth : &spr.defs.hisauth;
+	if (auth->proto == 0)
+		errx(1, "unspecified protocol");
+	if (strlcpy((char *)auth->secret, val, AUTHKEYLEN) >= AUTHKEYLEN)
+		errx(1, "setspppname");
+
+	spr.cmd = (int)SPPPIOSDEFS;
+	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
+		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+}
+
+void
+setsppppeerkey(const char *val, int d)
+{
+	setspppkey(val, 1);
+}
+
+void
+setsppppeerflag(const char *val, int d)
+{
+	struct spppreq spr;
+	struct sauth *auth;
+	int flag;
+
+	spppinfo(&spr);
+	auth = &spr.defs.hisauth;
+	if (auth->proto == 0)
+		errx(1, "unspecified protocol");
+	if (strcmp(val, "callin") == 0)
+		flag = AUTHFLAG_NOCALLOUT;
+	else if (strcmp(val, "norechallenge") == 0)
+		flag = AUTHFLAG_NORECHALLENGE;
+	else
+		errx(1, "setppppeerflags");
+
+	if (d)
+		auth->flags &= ~flag;
+	else
+		auth->flags |= flag;
+
+	spr.cmd = (int)SPPPIOSDEFS;
+	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
+		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+}
+
+void
+unsetsppppeerflag(const char *val, int d)
+{
+	setsppppeerflag(val, 1);
+}
+
+void
+sppp_printproto(const char *name, struct sauth *auth)
+{
+	if (auth->proto == 0)
+		return;
+	printf("%sproto ", name);
+	switch (auth->proto) {
+	case PPP_PAP:
+		printf("pap ");
+		break;
+	case PPP_CHAP:
+		printf("chap ");
+		break;
+	default:
+		printf("0x%04x ", auth->proto);
+		break;
+	}
+	printf("%sname \"%.*s\" ", name, AUTHNAMELEN, auth->name);
+}
+
+void
+sppp_status(void)
+{
+	struct spppreq spr;
+
+	bzero(&spr, sizeof(spr));
+
+	ifr.ifr_data = (caddr_t)&spr;
+	spr.cmd = (int)SPPPIOGDEFS;
+	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
+		return;
+	if (spr.defs.pp_phase == PHASE_DEAD)
+		return;
+	printf("\tsppp: phase ");
+	switch (spr.defs.pp_phase) {
+	case PHASE_ESTABLISH:
+		printf("establish ");
+		break;
+	case PHASE_TERMINATE:
+		printf("terminate ");
+		break;
+	case PHASE_AUTHENTICATE:
+		printf("authenticate ");
+		break;
+	case PHASE_NETWORK:
+		printf("network ");
+		break;
+	default:
+		printf("illegal ");
+		break;
+	}
+
+	sppp_printproto("auth", &spr.defs.myauth);
+	sppp_printproto("peer", &spr.defs.hisauth);
+	if (spr.defs.hisauth.flags & AUTHFLAG_NOCALLOUT)
+		printf("callin ");
+	if (spr.defs.hisauth.flags & AUTHFLAG_NORECHALLENGE)
+		printf("norechallenge ");
+	putchar('\n');
+}
+
+void
 settrunkport(const char *val, int d)
 {
 	struct trunk_reqport rp;
@@ -3332,7 +3536,7 @@ trunk_status(void)
 
 	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
 	strlcpy(rp.rp_portname, name, sizeof(rp.rp_portname));
-	
+
 	if (ioctl(s, SIOCGTRUNKPORT, &rp) == 0)
 		isport = 1;
 
@@ -3580,7 +3784,8 @@ void
 usage(int value)
 {
 	fprintf(stderr,
-	    "usage: ifconfig [interface] [address_family] [address [dest_address]]\n"
+	    "usage: ifconfig "
+	    "[interface] [address_family] [address [dest_address]]\n"
 	    "\t[[-]alias] [[-]arp] [broadcast addr]\n"
 	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
@@ -3602,7 +3807,9 @@ usage(int value)
 	    "\t[phase n] [range netrange] [timeslot timeslot_range]\n"
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
 	    "\t[pppoeac access-concentrator] [-pppoeac]\n"
-	    "\t[pppoesvc service] [-pppoesvc]\n"
+	    "\t[pppoesvc service] [-pppoesvc] [authproto proto]\n"
+	    "\t[authname name] [authkey key] [peerproto proto]\n"
+	    "\t[peername name] [peerkey key] [[-]peerflag flag]\n"
 	    "       ifconfig [-AaCMm] [interface] [address_family]\n"
 	    "       ifconfig interface create\n"
 	    "       ifconfig interface destroy\n");
