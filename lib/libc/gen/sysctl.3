@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.150 2006/04/27 07:34:39 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.151 2006/05/17 08:34:42 gwk Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -285,9 +285,14 @@ privileges may change the value.
 .It Dv HW_NCPU No "	integer	no"
 .It Dv HW_PAGESIZE No "	integer	no"
 .It Dv HW_PHYSMEM No "	integer	no"
+.It Dv HW_PRODUCT No "	string	no"
 .It Dv HW_SENSORS No "	struct	no"
+.It Dv HW_SERIALNO No "	string	no"
 .It Dv HW_SETPERF No "	integer	yes"
 .It Dv HW_USERMEM No "	integer	no"
+.It Dv HW_UUID No "	string	no"
+.It Dv HW_VENDOR No "	string	no"
+.It Dv HW_VERSION No "	string	no"
 .El
 .Bl -tag -width "123456"
 .It Dv HW_BYTEORDER
@@ -313,15 +318,25 @@ The number of CPUs.
 The software page size.
 .It Dv HW_PHYSMEM
 The total physical memory, in bytes.
+.It Dv HW_PRODUCT
+The product name of the machine.
 .It Dv HW_SENSORS
 An array of
 .Li struct sensor
 structures containing information from the hardware monitoring sensors.
+.It Dv HW_SERIALNO
+The serial number of the machine.
 .It Dv HW_SETPERF
 Current CPU performance
 .Pq percentage .
 .It Dv HW_USERMEM
 The amount of available non-kernel memory in bytes.
+.It Dv HW_UUID
+The universal unique identification number assigned to the machine.
+.It Dv HW_VENDOR
+The vendor name for this machine.
+.It Dv HW_VERSION
+The version or revision of this machine.
 .El
 .Ss CTL_KERN
 The string and integer information available for the

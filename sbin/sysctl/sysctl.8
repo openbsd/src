@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.128 2006/04/21 10:51:08 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.129 2006/05/17 08:34:42 gwk Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -340,6 +340,11 @@ not all of the variables are relevant to all architectures.
 .It hw.sensors	struct	no
 .It hw.cpuspeed	integer	no
 .It hw.setperf	integer	yes
+.It hw.vendor	string	no
+.It hw.product	string	no
+.It hw.version	string	no
+.It hw.serialno	string	no
+.It hw.uuid	string	no
 .It machdep.console_device	dev_t	no
 .It machdep.unaligned_print	integer	yes
 .It machdep.unaligned_fix	integer	yes
