@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.27 2006/05/17 21:24:04 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.28 2006/05/17 21:29:35 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -64,17 +64,11 @@ In
 the PROM loads a boot program.
 PROM designs vary widely, so this phase is inherently
 machine-specific.
-Sun and Motorola machines use
-.Tn RARP
-to determine the client's
-.Tn IP
-address and then use
-.Tn TFTP
-to download a boot program from whoever sent the
-.Tn RARP
-reply.
+Sun and Motorola machines use RARP to determine the client's IP address
+and then use TFTP to download a boot program
+from whoever sent the RARP reply.
 HP 300-series machines use the
-.Tn HP Remote Maintenance Protocol
+HP Remote Maintenance Protocol
 to download a boot program.
 Other machines may load a
 network boot program either from diskette or
@@ -88,31 +82,23 @@ The boot program:
 .Pp
 .Bl -enum -compact
 .It
-gets the client IP address using
-.Tn RARP .
+gets the client IP address using RARP.
 .It
-gets the client name and server
-.Tn IP
-address by broadcasting an
-.Tn RPC / BOOTPARAMS / WHOAMI
-request with the client IP address.
+gets the client name and server IP address by broadcasting an
+RPC/BOOTPARAMS/WHOAMI request with the client IP address.
 .It
-gets the server path for this client's
-root using an
-.Tn RPC / BOOTPARAMS / GETFILE
-request with the client name.
+gets the server path for this client's root
+using an RPC/BOOTPARAMS/GETFILE request with the client name.
 .It
 gets the root file handle by calling
 .Xr mountd 8
 with the server path for the client root.
 .It
 gets the kernel file handle by calling
-.Tn NFS
-lookup on the root file handle.
+NFS lookup on the root file handle.
 .It
 loads the kernel using
-.Tn NFS
-read calls on the kernel file handle.
+NFS read calls on the kernel file handle.
 .It
 transfers control to the kernel entry point.
 .El
@@ -130,20 +116,16 @@ The procedure used by the kernel is as follows:
 The kernel finds a boot server using the same procedure
 as described in steps 1 and 2 of phase 2, above.
 .It
-The kernel gets the
-.Tn NFS
+The kernel gets the NFS
 file handle for root using the same procedure
 as described in steps 3, 4, and 5 of phase 2, above.
 .It
-The kernel calls the
-.Tn NFS
+The kernel calls the NFS
 getattr function to get the last-modified time of the root
 directory, and uses it to check the system clock.
 .It
-If the kernel is configured for swap on
-.Tn NFS ,
-it uses the same mechanism as for root, but uses the
-.Tn NFS
+If the kernel is configured for swap on NFS,
+it uses the same mechanism as for root, but uses the NFS
 getattr function to determine the size of the swap area.
 .El
 .Sh CONFIGURATION
