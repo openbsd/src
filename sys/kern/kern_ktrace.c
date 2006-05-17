@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.39 2006/02/27 00:34:33 niklas Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.40 2006/05/17 02:11:25 tedu Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 {
 	struct	ktr_header kth;
 	struct	ktr_syscall *ktp;
-	unsigned int len = sizeof(struct ktr_syscall) + argsize;
+	size_t len = sizeof(struct ktr_syscall) + argsize;
 	register_t *argp;
 	u_int nargs = 0;
 	int i;
@@ -250,7 +250,7 @@ ktrpsig(struct proc *p, int sig, sig_t action, int mask, int code,
 	kp.code = code;
 	kp.si = *si;
 	kth.ktr_buf = (caddr_t)&kp;
-	kth.ktr_len = sizeof (struct ktr_psig);
+	kth.ktr_len = sizeof(struct ktr_psig);
 
 	ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
@@ -267,7 +267,7 @@ ktrcsw(struct proc *p, int out, int user)
 	kc.out = out;
 	kc.user = user;
 	kth.ktr_buf = (caddr_t)&kc;
-	kth.ktr_len = sizeof (struct ktr_csw);
+	kth.ktr_len = sizeof(struct ktr_csw);
 
 	ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;

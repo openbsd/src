@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.8 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.9 2006/05/17 02:11:25 tedu Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -48,10 +48,10 @@
  * ktrace record header
  */
 struct ktr_header {
-	int	ktr_len;		/* length of buf */
-	short	ktr_type;		/* trace record type */
+	size_t	ktr_len;		/* length of buf */
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
+	short	ktr_type;		/* trace record type */
 	struct	timeval ktr_time;	/* timestamp */
 	caddr_t	ktr_buf;
 };
