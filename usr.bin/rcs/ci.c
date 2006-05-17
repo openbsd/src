@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.173 2006/05/11 08:24:24 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.174 2006/05/17 19:37:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -412,8 +412,8 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 	rcsnum_free(tmprev);
 
 	if (!(flags & QUIET))
-		printf("new revision: %s; previous revision: %s\n", nrev,
-		    prev);
+		(void)fprintf(stderr, "new revision: %s; "
+		    "previous revision: %s\n", nrev, prev);
 
 	rcs_msg = rcs_prompt(prompt);
 

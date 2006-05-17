@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.90 2006/05/11 09:43:19 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.91 2006/05/17 19:37:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -347,7 +347,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (!(flags & QUIET) && !(flags & NEWFILE) &&
 	    !(flags & CO_REVERT) && file->rf_ndelta != 0)
-		printf("revision %s", buf);
+		(void)fprintf(stderr, "revision %s", buf);
 
 	if (file->rf_ndelta != 0) {
 		if ((bp = rcs_getrev(file, rev)) == NULL) {
@@ -393,7 +393,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (file->rf_ndelta != 0) {
 			if (!(flags & QUIET) && !(flags & NEWFILE) &&
 			    !(flags & CO_REVERT))
-				printf(" (locked)");
+				(void)fprintf(stderr, " (locked)");
 		}
 	} else if (flags & CO_UNLOCK) {
 		if (file->rf_ndelta != 0) {
@@ -412,13 +412,13 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (file->rf_ndelta != 0) {
 			if (!(flags & QUIET) && !(flags & NEWFILE) &&
 			    !(flags & CO_REVERT))
-				printf(" (unlocked)");
+				(void)fprintf(stderr, " (unlocked)");
 		}
 	}
 
 	if (file->rf_ndelta == 0 && !(flags & QUIET) &&
 	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
-		(void)fprintf(stderr, "no revisions, so nothing can be %s",
+		(void)fprintf(stderr, "no revisions, so nothing can be %s\n",
 		    (flags & CO_LOCK) ? "locked" : "unlocked");
 	} else if (file->rf_ndelta != 0) {
 		/* XXX - Not a good way to detect if a newline is needed. */
@@ -449,11 +449,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		 * revision, and prompt if there are differences.
 		 */
 		if (st.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH))
-			printf("writable ");
-		printf("%s exists%s; ", dst,
+			(void)fprintf(stderr, "writable ");
+		(void)fprintf(stderr, "%s exists%s; ", dst,
 		    (getuid() == st.st_uid) ? "" :
 		    ", and you do not own it");
-		printf("remove it? [ny](n): ");
+		(void)fprintf(stderr, "remove it? [ny](n): ");
 		/* default is n */
 		if (rcs_yesno() == -1) {
 			if (!(flags & QUIET) && isatty(STDIN_FILENO))
