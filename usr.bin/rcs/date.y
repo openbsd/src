@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.3 2006/05/03 14:26:13 ray Exp $	*/
+/*	$OpenBSD: date.y,v 1.4 2006/05/17 20:38:05 xsa Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -70,10 +70,10 @@ static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
 
 
-static int   yyerror   (const char *);
-static int   yylex     (void);
-static int   yyparse   (void);
-static int   lookup    (char *);
+static int	yyerror(const char *);
+static int	yylex(void);
+static int	yyparse(void);
+static int	lookup(char *);
 
 %}
 
@@ -485,17 +485,13 @@ yyerror(const char *s)
 	char *str;
 
 	if (isspace(yyInput[0]) || !isprint(yyInput[0]))
-		(void)xasprintf(&str, "%s: unexpected char 0x%02x in date string",
-		    s, yyInput[0]);
+		(void)xasprintf(&str,
+		    "%s: unexpected char 0x%02x in date string", s, yyInput[0]);
 	else
 		(void)xasprintf(&str, "%s: unexpected %s in date string",
 		    s, yyInput);
 
-#if defined(TEST)
-	printf("%s", str);
-#else
 	warnx("%s", str);
-#endif
 	xfree(str);
 	return (0);
 }
