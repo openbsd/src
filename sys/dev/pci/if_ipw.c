@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.56 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.57 2006/05/17 19:54:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1070,8 +1070,9 @@ ipw_intr(void *arg)
 	DPRINTFN(8, ("INTR!0x%08x\n", r));
 
 	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
-		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
+		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		ipw_stop(&sc->sc_ic.ic_if, 1);
+		return 1;
 	}
 
 	if (r & IPW_INTR_FW_INIT_DONE) {

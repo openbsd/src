@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.67 2006/05/01 08:39:17 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.68 2006/05/17 19:54:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1195,9 +1195,9 @@ iwi_intr(void *arg)
 	CSR_WRITE_4(sc, IWI_CSR_INTR, r);
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
-		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
+		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		iwi_stop(&sc->sc_ic.ic_if, 1);
-		r = 0;	/* don't process more interrupts */
+		return 1;
 	}
 
 	if (r & IWI_INTR_FW_INITED) {
