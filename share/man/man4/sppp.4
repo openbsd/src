@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.10 2006/05/17 03:29:55 reyk Exp $
+.\" $OpenBSD: sppp.4,v 1.11 2006/05/17 11:57:48 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -139,6 +139,49 @@ and RFC 1994 resp., are also implemented.
 Their parameters are being controlled by the
 .Xr ifconfig 8
 utility.
+.Sh EXAMPLES
+Display the settings for pppoe0.
+The interface is currently in the
+.Em establish
+phase and tries to connect to the remote peer;
+other possible PPP phases are
+.Em dead ,
+.Em authenticate ,
+.Em network ,
+or
+.Em terminate .
+Both ends of the connection use the CHAP protocol, the local client
+tells the remote peer the system name
+.Ql uriah ,
+and the peer is expected to authenticate by the name
+.Ql ifb-gw .
+Once the initial CHAP handshake has been successful, no further CHAP
+challenges will be transmitted.
+There are supposedly some known CHAP secrets for both ends of the link
+which are not displayed.
+.Bd -literal -offset indent
+$ ifconfig pppoe0
+pppoe0: flags=8851<UP,POINTOPOINT,RUNNING,SIMPLEX,MULTICAST> mtu 1492
+        dev: em0 state: PADI sent
+        sid: 0x0 PADI retries: 0 PADR retries: 0
+        sppp: phase establish authproto chap authname "uriah" \e
+		peerproto chap peername "ifb-gw" norechallenge
+        groups: pppoe
+        inet 0.0.0.0 --> 0.0.0.1 netmask 0xffffffff
+.Ed
+.Pp
+A possible call to
+.Xr ifconfig 8
+that could have been used to bring the interface into the state shown
+by the previous example:
+.Bd -literal -offset indent
+# ifconfig pppoe0 0.0.0.0 0.0.0.1 netmask 0xffffffff \e
+	pppoedev em0 \e
+	authproto chap authname uriah authkey "some secret" \e
+	peerproto chap peername "ifb-gw" peerkey "another" \e
+	peerflag norechallenge \e
+	up
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It <ifname><ifnum>: <proto> illegal <event> in state <statename>
@@ -157,54 +200,11 @@ The keepalive facility detected the line being unresponsive.
 Keepalive must be explicitly requested by the lower layers in order to
 take place.
 .El
-.Sh EXAMPLES
-Display the settings for pppoe0.
-The interface is currently in the
-.Em establish
-phase and tries to connect to the remote peer,
-other possible PPP phases are
-.Em dead ,
-.Em authenticate ,
-.Em network ,
-or
-.Em terminate .
-Both ends of the connection use the CHAP protocol, the local client
-tells the remote peer the system name
-.Ql uriah ,
-and the peer is expected to authenticate by the name
-.Ql ifb-gw .
-Once the initial CHAP handshake was successful, no further CHAP
-challenges will be transmitted.
-There are supposedly some known CHAP secrets for both ends of the link
-which are not displayed.
-.Bd -literal -offset indent
-$ ifconfig pppoe0                                                              
-pppoe0: flags=8851<UP,POINTOPOINT,RUNNING,SIMPLEX,MULTICAST> mtu 1492
-        dev: em0 state: PADI sent
-        sid: 0x0 PADI retries: 0 PADR retries: 0
-        sppp: phase establish authproto chap authname "uriah" \e
-		peerproto chap peername "ifb-gw" norechallenge 
-        groups: pppoe
-        inet 0.0.0.0 --> 0.0.0.1 netmask 0xffffffff 
-.Ed
-.Pp
-A possible call to
-.Xr ifconfig 8
-that could have been used to bring the interface into the state shown
-by the previous example:
-.Bd -literal -offset indent
-# ifconfig pppoe0 0.0.0.0 0.0.0.1 netmask 0xffffffff \e
-	pppoedev em0 \e
-	authproto chap authname uriah authkey "some secret" \e
-	peerproto chap peername "ifb-gw" peerkey "another" \e
-	peerflag norechallenge \e
-	up
-.Ed
 .Sh SEE ALSO
 .Xr inet 4 ,
+.Xr pppoe 4 ,
 .Xr ifconfig 8 ,
-.Xr ppp 8 ,
-.Xr pppoe 4
+.Xr ppp 8
 .Rs
 .%A W. Simpson, Editor
 .%T "The Point-to-Point Protocol (PPP)"
@@ -248,7 +248,7 @@ implemented
 .Nm
 support for
 .Xr ifconfig 8
-in 
+in
 .Ox 4.0
 in order to remove the original
 .Ql spppcontrol
