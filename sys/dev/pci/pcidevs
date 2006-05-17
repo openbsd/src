@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1067 2006/05/10 17:08:59 mickey Exp $
+$OpenBSD: pcidevs,v 1.1068 2006/05/17 19:53:07 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2264,8 +2264,8 @@ product NEOMAGIC NM256AV	0x8005	MagicMedia 256AV
 product NEOMAGIC NM256ZX	0x8006	MagicMedia 256ZX
 
 /* Neterion products */
-product NETERION XFRAME		0x5831	Xframe 10GbE
-product NETERION XFRAME_2	0x5832	Xframe-II 10GbE
+product NETERION XFRAME		0x5831	Xframe
+product NETERION XFRAME_2	0x5832	Xframe-II
 
 /* Netgear products */
 product NETGEAR MA301		0x4100	MA301
