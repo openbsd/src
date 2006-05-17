@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.7 2006/05/16 21:56:21 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.8 2006/05/17 19:51:51 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -106,12 +106,11 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t		csr;
 	uint32_t		subsysid, i;
 
-	printf(": ");
 	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++)
 		if (mfi_pci_devices[i].mpd_subvendor == PCI_VENDOR(subsysid) &&
 		    mfi_pci_devices[i].mpd_subproduct == PCI_PRODUCT(subsysid)){
-				printf("%s ", mfi_pci_devices[i].mpd_model);
+				printf(", %s", mfi_pci_devices[i].mpd_model);
 				break;
 		}
 
@@ -119,14 +118,14 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, MFI_BAR, csr, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &size, MFI_PCI_MEMSIZE)) {
-		printf("can't map controller pci space\n");
+		printf(": can't map controller pci space\n");
 		return;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("can't map interrupt\n");
+		printf(": can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
 	}
@@ -134,7 +133,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
-		printf("can't establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -142,7 +141,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("%s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	if (mfi_attach(sc)) {
 		printf("%s: can't attach", DEVNAME(sc));
