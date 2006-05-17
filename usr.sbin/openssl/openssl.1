@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.53 2006/05/14 08:56:25 matthieu Exp $
+.\" $OpenBSD: openssl.1,v 1.54 2006/05/17 08:55:03 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -4244,8 +4244,8 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .Sh RAND
 .Cm openssl rand
 .Op Fl base64
-.Op Fl engine Ar id
 .Op Fl hex
+.Op Fl engine Ar id
 .Op Fl out Ar file
 .Op Fl rand Ar file ...
 .Ar num
