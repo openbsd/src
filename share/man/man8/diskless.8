@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.24 2004/12/20 22:12:43 jsg Exp $
+.\"	$OpenBSD: diskless.8,v 1.25 2006/05/17 21:05:54 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -48,12 +48,12 @@ configuring a server for diskless Sun clients.
 When booting a system over the network, there are three
 phases of interaction between client and server:
 .Pp
-.Bl -tag -width 1.2 -compact
-.It 1.
+.Bl -enum -compact
+.It
 The PROM (or stage-1 bootstrap) loads a boot program.
-.It 2.
+.It
 The boot program loads a kernel.
-.It 3.
+.It
 The kernel does NFS mounts for root and swap.
 .El
 .Pp
@@ -148,8 +148,8 @@ might be configured -- other clients should be similar.
 .Pp
 Assuming the client's hostname is to be
 "myclient",
-.Bl -tag -width 2.1
-.It 1.
+.Bl -enum
+.It
 Add an entry to
 .Pa /etc/ethers
 corresponding to the client's Ethernet address:
@@ -160,7 +160,7 @@ corresponding to the client's Ethernet address:
 This will be used by
 .Xr rarpd 8 .
 .Pp
-.It 2.
+.It
 Assign an IP address for myclient in your
 .Pa /etc/hosts
 or DNS database:
@@ -168,7 +168,7 @@ or DNS database:
 192.197.96.12           myclient
 .Ed
 .Pp
-.It 3.
+.It
 If booting a Sun or Motorola client, ensure that
 .Pa /etc/inetd.conf
 is configured to run
@@ -188,7 +188,7 @@ See the
 .Xr rbootd 8
 manual page for more information.
 .Pp
-.It 4.
+.It
 If booting a Sun or Motorola client, install a copy of the
 appropriate diskless boot loader (such as
 .Pa boot.net
@@ -224,7 +224,7 @@ before installation)
 is installed in the directory
 .Pa /usr/mdec/rbootd .
 .Pp
-.It 5.
+.It
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
 .Bd -literal -offset indent
@@ -237,7 +237,7 @@ Some require fully qualified hostnames or partially qualified hostnames
 (which can be solved by having both fully and partially qualified entries).
 Other servers are case sensitive.
 .Pp
-.It 6.
+.It
 Build the swap file for myclient:
 .Bd -literal -offset indent
 # mkdir /export/myclient
@@ -247,7 +247,7 @@ Build the swap file for myclient:
 .Pp
 This creates a 120 Megabyte swap file.
 .Pp
-.It 7.
+.It
 Populate myclient's
 .Pa /
 filesystem on the server.
@@ -258,7 +258,7 @@ It can be as simple as copying and modifying the server's root
 filesystem, or perhaps you need to get those files out of the
 standard binary distribution.
 .Pp
-.It 8.
+.It
 Export the required filesystems in
 .Pa /etc/exports :
 .Bd -literal -offset indent
@@ -288,7 +288,7 @@ lines:
 /export/myclient -rw=myclient,root=myclient
 .Ed
 .Pp
-.It 9.
+.It
 Copy and customize at least the following files in
 .Pa /export/myclient/root :
 .Bd -literal -offset indent
@@ -302,7 +302,7 @@ Copy and customize at least the following files in
 Note that "le0" above should be replaced with the name of
 the network interface that the client will use for booting.
 .Pp
-.It 10.
+.It
 Correct the critical mount points in the client's
 .Pa /etc/fstab
 (which will be
