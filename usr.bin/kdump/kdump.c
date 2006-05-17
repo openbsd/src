@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.36 2006/05/11 12:26:42 jmc Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.37 2006/05/17 02:12:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static const char rcsid[] = "$OpenBSD: kdump.c,v 1.36 2006/05/11 12:26:42 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: kdump.c,v 1.37 2006/05/17 02:12:17 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -153,12 +153,12 @@ static char *ptrace_ops[] = {
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
 };
 
-static int fread_tail(void *, int, int);
+static int fread_tail(void *, size_t, size_t);
 static void dumpheader(struct ktr_header *);
 static void ktrcsw(struct ktr_csw *);
-static void ktremul(char *, int);
-static void ktrgenio(struct ktr_genio *, int);
-static void ktrnamei(const char *, int);
+static void ktremul(char *, size_t);
+static void ktrgenio(struct ktr_genio *, size_t);
+static void ktrnamei(const char *, size_t);
 static void ktrpsig(struct ktr_psig *);
 static void ktrsyscall(struct ktr_syscall *);
 static void ktrsysret(struct ktr_sysret *);
@@ -168,7 +168,8 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, ktrlen, size, silent;
+	int ch, silent;
+	size_t ktrlen, size;
 	int trpoints = ALL_POINTS;
 	void *m;
 
@@ -220,9 +221,9 @@ main(int argc, char *argv[])
 	if (argc > optind)
 		usage();
 
-	m = (void *)malloc(size = 1025);
+	m = malloc(size = 1025);
 	if (m == NULL)
-		errx(1, "%s", strerror(ENOMEM));
+		err(1, NULL);
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
 	while (fread_tail(&ktr_header, sizeof(struct ktr_header), 1)) {
@@ -231,14 +232,13 @@ main(int argc, char *argv[])
 			silent = 1;
 		if (silent == 0 && trpoints & (1<<ktr_header.ktr_type))
 			dumpheader(&ktr_header);
-		if ((ktrlen = ktr_header.ktr_len) < 0)
-			errx(1, "bogus length 0x%x", ktrlen);
+		ktrlen = ktr_header.ktr_len;
 		if (ktrlen > size) {
 			void *newm;
 
 			newm = realloc(m, ktrlen+1);
 			if (newm == NULL)
-				errx(1, "%s", strerror(ENOMEM));
+				err(1, NULL);
 			m = newm;
 			size = ktrlen;
 		}
@@ -278,7 +278,7 @@ main(int argc, char *argv[])
 }
 
 static int
-fread_tail(void *buf, int size, int num)
+fread_tail(void *buf, size_t size, size_t num)
 {
 	int i;
 
@@ -495,13 +495,13 @@ ktrsysret(struct ktr_sysret *ktr)
 }
 
 static void
-ktrnamei(const char *cp, int len)
+ktrnamei(const char *cp, size_t len)
 {
-	(void)printf("\"%.*s\"\n", len, cp);
+	(void)printf("\"%.*s\"\n", (int)len, cp);
 }
 
 static void
-ktremul(char *cp, int len)
+ktremul(char *cp, size_t len)
 {
 	char name[1024];
 
@@ -516,10 +516,11 @@ ktremul(char *cp, int len)
 }
 
 static void
-ktrgenio(struct ktr_genio *ktr, int len)
+ktrgenio(struct ktr_genio *ktr, size_t len)
 {
-	unsigned char *dp = (unsigned char *)ktr + sizeof (struct ktr_genio);
-	int i, j, datalen = len - sizeof (struct ktr_genio);
+	unsigned char *dp = (unsigned char *)ktr + sizeof(struct ktr_genio);
+	int i, j;
+	size_t datalen = len - sizeof(struct ktr_genio);
 	static int screenwidth = 0;
 	int col = 0, width, bpl;
 	unsigned char visbuf[5], *cp, c;
@@ -533,7 +534,7 @@ ktrgenio(struct ktr_genio *ktr, int len)
 		else
 			screenwidth = 80;
 	}
-	printf("fd %d %s %d bytes\n", ktr->ktr_fd,
+	printf("fd %d %s %zu bytes\n", ktr->ktr_fd,
 		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
 	if (maxdata && datalen > maxdata)
 		datalen = maxdata;
