@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.511 2006/03/14 11:09:42 djm Exp $ */
+/*	$OpenBSD: pf.c,v 1.512 2006/05/17 14:50:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1308,6 +1308,8 @@ pf_addr_wrap_neq(struct pf_addr_wrap *aw1, struct pf_addr_wrap *aw2)
 		return (0);
 	case PF_ADDR_TABLE:
 		return (aw1->p.tbl != aw2->p.tbl);
+	case PF_ADDR_RTLABEL:
+		return (aw1->v.rtlabel != aw2->v.rtlabel);
 	default:
 		printf("invalid address type: %d\n", aw1->type);
 		return (1);
