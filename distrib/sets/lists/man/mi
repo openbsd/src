@@ -2423,7 +2423,6 @@
 ./usr/share/man/cat8/sparc64/kbd.0
 ./usr/share/man/cat8/sparc64/wsconscfg.0
 ./usr/share/man/cat8/sparc64/wsconsctl.0
-./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/ssh-keysign.0

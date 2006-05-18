@@ -1887,7 +1887,6 @@
 ./usr/sbin/snkadm
 ./usr/sbin/snkinit
 ./usr/sbin/spamdb
-./usr/sbin/spppcontrol
 ./usr/sbin/spray
 ./usr/sbin/sshd
 ./usr/sbin/stdethers
