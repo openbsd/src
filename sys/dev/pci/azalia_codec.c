@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.7 2006/05/18 03:23:23 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.8 2006/05/18 03:34:50 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -57,7 +57,9 @@ int	alc260_init_widget(const codec_t *, widget_t *, nid_t);
 int	alc880_init_dacgroup(codec_t *);
 int	alc882_init_dacgroup(codec_t *);
 int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
+#if 0
 int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
+#endif
 int	stac9221_init_dacgroup(codec_t *);
 
 
@@ -79,11 +81,13 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
 		this->init_dacgroup = alc882_init_dacgroup;
 		this->init_widget = alc882_init_widget;
 		break;
+#if 0
 	case 0x11d41981:
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
 		this->name = "Analog Devices AD1981HD";
 		this->init_widget = ad1981hd_init_widget;
 		break;
+#endif
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = stac9221_init_dacgroup;
@@ -423,6 +427,7 @@ alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
+#if 0
 int
 ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
@@ -460,6 +465,7 @@ ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	}
 	return 0;
 }
+#endif
 
 /* ----------------------------------------------------------------
  * Sigmatel STAC9221 and STAC9221D
