@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.12 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.13 2006/05/18 21:27:25 miod Exp $	*/
 
 /*-
  *
@@ -305,7 +305,7 @@ ipx_setpeeraddr(ipxp, nam)
  * Pass some notification to all connections of a protocol
  * associated with address dst.  Call the
  * protocol specific routine to handle each connection.
- * Also pass an extra paramter via the ipxpcb. (which may in fact
+ * Also pass an extra parameter via the ipxpcb. (which may in fact
  * be a parameter list!)
  */
 void

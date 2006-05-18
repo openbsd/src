@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.34 2005/12/13 10:33:14 jsg Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.35 2006/05/18 21:27:24 miod Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -322,7 +322,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 
 		PHOLD(t);
-		/* If the address paramter is not (int *)1, set the pc. */
+		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
 				goto relebad;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.54 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.55 2006/05/18 21:27:25 miod Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -713,7 +713,7 @@ ssioctl(dev, cmd, addr, flag, p)
 			if (error)
 				return (error);
 		} else {
-			/* XXX add routine to validate paramters */
+			/* XXX add routine to validate parameters */
 			ss_set_window(ss, sio);
 		}
 		break;

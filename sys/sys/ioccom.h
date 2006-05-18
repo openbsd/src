@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioccom.h,v 1.3 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: ioccom.h,v 1.4 2006/05/18 21:27:25 miod Exp $	*/
 /*	$NetBSD: ioccom.h,v 1.4 1994/10/30 21:49:56 cgd Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	IOC_OUT		(unsigned long)0x40000000
 				/* copy parameters in */
 #define	IOC_IN		(unsigned long)0x80000000
-				/* copy paramters in and out */
+				/* copy parameters in and out */
 #define	IOC_INOUT	(IOC_IN|IOC_OUT)
 				/* mask for IN/OUT/VOID */
 #define	IOC_DIRMASK	(unsigned long)0xe0000000

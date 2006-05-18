@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.12 2005/05/28 04:53:47 millert Exp $
+#	$OpenBSD: th,v 1.13 2006/05/18 21:27:23 miod Exp $
 
 
 #
@@ -909,7 +909,7 @@ read_test
 		    #
 		    if ($val !~ /^[ \t]*(\S+)[ \t]+(\S+)[ \t]+([^ \t].*)/) {
 			print STDERR
-		    "$prog:$file:$.: bad paramter line for file-setup field\n";
+		    "$prog:$file:$.: bad parameter line for file-setup field\n";
 			return undef;
 		    }
 		    ($type, $perm, $rest) = ($1, $2, $3);
@@ -947,7 +947,7 @@ read_test
 		    #
 		    if ($val !~ /^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S.*)/) {
 			print STDERR
-		    "$prog:$file:$.: bad paramter line for file-result field\n";
+		    "$prog:$file:$.: bad parameter line for file-result field\n";
 			return undef;
 		    }
 		    ($type, $perm, $uid, $gid, $matchType, $rest)

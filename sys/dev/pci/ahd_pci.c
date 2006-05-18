@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.12 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.13 2006/05/18 21:27:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1129,7 +1129,7 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 			  |  AHD_FAINT_LED_BUG;
 
 		/*
-		 * IO Cell paramter setup.
+		 * IO Cell parameter setup.
 		 */
 		AHD_SET_PRECOMP(ahd, AHD_PRECOMP_CUTBACK_29);
 
@@ -1150,7 +1150,7 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 			ahd->bugs |= AHD_INTCOLLISION_BUG|AHD_ABORT_LQI_BUG;
 
 		/*
-		 * IO Cell paramter setup.
+		 * IO Cell parameter setup.
 		 */
 		AHD_SET_PRECOMP(ahd, AHD_PRECOMP_CUTBACK_29);
 		AHD_SET_SLEWRATE(ahd, AHD_SLEWRATE_DEF_REVB);
