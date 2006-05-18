@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtvid.c,v 1.4 2006/05/16 22:52:26 miod Exp $ */
+/*	$OpenBSD: prtvid.c,v 1.5 2006/05/18 06:11:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -17,10 +17,14 @@
  */
 
 #include <stdio.h>
-#define __DBINTERFACE_PRIVATE
-#include <db.h>
+#include <stdlib.h>
+
 #include "vid.h"
 
+void	swabcfg(struct cfg *);
+void	swabvid(struct vid *);
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -35,23 +39,23 @@ main(argc, argv)
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabvid(pvid);
 
-	printf("vid_id		%s	%x\n", pvid->vid_id,
+	printf("vid_id		%s	%lx\n", pvid->vid_id,
 	    (char *)&(pvid->vid_id[4]) - (char *)pvid);
-	printf("vid_oss		%x	%x\n", pvid->vid_oss,
+	printf("vid_oss		%x	%lx\n", pvid->vid_oss,
 	    (char *)&(pvid->vid_oss) - (char *)pvid);
-	printf("vid_osl		%x	%x\n", pvid->vid_osl,
+	printf("vid_osl		%x	%lx\n", pvid->vid_osl,
 	    (char *)&(pvid->vid_osl) - (char *)pvid);
-	printf("vid_osa_u	%x	%x\n", pvid->vid_osa_u,
+	printf("vid_osa_u	%x	%lx\n", pvid->vid_osa_u,
 	    (char *)&(pvid->vid_osa_u) - (char *)pvid);
-	printf("vid_osa_l	%x	%x\n", pvid->vid_osa_l,
+	printf("vid_osa_l	%x	%lx\n", pvid->vid_osa_l,
 	    (char *)&(pvid->vid_osa_l) - (char *)pvid);
-	printf("vid_vd 		%x	%x\n", pvid->vid_vd,
+	printf("vid_vd 		%s	%lx\n", pvid->vid_vd,
 	    (char *)&(pvid->vid_vd) - (char *)pvid);
-	printf("vid_cas		%x	%x\n", pvid->vid_cas,
+	printf("vid_cas		%x	%lx\n", pvid->vid_cas,
 	    (char *)&(pvid->vid_cas) - (char *)pvid);
-	printf("vid_cal		%x	%x\n", pvid->vid_cal,
+	printf("vid_cal		%x	%lx\n", pvid->vid_cal,
 	    (char *)&(pvid->vid_cal) - (char *)pvid);
-	printf("vid_moto	%s	%x\n", pvid->vid_mot,
+	printf("vid_moto	%s	%lx\n", pvid->vid_mot,
 	    (char *)&(pvid->vid_mot[0]) - (char *)pvid);
 
 	free(pvid);
@@ -63,88 +67,92 @@ main(argc, argv)
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabcfg(pcfg);
 
-	printf("cfg_atm		%x	%x\n", pcfg->cfg_atm,
+	printf("cfg_atm		%x	%lx\n", pcfg->cfg_atm,
 	    (char *)&(pcfg->cfg_atm) - (char *)(pcfg));
-	printf("cfg_prm		%x	%x\n", pcfg->cfg_prm,
+	printf("cfg_prm		%x	%lx\n", pcfg->cfg_prm,
 	    (char *)&(pcfg->cfg_prm) - (char *)(pcfg));
-	printf("cfg_atw		%x	%x\n", pcfg->cfg_atw,
+	printf("cfg_atw		%x	%lx\n", pcfg->cfg_atw,
 	    (char *)&(pcfg->cfg_atw) - (char *)(pcfg));
-	printf("cfg_rec		%x	%x\n",(long)pcfg->cfg_rec,
+	printf("cfg_rec		%x	%lx\n",(int)pcfg->cfg_rec,
 	    (char *)&(pcfg->cfg_rec) - (char *)(pcfg));
-	printf("cfg_spt		%x	%x\n", pcfg->cfg_spt,
+	printf("cfg_spt		%x	%lx\n", pcfg->cfg_spt,
 	    (char *)&(pcfg->cfg_spt) - (char *)(pcfg));
-	printf("cfg_hds		%x	%x\n", pcfg->cfg_hds,
+	printf("cfg_hds		%x	%lx\n", pcfg->cfg_hds,
 	    (char *)&(pcfg->cfg_hds) - (char *)(pcfg));
-	printf("cfg_trk		%x	%x\n", pcfg->cfg_trk,
+	printf("cfg_trk		%x	%lx\n", pcfg->cfg_trk,
 	    (char *)&(pcfg->cfg_trk) - (char *)(pcfg));
-	printf("cfg_ilv		%x	%x\n", pcfg->cfg_ilv,
+	printf("cfg_ilv		%x	%lx\n", pcfg->cfg_ilv,
 	    (char *)&(pcfg->cfg_ilv) - (char *)(pcfg));
-	printf("cfg_sof		%x	%x\n", pcfg->cfg_sof,
+	printf("cfg_sof		%x	%lx\n", pcfg->cfg_sof,
 	    (char *)&(pcfg->cfg_sof) - (char *)(pcfg));
-	printf("cfg_psm		%x	%x\n", pcfg->cfg_psm,
+	printf("cfg_psm		%x	%lx\n", pcfg->cfg_psm,
 	    (char *)&(pcfg->cfg_psm) - (char *)(pcfg));
-	printf("cfg_shd		%x	%x\n", pcfg->cfg_shd,
+	printf("cfg_shd		%x	%lx\n", pcfg->cfg_shd,
 	    (char *)&(pcfg->cfg_shd) - (char *)(pcfg));
-	printf("cfg_pcom	%x	%x\n", pcfg->cfg_pcom,
+	printf("cfg_pcom	%x	%lx\n", pcfg->cfg_pcom,
 	    (char *)&(pcfg->cfg_pcom) - (char *)(pcfg));
-	printf("cfg_ssr 	%x	%x\n", pcfg->cfg_ssr,
+	printf("cfg_ssr 	%x	%lx\n", pcfg->cfg_ssr,
 	    (char *)&(pcfg->cfg_ssr) - (char *)(pcfg));
-	printf("cfg_rwcc	%x	%x\n", pcfg->cfg_rwcc,
+	printf("cfg_rwcc	%x	%lx\n", pcfg->cfg_rwcc,
 	    (char *)&(pcfg->cfg_rwcc) - (char *)(pcfg));
-	printf("cfg_ecc 	%x	%x\n", pcfg->cfg_ecc,
+	printf("cfg_ecc 	%x	%lx\n", pcfg->cfg_ecc,
 	    (char *)&(pcfg->cfg_ecc) - (char *)(pcfg));
-	printf("cfg_eatm	%x	%x\n", pcfg->cfg_eatm,
+	printf("cfg_eatm	%x	%lx\n", pcfg->cfg_eatm,
 	    (char *)&(pcfg->cfg_eatm) - (char *)(pcfg));
-	printf("cfg_eprm	%x	%x\n", pcfg->cfg_eprm,
+	printf("cfg_eprm	%x	%lx\n", pcfg->cfg_eprm,
 	    (char *)&(pcfg->cfg_eprm) - (char *)(pcfg));
-	printf("cfg_eatw	%x	%x\n", pcfg->cfg_eatw,
+	printf("cfg_eatw	%x	%lx\n", pcfg->cfg_eatw,
 	    (char *)&(pcfg->cfg_eatw) - (char *)(pcfg));
-	printf("cfg_gpb1	%x	%x\n", pcfg->cfg_gpb1,
+	printf("cfg_gpb1	%x	%lx\n", pcfg->cfg_gpb1,
 	    (char *)&(pcfg->cfg_gpb1) - (char *)(pcfg));
-	printf("cfg_gpb2	%x	%x\n", pcfg->cfg_gpb2,
+	printf("cfg_gpb2	%x	%lx\n", pcfg->cfg_gpb2,
 	    (char *)&(pcfg->cfg_gpb2) - (char *)(pcfg));
-	printf("cfg_gpb3	%x	%x\n", pcfg->cfg_gpb3,
+	printf("cfg_gpb3	%x	%lx\n", pcfg->cfg_gpb3,
 	    (char *)&(pcfg->cfg_gpb3) - (char *)(pcfg));
-	printf("cfg_gpb4	%x	%x\n", pcfg->cfg_gpb4,
+	printf("cfg_gpb4	%x	%lx\n", pcfg->cfg_gpb4,
 	    (char *)&(pcfg->cfg_gpb4) - (char *)(pcfg));
-	printf("cfg_ssc		%x	%x\n", pcfg->cfg_ssc,
+	printf("cfg_ssc		%x	%lx\n", pcfg->cfg_ssc,
 	    (char *)&(pcfg->cfg_ssc) - (char *)(pcfg));
-	printf("cfg_runit	%x	%x\n", pcfg->cfg_runit,
+	printf("cfg_runit	%x	%lx\n", pcfg->cfg_runit,
 	    (char *)&(pcfg->cfg_runit) - (char *)(pcfg));
-	printf("cfg_rsvc1	%x	%x\n", pcfg->cfg_rsvc1,
+	printf("cfg_rsvc1	%x	%lx\n", pcfg->cfg_rsvc1,
 	    (char *)&(pcfg->cfg_rsvc1) - (char *)(pcfg));
-	printf("cfg_rsvc2	%x	%x\n", pcfg->cfg_rsvc2,
+	printf("cfg_rsvc2	%x	%lx\n", pcfg->cfg_rsvc2,
 	    (char *)&(pcfg->cfg_rsvc2) - (char *)(pcfg));
+
+	return (0);
 }
 
+void
 swabvid(pvid)
 	struct vid *pvid;
 {
-	M_32_SWAP(pvid->vid_oss);
-	M_16_SWAP(pvid->vid_osl);
-	M_16_SWAP(pvid->vid_osa_u);
-	M_16_SWAP(pvid->vid_osa_l);
-	M_32_SWAP(pvid->vid_cas);
+	swap32(pvid->vid_oss);
+	swap16(pvid->vid_osl);
+	swap16(pvid->vid_osa_u);
+	swap16(pvid->vid_osa_l);
+	swap32(pvid->vid_cas);
 }
 
+void
 swabcfg(pcfg)
 	struct cfg *pcfg;
 {
 	printf("swapping cfg\n");
 
-	M_16_SWAP(pcfg->cfg_atm);
-	M_16_SWAP(pcfg->cfg_prm);
-	M_16_SWAP(pcfg->cfg_atm);
-	M_16_SWAP(pcfg->cfg_rec);
-	M_16_SWAP(pcfg->cfg_trk);
-	M_16_SWAP(pcfg->cfg_psm);
-	M_16_SWAP(pcfg->cfg_shd);
-	M_16_SWAP(pcfg->cfg_pcom);
-	M_16_SWAP(pcfg->cfg_rwcc);
-	M_16_SWAP(pcfg->cfg_ecc);
-	M_16_SWAP(pcfg->cfg_eatm);
-	M_16_SWAP(pcfg->cfg_eprm);
-	M_16_SWAP(pcfg->cfg_eatw);
-	M_16_SWAP(pcfg->cfg_rsvc1);
-	M_16_SWAP(pcfg->cfg_rsvc2);
+	swap16(pcfg->cfg_atm);
+	swap16(pcfg->cfg_prm);
+	swap16(pcfg->cfg_atm);
+	swap16(pcfg->cfg_rec);
+	swap16(pcfg->cfg_trk);
+	swap16(pcfg->cfg_psm);
+	swap16(pcfg->cfg_shd);
+	swap16(pcfg->cfg_pcom);
+	swap16(pcfg->cfg_rwcc);
+	swap16(pcfg->cfg_ecc);
+	swap16(pcfg->cfg_eatm);
+	swap16(pcfg->cfg_eprm);
+	swap16(pcfg->cfg_eatw);
+	swap16(pcfg->cfg_rsvc1);
+	swap16(pcfg->cfg_rsvc2);
 }
