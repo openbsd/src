@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.39 2006/05/18 17:25:02 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.40 2006/05/18 17:34:23 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -754,13 +754,11 @@ mfi_intr(void *arg)
 	struct mfi_ccb		*ccb;
 	uint32_t		status, producer, consumer, ctx;
 	int			claimed = 0;
-	int			s;
 
 	status = mfi_read(sc, MFI_OSTS);
 	if ((status & MFI_OSTS_INTR_VALID) == 0)
 		return (claimed);
 	/* write status back to acknowledge interrupt */
-	s = splbio();
 	mfi_write(sc, MFI_OSTS, status);
 
 	DNPRINTF(MFI_D_INTR, "%s: mfi_intr %#x %#x\n", DEVNAME(sc), sc, pcq);
@@ -793,7 +791,6 @@ mfi_intr(void *arg)
 	}
 
 	pcq->mpc_consumer = consumer;
-	splx(s);
 
 	return (claimed);
 }
