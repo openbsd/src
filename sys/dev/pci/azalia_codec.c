@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.6 2006/05/11 05:12:46 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.7 2006/05/18 03:23:23 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -48,17 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.3 2005/09/29 04:14:03 kent Exp $"
 #include <dev/pci/azalia.h>
 
 
-static int	azalia_codec_init_dacgroup(codec_t *);
-static int	azalia_codec_add_dacgroup(codec_t *, int, uint32_t);
-static int	azalia_codec_find_pin(const codec_t *, int, int, uint32_t);
-static int	azalia_codec_find_dac(const codec_t *, int, int);
-static int	alc260_init_dacgroup(codec_t *);
-static int	alc260_init_widget(const codec_t *, widget_t *, nid_t);
-static int	alc880_init_dacgroup(codec_t *);
-static int	alc882_init_dacgroup(codec_t *);
-static int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
-static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
-static int	stac9221_init_dacgroup(codec_t *);
+int	azalia_codec_init_dacgroup(codec_t *);
+int	azalia_codec_add_dacgroup(codec_t *, int, uint32_t);
+int	azalia_codec_find_pin(const codec_t *, int, int, uint32_t);
+int	azalia_codec_find_dac(const codec_t *, int, int);
+int	alc260_init_dacgroup(codec_t *);
+int	alc260_init_widget(const codec_t *, widget_t *, nid_t);
+int	alc880_init_dacgroup(codec_t *);
+int	alc882_init_dacgroup(codec_t *);
+int	alc882_init_widget(const codec_t *, widget_t *, nid_t);
+int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
+int	stac9221_init_dacgroup(codec_t *);
 
 
 int
@@ -103,7 +103,7 @@ azalia_codec_init_vtbl(codec_t *this, uint32_t vid)
  * functions for generic codecs
  * ---------------------------------------------------------------- */
 
-static int
+int
 azalia_codec_init_dacgroup(codec_t *this)
 {
 	int i, j, assoc, group;
@@ -161,7 +161,7 @@ azalia_codec_init_dacgroup(codec_t *this)
 	return 0;
 }
 
-static int
+int
 azalia_codec_add_dacgroup(codec_t *this, int assoc, uint32_t digital)
 {
 	int i, j, n, dac, seq;
@@ -206,7 +206,7 @@ azalia_codec_add_dacgroup(codec_t *this, int assoc, uint32_t digital)
 	return 0;
 }
 
-static int
+int
 azalia_codec_find_pin(const codec_t *this, int assoc, int seq, uint32_t digital)
 {
 	int i;
@@ -227,7 +227,7 @@ azalia_codec_find_pin(const codec_t *this, int assoc, int seq, uint32_t digital)
 	return -1;
 }
 
-static int
+int
 azalia_codec_find_dac(const codec_t *this, int index, int depth)
 {
 	const widget_t *w;
@@ -267,7 +267,7 @@ azalia_codec_find_dac(const codec_t *this, int index, int depth)
  * Realtek ALC260
  * ---------------------------------------------------------------- */
 
-static int
+int
 alc260_init_dacgroup(codec_t *this)
 {
 	static const convgroup_t dacs[2] = {
@@ -285,7 +285,7 @@ alc260_init_dacgroup(codec_t *this)
 	return 0;
 }
 
-static int
+int
 alc260_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
 	switch (nid) {
@@ -337,7 +337,7 @@ alc260_init_widget(const codec_t *this, widget_t *w, nid_t nid)
  * Realtek ALC880
  * ---------------------------------------------------------------- */
 
-static int
+int
 alc880_init_dacgroup(codec_t *this)
 {
 	static const convgroup_t dacs[2] = {
@@ -359,7 +359,7 @@ alc880_init_dacgroup(codec_t *this)
  * Realtek ALC882
  * ---------------------------------------------------------------- */
 
-static int
+int
 alc882_init_dacgroup(codec_t *this)
 {
 	static const convgroup_t dacs[3] = {
@@ -380,7 +380,7 @@ alc882_init_dacgroup(codec_t *this)
 	return 0;
 }
 
-static int
+int
 alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
 	switch (nid) {
@@ -423,7 +423,7 @@ alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
-static int
+int
 ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
 	switch (nid) {
@@ -465,7 +465,7 @@ ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
  * Sigmatel STAC9221 and STAC9221D
  * ---------------------------------------------------------------- */
 
-static int
+int
 stac9221_init_dacgroup(codec_t *this)
 {
 	static const convgroup_t dacs[3] = {
