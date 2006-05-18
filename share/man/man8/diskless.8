@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.30 2006/05/17 21:38:44 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.31 2006/05/18 09:03:03 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -199,6 +199,12 @@ For example:
 .Bd -literal -offset indent
 # cd /tftpboot
 # ln -s boot.net C0C5600C.SUN4
+.Ed
+.Pp
+The following example converts an IP address to hex:
+.Bd -literal -offset indent
+$ echo 192.197.96.12 | awk -F . \e
+	'{ printf "0x%02x%02x%02x%02x\n", $1, $2, $3 ,$4 }'
 .Ed
 .Pp
 Some architectures, such as the Sun3 and Ultrasparc machines, do not append the
