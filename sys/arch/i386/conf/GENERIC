@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.492 2006/05/14 19:15:13 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.493 2006/05/18 03:42:09 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -545,7 +545,7 @@ auich*	at pci? flags 0x0000		# i82801 ICH AC'97 audio
 auixp*	at pci?				# ATI IXP AC'97 Audio
 autri*	at pci? flags 0x0000		# Trident 4D WAVE
 auvia*	at pci?				# VIA VT82C686A
-#azalia*	at pci?				# High Definition Audio
+azalia*	at pci?				# High Definition Audio
 clcs*	at pci?				# CS4280 CrystalClear audio
 clct*	at pci?				# CS4281 CrystalClear audio
 fms*	at pci?				# Forte Media FM801
@@ -602,7 +602,7 @@ audio*	at auich?
 audio*	at auixp?
 audio*	at autri?
 audio*	at auvia?
-#audio*	at azalia?
+audio*	at azalia?
 audio*	at fms?
 audio*	at maestro?
 audio*	at esa?
