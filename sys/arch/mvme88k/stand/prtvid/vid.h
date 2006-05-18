@@ -1,4 +1,4 @@
-/*	$OpenBSD: vid.h,v 1.7 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: vid.h,v 1.1 2006/05/18 06:10:07 miod Exp $	*/
 
 #ifndef __MACHINE_VID_H__
 #define __MACHINE_VID_H__
