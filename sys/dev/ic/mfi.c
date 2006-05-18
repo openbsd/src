@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.38 2006/05/17 23:40:26 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.39 2006/05/18 17:25:02 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -89,9 +89,8 @@ int		mfi_create_sgl(struct mfi_ccb *, int);
 /* LD commands */
 int		mfi_scsi_io(struct mfi_ccb *, struct scsi_xfer *, uint32_t,
 		    uint32_t);
-void		mfi_scsi_io_done(struct mfi_ccb *);
+void		mfi_scsi_xs_done(struct mfi_ccb *);
 int		mfi_scsi_ld(struct mfi_ccb *, struct scsi_xfer *);
-void		mfi_scsi_ld_done(struct mfi_ccb *);
 
 #if NBIO > 0
 int		mfi_ioctl(struct device *, u_long, caddr_t);
@@ -755,11 +754,13 @@ mfi_intr(void *arg)
 	struct mfi_ccb		*ccb;
 	uint32_t		status, producer, consumer, ctx;
 	int			claimed = 0;
+	int			s;
 
 	status = mfi_read(sc, MFI_OSTS);
 	if ((status & MFI_OSTS_INTR_VALID) == 0)
 		return (claimed);
 	/* write status back to acknowledge interrupt */
+	s = splbio();
 	mfi_write(sc, MFI_OSTS, status);
 
 	DNPRINTF(MFI_D_INTR, "%s: mfi_intr %#x %#x\n", DEVNAME(sc), sc, pcq);
@@ -792,48 +793,9 @@ mfi_intr(void *arg)
 	}
 
 	pcq->mpc_consumer = consumer;
+	splx(s);
 
 	return (claimed);
-}
-
-void
-mfi_scsi_io_done(struct mfi_ccb *ccb)
-{
-	struct scsi_xfer	*xs = ccb->ccb_xs;
-	struct mfi_softc	*sc = ccb->ccb_sc;
-	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
-
-	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io_done %#x\n", DEVNAME(sc), ccb);
-
-	if (xs->data != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize,
-		    (xs->flags & SCSI_DATA_IN) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
-	}
-
-	if (hdr->mfh_cmd_status == MFI_STAT_OK)
-		xs->error = XS_DRIVER_STUFFUP;
-	else if (hdr->mfh_scsi_status != 0) {
-		bzero(&xs->sense, sizeof(xs->sense));
-		memcpy(&xs->sense, ccb->ccb_sense,
-		    sizeof(struct scsi_sense_data));
-#if 0
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-		xs->sense.add_sense_code = 0x20; /* invalid opcode */
-#endif
-		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
-	}
-
-	xs->resid = 0;
-	xs->flags |= ITSDONE;
-
-	mfi_put_ccb(ccb);
-	scsi_done(xs);
 }
 
 int
@@ -867,7 +829,7 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint32_t blockno,
 	io->mif_sense_addr_lo = htole32(ccb->ccb_psense);
 	io->mif_sense_addr_hi = 0;
 
-	ccb->ccb_done = mfi_scsi_io_done;
+	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_xs = xs;
 	ccb->ccb_frame_size = MFI_IO_FRAME_SIZE;
 	ccb->ccb_sgl = &io->mif_sgl;
@@ -882,15 +844,18 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint32_t blockno,
 }
 
 void
-mfi_scsi_ld_done(struct mfi_ccb *ccb)
+mfi_scsi_xs_done(struct mfi_ccb *ccb)
 {
 	struct scsi_xfer	*xs = ccb->ccb_xs;
 	struct mfi_softc	*sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld_done %#x\n", DEVNAME(sc), ccb);
+	DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done %#x %#x\n",
+	    DEVNAME(sc), ccb, ccb->ccb_frame);
 
 	if (xs->data != NULL) {
+		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done sync\n",
+		    DEVNAME(sc));
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ?
@@ -899,19 +864,26 @@ mfi_scsi_ld_done(struct mfi_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 	}
 
-	if (hdr->mfh_cmd_status == MFI_STAT_OK)
+	if (hdr->mfh_cmd_status != MFI_STAT_OK) {
 		xs->error = XS_DRIVER_STUFFUP;
-	else if (hdr->mfh_scsi_status != 0) {
-		bzero(&xs->sense, sizeof(xs->sense));
-		memcpy(&xs->sense, ccb->ccb_sense,
-		    sizeof(struct scsi_sense_data));
-#if 0
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-		xs->sense.add_sense_code = 0x20; /* invalid opcode */
-#endif
-		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
+		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done stuffup %#x\n",
+		    DEVNAME(sc), hdr->mfh_cmd_status);
+
+		if (hdr->mfh_scsi_status != 0) {
+			DNPRINTF(MFI_D_INTR,
+			    "%s: mfi_scsi_xs_done sense %#x %x %x\n",
+			    DEVNAME(sc), hdr->mfh_scsi_status,
+			    &xs->sense, ccb->ccb_sense);
+			memset(&xs->sense, 0, sizeof(xs->sense));
+			memcpy(&xs->sense, ccb->ccb_sense,
+			    sizeof(struct scsi_sense_data));
+	#if 0
+			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+			xs->sense.add_sense_code = 0x20; /* invalid opcode */
+	#endif
+			xs->error = XS_SENSE;
+		}
 	}
 
 	xs->resid = 0;
@@ -945,7 +917,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	memset(pf->mpf_cdb, 0, 16);
 	memcpy(pf->mpf_cdb, &xs->cmdstore, xs->cmdlen);
 
-	ccb->ccb_done = mfi_scsi_ld_done;
+	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_xs = xs;
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
 	ccb->ccb_sgl = &pf->mpf_sgl;
@@ -998,8 +970,10 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		goto stuffup;
 	}
 
-	if ((ccb = mfi_get_ccb(sc)) == NULL)
+	if ((ccb = mfi_get_ccb(sc)) == NULL) {
+		DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd no ccb\n", DEVNAME(sc));
 		return (TRY_AGAIN_LATER);
+	}
 
 	xs->error = XS_NOERROR;
 
