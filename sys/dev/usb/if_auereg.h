@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.8 2006/03/07 04:41:19 krw Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.9 2006/05/18 16:46:05 jolan Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -270,6 +270,7 @@ struct aue_softc {
 
 	struct lock		aue_mii_lock;
 
+	void			*sc_sdhook;
 };
 
 #define AUE_TIMEOUT		1000

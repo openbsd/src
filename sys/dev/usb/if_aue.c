@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.45 2006/03/25 22:41:46 djm Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.46 2006/05/18 16:46:05 jolan Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -245,6 +245,7 @@ Static void aue_tick_task(void *);
 Static void aue_start(struct ifnet *);
 Static int aue_ioctl(struct ifnet *, u_long, caddr_t);
 Static void aue_init(void *);
+Static void aue_shutdown(void *);
 Static void aue_stop(struct aue_softc *);
 Static void aue_watchdog(struct ifnet *);
 Static int aue_openpipes(struct aue_softc *);
@@ -846,6 +847,7 @@ USB_ATTACH(aue)
 	usb_callout_init(sc->aue_stat_ch);
 
 	sc->aue_attached = 1;
+	sc->sc_sdhook = shutdownhook_establish(aue_shutdown, sc);
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
@@ -894,6 +896,7 @@ USB_DETACH(aue)
 #endif
 
 	sc->aue_attached = 0;
+	shutdownhook_disestablish(sc->sc_sdhook);
 
 	if (--sc->aue_refcnt >= 0) {
 		/* Wait for processes to go away. */
@@ -1630,6 +1633,19 @@ aue_watchdog(struct ifnet *ifp)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		aue_start(ifp);
 	splx(s);
+}
+
+/*
+ * Stop all chip I/O so that the kernel's probe routines don't
+ * get confused by errant DMAs when rebooting.
+ */
+Static void
+aue_shutdown(void *arg)
+{
+	struct aue_softc *sc = (struct aue_softc *)arg;
+
+	aue_reset(sc);
+	aue_stop(sc);
 }
 
 /*
