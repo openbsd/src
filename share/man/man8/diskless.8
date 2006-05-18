@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.39 2006/05/18 13:52:28 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.40 2006/05/18 14:42:05 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -246,6 +246,8 @@ Build the swap file for myclient:
 .Ed
 .Pp
 This creates a 120 Megabyte swap file and an empty /swap directory.
+A smaller swap file may be created if the boot is for
+maintenance (i.e. temporary) purposes only.
 .Pp
 .It
 Populate myclient's root
