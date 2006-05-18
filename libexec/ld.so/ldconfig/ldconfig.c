@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.21 2006/05/13 16:33:40 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.22 2006/05/18 17:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -155,11 +155,11 @@ main(int argc, char *argv[])
 	if (delete) {
 		if (rescan || unconfig || merge || justread || nostd || doprebind)
 			errx(1, "cannot mix -U -R -r -s -P options with -D");
-		exit (prebind_delete(&argv[optind]));
+		exit(prebind_delete(&argv[optind]));
 	} else if (doprebind) {
 		if (rescan || unconfig || justread || nostd)
 			errx(1, "cannot mix other options with -P");
-		exit (prebind(&argv[optind]));
+		exit(prebind(&argv[optind]));
 	}
 
 	if (unconfig) {

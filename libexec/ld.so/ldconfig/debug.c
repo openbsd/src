@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.c,v 1.3 2006/05/14 21:09:47 deraadt Exp $ */
+/* $OpenBSD: debug.c,v 1.4 2006/05/18 17:00:06 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -136,7 +136,7 @@ dump_symcachetab(struct symcachetab *symcachetab, int symcache_cnt,
 }
 
 void
-elf_print_prog_list (prog_list_ty *prog_list)
+elf_print_prog_list(prog_list_ty *prog_list)
 {
 	struct elf_object *object;
 	struct proglist *pl;

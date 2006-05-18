@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.4 2006/05/14 21:09:47 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.5 2006/05/18 17:00:06 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -581,7 +581,7 @@ elf_load_object(void *pexe, const char *name)
 				    name);
 				exit(10);
 			}
-			bcopy (object->dyn.hash, hash, hashsz);
+			bcopy(object->dyn.hash, hash, hashsz);
 			object->dyn.hash = hash;
 			object->buckets = ((Elf_Word *)hash + 2);
 			object->chains = object->buckets + object->nbuckets;
@@ -941,7 +941,7 @@ add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 		    sizeof (struct fixup) * pl->fixupcntalloc[libidx]);
 		if (pl->fixup[libidx] == NULL)  {
 			printf("realloc fixup, out of memory\n");
-			exit (20);
+			exit(20);
 		}
 	}
 	cnt = pl->fixupcnt[libidx];
@@ -1502,7 +1502,7 @@ elf_prep_lib_prebind(struct elf_object *object)
 		nameidx[i].id0 = objarray[idxtolib[i]].id0;
 		nameidx[i].id1 = objarray[idxtolib[i]].id1;
 		nametablen += strlen(objarray[idxtolib[i]].obj->load_name) + 1;
-		strlcpy (&nametab[nameidx[i].name],
+		strlcpy(&nametab[nameidx[i].name],
 		    objarray[idxtolib[i]].obj->load_name,
 		    nametablen - nameidx[i].name);
 	}
@@ -1513,9 +1513,9 @@ elf_prep_lib_prebind(struct elf_object *object)
 		    numlibs, 0, NULL, NULL, NULL, NULL, symcachetab,
 		    symcache_cnt, pltsymcachetab, pltsymcache_cnt);
 
-	free (nameidx);
-	free (nametab);
-	free (libmap);
+	free(nameidx);
+	free(nametab);
+	free(libmap);
 	free(pltsymcachetab);
 	free(symcachetab);
 
@@ -1617,7 +1617,7 @@ elf_prep_bin_prebind(struct proglist *pl)
 		nameidx[i].id1 = objarray[idxtolib[i]].id1;
 		nametablen += strlen(objarray[idxtolib[i]].obj->load_name) + 1;
 
-		strlcpy (&nametab[nameidx[i].name],
+		strlcpy(&nametab[nameidx[i].name],
 		    objarray[idxtolib[i]].obj->load_name,
 		    nametablen - nameidx[i].name);
 	}
@@ -1836,7 +1836,7 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 	if (verbose > 1)
 		elf_dump_footer(&footer);
 
-	close (fd);
+	close(fd);
 	return 0;
 }
 void
@@ -2032,7 +2032,7 @@ write_txtbusy_file(char *name)
 	err = asprintf(&prebind_name, "%s%s", name, ".prebXXXXXXXXXX");
 	if (err == -1) {
 		/* fail */
-		exit (10);	/* bail on memory failure */
+		exit(10);	/* bail on memory failure */
 	}
 	mkstemp(prebind_name);
 
@@ -2055,11 +2055,11 @@ write_txtbusy_file(char *name)
 	}
 
 	/* this mode is used above, but is modified by umask */
-	chmod (prebind_name, sb.st_mode);
+	chmod(prebind_name, sb.st_mode);
 	close(oldfd);
 	unlink(name);
-	rename (prebind_name, name);
-	free (buf);
+	rename(prebind_name, name);
+	free(buf);
 
 	return fd;
 }
@@ -2159,6 +2159,6 @@ copy_oldsymcache(int objidx, void *prebind_map)
 		    symcache[i].sym_idx;
 	}
 done:
-	free (idxtolib);
+	free(idxtolib);
 	/* munmap(prebind_map, size);*/
 }
