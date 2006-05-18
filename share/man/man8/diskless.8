@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.33 2006/05/18 09:13:29 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.34 2006/05/18 09:36:51 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -315,6 +315,26 @@ myserver:/export/myclient/root / nfs rw 0 0
 myserver:/usr /usr nfs rw 0 0
 /swap none swap sw 0 0
 .Ed
+.It
+Make sure the following processes are enabled on the server:
+.Xr tftpd 8
+via
+.Xr inetd 8
+(for Sun or Motorola clients),
+.Xr rarpd 8
+(for Sun or Motorola clients),
+.Xr rbootd 8
+(for HP clients),
+.Xr rpc.bootparamd 8 ,
+.Xr portmap 8 ,
+and
+.Xr nfsd 8 .
+.Pp
+See
+.Xr rc.conf 8
+for details of how to start these processes at boot.
+.It
+Net boot the client.
 .El
 .Sh FILES
 .Bl -tag -width "/usr/mdec/rbootdXX" -compact
@@ -338,6 +358,7 @@ Location of boot programs loaded by the HP Boot ROM.
 .Xr fstab 5 ,
 .Xr mountd 8 ,
 .Xr nfsd 8 ,
+.Xr portmap 8 ,
 .Xr rarpd 8 ,
 .Xr rbootd 8 ,
 .Xr rpc.bootparamd 8 ,
