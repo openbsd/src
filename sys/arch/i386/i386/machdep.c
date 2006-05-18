@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.354 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.355 2006/05/18 17:36:31 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1177,6 +1177,14 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 	extern void i686_pagezero(void *, size_t);
 
 	pagezero = i686_pagezero;
+
+	if (cpu_ecxfeature & CPUIDECX_EST) {
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
+			est_init(ci->ci_dev.dv_xname);
+		else
+			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
+			    ci->ci_dev.dv_xname);
+	}
 #endif
 
 	switch (model) {
@@ -1534,8 +1542,7 @@ tm86_cpu_setup(struct cpu_info *ci)
 }
 
 char *
-intel686_cpu_name(model)
-	int model;
+intel686_cpu_name(int model)
 {
 	extern int cpu_cache_edx;
 	char *ret = NULL;
@@ -1575,8 +1582,7 @@ intel686_cpu_name(model)
 }
 
 char *
-cyrix3_cpu_name(model, step)
-	int model, step;
+cyrix3_cpu_name(int model, int step)
 {
 	char	*name = NULL;
 
