@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.403 2006/03/15 01:17:12 krw Exp $
+#	$OpenBSD: install.sub,v 1.404 2006/05/18 11:56:09 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2006 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1122,9 +1122,10 @@ install_url() {
 		ask_until "Login?" "${_ftp_server_login:=anonymous}"
 		_ftp_server_login=$resp
 
-		# Get password unless anonymous
-		_passwd=root@`hostname`
-		if [[ $_ftp_server_login != anonymous ]]; then
+		# Get password unless login in 'anonymous' or 'ftp'
+		if [[ $_ftp_server_login == @(anonymous|ftp) ]]; then
+			_passwd=root@`hostname`
+		else
 			resp=
 			while [[ -z $resp ]] ; do
 				askpass "Password? (will not echo)"
