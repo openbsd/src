@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.40 2006/05/18 17:34:23 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.41 2006/05/18 17:42:00 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -218,14 +218,14 @@ mfi_read(struct mfi_softc *sc, bus_size_t r)
 	    BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
-	DNPRINTF(MFI_D_RW, "mr 0x%x 0x08%x ", r, rv);
+	DNPRINTF(MFI_D_RW, "%s: mr 0x%x 0x08%x ", DEVNAME(sc), r, rv);
 	return (rv);
 }
 
 void
 mfi_write(struct mfi_softc *sc, bus_size_t r, u_int32_t v)
 {
-	DNPRINTF(MFI_D_RW, "mw 0x%x 0x%08x", r, v);
+	DNPRINTF(MFI_D_RW, "%s: mw 0x%x 0x%08x", DEVNAME(sc), r, v);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
@@ -874,11 +874,6 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb)
 			memset(&xs->sense, 0, sizeof(xs->sense));
 			memcpy(&xs->sense, ccb->ccb_sense,
 			    sizeof(struct scsi_sense_data));
-	#if 0
-			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-			xs->sense.add_sense_code = 0x20; /* invalid opcode */
-	#endif
 			xs->error = XS_SENSE;
 		}
 	}
@@ -942,7 +937,6 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_softc	*sc = link->adapter_softc;
-	/* struct device		*dev = link->device_softc; */
 	struct mfi_ccb		*ccb;
 	struct scsi_rw		*rw;
 	struct scsi_rw_big	*rwb;
@@ -952,14 +946,6 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
 
-	/* only issue IO through this path, create seperate path for mgmt */
-#if 0
-	if (!cold) {
-		DNPRINTF(MFI_D_CMD, "%s: no interrupt io yet %02x\n",
-		    DEVNAME(sc), xs->cmd->opcode);
-		goto stuffup;
-	}
-#endif
 	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
 	    link->lun != 0) {
 		DNPRINTF(MFI_D_CMD, "%s: invalid target %d\n",
@@ -1115,7 +1101,7 @@ mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
 
-	DNPRINTF(MFI_D_IOCTL, "mfi_scsi_ioctl\n");
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_scsi_ioctl\n", DEVNAME(sc));
 
 	if (sc->sc_ioctl)
 		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
