@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.41 2006/05/18 15:26:26 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.42 2006/05/18 15:57:02 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -43,7 +43,7 @@ re-installing filesystems on a local disk.
 This file provides a general description of the interactions between
 a client and its server when a client is booting over the network.
 The general description is followed by specific instructions for
-configuring a server for diskless Sun clients.
+configuring a server for diskless clients.
 .Pp
 When booting a system over the network, there are three
 phases of interaction between client and server:
@@ -138,8 +138,7 @@ getattr function to determine the size of the swap area.
 .Sh EXAMPLES
 Before a client can boot over the network,
 its server must be configured correctly.
-This example will demonstrate how a Sun client
-might be configured -- other clients should be similar.
+This example will demonstrate how to configure a server and client.
 .Pp
 Assuming the client's hostname is to be
 "myclient":
@@ -163,14 +162,15 @@ Assign an IP address for myclient in
 .Ed
 .Pp
 .It
-If booting a Sun, Motorola, or Alpha client, ensure that
+If booting an Alpha, HPPA64, Mips64, Motorola, Sun, or Vax client,
+ensure that
 .Pa /etc/inetd.conf
 is configured to run
 .Xr tftpd 8
 in the directory
 .Pa /tftpboot .
 .Pp
-If booting an HP 300-series machine, ensure that
+If booting an HP 300 or HPPA machine, ensure that
 .Pa /etc/rbootd.conf
 is configured properly to transfer the boot program to the client.
 An entry might look like this:
@@ -183,8 +183,8 @@ See the
 manual page for more information.
 .Pp
 .It
-If booting a Sun or Motorola client, install a copy of the
-appropriate diskless boot loader (such as
+If booting an HPPA64, Mips64, Motorola, or Sun client,
+install a copy of the appropriate diskless boot loader (such as
 .Pa boot.net
 from the root directory of the
 .Ox
@@ -215,16 +215,11 @@ If the client's PROM fails to fetch the expected file,
 .Xr tcpdump 8
 can be used to discover which filename the client is trying to read.
 .Pp
-If booting an HP 300-series machine, ensure that the general purpose
-boot program
-.Pa SYS_UBOOT
-(which may be called
-.Pa netboot.lif
-before installation)
-is installed in the directory
+If booting an HP 300 or HPPA machine, ensure that the general purpose
+boot program is installed in the directory
 .Pa /usr/mdec/rbootd .
 .Pp
-If booting an Alpha machine,
+If booting an Alpha or Vax machine,
 follow the instructions in
 .Xr mopd 8
 for setting up a TFTP boot.
@@ -325,13 +320,13 @@ Make sure the following processes are enabled on the server:
 .Xr tftpd 8
 via
 .Xr inetd 8
-(for Sun or Motorola clients),
+(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients),
 .Xr rarpd 8
-(for Sun or Motorola clients),
+(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients),
 .Xr rbootd 8
-(for HP clients),
+(for HP 300 and HPPA clients),
 .Xr mopd 8
-(for Alpha clients),
+(for Alpha or Vax clients),
 .Xr rpc.bootparamd 8 ,
 .Xr portmap 8 ,
 and
