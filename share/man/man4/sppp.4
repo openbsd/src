@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.11 2006/05/17 11:57:48 jmc Exp $
+.\" $OpenBSD: sppp.4,v 1.12 2006/05/18 15:38:57 reyk Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -175,6 +175,7 @@ A possible call to
 that could have been used to bring the interface into the state shown
 by the previous example:
 .Bd -literal -offset indent
+# ifconfig em0 up
 # ifconfig pppoe0 0.0.0.0 0.0.0.1 netmask 0xffffffff \e
 	pppoedev em0 \e
 	authproto chap authname uriah authkey "some secret" \e

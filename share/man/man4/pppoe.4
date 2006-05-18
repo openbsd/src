@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.9 2006/05/17 11:50:23 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.10 2006/05/18 15:38:57 reyk Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -108,6 +108,14 @@ inet 0.0.0.0 255.255.255.255 0.0.0.1 pppoedev ne0 \e
 	authproto pap authname testcaller authkey donttell up
 !/sbin/route add default 0.0.0.1
 .Ed
+.Pp
+To mark the physical interface UP, just write a single
+.Ql up
+in
+.Pa /etc/hostname.ne0
+or the corresponding 
+.Xr hostname.if 5
+file.
 .Pp
 Since this is a PPP interface, the addresses assigned to the interface
 may change during PPP negotiation.
