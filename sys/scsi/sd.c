@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.105 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.106 2006/05/18 00:10:05 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -209,13 +209,14 @@ sdattach(parent, self, aux)
 	 */
 	printf("\n");
 
+	/* Spin up the unit ready or not. */
+	scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+
+	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES_DEFAULT,
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-
-	/* Spin up the unit ready or not. */
-	error = scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
-	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
@@ -362,18 +363,22 @@ sdopen(dev, flag, fmt, p)
 			goto bad;
 		}
 	} else {
-		/* Use sd_interpret_sense() for sense errors. */
+		/* Spin up the unit, ready or not. */
+		scsi_start(sc_link, SSS_START, (rawopen ? SCSI_SILENT : 0) |
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+
+		/* Use sd_interpret_sense() for sense errors.
+		 *
+		 * But only after spinning the disk up! Just in case a broken
+		 * device returns "Initialization command required." and causes
+		 * a loop of scsi_start() calls.
+		 */
 		sc_link->flags |= SDEV_OPEN;
 
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
 		    TEST_READY_RETRIES_DEFAULT, (rawopen ? SCSI_SILENT : 0) |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
-
-		/* Spin up the unit, ready or not. */
-		error = scsi_start(sc_link, SSS_START,
-		    (rawopen ? SCSI_SILENT : 0) | SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error) {
 			if (rawopen) {
