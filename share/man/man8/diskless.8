@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.36 2006/05/18 12:34:14 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.37 2006/05/18 12:45:43 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -142,7 +142,7 @@ This example will demonstrate how a Sun client
 might be configured -- other clients should be similar.
 .Pp
 Assuming the client's hostname is to be
-"myclient",
+"myclient":
 .Bl -enum
 .It
 Add an entry to
@@ -156,9 +156,8 @@ This will be used by
 .Xr rarpd 8 .
 .Pp
 .It
-Assign an IP address for myclient in your
-.Pa /etc/hosts
-or DNS database:
+Assign an IP address for myclient in
+.Pa /etc/hosts :
 .Bd -literal -offset indent
 192.197.96.12           myclient
 .Ed
@@ -211,7 +210,7 @@ Some architectures, such as the Sun3 and Ultrasparc machines, do not append the
 architecture name.
 It this case, the name would be just C0C5600C.
 The name used is architecture dependent, it simply has to match what the
-booting client's PROM wishes to it to be.
+booting client's PROM wishes it to be.
 If the client's PROM fails to fetch the expected file,
 .Xr tcpdump 8
 can be used to discover which filename the client is trying to read.
@@ -249,14 +248,13 @@ Build the swap file for myclient:
 This creates a 120 Megabyte swap file and an empty /swap directory.
 .Pp
 .It
-Populate myclient's
-.Pa /
+Populate myclient's root
 filesystem on the server.
 How this is done depends on the client architecture and the version of the
 .Ox
 distribution.
 It can be as simple as copying and modifying the server's root
-filesystem, or perhaps you need to get those files out of the
+filesystem, or perhaps the files can be taken from the
 standard binary distribution.
 .Pp
 .It
@@ -274,12 +272,13 @@ If the server and client are of the same architecture, then the client
 can share the server's
 .Pa /usr
 filesystem (as is done above).
-If not, you must build a properly fleshed out
+If not, a properly fleshed out
 .Pa /usr
-partition for the client in some other place.
+partition will have to be built for the client in some other place.
 .Pp
-If your server was a sparc, and your client a sun3,
-you might create and fill
+For example,
+if the server is a sparc, and the client a sun3,
+create and fill
 .Pa /export/usr.sun3
 and then use the following
 .Pa /etc/exports
@@ -304,8 +303,7 @@ Note that "le0" above should be replaced with the name of
 the network interface that the client will use for booting.
 .Pp
 .It
-Correct
-.Em at least
+Correct at least
 the critical mount points in the client's
 .Xr fstab 5
 (which will be
