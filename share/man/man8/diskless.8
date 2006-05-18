@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.40 2006/05/18 14:42:05 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.41 2006/05/18 15:26:26 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -163,7 +163,7 @@ Assign an IP address for myclient in
 .Ed
 .Pp
 .It
-If booting a Sun or Motorola client, ensure that
+If booting a Sun, Motorola, or Alpha client, ensure that
 .Pa /etc/inetd.conf
 is configured to run
 .Xr tftpd 8
@@ -223,6 +223,11 @@ boot program
 before installation)
 is installed in the directory
 .Pa /usr/mdec/rbootd .
+.Pp
+If booting an Alpha machine,
+follow the instructions in
+.Xr mopd 8
+for setting up a TFTP boot.
 .Pp
 .It
 Add myclient to the bootparams database
@@ -325,6 +330,8 @@ via
 (for Sun or Motorola clients),
 .Xr rbootd 8
 (for HP clients),
+.Xr mopd 8
+(for Alpha clients),
 .Xr rpc.bootparamd 8 ,
 .Xr portmap 8 ,
 and
@@ -367,6 +374,7 @@ Location of boot programs loaded by the HP Boot ROM.
 .Xr hostname.if 5 ,
 .Xr hosts 5 ,
 .Xr myname 5 ,
+.Xr mopd 8 ,
 .Xr mountd 8 ,
 .Xr nfsd 8 ,
 .Xr portmap 8 ,
