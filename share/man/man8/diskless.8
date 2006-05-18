@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.35 2006/05/18 09:54:42 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.36 2006/05/18 12:34:14 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -230,7 +230,7 @@ Add myclient to the bootparams database
 .Pa /etc/bootparams :
 .Bd -literal -offset indent
 myclient  root=server:/export/myclient/root \e
-          swap=server:/export/myclient/root/swap
+          swap=server:/export/myclient/swap
 .Ed
 .Pp
 Note that some bootparam servers are somewhat sensitive.
@@ -241,12 +241,12 @@ Other servers are case sensitive.
 .It
 Build the swap file for myclient:
 .Bd -literal -offset indent
-# mkdir -p /export/myclient/root
-# cd /export/myclient/root
+# mkdir -p /export/myclient/root/swap
+# cd /export/myclient
 # dd if=/dev/zero of=swap bs=1m count=120
 .Ed
 .Pp
-This creates a 120 Megabyte swap file.
+This creates a 120 Megabyte swap file and an empty /swap directory.
 .Pp
 .It
 Populate myclient's
@@ -312,8 +312,8 @@ the critical mount points in the client's
 .Pa /export/myclient/root/etc/fstab ) :
 .Bd -literal -offset indent
 myserver:/export/myclient/root / nfs rw 0 0
+myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap
 myserver:/usr /usr nfs rw 0 0
-/swap none swap sw 0 0
 .Ed
 .It
 Make sure the following processes are enabled on the server:
