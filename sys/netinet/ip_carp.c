@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.123 2006/03/26 14:54:01 camield Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.124 2006/05/18 12:39:23 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -586,6 +586,48 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		carpstats.carps_badvhid++;
 		m_freem(m);
 		return;
+	}
+
+	/*
+	 * Check if our own advertisement was duplicated
+	 * from a non simplex interface.
+	 * XXX If there is no address on our physical interface
+	 * there is no way to distinguish our ads from the ones
+	 * another carp host might have sent us.
+	 */
+	if ((sc->sc_carpdev->if_flags & IFF_SIMPLEX) == 0) {
+		struct sockaddr sa;
+		struct ifaddr *ifa;
+
+		bzero(&sa, sizeof(sa));
+		sa.sa_family = af;
+		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
+
+		if (ifa && af == AF_INET) {
+			struct ip *ip = mtod(m, struct ip *);
+			if (ip->ip_src.s_addr ==
+			    ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
+				m_freem(m);
+				return;
+			}
+		}
+#ifdef INET6
+		if (ifa && af == AF_INET6) {
+			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+			struct in6_addr in6_src, in6_found;
+
+			in6_src = ip6->ip6_src;
+			in6_found = ifatoia6(ifa)->ia_addr.sin6_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&in6_src))
+				in6_src.s6_addr16[1] = 0;
+			if (IN6_IS_ADDR_LINKLOCAL(&in6_found))
+				in6_found.s6_addr16[1] = 0;
+			if (IN6_ARE_ADDR_EQUAL(&in6_src, &in6_found)) {
+				m_freem(m);
+				return;
+			}
+		}
+#endif /* INET6 */
 	}
 
 	getmicrotime(&sc->sc_if.if_lastchange);
