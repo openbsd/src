@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.31 2006/04/20 20:00:46 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.32 2006/05/18 05:49:53 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.31 2006/04/20 20:00:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.32 2006/05/18 05:49:53 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -944,7 +944,7 @@ yyerror(char *s)
 	char	*str, *p;
 	int	n;
 
-	if (feof(yyin))
+	if (yyin != NULL && feof(yyin))
 		n = asprintf(&str, "%s: %s:%d: %s: unexpected EOF",
 		    __progname, filename, lineno, s);
 	else if (isspace(yytext[0]) || !isprint(yytext[0]))
