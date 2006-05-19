@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.3 2006/05/17 19:50:35 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.4 2006/05/19 18:14:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1850,11 +1850,7 @@ wpi_scan(struct wpi_softc *sc)
 	frm = (uint8_t *)(wh + 1);
 
 	/* add essid IE */
-	/* frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);*/
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	bcopy(ni->ni_essid, frm, ni->ni_esslen);
-	frm += ni->ni_esslen;
+	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
 
 	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
 	rs = &ic->ic_sup_rates[mode];

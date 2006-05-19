@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.17 2006/05/19 18:06:51 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.18 2006/05/19 18:14:35 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -935,10 +935,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 	*(u_int16_t *)frm = htole16(capinfo);
 	frm += 2;
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
+	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
 	frm = ieee80211_add_rates(frm, rs);
 	*frm++ = IEEE80211_ELEMID_DSPARMS;
 	*frm++ = 1;
