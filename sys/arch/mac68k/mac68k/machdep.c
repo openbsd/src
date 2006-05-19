@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.130 2006/01/24 06:50:13 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.131 2006/05/19 22:51:09 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -190,8 +190,7 @@ int	bufpages = 0;
 #endif
 int	bufcachepercent = BUFCACHEPERCENT;
 
-int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
+int	physmem;		/* size of physical memory, in pages */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait

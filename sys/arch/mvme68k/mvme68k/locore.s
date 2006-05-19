@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.50 2006/04/21 22:21:54 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.51 2006/05/19 22:51:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -101,7 +101,6 @@ ASLOCAL(tmpstk)
  * On entry, args on stack are boot device, boot filename, console unit,
  * boot flags (howto), boot device name, filesystem type name.
  */
-BSS(lowram, 4)
 BSS(esym, 4)
 BSS(emini, 4)
 BSS(smini, 4)
@@ -118,7 +117,6 @@ GLOBAL(kernel_text)
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,sr		| no interrupts
-	movl	#0,a5			| RAM starts at 0
 	movl	sp@(4), d7		| get boothowto
 	movl	sp@(8), d6		| get bootaddr
 	movl	sp@(12),d5		| get bootctrllun
@@ -144,9 +142,6 @@ ASENTRY_NOPROFILE(start)
 	movl	d2,a0@			| store end of symbol table
 	/* note: d2 now free, d3-d7 still in use */
 	
-        RELOC(lowram, a0)
-	movl	a5,a0@			| store start of physical memory
-
 	clrl	sp@-
 	BUGCALL(MVMEPROM_GETBRDID)
 	movl	sp@+, a1
@@ -397,14 +392,9 @@ Lstart1:
 	movc	d0,sfc			|   as source
 	movc	d0,dfc			|   and destination of transfers
         moveq	#PGSHIFT,d2
-	lsrl	d2,d1			| convert to page (click) number
-	RELOC(maxmem, a0)
-	movl	d1,a0@			| save as maxmem
-	movl	a5,d0			| lowram value from ROM via boot
-	lsrl	d2,d0			| convert to page number
-	subl	d0,d1			| compute amount of RAM present
+	lsrl	d2,d1			| convert to pages
 	RELOC(physmem, a0)
-	movl	d1,a0@			| and physmem
+	movl	d1,a0@			| save as physmem
 
 /* configure kernel and proc0 VA space so we can get going */
 #if defined(DDB) || NKSYMS > 0
@@ -417,7 +407,6 @@ Lstart2:
 	addl	#NBPG-1,d2
 	andl	#PG_FRAME,d2		| round to a page
 	movl	d2,a4
-	addl	a5,a4			| convert to PA
 #if 0
 	| XXX clear from end-of-kernel to 1M, as a workaround for an
 	| insane pmap_bootstrap bug I cannot find (68040-specific)
@@ -433,8 +422,7 @@ Lstart2:
 #endif
 
 /* do pmap_bootstrap stuff */	
-	RELOC(mmutype, a0)
-        pea	a5@			| firstpa
+	clrl	sp@-			| firstpa
 	pea	a4@			| nextpa
 	RELOC(pmap_bootstrap,a0)
 	jbsr	a0@			| pmap_bootstrap(firstpa, nextpa)
@@ -464,7 +452,6 @@ Lstart2:
 Lmmu_enable:
 	RELOC(Sysseg, a0)		| system segment table addr
 	movl	a0@,d1			| read value (a KVA)
-	addl	a5,d1			| convert to PA
 	RELOC(mmutype, a0)
 	cmpl	#MMU_68040,a0@		| 68040 or 68060?
 	jgt	Lmotommu1 		| no, skip

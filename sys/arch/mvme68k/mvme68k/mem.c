@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.23 2005/12/17 07:31:26 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.24 2006/05/19 22:51:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -74,7 +74,6 @@
 
 #include <uvm/uvm_extern.h>
 
-extern u_int lowram;
 static caddr_t devzeropage;
 
 /*ARGSUSED*/
@@ -147,7 +146,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram || v < NBPG) {
+			if (v >= 0xFFFFFFFC || v < NBPG) {
 				error = EFAULT;
 				goto unlock;
 			}
@@ -246,8 +245,7 @@ mmmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC ||
-	    (unsigned)off < NBPG)
+	if ((unsigned)off >= 0xFFFFFFFC || (unsigned)off < NBPG)
 		return (-1);
 	return (atop(off));
 }

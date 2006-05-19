@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.52 2006/01/21 12:27:56 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.53 2006/05/19 22:51:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -475,17 +475,14 @@ Lstart2:
 	moveq	#FC_USERD,d0		| user space
 	movc	d0,sfc			|   as source
 	movc	d0,dfc			|   and destination of transfers
-/* initialize memory sizes (for pmap_bootstrap) */
+/* initialize memory size (for pmap_bootstrap) */
 	movl	#MAXADDR,d1		| last page
-	moveq	#PGSHIFT,d2
-	lsrl	d2,d1			| convert to page (click) number
-	RELOC(maxmem, a0)
-	movl	d1,a0@			| save as maxmem
 	movl	a5,d0			| lowram value from ROM via boot
-	lsrl	d2,d0			| convert to page number
+	moveq	#PGSHIFT,d2
 	subl	d0,d1			| compute amount of RAM present
+	lsrl	d2,d1			| convert to pages
 	RELOC(physmem, a0)
-	movl	d1,a0@			| and physmem
+	movl	d1,a0@			| save as physmem
 
 /* configure kernel and proc0 VA space so we can get going */
 #if defined(DDB) || NKSYMS > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.23 2005/10/28 09:07:48 martin Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.24 2006/05/19 22:51:07 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /*
@@ -53,7 +53,6 @@ caddr_t ledbase;	/* SPU LEDs mapping */
 
 extern vaddr_t CLKbase, MMUbase;
 extern char *extiobase;
-extern int maxmem;
 extern int eiomapsize;
 
 #define	RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
@@ -89,7 +88,7 @@ do { \
 
 #define	PMAP_MD_MEMSIZE() \
 do { \
-	RELOC(avail_end, paddr_t) = ptoa(RELOC(maxmem, int)) - \
+	RELOC(avail_end, paddr_t) = MAXADDR - \
 	    (round_page(MSGBUFSIZE) + ptoa(1)); \
 } while (0)
 
