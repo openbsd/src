@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.51 2006/05/16 23:43:16 ray Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.52 2006/05/19 04:05:35 ray Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.51 2006/05/16 23:43:16 ray Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.52 2006/05/19 04:05:35 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -1412,11 +1412,6 @@ quote1(const char *initial, int argc, char *argv[])
 	(void)strlcpy(buf, initial, sizeof(buf));
 	if (argc > 1) {
 		for (i = 1, len = strlen(buf); i < argc && len < sizeof(buf)-1; i++) {
-
-			/* Sanity check */
-			if (len >= sizeof(buf) - 1)
-				break;
-
 			/* Space for next arg */
 			if (len > 1)
 				buf[len++] = ' ';
