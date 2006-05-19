@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.28 2005/05/15 11:29:15 miod Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.29 2006/05/19 20:55:05 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -361,31 +361,58 @@
 #define KS_L2_Aogonek		0xa1
 #define KS_L2_breve		0xa2
 #define KS_L2_Lstroke		0xa3
+#define KS_L2_Lcaron		0xa5
 #define KS_L2_Sacute		0xa6
 #define KS_L2_Scaron		0xa9
+#define KS_L2_Scedilla		0xaa
+#define KS_L2_Tcaron		0xab
 #define KS_L2_Zacute		0xac
 #define KS_L2_Zcaron		0xae
 #define KS_L2_Zdotabove		0xaf
 #define KS_L2_aogonek		0xb1
 #define KS_L2_ogonek		0xb2
 #define KS_L2_lstroke		0xb3
+#define KS_L2_lcaron		0xb5
 #define KS_L2_sacute		0xb6
 #define KS_L2_caron		0xb7
 #define KS_L2_scaron		0xb9
+#define KS_L2_scedilla		0xba
+#define KS_L2_tcaron		0xbb
 #define KS_L2_zacute		0xbc
 #define KS_L2_dblacute		0xbd
 #define KS_L2_zcaron		0xbe
 #define KS_L2_zdotabove		0xbf
+#define KS_L2_Racute		0xc0
+#define KS_L2_Abreve		0xc3
+#define KS_L2_Lacute		0xc5
 #define KS_L2_Cacute		0xc6
 #define KS_L2_Ccaron		0xc8
 #define KS_L2_Eogonek		0xca
+#define KS_L2_Ecaron		0xcc
+#define KS_L2_Dcaron		0xcf
 #define KS_L2_Dstroke		0xd0
 #define KS_L2_Nacute		0xd1
+#define KS_L2_Ncaron		0xd2
+#define KS_L2_Odoubleacute	0xd5
+#define KS_L2_Rcaron		0xd8
+#define KS_L2_Uring		0xd9
+#define KS_L2_Udoubleacute	0xdb
+#define KS_L2_Tcedilla		0xde
+#define KS_L2_racute		0xe0
+#define KS_L2_abreve		0xe3
+#define KS_L2_lacute		0xe5
 #define KS_L2_cacute		0xe6
 #define KS_L2_ccaron		0xe8
 #define KS_L2_eogonek		0xea
+#define KS_L2_ecaron		0xec
+#define KS_L2_dcaron		0xef
 #define KS_L2_dstroke		0xf0
 #define KS_L2_nacute		0xf1
+#define KS_L2_odoubleacute	0xf5
+#define KS_L2_rcaron		0xf8
+#define KS_L2_uring		0xf9
+#define KS_L2_udoubleacute	0xfb
+#define KS_L2_tcedilla		0xfe
 #define KS_L2_dotabove		0xff
 
 /*
