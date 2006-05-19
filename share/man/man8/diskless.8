@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.45 2006/05/19 09:23:41 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.46 2006/05/19 09:41:45 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -168,7 +168,7 @@ Assign an IP address for myclient in
 .Ed
 .Pp
 .It
-If booting an Alpha, HPPA64, Mips64, Motorola, Sun, or Vax client,
+If booting an Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax client,
 ensure that
 .Pa /etc/inetd.conf
 is configured to run
@@ -176,7 +176,7 @@ is configured to run
 in the directory
 .Pa /tftpboot .
 .Pp
-If booting an HP 300 or HPPA machine, ensure that
+If booting an HP 300 or older HPPA machine, ensure that
 .Pa /etc/rbootd.conf
 is configured properly to transfer the boot program to the client.
 An entry might look like this:
@@ -189,7 +189,7 @@ See the
 manual page for more information.
 .Pp
 .It
-If booting an Alpha, HPPA64, Mips64, Motorola, or Sun client,
+If booting an Alpha, newer HPPA, HPPA64, Mips64, Motorola, or Sun client,
 install a copy of the appropriate diskless boot loader (such as
 .Pa boot.net
 from the root directory of the
@@ -224,7 +224,7 @@ If the client's PROM fails to fetch the expected file,
 can be used to discover which filename the client is trying to read.
 .Pp
 Architectures using DHCP
-(Alpha)
+(Alpha and newer HPPA)
 should ensure that
 .Xr dhcpd 8
 is configured on the server to serve BOOTP protocol requests.
@@ -242,7 +242,7 @@ subnet 10.0.0.0 netmask 255.0.0.0 {
 .Ed
 .Pp
 Architectures using the HP remote boot server
-(HP 300 or HPPA)
+(HP 300 or older HPPA)
 should ensure that the general purpose
 boot program is installed in the directory
 .Pa /usr/mdec/rbootd .
@@ -349,17 +349,16 @@ Make sure the following processes are enabled on the server:
 .Xr tftpd 8
 via
 .Xr inetd 8
-(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients);
-.Xr rarpd 8
-(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients);
+(for Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax clients);
 .Xr dhcpd 8
-(for Alpha clients);
+(for Alpha and newer HPPA clients);
 .Xr rbootd 8
-(for HP 300 and HPPA clients);
+(for HP 300 and older HPPA clients);
 .Xr mopd 8
 (for Vax clients);
-.Xr rpc.bootparamd 8 ;
 .Xr portmap 8 ;
+.Xr rarpd 8 ;
+.Xr rpc.bootparamd 8 ;
 and
 .Xr nfsd 8 .
 .Pp
