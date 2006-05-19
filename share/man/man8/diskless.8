@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.47 2006/05/19 10:04:09 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.48 2006/05/19 10:15:36 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -345,26 +345,33 @@ myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap
 myserver:/usr /usr nfs rw 0 0
 .Ed
 .It
-Make sure the following processes are enabled on the server:
-.Xr tftpd 8
-via
-.Xr inetd 8
-(for Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax clients);
-.Xr dhcpd 8
-(for Alpha, newer HPPA, and Mips64 clients);
-.Xr rbootd 8
-(for HP 300 and older HPPA clients);
-.Xr mopd 8
-(for Vax clients);
-.Xr portmap 8 ;
-.Xr rarpd 8 ;
-.Xr rpc.bootparamd 8 ;
-and
-.Xr nfsd 8 .
-.Pp
+Make sure the correct processes are enabled on the server.
 See
 .Xr rc.conf 8
 for details of how to start these processes at boot.
+.Pp
+For all clients:
+.Xr portmap 8 ,
+.Xr rarpd 8 ,
+and
+.Xr nfsd 8 .
+.Pp
+For Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax clients:
+.Xr tftpd 8
+via
+.Xr inetd 8
+.Pp
+For Alpha, newer HPPA, and Mips64 clients:
+.Xr dhcpd 8
+.Pp
+For HP 300 and older HPPA clients:
+.Xr rbootd 8
+.Pp
+For older HPPA, HPPA64, Motorola, Sun, or Vax clients:
+.Xr rpc.bootparamd 8
+.Pp
+For Vax clients:
+.Xr mopd 8
 .It
 Net boot the client.
 .El
