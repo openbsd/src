@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.7 2006/05/11 23:22:13 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.8 2006/05/19 04:49:17 gwk Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -39,6 +39,7 @@ struct bios_softc {
 void smbios_info(char *);
 int bios_match(struct device *, void *, void *);
 void bios_attach(struct device *, struct device *, void *);
+char *fixstring(char *);
 
 struct cfattach bios_ca = {
 	sizeof(struct bios_softc), bios_match, bios_attach
@@ -56,7 +57,9 @@ extern char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
 
 const char *smbios_uninfo[] = {
 	"System",
-	"Not Specified"
+	"Not ",
+	"To be",
+	"SYS-"
 };
 
 int
@@ -185,7 +188,7 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 }
 
 char *
-smbios_get_string(struct smbtable *st, u_int8_t indx)
+smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
 {
 	u_int8_t *va, *end;
 	char *ret = NULL;
@@ -196,26 +199,61 @@ smbios_get_string(struct smbtable *st, u_int8_t indx)
 	for (i = 1; va < end && i < indx && *va; i++)
 		while (*va++)
 			;
-	if (i == indx)
-		ret = (char *)va;
+	if (i == indx) {
+		if (va + len < end) {
+			ret = dest;
+			bcopy(va, ret, len);
+			ret[len-1] = '\0';
+		}
+	}
 
 	return ret;
 }
 
-void
-smbios_info(char * str)
+char *
+fixstring(char *s)
 {
+	char *p, *e;
+	int i;
+
+	for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]); i++)
+		if ((strncmp(s, smbios_uninfo[i], strlen(smbios_uninfo[i])))==0)
+			return NULL;
+	/*
+	 * Remove leading and trailing whitespace
+	 */
+	for (p = s; *p == ' '; p++)
+		;
+	/*
+	 * Special case entire string is whitespace
+	 */
+	if (p == s + strlen(s))
+		return NULL;
+	for (e = s + strlen(s) - 1; e > s && *e == ' '; e--)
+		;
+	if (p > s || e < s + strlen(s) - 1) {
+		bcopy(p, s, e-p + 1);
+		s[e - p + 1] = '\0';
+	}
+
+	return s;
+}
+
+void
+smbios_info(char* str)
+{
+	static char vend[40], prod[30], ver[30], ser[20];
 	struct smbtable stbl, btbl;
 	struct smbios_sys *sys;
 	struct smbios_board *board;
 	int i, uuidf, havebb;
+	char *p;
 
 	if (smbios_entry.mjr < 2)
 		return;
 	/*
-	 * According to the spec the system table among others are required to
-	 * be present, if it is not we dont bother with this smbios
-	 * implementation.
+	 * According to the spec the system table among others is required,
+	 * if it is not we do not bother with this smbios implementation.
 	 */
 	stbl.cookie = btbl.cookie = 0;
 	if (!smbios_find_table(SMBIOS_TYPE_SYSTEM, &stbl))
@@ -233,36 +271,36 @@ smbios_info(char * str)
 	 * perhaps naieve belief that motherboard vendors will supply this
 	 * information.
 	 */
-	if ((hw_vendor = smbios_get_string(&stbl, sys->vendor)) != NULL) {
-		for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]);
-		    i++) {
-			if ((strncmp(hw_vendor, smbios_uninfo[i],
-			    strlen(smbios_uninfo[i]))) == 0) {
-				if (havebb)
-					hw_vendor = smbios_get_string(&btbl,
-				   	    board->vendor);
-				break;
-			}
+	if ((p = smbios_get_string(&stbl, sys->vendor, vend, sizeof(vend))) !=
+	    NULL)
+		hw_vendor = fixstring(p);
+	if (hw_vendor == NULL) {
+		if (havebb) {
+			if ((p = smbios_get_string(&btbl, board->vendor, vend,
+			    sizeof(vend))) != NULL)
+				hw_vendor = fixstring(p);
 		}
-	} else
-		hw_vendor = smbios_get_string(&btbl, board->vendor);
-	if ((hw_prod = smbios_get_string(&stbl, sys->product)) != NULL) {
-		for (i = 0; i < sizeof(smbios_uninfo)/sizeof(smbios_uninfo[0]);
-		    i++) {
-			if ((strncmp(hw_prod, smbios_uninfo[i],
-			    strlen(smbios_uninfo[i]))) == 0) {
-				if (havebb)
-					hw_prod = smbios_get_string(&btbl,
-				   		board->product);
-				break;
-			}
+	}
+	if ((p = smbios_get_string(&stbl, sys->product, prod, sizeof(prod))) !=
+	    NULL)
+		hw_prod = fixstring(p);
+	if (hw_prod == NULL) {
+		if (havebb) {
+			if ((p = smbios_get_string(&btbl, board->product, prod, 
+			    sizeof(prod))) != NULL)
+				hw_prod = fixstring(p);
 		}
-	} else
-		hw_prod = smbios_get_string(&btbl, board->product);
+	}
 	if (hw_vendor != NULL && hw_prod != NULL)
 		printf("\n%s: %s %s", str, hw_vendor, hw_prod);
-	hw_ver = smbios_get_string(&stbl, sys->version);
-	hw_serial = smbios_get_string(&stbl, sys->serial);
+	if ((p = smbios_get_string(&stbl, sys->version, ver, sizeof(ver))) !=
+	    NULL) {
+		hw_ver = fixstring(p);
+	}
+	if ((p = smbios_get_string(&stbl, sys->serial, ser, sizeof(ser))) !=
+	    NULL) {
+		hw_serial = fixstring(p);
+	}
 	if (smbios_entry.mjr > 2 || (smbios_entry.mjr == 2 &&
 	    smbios_entry.min >= 1)) {
 		/*

@@ -201,6 +201,6 @@ struct smbios_ipmi {
 } __packed;
 
 int smbios_find_table(u_int8_t, struct smbtable *);
-char * smbios_get_string(struct smbtable *, u_int8_t);
+char *smbios_get_string(struct smbtable *, u_int8_t, char *, size_t);
 
 #endif

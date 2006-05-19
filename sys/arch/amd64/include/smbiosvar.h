@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.2 2006/05/10 01:39:04 krw Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.3 2006/05/19 04:49:17 gwk Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -202,6 +202,6 @@ struct smbios_ipmi {
 } __packed;
 
 int smbios_find_table(u_int8_t, struct smbtable *);
-char * smbios_get_string(struct smbtable *, u_int8_t);
+char *smbios_get_string(struct smbtable *, u_int8_t, char *, size_t);
 
 #endif
