@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.43 2006/05/18 18:47:40 otto Exp $
+.\"	$OpenBSD: diskless.8,v 1.44 2006/05/19 08:13:16 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -135,6 +135,12 @@ If the kernel is configured for swap on NFS,
 it uses the same mechanism as for root, but uses the NFS
 getattr function to determine the size of the swap area.
 .El
+.Pp
+The
+.No INSTALL. Ns Aq Ar arch
+notes that come with each distribution
+also give details on the specifics of net/diskless booting
+for each architecture.
 .Sh EXAMPLES
 Before a client can boot over the network,
 its server must be configured correctly.
