@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.6 2006/05/19 18:28:23 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.7 2006/05/19 18:44:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -122,7 +122,7 @@ void		wpi_tx_intr(struct wpi_softc *, struct wpi_rx_desc *,
 void		wpi_cmd_intr(struct wpi_softc *, struct wpi_rx_desc *);
 void		wpi_notif_intr(struct wpi_softc *);
 int		wpi_intr(void *);
-int		wpi_ioctl(struct ifnet *, u_long, caddr_t);
+void		wpi_read_eeprom(struct wpi_softc *);
 int		wpi_tx_data(struct wpi_softc *, struct mbuf *,
 		    struct ieee80211_node *, int);
 void		wpi_start(struct ifnet *);
@@ -179,7 +179,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t memh;
 	pci_intr_handle_t ih;
 	pcireg_t data;
-	uint16_t val;
 	int i, ac, error;
 
 	sc->sc_pct = pa->pa_pc;
@@ -274,17 +273,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
-	/* read MAC address from EEPROM */
-	val = wpi_read_prom_word(sc, WPI_EEPROM_MAC + 0);
-	ic->ic_myaddr[0] = val & 0xff;
-	ic->ic_myaddr[1] = val >> 8;
-	val = wpi_read_prom_word(sc, WPI_EEPROM_MAC + 1);
-	ic->ic_myaddr[2] = val & 0xff;
-	ic->ic_myaddr[3] = val >> 8;
-	val = wpi_read_prom_word(sc, WPI_EEPROM_MAC + 2);
-	ic->ic_myaddr[4] = val & 0xff;
-	ic->ic_myaddr[5] = val >> 8;
-
+	wpi_read_eeprom(sc);
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 #ifdef notyet
@@ -1623,6 +1612,33 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
+void
+wpi_read_eeprom(struct wpi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint16_t val;
+	int i;
+
+	/* read MAC address */
+	val = wpi_read_prom_word(sc, WPI_EEPROM_MAC + 0);
+	ic->ic_myaddr[0] = val & 0xff;
+	ic->ic_myaddr[1] = val >> 8;
+	val = wpi_read_prom_word(sc, WPI_EEPROM_MAC + 1);
+	ic->ic_myaddr[2] = val & 0xff;
+	ic->ic_myaddr[3] = val >> 8;
+	val = wpi_read_prom_word(sc, WPI_EEPROM_MAC + 2);
+	ic->ic_myaddr[4] = val & 0xff;
+	ic->ic_myaddr[5] = val >> 8;
+
+	/* read channels power settings for 2GHz channels */
+	for (i = 0; i < 14; i++) {
+		sc->calib1[i] = wpi_read_prom_word(sc, WPI_EEPROM_CALIB1 + i);
+		sc->calib2[i] = wpi_read_prom_word(sc, WPI_EEPROM_CALIB2 + i);
+		DPRINTF(("channel %d calib1 0x%04x calib2 0x%04x\n", i + 1,
+		    sc->calib1[i], sc->calib2[i]));
+	}
+}
+
 /*
  * Send a command to the firmware.
  */
@@ -2111,7 +2127,7 @@ wpi_init(struct ifnet *ifp)
 	u_char *fw;
 	size_t size;
 	uint32_t tmp;
-	int i, qid, ntries, error;
+	int qid, ntries, error;
 
 	wpi_reset(sc);
 
@@ -2162,14 +2178,6 @@ wpi_init(struct ifnet *ifp)
 	WPI_WRITE(sc, WPI_INTR, 0xffffffff);
 	/* enable interrupts */
 	WPI_WRITE(sc, WPI_MASK, WPI_INTR_MASK);
-
-	/* read channels power settings before firmware locks EEPROM */
-	for (i = 0; i < 14; i++) {
-		sc->calib1[i] = wpi_read_prom_word(sc, WPI_EEPROM_CALIB1 + i);
-		sc->calib2[i] = wpi_read_prom_word(sc, WPI_EEPROM_CALIB2 + i);
-		DPRINTF(("channel %d calib1 0x%04x calib2 0x%04x\n", i + 1,
-		    sc->calib1[i], sc->calib2[i]));
-	}
 
 	if ((error = loadfirmware("wpi-ucode", &fw, &size)) != 0) {
 		printf("%s: could not read firmware file\n",
