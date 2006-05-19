@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtod.c,v 1.21 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strtod.c,v 1.22 2006/05/19 14:15:27 thib Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -532,7 +532,7 @@ lo0bits(ULong *y)
 	if (!(x & 1)) {
 		k++;
 		x >>= 1;
-		if (!x & 1)
+		if (!(x & 1))
 			return 32;
 		}
 	*y = x;
