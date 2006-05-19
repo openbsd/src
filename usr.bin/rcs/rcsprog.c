@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.126 2006/05/15 06:58:03 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.127 2006/05/19 07:52:38 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -425,7 +425,7 @@ rcs_main(int argc, char **argv)
 				    "revision %s", fpath, rev_str);
 			if (rcs_lock_add(file, username, rev) != -1 &&
 			    !(rcsflags & QUIET))
-				printf("%s locked\n", rev_str);
+				(void)fprintf(stderr, "%s locked\n", rev_str);
 			rcsnum_free(rev);
 		}
 
@@ -452,6 +452,11 @@ rcs_main(int argc, char **argv)
 			if (rcs_lock_remove(file, username, rev) == -1 &&
 			    !(rcsflags & QUIET))
 				warnx("%s: warning: No locks are set.", fpath);
+			else {
+				if (!(rcsflags & QUIET))
+					(void)fprintf(stderr,
+					    "%s unlocked\n", rev_str);
+			}
 			rcsnum_free(rev);
 		}
 
