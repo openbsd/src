@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2006/05/07 15:48:01 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.6 2006/05/19 20:56:23 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -79,8 +79,6 @@
  */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x20000000)
-
-#define INTSTACK_SIZE		(4 * PAGE_SIZE)	/* interrupt stack size */
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(1 * NPTEPG * PAGE_SIZE)
