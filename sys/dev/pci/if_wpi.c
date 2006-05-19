@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.4 2006/05/19 18:14:35 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.5 2006/05/19 18:24:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1087,16 +1087,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len =
-	    sizeof (struct wpi_rx_desc) +
-	    sizeof (struct wpi_rx_stat) + stat->len +
-	    sizeof (struct wpi_rx_head) + letoh16(head->len) +
-	    sizeof (struct wpi_rx_tail);
-
-	/* remove head + tail */
-	m_adj(m, sizeof (struct wpi_rx_desc) + sizeof (struct wpi_rx_stat) +
-	    stat->len + sizeof (struct wpi_rx_head));
-	m_adj(m, -sizeof (struct wpi_rx_tail));
+	m->m_data = (caddr_t)(head + 1);
+	m->m_pkthdr.len = m->m_len = letoh16(head->len);
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
