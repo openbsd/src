@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.16 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.17 2006/05/19 18:06:51 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -144,15 +144,11 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 
 	/*
 	 * Yech, hack alert!  We want to pass the node down to the
-	 * driver's start routine.  If we don't do so then the start
-	 * routine must immediately look it up again and that can
-	 * cause a lock order reversal if, for example, this frame
-	 * is being sent because the station is being timedout and
-	 * the frame being sent is a DEAUTH message.  We could stick
-	 * this in an m_tag and tack that on to the mbuf.  However
-	 * that's rather expensive to do for every frame so instead
-	 * we stuff it in the rcvif field since outbound frames do
-	 * not (presently) use this.
+	 * driver's start routine.  We could stick this in an m_tag
+	 * and tack that on to the mbuf.  However that's rather
+	 * expensive to do for every frame so instead we stuff it in
+	 * the rcvif field since outbound frames do not (presently)
+	 * use this.
 	 */
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
@@ -544,9 +540,9 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 }
 
 /*
- * Add an ssid elemet to a frame.
+ * Add an ssid element to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
 {
 	*frm++ = IEEE80211_ELEMID_SSID;
@@ -895,7 +891,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		pktlen += 2;
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-	    2 + ic->ic_des_esslen + 2 + IEEE80211_RATE_SIZE +
+	    2 + ni->ni_esslen + 2 + IEEE80211_RATE_SIZE +
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 	if (m == NULL)
 		return NULL;
