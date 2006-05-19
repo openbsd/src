@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.5 2006/05/19 18:24:08 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.6 2006/05/19 18:28:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1159,8 +1159,20 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 void
 wpi_cmd_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 {
+	struct wpi_tx_ring *ring = &sc->cmdq;
+	struct wpi_tx_data *data;
+
 	if ((desc->qid & 7) != 4)
 		return;	/* not a command ack */
+
+	data = &ring->data[desc->idx];
+
+	/* if the command was mapped in a mbuf, free it */
+	if (data->m != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, data->map);
+		m_freem(data->m);
+		data->m = NULL;
+	}
 
 	wakeup(&sc->cmdq.cmd[desc->idx]);
 }
