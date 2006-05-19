@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.112 2005/11/28 19:43:00 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.113 2006/05/19 13:13:52 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -517,13 +517,6 @@ In both these cases, make sure that
 .Xr named 8
 is running
 (otherwise there are long waits for resolver timeouts).
-.Ss BOOTP server
-If this is a BOOTP server, edit
-.Pa /etc/dhcpd.conf
-as needed.
-.Xr dhcpd 8
-will have to be turned on in
-.Xr rc.conf.local 8 .
 .Ss Clock synchronisation
 In order to make sure the system clock is synchronised
 to that of a publicly accessible NTP server,
@@ -555,9 +548,9 @@ You then
 and edit
 .Pa /etc/fstab
 as needed.
-.Ss DHCP server
+.Ss BOOTP/DHCP server
 If this is a
-DHCP
+BOOTP or DHCP
 server, edit
 .Pa /etc/dhcpd.conf
 and
@@ -572,11 +565,15 @@ has:
 or run
 .Xr dhcpd 8
 manually.
+See also
+.Xr diskless 8 .
 .Ss HP remote boot server
 Edit
 .Pa /etc/rbootd.conf
 if needed for remote booting.
 If you do not have HP computers doing remote booting, do not enable this.
+See also
+.Xr diskless 8 .
 .Ss Kerberos
 If you are going to use
 .Xr kerberos 8
@@ -893,6 +890,7 @@ boot time in the kernel image.
 .Xr dhclient 8 ,
 .Xr dhcp 8 ,
 .Xr dhcpd 8 ,
+.Xr diskless 8 ,
 .Xr dmesg 8 ,
 .Xr ftpd 8 ,
 .Xr ifconfig 8 ,
