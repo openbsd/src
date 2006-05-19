@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.48 2006/05/19 10:15:36 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.49 2006/05/19 10:36:27 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -293,9 +293,6 @@ Export the required filesystems in
 .Pa /etc/exports :
 .Bd -literal -offset indent
 /usr -ro myclient
-# for SunOS:
-# /export/myclient -rw=myclient,root=myclient
-# for OpenBSD:
 /export/myclient -maproot=root -alldirs myclient
 .Ed
 .Pp
@@ -306,19 +303,6 @@ filesystem (as is done above).
 If not, a properly fleshed out
 .Pa /usr
 partition will have to be built for the client in some other place.
-.Pp
-For example,
-if the server is a sparc, and the client a sun3,
-create and fill
-.Pa /export/usr.sun3
-and then use the following
-.Pa /etc/exports
-lines:
-.Bd -literal -offset indent
-/export/usr.sun3 -ro myclient
-/export/myclient -rw=myclient,root=myclient
-.Ed
-.Pp
 .It
 Copy and customize at least the following files in
 .Pa /export/myclient/root :
