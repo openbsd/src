@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.355 2006/05/18 17:36:31 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.356 2006/05/19 19:43:41 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1180,7 +1180,7 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci->ci_dev.dv_xname);
+			est_init(ci->ci_dev.dv_xname, CPUVENDOR_VIA);
 		else
 			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    ci->ci_dev.dv_xname);
@@ -1460,7 +1460,7 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci->ci_dev.dv_xname);
+			est_init(ci->ci_dev.dv_xname, CPUVENDOR_INTEL);
 		else
 			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    ci->ci_dev.dv_xname);
