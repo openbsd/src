@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.44 2006/05/19 08:13:16 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.45 2006/05/19 09:23:41 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -189,7 +189,7 @@ See the
 manual page for more information.
 .Pp
 .It
-If booting an HPPA64, Mips64, Motorola, or Sun client,
+If booting an Alpha, HPPA64, Mips64, Motorola, or Sun client,
 install a copy of the appropriate diskless boot loader (such as
 .Pa boot.net
 from the root directory of the
@@ -197,7 +197,9 @@ from the root directory of the
 sparc tree) in the
 .Pa /tftpboot
 directory.
-Make a link such that the boot program is
+.Pp
+If booting an HPPA64, Mips64, Motorola, or Sun client,
+make a link such that the boot program is
 accessible by a file name composed of the client's IP address
 in HEX, a dot, and the architecture name (all upper case).
 For example:
@@ -221,12 +223,33 @@ If the client's PROM fails to fetch the expected file,
 .Xr tcpdump 8
 can be used to discover which filename the client is trying to read.
 .Pp
-If booting an HP 300 or HPPA machine, ensure that the general purpose
+Architectures using DHCP
+(Alpha)
+should ensure that
+.Xr dhcpd 8
+is configured on the server to serve BOOTP protocol requests.
+An example entry in
+.Xr dhcpd.conf 5 :
+.Bd -literal -offset indent
+subnet 10.0.0.0 netmask 255.0.0.0 {
+	host myclient {
+		filename "netboot";
+		option root-path "/export/myclient/root";
+		hardware ethernet 00:02:56:00:73:31;
+		fixed-address 10.42.42.42;
+	}
+}
+.Ed
+.Pp
+Architectures using the HP remote boot server
+(HP 300 or HPPA)
+should ensure that the general purpose
 boot program is installed in the directory
 .Pa /usr/mdec/rbootd .
 .Pp
-If booting an Alpha or Vax machine,
-follow the instructions in
+Architectures using MOPS
+(Vax)
+should follow the instructions in
 .Xr mopd 8
 for setting up a TFTP boot.
 .Pp
@@ -326,15 +349,17 @@ Make sure the following processes are enabled on the server:
 .Xr tftpd 8
 via
 .Xr inetd 8
-(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients),
+(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients);
 .Xr rarpd 8
-(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients),
+(for Alpha, HPPA64, Mips64, Motorola, Sun, or Vax clients);
+.Xr dhcpd 8
+(for Alpha clients);
 .Xr rbootd 8
-(for HP 300 and HPPA clients),
+(for HP 300 and HPPA clients);
 .Xr mopd 8
-(for Alpha or Vax clients),
-.Xr rpc.bootparamd 8 ,
-.Xr portmap 8 ,
+(for Vax clients);
+.Xr rpc.bootparamd 8 ;
+.Xr portmap 8 ;
 and
 .Xr nfsd 8 .
 .Pp
@@ -348,6 +373,8 @@ Net boot the client.
 .Bl -tag -width "/usr/mdec/rbootdXX" -compact
 .It /etc/bootparams
 Client root and swap pathnames.
+.It /etc/dhcpd.conf
+DHCP daemon configuration file.
 .It /etc/ethers
 Ethernet addresses of known clients.
 .It /etc/exports
@@ -369,12 +396,14 @@ Location of boot programs loaded by the HP Boot ROM.
 .El
 .Sh SEE ALSO
 .Xr bootparams 5 ,
+.Xr dhcpd.conf 5 ,
 .Xr ethers 5 ,
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr hostname.if 5 ,
 .Xr hosts 5 ,
 .Xr myname 5 ,
+.Xr dhcpd 8 ,
 .Xr mopd 8 ,
 .Xr mountd 8 ,
 .Xr nfsd 8 ,
