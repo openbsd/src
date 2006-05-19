@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.118 2006/05/13 04:46:15 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.119 2006/05/19 04:17:31 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -198,6 +198,8 @@ scsibus* at gdt?
 #scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
 scsibus* at ami?
+mfi*	at pci?			# LSI MegaRAID SAS controllers
+scsibus* at mfi?
 cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
 cac*	at eisa?
 scsibus* at cac?
