@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.49 2006/05/19 10:36:27 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.50 2006/05/19 10:39:15 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -159,14 +159,12 @@ corresponding to the client's Ethernet address:
 .Pp
 This will be used by
 .Xr rarpd 8 .
-.Pp
 .It
 Assign an IP address for myclient in
 .Pa /etc/hosts :
 .Bd -literal -offset indent
 192.197.96.12           myclient
 .Ed
-.Pp
 .It
 If booting an Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax client,
 ensure that
@@ -187,7 +185,6 @@ An entry might look like this:
 See the
 .Xr rbootd 8
 manual page for more information.
-.Pp
 .It
 If booting an Alpha, newer HPPA, HPPA64, Mips64, Motorola, or Sun client,
 install a copy of the appropriate diskless boot loader (such as
@@ -252,7 +249,6 @@ Architectures using MOPS
 should follow the instructions in
 .Xr mopd 8
 for setting up a TFTP boot.
-.Pp
 .It
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
@@ -265,7 +261,6 @@ Note that some bootparam servers are somewhat sensitive.
 Some require fully qualified hostnames or partially qualified hostnames
 (which can be solved by having both fully and partially qualified entries).
 Other servers are case sensitive.
-.Pp
 .It
 Build the swap file for myclient:
 .Bd -literal -offset indent
@@ -277,7 +272,6 @@ Build the swap file for myclient:
 This creates a 120 Megabyte swap file and an empty /swap directory.
 A smaller swap file may be created if the boot is for
 maintenance (i.e. temporary) purposes only.
-.Pp
 .It
 Populate myclient's root
 filesystem on the server.
@@ -287,7 +281,6 @@ distribution.
 It can be as simple as copying and modifying the server's root
 filesystem, or perhaps the files can be taken from the
 standard binary distribution.
-.Pp
 .It
 Export the required filesystems in
 .Pa /etc/exports :
@@ -316,7 +309,6 @@ Copy and customize at least the following files in
 .Pp
 Note that "le0" above should be replaced with the name of
 the network interface that the client will use for booting.
-.Pp
 .It
 Correct at least
 the critical mount points in the client's
