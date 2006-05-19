@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.51 2006/05/19 13:02:06 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.52 2006/05/19 16:36:41 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -186,7 +186,7 @@ See the
 .Xr rbootd 8
 manual page for more information.
 .It
-If booting an Alpha, newer HPPA, HPPA64, Mips64, Motorola, or Sun client,
+If booting a newer Alpha, newer HPPA, HPPA64, Mips64, Motorola, or Sun client,
 install a copy of the appropriate diskless boot loader (such as
 .Pa boot.net
 from the root directory of the
@@ -222,7 +222,7 @@ If the client's PROM fails to fetch the expected file,
 can be used to discover which filename the client is trying to read.
 .Pp
 Architectures using DHCP
-(Alpha, newer HPPA, or Mips64)
+(newer Alpha, newer HPPA, or Mips64)
 should ensure that
 .Xr dhcpd 8
 is configured on the server to serve BOOTP protocol requests.
@@ -246,7 +246,7 @@ boot program is installed in the directory
 .Pa /usr/mdec/rbootd .
 .Pp
 Architectures using MOP
-(Vax)
+(older Alpha and Vax)
 should follow the instructions in
 .Xr mopd 8
 for setting up a TFTP boot.
@@ -360,7 +360,7 @@ For Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax clients:
 via
 .Xr inetd 8
 .Pp
-For Alpha, newer HPPA, and Mips64 clients:
+For newer Alpha, newer HPPA, and Mips64 clients:
 .Xr dhcpd 8
 .Pp
 For HP 300 and older HPPA clients:
@@ -369,7 +369,7 @@ For HP 300 and older HPPA clients:
 For older HPPA, HPPA64, Motorola, Sun, or Vax clients:
 .Xr rpc.bootparamd 8
 .Pp
-For Vax clients:
+For older Alpha and Vax clients:
 .Xr mopd 8
 .It
 Net boot the client.
