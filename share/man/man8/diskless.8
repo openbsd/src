@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.46 2006/05/19 09:41:45 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.47 2006/05/19 10:04:09 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -198,7 +198,7 @@ sparc tree) in the
 .Pa /tftpboot
 directory.
 .Pp
-If booting an HPPA64, Mips64, Motorola, or Sun client,
+If booting an HPPA64, Motorola, or Sun client,
 make a link such that the boot program is
 accessible by a file name composed of the client's IP address
 in HEX, a dot, and the architecture name (all upper case).
@@ -224,7 +224,7 @@ If the client's PROM fails to fetch the expected file,
 can be used to discover which filename the client is trying to read.
 .Pp
 Architectures using DHCP
-(Alpha and newer HPPA)
+(Alpha, newer HPPA, or Mips64)
 should ensure that
 .Xr dhcpd 8
 is configured on the server to serve BOOTP protocol requests.
@@ -351,7 +351,7 @@ via
 .Xr inetd 8
 (for Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax clients);
 .Xr dhcpd 8
-(for Alpha and newer HPPA clients);
+(for Alpha, newer HPPA, and Mips64 clients);
 .Xr rbootd 8
 (for HP 300 and older HPPA clients);
 .Xr mopd 8
