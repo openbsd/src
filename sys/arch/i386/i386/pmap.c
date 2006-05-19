@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.92 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.93 2006/05/19 20:53:31 brad Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -77,13 +77,8 @@
 #include <machine/gdt.h>
 
 #include <dev/isa/isareg.h>
-#ifdef __NetBSD__
-#include <machine/isa_machdep.h>
-#endif
-#ifdef __OpenBSD__
 #include <sys/msgbuf.h>
 #include <stand/boot/bootarg.h>
-#endif
 
 /*
  * this file contains the code for the "pmap module."   the module's
@@ -644,14 +639,6 @@ struct pool pmap_pmap_pool;
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
 caddr_t pmap_csrcp, pmap_cdstp, pmap_zerop, pmap_ptpp;
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
-
-#ifdef __NetBSD__
-extern vaddr_t msgbuf_vaddr;
-extern paddr_t msgbuf_paddr;
-
-extern vaddr_t idt_vaddr;			/* we allocate IDT early */
-extern paddr_t idt_paddr;
-#endif
 
 #if defined(I586_CPU)
 /* stuff to fix the pentium f00f bug */
@@ -1289,31 +1276,11 @@ pmap_bootstrap(kva_start)
 	vmmap = (char *)virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
 
-#ifdef __NetBSD
-	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-#endif
-#ifdef __OpenBSD__
 	msgbufp = (struct msgbuf *)virtual_avail;	/* don't need pte */
-#endif
 	virtual_avail += round_page(MSGBUFSIZE); pte++;
 
-#ifdef __NetBSD__
-	idt_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += PAGE_SIZE; pte++;
-	idt_paddr = avail_start;			/* steal a page */
-	avail_start += PAGE_SIZE;
-
-#if defined(I586_CPU)
-	/* pentium f00f bug stuff */
-	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-	virtual_avail += PAGE_SIZE; pte++;
-#endif
-#endif
-
-#ifdef __OpenBSD__
 	bootargp = (bootarg_t *)virtual_avail;
 	virtual_avail += round_page(bootargc); pte++;
-#endif
 
 	/*
 	 * now we reserve some VM for mapping pages when doing a crash dump
@@ -1351,42 +1318,6 @@ pmap_bootstrap(kva_start)
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		mtx_init(&pmap_tlb_shootdown_q[i].pq_mutex, IPL_IPI);
 	}
-
-#ifdef __NetBSD__
-	/*
-	 * we must call uvm_page_physload() after we are done playing with
-	 * virtual_avail but before we call pmap_steal_memory.  [i.e. here]
-	 * this call tells the VM system how much physical memory it
-	 * controls.  If we have 16M of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first 16M of RAM
-	 * on a lower priority free list (so that all of the ISA DMA'able
-	 * memory won't be eaten up first-off).
-	 */
-
-	if (avail_end <= (16 * 1024 * 1024))
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
-
-	if (avail_start < hole_start)   /* any free memory before the hole? */
-		uvm_page_physload(atop(avail_start), atop(hole_start),
-				  atop(avail_start), atop(hole_start),
-				  first16q);
-
-	if (first16q != VM_FREELIST_DEFAULT &&
-	    hole_end < 16 * 1024 * 1024) {
-		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
-				  atop(hole_end), atop(16 * 1024 * 1024),
-				  first16q);
-		uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
-				  atop(16 * 1024 * 1024), atop(avail_end),
-				  VM_FREELIST_DEFAULT);
-	} else {
-		uvm_page_physload(atop(hole_end), atop(avail_end),
-				  atop(hole_end), atop(avail_end),
-				  VM_FREELIST_DEFAULT);
-	}
-#endif
 
 #if defined(MULTIPROCESSOR)
 	/* install the page after boot args as PT page for first 4M */

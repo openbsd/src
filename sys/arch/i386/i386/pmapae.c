@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.2 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.3 2006/05/19 20:53:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -100,13 +100,8 @@
 #include <machine/gdt.h>
 
 #include <dev/isa/isareg.h>
-#ifdef __NetBSD__
-#include <machine/isa_machdep.h>
-#endif
-#ifdef __OpenBSD__
 #include <sys/msgbuf.h>
 #include <stand/boot/bootarg.h>
-#endif
 
 /*
  * this file contains the code for the "pmap module."   the module's
