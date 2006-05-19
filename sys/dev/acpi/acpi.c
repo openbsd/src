@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.48 2006/04/11 02:36:49 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.49 2006/05/19 09:24:32 canacar Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -59,6 +59,7 @@ void	acpi_write_pmreg(struct acpi_softc *, int, int);
 
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
+void	acpi_foundtmp(struct aml_node *, void *);
 void	acpi_inidev(struct aml_node *, void *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
@@ -472,6 +473,26 @@ acpi_inidev(struct aml_node *node, void *arg)
 }
 
 void
+acpi_foundtmp(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+	struct acpi_attach_args	aaa;
+
+	dnprintf(10, "found thermal zone entry: %s\n", node->parent->name);
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
+	aaa.aaa_name = "acpitz";
+
+	config_found(self, &aaa, acpi_print);
+}
+
+void
 acpi_foundpss(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -749,6 +770,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_PSS", acpi_foundpss, sc);
+
+	/* attach devices found in dsdt */
+	aml_find_node(aml_root.child, "_TMP", acpi_foundtmp, sc);
 
 	/* Setup threads */
 	sc->sc_thread = malloc(sizeof(struct acpi_thread), M_DEVBUF, M_WAITOK);
