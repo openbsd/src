@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.21 2006/04/30 05:22:27 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.22 2006/05/19 09:10:50 canacar Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -19,7 +19,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
@@ -44,7 +44,7 @@ struct acpibat_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	struct lock		sc_lock;
+	struct rwlock		sc_lock;
 	struct acpibat_bif	sc_bif;
 	struct acpibat_bst	sc_bst;
 	volatile int		sc_bat_present;
@@ -92,7 +92,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
+	rw_init(&sc->sc_lock, "acpibat");
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
@@ -212,7 +212,7 @@ acpibat_refresh(void *arg)
 	acpibat_getbif(sc);
 	acpibat_getbst(sc); 
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	/* XXX ugh but make sure */
 	if (!sc->sc_bif.bif_cap_granu1)
@@ -244,7 +244,7 @@ acpibat_refresh(void *arg)
 	    sc->sc_bif.bif_cap_granu1 * 1000;
 	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 }
 
 int
@@ -254,7 +254,7 @@ acpibat_getbif(struct acpibat_softc *sc)
 	struct acpi_context	*ctx;
 	int			rv = 1;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
@@ -321,7 +321,7 @@ acpibat_getbif(struct acpibat_softc *sc)
 	    sc->sc_bif.bif_oem);
 
 out:
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
 
@@ -332,7 +332,7 @@ acpibat_getbst(struct acpibat_softc *sc)
 	struct acpi_context	*ctx;
 	int			rv = 0;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&sc->sc_lock);
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
@@ -364,7 +364,7 @@ acpibat_getbst(struct acpibat_softc *sc)
 	    sc->sc_bst.bst_capacity,
 	    sc->sc_bst.bst_voltage);
 out:
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
 
