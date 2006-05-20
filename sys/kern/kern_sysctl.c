@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.140 2006/05/08 22:51:18 gwk Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.141 2006/05/20 22:55:46 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1796,19 +1796,22 @@ int
 sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	struct sensor *s;
-	int num;
+	struct sensor ls, *s;
 
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	num = name[0];
-
-	s = sensor_get(num);
+	s = sensor_get(name[0]);
 	if (s == NULL)
 		return (ENOENT);
 
-	return (sysctl_rdstruct(oldp, oldlenp, newp, s, sizeof(struct sensor)));
+	/*
+	 * Make a local copy of the sensor which cannot be freed by a driver
+	 * while it's being copied to userland.
+	 */
+	bcopy(s, &ls, sizeof(ls));
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp, &ls, sizeof(ls)));
 }
 
 int
