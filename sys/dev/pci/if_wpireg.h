@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.3 2006/05/20 12:44:47 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.4 2006/05/20 13:24:02 damien Exp $	*/
 
 
 /*-
@@ -260,7 +260,10 @@ struct wpi_config {
 	uint16_t	reserved2;
 	uint32_t	reserved3[2];
 	uint8_t		mode;
-#define WPI_MODE_STA	3
+#define WPI_MODE_HOSTAP		1
+#define WPI_MODE_STA		3
+#define WPI_MODE_IBSS		4
+#define WPI_MODE_MONITOR	6
 
 	uint8_t		reserved4[3];
 	uint8_t		ofdm_mask;
@@ -344,6 +347,7 @@ struct wpi_cmd_data {
 	uint16_t	len;
 	uint16_t	lnext;
 	uint32_t	flags;
+#define WPI_TX_NEED_RTS		(1 <<  1)
 #define WPI_TX_NEED_ACK		(1 <<  3)
 #define WPI_TX_AUTO_SEQ		(1 << 13)
 #define WPI_TX_INSERT_TSTAMP	(1 << 16)

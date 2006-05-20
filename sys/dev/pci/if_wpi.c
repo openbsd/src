@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.9 2006/05/20 12:44:47 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.10 2006/05/20 13:24:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -410,36 +410,36 @@ wpi_dma_contig_alloc(struct wpi_softc *sc, struct wpi_dma_info *dma,
 
 	dma->size = size;
 
-	error = bus_dmamap_create(sc->sc_dmat, dma->size, 1, dma->size, 0,
-	    flags, &dma->map);
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, flags,
+	    &dma->map);
 	if (error != 0) {
 		printf("%s: could not create DMA map\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamem_alloc(sc->sc_dmat, dma->size, alignment, 0,
-	    &dma->seg, 1, &nsegs, flags);
+	error = bus_dmamem_alloc(sc->sc_dmat, size, alignment, 0, &dma->seg,
+	    1, &nsegs, flags);
 	if (error != 0) {
 		printf("%s: could not allocate DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &dma->seg, 1, dma->size,
-	    &dma->vaddr, flags);
+	error = bus_dmamem_map(sc->sc_dmat, &dma->seg, 1, size, &dma->vaddr,
+	    flags);
 	if (error != 0) {
 		printf("%s: could not map DMA memory\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, dma->map, &dma->seg, 1,
-	    dma->size, flags);
+	error = bus_dmamap_load_raw(sc->sc_dmat, dma->map, &dma->seg, 1, size,
+	    flags);
 	if (error != 0) {
 		printf("%s: could not load DMA memory\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	bzero(dma->vaddr, dma->size);
+	bzero(dma->vaddr, size);
 
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
 	*kvap = dma->vaddr;
@@ -763,6 +763,12 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
+		if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+			/* link LED blinks while monitoring */
+			wpi_set_led(sc, WPI_LED_LINK, 5, 5);
+			break;
+		}
+
 		wpi_enable_tsf(sc, ic->ic_bss);
 
 		/* update adapter's configuration */
@@ -1351,6 +1357,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
 		tx->flags |= htole32(WPI_TX_NEED_ACK);
+	else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
+		tx->flags |= htole32(WPI_TX_NEED_RTS);
 
 	tx->flags |= htole32(WPI_TX_AUTO_SEQ);
 
@@ -1359,10 +1367,6 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 		tx->flags |= htole32(WPI_TX_INSERT_TSTAMP);
-
-#ifdef notyet
-	tx->flags |= htole32(WPI_TX_NEED_RTS);
-#endif
 
 	/* retrieve destination node's id */
 	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? WPI_ID_BROADCAST :
@@ -2052,10 +2056,27 @@ wpi_config(struct wpi_softc *sc)
 	bzero(&sc->config, sizeof (struct wpi_config));
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
 	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
-	sc->config.mode = WPI_MODE_STA;
-	sc->config.flags =
-	    htole32(WPI_CONFIG_TSF | WPI_CONFIG_AUTO | WPI_CONFIG_24GHZ);
-	sc->config.filter = htole32(WPI_FILTER_MULTICAST);
+	sc->config.flags = htole32(WPI_CONFIG_TSF | WPI_CONFIG_AUTO |
+	    WPI_CONFIG_24GHZ);
+	sc->config.filter = 0;
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		sc->config.mode = WPI_MODE_STA;
+		sc->config.filter |= htole32(WPI_FILTER_MULTICAST);
+		break;
+	case IEEE80211_M_IBSS:
+	case IEEE80211_M_AHDEMO:
+		sc->config.mode = WPI_MODE_IBSS;
+		break;
+	case IEEE80211_M_HOSTAP:
+		sc->config.mode = WPI_MODE_HOSTAP;
+		break;
+	case IEEE80211_M_MONITOR:
+		sc->config.mode = WPI_MODE_MONITOR;
+		sc->config.filter |= htole32(WPI_FILTER_MULTICAST |
+		    WPI_FILTER_CTL | WPI_FILTER_PROMISC);
+		break;
+	}
 	sc->config.cck_mask  = 0x0f;	/* not yet negotiated */
 	sc->config.ofdm_mask = 0xff;	/* not yet negotiated */
 	error = wpi_cmd(sc, WPI_CMD_CONFIGURE, &sc->config,
