@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.11 2006/05/20 15:31:30 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.12 2006/05/20 15:46:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1359,6 +1359,10 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		tap->wt_flags = 0;
 		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_rate = 2;	/* 1Mb/s */
+		tap->wt_hwqueue = ac;
+		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
+			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
 		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)tap;
