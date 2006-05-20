@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.47 2006/03/04 09:19:13 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.48 2006/05/20 23:03:53 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -125,6 +125,10 @@ static const struct mii_phydesc brgphys[] = {
 	  MII_STR_xxBROADCOM_BCM5752 },
 	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5780,
 	  MII_STR_xxBROADCOM_BCM5780 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5706C,
+	  MII_STR_xxBROADCOM_BCM5706C },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5708C,
+	  MII_STR_xxBROADCOM_BCM5708C },
 
 	{ 0,				0,
 	  NULL },
@@ -689,6 +693,8 @@ brgphy_load_dspcode(struct mii_softc *sc)
 	case MII_MODEL_xxBROADCOM_BCM5714:
 	case MII_MODEL_xxBROADCOM_BCM5780:
 	case MII_MODEL_xxBROADCOM_BCM5752:
+	case MII_MODEL_xxBROADCOM_BCM5706C:
+	case MII_MODEL_xxBROADCOM_BCM5708C:
 		brgphy_bcm5750_dspcode(sc);
 		break;
 	}
