@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.8 2006/05/20 11:47:29 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.9 2006/05/20 12:44:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -131,6 +131,7 @@ int		wpi_cmd(struct wpi_softc *, int, const void *, int, int);
 int		wpi_mrr_setup(struct wpi_softc *);
 void		wpi_set_led(struct wpi_softc *, uint8_t, uint8_t, uint8_t);
 void		wpi_enable_tsf(struct wpi_softc *, struct ieee80211_node *);
+int		wpi_setup_beacon(struct wpi_softc *, struct ieee80211_node *);
 int		wpi_auth(struct wpi_softc *);
 int		wpi_scan(struct wpi_softc *);
 int		wpi_config(struct wpi_softc *);
@@ -1751,6 +1752,76 @@ wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
 		printf("%s: could not enable TSF\n", sc->sc_dev.dv_xname);
 }
 
+/*
+ * Build a beacon frame that the firmware will broadcast periodically in
+ * IBSS or HostAP modes.
+ */
+int
+wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct wpi_tx_ring *ring = &sc->cmdq;
+	struct wpi_tx_desc *desc;
+	struct wpi_tx_data *data;
+	struct wpi_tx_cmd *cmd;
+	struct wpi_cmd_beacon *bcn;
+	struct mbuf *m0;
+	int error;
+
+	desc = &ring->desc[ring->cur];
+	data = &ring->data[ring->cur];
+
+	m0 = ieee80211_beacon_alloc(ic, ni);
+	if (m0 == NULL) {
+		printf("%s: could not allocate beacon frame\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
+	}
+
+	cmd = &ring->cmd[ring->cur];
+	cmd->code = WPI_CMD_SET_BEACON;
+	cmd->flags = 0;
+	cmd->qid = ring->qid;
+	cmd->idx = ring->cur;
+
+	bcn = (struct wpi_cmd_beacon *)cmd->data;
+	bzero(bcn, sizeof (struct wpi_cmd_beacon));
+	bcn->id = WPI_ID_BROADCAST;
+	bcn->lifetime = htole32(0xffffffff);
+	bcn->len = htole16(m0->m_pkthdr.len);
+	bcn->rate = 10;	/* 1Mb/s */
+	bcn->flags = htole32(WPI_TX_AUTO_SEQ | WPI_TX_INSERT_TSTAMP);
+
+	/* save and trim IEEE802.11 header */
+	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&bcn->wh);
+	m_adj(m0, sizeof (struct ieee80211_frame));
+
+	/* assume beacon frame is contiguous */
+	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m0, void *),
+	    m0->m_pkthdr.len, NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map beacon\n", sc->sc_dev.dv_xname);
+		m_freem(m0);
+		return error;
+	}
+
+	data->m = m0;
+
+	/* first scatter/gather segment is used by the beacon command */
+	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 | 2 << 24);
+	desc->segs[0].physaddr = htole32(ring->cmd_dma.paddr +
+	    ring->cur * sizeof (struct wpi_tx_cmd));
+	desc->segs[0].len = htole32(4 + sizeof (struct wpi_cmd_beacon));
+	desc->segs[1].physaddr = htole32(data->map->dm_segs[0].ds_addr);
+	desc->segs[1].len = htole32(data->map->dm_segs[0].ds_len);
+
+	/* kick cmd ring */
+	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
+	WPI_WRITE(sc, WPI_TX_WIDX, ring->qid << 8 | ring->cur);
+
+	return 0;
+}
+
 int
 wpi_auth(struct wpi_softc *sc)
 {
@@ -1763,7 +1834,7 @@ wpi_auth(struct wpi_softc *sc)
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
 	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 	if (ic->ic_curmode == IEEE80211_MODE_11B) {
-		sc->config.cck_mask  = 0x0f;
+		sc->config.cck_mask  = 0x03;
 		sc->config.ofdm_mask = 0;
 	} else if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
 		sc->config.cck_mask  = 0;
@@ -1777,8 +1848,8 @@ wpi_auth(struct wpi_softc *sc)
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		sc->config.flags |= htole32(WPI_CONFIG_SHPREAMBLE);
 
-	DPRINTF(("config chan %d flags %x\n", sc->config.chan,
-	    sc->config.flags));
+	DPRINTF(("config chan %d flags %x cck %x ofdm %x\n", sc->config.chan,
+	    sc->config.flags, sc->config.cck_mask, sc->config.ofdm_mask));
 	error = wpi_cmd(sc, WPI_CMD_CONFIGURE, &sc->config,
 	    sizeof (struct wpi_config), 1);
 	if (error != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.2 2006/05/20 11:47:29 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.3 2006/05/20 12:44:47 damien Exp $	*/
 
 
 /*-
@@ -242,6 +242,7 @@ struct wpi_tx_cmd {
 #define WPI_CMD_SET_LED		 72
 #define WPI_CMD_SET_POWER_MODE	119
 #define WPI_CMD_SCAN		128
+#define WPI_CMD_SET_BEACON	145
 #define WPI_CMD_BLUETOOTH	155
 #define WPI_CMD_TXPOWER		176
 
@@ -361,6 +362,22 @@ struct wpi_cmd_data {
 	uint8_t		data_ntries;
 	uint16_t	duration;
 	uint16_t	txop;
+	struct		ieee80211_frame wh;
+} __packed;
+
+/* structure for command WPI_CMD_SET_BEACON */
+struct wpi_cmd_beacon {
+	uint16_t	len;
+	uint16_t	reserved1;
+	uint32_t	flags;	/* same as wpi_cmd_data */
+	uint8_t		rate;
+	uint8_t		id;
+	uint8_t		reserved2[30];
+	uint32_t	lifetime;
+	uint32_t	reserved3[2];
+	uint16_t	tim;
+	uint8_t		timsz;
+	uint8_t		reserved4;
 	struct		ieee80211_frame wh;
 } __packed;
 
