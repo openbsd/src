@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.145 2006/05/20 03:47:56 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.146 2006/05/20 04:18:51 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1150,11 +1150,6 @@ bge_chipinit(struct bge_softc *sc)
 	struct pci_attach_args	*pa = &(sc->bge_pa);
 	u_int32_t dma_rw_ctl;
 	int i;
-
-#ifdef BGE_CHECKSUM
-	sc->arpcom.ac_if.if_capabilities =
-	  IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-#endif
 
 	/* Set endianness before we access any non-PCI registers. */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
