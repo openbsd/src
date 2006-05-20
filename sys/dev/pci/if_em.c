@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.119 2006/05/07 07:06:23 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.120 2006/05/20 02:58:00 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -245,19 +245,35 @@ em_attach(struct device *parent, struct device *self, void *aux)
 #else
 	sc->hw.master_slave = EM_MASTER_SLAVE;
 #endif
+
+	/* Initialize eeprom parameters */
+	em_init_eeprom_params(&sc->hw);
+
 	/*
 	 * Set the max frame size assuming standard Ethernet
 	 * sized frames.
 	 */
 	switch (sc->hw.mac_type) {
+		case em_82573:
+		{
+			uint16_t	eeprom_data = 0;
+
+			/*
+			 * 82573 only supports Jumbo frames
+			 * if ASPM is disabled.
+			 */
+			em_read_eeprom(&sc->hw, EEPROM_INIT_3GIO_3,
+			    1, &eeprom_data);
+			if (eeprom_data & EEPROM_WORD1A_ASPM_MASK) {
+				sc->hw.max_frame_size = ETHER_MAX_LEN;
+				break;
+			}
+			/* Allow Jumbo frames - FALLTHROUGH */
+		}
 		case em_82571:
 		case em_82572:
 		case em_80003es2lan:	/* Limit Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
-			break;
-		case em_82573:
-			/* 82573 does not support Jumbo frames */
-			sc->hw.max_frame_size = ETHER_MAX_LEN;
 			break;
 		default:
 			sc->hw.max_frame_size =
@@ -278,9 +294,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		       sc->sc_dv.dv_xname);
 		goto err_pci;
 	}
-
-	/* Initialize eeprom parameters */
-	em_init_eeprom_params(&sc->hw);
 
 	if (sc->hw.mac_type >= em_82544)
 	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
@@ -455,8 +468,7 @@ em_start(struct ifnet *ifp)
 int
 em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	int		max_frame_size, error = 0;
-	uint16_t	eeprom_data = 0;
+	int		error = 0;
 	struct ifreq   *ifr = (struct ifreq *) data;
 	struct ifaddr  *ifa = (struct ifaddr *)data;
 	struct em_softc *sc = ifp->if_softc;
@@ -483,29 +495,8 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
-		switch (sc->hw.mac_type) {
-			case em_82573:
-				/*
-				 * 82573 only supports Jumbo frames
-				 * if ASPM is disabled.
-				 */
-				em_read_eeprom(&sc->hw, EEPROM_INIT_3GIO_3,
-				    1, &eeprom_data);
-				if (eeprom_data & EEPROM_WORD1A_ASPM_MASK) {
-					max_frame_size = ETHER_MAX_LEN;
-					break;
-				}
-				/* Allow Jumbo frames - FALLTHROUGH */
-			case em_82571:
-			case em_82572:
-			case em_80003es2lan:	/* Limit Jumbo Frame size */
-				max_frame_size = 9234;
-				break;
-			default:
-				max_frame_size = MAX_JUMBO_FRAME_SIZE;
-		}
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu >
-		    max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN)
+		    sc->hw.max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
@@ -1515,7 +1506,6 @@ em_setup_interface(struct em_softc *sc)
 
 	ifp = &sc->interface_data.ac_if;
 	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
-
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = em_ioctl;
