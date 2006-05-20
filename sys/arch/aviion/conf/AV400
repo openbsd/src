@@ -1,4 +1,4 @@
-#	$OpenBSD: AV400,v 1.1.1.1 2006/05/09 18:09:58 miod Exp $
+#	$OpenBSD: AV400,v 1.2 2006/05/20 12:06:18 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -10,27 +10,14 @@
 # device.
 
 machine		aviion m88k
-
-option		DDB		# in-kernel debugger
-option		DDB_SAFE_CONSOLE # allow break into ddb during boot
-option		DIAGNOSTIC	# internal consistency checks
-option		NFSCLIENT	# Network File System client
-option		FIFO		# FIFOs; RECOMMENDED
-option		INET		# IP + ICMP + TCP + UDP
-
-pseudo-device	pty	16	# initial number of pseudo-terminals
-pseudo-device	loop		# network loopback
-
-option		BOOT_CONFIG	# add support for boot -c
+include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
 # Processor type
-option		M88100		# 100, 200, 300, 400, 500, 3000, 4000, 5000, 6000
-#option		M88110		# 550, 4500, 5500, 8500, 9500
+option		M88100
 
 # Supported models
-option		AV400		# 100, 200, 300, 400, 3000, 4000
-#option		AV5000		# 5000, 6000
+option		AV400		# 100, 200, 300, 400, 3000, 4000, 4300
 
 # Define this if your 88100 processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
@@ -44,17 +31,22 @@ config		bsd		swap generic
 mainbus0 at root
 
 #
-# AV400 onboard devices
+# Onboard devices for all 88100-based machines
 #
 
 syscon0 at mainbus0 addr 0xfff00000
 nvram0	at syscon? offset 0x80000
 dart0	at syscon? offset 0x82000 ipl 3		# serial ports
-dart1	at syscon? offset 0x82c00 ipl 3
-vme0	at syscon? offset 0x85000		# VME bridge
-#avfb0	at syscon? offset 0x89000
 #avkbd0	at syscon? offset 0x82800
 #wskbd*	at avkbd?
+#avfb0	at syscon? offset 0x89000
+
+#
+# AV400 onboard devices
+#
+
+dart1	at syscon? offset 0x82c00 ipl 3
+vme0	at syscon? offset 0x85000		# VME bridge
 #aic0	at syscon? offset 0x8a000 ipl 2
 le0	at syscon? offset 0x8c000 ipl 1		# on-board ethernet
 
@@ -67,6 +59,3 @@ le*	at vme? a32 0x00900000 a16 0x4000 ipl 1	# artwork X0A factory settings
 le*	at vme? a32 0x55540000 a16 0x8600 ipl 1	# artwork X0B factory settings
 le*	at vme? a32 0x55900000 a16 0x4000 ipl 1
 le*	at vme? a32 0x55980000 a16 0x5000 ipl 1
-
-# VDA/255 Serial Host Adapter (on-board on model 4300)
-#vda0	at vme? a32 0x60000000
