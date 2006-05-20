@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.6 2005/12/02 21:16:45 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.7 2006/05/20 22:33:16 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -182,22 +182,6 @@ typedef	u_int32_t	pt_ind_entry_t;
 
 #define	SDTIDX(va)	(((va) & SDT_MASK) >> SDT_SHIFT)
 #define	PDTIDX(va)	(((va) & PDT_MASK) >> PDT_SHIFT)
-
-/* XXX uses knowledge of pmap structure */
-#define SDTENT(map, va)	((sdt_entry_t *)((map)->pm_stab + SDTIDX(va)))
-
-/*
- * Va spaces mapped by tables and PDT table group.
- */
-
-#define PDT_VA_SPACE			(PDT_ENTRIES * PAGE_SIZE)
-
-/*
- * Number of sdt entries used to map user and kernel space.
- */
-
-#define USER_SDT_ENTRIES	SDTIDX(VM_MIN_KERNEL_ADDRESS)
-#define KERNEL_SDT_ENTRIES	(SDT_ENTRIES - USER_SDT_ENTRIES)
 
 /*
  * Parameters and macros for BATC
