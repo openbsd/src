@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2006/03/15 21:03:37 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2006/05/20 22:38:52 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -217,6 +217,10 @@ typedef struct _boot_args32 {
 } bootarg32_t;
 
 #define BOOTARGC_MAX	NBPG	/* one page */
+
+#ifdef NFSCLIENT
+bios_bootmac_t *bios_bootmac;
+#endif
 
 /* locore copies the arguments from /boot to here for us */
 char bootinfo[BOOTARGC_MAX];
@@ -1953,6 +1957,11 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 				cnset(cdp->consdev);
 			}
 			break;
+#ifdef NFSCLIENT
+		case BOOTARG_BOOTMAC:
+			bios_bootmac = (bios_bootmac_t *)q->ba_arg;
+			break;
+#endif                 
 
 		default:
 #ifdef BOOTINFO_DEBUG

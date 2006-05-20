@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.64 2006/05/19 04:49:17 gwk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.65 2006/05/20 22:38:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -93,6 +93,9 @@ struct bios32_entry bios32_entry;
 struct smbios_entry smbios_entry;
 #ifdef MULTIPROCESSOR
 void		*bios_smpinfo;
+#endif
+#ifdef NFSCLIENT
+bios_bootmac_t	*bios_bootmac;
 #endif
 
 void		smbios_info(char*);
@@ -396,6 +399,12 @@ bios_getopt()
 			printf(" smpinfo %p", bios_smpinfo);
 			break;
 #endif
+
+#ifdef NFSCLIENT
+		case BOOTARG_BOOTMAC:
+			bios_bootmac = (bios_bootmac_t *)q->ba_arg;
+			break;
+#endif			
 
 		default:
 #ifdef BIOS_DEBUG
