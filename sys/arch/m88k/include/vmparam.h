@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2006/05/19 20:56:23 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.7 2006/05/20 22:34:00 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -69,7 +69,7 @@
 #endif
 
 #define	VM_MIN_ADDRESS		((vaddr_t)0)
-#define	VM_MAX_ADDRESS		((vaddr_t)0xffc00000)
+#define	VM_MAX_ADDRESS		((vaddr_t)0xfffff000)
 #define VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
 
 /*
