@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.2 2006/05/16 23:23:00 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.3 2006/05/20 11:58:33 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2006, Miodrag Vallat.
  *
@@ -76,26 +76,33 @@ m8820x_setup_board_config()
 	cr = (void *)AV400_CMMU_I0;
 	type = CMMU_TYPE(cr[CMMU_IDR]);
 
-	switch (type) {
-	default:
+	if (type != M88204_ID && type != M88200_ID) {
 		printf("CPU0: unrecognized CMMU type %d\n", type);
 		scm_halt();
 		/* NOTREACHED */
-		break;
+	}
+
+	/*
+	 * Try and use the CPUCONFIG system call to get all the information
+	 * we need. This is theoretically only available on 88204-based
+	 * machines, but it can't hurt to give it a try.
+	 */
+	if (scm_cpuconfig(&scc) == 0 &&
+	    scc.version == SCM_CPUCONFIG_VERSION)
+		goto knowledge;
+
+	/*
+	 * XXX Instead of deciding on the CMMU type, we should decide on
+	 * XXX the board type instead. But then, I am not sure not all
+	 * XXX 88204-based designs have the WHOAMI register... -- miod
+	 */
+	switch (type) {
 	case M88204_ID:
 		/*
-		 * We can use the CPUCONFIG system call to get all the
-		 * information we need.
-		 */
-		if (scm_cpuconfig(&scc) == 0 &&
-		    scc.version == SCM_CPUCONFIG_VERSION)
-			break;
-
-		/*
-		 * If it fails, we'll need to probe CMU addresses to
-		 * discover which CPU slots are populated. Actually,
-		 * we'll simply check how many upper slots we can ignore,
-		 * and keep using badaddr() to cope with unpopulated slots.
+		 * Probe CMMU addresses to discover which CPU slots are
+		 * populated. Actually, we'll simply check how many upper
+		 * slots we can ignore, and keep using badaddr() to cope
+		 * with unpopulated slots.
 		 */
 hardprobe:
 		/*
@@ -117,11 +124,11 @@ hardprobe:
 				break;
 		}
 		scc.cpucount = (1 + max_cmmus) >> 1;
-
 		break;
+
 	case M88200_ID:
 		/*
-		 * Deduce our configuration from the whoami register.
+		 * Deduce our configuration from the WHOAMI register.
 		 */
 		whoami = *(volatile u_int32_t *)AV400_WHOAMI;
 		switch ((whoami & 0xf0) >> 4) {
@@ -160,6 +167,7 @@ hardprobe:
 		break;
 	}
 
+knowledge:
 	if (scc.igang != scc.dgang ||
 	    scc.igang == 0 || scc.igang > 2) {
 		printf("Unsupported CMMU to CPU ratio (%dI/%dD)\n",
