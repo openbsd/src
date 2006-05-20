@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.53 2006/05/19 22:51:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.54 2006/05/20 14:54:52 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -321,10 +321,12 @@ Lishpmmu:
 	jeq	Lis320			| no, just a 320
 	RELOC(machineid, a0)
 	movl	#HP_350,a0@		| yes, a 350
+	movl	#0,a1@(MMUCMD)		| clear out MMU again
 	jra	Lstart1
 Lis320:
 	RELOC(machineid, a0)
 	movl	#HP_320,a0@
+	movl	#0,a1@(MMUCMD)		| clear out MMU again
 	jra	Lstart1
 
 	/*
@@ -354,7 +356,6 @@ Lstart1:
 	 * we are not running in virtual mode and will cause several bus
 	 * errors while probing, it is easier to do this before setting up
 	 * our own vectors table.
-	 * Be careful, a1 is reserved at this point.
 	 */
 	clrl	d3
 
@@ -470,7 +471,6 @@ eiodone:
 	DOREBOOT
 
 Lstart2:
-	movl	#0,a1@(MMUCMD)		| clear out MMU again
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
 	movc	d0,sfc			|   as source
