@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt.c,v 1.1 2006/05/16 22:48:18 miod Exp $ */
+/*	$OpenBSD: crt.c,v 1.2 2006/05/20 22:38:33 miod Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -7,6 +7,12 @@
 
 extern void netboot(const char *, int, int, int);
 
+/*
+ * This is the boot code entry point.
+ * Note that we do not bother to set r31, and use the default value supplied
+ * by the PROM, which is the top of memory, minus the PROM data area (usually
+ * 128KB).
+ */
 void
 start(const char *args, int dev, int unit, int part)
 {
