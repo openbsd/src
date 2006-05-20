@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.2 2006/05/20 11:57:02 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.3 2006/05/20 12:04:51 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -142,6 +142,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -155,14 +156,17 @@
 
 u_int	safe_level(u_int mask, u_int curlevel);
 
-void	av400_bootstrap(void);
-void	av400_ext_int(u_int, struct trapframe *);
-u_int	av400_getipl(void);
-void	av400_init_clocks(void);
-vaddr_t	av400_memsize(void);
-u_int	av400_raiseipl(u_int);
-u_int	av400_setipl(u_int);
-void	av400_startup(void);
+struct board board_av400 = {
+	"100/200/300/400/3000/4000/4300 series",
+	av400_bootstrap,
+	av400_memsize,
+	av400_startup,
+	av400_intr,
+	av400_init_clocks,
+	av400_getipl,
+	av400_setipl,
+	av400_raiseipl
+};
 
 /*
  * The MVME188 interrupt arbiter has 25 orthogonal interrupt sources.
@@ -179,7 +183,7 @@ void	av400_startup(void);
  */
 unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
 
-unsigned int av400_curspl[] = {0, 0, 0, 0};
+u_int av400_curspl[] = { 0, 0, 0, 0 };
 
 /*
  * external interrupt masks per spl.
@@ -194,8 +198,6 @@ const unsigned int int_mask_val[INT_LEVEL] = {
 	MASK_LVL_6,
 	MASK_LVL_7
 };
-
-vaddr_t utilva;
 
 /*
  * Figure out how much memory is available, by asking the PROM.
@@ -230,11 +232,6 @@ av400_bootstrap()
 	extern u_char hostaddr[6];
 
 	cmmu = &cmmu8820x;
-	md_interrupt_func_ptr = av400_ext_int;
-	md_getipl = av400_getipl;
-	md_setipl = av400_setipl;
-	md_raiseipl = av400_raiseipl;
-	md_init_clocks = av400_init_clocks;
 
 	/* clear and disable all interrupts */
 	*(volatile u_int32_t *)AV400_IENALL = 0;
@@ -357,7 +354,7 @@ const unsigned int obio_vec[32] = {
 #define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
 
 void
-av400_ext_int(u_int v, struct trapframe *eframe)
+av400_intr(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
 	unsigned int cur_mask, ign_mask;

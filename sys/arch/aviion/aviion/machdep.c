@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.2 2006/05/16 23:22:10 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.3 2006/05/20 12:04:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -69,6 +69,7 @@
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
@@ -90,7 +91,9 @@
 
 caddr_t	allocsys(caddr_t);
 void	aviion_bootstrap(void);
+int	aviion_identify(void);
 void	consinit(void);
+__dead void doboot(void);
 void	dumpconf(void);
 void	dumpsys(void);
 u_int	getipl(void);
@@ -98,22 +101,8 @@ void	identifycpu(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 void	secondary_pre_main(void);
-void	doboot(void);
-
-extern void setlevel(unsigned int);
-
-extern void av400_bootstrap(void);
-extern vaddr_t av400_memsize(void);
-extern void av400_startup(void);
 
 intrhand_t intr_handlers[NVMEINTR];
-
-/* board dependent pointers */
-void	(*md_interrupt_func_ptr)(u_int, struct trapframe *);
-void	(*md_init_clocks)(void);
-u_int	(*md_getipl)(void);
-u_int	(*md_setipl)(u_int);
-u_int	(*md_raiseipl)(u_int);
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -160,6 +149,8 @@ u_int bootdev, bootunit, bootpart;		/* set in locore.S */
 
 int cputyp;					/* set in locore.S */
 int cpuspeed = 20;				/* safe guess */
+int avtyp;
+struct board *platform;
 
 vaddr_t first_addr;
 vaddr_t last_addr;
@@ -215,7 +206,7 @@ identifycpu()
 	cpuspeed = getcpuspeed(&brdid);
 #endif
 
-	strlcpy(cpu_model, "AV400 or compatible", sizeof cpu_model);
+	strlcpy(cpu_model, platform->descr, sizeof cpu_model);
 }
 
 /*
@@ -225,7 +216,7 @@ identifycpu()
 void
 cpu_initclocks()
 {
-	(*md_init_clocks)();
+	platform->init_clocks();
 }
 
 void
@@ -275,7 +266,7 @@ cpu_startup()
 	/*
 	 * Grab machine dependent memory spaces
 	 */
-	av400_startup();	/* XXX should be a function pointer */
+	platform->startup();
 
 	/*
 	 * Now allocate buffers proper.  They are different than the above
@@ -831,34 +822,41 @@ aviion_bootstrap()
 	/* Save a copy of our commandline before it gets overwritten. */
 	strlcpy(bootargs, prom_bootargs, sizeof bootargs);
 
-	cn_tab = &bootcons;
+	avtyp = aviion_identify();
 
 	/* Set up interrupt and fp exception handlers based on the machine. */
-	switch (cputyp) {
-#ifdef M88100
-	case CPU_88100:
+	switch (avtyp) {
 #ifdef AV400
-		/*
-		 * Right now, we do not know how to tell 400 designs from
-		 * 5000 designs...
-		 */
-#if 0
-		if (badaddr(AV400_VIRQV, 4) != 0)
-#else
-		if (1)
+	case AV_400:
+		platform = &board_av400;
+		break;
 #endif
-		{
-			av400_bootstrap();
-			break;
-		}
-#endif	/* AV400 */
-#endif	/* 88100 */
+#ifdef AV530
+	case AV_530:
+		platform = &board_av530;
+		break;
+#endif
+#ifdef AV5000
+	case AV_5000:
+		platform = &board_av5000;
+		break;
+#endif
+#ifdef AV6280
+	case AV_6280:
+		platform = &board_av6280;
+		break;
+#endif
 	default:
-		printf("Sorry, OpenBSD/" MACHINE
+		scm_printf("Sorry, OpenBSD/" MACHINE
 		    " does not support this model.\n");
 		scm_halt();
 		break;
 	};
+
+	cn_tab = &bootcons;
+	/* we can use printf() from here. */
+
+	platform->bootstrap();
 
 	/* Parse the commandline */
 	cmdline_parse();
@@ -867,7 +865,7 @@ aviion_bootstrap()
 	uvm_setpagesize();
 
 	first_addr = round_page((vaddr_t)&end);	/* XXX temp until symbols */
-	last_addr = av400_memsize();	/* XXX should be a function pointer */
+	last_addr = platform->memsize();
 	physmem = btoc(last_addr);
 
 	setup_board_config();
@@ -966,7 +964,7 @@ getipl(void)
 	u_int curspl, psr;
 
 	disable_interrupt(psr);
-	curspl = (*md_getipl)();
+	curspl = platform->getipl();
 	set_psr(psr);
 	return curspl;
 }
@@ -977,7 +975,7 @@ setipl(u_int level)
 	u_int curspl, psr;
 
 	disable_interrupt(psr);
-	curspl = (*md_setipl)(level);
+	curspl = platform->setipl(level);
 
 	/*
 	 * The flush pipeline is required to make sure the above change gets
@@ -996,7 +994,7 @@ raiseipl(u_int level)
 	u_int curspl, psr;
 
 	disable_interrupt(psr);
-	curspl = (*md_raiseipl)(level);
+	curspl = platform->raiseipl(level);
 
 	/*
 	 * The flush pipeline is required to make sure the above change gets
@@ -1015,4 +1013,49 @@ void
 myetheraddr(u_char *cp)
 {
 	bcopy(hostaddr, cp, 6);
+}
+
+/*
+ * Attempt to identify which AViiON flavour we are running on.
+ * The only thing we can do at this point is peek at random addresses and
+ * see if they cause bus errors, or not.
+ *
+ * These heuristics are probably not the best; feel free to come with better
+ * ones...
+ */
+int
+aviion_identify()
+{
+	/*
+	 * We don't know anything about 88110-based models.
+	 * Note that we can't use CPU_IS81x0 here since these are optimized
+	 * if the kernel you're running is compiled for only one processor
+	 * type, and we want to check against the real hardware.
+	 */
+	if (cputyp == CPU_88110)
+		return (0);
+
+	/*
+	 * Series 100/200/300/400/3000/4000/4300 do not have the VIRQLV
+	 * register at 0xfff85000.
+	 */
+	if (badaddr(0xfff85000, 4) != 0)
+		return (AV_400);
+
+	/*
+	 * Series 5000 and 6000 do not have an RTC counter at 0xfff8f084.
+	 */
+	if (badaddr(0xfff8f084, 4) != 0)
+		return (AV_5000);
+
+	/*
+	 * Series 4600/530 have IOFUSEs at 0xfffb0040 and 0xfffb00c0.
+	 */
+	if (badaddr(0xfffb0040, 1) == 0 && badaddr(0xfffb00c0, 1) == 0)
+		return (AV_530);
+
+	/*
+	 * Series 6280/8000-8 fall here.
+	 */
+	return (AV_6280);
 }
