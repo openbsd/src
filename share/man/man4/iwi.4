@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.23 2006/05/01 09:35:21 damien Exp $
+.\" $OpenBSD: iwi.4,v 1.24 2006/05/20 14:02:04 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -182,7 +182,7 @@ This is the default mode of operation.
 .El
 .Sh FILES
 The driver needs at least version 3.0 of the following firmware files,
-which are loaded on demand when the device is attached:
+which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/iwi-bss
@@ -248,7 +248,7 @@ This should not happen.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
-.%T The IWI Web Page
+.%T The IPW Web Page
 .%O http://damien.bergamini.free.fr/ipw/
 .Re
 .Sh AUTHORS
