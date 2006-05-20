@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.51 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.52 2006/05/20 03:47:56 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -890,7 +890,7 @@ nge_attach(parent, self, aux)
 	DPRINTFN(5, ("%s: bcopy\n", sc->sc_dv.dv_xname));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU;
 
 #ifdef NGE_VLAN
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;

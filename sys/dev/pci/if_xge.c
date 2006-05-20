@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.12 2006/05/15 00:41:51 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.13 2006/05/20 03:47:56 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -560,10 +560,11 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xge_ioctl;
 	ifp->if_start = xge_start;
+	ifp->if_jumbo_mtu = XGE_MAX_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESCS - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU;
 
 	/*
 	 * Attach the interface.

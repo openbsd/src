@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.20 2006/05/16 02:15:23 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.21 2006/05/20 03:47:56 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -875,14 +875,16 @@ re_attach_common(struct rl_softc *sc)
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
-	if (sc->rl_type == RL_8169)
+	if (sc->rl_type == RL_8169) {
 		ifp->if_baudrate = 1000000000;
-	else
+		ifp->if_jumbo_mtu = RL_JUMBO_MTU;
+		ifp->if_capabilities |= IFCAP_JUMBO_MTU;
+	} else
 		ifp->if_baudrate = 100000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 
 #ifdef RE_CSUM_OFFLOAD
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
@@ -890,7 +892,7 @@ re_attach_common(struct rl_softc *sc)
 #endif
 
 #ifdef RE_VLAN
-        ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 	timeout_set(&sc->timer_handle, re_tick, sc);

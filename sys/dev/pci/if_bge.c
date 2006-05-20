@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.144 2006/05/08 20:08:02 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.145 2006/05/20 03:47:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1941,6 +1941,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
+	if (BGE_IS_JUMBO_CAPABLE(sc))
+		ifp->if_capabilities |= IFCAP_JUMBO_MTU;
+
 	/*
 	 * Do MII setup.
 	 */
@@ -2889,7 +2892,7 @@ bge_init(void *xsc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	/* Specify MTU. */
+	/* Specify MRU. */
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		CSR_WRITE_4(sc, BGE_RX_MTU,
 			ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN);

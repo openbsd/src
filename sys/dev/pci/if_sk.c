@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.107 2006/05/01 18:47:34 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.108 2006/05/20 03:47:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1266,10 +1266,11 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = sk_start;
 	ifp->if_watchdog = sk_watchdog;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU;
 
 	/*
 	 * Do miibus setup.

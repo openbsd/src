@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.20 2006/03/25 22:41:46 djm Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.21 2006/05/20 03:47:56 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -785,8 +785,9 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, VGE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU|IFCAP_CSUM_IPv4|
-				IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU |
+				IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+				IFCAP_CSUM_UDPv4;
 
 #ifdef VGE_VLAN
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
