@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.60 2006/05/20 07:52:36 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.61 2006/05/20 22:40:30 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -52,6 +52,13 @@
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -234,15 +241,48 @@ void
 setroot()
 {
 	int  majdev, mindev, unit, part, adaptor;
+	struct swdevt *swp;
 	dev_t orootdev;
+#if defined(NFSCLIENT)
+	extern bios_bootmac_t *bios_bootmac;
+#endif
 #ifdef DOSWAP
 	dev_t temp = 0;
 #endif
-	struct swdevt *swp;
+
+#if defined(NFSCLIENT)
+	if (bios_bootmac) {
+		extern char *nfsbootdevname;
+		struct ifnet *ifp;
+		
+		mountroot = nfs_mountroot;
+		nfsbootdevname = NULL;		/* we do not know */
+
+		printf("PXE boot MAC address %s, ",
+		    ether_sprintf(bios_bootmac->mac));
+
+		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+		    ifp = TAILQ_NEXT(ifp, if_list)) {
+			if ((ifp->if_type == IFT_ETHER ||
+			    ifp->if_type == IFT_FDDI) &&
+			    bcmp(bios_bootmac->mac,
+			    ((struct arpcom *)ifp)->ac_enaddr,
+			    ETHER_ADDR_LEN) == 0)
+				break;
+		}
+		if (ifp) {
+			nfsbootdevname = ifp->if_xname;
+			printf("interface %s\n", nfsbootdevname);
+		} else
+			printf("no interface selected\n");
+		return;
+	}
+#endif
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
+
 	majdev = B_TYPE(bootdev);
 	if (findblkname(majdev) == NULL)
 		return;
@@ -252,6 +292,8 @@ setroot()
 	mindev = (unit * MAXPARTITIONS) + part;
 	orootdev = rootdev;
 	rootdev = makedev(majdev, mindev);
+	mountroot = dk_mountroot;
+
 	/*
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
@@ -345,66 +387,89 @@ rootconf()
 {
 	register struct genericconf *gc;
 	int unit, part = 0;
+#if defined(NFSCLIENT)
+	struct ifnet *ifp;
+#endif
+	char name[128];
 	char *num;
 
 	if (boothowto & RB_ASKNAME) {
-		char name[128];
-retry:
-		printf("root device? ");
-		cnpollc(TRUE);
-		getsn(name, sizeof name);
-		cnpollc(FALSE);
-		if (*name == '\0')
-			goto noask;
-		for (gc = genericconf; gc->gc_driver; gc++)
-			if (gc->gc_driver->cd_ndevs &&
-			    strncmp(gc->gc_name, name,
-			    strlen(gc->gc_name)) == 0)
+		while (1) {
+			printf("root device? ");
+			cnpollc(TRUE);
+			getsn(name, sizeof name);
+			cnpollc(FALSE);
+			if (*name == '\0')
 				break;
-		if (gc->gc_driver) {
-			num = &name[strlen(gc->gc_name)];
+			for (gc = genericconf; gc->gc_driver; gc++)
+				if (gc->gc_driver->cd_ndevs &&
+				    strncmp(gc->gc_name, name,
+				    strlen(gc->gc_name)) == 0)
+					break;
+			if (gc->gc_driver) {
+				num = &name[strlen(gc->gc_name)];
 
-			unit = -2;
-			do {
-				if (unit != -2 && *num >= 'a' &&
-				    *num <= 'a'+MAXPARTITIONS-1 &&
-				    num[1] == '\0') {
-					part = *num++ - 'a';
+				unit = -2;
+				do {
+					if (unit != -2 && *num >= 'a' &&
+					    *num <= 'a'+MAXPARTITIONS-1 &&
+					    num[1] == '\0') {
+						part = *num++ - 'a';
+						break;
+					}
+					if (unit == -2)
+						unit = 0;
+					unit = (unit * 10) + *num - '0';
+					if (*num < '0' || *num > '9')
+						unit = -1;
+				} while (unit != -1 && *++num);
+	
+				if (unit < 0) {
+					printf("%s: not a unit number\n",
+					    &name[strlen(gc->gc_name)]);
+				} else if (unit >= gc->gc_driver->cd_ndevs ||
+				    gc->gc_driver->cd_devs[unit] == NULL) {
+					printf("%d: no such unit\n", unit);
+				} else {
+					printf("root on %s%d%c\n", gc->gc_name, unit,
+					    'a' + part);
+					rootdev = makedev(gc->gc_major,
+					    unit * MAXPARTITIONS + part);
+					mountroot = dk_mountroot;
 					break;
 				}
-				if (unit == -2)
-					unit = 0;
-				unit = (unit * 10) + *num - '0';
-				if (*num < '0' || *num > '9')
-					unit = -1;
-			} while (unit != -1 && *++num);
-
-			if (unit < 0) {
-				printf("%s: not a unit number\n",
-				    &name[strlen(gc->gc_name)]);
-			} else if (unit >= gc->gc_driver->cd_ndevs ||
-			    gc->gc_driver->cd_devs[unit] == NULL) {
-				printf("%d: no such unit\n", unit);
+#if defined(NFSCLIENT)
 			} else {
-				printf("root on %s%d%c\n", gc->gc_name, unit,
-				    'a' + part);
-				rootdev = makedev(gc->gc_major,
-				    unit * MAXPARTITIONS + part);
-				goto doswap;
+				ifp = ifunit(name);
+				if (ifp && (ifp->if_flags & IFF_BROADCAST)) {
+					extern char *nfsbootdevname;
+			
+					mountroot = nfs_mountroot;
+					nfsbootdevname = ifp->if_xname;
+					return;
+				}
+#endif
 			}
-		}
-		printf("use one of: ");
-		for (gc = genericconf; gc->gc_driver; gc++) {
-			for (unit=0; unit < gc->gc_driver->cd_ndevs; unit++) {
-				if (gc->gc_driver->cd_devs[unit])
-					printf("%s%d[a-%c] ", gc->gc_name,
-					    unit, 'a'+MAXPARTITIONS-1);
+
+			printf("use one of: ");
+			for (gc = genericconf; gc->gc_driver; gc++) {
+				for (unit=0; unit < gc->gc_driver->cd_ndevs; unit++) {
+					if (gc->gc_driver->cd_devs[unit])
+						printf("%s%d[a-%c] ", gc->gc_name,
+						    unit, 'a'+MAXPARTITIONS-1);
+				}
 			}
+#if defined(NFSCLIENT)
+			for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+			    ifp = TAILQ_NEXT(ifp, if_list)) {
+				if ((ifp->if_flags & IFF_BROADCAST))
+					printf("%s ", ifp->if_xname);
+			}
+#endif
+			printf("\n");
 		}
-		printf("\n");
-		goto retry;
 	}
-noask:
+
 	if (mountroot == NULL) {
 		/* `swap generic' */
 		setroot();
@@ -418,14 +483,9 @@ noask:
 		part = minor(rootdev) % MAXPARTITIONS;
 		unit = minor(rootdev) / MAXPARTITIONS;
 		printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
-		return;
+		mountroot = dk_mountroot;
 	}
-
-doswap:
-#ifndef DISKLESS
-	mountroot = dk_mountroot;
-#endif
-	swdevt[0].sw_dev = argdev = dumpdev =
-	    makedev(major(rootdev), minor(rootdev) + 1);
-	/* swap size and dumplo set during autoconfigure */
+	if (mountroot == dk_mountroot)
+		swdevt[0].sw_dev = argdev = dumpdev =
+		    makedev(major(rootdev), minor(rootdev) + 1);
 }
