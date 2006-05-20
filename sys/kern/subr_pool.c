@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.46 2006/05/07 20:06:50 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.47 2006/05/20 18:29:23 mickey Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1301,6 +1301,10 @@ pool_reclaim(struct pool *pp)
 }
 
 #ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
 /*
  * Diagnostic helpers.
  */
@@ -1424,6 +1428,78 @@ skip_log:
 
 skip_cache:
 	pr_enter_check(pp, pr);
+}
+
+void
+db_show_all_pools(db_expr_t expr, int haddr, db_expr_t count, char *modif)
+{
+	struct pool *pp;
+	char maxp[16];
+	int ovflw;
+	char mode;
+
+	mode = modif[0];
+	if (mode != '\0' && mode != 'a') {
+		db_printf("usage: show all pools [/a]\n");
+		return;
+	}
+
+	if (mode == '\0')
+		db_printf("%-10s%4s%9s%5s%9s%6s%6s%6s%6s%6s%6s%5s\n",
+		    "Name",
+		    "Size",
+		    "Requests",
+		    "Fail",
+		    "Releases",
+		    "Pgreq",
+		    "Pgrel",
+		    "Npage",
+		    "Hiwat",
+		    "Minpg",
+		    "Maxpg",
+		    "Idle");
+	else
+		db_printf("%-10s %18s %18s\n",
+		    "Name", "Address", "Allocator");
+
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
+		if (mode == 'a') {
+			db_printf("%-10s %18p %18p\n", pp->pr_wchan, pp,
+			    pp->pr_alloc);
+			continue;
+		}
+
+		if (!pp->pr_nget)
+			continue;
+
+		if (pp->pr_maxpages == UINT_MAX)
+			snprintf(maxp, sizeof maxp, "inf");
+		else
+			snprintf(maxp, sizeof maxp, "%u", pp->pr_maxpages);
+
+#define PRWORD(ovflw, fmt, width, fixed, val) do {	\
+	(ovflw) += db_printf((fmt),			\
+	    (width) - (fixed) - (ovflw) > 0 ?		\
+	    (width) - (fixed) - (ovflw) : 0,		\
+	    (val)) - (width);				\
+	if ((ovflw) < 0)				\
+		(ovflw) = 0;				\
+} while (/* CONSTCOND */0)
+
+		ovflw = 0;
+		PRWORD(ovflw, "%-*s", 10, 0, pp->pr_wchan);
+		PRWORD(ovflw, " %*u", 4, 1, pp->pr_size);
+		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget);
+		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
+		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nput);
+		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagealloc);
+		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagefree);
+		PRWORD(ovflw, " %*d", 6, 1, pp->pr_npages);
+		PRWORD(ovflw, " %*d", 6, 1, pp->pr_hiwat);
+		PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
+		PRWORD(ovflw, " %*s", 6, 1, maxp);
+		PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
+	}
 }
 
 int

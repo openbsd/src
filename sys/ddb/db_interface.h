@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.6 2006/05/16 03:18:29 mickey Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.7 2006/05/20 18:29:23 mickey Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -44,6 +44,9 @@ void db_show_all_procs(db_expr_t, int, db_expr_t, char *);
 
 /* kern/kern_timeout.c */
 void db_show_callout(db_expr_t, int, db_expr_t, char *);
+
+/* kern/subr_pool.c */
+void db_show_all_pools(db_expr_t, int, db_expr_t, char *);
 
 /* arch/<arch>/<arch>/db_interface.c */
 void db_machine_init(void);
