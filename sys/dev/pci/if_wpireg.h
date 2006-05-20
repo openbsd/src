@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.1 2006/05/14 19:00:48 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.2 2006/05/20 11:47:29 damien Exp $	*/
 
 
 /*-
@@ -452,9 +452,9 @@ struct wpi_bluetooth {
 /* structure for command WPI_CMD_TXPOWER */
 struct wpi_txpower {
 	uint32_t	reserved1;
-	uint16_t	calib1[14];
+	uint16_t	pwr1[14];
 	uint32_t	reserved2[2];
-	uint16_t	calib2[14];
+	uint16_t	pwr2[14];
 	uint32_t	reserved3[2];
 } __packed;
 
@@ -495,8 +495,8 @@ struct wpi_start_scan {
 #define WPI_EEPROM_REVISION	0x035
 #define WPI_EEPROM_CAPABILITIES	0x045
 #define WPI_EEPROM_TYPE		0x04a
-#define WPI_EEPROM_CALIB1	0x1ae
-#define WPI_EEPROM_CALIB2	0x1bc
+#define WPI_EEPROM_PWR1		0x1ae
+#define WPI_EEPROM_PWR2		0x1bc
 
 #define WPI_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))

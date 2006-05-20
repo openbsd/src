@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.2 2006/05/17 19:50:35 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.3 2006/05/20 11:47:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -108,8 +108,8 @@ struct wpi_softc {
 	bus_size_t		sc_sz;
 
 	struct wpi_config	config;
-	uint16_t		calib1[14];
-	uint16_t		calib2[14];
+	uint16_t		pwr1[14];
+	uint16_t		pwr2[14];
 
 	int			sc_tx_timer;
 	void			*powerhook;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.7 2006/05/19 18:44:56 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.8 2006/05/20 11:47:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -17,9 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*-
- * Intel(R) PRO/Wireless 3945ABG driver
- * http://www.intel.com/network/connectivity/products/wireless/prowireless_mobile.htm
+/*
+ * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
  */
 
 #include "bpfilter.h"
@@ -271,6 +270,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_WEP |		/* s/w WEP */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
+	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
 	wpi_read_eeprom(sc);
@@ -1313,9 +1313,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	if ((ic->ic_flags & IEEE80211_F_WEPON) &&
-	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	    IEEE80211_FC0_TYPE_DATA) {
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
 		if (m0 == NULL)
 			return ENOBUFS;
@@ -1355,7 +1353,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	tx->flags |= htole32(WPI_TX_AUTO_SEQ);
 
-	/* tell h/w to add timestamp in probe responses */
+	/* tell h/w to set timestamp in probe responses */
 	if ((wh->i_fc[0] &
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
@@ -1612,6 +1610,9 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
+/*
+ * Extract various information from EEPROM.
+ */
 void
 wpi_read_eeprom(struct wpi_softc *sc)
 {
@@ -1630,12 +1631,12 @@ wpi_read_eeprom(struct wpi_softc *sc)
 	ic->ic_myaddr[4] = val & 0xff;
 	ic->ic_myaddr[5] = val >> 8;
 
-	/* read channels power settings for 2GHz channels */
+	/* read power settings for 2.4GHz channels */
 	for (i = 0; i < 14; i++) {
-		sc->calib1[i] = wpi_read_prom_word(sc, WPI_EEPROM_CALIB1 + i);
-		sc->calib2[i] = wpi_read_prom_word(sc, WPI_EEPROM_CALIB2 + i);
-		DPRINTF(("channel %d calib1 0x%04x calib2 0x%04x\n", i + 1,
-		    sc->calib1[i], sc->calib2[i]));
+		sc->pwr1[i] = wpi_read_prom_word(sc, WPI_EEPROM_PWR1 + i);
+		sc->pwr2[i] = wpi_read_prom_word(sc, WPI_EEPROM_PWR2 + i);
+		DPRINTF(("channel %d pwr1 0x%04x pwr2 0x%04x\n", i + 1,
+		    sc->pwr1[i], sc->pwr2[i]));
 	}
 }
 
@@ -1741,7 +1742,7 @@ wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
 	struct wpi_cmd_tsf tsf;
 
 	bzero(&tsf, sizeof tsf);
-	tsf.tstamp = 0;
+	bcopy(ni->ni_tstamp, &tsf.tstamp, sizeof (uint64_t));
 	tsf.bintval = htole16(ni->ni_intval);
 	tsf.binitval = htole32(102400);	/* XXX */
 	tsf.lintval = htole16(10);
@@ -1760,11 +1761,24 @@ wpi_auth(struct wpi_softc *sc)
 
 	/* update adapter's configuration */
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
-	sc->config.cck_mask  = 0x0f;	/* XXX */
-	sc->config.ofdm_mask = 0x15;	/* XXX */
 	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-	sc->config.flags |= htole32(WPI_CONFIG_SHORT_SLOT);
+	if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		sc->config.cck_mask  = 0x0f;
+		sc->config.ofdm_mask = 0;
+	} else if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
+		sc->config.cck_mask  = 0;
+		sc->config.ofdm_mask = 0x15;
+	} else {	/* assume 802.11b/g */
+		sc->config.cck_mask  = 0x0f;
+		sc->config.ofdm_mask = 0x15;
+	}
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		sc->config.flags |= htole32(WPI_CONFIG_SHORT_SLOT);
+	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+		sc->config.flags |= htole32(WPI_CONFIG_SHPREAMBLE);
 
+	DPRINTF(("config chan %d flags %x\n", sc->config.chan,
+	    sc->config.flags));
 	error = wpi_cmd(sc, WPI_CMD_CONFIGURE, &sc->config,
 	    sizeof (struct wpi_config), 1);
 	if (error != 0) {
@@ -1933,8 +1947,8 @@ wpi_config(struct wpi_softc *sc)
 
 	/* set Tx power for 2.4GHz channels (values read from EEPROM) */
 	bzero(&txpower, sizeof txpower);
-	bcopy(sc->calib1, txpower.calib1, 14 * sizeof (uint16_t));
-	bcopy(sc->calib2, txpower.calib2, 14 * sizeof (uint16_t));
+	bcopy(sc->pwr1, txpower.pwr1, 14 * sizeof (uint16_t));
+	bcopy(sc->pwr2, txpower.pwr2, 14 * sizeof (uint16_t));
 	error = wpi_cmd(sc, WPI_CMD_TXPOWER, &txpower, sizeof txpower, 0);
 	if (error != 0) {
 		printf("%s: could not set txpower\n", sc->sc_dev.dv_xname);
@@ -2170,7 +2184,7 @@ wpi_init(struct ifnet *ifp)
 	}
 	wpi_mem_unlock(sc);
 
-	/* clear radio off and disable command bits (reversed logic) */
+	/* clear "radio off" and "disable command" bits (reversed logic) */
 	WPI_WRITE(sc, WPI_UCODE_CLR, WPI_RADIO_OFF);
 	WPI_WRITE(sc, WPI_UCODE_CLR, WPI_DISABLE_CMD);
 
