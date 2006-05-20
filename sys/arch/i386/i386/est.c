@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.15 2006/05/19 19:43:41 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.16 2006/05/20 13:31:00 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -405,6 +405,15 @@ static const struct fq_info pm90_n778[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 710 1.4 GHz */
+static const struct fq_info pm90_n710[] = {
+	{ 1400, 1340 },
+	{ 1200, 1228 },
+	{ 1000, 1148 },
+	{  800, 1068 },
+	{  600,  998 }
+};
+
 /* Intel Pentium M processor 715 1.5 GHz, VID #A */
 static const struct fq_info pm90_n715a[] = {
 	{ 1500, 1340 },
@@ -481,6 +490,15 @@ static const struct fq_info pm90_n725d[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 730 1.6 GHz, 533 MHz FSB */
+static const struct fq_info pm90_n730[] = {
+       { 1600, 1308 },
+       { 1333, 1260 }, 
+       { 1200, 1212 },
+       { 1067, 1180 },
+       {  800,  988 }
+};     
+
 /* Intel Pentium M processor 735 1.7 GHz, VID #A */
 static const struct fq_info pm90_n735a[] = {
 	{ 1700, 1340 },
@@ -519,6 +537,14 @@ static const struct fq_info pm90_n735d[] = {
 	{ 1000, 1100 },
 	{  800, 1052 },
 	{  600,  988 }
+};
+
+/* Intel Pentium M processor 740 1.73 GHz, 533 MHz FSB */
+static const struct fq_info pm90_n740[] = {
+       { 1733, 1356 },
+       { 1333, 1212 },
+       { 1067, 1100 },
+       {  800,  988 },
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #A */
@@ -563,6 +589,16 @@ static const struct fq_info pm90_n745d[] = {
 	{ 1000, 1084 },
 	{  800, 1036 },
 	{  600,  988 }
+};
+
+/* Intel Pentium M processor 750 1.86 GHz, 533 MHz FSB */
+/* values extracted from \_PR\NPSS (via _PSS) SDST ACPI table */
+static const struct fq_info pm90_n750[] = {
+	{ 1867, 1308 },
+	{ 1600, 1228 },
+	{ 1333, 1148 },
+	{ 1067, 1068 },
+	{  800,  988 }
 };
 
 /* Intel Pentium M processor 755 2.0 GHz, VID #A */
@@ -611,6 +647,15 @@ static const struct fq_info pm90_n755d[] = {
 	{ 1000, 1084 },
 	{  800, 1036 },
 	{  600,  988 }
+};
+
+/* Intel Pentium M processor 760 2.0 GHz, 533 MHz FSB */
+static const struct fq_info pm90_n760[] = {
+	{ 2000, 1356 },
+	{ 1600, 1244 },
+	{ 1333, 1164 },
+	{ 1067, 1084 },
+	{  800,  988 }
 };
 
 /* Intel Pentium M processor 765 2.1 GHz, VID #A */
@@ -663,7 +708,7 @@ static const struct fq_info pm90_n765e[] = {
 
 /* Intel Pentium M processor 770 2.13 GHz */
 static const struct fq_info pm90_n770[] = {
-	{ 2130, 1551 },
+	{ 2133, 1551 },
 	{ 1800, 1429 },
 	{ 1600, 1356 },
 	{ 1400, 1180 },
@@ -800,7 +845,7 @@ static const struct fq_info C7M_795[] = {
 
 /* Convert MHz and mV into IDs for passing to the MSR. */
 #define ID16(MHz, mV, bus_clk) \
-	(((MHz / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
+	((((MHz + 50) * 100 / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
 #define ID32(MHz_hi, mV_hi, MHz_lo, mV_lo, bus_clk) \
 	((ID16(MHz_lo, mV_lo, bus_clk) << 16) | (ID16(MHz_hi, mV_hi, bus_clk)))
 
@@ -816,88 +861,98 @@ struct fqlist {
 	{ CPUVENDOR_##ven, ID32(zhi, vhi, zlo, vlo, bus_clk), bus_clk, tab, \
 	sizeof(tab) / sizeof((tab)[0]) }
 
+#define BUS100 10000
+#define BUS133 13333
+
 static const struct fqlist est_cpus[] = {
-	ENTRY(INTEL, pm130_900_ulv,	 900, 1004, 600, 844, 100),
-	ENTRY(INTEL, pm130_1000_ulv,	1000, 1004, 600, 844, 100),
-	ENTRY(INTEL, pm130_1100_ulv,	1100, 1004, 600, 844, 100),
-	ENTRY(INTEL, pm130_1100_lv,	1100, 1180, 600, 956, 100),
-	ENTRY(INTEL, pm130_1200_lv,	1200, 1180, 600, 956, 100),
-	ENTRY(INTEL, pm130_1300_lv,	1300, 1180, 600, 956, 100),
-	ENTRY(INTEL, pm130_1300,	1300, 1388, 600, 956, 100),
-	ENTRY(INTEL, pm130_1400,	1400, 1484, 600, 956, 100),
-	ENTRY(INTEL, pm130_1500,	1500, 1484, 600, 956, 100),
-	ENTRY(INTEL, pm130_1600,	1600, 1484, 600, 956, 100),
-	ENTRY(INTEL, pm130_1700,	1700, 1484, 600, 956, 100),
+	ENTRY(INTEL, pm130_900_ulv,	 900, 1004, 600, 844, BUS100),
+	ENTRY(INTEL, pm130_1000_ulv,	1000, 1004, 600, 844, BUS100),
+	ENTRY(INTEL, pm130_1100_ulv,	1100, 1004, 600, 844, BUS100),
+	ENTRY(INTEL, pm130_1100_lv,	1100, 1180, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1200_lv,	1200, 1180, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1300_lv,	1300, 1180, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1300,	1300, 1388, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1400,	1400, 1484, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1500,	1500, 1484, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1600,	1600, 1484, 600, 956, BUS100),
+	ENTRY(INTEL, pm130_1700,	1700, 1484, 600, 956, BUS100),
 
-	ENTRY(INTEL, pm90_n723,		1000,  940, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733,		1100,  940, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733g,	1100,  956, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733h,	1100,  940, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733i,	1100,  924, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733j,	1100,  908, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733k,	1100,  892, 600, 812, 100),
-	ENTRY(INTEL, pm90_n733l,	1100,  876, 600, 812, 100),
-	ENTRY(INTEL, pm90_n753g,	1200,  956, 600, 812, 100),
-	ENTRY(INTEL, pm90_n753h,	1200,  940, 600, 812, 100),
-	ENTRY(INTEL, pm90_n753i,	1200,  924, 600, 812, 100),
-	ENTRY(INTEL, pm90_n753j,	1200,  908, 600, 812, 100),
-	ENTRY(INTEL, pm90_n753k,	1200,  892, 600, 812, 100),
-	ENTRY(INTEL, pm90_n753l,	1200,  876, 600, 812, 100),
-	ENTRY(INTEL, pm90_n773g,	1300,  956, 600, 812, 100),
-	ENTRY(INTEL, pm90_n773h,	1300,  940, 600, 812, 100),
-	ENTRY(INTEL, pm90_n773i,	1300,  924, 600, 812, 100),
-	ENTRY(INTEL, pm90_n773j,	1300,  908, 600, 812, 100),
-	ENTRY(INTEL, pm90_n773k,	1300,  892, 600, 812, 100),
-	ENTRY(INTEL, pm90_n773l,	1300,  876, 600, 812, 100),
-	ENTRY(INTEL, pm90_n738,		1400, 1116, 600, 988, 100),
-	ENTRY(INTEL, pm90_n758,		1500, 1116, 600, 988, 100),
-	ENTRY(INTEL, pm90_n778,		1600, 1116, 600, 988, 100),
-	ENTRY(INTEL, pm90_n715a,	1500, 1340, 600, 988, 100),
-	ENTRY(INTEL, pm90_n715b,	1500, 1324, 600, 988, 100),
-	ENTRY(INTEL, pm90_n715c,	1500, 1308, 600, 988, 100),
-	ENTRY(INTEL, pm90_n715d,	1500, 1276, 600, 988, 100),
-	ENTRY(INTEL, pm90_n725a,	1600, 1340, 600, 988, 100),
-	ENTRY(INTEL, pm90_n725b,	1600, 1324, 600, 988, 100),
-	ENTRY(INTEL, pm90_n725c,	1600, 1308, 600, 988, 100),
-	ENTRY(INTEL, pm90_n725d,	1600, 1276, 600, 988, 100),
-	ENTRY(INTEL, pm90_n735a,	1700, 1340, 600, 988, 100),
-	ENTRY(INTEL, pm90_n735b,	1700, 1324, 600, 988, 100),
-	ENTRY(INTEL, pm90_n735c,	1700, 1308, 600, 988, 100),
-	ENTRY(INTEL, pm90_n735d,	1700, 1276, 600, 988, 100),
-	ENTRY(INTEL, pm90_n745a,	1800, 1340, 600, 988, 100),
-	ENTRY(INTEL, pm90_n745b,	1800, 1324, 600, 988, 100),
-	ENTRY(INTEL, pm90_n745c,	1800, 1308, 600, 988, 100),
-	ENTRY(INTEL, pm90_n745d,	1800, 1276, 600, 988, 100),
-	ENTRY(INTEL, pm90_n755a,	2000, 1340, 600, 988, 100),
-	ENTRY(INTEL, pm90_n755b,	2000, 1324, 600, 988, 100),
-	ENTRY(INTEL, pm90_n755c,	2000, 1308, 600, 988, 100),
-	ENTRY(INTEL, pm90_n755d,	2000, 1276, 600, 988, 100),
-	ENTRY(INTEL, pm90_n765a,	2100, 1340, 600, 988, 100),
-	ENTRY(INTEL, pm90_n765b,	2100, 1324, 600, 988, 100),
-	ENTRY(INTEL, pm90_n765c,	2100, 1308, 600, 988, 100),
-	ENTRY(INTEL, pm90_n765e,	2100, 1356, 600, 988, 100),
-	ENTRY(INTEL, pm90_n770,		2130, 1551, 600, 988, 100),
+	ENTRY(INTEL, pm90_n723,		1000,  940, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733,		1100,  940, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733g,	1100,  956, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733h,	1100,  940, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733i,	1100,  924, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733j,	1100,  908, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733k,	1100,  892, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n733l,	1100,  876, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n753g,	1200,  956, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n753h,	1200,  940, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n753i,	1200,  924, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n753j,	1200,  908, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n753k,	1200,  892, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n753l,	1200,  876, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n773g,	1300,  956, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n773h,	1300,  940, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n773i,	1300,  924, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n773j,	1300,  908, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n773k,	1300,  892, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n773l,	1300,  876, 600, 812, BUS100),
+	ENTRY(INTEL, pm90_n738,		1400, 1116, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n758,		1500, 1116, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n778,		1600, 1116, 600, 988, BUS100),
 
-	ENTRY(VIA,   C7M_770_ULV,	1000,  844, 400, 796, 100),
-	ENTRY(VIA,   C7M_779_ULV,	1000,  796, 400, 796, 100),
-	ENTRY(VIA,   C7M_772_ULV,	1200,  844, 400, 796, 100),
-	ENTRY(VIA,   C7M_771,		1200,  860, 400, 844, 100),
-	ENTRY(VIA,   C7M_775_ULV,	1500,  956, 400, 796, 100),
-	ENTRY(VIA,   C7M_754,		1500, 1004, 400, 844, 100),
-	ENTRY(VIA,   C7M_764,		1600, 1084, 400, 844, 100),
-	ENTRY(VIA,   C7M_765,		1600, 1084, 533, 844, 133),
-	ENTRY(VIA,   C7M_784,		1800, 1148, 400, 844, 100),
-	ENTRY(VIA,   C7M_785,		1867, 1148, 533, 844, 133),
-	ENTRY(VIA,   C7M_794,		2000, 1148, 400, 844, 100),
-	ENTRY(VIA,   C7M_795,		2000, 1148, 533, 844, 133),
+	ENTRY(INTEL, pm90_n710,		1400, 1340, 600, 988, BUS133),
+	ENTRY(INTEL, pm90_n715a,	1500, 1340, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n715b,	1500, 1324, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n715c,	1500, 1308, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n715d,	1500, 1276, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n725a,	1600, 1340, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n725b,	1600, 1324, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n725c,	1600, 1308, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n725d,	1600, 1276, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n730,		1600, 1308, 800, 988, BUS133),
+	ENTRY(INTEL, pm90_n735a,	1700, 1340, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n735b,	1700, 1324, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n735c,	1700, 1308, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n735d,	1700, 1276, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n740,		1733, 1356, 800, 988, BUS133),
+	ENTRY(INTEL, pm90_n745a,	1800, 1340, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n745b,	1800, 1324, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n745c,	1800, 1308, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n745d,	1800, 1276, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n750,		1867, 1308, 800, 988, BUS133),
+	ENTRY(INTEL, pm90_n755a,	2000, 1340, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n755b,	2000, 1324, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n755c,	2000, 1308, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n755d,	2000, 1276, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n760,		2000, 1356, 800, 988, BUS133),
+	ENTRY(INTEL, pm90_n765a,	2100, 1340, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n765b,	2100, 1324, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n765c,	2100, 1308, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n765e,	2100, 1356, 600, 988, BUS100),
+	ENTRY(INTEL, pm90_n770,		2133, 1551, 600, 988, BUS133),
+
+	ENTRY(VIA,   C7M_770_ULV,	1000,  844, 400, 796, BUS100),
+	ENTRY(VIA,   C7M_779_ULV,	1000,  796, 400, 796, BUS100),
+	ENTRY(VIA,   C7M_772_ULV,	1200,  844, 400, 796, BUS100),
+	ENTRY(VIA,   C7M_771,		1200,  860, 400, 844, BUS100),
+	ENTRY(VIA,   C7M_775_ULV,	1500,  956, 400, 796, BUS100),
+	ENTRY(VIA,   C7M_754,		1500, 1004, 400, 844, BUS100),
+	ENTRY(VIA,   C7M_764,		1600, 1084, 400, 844, BUS100),
+	ENTRY(VIA,   C7M_765,		1600, 1084, 533, 844, BUS133),
+	ENTRY(VIA,   C7M_784,		1800, 1148, 400, 844, BUS100),
+	ENTRY(VIA,   C7M_785,		1867, 1148, 533, 844, BUS133),
+	ENTRY(VIA,   C7M_794,		2000, 1148, 400, 844, BUS100),
+	ENTRY(VIA,   C7M_795,		2000, 1148, 533, 844, BUS133),
 };
 
 #define NESTCPUS	  (sizeof(est_cpus) / sizeof(est_cpus[0]))
 
 
-#define MSRVALUE(mhz, mv, bus)	((((mhz) / (bus)) << 8) | (((mv) - 700) / 16))
-#define MSR2MHZ(msr)		((((int) (msr) >> 8) & 0xff) * 100)
-#define MSR2MV(msr)		(((int) (msr) & 0xff) * 16 + 700)
+#define MSR2MHZ(msr, bus) \
+	(((((int) (msr) >> 8) & 0xff) * (bus) + 50) / 100)
+#define MSR2MV(msr) \
+	(((int) (msr) & 0xff) * 16 + 700)
 
 static const struct fqlist *est_fqlist;
 
@@ -918,10 +973,6 @@ est_init(const char *cpu_device, int vendor)
 		return;
 
 	msr = rdmsr(MSR_PERF_STATUS);
-	mhz = MSR2MHZ(msr);
-	mv = MSR2MV(msr);
-	printf("%s: Enhanced SpeedStep %d MHz (%d mV)",
-	    cpu_device, mhz, mv);
 
 	/*
 	 * Find an entry which matches (vendor, id32)
@@ -934,24 +985,30 @@ est_init(const char *cpu_device, int vendor)
 		}
 	}
 	if (est_fqlist == NULL) {
-		printf(": unknown EST cpu, msr %016llx\n", msr);
+		printf("%s: unknown Enhanced SpeedStep CPU, msr 0x%016llx\n",
+		    cpu_device, msr);
 		return;
 	}
+
+	mhz = MSR2MHZ(msr, est_fqlist->bus_clk);
+	mv = MSR2MV(msr);
+	printf("%s: Enhanced SpeedStep %d MHz (%d mV)", cpu_device, mhz, mv);
 
 	/*
 	 * Check that the current operating point is in our list.
 	 */
-	for (i = est_fqlist->n - 1; i >= 0; i--)
-		if (est_fqlist->table[i].mhz == mhz &&
-		    est_fqlist->table[i].mv == mv)
+	for (i = est_fqlist->n - 1; i >= 0; i--) {
+		if (ID16(est_fqlist->table[i].mhz, est_fqlist->table[i].mv,
+		    est_fqlist->bus_clk) == (msr & 0xffff))
 			break;
+	}
 	if (i < 0) {
-		printf(" (not in table)\n");
+		printf(" (not in table, msr 0x%016llx)\n", msr);
 		return;
 	}
 	low = est_fqlist->table[est_fqlist->n - 1].mhz;
 	high = est_fqlist->table[0].mhz;
-	perflevel = (mhz - low) * 100 / (high - low);
+	perflevel = (est_fqlist->table[i].mhz - low) * 100 / (high - low);
 
 	/*
 	 * OK, tell the user the available frequencies.
@@ -982,7 +1039,7 @@ est_setperf(int level)
 		if (est_fqlist->table[i].mhz >= fq)
 			break;
 	msr = (rdmsr(MSR_PERF_CTL) & ~0xffffULL) |
-	    MSRVALUE(est_fqlist->table[i].mhz, est_fqlist->table[i].mv,
+	    ID16(est_fqlist->table[i].mhz, est_fqlist->table[i].mv,
 	    est_fqlist->bus_clk);
 	wrmsr(MSR_PERF_CTL, msr);
 	pentium_mhz = est_fqlist->table[i].mhz;
