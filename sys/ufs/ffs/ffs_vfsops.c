@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.92 2006/04/19 11:55:55 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.93 2006/05/20 16:03:46 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -203,10 +203,11 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		ronly = fs->fs_ronly;
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
-			/*
-			 * Flush any dirty data.
-			 */
+			/* Flush any dirty data */
+			mp->mnt_flag &= ~MNT_RDONLY;
 			VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+			mp->mnt_flag |= MNT_RDONLY;
+
 			/*
 			 * Get rid of files open for writing.
 			 */
