@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.1 2006/05/16 22:48:18 miod Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.2 2006/05/20 22:40:46 miod Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,7 +39,7 @@
 #include "stand.h"
 #include "libsa.h"
 
-#define	SYM_MAGIC	0x6274ef2d
+#define	SYM_MAGIC	0x6274ef2e
 
 /*ARGSUSED*/
 void
@@ -160,7 +160,7 @@ exec_aout(char *file, const char *args, int bootdev, int bootunit, int bootpart)
 	printf("=0x%lx\n", cp - loadaddr);
 	close(io);
 
-	(*entry)(args, bootdev, bootunit, bootpart, SYM_MAGIC);
+	(*entry)(args, bootdev, bootunit, bootpart, SYM_MAGIC, cp);
 
 	printf("exec: kernel returned!\n");
 	return;
