@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.10 2006/05/20 13:24:02 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.11 2006/05/20 15:31:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1096,7 +1096,30 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		    htole16(ic->ic_channels[head->chan].ic_freq);
 		tap->wr_chan_flags =
 		    htole16(ic->ic_channels[head->chan].ic_flags);
-		tap->wr_antsignal = stat->signal;
+		tap->wr_dbm_antsignal = (int8_t)(stat->rssi - WPI_RSSI_OFFSET);
+		tap->wr_dbm_antnoise = (int8_t)stat->noise;
+		tap->wr_tsft = tail->tstamp;
+		tap->wr_antenna = (letoh16(head->flags) >> 4) & 0xf;
+		switch (head->rate) {
+		/* CCK rates */
+		case  10: tap->wr_rate =   2; break;
+		case  20: tap->wr_rate =   4; break;
+		case  55: tap->wr_rate =  11; break;
+		case 110: tap->wr_rate =  22; break;
+		/* OFDM rates */
+		case 0xd: tap->wr_rate =  12; break;
+		case 0xf: tap->wr_rate =  18; break;
+		case 0x5: tap->wr_rate =  24; break;
+		case 0x7: tap->wr_rate =  36; break;
+		case 0x9: tap->wr_rate =  48; break;
+		case 0xb: tap->wr_rate =  72; break;
+		case 0x1: tap->wr_rate =  96; break;
+		case 0x3: tap->wr_rate = 109; break;
+		/* unknown rate: should not happen */
+		default:  tap->wr_rate =   0;
+		}
+		if (letoh16(head->flags) & 0x4)
+			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
 		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
@@ -1126,9 +1149,8 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_tx_ring *ring = &sc->txq[desc->qid & 0x3];
 	struct wpi_tx_data *txdata = &ring->data[desc->idx];
-#ifdef WPI_DEBUG
 	struct wpi_tx_stat *stat = (struct wpi_tx_stat *)(desc + 1);
-#endif
+
 	DPRINTFN(4, ("tx done: qid=%d idx=%d retries=%d nkill=%d rate=%x "
 	    "duration=%d status=%x\n", desc->qid, desc->idx, stat->ntries,
 	    stat->nkill, stat->rate, letoh32(stat->duration),
@@ -1848,7 +1870,7 @@ wpi_auth(struct wpi_softc *sc)
 		sc->config.ofdm_mask = 0x15;
 	}
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		sc->config.flags |= htole32(WPI_CONFIG_SHORT_SLOT);
+		sc->config.flags |= htole32(WPI_CONFIG_SHSLOT);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		sc->config.flags |= htole32(WPI_CONFIG_SHPREAMBLE);
 

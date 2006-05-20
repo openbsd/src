@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.4 2006/05/20 13:24:02 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.5 2006/05/20 15:31:30 damien Exp $	*/
 
 
 /*-
@@ -275,7 +275,7 @@ struct wpi_config {
 #define WPI_CONFIG_24GHZ	(1 << 0)
 #define WPI_CONFIG_CCK		(1 << 1)
 #define WPI_CONFIG_AUTO		(1 << 2)
-#define WPI_CONFIG_SHORT_SLOT	(1 << 4)
+#define WPI_CONFIG_SHSLOT	(1 << 4)
 #define WPI_CONFIG_SHPREAMBLE	(1 << 5)
 #define WPI_CONFIG_NODIVERSITY	(1 << 7)
 #define WPI_CONFIG_ANTENNA_A	(1 << 8)

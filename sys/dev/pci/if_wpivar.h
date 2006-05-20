@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.3 2006/05/20 11:47:29 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.4 2006/05/20 15:31:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -19,16 +19,24 @@
 
 struct wpi_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
+	uint64_t	wr_tsft;
 	uint8_t		wr_flags;
+	uint8_t		wr_rate;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
-	uint8_t		wr_antsignal;
+	int8_t		wr_dbm_antsignal;
+	int8_t		wr_dbm_antnoise;
+	uint8_t		wr_antenna;
 } __packed;
 
 #define WPI_RX_RADIOTAP_PRESENT						\
-	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	((1 << IEEE80211_RADIOTAP_TSFT) |				\
+	 (1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) |			\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE) |			\
+	 (1 << IEEE80211_RADIOTAP_ANTENNA))
 
 struct wpi_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
