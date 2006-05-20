@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.1.1.1 2006/05/08 16:34:56 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.2 2006/05/20 11:57:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat.
@@ -29,8 +29,9 @@
 #include <sys/systm.h>
 
 #include <machine/asm_macro.h>
-#include <machine/av400.h>		/* PROM_VBR */
 #include <machine/prom.h>
+
+register_t prom_vbr;					/* set in locore.S */
 
 /*
  * No locking is necessary, since we will only use the SCM routines
@@ -48,7 +49,7 @@
 	    "r9", "r10", "r11", "r12", "r13")
 
 #define	SCM_VBR() \
-	__asm__ __volatile__ ("stcr %0, cr7" : : "r" (PROM_VBR))
+	__asm__ __volatile__ ("stcr %0, cr7" : : "r" (prom_vbr))
 
 #define	SCM_CONTEXT() \
 	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (ossr0)); \
@@ -156,7 +157,7 @@ scm_halt()
 }
 
 u_int
-scm_memsize()
+scm_memsize(int which)
 {
 	SCM_DECL;
 	u_int msize;
@@ -164,7 +165,7 @@ scm_memsize()
 	disable_interrupt(psr);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, r0");
+	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (which));
 	SCM_CALL(SCM_MSIZE);
 	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (msize));
 	OS_CONTEXT();
@@ -172,6 +173,25 @@ scm_memsize()
 	set_psr(psr);
 
 	return (msize);
+}
+
+/*
+ * Does not accept parameters beyond a string because this would need extra
+ * register constraints.
+ */
+void
+scm_printf(const char *msg)
+{
+	SCM_DECL;
+
+	disable_interrupt(psr);
+	SCM_CONTEXT();
+	SCM_VBR();
+	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (msg));
+	SCM_CALL(SCM_PTLINE);
+	OS_CONTEXT();
+	OS_VBR();
+	set_psr(psr);
 }
 
 u_int

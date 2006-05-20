@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.1.1.1 2006/05/09 18:25:34 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.2 2006/05/20 11:57:02 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -205,7 +205,7 @@ av400_memsize()
 {
 	vaddr_t memsize;
 
-	memsize = scm_memsize();
+	memsize = scm_memsize(1);
 
 	/*
 	 * What we got is the ``top of memory'', i.e. the largest addressable
@@ -213,28 +213,12 @@ av400_memsize()
 	 */
 	memsize = round_page(memsize);
 
-	/*
-	 * But then the PROM uses at least one full page for its own needs...
-	 */
-	memsize -= PAGE_SIZE;
-
 	return (memsize);
 }
 
 void
 av400_startup()
 {
-#if 0
-	/*
-	 * Supply the self-inflicted vector base. Note that since we don't
-	 * use this functionality, this is not really necessary.
-	 * Moreover, writing to this register in av400_bootstrap() causes
-	 * an exception (and at this point we can not handle it).
-	 * This might be a good way to tell 400s from 5000s!
-	 */
-	/* supply a vector base for av400ih */
-	*(volatile u_int8_t *)AV400_VIRQV = AV400_IVEC;
-#endif
 }
 
 int32_t cpuid, sysid;

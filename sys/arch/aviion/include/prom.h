@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.1.1.1 2006/05/09 18:19:43 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.2 2006/05/20 11:57:04 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -65,7 +65,8 @@ u_int	scm_cpuid(void);
 int	scm_getc(void);
 void	scm_getenaddr(u_char *);
 __dead void scm_halt(void);
-u_int	scm_memsize(void);
+u_int	scm_memsize(int);
+void	scm_printf(const char *);
 u_int	scm_promver(void);
 void	scm_putc(int);
 void	scm_putcrlf(void);

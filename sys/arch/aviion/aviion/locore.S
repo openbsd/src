@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1.1.1 2006/05/07 21:32:26 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2006/05/20 11:57:02 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -175,6 +175,11 @@ ASLOCAL(main_start)
 	set	r11, r11, 1<PSR_SERIALIZE_BIT>
 	stcr	r11, PSR
 	FLUSH_PIPELINE
+
+	/* save PROM vbr */
+	ldcr	r12, VBR
+	or.u	r13, r0,  hi16(_C_LABEL(prom_vbr))
+	st	r12,  r13, lo16(_C_LABEL(prom_vbr))
 	stcr	r0,  VBR
 
 #ifdef MULTIPROCESSOR
