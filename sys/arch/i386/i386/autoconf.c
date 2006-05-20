@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.59 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.60 2006/05/20 07:52:36 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -346,14 +346,6 @@ rootconf()
 	register struct genericconf *gc;
 	int unit, part = 0;
 	char *num;
-
-#ifdef INSTALL
-	if (B_TYPE(bootdev) == 2) {
-		printf("\n\nInsert file system floppy...\n");
-		if (!(boothowto & RB_ASKNAME))
-			cngetc();
-	}
-#endif
 
 	if (boothowto & RB_ASKNAME) {
 		char name[128];
