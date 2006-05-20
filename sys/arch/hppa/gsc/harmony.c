@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.24 2005/04/16 21:54:32 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.25 2006/05/20 01:58:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -133,13 +133,23 @@ harmony_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct gsc_attach_args *ga = aux;
+	bus_space_handle_t bh;
+	u_int32_t cntl;
 
 	if (ga->ga_type.iodc_type == HPPA_TYPE_FIO) {
 		if (ga->ga_type.iodc_sv_model == HPPA_FIO_A1 ||
 		    ga->ga_type.iodc_sv_model == HPPA_FIO_A2NB ||
 		    ga->ga_type.iodc_sv_model == HPPA_FIO_A1NB ||
-		    ga->ga_type.iodc_sv_model == HPPA_FIO_A2)
-			return (1);
+		    ga->ga_type.iodc_sv_model == HPPA_FIO_A2) {
+			if (bus_space_map(ga->ga_iot, ga->ga_hpa,
+			    HARMONY_NREGS, 0, &bh) != 0)
+				return (0);
+			cntl = bus_space_read_4(ga->ga_iot, bh, HARMONY_ID) &
+			    ID_REV_MASK;
+			bus_space_unmap(ga->ga_iot, bh, HARMONY_NREGS);
+			if (cntl == ID_REV_TS || cntl == ID_REV_NOTS)
+				return (1);
+		}
 	}
 	return (0);
 }
@@ -165,17 +175,7 @@ harmony_attach(parent, self, aux)
 	}
 
 	cntl = READ_REG(sc, HARMONY_ID);
-	switch ((cntl & ID_REV_MASK)) {
-	case ID_REV_TS:
-		sc->sc_teleshare = 1;
-	case ID_REV_NOTS:
-		break;
-	default:
-		printf(": unknown id == 0x%02x\n",
-		    (cntl & ID_REV_MASK) >> ID_REV_SHIFT);
-		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
-		return;
-	}
+	sc->sc_teleshare = (cntl & ID_REV_MASK) == ID_REV_TS;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct harmony_empty),
 	    PAGE_SIZE, 0, &sc->sc_empty_seg, 1, &sc->sc_empty_rseg,
