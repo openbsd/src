@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.29 2006/03/13 08:21:37 otto Exp $	*/
+/*	$OpenBSD: var.c,v 1.30 2006/05/21 18:40:39 otto Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -293,7 +293,7 @@ str_val(struct tbl *vp)
 	else {				/* integer source */
 		/* worst case number length is when base=2, so use BITS(long) */
 		/* minus base #     number    null */
-		static char strbuf[1 + 2 + 1 + BITS(long) + 1];
+		char strbuf[1 + 2 + 1 + BITS(long) + 1];
 		const char *digits = (vp->flag & UCASEV_AL) ?
 		    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" :
 		    "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -322,6 +322,8 @@ str_val(struct tbl *vp)
 			*--s = '-';
 		if (vp->flag & (RJUST|LJUST)) /* case already dealt with */
 			s = formatstr(vp, s);
+		else
+			s = str_save(s, ATEMP);
 	}
 	return s;
 }
@@ -1107,12 +1109,10 @@ arraysearch(struct tbl *vp, int val)
 	size_t namelen = strlen(vp->name) + 1;
 
 	vp->flag |= ARRAY|DEFINED;
-
+	vp->index = 0;
 	/* The table entry is always [0] */
-	if (val == 0) {
-		vp->index = 0;
+	if (val == 0)
 		return vp;
-	}
 	prev = vp;
 	curr = vp->u.array;
 	while (curr && curr->index < val) {
