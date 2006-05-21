@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.18 2006/05/12 20:48:19 brad Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.19 2006/05/21 01:48:35 brad Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -281,7 +281,7 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 }
 
 /*
- * Like _bus_dmamap_load_direct_common(), but for mbufs.
+ * Like _bus_dmamap_load_direct(), but for mbufs.
  */
 int
 _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
@@ -332,7 +332,7 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 }
 
 /*
- * Like _bus_dmamap_load_direct_common(), but for uios.
+ * Like _bus_dmamap_load_direct(), but for uios.
  */
 int
 _bus_dmamap_load_uio_direct(t, map, uio, flags)
@@ -396,7 +396,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 }
 
 /*
- * Like _bus_dmamap_load_direct_common(), but for raw memory.
+ * Like _bus_dmamap_load_direct(), but for raw memory.
  */
 int
 _bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
