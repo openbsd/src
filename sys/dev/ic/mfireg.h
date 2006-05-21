@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.13 2006/05/17 23:40:26 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.14 2006/05/21 14:03:01 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -96,6 +96,12 @@
 #define MR_DCMD_CLUSTER				0x08000000
 #define MR_DCMD_CLUSTER_RESET_ALL		0x08010100
 #define MR_DCMD_CLUSTER_RESET_LD		0x08010200
+
+#define MR_DCMD_SPEAKER_GET			0x01030100
+#define MR_DCMD_SPEAKER_ENABLE			0x01030200
+#define MR_DCMD_SPEAKER_DISABLE			0x01030300
+#define MR_DCMD_SPEAKER_SILENCE			0x01030400
+#define MR_DCMD_SPEAKER_TEST			0x01030500
 
 /* mailbox bytes in direct command */
 #define MFI_MBOX_SIZE				12
