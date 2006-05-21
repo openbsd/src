@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pxeboot.8,v 1.4 2004/12/04 00:46:58 jmc Exp $
+.\"	$OpenBSD: pxeboot.8,v 1.5 2006/05/21 19:46:38 jmc Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -76,14 +76,15 @@ file,
 or by commands typed by the user at the
 .Ic boot>
 prompt.
-At this time,
-it is expected that pxeboot will be used to load the
+.Nm
+can be used for
+.Xr diskless 8
+setups or to load the
 .Pa bsd.rd
-install kernel,
-for network installs,
-although this is not the default kernel.
+install kernel
+for network installs.
 .Pp
-To prepare a server to support network installs,
+To prepare a server to support network booting,
 the
 .Xr dhcpd 8
 and
@@ -166,6 +167,7 @@ The same thing:
 .Xr boot 8 ,
 .Xr boot_i386 8 ,
 .Xr dhcpd 8 ,
+.Xr diskless 8 ,
 .Xr httpd 8 ,
 .Xr tftpd 8
 .Rs
