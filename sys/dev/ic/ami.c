@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.161 2006/05/21 19:17:22 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.162 2006/05/21 19:48:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -127,6 +127,7 @@ void		ami_copyhds(struct ami_softc *, const u_int32_t *,
 		    const u_int8_t *, const u_int8_t *);
 struct ami_mem	*ami_allocmem(struct ami_softc *, size_t);
 void		ami_freemem(struct ami_softc *, struct ami_mem *);
+int		ami_alloc_ccbs(struct ami_softc *, int);
 
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 void		ami_start(struct ami_softc *, struct ami_ccb *);
@@ -289,43 +290,20 @@ ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
 }
 
 int
-ami_attach(struct ami_softc *sc)
+ami_alloc_ccbs(struct ami_softc *sc, int nccbs)
 {
-	struct ami_rawsoftc *rsc;
-	struct ami_ccb iccb, *ccb;
-	struct ami_iocmd *cmd;
+	struct ami_ccb *ccb;
 	struct ami_ccbmem *ccbmem, *mem;
-	struct ami_mem *am;
-	const char *p;
-	paddr_t	pa;
 	int i, error;
-	int s;
 
-	am = ami_allocmem(sc, NBPG);
-	if (am == NULL) {
-		printf(": unable to allocate init data\n");
-		return (1);
-	}
-	pa = htole32(AMIMEM_DVA(am));
-
-	sc->sc_mbox_am = ami_allocmem(sc, sizeof(struct ami_iocmd));
-	if (sc->sc_mbox_am == NULL) {
-		printf(": unable to allocate mbox\n");
-		goto free_idata;
-	}
-	sc->sc_mbox = (volatile struct ami_iocmd *)AMIMEM_KVA(sc->sc_mbox_am);
-	sc->sc_mbox_pa = htole32(AMIMEM_DVA(sc->sc_mbox_am));
-	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
-
-	sc->sc_ccbs = malloc(sizeof(struct ami_ccb) * AMI_MAXCMDS,
+	sc->sc_ccbs = malloc(sizeof(struct ami_ccb) * nccbs,
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_ccbs == NULL) {
 		printf(": unable to allocate ccbs\n");
-		goto free_mbox;
+		return (1);
 	}
 
-	sc->sc_ccbmem_am = ami_allocmem(sc,
-	    sizeof(struct ami_ccbmem) * AMI_MAXCMDS);
+	sc->sc_ccbmem_am = ami_allocmem(sc, sizeof(struct ami_ccbmem) * nccbs);
 	if (sc->sc_ccbmem_am == NULL) {
 		printf(": unable to allocate ccb dmamem\n");
 		goto free_ccbs;
@@ -337,7 +315,7 @@ ami_attach(struct ami_softc *sc)
 	TAILQ_INIT(&sc->sc_ccb_runq);
 	timeout_set(&sc->sc_run_tmo, ami_runqueue, sc);
 
-	for (i = 0; i < AMI_MAXCMDS; i++) {
+	for (i = 0; i < nccbs; i++) {
 		ccb = &sc->sc_ccbs[i];
 		mem = &ccbmem[i];
 
@@ -346,7 +324,7 @@ ami_attach(struct ami_softc *sc)
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
 		if (error) {
 			printf(": cannot create ccb dmamap (%d)\n", error);
-			goto destroy;
+			goto free_list;
 		}
 
 		ccb->ccb_sc = sc;
@@ -364,6 +342,46 @@ ami_attach(struct ami_softc *sc)
 
 		ami_put_ccb(ccb);
 	}
+
+	return (0);
+
+free_list:
+	while ((ccb = ami_get_ccb(sc)) != NULL)
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+
+	ami_freemem(sc, sc->sc_ccbmem_am);
+free_ccbs:
+	free(sc->sc_ccbs, M_DEVBUF);
+
+	return (1);
+}
+
+int
+ami_attach(struct ami_softc *sc)
+{
+	struct ami_rawsoftc *rsc;
+	struct ami_ccb iccb;
+	struct ami_iocmd *cmd;
+	struct ami_mem *am;
+	const char *p;
+	paddr_t	pa;
+	int s;
+
+	am = ami_allocmem(sc, NBPG);
+	if (am == NULL) {
+		printf(": unable to allocate init data\n");
+		return (1);
+	}
+	pa = htole32(AMIMEM_DVA(am));
+
+	sc->sc_mbox_am = ami_allocmem(sc, sizeof(struct ami_iocmd));
+	if (sc->sc_mbox_am == NULL) {
+		printf(": unable to allocate mbox\n");
+		goto free_idata;
+	}
+	sc->sc_mbox = (volatile struct ami_iocmd *)AMIMEM_KVA(sc->sc_mbox_am);
+	sc->sc_mbox_pa = htole32(AMIMEM_DVA(sc->sc_mbox_am));
+	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
 
 	/* create a spartan ccb for use with ami_poll */
 	bzero(&iccb, sizeof(iccb));
@@ -422,7 +440,7 @@ ami_attach(struct ami_softc *sc)
 			if (ami_poll(sc, &iccb) != 0) {
 				splx(s);
 				printf(": cannot do inquiry\n");
-				goto destroy;
+				goto free_mbox;
 			}
 		}
 
@@ -468,6 +486,11 @@ ami_attach(struct ami_softc *sc)
 	splx(s);
 
 	ami_freemem(sc, am);
+
+	if (ami_alloc_ccbs(sc, AMI_MAXCMDS) != 0) {
+		/* error already printed */
+		goto free_mbox;
+	}
 
 	/* hack for hp netraid version encoding */
 	if ('A' <= sc->sc_fwver[2] && sc->sc_fwver[2] <= 'Z' &&
@@ -556,14 +579,6 @@ ami_attach(struct ami_softc *sc)
 
 	return (0);
 
-destroy:
-	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS - 1]; ccb > sc->sc_ccbs; ccb--)
-		if (ccb->ccb_dmamap)
-			bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-
-	ami_freemem(sc, sc->sc_ccbmem_am);
-free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF);
 free_mbox:
 	ami_freemem(sc, sc->sc_mbox_am);
 free_idata:
