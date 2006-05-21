@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.4 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.5 2006/05/21 19:21:30 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -113,6 +113,15 @@ vs_columns(sp, lp, lno, cnop, diffp)
 	int ch, leftright, listset;
 	char *p;
 
+	/*
+	 * Initialize the screen offset.
+	 */
+	scno = 0;
+
+	/* Leading number if O_NUMBER option set. */
+	if (O_ISSET(sp, O_NUMBER))
+		scno += O_NUMBER_LENGTH;
+
 	/* Need the line to go any further. */
 	if (lp == NULL) {
 		(void)db_get(sp, lno, 0, &lp, &len);
@@ -124,7 +133,7 @@ vs_columns(sp, lp, lno, cnop, diffp)
 	if (lp == NULL) {
 done:		if (diffp != NULL)		/* XXX */
 			*diffp = 0;
-		return (0);
+		return (scno);
 	}
 
 	/* Store away the values of the list and leftright edit options. */
@@ -136,7 +145,7 @@ done:		if (diffp != NULL)		/* XXX */
 	 * offsets.
 	 */
 	p = lp;
-	curoff = scno = 0;
+	curoff = 0;
 
 	/* Leading number if O_NUMBER option set. */
 	if (O_ISSET(sp, O_NUMBER))
