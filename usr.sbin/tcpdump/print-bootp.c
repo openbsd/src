@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.13 2005/11/17 23:33:50 stevesk Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.14 2006/05/21 11:17:20 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-bootp.c,v 1.13 2005/11/17 23:33:50 stevesk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-bootp.c,v 1.14 2006/05/21 11:17:20 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ bootp_print(register const u_char *cp, u_int length,
 		printf(" bootp-#%d", bp->bp_op);
 	}
 
-	TCHECK(bp->bp_secs);
+	TCHECK(bp->bp_flags);
 
 	/* The usual hardware address type is 1 (10Mb Ethernet) */
 	if (bp->bp_htype != 1)
@@ -150,7 +150,7 @@ bootp_print(register const u_char *cp, u_int length,
 		}
 		putchar('"');
 	}
-	TCHECK2(bp->bp_sname[0], 1);		/* check first char only */
+	TCHECK2(bp->bp_file[0], 1);		/* check first char only */
 	if (*bp->bp_file) {
 		printf(" file \"");
 		if (fn_print(bp->bp_file, snapend)) {
@@ -162,7 +162,7 @@ bootp_print(register const u_char *cp, u_int length,
 	}
 
 	/* Decode the vendor buffer */
-	TCHECK(bp->bp_vend[0]);
+	TCHECK2(bp->bp_vend[0], sizeof(u_int32_t));
 	length -= sizeof(*bp) - sizeof(bp->bp_vend);
 	if (memcmp((char *)bp->bp_vend, (char *)vm_rfc1048,
 		 sizeof(u_int32_t)) == 0)
