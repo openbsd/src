@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.41 2006/05/15 01:10:07 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.42 2006/05/21 20:55:26 alek Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1342,7 +1342,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	int		rxlen, rv = -1;
 
 	if (!cold)
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		rw_enter_write(&sc->sc_lock);
 
 	memset(data, 0, sizeof(data));
 	data[0] = psensor->i_num;
@@ -1364,7 +1364,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	rv = 0;
 done:
 	if (!cold)
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
 
@@ -1683,7 +1683,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	wdog_register(sc, ipmi_watchdog);
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
-	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
+	rw_init(&sc->sc_lock, DEVNAME(sc));
 
 	/* setup ticker */
 	sc->sc_retries = 0;
