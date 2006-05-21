@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.160 2006/05/21 18:52:37 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.161 2006/05/21 19:17:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -297,14 +297,16 @@ ami_attach(struct ami_softc *sc)
 	struct ami_ccbmem *ccbmem, *mem;
 	struct ami_mem *am;
 	const char *p;
-	int	i, error;
-	/* u_int32_t *pp; */
+	paddr_t	pa;
+	int i, error;
+	int s;
 
 	am = ami_allocmem(sc, NBPG);
 	if (am == NULL) {
 		printf(": unable to allocate init data\n");
 		return (1);
 	}
+	pa = htole32(AMIMEM_DVA(am));
 
 	sc->sc_mbox_am = ami_allocmem(sc, sizeof(struct ami_iocmd));
 	if (sc->sc_mbox_am == NULL) {
@@ -370,104 +372,101 @@ ami_attach(struct ami_softc *sc)
 	cmd = &iccb.ccb_cmd;
 
 	(sc->sc_init)(sc);
-	{
-		paddr_t	pa = htole32(AMIMEM_DVA(am));
-		int s;
 
-		s = splbio();
+	s = splbio();
 
-		/* try FC inquiry first */
+	/* try FC inquiry first */
+	cmd->acc_cmd = AMI_FCOP;
+	cmd->acc_io.aio_channel = AMI_FC_EINQ3;
+	cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
+	cmd->acc_io.aio_data = pa;
+	if (ami_poll(sc, &iccb) == 0) {
+		struct ami_fc_einquiry *einq = AMIMEM_KVA(am);
+		struct ami_fc_prodinfo *pi = AMIMEM_KVA(am);
+
+		sc->sc_nunits = einq->ain_nlogdrv;
+		ami_copyhds(sc, einq->ain_ldsize, einq->ain_ldprop,
+		    einq->ain_ldstat);
+
 		cmd->acc_cmd = AMI_FCOP;
-		cmd->acc_io.aio_channel = AMI_FC_EINQ3;
-		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
+		cmd->acc_io.aio_channel = AMI_FC_PRODINF;
+		cmd->acc_io.aio_param = 0;
 		cmd->acc_io.aio_data = pa;
 		if (ami_poll(sc, &iccb) == 0) {
-			struct ami_fc_einquiry *einq = AMIMEM_KVA(am);
-			struct ami_fc_prodinfo *pi = AMIMEM_KVA(am);
+			sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
-			sc->sc_nunits = einq->ain_nlogdrv;
-			ami_copyhds(sc, einq->ain_ldsize, einq->ain_ldprop,
-			    einq->ain_ldstat);
-
-			cmd->acc_cmd = AMI_FCOP;
-			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
-			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = pa;
-			if (ami_poll(sc, &iccb) == 0) {
-				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
-
-				bcopy (pi->api_fwver, sc->sc_fwver, 16);
-				sc->sc_fwver[15] = '\0';
-				bcopy (pi->api_biosver, sc->sc_biosver, 16);
-				sc->sc_biosver[15] = '\0';
-				sc->sc_channels = pi->api_channels;
-				sc->sc_targets = pi->api_fcloops;
-				sc->sc_memory = letoh16(pi->api_ramsize);
-				sc->sc_maxcmds = pi->api_maxcmd;
-				p = "FC loop";
-			}
+			bcopy (pi->api_fwver, sc->sc_fwver, 16);
+			sc->sc_fwver[15] = '\0';
+			bcopy (pi->api_biosver, sc->sc_biosver, 16);
+			sc->sc_biosver[15] = '\0';
+			sc->sc_channels = pi->api_channels;
+			sc->sc_targets = pi->api_fcloops;
+			sc->sc_memory = letoh16(pi->api_ramsize);
+			sc->sc_maxcmds = pi->api_maxcmd;
+			p = "FC loop";
 		}
+	}
 
-		if (sc->sc_maxunits == 0) {
-			struct ami_inquiry *inq = AMIMEM_KVA(am);
+	if (sc->sc_maxunits == 0) {
+		struct ami_inquiry *inq = AMIMEM_KVA(am);
 
-			cmd->acc_cmd = AMI_EINQUIRY;
+		cmd->acc_cmd = AMI_EINQUIRY;
+		cmd->acc_io.aio_channel = 0;
+		cmd->acc_io.aio_param = 0;
+		cmd->acc_io.aio_data = pa;
+		if (ami_poll(sc, &iccb) != 0) {
+			cmd->acc_cmd = AMI_INQUIRY;
 			cmd->acc_io.aio_channel = 0;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = pa;
 			if (ami_poll(sc, &iccb) != 0) {
-				cmd->acc_cmd = AMI_INQUIRY;
-				cmd->acc_io.aio_channel = 0;
-				cmd->acc_io.aio_param = 0;
-				cmd->acc_io.aio_data = pa;
-				if (ami_poll(sc, &iccb) != 0) {
-					splx(s);
-					printf(": cannot do inquiry\n");
-					goto destroy;
-				}
+				splx(s);
+				printf(": cannot do inquiry\n");
+				goto destroy;
 			}
-
-			sc->sc_maxunits = AMI_MAX_LDRIVES;
-			sc->sc_nunits = inq->ain_nlogdrv;
-			ami_copyhds(sc, inq->ain_ldsize, inq->ain_ldprop,
-			    inq->ain_ldstat);
-
-			bcopy (inq->ain_fwver, sc->sc_fwver, 4);
-			sc->sc_fwver[4] = '\0';
-			bcopy (inq->ain_biosver, sc->sc_biosver, 4);
-			sc->sc_biosver[4] = '\0';
-			sc->sc_channels = inq->ain_channels;
-			sc->sc_targets = inq->ain_targets;
-			sc->sc_memory = inq->ain_ramsize;
-			sc->sc_maxcmds = inq->ain_maxcmd;
-			p = "target";
 		}
 
-		if (sc->sc_flags & AMI_BROKEN) {
-			sc->sc_link.openings = 1;
-			sc->sc_maxcmds = 1;
-			sc->sc_maxunits = 1;
-		} else {
-			sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
-			if (sc->sc_maxcmds > AMI_MAXCMDS)
-				sc->sc_maxcmds = AMI_MAXCMDS;
-			/*
-			 * Reserve ccb's for ioctl's and raw commands to
-			 * processors/enclosures by lowering the number of
-			 * openings available for logical units.
-			 */
-			sc->sc_maxcmds -= AMI_MAXIOCTLCMDS + AMI_MAXPROCS *
-			    AMI_MAXRAWCMDS * sc->sc_channels;
+		sc->sc_maxunits = AMI_MAX_LDRIVES;
+		sc->sc_nunits = inq->ain_nlogdrv;
+		ami_copyhds(sc, inq->ain_ldsize, inq->ain_ldprop,
+		    inq->ain_ldstat);
 
-			if (sc->sc_nunits)
-				sc->sc_link.openings =
-				    sc->sc_maxcmds / sc->sc_nunits;
-			else
-				sc->sc_link.openings = sc->sc_maxcmds;
-		}
-
-		splx(s);
+		bcopy (inq->ain_fwver, sc->sc_fwver, 4);
+		sc->sc_fwver[4] = '\0';
+		bcopy (inq->ain_biosver, sc->sc_biosver, 4);
+		sc->sc_biosver[4] = '\0';
+		sc->sc_channels = inq->ain_channels;
+		sc->sc_targets = inq->ain_targets;
+		sc->sc_memory = inq->ain_ramsize;
+		sc->sc_maxcmds = inq->ain_maxcmd;
+		p = "target";
 	}
+
+	if (sc->sc_flags & AMI_BROKEN) {
+		sc->sc_link.openings = 1;
+		sc->sc_maxcmds = 1;
+		sc->sc_maxunits = 1;
+	} else {
+		sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
+		if (sc->sc_maxcmds > AMI_MAXCMDS)
+			sc->sc_maxcmds = AMI_MAXCMDS;
+		/*
+		 * Reserve ccb's for ioctl's and raw commands to
+		 * processors/enclosures by lowering the number of
+		 * openings available for logical units.
+		 */
+		sc->sc_maxcmds -= AMI_MAXIOCTLCMDS + AMI_MAXPROCS *
+		    AMI_MAXRAWCMDS * sc->sc_channels;
+
+		if (sc->sc_nunits)
+			sc->sc_link.openings =
+			    sc->sc_maxcmds / sc->sc_nunits;
+		else
+			sc->sc_link.openings = sc->sc_maxcmds;
+	}
+
+	splx(s);
+
 	ami_freemem(sc, am);
 
 	/* hack for hp netraid version encoding */
