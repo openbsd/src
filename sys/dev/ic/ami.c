@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.159 2006/05/21 18:28:24 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.160 2006/05/21 18:52:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -143,7 +143,7 @@ void		ami_done_sysflush(struct ami_softc *, struct ami_ccb *);
 void		ami_stimeout(void *);
 
 void		ami_done_ioctl(struct ami_softc *, struct ami_ccb *);
-void		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
+void		ami_done_init(struct ami_softc *, struct ami_ccb *);
 
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 
@@ -292,7 +292,7 @@ int
 ami_attach(struct ami_softc *sc)
 {
 	struct ami_rawsoftc *rsc;
-	struct ami_ccb	*ccb;
+	struct ami_ccb iccb, *ccb;
 	struct ami_iocmd *cmd;
 	struct ami_ccbmem *ccbmem, *mem;
 	struct ami_mem *am;
@@ -363,6 +363,12 @@ ami_attach(struct ami_softc *sc)
 		ami_put_ccb(ccb);
 	}
 
+	/* create a spartan ccb for use with ami_poll */
+	bzero(&iccb, sizeof(iccb));
+	iccb.ccb_sc = sc;
+	iccb.ccb_done = ami_done_init;
+	cmd = &iccb.ccb_cmd;
+
 	(sc->sc_init)(sc);
 	{
 		paddr_t	pa = htole32(AMIMEM_DVA(am));
@@ -370,16 +376,12 @@ ami_attach(struct ami_softc *sc)
 
 		s = splbio();
 
-		ccb = ami_get_ccb(sc);
-		ccb->ccb_done = ami_done_ccb;
-		cmd = &ccb->ccb_cmd;
-
 		/* try FC inquiry first */
 		cmd->acc_cmd = AMI_FCOP;
 		cmd->acc_io.aio_channel = AMI_FC_EINQ3;
 		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
 		cmd->acc_io.aio_data = pa;
-		if (ami_poll(sc, ccb) == 0) {
+		if (ami_poll(sc, &iccb) == 0) {
 			struct ami_fc_einquiry *einq = AMIMEM_KVA(am);
 			struct ami_fc_prodinfo *pi = AMIMEM_KVA(am);
 
@@ -387,15 +389,11 @@ ami_attach(struct ami_softc *sc)
 			ami_copyhds(sc, einq->ain_ldsize, einq->ain_ldprop,
 			    einq->ain_ldstat);
 
-			ccb = ami_get_ccb(sc);
-			ccb->ccb_done = ami_done_ccb;
-			cmd = &ccb->ccb_cmd;
-
 			cmd->acc_cmd = AMI_FCOP;
 			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = pa;
-			if (ami_poll(sc, ccb) == 0) {
+			if (ami_poll(sc, &iccb) == 0) {
 				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
 				bcopy (pi->api_fwver, sc->sc_fwver, 16);
@@ -413,24 +411,16 @@ ami_attach(struct ami_softc *sc)
 		if (sc->sc_maxunits == 0) {
 			struct ami_inquiry *inq = AMIMEM_KVA(am);
 
-			ccb = ami_get_ccb(sc);
-			ccb->ccb_done = ami_done_ccb;
-			cmd = &ccb->ccb_cmd;
-
 			cmd->acc_cmd = AMI_EINQUIRY;
 			cmd->acc_io.aio_channel = 0;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = pa;
-			if (ami_poll(sc, ccb) != 0) {
-				ccb = ami_get_ccb(sc);
-				ccb->ccb_done = ami_done_ccb;
-				cmd = &ccb->ccb_cmd;
-
+			if (ami_poll(sc, &iccb) != 0) {
 				cmd->acc_cmd = AMI_INQUIRY;
 				cmd->acc_io.aio_channel = 0;
 				cmd->acc_io.aio_param = 0;
 				cmd->acc_io.aio_data = pa;
-				if (ami_poll(sc, ccb) != 0) {
+				if (ami_poll(sc, &iccb) != 0) {
 					splx(s);
 					printf(": cannot do inquiry\n");
 					goto destroy;
@@ -1213,9 +1203,9 @@ ami_done_ioctl(struct ami_softc *sc, struct ami_ccb *ccb)
 }
 
 void
-ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
+ami_done_init(struct ami_softc *sc, struct ami_ccb *ccb)
 {
-	ami_put_ccb(ccb);
+	/* the ccb is going to be reused, so do nothing with it */
 }
 
 void
