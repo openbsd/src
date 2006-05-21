@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.37 2006/03/13 22:11:23 brad Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.38 2006/05/21 00:56:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -101,6 +101,7 @@ struct	ami_pci_subsys {
 	{ 0x004d1025,	"ACER MegaRAID ROMB-2E", 0},
 	{ 0x0511101e,	"AMI MegaRAID i4", AMI_BROKEN },
 	{ 0x04931028,	"Dell PERC3/DC", 0 },
+	{ 0x05181028,	"Dell PERC4/DC", 0 },
 	{ 0x09a0101e,	"Dell 466v1", 0 },
 	{ 0x11111111,	"Dell 466v2", 0 },
 	{ 0x11121111,	"Dell 438", 0 },
