@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.9 2006/05/21 01:26:19 brad Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.10 2006/05/21 01:42:43 brad Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -92,8 +92,15 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * mapping.  Round the size, since we deal with whole pages.
 	 */
 
-	/* XXX Always allocate a spill page for now. */
-	spill = 1;
+	/*
+	 * XXX Always allocate a spill page for now.  Note
+	 * the spill page is not needed for an in-bound-only
+	 * transfer.
+	 */
+	if ((flags & BUS_DMA_READ) == 0)
+		spill = 1;
+	else
+		spill = 0;
 
 	endva = round_page(va + buflen);
 	va = trunc_page(va);
@@ -202,6 +209,12 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
+
+	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
+
 	seg = 0;
 	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, p,
 	    flags, seg, sgmap);
@@ -217,10 +230,13 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
 		map->_dm_window = t;
-	} else if (t->_next_window != NULL) {
-		/* Give the next window a chance. */
-		error = bus_dmamap_load(t->_next_window, map, buf, buflen,
-		    p, flags);
+	} else {
+		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
+		if (t->_next_window != NULL) {
+			/* Give the next window a chance. */
+			error = bus_dmamap_load(t->_next_window, map, buf,
+			    buflen, p, flags);
+		}
 	}
 	return (error);
 }
@@ -245,6 +261,12 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
+
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
+
+	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
 
 	seg = 0;
 	error = 0;
@@ -271,6 +293,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 		/* Need to back out what we've done so far. */
 		map->dm_nsegs = seg - 1;
 		__C(SGMAP_TYPE,_unload)(t, map, sgmap);
+		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 		if (t->_next_window != NULL) {
 			/* Give the next window a chance. */
 			error = bus_dmamap_load_mbuf(t->_next_window, map,
@@ -297,12 +320,11 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-#if 0
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
  	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
 	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
-#endif
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -347,9 +369,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		/* Need to back out what we've done so far. */
 		map->dm_nsegs = seg - 1;
 		__C(SGMAP_TYPE,_unload)(t, map, sgmap);
-#if 0
 		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
-#endif
 		if (t->_next_window != NULL) {
 			/* Give the next window a chance. */
 			error = bus_dmamap_load_uio(t->_next_window, map,
@@ -365,6 +385,9 @@ __C(SGMAP_TYPE,_load_raw)(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags,
     struct alpha_sgmap *sgmap)
 {
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+	    (BUS_DMA_READ|BUS_DMA_WRITE));
 
 	panic(__S(__C(SGMAP_TYPE,_load_raw)) ": not implemented");
 }
@@ -378,8 +401,15 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 	int s, error, spill, seg, pteidx;
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
-		/* XXX Always have a spill page for now... */
-		spill = 1;
+		/*
+		 * XXX Always allocate a spill page for now.  Note
+		 * the spill page is not needed for an in-bound-only
+		 * transfer.
+		 */
+		if ((map->_dm_flags & BUS_DMA_READ) == 0)
+			spill = 1;
+		else
+			spill = 0;
 
 		sgva = map->dm_segs[seg].ds_addr & ~sgmap->aps_wbase;
 
@@ -411,6 +441,8 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		if (error != 0)
 			panic(__S(__C(SGMAP_TYPE,_unload)));
 	}
+
+	map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 
 	/* Mark the mapping invalid. */
 	map->dm_mapsize = 0;
