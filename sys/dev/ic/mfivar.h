@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.20 2006/05/18 17:25:02 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.21 2006/05/21 20:20:17 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -83,8 +83,7 @@ struct mfi_ccb {
 	volatile enum {
 		MFI_CCB_FREE,
 		MFI_CCB_READY,
-		MFI_CCB_QUEUED,
-		MFI_CCB_PREQUEUED
+		MFI_CCB_DONE
 	}			ccb_state;
 	uint32_t		ccb_flags;
 #define MFI_CCB_F_ERR			(1<<0)
@@ -103,6 +102,9 @@ struct mfi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/* mgmt lock */
+	struct rwlock		sc_lock;
 
 	/* save some useful information for logical drives */
 	struct {
