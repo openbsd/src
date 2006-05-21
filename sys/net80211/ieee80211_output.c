@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.18 2006/05/19 18:14:35 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.19 2006/05/21 07:47:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -556,6 +556,9 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
+	/* account for 802.11 header */
+	pktlen += sizeof(struct ieee80211_frame);
+
 	if (pktlen > MCLBYTES)
 		panic("802.11 packet too large: %u", pktlen);
 	MGETHDR(m, flags, type);
@@ -594,7 +597,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	switch (type) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
 		/*
-		 * prreq frame format
+		 * probe request frame format
 		 *	[tlv] ssid
 		 *	[tlv] supported rates
 		 *	[tlv] extended supported rates
@@ -751,7 +754,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
 	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ:
 		/*
-		 * asreq frame format
+		 * association request frame format
 		 *	[2] capability information
 		 *	[2] listen interval
 		 *	[6*] current AP address (reassoc only)
@@ -778,7 +781,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		/*
 		 * NB: Some 11a AP's reject the request when
-		 *     short premable is set.
+		 *     short preamble is set.
 		 */
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
@@ -807,7 +810,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
 	case IEEE80211_FC0_SUBTYPE_REASSOC_RESP:
 		/*
-		 * asreq frame format
+		 * association response frame format
 		 *	[2] capability information
 		 *	[2] status
 		 *	[2] association ID
