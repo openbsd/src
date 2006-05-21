@@ -1,4 +1,4 @@
-/*	$OpenBSD: avcommon.h,v 1.1 2006/05/21 12:22:03 miod Exp $	*/
+/*	$OpenBSD: avcommon.h,v 1.2 2006/05/21 22:43:54 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -52,12 +52,13 @@
  */
 
 /* per-processor interrupt enable registers */
+#define	AV_IEN_BASE	0xfff84000
 #define	AV_IEN0		0xfff84004	/* interrupt enable CPU 0 */
 #define	AV_IEN1		0xfff84008	/* interrupt enable CPU 1 */
 #define	AV_IEN2		0xfff84010	/* interrupt enable CPU 2 */
 #define	AV_IEN3		0xfff84020	/* interrupt enable CPU 3 */
 #define	AV_IENALL	0xfff8403c	/* simultaneous write */
-#define	AV_IEN(cpu)	(AV_IEN0 + ((cpu) << 2))
+#define	AV_IEN(cpu)	(AV_IEN_BASE + (4 << (cpu)))
 
 #define	AV_IST		0xfff84040 	/* interrupt status register */
 
@@ -69,10 +70,6 @@
 #define	AV_CLRINT	0xfff8408c 	/* reset HW interrupt */
 
 #define	AV_GCSR		0xfff86000	/* global control and status reg */
-#define	AV_UCSR		0xfff87000	/* utility control and status reg */
-#define	AV_BASAD	0xfff87004	/* base address reg */
-#define	AV_GLBRES	0xfff8700c	/* global reset reg */
-
 #define AV_GLOBAL0	0xfff86001	/* global control and status regs */
 #define AV_GLOBAL1	0xfff86003
 #define	AV_LRST			0x80
