@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.44 2006/05/20 18:31:50 mickey Exp $
+.\"	$OpenBSD: ddb.4,v 1.45 2006/05/21 15:55:02 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -758,9 +758,8 @@ wait channel address, and wait channel message.
 .It Ic show all callout
 Display the contents of the callout table.
 .It Ic show all pools Op Cm /a
-Display information about all system pools in similar to
-.Xr vmstat 8
-output format.
+Display information about all system pools in a format similar to
+.Xr vmstat 8 .
 .Pp
 .Bl -tag -width foo -compact
 .It Cm /a
