@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.8 2006/05/12 20:48:19 brad Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.9 2006/05/21 01:26:19 brad Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -285,8 +285,79 @@ int
 __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags, struct alpha_sgmap *sgmap)
 {
+	bus_size_t minlen, resid;
+	struct proc *p = NULL;
+	struct iovec *iov;
+	caddr_t addr;
+	int i, seg, error;
 
-	panic(__S(__C(SGMAP_TYPE,_load_uio)) ": not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+#if 0
+	KASSERT((flags & (BUS_DMA_READ|BUS_DMA_WRITE)) !=
+ 	    (BUS_DMA_READ|BUS_DMA_WRITE));
+
+	map->_dm_flags |= flags & (BUS_DMA_READ|BUS_DMA_WRITE);
+#endif
+
+	resid = uio->uio_resid;
+	iov = uio->uio_iov;
+
+	if (uio->uio_segflg == UIO_USERSPACE) {
+		p = uio->uio_procp;
+#ifdef DIAGNOSTIC
+		if (p == NULL)
+			panic(__S(__C(SGMAP_TYPE,_load_uio))
+			    ": USERSPACE but no proc");
+#endif
+	}
+
+	seg = 0;
+	error = 0;
+	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0;
+	     i++, seg++) {
+		/*
+		 * Now at the first iovec to load.  Load each iovec
+		 * until we have exhausted the residual count.
+		 */
+		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
+		addr = (caddr_t)iov[i].iov_base;
+
+		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
+		    addr, minlen, p, flags, seg, sgmap);
+
+		resid -= minlen;
+	}
+
+	alpha_mb();
+
+#if defined(SGMAP_DEBUG) && defined(DDB)
+	if (__C(SGMAP_TYPE,_debug) > 1)
+		Debugger();
+#endif
+
+	if (error == 0) {
+		map->dm_mapsize = uio->uio_resid;
+		map->dm_nsegs = seg;
+	} else {
+		/* Need to back out what we've done so far. */
+		map->dm_nsegs = seg - 1;
+		__C(SGMAP_TYPE,_unload)(t, map, sgmap);
+#if 0
+		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
+#endif
+		if (t->_next_window != NULL) {
+			/* Give the next window a chance. */
+			error = bus_dmamap_load_uio(t->_next_window, map,
+			    uio, flags);
+		}
+	}
+
+	return (error);
 }
 
 int
