@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.156 2006/05/12 20:51:25 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.157 2006/05/21 02:51:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1151,15 +1151,15 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 	struct ami_rawsoftc *rsc = link->adapter_softc;
 	u_int8_t target = link->target, type;
 
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+	    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 	if (xs->data != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
-		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 	}
@@ -1361,44 +1361,44 @@ ami_load_ptmem(struct ami_softc *sc, struct ami_ccb *ccb, void *data,
 {
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	bus_dma_segment_t *sgd;
-	int error = 0, i;
+	int error, i;
 
-	if (data == NULL) /* nothing to do */
-		return (0);
+	if (data != NULL) {
+		error = bus_dmamap_load(sc->sc_dmat, dmap, data, len, NULL,
+		    nowait ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+		if (error) {
+			if (error == EFBIG)
+				printf("more than %d dma segs\n",
+				    AMI_MAXOFFSETS);
+			else
+				printf("error %d loading dma map\n", error);
 
-	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap, data, len,
-	    NULL, nowait ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-	if (error) {
-		if (error == EFBIG)
-			printf("more than %d dma segs\n", AMI_MAXOFFSETS);
-		else
-			printf("error %d loading dma map\n", error);
-
-		return (1);
-	}
-
-	sgd = dmap->dm_segs;
-	if (dmap->dm_nsegs > 1) {
-		struct ami_sgent *sgl = ccb->ccb_sglist;
-
-		ccb->ccb_pt->apt_nsge = dmap->dm_nsegs;
-		ccb->ccb_pt->apt_data = ccb->ccb_sglistpa;
-
-		for (i = 0; i < dmap->dm_nsegs; i++) {
-			sgl[i].asg_addr = htole32(sgd[i].ds_addr);
-			sgl[i].asg_len = htole32(sgd[i].ds_len);
+			return (1);
 		}
-	} else {
-		ccb->ccb_pt->apt_nsge = 0;
-		ccb->ccb_pt->apt_data = htole32(sgd->ds_addr);
+
+		sgd = dmap->dm_segs;
+		if (dmap->dm_nsegs > 1) {
+			struct ami_sgent *sgl = ccb->ccb_sglist;
+
+			ccb->ccb_pt->apt_nsge = dmap->dm_nsegs;
+			ccb->ccb_pt->apt_data = ccb->ccb_sglistpa;
+
+			for (i = 0; i < dmap->dm_nsegs; i++) {
+				sgl[i].asg_addr = htole32(sgd[i].ds_addr);
+				sgl[i].asg_len = htole32(sgd[i].ds_len);
+			}
+		} else {
+			ccb->ccb_pt->apt_nsge = 0;
+			ccb->ccb_pt->apt_data = htole32(sgd->ds_addr);
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+		    read ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
 	    ccb->ccb_offset, sizeof(struct ami_ccbmem),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0, dmap->dm_mapsize,
-	    read ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
