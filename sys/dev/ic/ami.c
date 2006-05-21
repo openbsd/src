@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.157 2006/05/21 02:51:09 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.158 2006/05/21 03:33:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -445,61 +445,7 @@ ami_attach(struct ami_softc *sc)
 			sc->sc_maxcmds = inq->ain_maxcmd;
 			p = "target";
 		}
-#if 0
-		/* FIXME need to find a way to detect if fw supports this
-		 * calling it this way crashes fw when io is ran to
-		 * multiple logical disks
-		 */
 
-		/* reset the IO completion values to 0
-		 * the firmware either has at least pp[0] IOs outstanding
-		 * -or-
-		 * it times out pp[1] us before it completes any IO
-		 * if the values remain unchanged it locksteps the driver
-		 * to a maximum of 4 outstanding IOs and it hits the 5us timer
-		 * continuously (these are the default values)
-		 * this trick only works with firmwares newer than 5/13/05
-		 * Setting the values outright will hang old firmwares so
-		 * we need to read them first before setting them.
-		 */
-		ccb = ami_get_ccb(sc);
-		ccb->ccb_done = ami_done_ccb;
-		ccb->ccb_data = NULL;
-		cmd = &ccb->ccb_cmd;
-
-		cmd->acc_cmd = AMI_MISC;
-		cmd->acc_io.aio_channel = AMI_GET_IO_CMPL; /* sub opcode */
-		cmd->acc_io.aio_param = 0;
-		cmd->acc_io.aio_data = pa;
-
-		if (ami_poll(sc, ccb) != 0) {
-			AMI_DPRINTF(AMI_D_MISC, ("getting io completion values"
-			    " failed\n"));
-		} else {
-			ccb = ami_get_ccb(sc);
-			ccb->ccb_done = ami_done_ccb;
-			ccb->ccb_data = NULL;
-			cmd = &ccb->ccb_cmd;
-
-			cmd->acc_cmd = AMI_MISC;
-			cmd->acc_io.aio_channel = AMI_SET_IO_CMPL;
-			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = pa;
-
-			/* set parameters */
-			pp = AMIMEM_KVA(am);
-			pp[0] = 0; /* minimal outstanding commands, 0 disable */
-			pp[1] = 0; /* maximal timeout in us, 0 disable */
-
-			if (ami_poll(sc, ccb) != 0) {
-				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
-				    " values failed\n"));
-			} else {
-				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
-				    " values succeeded\n"));
-			}
-		}
-#endif
 		if (sc->sc_flags & AMI_BROKEN) {
 			sc->sc_link.openings = 1;
 			sc->sc_maxcmds = 1;
