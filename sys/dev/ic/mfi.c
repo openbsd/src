@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.45 2006/05/21 21:44:50 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.46 2006/05/21 21:55:44 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1184,27 +1184,27 @@ mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	switch (cmd) {
 	case BIOCINQ:
-		DNPRINTF(MFI_D_IOCTL, "inq ");
+		DNPRINTF(MFI_D_IOCTL, "inq\n");
 		error = mfi_ioctl_inq(sc, (struct bioc_inq *)addr);
 		break;
 
 	case BIOCVOL:
-		DNPRINTF(MFI_D_IOCTL, "vol ");
+		DNPRINTF(MFI_D_IOCTL, "vol\n");
 		error = mfi_ioctl_vol(sc, (struct bioc_vol *)addr);
 		break;
 
 	case BIOCDISK:
-		DNPRINTF(MFI_D_IOCTL, "disk ");
+		DNPRINTF(MFI_D_IOCTL, "disk\n");
 		error = mfi_ioctl_disk(sc, (struct bioc_disk *)addr);
 		break;
 
 	case BIOCALARM:
-		DNPRINTF(MFI_D_IOCTL, "alarm ");
+		DNPRINTF(MFI_D_IOCTL, "alarm\n");
 		error = mfi_ioctl_alarm(sc, (struct bioc_alarm *)addr);
 		break;
 
 	case BIOCSETSTATE:
-		DNPRINTF(MFI_D_IOCTL, "setstate ");
+		DNPRINTF(MFI_D_IOCTL, "setstate\n");
 		error = mfi_ioctl_setstate(sc, (struct bioc_setstate *)addr);
 		break;
 
@@ -1276,8 +1276,8 @@ mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 		break;
 
 	default:
-		DNPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
-		    DEVNAME(sc), ba->ba_opcode));
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_alarm biocalarm invalid "
+		    "opcode %x\n", DEVNAME(sc), ba->ba_opcode);
 		return (EINVAL);
 	}
 
