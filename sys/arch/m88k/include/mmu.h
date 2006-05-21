@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.7 2006/05/20 22:33:16 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.8 2006/05/21 20:55:43 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -216,11 +216,5 @@ invalidate_pte(pt_entry_t *pte)
 	__asm__ __volatile__ ("tb1 0, r0, 0");
 	return oldpte;
 }
-
-extern vaddr_t kmapva;
-
-#define kvtopte(va)	\
-	((pt_entry_t *)(PG_PFNUM(*((sdt_entry_t *)kmapva + \
-	    SDTIDX(va) + SDT_ENTRIES)) << PDT_SHIFT) + PDTIDX(va))
 
 #endif /* __MACHINE_MMU_H__ */
