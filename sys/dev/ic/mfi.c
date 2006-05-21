@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.46 2006/05/21 21:55:44 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.47 2006/05/21 22:56:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -919,6 +919,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_rw_big	*rwb;
 	uint32_t		blockno, blockcnt;
 	uint8_t			target = link->target;
+	uint8_t			flushcmd;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
@@ -960,6 +961,17 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 			goto stuffup;
 		}
 		break;
+
+	case SYNCHRONIZE_CACHE:
+		mfi_put_ccb(ccb); /* we don't need this */
+
+		flushcmd = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
+		if (mfi_mgmt(sc, MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE,
+		    sizeof(flushcmd), &flushcmd))
+			goto stuffup;;
+
+		return (COMPLETE);
+		/* NOTREACHED */
 
 	/* hand it of to the firmware and let it deal with it */
 	default:
@@ -1096,6 +1108,13 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 	ccb->ccb_done = mfi_mgmt_done;
 
 	ccb->ccb_frame_size = MFI_DCMD_FRAME_SIZE;
+
+	/* handle special opcodes, use the buffer parameter */
+	switch (opc) {
+	case MR_DCMD_CTRL_CACHE_FLUSH:
+		dcmd->mdf_mbox[0] = *((uint8_t *)buf);
+		break;
+	}
 
 	if (dir != MFI_DATA_NONE) {
 		dcmd->mdf_header.mfh_data_len = len;
