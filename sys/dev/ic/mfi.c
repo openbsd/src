@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.44 2006/05/21 20:20:17 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.45 2006/05/21 21:44:50 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1090,18 +1090,22 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 	dcmd->mdf_header.mfh_cmd = MFI_CMD_DCMD;
 	dcmd->mdf_header.mfh_timeout = 0;
 
-	dcmd->mdf_header.mfh_data_len = len;
 	dcmd->mdf_opcode = opc;
-	ccb->ccb_data = buf;
-	ccb->ccb_len = len;
+	dcmd->mdf_header.mfh_data_len = 0;
 	ccb->ccb_direction = dir;
 	ccb->ccb_done = mfi_mgmt_done;
 
 	ccb->ccb_frame_size = MFI_DCMD_FRAME_SIZE;
-	ccb->ccb_sgl = &dcmd->mdf_sgl;
 
-	if (mfi_create_sgl(ccb, BUS_DMA_WAITOK))
-		goto done;
+	if (dir != MFI_DATA_NONE) {
+		dcmd->mdf_header.mfh_data_len = len;
+		ccb->ccb_data = buf;
+		ccb->ccb_len = len;
+		ccb->ccb_sgl = &dcmd->mdf_sgl;
+
+		if (mfi_create_sgl(ccb, BUS_DMA_WAITOK))
+			goto done;
+	}
 
 	if (cold) {
 		if (mfi_poll(ccb))
@@ -1245,7 +1249,47 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 int
 mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 {
-	return (ENOTTY); /* XXX not yet */
+	uint32_t		opc, dir = MFI_DATA_NONE;
+	int			rv = 0;
+	int8_t			ret;
+
+	switch(ba->ba_opcode) {
+	case BIOC_SADISABLE:
+		opc = MR_DCMD_SPEAKER_DISABLE;
+		break;
+
+	case BIOC_SAENABLE:
+		opc = MR_DCMD_SPEAKER_ENABLE;
+		break;
+
+	case BIOC_SASILENCE:
+		opc = MR_DCMD_SPEAKER_SILENCE;
+		break;
+
+	case BIOC_GASTATUS:
+		opc = MR_DCMD_SPEAKER_GET;
+		dir = MFI_DATA_IN;
+		break;
+
+	case BIOC_SATEST:
+		opc = MR_DCMD_SPEAKER_TEST;
+		break;
+
+	default:
+		DNPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
+		    DEVNAME(sc), ba->ba_opcode));
+		return (EINVAL);
+	}
+
+	if (mfi_mgmt(sc, opc, dir, sizeof(ret), &ret))
+		rv = EINVAL;
+	else
+		if (ba->ba_opcode == BIOC_GASTATUS)
+			ba->ba_status = ret;
+		else
+			ba->ba_status = 0;
+
+	return (rv);
 }
 
 int
