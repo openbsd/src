@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.20 2006/05/21 02:00:08 brad Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.21 2006/05/21 02:11:54 brad Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -259,6 +259,7 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -299,6 +300,7 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -353,6 +355,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT((map->_dm_flags & (BUS_DMA_READ|BUS_DMA_WRITE)) == 0);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -429,6 +432,7 @@ _bus_dmamap_unload(t, map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_window = NULL;
+	map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 }
 
 /*
