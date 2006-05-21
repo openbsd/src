@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.1.1.1 2006/05/07 19:38:21 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.2 2006/05/21 12:22:01 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,29 +29,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cmmu.h>
+#include <machine/board.h>
 #include <machine/pmap_table.h>
-
-#define	R	UVM_PROT_R
-#define	RW	UVM_PROT_RW
-#define	CW	CACHE_WT
-#define	CI	CACHE_INH
-#define	CG	CACHE_GLOBAL
-
-#include <machine/av400.h>
-const pmap_table_entry
-machine_map[] = {
-	{ AV400_PROM,	AV400_PROM,	AV400_PROM_SIZE,	RW,	CI },
-#if 0	/* mapped by the hardcoded BATC entries */
-	{ AV400_UTILITY,AV400_UTILITY,	AV400_UTILITY_SIZE,	RW,	CI },
-#endif
-	{ 0, 0, (vsize_t)-1, 0, 0 }
-};
 
 pmap_table_t
 pmap_table_build(void)
 {
-	return (machine_map);
+	return (platform->ptable);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.1.1.1 2006/05/09 18:13:40 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.2 2006/05/21 12:22:02 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <machine/av400.h>
 #include <aviion/dev/sysconreg.h>
 
 #include <dev/ic/am7990reg.h>

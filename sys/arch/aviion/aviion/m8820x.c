@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.3 2006/05/20 11:58:33 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.4 2006/05/21 12:22:01 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2006, Miodrag Vallat.
  *
@@ -30,12 +30,11 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/avcommon.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/m8820x.h>
 #include <machine/prom.h>
-
-#include <machine/av400.h>
 
 /*
  * This routine sets up the CPU/CMMU configuration.
@@ -50,30 +49,18 @@ m8820x_setup_board_config()
 	u_int32_t whoami;
 
 	/*
-	 * These are the fixed assignments on AV400 designs.
-	 */
-	m8820x_cmmu[0].cmmu_regs = (void *)AV400_CMMU_I0;
-	m8820x_cmmu[1].cmmu_regs = (void *)AV400_CMMU_D0;
-	m8820x_cmmu[2].cmmu_regs = (void *)AV400_CMMU_I1;
-	m8820x_cmmu[3].cmmu_regs = (void *)AV400_CMMU_D1;
-	m8820x_cmmu[4].cmmu_regs = (void *)AV400_CMMU_I2;
-	m8820x_cmmu[5].cmmu_regs = (void *)AV400_CMMU_D2;
-	m8820x_cmmu[6].cmmu_regs = (void *)AV400_CMMU_I3;
-	m8820x_cmmu[7].cmmu_regs = (void *)AV400_CMMU_D3;
-
-	/*
 	 * First, find if any CPU0 CMMU is a 88204. If so, we can
 	 * issue the CPUCONFIG system call to get the configuration
 	 * details.
 	 */
-	if (badaddr(AV400_CMMU_I0, 4) != 0 ||
-	    badaddr(AV400_CMMU_D0, 4) != 0) {
+	if (badaddr((vaddr_t)m8820x_cmmu[0].cmmu_regs, 4) != 0 ||
+	    badaddr((vaddr_t)m8820x_cmmu[1].cmmu_regs, 4) != 0) {
 		printf("CPU0: missing CMMUs ???\n");
 		scm_halt();
 		/* NOTREACHED */
 	}
 
-	cr = (void *)AV400_CMMU_I0;
+	cr = (void *)m8820x_cmmu[0].cmmu_regs;
 	type = CMMU_TYPE(cr[CMMU_IDR]);
 
 	if (type != M88204_ID && type != M88200_ID) {
@@ -130,7 +117,7 @@ hardprobe:
 		/*
 		 * Deduce our configuration from the WHOAMI register.
 		 */
-		whoami = *(volatile u_int32_t *)AV400_WHOAMI;
+		whoami = *(volatile u_int32_t *)AV_WHOAMI;
 		switch ((whoami & 0xf0) >> 4) {
 		case 0:		/* 4 CPUs, 8 CMMUs */
 			scc.cpucount = 4;
@@ -229,7 +216,7 @@ m8820x_cpu_number()
 	u_int32_t whoami;
 	cpuid_t cpu;
 
-	whoami = *(volatile u_int32_t *)AV400_WHOAMI;
+	whoami = *(volatile u_int32_t *)AV_WHOAMI;
 	switch ((whoami & 0xf0) >> 4) {
 	case 0:
 	case 3:

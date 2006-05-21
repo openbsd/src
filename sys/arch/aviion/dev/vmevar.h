@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmevar.h,v 1.1.1.1 2006/05/09 18:17:37 miod Exp $	*/
+/*	$OpenBSD: vmevar.h,v 1.2 2006/05/21 12:22:02 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -32,10 +32,7 @@ typedef	u_int32_t vme_addr_t;
 /*
  * Attachment information for VME devices.
  *
- * The driver is supposed to know in which space it lives if it got an
- * unspecified address (this is to simplify kernel configuration files).
- *
- * Drivers are also supposed to do their interrupt vector allocation
+ * Drivers are supposed to do their interrupt vector allocation
  * themselves.
  */
 struct	vme_attach_args {

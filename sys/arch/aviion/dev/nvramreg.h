@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvramreg.h,v 1.1.1.1 2006/04/25 09:19:52 miod Exp $ */
+/*	$OpenBSD: nvramreg.h,v 1.2 2006/05/21 12:22:02 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 /*
- * On AV400, these offsets need shifting two bits, as they are 32 bit
+ * On the AViiON, these offsets need shifting two bits, as they are 32 bit
  * registers.
  */
 #define	CLK_CSR		0		/* control register */
@@ -83,5 +83,5 @@
  */
 #define	YEAR0	00
 
-#define AV400_NVRAM_TOD_OFF	0x1fe0 /* offset of tod in NVRAM space */
+#define AV_NVRAM_TOD_OFF	0x1fe0 /* offset of tod in NVRAM space */
 #define MK48T02_SIZE	2 * 1024

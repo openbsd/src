@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.2 2006/05/11 19:50:28 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.3 2006/05/21 12:22:02 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -44,6 +44,7 @@
 
 #include <aviion/dev/vmevar.h>
 
+#include <machine/avcommon.h>
 #include <machine/av400.h>
 #include <aviion/dev/sysconreg.h>
 
@@ -109,30 +110,30 @@ vmeattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ext_a32 = extent_create("vme a32", 0, 1 << (32 - PAGE_SHIFT),
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-	vmevecbase = 0x80;  /* Hard coded for AV400 */
+	vmevecbase = 0x80;  /* Hard coded */
 
 	/*
 	 * Force a reasonable timeout for VME data transfers.
 	 * We can not disable this, this would cause autoconf to hang
 	 * on the first missing device we'll probe.
 	 */
-	ucsr = *(volatile u_int32_t*)AV400_UCSR;
+	ucsr = *(volatile u_int32_t*)AV_UCSR;
 	ucsr = (ucsr & ~VTOSELBITS) | VTO128US;
-	*(volatile u_int32_t *)AV400_UCSR = ucsr;
+	*(volatile u_int32_t *)AV_UCSR = ucsr;
 
 	/*
 	 * Clear EXTAD to allow VME A24 devices to access the first 16MB
 	 * of memory.
 	 */
-	*(volatile u_int32_t *)AV400_EXTAD = 0x00000000;
+	*(volatile u_int32_t *)AV_EXTAD = 0x00000000;
 
 	/*
 	 * Use supervisor data address modifiers for VME accesses.
 	 */
-	*(volatile u_int32_t *)AV400_EXTAM = 0x0d;
+	*(volatile u_int32_t *)AV_EXTAM = 0x0d;
 
 	/*
-	 * Display AV400 VME ranges.
+	 * Display VME ranges.
 	 */
 	printf("%s: A32 %08x-%08x\n", self->dv_xname,
 	    AV400_VME32_START1, AV400_VME32_END1);
@@ -223,7 +224,7 @@ int
 vmeintr_establish(u_int vec, struct intrhand *ih, const char *name)
 {
 	/*
-	 * No need to enable the VME interrupt source in the AV400 interrupt
+	 * No need to enable the VME interrupt source in the interrupt
 	 * controller, as they are enabled by default.
 	 */
 	return intr_establish(vec, ih, name);

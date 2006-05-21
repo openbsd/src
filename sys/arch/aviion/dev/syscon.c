@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.1.1.1 2006/05/09 18:14:07 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.2 2006/05/21 12:22:02 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-#include <machine/av400.h>
+#include <machine/avcommon.h>
 #include <aviion/dev/sysconreg.h>
 
 struct sysconsoftc {
@@ -43,9 +43,6 @@ struct sysconsoftc {
 	struct intrhand sc_abih;	/* `abort' switch */
 	struct intrhand sc_acih;	/* `ac fail' */
 	struct intrhand sc_sfih;	/* `sys fail' */
-#if 0
-	struct intrhand sc_av400ih;	/* `av400 interrupt' */
-#endif
 };
 
 void	sysconattach(struct device *, struct device *, void *);
@@ -82,7 +79,7 @@ sysconattach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Clear SYSFAIL if lit.
 	 */
-	*(volatile u_int32_t *)AV400_UCSR |= UCSR_DRVSFBIT;
+	*(volatile u_int32_t *)AV_UCSR |= UCSR_DRVSFBIT;
 
 	/*
 	 * pseudo driver, abort interrupt handler
@@ -102,19 +99,9 @@ sysconattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sfih.ih_wantframe = 1;
 	sc->sc_sfih.ih_ipl = IPL_ABORT;
 
-#if 0
-	sc->sc_av400ih.ih_fn = sysconav400;
-	sc->sc_av400ih.ih_arg = 0;
-	sc->sc_av400ih.ih_wantframe = 1;
-	sc->sc_av400ih.ih_ipl = IPL_ABORT;
-#endif
-
 	sysconintr_establish(SYSCV_ABRT, &sc->sc_abih, "abort");
 	sysconintr_establish(SYSCV_ACF, &sc->sc_acih, "acfail");
 	sysconintr_establish(SYSCV_SYSF, &sc->sc_sfih, "sysfail");
-#if 0
-	intr_establish(AV400_IVEC, &sc->sc_av400ih, self->dv_xname);
-#endif
 
 	config_search(syscon_scan, self, args);
 }
@@ -169,7 +156,7 @@ sysconintr_establish(u_int vec, struct intrhand *ih, const char *name)
 int
 sysconabort(void *eframe)
 {
-	*(volatile u_int32_t *)AV400_CLRINT = ISTATE_ABORT;
+	*(volatile u_int32_t *)AV_CLRINT = ISTATE_ABORT;
 	nmihand(eframe);
 	return (1);
 }
@@ -177,7 +164,7 @@ sysconabort(void *eframe)
 int
 sysconsysfail(void *eframe)
 {
-	*(volatile u_int32_t *)AV400_CLRINT = ISTATE_SYSFAIL;
+	*(volatile u_int32_t *)AV_CLRINT = ISTATE_SYSFAIL;
 	printf("WARNING: SYSFAIL* ASSERTED\n");
 	return (1);
 }
@@ -185,17 +172,7 @@ sysconsysfail(void *eframe)
 int
 sysconacfail(void *eframe)
 {
-	*(volatile u_int32_t *)AV400_CLRINT = ISTATE_ACFAIL;
+	*(volatile u_int32_t *)AV_CLRINT = ISTATE_ACFAIL;
 	printf("WARNING: ACFAIL* ASSERTED\n");
 	return (1);
 }
-
-#if 0
-int
-sysconav400(void *eframe)
-{
-	/* shouldn't happen! */
-	printf("AV400: self-inflicted interrupt\n");
-	return (1);
-}
-#endif

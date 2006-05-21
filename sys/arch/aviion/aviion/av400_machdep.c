@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.3 2006/05/20 12:04:51 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.4 2006/05/21 12:22:01 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -149,6 +149,8 @@
 #include <machine/trap.h>
 
 #include <machine/m88100.h>
+#include <machine/m8820x.h>
+#include <machine/avcommon.h>
 #include <machine/av400.h>
 #include <machine/prom.h>
 
@@ -156,7 +158,18 @@
 
 u_int	safe_level(u_int mask, u_int curlevel);
 
-struct board board_av400 = {
+const pmap_table_entry
+av400_ptable[] = {
+	{ AV400_PROM,	AV400_PROM,	AV400_PROM_SIZE,
+	  UVM_PROT_RW,	CACHE_INH },
+#if 0	/* mapped by the hardcoded BATC entries */
+	{ AV400_UTILITY,AV400_UTILITY,	AV400_UTILITY_SIZE,
+	  UVM_PROT_RW,	CACHE_INHIBIT },
+#endif
+	{ 0, 0, (vsize_t)-1, 0, 0 }
+};
+
+const struct board board_av400 = {
 	"100/200/300/400/3000/4000/4300 series",
 	av400_bootstrap,
 	av400_memsize,
@@ -165,7 +178,8 @@ struct board board_av400 = {
 	av400_init_clocks,
 	av400_getipl,
 	av400_setipl,
-	av400_raiseipl
+	av400_raiseipl,
+	av400_ptable
 };
 
 /*
@@ -231,16 +245,26 @@ av400_bootstrap()
 	extern struct cmmu_p cmmu8820x;
 	extern u_char hostaddr[6];
 
+	/*
+	 * These are the fixed assignments on AV400 designs.
+	 */
 	cmmu = &cmmu8820x;
+	m8820x_cmmu[0].cmmu_regs = (void *)AV400_CMMU_I0;
+	m8820x_cmmu[1].cmmu_regs = (void *)AV400_CMMU_D0;
+	m8820x_cmmu[2].cmmu_regs = (void *)AV400_CMMU_I1;
+	m8820x_cmmu[3].cmmu_regs = (void *)AV400_CMMU_D1;
+	m8820x_cmmu[4].cmmu_regs = (void *)AV400_CMMU_I2;
+	m8820x_cmmu[5].cmmu_regs = (void *)AV400_CMMU_D2;
+	m8820x_cmmu[6].cmmu_regs = (void *)AV400_CMMU_I3;
+	m8820x_cmmu[7].cmmu_regs = (void *)AV400_CMMU_D3;
 
 	/* clear and disable all interrupts */
-	*(volatile u_int32_t *)AV400_IENALL = 0;
+	*(volatile u_int32_t *)AV_IENALL = 0;
 
 	/*
 	 * Get all the information we'll need later from the PROM, while
 	 * we can still use it.
 	 */
-
 	scm_getenaddr(hostaddr);
 	cpuid = scm_cpuid();
 	sysid = scm_sysid();
@@ -281,7 +305,7 @@ av400_setipl(u_int level)
 		mask &= ~SLAVE_MASK;
 #endif
 
-	*(u_int32_t *)AV400_IEN(cpu) = int_mask_reg[cpu] = mask;
+	*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 	av400_curspl[cpu] = level;
 
 	return curspl;
@@ -301,7 +325,7 @@ av400_raiseipl(u_int level)
 			mask &= ~SLAVE_MASK;
 #endif
 
-		*(u_int32_t *)AV400_IEN(cpu) = int_mask_reg[cpu] = mask;
+		*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
 		av400_curspl[cpu] = level;
 	}
 	return curspl;
@@ -446,30 +470,13 @@ av400_intr(u_int v, struct trapframe *eframe)
 			ivec = AV400_VIRQLV + (level << 2);
 			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
-				/*
-				 * This could be a self-inflicted interrupt.
-				 * Except that we never write to VIRQV, so
-				 * such things do not happen.
-				 * Moreover, the AV400 design does not
-				 * implement this feature.
-
-				u_int src = 0x07 &
-				    *(volatile u_int32_t *)AV400_VIRQLV;
-				if (src == 0)
-					vec = 0xff &
-					    *(volatile u_int32_t *)AV400_VIRQV;
-				else
-
-				 */
-				{
-					printf("%s: timeout getting VME "
-					    "interrupt vector, "
-					    "level %d, mask 0x%b\n",
-					    __func__, level,
-					    cur_mask, IST_STRING);
-					ign_mask |= 1 << intbit;
-					continue;
-				}
+				printf("%s: timeout getting VME "
+				    "interrupt vector, "
+				    "level %d, mask 0x%b\n",
+				    __func__, level,
+				    cur_mask, IST_STRING);
+				ign_mask |= 1 << intbit;
+				continue;
 			}
 			if (vec == 0) {
 				panic("%s: invalid VME interrupt vector, "

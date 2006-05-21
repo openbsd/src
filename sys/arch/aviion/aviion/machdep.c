@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.4 2006/05/20 22:40:43 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.5 2006/05/21 12:22:01 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -140,7 +140,7 @@ char  machine[] = MACHINE;	 /* cpu "architecture" */
 char  cpu_model[120];
 
 #if defined(DDB) || NKSYMS > 0
-extern char *esym;
+extern vaddr_t esym;
 #endif
 
 const char *prom_bootargs;			/* set in locore.S */
@@ -150,7 +150,7 @@ u_int bootdev, bootunit, bootpart;		/* set in locore.S */
 int cputyp;					/* set in locore.S */
 int cpuspeed = 20;				/* safe guess */
 int avtyp;
-struct board *platform;
+const struct board *platform;
 
 vaddr_t first_addr;
 vaddr_t last_addr;

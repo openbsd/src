@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.1 2006/05/20 12:04:54 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.2 2006/05/21 12:22:03 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -29,6 +29,8 @@
 
 #if !defined(_LOCORE)
 
+#include <machine/pmap_table.h>
+
 struct board {
 	const char *descr;
 	void (*bootstrap)(void);
@@ -40,12 +42,14 @@ struct board {
 	u_int (*getipl)(void);
 	u_int (*setipl)(u_int);
 	u_int (*raiseipl)(u_int);
+
+	pmap_table_t ptable;
 };
 
 #define	md_interrupt_func(t, f)	platform->intr(t, f)
 
 #define	DECLARE_BOARD(b) \
-extern struct board board_av##b; \
+extern const struct board board_av##b; \
 void	av##b##_bootstrap(void); \
 vaddr_t	av##b##_memsize(void); \
 void	av##b##_startup(void); \
@@ -60,7 +64,7 @@ DECLARE_BOARD(530);
 DECLARE_BOARD(5000);
 DECLARE_BOARD(6280);
 
-extern struct board *platform;	/* just to have people confuse both names */
+extern const struct board *platform;/* just to have people confuse both names */
 
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_BOARD_H_ */

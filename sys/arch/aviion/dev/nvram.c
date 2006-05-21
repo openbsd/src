@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.1.1.1 2006/05/09 18:17:09 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.2 2006/05/21 12:22:02 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -96,7 +96,7 @@ nvramattach(parent, self, args)
 	vsize_t maplen;
 
 	sc->sc_len = MK48T02_SIZE;
-	sc->sc_regs = AV400_NVRAM_TOD_OFF;
+	sc->sc_regs = AV_NVRAM_TOD_OFF;
 
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_base = ca->ca_paddr;
@@ -446,7 +446,7 @@ nvrammmap(dev, off, prot)
 		return (-1);
 	return (atop(sc->sc_base + off));
 #else
-	/* disallow mmap on AV400 due to non-linear layout */
+	/* disallow mmap due to non-linear layout */
 	return (-1);
 #endif
 }
