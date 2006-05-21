@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.95 2006/04/20 11:21:17 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.96 2006/05/21 13:27:08 mpf Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1246,17 +1246,40 @@ void
 pmsg_addrs(char *cp, int addrs)
 {
 	struct sockaddr *sa;
+	int family = AF_UNSPEC;
 	int i;
+	char *p;
 
 	if (addrs != 0) {
 		printf("\nsockaddrs: ");
 		bprintf(stdout, addrs, addrnames);
 		putchar('\n');
+		/* first run, search for address family */
+		p = cp;
 		for (i = 1; i; i <<= 1)
 			if (i & addrs) {
-				sa = (struct sockaddr *)cp;
+				sa = (struct sockaddr *)p;
+				if (family == AF_UNSPEC)
+					switch (i) {
+					case RTA_DST:
+					case RTA_IFA:
+						family = sa->sa_family;
+					}
+				ADVANCE(p, sa);
+			}
+		/* second run, set address family for mask and print */
+		p = cp;
+		for (i = 1; i; i <<= 1)
+			if (i & addrs) {
+				sa = (struct sockaddr *)p;
+				if (family != AF_UNSPEC)
+					switch (i) {
+					case RTA_NETMASK:
+					case RTA_GENMASK:
+						sa->sa_family = family;
+					}
 				printf(" %s", routename(sa));
-				ADVANCE(cp, sa);
+				ADVANCE(p, sa);
 			}
 	}
 	putchar('\n');
