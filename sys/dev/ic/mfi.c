@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.42 2006/05/21 04:03:06 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.43 2006/05/21 04:07:10 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1158,7 +1158,7 @@ mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 	/* XXX this is static and needs to become dynamic */
 	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
 	bi->bi_novol = sc->sc_info.mci_lds_present;
-	bi->bi_nodisk = sc->sc_info.mci_pd_present;
+	bi->bi_nodisk = sc->sc_info.mci_pd_disks_present;
 
 	return (0);
 }
