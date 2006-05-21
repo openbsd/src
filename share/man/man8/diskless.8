@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.55 2006/05/19 19:35:41 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.56 2006/05/21 16:35:38 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -141,6 +141,12 @@ The
 notes that come with each distribution
 also give details on the specifics of net/diskless booting
 for each architecture.
+.Pp
+The procedures for AMD64 and i386 clients vary somewhat
+to the stages detailed above.
+See
+.Xr pxeboot 8
+for more detailed information.
 .Sh EXAMPLES
 Before a client can boot over the network,
 its server must be configured correctly.
@@ -166,7 +172,8 @@ Assign an IP address for myclient in
 192.197.96.12           myclient
 .Ed
 .It
-If booting an Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, or Vax client,
+If booting an Alpha, AMD64, newer HPPA, HPPA64, i386, Mips64, Motorola,
+Sun, or Vax client,
 ensure that
 .Pa /etc/inetd.conf
 is configured to run
@@ -186,7 +193,8 @@ See the
 .Xr rbootd 8
 manual page for more information.
 .It
-If booting a newer Alpha, newer HPPA, HPPA64, Mips64, Motorola, or Sun client,
+If booting a newer Alpha, AMD64, newer HPPA, HPPA64, i386, Mips64,
+Motorola, or Sun client,
 install a copy of the appropriate diskless boot loader (such as
 .Pa boot.net
 from the root directory of the
@@ -222,7 +230,7 @@ If the client's PROM fails to fetch the expected file,
 can be used to discover which filename the client is trying to read.
 .Pp
 Architectures using DHCP
-(newer Alpha, newer HPPA, HPPA64, or Mips64)
+(newer Alpha, AMD64, newer HPPA, HPPA64, i386, or Mips64)
 should ensure that
 .Xr dhcpd 8
 is configured on the server to serve BOOTP protocol requests.
@@ -238,6 +246,11 @@ subnet 10.0.0.0 netmask 255.0.0.0 {
 	}
 }
 .Ed
+.Pp
+Note that procedures for AMD64 and i386 clients vary somewhat.
+See
+.Xr pxeboot 8
+for more detailed information.
 .Pp
 Architectures using the HP remote boot server
 (HP 300 or older HPPA)
@@ -355,7 +368,8 @@ For all clients:
 and
 .Xr nfsd 8 .
 .Pp
-For Alpha, newer HPPA, HPPA64, Mips64, Motorola, Sun, and Vax clients:
+For Alpha, AMD64, newer HPPA, HPPA64, i386, Mips64, Motorola,
+Sun, and Vax clients:
 .Xr tftpd 8
 via
 .Xr inetd 8
@@ -363,7 +377,7 @@ via
 For HP 300 and older HPPA clients:
 .Xr rbootd 8
 .Pp
-For newer Alpha, newer HPPA, HPPA64, and Mips64 clients:
+For newer Alpha, AMD64, newer HPPA, HPPA64, i386, and Mips64 clients:
 .Xr dhcpd 8
 .Pp
 For HP 300, older HPPA, Motorola, Sun, and Vax clients:
@@ -413,6 +427,7 @@ Location of boot programs loaded by the HP Boot ROM.
 .Xr mountd 8 ,
 .Xr nfsd 8 ,
 .Xr portmap 8 ,
+.Xr pxeboot 8 ,
 .Xr rarpd 8 ,
 .Xr rbootd 8 ,
 .Xr rpc.bootparamd 8 ,
