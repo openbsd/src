@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.158 2006/05/21 03:33:53 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.159 2006/05/21 18:28:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -315,11 +315,18 @@ ami_attach(struct ami_softc *sc)
 	sc->sc_mbox_pa = htole32(AMIMEM_DVA(sc->sc_mbox_am));
 	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
 
+	sc->sc_ccbs = malloc(sizeof(struct ami_ccb) * AMI_MAXCMDS,
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->sc_ccbs == NULL) {
+		printf(": unable to allocate ccbs\n");
+		goto free_mbox;
+	}
+
 	sc->sc_ccbmem_am = ami_allocmem(sc,
 	    sizeof(struct ami_ccbmem) * AMI_MAXCMDS);
 	if (sc->sc_ccbmem_am == NULL) {
 		printf(": unable to allocate ccb dmamem\n");
-		goto free_mbox;
+		goto free_ccbs;
 	}
 	ccbmem = AMIMEM_KVA(sc->sc_ccbmem_am);
 
@@ -566,6 +573,8 @@ destroy:
 			bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
 
 	ami_freemem(sc, sc->sc_ccbmem_am);
+free_ccbs:
+	free(sc->sc_ccbs, M_DEVBUF);
 free_mbox:
 	ami_freemem(sc, sc->sc_mbox_am);
 free_idata:
