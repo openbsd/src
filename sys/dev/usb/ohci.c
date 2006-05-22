@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.66 2006/05/04 14:21:30 jolan Exp $ */
+/*	$OpenBSD: ohci.c,v 1.67 2006/05/22 15:26:07 krw Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -373,7 +373,8 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	shutdownhook_disestablish(sc->sc_shutdownhook);
+	if (sc->sc_shutdownhook != NULL)
+		shutdownhook_disestablish(sc->sc_shutdownhook);
 #endif
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
