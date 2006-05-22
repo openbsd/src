@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.67 2006/05/22 15:26:07 krw Exp $ */
+/*	$OpenBSD: ohci.c,v 1.68 2006/05/22 15:52:48 krw Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -49,19 +49,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/selinfo.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/bus_pio.h>
-#include <machine/bus_memio.h>
-#if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
-#include <machine/cpu.h>
-#endif
-#endif
 #include <sys/proc.h>
 #include <sys/queue.h>
 
@@ -77,25 +67,15 @@
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-
-#define delay(d)                DELAY(d)
-#endif
-
-#if defined(__OpenBSD__)
 struct cfdriver ohci_cd = {
 	NULL, "ohci", DV_DULL
 };
-#endif
 
 #ifdef OHCI_DEBUG
 #define DPRINTF(x)	do { if (ohcidebug) logprintf x; } while (0)
 #define DPRINTFN(n,x)	do { if (ohcidebug>(n)) logprintf x; } while (0)
 int ohcidebug = 0;
-#ifndef __NetBSD__
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
-#endif
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -105,15 +85,6 @@ int ohcidebug = 0;
  * The OHCI controller is little endian, so on big endian machines
  * the data stored in memory needs to be swapped.
  */
-#if defined(__FreeBSD__)
-#if BYTE_ORDER == BIG_ENDIAN
-#define htole32(x) (bswap32(x))
-#define le32toh(x) (bswap32(x))
-#else
-#define htole32(x) (x)
-#define le32toh(x) (x)
-#endif
-#endif
 
 struct ohci_pipe;
 
@@ -339,7 +310,6 @@ Static struct usbd_pipe_methods ohci_device_isoc_methods = {
 	ohci_device_isoc_done,
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ohci_activate(device_ptr_t self, enum devact act)
 {
@@ -372,10 +342,8 @@ ohci_detach(struct ohci_softc *sc, int flags)
 
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
-#endif
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
@@ -383,7 +351,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 
 	return (rv);
 }
-#endif
 
 ohci_soft_ed_t *
 ohci_alloc_sed(ohci_softc_t *sc)
@@ -652,11 +619,7 @@ ohci_init(ohci_softc_t *sc)
 	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca, descb;
 
 	DPRINTF(("ohci_init: start\n"));
-#if defined(__OpenBSD__)
 	printf(",");
-#else
-	printf("%s:", USBDEVNAME(sc->sc_bus.bdev));
-#endif
 	rev = OREAD4(sc, OHCI_REVISION);
 	printf(" version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
@@ -875,10 +838,8 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_bus.methods = &ohci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
-#endif
 
 	usb_callout_init(sc->sc_tmo_rhsc);
 
@@ -905,9 +866,7 @@ ohci_init(ohci_softc_t *sc)
 usbd_status
 ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
-#endif
 
 	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
 }
@@ -915,9 +874,7 @@ ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 void
 ohci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
-#endif
 
 	usb_freemem(&sc->sc_bus, dma);
 }
@@ -1053,12 +1010,6 @@ ohci_power(int why, void *v)
 		sc->sc_control = sc->sc_intre = sc->sc_ival = 0;
 		sc->sc_bus.use_polling--;
 		break;
-#if defined(__NetBSD__)
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-#endif
 	}
 	splx(s);
 }

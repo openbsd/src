@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.20 2005/03/30 14:12:35 dlg Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.21 2006/05/22 15:52:48 krw Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -125,10 +125,9 @@ typedef struct ohci_softc {
 	char sc_vendor[16];
 	int sc_id_vendor;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
-#endif
+
 	u_int32_t sc_control;		/* Preserved during suspend/standby */
 	u_int32_t sc_intre;
 	u_int32_t sc_ival;
@@ -150,8 +149,6 @@ struct ohci_xfer {
 
 usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach(ohci_softc_t *, int);
 int		ohci_activate(device_ptr_t, enum devact);
 void		ohci_power(int, void *);
-#endif

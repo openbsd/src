@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.27 2005/12/30 03:43:04 dlg Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.28 2006/05/22 15:52:48 krw Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -104,12 +104,6 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	int s;
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
-
-#if defined(__NetBSD__)
-	char devinfo[256];
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
-#endif
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
