@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.4 2005/12/30 04:01:18 dlg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.5 2006/05/22 15:58:00 dlg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -188,7 +188,9 @@ ohci_cardbus_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	powerhook_disestablish(sc->sc.sc_powerhook);
+
+	if (sc->sc.sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc.sc_powerhook);
 
 	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
