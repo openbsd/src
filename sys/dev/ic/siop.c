@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.43 2005/12/03 16:53:16 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.44 2006/05/22 22:22:11 martin Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -55,12 +55,17 @@
 
 #ifndef SIOP_DEBUG
 #undef SIOP_DEBUG
-#endif
-#undef SIOP_DEBUG
 #undef SIOP_DEBUG_DR
 #undef SIOP_DEBUG_INTR
 #undef SIOP_DEBUG_SCHED
 #undef DUMP_SCRIPT
+#else
+#define SIOP_DEBUG_DR
+#define SIOP_DEBUG_INTR
+#define SIOP_DEBUG_SCHED
+#define DUMP_SCRIPT
+#endif
+
 
 #define SIOP_STATS
 
@@ -1094,7 +1099,8 @@ siop_scsicmd_end(siop_cmd)
 	case SCSI_CHECK:
 		if (siop_cmd->cmd_c.status == CMDST_SENSE_DONE) {
 			/* request sense on a request sense ? */
-			printf("request sense failed\n");
+			printf("%s: request sense failed\n",
+			    sc->sc_c.sc_dev.dv_xname);
 			xs->error = XS_DRIVER_STUFFUP;
 		} else {
 			siop_cmd->cmd_c.status = CMDST_SENSE;
@@ -1895,8 +1901,7 @@ siop_morecbd(sc)
 		    "offset=0x%x\n", i,
 		    letoh32(newcbd->cmds[i].cmd_tables->t_msgin.addr),
 		    letoh32(newcbd->cmds[i].cmd_tables->t_msgout.addr),
-		    letoh32(newcbd->cmds[i].cmd_tables->t_status.addr),
-		    letoh32(newcbd->cmds[i].cmd_tables->t_offset.addr));
+		    letoh32(newcbd->cmds[i].cmd_tables->t_status.addr));
 #endif
 	}
 	s = splbio();
