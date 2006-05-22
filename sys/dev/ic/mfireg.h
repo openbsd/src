@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.15 2006/05/22 01:08:39 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.16 2006/05/22 02:24:11 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -224,6 +224,7 @@ typedef enum {
 #define MFI_DEFAULT_ID				-1
 #define MFI_MAX_LUN				8
 #define MFI_MAX_LD				64
+#define MFI_MAX_SPAN				8
 
 /* sense buffer */
 struct mfi_sense {
@@ -702,4 +703,52 @@ struct mfi_ld_list {
 		uint8_t		mll_res4;
 		u_quad_t	mll_size;
 	} mll_list[MFI_MAX_LD];
+} __packed;
+
+/* logicl disk details from MR_DCMD_LD_GET_INFO */
+struct mfi_ld_prop {
+	struct mfi_ld		mlp_ld;
+	char			mlp_name[16];
+	uint8_t			mlp_cache_policy;
+	uint8_t			mlp_acces_policy;
+	uint8_t			mlp_diskcache_policy;
+	uint8_t			mlp_cur_cache_policy;
+	uint8_t			mlp_disable_bgi;
+	uint8_t			mlp_res[7];
+} __packed;
+
+struct mfi_ld_parm {
+	uint8_t			mpa_pri_raid;
+	uint8_t			mpa_raid_qual;
+	uint8_t			mpa_sec_raid;
+	uint8_t			mpa_stripe_size;
+	uint8_t			mpa_no_drv_per_span;
+	uint8_t			mpa_span_depth;
+	uint8_t			mpa_state;
+	uint8_t			mpa_init_state;
+	uint8_t			mpa_res[24];
+} __packed;
+
+struct mfi_ld_span {
+	u_quad_t		mls_start_block;
+	u_quad_t		mls_no_blocks;
+	uint16_t		mls_index;
+	uint8_t			mls_res[6];
+} __packed;
+
+struct mfi_ld_cfg {
+	struct mfi_ld_prop	mlc_prop;
+	struct mfi_ld_parm	mlc_parm;
+	struct mfi_ld_span	mlc_span[MFI_MAX_SPAN];
+} __packed;
+
+struct mfi_ld_details {
+	struct mfi_ld_cfg	mld_cfg;
+	u_quad_t		mld_size;
+	struct mfi_progress	mld_progress;
+	uint16_t		mld_clust_own_id;
+	uint8_t			mld_res1;
+	uint8_t			mld_res2;
+	uint8_t			mld_inq_page83[64];
+	uint8_t			mld_res[16];
 } __packed;

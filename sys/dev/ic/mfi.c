@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.48 2006/05/22 01:08:39 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.49 2006/05/22 02:24:11 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -91,7 +91,7 @@ int		mfi_scsi_io(struct mfi_ccb *, struct scsi_xfer *, uint32_t,
 		    uint32_t);
 void		mfi_scsi_xs_done(struct mfi_ccb *);
 int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t, uint32_t,
-		    void *);
+		    void *, uint8_t *);
 void		mfi_mgmt_done(struct mfi_ccb *);
 
 #if NBIO > 0
@@ -404,7 +404,7 @@ mfi_get_info(struct mfi_softc *sc)
 	DNPRINTF(MFI_D_MISC, "%s: mfi_get_info\n", DEVNAME(sc));
 
 	if (mfi_mgmt(sc, MR_DCMD_CTRL_GET_INFO, MFI_DATA_IN,
-	    sizeof(sc->sc_info), &sc->sc_info))
+	    sizeof(sc->sc_info), &sc->sc_info, NULL))
 		return (1);
 
 #ifdef MFI_DEBUG
@@ -920,7 +920,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_rw_big	*rwb;
 	uint32_t		blockno, blockcnt;
 	uint8_t			target = link->target;
-	uint8_t			flushcmd;
+	uint8_t			mbox[MFI_MBOX_SIZE];
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
@@ -966,18 +966,16 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	case SYNCHRONIZE_CACHE:
 		mfi_put_ccb(ccb); /* we don't need this */
 
-		flushcmd = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
+		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 		if (mfi_mgmt(sc, MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE,
-		    sizeof(flushcmd), &flushcmd))
-			goto stuffup;;
+		    0, NULL, mbox))
+			goto stuffup;
 
 		return (COMPLETE);
 		/* NOTREACHED */
 
 	/* hand it of to the firmware and let it deal with it */
 	case TEST_UNIT_READY:
-		printf("%#x  %#x  %#x  %d\n", sc, target, dev,
-		    sizeof(sc->sc_ld[target].ld_dev));
 		/* save off sd? after autoconf */
 		if (!cold)	/* XXX bogus */
 			strlcpy(sc->sc_ld[target].ld_dev, dev->dv_xname,
@@ -1096,7 +1094,7 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 
 int
 mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
-    void *buf)
+    void *buf, uint8_t *mbox)
 {
 	struct mfi_ccb		*ccb;
 	struct mfi_dcmd_frame	*dcmd;
@@ -1119,12 +1117,9 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 
 	ccb->ccb_frame_size = MFI_DCMD_FRAME_SIZE;
 
-	/* handle special opcodes, use the buffer parameter */
-	switch (opc) {
-	case MR_DCMD_CTRL_CACHE_FLUSH:
-		dcmd->mdf_mbox[0] = *((uint8_t *)buf);
-		break;
-	}
+	/* handle special opcodes */
+	if (mbox)
+		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
 
 	if (dir != MFI_DATA_NONE) {
 		dcmd->mdf_header.mfh_data_len = len;
@@ -1267,20 +1262,28 @@ int
 mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 {
 	int			i, rv = EINVAL;
+	uint8_t			mbox[MFI_MBOX_SIZE];
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol %#x\n",
 	    DEVNAME(sc), bv->bv_volid);
 
 	if (mfi_mgmt(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
-	    sizeof(sc->sc_ld_list), &sc->sc_ld_list))
+	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL))
+		goto done;
+
+	i = bv->bv_volid;
+	mbox[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol target %#x\n",
+	    DEVNAME(sc), mbox[0]);
+
+	if (mfi_mgmt(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN,
+	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox))
 		goto done;
 
 	if (bv->bv_volid > sc->sc_ld_list.mll_no_ld) {
 		/* XXX go do hotspares */
 		goto done;
 	}
-
-	i = bv->bv_volid;
 
 	strlcpy(bv->bv_dev, sc->sc_ld[i].ld_dev, sizeof(bv->bv_dev));
 
@@ -1306,10 +1309,17 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	}
 
 #if 0
-	bv->bv_level = 5;
-	bv->bv_nodisk = 2;
-	bv->bv_size = sc->sc_ld_list.mll_list[i].mll_size;
+	printf("drv/span %d   span depth%d\n",
+	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span,
+	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth);
 #endif
+	bv->bv_level = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_pri_raid;
+	
+	bv->bv_nodisk = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span *
+	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth;
+
+	bv->bv_size = sc->sc_ld_details.mld_size * (u_quad_t)512;
+
 	rv = 0;
 done:
 	return (rv);
@@ -1356,7 +1366,7 @@ mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 		return (EINVAL);
 	}
 
-	if (mfi_mgmt(sc, opc, dir, sizeof(ret), &ret))
+	if (mfi_mgmt(sc, opc, dir, sizeof(ret), &ret, NULL))
 		rv = EINVAL;
 	else
 		if (ba->ba_opcode == BIOC_GASTATUS)
