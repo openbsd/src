@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.49 2006/05/22 02:24:11 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.50 2006/05/22 19:50:43 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1309,12 +1309,22 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	}
 
 #if 0
-	printf("drv/span %d   span depth%d\n",
+	printf("drv/span %d   span depth %d   raid qual %#x   sec raid %#x\n",
 	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span,
-	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth);
+	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth,
+	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_raid_qual,
+	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_sec_raid);
 #endif
+
+	/*
+	 * The RAID levels are determined per the SNIA DDF spec, this is only
+	 * a subset that is valid for the MFI contrller.
+	 */
 	bv->bv_level = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_pri_raid;
-	
+	if (sc->sc_ld_details.mld_cfg.mlc_parm.mpa_sec_raid ==
+	    MFI_DDF_SRL_SPANNED)
+		bv->bv_level *= 10;
+
 	bv->bv_nodisk = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span *
 	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth;
 

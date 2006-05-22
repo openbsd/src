@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.16 2006/05/22 02:24:11 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.17 2006/05/22 19:50:43 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -718,9 +718,24 @@ struct mfi_ld_prop {
 } __packed;
 
 struct mfi_ld_parm {
-	uint8_t			mpa_pri_raid;
-	uint8_t			mpa_raid_qual;
-	uint8_t			mpa_sec_raid;
+	uint8_t			mpa_pri_raid;	/* SNIA DDF PRL */
+#define MFI_DDF_PRL_RAID0	0x00
+#define MFI_DDF_PRL_RAID1	0x01
+#define MFI_DDF_PRL_RAID3	0x03
+#define MFI_DDF_PRL_RAID4	0x04
+#define MFI_DDF_PRL_RAID5	0x05
+#define MFI_DDF_PRL_RAID1E	0x11
+#define MFI_DDF_PRL_JBOD	0x0f
+#define MFI_DDF_PRL_CONCAT	0x1f
+#define MFI_DDF_PRL_RAID5E	0x15
+#define MFI_DDF_PRL_RAID5EE	0x25
+#define MFI_DDF_PRL_RAID6	0x16
+	uint8_t			mpa_raid_qual;	/* SNIA DDF RLQ */
+	uint8_t			mpa_sec_raid;	/* SNIA DDF SRL */
+#define MFI_DDF_SRL_STRIPED	0x00
+#define MFI_DDF_SRL_MIRRORED	0x01
+#define MFI_DDF_SRL_CONCAT	0x02
+#define MFI_DDF_SRL_SPANNED	0x03
 	uint8_t			mpa_stripe_size;
 	uint8_t			mpa_no_drv_per_span;
 	uint8_t			mpa_span_depth;
