@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.47 2006/05/21 22:56:45 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.48 2006/05/22 01:08:39 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -43,8 +43,8 @@
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0
 /*		    | MFI_D_CMD */
-		    | MFI_D_INTR
-		    | MFI_D_MISC
+/*		    | MFI_D_INTR */
+/*		    | MFI_D_MISC */
 /*		    | MFI_D_DMA */
 		    | MFI_D_IOCTL
 /*		    | MFI_D_RW */
@@ -914,6 +914,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mfi_softc	*sc = link->adapter_softc;
+	struct device		*dev = link->device_softc;
 	struct mfi_ccb		*ccb;
 	struct scsi_rw		*rw;
 	struct scsi_rw_big	*rwb;
@@ -974,6 +975,15 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		/* NOTREACHED */
 
 	/* hand it of to the firmware and let it deal with it */
+	case TEST_UNIT_READY:
+		printf("%#x  %#x  %#x  %d\n", sc, target, dev,
+		    sizeof(sc->sc_ld[target].ld_dev));
+		/* save off sd? after autoconf */
+		if (!cold)	/* XXX bogus */
+			strlcpy(sc->sc_ld[target].ld_dev, dev->dv_xname,
+			    sizeof(sc->sc_ld[target].ld_dev));
+		/* FALLTHROUGH */
+
 	default:
 		if (mfi_scsi_ld(ccb, xs)) {
 			mfi_put_ccb(ccb);
@@ -1256,7 +1266,53 @@ mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 int
 mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 {
-	return (ENOTTY); /* XXX not yet */
+	int			i, rv = EINVAL;
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol %#x\n",
+	    DEVNAME(sc), bv->bv_volid);
+
+	if (mfi_mgmt(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
+	    sizeof(sc->sc_ld_list), &sc->sc_ld_list))
+		goto done;
+
+	if (bv->bv_volid > sc->sc_ld_list.mll_no_ld) {
+		/* XXX go do hotspares */
+		goto done;
+	}
+
+	i = bv->bv_volid;
+
+	strlcpy(bv->bv_dev, sc->sc_ld[i].ld_dev, sizeof(bv->bv_dev));
+
+	switch(sc->sc_ld_list.mll_list[i].mll_state) {
+	case MFI_LD_OFFLINE:
+		bv->bv_status = BIOC_SVOFFLINE;
+		break;
+
+	case MFI_LD_PART_DEGRADED:
+	case MFI_LD_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+
+	case MFI_LD_ONLINE:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+
+	default:
+		bv->bv_status = BIOC_SVINVALID;
+		DNPRINTF(MFI_D_IOCTL, "%s: invalid logical disk state %#x\n",
+		    DEVNAME(sc),
+		    sc->sc_ld_list.mll_list[i].mll_state);
+	}
+
+#if 0
+	bv->bv_level = 5;
+	bv->bv_nodisk = 2;
+	bv->bv_size = sc->sc_ld_list.mll_list[i].mll_size;
+#endif
+	rv = 0;
+done:
+	return (rv);
 }
 
 int

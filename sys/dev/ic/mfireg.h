@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.14 2006/05/21 14:03:01 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.15 2006/05/22 01:08:39 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -92,6 +92,8 @@
 #define MR_DCMD_CTRL_EVENT_GET_INFO		0x01040100
 #define MR_DCMD_CTRL_EVENT_GET			0x01040300
 #define MR_DCMD_CTRL_EVENT_WAIT			0x01040500
+#define MR_DCMD_LD_GET_LIST                     0x03010000
+#define MR_DCMD_LD_GET_INFO                     0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
 #define MR_DCMD_CLUSTER				0x08000000
 #define MR_DCMD_CLUSTER_RESET_ALL		0x08010100
@@ -576,7 +578,6 @@ struct mfi_info_component {
 	char		 	mic_build_time[16];
 } __packed;
 
-
 /* controller info from MFI_DCMD_CTRL_GETINFO. */
 struct mfi_ctrl_info {
 	struct mfi_info_pci	mci_pci;
@@ -677,4 +678,28 @@ struct mfi_ctrl_info {
 	struct mfi_ctrl_props	mci_properties;
 	char			mci_package_version[0x60];
 	uint8_t			mci_pad[0x800 - 0x6a0];
+} __packed;
+
+/* logical disk info from MR_DCMD_LD_GET_LIST */
+struct mfi_ld {
+	uint8_t			mld_target;
+	uint8_t			mld_res;
+	uint16_t		mld_seq;
+} __packed;
+
+struct mfi_ld_list {
+	uint32_t		mll_no_ld;
+	uint32_t		mll_res;
+	struct {
+		struct mfi_ld	mll_ld;
+		uint8_t		mll_state;
+#define MFI_LD_OFFLINE			0x00
+#define MFI_LD_PART_DEGRADED		0x01
+#define MFI_LD_DEGRADED			0x02
+#define MFI_LD_ONLINE			0x03
+		uint8_t		mll_res2;
+		uint8_t		mll_res3;
+		uint8_t		mll_res4;
+		u_quad_t	mll_size;
+	} mll_list[MFI_MAX_LD];
 } __packed;

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.21 2006/05/21 20:20:17 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.22 2006/05/22 01:08:39 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -106,10 +106,11 @@ struct mfi_softc {
 	/* mgmt lock */
 	struct rwlock		sc_lock;
 
-	/* save some useful information for logical drives */
+	/* save some useful information for logical drives that is missing
+	 * in sc_ld_list
+	 */
 	struct {
 		uint32_t	ld_present;
-		quad_t		ld_size;	/* READ CAPICITY */
 		char		ld_dev[16];	/* device name sd? */
 	}			sc_ld[MFI_MAX_LD];
 
@@ -122,6 +123,7 @@ struct mfi_softc {
 	uint32_t		sc_max_ld;
 	uint32_t		sc_ld_cnt;
 	struct mfi_ctrl_info	sc_info;
+	struct mfi_ld_list	sc_ld_list;
 
 	/* all commands */
 	struct mfi_ccb		*sc_ccb;
