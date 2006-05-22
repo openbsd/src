@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.124 2006/05/18 12:39:23 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.125 2006/05/22 23:25:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -835,8 +835,9 @@ carpdetach(struct carp_softc *sc)
 
 	s = splnet();
 	if (sc->sc_carpdev != NULL) {
-		hook_disestablish(sc->sc_carpdev->if_linkstatehooks,
-		    sc->lh_cookie);
+		if (sc->lh_cookie != NULL)
+			hook_disestablish(sc->sc_carpdev->if_linkstatehooks,
+			    sc->lh_cookie);
 		cif = (struct carp_if *)sc->sc_carpdev->if_carp;
 		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
 		if (!--cif->vhif_nvrs) {

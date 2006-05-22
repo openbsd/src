@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.67 2006/05/09 19:43:02 mpf Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.68 2006/05/22 23:25:15 krw Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -436,7 +436,8 @@ vlan_unconfig(struct ifnet *ifp)
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
-	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
+	if (ifv->lh_cookie != NULL)
+		hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
 	/* The cookie is NULL if disestablished externally */
 	if (ifv->dh_cookie != NULL)
 		hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
