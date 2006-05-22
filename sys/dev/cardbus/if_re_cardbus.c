@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.2 2005/05/16 01:36:25 brad Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.3 2006/05/22 20:35:12 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -260,8 +260,10 @@ re_cardbus_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	/* No more hooks */
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_pwrhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
 
 	/* Disable interrupts */
 	if (csc->sc_ih != NULL)

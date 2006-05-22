@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.128 2006/04/10 00:58:52 deraadt Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.129 2006/05/22 20:35:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.128 2006/04/10 00:58:52 deraadt Exp $";
+	"$OpenBSD: if_wi.c,v 1.129 2006/05/22 20:35:12 krw Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2473,7 +2473,8 @@ wi_detach(struct wi_softc *sc)
 	
 	if (sc->wi_flags & WI_FLAGS_ATTACHED) {
 		sc->wi_flags &= ~WI_FLAGS_ATTACHED;
-		shutdownhook_disestablish(sc->sc_sdhook);
+		if (sc->sc_sdhook != NULL)
+			shutdownhook_disestablish(sc->sc_sdhook);
 	}
 }
 

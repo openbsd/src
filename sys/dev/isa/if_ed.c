@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.56 2006/03/25 22:41:44 djm Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.57 2006/05/22 20:35:12 krw Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -282,7 +282,8 @@ ed_remove(pc_link,self)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	if_down(ifp);
 	edstop(sc);
-	shutdownhook_disestablish(sc->sc_sh);
+	if (sc->sc_sh != NULL)
+		shutdownhook_disestablish(sc->sc_sh);
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_UP);
 	sc->spec_flags |= ED_NOTPRESENT;
 	isa_intr_disestablish(sc->sc_ic, sc->sc_ih);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.77 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.78 2006/05/22 20:35:12 krw Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -578,8 +578,10 @@ fxp_detach(sc)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }

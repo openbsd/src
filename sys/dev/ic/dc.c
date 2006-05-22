@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.94 2006/05/07 03:56:25 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.95 2006/05/22 20:35:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1876,8 +1876,10 @@ dc_detach(sc)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	shutdownhook_disestablish(sc->sc_dhook);
-	powerhook_disestablish(sc->sc_pwrhook);
+	if (sc->sc_dhook != NULL)
+		shutdownhook_disestablish(sc->sc_dhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
 
 	return (0);
 }

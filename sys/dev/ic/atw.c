@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.45 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: atw.c,v 1.46 2006/05/22 20:35:12 krw Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2775,8 +2775,10 @@ atw_detach(struct atw_softc *sc)
 	    sizeof(struct atw_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
 
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);

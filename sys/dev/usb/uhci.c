@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.43 2006/04/21 07:29:11 jolan Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.44 2006/05/22 20:35:12 krw Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -563,8 +563,10 @@ uhci_detach(struct uhci_softc *sc, int flags)
 		return (rv);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	powerhook_disestablish(sc->sc_powerhook);
-	shutdownhook_disestablish(sc->sc_shutdownhook);
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_shutdownhook != NULL)
+		shutdownhook_disestablish(sc->sc_shutdownhook);
 #endif
 
 	/* Free all xfers associated with this HC. */

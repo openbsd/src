@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.46 2006/05/18 16:46:05 jolan Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.47 2006/05/22 20:35:12 krw Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -896,7 +896,8 @@ USB_DETACH(aue)
 #endif
 
 	sc->aue_attached = 0;
-	shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 
 	if (--sc->aue_refcnt >= 0) {
 		/* Wait for processes to go away. */

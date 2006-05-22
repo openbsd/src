@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.49 2006/05/08 18:32:11 pedro Exp $  */
+/*      $OpenBSD: ath.c,v 1.50 2006/05/22 20:35:12 krw Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -459,8 +459,10 @@ ath_detach(struct ath_softc *sc, int flags)
 	if_detach(ifp);
 
 	splx(s);
-	powerhook_disestablish(sc->sc_powerhook);
-	shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 #ifdef __FreeBSD__
 	ATH_TXBUF_LOCK_DESTROY(sc);
 	ATH_TXQ_LOCK_DESTROY(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.50 2006/04/05 14:28:20 kurt Exp $	*/
+/*	$OpenBSD: an.c,v 1.51 2006/05/22 20:35:12 krw Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1675,7 +1675,8 @@ an_detach(struct an_softc *sc)
 	ifmedia_delete_instance(&sc->sc_ic.ic_media, IFM_INST_ANY);
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
-	shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 	splx(s);
 	return 0;
 }
