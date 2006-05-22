@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.28 2006/05/22 15:52:48 krw Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.29 2006/05/22 16:09:21 dlg Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -169,6 +169,9 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+	if (sc->sc.sc_powerhook == NULL)
+		printf("%s: unable to establish powerhook\n",
+		    sc->sc.sc_bus.bdev.dv_xname);
 
 	splx(s);
 
@@ -187,7 +190,8 @@ ohci_pci_detach(struct device *self, int flags)
 	if (rv)
 		return (rv);
 
-	powerhook_disestablish(sc->sc.sc_powerhook);
+	if (sc->sc.sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc.sc_powerhook);
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
