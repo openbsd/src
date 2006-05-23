@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.43 2006/01/09 21:34:57 jsg Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.44 2006/05/23 13:38:49 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -251,7 +251,7 @@ This should be used on single interface hosts only,
 since the IPv6 specifications are silent about the
 behavior on multi-interface hosts.
 Also note that the kernel must be configured to accept IPv6
-router advertisement, and configured as a host (ie. non-router).
+router advertisement, and configured as a host (i.e. non-router).
 Add the following lines into
 .Xr sysctl.conf 5 :
 .Bd -literal -offset indent
@@ -336,5 +336,4 @@ are permitted.
 .Xr lmccontrol 8 ,
 .Xr netstart 8 ,
 .Xr rc 8 ,
-.Xr spppcontrol 8 ,
 .Xr wicontrol 8
