@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.18 2006/05/23 00:43:57 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.19 2006/05/23 00:49:26 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -771,7 +771,7 @@ struct mfi_ld_details {
 } __packed;
 
 /* physical disk info from MR_DCMD_PD_GET_LIST */
-struct mdi_pd_address {
+struct mfi_pd_address {
 	uint16_t		mpa_pd_id;
 	uint16_t		mpa_enc_id;
 	uint8_t			mpa_enc_index;
@@ -784,6 +784,6 @@ struct mdi_pd_address {
 struct mfi_pd_list {
 	uint32_t		mpl_size;
 	uint32_t		mpl_no_pd;
-	struct mdi_pd_address	mpl_address[1];
+	struct mfi_pd_address	mpl_address[1];
 } __packed;
-#define MFI_PD_LIST_SIZE	(256 * sizeof(struct mdi_pd_address) + 8)
+#define MFI_PD_LIST_SIZE	(256 * sizeof(struct mfi_pd_address) + 8)
