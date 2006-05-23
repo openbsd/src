@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.30 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.31 2006/05/23 20:35:12 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -88,7 +88,9 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
+#ifdef NCR53C9X_DEBUG
 int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*/
+#endif
 #ifdef DEBUG
 int ncr53c9x_notag = 0;
 #endif
@@ -1636,14 +1638,17 @@ gotit:
 						ti->flags &= ~T_SYNCMODE;
 					}
 				} else {
-					int r = 250/ti->period;
-					int s = (100*250)/ti->period - 100*r;
+#ifdef NCR53C9X_DEBUG
+					int r, s;
+#endif
 					int p;
 
 					p = ncr53c9x_stp2cpb(sc, ti->period);
 					ti->period = ncr53c9x_cpb2stp(sc, p);
 #ifdef NCR53C9X_DEBUG
 					sc_print_addr(ecb->xs->sc_link);
+					r = 250/ti->period;
+					s = (100*250)/ti->period - 100*r;
 					printf("max sync rate %d.%02dMB/s\n",
 						r, s);
 #endif
