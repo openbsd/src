@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.21 2006/05/23 01:11:55 brad Exp $
+.\" $OpenBSD: re.4,v 1.22 2006/05/23 13:24:28 jmc Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -46,8 +46,8 @@
 The
 .Nm
 driver provides support for various NICs based on the
-RealTek RTL8111B, RTL8139C+, RTL8168B, RTL8169, RTL8169S, and RTL8110S PCI and PCI Express
-Ethernet controllers, including
+RealTek RTL8111B, RTL8139C+, RTL8168B, RTL8169, RTL8169S,
+and RTL8110S PCI and PCI Express Ethernet controllers, including
 the following:
 .Pp
 .Bl -bullet -compact
@@ -83,24 +83,24 @@ Xterasys XN-152 10/100/1000 NIC (8169)
 .Pp
 NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over CAT5
 cable.
-NICs based on the 8111B, 8168B, 8169, 8169S and 8110S are capable of 10, 100 and
-1000Mbps operation.
+NICs based on the 8111B, 8168B, 8169, 8169S and 8110S
+are capable of 10, 100 and 1000Mbps operation.
 .Pp
 All NICs supported by the
 .Nm
-driver have IPv4 receive IP/TCP/UDP checksum offload and use a descriptor-based
-DMA mechanism.
+driver have IPv4 receive IP/TCP/UDP checksum offload
+and use a descriptor-based DMA mechanism.
 .Pp
 The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
-The 8111B, 8168B, 8169S and 8110S are single-chip devices containing both a 10/100/1000
-MAC and 10/100/1000 copper PHY.
+The 8111B, 8168B, 8169S and 8110S are single-chip devices
+containing both a 10/100/1000 MAC and 10/100/1000 copper PHY.
 Standalone 10/100/1000 cards are available in both 32-bit PCI and 64-bit
 PCI models.
 The 8110S and 8111B are designed for embedded LAN-on-motherboard applications.
 .Pp
-The 8111B, 8168B, 8169, 8169S and 8110S also support Jumbo frames, which can be configured
-via the interface MTU setting.
+The 8111B, 8168B, 8169, 8169S and 8110S also support Jumbo frames,
+which can be configured via the interface MTU setting.
 The MTU is limited to 7422, since the chip cannot transmit larger frames.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
@@ -226,5 +226,6 @@ the console and abort the device attach.
 The user should ensure the NIC is installed in a 32-bit PCI slot to avoid
 this problem.
 .Pp
-The RealTek 8111B, 8168B, 8169, 8169S and 8110S chips appear to only be capable of
+The RealTek 8111B, 8168B, 8169, 8169S and 8110S chips
+appear to only be capable of
 transmitting jumbo frames up to 7.5K in size.
