@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.7 2006/05/16 02:32:39 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.8 2006/05/23 00:41:50 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -67,7 +67,8 @@ const struct pci_matchid re_pci_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGLAPCIGT },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T },
-	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902 }
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902 },
+	{ PCI_VENDOR_TTTECH, PCI_PRODUCT_TTTECH_MC322 }
 };
 
 #define RE_LINKSYS_EG1032_SUBID 0x00241737
@@ -196,7 +197,13 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RL_ENABLED;
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)
+			sc->rl_type = RL_8139;
+		else
+			sc->rl_type = RL_8169;
+	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TTTECH &&
+		   PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TTTECH_MC322)
 		sc->rl_type = RL_8139;
 	else
 		sc->rl_type = RL_8169;
