@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1068 2006/05/17 19:53:07 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1069 2006/05/23 04:53:09 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2204,6 +2204,7 @@
 #define	PCI_PRODUCT_MYLEX_EXTREMERAID	0xba56		/* eXtremeRAID */
 
 /* Myricom */
+#define	PCI_PRODUCT_MYRICOM_Z8E	0x0008		/* Z8E */
 #define	PCI_PRODUCT_MYRICOM_LANAI_92	0x8043		/* Myrinet LANai 9.2 */
 
 /* Myson Century products */
