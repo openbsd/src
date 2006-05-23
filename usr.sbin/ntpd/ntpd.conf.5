@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.9 2004/11/08 19:09:19 otto Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.10 2006/05/23 14:29:16 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -50,6 +50,10 @@ does not listen on any address by default.
 For example:
 .Bd -literal -offset indent
 listen on *
+.Ed
+.Pp
+or
+.Bd -literal -offset indent
 listen on 127.0.0.1
 listen on ::1
 .Ed
