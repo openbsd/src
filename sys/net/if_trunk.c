@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.27 2006/05/23 04:35:52 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.28 2006/05/23 04:56:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1283,7 +1283,7 @@ const void *
 trunk_lb_gethdr(struct mbuf *m, u_int off, u_int len, void *buf)
 {
 	if (m->m_pkthdr.len < (off + len)) {
-		return (NULL);		
+		return (NULL);
 	} else if (m->m_len < (off + len)) {
 		m_copydata(m, off, len, buf);
 		return (buf);
@@ -1362,9 +1362,6 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	if ((idx = p % tr->tr_count) >= TRUNK_MAX_PORTS)
 		return (EINVAL);
 	tp = lb->lb_ports[idx];
-
-	if (tr->tr_ifflags & IFF_DEBUG)	
-		printf("%s: %d: port %u\n", __func__, __LINE__, p);
 
  send:
 	/*
