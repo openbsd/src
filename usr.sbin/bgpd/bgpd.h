@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.199 2006/04/26 17:13:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.200 2006/05/23 12:11:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -310,6 +310,7 @@ enum imsg_type {
 	IMSG_CTL_NEIGHBOR_UP,
 	IMSG_CTL_NEIGHBOR_DOWN,
 	IMSG_CTL_NEIGHBOR_CLEAR,
+	IMSG_CTL_NEIGHBOR_RREFRESH,
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE6,
 	IMSG_CTL_KROUTE_ADDR,
@@ -344,7 +345,8 @@ struct imsg {
 enum ctl_results {
 	CTL_RES_OK,
 	CTL_RES_NOSUCHPEER,
-	CTL_RES_DENIED
+	CTL_RES_DENIED,
+	CTL_RES_NOCAP
 };
 
 /* needed for session.h parse prototype */

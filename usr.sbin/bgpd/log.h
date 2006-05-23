@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.6 2006/01/24 10:03:44 henning Exp $ */
+/*	$OpenBSD: log.h,v 1.7 2006/05/23 12:11:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,5 +107,6 @@ static const char * const procnames[] = {
 static const char * const ctl_res_strerror[] = {
 	"no error",
 	"no such neighbor",
-	"permission denied"
+	"permission denied",
+	"neighbor does not have this capability"
 };

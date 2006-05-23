@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.246 2006/03/22 10:18:49 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.247 2006/05/23 12:11:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,7 @@ void	session_keepalive(struct peer *);
 void	session_update(u_int32_t, void *, size_t);
 void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
+void	session_rrefresh(struct peer *, u_int16_t, u_int8_t);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
 int	parse_open(struct peer *);
@@ -1446,6 +1447,72 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	peer->stats.msg_sent_notification++;
 	peer->stats.last_sent_errcode = errcode;
 	peer->stats.last_sent_suberr = subcode;
+}
+
+int
+session_neighbor_rrefresh(struct peer *p)
+{
+	if (!p->capa.peer.refresh)
+		return (-1);
+
+	if (p->capa.peer.mp_v4 != SAFI_NONE)
+		session_rrefresh(p, AFI_IPv4, p->capa.peer.mp_v4);
+	if (p->capa.peer.mp_v6 != SAFI_NONE)
+		session_rrefresh(p, AFI_IPv6, p->capa.peer.mp_v6);
+
+	return (0);
+}
+
+void
+session_rrefresh(struct peer *peer, u_int16_t afi, u_int8_t safi)
+{
+	struct msg_header	 msg;
+	struct buf		*buf;
+	struct mrt		*mrt;
+	ssize_t			 len;
+	int			 errs = 0;
+	u_int8_t		 null8 = 0;
+
+	len = MSGSIZE_RREFRESH;
+
+	memset(&msg.marker, 0xff, sizeof(msg.marker));
+	msg.len = htons(len);
+	msg.type = RREFRESH;
+
+	if ((buf = buf_open(len)) == NULL) {
+		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
+	}
+	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
+	errs += buf_add(buf, &msg.len, sizeof(msg.len));
+	errs += buf_add(buf, &msg.type, sizeof(msg.type));
+	errs += buf_add(buf, &afi, sizeof(afi));
+	errs += buf_add(buf, &null8, sizeof(null8));
+	errs += buf_add(buf, &safi, sizeof(safi));
+
+	if (errs > 0) {
+		buf_free(buf);
+		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
+	}
+
+	LIST_FOREACH(mrt, &mrthead, entry) {
+		if (mrt->type != MRT_ALL_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == peer->conf.id ||
+		    mrt->group_id == peer->conf.groupid)
+			mrt_dump_bgp_msg(mrt, buf->buf, len, peer, conf);
+	}
+
+	if (buf_close(&peer->wbuf, buf) == -1) {
+		log_peer_warn(&peer->conf, "session_rrefresh buf_close");
+		buf_free(buf);
+		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
+	}
+
+	peer->stats.msg_sent_rrefresh++;
 }
 
 int

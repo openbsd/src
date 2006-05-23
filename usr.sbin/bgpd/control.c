@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.49 2006/01/24 15:28:03 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.50 2006/05/23 12:11:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -279,6 +279,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_NEIGHBOR_UP:
 		case IMSG_CTL_NEIGHBOR_DOWN:
 		case IMSG_CTL_NEIGHBOR_CLEAR:
+		case IMSG_CTL_NEIGHBOR_RREFRESH:
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_neighbor)) {
 				neighbor = imsg.data;
@@ -293,19 +294,28 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				switch (imsg.hdr.type) {
 				case IMSG_CTL_NEIGHBOR_UP:
 					bgp_fsm(p, EVNT_START);
+					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_DOWN:
 					bgp_fsm(p, EVNT_STOP);
+					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_CLEAR:
 					bgp_fsm(p, EVNT_STOP);
 					p->IdleHoldTimer = time(NULL) +
 					    SESSION_CLEAR_DELAY;
+					control_result(c, CTL_RES_OK);
+					break;
+				case IMSG_CTL_NEIGHBOR_RREFRESH:
+					if (session_neighbor_rrefresh(p))
+						control_result(c,
+						    CTL_RES_NOCAP);
+					else
+						control_result(c, CTL_RES_OK);
 					break;
 				default:
 					fatal("king bula wants more humppa");
 				}
-				control_result(c, CTL_RES_OK);
 			} else
 				log_warnx("got IMSG_CTL_NEIGHBOR_ with "
 				    "wrong length");
