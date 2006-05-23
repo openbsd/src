@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.103 2006/04/06 12:33:17 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.104 2006/05/23 12:14:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -248,6 +248,10 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_CLEAR, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
 		break;
+	case NEIGHBOR_RREFRESH:
+		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_RREFRESH, 0, 0, -1,
+		    &neighbor, sizeof(neighbor));
+		break;
 	case NETWORK_ADD:
 	case NETWORK_REMOVE:
 		bzero(&net, sizeof(net));
@@ -340,6 +344,7 @@ main(int argc, char *argv[])
 			case NEIGHBOR_UP:
 			case NEIGHBOR_DOWN:
 			case NEIGHBOR_CLEAR:
+			case NEIGHBOR_RREFRESH:
 			case NONE:
 			case RELOAD:
 			case FIB:

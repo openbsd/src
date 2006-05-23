@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.32 2006/04/06 12:25:54 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.33 2006/05/23 12:14:34 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -69,6 +69,12 @@ Take the BGP session to the specified neighbor down.
 may be the neighbor's address or description.
 .It Cm neighbor Ar peer Cm clear
 Stop and restart the BGP session to the specified neighbor.
+.Ar peer
+may be the neighbor's address or description.
+.It Cm neighbor Ar peer Cm rrefresh
+Request the neighbor to re-send all routes.
+Note that the neighbor is not obliged to re-send all routes, or any routes at
+all, even if it announced the route refresh capability.
 .Ar peer
 may be the neighbor's address or description.
 .It Cm network add Ar prefix
