@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.113 2006/04/02 05:17:49 brad Exp $
+dnl	$OpenBSD: hardware,v 1.114 2006/05/23 19:24:51 brad Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -113,6 +113,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546,
 		i82547, i82571, i82572 and i82573 based adapters, including:
 		    HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC340T PCI-X Gigabit NIC
 		    HP ProLiant NC6134 PCI Gigabit NIC (SX Fiber)
 		    HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
 		    HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
