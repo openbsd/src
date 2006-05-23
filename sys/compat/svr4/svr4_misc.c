@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.45 2006/03/05 21:48:56 miod Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.46 2006/05/23 20:34:22 miod Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -562,9 +562,11 @@ svr4_sys_sysconfig(p, v, retval)
 	case SVR4_CONFIG_DELAYTIMER_MAX:
 		*retval = 0;	/* No delaytimer support */
 		break;
+#ifdef SYSVMSG
 	case SVR4_CONFIG_MQ_OPEN_MAX:
 		*retval = msginfo.msgmni;
 		break;
+#endif
 	case SVR4_CONFIG_MQ_PRIO_MAX:
 		*retval = 0;	/* XXX: Don't know */
 		break;
