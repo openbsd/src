@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.50 2006/05/22 19:50:43 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.51 2006/05/23 00:43:57 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -671,6 +671,9 @@ mfi_attach(struct mfi_softc *sc)
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
+	/* memory for physical disk map */
+	sc->sc_pd_list = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+
 	return (0);
 noinit:
 	mfi_freemem(sc, sc->sc_sense);
@@ -1338,7 +1341,17 @@ done:
 int
 mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 {
-	return (ENOTTY); /* XXX not yet */
+	int			i, rv = EINVAL;
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_disk %#x\n",
+	    DEVNAME(sc), bd->bd_diskid);
+
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
+	    MFI_PD_LIST_SIZE, sc->sc_pd_list, NULL))
+		goto done;
+	rv = 0;
+done:
+	return (rv);
 }
 
 int

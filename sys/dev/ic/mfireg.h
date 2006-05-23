@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.17 2006/05/22 19:50:43 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.18 2006/05/23 00:43:57 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -92,8 +92,10 @@
 #define MR_DCMD_CTRL_EVENT_GET_INFO		0x01040100
 #define MR_DCMD_CTRL_EVENT_GET			0x01040300
 #define MR_DCMD_CTRL_EVENT_WAIT			0x01040500
-#define MR_DCMD_LD_GET_LIST                     0x03010000
-#define MR_DCMD_LD_GET_INFO                     0x03020000
+#define MR_DCMD_PD_GET_LIST			0x02010000
+#define MR_DCMD_PD_GET_INFO			0x02020000
+#define MR_DCMD_LD_GET_LIST			0x03010000
+#define MR_DCMD_LD_GET_INFO			0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
 #define MR_DCMD_CLUSTER				0x08000000
 #define MR_DCMD_CLUSTER_RESET_ALL		0x08010100
@@ -767,3 +769,21 @@ struct mfi_ld_details {
 	uint8_t			mld_inq_page83[64];
 	uint8_t			mld_res[16];
 } __packed;
+
+/* physical disk info from MR_DCMD_PD_GET_LIST */
+struct mdi_pd_address {
+	uint16_t		mpa_pd_id;
+	uint16_t		mpa_enc_id;
+	uint8_t			mpa_enc_index;
+	uint8_t			mpa_enc_slot;
+	uint8_t			mpa_scsi_type;
+	uint8_t			mpa_port;
+	u_quad_t		mpa_sas_address[2];
+} __packed;
+
+struct mfi_pd_list {
+	uint32_t		mpl_size;
+	uint32_t		mpl_no_pd;
+	struct mdi_pd_address	mpl_address[1];
+} __packed;
+#define MFI_PD_LIST_SIZE	(256 * sizeof(struct mdi_pd_address) + 8)
