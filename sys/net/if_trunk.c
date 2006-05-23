@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.26 2006/05/20 22:03:24 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.27 2006/05/23 04:35:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,9 @@
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/hash.h>
+
+#include <dev/rndvar.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -42,9 +45,16 @@
 
 #ifdef INET
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip.h>
 #endif
 
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
+
+#include <net/if_vlan_var.h>
 #include <net/if_trunk.h>
 
 SLIST_HEAD(__trhead, trunk_softc) trunk_list;	/* list of trunks */
@@ -97,14 +107,26 @@ int	 trunk_fail_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_fail_input(struct trunk_softc *, struct trunk_port *,
 	    struct ether_header *, struct mbuf *);
 
+/* Loadbalancing */
+int	 trunk_lb_attach(struct trunk_softc *);
+int	 trunk_lb_detach(struct trunk_softc *);
+int	 trunk_lb_port_create(struct trunk_port *);
+void	 trunk_lb_port_destroy(struct trunk_port *);
+int	 trunk_lb_start(struct trunk_softc *, struct mbuf *);
+int	 trunk_lb_input(struct trunk_softc *, struct trunk_port *,
+	    struct ether_header *, struct mbuf *);
+int	 trunk_lb_porttable(struct trunk_softc *, struct trunk_port *);
+const void *trunk_lb_gethdr(struct mbuf *, u_int, u_int, void *);
+
 /* Trunk protocol table */
 static const struct {
 	enum trunk_proto	ti_proto;
 	int			(*ti_attach)(struct trunk_softc *);
 } trunk_protos[] = {
-	{ TRUNK_PROTO_ROUNDROBIN, trunk_rr_attach },
-	{ TRUNK_PROTO_FAILOVER, trunk_fail_attach },
-	{ TRUNK_PROTO_NONE, }
+	{ TRUNK_PROTO_ROUNDROBIN,	trunk_rr_attach },
+	{ TRUNK_PROTO_FAILOVER,		trunk_fail_attach },
+	{ TRUNK_PROTO_LOADBALANCE,	trunk_lb_attach },
+	{ TRUNK_PROTO_NONE,		NULL }
 };
 
 void
@@ -253,7 +275,7 @@ trunk_port_lladdr(struct trunk_port *tp, u_int8_t *lladdr)
 
 	/* Reset the port to update the lladdr */
 	if (ifp->if_flags & IFF_UP) {
-	        int s = splnet();
+		int s = splnet();
 		ifp->if_flags &= ~IFF_UP;
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
 		ifp->if_flags |= IFF_UP;
@@ -1184,4 +1206,201 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 	}
 
 	return (-1);
+}
+
+/*
+ * Loadbalancing
+ */
+
+int
+trunk_lb_attach(struct trunk_softc *tr)
+{
+	struct trunk_lb *lb;
+
+	if ((lb = (struct trunk_lb *)malloc(sizeof(struct trunk_lb),
+	    M_DEVBUF, M_NOWAIT)) == NULL)
+		return (ENOMEM);
+	bzero(lb, sizeof(struct trunk_lb));
+
+	tr->tr_detach = trunk_lb_detach;
+	tr->tr_start = trunk_lb_start;
+	tr->tr_input = trunk_lb_input;
+	tr->tr_port_create = trunk_lb_port_create;
+	tr->tr_port_destroy = trunk_lb_port_destroy;
+
+	lb->lb_key = arc4random();
+	tr->tr_psc = (caddr_t)lb;
+
+	return (0);
+}
+
+int
+trunk_lb_detach(struct trunk_softc *tr)
+{
+	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
+	if (lb != NULL)
+		free(lb, M_DEVBUF);
+	return (0);
+}
+
+int
+trunk_lb_porttable(struct trunk_softc *tr, struct trunk_port *tp)
+{
+	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
+	struct trunk_port *tp_next;
+	int i = 0;
+
+	bzero(&lb->lb_ports, sizeof(lb->lb_ports));
+	SLIST_FOREACH(tp_next, &tr->tr_ports, tp_entries) {
+		if (tp_next == tp)
+			continue;
+		if (i >= TRUNK_MAX_PORTS)
+			return (EINVAL);
+		if (tr->tr_ifflags & IFF_DEBUG)
+			printf("%s: port %s at index %d\n",
+			    tr->tr_ifname, tp_next->tp_ifname, i);
+		lb->lb_ports[i++] = tp_next;
+	}
+
+	return (0);
+}
+
+int
+trunk_lb_port_create(struct trunk_port *tp)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+	return (trunk_lb_porttable(tr, NULL));
+}
+
+void
+trunk_lb_port_destroy(struct trunk_port *tp)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+	trunk_lb_porttable(tr, tp);
+}
+
+const void *
+trunk_lb_gethdr(struct mbuf *m, u_int off, u_int len, void *buf)
+{
+	if (m->m_pkthdr.len < (off + len)) {
+		return (NULL);		
+	} else if (m->m_len < (off + len)) {
+		m_copydata(m, off, len, buf);
+		return (buf);
+	}
+	return (mtod(m, const void *) + off);
+}
+
+int
+trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
+{
+	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
+	struct trunk_port *tp = NULL;
+	u_int16_t etype;
+	struct ifnet *ifp;
+	u_int32_t p = 0;
+	u_int16_t *vlan, vlanbuf[2];
+	int error = 0, idx, off;
+	struct ether_header *eh;
+#ifdef INET
+	struct ip *ip, ipbuf;
+#endif
+#ifdef INET6
+	struct ip6_hdr *ip6, ip6buf;
+#endif
+
+	off = sizeof(*eh);
+	if (m->m_len < off)
+		goto send;
+	eh = mtod(m, struct ether_header *);
+	etype = ntohs(eh->ether_type);
+	p = hash32_buf(&eh->ether_shost, ETHER_ADDR_LEN, lb->lb_key);
+	p = hash32_buf(&eh->ether_dhost, ETHER_ADDR_LEN, p);
+
+	/* Special handling for encapsulating VLAN frames */
+	if (etype == ETHERTYPE_VLAN) {
+		if ((vlan = (u_int16_t *)
+		    trunk_lb_gethdr(m, off, EVL_ENCAPLEN, &vlanbuf)) == NULL) {
+			if (m == NULL)
+				goto merr;
+			goto portidx;
+		}
+		p = hash32_buf(vlan, sizeof(*vlan), p);
+		etype = ntohs(vlan[1]);
+		off += EVL_ENCAPLEN;
+	}
+
+	switch (etype) {
+#ifdef INET
+	case ETHERTYPE_IP:
+		if ((ip = (struct ip *)
+		    trunk_lb_gethdr(m, off, sizeof(*ip), &ipbuf)) == NULL) {
+			if (m == NULL)
+				goto merr;
+			goto portidx;
+		}
+		p = hash32_buf(&ip->ip_src, sizeof(struct in_addr), p);
+		p = hash32_buf(&ip->ip_dst, sizeof(struct in_addr), p);
+		break;
+#endif
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		if ((ip6 = (struct ip6_hdr *)
+		    trunk_lb_gethdr(m, off, sizeof(*ip6), &ip6buf)) == NULL) {
+			if (m == NULL)
+				goto merr;
+			goto portidx;
+		}
+		p = hash32_buf(&ip6->ip6_src, sizeof(struct in6_addr), p);
+		p = hash32_buf(&ip6->ip6_dst, sizeof(struct in6_addr), p);
+		break;
+#endif
+	}
+
+ portidx:
+	/* Finally get the physical port */
+	if ((idx = p % tr->tr_count) >= TRUNK_MAX_PORTS)
+		return (EINVAL);
+	tp = lb->lb_ports[idx];
+
+	if (tr->tr_ifflags & IFF_DEBUG)	
+		printf("%s: %d: port %u\n", __func__, __LINE__, p);
+
+ send:
+	/*
+	 * Check the port's link state. This will return the next active
+	 * port if the link is down or the port is NULL.
+	 */
+	if ((tp = trunk_link_active(tr, tp)) == NULL)
+		return (ENOENT);
+
+	/* Send mbuf */
+	ifp = tp->tp_if;
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error)
+		return (error);
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+
+	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
+
+	return (error);
+
+ merr:
+	m = NULL;
+	return (ENOBUFS);
+}
+
+int
+trunk_lb_input(struct trunk_softc *tr, struct trunk_port *tp,
+    struct ether_header *eh, struct mbuf *m)
+{
+	struct ifnet *ifp = &tr->tr_ac.ac_if;
+
+	/* Just pass in the packet to our trunk device */
+	m->m_pkthdr.rcvif = ifp;
+
+	return (0);
 }

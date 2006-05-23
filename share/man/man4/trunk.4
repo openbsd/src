@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.12 2006/05/20 05:46:21 reyk Exp $
+.\"	$OpenBSD: trunk.4,v 1.13 2006/05/23 04:35:52 reyk Exp $
 .\"
 .\" Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -48,25 +48,34 @@ The driver currently supports the trunk protocols
 .Ic roundrobin
 (the default),
 .Ic failover ,
+.Ic loadbalance ,
 and
 .Ic none .
-The
-.Ic roundrobin
-protocol distributes outgoing traffic using a round-robin scheduler
-through all active ports and accepts incoming traffic from
-any active port;
-the
-.Ic failover
-protocol sends outgoing and receives incoming traffic only through the
-master or the next active port.
+The protocols will choose the active ports for outgoing traffic
+and if they accept incoming traffic from specific ports.
 The interface link state is used to validate if the port is active or
 not.
-The
-.Ic none
-protocol is intended to do nothing: it disables any traffic without
+.Pp
+.Bl -tag -width loadbalance
+.It Ic roundrobin
+Distributes outgoing traffic using a round-robin scheduler
+through all active ports and accepts incoming traffic from
+any active port.
+.It Ic failover
+Sends and receives traffic only through the master or the next active
+port.
+.It Ic loadbalance
+Balances outgoing traffic across the active ports based on hashed
+protocol header information and accepts incoming traffic from
+any active port.
+The hash includes the Ethernet source and destination address, and, if
+available, the VLAN tag, and the IP source and destination address.
+.It Ic none
+This protocol is intended to do nothing: it disables any traffic without
 disabling the
 .Nm
 interface itself.
+.El
 .Pp
 The configuration can be done at runtime or by setting up a
 .Xr hostname.if 5
