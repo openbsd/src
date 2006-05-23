@@ -676,7 +676,7 @@ lglob(filename)
 	/*
 	 * Overwrite the final trailing space with a null terminator.
 	 */
-	*--p = '\0';
+	gfilename[strlen(gfilename) - 1] = '\0';
 	GLOB_LIST_DONE(list);
 }
 #else
