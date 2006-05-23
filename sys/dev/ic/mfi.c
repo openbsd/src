@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.52 2006/05/23 00:44:41 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.53 2006/05/23 03:55:41 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1333,7 +1333,7 @@ done:
 int
 mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 {
-	int			i, rv = EINVAL;
+	int			rv = EINVAL;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_disk %#x\n",
 	    DEVNAME(sc), bd->bd_diskid);
