@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.41 2005/11/30 11:18:27 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.42 2006/05/23 19:19:43 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -204,13 +204,17 @@ The number of archives to be kept besides the log file itself.
 When the size of the log file (in kilobytes) reaches this point, the log
 file is trimmed as described above.
 If this field is replaced by an
-.Ql \&* ,
+.Ql * ,
+or set to
+.Ql 0 ,
 then the size of
 the log file is not taken into account when determining when to trim the
 log file.
 By default, files smaller than 512 bytes are not rotated unless the
 .Sq B
-(binary) flag is set.
+(binary) flag is set or the
+.Fl F
+option is specified.
 This prevents
 .Nm
 from rotating files consisting solely of a message indicating
@@ -406,7 +410,7 @@ The command must be enclosed in double quotes
 .Pq Ql \&" .
 The empty string,
 .Ql \&"\&" ,
-can use used to prevent
+can be used to prevent
 .Nm
 from sending a signal or running a command.
 You cannot specify both a command and a PID file.
