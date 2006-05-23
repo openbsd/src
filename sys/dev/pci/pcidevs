@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1068 2006/05/17 19:53:07 brad Exp $
+$OpenBSD: pcidevs,v 1.1069 2006/05/23 04:53:09 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2199,7 +2199,8 @@ product MYLEX ACCELERAID	0x0050	AcceleRAID
 product MYLEX EXTREMERAID	0xba56	eXtremeRAID
 
 /* Myricom */
-product	MYRICOM LANAI_92	0x8043	Myrinet LANai 9.2
+product MYRICOM Z8E		0x0008	Z8E
+product MYRICOM LANAI_92	0x8043	Myrinet LANai 9.2
 
 /* Myson Century products */
 product MYSON MTD800		0x0800	MTD800 10/100
