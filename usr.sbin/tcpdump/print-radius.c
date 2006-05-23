@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.7 2003/11/08 19:17:30 jmc Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.8 2006/05/23 21:57:15 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -237,7 +237,7 @@ static void r_print_hex(int code, int len, const u_char *data) {
 void radius_print(register const u_char *data, u_int len) {
 	const struct radius_header *rhp;
 	const u_char *pp;
-	int i, l, ac, al;
+	int first, l, ac, al;
 
 	if(len < sizeof(struct radius_header)) {
 		fputs(" [|radius]", stdout);
@@ -266,9 +266,12 @@ void radius_print(register const u_char *data, u_int len) {
 	else
 		pp = data + RADFIXEDSZ;
 
-	i = 0; /* XXX I don't see what 'i' is supposed to do here. */
+	first = 1;
 	while(l) {
-		if(!i) fputc(',', stdout); i = 0;
+		if(!first)
+			fputc(',', stdout);
+		else
+			first = 0;
 
 		ac = *pp++;
 		al = *pp++;
