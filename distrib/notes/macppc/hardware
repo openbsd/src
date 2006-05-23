@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.71 2006/05/23 19:24:51 brad Exp $
+dnl	$OpenBSD: hardware,v 1.72 2006/05/23 19:46:10 jmc Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -266,6 +266,7 @@ Supported devices {:-include-:}:
 			KTX-9130TX 10/100 Fast Ethernet
 			Longshine LCS-8038TX-R
 			NDC NE100TX-E
+			Netgear FA311 v2
 			Netronix EA-1210 Net Ether 10/100
 			Nortel BayStack 21
 			OvisLink LEF-8129TX, LEF-8139TX

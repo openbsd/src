@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.234 2006/05/23 19:24:51 brad Exp $
+dnl	$OpenBSD: hardware,v 1.235 2006/05/23 19:46:10 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -460,6 +460,7 @@ Supported hardware {:-include-:}:
 		    KTX-9130TX 10/100 Fast Ethernet
 		    Longshine LCS-8038TX-R
 		    NDC NE100TX-E
+		    Netgear FA311 v2
 		    Netronix EA-1210 Net Ether 10/100
 		    Nortel BayStack 21
 		    OvisLink LEF-8129TX, LEF-8139TX
