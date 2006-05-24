@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.16 2006/05/20 13:31:00 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.17 2006/05/24 11:44:35 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -845,108 +845,108 @@ static const struct fq_info C7M_795[] = {
 
 /* Convert MHz and mV into IDs for passing to the MSR. */
 #define ID16(MHz, mV, bus_clk) \
-	((((MHz + 50) * 100 / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
+	((((MHz * 100 + 50) / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
 #define ID32(MHz_hi, mV_hi, MHz_lo, mV_lo, bus_clk) \
 	((ID16(MHz_lo, mV_lo, bus_clk) << 16) | (ID16(MHz_hi, mV_hi, bus_clk)))
 
 struct fqlist {
-	int vendor;
-	u_int32_t id32;
-	u_int32_t bus_clk;
+	int vendor : 5;
+	unsigned bus_clk : 1;
+	unsigned n : 5;
 	const struct fq_info *table;
-	unsigned n;
 };
 
-#define ENTRY(ven, tab, zhi, vhi, zlo, vlo, bus_clk) \
-	{ CPUVENDOR_##ven, ID32(zhi, vhi, zlo, vlo, bus_clk), bus_clk, tab, \
-	sizeof(tab) / sizeof((tab)[0]) }
+#define NELEM(x) (sizeof(x) / sizeof((x)[0]))
 
-#define BUS100 10000
-#define BUS133 13333
+#define ENTRY(ven, bus_clk, tab) \
+	{ CPUVENDOR_##ven, bus_clk, NELEM(tab), tab }
+
+#define BUS100 0
+#define BUS133 1
+
+#define BUS_CLK(fqp) ((fqp)->bus_clk ? 13333 : 10000)
 
 static const struct fqlist est_cpus[] = {
-	ENTRY(INTEL, pm130_900_ulv,	 900, 1004, 600, 844, BUS100),
-	ENTRY(INTEL, pm130_1000_ulv,	1000, 1004, 600, 844, BUS100),
-	ENTRY(INTEL, pm130_1100_ulv,	1100, 1004, 600, 844, BUS100),
-	ENTRY(INTEL, pm130_1100_lv,	1100, 1180, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1200_lv,	1200, 1180, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1300_lv,	1300, 1180, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1300,	1300, 1388, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1400,	1400, 1484, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1500,	1500, 1484, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1600,	1600, 1484, 600, 956, BUS100),
-	ENTRY(INTEL, pm130_1700,	1700, 1484, 600, 956, BUS100),
+	ENTRY(INTEL, BUS100, pm130_900_ulv),
+	ENTRY(INTEL, BUS100, pm130_1000_ulv),
+	ENTRY(INTEL, BUS100, pm130_1100_ulv),
+	ENTRY(INTEL, BUS100, pm130_1100_lv),
+	ENTRY(INTEL, BUS100, pm130_1200_lv),
+	ENTRY(INTEL, BUS100, pm130_1300_lv),
+	ENTRY(INTEL, BUS100, pm130_1300),
+	ENTRY(INTEL, BUS100, pm130_1400),
+	ENTRY(INTEL, BUS100, pm130_1500),
+	ENTRY(INTEL, BUS100, pm130_1600),
+	ENTRY(INTEL, BUS100, pm130_1700),
 
-	ENTRY(INTEL, pm90_n723,		1000,  940, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733,		1100,  940, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733g,	1100,  956, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733h,	1100,  940, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733i,	1100,  924, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733j,	1100,  908, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733k,	1100,  892, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n733l,	1100,  876, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n753g,	1200,  956, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n753h,	1200,  940, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n753i,	1200,  924, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n753j,	1200,  908, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n753k,	1200,  892, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n753l,	1200,  876, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n773g,	1300,  956, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n773h,	1300,  940, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n773i,	1300,  924, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n773j,	1300,  908, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n773k,	1300,  892, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n773l,	1300,  876, 600, 812, BUS100),
-	ENTRY(INTEL, pm90_n738,		1400, 1116, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n758,		1500, 1116, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n778,		1600, 1116, 600, 988, BUS100),
-
-	ENTRY(INTEL, pm90_n710,		1400, 1340, 600, 988, BUS133),
-	ENTRY(INTEL, pm90_n715a,	1500, 1340, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n715b,	1500, 1324, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n715c,	1500, 1308, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n715d,	1500, 1276, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n725a,	1600, 1340, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n725b,	1600, 1324, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n725c,	1600, 1308, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n725d,	1600, 1276, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n730,		1600, 1308, 800, 988, BUS133),
-	ENTRY(INTEL, pm90_n735a,	1700, 1340, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n735b,	1700, 1324, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n735c,	1700, 1308, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n735d,	1700, 1276, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n740,		1733, 1356, 800, 988, BUS133),
-	ENTRY(INTEL, pm90_n745a,	1800, 1340, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n745b,	1800, 1324, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n745c,	1800, 1308, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n745d,	1800, 1276, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n750,		1867, 1308, 800, 988, BUS133),
-	ENTRY(INTEL, pm90_n755a,	2000, 1340, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n755b,	2000, 1324, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n755c,	2000, 1308, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n755d,	2000, 1276, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n760,		2000, 1356, 800, 988, BUS133),
-	ENTRY(INTEL, pm90_n765a,	2100, 1340, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n765b,	2100, 1324, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n765c,	2100, 1308, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n765e,	2100, 1356, 600, 988, BUS100),
-	ENTRY(INTEL, pm90_n770,		2133, 1551, 600, 988, BUS133),
-
-	ENTRY(VIA,   C7M_770_ULV,	1000,  844, 400, 796, BUS100),
-	ENTRY(VIA,   C7M_779_ULV,	1000,  796, 400, 796, BUS100),
-	ENTRY(VIA,   C7M_772_ULV,	1200,  844, 400, 796, BUS100),
-	ENTRY(VIA,   C7M_771,		1200,  860, 400, 844, BUS100),
-	ENTRY(VIA,   C7M_775_ULV,	1500,  956, 400, 796, BUS100),
-	ENTRY(VIA,   C7M_754,		1500, 1004, 400, 844, BUS100),
-	ENTRY(VIA,   C7M_764,		1600, 1084, 400, 844, BUS100),
-	ENTRY(VIA,   C7M_765,		1600, 1084, 533, 844, BUS133),
-	ENTRY(VIA,   C7M_784,		1800, 1148, 400, 844, BUS100),
-	ENTRY(VIA,   C7M_785,		1867, 1148, 533, 844, BUS133),
-	ENTRY(VIA,   C7M_794,		2000, 1148, 400, 844, BUS100),
-	ENTRY(VIA,   C7M_795,		2000, 1148, 533, 844, BUS133),
+	ENTRY(INTEL, BUS100, pm90_n723),
+	ENTRY(INTEL, BUS100, pm90_n733),
+	ENTRY(INTEL, BUS100, pm90_n733g),
+	ENTRY(INTEL, BUS100, pm90_n733h),
+	ENTRY(INTEL, BUS100, pm90_n733i),
+	ENTRY(INTEL, BUS100, pm90_n733j),
+	ENTRY(INTEL, BUS100, pm90_n733k),
+	ENTRY(INTEL, BUS100, pm90_n733l),
+	ENTRY(INTEL, BUS100, pm90_n753g),
+	ENTRY(INTEL, BUS100, pm90_n753h),
+	ENTRY(INTEL, BUS100, pm90_n753i),
+	ENTRY(INTEL, BUS100, pm90_n753j),
+	ENTRY(INTEL, BUS100, pm90_n753k),
+	ENTRY(INTEL, BUS100, pm90_n753l),
+	ENTRY(INTEL, BUS100, pm90_n773g),
+	ENTRY(INTEL, BUS100, pm90_n773h),
+	ENTRY(INTEL, BUS100, pm90_n773i),
+	ENTRY(INTEL, BUS100, pm90_n773j),
+	ENTRY(INTEL, BUS100, pm90_n773k),
+	ENTRY(INTEL, BUS100, pm90_n773l),
+	ENTRY(INTEL, BUS100, pm90_n738),
+	ENTRY(INTEL, BUS100, pm90_n758),
+	ENTRY(INTEL, BUS100, pm90_n778),
+		              		        	      
+	ENTRY(INTEL, BUS133, pm90_n710),
+	ENTRY(INTEL, BUS100, pm90_n715a),
+	ENTRY(INTEL, BUS100, pm90_n715b),
+	ENTRY(INTEL, BUS100, pm90_n715c),
+	ENTRY(INTEL, BUS100, pm90_n715d),
+	ENTRY(INTEL, BUS100, pm90_n725a),
+	ENTRY(INTEL, BUS100, pm90_n725b),
+	ENTRY(INTEL, BUS100, pm90_n725c),
+	ENTRY(INTEL, BUS100, pm90_n725d),
+	ENTRY(INTEL, BUS133, pm90_n730),
+	ENTRY(INTEL, BUS100, pm90_n735a),
+	ENTRY(INTEL, BUS100, pm90_n735b),
+	ENTRY(INTEL, BUS100, pm90_n735c),
+	ENTRY(INTEL, BUS100, pm90_n735d),
+	ENTRY(INTEL, BUS133, pm90_n740),
+	ENTRY(INTEL, BUS100, pm90_n745a),
+	ENTRY(INTEL, BUS100, pm90_n745b),
+	ENTRY(INTEL, BUS100, pm90_n745c),
+	ENTRY(INTEL, BUS100, pm90_n745d),
+	ENTRY(INTEL, BUS133, pm90_n750),
+	ENTRY(INTEL, BUS100, pm90_n755a),
+	ENTRY(INTEL, BUS100, pm90_n755b),
+	ENTRY(INTEL, BUS100, pm90_n755c),
+	ENTRY(INTEL, BUS100, pm90_n755d),
+	ENTRY(INTEL, BUS133, pm90_n760),
+	ENTRY(INTEL, BUS100, pm90_n765a),
+	ENTRY(INTEL, BUS100, pm90_n765b),
+	ENTRY(INTEL, BUS100, pm90_n765c),
+	ENTRY(INTEL, BUS100, pm90_n765e),
+	ENTRY(INTEL, BUS133, pm90_n770),
+		              		        	      
+	ENTRY(VIA,   BUS100, C7M_770_ULV),
+	ENTRY(VIA,   BUS100, C7M_779_ULV),
+	ENTRY(VIA,   BUS100, C7M_772_ULV),
+	ENTRY(VIA,   BUS100, C7M_771),
+	ENTRY(VIA,   BUS100, C7M_775_ULV),
+	ENTRY(VIA,   BUS100, C7M_754),
+	ENTRY(VIA,   BUS100, C7M_764),
+	ENTRY(VIA,   BUS133, C7M_765),
+	ENTRY(VIA,   BUS100, C7M_784),
+	ENTRY(VIA,   BUS133, C7M_785),
+	ENTRY(VIA,   BUS100, C7M_794),
+	ENTRY(VIA,   BUS133, C7M_795),
 };
-
-#define NESTCPUS	  (sizeof(est_cpus) / sizeof(est_cpus[0]))
 
 
 #define MSR2MHZ(msr, bus) \
@@ -965,6 +965,7 @@ est_init(const char *cpu_device, int vendor)
 	int i, mhz, mv, low, high;
 	u_int32_t id;
 	u_int64_t msr;
+	const struct fqlist *fql;
 
 	if (setperf_prio > 3)
 		return;
@@ -978,9 +979,13 @@ est_init(const char *cpu_device, int vendor)
 	 * Find an entry which matches (vendor, id32)
 	 */
 	id = msr >> 32;
-	for (i = 0; i < NESTCPUS; i++) {
-		if (est_cpus[i].vendor == vendor && est_cpus[i].id32 == id) {
-			est_fqlist = &est_cpus[i];
+	for (i = 0; i < NELEM(est_cpus); i++) {
+		fql = &est_cpus[i];
+		if (vendor == fql->vendor &&
+		    id == ID32(fql->table[0].mhz, fql->table[0].mv,
+		    fql->table[fql->n - 1].mhz, fql->table[fql->n - 1].mv,
+		    BUS_CLK(fql))) {
+			est_fqlist = fql;
 			break;
 		}
 	}
@@ -990,7 +995,7 @@ est_init(const char *cpu_device, int vendor)
 		return;
 	}
 
-	mhz = MSR2MHZ(msr, est_fqlist->bus_clk);
+	mhz = MSR2MHZ(msr, BUS_CLK(est_fqlist));
 	mv = MSR2MV(msr);
 	printf("%s: Enhanced SpeedStep %d MHz (%d mV)", cpu_device, mhz, mv);
 
@@ -999,7 +1004,7 @@ est_init(const char *cpu_device, int vendor)
 	 */
 	for (i = est_fqlist->n - 1; i >= 0; i--) {
 		if (ID16(est_fqlist->table[i].mhz, est_fqlist->table[i].mv,
-		    est_fqlist->bus_clk) == (msr & 0xffff))
+		    BUS_CLK(est_fqlist)) == (msr & 0xffff))
 			break;
 	}
 	if (i < 0) {
@@ -1040,7 +1045,7 @@ est_setperf(int level)
 			break;
 	msr = (rdmsr(MSR_PERF_CTL) & ~0xffffULL) |
 	    ID16(est_fqlist->table[i].mhz, est_fqlist->table[i].mv,
-	    est_fqlist->bus_clk);
+	    BUS_CLK(est_fqlist));
 	wrmsr(MSR_PERF_CTL, msr);
 	pentium_mhz = est_fqlist->table[i].mhz;
 
