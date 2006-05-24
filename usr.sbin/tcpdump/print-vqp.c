@@ -223,10 +223,12 @@ vqp_print(const u_char *bp, u_int len)
 
 	dcount = p->dcount;
 	while (vflag && dcount > 0) {
+		u_int type, length;
+
 		TCHECK2(bp[0], 6);
-		u_int type = EXTRACT_32BITS(bp);
+		type = EXTRACT_32BITS(bp);
 		bp += 4;
-		u_int length = EXTRACT_16BITS(bp);
+		length = EXTRACT_16BITS(bp);
 		bp += 2;
 		TCHECK2(bp[0], length);
 		vqp_print_type(type, length, bp);
