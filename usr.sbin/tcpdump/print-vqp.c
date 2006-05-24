@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-vqp.c,v 1.3 2006/05/24 16:29:31 stevesk Exp $	*/
+
 /*
  * Copyright (c) 2006 Kevin Steves <stevesk@openbsd.org>
  *
