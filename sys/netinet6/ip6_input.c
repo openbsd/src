@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.64 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.65 2006/05/24 18:43:10 thib Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1048,7 +1048,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:
-				if (!in6p->in6p_flags & IN6P_DSTOPTS)
+				if (!(in6p->in6p_flags & IN6P_DSTOPTS))
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
@@ -1058,7 +1058,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				break;
 
 			case IPPROTO_ROUTING:
-				if (!in6p->in6p_flags & IN6P_RTHDR)
+				if (!(in6p->in6p_flags & IN6P_RTHDR))
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
