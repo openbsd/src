@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.20 2006/05/25 00:21:31 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.21 2006/05/25 03:01:38 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -762,10 +762,23 @@ struct mfi_ld_cfg {
 	struct mfi_ld_span	mlc_span[MFI_MAX_SPAN];
 } __packed;
 
+struct mfi_ld_progress {
+	uint32_t		mlp_in_prog;
+#define MFI_LD_PROG_CC		0x01
+#define MFI_LD_PROG_BGI		0x02
+#define MFI_LD_PROG_FGI		0x04
+#define MFI_LD_PROG_RECONSTRUCT	0x08
+	struct mfi_progress	mlp_cc;
+	struct mfi_progress	mlp_bgi;
+	struct mfi_progress	mlp_fgi;
+	struct mfi_progress	mlp_reconstruct;
+	struct mfi_progress	mlp_res[4];
+} __packed;
+
 struct mfi_ld_details {
 	struct mfi_ld_cfg	mld_cfg;
 	u_quad_t		mld_size;
-	struct mfi_progress	mld_progress;
+	struct mfi_ld_progress	mld_progress;
 	uint16_t		mld_clust_own_id;
 	uint8_t			mld_res1;
 	uint8_t			mld_res2;
