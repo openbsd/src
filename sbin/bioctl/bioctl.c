@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.43 2006/05/25 04:28:26 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.44 2006/05/25 22:26:03 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -345,6 +345,9 @@ bio_inq(char *name)
 				break;
 			case BIOC_SDUNUSED:
 				status = BIOC_SDUNUSED_S;
+				break;
+			case BIOC_SDSCRUB:
+				status = BIOC_SDSCRUB_S;
 				break;
 			case BIOC_SDINVALID:
 			default:
