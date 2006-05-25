@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.43 2005/11/01 14:18:14 aaron Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.44 2006/05/25 22:42:22 miod Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -275,6 +275,11 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
 	if (rv != KERN_SUCCESS)
 		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
+
+#ifdef PMAP_UAREA
+	/* Tell the pmap this is a u-area mapping */
+	PMAP_UAREA((vaddr_t)up);
+#endif
 
 	/*
 	 * p_stats currently points at a field in the user struct.  Copy
