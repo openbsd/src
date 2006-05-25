@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.54 2006/05/25 00:21:31 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.55 2006/05/25 02:15:47 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1333,19 +1333,23 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	struct mfi_conf		*cfg;
 	struct mfi_array	*ar;
 	struct mfi_ld_cfg	*ld;
+	struct mfi_pd_details	*pd;
+	struct scsi_inquiry_data *inqbuf;
+	char			vend[8+16+4+1];
 	int			i, rv = EINVAL;
 	int			arr, vol, disk;
 	uint32_t		size;
+	uint8_t			mbox[MFI_MBOX_SIZE];
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_disk %#x\n",
 	    DEVNAME(sc), bd->bd_diskid);
 
-	memset(&cfg, 0, sizeof cfg);
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
 
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
 	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
-		goto done;
+		goto freeme;
 
 	size = cfg->mfc_size;
 	free(cfg, M_DEVBUF);
@@ -1381,7 +1385,6 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	arr += bd->bd_diskid / ld[vol].mlc_parm.mpa_no_drv_per_span;
 
 	bd->bd_target = ar[arr].pd[disk].mar_enc_slot;
-
 	switch (ar[arr].pd[disk].mar_pd_state){
 	case MFI_PD_UNCONFIG_GOOD:
 		bd->bd_status = BIOC_SDUNUSED;
@@ -1414,11 +1417,33 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	}
 
+	/* get the remaining fields */
+	*((uint16_t *)&mbox) = ar[arr].pd[disk].mar_pd.mfp_id;
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
+	    sizeof *pd, pd, mbox))
+		goto freeme;
+
+	bd->bd_size = pd->mpd_size;
+
+	/* if pd->mpd_enc_idx is 0 then it is not in an enclosure */
+	if (pd->mpd_enc_idx)
+		bd->bd_channel = pd->mpd_enc_idx - 1; /* fw numbers ch from 1 */
+	else
+		bd->bd_channel = 0;
+
+	inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;
+	memcpy(vend, inqbuf->vendor, sizeof vend - 1);
+	vend[sizeof vend - 1] = '\0';
+	strlcpy(bd->bd_vendor, vend, sizeof(bd->bd_vendor));
+
+	/* XXX find a way to retrieve serial nr from drive */
+	/* XXX find a way to get bd_procdev */
+
 	rv = 0;
 freeme:
+	free(pd, M_DEVBUF);
 	free(cfg, M_DEVBUF);
-	cfg = NULL;
-done:
+
 	return (rv);
 }
 
