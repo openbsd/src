@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.62 2006/05/16 23:43:16 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.63 2006/05/25 03:43:36 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.62 2006/05/16 23:43:16 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.63 2006/05/25 03:43:36 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -1095,8 +1095,7 @@ SSL_vprintf(SSL *ssl, const char *fmt, va_list ap)
 char *
 SSL_readline(SSL *ssl, size_t *lenp)
 {
-	int i;
-	size_t len;
+	size_t i, len;
 	char *buf, *q, c;
 
 	len = 128;
