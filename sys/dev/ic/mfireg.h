@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.19 2006/05/23 00:49:26 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.20 2006/05/25 00:21:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -97,6 +97,7 @@
 #define MR_DCMD_LD_GET_LIST			0x03010000
 #define MR_DCMD_LD_GET_INFO			0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
+#define MD_DCMD_CONF_GET			0x04010000
 #define MR_DCMD_CLUSTER				0x08000000
 #define MR_DCMD_CLUSTER_RESET_ALL		0x08010100
 #define MR_DCMD_CLUSTER_RESET_LD		0x08010200
@@ -220,6 +221,7 @@ typedef enum {
 
 /* driver definitions */
 #define MFI_MAX_PD_CHANNELS			2
+#define MFI_MAX_PD_ARRAY			32
 #define MFI_MAX_LD_CHANNELS			2
 #define MFI_MAX_CHANNELS	(MFI_MAX_PD_CHANNELS + MFI_MAX_LD_CHANNELS)
 #define MFI_MAX_CHANNEL_DEVS			128
@@ -227,6 +229,7 @@ typedef enum {
 #define MFI_MAX_LUN				8
 #define MFI_MAX_LD				64
 #define MFI_MAX_SPAN				8
+#define MFI_MAX_ARRAY_DEDICATED			16
 
 /* sense buffer */
 struct mfi_sense {
@@ -787,3 +790,119 @@ struct mfi_pd_list {
 	struct mfi_pd_address	mpl_address[1];
 } __packed;
 #define MFI_PD_LIST_SIZE	(256 * sizeof(struct mfi_pd_address) + 8)
+
+struct mfi_pd {
+	uint16_t		mfp_id;
+	uint16_t		mfp_seq;
+} __packed;
+
+struct mfi_pd_progress {
+	uint32_t		mfp_in_prog;
+#define MFI_PD_PROG_RBLD	0x01
+#define MFI_PD_PROG_PR		0x02
+#define MFI_PD_PROG_CLEAR	0x04
+	struct mfi_progress	mfp_rebuild;
+	struct mfi_progress	mfp_patrol_read;
+	struct mfi_progress	mfp_clear;
+	struct mfi_progress	mfp_res[4];
+} __packed;
+
+struct mfi_pd_details {
+	struct mfi_pd		mpd_pd;
+	uint8_t			mpd_inq_data[96];
+	uint8_t			mpd_inq_page83[64];
+	uint8_t			mpd_no_support;
+	uint8_t			mpd_scsy_type;
+	uint8_t			mpd_port;
+	uint8_t			mpd_speed;
+	uint32_t		mpd_mediaerr_cnt;
+	uint32_t		mpd_othererr_cnt;
+	uint32_t		mpd_predfail_cnt;
+	uint32_t		mpd_last_pred_event;
+	uint16_t		mpd_fw_state;
+	uint8_t			mpd_rdy_for_remove;
+	uint8_t			mpd_link_speed;
+	uint32_t		mpd_ddf_state;
+#define MFI_DDF_GUID_FORCED	0x01
+#define MFI_DDF_PART_OF_VD	0x02
+#define MFI_DDF_GLOB_HOTSPARE	0x04
+#define MFI_DDF_HOTSPARE	0x08
+#define MFI_DDF_FOREIGN		0x10
+#define MFI_DDF_TYPE_MASK	0xf000
+#define MFI_DDF_TYPE_UNKNOWN	0x0000
+#define MFI_DDF_TYPE_PAR_SCSI	0x1000
+#define MFI_DDF_TYPE_SAS	0x2000
+#define MFI_DDF_TYPE_SATA	0x3000
+#define MFI_DDF_TYPE_FC		0x4000
+	struct {
+		uint8_t		mpp_cnt;
+		uint8_t		mpp_severed;
+		uint8_t		mpp_res[6];
+		u_quad_t	mpp_sas_addr[4];
+	} __packed mpd_path;
+	u_quad_t		mpd_size;
+	u_quad_t		mpd_no_coerce_size;
+	u_quad_t		mpd_coerce_size;
+	uint16_t		mpd_enc_id;
+	uint8_t			mpd_enc_idx;
+	uint8_t			mpd_slot;
+	struct mfi_pd_progress	mpd_progress;
+	uint8_t			mpd_bblock_full;
+	uint8_t			mpd_unusable;
+	uint8_t			mpd_res[218]; /* size is 512 */
+} __packed;
+
+/* array configuration from MD_DCMD_CONF_GET */
+struct mfi_array {
+	u_quad_t		mar_smallest_pd;
+	uint8_t			mar_no_disk;
+	uint8_t			mar_res1;
+	uint16_t		mar_array_ref;
+	uint8_t			mar_res2[20];
+	struct {
+		struct mfi_pd	mar_pd;
+		uint16_t	mar_pd_state;
+#define MFI_PD_UNCONFIG_GOOD	0x00
+#define MFI_PD_UNCONFIG_BAD	0x01
+#define MFI_PD_HOTSPARE		0x02
+#define MFI_PD_OFFLINE		0x10
+#define MFI_PD_FAILED		0x11
+#define MFI_PD_REBUILD		0x14
+#define MFI_PD_ONLINE		0x18
+		uint8_t		mar_enc_pd;
+		uint8_t		mar_enc_slot;
+	} pd[MFI_MAX_PD_ARRAY];
+} __packed;
+
+struct mfi_hotspare {
+	struct mfi_pd	mhs_pd;
+	uint8_t		mhs_type;
+#define MFI_PD_HS_DEDICATED	0x01
+#define MFI_PD_HS_REVERTIBLE	0x02
+#define MFI_PD_HS_ENC_AFFINITY	0x04
+	uint8_t		mhs_res[2];
+	uint8_t		mhs_array_max;
+	uint16_t	mhs_array_ref[MFI_MAX_ARRAY_DEDICATED];
+} __packed;
+
+struct mfi_conf {
+	uint32_t		mfc_size;
+	uint16_t		mfc_no_array;
+	uint16_t		mfc_array_size;
+	uint16_t		mfc_no_ld;
+	uint16_t		mfc_ld_size;
+	uint16_t		mfc_no_hs;
+	uint16_t		mfc_hs_size;
+	uint8_t			mfc_res[16];
+	/*
+	 * XXX this is a ridiculous hack and does not reflect reality
+	 * Structures are actually indexed and therefore need pointer
+	 * math to reach.  We need the size of this structure first so
+	 * call it with the size of this structure and then use the returned
+	 * values to allocate memory and do the transfer of the whole structure
+	 * then calculate pointers to each of these structures.
+	 */
+	struct mfi_array	mfc_array[1];
+	struct mfi_ld_cfg	mfc_ld[1];
+	struct mfi_hotspare	mfc_hs[1];
+} __packed;

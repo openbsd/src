@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.24 2006/05/23 00:43:57 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.25 2006/05/25 00:21:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -125,7 +125,6 @@ struct mfi_softc {
 	struct mfi_ctrl_info	sc_info;
 	struct mfi_ld_list	sc_ld_list;
 	struct mfi_ld_details	sc_ld_details;
-	struct mfi_pd_list	*sc_pd_list;
 
 	/* all commands */
 	struct mfi_ccb		*sc_ccb;

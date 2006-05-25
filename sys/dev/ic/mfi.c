@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.53 2006/05/23 03:55:41 deraadt Exp $ */
+/* $OpenBSD: mfi.c,v 1.54 2006/05/25 00:21:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -671,9 +671,6 @@ mfi_attach(struct mfi_softc *sc)
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
-	/* memory for physical disk map */
-	sc->sc_pd_list = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
-
 	return (0);
 noinit:
 	mfi_freemem(sc, sc->sc_sense);
@@ -1333,15 +1330,94 @@ done:
 int
 mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 {
-	int			rv = EINVAL;
+	struct mfi_conf		*cfg;
+	struct mfi_array	*ar;
+	struct mfi_ld_cfg	*ld;
+	int			i, rv = EINVAL;
+	int			arr, vol, disk;
+	uint32_t		size;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_disk %#x\n",
 	    DEVNAME(sc), bd->bd_diskid);
 
-	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, sc->sc_pd_list, NULL))
+	memset(&cfg, 0, sizeof cfg);
+
+	/* send single element command to retrieve size for full structure */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
 		goto done;
+
+	size = cfg->mfc_size;
+	free(cfg, M_DEVBUF);
+
+	/* memory for read config */
+	cfg = malloc(size, M_DEVBUF, M_WAITOK);
+	memset(cfg, 0, size);
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+		goto freeme;
+
+	ar = cfg->mfc_array;
+
+	/* calculate offset to ld structure */
+	ld = (struct mfi_ld_cfg *)(
+	    ((uint8_t *)cfg) + offsetof(struct mfi_conf, mfc_array) +
+	    cfg->mfc_array_size * cfg->mfc_no_array);
+
+	vol = bd->bd_volid;
+
+	if (vol > cfg->mfc_no_ld) {
+		/* XXX do hotspares */
+		goto freeme;
+	}
+
+	/* find corresponding array for ld */
+	for (i = 0, arr = 0; i < vol; i++)
+		arr += ld[i].mlc_parm.mpa_span_depth;
+
+	/* offset disk into pd list */
+	disk = bd->bd_diskid % ld[vol].mlc_parm.mpa_no_drv_per_span;
+
+	/* offset array index into the next spans */
+	arr += bd->bd_diskid / ld[vol].mlc_parm.mpa_no_drv_per_span;
+
+	bd->bd_target = ar[arr].pd[disk].mar_enc_slot;
+
+	switch (ar[arr].pd[disk].mar_pd_state){
+	case MFI_PD_UNCONFIG_GOOD:
+		bd->bd_status = BIOC_SDUNUSED;
+		break;
+
+	case MFI_PD_HOTSPARE:
+		bd->bd_status = BIOC_SDHOTSPARE;
+		break;
+
+	case MFI_PD_OFFLINE:
+		bd->bd_status = BIOC_SDOFFLINE;
+		break;
+
+	case MFI_PD_FAILED:
+		bd->bd_status = BIOC_SDFAILED;
+		break;
+
+	case MFI_PD_REBUILD:
+		bd->bd_status = BIOC_SDREBUILD;
+		break;
+
+	case MFI_PD_ONLINE:
+		bd->bd_status = BIOC_SDONLINE;
+		break;
+
+	case MFI_PD_UNCONFIG_BAD: /* XXX define new state in bio */
+	default:
+		bd->bd_status = BIOC_SDINVALID;
+		break;
+
+	}
+
 	rv = 0;
+freeme:
+	free(cfg, M_DEVBUF);
+	cfg = NULL;
 done:
 	return (rv);
 }
