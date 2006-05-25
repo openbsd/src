@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.64 2006/05/25 03:45:25 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.65 2006/05/25 03:48:23 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.64 2006/05/25 03:45:25 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.65 2006/05/25 03:48:23 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -86,7 +86,7 @@ char		hextochar(const char *);
 char		*urldecode(const char *);
 int		ftp_printf(FILE *, SSL *, const char *, ...) __attribute__((format(printf, 3, 4)));
 char		*ftp_readline(FILE *, SSL *, size_t *);
-int		ftp_read(FILE *, SSL *, char *, size_t);
+size_t		ftp_read(FILE *, SSL *, char *, size_t);
 #ifndef SMALL
 int		proxy_connect(int, char *);
 int		SSL_vprintf(SSL *, const char *, va_list);
@@ -1042,15 +1042,23 @@ ftp_readline(FILE *fp, SSL *ssl, size_t *lenp)
 		return NULL;
 }
 
-int
+size_t
 ftp_read(FILE *fp, SSL *ssl, char *buf, size_t len)
 {
-	int ret;
+	size_t ret;
 	if (fp != NULL)
 		ret = fread(buf, sizeof(char), len, fp);
 #ifndef SMALL
-	else if (ssl != NULL)
-		ret = SSL_read(ssl, buf, (int)len);
+	else if (ssl != NULL) {
+		int nr;
+
+		if (len > INT_MAX)
+			len = INT_MAX;
+		if ((nr = SSL_read(ssl, buf, (int)len)) <= 0)
+			ret = 0;
+		else
+			ret = nr;
+	}
 #endif
 	else
 		ret = 0;
