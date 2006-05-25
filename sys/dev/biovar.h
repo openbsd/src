@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.22 2006/05/25 03:38:34 deraadt Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.23 2006/05/25 22:25:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -81,6 +81,8 @@ struct bioc_disk {
 #define BIOC_SDHOTSPARE_S	"Hot spare"
 #define BIOC_SDUNUSED		0x05
 #define BIOC_SDUNUSED_S		"Unused"
+#define BIOC_SDSCRUB		0x06
+#define BIOC_SDSCRUB_S		"Online/Scrub"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
 	int		bd_resv;	/* align */
