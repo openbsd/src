@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.1 2006/02/20 08:38:18 otto Exp $	*/
+/*	$OpenBSD: common.h,v 1.2 2006/05/25 03:20:32 ray Exp $	*/
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -6,4 +6,3 @@
  */
 
 __dead void cleanup(const char *);
-char *xmktemp(const char *);

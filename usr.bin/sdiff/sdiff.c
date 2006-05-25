@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.18 2006/05/10 14:32:51 ray Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.19 2006/05/25 03:20:32 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +66,7 @@ int	 Iflag = 0;	/* ignore sets matching regexp */
 int	 lflag;		/* print only left column for identical lines */
 int	 sflag;		/* skip identical lines */
 FILE	*outfile;	/* file to save changes to */
+const char *tmpdir;	/* TMPDIR or /tmp */
 
 static struct option longopts[] = {
 	{ "text",			no_argument,		NULL,	'a' },
@@ -117,8 +119,9 @@ mktmpcpy(const char *source_file)
 	}
 
 	/* Not a regular file, so copy input into temporary file. */
-	target_file = xmktemp(NULL);
-	if ((ofd = open(target_file, O_WRONLY, 0)) == -1) {
+	if (asprintf(&target_file, "%s/sdiff.XXXXXXXXXX", tmpdir) == -1)
+		err(2, "asprintf");
+	if ((ofd = mkstemp(target_file)) == -1) {
 		warn("error opening %s", target_file);
 		goto FAIL;
 	}
@@ -243,6 +246,9 @@ main(int argc, char **argv)
 
 	if (argc != 2)
 		usage();
+
+	if ((tmpdir = getenv("TMPDIR")) == NULL)                       
+		tmpdir = _PATH_TMP;
 
 	filename1 = argv[0];
 	filename2 = argv[1];

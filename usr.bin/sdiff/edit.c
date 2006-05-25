@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.13 2006/05/10 14:32:51 ray Exp $ */
+/*	$OpenBSD: edit.c,v 1.14 2006/05/25 03:20:32 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -12,6 +12,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -69,6 +70,7 @@ eparse(const char *cmd, const char *left, const char *right)
 {
 	FILE *file;
 	size_t nread, nwritten;
+	int fd;
 	char *filename;
 	char buf[BUFSIZ], *text;
 
@@ -121,7 +123,21 @@ RIGHT:
 	}
 
 	/* Create temp file. */
-	filename = xmktemp(text);
+	if (asprintf(&filename, "%s/sdiff.XXXXXXXXXX", tmpdir) == -1)
+		err(2, "asprintf");
+	if ((fd = mkstemp(filename)) == -1)
+		err(2, "mkstemp");
+	if (text != NULL) {
+		size_t len;
+
+		len = strlen(text);
+		if ((nwritten = write(fd, text, len)) == -1 ||
+		    nwritten != len) {
+			warn("error writing to temp file");
+			cleanup(filename);
+		}
+	}
+	close(fd);
 
 	/* text is no longer used. */
 	free(text);
@@ -165,7 +181,6 @@ RIGHT:
 		warn("could not delete: %s", filename);
 	fclose(file);
 
-	/* filename was malloc()ed in xmktemp(). */
 	free(filename);
 
 	return (0);
