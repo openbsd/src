@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.66 2005/09/24 00:32:03 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.67 2006/05/25 19:25:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -255,6 +255,12 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->reply[p->shift].status.reftime = lfp_to_d(msg.reftime);
 	p->reply[p->shift].status.poll = msg.ppoll;
 	p->reply[p->shift].status.stratum = msg.stratum;
+
+	if (p->addr->ss.ss_family == AF_INET)
+		p->reply[p->shift].status.send_refid =
+		    ((struct sockaddr_in *)&p->addr->ss)->sin_addr.s_addr;
+	else
+		p->reply[p->shift].status.send_refid = msg.xmttime.fractionl;
 
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
 		interval = scale_interval(INTERVAL_QUERY_PATHETIC);
