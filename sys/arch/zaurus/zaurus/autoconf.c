@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2005/12/27 18:31:11 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2006/05/25 22:40:18 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -70,46 +70,15 @@ static struct device * getdisk(char *str, int len, int defpart, dev_t *devp);
 struct  device *parsedisk(char *, int, int, dev_t *);
 extern char *boot_file;
 
-#include "wd.h"
-#if NWD > 0  
-extern  struct cfdriver wd_cd;
-#endif
-#include "sd.h"
-#if NSD > 0
-extern  struct cfdriver sd_cd;
-#endif
-#include "cd.h"
-#if NCD > 0
-extern  struct cfdriver cd_cd;
-#endif
-#if NRD > 0
-extern  struct cfdriver rd_cd;
-#endif
-#include "raid.h"
-#if NRAID > 0
-extern  struct cfdriver raid_cd;
-#endif
-
 struct  genericconf {
-	struct cfdriver *gc_driver;
 	char *gc_name;
 	dev_t gc_major;
 } genericconf[] = {
-#if NWD > 0
-	{ &wd_cd,  "wd",  16 },
-#endif
-#if NSD > 0
-	{ &sd_cd,  "sd",  24 },
-#endif
-#if NCD > 0
-	{ &cd_cd,  "cd",  26 },
-#endif
-#if NRD > 0
-	{ &rd_cd,  "rd",  18 },
-#endif
-#if NRAID > 0
-	{ &raid_cd,  "raid",  71 },
-#endif
+	{ "wd",  16 },
+	{ "sd",  24 },
+	{ "cd",  26 },
+	{ "rd",  18 },
+	{ "raid",  71 },
 	{ 0 }
 };
 
