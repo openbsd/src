@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.15 2005/03/29 21:59:59 henning Exp $
+.\"	$OpenBSD: arp.8,v 1.16 2006/05/25 15:04:07 jmc Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -162,28 +162,25 @@ be replaced unless
 is given.
 .El
 .Sh EXAMPLES
-To view the current
+View the current
 .Xr arp 4
 table:
 .Pp
 .Dl $ arp -a
 .Pp
-To create a
-.Em permanent
+Create a permanent
 entry (one that cannot be overwritten by other network traffic):
 .Pp
 .Dl # arp -s 10.0.0.2 00:90:27:bb:cc:dd permanent
 .Pp
-To create
-.Em proxy ARP
-entries on an interface, fxp0,
-for the IP addresses 204.1.2.3 and 204.1.2.4:
+Create proxy ARP
+entries on interface fxp0
+(MAC address 00:90:27:bb:cc:dd),
+for IP addresses 204.1.2.3 and 204.1.2.4:
 .Bd -literal -offset indent
 # arp -s 204.1.2.3 00:90:27:bb:cc:dd pub
 # arp -s 204.1.2.4 00:90:27:bb:cc:dd pub
 .Ed
-.Pp
-(where 00:90:27:bb:cc:dd is the MAC address of fxp0)
 .Sh SEE ALSO
 .Xr inet 3 ,
 .Xr arp 4 ,
