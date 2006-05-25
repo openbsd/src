@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.20 2005/08/18 09:42:41 dlg Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.21 2006/05/25 03:11:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -102,7 +102,7 @@ struct bioc_vol {
 	void		*bv_cookie;
 
 	int		bv_volid;	/* volume id */
-	int		bv_resv1;	/* for binary compatibility */
+	int		bv_percent;	/* percent done operation */
 	int		bv_status;	/* current status */
 #define BIOC_SVONLINE		0x00
 #define BIOC_SVONLINE_S		"Online"
@@ -110,6 +110,12 @@ struct bioc_vol {
 #define BIOC_SVOFFLINE_S	"Offline"
 #define BIOC_SVDEGRADED		0x02
 #define BIOC_SVDEGRADED_S	"Degraded"
+#define BIOC_SVBUILDING		0x03
+#define BIOC_SVBUILDING_S	"Building"
+#define BIOC_SVSCRUB		0x04
+#define BIOC_SVSCRUB_S		"Online/Scrub"
+#define BIOC_SVREBUILD		0x05
+#define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
 	int		bv_resv2;	/* align */
