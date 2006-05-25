@@ -1,5 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.5 2006/05/20 15:31:30 damien Exp $	*/
-
+/*	$OpenBSD: if_wpireg.h,v 1.6 2006/05/25 09:26:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -174,7 +173,7 @@ struct wpi_tx_desc {
 #define WPI_PAD32(x)	((((x) + 3) & ~3) - (x))
 
 	struct {
-		uint32_t	physaddr;
+		uint32_t	addr;
 		uint32_t	len;
 	} __packed	segs[WPI_MAX_SCATTER];
 	uint8_t		reserved[28];
@@ -349,6 +348,7 @@ struct wpi_cmd_data {
 	uint32_t	flags;
 #define WPI_TX_NEED_RTS		(1 <<  1)
 #define WPI_TX_NEED_ACK		(1 <<  3)
+#define WPI_TX_FULL_TXOP	(1 <<  7)
 #define WPI_TX_AUTO_SEQ		(1 << 13)
 #define WPI_TX_INSERT_TSTAMP	(1 << 16)
 
@@ -364,7 +364,7 @@ struct wpi_cmd_data {
 	uint8_t		cck_mask;
 	uint8_t		rts_ntries;
 	uint8_t		data_ntries;
-	uint16_t	duration;
+	uint16_t	timeout;
 	uint16_t	txop;
 	struct		ieee80211_frame wh;
 } __packed;
@@ -378,7 +378,9 @@ struct wpi_cmd_beacon {
 	uint8_t		id;
 	uint8_t		reserved2[30];
 	uint32_t	lifetime;
-	uint32_t	reserved3[2];
+	uint8_t		ofdm_mask;
+	uint8_t		cck_mask;
+	uint16_t	reserved3[3];
 	uint16_t	tim;
 	uint8_t		timsz;
 	uint8_t		reserved4;
@@ -399,6 +401,7 @@ struct wpi_mrr_setup {
 #define WPI_OFDM6	0
 #define WPI_OFDM54	7
 #define WPI_CCK1	8
+#define WPI_CCK2	9
 #define WPI_CCK11	11
 
 	} __packed	rates[WPI_CCK11 + 1];

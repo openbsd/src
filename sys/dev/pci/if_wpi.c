@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.12 2006/05/20 15:46:55 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.13 2006/05/25 09:26:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -81,8 +81,8 @@ static const struct ieee80211_rateset wpi_rateset_11b =
 static const struct ieee80211_rateset wpi_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static const uint8_t wpi_ridx_to_rate[] = {
-	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3,	/* OFDM */
+static const uint8_t wpi_ridx_to_plcp[] = {
+	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3,	/* OFDM R1-R4 */
 	10, 20, 55, 110	/* CCK */
 };
 
@@ -102,6 +102,9 @@ int		wpi_alloc_tx_ring(struct wpi_softc *, struct wpi_tx_ring *,
 		    int, int);
 void		wpi_reset_tx_ring(struct wpi_softc *, struct wpi_tx_ring *);
 void		wpi_free_tx_ring(struct wpi_softc *, struct wpi_tx_ring *);
+struct		ieee80211_node *wpi_node_alloc(struct ieee80211com *);
+void		wpi_node_copy(struct ieee80211com *, struct ieee80211_node *,
+		    const struct ieee80211_node *);
 int		wpi_media_change(struct ifnet *);
 int		wpi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void		wpi_mem_lock(struct wpi_softc *);
@@ -122,6 +125,7 @@ void		wpi_cmd_intr(struct wpi_softc *, struct wpi_rx_desc *);
 void		wpi_notif_intr(struct wpi_softc *);
 int		wpi_intr(void *);
 void		wpi_read_eeprom(struct wpi_softc *);
+uint8_t		wpi_plcp_signal(int);
 int		wpi_tx_data(struct wpi_softc *, struct mbuf *,
 		    struct ieee80211_node *, int);
 void		wpi_start(struct ifnet *);
@@ -141,6 +145,12 @@ int		wpi_reset(struct wpi_softc *);
 void		wpi_hw_config(struct wpi_softc *);
 int		wpi_init(struct ifnet *);
 void		wpi_stop(struct ifnet *, int);
+
+/* rate control algorithm: should be moved to net80211 */
+void		wpi_amrr_init(struct wpi_amrr *);
+void		wpi_amrr_init(struct wpi_amrr *);
+void		wpi_amrr_timeout(void *);
+void		wpi_amrr_ratectl(void *, struct ieee80211_node *);
 
 #define WPI_DEBUG
 
@@ -217,7 +227,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s", intrstr);
-
 
 	/*
 	 * Put adapter into a known state.
@@ -321,10 +330,15 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_node_alloc = wpi_node_alloc;
+	ic->ic_node_copy = wpi_node_copy;
+
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = wpi_newstate;
 	ieee80211_media_init(ifp, wpi_media_change, ieee80211_media_status);
+
+	timeout_set(&sc->amrr_ch, wpi_amrr_timeout, sc);
 
 	sc->powerhook = powerhook_establish(wpi_power, sc);
 
@@ -385,6 +399,7 @@ wpi_power(int why, void *arg)
 	struct wpi_softc *sc = arg;
 	struct ifnet *ifp;
 	pcireg_t data;
+	int s;
 
 	if (why != PWR_RESUME)
 		return;
@@ -394,12 +409,14 @@ wpi_power(int why, void *arg)
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
+	s = splnet();
 	ifp = &sc->sc_ic.ic_if;
 	if (ifp->if_flags & IFF_UP) {
 		ifp->if_init(ifp);
 		if (ifp->if_flags & IFF_RUNNING)
 			ifp->if_start(ifp);
 	}
+	splx(s);
 }
 
 int
@@ -719,6 +736,27 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 	}
 }
 
+struct ieee80211_node *
+wpi_node_alloc(struct ieee80211com *ic)
+{
+	struct wpi_amrr *amrr;
+
+	amrr = malloc(sizeof (struct wpi_amrr), M_DEVBUF, M_NOWAIT);
+	if (amrr != NULL) {
+		bzero(amrr, sizeof (struct wpi_amrr));
+		wpi_amrr_init(amrr);
+	}
+	return (struct ieee80211_node *)amrr;
+}
+
+void
+wpi_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
+    const struct ieee80211_node *src)
+{
+	*dst = *src;
+	wpi_amrr_init((struct wpi_amrr *)dst);
+}
+
 int
 wpi_media_change(struct ifnet *ifp)
 {
@@ -740,6 +778,8 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_softc *sc = ifp->if_softc;
 	int error;
+
+	timeout_del(&sc->amrr_ch);
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -773,8 +813,17 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* update adapter's configuration */
 		sc->config.state = htole16(WPI_CONFIG_ASSOCIATED);
+		/* short preamble/slot time are negotiated when associating */
+		sc->config.flags &= ~htole32(WPI_CONFIG_SHPREAMBLE |
+		    WPI_CONFIG_SHSLOT);
+		if (ic->ic_flags & IEEE80211_F_SHSLOT)
+			sc->config.flags |= htole32(WPI_CONFIG_SHSLOT);
+		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+			sc->config.flags |= htole32(WPI_CONFIG_SHPREAMBLE);
 		sc->config.filter |= htole32(WPI_FILTER_BSSID);
 
+		DPRINTF(("config chan %d flags %x\n", sc->config.chan,
+		    sc->config.flags));
 		error = wpi_cmd(sc, WPI_CMD_CONFIGURE, &sc->config,
 		    sizeof (struct wpi_config), 1);
 		if (error != 0) {
@@ -782,6 +831,9 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    sc->sc_dev.dv_xname);
 			return error;
 		}
+
+		/* start automatic rate control timer */
+		timeout_add(&sc->amrr_ch, hz / 2);
 
 		/* link LED always on while associated */
 		wpi_set_led(sc, WPI_LED_LINK, 0, 1);
@@ -801,7 +853,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 void
 wpi_mem_lock(struct wpi_softc *sc)
 {
-        uint32_t tmp;
+	uint32_t tmp;
 	int ntries;
 
 	tmp = WPI_READ(sc, WPI_GPIO_CTL);
@@ -910,7 +962,7 @@ wpi_load_microcode(struct wpi_softc *sc, const char *ucode, int size)
 
 /*
  * The firmware text and data segments are transferred to the NIC using DMA.
- * The driver just copies the firmware into DMA'able memory and tells the NIC
+ * The driver just copies the firmware into DMA-safe memory and tells the NIC
  * where to find it.  Once the NIC has copied the firmware into its internal
  * memory, we can free our local copy in the driver.
  */
@@ -925,7 +977,7 @@ wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
 	int i, ntries, nsegs, error;
 
 	/*
-	 * Allocate DMA'able memory to store the firmware.
+	 * Allocate DMA-safe memory to store the firmware.
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, size, WPI_MAX_SCATTER,
 	    WPI_MAX_SEG_LEN, 0, BUS_DMA_NOWAIT, &map);
@@ -959,7 +1011,7 @@ wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
 		goto fail4;
 	}
 
-	/* copy firmware image to DMA'able memory */
+	/* copy firmware image to DMA-safe memory */
 	bcopy(fw, virtaddr, size);
 
 	/* make sure the adapter will get up-to-date values */
@@ -968,8 +1020,8 @@ wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
 	bzero(&desc, sizeof desc);
 	desc.flags = htole32(WPI_PAD32(size) << 28 | map->dm_nsegs << 24);
 	for (i = 0; i < map->dm_nsegs; i++) {
-		desc.segs[i].physaddr = htole32(map->dm_segs[i].ds_addr);
-		desc.segs[i].len = htole32(map->dm_segs[i].ds_len);
+		desc.segs[i].addr = htole32(map->dm_segs[i].ds_addr);
+		desc.segs[i].len  = htole32(map->dm_segs[i].ds_len);
 	}
 
 	wpi_mem_lock(sc);
@@ -1097,7 +1149,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		tap->wr_chan_flags =
 		    htole16(ic->ic_channels[head->chan].ic_flags);
 		tap->wr_dbm_antsignal = (int8_t)(stat->rssi - WPI_RSSI_OFFSET);
-		tap->wr_dbm_antnoise = (int8_t)stat->noise;
+		tap->wr_dbm_antnoise = (int8_t)letoh16(stat->noise);
 		tap->wr_tsft = tail->tstamp;
 		tap->wr_antenna = (letoh16(head->flags) >> 4) & 0xf;
 		switch (head->rate) {
@@ -1114,7 +1166,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		case 0x9: tap->wr_rate =  48; break;
 		case 0xb: tap->wr_rate =  72; break;
 		case 0x1: tap->wr_rate =  96; break;
-		case 0x3: tap->wr_rate = 109; break;
+		case 0x3: tap->wr_rate = 108; break;
 		/* unknown rate: should not happen */
 		default:  tap->wr_rate =   0;
 		}
@@ -1150,11 +1202,19 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct wpi_tx_ring *ring = &sc->txq[desc->qid & 0x3];
 	struct wpi_tx_data *txdata = &ring->data[desc->idx];
 	struct wpi_tx_stat *stat = (struct wpi_tx_stat *)(desc + 1);
+	struct wpi_amrr *amrr = (struct wpi_amrr *)txdata->ni;
 
 	DPRINTFN(4, ("tx done: qid=%d idx=%d retries=%d nkill=%d rate=%x "
 	    "duration=%d status=%x\n", desc->qid, desc->idx, stat->ntries,
 	    stat->nkill, stat->rate, letoh32(stat->duration),
 	    letoh32(stat->status)));
+
+	/* update rate control statistics for the node */
+	amrr->txcnt++;
+	if (stat->ntries > 0) {
+		DPRINTFN(3, ("tx intr ntries %d\n", stat->ntries));
+		amrr->retrycnt++;
+	}
 
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
@@ -1192,7 +1252,7 @@ wpi_cmd_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 		data->m = NULL;
 	}
 
-	wakeup(&sc->cmdq.cmd[desc->idx]);
+	wakeup(&ring->cmd[desc->idx]);
 }
 
 void
@@ -1281,7 +1341,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 
 	/* tell the firmware what we have processed */
 	hw = (hw == 0) ? WPI_RX_RING_COUNT - 1 : hw - 1;
-	WPI_WRITE(sc, WPI_RX_WIDX, hw & ~0x7);
+	WPI_WRITE(sc, WPI_RX_WIDX, hw & ~7);
 }
 
 int
@@ -1321,6 +1381,32 @@ wpi_intr(void *arg)
 	return 1;
 }
 
+uint8_t
+wpi_plcp_signal(int rate)
+{
+	switch (rate) {
+	/* CCK rates (returned values are device-dependent) */
+	case 2:		return 10;
+	case 4:		return 20;
+	case 11:	return 55;
+	case 22:	return 110;
+
+	/* OFDM rates (cf IEEE Std 802.11a-1999, pp. 14 Table 80) */
+	/* R1-R4, (u)ral is R4-R1 */
+	case 12:	return 0xd;
+	case 18:	return 0xf;
+	case 24:	return 0x5;
+	case 36:	return 0x7;
+	case 48:	return 0x9;
+	case 72:	return 0xb;
+	case 96:	return 0x1;
+	case 108:	return 0x3;
+
+	/* unsupported rates (should not get there) */
+	default:	return 0;
+	}
+}
+
 int
 wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
     int ac)
@@ -1334,11 +1420,10 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	struct wpi_cmd_data *tx;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
-	int i, error;
+	int i, rate, error;
 
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
-	cmd = &ring->cmd[ring->cur];
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
@@ -1351,15 +1436,29 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
+	/* pickup a rate */
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_MGT) {
+		/* mgmt frames are sent at the lowest available bit-rate */
+		rate = ni->ni_rates.rs_rates[0];
+	} else {
+		if (ic->ic_fixed_rate != -1) {
+			rate = ic->ic_sup_rates[ic->ic_curmode].
+			    rs_rates[ic->ic_fixed_rate];
+		} else
+			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+	}
+	rate &= IEEE80211_RATE_VAL;
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
 		struct wpi_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
-		tap->wt_rate = 2;	/* 1Mb/s */
+		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
+		tap->wt_rate = rate;
 		tap->wt_hwqueue = ac;
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
@@ -1373,6 +1472,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 #endif
 
+	cmd = &ring->cmd[ring->cur];
 	cmd->code = WPI_CMD_TX_DATA;
 	cmd->flags = 0;
 	cmd->qid = ring->qid;
@@ -1384,39 +1484,39 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
 		tx->flags |= htole32(WPI_TX_NEED_ACK);
 	else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
-		tx->flags |= htole32(WPI_TX_NEED_RTS);
+		tx->flags |= htole32(WPI_TX_NEED_RTS | WPI_TX_FULL_TXOP);
 
 	tx->flags |= htole32(WPI_TX_AUTO_SEQ);
-
-	/* tell h/w to set timestamp in probe responses */
-	if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
-	    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
-		tx->flags |= htole32(WPI_TX_INSERT_TSTAMP);
 
 	/* retrieve destination node's id */
 	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? WPI_ID_BROADCAST :
 	    WPI_ID_BSSID;
 
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_MGT) {
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_MGT) {
+		/* tell h/w to set timestamp in probe responses */
+		if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+			tx->flags |= htole32(WPI_TX_INSERT_TSTAMP);
+
 		if (((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		     IEEE80211_FC0_SUBTYPE_ASSOC_REQ) ||
 		    ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		     IEEE80211_FC0_SUBTYPE_REASSOC_REQ))
-			tx->duration = 3;
+			tx->timeout = 3;
 		else
-			tx->duration = 2;
+			tx->timeout = 2;
 	} else
-		tx->duration = 0;
+		tx->timeout = 0;
 
-	tx->rate = 10;	/* 1Mb/s */
+	tx->rate = wpi_plcp_signal(rate);
 
 	/* be very persistant at sending frames out */
 	tx->rts_ntries = 7;
 	tx->data_ntries = 15;
 
-	tx->ofdm_mask = sc->config.ofdm_mask;
-	tx->cck_mask = sc->config.cck_mask;
+	tx->ofdm_mask = 0xff;
+	tx->cck_mask = 0xf;;
 	tx->lifetime = htole32(0xffffffff);
 
 	tx->len = htole16(m0->m_pkthdr.len);
@@ -1476,13 +1576,13 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	/* first scatter/gather segment is used by the tx data command */
 	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 |
 	    (1 + data->map->dm_nsegs) << 24);
-	desc->segs[0].physaddr = htole32(ring->cmd_dma.paddr +
+	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
-	desc->segs[0].len = htole32(4 + sizeof (struct wpi_cmd_data));
+	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_data));
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
-		desc->segs[i].physaddr =
+		desc->segs[i].addr =
 		    htole32(data->map->dm_segs[i - 1].ds_addr);
-		desc->segs[i].len =
+		desc->segs[i].len  =
 		    htole32(data->map->dm_segs[i - 1].ds_len);
 	}
 
@@ -1684,7 +1784,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	KASSERT(size <= sizeof cmd->data);
 
 	desc = &ring->desc[ring->cur];
-	cmd = &ring->cmd[ring->cur]; 
+	cmd = &ring->cmd[ring->cur];
 
 	cmd->code = code;
 	cmd->flags = 0;
@@ -1693,9 +1793,9 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	bcopy(buf, cmd->data, size);
 
 	desc->flags = htole32(WPI_PAD32(size) << 28 | 1 << 24);
-	desc->segs[0].physaddr = htole32(ring->cmd_dma.paddr +
+	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
-	desc->segs[0].len = htole32(4 + size);
+	desc->segs[0].len  = htole32(4 + size);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
@@ -1716,7 +1816,7 @@ wpi_mrr_setup(struct wpi_softc *sc)
 	/* CCK rates (not used with 802.11a) */
 	for (i = WPI_CCK1; i <= WPI_CCK11; i++) {
 		mrr.rates[i].flags = 0;
-		mrr.rates[i].plcp = wpi_ridx_to_rate[i];
+		mrr.rates[i].plcp = wpi_ridx_to_plcp[i];
 		/* fallback to the immediate lower CCK rate (if any) */
 		mrr.rates[i].next = (i == WPI_CCK1) ? WPI_CCK1 : i - 1;
 		/* try one time at this rate before falling back to "next" */
@@ -1726,9 +1826,10 @@ wpi_mrr_setup(struct wpi_softc *sc)
 	/* OFDM rates (not used with 802.11b) */
 	for (i = WPI_OFDM6; i <= WPI_OFDM54; i++) {
 		mrr.rates[i].flags = 0;
-		mrr.rates[i].plcp = wpi_ridx_to_rate[i];
-		/* fallback to the immediate lower OFDM rate (if any) */
-		mrr.rates[i].next = (i == WPI_OFDM6) ? WPI_OFDM6 : i - 1;
+		mrr.rates[i].plcp = wpi_ridx_to_plcp[i];
+		/* fallback to the immediate lower rate (if any) */
+		/* we allow fallback from OFDM/6 to CCK/2 in 11b/g mode */
+		mrr.rates[i].next = (i == WPI_OFDM6) ? WPI_CCK2 : i - 1;
 		/* try one time at this rate before falling back to "next" */
 		mrr.rates[i].ntries = 1;
 	}
@@ -1817,9 +1918,11 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 	bcn = (struct wpi_cmd_beacon *)cmd->data;
 	bzero(bcn, sizeof (struct wpi_cmd_beacon));
 	bcn->id = WPI_ID_BROADCAST;
+	bcn->ofdm_mask = 0xff;
+	bcn->cck_mask = 0xf;
 	bcn->lifetime = htole32(0xffffffff);
 	bcn->len = htole16(m0->m_pkthdr.len);
-	bcn->rate = 10;	/* 1Mb/s */
+	bcn->rate = wpi_plcp_signal(2);
 	bcn->flags = htole32(WPI_TX_AUTO_SEQ | WPI_TX_INSERT_TSTAMP);
 
 	/* save and trim IEEE802.11 header */
@@ -1839,11 +1942,11 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 
 	/* first scatter/gather segment is used by the beacon command */
 	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 | 2 << 24);
-	desc->segs[0].physaddr = htole32(ring->cmd_dma.paddr +
+	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
-	desc->segs[0].len = htole32(4 + sizeof (struct wpi_cmd_beacon));
-	desc->segs[1].physaddr = htole32(data->map->dm_segs[0].ds_addr);
-	desc->segs[1].len = htole32(data->map->dm_segs[0].ds_len);
+	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_beacon));
+	desc->segs[1].addr = htole32(data->map->dm_segs[0].ds_addr);
+	desc->segs[1].len  = htole32(data->map->dm_segs[0].ds_len);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
@@ -1891,7 +1994,7 @@ wpi_auth(struct wpi_softc *sc)
 	bzero(&node, sizeof node);
 	IEEE80211_ADDR_COPY(node.bssid, ni->ni_bssid);
 	node.id = WPI_ID_BSSID;
-	node.rate = 10;	/* 1Mb/s */
+	node.rate = wpi_plcp_signal(2);
 	error = wpi_cmd(sc, WPI_CMD_ADD_NODE, &node, sizeof node, 1);
 	if (error != 0) {
 		printf("%s: could not add BSS node\n", sc->sc_dev.dv_xname);
@@ -1961,7 +2064,7 @@ wpi_scan(struct wpi_softc *sc)
 	hdr->quiet = htole16(5);
 	hdr->threshold = htole16(1);
 	hdr->filter = htole32(5);	/* XXX */
-	hdr->rate = 10;	/* 1Mb/s */
+	hdr->rate = wpi_plcp_signal(2);
 	hdr->id = WPI_ID_BROADCAST;
 	hdr->mask = htole32(0xffffffff);
 	hdr->esslen = ni->ni_esslen;
@@ -1969,8 +2072,7 @@ wpi_scan(struct wpi_softc *sc)
 
 	/*
 	 * Build a probe request frame.  Most of the following code is a
-	 * copy & paste of what is done in net80211.  Unfortunately, the
-	 * functions to add IEs are static and thus can't be reused here.
+	 * copy & paste of what is done in net80211.
 	 */
 	wh = (struct ieee80211_frame *)(hdr + 1);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
@@ -2024,8 +2126,8 @@ wpi_scan(struct wpi_softc *sc)
 	}
 
 	desc->flags = htole32(WPI_PAD32(pktlen) << 28 | 1 << 24);
-	desc->segs[0].physaddr = htole32(data->map->dm_segs[0].ds_addr);
-	desc->segs[0].len = htole32(data->map->dm_segs[0].ds_len);
+	desc->segs[0].addr = htole32(data->map->dm_segs[0].ds_addr);
+	desc->segs[0].len  = htole32(data->map->dm_segs[0].ds_len);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
@@ -2038,6 +2140,7 @@ int
 wpi_config(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_txpower txpower;
 	struct wpi_power power;
 	struct wpi_bluetooth bluetooth;
@@ -2080,6 +2183,7 @@ wpi_config(struct wpi_softc *sc)
 
 	/* configure adapter */
 	bzero(&sc->config, sizeof (struct wpi_config));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
 	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
 	sc->config.flags = htole32(WPI_CONFIG_TSF | WPI_CONFIG_AUTO |
@@ -2116,7 +2220,7 @@ wpi_config(struct wpi_softc *sc)
 	bzero(&node, sizeof node);
 	IEEE80211_ADDR_COPY(node.bssid, etherbroadcastaddr);
 	node.id = WPI_ID_BROADCAST;
-	node.rate = 10;	/* 1Mb/s */
+	node.rate = wpi_plcp_signal(2);
 	error = wpi_cmd(sc, WPI_CMD_ADD_NODE, &node, sizeof node, 0);
 	if (error != 0) {
 		printf("%s: could not add broadcast node\n",
@@ -2261,7 +2365,7 @@ wpi_init(struct ifnet *ifp)
 	uint32_t tmp;
 	int qid, ntries, error;
 
-	wpi_reset(sc);
+	(void)wpi_reset(sc);
 
 	wpi_mem_lock(sc);
 	wpi_mem_write(sc, WPI_MEM_CLOCK1, 0xa00);
@@ -2270,7 +2374,7 @@ wpi_init(struct ifnet *ifp)
 	wpi_mem_write(sc, WPI_MEM_PCIDEV, tmp | 0x800);
 	wpi_mem_unlock(sc);
 
-	wpi_power_up(sc);
+	(void)wpi_power_up(sc);
 	wpi_hw_config(sc);
 
 	/* init Rx ring */
@@ -2450,6 +2554,114 @@ wpi_stop(struct ifnet *ifp, int disable)
 
 	tmp = WPI_READ(sc, WPI_RESET);
 	WPI_WRITE(sc, WPI_RESET, tmp | WPI_SW_RESET);
+}
+
+/*-
+ * Naive implementation of the Adaptive Multi Rate Retry algorithm:
+ *     "IEEE 802.11 Rate Adaptation: A Practical Approach"
+ *     Mathieu Lacage, Hossein Manshaei, Thierry Turletti
+ *     INRIA Sophia - Projet Planete
+ *     http://www-sop.inria.fr/rapports/sophia/RR-5208.html
+ */
+#define is_success(amrr)	\
+	((amrr)->retrycnt < (amrr)->txcnt / 10)
+#define is_failure(amrr)	\
+	((amrr)->retrycnt > (amrr)->txcnt / 3)
+#define is_enough(amrr)		\
+	((amrr)->txcnt > 10)
+#define is_min_rate(ni)		\
+	((ni)->ni_txrate == 0)
+#define is_max_rate(ni)		\
+	((ni)->ni_txrate == (ni)->ni_rates.rs_nrates - 1)
+#define increase_rate(ni)	\
+	((ni)->ni_txrate++)
+#define decrease_rate(ni)	\
+	((ni)->ni_txrate--)
+#define reset_cnt(amrr)		\
+	do { (amrr)->txcnt = (amrr)->retrycnt = 0; } while (0)
+
+#define WPI_AMRR_MIN_SUCCESS_THRESHOLD	 1
+#define WPI_AMRR_MAX_SUCCESS_THRESHOLD	15
+
+void
+wpi_amrr_init(struct wpi_amrr *amrr)
+{
+	struct ieee80211_node *ni = &amrr->ni;
+	int i;
+
+	amrr->success = 0;
+	amrr->recovery = 0;
+	amrr->txcnt = amrr->retrycnt = 0;
+	amrr->success_threshold = WPI_AMRR_MIN_SUCCESS_THRESHOLD;
+
+	/* set rate to some reasonable initial value */
+	ni = &amrr->ni;
+	for (i = ni->ni_rates.rs_nrates - 1;
+	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
+	     i--);
+
+	ni->ni_txrate = i;
+}
+
+void
+wpi_amrr_timeout(void *arg)
+{
+	struct wpi_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		wpi_amrr_ratectl(NULL, ic->ic_bss);
+	else
+		ieee80211_iterate_nodes(ic, wpi_amrr_ratectl, NULL);
+
+	timeout_add(&sc->amrr_ch, hz / 2);
+}
+
+/* ARGSUSED */
+void
+wpi_amrr_ratectl(void *arg, struct ieee80211_node *ni)
+{
+	struct wpi_amrr *amrr = (struct wpi_amrr *)ni;
+	int need_change = 0;
+
+	if (is_success(amrr) && is_enough(amrr)) {
+		amrr->success++;
+		if (amrr->success >= amrr->success_threshold &&
+		    !is_max_rate(ni)) {
+			amrr->recovery = 1;
+			amrr->success = 0;
+			increase_rate(ni);
+			DPRINTFN(2, ("AMRR increasing rate %d (txcnt=%d "
+			    "retrycnt=%d)\n", ni->ni_txrate, amrr->txcnt,
+			    amrr->retrycnt));
+			need_change = 1;
+		} else {
+			amrr->recovery = 0;
+		}
+	} else if (is_failure(amrr)) {
+		amrr->success = 0;
+		if (!is_min_rate(ni)) {
+			if (amrr->recovery) {
+				amrr->success_threshold *= 2;
+				if (amrr->success_threshold >
+				    WPI_AMRR_MAX_SUCCESS_THRESHOLD)
+					amrr->success_threshold =
+					    WPI_AMRR_MAX_SUCCESS_THRESHOLD;
+			} else {
+				amrr->success_threshold =
+				    WPI_AMRR_MIN_SUCCESS_THRESHOLD;
+			}
+			decrease_rate(ni);
+			DPRINTFN(2, ("AMRR decreasing rate %d (txcnt=%d "
+			    "retrycnt=%d)\n", ni->ni_txrate, amrr->txcnt,
+			    amrr->retrycnt));
+			need_change = 1;
+		}
+		amrr->recovery = 0;	/* paper is incorrect */
+	}
+
+	if (is_enough(amrr) || need_change)
+		reset_cnt(amrr);
 }
 
 struct cfdriver wpi_cd = {

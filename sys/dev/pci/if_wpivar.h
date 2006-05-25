@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.5 2006/05/20 15:46:55 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.6 2006/05/25 09:26:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -91,6 +91,15 @@ struct wpi_rx_ring {
 	int			cur;
 };
 
+struct wpi_amrr {
+	struct	ieee80211_node ni;	/* must be the first */
+	int	txcnt;
+	int	retrycnt;
+	int	success;
+	int	success_threshold;
+	int	recovery;
+};
+
 struct wpi_softc {
 	struct device		sc_dev;
 
@@ -118,6 +127,8 @@ struct wpi_softc {
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
+
+	struct timeout		amrr_ch;
 
 	struct wpi_config	config;
 	uint16_t		pwr1[14];
