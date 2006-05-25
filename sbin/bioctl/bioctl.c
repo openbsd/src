@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.42 2006/05/25 03:39:12 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.43 2006/05/25 04:28:26 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -212,7 +212,7 @@ void
 bio_inq(char *name)
 {
 	char *status, size[64], scsiname[16], volname[32];
-	char percent[10], seconds[10];
+	char percent[10], seconds[20];
 	int rv, i, d, volheader, hotspare, unused;
 	char encname[16], serial[32];
 	struct bioc_disk bd;
