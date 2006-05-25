@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.55 2006/05/25 02:15:47 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.56 2006/05/25 04:23:57 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1261,7 +1261,7 @@ mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 int
 mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 {
-	int			i, rv = EINVAL;
+	int			i, per, rv = EINVAL;
 	uint8_t			mbox[MFI_MBOX_SIZE];
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol %#x\n",
@@ -1306,6 +1306,30 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 		DNPRINTF(MFI_D_IOCTL, "%s: invalid logical disk state %#x\n",
 		    DEVNAME(sc),
 		    sc->sc_ld_list.mll_list[i].mll_state);
+	}
+
+	/* additional status can modify MFI status */
+	switch (sc->sc_ld_details.mld_progress.mlp_in_prog) {
+	case MFI_LD_PROG_CC:
+		bv->bv_status = BIOC_SVSCRUB;
+		per = (int)sc->sc_ld_details.mld_progress.mlp_cc.mp_progress;
+		bv->bv_percent = (per * 100) / 0xffff;
+		bv->bv_seconds =
+		    sc->sc_ld_details.mld_progress.mlp_cc.mp_elapsed_seconds;
+		break;
+
+	case MFI_LD_PROG_BGI:
+		bv->bv_status = BIOC_SVBUILDING;
+		per = (int)sc->sc_ld_details.mld_progress.mlp_bgi.mp_progress;
+		bv->bv_percent = (per * 100) / 0xffff;
+		bv->bv_seconds =
+		    sc->sc_ld_details.mld_progress.mlp_bgi.mp_elapsed_seconds;
+		break;
+
+	case MFI_LD_PROG_FGI:
+	case MFI_LD_PROG_RECONSTRUCT:
+		/* nothing yet */
+		break;
 	}
 
 	/*

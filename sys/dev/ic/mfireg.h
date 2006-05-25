@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.21 2006/05/25 03:01:38 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.22 2006/05/25 04:23:57 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -384,7 +384,6 @@ struct mfi_evt_log_info {
 struct mfi_progress {
 	uint16_t		mp_progress;
 	uint16_t		mp_elapsed_seconds;
-
 } __packed;
 
 struct mfi_evtarg_ld {
