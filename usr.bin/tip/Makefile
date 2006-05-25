@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2005/05/24 22:23:04 millert Exp $
+#	$OpenBSD: Makefile,v 1.11 2006/05/25 08:41:52 jmc Exp $
 #
 # Files are:
 #	/etc/remote		remote host description file
@@ -32,7 +32,7 @@
 
 PROG=	tip
 LINKS=	${BINDIR}/tip ${BINDIR}/cu
-MLINKS=	tip.1 cu.1
+MAN=	tip.1 cu.1
 CFLAGS+=-I${.CURDIR} -DDEFBR=9600 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE \
 	-DCONNECT -DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
 .PATH:	${.CURDIR}/aculib
