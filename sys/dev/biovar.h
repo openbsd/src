@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.21 2006/05/25 03:11:59 deraadt Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.22 2006/05/25 03:38:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -102,7 +102,9 @@ struct bioc_vol {
 	void		*bv_cookie;
 
 	int		bv_volid;	/* volume id */
-	int		bv_percent;	/* percent done operation */
+	int16_t		bv_percent;	/* percent done operation */
+	u_int16_t	bv_seconds;	/* seconds of progress so far */
+
 	int		bv_status;	/* current status */
 #define BIOC_SVONLINE		0x00
 #define BIOC_SVONLINE_S		"Online"
