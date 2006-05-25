@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.56 2006/05/25 04:23:57 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.57 2006/05/25 22:04:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -401,6 +401,9 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 int
 mfi_get_info(struct mfi_softc *sc)
 {
+#ifdef MFI_DEBUG
+	int i;
+#endif
 	DNPRINTF(MFI_D_MISC, "%s: mfi_get_info\n", DEVNAME(sc));
 
 	if (mfi_mgmt(sc, MR_DCMD_CTRL_GET_INFO, MFI_DATA_IN,
@@ -408,7 +411,6 @@ mfi_get_info(struct mfi_softc *sc)
 		return (1);
 
 #ifdef MFI_DEBUG
-	int i;
 
 	for (i = 0; i < sc->sc_info.mci_image_component_count; i++) {
 		printf("%s: active FW %s Version %s date %s time %s\n",
@@ -1450,10 +1452,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	bd->bd_size = pd->mpd_size;
 
 	/* if pd->mpd_enc_idx is 0 then it is not in an enclosure */
-	if (pd->mpd_enc_idx)
-		bd->bd_channel = pd->mpd_enc_idx - 1; /* fw numbers ch from 1 */
-	else
-		bd->bd_channel = 0;
+	bd->bd_channel = pd->mpd_enc_idx;
 
 	inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;
 	memcpy(vend, inqbuf->vendor, sizeof vend - 1);
