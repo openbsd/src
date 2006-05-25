@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.28 2005/06/17 21:54:14 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.29 2006/05/25 01:33:43 brad Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -64,6 +64,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+.file 1 __FILE__
 
 .stabs	__FILE__,100,0,0,kernel_text
 
@@ -1339,7 +1341,7 @@ bcopy_ov_short:
 	ldq_u	t2,0(a0)
 	br	zero,bcopy_da_finish
 
-	END(bcopy)
+	END(memcpy)
 
 /*
  * kcopy(const void *src, void *dst, size_t len);
