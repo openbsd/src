@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.122 2006/05/20 05:12:23 reyk Exp $ */
+/* $OpenBSD: if_em.c,v 1.123 2006/05/25 14:31:37 jason Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -617,29 +617,29 @@ em_init(void *arg)
 	switch (sc->hw.mac_type) {
 	case em_82547:
 	case em_82547_rev_2: /* 82547: Total Packet Buffer is 40K */
-	    if (sc->hw.max_frame_size > EM_RXBUFFER_8192)
-		    pba = E1000_PBA_22K; /* 22K for Rx, 18K for Tx */
-	    else
-		    pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
-	    sc->tx_fifo_head = 0;
-	    sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
-	    sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
-	    break;
+		if (sc->hw.max_frame_size > EM_RXBUFFER_8192)
+			pba = E1000_PBA_22K; /* 22K for Rx, 18K for Tx */
+		else
+			pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
+		sc->tx_fifo_head = 0;
+		sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
+		sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
+		break;
 	case em_80003es2lan: /* 80003es2lan: Total Packet Buffer is 48K */
 	case em_82571: /* 82571: Total Packet Buffer is 48K */
 	case em_82572: /* 82572: Total Packet Buffer is 48K */
-	    pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
-	    break;
+		pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
+		break;
 	case em_82573: /* 82573: Total Packet Buffer is 32K */
-	    /* Jumbo frames not supported */
-	    pba = E1000_PBA_12K; /* 12K for Rx, 20K for Tx */
-	    break;
+		/* Jumbo frames not supported */
+		pba = E1000_PBA_12K; /* 12K for Rx, 20K for Tx */
+		break;
 	default:
-	    /* Devices before 82547 had a Packet Buffer of 64K.   */
-	    if (sc->hw.max_frame_size > EM_RXBUFFER_8192)
-		pba = E1000_PBA_40K; /* 40K for Rx, 24K for Tx */
-	    else
-		pba = E1000_PBA_48K; /* 48K for Rx, 16K for Tx */
+		/* Devices before 82547 had a Packet Buffer of 64K.   */
+		if (sc->hw.max_frame_size > EM_RXBUFFER_8192)
+			pba = E1000_PBA_40K; /* 40K for Rx, 24K for Tx */
+		else
+			pba = E1000_PBA_48K; /* 48K for Rx, 16K for Tx */
 	}
 	INIT_DEBUGOUT1("em_init: pba=%dK",pba);
 	E1000_WRITE_REG(&sc->hw, PBA, pba);
@@ -1273,7 +1273,7 @@ em_update_link_status(struct em_softc *sc)
 
 /*********************************************************************
  *
- *  This routine disables all traffic on the sc by issuing a
+ *  This routine disables all traffic on the adapter by issuing a
  *  global reset on the MAC and deallocates TX/RX buffers. 
  *
  **********************************************************************/
@@ -1920,22 +1920,22 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 
 	TXD->lower_setup.ip_fields.ipcss = ETHER_HDR_LEN;
 	TXD->lower_setup.ip_fields.ipcso = 
-	ETHER_HDR_LEN + offsetof(struct ip, ip_sum);
+	    ETHER_HDR_LEN + offsetof(struct ip, ip_sum);
 	TXD->lower_setup.ip_fields.ipcse = 
 	    htole16(ETHER_HDR_LEN + sizeof(struct ip) - 1);
 
 	TXD->upper_setup.tcp_fields.tucss = 
-	ETHER_HDR_LEN + sizeof(struct ip);
+	    ETHER_HDR_LEN + sizeof(struct ip);
 	TXD->upper_setup.tcp_fields.tucse = htole16(0);
 
 	if (sc->active_checksum_context == OFFLOAD_TCP_IP) {
 		TXD->upper_setup.tcp_fields.tucso = 
-		ETHER_HDR_LEN + sizeof(struct ip) + 
-		offsetof(struct tcphdr, th_sum);
+		    ETHER_HDR_LEN + sizeof(struct ip) + 
+		    offsetof(struct tcphdr, th_sum);
 	} else if (sc->active_checksum_context == OFFLOAD_UDP_IP) {
 		TXD->upper_setup.tcp_fields.tucso = 
-		ETHER_HDR_LEN + sizeof(struct ip) + 
-		offsetof(struct udphdr, uh_sum);
+		    ETHER_HDR_LEN + sizeof(struct ip) + 
+		    offsetof(struct udphdr, uh_sum);
 	}
 
 	TXD->tcp_seg_setup.data = htole32(0);
@@ -2201,8 +2201,8 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Setup the Receive Control Register */
 	reg_rctl = E1000_RCTL_EN | E1000_RCTL_BAM | E1000_RCTL_LBM_NO |
-		   E1000_RCTL_RDMTS_HALF |
-		   (sc->hw.mc_filter_type << E1000_RCTL_MO_SHIFT);
+	    E1000_RCTL_RDMTS_HALF |
+	    (sc->hw.mc_filter_type << E1000_RCTL_MO_SHIFT);
 
 	if (sc->hw.tbi_compatibility_on == TRUE)
 		reg_rctl |= E1000_RCTL_SBP;
@@ -2541,11 +2541,9 @@ em_disable_intr(struct em_softc *sc)
 	 */
 
 	if (sc->hw.mac_type == em_82542_rev2_0)
-	    E1000_WRITE_REG(&sc->hw, IMC,
-	        (0xffffffff & ~E1000_IMC_RXSEQ));
+		E1000_WRITE_REG(&sc->hw, IMC, (0xffffffff & ~E1000_IMC_RXSEQ));
 	else
-	    E1000_WRITE_REG(&sc->hw, IMC,
-	        0xffffffff);
+		E1000_WRITE_REG(&sc->hw, IMC, 0xffffffff);
 }
 
 int
@@ -2661,7 +2659,7 @@ em_update_stats_counters(struct em_softc *sc)
 	if(sc->hw.media_type == em_media_type_copper ||
 	    (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU)) {
 		sc->stats.symerrs += E1000_READ_REG(&sc->hw, SYMERRS);
- 		sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
+		sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
 	}
 	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
 	sc->stats.mpc += E1000_READ_REG(&sc->hw, MPC);
@@ -2740,13 +2738,13 @@ em_update_stats_counters(struct em_softc *sc)
 
 	/* Rx Errors */
 	ifp->if_ierrors =
-	sc->dropped_pkts +
-	sc->stats.rxerrc +
-	sc->stats.crcerrs +
-	sc->stats.algnerrc +
-	sc->stats.rlec + sc->stats.rnbc +
-	sc->stats.mpc + sc->stats.cexterr +
-	sc->rx_overruns;
+	    sc->dropped_pkts +
+	    sc->stats.rxerrc +
+	    sc->stats.crcerrs +
+	    sc->stats.algnerrc +
+	    sc->stats.rlec + sc->stats.rnbc +
+	    sc->stats.mpc + sc->stats.cexterr +
+	    sc->rx_overruns;
 
 	/* Tx Errors */
 	ifp->if_oerrors = sc->stats.ecol + sc->stats.latecol +
