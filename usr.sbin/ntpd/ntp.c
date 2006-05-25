@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.69 2006/05/25 19:25:46 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.70 2006/05/25 19:30:45 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -391,10 +391,10 @@ peer_remove(struct ntp_peer *p)
 void
 priv_adjtime(void)
 {
-	struct ntp_peer	 *p;
-	int		  offset_cnt = 0, i = 0;
-	struct ntp_peer	**peers;
-	double		  offset_median;
+	struct ntp_peer		 *p;
+	int			  offset_cnt = 0, i = 0;
+	struct ntp_offset	**offsets;
+	double			  offset_median;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
@@ -404,36 +404,36 @@ priv_adjtime(void)
 		offset_cnt++;
 	}
 
-	if ((peers = calloc(offset_cnt, sizeof(struct ntp_peer *))) == NULL)
+	if ((offsets = calloc(offset_cnt, sizeof(struct ntp_offset *))) == NULL)
 		fatal("calloc priv_adjtime");
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
-		peers[i++] = p;
+		offsets[i++] = &p->update;
 	}
 
-	qsort(peers, offset_cnt, sizeof(struct ntp_peer *), offset_compare);
+	qsort(offsets, offset_cnt, sizeof(struct ntp_offset *), offset_compare);
 
 	if (offset_cnt > 0) {
 		if (offset_cnt > 1 && offset_cnt % 2 == 0) {
 			offset_median =
-			    (peers[offset_cnt / 2 - 1]->update.offset +
-			    peers[offset_cnt / 2]->update.offset) / 2;
+			    (offsets[offset_cnt / 2 - 1]->offset +
+			    offsets[offset_cnt / 2]->offset) / 2;
 			conf->status.rootdelay =
-			    (peers[offset_cnt / 2 - 1]->update.delay +
-			    peers[offset_cnt / 2]->update.delay) / 2;
+			    (offsets[offset_cnt / 2 - 1]->delay +
+			    offsets[offset_cnt / 2]->delay) / 2;
 			conf->status.stratum = MAX(
-			    peers[offset_cnt / 2 - 1]->update.status.stratum,
-			    peers[offset_cnt / 2]->update.status.stratum);
+			    offsets[offset_cnt / 2 - 1]->status.stratum,
+			    offsets[offset_cnt / 2]->status.stratum);
 		} else {
-			offset_median = peers[offset_cnt / 2]->update.offset;
+			offset_median = offsets[offset_cnt / 2]->offset;
 			conf->status.rootdelay =
-			    peers[offset_cnt / 2]->update.delay;
+			    offsets[offset_cnt / 2]->delay;
 			conf->status.stratum =
-			    peers[offset_cnt / 2]->update.status.stratum;
+			    offsets[offset_cnt / 2]->status.stratum;
 		}
-		conf->status.leap = peers[offset_cnt / 2]->update.status.leap;
+		conf->status.leap = offsets[offset_cnt / 2]->status.leap;
 
 		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 		    &offset_median, sizeof(offset_median));
@@ -443,12 +443,12 @@ priv_adjtime(void)
 		update_scale(offset_median);
 
 		conf->status.refid4 =
-		    peers[offset_cnt / 2]->update.status.refid4;
+		    offsets[offset_cnt / 2]->status.refid4;
 		conf->status.refid =
-		    peers[offset_cnt / 2]->update.status.send_refid;
+		    offsets[offset_cnt / 2]->status.send_refid;
 	}
 
-	free(peers);
+	free(offsets);
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		p->update.good = 0;
@@ -457,15 +457,15 @@ priv_adjtime(void)
 int
 offset_compare(const void *aa, const void *bb)
 {
-	const struct ntp_peer * const *a;
-	const struct ntp_peer * const *b;
+	const struct ntp_offset * const *a;
+	const struct ntp_offset * const *b;
 
 	a = aa;
 	b = bb;
 
-	if ((*a)->update.offset < (*b)->update.offset)
+	if ((*a)->offset < (*b)->offset)
 		return (-1);
-	else if ((*a)->update.offset > (*b)->update.offset)
+	else if ((*a)->offset > (*b)->offset)
 		return (1);
 	else
 		return (0);
