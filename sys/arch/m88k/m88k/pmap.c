@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2006/05/20 22:33:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2006/05/25 21:37:45 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1205,7 +1205,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 void
 pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 {
-	vaddr_t va;
+	vaddr_t va, eseg;
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_RM) {
@@ -1223,17 +1223,20 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 	while (va != e) {
 		sdt_entry_t *sdt;
 
+		eseg = (va & SDT_MASK) + (1 << SDT_SHIFT);
+		if (eseg > e || eseg == 0)
+			eseg = e;
+
 		sdt = SDTENT(pmap, va);
 
 		/* If no segment table, skip a whole segment */
-		if (!SDT_VALID(sdt)) {
-			va &= SDT_MASK;
-			va += 1 << SDT_SHIFT;
-			if (va > e || va == 0)
-				va = e;
-		} else {
-			pmap_remove_pte(pmap, va, sdt_pte(sdt, va));
-			va += PAGE_SIZE;
+		if (!SDT_VALID(sdt))
+			va = eseg;
+		else {
+			while (va != eseg) {
+				pmap_remove_pte(pmap, va, sdt_pte(sdt, va));
+				va += PAGE_SIZE;
+			}
 		}
 	}
 }
@@ -1413,7 +1416,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 {
 	int spl;
 	pt_entry_t *pte, ap;
-	vaddr_t va;
+	vaddr_t va, eseg;
 
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pmap, s, e);
@@ -1432,26 +1435,31 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 	while (va != e) {
 		sdt_entry_t *sdt;
 
+		eseg = (va & SDT_MASK) + (1 << SDT_SHIFT);
+		if (eseg > e || eseg == 0)
+			eseg = e;
+
 		sdt = SDTENT(pmap, va);
 
 		/* If no segment table, skip a whole segment */
-		if (!SDT_VALID(sdt)) {
-			va &= SDT_MASK;
-			va += 1 << SDT_SHIFT;
-			if (va > e || va == 0)
-				va = e;
-		} else {
-			pte = sdt_pte(sdt, va);
-			if (pte != NULL && PDT_VALID(pte)) {
-				/*
-				 * Invalidate pte temporarily to avoid the
-				 * modified bit and/or the reference bit being
-				 * written back by any other cpu.
-				 */
-				*pte = (invalidate_pte(pte) & ~PG_PROT) | ap;
-				flush_atc_entry(pmap, va);
+		if (!SDT_VALID(sdt))
+			va = eseg;
+		else {
+			while (va != eseg) {
+				pte = sdt_pte(sdt, va);
+				if (pte != NULL && PDT_VALID(pte)) {
+					/*
+					 * Invalidate pte temporarily to avoid
+					 * the modified bit and/or the
+					 * reference bit being written back by
+					 * any other cpu.
+					 */
+					*pte = ap |
+					    (invalidate_pte(pte) & ~PG_PROT);
+					flush_atc_entry(pmap, va);
+				}
+				va += PAGE_SIZE;
 			}
-			va += PAGE_SIZE;
 		}
 	}
 	PMAP_UNLOCK(pmap);
@@ -2510,7 +2518,7 @@ void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	int spl;
-	vaddr_t e;
+	vaddr_t e, eseg;
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_RM)
@@ -2525,25 +2533,28 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		sdt_entry_t *sdt;
 		pt_entry_t *pte;
 
+		eseg = (va & SDT_MASK) + (1 << SDT_SHIFT);
+		if (eseg > e || eseg == 0)
+			eseg = e;
+
 		sdt = SDTENT(kernel_pmap, va);
 
 		/* If no segment table, skip a whole segment */
-		if (!SDT_VALID(sdt)) {
-			va &= SDT_MASK;
-			va += 1 << SDT_SHIFT;
-			if (va > e || va == 0)
-				va = e;
-		} else {
-			pte = sdt_pte(sdt, va);
-			if (pte != NULL && PDT_VALID(pte)) {
-				/* Update the counts */
-				kernel_pmap->pm_stats.resident_count--;
-				kernel_pmap->pm_stats.wired_count--;
+		if (!SDT_VALID(sdt))
+			va = eseg;
+		else {
+			while (va != eseg) {
+				pte = sdt_pte(sdt, va);
+				if (pte != NULL && PDT_VALID(pte)) {
+					/* Update the counts */
+					kernel_pmap->pm_stats.resident_count--;
+					kernel_pmap->pm_stats.wired_count--;
 
-				invalidate_pte(pte);
-				flush_atc_entry(kernel_pmap, va);
+					invalidate_pte(pte);
+					flush_atc_entry(kernel_pmap, va);
+				}
+				va += PAGE_SIZE;
 			}
-			va += PAGE_SIZE;
 		}
 	}
 	PMAP_UNLOCK(kernel_pmap);
