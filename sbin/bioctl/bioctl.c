@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.40 2006/05/07 23:57:23 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.41 2006/05/25 03:12:50 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -211,7 +211,7 @@ str2locator(const char *string, struct locator *location)
 void
 bio_inq(char *name)
 {
-	char *status, size[64], scsiname[16], volname[32];
+	char *status, size[64], scsiname[16], volname[32], percent[10];
 	int rv, i, d, volheader, hotspare, unused;
 	char encname[16], serial[32];
 	struct bioc_disk bd;
@@ -243,6 +243,7 @@ bio_inq(char *name)
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_cookie = bl.bl_cookie;
 		bv.bv_volid = i;
+		bv.bv_percent = -1;
 
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1) {
@@ -259,6 +260,10 @@ bio_inq(char *name)
 			    "Volume", "Status", "Size", "Device");
 		}
 
+		percent[0] = '\0';
+		if (bv.bv_percent != -1)
+			snprintf(percent, sizeof percent,
+			    " %d%% done", bv.bv_percent);
 		switch (bv.bv_status) {
 		case BIOC_SVONLINE:
 			status = BIOC_SVONLINE_S;
@@ -268,6 +273,15 @@ bio_inq(char *name)
 			break;
 		case BIOC_SVDEGRADED:
 			status = BIOC_SVDEGRADED_S;
+			break;
+		case BIOC_SVBUILDING:
+			status = BIOC_SVBUILDING_S;
+			break;
+		case BIOC_SVREBUILD:
+			status = BIOC_SVREBUILD_S;
+			break;
+		case BIOC_SVSCRUB:
+			status = BIOC_SVSCRUB_S;
 			break;
 		case BIOC_SVINVALID:
 		default:
@@ -290,8 +304,9 @@ bio_inq(char *name)
 			else
 				snprintf(size, sizeof size, "%14llu",
 				    bv.bv_size);
-			printf("%7s %-10s %14s %-7s RAID%u\n",
-			    volname, status, size, bv.bv_dev, bv.bv_level);
+			printf("%7s %-10s %14s %-7s RAID%u%s\n",
+			    volname, status, size, bv.bv_dev,
+			    bv.bv_level, percent);
 		}
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
