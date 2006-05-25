@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.41 2006/05/25 03:12:50 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.42 2006/05/25 03:39:12 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -211,7 +211,8 @@ str2locator(const char *string, struct locator *location)
 void
 bio_inq(char *name)
 {
-	char *status, size[64], scsiname[16], volname[32], percent[10];
+	char *status, size[64], scsiname[16], volname[32];
+	char percent[10], seconds[10];
 	int rv, i, d, volheader, hotspare, unused;
 	char encname[16], serial[32];
 	struct bioc_disk bd;
@@ -244,6 +245,7 @@ bio_inq(char *name)
 		bv.bv_cookie = bl.bl_cookie;
 		bv.bv_volid = i;
 		bv.bv_percent = -1;
+		bv.bv_seconds = 0;
 
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1) {
@@ -261,9 +263,13 @@ bio_inq(char *name)
 		}
 
 		percent[0] = '\0';
+		seconds[0] = '\0';
 		if (bv.bv_percent != -1)
 			snprintf(percent, sizeof percent,
 			    " %d%% done", bv.bv_percent);
+		if (bv.bv_seconds)
+			snprintf(seconds, sizeof seconds,
+			    " %u seconds", bv.bv_seconds);
 		switch (bv.bv_status) {
 		case BIOC_SVONLINE:
 			status = BIOC_SVONLINE_S;
@@ -304,9 +310,9 @@ bio_inq(char *name)
 			else
 				snprintf(size, sizeof size, "%14llu",
 				    bv.bv_size);
-			printf("%7s %-10s %14s %-7s RAID%u%s\n",
+			printf("%7s %-10s %14s %-7s RAID%u%s%s\n",
 			    volname, status, size, bv.bv_dev,
-			    bv.bv_level, percent);
+			    bv.bv_level, percent, seconds);
 		}
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
