@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.123 2006/05/25 14:31:37 jason Exp $ */
+/* $OpenBSD: if_em.c,v 1.124 2006/05/25 18:27:34 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -246,17 +246,17 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.master_slave = EM_MASTER_SLAVE;
 #endif
 
-        /*
-         * This controls when hardware reports transmit completion
-         * status.   
-         */
-        sc->hw.report_tx_early = 1;
+	/*
+	 * This controls when hardware reports transmit completion
+	 * status.   
+	 */
+	sc->hw.report_tx_early = 1;
 
-        if (em_allocate_pci_resources(sc)) {
-                printf("%s: Allocation of PCI resources failed\n",
-                       sc->sc_dv.dv_xname);
-                goto err_pci;
-        }
+	if (em_allocate_pci_resources(sc)) {
+		printf("%s: Allocation of PCI resources failed\n",
+		    sc->sc_dv.dv_xname);
+		goto err_pci;
+	}
 
 	/* Initialize eeprom parameters */
 	em_init_eeprom_params(&sc->hw);
