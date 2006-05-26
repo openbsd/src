@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcp.4,v 1.17 2005/07/10 08:30:51 hshoexer Exp $
+.\"	$OpenBSD: tcp.4,v 1.18 2006/05/26 04:02:59 deraadt Exp $
 .\"	$NetBSD: tcp.4,v 1.3 1994/11/30 16:22:35 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -141,8 +141,6 @@ Use TCP MD5 signatures per RFC 2385.
 This requires
 .Em Security Associations
 to be set up, which can be done using
-.Xr ipsecadm 8
-or
 .Xr ipsecctl 8 .
 When a listening socket has
 .Em TCP_MD5SIG
@@ -210,7 +208,6 @@ exists.
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr netintro 4 ,
-.Xr ipsecadm 8 ,
 .Xr ipsecctl 8
 .Sh HISTORY
 The

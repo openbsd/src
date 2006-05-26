@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.5 2005/08/08 14:52:41 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.6 2006/05/26 04:02:59 deraadt Exp $
 
-SUBDIR+= ipsecadm ipsecctl pfctl route
+SUBDIR+= ipsecctl pfctl route
 
 install:
 

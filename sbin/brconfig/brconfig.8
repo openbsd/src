@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.53 2005/09/27 21:31:40 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.54 2006/05/26 04:02:59 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -187,7 +187,7 @@ Setting this flag causes all packets to be passed on to
 .Xr ipsec 4
 for processing, based on the policies established by the administrator
 using the
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 command.
 If appropriate security associations (SAs) exist, they will be used to
 encrypt or decrypt the packets.
@@ -359,7 +359,7 @@ between the two bridges.
 To only protect the bridge traffic between
 the two bridges, the transport protocol 97 (etherip) selector may be
 used in
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 or
 .Xr isakmpd 8 .
 Otherwise, the Ethernet frames will be sent in the clear between the
@@ -457,7 +457,7 @@ commands are used to add and delete span ports to and from a bridge.
 .Xr bridgename.if 5 ,
 .Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
-.Xr ipsecadm 8 ,
+.Xr ipsecctl 8 ,
 .Xr isakmpd 8
 .Sh HISTORY
 The

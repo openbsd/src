@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcomp.4,v 1.12 2005/04/08 18:44:03 jmc Exp $
+.\" $OpenBSD: ipcomp.4,v 1.13 2006/05/26 04:02:59 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jj@wabbitt.org>
 .\" All rights reserved.
@@ -68,10 +68,10 @@ Compression Parameter Index (CPI).
 An IPCA is the pendant of the SA (Security Association) for IPsec.
 .Pp
 Currently, IPCA can be created using the
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 tool.
 Using
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 it is also possible to create IPComp flows and SA/IPCA
 bundles.
 Such a bundle is used to create a combination of IPsec and IPComp
@@ -115,7 +115,7 @@ displays information about IPComp flows.
 .Xr ip 4 ,
 .Xr ipsec 4 ,
 .Xr netintro 4 ,
-.Xr ipsecadm 8 ,
+.Xr ipsecctl 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The

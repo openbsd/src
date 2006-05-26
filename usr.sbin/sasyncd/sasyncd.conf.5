@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.9 2005/05/31 21:15:32 jmc Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.10 2006/05/26 04:02:59 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -81,10 +81,10 @@ Pass any SADB_FLUSH messages along.
 For example, in this mode
 .Xr sasyncd 8
 will synchronize an
-.Ic ipsecadm flush
+.Ic ipsecctl -F
 command to all connected slaves.
 For more information, see
-.Xr ipsecadm 8 .
+.Xr ipsecctl 8 .
 .It Ic startup
 Send a SADB_FLUSH message to the slaves as they connect, and act as
 .Ic sync
@@ -147,7 +147,7 @@ bytes long (corresponding to AES using a 128, 192 or 256 bit key).
 .Xr chmod 1 ,
 .Xr carp 4 ,
 .Xr chown 8 ,
-.Xr ipsecadm 8 ,
+.Xr ipsecctl 8 ,
 .Xr sasyncd 8
 .Sh HISTORY
 The

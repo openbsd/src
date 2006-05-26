@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.83 2005/09/23 14:45:25 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.84 2006/05/26 04:02:59 deraadt Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -112,7 +112,7 @@ If given,
 .Nm
 does not set up flows automatically.
 This is useful when flows are configured with
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 or by other programs like
 .Xr bgpd 8 .
 Thus
@@ -217,7 +217,7 @@ does not read the policy configuration file and no
 policy check is accomplished.
 This option can be used when policies for flows and SA establishment are
 arranged by other programs like
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 or
 .Xr bgpd 8 .
 .It Fl L

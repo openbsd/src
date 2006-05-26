@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.151 2006/05/17 08:34:42 gwk Exp $
+.\"	$OpenBSD: sysctl.3,v 1.152 2006/05/26 04:02:59 deraadt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1274,7 +1274,7 @@ and
 Note that lzs is only available with
 .Xr hifn 4 .
 See
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 for more information.
 .It Li ip.ipsec-enc-alg
 This is the default encryption algorithm the kernel will instruct key
@@ -1412,7 +1412,7 @@ This value applies to normal transport protocols, not to
 .It Li ipcomp.enable
 Enable the IPComp protocol.
 See
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 for more information.
 .It Li ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.59 2006/05/09 19:03:04 jmc Exp $
+.\"	$OpenBSD: bridge.4,v 1.60 2006/05/26 04:02:59 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -596,7 +596,7 @@ interface, the bridge will also perform transparent
 .Xr ipsec 4
 processing on the packets (encrypt or decrypt them), according to the
 policies set with the
-.Xr ipsecadm 8
+.Xr ipsecctl 8
 command by the administrator.
 If appropriate security associations (SAs) do not exist, any key
 management daemons such as
@@ -619,7 +619,7 @@ and certificates, to impersonate the protected host(s)).
 .Xr pf 4 ,
 .Xr bridgename.if 5 ,
 .Xr brconfig 8 ,
-.Xr ipsecadm 8 ,
+.Xr ipsecctl 8 ,
 .Xr isakmpd 8 ,
 .Xr netstart 8
 .Sh HISTORY
