@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.30 2006/05/09 21:17:13 miod Exp $
+ * $OpenBSD: calendar.openbsd,v 1.31 2006/05/26 10:52:45 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -25,6 +25,7 @@ Apr 01	OpenBSD/hppa64 port is added, 2005
 Apr 16	OpenBSD/i386 is ELF, 2003
 Apr 19	OpenBSD/solbourne port is added, 2005
 Apr 21	OpenBSD/luna88k port is added, 2004
+Apr 27	i386/PAE work integrated, 2006
 May 01	OpenBSD 3.3 released, exploiting W^X, 2003
 May 09	First commit to OpenBSD stable branch, OPENBSD_2_7, 2000
 May 09  OpenBSD/aviion port is added, 2006
