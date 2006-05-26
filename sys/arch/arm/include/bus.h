@@ -1,3 +1,4 @@
+/*	$OpenBSD: bus.h,v 1.5 2006/05/26 20:22:04 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
