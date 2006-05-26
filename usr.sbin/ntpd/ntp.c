@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.70 2006/05/25 19:30:45 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.71 2006/05/26 00:33:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	int			 a, b, nfds, i, j, idx_peers, timeout, nullfd;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
+	u_int			 sensors_cnt = 0;
 	pid_t			 pid;
 	struct pollfd		*pfd = NULL;
 	struct passwd		*pw;
@@ -72,6 +73,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	struct listen_addr	*la;
 	struct ntp_peer		*p;
 	struct ntp_peer		**idx2peer = NULL;
+	struct ntp_sensor	*s, *next_s;
 	struct timespec		 tp;
 	struct stat		 stb;
 	time_t			 nextaction;
@@ -145,6 +147,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		;
 	conf->status.precision = a;
 	conf->scale = 1;
+
+	sensor_init(conf);
+	sensor_scan(conf);
 
 	log_info("ntp engine ready");
 
@@ -227,8 +232,16 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 		}
 
+		sensors_cnt = 0;
+		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
+			sensors_cnt++;
+			if (s->next > 0 && s->next < nextaction)
+				nextaction = s->next;
+		}
+
 		if (conf->settime &&
-		    ((trial_cnt > 0 && sent_cnt == 0) || peer_cnt == 0))
+		    ((trial_cnt > 0 && sent_cnt == 0) ||
+		    (peer_cnt == 0 && sensors_cnt == 0)))
 			priv_settime(0);	/* no good peers, don't wait */
 
 		if (ibuf_main->w.queued > 0)
@@ -270,6 +283,13 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 				    conf->settime) == -1)
 					ntp_quit = 1;
 			}
+
+		for (s = TAILQ_FIRST(&conf->ntp_sensors); s != NULL;
+		    s = next_s) {
+			next_s = TAILQ_NEXT(s, entry);
+			if (sensor_query(s) == -1)
+				sensor_remove(conf, s);
+		}
 	}
 
 	msgbuf_write(&ibuf_main->w);
@@ -392,6 +412,7 @@ void
 priv_adjtime(void)
 {
 	struct ntp_peer		 *p;
+	struct ntp_sensor	 *s;
 	int			  offset_cnt = 0, i = 0;
 	struct ntp_offset	**offsets;
 	double			  offset_median;
@@ -404,6 +425,12 @@ priv_adjtime(void)
 		offset_cnt++;
 	}
 
+	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
+		if (!s->update.good)
+			continue;
+		offset_cnt++;
+	}
+
 	if ((offsets = calloc(offset_cnt, sizeof(struct ntp_offset *))) == NULL)
 		fatal("calloc priv_adjtime");
 
@@ -411,6 +438,12 @@ priv_adjtime(void)
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
 		offsets[i++] = &p->update;
+	}
+
+	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
+		if (!s->update.good)
+			continue;
+		offsets[i++] = &s->update;
 	}
 
 	qsort(offsets, offset_cnt, sizeof(struct ntp_offset *), offset_compare);

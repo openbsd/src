@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.62 2006/05/25 19:25:46 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.63 2006/05/26 00:33:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,9 @@
 #define	SETTIME_MIN_OFFSET	180	/* min offset for settime at start */
 #define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
 #define	LOG_NEGLIGEE		128	/* negligible drift to not log (ms) */
+
+#define	SENSOR_DATA_MAXAGE	15*60
+#define	SENSOR_QUERY_INTERVAL	30
 
 enum client_state {
 	STATE_NONE,
@@ -123,9 +126,18 @@ struct ntp_peer {
 	int				 lasterror;
 };
 
+struct ntp_sensor {
+	TAILQ_ENTRY(ntp_sensor)		 entry;
+	struct ntp_offset		 update;
+	time_t				 next;
+	char				*device;
+	int				 sensorid;
+};
+
 struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)	listen_addrs;
 	TAILQ_HEAD(ntp_peers, ntp_peer)		ntp_peers;
+	TAILQ_HEAD(ntp_sensors, ntp_sensor)	ntp_sensors;
 	struct ntp_status			status;
 	u_int8_t				listen_all;
 	u_int8_t				settime;
@@ -259,3 +271,9 @@ double			lfp_to_d(struct l_fixedpt);
 struct l_fixedpt	d_to_lfp(double);
 double			sfp_to_d(struct s_fixedpt);
 struct s_fixedpt	d_to_sfp(double);
+
+/* sensors.c */
+void			sensor_init(struct ntpd_conf *);
+void			sensor_scan(struct ntpd_conf *);
+void			sensor_remove(struct ntpd_conf *, struct ntp_sensor *);
+int			sensor_query(struct ntp_sensor *);
