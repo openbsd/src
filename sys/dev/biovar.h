@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.23 2006/05/25 22:25:48 deraadt Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.24 2006/05/26 00:09:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -38,6 +38,7 @@ struct bio_common {
 	void		*bc_cookie;
 };
 
+/* convert name to a cookie */
 #define BIOCLOCATE _IOWR('B', 0, struct bio_locate)
 struct bio_locate {
 	void		*bl_cookie;
@@ -49,8 +50,6 @@ int	bio_register(struct device *, int (*)(struct device *, u_long,
     caddr_t));
 void	bio_unregister(struct device *);
 #endif
-
-/* RAID section */
 
 #define BIOCINQ _IOWR('B', 32, struct bioc_inq)
 struct bioc_inq {
@@ -65,6 +64,11 @@ struct bioc_inq {
 /* structure that represents a disk in a RAID volume */
 struct bioc_disk {
 	void		*bd_cookie;
+
+	u_int16_t	bd_channel;
+	u_int16_t	bd_target;
+	u_int16_t	bd_lun;
+	u_int16_t	bd_other_id;	/* unused for now  */
 
 	int		bd_volid;	/* associate with volume */
 	int		bd_diskid;	/* virtual disk */
@@ -85,14 +89,8 @@ struct bioc_disk {
 #define BIOC_SDSCRUB_S		"Online/Scrub"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
-	int		bd_resv;	/* align */
 	u_quad_t	bd_size;	/* size of the disk */
 
-	/* physical data */
-	u_int16_t	bd_channel;
-	u_int16_t	bd_target;
-	u_int16_t	bd_lun;
-	u_int16_t	bd_other_id;	/* unused for now  */
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
 	char		bd_procdev[16];	/* processor device */
@@ -102,8 +100,8 @@ struct bioc_disk {
 /* structure that represents a RAID volume */
 struct bioc_vol {
 	void		*bv_cookie;
-
 	int		bv_volid;	/* volume id */
+
 	int16_t		bv_percent;	/* percent done operation */
 	u_int16_t	bv_seconds;	/* seconds of progress so far */
 
@@ -122,7 +120,6 @@ struct bioc_vol {
 #define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
-	int		bv_resv2;	/* align */
 	u_quad_t	bv_size;	/* size of the disk */
 	int		bv_level;	/* raid level */
 	int		bv_nodisk;	/* nr of drives */
@@ -134,13 +131,9 @@ struct bioc_vol {
 #define BIOCALARM _IOWR('B', 35, struct bioc_alarm)
 struct bioc_alarm {
 	void		*ba_cookie;
-
-	int		ba_resv1;	/* for binary compatibility */
-	int		ba_resv2;	/* for binary compatibility */
-	int		ba_status;	/* only used with get state */
-	int		ba_resv3;	/* for binary compatibility */
-
 	int		ba_opcode;
+
+	int		ba_status;	/* only used with get state */
 #define BIOC_SADISABLE		0x00	/* disable alarm */
 #define BIOC_SAENABLE		0x01	/* enable alarm */
 #define BIOC_SASILENCE		0x02	/* silence alarm */
@@ -151,36 +144,27 @@ struct bioc_alarm {
 #define BIOCBLINK _IOWR('B', 36, struct bioc_blink)
 struct bioc_blink {
 	void		*bb_cookie;
+	u_int16_t	bb_channel;
+	u_int16_t	bb_target;
 
-	int		bb_resv1;	/* for binary compatibility */
-	int		bb_resv2;	/* for binary compatibility */
 	int		bb_status;	/* current status */
 #define BIOC_SBUNBLINK		0x00	/* disable blinking */
 #define BIOC_SBBLINK		0x01	/* enable blink */
 #define BIOC_SBALARM		0x02	/* enable alarm blink */
-	int		bb_resv3;	/* for binary compatibility */
-
-	int		bb_target;
 };
 
 #define BIOCSETSTATE _IOWR('B', 37, struct bioc_setstate)
 struct bioc_setstate {
 	void		*bs_cookie;
-
-	int		bs_resv1;	/* for binary compatibility */
-	int		bs_resv2;	/* for binary compatibility */
-	int		bs_status;	/* change to this status */
-#define BIOC_SSONLINE		0x00	/* online disk */
-#define BIOC_SSOFFLINE		0x01	/* offline disk */
-#define BIOC_SSHOTSPARE		0x02	/* mark as hotspare */
-	int		bs_resv3;	/* for binary compatibility */
-
 	u_int16_t	bs_channel;
 	u_int16_t	bs_target;
 	u_int16_t	bs_lun;
 	u_int16_t	bs_other_id;	/* unused for now  */
 
-	int		bs_resv4;
+	int		bs_status;	/* change to this status */
+#define BIOC_SSONLINE		0x00	/* online disk */
+#define BIOC_SSOFFLINE		0x01	/* offline disk */
+#define BIOC_SSHOTSPARE		0x02	/* mark as hotspare */
 };
 
 #define BIOC_INQ		0x0001
