@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.20 2005/12/29 21:53:56 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.21 2006/05/26 17:26:33 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -290,7 +290,7 @@ version 2 only).
 .It "nd	str		Non-destructive space (cursor right)."
 .It "NL	bool	(o)" Ta Sy \&\en No "is newline, not line feed."
 .It "nl	str	(o)	Newline character if not" Sy \en .
-.It "ns	bool	(o)	Terminal is a" Tn CRT No "but doesn't scroll."
+.It "ns	bool	(o)	Terminal doesn't scroll."
 .It "nw	str	(P)	Newline (behaves like"
 .Sy \&cr
 followed by
@@ -592,8 +592,7 @@ A similar test can be used for insert-character.
 The number of columns on each line of the display is given by the
 .Sy \&co
 numeric capability.
-If the display is a
-.Tn CRT ,
+If the display is a terminal,
 then the
 number of lines on the screen is given by the
 .Sy \&li
@@ -657,9 +656,7 @@ because the space would erase the character moved over.
 A very important point here is that the local cursor motions encoded
 in
 .Nm
-have undefined behavior at the left and top edges of a
-.Tn CRT
-display.
+have undefined behavior at the left and top edges of a terminal.
 Programs should never attempt to backspace around the left edge,
 unless
 .Sy \&bw
