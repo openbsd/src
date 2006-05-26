@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.152 2006/05/26 04:02:59 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.153 2006/05/26 09:26:07 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1251,9 +1251,7 @@ associations on behalf of the kernel.
 Such security associations can occur as a result of a process having
 requested some security level through
 .Xr setsockopt 2 ,
-or as a result of dynamic
-.Xr vpn 8
-entries.
+or as a result of dynamic VPN entries.
 Supported values are hmac-md5, hmac-sha1, and hmac-ripemd160.
 If set to any other value, it is left to the key management daemons to
 select an authentication algorithm for the security association.
@@ -1283,9 +1281,7 @@ associations on behalf of the kernel.
 Such security associations can occur as a result of a process having
 requested some security level through
 .Xr setsockopt 2 ,
-or as a result of dynamic
-.Xr vpn 8
-entries.
+or as a result of dynamic VPN entries.
 Supported values are aes, des, 3des, blowfish, cast128, and skipjack.
 If set to any other value, it is left to the key management daemons to
 select an encryption algorithm for the security association.

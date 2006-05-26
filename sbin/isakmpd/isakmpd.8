@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.84 2006/05/26 04:02:59 deraadt Exp $
+.\" $OpenBSD: isakmpd.8,v 1.85 2006/05/26 09:26:07 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -76,11 +76,6 @@ socket, and lastly by scheduled events triggered by timers running out.
 Most uses of
 .Nm
 will be to implement so called "virtual private networks" (VPNs).
-The
-.Xr vpn 8
-manual page describes how to set up
-.Nm
-for a simple VPN.
 For other uses, some more knowledge of IKE as a protocol is required.
 One source of information are the RFCs mentioned below.
 .Pp
@@ -483,9 +478,6 @@ A number of methods exist to allow authentication:
 .Bl -ohang -offset indent
 .It Passphrase:
 This method does not use keys at all, but relies on a shared passphrase.
-See
-.Xr vpn 8
-for an example implementation.
 .It Host Keys:
 Public keys are used to authenticate.
 See
@@ -753,8 +745,7 @@ command is issued in the command FIFO.
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
 .Xr ssl 8 ,
-.Xr tcpdump 8 ,
-.Xr vpn 8
+.Xr tcpdump 8
 .Sh HISTORY
 The ISAKMP/Oakley key management protocol is described in
 RFC 2407, RFC 2408, and RFC 2409.
