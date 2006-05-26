@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.8 2006/03/13 16:08:12 espie Exp $
+# $OpenBSD: SCP.pm,v 1.9 2006/05/26 17:12:09 steven Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -135,6 +135,9 @@ sub list
 		print $cmdfh "LIST $path\n";
 		local $_;
 		$_ = <$getfh>;
+		if (!defined $_) {
+			die "Could not initiate SSH session\n";
+		}
 		chomp;
 		if (m/^ERROR:/) {
 			die $_;
