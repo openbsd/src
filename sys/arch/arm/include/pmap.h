@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.4 2005/11/09 18:08:37 martin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 2006/05/26 17:11:41 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 #include <arm/pte.h>
 #ifndef _LOCORE
 #include <arm/cpufunc.h>
-#include <uvm/uvm_object.h>
 #endif
 
 /*
@@ -174,8 +173,8 @@ struct pmap {
 	boolean_t		pm_remove_all;
 	struct l1_ttable	*pm_l1;
 	union pmap_cache_state	pm_cstate;
-	struct uvm_object	pm_obj;
-#define	pm_lock pm_obj.vmobjlock
+	u_int			pm_refs;
+	simple_lock_data_t	pm_lock;
 	struct l2_dtable	*pm_l2[L2_SIZE];
 	struct pmap_statistics	pm_stats;
 	LIST_ENTRY(pmap)	pm_list;

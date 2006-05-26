@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2006/05/26 17:06:39 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2006/05/26 17:11:40 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1905,10 +1905,7 @@ pmap_create(void)
 	pm = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 
 	simple_lock_init(&pm->pm_lock);
-	pm->pm_obj.pgops = NULL;	/* currently not a mappable object */
-	TAILQ_INIT(&pm->pm_obj.memq);
-	pm->pm_obj.uo_npages = 0;
-	pm->pm_obj.uo_refs = 1;
+	pm->pm_refs = 1;
 	pm->pm_stats.wired_count = 0;
 	pm->pm_stats.resident_count = 1;
 	pm->pm_cstate.cs_all = 0;
@@ -3191,7 +3188,7 @@ pmap_destroy(pmap_t pm)
 	 * Drop reference count
 	 */
 	simple_lock(&pm->pm_lock);
-	count = --pm->pm_obj.uo_refs;
+	count = --pm->pm_refs;
 	simple_unlock(&pm->pm_lock);
 	if (count > 0) {
 		if (pmap_is_current(pm)) {
@@ -3261,7 +3258,7 @@ pmap_reference(pmap_t pm)
 	pmap_use_l1(pm);
 
 	simple_lock(&pm->pm_lock);
-	pm->pm_obj.uo_refs++;
+	pm->pm_refs++;
 	simple_unlock(&pm->pm_lock);
 }
 
@@ -3846,10 +3843,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pm->pm_domain = PMAP_DOMAIN_KERNEL;
 	pm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
 	simple_lock_init(&pm->pm_lock);
-	pm->pm_obj.pgops = NULL;
-	TAILQ_INIT(&pm->pm_obj.memq);
-	pm->pm_obj.uo_npages = 0;
-	pm->pm_obj.uo_refs = 1;
+	pm->pm_refs = 1;
 
 	/*
 	 * Scan the L1 translation table created by initarm() and create
