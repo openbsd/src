@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.79 2006/05/19 19:50:23 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.80 2006/05/26 20:50:41 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ struct ifnet {				/* and the entries */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	struct	if_data if_data;	/* stats and other data about if */
-	u_int32_t if_jumbo_mtu;		/* maximum jumbo transmission unit */
+	u_int32_t if_hardmtu;		/* maximum MTU device supports */
 	int	if_capabilities;	/* interface capabilities */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 

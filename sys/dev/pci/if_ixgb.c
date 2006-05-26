@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.15 2006/05/20 03:47:56 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.16 2006/05/26 20:50:41 deraadt Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1034,7 +1034,7 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	ifp->if_ioctl = ixgb_ioctl;
 	ifp->if_start = ixgb_start;
 	ifp->if_watchdog = ixgb_watchdog;
-	ifp->if_jumbo_mtu =
+	ifp->if_hardmtu =
 		IXGB_MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN - ETHER_CRC_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);

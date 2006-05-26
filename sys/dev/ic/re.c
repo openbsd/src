@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.21 2006/05/20 03:47:56 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.22 2006/05/26 20:50:41 deraadt Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -877,7 +877,7 @@ re_attach_common(struct rl_softc *sc)
 	ifp->if_init = re_init;
 	if (sc->rl_type == RL_8169) {
 		ifp->if_baudrate = 1000000000;
-		ifp->if_jumbo_mtu = RL_JUMBO_MTU;
+		ifp->if_hardmtu = RL_JUMBO_MTU;
 		ifp->if_capabilities |= IFCAP_JUMBO_MTU;
 	} else
 		ifp->if_baudrate = 100000000;
