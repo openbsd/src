@@ -2234,7 +2234,6 @@
 ./usr/share/ipsec/isakmpd/singlehost-setup.sh
 ./usr/share/ipsec/isakmpd/singlehost-west.conf
 ./usr/share/ipsec/isakmpd/singlehost-west.gdb
-./usr/share/ipsec/rc.vpn
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
