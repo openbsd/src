@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.44 2006/05/25 22:26:03 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.45 2006/05/26 00:38:30 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -481,6 +481,7 @@ bio_setblink(char *name, char *arg, int blink)
 	bb.bb_cookie = bl.bl_cookie;
 	bb.bb_status = blink;
 	bb.bb_target = location.target;
+	bb.bb_channel = location.channel;
 	rv = ioctl(devh, BIOCBLINK, &bb);
 	if (rv == 0)
 		return;
