@@ -2189,7 +2189,6 @@
 ./usr/share/man/cat8/iprop.0
 ./usr/share/man/cat8/ipropd-master.0
 ./usr/share/man/cat8/ipropd-slave.0
-./usr/share/man/cat8/ipsecadm.0
 ./usr/share/man/cat8/ipsecctl.0
 ./usr/share/man/cat8/isakmpd.0
 ./usr/share/man/cat8/kadmin.0
