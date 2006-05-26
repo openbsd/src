@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.30 2006/05/23 12:14:34 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.31 2006/05/26 05:07:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -166,7 +166,7 @@ static const struct token t_neighbor_modifiers[] = {
 	{ KEYWORD,	"up",		NEIGHBOR_UP,		NULL},
 	{ KEYWORD,	"down",		NEIGHBOR_DOWN,		NULL},
 	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,		NULL},
-	{ KEYWORD,	"rrefresh",	NEIGHBOR_RREFRESH,	NULL},
+	{ KEYWORD,	"refresh",	NEIGHBOR_RREFRESH,	NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 

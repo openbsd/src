@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.33 2006/05/23 12:14:34 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.34 2006/05/26 05:07:15 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -71,7 +71,7 @@ may be the neighbor's address or description.
 Stop and restart the BGP session to the specified neighbor.
 .Ar peer
 may be the neighbor's address or description.
-.It Cm neighbor Ar peer Cm rrefresh
+.It Cm neighbor Ar peer Cm refresh
 Request the neighbor to re-send all routes.
 Note that the neighbor is not obliged to re-send all routes, or any routes at
 all, even if it announced the route refresh capability.
