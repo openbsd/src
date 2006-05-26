@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.37 2006/04/18 22:11:49 moritz Exp $ */
+/*	$OpenBSD: arp.c,v 1.38 2006/05/26 09:00:57 jmc Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -518,13 +518,9 @@ ether_print(const char *scp)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: arp [-n] hostname\n");
-	fprintf(stderr, "usage: arp [-n] -a\n");
-	fprintf(stderr, "usage: arp -d hostname\n");
-	fprintf(stderr, "usage: arp -d -a\n");
-	fprintf(stderr, "usage: arp [-F] -s hostname ether_addr "
+	fprintf(stderr, "usage: arp [-adn] hostname\n");
+	fprintf(stderr, "usage: arp [-F] [-f file] -s hostname ether_addr "
 	    "[temp | permanent] [pub]\n");
-	fprintf(stderr, "usage: arp [-F] -f filename\n");
 	exit(1);
 }
 

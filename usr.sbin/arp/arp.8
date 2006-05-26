@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.16 2006/05/25 15:04:07 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.17 2006/05/26 09:00:57 jmc Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -38,23 +38,14 @@
 .Nd address resolution display and control
 .Sh SYNOPSIS
 .Nm arp
-.Op Fl n
+.Op Fl adn
 .Ar hostname
 .Nm arp
-.Op Fl n
-.Fl a
-.Nm arp
-.Fl d Ar hostname
-.Nm arp
-.Fl d a
-.Nm arp
 .Op Fl F
+.Op Fl f Ar file
 .Fl s Ar hostname ether_addr
 .Op Cm temp | permanent
 .Op Cm pub
-.Nm arp
-.Op Fl F
-.Fl f Ar filename
 .Sh DESCRIPTION
 The
 .Nm
@@ -94,9 +85,9 @@ Force existing entries for the given host to be overwritten
 and
 .Fl s
 options).
-.It Fl f
+.It Fl f Ar file
 Process entries from
-.Ar filename
+.Ar file
 to be set in the
 .Tn ARP
 tables.
