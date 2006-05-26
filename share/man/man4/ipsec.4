@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.70 2006/05/26 04:02:59 deraadt Exp $
+.\" $OpenBSD: ipsec.4,v 1.71 2006/05/26 08:54:04 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -188,7 +188,6 @@ for encrypting and decrypting the data passing over the public net.
 An SA will contain information specifying
 whether it is a tunnel or transport mode SA,
 and for tunnels it will contain values to fill in into the outer IP header.
-.Pp
 .Ss Lifetimes
 The SA also holds a couple of other parameters, especially useful for
 automatic keying, called lifetimes, which puts a limit on how much we can
