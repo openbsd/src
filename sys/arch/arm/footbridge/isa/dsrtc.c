@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: dsrtc.c,v 1.3 2006/05/26 20:34:03 miod Exp $	*/
 /*	$NetBSD: dsrtc.c,v 1.5 2003/03/23 14:12:26 chris Exp $	*/
 
 /*
@@ -42,8 +42,6 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-
-#include <machine/rtc.h>
 
 #include <arm/footbridge/todclockvar.h>
 #include <arm/footbridge/isa/ds1687reg.h>

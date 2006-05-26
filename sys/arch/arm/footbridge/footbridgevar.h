@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridgevar.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: footbridgevar.h,v 1.2 2006/05/26 20:34:01 miod Exp $	*/
 /*	$NetBSD: footbridgevar.h,v 1.2 2002/02/10 12:26:00 chris Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  */
 
 #include <machine/bus.h>
-#include <machine/rtc.h>
 #include <dev/pci/pcivar.h>
 #include <arm/footbridge/todclockvar.h>
 

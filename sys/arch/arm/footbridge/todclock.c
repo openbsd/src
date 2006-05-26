@@ -1,4 +1,4 @@
-/*	$OpenBSD: todclock.c,v 1.5 2005/05/26 19:52:28 pedro Exp $	*/
+/*	$OpenBSD: todclock.c,v 1.6 2006/05/26 20:34:01 miod Exp $	*/
 /*	$NetBSD: todclock.c,v 1.4 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/rtc.h>
 #include <arm/footbridge/todclockvar.h>
 
 #include "todclock.h"
