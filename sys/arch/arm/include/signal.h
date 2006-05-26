@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2006/01/08 14:20:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2006/05/26 20:31:25 miod Exp $	*/
 /*	$NetBSD: signal.h,v 1.5 2003/10/18 17:57:21 briggs Exp $	*/
 
 /*
@@ -90,39 +90,4 @@ struct sigcontext {
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #endif /* !_LOCORE */
 
-#if defined(_LOCORE) || __BSD_VISIBLE
-
-/*
- * SIGFPE codes
- *
- * see ieeefp.h for definition of FP exception codes
- */
-#define SIG_CODE_FPE_CODE_MASK	0x00000f00	/* Mask for exception code */
-#define SIG_CODE_FPE_CODE_SHIFT	8		/* Shift for exception code */
-#define SIG_CODE_FPE_TYPE_MASK	0x000000ff	/* Mask for specific code */
-
-/*
- * SIGILL codes
- *
- * the signal code is the instruction that raised the signal
- */
-
-/*
- * SIGBUS and SIGSEGV codes
- *
- * The signal code is combination of the fault address and the fault code.
- *
- * The fault code is the coproc #15 fault status code
- *
- * The exception to this is a SIGBUS or SIGSEGV from a prefetch abort.
- * In this case the fault status code is not valid so the TYPE_MASK
- * should be treated as undefined (in practice it is the bottom 4 bits
- * of the fault address).
- */
-#define SIG_CODE_BUS_ADDR_MASK	0xfffffff0
-#define SIG_CODE_BUS_TYPE_MASK	0x0000000f
-#define SIG_CODE_SEGV_ADDR_MASK	SIG_CODE_BUS_ADDR_MASK
-#define SIG_CODE_SEGV_TYPE_MASK	SIG_CODE_BUS_TYPE_MASK
-
-#endif /* _LOCORE || __BSD_VISIBLE */
 #endif	/* !_ARM32_SIGNAL_H_ */
