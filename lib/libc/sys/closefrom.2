@@ -1,4 +1,4 @@
-.\"	$OpenBSD: closefrom.2,v 1.2 2004/01/12 20:52:09 jmc Exp $
+.\"	$OpenBSD: closefrom.2,v 1.3 2006/05/26 04:41:02 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst.  All rights reserved.
 .\"
@@ -52,7 +52,7 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa fd
-is greater than any open file descriptor.
+is greater than all open file descriptors.
 .It Bq Er EINTR
 An interrupt was received.
 .El
