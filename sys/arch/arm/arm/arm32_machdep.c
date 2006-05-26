@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.20 2006/03/15 21:41:37 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.21 2006/05/26 17:06:39 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 
 #include <dev/cons.h>
 
-#include <arm/katelib.h>
 #include <arm/machdep.h>
 #include <machine/bootconfig.h>
 #include <machine/conf.h>

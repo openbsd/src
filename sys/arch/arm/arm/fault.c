@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.7 2006/03/04 10:19:12 miod Exp $	*/
+/*	$OpenBSD: fault.c,v 1.8 2006/05/26 17:06:39 miod Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 #include <arm/cpuconf.h>
 
 #include <machine/frame.h>
-#include <arm/katelib.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #if defined(DDB) || defined(KGDB)
@@ -310,7 +309,7 @@ data_abort_handler(trapframe_t *tf)
 	if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS ||
 	    (va < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW)) &&
 	    __predict_true((pcb->pcb_onfault == NULL ||
-	     (ReadWord(tf->tf_pc) & 0x05200000) != 0x04200000))) {
+	     ((*(u_int *)tf->tf_pc) & 0x05200000) != 0x04200000))) {
 		map = kernel_map;
 
 		/* Was the fault due to the FPE/IPKDB ? */
@@ -355,7 +354,7 @@ data_abort_handler(trapframe_t *tf)
 	if (IS_PERMISSION_FAULT(fsr))
 		ftype = VM_PROT_WRITE; 
 	else {
-		u_int insn = ReadWord(tf->tf_pc);
+		u_int insn = *(u_int *)tf->tf_pc;
 
 		if (((insn & 0x0c100000) == 0x04000000) ||	/* STR/STRB */
 		    ((insn & 0x0e1000b0) == 0x000000b0) ||	/* STRH/STRD */

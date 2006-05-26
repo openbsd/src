@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2005/07/18 02:43:24 fgsch Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 2006/05/26 17:06:39 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -205,7 +205,6 @@
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>
-#include <arm/katelib.h>
 #include <arm/cpufunc.h>
 
 #ifdef PMAP_DEBUG
