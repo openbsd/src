@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.57 2006/05/25 22:04:35 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.58 2006/05/26 00:53:54 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -100,6 +100,7 @@ int		mfi_ioctl_inq(struct mfi_softc *, struct bioc_inq *);
 int		mfi_ioctl_vol(struct mfi_softc *, struct bioc_vol *);
 int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
 int		mfi_ioctl_alarm(struct mfi_softc *, struct bioc_alarm *);
+int		mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *);
 int		mfi_ioctl_setstate(struct mfi_softc *, struct bioc_setstate *);
 #endif /* NBIO > 0 */
 
@@ -1229,6 +1230,11 @@ mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		error = mfi_ioctl_alarm(sc, (struct bioc_alarm *)addr);
 		break;
 
+	case BIOCBLINK:
+		DNPRINTF(MFI_D_IOCTL, "blink\n");
+		error = mfi_ioctl_blink(sc, (struct bioc_blink *)addr);
+		break;
+
 	case BIOCSETSTATE:
 		DNPRINTF(MFI_D_IOCTL, "setstate\n");
 		error = mfi_ioctl_setstate(sc, (struct bioc_setstate *)addr);
@@ -1513,6 +1519,64 @@ mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 		else
 			ba->ba_status = 0;
 
+	return (rv);
+}
+
+int
+mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
+{
+	int			i, found, rv = EINVAL;
+	uint8_t			mbox[MFI_MBOX_SIZE];
+	uint32_t		cmd;
+	struct mfi_pd_list	*pd;
+
+	/* channel 0 means not in an enclosure so can't be blinked */
+	if (bb->bb_channel == 0)
+		return (EINVAL);
+
+	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
+	    MFI_PD_LIST_SIZE, pd, NULL))
+		goto done;
+
+	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
+		if (bb->bb_channel == pd->mpl_address[i].mpa_enc_index &&
+		    bb->bb_target == pd->mpl_address[i].mpa_enc_slot) {
+		    	found = 1;
+			break;
+		}
+
+	if (!found)
+		goto done;
+
+	memset(mbox, 0, sizeof mbox);
+
+	switch (bb->bb_status) {
+	case BIOC_SBUNBLINK:
+		*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
+		cmd = MR_DCMD_PD_UNBLINK;
+		break;
+
+	case BIOC_SBBLINK:
+		*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
+		cmd = MR_DCMD_PD_BLINK;
+		break;
+
+	case BIOC_SBALARM:
+	default:
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_blink biocblink invalid "
+		    "opcode %x\n", DEVNAME(sc), bb->bb_status);
+		goto done;
+	}
+
+
+	if (mfi_mgmt(sc, cmd, MFI_DATA_NONE, 0, NULL, mbox))
+		goto done;
+
+	rv = 0;
+done:
+	free(pd, M_DEVBUF);
 	return (rv);
 }
 
