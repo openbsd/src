@@ -1,8 +1,9 @@
-/*	$OpenBSD: ami.c,v 1.162 2006/05/21 19:48:51 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.163 2006/05/26 15:57:32 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
  * Copyright (c) 2005 Marco Peereboom
+ * Copyright (c) 2006 David Gwynne
  * All rights reserved.
  *
  * The SCSI emulation layer is derived from gdt(4) driver,
