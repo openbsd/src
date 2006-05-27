@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.69 2006/04/28 17:18:13 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.70 2006/05/27 21:48:22 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -729,6 +729,15 @@ allmulti:
 		return;
 	}
 
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
 	/*
 	 * We have to explicitly enable the multicast hash table
 	 * on the NatSemi chip if we want to use it, which we do.
@@ -746,11 +755,6 @@ allmulti:
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
-
 		h = sis_mchash(sc, enm->enm_addrlo);
 		index = h >> 3;
 		bit = h & 0x1F;
