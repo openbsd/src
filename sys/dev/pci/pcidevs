@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1069 2006/05/23 04:53:09 brad Exp $
+$OpenBSD: pcidevs,v 1.1070 2006/05/27 03:29:43 reyk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -275,6 +275,7 @@ vendor	LANERGY		0x1812	Lanergy
 vendor	RALINK		0x1814	Ralink
 vendor	XGI		0x18ca	XGI Technology
 vendor	SANGOMA		0x1923	Sangoma
+vendor	OPTION		0x1931	Option
 vendor	JMICRON		0x197b	JMicron
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
@@ -2647,6 +2648,9 @@ product OPTI 82C700		0xc700	82C700
 product OPTI 82C701		0xc701	82C701
 product OPTI 82C822		0xc822	82C822
 product OPTI 82C861		0xc861	82C861
+
+/* Option products */
+product OPTION F32		0x000c	3G+ UMTS HSDPA (F32)
 
 /* Oxford/ VScom */
 product OXFORD VSCOM_PCI010L	0x8001	010L
