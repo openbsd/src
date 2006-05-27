@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.50 2006/03/31 15:56:25 hshoexer Exp $	*/
+/*	$OpenBSD: show.c,v 1.51 2006/05/27 18:20:59 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <arpa/inet.h>
 
 #include <err.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -165,8 +166,11 @@ p_rttables(int af, int Aflag)
 	mib[3] = NET_KEY_SPD_DUMP;
 	mib[4] = mib[5] = 0;
 
-	if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1)
+	if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
+		if (errno == ENOPROTOOPT)
+			return;
 		err(1, "spd-sysctl-estimate");
+	}
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == 0)
 			err(1, NULL);
