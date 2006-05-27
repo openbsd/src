@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2003/11/03 19:51:42 otto Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/05/27 22:53:44 deraadt Exp $
 
 PROG=		bc
-SRCS=		bc.c scan.c
+SRCS=		bc.y scan.l
 CPPFLAGS+=	-I. -I${.CURDIR}
 CFLAGS+=	-Wall -Wno-unused
 YFLAGS+=
