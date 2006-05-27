@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcwd.c,v 1.15 2006/05/27 16:14:02 pedro Exp $	*/
+/*	$OpenBSD: getcwd.c,v 1.16 2006/05/27 18:00:27 pedro Exp $	*/
 
 /*
  * Copyright (c) 2005 Marius Eriksen <marius@openbsd.org>
@@ -25,14 +25,21 @@ int __getcwd(char *buf, size_t len);
 char *
 getcwd(char *buf, size_t size)
 {
+	char *allocated = NULL;
+
 	if (buf != NULL && size == 0) {
 		errno = EINVAL;
 		return (NULL);
 	}
 
 	if (buf == NULL &&
-	    (buf = malloc(size = MAXPATHLEN)) == NULL)
+	    (allocated = buf = malloc(size = MAXPATHLEN)) == NULL)
 		return (NULL);
 
-	return (__getcwd(buf, size) < 0 ? NULL : buf);
+	if (__getcwd(buf, size) < 0) {
+		free(allocated);
+		return (NULL);
+	}
+
+	return (buf);
 }
