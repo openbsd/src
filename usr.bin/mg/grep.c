@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.28 2006/05/02 17:10:25 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.29 2006/05/27 21:22:45 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -83,7 +83,6 @@ grep_init(void)
 static int
 grep(int f, int n)
 {
-	char	 command[NFILEN + 21];
 	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
@@ -94,9 +93,10 @@ grep(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	(void)snprintf(command, sizeof(command), "%s /dev/null", bufp);
+	if (strlcat(cprompt, " /dev/null", sizeof(cprompt)) >= sizeof(cprompt))
+		return (FALSE);
 
-	if ((bp = compile_mode("*grep*", command)) == NULL)
+	if ((bp = compile_mode("*grep*", cprompt)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -109,7 +109,6 @@ grep(int f, int n)
 static int
 xlint(int f, int n)
 {
-	char	 command[NFILEN + 16];
 	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
@@ -120,9 +119,8 @@ xlint(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	(void)snprintf(command, sizeof(command), "%s 2>&1", bufp);
 
-	if ((bp = compile_mode("*lint*", command)) == NULL)
+	if ((bp = compile_mode("*lint*", cprompt)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -135,7 +133,6 @@ xlint(int f, int n)
 static int
 compile(int f, int n)
 {
-	char	 command[NFILEN + 20];
 	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
@@ -150,9 +147,7 @@ compile(int f, int n)
 		return (ABORT);
 	(void)strlcpy(compile_last_command, bufp, sizeof(compile_last_command));
 
-	(void)snprintf(command, sizeof(command), "%s 2>&1", bufp);
-
-	if ((bp = compile_mode("*compile*", command)) == NULL)
+	if ((bp = compile_mode("*compile*", cprompt)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -167,11 +162,11 @@ compile(int f, int n)
 static int
 gid(int f, int n)
 {
-	char	 command[NFILEN + 20];
+	char	 command[NFILEN];
 	char	 cprompt[NFILEN], c, *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
-	int	 i, j;
+	int	 i, j, len;
 
 	/* catch ([^\s(){}]+)[\s(){}]* */
 
@@ -206,7 +201,9 @@ gid(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	(void)snprintf(command, sizeof(command), "gid %s", cprompt);
+	len = snprintf(command, sizeof(command), "gid %s", cprompt);
+	if (len < 0 || len >= sizeof(command))
+		return (FALSE);
 
 	if ((bp = compile_mode("*gid*", command)) == NULL)
 		return (FALSE);
@@ -224,10 +221,14 @@ compile_mode(const char *name, const char *command)
 	FILE	*fpipe;
 	char	*buf;
 	size_t	 len;
-	int	 ret;
-	char	 cwd[NFILEN];
+	int	 ret, n;
+	char	 cwd[NFILEN], qcmd[NFILEN];
 	char	 timestr[NTIME];
 	time_t	 t;
+
+	n = snprintf(qcmd, sizeof(qcmd), "%s 2>&1", command);
+	if (n < 0 || n >= sizeof(qcmd))
+		return (NULL);
 
 	bp = bfind(name, TRUE);
 	if (bclear(bp) != TRUE)
@@ -236,7 +237,7 @@ compile_mode(const char *name, const char *command)
 	if (getbufcwd(bp->b_cwd, sizeof(bp->b_cwd)) != TRUE)
 		return (NULL);
 	addlinef(bp, "cd %s", bp->b_cwd);
-	addline(bp, command);
+	addline(bp, qcmd);
 	addline(bp, "");
 
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -245,7 +246,7 @@ compile_mode(const char *name, const char *command)
 		ewprintf("Can't change dir to %s", bp->b_cwd);
 		return (NULL);
 	}
-	if ((fpipe = popen(command, "r")) == NULL) {
+	if ((fpipe = popen(qcmd, "r")) == NULL) {
 		ewprintf("Problem opening pipe");
 		return (NULL);
 	}
@@ -289,7 +290,7 @@ compile_goto_error(int f, int n)
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	char	*fname, *line, *lp, *ln;
-	int	 lineno, len;
+	int	 lineno;
 	char	*adjf, path[NFILEN];
 	const char *errstr;
 	struct line	*last;
@@ -302,15 +303,9 @@ compile_goto_error(int f, int n)
 	/* last line is compilation result */
 	if (curwp->w_dotp == last)
 		return (FALSE);
-
-	len = llength(curwp->w_dotp);
-
-	if ((line = malloc(len + 1)) == NULL)
+	
+	if ((line = linetostr(curwp->w_dotp)) == NULL)
 		return (FALSE);
-
-	(void)memcpy(line, curwp->w_dotp->l_text, len);
-	line[len] = '\0';
-
 	lp = line;
 	if ((fname = strsep(&lp, ":")) == NULL || *fname == '\0')
 		goto fail;
