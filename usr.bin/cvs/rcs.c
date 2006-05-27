@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.172 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.173 2006/05/27 05:59:32 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2577,7 +2577,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 	u_int j, found;
 	char *c, *kwstr, *start, *end, *tbuf;
 	char expbuf[256], buf[256];
-	struct tm tb;
 	char *fmt;
 
 	kwtype = 0;
@@ -2694,7 +2693,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				if (kwtype & RCS_KW_DATE) {
 					fmt = "%Y/%m/%d %H:%M:%S ";
 
-					strftime(buf, sizeof(buf), fmt, &tb);
+					strftime(buf, sizeof(buf), fmt,
+					    &rdp->rd_date);
 					if (strlcat(expbuf, buf,
 					    sizeof(expbuf)) >= sizeof(expbuf))
 						fatal("rcs_expand_keywords: "

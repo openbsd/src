@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.54 2006/05/27 05:20:25 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.55 2006/05/27 05:59:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -127,6 +127,8 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 		    cf->file_path, rev);
 		return (0);
 	}
+
+	bp = rcs_kwexp_buf(bp, cf->file_rcs, rnum);
 
 	oflags = O_WRONLY | O_TRUNC;
 	if (cf->fd != -1) {
