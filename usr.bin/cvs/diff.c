@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.92 2006/05/27 15:14:27 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.93 2006/05/27 17:52:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -144,6 +144,8 @@ cvs_diff_local(struct cvs_file *cf)
 	if ((b1 = rcs_getrev(cf->file_rcs, r1)) == NULL)
 		fatal("failed to retrieve revision %s", rbuf);
 
+	b1 = rcs_kwexp_buf(b1, cf->file_rcs, r1);
+
 	tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
 	tv[0].tv_usec = 0;
 	tv[1] = tv[0];
@@ -153,6 +155,8 @@ cvs_diff_local(struct cvs_file *cf)
 		cvs_printf("retrieving revision %s\n", rbuf);
 		if ((b2 = rcs_getrev(cf->file_rcs, diff_rev2)) == NULL)
 			fatal("failed to retrieve revision %s", rbuf);
+
+		b2 = rcs_kwexp_buf(b2, cf->file_rcs, diff_rev2);
 
 		tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev2);
 		tv2[0].tv_usec = 0;
