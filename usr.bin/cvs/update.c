@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.62 2006/05/27 15:53:01 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.63 2006/05/27 16:10:01 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -24,6 +24,9 @@
 
 int	cvs_update(int, char **);
 int	prune_dirs = 0;
+int	build_dirs = 0;
+
+#define UPDATE_SKIP	100
 
 struct cvs_cmd cvs_cmd_update = {
 	CVS_OP_UPDATE, CVS_REQ_UPDATE, "update",
@@ -54,6 +57,7 @@ cvs_update(int argc, char **argv)
 		case 'D':
 			break;
 		case 'd':
+			build_dirs = 1;
 			break;
 		case 'f':
 			break;
@@ -111,7 +115,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 
 	cvs_file_classify(cf);
 
-	if (cf->file_status == DIR_CREATE) {
+	if (cf->file_status == DIR_CREATE && build_dirs == 1) {
 		cvs_mkpath(cf->file_path);
 		if ((cf->fd = open(cf->file_path, O_RDONLY)) == -1)
 			fatal("cvs_update_enterdir: %s", strerror(errno));
@@ -126,6 +130,8 @@ cvs_update_enterdir(struct cvs_file *cf)
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
 		xfree(entry);
+	} else if (cf->file_status == DIR_CREATE && build_dirs == 0) {
+		cf->file_status = UPDATE_SKIP;
 	}
 }
 
@@ -219,6 +225,9 @@ cvs_update_local(struct cvs_file *cf)
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
 
 	if (cf->file_type == CVS_DIR) {
+		if (cf->file_status == UPDATE_SKIP)
+			return;
+
 		if (cf->file_status != FILE_UNKNOWN &&
 		    verbosity > 1)
 			cvs_log(LP_NOTICE, "Updating %s", cf->file_path);
