@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.79 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.80 2006/05/27 16:18:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -790,31 +790,6 @@ cvs_patchfile(const char *data, const char *patch,
 	cvs_freelines(dlines);
 	cvs_freelines(plines);
 	return (res);
-}
-
-/*
- * cvs_yesno()
- *
- * Read from standart input for `y' or `Y' character.
- * Returns 0 on success, or -1 on failure.
- */
-int
-cvs_yesno(void)
-{
-	int c, ret;
-
-	ret = 0;
-
-	fflush(stderr);
-	fflush(stdout);
-
-	if ((c = getchar()) != 'y' && c != 'Y')
-		ret = -1;
-	else
-		while (c != EOF && c != '\n')
-			c = getchar();
-
-	return (ret);
 }
 
 /*
