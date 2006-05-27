@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.2 2006/05/27 19:37:38 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.3 2006/05/27 20:53:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -116,8 +116,6 @@ void			mpi_portenable_done(struct mpi_ccb *, void *, paddr_t);
 				    MPI_INTR_STATUS_DOORBELL, 0)
 #define mpi_wait_db_ack(s)	mpi_wait_eq((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_IOCDOORBELL, 0)
-
-
 
 int
 mpi_attach(struct mpi_softc *sc)
@@ -1128,65 +1126,72 @@ mpi_iocfacts(struct mpi_softc *sc)
 	}
 
 #ifdef MPI_DEBUG
-	printf("%s:  func: 0x%02x len: %d msgver: %d.%d\n",
-	    DEVNAME(sc), ifp.function, ifp.msg_length,
-	    ifp.msg_version_maj, ifp.msg_version_min);
+	if (mpidebug) {
+		printf("%s:  func: 0x%02x len: %d msgver: %d.%d\n",
+		    DEVNAME(sc), ifp.function, ifp.msg_length,
+		    ifp.msg_version_maj, ifp.msg_version_min);
 
-	printf("%s:  msgflags: 0x%02x iocnumber: 0x%02x hdrver: %d.%d\n",
-            DEVNAME(sc), ifp.msg_flags, ifp.ioc_number,
-            ifp.header_version_maj, ifp.header_version_min);
+		printf("%s:  msgflags: 0x%02x iocnumber: 0x%02x "
+		    "hdrver: %d.%d\n", DEVNAME(sc), ifp.msg_flags,
+		    ifp.ioc_number, ifp.header_version_maj,
+		    ifp.header_version_min);
 
-	printf("%s:  message context: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.msg_context));
+		printf("%s:  message context: 0x%08x\n", DEVNAME(sc),
+		    letoh32(ifp.msg_context));
 
-	printf("%s:  iocstatus: 0x%04x ioexcept: 0x%04x\n", DEVNAME(sc),
-	    letoh16(ifp.ioc_status), letoh16(ifp.ioc_exceptions));
+		printf("%s:  iocstatus: 0x%04x ioexcept: 0x%04x\n",
+		    DEVNAME(sc), letoh16(ifp.ioc_status),
+		    letoh16(ifp.ioc_exceptions));
 
-	printf("%s:  iocloginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.ioc_loginfo));
+		printf("%s:  iocloginfo: 0x%08x\n", DEVNAME(sc),
+		    letoh32(ifp.ioc_loginfo));
 
-	printf("%s:  flags: 0x%02x blocksize: %d whoinit: 0x%02x "
-	    "maxchdepth: %d\n", DEVNAME(sc), ifp.flags, ifp.block_size,
-	    ifp.whoinit, ifp.max_chain_depth);
+		printf("%s:  flags: 0x%02x blocksize: %d whoinit: 0x%02x "
+		    "maxchdepth: %d\n", DEVNAME(sc), ifp.flags,
+		    ifp.block_size, ifp.whoinit, ifp.max_chain_depth);
 
-	printf("%s:  reqfrsize: %d replyqdepth: %d\n", DEVNAME(sc),
-	    letoh16(ifp.request_frame_size), letoh16(ifp.reply_queue_depth));
+		printf("%s:  reqfrsize: %d replyqdepth: %d\n", DEVNAME(sc),
+		    letoh16(ifp.request_frame_size),
+		    letoh16(ifp.reply_queue_depth));
 
-	printf("%s:  productid: 0x%04x\n", DEVNAME(sc),
-	    letoh16(ifp.product_id));
+		printf("%s:  productid: 0x%04x\n", DEVNAME(sc),
+		    letoh16(ifp.product_id));
 
-	printf("%s:  hostmfahiaddr: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.current_host_mfa_hi_addr));
+		printf("%s:  hostmfahiaddr: 0x%08x\n", DEVNAME(sc),
+		    letoh32(ifp.current_host_mfa_hi_addr));
 
-	printf("%s:  event_state: 0x%02x number_of_ports: %d "
-	    "global_credits: %d\n",
-	    DEVNAME(sc), ifp.event_state, ifp.number_of_ports,
-	    letoh16(ifp.global_credits));
+		printf("%s:  event_state: 0x%02x number_of_ports: %d "
+		    "global_credits: %d\n",
+		    DEVNAME(sc), ifp.event_state, ifp.number_of_ports,
+		    letoh16(ifp.global_credits));
 
-	printf("%s:  sensebufhiaddr: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.current_sense_buffer_hi_addr));
+		printf("%s:  sensebufhiaddr: 0x%08x\n", DEVNAME(sc),
+		    letoh32(ifp.current_sense_buffer_hi_addr));
 
-	printf("%s:  maxbus: %d maxdev: %d replyfrsize: %d\n", DEVNAME(sc),
-	    ifp.max_buses, ifp.max_devices,
-	    letoh16(ifp.current_reply_frame_size));
+		printf("%s:  maxbus: %d maxdev: %d replyfrsize: %d\n",
+		    DEVNAME(sc), ifp.max_buses, ifp.max_devices,
+		    letoh16(ifp.current_reply_frame_size));
 
-	printf("%s:  fw_image_size: %d\n", DEVNAME(sc),
-	    letoh32(ifp.fw_image_size));
+		printf("%s:  fw_image_size: %d\n", DEVNAME(sc),
+		    letoh32(ifp.fw_image_size));
 
-	printf("%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
-	    letoh32(ifp.ioc_capabilities));
+		printf("%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
+		    letoh32(ifp.ioc_capabilities));
 
-	printf("%s:  fw_version: %d.%d fw_version_unit: 0x%02x "
-	    "fw_version_dev: 0x%02x\n", DEVNAME(sc), ifp.fw_version_maj,
-	    ifp.fw_version_min, ifp.fw_version_unit, ifp.fw_version_dev);
+		printf("%s:  fw_version: %d.%d fw_version_unit: 0x%02x "
+		    "fw_version_dev: 0x%02x\n", DEVNAME(sc),
+		    ifp.fw_version_maj, ifp.fw_version_min,
+		    ifp.fw_version_unit, ifp.fw_version_dev);
 
-	printf("%s:  hi_priority_queue_depth: 0x%04x\n", DEVNAME(sc),
-	    letoh16(ifp.hi_priority_queue_depth));
+		printf("%s:  hi_priority_queue_depth: 0x%04x\n", DEVNAME(sc),
+		    letoh16(ifp.hi_priority_queue_depth));
 
-	printf("%s:  host_page_buffer_sge: hdr: 0x%08x addr 0x%08x %08x\n",
-	    DEVNAME(sc), letoh32(ifp.host_page_buffer_sge.sg_hdr),
-	    letoh32(ifp.host_page_buffer_sge.sg_hiaddr),
-	    letoh32(ifp.host_page_buffer_sge.sg_loaddr));
+		printf("%s:  host_page_buffer_sge: hdr: 0x%08x "
+		    "addr 0x%08x %08x\n", DEVNAME(sc),
+		    letoh32(ifp.host_page_buffer_sge.sg_hdr),
+		    letoh32(ifp.host_page_buffer_sge.sg_hiaddr),
+		    letoh32(ifp.host_page_buffer_sge.sg_loaddr));
+	}
 #endif /* MPI_DEBUG */
 
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
@@ -1234,21 +1239,24 @@ mpi_iocinit(struct mpi_softc *sc)
 	}
 
 #ifdef MPI_DEBUG
-	printf("%s:  function: 0x%02x msg_length: %d whoinit: 0x%02x\n",
-	    DEVNAME(sc), iip.function, iip.msg_length, iip.whoinit);
+	if (mpidebug) {
+		printf("%s:  function: 0x%02x msg_length: %d "
+		    "whoinit: 0x%02x\n", DEVNAME(sc), iip.function,
+		    iip.msg_length, iip.whoinit);
 
-	printf("%s:  msg_flags: 0x%02x max_buses: %d max_devices: %d "
-	    "flags: 0x%02x\n", DEVNAME(sc), iip.msg_flags, iip.max_buses,
-	    iip.max_devices, iip.flags);
+		printf("%s:  msg_flags: 0x%02x max_buses: %d max_devices: %d "
+		    "flags: 0x%02x\n", DEVNAME(sc), iip.msg_flags,
+		    iip.max_buses, iip.max_devices, iip.flags);
 
-	printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-	    letoh32(iip.msg_context));
+		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+		    letoh32(iip.msg_context));
 
-	printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(iip.ioc_status));
+		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+		    letoh16(iip.ioc_status));
 
-	printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(iip.ioc_loginfo));
+		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+		    letoh32(iip.ioc_loginfo));
+	}
 #endif /* MPI_DEBUG */
 
 	return (0);
@@ -1300,34 +1308,37 @@ mpi_portfacts_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 		panic("%s: empty portfacts reply\n", DEVNAME(sc));
 
 #ifdef MPI_DEBUG
-	printf("%s:  function: 0x%02x msg_length: %d\n", DEVNAME(sc),
-	    pfp->function, pfp->msg_length);
+	if (mpidebug) {
+		printf("%s:  function: 0x%02x msg_length: %d\n", DEVNAME(sc),
+		    pfp->function, pfp->msg_length);
 
-	printf("%s:  msg_flags: 0x%02x port_number: %d\n", DEVNAME(sc),
-	    pfp->msg_flags, pfp->port_number);
+		printf("%s:  msg_flags: 0x%02x port_number: %d\n", DEVNAME(sc),
+		    pfp->msg_flags, pfp->port_number);
 
-	printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-	    letoh32(pfp->msg_context));
+		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+		    letoh32(pfp->msg_context));
 
-	printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(pfp->ioc_status));
+		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+		    letoh16(pfp->ioc_status));
 
-	printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(pfp->ioc_loginfo));
+		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+		    letoh32(pfp->ioc_loginfo));
 
-	printf("%s:  max_devices: %d port_type: 0x%02x\n", DEVNAME(sc),
-	    letoh16(pfp->max_devices), pfp->port_type);
+		printf("%s:  max_devices: %d port_type: 0x%02x\n", DEVNAME(sc),
+		    letoh16(pfp->max_devices), pfp->port_type);
 
-	printf("%s:  protocol_flags: 0x%04x port_scsi_id: %d\n",
-	    DEVNAME(sc), letoh16(pfp->protocol_flags),
-	    letoh16(pfp->port_scsi_id));
+		printf("%s:  protocol_flags: 0x%04x port_scsi_id: %d\n",
+		    DEVNAME(sc), letoh16(pfp->protocol_flags),
+		    letoh16(pfp->port_scsi_id));
 
-	printf("%s:  max_persistent_ids: %d max_posted_cmd_buffers: %d\n",
-	    DEVNAME(sc), letoh16(pfp->max_persistent_ids),
-	    letoh16(pfp->max_posted_cmd_buffers));
+		printf("%s:  max_persistent_ids: %d "
+		    "max_posted_cmd_buffers: %d\n", DEVNAME(sc),
+	 	    letoh16(pfp->max_persistent_ids),
+		    letoh16(pfp->max_posted_cmd_buffers));
 
-	printf("%s:  max_lan_buckets: %d\n", DEVNAME(sc),
-	    letoh16(pfp->max_lan_buckets));
+		printf("%s:  max_lan_buckets: %d\n", DEVNAME(sc),
+		    letoh16(pfp->max_lan_buckets));
+	}
 #endif /* MPI_DEBUG */
 
 	sc->sc_porttype = pfp->port_type;
