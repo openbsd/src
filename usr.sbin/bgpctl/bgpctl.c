@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.104 2006/05/23 12:14:34 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.105 2006/05/27 21:25:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -218,7 +218,6 @@ main(int argc, char *argv[])
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
-		done = 1;
 		break;
 	case FIB:
 		errx(1, "action==FIB");
