@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.1 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.2 2006/05/27 15:14:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -89,7 +89,7 @@ cvs_repository_lock(const char *repo)
 
 void
 cvs_repository_getdir(const char *dir, const char *wdir,
-	struct cvs_flisthead *fl, struct cvs_flisthead *dl)
+	struct cvs_flisthead *fl, struct cvs_flisthead *dl, int dodirs)
 {
 	int l;
 	DIR *dirp;
@@ -107,6 +107,9 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 			continue;
 
 		if (cvs_file_chkign(dp->d_name))
+			continue;
+
+		if (dodirs == 0 && dp->d_type == DT_DIR)
 			continue;
 
 		l = snprintf(fpath, sizeof(fpath), "%s/%s", wdir, dp->d_name);

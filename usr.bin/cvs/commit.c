@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.57 2006/05/27 14:05:53 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.58 2006/05/27 15:14:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -47,7 +47,10 @@ cvs_commit(int argc, char **argv)
 {
 	int ch;
 	char *arg = ".";
+	int flags;
 	struct cvs_recursion cr;
+
+	flags = CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_commit.cmd_opts)) != -1) {
 		switch (ch) {
@@ -56,6 +59,7 @@ cvs_commit(int argc, char **argv)
 		case 'F':
 			break;
 		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'm':
 			logmsg = xstrdup(optarg);
@@ -82,6 +86,7 @@ cvs_commit(int argc, char **argv)
 	cr.leavedir = NULL;
 	cr.local = cvs_commit_check_conflicts;
 	cr.remote = NULL;
+	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);

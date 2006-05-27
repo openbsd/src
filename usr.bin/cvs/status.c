@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.57 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.58 2006/05/27 15:14:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -55,13 +55,16 @@ const char *status_tab[] = {
 int
 cvs_status(int argc, char **argv)
 {
-	int ch;
+	int ch, flags;
 	char *arg = ".";
 	struct cvs_recursion cr;
+
+	flags = CR_REPO | CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_status.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
 			break;
@@ -79,6 +82,7 @@ cvs_status(int argc, char **argv)
 	cr.leavedir = NULL;
 	cr.local = cvs_status_local;
 	cr.remote = NULL;
+	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);

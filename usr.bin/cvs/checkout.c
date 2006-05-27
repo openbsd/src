@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.55 2006/05/27 05:59:32 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.56 2006/05/27 15:14:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -94,9 +94,10 @@ checkout_repository(const char *repobase, const char *wdbase)
 	cr.leavedir = cvs_update_leavedir;
 	cr.local = cvs_update_local;
 	cr.remote = NULL;
+	cr.flags = CR_REPO | CR_RECURSE_DIRS;
 
 	cvs_repository_lock(repobase);
-	cvs_repository_getdir(repobase, wdbase, &fl, &dl);
+	cvs_repository_getdir(repobase, wdbase, &fl, &dl, 1);
 
 	cvs_file_walklist(&fl, &cr);
 	cvs_file_freelist(&fl);

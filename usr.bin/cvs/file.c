@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.139 2006/05/27 06:15:50 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.140 2006/05/27 15:14:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -366,7 +366,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	if (cr->local != NULL)
 		cr->local(cf);
 
-	repo = xmalloc(MAXPATHLEN);
 	fpath = xmalloc(MAXPATHLEN);
 
 	/*
@@ -378,7 +377,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		fatal("cvs_file_walkdir: overflow");
 
 	if (stat(fpath, &st) == -1) {
-		xfree(repo);
 		xfree(fpath);
 		return;
 	}
@@ -433,6 +431,13 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
+			if (!(cr->flags & CR_RECURSE_DIRS) &&
+			    dp->d_type == DT_DIR) {
+				printf("Skipping %s\n", dp->d_name);
+				cp += dp->d_reclen;
+				continue;
+			}
+
 			l = snprintf(fpath, MAXPATHLEN, "%s/%s",
 			    cf->file_path, dp->d_name);
 			if (l == -1 || l >= MAXPATHLEN)
@@ -473,6 +478,10 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		if (l == -1 || l >= MAXPATHLEN)
 			fatal("cvs_file_walkdir: overflow");
 
+		if (!(cr->flags & CR_RECURSE_DIRS) &&
+		    ent->ce_type == CVS_ENT_DIR)
+			continue;
+
 		if (ent->ce_type == CVS_ENT_DIR)
 			cvs_file_get(fpath, &dl);
 		else if (ent->ce_type == CVS_ENT_FILE)
@@ -483,20 +492,26 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 	cvs_ent_close(entlist, ENT_NOSYNC);
 
-	cvs_get_repo(cf->file_path, repo, MAXPATHLEN);
-	cvs_repository_lock(repo);
+	if (cr->flags & CR_REPO) {
+		repo = xmalloc(MAXPATHLEN);
+		cvs_get_repo(cf->file_path, repo, MAXPATHLEN);
+		cvs_repository_lock(repo);
 
-	cvs_repository_getdir(repo, cf->file_path, &fl, &dl);
+		cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
+		    (cr->flags & CR_RECURSE_DIRS));
+	}
 
 	cvs_file_walklist(&fl, cr);
 	cvs_file_freelist(&fl);
 
-	cvs_repository_unlock(repo);
+	if (cr->flags & CR_REPO) {
+		cvs_repository_unlock(repo);
+		xfree(repo);
+	}
 
 	cvs_file_walklist(&dl, cr);
 	cvs_file_freelist(&dl);
 
-	xfree(repo);
 	xfree(fpath);
 
 	if (cr->leavedir != NULL)

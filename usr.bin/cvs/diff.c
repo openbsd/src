@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.91 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.92 2006/05/27 15:14:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -41,8 +41,10 @@ cvs_diff(int argc, char **argv)
 {
 	int ch;
 	char *arg = ".";
+	int flags;
 	struct cvs_recursion cr;
 
+	flags = CR_RECURSE_DIRS;
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
 	while ((ch = getopt(argc, argv, cvs_cmd_diff.cmd_opts)) != -1) {
@@ -50,6 +52,9 @@ cvs_diff(int argc, char **argv)
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
 			diff_format = D_CONTEXT;
+			break;
+		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'n':
 			strlcat(diffargs, " -n", sizeof(diffargs));
@@ -85,6 +90,7 @@ cvs_diff(int argc, char **argv)
 	cr.leavedir = NULL;
 	cr.local = cvs_diff_local;
 	cr.remote = NULL;
+	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
