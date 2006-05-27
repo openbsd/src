@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.58 2006/05/27 15:14:27 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.59 2006/05/27 15:17:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -114,6 +114,12 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	 * XXX - we want that?
 	 */
 	cvs_file_classify(cf);
+
+	if (cf->file_type == CVS_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_NOTICE, "Examining %s", cf->file_path);
+		return;
+	}
 
 	if (cf->file_status == FILE_CONFLICT ||
 	    cf->file_status == FILE_LOST ||
