@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.3 2006/05/11 07:34:26 xsa Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.4 2006/05/27 08:12:29 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -161,13 +161,13 @@ struct rcs_lock {
 	char	*rl_name;
 	RCSNUM	*rl_num;
 
-	TAILQ_ENTRY(rcs_lock)	rl_list;
+	TAILQ_ENTRY(rcs_lock)	 rl_list;
 };
 
 
 struct rcs_branch {
 	RCSNUM			*rb_num;
-	TAILQ_ENTRY(rcs_branch)	rb_list;
+	TAILQ_ENTRY(rcs_branch)	 rb_list;
 };
 
 TAILQ_HEAD(rcs_dlist, rcs_delta);
@@ -190,7 +190,7 @@ struct rcs_delta {
 
 
 typedef struct rcs_file {
-	int	fd;
+	int	 rf_fd;
 	char	*rf_path;
 	mode_t	 rf_mode;
 	u_int	 rf_flags;

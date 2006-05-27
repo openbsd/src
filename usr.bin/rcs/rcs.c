@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.9 2006/05/11 07:34:26 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.10 2006/05/27 08:12:29 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -262,7 +262,7 @@ rcs_open(const char *path, int fd, int flags, ...)
 	rfp->rf_path = xstrdup(path);
 	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
 	rfp->rf_mode = fmode;
-	rfp->fd = fd;
+	rfp->rf_fd = fd;
 
 	TAILQ_INIT(&(rfp->rf_delta));
 	TAILQ_INIT(&(rfp->rf_access));
@@ -1720,7 +1720,7 @@ rcs_parse_init(RCSFILE *rfp)
 	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
 
-	if ((pdp->rp_file = fdopen(rfp->fd, "r")) == NULL)
+	if ((pdp->rp_file = fdopen(rfp->rf_fd, "r")) == NULL)
 		err(1, "fopen: `%s'", rfp->rf_path);
 
 	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);

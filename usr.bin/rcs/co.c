@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.92 2006/05/27 05:49:14 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.93 2006/05/27 08:12:29 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -369,8 +369,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	/*
 	 * File inherits permissions from its ,v file
 	 */
-	if (file->fd != -1) {
-		if (fstat(file->fd, &st) == -1)
+	if (file->rf_fd != -1) {
+		if (fstat(file->rf_fd, &st) == -1)
 			err(1, "%s", file->rf_path);
 		mode = st.st_mode;
 	}
@@ -385,7 +385,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		/* Strip all write bits from mode */
-		if (file->fd != -1) {
+		if (file->rf_fd != -1) {
 			mode = st.st_mode &
 			    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 		}
@@ -406,7 +406,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		/* Strip all write bits from mode */
-		if (file->fd != -1) {
+		if (file->rf_fd != -1) {
 			mode = st.st_mode &
 			    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 		}
