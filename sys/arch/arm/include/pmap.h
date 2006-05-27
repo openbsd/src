@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 2006/05/26 17:11:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 2006/05/27 20:36:05 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ vtophys(vaddr_t va)
  * the code.
  */
 extern int pmap_needs_pte_sync;
-#if defined(_KERNEL_OPT)
+
 /*
  * StrongARM SA-1 caches do not have a write-through mode.  So, on these,
  * we need to do PTE syncs.  If only SA-1 is configured, then evaluate
@@ -347,7 +347,6 @@ extern int pmap_needs_pte_sync;
 #elif (ARM_MMU_SA1 == 0)
 #define	PMAP_NEEDS_PTE_SYNC	0
 #endif
-#endif /* _KERNEL_OPT */
 
 /*
  * Provide a fallback in case we were not able to determine it at

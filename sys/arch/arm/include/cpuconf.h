@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.2 2004/12/30 23:40:07 drahn Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.3 2006/05/27 20:36:05 miod Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -46,28 +46,7 @@
  */
 
 /*
- * Step 1: Count the number of CPU types configured into the kernel.
- */
-#if defined(_KERNEL_OPT)
-#define	CPU_NTYPES	(defined(CPU_ARM2) + defined(CPU_ARM250) +	\
-			 defined(CPU_ARM3) +				\
-			 defined(CPU_ARM6) + defined(CPU_ARM7) +	\
-			 defined(CPU_ARM7TDMI) +			\
-			 defined(CPU_ARM8) + defined(CPU_ARM9) +	\
-			 defined(CPU_ARM10) +				\
-			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
-			 defined(CPU_SA1110) +				\
-			 defined(CPU_IXP12X0) +				\
-			 defined(CPU_XSCALE_80200) +			\
-			 defined(CPU_XSCALE_80321) +			\
-			 defined(CPU_XSCALE_PXA2X0) + 			\
-			 defined(CPU_XSCALE_IXP425))
-#else
-#define	CPU_NTYPES	2
-#endif /* _KERNEL_OPT */
-
-/*
- * Step 2: Determine which ARM architecture versions are configured.
+ * Determine which ARM architecture versions are configured.
  */
 #if (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
 #define	ARM_ARCH_2	1
@@ -96,13 +75,8 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5)
-#if ARM_NARCH == 0
-#error ARM_NARCH is 0
-#endif
-
 /*
- * Step 3: Define which MMU classes are configured:
+ * Define which MMU classes are configured:
  *
  *	ARM_MMU_MEMC		Prehistoric, external memory controller
  *				and MMU for ARMv2 CPUs.
@@ -145,18 +119,14 @@
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
 				 ARM_MMU_SA1 + ARM_MMU_XSCALE)
-#if ARM_NMMUS == 0
-#error ARM_NMMUS is 0
-#endif
 
 /*
- * Step 4: Define features that may be present on a subset of CPUs
+ * Define features that may be present on a subset of CPUs
  *
  *	ARM_XSCALE_PMU		Performance Monitoring Unit on 80200 and 80321
  */
 
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321))
+#if (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321))
 #define ARM_XSCALE_PMU	1
 #else
 #define ARM_XSCALE_PMU	0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2006/05/26 20:22:04 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2006/05/27 20:36:05 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -71,10 +71,6 @@
 
 #ifndef _ARM32_BUS_H_
 #define _ARM32_BUS_H_
-
-#if defined(_KERNEL_OPT)
-#include "opt_arm_bus_space.h"
-#endif
 
 /*
  * Addresses (in bus space).
