@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.31 2006/03/31 13:13:51 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.32 2006/05/27 17:21:40 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -66,6 +66,10 @@ enum {
 	COMPXF_UNKNOWN, COMPXF_DEFLATE, COMPXF_LZS
 };
 enum {
+	GROUPXF_UNKNOWN, GROUPXF_768, GROUPXF_1024, GROUPXF_1536, GROUPXF_2048,
+	GROUPXF_3072, GROUPXF_4096, GROUPXF_6144, GROUPXF_8192,
+};
+enum {
 	IKE_ACTIVE, IKE_PASSIVE, IKE_DYNAMIC
 };
 enum {
@@ -123,6 +127,7 @@ struct ipsec_transforms {
 	const struct ipsec_xf *authxf;
 	const struct ipsec_xf *encxf;
 	const struct ipsec_xf *compxf;
+	const struct ipsec_xf *groupxf;
 };
 
 extern const struct ipsec_xf authxfs[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2006/05/26 01:06:11 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2006/05/27 17:21:40 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,6 +85,27 @@ const struct ipsec_xf compxfs[] = {
 	{ "unknown",		COMPXF_UNKNOWN,		0,	0 },
 	{ "deflate",		COMPXF_DEFLATE,		0,	0 },
 	{ "lzs",		COMPXF_LZS,		0,	0 },
+	{ NULL,			0,			0,	0 },
+};
+
+const struct ipsec_xf groupxfs[] = {
+	{ "unknown",		GROUPXF_UNKNOWN,	0,	0 },
+	{ "modp768",		GROUPXF_768,		768,	0 },
+	{ "grp1",		GROUPXF_768,		768,	0 },
+	{ "modp1024",		GROUPXF_1024,		1024,	0 },
+	{ "grp2",		GROUPXF_1024,		1024,	0 },
+	{ "modp1536",		GROUPXF_1536,		1536,	0 },
+	{ "grp5",		GROUPXF_1536,		1536,	0 },
+	{ "modp2048",		GROUPXF_2048,		2048,	0 },
+	{ "grp14",		GROUPXF_2048,		2048,	0 },
+	{ "modp3072",		GROUPXF_3072,		3072,	0 },
+	{ "grp15",		GROUPXF_3072,		3072,	0 },
+	{ "modp4096",		GROUPXF_4096,		4096,	0 },
+	{ "grp16",		GROUPXF_4096,		4096,	0 },
+	{ "modp6144",		GROUPXF_6144,		6144,	0 },
+	{ "grp18",		GROUPXF_6144,		6144,	0 },
+	{ "modp8192",		GROUPXF_8192,		8192,	0 },
+	{ "grp18",		GROUPXF_8192,		8192,	0 },
 	{ NULL,			0,			0,	0 },
 };
 
@@ -203,7 +224,7 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
-%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ
+%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP
 %token	<v.string>		STRING
 %type	<v.string>		string
 %type	<v.dir>			dir
@@ -579,6 +600,16 @@ transform	: AUTHXF STRING			{
 					yyerror("%s not a valid transform", $2);
 			}
 		}
+		| GROUP STRING			{
+			if (ipsec_transforms->groupxf)
+				yyerror("group already set");
+			else {
+				ipsec_transforms->groupxf = parse_xf($2,
+				    groupxfs);
+				if (!ipsec_transforms->groupxf)
+					yyerror("%s not a valid transform", $2);
+			}
+		}
 		;
 
 mmxfs		: /* empty */			{
@@ -749,6 +780,7 @@ lookup(char *s)
 		{ "file",		FILENAME },
 		{ "flow",		FLOW },
 		{ "from",		FROM },
+		{ "group",		GROUP },
 		{ "ike",		IKE },
 		{ "in",			IN },
 		{ "ipcomp",		IPCOMP },

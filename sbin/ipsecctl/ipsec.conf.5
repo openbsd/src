@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.44 2006/05/26 09:26:07 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.45 2006/05/27 17:21:40 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -427,6 +427,8 @@ specification can be left out.
 .Aq Ar algorithm
 .Ar enc
 .Aq Ar algorithm
+.Ar group
+.Aq group
 .Xc
 These parameters define the cryptographic transforms to be used for main mode.
 Possible values for
@@ -445,17 +447,33 @@ the values
 and
 .Ar cast
 are allowed.
+For
+.Aq Ar group
+the values
+.Ar modp768 ,
+.Ar modp1024 ,
+.Ar modp1536 ,
+.Ar modp2048 ,
+.Ar modp3072 ,
+.Ar modp4096 ,
+.Ar modp6144
+and
+.Ar modp8192
+are allowed.
 If omitted,
 .Xr ipsecctl 8
 will use the default values
-.Ar hmac-sha1
+.Ar hmac-sha1 ,
+.Ar aes
 and
-.Ar aes .
+.Ar modp3072 .
 .It Xo
 .Ar quick auth
 .Aq Ar algorithm
 .Ar enc
 .Aq Ar algorithm
+.Ar group
+.Aq Ar group
 .Xc
 Similar to
 .Ar main ,
@@ -480,11 +498,25 @@ valid values are again
 .Ar blowfish
 and
 .Ar cast .
+For
+.Aq Ar group
+the values
+.Ar modp768 ,
+.Ar modp1024 ,
+.Ar modp1536 ,
+.Ar modp2048 ,
+.Ar modp3072 ,
+.Ar modp4096 ,
+.Ar modp6144
+and
+.Ar modp8192
+are allowed.
 If no quick mode transforms are specified,
 the default values
-.Ar hmac-sha2-256
-and
+.Ar hmac-sha2-256 ,
 .Ar aes
+and
+.Ar modp3072
 are chosen.
 .It Xo
 .Ar srcid

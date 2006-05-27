@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.25 2006/05/15 07:50:26 deraadt Exp $	*/
+/*	$OpenBSD: ike.c,v 1.26 2006/05/27 17:21:40 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -203,7 +203,41 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		}
 	} else
 		fprintf(fd, "SHA2-256");
-	fprintf(fd, "-PFS-SUITE force\n");
+	fprintf(fd, "-PFS-");
+
+	if (qmxfs->groupxf) {
+		switch (qmxfs->groupxf->id) {
+		case GROUPXF_768:
+			fprintf(fd, "GRP1");
+			break;
+		case GROUPXF_1024:
+			fprintf(fd, "GRP2");
+			break;
+		case GROUPXF_1536:
+			fprintf(fd, "GRP5");
+			break;
+		case GROUPXF_2048:
+			fprintf(fd, "GRP14");
+			break;
+		case GROUPXF_3072:
+			fprintf(fd, "GRP15");
+			break;
+		case GROUPXF_4096:
+			fprintf(fd, "GRP16");
+			break;
+		case GROUPXF_6144:
+			fprintf(fd, "GRP17");
+			break;
+		case GROUPXF_8192:
+			fprintf(fd, "GRP18");
+			break;
+		default:
+			warnx("illegal group %s", qmxfs->groupxf->name);
+			return (-1);
+		};
+	} else
+		fprintf(fd, "GRP15");
+	fprintf(fd, "-SUITE force\n");
 
 	return (0);
 }
@@ -256,6 +290,40 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		}
 	} else
 		fprintf(fd, "SHA");
+	fprintf(fd, "-");
+
+	if (mmxfs->groupxf) {
+		switch (mmxfs->groupxf->id) {
+		case GROUPXF_768:
+			fprintf(fd, "GRP1");
+			break;
+		case GROUPXF_1024:
+			fprintf(fd, "GRP2");
+			break;
+		case GROUPXF_1536:
+			fprintf(fd, "GRP5");
+			break;
+		case GROUPXF_2048:
+			fprintf(fd, "GRP14");
+			break;
+		case GROUPXF_3072:
+			fprintf(fd, "GRP15");
+			break;
+		case GROUPXF_4096:
+			fprintf(fd, "GRP16");
+			break;
+		case GROUPXF_6144:
+			fprintf(fd, "GRP17");
+			break;
+		case GROUPXF_8192:
+			fprintf(fd, "GRP18");
+			break;
+		default:
+			warnx("illegal group %s", mmxfs->groupxf->name);
+			return (-1);
+		};
+	} else
+		fprintf(fd, "GRP15");
 
 	if (auth->type == IKE_AUTH_RSA)
 		fprintf(fd, "-RSA_SIG");
