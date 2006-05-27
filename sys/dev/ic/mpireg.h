@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.1 2006/05/27 19:03:55 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.2 2006/05/27 22:40:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -692,3 +692,79 @@ struct mpi_msg_scsi_io_error {
 	u_int16_t		tag;
 	u_int16_t		reserved2;
 } __packed;
+
+struct mpi_msg_config_request {
+	u_int8_t		action;
+#define MPI_CONFIG_REQ_ACTION_PAGE_HEADER		(0x00)
+#define MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT		(0x01)
+#define MPI_CONFIG_REQ_ACTION_PAGE_WRITE_CURRENT	(0x02)
+#define MPI_CONFIG_REQ_ACTION_PAGE_DEFAULT		(0x03)
+#define MPI_CONFIG_REQ_ACTION_PAGE_WRITE_NVRAM		(0x04)
+#define MPI_CONFIG_REQ_ACTION_PAGE_READ_DEFAULT		(0x05)
+#define MPI_CONFIG_REQ_ACTION_PAGE_READ_NVRAM		(0x06)
+	u_int8_t		reserved1;
+	u_int8_t		chain_offset;
+	u_int8_t		function;
+
+	u_int16_t		ext_page_len;
+	u_int8_t		ext_page_type;
+#define MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_IO_UNIT		(0x10)
+#define MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_EXPANDER	(0x11)
+#define MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_DEVICE		(0x12)
+#define MPI_CONFIG_REQ_EXTPAGE_TYPE_SAS_PHY		(0x13)
+#define MPI_CONFIG_REQ_EXTPAGE_TYPE_LOG			(0x14)
+	u_int8_t		msg_flags;
+
+	u_int32_t		msg_context;
+
+	u_int32_t		reserved2[2];
+
+	u_int8_t		page_version;
+	u_int8_t		page_length;
+	u_int8_t		page_number;
+	u_int8_t		page_type;
+#define MPI_CONFIG_REQ_PAGE_TYPE_ATTRIBUTE		(0xf0)
+#define MPI_CONFIG_REQ_PAGE_TYPE_IO_UNIT		(0x00)
+#define MPI_CONFIG_REQ_PAGE_TYPE_IOC			(0x01)
+#define MPI_CONFIG_REQ_PAGE_TYPE_BIOS			(0x02)
+#define MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT		(0x03)
+#define MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_DEV		(0x04)
+#define MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT		(0x05)
+#define MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV			(0x06)
+#define MPI_CONFIG_REQ_PAGE_TYPE_LAN			(0x07)
+#define MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL		(0x08)
+#define MPI_CONFIG_REQ_PAGE_TYPE_MANUFACTURING		(0x09)
+#define MPI_CONFIG_REQ_PAGE_TYPE_RAID_PD		(0x0A)
+#define MPI_CONFIG_REQ_PAGE_TYPE_INBAND			(0x0B)
+#define MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0F)
+
+	u_int32_t		page_address;
+/* XXX lots of defns here */
+
+	struct mpi_sge32	page_buffer;
+} __packed;
+
+struct mpi_msg_config_reply {
+	u_int8_t		action;
+	u_int8_t		reserved1;
+	u_int8_t		msg_length;
+	u_int8_t		function;
+
+	u_int16_t		ext_page_length;
+	u_int8_t		ext_page_type;
+	u_int8_t		msg_flags;
+
+	u_int32_t		msg_context;
+
+	u_int16_t		reserved2;
+	u_int16_t		ioc_status;
+
+	u_int32_t		ioc_loginfo;
+
+	u_int8_t		page_version;
+	u_int8_t		page_length;
+	u_int8_t		page_number;
+	u_int8_t		page_type;
+} __packed;
+
+
