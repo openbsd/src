@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.22 2006/04/02 04:13:07 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.23 2006/05/27 23:42:08 moritz Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -83,7 +83,7 @@ trim(char *line)
 void
 print_passwd(char *string, int operation, void *extra)
 {
-	char msalt[3], *salt;
+	char msalt[3], *salt, *cryptstr;
 	login_cap_t *lc;
 	int pwd_gensalt(char *, int, login_cap_t *, char);
 	void to64(char *, u_int32_t, int n);
@@ -128,7 +128,9 @@ print_passwd(char *string, int operation, void *extra)
 		break;
 	}
 
-	(void)fputs(crypt(string, salt), stdout);
+	if ((cryptstr = crypt(string, salt)) == NULL)
+		errx(1, "crypt failed");
+	fputs(cryptstr, stdout);
 }
 
 int
