@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.72 2006/05/27 18:32:00 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.73 2006/05/27 21:27:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,7 +35,8 @@
 #include "ntp.h"
 
 #define	PFD_PIPE_MAIN	0
-#define	PFD_MAX		1
+#define	PFD_HOTPLUG	1
+#define	PFD_MAX		2
 
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		*ibuf_main;
@@ -62,7 +63,8 @@ ntp_sighdlr(int sig)
 pid_t
 ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 {
-	int			 a, b, nfds, i, j, idx_peers, timeout, nullfd;
+	int			 a, b, nfds, i, j, idx_peers, timeout;
+	int			 hotplugfd, nullfd;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
 	u_int			 sensors_cnt = 0;
@@ -97,6 +99,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);
+	hotplugfd = sensor_hotplugfd();
 
 	if (stat(pw->pw_dir, &stb) == -1)
 		fatal("stat");
@@ -187,6 +190,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		nextaction = time(NULL) + 3600;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
+		pfd[PFD_HOTPLUG].fd = hotplugfd;
+		pfd[PFD_HOTPLUG].events = POLLIN;
 
 		i = PFD_MAX;
 		TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
@@ -270,6 +275,11 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			nfds--;
 			if (ntp_dispatch_imsg() == -1)
 				ntp_quit = 1;
+		}
+
+		if (nfds > 0 && pfd[PFD_HOTPLUG].revents & (POLLIN|POLLERR)) {
+			nfds--;
+			sensor_hotplugevent(hotplugfd);
 		}
 
 		for (j = 1; nfds > 0 && j < idx_peers; j++)
