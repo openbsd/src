@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.111 2006/05/26 09:30:36 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.112 2006/05/27 21:09:11 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -83,7 +83,7 @@ to fully specify the Main Mode transforms and Quick Mode suites, protocols,
 and transforms.
 .Pp
 For Main Mode:
-.\" .Ar {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14}][-RSA_SIG]
+.\" .Ar {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14,15}][-RSA_SIG]
 .Bl -inset -compact
 .It Xo
 .Sm off
@@ -94,7 +94,7 @@ For Main Mode:
 .No }[-
 .Ar GRP
 .No {
-.Ar 1 , 2 , 5 , 14
+.Ar 1 , 2 , 5 , 14 , 15
 .No }]
 .No [-
 .Ar RSA_SIG
@@ -137,7 +137,7 @@ is either DES, 3DES, CAST, BLF, or AES
 .It Ns { Ns Ar hash Ns }
 is either MD5, SHA, RIPEMD, or SHA2-{256,384,512}
 .It Ns { Ns Ar group Ns }
-is either GRP1, GRP2, GRP5, or GRP14
+is either GRP1, GRP2, GRP5, GRP14 or GRP15
 .El
 .Pp
 For example, 3DES-SHA means: 3DES encryption, SHA hash, and authorization by
@@ -145,8 +145,8 @@ pre-shared keys.
 Similarly, QM-ESP-3DES-SHA-PFS-SUITE means: ESP protocol, 3DES encryption,
 SHA hash, and use Perfect Forward Secrecy.
 .Pp
-Unless explicitly stated with -GRP1, 2, 5, or 14, transforms and PFS suites
-use DH group 2.
+Unless explicitly stated with -GRP1, 2, 5, 14 or 15, transforms and
+PFS suites use DH group 2.
 There are currently no predefined ESP+AH Quick Mode suites.
 .Pp
 The predefinitions include some default values for the special
