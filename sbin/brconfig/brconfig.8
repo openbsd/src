@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.54 2006/05/26 04:02:59 deraadt Exp $
+.\"	$OpenBSD: brconfig.8,v 1.55 2006/05/27 19:37:24 hshoexer Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -188,7 +188,8 @@ Setting this flag causes all packets to be passed on to
 for processing, based on the policies established by the administrator
 using the
 .Xr ipsecctl 8
-command.
+command and
+.Xr ipsec.conf 5 .
 If appropriate security associations (SAs) exist, they will be used to
 encrypt or decrypt the packets.
 Otherwise, any key management daemons such as
@@ -359,7 +360,7 @@ between the two bridges.
 To only protect the bridge traffic between
 the two bridges, the transport protocol 97 (etherip) selector may be
 used in
-.Xr ipsecctl 8
+.Xr ipsec.conf 5
 or
 .Xr isakmpd 8 .
 Otherwise, the Ethernet frames will be sent in the clear between the
@@ -387,21 +388,48 @@ Create and configure the gif0 interface:
 .Ed
 .Pp
 Create Security Associations (SAs) between the external IP address of each
-bridge:
+bridge and matching ingress flows by using the following
+.Xr ipsec.conf 5
+file on bridge1:
 .Bd -literal -offset indent
-# ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 -enc 3des \e
-	-auth md5 -keyfile keyfile1 -authkeyfile authkeyfile1
-# ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 -enc 3des \e
-	-auth md5 -keyfile keyfile2 -authkeyfile authkeyfile2
+esp from 1.2.3.4 to 4.3.2.1 spi 0x4242:0x4243 \e
+	authkey file "auth1:auth2" enckey file "enc1:enc2"
+flow esp proto etherip from 1.2.3.4 to 4.3.2.1
 .Ed
 .Pp
-Set up ingress flows so that traffic is allowed between the two bridges
-for the above associations:
+Now load these rules into the kernel by issuing the
+.Xr ipsecctl 8
+command:
 .Bd -literal -offset indent
-(on bridge1) # ipsecadm flow -dst 4.3.2.1 -out \e
-	-transport etherip -require -addr 1.2.3.4/32 4.3.2.1/32
-(on bridge2) # ipsecadm flow -dst 1.2.3.4 -out \e
-	-transport etherip -require -addr 4.3.2.1/32 1.2.3.4/32
+	# ipsecctl -f ipsec.conf
+.Ed
+.Pp
+Apropriate
+.Xr ipsec.conf 5
+for bridge2:
+.Bd -literal -offset indent
+esp from 4.3.2.1 to 1.2.3.4 spi 0x4243:0x4242 \e
+	authkey file "auth2:auth1" enckey file "enc2:enc1"
+flow esp proto etherip from 4.3.2.1 to 1.2.3.4
+.Ed
+.Pp
+And load them:
+.Bd -literal -offset indent
+	# ipsecctl -f ipsec.conf
+.Ed
+.Pp
+To use
+.Xr isakmpd 8
+use this
+.Xr ipsec.conf 5
+on bridge1:
+.Bd -literal -offset indent
+ike esp proto etherip from 1.2.3.4 to 4.3.2.1
+.Ed
+.Pp
+And that one on bridge2:
+.Bd -literal -offset indent
+ike esp proto etherip from 4.3.2.1. to 1.2.3.4
 .Ed
 .Pp
 Bring up the internal interface (if not already up) and encapsulation
