@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.7 2006/05/27 18:22:04 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.8 2006/05/27 21:32:21 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -179,8 +179,6 @@ USB_ATTACH(udcf)
 	    sizeof(sc->sc_sensor.device));
 	sc->sc_sensor.type = SENSOR_TIMEDELTA;
 	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
-	sc->sc_sensor.flags = SENSOR_FINVALID;
-	sensor_add(&sc->sc_sensor);
 
 	/* Prepare the USB request to probe the value */
 
@@ -413,8 +411,7 @@ udcf_probe(void *xsc)
 					    sizeof(sc->sc_sensor.desc));
 					DPRINTF(("add timedelta sensor for %s\n",
 						sc->sc_sensor.desc));
-					sc->sc_sensor.flags &=
-					    ~SENSOR_FINVALID;
+					sensor_add(&sc->sc_sensor);
 				}
 				sc->sc_sensor.status = SENSOR_S_OK;
 
