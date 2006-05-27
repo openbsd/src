@@ -1,6 +1,6 @@
-.\" $OpenBSD: ntpd.8,v 1.14 2005/06/21 19:55:18 deraadt Exp $
+.\" $OpenBSD: ntpd.8,v 1.15 2006/05/27 17:05:52 henning Exp $
 .\"
-.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 9, 2004
+.Dd May 26, 2006
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -29,8 +29,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon synchronizes the local clock to one or more remote NTP servers,
-and can also act as an NTP server itself,
+daemon synchronizes the local clock to one or more remote NTP servers
+or local timedelta sensors.
+.Nm
+can also act as an NTP server itself,
 redistributing the local time.
 It implements the Simple Network Time Protocol version 4,
 as described in RFC 2030,
