@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.93 2006/05/27 17:52:27 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.94 2006/05/27 20:57:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -24,6 +24,8 @@
 
 int	cvs_diff(int, char **);
 void	cvs_diff_local(struct cvs_file *);
+
+int include_added_files = 0;
 
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_REQ_DIFF, "diff",
@@ -59,6 +61,10 @@ cvs_diff(int argc, char **argv)
 		case 'n':
 			strlcat(diffargs, " -n", sizeof(diffargs));
 			diff_format = D_RCSDIFF;
+			break;
+		case 'N':
+			strlcat(diffargs, " -N", sizeof(diffargs));
+			include_added_files = 1;
 			break;
 		case 'r':
 			if (diff_rev1 == NULL) {
@@ -126,31 +132,38 @@ cvs_diff_local(struct cvs_file *cf)
 	} else if (cf->file_status == FILE_UNKNOWN) {
 		cvs_log(LP_ERR, "I know nothing about %s", cf->file_path);
 		return;
-	} else if (cf->file_status == FILE_UPTODATE && diff_rev2 == NULL)
+	} else if (cf->file_status == FILE_ADDED && include_added_files == 0) {
+		cvs_log(LP_ERR, "%s is a new entry, no comparison available",
+		    cf->file_path);
 		return;
+	} else if (cf->file_status == FILE_UPTODATE && diff_rev2 == NULL) {
+		return;
+	}
 
 	diff_file = cf->file_path;
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
 	    RCS_DIFF_DIV, cf->file_rpath);
 
-	if (diff_rev1 != NULL)
-		r1 = diff_rev1;
-	else
-		r1 = cf->file_ent->ce_rev;
+	if (cf->file_status != FILE_ADDED) {
+		if (diff_rev1 != NULL)
+			r1 = diff_rev1;
+		else
+			r1 = cf->file_ent->ce_rev;
 
-	diff_rev1 = r1;
-	rcsnum_tostr(r1, rbuf , sizeof(rbuf));
-	cvs_printf("retrieving revision %s\n", rbuf);
-	if ((b1 = rcs_getrev(cf->file_rcs, r1)) == NULL)
-		fatal("failed to retrieve revision %s", rbuf);
+		diff_rev1 = r1;
+		rcsnum_tostr(r1, rbuf , sizeof(rbuf));
+		cvs_printf("retrieving revision %s\n", rbuf);
+		if ((b1 = rcs_getrev(cf->file_rcs, r1)) == NULL)
+			fatal("failed to retrieve revision %s", rbuf);
 
-	b1 = rcs_kwexp_buf(b1, cf->file_rcs, r1);
+		b1 = rcs_kwexp_buf(b1, cf->file_rcs, r1);
 
-	tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
-	tv[0].tv_usec = 0;
-	tv[1] = tv[0];
+		tv[0].tv_sec = rcs_rev_getdate(cf->file_rcs, r1);
+		tv[0].tv_usec = 0;
+		tv[1] = tv[0];
+	}
 
-	if (diff_rev2 != NULL) {
+	if (diff_rev2 != NULL && cf->file_status != FILE_ADDED) {
 		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
 		cvs_printf("retrieving revision %s\n", rbuf);
 		if ((b2 = rcs_getrev(cf->file_rcs, diff_rev2)) == NULL)
@@ -178,26 +191,34 @@ cvs_diff_local(struct cvs_file *cf)
 
 	cvs_printf("%s", diffargs);
 
-	rcsnum_tostr(r1, rbuf, sizeof(rbuf));
-	cvs_printf(" -r%s", rbuf);
-
-	if (diff_rev2 != NULL) {
-		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
+	if (cf->file_status != FILE_ADDED) {
+		rcsnum_tostr(r1, rbuf, sizeof(rbuf));
 		cvs_printf(" -r%s", rbuf);
+
+		if (diff_rev2 != NULL) {
+			rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
+			cvs_printf(" -r%s", rbuf);
+		}
 	}
 
 	cvs_printf(" %s\n", cf->file_path);
 
-	len = strlcpy(p1, cvs_tmpdir, sizeof(p1));
-	if (len >= sizeof(p1))
+	if (cf->file_status != FILE_ADDED) {
+		len = strlcpy(p1, cvs_tmpdir, sizeof(p1));
+		if (len >= sizeof(p1))
 		fatal("cvs_diff_local: truncation");
 
-	len = strlcat(p1, "/diff1.XXXXXXXXXX", sizeof(p1));
-	if (len >= sizeof(p1))
-		fatal("cvs_diff_local: truncation");
+		len = strlcat(p1, "/diff1.XXXXXXXXXX", sizeof(p1));
+		if (len >= sizeof(p1))
+			fatal("cvs_diff_local: truncation");
 
-	cvs_buf_write_stmp(b1, p1, 0600, tv);
-	cvs_buf_free(b1);
+		cvs_buf_write_stmp(b1, p1, 0600, tv);
+		cvs_buf_free(b1);
+	} else {
+		len = strlcpy(p1, CVS_PATH_DEVNULL, sizeof(p1));
+		if (len >= sizeof(p1))
+			fatal("cvs_diff_local: truncation");
+	}
 
 	len = strlcpy(p2, cvs_tmpdir, sizeof(p2));
 	if (len >= sizeof(p2))
@@ -212,4 +233,6 @@ cvs_diff_local(struct cvs_file *cf)
 
 	cvs_diffreg(p1, p2, NULL);
 	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
+
+	diff_rev1 = diff_rev2 = NULL;
 }

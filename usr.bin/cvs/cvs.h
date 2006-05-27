@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.107 2006/05/27 18:04:46 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.108 2006/05/27 20:57:42 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -105,6 +105,7 @@
 #define CVS_DESCR_FILE_EXT	",t"
 
 /* server-side paths */
+#define CVS_PATH_DEVNULL	"/dev/null"
 #define CVS_PATH_ROOT		"CVSROOT"
 #define CVS_PATH_EMPTYDIR	CVS_PATH_ROOT "/Emptydir"
 #define CVS_PATH_COMMITINFO	CVS_PATH_ROOT "/commitinfo"
