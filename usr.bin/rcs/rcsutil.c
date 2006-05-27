@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.10 2006/05/09 12:31:27 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.11 2006/05/27 02:58:02 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -136,7 +136,7 @@ rcs_getopt(int argc, char **argv, const char *optstr)
  * should be.  Tries each extension until a file is found.  If no file
  * was found, returns a path with the first extension.
  *
- * Returns pointer to a char array on success, NULL on failure.
+ * Opens and returns file descriptor to RCS file.
  */
 int
 rcs_choosefile(const char *filename, char *out, size_t len)
@@ -254,8 +254,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	 * `suffixes' should now be NUL separated, so the first
 	 * extension can be read just by reading `suffixes'.
 	 */
-	if (strlcat(rcspath, suffixes, sizeof(rcspath)) >=
-	    sizeof(rcspath))
+	if (strlcat(rcspath, suffixes, sizeof(rcspath)) >= sizeof(rcspath))
 		errx(1, "rcs_choosefile: truncation");
 
 	xfree(suffixes);
