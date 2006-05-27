@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.173 2006/05/27 05:59:32 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.174 2006/05/27 18:04:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2611,6 +2611,14 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 					kwtype = rcs_expkw[j].kw_type;
 					break;
 				}
+			}
+
+			if (cvs_tagname != NULL &&
+			    !strncmp(c, cvs_tagname, strlen(cvs_tagname)) &&
+			    found != 1) {
+				found = 1;
+				kwstr = cvs_tagname;
+				kwtype = RCS_KW_ID;
 			}
 
 			/* unknown keyword, continue looking */

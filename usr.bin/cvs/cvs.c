@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.98 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.99 2006/05/27 18:04:46 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -28,6 +28,7 @@
 #include "includes.h"
 
 #include "cvs.h"
+#include "config.h"
 #include "log.h"
 #include "file.h"
 
@@ -46,7 +47,9 @@ int	cvs_nocase = 0;	/* set to 1 to disable filename case sensitivity */
 int	cvs_noexec = 0;	/* set to 1 to disable disk operations (-n option) */
 int	cvs_error = -1;	/* set to the correct error code on failure */
 int	cvs_cmdop;
+int	cvs_umask = CVS_UMASK_DEFAULT;
 
+char	*cvs_tagname = NULL;
 char	*cvs_defargs;		/* default global arguments from .cvsrc */
 char	*cvs_command;		/* name of the command we are running */
 char	*cvs_rootstr;
@@ -222,6 +225,10 @@ main(int argc, char **argv)
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
 		fatal("remote setups are not supported yet");
+
+	cvs_parse_configfile();
+
+	umask(cvs_umask);
 
 	cmdp->cmd(cmd_argc, cmd_argv);
 	cvs_cleanup();

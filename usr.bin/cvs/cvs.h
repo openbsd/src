@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.106 2006/05/27 15:14:27 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.107 2006/05/27 18:04:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -99,6 +99,7 @@
 #define CVS_RSH_DEFAULT		"ssh"
 #define CVS_EDITOR_DEFAULT	"vi"
 #define CVS_TMPDIR_DEFAULT	"/tmp"
+#define CVS_UMASK_DEFAULT	002
 
 /* extensions */
 #define CVS_DESCR_FILE_EXT	",t"
@@ -262,6 +263,7 @@ extern struct cvs_wklhead temp_files;
 extern volatile sig_atomic_t sig_received;
 extern volatile sig_atomic_t cvs_quit;
 extern struct cvsroot *current_cvsroot;
+extern char *cvs_tagname;
 extern char *cvs_repo_base;
 extern char *cvs_command;
 extern char *cvs_editor;
@@ -270,6 +272,7 @@ extern char *cvs_msg;
 extern char *cvs_rsh;
 extern char *cvs_tmpdir;
 
+extern int  cvs_umask;
 extern int  verbosity;
 extern int  cvs_trace;
 extern int  cvs_nolog;

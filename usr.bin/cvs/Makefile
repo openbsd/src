@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.22 2006/05/27 03:30:30 joris Exp $
+#	$OpenBSD: Makefile,v 1.23 2006/05/27 18:04:46 joris Exp $
 
 PROG=	opencvs
 MAN=   cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
 CPPFLAGS+=-I${.CURDIR}
 
-SRCS=	cvs.c commit.c checkout.c buf.c cmd.c date.y diff.c diff3.c \
+SRCS=	cvs.c commit.c config.c checkout.c buf.c cmd.c date.y diff.c diff3.c \
 	diff_internals.c entries.c fatal.c file.c log.c repository.c \
 	rcs.c rcsnum.c rcstime.c root.c status.c worklist.c util.c \
 	update.c xmalloc.c
