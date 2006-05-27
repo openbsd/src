@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.16 2006/03/25 22:41:46 djm Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.17 2006/05/27 21:47:55 pascoe Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -438,6 +438,16 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				cdce_stop(sc);
 		}
 		error = 0;
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->cdce_arpcom) :
+		    ether_delmulti(ifr, &sc->cdce_arpcom);
+
+		if (error == ENETRESET)
+			error = 0;
 		break;
 
 	default:
