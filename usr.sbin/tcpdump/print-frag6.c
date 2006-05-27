@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-frag6.c,v 1.2 2004/06/22 11:58:44 itojun Exp $	*/
+/*	$OpenBSD: print-frag6.c,v 1.3 2006/05/27 21:52:38 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -72,6 +72,7 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 	TCHECK(dp->ip6f_offlg);
 
 	if (vflag) {
+		TCHECK(dp->ip6f_ident);
 		printf("frag (0x%08x:%d|%ld)",
 		       ntohl(dp->ip6f_ident),
 		       ntohs(dp->ip6f_offlg & IP6F_OFF_MASK),
