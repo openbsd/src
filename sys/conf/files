@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.371 2006/05/27 14:18:01 miod Exp $
+#	$OpenBSD: files,v 1.372 2006/05/27 19:03:55 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -187,6 +187,10 @@ device	mpt: scsi
 file	dev/ic/mpt.c			mpt
 file	dev/ic/mpt_debug.c		mpt
 file	dev/ic/mpt_openbsd.c		mpt
+
+# LSI Logic Fusion-MPT Message Passing Interface
+device	mpi: scsi
+file	dev/ic/mpi.c			mpi
 
 # UltraStor SCSI controllers
 device	uha: scsi
