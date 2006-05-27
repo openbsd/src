@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.35 2005/08/10 15:22:39 jsg Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.36 2006/05/27 21:19:33 moritz Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ const char *valtostr(int, struct valinfo *);
 
 int	fd;				/* file descriptor for device */
 
-extern const char *__progname;		/* from crt0.o */
+extern char *__progname;		/* from crt0.o */
 
 void    device_dump(int, char*[]);
 void	device_identify(int, char *[]);
@@ -110,7 +110,7 @@ void	device_smart_readlog(int, char *[]);
 void	device_attr(int, char *[]);
 
 void	smart_print_errdata(struct smart_log_errdata *);
-int	smart_cksum(u_int8_t *, int);
+int	smart_cksum(u_int8_t *, size_t);
 
 char 	*sec_getpass(int, int);
 
@@ -472,8 +472,8 @@ device_dump(int argc, char *argv[])
 {
 	unsigned char buf[131072];
 	atagettrace_t agt;
-	int total;
-	int p = 0;
+	unsigned int total;
+	unsigned int p = 0;
 	int type;
 	const char *types[] = { NULL, "status", "error", "ATAPI",
 	    "ATAPI done", "ATA cmd", "ATA", "select slave",
@@ -743,8 +743,9 @@ device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
 	struct atareq req;
-	char inbuf[DEV_BSIZE], *s;
+	char inbuf[DEV_BSIZE];
 	u_int64_t capacity;
+	u_int8_t *s;
 
 	if (argc != 1)
 		goto usage;
@@ -786,15 +787,15 @@ device_identify(int argc, char *argv[])
 	 */
 
 	for (s = &inqbuf->atap_model[sizeof(inqbuf->atap_model) - 1];
-	    s >= (char *)inqbuf->atap_model && *s == ' '; s--)
+	    s >= inqbuf->atap_model && *s == ' '; s--)
 		*s = '\0';
 
 	for (s = &inqbuf->atap_revision[sizeof(inqbuf->atap_revision) - 1];
-	    s >= (char *)inqbuf->atap_revision && *s == ' '; s--)
+	    s >= inqbuf->atap_revision && *s == ' '; s--)
 		*s = '\0';
 
 	for (s = &inqbuf->atap_serial[sizeof(inqbuf->atap_serial) - 1];
-	    s >= (char *)inqbuf->atap_serial && *s == ' '; s--)
+	    s >= inqbuf->atap_serial && *s == ' '; s--)
 		*s = '\0';
 
 	printf("Model: %.*s, Rev: %.*s, Serial #: %.*s\n",
@@ -1571,10 +1572,10 @@ smart_print_errdata(struct smart_log_errdata *data)
 }
 
 int
-smart_cksum(u_int8_t *data, int len)
+smart_cksum(u_int8_t *data, size_t len)
 {
 	u_int8_t sum = 0;
-	int i;
+	size_t i;
 
 	for (i = 0; i < len; i++)
 		sum += data[i];
@@ -1673,18 +1674,17 @@ usage:
 void
 device_acoustic(int argc, char *argv[])
 {
-	unsigned long acoustic;
+	u_char acoustic;
 	struct atareq req;
-	char *end;
+	const char *errstr;
 
 	if (argc != 2)
 		goto usage;
 
-	acoustic = strtoul(argv[1], &end, 0);
-
-	if (*end != '\0' || acoustic > 126)
-		errx(1, "Invalid acoustic management value: \"%s\" "
-		    "(valid values range from 0 to 126)", argv[1]);
+	acoustic = strtonum(argv[1], 0, 126, &errstr);
+	if (errstr)
+		errx(1, "Acoustic management value \"%s\" is %s "
+		    "(valid values: 0 - 126)", argv[1], errstr);
 
 	memset(&req, 0, sizeof(req));
 
@@ -1712,18 +1712,17 @@ usage:
 void
 device_apm(int argc, char *argv[])
 {
-	unsigned long power;
+	u_char power;
 	struct atareq req;
-	char *end;
+	const char *errstr;
 
 	if (argc != 2)
 		goto usage;
 
-	power = strtoul(argv[1], &end, 0);
-
-	if (*end != '\0' || power > 253)
-		errx(1, "Invalid advanced power management value: "
-		    "\"%s\" (valid values range from 0 to 253)", argv[1]);
+	power = strtonum(argv[1], 0, 253, &errstr);
+	if (errstr)
+		errx(1, "Advanced power management value \"%s\" is %s "
+		    "(valid values: 0 - 253)", argv[1], errstr);
 
 	memset(&req, 0, sizeof(req));
 
@@ -1813,7 +1812,7 @@ device_setidle(int argc, char *argv[])
 
 	if (*end != '\0' || idle > 19800)
 		errx(1, "Invalid idle time: \"%s\" "
-		    "(valid values range from 1 to 19800)", argv[1]);
+		    "(valid values: 1 - 19800)", argv[1]);
 
 	if (idle != 0 && idle < 5)
 		errx(1, "Idle timer must be at least 5 seconds");
