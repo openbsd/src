@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.51 2006/05/27 15:43:13 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.52 2006/05/27 21:24:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -271,7 +271,6 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				    0, 0, -1, p, sizeof(struct peer));
 			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_FIB_COUPLE:
 		case IMSG_CTL_FIB_DECOUPLE:
 			imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);
@@ -320,6 +319,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				log_warnx("got IMSG_CTL_NEIGHBOR_ with "
 				    "wrong length");
 			break;
+		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_SHOW_NEXTHOP:

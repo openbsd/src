@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.136 2006/04/26 20:00:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.137 2006/05/27 21:24:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,8 +53,9 @@ struct filter_set_head	*staticset;
 struct filter_set_head	*staticset6;
 volatile sig_atomic_t	 mrtdump = 0;
 volatile sig_atomic_t	 quit = 0;
-volatile sig_atomic_t	 reconfig = 0;
 volatile sig_atomic_t	 sigchld = 0;
+volatile sig_atomic_t	 reconfig = 0;
+pid_t			 reconfpid = 0;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_rde;
 
@@ -309,9 +310,27 @@ main(int argc, char *argv[])
 		}
 
 		if (reconfig) {
+			u_int	error;
+
 			reconfig = 0;
 			log_info("rereading config");
-			reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
+			switch (reconfigure(conffile, &conf, &mrt_l, &peer_l,
+			    rules_l)) {
+			case -1:	/* fatal error */
+				quit = 1;
+				break;
+			case 0:		/* all OK */
+				error = 0;
+				break;
+			default:	/* parse error */
+				error = CTL_RES_PARSE_ERROR;
+				break;
+			}
+			if (reconfpid != 0) {
+				send_imsg_session(IMSG_CTL_RESULT, reconfpid,
+				    &error, sizeof(error));
+				reconfpid = 0;
+			}
 		}
 
 		if (sigchld) {
@@ -421,7 +440,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, rules_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
-		return (-1);
+		return (1);
 	}
 
 	cflags = conf->flags;
@@ -596,6 +615,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				log_warnx("reload request not from SE");
 			else
 				reconfig = 1;
+				reconfpid = imsg.hdr.pid;
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 			if (idx != PFD_PIPE_SESSION)

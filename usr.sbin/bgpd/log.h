@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.7 2006/05/23 12:11:38 henning Exp $ */
+/*	$OpenBSD: log.h,v 1.8 2006/05/27 21:24:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -108,5 +108,6 @@ static const char * const ctl_res_strerror[] = {
 	"no error",
 	"no such neighbor",
 	"permission denied",
-	"neighbor does not have this capability"
+	"neighbor does not have this capability",
+	"config file has errors, reload failed"
 };
