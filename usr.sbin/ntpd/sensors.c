@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.4 2006/05/27 21:33:47 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.5 2006/05/27 22:22:47 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -34,26 +34,29 @@
 #define SENSORS_MAX	255
 #define	_PATH_DEV_HOTPLUG               "/dev/hotplug"
 
-void	sensor_probe(struct ntpd_conf *, int);
-void	sensor_add(struct ntpd_conf *, struct sensor *);
+void	sensor_probe(int);
+void	sensor_add(struct sensor *);
+
+struct ntpd_conf *conf;
 
 void
-sensor_init(struct ntpd_conf *conf)
+sensor_init(struct ntpd_conf *c)
 {
+	conf = c;
 	TAILQ_INIT(&conf->ntp_sensors);
 }
 
 void
-sensor_scan(struct ntpd_conf *conf)
+sensor_scan(void)
 {
 	int		i;
 
 	for (i = 0; i < SENSORS_MAX; i++)
-		sensor_probe(conf, i);
+		sensor_probe(i);
 }
 
 void
-sensor_probe(struct ntpd_conf *conf, int id)
+sensor_probe(int id)
 {
 	int		mib[3];
 	size_t		len;
@@ -71,11 +74,11 @@ sensor_probe(struct ntpd_conf *conf, int id)
 	}
 
 	if (sensor.type == SENSOR_TIMEDELTA)
-		sensor_add(conf, &sensor);
+		sensor_add(&sensor);
 }
 
 void
-sensor_add(struct ntpd_conf *conf, struct sensor *sensor)
+sensor_add(struct sensor *sensor)
 {
 	struct ntp_sensor	*s;
 	struct ntp_conf_sensor	*cs;
@@ -107,7 +110,7 @@ sensor_add(struct ntpd_conf *conf, struct sensor *sensor)
 }
 
 void
-sensor_remove(struct ntpd_conf *conf, struct ntp_sensor *s)
+sensor_remove(struct ntp_sensor *s)
 {
 	TAILQ_REMOVE(&conf->ntp_sensors, s, entry);
 	free(s->device);
