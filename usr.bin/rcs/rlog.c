@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.54 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.55 2006/05/27 05:49:14 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -136,9 +136,11 @@ rlog_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), 0);
-		if (fd < 0)
+		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
+		if (fd < 0) {
+			warnx("%s", fpath);
 			continue;
+		}
 
 		if ((file = rcs_open(fpath, fd,
 		    RCS_READ|RCS_PARSE_FULLY)) == NULL)

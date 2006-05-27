@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.127 2006/05/19 07:52:38 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.128 2006/05/27 05:49:14 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -202,10 +202,14 @@ rcs_main(int argc, char **argv)
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'A':
-			ofd = rcs_statfile(rcs_optarg, ofpath,
-			    sizeof(ofpath), flags);
-			if (ofd < 0)
+			/* XXX - Should we process this after all flags? */
+			ofd = rcs_choosefile(rcs_optarg, ofpath,
+			    sizeof(ofpath));
+			if (ofd < 0) {
+				if (!(flags & RCS_CREATE))
+					warnx("%s", ofpath);
 				exit(1);
+			}
 			rcsflags |= CO_ACLAPPEND;
 			break;
 		case 'a':
@@ -303,9 +307,11 @@ rcs_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
-		if (fd < 0 && !(flags & RCS_CREATE))
+		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
+		if (fd < 0 && !(flags & RCS_CREATE)) {
+			warnx("%s", fpath);
 			continue;
+		}
 
 		if (!(rcsflags & QUIET))
 			(void)fprintf(stderr, "RCS file: %s\n", fpath);

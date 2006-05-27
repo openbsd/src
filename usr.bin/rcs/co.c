@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.91 2006/05/17 19:37:40 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.92 2006/05/27 05:49:14 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -151,9 +151,11 @@ checkout_main(int argc, char **argv)
 		err(1, "getlogin");
 
 	for (i = 0; i < argc; i++) {
-		fd = rcs_statfile(argv[i], fpath, sizeof(fpath), flags);
-		if (fd < 0)
+		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
+		if (fd < 0) {
+			warnx("%s", fpath);
 			continue;
+		}
 
 		if (!(flags & QUIET))
 			(void)fprintf(stderr, "%s  -->  %s\n", fpath,

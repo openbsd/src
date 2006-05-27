@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.46 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.47 2006/05/27 05:49:14 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -137,7 +137,7 @@ rcsclean_file(char *fname, const char *rev_str)
 	file = NULL;
 	rev = NULL;
 
-	if ((fd = rcs_statfile(fname, fpath, sizeof(fpath), flags)) < 0)
+	if ((fd = rcs_choosefile(fname, fpath, sizeof(fpath))) < 0)
 		goto out;
 
 	if ((file = rcs_open(fpath, fd, RCS_RDWR)) == NULL)

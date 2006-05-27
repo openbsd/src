@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.174 2006/05/17 19:37:40 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.175 2006/05/27 05:49:14 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -235,12 +235,8 @@ checkin_main(int argc, char **argv)
 		if ((workfile_fd = open(pb.filename, O_RDONLY)) == -1)
 			err(1, "%s", pb.filename);
 
-		/*
-		 * Test for existence of ,v file. If we are expected to
-		 * create one, set NEWFILE flag.
-		 */
-		fd = rcs_statfile(pb.filename, pb.fpath, sizeof(pb.fpath),
-		    pb.flags);
+		/* Find RCS file path. */
+		fd = rcs_choosefile(pb.filename, pb.fpath, sizeof(pb.fpath));
 
 		if (fd < 0) {
 			if (pb.openflags & RCS_CREATE)
@@ -261,14 +257,6 @@ checkin_main(int argc, char **argv)
 			}
 			pb.openflags &= ~RCS_CREATE;
 		}
-
-		/*
-		 * If we are to create a new ,v file, we must decide where it
-		 * should go.
-		 */
-		if (pb.flags & NEWFILE)
-			fd = rcs_choosefile(pb.filename,
-			    pb.fpath, sizeof(pb.fpath));
 
 		pb.file = rcs_open(pb.fpath, fd, pb.openflags, pb.fmode);
 		if (pb.file == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.11 2006/05/27 02:58:02 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.12 2006/05/27 05:49:14 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -262,27 +262,6 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	fd = open(rcspath, O_RDONLY);
 	if (strlcpy(out, rcspath, len) >= len)
 		errx(1, "rcs_choosefile: truncation");
-
-	return (fd);
-}
-
-/*
- * Find the name of an RCS file, given a file name `fname'.  If an RCS
- * file is found, the name is copied to the `len' sized buffer `out'.
- * Returns 0 if RCS file was found, -1 otherwise.
- */
-int
-rcs_statfile(char *fname, char *out, size_t len, int flags)
-{
-	int fd;
-
-	fd = rcs_choosefile(fname, out, len);
-	if (fd == -1 && !(flags & RCS_CREATE)) {
-		if (strcmp(__progname, "rcsclean") != 0 &&
-		    strcmp(__progname, "ci") != 0)
-			warnx("%s", out);
-		return (-1);
-	}
 
 	return (fd);
 }
