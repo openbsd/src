@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.52 2006/03/25 22:41:41 djm Exp $	*/
+/*	$OpenBSD: hme.c,v 1.53 2006/05/27 23:59:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -468,7 +468,7 @@ hmeioctl(ifp, cmd, data)
 		error = ifmedia_ioctl(ifp, ifr,  &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	sc->sc_if_flags = ifp->if_flags;
