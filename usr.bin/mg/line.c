@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.37 2005/12/20 06:17:36 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.38 2006/05/27 21:20:11 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -568,4 +568,26 @@ lreplace(RSIZE plen, char *st)
 	undo_no_boundary(FALSE);
 	undo_add_boundary();
 	return (TRUE);
+}
+
+/*
+ * Allocate and return the supplied line as a C string
+ */
+char *
+linetostr(const struct line *ln)
+{
+	size_t	 len;
+	char	*line;
+
+	len = llength(ln);
+	if (len == SIZE_MAX)  /* (len + 1) overflow */
+		return (NULL);
+
+	if ((line = malloc(len + 1)) == NULL)
+		return (NULL);
+
+	(void)memcpy(line, ltext(ln), len);
+	line[len] = '\0';
+
+	return (line);
 }
