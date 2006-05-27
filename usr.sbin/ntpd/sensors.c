@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.3 2006/05/27 21:27:34 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.4 2006/05/27 21:33:47 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -34,6 +34,7 @@
 #define SENSORS_MAX	255
 #define	_PATH_DEV_HOTPLUG               "/dev/hotplug"
 
+void	sensor_probe(struct ntpd_conf *, int);
 void	sensor_add(struct ntpd_conf *, struct sensor *);
 
 void
@@ -45,26 +46,32 @@ sensor_init(struct ntpd_conf *conf)
 void
 sensor_scan(struct ntpd_conf *conf)
 {
-	struct sensor	sensor;
 	int		i;
+
+	for (i = 0; i < SENSORS_MAX; i++)
+		sensor_probe(conf, i);
+}
+
+void
+sensor_probe(struct ntpd_conf *conf, int id)
+{
 	int		mib[3];
 	size_t		len;
+	struct sensor	sensor;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
+	mib[2] = id;
 
-	for (i = 0; i < SENSORS_MAX; i++) {
-		mib[2] = i;
-		len = sizeof(sensor);
-		if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
-			if (errno != ENOENT)
-				log_warn("sensor_scan sysctl");
-			break;
-		}
-
-		if (sensor.type == SENSOR_TIMEDELTA)
-			sensor_add(conf, &sensor);
+	len = sizeof(sensor);
+	if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
+		if (errno != ENOENT)
+			log_warn("sensor_probe sysctl");
+		return;
 	}
+
+	if (sensor.type == SENSOR_TIMEDELTA)
+		sensor_add(conf, &sensor);
 }
 
 void
