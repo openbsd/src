@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.55 2006/04/04 12:03:26 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.56 2006/05/27 15:37:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include "session.h"
 
 void		 print_op(enum comp_ops);
+void		 print_community(int, int);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
@@ -71,6 +72,24 @@ print_op(enum comp_ops op)
 		printf("?");
 		break;
 	}
+}
+
+void
+print_community(int as, int type)
+{
+	if (as == COMMUNITY_ANY)
+		printf("*:");
+	else if (as == COMMUNITY_NEIGHBOR_AS)
+		printf("neighbor-as:");
+	else
+		printf("%d:", as);
+
+	if (type == COMMUNITY_ANY)
+		printf("* ");
+	else if (type == COMMUNITY_NEIGHBOR_AS)
+		printf("neighbor-as ");
+	else
+		printf("%d ", type);
 }
 
 void
@@ -124,12 +143,16 @@ print_set(struct filter_set_head *set)
 			printf("prepend-neighbor %u ", s->action.prepend);
 			break;
 		case ACTION_DEL_COMMUNITY:
-			printf("community delete %u:%u ",
-			    s->action.community.as, s->action.community.type);
+			printf("community delete ");
+			print_community(s->action.community.as,
+			    s->action.community.type);
+			printf(" ");
 			break;
 		case ACTION_SET_COMMUNITY:
-			printf("community %u:%u ", s->action.community.as,
+			printf("community ");
+			print_community(s->action.community.as,
 			    s->action.community.type);
+			printf(" ");
 			break;
 		case ACTION_PFTABLE:
 			printf("pftable %s ", s->action.pftable);
@@ -441,19 +464,8 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 
 	if (r->match.community.as != 0) {
 		printf("community ");
-		if (r->match.community.as == COMMUNITY_ANY)
-			printf("*:");
-		else if (r->match.community.as == COMMUNITY_NEIGHBOR_AS)
-			printf("neighbor-as:");
-		else
-			printf("%d:", r->match.community.as);
-
-		if (r->match.community.type == COMMUNITY_ANY)
-			printf("* ");
-		else if (r->match.community.type == COMMUNITY_NEIGHBOR_AS)
-			printf("neighbor-as ");
-		else
-			printf("%d ", r->match.community.type);
+		print_community(r->match.community.as,
+		    r->match.community.type);
 	}
 
 	print_set(&r->set);
