@@ -1,0 +1,78 @@
+.\"	$OpenBSD: mpi.4,v 1.1 2006/05/27 19:42:39 dlg Exp $
+.\"
+.\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" TORTIOUS ACTION, ARISING OUT OF
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 28, 2006
+.Dt MPI 4
+.Os
+.Sh NAME
+.Nm mpi
+.Nd LSI Logic Fusion-MPT Message Passing Interface
+.Sh SYNOPSIS
+.Cd "mpi* at pci?"
+.Cd "scsibus* at mpt?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support
+for the LSI Logic Fusion-MPT family of storage controllers:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+53c1020
+.Pq Single Ultra320 Tn SCSI
+.It
+53c1030
+.Pq Dual Ultra320 Tn SCSI
+.It
+FC909
+.Pq 1Gb/s Tn Fibre Channel
+.It
+FC909A
+.Pq Dual 1Gb/s Tn Fibre Channel
+.It
+FC919
+.Pq 2Gb/s Tn Fibre Channel
+.It
+FC929
+.Pq Dual 2Gb/s Tn Fibre Channel
+.It
+Emulated in VMWare ESX Server 2
+.El
+.Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr safte 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr ses 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An David Gwynne Aq dlg@openbsd.org
+and
+.An Marco Peereboom Aq marco@openbsd.org .
