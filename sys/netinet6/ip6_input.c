@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.66 2006/05/27 20:00:37 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.67 2006/05/27 23:40:27 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -377,7 +377,11 @@ ip6_input(m)
 		IN6_LOOKUP_MULTI(ip6->ip6_dst, m->m_pkthdr.rcvif, in6m);
 		if (in6m)
 			ours = 1;
-		else if (!ip6_mrouter) {
+#ifdef MROUTING
+		else if (!ip6_mforwarding || !ip6_mrouter) {
+#else
+		else {
+#endif
 			ip6stat.ip6s_notmember++;
 			if (!IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst))
 				ip6stat.ip6s_cantforward++;
@@ -594,11 +598,14 @@ ip6_input(m)
 		 * ip6_mforward() returns a non-zero value, the packet
 		 * must be discarded, else it may be accepted below.
 		 */
-		if (ip6_mrouter && ip6_mforward(ip6, m->m_pkthdr.rcvif, m)) {
+#ifdef MROUTING
+		if (ip6_mforwarding && ip6_mrouter &&
+		    ip6_mforward(ip6, m->m_pkthdr.rcvif, m)) {
 			ip6stat.ip6s_cantforward++;
 			m_freem(m);
 			return;
 		}
+#endif
 		if (!ours) {
 			m_freem(m);
 			return;

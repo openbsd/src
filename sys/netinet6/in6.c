@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.65 2006/04/16 19:09:56 canacar Exp $	*/
+/*	$OpenBSD: in6.c,v 1.66 2006/05/27 23:40:27 claudio Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -87,7 +87,9 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/mld6_var.h>
+#ifdef MROUTING
 #include <netinet6/ip6_mroute.h>
+#endif
 #include <netinet6/in6_ifattach.h>
 
 /* backward compatibility for a while... */
@@ -335,11 +337,13 @@ in6_control(so, cmd, data, ifp, p)
 	if ((so->so_state & SS_PRIV) != 0)
 		privileged++;
 
+#ifdef MROUTING
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
 		return (mrt6_ioctl(cmd, data));
 	}
+#endif
 
 	if (ifp == NULL)
 		return (EOPNOTSUPP);

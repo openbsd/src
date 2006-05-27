@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.40 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.41 2006/05/27 23:40:27 claudio Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -54,7 +54,9 @@
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#ifdef MROUTING
 #include <netinet6/ip6_mroute.h>
+#endif
 
 unsigned long in6_maxmtu = 0;
 
@@ -652,8 +654,10 @@ in6_ifdetach(ifp)
 	struct sockaddr_in6 sin6;
 	struct in6_multi_mship *imm;
 
+#ifdef MROUTING
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
+#endif
 
 	/* remove neighbor management table */
 	nd6_purge(ifp);

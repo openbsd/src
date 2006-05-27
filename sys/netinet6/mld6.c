@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.20 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.21 2006/05/27 23:40:27 claudio Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -445,7 +445,9 @@ mld6_sendpkt(in6m, type, dst)
 	 * Request loopback of the report if we are acting as a multicast
 	 * router, so that the process-level routing daemon can hear it.
 	 */
+#ifdef MROUTING
 	im6o.im6o_multicast_loop = (ip6_mrouter != NULL);
+#endif
 
 	/* increment output statictics */
 	icmp6stat.icp6s_outhist[type]++;

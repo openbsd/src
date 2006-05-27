@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.29 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.30 2006/05/27 23:40:27 claudio Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -78,7 +78,9 @@
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#ifdef MROUTING
 #include <netinet6/ip6_mroute.h>
+#endif
 #include <netinet/icmp6.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -523,11 +525,14 @@ rip6_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
+#ifdef MROUTING
 	int error = 0;
+#endif
 
 	switch (level) {
 	case IPPROTO_IPV6:
 		switch (optname) {
+#ifdef MROUTING
 		case MRT6_INIT:
 		case MRT6_DONE:
 		case MRT6_ADD_MIF:
@@ -544,6 +549,7 @@ rip6_ctloutput(op, so, level, optname, mp)
 			else
 				error = EINVAL;
 			return (error);
+#endif
 		case IPV6_CHECKSUM:
 			return (ip6_raw_ctloutput(op, so, level, optname, mp));
 		default:
@@ -635,8 +641,10 @@ rip6_usrreq(so, req, m, nam, control, p)
 	case PRU_DETACH:
 		if (in6p == 0)
 			panic("rip6_detach");
+#ifdef MROUTING
 		if (so == ip6_mrouter)
 			ip6_mrouter_done();
+#endif
 		/* xxx: RSVP */
 		if (in6p->in6p_icmp6filt) {
 			FREE(in6p->in6p_icmp6filt, M_PCB);

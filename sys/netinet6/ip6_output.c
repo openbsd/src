@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.88 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.89 2006/05/27 23:40:27 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -673,12 +673,15 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			 * above, will be forwarded by the ip6_input() routine,
 			 * if necessary.
 			 */
-			if (ip6_mrouter && (flags & IPV6_FORWARDING) == 0) {
+#ifdef MROUTING
+			if (ip6_mforwarding && ip6_mrouter &&
+			    (flags & IPV6_FORWARDING) == 0) {
 				if (ip6_mforward(ip6, ifp, m) != 0) {
 					m_freem(m);
 					goto done;
 				}
 			}
+#endif
 		}
 		/*
 		 * Multicasts with a hoplimit of zero may be looped back,
