@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.5 2006/04/18 04:58:41 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.6 2006/05/27 04:46:12 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -67,6 +67,7 @@
 #define	BIOS_LEN			0x20000
 
 extern int cpuspeed;
+extern int setperf_prio;
 
 /*
  * MSRs and bits used by Powernow technology
@@ -375,6 +376,9 @@ k8_powernow_init(void)
 	char * techname = NULL;
 	ci = curcpu();
 
+	if (setperf_prio > 1)
+		return;
+
 	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate)
 		return;
@@ -404,6 +408,7 @@ k8_powernow_init(void)
 			printf(" Mhz\n");
 			k8pnow_current_state = cstate;
 			cpu_setperf = k8_powernow_setperf;
+			setperf_prio = 1;
 			return;
 		}
 	}

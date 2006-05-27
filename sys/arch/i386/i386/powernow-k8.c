@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.10 2006/05/11 13:21:12 mickey Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.11 2006/05/27 04:46:12 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -154,6 +154,7 @@ struct pst_s {
 };
 
 struct k8pnow_cpu_state *k8pnow_current_state = NULL;
+extern int setperf_prio;
 
 /*
  * Prototypes
@@ -381,6 +382,9 @@ k8_powernow_init(void)
 
 	ci = curcpu();
 
+	if (setperf_prio > 1)
+		return;
+
 	if (k8pnow_current_state)
 		return;
 
@@ -421,6 +425,7 @@ k8_powernow_init(void)
 			printf(" Mhz\n");
 			k8pnow_current_state = cstate;
 			cpu_setperf = k8_powernow_setperf;
+			setperf_prio = 1;
 			return;
 		}
 	}

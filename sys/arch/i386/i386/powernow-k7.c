@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.21 2006/05/11 13:21:11 mickey Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.22 2006/05/27 04:46:12 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -151,6 +151,7 @@ struct pst_s {
 };
 
 struct k7pnow_cpu_state *k7pnow_current_state;
+extern int setperf_prio;
 
 /*
  * Prototypes
@@ -326,6 +327,9 @@ k7_powernow_init(void)
 	char *techname = NULL;
 	int i;
 
+	if (setperf_prio > 1)
+		return;
+
 	ci = curcpu();
 
 	cpuid(0x80000000, regs);
@@ -366,6 +370,7 @@ k7_powernow_init(void)
 			
 			k7pnow_current_state = cstate;
 			cpu_setperf = k7_powernow_setperf;
+			setperf_prio = 1;
 			return;
 		}
 	}
