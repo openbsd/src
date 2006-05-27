@@ -31,7 +31,6 @@
 ./usr/include/arm/limits.h
 ./usr/include/arm/lock.h
 ./usr/include/arm/machdep.h
-./usr/include/arm/math.h
 ./usr/include/arm/param.h
 ./usr/include/arm/pcb.h
 ./usr/include/arm/pci_machdep.h
@@ -82,7 +81,6 @@
 ./usr/include/cats/isa_machdep.h
 ./usr/include/cats/limits.h
 ./usr/include/cats/lock.h
-./usr/include/cats/math.h
 ./usr/include/cats/param.h
 ./usr/include/cats/pcb.h
 ./usr/include/cats/pio.h

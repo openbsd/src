@@ -660,7 +660,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/lock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/machdep.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/math.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pci_machdep.ph
@@ -723,7 +722,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/lock.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/cats/math.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/pio.ph
