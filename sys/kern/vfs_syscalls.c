@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.134 2006/04/30 14:20:07 sturm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.135 2006/05/27 17:37:42 sturm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -237,9 +237,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	/* This error never happens, but it makes auditing easier */
-	if ((error = vfs_busy(mp, LK_NOWAIT)))
-		return (error);
+	(void) vfs_busy(mp, LK_NOWAIT);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
 	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
