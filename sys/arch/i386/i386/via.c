@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.4 2006/05/11 13:21:12 mickey Exp $	*/
+/*	$OpenBSD: via.c,v 1.5 2006/05/27 04:08:57 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -141,8 +141,8 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	    C3_CRYPT_CWLO_NORMAL;
 
 	if (sc->sc_sessions == NULL) {
-		ses = sc->sc_sessions = (struct viac3_session *)malloc(
-		    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+		ses = sc->sc_sessions = malloc(sizeof(*ses), M_DEVBUF,
+		    M_NOWAIT);
 		if (ses == NULL)
 			return (ENOMEM);
 		sesn = 0;
@@ -157,8 +157,8 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 		if (ses == NULL) {
 			sesn = sc->sc_nsessions;
-			ses = (struct viac3_session *)malloc((sesn + 1) *
-			    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+			ses = malloc((sesn + 1) * sizeof(*ses), M_DEVBUF,
+			    M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
@@ -251,7 +251,7 @@ viac3_crypto_process(struct cryptop *crp)
 	}
 	ses = &sc->sc_sessions[sesn];
 
-	sc->op_buf = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
+	sc->op_buf = malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
 	if (sc->op_buf == NULL) {
 		err = ENOMEM;
 		goto out;

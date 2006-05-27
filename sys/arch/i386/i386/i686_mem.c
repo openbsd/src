@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.7 2006/05/11 13:21:11 mickey Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.8 2006/05/27 04:08:57 gwk Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -569,9 +569,8 @@ i686_mrinit(sc)
 		nmdesc += MTRR_N64K + MTRR_N16K + MTRR_N4K;
 	}
 	
-	sc->mr_desc =
-		(struct mem_range_desc *)malloc(nmdesc * sizeof(struct mem_range_desc),
-						M_MEMDESC, M_WAITOK);
+	sc->mr_desc = malloc(nmdesc * sizeof(struct mem_range_desc),
+	     M_MEMDESC, M_WAITOK);
 	bzero(sc->mr_desc, nmdesc * sizeof(struct mem_range_desc));
 	sc->mr_ndesc = nmdesc;
 	
