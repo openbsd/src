@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2005/01/02 19:33:11 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2006/05/27 00:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -289,7 +289,6 @@ struct uio;
 #define BUS_DMASYNC_POSTWRITE	0x0002
 #define BUS_DMASYNC_PREREAD	0x0004
 #define BUS_DMASYNC_PREWRITE	0x0008
-typedef int bus_dmasync_op_t;
 
 typedef struct machine_bus_dma_tag	*bus_dma_tag_t;
 typedef struct machine_bus_dmamap	*bus_dmamap_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.8 2005/11/06 10:26:56 martin Exp $ */
+/*	$OpenBSD: busdma.c,v 1.9 2006/05/27 00:29:55 krw Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -340,7 +340,7 @@ _dmamap_sync(t, map, addr, size, op)
 	bus_dmamap_t map;
 	bus_addr_t addr;
 	bus_size_t size;
-	bus_dmasync_op_t op;
+	int op;
 {
 #define SYNC_R 0
 #define SYNC_W 1
