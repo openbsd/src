@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.94 2006/05/27 20:57:42 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.95 2006/05/27 21:11:11 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,7 +25,7 @@
 int	cvs_diff(int, char **);
 void	cvs_diff_local(struct cvs_file *);
 
-int include_added_files = 0;
+int Nflag = 0;
 
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_REQ_DIFF, "diff",
@@ -64,7 +64,7 @@ cvs_diff(int argc, char **argv)
 			break;
 		case 'N':
 			strlcat(diffargs, " -N", sizeof(diffargs));
-			include_added_files = 1;
+			Nflag = 1;
 			break;
 		case 'r':
 			if (diff_rev1 == NULL) {
@@ -132,8 +132,12 @@ cvs_diff_local(struct cvs_file *cf)
 	} else if (cf->file_status == FILE_UNKNOWN) {
 		cvs_log(LP_ERR, "I know nothing about %s", cf->file_path);
 		return;
-	} else if (cf->file_status == FILE_ADDED && include_added_files == 0) {
+	} else if (cf->file_status == FILE_ADDED && Nflag == 0) {
 		cvs_log(LP_ERR, "%s is a new entry, no comparison available",
+		    cf->file_path);
+		return;
+	} else if (cf->file_status == FILE_REMOVED && Nflag == 0) {
+		cvs_log(LP_ERR, "%s was removed, no comparison available",
 		    cf->file_path);
 		return;
 	} else if (cf->file_status == FILE_UPTODATE && diff_rev2 == NULL) {
@@ -163,7 +167,8 @@ cvs_diff_local(struct cvs_file *cf)
 		tv[1] = tv[0];
 	}
 
-	if (diff_rev2 != NULL && cf->file_status != FILE_ADDED) {
+	if (diff_rev2 != NULL && cf->file_status != FILE_ADDED &&
+	    cf->file_status != FILE_REMOVED) {
 		rcsnum_tostr(diff_rev2, rbuf, sizeof(rbuf));
 		cvs_printf("retrieving revision %s\n", rbuf);
 		if ((b2 = rcs_getrev(cf->file_rcs, diff_rev2)) == NULL)
@@ -174,7 +179,7 @@ cvs_diff_local(struct cvs_file *cf)
 		tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs, diff_rev2);
 		tv2[0].tv_usec = 0;
 		tv2[1] = tv2[0];
-	} else {
+	} else if (cf->file_status != FILE_REMOVED) {
 		if (fstat(cf->fd, &st) == -1)
 			fatal("fstat failed %s", strerror(errno));
 		if ((b2 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
@@ -220,16 +225,22 @@ cvs_diff_local(struct cvs_file *cf)
 			fatal("cvs_diff_local: truncation");
 	}
 
-	len = strlcpy(p2, cvs_tmpdir, sizeof(p2));
-	if (len >= sizeof(p2))
-		fatal("cvs_diff_local: truncation");
+	if (cf->file_status != FILE_REMOVED) {
+		len = strlcpy(p2, cvs_tmpdir, sizeof(p2));
+		if (len >= sizeof(p2))
+			fatal("cvs_diff_local: truncation");
 
-	len = strlcat(p2, "/diff2.XXXXXXXXXX", sizeof(p2));
-	if (len >= sizeof(p2))
-		fatal("cvs_diff_local: truncation");
+		len = strlcat(p2, "/diff2.XXXXXXXXXX", sizeof(p2));
+		if (len >= sizeof(p2))
+			fatal("cvs_diff_local: truncation");
 
-	cvs_buf_write_stmp(b2, p2, 0600, tv2);
-	cvs_buf_free(b2);
+		cvs_buf_write_stmp(b2, p2, 0600, tv2);
+		cvs_buf_free(b2);
+	} else {
+		len = strlcpy(p2, CVS_PATH_DEVNULL, sizeof(p2));
+		if (len >= sizeof(p2))
+			fatal("cvs_diff_local: truncation");
+	}
 
 	cvs_diffreg(p1, p2, NULL);
 	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
