@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.56 2006/05/27 06:16:14 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.57 2006/05/27 14:05:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -114,6 +114,13 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	    cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNLINK)
 		conflicts_found++;
+
+	if (cf->file_status == FILE_MERGE ||
+	    cf->file_status == FILE_PATCH) {
+		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
+		    cf->file_path);
+		conflicts_found++;
+	}
 
 	if (cf->file_status == FILE_ADDED ||
 	    cf->file_status == FILE_REMOVED ||
