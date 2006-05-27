@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.6 2006/04/27 08:22:56 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.7 2006/05/27 18:22:04 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -179,6 +179,8 @@ USB_ATTACH(udcf)
 	    sizeof(sc->sc_sensor.device));
 	sc->sc_sensor.type = SENSOR_TIMEDELTA;
 	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+	sc->sc_sensor.flags = SENSOR_FINVALID;
+	sensor_add(&sc->sc_sensor);
 
 	/* Prepare the USB request to probe the value */
 
@@ -401,7 +403,7 @@ udcf_probe(void *xsc)
 				    (now.tv_sec - sc->sc_current)
 				    * 1000000000 + now.tv_nsec;
 
-				/* set the clocktype */
+				/* set the clocktype and make sensor valid */
 
 				if (sc->sc_sensor.status == SENSOR_S_UNKNOWN) {
 					strlcpy(sc->sc_sensor.desc,
@@ -411,7 +413,8 @@ udcf_probe(void *xsc)
 					    sizeof(sc->sc_sensor.desc));
 					DPRINTF(("add timedelta sensor for %s\n",
 						sc->sc_sensor.desc));
-					sensor_add(&sc->sc_sensor);
+					sc->sc_sensor.flags &=
+					    ~SENSOR_FINVALID;
 				}
 				sc->sc_sensor.status = SENSOR_S_OK;
 
