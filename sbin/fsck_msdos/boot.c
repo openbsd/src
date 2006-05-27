@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.11 2006/05/27 22:30:09 thib Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.11 2006/05/27 22:30:09 thib Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -55,7 +55,7 @@ readboot(int dosfs, struct bootblock *boot)
 	int ret = FSOK;
 
 	if (read(dosfs, block, sizeof block) < sizeof block) {
-		perror("could not read boot block");
+		xperror("could not read boot block");
 		return (FSFATAL);
 	}
 
@@ -107,7 +107,7 @@ readboot(int dosfs, struct bootblock *boot)
 		    != boot->FSInfo * boot->BytesPerSec
 		    || read(dosfs, fsinfo, sizeof fsinfo)
 		    != sizeof fsinfo) {
-			perror("could not read fsinfo block");
+			xperror("could not read fsinfo block");
 			return FSFATAL;
 		}
 		if (memcmp(fsinfo, "RRaA", 4)
@@ -134,7 +134,7 @@ readboot(int dosfs, struct bootblock *boot)
 				    != boot->FSInfo * boot->BytesPerSec
 				    || write(dosfs, fsinfo, sizeof fsinfo)
 				    != sizeof fsinfo) {
-					perror("Unable to write FSInfo");
+					xperror("Unable to write FSInfo");
 					return FSFATAL;
 				}
 				ret = FSBOOTMOD;
@@ -153,7 +153,7 @@ readboot(int dosfs, struct bootblock *boot)
 		if (lseek(dosfs, boot->Backup * boot->BytesPerSec, SEEK_SET)
 		    != boot->Backup * boot->BytesPerSec
 		    || read(dosfs, backup, sizeof backup) != sizeof  backup) {
-			perror("could not read backup bootblock");
+			xperror("could not read backup bootblock");
 			return FSFATAL;
 		}
 		if (memcmp(block, backup, DOSBOOTBLOCKSIZE)) {
@@ -232,7 +232,7 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 	    != boot->FSInfo * boot->BytesPerSec
 	    || read(dosfs, fsinfo, sizeof fsinfo) != sizeof fsinfo) {
-		perror("could not read fsinfo block");
+		xperror("could not read fsinfo block");
 		return FSFATAL;
 	}
 	fsinfo[0x1e8] = (u_char)boot->FSFree;
@@ -247,7 +247,7 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	    != boot->FSInfo * boot->BytesPerSec
 	    || write(dosfs, fsinfo, sizeof fsinfo)
 	    != sizeof fsinfo) {
-		perror("Unable to write FSInfo");
+		xperror("Unable to write FSInfo");
 		return FSFATAL;
 	}
 	/*

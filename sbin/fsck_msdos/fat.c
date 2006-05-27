@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.14 2006/04/02 21:38:56 djm Exp $	*/
+/*	$OpenBSD: fat.c,v 1.15 2006/05/27 22:30:09 thib Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.14 2006/04/02 21:38:56 djm Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.15 2006/05/27 22:30:09 thib Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -97,7 +97,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	fat = calloc(boot->NumClusters, sizeof(struct fatEntry));
 	buffer = malloc(boot->FATsecs * boot->BytesPerSec);
 	if (fat == NULL || buffer == NULL) {
-		perror("No space for FAT");
+		xperror("No space for FAT");
 		if (fat)
 			free(fat);
 		return (FSFATAL);
@@ -107,7 +107,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	off *= boot->BytesPerSec;
 
 	if (lseek(fs, off, SEEK_SET) != off) {
-		perror("Unable to read FAT");
+		xperror("Unable to read FAT");
 		free(buffer);
 		free(fat);
 		return (FSFATAL);
@@ -115,7 +115,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 
 	if (read(fs, buffer, boot->FATsecs * boot->BytesPerSec)
 	    != boot->FATsecs * boot->BytesPerSec) {
-		perror("Unable to read FAT");
+		xperror("Unable to read FAT");
 		free(buffer);
 		free(fat);
 		return (FSFATAL);
@@ -432,7 +432,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat)
 
 	buffer = malloc(fatsz = boot->FATsecs * boot->BytesPerSec);
 	if (buffer == NULL) {
-		perror("No space for FAT");
+		xperror("No space for FAT");
 		return (FSFATAL);
 	}
 	(void)memset(buffer, 0, fatsz);
@@ -488,7 +488,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat)
 		off *= boot->BytesPerSec;
 		if (lseek(fs, off, SEEK_SET) != off
 		    || write(fs, buffer, fatsz) != fatsz) {
-			perror("Unable to write FAT");
+			xperror("Unable to write FAT");
 			ret = FSFATAL; /* Return immediately?		XXX */
 		}
 	}

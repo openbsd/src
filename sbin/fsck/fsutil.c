@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.13 2003/09/25 04:15:29 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.14 2006/05/27 22:30:09 thib Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.13 2003/09/25 04:15:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.14 2006/05/27 22:30:09 thib Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,9 +93,8 @@ vmsg(int fatal, const char *fmt, va_list ap)
 		(void) printf("%s: ", dev);
 
 	(void) vprintf(fmt, ap);
-
+	printf("\n");
 	if (fatal && preen) {
-		(void) printf("\n");
 		(void) printf(
 		    "%s: UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
 		    dev, __progname);
@@ -126,7 +125,7 @@ pwarn(const char *fmt, ...)
 }
 
 void
-perror(const char *s)
+xperror(const char *s)
 {
 	pfatal("%s (%s)", s, strerror(errno));
 }
@@ -186,14 +185,14 @@ blockcheck(char *origname)
 
 	hot = 0;
 	if (stat("/", &stslash) < 0) {
-		perror("/");
+		xperror("/");
 		printf("Can't stat root\n");
 		return (origname);
 	}
 	newname = origname;
 retry:
 	if (stat(newname, &stblock) < 0) {
-		perror(newname);
+		xperror(newname);
 		printf("Can't stat %s\n", newname);
 		return (origname);
 	}
@@ -202,7 +201,7 @@ retry:
 			hot++;
 		raw = rawname(newname);
 		if (stat(raw, &stchar) < 0) {
-			perror(raw);
+			xperror(raw);
 			printf("Can't stat %s\n", raw);
 			return (origname);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.h,v 1.4 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: fsutil.h,v 1.5 2006/05/27 22:30:09 thib Exp $	*/
 /*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void perror(const char *);
+void xperror(const char *);
 void errexit(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 void pfatal(const char *, ...)

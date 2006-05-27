@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: check.c,v 1.11 2006/05/27 22:30:09 thib Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.11 2006/05/27 22:30:09 thib Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -72,7 +72,7 @@ checkfilesys(const char *fname)
 		printf("\n");
 
 	if (dosfs < 0) {
-		perror("Can't open");
+		xperror("Can't open");
 		return (8);
 	}
 
