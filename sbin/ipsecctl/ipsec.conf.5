@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.45 2006/05/27 17:21:40 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.46 2006/05/27 17:37:02 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -92,6 +92,9 @@ for details.
 .Pp
 Parameters specify the packets to which a flow applies.
 Some parameters are optional.
+.Pp
+Adresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Ar in No or Ar out
 This rule applies to incoming or outgoing packets.
@@ -134,7 +137,6 @@ This rule applies for packets with source address
 .Aq Ar src
 and destination address
 .Aq Ar dst .
-All addresses are specified either in CIDR notation or as FQDN.
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
@@ -190,6 +192,9 @@ Enter an IPIP pseudo SA.
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),
 cryptographic transforms, and key material to be used.
+.Pp
+Adresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
 .Aq Ar mode
@@ -345,6 +350,9 @@ Parameters specify the packets that will go through the tunnel and which
 cryptographic transforms are used for
 .Xr isakmpd 8 .
 Some parameters are optional.
+.Pp
+Adresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
 .Ar ike
@@ -402,7 +410,6 @@ This rule applies for packets with source address
 .Aq Ar src
 and destination address
 .Aq Ar dst .
-All addresses are specified either in CIDR notation or as FQDN.
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
@@ -569,7 +576,6 @@ This rule applies for packets with source address
 .Aq Ar src
 and destination address
 .Aq Ar dst .
-All addresses are specified either in CIDR notation or as FQDN.
 The parameter
 .Ar spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
@@ -649,6 +655,9 @@ tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 ike esp from 192.168.3.1 to 192.168.3.2
+
+# Using interface group names and symbolic host names
+ike esp from egress to 10.1.2.0/24 peer mygate.home.net
 
 # Protect remote bridges (IP over Ethernet)
 ike esp proto etherip from 192.168.100.1 to 192.168.200.1
