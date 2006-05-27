@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1069 2006/05/23 04:53:09 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1070 2006/05/27 03:29:43 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8091,6 +8091,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C861",
 	},
 	{
+	    PCI_VENDOR_OPTION, PCI_PRODUCT_OPTION_F32,
+	    "3G+ UMTS HSDPA (F32)",
+	},
+	{
 	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI010L,
 	    "010L",
 	},
@@ -12133,6 +12137,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SANGOMA,
 	    "Sangoma",
+	},
+	{
+	    PCI_VENDOR_OPTION,
+	    "Option",
 	},
 	{
 	    PCI_VENDOR_JMICRON,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1069 2006/05/23 04:53:09 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1070 2006/05/27 03:29:43 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -280,6 +280,7 @@
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
 #define	PCI_VENDOR_XGI	0x18ca		/* XGI Technology */
 #define	PCI_VENDOR_SANGOMA	0x1923		/* Sangoma */
+#define	PCI_VENDOR_OPTION	0x1931		/* Option */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
@@ -2652,6 +2653,9 @@
 #define	PCI_PRODUCT_OPTI_82C701	0xc701		/* 82C701 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
 #define	PCI_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
+
+/* Option products */
+#define	PCI_PRODUCT_OPTION_F32	0x000c		/* 3G+ UMTS HSDPA (F32) */
 
 /* Oxford/ VScom */
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI010L	0x8001		/* 010L */
