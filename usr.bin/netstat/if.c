@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.47 2006/05/27 19:16:37 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.48 2006/05/27 19:24:01 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.47 2006/05/27 19:16:37 claudio Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.48 2006/05/27 19:24:01 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -280,9 +280,8 @@ intpr(int interval, u_long ifnetaddr)
 				char netnum[8];
 
 				*(union ipx_net *)&net = sipx->sipx_addr.ipx_net;
-				snprintf(netnum, sizeof netnum, "%xH",
+				snprintf(netnum, sizeof netnum, "%XH",
 				    ntohl(net));
-				upHex(netnum);
 				printf("ipx:%-8s", netnum);
 				printf("%-17s ",
 				    ipx_phost((struct sockaddr *)sipx));
@@ -550,24 +549,6 @@ static void
 catchalarm(int signo)
 {
 	signalled = YES;
-}
-
-void
-upHex(char *p0)
-{
-	char *p = p0;
-
-	for (; *p; p++)
-		switch (*p) {
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		case 'e':
-		case 'f':
-			*p += ('A' - 'a');
-			break;
-	}
 }
 
 char *

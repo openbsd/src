@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.36 2006/05/27 19:16:37 claudio Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.37 2006/05/27 19:24:01 claudio Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ void	pr_encaphdr(void);
 void	pr_family(int);
 char	*ns_phost(struct sockaddr *);
 char	*ipx_phost(struct sockaddr *);
-void	upHex(char *);
 
 #ifdef INET6
 struct in6_addr;
