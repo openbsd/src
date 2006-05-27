@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.10 2006/05/23 14:29:16 henning Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.11 2006/05/27 17:01:36 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June 17, 2004
+.Dd May 26, 2006
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -56,6 +56,26 @@ or
 .Bd -literal -offset indent
 listen on 127.0.0.1
 listen on ::1
+.Ed
+.It Ic sensor Ar device
+Specify a timedelta sensor device
+.Xr ntpd 8
+should use.
+Can be specified multiple times,
+.Xr ntpd 8
+will use each given sensor that actually exists.
+Nonexistant sensors are ignored.
+If
+.Sq *
+is given as device name,
+.Xr ntpd 8
+will use all timedelta sensors it finds.
+.Xr ntpd 8
+does not use any timedelta sensor by default.
+For example:
+.Bd -literal -offset indent
+sensor *
+sensor udcf0
 .Ed
 .It Ic server Ar address
 Specify the IP address or the hostname of an NTP
@@ -102,7 +122,8 @@ default
 configuration file
 .El
 .Sh SEE ALSO
-.Xr ntpd 8
+.Xr ntpd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
