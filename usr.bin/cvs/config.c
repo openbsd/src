@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.1 2006/05/27 18:04:46 joris Exp $	*/
+/*	$OpenBSD: config.c,v 1.2 2006/05/27 21:10:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -30,7 +30,7 @@ cvs_parse_configfile(void)
 	FILE *fp;
 	size_t len;
 	const char *errstr;
-	char *buf, *lbuf, *opt, *val, fpath[MAXPATHLEN];
+	char *p, *buf, *lbuf, *opt, *val, fpath[MAXPATHLEN];
 
 	i = snprintf(fpath, sizeof(fpath), "%s/%s", current_cvsroot->cr_dir,
 	    CVS_PATH_CONFIG);
@@ -51,7 +51,17 @@ cvs_parse_configfile(void)
 			buf = lbuf;
 		}
 
-		opt = buf;
+		p = buf;
+		while (*p == ' ')
+			p++;
+
+		if (p[0] == '#' || p[0] == '\0') {
+			if (lbuf != NULL)
+				xfree(lbuf);
+			continue;
+		}
+
+		opt = p;
 		if ((val = strrchr(opt, '=')) == NULL)
 			fatal("cvs_parse_configfile: bad option '%s'", opt);
 
