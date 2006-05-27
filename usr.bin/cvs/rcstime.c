@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.5 2006/04/17 06:33:22 ray Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.6 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -33,7 +33,7 @@ void
 rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 {
 	int tzone;
-	int pos;
+	int neg, pos;
 	char *h, *m;
 	struct tm *ltb;
 	time_t now;
@@ -44,9 +44,10 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 		ltb->tm_hour += ((int)ltb->tm_gmtoff/3600);
 		memcpy(tb, ltb, sizeof(struct tm));
 	} else {
-		pos = 0;
+		neg = pos = 0;
 		switch (*tz) {
 		case '-':
+			neg = 1;
 			break;
 		case '+':
 			pos = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.12 2006/01/04 14:58:12 xsa Exp $	*/
+/*	$OpenBSD: proto.h,v 1.13 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,13 +28,9 @@
 #define PROTO_H
 
 #include "buf.h"
-#include "file.h"
-
 
 #define CVS_PROTO_MAXARG	256
-
 #define CVS_REQ_TIMEOUT		300
-
 
 /* client/server protocol requests */
 #define CVS_REQ_NONE		0
@@ -110,10 +106,7 @@
 #define CVS_REQ_WATCH_OFF	71
 #define CVS_REQ_WATCH_ADD	72
 #define CVS_REQ_WATCH_REMOVE	73
-
-
 #define CVS_REQ_MAX		73
-
 
 /* responses */
 #define CVS_RESP_NONE		0
@@ -149,8 +142,7 @@
 #define CVS_RESP_E		30
 #define CVS_RESP_F		31
 #define CVS_RESP_MT		32
-
-#define CVS_RESP_MAX	32
+#define CVS_RESP_MAX		32
 
 struct cvs_req {
 	int	req_id;
@@ -162,33 +154,5 @@ struct cvs_resp {
 	u_int	resp_id;
 	char	resp_str[32];
 };
-
-
-BUF	*cvs_recvfile(struct cvsroot *, mode_t *);
-void	 cvs_sendfile(struct cvsroot *, const char *);
-void	 cvs_connect(struct cvsroot *);
-void	 cvs_disconnect(struct cvsroot *);
-
-int		 cvs_req_handle(char *);
-struct cvs_req	*cvs_req_getbyid(int);
-struct cvs_req	*cvs_req_getbyname(const char *);
-char		*cvs_req_getvalid(void);
-
-int              cvs_resp_handle(struct cvsroot *, char *);
-struct cvs_resp* cvs_resp_getbyid(int);
-struct cvs_resp* cvs_resp_getbyname(const char *);
-char*            cvs_resp_getvalid(void);
-
-void	cvs_sendreq(struct cvsroot *, u_int, const char *);
-void	cvs_getresp(struct cvsroot *);
-void	cvs_sendresp(u_int, const char *);
-void	cvs_getln(struct cvsroot *, char *, size_t);
-void	cvs_senddir(struct cvsroot *, CVSFILE *);
-void	cvs_sendarg(struct cvsroot *, const char *, int);
-void	cvs_sendln(struct cvsroot *, const char *);
-void	cvs_sendentry(struct cvsroot *, const CVSFILE *);
-void	cvs_sendraw(struct cvsroot *, const void *, size_t);
-size_t	cvs_recvraw(struct cvsroot *, void *, size_t);
-
 
 #endif	/* PROTO_H */

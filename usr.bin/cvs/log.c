@@ -1,5 +1,6 @@
-/*	$OpenBSD: log.c,v 1.34 2006/04/20 12:13:19 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.35 2006/05/27 03:30:30 joris Exp $	*/
 /*
+ * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
  *
@@ -31,138 +32,7 @@
 
 extern char *__progname;
 
-
-#ifdef unused
-static char *cvs_log_levels[LP_MAX + 1] = {
-	"debug",
-	"info",
-	"notice",
-	"warning",
-	"error",
-	"alert",
-	"error",
-	"abort",
-	"trace",
-};
-#endif
-
-static int cvs_slpriomap[LP_MAX + 1] = {
-	LOG_DEBUG,
-	LOG_INFO,
-	LOG_NOTICE,
-	LOG_WARNING,
-	LOG_ERR,
-	LOG_ALERT,
-	LOG_ERR,
-	LOG_ERR,
-	LOG_DEBUG,
-};
-
-#if !defined(RCSPROG)
 static int send_m = 1;
-#endif
-static u_int cvs_log_dest = LD_STD;
-static u_int cvs_log_flags = 0;
-
-static struct syslog_data cvs_sl = SYSLOG_DATA_INIT;
-
-/* filter manipulation macros */
-#define CVS_LOG_FLTRRST()	(cvs_log_filters = 0)
-#define CVS_LOG_FLTRSET(l)	(cvs_log_filters |= (1 << l))
-#define CVS_LOG_FLTRGET(l)	(cvs_log_filters & (1 << l))
-#define CVS_LOG_FLTRCLR(l)	(cvs_log_filters &= ~(1 << l))
-
-static u_int cvs_log_filters;
-
-
-/*
- * cvs_log_init()
- *
- * Initialize the logging facility of the server.
- */
-void
-cvs_log_init(u_int dest, u_int flags)
-{
-	int slopt;
-
-	cvs_log_dest = dest;
-	cvs_log_flags = flags;
-
-	/* by default, filter only LP_DEBUG and LP_INFO levels */
-	CVS_LOG_FLTRRST();
-	CVS_LOG_FLTRSET(LP_DEBUG);
-	CVS_LOG_FLTRSET(LP_INFO);
-
-	/* traces are enabled with the -t command-line option */
-	CVS_LOG_FLTRSET(LP_TRACE);
-
-	if (dest & LD_SYSLOG) {
-		slopt = 0;
-
-		if (dest & LD_CONS)
-			slopt |= LOG_CONS;
-		if (flags & LF_PID)
-			slopt |= LOG_PID;
-
-		openlog_r(__progname, slopt, LOG_DAEMON, &cvs_sl);
-	}
-}
-
-
-/*
- * cvs_log_cleanup()
- *
- * Cleanup the logging facility.
- */
-void
-cvs_log_cleanup(void)
-{
-
-	closelog_r(&cvs_sl);
-}
-
-
-/*
- * cvs_log_filter()
- *
- * Apply or remove filters on the logging facility.  The exact operation is
- * specified by the <how> and <level> arguments.  The <how> arguments tells
- * how the filters will be affected, and <level> gives the log levels that
- * will be affected by the change.
- * Returns 0 on success, or -1 on failure.
- */
-
-int
-cvs_log_filter(u_int how, u_int level)
-{
-	u_int i;
-
-	if (level > LP_MAX && level != LP_ALL) {
-		cvs_log(LP_ERR, "invalid log level for filter");
-		return (-1);
-	}
-
-	switch (how) {
-	case LP_FILTER_SET:
-		if (level == LP_ALL)
-			for (i = 0; i <= LP_MAX; i++)
-				CVS_LOG_FLTRSET(i);
-		else
-			CVS_LOG_FLTRSET(level);
-		break;
-	case LP_FILTER_UNSET:
-		if (level == LP_ALL)
-			CVS_LOG_FLTRRST();
-		else
-			CVS_LOG_FLTRCLR(level);
-		break;
-	default:
-		return (-1);
-	}
-
-	return (0);
-}
-
 
 /*
  * cvs_log()
@@ -181,7 +51,6 @@ cvs_log(u_int level, const char *fmt, ...)
 	va_end(vap);
 }
 
-
 /*
  * cvs_vlog()
  *
@@ -194,16 +63,10 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	int ecp;
 	char prefix[64], buf[1024], ebuf[255];
 	FILE *out;
-#if !defined(RCSPROG)
 	char *cmdname;
 	struct cvs_cmd *cmdp;
-#endif
 
-	if (level > LP_MAX)
-		fatal("cvs_vlog failed");
-
-	/* apply any filters */
-	if (CVS_LOG_FLTRGET(level))
+	if (cvs_trace != 1 && level == LP_TRACE)
 		return;
 
 	if (level == LP_ERRNO)
@@ -212,7 +75,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		ecp = 0;
 
 	/* always use the command name in error messages, not aliases */
-#if !defined(RCSPROG)
 	if (cvs_command == NULL)
 		cmdname = " ";
 	else {
@@ -233,13 +95,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
 			    cmdname);
 	} else /* just use the standard strlcpy */
-#endif
 		strlcpy(prefix, __progname, sizeof(prefix));
-
-	if ((cvs_log_flags & LF_PID) && level != LP_TRACE) {
-		snprintf(buf, sizeof(buf), "[%d]", (int)getpid());
-		strlcat(prefix, buf, sizeof(prefix));
-	}
 
 	vsnprintf(buf, sizeof(buf), fmt, vap);
 	if (level == LP_ERRNO) {
@@ -247,39 +103,32 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		strlcat(buf, ebuf, sizeof(buf));
 	}
 
-	if (cvs_log_dest & LD_STD) {
-		if (level < LP_NOTICE)
+	if (level == LP_NOTICE)
+		out = stdout;
+	else
+		out = stderr;
+
+	if (cvs_cmdop == CVS_OP_SERVER) {
+		if (out == stdout)
+			putc('M', out);
+		else {
 			out = stdout;
-		else
-			out = stderr;
-
-#if !defined(RCSPROG)
-		if (cvs_cmdop == CVS_OP_SERVER) {
-			if (out == stdout)
-				putc('M', out);
-			else {
-				out = stdout;
-				putc('E', out);
-			}
-			putc(' ', out);
+			putc('E', out);
 		}
-#endif
 
-		fputs(prefix, out);
-		if (level != LP_TRACE)
-			fputs(": ", out);
-		fputs(buf, out);
-		fputc('\n', out);
+		putc(' ', out);
 	}
 
-	if (cvs_log_dest & LD_SYSLOG)
-		syslog_r(cvs_slpriomap[level], &cvs_sl, "%s", buf);
+	fputs(prefix, out);
+	if (level != LP_TRACE)
+		fputs(": ", out);
+	fputs(buf, out);
+	fputc('\n', out);
 
 	/* preserve it just in case we changed it? */
 	if (level == LP_ERRNO)
 		errno = ecp;
 }
-
 
 /*
  * cvs_printf()
@@ -291,14 +140,11 @@ int
 cvs_printf(const char *fmt, ...)
 {
 	int ret;
-#if !defined(RCSPROG)
 	char *nstr, *dp, *sp;
-#endif
 	va_list vap;
 
 	va_start(vap, fmt);
 
-#if !defined(RCSPROG)
 	if (cvs_cmdop == CVS_OP_SERVER) {
 		ret = vasprintf(&nstr, fmt, vap);
 		if (ret == -1)
@@ -326,7 +172,6 @@ cvs_printf(const char *fmt, ...)
 		}
 		xfree(nstr);
 	} else
-#endif
 		ret = vprintf(fmt, vap);
 
 	va_end(vap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.50 2006/04/14 02:49:43 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.51 2006/05/27 03:30:30 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include "includes.h"
 
+#include "cvs.h"
 #include "buf.h"
 #include "log.h"
 #include "xmalloc.h"
@@ -95,21 +96,20 @@ cvs_buf_load(const char *path, u_int flags)
 	BUF *buf;
 
 	if ((fd = open(path, O_RDONLY, 0600)) == -1) {
-		cvs_log(LP_ERRNO, "%s", path);
+		cvs_log(LP_ERR, "%s", path);
 		return (NULL);
 	}
 
 	if (fstat(fd, &st) == -1)
 		fatal("cvs_buf_load: fstat: %s", strerror(errno));
 
-	buf = cvs_buf_alloc((size_t)st.st_size, flags);
+	buf = cvs_buf_alloc(st.st_size, flags);
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
-		if (ret == -1) {
-			cvs_buf_free(buf);
+		if (ret == -1)
 			fatal("cvs_buf_load: read: %s", strerror(errno));
-		} else if (ret == 0)
+		else if (ret == 0)
 			break;
 
 		buf->cb_len += (size_t)ret;
@@ -356,7 +356,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 	}
 
 	if (fchmod(fd, mode) < 0)
-		cvs_log(LP_ERRNO, "permissions not set on file %s", path);
+		cvs_log(LP_ERR, "permissions not set on file %s", path);
 
 	(void)close(fd);
 
@@ -371,16 +371,12 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
  * <template>, as per mkstemp
  */
 void
-cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
+cvs_buf_write_stmp(BUF *b, char *template, mode_t mode, struct timeval *tv)
 {
 	int fd;
 
 	if ((fd = mkstemp(template)) == -1)
 		fatal("mkstemp: `%s': %s", template, strerror(errno));
-
-#if defined(RCSPROG)
-	cvs_worklist_add(template, &rcs_temp_files);
-#endif
 
 	if (cvs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);
@@ -388,10 +384,17 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 	}
 
 	if (fchmod(fd, mode) < 0)
-		cvs_log(LP_ERRNO, "permissions not set on temporary file %s",
+		cvs_log(LP_ERR, "permissions not set on temporary file %s",
 		    template);
 
+	if (tv != NULL) {
+		if (futimes(fd, tv) == -1)
+			fatal("cvs_buf_write_stmp: futimes failed");
+	}
+
 	(void)close(fd);
+
+	cvs_worklist_add(template, &temp_files);
 }
 
 /*
@@ -415,7 +418,6 @@ cvs_buf_grow(BUF *b, size_t len)
 	b->cb_cur = b->cb_buf + diff;
 }
 
-#if !defined(RCSPROG)
 /*
  * cvs_buf_copy()
  *
@@ -450,4 +452,3 @@ cvs_buf_peek(BUF *b, size_t off)
 
 	return (b->cb_buf + off);
 }
-#endif	/* RCSPROG */

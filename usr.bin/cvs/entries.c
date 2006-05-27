@@ -1,27 +1,18 @@
-/*	$OpenBSD: entries.c,v 1.56 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: entries.c,v 1.57 2006/05/27 03:30:30 joris Exp $	*/
 /*
- * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved.
+ * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "includes.h"
@@ -29,339 +20,87 @@
 #include "cvs.h"
 #include "log.h"
 
-
 #define CVS_ENTRIES_NFIELDS	6
 #define CVS_ENTRIES_DELIM	'/'
 
+static struct cvs_ent_line *ent_get_line(CVSENTRIES *, const char *);
 
-/*
- * cvs_ent_open()
- *
- * Open the CVS Entries file for the directory <dir>.
- * Returns a pointer to the CVSENTRIES file structure on success, or NULL
- * on failure.
- */
 CVSENTRIES *
-cvs_ent_open(const char *dir, int flags)
+cvs_ent_open(const char *dir)
 {
-	size_t len;
-	int exists, nodir;
-	char bpath[MAXPATHLEN], *p;
-	char cdpath[MAXPATHLEN], ebuf[CVS_ENT_MAXLINELEN], entpath[MAXPATHLEN];
-	char mode[4];
 	FILE *fp;
-	struct stat st;
-	struct cvs_ent *ent;
+	size_t len;
 	CVSENTRIES *ep;
+	char *p, buf[MAXPATHLEN];
+	struct cvs_ent *ent;
+	struct cvs_ent_line *line;
 
-	exists = 0;
-	nodir = 1;
-	memset(mode, 0, sizeof(mode));
+	ep = (CVSENTRIES *)xmalloc(sizeof(*ep));
+	memset(ep, 0, sizeof(*ep));
 
-	/*
-	 * Check if the CVS/ dir does exist. If it does,
-	 * maybe the Entries file was deleted by accident,
-	 * display error message. Else we might be doing a fresh
-	 * update or checkout of a module.
-	 */
-	len = cvs_path_cat(dir, CVS_PATH_CVSDIR, cdpath, sizeof(cdpath));
-	if (len >= sizeof(cdpath))
-		return (NULL);
+	cvs_path_cat(dir, CVS_PATH_ENTRIES, buf, sizeof(buf));
+	ep->cef_path = xstrdup(buf);
 
-	if (stat(cdpath, &st) == 0 && S_ISDIR(st.st_mode))
-		nodir = 0;	/* the CVS/ directory does exist */
+	cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, buf, sizeof(buf));
+	ep->cef_bpath = xstrdup(buf);
 
-	len = cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, bpath, sizeof(bpath));
-	if (len >= sizeof(entpath))
-		return (NULL);
+	cvs_path_cat(dir, CVS_PATH_LOGENTRIES, buf, sizeof(buf));
+	ep->cef_lpath = xstrdup(buf);
 
-	len = cvs_path_cat(dir, CVS_PATH_ENTRIES, entpath, sizeof(entpath));
-	if (len >= sizeof(entpath))
-		return (NULL);
-
-	switch (flags & O_ACCMODE) {
-	case O_WRONLY:
-	case O_RDWR:
-		/* we have to use append otherwise the file gets truncated */
-		mode[0] = 'w';
-		mode[1] = '+';
-		break;
-	case O_RDONLY:
-		mode[0] = 'r';
-		break;
-	}
-
-	/* we can use 'r' if the file already exists */
-	if (stat(entpath, &st) == 0) {
-		exists = 1;
-		mode[0] = 'r';
-	}
-
-	fp = fopen(entpath, mode);
-	if (fp == NULL) {
-		if (nodir == 0)
-			cvs_log(LP_ERRNO, "cannot open %s for %s", entpath,
-			    mode[1] == '+' ? "writing" : "reading");
-		return (NULL);
-	}
-
-	ep = xcalloc(1, sizeof(*ep));
-
-	ep->cef_path = xstrdup(entpath);
-	ep->cef_bpath = xstrdup(bpath);
-	ep->cef_cur = NULL;
 	TAILQ_INIT(&(ep->cef_ent));
 
-	while (fgets(ebuf, (int)sizeof(ebuf), fp) != NULL) {
-		len = strlen(ebuf);
-		if (len > 0 && ebuf[len - 1] == '\n')
-			ebuf[--len] = '\0';
-		if (ebuf[0] == 'D' && ebuf[1] == '\0')
-			break;
-		ent = cvs_ent_parse(ebuf);
-		if (ent == NULL)
-			continue;
+	if ((fp = fopen(ep->cef_path, "r")) != NULL) {
+		while (fgets(buf, sizeof(buf), fp)) {
+			len = strlen(buf);
+			if (len > 0 && buf[len - 1] == '\n')
+				buf[len - 1] = '\0';
 
-		TAILQ_INSERT_TAIL(&(ep->cef_ent), ent, ce_list);
-	}
+			if (buf[0] == 'D' && buf[1] == '\0')
+				break;
 
-	if (ferror(fp)) {
-		cvs_log(LP_ERRNO, "read error on %s", entpath);
-		(void)fclose(fp);
-		cvs_ent_close(ep);
-		return (NULL);
-	}
-
-	/* only keep a pointer to the open file if we're in writing mode */
-	if ((flags & O_WRONLY) || (flags & O_RDWR))
-		ep->cef_flags |= CVS_ENTF_WR;
-
-	(void)fclose(fp);
-
-	/*
-	 * look for Entries.Log and add merge it together with our
-	 * list of things.
-	 */
-	len = cvs_path_cat(dir, CVS_PATH_LOGENTRIES, entpath, sizeof(entpath));
-	if (len >= sizeof(entpath)) {
-		cvs_ent_close(ep);
-		return (NULL);
-	}
-
-	fp = fopen(entpath, "r");
-	if (fp != NULL) {
-		while (fgets(ebuf, (int)sizeof(ebuf), fp) != NULL) {
-			len = strlen(ebuf);
-			if (len > 0 && ebuf[len - 1] == '\n')
-				ebuf[--len] = '\0';
-
-			p = &ebuf[2];
-			ent = cvs_ent_parse(p);
-			if (ent == NULL)
-				continue;
-
-			if (ebuf[0] == 'A')
-				cvs_ent_add(ep, ent);
-			else if (ebuf[0] == 'R')
-				cvs_ent_remove(ep, ent->ce_name, 0);
+			line = (struct cvs_ent_line *)xmalloc(sizeof(*line));
+			line->buf = xstrdup(buf);
+			TAILQ_INSERT_TAIL(&(ep->cef_ent), line, entries_list);
 		}
-		(void)fclose(fp);
 
-		/* always un-synced here, because we
-		 * just added or removed entries.
-		 */
-		ep->cef_flags &= ~CVS_ENTF_SYNC;
-	} else {
-		if (exists == 1)
-			ep->cef_flags |= CVS_ENTF_SYNC;
+		(void)fclose(fp);
+	}
+
+	if ((fp = fopen(ep->cef_lpath, "r")) != NULL) {
+		while (fgets(buf, sizeof(buf), fp)) {
+			len = strlen(buf);
+			if (len > 0 && buf[strlen(buf) - 1] == '\n')
+				buf[strlen(buf) - 1] = '\0';
+
+			p = &buf[1];
+
+			if (buf[0] == 'A') {
+				line = xmalloc(sizeof(*line));
+				line->buf = xstrdup(p);
+				TAILQ_INSERT_TAIL(&(ep->cef_ent), line,
+				    entries_list);
+			} else if (buf[0] == 'R') {
+				ent = cvs_ent_parse(p);
+				line = ent_get_line(ep, ent->ce_name);
+				if (line != NULL)
+					TAILQ_REMOVE(&(ep->cef_ent), line,
+					    entries_list);
+				cvs_ent_free(ent);
+			}
+		}
+
+		(void)fclose(fp);
 	}
 
 	return (ep);
 }
 
-
-/*
- * cvs_ent_close()
- *
- * Close the Entries file <ep> and free all data.  Any reference to entries
- * structure within that file become invalid.
- */
-void
-cvs_ent_close(CVSENTRIES *ep)
-{
-	struct cvs_ent *ent;
-
-	if (cvs_noexec == 0 && (ep->cef_flags & CVS_ENTF_WR) &&
-	    !(ep->cef_flags & CVS_ENTF_SYNC)) {
-		/* implicit sync with disk */
-		(void)cvs_ent_write(ep);
-	}
-
-	if (ep->cef_path != NULL)
-		xfree(ep->cef_path);
-
-	if (ep->cef_bpath != NULL)
-		xfree(ep->cef_bpath);
-
-	while (!TAILQ_EMPTY(&(ep->cef_ent))) {
-		ent = TAILQ_FIRST(&(ep->cef_ent));
-		TAILQ_REMOVE(&(ep->cef_ent), ent, ce_list);
-		cvs_ent_free(ent);
-	}
-
-	xfree(ep);
-}
-
-
-/*
- * cvs_ent_add()
- *
- * Add the entry <ent> to the Entries file <ef>.  The disk contents are not
- * modified until a call to cvs_ent_write() is performed.  This is done
- * implicitly on a call to cvs_ent_close() on an Entries file that has been
- * opened for writing.
- * Returns 0 on success, or -1 on failure.
- */
-int
-cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
-{
-	if (!(ef->cef_flags & CVS_ENTF_WR)) {
-		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
-		return (-1);
-	}
-
-	if (cvs_ent_get(ef, ent->ce_name) != NULL) {
-		cvs_log(LP_ERR, "attempt to add duplicate entry for `%s'",
-		    ent->ce_name);
-		return (-1);
-	}
-
-	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
-
-	ef->cef_flags &= ~CVS_ENTF_SYNC;
-
-	return (0);
-}
-
-
-/*
- * cvs_ent_addln()
- *
- * Add a line to the Entries file.
- */
-int
-cvs_ent_addln(CVSENTRIES *ef, const char *line)
-{
-	struct cvs_ent *ent;
-
-	if (!(ef->cef_flags & CVS_ENTF_WR)) {
-		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
-		return (-1);
-	}
-
-	ent = cvs_ent_parse(line);
-	if (ent == NULL)
-		return (-1);
-
-	if (cvs_ent_get(ef, ent->ce_name) != NULL)
-		return (-1);
-
-	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
-	ef->cef_flags &= ~CVS_ENTF_SYNC;
-
-	return (0);
-}
-
-
-/*
- * cvs_ent_remove()
- *
- * Remove an entry from the Entries file <ef>.  The entry's name is given
- * by <name>.
- */
-int
-cvs_ent_remove(CVSENTRIES *ef, const char *name, int useprev)
-{
-	struct cvs_ent *ent;
-
-	cvs_log(LP_TRACE, "cvs_ent_remove(%s)", name);
-
-	ent = cvs_ent_get(ef, name);
-	if (ent == NULL)
-		return (-1);
-
-	if (ef->cef_cur == ent) {
-		/* if this element was the last one retrieved through a
-		 * call to cvs_ent_next(), point to the next element to avoid
-		 * keeping an invalid reference.
-		 */
-		if (useprev) {
-			ef->cef_cur = TAILQ_PREV(ef->cef_cur,
-			    cvsentrieshead, ce_list);
-		} else {
-			ef->cef_cur = TAILQ_NEXT(ef->cef_cur, ce_list);
-		}
-	}
-	TAILQ_REMOVE(&(ef->cef_ent), ent, ce_list);
-	cvs_ent_free(ent);
-
-	ef->cef_flags &= ~CVS_ENTF_SYNC;
-
-	return (0);
-}
-
-
-/*
- * cvs_ent_get()
- *
- * Get the CVS entry from the Entries file <ef> whose 'name' portion matches
- * <file>.
- * Returns a pointer to the cvs entry structure on success, or NULL on failure.
- */
 struct cvs_ent *
-cvs_ent_get(CVSENTRIES *ef, const char *file)
-{
-	struct cvs_ent *ent;
-
-	TAILQ_FOREACH(ent, &(ef->cef_ent), ce_list)
-		if (strcmp(ent->ce_name, file) == 0)
-			return (ent);
-
-	return (NULL);
-}
-
-
-/*
- * cvs_ent_next()
- *
- * This function is used to iterate over the entries in an Entries file.  The
- * first call will return the first entry of the file and each subsequent call
- * will return the entry following the last one returned.
- * Returns a pointer to the cvs entry structure on success, or NULL on failure.
- */
-struct cvs_ent *
-cvs_ent_next(CVSENTRIES *ef)
-{
-	if (ef->cef_cur == NULL)
-		ef->cef_cur = TAILQ_FIRST(&(ef->cef_ent));
-	else
-		ef->cef_cur = TAILQ_NEXT(ef->cef_cur, ce_list);
-	return (ef->cef_cur);
-}
-
-
-/*
- * cvs_ent_parse()
- *
- * Parse a single line from a CVS/Entries file and return a cvs_ent structure
- * containing all the parsed information.
- */
-struct cvs_ent*
 cvs_ent_parse(const char *entry)
 {
 	int i;
-	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 	struct cvs_ent *ent;
+	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 
 	buf = xstrdup(entry);
 	sp = buf;
@@ -374,12 +113,10 @@ cvs_ent_parse(const char *entry)
 		sp = dp;
 	} while (dp != NULL && i < CVS_ENTRIES_NFIELDS);
 
-	if (i < CVS_ENTRIES_NFIELDS) {
-		cvs_log(LP_ERR, "missing fields in entry line `%s'", entry);
-		return (NULL);
-	}
+	if (i < CVS_ENTRIES_NFIELDS)
+		fatal("missing fields in entry line '%s'", entry);
 
-	ent = xcalloc(1, sizeof(*ent));
+	ent = (struct cvs_ent *)xmalloc(sizeof(*ent));
 	ent->ce_buf = buf;
 
 	if (*fields[0] == '\0')
@@ -391,7 +128,7 @@ cvs_ent_parse(const char *entry)
 
 	ent->ce_status = CVS_ENT_REG;
 	ent->ce_name = fields[1];
-	ent->processed = 0;
+	ent->ce_rev = NULL;
 
 	if (ent->ce_type == CVS_ENT_FILE) {
 		if (*fields[2] == '-') {
@@ -403,112 +140,194 @@ cvs_ent_parse(const char *entry)
 				ent->ce_status = CVS_ENT_ADDED;
 		}
 
-		if ((ent->ce_rev = rcsnum_parse(sp)) == NULL) {
-			cvs_ent_free(ent);
-			return (NULL);
-		}
+		if ((ent->ce_rev = rcsnum_parse(sp)) == NULL)
+			fatal("failed to parse entry revision '%s'", entry);
 
-		if (cvs_cmdop == CVS_OP_SERVER) {
-			if (!strcmp(fields[3], "up to date"))
-				ent->ce_status = CVS_ENT_UPTODATE;
-		} else {
-			if (strcmp(fields[3], CVS_DATE_DUMMY) == 0 ||
-			    strncmp(fields[3], "Initial ", 8) == 0)
-				ent->ce_mtime = CVS_DATE_DMSEC;
-			else
-				ent->ce_mtime = cvs_date_parse(fields[3]);
-		}
+		if (strcmp(fields[3], CVS_DATE_DUMMY) == 0 ||
+		    strncmp(fields[3], "Initial ", 8) == 0 ||
+		    strncmp(fields[3], "Result of merge", 15) == 0)
+			ent->ce_mtime = CVS_DATE_DMSEC;
+		else
+			ent->ce_mtime = cvs_date_parse(fields[3]);
 	}
 
-	ent->ce_opts = fields[4];
-	ent->ce_tag = fields[5];
+	ent->ce_conflict = fields[3];
+	if ((dp = strchr(ent->ce_conflict, '+')) != NULL)
+		*dp = '\0';
+	else
+		ent->ce_conflict = NULL;
+
+	if (strcmp(fields[4], ""))
+		ent->ce_opts = fields[4];
+	else
+		ent->ce_opts = NULL;
+
+	if (strcmp(fields[5], ""))
+		ent->ce_tag = fields[5];
+	else
+		ent->ce_tag = NULL;
+
 	return (ent);
 }
 
-/*
- * cvs_ent_free()
- *
- * Free a single CVS entries structure.
- */
+struct cvs_ent *
+cvs_ent_get(CVSENTRIES *ep, const char *name)
+{
+	struct cvs_ent *ent;
+	struct cvs_ent_line *l;
+
+	l = ent_get_line(ep, name);
+	if (l == NULL)
+		return (NULL);
+
+	ent = cvs_ent_parse(l->buf);
+	return (ent);
+}
+
+int
+cvs_ent_exists(CVSENTRIES *ep, const char *name)
+{
+	struct cvs_ent_line *l;
+
+	l = ent_get_line(ep, name);
+	if (l == NULL)
+		return (0);
+
+	return (1);
+}
+
+void
+cvs_ent_close(CVSENTRIES *ep, int writefile)
+{
+	FILE *fp;
+	struct cvs_ent_line *l;
+
+	if (writefile) {
+		if ((fp = fopen(ep->cef_bpath, "w")) == NULL)
+			fatal("cvs_ent_close: failed to write %s",
+			    ep->cef_path);
+	}
+
+	while ((l = TAILQ_FIRST(&(ep->cef_ent))) != NULL) {
+		if (writefile) {
+			fputs(l->buf, fp);
+			fputc('\n', fp);
+		}
+
+		TAILQ_REMOVE(&(ep->cef_ent), l, entries_list);
+		xfree(l->buf);
+		xfree(l);
+	}
+
+	if (writefile) {
+		fputc('D', fp);
+		(void)fclose(fp);
+
+		if (rename(ep->cef_bpath, ep->cef_path) == -1)
+			fatal("cvs_ent_close: %s: %s", ep->cef_path,
+			     strerror(errno));
+
+		(void)unlink(ep->cef_lpath);
+	}
+
+	xfree(ep->cef_path);
+	xfree(ep->cef_bpath);
+	xfree(ep->cef_lpath);
+	xfree(ep);
+}
+
+void
+cvs_ent_add(CVSENTRIES *ep, const char *line)
+{
+	FILE *fp;
+	struct cvs_ent_line *l;
+	struct cvs_ent *ent;
+
+	if ((ent = cvs_ent_parse(line)) == NULL)
+		fatal("cvs_ent_add: parsing failed '%s'", line);
+
+	l = ent_get_line(ep, ent->ce_name);
+	if (l != NULL)
+		cvs_ent_remove(ep, ent->ce_name);
+
+	cvs_ent_free(ent);
+
+	cvs_log(LP_TRACE, "cvs_ent_add(%s, %s)", ep->cef_path, line);
+
+	if ((fp = fopen(ep->cef_lpath, "a")) == NULL)
+		fatal("cvs_ent_add: failed to open '%s'", ep->cef_lpath);
+
+	fputc('A', fp);
+	fputs(line, fp);
+	fputc('\n', fp);
+
+	(void)fclose(fp);
+
+	l = (struct cvs_ent_line *)xmalloc(sizeof(*l));
+	l->buf = xstrdup(line);
+	TAILQ_INSERT_TAIL(&(ep->cef_ent), l, entries_list);
+}
+
+void
+cvs_ent_remove(CVSENTRIES *ep, const char *name)
+{
+	FILE *fp;
+	struct cvs_ent_line *l;
+
+	cvs_log(LP_TRACE, "cvs_ent_remove(%s, %s)", ep->cef_path, name);
+
+	l = ent_get_line(ep, name);
+	if (l == NULL)
+		return;
+
+	if ((fp = fopen(ep->cef_lpath, "a")) == NULL)
+		fatal("cvs_ent_remove: failed to open '%s'",
+		    ep->cef_lpath);
+
+	fputc('R', fp);
+	fputs(l->buf, fp);
+	fputc('\n', fp);
+
+	(void)fclose(fp);
+
+	TAILQ_REMOVE(&(ep->cef_ent), l, entries_list);
+	xfree(l->buf);
+	xfree(l);
+}
+
 void
 cvs_ent_free(struct cvs_ent *ent)
 {
 	if (ent->ce_rev != NULL)
 		rcsnum_free(ent->ce_rev);
-	if (ent->ce_buf != NULL)
-		xfree(ent->ce_buf);
+	xfree(ent->ce_buf);
 	xfree(ent);
 }
 
-/*
- * cvs_ent_write()
- *
- * Explicitly write the contents of the Entries file <ef> to disk.
- * Returns 0 on success, or -1 on failure.
- */
-int
-cvs_ent_write(CVSENTRIES *ef)
+static struct cvs_ent_line *
+ent_get_line(CVSENTRIES *ep, const char *name)
 {
-	size_t len;
-	char revbuf[64], timebuf[32];
-	struct cvs_ent *ent;
-	FILE *fp;
+	char *p, *s;
+	struct cvs_ent_line *l;
 
-	if (ef->cef_flags & CVS_ENTF_SYNC)
-		return (0);
+	TAILQ_FOREACH(l, &(ep->cef_ent), entries_list) {
+		if (l->buf[0] == 'D')
+			p = &(l->buf[2]);
+		else
+			p = &(l->buf[1]);
 
-	if ((fp = fopen(ef->cef_bpath, "w")) == NULL) {
-		cvs_log(LP_ERRNO, "failed to open Entries `%s'", ef->cef_bpath);
-		return (-1);
-	}
+		if ((s = strchr(p, '/')) == NULL)
+			fatal("ent_get_line: bad entry line '%s'", l->buf);
 
-	TAILQ_FOREACH(ent, &(ef->cef_ent), ce_list) {
-		if (ent->ce_type == CVS_ENT_DIR) {
-			putc('D', fp);
-			timebuf[0] = '\0';
-			revbuf[0] = '\0';
-		} else {
-			rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
-			if (ent->ce_mtime == CVS_DATE_DMSEC &&
-			    ent->ce_status != CVS_ENT_ADDED)
-				strlcpy(timebuf, CVS_DATE_DUMMY,
-				    sizeof(timebuf));
-			else if (ent->ce_status == CVS_ENT_ADDED) {
-				strlcpy(timebuf, "Initial ", sizeof(timebuf));
-				strlcat(timebuf, ent->ce_name, sizeof(timebuf));
-			} else {
-				ctime_r(&(ent->ce_mtime), timebuf);
-				len = strlen(timebuf);
-				if (len > 0 && timebuf[len - 1] == '\n')
-					timebuf[--len] = '\0';
-			}
+		*s = '\0';
+
+		if (!strcmp(p, name)) {
+			*s = '/';
+			return (l);
 		}
 
-		if (cvs_cmdop == CVS_OP_SERVER) {
-			if (ent->ce_status == CVS_ENT_UPTODATE)
-				strlcpy(timebuf, "up to date", sizeof(timebuf));
-			else
-				timebuf[0] = '\0';
-		}
-
-		fprintf(fp, "/%s/%s%s/%s/%s/%s\n", ent->ce_name,
-		    (ent->ce_status == CVS_ENT_REMOVED) ? "-" : "", revbuf,
-		    timebuf, (ent->ce_opts != NULL) ? ent->ce_opts : "",
-		    (ent->ce_tag != NULL) ? ent->ce_tag : "");
+		*s = '/';
 	}
 
-	/* terminating line */
-	putc('D', fp);
-	putc('\n', fp);
-
-	ef->cef_flags |= CVS_ENTF_SYNC;
-	fclose(fp);
-
-	/* rename Entries.Backup to Entries */
-	cvs_rename(ef->cef_bpath, ef->cef_path);
-
-	/* remove Entries.Log */
-	cvs_unlink(CVS_PATH_LOGENTRIES);
-
-	return (0);
+	return (NULL);
 }

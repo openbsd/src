@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.10 2006/04/14 23:29:01 joris Exp $	*/
+/*	$OpenBSD: diff.h,v 1.11 2006/05/27 03:30:30 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -67,7 +67,6 @@
 #define CVS_DIFF_H
 #define CVS_DIFF_DEFCTX	3	/* default context length */
 
-
 /*
  * Output format options
  */
@@ -91,11 +90,6 @@
 #define	D_ERROR		7	/* An error occurred */
 #define	D_SKIPPED1	8	/* path1 was a special file */
 #define	D_SKIPPED2	9	/* path2 was a special file */
-
-
-#if defined(RCSPROG)
-struct cvs_lines;
-#endif
 
 BUF		*cvs_diff3(RCSFILE *, char *, RCSNUM *, RCSNUM *, int);
 void		diff_output(const char *, ...);

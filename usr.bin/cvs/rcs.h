@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.61 2006/04/14 22:33:15 niallo Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.62 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -133,7 +133,7 @@ struct rcs_kw {
 #define RCS_ERR_PARSE	5
 #define RCS_ERR_ERRNO	255
 
-/* used for cvs_checkout_rev */
+/* used for rcs_checkout_rev */
 #define CHECKOUT_REV_CREATED	1
 #define CHECKOUT_REV_MERGED	2
 #define CHECKOUT_REV_REMOVED	3
@@ -190,6 +190,7 @@ struct rcs_delta {
 
 
 typedef struct rcs_file {
+	int	fd;
 	char	*rf_path;
 	mode_t	 rf_mode;
 	u_int	 rf_flags;
@@ -209,11 +210,9 @@ typedef struct rcs_file {
 	void	*rf_pdata;
 } RCSFILE;
 
-
 extern int rcs_errno;
 
-
-RCSFILE			*rcs_open(const char *, int, ...);
+RCSFILE			*rcs_open(const char *, int, int, ...);
 void			 rcs_close(RCSFILE *);
 const RCSNUM		*rcs_head_get(RCSFILE *);
 int			 rcs_head_set(RCSFILE *, RCSNUM *);
@@ -251,8 +250,7 @@ const char		*rcs_state_get(RCSFILE *, RCSNUM *);
 int			 rcs_state_check(const char *);
 RCSNUM			*rcs_tag_resolve(RCSFILE *, const char *);
 const char		*rcs_errstr(int);
-int			 rcs_write(RCSFILE *);
-
+void			 rcs_write(RCSFILE *);
 
 int	rcs_kflag_get(const char *);
 void	rcs_kflag_usage(void);
@@ -272,12 +270,7 @@ int	 rcsnum_cmp(const RCSNUM *, const RCSNUM *, u_int);
 
 /* rcstime.c */
 void	 rcs_set_tz(char *, struct rcs_delta *, struct tm *);
-
 extern char *timezone_flag;
-
-#if defined(RCSPROG)
-extern char *rcs_tmpdir;
-#endif
 extern int rcsnum_flags;
 
 #endif	/* RCS_H */

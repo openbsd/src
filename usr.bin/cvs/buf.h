@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.14 2006/04/06 16:48:34 xsa Exp $	*/
+/*	$OpenBSD: buf.h,v 1.15 2006/05/27 03:30:30 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -22,17 +22,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Buffer management
- * -----------------
- *
- * This code provides an API to generic memory buffer management.  All
- * operations are performed on a cvs_buf structure, which is kept opaque to the
- * API user in order to avoid corruption of the fields and make sure that only
- * the internals can modify the fields.
- *
- * The first step is to allocate a new buffer using the cvs_buf_create()
- * function, which returns a pointer to a new buffer.
  */
 
 #ifndef BUF_H
@@ -41,9 +30,7 @@
 /* flags */
 #define BUF_AUTOEXT	1	/* autoextend on append */
 
-
 typedef struct cvs_buf BUF;
-
 
 BUF		*cvs_buf_alloc(size_t, u_int);
 BUF		*cvs_buf_load(const char *, u_int);
@@ -59,11 +46,10 @@ void		 cvs_buf_putc(BUF *, int);
 size_t		 cvs_buf_len(BUF *);
 int		 cvs_buf_write_fd(BUF *, int);
 int		 cvs_buf_write(BUF *, const char *, mode_t);
-void		 cvs_buf_write_stmp(BUF *, char *, mode_t);
-#if !defined(RCSPROG)
+void		 cvs_buf_write_stmp(BUF *, char *, mode_t, struct timeval *);
+
 ssize_t		 cvs_buf_copy(BUF *, size_t, void *, size_t);
 const void	*cvs_buf_peek(BUF *, size_t);
-#endif	/* RCSPROG */
 
 #define cvs_buf_get(b)	cvs_buf_peek(b, 0)
 

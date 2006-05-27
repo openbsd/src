@@ -1,5 +1,6 @@
-/*	$OpenBSD: file.h,v 1.33 2006/01/02 09:42:20 xsa Exp $	*/
+/*	$OpenBSD: file.h,v 1.34 2006/05/27 03:30:30 joris Exp $	*/
 /*
+ * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
  *
@@ -29,123 +30,77 @@
 
 #include "rcs.h"
 
-struct cvs_file;
-struct cvs_entries;
+struct cvs_file {
+	char	*file_name;
+	char	*file_wd;
+	char	*file_path;
+	char	*file_rpath;
 
-#define CF_STAT		0x01	/* obsolete */
-#define CF_IGNORE	0x02	/* apply regular ignore rules */
-#define CF_RECURSE	0x04	/* recurse on directory operations */
-#define CF_SORT		0x08	/* all files are sorted alphabetically */
-#define CF_KNOWN	0x10	/* only recurse in directories known to CVS */
-#define CF_CREATE	0x20	/* create if file does not exist */
-#define CF_NOSYMS	0x40	/* ignore symbolic links */
-#define CF_NOFILES	0x80	/* don't load any files inside a directory */
-#define CF_REPO		0x100	/* we are loading a repository with ,v files */
+	int	 fd;
+	int	 repo_fd;
+	int	 file_type;
+	int	 file_status;
+	int	 file_flags;
 
-/*
- * The cvs_file structure is used to represent any file or directory within
- * the CVS tree's hierarchy.  The <cf_path> field is a path relative to the
- * directory in which the cvs command was executed.  The <cf_parent> field
- * points back to the parent node in the directory tree structure (it is
- * NULL if the directory is at the wd of the command).
- *
- * The <cf_cvstat> field gives the file's status with regards to the CVS
- * repository.  The file can be in any one of the CVS_FST_* states.
- */
-#define CVS_FST_UNKNOWN		0	/* Unknown */
-#define CVS_FST_UPTODATE	1	/* Up-to-date */
-#define CVS_FST_MODIFIED	2	/* Locally Modified */
-#define CVS_FST_ADDED		3	/* Locally Added */
-#define CVS_FST_REMOVED		4	/* Locally Removed */
-#define CVS_FST_CONFLICT	5	/* Unresolved Conflict */
-#define CVS_FST_PATCHED		6
-#define CVS_FST_LOST		7	/* Needs Checkout */
+	RCSFILE		*file_rcs;
+	struct cvs_ent	*file_ent;
+};
 
-SIMPLEQ_HEAD(cvs_flist, cvs_file);
+#define FILE_UNKNOWN		0
+#define FILE_ADDED		1
+#define FILE_REMOVED		2
+#define FILE_MODIFIED		3
+#define FILE_UPTODATE		4
+#define FILE_LOST		5
+#define FILE_CHECKOUT		6
+#define FILE_MERGE		7
+#define FILE_PATCH		8
+#define FILE_REMOVE_ENTRY	9
+#define FILE_CONFLICT		10
+#define FILE_UNLINK		11
 
-typedef struct cvs_file {
-	struct cvs_file	*cf_parent;	/* parent directory (NULL if none) */
+#define DIR_CREATE		12
 
-	/*
-	 * cf_name contains the basename of the fullpath
-	 * cf_dir contains the parent directory the file or dir is in.
-	 * if cf_dir is NULL the file is in the parent directory.
-	 */
-	char		*cf_name;
-	char		*cf_dir;
+struct cvs_filelist {
+	char	*file_path;
+	TAILQ_ENTRY(cvs_filelist) flist;
+};
 
-	/* pointer to the parent directory's entry file */
-	void		*cf_entry;
+TAILQ_HEAD(cvs_flisthead, cvs_filelist);
 
-	mode_t		 cf_mode;
-	u_int8_t	 cf_cvstat;	/* cvs status of the file */
-	u_int8_t	 cf_type;	/* uses values from dirent.h */
-	u_int16_t	 cf_flags;
+struct cvs_recursion;
 
-	union {
-		struct {
-			RCSNUM	*cd_lrev;	/* local revision */
-			time_t	 cd_etime;	/* time in Entries file */
-			time_t	 cd_mtime;
-			char	*cd_tag;
-			char	*cd_opts;
-		} cf_reg;
-		struct {
-			char			*cd_repo;
-			struct cvsroot		*cd_root;
-			struct cvs_flist	cd_files;
-		} cf_dir;
-	} cf_td;
+#define CVS_DIR		1
+#define CVS_FILE	2
 
-	SIMPLEQ_ENTRY(cvs_file)	cf_list;
-} CVSFILE;
+#define CVS_ISDIR(cf)	\
+	((cf)->file_type == CVS_DIR)
 
-/* only valid for regular files */
-#define cf_etime	cf_td.cf_reg.cd_etime
-#define cf_mtime	cf_td.cf_reg.cd_mtime
-#define cf_lrev		cf_td.cf_reg.cd_lrev
-#define cf_tag		cf_td.cf_reg.cd_tag
-#define cf_opts		cf_td.cf_reg.cd_opts
+#define CVS_ISFILE(cf)	\
+	((cf)->file_type == CVS_FILE)
 
-/* only valid for directories */
-#define cf_files	cf_td.cf_dir.cd_files
-#define cf_repo		cf_td.cf_dir.cd_repo
-#define cf_root		cf_td.cf_dir.cd_root
+TAILQ_HEAD(cvs_flist, cvs_file);
 
-#define CVS_DIRF_STATIC		0x01
-#define CVS_DIRF_STICKY		0x02
-#define CVS_DIRF_BASE		0x04
-#define CVS_FILE_ONDISK		0x08
+struct cvs_ignpat {
+	char				ip_pat[MAXNAMLEN];
+	int				ip_flags;
+	TAILQ_ENTRY(cvs_ignpat)		ip_list;
+};
 
-#define CVS_DIR_ROOT(f)  ((((f)->cf_type == DT_DIR) && \
-	((f)->cf_root != NULL)) ? (f)->cf_root : \
-	(((f)->cf_parent == NULL) ? NULL : (f)->cf_parent->cf_root))
+TAILQ_HEAD(ignore_head, cvs_ignpat);
 
-#define CVS_DIR_REPO(f)  (((f)->cf_type == DT_DIR) ? \
-	(f)->cf_repo : (((f)->cf_parent == NULL) ? \
-	NULL : (f)->cf_parent->cf_repo))
+void	cvs_file_init(void);
+void	cvs_file_ignore(const char *, struct ignore_head *);
+void	cvs_file_classify(struct cvs_file *);
+void	cvs_file_free(struct cvs_file *);
+void	cvs_file_run(int, char **, struct cvs_recursion *);
+void	cvs_file_walklist(struct cvs_flisthead *, struct cvs_recursion *);
+void	cvs_file_walkdir(struct cvs_file *, struct cvs_recursion *);
+void	cvs_file_freelist(struct cvs_flisthead *);
+struct cvs_filelist *cvs_file_get(const char *, struct cvs_flisthead *);
 
-int	 cvs_file_init(void);
-int	 cvs_file_ignore(const char *);
-int	 cvs_file_chkign(const char *);
-int	 cvs_file_get(const char *, int, int (*)(CVSFILE *, void *),
-	    void *, struct cvs_flist *);
-int	 cvs_file_getspec(char **, int, int, int (*)(CVSFILE *, void *),
-	    void *, struct cvs_flist *);
-CVSFILE	*cvs_file_loadinfo(char *, int, int (*)(CVSFILE *, void *), void *,
-	    int);
+int	cvs_file_chkign(const char *);
 
-CVSFILE	*cvs_file_create(CVSFILE *, const char *, u_int, mode_t);
-CVSFILE	*cvs_file_copy(CVSFILE *);
-int	 cvs_file_attach(CVSFILE *, CVSFILE *);
-
-int	 cvs_file_init(void);
-int	 cvs_file_ignore(const char *);
-int	 cvs_file_chkign(const char *);
-CVSFILE	*cvs_file_load(const char *, int);
-CVSFILE	*cvs_file_find(CVSFILE *, const char *);
-char	*cvs_file_getpath(CVSFILE *, char *, size_t);
-void	 cvs_file_free(CVSFILE *);
-int	 cvs_file_prune(char *);
+struct cvs_file *cvs_file_get_cf(const char *, const char *, int, int);
 
 #endif	/* FILE_H */

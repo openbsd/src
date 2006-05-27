@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.78 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.79 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -32,7 +32,6 @@
 #include "log.h"
 #include "util.h"
 
-#if !defined(RCSPROG)
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
 	-1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1,
@@ -67,47 +66,6 @@ static const char *cvs_modestr[8] = {
 	"", "x", "w", "wx", "r", "rx", "rw", "rwx"
 };
 
-
-
-/*
- * cvs_readrepo()
- *
- * Read the path stored in the `Repository' CVS file for a given directory
- * <dir>, and store that path into the buffer pointed to by <dst>, whose size
- * is <len>.
- */
-int
-cvs_readrepo(const char *dir, char *dst, size_t len)
-{
-	size_t dlen, l;
-	FILE *fp;
-	char repo_path[MAXPATHLEN];
-
-	l = cvs_path_cat(dir, "CVS/Repository", repo_path, sizeof(repo_path));
-	if (l >= sizeof(repo_path))
-		return (-1);
-
-	fp = fopen(repo_path, "r");
-	if (fp == NULL)
-		return (-1);
-
-	if (fgets(dst, (int)len, fp) == NULL) {
-		if (ferror(fp)) {
-			cvs_log(LP_ERRNO, "failed to read from `%s'",
-			    repo_path);
-		}
-		(void)fclose(fp);
-		return (-1);
-	}
-	dlen = strlen(dst);
-	if (dlen > 0 && dst[dlen - 1] == '\n')
-		dst[--dlen] = '\0';
-
-	(void)fclose(fp);
-	return (0);
-}
-
-
 /*
  * cvs_strtomode()
  *
@@ -141,13 +99,13 @@ cvs_strtomode(const char *str, mode_t *mode)
 		memset(ms, 0, sizeof ms);
 		if (sscanf(sp, "%c=%3s", &type, ms) != 2 &&
 			sscanf(sp, "%c=", &type) != 1) {
-			cvs_log(LP_WARN, "failed to scan mode string `%s'", sp);
+			cvs_log(LP_ERR, "failed to scan mode string `%s'", sp);
 			continue;
 		}
 
 		if (type <= 'a' || type >= 'z' ||
 		    cvs_modetypes[type - 'a'] == -1) {
-			cvs_log(LP_WARN,
+			cvs_log(LP_ERR,
 			    "invalid mode type `%c'"
 			    " (`u', `g' or `o' expected), ignoring", type);
 			continue;
@@ -159,7 +117,7 @@ cvs_strtomode(const char *str, mode_t *mode)
 		for (sp = ms; *sp != '\0'; sp++) {
 			if (*sp <= 'a' || *sp >= 'z' ||
 			    cvs_modes[(int)type][*sp - 'a'] == 0) {
-				cvs_log(LP_WARN,
+				cvs_log(LP_ERR,
 				    "invalid permission bit `%c'", *sp);
 			} else
 				m |= cvs_modes[(int)type][*sp - 'a'];
@@ -168,7 +126,6 @@ cvs_strtomode(const char *str, mode_t *mode)
 
 	*mode = m;
 }
-
 
 /*
  * cvs_modetostr()
@@ -241,11 +198,11 @@ int
 cvs_cksum(const char *file, char *dst, size_t len)
 {
 	if (len < CVS_CKSUM_LEN) {
-		cvs_log(LP_WARN, "buffer too small for checksum");
+		cvs_log(LP_ERR, "buffer too small for checksum");
 		return (-1);
 	}
 	if (MD5File(file, dst) == NULL) {
-		cvs_log(LP_ERRNO, "failed to generate checksum for %s", file);
+		cvs_log(LP_ERR, "failed to generate checksum for %s", file);
 		return (-1);
 	}
 
@@ -368,7 +325,6 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 	return (argc);
 }
 
-
 /*
  * cvs_makeargv()
  *
@@ -395,7 +351,6 @@ cvs_makeargv(const char *line, int *argc)
 	return (copy);
 }
 
-
 /*
  * cvs_freeargv()
  *
@@ -411,76 +366,6 @@ cvs_freeargv(char **argv, int argc)
 			xfree(argv[i]);
 }
 
-
-/*
- * cvs_mkadmin()
- *
- * Create the CVS administrative files within the directory <cdir>.  If the
- * files already exist, they are kept as is.
- * Returns 0 on success, or -1 on failure.
- */
-int
-cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
-    char *tag, char *date, int nb)
-{
-	size_t l;
-	char path[MAXPATHLEN];
-	FILE *fp;
-	CVSENTRIES *ef;
-	struct stat st;
-
-	cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s, %s, %s, %d)",
-	    dpath, rootpath, repopath, tag ? tag : "", date ? date : "", nb);
-
-	l = cvs_path_cat(dpath, CVS_PATH_CVSDIR, path, sizeof(path));
-	if (l >= sizeof(path))
-		fatal("cvs_mkadmin: path truncation");
-
-	if (mkdir(path, 0755) == -1 && errno != EEXIST)
-		fatal("cvs_mkadmin: mkdir: `%s': %s", path, strerror(errno));
-
-	/* just create an empty Entries file */
-	ef = cvs_ent_open(dpath, O_WRONLY);
-	if (ef != NULL)
-		cvs_ent_close(ef);
-
-	l = cvs_path_cat(dpath, CVS_PATH_ROOTSPEC, path, sizeof(path));
-	if (l >= sizeof(path))
-		fatal("cvs_mkadmin: path truncation");
-
-	if (stat(path, &st) == -1 && errno == ENOENT) {
-		if ((fp = fopen(path, "w")) == NULL)
-			fatal("cvs_mkadmin: fopen: `%s': %s",
-			    path, strerror(errno));
-
-		if (rootpath != NULL)
-			fprintf(fp, "%s\n", rootpath);
-		(void)fclose(fp);
-	}
-
-	l = cvs_path_cat(dpath, CVS_PATH_REPOSITORY, path, sizeof(path));
-	if (l >= sizeof(path))
-		fatal("cvs_mkadmin: path truncation");
-
-	if (stat(path, &st) == -1 && errno == ENOENT) {
-		if ((fp = fopen(path, "w")) == NULL)
-			fatal("cvs_mkadmin: fopen: `%s': %s",
-			    path, strerror(errno));
-
-		if (repopath != NULL)
-			fprintf(fp, "%s\n", repopath);
-		(void)fclose(fp);
-	}
-
-	/* create CVS/Tag file (if needed) */
-	/* XXX correct? */
-	if (tag != NULL || date != NULL)
-		(void)cvs_write_tagfile(tag, date, nb);
-
-	return (0);
-}
-
-
 /*
  * cvs_exec()
  */
@@ -491,16 +376,16 @@ cvs_exec(int argc, char **argv, int fds[3])
 	pid_t pid;
 
 	if ((pid = fork()) == -1) {
-		cvs_log(LP_ERRNO, "failed to fork");
+		cvs_log(LP_ERR, "failed to fork");
 		return (-1);
 	} else if (pid == 0) {
 		execvp(argv[0], argv);
-		cvs_log(LP_ERRNO, "failed to exec %s", argv[0]);
+		cvs_log(LP_ERR, "failed to exec %s", argv[0]);
 		exit(1);
 	}
 
 	if (waitpid(pid, &ret, 0) == -1)
-		cvs_log(LP_ERRNO, "failed to waitpid");
+		cvs_log(LP_ERR, "failed to waitpid");
 
 	return (ret);
 }
@@ -561,7 +446,7 @@ cvs_unlink(const char *path)
 		return (0);
 
 	if (unlink(path) == -1 && errno != ENOENT) {
-		cvs_log(LP_ERRNO, "cannot remove `%s'", path);
+		cvs_log(LP_ERR, "cannot remove `%s'", path);
 		return (-1);
 	}
 
@@ -589,7 +474,7 @@ cvs_rmdir(const char *path)
 		return (0);
 
 	if ((dirp = opendir(path)) == NULL) {
-		cvs_log(LP_ERRNO, "failed to open '%s'", path);
+		cvs_log(LP_ERR, "failed to open '%s'", path);
 		return (-1);
 	}
 
@@ -611,114 +496,13 @@ cvs_rmdir(const char *path)
 
 
 	if (rmdir(path) == -1 && errno != ENOENT) {
-		cvs_log(LP_ERRNO, "failed to remove '%s'", path);
+		cvs_log(LP_ERR, "failed to remove '%s'", path);
 		goto done;
 	}
 
 	ret = 0;
 done:
 	closedir(dirp);
-	return (ret);
-}
-
-/*
- * Create a directory, and the parent directories if needed.
- * based upon mkpath() from mkdir.c
- */
-int
-cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
-{
-	int ret;
-	char *d, *s;
-	struct stat sb;
-	char rpath[MAXPATHLEN], entry[MAXPATHLEN];
-	CVSENTRIES *entf;
-	struct cvs_ent *ent;
-
-	if (create_adm == 1 && root == NULL)
-		fatal("cvs_create_dir failed");
-
-	s = xstrdup(path);
-	rpath[0] = '\0';
-	if (repo != NULL) {
-		if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath))
-			fatal("cvs_create_dir: path truncation");
-
-		if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath))
-			fatal("cvs_create_dir: path truncation");
-	}
-
-	ret = -1;
-	entf = NULL;
-	d = strtok(s, "/");
-	while (d != NULL) {
-		if (stat(d, &sb)) {
-			/* try to create the directory */
-			if (errno != ENOENT ||
-			    (mkdir(d, 0755) && errno != EEXIST)) {
-				cvs_log(LP_ERRNO, "failed to create `%s'", d);
-				goto done;
-			}
-		} else if (!S_ISDIR(sb.st_mode)) {
-			cvs_log(LP_ERR, "`%s' not a directory", d);
-			goto done;
-		}
-
-		/*
-		 * Create administrative files if requested.
-		 */
-		if (create_adm == 1) {
-			if (strlcat(rpath, d, sizeof(rpath)) >= sizeof(rpath))
-				fatal("cvs_create_dir: path truncation");
-
-			if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath))
-				fatal("cvs_create_dir: path truncation");
-
-			cvs_mkadmin(d, root, rpath, NULL, NULL, 0);
-		}
-
-		/*
-		 * Add it to the parent directory entry file.
-		 * (if any).
-		 */
-		entf = cvs_ent_open(".", O_RDWR);
-		if (entf != NULL && strcmp(d, ".")) {
-			if (strlcpy(entry, "D/", sizeof(entry)) >=
-			    sizeof(entry) ||
-			    strlcat(entry, d, sizeof(entry)) >= sizeof(entry) ||
-			    strlcat(entry, "////", sizeof(entry)) >=
-			    sizeof(entry))
-				fatal("cvs_create_dir: overflow in entry buf");
-
-			if ((ent = cvs_ent_parse(entry)) == NULL) {
-				cvs_log(LP_ERR, "failed to parse entry");
-				goto done;
-			}
-
-			cvs_ent_remove(entf, d, 0);
-
-			if (cvs_ent_add(entf, ent) < 0) {
-				cvs_log(LP_ERR, "failed to add entry");
-				goto done;
-			}
-		}
-
-		if (entf != NULL) {
-			cvs_ent_close(entf);
-			entf = NULL;
-		}
-
-		/* All went ok, switch to the newly created directory. */
-		cvs_chdir(d, 0);
-
-		d = strtok(NULL, "/");
-	}
-
-	ret = 0;
-done:
-	if (entf != NULL)
-		cvs_ent_close(entf);
-	xfree(s);
 	return (ret);
 }
 
@@ -740,165 +524,18 @@ cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
 	len = strlcpy(dst, base, dlen);
 	if (len >= dlen - 1) {
 		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", dst);
+		fatal("overflow in cvs_path_cat");
 	} else {
 		dst[len] = '/';
 		dst[len + 1] = '\0';
 		len = strlcat(dst, end, dlen);
 		if (len >= dlen) {
 			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", dst);
+			cvs_log(LP_ERR, "%s", dst);
 		}
 	}
 
 	return (len);
-}
-
-/*
- * cvs_rcs_getpath()
- *
- * Get the RCS path of the file <file> and store it in <buf>, which is
- * of size <len>. For portability, it is recommended that <buf> always be
- * at least MAXPATHLEN bytes long.
- * Returns a pointer to the start of the path on success, or NULL on failure.
- */
-char *
-cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
-{
-	char *repo;
-	struct cvsroot *root;
-
-	root = CVS_DIR_ROOT(file);
-	repo = CVS_DIR_REPO(file);
-
-	if (strlcpy(buf, root->cr_dir, len) >= len ||
-	    strlcat(buf, "/", len) >= len ||
-	    strlcat(buf, repo, len) >= len ||
-	    strlcat(buf, "/", len) >= len ||
-	    strlcat(buf, file->cf_name, len) >= len ||
-	    strlcat(buf, RCS_FILE_EXT, len) >= len)
-		fatal("cvs_rcs_getpath: path truncation");
-
-	return (buf);
-}
-
-/*
- * cvs_write_tagfile()
- *
- * Write the CVS/Tag file for current directory.
- */
-void
-cvs_write_tagfile(char *tag, char *date, int nb)
-{
-	FILE *fp;
-	char tagpath[MAXPATHLEN];
-
-	if (cvs_noexec == 1)
-		return;
-
-	if (strlcpy(tagpath, CVS_PATH_TAG, sizeof(tagpath)) >= sizeof(tagpath))
-		return;
-
-	if (tag != NULL || date != NULL) {
-		fp = fopen(tagpath, "w+");
-		if (fp == NULL) {
-			if (errno != ENOENT)
-				cvs_log(LP_NOTICE,
-				    "failed to open `%s' : %s", tagpath,
-				    strerror(errno));
-			return;
-		}
-		if (tag != NULL) {
-			if (nb != 0)
-				fprintf(fp, "N%s\n", tag);
-			else
-				fprintf(fp, "T%s\n", tag);
-		} else {
-			fprintf(fp, "D%s\n", date);
-		}
-		(void)fclose(fp);
-	} else {
-		cvs_unlink(tagpath);
-		return;
-	}
-}
-
-/*
- * cvs_parse_tagfile()
- *
- * Parse the CVS/Tag file for current directory.
- *
- * If it contains a branch tag, sets <tagp>.
- * If it contains a date, sets <datep>.
- * If it contains a non-branch tag, sets <nbp>.
- *
- * Returns nothing but an error message, and sets <tagp>, <datep> to NULL
- * and <nbp> to 0.
- */
-void
-cvs_parse_tagfile(char **tagp, char **datep, int *nbp)
-{
-	FILE *fp;
-	int linenum;
-	size_t len;
-	char linebuf[128], tagpath[MAXPATHLEN];
-
-	if (tagp != NULL)
-		*tagp = (char *)NULL;
-
-	if (datep != NULL)
-		*datep = (char *)NULL;
-
-	if (nbp != NULL)
-		*nbp = 0;
-
-	if (strlcpy(tagpath, CVS_PATH_TAG, sizeof(tagpath)) >= sizeof(tagpath))
-		return;
-
-	fp = fopen(tagpath, "r");
-	if (fp == NULL) {
-		if (errno != ENOENT)
-			cvs_log(LP_NOTICE, "failed to open `%s' : %s", tagpath,
-			    strerror(errno));
-		return;
-	}
-
-	linenum = 0;
-
-	while (fgets(linebuf, (int)sizeof(linebuf), fp) != NULL) {
-		linenum++;
-		if ((len = strlen(linebuf)) == 0)
-			continue;
-		if (linebuf[len -1] != '\n') {
-			cvs_log(LP_WARN, "line too long in `%s:%d'", tagpath,
-			    linenum);
-			break;
-		}
-		linebuf[--len] = '\0';
-
-		switch (*linebuf) {
-		case 'T':
-			if (tagp != NULL)
-				*tagp = xstrdup(linebuf);
-			break;
-		case 'D':
-			if (datep != NULL)
-				*datep = xstrdup(linebuf);
-			break;
-		case 'N':
-			if (tagp != NULL)
-				*tagp = xstrdup(linebuf);
-			if (nbp != NULL)
-				*nbp = 1;
-			break;
-		default:
-			break;
-		}
-	}
-	if (ferror(fp))
-		cvs_log(LP_NOTICE, "failed to read line from `%s'", tagpath);
-
-	(void)fclose(fp);
 }
 
 /*
@@ -930,7 +567,144 @@ cvs_hack_time(time_t oldtime, int togmt)
 	return (cvs_date_parse(tbuf));
 }
 
-#endif	/* !RCSPROG */
+void
+cvs_get_repo(const char *dir, char *dst, size_t len)
+{
+	int l;
+	FILE *fp;
+	char *s, buf[MAXPATHLEN], fpath[MAXPATHLEN];
+
+	if (strlcpy(buf, dir, sizeof(buf)) >= sizeof(buf))
+		fatal("cvs_get_repo: truncation");
+
+	l = snprintf(fpath, sizeof(fpath), "%s/%s", dir, CVS_PATH_REPOSITORY);
+	if (l == -1 || l >= (int)sizeof(fpath))
+		fatal("cvs_get_repo: overflow");
+
+	if ((fp = fopen(fpath, "r")) != NULL) {
+		fgets(buf, sizeof(buf), fp);
+
+		if ((s = strrchr(buf, '\n')) != NULL)
+			*s = '\0';
+
+		(void)fclose(fp);
+	}
+
+	l = snprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
+	if (l == -1 || l >= (int)len)
+		fatal("cvs_get_repo: overflow");
+}
+
+void
+cvs_mkadmin(const char *path, const char *root, const char *repo)
+{
+	FILE *fp;
+	size_t len;
+	struct stat st;
+	char buf[MAXPATHLEN];
+
+	cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s)", path, root, repo);
+
+	len = cvs_path_cat(path, CVS_PATH_CVSDIR, buf, sizeof(buf));
+	if (len >= sizeof(buf))
+		fatal("cvs_mkadmin: truncation");
+
+	if (stat(buf, &st) != -1)
+		return;
+
+	if (mkdir(buf, 0755) == -1 && errno != EEXIST)
+		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
+
+	len = cvs_path_cat(path, CVS_PATH_ROOTSPEC, buf, sizeof(buf));
+	if (len >= sizeof(buf))
+		fatal("cvs_mkadmin: truncation");
+
+	if ((fp = fopen(buf, "w")) == NULL)
+		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
+
+	fprintf(fp, "%s\n", root);
+	(void)fclose(fp);
+
+	len = cvs_path_cat(path, CVS_PATH_REPOSITORY, buf, sizeof(buf));
+	if (len >= sizeof(buf))
+		fatal("cvs_mkadmin: truncation");
+
+	if ((fp = fopen(buf, "w")) == NULL)
+		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
+
+	fprintf(fp, "%s\n", repo);
+	(void)fclose(fp);
+
+	len = cvs_path_cat(path, CVS_PATH_ENTRIES, buf, sizeof(buf));
+	if (len >= sizeof(buf))
+		fatal("cvs_mkadmin: truncation");
+
+	if ((fp = fopen(buf, "w")) == NULL)
+		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
+	(void)fclose(fp);
+}
+
+void
+cvs_mkpath(const char *path)
+{
+	FILE *fp;
+	size_t len;
+	struct stat st;
+	char *sp, *dp, *dir, rpath[MAXPATHLEN], repo[MAXPATHLEN];
+
+	dir = xstrdup(path);
+
+	STRIP_SLASH(dir);
+	cvs_log(LP_TRACE, "cvs_mkpath(%s)", dir);
+
+	repo[0] = '\0';
+	rpath[0] = '\0';
+
+	if (cvs_cmdop == CVS_OP_UPDATE) {
+		if ((fp = fopen(CVS_PATH_REPOSITORY, "r")) != NULL) {
+			fgets(repo, sizeof(repo), fp);
+			if (repo[strlen(repo) - 1] == '\n')
+				repo[strlen(repo) - 1] = '\0';
+			(void)fclose(fp);
+		}
+	}
+
+	for (sp = dir; sp != NULL; sp = dp) {
+		dp = strchr(sp, '/');
+		if (dp != NULL)
+			*(dp++) = '\0';
+
+		if (repo[0] != '\0') {
+			len = strlcat(repo, "/", sizeof(repo));
+			if (len >= (int)sizeof(repo))
+				fatal("cvs_mkpath: overflow");
+		}
+
+		len = strlcat(repo, sp, sizeof(repo));
+		if (len >= (int)sizeof(repo))
+			fatal("cvs_mkpath: overflow");
+
+		if (rpath[0] != '\0') {
+			len = strlcat(rpath, "/", sizeof(rpath));
+			if (len >= (int)sizeof(rpath))
+				fatal("cvs_mkpath: overflow");
+		}
+
+		len = strlcat(rpath, sp, sizeof(rpath));
+		if (len >= (int)sizeof(rpath))
+			fatal("cvs_mkpath: overflow");
+
+		if (stat(repo, &st) != -1)
+			continue;
+
+		if (mkdir(rpath, 0755) == -1 && errno != EEXIST)
+			fatal("cvs_mkpath: %s: %s", rpath, strerror(errno));
+
+		cvs_mkadmin(rpath, current_cvsroot->cr_dir, repo);
+	}
+
+	xfree(dir);
+}
 
 /*
  * Split the contents of a file into a list of lines.

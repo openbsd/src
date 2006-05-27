@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.18 2006/04/20 12:13:19 xsa Exp $	*/
+/*	$OpenBSD: log.h,v 1.19 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,38 +27,13 @@
 #ifndef LOG_H
 #define LOG_H
 
-/* log destinations */
-#define LD_STD		0x01
-#define LD_SYSLOG	0x02
-#define LD_CONS		0x04
-
-#define LD_ALL		(LD_STD|LD_SYSLOG|LD_CONS)
-
-/* log flags */
-#define LF_PID		0x01	/* include PID in messages */
-
-
 /* log priority levels */
-#define LP_DEBUG	0
-#define LP_INFO		1
-#define LP_NOTICE	2
-#define LP_WARN		3
-#define LP_ERR		4
-#define LP_ALERT	5
-#define LP_ERRNO	6
-#define LP_ABORT	7
-#define LP_TRACE	8
+#define LP_NOTICE	0
+#define LP_ERR		1
+#define LP_ERRNO	2
+#define LP_ABORT	3
+#define LP_TRACE	4
 
-#define LP_MAX		8
-#define LP_ALL		255
-
-/* filtering methods */
-#define LP_FILTER_SET	0	/* set a filter */
-#define LP_FILTER_UNSET	1	/* remove a filter */
-
-void	cvs_log_init(u_int, u_int);
-void	cvs_log_cleanup(void);
-int	cvs_log_filter(u_int, u_int);
 void	cvs_log(u_int, const char *, ...) __attribute__((format(printf, 2, 3)));
 void	cvs_vlog(u_int, const char *, va_list);
 int	cvs_printf(const char *, ...) __attribute__((format(printf, 1, 2)));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.31 2006/04/05 01:38:56 ray Exp $	*/
+/*	$OpenBSD: root.c,v 1.32 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,9 +30,7 @@
 #include "log.h"
 #include "proto.h"
 
-
 extern char *cvs_rootstr;
-
 
 /* keep these ordered with the defines */
 const char *cvs_methods[] = {
@@ -126,6 +124,7 @@ cvsroot_parse(const char *str)
 		fatal("no path specification in CVSROOT");
 
 	root->cr_dir = sp;
+	STRIP_SLASH(root->cr_dir);
 	if (sp == cp) {
 		if (root->cr_method == CVS_METHOD_NONE)
 			root->cr_method = CVS_METHOD_LOCAL;
@@ -249,7 +248,7 @@ cvsroot_get(const char *dir)
 			if ((rootstr = getenv("CVSROOT")) != NULL)
 				return cvsroot_parse(rootstr);
 			else
-				fatal("cvsroot_get: empty CVSROOT variable");
+				return (NULL);
 		} else {
 			fatal("cvsroot_get: fopen: `%s': %s",
 			    CVS_PATH_ROOTSPEC, strerror(errno));
@@ -263,7 +262,7 @@ cvsroot_get(const char *dir)
 
 	len = strlen(line);
 	if (len == 0)
-		cvs_log(LP_WARN, "empty %s file", CVS_PATH_ROOTSPEC);
+		cvs_log(LP_ERR, "empty %s file", CVS_PATH_ROOTSPEC);
 	else if (line[len - 1] == '\n')
 		line[--len] = '\0';
 

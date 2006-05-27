@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.171 2006/05/01 18:17:39 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.172 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,15 +26,17 @@
 
 #include "includes.h"
 
+#include "buf.h"
 #include "cvs.h"
+#include "diff.h"
 #include "log.h"
 #include "rcs.h"
-#include "diff.h"
+#include "util.h"
+#include "xmalloc.h"
 
 #define RCS_BUFSIZE	16384
 #define RCS_BUFEXTSIZE	8192
 #define RCS_KWEXP_SIZE  1024
-
 
 /* RCS token types */
 #define RCS_TOK_ERR	-1
@@ -44,7 +46,6 @@
 #define RCS_TOK_STRING	3
 #define RCS_TOK_SCOLON	4
 #define RCS_TOK_COLON	5
-
 
 #define RCS_TOK_HEAD		8
 #define RCS_TOK_BRANCH		9
@@ -65,10 +66,8 @@
 
 #define RCS_ISKEY(t)	(((t) >= RCS_TOK_HEAD) && ((t) <= RCS_TOK_BRANCHES))
 
-
 #define RCS_NOSCOL	0x01	/* no terminating semi-colon */
 #define RCS_VOPT	0x02	/* value is optional */
-
 
 /* opaque parse data */
 struct rcs_pdata {
@@ -86,14 +85,11 @@ struct rcs_pdata {
 	FILE	*rp_file;
 };
 
-
 #define RCS_TOKSTR(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
 #define RCS_TOKLEN(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
 
-
 /* invalid characters in RCS symbol names */
 static const char rcs_sym_invch[] = RCS_SYM_INVALCHAR;
-
 
 /* comment leaders, depending on the file's suffix */
 static const struct rcs_comment {
@@ -179,19 +175,6 @@ struct rcs_kw rcs_expkw[] =  {
 
 #define NB_COMTYPES	(sizeof(rcs_comments)/sizeof(rcs_comments[0]))
 
-#ifdef notyet
-static struct rcs_kfl {
-	char	rk_char;
-	int	rk_val;
-} rcs_kflags[] = {
-	{ 'k',   RCS_KWEXP_NAME },
-	{ 'v',   RCS_KWEXP_VAL  },
-	{ 'l',   RCS_KWEXP_LKR  },
-	{ 'o',   RCS_KWEXP_OLD  },
-	{ 'b',   RCS_KWEXP_NONE },
-};
-#endif
-
 static struct rcs_key {
 	char	rk_str[16];
 	int	rk_id;
@@ -218,7 +201,6 @@ static struct rcs_key {
 
 #define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
-
 static const char *rcs_errstrs[] = {
 	"No error",
 	"No such entry",
@@ -230,10 +212,10 @@ static const char *rcs_errstrs[] = {
 
 #define RCS_NERR   (sizeof(rcs_errstrs)/sizeof(rcs_errstrs[0]))
 
-
 int rcs_errno = RCS_ERR_NOERR;
-char *timezone_flag = NULL;
 
+int		rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);
+static int	rcs_movefile(char *, char *, mode_t, u_int);
 static void	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
@@ -256,25 +238,12 @@ static void	rcs_strprint(const u_char *, size_t, FILE *);
 static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
                     size_t, int);
 
-/*
- * rcs_open()
- *
- * Open a file containing RCS-formatted information.  The file's path is
- * given in <path>, and the opening flags are given in <flags>, which is either
- * RCS_READ, RCS_WRITE, or RCS_RDWR.  If the open requests write access and
- * the file does not exist, the RCS_CREATE flag must also be given, in which
- * case it will be created with the mode specified in a third argument of
- * type mode_t.  If the file exists and RCS_CREATE is passed, the open will
- * fail.
- * Returns a handle to the opened file on success, or NULL on failure.
- */
 RCSFILE *
-rcs_open(const char *path, int flags, ...)
+rcs_open(const char *path, int fd, int flags, ...)
 {
-	int ret, mode;
+	int mode;
 	mode_t fmode;
 	RCSFILE *rfp;
-	struct stat st;
 	va_list vap;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkr;
@@ -282,23 +251,11 @@ rcs_open(const char *path, int flags, ...)
 	fmode = S_IRUSR|S_IRGRP|S_IROTH;
 	flags &= 0xffff;	/* ditch any internal flags */
 
-	if (((ret = stat(path, &st)) == -1) && errno == ENOENT) {
-		if (flags & RCS_CREATE) {
-			va_start(vap, flags);
-			mode = va_arg(vap, int);
-			va_end(vap);
-			fmode = (mode_t)mode;
-		} else {
-			/* XXX, make this command dependant? */
-#if 0
-			cvs_log(LP_ERR, "RCS file `%s' does not exist", path);
-#endif
-			rcs_errno = RCS_ERR_NOENT;
-			return (NULL);
-		}
-	} else if (ret == 0 && (flags & RCS_CREATE)) {
-		cvs_log(LP_ERR, "RCS file `%s' exists", path);
-		return (NULL);
+	if (flags & RCS_CREATE) {
+		va_start(vap, flags);
+		mode = va_arg(vap, int);
+		va_end(vap);
+		fmode = (mode_t)mode;
 	}
 
 	rfp = xcalloc(1, sizeof(*rfp));
@@ -306,6 +263,7 @@ rcs_open(const char *path, int flags, ...)
 	rfp->rf_path = xstrdup(path);
 	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
 	rfp->rf_mode = fmode;
+	rfp->fd = fd;
 
 	TAILQ_INIT(&(rfp->rf_delta));
 	TAILQ_INIT(&(rfp->rf_access));
@@ -396,39 +354,40 @@ rcs_close(RCSFILE *rfp)
  *
  * Write the contents of the RCS file handle <rfp> to disk in the file whose
  * path is in <rf_path>.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], fn[19] = "";
-	void *bp;
+	char buf[1024], numbuf[64], *fn;
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
-	ssize_t nread, nwritten;
 	size_t len;
 	int fd, from_fd, to_fd;
 
 	from_fd = to_fd = fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
-		return (0);
+		return;
 
 	/* Write operations need the whole file parsed */
 	rcs_parse_deltatexts(rfp, NULL);
 
-	strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn));
+	(void)xasprintf(&fn, "%s/rcs.XXXXXXXXXX", cvs_tmpdir);
+
 	if ((fd = mkstemp(fn)) == -1)
-		fatal("mkstemp: `%s': %s", fn, strerror(errno));
+		fatal("%s", fn);
 
 	if ((fp = fdopen(fd, "w+")) == NULL) {
-		fd = errno;
-		unlink(fn);
-		fatal("fdopen: %s", strerror(fd));
+		int saved_errno;
+
+		saved_errno = errno;
+		(void)unlink(fn);
+		errno = saved_errno;
+		fatal("%s", fn);
 	}
 
 	if (rfp->rf_head != NULL)
@@ -452,9 +411,10 @@ rcs_write(RCSFILE *rfp)
 	fprintf(fp, "symbols");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
-		strlcpy(buf, symp->rs_name, sizeof(buf));
-		strlcat(buf, ":", sizeof(buf));
-		strlcat(buf, numbuf, sizeof(buf));
+		if (strlcpy(buf, symp->rs_name, sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, ":", sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, numbuf, sizeof(buf)) >= sizeof(buf))
+			fatal("rcs_write: string overflow");
 		fprintf(fp, "\n\t%s", buf);
 	}
 	fprintf(fp, ";\n");
@@ -537,81 +497,91 @@ rcs_write(RCSFILE *rfp)
 		}
 		fputs("@\n", fp);
 	}
-	fclose(fp);
+	(void)fclose(fp);
 
-	/*
-	 * We try to use rename() to atomically put the new file in place.
-	 * If that fails, we try a copy.
-	 */
-	if (rename(fn, rfp->rf_path) == -1) {
-		if (errno == EXDEV) {
-			/* rename() not supported so we have to copy. */
-			if (chmod(rfp->rf_path, S_IWUSR) == -1 &&
-			    !(rfp->rf_flags & RCS_CREATE)) {
-				fatal("chmod(%s, 0%o) failed",
-				    rfp->rf_path, S_IWUSR);
-			}
-
-			if ((from_fd = open(fn, O_RDONLY)) == -1) {
-				cvs_log(LP_ERRNO, "failed to open `%s'",
-				    rfp->rf_path);
-				return (-1);
-			}
-
-			if ((to_fd = open(rfp->rf_path,
-			    O_WRONLY|O_TRUNC|O_CREAT)) == -1) {
-				cvs_log(LP_ERRNO, "failed to open `%s'", fn);
-				close(from_fd);
-				return (-1);
-			}
-
-			bp = xmalloc(MAXBSIZE);
-			for (;;) {
-				if ((nread = read(from_fd, bp, MAXBSIZE)) == 0)
-					break;
-				if (nread == -1)
-					goto err;
-				nwritten = write(to_fd, bp, (size_t)nread);
-				if (nwritten == -1 || nwritten != nread)
-					goto err;
-			}
-
-			if (nread < 0) {
-err:				if (unlink(rfp->rf_path) == -1)
-					cvs_log(LP_ERRNO,
-					    "failed to unlink `%s'",
-					    rfp->rf_path);
-				close(from_fd);
-				close(to_fd);
-				xfree(bp);
-				return (-1);
-			}
-
-			close(from_fd);
-			close(to_fd);
-			xfree(bp);
-
-			if (unlink(fn) == -1) {
-				cvs_log(LP_ERRNO,
-				    "failed to unlink `%s'", fn);
-				return (-1);
-			}
-		} else {
-			cvs_log(LP_ERRNO,
-			    "failed to access temp RCS output file");
-			return (-1);
-		}
-	}
-
-	if (chmod(rfp->rf_path, rfp->rf_mode) == -1) {
-		cvs_log(LP_ERRNO, "failed to chmod `%s'",
-		    rfp->rf_path);
-		return (-1);
+	if (rcs_movefile(fn, rfp->rf_path, rfp->rf_mode, rfp->rf_flags) == -1) {
+		(void)unlink(fn);
+		fatal("rcs_movefile failed");
 	}
 
 	rfp->rf_flags |= RCS_SYNCED;
 
-	return (0);
+	if (fn != NULL)
+		xfree(fn);
+}
+
+/*
+ * rcs_movefile()
+ *
+ * Move a file using rename(2) if possible and copying if not.
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
+{
+	FILE *src, *dst;
+	size_t nread, nwritten;
+	char *buf;
+	int ret;
+
+	ret = -1;
+
+	if (rename(from, to) == 0) {
+		if (chmod(to, perm) == -1) {
+			cvs_log(LP_ERRNO, "%s", to);
+			return (-1);
+		}
+		return (0);
+	} else if (errno != EXDEV) {
+		cvs_log(LP_NOTICE, "failed to access temp RCS output file");
+		return (-1);
+	}
+
+	if ((chmod(to, S_IWUSR) == -1) && !(to_flags & RCS_CREATE)) {
+		cvs_log(LP_ERR, "chmod(%s, 0%o) failed", to, S_IWUSR);
+		return (-1);
+	}
+
+	/* different filesystem, have to copy the file */
+	if ((src = fopen(from, "r")) == NULL) {
+		cvs_log(LP_ERRNO, "%s", from);
+		return (-1);
+	}
+	if ((dst = fopen(to, "w")) == NULL) {
+		cvs_log(LP_ERRNO, "%s", to);
+		return (-1);
+	}
+	if (fchmod(fileno(dst), perm)) {
+		cvs_log(LP_ERR, "%s", to);
+		(void)unlink(to);
+		return (-1);
+	}
+
+	buf = xmalloc(MAXBSIZE);
+	while ((nread = fread(buf, sizeof(char), MAXBSIZE, src)) != 0) {
+		if (ferror(src)) {
+			cvs_log(LP_ERRNO, "failed to read `%s'", from);
+			(void)unlink(to);
+			goto out;
+		}
+		nwritten = fwrite(buf, sizeof(char), nread, dst);
+		if (nwritten != nread) {
+			cvs_log(LP_ERRNO, "failed to write `%s'", to);
+			(void)unlink(to);
+			goto out;
+		}
+	}
+
+	ret = 0;
+
+	(void)fclose(src);
+	(void)fclose(dst);
+	(void)unlink(from);
+
+out:
+	xfree(buf);
+
+	return (ret);
 }
 
 /*
@@ -1383,17 +1353,9 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 int
 rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
-	size_t len;
-	char *tmpdir;
-	char *newdeltatext, path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
+	char *newdeltatext, *path_tmp1, *path_tmp2;
 	struct rcs_delta *rdp, *prevrdp, *nextrdp;
 	BUF *nextbuf, *prevbuf, *newdiff;
-
-#if defined(RCSPROG)
-	tmpdir = rcs_tmpdir;
-#else
-	tmpdir = cvs_tmpdir;
-#endif
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
@@ -1429,32 +1391,17 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		newdiff = cvs_buf_alloc(64, BUF_AUTOEXT);
 
 		/* calculate new diff */
-		len = strlcpy(path_tmp1, tmpdir, sizeof(path_tmp1));
-		if (len >= sizeof(path_tmp1))
-			fatal("path truncation in rcs_rev_remove");
-
-		len = strlcat(path_tmp1, "/diff1.XXXXXXXXXX",
-		    sizeof(path_tmp1));
-		if (len >= sizeof(path_tmp1))
-			fatal("path truncation in rcs_rev_remove");
-
-		cvs_buf_write_stmp(nextbuf, path_tmp1, 0600);
+		(void)xasprintf(&path_tmp1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+		cvs_buf_write_stmp(nextbuf, path_tmp1, 0600, NULL);
 		cvs_buf_free(nextbuf);
 
-		len = strlcpy(path_tmp2, tmpdir, sizeof(path_tmp2));
-		if (len >= sizeof(path_tmp2))
-			fatal("path truncation in rcs_rev_remove");
-
-		len = strlcat(path_tmp2, "/diff2.XXXXXXXXXX",
-		    sizeof(path_tmp2));
-		if (len >= sizeof(path_tmp2))
-			fatal("path truncation in rcs_rev_remove");
-
-		cvs_buf_write_stmp(prevbuf, path_tmp2, 0600);
+		(void)xasprintf(&path_tmp2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+		cvs_buf_write_stmp(prevbuf, path_tmp2, 0600, NULL);
 		cvs_buf_free(prevbuf);
 
 		diff_format = D_RCSDIFF;
-		cvs_diffreg(path_tmp1, path_tmp2, newdiff);
+		if (cvs_diffreg(path_tmp1, path_tmp2, newdiff) == D_ERROR)
+			fatal("rcs_diffreg failed");
 
 		newdeltatext = cvs_buf_release(newdiff);
 	} else if (nextrdp == NULL && prevrdp != NULL) {
@@ -1489,6 +1436,11 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 
 	if (newdeltatext != NULL)
 		xfree(newdeltatext);
+
+	if (path_tmp1 != NULL)
+		xfree(path_tmp1);
+	if (path_tmp2 != NULL)
+		xfree(path_tmp2);
 
 	return (0);
 }
@@ -1768,8 +1720,8 @@ rcs_parse_init(RCSFILE *rfp)
 	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
 
-	if ((pdp->rp_file = fopen(rfp->rf_path, "r")) == NULL)
-		fatal("fopen: `%s': %s", rfp->rf_path, strerror(errno));
+	if ((pdp->rp_file = fdopen(rfp->fd, "r")) == NULL)
+		fatal("fopen: `%s'", rfp->rf_path);
 
 	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;
@@ -2057,8 +2009,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			break;
 		default:
 			rcs_errno = RCS_ERR_PARSE;
-			cvs_log(LP_ERR,
-			    "unexpected token `%s' in RCS delta",
+			cvs_log(LP_ERR, "unexpected token `%s' in RCS delta",
 			    RCS_TOKSTR(rfp));
 			rcs_freedelta(rdp);
 			return (-1);
@@ -2149,7 +2100,9 @@ rcs_parse_deltatext(RCSFILE *rfp)
 	}
 
 	rdp->rd_text = xmalloc(RCS_TOKLEN(rfp) + 1);
-	strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1));
+	if (strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1)) >=
+	    RCS_TOKLEN(rfp) + 1)
+		fatal("rcs_parse_deltatext: strlcpy");
 	rdp->rd_tlen = RCS_TOKLEN(rfp);
 
 	return (1);
@@ -2436,7 +2389,9 @@ rcs_gettok(RCSFILE *rfp)
 
 	if (pdp->rp_pttype != RCS_TOK_ERR) {
 		type = pdp->rp_pttype;
-		strlcpy(pdp->rp_buf, pdp->rp_ptok, pdp->rp_blen);
+		if (strlcpy(pdp->rp_buf, pdp->rp_ptok, pdp->rp_blen) >=
+		    pdp->rp_blen)
+			fatal("rcs_gettok: strlcpy");
 		pdp->rp_pttype = RCS_TOK_ERR;
 		return (type);
 	}
@@ -2550,7 +2505,9 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
 		return (-1);
 
 	pdp->rp_pttype = type;
-	strlcpy(pdp->rp_ptok, tok, sizeof(pdp->rp_ptok));
+	if (strlcpy(pdp->rp_ptok, tok, sizeof(pdp->rp_ptok)) >=
+	    sizeof(pdp->rp_ptok))
+		fatal("rcs_pushtok: strlcpy");
 	return (0);
 }
 
@@ -2628,13 +2585,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 	i = 0;
 
 	/*
-	 * -z support for RCS
-	 */
-	tb = rdp->rd_date;
-	if (timezone_flag != NULL)
-		rcs_set_tz(timezone_flag, rdp, &tb);
-
-	/*
 	 * Keyword formats:
 	 * $Keyword$
 	 * $Keyword: value$
@@ -2700,10 +2650,15 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			expbuf[0] = '\0';
 
 			if (mode & RCS_KWEXP_NAME) {
-				strlcat(expbuf, "$", sizeof(expbuf));
-				strlcat(expbuf, kwstr, sizeof(expbuf));
-				if (mode & RCS_KWEXP_VAL)
-					strlcat(expbuf, ": ", sizeof(expbuf));
+				if (strlcat(expbuf, "$", sizeof(expbuf))
+				    >= sizeof(expbuf) ||
+				    strlcat(expbuf, kwstr, sizeof(expbuf))
+				    >= sizeof(expbuf))
+					fatal("rcs_expand_keywords: truncated");
+				if ((mode & RCS_KWEXP_VAL) &&
+				    strlcat(expbuf, ": ", sizeof(expbuf))
+				    >= sizeof(expbuf))
+					fatal("rcs_expand_keywords: truncated");
 			}
 
 			/*
@@ -2713,64 +2668,89 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			if (mode & RCS_KWEXP_VAL) {
 				if (kwtype & RCS_KW_RCSFILE) {
 					if (!(kwtype & RCS_KW_FULLPATH))
-						strlcat(expbuf,
+						(void)strlcat(expbuf,
 						    basename(rcsfile),
 						    sizeof(expbuf));
 					else
-						strlcat(expbuf, rcsfile,
-						    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+						(void)strlcat(expbuf,
+						    rcsfile, sizeof(expbuf));
+					if (strlcat(expbuf, " ",
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "truncated");
 				}
 
 				if (kwtype & RCS_KW_REVISION) {
 					rcsnum_tostr(rdp->rd_num, buf,
 					    sizeof(buf));
-					strlcat(buf, " ", sizeof(buf));
-					strlcat(expbuf, buf, sizeof(expbuf));
+					if (strlcat(buf, " ", sizeof(buf))
+					    >= sizeof(buf) ||
+					    strlcat(expbuf, buf,
+					    sizeof(expbuf)) >= sizeof(buf))
+						fatal("rcs_expand_keywords: "
+						    "truncated");
 				}
 
 				if (kwtype & RCS_KW_DATE) {
-					if (timezone_flag != NULL)
-						fmt = "%Y/%m/%d %H:%M:%S%z ";
-					else
-						fmt = "%Y/%m/%d %H:%M:%S ";
+					fmt = "%Y/%m/%d %H:%M:%S ";
 
 					strftime(buf, sizeof(buf), fmt, &tb);
-					strlcat(expbuf, buf, sizeof(expbuf));
+					if (strlcat(expbuf, buf,
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "string truncated");
 				}
 
 				if (kwtype & RCS_KW_AUTHOR) {
-					strlcat(expbuf, rdp->rd_author,
-					    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, rdp->rd_author,
+					    sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ",
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "string truncated");
 				}
 
 				if (kwtype & RCS_KW_STATE) {
-					strlcat(expbuf, rdp->rd_state,
-					    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, rdp->rd_state,
+					    sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ",
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "string truncated");
 				}
 
 				/* order does not matter anymore below */
 				if (kwtype & RCS_KW_LOG)
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, " ",
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "string truncated");
 
 				if (kwtype & RCS_KW_SOURCE) {
-					strlcat(expbuf, rcsfile,
-					    sizeof(expbuf));
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, rcsfile,
+					    sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ",
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "string truncated");
 				}
 
 				if (kwtype & RCS_KW_NAME)
-					strlcat(expbuf, " ", sizeof(expbuf));
+					if (strlcat(expbuf, " ",
+					    sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: "
+						    "string truncated");
 			}
 
 			/* end the expansion */
 			if (mode & RCS_KWEXP_NAME)
-				strlcat(expbuf, "$", sizeof(expbuf));
+				if (strlcat(expbuf, "$",
+				    sizeof(expbuf)) >= sizeof(expbuf))
+					fatal("rcs_expand_keywords: truncated");
 
 			sizdiff = strlen(expbuf) - (end - start);
 			tbuf = xstrdup(end);
+
 			/* only realloc if we have to */
 			if (sizdiff > 0) {
 				char *newdata;
@@ -2778,6 +2758,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				len += sizdiff;
 				newdata = xrealloc(data, 1, len);
 				data = newdata;
+
 				/*
 				 * ensure string pointers are not invalidated
 				 * after realloc()
@@ -2785,8 +2766,9 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				start = data + start_offset;
 				c = data + c_offset;
 			}
-			strlcpy(start, expbuf, len);
-			strlcat(data, tbuf, len);
+			if (strlcpy(start, expbuf, len) >= len ||
+			    strlcat(data, tbuf, len) >= len)
+				fatal("rcs_expand_keywords: string truncated");
 			xfree(tbuf);
 			i += strlen(expbuf);
 		}
@@ -2954,7 +2936,7 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 
 	if (!(expmode & RCS_KWEXP_NONE)) {
 		if ((rdp = rcs_findrev(rf, rev)) == NULL)
-		    fatal("could not fetch revision");
+			fatal("could not fetch revision");
 		cvs_buf_putc(bp, '\0');
 		len = cvs_buf_len(bp);
 		tbuf = cvs_buf_release(bp);
@@ -2966,248 +2948,3 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 	}
 	return (bp);
 }
-
-#if !defined(RCSPROG)
-
-static char *month_tab[] = {
-	"Jan",
-	"Feb",
-	"Mar",
-	"Apr",
-	"May",
-	"Jun",
-	"Jul",
-	"Aug",
-	"Sep",
-	"Oct",
-	"Nov",
-	"Dec"
-};
-
-void
-rcs_kflag_usage(void)
-{
-	(void)fprintf(stderr, "Valid expansion modes include:\n"
-	    "\t-kkv\tGenerate keywords using the default form.\n"
-	    "\t-kkvl\tLike -kkv, except locker's name inserted.\n"
-	    "\t-kk\tGenerate only keyword names in keyword strings.\n"
-	    "\t-kv\tGenerate only keyword values in keyword strings.\n"
-	    "\t-ko\tGenerate old keyword string "
-	    "(no changes from checked in file).\n"
-	    "\t-kb\tGenerate binary file unmodified (merges not allowed).\n");
-}
-
-/*
- * Checkout a certain revision <rev> of RCS file <rf> to either standard
- * output when running in server mode, or to <fpath> when running in local mode.
- *
- * If type is CHECKOUT_REV_MERGED we have an extra argument, which
- * is the buffer containing the merged file.
- *
- * If type is CHECKOUT_REV_REMOVED, the file has been removed and we
- * need to do the same thing.
- */
-int
-cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
-    int local, int type, ...)
-{
-	BUF *bp;
-	int l, ret, fsize;
-	char timebuf[32], entry[MAXPATHLEN], copyfile[MAXPATHLEN];
-	char *content, *repo, buf[MAXPATHLEN], modestr[16];
-	struct cvsroot *root;
-	struct cvs_ent *ent;
-	va_list ap;
-	time_t rcstime;
-	struct timeval tv[2];
-	struct tm *tp;
-	RCSNUM *oldrev;
-
-	bp = NULL;
-	ret = -1;
-	content = NULL;
-	oldrev = NULL;
-
-	if (type != CHECKOUT_REV_MERGED && type != CHECKOUT_REV_REMOVED) {
-		/* fetch the contents of the revision */
-		if ((bp = rcs_getrev(rf, rev)) == NULL) {
-			cvs_log(LP_ERR, "revision '%s' not found in file '%s'",
-			    rcsnum_tostr(rev, buf, sizeof(buf)), fpath);
-			goto out;
-		}
-		bp = rcs_kwexp_buf(bp, rf, rev);
-	} else if (type != CHECKOUT_REV_REMOVED) {
-		va_start(ap, type);
-		bp = va_arg(ap, BUF *);
-		va_end(ap);
-	}
-
-	if (type == CHECKOUT_REV_CREATED)
-		rcstime = rcs_rev_getdate(rf, rev);
-	else if (type == CHECKOUT_REV_MERGED ||
-	    type == CHECKOUT_REV_UPDATED) {
-		time(&rcstime);
-		if ((rcstime = cvs_hack_time(rcstime, 1)) < 0)
-			goto out;
-	}
-
-	if (type == CHECKOUT_REV_CREATED ||
-	    type == CHECKOUT_REV_MERGED ||
-	    type == CHECKOUT_REV_UPDATED) {
-		ctime_r(&rcstime, timebuf);
-		l = strlen(timebuf);
-		if (l > 0 && timebuf[l - 1] == '\n')
-			timebuf[--l] = '\0';
-
-		l = snprintf(entry, sizeof(entry), "/%s/%s/%s/%s/", cf->cf_name,
-		    rcsnum_tostr(rev, buf, sizeof(buf)),
-		    (local == 1) ? timebuf : "",
-		    (type == CHECKOUT_REV_MERGED) ? "+=" : "");
-		if (l == -1 || l >= (int)sizeof(buf))
-			goto out;
-	}
-
-	if (type == CHECKOUT_REV_MERGED) {
-		oldrev = rcsnum_alloc();
-		rcsnum_cpy(rev, oldrev, 0);
-
-		if (oldrev->rn_id[oldrev->rn_len - 1] <= 0)
-			goto out;
-		oldrev = rcsnum_dec(oldrev);
-
-		l = snprintf(copyfile, sizeof(copyfile), ".#%s.%s",
-		    cf->cf_name, rcsnum_tostr(oldrev, buf, sizeof(buf)));
-		if (l == -1 || l >= (int)sizeof(copyfile))
-			goto out;
-	}
-
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
-
-	/*
-	 * In local mode, just copy the entire contents to fpath.
-	 * In server mode, we need to send it to the client together with
-	 * some responses.
-	 */
-	if (local) {
-		l = 0;
-		if (cf->cf_entry == NULL) {
-			l = 1;
-			cf->cf_entry = cvs_ent_open(cf->cf_dir, O_RDWR);
-			if (cf->cf_entry == NULL) {
-				cvs_log(LP_ERR, "failed to open Entry "
-				    "file '%s'", cf->cf_dir);
-				goto out;
-			}
-		}
-
-		cvs_ent_remove(cf->cf_entry, cf->cf_name, 1);
-		if (type != CHECKOUT_REV_REMOVED) {
-			cvs_ent_addln(cf->cf_entry, entry);
-			ent = cvs_ent_get(cf->cf_entry, cf->cf_name);
-			ent->processed = 1;
-		}
-
-		if (l == 1)
-			cvs_ent_close(cf->cf_entry);
-
-		switch (type) {
-		case CHECKOUT_REV_REMOVED:
-			if (cvs_unlink(fpath) < 0)
-				goto out;
-			break;
-		case CHECKOUT_REV_MERGED:
-			/* XXX move the old file when merging */
-		case CHECKOUT_REV_UPDATED:
-		case CHECKOUT_REV_CREATED:
-			cvs_buf_write(bp, fpath, cf->cf_mode);
-			/*
-			 * correct the time first
-			 */
-			if ((rcstime = cvs_hack_time(rcstime, 0)) == 0)
-				goto out;
-
-			tv[0].tv_sec = rcstime;
-			tv[0].tv_usec = 0;
-			tv[1] = tv[0];
-			if (utimes(fpath, tv) == -1)
-				cvs_log(LP_ERRNO, "failed to set timestamps");
-			break;
-		}
-	} else {
-		/* sanity */
-		if (cf->cf_type != DT_REG) {
-			cvs_log(LP_ERR, "cvs_checkout_rev: none DT_REG file");
-			goto out;
-		}
-
-		/*
-		 * if we are removing a file, we don't need this stuff.
-		 */
-		if (type != CHECKOUT_REV_REMOVED) {
-			if ((rcstime = cvs_hack_time(rcstime, 0)) == 0)
-				goto out;
-
-			tp = gmtime(&rcstime);
-			l = snprintf(timebuf, sizeof(timebuf),
-			    "%02d %s %d %02d:%02d:%02d -0000",
-			    tp->tm_mday, month_tab[tp->tm_mon],
-			    tp->tm_year + 1900, tp->tm_hour,
-			    tp->tm_min, tp->tm_sec);
-			if (l == -1 || l >= (int)sizeof(timebuf))
-				goto out;
-
-			fsize = cvs_buf_len(bp);
-			cvs_modetostr(cf->cf_mode, modestr, sizeof(modestr));
-			cvs_buf_putc(bp, '\0');
-			content = cvs_buf_release(bp);
-			bp = NULL;
-		}
-
-		if (type == CHECKOUT_REV_MERGED) {
-			printf("Copy-file %s/\n", (cf->cf_dir != NULL) ?
-			    cf->cf_dir : ".");
-			printf("%s/%s/%s\n", root->cr_dir, repo, cf->cf_name);
-			printf("%s\n", copyfile);
-		}
-
-		switch (type) {
-		case CHECKOUT_REV_MERGED:
-			printf("Merged");
-			break;
-		case CHECKOUT_REV_REMOVED:
-			printf("Removed");
-			break;
-		case CHECKOUT_REV_CREATED:
-			printf("Mod-time %s\n", timebuf);
-			printf("Created");
-			break;
-		default:
-			cvs_log(LP_ERR, "cvs_checkout_rev: bad type %d",
-			    type);
-			goto out;
-		}
-
-		printf(" %s/\n", (cf->cf_dir != NULL) ? cf->cf_dir : ".");
-		printf("%s/%s\n", repo, cf->cf_name);
-
-		if (type != CHECKOUT_REV_REMOVED) {
-			printf("%s\n", entry);
-			printf("%s\n%d\n%s", modestr, fsize, content);
-		}
-	}
-
-	ret = 0;
-
-out:
-	if (oldrev != NULL)
-		rcsnum_free(oldrev);
-	if (bp != NULL)
-		cvs_buf_free(bp);
-	if (content != NULL)
-		xfree(content);
-
-	return (ret);
-}
-
-#endif	/* !RCSPROG */

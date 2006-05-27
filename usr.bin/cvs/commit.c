@@ -1,271 +1,204 @@
-/*	$OpenBSD: commit.c,v 1.54 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: commit.c,v 1.55 2006/05/27 03:30:30 joris Exp $	*/
 /*
- * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved.
+ * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "includes.h"
 
-#include "buf.h"
 #include "cvs.h"
+#include "diff.h"
 #include "log.h"
 #include "proto.h"
 
+int	cvs_commit(int, char **);
+void	cvs_commit_local(struct cvs_file *);
+void	cvs_commit_check_conflicts(struct cvs_file *);
 
-static int	cvs_commit_init(struct cvs_cmd *, int, char **, int *);
-static int	cvs_commit_prepare(CVSFILE *, void *);
-static int	cvs_commit_remote(CVSFILE *, void *);
-static int	cvs_commit_local(CVSFILE *, void *);
-static int	cvs_commit_pre_exec(struct cvsroot *);
+static char *commit_diff_file(struct cvs_file *);
+
+struct	cvs_flisthead files_affected;
+int	conflicts_found;
+char	*logmsg;
 
 struct cvs_cmd cvs_cmd_commit = {
 	CVS_OP_COMMIT, CVS_REQ_CI, "commit",
-	{ "ci",  "com" },
+	{ "ci", "com" },
 	"Check files into the repository",
 	"[-flR] [-F logfile | -m msg] [-r rev] ...",
 	"F:flm:Rr:",
 	NULL,
-	CF_RECURSE | CF_IGNORE | CF_SORT,
-	cvs_commit_init,
-	cvs_commit_pre_exec,
-	cvs_commit_remote,
-	cvs_commit_local,
-	NULL,
-	NULL,
-	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
+	cvs_commit
 };
 
-static char *mfile = NULL;
-static char *rev = NULL;
-static char **commit_files = NULL;
-static int commit_fcount = 0;
-static int wantedstatus = 0;
-
-static int
-cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
+int
+cvs_commit(int argc, char **argv)
 {
 	int ch;
+	char *arg = ".";
+	struct cvs_recursion cr;
 
-	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
+	while ((ch = getopt(argc, argv, cvs_cmd_commit.cmd_opts)) != -1) {
 		switch (ch) {
-		case 'F':
-			mfile = optarg;
-			break;
 		case 'f':
-			/* XXX half-implemented */
-			cmd->file_flags &= ~CF_RECURSE;
+			break;
+		case 'F':
 			break;
 		case 'l':
-			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'm':
-			cvs_msg = xstrdup(optarg);
-			break;
-		case 'R':
-			cmd->file_flags |= CF_RECURSE;
+			logmsg = xstrdup(optarg);
 			break;
 		case 'r':
-			rev = optarg;
+			break;
+		case 'R':
 			break;
 		default:
-			return (CVS_EX_USAGE);
+			fatal("%s", cvs_cmd_commit.cmd_synopsis);
 		}
 	}
 
-	if (cvs_msg != NULL && mfile != NULL) {
-		cvs_log(LP_ERR, "the -F and -m flags are mutually exclusive");
-		return (CVS_EX_USAGE);
-	}
+	argc -= optind;
+	argv += optind;
 
-	if (mfile != NULL)
-		cvs_msg = cvs_logmsg_open(mfile);
+	if (logmsg == NULL)
+		fatal("please use -m to specify a log message for now");
 
-	*arg = optind;
+	TAILQ_INIT(&files_affected);
+	conflicts_found = 0;
 
-	commit_files = (argv + optind);
-	commit_fcount = (argc - optind);
+	cr.enterdir = NULL;
+	cr.leavedir = NULL;
+	cr.local = cvs_commit_check_conflicts;
+	cr.remote = NULL;
+
+	if (argc > 0)
+		cvs_file_run(argc, argv, &cr);
+	else
+		cvs_file_run(1, &arg, &cr);
+
+	if (conflicts_found != 0)
+		fatal("%d conflicts found, please correct these first",
+		    conflicts_found);
+
+	cr.local = cvs_commit_local;
+	cvs_file_walklist(&files_affected, &cr);
+	cvs_file_freelist(&files_affected);
 
 	return (0);
 }
 
-int
-cvs_commit_pre_exec(struct cvsroot *root)
+void
+cvs_commit_check_conflicts(struct cvs_file *cf)
 {
-	CVSFILE *cfp;
-	CVSFILE *tmp;
-	int ret, i, flags = CF_RECURSE | CF_IGNORE | CF_SORT;
-	struct cvs_flist added, modified, removed, *cl[3];
-	int stattype[] = { CVS_FST_ADDED, CVS_FST_MODIFIED, CVS_FST_REMOVED };
-
-	SIMPLEQ_INIT(&added);
-	SIMPLEQ_INIT(&modified);
-	SIMPLEQ_INIT(&removed);
-
-	cl[0] = &added;
-	cl[1] = &modified;
-	cl[2] = &removed;
-
-	if ((tmp = cvs_file_loadinfo(".", CF_NOFILES, NULL, NULL, 1)) == NULL)
-		return (CVS_EX_DATA);
+	cvs_log(LP_TRACE, "cvs_commit_check_conflicts(%s)", cf->file_path);
 
 	/*
-	 * Obtain the file lists for the logmessage.
+	 * cvs_file_classify makes the noise for us
+	 * XXX - we want that?
 	 */
-	for (i = 0; i < 3; i++) {
-		wantedstatus = stattype[i];
-		if (commit_fcount != 0) {
-			ret = cvs_file_getspec(commit_files, commit_fcount,
-			    flags, cvs_commit_prepare, cl[i], NULL);
-		} else {
-			ret = cvs_file_get(".", flags, cvs_commit_prepare,
-			    cl[i], NULL);
-		}
+	cvs_file_classify(cf);
 
-		if (ret != CVS_EX_OK) {
-			cvs_file_free(tmp);
-			return (CVS_EX_DATA);
-		}
-	}
+	if (cf->file_status == FILE_CONFLICT ||
+	    cf->file_status == FILE_LOST ||
+	    cf->file_status == FILE_UNLINK)
+		conflicts_found++;
 
-	/*
-	 * If we didn't catch any file, don't call the editor.
-	 */
-	if (SIMPLEQ_EMPTY(&added) && SIMPLEQ_EMPTY(&modified) &&
-	    SIMPLEQ_EMPTY(&removed)) {
-		cvs_file_free(tmp);
-		return (0);
-	}
-
-	/*
-	 * Fetch the log message for real, with all the files.
-	 */
-	if (cvs_msg == NULL)
-		cvs_msg = cvs_logmsg_get(tmp->cf_name, &added, &modified,
-		    &removed);
-
-	cvs_file_free(tmp);
-
-	/* free the file lists */
-	for (i = 0; i < 3; i++) {
-		while (!SIMPLEQ_EMPTY(cl[i])) {
-			cfp = SIMPLEQ_FIRST(cl[i]);
-			SIMPLEQ_REMOVE_HEAD(cl[i], cf_list);
-			cvs_file_free(cfp);
-		}
-	}
-
-	if (cvs_msg == NULL)
-		return (CVS_EX_DATA);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_logmsg_send(root, cvs_msg);
-
-		if (rev != NULL) {
-			cvs_sendarg(root, "-r", 0);
-			cvs_sendarg(root, rev, 0);
-		}
-	}
-
-	return (0);
+	if (cf->file_status == FILE_ADDED ||
+	    cf->file_status == FILE_REMOVED ||
+	    cf->file_status == FILE_MODIFIED)
+		cvs_file_get(cf->file_path, &files_affected);
 }
 
-/*
- * cvs_commit_prepare()
- *
- * Examine the file <cf> to see if it will be part of the commit, in which
- * case it gets added to the list passed as second argument.
- */
-int
-cvs_commit_prepare(CVSFILE *cf, void *arg)
+void
+cvs_commit_local(struct cvs_file *cf)
 {
-	CVSFILE *copy;
-	struct cvs_flist *clp = (struct cvs_flist *)arg;
+	BUF *b;
+	char *d, *f, rbuf[16];
 
-	if (cf->cf_type == DT_REG && cf->cf_cvstat == wantedstatus) {
-		copy = cvs_file_copy(cf);
-		if (copy == NULL)
-			return (CVS_EX_DATA);
+	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
+	cvs_file_classify(cf);
 
-		SIMPLEQ_INSERT_TAIL(clp, copy, cf_list);
-	}
+	rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
 
-	return (0);
+	cvs_printf("Checking in %s:\n", cf->file_path);
+	cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
+	cvs_printf("old revision: %s; ", rbuf);
+
+	d = commit_diff_file(cf);
+
+	if ((b = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		fatal("cvs_commit_local: failed to load file");
+
+	cvs_buf_putc(b, '\0');
+	f = cvs_buf_release(b);
+
+	if (rcs_deltatext_set(cf->file_rcs, cf->file_rcs->rf_head, d) == -1)
+		fatal("cvs_commit_local: failed to set delta");
+
+	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, logmsg, -1, NULL) == -1)
+		fatal("cvs_commit_local: failed to add new revision");
+
+	if (rcs_deltatext_set(cf->file_rcs, cf->file_rcs->rf_head, f) == -1)
+		fatal("cvs_commit_local: failed to set new HEAD delta");
+
+	xfree(f);
+	xfree(d);
+
+	rcs_write(cf->file_rcs);
+
+	rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+	cvs_printf("new revision: %s\n", rbuf);
+
+	(void)unlink(cf->file_path);
+	(void)close(cf->fd);
+	cf->fd = -1;
+	cvs_checkout_file(cf, cf->file_rcs->rf_head, 0);
+
+	cvs_printf("done\n");
+
 }
 
-
-/*
- * cvs_commit_remote()
- *
- * Commit a single file.
- */
-int
-cvs_commit_remote(CVSFILE *cf, void *arg)
+static char *
+commit_diff_file(struct cvs_file *cf)
 {
-	char fpath[MAXPATHLEN];
-	struct cvsroot *root;
+	char*delta,  *p1, *p2;
+	BUF *b1, *b2, *b3;
 
-	root = CVS_DIR_ROOT(cf);
+	if ((b1 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		fatal("commit_diff_file: failed to load '%s'", cf->file_path);
 
-	if (cf->cf_type == DT_DIR) {
-		if (cf->cf_cvstat != CVS_FST_UNKNOWN)
-			cvs_senddir(root, cf);
-		return (0);
-	}
+	if ((b2 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
+		fatal("commit_diff_file: failed to load HEAD for '%s'",
+		    cf->file_path);
 
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
+	if ((b3 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
+		fatal("commit_diff_file: failed to create diff buf");
 
-	if (cf->cf_cvstat == CVS_FST_ADDED ||
-	    cf->cf_cvstat == CVS_FST_MODIFIED ||
-	    cf->cf_cvstat == CVS_FST_REMOVED) {
-		cvs_sendentry(root, cf);
+	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+	cvs_buf_write_stmp(b1, p1, 0600, NULL);
+	cvs_buf_free(b1);
 
-		/* if it's removed, don't bother sending a
-		 * Modified request together with the file its
-		 * contents.
-		 */
-		if (cf->cf_cvstat == CVS_FST_REMOVED)
-			return (0);
+	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+	cvs_buf_write_stmp(b2, p2, 0600, NULL);
+	cvs_buf_free(b2);
 
-		cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
-		cvs_sendfile(root, fpath);
-	}
+	diff_format = D_RCSDIFF;
+	if (cvs_diffreg(p1, p2, b3) == D_ERROR)
+		fatal("commit_diff_file: failed to get RCS patch");
 
-	return (0);
-}
-
-static int
-cvs_commit_local(CVSFILE *cf, void *arg)
-{
-	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
-
-	if (cf->cf_type == DT_DIR) {
-		if (verbosity > 1)
-			cvs_log(LP_NOTICE, "Examining %s", cf->cf_name);
-		return (0);
-	}
-
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
-	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
-
-	return (0);
+	cvs_buf_putc(b3, '\0');
+	delta = cvs_buf_release(b3);
+	return (delta);
 }

@@ -1,15 +1,13 @@
-#	$OpenBSD: Makefile,v 1.21 2006/04/02 02:42:33 ray Exp $
+#	$OpenBSD: Makefile,v 1.22 2006/05/27 03:30:30 joris Exp $
 
-PROG=	cvs
-MAN=	cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
+PROG=	opencvs
+MAN=   cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
 CPPFLAGS+=-I${.CURDIR}
 
-SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c \
-	compress.c date.y diff.c diff3.c edit.c entries.c fatal.c file.c \
-	getlog.c history.c hist.c import.c init.c log.c logmsg.c proto.c \
-	rcs.c rcsnum.c rcstime.c release.c remove.c req.c resp.c root.c \
-	server.c status.c tag.c update.c util.c version.c watch.c \
-	worklist.c xmalloc.c
+SRCS=	cvs.c commit.c checkout.c buf.c cmd.c date.y diff.c diff3.c \
+	diff_internals.c entries.c fatal.c file.c log.c repository.c \
+	rcs.c rcsnum.c rcstime.c root.c status.c worklist.c util.c \
+	update.c xmalloc.c
 
 CFLAGS+=-Wall
 CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes

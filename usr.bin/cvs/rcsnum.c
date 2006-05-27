@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.36 2006/04/14 22:33:15 niallo Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.37 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,6 @@
 #include "cvs.h"
 #include "log.h"
 #include "rcs.h"
-
 
 static void	 rcsnum_setsize(RCSNUM *, u_int);
 static char	*rcsnum_itoa(u_int16_t, char *, size_t);
@@ -102,6 +101,7 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 {
 	u_int i;
 	char tmp[8];
+	size_t len;
 
 	if (nump == NULL || nump->rn_len == 0) {
 		buf[0] = '\0';
@@ -110,9 +110,14 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 
 	strlcpy(buf, rcsnum_itoa(nump->rn_id[0], buf, blen), blen);
 	for (i = 1; i < nump->rn_len; i++) {
-		strlcat(buf, ".", blen);
-		strlcat(buf, rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp)),
-		    blen);
+		len = strlcat(buf, ".", blen);
+		if (len >= blen)
+			fatal("rcsnum_tostr: overflow 1");
+
+		len = strlcat(buf,
+		    rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp)), blen);
+		if (len >= blen)
+			fatal("rcsnum_tostr: overflow 2");
 	}
 
 	return (buf);

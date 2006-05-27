@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.4 2006/03/27 06:13:51 pat Exp $	*/
+/*	$OpenBSD: util.h,v 1.5 2006/05/27 03:30:31 joris Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -27,15 +27,12 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#if !defined(RCSPROG)
-
-
-int	  cvs_readrepo(const char *, char *, size_t);
+void	  cvs_get_repo(const char *, char *, size_t);
 void	  cvs_modetostr(mode_t, char *, size_t);
 void	  cvs_strtomode(const char *, mode_t *);
 void	  cvs_splitpath(const char *, char *, size_t, char **);
-int	  cvs_mkadmin(const char *, const char *, const char *, char *,
-		char *, int);
+void	  cvs_mkadmin(const char *, const char *, const char *);
+void	  cvs_mkpath(const char *);
 int	  cvs_cksum(const char *, char *, size_t);
 int	  cvs_exec(int, char **, int []);
 int	  cvs_getargv(const char *, char **, int);
@@ -43,17 +40,12 @@ int	  cvs_chdir(const char *, int);
 int	  cvs_rename(const char *, const char *);
 int	  cvs_unlink(const char *);
 int	  cvs_rmdir(const char *);
-int	  cvs_create_dir(const char *, int, char *, char *);
-char	 *cvs_rcs_getpath(CVSFILE *, char *, size_t);
 char	**cvs_makeargv(const char *, int *);
 void	  cvs_freeargv(char **, int);
 void	  cvs_write_tagfile(char *, char *, int);
 void	  cvs_parse_tagfile(char **, char **, int *);
 size_t	  cvs_path_cat(const char *, const char *, char *, size_t);
 time_t	  cvs_hack_time(time_t, int);
-
-#endif	/* !RCSPROG */
-
 
 struct cvs_line {
 	char			*l_line;
