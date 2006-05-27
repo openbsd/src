@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.152 2006/05/23 13:32:01 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.153 2006/05/27 19:58:13 dlg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -120,6 +120,8 @@ QLogic ISP-1020, ISP-1040, and ISP-2100
 and
 .Tn FibreChannel
 interfaces.
+.It Xr mpi 4
+LSI Logic Fusion-MPT Message Passing Interface.
 .It Xr mpt 4
 LSI Fusion-MPT
 .Tn SCSI/Fibre Channel
@@ -576,6 +578,7 @@ driver.
 .Xr lofn 4 ,
 .Xr maestro 4 ,
 .\" no manpage .Xr mpcpcibr 4
+.Xr mpi 4 ,
 .Xr mpt 4 ,
 .Xr ne 4 ,
 .Xr neo 4 ,
