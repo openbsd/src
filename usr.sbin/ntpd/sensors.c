@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.5 2006/05/27 22:22:47 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.6 2006/05/27 22:23:49 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -34,8 +34,9 @@
 #define SENSORS_MAX	255
 #define	_PATH_DEV_HOTPLUG               "/dev/hotplug"
 
-void	sensor_probe(int);
-void	sensor_add(struct sensor *);
+void			 sensor_probe(int);
+void			 sensor_add(struct sensor *);
+struct ntp_sensor	*sensor_byid(int);
 
 struct ntpd_conf *conf;
 
@@ -115,6 +116,18 @@ sensor_remove(struct ntp_sensor *s)
 	TAILQ_REMOVE(&conf->ntp_sensors, s, entry);
 	free(s->device);
 	free(s);
+}
+
+struct ntp_sensor *
+sensor_byid(int id)
+{
+	struct ntp_sensor	*s;
+
+	TAILQ_FOREACH(s, &conf->ntp_sensors, entry)
+		if (s->sensorid == id)
+			return(s);
+
+	return (NULL);
 }
 
 int
