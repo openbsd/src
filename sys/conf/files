@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.370 2006/04/28 08:34:31 pedro Exp $
+#	$OpenBSD: files,v 1.371 2006/05/27 14:18:01 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -297,7 +297,8 @@ file	dev/ic/tropic.c			tr
 # 8250/16[45]50-based "com" ports
 device	com: tty
 device	pccom: tty			# XXX
-file	dev/ic/com.c			com needs-flag
+file	dev/ic/com.c			com & (com | com_cardbus | com_gsc |
+					       com_isapnp)	needs-flag
 file	dev/ic/com_subr.c		com | pccom
 
 # PC-like keyboard controller
