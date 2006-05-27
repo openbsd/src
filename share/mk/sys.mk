@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.48 2006/04/01 05:53:39 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.49 2006/05/27 23:01:21 deraadt Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -193,6 +193,11 @@ CTAGS?=		/usr/bin/ctags
 	${LEX.l} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} lex.yy.c 
 	rm -f lex.yy.c
+.l.ln:
+	${LEX.l} ${.IMPSRC}
+	mv lex.yy.c ${.TARGET:R}.c
+	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} ${CPPFLAGS:M-[IDU]*} -i ${.TARGET:R}.c
+	rm -f ${.TARGET:R}.c
 
 # Yacc
 .y:
@@ -206,6 +211,11 @@ CTAGS?=		/usr/bin/ctags
 	${YACC.y} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} y.tab.c
 	rm -f y.tab.c
+.y.ln:
+	${YACC.y} ${.IMPSRC}
+	mv y.tab.c ${.TARGET:R}.c
+	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} ${CPPFLAGS:M-[IDU]*} -i ${.TARGET:R}.c
+	rm -f ${.TARGET:R}.c
 
 # Shell
 .sh:

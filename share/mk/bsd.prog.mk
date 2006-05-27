@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.46 2005/09/16 21:23:21 espie Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.47 2006/05/27 23:01:21 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -8,7 +8,7 @@
 
 .include <bsd.own.mk>
 
-.SUFFIXES: .out .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
+.SUFFIXES: .out .ln .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 .if ${WARNINGS:L} == "yes"
 CFLAGS+=       ${CDIAGFLAGS}
@@ -81,7 +81,7 @@ LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 SRCS?=	${PROG}.c
 .  if !empty(SRCS:N*.h:N*.sh)
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/g}
-LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln} ${SRCS:M*.y:.y=.ln} ${SRCS:M*.l:.l=.ln}
 .  endif
 
 .  if defined(OBJS) && !empty(OBJS)
