@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.51 2006/05/27 18:20:59 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.52 2006/05/27 18:26:45 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
-void	 pr_rthdr(int, int);
-void	 p_rtentry(struct rt_msghdr *, int);
+void	 pr_rthdr(int);
+void	 p_rtentry(struct rt_msghdr *);
 void	 p_pfkentry(struct sadb_msg *);
 void	 pr_family(int);
 void	 p_encap(struct sockaddr *, struct sockaddr *, int);
@@ -118,7 +118,7 @@ void	 index_pfk(struct sadb_msg *, void **);
  * Print routing tables.
  */
 void
-p_rttables(int af, int Aflag)
+p_rttables(int af)
 {
 	struct rt_msghdr *rtm;
 	struct sadb_msg *msg;
@@ -151,7 +151,7 @@ p_rttables(int af, int Aflag)
 			sa = (struct sockaddr *)(rtm + 1);
 			if (af != AF_UNSPEC && sa->sa_family != af)
 				continue;
-			p_rtentry(rtm, Aflag);
+			p_rtentry(rtm);
 		}
 		free(buf);
 		buf = NULL;
@@ -206,10 +206,8 @@ p_rttables(int af, int Aflag)
  * Print header for routing table columns.
  */
 void
-pr_rthdr(int af, int Aflag)
+pr_rthdr(int af)
 {
-	if (Aflag)
-		printf("%-*.*s ", PLEN, PLEN, "Address");
 	if (af != PF_KEY)
 		printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
 		    WID_DST(af), WID_DST(af), "Destination",
@@ -240,7 +238,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
  * Print a routing table entry.
  */
 void
-p_rtentry(struct rt_msghdr *rtm, int Aflag)
+p_rtentry(struct rt_msghdr *rtm)
 {
 	static int	 old_af = -1;
 	struct sockaddr	*sa = (struct sockaddr *)(rtm + 1);
@@ -253,7 +251,7 @@ p_rtentry(struct rt_msghdr *rtm, int Aflag)
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
 		pr_family(sa->sa_family);
-		pr_rthdr(sa->sa_family, Aflag);
+		pr_rthdr(sa->sa_family);
 	}
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
@@ -290,7 +288,7 @@ p_pfkentry(struct sadb_msg *msg)
 	void			*headers[SADB_EXT_MAX + 1];
 
 	if (!old) {
-		pr_rthdr(PF_KEY, 0);
+		pr_rthdr(PF_KEY);
 		old++;
 	}
 
