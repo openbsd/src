@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.1 2006/05/27 19:03:55 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.2 2006/05/27 19:37:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -95,7 +95,6 @@ int			mpi_iocinit(struct mpi_softc *);
 int			mpi_iocfacts(struct mpi_softc *);
 int			mpi_portfacts(struct mpi_softc *);
 void			mpi_portfacts_done(struct mpi_ccb *, void *, paddr_t);
-int			mpi_oportfacts(struct mpi_softc *);
 int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *, void *, paddr_t);
 int			mpi_portenable(struct mpi_softc *);
@@ -1446,64 +1445,3 @@ mpi_portenable_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 	mpi_put_ccb(sc, ccb);
 }
 
-int
-mpi_oportfacts(struct mpi_softc *sc)
-{
-	struct mpi_msg_portfacts_request	pfq;
-	struct mpi_msg_portfacts_reply		pfp;
-
-	bzero(&pfq, sizeof(pfq));
-	bzero(&pfp, sizeof(pfp));
-
-	pfq.function = MPI_FUNCTION_PORT_FACTS;
-	pfq.chain_offset = 0;
-	pfq.msg_flags = 0;
-	pfq.port_number = 0;
-	pfq.msg_context = htole32(0xdeadbeef);
-
-	if (mpi_handshake_send(sc, &pfq, dwordsof(pfq)) != 0) {
-		DPRINTF("%s: %s send failed\n", DEVNAME(sc), __func__);
-		return (1);
-	}
-
-	if (mpi_handshake_recv(sc, &pfp, dwordsof(pfp)) != 0) {
-		DPRINTF("%s: %s recv failed\n", DEVNAME(sc), __func__);
-		return (1);
-	}
-
-#ifdef MPI_DEBUG
-	printf("%s:  function: 0x%02x msg_length: %d\n", DEVNAME(sc),
-	    pfp.function, pfp.msg_length);
-
-	printf("%s:  msg_flags: 0x%02x port_number: %d\n", DEVNAME(sc),
-	    pfp.msg_flags, pfp.port_number);
-
-	printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-	    letoh32(pfp.msg_context));
-
-	printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(pfp.ioc_status));
-
-	printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(pfp.ioc_loginfo));
-
-	printf("%s:  max_devices: %d port_type: 0x%02x\n", DEVNAME(sc),
-	    letoh16(pfp.max_devices), pfp.port_type);
-
-	printf("%s:  protocol_flags: 0x%04x port_scsi_id: %d\n",
-	    DEVNAME(sc), letoh16(pfp.protocol_flags),
-	    letoh16(pfp.port_scsi_id));
-
-	printf("%s:  max_persistent_ids: %d max_posted_cmd_buffers: %d\n",
-	    DEVNAME(sc), letoh16(pfp.max_persistent_ids),
-	    letoh16(pfp.max_posted_cmd_buffers));
-
-	printf("%s:  max_lan_buckets: %d\n", DEVNAME(sc),
-	    letoh16(pfp.max_lan_buckets));
-#endif /* MPI_DEBUG */
-
-	sc->sc_porttype = pfp.port_type;
-	sc->sc_target = letoh16(pfp.port_scsi_id);
-
-	return (0);
-}
