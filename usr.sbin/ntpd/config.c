@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.18 2005/05/11 15:12:35 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.19 2006/05/27 17:01:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,8 +167,21 @@ new_peer(void)
 	struct ntp_peer	*p;
 
 	if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
-		fatal("conf_main server calloc");
+		fatal("new_peer calloc");
 	p->id = ++maxid;
 
 	return (p);
+}
+
+struct ntp_conf_sensor *
+new_sensor(char *device)
+{
+	struct ntp_conf_sensor	*s;
+
+	if ((s = calloc(1, sizeof(struct ntp_conf_sensor))) == NULL)
+		fatal("new_sensor calloc");
+	if ((s->device = strdup(device)) == NULL)
+		fatal("new_sensor strdup");
+
+	return (s);
 }

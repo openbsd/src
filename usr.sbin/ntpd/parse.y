@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2006/05/26 01:06:12 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.27 2006/05/27 17:01:07 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,7 +62,7 @@ typedef struct {
 %}
 
 %token	LISTEN ON
-%token	SERVER SERVERS
+%token	SERVER SERVERS SENSOR
 %token	ERROR
 %token	<v.string>		STRING
 %type	<v.addr>		address
@@ -176,6 +176,13 @@ conf_main	: LISTEN ON address	{
 			free($2->name);
 			free($2);
 		}
+		| SENSOR STRING	{
+			struct ntp_conf_sensor	*s;
+
+			s = new_sensor($2);
+			free($2);
+			TAILQ_INSERT_TAIL(&conf->ntp_conf_sensors, s, entry);
+		}
 		;
 
 address		: STRING		{
@@ -229,6 +236,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "listen",		LISTEN},
 		{ "on",			ON},
+		{ "sensor",		SENSOR},
 		{ "server",		SERVER},
 		{ "servers",		SERVERS}
 	};
@@ -409,6 +417,7 @@ parse_config(const char *filename, struct ntpd_conf *xconf)
 	errors = 0;
 	TAILQ_INIT(&conf->listen_addrs);
 	TAILQ_INIT(&conf->ntp_peers);
+	TAILQ_INIT(&conf->ntp_conf_sensors);
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		log_warn("%s", filename);

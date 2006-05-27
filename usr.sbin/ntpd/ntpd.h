@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.63 2006/05/26 00:33:16 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.64 2006/05/27 17:01:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -134,15 +134,21 @@ struct ntp_sensor {
 	int				 sensorid;
 };
 
+struct ntp_conf_sensor {
+	TAILQ_ENTRY(ntp_conf_sensor)		 entry;
+	char					*device;
+};
+
 struct ntpd_conf {
-	TAILQ_HEAD(listen_addrs, listen_addr)	listen_addrs;
-	TAILQ_HEAD(ntp_peers, ntp_peer)		ntp_peers;
-	TAILQ_HEAD(ntp_sensors, ntp_sensor)	ntp_sensors;
-	struct ntp_status			status;
-	u_int8_t				listen_all;
-	u_int8_t				settime;
-	u_int8_t				debug;
-	u_int32_t				scale;
+	TAILQ_HEAD(listen_addrs, listen_addr)		listen_addrs;
+	TAILQ_HEAD(ntp_peers, ntp_peer)			ntp_peers;
+	TAILQ_HEAD(ntp_sensors, ntp_sensor)		ntp_sensors;
+	TAILQ_HEAD(ntp_conf_sensors, ntp_conf_sensor)	ntp_conf_sensors;	
+	struct ntp_status				status;
+	u_int8_t					listen_all;
+	u_int8_t					settime;
+	u_int8_t					debug;
+	u_int32_t					scale;
 };
 
 struct buf {
@@ -239,9 +245,10 @@ void	 priv_host_dns(char *, u_int32_t);
 int	 parse_config(const char *, struct ntpd_conf *);
 
 /* config.c */
-int		 host(const char *, struct ntp_addr **);
-int		 host_dns(const char *, struct ntp_addr **);
-struct ntp_peer	*new_peer(void);
+int			 host(const char *, struct ntp_addr **);
+int			 host_dns(const char *, struct ntp_addr **);
+struct ntp_peer		*new_peer(void);
+struct ntp_conf_sensor	*new_sensor(char *);
 
 /* ntp_msg.c */
 int	ntp_getmsg(struct sockaddr *, char *, ssize_t, struct ntp_msg *);

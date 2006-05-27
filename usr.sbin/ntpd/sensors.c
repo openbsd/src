@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.1 2006/05/26 00:33:16 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.2 2006/05/27 17:01:07 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -68,11 +68,20 @@ void
 sensor_add(struct ntpd_conf *conf, struct sensor *sensor)
 {
 	struct ntp_sensor	*s;
+	struct ntp_conf_sensor	*cs;
 
 	/* check wether it is already there */
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry)
 		if (!strcmp(s->device, sensor->device))
 			return;
+
+	/* check wether it is requested in the config file */
+	for (cs = TAILQ_FIRST(&conf->ntp_conf_sensors); cs != NULL &&
+	    strcmp(cs->device, sensor->device) && strcmp(cs->device, "*");
+	    cs = TAILQ_NEXT(cs, entry))
+		; /* nothing */
+	if (cs == NULL)
+		return;
 
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal("sensor_add calloc");
