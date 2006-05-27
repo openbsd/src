@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.138 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.139 2006/05/27 06:15:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -598,7 +598,7 @@ cvs_file_classify(struct cvs_file *cf)
 		if (state == NULL)
 			fatal("failed to get state for HEAD for %s",
 			    cf->file_path);
-		if (!strcmp(state, "dead"))
+		if (!strcmp(state, RCS_STATE_DEAD))
 			rcsdead = 1;
 	}
 
