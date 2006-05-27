@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.104 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.105 2006/05/27 05:20:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -337,6 +337,7 @@ void		 cvsroot_remove(struct cvsroot *);
 /* misc stuff */
 void	cvs_update_local(struct cvs_file *);
 void	cvs_update_enterdir(struct cvs_file *);
+void	cvs_update_leavedir(struct cvs_file *);
 int	cvs_checkout_file(struct cvs_file *, RCSNUM *, int);
 
 #endif

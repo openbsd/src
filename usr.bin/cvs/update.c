@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.59 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.60 2006/05/27 05:20:25 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include "proto.h"
 
 int	cvs_update(int, char **);
+int	prune_dirs = 0;
 
 struct cvs_cmd cvs_cmd_update = {
 	CVS_OP_UPDATE, CVS_REQ_UPDATE, "update",
@@ -62,6 +63,7 @@ cvs_update(int argc, char **argv)
 		case 'l':
 			break;
 		case 'P':
+			prune_dirs = 1;
 			break;
 		case 'p':
 			break;
@@ -81,7 +83,7 @@ cvs_update(int argc, char **argv)
 	argv += optind;
 
 	cr.enterdir = cvs_update_enterdir;
-	cr.leavedir = NULL;
+	cr.leavedir = cvs_update_leavedir;
 	cr.local = cvs_update_local;
 	cr.remote = NULL;
 
@@ -119,6 +121,88 @@ cvs_update_enterdir(struct cvs_file *cf)
 		cvs_ent_add(entlist, entry);
 		cvs_ent_close(entlist, ENT_SYNC);
 		xfree(entry);
+	}
+}
+
+void
+cvs_update_leavedir(struct cvs_file *cf)
+{
+	long base;
+	int nbytes;
+	int isempty;
+	size_t bufsize;
+	struct stat st;
+	struct dirent *dp;
+	char *buf, *ebuf, *cp;
+	struct cvs_ent *ent;
+	struct cvs_ent_line *line;
+	CVSENTRIES *entlist;
+
+	if (fstat(cf->fd, &st) == -1)
+		fatal("cvs_update_leavedir: %s", strerror(errno));
+
+	bufsize = st.st_size;
+	if (bufsize < st.st_blksize)
+		bufsize = st.st_blksize;
+
+	isempty = 1;
+	buf = xmalloc(bufsize);
+
+	if (lseek(cf->fd, SEEK_SET, 0) == -1)
+		fatal("cvs_update_leavedir: %s", strerror(errno));
+
+	while ((nbytes = getdirentries(cf->fd, buf, bufsize, &base)) > 0) {
+		ebuf = buf + nbytes;
+		cp = buf;
+
+		while (cp < ebuf) {
+			dp = (struct dirent *)cp;
+			if (!strcmp(dp->d_name, ".") ||
+			    !strcmp(dp->d_name, "..") ||
+			    dp->d_reclen == 0) {
+				cp += dp->d_reclen;
+				continue;
+			}
+
+			if (!strcmp(dp->d_name, CVS_PATH_CVSDIR)) {
+				entlist = cvs_ent_open(cf->file_path);
+				TAILQ_FOREACH(line, &(entlist->cef_ent),
+				    entries_list) {
+					ent = cvs_ent_parse(line->buf);
+
+					if (ent->ce_status == CVS_ENT_REMOVED) {
+						isempty = 0;
+						cvs_ent_free(ent);
+						cvs_ent_close(entlist,
+						    ENT_NOSYNC);
+						break;
+					}
+
+					cvs_ent_free(ent);
+				}
+				cvs_ent_close(entlist, ENT_NOSYNC);
+			} else {
+				isempty = 0;
+			}
+
+			if (isempty == 0)
+				break;
+
+			cp += dp->d_reclen;
+		}
+	}
+
+	if (nbytes == -1)
+		fatal("cvs_update_leavedir: %s", strerror(errno));
+
+	xfree(buf);
+
+	if (isempty == 1 && prune_dirs == 1) {
+		cvs_rmdir(cf->file_path);
+
+		entlist = cvs_ent_open(cf->file_wd);
+		cvs_ent_remove(entlist, cf->file_name);
+		cvs_ent_close(entlist, ENT_SYNC);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.53 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.54 2006/05/27 05:20:25 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,6 +25,8 @@
 int	cvs_checkout(int, char **);
 static void checkout_repository(const char *, const char *);
 
+extern int prune_dirs;
+
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_REQ_CO, "checkout",
 	{ "co", "get" },
@@ -45,6 +47,9 @@ cvs_checkout(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_checkout.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'P':
+			prune_dirs = 1;
+			break;
 		default:
 			fatal("%s", cvs_cmd_checkout.cmd_synopsis);
 		}
@@ -86,7 +91,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 	TAILQ_INIT(&dl);
 
 	cr.enterdir = cvs_update_enterdir;
-	cr.leavedir = NULL;
+	cr.leavedir = cvs_update_leavedir;
 	cr.local = cvs_update_local;
 	cr.remote = NULL;
 
