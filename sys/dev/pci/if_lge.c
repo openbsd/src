@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.41 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.42 2006/05/27 20:42:51 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -158,14 +158,6 @@ void lge_reset(struct lge_softc *);
 int lge_list_rx_init(struct lge_softc *);
 int lge_list_tx_init(struct lge_softc *);
 
-#ifdef LGE_USEIOSPACE
-#define LGE_RES			SYS_RES_IOPORT
-#define LGE_RID			LGE_PCI_LOIO
-#else
-#define LGE_RES			SYS_RES_MEMORY
-#define LGE_RID			LGE_PCI_LOMEM
-#endif
-
 #ifdef LGE_DEBUG
 #define DPRINTF(x)	if (lgedebug) printf x
 #define DPRINTFN(n,x)	if (lgedebug >= (n)) printf x
@@ -176,7 +168,7 @@ int	lgedebug = 0;
 #endif
 
 const struct pci_matchid lge_devices[] = {
-	{ PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001 },
+	{ PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001 }
 };
 
 #define LGE_SETBIT(sc, reg, x)				\
