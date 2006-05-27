@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.26 2005/12/22 17:23:27 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.27 2006/05/27 22:37:03 beck Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.26 2005/12/22 17:23:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.27 2006/05/27 22:37:03 beck Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,28 +217,12 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-#ifdef sun
-#include <sundev/tmreg.h>
-#include <sundev/arreg.h>
-#endif
-
-#ifdef tahoe
-#include <tahoe/vba/cyreg.h>
-#endif
-
 struct tape_desc {
 	short	t_type;		/* type of magtape device */
 	char	*t_name;	/* printing name */
 	char	*t_dsbits;	/* "drive status" register */
 	char	*t_erbits;	/* "error" register */
 } tapes[] = {
-#ifdef sun
-	{ MT_ISCPC,	"TapeMaster",	TMS_BITS,	0 },
-	{ MT_ISAR,	"Archive",	ARCH_CTRL_BITS,	ARCH_BITS },
-#endif
-#ifdef tahoe
-	{ MT_ISCY,	"cipher",	CYS_BITS,	CYCW_BITS },
-#endif
 #define SCSI_DS_BITS	"\20\5WriteProtect\2Mounted"
 	{ 0x7,		"SCSI",		SCSI_DS_BITS,	"76543210" },
 	{ 0 }
