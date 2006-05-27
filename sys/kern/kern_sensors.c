@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.8 2006/03/12 13:48:32 dlg Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.9 2006/05/27 23:51:27 mk Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/time.h>
 
 #include <sys/sensors.h>
+#include "hotplug.h"
 
 int			sensors_count = 0;
 SLIST_HEAD(, sensor)	sensors_list = SLIST_HEAD_INITIALIZER(&sensors_list);
@@ -66,6 +67,10 @@ sensor_add(struct sensor *sens)
 	}
 	sensors_count++;
 	splx(s);
+
+#if NHOTPLUG > 0
+	hotplug_device_attach(DV_SENSOR, sens->device);
+#endif
 }
 
 void
@@ -77,6 +82,10 @@ sensor_del(struct sensor *sens)
 	sensors_count--;
 	SLIST_REMOVE(&sensors_list, sens, sensor, list);
 	splx(s);
+
+#if NHOTPLUG > 0
+	hotplug_device_detach(DV_SENSOR, sens->device);
+#endif
 }
 
 struct sensor *
