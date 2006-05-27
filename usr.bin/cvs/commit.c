@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.55 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.56 2006/05/27 06:16:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -126,11 +126,14 @@ cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b;
 	char *d, *f, rbuf[16];
+	CVSENTRIES *entlist;
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
 	cvs_file_classify(cf);
 
-	rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+	if (cf->file_status == FILE_MODIFIED ||
+	    cf->file_status == FILE_REMOVED)
+		rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
 
 	cvs_printf("Checking in %s:\n", cf->file_path);
 	cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
@@ -138,8 +141,14 @@ cvs_commit_local(struct cvs_file *cf)
 
 	d = commit_diff_file(cf);
 
-	if ((b = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
-		fatal("cvs_commit_local: failed to load file");
+	if (cf->file_status == FILE_REMOVED) {
+		b = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		if (b == NULL)
+			fatal("cvs_commit_local: failed to get HEAD");
+	} else if (cf->file_status == FILE_MODIFIED) {
+		if ((b = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+			fatal("cvs_commit_local: failed to load file");
+	}
 
 	cvs_buf_putc(b, '\0');
 	f = cvs_buf_release(b);
@@ -156,15 +165,33 @@ cvs_commit_local(struct cvs_file *cf)
 	xfree(f);
 	xfree(d);
 
+	if (cf->file_status == FILE_REMOVED) {
+		if (rcs_state_set(cf->file_rcs,
+		    cf->file_rcs->rf_head, RCS_STATE_DEAD) == -1)
+			fatal("cvs_commit_local: failed to set state");
+	}
+
 	rcs_write(cf->file_rcs);
 
-	rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+	if (cf->file_status == FILE_REMOVED) {
+		strlcpy(rbuf, "Removed", sizeof(rbuf));
+	} else if (cf->file_status == FILE_MODIFIED) {
+		rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+	}
+
 	cvs_printf("new revision: %s\n", rbuf);
 
 	(void)unlink(cf->file_path);
 	(void)close(cf->fd);
 	cf->fd = -1;
-	cvs_checkout_file(cf, cf->file_rcs->rf_head, 0);
+
+	if (cf->file_status != FILE_REMOVED) {
+		cvs_checkout_file(cf, cf->file_rcs->rf_head, 0);
+	} else {
+		entlist = cvs_ent_open(cf->file_wd);
+		cvs_ent_remove(entlist, cf->file_name);
+		cvs_ent_close(entlist, ENT_SYNC);
+	}
 
 	cvs_printf("done\n");
 
@@ -176,8 +203,16 @@ commit_diff_file(struct cvs_file *cf)
 	char*delta,  *p1, *p2;
 	BUF *b1, *b2, *b3;
 
-	if ((b1 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
-		fatal("commit_diff_file: failed to load '%s'", cf->file_path);
+	if (cf->file_status == FILE_MODIFIED) {
+		if ((b1 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+			fatal("commit_diff_file: failed to load '%s'",
+			    cf->file_path);
+	} else if (cf->file_status == FILE_REMOVED) {
+		b1 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		if (b1 == NULL)
+			fatal("commit_diff_file: failed to load HEAD");
+		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcs->rf_head);
+	}
 
 	if ((b2 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
 		fatal("commit_diff_file: failed to load HEAD for '%s'",
