@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.247 2006/05/23 12:11:38 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.248 2006/05/27 15:43:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -76,7 +76,6 @@ int	parse_open(struct peer *);
 int	parse_update(struct peer *);
 int	parse_refresh(struct peer *);
 int	parse_notification(struct peer *);
-int	parse_keepalive(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, u_int16_t);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
 void	session_up(struct peer *);
@@ -164,8 +163,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
     struct network_head *net_l, struct filter_head *rules,
     struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2])
 {
-	int			 nfds, i, j, timeout;
-	int			 idx_peers, idx_listeners, idx_mrts;
+	int			 nfds, timeout;
+	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	pid_t			 pid;
 	time_t			 nextaction;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;

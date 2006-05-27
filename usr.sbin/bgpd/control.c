@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.50 2006/05/23 12:11:38 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.51 2006/05/27 15:43:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,7 @@ control_cleanup(const char *path)
 		unlink(path);
 }
 
-int
+unsigned int
 control_accept(int listenfd, int restricted)
 {
 	int			 connfd;
