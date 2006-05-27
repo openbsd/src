@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.125 2006/05/26 20:50:41 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.126 2006/05/27 10:03:15 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1514,12 +1514,11 @@ em_setup_interface(struct em_softc *sc)
 	if (sc->hw.mac_type != em_82573) {
 		ifp->if_hardmtu =
 			sc->hw.max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN;
-		ifp->if_capabilities |= IFCAP_JUMBO_MTU;
 	}
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* 
 	 * Specify the media types supported by this adapter and register

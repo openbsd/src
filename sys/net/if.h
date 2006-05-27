@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.80 2006/05/26 20:50:41 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.81 2006/05/27 10:03:15 brad Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -274,11 +274,10 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_VLAN_MTU		0x00000010	/* VLAN-compatible MTU */
 #define	IFCAP_VLAN_HWTAGGING	0x00000020	/* hardware VLAN tag support */
 #define	IFCAP_IPCOMP		0x00000040	/* can do IPcomp */
-#define	IFCAP_JUMBO_MTU		0x00000080	/* jumbo MTU supported */
-#define	IFCAP_CSUM_TCPv6	0x00000100	/* can do IPv6/TCP checksums */
-#define	IFCAP_CSUM_UDPv6	0x00000200	/* can do IPv6/UDP checksums */
-#define	IFCAP_CSUM_TCPv4_Rx	0x00000400	/* can do IPv4/TCP (Rx only) */
-#define	IFCAP_CSUM_UDPv4_Rx	0x00000800	/* can do IPv4/UDP (Rx only) */
+#define	IFCAP_CSUM_TCPv6	0x00000080	/* can do IPv6/TCP checksums */
+#define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
+#define	IFCAP_CSUM_TCPv4_Rx	0x00000200	/* can do IPv4/TCP (Rx only) */
+#define	IFCAP_CSUM_UDPv4_Rx	0x00000400	/* can do IPv4/UDP (Rx only) */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.146 2006/05/20 04:18:51 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.147 2006/05/27 10:03:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1937,7 +1937,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	if (BGE_IS_JUMBO_CAPABLE(sc))
-		ifp->if_capabilities |= IFCAP_JUMBO_MTU;
+		ifp->if_hardmtu = ETHERMTU_JUMBO;
 
 	/*
 	 * Do MII setup.

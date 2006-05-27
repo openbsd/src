@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.80 2006/05/20 03:47:56 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.81 2006/05/27 10:03:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1648,11 +1648,12 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
+	ifp->if_hardmtu = ETHERMTU_JUMBO;
 	IFQ_SET_MAXLEN(&ifp->if_snd, TI_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #if TI_VLAN
 #if NVLAN > 0

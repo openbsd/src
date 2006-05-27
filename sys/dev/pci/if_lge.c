@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.40 2006/05/20 03:47:56 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.41 2006/05/27 10:03:15 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -564,12 +564,13 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = lge_start;
 	ifp->if_watchdog = lge_watchdog;
 	ifp->if_baudrate = 1000000000;
+	ifp->if_hardmtu = ETHERMTU_JUMBO;
 	IFQ_SET_MAXLEN(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	if (CSR_READ_4(sc, LGE_GMIIMODE) & LGE_GMIIMODE_PCSENH)
 		sc->lge_pcs = 1;

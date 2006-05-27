@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.52 2006/05/20 03:47:56 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.53 2006/05/27 10:03:15 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -885,12 +885,13 @@ nge_attach(parent, self, aux)
 	ifp->if_start = nge_start;
 	ifp->if_watchdog = nge_watchdog;
 	ifp->if_baudrate = 1000000000;
+	ifp->if_hardmtu = ETHERMTU_JUMBO;
 	IFQ_SET_MAXLEN(&ifp->if_snd, NGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("%s: bcopy\n", sc->sc_dv.dv_xname));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_JUMBO_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #ifdef NGE_VLAN
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.22 2006/05/26 20:50:41 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.23 2006/05/27 10:03:15 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -878,13 +878,12 @@ re_attach_common(struct rl_softc *sc)
 	if (sc->rl_type == RL_8169) {
 		ifp->if_baudrate = 1000000000;
 		ifp->if_hardmtu = RL_JUMBO_MTU;
-		ifp->if_capabilities |= IFCAP_JUMBO_MTU;
 	} else
 		ifp->if_baudrate = 100000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #ifdef RE_CSUM_OFFLOAD
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
