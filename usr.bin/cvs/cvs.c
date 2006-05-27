@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.99 2006/05/27 18:04:46 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.100 2006/05/27 18:18:06 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -115,6 +115,7 @@ main(int argc, char **argv)
 	struct cvs_cmd *cmdp;
 	struct passwd *pw;
 	struct stat st;
+	char fpath[MAXPATHLEN];
 
 	tzset();
 
@@ -225,6 +226,21 @@ main(int argc, char **argv)
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
 		fatal("remote setups are not supported yet");
+
+	i = snprintf(fpath, sizeof(fpath), "%s/%s", current_cvsroot->cr_dir,
+	    CVS_PATH_ROOT);
+	if (stat(fpath, &st) == -1) {
+		if (errno == ENOENT)
+			fatal("'%s' does not seem to be a valid repository",
+			    current_cvsroot->cr_dir);
+		else
+			fatal("%s: %s", current_cvsroot->cr_dir,
+			    strerror(errno));
+	} else {
+		if (!S_ISDIR(st.st_mode))
+			fatal("'%s' is not a directory",
+			    current_cvsroot->cr_dir);
+	}
 
 	cvs_parse_configfile();
 
