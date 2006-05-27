@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.63 2006/05/27 16:10:01 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.64 2006/05/27 21:20:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -184,8 +184,6 @@ cvs_update_leavedir(struct cvs_file *cf)
 					if (ent->ce_status == CVS_ENT_REMOVED) {
 						isempty = 0;
 						cvs_ent_free(ent);
-						cvs_ent_close(entlist,
-						    ENT_NOSYNC);
 						break;
 					}
 
