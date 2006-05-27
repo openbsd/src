@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.19 2006/05/27 04:01:04 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.20 2006/05/27 19:52:23 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -202,15 +202,13 @@ discover_interfaces(void)
 		}
 	}
 
-	/* Now cycle through all the interfaces we found, looking for
-	   hardware addresses. */
-
-	/* Weed out the interfaces that did not have IP addresses. */
+	/* Discard interfaces we can't listen on. */
 	last = NULL;
 	for (tmp = interfaces; tmp; tmp = next) {
 		next = tmp->next;
+
 		if (!tmp->ifp) {
-			warning("%s: no IP address found, can't listen.",
+			warning("Can't listen on %s - it has no IP address.",
 			    tmp->name);
 			/* Remove tmp from the list of interfaces. */
 			if (!last)
@@ -219,22 +217,24 @@ discover_interfaces(void)
 				last->next = tmp->next;
 			continue;
 		}
-		last = tmp;
 
 		memcpy(&foo, &tmp->ifp->ifr_addr, sizeof tmp->ifp->ifr_addr);
 
-		/* We must have a subnet declaration for each interface. */
 		if (!tmp->shared_network) {
-			warning("No subnet declaration for %s (%s).",
-			    tmp->name, inet_ntoa(foo.sin_addr));
-			warning("Please write a subnet declaration in your %s",
-			    "dhcpd.conf file for the");
-			error("network segment to which interface %s %s",
-			    tmp->name, "is attached.");
+			warning("Can't listen on %s - dhcpd.conf has no subnet "
+			    "declaration for %s.", tmp->name,
+			    inet_ntoa(foo.sin_addr));
+			/* Remove tmp from the list of interfaces. */
+			if (!last)
+				interfaces = interfaces->next;
+			else
+				last->next = tmp->next;
+			continue;
 		}
 
-		/* Find subnets that don't have valid interface
-		   addresses... */
+		last = tmp;
+
+		/* Find subnets that don't have valid interface addresses. */
 		for (subnet = (tmp->shared_network ? tmp->shared_network->subnets :
 		    NULL); subnet; subnet = subnet->next_sibling) {
 			if (!subnet->interface_address.len) {
