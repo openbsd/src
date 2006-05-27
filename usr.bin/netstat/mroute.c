@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.15 2005/10/17 19:09:36 otto Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.16 2006/05/27 19:16:37 claudio Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -151,9 +151,9 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 
 		printf(" %3u     %3u  %5u  %-15.15s",
 		    vifi, v->v_threshold, v->v_rate_limit,
-		    routename(v->v_lcl_addr.s_addr));
+		    routename4(v->v_lcl_addr.s_addr));
 		printf("  %-15.15s  %6lu  %7lu\n", (v->v_flags & VIFF_TUNNEL) ?
-		    routename(v->v_rmt_addr.s_addr) : "",
+		    routename4(v->v_rmt_addr.s_addr) : "",
 		    v->v_pkt_in, v->v_pkt_out);
 	}
 	if (!banner_printed)
@@ -178,9 +178,9 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 
 				kread((u_long)mfcp, &mfc, sizeof(mfc));
 				printf("  %3u  %-15.15s",
-				    i, routename(mfc.mfc_origin.s_addr));
+				    i, routename4(mfc.mfc_origin.s_addr));
 				printf("  %-15.15s  %7s     %3u ",
-				    routename(mfc.mfc_mcastgrp.s_addr),
+				    routename4(mfc.mfc_mcastgrp.s_addr),
 				    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
 				for (vifi = 0; vifi <= numvifs; ++vifi)
 					if (mfc.mfc_ttls[vifi])

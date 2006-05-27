@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.16 2005/06/08 04:47:03 henning Exp $
+#	$OpenBSD: Makefile,v 1.17 2006/05/27 19:16:37 claudio Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c inet6.c ipx.c main.c mbuf.c mroute.c route.c \
-	unix.c atalk.c mroute6.c net80211.c
+	unix.c atalk.c mroute6.c net80211.c show.c
 BINGRP=	kmem
 BINMODE=2555
 LDADD=	-lkvm

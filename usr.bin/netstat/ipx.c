@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.18 2005/10/17 19:09:36 otto Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.19 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.18 2005/10/17 19:09:36 otto Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.19 2006/05/27 19:16:37 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ static char *rcsid = "$OpenBSD: ipx.c,v 1.18 2005/10/17 19:09:36 otto Exp $";
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "netstat.h"
 
 struct	ipxpcb ipxpcb;

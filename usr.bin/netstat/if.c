@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.46 2005/12/11 17:25:03 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.47 2006/05/27 19:16:37 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.46 2005/12/11 17:25:03 deraadt Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.47 2006/05/27 19:16:37 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,10 +183,10 @@ intpr(int interval, u_long ifnetaddr)
 				 */
 				in = inet_makeaddr(ifaddr.in.ia_subnet,
 				    INADDR_ANY);
-				cp = netname(in.s_addr,
+				cp = netname4(in.s_addr,
 				    ifaddr.in.ia_subnetmask);
 #else
-				cp = netname(ifaddr.in.ia_subnet,
+				cp = netname4(ifaddr.in.ia_subnet,
 				    ifaddr.in.ia_subnetmask);
 #endif
 				if (vflag)
@@ -194,7 +194,7 @@ intpr(int interval, u_long ifnetaddr)
 				else
 					n = 11;
 				printf("%-*.*s ", n, n, cp);
-				cp = routename(sin->sin_addr.s_addr);
+				cp = routename4(sin->sin_addr.s_addr);
 				if (vflag)
 					n = strlen(cp) < 17 ? 17 : strlen(cp);
 				else
@@ -209,7 +209,7 @@ intpr(int interval, u_long ifnetaddr)
 					while (multiaddr != 0) {
 						kread(multiaddr, &inm, sizeof inm);
 						printf("\n%25s %-17.17s ", "",
-						    routename(inm.inm_addr.s_addr));
+						    routename4(inm.inm_addr.s_addr));
 						multiaddr = (u_long)LIST_NEXT(&inm, inm_list);
 					}
 				}
@@ -227,7 +227,7 @@ intpr(int interval, u_long ifnetaddr)
 				}
 #endif
 				cp = netname6(&ifaddr.in6.ia_addr,
-				    &ifaddr.in6.ia_prefixmask.sin6_addr);
+				    &ifaddr.in6.ia_prefixmask);
 				if (vflag)
 					n = strlen(cp) < 11 ? 11 : strlen(cp);
 				else
@@ -551,3 +551,40 @@ catchalarm(int signo)
 {
 	signalled = YES;
 }
+
+void
+upHex(char *p0)
+{
+	char *p = p0;
+
+	for (; *p; p++)
+		switch (*p) {
+		case 'a':
+		case 'b':
+		case 'c':
+		case 'd':
+		case 'e':
+		case 'f':
+			*p += ('A' - 'a');
+			break;
+	}
+}
+
+char *
+ipx_phost(struct sockaddr *sa)
+{
+	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
+	struct sockaddr_ipx work;
+	static union ipx_net ipx_zeronet;
+	char *p;
+
+	work = *sipx;
+	work.sipx_addr.ipx_port = 0;
+	work.sipx_addr.ipx_net = ipx_zeronet;
+
+	p = ipx_print((struct sockaddr *)&work);
+	if (strncmp("0H.", p, 3) == 0)
+		p += 3;
+	return(p);
+}
+
