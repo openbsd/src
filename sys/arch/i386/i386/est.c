@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.17 2006/05/24 11:44:35 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.18 2006/05/28 22:06:33 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -173,15 +173,6 @@ static const struct fq_info pm130_1700[] = {
 static const struct fq_info pm90_n723[] = {
 	{ 1000,  940 },
 	{  900,  908 },
-	{  800,  876 },
-	{  600,  812 }
-};
-
-/* Intel Pentium M processor 733 1.1 GHz */
-static const struct fq_info pm90_n733[] = {
-	{ 1100,  940 },
-	{ 1000,  924 },
-	{  900,  892 },
 	{  800,  876 },
 	{  600,  812 }
 };
@@ -493,11 +484,11 @@ static const struct fq_info pm90_n725d[] = {
 /* Intel Pentium M processor 730 1.6 GHz, 533 MHz FSB */
 static const struct fq_info pm90_n730[] = {
        { 1600, 1308 },
-       { 1333, 1260 }, 
+       { 1333, 1260 },
        { 1200, 1212 },
        { 1067, 1180 },
        {  800,  988 }
-};     
+};
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #A */
 static const struct fq_info pm90_n735a[] = {
@@ -880,7 +871,6 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(INTEL, BUS100, pm130_1700),
 
 	ENTRY(INTEL, BUS100, pm90_n723),
-	ENTRY(INTEL, BUS100, pm90_n733),
 	ENTRY(INTEL, BUS100, pm90_n733g),
 	ENTRY(INTEL, BUS100, pm90_n733h),
 	ENTRY(INTEL, BUS100, pm90_n733i),
@@ -902,7 +892,7 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(INTEL, BUS100, pm90_n738),
 	ENTRY(INTEL, BUS100, pm90_n758),
 	ENTRY(INTEL, BUS100, pm90_n778),
-		              		        	      
+
 	ENTRY(INTEL, BUS133, pm90_n710),
 	ENTRY(INTEL, BUS100, pm90_n715a),
 	ENTRY(INTEL, BUS100, pm90_n715b),
@@ -933,7 +923,7 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(INTEL, BUS100, pm90_n765c),
 	ENTRY(INTEL, BUS100, pm90_n765e),
 	ENTRY(INTEL, BUS133, pm90_n770),
-		              		        	      
+
 	ENTRY(VIA,   BUS100, C7M_770_ULV),
 	ENTRY(VIA,   BUS100, C7M_779_ULV),
 	ENTRY(VIA,   BUS100, C7M_772_ULV),
