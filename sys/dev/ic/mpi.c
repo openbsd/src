@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.4 2006/05/28 01:29:21 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.5 2006/05/28 02:32:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -49,7 +49,7 @@ struct cfdriver mpi_cd = {
 };
 
 int			mpi_scsi_cmd(struct scsi_xfer *);
-void			mpi_scsi_cmd_done(struct mpi_ccb *, void *, paddr_t);
+void			mpi_scsi_cmd_done(struct mpi_ccb *);
 void			mpi_minphys(struct buf *bp);
 int			mpi_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
 			    int, struct proc *);
@@ -91,14 +91,14 @@ int			mpi_handshake_recv_dword(struct mpi_softc *,
 			    u_int32_t *);
 int			mpi_handshake_recv(struct mpi_softc *, void *, size_t);
 
+void			mpi_empty_done(struct mpi_ccb *);
+
 int			mpi_iocinit(struct mpi_softc *);
 int			mpi_iocfacts(struct mpi_softc *);
 int			mpi_portfacts(struct mpi_softc *);
-void			mpi_portfacts_done(struct mpi_ccb *, void *, paddr_t);
 int			mpi_eventnotify(struct mpi_softc *);
-void			mpi_eventnotify_done(struct mpi_ccb *, void *, paddr_t);
+void			mpi_eventnotify_done(struct mpi_ccb *);
 int			mpi_portenable(struct mpi_softc *);
-void			mpi_portenable_done(struct mpi_ccb *, void *, paddr_t);
 
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
@@ -263,8 +263,11 @@ mpi_intr(void *arg)
 
 		bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
 		    ccb->ccb_offset, MPI_REQUEST_SIZE, BUS_DMASYNC_POSTWRITE);
+		ccb->ccb_state = MPI_CCB_READY;
+		ccb->ccb_reply = reply;
+		ccb->ccb_reply_dva = reply_dva;
 
-		ccb->ccb_done(ccb, reply, reply_dva);
+		ccb->ccb_done(ccb);
 		rv = 1;
 	}
 
@@ -333,7 +336,6 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 	int				i;
 
 	TAILQ_INIT(&sc->sc_ccb_free);
-	TAILQ_INIT(&sc->sc_ccb_runq);
 
 	sc->sc_ccbs = malloc(sizeof(struct mpi_ccb) * sc->sc_maxcmds,
 	    M_DEVBUF, M_WAITOK);
@@ -445,7 +447,6 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 	    ccb->ccb_offset, MPI_REQUEST_SIZE, BUS_DMASYNC_PREWRITE);
 
 	ccb->ccb_state = MPI_CCB_QUEUED;
-	TAILQ_INSERT_TAIL(&sc->sc_ccb_runq, ccb, ccb_link);
 	mpi_write(sc, MPI_REQ_QUEUE, ccb->ccb_cmd_dva);
 }
 
@@ -509,8 +510,11 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb)
 
 		bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
 		    ccb->ccb_offset, MPI_REQUEST_SIZE, BUS_DMASYNC_POSTWRITE);
+		ccb->ccb_state = MPI_CCB_READY;
+		ccb->ccb_reply = reply;
+		ccb->ccb_reply_dva = reply_dva;
 
-		ccb->ccb_done(ccb, reply, reply_dva);
+		ccb->ccb_done(ccb);
 
 	} while (nccb->ccb_id != id);
 
@@ -610,13 +614,13 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 }
 
 void
-mpi_scsi_cmd_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
+mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc		*sc = ccb->ccb_sc;
 	struct scsi_xfer		*xs = ccb->ccb_xs;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
-	struct mpi_msg_scsi_io_error	*sie = reply;
+	struct mpi_msg_scsi_io_error	*sie = ccb->ccb_reply;
 
 	if (xs->datalen != 0) {
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
@@ -673,7 +677,6 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 		printf("%s:  tag: 0x%04x\n", DEVNAME(sc), letoh16(sie->tag));
 	}
 #endif /* MPI_DEBUG */
-
 
 	xs->status = sie->scsi_status;
 	switch (sie->ioc_status) {
@@ -771,7 +774,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 
 	DPRINTFN(10, "%s:  xs error: 0x%02x len: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
-	mpi_push_reply(sc, reply_dva);
+	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 	scsi_done(xs);
 }
@@ -1102,6 +1105,12 @@ mpi_handshake_recv(struct mpi_softc *sc, void *buf, size_t dwords)
 	return (0);
 }
 
+void
+mpi_empty_done(struct mpi_ccb *ccb)
+{
+	/* nothing to do */
+}
+
 int
 mpi_iocfacts(struct mpi_softc *sc)
 {
@@ -1270,6 +1279,7 @@ mpi_portfacts(struct mpi_softc *sc)
 {
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_portfacts_request	*pfq;
+	struct mpi_msg_portfacts_reply		*pfp;
 	int					s;
 
 	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
@@ -1282,7 +1292,7 @@ mpi_portfacts(struct mpi_softc *sc)
 		return (1);
 	}
 
-	ccb->ccb_done = mpi_portfacts_done;
+	ccb->ccb_done = mpi_empty_done;
 	pfq = ccb->ccb_cmd;
 
 	pfq->function = MPI_FUNCTION_PORT_FACTS;
@@ -1293,17 +1303,7 @@ mpi_portfacts(struct mpi_softc *sc)
 
 	mpi_poll(sc, ccb);
 
-	return (0);
-}
-
-void
-mpi_portfacts_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
-{
-	struct mpi_softc			*sc = ccb->ccb_sc;
-	struct mpi_msg_portfacts_reply		*pfp = reply;
-
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
-
+	pfp = ccb->ccb_reply;
 	if (pfp == NULL)
 		panic("%s: empty portfacts reply\n", DEVNAME(sc));
 
@@ -1344,8 +1344,10 @@ mpi_portfacts_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 	sc->sc_porttype = pfp->port_type;
 	sc->sc_target = letoh16(pfp->port_scsi_id);
 
-	mpi_push_reply(sc, reply_dva);
+	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
+
+	return (0);
 }
 
 int
@@ -1377,10 +1379,10 @@ mpi_eventnotify(struct mpi_softc *sc)
 }
 
 void
-mpi_eventnotify_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
+mpi_eventnotify_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc			*sc = ccb->ccb_sc;
-	struct mpi_msg_event_reply		*enp = reply;
+	struct mpi_msg_event_reply		*enp = ccb->ccb_reply;
 	u_int32_t				*data;
 	int					i;
 
@@ -1402,7 +1404,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 	printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(enp->ioc_loginfo));
 
-	data = reply;
+	data = ccb->ccb_reply;
 	data += dwordsof(struct mpi_msg_event_reply);
 	for (i = 0; i < letoh16(enp->data_length); i++) {
 		printf("%s:  data[%d]: 0x%08x\n", DEVNAME(sc), i, data[i]);
@@ -1414,6 +1416,7 @@ mpi_portenable(struct mpi_softc *sc)
 {
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_portenable_request	*peq;
+	struct mpi_msg_portenable_repy		*pep;
 	int					s;
 
 	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
@@ -1426,7 +1429,7 @@ mpi_portenable(struct mpi_softc *sc)
 		return (1);
 	}
 
-	ccb->ccb_done = mpi_portenable_done;
+	ccb->ccb_done = mpi_empty_done;
 	peq = ccb->ccb_cmd;
 
 	peq->function = MPI_FUNCTION_PORT_ENABLE;
@@ -1435,20 +1438,12 @@ mpi_portenable(struct mpi_softc *sc)
 
 	mpi_poll(sc, ccb);
 
-	return (0);
-}
-
-void
-mpi_portenable_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
-{
-	struct mpi_softc			*sc = ccb->ccb_sc;
-	struct mpi_msg_portenable_reply		*pep = reply;
-
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
-
+	pep = ccb->ccb_reply;
 	if (pep == NULL)
 		panic("%s: empty portfacts reply\n", DEVNAME(sc));
 
-	mpi_push_reply(sc, reply_dva);
+	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.1 2006/05/27 19:03:55 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.2 2006/05/28 02:32:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -57,7 +57,9 @@ struct mpi_ccb {
 		MPI_CCB_READY,
 		MPI_CCB_QUEUED
 	}			ccb_state;
-	void			(*ccb_done)(struct mpi_ccb *, void *, paddr_t);
+	void			(*ccb_done)(struct mpi_ccb *);
+	void			*ccb_reply;
+	paddr_t			ccb_reply_dva;
 
 	TAILQ_ENTRY(mpi_ccb)	ccb_link;
 };
@@ -82,7 +84,7 @@ struct mpi_softc {
 
 	struct mpi_dmamem	*sc_requests;
 	struct mpi_ccb		*sc_ccbs;
-	struct mpi_ccb_list	sc_ccb_free, sc_ccb_runq;
+	struct mpi_ccb_list	sc_ccb_free;
 
 	struct mpi_dmamem	*sc_replies;
 };
