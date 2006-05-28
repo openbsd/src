@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.47 2006/05/28 01:33:50 mk Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.48 2006/05/28 07:12:11 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -489,14 +489,15 @@ config_detach(struct device *dev, int flags)
 	struct cfdata *cf;
 	struct cfattach *ca;
 	struct cfdriver *cd;
+	int rv = 0, i, devnum = dev->dv_unit;
 #ifdef DIAGNOSTIC
 	struct device *d;
 #endif
-	int rv = 0, i;
 #if NHOTPLUG > 0
 	char devname[16];
-	int devnum = dev->dv_unit;
+#endif
 
+#if NHOTPLUG > 0
 	strlcpy(devname, dev->dv_xname, sizeof(devname));
 #endif
 
