@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.46 2006/04/09 12:02:23 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.47 2006/05/28 02:49:18 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -611,6 +611,7 @@ setroot()
 				case DV_TTY:
 				case DV_DULL:
 				case DV_CPU:
+				case DV_SENSOR:
 					break;
 				}
 				break;
