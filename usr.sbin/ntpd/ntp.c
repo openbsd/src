@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.74 2006/05/27 22:22:47 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.75 2006/05/28 03:23:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	struct ntp_sensor	*s, *next_s;
 	struct timespec		 tp;
 	struct stat		 stb;
-	time_t			 nextaction, last_sensor_scan = 0;
+	time_t			 nextaction;
 	void			*newp;
 
 	switch (pid = fork()) {
@@ -152,6 +152,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	conf->scale = 1;
 
 	sensor_init(conf);
+	sensor_scan();
 
 	log_info("ntp engine ready");
 
@@ -236,10 +237,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 		}
 
-		if (last_sensor_scan + SENSOR_SCAN_INTERVAL < time(NULL)) {
-			sensor_scan();
-			last_sensor_scan = time(NULL);
-		}
 		sensors_cnt = 0;
 		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 			sensors_cnt++;
