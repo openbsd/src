@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.75 2006/05/28 03:23:08 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.76 2006/05/28 18:47:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -297,8 +297,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		for (s = TAILQ_FIRST(&conf->ntp_sensors); s != NULL;
 		    s = next_s) {
 			next_s = TAILQ_NEXT(s, entry);
-			if (sensor_query(s) == -1)
-				sensor_remove(s);
+			sensor_query(s);
 		}
 	}
 

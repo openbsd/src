@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.11 2006/05/28 16:41:40 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.12 2006/05/28 18:47:25 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -34,8 +34,9 @@
 #define SENSORS_MAX	255
 #define	_PATH_DEV_HOTPLUG               "/dev/hotplug"
 
-void			 sensor_probe(int);
-void			 sensor_add(struct sensor *);
+void	sensor_probe(int);
+void	sensor_add(struct sensor *);
+void	sensor_remove(struct ntp_sensor *);
 
 struct ntpd_conf *conf;
 
@@ -117,7 +118,7 @@ sensor_remove(struct ntp_sensor *s)
 	free(s);
 }
 
-int
+void
 sensor_query(struct ntp_sensor *s)
 {
 	struct sensor	 sensor;
@@ -134,19 +135,21 @@ sensor_query(struct ntp_sensor *s)
 	len = sizeof(sensor);
 	if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
 		log_warn("sensor_query sysctl");
-		return (0);
+		return;
 	}
 
 	if (sensor.flags & SENSOR_FINVALID ||
 	    sensor.status != SENSOR_S_OK)
-		return (0);
+		return;
 
 	if (sensor.type != SENSOR_TIMEDELTA ||
-	    strcmp(sensor.device, s->device))
-		return (-1);	/* causes sensor removal */
+	    strcmp(sensor.device, s->device)) {
+		sensor_remove(s);
+		return;
+	}
 
 	if (sensor.tv.tv_sec == s->update.rcvd)	/* already seen */
-		return (0);
+		return;
 
 	s->update.offset = 0 - (float)sensor.value / 1000000000.0;
 	s->update.status.stratum = 0;	/* increased when sent out */
@@ -160,8 +163,6 @@ sensor_query(struct ntp_sensor *s)
 	s->update.good = 1;
 
 	log_debug("sensor %s: offset %f", s->device, s->update.offset);
-
-	return (0);
 }
 
 int
