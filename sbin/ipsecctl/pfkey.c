@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.36 2006/04/19 16:10:50 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.37 2006/05/28 20:58:24 todd Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -75,48 +75,58 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&smask, sizeof(smask));
+	ssrc.ss_family = smask.ss_family = src->af;
 	switch (src->af) {
 	case AF_INET:
 		((struct sockaddr_in *)&ssrc)->sin_addr = src->address.v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
-		ssrc.ss_family = AF_INET;
 		((struct sockaddr_in *)&smask)->sin_addr = src->mask.v4;
 		break;
 	case AF_INET6:
+		((struct sockaddr_in6 *)&ssrc)->sin6_addr = src->address.v6;
+		ssrc.ss_len = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)&smask)->sin6_addr = src->mask.v6;
+		break;
 	default:
 		warnx("unsupported address family %d", src->af);
 		return -1;
 	}
-	smask.ss_family = ssrc.ss_family;
 	smask.ss_len = ssrc.ss_len;
 
 	bzero(&sdst, sizeof(sdst));
 	bzero(&dmask, sizeof(dmask));
+	sdst.ss_family = dmask.ss_family = dst->af;
 	switch (dst->af) {
 	case AF_INET:
 		((struct sockaddr_in *)&sdst)->sin_addr = dst->address.v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
-		sdst.ss_family = AF_INET;
 		((struct sockaddr_in *)&dmask)->sin_addr = dst->mask.v4;
 		break;
 	case AF_INET6:
+		((struct sockaddr_in6 *)&sdst)->sin6_addr = dst->address.v6;
+		sdst.ss_len = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)&dmask)->sin6_addr = dst->mask.v6;
+		break;
 	default:
 		warnx("unsupported address family %d", dst->af);
 		return -1;
 	}
-	dmask.ss_family = sdst.ss_family;
 	dmask.ss_len = sdst.ss_len;
 
 	bzero(&slocal, sizeof(slocal));
 	if (local) {
+		slocal.ss_family = local->af;
 		switch (local->af) {
 		case AF_INET:
 			((struct sockaddr_in *)&slocal)->sin_addr =
 			    local->address.v4;
 			slocal.ss_len = sizeof(struct sockaddr_in);
-			slocal.ss_family = AF_INET;
 			break;
 		case AF_INET6:
+			((struct sockaddr_in6 *)&slocal)->sin6_addr =
+			    local->address.v6;
+			slocal.ss_len = sizeof(struct sockaddr_in6);
+			break;
 		default:
 			warnx("unsupported address family %d", local->af);
 			return -1;
@@ -125,14 +135,18 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 
 	bzero(&speer, sizeof(speer));
 	if (peer) {
+		speer.ss_family = peer->af;
 		switch (peer->af) {
 		case AF_INET:
 			((struct sockaddr_in *)&speer)->sin_addr =
 			    peer->address.v4;
 			speer.ss_len = sizeof(struct sockaddr_in);
-			speer.ss_family = AF_INET;
 			break;
 		case AF_INET6:
+			((struct sockaddr_in6 *)&speer)->sin6_addr =
+			    peer->address.v6;
+			speer.ss_len = sizeof(struct sockaddr_in6);
+			break;
 		default:
 			warnx("unsupported address family %d", peer->af);
 			return -1;
@@ -369,26 +383,32 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	int			iov_cnt, len, ret = 0;
 
 	bzero(&ssrc, sizeof(ssrc));
+	ssrc.ss_family = src->af;
 	switch (src->af) {
 	case AF_INET:
 		((struct sockaddr_in *)&ssrc)->sin_addr = src->address.v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
-		ssrc.ss_family = AF_INET;
 		break;
 	case AF_INET6:
+		((struct sockaddr_in6 *)&ssrc)->sin6_addr = src->address.v6;
+		ssrc.ss_len = sizeof(struct sockaddr_in6);
+		break;
 	default:
 		warnx("unsupported address family %d", src->af);
 		return -1;
 	}
 
 	bzero(&sdst, sizeof(sdst));
+	sdst.ss_family = dst->af;
 	switch (dst->af) {
 	case AF_INET:
 		((struct sockaddr_in *)&sdst)->sin_addr = dst->address.v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
-		sdst.ss_family = AF_INET;
 		break;
 	case AF_INET6:
+		((struct sockaddr_in6 *)&sdst)->sin6_addr = dst->address.v6;
+		sdst.ss_len = sizeof(struct sockaddr_in6);
+		break;
 	default:
 		warnx("unsupported address family %d", dst->af);
 		return -1;
@@ -617,6 +637,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 	struct sadb_ident	*sident;
 	struct sockaddr		*sa;
 	struct sockaddr_in	*sa_in;
+	struct sockaddr_in6	*sa_in6;
 	int			 len;
 
 	switch (msg->sadb_msg_satype) {
@@ -639,7 +660,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 	for (ext = (struct sadb_ext *)(msg + 1);
 	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
 	    msg->sadb_msg_len * PFKEYV2_CHUNK && ext->sadb_ext_len > 0;
-	    ext = (struct sadb_ext *)((u_int8_t *)ext +
+	    ext = (struct sadb_ext *)((u_int8_t *)ext + 
 	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
 		switch (ext->sadb_ext_type) {
 		case SADB_EXT_ADDRESS_SRC:
@@ -650,13 +671,19 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			if (rule->local == NULL)
 				err(1, "pfkey_parse: malloc");
 
+			rule->local->af = sa->sa_family;
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
 				    &rule->local->address.v4,
 				    sizeof(struct in_addr));
-				rule->local->mask.addr32[0] = 0xffffffff;
-				rule->local->af = AF_INET;
+				set_ipmask(rule->local, 32);
+				break;
+			case AF_INET6:
+				bcopy(&((struct sockaddr_in6 *)sa)->sin6_addr,
+				    &rule->local->address.v6,
+				    sizeof(struct in6_addr));
+				set_ipmask(rule->local, 128);
 				break;
 			default:
 				return (1);
@@ -672,13 +699,19 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			if (rule->peer == NULL)
 				err(1, "pfkey_parse: malloc");
 
+			rule->peer->af = sa->sa_family;
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
 				    &rule->peer->address.v4,
 				    sizeof(struct in_addr));
-				rule->peer->mask.addr32[0] = 0xffffffff;
-				rule->peer->af = AF_INET;
+				set_ipmask(rule->peer, 32);
+				break;
+			case AF_INET6:
+				bcopy(&((struct sockaddr_in6 *)sa)->sin6_addr,
+				    &rule->peer->address.v6,
+				    sizeof(struct in6_addr));
+				set_ipmask(rule->peer, 128);
 				break;
 			default:
 				return (1);
@@ -778,12 +811,17 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 					err(1, "pfkey_parse: calloc");
 			}
 
+			rule->src->af = sa->sa_family;
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
 				    &rule->src->address.v4,
 				    sizeof(struct in_addr));
-				rule->src->af = AF_INET;
+				break;
+			case AF_INET6:
+				bcopy(&((struct sockaddr_in6 *)sa)->sin6_addr,
+				    &rule->src->address.v6,
+				    sizeof(struct in6_addr));
 				break;
 			default:
 				return (1);
@@ -801,14 +839,18 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 					err(1, "pfkey_parse: calloc");
 			}
 
+			rule->dst->af = sa->sa_family;
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
 				    &rule->dst->address.v4,
 				    sizeof(struct in_addr));
-				rule->dst->af = AF_INET;
 				break;
-
+			case AF_INET6:
+				bcopy(&((struct sockaddr_in6 *)sa)->sin6_addr,
+				    &rule->dst->address.v6,
+				    sizeof(struct in6_addr));
+				break;
 			default:
 				return (1);
 			}
@@ -826,12 +868,17 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 					err(1, "pfkey_parse: calloc");
 			}
 
+			rule->src->af = sa->sa_family;
 			switch (sa->sa_family) {
 			case AF_INET:
 				sa_in = (struct sockaddr_in *)sa;
 				bcopy(&sa_in->sin_addr, &rule->src->mask.v4,
 				    sizeof(struct in_addr));
-				rule->src->af = AF_INET;
+				break;
+			case AF_INET6:
+				sa_in6 = (struct sockaddr_in6 *)sa;
+				bcopy(&sa_in6->sin6_addr, &rule->src->mask.v6,
+				    sizeof(struct in6_addr));
 				break;
 
 			default:
@@ -850,14 +897,18 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 					err(1, "pfkey_parse: calloc");
 			}
 
+			rule->dst->af = sa->sa_family;
 			switch (sa->sa_family) {
 			case AF_INET:
 				sa_in = (struct sockaddr_in *)sa;
 				bcopy(&sa_in->sin_addr, &rule->dst->mask.v4,
 				    sizeof(struct in_addr));
-				rule->dst->af = AF_INET;
 				break;
-
+			case AF_INET6:
+				sa_in6 = (struct sockaddr_in6 *)sa;
+				bcopy(&sa_in6->sin6_addr, &rule->dst->mask.v6,
+				    sizeof(struct in6_addr));
+				break;
 			default:
 				return (1);
 			}
