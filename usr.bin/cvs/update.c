@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.64 2006/05/27 21:20:52 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.65 2006/05/28 01:24:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,6 +25,8 @@
 int	cvs_update(int, char **);
 int	prune_dirs = 0;
 int	build_dirs = 0;
+
+static void update_clear_conflict(struct cvs_file *);
 
 #define UPDATE_SKIP	100
 
@@ -218,6 +220,8 @@ cvs_update_leavedir(struct cvs_file *cf)
 void
 cvs_update_local(struct cvs_file *cf)
 {
+	int ret;
+	BUF *bp;
 	CVSENTRIES *entlist;
 
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
@@ -232,6 +236,11 @@ cvs_update_local(struct cvs_file *cf)
 		return;
 	}
 
+	/*
+	 * the bp buffer will be released inside rcs_kwexp_buf,
+	 * which is called from cvs_checkout_file().
+	 */
+	bp = NULL;
 	cvs_file_classify(cf);
 
 	switch (cf->file_status) {
@@ -239,10 +248,14 @@ cvs_update_local(struct cvs_file *cf)
 		cvs_printf("? %s\n", cf->file_path);
 		break;
 	case FILE_MODIFIED:
-		if (cf->file_ent->ce_conflict != NULL)
+		ret = update_has_conflict_markers(cf);
+		if (cf->file_ent->ce_conflict != NULL && ret == 1) {
 			cvs_printf("C %s\n", cf->file_path);
-		else
+		} else {
+			if (cf->file_ent->ce_conflict != NULL && ret == 0)
+				update_clear_conflict(cf);
 			cvs_printf("M %s\n", cf->file_path);
+		}
 		break;
 	case FILE_ADDED:
 		cvs_printf("A %s\n", cf->file_path);
@@ -256,11 +269,27 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		if (cvs_checkout_file(cf, cf->file_rcs->rf_head, 0))
-			cvs_printf("U %s\n", cf->file_path);
+		bp = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		if (bp == NULL)
+			fatal("cvs_update_local: failed to get HEAD");
+
+		cvs_checkout_file(cf, cf->file_rcs->rf_head, bp, 0);
+		cvs_printf("U %s\n", cf->file_path);
 		break;
 	case FILE_MERGE:
-		cvs_printf("needs merge: %s\n", cf->file_path);
+		bp = cvs_diff3(cf->file_rcs, cf->file_path,
+		    cf->file_ent->ce_rev, cf->file_rcs->rf_head, 1);
+		if (bp == NULL)
+			fatal("cvs_update_local: failed to merge");
+
+		cvs_checkout_file(cf, cf->file_rcs->rf_head, bp, CO_MERGE);
+
+		if (diff3_conflicts != 0) {
+			cvs_printf("C %s\n", cf->file_path);
+		} else {
+			update_clear_conflict(cf);
+			cvs_printf("M %s\n", cf->file_path);
+		}
 		break;
 	case FILE_UNLINK:
 		(void)unlink(cf->file_path);
@@ -272,4 +301,80 @@ cvs_update_local(struct cvs_file *cf)
 	default:
 		break;
 	}
+}
+
+static void
+update_clear_conflict(struct cvs_file *cf)
+{
+	int l;
+	time_t now;
+	CVSENTRIES *entlist;
+	char *entry, revbuf[16], timebuf[32];
+
+	cvs_log(LP_TRACE, "update_clear_conflict(%s)", cf->file_path);
+
+	time(&now);
+	ctime_r(&now, timebuf);
+	if (timebuf[strlen(timebuf) - 1] == '\n')
+		timebuf[strlen(timebuf) - 1] = '\0';
+
+	rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
+
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//",
+	    cf->file_name, revbuf, timebuf);
+	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
+		fatal("update_clear_conflict: overflow");
+
+	entlist = cvs_ent_open(cf->file_wd);
+	cvs_ent_add(entlist, entry);
+	cvs_ent_close(entlist, ENT_SYNC);
+	xfree(entry);
+}
+
+/*
+ * XXX - this is the way GNU cvs checks for outstanding conflicts
+ * in a file after a merge. It is a very very bad approach and
+ * should be looked at once opencvs is working decently.
+ */
+int
+update_has_conflict_markers(struct cvs_file *cf)
+{
+	BUF *bp;
+	int conflict;
+	char *content;
+	struct cvs_line *lp;
+	struct cvs_lines *lines;
+
+	cvs_log(LP_TRACE, "update_has_conflict_markers(%s)", cf->file_path);
+
+	if ((bp = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		fatal("update_has_conflict_markers: failed to load %s",
+		    cf->file_path);
+
+	cvs_buf_putc(bp, '\0');
+	content = cvs_buf_release(bp);
+	if ((lines = cvs_splitlines(content)) == NULL)
+		fatal("update_has_conflict_markers: failed to split lines");
+
+	xfree(content);
+
+	conflict = 0;
+	TAILQ_FOREACH(lp, &(lines->l_lines), l_list) {
+		if (lp->l_line == NULL)
+			continue;
+
+		if (!strncmp(lp->l_line, RCS_CONFLICT_MARKER1,
+		    strlen(RCS_CONFLICT_MARKER1)) ||
+		    !strncmp(lp->l_line, RCS_CONFLICT_MARKER2,
+		    strlen(RCS_CONFLICT_MARKER2)) ||
+		    !strncmp(lp->l_line, RCS_CONFLICT_MARKER3,
+		    strlen(RCS_CONFLICT_MARKER3))) {
+			conflict = 1;
+			break;
+		}
+	}
+
+	cvs_freelines(lines);
+	return (conflict);
 }

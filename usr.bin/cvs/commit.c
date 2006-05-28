@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.59 2006/05/27 15:17:42 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.60 2006/05/28 01:24:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -126,6 +126,12 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	    cf->file_status == FILE_UNLINK)
 		conflicts_found++;
 
+	if (update_has_conflict_markers(cf)) {
+		cvs_log(LP_ERR, "conflict: unresolved conflicts in %s from "
+		    "merging, please fix these first", cf->file_path);
+		conflicts_found++;
+	}
+
 	if (cf->file_status == FILE_MERGE ||
 	    cf->file_status == FILE_PATCH) {
 		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
@@ -204,7 +210,11 @@ cvs_commit_local(struct cvs_file *cf)
 	cf->fd = -1;
 
 	if (cf->file_status != FILE_REMOVED) {
-		cvs_checkout_file(cf, cf->file_rcs->rf_head, 0);
+		b = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		if (b == NULL)
+			fatal("cvs_commit_local: failed to get HEAD");
+
+		cvs_checkout_file(cf, cf->file_rcs->rf_head, b, 0);
 	} else {
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);

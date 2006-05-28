@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.57 2006/05/27 16:10:01 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.58 2006/05/28 01:24:28 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -110,28 +110,22 @@ checkout_repository(const char *repobase, const char *wdbase)
 	cvs_file_freelist(&dl);
 }
 
-int
-cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
+void
+cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 {
-	BUF *bp;
+	BUF *nbp;
 	int l, oflags, exists;
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
-	char *entry, rev[16], timebuf[32];
+	char *entry, rev[16], timebuf[64], tbuf[32];
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
 	cvs_log(LP_TRACE, "cvs_checkout_file(%s, %s, %d)",
 	    cf->file_path, rev, flags);
 
-	if ((bp = rcs_getrev(cf->file_rcs, rnum)) == NULL) {
-		cvs_log(LP_ERR, "%s: cannot find revision %s",
-		    cf->file_path, rev);
-		return (0);
-	}
-
-	bp = rcs_kwexp_buf(bp, cf->file_rcs, rnum);
+	nbp = rcs_kwexp_buf(bp, cf->file_rcs, rnum);
 
 	oflags = O_WRONLY | O_TRUNC;
 	if (cf->fd != -1) {
@@ -146,10 +140,10 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 	if (cf->fd == -1)
 		fatal("cvs_checkout_file: open: %s", strerror(errno));
 
-	if (cvs_buf_write_fd(bp, cf->fd) == -1)
+	if (cvs_buf_write_fd(nbp, cf->fd) == -1)
 		fatal("cvs_checkout_file: %s", strerror(errno));
 
-	cvs_buf_free(bp);
+	cvs_buf_free(nbp);
 
 	if (fchmod(cf->fd, 0644) == -1)
 		fatal("cvs_checkout_file: fchmod: %s", strerror(errno));
@@ -171,9 +165,18 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 	if ((rcstime = cvs_hack_time(rcstime, 1)) == 0)
 		fatal("cvs_checkout_file: to gmt failed");
 
-	ctime_r(&rcstime, timebuf);
-	if (timebuf[strlen(timebuf) - 1] == '\n')
-		timebuf[strlen(timebuf) - 1] = '\0';
+	ctime_r(&rcstime, tbuf);
+	if (tbuf[strlen(tbuf) - 1] == '\n')
+		tbuf[strlen(tbuf) - 1] = '\0';
+
+	if (flags & CO_MERGE) {
+		l = snprintf(timebuf, sizeof(timebuf), "Result of merge+%s",
+		    tbuf);
+		if (l == -1 || l >= (int)sizeof(timebuf))
+			fatal("cvs_checkout_file: overflow");
+	} else {
+		strlcpy(timebuf, tbuf, sizeof(timebuf));
+	}
 
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//", cf->file_name,
@@ -184,6 +187,4 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int flags)
 	cvs_ent_close(ent, ENT_SYNC);
 
 	xfree(entry);
-
-	return (1);
 }
