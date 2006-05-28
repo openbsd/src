@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.499 2006/05/26 01:06:12 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.500 2006/05/28 03:05:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1507,6 +1507,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			struct node_proto	*proto;
 			int			 srctrack = 0;
 			int			 statelock = 0;
+			int			 adaptive = 0;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -1714,6 +1715,11 @@ pfrule		: action dir logquick interface route af proto fromto
 					r.rule_flag |= o->data.statelock;
 					break;
 				case PF_STATE_OPT_TIMEOUT:
+					if (o->data.timeout.number ==
+					    PFTM_ADAPTIVE_START ||
+					    o->data.timeout.number ==
+					    PFTM_ADAPTIVE_END)
+						adaptive = 1;
 					if (r.timeout[o->data.timeout.number]) {
 						yyerror("state timeout %s "
 						    "multiple definitions",
@@ -1726,6 +1732,12 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				o = o->next;
 				free(p);
+			}
+			if (!adaptive && r.max_states) {
+				r.timeout[PFTM_ADAPTIVE_START] =
+				    (r.max_states / 10) * 6;
+				r.timeout[PFTM_ADAPTIVE_END] =
+				    (r.max_states / 10) * 12;
 			}
 			if (r.rule_flag & PFRULE_SRCTRACK) {
 				if (srctrack == PF_SRCTRACK_GLOBAL &&
