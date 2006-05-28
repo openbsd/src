@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.80 2006/05/27 16:18:23 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.81 2006/05/28 17:25:18 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -568,31 +568,39 @@ cvs_hack_time(time_t oldtime, int togmt)
 }
 
 void
-cvs_get_repo(const char *dir, char *dst, size_t len)
+cvs_get_repository_path(const char *dir, char *dst, size_t len)
+{
+	int l;
+	char buf[MAXPATHLEN];
+
+	cvs_get_repository_name(dir, buf, sizeof(buf));
+	l = snprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
+	if (l == -1 || l >= (int)len)
+		fatal("cvs_get_repository_path: overflow");
+}
+
+void
+cvs_get_repository_name(const char *dir, char *dst, size_t len)
 {
 	int l;
 	FILE *fp;
-	char *s, buf[MAXPATHLEN], fpath[MAXPATHLEN];
-
-	if (strlcpy(buf, dir, sizeof(buf)) >= sizeof(buf))
-		fatal("cvs_get_repo: truncation");
+	char *s, fpath[MAXPATHLEN];
 
 	l = snprintf(fpath, sizeof(fpath), "%s/%s", dir, CVS_PATH_REPOSITORY);
 	if (l == -1 || l >= (int)sizeof(fpath))
-		fatal("cvs_get_repo: overflow");
+		fatal("cvs_get_repository_name: overflow");
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
-		fgets(buf, sizeof(buf), fp);
+		fgets(dst, len, fp);
 
-		if ((s = strrchr(buf, '\n')) != NULL)
+		if ((s = strchr(dst, '\n')) != NULL)
 			*s = '\0';
 
 		(void)fclose(fp);
+	} else {
+		if (strlcpy(dst, dir, len) >= len)
+			fatal("cvs_get_repository_name: overflow");
 	}
-
-	l = snprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
-	if (l == -1 || l >= (int)len)
-		fatal("cvs_get_repo: overflow");
 }
 
 void

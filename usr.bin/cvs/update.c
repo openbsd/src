@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.66 2006/05/28 07:56:44 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.67 2006/05/28 17:25:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -27,8 +27,6 @@ int	prune_dirs = 0;
 int	build_dirs = 0;
 
 static void update_clear_conflict(struct cvs_file *);
-
-#define UPDATE_SKIP	100
 
 struct cvs_cmd cvs_cmd_update = {
 	CVS_OP_UPDATE, CVS_REQ_UPDATE, "update",
@@ -133,7 +131,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 		cvs_ent_close(entlist, ENT_SYNC);
 		xfree(entry);
 	} else if (cf->file_status == DIR_CREATE && build_dirs == 0) {
-		cf->file_status = UPDATE_SKIP;
+		cf->file_status = FILE_SKIP;
 	}
 }
 
@@ -150,6 +148,8 @@ cvs_update_leavedir(struct cvs_file *cf)
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 	CVSENTRIES *entlist;
+
+	cvs_log(LP_TRACE, "cvs_update_leavedir(%s)", cf->file_path);
 
 	if (fstat(cf->fd, &st) == -1)
 		fatal("cvs_update_leavedir: %s", strerror(errno));
@@ -227,7 +227,7 @@ cvs_update_local(struct cvs_file *cf)
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
 
 	if (cf->file_type == CVS_DIR) {
-		if (cf->file_status == UPDATE_SKIP)
+		if (cf->file_status == FILE_SKIP)
 			return;
 
 		if (cf->file_status != FILE_UNKNOWN &&

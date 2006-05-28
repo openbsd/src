@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.145 2006/05/28 10:14:59 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.146 2006/05/28 17:25:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -261,6 +261,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		if ((d = dirname(l->file_path)) == NULL)
 			fatal("cvs_file_walklist: dirname failed");
 
+		type = CVS_FILE;
 		if ((fd = open(l->file_path, O_RDONLY)) != -1) {
 			if (fstat(fd, &st) == -1) {
 				cvs_log(LP_ERRNO, "%s", l->file_path);
@@ -285,7 +286,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				goto next;
 			}
 
-			cvs_get_repo(d, repo, MAXPATHLEN);
+			cvs_get_repository_path(d, repo, MAXPATHLEN);
 			len = snprintf(fpath, MAXPATHLEN, "%s/%s",
 			    repo, f);
 			if (len == -1 || len >= MAXPATHLEN)
@@ -367,6 +368,9 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	if (cr->local != NULL)
 		cr->local(cf);
 
+	if (cf->file_status == FILE_SKIP)
+		return;
+
 	fpath = xmalloc(MAXPATHLEN);
 
 	/*
@@ -377,7 +381,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	if (l == -1 || l >= MAXPATHLEN)
 		fatal("cvs_file_walkdir: overflow");
 
-	if (stat(fpath, &st) == -1) {
+	l = stat(fpath, &st);
+	if (l == -1 || (l == 0 && !S_ISDIR(st.st_mode))) {
 		xfree(fpath);
 		return;
 	}
@@ -494,7 +499,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 	if (cr->flags & CR_REPO) {
 		repo = xmalloc(MAXPATHLEN);
-		cvs_get_repo(cf->file_path, repo, MAXPATHLEN);
+		cvs_get_repository_path(cf->file_path, repo, MAXPATHLEN);
 		cvs_repository_lock(repo);
 
 		cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
@@ -554,7 +559,7 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	repo = xmalloc(MAXPATHLEN);
 	rcsfile = xmalloc(MAXPATHLEN);
 
-	cvs_get_repo(cf->file_wd, repo, MAXPATHLEN);
+	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 	l = snprintf(rcsfile, MAXPATHLEN, "%s/%s",
 	    repo, cf->file_name);
 	if (l == -1 || l >= MAXPATHLEN)

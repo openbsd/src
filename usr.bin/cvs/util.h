@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.6 2006/05/27 16:18:23 joris Exp $	*/
+/*	$OpenBSD: util.h,v 1.7 2006/05/28 17:25:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -27,7 +27,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-void	  cvs_get_repo(const char *, char *, size_t);
+void	  cvs_get_repository_path(const char *, char *, size_t);
+void	  cvs_get_repository_name(const char *, char *, size_t);
 void	  cvs_modetostr(mode_t, char *, size_t);
 void	  cvs_strtomode(const char *, mode_t *);
 void	  cvs_splitpath(const char *, char *, size_t, char **);

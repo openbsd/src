@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.35 2006/05/28 07:56:44 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.36 2006/05/28 17:25:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -60,6 +60,8 @@ struct cvs_file {
 #define FILE_UNLINK		11
 
 #define DIR_CREATE		12
+
+#define FILE_SKIP		100
 
 struct cvs_filelist {
 	char	*file_path;
