@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.14 2006/05/27 22:30:09 thib Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.15 2006/05/28 15:43:41 thib Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.14 2006/05/27 22:30:09 thib Exp $";
+static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.15 2006/05/28 15:43:41 thib Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,8 +93,9 @@ vmsg(int fatal, const char *fmt, va_list ap)
 		(void) printf("%s: ", dev);
 
 	(void) vprintf(fmt, ap);
-	printf("\n");
+	
 	if (fatal && preen) {
+		(void) printf("\n");
 		(void) printf(
 		    "%s: UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
 		    dev, __progname);
