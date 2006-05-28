@@ -775,6 +775,13 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/xboxreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/xboxvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/zxreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc/sdhcreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc/sdhcvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc/sdmmc_scsi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc/sdmmcchip.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc/sdmmcreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/disklabel.ph

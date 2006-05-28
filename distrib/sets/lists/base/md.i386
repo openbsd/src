@@ -1326,6 +1326,13 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/sbus/xboxreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/sbus/xboxvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/sbus/zxreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc/sdhcreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc/sdhcvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc/sdmmc_scsi.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc/sdmmcchip.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc/sdmmcreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/sun/disklabel.ph

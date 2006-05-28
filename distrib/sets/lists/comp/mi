@@ -731,6 +731,13 @@
 ./usr/include/dev/sbus/xboxreg.h
 ./usr/include/dev/sbus/xboxvar.h
 ./usr/include/dev/sbus/zxreg.h
+./usr/include/dev/sdmmc
+./usr/include/dev/sdmmc/sdhcreg.h
+./usr/include/dev/sdmmc/sdhcvar.h
+./usr/include/dev/sdmmc/sdmmc_scsi.h
+./usr/include/dev/sdmmc/sdmmcchip.h
+./usr/include/dev/sdmmc/sdmmcreg.h
+./usr/include/dev/sdmmc/sdmmcvar.h
 ./usr/include/dev/sequencervar.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
