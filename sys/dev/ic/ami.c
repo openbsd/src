@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.163 2006/05/26 15:57:32 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.164 2006/05/28 09:21:57 uwe Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1494,11 +1494,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		rwb = (struct scsi_rw_big *)xs->cmd;
 		blockno = _4btol(rwb->addr);
 		blockcnt = _2btol(rwb->length);
-#if 0
-		/* TODO: reflect DPO & FUA flags */
-		if (xs->cmd->opcode == WRITE_BIG && rwb->byte2 & 0x18)
-			flags |= 0;
-#endif
 	}
 
 	if (blockno >= sc->sc_hdr[target].hd_size ||
