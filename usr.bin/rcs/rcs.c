@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.10 2006/05/27 08:12:29 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.11 2006/05/28 18:33:49 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -269,17 +269,18 @@ rcs_open(const char *path, int fd, int flags, ...)
 	TAILQ_INIT(&(rfp->rf_symbols));
 	TAILQ_INIT(&(rfp->rf_locks));
 
-	if (!(rfp->rf_flags & RCS_CREATE))
+	if (!(rfp->rf_flags & RCS_CREATE)) {
 		rcs_parse_init(rfp);
 
-	/* fill in rd_locker */
-	TAILQ_FOREACH(lkr, &(rfp->rf_locks), rl_list) {
-		if ((rdp = rcs_findrev(rfp, lkr->rl_num)) == NULL) {
-			rcs_close(rfp);
-			return (NULL);
-		}
+		/* fill in rd_locker */
+		TAILQ_FOREACH(lkr, &(rfp->rf_locks), rl_list) {
+			if ((rdp = rcs_findrev(rfp, lkr->rl_num)) == NULL) {
+				rcs_close(rfp);
+				return (NULL);
+			}
 
-		rdp->rd_locker = xstrdup(lkr->rl_name);
+			rdp->rd_locker = xstrdup(lkr->rl_name);
+		}
 	}
 
 	return (rfp);
