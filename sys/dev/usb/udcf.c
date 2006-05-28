@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.8 2006/05/27 21:32:21 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.9 2006/05/28 18:52:16 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -56,8 +56,8 @@ int udcfdebug = 0;
 #define CLOCK_HBG	1
 
 static const char	*clockname[2] = {
-	"DCF77",
-	"HBG" };
+	"DCF  DCF77",
+	"HBG  HBG" };
 
 struct udcf_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
