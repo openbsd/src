@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.64 2006/05/13 05:23:45 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.65 2006/05/28 02:04:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1548,24 +1548,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	s = spltdb();
 	tdb = gettdb(pt->spi, &pt->dst, pt->sproto);
 	if (tdb) {
-		/*
-		 * When a failover happens, the master's rpl is probably above
-		 * what we see here (we may be up to a second late), so
-		 * increase it a bit to manage most such situations.
-		 *
-		 * For now, just add an offset that is likely to be larger
-		 * than the number of packets we can see in one second. The RFC
-		 * just says the next packet must have a higher seq value.
-		 *
-		 * XXX What is a good algorithm for this? We could use
-		 * a rate-determined increase, but to know it, we would have
-		 * to extend struct tdb.
-		 * XXX pt->rpl can wrap over MAXINT, but if so the real tdb
-		 * will soon be replaced anyway. For now, just don't handle
-		 * this edge case.
-		 */
-#define RPL_INCR 16384
-		pt->rpl = ntohl(pt->rpl) + RPL_INCR;
+		pt->rpl = ntohl(pt->rpl);
 		pt->cur_bytes = betoh64(pt->cur_bytes);
 
 		/* Neither replay nor byte counter should ever decrease. */
@@ -1591,7 +1574,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 
 /* One of our local tdbs have been updated, need to sync rpl with others */
 int
-pfsync_update_tdb(struct tdb *tdb)
+pfsync_update_tdb(struct tdb *tdb, int output)
 {
 	struct ifnet *ifp = &pfsyncif.sc_if;
 	struct pfsync_softc *sc = ifp->if_softc;
@@ -1667,7 +1650,25 @@ pfsync_update_tdb(struct tdb *tdb)
 		pt->sproto = tdb->tdb_sproto;
 	}
 
-	pt->rpl = htonl(tdb->tdb_rpl);
+	/*
+	 * When a failover happens, the master's rpl is probably above
+	 * what we see here (we may be up to a second late), so
+	 * increase it a bit for outbound tdbs to manage most such
+	 * situations.
+	 *
+	 * For now, just add an offset that is likely to be larger
+	 * than the number of packets we can see in one second. The RFC
+	 * just says the next packet must have a higher seq value.
+	 *
+	 * XXX What is a good algorithm for this? We could use
+	 * a rate-determined increase, but to know it, we would have
+	 * to extend struct tdb.
+	 * XXX pt->rpl can wrap over MAXINT, but if so the real tdb
+	 * will soon be replaced anyway. For now, just don't handle
+	 * this edge case.
+	 */
+#define RPL_INCR 16384
+	pt->rpl = htonl(tdb->tdb_rpl + (output ? RPL_INCR : 0));
 	pt->cur_bytes = htobe64(tdb->tdb_cur_bytes);
 
 	if (h->count == sc->sc_maxcount ||

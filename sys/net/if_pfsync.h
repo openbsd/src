@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.28 2005/11/04 08:24:14 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.29 2006/05/28 02:04:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -330,7 +330,7 @@ int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 		pfsync_pack_state(PFSYNC_ACT_DEL, (st),		\
 		    PFSYNC_FLAG_COMPRESS);			\
 } while (0)
-int pfsync_update_tdb(struct tdb *);
+int pfsync_update_tdb(struct tdb *, int);
 #endif
 
 #endif /* _NET_IF_PFSYNC_H_ */

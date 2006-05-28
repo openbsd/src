@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.97 2006/03/25 22:41:48 djm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.98 2006/05/28 02:04:15 mcbride Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -588,7 +588,7 @@ esp_input_cb(void *op)
 		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 1)) {
 		case 0: /* All's well */
 #if NPFSYNC > 0
-			pfsync_update_tdb(tdb);
+			pfsync_update_tdb(tdb,0);
 #endif
 			break;
 
@@ -884,7 +884,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		bcopy((caddr_t) &replay, mtod(mo, caddr_t) + sizeof(u_int32_t),
 		    sizeof(u_int32_t));
 #if NPFSYNC > 0
-		pfsync_update_tdb(tdb);
+		pfsync_update_tdb(tdb,1);
 #endif
 	}
 
