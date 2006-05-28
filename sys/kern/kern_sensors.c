@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.13 2006/05/28 03:22:35 henning Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.14 2006/05/28 16:43:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -71,7 +71,7 @@ sensor_add(struct sensor *sens)
 	splx(s);
 
 #if NHOTPLUG > 0
-	hotplug_device_attach(DV_DULL, sens->device, sens->num);
+	hotplug_device_attach(DV_DULL, "sensor");
 #endif
 }
 
@@ -86,7 +86,7 @@ sensor_del(struct sensor *sens)
 	splx(s);
 
 #if NHOTPLUG > 0
-	hotplug_device_detach(DV_DULL, sens->device, sens->num);
+	hotplug_device_detach(DV_DULL, "sensor");
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.7 2006/05/28 01:33:50 mk Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.8 2006/05/28 16:43:49 mk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -60,11 +60,10 @@ hotplugattach(int count)
 }
 
 void
-hotplug_device_attach(enum devclass class, char *name, int id)
+hotplug_device_attach(enum devclass class, char *name)
 {
 	struct hotplug_event he;
 
-	he.he_devid = id;
 	he.he_type = HOTPLUG_DEVAT;
 	he.he_devclass = class;
 	strlcpy(he.he_devname, name, sizeof(he.he_devname));
@@ -72,11 +71,10 @@ hotplug_device_attach(enum devclass class, char *name, int id)
 }
 
 void
-hotplug_device_detach(enum devclass class, char *name, int id)
+hotplug_device_detach(enum devclass class, char *name)
 {
 	struct hotplug_event he;
 
-	he.he_devid = id;
 	he.he_type = HOTPLUG_DEVDT;
 	he.he_devclass = class;
 	strlcpy(he.he_devname, name, sizeof(he.he_devname));
