@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.125 2006/05/07 14:12:15 sturm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.126 2006/05/28 04:03:28 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1358,29 +1358,38 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* all sysctl names at this level are at least name and field */
 	if (namelen < 2)
 		return (ENOTDIR);		/* overloaded */
+
 	if (name[0] != VFS_GENERIC) {
 		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
 			if (vfsp->vfc_typenum == name[0])
 				break;
+
 		if (vfsp == NULL)
 			return (EOPNOTSUPP);
+
 		return ((*vfsp->vfc_vfsops->vfs_sysctl)(&name[1], namelen - 1,
 		    oldp, oldlenp, newp, newlen, p));
 	}
+
 	switch (name[1]) {
 	case VFS_MAXTYPENUM:
 		return (sysctl_rdint(oldp, oldlenp, newp, maxvfsconf));
+
 	case VFS_CONF:
 		if (namelen < 3)
 			return (ENOTDIR);	/* overloaded */
+
 		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
 			if (vfsp->vfc_typenum == name[2])
 				break;
+
 		if (vfsp == NULL)
 			return (EOPNOTSUPP);
+
 		return (sysctl_rdstruct(oldp, oldlenp, newp, vfsp,
 		    sizeof(struct vfsconf)));
 	}
+
 	return (EOPNOTSUPP);
 }
 
