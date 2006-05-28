@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.60 2006/05/28 23:34:34 beck Exp $	*/
+/*	$OpenBSD: st.c,v 1.61 2006/05/28 23:58:00 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -261,7 +261,6 @@ struct st_softc {
 	u_int quirks;		/* quirks for the open mode           */
 	int blksize;		/* blksize we are using               */
 	u_int8_t density;	/* present density                    */
-	u_int last_dsty;	/* last density opened                */
 	short mt_resid;		/* last (short) resid                 */
 	short mt_erreg;		/* last error (sense key) seen        */
 /*--------------------device/scsi parameters----------------------------------*/
@@ -478,51 +477,55 @@ stopen(dev, flags, fmt, p)
 {
 	struct scsi_link *sc_link;
 	struct st_softc *st;
-	u_int dsty;
 	int error = 0, unit;
 
 	unit = STUNIT(dev);
 	if (unit >= st_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	st = st_cd.cd_devs[unit];
 	if (!st)
-		return ENXIO;
+		return (ENXIO);
 
-	dsty = STDSTY(dev);
 	sc_link = st->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    unit, st_cd.cd_ndevs));
 
 	/*
-	 * Only allow one at a time
+	 * Tape is an exclusive media. Only one open at a time.
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
 		SC_DEBUG(sc_link, SDEV_DB4, ("already open\n"));
-		return EBUSY;
+		return (EBUSY);
 	}
 
+	/* Use st_interpret_sense() now. */
+	sc_link->flags |= SDEV_OPEN;
+
 	/*
-	 * Discard any outstanding unit attention errors.
+	 * Check the unit status. This clears any outstanding errors and
+	 * will ensure that media is present.
 	 */
 	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST);
-	if (error)
-		goto bad;
-
-	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
 
 	/*
-	 * if it's a different mode, or if the media has been
-	 * invalidated, unmount the tape from the previous
-	 * session but continue with open processing
+	 * Terminate any exising mount session if there is no media.
 	 */
-	if (st->last_dsty != dsty || !(sc_link->flags & SDEV_MEDIA_LOADED))
+	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 		st_unmount(st, NOEJECT, DOREWIND);
 
-	if (!(st->flags & ST_MOUNTED)) {
-		st_mount_tape(dev, flags);
-		st->last_dsty = dsty;
+	if (error) {
+		sc_link->flags &= ~SDEV_OPEN;
+		return (error);
+	}
+
+	if ((st->flags & ST_MOUNTED) == 0) {
+		error = st_mount_tape(dev, flags);
+		if (error) {
+			sc_link->flags &= ~SDEV_OPEN;
+			return (error);
+		}
 	}
 
 	/*
@@ -534,12 +537,7 @@ stopen(dev, flags, fmt, p)
 		st->flags |= ST_WRITTEN;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
-	return 0;
-
-bad:
-	st_unmount(st, NOEJECT, DOREWIND);
-	sc_link->flags &= ~SDEV_OPEN;
-	return error;
+	return (0);
 }
 
 /*
