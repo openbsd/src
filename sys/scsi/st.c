@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.58 2006/05/28 23:19:25 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.59 2006/05/28 23:26:35 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ bad:
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-int 
+int
 stclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
@@ -1240,7 +1240,7 @@ stioctl(dev, cmd, arg, flag, p)
 #endif
 
 	default:
-		error = ENOTTY;
+		error = scsi_do_ioctl(st->sc_link, dev, cmd, arg, flag, p);
 		break;
 	}
 	return error;
