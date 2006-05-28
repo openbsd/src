@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.122 2005/09/23 14:44:03 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.123 2006/05/28 02:22:34 mcbride Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -2077,8 +2077,9 @@ ipsec_proto_init(struct proto *proto, char *section)
 	struct ipsec_proto *iproto = proto->data;
 
 	if (proto->sa->phase == 2 && section)
-		iproto->replay_window = conf_get_num(section, "ReplayWindow",
-		    DEFAULT_REPLAY_WINDOW);
+		iproto->replay_window = section ? conf_get_num(section,
+		    "ReplayWindow", DEFAULT_REPLAY_WINDOW) :
+		    DEFAULT_REPLAY_WINDOW;
 }
 
 /*
