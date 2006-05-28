@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.8 2005/05/19 18:28:59 mickey Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.9 2006/05/28 22:09:57 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -26,9 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 struct schizo_pbm_regs {
-	volatile u_int64_t	_unused1[64];
-	struct iommureg		iommu;
-	volatile u_int64_t	iommu_ctxflush;
+	volatile u_int64_t	_unused1[64];		/* 0x0000 - 0x01ff */
+	struct iommureg		iommu;			/* 0x0200 - 0x0217 */
+	volatile u_int64_t	iommu_ctxflush;		/* 0x0218 - 0x021f */
 	volatile u_int64_t	_unused2[444];
 	volatile u_int64_t	imap[64];
 	volatile u_int64_t	_unused3[64];
@@ -62,7 +62,9 @@ struct schizo_regs {
 	volatile u_int64_t	pcib_io_mask;
 	volatile u_int64_t	_unused1[8176];
 
-	volatile u_int64_t	_unused2[3];
+	volatile u_int64_t	control_status;
+	volatile u_int64_t	error_control;
+	volatile u_int64_t	interrupt_control;
 	volatile u_int64_t	safari_errlog;
 	volatile u_int64_t	eccctrl;
 	volatile u_int64_t	_unused3[1];
@@ -84,6 +86,7 @@ struct schizo_regs {
 #define	SCZ_PCIB_MEM_MASK		0x00068
 #define	SCZ_PCIB_IO_MATCH		0x00070
 #define	SCZ_PCIB_IO_MASK		0x00078
+#define	SCZ_CONTROL_STATUS		0x10000
 #define	SCZ_SAFARI_ERRLOG		0x10018
 #define	SCZ_ECCCTRL			0x10020
 #define	SCZ_UE_AFSR			0x10030

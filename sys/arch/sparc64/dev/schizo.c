@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.19 2006/05/28 06:28:08 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.20 2006/05/28 22:09:57 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -79,6 +79,7 @@ bus_space_tag_t _schizo_alloc_bus_tag(struct schizo_pbm *, const char *,
 bus_dma_tag_t schizo_alloc_dma_tag(struct schizo_pbm *);
 
 paddr_t schizo_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+int schizo_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int _schizo_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
 void *_schizo_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
@@ -199,6 +200,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 	pba.pba_dmat = pbm->sp_dmat;
 	pba.pba_memt = pbm->sp_memt;
 	pba.pba_iot = pbm->sp_iot;
+	pba.pba_pc->intr_map = schizo_intr_map;
 
 	free(busranges, M_DEVBUF);
 
@@ -257,6 +259,58 @@ schizo_print(void *aux, const char *p)
 	if (p == NULL)
 		return (UNCONF);
 	return (QUIET);
+}
+
+/*
+ * Bus-specific interrupt mapping
+ */
+int
+schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	struct schizo_pbm *sp = pa->pa_pc->cookie;
+	struct schizo_softc *sc = sp->sp_sc;
+	u_int dev;
+	u_int ino;
+	u_int64_t agentid;
+
+	ino = *ihp;
+
+	agentid = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
+	    SCZ_CONTROL_STATUS);
+	printf("AGENT(%llx)", agentid);
+	agentid = ((agentid >> 20) & 31) << 6;
+	printf("agent(%llx)", agentid);
+
+	if (ino & ~INTMAP_PCIINT) {
+		*ihp |= agentid;
+		return (0);
+	}
+
+	/*
+	 * This deserves some documentation.  Should anyone
+	 * have anything official looking, please speak up.
+	 */
+	dev = pa->pa_device - 1;
+
+	if (ino == 0 || ino > 4) {
+		u_int32_t intreg;
+
+		intreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		     PCI_INTERRUPT_REG);
+
+		ino = PCI_INTERRUPT_PIN(intreg) - 1;
+	} else
+		ino -= 1;
+
+	ino &= INTMAP_PCIINT;
+	ino |= agentid;
+	ino |= (dev << 2) & INTMAP_PCISLOT;
+
+	printf("******** mapping interrupt %x -> %x\n", *ihp, ino);
+
+	*ihp = ino;
+
+	return (0);
 }
 
 bus_space_tag_t
@@ -355,9 +409,9 @@ schizo_dmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
     int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags,
     bus_dmamap_t *dmamp)
 {
-        struct schizo_pbm *sp = t->_cookie;
+	struct schizo_pbm *sp = t->_cookie;
 
-        return (iommu_dvmamap_create(t, t0, &sp->sp_sb, size, nsegments,
+	return (iommu_dvmamap_create(t, t0, &sp->sp_sb, size, nsegments,
 	    maxsegsz, boundary, flags, dmamp));
 }
 
@@ -380,12 +434,12 @@ _schizo_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
 		printf("\n_psycho_bus_map: invalid parent");
 		return (EINVAL);
-        }
+	}
 
 	if (flags & BUS_SPACE_MAP_PROMADDRESS) {
 		return ((*t->parent->sparc_bus_map)
 		    (t, t0, offset, size, flags, hp));
-        }
+	}
 
 	for (i = 0; i < pbm->sp_nrange; i++) {
 		bus_addr_t paddr;
@@ -415,10 +469,10 @@ _schizo_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 	DPRINTF(SDB_BUSMAP, ("_schizo_bus_mmap: prot %d flags %d pa %qx\n",
 	    prot, flags, (unsigned long long)paddr));
 
-        if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
+	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
 		printf("\n_schizo_bus_mmap: invalid parent");
 		return (-1);
-        }
+	}
 
 	for (i = 0; i < pbm->sp_nrange; i++) {
 		bus_addr_t paddr;
@@ -461,6 +515,7 @@ _schizo_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
 		intrmapptr = &pbmreg->imap[ino];
 		intrclrptr = &pbmreg->iclr[ino];
+		ino |= (*intrmapptr) & INTMAP_IGN;
 	}
 
 	ih = bus_intr_allocate(t0, handler, arg, ino, level, intrmapptr,
