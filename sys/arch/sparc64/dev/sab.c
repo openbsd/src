@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.18 2006/05/28 17:10:52 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.19 2006/05/28 22:41:44 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1378,4 +1378,5 @@ sabtty_shutdown(vsc)
 	sabtty_cec_wait(sc);
 	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
 	sabtty_cec_wait(sc);
+	SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) | SAB_IPC_VIS);
 }
