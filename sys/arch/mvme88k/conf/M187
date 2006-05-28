@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.34 2006/05/02 21:43:07 miod Exp $
+#	$OpenBSD: M187,v 1.35 2006/05/28 11:09:56 miod Exp $
 
 machine mvme88k m88k
 
@@ -26,11 +26,11 @@ sram0	at mainbus0 addr 0xffe00000
 # ------------------------------ pcctwo devices -------------------------
 vme0	at pcctwo0 offset 0x40000
 nvram0	at pcctwo0 offset 0xc0000
-ie0	at pcctwo0 offset 0x46000 ipl 1
+ie0	at pcctwo0 offset 0x46000 ipl 3
 osiop0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 cl1	at pcctwo0 offset 0x45200 ipl 3		# M8120 only
-#lptwo0	at pcctwo0 offset 0x45000 ipl 1 size
+#lptwo0	at pcctwo0 offset 0x45000 ipl 1
 memc0	at pcctwo0 offset 0x43000
 memc1	at pcctwo0 offset 0x43100
 
@@ -43,9 +43,9 @@ vx0	at vmes0 addr 0xff780000 ipl 3
 vx1	at vmes0 addr 0xff790000 ipl 3
 vx2	at vmes0 addr 0xff7a0000 ipl 3
 vx3	at vmes0 addr 0xff7b0000 ipl 3
-le0	at vmes0 addr 0xffff1200 ipl 1
-le1	at vmes0 addr 0xffff1400 ipl 1
-le2	at vmes0 addr 0xffff1600 ipl 1
+le0	at vmes0 addr 0xffff1200 ipl 3
+le1	at vmes0 addr 0xffff1400 ipl 3
+le2	at vmes0 addr 0xffff1600 ipl 3
 vs0	at vmes0 addr 0xffff9000 ipl 2
 vs1	at vmes0 addr 0xffff9800 ipl 2
 vs2	at vmes0 addr 0xffff4800 ipl 2
