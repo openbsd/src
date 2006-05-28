@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.56 2006/05/28 19:31:09 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.57 2006/05/28 20:04:52 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #define STMODE(z)	( minor(z)	 & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
-#define STCTLMODE(z)	(minor(z) & (1 << 23))
 
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
 #define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
@@ -504,21 +503,14 @@ stopen(dev, flags, fmt, p)
 	}
 
 	/*
-	 * Catch any unit attention errors.
+	 * Discard any outstanding unit attention errors.
 	 */
 	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
-	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST |
-	    ((fmt == S_IFCHR) ? SCSI_SILENT : 0));
-	if (error && (fmt != S_IFCHR))
+	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST);
+	if (error)
 		goto bad;
 
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
-
-	/* Allow control mode devices to open successfully without changing
-	 * the state of the device.
-	 */
-	if (STCTLMODE(dev))
-		return 0;
 
 	/*
 	 * if it's a different mode, or if the media has been
@@ -528,10 +520,6 @@ stopen(dev, flags, fmt, p)
 	if (st->last_dsty != dsty || !(sc_link->flags & SDEV_MEDIA_LOADED))
 		st_unmount(st, NOEJECT, DOREWIND);
 
-	/*
-	 * If we are not mounted, then we should start a new
-	 * mount session.
-	 */
 	if (!(st->flags & ST_MOUNTED)) {
 		st_mount_tape(dev, flags);
 		st->last_dsty = dsty;
@@ -1252,11 +1240,7 @@ stioctl(dev, cmd, arg, flag, p)
 #endif
 
 	default:
-		if (STCTLMODE(dev))
-			error = scsi_do_ioctl(st->sc_link, dev,
-			    cmd, arg, flag, p);
-		else
-			error = ENOTTY;
+		error = ENOTTY;
 		break;
 	}
 	return error;
