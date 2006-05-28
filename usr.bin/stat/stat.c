@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.11 2005/06/15 17:50:28 millert Exp $ */
+/*	$OpenBSD: stat.c,v 1.12 2006/05/28 16:41:18 pedro Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.11 2005/06/15 17:50:28 millert Exp $";
+    "$OpenBSD: stat.c,v 1.12 2006/05/28 16:41:18 pedro Exp $";
 #endif
 
 #include <sys/types.h>
@@ -279,7 +279,7 @@ main(int argc, char *argv[])
 			errs = 1;
 			linkfail = 1;
 			if (!quiet)
-				warn("%s: stat",
+				warn("%s",
 				    argc == 0 ? "(stdin)" : argv[0]);
 		} else
 			output(&st, argv[0], statfmt, fn, nonl);
