@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.14 2006/05/23 05:06:53 reyk Exp $
+.\"	$OpenBSD: trunk.4,v 1.15 2006/05/28 18:47:29 reyk Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -97,7 +97,7 @@ Whenever the wired master interface is unplugged, the wireless failover
 device will be used:
 .Bd -literal -offset indent
 # ifconfig em0 up
-# ifconfig ath0 192.168.1.1 netmask 255.255.255.0 nwid my_net
+# ifconfig ath0 nwid my_net up
 # ifconfig trunk0 trunkproto failover trunkport em0 trunkport ath0 \e
 	192.168.1.1 netmask 255.255.255.0
 .Ed
