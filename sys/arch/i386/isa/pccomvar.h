@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.16 2005/10/24 14:22:34 fgsch Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.17 2006/05/28 16:48:18 fkr Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ struct com_softc {
 
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_hayespioh;
-	isa_chipset_tag_t sc_ic;
 
 	u_char sc_uarttype;
 #define COM_UART_UNKNOWN	0x00		/* unknown */
