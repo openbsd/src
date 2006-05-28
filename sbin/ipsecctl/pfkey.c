@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.37 2006/05/28 20:58:24 todd Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.38 2006/05/28 21:08:42 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -660,7 +660,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 	for (ext = (struct sadb_ext *)(msg + 1);
 	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
 	    msg->sadb_msg_len * PFKEYV2_CHUNK && ext->sadb_ext_len > 0;
-	    ext = (struct sadb_ext *)((u_int8_t *)ext + 
+	    ext = (struct sadb_ext *)((u_int8_t *)ext +
 	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
 		switch (ext->sadb_ext_type) {
 		case SADB_EXT_ADDRESS_SRC:
