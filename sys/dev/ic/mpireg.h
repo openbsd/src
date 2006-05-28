@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.2 2006/05/27 22:40:41 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.3 2006/05/28 21:59:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -693,6 +693,28 @@ struct mpi_msg_scsi_io_error {
 	u_int16_t		reserved2;
 } __packed;
 
+struct mpi_cfg_hdr {
+	u_int8_t		page_version;
+	u_int8_t		page_length;
+	u_int8_t		page_number;
+	u_int8_t		page_type;
+#define MPI_CONFIG_REQ_PAGE_TYPE_ATTRIBUTE		(0xf0)
+#define MPI_CONFIG_REQ_PAGE_TYPE_MASK			(0x0f)
+#define MPI_CONFIG_REQ_PAGE_TYPE_IO_UNIT		(0x00)
+#define MPI_CONFIG_REQ_PAGE_TYPE_IOC			(0x01)
+#define MPI_CONFIG_REQ_PAGE_TYPE_BIOS			(0x02)
+#define MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT		(0x03)
+#define MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_DEV		(0x04)
+#define MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT		(0x05)
+#define MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV			(0x06)
+#define MPI_CONFIG_REQ_PAGE_TYPE_LAN			(0x07)
+#define MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL		(0x08)
+#define MPI_CONFIG_REQ_PAGE_TYPE_MANUFACTURING		(0x09)
+#define MPI_CONFIG_REQ_PAGE_TYPE_RAID_PD		(0x0A)
+#define MPI_CONFIG_REQ_PAGE_TYPE_INBAND			(0x0B)
+#define MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0F)
+} __packed;
+
 struct mpi_msg_config_request {
 	u_int8_t		action;
 #define MPI_CONFIG_REQ_ACTION_PAGE_HEADER		(0x00)
@@ -719,24 +741,7 @@ struct mpi_msg_config_request {
 
 	u_int32_t		reserved2[2];
 
-	u_int8_t		page_version;
-	u_int8_t		page_length;
-	u_int8_t		page_number;
-	u_int8_t		page_type;
-#define MPI_CONFIG_REQ_PAGE_TYPE_ATTRIBUTE		(0xf0)
-#define MPI_CONFIG_REQ_PAGE_TYPE_IO_UNIT		(0x00)
-#define MPI_CONFIG_REQ_PAGE_TYPE_IOC			(0x01)
-#define MPI_CONFIG_REQ_PAGE_TYPE_BIOS			(0x02)
-#define MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT		(0x03)
-#define MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_DEV		(0x04)
-#define MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT		(0x05)
-#define MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV			(0x06)
-#define MPI_CONFIG_REQ_PAGE_TYPE_LAN			(0x07)
-#define MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL		(0x08)
-#define MPI_CONFIG_REQ_PAGE_TYPE_MANUFACTURING		(0x09)
-#define MPI_CONFIG_REQ_PAGE_TYPE_RAID_PD		(0x0A)
-#define MPI_CONFIG_REQ_PAGE_TYPE_INBAND			(0x0B)
-#define MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0F)
+	struct mpi_cfg_hdr	config_header;
 
 	u_int32_t		page_address;
 /* XXX lots of defns here */
@@ -761,10 +766,16 @@ struct mpi_msg_config_reply {
 
 	u_int32_t		ioc_loginfo;
 
-	u_int8_t		page_version;
-	u_int8_t		page_length;
-	u_int8_t		page_number;
-	u_int8_t		page_type;
+	struct mpi_cfg_hdr	config_header;
 } __packed;
 
 
+struct mpi_cfg_manufacturing_pg0 {
+	struct mpi_cfg_hdr	config_header;
+
+	char			chip_name[16];
+	char			chip_revision[8];
+	char			board_name[16];
+	char			board_assembly[16];
+	char			board_tracer_number[16];
+} __packed;

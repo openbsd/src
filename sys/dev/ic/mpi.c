@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.5 2006/05/28 02:32:55 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.6 2006/05/28 21:59:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -100,6 +100,13 @@ int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *);
 int			mpi_portenable(struct mpi_softc *);
 
+int			mpi_cfg_hdr(struct mpi_softc *, u_int8_t, u_int8_t,
+			    u_int32_t, struct mpi_cfg_hdr *);
+int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
+			    struct mpi_cfg_hdr *, int, void *, size_t);
+
+int			mpi_cfg_manufacturer0(struct mpi_softc *);
+
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
 #define	dwordsof(s)		(sizeof(s) / sizeof(u_int32_t))
@@ -176,6 +183,11 @@ mpi_attach(struct mpi_softc *sc)
 
 	if (mpi_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
+		goto free_replies;
+	}
+
+	if (mpi_cfg_manufacturer0(sc) != 0) {
+		printf("%s: unable to read config pages\n", DEVNAME(sc));
 		goto free_replies;
 	}
 
@@ -1441,6 +1453,198 @@ mpi_portenable(struct mpi_softc *sc)
 	pep = ccb->ccb_reply;
 	if (pep == NULL)
 		panic("%s: empty portfacts reply\n", DEVNAME(sc));
+
+	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_put_ccb(sc, ccb);
+
+	return (0);
+}
+
+int
+mpi_cfg_manufacturer0(struct mpi_softc *sc)
+{
+	struct mpi_cfg_hdr			hdr;
+	struct mpi_cfg_manufacturing_pg0	pg0;
+
+	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+
+	if (mpi_cfg_hdr(sc, MPI_CONFIG_REQ_PAGE_TYPE_MANUFACTURING, 0, 0x0,
+	    &hdr) != 0)
+		return (1);
+
+	if (mpi_cfg_page(sc, 0x0, &hdr, 1, &pg0, sizeof(pg0)) != 0)
+		return (1);
+
+	printf("%s:  chip_name: %s\n", DEVNAME(sc), pg0.chip_name);
+	printf("%s:  chip_revision: %s\n", DEVNAME(sc), pg0.chip_revision);
+	printf("%s:  board_name: %s\n", DEVNAME(sc), pg0.board_name);
+	printf("%s:  board_assembly: %s\n", DEVNAME(sc), pg0.board_assembly);
+	printf("%s:  board_tracer_numer: %s\n", DEVNAME(sc),
+	    pg0.board_tracer_number);
+
+	return (0);
+}
+
+int
+mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
+    u_int32_t address, struct mpi_cfg_hdr *hdr)
+{
+	struct mpi_ccb				*ccb;
+	struct mpi_msg_config_request           *cq;
+	struct mpi_msg_config_reply             *cp;
+	int					s;
+
+	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+
+	s = splbio();
+	ccb = mpi_get_ccb(sc);
+	splx(s);
+	if (ccb == NULL) {
+		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		return (1);
+	}
+
+	ccb->ccb_done = mpi_empty_done;
+	cq = ccb->ccb_cmd;
+
+	cq->function = MPI_FUNCTION_CONFIG;
+	cq->msg_context = htole32(ccb->ccb_id);
+
+	cq->action = MPI_CONFIG_REQ_ACTION_PAGE_HEADER;
+
+	cq->config_header.page_number = number;
+	cq->config_header.page_type = type;
+	cq->page_address = htole32(address);
+	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
+	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
+
+	mpi_poll(sc, ccb);
+
+	cp = ccb->ccb_reply;
+	if (cp == NULL)
+		panic("%s: unable to fetch config header\n", DEVNAME(sc));
+
+#ifdef MPI_DEBUG
+	if (mpidebug) {
+		printf("%s:  action: 0x%02x msg_length: %d function: 0x%02x\n",
+		    DEVNAME(sc), cp->action, cp->msg_length, cp->function);
+
+		printf("%s:  ext_page_length: %d ext_page_type: 0x%02x "
+		    "msg_flags: 0x%02x\n", DEVNAME(sc),
+		    letoh16(cp->ext_page_length), cp->ext_page_type,
+		    cp->msg_flags);
+
+		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+		    letoh32(cp->msg_context));
+
+		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+		    letoh16(cp->ioc_status));
+
+		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+		    letoh32(cp->ioc_loginfo));
+
+		printf("%s:  page_version: 0x%02x page_length: %d "
+		    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
+		    cp->config_header.page_version, 
+		    cp->config_header.page_length, 
+		    cp->config_header.page_number, 
+		    cp->config_header.page_type);
+	}
+#endif /* MPI_DEBUG */ 
+
+	*hdr = cp->config_header;
+
+	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_put_ccb(sc, ccb);
+
+	return (0);
+}
+
+int
+mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
+    int read, void *page, size_t len)
+{
+	struct mpi_ccb				*ccb;
+	struct mpi_msg_config_request		*cq;
+	struct mpi_msg_config_reply		*cp;
+	char					*kva;
+	int					s;
+
+	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+
+	if (len > MPI_REQUEST_SIZE - sizeof(struct mpi_msg_config_request) ||
+	    len < hdr->page_length * 4)
+		return (1);
+
+	s = splbio();
+	ccb = mpi_get_ccb(sc);
+	splx(s);
+	if (ccb == NULL) {
+		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		return (1);
+	}
+
+	ccb->ccb_done = mpi_empty_done;
+	cq = ccb->ccb_cmd;
+
+	cq->function = MPI_FUNCTION_CONFIG;
+	cq->msg_context = htole32(ccb->ccb_id);
+
+	cq->action = (read ? MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT :
+	    MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT);
+
+	cq->config_header = *hdr;
+	cq->config_header.page_type &= MPI_CONFIG_REQ_PAGE_TYPE_MASK;
+	cq->page_address = htole32(address);
+	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
+	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL | len);
+
+	/* bounce the page via the request space to avoid more bus_dma games */
+	cq->page_buffer.sg_addr = htole32(MPI_DMA_DVA(sc->sc_requests) +
+	    ccb->ccb_offset + sizeof(struct mpi_msg_config_request));
+	kva = MPI_DMA_KVA(sc->sc_requests);
+	kva += ccb->ccb_offset + sizeof(struct mpi_msg_config_request);
+	if (!read)
+		bcopy(page, kva, len);
+
+	mpi_poll(sc, ccb);
+
+	cp = ccb->ccb_reply;
+	if (cp == NULL) {
+		mpi_put_ccb(sc, ccb);
+		return (1);
+	}
+
+#ifdef MPI_DEBUG
+	if (mpidebug) {
+		printf("%s:  action: 0x%02x msg_length: %d function: 0x%02x\n",
+		    DEVNAME(sc), cp->action, cp->msg_length, cp->function);
+
+		printf("%s:  ext_page_length: %d ext_page_type: 0x%02x "
+		    "msg_flags: 0x%02x\n", DEVNAME(sc),
+		    letoh16(cp->ext_page_length), cp->ext_page_type,
+		    cp->msg_flags);
+
+		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+		    letoh32(cp->msg_context));
+
+		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+		    letoh16(cp->ioc_status));
+
+		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+		    letoh32(cp->ioc_loginfo));
+
+		printf("%s:  page_version: 0x%02x page_length: %d "
+		    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
+		    cp->config_header.page_version, 
+		    cp->config_header.page_length, 
+		    cp->config_header.page_number, 
+		    cp->config_header.page_type);
+	}
+#endif /* MPI_DEBUG */ 
+
+	if (read)
+		bcopy(kva, page, len);
 
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
