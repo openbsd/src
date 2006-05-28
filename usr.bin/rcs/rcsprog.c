@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.129 2006/05/28 18:55:55 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.130 2006/05/28 23:16:31 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -177,10 +177,10 @@ rcs_main(int argc, char **argv)
 {
 	int fd;
 	int i, j, ch, flags, kflag, lkmode;
-	const char *oldfilename;
+	const char *nflag, *oldfilename, *orange;
 	char fpath[MAXPATHLEN];
-	char *logstr, *logmsg, *nflag, *descfile;
-	char *alist, *comment, *elist, *lrev, *urev, *orange;
+	char *logstr, *logmsg, *descfile;
+	char *alist, *comment, *elist, *lrev, *urev;
 	mode_t fmode;
 	RCSFILE *file;
 	RCSNUM *logrev;
@@ -191,9 +191,9 @@ rcs_main(int argc, char **argv)
 	lkmode = -1;
 	fmode =  S_IRUSR|S_IRGRP|S_IROTH;
 	flags = RCS_RDWR|RCS_PARSE_FULLY;
-	lrev = urev = descfile = nflag = NULL;
-	logstr = alist = comment = elist = orange = NULL;
-	oldfilename = NULL;
+	lrev = urev = descfile = NULL;
+	logstr = alist = comment = elist = NULL;
+	nflag = oldfilename = orange = NULL;
 
 	/* match GNU */
 	if (1 < argc && argv[1][0] != '-')
@@ -244,14 +244,14 @@ rcs_main(int argc, char **argv)
 			/* ignore for the moment */
 			break;
 		case 'n':
-			nflag = xstrdup(rcs_optarg);
+			nflag = rcs_optarg;
 			break;
 		case 'N':
-			nflag = xstrdup(rcs_optarg);
+			nflag = rcs_optarg;
 			rcsflags |= RCSPROG_NFLAG;
 			break;
 		case 'o':
-			orange = xstrdup(rcs_optarg);
+			orange = rcs_optarg;
 			break;
 		case 'q':
 			rcsflags |= QUIET;
@@ -505,12 +505,6 @@ rcs_main(int argc, char **argv)
 
 	if (logstr != NULL)
 		xfree(logstr);
-
-	if (nflag != NULL)
-		xfree(nflag);
-
-	if (orange != NULL)
-		xfree(orange);
 
 	return (0);
 }

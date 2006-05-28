@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.h,v 1.5 2006/05/27 05:49:14 ray Exp $	*/
+/*	$OpenBSD: rcsutil.h,v 1.6 2006/05/28 23:16:31 ray Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -55,7 +55,7 @@ int			 rcs_choosefile(const char *, char *, size_t);
 time_t			 rcs_get_mtime(RCSFILE *);
 RCSNUM			*rcs_getrevnum(const char *, RCSFILE *);
 char			*rcs_prompt(const char *);
-u_int			 rcs_rev_select(RCSFILE *, char *);
+u_int			 rcs_rev_select(RCSFILE *, const char *);
 void			 rcs_set_description(RCSFILE *, const char *);
 void			 rcs_set_rev(const char *, RCSNUM **);
 void			 rcs_setrevstr(char **, char *);
@@ -65,7 +65,7 @@ BUF			*rcs_patchfile(const char *, const char *,
 struct rcs_lines	*rcs_splitlines(const char *);
 void			 rcs_freelines(struct rcs_lines *);
 int			 rcs_yesno(void);
-struct rcs_argvector	*rcs_strsplit(char *, const char *);
+struct rcs_argvector	*rcs_strsplit(const char *, const char *);
 void			 rcs_argv_destroy(struct rcs_argvector *);
 
 #endif	/* RCSUTIL_H */

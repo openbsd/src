@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.93 2006/05/27 08:12:29 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.94 2006/05/28 23:16:31 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,25 +36,24 @@ static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
 int
 checkout_main(int argc, char **argv)
 {
-	int fd, i, ch, flags, kflag, status, warg;
+	int fd, i, ch, flags, kflag, status;
 	RCSNUM *rev;
 	RCSFILE *file;
+	const char *author, *date, *state;
 	char fpath[MAXPATHLEN];
-	char *author, *date, *rev_str, *username, *state;
+	char *rev_str, *username;
 	time_t rcs_mtime = -1;
 
-	warg = flags = status = 0;
+	flags = status = 0;
 	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
 	rev_str = NULL;
-	state = NULL;
-	author = NULL;
-	date = NULL;
+	author = date = state = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, CO_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'd':
-			date = xstrdup(rcs_optarg);
+			date = rcs_optarg;
 			break;
 		case 'f':
 			rcs_setrevstr(&rev_str, rcs_optarg);
@@ -97,7 +96,7 @@ checkout_main(int argc, char **argv)
 			rcs_setrevstr(&rev_str, rcs_optarg);
 			break;
 		case 's':
-			state = xstrdup(rcs_optarg);
+			state = rcs_optarg;
 			flags |= CO_STATE;
 			break;
 		case 'T':
@@ -119,10 +118,8 @@ checkout_main(int argc, char **argv)
 			if (rcs_optarg == NULL) {
 				if ((author = getlogin()) == NULL)
 					err(1, "getlogin");
-			} else {
-				author = xstrdup(rcs_optarg);
-				warg = 1;
-			}
+			} else
+				author = rcs_optarg;
 			flags |= CO_AUTHOR;
 			break;
 		case 'x':
@@ -208,15 +205,6 @@ checkout_main(int argc, char **argv)
 			rcs_set_mtime(file, rcs_mtime);
 		rcs_close(file);
 	}
-
-	if (author != NULL && warg)
-		xfree(author);
-
-	if (date != NULL)
-		xfree(date);
-
-	if (state != NULL)
-		xfree(state);
 
 	return (status);
 }

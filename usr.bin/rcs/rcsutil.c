@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.13 2006/05/27 08:12:29 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.14 2006/05/28 23:16:31 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -358,7 +358,7 @@ rcs_prompt(const char *prompt)
 }
 
 u_int
-rcs_rev_select(RCSFILE *file, char *range)
+rcs_rev_select(RCSFILE *file, const char *range)
 {
 	int i;
 	u_int nrev;
@@ -582,7 +582,7 @@ rcs_yesno(void)
  * an argument vector for the values found.
  */
 struct rcs_argvector *
-rcs_strsplit(char *str, const char *sep)
+rcs_strsplit(const char *str, const char *sep)
 {
 	struct rcs_argvector *av;
 	size_t i = 0;
