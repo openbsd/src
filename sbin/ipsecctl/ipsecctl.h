@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.33 2006/05/28 20:58:24 todd Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.34 2006/05/28 20:59:23 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -97,6 +97,8 @@ struct ipsec_addr_wrap {
 	int			 netaddress;
 	sa_family_t		 af;
 	char			*name;
+	struct ipsec_addr_wrap	*next;
+	struct ipsec_addr_wrap	*tail;
 };
 
 struct ipsec_auth {
@@ -169,19 +171,11 @@ struct ipsecctl {
 	struct ipsec_rule_queue rule_queue;
 };
 
-struct addr_node {
-	struct ipsec_addr_wrap	 addr;
-	sa_family_t		 af;
-	struct addr_node	*next;
-	struct addr_node	*tail;
-};
-
 int	parse_rules(FILE *, struct ipsecctl *);
 int	cmdline_symset(char *);
 int	ipsecctl_add_rule(struct ipsecctl * ipsec, struct ipsec_rule *);
 void	ipsecctl_get_rules(struct ipsecctl *);
 int	ike_print_config(struct ipsec_rule *, int);
 int	ike_ipsec_establish(int, struct ipsec_rule *);
-void	set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 
 #endif /* _IPSECCTL_H_ */
