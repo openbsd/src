@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.82 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.83 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -881,8 +881,8 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m)
 		}
 
 		/* Attach the buffer to the mbuf. */
-		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
-		MEXTADD(m_new, buf, ETHER_MAX_LEN_JUMBO, 0, ti_jfree, sc);
+		m_new->m_len = m_new->m_pkthdr.len = TI_JUMBO_FRAMELEN;
+		MEXTADD(m_new, buf, TI_JUMBO_FRAMELEN, 0, ti_jfree, sc);
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -891,7 +891,7 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m)
 		 */
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
+		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
 	}
 
 	m_adj(m_new, ETHER_ALIGN);
@@ -1056,7 +1056,7 @@ ti_init_tx_ring(struct ti_softc *sc)
 
 	SLIST_INIT(&sc->ti_tx_map_listhead);
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmatag, ETHER_MAX_LEN_JUMBO,
+		if (bus_dmamap_create(sc->sc_dmatag, TI_JUMBO_FRAMELEN,
 		    TI_NTXSEG, MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
 			return (ENOBUFS);
 
@@ -1420,7 +1420,7 @@ ti_gibinit(struct ti_softc *sc)
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
 	TI_HOSTADDR(rcb->ti_hostaddr) = TI_RING_DMA_ADDR(sc, ti_rx_jumbo_ring);
-	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
+	rcb->ti_max_len = TI_JUMBO_FRAMELEN;
 	rcb->ti_flags = 0;
 	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 
@@ -1648,7 +1648,7 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
-	ifp->if_hardmtu = ETHERMTU_JUMBO;
+	ifp->if_hardmtu = TI_JUMBO_FRAMELEN - ETHER_HDR_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, TI_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -2257,7 +2257,7 @@ ti_init2(struct ti_softc *sc)
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dv.dv_unit);
 	CSR_WRITE_4(sc, TI_GCR_IFMTU,
-		ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN);
+		TI_JUMBO_FRAMELEN + ETHER_VLAN_ENCAP_LEN);
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
@@ -2467,7 +2467,7 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

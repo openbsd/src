@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.24 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.25 2006/05/28 00:20:21 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -450,7 +450,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = 0; i < STGE_NTXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat,
-		    ETHER_MAX_LEN_JUMBO, STGE_NTXFRAGS, MCLBYTES, 0, 0,
+		    STGE_JUMBO_FRAMELEN, STGE_NTXFRAGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);

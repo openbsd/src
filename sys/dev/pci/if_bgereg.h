@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.46 2006/04/21 03:22:18 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.47 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2191,6 +2191,8 @@ struct bge_gib {
  * boundary.
  */
 
+#define BGE_JUMBO_FRAMELEN	9018
+#define BGE_JUMBO_MTU		(BGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define BGE_PAGE_SIZE		PAGE_SIZE
 #define BGE_MIN_FRAMELEN		60
 
@@ -2244,7 +2246,7 @@ struct bge_gib {
 #define BGE_JSLOTS	384
 #endif
 
-#define BGE_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
+#define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define BGE_JLEN (BGE_JRAWLEN + (sizeof(u_int64_t) - \
 	(BGE_JRAWLEN % sizeof(u_int64_t))))
 #define BGE_JPAGESZ PAGE_SIZE

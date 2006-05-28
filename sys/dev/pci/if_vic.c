@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.7 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.8 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -191,6 +191,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = vic_ioctl;
 	ifp->if_start = vic_start;
 	ifp->if_watchdog = vic_watchdog;
+	ifp->if_hardmtu = VIC_JUMBO_MTU;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -664,7 +665,7 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

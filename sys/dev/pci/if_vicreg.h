@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vicreg.h,v 1.1 2006/02/25 23:49:04 reyk Exp $	*/
+/*	$OpenBSD: if_vicreg.h,v 1.2 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -191,5 +191,9 @@ struct vic_data {
 #define VIC_OWNER_DRIVER_PEND	1
 #define VIC_OWNER_NIC		2
 #define VIC_OWNER_NIC_PEND	3
+
+
+#define VIC_JUMBO_FRAMELEN	9018
+#define VIC_JUMBO_MTU		(VIC_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #endif /* _DEV_IC_VICREG_H */

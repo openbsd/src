@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.60 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.61 2006/05/28 00:20:21 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -259,7 +259,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	if (sc->sc_flags & NFE_USE_JUMBO)
-		ifp->if_hardmtu = ETHERMTU_JUMBO;
+		ifp->if_hardmtu = NFE_JUMBO_MTU;
 
 #if NVLAN > 0
 	if (sc->sc_flags & NFE_HW_VLAN)
@@ -483,11 +483,7 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN ||
-		    ((sc->sc_flags & NFE_USE_JUMBO) &&
-		    ifr->ifr_mtu > ETHERMTU_JUMBO) ||
-		    (!(sc->sc_flags & NFE_USE_JUMBO) &&
-		    ifr->ifr_mtu > ETHERMTU))
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

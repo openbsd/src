@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.110 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.111 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -908,7 +908,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
@@ -1266,7 +1266,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = sk_start;
 	ifp->if_watchdog = sk_watchdog;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_hardmtu = ETHERMTU_JUMBO;
+	ifp->if_hardmtu = SK_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);

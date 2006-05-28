@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngereg.h,v 1.7 2005/12/17 07:31:27 miod Exp $	*/
+/*	$OpenBSD: if_ngereg.h,v 1.8 2006/05/28 00:20:21 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -613,9 +613,11 @@ struct nge_mii_frame {
 #define NGE_MII_WRITEOP		0x01
 #define NGE_MII_TURNAROUND	0x02
 
+#define NGE_JUMBO_FRAMELEN	9018
+#define NGE_JUMBO_MTU		(NGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define NGE_JSLOTS		384
 
-#define NGE_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))
+#define NGE_JRAWLEN (NGE_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
 #define NGE_JLEN (NGE_JRAWLEN  + (sizeof(u_int64_t) - \
 	(NGE_JRAWLEN % sizeof(u_int64_t))))
 #define NGE_MCLBYTES (NGE_JLEN - sizeof(u_int64_t))

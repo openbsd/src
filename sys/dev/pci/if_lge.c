@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.43 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.44 2006/05/28 00:20:21 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -556,7 +556,7 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = lge_start;
 	ifp->if_watchdog = lge_watchdog;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_hardmtu = ETHERMTU_JUMBO;
+	ifp->if_hardmtu = LGE_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));
@@ -708,7 +708,7 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 		 * default values.
 		 */
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
+		m_new->m_len = m_new->m_pkthdr.len = LGE_JLEN;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 
@@ -1391,7 +1391,7 @@ lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

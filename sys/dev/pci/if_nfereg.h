@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.18 2006/05/01 15:59:31 brad Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.19 2006/05/28 00:20:21 brad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -21,7 +21,10 @@
 #define NFE_RX_RING_COUNT	128
 #define NFE_TX_RING_COUNT	256
 
-#define NFE_JBYTES		(ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
+#define NFE_JUMBO_FRAMELEN	9018
+#define NFE_JUMBO_MTU		(NFE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+#define NFE_JBYTES		(NFE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define NFE_JPOOL_COUNT		(NFE_RX_RING_COUNT + 64)
 #define NFE_JPOOL_SIZE		(NFE_JPOOL_COUNT * NFE_JBYTES)
 

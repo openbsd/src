@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.23 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.24 2006/05/28 00:20:21 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -782,7 +782,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = vge_watchdog;
 	ifp->if_init = vge_init;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_hardmtu = ETHERMTU_JUMBO;
+	ifp->if_hardmtu = VGE_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, VGE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -1753,7 +1753,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

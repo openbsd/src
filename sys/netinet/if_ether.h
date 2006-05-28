@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.36 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.37 2006/05/28 00:20:21 brad Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #define ETHER_MIN_LEN	64	/* Minimum frame length, CRC included	*/
 #define ETHER_MAX_LEN	1518	/* Maximum frame length, CRC included	*/
 #define ETHER_MAX_DIX_LEN	1536	/* Maximum DIX frame length	*/
-#define ETHER_MAX_LEN_JUMBO	9018	/* max jumbo frame len, including CRC */
 
 /*
  * Some Ethernet extensions.
@@ -82,7 +81,6 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
-#define	ETHERMTU_JUMBO	(ETHER_MAX_LEN_JUMBO - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 /*
  * Ethernet CRC32 polynomials (big- and little-endian verions).

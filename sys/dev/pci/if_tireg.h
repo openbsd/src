@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.22 2006/03/16 02:23:53 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.23 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -782,6 +782,8 @@ struct ti_tx_desc {
  * boundary.
  */
 
+#define TI_JUMBO_FRAMELEN	9018
+#define TI_JUMBO_MTU		(TI_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define TI_PAGE_SIZE		PAGE_SIZE
 #define TI_MIN_FRAMELEN		60
 
@@ -996,7 +998,7 @@ struct ti_event_desc {
 #define TI_JSLOTS	384
 #endif
 
-#define TI_JRAWLEN	(ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
+#define TI_JRAWLEN	(TI_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define TI_JLEN		(TI_JRAWLEN + (sizeof(u_int64_t) - \
        (TI_JRAWLEN % sizeof(u_int64_t))))
 #define TI_JPAGESZ	PAGE_SIZE

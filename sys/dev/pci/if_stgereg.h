@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stgereg.h,v 1.4 2005/05/23 22:44:20 brad Exp $	*/
+/*	$OpenBSD: if_stgereg.h,v 1.5 2006/05/28 00:20:21 brad Exp $	*/
 /*	$NetBSD: if_stgereg.h,v 1.3 2003/02/10 21:10:07 christos Exp $	*/
 
 /*-
@@ -39,6 +39,9 @@
 
 #ifndef _DEV_PCI_IF_STGEREG_H_
 #define	_DEV_PCI_IF_STGEREG_H_
+
+#define STGE_JUMBO_FRAMELEN	9018
+#define STGE_JUMBO_MTU		(STGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 /*
  * Register description for the Sundance Tech. TC9021 10/100/1000

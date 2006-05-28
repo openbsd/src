@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.54 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.55 2006/05/28 00:20:21 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -885,7 +885,7 @@ nge_attach(parent, self, aux)
 	ifp->if_start = nge_start;
 	ifp->if_watchdog = nge_watchdog;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_hardmtu = ETHERMTU_JUMBO;
+	ifp->if_hardmtu = NGE_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, NGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("%s: bcopy\n", sc->sc_dv.dv_xname));
@@ -2060,7 +2060,7 @@ nge_ioctl(ifp, command, data)
 
 	switch(command) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

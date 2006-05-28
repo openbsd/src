@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.148 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.149 2006/05/28 00:20:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -897,8 +897,8 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		}
 
 		/* Attach the buffer to the mbuf. */
-		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
-		MEXTADD(m_new, buf, ETHER_MAX_LEN_JUMBO, 0, bge_jfree, sc);
+		m_new->m_len = m_new->m_pkthdr.len = BGE_JUMBO_FRAMELEN;
+		MEXTADD(m_new, buf, BGE_JUMBO_FRAMELEN, 0, bge_jfree, sc);
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -907,7 +907,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		 */
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
+		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
 	}
 
 	if (!sc->bge_rx_alignment_bug)
@@ -1407,7 +1407,7 @@ bge_blockinit(struct bge_softc *sc)
 		BGE_HOSTADDR(rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
 		rcb->bge_maxlen_flags =
-		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_LEN_JUMBO,
+		    BGE_RCB_MAXLEN_FLAGS(BGE_JUMBO_FRAMELEN,
 		        BGE_RCB_FLAG_RING_DISABLED);
 		if (sc->bge_extram)
 			rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
@@ -1937,7 +1937,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	if (BGE_IS_JUMBO_CAPABLE(sc))
-		ifp->if_hardmtu = ETHERMTU_JUMBO;
+		ifp->if_hardmtu = BGE_JUMBO_MTU;
 
 	/*
 	 * Do MII setup.
@@ -2890,7 +2890,7 @@ bge_init(void *xsc)
 	/* Specify MRU. */
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		CSR_WRITE_4(sc, BGE_RX_MTU,
-			ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN);
+			BGE_JUMBO_FRAMELEN + ETHER_VLAN_ENCAP_LEN);
 	else
 		CSR_WRITE_4(sc, BGE_RX_MTU,
 			ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
@@ -3089,11 +3089,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN ||
-		    ((BGE_IS_JUMBO_CAPABLE(sc)) &&
-		    ifr->ifr_mtu > ETHERMTU_JUMBO) ||
-		    ((!BGE_IS_JUMBO_CAPABLE(sc)) &&
-		    ifr->ifr_mtu > ETHERMTU))
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;

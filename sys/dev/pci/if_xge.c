@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.16 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.17 2006/05/28 00:20:21 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -272,7 +272,8 @@ struct cfdriver xge_cd = {
 /*
  * Non-tunable constants.
  */
-#define XGE_MAX_MTU		9600
+#define XGE_MAX_FRAMELEN	9600
+#define XGE_MAX_MTU		(XGE_MAX_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #define XGE_TYPE_XENA		1	/* Xframe-I */
 #define XGE_TYPE_HERC		2	/* Xframe-II */
@@ -439,7 +440,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Create transmit DMA maps */
 	for (i = 0; i < NTXDESCS; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_MTU,
+		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_FRAMELEN,
 		    NTXFRAGS, MCLBYTES, 0, 0, &sc->sc_txm[i])) {
 			printf(": cannot create TX DMA maps\n");
 			return;
@@ -460,7 +461,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Create receive buffer DMA maps */
 	for (i = 0; i < NRXREAL; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_MTU,
+		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_FRAMELEN,
 		    NRXFRAGS, MCLBYTES, 0, 0, &sc->sc_rxm[i])) {
 			printf(": cannot create RX DMA maps\n");
 			return;
@@ -657,7 +658,7 @@ xge_init(struct ifnet *ifp)
 	}
 
 	/* set MRU */
-	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(XGE_MAX_MTU));
+	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(XGE_MAX_FRAMELEN));
 
 	/* 56, enable the transmit laser */
 	val = PIF_RCSR(ADAPTER_CONTROL);
@@ -880,7 +881,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
