@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.54 2006/05/28 07:07:09 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.55 2006/05/28 07:18:30 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ stopen(dev, flags, fmt, p)
 	/*
 	 * Catch any unit attention errors.
 	 */
-	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
+	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    ((fmt == S_IFCHR) ? SCSI_SILENT : 0));
 	if (error && (fmt != S_IFCHR))
@@ -633,7 +633,7 @@ st_mount_tape(dev, flags)
 	 * (noteably some DAT drives)
 	 */
 	/* XXX */
-	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT, SCSI_SILENT);
+	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE, SCSI_SILENT);
 
 	/*
 	 * Some devices can't tell you much until they have been
