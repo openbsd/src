@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.57 2006/05/28 20:04:52 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.58 2006/05/28 23:19:25 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1263,23 +1263,18 @@ try_new_value:
 	/*
 	 * As the drive liked it, if we are setting a new default,
 	 * set it into the structures as such.
-	 *
-	 * The means for deciding this are not finalised yet
 	 */
-	if (STMODE(dev) == 0x03) {
-		/* special mode */
-		/* XXX */
-		switch ((short) (mt->mt_op)) {
-		case MTSETBSIZ:
-			st->modes[dsty].blksize = st->blksize;
-			st->modeflags[dsty] |= BLKSIZE_SET_BY_USER;
-			break;
-		case MTSETDNSTY:
-			st->modes[dsty].density = st->density;
-			st->modeflags[dsty] |= DENSITY_SET_BY_USER;
-			break;
-		}
+	switch (mt->mt_op) {
+	case MTSETBSIZ:
+		st->modes[dsty].blksize = st->blksize;
+		st->modeflags[dsty] |= BLKSIZE_SET_BY_USER;
+		break;
+	case MTSETDNSTY:
+		st->modes[dsty].density = st->density;
+		st->modeflags[dsty] |= DENSITY_SET_BY_USER;
+		break;
 	}
+
 	return 0;
 }
 
