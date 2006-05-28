@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2006/05/27 21:10:53 joris Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2006/05/28 15:45:31 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -29,8 +29,11 @@ cvs_parse_configfile(void)
 	int i;
 	FILE *fp;
 	size_t len;
+	struct rlimit rl;
 	const char *errstr;
 	char *p, *buf, *lbuf, *opt, *val, fpath[MAXPATHLEN];
+
+	cvs_log(LP_TRACE, "cvs_parse_configfile()");
 
 	i = snprintf(fpath, sizeof(fpath), "%s/%s", current_cvsroot->cr_dir,
 	    CVS_PATH_CONFIG);
@@ -74,6 +77,16 @@ cvs_parse_configfile(void)
 			if (errstr != NULL)
 				fatal("cvs_parse_configfile: %s: %s", val,
 				    errstr);
+		} else if (!strcmp(opt, "dlimit")) {
+			if (getrlimit(RLIMIT_DATA, &rl) != -1) {
+				rl.rlim_cur = (int)strtonum(val, 0, INT_MAX,
+				    &errstr);
+				if (errstr != NULL)
+					fatal("cvs_parse_configfile: %s: %s",
+					    val, errstr);
+				rl.rlim_cur = rl.rlim_cur * 1024;
+				(void)setrlimit(RLIMIT_DATA, &rl);
+			}
 		} else {
 			cvs_log(LP_ERR, "ignoring unknown option '%s'", opt);
 		}
