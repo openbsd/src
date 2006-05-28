@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.146 2006/05/28 17:25:18 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.147 2006/05/28 21:11:12 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -599,7 +599,16 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 		return;
 	}
 
-	rflags = 0;
+	rflags = RCS_READ;
+	switch (cvs_cmdop) {
+	case CVS_OP_COMMIT:
+		rflags = RCS_WRITE;
+		break;
+	case CVS_OP_LOG:
+		rflags |= RCS_PARSE_FULLY;
+		break;
+	}
+
 	cf->repo_fd = open(cf->file_rpath, O_RDONLY);
 	if (cf->repo_fd != -1) {
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, rflags);
