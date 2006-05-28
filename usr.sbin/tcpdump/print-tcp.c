@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.23 2004/09/16 14:02:07 markus Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.24 2006/05/28 22:48:16 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.23 2004/09/16 14:02:07 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.24 2006/05/28 22:48:16 moritz Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -596,7 +596,7 @@ tcp_print(register const u_char *bp, register u_int length,
 				(void)printf("tcpmd5:");
 				datalen = len - 2;
 				for (i = 0; i < datalen; ++i) {
-					LENCHECK(i);
+					LENCHECK(i+1);
 					(void)printf("%02x", cp[i]);
 				}
 				break;
@@ -605,7 +605,7 @@ tcp_print(register const u_char *bp, register u_int length,
 				(void)printf("opt-%d:", opt);
 				datalen = len - 2;
 				for (i = 0; i < datalen; ++i) {
-					LENCHECK(i);
+					LENCHECK(i+1);
 					(void)printf("%02x", cp[i]);
 				}
 				break;
@@ -688,7 +688,7 @@ print_tcp_rst_data(register const u_char *sp, u_int length)
 		putchar('+');			/* indicate we truncate */
 	}
 	putchar(' ');
-	while (length-- && sp <= snapend) {
+	while (length-- && sp < snapend) {
 		c = *sp++;
 		safeputchar(c);
 	}
