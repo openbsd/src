@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.86 2006/05/28 22:07:54 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.87 2006/05/28 23:24:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -801,10 +801,18 @@ void
 nexthop_shutdown(void)
 {
 	u_int32_t		 i;
+	struct nexthop		*nh, *nnh;
 
-	for (i = 0; i <= nexthoptable.nexthop_hashmask; i++)
+	for (i = 0; i <= nexthoptable.nexthop_hashmask; i++) {
+		for(nh = LIST_FIRST(&nexthoptable.nexthop_hashtbl[i]);
+		    nh != NULL; nh = nnh) {
+			nnh = LIST_NEXT(nh, nexthop_l);
+			nh->state = NEXTHOP_UNREACH;
+			(void)nexthop_delete(nh);
+		}
 		if (!LIST_EMPTY(&nexthoptable.nexthop_hashtbl[i]))
 			log_warnx("nexthop_shutdown: non-free table");
+	}
 
 	free(nexthoptable.nexthop_hashtbl);
 }
@@ -817,7 +825,8 @@ nexthop_update(struct kroute_nexthop *msg)
 
 	nh = nexthop_lookup(&msg->nexthop);
 	if (nh == NULL) {
-		log_warnx("nexthop_update: non-existent nexthop");
+		log_warnx("nexthop_update: non-existent nexthop %s",
+		    log_addr(&msg->nexthop));
 		return;
 	}
 
@@ -825,6 +834,10 @@ nexthop_update(struct kroute_nexthop *msg)
 		nh->state = NEXTHOP_REACH;
 	else
 		nh->state = NEXTHOP_UNREACH;
+
+	if (nexthop_delete(nh))
+		/* nexthop no longer used */
+		return;
 
 	if (msg->connected) {
 		nh->flags |= NEXTHOP_CONNECTED;
@@ -918,8 +931,15 @@ nexthop_unlink(struct rde_aspath *asp)
 	nh = asp->nexthop;
 	asp->nexthop = NULL;
 
-	if (nh->refcnt > 0)
-		return;
+	(void)nexthop_delete(nh);
+}
+
+int
+nexthop_delete(struct nexthop *nh)
+{
+	/* either pinned or in a state where it may not be deleted */
+	if (nh->refcnt > 0 || nh->state == NEXTHOP_LOOKUP)
+		return (0);
 
 	if (LIST_EMPTY(&nh->path_h)) {
 		LIST_REMOVE(nh, nexthop_l);
@@ -927,7 +947,9 @@ nexthop_unlink(struct rde_aspath *asp)
 
 		rdemem.nexthop_cnt--;
 		free(nh);
+		return (1);
 	}
+	return (0);
 }
 
 struct nexthop *
