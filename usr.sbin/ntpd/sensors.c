@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.12 2006/05/28 18:47:25 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.13 2006/05/28 18:48:20 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -134,7 +134,10 @@ sensor_query(struct ntp_sensor *s)
 	mib[2] = s->sensorid;
 	len = sizeof(sensor);
 	if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
-		log_warn("sensor_query sysctl");
+		if (errno == ENOENT)
+			sensor_remove(s);
+		else
+			log_warn("sensor_query sysctl");
 		return;
 	}
 
