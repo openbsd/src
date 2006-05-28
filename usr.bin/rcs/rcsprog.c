@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.128 2006/05/27 05:49:14 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.129 2006/05/28 18:55:55 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -175,13 +175,14 @@ rcs_usage(void)
 int
 rcs_main(int argc, char **argv)
 {
-	int fd, ofd;
+	int fd;
 	int i, j, ch, flags, kflag, lkmode;
-	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
+	const char *oldfilename;
+	char fpath[MAXPATHLEN];
 	char *logstr, *logmsg, *nflag, *descfile;
 	char *alist, *comment, *elist, *lrev, *urev, *orange;
 	mode_t fmode;
-	RCSFILE *file, *oldfile;
+	RCSFILE *file;
 	RCSNUM *logrev;
 	struct rcs_access *acp;
 	time_t rcs_mtime = -1;
@@ -192,24 +193,17 @@ rcs_main(int argc, char **argv)
 	flags = RCS_RDWR|RCS_PARSE_FULLY;
 	lrev = urev = descfile = nflag = NULL;
 	logstr = alist = comment = elist = orange = NULL;
+	oldfilename = NULL;
 
 	/* match GNU */
 	if (1 < argc && argv[1][0] != '-')
 		warnx("warning: No options were given; "
 		    "this usage is obsolescent.");
 
-	ofd = -1;
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'A':
-			/* XXX - Should we process this after all flags? */
-			ofd = rcs_choosefile(rcs_optarg, ofpath,
-			    sizeof(ofpath));
-			if (ofd < 0) {
-				if (!(flags & RCS_CREATE))
-					warnx("%s", ofpath);
-				exit(1);
-			}
+			oldfilename = rcs_optarg;
 			rcsflags |= CO_ACLAPPEND;
 			break;
 		case 'a':
@@ -357,7 +351,16 @@ rcs_main(int argc, char **argv)
 
 		/* entries to add from <oldfile> */
 		if (rcsflags & CO_ACLAPPEND) {
-			/* XXX */
+			RCSFILE *oldfile;
+			int ofd;
+			char ofpath[MAXPATHLEN];
+
+			ofd = rcs_choosefile(oldfilename, ofpath, sizeof(ofpath));
+			if (ofd < 0) {
+				if (!(flags & RCS_CREATE))
+					warnx("%s", ofpath);
+				exit(1);
+			}
 			if ((oldfile = rcs_open(ofpath, ofd, RCS_READ)) == NULL)
 				exit(1);
 
@@ -365,7 +368,7 @@ rcs_main(int argc, char **argv)
 				rcs_access_add(file, acp->ra_name);
 
 			rcs_close(oldfile);
-			ofd = -1;
+			(void)close(ofd);
 		}
 
 		/* entries to add to the access list */
@@ -508,9 +511,6 @@ rcs_main(int argc, char **argv)
 
 	if (orange != NULL)
 		xfree(orange);
-
-	if (ofd != -1)
-		(void)close(ofd);
 
 	return (0);
 }
