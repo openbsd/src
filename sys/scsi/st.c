@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.59 2006/05/28 23:26:35 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.60 2006/05/28 23:34:34 beck Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1807,6 +1807,39 @@ st_interpret_sense(xs)
 		return (EJUSTRETURN); /* let the generic code handle it */
 
 	switch (skey) {
+
+	/*
+	 * We do custom processing in st for the unit becoming ready case.
+	 * in this case we do not allow xs->retries to be decremented
+	 * only on the "Unit Becoming Ready" case. This is because tape
+	 * drives report "Unit Becoming Ready" when loading media, etc.
+	 * and can take a long time.  Rather than having a massive timeout 
+	 * for all operations (which would cause other problems) we allow
+	 * operations to wait (but be interruptable with Ctrl-C) forever
+	 * as long as the drive is reporting that it is becoming ready.
+	 * all other cases are handled as per the default.
+	 */
+
+	case SKEY_NOT_READY:
+		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+			return (0);
+		switch (sense->add_sense_code) {
+		case 0x04:	/* LUN not ready */
+			switch (sense->add_sense_code_qual) {
+				case 0x01: /* Becoming Ready */
+					SC_DEBUG(sc_link, SDEV_DB1,
+		    			    ("not ready: busy (%#x)\n",
+					    sense->add_sense_code_qual));
+					/* don't count this as a retry */
+					xs->retries++;
+					return (scsi_delay(xs, 1));
+				default:
+					return (EJUSTRETURN);
+			}
+			break;
+		default:
+			return (EJUSTRETURN);
+	}
 	case SKEY_NO_SENSE:
 	case SKEY_RECOVERED_ERROR:
 	case SKEY_MEDIUM_ERROR:
