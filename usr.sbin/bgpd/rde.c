@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.205 2006/04/21 08:55:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.206 2006/05/28 22:07:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -126,6 +126,9 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	struct peer		*p;
 	struct listen_addr	*la;
 	struct pollfd		 pfd[3];
+	struct filter_rule	*f;
+	struct filter_set	*set;
+	struct nexthop		*nh;
 	int			 i;
 
 	switch (pid = fork()) {
@@ -200,6 +203,15 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	network_init(net_l);
 
 	log_info("route decision engine ready");
+
+	TAILQ_FOREACH(f, rules, entry) {
+		TAILQ_FOREACH(set, &f->set, entry) {
+			if (set->type == ACTION_SET_NEXTHOP) {
+				nh = nexthop_get(&set->action.nexthop);
+				nh->refcnt++;
+			}
+		}
+	}
 
 	while (rde_quit == 0) {
 		bzero(pfd, sizeof(pfd));
@@ -280,6 +292,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct rde_peer		*peer;
 	struct session_up	 sup;
 	struct filter_set	*s;
+	struct nexthop		*nh;
 	pid_t			 pid;
 	int			 n;
 	sa_family_t		 af = AF_UNSPEC;
@@ -393,6 +406,11 @@ badnet:
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
 			TAILQ_INSERT_TAIL(session_set, s, entry);
+
+			if (s->type == ACTION_SET_NEXTHOP) {
+				nh = nexthop_get(&s->action.nexthop);
+				nh->refcnt++;
+			}
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(af)) {
@@ -474,6 +492,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct filter_rule	*r;
 	struct filter_set	*s;
 	struct mrt		*xmrt;
+	struct nexthop		*nh;
 	int			 n, reconf_in = 0, reconf_out = 0;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -593,6 +612,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
 			TAILQ_INSERT_TAIL(parent_set, s, entry);
+
+			if (s->type == ACTION_SET_NEXTHOP) {
+				nh = nexthop_get(&s->action.nexthop);
+				nh->refcnt++;
+			}
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
@@ -2439,6 +2463,7 @@ rde_shutdown(void)
 	/* free filters */
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		TAILQ_REMOVE(rules_l, r, entry);
+		filterset_free(&r->set);
 		free(r);
 	}
 	free(rules_l);

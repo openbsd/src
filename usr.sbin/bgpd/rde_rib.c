@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.85 2006/04/04 12:03:26 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.86 2006/05/28 22:07:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -917,6 +917,9 @@ nexthop_unlink(struct rde_aspath *asp)
 	/* see if list is empty */
 	nh = asp->nexthop;
 	asp->nexthop = NULL;
+
+	if (nh->refcnt > 0)
+		return;
 
 	if (LIST_EMPTY(&nh->path_h)) {
 		LIST_REMOVE(nh, nexthop_l);

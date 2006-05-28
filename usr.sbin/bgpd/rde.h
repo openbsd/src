@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.93 2006/04/12 14:05:46 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.94 2006/05/28 22:07:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -201,6 +201,7 @@ struct nexthop {
 	 */
 	u_int32_t		costs;
 #endif
+	int			refcnt;	/* filterset reference counter */
 	enum nexthop_state	state;
 	u_int8_t		nexthop_netlen;
 	u_int8_t		flags;

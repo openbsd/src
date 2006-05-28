@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.48 2006/04/26 17:13:14 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.49 2006/05/28 22:07:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -428,6 +428,7 @@ void
 filterset_free(struct filter_set_head *sh)
 {
 	struct filter_set	*s;
+	struct nexthop		*nh;
 
 	while ((s = TAILQ_FIRST(sh)) != NULL) {
 		TAILQ_REMOVE(sh, s, entry);
@@ -435,6 +436,17 @@ filterset_free(struct filter_set_head *sh)
 			rtlabel_unref(s->action.id);
 		else if (s->type == ACTION_PFTABLE_ID)
 			pftable_unref(s->action.id);
+		else if (s->type == ACTION_SET_NEXTHOP &&
+		    bgpd_process == PROC_RDE) {
+			nh = nexthop_get(&s->action.nexthop);
+			if (--nh->refcnt <= 0 && LIST_EMPTY(&nh->path_h)) {
+				LIST_REMOVE(nh, nexthop_l);
+				rde_send_nexthop(&nh->exit_nexthop, 0);
+
+				rdemem.nexthop_cnt--;
+				free(nh);
+			}
+		}
 		free(s);
 	}
 }
