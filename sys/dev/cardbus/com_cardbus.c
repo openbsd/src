@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.20 2006/05/28 01:09:25 fkr Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.21 2006/05/28 16:49:46 fkr Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -55,8 +55,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
-
-#include <dev/isa/isavar.h>
 
 #include "com.h"
 #ifdef i386
