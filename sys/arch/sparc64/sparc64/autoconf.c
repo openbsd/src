@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.50 2006/05/28 18:04:41 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.51 2006/05/28 19:09:39 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -574,8 +574,10 @@ setroot()
 					goto gotswap;
 				}
 			}
-			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+			if (len == 4 && strncmp(buf, "exit", 4) == 0) {
+				doshutdownhooks();
 				OF_exit();
+			}
 			dv = getdisk(buf, len, bp?bp->val[2]:0, &nrootdev);
 			if (dv != NULL) {
 				bootdv = dv;
