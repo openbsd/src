@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.53 2005/12/03 03:40:52 brad Exp $ */
+/*	$OpenBSD: ehci.c,v 1.54 2006/05/28 23:52:27 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2240,6 +2240,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 	int len, curlen, mps;
 	int i, tog;
 	usb_dma_t *dma = &xfer->dmabuf;
+	u_int16_t flags = xfer->flags;
 
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
@@ -2292,7 +2293,14 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 		    dataphys, dataphyslastpage, len, curlen));
 		len -= curlen;
 
-		if (len != 0) {
+		/*
+		 * Allocate another transfer if there's more data left,
+		 * or if force last short transfer flag is set and we're
+		 * allocating a multiple of the max packet size.
+		 */
+		if (len != 0 ||
+		    ((curlen % mps) == 0 && !rd && curlen != 0 &&
+		     (flags & USBD_FORCE_SHORT_XFER))) {
 			next = ehci_alloc_sqtd(sc);
 			if (next == NULL)
 				goto nomem;
@@ -2329,7 +2337,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 			tog ^= 1;
 			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
 		}
-		if (len == 0)
+		if (next == NULL)
 			break;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
 		dataphys += curlen;
