@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.14 2004/12/20 08:30:40 pascoe Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.15 2006/05/28 21:20:16 moritz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.14 2004/12/20 08:30:40 pascoe Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.15 2006/05/28 21:20:16 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 #endif
 	register int ret;
 
-	if (caplen < 3) {
+	if (caplen < sizeof(struct llc)) {
 		(void)printf("[|llc]");
 		default_print((u_char *)p, caplen);
 		return(0);
