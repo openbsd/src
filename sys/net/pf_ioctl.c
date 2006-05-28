@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.165 2006/03/04 22:40:16 brad Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.166 2006/05/28 02:45:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -190,6 +190,8 @@ pfattach(int num)
 	timeout[PFTM_INTERVAL] = PFTM_INTERVAL_VAL;
 	timeout[PFTM_SRC_NODE] = PFTM_SRC_NODE_VAL;
 	timeout[PFTM_TS_DIFF] = PFTM_TS_DIFF_VAL;
+	timeout[PFTM_ADAPTIVE_START] = PFSTATE_ADAPT_START;
+	timeout[PFTM_ADAPTIVE_END] = PFSTATE_ADAPT_END;
 
 	pf_normalize_init();
 	bzero(&pf_status, sizeof(pf_status));
