@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.19 2006/03/07 07:38:16 jsg Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.20 2006/05/28 01:09:25 fkr Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -303,9 +303,9 @@ com_cardbus_attach(struct device *parent, struct device *self, void *aux)
 void
 com_cardbus_setup(struct com_cardbus_softc *csc)
 {
-        cardbus_devfunc_t ct = csc->cc_ct;
-        cardbus_chipset_tag_t cc = ct->ct_cc;
-        cardbus_function_tag_t cf = ct->ct_cf;
+	cardbus_devfunc_t ct = csc->cc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t reg;
 
 	Cardbus_conf_write(ct, csc->cc_tag, csc->cc_reg, csc->cc_base);
@@ -320,16 +320,16 @@ com_cardbus_setup(struct com_cardbus_softc *csc)
 	reg |= csc->cc_csr;
 	Cardbus_conf_write(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG, reg);
 
-        /*
-         * Make sure the latency timer is set to some reasonable
-         * value.
-         */
-        reg = cardbus_conf_read(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG);
-        if (CARDBUS_LATTIMER(reg) < 0x20) {
-                reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-                reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-                cardbus_conf_write(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG, reg);
-        }
+	/*
+	 * Make sure the latency timer is set to some reasonable
+	 * value.
+	 */
+	reg = cardbus_conf_read(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG);
+	if (CARDBUS_LATTIMER(reg) < 0x20) {
+			reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+			reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
+			cardbus_conf_write(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG, reg);
+	}
 }
 
 int
