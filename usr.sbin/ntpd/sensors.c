@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.13 2006/05/28 18:48:20 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.14 2006/05/28 19:04:37 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -154,14 +154,15 @@ sensor_query(struct ntp_sensor *s)
 	if (sensor.tv.tv_sec == s->update.rcvd)	/* already seen */
 		return;
 
+	/* 1st 4 bytes of the desc are required to be the clock src code */
+	bcopy(sensor.desc, &s->update.status.refid,
+	    sizeof(s->update.status.refid));
+
 	s->update.offset = 0 - (float)sensor.value / 1000000000.0;
 	s->update.status.stratum = 0;	/* increased when sent out */
 	s->update.status.rootdelay = 0;
 	s->update.status.rootdispersion = 0;
 	s->update.status.reftime = sensor.tv.tv_sec;
-
-	/* XXX 4 char, 'DCF ', 'GPS ', 'PPS ' and the like */
-	s->update.status.refid = 0;
 	s->update.rcvd = sensor.tv.tv_sec;
 	s->update.good = 1;
 
