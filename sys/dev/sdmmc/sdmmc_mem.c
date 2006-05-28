@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.2 2006/05/28 18:45:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -25,16 +25,14 @@
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#undef SDMMC_DEBUG
+int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
+int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_card *);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
 #else
 #define DPRINTF(s)	/**/
 #endif
-
-int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
-int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_card *);
 
 /*
  * Initialize SD/MMC memory cards and memory in SDIO "combo" cards.

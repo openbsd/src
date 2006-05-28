@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.2 2006/05/28 18:45:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -29,8 +29,6 @@
 
 #include <dev/sdmmc/sdmmc_scsi.h>
 #include <dev/sdmmc/sdmmcvar.h>
-
-#undef SDMMC_DEBUG
 
 #define SDMMC_SCSIID_HOST	0x00
 #define SDMMC_SCSIID_MAX	0x0f
