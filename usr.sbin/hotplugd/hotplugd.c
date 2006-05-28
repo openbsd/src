@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.6 2006/05/28 01:35:38 mk Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.7 2006/05/28 16:44:52 mk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -48,7 +48,7 @@ volatile sig_atomic_t quit = 0;
 char *device = _PATH_DEV_HOTPLUG;
 int devfd = -1;
 
-void exec_script(const char *, int, char *, int);
+void exec_script(const char *, int, char *);
 
 void sigchild(int);
 void sigquit(int);
@@ -104,16 +104,16 @@ main(int argc, char *argv[])
 
 		switch (he.he_type) {
 		case HOTPLUG_DEVAT:
-			syslog(LOG_INFO, "%s attached, class %d, id %d",
-			    he.he_devname, he.he_devclass, he.he_devid);
+			syslog(LOG_INFO, "%s attached, class %d",
+			    he.he_devname, he.he_devclass);
 			exec_script(_PATH_ETC_HOTPLUG_ATTACH, he.he_devclass,
-			    he.he_devname, he.he_devid);
+			    he.he_devname);
 			break;
 		case HOTPLUG_DEVDT:
-			syslog(LOG_INFO, "%s detached, class %d id %d",
-			    he.he_devname, he.he_devclass, he.he_devid);
+			syslog(LOG_INFO, "%s detached, class %d",
+			    he.he_devname, he.he_devclass);
 			exec_script(_PATH_ETC_HOTPLUG_DETACH, he.he_devclass,
-			    he.he_devname, he.he_devid);
+			    he.he_devname);
 			break;
 		default:
 			syslog(LOG_NOTICE, "unknown event (0x%x)", he.he_type);
@@ -129,14 +129,12 @@ main(int argc, char *argv[])
 }
 
 void
-exec_script(const char *file, int class, char *name, int id)
+exec_script(const char *file, int class, char *name)
 {
 	char strclass[8];
-	char strid[8];
 	pid_t pid;
 
 	snprintf(strclass, sizeof(strclass), "%d", class);
-	snprintf(strid, sizeof(strid), "%d", id);
 
 	if (access(file, X_OK | R_OK))
 		/* do nothing if file can't be accessed */
@@ -148,7 +146,7 @@ exec_script(const char *file, int class, char *name, int id)
 	}
 	if (pid == 0) {
 		/* child process */
-		execl(file, basename(file), strclass, name, strid, (char *)NULL);
+		execl(file, basename(file), strclass, name, (char *)NULL);
 		syslog(LOG_ERR, "execl %s: %m", file);
 		_exit(1);
 		/* NOTREACHED */
