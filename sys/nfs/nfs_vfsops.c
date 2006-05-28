@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.60 2006/04/19 11:55:55 pedro Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.61 2006/05/28 23:29:32 avsm Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
+extern int nfs_privport;
 
 int nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int nfs_checkexp(struct mount *mp, struct mbuf *nam,
@@ -911,6 +912,8 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 		return rv;
 
+	case NFS_PRIVPORT:
+		return(sysctl_int(oldp, oldlenp, newp, newlen, &nfs_privport));
 	default:
 		return EOPNOTSUPP;
 	}

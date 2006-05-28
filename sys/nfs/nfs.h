@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.24 2005/06/08 04:17:14 marius Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.25 2006/05/28 23:29:32 avsm Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -221,12 +221,14 @@ struct nfsstats {
  */
 #define	NFS_NFSSTATS	1	/* struct: struct nfsstats */
 #define	NFS_NIOTHREADS	2	/* number of i/o threads */
-#define	NFS_MAXID	3
+#define	NFS_PRIVPORT	3	/* whether priv ports are needed */
+#define	NFS_MAXID	4
 
 #define FS_NFS_NAMES { \
 			{ 0, 0 }, \
 			{ "nfsstats", CTLTYPE_STRUCT }, \
-			{ "iothreads", CTLTYPE_INT } \
+			{ "iothreads", CTLTYPE_INT }, \
+			{ "privport", CTLTYPE_INT } \
 }
 
 /*
