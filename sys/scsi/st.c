@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.53 2006/05/28 00:47:45 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.54 2006/05/28 07:07:09 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #define STMODE(z)	( minor(z)	 & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
-#define CTLMODE	3
+#define STCTLMODE(z)	(minor(z) & (1 << 23))
 
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
 #define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
@@ -515,8 +515,10 @@ stopen(dev, flags, fmt, p)
 
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
 
-	/* Allow ioctl's to proceed in all cases, even if we can't mount. */
-	if (error && (fmt == S_IFCHR))
+	/* Allow control mode devices to open successfully without changing
+	 * the state of the device.
+	 */
+	if (STCTLMODE(dev))
 		return 0;
 
 	/*
@@ -1260,7 +1262,7 @@ stioctl(dev, cmd, arg, flag, p)
 #endif
 
 	default:
-		if (STMODE(dev) == CTLMODE)
+		if (STCTLMODE(dev))
 			error = scsi_do_ioctl(st->sc_link, dev,
 			    cmd, arg, flag, p);
 		else
