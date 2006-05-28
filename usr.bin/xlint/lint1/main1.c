@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.8 2005/12/10 17:51:49 cloder Exp $	*/
+/*	$OpenBSD: main1.c,v 1.9 2006/05/28 23:42:49 cloder Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.8 2005/12/10 17:51:49 cloder Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.9 2006/05/28 23:42:49 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -45,14 +45,6 @@ static char rcsid[] = "$OpenBSD: main1.c,v 1.8 2005/12/10 17:51:49 cloder Exp $"
 
 /* set yydebug to 1*/
 int	yflag;
-
-/*
- * Print warnings if an assignment of an integertype to another integertype
- * causes an implicit narrowing conversion. If aflag is 1, these warnings
- * are printed only if the source type is at least as wide as long. If aflag
- * is greather then 1, they are always printed.
- */
-int	aflag;
 
 /* Print a warning if a break statement cannot be reached. */
 int	bflag;
@@ -117,7 +109,7 @@ main(int argc, char *argv[])
 
 	while ((c = getopt(argc, argv, "abcdefghprstuvyzF")) != -1) {
 		switch (c) {
-		case 'a':	aflag++;	break;
+		case 'a':	/* obsolete */	break;
 		case 'b':	bflag = 1;	break;
 		case 'c':	cflag = 1;	break;
 		case 'd':	dflag = 1;	break;

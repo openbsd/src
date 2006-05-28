@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.18 2005/12/10 17:51:49 cloder Exp $
+.\"	$OpenBSD: lint.1,v 1.19 2006/05/28 23:42:49 cloder Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 .Nd a C program verifier
 .Sh SYNOPSIS
 .Nm lint
-.Op Fl abcefghprvxzHFV
+.Op Fl bcefghprvxzHFV
 .Op Fl s Ns | Ns Fl t
 .Op Fl i Ns | Ns Fl nu
 .Op Fl D Ns Ar name Ns Op =def
@@ -150,18 +150,6 @@ will be printed followed by a question mark.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a
-Report assignments of
-.Sy long
-values to variables that are not
-.Sy long .
-.It Fl aa
-Additional to
-.Fl a ,
-report
-.Em all
-assignments of integer values to other integer values which
-cause implicit narrowing conversion.
 .It Fl b
 Report
 .Sy break

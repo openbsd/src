@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.12 2006/04/20 16:29:48 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.13 2006/05/28 23:42:49 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 /*
  * main.c
  */
-extern	int	aflag;
 extern	int	bflag;
 extern	int	cflag;
 extern	int	dflag;
