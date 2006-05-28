@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.62 2006/05/28 07:56:44 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.63 2006/05/28 10:15:35 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -126,7 +126,8 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	    cf->file_status == FILE_UNLINK)
 		conflicts_found++;
 
-	if (update_has_conflict_markers(cf)) {
+	if (cf->file_status != FILE_REMOVED &&
+	    update_has_conflict_markers(cf)) {
 		cvs_log(LP_ERR, "conflict: unresolved conflicts in %s from "
 		    "merging, please fix these first", cf->file_path);
 		conflicts_found++;
@@ -149,6 +150,7 @@ void
 cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b;
+	int isadded;
 	char *d, *f, rbuf[24];
 	CVSENTRIES *entlist;
 
@@ -161,7 +163,8 @@ cvs_commit_local(struct cvs_file *cf)
 	else
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 
-	if (cf->file_status == FILE_ADDED) {
+	isadded = (cf->file_status == FILE_ADDED && cf->file_rcs == NULL);
+	if (isadded) {
 		cf->repo_fd = open(cf->file_rpath, O_CREAT|O_TRUNC|O_WRONLY);
 		if (cf->repo_fd < 0)
 			fatal("cvs_commit_local: %s", strerror(errno));
@@ -177,7 +180,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
 	cvs_printf("old revision: %s; ", rbuf);
 
-	if (cf->file_status != FILE_ADDED)
+	if (isadded == 0)
 		d = commit_diff_file(cf);
 
 	if (cf->file_status == FILE_REMOVED) {
@@ -192,7 +195,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cvs_buf_putc(b, '\0');
 	f = cvs_buf_release(b);
 
-	if (cf->file_status != FILE_ADDED) {
+	if (isadded == 0) {
 		if (rcs_deltatext_set(cf->file_rcs,
 		    cf->file_rcs->rf_head, d) == -1)
 			fatal("cvs_commit_local: failed to set delta");
@@ -206,7 +209,7 @@ cvs_commit_local(struct cvs_file *cf)
 
 	xfree(f);
 
-	if (cf->file_status != FILE_ADDED)
+	if (isadded == 0)
 		xfree(d);
 
 	if (cf->file_status == FILE_REMOVED) {
@@ -220,7 +223,11 @@ cvs_commit_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_REMOVED) {
 		strlcpy(rbuf, "Removed", sizeof(rbuf));
 	} else if (cf->file_status == FILE_ADDED) {
-		strlcpy(rbuf, "Initial Revision", sizeof(rbuf));
+		if (cf->file_rcs->rf_dead == 0)
+			strlcpy(rbuf, "Initial Revision", sizeof(rbuf));
+		else
+			rcsnum_tostr(cf->file_rcs->rf_head,
+			    rbuf, sizeof(rbuf));
 	} else if (cf->file_status == FILE_MODIFIED) {
 		rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
 	}
@@ -253,11 +260,12 @@ commit_diff_file(struct cvs_file *cf)
 	char*delta,  *p1, *p2;
 	BUF *b1, *b2, *b3;
 
-	if (cf->file_status == FILE_MODIFIED) {
+	if (cf->file_status == FILE_MODIFIED ||
+	    cf->file_status == FILE_ADDED) {
 		if ((b1 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
 			fatal("commit_diff_file: failed to load '%s'",
 			    cf->file_path);
-	} else if (cf->file_status == FILE_REMOVED) {
+	} else {
 		b1 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
 		if (b1 == NULL)
 			fatal("commit_diff_file: failed to load HEAD");
