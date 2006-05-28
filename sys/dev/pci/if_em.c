@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.129 2006/05/28 10:40:27 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.130 2006/05/28 23:38:49 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -265,6 +265,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * Set the max frame size assuming standard Ethernet
 	 * sized frames.
 	 */
+#ifdef __STRICT_ALIGNMENT
+	sc->hw.max_frame_size = ETHER_MAX_LEN;
+#else
 	switch (sc->hw.mac_type) {
 		case em_82573:
 		{
@@ -291,6 +294,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 			sc->hw.max_frame_size =
 			    MAX_JUMBO_FRAME_SIZE;
 	}
+#endif
 
 	sc->hw.min_frame_size = 
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
@@ -2047,8 +2051,10 @@ em_get_buf(int i, struct em_softc *sc, struct mbuf *nmp)
 		mp->m_next = NULL;
 	}
 
+#ifdef __STRICT_ALIGNMENT
 	if (ifp->if_mtu <= ETHERMTU)
 		m_adj(mp, ETHER_ALIGN);
+#endif
 
 	rx_buffer = &sc->rx_buffer_area[i];
 
@@ -2219,8 +2225,10 @@ em_initialize_receive_unit(struct em_softc *sc)
 		break;
 	}
 
+#ifndef __STRICT_ALIGNMENT
 	if (sc->hw.mac_type != em_82573)
 		reg_rctl |= E1000_RCTL_LPE;
+#endif
 
 	/* Enable 82543 Receive Checksum Offload for TCP and UDP */
 	if (sc->hw.mac_type >= em_82543) {
