@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2006/05/27 17:21:40 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2006/05/28 01:36:06 todd Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1203,8 +1203,9 @@ host(const char *s)
 	char			*p, *q, *ps;
 
 	if ((p = strrchr(s, '/')) != NULL) {
+		errno = 0;
 		mask = strtol(p + 1, &q, 0);
-		if (!q || *q || mask > 32 || q == (p + 1))
+		if (errno == ERANGE || !q || *q || mask > 32 || q == (p + 1))
 			errx(1, "host: invalid netmask '%s'", p);
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: calloc");
