@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.373 2006/05/27 23:40:27 claudio Exp $
+#	$OpenBSD: files,v 1.374 2006/05/28 17:21:14 uwe Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -388,6 +388,7 @@ define	usbus {}			# USB attachment
 define	pcmciabus {[controller = -1], [socket = -1]}	# PCMCIA attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
+define	sdmmcbus {}			# SD/MMC attachment
 
 # UHCI USB controller
 device	uhci: usbus
@@ -400,6 +401,10 @@ file	dev/usb/ohci.c			ohci	needs-flag
 # EHCI USB controller
 device	ehci: usbus
 file	dev/usb/ehci.c			ehci	needs-flag
+
+# SDHC SD/MMC controller
+device	sdhc: sdmmcbus
+file	dev/sdmmc/sdhc.c		sdhc	needs-flag
 
 # radio devices, attaches to radio hardware driver
 device	radio

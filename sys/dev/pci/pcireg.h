@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.29 2006/05/11 23:29:12 brad Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.30 2006/05/28 17:21:14 uwe Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -221,6 +221,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SYSTEM_TIMER		0x02
 #define	PCI_SUBCLASS_SYSTEM_RTC			0x03
 #define	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG		0x04
+#define	PCI_SUBCLASS_SYSTEM_SDHC		0x05
 #define	PCI_SUBCLASS_SYSTEM_MISC		0x80
 
 /* 0x09 input subclasses */
