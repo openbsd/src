@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.9 2006/05/23 04:35:52 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.10 2006/05/28 01:14:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -110,8 +110,14 @@ struct trunk_port {
 };
 
 #define tp_ifname		tp_if->if_xname		/* interface name */
+#define tp_ifflags		tp_if->if_flags		/* interface flags */
 #define tp_link_state		tp_if->if_link_state	/* link state */
 #define tp_capabilities		tp_if->if_capabilities	/* capabilities */
+
+#define TRUNK_PORTACTIVE(_tp)	(					\
+	((_tp)->tp_link_state != LINK_STATE_DOWN) &&			\
+	((_tp)->tp_ifflags & IFF_UP)					\
+)
 
 struct trunk_mc {
 	union {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.28 2006/05/23 04:56:55 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.29 2006/05/28 01:14:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -568,7 +568,7 @@ trunk_port2req(struct trunk_port *tp, struct trunk_reqport *rp)
 	strlcpy(rp->rp_portname, tp->tp_if->if_xname, sizeof(rp->rp_portname));
 	rp->rp_prio = tp->tp_prio;
 	rp->rp_flags = tp->tp_flags;
-	if (tp->tp_link_state != LINK_STATE_DOWN)
+	if (TRUNK_PORTACTIVE(tp))
 		rp->rp_flags |= TRUNK_PORT_ACTIVE;
 }
 
@@ -1025,19 +1025,19 @@ trunk_link_active(struct trunk_softc *tr, struct trunk_port *tp)
 
 	if (tp == NULL)
 		goto search;
-	if (tp->tp_link_state != LINK_STATE_DOWN) {
+	if (TRUNK_PORTACTIVE(tp)) {
 		rval = tp;
 		goto found;
 	}
 	if ((tp_next = SLIST_NEXT(tp, tp_entries)) != NULL &&
-	    tp_next->tp_link_state != LINK_STATE_DOWN) {
+	    TRUNK_PORTACTIVE(tp_next)) {
 		rval = tp_next;
 		goto found;
 	}
 
  search:
 	SLIST_FOREACH(tp_next, &tr->tr_ports, tp_entries) {
-		if (tp_next->tp_link_state != LINK_STATE_DOWN) {
+		if (TRUNK_PORTACTIVE(tp_next)) {
 			rval = tp_next;
 			goto found;
 		}
