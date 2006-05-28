@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.52 2006/05/28 00:27:09 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.53 2006/05/28 00:47:45 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
@@ -471,17 +472,16 @@ st_loadquirks(st)
  * open the device.
  */
 int
-stopen(dev, flags, mode, p)
+stopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
-	int mode;
+	int fmt;
 	struct proc *p;
 {
-	int unit;
-	u_int stmode, dsty;
-	int error = 0;
-	struct st_softc *st;
 	struct scsi_link *sc_link;
+	struct st_softc *st;
+	u_int dsty;
+	int error = 0, unit;
 
 	unit = STUNIT(dev);
 	if (unit >= st_cd.cd_ndevs)
@@ -490,7 +490,6 @@ stopen(dev, flags, mode, p)
 	if (!st)
 		return ENXIO;
 
-	stmode = STMODE(dev);
 	dsty = STDSTY(dev);
 	sc_link = st->sc_link;
 
@@ -509,19 +508,15 @@ stopen(dev, flags, mode, p)
 	 * Catch any unit attention errors.
 	 */
 	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
-	    SCSI_IGNORE_MEDIA_CHANGE |
-	    (stmode == CTLMODE ? SCSI_IGNORE_NOT_READY : 0));
-	if (error)
+	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST |
+	    ((fmt == S_IFCHR) ? SCSI_SILENT : 0));
+	if (error && (fmt != S_IFCHR))
 		goto bad;
 
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
 
-	/*
-	 * If the mode is 3 (e.g. minor = 3,7,11,15)
-	 * then the device has been opened to set defaults
-	 * This mode does NOT ALLOW I/O, only ioctls
-	 */
-	if (stmode == CTLMODE)
+	/* Allow ioctl's to proceed in all cases, even if we can't mount. */
+	if (error && (fmt == S_IFCHR))
 		return 0;
 
 	/*
