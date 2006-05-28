@@ -27,10 +27,8 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define LITTLE_ENDIAN 1234
-#define BIG_ENDIAN 4321
-#define BYTE_ORDER 4321
-//#define BYTE_ORDER 1234
+#include <sys/param.h>
+#include <machine/endian.h>
 
 #include "convert.h"
 
