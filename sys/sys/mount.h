@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.70 2006/04/30 14:20:07 sturm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.71 2006/05/28 03:55:56 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -443,8 +443,6 @@ struct mount {
 #define VFS_MAXTYPENUM	1	/* int: highest defined filesystem type */
 #define VFS_CONF	2	/* struct: vfsconf for filesystem given
 				   as next argument */
-#define	VFSGEN_MAXID	3	/* max number of vfs.generic ids */
-
 #define	CTL_VFSGENCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maxtypenum", CTLTYPE_INT }, \
