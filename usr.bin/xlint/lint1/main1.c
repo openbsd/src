@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.9 2006/05/28 23:42:49 cloder Exp $	*/
+/*	$OpenBSD: main1.c,v 1.10 2006/05/28 23:50:54 cloder Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.9 2006/05/28 23:42:49 cloder Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.10 2006/05/28 23:50:54 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -45,9 +45,6 @@ static char rcsid[] = "$OpenBSD: main1.c,v 1.9 2006/05/28 23:42:49 cloder Exp $"
 
 /* set yydebug to 1*/
 int	yflag;
-
-/* Print a warning if a break statement cannot be reached. */
-int	bflag;
 
 /* Print warnings for pointer casts. */
 int	cflag;
@@ -110,7 +107,7 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "abcdefghprstuvyzF")) != -1) {
 		switch (c) {
 		case 'a':	/* obsolete */	break;
-		case 'b':	bflag = 1;	break;
+		case 'b':	/* obsolete */	break;
 		case 'c':	cflag = 1;	break;
 		case 'd':	dflag = 1;	break;
 		case 'e':	eflag = 1;	break;

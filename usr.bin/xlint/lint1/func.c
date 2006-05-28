@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.16 2006/04/26 15:57:41 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.17 2006/05/28 23:50:54 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.16 2006/04/26 15:57:41 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.17 2006/05/28 23:50:54 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -952,7 +952,7 @@ dobreak(void)
 	 *     // etc...
 	 * }
 	 */
-	if (bflag && (ci == NULL || !ci->c_switch))
+	if (ci == NULL || !ci->c_switch)
 		chkreach();
 
 	reached = rchflg = 0;
