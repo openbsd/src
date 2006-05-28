@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.150 2006/04/15 15:35:20 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.151 2006/05/28 23:08:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -495,7 +495,7 @@ cpuid()
 	}
 
 	/* BTLB params */
-	if (cpu_type < HPPA_FPU_PCXU &&
+	if (cpu_type < HPPA_CPU_PCXU &&
 	    (error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
 	     PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
 #ifdef DEBUG
