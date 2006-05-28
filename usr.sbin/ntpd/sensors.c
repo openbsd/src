@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.6 2006/05/27 22:23:49 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.7 2006/05/28 02:06:46 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -207,6 +207,19 @@ sensor_hotplugevent(int fd)
 
 		if (n == sizeof(he))
 			switch (he.he_type) {
+			case HOTPLUG_DEVAT:
+				if (he.he_devclass == DV_SENSOR)
+					sensor_probe(he.he_devid);
+				break;
+			case HOTPLUG_DEVDT:
+				if (he.he_devclass == DV_SENSOR) {
+					struct ntp_sensor	*s;
+
+					s = sensor_byid(he.he_devid);
+					if (s != NULL)
+						sensor_remove(s);
+				}
+				break;
 			default:		/* ignore */
 				break;
 			}
