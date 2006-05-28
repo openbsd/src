@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.10 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.11 2006/05/28 04:21:13 ray Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -37,18 +37,18 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$OpenBSD: env.c,v 1.10 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.11 2006/05/28 04:21:13 ray Exp $";
 #endif /* not lint */
 
 #include <err.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <locale.h>
 #include <errno.h>
+#include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-void usage(void);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -60,19 +60,19 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "i-")) != -1)
-		switch((char)ch) {
-		case '-':			/* obsolete */
+	while ((ch = getopt(argc, argv, "i")) != -1)
+		switch(ch) {
 		case 'i':
-			if ((environ = (char **)calloc(1, sizeof(char *))) == NULL)
+			if ((environ = calloc(1, sizeof(char *))) == NULL)
 				err(126, "calloc");
 			break;
-		case '?':
 		default:
 			usage();
 		}
+	argc -= optind;
+	argv += optind;
 
-	for (argv += optind; *argv && (p = strchr(*argv, '=')); ++argv)
+	for (; *argv && (p = strchr(*argv, '=')); ++argv)
 		if (setenv(*argv, ++p, 1) == -1) {
 			/* reuse 126, it matches the problem most */
 			exit(126);
@@ -86,7 +86,6 @@ main(int argc, char *argv[])
 		 */
 		execvp(*argv, argv);
 		err((errno == ENOENT) ? 127 : 126, "%s", *argv);
-		/* NOTREACHED */
 	}
 
 	for (ep = environ; *ep; ep++)
@@ -98,7 +97,9 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: env [-i] [name=value ...] "
-	    "[utility [argument ...]]\n");
-	exit (1);
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-i] [name=value ...] "
+	    "[utility [argument ...]]\n", __progname);
+	exit(1);
 }
