@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.9 2006/05/28 16:39:12 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.10 2006/05/28 16:40:07 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -209,8 +209,8 @@ sensor_hotplugevent(int fd)
 			switch (he.he_type) {
 			case HOTPLUG_DEVAT:
 				if (he.he_devclass == DV_DULL &&
-				    he.he_devid > 0)
-					sensor_probe(he.he_devid);
+				    !strcmp(he.he_devname, "sensor"))
+					sensor_scan();
 				break;
 			default:		/* ignore */
 				break;
