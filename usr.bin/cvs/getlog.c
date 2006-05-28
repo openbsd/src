@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.57 2006/05/28 21:11:12 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.58 2006/05/28 21:35:58 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -143,7 +143,7 @@ cvs_log_local(struct cvs_file *cf)
 	printf("total revisions: %u", cf->file_rcs->rf_ndelta);
 
 	if (logrev != NULL)
-		nrev = 1;
+		nrev = cvs_revision_select(cf->file_rcs, logrev);
 	else
 		nrev = cf->file_rcs->rf_ndelta;
 
@@ -152,14 +152,13 @@ cvs_log_local(struct cvs_file *cf)
 	printf("description:\n%s", cf->file_rcs->rf_desc);
 
 	TAILQ_FOREACH(rdp, &(cf->file_rcs->rf_delta), rd_list) {
-		rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
-
 		if (logrev != NULL &&
-		    strcmp(logrev, numb))
+		    !(rdp->rd_flags & RCS_RD_SELECT))
 			continue;
 
 		printf("%s\n", LOG_REVSEP);
 
+		rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
 		printf("revision %s", numb);
 
 		strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S",
