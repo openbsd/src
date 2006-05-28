@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.h,v 1.3 2006/05/28 02:10:55 henning Exp $	*/
+/*	$OpenBSD: hotplug.h,v 1.4 2006/05/28 16:49:47 henning Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -34,8 +34,8 @@ struct hotplug_event {
 };
 
 #ifdef _KERNEL
-void	hotplug_device_attach(enum devclass, char *, int);
-void	hotplug_device_detach(enum devclass, char *, int);
+void	hotplug_device_attach(enum devclass, char *);
+void	hotplug_device_detach(enum devclass, char *);
 #endif
 
 #endif	/* _SYS_HOTPLUG_H_ */
