@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.3 2006/05/27 20:53:56 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.4 2006/05/28 01:29:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -71,7 +71,7 @@ void			mpi_put_ccb(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_alloc_replies(struct mpi_softc *);
 
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
-void			mpi_complete(struct mpi_softc *, struct mpi_ccb *);
+void			mpi_poll(struct mpi_softc *, struct mpi_ccb *);
 void			mpi_timeout_xs(void *);
 int			mpi_load_xs(struct mpi_ccb *);
 
@@ -450,15 +450,20 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 }
 
 void
-mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb)
+mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb)
 {
 	struct mpi_ccb			*ccb;
 	struct mpi_msg_reply		*reply = NULL;
 	paddr_t				reply_dva;
 	char				*reply_addr;
 	u_int32_t			reg, id;
+	int				s;
 
 	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+
+	s = splbio();
+
+	mpi_start(sc, nccb);
 
 	do {
 		reg = mpi_pop_reply(sc);
@@ -508,6 +513,8 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb)
 		ccb->ccb_done(ccb, reply, reply_dva);
 
 	} while (nccb->ccb_id != id);
+
+	splx(s);
 }
 
 int
@@ -594,11 +601,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	timeout_set(&xs->stimeout, mpi_timeout_xs, ccb);
 
 	if (xs->flags & SCSI_POLL) {
-		s = splbio();
-		mpi_start(sc, ccb);
-		mpi_complete(sc, ccb);
-		splx(s);
-
+		mpi_poll(sc, ccb);
 		return (COMPLETE);
 	}
 
@@ -1288,10 +1291,7 @@ mpi_portfacts(struct mpi_softc *sc)
 	pfq->port_number = 0;
 	pfq->msg_context = htole32(ccb->ccb_id);
 
-	s = splbio();
-	mpi_start(sc, ccb);
-	mpi_complete(sc, ccb);
-	splx(s);
+	mpi_poll(sc, ccb);
 
 	return (0);
 }
@@ -1433,10 +1433,7 @@ mpi_portenable(struct mpi_softc *sc)
 	peq->port_number = 0;
 	peq->msg_context = htole32(ccb->ccb_id);
 
-	s = splbio();
-	mpi_start(sc, ccb);
-	mpi_complete(sc, ccb);
-	splx(s);
+	mpi_poll(sc, ccb);
 
 	return (0);
 }
@@ -1455,4 +1452,3 @@ mpi_portenable_done(struct mpi_ccb *ccb, void *reply, paddr_t reply_dva)
 	mpi_push_reply(sc, reply_dva);
 	mpi_put_ccb(sc, ccb);
 }
-
