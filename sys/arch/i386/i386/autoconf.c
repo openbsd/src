@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.61 2006/05/20 22:40:30 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.62 2006/05/28 14:58:12 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -256,7 +256,6 @@ setroot()
 		struct ifnet *ifp;
 		
 		mountroot = nfs_mountroot;
-		nfsbootdevname = NULL;		/* we do not know */
 
 		printf("PXE boot MAC address %s, ",
 		    ether_sprintf(bios_bootmac->mac));
@@ -431,8 +430,6 @@ rootconf()
 				    gc->gc_driver->cd_devs[unit] == NULL) {
 					printf("%d: no such unit\n", unit);
 				} else {
-					printf("root on %s%d%c\n", gc->gc_name, unit,
-					    'a' + part);
 					rootdev = makedev(gc->gc_major,
 					    unit * MAXPARTITIONS + part);
 					mountroot = dk_mountroot;
@@ -473,8 +470,12 @@ rootconf()
 	if (mountroot == NULL) {
 		/* `swap generic' */
 		setroot();
+#if defined(NFSCLIENT)
+	} else if (mountroot == nfs_mountroot) {
+		;
+#endif
 	} else {
-		/* preconfigured */
+		/* preconfigured for disk */
 		int  majdev, unit, part;
 
 		majdev = major(rootdev);
@@ -483,7 +484,6 @@ rootconf()
 		part = minor(rootdev) % MAXPARTITIONS;
 		unit = minor(rootdev) / MAXPARTITIONS;
 		printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
-		mountroot = dk_mountroot;
 	}
 	if (mountroot == dk_mountroot)
 		swdevt[0].sw_dev = argdev = dumpdev =
