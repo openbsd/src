@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.51 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.52 2006/05/28 00:27:09 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -393,29 +393,7 @@ stattach(parent, self, aux)
 	 * Any steps needed to bring it into line
 	 */
 	st_identify_drive(st, sa->sa_inqbuf);
-
-	/*
-	 * Use the subdriver to request information regarding
-	 * the drive. We cannot use interrupts yet, so the
-	 * request must specify this.
-	 */
 	printf("\n");
-	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
-	if (scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
-	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
-	    st_mode_sense(st,
-	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE)) {
-		printf("drive empty or not ready\n");
-	}
-	else {
-		printf("density code 0x%x, ", st->media_density);
-		if (st->media_blksize > 0)
-			printf("%d-byte", st->media_blksize);
-		else
-			printf("variable");
-		printf(" blocks, write-%s\n",
-		    (st->flags & ST_READONLY) ? "protected" : "enabled");
-	}
 
 	/*
 	 * Set up the buf queue for this device
