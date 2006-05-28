@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.109 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.110 2006/05/28 00:04:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -988,7 +988,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

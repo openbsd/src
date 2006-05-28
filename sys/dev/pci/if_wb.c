@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.34 2006/03/25 22:41:46 djm Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.35 2006/05/28 00:04:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1669,7 +1669,7 @@ int wb_ioctl(ifp, command, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.62 2006/04/28 06:32:31 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.63 2006/05/28 00:04:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1578,7 +1578,7 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

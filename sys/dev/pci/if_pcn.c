@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.12 2006/04/21 14:16:08 mickey Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.13 2006/05/28 00:04:24 jason Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1136,7 +1136,7 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	/* Try to get more packets going. */

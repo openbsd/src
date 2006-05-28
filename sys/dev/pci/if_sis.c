@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.70 2006/05/27 21:48:22 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.71 2006/05/28 00:04:24 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1951,7 +1951,7 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

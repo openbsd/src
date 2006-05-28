@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.12 2006/03/25 22:41:44 djm Exp $ */
+/* $OpenBSD: if_bce.c,v 1.13 2006/05/28 00:04:24 jason Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -522,7 +522,7 @@ bce_ioctl(ifp, cmd, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->bce_mii.mii_media, cmd);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

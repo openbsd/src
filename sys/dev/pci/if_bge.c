@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.147 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.148 2006/05/28 00:04:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3157,7 +3157,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

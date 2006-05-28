@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.59 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.60 2006/05/28 00:04:24 jason Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -530,7 +530,7 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	splx(s);

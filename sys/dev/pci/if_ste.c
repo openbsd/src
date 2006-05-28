@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.36 2006/04/02 05:12:02 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.37 2006/05/28 00:04:24 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1362,7 +1362,7 @@ int ste_ioctl(ifp, command, data)
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

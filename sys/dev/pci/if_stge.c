@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.23 2006/03/25 22:41:45 djm Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.24 2006/05/28 00:04:24 jason Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -935,7 +935,7 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	/* Try to get more packets going. */

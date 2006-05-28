@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.81 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.82 2006/05/28 00:04:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2519,7 +2519,7 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

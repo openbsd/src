@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.17 2006/05/27 10:03:15 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.18 2006/05/28 00:04:24 jason Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -412,7 +412,7 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	default:
 		IOCTL_DEBUGOUT1("ioctl received: UNKNOWN (0x%X)\n", (int)command);
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.22 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.23 2006/05/28 00:04:24 jason Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1797,7 +1797,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

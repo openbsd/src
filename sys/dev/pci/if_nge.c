@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.53 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.54 2006/05/28 00:04:24 jason Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -2130,7 +2130,7 @@ nge_ioctl(ifp, command, data)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 

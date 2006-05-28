@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.42 2006/05/27 20:42:51 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.43 2006/05/28 00:04:24 jason Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1442,7 +1442,7 @@ lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 
