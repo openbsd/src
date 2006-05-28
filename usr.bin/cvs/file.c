@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.144 2006/05/28 08:49:01 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.145 2006/05/28 10:14:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -630,6 +630,8 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 			    cf->file_path);
 		if (!strcmp(state, RCS_STATE_DEAD))
 			rcsdead = 1;
+
+		cf->file_rcs->rf_dead = rcsdead;
 	}
 
 	/*
