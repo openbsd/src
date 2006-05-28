@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.51 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.52 2006/05/28 22:43:54 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -451,4 +451,30 @@ cvs_buf_peek(BUF *b, size_t off)
 		return (NULL);
 
 	return (b->cb_buf + off);
+}
+
+int
+cvs_buf_differ(BUF *b1, BUF *b2)
+{
+	char *c1, *c2;
+	int i, l1, l2, len, ret;
+
+	l1 = cvs_buf_len(b1);
+	l2 = cvs_buf_len(b2);
+	len = MIN(l1, l2);
+
+	if (l1 != l2)
+		return (1);
+
+	c1 = cvs_buf_release(b1);
+	c2 = cvs_buf_release(b2);
+
+	ret = memcmp(c1, c2, len);
+
+	if (c1 != NULL)
+		xfree(c1);
+	if (c2 != NULL)
+		xfree(c2);
+
+	return (ret);
 }
