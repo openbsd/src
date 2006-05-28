@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.65 2006/05/28 01:24:28 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.66 2006/05/28 07:56:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -115,7 +115,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_update_enterdir(%s)", cf->file_path);
 
-	cvs_file_classify(cf);
+	cvs_file_classify(cf, 0);
 
 	if (cf->file_status == DIR_CREATE && build_dirs == 1) {
 		cvs_mkpath(cf->file_path);
@@ -241,7 +241,7 @@ cvs_update_local(struct cvs_file *cf)
 	 * which is called from cvs_checkout_file().
 	 */
 	bp = NULL;
-	cvs_file_classify(cf);
+	cvs_file_classify(cf, 1);
 
 	switch (cf->file_status) {
 	case FILE_UNKNOWN:

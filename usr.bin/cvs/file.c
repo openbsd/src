@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.142 2006/05/27 20:56:39 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.143 2006/05/28 07:56:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -531,12 +531,12 @@ cvs_file_freelist(struct cvs_flisthead *fl)
 }
 
 void
-cvs_file_classify(struct cvs_file *cf)
+cvs_file_classify(struct cvs_file *cf, int loud)
 {
 	size_t len;
 	time_t mtime;
 	struct stat st;
-	int rflags, l, ismodified, rcsdead;
+	int rflags, l, ismodified, rcsdead, verbose;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char *repo, *rcsfile, r1[16], r2[16];
@@ -548,6 +548,7 @@ cvs_file_classify(struct cvs_file *cf)
 		return;
 	}
 
+	verbose = (verbosity > 1 && loud == 1);
 	entlist = cvs_ent_open(cf->file_wd);
 
 	repo = xmalloc(MAXPATHLEN);
@@ -625,12 +626,12 @@ cvs_file_classify(struct cvs_file *cf)
 	if (cf->file_ent == NULL) {
 		if (cf->file_rcs == NULL) {
 			if (cf->fd == -1) {
-				if (verbosity > 1)
+				if (verbose)
 					cvs_log(LP_NOTICE,
 					    "nothing known about '%s'",
 					    cf->file_path);
 			} else {
-				if (verbosity > 1)
+				if (verbose)
 					cvs_log(LP_NOTICE,
 					    "use add to create an entry for %s",
 					    cf->file_path);
@@ -641,9 +642,10 @@ cvs_file_classify(struct cvs_file *cf)
 			if (cf->fd == -1) {
 				cf->file_status = FILE_UPTODATE;
 			} else {
-				cvs_log(LP_NOTICE,
-				    "use add to create an entry for %s",
-				    cf->file_path);
+				if (verbose)
+					cvs_log(LP_NOTICE,
+					    "use add to create an entry for %s",
+					    cf->file_path);
 				cf->file_status = FILE_UNKNOWN;
 			}
 		} else {
@@ -651,7 +653,7 @@ cvs_file_classify(struct cvs_file *cf)
 		}
 	} else if (cf->file_ent->ce_status == CVS_ENT_ADDED) {
 		if (cf->fd == -1) {
-			if (verbosity > 1)
+			if (verbose)
 				cvs_log(LP_NOTICE,
 				    "warning: new-born %s has dissapeared",
 				    cf->file_path);
@@ -659,7 +661,7 @@ cvs_file_classify(struct cvs_file *cf)
 		} else if (cf->file_rcs == NULL || rcsdead == 1) {
 			cf->file_status = FILE_ADDED;
 		} else {
-			if (verbosity > 1)
+			if (verbose)
 				cvs_log(LP_NOTICE,
 				    "conflict: %s already created by others",
 				    cf->file_path);
@@ -667,7 +669,7 @@ cvs_file_classify(struct cvs_file *cf)
 		}
 	} else if (cf->file_ent->ce_status == CVS_ENT_REMOVED) {
 		if (cf->fd != -1) {
-			if (verbosity > 1)
+			if (verbose)
 				cvs_log(LP_NOTICE,
 				    "%s should be removed but is still there",
 				    cf->file_path);
@@ -676,7 +678,7 @@ cvs_file_classify(struct cvs_file *cf)
 			cf->file_status = FILE_REMOVE_ENTRY;
 		} else {
 			if (strcmp(r1, r2)) {
-				if (verbosity > 1)
+				if (verbose)
 					cvs_log(LP_NOTICE,
 					    "conflict: removed %s was modified"
 					    " by a second party",
@@ -689,7 +691,7 @@ cvs_file_classify(struct cvs_file *cf)
 	} else if (cf->file_ent->ce_status == CVS_ENT_REG) {
 		if (cf->file_rcs == NULL || rcsdead == 1) {
 			if (cf->fd == -1) {
-				if (verbosity > 1)
+				if (verbose)
 					cvs_log(LP_NOTICE,
 					    "warning: %s's entry exists but"
 					    " there is no longer a file"
@@ -699,7 +701,7 @@ cvs_file_classify(struct cvs_file *cf)
 				cf->file_status = FILE_REMOVE_ENTRY;
 			} else {
 				if (ismodified) {
-					if (verbosity > 1)
+					if (verbose)
 						cvs_log(LP_NOTICE,
 						    "conflict: %s is no longer "
 						    "in the repository but is "
@@ -707,7 +709,7 @@ cvs_file_classify(struct cvs_file *cf)
 						    cf->file_path);
 					cf->file_status = FILE_CONFLICT;
 				} else {
-					if (verbosity > 1)
+					if (verbose)
 						cvs_log(LP_NOTICE,
 						    "%s is no longer in the "
 						    "repository",
@@ -718,7 +720,7 @@ cvs_file_classify(struct cvs_file *cf)
 			}
 		} else {
 			if (cf->fd == -1) {
-				if (verbosity > 1)
+				if (verbose)
 					cvs_log(LP_NOTICE,
 					    "warning: %s was lost",
 					    cf->file_path);

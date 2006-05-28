@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.95 2006/05/27 21:11:11 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.96 2006/05/28 07:56:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -124,7 +124,7 @@ cvs_diff_local(struct cvs_file *cf)
 		return;
 	}
 
-	cvs_file_classify(cf);
+	cvs_file_classify(cf, 0);
 
 	if (cf->file_status == FILE_LOST) {
 		cvs_log(LP_ERR, "cannot find file %s", cf->file_path);

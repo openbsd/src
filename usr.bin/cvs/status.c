@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.58 2006/05/27 15:14:27 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.59 2006/05/28 07:56:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -102,7 +102,7 @@ cvs_status_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_status_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf);
+	cvs_file_classify(cf, 1);
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
