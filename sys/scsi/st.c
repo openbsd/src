@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.55 2006/05/28 07:18:30 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.56 2006/05/28 19:31:09 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -331,7 +331,6 @@ struct scsi_device st_switch = {
 #define	ST_FIXEDBLOCKS	0x0008
 #define	ST_AT_FILEMARK	0x0010
 #define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
-#define	ST_NEW_MOUNT	0x0040	/* still need to decide mode              */
 #define	ST_READONLY	0x0080	/* st_mode_sense says write protected */
 #define	ST_FM_WRITTEN	0x0100	/*
 				 * EOF file mark written  -- used with
@@ -618,7 +617,6 @@ st_mount_tape(dev, flags)
 		return 0;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n"));
-	st->flags |= ST_NEW_MOUNT;
 	st->quirks = st->drive_quirks | st->modes[dsty].quirks;
 	/*
 	 * If the media is new, then make sure we give it a chance to
@@ -689,7 +687,6 @@ st_mount_tape(dev, flags)
 	}
 	scsi_prevent(sc_link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-	st->flags &= ~ST_NEW_MOUNT;
 	st->flags |= ST_MOUNTED;
 	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
 
@@ -720,7 +717,7 @@ st_unmount(st, eject, rewind)
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	if (eject)
 		st_load(st, LD_UNLOAD, SCSI_IGNORE_NOT_READY);
-	st->flags &= ~(ST_MOUNTED | ST_NEW_MOUNT);
+	st->flags &= ~ST_MOUNTED;
 	sc_link->flags &= ~SDEV_MEDIA_LOADED;
 }
 
@@ -1204,13 +1201,6 @@ stioctl(dev, cmd, arg, flag, p)
 			error = st_erase(st, number, flags);
 			break;
 		case MTSETBSIZ:	/* Set block size for device */
-#ifdef	NOTYET
-			if (!(st->flags & ST_NEW_MOUNT)) {
-				uprintf("re-mount tape before changing blocksize");
-				error = EINVAL;
-				break;
-			}
-#endif
 			if (number == 0) {
 				st->flags &= ~ST_FIXEDBLOCKS;
 			} else {
