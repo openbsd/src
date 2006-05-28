@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.103 2006/05/28 17:40:21 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.104 2006/05/28 19:08:11 mcbride Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1165,6 +1165,53 @@ sa_teardown_all(void)
 }
 
 /*
+ * This function will get called when the exchange initiated by sa_soft_expire
+ * completes. The intent is to support the case where the initiator has a phase
+ * 1 SA, but the responder does not, or in the case of a fail-over gateway, the
+ * responder SA does not match the one held by the initiator.
+ *
+ * Note that if sa_soft_expire initiates a phase 1 exchange, then this will be 
+ * called at the completion of that.
+ */
+static void
+sa_soft_finalize(struct exchange* exchange, void *v_sa, int fail)
+{
+	struct sa *sa = v_sa;
+
+	if (sa->phase != 2 || !sa->death ||
+	    (sa->flags & SA_FLAG_REPLACED))
+		sa_release(sa);
+
+	if (fail) {
+		char *peer = conf_get_str(sa->name, "ISAKMP-peer");
+		if (peer) {
+			struct sa *p1_sa;
+			while ((p1_sa = sa_lookup_by_name(peer, 1)))
+				sa_free(p1_sa);
+		}
+	}
+
+	if (exchange)
+		exchange_establish(sa->name, sa_soft_finalize, sa);
+	else {
+		struct timeval  expiration;
+		int 		seconds;
+
+		gettimeofday(&expiration, 0);
+		seconds = conf_get_num("General", "Exchange-max-time",
+		    EXCHANGE_MAX_TIME);
+		LOG_DBG((LOG_TIMER, 95,
+	    	    "sa_soft_finalize: SA %p soft timeout in %d seconds",
+		    sa, seconds));
+		expiration.tv_sec += seconds;
+		sa->soft_death = timer_add_event("sa_soft_expire",
+		    sa_soft_expire, sa, &expiration);
+		if (!sa->soft_death)
+			sa_release(sa);
+	}
+}
+
+/*
  * This function will get called when we are closing in on the death time of SA
  */
 static void
@@ -1173,17 +1220,19 @@ sa_soft_expire(void *v_sa)
 	struct sa      *sa = v_sa;
 
 	sa->soft_death = 0;
-	sa_release(sa);
 
-	if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED)) ==
-	    SA_FLAG_STAYALIVE)
-		exchange_establish(sa->name, 0, 0);
-	else
+	if (sa->death && (sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
+	    == SA_FLAG_STAYALIVE)
+		// soft_finalize will (eventually) release the sa
+		exchange_establish(sa->name, sa_soft_finalize, sa);
+	else {
 		/*
 		 * Start to watch the use of this SA, so a renegotiation can
 		 * happen as soon as it is shown to be alive.
 		 */
 		sa->flags |= SA_FLAG_FADING;
+		sa_release(sa);
+	}
 }
 
 /* SA has passed its best before date.  */
