@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.81 2006/05/28 17:25:18 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.82 2006/05/28 21:34:37 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -841,4 +841,74 @@ cvs_argv_destroy(struct cvs_argvector *av)
 	xfree(av->str);
 	xfree(av->argv);
 	xfree(av);
+}
+
+u_int
+cvs_revision_select(RCSFILE *file, char *range)
+{
+	int i;
+	u_int nrev;
+	char *lstr, *rstr;
+	struct rcs_delta *rdp;
+	struct cvs_argvector *revargv, *revrange;
+	RCSNUM *lnum, *rnum;
+
+	nrev = 0;
+	lnum = rnum = NULL;
+
+	revargv = cvs_strsplit(range, ",");
+	for (i = 0; revargv->argv[i] != NULL; i++) {
+		revrange = cvs_strsplit(revargv->argv[i], ":");
+		if (revrange->argv[0] == NULL)
+			fatal("invalid revision range: %s", revargv->argv[i]);
+		else if (revrange->argv[1] == NULL)
+			lstr = rstr = revrange->argv[0];
+		else {
+			if (revrange->argv[2] != NULL)
+				fatal("invalid revision range: %s",
+				    revargv->argv[i]);
+
+			lstr = revrange->argv[0];
+			rstr = revrange->argv[1];
+
+			if (strcmp(lstr, "") == 0)
+				lstr = NULL;
+			if (strcmp(rstr, "") == 0)
+				rstr = NULL;
+		}
+
+		if (lstr == NULL)
+			lstr = RCS_HEAD_INIT;
+
+		if ((lnum = rcsnum_parse(lstr)) == NULL)
+			fatal("invalid revision %s", lstr);
+
+		if (rstr != NULL) {
+			if ((rnum = rcsnum_parse(rstr)) == NULL)
+				fatal("invalid revision %s", rstr);
+		} else {
+			rnum = rcsnum_alloc();
+			rcsnum_cpy(file->rf_head, rnum, 0);
+		}
+
+		cvs_argv_destroy(revrange);
+
+		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
+			if (rcsnum_cmp(rdp->rd_num, lnum, 0) <= 0 &&
+			    rcsnum_cmp(rdp->rd_num, rnum, 0) >= 0 &&
+			    !(rdp->rd_flags & RCS_RD_SELECT)) {
+				rdp->rd_flags |= RCS_RD_SELECT;
+				nrev++;
+			}
+		}
+	}
+
+	cvs_argv_destroy(revargv);
+
+	if (lnum != NULL)
+		rcsnum_free(lnum);
+	if (rnum != NULL)
+		rcsnum_free(rnum);
+
+	return (nrev);
 }
