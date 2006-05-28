@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2006/04/03 02:43:22 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -185,7 +185,7 @@ edinit(PF init_fcn)
 	wp->w_wndp = NULL;			/* Initialize window.	 */
 	wp->w_linep = wp->w_dotp = bp->b_linep;
 	wp->w_ntrows = nrow - 2;		/* 2 = mode, echo.	 */
-	wp->w_flag = WFMODE | WFHARD;		/* Full.		 */
+	wp->w_flag = WFMODE | WFFULL;		/* Full.		 */
 
 	if (init_fcn)
 		init_fcn(0, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.88 2006/05/27 21:20:11 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.89 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -218,10 +218,10 @@ struct mgwin {
  * Because commands set bits in the "w_flag", update will see
  * all change flags, and do the most general one.
  */
-#define WFFORCE 0x01			/* Force reframe.		 */
+#define WFFRAME 0x01			/* Force reframe.		 */
 #define WFMOVE	0x02			/* Movement from line to line.	 */
 #define WFEDIT	0x04			/* Editing within a line.	 */
-#define WFHARD	0x08			/* Better to a full display.	 */
+#define WFFULL	0x08			/* Do a full display.		 */
 #define WFMODE	0x10			/* Update mode line.		 */
 
 struct undo_rec;

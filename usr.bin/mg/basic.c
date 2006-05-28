@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.21 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: basic.c,v 1.22 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -98,7 +98,7 @@ forwchar(int f, int n)
 
 /*
  * Go to the beginning of the
- * buffer. Setting WFHARD is conservative,
+ * buffer. Setting WFFULL is conservative,
  * but almost always the case.
  */
 int
@@ -107,13 +107,13 @@ gotobob(int f, int n)
 	(void) setmark(f, n);
 	curwp->w_dotp = lforw(curbp->b_linep);
 	curwp->w_doto = 0;
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	return (TRUE);
 }
 
 /*
  * Go to the end of the buffer.
- * Setting WFHARD is conservative, but
+ * Setting WFFULL is conservative, but
  * almost always the case.
  */
 int
@@ -122,7 +122,7 @@ gotoeob(int f, int n)
 	(void) setmark(f, n);
 	curwp->w_dotp = lback(curbp->b_linep);
 	curwp->w_doto = llength(curwp->w_dotp);
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	return (TRUE);
 }
 
@@ -276,7 +276,7 @@ forwpage(int f, int n)
 	while (n-- && lforw(lp) != curbp->b_linep)
 		lp = lforw(lp);
 	curwp->w_linep = lp;
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
@@ -314,7 +314,7 @@ backpage(int f, int n)
 	while (n-- && lback(lp) != curbp->b_linep)
 		lp = lback(lp);
 	curwp->w_linep = lp;
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
 		if (lp == curwp->w_dotp)

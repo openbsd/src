@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.57 2006/05/02 17:10:25 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.58 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -61,7 +61,7 @@ usebuffer(int f, int n)
 
 	/* and put it in current window */
 	curbp = bp;
-	return (showbuffer(bp, curwp, WFFORCE | WFHARD));
+	return (showbuffer(bp, curwp, WFFRAME | WFFULL));
 }
 
 /*
@@ -153,7 +153,7 @@ killbuffer(struct buffer *bp)
 	for (wp = wheadp; bp->b_nwnd > 0; wp = wp->w_wndp) {
 		if (wp->w_bufp == bp) {
 			bp2 = bp1->b_altb;	/* save alternate buffer */
-			if (showbuffer(bp1, wp, WFMODE | WFFORCE | WFHARD))
+			if (showbuffer(bp1, wp, WFMODE | WFFRAME | WFFULL))
 				bp1->b_altb = bp2;
 			else
 				bp1 = bp2;
@@ -649,10 +649,10 @@ popbuf(struct buffer *bp)
 	} else
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_bufp == bp) {
-				wp->w_flag |= WFHARD | WFFORCE;
+				wp->w_flag |= WFFULL | WFFRAME;
 				return (wp);
 			}
-	if (showbuffer(bp, wp, WFHARD) != TRUE)
+	if (showbuffer(bp, wp, WFFULL) != TRUE)
 		return (NULL);
 	return (wp);
 }
@@ -709,7 +709,7 @@ bufferinsert(int f, int n)
 		while (nline-- && lback(clp) != curbp->b_linep)
 			clp = lback(clp);
 		curwp->w_linep = clp;	/* adjust framing.	*/
-		curwp->w_flag |= WFHARD;
+		curwp->w_flag |= WFFULL;
 	}
 	return (TRUE);
 }
@@ -751,7 +751,7 @@ popbuftop(struct buffer *bp)
 			if (wp->w_bufp == bp) {
 				wp->w_dotp = bp->b_dotp;
 				wp->w_doto = 0;
-				wp->w_flag |= WFHARD;
+				wp->w_flag |= WFFULL;
 			}
 	}
 	return (popbuf(bp) != NULL);

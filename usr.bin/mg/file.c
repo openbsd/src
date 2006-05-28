@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.54 2006/05/02 17:10:25 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.55 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -62,7 +62,7 @@ filevisit(int f, int n)
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
 	curbp = bp;
-	if (showbuffer(bp, curwp, WFHARD) != TRUE)
+	if (showbuffer(bp, curwp, WFFULL) != TRUE)
 		return (FALSE);
 	if (bp->b_fname[0] == '\0') {
 		if ((status = readin(adjf)) != TRUE)
@@ -105,7 +105,7 @@ filevisitalt(int f, int n)
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
 	curbp = bp;
-	if (showbuffer(bp, curwp, WFHARD) != TRUE)
+	if (showbuffer(bp, curwp, WFFULL) != TRUE)
 		return (FALSE);
 	if (bp->b_fname[0] == '\0') {
 		if ((status = readin(adjf)) != TRUE)
@@ -324,7 +324,7 @@ insertfile(char *fname, char *newname, int replacebuf)
 			return (FALSE);
 		undo_enable(x);
 		curbp = bp;
-		return (showbuffer(bp, curwp, WFHARD | WFMODE));
+		return (showbuffer(bp, curwp, WFFULL | WFMODE));
 	} else {
 		(void)strlcpy(bp->b_cwd, dirname(fname), sizeof(bp->b_cwd));
 		(void)strlcat(bp->b_cwd, "/", sizeof(bp->b_cwd));

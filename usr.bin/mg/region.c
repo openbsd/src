@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.21 2005/12/15 19:39:19 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.22 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -102,7 +102,7 @@ lowerregion(int f, int n)
 
 	undo_add_change(region.r_linep, region.r_offset, region.r_size);
 
-	lchange(WFHARD);
+	lchange(WFFULL);
 	linep = region.r_linep;
 	loffs = region.r_offset;
 	while (region.r_size--) {
@@ -142,7 +142,7 @@ upperregion(int f, int n)
 
 	undo_add_change(region.r_linep, region.r_offset, region.r_size);
 
-	lchange(WFHARD);
+	lchange(WFFULL);
 	linep = region.r_linep;
 	loffs = region.r_offset;
 	while (region.r_size--) {

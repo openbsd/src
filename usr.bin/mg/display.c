@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.26 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.27 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -376,7 +376,7 @@ update(void)
 	if (sgarbf) {		/* must update everything */
 		wp = wheadp;
 		while (wp != NULL) {
-			wp->w_flag |= WFMODE | WFHARD;
+			wp->w_flag |= WFMODE | WFFULL;
 			wp = wp->w_wndp;
 		}
 	}
@@ -388,7 +388,7 @@ update(void)
 		if (wp->w_flag == 0)
 			continue;
 
-		if ((wp->w_flag & WFFORCE) == 0) {
+		if ((wp->w_flag & WFFRAME) == 0) {
 			lp = wp->w_linep;
 			for (i = 0; i < wp->w_ntrows; ++i) {
 				if (lp == wp->w_dotp)
@@ -422,7 +422,7 @@ update(void)
 			lp = lback(lp);
 		}
 		wp->w_linep = lp;
-		wp->w_flag |= WFHARD;	/* Force full.		 */
+		wp->w_flag |= WFFULL;	/* Force full.		 */
 	out:
 		lp = wp->w_linep;	/* Try reduced update.	 */
 		i = wp->w_toprow;
@@ -437,7 +437,7 @@ update(void)
 			for (j = 0; j < llength(lp); ++j)
 				vtputc(lgetc(lp, j));
 			vteeol();
-		} else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0) {
+		} else if ((wp->w_flag & (WFEDIT | WFFULL)) != 0) {
 			hflag = TRUE;
 			while (i < wp->w_toprow + wp->w_ntrows) {
 				vscreen[i]->v_color = CTEXT;

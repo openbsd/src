@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.13 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: word.c,v 1.14 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -91,7 +91,7 @@ upperword(int f, int n)
 			if (ISLOWER(c) != FALSE) {
 				c = TOUPPER(c);
 				lputc(curwp->w_dotp, curwp->w_doto, c);
-				lchange(WFHARD);
+				lchange(WFFULL);
 			}
 			if (forwchar(FFRAND, 1) == FALSE)
 				return (TRUE);
@@ -130,7 +130,7 @@ lowerword(int f, int n)
 			if (ISUPPER(c) != FALSE) {
 				c = TOLOWER(c);
 				lputc(curwp->w_dotp, curwp->w_doto, c);
-				lchange(WFHARD);
+				lchange(WFFULL);
 			}
 			if (forwchar(FFRAND, 1) == FALSE)
 				return (TRUE);
@@ -172,7 +172,7 @@ capword(int f, int n)
 			if (ISLOWER(c) != FALSE) {
 				c = TOUPPER(c);
 				lputc(curwp->w_dotp, curwp->w_doto, c);
-				lchange(WFHARD);
+				lchange(WFFULL);
 			}
 			if (forwchar(FFRAND, 1) == FALSE)
 				return (TRUE);
@@ -181,7 +181,7 @@ capword(int f, int n)
 				if (ISUPPER(c) != FALSE) {
 					c = TOLOWER(c);
 					lputc(curwp->w_dotp, curwp->w_doto, c);
-					lchange(WFHARD);
+					lchange(WFFULL);
 				}
 				if (forwchar(FFRAND, 1) == FALSE)
 					return (TRUE);

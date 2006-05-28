@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.21 2006/02/25 14:40:16 otto Exp $	*/
+/*	$OpenBSD: window.c,v 1.22 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -47,7 +47,7 @@ reposition(int f, int n)
 #else /* !GOSREC */
 	curwp->w_force = n;
 #endif /* !GOSREC */
-	curwp->w_flag |= WFFORCE;
+	curwp->w_flag |= WFFRAME;
 	sgarbf = TRUE;
 	return (TRUE);
 }
@@ -191,7 +191,7 @@ onlywind(int f, int n)
 	/* 2 = mode, echo */
 	curwp->w_ntrows = nrow - 2;
 	curwp->w_linep = lp;
-	curwp->w_flag |= WFMODE | WFHARD;
+	curwp->w_flag |= WFMODE | WFFULL;
 	return (TRUE);
 }
 
@@ -272,8 +272,8 @@ splitwind(int f, int n)
 	curwp->w_linep = lp;
 	wp->w_linep = lp;
 
-	curwp->w_flag |= WFMODE | WFHARD;
-	wp->w_flag |= WFMODE | WFHARD;
+	curwp->w_flag |= WFMODE | WFFULL;
+	wp->w_flag |= WFMODE | WFFULL;
 	return (TRUE);
 }
 
@@ -324,8 +324,8 @@ enlargewind(int f, int n)
 	}
 	curwp->w_ntrows += n;
 	adjwp->w_ntrows -= n;
-	curwp->w_flag |= WFMODE | WFHARD;
-	adjwp->w_flag |= WFMODE | WFHARD;
+	curwp->w_flag |= WFMODE | WFFULL;
+	adjwp->w_flag |= WFMODE | WFFULL;
 	return (TRUE);
 }
 
@@ -377,8 +377,8 @@ shrinkwind(int f, int n)
 	}
 	curwp->w_ntrows -= n;
 	adjwp->w_ntrows += n;
-	curwp->w_flag |= WFMODE | WFHARD;
-	adjwp->w_flag |= WFMODE | WFHARD;
+	curwp->w_flag |= WFMODE | WFFULL;
+	adjwp->w_flag |= WFMODE | WFFULL;
 	return (TRUE);
 }
 

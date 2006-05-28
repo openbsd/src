@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.22 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.23 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -189,7 +189,7 @@ retry:
 	}
 
 stopsearch:
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	update();
 	if (!inmacro) {
 		if (rcnt == 0)

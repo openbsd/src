@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.28 2006/02/03 13:57:03 otto Exp $	*/
+/*	$OpenBSD: search.c,v 1.29 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -591,7 +591,7 @@ retry:
 		}
 	}
 stopsearch:
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	update();
 	if (rcnt == 1)
 		ewprintf("Replaced 1 occurrence");
@@ -628,7 +628,7 @@ replstr(int f, int n)
 		rcnt++;
 	}
 
-	curwp->w_flag |= WFHARD;
+	curwp->w_flag |= WFFULL;
 	update();
 
 	if (rcnt == 1)

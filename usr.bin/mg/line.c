@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.38 2006/05/27 21:20:11 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.39 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -122,7 +122,7 @@ lchange(int flag)
 		if (wp->w_bufp == curbp) {
 			wp->w_flag |= flag;
 			if (wp != curwp)
-				wp->w_flag |= WFHARD;
+				wp->w_flag |= WFFULL;
 		}
 	}
 }
@@ -152,7 +152,7 @@ linsert_str(const char *s, int n)
 	if (!n)
 		return (TRUE);
 
-	lchange(WFHARD);
+	lchange(WFFULL);
 
 	/* current line */
 	lp1 = curwp->w_dotp;
@@ -316,7 +316,7 @@ lnewline_at(struct line *lp1, int doto)
 	int	 nlen;
 	struct mgwin	*wp;
 
-	lchange(WFHARD);
+	lchange(WFFULL);
 
 	/* If start of line, allocate a new line instead of copying */
 	if (doto == 0) {
@@ -427,7 +427,7 @@ ldelete(RSIZE n, int kflag)
 			if (dotp == lback(curbp->b_linep))
 				/* End of buffer */
 				return (FALSE);
-			lchange(WFHARD);
+			lchange(WFFULL);
 			if (ldelnewline() == FALSE)
 				return (FALSE);
 			end = strlcat(sv, "\n", len + 1);
@@ -563,7 +563,7 @@ lreplace(RSIZE plen, char *st)
 
 	rlen = strlen(st);
 	region_put_data(st, rlen);
-	lchange(WFHARD);
+	lchange(WFFULL);
 
 	undo_no_boundary(FALSE);
 	undo_add_boundary();

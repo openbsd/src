@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.36 2006/05/02 17:10:25 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.37 2006/05/28 23:30:16 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -197,7 +197,7 @@ dired(int f, int n)
 		return (FALSE);
 
 	curbp = bp;
-	return (showbuffer(bp, curwp, WFHARD | WFMODE));
+	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
 /* ARGSUSED */
@@ -300,7 +300,7 @@ d_findfile(int f, int n)
 	if (bp == NULL)
 		return (FALSE);
 	curbp = bp;
-	if (showbuffer(bp, curwp, WFHARD) != TRUE)
+	if (showbuffer(bp, curwp, WFFULL) != TRUE)
 		return (FALSE);
 	if (bp->b_fname[0] != 0)
 		return (TRUE);
@@ -359,7 +359,7 @@ d_expunge(int f, int n)
 				break;
 			}
 			lfree(lp);
-			curwp->w_flag |= WFHARD;
+			curwp->w_flag |= WFFULL;
 		}
 	}
 	return (TRUE);
@@ -392,7 +392,7 @@ d_copy(int f, int n)
 	if (ret != TRUE)
 		return (ret);
 	bp = dired_(curbp->b_fname);
-	return (showbuffer(bp, curwp, WFHARD | WFMODE));
+	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
 /* ARGSUSED */
@@ -422,7 +422,7 @@ d_rename(int f, int n)
 	if (ret != TRUE)
 		return (ret);
 	bp = dired_(curbp->b_fname);
-	return (showbuffer(bp, curwp, WFHARD | WFMODE));
+	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
 /* ARGSUSED */
@@ -550,7 +550,7 @@ d_create_directory(int f, int n)
 		return (FALSE);
 	}
 	bp = dired_(curbp->b_fname);
-	return (showbuffer(bp, curwp, WFHARD | WFMODE));
+	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
 #define NAME_FIELD	8
