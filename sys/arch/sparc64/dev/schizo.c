@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.20 2006/05/28 22:09:57 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.21 2006/05/28 22:14:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -277,9 +277,7 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	agentid = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
 	    SCZ_CONTROL_STATUS);
-	printf("AGENT(%llx)", agentid);
 	agentid = ((agentid >> 20) & 31) << 6;
-	printf("agent(%llx)", agentid);
 
 	if (ino & ~INTMAP_PCIINT) {
 		*ihp |= agentid;
