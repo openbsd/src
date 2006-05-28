@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.24 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.25 2006/05/28 17:24:43 beck Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -110,18 +110,22 @@ const struct scsi_inquiry_pattern ch_patterns[] = {
 	 "",		"",		""},
 };
 
-/* SCSI glue */
-struct scsi_device ch_switch = {
-	NULL, NULL, NULL, NULL
-};
-
 int	ch_move(struct ch_softc *, struct changer_move *);
 int	ch_exchange(struct ch_softc *, struct changer_exchange *);
 int	ch_position(struct ch_softc *, struct changer_position *);
 int	ch_usergetelemstatus(struct ch_softc *, int, u_int8_t *);
 int	ch_getelemstatus(struct ch_softc *, int, int, caddr_t, size_t);
 int	ch_get_params(struct ch_softc *, int);
+int	ch_interpret_sense(struct scsi_xfer *xs);
 void	ch_get_quirks(struct ch_softc *, struct scsi_inquiry_data *);
+
+/* SCSI glue */
+struct scsi_device ch_switch = {
+	ch_interpret_sense,
+	NULL,
+	NULL,
+	NULL
+};
 
 /*
  * SCSI changer quirks.
@@ -200,13 +204,14 @@ chopen(dev, flags, fmt, p)
 	sc->sc_link->flags |= SDEV_OPEN;
 
 	/*
-	 * Absorb any unit attention errors.  Ignore "not ready"
-	 * since this might occur if e.g. a tape isn't actually
-	 * loaded in the drive.
+	 * Absorb any unit attention errors. We must notice
+	 * "Not ready" errors as a changer will report "In the
+	 * process of getting ready" any time it must rescan 
+	 * itself to determine the state of the changer.
 	 */
 	error = scsi_test_unit_ready(sc->sc_link,
-	    TEST_READY_RETRIES_DEFAULT,
-	    SCSI_IGNORE_NOT_READY|SCSI_IGNORE_MEDIA_CHANGE);
+	    TEST_READY_RETRIES_TAPE,
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 	if (error)
 		goto bad;
 
@@ -692,5 +697,62 @@ ch_get_quirks(sc, inqbuf)
 	    sizeof(chquirks[0]), &priority);
 	if (priority != 0) {
 		sc->sc_settledelay = match->cq_settledelay;
+	}
+}
+
+/*
+ * Look at the returned sense and act on the error and detirmine
+ * The unix error number to pass back... (0 = report no error)
+ *                            (-1 = continue processing)
+ */
+int
+ch_interpret_sense(xs)
+	struct scsi_xfer *xs;
+{
+	struct scsi_sense_data *sense = &xs->sense;
+	struct scsi_link *sc_link = xs->sc_link;
+	u_int8_t serr = sense->error_code & SSD_ERRCODE;
+	u_int8_t skey = sense->flags & SSD_KEY;
+
+	if (((sc_link->flags & SDEV_OPEN) == 0) ||
+	    (serr != 0x70 && serr != 0x71))
+		return (EJUSTRETURN); /* let the generic code handle it */
+
+	switch (skey) {
+
+	/*
+	 * We do custom processing in ch for the unit becoming ready case.
+	 * in this case we do not allow xs->retries to be decremented
+	 * only on the "Unit Becoming Ready" case. This is because tape
+	 * changers report "Unit Becoming Ready" when they rescan their
+	 * state (i.e. when the door got opened) and can take a long time
+	 * for large units. Rather than having a massive timeout for 
+	 * all operations (which would cause other problems) we allow
+	 * changers to wait (but be interruptable with Ctrl-C) forever
+	 * as long as they are reporting that they are becoming ready.
+	 * all other cases are handled as per the default.
+	 */
+	case SKEY_NOT_READY:
+		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+			return (0);
+		switch (sense->add_sense_code) {
+		case 0x04:	/* LUN not ready */
+			switch (sense->add_sense_code_qual) {
+				case 0x01: /* Becoming Ready */
+					SC_DEBUG(sc_link, SDEV_DB1,
+		    			    ("not ready: busy (%#x)\n",
+					    sense->add_sense_code_qual));
+					/* don't count this as a retry */
+					xs->retries++;
+					return (scsi_delay(xs, 1));
+				default:
+					return (EJUSTRETURN);
+			}
+			break;
+		default:
+			return (EJUSTRETURN);
+	}
+	default:
+		return (EJUSTRETURN);
 	}
 }
