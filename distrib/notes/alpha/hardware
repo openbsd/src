@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.79 2006/05/23 19:46:10 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.80 2006/05/28 17:43:51 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -190,6 +190,8 @@ Supported Peripherals:
 		  (siop)
 		AMD Am53c974 PCscsi-PCI host adapters including the Tekram
 		  DC-390 (pcscp) [*]
+	RAID and Cache Controllers [*]
+		3ware Escalade 3W-5x00, 3W-6x00, 3W-7x00
 	CD-ROM and DVD-ROM Drives [*]
 		Most SCSI CD-ROM, CD-R, CD-RW, and DVD drives
 		Most ATAPI CD-ROM, CD-R, CD-RW, and DVD drives
@@ -425,7 +427,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		AdvanSys ABP940UW, ASB3940UW-00, ASB3940U2W-00 and
 		  ASB3950U160 PCI SCSI controllers. (adw)
 	RAID and Cache Controllers [*]
-		3ware Escalade 3W-5x00, 3W-6x00
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters (dpt)
 		ICP-Vortex GDT 6xxxR[DNPS] series (gdt)
 	Serial Ports [*]

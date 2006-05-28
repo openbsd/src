@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.171 2006/05/06 05:37:02 brad Exp $
+#	$OpenBSD: GENERIC,v 1.172 2006/05/28 17:43:51 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -175,6 +175,8 @@ siop*	at pci?				# NCR 53c8xx SCSI
 scsibus* at siop?
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
+twe*	at pci?				# 3ware Escalade RAID controllers
+scsibus* at twe?
 
 #UNTESTED: the following drivers are untested.
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
@@ -185,11 +187,6 @@ dpt*	at pci?				# DPT SmartCache/SmartRAID PCI
 scsibus* at dpt?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
-twe*	at pci?				# 3ware Escalade RAID controllers
-scsibus* at twe?
-##
-
-#BROKEN: adv and twe have 64-bit problems
 #adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI
 #scsibus* at adv?
 #ami*	at pci?				# AMI MegaRAID controllers

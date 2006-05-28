@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.73 2006/05/23 19:46:10 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.74 2006/05/28 17:43:51 martin Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -105,7 +105,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		Tekram DC-3x5U (DC-315U, DC-395U/UW/F) TRM-S1040 based
 		  PCI SCSI host adapters
 	RAID and Cache Controllers
-		3ware Escalade 3W-5x00, 3W-6x00
+		3ware Escalade 3W-5x00, 3W-6x00, 3W-7x00
 		Adaptec FSA-based RAID controllers, including:
 		    Adaptec AAC-2622, AAC-364, AAC-3642
 		    Dell PERC 2/Si, PERC 2/QC, PERC 3/Si, PERC 3/Di,
