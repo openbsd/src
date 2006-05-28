@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.347 2006/05/28 02:51:06 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.348 2006/05/28 12:07:10 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -308,11 +308,12 @@ When reaching this number of state entries, all timeout values become
 zero, effectively purging all state entries immediately.
 This value is used to define the scale factor, it should not actually
 be reached (set a lower state limit, see below).
+.El
+.Pp
 Adaptive timeouts are enabled by default, with an adaptive.start value
 equal to 60% of the state limit, and an adaptive.end value equal to
 120% of the state limit.
 They can be disabled by setting both adaptive.start and adaptive.end to 0.
-.El
 .Pp
 The adaptive timeout values can be defined both globally and for each rule.
 When used on a per-rule basis, the values relate to the number of
