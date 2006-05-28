@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.18 2006/03/19 02:43:38 brad Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.19 2006/05/28 06:28:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -247,7 +247,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
 
-	iommu_init(name, is, 128 * 1024, 0xc0000000);
+	iommu_init(name, is, 128 * 1024, -1);
 	iommu_reset(is);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.11 2005/04/26 14:57:11 miod Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.12 2006/05/28 06:28:08 jason Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct iommu_strbuf {
 #define IOTTE_8K	0x0000000000000000LL
 #define IOTTE_STREAM	0x1000000000000000LL	/* Is page streamable? */
 #define	IOTTE_LOCAL	0x0800000000000000LL	/* Accesses to same bus segment? */
+#define	IOTTE_CONTEXT	0x07ff800000000000LL	/* context number */
 #define IOTTE_PAMASK	0x000007ffffffe000LL	/* Let's assume this is correct (bits 42..13) */
 #define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
 #define IOTTE_W		0x0000000000000002LL	/* Writeable */
