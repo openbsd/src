@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.17 2004/07/17 21:27:30 miod Exp $	*/
+/*	$OpenBSD: sab.c,v 1.18 2006/05/28 17:10:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1107,8 +1107,7 @@ sabtty_start(tp)
 }
 
 int
-sabtty_cec_wait(sc)
-	struct sabtty_softc *sc;
+sabtty_cec_wait(struct sabtty_softc *sc)
 {
 	int i = 50000;
 
@@ -1122,8 +1121,7 @@ sabtty_cec_wait(sc)
 }
 
 int
-sabtty_tec_wait(sc)
-	struct sabtty_softc *sc;
+sabtty_tec_wait(struct sabtty_softc *sc)
 {
 	int i = 200000;
 
@@ -1208,7 +1206,10 @@ int
 sabtty_cngetc(sc)
 	struct sabtty_softc *sc;
 {
-	u_int8_t r, len;
+	u_int8_t r, len, ipc;
+
+	ipc = SAB_READ(sc, SAB_IPC);
+	SAB_WRITE(sc, SAB_IPC, ipc | SAB_IPC_VIS);
 
 again:
 	do {
@@ -1238,6 +1239,7 @@ again:
 	 */
 	sabtty_cec_wait(sc);
 	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RMC);
+	SAB_WRITE(sc, SAB_IPC, ipc);
 	return (r);
 }
 
