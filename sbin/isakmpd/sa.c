@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.102 2005/09/23 14:44:03 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.103 2006/05/28 17:40:21 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -716,6 +716,8 @@ sa_dump_all(FILE *fd, struct sa *sa)
 
 	/* Lifetimes */
 	report_lifetimes(fd, sa);
+
+	fprintf(fd, "Flags 0x%08x\n", sa->flags);
 
 	if (sa->phase == 1)
 		report_phase1(fd, sa);
