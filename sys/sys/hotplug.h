@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.h,v 1.1 2004/05/30 08:11:27 grange Exp $	*/
+/*	$OpenBSD: hotplug.h,v 1.2 2006/05/28 01:33:50 mk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -27,14 +27,15 @@
 #define HOTPLUG_DEVDT		0x02	/* device detached	*/
 
 struct hotplug_event {
+	int		he_devid;	/* device id		*/
 	int		he_type;	/* event type		*/
 	enum devclass	he_devclass;	/* device class		*/
 	char		he_devname[16];	/* device name		*/
 };
 
 #ifdef _KERNEL
-void	hotplug_device_attach(enum devclass, char *);
-void	hotplug_device_detach(enum devclass, char *);
+void	hotplug_device_attach(enum devclass, char *, int);
+void	hotplug_device_detach(enum devclass, char *, int);
 #endif
 
 #endif	/* _SYS_HOTPLUG_H_ */

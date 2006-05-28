@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.46 2006/05/17 23:56:03 krw Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.47 2006/05/28 01:33:50 mk Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	config_process_deferred_children(dev);
 #if NHOTPLUG > 0
 	if (!cold)
-		hotplug_device_attach(cd->cd_class, dev->dv_xname);
+		hotplug_device_attach(cd->cd_class, dev->dv_xname, dev->dv_unit);
 #endif
 	return (dev);
 }
@@ -495,6 +495,7 @@ config_detach(struct device *dev, int flags)
 	int rv = 0, i;
 #if NHOTPLUG > 0
 	char devname[16];
+	int devnum = dev->dv_unit;
 
 	strlcpy(devname, dev->dv_xname, sizeof(devname));
 #endif
@@ -561,10 +562,10 @@ config_detach(struct device *dev, int flags)
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		if (cf->cf_driver == cd) {
 			if (cf->cf_fstate == FSTATE_FOUND &&
-			    cf->cf_unit == dev->dv_unit)
+			    cf->cf_unit == devnum)
 				cf->cf_fstate = FSTATE_NOTFOUND;
 			if (cf->cf_fstate == FSTATE_STAR &&
-			    cf->cf_unit == dev->dv_unit + 1)
+			    cf->cf_unit == devnum + 1)
 				cf->cf_unit--;
 		}
 	}
@@ -578,7 +579,7 @@ config_detach(struct device *dev, int flags)
 	/*
 	 * Remove from cfdriver's array, tell the world, and free softc.
 	 */
-	cd->cd_devs[dev->dv_unit] = NULL;
+	cd->cd_devs[devnum] = NULL;
 	if ((flags & DETACH_QUIET) == 0)
 		printf("%s detached\n", dev->dv_xname);
 
@@ -598,7 +599,7 @@ config_detach(struct device *dev, int flags)
 
 #if NHOTPLUG > 0
 	if (!cold)
-		hotplug_device_detach(cd->cd_class, devname);
+		hotplug_device_detach(cd->cd_class, devname, devnum);
 #endif
 
 	/*
