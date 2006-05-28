@@ -1,0 +1,39 @@
+.\"	$OpenBSD: sdmmc.4,v 1.1 2006/05/28 17:22:48 deraadt Exp $
+.\"
+.\" Theo de Raadt, 2006. Public Domain.
+.\"
+.Dd May 28, 2006
+.Dt SDMMC 4
+.Os
+.Sh NAME
+.Nm sdmmc
+.Nd SD Host Controller
+.Sh SYNOPSIS
+.Cd "sdmmc* at sdhc?"
+.Cd "scsibus* at sdmmc?"
+.Sh DESCRIPTION
+The
+.Nm
+subsystem provides machine-independent bus support and drivers for
+SD/MMC devices.
+.Pp
+Standard SD memory devices will as a fake scsi disk, using
+.Xr scsibus 4
+and
+.Xr sd 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsibus 4 ,
+.Xr sdhc 4 ,
+.Xr sd 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Uwe Stuehler Aq uwe@openbsd.org .
