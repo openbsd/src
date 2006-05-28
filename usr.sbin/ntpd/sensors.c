@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.14 2006/05/28 19:04:37 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.15 2006/05/28 20:39:16 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,7 @@ sensor_add(struct sensor *sensor)
 		fatal("sensor_add calloc");
 
 	s->next = time(NULL);
+	s->weight = cs->weight;
 	if ((s->device = strdup(sensor->device)) == NULL)
 		fatal("sensor_add strdup");
 	s->sensorid = sensor->num;

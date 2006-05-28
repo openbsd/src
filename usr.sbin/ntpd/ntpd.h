@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.68 2006/05/28 18:47:25 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.69 2006/05/28 20:39:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -124,6 +124,7 @@ struct ntp_peer {
 	u_int32_t			 id;
 	u_int8_t			 shift;
 	u_int8_t			 trustlevel;
+	u_int8_t			 weight;
 	int				 lasterror;
 };
 
@@ -133,11 +134,13 @@ struct ntp_sensor {
 	time_t				 next;
 	char				*device;
 	int				 sensorid;
+	u_int8_t			 weight;
 };
 
 struct ntp_conf_sensor {
 	TAILQ_ENTRY(ntp_conf_sensor)		 entry;
 	char					*device;
+	u_int8_t				 weight;
 };
 
 struct ntpd_conf {

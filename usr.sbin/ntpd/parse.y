@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2006/05/27 17:01:07 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2006/05/28 20:39:16 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,10 +62,11 @@ typedef struct {
 %}
 
 %token	LISTEN ON
-%token	SERVER SERVERS SENSOR
+%token	SERVER SERVERS SENSOR WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
 %type	<v.addr>		address
+%type	<v.number>		number weight
 %%
 
 grammar		: /* empty */
@@ -106,7 +107,7 @@ conf_main	: LISTEN ON address	{
 			free($3->name);
 			free($3);
 		}
-		| SERVERS address	{
+		| SERVERS address weight	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
@@ -128,6 +129,7 @@ conf_main	: LISTEN ON address	{
 					next = NULL;
 
 				p = new_peer();
+				p->weight = $3;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -144,7 +146,7 @@ conf_main	: LISTEN ON address	{
 			free($2->name);
 			free($2);
 		}
-		| SERVER address	{
+		| SERVER address weight	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
@@ -165,6 +167,7 @@ conf_main	: LISTEN ON address	{
 				p->addr = h;
 			}
 
+			p->weight = $3;
 			p->addr_head.a = p->addr;
 			p->addr_head.pool = 0;
 			p->addr_head.name = strdup($2->name);
@@ -176,10 +179,11 @@ conf_main	: LISTEN ON address	{
 			free($2->name);
 			free($2);
 		}
-		| SENSOR STRING	{
+		| SENSOR STRING	weight {
 			struct ntp_conf_sensor	*s;
 
 			s = new_sensor($2);
+			s->weight = $3;
 			free($2);
 			TAILQ_INSERT_TAIL(&conf->ntp_conf_sensors, s, entry);
 		}
@@ -197,6 +201,31 @@ address		: STRING		{
 				YYERROR;
 			}
 			$$->name = $1;
+		}
+		;
+
+number		: STRING			{
+			u_long		 ulval;
+			const char	*errstr;
+
+			ulval = strtonum($1, 0, ULONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid: %s", $1, errstr);
+				free($1);
+				YYERROR;
+			} else
+				$$ = ulval;
+			free($1);
+		}
+		;
+
+weight		: /* empty */	{ $$ = 1; }
+		| WEIGHT number	{
+			if ($2 < 1 || $2 > 10) {
+				yyerror("weight must be between 1 and 10");
+				YYERROR;
+			}
+			$$ = $2;
 		}
 		;
 
@@ -238,7 +267,8 @@ lookup(char *s)
 		{ "on",			ON},
 		{ "sensor",		SENSOR},
 		{ "server",		SERVER},
-		{ "servers",		SERVERS}
+		{ "servers",		SERVERS},
+		{ "weight",		WEIGHT}
 	};
 	const struct keywords	*p;
 

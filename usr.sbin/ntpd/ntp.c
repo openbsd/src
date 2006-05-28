@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.76 2006/05/28 18:47:25 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.77 2006/05/28 20:39:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -422,7 +422,7 @@ priv_adjtime(void)
 {
 	struct ntp_peer		 *p;
 	struct ntp_sensor	 *s;
-	int			  offset_cnt = 0, i = 0;
+	int			  offset_cnt = 0, i = 0, j;
 	struct ntp_offset	**offsets;
 	double			  offset_median;
 
@@ -431,13 +431,13 @@ priv_adjtime(void)
 			continue;
 		if (!p->update.good)
 			return;
-		offset_cnt++;
+		offset_cnt += p->weight;
 	}
 
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 		if (!s->update.good)
 			continue;
-		offset_cnt++;
+		offset_cnt += p->weight;
 	}
 
 	if ((offsets = calloc(offset_cnt, sizeof(struct ntp_offset *))) == NULL)
@@ -446,13 +446,15 @@ priv_adjtime(void)
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
-		offsets[i++] = &p->update;
+		for (j = 0; j < p->weight; j++)
+			offsets[i++] = &p->update;
 	}
 
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 		if (!s->update.good)
 			continue;
-		offsets[i++] = &s->update;
+		for (j = 0; j < s->weight; j++)
+			offsets[i++] = &s->update;
 	}
 
 	qsort(offsets, offset_cnt, sizeof(struct ntp_offset *), offset_compare);
