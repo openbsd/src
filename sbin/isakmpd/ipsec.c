@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.123 2006/05/28 02:22:34 mcbride Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.124 2006/05/29 06:56:36 mcbride Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1410,6 +1410,17 @@ ipsec_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 {
 	if (sa->phase == 1)
 		return;
+
+	/*
+	 * If the SA was not replaced and was not one acquired through the
+	 * kernel (ACQUIRE message), remove the flow associated with it.
+	 * We ignore any errors from the disabling of the flow.
+	 */
+	if (sa->flags & SA_FLAG_READY && !(sa->flags & SA_FLAG_ONDEMAND ||
+	    sa->flags & SA_FLAG_REPLACED || acquire_only ||
+	    conf_get_str("General", "Acquire-Only")))
+		pf_key_v2_disable_sa(sa, incoming);
+
 	/* XXX Error handling?  Is it interesting?  */
 	pf_key_v2_delete_spi(sa, proto, incoming);
 }
@@ -2076,7 +2087,7 @@ ipsec_proto_init(struct proto *proto, char *section)
 {
 	struct ipsec_proto *iproto = proto->data;
 
-	if (proto->sa->phase == 2 && section)
+	if (proto->sa->phase == 2)
 		iproto->replay_window = section ? conf_get_num(section,
 		    "ReplayWindow", DEFAULT_REPLAY_WINDOW) :
 		    DEFAULT_REPLAY_WINDOW;
