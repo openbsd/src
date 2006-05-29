@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.12 2006/04/25 15:41:05 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.13 2006/05/29 01:21:38 beck Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/chio.h>
 #include <err.h>
 #include <errno.h>
@@ -44,10 +45,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "defs.h"
 #include "pathnames.h"
 
+#define _PATH_CH_CONF	"/etc/chio.conf"
+extern	char *parse_tapedev(const char *, const char *, int); /* parse.y */
 extern	char *__progname;	/* from crt0.o */
 
 static	void usage(void);
@@ -175,6 +179,28 @@ do_move(char *cname, int argc, char *argv[])
 	/* <from EU> */
 	cmd.cm_fromunit = parse_element_unit(*argv);
 	++argv; --argc;
+
+	if (cmd.cm_fromtype == CHET_DT) {
+		/* 
+		 * from unit is a drive - make sure the tape
+		 * in it is unmounted before we attempt to move 
+		 * it to avoid errors in "disconnected" type 
+		 * pickers where the drive is on a seperate target
+		 * from the changer.
+		 */
+		int mtfd;
+		struct mtop mtoffl =  { MTOFFL, 1 };
+		char * tapedev = parse_tapedev(_PATH_CH_CONF, changer_name, cmd.cm_fromunit);
+		mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
+		    NULL);
+		if (mtfd == -1) 
+			err(1, "%s drive %d (%s): open", changer_name,
+			    cmd.cm_fromunit, tapedev);
+		if (ioctl(mtfd, MTIOCTOP, &mtoffl) == -1)
+			err(1, "%s drive %d (%s): rewoffl", changer_name,
+			    cmd.cm_fromunit, tapedev);
+		close(mtfd);
+	}
 
 	/* <to ET> */
 	cmd.cm_totype = parse_element_type(*argv);

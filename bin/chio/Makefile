@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2005/11/25 20:37:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2006/05/29 01:21:38 beck Exp $
 
 PROG=	chio
-SRCS=	chio.c
+SRCS=	chio.c parse.y
+DPADD=	${LIBUTIL}
+LDADD=	-lutil
 
 .include <bsd.prog.mk>
