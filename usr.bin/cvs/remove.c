@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.46 2006/05/29 05:34:31 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.47 2006/05/29 05:52:42 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -44,15 +44,18 @@ int
 cvs_remove(int argc, char **argv)
 {
 	int ch;
+	int flags;
 	char *arg = ".";
 	struct cvs_recursion cr;
 
+	flags = CR_RECURSE_DIRS;
 	while ((ch = getopt(argc, argv, cvs_cmd_commit.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'f':
 			force_remove = 1;
 			break;
 		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
 			break;
@@ -68,6 +71,7 @@ cvs_remove(int argc, char **argv)
 	cr.leavedir = NULL;
 	cr.local = cvs_remove_local;
 	cr.remote = NULL;
+	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
