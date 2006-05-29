@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.77 2006/05/29 15:59:49 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.78 2006/05/29 16:04:25 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1433,34 +1433,34 @@ ifa_grouplookup(const char *ifa_name)
 struct ipsec_addr_wrap *
 ifa_lookup(const char *ifa_name)
 {
-	struct ipsec_addr_wrap	*ipa = NULL, *p = NULL, *h = NULL;
+	struct ipsec_addr_wrap	*p = NULL, *h = NULL, *n = NULL;
 
 	if (iftab == NULL)
 		ifa_load();
 
-	if ((ipa = ifa_grouplookup(ifa_name)) != NULL)
-		return (ipa);
+	if ((n = ifa_grouplookup(ifa_name)) != NULL)
+		return (n);
 
 	for (p = iftab; p; p = p->next) {
 		if (p->af != AF_INET)
 			continue;
 		if (strncmp(p->name, ifa_name, IFNAMSIZ))
 			continue;
-		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
-		if (ipa == NULL)
+		n = calloc(1, sizeof(struct ipsec_addr_wrap));
+		if (n == NULL)
 			err(1, "ifa_lookup: calloc");
-		memcpy(ipa, p, sizeof(struct ipsec_addr_wrap));
-		if ((ipa->name = strdup(p->name)) == NULL)
+		memcpy(n, p, sizeof(struct ipsec_addr_wrap));
+		if ((n->name = strdup(p->name)) == NULL)
 			err(1, "ifa_lookup: strdup");
-		set_ipmask(ipa, 32);
+		set_ipmask(n, 32);
 
-		ipa->next = NULL;
-		ipa->tail = ipa;
+		n->next = NULL;
+		n->tail = n;
 		if (h == NULL)
-			h = ipa;
+			h = n;
 		else {
-			h->tail->next = ipa;
-			h->tail = ipa;
+			h->tail->next = n;
+			h->tail = n;
 		}
 	}
 
