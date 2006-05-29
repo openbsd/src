@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.4 2006/01/13 19:27:22 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.5 2006/05/29 19:27:22 stevesk Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -779,19 +779,19 @@ group {
   use-host-decl-names on;
 
   host joe {
- hardware ethernet 08:00:2b:4c:29:32;
- fixed-address joe.fugue.com;
+    hardware ethernet 08:00:2b:4c:29:32;
+    fixed-address joe.fugue.com;
   }
 }
 .Ed
 .Pp
 is equivalent to
 .Bd -literal -offset indent
- host joe {
-hardware ethernet 08:00:2b:4c:29:32;
-fixed-address joe.fugue.com;
-   option host-name "joe";
- }
+host joe {
+  hardware ethernet 08:00:2b:4c:29:32;
+  fixed-address joe.fugue.com;
+  option host-name "joe";
+}
 .Ed
 .Pp
 An
