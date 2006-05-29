@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.1 2006/05/27 19:03:55 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.2 2006/05/29 21:16:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -66,6 +66,7 @@ static const struct pci_matchid mpi_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919_1 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC929 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC929_1 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1064 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1068 }
 
 };
