@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.168 2005/11/14 23:25:11 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.169 2006/05/29 10:17:59 markus Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2123,7 +2123,7 @@ passed:
 }
 
 /* Disable a flow given a SA.  */
-static int
+int
 pf_key_v2_disable_sa(struct sa *sa, int incoming)
 {
 	struct ipsec_sa *isa = sa->data;
