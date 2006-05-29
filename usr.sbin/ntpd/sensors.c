@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.15 2006/05/28 20:39:16 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.16 2006/05/29 05:20:42 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -175,8 +175,10 @@ sensor_hotplugfd(void)
 {
 	int	fd, flags;
 
-	if ((fd = open(_PATH_DEV_HOTPLUG, O_RDONLY, 0)) == -1)
-		fatal(NULL);
+	if ((fd = open(_PATH_DEV_HOTPLUG, O_RDONLY, 0)) == -1) {
+		log_warn("open %s", _PATH_DEV_HOTPLUG);
+		return (-1);
+	}
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
 		fatal("fnctl F_GETFL");
