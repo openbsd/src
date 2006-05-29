@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.2 2006/05/28 02:32:55 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.3 2006/05/29 05:43:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -35,7 +35,7 @@ struct mpi_dmamem {
 
 struct mpi_ccb_bundle {
 	struct mpi_msg_scsi_io	mcb_io; /* sgl must follow */
-	struct mpi_sge32	mcb_sgl[MPI_MAX_SGL];
+	struct mpi_sge		mcb_sgl[MPI_MAX_SGL];
 	struct scsi_sense_data	mcb_sense;
 } __packed;
 

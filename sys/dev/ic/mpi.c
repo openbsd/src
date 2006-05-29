@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.6 2006/05/28 21:59:23 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.7 2006/05/29 05:43:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -38,7 +38,7 @@
 #ifdef MPI_DEBUG
 #define DPRINTF(x...)		do { if (mpidebug) printf(x); } while (0)
 #define DPRINTFN(n, x...)	do { if (mpidebug > (n)) printf(x); } while (0)
-int mpidebug = 0;
+int mpidebug = 10;
 #else
 #define DPRINTF(x...)		/* x */
 #define DPRINTFN(n, x...)	/* n, x */
@@ -69,9 +69,10 @@ int			mpi_alloc_ccbs(struct mpi_softc *);
 struct mpi_ccb		*mpi_get_ccb(struct mpi_softc *);
 void			mpi_put_ccb(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_alloc_replies(struct mpi_softc *);
+void			mpi_push_replies(struct mpi_softc *);
 
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
-void			mpi_poll(struct mpi_softc *, struct mpi_ccb *);
+int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
 void			mpi_timeout_xs(void *);
 int			mpi_load_xs(struct mpi_ccb *);
 
@@ -150,6 +151,11 @@ mpi_attach(struct mpi_softc *sc)
 		return (1);
 	}
 
+	if (mpi_alloc_replies(sc) != 0) {
+		printf("%s: unable to allocate reply space\n", DEVNAME(sc));
+		goto free_ccbs;
+	}
+
 	if (mpi_iocinit(sc) != 0) {
 		printf("%s: unable to send iocinit\n", DEVNAME(sc));
 		goto free_ccbs;
@@ -164,10 +170,7 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_ccbs;
 	}
 
-	if (mpi_alloc_replies(sc) != 0) {
-		/* error already printed */
-		goto free_ccbs;
-	}
+	mpi_push_replies(sc);
 
 	if (mpi_portfacts(sc) != 0) {
 		printf("%s: unable to get portfacts\n", DEVNAME(sc));
@@ -410,18 +413,12 @@ mpi_get_ccb(struct mpi_softc *sc)
 
 	TAILQ_REMOVE(&sc->sc_ccb_free, ccb, ccb_link);
 
-	DPRINTFN(10, "%s: %s: ccb_id: %d\n", DEVNAME(sc), __func__,
-	    ccb->ccb_id);
-
 	return (ccb);
 }
 
 void
 mpi_put_ccb(struct mpi_softc *sc, struct mpi_ccb *ccb)
 {
-	DPRINTFN(10, "%s: %s: ccb_id: %d\n", DEVNAME(sc), __func__,
-	    ccb->ccb_id);
-
 	ccb->ccb_state = MPI_CCB_FREE;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_done = NULL;
@@ -432,14 +429,18 @@ mpi_put_ccb(struct mpi_softc *sc, struct mpi_ccb *ccb)
 int
 mpi_alloc_replies(struct mpi_softc *sc)
 {
+	sc->sc_replies = mpi_dmamem_alloc(sc, PAGE_SIZE);
+	if (sc->sc_replies == NULL)
+		return (1);
+
+	return (0);
+}
+
+void
+mpi_push_replies(struct mpi_softc *sc)
+{
 	paddr_t				reply;
 	int				i;
-
-	sc->sc_replies = mpi_dmamem_alloc(sc, PAGE_SIZE);
-	if (sc->sc_replies == NULL) {
-		printf("%s: unable to allocate replies\n", DEVNAME(sc));
-		return (1);
-	}
 
 	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies),
 	    0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
@@ -448,8 +449,6 @@ mpi_alloc_replies(struct mpi_softc *sc)
 		reply = MPI_DMA_DVA(sc->sc_replies) + MPI_REPLY_SIZE * i;
 		mpi_push_reply(sc, reply);
 	}
-
-	return (0);
 }
 
 void
@@ -462,8 +461,8 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 	mpi_write(sc, MPI_REQ_QUEUE, ccb->ccb_cmd_dva);
 }
 
-void
-mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb)
+int
+mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 {
 	struct mpi_ccb			*ccb;
 	struct mpi_msg_reply		*reply = NULL;
@@ -481,6 +480,14 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb)
 	do {
 		reg = mpi_pop_reply(sc);
 		if (reg == 0xffffffff) {
+			if (timeout == 0) {
+				splx(s);
+				return (1);
+			}
+
+			if (timeout > 0)
+				--timeout;
+
 			delay(1000);
 			continue;
 		}
@@ -531,6 +538,8 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb)
 	} while (nccb->ccb_id != id);
 
 	splx(s);
+
+	return (0);
 }
 
 int
@@ -580,11 +589,11 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	io->cdb_length = xs->cmdlen;
 	io->sense_buf_len = sizeof(xs->sense);
+	io->msg_flags = MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_64;
 
 	io->msg_context = htole32(ccb->ccb_id);
 
-	/* XXX */
-	io->lun[0] = htole16(link->lun);
+	io->lun[0] = htobe16(link->lun);
 
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 	case SCSI_DATA_IN:
@@ -617,7 +626,8 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	timeout_set(&xs->stimeout, mpi_timeout_xs, ccb);
 
 	if (xs->flags & SCSI_POLL) {
-		mpi_poll(sc, ccb);
+		if (mpi_poll(sc, ccb, xs->timeout) != 0)
+			xs->error = XS_DRIVER_STUFFUP;
 		return (COMPLETE);
 	}
 
@@ -803,15 +813,16 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	struct mpi_softc		*sc = ccb->ccb_sc;
 	struct scsi_xfer		*xs = ccb->ccb_xs;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
-	struct mpi_sge32		*sge;
+	struct mpi_sge			*sge;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
-	u_int32_t			flags;
+	u_int32_t			addr, flags;
 	int				i, error;
 
 	if (xs->datalen == 0) {
 		sge = &mcb->mcb_sgl[0];
 		sge->sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
-		    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
+		    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
+		    MPI_SGE_FL_SIZE_64);
 		return (0);
 	}
 
@@ -836,7 +847,10 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	for (i = 0; i < dmap->dm_nsegs; i++) {
 		sge = &mcb->mcb_sgl[i];
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
-		sge->sg_addr = htole32(dmap->dm_segs[i].ds_addr);
+		addr = (u_int32_t)(dmap->dm_segs[i].ds_addr >> 32);
+		sge->sg_hi_addr = htole32(addr);
+		addr = (u_int32_t)dmap->dm_segs[i].ds_addr;
+		sge->sg_lo_addr = htole32(addr);
 	}
 
 	/* terminate list */
@@ -844,10 +858,15 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	    MPI_SGE_FL_EOL);
 
 #ifdef MPI_DEBUG
-	if (mpidebug > 11) {
+	if (mpidebug > 5) {
 		for (i = 0; i < dmap->dm_nsegs; i++) {
-			printf("%s:  %d: 0x%08x 0x%08x\n", DEVNAME(sc), i,
-			    mcb->mcb_sgl[i].sg_hdr, mcb->mcb_sgl[i].sg_addr);
+			printf("%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
+			    i, dmap->dm_segs[i].ds_len,
+			    (unsigned long long)dmap->dm_segs[i].ds_addr);
+			printf("%s:  %d: 0x%08x 0x%08x 0x%08x\n", DEVNAME(sc),
+			    i, mcb->mcb_sgl[i].sg_hdr,
+			    mcb->mcb_sgl[i].sg_hi_addr,
+			    mcb->mcb_sgl[i].sg_lo_addr);
 		}
 	}
 #endif
@@ -1213,8 +1232,8 @@ mpi_iocfacts(struct mpi_softc *sc)
 		printf("%s:  host_page_buffer_sge: hdr: 0x%08x "
 		    "addr 0x%08x %08x\n", DEVNAME(sc),
 		    letoh32(ifp.host_page_buffer_sge.sg_hdr),
-		    letoh32(ifp.host_page_buffer_sge.sg_hiaddr),
-		    letoh32(ifp.host_page_buffer_sge.sg_loaddr));
+		    letoh32(ifp.host_page_buffer_sge.sg_hi_addr),
+		    letoh32(ifp.host_page_buffer_sge.sg_lo_addr));
 	}
 #endif /* MPI_DEBUG */
 
@@ -1230,6 +1249,7 @@ mpi_iocinit(struct mpi_softc *sc)
 {
 	struct mpi_msg_iocinit_request		iiq;
 	struct mpi_msg_iocinit_reply		iip;
+	u_int32_t				hi_addr;
 
 	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
 
@@ -1245,6 +1265,13 @@ mpi_iocinit(struct mpi_softc *sc)
 	iiq.msg_context = htole32(0xd00fd00f);
 
 	iiq.reply_frame_size = htole16(MPI_REPLY_SIZE);
+
+	hi_addr = (u_int32_t)(MPI_DMA_DVA(sc->sc_requests) >> 32);
+	iiq.host_mfa_hi_addr = htole32(hi_addr);
+	iiq.sense_buffer_hi_addr = htole32(hi_addr);
+
+	hi_addr = (u_int32_t)(MPI_DMA_DVA(sc->sc_replies) >> 32);
+	iiq.reply_fifo_host_signalling_addr = htole32(hi_addr);
 
 	iiq.msg_version_maj = 0x01;
 	iiq.msg_version_min = 0x02;
@@ -1313,7 +1340,7 @@ mpi_portfacts(struct mpi_softc *sc)
 	pfq->port_number = 0;
 	pfq->msg_context = htole32(ccb->ccb_id);
 
-	mpi_poll(sc, ccb);
+	mpi_poll(sc, ccb, -1);
 
 	pfp = ccb->ccb_reply;
 	if (pfp == NULL)
@@ -1448,7 +1475,7 @@ mpi_portenable(struct mpi_softc *sc)
 	peq->port_number = 0;
 	peq->msg_context = htole32(ccb->ccb_id);
 
-	mpi_poll(sc, ccb);
+	mpi_poll(sc, ccb, -1);
 
 	pep = ccb->ccb_reply;
 	if (pep == NULL)
@@ -1518,7 +1545,7 @@ mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 
-	mpi_poll(sc, ccb);
+	mpi_poll(sc, ccb, -1);
 
 	cp = ccb->ccb_reply;
 	if (cp == NULL)
@@ -1567,6 +1594,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_config_request		*cq;
 	struct mpi_msg_config_reply		*cp;
+	paddr_t					dva;
 	char					*kva;
 	int					s;
 
@@ -1600,14 +1628,17 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL | len);
 
 	/* bounce the page via the request space to avoid more bus_dma games */
-	cq->page_buffer.sg_addr = htole32(MPI_DMA_DVA(sc->sc_requests) +
-	    ccb->ccb_offset + sizeof(struct mpi_msg_config_request));
+	dva = MPI_DMA_DVA(sc->sc_requests) + ccb->ccb_offset +
+	    sizeof(struct mpi_msg_config_request);
+	cq->page_buffer.sg_hi_addr = htole32((u_int32_t)(dva >> 32));
+	cq->page_buffer.sg_lo_addr = htole32((u_int32_t)dva);
+
 	kva = MPI_DMA_KVA(sc->sc_requests);
 	kva += ccb->ccb_offset + sizeof(struct mpi_msg_config_request);
 	if (!read)
 		bcopy(page, kva, len);
 
-	mpi_poll(sc, ccb);
+	mpi_poll(sc, ccb, -1);
 
 	cp = ccb->ccb_reply;
 	if (cp == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.3 2006/05/28 21:59:23 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.4 2006/05/29 05:43:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -134,10 +134,10 @@ struct mpi_sge64 {
 } __packed;
 
 /* XXX */
-struct mpi_sgl_se {
+struct mpi_sge {
 	u_int32_t		sg_hdr;
-	u_int32_t		sg_loaddr;
-	u_int32_t		sg_hiaddr;
+	u_int32_t		sg_lo_addr;
+	u_int32_t		sg_hi_addr;
 } __packed;
 
 struct mpi_sgl_ce {
@@ -360,9 +360,12 @@ struct mpi_msg_iocinit_request {
 	u_int16_t		reserved2;
 
 	u_int32_t		host_mfa_hi_addr;
+
 	u_int32_t		sense_buffer_hi_addr;
+
 	u_int32_t		reply_fifo_host_signalling_addr;
-	struct mpi_sgl_se	host_page_buffer_sge;
+
+	struct mpi_sge		host_page_buffer_sge;
 
 	u_int8_t		msg_version_min;
 	u_int8_t		msg_version_maj;
@@ -477,7 +480,7 @@ struct mpi_msg_iocfacts_reply {
 	u_int16_t		hi_priority_queue_depth;
 	u_int16_t		reserved2;
 
-	struct mpi_sgl_se	host_page_buffer_sge;
+	struct mpi_sge		host_page_buffer_sge;
 
 	u_int32_t		reply_fifo_host_signalling_addr;
 } __packed;
@@ -617,6 +620,8 @@ struct mpi_msg_scsi_io {
 #define MPI_SCSIIO_CMD_DATA_DIR				(1<<2)
 #define MPI_SCSIIO_SENSE_BUF_LOC			(1<<1)
 #define MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH			(1<<0)
+#define  MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_32		(0<<0)
+#define  MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_64		(1<<0)
 
 	u_int32_t		msg_context;
 
@@ -746,7 +751,7 @@ struct mpi_msg_config_request {
 	u_int32_t		page_address;
 /* XXX lots of defns here */
 
-	struct mpi_sge32	page_buffer;
+	struct mpi_sge		page_buffer;
 } __packed;
 
 struct mpi_msg_config_reply {
