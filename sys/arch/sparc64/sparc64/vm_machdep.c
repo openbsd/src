@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2005/08/08 19:48:37 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2006/05/29 20:01:32 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -68,11 +68,6 @@
 #include <machine/bus.h>
 
 #include <sparc64/sparc64/cache.h>
-
-/* XXX These are in sbusvar.h, but including that would be problematical */
-struct sbus_softc *sbus0;
-void    sbus_enter(struct sbus_softc *, vaddr_t va, int64_t pa, int flags);
-void    sbus_remove(struct sbus_softc *, vaddr_t va, int len);
 
 /*
  * Move pages from one kernel virtual address to another.
