@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.105 2006/05/29 07:02:10 mcbride Exp $	 */
+/* $OpenBSD: sa.c,v 1.106 2006/05/29 14:31:39 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1225,7 +1225,7 @@ sa_soft_expire(void *v_sa)
 
 	if (sa->death && (sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
 	    == SA_FLAG_STAYALIVE)
-		// soft_finalize will (eventually) release the sa
+		/* soft_finalize will (eventually) release the sa */
 		exchange_establish(sa->name, sa_soft_finalize, sa);
 	else {
 		/*
