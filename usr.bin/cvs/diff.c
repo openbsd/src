@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.96 2006/05/28 07:56:44 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.97 2006/05/29 07:17:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,7 +25,9 @@
 int	cvs_diff(int, char **);
 void	cvs_diff_local(struct cvs_file *);
 
-int Nflag = 0;
+static int Nflag = 0;
+static char *rev1 = NULL;
+static char *rev2 = NULL;
 
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_REQ_DIFF, "diff",
@@ -67,14 +69,10 @@ cvs_diff(int argc, char **argv)
 			Nflag = 1;
 			break;
 		case 'r':
-			if (diff_rev1 == NULL) {
-				diff_rev1 = rcsnum_parse(optarg);
-				if (diff_rev1 == NULL)
-					fatal("rcsnum_parse failed");
-			} else if (diff_rev2 == NULL) {
-				diff_rev2 = rcsnum_parse(optarg);
-				if (diff_rev2 == NULL)
-					fatal("rcsnum_parse failed");
+			if (rev1 == NULL) {
+				rev1 = optarg;
+			} else if (rev2 == NULL) {
+				rev2 = optarg;
 			} else {
 				fatal("no more than 2 revisions/dates can"
 				    " be specified");
@@ -97,6 +95,8 @@ cvs_diff(int argc, char **argv)
 	cr.local = cvs_diff_local;
 	cr.remote = NULL;
 	cr.flags = flags;
+
+	diff_rev1 = diff_rev2 = NULL;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
@@ -140,9 +140,14 @@ cvs_diff_local(struct cvs_file *cf)
 		cvs_log(LP_ERR, "%s was removed, no comparison available",
 		    cf->file_path);
 		return;
-	} else if (cf->file_status == FILE_UPTODATE && diff_rev2 == NULL) {
+	} else if (cf->file_status == FILE_UPTODATE && rev2 == NULL) {
 		return;
 	}
+
+	if (rev1 != NULL)
+		diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs);
+	if (rev2 != NULL)
+		diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs);
 
 	diff_file = cf->file_path;
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
