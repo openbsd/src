@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.35 2005/08/11 12:55:31 mpf Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.36 2006/05/29 20:42:27 claudio Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -152,6 +152,7 @@ extern int ip_mtudisc;			/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;
+struct inpcb;
 
 int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);
 int	 ip_dooptions(struct mbuf *);
@@ -181,6 +182,8 @@ struct mbuf *
 	 ip_srcroute(void);
 void	 ip_stripoptions(struct mbuf *, struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
+	    struct mbuf *);
 void	 ipintr(void);
 void	 ipv4_input(struct mbuf *);
 int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);

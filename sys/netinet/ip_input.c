@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.138 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.139 2006/05/29 20:42:27 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 
@@ -1627,3 +1628,64 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
+
+void
+ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
+    struct mbuf *m)
+{
+#ifdef SO_TIMESTAMP
+	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
+		struct timeval tv;
+
+		microtime(&tv);
+		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
+		    SCM_TIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+#endif
+	if (inp->inp_flags & INP_RECVDSTADDR) {
+		*mp = sbcreatecontrol((caddr_t) &ip->ip_dst,
+		    sizeof(struct in_addr), IP_RECVDSTADDR, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+#ifdef notyet
+	/* this code is broken and will probably never be fixed. */
+	/* options were tossed already */
+	if (inp->inp_flags & INP_RECVOPTS) {
+		*mp = sbcreatecontrol((caddr_t) opts_deleted_above,
+		    sizeof(struct in_addr), IP_RECVOPTS, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	/* ip_srcroute doesn't do what we want here, need to fix */
+	if (inp->inp_flags & INP_RECVRETOPTS) {
+		*mp = sbcreatecontrol((caddr_t) ip_srcroute(),
+		    sizeof(struct in_addr), IP_RECVRETOPTS, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+#endif
+	if (inp->inp_flags & INP_RECVIF) {
+		struct sockaddr_dl sdl;
+		struct ifnet *ifp;
+
+		if ((ifp = m->m_pkthdr.rcvif) == NULL ||
+		    ifp->if_sadl == NULL) {
+			bzero(&sdl, sizeof(sdl));
+			sdl.sdl_len = offsetof(struct sockaddr_dl, sdl_data[0]);
+			sdl.sdl_family = AF_LINK;
+			sdl.sdl_index = ifp != NULL ? ifp->if_index : 0;
+			sdl.sdl_nlen = sdl.sdl_alen = sdl.sdl_slen = 0;
+			*mp = sbcreatecontrol((caddr_t) &sdl, sdl.sdl_len,
+			    IP_RECVIF, IPPROTO_IP);
+		} else {
+			*mp = sbcreatecontrol((caddr_t) ifp->if_sadl,
+			    ifp->if_sadl->sdl_len, IP_RECVIF, IPPROTO_IP);
+		}
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+}
+

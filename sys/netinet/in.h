@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.69 2006/05/26 20:50:41 deraadt Exp $	*/
+/*	$OpenBSD: in.h,v 1.70 2006/05/29 20:42:27 claudio Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -264,6 +264,7 @@ struct ip_opts {
 #define IP_IPSEC_LOCAL_AUTH	27   /* buf; IPsec local auth material */
 #define IP_IPSEC_REMOTE_AUTH	28   /* buf; IPsec remote auth material */
 #define IP_IPCOMP_LEVEL		29   /* int; compression used */
+#define IP_RECVIF		30   /* bool; receive reception if w/dgram */
 
 /*
  * Security levels - IPsec, not IPSO

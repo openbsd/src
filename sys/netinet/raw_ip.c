@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.38 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.39 2006/05/29 20:42:27 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -120,8 +120,8 @@ void
 rip_input(struct mbuf *m, ...)
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct inpcb *inp;
-	struct socket *last = 0;
+	struct inpcb *inp, *last = NULL;
+	struct mbuf *opts = NULL;
 
 	ripsrc.sin_addr = ip->ip_src;
 	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
@@ -139,24 +139,34 @@ rip_input(struct mbuf *m, ...)
 			continue;
 		if (last) {
 			struct mbuf *n;
+
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (sbappendaddr(&last->so_rcv,
-				    sintosa(&ripsrc), n,
-				    (struct mbuf *)0) == 0)
+				if (last->inp_flags & INP_CONTROLOPTS)
+					ip_savecontrol(last, &opts, ip, n);
+				if (sbappendaddr(&last->inp_socket->so_rcv,
+				    sintosa(&ripsrc), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
-				else
-					sorwakeup(last);
+					if (opts)
+						m_freem(opts);
+				} else
+					sorwakeup(last->inp_socket);
+				if (opts)
+					opts = NULL;
 			}
 		}
-		last = inp->inp_socket;
+		last = inp;
 	}
 	if (last) {
-		if (sbappendaddr(&last->so_rcv, sintosa(&ripsrc), m,
-		    (struct mbuf *)0) == 0)
+		if (last->inp_flags & INP_CONTROLOPTS)
+			ip_savecontrol(last, &opts, ip, m);
+		if (sbappendaddr(&last->inp_socket->so_rcv, sintosa(&ripsrc), m,
+		    opts) == 0) {
 			m_freem(m);
-		else
-			sorwakeup(last);
+			if (opts)
+				m_freem(opts);
+		} else
+			sorwakeup(last->inp_socket);
 	} else {
 		if (ip->ip_p != IPPROTO_ICMP)
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL, 0, 0);
@@ -251,11 +261,8 @@ rip_output(struct mbuf *m, ...)
  * Raw IP socket option processing.
  */
 int
-rip_ctloutput(op, so, level, optname, m)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **m;
+rip_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **m)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error;
@@ -325,10 +332,8 @@ u_long	rip_recvspace = RIPRCVQ;
 
 /*ARGSUSED*/
 int
-rip_usrreq(so, req, m, nam, control)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
+rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
 {
 	int error = 0;
 	struct inpcb *inp = sotoinpcb(so);
@@ -337,7 +342,7 @@ rip_usrreq(so, req, m, nam, control)
 #endif
 	if (req == PRU_CONTROL)
 		return (in_control(so, (u_long)m, (caddr_t)nam,
-			(struct ifnet *)control));
+		    (struct ifnet *)control));
 
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
