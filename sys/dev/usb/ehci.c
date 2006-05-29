@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.54 2006/05/28 23:52:27 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.55 2006/05/29 00:16:10 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2310,7 +2310,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 			nextphys = EHCI_NULL;
 		}
 
-		for (i = 0; i * EHCI_PAGE_SIZE < curlen; i++) {
+		for (i = 0; i * EHCI_PAGE_SIZE <
+		    curlen + EHCI_PAGE_OFFSET(dataphys); i++) {
 			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
 			if (i != 0) /* use offset only in first buffer */
 				a = EHCI_PAGE(a);
