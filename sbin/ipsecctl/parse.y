@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2006/05/29 15:22:40 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.76 2006/05/29 15:48:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1425,7 +1425,7 @@ ifa_grouplookup(const char *ifa_name)
 struct ipsec_addr_wrap *
 ifa_lookup(const char *ifa_name)
 {
-	struct ipsec_addr_wrap	*ipa = NULL, *p = NULL;
+	struct ipsec_addr_wrap	*ipa = NULL, *p = NULL, *h = NULL;
 
 	if (iftab == NULL)
 		ifa_load();
@@ -1445,10 +1445,18 @@ ifa_lookup(const char *ifa_name)
 		if ((ipa->name = strdup(p->name)) == NULL)
 			err(1, "ifa_lookup: strdup");
 		set_ipmask(ipa, 32);
-		break;
+
+		ipa->next = NULL;
+		ipa->tail = ipa;
+		if (h == NULL)
+			h = ipa;
+		else {
+			h->tail->next = ipa;
+			h->tail = ipa;
+		}
 	}
 
-	return (ipa);
+	return (h);
 }
 
 void
