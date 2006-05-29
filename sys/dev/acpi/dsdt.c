@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.43 2006/05/29 02:39:49 gwk Exp $ */
+/* $OpenBSD: dsdt.c,v 1.44 2006/05/29 21:27:59 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -678,9 +678,10 @@ aml_showvalue(struct aml_value *value)
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
 
-		aml_dump(aml_bytelen(value->v_field.bitlen), 
-		    value->v_field.ref1->v_buffer + 
-		    aml_bytepos(value->v_field.bitpos));
+		if (value->v_field.ref1)
+			aml_dump(aml_bytelen(value->v_field.bitlen), 
+			    value->v_field.ref1->v_buffer + 
+			    aml_bytepos(value->v_field.bitpos));
 
 		aml_showvalue(value->v_field.ref1);
 		break;
