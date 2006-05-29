@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.23 2006/01/15 03:06:21 jsg Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.24 2006/05/29 00:22:46 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -250,9 +250,9 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (sc->mii_flags & MIIF_DOINGAUTO) {
+			if (sc->mii_flags & MIIF_DOINGAUTO)
 				return (0);
-			}
+
 			PHY_RESET(sc);
 			(void) eephy_mii_phy_auto(sc, 1);
 			break;
@@ -448,10 +448,8 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 		/* Wait 500ms for it to complete. */
 		for (i = 0; i < 500; i++) {
 			bmsr = PHY_READ(sc, E1000_SR) | PHY_READ(sc, E1000_SR);
-
-			if (bmsr & E1000_SR_AUTO_NEG_COMPLETE) {
+			if (bmsr & E1000_SR_AUTO_NEG_COMPLETE)
 				return (0);
-			}
 			DELAY(1000);
 		}
 
