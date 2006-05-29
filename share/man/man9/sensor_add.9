@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_add.9,v 1.1 2006/05/29 00:48:50 mk Exp $
+.\"	$OpenBSD: sensor_add.9,v 1.2 2006/05/29 10:39:29 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" All rights reserved.
@@ -67,7 +67,7 @@ and
 take an argument of a pointer to a
 .Vt struct sensor ,
 defined in
-.Aq sys/sensors.h ,
+.Aq Pa sys/sensors.h ,
 as:
 .Bd -literal
 struct sensor {
@@ -91,9 +91,9 @@ or
 .Dv NULL
 if no such sensor exists.
 .Pp
-Drivers are responsible for retrieving, interpreting and normalising
+Drivers are responsible for retrieving, interpreting, and normalising
 sensor values and updating the sensor struct periodically.
-If the driver needs process context, e.g. to sleep, it can
+If the driver needs process context, for example to sleep, it can
 register a task with the sensor framework.
 .Pp
 .Fn sensor_task_register
