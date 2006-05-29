@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipx.c,v 1.9 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.10 2006/05/29 17:41:14 moritz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.9 2002/02/19 19:39:40 millert Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.10 2006/05/29 17:41:14 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -143,7 +143,7 @@ ipx_sap_print(const u_short *ipx, u_int length)
 	if (length > 0) {
 	    TCHECK(ipx[1]);
 	    (void)printf(" %x '", EXTRACT_16BITS(&ipx[0]));
-	    fn_print((u_char *)&ipx[1], (u_char *)&ipx[1] + 48);
+	    fn_print((u_char *)&ipx[1], min(snapend, (u_char *)&ipx[1] + 48));
 	    putchar('\'');
 	}
 	break;
@@ -158,7 +158,7 @@ ipx_sap_print(const u_short *ipx, u_int length)
 	for (i = 0; i < 8 && length > 0; i++) {
 	    TCHECK2(ipx[27], 1);
 	    (void)printf(" %x '", EXTRACT_16BITS(&ipx[0]));
-	    fn_print((u_char *)&ipx[1], (u_char *)&ipx[1] + 48);
+	    fn_print((u_char *)&ipx[1], min(snapend, (u_char *)&ipx[1] + 48));
 	    printf("' addr %s",
 		ipxaddr_string(EXTRACT_32BITS(&ipx[25]), (u_char *)&ipx[27]));
 	    ipx += 32;
