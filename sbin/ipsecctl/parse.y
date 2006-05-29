@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2006/05/29 15:18:17 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2006/05/29 15:22:40 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1745,29 +1745,41 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
     struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct ipsec_rule	*r;
+	struct ipsec_addr_wrap	*src, *dst, *tsrc, *tdst;
 
-	rule->nr = ipsec->rule_nr++;
-	if (ipsecctl_add_rule(ipsec, rule))
-		return (1);
+	src = rule->src;
+	dst = rule->dst;
 
-	if (direction == IPSEC_INOUT) {
-		/* Create and add reverse flow rule. */
-		r = reverse_rule(rule);
-		if (r == NULL)
-			return (1);
+	for (tsrc = src; tsrc; tsrc = tsrc->next) {
+		rule->src = tsrc;
 
-		r->nr = ipsec->rule_nr++;
-		if (ipsecctl_add_rule(ipsec, r))
-			return (1);
-	} else if (spi != 0 || authkey || enckey) {
-		/* Create and add reverse sa rule. */
-		r = reverse_sa(rule, spi, authkey, enckey);
-		if (r == NULL)
-			return (1);
+		for (tdst = dst; tdst; tdst = tdst->next) {
+			rule->dst = tdst;
 
-		r->nr = ipsec->rule_nr++;
-		if (ipsecctl_add_rule(ipsec, r))
-			return (1);
+			rule->nr = ipsec->rule_nr++;
+			if (ipsecctl_add_rule(ipsec, rule))
+				return (1);
+
+			if (direction == IPSEC_INOUT) {
+				/* Create and add reverse flow rule. */
+				r = reverse_rule(rule);
+				if (r == NULL)
+					return (1);
+
+				r->nr = ipsec->rule_nr++;
+				if (ipsecctl_add_rule(ipsec, r))
+					return (1);
+			} else if (spi != 0 || authkey || enckey) {
+				/* Create and add reverse sa rule. */
+				r = reverse_sa(rule, spi, authkey, enckey);
+				if (r == NULL)
+					return (1);
+
+				r->nr = ipsec->rule_nr++;
+				if (ipsecctl_add_rule(ipsec, r))
+					return (1);
+			}
+		}
 	}
 	return (0);
 }
