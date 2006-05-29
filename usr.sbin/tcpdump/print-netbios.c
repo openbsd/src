@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-netbios.c,v 1.5 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-netbios.c,v 1.6 2006/05/29 18:00:28 moritz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-netbios.c,v 1.5 2002/02/19 19:39:40 millert Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-netbios.c,v 1.6 2006/05/29 18:00:28 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -56,43 +56,21 @@ void
 netbios_print(struct p8022Hdr *nb, u_int length)
 {
 	if (length < p8022Size) {
-		(void)printf(" truncated-netbios %d", length);
+		printf(" truncated-netbios %d", length);
 		return;
 	}
 
-	if (nb->flags == UI) {
-	    (void)printf("802.1 UI ");
-	} else {
-	    (void)printf("802.1 CONN ");
-	}
+	TCHECK(*nb);
 
-	if ((u_char *)(nb + 1) > snapend) {
-		printf(" [|netbios]");
-		return;
-	}
+	if (nb->flags == UI)
+		printf("802.1 UI ");
+	else
+		printf("802.1 CONN ");
 
-/*
+#if 0
 	netbios_decode(nb, (u_char *)nb + p8022Size, length - p8022Size);
-*/
-}
-
-#ifdef never
-	(void)printf("%s.%d > ",
-		     ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
-		     EXTRACT_16BITS(ipx->srcSkt));
-
-	(void)printf("%s.%d:",
-		     ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
-		     EXTRACT_16BITS(ipx->dstSkt));
-
-	if ((u_char *)(ipx + 1) > snapend) {
-		printf(" [|ipx]");
-		return;
-	}
-
-	/* take length from ipx header */
-	length = EXTRACT_16BITS(&ipx->length);
-
-	ipx_decode(ipx, (u_char *)ipx + ipxSize, length - ipxSize);
 #endif
 
+trunc:
+	printf("[|netbios]");
+}
