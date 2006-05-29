@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.13 2006/05/25 09:26:58 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.14 2006/05/29 20:26:54 miod Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2380,8 +2380,8 @@ wpi_init(struct ifnet *ifp)
 	/* init Rx ring */
 	wpi_mem_lock(sc);
 	WPI_WRITE(sc, WPI_RX_BASE, sc->rxq.desc_dma.paddr);
-	WPI_WRITE(sc, WPI_RX_RIDX_PTR,
-	    (uint32_t)&((struct wpi_shared *)sc->shared_dma.paddr)->next);
+	WPI_WRITE(sc, WPI_RX_RIDX_PTR, sc->shared_dma.paddr +
+	    offsetof(struct wpi_shared, next));
 	WPI_WRITE(sc, WPI_RX_WIDX, (WPI_RX_RING_COUNT - 1) & ~7);
 	WPI_WRITE(sc, WPI_RX_CONFIG, 0xa9601010);
 	wpi_mem_unlock(sc);
