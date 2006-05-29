@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.8 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.9 2006/05/29 09:54:16 mickey Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -60,6 +60,7 @@
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+#include <machine/pctr.h>
 
 #include <i386/isa/timerreg.h>	/* XXX for TIMER_FREQ */
 
@@ -196,13 +197,19 @@ u_int32_t lapic_per_second;
 u_int32_t lapic_frac_usec_per_cycle;
 u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
+u_int64_t scaled_pentium_mhz;
 
 void
 lapic_clockintr(arg)
 	void *arg;
 {
+	struct cpu_info *ci = curcpu();
 	struct clockframe *frame = arg;
 
+	if (CPU_IS_PRIMARY(ci)) {
+		ci->ci_tscbase = rdtsc();
+		i386_broadcast_ipi(I386_IPI_MICROSET);
+	}
 	hardclock(frame);
 
 	clk_count.ec_count++;
@@ -352,6 +359,8 @@ lapic_calibrate_timer(ci)
 
 		lapic_frac_cycle_per_usec = tmp;
 
+		scaled_pentium_mhz = (1ULL << 32) / pentium_mhz;
+
 		/*
 		 * Compute delay in cycles for likely short delays in usec.
 		 */
@@ -373,7 +382,8 @@ lapic_calibrate_timer(ci)
  * delay for N usec.
  */
 
-void lapic_delay(usec)
+void
+lapic_delay(usec)
 	int usec;
 {
 	int32_t tick, otick;
@@ -401,26 +411,32 @@ void lapic_delay(usec)
 #define LAPIC_TICK_THRESH 200
 
 /*
+ * An IPI handler to record current timer value
+ */
+void
+i386_ipi_microset(struct cpu_info *ci)
+{
+	ci->ci_tscbase = rdtsc();
+}
+
+/*
  * XXX need to make work correctly on other than cpu 0.
  */
-
-void lapic_microtime(tv)
+void
+lapic_microtime(tv)
 	struct timeval *tv;
 {
+	struct cpu_info *ci = curcpu();
 	struct timeval now;
-	u_int32_t tick;
-	u_int32_t usec;
-	u_int32_t tmp;
+	u_int64_t tmp;
 
 	disable_intr();
-	tick = lapic_gettick();
 	now = time;
+	tmp = rdtsc() - ci->ci_tscbase;
 	enable_intr();
 
-	tmp = lapic_tval - tick;
-	usec = ((u_int64_t)tmp * lapic_frac_usec_per_cycle) >> 32;
+	now.tv_usec += (tmp * scaled_pentium_mhz) >> 32;
 
-	now.tv_usec += usec;
 	while (now.tv_usec >= 1000000) {
 		now.tv_sec += 1;
 		now.tv_usec -= 1000000;

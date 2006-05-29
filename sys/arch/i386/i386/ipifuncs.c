@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.5 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.6 2006/05/29 09:54:16 mickey Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -74,11 +74,7 @@ void i386_ipi_flush_fpu(struct cpu_info *);
 void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
-#if 0 && (defined(I586_CPU) || defined(I686_CPU))
-	cc_microset,
-#else
-	0,
-#endif
+	i386_ipi_microset,
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
 	pmap_do_tlb_shootdown,
@@ -158,7 +154,22 @@ i386_self_ipi(int vector)
 void
 i386_broadcast_ipi(int ipimask)
 {
-	panic("broadcast_ipi not implemented");
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
+	int count = 0;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == self)
+			continue;
+		if ((ci->ci_flags & CPUF_RUNNING) == 0)
+			continue;
+		i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
+		count++;
+	}
+	if (!count)
+		return;
+
+	i386_ipi(LAPIC_IPI_VECTOR, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);   
 }
 
 void
