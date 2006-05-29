@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.17 2006/05/28 23:50:54 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.18 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.17 2006/05/28 23:50:54 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.18 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -481,12 +481,6 @@ label(int typ, sym_t *sym, tnode_t *tn)
 			}
 
 			t = tn->tn_type->t_tspec;
-			if (t == LONG || t == ULONG ||
-			    t == QUAD || t == UQUAD) {
-				if (tflag)
-					/* case label must be of type ... */
-					warning(203);
-			}
 
 			/*
 			 * get the value of the expression and convert it
@@ -603,13 +597,6 @@ switch1(tnode_t *tn)
 		/* switch expression must have integral type */
 		error(205);
 		tn = NULL;
-	}
-	if (tn != NULL && tflag) {
-		t = tn->tn_type->t_tspec;
-		if (t == LONG || t == ULONG || t == QUAD || t == UQUAD) {
-			/* switch expr. must be of type `int' in trad. C */
-			warning(271);
-		}
 	}
 
 	/*

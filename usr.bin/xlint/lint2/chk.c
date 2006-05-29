@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.13 2006/04/25 01:25:41 cloder Exp $	*/
+/*	$OpenBSD: chk.c,v 1.14 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.13 2006/04/25 01:25:41 cloder Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.14 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -595,12 +595,12 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			} else if (t1 == CHAR || t1 == SCHAR) {
 				t1 = INT;
 			} else if (t1 == UCHAR) {
-				t1 = tflag ? UINT : INT;
+				t1 = INT;
 			} else if (t1 == SHORT) {
 				t1 = INT;
 			} else if (t1 == USHORT) {
 				/* CONSTCOND */
-				t1 = INT_MAX < USHRT_MAX || tflag ? UINT : INT;
+				t1 = INT_MAX < USHRT_MAX ? UINT : INT;
 			}
 		}
 
@@ -842,8 +842,8 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 					inconarg(hte, call, n);
 			}
 		} else if (fc == 'D' || fc == 'O' || fc == 'U') {
-			if ((alt && fc != 'O') || sz != NOTSPEC || !tflag)
-				badfmt(hte, call);
+			/* DOU are deprecated */
+			badfmt(hte, call);
 			sz = LONG;
 			if (fc == 'D') {
 				goto int_conv;
@@ -1000,13 +1000,11 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			}
 			goto conv;
 		} else if (fc == 'D') {
-			if (sz != NOTSPEC || !tflag)
-				badfmt(hte, call);
+			badfmt(hte, call);
 			sz = LONG;
 			goto conv;
 		} else if (fc == 'O') {
-			if (sz != NOTSPEC || !tflag)
-				badfmt(hte, call);
+			badfmt(hte, call);
 			sz = ULONG;
 			goto conv;
 		} else if (fc == 'X') {
@@ -1014,8 +1012,7 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			 * XXX valid in ANSI C, but in NetBSD's libc imple-
 			 * mented as "lx". Thats why it should be avoided.
 			 */
-			if (sz != NOTSPEC || !tflag)
-				badfmt(hte, call);
+			badfmt(hte, call);
 			sz = ULONG;
 			goto conv;
 		} else if (fc == 'E') {
@@ -1023,14 +1020,12 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			 * XXX valid in ANSI C, but in NetBSD's libc imple-
 			 * mented as "lf". Thats why it should be avoided.
 			 */
-			if (sz != NOTSPEC || !tflag)
-				badfmt(hte, call);
+			badfmt(hte, call);
 			sz = DOUBLE;
 			goto conv;
 		} else if (fc == 'F') {
 			/* XXX only for backward compatibility */
-			if (sz != NOTSPEC || !tflag)
-				badfmt(hte, call);
+			badfmt(hte, call);
 			sz = DOUBLE;
 			goto conv;
 		} else if (fc == 'G') {
@@ -1273,12 +1268,12 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *warn)
 			} else if (t == CHAR || t == SCHAR) {
 				t = INT;
 			} else if (t == UCHAR) {
-				t = tflag ? UINT : INT;
+				t = INT;
 			} else if (t == SHORT) {
 				t = INT;
 			} else if (t == USHORT) {
 				/* CONSTCOND */
-				t = INT_MAX < USHRT_MAX || tflag ? UINT : INT;
+				t = INT_MAX < USHRT_MAX ? UINT : INT;
 			}
 		}
 
@@ -1318,7 +1313,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *warn)
 				return (0);
 			if (!tp1->t_volatile && tp2->t_volatile)
 				return (0);
-		} else if (!ignqual && !tflag) {
+		} else if (!ignqual) {
 			if (tp1->t_const != tp2->t_const)
 				return (0);
 			if (tp1->t_const != tp2->t_const)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main2.c,v 1.8 2005/11/23 18:21:44 deraadt Exp $	*/
+/*	$OpenBSD: main2.c,v 1.9 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: main2.c,v 1.2 1995/07/03 21:24:53 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main2.c,v 1.8 2005/11/23 18:21:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main2.c,v 1.9 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -63,8 +63,6 @@ int	pflag;
  * one translation unit
  */
 int	sflag;
-
-int	tflag;
 
 /*
  * If a complaint stems from a included file, print the name of the included
@@ -101,9 +99,6 @@ main(int argc, char *argv[])
 		switch (c) {
 		case 's':
 			sflag = 1;
-			break;
-		case 't':
-			tflag = 1;
 			break;
 		case 'u':
 			uflag = 0;

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.19 2006/04/21 23:17:10 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.20 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.19 2006/04/21 23:17:10 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.20 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -217,7 +217,7 @@ program:
 		if (sflag) {
 			/* empty translation unit */
 			error(272);
-		} else if (!tflag) {
+		} else {
 			/* empty translation unit */
 			warning(272);
 		}
@@ -282,7 +282,7 @@ data_def: T_SEMI
 		if (sflag) {
 			/* old style declaration; add "int" */
 			error(1);
-		} else if (!tflag) {
+		} else {
 			/* old style declaration; add "int" */
 			warning(1);
 		}
@@ -1033,7 +1033,7 @@ vararg_parameter_type_list:
 		if (sflag) {
 			/* ANSI C requires formal parameter before "..." */
 			error(84);
-		} else if (!tflag) {
+		} else {
 			/* ANSI C requires formal parameter before "..." */
 			warning(84);
 		}
@@ -1508,10 +1508,6 @@ term:
 		$$ = build($1, $2, NULL);
 	  }
 	| T_ADDOP term {
-		if (tflag && $1 == PLUS) {
-			/* unary + is illegal in traditional C */
-			warning(100);
-		}
 		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
 	  }
 	| term T_LBRACK expr T_RBRACK {
@@ -1560,10 +1556,6 @@ string:
 
 string2:
 	 T_STRING {
-		if (tflag) {
-			/* concatenated strings are illegal in traditional C */
-			warning(219);
-		}
 		$$ = $1;
 	  }
 	| string2 T_STRING {

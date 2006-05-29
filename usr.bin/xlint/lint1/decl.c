@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.22 2006/05/05 06:47:28 otto Exp $	*/
+/*	$OpenBSD: decl.c,v 1.23 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.22 2006/05/05 06:47:28 otto Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.23 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -373,7 +373,7 @@ addtype(type_t *tp)
 		dcs->d_lmod = NOTSPEC;
 		if (!quadflg)
 			/* %s C does not support 'long long' */
-			(void)gnuism(265, tflag ? "traditional" : "ANSI");
+			(void)gnuism(265, "ANSI");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
@@ -429,9 +429,8 @@ tdeferr(type_t *td, tspec_t t)
 	case UNSIGN:
 		if (t2 == CHAR || t2 == SHORT || t2 == INT || t2 == LONG ||
 		    t2 == QUAD) {
-			if (!tflag)
-				/* modifying typedef with ... */
-				warning(5, ttab[t].tt_name);
+			/* modifying typedef with ... */
+			warning(5, ttab[t].tt_name);
 			td = duptyp(gettyp(mrgtspec(t2, t)));
 			td->t_typedef = 1;
 			return (td);
@@ -714,18 +713,14 @@ deftyp(void)
 			if (l == LONG) {
 				l = NOTSPEC;
 				t = DOUBLE;
-				if (!tflag)
-					/* use 'double' instead of ...  */
-					warning(6);
+				/* use 'double' instead of ...  */
+				warning(6);
 			}
 			break;
 		case DOUBLE:
 			if (l == LONG) {
 				l = NOTSPEC;
 				t = LDOUBLE;
-				if (tflag)
-					/* 'long double' is illegal in ... */
-					warning(266);
 			}
 			break;
 		case VOID:
@@ -948,7 +943,7 @@ chktyp(sym_t *sym)
 				}
 				return;
 			} else if (tp->t_const || tp->t_volatile) {
-				if (sflag) {	/* XXX oder better !tflag ? */
+				if (sflag) {
 					/* function cannot return const... */
 					warning(228);
 				}
@@ -1285,9 +1280,6 @@ addfunc(sym_t *decl, sym_t *args)
 	type_t	**tpp, *tp;
 
 	if (dcs->d_proto) {
-		if (tflag)
-			/* function prototypes are illegal in traditional C */
-			warning(270);
 		args = nsfunc(decl, args);
 	} else {
 		osfunc(decl, args);
@@ -1565,7 +1557,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 			/* a new tag, no empty declaration */
 			dcs->d_nxt->d_nedecl = 1;
 			if (scl == ENUMTAG && !decl) {
-				if (!tflag && (sflag || pflag))
+				if (sflag || pflag)
 					/* forward reference to enum type */
 					warning(42);
 			}
@@ -1616,15 +1608,10 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 	if (tag->s_blklev < blklev) {
 		if (semi) {
 			/* "struct a;" */
-			if (!tflag) {
-				if (!sflag)
-					/* decl. introduces new type ... */
-					warning(44, scltoa(scl), tag->s_name);
-				tag = pushdown(tag);
-			} else if (tag->s_scl != scl) {
-				/* base type is really "%s %s" */
-				warning(45, scltoa(tag->s_scl), tag->s_name);
-			}
+			if (!sflag)
+				/* decl. introduces new type ... */
+				warning(44, scltoa(scl), tag->s_name);
+			tag = pushdown(tag);
 			dcs->d_nxt->d_nedecl = 1;
 		} else if (decl) {
 			/* "struct a { ..." */
@@ -2001,25 +1988,25 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 			} else if (t == CHAR || t == SCHAR) {
 				t = INT;
 			} else if (t == UCHAR) {
-				t = tflag ? UINT : INT;
+				t = INT;
 			} else if (t == SHORT) {
 				t = INT;
 			} else if (t == USHORT) {
 				/* CONSTCOND */
-				t = INT_MAX < USHRT_MAX || tflag ? UINT : INT;
+				t = INT_MAX < USHRT_MAX ? UINT : INT;
 			}
 		}
 
 		if (t != tp2->t_tspec)
 			return (0);
 
-		if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
+		if (tp1->t_const != tp2->t_const && !ignqual)
 			return (0);
 
-		if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
+		if (tp1->t_volatile != tp2->t_volatile && !ignqual)
 			return (0);
 
-		if (tp1->t_restrict != tp2->t_restrict && !ignqual && !tflag)
+		if (tp1->t_restrict != tp2->t_restrict && !ignqual)
 			return (0);
 
 		if (t == STRUCT || t == UNION)
@@ -2031,7 +2018,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 		}
 
 		/* dont check prototypes for traditional */
-		if (t == FUNC && !tflag) {
+		if (t == FUNC) {
 			if (tp1->t_proto && tp2->t_proto) {
 				if (!eqargs(tp1, tp2, warn))
 					return (0);
@@ -2240,13 +2227,7 @@ decl1arg(sym_t *sym, int initflg)
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
 		sym->s_type = incref(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {
-		if (tflag)
-			/* a function is declared as an argument: %s */
-			warning(50, sym->s_name);
 		sym->s_type = incref(sym->s_type, PTR);
-	} else if (t == FLOAT) {
-		if (tflag)
-			sym->s_type = gettyp(DOUBLE);
 	}
 
 	if (dcs->d_inline)
@@ -2457,8 +2438,6 @@ decl1loc(sym_t *dsym, int initflg)
 	 * functions may be declared inline at local scope, although
 	 * this has no effect for a later definition of the same
 	 * function.
-	 * XXX it should have an effect if tflag is set. this would
-	 * also be the way gcc behaves.
 	 */
 	if (dcs->d_inline) {
 		if (dsym->s_type->t_tspec == FUNC) {
@@ -2518,15 +2497,9 @@ decl1loc(sym_t *dsym, int initflg)
 			/* no hflag, because its illegal! */
 			if (dcs->d_rdcsym->s_arg) {
 				/*
-				 * if !tflag, a "redeclaration of %s" error
+				 * a "redeclaration of %s" error
 				 * is produced below
 				 */
-				if (tflag) {
-					if (hflag)
-						/* decl. hides parameter: %s */
-						warning(91, dsym->s_name);
-					rmsym(dcs->d_rdcsym);
-				}
 			}
 
 		} else if (dcs->d_rdcsym->s_blklev < blklev) {
@@ -2724,11 +2697,7 @@ chksz(sym_t *dsym)
 	if (length(dsym->s_type, dsym->s_name) == 0 &&
 	    dsym->s_type->t_tspec == ARRAY && dsym->s_type->t_dim == 0) {
 		/* empty array declaration: %s */
-		if (tflag) {
-			warning(190, dsym->s_name);
-		} else {
-			error(190, dsym->s_name);
-		}
+		error(190, dsym->s_name);
 	}
 }
 
@@ -3016,7 +2985,7 @@ chkglvar(sym_t *sym)
 				warning(307, sym->s_name);
 			}
 		}
-		if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
+		if (sym->s_def == TDEF && sym->s_type->t_const) {
 			STRUCT_ASSIGN(curr_pos, sym->s_dpos);
 			/* const object %s should have initializer */
 			warning(227, sym->s_name);
@@ -3038,7 +3007,7 @@ glchksz(sym_t *sym)
 		if (length(sym->s_type, sym->s_name) == 0 &&
 		    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
 			/* empty array declaration: %s */
-			if (tflag || (sym->s_scl == EXTERN && !sflag)) {
+			if (sym->s_scl == EXTERN && !sflag) {
 				warning(190, sym->s_name);
 			} else {
 				error(190, sym->s_name);

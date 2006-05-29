@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2006/05/05 06:46:17 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.9 2006/05/05 06:46:17 otto Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.10 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -200,9 +200,6 @@ pushinit(void)
 		istk->i_cnt = istk->i_type->t_dim;
 		break;
 	case UNION:
-		if (tflag)
-			/* initialisation of union is illegal in trad. C */
-			warning(238);
 		/* FALLTHROUGH */
 	case STRUCT:
 		if (incompl(istk->i_type)) {
@@ -307,13 +304,6 @@ initlbr(void)
 	if (initerr)
 		return;
 
-	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
-	    initstk->i_nxt == NULL) {
-		if (tflag && !issclt(initstk->i_subt->t_tspec))
-			/* no automatic aggregate initialization in trad. C*/
-			warning(188);
-	}
-
 	/*
 	 * Remove all entries which cannot be used for further initializers
 	 * and do not expect a closing brace.
@@ -410,16 +400,6 @@ mkinit(tnode_t *tn)
 	tmem = tsave();
 	expr(tn, 1, 0);
 	trestor(tmem);
-
-	if (isityp(lt) && ln->tn_type->t_isfield && !isityp(rt)) {
-		/*
-		 * Bit-fields can be initialized in trad. C only by integer
-		 * constants.
-		 */
-		if (tflag)
-			/* bit-field initialisation is illegal in trad. C */
-			warning(186);
-	}
 
 	if (lt != rt || (initstk->i_type->t_isfield && tn->tn_op == CON))
 		tn = convert(INIT, NULL, initstk->i_type, tn);

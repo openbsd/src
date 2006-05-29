@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.10 2006/05/28 23:50:54 cloder Exp $	*/
+/*	$OpenBSD: main1.c,v 1.11 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.10 2006/05/28 23:50:54 cloder Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.11 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -82,9 +82,6 @@ int	rflag;
 /* Strict ANSI C mode. */
 int	sflag;
 
-/* Traditional C mode. */
-int	tflag;
-
 /*
  * Complain about functions and external variables used and not defined,
  * or defined and not used.
@@ -118,7 +115,7 @@ main(int argc, char *argv[])
 		case 'p':	pflag = 1;	break;
 		case 'r':	rflag = 1;	break;
 		case 's':	sflag = 1;	break;
-		case 't':	tflag = 1;	break;
+		case 't':	/* obsolete */	break;
 		case 'u':	uflag = 0;	break;
 		case 'v':	vflag = 0;	break;
 		case 'y':	yflag = 1;	break;

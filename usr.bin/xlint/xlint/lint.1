@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.21 2006/05/29 10:35:17 jmc Exp $
+.\"	$OpenBSD: lint.1,v 1.22 2006/05/29 20:47:22 cloder Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,8 +38,7 @@
 .Nd a C program verifier
 .Sh SYNOPSIS
 .Nm lint
-.Op Fl cefghprvxzHFV
-.Op Fl s Ns | Ns Fl t
+.Op Fl cefghprsvxzHFV
 .Op Fl i Ns | Ns Fl nu
 .Op Fl D Ns Ar name Ns Op =def
 .Op Fl U Ns Ar name
@@ -49,8 +48,7 @@
 .Op Fl o Ns Ar outputfile
 .Ar
 .Nm lint
-.Op Fl cefghprvzHFV
-.Op Fl s Ns | Ns Fl t
+.Op Fl cefghprsvzHFV
 .Fl C Ns Ar library
 .Op Fl D Ns Ar name Ns Op =def
 .Op Fl I Ns Ar directory
@@ -214,26 +212,6 @@ With the
 flag,
 .Li __STRICT_ANSI__
 is a predefined preprocessor macro.
-.It Fl t
-Traditional C mode.
-.Li __STDC__
-is not predefined in this mode.
-Warnings are printed for constructs not allowed in
-traditional C.
-Warnings for constructs which behave differently in
-traditional C and ANSI C are suppressed.
-Preprocessor macros describing the machine type (e.g.,
-.Li sun3 )
-and machine architecture (e.g.,
-.Li m68k )
-are defined without leading and trailing underscores.
-The keywords
-.Sy const ,
-.Sy volatile
-and
-.Sy signed
-are not available in traditional C mode (although the alternate
-keywords with leading underscores still are).
 .It Fl u
 Do not complain about functions and external variables used
 and not defined, or defined and not used (this is suitable

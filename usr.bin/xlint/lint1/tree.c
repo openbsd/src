@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.41 2006/05/28 23:42:49 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.42 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.41 2006/05/28 23:42:49 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.42 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -298,10 +298,6 @@ getnnode(sym_t *sym, int ntok)
 				/* function implicitly declared to ... */
 				warning(215);
 			}
-			/*
-			 * XXX if tflag is set the symbol should be
-			 * exported to level 0
-			 */
 			sym->s_type = incref(sym->s_type, FUNC);
 		} else {
 			/* %s undefined */
@@ -477,11 +473,7 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (str != NULL) {
 		/* illegal member use: %s */
-		if (eq && tflag) {
-			warning(102, msym->s_name);
-		} else {
-			error(102, msym->s_name);
-		}
+		error(102, msym->s_name);
 		return (msym);
 	}
 
@@ -492,27 +484,14 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 	if (eq) {
 		if (op == POINT) {
 			/* left operand of "." must be struct/union object */
-			if (tflag) {
-				warning(103);
-			} else {
-				error(103);
-			}
+			error(103);
 		} else {
 			/* left operand of "->" must be pointer to ... */
-			if (tflag && tn->tn_type->t_tspec == PTR) {
-				warning(104);
-			} else {
-				error(104);
-			}
+			error(104);
 		}
 	} else {
-		if (tflag) {
-			/* non-unique member requires struct/union %s */
-			error(105, op == POINT ? "object" : "pointer");
-		} else {
-			/* unacceptable operand of %s */
-			error(111, modtab[op].m_name);
-		}
+		/* unacceptable operand of %s */
+		error(111, modtab[op].m_name);
 	}
 
 	return (msym);
@@ -593,7 +572,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	/* Make sure both operands are of the same type */
-	if (mp->m_balance || (tflag && (op == SHL || op == SHR)))
+	if (mp->m_balance)
 		balance(op, &ln, &rn);
 
 	/*
@@ -807,20 +786,14 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 		 */
 		if (lt == FUNC || lt == VOID || ltp->t_isfield ||
 		    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
-			/* Without tflag we already have an error */
-			if (tflag)
-				/* unacceptable operand of %s */
-				error(111, mp->m_name);
+			/* we already have an error from strmemb() */
 			return (0);
 		}
 		/* Now we have an object we can create a pointer to */
 		break;
 	case ARROW:
-		if (lt != PTR && !(tflag && isityp(lt))) {
-			/* Without tflag we already have an error */
-			if (tflag)
-				/* unacceptable operand of %s */
-				error(111, mp->m_name);
+		if (lt != PTR) {
+			/* we already have an error from strmemb() */
 			return (0);
 		}
 		break;
@@ -840,8 +813,7 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 			return (0);
 		} else if (ltp->t_const) {
 			/* %soperand of %s must be modifiable lvalue */
-			if (!tflag)
-				warning(115, "", mp->m_name);
+			warning(115, "", mp->m_name);
 		}
 		break;
 	case AMPER:
@@ -918,7 +890,7 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 			} else if (ln->tn_val->v_quad < 0) {
 				warning(120);
 			}
-		} else if (!tflag && !sflag && !isutyp(olt) && isutyp(ort)) {
+		} else if (!sflag && !isutyp(olt) && isutyp(ort)) {
 			/*
 			 * The left operand would become unsigned in
 			 * traditional C.
@@ -928,7 +900,7 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 				/* semantics of %s change in ANSI C; use ... */
 				warning(118, mp->m_name);
 			}
-		} else if (!tflag && !sflag && !isutyp(olt) && !isutyp(ort) &&
+		} else if (!sflag && !isutyp(olt) && !isutyp(ort) &&
 			   psize(lt) < psize(rt)) {
 			/*
 			 * In traditional C the left operand would be extended,
@@ -1094,7 +1066,7 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 	case SHLASS:
 		goto assign;
 	case SHRASS:
-		if (pflag && !isutyp(lt) && !(tflag && isutyp(rt))) {
+		if (pflag && !isutyp(lt)) {
 			/* bitwise operation on s.v. possibly nonportable */
 			warning(117);
 		}
@@ -1121,8 +1093,7 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 		} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
 					    conmemb(ltp))) {
 			/* %soperand of %s must be modifiable lvalue */
-			if (!tflag)
-				warning(115, "left ", mp->m_name);
+			warning(115, "left ", mp->m_name);
 		}
 		break;
 	case COMMA:
@@ -1246,8 +1217,7 @@ asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 	if (lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
 				       eqtype(lstp, rstp, 1, 0, NULL))) {
 		/* compatible pointer types (qualifiers ignored) */
-		if (!tflag &&
-		    ((!lstp->t_const && rstp->t_const) ||
+		if (((!lstp->t_const && rstp->t_const) ||
 		     (!lstp->t_volatile && rstp->t_volatile))) {
 			/* left side has not all qualifiers of right */
 			switch (op) {
@@ -1473,9 +1443,8 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 /*
  * Performs usual conversion of operands to (unsigned) int.
  *
- * If tflag is set or the operand is a function argument with no
- * type information (no prototype or variable # of args), convert
- * float to double.
+ * If the operand is a function argument with no type information
+ * (no prototype or variable # of args), convert float to double.
  */
 tnode_t *
 promote(op_t op, int farg, tnode_t *tn)
@@ -1489,50 +1458,34 @@ promote(op_t op, int farg, tnode_t *tn)
 	if (!isatyp(t))
 		return (tn);
 
-	if (!tflag) {
-		/*
-		 * ANSI C requires that the result is always of type INT
-		 * if INT can represent all possible values of the previous
-		 * type.
-		 */
-		if (tn->tn_type->t_isfield) {
-			len = tn->tn_type->t_flen;
-			if (size(INT) > len) {
-				t = INT;
+	/*
+	 * ANSI C requires that the result is always of type INT
+	 * if INT can represent all possible values of the previous
+	 * type.
+	 */
+	if (tn->tn_type->t_isfield) {
+		len = tn->tn_type->t_flen;
+		if (size(INT) > len) {
+			t = INT;
+		} else {
+			if (size(INT) != len)
+				lerror("promote() 1");
+			if (isutyp(t)) {
+				t = UINT;
 			} else {
-				if (size(INT) != len)
-					lerror("promote() 1");
-				if (isutyp(t)) {
-					t = UINT;
-				} else {
-					t = INT;
-				}
+				t = INT;
 			}
-		} else if (t == CHAR || t == UCHAR || t == SCHAR) {
-			t = (size(CHAR) < size(INT) || t != UCHAR) ?
-				INT : UINT;
-		} else if (t == SHORT || t == USHORT) {
-			t = (size(SHORT) < size(INT) || t == SHORT) ?
-				INT : UINT;
-		} else if (t == ENUM) {
-			t = INT;
-		} else if (farg && t == FLOAT) {
-			t = DOUBLE;
 		}
-	} else {
-		/*
-		 * In traditional C, keep unsigned and promote FLOAT
-		 * to DOUBLE.
-		 */
-		if (t == UCHAR || t == USHORT) {
-			t = UINT;
-		} else if (t == CHAR || t == SCHAR || t == SHORT) {
-			t = INT;
-		} else if (t == FLOAT) {
-			t = DOUBLE;
-		} else if (t == ENUM) {
-			t = INT;
-		}
+	} else if (t == CHAR || t == UCHAR || t == SCHAR) {
+		t = (size(CHAR) < size(INT) || t != UCHAR) ?
+			INT : UINT;
+	} else if (t == SHORT || t == USHORT) {
+		t = (size(SHORT) < size(INT) || t == SHORT) ?
+			INT : UINT;
+	} else if (t == ENUM) {
+		t = INT;
+	} else if (farg && t == FLOAT) {
+		t = DOUBLE;
 	}
 
 	if (t != tn->tn_type->t_tspec) {
@@ -1568,46 +1521,34 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	if (!isatyp(lt) || !isatyp(rt))
 		return;
 
-	if (!tflag) {
-		if (lt == rt) {
-			t = lt;
-		} else if (lt == LDOUBLE || rt == LDOUBLE) {
-			t = LDOUBLE;
-		} else if (lt == DOUBLE || rt == DOUBLE) {
-			t = DOUBLE;
-		} else if (lt == FLOAT || rt == FLOAT) {
-			t = FLOAT;
-		} else {
-			/*
-			 * If type A has more bits than type B it should
-			 * be able to hold all possible values of type B.
-			 */
-			if (size(lt) > size(rt)) {
-				t = lt;
-			} else if (size(lt) < size(rt)) {
-				t = rt;
-			} else {
-				for (i = 3; tl[i] != INT; i++) {
-					if (tl[i] == lt || tl[i] == rt)
-						break;
-				}
-				if ((isutyp(lt) || isutyp(rt)) &&
-				    !isutyp(tl[i])) {
-					i--;
-				}
-				t = tl[i];
-			}
-		}
+	if (lt == rt) {
+		t = lt;
+	} else if (lt == LDOUBLE || rt == LDOUBLE) {
+		t = LDOUBLE;
+	} else if (lt == DOUBLE || rt == DOUBLE) {
+		t = DOUBLE;
+	} else if (lt == FLOAT || rt == FLOAT) {
+		t = FLOAT;
 	} else {
-		/* Keep unsigned in traditional C */
-		u = isutyp(lt) || isutyp(rt);
-		for (i = 0; tl[i] != INT; i++) {
-			if (lt == tl[i] || rt == tl[i])
-				break;
+		/*
+		 * If type A has more bits than type B it should
+		 * be able to hold all possible values of type B.
+		 */
+		if (size(lt) > size(rt)) {
+			t = lt;
+		} else if (size(lt) < size(rt)) {
+			t = rt;
+		} else {
+			for (i = 3; tl[i] != INT; i++) {
+				if (tl[i] == lt || tl[i] == rt)
+					break;
+			}
+			if ((isutyp(lt) || isutyp(rt)) &&
+			    !isutyp(tl[i])) {
+				i--;
+			}
+			t = tl[i];
 		}
-		t = tl[i];
-		if (u && isityp(t) && !isutyp(t))
-			t = utyp(t);
 	}
 
 	if (t != lt) {
@@ -1641,7 +1582,7 @@ convert(op_t op, farg_t *farg, type_t *tp, tnode_t *tn)
 	if ((ot = tn->tn_type->t_tspec) == PTR)
 		ost = tn->tn_type->t_subt->t_tspec;
 
-	if (!tflag && !sflag && op == FARG)
+	if (!sflag && op == FARG)
 		ptconv(farg, nt, ot, tp, tn);
 	if (isityp(nt) && isityp(ot)) {
 		iiconv(op, farg, nt, ot, tp, tn);
@@ -2290,8 +2231,7 @@ bldstr(op_t op, tnode_t *ln, tnode_t *rn)
 	if (op == POINT) {
 		ln = bldamper(ln, 1);
 	} else if (ln->tn_type->t_tspec != PTR) {
-		if (!tflag || !isityp(ln->tn_type->t_tspec))
-			lerror("bldstr() 4");
+		lerror("bldstr() 4");
 		ln = convert(NOOP, NULL, tincref(gettyp(VOID), PTR), ln);
 	}
 
@@ -2349,8 +2289,6 @@ bldamper(tnode_t *tn, int noign)
 
 	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
 		/* & before array or function: ignored */
-		if (tflag)
-			warning(127);
 		return (tn);
 	}
 

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.29 2006/04/20 16:29:48 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.30 2006/05/29 20:47:22 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.29 2006/04/20 16:29:48 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.30 2006/05/29 20:47:22 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -280,8 +280,6 @@ initscan(void)
 	u_quad_t uq;
 
 	for (kw = kwtab; kw->kw_name != NULL; kw++) {
-		if (kw->kw_stdc && tflag)
-			continue;
 		if (kw->kw_gcc && !gflag)
 			continue;
 		sym = getblk(sizeof (sym_t));
@@ -499,10 +497,6 @@ icon(int base)
 		if (u_suffix > 1)
 			u_suffix = 1;
 	}
-	if (tflag && u_suffix != 0) {
-		/* suffix U is illegal in traditional C */
-		warning(97);
-	}
 	typ = contypes[u_suffix][l_suffix];
 
 	errno = 0;
@@ -534,9 +528,7 @@ icon(int base)
 			typ = ULONG;
 		}
 		if (typ == UINT || typ == ULONG) {
-			if (tflag) {
-				typ = LONG;
-			} else if (!sflag) {
+			if (!sflag) {
 				/*
 				 * Remember that the constant is unsigned
 				 * only in ANSI C
@@ -550,14 +542,14 @@ icon(int base)
 			typ = ULONG;
 		break;
 	case LONG:
-		if (ul > LONG_MAX && !tflag) {
+		if (ul > LONG_MAX) {
 			typ = ULONG;
 			if (!sflag)
 				ansiu = 1;
 		}
 		break;
 	case QUAD:
-		if (uq > QUAD_MAX && !tflag) {
+		if (uq > QUAD_MAX) {
 			typ = UQUAD;
 			if (!sflag)
 				ansiu = 1;
@@ -652,11 +644,6 @@ fcon(void)
 		typ = DOUBLE;
 	}
 
-	if (tflag && typ != DOUBLE) {
-		/* suffixes F and L are illegal in traditional C */
-		warning(98);
-	}
-
 	errno = 0;
 	d = strtod(cp, &eptr);
 	if (eptr != cp + len)
@@ -712,11 +699,6 @@ fhexcon(void)
 		len--;
 	} else {
 		typ = DOUBLE;
-	}
-
-	if (tflag) {
-		/* hex float constant are only legal in C99 */
-		warning(314);
 	}
 
 	/* arbitrary value, until strtod can cope */
@@ -866,23 +848,14 @@ getescc(int d)
 	case '\\':
 		switch (c = inpc()) {
 		case '"':
-			if (tflag && d == '\'')
-				/* \" inside character constant undef. ... */
-				warning(262);
 			return ('"');
 		case '\'':
 			return ('\'');
 		case '?':
-			if (tflag)
-				/* \? undefined in traditional C */
-				warning(263);
 			return ('?');
 		case '\\':
 			return ('\\');
 		case 'a':
-			if (tflag)
-				/* \a undefined in traditional C */
-				warning(81);
 			return ('\a');
 		case 'b':
 			return ('\b');
@@ -895,9 +868,6 @@ getescc(int d)
 		case 't':
 			return ('\t');
 		case 'v':
-			if (tflag)
-				/* \v undefined in traditional C */
-				warning(264);
 			return ('\v');
 		case '8': case '9':
 			/* bad octal digit %c */
@@ -910,10 +880,7 @@ getescc(int d)
 			do {
 				v = (v << 3) + (c - '0');
 				c = inpc();
-			} while (--n && isdigit(c) && (tflag || c <= '7'));
-			if (tflag && n > 0 && isdigit(c))
-				/* bad octal digit %c */
-				warning(77, c);
+			} while (--n && isdigit(c) && (c <= '7'));
 			pbc = c;
 			if (v > UCHAR_MAX) {
 				/* character escape does not fit in char. */
@@ -922,9 +889,6 @@ getescc(int d)
 			}
 			return (v);
 		case 'x':
-			if (tflag)
-				/* \x undefined in traditional C */
-				warning(82);
 			v = 0;
 			n = 0;
 			while ((c = inpc()) >= 0 && isxdigit(c)) {
