@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.59 2006/05/29 06:29:49 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.60 2006/05/29 18:00:02 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -93,6 +93,8 @@ cvs_log_local(struct cvs_file *cf)
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
 	char numb[32], timeb[32];
+
+	cvs_log(LP_TRACE, "cvs_log_local(%s)", cf->file_path);
 
 	cvs_file_classify(cf, 0);
 
