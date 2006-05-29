@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.69 2006/05/29 03:31:29 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.70 2006/05/29 03:35:31 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -504,7 +504,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 		dataphys += curlen;
 		cur = next;
 	}
-	if ((flags & USBD_FORCE_SHORT_XFER) &&
+	if (!rd && (flags & USBD_FORCE_SHORT_XFER) &&
 	    alen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
 		/* Force a 0 length transfer at the end. */
 
