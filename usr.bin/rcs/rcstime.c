@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.1 2006/04/26 02:55:13 joris Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.2 2006/05/29 03:00:12 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -41,7 +41,7 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 		now = mktime(&rdp->rd_date);
 		ltb = localtime(&now);
 		ltb->tm_hour += ((int)ltb->tm_gmtoff/3600);
-		memcpy(tb, ltb, sizeof(struct tm));
+		memcpy(tb, ltb, sizeof(*tb));
 	} else {
 		pos = 0;
 		switch (*tz) {
@@ -58,7 +58,7 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 		if ((m = strrchr(tz, ':')) != NULL)
 			*(m++) = '\0';
 
-		memcpy(tb, &rdp->rd_date, sizeof(struct tm));
+		memcpy(tb, &rdp->rd_date, sizeof(*tb));
 
 		tzone = atoi(h);
 		if ((tzone >= 24) && (tzone <= -24))
