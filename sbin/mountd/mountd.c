@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.66 2006/05/28 23:29:32 avsm Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.67 2006/05/29 16:49:42 avsm Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ static char rcsid[] = "$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/sysctl.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -62,7 +61,6 @@ static char rcsid[] = "$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $";
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
 
 #include <arpa/inet.h>
 
@@ -229,8 +227,7 @@ main(int argc, char *argv[])
 {
 	SVCXPRT *udptransp, *tcptransp;
 	FILE *pidfile;
-	int c, nfs_id, mib[4];
-	size_t s_len;
+	int c;
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
 		switch (c) {
@@ -287,41 +284,6 @@ main(int argc, char *argv[])
 		fclose(pidfile);
 	}
 
-	/* Set vfs.nfs.privport to correct value */
-	mib[0] = CTL_VFS;
-	mib[1] = VFS_GENERIC;
-	mib[2] = VFS_MAXTYPENUM;
-	s_len = sizeof nfs_id;
-	if (sysctl(mib, 3, &nfs_id, &s_len, NULL, 0)) {
-		syslog(LOG_ERR, "sysctl VFS_MAXTYPENUM: %m");
-		exit(1);
-	}
-	for (; nfs_id; nfs_id--) {
-		struct vfsconf vfsc;
-		mib[0] = CTL_VFS;
-		mib[1] = VFS_GENERIC;
-		mib[2] = VFS_CONF;
-		mib[3] = nfs_id;
-		s_len = sizeof(vfsc);
-		if (sysctl(mib, 4, &vfsc, &s_len, NULL, 0))
-			continue;
-		if (!strcmp(vfsc.vfc_name, MOUNT_NFS))
-			break;
-	}
-	if (nfs_id == 0) {
-		syslog(LOG_ERR, "null nfs filesystem id");
-		exit(1);
-	}
-
-	mib[0] = CTL_VFS;
-	mib[1] = nfs_id;
-	mib[2] = NFS_PRIVPORT;
-	if (sysctl(mib, 3, NULL, 0, &resvport_only,
-		sizeof resvport_only) != 0 && errno != ENOENT) {
-		syslog(LOG_ERR, "sysctl NFS_PRIVPORT: %m");
-		exit(1);
-	}
-	
 	signal(SIGHUP, (void (*)(int)) new_exportlist);
 	signal(SIGTERM, (void (*)(int)) send_umntall);
 	signal(SIGSYS, SIG_IGN);

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.282 2006/05/28 23:29:32 avsm Exp $
+#	$OpenBSD: rc,v 1.283 2006/05/29 16:49:42 avsm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -383,7 +383,7 @@ if [ X"${nfs_server}" = X"YES" -a -s /etc/exports -a \
     `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]; then
 	rm -f /var/db/mountdtab
 	echo -n > /var/db/mountdtab
-	echo -n ' mountd';		mountd ${mountd_flags}
+	echo -n ' mountd';		mountd
 	echo -n ' nfsd';		nfsd ${nfsd_flags}
 	if [ X"${lockd}" = X"YES" ]; then
 		echo -n ' rpc.lockd';	rpc.lockd

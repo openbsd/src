@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.56 2006/05/28 23:29:32 avsm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.57 2006/05/29 16:49:42 avsm Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ nfstype nfsv3_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFSOCK,
 enum vtype nv2tov_type[8] = { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VNON, VNON };
 enum vtype nv3tov_type[8]={ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO };
 int nfs_ticks;
-int nfs_privport = 1;
 
 /*
  * Mapping of old NFS Version 2 RPC numbers to generic numbers.
@@ -1655,15 +1654,12 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	if (error)
 		return (error);
 
-	if (nfs_privport) {
-		saddr = mtod(nam, struct sockaddr_in *);
-		if (saddr->sin_family == AF_INET &&
-		    (ntohs(saddr->sin_port) >= IPPORT_RESERVED ||
-		    (slp->ns_so->so_type == SOCK_STREAM &&
-		    ntohs(saddr->sin_port) == 20))) {
-			vput(*vpp);
-			return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-		}
+	saddr = mtod(nam, struct sockaddr_in *);
+	if (saddr->sin_family == AF_INET &&
+	    (ntohs(saddr->sin_port) >= IPPORT_RESERVED ||
+	    (slp->ns_so->so_type == SOCK_STREAM && ntohs(saddr->sin_port) == 20))) {
+		vput(*vpp);
+		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
 	}
 
 	/*
