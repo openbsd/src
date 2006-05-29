@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2006/05/29 18:50:27 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2006/05/29 20:12:14 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,7 +241,7 @@ typedef struct {
 %type	<v.hosts>		hosts
 %type	<v.peers>		peers
 %type	<v.singlehost>		singlehost
-%type	<v.host>		host
+%type	<v.host>		host host_list
 %type	<v.ids>			ids
 %type	<v.id>			id
 %type	<v.spis>		spispec
@@ -282,6 +282,10 @@ number		: STRING			{
 			$$ = (u_int32_t)ulval;
 			free($1);
 		}
+		;
+
+comma		: ','
+		| /* empty */
 		;
 
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
@@ -419,6 +423,20 @@ singlehost	: /* empty */			{ $$ = NULL; }
 		}
 		;
 
+host_list	: host				{ $$ = $1; }
+		| host_list comma host		{
+			if ($3 == NULL)
+				$$ = $1;
+			else if ($1 == NULL)
+				$$ = $3;
+			else {
+				$1->tail->next = $3;
+				$1->tail = $3->tail;
+				$$ = $1;
+			}
+		}
+		;
+
 host		: STRING			{
 			if (($$ = host($1)) == NULL) {
 				free($1);
@@ -453,6 +471,7 @@ host		: STRING			{
 				err(1, "host: strdup");
 			$$ = ipa;
 		}
+		| '{' host_list '}'		{ $$ = $2; }
 		;
 
 ids		: /* empty */			{
