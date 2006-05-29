@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.23 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.24 2006/05/29 05:11:15 drahn Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1317,7 +1317,6 @@ re_intr(arg)
 		if (status == 0xffff)
 			break;
 		if (status) {
-			claimed = 1;
 			CSR_WRITE_2(sc, RL_ISR, status);
 		}
 
@@ -1325,22 +1324,28 @@ re_intr(arg)
 			break;
 
 		if ((status & RL_ISR_RX_OK) ||
-		    (status & RL_ISR_RX_ERR))
+		    (status & RL_ISR_RX_ERR)) {
 			re_rxeof(sc);
+			claimed = 1;
+		}
 
 		if ((status & RL_ISR_TIMEOUT_EXPIRED) ||
 		    (status & RL_ISR_TX_ERR) ||
-		    (status & RL_ISR_TX_DESC_UNAVAIL))
+		    (status & RL_ISR_TX_DESC_UNAVAIL)) {
 			re_txeof(sc);
+			claimed = 1;
+		}
 
 		if (status & RL_ISR_SYSTEM_ERR) {
 			re_reset(sc);
 			re_init(ifp);
+			claimed = 1;
 		}
 
 		if (status & RL_ISR_LINKCHG) {
 			timeout_del(&sc->timer_handle);
 			re_tick(sc);
+			claimed = 1;
 		}
 	}
 
@@ -1467,6 +1472,11 @@ re_encap(sc, m_head, idx)
 #endif
 
 	/* Transfer ownership of packet to the chip. */
+
+	bus_dmamap_sync(sc->sc_dmat,
+	    sc->rl_ldata.rl_tx_dmamap[curidx],
+	    0, sc->rl_ldata.rl_tx_dmamap[curidx]->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	sc->rl_ldata.rl_tx_list[curidx].rl_cmdstat |=
 	    htole32(RL_TDESC_CMD_OWN);
