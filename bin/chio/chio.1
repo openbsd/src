@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.23 2005/02/08 18:24:59 jaredy Exp $
+.\"	$OpenBSD: chio.1,v 1.24 2006/05/29 04:12:02 beck Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -120,7 +120,7 @@ multiple free pickers with transient storage.
 Report which picker unit the changer is currently configured to use.
 .It Xo
 .Cm move
-.Ar from-ET from-EU to-ET to-EU
+.Ari from-ET from-EU to-ET to-EU
 .Op Cm inv
 .Xc
 Moves the media unit from
@@ -130,6 +130,29 @@ to
 If the optional modifier
 .Cm inv
 is specified, the media unit will be inverted before insertion.
+If the
+.Em from-ET
+is a
+.Em drive
+then 
+.Nm
+will first attempt to open and perform an
+.Em MTOFFL
+operation on the
+.Xr st 4
+device corresponting to 
+.Ar from-EU .
+By default, the
+.Xr st 4
+device
+.Em /dev/rstX
+is used. where
+.Em X 
+is the
+.Ar from-EU .
+This mapping can be changed by using the
+.Pa /etc/chio.conf
+file.
 .It Cm params
 Report the number of slots, drives, pickers, and portals in the changer,
 and which picker unit the changer is currently configured to use.
@@ -177,6 +200,9 @@ variable to the desired changer device.
 .Bl -tag -width /dev/ch0 -compact
 .It Pa /dev/ch0
 default changer device
+.It Pa /etc/chio.conf
+optional config file to set up a non default mapping between st(4) devices
+and changer drives.
 .El
 .Sh EXAMPLES
 Move the media in slot 3 (fourth slot) to drive 0 (first drive):
