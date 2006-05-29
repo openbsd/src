@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.148 2006/05/28 23:38:42 pedro Exp $	*/
+/*	$OpenBSD: file.c,v 1.149 2006/05/29 05:06:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -541,6 +541,7 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	size_t len;
 	time_t mtime;
 	struct stat st;
+	BUF *b1, *b2;
 	int rflags, l, ismodified, rcsdead, verbose;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
@@ -635,6 +636,25 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 
 		if (mtime != cf->file_ent->ce_mtime)
 			ismodified = 1;
+	}
+
+	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL) {
+		b1 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		if (b1 == NULL)
+			fatal("failed to get HEAD revision for comparison");
+
+		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcs->rf_head);
+
+		/* XXX */
+		b2 = cvs_buf_load(cf->file_path, BUF_AUTOEXT);
+		if (b2 == NULL)
+			fatal("failed to get file content for comparison");
+
+		/* b1 and b2 get released in cvs_buf_differ */
+		if (cvs_buf_differ(b1, b2))
+			ismodified = 1;
+		else
+			ismodified = 0;
 	}
 
 	if (cf->file_rcs != NULL) {
