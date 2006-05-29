@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.34 2006/03/17 16:30:13 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.35 2006/05/29 18:22:24 otto Exp $	*/
 
 /*
  * command history
@@ -851,6 +851,7 @@ histload(Source *s, unsigned char *base, int bytes)
 				}
 				else {
 					s->line = lno;
+					s->cmd_offset = lno;
 					histsave(lno, (char *)line, 0);
 				}
 				state = shdr;

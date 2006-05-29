@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.39 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: lex.c,v 1.40 2006/05/29 18:22:24 otto Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -63,6 +63,7 @@ static const char *ungetsc(int);
 static void	gethere(void);
 static Lex_state *push_state_(State_info *, Lex_state *);
 static Lex_state *pop_state_(State_info *, Lex_state *);
+static char	*special_prompt_expand(char *);
 static int	dopprompt(const char *, int, const char **, int);
 
 static int backslash_skip;
@@ -909,6 +910,7 @@ pushs(int type, Area *areap)
 	s->str = null;
 	s->start = NULL;
 	s->line = 0;
+	s->cmd_offset = 0;
 	s->errline = 0;
 	s->file = NULL;
 	s->flags = 0;
@@ -1120,6 +1122,18 @@ getsc_line(Source *s)
 		set_prompt(PS2, (Source *) 0);
 }
 
+static char *
+special_prompt_expand(char *str)
+{
+	char *p = str;
+
+	while ((p = strstr(p, "\\$")) != NULL) {
+		memmove(p, p + 1, strlen(p));
+		*p = ksheuid ? '$' : '#';
+	}
+	return str;
+}
+
 void
 set_prompt(int to, Source *s)
 {
@@ -1141,9 +1155,11 @@ set_prompt(int to, Source *s)
 			 * unwinding its stack through this code as it
 			 * exits.
 			 */
-		} else
-			prompt = str_save(substitute(ps1, 0),
-			    saved_atemp);
+		} else {
+			/* expand \$ before other substitutions are done */
+			char *tmp = special_prompt_expand(ps1);
+			prompt = str_save(substitute(tmp, 0), saved_atemp);
+		}
 		quitenv(NULL);
 		break;
 	case PS2: /* command continuation */
@@ -1309,17 +1325,13 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				p = str_val(global("PWD"));
 				strlcpy(strbuf, basename(p), sizeof strbuf);
 				break;
-			case '!':	/* '\' '!' history line number XXX busted */
+			case '!':	/* '\' '!' history line number */
 				snprintf(strbuf, sizeof strbuf, "%d",
 				    source->line + 1);
 				break;
-			case '#':	/* '\' '#' command line number XXX busted */
+			case '#':	/* '\' '#' command line number */
 				snprintf(strbuf, sizeof strbuf, "%d",
-				    source->line + 1);
-				break;
-			case '$':	/* '\' '$' $ or # XXX busted */
-				strbuf[0] = ksheuid ? '$' : '#';
-				strbuf[1] = '\0';
+				    source->line - source->cmd_offset + 1);
 				break;
 			case '0':	/* '\' '#' '#' ' #' octal numeric handling */
 			case '1':
