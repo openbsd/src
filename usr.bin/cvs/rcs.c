@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.175 2006/05/28 10:14:59 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.176 2006/05/29 07:15:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -796,6 +796,12 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	if (!rcs_sym_check(sym)) {
 		rcs_errno = RCS_ERR_BADSYM;
 		return (NULL);
+	}
+
+	if (!strcmp(sym, RCS_HEAD_BRANCH)) {
+		num = rcsnum_alloc();
+		rcsnum_cpy(file->rf_head, num, 0);
+		return (num);
 	}
 
 	num = NULL;
@@ -2956,4 +2962,18 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 		xfree(expanded);
 	}
 	return (bp);
+}
+
+RCSNUM *
+rcs_translate_tag(const char *revstr, RCSFILE *rfp)
+{
+	RCSNUM *rev;
+
+	rev = rcs_sym_getrev(rfp, revstr);
+	if (rev == NULL) {
+		if ((rev = rcsnum_parse(revstr)) == NULL)
+			fatal("%s is an invalid revision/symbol", revstr);
+	}
+
+	return (rev);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.64 2006/05/28 10:14:59 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.65 2006/05/29 07:15:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -229,6 +229,7 @@ struct rcs_delta	*rcs_findrev(RCSFILE *, RCSNUM *);
 int			 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
 int			 rcs_sym_remove(RCSFILE *, const char *);
 RCSNUM			*rcs_sym_getrev(RCSFILE *, const char *);
+RCSNUM			*rcs_translate_tag(const char *, RCSFILE *);
 int			 rcs_sym_check(const char *);
 int			 rcs_lock_getmode(RCSFILE *);
 int			 rcs_lock_setmode(RCSFILE *, int);
