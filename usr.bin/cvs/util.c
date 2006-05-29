@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.82 2006/05/28 21:34:37 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.83 2006/05/29 07:16:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -880,12 +880,10 @@ cvs_revision_select(RCSFILE *file, char *range)
 		if (lstr == NULL)
 			lstr = RCS_HEAD_INIT;
 
-		if ((lnum = rcsnum_parse(lstr)) == NULL)
-			fatal("invalid revision %s", lstr);
+		lnum = rcs_translate_tag(lstr, file);
 
 		if (rstr != NULL) {
-			if ((rnum = rcsnum_parse(rstr)) == NULL)
-				fatal("invalid revision %s", rstr);
+			rnum = rcs_translate_tag(rstr, file);
 		} else {
 			rnum = rcsnum_alloc();
 			rcsnum_cpy(file->rf_head, rnum, 0);
