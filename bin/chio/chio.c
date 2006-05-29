@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.14 2006/05/29 01:35:42 henning Exp $	*/
+/*	$OpenBSD: chio.c,v 1.15 2006/05/29 01:39:38 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -181,10 +181,10 @@ do_move(char *cname, int argc, char *argv[])
 	++argv; --argc;
 
 	if (cmd.cm_fromtype == CHET_DT) {
-		/* 
+		/*
 		 * from unit is a drive - make sure the tape
-		 * in it is unmounted before we attempt to move 
-		 * it to avoid errors in "disconnected" type 
+		 * in it is unmounted before we attempt to move
+		 * it to avoid errors in "disconnected" type
 		 * pickers where the drive is on a seperate target
 		 * from the changer.
 		 */
