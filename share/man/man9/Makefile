@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.113 2006/05/07 20:24:45 pedro Exp $
+#	$OpenBSD: Makefile,v 1.114 2006/05/29 00:56:50 mk Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -20,6 +20,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 rwlock.9 \
+	sensor_add.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
 	style.9 syscall.9 systrace.9 sysctl_int.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_cache.9 \
@@ -244,6 +245,9 @@ MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=rasops.9 rasops_init.9 rasops.9 rasops_reconfig.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
+MLINKS+=sensor_add.9 sensor_del.9 sensor_add.9 sensor_get.9 \
+	sensor_add.9 sensor_task_register.9 \
+	sensor_add.9 sensor_task_unregister.9
 MLINKS+=sleep.9 tsleep.9 sleep.9 wakeup.9
 MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splhigh.9 spl.9 spllowersoftclock.9 \
