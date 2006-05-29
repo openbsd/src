@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.45 2006/05/29 03:15:05 pascoe Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.46 2006/05/29 04:15:49 pascoe Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1325,7 +1325,7 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 #endif
 	/*
 	 * If the last TD is still active we need to check whether there
-	 * is a an error somewhere in the middle, or whether there was a
+	 * is an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
 	if (le32toh(lstd->td.td_status) & UHCI_TD_ACTIVE) {
@@ -2070,7 +2070,6 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 
 	endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-	sqh = upipe->u.bulk.sqh;
 
 	upipe->u.intr.isread = isread;
 
