@@ -1,5 +1,6 @@
-/*	$OpenBSD: compress.c,v 1.4 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: compress.c,v 1.5 2006/05/29 17:10:57 pat Exp $	*/
 /*
+ * Copyright (c) 2006 Patrick Latifi <pat@openbsd.org>
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
  *
@@ -38,6 +39,14 @@ struct cvs_zlib_ctx {
 	z_stream	z_destrm;
 };
 
+struct zlib_ioctx {
+	z_stream *stream;
+	int	(*reset)(z_stream *);
+	int	(*io)(z_stream *, int);
+	int	ioflags;
+};
+
+static int cvs_zlib_io(struct zlib_ioctx *, BUF *, u_char *, size_t);
 
 /*
  * cvs_zlib_newctx()
@@ -99,32 +108,14 @@ cvs_zlib_free(CVSZCTX *ctx)
 int
 cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 {
-	int bytes, ret;
-	u_char buf[CVS_ZLIB_BUFSIZE];
+	struct zlib_ioctx zio;
 
-	bytes = 0;
-	cvs_buf_empty(dst);
-	if (inflateReset(&(ctx->z_instrm)) == Z_STREAM_ERROR)
-		fatal("inflate error: %s", ctx->z_instrm.msg);
+	zio.stream = &ctx->z_instrm;
+	zio.reset = inflateReset;
+	zio.io = inflate;
+	zio.ioflags = Z_FINISH;
 
-	ctx->z_instrm.next_in = src;
-	ctx->z_instrm.avail_in = slen;
-
-	do {
-		ctx->z_instrm.next_out = buf;
-		ctx->z_instrm.avail_out = sizeof(buf);
-
-		ret = inflate(&(ctx->z_instrm), Z_FINISH);
-		if (ret == Z_MEM_ERROR || ret == Z_BUF_ERROR ||
-		    ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR)
-			fatal("inflate error: %s", ctx->z_instrm.msg);
-
-		cvs_buf_append(dst, buf, ctx->z_instrm.avail_out);
-		bytes += sizeof(buf) - ctx->z_instrm.avail_out;
-
-	} while (ret != Z_STREAM_END);
-
-	return (bytes);
+	return cvs_zlib_io(&zio, dst, src, slen);
 }
 
 /*
@@ -137,28 +128,45 @@ cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 int
 cvs_zlib_deflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 {
+	struct zlib_ioctx zio;
+
+	zio.stream = &ctx->z_destrm;
+	zio.reset = deflateReset;
+	zio.io = deflate;
+	zio.ioflags = Z_FINISH;
+
+	return cvs_zlib_io(&zio, dst, src, slen);
+}
+
+static int
+cvs_zlib_io(struct zlib_ioctx *zio, BUF *dst, u_char *src, size_t slen)
+{
 	int bytes, ret;
 	u_char buf[CVS_ZLIB_BUFSIZE];
+	z_stream *zstream = zio->stream;
 
 	bytes = 0;
 	cvs_buf_empty(dst);
-	if (deflateReset(&(ctx->z_destrm)) == Z_STREAM_ERROR)
-		fatal("deflate error: %s", ctx->z_destrm.msg);
+	if ((*zio->reset)(zstream) == Z_STREAM_ERROR)
+		fatal("%s error: %s", (zio->reset == inflateReset) ?
+		    "inflate" : "deflate", zstream->msg);
 
-	ctx->z_destrm.next_in = src;
-	ctx->z_destrm.avail_in = slen;
+	zstream->next_in = src;
+	zstream->avail_in = slen;
 
 	do {
-		ctx->z_destrm.next_out = buf;
-		ctx->z_destrm.avail_out = sizeof(buf);
-		ret = deflate(&(ctx->z_destrm), Z_FINISH);
-		if (ret == Z_STREAM_ERROR || ret == Z_BUF_ERROR)
-			fatal("deflate error: %s", ctx->z_destrm.msg);
+		zstream->next_out = buf;
+		zstream->avail_out = sizeof(buf);
+		ret = (*zio->io)(zstream, zio->ioflags);
+		if (ret == Z_MEM_ERROR || ret == Z_STREAM_ERROR ||
+		    ret == Z_BUF_ERROR || ret == Z_DATA_ERROR)
+			fatal("%s error: %s", (zio->reset == inflateReset) ?
+			    "inflate" : "deflate", zstream->msg);
 
 		if (cvs_buf_append(dst, buf,
-		    sizeof(buf) - ctx->z_destrm.avail_out) < 0)
+		    sizeof(buf) - zstream->avail_out) < 0)
 			return (-1);
-		bytes += sizeof(buf) - ctx->z_destrm.avail_out;
+		bytes += sizeof(buf) - zstream->avail_out;
 	} while (ret != Z_STREAM_END);
 
 	return (bytes);
