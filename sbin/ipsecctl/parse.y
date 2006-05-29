@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2006/05/29 15:48:46 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.77 2006/05/29 15:59:49 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1393,7 +1393,7 @@ ifa_grouplookup(const char *ifa_name)
 	struct ifgroupreq	 ifgr;
 	int			 s;
 	size_t			 len;
-	struct ipsec_addr_wrap	*ipa = NULL;
+	struct ipsec_addr_wrap	*n, *h = NULL, *hn;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
@@ -1413,13 +1413,21 @@ ifa_grouplookup(const char *ifa_name)
 	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
 	    ifg++) {
 		len -= sizeof(struct ifg_req);
-		if ((ipa = ifa_lookup(ifg->ifgrq_member)) != NULL)
-			break;
+		if ((n = ifa_lookup(ifg->ifgrq_member)) == NULL)
+			continue;
+		if (h == NULL)
+			h = n;
+		else {
+			for (hn = h; hn->next != NULL; hn = hn->next)
+				;	/* nothing */
+			hn->next = n;
+			n->tail = hn;
+		}
 	}
 	free(ifgr.ifgr_groups);
 	close(s);
 
-	return (ipa);
+	return (h);
 }
 
 struct ipsec_addr_wrap *
