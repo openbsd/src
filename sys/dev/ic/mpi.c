@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.7 2006/05/29 05:43:55 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.8 2006/05/29 06:32:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -826,12 +826,6 @@ mpi_load_xs(struct mpi_ccb *ccb)
 		return (0);
 	}
 
-#if 0
-	error = bus_dmamap_load(sc->sc_dmat, dmap,
-	    xs->data, xs->datalen, NULL, BUS_DMA_STREAMING |
-	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK |
-	    (xs->flags & SCSI_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE);
-#endif
 	error = bus_dmamap_load(sc->sc_dmat, dmap,
 	    xs->data, xs->datalen, NULL,
 	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
