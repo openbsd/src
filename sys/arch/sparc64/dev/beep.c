@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.2 2006/05/29 00:17:25 jason Exp $	*/
+/*	$OpenBSD: beep.c,v 1.3 2006/05/29 03:26:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -54,15 +54,22 @@
 #define	BEEP_CTRL_ON		0x01
 #define	BEEP_CTRL_OFF		0x00
 
+struct beep_freq {
+	int freq;
+	u_int32_t reg;
+};
+
 struct beep_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_clk;
+	struct beep_freq	sc_freqs[9];
 };
 
-int	beep_match(struct device *, void *, void *);
-void	beep_attach(struct device *, struct device *, void *);
+int beep_match(struct device *, void *, void *);
+void beep_attach(struct device *, struct device *, void *);
+void beep_setfreq(struct beep_softc *, int);
 
 struct cfattach beep_ca = {
 	sizeof(struct beep_softc), beep_match, beep_attach
@@ -89,6 +96,7 @@ beep_attach(parent, self, aux)
 {
 	struct beep_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
+	int i;
 
 	sc->sc_iot = ea->ea_memtag;
 
@@ -110,5 +118,64 @@ beep_attach(parent, self, aux)
 	sc->sc_clk = getpropint(findroot(), "clock-frequency", 0);
 	sc->sc_clk /= 2;
 
+	/*
+	 * Compute the frequence table based on the scalar and base
+	 * board clock speed.
+	 */
+	for (i = 0; i < 9; i++) {
+		sc->sc_freqs[i].reg = 1 << (18 - i);
+		sc->sc_freqs[i].freq = sc->sc_clk / sc->sc_freqs[i].reg;
+	}
+
+	/* set beep at around 1200hz */
+	beep_setfreq(sc, 1200);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
+	    BEEP_CTRL_ON);
+	for (i = 0; i < 1000; i++)
+		DELAY(1000);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
+	    BEEP_CTRL_OFF);
+
 	printf(": clock %sMHz\n", clockfreq(sc->sc_clk));
+}
+
+void
+beep_setfreq(struct beep_softc *sc, int freq)
+{
+	int i, n, selected = -1;
+
+	n = sizeof(sc->sc_freqs)/sizeof(sc->sc_freqs[0]);
+
+	if (freq < sc->sc_freqs[0].freq)
+		selected = 0;
+	if (freq > sc->sc_freqs[n - 1].freq)
+		selected = n - 1;
+
+	for (i = 1; selected == -1 && i < n; i++) {
+		if (sc->sc_freqs[i].freq == freq)
+			selected = i;
+		else if (sc->sc_freqs[i].freq > freq) {
+			int diff1, diff2;
+
+			diff1 = freq - sc->sc_freqs[i - 1].freq;
+			diff2 = sc->sc_freqs[i].freq - freq;
+			if (diff1 < diff2)
+				selected = i - 1;
+			else
+				selected = i;
+		}
+	}
+
+	if (selected == -1)
+		selected = 0;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_0,
+	    (sc->sc_freqs[i].reg >> 24) & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_1,
+	    (sc->sc_freqs[i].reg >> 16) & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_2,
+	    (sc->sc_freqs[i].reg >>  8) & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_3,
+	    (sc->sc_freqs[i].reg >>  0) & 0xff);
 }
