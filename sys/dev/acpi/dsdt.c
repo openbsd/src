@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.42 2006/05/29 00:43:56 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.43 2006/05/29 02:39:49 gwk Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1388,6 +1388,8 @@ aml_ederef(struct acpi_context *ctx, struct aml_value *val)
 	case AML_OBJTYPE_OBJREF:
 		i1 = val->v_objref.index;
 		ref = aml_ederef(ctx, val->v_objref.ref);
+		if (ref == NULL)
+			return (NULL);
 
 		if (i1 == -1)
 			return aml_ederef(ctx, ref);
@@ -1479,6 +1481,8 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 	case AMLOP_FIELD:
 		/* e_rgn should be OPREGION */
 		e_rgn = aml_ederef(ctx, e_fld->v_field.ref1);
+		if (e_rgn == NULL)
+			return NULL;
 		if (e_rgn->type != AML_OBJTYPE_OPREGION) {
 			dnprintf(40, "aml_efield: Wrong FIELD type!\n");
 			return (NULL);
@@ -1572,6 +1576,9 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 	default:
 		/* This is a buffer field */
 		e_rgn = aml_ederef(ctx, e_fld->v_field.ref1);
+		if (e_rgn == NULL)
+			return (NULL);
+
 		if (e_rgn->type != AML_OBJTYPE_BUFFER) {
 			dnprintf(40, "aml_efield: Wrong type!\n");
 			return (NULL);
@@ -1611,6 +1618,8 @@ aml_val2buf(struct acpi_context *ctx, struct aml_value *oval, int mlen)
 		return (NULL);
 
 	val = aml_ederef(ctx, oval);
+	if (val == NULL)
+		return (NULL);
 	switch (val->type) {
 	case AML_OBJTYPE_BUFFER:
 		if (mlen < val->length)
@@ -1887,6 +1896,8 @@ aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
 	aml_showvalue(lhs);
 
 	tmp = aml_ederef(ctx, lhs);
+	if (tmp == NULL)
+		return (NULL);
 	switch (tmp->type) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		/* Object is not initialized */
