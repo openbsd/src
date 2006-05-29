@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.89 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.90 2006/05/29 00:02:23 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -202,7 +202,7 @@ struct mgwin {
 	int		 w_marko;	/* Byte offset for "mark"	*/
 	char		 w_toprow;	/* Origin 0 top row of window	*/
 	char		 w_ntrows;	/* # of rows of text in window	*/
-	char		 w_force;	/* If NZ, forcing row.		*/
+	char		 w_frame;	/* #lines to reframe by.	*/
 	char		 w_flag;	/* Flags.			*/
 	struct line	*w_wrapline;
 };
