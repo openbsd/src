@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.29 2005/10/08 19:24:03 canacar Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.30 2006/05/29 20:30:11 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.29 2005/10/08 19:24:03 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.30 2006/05/29 20:30:11 moritz Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -262,10 +262,11 @@ static void
 ip_optprint(register const u_char *cp, u_int length)
 {
 	register u_int len;
+	int tt;
 
 	for (; length > 0; cp += len, length -= len) {
-		int tt = *cp;
-
+		TCHECK(cp[1]);
+		tt = *cp;
 		len = (tt == IPOPT_NOP || tt == IPOPT_EOL) ? 1 : cp[1];
 		if (len <= 0) {
 			printf("[|ip op len %d]", len);
@@ -313,6 +314,10 @@ ip_optprint(register const u_char *cp, u_int length)
 			break;
 		}
 	}
+	return;
+
+trunc:
+	printf("[|ip]");
 }
 
 /*
@@ -385,28 +390,25 @@ ip_print(register const u_char *bp, register u_int length)
 		}
 	}
 
-	if ((u_char *)(ip + 1) > snapend) {
-		printf("[|ip]");
-		return;
-	}
-	if (length < sizeof (struct ip)) {
-		(void)printf("truncated-ip %d", length);
-		return;
-	}
+	TCHECK(*ip);
 	if (ip->ip_v != IPVERSION) {
 		(void)printf("bad-ip-version %u", ip->ip_v);
 		return;
 	}
+
+	len = ntohs(ip->ip_len);
+	if (length < len) {
+		(void)printf("truncated-ip - %d bytes missing!",
+			len - length);
+		len = length;
+	}
+
 	hlen = ip->ip_hl * 4;
-	if (hlen < sizeof(struct ip)) {
+	if (hlen < sizeof(struct ip) || hlen > len) {
 		(void)printf("bad-hlen %d", hlen);
 		return;
 	}
 
-	len = ntohs(ip->ip_len);
-	if (length < len)
-		(void)printf("truncated-ip - %d bytes missing!",
-			len - length);
 	len -= hlen;
 
 	/*
@@ -650,10 +652,16 @@ ip_print(register const u_char *bp, register u_int length)
 				sep = ", ";
 			}
 		}
-		if ((hlen -= sizeof(struct ip)) > 0) {
+		if (hlen > sizeof(struct ip)) {
+			hlen -= sizeof(struct ip);
 			(void)printf("%soptlen=%d", sep, hlen);
 			ip_optprint((u_char *)(ip + 1), hlen);
 		}
 		printf(")");
 	}
+	return;
+
+trunc:
+	printf("[|ip]");
+	return;
 }
