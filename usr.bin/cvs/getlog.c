@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.58 2006/05/28 21:35:58 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.59 2006/05/29 06:29:49 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -105,6 +105,12 @@ cvs_log_local(struct cvs_file *cf)
 		if (verbosity > 0)
 			cvs_log(LP_ERR, "%s has been added, but not commited",
 			    cf->file_path);
+		return;
+	}
+
+	if (cf->file_type == CVS_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_NOTICE, "Logging %s", cf->file_path);
 		return;
 	}
 
