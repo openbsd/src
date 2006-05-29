@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.44 2006/05/22 20:35:12 krw Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.45 2006/05/29 03:15:05 pascoe Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1930,6 +1930,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		usb_uncallout(xfer->timeout_handle, uhci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
+		return;
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
