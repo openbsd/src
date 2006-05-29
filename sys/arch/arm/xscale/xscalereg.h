@@ -1,3 +1,4 @@
+/*	$OpenBSD: xscalereg.h,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
 /*	$NetBSD: xscalereg.h,v 1.2 2002/08/07 05:15:02 briggs Exp $	*/
 
 /*
