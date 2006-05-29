@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.46 2006/03/31 14:24:15 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.47 2006/05/29 18:43:36 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -44,6 +44,7 @@ int		 ipsecctl_rules(char *, int);
 FILE		*ipsecctl_fopen(const char *, const char *);
 int		 ipsecctl_commit(int, struct ipsecctl *);
 int		 ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
+void		 ipsecctl_free_rule(struct ipsec_rule *);
 void		 ipsecctl_print_addr(struct ipsec_addr_wrap *);
 void		 ipsecctl_print_proto(u_int8_t);
 void		 ipsecctl_print_key(struct ipsec_key *);
@@ -162,44 +163,7 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 				    action == ACTION_DELETE ? "delete" : "add",
 				    rp->nr);
 		}
-
-		/* src and dst are always used. */
-		free(rp->src->name);
-		free(rp->src);
-		free(rp->dst->name);
-		free(rp->dst);
-
-		if (rp->local) {
-			free(rp->local->name);
-			free(rp->local);
-		}
-		if (rp->peer) {
-			free(rp->peer->name);
-			free(rp->peer);
-		}
-		if (rp->auth) {
-			if (rp->auth->srcid)
-				free(rp->auth->srcid);
-			if (rp->auth->dstid)
-				free(rp->auth->dstid);
-			free(rp->auth);
-		}
-		if (rp->ikeauth) {
-			if (rp->ikeauth->string)
-				free(rp->ikeauth->string);
-			free(rp->ikeauth);
-		}
-		if (rp->xfs)
-			free(rp->xfs);
-		if (rp->authkey) {
-			free(rp->authkey->data);
-			free(rp->authkey);
-		}
-		if (rp->enckey) {
-			free(rp->enckey->data);
-			free(rp->enckey);
-		}
-		free(rp);
+		ipsecctl_free_rule(rp);
 	}
 
 	return (0);
@@ -215,6 +179,48 @@ ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 		ipsecctl_print_rule(r, ipsec->opts);
 
 	return (0);
+}
+
+void
+ipsecctl_free_rule(struct ipsec_rule *rp)
+{
+	/* src and dst are always used. */
+	free(rp->src->name);
+	free(rp->src);
+	free(rp->dst->name);
+	free(rp->dst);
+
+	if (rp->local) {
+		free(rp->local->name);
+		free(rp->local);
+	}
+	if (rp->peer) {
+		free(rp->peer->name);
+		free(rp->peer);
+	}
+	if (rp->auth) {
+		if (rp->auth->srcid)
+			free(rp->auth->srcid);
+		if (rp->auth->dstid)
+			free(rp->auth->dstid);
+		free(rp->auth);
+	}
+	if (rp->ikeauth) {
+		if (rp->ikeauth->string)
+			free(rp->ikeauth->string);
+		free(rp->ikeauth);
+	}
+	if (rp->xfs)
+		free(rp->xfs);
+	if (rp->authkey) {
+		free(rp->authkey->data);
+		free(rp->authkey);
+	}
+	if (rp->enckey) {
+		free(rp->enckey->data);
+		free(rp->enckey);
+	}
+	free(rp);
 }
 
 void
