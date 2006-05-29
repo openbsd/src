@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2006/05/29 16:04:25 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.79 2006/05/29 18:50:27 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -144,9 +144,13 @@ int			 ifa_exists(const char *);
 struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
 struct ipsec_addr_wrap	*ifa_grouplookup(const char *);
 void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
-struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
+struct ipsec_auth	*copyipsecauth(const struct ipsec_auth *);
+struct ike_auth		*copyikeauth(const struct ike_auth *);
+struct ipsec_key	*copykey(struct ipsec_key *);
+struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
+struct ipsec_rule	*copyrule(struct ipsec_rule *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *, u_int8_t);
@@ -1486,23 +1490,6 @@ set_ipmask(struct ipsec_addr_wrap *address, u_int8_t b)
 		ipa->addr32[j] = htonl(ipa->addr32[j]);
 }
 
-struct ipsec_addr_wrap *
-copyhost(const struct ipsec_addr_wrap *src)
-{
-	struct ipsec_addr_wrap *dst;
-
-	dst = calloc(1, sizeof(struct ipsec_addr_wrap));
-	if (dst == NULL)
-		err(1, "copyhost: calloc");
-
-	memcpy(dst, src, sizeof(struct ipsec_addr_wrap));
-
-	if ((dst->name = strdup(src->name)) == NULL)
-		err(1, "copyhost: strdup");
-
-	return dst;
-}
-
 const struct ipsec_xf *
 parse_xf(const char *name, const struct ipsec_xf xfs[])
 {
@@ -1530,6 +1517,119 @@ copytransforms(const struct ipsec_transforms *xfs)
 
 	memcpy(newxfs, xfs, sizeof(struct ipsec_transforms));
 	return (newxfs);
+}
+
+struct ipsec_auth *
+copyipsecauth(const struct ipsec_auth *auth)
+{
+	struct ipsec_auth	*newauth;
+
+	if (auth == NULL)
+		return (NULL);
+
+	if ((newauth = calloc(1, sizeof(struct ipsec_auth))) == NULL)
+		err(1, "calloc");
+	if (auth->srcid &&
+	    asprintf(&newauth->srcid, "%s", auth->srcid) == -1)
+		err(1, "asprintf");
+	if (auth->dstid &&
+	    asprintf(&newauth->dstid, "%s", auth->dstid) == -1)
+		err(1, "asprintf");
+
+	newauth->idtype = auth->idtype;
+	newauth->type = auth->type;
+
+	return (newauth);
+}
+
+struct ike_auth *
+copyikeauth(const struct ike_auth *auth)
+{
+	struct ike_auth	*newauth;
+
+	if (auth == NULL)
+		return (NULL);
+
+	if ((newauth = calloc(1, sizeof(struct ike_auth))) == NULL)
+		err(1, "calloc");
+	if (auth->string &&
+	    asprintf(&newauth->string, "%s", auth->string) == -1)
+		err(1, "asprintf");
+
+	newauth->type = auth->type;
+
+	return (newauth);
+}
+
+struct ipsec_key *
+copykey(struct ipsec_key *key)
+{
+	struct ipsec_key	*newkey;
+
+	if (key == NULL)
+		return (NULL);
+
+	if ((newkey = calloc(1, sizeof(struct ipsec_key))) == NULL)
+		err(1, "calloc");
+	if ((newkey->data = calloc(key->len, sizeof(u_int8_t))) == NULL)
+		err(1, "calloc");
+	memcpy(newkey->data, key->data, key->len);
+	newkey->len = key->len;
+
+	return (newkey);
+}
+
+struct ipsec_addr_wrap *
+copyhost(const struct ipsec_addr_wrap *src)
+{
+	struct ipsec_addr_wrap *dst;
+
+	if (src == NULL)
+		return (NULL);
+
+	dst = calloc(1, sizeof(struct ipsec_addr_wrap));
+	if (dst == NULL)
+		err(1, "copyhost: calloc");
+
+	memcpy(dst, src, sizeof(struct ipsec_addr_wrap));
+
+	if ((dst->name = strdup(src->name)) == NULL)
+		err(1, "copyhost: strdup");
+
+	return dst;
+}
+
+struct ipsec_rule *
+copyrule(struct ipsec_rule *rule)
+{
+	struct ipsec_rule	*r;
+
+	if ((r = calloc(1, sizeof(struct ipsec_rule))) == NULL)
+		err(1, "calloc");
+
+	r->src = copyhost(rule->src);
+	r->dst = copyhost(rule->dst);
+	r->local = copyhost(rule->local);
+	r->peer = copyhost(rule->peer);
+	r->auth = copyipsecauth(rule->auth);
+	r->ikeauth = copyikeauth(rule->ikeauth);
+	r->xfs = copytransforms(rule->xfs);
+	r->mmxfs = copytransforms(rule->mmxfs);
+	r->qmxfs = copytransforms(rule->qmxfs);
+	r->authkey = copykey(rule->authkey);
+	r->enckey = copykey(rule->enckey);
+
+	r->type = rule->type;
+	r->satype = rule->satype;
+	r->proto = rule->proto;
+	r->tmode = rule->tmode;
+	r->direction = rule->direction;
+	r->flowtype = rule->flowtype;
+	r->ikemode = rule->ikemode;
+	r->spi = rule->spi;
+	r->nr = rule->nr;
+
+	return (r);
 }
 
 int
@@ -1760,43 +1860,42 @@ int
 expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
     struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
-	struct ipsec_rule	*r;
-	struct ipsec_addr_wrap	*src, *dst, *tsrc, *tdst;
+	struct ipsec_rule	*r, *revr;
+	struct ipsec_addr_wrap	*src, *dst;
 
-	src = rule->src;
-	dst = rule->dst;
+	for (src = rule->src; src; src = src->next) {
+		for (dst = rule->dst; dst; dst = dst->next) {
+			r = copyrule(rule);
 
-	for (tsrc = src; tsrc; tsrc = tsrc->next) {
-		rule->src = tsrc;
+			r->src = copyhost(src);
+			r->dst = copyhost(dst);
 
-		for (tdst = dst; tdst; tdst = tdst->next) {
-			rule->dst = tdst;
-
-			rule->nr = ipsec->rule_nr++;
-			if (ipsecctl_add_rule(ipsec, rule))
+			r->nr = ipsec->rule_nr++;
+			if (ipsecctl_add_rule(ipsec, r))
 				return (1);
 
 			if (direction == IPSEC_INOUT) {
 				/* Create and add reverse flow rule. */
-				r = reverse_rule(rule);
-				if (r == NULL)
+				revr = reverse_rule(r);
+				if (revr == NULL)
 					return (1);
 
-				r->nr = ipsec->rule_nr++;
-				if (ipsecctl_add_rule(ipsec, r))
+				revr->nr = ipsec->rule_nr++;
+				if (ipsecctl_add_rule(ipsec, revr))
 					return (1);
 			} else if (spi != 0 || authkey || enckey) {
 				/* Create and add reverse sa rule. */
-				r = reverse_sa(rule, spi, authkey, enckey);
-				if (r == NULL)
+				revr = reverse_sa(r, spi, authkey, enckey);
+				if (revr == NULL)
 					return (1);
 
-				r->nr = ipsec->rule_nr++;
-				if (ipsecctl_add_rule(ipsec, r))
+				revr->nr = ipsec->rule_nr++;
+				if (ipsecctl_add_rule(ipsec, revr))
 					return (1);
 			}
 		}
 	}
+	ipsecctl_free_rule(rule);
 	return (0);
 }
 
