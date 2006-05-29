@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.22 2005/05/23 21:33:43 miod Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.23 2006/05/29 20:25:30 miod Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.6 2005/05/23 21:33:03 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.30 2005/05/09 05:08:57 miod Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.31 2006/05/29 20:23:13 miod Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -62,6 +62,9 @@
 
 static const keysym_t ukbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
+/* initially KC(160),	KS_AudioMute,	*/
+/* initially KC(174),	KS_AudioLower,	*/
+/* initially KC(176),	KS_AudioRaise,	*/
     KC(4),	KS_a,
     KC(5),	KS_b,
     KC(6),	KS_c,
