@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.5 2006/03/07 20:20:28 miod Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.6 2006/05/29 17:01:42 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1038,6 +1038,7 @@ set_cpufuncs()
 
 		i80200_icu_init();
 
+#ifdef PERFCTRS
 		/*
 		 * Reset the Performance Monitoring Unit to a
 		 * pristine state:
@@ -1049,6 +1050,7 @@ set_cpufuncs()
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
+#endif /* PERFCTRS */
 
 #if defined(XSCALE_CCLKCFG)
 		/*
@@ -1091,9 +1093,11 @@ set_cpufuncs()
 #endif /* CPU_XSCALE_80200 */
 #ifdef CPU_XSCALE_80321
 	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600 ||
-	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0) {
+	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0 ||
+	    cputype == CPU_ID_80219_400 || cputype == CPU_ID_80219_600) {
 		i80321_icu_init();
 
+#ifdef PERFCTRS
 		/*
 		 * Reset the Performance Monitoring Unit to a
 		 * pristine state:
@@ -1105,6 +1109,7 @@ set_cpufuncs()
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
+#endif /* PERFCTRS */
 
 		cpufuncs = xscale_cpufuncs;
 #if defined(PERFCTRS)

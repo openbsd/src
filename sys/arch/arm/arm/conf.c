@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2005/05/13 22:54:00 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2006/05/29 17:01:42 drahn Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -278,6 +278,12 @@ cdev_decl(xfs_dev);
 
 #include "hotplug.h"
 
+#ifdef CONF_HAVE_GPIO
+#include "gpio.h"
+#else
+#define	NGPIO 0
+#endif
+
 #ifdef CONF_HAVE_SPKR
 #include "spkr.h"
 #else
@@ -298,7 +304,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 10: */
 	cdev_lkm_dummy(),			/* 11: */
 	cdev_tty_init(NCOM,com),		/* 12: serial port */
-	cdev_lkm_dummy(),			/* 13: */
+	cdev_gpio_init(NGPIO,gpio),     	/* 13: GPIO interface */
 	cdev_lkm_dummy(),			/* 14: */
 	cdev_lkm_dummy(),			/* 15: */
 	cdev_disk_init(NWD,wd),			/* 16: ST506/ESDI/IDE disk */
