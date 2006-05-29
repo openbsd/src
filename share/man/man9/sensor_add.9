@@ -1,0 +1,126 @@
+.\"	$OpenBSD: sensor_add.9,v 1.1 2006/05/29 00:48:50 mk Exp $
+.\"
+.\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 23, 2006
+.Dt SENSOR_ADD 9
+.Os
+.Sh NAME
+.Nm sensor_add ,
+.Nm sensor_del ,
+.Nm sensor_get ,
+.Nm sensor_task_register ,
+.Nm sensor_task_unregister
+.Nd sensor framework
+.Sh SYNOPSIS
+.Fd #include <sys/sensors.h>
+.Ft void
+.Fn "sensor_add" "struct sensor *sens"
+.Ft void
+.Fn "sensor_del" "struct sensor *sens"
+.Ft struct sensor
+.Fn "*sensor_get" "int num"
+.Ft int
+.Fn "sensor_task_register" "void *arg" "void (*func)(void *)" "int period"
+.Ft void
+.Fn "sensor_task_unregister" "void *arg"
+.Sh DESCRIPTION
+The
+.Nm sensor
+framework API provides a mechanism to manipulate the sensor framework
+available under the
+.Va hw.sensors
+.Xr sysctl 8 .
+.Pp
+.Fn sensor_add
+adds a sensor specified by the
+.Pa sens
+argument.
+.Fn sensor_del
+removes a sensor previously added by
+.Fn sensor_add .
+Both
+.Fn sensor_add
+and
+.Fn sensor_del
+take an argument of a pointer to a
+.Vt struct sensor ,
+defined in
+.Aq sys/sensors.h ,
+as:
+.Bd -literal
+struct sensor {
+	SLIST_ENTRY(sensor) list;
+	int num;			/* sensor number */
+	char device[16];		/* device name */
+	enum sensor_type type;		/* sensor type */
+	char desc[32];			/* sensor description */
+	int64_t value;			/* current value */
+	u_int rfact;			/* resistor factor */
+	enum sensor_status status;	/* sensor status */
+	int flags;			/* sensor flags */
+	struct timeval tv;		/* sensor value last change time */
+};
+.Ed
+.Pp
+.Fn sensor_get
+takes an index parameter and returns a pointer to the corresponding
+.Vt struct sensor ,
+or
+.Dv NULL
+if no such sensor exists.
+.Pp
+Drivers are responsible for retrieving, interpreting and normalising
+sensor values and updating the sensor struct periodically.
+If the driver needs process context, e.g. to sleep, it can
+register a task with the sensor framework.
+.Pp
+.Fn sensor_task_register
+is used to register a periodic task to update sensors.
+The
+.Fa func
+argument is a pointer to the function to run with an interval of
+.Fa period
+seconds.
+The
+.Fa arg
+parameter is the argument given to the
+.Fa func
+function.
+The
+.Fn sensor_task_unregister
+removes all tasks previously registered with
+.Fn sensor_task_register
+with an argument of
+.Fa arg .
+.Sh SEE ALSO
+.Xr sysctl 8
+.Sh HISTORY
+The sensor framework was written by
+.An Alexander Yurchenko Aq grange@openbsd.org
+and first appeared in
+.Ox 3.4 .
+.An David Gwynne Aq dlg@openbsd.org
+later extended it for
+.Ox 3.8 .
