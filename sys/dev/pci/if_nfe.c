@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.61 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.62 2006/05/29 01:00:02 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -113,8 +113,6 @@ struct cfdriver nfe_cd = {
 	NULL, "nfe", DV_IFNET
 };
 
-/*#define NFE_NO_JUMBO*/
-
 #ifdef NFE_DEBUG
 int nfedebug = 0;
 #define DPRINTF(x)	do { if (nfedebug) printf x; } while (0)
@@ -222,11 +220,9 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-#ifndef NFE_NO_JUMBO
 	/* enable jumbo frames for adapters that support it */
 	if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->sc_flags |= NFE_USE_JUMBO;
-#endif
 
 	/*
 	 * Allocate Tx and Rx rings.
