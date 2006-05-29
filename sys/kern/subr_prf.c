@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.64 2005/12/27 18:35:34 miod Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.65 2006/05/29 20:33:15 jason Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -601,6 +601,18 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
  *
  *	reg=3<BITTWO,BITONE>
  *
+ * To support larger integers (> 32 bits), %b formatting will also accept
+ * control characters in the region 0x80 - 0xff.  0x80 refers to bit 0,
+ * 0x81 refers to bit 1, and so on.  The equivalent string to the above is:
+ *
+ *	kprintf("reg=%b\n", 3, "\10\201BITTWO\200BITONE\n");
+ *
+ * and would produce the same output.
+ *
+ * Like the rest of printf, %b can be prefixed to handle various size
+ * modifiers, eg. %b is for "int", %lb is for "long", and %llb supports
+ * "long long".
+ *
  * This code is large and complicated...
  */
 
@@ -705,7 +717,7 @@ reswitch:	switch (ch) {
 		case 'b': {
 			char *b, *z;
 			int tmp;
-			_uquad = va_arg(ap, u_int);
+			_uquad = UARG();
 			b = va_arg(ap, char *);
 			if (*b == 8)
 				snprintf(buf, sizeof buf, "%llo", _uquad);
@@ -725,15 +737,21 @@ reswitch:	switch (ch) {
 			if (_uquad) {
 				tmp = 0;
 				while ((n = *b++) != 0) {
-					if (_uquad & (1 << (n - 1))) {
+					if (n & 0x80)
+						n &= 0x7f;
+					else if (n < ' ')
+						n = n - 1;
+					if (_uquad & (1 << n)) {
 						KPRINTF_PUTCHAR(tmp ? ',':'<');
-						while ((n = *b) > ' ') {
-							KPRINTF_PUTCHAR(n);
+						while (*b > ' ' &&
+						    (*b & 0x80) == 0) {
+							KPRINTF_PUTCHAR(*b);
 							b++;
 						}
 						tmp = 1;
 					} else {
-						while(*b > ' ')
+						while (*b > ' ' &&
+						    (*b & 0x80) == 0)
 							b++;
 					}
 				}
