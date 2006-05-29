@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2006/05/29 01:34:36 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2006/05/29 01:41:27 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -110,8 +110,9 @@ changeropts	: DRIVE STRING	{
 			    sizeof(curchanger->drives))) == NULL)
 				err(1, NULL);
 			curchanger->drives = newp;
-			curchanger->drives[curchanger->drivecnt] =
-			    strdup($2);
+			if ((curchanger->drives[curchanger->drivecnt] =
+			    strdup($2)) == NULL)
+				err(1, NULL);
 			curchanger->drivecnt++;
 			free($2);
 		}
