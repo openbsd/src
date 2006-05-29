@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.27 2005/11/28 20:13:08 martin Exp $	*/
+/*	$OpenBSD: mem.c,v 1.28 2006/05/29 08:09:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -276,7 +276,7 @@ viper_setintrwnd(mask)
 	sc = mem_cd.cd_devs[0];
 
 	if (sc->sc_vp)
-		sc->sc_vp->vi_intrwd;
+		sc->sc_vp->vi_intrwd = mask;
 }
 
 void
