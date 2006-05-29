@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.70 2006/05/29 03:35:31 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.71 2006/05/29 03:49:22 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1422,10 +1422,12 @@ ohci_softintr(void *v)
 					for (j = 0; j < iframes; i++, j++) {
 						len = le16toh(sitd->
 						    itd.itd_offset[j]);
-						len =
-						    (OHCI_ITD_PSW_GET_CC(len) ==
-						    OHCI_CC_NOT_ACCESSED) ? 0 :
-						    OHCI_ITD_PSW_LENGTH(len);
+						if ((OHCI_ITD_PSW_GET_CC(len) &
+						    OHCI_CC_NOT_ACCESSED_MASK)
+						    == OHCI_CC_NOT_ACCESSED)
+							len = 0;
+						else
+							len = OHCI_ITD_PSW_LENGTH(len);
 						xfer->frlengths[i] = len;
 						actlen += len;
 					}
