@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2006/05/29 01:21:38 beck Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2006/05/29 01:34:36 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -337,7 +337,7 @@ parse_tapedev(const char *filename, const char *changer, int drive)
 		goto guess;
 
 	infile = filename;
-	
+
 	yyparse();
 
 	fclose(fin);
@@ -346,10 +346,9 @@ parse_tapedev(const char *filename, const char *changer, int drive)
 		if (strcmp(basename(changer), p->name) == 0) {
 			if (drive >= 0 && drive < p->drivecnt) {
 				if (asprintf(&tapedev, "/dev/%s",
-				     p->drives[drive]) == -1)	
+				     p->drives[drive]) == -1)
 					errx(1, "malloc failed");
-			}
-			else
+			} else
 				tapedev = NULL;
 		}
 	}
@@ -359,8 +358,7 @@ guess:
 	if (tapedev == NULL)
 		if (asprintf(&tapedev, "/dev/rst%d", drive) == -1)
 			errx(1, "malloc failed");
-	return(tapedev);
-		
+	return (tapedev);
 }
 
 struct changer *
