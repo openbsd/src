@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.175 2006/05/27 05:49:14 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.176 2006/05/29 02:58:16 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -357,7 +357,7 @@ checkin_diff_file(struct checkin_params *pb)
 		goto out;
 
 	rcs_buf_putc(b3, '\0');
-	deltatext = (char *)rcs_buf_release(b3);
+	deltatext = rcs_buf_release(b3);
 	b3 = NULL;
 
 out:
@@ -616,7 +616,7 @@ checkin_init(struct checkin_params *pb)
 		goto fail;
 
 	rcs_buf_putc(bp, '\0');
-	filec = (char *)rcs_buf_release(bp);
+	filec = rcs_buf_release(bp);
 
 	/* Get default values from working copy if -k specified */
 	if (pb->flags & CI_KEYWORDSCAN)
