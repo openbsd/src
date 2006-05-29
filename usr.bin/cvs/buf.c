@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.52 2006/05/28 22:43:54 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.53 2006/05/29 04:47:28 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -457,7 +457,7 @@ int
 cvs_buf_differ(BUF *b1, BUF *b2)
 {
 	char *c1, *c2;
-	int i, l1, l2, len, ret;
+	int l1, l2, len, ret;
 
 	l1 = cvs_buf_len(b1);
 	l2 = cvs_buf_len(b2);
