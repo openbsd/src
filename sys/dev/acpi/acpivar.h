@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.22 2006/04/11 02:35:35 gwk Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.23 2006/05/29 00:54:23 canacar Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -31,6 +31,7 @@ extern int acpi_debug;
 #endif
 
 struct klist;
+struct acpiec_softc;
 
 struct acpi_attach_args {
 	char		*aaa_name;
@@ -155,6 +156,8 @@ struct acpi_softc {
 	struct aml_node		*sc_gts;
 	struct aml_node		*sc_wak;
 	int 			sc_state;
+	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
+	u_int32_t		sc_ec_gpemask;
 };
 
 #define GPE_NONE  0x00
@@ -197,6 +200,12 @@ void	 acpi_resume(struct acpi_softc *);
 void acpi_delay(struct acpi_softc *, int64_t);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
+void	acpi_enable_gpe(struct acpi_softc *, u_int32_t);
+
+int	acpiec_intr(struct acpiec_softc *);
+void	acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
+void	acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
+void	acpiec_handle_events(struct acpiec_softc *);
 #endif
 
 #endif	/* !_DEV_ACPI_ACPIVAR_H_ */

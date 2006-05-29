@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.11 2006/05/19 09:24:32 canacar Exp $
+#	$OpenBSD: files.acpi,v 1.12 2006/05/29 00:54:23 canacar Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -40,6 +40,11 @@ file	dev/acpi/acpicpu.c		acpicpu
 device	acpihpet
 attach	acpihpet at acpi
 file	dev/acpi/acpihpet.c		acpihpet
+
+# Embedded Controller
+device	acpiec
+attach	acpiec at acpi
+file	dev/acpi/acpiec.c		acpiec
 
 # Thermal Zone
 device	acpitz

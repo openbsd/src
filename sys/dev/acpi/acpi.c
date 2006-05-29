@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.49 2006/05/19 09:24:32 canacar Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.50 2006/05/29 00:54:23 canacar Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -59,6 +59,7 @@ void	acpi_write_pmreg(struct acpi_softc *, int, int);
 
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
+void	acpi_foundec(struct aml_node *, void *);
 void	acpi_foundtmp(struct aml_node *, void *);
 void	acpi_inidev(struct aml_node *, void *);
 
@@ -247,6 +248,14 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			}
 			pb++;
 		}
+		break;
+	case GAS_EMBEDDED:
+		if (sc->sc_ec == NULL)
+			break;
+		if (iodir == ACPI_IOREAD)
+			acpiec_read(sc->sc_ec, (u_int8_t)address, len, buffer);
+		else
+			acpiec_write(sc->sc_ec, (u_int8_t)address, len, buffer);
 		break;
 	}
 	return (0);
@@ -556,6 +565,45 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		config_found(self, &aaa, acpi_print);
 }
 
+
+void
+acpi_foundec(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+	struct aml_value	res;
+	struct acpi_attach_args	aaa;
+
+	dnprintf(10, "found hid device: %s ", node->parent->name);
+	aml_eval_object(sc, node, &res, 0, NULL);
+
+	switch (res.type) {
+	case AML_OBJTYPE_STRING:
+		dev = aml_strval(&res);
+		break;
+	case AML_OBJTYPE_INTEGER:
+		dev = aml_eisaid(aml_val2int(NULL, &res));
+		break;
+	default:
+		dev = "unknown";
+		break;
+	}
+	dnprintf(10, "	device: %s\n", dev);
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
+
+	if (!strcmp(dev, ACPI_DEV_ECD))
+		aaa.aaa_name = "acpiec";
+
+	if (aaa.aaa_name)
+		config_found(self, &aaa, acpi_print);
+}
+
 int
 acpi_match(struct device *parent, void *match, void *aux)
 {
@@ -766,6 +814,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	aml_find_node(aml_root.child, "_INI", acpi_inidev, sc);
 
 	/* attach devices found in dsdt */
+	aml_find_node(aml_root.child, "_HID", acpi_foundec, sc);
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
 
 	/* attach devices found in dsdt */
@@ -941,8 +990,9 @@ int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t processed, sts, en;
+	u_int32_t ec, processed, sts, en;
 
+	ec = 0;
 	processed = 0;
 
 	sts = acpi_read_pmreg(sc, ACPIREG_GPE0_STS);
@@ -956,6 +1006,11 @@ acpi_interrupt(void *arg)
 		sc->sc_gpe_sts = sts;
 		sc->sc_gpe_en = en;
 		processed = 1;
+		if ((sc->sc_ec != NULL) && (sts & sc->sc_ec_gpemask)) {
+			ec = 1;
+			if ((sts & en) == sc->sc_ec_gpemask)
+				processed = 0;
+		}
 	}
 
 	sts = acpi_read_pmreg(sc, ACPIREG_PM1_STS);
@@ -963,7 +1018,7 @@ acpi_interrupt(void *arg)
 	if (sts & en) {
 		dnprintf(10,"GEN interrupt: %.4x\n", sts & en);
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, en & ~sts);
-		acpi_write_pmreg(sc, ACPIREG_PM1_STS,en);
+		acpi_write_pmreg(sc, ACPIREG_PM1_STS, en);
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, en);
 		if (sts & ACPI_PM1_PWRBTN_STS)
 			sc->sc_powerbtn = 1;
@@ -971,12 +1026,25 @@ acpi_interrupt(void *arg)
 			sc->sc_sleepbtn = 1;
 		processed = 1;
 	}
+
+	if (ec) {
+		if (acpiec_intr(sc->sc_ec))
+			processed = 1;
+
+		sts = sc->sc_ec_gpemask;
+		en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
+
+		/* enable SCI once again */
+		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, sts);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en | sts);
+	}
+
 	if (processed) {
 		sc->sc_wakeup = 0;
 		wakeup(sc);
 	}
 
-	return (processed);
+	return (processed | ec);
 }
 
 void
@@ -1008,6 +1076,16 @@ acpi_init_gpes(struct acpi_softc *sc)
 		}
 	}
 	sc->sc_maxgpe = ngpe;
+}
+
+void
+acpi_enable_gpe(struct acpi_softc *sc, u_int32_t gpemask)
+{
+	u_int32_t mask;
+	dnprintf(10, "acpi_enable_gpe: mask 0x%08x\n", gpemask);
+	mask = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
+	acpi_write_pmreg(sc, ACPIREG_GPE0_EN, mask | gpemask);
+	dnprintf(10, "acpi_enable_gpe: GPE 0x%08x\n", mask | gpemask);
 }
 
 void
@@ -1346,8 +1424,9 @@ acpi_isr_thread(void *arg)
 		acpi_write_pmreg(sc, ACPIREG_GPE0_EN,	0);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, -1);
 
-		/* XXX: Enable GPEs _L1D */
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN,  (1L << 0x1D));
+		/* Enable EC interrupt */
+		if (sc->sc_ec != NULL)
+			acpi_enable_gpe(sc, sc->sc_ec_gpemask);
 	}
 
 	while (thread->running) {
@@ -1395,6 +1474,8 @@ acpi_isr_thread(void *arg)
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
 							      acpi_evindex));
 		}
+		if (sc->sc_ec)
+			acpiec_handle_events(sc->sc_ec);
 	}
 	free(thread, M_DEVBUF);
 
