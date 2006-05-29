@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.1 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: apic.c,v 1.2 2006/05/29 20:40:55 miod Exp $	*/
 /* $NetBSD: apic.c,v 1.1 2003/02/26 21:26:11 fvdl Exp $ */
 
 /*-
@@ -46,21 +46,6 @@
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #include <machine/apicvar.h>
-
-
-const char redirlofmt[] = "\177\20"
-	"f\0\10vector\0"
-	"f\10\3delmode\0"
-	"b\13logical\0"
-	"b\14pending\0"
-	"b\15actlo\0"
-	"b\16irrpending\0"
-	"b\17level\0"
-	"b\20masked\0"
-	"f\22\1dest\0" "=\1self" "=\2all" "=\3all-others";
-
-const char redirhifmt[] = "\177\20"
-	"f\30\10target\0";
 
 void
 apic_format_redir(where1, where2, idx, redirhi, redirlo)

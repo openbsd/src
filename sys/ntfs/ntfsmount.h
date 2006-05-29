@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfsmount.h,v 1.2 2003/05/20 03:23:12 mickey Exp $	*/
+/*	$OpenBSD: ntfsmount.h,v 1.3 2006/05/29 20:40:58 miod Exp $	*/
 /*	$NetBSD: ntfsmount.h,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
 
 /*-
@@ -31,6 +31,3 @@
 
 #define	NTFS_MFLAG_CASEINS	0x00000001
 #define	NTFS_MFLAG_ALLNAMES	0x00000002
-
-#define NTFS_MFLAG_BITS	"\177\20" \
-    "b\00caseins\0b\01allnames"

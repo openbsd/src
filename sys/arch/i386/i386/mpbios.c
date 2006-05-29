@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.13 2006/05/14 19:07:46 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.14 2006/05/29 20:40:58 miod Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -1063,13 +1063,6 @@ mpbios_ioapic(ent, self)
 
 	config_found_sm(self, &aaa, mp_print, mp_match);
 }
-
-static const char inttype_fmt[] = "\177\020"
-		"f\0\2type\0" "=\1NMI\0" "=\2SMI\0" "=\3ExtINT\0";
-
-static const char flagtype_fmt[] = "\177\020"
-		"f\0\2pol\0" "=\1Act Hi\0" "=\3Act Lo\0"
-		"f\2\2trig\0" "=\1Edge\0" "=\3Level\0";
 
 int
 mpbios_int(ent, mpi)
