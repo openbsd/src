@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.21 2004/09/18 23:22:05 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.22 2006/05/29 05:09:36 ray Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -26,6 +26,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <util.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -134,15 +135,20 @@ int
 MBR_read(int fd, off_t where, char *buf)
 {
 	off_t off;
-	int len;
+	ssize_t len;
 
 	where *= DEV_BSIZE;
 	off = lseek(fd, where, SEEK_SET);
 	if (off != where)
-		return (off);
+		return (-1);
 	len = read(fd, buf, DEV_BSIZE);
-	if (len != DEV_BSIZE)
-		return (len);
+	if (len == -1)
+		return (-1);
+	if (len != DEV_BSIZE) {
+		/* short read */
+		errno = EIO;
+		return (-1);
+	}
 	return (0);
 }
 
@@ -150,15 +156,20 @@ int
 MBR_write(int fd, off_t where, char *buf)
 {
 	off_t off;
-	int len;
+	ssize_t len;
 
 	where *= DEV_BSIZE;
 	off = lseek(fd, where, SEEK_SET);
 	if (off != where)
-		return (off);
+		return (-1);
 	len = write(fd, buf, DEV_BSIZE);
-	if (len != DEV_BSIZE)
-		return (len);
+	if (len == -1)
+		return (-1);
+	if (len != DEV_BSIZE) {
+		/* short write */
+		errno = EIO;
+		return (-1);
+	}
 	(void) ioctl(fd, DIOCRLDINFO, 0);
 	return (0);
 }
