@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.13 2006/05/29 18:47:19 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.14 2006/05/29 20:39:41 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -29,12 +29,12 @@ The optional
 .Ic weight
 keyword permits finer control over the relative importance
 of time sources (servers or sensor devices).
-Weights are specified in the range 1 to 10:
-a server with a weight of 5
-will have five times more importance on time offset calculation
-than a server with a weight of 1.
-If no weight is given,
+Weights are specified in the range 1 to 10;
+if no weight is given,
 the default is 1.
+A server with a weight of 5, for example,
+will have five times more influence on time offset calculation
+than a server with a weight of 1.
 .Pp
 .Nm
 has the following format:
