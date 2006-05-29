@@ -1,3 +1,4 @@
+/*	$OpenBSD: obio_space.c,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
 /*	$NetBSD: obio_space.c,v 1.9 2005/11/24 13:08:33 yamt Exp $	*/
 
 

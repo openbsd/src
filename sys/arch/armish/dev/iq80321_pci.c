@@ -1,3 +1,4 @@
+/*	$OpenBSD: iq80321_pci.c,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*

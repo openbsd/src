@@ -1,3 +1,4 @@
+/*	$OpenBSD: iq80321var.h,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
 /*	$NetBSD: iq80321var.h,v 1.1 2002/03/27 21:51:30 thorpej Exp $	*/
 
 /*
