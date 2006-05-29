@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.1 2006/05/28 23:37:42 jason Exp $	*/
+/*	$OpenBSD: beep.c,v 1.2 2006/05/29 00:17:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -58,6 +58,7 @@ struct beep_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_clk;
 };
 
 int	beep_match(struct device *, void *, void *);
@@ -105,5 +106,9 @@ beep_attach(parent, self, aux)
                 return;
 	}
 
-	printf("\n");
+	/* The bbc,beep is clocked at half the BBC frequency */
+	sc->sc_clk = getpropint(findroot(), "clock-frequency", 0);
+	sc->sc_clk /= 2;
+
+	printf(": clock %sMHz\n", clockfreq(sc->sc_clk));
 }
