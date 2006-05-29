@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.4 2006/05/29 05:43:55 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.5 2006/05/29 18:58:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -698,6 +698,52 @@ struct mpi_msg_scsi_io_error {
 	u_int16_t		reserved2;
 } __packed;
 
+struct mpi_msg_scsi_task_request {
+	u_int8_t		target_id;
+	u_int8_t		bus;
+	u_int8_t		chain_offset;
+	u_int8_t		function;
+
+	u_int8_t		reserved1;
+	u_int8_t		task_type;
+#define MPI_MSG_SCSI_TASK_TYPE_ABORT_TASK		(0x01)
+#define MPI_MSG_SCSI_TASK_TYPE_ABRT_TASK_SET		(0x02)
+#define MPI_MSG_SCSI_TASK_TYPE_TARGET_RESET		(0x03)
+#define MPI_MSG_SCSI_TASK_TYPE_RESET_BUS		(0x04)
+#define MPI_MSG_SCSI_TASK_TYPE_LOGICAL_UNIT_RESET	(0x05)
+	u_int8_t		reserved2;
+	u_int8_t		msg_flags;
+
+	u_int32_t		msg_context;
+
+	u_int16_t		lun[4];
+
+	u_int32_t		reserved3[7]; /* wtf? */
+
+	u_int32_t		target_msg_context;
+} __packed;
+
+struct mpi_msg_scsi_task_reply {
+	u_int8_t		target_id;
+	u_int8_t		bus;
+	u_int8_t		msg_length;
+	u_int8_t		function;
+
+	u_int8_t		response_code;
+	u_int8_t		task_type;
+	u_int8_t		reserved1;
+	u_int8_t		msg_flags;
+
+	u_int32_t		msg_context;
+
+	u_int16_t		reserved2;
+	u_int16_t		ioc_status;
+
+	u_int32_t		ioc_loginfo;
+
+	u_int32_t		termination_count;
+} __packed;
+
 struct mpi_cfg_hdr {
 	u_int8_t		page_version;
 	u_int8_t		page_length;
@@ -774,6 +820,30 @@ struct mpi_msg_config_reply {
 	struct mpi_cfg_hdr	config_header;
 } __packed;
 
+struct mpi_cfg_spi_port_pg0 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int32_t		capabilities;
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_PACKETIZED	(1<<0)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_DT		(1<<1)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_QAS		(1<<2)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_MIN_STP		(0x0000ff00)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_MAX_STP		(0x00ff0000)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_IDP		(1<<27)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH		(1<<29)
+#define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_NARROW	(0<<29)
+#define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_WIDE	(1<<29)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_AIP		(1<<31)
+
+        u_int32_t               physical_interface;
+#define MPI_CFG_SPI_PORT_0_PHYS_SIGNAL			(0x3<<0)
+#define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_HVD		(0x1<<0)
+#define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_SE		(0x2<<0)
+#define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_LVD		(0x3<<0)
+#define MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID		(0xff<<24)
+#define  MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID_BUSFREE	(0xfe<<24)
+#define  MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID_UNKNOWN	(0xff<<24)
+} __packed;
 
 struct mpi_cfg_manufacturing_pg0 {
 	struct mpi_cfg_hdr	config_header;
