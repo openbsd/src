@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.9 2006/05/29 08:18:57 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.10 2006/05/29 08:33:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -827,8 +827,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	if (xs->datalen == 0) {
 		sge = &mcb->mcb_sgl[0];
 		sge->sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
-		    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
-		    MPI_SGE_FL_SIZE_64);
+		    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 		return (0);
 	}
 
@@ -840,7 +839,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 		return (1);
 	}
 
-	flags = MPI_SGE_FL_TYPE_SIMPLE;
+	flags = MPI_SGE_FL_TYPE_SIMPLE | MPI_SGE_FL_SIZE_64;
 	if (xs->flags & SCSI_DATA_OUT)
 		flags |= MPI_SGE_FL_DIR_OUT;
 
