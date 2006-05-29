@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.104 2006/05/28 19:08:11 mcbride Exp $	 */
+/* $OpenBSD: sa.c,v 1.105 2006/05/29 07:02:10 mcbride Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1179,8 +1179,10 @@ sa_soft_finalize(struct exchange* exchange, void *v_sa, int fail)
 	struct sa *sa = v_sa;
 
 	if (sa->phase != 2 || !sa->death ||
-	    (sa->flags & SA_FLAG_REPLACED))
+	    (sa->flags & SA_FLAG_REPLACED)) {
 		sa_release(sa);
+		return;
+	}
 
 	if (fail) {
 		char *peer = conf_get_str(sa->name, "ISAKMP-peer");
