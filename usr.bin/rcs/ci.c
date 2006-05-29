@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.176 2006/05/29 02:58:16 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.177 2006/05/29 21:17:44 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -63,8 +63,9 @@ struct checkin_params {
 	time_t date;
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
+	const char *description, *symbol;
 	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
-	char *author, *description, *state, *symbol;
+	char *author, *state;
 };
 
 static int	 checkin_attach_symbol(struct checkin_params *);
@@ -108,7 +109,8 @@ checkin_main(int argc, char **argv)
 	pb.date = DATE_NOW;
 	pb.file = NULL;
 	pb.rcs_msg = pb.username = pb.author = pb.state = NULL;
-	pb.symbol = pb.description = pb.deltatext = NULL;
+	pb.description = pb.symbol = NULL;
+	pb.deltatext = NULL;
 	pb.newrev =  NULL;
 	pb.flags = status = 0;
 	pb.fmode = S_IRUSR|S_IRGRP|S_IROTH;
@@ -164,9 +166,7 @@ checkin_main(int argc, char **argv)
 			pb.flags |= CI_SYMFORCE;
 			/* FALLTHROUGH */
 		case 'n':
-			if (pb.symbol != NULL)
-				xfree(pb.symbol);
-			pb.symbol = xstrdup(rcs_optarg);
+			pb.symbol = rcs_optarg;
 			if (rcs_sym_check(pb.symbol) != 1)
 				errx(1, "invalid symbol `%s'", pb.symbol);
 			break;

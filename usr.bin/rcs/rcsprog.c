@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.130 2006/05/28 23:16:31 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.131 2006/05/29 21:17:44 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -238,6 +238,8 @@ rcs_main(int argc, char **argv)
 			rcsflags |= RCSPROG_LFLAG;
 			break;
 		case 'm':
+			if (logstr != NULL)
+				xfree(logstr);
 			logstr = xstrdup(rcs_optarg);
 			break;
 		case 'M':
@@ -502,9 +504,6 @@ rcs_main(int argc, char **argv)
 		if (!(rcsflags & QUIET))
 			(void)fprintf(stderr, "done\n");
 	}
-
-	if (logstr != NULL)
-		xfree(logstr);
 
 	return (0);
 }
