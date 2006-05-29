@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.15 2006/05/28 21:20:16 moritz Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.16 2006/05/29 17:38:46 moritz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.15 2006/05/28 21:20:16 moritz Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.16 2006/05/29 17:38:46 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 #endif
 	register int ret;
 
-	if (caplen < sizeof(struct llc)) {
+	if (caplen < 3) {
 		(void)printf("[|llc]");
 		default_print((u_char *)p, caplen);
 		return(0);
@@ -90,23 +90,6 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	else if (p[0] == 0xf0 && p[1] == 0xf0)
 		netbios_print(p, length);
 #endif
-
-	/* Cisco Discovery Protocol  - SNAP & ether type 0x2000 */
-	if(llc.ssap == LLCSAP_SNAP && llc.dsap == LLCSAP_SNAP &&
-		llc.llcui == LLC_UI && 
-		llc.ethertype[0] == 0x20 && llc.ethertype[1] == 0x00 ) {
-		    cdp_print( p, length, caplen, esrc, edst);
-		    return (1);
-	}
-
-	/* Shared Spanning Tree Protocol - SNAP & ether type 0x010b */
-	if (llc.ssap == LLCSAP_SNAP && llc.dsap == LLCSAP_SNAP &&
-	    llc.llcui == LLC_UI &&
-	    llc.ethertype[0] == 0x01 && llc.ethertype[1] == 0x0b) {
-		stp_print(p, length);
-		return(1);
-	}
-
 	if (llc.ssap == LLCSAP_ISONS && llc.dsap == LLCSAP_ISONS
 	    && llc.llcui == LLC_UI) {
 		isoclns_print(p + 3, length - 3, caplen - 3, esrc, edst);
@@ -120,6 +103,18 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		    default_print((u_char *)p, caplen);
 		    return (0);
 		}
+
+		/* Cisco Discovery Protocol  - SNAP & ether type 0x2000 */
+		if (llc.ethertype[0] == 0x20 && llc.ethertype[1] == 0x00) {
+			cdp_print(p, length, caplen, esrc, edst);
+			return (1);
+		}
+		/* Shared Spanning Tree Protocol - SNAP & ether type 0x010b */
+		if (llc.ethertype[0] == 0x01 && llc.ethertype[1] == 0x0b) {
+			stp_print(p, length);
+			return (1);
+		}
+
 		if (vflag)
 			(void)printf("snap %s ", protoid_string(llc.llcpi));
 
@@ -258,6 +253,10 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 
 	} else {
 		char f;
+		if (caplen < 4) {
+			default_print_unaligned(p, caplen);
+			return (0);
+		}
 		llc.llcis = ntohs(llc.llcis);
 		switch ((llc.ssap & LLC_GSAP) | (llc.llcu & LLC_U_POLL)) {
 		    case 0:			f = 'C'; break;
