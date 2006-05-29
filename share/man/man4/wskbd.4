@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.17 2005/11/17 05:41:42 uwe Exp $
+.\" $OpenBSD: wskbd.4,v 1.18 2006/05/29 20:23:10 miod Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -140,6 +140,12 @@ and
 .Cm Shift+PgDn
 combinations provide scrollback functionality if the underlying hardware
 driver supports it.
+When audio devices are supported, keys
+.Cm Mute ,
+.Cm VolumeUp
+and
+.Cm VolumeDown
+tweak mixer settings.
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsksymdef.h -compact
 .It Pa /dev/wskbd*

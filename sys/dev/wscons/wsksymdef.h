@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.29 2006/05/19 20:55:05 miod Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.30 2006/05/29 20:23:13 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -628,6 +628,10 @@
 #define KS_Menu			0xf3c0
 #define KS_Pause		0xf3c1
 #define KS_Print_Screen		0xf3c2
+
+#define KS_AudioMute		0xf3d1
+#define KS_AudioLower		0xf3d2
+#define KS_AudioRaise		0xf3d3
 
 /*
  * Group 4 (command)

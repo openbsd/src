@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.30 2005/05/09 05:08:57 miod Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.31 2006/05/29 20:23:13 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -141,7 +141,10 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(127),			KS_Pause, /* Break */
     KC(156),			KS_KP_Enter,
     KC(157), KS_Cmd1,		KS_Control_R,
+    KC(160),			KS_AudioMute,
     KC(170),			KS_Print_Screen,
+    KC(174),			KS_AudioLower,
+    KC(176),			KS_AudioRaise,
     KC(181),			KS_KP_Divide,
     KC(183),			KS_Print_Screen,
     KC(184), KS_Cmd2,		KS_Alt_R,	KS_Multi_key,

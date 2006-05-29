@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.46 2005/08/14 11:00:15 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.47 2006/05/29 20:23:13 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -82,6 +82,7 @@
 #ifndef	SMALL_KERNEL
 #define	BURNER_SUPPORT
 #define	SCROLLBACK_SUPPORT
+#define	HOTKEY_SUPPORT
 #endif
 
 #include <sys/param.h>
@@ -110,6 +111,7 @@
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
+#include "audio.h"		/* NAUDIO (mixer tuning) */
 #include "wsdisplay.h"
 #include "wsmux.h"
 
@@ -428,6 +430,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: attach error=%d\n",
 			    sc->sc_base.me_dv.dv_xname, error);
 	}
+#endif
+
+#ifdef HOTKEY_SUPPORT
+	wskbd_hotkey_init();
 #endif
 }
 
@@ -1611,6 +1617,23 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 			ksym = group[gindex];
 		}
 	}
+
+#ifdef HOTKEY_SUPPORT
+	/* Submit Audio keys for hotkey processing */
+	if (KS_GROUP(ksym) == KS_GROUP_Function) {
+		switch (ksym) {
+#if NAUDIO > 0
+		case KS_AudioMute:
+		case KS_AudioLower:
+		case KS_AudioRaise:
+			wskbd_hotkey_put(ksym);
+			return (0);
+#endif
+		default:
+			break;
+		}
+	}
+#endif
 
 	/* Process compose sequence and dead accents */
 	res = KS_voidSymbol;
