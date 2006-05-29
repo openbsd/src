@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.8 2006/05/29 06:32:09 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.9 2006/05/29 08:18:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -72,7 +72,9 @@ int			mpi_alloc_replies(struct mpi_softc *);
 void			mpi_push_replies(struct mpi_softc *);
 
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
+int			mpi_complete(struct mpi_softc *, struct mpi_ccb *, int);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
+
 void			mpi_timeout_xs(void *);
 int			mpi_load_xs(struct mpi_ccb *);
 
@@ -462,31 +464,21 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 }
 
 int
-mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
+mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 {
 	struct mpi_ccb			*ccb;
 	struct mpi_msg_reply		*reply = NULL;
 	paddr_t				reply_dva;
 	char				*reply_addr;
 	u_int32_t			reg, id;
-	int				s;
 
 	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
-
-	s = splbio();
-
-	mpi_start(sc, nccb);
 
 	do {
 		reg = mpi_pop_reply(sc);
 		if (reg == 0xffffffff) {
-			if (timeout == 0) {
-				splx(s);
+			if (timeout-- == 0)
 				return (1);
-			}
-
-			if (timeout > 0)
-				--timeout;
 
 			delay(1000);
 			continue;
@@ -537,9 +529,23 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 
 	} while (nccb->ccb_id != id);
 
+	return (0);
+}
+
+int
+mpi_poll(struct mpi_softc *sc, struct mpi_ccb *ccb, int timeout)
+{
+	int				error;
+	int				s;
+
+	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+
+	s = splbio();
+	mpi_start(sc, ccb);
+	error = mpi_complete(sc, ccb, timeout);
 	splx(s);
 
-	return (0);
+	return (error);
 }
 
 int
@@ -1334,7 +1340,10 @@ mpi_portfacts(struct mpi_softc *sc)
 	pfq->port_number = 0;
 	pfq->msg_context = htole32(ccb->ccb_id);
 
-	mpi_poll(sc, ccb, -1);
+	if (mpi_poll(sc, ccb, 1000) != 0) {
+		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		return (1);
+	}
 
 	pfp = ccb->ccb_reply;
 	if (pfp == NULL)
@@ -1469,7 +1478,10 @@ mpi_portenable(struct mpi_softc *sc)
 	peq->port_number = 0;
 	peq->msg_context = htole32(ccb->ccb_id);
 
-	mpi_poll(sc, ccb, -1);
+	if (mpi_poll(sc, ccb, 1000) != 0) {
+		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		return (1);
+	}
 
 	pep = ccb->ccb_reply;
 	if (pep == NULL)
@@ -1539,7 +1551,10 @@ mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 
-	mpi_poll(sc, ccb, -1);
+	if (mpi_poll(sc, ccb, 1000) != 0) {
+		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		return (1);
+	}
 
 	cp = ccb->ccb_reply;
 	if (cp == NULL)
@@ -1632,7 +1647,10 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	if (!read)
 		bcopy(page, kva, len);
 
-	mpi_poll(sc, ccb, -1);
+	if (mpi_poll(sc, ccb, 1000) != 0) {
+		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		return (1);
+	}
 
 	cp = ccb->ccb_reply;
 	if (cp == NULL) {
