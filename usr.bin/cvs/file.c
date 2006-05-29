@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.149 2006/05/29 05:06:03 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.150 2006/05/29 06:05:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -41,7 +41,6 @@
 static const char *cvs_ign_std[] = {
 	".",
 	"..",
-	".*",
 	"*.o",
 	"*.a",
 	"*.bak",
