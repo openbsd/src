@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.45 2006/05/28 17:26:12 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.46 2006/05/29 06:25:06 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -45,7 +45,6 @@ cvs_add(int argc, char **argv)
 {
 	int ch;
 	int flags;
-	char *arg = ".";
 	struct cvs_recursion cr;
 
 	flags = CR_REPO;
@@ -63,17 +62,16 @@ cvs_add(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc == 0)
+		fatal("%s", cvs_cmd_add.cmd_synopsis);
+
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 	cr.local = cvs_add_local;
 	cr.remote = NULL;
 	cr.flags = flags;
 
-	if (argc > 0)
-		cvs_file_run(argc, argv, &cr);
-	else
-		cvs_file_run(1, &arg, &cr);
-
+	cvs_file_run(argc, argv, &cr);
 	return (0);
 }
 
