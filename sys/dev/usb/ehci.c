@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.55 2006/05/29 00:16:10 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.56 2006/05/29 04:02:10 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ Static void		ehci_device_isoc_done(usbd_xfer_handle);
 Static void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
 Static void		ehci_noop(usbd_pipe_handle pipe);
 
-Static int		ehci_str(usb_string_descriptor_t *, int, char *);
+Static int		ehci_str(usb_string_descriptor_t *, int, const char *);
 Static void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
 Static void		ehci_pcd_able(ehci_softc_t *, int);
 Static void		ehci_pcd_enable(void *);
@@ -339,14 +339,14 @@ ehci_init(ehci_softc_t *sc)
 	ehci_soft_qh_t *sqh;
 
 #ifdef EHCI_DEBUG
-	u_int32_t version;
+	u_int32_t vers;
 	theehci = sc;
 
 	DPRINTF(("ehci_init: start\n"));
 
-	version = EREAD2(sc, EHCI_HCIVERSION);
+	vers = EREAD2(sc, EHCI_HCIVERSION);
 	DPRINTF(("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
-	    version >> 8, version & 0xff));
+	    vers >> 8, vers & 0xff));
 #endif
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
@@ -1623,7 +1623,7 @@ Static usb_hub_descriptor_t ehci_hubd = {
 };
 
 Static int
-ehci_str(usb_string_descriptor_t *p, int l, char *s)
+ehci_str(usb_string_descriptor_t *p, int l, const char *s)
 {
 	int i;
 
