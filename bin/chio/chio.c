@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.13 2006/05/29 01:21:38 beck Exp $	*/
+/*	$OpenBSD: chio.c,v 1.14 2006/05/29 01:35:42 henning Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 
 	/* Skip over the command name and call handler. */
 	++argv; --argc;
-	exit ((*commands[i].cc_handler)(commands[i].cc_name, argc, argv));
+	exit((*commands[i].cc_handler)(commands[i].cc_name, argc, argv));
 }
 
 static int
@@ -190,10 +190,11 @@ do_move(char *cname, int argc, char *argv[])
 		 */
 		int mtfd;
 		struct mtop mtoffl =  { MTOFFL, 1 };
-		char * tapedev = parse_tapedev(_PATH_CH_CONF, changer_name, cmd.cm_fromunit);
+		char *tapedev =
+		    parse_tapedev(_PATH_CH_CONF, changer_name, cmd.cm_fromunit);
 		mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
 		    NULL);
-		if (mtfd == -1) 
+		if (mtfd == -1)
 			err(1, "%s drive %d (%s): open", changer_name,
 			    cmd.cm_fromunit, tapedev);
 		if (ioctl(mtfd, MTIOCTOP, &mtoffl) == -1)
@@ -643,7 +644,7 @@ bits_to_string(int v, const char *cp)
 		if ((v & (1 << (f - 1))) == 0)
 			continue;
 		(void)snprintf(bp, sizeof(buf) - (bp - &buf[0]),
-			       "%c%.*s", sep, (int)(np - cp), cp);
+		    "%c%.*s", sep, (int)(np - cp), cp);
 		bp += strlen(bp);
 		sep = ',';
 	}
