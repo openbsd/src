@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.8 2005/11/23 11:22:10 mickey Exp $ */
+/*      $OpenBSD: pmap.h,v 1.9 2006/05/29 21:50:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -37,6 +37,8 @@
 
 #ifndef	_MIPS_PMAP_H_
 #define	_MIPS_PMAP_H_
+
+#ifdef	_KERNEL
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -84,7 +86,6 @@ typedef struct pmap {
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
-#ifdef	_KERNEL
 
 /* flags for pv_entry */
 #define	PV_UNCACHED	0x0001		/* Page is mapped unchached */

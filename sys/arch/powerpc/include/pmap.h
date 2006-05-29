@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.41 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.42 2006/05/29 21:50:09 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -81,6 +81,8 @@ void pmap_kremove_pg(vaddr_t va);
 #define PMAP_CACHE_WT		2 	/* writethru */
 #define PMAP_CACHE_WB		3	/* writeback */
 
+#ifdef	_KERNEL
+
 /*
  * Pmap stuff
  */
@@ -94,7 +96,6 @@ struct pmap {
 
 typedef	struct pmap *pmap_t;
 
-#ifdef	_KERNEL
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 boolean_t pteclrbits(paddr_t pa, u_int mask, u_int clear);
