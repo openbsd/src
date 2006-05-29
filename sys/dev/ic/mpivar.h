@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.3 2006/05/29 05:43:55 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.4 2006/05/29 19:55:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -17,11 +17,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* XXX */
-#define MPI_MAX_SGL		32
 
 #define MPI_REQUEST_SIZE	512
 #define MPI_REPLY_SIZE		128
+
+/*
+ * this is the max number of sge's we can stuff in a request frame:
+ * sizeof(scsi_io) + sizeof(sense) + sizeof(sge) * 32 = MPI_REQUEST_SIZE
+ */
+#define MPI_MAX_SGL		36
 
 struct mpi_dmamem {
 	bus_dmamap_t		mdm_map;
@@ -76,6 +80,7 @@ struct mpi_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	int			sc_maxcmds;
+	int			sc_first_sgl_len;
 	int			sc_maxchdepth;
 	u_int8_t		sc_porttype;
 

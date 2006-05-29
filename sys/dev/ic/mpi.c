@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.10 2006/05/29 08:33:36 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.11 2006/05/29 19:55:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -374,8 +374,9 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 	for (i = 0; i < sc->sc_maxcmds; i++) {
 		ccb = &sc->sc_ccbs[i];
 
-		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, MPI_MAX_SGL,
-		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
+		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
+		    sc->sc_first_sgl_len, MAXPHYS, 0, 0,
+		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
 			goto free_maps;
 		}
@@ -1237,6 +1238,10 @@ mpi_iocfacts(struct mpi_softc *sc)
 #endif /* MPI_DEBUG */
 
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
+	sc->sc_first_sgl_len = ((letoh16(ifp.request_frame_size) * 4) - 
+	    sizeof(struct mpi_msg_scsi_io)) / sizeof(struct mpi_sge);
+	DPRINTF("%s:   first sgl len: %d\n", DEVNAME(sc),
+	    sc->sc_first_sgl_len);
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_buswidth = ifp.max_devices;
 
