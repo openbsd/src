@@ -1,4 +1,5 @@
-$	$OpenBSD: files.armish,v 1.2 2006/05/29 17:30:26 drahn Exp $
+#	$OpenBSD: files.armish,v 1.3 2006/05/29 17:31:57 drahn Exp $
+
 maxpartitions   16
 maxusers		2 8 64
 
