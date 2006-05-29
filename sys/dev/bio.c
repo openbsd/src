@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.7 2006/05/26 00:09:09 deraadt Exp $	*/
+/*	$OpenBSD: bio.c,v 1.8 2006/05/29 09:34:38 mk Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -43,17 +43,13 @@ struct bio_mapping {
 
 LIST_HEAD(, bio_mapping) bios = LIST_HEAD_INITIALIZER(bios);
 
-struct bio_softc {
-	struct device	 sc_dev;
-};
-
 void	bioattach(int);
 int	bioclose(dev_t, int, int, struct proc *);
 int	bioioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	bioopen(dev_t, int, int, struct proc *);
 
 int	bio_delegate_ioctl(struct bio_mapping *, u_long, caddr_t);
-struct bio_mapping *bio_lookup(char *);
+struct	bio_mapping *bio_lookup(char *);
 int	bio_validate(void *);
 
 void
@@ -79,13 +75,12 @@ bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct bio_locate *locate;
 	struct bio_common *common;
 	char name[16];
-	size_t len;
 	int error;
 
 	switch (cmd) {
 	case BIOCLOCATE:
 		locate = (struct bio_locate *)addr;
-		error = copyinstr(locate->bl_name, name, 16, &len);
+		error = copyinstr(locate->bl_name, name, 16, NULL);
 		if (error != 0)
 			return (error);
 		locate->bl_cookie = bio_lookup(name);
