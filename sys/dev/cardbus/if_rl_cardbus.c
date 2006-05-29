@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.10 2005/05/29 07:54:33 brad Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.11 2006/05/29 01:00:24 pvalchev Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ rl_cardbus_setup(csc)
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	pcireg_t	reg,command;
+	pcireg_t	reg, command;
 	int		pmreg;
 
 	/*
