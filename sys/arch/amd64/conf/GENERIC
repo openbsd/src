@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.136 2006/05/29 00:59:24 canacar Exp $
+#	$OpenBSD: GENERIC,v 1.137 2006/05/29 01:06:26 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -192,6 +192,10 @@ ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
 
 puc*	at pci?				# PCI "universal" communication device
+
+sdhc*	at pci?			# SD Host Controller
+sdmmc*	at sdhc?		# SD/MMC bus
+scsibus* at sdmmc?		# SCSI emulation
 
 isadma0	at isa?
 
