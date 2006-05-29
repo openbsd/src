@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.2 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.3 2006/05/29 20:40:03 miod Exp $	*/
 /*	$NetBSD: bereg.h,v 1.4 2000/07/24 04:28:51 mycroft Exp $	*/
 
 /*-
@@ -159,12 +159,12 @@ struct be_bregs {
 #define BE_BR_STAT_LCCNTEXP	0x00002000	/* late-collision cntr exp */
 #define BE_BR_STAT_FCNTEXP	0x00004000	/* first-collision cntr exp */
 #define BE_BR_STAT_DTIMEXP	0x00008000	/* defer-timer expired */
-#define BE_BR_STAT_BITS		"\177\020"				\
-			"b\0GOTFRAME\0b\1RCNTEXP\0b\2ACNTEXP\0"		\
-			"b\3CCNTEXP\0b\5LCNTEXP\0b\6RFIFOVF\0"		\
-			"b\7CVCNTEXP\0b\10SENTFRAME\0b\11TFIFO_UND\0"	\
-			"b\12MAXPKTERR\0b\13NCNTEXP\0b\14ECNTEXP\0"	\
-			"b\15LCCNTEXP\0b\16FCNTEXP\0b\17DTIMEXP\0\0"
+#define BE_BR_STAT_BITS		"\020"				\
+			"\01GOTFRAME\02RCNTEXP\03ACNTEXP"		\
+			"\04CCNTEXP\05LCNTEXP\06RFIFOVF"		\
+			"\07CVCNTEXP\011SENTFRAME\012TFIFO_UND"	\
+			"\013MAXPKTERR\014NCNTEXP\015ECNTEXP"	\
+			"\016LCCNTEXP\017FCNTEXP\020DTIMEXP"
 
 /* be_bregs.imask: interrupt mask. */
 #define BE_BR_IMASK_GOTFRAME	0x00000001	/* received a frame */
@@ -286,9 +286,9 @@ struct be_tregs {
 #define TCVR_PAL_MSENSE		0x00000004	/* media sense */
 #define TCVR_PAL_LTENABLE	0x00000008	/* link test enable */
 #define TCVR_PAL_LTSTATUS	0x00000010	/* link test status: p1 only */
-#define TCVR_PAL_BITS		"\177\020"				\
-				"b\0SERIAL\0b\1EXTLBACK\0b\2MSENSE\0"	\
-				"b\3LTENABLE\0\b4LTSTATUS\0\0"
+#define TCVR_PAL_BITS		"\020"				\
+				"\01SERIAL\02EXTLBACK\03MSENSE"	\
+				"\04LTENABLE\05LTSTATUS"
 
 /* be_tregs.mgmt_pal: management pal */
 #define MGMT_PAL_DCLOCK		0x00000001	/* data clock strobe */
@@ -299,9 +299,9 @@ struct be_tregs {
 #define MGMT_PAL_TIMEO		0x00000008	/* tx enable timeout error */
 #define MGMT_PAL_INT_MDIO	MGMT_PAL_TIMEO	/* internal mdio */
 #define MGMT_PAL_INT_MDIO_SHIFT	3		/* position of int mdio bit */
-#define MGMT_PAL_BITS		"\177\020"				\
-				"b\0DLCLOCK\0b\1OENAB\0b\2EXT_MDIO\0"	\
-				"b\3INT_MDIO\0\0"
+#define MGMT_PAL_BITS		"\020"				\
+				"\01DLCLOCK\02ENAB\03EXT_MDIO"	\
+				"\04INT_MDIO"
 
 /* Packet buffer size */
 #define BE_PKT_BUF_SZ		2048

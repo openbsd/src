@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.7 2005/04/19 21:30:20 miod Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.8 2006/05/29 20:40:01 miod Exp $	*/
 /*	$NetBSD: intreg.h,v 1.6 1997/07/22 20:19:10 pk Exp $ */
 
 /*
@@ -142,10 +142,12 @@ void	ienab_bic(int bic);	/* clear given bits */
 #define SINTR_SBUS(n)		(1 << (7+(n)-1))
 #define SINTR_VMEMASK		0x0000007f	/* VME */
 #define SINTR_VME(n)		(1 << ((n)-1))
-#define SINTR_BITS		"\177\020" \
-				"f\0\7VME\0f\7\7SBUS\0b\16K\0b\17S\0b\20E\0" \
-				"b\21A\0b\22SC\0b\23T\0b\24VI\0b\25MI\0"     \
-				"b\26F\0b\33V\0b\34M\0b\35I\0b\36ME\0b\37MA\0"
+#define SINTR_BITS		"\020" \
+				"\01VME0\02VME1\03VME2\04VME3\05VME4\06VME5" \
+				"\07VME6\010SBUS0\011SBUS1\012SBUS2\013SBUS3" \
+				"\014SBUS4\015SBUS5\016SBUS6\017K\020S\021E" \
+				"\022A\023SC\024T\025VI\065MI\027F" \
+				"\034V\035M\036I\037ME\040MA"
 
 
 #endif
