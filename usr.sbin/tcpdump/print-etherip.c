@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-etherip.c,v 1.2 2003/06/03 00:21:04 jason Exp $	*/
+/*	$OpenBSD: print-etherip.c,v 1.3 2006/05/29 18:05:22 moritz Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-etherip.c,v 1.2 2003/06/03 00:21:04 jason Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-etherip.c,v 1.3 2006/05/29 18:05:22 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -63,10 +63,8 @@ static const char rcsid[] =
 
 extern u_short extracted_ethertype;
 
-void 
-etherip_print(bp, len, bp2)
-	register const u_char *bp, *bp2;
-	register u_int len;
+void
+etherip_print(const u_char *bp, u_int len, const u_char *bp2)
 {
 	const struct ip *ip = (const struct ip *)bp2;
 	struct ether_header *eh;
@@ -101,7 +99,7 @@ etherip_print(bp, len, bp2)
 		return;
 
 	printf(": ");
-		
+
 	pbuf += hlen;
 	plen -= hlen;
 
