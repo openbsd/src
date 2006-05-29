@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.70 2006/05/28 21:24:09 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.71 2006/05/29 03:38:28 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -154,6 +154,8 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_addr_wrap *, u_int32_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *);
+int			 expand_sa(struct ipsec_rule *, u_int32_t,
+			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct
@@ -287,20 +289,8 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
-			if (ipsecctl_add_rule(ipsec, r))
-				errx(1, "tcpmd5rule: ipsecctl_add_rule");
-
-			/* Create and add reverse SA rule. */
-			if ($3.spiin != 0 || $4.keyin != NULL) {
-				r = reverse_sa(r, $3.spiin, $4.keyin, NULL);
-				if (r == NULL)
-					YYERROR;
-				r->nr = ipsec->rule_nr++;
-
-				if (ipsecctl_add_rule(ipsec, r))
-					errx(1, "tcpmd5rule: "
-					    "ipsecctl_add_rule");
-			}
+			if (expand_sa(r, $3.spiin, $4.keyin, NULL))
+				errx(1, "tcpmd5rule: expand_sa");
 		}
 		;
 
@@ -314,20 +304,8 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
-			if (ipsecctl_add_rule(ipsec, r))
-				errx(1, "sarule: ipsecctl_add_rule");
-
-			/* Create and add reverse SA rule. */
-			if ($4.spiin != 0 || $6.keyin || $7.keyin) {
-				r = reverse_sa(r, $4.spiin, $6.keyin,
-				    $7.keyin);
-				if (r == NULL)
-					YYERROR;
-				r->nr = ipsec->rule_nr++;
-
-				if (ipsecctl_add_rule(ipsec, r))
-					errx(1, "sarule: ipsecctl_add_rule");
-			}
+			if (expand_sa(r, $4.spiin, $6.keyin, $7.keyin))
+				errx(1, "sarule: expand_sa");
 		}
 		;
 
@@ -1673,6 +1651,27 @@ create_sa(u_int8_t satype, u_int8_t tmode, struct ipsec_addr_wrap *src, struct
 	r->enckey = enckey;
 
 	return r;
+}
+
+int
+expand_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
+    struct ipsec_key *enckey)
+{
+	struct ipsec_rule	*r;
+
+	if (ipsecctl_add_rule(ipsec, rule))
+		return (1);
+	if (spi != 0 || authkey || enckey) {
+		r = reverse_sa(rule, spi, authkey, enckey);
+		if (r == NULL)
+			return (1);
+		r->nr = ipsec->rule_nr++;
+
+		if (ipsecctl_add_rule(ipsec, r))
+			return (1);
+	}
+
+	return (0);
 }
 
 struct ipsec_rule *
