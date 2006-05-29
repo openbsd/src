@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2006/05/29 03:38:28 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2006/05/29 03:53:04 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,6 +162,7 @@ struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     u_int8_t, char *, char *, u_int8_t);
+int			 expand_rule(struct ipsec_rule *, u_int8_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
@@ -318,17 +319,8 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
-			if (ipsecctl_add_rule(ipsec, r))
-				errx(1, "flowrule: ipsecctl_add_rule");
-
-			/* Create and add reverse flow rule. */
-			if ($3 == IPSEC_INOUT) {
-				r = reverse_rule(r);
-				r->nr = ipsec->rule_nr++;
-
-				if (ipsecctl_add_rule(ipsec, r))
-					errx(1, "flowrule: ipsecctl_add_rule");
-			}
+			if (expand_rule(r, $3))
+				errx(1, "flowrule: expand_rule");
 		}
 		;
 
@@ -1769,6 +1761,26 @@ errout:
 	free(dst);
 
 	return NULL;
+}
+
+int
+expand_rule(struct ipsec_rule *rule, u_int8_t direction)
+{
+	struct ipsec_rule	*r;
+
+	if (ipsecctl_add_rule(ipsec, rule))
+		return (1);
+
+	/* Create and add reverse flow rule. */
+	if (direction == IPSEC_INOUT) {
+		r = reverse_rule(rule);
+		r->nr = ipsec->rule_nr++;
+
+		if (ipsecctl_add_rule(ipsec, r))
+			return (1);
+	}
+
+	return (0);
 }
 
 struct ipsec_rule *
