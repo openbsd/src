@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.45 2006/04/25 08:03:15 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.46 2006/05/30 22:12:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,6 +73,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 {
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
+	struct redistribute *r;
 	struct passwd	*pw;
 	struct event	 ev_sigint, ev_sigterm;
 	pid_t		 pid;
@@ -163,6 +164,12 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	event_set(&oeconf->ev, oeconf->ospf_socket, EV_READ|EV_PERSIST,
 	    recv_packet, oeconf);
 	event_add(&oeconf->ev, NULL);
+
+	/* remove unneeded config stuff */
+	while ((r = SIMPLEQ_FIRST(&oeconf->redist_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&oeconf->redist_list, entry);
+		free(r);
+	}
 
 	/* listen on ospfd control socket */
 	TAILQ_INIT(&ctl_conns);
@@ -810,7 +817,7 @@ orig_rtr_lsa(struct area *area)
 	 * Set the E bit as soon as an as-ext lsa may be redistributed, only
 	 * setting it in case we redistribute something is not worth the fuss.
 	 */
-	if (oeconf->redistribute_flags && (oeconf->options & OSPF_OPTION_E))
+	if (oeconf->redistribute && (oeconf->options & OSPF_OPTION_E))
 		lsa_rtr.flags |= OSPF_RTR_E;
 
 	border = (area_border_router(oeconf) != 0);
