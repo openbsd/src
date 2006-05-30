@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.98 2006/05/30 21:32:52 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.99 2006/05/30 22:25:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -140,7 +140,8 @@ cvs_diff_local(struct cvs_file *cf)
 		cvs_log(LP_ERR, "%s was removed, no comparison available",
 		    cf->file_path);
 		return;
-	} else if (cf->file_status == FILE_UPTODATE && rev2 == NULL) {
+	} else if (cf->file_status == FILE_UPTODATE && rev1 == NULL &&
+	     rev2 == NULL) {
 		return;
 	}
 
