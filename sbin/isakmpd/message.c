@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.116 2005/10/25 10:38:01 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.117 2006/05/30 19:54:29 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -2410,7 +2410,7 @@ message_add_sa_payload(struct message *msg)
 		for (proto = TAILQ_FIRST(&sa->protos), i = 0; proto;
 		    proto = TAILQ_NEXT(proto, link), i++) {
 			if (message_add_payload(msg, ISAKMP_PAYLOAD_PROPOSAL,
-			    proposals[i], proposal_lens[i], i > 1))
+			    proposals[i], proposal_lens[i], i > 0))
 				goto cleanup;
 			SET_ISAKMP_GEN_LENGTH(proposals[i], proposal_lens[i] +
 			    transform_lens[i]);
