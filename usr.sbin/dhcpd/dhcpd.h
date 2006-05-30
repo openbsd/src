@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.17 2006/05/11 01:19:08 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.18 2006/05/30 23:43:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -443,8 +443,8 @@ struct hardware_link {
 	struct hardware address;
 };
 
-struct timeout {
-	struct timeout *next;
+struct dhcpd_timeout {
+	struct dhcpd_timeout *next;
 	time_t when;
 	void (*func)(void *);
 	void *what;
@@ -711,7 +711,7 @@ extern struct interface_info *interfaces;
 extern struct protocol *protocols;
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
-extern struct timeout *timeouts;
+extern struct dhcpd_timeout *timeouts;
 void discover_interfaces(void);
 void dispatch(void);
 int locate_network(struct packet *);

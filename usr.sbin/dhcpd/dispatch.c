@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.20 2006/05/27 19:52:23 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.21 2006/05/30 23:43:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -50,8 +50,8 @@
 
 struct interface_info *interfaces;
 struct protocol *protocols;
-struct timeout *timeouts;
-static struct timeout *free_timeouts;
+struct dhcpd_timeout *timeouts;
+static struct dhcpd_timeout *free_timeouts;
 static int interfaces_invalidated;
 void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
@@ -297,7 +297,7 @@ dispatch(void)
 another:
 		if (timeouts) {
 			if (timeouts->when <= cur_time) {
-				struct timeout *t = timeouts;
+				struct dhcpd_timeout *t = timeouts;
 				timeouts = timeouts->next;
 				(*(t->func))(t->what);
 				t->next = free_timeouts;
@@ -487,7 +487,7 @@ locate_network(struct packet *packet)
 void
 add_timeout(time_t when, void (*where)(void *), void *what)
 {
-	struct timeout *t, *q;
+	struct dhcpd_timeout *t, *q;
 
 	/* See if this timeout supersedes an existing timeout. */
 	t = NULL;
@@ -511,7 +511,7 @@ add_timeout(time_t when, void (*where)(void *), void *what)
 			q->func = where;
 			q->what = what;
 		} else {
-			q = (struct timeout *)malloc(sizeof (struct timeout));
+			q = (struct dhcpd_timeout *)malloc(sizeof (struct dhcpd_timeout));
 			if (!q)
 				error("Can't allocate timeout structure!");
 			q->func = where;
@@ -547,7 +547,7 @@ add_timeout(time_t when, void (*where)(void *), void *what)
 void
 cancel_timeout(void (*where)(void *), void *what)
 {
-	struct timeout *t, *q;
+	struct dhcpd_timeout *t, *q;
 
 	/* Look for this timeout on the list, and unlink it if we find it. */
 	t = NULL;
