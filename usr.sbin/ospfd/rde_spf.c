@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.53 2006/04/25 19:27:36 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.54 2006/05/30 22:15:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -357,10 +357,11 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 		case LSA_TYPE_ROUTER:
 			for (i = 0; i < lsa_num_links(dst); i++) {
 				rtr_link = get_rtr_link(dst, i);
-				if (rtr_link->type != LINK_TYPE_POINTTOPOINT &&
-				    rtr_link->id != parent->ls_id)
-					continue;
-				dst->nexthop.s_addr = rtr_link->data;
+				if (rtr_link->type == LINK_TYPE_POINTTOPOINT &&
+				    ntohl(rtr_link->id) == parent->ls_id) {
+					dst->nexthop.s_addr = rtr_link->data;
+					break;
+				}
 			}
 			return;
 		case LSA_TYPE_NETWORK:
