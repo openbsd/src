@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.17 2006/05/27 21:47:55 pascoe Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.18 2006/05/30 22:51:53 pascoe Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -638,7 +638,12 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->cdce_bulkin_pipe);
 		DELAY(sc->cdce_rxeof_errors * 10000);
-		sc->cdce_rxeof_errors++;
+		if (sc->cdce_rxeof_errors++ > 10) {
+			printf("%s: too many errors, disabling\n",
+			    USBDEVNAME(sc->cdce_dev));
+			sc->cdce_dying = 1;
+			return;
+		}
 		goto done;
 	}
 
