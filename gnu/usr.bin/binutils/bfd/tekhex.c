@@ -99,7 +99,7 @@ static char sum_block[256];
 #define	ISHEX(x)  hex_p(x)
 
 static void tekhex_init PARAMS ((void));
-static bfd_vma getvalue PARAMS ((char **));
+static bfd_boolean getvalue PARAMS ((char **, bfd_vma *));
 static void tekhex_print_symbol
  PARAMS ((bfd *, PTR, asymbol *, bfd_print_symbol_type));
 static void tekhex_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
@@ -121,11 +121,11 @@ static const bfd_target *tekhex_object_p PARAMS ((bfd *));
 static bfd_boolean tekhex_mkobject PARAMS ((bfd *));
 static long tekhex_get_symtab_upper_bound PARAMS ((bfd *));
 static long tekhex_canonicalize_symtab PARAMS ((bfd *, asymbol **));
-static void pass_over PARAMS ((bfd *, void (*) (bfd*, int, char *)));
-static void first_phase PARAMS ((bfd *, int, char *));
+static bfd_boolean pass_over PARAMS ((bfd *, bfd_boolean (*) (bfd*, int, char *)));
+static bfd_boolean first_phase PARAMS ((bfd *, int, char *));
 static void insert_byte PARAMS ((bfd *, int, bfd_vma));
 static struct data_struct *find_chunk PARAMS ((bfd *, bfd_vma));
-static unsigned int getsym PARAMS ((char *, char **));
+static bfd_boolean getsym PARAMS ((char *, char **, unsigned int *));
 
 /*
 Here's an example
@@ -304,40 +304,50 @@ typedef struct tekhex_data_struct
 
 #define enda(x) (x->vma + x->size)
 
-static bfd_vma
-getvalue (srcp)
-     char **srcp;
+static bfd_boolean
+getvalue (char **srcp, bfd_vma *valuep)
 {
   char *src = *srcp;
   bfd_vma value = 0;
-  unsigned int len = hex_value(*src++);
+  unsigned int len;
+
+  if (!ISHEX (*src))
+    return FALSE;
+
+  len = hex_value(*src++);
 
   if (len == 0)
     len = 16;
   while (len--)
     {
+      if (!ISHEX (*src))
+	return FALSE;
       value = value << 4 | hex_value(*src++);
     }
   *srcp = src;
-  return value;
+  *valuep = value;
+  return TRUE;
 }
 
-static unsigned int
-getsym (dstp, srcp)
-     char *dstp;
-     char **srcp;
+static bfd_boolean
+getsym (char *dstp, char **srcp, unsigned int *lenp)
 {
   char *src = *srcp;
   unsigned int i;
-  unsigned int len = hex_value(*src++);
+  unsigned int len;
 
+  if (!ISHEX (*src))
+	return FALSE;
+
+  len = hex_value(*src++);
   if (len == 0)
     len = 16;
   for (i = 0; i < len; i++)
     dstp[i] = src[i];
   dstp[i] = 0;
   *srcp = src + i;
-  return len;
+  *lenp = len;
+  return TRUE;
 }
 
 static struct data_struct *
@@ -383,7 +393,7 @@ insert_byte (abfd, value, addr)
 
 /* The first pass is to find the names of all the sections, and see
   how big the data is */
-static void
+static bfd_boolean
 first_phase (abfd, type, src)
      bfd *abfd;
      int type;
@@ -391,6 +401,7 @@ first_phase (abfd, type, src)
 {
   asection *section = bfd_abs_section_ptr;
   unsigned int len;
+  bfd_vma val;
   char sym[17];			/* A symbol can only be 16chars long */
 
   switch (type)
@@ -398,7 +409,10 @@ first_phase (abfd, type, src)
     case '6':
       /* Data record - read it and store it */
       {
-	bfd_vma addr = getvalue (&src);
+	bfd_vma addr;
+
+	if (!getvalue (&src, &addr))
+	  return FALSE;
 
 	while (*src)
 	  {
@@ -408,17 +422,18 @@ first_phase (abfd, type, src)
 	  }
       }
 
-      return;
+      return TRUE;
     case '3':
       /* Symbol record, read the segment */
-      len = getsym (sym, &src);
+      if (!getsym (sym, &src, &len))
+	return FALSE;
       section = bfd_get_section_by_name (abfd, sym);
       if (section == (asection *) NULL)
 	{
 	  char *n = bfd_alloc (abfd, (bfd_size_type) len + 1);
 
 	  if (!n)
-	    abort ();		/* FIXME */
+	    return FALSE;
 	  memcpy (n, sym, len + 1);
 	  section = bfd_make_section (abfd, n);
 	}
@@ -428,8 +443,11 @@ first_phase (abfd, type, src)
 	    {
 	    case '1':		/* section range */
 	      src++;
-	      section->vma = getvalue (&src);
-	      section->_raw_size = getvalue (&src) - section->vma;
+	      if (!getvalue (&src, &section->vma))
+		return FALSE;
+	      if (!getvalue (&src, &val))
+		return FALSE;
+	      section->_raw_size = val - section->vma;
 	      section->flags = SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC;
 	      break;
 	    case '0':
@@ -447,37 +465,44 @@ first_phase (abfd, type, src)
 		char stype = (*src);
 
 		if (!new)
-		  abort ();	/* FIXME */
+		  return FALSE;
 		new->symbol.the_bfd = abfd;
 		src++;
 		abfd->symcount++;
 		abfd->flags |= HAS_SYMS;
 		new->prev = abfd->tdata.tekhex_data->symbols;
 		abfd->tdata.tekhex_data->symbols = new;
-		len = getsym (sym, &src);
+		if (!getsym (sym, &src, &len))
+		  return FALSE;
 		new->symbol.name = bfd_alloc (abfd, (bfd_size_type) len + 1);
 		if (!new->symbol.name)
-		  abort ();	/* FIXME */
+		  return FALSE;
 		memcpy ((char *) (new->symbol.name), sym, len + 1);
 		new->symbol.section = section;
 		if (stype <= '4')
 		  new->symbol.flags = (BSF_GLOBAL | BSF_EXPORT);
 		else
 		  new->symbol.flags = BSF_LOCAL;
-		new->symbol.value = getvalue (&src) - section->vma;
+		if (!getvalue (&src, &val))
+		  return FALSE;
+		new->symbol.value = val - section->vma;
 	      }
+	    default:
+	      return FALSE;
 	    }
 	}
     }
+
+  return TRUE;
 }
 
 /* Pass over a tekhex, calling one of the above functions on each
    record.  */
 
-static void
+static bfd_boolean
 pass_over (abfd, func)
      bfd *abfd;
-     void (*func) PARAMS ((bfd *, int, char *));
+     bfd_boolean (*func) PARAMS ((bfd *, int, char *));
 {
   unsigned int chars_on_line;
   bfd_boolean eof = FALSE;
@@ -516,9 +541,11 @@ pass_over (abfd, func)
 	abort (); /* FIXME */
       src[chars_on_line] = 0;	/* put a null at the end */
 
-      func (abfd, type, src);
+      if (!func (abfd, type, src))
+	return FALSE;
     }
 
+  return TRUE;
 }
 
 static long
@@ -585,7 +612,9 @@ tekhex_object_p (abfd)
 
   tekhex_mkobject (abfd);
 
-  pass_over (abfd, first_phase);
+  if (!pass_over (abfd, first_phase))
+    return NULL;
+
   return abfd->xvec;
 }
 
