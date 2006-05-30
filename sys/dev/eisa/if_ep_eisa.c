@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.20 2005/11/21 18:16:39 millert Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.21 2006/05/30 21:44:07 miod Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -138,12 +138,8 @@ ep_eisa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_iot = iot;
 
-	/* Reset card. */
-	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
-	delay(4000);
 	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE);
-	/* Wait for reset? */
-	delay(1000);
+	delay(4000);
 
 	/* XXX What is this doing?!  Reading the i/o address? */
 	k = bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG);
