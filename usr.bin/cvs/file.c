@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.152 2006/05/30 19:16:51 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.153 2006/05/30 21:32:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -537,7 +537,7 @@ cvs_file_freelist(struct cvs_flisthead *fl)
 }
 
 void
-cvs_file_classify(struct cvs_file *cf, int loud)
+cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 {
 	size_t len;
 	time_t mtime;
@@ -639,10 +639,17 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 		}
 	}
 
+	if (tag != NULL && cf->file_rcs != NULL)
+		cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs);
+	else if (cf->file_rcs != NULL)
+		cf->file_rcsrev = cf->file_rcs->rf_head;
+	else
+		cf->file_rcsrev = NULL;
+
 	if (cf->file_ent != NULL)
 		rcsnum_tostr(cf->file_ent->ce_rev, r1, sizeof(r1));
-	if (cf->file_rcs != NULL)
-		rcsnum_tostr(cf->file_rcs->rf_head, r2, sizeof(r2));
+	if (cf->file_rcsrev != NULL)
+		rcsnum_tostr(cf->file_rcsrev, r2, sizeof(r2));
 
 	ismodified = rcsdead = 0;
 	if (cf->fd != -1 && cf->file_ent != NULL) {
@@ -658,11 +665,11 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	}
 
 	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL) {
-		b1 = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		b1 = rcs_getrev(cf->file_rcs, cf->file_rcsrev);
 		if (b1 == NULL)
 			fatal("failed to get HEAD revision for comparison");
 
-		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcs->rf_head);
+		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcsrev);
 
 		/* XXX */
 		b2 = cvs_buf_load(cf->file_path, BUF_AUTOEXT);
@@ -677,7 +684,7 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	}
 
 	if (cf->file_rcs != NULL) {
-		state = rcs_state_get(cf->file_rcs, cf->file_rcs->rf_head);
+		state = rcs_state_get(cf->file_rcs, cf->file_rcsrev);
 		if (state == NULL)
 			fatal("failed to get state for HEAD for %s",
 			    cf->file_path);

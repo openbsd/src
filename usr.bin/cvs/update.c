@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.67 2006/05/28 17:25:18 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.68 2006/05/30 21:32:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -113,7 +113,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_update_enterdir(%s)", cf->file_path);
 
-	cvs_file_classify(cf, 0);
+	cvs_file_classify(cf, NULL, 0);
 
 	if (cf->file_status == DIR_CREATE && build_dirs == 1) {
 		cvs_mkpath(cf->file_path);
@@ -241,7 +241,7 @@ cvs_update_local(struct cvs_file *cf)
 	 * which is called from cvs_checkout_file().
 	 */
 	bp = NULL;
-	cvs_file_classify(cf, 1);
+	cvs_file_classify(cf, NULL, 1);
 
 	switch (cf->file_status) {
 	case FILE_UNKNOWN:
@@ -269,20 +269,20 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		bp = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+		bp = rcs_getrev(cf->file_rcs, cf->file_rcsrev);
 		if (bp == NULL)
 			fatal("cvs_update_local: failed to get HEAD");
 
-		cvs_checkout_file(cf, cf->file_rcs->rf_head, bp, 0);
+		cvs_checkout_file(cf, cf->file_rcsrev, bp, 0);
 		cvs_printf("U %s\n", cf->file_path);
 		break;
 	case FILE_MERGE:
 		bp = cvs_diff3(cf->file_rcs, cf->file_path,
-		    cf->file_ent->ce_rev, cf->file_rcs->rf_head, 1);
+		    cf->file_ent->ce_rev, cf->file_rcsrev, 1);
 		if (bp == NULL)
 			fatal("cvs_update_local: failed to merge");
 
-		cvs_checkout_file(cf, cf->file_rcs->rf_head, bp, CO_MERGE);
+		cvs_checkout_file(cf, cf->file_rcsrev, bp, CO_MERGE);
 
 		if (diff3_conflicts != 0) {
 			cvs_printf("C %s\n", cf->file_path);

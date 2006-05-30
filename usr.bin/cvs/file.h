@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.36 2006/05/28 17:25:18 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.37 2006/05/30 21:32:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -42,6 +42,7 @@ struct cvs_file {
 	int	 file_status;
 	int	 file_flags;
 
+	RCSNUM		*file_rcsrev;
 	RCSFILE		*file_rcs;
 	struct cvs_ent	*file_ent;
 };
@@ -93,7 +94,7 @@ TAILQ_HEAD(ignore_head, cvs_ignpat);
 
 void	cvs_file_init(void);
 void	cvs_file_ignore(const char *, struct ignore_head *);
-void	cvs_file_classify(struct cvs_file *, int);
+void	cvs_file_classify(struct cvs_file *, const char *, int);
 void	cvs_file_free(struct cvs_file *);
 void	cvs_file_run(int, char **, struct cvs_recursion *);
 void	cvs_file_walklist(struct cvs_flisthead *, struct cvs_recursion *);

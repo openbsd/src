@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.64 2006/05/30 04:20:27 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.65 2006/05/30 21:32:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -113,7 +113,7 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	 * cvs_file_classify makes the noise for us
 	 * XXX - we want that?
 	 */
-	cvs_file_classify(cf, 1);
+	cvs_file_classify(cf, NULL, 1);
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
@@ -156,7 +156,7 @@ cvs_commit_local(struct cvs_file *cf)
 	char *attic, *repo;
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
-	cvs_file_classify(cf, 0);
+	cvs_file_classify(cf, NULL, 0);
 
 	if (cf->file_type != CVS_FILE)
 		fatal("cvs_commit_local: '%s' is not a file", cf->file_path);
