@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.83 2006/05/29 07:16:44 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.84 2006/05/30 07:00:30 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -598,7 +598,16 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 
 		(void)fclose(fp);
 	} else {
-		if (strlcpy(dst, dir, len) >= len)
+		dst[0] = '\0';
+
+		if (cvs_cmdop == CVS_OP_IMPORT) {
+			if (strlcpy(dst, import_repository, len) >= len)
+				fatal("cvs_get_repository_name: overflow");
+			if (strlcat(dst, "/", len) >= len)
+				fatal("cvs_get_repository_name: overflow");
+		}
+
+		if (strlcat(dst, dir, len) >= len)
 			fatal("cvs_get_repository_name: overflow");
 	}
 }

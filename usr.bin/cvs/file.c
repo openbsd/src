@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.150 2006/05/29 06:05:56 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.151 2006/05/30 07:00:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -373,7 +373,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	fpath = xmalloc(MAXPATHLEN);
 
 	/*
-	 * If we do not have a admin directory inside here, dont bother.
+	 * If we do not have a admin directory inside here, dont bother,
+	 * unless we are running import.
 	 */
 	l = snprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
 	    CVS_PATH_CVSDIR);
@@ -381,7 +382,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		fatal("cvs_file_walkdir: overflow");
 
 	l = stat(fpath, &st);
-	if (l == -1 || (l == 0 && !S_ISDIR(st.st_mode))) {
+	if (cvs_cmdop != CVS_OP_IMPORT &&
+	    (l == -1 || (l == 0 && !S_ISDIR(st.st_mode)))) {
 		xfree(fpath);
 		return;
 	}
@@ -554,7 +556,6 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	}
 
 	verbose = (verbosity > 1 && loud == 1);
-	entlist = cvs_ent_open(cf->file_wd);
 
 	repo = xmalloc(MAXPATHLEN);
 	rcsfile = xmalloc(MAXPATHLEN);
@@ -572,6 +573,8 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	}
 
 	cf->file_rpath = xstrdup(rcsfile);
+
+	entlist = cvs_ent_open(cf->file_wd);
 	cf->file_ent = cvs_ent_get(entlist, cf->file_name);
 
 	if (cf->file_ent != NULL) {
