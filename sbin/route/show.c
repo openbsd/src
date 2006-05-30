@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.52 2006/05/27 18:26:45 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.53 2006/05/30 19:42:58 todd Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -362,16 +362,16 @@ p_encap(struct sockaddr *sa, struct sockaddr *mask, int width)
 	char 		*cp;
 	unsigned short	 port;
 
+	if (mask)
+		cp = netname(sa, mask);
+	else
+		cp = routename(sa);
 	switch (sa->sa_family) {
-	case AF_INET6: {
-		break;
-	}
-	default:
-		if (mask)
-			cp = netname(sa, mask);
-		else
-			cp = routename(sa);
+	case AF_INET:
 		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
+		break;
+	case AF_INET6:
+		port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
 		break;
 	}
 	if (width < 0)
@@ -389,6 +389,7 @@ p_protocol(struct sadb_protocol *sap, struct sockaddr *sa, struct sadb_protocol
     *saft, int proto)
 {
 	printf("%-6u", sap->sadb_protocol_proto);
+
 	if (sa)
 		p_sockaddr(sa, NULL, 0, -1);
 	else
