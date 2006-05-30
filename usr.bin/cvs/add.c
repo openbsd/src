@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.48 2006/05/30 07:09:38 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.49 2006/05/30 08:23:31 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -83,6 +83,17 @@ cvs_add_local(struct cvs_file *cf)
 	cvs_log(LP_TRACE, "cvs_add_local(%s)", cf->file_path);
 
 	cvs_file_classify(cf, 0);
+
+	/* dont use `cvs add *' */
+	if (strcmp(cf->file_name, ".") == 0 ||
+	    strcmp(cf->file_name, "..") == 0 ||
+	    strcmp(cf->file_name, CVS_PATH_CVSDIR) == 0) {
+		if (verbosity > 1)
+			cvs_log(LP_ERR,
+			    "cannot add special file `%s'; skipping",
+			    cf->file_name);
+		return;
+	}
 
 	if (cf->file_type == CVS_DIR)
 		add_directory(cf);
