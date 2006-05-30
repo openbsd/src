@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.47 2006/05/29 17:55:39 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.48 2006/05/30 07:09:38 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -21,6 +21,8 @@
 #include "diff.h"
 #include "log.h"
 #include "proto.h"
+
+extern char *__progname;
 
 int	cvs_add(int, char **);
 void	cvs_add_local(struct cvs_file *);
@@ -159,19 +161,62 @@ add_directory(struct cvs_file *cf)
 static void
 add_file(struct cvs_file *cf)
 {
-	int l;
-	int stop;
-	char *entry, revbuf[16];
+	BUF *b;
+	int added, l, stop;
+	char *entry, revbuf[16], tbuf[32];
 	CVSENTRIES *entlist;
 
 	if (cf->file_rcs != NULL)
 		rcsnum_tostr(cf->file_rcs->rf_head, revbuf, sizeof(revbuf));
 
-	stop = 0;
+	added = stop = 0;
 	switch (cf->file_status) {
 	case FILE_ADDED:
-		cvs_log(LP_NOTICE, "%s has already been entered",
-		    cf->file_path);
+		if (verbosity > 1)
+			cvs_log(LP_NOTICE, "%s has already been entered",
+			    cf->file_path);
+		stop = 1;
+		break;
+	case FILE_REMOVED:
+		if (cf->file_rcs == NULL) {
+			cvs_log(LP_NOTICE, "cannot resurrect %s; "
+			    "RCS file removed by second party", cf->file_name);
+		} else {
+			/*
+			 * Remove the '-' prefixing the version number and
+			 * restore the file.
+			 */
+			rcsnum_tostr(cf->file_ent->ce_rev, revbuf,
+			    sizeof(revbuf));
+
+			ctime_r(&cf->file_ent->ce_mtime, tbuf);
+			if (tbuf[strlen(tbuf) - 1] == '\n')
+				tbuf[strlen(tbuf) - 1] = '\0';
+
+			entry = xmalloc(CVS_ENT_MAXLINELEN);
+			l = snprintf(entry, CVS_ENT_MAXLINELEN,
+			    "/%s/%s/%s//", cf->file_name, revbuf, tbuf);
+			if (l == -1 || l >= CVS_ENT_MAXLINELEN)
+				fatal("cvs_add_local: overflow");
+
+			entlist = cvs_ent_open(cf->file_wd);
+			cvs_ent_add(entlist, entry);
+			cvs_ent_close(entlist, ENT_SYNC);
+
+			xfree(entry);
+
+			b = rcs_getrev(cf->file_rcs, cf->file_rcs->rf_head);
+			if (b == NULL)
+				fatal("cvs_add_local: failed to get HEAD");
+
+			cvs_checkout_file(cf, cf->file_rcs->rf_head, b, 0);
+			cvs_printf("U %s\n", cf->file_path);
+
+			cvs_log(LP_NOTICE, "%s, version %s, resurrected",
+			    cf->file_name, revbuf);
+
+			cf->file_status = FILE_UPTODATE;
+		}
 		stop = 1;
 		break;
 	case FILE_UPTODATE:
@@ -187,6 +232,7 @@ add_file(struct cvs_file *cf)
 			    "(instead of dead revision %s)",
 			    cf->file_path, revbuf);
 		} else {
+			added++;
 			cvs_log(LP_NOTICE, "scheduling file '%s' for addition",
 			    cf->file_path);
 		}
@@ -208,5 +254,10 @@ add_file(struct cvs_file *cf)
 
 	xfree(entry);
 
-	cvs_log(LP_NOTICE, "use commit to add this file permanently");
+	if (added != 0) {
+		if (verbosity > 0)
+			cvs_log(LP_NOTICE, "use '%s commit' to add %s "
+			    "permanently", __progname,
+			    (added == 1) ? "this file" : "these files");
+	}
 }
