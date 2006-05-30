@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.63 2006/05/28 10:15:35 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.64 2006/05/30 04:20:27 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -150,12 +150,16 @@ void
 cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b;
-	int isadded;
+	int l, isadded;
 	char *d, *f, rbuf[24];
 	CVSENTRIES *entlist;
+	char *attic, *repo;
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
 	cvs_file_classify(cf, 0);
+
+	if (cf->file_type != CVS_FILE)
+		fatal("cvs_commit_local: '%s' is not a file", cf->file_path);
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_REMOVED)
@@ -248,6 +252,29 @@ cvs_commit_local(struct cvs_file *cf)
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);
 		cvs_ent_close(entlist, ENT_SYNC);
+
+		repo = xmalloc(MAXPATHLEN);
+		attic = xmalloc(MAXPATHLEN);
+		cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
+
+		l = snprintf(attic, MAXPATHLEN, "%s/%s", repo, CVS_PATH_ATTIC);
+		if (l == -1 || l >= MAXPATHLEN)
+			fatal("cvs_commit_local: overflow");
+
+		if (mkdir(attic, 0755) == -1 && errno != EEXIST)
+			fatal("cvs_commit_local: failed to create Attic");
+
+		l = snprintf(attic, MAXPATHLEN, "%s/%s/%s%s", repo,
+		    CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
+		if (l == -1 || l >= MAXPATHLEN)
+			fatal("cvs_commit_local: overflow");
+
+		if (rename(cf->file_rpath, attic) == -1)
+			fatal("cvs_commit_local: failed to move %s to Attic",
+			    cf->file_path);
+
+		xfree(repo);
+		xfree(attic);
 	}
 
 	cvs_printf("done\n");
