@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2005/10/19 22:00:37 stevesk Exp $ */
+/*	$OpenBSD: printconf.c,v 1.3 2006/05/30 22:06:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -28,35 +28,56 @@
 #include "ospfd.h"
 #include "ospfe.h"
 
-void	 print_mainconf(struct ospfd_conf *);
-void	 print_iface(struct iface *);
+void	print_mainconf(struct ospfd_conf *);
+void	print_redistribute(struct ospfd_conf *);
+void	print_iface(struct iface *);
 
 void
 print_mainconf(struct ospfd_conf *conf)
 {
+	printf("router-id %s\n", inet_ntoa(conf->rtr_id));
+
 	if (conf->flags |= OSPFD_FLAG_NO_FIB_UPDATE)
 		printf("fib-update yes\n");
 	else
 		printf("fib-update no\n");
-
-	if (conf->redistribute_flags & REDISTRIBUTE_STATIC)
-		printf("redistribute static\n");
-	if (conf->redistribute_flags & REDISTRIBUTE_CONNECTED)
-		printf("redistribute connected\n");
-	if (conf->redistribute_flags & REDISTRIBUTE_DEFAULT)
-		printf("redistribute default\n");
-	if (conf->redistribute_flags == 0)
-		printf("redistribute none\n");
 
 	if (conf->rfc1583compat)
 		printf("rfc1583compat yes\n");
 	else
 		printf("rfc1583compat no\n");
 
-	printf("router-id %s\n", inet_ntoa(conf->rtr_id));
+	print_redistribute(conf);
 
 	printf("spf-delay %u\n", conf->spf_delay);
 	printf("spf-holdtime %u\n", conf->spf_hold_time);
+}
+
+void
+print_redistribute(struct ospfd_conf *conf)
+{
+	struct redistribute	*r;
+
+	if (conf->redistribute & REDISTRIBUTE_DEFAULT)
+		printf("redistribute default\n");
+
+	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
+		switch (r->type) {
+		case REDIST_STATIC:
+			printf("redistribute static\n");
+			break;
+		case REDIST_CONNECTED:
+			printf("redistribute connected\n");
+			break;
+		case REDIST_LABEL:
+			printf("redistribute rtlabel %s\n",
+			    rtlabel_id2name(r->label));
+			break;
+		case REDIST_ADDR:
+			/* ignore for now */
+			break;
+		}
+	}
 }
 
 void

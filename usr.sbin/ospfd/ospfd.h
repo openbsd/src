@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.57 2006/04/25 08:22:14 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.58 2006/05/30 22:06:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -57,9 +57,8 @@
 #define	F_DYNAMIC		0x0040
 #define	F_REDISTRIBUTED		0x0100
 
-#define REDISTRIBUTE_STATIC	0x01
-#define REDISTRIBUTE_CONNECTED	0x02
-#define REDISTRIBUTE_DEFAULT	0x04
+#define REDISTRIBUTE_ON		0x01
+#define REDISTRIBUTE_DEFAULT	0x02
 
 /* buffer */
 struct buf {
@@ -362,11 +361,27 @@ enum {
 	PROC_RDE_ENGINE
 } ospfd_process;
 
+enum redist_types {
+	REDIST_CONNECTED,
+	REDIST_STATIC,
+	REDIST_LABEL,
+	REDIST_ADDR
+};
+
+struct redistribute {
+	SIMPLEQ_ENTRY(redistribute)	entry;
+	struct in_addr			addr;
+	struct in_addr			mask;
+	u_int16_t			label;
+	enum redist_types		type;
+};
+
 struct ospfd_conf {
 	struct event		ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, area)	area_list;
 	LIST_HEAD(, vertex)	cand_list;
+	SIMPLEQ_HEAD(, redistribute) redist_list;
 
 	u_int32_t		opts;
 #define OSPFD_OPT_VERBOSE	0x00000001
@@ -377,10 +392,10 @@ struct ospfd_conf {
 	int			spf_state;
 	int			ospf_socket;
 	int			flags;
-	int			redistribute_flags;
 	int			options; /* OSPF options */
 	u_int8_t		rfc1583compat;
 	u_int8_t		border;
+	u_int8_t		redistribute;
 };
 
 /* kroute */
@@ -388,6 +403,7 @@ struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
 	u_int16_t	flags;
+	u_int16_t	rtlabel;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
 };
@@ -552,6 +568,11 @@ const char	*if_type_name(enum iface_type);
 const char	*if_auth_name(enum auth_type);
 const char	*dst_type_name(enum dst_type);
 const char	*path_type_name(enum path_type);
+
+/* name2id.c */
+u_int16_t	 rtlabel_name2id(const char *);
+const char	*rtlabel_id2name(u_int16_t);
+void		 rtlabel_unref(u_int16_t);
 
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.32 2006/05/27 19:28:20 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.33 2006/05/30 22:06:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -177,6 +177,8 @@ kr_change(struct kroute *kroute)
 			action = RTM_CHANGE;
 			kr->r.flags = kroute->flags | F_OSPFD_INSERTED;
 			kr->r.ifindex = 0;
+			rtlabel_unref(kr->r.rtlabel);
+			kr->r.rtlabel = 0;
 		}
 	}
 
@@ -221,7 +223,6 @@ kr_delete(struct kroute *kroute)
 	if (kr->r.flags & F_KERNEL) {
 		/* remove F_OSPFD_INSERTED flag, route still exists in kernel */
 		kr->r.flags &= ~F_OSPFD_INSERTED;
-		kr->r.ifindex = 0;	/* ifindex is no longer relevant */
 		return (0);
 	}
 
@@ -345,11 +346,12 @@ kr_redistribute(int type, struct kroute *kr)
 
 
 	if (type == IMSG_NETWORK_DEL) {
+dont_redistribute:
 		/* was the route redistributed? */
 		if (kr->flags & F_REDISTRIBUTED) {
-			/* remove redistributed flag */
+			/* remove redistributed flag and inform the RDE */
 			kr->flags &= ~F_REDISTRIBUTED;
-			main_imsg_compose_rde(type, 0, kr,
+			main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, kr,
 			    sizeof(struct kroute));
 		}
 		return;
@@ -357,15 +359,15 @@ kr_redistribute(int type, struct kroute *kr)
 
 	/* Only non-ospfd routes are considered for redistribution. */
 	if (!(kr->flags & F_KERNEL))
-		return;
+		goto dont_redistribute;
 
 	/* Dynamic routes are not redistributable. */
 	if (kr->flags & F_DYNAMIC)
-		return;
+		goto dont_redistribute;
 
 	/* interface is not up and running so don't announce */
 	if (kr->flags & F_DOWN)
-		return;
+		goto dont_redistribute;
 
 	/*
 	 * We consider the loopback net, multicast and experimental addresses
@@ -374,16 +376,16 @@ kr_redistribute(int type, struct kroute *kr)
 	a = ntohl(kr->prefix.s_addr);
 	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
 	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
-		return;
+		goto dont_redistribute;
 	/*
 	 * Consider networks with nexthop loopback as not redistributable.
 	 */
 	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
-		return;
+		goto dont_redistribute;
 
 	/* Should we redistrubute this route? */
 	if (!ospf_redistribute(kr))
-		return;
+		goto dont_redistribute;
 
 	/* Does not matter if we resend the kr, the RDE will cope. */
 	kr->flags |= F_REDISTRIBUTED;
@@ -459,6 +461,7 @@ kroute_remove(struct kroute_node *kr)
 	}
 
 	kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
+	rtlabel_unref(kr->r.rtlabel);
 
 	free(kr);
 	return (0);
@@ -780,6 +783,7 @@ fetchtable(void)
 	struct rt_msghdr	*rtm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
+	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 
 	mib[0] = CTL_NET;
@@ -870,8 +874,13 @@ fetchtable(void)
 		if (rtm->rtm_flags & RTF_PROTO2)  {
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 			free(kr);
-		} else
+		} else {
+			if ((label = (struct sockaddr_rtlabel *)
+			    rti_info[RTAX_LABEL]) != NULL)
+				kr->r.rtlabel =
+				    rtlabel_name2id(label->sr_label);
 			kroute_insert(kr);
+		}
 
 	}
 	free(buf);
@@ -963,6 +972,7 @@ dispatch_rtmsg(void)
 	struct if_msghdr	 ifm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
+	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 	struct in_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
@@ -1057,9 +1067,18 @@ dispatch_rtmsg(void)
 				/* pref is not checked because this is forced */
 				if (kr->r.flags & F_OSPFD_INSERTED)
 					flags |= F_OSPFD_INSERTED;
+				if (kr->r.flags & F_REDISTRIBUTED)
+					flags |= F_REDISTRIBUTED;
 				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
+
+				rtlabel_unref(kr->r.rtlabel);
+				kr->r.rtlabel = 0;
+				if ((label = (struct sockaddr_rtlabel *)
+				    rti_info[RTAX_LABEL]) != NULL)
+					kr->r.rtlabel =
+					    rtlabel_name2id(label->sr_label);
 
 				if (kif_validate(kr->r.ifindex))
 					kr->r.flags &= ~F_DOWN;
@@ -1080,6 +1099,11 @@ dispatch_rtmsg(void)
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
+				if ((label = (struct sockaddr_rtlabel *)
+				    rti_info[RTAX_LABEL]) != NULL)
+					kr->r.rtlabel =
+					    rtlabel_name2id(label->sr_label);
+
 				kroute_insert(kr);
 			}
 			break;
@@ -1092,6 +1116,7 @@ dispatch_rtmsg(void)
 			if (kr->r.flags & F_OSPFD_INSERTED)
 				main_imsg_compose_rde(IMSG_KROUTE_GET, 0,
 				    &kr->r, sizeof(struct kroute));
+			rtlabel_unref(kr->r.rtlabel);
 			if (kroute_remove(kr) == -1)
 				return (-1);
 			break;

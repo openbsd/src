@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.45 2006/05/29 16:50:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.46 2006/05/30 22:06:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -92,6 +92,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
     int pipe_parent2ospfe[2])
 {
 	struct passwd		*pw;
+	struct redistribute	*r;
 	struct event		 ev_sigint, ev_sigterm;
 	pid_t			 pid;
 
@@ -159,6 +160,11 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	evtimer_set(&rdeconf->ev, spf_timer, rdeconf);
 	cand_list_init();
 	rt_init();
+
+	while ((r = SIMPLEQ_FIRST(&rdeconf->redist_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
+		free(r);
+	}
 
 	event_dispatch();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.31 2006/03/27 11:57:24 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.32 2006/05/30 22:06:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -489,6 +489,8 @@ imsg_event_add(struct imsgbuf *ibuf)
 int
 ospf_redistribute(struct kroute *kr)
 {
+	struct redistribute	*r;
+
 	/* stub area router? */
 	if ((conf->options & OSPF_OPTION_E) == 0)
 		return (0);
@@ -497,12 +499,32 @@ ospf_redistribute(struct kroute *kr)
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
 		return (0);
 
-	if ((conf->redistribute_flags & REDISTRIBUTE_STATIC) &&
-	    (kr->flags & F_STATIC))
-		return (1);
-	if ((conf->redistribute_flags & REDISTRIBUTE_CONNECTED) &&
-	    (kr->flags & F_CONNECTED))
-		return (1);
+	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
+		switch (r->type) {
+		case REDIST_LABEL:
+			if (kr->rtlabel == r->label)
+				return (1);
+			break;
+		case REDIST_STATIC:
+			/*
+			 * Dynamic routes are not redistributable. Placed here
+			 * so that link local addresses can be redistributed
+			 * via a rtlabel.
+			 */
+			if (kr->flags & F_DYNAMIC)
+				continue;
+			if (kr->flags & F_STATIC)
+				return (1);
+		case REDIST_CONNECTED:
+			if (kr->flags & F_DYNAMIC)
+				continue;
+			if (kr->flags & F_CONNECTED)
+				return (1);
+		case REDIST_ADDR:
+			/* ignore */
+			break;
+		}
+	}
 
 	return (0);
 }
@@ -513,7 +535,7 @@ ospf_redistribute_default(int type)
 	struct kroute	kr;
 
 	bzero(&kr, sizeof(kr));
-	if (conf->redistribute_flags & REDISTRIBUTE_DEFAULT)
+	if (conf->redistribute & REDISTRIBUTE_DEFAULT)
 		main_imsg_compose_rde(type, 0, &kr, sizeof(struct kroute));
 }
 

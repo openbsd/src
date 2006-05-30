@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2006/05/26 01:06:12 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.31 2006/05/30 22:06:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -106,7 +106,7 @@ typedef struct {
 
 %}
 
-%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE
+%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL
 %token	RFC1583COMPAT SPFDELAY SPFHOLDTIME
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
@@ -191,23 +191,42 @@ conf_main	: ROUTERID STRING {
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
 		}
 		| REDISTRIBUTE STRING {
-			if (!strcmp($2, "static"))
-				conf->redistribute_flags |=
-				    REDISTRIBUTE_STATIC;
-			else if (!strcmp($2, "connected"))
-				conf->redistribute_flags |=
-				    REDISTRIBUTE_CONNECTED;
-			else if (!strcmp($2, "default"))
-				conf->redistribute_flags |=
-				    REDISTRIBUTE_DEFAULT;
-			else if (!strcmp($2, "none"))
-				conf->redistribute_flags = 0;
+			struct redistribute	*r;
+
+			if (!strcmp($2, "default"))
+				conf->redistribute |= REDISTRIBUTE_DEFAULT;
 			else {
-				yyerror("unknown redistribute type");
+				if ((r = calloc(1, sizeof(*r))) == NULL)
+					fatal(NULL);
+				if (!strcmp($2, "static"))
+					r->type = REDIST_STATIC;
+				else if (!strcmp($2, "connected"))
+					r->type = REDIST_CONNECTED;
+				else {
+					yyerror("unknown redistribute type");
+					free($2);
+					free(r);
+					YYERROR;
+				}
 				free($2);
-				YYERROR;
+
+				SIMPLEQ_INSERT_TAIL(&conf->redist_list, r,
+				    entry);
 			}
-			free($2);
+			conf->redistribute |= REDISTRIBUTE_ON;
+
+		}
+		| REDISTRIBUTE RTLABEL STRING {
+			struct redistribute	*r;
+
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal(NULL);
+			r->type = REDIST_LABEL;
+			r->label = rtlabel_name2id($3);
+			free($3);
+
+			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
+			conf->redistribute |= REDISTRIBUTE_ON;
 		}
 		| RFC1583COMPAT yesno {
 			conf->rfc1583compat = $2;
@@ -484,6 +503,7 @@ lookup(char *s)
 		{"router-dead-time",	ROUTERDEADTIME},
 		{"router-id",		ROUTERID},
 		{"router-priority",	ROUTERPRIORITY},
+		{"rtlabel",		RTLABEL},
 		{"spf-delay",		SPFDELAY},
 		{"spf-holdtime",	SPFHOLDTIME},
 		{"transmit-delay",	TRANSMITDELAY}
@@ -694,10 +714,8 @@ parse_config(char *filename, int opts)
 {
 	struct sym	*sym, *next;
 
-	if ((conf = calloc(1, sizeof(struct ospfd_conf))) == NULL) {
-		errx(1, "parse_config calloc");
-		return (NULL);
-	}
+	if ((conf = calloc(1, sizeof(struct ospfd_conf))) == NULL)
+		fatal("parse_config");
 
 	bzero(&globaldefs, sizeof(globaldefs));
 	defs = &globaldefs;
@@ -723,6 +741,8 @@ parse_config(char *filename, int opts)
 
 	conf->opts = opts;
 	LIST_INIT(&conf->area_list);
+	LIST_INIT(&conf->cand_list);
+	SIMPLEQ_INIT(&conf->redist_list);
 
 	if (!(conf->opts & OSPFD_OPT_NOACTION))
 		if (check_file_secrecy(fileno(fin), filename)) {
