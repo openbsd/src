@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.8 2006/03/11 06:52:00 ray Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.9 2006/05/30 19:43:27 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -355,14 +355,17 @@ ex_writefp(sp, name, fp, fm, tm, nlno, nch, silent)
 	    S_ISREG(sb.st_mode) && fsync(fileno(fp)))
 		goto err;
 
-	if (fclose(fp))
+	if (fclose(fp)) {
+		fp = NULL;
 		goto err;
+	}
 
 	rval = 0;
 	if (0) {
 err:		if (!F_ISSET(sp->ep, F_MULTILOCK))
 			msgq_str(sp, M_SYSERR, name, "%s");
-		(void)fclose(fp);
+		if (fp != NULL)
+			(void)fclose(fp);
 		rval = 1;
 	}
 
