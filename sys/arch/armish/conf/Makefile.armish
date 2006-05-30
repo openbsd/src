@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.1 2006/05/29 17:13:19 drahn Exp $
+#	$OpenBSD: Makefile.armish,v 1.2 2006/05/30 18:25:42 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -179,7 +179,7 @@ depend:: .depend
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	cat ${ARM}/arm/genassym.cf ${ARM}/footbridge/genassym.cf | \
+	cat ${ARM}/arm/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} 
 	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.cats,v 1.3 2004/11/19 06:41:13 miod Exp $
-#	$OpenBSD: Makefile.cats,v 1.3 2004/11/19 06:41:13 miod Exp $
+#	$OpenBSD: Makefile.cats,v 1.4 2006/05/30 18:25:42 miod Exp $
+#	$OpenBSD: Makefile.cats,v 1.4 2006/05/30 18:25:42 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -172,7 +172,7 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM}/arm/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	cat ${ARM}/arm/genassym.cf ${ARM}/footbridge/genassym.cf | \
+	cat ${ARM}/arm/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} 
 	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
