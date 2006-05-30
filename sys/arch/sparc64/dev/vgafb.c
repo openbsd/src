@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.44 2006/04/16 22:28:02 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.45 2006/05/30 19:53:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -380,6 +380,10 @@ vgafb_mmap(v, off, prot)
 		if (allowaperture == 0)
 			return (-1);
 #endif
+
+		if (sc->sc_mmio_size == 0)
+			return (-1);
+
 		if (off >= sc->sc_mem_addr &&
 		    off < (sc->sc_mem_addr + sc->sc_mem_size))
 			return (bus_space_mmap(sc->sc_mem_t,
@@ -423,7 +427,7 @@ vgafb_mapregs(sc, pa)
 	u_int32_t i, cf;
 	int rv;
 
-	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
+	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
 		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
 			if (hasio)
@@ -448,38 +452,69 @@ vgafb_mapregs(sc, pa)
 				continue;
 			}
 
-			if (bs <= 0x10000) {	/* mmio */
-				if (hasmmio)
-					continue;
-				sc->sc_mmio_addr = ba;
-				sc->sc_mmio_size = bs;
-				hasmmio = 1;
-			} else {
-				if (hasmem)
-					continue;
-				if (bus_space_map(pa->pa_memt, ba, bs,
-				    0, &sc->sc_mem_h)) {
-					printf("%s: can't map mem space\n",
-					    sc->sc_sunfb.sf_dev.dv_xname);
-					continue;
-				}
+			if (bs == 0 /* || ba == 0 */) {
+				/* ignore this entry */
+			} else if (hasmem == 0) {
+				/*
+				 * first memory slot found goes into memory,
+				 * this is for the case of no mmio
+				 */
 				sc->sc_mem_addr = ba;
 				sc->sc_mem_size = bs;
 				hasmem = 1;
+			} else {
+				/*
+				 * Oh, we have a second `memory'
+				 * region, is this region the vga memory
+				 * or mmio, we guess that memory is
+				 * the larger of the two.
+				 */
+				if (sc->sc_mem_size > bs) {
+					/* this is the mmio */
+					sc->sc_mmio_addr = ba;
+					/* ATI driver maps 0x80000 mmio, grr */
+					if (bs < 0x80000) {
+						bs = 0x80000;
+					}
+					sc->sc_mmio_size = bs;
+					hasmmio = 1;
+				} else {
+					/* this is the memory */
+					sc->sc_mmio_addr = sc->sc_mem_addr;
+					sc->sc_mmio_size = sc->sc_mem_size;
+					sc->sc_mem_addr = ba;
+					sc->sc_mem_size = bs;
+					/* ATI driver maps 0x80000 mmio, grr */
+					if (sc->sc_mmio_size < 0x80000) {
+						sc->sc_mmio_size = 0x80000;
+					}
+				}
 			}
 		}
 	}
 
-	if (hasmmio == 0 || hasmem == 0 || hasio == 0) {
-		printf("%s: failed to find all ports\n",
-		    sc->sc_sunfb.sf_dev.dv_xname);
-		goto fail;
+	if (hasmem != 0) {
+		if (bus_space_map(pa->pa_memt, sc->sc_mem_addr, sc->sc_mem_size,
+		    0, &sc->sc_mem_h)) {
+			printf("%s: can't map mem space\n",
+			    sc->sc_sunfb.sf_dev.dv_xname);
+			return (1);
+		}
 	}
 
-	return (0);
+	/* failure to initialize io ports should not prevent attachment */
+	if (hasmem == 0) {
+		printf("%s: could not find memory space\n",
+		    sc->sc_sunfb.sf_dev.dv_xname);
+		return (1);
+	}
 
-fail:
-	if (hasmem)
-		bus_space_unmap(pa->pa_memt, sc->sc_mem_h, sc->sc_mem_size);
-	return (1);
+#ifdef DIAGNOSTIC
+	if (hasmmio == 0) {
+		printf("%s: WARNING: no mmio space configured\n",
+		    sc->sc_sunfb.sf_dev.dv_xname);
+	}
+#endif
+
+	return (0);
 }
