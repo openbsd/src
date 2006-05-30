@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.60 2006/05/29 18:00:02 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.61 2006/05/30 21:34:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -96,7 +96,7 @@ cvs_log_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_log_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, 0);
+	cvs_file_classify(cf, NULL, 0);
 
 	if (cf->file_status == FILE_UNKNOWN) {
 		if (verbosity > 0)
