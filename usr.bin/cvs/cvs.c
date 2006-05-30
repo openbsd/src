@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.100 2006/05/27 18:18:06 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.101 2006/05/30 06:36:09 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -57,7 +57,6 @@ char	*cvs_rsh = CVS_RSH_DEFAULT;
 char	*cvs_editor = CVS_EDITOR_DEFAULT;
 char	*cvs_homedir = NULL;
 char	*cvs_msg = NULL;
-char	*cvs_repo_base = NULL;
 char	*cvs_tmpdir = CVS_TMPDIR_DEFAULT;
 
 struct cvsroot *current_cvsroot = NULL;
