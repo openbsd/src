@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.47 2006/05/29 18:43:36 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.48 2006/05/30 21:56:05 msf Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -56,6 +56,7 @@ void		 ipsecctl_get_rules(struct ipsecctl *);
 void		 ipsecctl_print_title(char *);
 void		 ipsecctl_show_flows(int);
 void		 ipsecctl_show_sas(int);
+int		 ipsecctl_monitor(int);
 void		 usage(void);
 const char	*ipsecctl_lookup_option(char *, const char **);
 static int	 unmask(struct ipsec_addr *, sa_family_t);
@@ -511,6 +512,12 @@ ipsecctl_show_sas(int opts)
 	free(buf);
 }
 
+int
+ipsecctl_monitor(int opts)
+{
+	return (pfkey_monitor(opts));
+}
+
 __dead void
 usage(void)
 {
@@ -542,7 +549,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "D:df:Fnvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "D:df:Fmnvs:")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -558,6 +565,10 @@ main(int argc, char *argv[])
 
 		case 'F':
 			opts |= IPSECCTL_OPT_FLUSH;
+			break;
+
+		case 'm':
+			opts |= IPSECCTL_OPT_MONITOR;
 			break;
 
 		case 'n':
@@ -613,6 +624,10 @@ main(int argc, char *argv[])
 			ipsecctl_show_sas(opts);
 		}
 	}
+
+	if (opts & IPSECCTL_OPT_MONITOR)
+		if (ipsecctl_monitor(opts))
+			error = 1;
 
 	exit(error);
 }

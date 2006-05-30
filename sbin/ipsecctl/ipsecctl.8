@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.16 2006/03/22 16:01:23 reyk Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.17 2006/05/30 21:56:05 msf Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nd control flows for IPsec
 .Sh SYNOPSIS
 .Nm ipsecctl
-.Op Fl dFnv
+.Op Fl dFmnv
 .Oo Fl D
 .Ar macro Ns = Ns Ar value Oc
 .Op Fl f Ar file
@@ -77,6 +77,8 @@ option flushes the SPD and the SADB.
 .It Fl f Ar file
 Load the rules contained in
 .Ar file .
+.It Fl m
+Continuously display all PF_KEY messages exchanged with the kernel.
 .It Fl n
 Do not actually load rules, just parse them.
 .It Fl s Ar modifier

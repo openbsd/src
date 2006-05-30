@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.36 2006/05/29 18:52:56 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.37 2006/05/30 21:56:05 msf Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #define IPSECCTL_OPT_SHOWALL		0x0080
 #define IPSECCTL_OPT_FLUSH		0x0100
 #define IPSECCTL_OPT_DELETE		0x0200
+#define IPSECCTL_OPT_MONITOR		0x0400
 
 enum {
 	ACTION_ADD, ACTION_DELETE

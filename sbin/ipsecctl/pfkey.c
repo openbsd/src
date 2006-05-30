@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.38 2006/05/28 21:08:42 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.39 2006/05/30 21:56:05 msf Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -49,7 +49,7 @@ static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *, u_int8_t);
-static int	pfkey_reply(int);
+static int	pfkey_reply(int, u_int8_t **, ssize_t *);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
 int		pfkey_ipsec_establish(int, struct ipsec_rule *);
@@ -598,7 +598,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 }
 
 static int
-pfkey_reply(int sd)
+pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 {
 	struct sadb_msg	 hdr;
 	ssize_t		 len;
@@ -608,7 +608,7 @@ pfkey_reply(int sd)
 		warnx("short read");
 		return -1;
 	}
-	if (hdr.sadb_msg_errno != 0) {
+	if (datap == NULL && hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
 		warn("PF_KEY failed");
 		return -1;
@@ -622,8 +622,14 @@ pfkey_reply(int sd)
 		free(data);
 		return -1;
 	}
-	bzero(data, len);
-	free(data);
+	if (datap) {
+		*datap = data;
+		if (lenp)
+			*lenp = len;
+	} else {
+		bzero(data, len);
+		free(data);
+	}
 
 	return 0;
 }
@@ -1010,7 +1016,7 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 
 	if (ret < 0)
 		return -1;
-	if (pfkey_reply(fd) < 0)
+	if (pfkey_reply(fd, NULL, NULL) < 0)
 		return -1;
 
 	return 0;
@@ -1047,9 +1053,78 @@ pfkey_ipsec_flush(void)
 		warnx("short write");
 		return -1;
 	}
-	if (pfkey_reply(fd) < 0)
+	if (pfkey_reply(fd, NULL, NULL) < 0)
 		return -1;
 
+	return 0;
+}
+
+static int
+pfkey_promisc(void)
+{
+	struct sadb_msg msg;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.sadb_msg_version = PF_KEY_V2;
+	msg.sadb_msg_seq = sadb_msg_seq++;
+	msg.sadb_msg_pid = getpid();
+	msg.sadb_msg_len = sizeof(msg) / PFKEYV2_CHUNK;
+	msg.sadb_msg_type = SADB_X_PROMISC;
+	msg.sadb_msg_satype = 1;	/* enable */
+	if (write(fd, &msg, sizeof(msg)) != sizeof(msg)) {
+		warn("pfkey_promisc: write failed");
+		return -1;
+	}
+	if (pfkey_reply(fd, NULL, NULL) < 0)
+		return -1; 
+	return 0;
+}
+
+int
+pfkey_monitor(int opts)
+{
+	fd_set *rset;
+	u_int8_t *data;
+	struct sadb_msg *msg;
+	ssize_t len, set_size;
+	int n;
+
+	if (pfkey_init() < 0)
+		return -1;
+	if (pfkey_promisc() < 0)
+		return -1;
+
+	set_size = howmany(fd + 1, NFDBITS) * sizeof(fd_mask);
+	if ((rset = malloc(set_size)) == NULL) {
+		warn("malloc");
+		return -1;
+	}
+	for (;;) {
+		memset(rset, 0, set_size);
+		FD_SET(fd, rset);
+		if ((n = select(fd+1, rset, NULL, NULL, NULL)) < 0)
+			err(2, "select");
+		if (n == 0)
+			break;
+		if (!FD_ISSET(fd, rset))
+			continue;
+		if (pfkey_reply(fd, &data, &len) < 0)
+			continue; 
+		msg = (struct sadb_msg *)data;
+		if (msg->sadb_msg_type == SADB_X_PROMISC) {
+			/* remove extra header from promisc messages */
+			if ((msg->sadb_msg_len * PFKEYV2_CHUNK) >=
+			     2 * sizeof(struct sadb_msg)) {
+				msg++;
+			}
+		}
+		pfkey_monitor_sa(msg, opts);
+		if (opts & IPSECCTL_OPT_VERBOSE)
+			pfkey_print_raw(data, len);
+		memset(data, 0, len);
+		free(data);
+	}
+	close(fd);
 	return 0;
 }
 
