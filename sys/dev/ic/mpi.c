@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.13 2006/05/30 03:25:13 jason Exp $ */
+/*	$OpenBSD: mpi.c,v 1.14 2006/05/30 05:03:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -32,8 +32,6 @@
 
 #include <dev/ic/mpireg.h>
 #include <dev/ic/mpivar.h>
-
-#undef MPI_DEBUG
 
 #ifdef MPI_DEBUG
 #define DPRINTF(x...)		do { if (mpidebug) printf(x); } while (0)
@@ -1344,7 +1342,7 @@ mpi_portfacts(struct mpi_softc *sc)
 	pfq->port_number = 0;
 	pfq->msg_context = htole32(ccb->ccb_id);
 
-	if (mpi_poll(sc, ccb, 10000) != 0) {
+	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
 		return (1);
 	}
@@ -1482,7 +1480,7 @@ mpi_portenable(struct mpi_softc *sc)
 	peq->port_number = 0;
 	peq->msg_context = htole32(ccb->ccb_id);
 
-	if (mpi_poll(sc, ccb, 10000) != 0) {
+	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
 		return (1);
 	}
@@ -1555,7 +1553,7 @@ mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 
-	if (mpi_poll(sc, ccb, 10000) != 0) {
+	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
 		return (1);
 	}
@@ -1651,7 +1649,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	if (!read)
 		bcopy(page, kva, len);
 
-	if (mpi_poll(sc, ccb, 10000) != 0) {
+	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
 		return (1);
 	}
