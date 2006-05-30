@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.21 2006/05/28 16:49:46 fkr Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.22 2006/05/30 21:44:03 fkr Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -136,7 +136,9 @@ static struct csdev {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL_GC,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4322,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, BUG_BROADCOM }
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, BUG_BROADCOM },
+	{ PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXCB950,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
 };
 
 static const int ncsdevs = sizeof(csdevs) / sizeof(csdevs[0]);
