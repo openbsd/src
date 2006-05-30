@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.49 2006/05/30 08:23:31 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.50 2006/05/30 09:11:24 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -230,6 +230,9 @@ add_file(struct cvs_file *cf)
 		}
 		stop = 1;
 		break;
+	case FILE_CONFLICT:
+	case FILE_LOST:
+	case FILE_MODIFIED:
 	case FILE_UPTODATE:
 		if (cf->file_rcs != NULL && cf->file_rcs->rf_dead == 0) {
 			cvs_log(LP_NOTICE, "%s already exists, with version "
