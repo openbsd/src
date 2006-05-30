@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.59 2006/05/28 07:56:44 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.60 2006/05/30 07:24:08 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -166,11 +166,16 @@ cvs_status_local(struct cvs_file *cf)
 
 	if (cf->file_ent != NULL) {
 		if (cf->file_ent->ce_tag != NULL)
-			cvs_printf("   Sticky Tag:\t%s\n",
+			cvs_printf("   Sticky Tag:\t\t%s\n",
 			    cf->file_ent->ce_tag);
+		else if (verbosity > 0)
+			cvs_printf("   Sticky Tag:\t\t(none)\n");
+
 		if (cf->file_ent->ce_opts != NULL)
 			cvs_printf("   Sticky Options:\t%s\n",
 			    cf->file_ent->ce_opts);
+		else if (verbosity > 0)
+			cvs_printf("   Sticky Options:\t(none)\n");
 	}
 
 	cvs_printf("\n");
