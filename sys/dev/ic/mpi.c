@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.12 2006/05/29 21:30:24 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.13 2006/05/30 03:25:13 jason Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -33,7 +33,7 @@
 #include <dev/ic/mpireg.h>
 #include <dev/ic/mpivar.h>
 
-#define MPI_DEBUG
+#undef MPI_DEBUG
 
 #ifdef MPI_DEBUG
 #define DPRINTF(x...)		do { if (mpidebug) printf(x); } while (0)
