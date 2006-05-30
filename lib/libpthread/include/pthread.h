@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.25 2005/10/31 20:48:30 brad Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.26 2006/05/30 19:13:04 otto Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -57,7 +57,7 @@
  */
 #define PTHREAD_DESTRUCTOR_ITERATIONS		4
 #define PTHREAD_KEYS_MAX			256
-#define PTHREAD_STACK_MIN			1024
+#define PTHREAD_STACK_MIN			2048
 #define PTHREAD_THREADS_MAX			ULONG_MAX
 
 /*
