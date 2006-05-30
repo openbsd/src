@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.51 2006/05/28 19:09:39 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.52 2006/05/30 19:37:29 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1347,6 +1347,7 @@ getdevunit(name, unit)
 #define BUSCLASS_XDC		7
 #define BUSCLASS_XYC		8
 #define BUSCLASS_FDC		9
+#define BUSCLASS_SCHIZO		10
 
 static struct {
 	char	*name;
@@ -1355,7 +1356,7 @@ static struct {
 	{ "mainbus",	BUSCLASS_MAINBUS },
 	{ "upa",	BUSCLASS_MAINBUS },
 	{ "psycho",	BUSCLASS_MAINBUS },
-	{ "schizo",	BUSCLASS_MAINBUS },
+	{ "schizo",	BUSCLASS_SCHIZO },
 	{ "obio",	BUSCLASS_OBIO },
 	{ "iommu",	BUSCLASS_IOMMU },
 	{ "sbus",	BUSCLASS_SBUS },
@@ -1371,6 +1372,7 @@ static struct {
 	{ "pciide",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
+	{ "mpi",	BUSCLASS_PCI },
 	{ "fdc",	BUSCLASS_FDC },
 };
 
@@ -1389,8 +1391,8 @@ static const struct dev_compat_tab {
 	{ "ptisp",	BUSCLASS_NONE,		"isp" },
 	{ "SUNW,isptwo", BUSCLASS_NONE,		"isp" },
 	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
+	{ "pci108e,8001", BUSCLASS_SCHIZO,	"schizo" },
 	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
-	{ "pci",	BUSCLASS_MAINBUS,	"schizo" },
 	{ "pci",	BUSCLASS_PCI,		"ppb" },
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
 	{ "disk",	BUSCLASS_NONE,		"wd" },
@@ -1408,6 +1410,7 @@ static const struct dev_compat_tab {
 	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
 	{ "sd",		BUSCLASS_NONE,		"sd" },
 	{ "ide-disk",	BUSCLASS_NONE,		"wd" },
+	{ "LSILogic,sas", BUSCLASS_NONE,	"mpi" },
 	{ NULL }
 };
 
@@ -1530,6 +1533,22 @@ instance_match(dev, aux, bp)
 		    bp->val[1] == pa->pa_function)
 			return (1);
 		break;
+	case BUSCLASS_SCHIZO:
+		ma = aux;
+		if (ma->ma_nreg < 1) {
+			DPRINTF(ACDB_BOOTDEV, ("schizo: not enough regs %d\n",
+			    ma->ma_nreg));
+			break;
+		}
+		DPRINTF(ACDB_BOOTDEV,
+		    ("instance_match: mainbus device, want %#x/%llx have %#x/%llx\n",
+		    ma->ma_upaid,
+		    (unsigned long long)ma->ma_reg[0].ur_paddr & 0x00700000,
+		    bp->val[0], (unsigned long long)bp->val[1]));
+		if (bp->val[0] == ma->ma_upaid &&
+		    bp->val[1] == (ma->ma_reg[0].ur_paddr & 0x00700000))
+			return (1);
+		break;
 	default:
 		break;
 	}
@@ -1567,7 +1586,7 @@ device_register(dev, aux)
 
 	/* First, match by name */
 	if (strcmp(dvname, bpname) != 0 &&
-	    (strcmp(dvname, "schizo") != 0 || strcmp(bpname, "psycho") != 0))
+	    (strcmp(dvname, "schizo") != 0 || strcmp(bpname, "pci") != 0))
 		return;
 
 	if (bus_class(dev) != BUSCLASS_NONE) {
