@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.25 2006/04/13 00:48:48 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.26 2006/05/30 20:09:53 krw Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,14 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.25 2006/04/13 00:48:48 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.26 2006/05/30 20:09:53 krw Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #ifdef sunos
 #include <sys/vnode.h>
 
@@ -361,8 +363,8 @@ flushtape(void)
 void
 trewind(void)
 {
-	int f;
-	int got;
+	struct stat sb;
+	int f, got;
 
 	for (f = 0; f < SLAVES; f++) {
 		/*
@@ -405,6 +407,23 @@ trewind(void)
 		return;
 	}
 #endif
+	/*
+	 * st(4) says: "... bits 0 and 1 of the minor number are interpreted as
+	 * `sub-modes'.  The sub-modes differ in the action taken when the
+	 * device is closed ...". In short, if bit 1 is set the tape will be
+	 * ejected on close.
+	 *
+	 * If the tape has been ejected, looping on open() will generate 'Media
+	 * not present' errors until a tape is loaded. Once loaded the tape
+	 * will be immediately ejected as a result of the second close().
+	 *
+	 * So if the tape will be ejected, just close and return.
+	 */
+	if ((fstat(tapefd, &sb) == 0) && (minor(sb.st_rdev) & 0x02)) {
+		(void) close(tapefd);
+		return;
+	}
+
 	(void) close(tapefd);
 	while ((f = open(tape, 0)) < 0)
 		sleep (10);
