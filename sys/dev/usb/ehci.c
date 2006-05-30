@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.56 2006/05/29 04:02:10 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.57 2006/05/30 19:21:07 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2238,9 +2238,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 	ehci_physaddr_t dataphys, dataphyspage, dataphyslastpage, nextphys;
 	u_int32_t qtdstatus;
 	int len, curlen, mps;
-	int i, tog;
+	int i, tog, forceshort;
 	usb_dma_t *dma = &xfer->dmabuf;
-	u_int16_t flags = xfer->flags;
 
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
@@ -2253,6 +2252,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 	mps = UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize);
 	tog = epipe->nexttoggle;
 	qtdstatus |= EHCI_QTD_SET_TOGGLE(tog);
+	forceshort = ((xfer->flags & USBD_FORCE_SHORT_XFER) || len == 0) &&
+	    len % mps == 0;
 
 	cur = ehci_alloc_sqtd(sc);
 	*sp = cur;
@@ -2298,9 +2299,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 		 * or if force last short transfer flag is set and we're
 		 * allocating a multiple of the max packet size.
 		 */
-		if (len != 0 ||
-		    ((curlen % mps) == 0 && !rd && curlen != 0 &&
-		     (flags & USBD_FORCE_SHORT_XFER))) {
+		if (len != 0 || forceshort) {
 			next = ehci_alloc_sqtd(sc);
 			if (next == NULL)
 				goto nomem;
@@ -2332,14 +2331,16 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 		cur->len = curlen;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
 		    dataphys, dataphys + curlen));
-		/* adjust the toggle based on the number of packets in this
-		   qtd */
-		if (((curlen + mps - 1) / mps) & 1) {
+		/* adjust the toggle based on the number of packets
+		 * in this qtd */
+		if ((((curlen + mps - 1) / mps) & 1) || curlen == 0)
 			tog ^= 1;
-			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
+		if (len == 0) {
+			if (! forceshort) {
+				break;
+			}
+			forceshort = 0;
 		}
-		if (next == NULL)
-			break;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
 		dataphys += curlen;
 		cur = next;
