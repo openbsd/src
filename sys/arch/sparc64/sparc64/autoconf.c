@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.52 2006/05/30 19:37:29 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.53 2006/05/30 23:24:15 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1513,7 +1513,21 @@ instance_match(dev, aux, bp)
 		DPRINTF(ACDB_BOOTDEV,
 		    ("instance_match: mainbus device, want %#x have %#x\n",
 		    ma->ma_upaid, bp->val[0]));
-		if (bp->val[0] == ma->ma_upaid)
+		if (bp->val[0] != ma->ma_upaid)
+			break;
+		if (bus_class(dev) != BUSCLASS_SCHIZO)
+			return (1);
+		if (ma->ma_nreg < 1) {
+			DPRINTF(ACDB_BOOTDEV,
+			    ("instance match: schizo not enough regs %d\n",
+			    ma->ma_nreg));
+			break;
+		}
+		DPRINTF(ACDB_BOOTDEV,
+		    ("instance_match: schizo device, want %llx have %llx\n",
+		    (unsigned long long)ma->ma_reg[0].ur_paddr & 0x00700000,
+		    (unsigned long long)bp->val[1]));
+		if ((ma->ma_reg[0].ur_paddr & 0x00700000) == bp->val[1])
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
