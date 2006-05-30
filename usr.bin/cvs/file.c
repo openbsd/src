@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.151 2006/05/30 07:00:30 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.152 2006/05/30 19:16:51 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -616,10 +616,27 @@ cvs_file_classify(struct cvs_file *cf, int loud)
 	if (cf->repo_fd != -1) {
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, rflags);
 		if (cf->file_rcs == NULL)
-			fatal("cvs_file_classify: rcs_open failed while it "
-			    "shouldn't");
+			fatal("cvs_file_classify: failed to parse RCS");
+		cf->file_rcs->rf_inattic = 0;
 	} else {
-		cf->file_rcs = NULL;
+		xfree(cf->file_rpath);
+		l = snprintf(rcsfile, MAXPATHLEN, "%s/%s/%s%s",
+		    repo, CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
+		if (l == -1 || l >= MAXPATHLEN)
+			fatal("cvs_file_classify: overflow");
+
+		cf->file_rpath = xstrdup(rcsfile);
+
+		cf->repo_fd = open(cf->file_rpath, O_RDONLY);
+		if (cf->repo_fd != -1) {
+			cf->file_rcs = rcs_open(cf->file_rpath,
+			     cf->repo_fd, rflags);
+			if (cf->file_rcs == NULL)
+				fatal("cvs_file_classify: failed to parse RCS");
+			cf->file_rcs->rf_inattic = 1;
+		} else {
+			cf->file_rcs = NULL;
+		}
 	}
 
 	if (cf->file_ent != NULL)
