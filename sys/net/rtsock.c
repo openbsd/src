@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.58 2006/04/22 19:43:07 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.59 2006/05/30 21:58:28 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -793,6 +793,8 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 	struct rtentry		*rt = (struct rtentry *)rn;
 	int			 error = 0, size;
 	struct rt_addrinfo	 info;
+	struct sockaddr_rtlabel	 sa_rt;
+	const char		*label;
 
 	if (w->w_op == NET_RT_FLAGS && !(rt->rt_flags & w->w_arg))
 		return 0;
@@ -807,6 +809,18 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			brdaddr = rt->rt_ifa->ifa_dstaddr;
 	}
+	if (rt->rt_labelid) {
+		bzero(&sa_rt, sizeof(sa_rt));
+		sa_rt.sr_len = sizeof(sa_rt);
+		label = rtlabel_id2name(rt->rt_labelid);
+		if (label != NULL) {
+			strlcpy(sa_rt.sr_label, label,
+			    sizeof(sa_rt.sr_label));
+			info.rti_info[RTAX_LABEL] =
+			    (struct sockaddr *)&sa_rt;
+		}
+	}
+
 	size = rt_msg2(RTM_GET, &info, NULL, w);
 	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
