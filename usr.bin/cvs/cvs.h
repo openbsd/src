@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.109 2006/05/28 01:24:28 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.110 2006/05/30 06:34:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -139,6 +139,7 @@
 #define CVS_PATH_TAG		CVS_PATH_CVSDIR "/Tag"
 #define CVS_PATH_TEMPLATE	CVS_PATH_CVSDIR "/Template"
 #define CVS_PATH_UPDATEPROG	CVS_PATH_CVSDIR "/Update.prog"
+#define CVS_PATH_ATTIC		"Attic"
 
 struct cvs_cmd {
 	u_int	 cmd_op;
@@ -265,13 +266,13 @@ extern volatile sig_atomic_t sig_received;
 extern volatile sig_atomic_t cvs_quit;
 extern struct cvsroot *current_cvsroot;
 extern char *cvs_tagname;
-extern char *cvs_repo_base;
 extern char *cvs_command;
 extern char *cvs_editor;
 extern char *cvs_homedir;
 extern char *cvs_msg;
 extern char *cvs_rsh;
 extern char *cvs_tmpdir;
+extern char *import_repository;
 
 extern int  cvs_umask;
 extern int  verbosity;
