@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.3 2006/05/31 07:51:47 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.4 2006/05/31 23:01:15 mjc Exp $ */
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -302,7 +302,6 @@ get_nwa(int *nwa)
 	scr.cmd[0] = 0x52; /* READ TRACK INFO */
 	scr.cmd[1] = 0x01;
 	scr.cmd[5] = 0xff; /* Invisible Track */
-	scr.cmd[2] = 0x05; /* Write parameters mode page */
 	scr.cmd[7] = 0x00;
 	scr.cmd[8] = 0x1c;
 	scr.cmdlen = 10;
