@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.15 2006/05/29 01:39:38 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.16 2006/05/31 03:04:52 beck Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -100,18 +100,28 @@ const struct special_word specials[] = {
 
 static	int changer_fd;
 static	char *changer_name;
+static int avoltag;
+static int pvoltag;
 
 int
 main(int argc, char *argv[])
 {
 	int ch, i;
 
-	while ((ch = getopt(argc, argv, "f:")) != -1) {
+	while ((ch = getopt(argc, argv, "af:vV")) != -1) {
 		switch (ch) {
+		case 'v':
+			pvoltag = 1;
+			break;
+		case 'V':
+			avoltag = 1;
+			break;
 		case 'f':
 			changer_name = optarg;
 			break;
-
+		case 'a':
+			pvoltag = avoltag = 1;
+			break;
 		default:
 			usage();
 		}
@@ -472,9 +482,8 @@ do_setpicker(char *cname, int argc, char *argv[])
 static int
 do_status(char *cname, int argc, char *argv[])
 {
-	struct changer_element_status cmd;
+	struct changer_element_status_request cmd;
 	struct changer_params data;
-	u_int8_t *statusp;
 	int i, chet, schet, echet;
 	char *description;
 	size_t count;
@@ -547,28 +556,39 @@ do_status(char *cname, int argc, char *argv[])
 			}
 		}
 
-		/* Allocate storage for the status bytes. */
-		if ((statusp = malloc(count)) == NULL)
-			errx(1, "can't allocate status storage");
-
-		bzero(statusp, count);
 		bzero(&cmd, sizeof(cmd));
 
-		cmd.ces_type = chet;
-		cmd.ces_data = statusp;
+		cmd.cesr_type = chet;
+		/* Allocate storage for the status info. */
+		cmd.cesr_data = calloc(count, sizeof(*cmd.cesr_data));
+		if ((cmd.cesr_data) == NULL)
+			errx(1, "can't allocate status storage");
+		if (avoltag || pvoltag)
+			cmd.cesr_flags |= CESR_VOLTAGS;
 
 		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
-			free(statusp);
+			free(cmd.cesr_data);
 			err(1, "%s: CHIOGSTATUS", changer_name);
 		}
 
 		/* Dump the status for each element of this type. */
 		for (i = 0; i < count; ++i) {
-			printf("%s %d: %s\n", description, i,
-			    bits_to_string(statusp[i], CESTATUS_BITS));
+			struct changer_element_status *ces =
+			         &(cmd.cesr_data[i]);
+			printf("%s %d: %s", description, i,
+			    bits_to_string(ces->ces_flags, CESTATUS_BITS));
+			if (pvoltag)
+				printf(" voltag: <%s:%d>", 
+				       ces->ces_pvoltag.cv_volid,
+				       ces->ces_pvoltag.cv_serial);
+			if (avoltag)
+				printf(" avoltag: <%s:%d>", 
+				       ces->ces_avoltag.cv_volid,
+				       ces->ces_avoltag.cv_serial);
+			printf("\n");
 		}
 
-		free(statusp);
+		free(cmd.cesr_data);
 	}
 
 	return (0);
@@ -659,7 +679,7 @@ usage(void)
 {
 	int i;
 
-	fprintf(stderr, "usage: %s [-f device] command [args ...]\n",
+	fprintf(stderr, "usage: %s [-avV] [-f device] command [args ...]\n",
 	    __progname);
 	fprintf(stderr, "commands:");
 	for (i = 0; commands[i].cc_name; i++)
