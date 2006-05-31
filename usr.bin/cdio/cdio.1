@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.33 2006/05/31 08:30:36 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.34 2006/05/31 20:59:32 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -230,16 +230,19 @@ Set the volume of the left channel to
 and the volume of the right channel to
 .Ar right_channel .
 Allowed values are in the range 0\-255.
-.It Ic volume Ar left
-Play the left subtrack on both left and right channels.
-.It Ic volume Ar mono
-Set the mono mode.
-.It Ic volume Ar mute
-Turn the sound off.
-.It Ic volume Ar right
-Play the right subtrack on both left and right channels.
-.It Ic volume Ar stereo
-Set the stereo mode.
+.It Xo Ic volume
+.Ic left \*(Ba
+.Ic right \*(Ba
+.Ic mono \*(Ba
+.Ic stereo \*(Ba
+.Ic mute
+.Xc
+Respectively:
+play the left subtrack on both left and right channels;
+play the right subtrack on both left and right channels;
+set mono mode;
+set stereo mode;
+turn the sound off.
 .El
 .Sh FILES
 .Bl -tag -width /dev/rmcd0c -compact
