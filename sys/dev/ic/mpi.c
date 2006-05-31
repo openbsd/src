@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.20 2006/05/31 06:17:00 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.21 2006/05/31 21:28:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -701,7 +701,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 #endif /* MPI_DEBUG */
 
 	xs->status = sie->scsi_status;
-	switch (sie->ioc_status) {
+	switch (letoh16(sie->ioc_status)) {
 	case MPI_IOCSTATUS_SCSI_DATA_OVERRUN:
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
