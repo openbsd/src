@@ -141,7 +141,7 @@ struct prom_map {
 #define PMAP_4M		0x018
 #define PMAP_SZ_TO_TTE(x)	(((x)&0x018)<<58)
 /* If these bits are different in va's to the same PA then there is an aliasing in the d$ */
-#define VA_ALIAS_MASK   (1<<14)	
+#define VA_ALIAS_MASK   (1<<13)	
 
 typedef	struct pmap *pmap_t;
 
