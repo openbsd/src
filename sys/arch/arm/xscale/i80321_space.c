@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_space.c,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
+/*	$OpenBSD: i80321_space.c,v 1.3 2006/05/31 05:43:49 drahn Exp $	*/
 /*	$NetBSD: i80321_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $	*/
 
 /*
@@ -301,7 +301,6 @@ i80321_io_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	bus_space_subregion(sc->sc_st, sc->sc_io_sh, (bpa - busbase), size,
 	    bshp);
-
 	return (0);
 }
 
@@ -358,10 +357,8 @@ printf("i80321_bs_map bpa %x, size %x flag %x : %x %x \n", bpa, size, flag,
 	if (bpa >= sc->sc_owin[0].owin_xlate_lo &&
 	    bpa < (sc->sc_owin[0].owin_xlate_lo +
 		   VERDE_OUT_XLATE_MEM_WIN_SIZE)) {
-		//busbase = sc->sc_owin[0].owin_xlate_lo;
-		busbase = 0;
-		physbase = sc->sc_iwin[1].iwin_xlate;
-		physbase = 0x40000000; /* COMPLETELY FUCKING WRONG */
+		busbase = sc->sc_iwin[1].iwin_xlate;
+		physbase = sc->sc_owin[0].owin_xlate_lo;
 	} else
 		return (EINVAL);
 
