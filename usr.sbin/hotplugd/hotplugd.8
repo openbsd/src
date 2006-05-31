@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplugd.8,v 1.3 2006/05/31 09:16:35 jmc Exp $
+.\"	$OpenBSD: hotplugd.8,v 1.4 2006/05/31 10:07:51 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -37,6 +37,7 @@ device for reading events from, but an alternative device can be
 specified with the
 .Fl d
 option.
+.Pp
 Actions can be configured either for device attachment or detachment.
 On device attachment the
 .Pa attach
@@ -46,10 +47,11 @@ On device detachment the
 script is executed if it exists.
 In both cases two parameters are passed to the scripts: the class and name
 of the attached or detached device.
-Device class corresponds to the classes described in the
+The device class corresponds to the classes described in the
 .Aq Pa sys/device.h
 header file and can be one of the following:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 generic, no special info
 .It 1
@@ -64,10 +66,13 @@ tape device
 serial line interface
 .El
 .Pp
-Not all classes can be really usable, e.g. it's unlikely to have
-a hot plug CPU.
+Not all classes are really usable.
+For example, it's unlikely that a CPU will be hotplug.
 .Pp
-Device name is a usual name including unit number, e.g.\&
+The device name is the usual name,
+as listed in
+.Xr MAKEDEV 8 ,
+and the unit number, e.g.\&
 .Pa sd1 .
 .Sh FILES
 .Bl -tag -width "/dev/hotplug/attach" -compact
@@ -94,7 +99,7 @@ case $DEVCLASS in
 2)
 	# disk devices
 
-	disklabel=`/sbin/disklabel $DEVNAME 2>&1 | \e
+	disklabel=`/sbin/disklabel $DEVNAME 2\*(Gt&1 | \e
 		grep '^label:' | sed -e 's/^label: //'`
 	case $disklabel in
 	Sony*DSC*)
