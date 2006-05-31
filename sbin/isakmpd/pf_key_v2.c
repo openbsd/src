@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.169 2006/05/29 10:17:59 markus Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.170 2006/05/31 04:54:46 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2319,7 +2319,7 @@ pf_key_v2_connection_check(char *conn)
 	if (!sa_lookup_by_name(conn, 2)) {
 		LOG_DBG((LOG_SYSDEP, 70,
 		    "pf_key_v2_connection_check: SA for %s missing", conn));
-		exchange_establish(conn, pf_key_v2_stayalive, conn);
+		exchange_establish(conn, pf_key_v2_stayalive, conn, 0);
 	} else
 		LOG_DBG((LOG_SYSDEP, 70, "pf_key_v2_connection_check: "
 		    "SA for %s exists", conn));
@@ -2425,7 +2425,7 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	if (!(sa->flags & SA_FLAG_REPLACED) &&
 	    (sa->flags & SA_FLAG_ONDEMAND) &&
 	    lifecurrent->sadb_lifetime_bytes)
-		exchange_establish(sa->name, 0, 0);
+		exchange_establish(sa->name, 0, 0, 0);
 
 	if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_HARD) {
 		/* Remove the old SA, it isn't useful anymore.  */

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.117 2006/05/30 19:54:29 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.118 2006/05/31 04:54:46 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1719,7 +1719,7 @@ message_send_notification(struct message *msg, struct sa *isakmp_sa,
 	else
 		exchange_establish_p1(msg->transport, ISAKMP_EXCH_INFO,
 		    msg->exchange ? msg->exchange->doi->id : ISAKMP_DOI_ISAKMP,
-		    0, &args, 0, 0);
+		    0, &args, 0, 0, 0);
 }
 
 /* Send a DELETE inside an informational exchange for each protocol in SA.  */

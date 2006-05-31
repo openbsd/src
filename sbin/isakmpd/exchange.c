@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.125 2005/11/16 18:35:32 cloder Exp $	 */
+/* $OpenBSD: exchange.c,v 1.126 2006/05/31 04:54:46 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -720,7 +720,7 @@ exchange_establish_transaction(struct exchange *exchange, void *arg, int fail)
 void
 exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
     char *name, void *args, void (*finalize)(struct exchange *, void *, int),
-    void *arg)
+    void *arg, int stayalive)
 {
 	struct exchange		*exchange;
 	struct message		*msg;
@@ -848,6 +848,9 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 			return;
 		}
 		sa_reference(msg->isakmp_sa);
+
+		if (stayalive)
+			msg->isakmp_sa->flags |= SA_FLAG_STAYALIVE;
 	}
 	msg->extra = args;
 
@@ -1676,7 +1679,7 @@ exchange_establish_finalize(struct exchange *exchange, void *arg, int fail)
 	    exchange, arg, name ? name : "<unnamed>", fail));
 
 	if (!fail)
-		exchange_establish(name, 0, 0);
+		exchange_establish(name, 0, 0, 0);
 	free(name);
 }
 
@@ -1686,7 +1689,7 @@ exchange_establish_finalize(struct exchange *exchange, void *arg, int fail)
  */
 void
 exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
-    int), void *arg)
+    int), void *arg, int stayalive)
 {
 	struct transport	*transport;
 	struct sa		*isakmp_sa;
@@ -1721,7 +1724,8 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 			    "peer \"%s\" could not be created", trpt, name);
 			return;
 		}
-		exchange_establish_p1(transport, 0, 0, name, 0, finalize, arg);
+		exchange_establish_p1(transport, 0, 0, name, 0, finalize, arg,
+		    stayalive);
 		break;
 
 	case 2:
@@ -1755,7 +1759,7 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 			 * This is the case with dynamic SAs and PFKEY.
 			 */
 			exchange_establish(peer, exchange_establish_finalize,
-			    name);
+			    name, 0);
 			exchange = exchange_lookup_by_name(peer, 1);
 			/*
 			 * If the exchange was correctly initialized, add the

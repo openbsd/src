@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.30 2005/07/25 15:03:47 hshoexer Exp $	 */
+/* $OpenBSD: exchange.h,v 1.31 2006/05/31 04:54:46 hshoexer Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -227,10 +227,10 @@ extern void     exchange_finalize(struct message *);
 extern void     exchange_free(struct exchange *);
 extern void     exchange_free_aca_list(struct exchange *);
 extern void     exchange_establish(char *name, void (*)(struct exchange *,
-		    void *, int), void *);
+		    void *, int), void *, int);
 extern void	exchange_establish_p1(struct transport *, u_int8_t, u_int32_t,
 		    char *, void *, void (*)(struct exchange *, void *, int),
-		    void *);
+		    void *, int);
 extern void     exchange_establish_p2(struct sa *, u_int8_t, char *, void *,
 		    void (*)(struct exchange *, void *, int), void *);
 extern int      exchange_gen_nonce(struct message *, size_t);

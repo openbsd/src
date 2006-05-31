@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.106 2006/05/29 14:31:39 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.107 2006/05/31 04:54:46 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1194,7 +1194,8 @@ sa_soft_finalize(struct exchange* exchange, void *v_sa, int fail)
 	}
 
 	if (exchange)
-		exchange_establish(sa->name, sa_soft_finalize, sa);
+		exchange_establish(sa->name, sa_soft_finalize, sa,
+		    sa->flags & SA_FLAG_STAYALIVE);
 	else {
 		struct timeval  expiration;
 		int 		seconds;
@@ -1226,7 +1227,7 @@ sa_soft_expire(void *v_sa)
 	if (sa->death && (sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
 	    == SA_FLAG_STAYALIVE)
 		/* soft_finalize will (eventually) release the sa */
-		exchange_establish(sa->name, sa_soft_finalize, sa);
+		exchange_establish(sa->name, sa_soft_finalize, sa, 1);
 	else {
 		/*
 		 * Start to watch the use of this SA, so a renegotiation can
@@ -1248,7 +1249,7 @@ sa_hard_expire(void *v_sa)
 
 	if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED)) ==
 	    SA_FLAG_STAYALIVE)
-		exchange_establish(sa->name, 0, 0);
+		exchange_establish(sa->name, 0, 0, 1);
 
 	sa_delete(sa, 1);
 }
