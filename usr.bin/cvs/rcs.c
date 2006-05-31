@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.178 2006/05/31 18:26:14 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.179 2006/05/31 22:25:59 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2985,6 +2985,8 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		}
 
 		if (brp == NULL) {
+			if (cvs_cmdop == CVS_OP_IMPORT)
+				return (NULL);
 			rcsnum_cpy(rdp->rd_num, rev, 0);
 			return (rev);
 		}

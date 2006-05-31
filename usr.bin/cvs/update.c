@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.68 2006/05/30 21:32:52 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.69 2006/05/31 22:25:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -140,7 +140,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 {
 	long base;
 	int nbytes;
-	int isempty;
+	int isempty, l;
 	size_t bufsize;
 	struct stat st;
 	struct dirent *dp;
@@ -148,8 +148,25 @@ cvs_update_leavedir(struct cvs_file *cf)
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 	CVSENTRIES *entlist;
+	char *export;
 
 	cvs_log(LP_TRACE, "cvs_update_leavedir(%s)", cf->file_path);
+
+	if (cvs_cmdop == CVS_OP_EXPORT) {
+		export = xmalloc(MAXPATHLEN);
+		l = snprintf(export, MAXPATHLEN, "%s/%s", cf->file_path,
+		    CVS_PATH_CVSDIR);
+		if (l == -1 || l >= MAXPATHLEN)
+			fatal("cvs_update_leavedir: overflow");
+
+		/* XXX */
+		if (cvs_rmdir(export) == -1)
+			fatal("cvs_update_leavedir: %s: %s:", export,
+			    strerror(errno));
+
+		xfree(export);
+		return;
+	}
 
 	if (fstat(cf->fd, &st) == -1)
 		fatal("cvs_update_leavedir: %s", strerror(errno));
@@ -209,6 +226,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 	xfree(buf);
 
 	if (isempty == 1 && prune_dirs == 1) {
+		/* XXX */
 		cvs_rmdir(cf->file_path);
 
 		entlist = cvs_ent_open(cf->file_wd);

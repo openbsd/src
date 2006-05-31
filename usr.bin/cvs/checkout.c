@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.58 2006/05/28 01:24:28 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.59 2006/05/31 22:25:59 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,6 +35,16 @@ struct cvs_cmd cvs_cmd_checkout = {
 	"[-AcflNnPpRs] [-D date | -r tag] [-d dir] [-j rev] [-k mode] "
 	"[-t id] module ...",
 	"AcD:d:fj:k:lNnPRr:st:",
+	NULL,
+	cvs_checkout
+};
+
+struct cvs_cmd cvs_cmd_export = {
+	CVS_OP_EXPORT, CVS_REQ_EXPORT, "export",
+	{ "exp", "ex" },
+	"Export sources from CVS, similar to checkout",
+	"module ...",
+	"",
 	NULL,
 	cvs_checkout
 };
