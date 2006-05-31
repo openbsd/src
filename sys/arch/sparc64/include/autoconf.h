@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.11 2006/03/04 10:31:50 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.12 2006/05/31 20:11:31 jason Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -147,7 +147,7 @@ struct device;
 struct bootpath {
 	char	name[16];	/* name of this node */
 	char	compatible[16];	/* "compatible" name of this node */
-	int	val[3];		/* up to three optional values */
+	long	val[3];		/* up to three optional values */
 	struct device *dev;	/* device that recognised this component */
 };
 struct bootpath	*bootpath_store(int, struct bootpath *);

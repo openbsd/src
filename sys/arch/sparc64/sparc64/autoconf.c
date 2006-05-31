@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.54 2006/05/31 01:03:20 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.55 2006/05/31 20:11:31 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -104,7 +104,7 @@ extern	int kgdb_debug_panic;
 static	int rootnode;
 char platform_type[64];
 
-static	char *str2hex(char *, int *);
+static	char *str2hex(char *, long *);
 static	int mbprint(void *, const char *);
 void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
@@ -163,11 +163,27 @@ int autoconf_debug = 0x0;
  * Depends on ASCII order (this *is* machine-dependent code, you know).
  */
 static char *
-str2hex(str, vp)
-	register char *str;
-	register int *vp;
+str2hex(char *str, long *vp)
 {
-	register int v, c;
+	long v;
+	int c;
+
+	if (*str == 'w') {
+		printf("dubbya...%s\n", str);
+		for (v = 1;; v++) {
+			if (str[v] >= '0' && str[v] <= '9')
+				continue;
+			if (str[v] >= 'a' && str[v] <= 'f')
+				continue;
+			if (str[v] >= 'A' && str[v] <= 'F')
+				continue;
+			if (str[v] == '\0' || str[v] == ',')
+				break;
+			*vp = 0;
+			return (str + v);
+		}
+		str++;
+	}
 
 	for (v = 0;; v = v * 16 + c, str++) {
 		c = *(u_char *)str;
@@ -412,7 +428,7 @@ bootpath_print(bp)
 		if (bp->val[0] == -1)
 			printf("/%s%x", bp->name, bp->val[1]);
 		else
-			printf("/%s@%x,%x", bp->name, bp->val[0], bp->val[1]);
+			printf("/%s@%lx,%lx", bp->name, bp->val[0], bp->val[1]);
 		if (bp->val[2] != 0)
 			printf(":%c", bp->val[2] + 'a');
 		bp++;
@@ -1374,6 +1390,7 @@ static struct {
 	{ "pci",	BUSCLASS_PCI },
 	{ "mpi",	BUSCLASS_PCI },
 	{ "fdc",	BUSCLASS_FDC },
+	{ "fp",		BUSCLASS_NONE},
 };
 
 /*
@@ -1412,6 +1429,8 @@ static const struct dev_compat_tab {
 	{ "sd",		BUSCLASS_NONE,		"sd" },
 	{ "ide-disk",	BUSCLASS_NONE,		"wd" },
 	{ "LSILogic,sas", BUSCLASS_NONE,	"mpi" },
+	{ "fp",		BUSCLASS_NONE,		"scsibus" },
+	{ "ssd",	BUSCLASS_NONE,		"sd" },
 	{ NULL }
 };
 
@@ -1639,6 +1658,15 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
+	} else if (strcmp(bp->name, "fp") == 0) {
+		struct scsi_link *sl = aux;
+
+		if (bp->val[0] == sl->scsibus) {
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found fp scsibus %s\n",
+			    dev->dv_xname));
+			bootpath_store(1, bp + 1);
+			return;
+		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
@@ -1650,9 +1678,21 @@ device_register(dev, aux)
 		struct scsibus_attach_args *sa = aux;
 		struct scsi_link *sl = sa->sa_sc_link;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+		    (struct scsibus_softc *)dev->dv_parent;
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
+
+		if (bp->val[0] & 0xffffffff00000000 && bp->val[0] != -1) {
+			/* fibre channel? */
+			if (sl->port_wwn != 0 && sl->port_wwn == bp->val[0] &&
+			    sl->lun == sl->lun) {
+				nail_bootdev(dev, bp);
+				DPRINTF(ACDB_BOOTDEV,
+				    ("\t-- found fc/ssd disk %s\n",
+				    dev->dv_xname));
+			}
+			return;
+		}
 
 		/* Check the controller that this scsibus is on */
 		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
