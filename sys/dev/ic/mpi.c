@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.16 2006/05/31 00:52:05 deraadt Exp $ */
+/*	$OpenBSD: mpi.c,v 1.17 2006/05/31 02:38:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -588,8 +588,10 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	io = &mcb->mcb_io;
 
 	io->function = MPI_FUNCTION_SCSI_IO_REQUEST;
-//	io->chain_offset = dwordsof(mcb->mcb_io);
-//	io->bus = htole16(sc->sc_bus);
+	/*
+	 * bus is always 0
+	 * io->bus = htole16(sc->sc_bus);
+	 */
 	io->target_id = link->target;
 
 	io->cdb_length = xs->cmdlen;
