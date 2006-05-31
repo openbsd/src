@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.45 2006/05/31 03:25:29 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.46 2006/05/31 14:02:12 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -156,6 +156,7 @@ void			aml_delchildren(struct acpi_context *,
 
 
 struct aml_node		aml_root;
+struct aml_value	aml_os;
 struct aml_value	*aml_global_lock;
 
 struct aml_opcode aml_table[] = {
@@ -3059,7 +3060,6 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	struct acpi_context *ctx;
 	struct aml_value *rv;
-	struct aml_value  aml_os;
 
 	aml_root.depth = -1;
 	aml_root.mnem  = "ROOT";
@@ -3069,8 +3069,9 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 	/* Add \_OS_ string */
 	aml_os.type = AML_OBJTYPE_STRING;
 	aml_os.v_string = "OpenBSD";
+	aml_os.length = strlen(aml_os.v_string) + 1;
 	ctx = acpi_alloccontext(sc, &aml_root, 0, NULL);
-	aml_addvname(ctx, "\\_OS_", 0, &aml_os);
+	aml_addvname(ctx, "\\_OS_", AMLOP_NAME, &aml_os);
 
 	rv  = aml_eparselist(ctx, aml_root.end, 0);
 	aml_freevalue(&rv);
