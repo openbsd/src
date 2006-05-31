@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.47 2006/01/20 00:58:32 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.48 2006/05/31 01:14:41 mjc Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -56,6 +56,7 @@
 #include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
+#include <sys/scsiio.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -101,6 +102,7 @@
 #define CMD_REPLAY	18
 #define CMD_CDDB	19
 #define CMD_CDID	20
+#define CMD_BLANK	21
 
 struct cmdtab {
 	int command;
@@ -132,6 +134,7 @@ struct cmdtab {
 { CMD_CDDB,   	"cddbinfo",     2, "[n]" },
 { CMD_CDID,	"cdid",		3, "" },
 { CMD_QUIT,	"exit",		2, "" },
+{ CMD_BLANK,	"blank",	1, "" },
 { 0, 0, 0, 0}
 };
 
@@ -143,6 +146,7 @@ int             verbose = 1;
 int             msf = 1;
 const char 	*cddb_host;
 char		**track_names;
+char            *track_types;
 
 EditLine       *el = NULL;	/* line-editing structure */
 History	       *hist = NULL;	/* line-editing history */
@@ -156,7 +160,7 @@ int             play_msf(int, int, int, int, int, int);
 int             play_track(int, int, int, int);
 int             get_vol(int *, int *);
 int             status(int *, int *, int *, int *);
-int             open_cd(char *);
+int             open_cd(char *, int);
 int             play(char *arg);
 int             info(char *arg);
 int             cddbinfo(char *arg);
@@ -258,6 +262,31 @@ main(int argc, char **argv)
 		    "No CD device name specified. Defaulting to %s.\n", cdname);
 	}
 
+	if (argc > 0 && ! strcasecmp(*argv, "tao")) {
+		optreset = 1;
+		optind = 0;
+		while ((ch = getopt(argc, argv, "t:")) != -1) {
+			switch (ch) {
+			case 't':
+				track_types = optarg;
+				break;
+			default:
+				usage();
+			}
+
+		}
+		argc -= optind;
+		argv += optind;
+		if (argc == 0)
+			usage();
+		if (! open_cd(cdname, 1))
+			exit(1);
+		if (writetao(argc,argv) != 0)
+			exit(1);
+		else
+			exit(0);
+	}
+
 	if (argc > 0) {
 		char buf[80], *p;
 		int len;
@@ -310,42 +339,42 @@ run(int cmd, char *arg)
 		exit(0);
 
 	case CMD_INFO:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return info(arg);
 
 	case CMD_CDDB:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return cddbinfo(arg);
 
 	case CMD_CDID:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 		return cdid();
 
 	case CMD_STATUS:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return pstatus(arg);
 
 	case CMD_PAUSE:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return ioctl(fd, CDIOCPAUSE);
 
 	case CMD_RESUME:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return ioctl(fd, CDIOCRESUME);
 
 	case CMD_STOP:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		rc = ioctl(fd, CDIOCSTOP);
@@ -355,7 +384,7 @@ run(int cmd, char *arg)
 		return (rc);
 
 	case CMD_RESET:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		rc = ioctl(fd, CDIOCRESET);
@@ -366,7 +395,7 @@ run(int cmd, char *arg)
 		return (0);
 
 	case CMD_DEBUG:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		if (! strcasecmp(arg, "on"))
@@ -393,14 +422,14 @@ run(int cmd, char *arg)
 		}
 
 		/* open new device */
-		if (!open_cd(arg))
+		if (! open_cd(arg, 0))
 			return (0);
 		(void) strlcpy(newcdname, arg, sizeof(newcdname));
 		cdname = newcdname;
 		return (1);
 
 	case CMD_EJECT:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		(void) ioctl(fd, CDIOCALLOW);
@@ -418,7 +447,7 @@ run(int cmd, char *arg)
 
 	case CMD_CLOSE:
 #if defined(CDIOCCLOSE)
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		(void) ioctl(fd, CDIOCALLOW);
@@ -434,7 +463,7 @@ run(int cmd, char *arg)
 #endif
 
 	case CMD_PLAY:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		while (isspace(*arg))
@@ -452,7 +481,7 @@ run(int cmd, char *arg)
 		return (0);
 
 	case CMD_VOLUME:
-		if (fd < 0 && !open_cd(cdname))
+		if (fd < 0 && !open_cd(cdname, 0))
 			return (0);
 
 		if (!strncasecmp(arg, "left", strlen(arg)))
@@ -478,22 +507,27 @@ run(int cmd, char *arg)
 		return setvol(l, r);
 
 	case CMD_NEXT:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return play_next(arg);
 
 	case CMD_PREV:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
 		return play_prev(arg);
 
 	case CMD_REPLAY:
-		if (fd < 0 && ! open_cd(cdname))
+		if (fd < 0 && ! open_cd(cdname, 0))
 			return 0;
 
 		return play_same(arg);
+	case CMD_BLANK:
+		if (fd < 0 && ! open_cd(cdname, 1))
+			return 0;
+
+		return blank();
 	default:
 	case CMD_HELP:
 		help();
@@ -1396,7 +1430,7 @@ parse(char *buf, int *cmd)
 }
 
 int
-open_cd(char *dev)
+open_cd(char *dev, int needwrite)
 {
 	char *realdev;
 	int tries;
@@ -1405,7 +1439,10 @@ open_cd(char *dev)
 		return (1);
 
 	for (tries = 0; fd < 0 && tries < 10; tries++) {
-		fd = opendev(dev, O_RDONLY, OPENDEV_PART, &realdev);
+		if (needwrite)
+			fd = opendev(dev, O_RDWR, OPENDEV_PART, &realdev);
+		else
+			fd = opendev(dev, O_RDONLY, OPENDEV_PART, &realdev);
 		if (fd < 0) {
 			if (errno == ENXIO) {
 				/*  ENXIO has an overloaded meaning here.

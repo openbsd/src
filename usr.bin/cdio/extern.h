@@ -31,5 +31,14 @@ extern unsigned long 	entry2frames(struct cd_toc_entry *);
 extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
 extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
+extern int		blank(void);
+extern int		unit_ready(void);
+extern int		synchronize_cache(void);
+extern int		close_session(void);
+extern int		get_nwa(int *);
+extern int		writetao(int, char *[]);
+extern int		writetrack(char *, u_int, u_int, char);
+extern int		mode_sense_write(unsigned char []);
+extern int		mode_select_write(unsigned char []);
 
 #define VERSION "2.1"

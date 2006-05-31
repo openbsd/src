@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.31 2006/01/23 00:41:10 krw Exp $
+.\" $OpenBSD: cdio.1,v 1.32 2006/05/31 01:14:41 mjc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -97,6 +97,8 @@ The word
 .Ic play
 may be omitted.
 .Bl -tag -width Ds
+.It Ic blank
+Minimally blank the disc.
 .It Ic cddb Op Ar n
 Print the table of contents after matching the disc with the cddb.
 In case of multiple matches, reissue the command with
@@ -198,6 +200,26 @@ the current media catalog status,
 and the current values of the volume for left and right channels.
 .It Ic stop
 Stop the disc.
+.It Xo Ic tao
+.Op Fl t Ar tracktypes
+.Ar trackfile ...
+.Xc
+Write track-at-once cd containing each
+.Ar trackfile
+specified. 
+The string
+.Ar tracktypes
+is used to assign types to each corresponding
+.Ar trackfile .
+Valid characters for the
+.Ar tracktypes
+string are 'a' for audio, 'd' for data.
+If there are more tracks specified than corresponding
+types, the last type will be used for the remainder.
+If
+.Ar tracktypes
+is completely unspecified, a track type of data is used.
+This option is only available from the command line.
 .It Ic volume Ar left_channel Ar right_channel
 Set the volume of the left channel to
 .Ar left_channel
