@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.65 2006/05/30 21:32:52 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.66 2006/05/31 01:26:21 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -150,10 +150,10 @@ void
 cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b;
-	int l, isadded;
+	int l, openflags, rcsflags;
 	char *d, *f, rbuf[24];
 	CVSENTRIES *entlist;
-	char *attic, *repo;
+	char *attic, *repo, *rcsfile;
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
 	cvs_file_classify(cf, NULL, 0);
@@ -162,19 +162,53 @@ cvs_commit_local(struct cvs_file *cf)
 		fatal("cvs_commit_local: '%s' is not a file", cf->file_path);
 
 	if (cf->file_status == FILE_MODIFIED ||
-	    cf->file_status == FILE_REMOVED)
+	    cf->file_status == FILE_REMOVED || (cf->file_status == FILE_ADDED
+	    && cf->file_rcs != NULL && cf->file_rcs->rf_dead == 1))
 		rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
 	else
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 
-	isadded = (cf->file_status == FILE_ADDED && cf->file_rcs == NULL);
-	if (isadded) {
-		cf->repo_fd = open(cf->file_rpath, O_CREAT|O_TRUNC|O_WRONLY);
+	if (cf->file_status == FILE_ADDED) {
+		rcsflags = RCS_CREATE;
+		openflags = O_CREAT | O_TRUNC | O_WRONLY;
+		if (cf->file_rcs != NULL) {
+			if (cf->file_rcs->rf_inattic == 0)
+				cvs_log(LP_ERR, "warning: expected %s "
+				    "to be in the Attic", cf->file_path);
+
+			if (cf->file_rcs->rf_dead == 0)
+				cvs_log(LP_ERR, "warning: expected %s "
+				    "to be dead", cf->file_path);
+
+			rcsfile = xmalloc(MAXPATHLEN);
+			repo = xmalloc(MAXPATHLEN);
+			cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
+			l = snprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
+			    repo, cf->file_name, RCS_FILE_EXT);
+			if (l == -1 || l >= MAXPATHLEN)
+				fatal("cvs_commit_local: overflow");
+
+			if (rename(cf->file_rpath, rcsfile) == -1)
+				fatal("cvs_commit_local: failed to move %s "
+				    "outside the Attic: %s", cf->file_path,
+				    strerror(errno));
+
+			xfree(cf->file_rpath);
+			cf->file_rpath = xstrdup(rcsfile);
+			xfree(rcsfile);
+			xfree(repo);
+
+			rcsflags = RCS_READ | RCS_PARSE_FULLY;
+			openflags = O_RDONLY;
+			rcs_close(cf->file_rcs);
+		}
+
+		cf->repo_fd = open(cf->file_rpath, openflags);
 		if (cf->repo_fd < 0)
 			fatal("cvs_commit_local: %s", strerror(errno));
 
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd,
-		    RCS_CREATE, 0600);
+		    rcsflags, 0600);
 		if (cf->file_rcs == NULL)
 			fatal("cvs_commit_local: failed to create RCS file "
 			    "for %s", cf->file_path);
@@ -184,7 +218,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
 	cvs_printf("old revision: %s; ", rbuf);
 
-	if (isadded == 0)
+	if (cf->file_status != FILE_ADDED)
 		d = commit_diff_file(cf);
 
 	if (cf->file_status == FILE_REMOVED) {
@@ -199,7 +233,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cvs_buf_putc(b, '\0');
 	f = cvs_buf_release(b);
 
-	if (isadded == 0) {
+	if (cf->file_status != FILE_ADDED) {
 		if (rcs_deltatext_set(cf->file_rcs,
 		    cf->file_rcs->rf_head, d) == -1)
 			fatal("cvs_commit_local: failed to set delta");
@@ -213,7 +247,7 @@ cvs_commit_local(struct cvs_file *cf)
 
 	xfree(f);
 
-	if (isadded == 0)
+	if (cf->file_status != FILE_ADDED)
 		xfree(d);
 
 	if (cf->file_status == FILE_REMOVED) {
@@ -227,7 +261,7 @@ cvs_commit_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_REMOVED) {
 		strlcpy(rbuf, "Removed", sizeof(rbuf));
 	} else if (cf->file_status == FILE_ADDED) {
-		if (cf->file_rcs->rf_dead == 0)
+		if (cf->file_rcs->rf_dead == 1)
 			strlcpy(rbuf, "Initial Revision", sizeof(rbuf));
 		else
 			rcsnum_tostr(cf->file_rcs->rf_head,
