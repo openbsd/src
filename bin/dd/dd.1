@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.16 2004/03/18 09:51:03 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.17 2006/05/31 11:24:06 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -334,15 +334,13 @@ in the same format as the standard completion message and
 .Nm
 will exit.
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std dd
 .Sh EXAMPLES
-.Li # dd if=floppy34.fs of=/dev/rfd0c bs=32k
-.Pp
 Write an
 .Ox
-floppy image to a floppy disk.
+floppy image to a floppy disk:
+.Pp
+.Dl # dd if=floppy34.fs of=/dev/rfd0c bs=32k
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr mt 1 ,
