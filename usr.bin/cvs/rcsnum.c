@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.37 2006/05/27 03:30:31 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.38 2006/05/31 18:24:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -175,11 +175,14 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
  * two numbers.
  */
 int
-rcsnum_cmp(const RCSNUM *n1, const RCSNUM *n2, u_int depth)
+rcsnum_cmp(RCSNUM *n1, RCSNUM *n2, u_int depth)
 {
 	int res;
 	u_int i;
 	size_t slen;
+
+	if (!rcsnum_differ(n1, n2))
+		return (0);
 
 	slen = MIN(n1->rn_len, n2->rn_len);
 	if (depth != 0 && slen > depth)
@@ -402,4 +405,21 @@ rcsnum_setsize(RCSNUM *num, u_int len)
 	tmp = xrealloc(num->rn_id, len, sizeof(*(num->rn_id)));
 	num->rn_id = tmp;
 	num->rn_len = len;
+}
+
+int
+rcsnum_differ(RCSNUM *r1, RCSNUM *r2)
+{
+	int i, len;
+
+	if (r1->rn_len != r2->rn_len)
+		return (1);
+
+	len = MIN(r1->rn_len, r2->rn_len);
+	for (i = 0; i < len; i++) {
+		if (r1->rn_id[i] != r2->rn_id[i])
+			return (1);
+	}
+
+	return (0);
 }
