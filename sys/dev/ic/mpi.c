@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.18 2006/05/31 02:39:29 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.19 2006/05/31 03:06:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1274,7 +1274,7 @@ mpi_iocfacts(struct mpi_softc *sc)
 #endif /* MPI_DEBUG */
 
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
-	sc->sc_buswidth = ifp.max_devices;
+	sc->sc_buswidth = (ifp.max_devices == 0) ? 256 : ifp.max_devices;
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 
 	/*
@@ -1311,7 +1311,7 @@ mpi_iocinit(struct mpi_softc *sc)
 	iiq.function = MPI_FUNCTION_IOC_INIT;
 	iiq.whoinit = MPI_WHOINIT_HOST_DRIVER;
 
-	iiq.max_devices = sc->sc_buswidth;
+	iiq.max_devices = (sc->sc_buswidth == 256) ? 0 : sc->sc_buswidth;
 	iiq.max_buses = 1;
 
 	iiq.msg_context = htole32(0xd00fd00f);
