@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wdt.4,v 1.10 2005/05/14 09:18:38 jmc Exp $
+.\"	$OpenBSD: wdt.4,v 1.11 2006/05/31 13:58:58 mk Exp $
 .\"
 .Dd April 25, 1999
 .Dt WDT 4 i386
@@ -46,8 +46,6 @@ To disable the onboard buzzer on PCI-WDT501 boards, add
 .Ic option WDT_DISABLE_BUZZER
 to your kernel configuration.
 .Pp
-By default the watchdog timer is set to 30 seconds and is refreshed
-by the kernel's timeout processing.
 If the kernel crashes, the watchdog
 timer is not reset and the system will reboot (assuming a proper connection
 is made between the WDT50x and motherboard).
@@ -58,6 +56,8 @@ See the
 .Dv WIOCSCHED
 .Xr ioctl 2
 below for more information.
+.Pp
+The timer can be configured to have a timeout from 2 to 1800 seconds.
 .Sh INTERFACE
 The
 .Nm
