@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2006/05/30 22:06:14 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.32 2006/05/31 02:18:23 pat Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -208,12 +208,12 @@ conf_main	: ROUTERID STRING {
 					free(r);
 					YYERROR;
 				}
-				free($2);
 
 				SIMPLEQ_INSERT_TAIL(&conf->redist_list, r,
 				    entry);
 			}
 			conf->redistribute |= REDISTRIBUTE_ON;
+			free($2);
 
 		}
 		| REDISTRIBUTE RTLABEL STRING {
