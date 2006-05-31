@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.66 2006/05/31 01:26:21 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.67 2006/05/31 23:27:38 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -150,6 +150,7 @@ void
 cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b;
+	int isnew;
 	int l, openflags, rcsflags;
 	char *d, *f, rbuf[24];
 	CVSENTRIES *entlist;
@@ -168,7 +169,9 @@ cvs_commit_local(struct cvs_file *cf)
 	else
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 
+	isnew = 0;
 	if (cf->file_status == FILE_ADDED) {
+		isnew = 1;
 		rcsflags = RCS_CREATE;
 		openflags = O_CREAT | O_TRUNC | O_WRONLY;
 		if (cf->file_rcs != NULL) {
@@ -201,6 +204,7 @@ cvs_commit_local(struct cvs_file *cf)
 			rcsflags = RCS_READ | RCS_PARSE_FULLY;
 			openflags = O_RDONLY;
 			rcs_close(cf->file_rcs);
+			isnew = 0;
 		}
 
 		cf->repo_fd = open(cf->file_rpath, openflags);
@@ -218,7 +222,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
 	cvs_printf("old revision: %s; ", rbuf);
 
-	if (cf->file_status != FILE_ADDED)
+	if (isnew == 0)
 		d = commit_diff_file(cf);
 
 	if (cf->file_status == FILE_REMOVED) {
@@ -233,7 +237,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cvs_buf_putc(b, '\0');
 	f = cvs_buf_release(b);
 
-	if (cf->file_status != FILE_ADDED) {
+	if (isnew == 0) {
 		if (rcs_deltatext_set(cf->file_rcs,
 		    cf->file_rcs->rf_head, d) == -1)
 			fatal("cvs_commit_local: failed to set delta");
@@ -247,7 +251,7 @@ cvs_commit_local(struct cvs_file *cf)
 
 	xfree(f);
 
-	if (cf->file_status != FILE_ADDED)
+	if (isnew == 0)
 		xfree(d);
 
 	if (cf->file_status == FILE_REMOVED) {
