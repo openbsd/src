@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.19 2006/05/31 03:06:39 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.20 2006/05/31 06:17:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -105,8 +105,6 @@ int			mpi_cfg_hdr(struct mpi_softc *, u_int8_t, u_int8_t,
 			    u_int32_t, struct mpi_cfg_hdr *);
 int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
 			    struct mpi_cfg_hdr *, int, void *, size_t);
-
-int			mpi_cfg_manufacturer0(struct mpi_softc *);
 
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
@@ -1541,31 +1539,6 @@ mpi_portenable(struct mpi_softc *sc)
 
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
-
-	return (0);
-}
-
-int
-mpi_cfg_manufacturer0(struct mpi_softc *sc)
-{
-	struct mpi_cfg_hdr			hdr;
-	struct mpi_cfg_manufacturing_pg0	pg0;
-
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
-
-	if (mpi_cfg_hdr(sc, MPI_CONFIG_REQ_PAGE_TYPE_MANUFACTURING, 0, 0x0,
-	    &hdr) != 0)
-		return (1);
-
-	if (mpi_cfg_page(sc, 0x0, &hdr, 1, &pg0, sizeof(pg0)) != 0)
-		return (1);
-
-	printf("%s:  chip_name: %s\n", DEVNAME(sc), pg0.chip_name);
-	printf("%s:  chip_revision: %s\n", DEVNAME(sc), pg0.chip_revision);
-	printf("%s:  board_name: %s\n", DEVNAME(sc), pg0.board_name);
-	printf("%s:  board_assembly: %s\n", DEVNAME(sc), pg0.board_assembly);
-	printf("%s:  board_tracer_numer: %s\n", DEVNAME(sc),
-	    pg0.board_tracer_number);
 
 	return (0);
 }
