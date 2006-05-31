@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.356 2006/05/19 19:43:41 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.357 2006/05/31 10:34:54 todd Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2322,11 +2322,13 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NACPI > 0
-		extern int acpi_s5;
+		extern int acpi_s5, acpi_enabled;
 
-		delay(500000);
-		if (howto & RB_POWERDOWN || acpi_s5)
-			acpi_powerdown();
+		if (acpi_enabled) {
+			delay(500000);
+			if (howto & RB_POWERDOWN || acpi_s5)
+				acpi_powerdown();
+		}
 #endif
 
 #if NAPM > 0

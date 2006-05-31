@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.50 2006/05/29 00:54:23 canacar Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.51 2006/05/31 10:34:54 todd Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -41,6 +41,7 @@
 #ifdef ACPI_DEBUG
 int acpi_debug = 11;
 #endif
+int acpi_enabled = 0;
 
 #define ACPIEN_RETRIES 15
 
@@ -685,6 +686,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #endif
+
+	acpi_enabled=1;
 
 	/*
 	 * Load the DSDT from the FADT pointer -- use the
