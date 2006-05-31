@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.51 2006/05/30 22:05:53 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.52 2006/05/31 07:12:32 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -131,12 +131,6 @@ cvs_remove_local(struct cvs_file *cf)
 		existing++;
 	} else {
 		switch(cf->file_status) {
-		case FILE_UNKNOWN:
-			if (verbosity > 1) {
-				cvs_log(LP_ERR, "nothing known about `%s'",
-				    cf->file_name);
-			}
-			return;
 		case FILE_ADDED:
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_remove(entlist, cf->file_name);
