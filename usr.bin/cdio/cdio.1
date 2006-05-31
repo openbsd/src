@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.32 2006/05/31 01:14:41 mjc Exp $
+.\" $OpenBSD: cdio.1,v 1.33 2006/05/31 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -204,16 +204,20 @@ Stop the disc.
 .Op Fl t Ar tracktypes
 .Ar trackfile ...
 .Xc
-Write track-at-once cd containing each
+Write a track-at-once CD containing each
 .Ar trackfile
-specified. 
+specified.
 The string
 .Ar tracktypes
 is used to assign types to each corresponding
 .Ar trackfile .
 Valid characters for the
 .Ar tracktypes
-string are 'a' for audio, 'd' for data.
+string are
+.Sq a
+for audio,
+.Sq d
+for data.
 If there are more tracks specified than corresponding
 types, the last type will be used for the remainder.
 If
