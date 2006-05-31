@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.499 2006/05/29 00:56:42 canacar Exp $
+#	$OpenBSD: GENERIC,v 1.500 2006/05/31 01:44:27 mk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -90,6 +90,7 @@ gpio*	at elansc?
 geodesc* at pci?		# Geode SC1100/SCx200 IAOC
 #gscpm*	at pci?			# NS Geode SC1100 SMI/ACPI module
 #ichwdt* at pci?		# Intel 6300ESB ICH watchdog timer
+wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
@@ -641,8 +642,6 @@ radio*	at fms?
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 joy*	at isapnp?
-
-#wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
 
 # crypto support
 hifn*	at pci?			# Hi/fn 7751 crypto card
