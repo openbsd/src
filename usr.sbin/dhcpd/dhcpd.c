@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.25 2006/05/11 01:19:08 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.26 2006/05/31 02:43:15 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -50,24 +50,35 @@ struct group root_group;
 u_int16_t server_port;
 u_int16_t client_port;
 
+struct passwd *pw;
 int log_priority;
 int log_perror = 0;
+int pfpipe[2];
+int gotpipe = 0;
+pid_t pfproc_pid = -1;
 char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
+char *abandoned_tab = NULL;
+char *changedmac_tab = NULL;
 
 int
 main(int argc, char *argv[])
 {
 	int ch, cftest = 0, daemonize = 1;
-	struct passwd	*pw;
 	extern char *__progname;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "c:dfl:nq")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:c:dfl:nq")) != -1)
 		switch (ch) {
+		case 'A':
+			abandoned_tab = optarg;
+			break;
+		case 'C':
+			changedmac_tab = optarg;
+			break;
 		case 'c':
 			path_dhcpd_conf = optarg;
 			break;
@@ -129,6 +140,26 @@ main(int argc, char *argv[])
 	if (daemonize)
 		daemon(0, 0);
 
+	/* don't go near /dev/pf unless we actually intend to use it */
+	if ((abandoned_tab != NULL) || (changedmac_tab != NULL)){
+		if (pipe(pfpipe) == -1)
+			error("pipe (%m)");
+		switch (pfproc_pid = fork()){
+		case -1:
+			error("fork (%m)");
+			/* NOTREACHED */
+			exit(1);
+		case 0:
+			/* child process. start up table engine */
+			pftable_handler();
+			/* NOTREACHED */
+			exit(1);
+		default:
+			gotpipe = 1;
+			break;
+		}
+	}
+
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot %s: %m", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
@@ -150,9 +181,10 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dfn] [-c config-file] [-l lease-file]",
-	    __progname);
-	fprintf(stderr, " [if0 [...ifN]]\n");
+	fprintf(stderr, "usage: %s [-dfn] [-c config-file]", __progname);
+	fprintf(stderr, " [-l lease-file] [-p pf-device]\n");
+	fprintf(stderr, "             [-A abandoned_ip_table]");
+	fprintf(stderr, " [-C changed_ip_table] [if0 [...ifN]]\n");
 	exit(1);
 }
 

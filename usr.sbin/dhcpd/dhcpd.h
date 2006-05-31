@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.18 2006/05/30 23:43:46 ckuethe Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.19 2006/05/31 02:43:15 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -82,6 +82,10 @@ extern int h_errno;
 #endif
 #ifndef _PATH_DHCPD_DB
 #define _PATH_DHCPD_DB "/var/db/dhcpd.leases"
+#endif
+
+#ifndef _PATH_DEV_PF
+#define _PATH_DEV_PF "/dev/pf"
 #endif
 
 /* Time stuff... */
@@ -324,6 +328,12 @@ struct client_lease {
 	unsigned int is_bootp: 1;	/* If set, lease was aquired with BOOTP. */
 
 	struct option_data options [256];	/* Options supplied with lease. */
+};
+
+/* privsep message. fixed length for easy parsing */
+struct pf_cmd{
+	struct in_addr ip;
+	u_int32_t type;
 };
 
 /* Possible states in which the client can be. */
@@ -775,3 +785,10 @@ u_int32_t	wrapsum(u_int32_t);
 void icmp_startup(int, void (*)(struct iaddr, u_int8_t *, int));
 int icmp_echorequest(struct iaddr *);
 void icmp_echoreply(struct protocol *);
+
+/* pfutils.c */
+__dead void pftable_handler(void);
+void pf_change_table(int , int , struct in_addr , char *);
+void pf_kill_state(int , struct in_addr );
+size_t atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
+#define vwrite (ssize_t (*)(int, void *, size_t))write

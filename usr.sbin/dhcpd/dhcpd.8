@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.8 2005/09/30 20:34:26 jaredy Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.9 2006/05/31 02:43:15 ckuethe Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -47,6 +47,9 @@
 .Op Fl dfn
 .Op Fl c Ar config-file
 .Op Fl l Ar lease-file
+.Op Fl p Ar pf-device
+.Op Fl A Ar abandoned_ip_table
+.Op Fl C Ar changed_ip_table
 .Op Ar if0 Op Ar ... ifN
 .Sh DESCRIPTION
 The Internet Software Consortium DHCP Server,
@@ -75,6 +78,11 @@ When a client requests an address using the DHCP protocol,
 allocates an address for it.
 Each client is assigned a lease, which expires after an amount of time
 chosen by the administrator (by default, one day).
+When a leased IP address is assigned to a new hardware address,
+.Nm
+may delete the leased IP from certain
+.Xr pf 4
+tables.
 Before leases expire, the clients to which leases are assigned are expected
 to renew them in order to continue to use the addresses.
 Once a lease has expired, the client to which that lease was assigned is no
@@ -185,6 +193,37 @@ running
 in production, this option should be used
 .Em only
 for testing lease files in a non-production environment.
+.It Fl p Ar pf-device
+Use an alternate pf device,
+.Ar pf-device .
+.It Fl A Ar abandoned_ip_table
+When an address is abandoned for some reason, add it to the
+.Xr pf 4
+table named
+.Ar abandoned_ip_table .
+This can be used to defend against machines "camping" on an address
+without obtaining a lease.
+When an address is properly leased,
+.Nm
+will remove the address from this table.
+.It Fl C Ar changed_ip_table
+When an address is leased to a different hardware address, delete it from the
+.Xr pf 4
+table named
+.Ar changed_ip_table .
+This feature complements the overload table in a stateful
+.Xr pf 4
+rule.
+If a host appears to be misbehaving, it can be quarantined by using the
+overload feature.
+When the address is leased to a different machine,
+.Nm
+can remove the address from the overload table, thus allowing a well-behaved
+machine to reuse the address.
+Users are cautioned against placing much trust in ethernet or IP addresses;
+.Xr ifconfig 8
+can be used to trivially change the interface's address, and on a busy DHCP
+network, IP addresses will likely be quickly recycled.
 .It Fl n
 Only test configuration, do not run
 .Nm .

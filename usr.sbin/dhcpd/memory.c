@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.10 2004/09/21 04:07:04 david Exp $ */
+/*	$OpenBSD: memory.c,v 1.11 2006/05/31 02:43:15 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -39,6 +39,10 @@
  */
 
 #include "dhcpd.h"
+extern int pfpipe[2];
+extern int gotpipe;
+extern char *abandoned_tab;
+extern char *changedmac_tab;
 
 static struct subnet *subnets;
 static struct shared_network *shared_networks;
@@ -435,7 +439,9 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 {
 	int enter_uid = 0;
 	int enter_hwaddr = 0;
+	int do_pftable = 0;
 	struct lease *lp;
+	struct pf_cmd cmd;
 
 	/* Static leases are not currently kept in the database... */
 	if (lease->flags & STATIC_LEASE)
@@ -489,8 +495,11 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 		    comp->hardware_addr.hlen))) {
 			hw_hash_delete(comp);
 			enter_hwaddr = 1;
-		} else if (!comp->hardware_addr.htype)
+			do_pftable = 1;
+		} else if (!comp->hardware_addr.htype) {
 			enter_hwaddr = 1;
+			do_pftable = 1;
+		}
 
 		/* Copy the data files, but not the linkages. */
 		comp->starts = lease->starts;
@@ -595,6 +604,18 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 		comp->ends = lease->ends;
 	}
 
+	if (gotpipe && (abandoned_tab != NULL)){
+		cmd.type = 'L';
+		bcopy(lease->ip_addr.iabuf, &cmd.ip.s_addr, 4);
+		(void)atomicio(vwrite, pfpipe[1], &cmd, sizeof(struct pf_cmd));
+	}
+
+	if (gotpipe && do_pftable && (changedmac_tab != NULL)){
+		cmd.type = 'C';
+		bcopy(lease->ip_addr.iabuf, &cmd.ip.s_addr, 4);
+		(void)atomicio(vwrite, pfpipe[1], &cmd, sizeof(struct pf_cmd));
+	}
+
 	/* Return zero if we didn't commit the lease to permanent storage;
 	   nonzero if we did. */
 	return commit && write_lease(comp) && commit_leases();
@@ -626,6 +647,7 @@ void
 abandon_lease(struct lease *lease, char *message)
 {
 	struct lease lt;
+	struct pf_cmd cmd;
 	time_t abtime;
 
 	abtime = lease->subnet->group->default_lease_time;
@@ -639,6 +661,13 @@ abandon_lease(struct lease *lease, char *message)
 	lt.uid = NULL;
 	lt.uid_len = 0;
 	supersede_lease(lease, &lt, 1);
+
+	if (gotpipe && abandoned_tab != NULL){
+		cmd.type = 'A';
+		bcopy(lease->ip_addr.iabuf, &cmd.ip.s_addr, 4);
+		(void)atomicio(vwrite, pfpipe[1], &cmd, sizeof(struct pf_cmd));
+	}
+	return;
 }
 
 /* Locate the lease associated with a given IP address... */
