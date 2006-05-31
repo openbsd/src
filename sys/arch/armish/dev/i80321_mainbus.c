@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
+/*	$OpenBSD: i80321_mainbus.c,v 1.3 2006/05/31 05:49:54 drahn Exp $	*/
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -116,7 +116,8 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t b0u, b0l, b1u, b1l;
 	paddr_t memstart;
 	psize_t memsize;
-	pcireg_t foo;
+	pcireg_t atumembase;
+	pcireg_t atuiobase;
 
 	i80321_mainbus_found = 1;
 
@@ -149,9 +150,9 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    VERDE_OUT_XLATE_IO_WIN_SIZE, 0, &sc->sc_io_sh))
 		panic("%s: unable to map IOW registers", sc->sc_dev.dv_xname);
 
-	printf ("PIRSR %x\n", bus_space_read_4(sc->sc_st, sc->sc_sh, ICU_PIRSR));
+//	printf ("PIRSR %x\n", bus_space_read_4(sc->sc_st, sc->sc_sh, ICU_PIRSR));
 
-	printf("mapping bus io to %x - %x\n", sc->sc_io_sh, sc->sc_io_sh+VERDE_OUT_XLATE_IO_WIN_SIZE);
+//	printf("mapping bus io to %x - %x\n", sc->sc_io_sh, sc->sc_io_sh+VERDE_OUT_XLATE_IO_WIN_SIZE);
 
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag.
@@ -161,9 +162,17 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize the PCI chipset tag. */
 	i80321_pci_init(&sc->sc_pci_chipset, sc);
 
-	sc->sc_membus_space.bus_base = 0x40000000;
-	sc->sc_membus_space.bus_size = 0x10000000;
+	iq80321_pci_init2(&sc->sc_pci_chipset, sc);
 
+	atumembase = bus_space_read_4(sc->sc_st, sc->sc_atu_sh,
+	    PCI_MAPREG_START + 0x08);
+	atuiobase = bus_space_read_4(sc->sc_st, sc->sc_atu_sh,
+	    ATU_OIOWTVR);
+
+	sc->sc_membus_space.bus_base = PCI_MAPREG_MEM_ADDR(atumembase);
+	sc->sc_membus_space.bus_size = 0x04000000;
+	sc->sc_iobus_space.bus_base = PCI_MAPREG_IO_ADDR(atuiobase);
+	sc->sc_iobus_space.bus_size = 0x00010000;
 	pci_addr_fixup(sc, 2/*XXX*/);
 
 	/*
@@ -184,30 +193,6 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	b1l &= PCI_MAPREG_MEM_ADDR_MASK;
 	b1u &= PCI_MAPREG_MEM_ADDR_MASK;
 
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x0,
-	    0xffffffff);
-	foo = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x0);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x0,
-	    b0l);
-
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x4,
-	    0xffffffff);
-	foo = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x4);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x4,
-	    b0u);
-	
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x8,
-	    0xffffffff);
-	foo = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x8);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x8,
-	    b1l);
-
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0xc,
-	    0xffffffff);
-	foo = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0xc);
-	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0xc,
-	    b1u);
-
 	printf(": i80321 I/O Processor\n");
 
 	i80321_sdram_bounds(sc->sc_st, sc->sc_mcu_sh, &memstart, &memsize);
@@ -226,66 +211,119 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * This chunk needs to be customized for each IOP321 application.
 	 */
+
+	atumembase = bus_space_read_4(sc->sc_st, sc->sc_atu_sh,
+	    PCI_MAPREG_START + 0x08);
+	printf("atumembase %x\n", atumembase);
+
+	if (atumembase == 0x8000000c) {
+		/* iodata: intel std config */
+
+		/* map device registers */
+		sc->sc_iwin[0].iwin_base_lo =	0x00000004;
+		sc->sc_iwin[0].iwin_base_hi =	0x00000000;
+		sc->sc_iwin[0].iwin_xlate = 	0xff000000;
+		sc->sc_iwin[0].iwin_size = 	0x01000000;
+		
+		/* Map PCI:Local 1:1. */
+		sc->sc_iwin[1].iwin_base_lo = VERDE_OUT_XLATE_MEM_WIN0_BASE |
+		    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
+		    PCI_MAPREG_MEM_TYPE_64BIT;
+		sc->sc_iwin[1].iwin_base_hi = 0;
+
+		sc->sc_iwin[1].iwin_xlate = VERDE_OUT_XLATE_MEM_WIN0_BASE;
+		sc->sc_iwin[1].iwin_size = VERDE_OUT_XLATE_MEM_WIN_SIZE;
+
+
+		sc->sc_iwin[2].iwin_base_lo = memstart |
+		    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
+		    PCI_MAPREG_MEM_TYPE_64BIT;
+		sc->sc_iwin[2].iwin_base_hi = 0;
+
+		sc->sc_iwin[2].iwin_xlate = memstart;
+		sc->sc_iwin[2].iwin_size = memsize;
+
+		sc->sc_iwin[3].iwin_base_lo = 0;
 #if 0
-	sc->sc_iwin[0].iwin_base_lo = VERDE_PMMR_BASE;
-	sc->sc_iwin[0].iwin_base_hi = 0;
-	sc->sc_iwin[0].iwin_xlate = VERDE_PMMR_BASE;
-	sc->sc_iwin[0].iwin_size = VERDE_PMMR_SIZE;
-#else
-	sc->sc_iwin[0].iwin_base_lo = 0;
-	sc->sc_iwin[0].iwin_base_hi = 0;
-	sc->sc_iwin[0].iwin_xlate = 0;
-	sc->sc_iwin[0].iwin_size = 0;
+		    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
+		    PCI_MAPREG_MEM_TYPE_64BIT;
 #endif
 
-	/* Map PCI:Local 1:1. */
-	sc->sc_iwin[1].iwin_base_lo = 0x40000000 |
-#if 0
-	    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
-	    PCI_MAPREG_MEM_TYPE_64BIT;
-#else
-	    0;
-#endif
-	sc->sc_iwin[1].iwin_base_hi = 0;
+		sc->sc_iwin[3].iwin_base_hi = 0;
+		sc->sc_iwin[3].iwin_xlate = 0;
+		sc->sc_iwin[3].iwin_size = 0;
 
-	sc->sc_iwin[1].iwin_xlate = 0;
-	sc->sc_iwin[1].iwin_size = 0x08000000;
+		/*
+		 * We set up the Outbound Windows as follows:
+		 *
+		 *	0	Access to private PCI space.
+		 *
+		 *	1	Unused.
+		 */
+		sc->sc_owin[0].owin_xlate_lo =
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[1].iwin_base_lo);
+		sc->sc_owin[0].owin_xlate_hi = sc->sc_iwin[1].iwin_base_hi;
 
-//	sc->sc_iwin[2].iwin_base_lo = memstart |
-	sc->sc_iwin[2].iwin_base_lo = 0 |
-	    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
-	    PCI_MAPREG_MEM_TYPE_64BIT;
-	sc->sc_iwin[2].iwin_base_hi = 0;
+		/*
+		 * Set the Secondary Outbound I/O window to map
+		 * to PCI address 0 for all 64K of the I/O space.
+		 */
+		sc->sc_ioout_xlate = 0x90000000;
+		sc->sc_ioout_xlate_offset = 0x1000;
+	} else if (atumembase == 0x40000004) {
+		/* thecus */
 
-	sc->sc_iwin[2].iwin_xlate = memstart;
-	sc->sc_iwin[2].iwin_size = memsize;
+		/* dont map device registers */
+		sc->sc_iwin[0].iwin_base_lo = 0;
+		sc->sc_iwin[0].iwin_base_hi = 0;
+		sc->sc_iwin[0].iwin_xlate = 0;
+		sc->sc_iwin[0].iwin_size = 0;
 
-	sc->sc_iwin[3].iwin_base_lo = 0;
-	sc->sc_iwin[3].iwin_base_hi = 0;
-	sc->sc_iwin[3].iwin_xlate = 0;
-	sc->sc_iwin[3].iwin_size = 0;
+		/* Map PCI:Local 1:1. */
+		sc->sc_iwin[1].iwin_base_lo = 0x40000000 |
+	#if 0
+		    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
+		    PCI_MAPREG_MEM_TYPE_64BIT;
+	#else
+		    0;
+	#endif
+		sc->sc_iwin[1].iwin_base_hi = 0;
 
-	/*
-	 * We set up the Outbound Windows as follows:
-	 *
-	 *	0	Access to private PCI space.
-	 *
-	 *	1	Unused.
-	 */
-	printf("setup outbound %x %x\n",
-	    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[1].iwin_base_lo),
-	    sc->sc_iwin[1].iwin_base_hi);
-	sc->sc_owin[0].owin_xlate_lo =
-	    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[1].iwin_base_lo);
-	sc->sc_owin[0].owin_xlate_hi = sc->sc_iwin[1].iwin_base_hi;
+		sc->sc_iwin[1].iwin_xlate = 0;
+		sc->sc_iwin[1].iwin_size = 0x08000000;
 
-	/*
-	 * Set the Secondary Outbound I/O window to map
-	 * to PCI address 0 for all 64K of the I/O space.
-	 */
-//	sc->sc_ioout_xlate = 0;
-	sc->sc_ioout_xlate = 0x90000000;
-	sc->sc_ioout_xlate_offset = 0x1000;
+		sc->sc_iwin[2].iwin_base_lo = 0 |
+		    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
+		    PCI_MAPREG_MEM_TYPE_64BIT;
+		sc->sc_iwin[2].iwin_base_hi = 0;
+
+		sc->sc_iwin[2].iwin_xlate = memstart;
+		sc->sc_iwin[2].iwin_size = memsize;
+
+		sc->sc_iwin[3].iwin_base_lo = 0;
+		sc->sc_iwin[3].iwin_base_hi = 0;
+		sc->sc_iwin[3].iwin_xlate = 0;
+		sc->sc_iwin[3].iwin_size = 0;
+
+		/*
+		 * We set up the Outbound Windows as follows:
+		 *
+		 *	0	Access to private PCI space.
+		 *
+		 *	1	Unused.
+		 */
+		sc->sc_owin[0].owin_xlate_lo =
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[1].iwin_base_lo);
+		sc->sc_owin[0].owin_xlate_hi = sc->sc_iwin[1].iwin_base_hi;
+
+		/*
+		 * Set the Secondary Outbound I/O window to map
+		 * to PCI address 0 for all 64K of the I/O space.
+		 */
+		sc->sc_ioout_xlate = 0x90000000;
+		sc->sc_ioout_xlate_offset = 0x1000;
+
+	}
 
 	i80321_attach(sc);
 

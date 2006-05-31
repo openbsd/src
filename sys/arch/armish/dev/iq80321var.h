@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321var.h,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
+/*	$OpenBSD: iq80321var.h,v 1.3 2006/05/31 05:49:54 drahn Exp $	*/
 /*	$NetBSD: iq80321var.h,v 1.1 2002/03/27 21:51:30 thorpej Exp $	*/
 
 /*
@@ -45,6 +45,7 @@ void	iq80321_7seg(char, char);
 void	iq80321_7seg_snake(void);
 
 void	iq80321_pci_init(pci_chipset_tag_t, void *);
+void	iq80321_pci_init2(pci_chipset_tag_t, void *);
 void	save_ref(void);
 void	check_ref(void);
 

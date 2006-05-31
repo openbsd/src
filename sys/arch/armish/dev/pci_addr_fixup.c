@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.1 2006/05/29 17:13:19 drahn Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.2 2006/05/31 05:49:54 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ void pci_device_foreach(struct i80321_softc *sc, pci_chipset_tag_t pc,
 #define PCIADDR_PORT_START	0x0
 #define PCIADDR_PORT_END	0xffff
 
-int pcibr_flags = 0;
+int pcibr_flags = 3;
 #define PCIBR_VERBOSE		1
 #define PCIBR_ADDR_FIXUP	2
 
@@ -99,7 +99,8 @@ pci_addr_fixup(void *v, int maxbus)
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(sc->extent_mem);
 	sc->extent_port = extent_create("PCI I/O port space",
-	    PCIADDR_PORT_START, PCIADDR_PORT_END,
+            sc->sc_iobus_space.bus_base,
+            sc->sc_iobus_space.bus_base + sc->sc_iobus_space.bus_size,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(sc->extent_port);
 
@@ -218,7 +219,14 @@ pciaddr_resource_manage(struct i80321_softc *sc, pci_chipset_tag_t pc,
 			ex = sc->extent_mem;
 		} else {
 			/* XXX some devices give 32bit value */
-			addr = PCI_MAPREG_IO_ADDR(val) & PCIADDR_PORT_END;
+			addr = PCI_MAPREG_IO_ADDR(val);
+			if (sc->sc_iobus_space.bus_base != PCIADDR_PORT_START &&
+			    addr < sc->sc_iobus_space.bus_base) {
+				/* skew address to be in range */
+				addr = PCI_MAPREG_IO_ADDR(val) &
+				     PCIADDR_PORT_END;
+				addr |= sc->sc_iobus_space.bus_base;
+			}
 			size = PCI_MAPREG_IO_SIZE(mask);
 			ex = sc->extent_port;
 		}
@@ -322,7 +330,7 @@ pciaddr_ioaddr(u_int32_t val)
 {
 	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
 		? PCI_MAPREG_MEM_ADDR(val)
-		: (PCI_MAPREG_IO_ADDR(val) & PCIADDR_PORT_END));
+		: (PCI_MAPREG_IO_ADDR(val)));
 }
 
 void
