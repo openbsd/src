@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplugd.8,v 1.2 2004/12/25 20:05:43 ian Exp $
+.\"	$OpenBSD: hotplugd.8,v 1.3 2006/05/31 09:16:35 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -94,8 +94,8 @@ case $DEVCLASS in
 2)
 	# disk devices
 
-	disklabel=`/sbin/disklabel $DEVNAME | grep '^label:' | \e
-	    sed -e 's/^label: //'`
+	disklabel=`/sbin/disklabel $DEVNAME 2>&1 | \e
+		grep '^label:' | sed -e 's/^label: //'`
 	case $disklabel in
 	Sony*DSC*)
 		# Sony DSC camera
