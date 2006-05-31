@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.17 2006/05/30 21:56:05 msf Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.18 2006/05/31 07:54:48 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -78,7 +78,9 @@ option flushes the SPD and the SADB.
 Load the rules contained in
 .Ar file .
 .It Fl m
-Continuously display all PF_KEY messages exchanged with the kernel.
+Continuously display all
+.Dv PF_KEY
+messages exchanged with the kernel.
 .It Fl n
 Do not actually load rules, just parse them.
 .It Fl s Ar modifier
