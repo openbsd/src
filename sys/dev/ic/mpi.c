@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.17 2006/05/31 02:38:36 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.18 2006/05/31 02:39:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -186,11 +186,6 @@ mpi_attach(struct mpi_softc *sc)
 
 	if (mpi_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
-		goto free_replies;
-	}
-
-	if (mpi_cfg_manufacturer0(sc) != 0) {
-		printf("%s: unable to read config pages\n", DEVNAME(sc));
 		goto free_replies;
 	}
 
