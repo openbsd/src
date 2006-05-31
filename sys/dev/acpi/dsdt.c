@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.44 2006/05/29 21:27:59 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.45 2006/05/31 03:25:29 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2336,11 +2336,12 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		end = aml_eparselen(ctx);
 		i2  = aml_eparseint(ctx, AML_ANYINT);  // requested length
 		i1  = end - ctx->pos;		       // supplied length
-
+		dnprintf(40, "buffer: %lld of %lld\n", i1, i2);
+		if (i2 < i1)
+			i2 = i1;
 		rv = aml_allocvalue(AML_OBJTYPE_BUFFER, i2, NULL);
 		if (i1 > 0)
 			memcpy(rv->v_buffer, ctx->pos, i1);
-		dnprintf(40, "buffer: %lld of %lld\n", i1, i2);
 		break;
 	case AMLOP_PACKAGE:
 	case AMLOP_VARPACKAGE:
