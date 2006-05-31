@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.12 2006/05/31 05:36:06 msf Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.13 2006/05/31 05:38:45 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -584,40 +584,40 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 static void
 monitor_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-        struct sadb_sa *sa = (struct sadb_sa *) ext;
+	struct sadb_sa *sa = (struct sadb_sa *) ext;
 
-        if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
-                printf("cpi 0x%8.8x comp %s\n",
-                    ntohl(sa->sadb_sa_spi),
-                    lookup_name(comp_types, sa->sadb_sa_encrypt));
-        else
-                printf("spi 0x%8.8x auth %s enc %s\n",
-                    ntohl(sa->sadb_sa_spi),
-                    lookup_name(auth_types, sa->sadb_sa_auth),
-                    lookup_name(enc_types, sa->sadb_sa_encrypt));
-        printf("\t\tstate %s replay %u flags %u",
-            lookup_name(states, sa->sadb_sa_state),
-            sa->sadb_sa_replay, sa->sadb_sa_flags);
+	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
+		printf("cpi 0x%8.8x comp %s\n",
+		    ntohl(sa->sadb_sa_spi),
+		    lookup_name(comp_types, sa->sadb_sa_encrypt));
+	else
+		printf("spi 0x%8.8x auth %s enc %s\n",
+		    ntohl(sa->sadb_sa_spi),
+		    lookup_name(auth_types, sa->sadb_sa_auth),
+		    lookup_name(enc_types, sa->sadb_sa_encrypt));
+	printf("\t\tstate %s replay %u flags %u",
+	    lookup_name(states, sa->sadb_sa_state),
+	    sa->sadb_sa_replay, sa->sadb_sa_flags);
 }
 
 static void
 monitor_ext(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-        struct idname *entry;
+	struct idname *entry;
 
-        if ((entry = lookup(ext_types, ext->sadb_ext_type)) == NULL) {
-                printf("unknown ext: type %u len %u\n",
-                    ext->sadb_ext_type, ext->sadb_ext_len);
-                return;
-        }
-        printf("\t%s: ", entry->name);
-        if (entry->func == print_sa)
-                monitor_sa(ext, msg);
-        else if (entry->func != NULL)
-                (*entry->func)(ext, msg);
-        else
-                printf("type %u len %u",
-                    ext->sadb_ext_type, ext->sadb_ext_len);
+	if ((entry = lookup(ext_types, ext->sadb_ext_type)) == NULL) {
+		printf("unknown ext: type %u len %u\n",
+		    ext->sadb_ext_type, ext->sadb_ext_len);
+		return;
+	}
+	printf("\t%s: ", entry->name);
+	if (entry->func == print_sa)
+		monitor_sa(ext, msg);
+	else if (entry->func != NULL)
+		(*entry->func)(ext, msg);
+	else
+		printf("type %u len %u",
+		    ext->sadb_ext_type, ext->sadb_ext_len);
 	printf("\n");
 }
 
@@ -654,7 +654,7 @@ pfkey_print_raw(u_int8_t *data, ssize_t len)
 	for(i = 0; i < len; i++) {
 		if ((i % 8 == 0) && (i != 0))
 			printf("\n");
-		printf("%02x ", *sp); 
+		printf("%02x ", *sp);
 		sp++;
 	}
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.39 2006/05/30 21:56:05 msf Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.40 2006/05/31 05:38:45 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -1076,7 +1076,7 @@ pfkey_promisc(void)
 		return -1;
 	}
 	if (pfkey_reply(fd, NULL, NULL) < 0)
-		return -1; 
+		return -1;
 	return 0;
 }
 
@@ -1109,7 +1109,7 @@ pfkey_monitor(int opts)
 		if (!FD_ISSET(fd, rset))
 			continue;
 		if (pfkey_reply(fd, &data, &len) < 0)
-			continue; 
+			continue;
 		msg = (struct sadb_msg *)data;
 		if (msg->sadb_msg_type == SADB_X_PROMISC) {
 			/* remove extra header from promisc messages */
