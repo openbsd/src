@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.28 2006/05/31 02:26:41 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.29 2006/05/31 02:28:35 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -363,8 +363,8 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 }
 
 static void
-ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
-    *dst, FILE *fd)
+ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
+    struct ipsec_addr_wrap *dst, FILE *fd)
 {
 	char *mask, *network, *p;
 
@@ -415,8 +415,8 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr
 }
 
 static int
-ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
-    *dst, FILE *fd)
+ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src,
+    struct ipsec_addr_wrap *dst, FILE *fd)
 {
 	switch (mode) {
 	case IKE_ACTIVE:
