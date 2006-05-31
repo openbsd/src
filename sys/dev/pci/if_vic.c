@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.8 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.9 2006/05/31 06:46:12 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -315,9 +315,6 @@ vic_rx_proc(struct vic_softc *sc)
 			break;
 
 		len = letoh32(desc->rx_length);
-		ifp->if_ibytes += len;
-		ifp->if_ipackets++;
-
 		if (len < ETHER_MIN_LEN) {
 			ifp->if_iqdrops++;
 			goto nextp;
@@ -349,6 +346,8 @@ vic_rx_proc(struct vic_softc *sc)
 			break;
 		}
 		desc->rx_physaddr = rxb->rxb_map->dm_segs->ds_addr;
+
+		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -597,7 +596,6 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 	}
 
 	ifp->if_opackets++;
-	ifp->if_obytes += m->m_len;
 
 	sc->sc_txpending++;
 	sc->sc_txtimeout = VIC_TX_TIMEOUT;
