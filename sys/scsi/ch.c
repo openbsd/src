@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.26 2006/05/31 03:01:44 beck Exp $	*/
+/*	$OpenBSD: ch.c,v 1.27 2006/05/31 03:38:01 deraadt Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ ch_usergetelemstatus(sc, cesr)
 	 * that the first one can fit into 1k.
 	 */
 	data = (caddr_t)malloc(1024, M_DEVBUF, M_WAITOK);
-	error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data,
+	error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data, 1024,
 	    want_voltags);
 	if (error)
 		goto done;
