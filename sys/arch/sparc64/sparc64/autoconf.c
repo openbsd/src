@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.53 2006/05/30 23:24:15 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.54 2006/05/31 01:03:20 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1387,6 +1387,7 @@ static const struct dev_compat_tab {
 } dev_compat_tab[] = {
 	{ "espdma",	BUSCLASS_NONE,		"dma" },
 	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
+	{ "SUNW,qlc",	BUSCLASS_NONE,		"isp" },
 	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
 	{ "ptisp",	BUSCLASS_NONE,		"isp" },
 	{ "SUNW,isptwo", BUSCLASS_NONE,		"isp" },
