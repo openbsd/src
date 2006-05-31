@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.100 2006/05/31 07:21:25 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.101 2006/05/31 22:24:12 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -67,6 +67,10 @@ cvs_diff(int argc, char **argv)
 		case 'N':
 			strlcat(diffargs, " -N", sizeof(diffargs));
 			Nflag = 1;
+			break;
+		case 'p':
+			strlcat(diffargs, " -p", sizeof(diffargs));
+			diff_pflag = 1;
 			break;
 		case 'r':
 			if (rev1 == NULL) {
@@ -252,6 +256,11 @@ cvs_diff_local(struct cvs_file *cf)
 
 	cvs_diffreg(p1, p2, NULL);
 	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
+
+	if (diff_rev1 != NULL && diff_rev1 != cf->file_ent->ce_rev)
+		rcsnum_free(diff_rev1);
+	if (diff_rev2 != NULL && diff_rev2 != cf->file_rcsrev)
+		rcsnum_free(diff_rev2);
 
 	diff_rev1 = diff_rev2 = NULL;
 }

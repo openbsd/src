@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.1 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.2 2006/05/31 22:24:12 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -191,9 +191,10 @@ static int	 files_differ(FILE *, FILE *);
 static char	*match_function(const long *, int, FILE *);
 static char	*preadline(int, size_t, off_t);
 
-static int aflag, bflag, dflag, iflag, pflag, tflag, Tflag, wflag;
+static int aflag, bflag, dflag, iflag, tflag, Tflag, wflag;
 static int context = 3;
 int diff_format = D_NORMAL;
+int diff_pflag = 0;
 char *diff_file = NULL;
 RCSNUM *diff_rev1 = NULL;
 RCSNUM *diff_rev2 = NULL;
@@ -1212,7 +1213,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 	upd = MIN(diff_len[1], context_vec_ptr->d + context);
 
 	diff_output("***************");
-	if (pflag == 1) {
+	if (diff_pflag == 1) {
 		f = match_function(ixold, lowa - 1, f1);
 		if (f != NULL) {
 			diff_output(" ");
@@ -1321,7 +1322,7 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	diff_output(" +");
 	uni_range(lowc, upd);
 	diff_output(" @@");
-	if (pflag == 1) {
+	if (diff_pflag == 1) {
 		f = match_function(ixold, lowa - 1, f1);
 		if (f != NULL) {
 			diff_output(" ");
