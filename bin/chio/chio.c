@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.16 2006/05/31 03:04:52 beck Exp $	*/
+/*	$OpenBSD: chio.c,v 1.17 2006/05/31 05:01:59 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -198,10 +198,12 @@ do_move(char *cname, int argc, char *argv[])
 		 * pickers where the drive is on a seperate target
 		 * from the changer.
 		 */
-		int mtfd;
 		struct mtop mtoffl =  { MTOFFL, 1 };
-		char *tapedev =
-		    parse_tapedev(_PATH_CH_CONF, changer_name, cmd.cm_fromunit);
+		char *tapedev;
+		int mtfd;
+
+		tapedev = parse_tapedev(_PATH_CH_CONF, changer_name,
+		    cmd.cm_fromunit);
 		mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
 		    NULL);
 		if (mtfd == -1)
@@ -578,11 +580,11 @@ do_status(char *cname, int argc, char *argv[])
 			printf("%s %d: %s", description, i,
 			    bits_to_string(ces->ces_flags, CESTATUS_BITS));
 			if (pvoltag)
-				printf(" voltag: <%s:%d>", 
+				printf(" voltag: <%s:%d>",
 				       ces->ces_pvoltag.cv_volid,
 				       ces->ces_pvoltag.cv_serial);
 			if (avoltag)
-				printf(" avoltag: <%s:%d>", 
+				printf(" avoltag: <%s:%d>",
 				       ces->ces_avoltag.cv_volid,
 				       ces->ces_avoltag.cv_serial);
 			printf("\n");
