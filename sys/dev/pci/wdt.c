@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.7 2006/03/15 20:03:07 miod Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.8 2006/05/31 01:40:40 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -33,7 +33,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/timeout.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -59,7 +58,6 @@ struct wdt_softc {
 
 	/* watchdog timeout */
 	unsigned		timeout_secs;
-	struct timeout		timeout;
 
 	/* device access through bus space */
 	bus_space_tag_t		iot;
@@ -77,18 +75,15 @@ int wdtioctl(dev_t, u_long, caddr_t, int, struct proc *);
 static int wdt_is501(struct wdt_softc *wdt);
 static void wdt_8254_count(struct wdt_softc *wdt, int counter, u_int16_t v);
 static void wdt_8254_mode(struct wdt_softc *wdt, int counter, int mode);
-static void wdt_set_timeout(struct wdt_softc *wdt, unsigned seconds);
-static void wdt_timeout(void *arg);
+static int wdt_set_timeout(void *wdt, int seconds);
 static void wdt_init_timer(struct wdt_softc *wdt);
 static void wdt_buzzer_off(struct wdt_softc *wdt);
 static int wdt_read_temperature(struct wdt_softc *wdt);
 static int wdt_read_status(struct wdt_softc *wdt);
 static void wdt_display_status(struct wdt_softc *wdt);
 static int wdt_get_state(struct wdt_softc *wdt, struct wdt_state *state);
-static void wdt_shutdown(void *arg);
 static int wdt_sched(struct wdt_softc *wdt, struct proc *p);
 static void wdt_timer_disable(struct wdt_softc *wdt);
-static void wdt_timer_enable(struct wdt_softc *wdt, unsigned seconds);
 #if WDT_DISABLE_BUZZER
 static void wdt_buzzer_disable(struct wdt_softc *wdt);
 #else
@@ -170,19 +165,13 @@ wdtattach (parent, self, aux)
 	/* initialize the watchdog timer structure */
 	wdt->unit  = unit;
 	wdt->procs = 0;
+	wdt->timeout_secs = 0;
 
 	/* check the feature set available */
 	if (wdt_is501(wdt))
 		wdt->features = 1;
 	else
 		wdt->features = 0;
-
-	/*
-	 * register a callback for system shutdown
-	 * (we need to disable the watchdog timer during shutdown)
-	 */
-	if (shutdownhook_establish(wdt_shutdown, wdt) == NULL)
-		return;
 
 	if (wdt->features) {
 		/*
@@ -202,13 +191,14 @@ wdtattach (parent, self, aux)
 	wdt_init_timer(wdt);
 
 	/*
-	 * it appears the timeout queue isn't processed until the
-	 * kernel has fully booted, so we set the first timeout
-	 * far in advance, and subsequent timeouts at the normal
-	 * 30 second interval
+	 * ensure that the watchdog is disabled
 	 */
-	wdt_timer_enable(wdt, 90/*seconds*/);
-	wdt->timeout_secs = 30;
+	wdt_timer_disable(wdt);
+
+	/*
+	 * register with the watchdog framework
+	 */
+	wdog_register(wdt, wdt_set_timeout);
 
 	printf("\n");
 	wdt_display_status(wdt);
@@ -307,52 +297,43 @@ wdt_8254_mode (struct wdt_softc *wdt, int counter, int mode)
  *	wdt_set_timeout
  *
  *	Load the watchdog timer with the specified number of seconds.
+ *	Clamp seconds to be in the interval [2; 1800].
  */
-static void
-wdt_set_timeout (struct wdt_softc *wdt, unsigned seconds)
+static int
+wdt_set_timeout (void *self, int seconds)
 {
-	/* 8254 has been programmed with a 2ms period */
-	u_int16_t v = (u_int16_t)seconds * 50;
+	struct wdt_softc *wdt = (struct wdt_softc *)self;
 
-	/* disable the timer */
-	(void)bus_space_read_1(wdt->iot, wdt->ioh, WDT_DISABLE_TIMER);
+	u_int16_t v;
+	int s;
+
+	s = splclock();
+
+	wdt_timer_disable(wdt);
+
+	if (seconds == 0) {
+		wdt->timeout_secs = 0;
+		splx(s);
+		return (0);
+	} else if (seconds < 2)
+		seconds = 2;
+	else if (seconds > 1800)
+		seconds = 1800;
+
+	/* 8254 has been programmed with a 2ms period */
+	v = (u_int16_t)seconds * 50;
 
 	/* load the new timeout count */
 	wdt_8254_count(wdt, WDT_8254_TC_HI, v);
 
 	/* enable the timer */
 	bus_space_write_1(wdt->iot, wdt->ioh, WDT_ENABLE_TIMER, 0);
-}
 
-/*
- *	wdt_timeout
- *
- *	Kernel timeout handler.  This function is called every
- *	wdt->timeout_secs / 2 seconds.  It reloads the watchdog
- *	counters in one of two ways:
- *
- *	   - If there are one or more processes sleeping in a
- *	     WIOCSCHED ioctl(), they are woken up to perform
- *	     the counter reload.
- *	   - If no processes are sleeping in WIOCSCHED, the
- *	     counters are reloaded from here.
- *
- *	Finally, another timeout is scheduled for wdt->timeout_secs
- *	from now.
- */
-static void
-wdt_timeout (void *arg)
-{
-	struct wdt_softc *wdt = (struct wdt_softc *)arg;
+	wdt->timeout_secs = seconds;
 
-	/* reload counters from proc in WIOCSCHED ioctl()? */
-	if (wdt->procs)
-		wakeup(wdt);
-	else
-		wdt_set_timeout(wdt, wdt->timeout_secs);
+	splx(s);
 
-	/* schedule another timeout in half the countdown time */
-	timeout_add(&wdt->timeout, wdt->timeout_secs * hz / 2);
+	return (seconds);
 }
 
 /*
@@ -365,40 +346,6 @@ static void
 wdt_timer_disable (struct wdt_softc *wdt)
 {
 	(void)bus_space_read_1(wdt->iot, wdt->ioh, WDT_DISABLE_TIMER);
-	timeout_del(&wdt->timeout);
-}
-
-/*
- *	wdt_timer_enable
- *
- *	Enables the watchdog timer to expire in the specified number
- *	of seconds.  If 'seconds' is outside the range 2-1800, it
- *	is silently clamped to be within range.
- */
-static void
-wdt_timer_enable (struct wdt_softc *wdt, unsigned seconds)
-{
-	int s;
-
-	/* clamp range */
-	if (seconds < 2)
-		seconds = 2;
-
-	if (seconds > 1800)
-		seconds = 1800;
-
-	/* block out the timeout handler */
-	s = splclock();
-
-	wdt_timer_disable(wdt);
-	wdt->timeout_secs = seconds;
-
-	timeout_set(&wdt->timeout, wdt_timeout, wdt);
-	timeout_add(&wdt->timeout, hz * seconds / 2);
-	wdt_set_timeout(wdt, seconds);
-
-	/* re-enable clock interrupts */
-	splx(s);
 }
 
 /*
@@ -529,19 +476,6 @@ wdt_get_state (struct wdt_softc *wdt, struct wdt_state *state)
 }
 
 /*
- *	wdt_shutdown
- *
- *	Disables the watchdog timer at system shutdown time.
- */
-static void
-wdt_shutdown (void *arg)
-{
-	struct wdt_softc *wdt = (struct wdt_softc *)arg;
-
-	wdt_timer_disable(wdt);
-}
-
-/*
  *	wdt_sched
  *
  *	Put the process into an infinite loop in which:
@@ -597,3 +531,4 @@ wdt_sched (struct wdt_softc *wdt, struct proc *p)
 
 	return(error);
 }
+
