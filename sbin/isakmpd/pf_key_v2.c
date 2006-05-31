@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.170 2006/05/31 04:54:46 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.171 2006/05/31 04:58:13 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -3520,7 +3520,7 @@ pf_key_v2_handler(int fd)
  */
 int
 pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
-		     struct proto *proto2, int incoming)
+    struct proto *proto2, int incoming)
 {
 	struct sadb_msg msg;
 	struct sadb_sa  sa1, sa2;
