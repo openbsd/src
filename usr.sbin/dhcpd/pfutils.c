@@ -1,3 +1,4 @@
+/*	$OpenBSD: pfutils.c,v 1.2 2006/05/31 14:40:14 ckuethe Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
