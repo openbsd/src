@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/scsiio.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,7 +11,9 @@
 #include "extern.h"
 
 #define WAVHDRLEN 44
+extern int errno;
 extern int fd;
+extern char *cdname;
 extern char *track_types;
 
 int
@@ -28,6 +31,13 @@ blank(void)
 	scr.flags = SCCMD_ESCAPE;
 	scr.senselen = SENSEBUFLEN;
 
+	r = ioctl(fd, SCIOCCOMMAND, &scr);
+	if (r == -1 && errno == EPERM) {
+		close(fd);
+		fd = -1;
+		if (! open_cd(cdname, 1))
+			return (-1);
+	}
 	r = ioctl(fd, SCIOCCOMMAND, &scr);
 	return (r == 0 ? scr.retsts : -1);
 }
