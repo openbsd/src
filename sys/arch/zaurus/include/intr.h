@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2006/03/12 03:14:37 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2006/05/31 18:01:07 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -71,9 +71,6 @@
 #define IST_EDGE_FALLING IST_EDGE
 #define IST_EDGE_RISING  5
 #define IST_EDGE_BOTH    6
-
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #ifndef _LOCORE
 
