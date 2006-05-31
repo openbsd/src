@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.64 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.65 2006/05/31 19:43:56 jason Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -163,6 +163,8 @@ struct scsi_link {
 	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
+	u_int64_t port_wwn;
+	u_int64_t node_wwn;
 	u_int16_t adapter_target;	/* what are we on the scsi bus */
 	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
 	u_int16_t openings;		/* available operations */
