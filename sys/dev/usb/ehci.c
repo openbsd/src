@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.59 2006/05/31 06:59:56 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.60 2006/05/31 07:27:28 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -742,7 +742,9 @@ void
 ehci_idone(struct ehci_xfer *ex)
 {
 	usbd_xfer_handle xfer = &ex->xfer;
+#ifdef EHCI_DEBUG
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
+#endif
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	u_int32_t status = 0, nstatus = 0;
 	int actlen, cerr;
