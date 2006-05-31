@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.27 2006/05/28 08:30:04 todd Exp $	*/
+/*	$OpenBSD: ike.c,v 1.28 2006/05/31 02:26:41 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -77,9 +77,16 @@ static void
 ike_section_peer(struct ipsec_addr_wrap *peer, struct ipsec_addr_wrap *local,
     FILE *fd, struct ike_auth *auth)
 {
-	fprintf(fd, SET "[Phase 1]:%s=peer-%s force\n", peer->name, peer->name);
-	fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
-	fprintf(fd, SET "[peer-%s]:Address=%s force\n", peer->name, peer->name);
+	if (peer) {
+		fprintf(fd, SET "[Phase 1]:%s=peer-%s force\n", peer->name,
+		    peer->name);
+		fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
+		fprintf(fd, SET "[peer-%s]:Address=%s force\n", peer->name,
+		    peer->name);
+	} else {
+		fprintf(fd, SET "[Phase 1]:Default=peer-default force\n");
+		fprintf(fd, SET "[peer-default]:Phase=1 force\n");
+	}
 	if (local)
 		fprintf(fd, SET "[peer-%s]:Local-address=%s force\n",
 		    peer->name, local->name);
@@ -104,15 +111,24 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 			err(1, "ike_section_ids: strdup");
 	}
 	if (auth->srcid) {
-		fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n", peer->name,
-		    "local");
+		if (peer)
+			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
+			    peer->name, "local");
+		else
+			fprintf(fd, SET "[peer-default]:ID=default-ID force\n");
+
 		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", "local");
 		fprintf(fd, SET "[%s-ID]:Name=%s force\n", "local",
 		    auth->srcid);
 	}
 	if (auth->dstid) {
-		fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
-		    peer->name, peer->name);
+		if (peer)
+			fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
+			    peer->name, peer->name);
+		else
+			fprintf(fd, SET
+			    "[peer-default]:Remote-ID=default-ID force\n");
+			
 		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", peer->name);
 		fprintf(fd, SET "[%s-ID]:Name=%s force\n", peer->name,
 		    auth->dstid);
@@ -124,8 +140,15 @@ ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
     struct ipsec_addr_wrap *peer, FILE *fd)
 {
 	fprintf(fd, SET "[IPsec-%s-%s]:Phase=2 force\n", src->name, dst->name);
-	fprintf(fd, SET "[IPsec-%s-%s]:ISAKMP-peer=peer-%s force\n", src->name,
-	    dst->name, peer->name);
+
+	if (peer)
+		fprintf(fd, SET "[IPsec-%s-%s]:ISAKMP-peer=peer-%s force\n",
+		    src->name, dst->name, peer->name);
+	else
+		fprintf(fd, SET
+		    "[IPsec-%s-%s]:ISAKMP-peer=peer-default force\n",
+		    src->name, dst->name);
+
 	fprintf(fd, SET "[IPsec-%s-%s]:Configuration=qm-%s-%s force\n",
 	    src->name, dst->name, src->name, dst->name);
 	fprintf(fd, SET "[IPsec-%s-%s]:Local-ID=lid-%s force\n", src->name,
@@ -246,10 +269,17 @@ static int
 ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
     FILE *fd, struct ike_auth *auth)
 {
-	fprintf(fd, SET "[peer-%s]:Configuration=mm-%s force\n", peer->name,
-	    peer->name);
-	fprintf(fd, SET "[mm-%s]:EXCHANGE_TYPE=ID_PROT force\n", peer->name);
-	fprintf(fd, ADD "[mm-%s]:Transforms=", peer->name);
+	if (peer) {
+		fprintf(fd, SET "[peer-%s]:Configuration=mm-%s force\n",
+		    peer->name, peer->name);
+		fprintf(fd, SET "[mm-%s]:EXCHANGE_TYPE=ID_PROT force\n",
+		    peer->name);
+		fprintf(fd, ADD "[mm-%s]:Transforms=", peer->name);
+	} else {
+		fprintf(fd, SET "[peer-default]:Configuration=mm-default\n");
+		fprintf(fd, SET "[mm-default]:EXCHANGE_TYPE=ID_PROT force\n");
+		fprintf(fd, ADD "[mm-default]:Transforms=");
+	}
 
 	if (mmxfs->encxf) {
 		switch (mmxfs->encxf->id) {
