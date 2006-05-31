@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.9 2006/05/31 02:43:15 ckuethe Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.10 2006/05/31 09:05:42 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -44,13 +44,15 @@
 .Nd Dynamic Host Configuration Protocol Server
 .Sh SYNOPSIS
 .Nm dhcpd
+.Bk -words
 .Op Fl dfn
+.Op Fl A Ar abandoned_ip_table
+.Op Fl C Ar changed_ip_table
 .Op Fl c Ar config-file
 .Op Fl l Ar lease-file
 .Op Fl p Ar pf-device
-.Op Fl A Ar abandoned_ip_table
-.Op Fl C Ar changed_ip_table
 .Op Ar if0 Op Ar ... ifN
+.Ek
 .Sh DESCRIPTION
 The Internet Software Consortium DHCP Server,
 .Nm dhcpd ,
@@ -152,6 +154,34 @@ interfaces if possible, and listen for DHCP broadcasts on each interface.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A Ar abandoned_ip_table
+When an address is abandoned for some reason, add it to the
+.Xr pf 4
+table named
+.Ar abandoned_ip_table .
+This can be used to defend against machines "camping" on an address
+without obtaining a lease.
+When an address is properly leased,
+.Nm
+will remove the address from this table.
+.It Fl C Ar changed_ip_table
+When an address is leased to a different hardware address, delete it from the
+.Xr pf 4
+table named
+.Ar changed_ip_table .
+This feature complements the overload table in a stateful
+.Xr pf 4
+rule.
+If a host appears to be misbehaving, it can be quarantined by using the
+overload feature.
+When the address is leased to a different machine,
+.Nm
+can remove the address from the overload table, thus allowing a well-behaved
+machine to reuse the address.
+Users are cautioned against placing much trust in Ethernet or IP addresses;
+.Xr ifconfig 8
+can be used to trivially change the interface's address, and on a busy DHCP
+network, IP addresses will likely be quickly recycled.
 .It Fl c Ar config-file
 Use an alternate configuration file,
 .Ar config-file .
@@ -193,40 +223,14 @@ running
 in production, this option should be used
 .Em only
 for testing lease files in a non-production environment.
-.It Fl p Ar pf-device
-Use an alternate pf device,
-.Ar pf-device .
-.It Fl A Ar abandoned_ip_table
-When an address is abandoned for some reason, add it to the
-.Xr pf 4
-table named
-.Ar abandoned_ip_table .
-This can be used to defend against machines "camping" on an address
-without obtaining a lease.
-When an address is properly leased,
-.Nm
-will remove the address from this table.
-.It Fl C Ar changed_ip_table
-When an address is leased to a different hardware address, delete it from the
-.Xr pf 4
-table named
-.Ar changed_ip_table .
-This feature complements the overload table in a stateful
-.Xr pf 4
-rule.
-If a host appears to be misbehaving, it can be quarantined by using the
-overload feature.
-When the address is leased to a different machine,
-.Nm
-can remove the address from the overload table, thus allowing a well-behaved
-machine to reuse the address.
-Users are cautioned against placing much trust in ethernet or IP addresses;
-.Xr ifconfig 8
-can be used to trivially change the interface's address, and on a busy DHCP
-network, IP addresses will likely be quickly recycled.
 .It Fl n
 Only test configuration, do not run
 .Nm .
+.It Fl p Ar pf-device
+Use an alternate
+.Xr pf 4
+device,
+.Ar pf-device .
 .El
 .Sh CONFIGURATION
 The syntax of the
@@ -363,6 +367,7 @@ DHCPD configuration file.
 DHCPD lease file.
 .El
 .Sh SEE ALSO
+.Xr pf 4 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhcpd.leases 5 ,
 .Xr dhclient 8 ,
