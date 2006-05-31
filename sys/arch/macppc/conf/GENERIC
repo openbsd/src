@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.137 2006/04/30 20:38:57 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.138 2006/05/31 03:25:08 dlg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -61,6 +61,7 @@ ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
 #ami*		at pci?
 pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
 isp*		at pci?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
+mpi*		at pci?		# LSI Logic MPT-Fusion Message Passing Interface
 option		ISP_COMPILE_FW
 pciide*		at pci?
 kauaiata*	at pci?		# Apple ATA 100
@@ -174,6 +175,7 @@ scsibus*	at ioprbs?
 scsibus*	at iopsp?
 scsibus*	at pcscp?
 scsibus*	at isp?
+scsibus*	at mpi?
 scsibus*	at siop?
 #scsibus*	at fwscsi?
 
