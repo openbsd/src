@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.57 2006/05/30 19:21:07 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.58 2006/05/31 06:18:09 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1403,7 +1403,8 @@ ehci_open(usbd_pipe_handle pipe)
 	/* Fill the overlay qTD */
 	sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
 	sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
-	sqh->qh.qh_qtd.qtd_status = htole32(0);
+	sqh->qh.qh_qtd.qtd_status =
+	    htole32(EHCI_QTD_SET_TOGGLE(pipe->endpoint->savedtoggle));
 
 	epipe->sqh = sqh;
 
@@ -2393,6 +2394,8 @@ ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
 	s = splusb();
 	ehci_rem_qh(sc, sqh, head);
 	splx(s);
+	pipe->endpoint->savedtoggle =
+	    EHCI_QTD_GET_TOGGLE(le32toh(sqh->qh.qh_qtd.qtd_status));
 	ehci_free_sqh(sc, epipe->sqh);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.46 2006/05/29 04:15:49 pascoe Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.47 2006/05/31 06:18:09 pascoe Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1985,6 +1985,7 @@ uhci_device_bulk_close(usbd_pipe_handle pipe)
 	uhci_softc_t *sc = (uhci_softc_t *)dev->bus;
 
 	uhci_free_sqh(sc, upipe->u.bulk.sqh);
+	pipe->endpoint->savedtoggle = upipe->nexttoggle;
 }
 
 usbd_status
@@ -2858,7 +2859,7 @@ uhci_open(usbd_pipe_handle pipe)
 		     ed->bEndpointAddress, sc->sc_addr));
 
 	upipe->aborting = 0;
-	upipe->nexttoggle = 0;
+	upipe->nexttoggle = pipe->endpoint->savedtoggle;
 
 	if (pipe->device->address == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
