@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2006/05/31 03:24:06 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.34 2006/05/31 03:59:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -62,6 +62,7 @@ int	 yylex(void);
 void	 clear_config(struct ospfd_conf *xconf);
 int	 check_file_secrecy(int fd, const char *fname);
 u_int32_t	get_rtr_id(void);
+int	 host(const char *, struct in_addr *, struct in_addr *);
 
 struct config_defaults {
 	char		auth_key[MAX_SIMPLE_AUTH_LEN];
@@ -203,6 +204,8 @@ conf_main	: ROUTERID STRING {
 					r->type = REDIST_STATIC;
 				else if (!strcmp($3, "connected"))
 					r->type = REDIST_CONNECTED;
+				else if (host($3, &r->addr, &r->mask))
+					r->type = REDIST_ADDR;
 				else {
 					yyerror("unknown redistribute type");
 					free($3);
@@ -957,3 +960,25 @@ get_rtr_id(void)
 
 	return (ip);
 }
+
+int
+host(const char *s, struct in_addr *addr, struct in_addr *mask)
+{
+	struct in_addr		 ina;
+	int			 bits = 32;
+
+	bzero(&ina, sizeof(struct in_addr));
+	if (strrchr(s, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+			return (0);
+	} else {
+		if (inet_pton(AF_INET, s, &ina) != 1)
+			return (0);
+	}
+
+	addr->s_addr = ina.s_addr;
+	mask->s_addr = prefixlen2mask(bits);
+
+	return (1);
+}
+
