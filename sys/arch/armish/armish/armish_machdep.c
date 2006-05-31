@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.1 2006/05/29 17:13:19 drahn Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.2 2006/05/31 05:54:09 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -184,7 +184,7 @@ extern int pmap_debug_level;
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	16
+#define	KERNEL_PT_KERNEL_NUM	32
 
 					/* L2 table for mapping i80312 */
 //#define	KERNEL_PT_IOPXS		(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
@@ -192,7 +192,7 @@ extern int pmap_debug_level;
 					/* L2 tables for mapping kernel VM */ 
 //#define KERNEL_PT_VMDATA	(KERNEL_PT_IOPXS + 1)
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
-#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
+#define	KERNEL_PT_VMDATA_NUM	8	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
