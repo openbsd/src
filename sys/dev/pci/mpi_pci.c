@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.3 2006/05/31 03:16:16 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.4 2006/05/31 03:38:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -59,9 +59,7 @@ struct cfattach mpi_pci_ca = {
 #define MPP_DUAL	0x01	/* Dual port adapter */
 
 static const struct pci_matchid mpi_devices[] = {
-#ifdef notyet
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1030 },
-#endif
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC909 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC909A },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919 },
@@ -77,8 +75,12 @@ mpi_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args		*pa = aux;
 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMBIOS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMBIOS_1030)
+		return (1);
+
 	return (pci_matchbyid(pa, mpi_devices,
-	    sizeof(mpi_devices) / sizeof(mpi_devices[0])) * 2);
+	    sizeof(mpi_devices) / sizeof(mpi_devices[0])) * 3);
 }
 
 void

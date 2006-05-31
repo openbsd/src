@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.12 2006/02/04 19:05:00 marco Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.13 2006/05/31 03:38:32 dlg Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ mpt_pci_match(struct device *parent, void *match, void *aux)
 	struct pci_attach_args		*pa = aux;
 
 	if (mpt_pci_lookup(pa) != NULL)
-		return (1);
+		return (2);
 
 	return (0);
 }
