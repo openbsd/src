@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.80 2006/05/29 20:12:14 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.81 2006/05/31 09:03:43 todd Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -136,6 +136,7 @@ u_int8_t		 x2i(unsigned char *);
 struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr_wrap	*host(const char *);
+struct ipsec_addr_wrap	*host_v6(const char *, int);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
 struct ipsec_addr_wrap	*host_dns(const char *, int, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
@@ -154,6 +155,8 @@ struct ipsec_rule	*copyrule(struct ipsec_rule *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *, u_int8_t);
+int			 validate_af(struct ipsec_addr_wrap *,
+				struct ipsec_addr_wrap *);
 struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_addr_wrap *, u_int32_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
@@ -1196,7 +1199,7 @@ host(const char *s)
 	if ((p = strrchr(s, '/')) != NULL) {
 		errno = 0;
 		mask = strtol(p + 1, &q, 0);
-		if (errno == ERANGE || !q || *q || mask > 32 || q == (p + 1))
+		if (errno == ERANGE || !q || *q || mask > 128 || q == (p + 1))
 			errx(1, "host: invalid netmask '%s'", p);
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: calloc");
@@ -1217,11 +1220,9 @@ host(const char *s)
 	if (cont && (ipa = host_v4(s, v4mask)) != NULL)
 		cont = 0;
 
-#if notyet
 	/* IPv6 address? */
-	if (cont && (ipa = host_v6(s, v6mask)) != NULL)
+	if (cont && (ipa = host_v6(ps, mask == -1 ? 128 : mask)) != NULL)
 		cont = 0;
-#endif
 
 	/* dns lookup */
 	if (cont && (ipa = host_dns(s, v4mask, 0)) != NULL)
@@ -1232,6 +1233,56 @@ host(const char *s)
 		fprintf(stderr, "no IP address found for %s\n", s);
 		return (NULL);
 	}
+	return (ipa);
+}
+
+struct ipsec_addr_wrap *
+host_v6(const char *s, int prefixlen)
+{
+	struct ipsec_addr_wrap	*ipa = NULL;
+	struct addrinfo		 hints, *res0, *res;
+	char 			 hbuf[NI_MAXHOST];
+
+	bzero(&hints, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, NULL, &hints, &res0))
+		return (NULL);
+
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_family != AF_INET6)
+			continue;
+		break; /* found one */
+	}
+	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
+	if (ipa == NULL)
+		err(1, "host_addr: calloc");
+	ipa->af = res->ai_family;
+	memcpy(&ipa->address.v6,
+    	    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
+    	    sizeof(struct in6_addr));
+	if (prefixlen > 128)
+		prefixlen = 128;
+	ipa->next = NULL;
+	ipa->tail = ipa;
+
+	set_ipmask(ipa, prefixlen);
+	if (getnameinfo(res->ai_addr, res->ai_addrlen,
+	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST)) {
+		errx(1, "could not get a numeric hostname");
+	}
+
+	if (prefixlen != 128) {
+		ipa->netaddress = 1;
+		asprintf(&ipa->name, "%s/%d", hbuf, prefixlen);
+	} else
+		ipa->name = strdup(hbuf);
+	if (ipa->name == NULL)
+		err(1, "host_dns: strdup");
+
+	freeaddrinfo(res0);
+
 	return (ipa);
 }
 
@@ -1881,9 +1932,12 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 {
 	struct ipsec_rule	*r, *revr;
 	struct ipsec_addr_wrap	*src, *dst;
+	int added = 0;
 
 	for (src = rule->src; src; src = src->next) {
 		for (dst = rule->dst; dst; dst = dst->next) {
+			if (src->af != dst->af)
+				continue;
 			r = copyrule(rule);
 
 			r->src = copyhost(src);
@@ -1912,8 +1966,11 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 				if (ipsecctl_add_rule(ipsec, revr))
 					return (1);
 			}
+			added++;
 		}
 	}
+	if (!added)
+		yyerror("rule expands to no valid combination");
 	ipsecctl_free_rule(rule);
 	return (0);
 }
