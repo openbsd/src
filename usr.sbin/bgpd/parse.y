@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.189 2006/05/26 01:06:12 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.190 2006/05/31 02:16:25 pat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1420,6 +1420,7 @@ filter_set_opt	: LOCALPREF number		{
 			    pftable_exists($2) != 0) {
 				yyerror("pftable name does not exist");
 				free($2);
+				free($$);
 				YYERROR;
 			}
 			if (strlcpy($$->action.pftable, $2,
@@ -1427,11 +1428,13 @@ filter_set_opt	: LOCALPREF number		{
 			    sizeof($$->action.pftable)) {
 				yyerror("pftable name too long");
 				free($2);
+				free($$);
 				YYERROR;
 			}
 			if (pftable_add($2) != 0) {
 				yyerror("Couldn't register table");
 				free($2);
+				free($$);
 				YYERROR;
 			}
 			free($2);
@@ -1445,6 +1448,7 @@ filter_set_opt	: LOCALPREF number		{
 			    sizeof($$->action.rtlabel)) {
 				yyerror("rtlabel name too long");
 				free($2);
+				free($$);
 				YYERROR;
 			}
 			free($2);
