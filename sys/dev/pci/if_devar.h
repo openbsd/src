@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.25 2006/05/06 02:57:30 brad Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.26 2006/05/31 02:45:42 brad Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -502,7 +502,7 @@ struct _tulip_softc_t {
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is
 						   TULIP_SYSTEMERROR is also set) */
-    u_int32_t tulip_txtimer : 2;	/* transmission timer */
+    u_int32_t tulip_txtimer;		/* transmission timer */
     u_int32_t tulip_system_errors;	/* number of system errors encountered */
     u_int32_t tulip_statusbits;	/* status bits from CSR5 that may need to be printed */
 
