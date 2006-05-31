@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.3 2006/05/30 22:06:14 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.4 2006/05/31 03:24:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -29,6 +29,7 @@
 #include "ospfe.h"
 
 void	print_mainconf(struct ospfd_conf *);
+const char *print_no(u_int16_t);
 void	print_redistribute(struct ospfd_conf *);
 void	print_iface(struct iface *);
 
@@ -53,6 +54,15 @@ print_mainconf(struct ospfd_conf *conf)
 	printf("spf-holdtime %u\n", conf->spf_hold_time);
 }
 
+const char *
+print_no(u_int16_t type)
+{
+	if (type & REDIST_NO)
+		return ("no ");
+	else
+		return ("");
+}
+
 void
 print_redistribute(struct ospfd_conf *conf)
 {
@@ -62,16 +72,16 @@ print_redistribute(struct ospfd_conf *conf)
 		printf("redistribute default\n");
 
 	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
-		switch (r->type) {
+		switch (r->type & ~REDIST_NO) {
 		case REDIST_STATIC:
-			printf("redistribute static\n");
+			printf("%sredistribute static\n", print_no(r->type));
 			break;
 		case REDIST_CONNECTED:
-			printf("redistribute connected\n");
+			printf("%sredistribute connected\n", print_no(r->type));
 			break;
 		case REDIST_LABEL:
-			printf("redistribute rtlabel %s\n",
-			    rtlabel_id2name(r->label));
+			printf("%sredistribute rtlabel %s\n",
+			    print_no(r->type), rtlabel_id2name(r->label));
 			break;
 		case REDIST_ADDR:
 			/* ignore for now */

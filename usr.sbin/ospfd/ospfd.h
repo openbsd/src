@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.58 2006/05/30 22:06:14 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.59 2006/05/31 03:24:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -361,19 +361,18 @@ enum {
 	PROC_RDE_ENGINE
 } ospfd_process;
 
-enum redist_types {
-	REDIST_CONNECTED,
-	REDIST_STATIC,
-	REDIST_LABEL,
-	REDIST_ADDR
-};
+#define	REDIST_CONNECTED	0x01
+#define	REDIST_STATIC		0x02
+#define	REDIST_LABEL		0x04
+#define	REDIST_ADDR		0x08
+#define	REDIST_NO		0x10
 
 struct redistribute {
 	SIMPLEQ_ENTRY(redistribute)	entry;
 	struct in_addr			addr;
 	struct in_addr			mask;
 	u_int16_t			label;
-	enum redist_types		type;
+	u_int16_t			type;
 };
 
 struct ospfd_conf {

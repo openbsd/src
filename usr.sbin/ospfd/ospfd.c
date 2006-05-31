@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.32 2006/05/30 22:06:14 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.33 2006/05/31 03:24:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -500,10 +500,10 @@ ospf_redistribute(struct kroute *kr)
 		return (0);
 
 	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
-		switch (r->type) {
+		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
 			if (kr->rtlabel == r->label)
-				return (1);
+				return (r->type & REDIST_NO ? 0 : 1);
 			break;
 		case REDIST_STATIC:
 			/*
@@ -514,14 +514,19 @@ ospf_redistribute(struct kroute *kr)
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_STATIC)
-				return (1);
+				return (r->type & REDIST_NO ? 0 : 1);
 		case REDIST_CONNECTED:
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED)
-				return (1);
+				return (r->type & REDIST_NO ? 0 : 1);
 		case REDIST_ADDR:
-			/* ignore */
+			if (kr->flags & F_DYNAMIC)
+				continue;
+			if ((kr->prefix.s_addr & r->mask.s_addr) ==
+			    (r->addr.s_addr & r->mask.s_addr) &&
+			    kr->prefixlen >= mask2prefixlen(r->mask.s_addr))
+				return (r->type & REDIST_NO? 0 : 1);
 			break;
 		}
 	}

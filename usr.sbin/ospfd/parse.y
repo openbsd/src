@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2006/05/31 02:18:23 pat Exp $ */
+/*	$OpenBSD: parse.y,v 1.33 2006/05/31 03:24:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -112,9 +112,10 @@ typedef struct {
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
 %token	RETRANSMITINTERVAL ROUTERDEADTIME ROUTERPRIORITY
+%token	YES NO
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.number>	number yesno
+%type	<v.number>	number yesno no
 %type	<v.string>	string
 
 %%
@@ -153,18 +154,12 @@ string		: string STRING	{
 		| STRING
 		;
 
-yesno		: STRING {
-			if (!strcmp($1, "yes"))
-				$$ = 1;
-			else if (!strcmp($1, "no"))
-				$$ = 0;
-			else {
-				free($1);
-				YYERROR;
-			}
-			free($1);
-		}
+yesno		: YES	{ $$ = 1; }
+		| NO	{ $$ = 0; }
 		;
+
+no		: /* empty */	{ $$ = 0; }
+		| NO		{ $$ = 1; }
 
 varset		: STRING '=' string		{
 			if (conf->opts & OSPFD_OPT_VERBOSE)
@@ -190,40 +185,51 @@ conf_main	: ROUTERID STRING {
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
 		}
-		| REDISTRIBUTE STRING {
+		| no REDISTRIBUTE STRING {
 			struct redistribute	*r;
 
-			if (!strcmp($2, "default"))
+			if (!strcmp($3, "default")) {
 				conf->redistribute |= REDISTRIBUTE_DEFAULT;
-			else {
+				if ($1) {
+					yyerror("cannot use 'no' with "
+					    "redistribute default");
+					free($3);
+					YYERROR;
+				}
+			} else {
 				if ((r = calloc(1, sizeof(*r))) == NULL)
 					fatal(NULL);
-				if (!strcmp($2, "static"))
+				if (!strcmp($3, "static"))
 					r->type = REDIST_STATIC;
-				else if (!strcmp($2, "connected"))
+				else if (!strcmp($3, "connected"))
 					r->type = REDIST_CONNECTED;
 				else {
 					yyerror("unknown redistribute type");
-					free($2);
+					free($3);
 					free(r);
 					YYERROR;
 				}
+
+				if ($1)
+					r->type |= REDIST_NO;
 
 				SIMPLEQ_INSERT_TAIL(&conf->redist_list, r,
 				    entry);
 			}
 			conf->redistribute |= REDISTRIBUTE_ON;
-			free($2);
+			free($3);
 
 		}
-		| REDISTRIBUTE RTLABEL STRING {
+		| no REDISTRIBUTE RTLABEL STRING {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
 				fatal(NULL);
 			r->type = REDIST_LABEL;
-			r->label = rtlabel_name2id($3);
-			free($3);
+			r->label = rtlabel_name2id($4);
+			if ($1)
+				r->type |= REDIST_NO;
+			free($4);
 
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
 			conf->redistribute |= REDISTRIBUTE_ON;
@@ -496,6 +502,7 @@ lookup(char *s)
 		{"hello-interval",	HELLOINTERVAL},
 		{"interface",		INTERFACE},
 		{"metric",		METRIC},
+		{"no",			NO},
 		{"passive",		PASSIVE},
 		{"redistribute",	REDISTRIBUTE},
 		{"retransmit-interval",	RETRANSMITINTERVAL},
@@ -506,7 +513,8 @@ lookup(char *s)
 		{"rtlabel",		RTLABEL},
 		{"spf-delay",		SPFDELAY},
 		{"spf-holdtime",	SPFHOLDTIME},
-		{"transmit-delay",	TRANSMITDELAY}
+		{"transmit-delay",	TRANSMITDELAY},
+		{"yes",			YES}
 	};
 	const struct keywords	*p;
 
