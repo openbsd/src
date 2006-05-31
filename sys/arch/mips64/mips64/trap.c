@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2005/12/17 20:13:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2006/05/31 20:19:39 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -172,6 +172,7 @@ trap(trapframe)
 	u_quad_t sticks;
 	vm_prot_t ftype;
 	extern vaddr_t onfault_table[];
+	int onfault;
 	int typ = 0;
 	union sigval sv;
 
@@ -275,32 +276,45 @@ trap(trapframe)
 			vaddr_t va;
 			int rv;
 
-		kernel_fault:
+	kernel_fault:
 			va = trunc_page((vaddr_t)trapframe->badvaddr);
+			onfault = p->p_addr->u_pcb.pcb_onfault;
+			p->p_addr->u_pcb.pcb_onfault = 0;
 			rv = uvm_fault(kernel_map, trunc_page(va), 0, ftype);
+			p->p_addr->u_pcb.pcb_onfault = onfault;
 			if (rv == 0)
 				return (trapframe->pc);
-			if ((i = p->p_addr->u_pcb.pcb_onfault) != 0) {
+			if (onfault != 0) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
-				return (onfault_table[i]);
+				return (onfault_table[onfault]);
 			}
 			goto err;
 		}
 		/*
 		 * It is an error for the kernel to access user space except
-		 * through the copyin/copyout routines. However we allow
-		 * accesses to the top of user stack for compat emul data.
+		 * through the copyin/copyout routines.
+		 */
+#if 0
+		/*
+		 * However we allow accesses to the top of user stack for
+		 * compat emul data.
 		 */
 #define szsigcode ((long)(p->p_emul->e_esigcode - p->p_emul->e_sigcode))
 		if (trapframe->badvaddr < VM_MAXUSER_ADDRESS &&
 		    trapframe->badvaddr >= (long)STACKGAPBASE)
 			goto fault_common;
-
-		if ((i = p->p_addr->u_pcb.pcb_onfault) == 0) {
-			goto fault_common;
-		}
 #undef szsigcode
-		goto fault_common;
+#endif
+
+		if (p->p_addr->u_pcb.pcb_onfault != 0) {
+			/*
+			 * We want to resolve the TLB fault before invoking
+			 * pcb_onfault if necessary.
+			 */
+			goto fault_common;
+		} else {
+			goto err;
+		}
 
 	case T_TLB_LD_MISS+T_USER:
 		ftype = VM_PROT_READ;
@@ -318,12 +332,12 @@ fault_common:
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page((vaddr_t)trapframe->badvaddr);
+
+		onfault = p->p_addr->u_pcb.pcb_onfault;
+		p->p_addr->u_pcb.pcb_onfault = 0;
 		rv = uvm_fault(map, trunc_page(va), 0, ftype);
-#if defined(VMFAULT_TRACE)
-		printf("vm_fault(%p (pmap %p), %p (%p), %x, %d) -> %x at pc %p\n",
-		    map, &vm->vm_map.pmap, va, trapframe->badvaddr, ftype, FALSE, rv, trapframe->pc);
-printf("sp %p\n", trapframe->sp);
-#endif
+		p->p_addr->u_pcb.pcb_onfault = onfault;
+
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -343,9 +357,9 @@ printf("sp %p\n", trapframe->sp);
 			goto out;
 		}
 		if (!USERMODE(trapframe->sr)) {
-			if ((i = p->p_addr->u_pcb.pcb_onfault) != 0) {
+			if (onfault != 0) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
-				return (onfault_table[i]);
+				return (onfault_table[onfault]);
 			}
 			goto err;
 		}
@@ -750,11 +764,11 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
-		if ((i = p->p_addr->u_pcb.pcb_onfault) != 0) {
+		if ((onfault = p->p_addr->u_pcb.pcb_onfault) != 0) {
 			p->p_addr->u_pcb.pcb_onfault = 0;
-			return (onfault_table[i]);
+			return (onfault_table[onfault]);
 		}
-		/* FALLTHROUGH */
+		goto err;
 
 	default:
 	err:
