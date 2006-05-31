@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.27 2006/05/23 14:20:19 stevesk Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.28 2006/05/31 01:49:17 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.27 2006/05/23 14:20:19 stevesk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.28 2006/05/31 01:49:17 stevesk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -528,7 +528,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #ifdef INET6
 	if (ip6) {
 		if (ip6->ip6_nxt == IPPROTO_UDP) {
-			(void)printf("%s.%s > %s.%s: ",
+			(void)printf("%s.%s > %s.%s:",
 				ip6addr_string(&ip6->ip6_src),
 				udpport_string(sport),
 				ip6addr_string(&ip6->ip6_dst),
@@ -541,13 +541,13 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #endif /*INET6*/
 	{
 		if (ip->ip_p == IPPROTO_UDP) {
-			(void)printf("%s.%s > %s.%s: ",
+			(void)printf("%s.%s > %s.%s:",
 				ipaddr_string(&ip->ip_src),
 				udpport_string(sport),
 				ipaddr_string(&ip->ip_dst),
 				udpport_string(dport));
 		} else {
-			(void)printf("%s > %s: ",
+			(void)printf("%s > %s:",
 				udpport_string(sport), udpport_string(dport));
 		}
 	}
