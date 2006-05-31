@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.2 2006/05/31 05:49:54 drahn Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.3 2006/05/31 05:57:32 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ void pci_device_foreach(struct i80321_softc *sc, pci_chipset_tag_t pc,
 #define PCIADDR_PORT_START	0x0
 #define PCIADDR_PORT_END	0xffff
 
-int pcibr_flags = 3;
+int pcibr_flags = 0;
 #define PCIBR_VERBOSE		1
 #define PCIBR_ADDR_FIXUP	2
 
