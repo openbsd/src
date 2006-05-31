@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.4 2006/05/29 19:55:37 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.5 2006/05/31 00:32:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -79,10 +79,11 @@ struct mpi_softc {
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
 
-	int			sc_maxcmds;
-	int			sc_first_sgl_len;
-	int			sc_maxchdepth;
 	u_int8_t		sc_porttype;
+	int			sc_maxcmds;
+	int			sc_maxchdepth;
+	int			sc_first_sgl_len;
+	int			sc_max_sgl_len;
 
 	int			sc_buswidth;
 	int			sc_target;

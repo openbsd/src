@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.14 2006/05/30 05:03:28 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.15 2006/05/31 00:32:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -36,7 +36,7 @@
 #ifdef MPI_DEBUG
 #define DPRINTF(x...)		do { if (mpidebug) printf(x); } while (0)
 #define DPRINTFN(n, x...)	do { if (mpidebug > (n)) printf(x); } while (0)
-int mpidebug = 10;
+int mpidebug = 11; 
 #else
 #define DPRINTF(x...)		/* x */
 #define DPRINTFN(n, x...)	/* n, x */
@@ -373,7 +373,7 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-		    sc->sc_first_sgl_len, MAXPHYS, 0, 0,
+		    sc->sc_max_sgl_len, MAXPHYS, 0, 0,
 		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
 			goto free_maps;
@@ -818,14 +818,16 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	struct mpi_softc		*sc = ccb->ccb_sc;
 	struct scsi_xfer		*xs = ccb->ccb_xs;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
-	struct mpi_sge			*sge;
+	struct mpi_msg_scsi_io		*io = &mcb->mcb_io;
+	struct mpi_sge			*sge, *nsge = &mcb->mcb_sgl[0];
+	struct mpi_sge			*ce = NULL, *nce;
+	paddr_t				ce_dva;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	u_int32_t			addr, flags;
 	int				i, error;
 
 	if (xs->datalen == 0) {
-		sge = &mcb->mcb_sgl[0];
-		sge->sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
+		nsge->sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 		    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 		return (0);
 	}
@@ -842,32 +844,71 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	if (xs->flags & SCSI_DATA_OUT)
 		flags |= MPI_SGE_FL_DIR_OUT;
 
+	if (dmap->dm_nsegs > sc->sc_first_sgl_len) {
+		ce = &mcb->mcb_sgl[sc->sc_first_sgl_len - 1];
+		io->chain_offset = ((u_int8_t *)ce - (u_int8_t *)io) / 4;
+	}
+
 	for (i = 0; i < dmap->dm_nsegs; i++) {
-		sge = &mcb->mcb_sgl[i];
+
+		if (nsge == ce) {
+			nsge++;
+			sge->sg_hdr |= htole32(MPI_SGE_FL_LAST);
+
+			DPRINTFN(5, "%s:   - 0x%08x 0x%08x 0x%08x\n",
+			    DEVNAME(sc), sge->sg_hdr,
+			    sge->sg_hi_addr, sge->sg_lo_addr);
+
+			if ((dmap->dm_nsegs - i) > sc->sc_maxchdepth) {
+				nce = &nsge[sc->sc_maxchdepth - 1];
+				addr = ((u_int8_t *)nce - (u_int8_t *)ce) / 4;
+				addr = addr << 16 |
+				    sizeof(struct mpi_sge) * sc->sc_maxchdepth;
+			} else {
+				nce = NULL;
+				addr = sizeof(struct mpi_sge) *
+				    (dmap->dm_nsegs - i);
+			}
+
+			ce->sg_hdr = htole32(MPI_SGE_FL_TYPE_CHAIN |
+			    MPI_SGE_FL_SIZE_64 | addr);
+
+			ce_dva = MPI_DMA_DVA(sc->sc_requests) + ccb->ccb_offset;
+			ce_dva += (u_int8_t *)nsge - (u_int8_t *)mcb;
+
+			addr = (u_int32_t)(ce_dva >> 32);
+			ce->sg_hi_addr = htole32(addr);
+			addr = (u_int32_t)ce_dva;
+			ce->sg_lo_addr = htole32(addr);
+
+			DPRINTFN(5, "%s:  ce: 0x%08x 0x%08x 0x%08x\n",
+			    DEVNAME(sc), ce->sg_hdr, ce->sg_hi_addr,
+			    ce->sg_lo_addr);
+
+			ce = nce;
+		}
+
+		DPRINTFN(5, "%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
+		    i, dmap->dm_segs[i].ds_len,
+		    (unsigned long long)dmap->dm_segs[i].ds_addr);
+
+		sge = nsge;
+
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
 		addr = (u_int32_t)(dmap->dm_segs[i].ds_addr >> 32);
 		sge->sg_hi_addr = htole32(addr);
 		addr = (u_int32_t)dmap->dm_segs[i].ds_addr;
 		sge->sg_lo_addr = htole32(addr);
+
+		DPRINTFN(5, "%s:  %d: 0x%08x 0x%08x 0x%08x\n", DEVNAME(sc),
+		    i, sge->sg_hdr, sge->sg_hi_addr, sge->sg_lo_addr);
+
+		nsge = sge + 1;
 	}
 
 	/* terminate list */
 	sge->sg_hdr |= htole32(MPI_SGE_FL_LAST | MPI_SGE_FL_EOB |
 	    MPI_SGE_FL_EOL);
-
-#ifdef MPI_DEBUG
-	if (mpidebug > 5) {
-		for (i = 0; i < dmap->dm_nsegs; i++) {
-			printf("%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
-			    i, dmap->dm_segs[i].ds_len,
-			    (unsigned long long)dmap->dm_segs[i].ds_addr);
-			printf("%s:  %d: 0x%08x 0x%08x 0x%08x\n", DEVNAME(sc),
-			    i, mcb->mcb_sgl[i].sg_hdr,
-			    mcb->mcb_sgl[i].sg_hi_addr,
-			    mcb->mcb_sgl[i].sg_lo_addr);
-		}
-	}
-#endif
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
@@ -1236,12 +1277,24 @@ mpi_iocfacts(struct mpi_softc *sc)
 #endif /* MPI_DEBUG */
 
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
+	sc->sc_buswidth = ifp.max_devices;
+	sc->sc_maxchdepth = ifp.max_chain_depth;
+
+	/*
+	 * you can fit sg elements on the end of the io cmd if they fit in the
+	 * request frame size.
+	 */
 	sc->sc_first_sgl_len = ((letoh16(ifp.request_frame_size) * 4) - 
 	    sizeof(struct mpi_msg_scsi_io)) / sizeof(struct mpi_sge);
 	DPRINTF("%s:   first sgl len: %d\n", DEVNAME(sc),
 	    sc->sc_first_sgl_len);
-	sc->sc_maxchdepth = ifp.max_chain_depth;
-	sc->sc_buswidth = ifp.max_devices;
+
+	/* the sgl tailing the io cmd loses an entry to the chain element. */
+	sc->sc_max_sgl_len = MPI_MAX_SGL - 1;
+	/* the sgl chains lose an entry for each chain element */
+	sc->sc_max_sgl_len -= (MPI_MAX_SGL - sc->sc_first_sgl_len) /
+	    sc->sc_maxchdepth;
+	DPRINTF("%s:   max sgl len: %d\n", DEVNAME(sc), sc->sc_max_sgl_len);
 
 	return (0);
 }
