@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.55 2006/03/23 02:29:36 ray Exp $	*/
+/*	$OpenBSD: locore.s,v 1.56 2006/05/31 02:43:05 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1622,8 +1622,8 @@ dmmu_write_fault:
 	stx	%g4, [%g6+0x48]	! debug -- what we tried to enter in TLB
 	stb	%g5, [%g6+0x8]	! debug
 #endif	/* DEBUG */
-	mov	0x010, %g1				! Secondary flush
-	mov	0x020, %g5				! Nucleus flush
+	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
+	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	stxa	%g0, [%g7] ASI_DMMU			! clear out the fault
 	membar	#Sync
 	sllx	%g3, (64-13), %g7			! Need to demap old entry first
@@ -1732,8 +1732,8 @@ data_miss:
 #if 0
 	/* This was a miss -- should be nothing to demap. */
 	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	0x010, %g1				! Secondary flush
-	mov	0x020, %g5				! Nucleus flush
+	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
+	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	movrz	%g6, %g5, %g1				! Pick one
 	andn	%g3, 0xfff, %g6
 	or	%g6, %g1, %g6
@@ -2470,8 +2470,8 @@ instr_miss:
 #if 1
 	/* This was a miss -- should be nothing to demap. */
 	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	0x010, %g1				! Secondary flush
-	mov	0x020, %g5				! Nucleus flush
+	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
+	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	movrz	%g6, %g5, %g1				! Pick one
 	andn	%g3, 0xfff, %g6
 	or	%g6, %g1, %g6
@@ -4356,7 +4356,7 @@ _C_LABEL(cpu_initialize):
 	!!
 	!! Demap entire context 0 kernel
 	!!
-	or	%l0, 0x020, %o0			! Context = Nucleus
+	or	%l0, DEMAP_PAGE_NUCLEUS, %o0	! Context = Nucleus
 	add	%l1, %l7, %o1			! Demap all of kernel text seg
 	andn	%o1, %l7, %o1			! rounded up to 4MB.
 	set	0x2000, %o2			! 8K page size
@@ -4368,7 +4368,7 @@ _C_LABEL(cpu_initialize):
 	bleu,pt	%xcc, 0b			! Next page
 	 add	%o0, %o2, %o0
 
-	or	%l3, 0x020, %o0			! Context = Nucleus
+	or	%l3, DEMAP_PAGE_NUCLEUS, %o0	! Context = Nucleus
 	add	%l4, %l7, %o1			! Demap all of kernel data seg
 	andn	%o1, %l7, %o1			! rounded up to 4MB.
 0:
@@ -4418,7 +4418,7 @@ _C_LABEL(cpu_initialize):
 	stxa	%o1, [%o0] ASI_DMMU
 	membar	#Sync				! This probably should be a flush, but it works
 	flush	%l0
-	mov	0x050, %o4
+	mov	DEMAP_CTX_SECONDARY, %o4
 	stxa	%o4, [%o4] ASI_DMMU_DEMAP
 	membar	#Sync
 	stxa	%o4, [%o4] ASI_IMMU_DEMAP
@@ -4687,7 +4687,7 @@ _C_LABEL(tlb_flush_pte):
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
 	membar	#Sync
-	or	%g2, 0x010, %g2				! Demap page from secondary context only
+	or	%g2, DEMAP_PAGE_SECONDARY, %g2		! Demap page from secondary context only
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
 	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
@@ -4739,7 +4739,7 @@ _C_LABEL(tlb_flush_ctx):
 	membar	#LoadStore
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
 	membar	#Sync
-	set	0x030, %g2				! Demap context from secondary context only
+	set	DEMAP_CTX_SECONDARY, %g2	! Demap context from secondary context only
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
 	membar	#Sync					! No real reason for this XXXX
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
@@ -5746,7 +5746,7 @@ ENTRY(switchexit)
 	ldx	[%l6 + %lo(CPCB)], %l5
 	clr	%l4				! lastproc = NULL;
 	brz,pn	%l1, 1f
-	 set	0x030, %l1			! Demap secondary context
+	 set	DEMAP_CTX_SECONDARY, %l1	! Demap secondary context
 	stxa	%g1, [%l1] ASI_DMMU_DEMAP
 	stxa	%g1, [%l1] ASI_IMMU_DEMAP
 	membar	#Sync
@@ -6081,7 +6081,7 @@ Lsw_load:
 	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
 	 mov	%o2, %o0
 
-	set	0x030, %o1			! This context has been recycled
+	set	DEMAP_CTX_SECONDARY, %o1	! This context has been recycled
 	stxa	%o0, [%l5] ASI_DMMU		! so we need to invalidate
 	membar	#Sync
 	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
@@ -9551,7 +9551,7 @@ ENTRY(longjmp)
 	 * Switch to context in %o0
 	 */
 	ENTRY(switchtoctx)
-	set	0x030, %o3
+	set	DEMAP_CTX_SECONDARY, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP
 	membar	#Sync
 	mov	CTX_SECONDARY, %o4
