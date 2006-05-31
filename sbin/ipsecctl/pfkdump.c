@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.11 2006/05/30 21:56:05 msf Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.12 2006/05/31 05:36:06 msf Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -264,8 +264,9 @@ print_ext(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	if (entry->func != NULL)
 		(*entry->func)(ext, msg);
 	else
-		printf("type %u len %u\n",
+		printf("type %u len %u",
 		    ext->sadb_ext_type, ext->sadb_ext_len);
+	printf("\n");
 }
 
 static void
@@ -301,7 +302,6 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 			printf(" auth %s", lookup_name(auth_types,
 			    sa->sadb_sa_auth));
 	}
-	printf("\n");
 }
 
 /* ARGSUSED1 */
@@ -350,7 +350,6 @@ print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 		printf("%2.2x", data[i]);
 		data[i] = 0x00;		/* clear sensitive data */
 	}
-	printf("\n");
 }
 
 /* ARGSUSED1 */
@@ -359,7 +358,7 @@ print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_lifetime *life = (struct sadb_lifetime *)ext;
 
-	printf("alloc %u bytes %llu add %llu first %llu\n",
+	printf("alloc %u bytes %llu add %llu first %llu",
 	    life->sadb_lifetime_allocations,
 	    life->sadb_lifetime_bytes,
 	    life->sadb_lifetime_addtime,
@@ -418,7 +417,7 @@ alg_by_ext(u_int8_t ext_type, u_int8_t id)
 static void
 print_alg(struct sadb_alg *alg, u_int8_t ext_type)
 {
-	printf("\t\t%s iv %u min %u max %u\n",
+	printf("\t\t%s iv %u min %u max %u",
 	    alg_by_ext(ext_type, alg->sadb_alg_id), alg->sadb_alg_ivlen,
 	    alg->sadb_alg_minbits, alg->sadb_alg_maxbits);
 }
@@ -445,7 +444,7 @@ print_comb(struct sadb_comb *comb, struct sadb_msg *msg)
 	printf("\t\tauth %s min %u max %u\n"
 	    "\t\tenc %s min %u max %u\n"
 	    "\t\taddtime hard %llu soft %llu\n"
-	    "\t\tusetime hard %llu soft %llu\n",
+	    "\t\tusetime hard %llu soft %llu",
 	    lookup_name(auth_types, comb->sadb_comb_auth),
 	    comb->sadb_comb_auth_minbits,
 	    comb->sadb_comb_auth_maxbits,
@@ -473,7 +472,7 @@ print_prop(struct sadb_ext *ext, struct sadb_msg *msg)
 	struct sadb_prop *prop = (struct sadb_prop *)ext;
 	struct sadb_comb *comb;
 
-	printf("replay %u\n", prop->sadb_prop_replay);
+	printf("replay %u", prop->sadb_prop_replay);
 	for (comb = (struct sadb_comb *)(prop + 1);
 	    (size_t)((u_int8_t *)comb - (u_int8_t *)ext) <
 	    ext->sadb_ext_len * PFKEYV2_CHUNK;
@@ -487,7 +486,7 @@ print_sens(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sens *sens = (struct sadb_sens *)ext;
 
-	printf("dpd %u sens_level %u integ_level %u\n",
+	printf("dpd %u sens_level %u integ_level %u",
 	    sens->sadb_sens_dpd,
 	    sens->sadb_sens_sens_level,
 	    sens->sadb_sens_integ_level);
@@ -499,7 +498,7 @@ print_spir(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_spirange *spirange = (struct sadb_spirange *)ext;
 
-	printf("min 0x%8.8x max 0x%8.8x\n",
+	printf("min 0x%8.8x max 0x%8.8x",
 	    spirange->sadb_spirange_min, spirange->sadb_spirange_max);
 }
 
@@ -509,7 +508,7 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_ident *ident = (struct sadb_ident *)ext;
 
-	printf("type %s id %llu: %s\n",
+	printf("type %s id %llu: %s",
 	    lookup_name(identity_types, ident->sadb_ident_type),
 	    ident->sadb_ident_id, (char *)(ident + 1));
 }
@@ -520,7 +519,7 @@ print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_cred *x_cred = (struct sadb_x_cred *)ext;
 
-	printf("type %s\n",
+	printf("type %s",
 	    lookup_name(xauth_types, x_cred->sadb_x_cred_type));
 }
 
@@ -529,7 +528,7 @@ static void
 print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_cred *x_cred = (struct sadb_x_cred *)ext;
-	printf("type %s\n",
+	printf("type %s",
 	    lookup_name(cred_types, x_cred->sadb_x_cred_type));
 }
 
@@ -539,7 +538,7 @@ print_policy(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_policy *x_policy = (struct sadb_x_policy *)ext;
 
-	printf("seq %u\n", x_policy->sadb_x_policy_seq);
+	printf("seq %u", x_policy->sadb_x_policy_seq);
 }
 
 /* ARGSUSED1 */
@@ -548,7 +547,7 @@ print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_udpencap *x_udpencap = (struct sadb_x_udpencap *)ext;
 
-	printf("udpencap port %u\n", ntohs(x_udpencap->sadb_x_udpencap_port));
+	printf("udpencap port %u", ntohs(x_udpencap->sadb_x_udpencap_port));
 }
 
 static void
@@ -578,6 +577,7 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	for (i = 0; i < SADB_EXT_MAX; i++)
 		if (extensions[i])
 			print_ext(extensions[i], msg, opts);
+	
 	fflush(stdout);
 }
 
