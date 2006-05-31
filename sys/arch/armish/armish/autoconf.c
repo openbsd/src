@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2006/05/29 17:13:19 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2006/05/31 05:51:20 drahn Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -91,24 +91,23 @@ extern  struct cfdriver raid_cd;
 #endif
 
 struct  genericconf {
-	struct cfdriver *gc_driver;
 	char *gc_name;
 	dev_t gc_major;
 } genericconf[] = {
 #if NWD > 0
-	{ &wd_cd,  "wd",  16 },
+	{ "wd",  16 },
 #endif
 #if NSD > 0
-	{ &sd_cd,  "sd",  24 },
+	{ "sd",  24 },
 #endif
 #if NCD > 0
-	{ &cd_cd,  "cd",  26 },
+	{ "cd",  26 },
 #endif
 #if NRD > 0
-	{ &rd_cd,  "rd",  18 },
+	{ "rd",  18 },
 #endif
 #if NRAID > 0
-	{ &raid_cd,  "raid",  71 },
+	{ "raid",  71 },
 #endif
 	{ 0 }
 };
