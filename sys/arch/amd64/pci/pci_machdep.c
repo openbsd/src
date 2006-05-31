@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.7 2005/09/04 19:19:40 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.8 2006/05/31 06:13:48 weingart Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -216,41 +216,27 @@ pci_make_tag(pc, bus, device, function)
 {
 	pcitag_t tag;
 
-#ifndef PCI_CONF_MODE
 	switch (pci_mode) {
 	case 1:
-		goto mode1;
+		if (bus >= 256 || device >= 32 || function >= 8)
+			panic("pci_make_tag: bad request");
+
+		tag.mode1 = PCI_MODE1_ENABLE |
+		    	(bus << 16) | (device << 11) | (function << 8);
+		break;
 	case 2:
-		goto mode2;
+		if (bus >= 256 || device >= 16 || function >= 8)
+			panic("pci_make_tag: bad request");
+
+		tag.mode2.port = 0xc000 | (device << 8);
+		tag.mode2.enable = 0xf0 | (function << 1);
+		tag.mode2.forward = bus;
+		break;
 	default:
 		panic("pci_make_tag: mode not configured");
 	}
-#endif
 
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
-#ifndef PCI_CONF_MODE
-mode1:
-#endif
-	if (bus >= 256 || device >= 32 || function >= 8)
-		panic("pci_make_tag: bad request");
-
-	tag.mode1 = PCI_MODE1_ENABLE |
-		    (bus << 16) | (device << 11) | (function << 8);
 	return tag;
-#endif
-
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
-#ifndef PCI_CONF_MODE
-mode2:
-#endif
-	if (bus >= 256 || device >= 16 || function >= 8)
-		panic("pci_make_tag: bad request");
-
-	tag.mode2.port = 0xc000 | (device << 8);
-	tag.mode2.enable = 0xf0 | (function << 1);
-	tag.mode2.forward = bus;
-	return tag;
-#endif
 }
 
 void
@@ -260,41 +246,26 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 	int *bp, *dp, *fp;
 {
 
-#ifndef PCI_CONF_MODE
 	switch (pci_mode) {
 	case 1:
-		goto mode1;
+		if (bp != NULL)
+			*bp = (tag.mode1 >> 16) & 0xff;
+		if (dp != NULL)
+			*dp = (tag.mode1 >> 11) & 0x1f;
+		if (fp != NULL)
+			*fp = (tag.mode1 >> 8) & 0x7;
+		break;
 	case 2:
-		goto mode2;
+		if (bp != NULL)
+			*bp = tag.mode2.forward & 0xff;
+		if (dp != NULL)
+			*dp = (tag.mode2.port >> 8) & 0xf;
+		if (fp != NULL)
+			*fp = (tag.mode2.enable >> 1) & 0x7;
+		break;
 	default:
 		panic("pci_decompose_tag: mode not configured");
 	}
-#endif
-
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
-#ifndef PCI_CONF_MODE
-mode1:
-#endif
-	if (bp != NULL)
-		*bp = (tag.mode1 >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag.mode1 >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag.mode1 >> 8) & 0x7;
-	return;
-#endif
-
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
-#ifndef PCI_CONF_MODE
-mode2:
-#endif
-	if (bp != NULL)
-		*bp = tag.mode2.forward & 0xff;
-	if (dp != NULL)
-		*dp = (tag.mode2.port >> 8) & 0xf;
-	if (fp != NULL)
-		*fp = (tag.mode2.enable >> 1) & 0x7;
-#endif
 }
 
 pcireg_t
@@ -306,41 +277,25 @@ pci_conf_read(pc, tag, reg)
 	pcireg_t data;
 	int s;
 
-#ifndef PCI_CONF_MODE
+	PCI_CONF_LOCK(s);
 	switch (pci_mode) {
 	case 1:
-		goto mode1;
+		outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
+		data = inl(PCI_MODE1_DATA_REG);
+		outl(PCI_MODE1_ADDRESS_REG, 0);
+		break;
 	case 2:
-		goto mode2;
+		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
+		outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
+		data = inl(tag.mode2.port | reg);
+		outb(PCI_MODE2_ENABLE_REG, 0);
+		break;
 	default:
 		panic("pci_conf_read: mode not configured");
 	}
-#endif
-
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
-#ifndef PCI_CONF_MODE
-mode1:
-#endif
-	PCI_CONF_LOCK(s);
-	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
-	data = inl(PCI_MODE1_DATA_REG);
-	outl(PCI_MODE1_ADDRESS_REG, 0);
 	PCI_CONF_UNLOCK(s);
-	return data;
-#endif
 
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
-#ifndef PCI_CONF_MODE
-mode2:
-#endif
-	PCI_CONF_LOCK(s);
-	outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
-	outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
-	data = inl(tag.mode2.port | reg);
-	outb(PCI_MODE2_ENABLE_REG, 0);
-	PCI_CONF_UNLOCK(s);
 	return data;
-#endif
 }
 
 void
@@ -352,40 +307,23 @@ pci_conf_write(pc, tag, reg, data)
 {
 	int s;
 
-#ifndef PCI_CONF_MODE
+	PCI_CONF_LOCK(s);
 	switch (pci_mode) {
 	case 1:
-		goto mode1;
+		outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
+		outl(PCI_MODE1_DATA_REG, data);
+		outl(PCI_MODE1_ADDRESS_REG, 0);
+		break;
 	case 2:
-		goto mode2;
+		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
+		outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
+		outl(tag.mode2.port | reg, data);
+		outb(PCI_MODE2_ENABLE_REG, 0);
+		break;
 	default:
 		panic("pci_conf_write: mode not configured");
 	}
-#endif
-
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
-#ifndef PCI_CONF_MODE
-mode1:
-#endif
-	PCI_CONF_LOCK(s);
-	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
-	outl(PCI_MODE1_DATA_REG, data);
-	outl(PCI_MODE1_ADDRESS_REG, 0);
 	PCI_CONF_UNLOCK(s);
-	return;
-#endif
-
-#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
-#ifndef PCI_CONF_MODE
-mode2:
-#endif
-	PCI_CONF_LOCK(s);
-	outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
-	outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
-	outl(tag.mode2.port | reg, data);
-	outb(PCI_MODE2_ENABLE_REG, 0);
-	PCI_CONF_UNLOCK(s);
-#endif
 }
 
 int
@@ -679,3 +617,4 @@ pci_bus_flags()
 	rval &= ~(PCI_FLAGS_MEM_ENABLED);
 	return (rval);
 }
+
