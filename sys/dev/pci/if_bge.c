@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.149 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.150 2006/05/31 23:40:08 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3411,15 +3411,15 @@ bge_link_upd(struct bge_softc *sc)
 }
 
 void
-bge_power(int why, void *xcs)
+bge_power(int why, void *xsc)
 {
-	struct bge_softc *sc = (struct bge_softc *)xcs;
+	struct bge_softc *sc = (struct bge_softc *)xsc;
 	struct ifnet *ifp;
 
 	if (why == PWR_RESUME) {
 		ifp = &sc->arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP) {
-			bge_init(xcs);
+			bge_init(xsc);
 			if (ifp->if_flags & IFF_RUNNING)
 				bge_start(ifp);
 		}
