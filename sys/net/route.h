@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.39 2006/04/22 19:43:07 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.40 2006/05/31 01:35:11 henning Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -334,7 +334,6 @@ void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
 void	 rt_timer_remove_all(struct rtentry *);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
-void	 rtable_init(void **);
 void	 rtalloc(struct route *);
 struct rtentry *
 	 rtalloc1(struct sockaddr *, int);
@@ -354,7 +353,7 @@ int	 rtrequest(int, struct sockaddr *,
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 void	 rt_if_remove(struct ifnet *);
 
-struct radix_node_head	*rt_gettable(sa_family_t, int);
+struct radix_node_head	*rt_gettable(sa_family_t, u_int);
 struct radix_node	*rt_lookup(struct sockaddr *, struct sockaddr *, int);
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */
