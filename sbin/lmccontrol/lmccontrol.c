@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.5 2004/10/24 11:50:47 deraadt Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.6 2006/05/31 20:17:15 dhill Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -41,9 +41,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 #include <errno.h>
 #include <string.h>
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -58,15 +60,18 @@ extern char *optarg;
 
 void lmc_av9110_freq(u_int32_t, lmc_av9110_t *);
 static void dumpdata(char *, lmc_ctl_t *);
-void usage(char *);
+void usage(void);
 
 #define DEFAULT_INTERFACE "lmc0"
 
 void
-usage(char *s)
+usage(void)
 {
+	extern char *__progname;
+
 	fprintf(stderr,
-		"usage: lmccontrol [interface] [-l speed] [-cCeEsSkKoO]\n");
+		"usage: %s [interface] [-l speed] [-cCeEsSkKoO]\n",
+		__progname);
 }
 
 int
@@ -83,7 +88,8 @@ main(int argc, char **argv)
 	int	flag_k = 0; /* HDLC keepalive */
 	int	just_print = 1, ifspecified = 0;
 	char	*ifname;
-
+	const char 	*errmsg;
+	
 	ifname = DEFAULT_INTERFACE;
 	if (argc > 1 && argv[1][0] != '-') {
 		ifname = argv[1];
@@ -100,7 +106,10 @@ main(int argc, char **argv)
 		case 'l':
 			flag_l = 1;
 			just_print = 0;
-			wanted.clock_rate = atoi(optarg);
+			wanted.clock_rate = (u_int)strtonum(optarg, 0,
+						UINT_MAX, &errmsg);
+			if (errmsg)
+				errx(1, "speed %s: %s", errmsg, optarg);
 			break;
 		case 's':
 			flag_s = 1;
@@ -194,7 +203,7 @@ main(int argc, char **argv)
 			break;
 		case 'h':
 		default:
-			usage(argv[0]);
+			usage();
 			return (0);
 		}
 	}
