@@ -1,0 +1,2 @@
+stdin: 1: rule expands to no valid combination
+ipsecctl: Syntax error in config file: ipsec rules not loaded

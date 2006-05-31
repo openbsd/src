@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2006/05/30 19:36:54 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.23 2006/05/31 11:34:24 todd Exp $
 
 # TARGETS
 # ipsec: feed ipsecNN.in through ipsecctl and check wether the output matches
@@ -8,10 +8,16 @@
 # ike:	 same as above, but for ike rules.
 
 IPSECTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+IPSECTESTS+=25 26 27 28 29 30 31 32 33 34 35 36 37 38 40 41 42 43 44
+#IPSECTESTS+=39
 TCPMD5TESTS=1 2 3
 SATESTS=1 2 3 4 5 6 7 8 9 10 11 12
 SAFAIL=1
-IKETESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14
+IPSECFAIL=1 2
+IKEFAIL=1
+IKETESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+#IKETESTS+=16 17 18 19 20 21 22 23 24
+#IKETESTS+=25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
 
 SHELL=/bin/sh
 
@@ -49,12 +55,28 @@ safail${n}:
 	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/safail${n}.ok /dev/stdin
 .endfor
 
+.for n in ${IPSECFAIL}
+IPSECFAIL_TARGETS+=ipsecfail${n}
+
+ipsecfail${n}:
+	cat ${.CURDIR}/ipsecfail${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/ipsecfail${n}.ok /dev/stdin
+.endfor
+
 .for n in ${IKETESTS}
 IKE_TARGETS+=ike${n}
 
 ike${n}:
 	cat ${.CURDIR}/ike${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
 	    ipsecctl -nv -f - | diff -u ${.CURDIR}/ike${n}.ok /dev/stdin
+.endfor
+
+.for n in ${IKEFAIL}
+IKEFAIL_TARGETS+=ikefail${n}
+
+ikefail${n}:
+	cat ${.CURDIR}/ikefail${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/ikefail${n}.ok /dev/stdin
 .endfor
 
 ipsec:		${IPSEC_TARGETS}
@@ -69,8 +91,14 @@ REGRESS_TARGETS+=sa
 safail:		${SAFAIL_TARGETS}
 REGRESS_TARGETS+=safail
 
+ipsecfail:	${IPSECFAIL_TARGETS}
+REGRESS_TARGETS+=ipsecfail
+
 ike:		${IKE_TARGETS}
 REGRESS_TARGETS+=ike
+
+ikefail:	${IKEFAIL_TARGETS}
+REGRESS_TARGETS+=ikefail
 
 alltests: ${REGRESS_TARGETS}
 
