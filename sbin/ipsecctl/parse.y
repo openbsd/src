@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.81 2006/05/31 09:03:43 todd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.82 2006/05/31 14:38:31 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1260,8 +1260,8 @@ host_v6(const char *s, int prefixlen)
 		err(1, "host_addr: calloc");
 	ipa->af = res->ai_family;
 	memcpy(&ipa->address.v6,
-    	    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
-    	    sizeof(struct in6_addr));
+	    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
+	    sizeof(struct in6_addr));
 	if (prefixlen > 128)
 		prefixlen = 128;
 	ipa->next = NULL;

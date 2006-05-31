@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.37 2006/05/30 21:56:05 msf Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.38 2006/05/31 14:38:31 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -152,8 +152,8 @@ struct ipsec_rule {
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 
-	u_int8_t         satype;	/* encapsulating prococol */
-	u_int8_t         proto;		/* encapsulated protocol */
+	u_int8_t	 satype;	/* encapsulating prococol */
+	u_int8_t	 proto;		/* encapsulated protocol */
 	u_int8_t	 tmode;
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
