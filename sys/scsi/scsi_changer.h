@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_changer.h,v 1.3 1996/10/31 01:09:22 niklas Exp $	*/
+/*	$OpenBSD: scsi_changer.h,v 1.4 2006/05/31 03:01:44 beck Exp $	*/
 /*	$NetBSD: scsi_changer.h,v 1.7 1996/04/03 00:25:48 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -184,6 +184,16 @@ struct read_element_status_page_header {
 	u_int8_t	nbytes[3]; /* byte count of all descriptors */
 };
 
+/*
+ * Format of a volume tag
+ */
+
+struct volume_tag {
+        u_int8_t        vif[32];        /* volume identification field */
+        u_int8_t        reserved[2];
+        u_int8_t        vsn[2];         /* volume sequence number */
+};
+
 struct read_element_status_descriptor {
 	u_int8_t	eaddr[2];	/* element address */
 	u_int8_t	flags1;
@@ -230,7 +240,12 @@ struct read_element_status_descriptor {
 	 *
 	 * bytes 48-83:	Alternate volume tag information.
 	 *		(field omitted if AVOLTAG = 0)
-	 *
+	 */
+	
+	struct volume_tag pvoltag;      /* omitted if PVOLTAG == 0 */
+  	struct volume_tag avoltag;      /* omitted if AVOLTAG == 0 */
+	
+	/*
 	 * bytes 84-87:	Reserved (moved up if either of the above fields
 	 *		are omitted)
 	 *
