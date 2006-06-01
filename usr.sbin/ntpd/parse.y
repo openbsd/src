@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2006/05/28 20:39:16 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.29 2006/06/01 06:06:59 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 
@@ -208,7 +209,7 @@ number		: STRING			{
 			u_long		 ulval;
 			const char	*errstr;
 
-			ulval = strtonum($1, 0, ULONG_MAX, &errstr);
+			ulval = strtonum($1, 0, LONG_MAX, &errstr);
 			if (errstr) {
 				yyerror("\"%s\" invalid: %s", $1, errstr);
 				free($1);
