@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.17 2006/05/31 11:24:06 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.18 2006/06/01 09:26:49 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -341,6 +341,10 @@ Write an
 floppy image to a floppy disk:
 .Pp
 .Dl # dd if=floppy34.fs of=/dev/rfd0c bs=32k
+.Pp
+Create an ISO-9660 image of a CD-ROM:
+.Pp
+.Dl # dd if=/dev/rcd0c of=disk.iso bs=32k
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr mt 1 ,
