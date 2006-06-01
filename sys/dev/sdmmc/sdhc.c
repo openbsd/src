@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.2 2006/05/28 18:45:23 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.3 2006/06/01 21:47:42 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -464,7 +464,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 	if (ocr == 0) {
 		splx(s);
 		if (sdhc_host_reset(hp) != 0)
-			printf("%s: host reset failed\n", HDEVNAME(hp));
+			DPRINTF(("%s: host reset failed\n", HDEVNAME(hp)));
 		return 0;
 	}
 
@@ -646,7 +646,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int error;
 	int s;
 	
-	DPRINTF(("%s: start cmd %u\n", HDEVNAME(hp), cmd->c_opcode));
+	DPRINTF(("%s: start cmd %u arg=%#x\n", HDEVNAME(hp), cmd->c_opcode,
+	    cmd->c_arg));
 	hp->cmd = cmd;
 
 	/* If the card went away, finish the command immediately. */
@@ -764,8 +765,6 @@ sdhc_wait_command(struct sdhc_host *hp, int flags)
 			return 0;
 		}
 
-		DPRINTF(("%s: tsleep sdhccmd (flags=%#x)\n",
-		    HDEVNAME(hp), flags));
 		(void)tsleep((caddr_t)hp, PWAIT, "sdhccmd", 0);
 
 		/* Process card events. */
@@ -788,9 +787,6 @@ sdhc_finish_command(struct sdhc_host *hp)
 
 	/* Cancel command timeout. */
 	timeout_del(&hp->cmd_to);
-
-	DPRINTF(("%s: finish cmd %u (flags=%#x error=%d)\n",
-	    HDEVNAME(hp), cmd->c_opcode, cmd->c_flags, cmd->c_error));
 
 	/*
 	 * The host controller removes bits [0:7] from the response
@@ -1012,6 +1008,8 @@ sdhc_intr(void *arg)
 			DPRINTF(("%s: error interrupt, status=%b\n",
 			    HDEVNAME(hp), error, SDHC_EINTR_STATUS_BITS));
 
+			/* XXX command timeout has higher priority
+			 * than command complete */
 			if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR|
 			    SDHC_DATA_TIMEOUT_ERROR) && hp->cmd != NULL &&
 			    !ISSET(hp->cmd->c_flags, SCF_DONE)) {
