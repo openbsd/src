@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.h,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.h,v 1.2 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -22,7 +22,7 @@
 struct sdmmc_softc;
 
 struct sdmmc_scsi_target {
-	struct sdmmc_card *card;
+	struct sdmmc_function *card;
 };
 
 struct sdmmc_scsi_softc {

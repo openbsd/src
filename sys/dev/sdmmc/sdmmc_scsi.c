@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.2 2006/05/28 18:45:23 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.3 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -49,7 +49,8 @@ void
 sdmmc_scsi_attach(struct sdmmc_softc *sc)
 {
 	struct sdmmc_scsi_softc *scbus;
-	struct sdmmc_card *cs;
+	struct sdmmc_function *sf;
+	struct sdmmc_attach_args saa;
 
 	MALLOC(scbus, struct sdmmc_scsi_softc *,
 	    sizeof *scbus, M_DEVBUF, M_WAITOK);
@@ -65,10 +66,10 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	 * gets a SCSI ID > 0, whether it is a memory card or not.
 	 */
 	scbus->sc_ntargets = 1;
-	SIMPLEQ_FOREACH(cs, &sc->cs_head, cs_list) {
+	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
 		if (scbus->sc_ntargets >= SDMMC_SCSIID_MAX+1)
 			break;
-		scbus->sc_tgt[scbus->sc_ntargets].card = cs;
+		scbus->sc_tgt[scbus->sc_ntargets].card = sf;
 		scbus->sc_ntargets++;
 	}
 
@@ -84,8 +85,10 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_link.openings = 1;
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 
-	scbus->sc_child = config_found(&sc->sc_dev, &scbus->sc_link,
-	    scsiprint);
+	bzero(&saa, sizeof saa);
+	bcopy(&scbus->sc_link, &saa.scsi_link, sizeof saa.scsi_link);
+
+	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
 void

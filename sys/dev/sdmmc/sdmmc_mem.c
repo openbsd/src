@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.2 2006/05/28 18:45:23 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.3 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,6 +19,8 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
@@ -26,7 +28,7 @@
 #include <dev/sdmmc/sdmmcvar.h>
 
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
-int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_card *);
+int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -65,8 +67,8 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 			goto mmc_mode;
 		}
 		if (!ISSET(sc->sc_flags, SMF_SD_MODE)) {
-			printf("%s: can't read memory OCR\n",
-			    SDMMCDEVNAME(sc));
+			DPRINTF(("%s: can't read memory OCR\n",
+			    SDMMCDEVNAME(sc)));
 			return 1;
 		} else {
 			/* Not a "combo" card. */
@@ -78,8 +80,8 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	/* Set the lowest voltage supported by the card and host. */
 	host_ocr = sdmmc_chip_host_ocr(sc->sct, sc->sch);
 	if (sdmmc_set_bus_power(sc, host_ocr, card_ocr) != 0) {
-		printf("%s: can't supply voltage requested by card\n",
-		    SDMMCDEVNAME(sc));
+		DPRINTF(("%s: can't supply voltage requested by card\n",
+		    SDMMCDEVNAME(sc)));
 		return 1;
 	}
 
@@ -88,20 +90,124 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 
 	/* Send the new OCR value until all cards are ready. */
 	if (sdmmc_mem_send_op_cond(sc, host_ocr, NULL) != 0) {
-		printf("%s: can't send memory OCR\n", SDMMCDEVNAME(sc));
+		DPRINTF(("%s: can't send memory OCR\n", SDMMCDEVNAME(sc)));
 		return 1;
 	}
 	return 0;
 }
 
 /*
+ * Read the CSD and CID from all cards and assign each card a unique
+ * relative card address (RCA).  CMD2 is ignored by SDIO-only cards.
+ */
+void
+sdmmc_mem_scan(struct sdmmc_softc *sc)
+{
+	struct sdmmc_command cmd;
+	struct sdmmc_function *sf;
+	u_int16_t next_rca;
+	int error;
+	int i;
+
+	/*
+	 * CMD2 is a broadcast command understood by SD cards and MMC
+	 * cards.  All cards begin to respond to the command, but back
+	 * off if another card drives the CMD line to a different level.
+	 * Only one card will get its entire response through.  That
+	 * card remains silent once it has been assigned a RCA.
+	 */
+	for (i = 0; i < 100; i++) {
+		bzero(&cmd, sizeof cmd);
+		cmd.c_opcode = MMC_ALL_SEND_CID;
+		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R2;
+
+		error = sdmmc_mmc_command(sc, &cmd);
+		if (error == ETIMEDOUT) {
+			/* No more cards there. */
+			break;
+		} else if (error != 0) {
+			DPRINTF(("%s: can't read CID\n", SDMMCDEVNAME(sc)));
+			break;
+		}
+
+		/* In MMC mode, find the next available RCA. */
+		next_rca = 0;
+		if (!ISSET(sc->sc_flags, SMF_SD_MODE))
+			SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list)
+				next_rca++;
+
+		/* Allocate a sdmmc_function structure. */
+		sf = sdmmc_function_alloc(sc);
+		sf->rca = next_rca;
+
+		/*
+		 * Remember the CID returned in the CMD2 response for
+		 * later decoding.
+		 */
+		bcopy(cmd.c_resp, sf->raw_cid, sizeof sf->raw_cid);
+
+		/*
+		 * Silence the card by assigning it a unique RCA, or
+		 * querying it for its RCA in the case of SD.
+		 */
+		if (sdmmc_set_relative_addr(sc, sf) != 0) {
+			printf("%s: can't set mem RCA\n", SDMMCDEVNAME(sc));
+			sdmmc_function_free(sf);
+			break;
+		}
+
+#if 0
+		/* Verify that the RCA has been set by selecting the card. */
+		if (sdmmc_select_card(sc, sf) != 0) {
+			printf("%s: can't select mem RCA %d\n",
+			    SDMMCDEVNAME(sc), sf->rca);
+			sdmmc_function_free(sf);
+			break;
+		}
+
+		/* Deselect. */
+		(void)sdmmc_select_card(sc, NULL);
+#endif
+
+		SIMPLEQ_INSERT_TAIL(&sc->sf_head, sf, sf_list);
+	}
+
+	/*
+	 * All cards are either inactive or awaiting further commands.
+	 * Read the CSDs and decode the raw CID for each card.
+	 */
+	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
+		bzero(&cmd, sizeof cmd);
+		cmd.c_opcode = MMC_SEND_CSD;
+		cmd.c_arg = MMC_ARG_RCA(sf->rca);
+		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R2;
+
+		if (sdmmc_mmc_command(sc, &cmd) != 0) {
+			SET(sf->flags, SFF_ERROR);
+			continue;
+		}
+
+		if (sdmmc_decode_csd(sc, cmd.c_resp, sf) != 0 ||
+		    sdmmc_decode_cid(sc, sf->raw_cid, sf) != 0) {
+			SET(sf->flags, SFF_ERROR);
+			continue;
+		}
+
+#ifdef SDMMC_DEBUG
+		printf("%s: CID: ", SDMMCDEVNAME(sc));
+		sdmmc_print_cid(&sf->cid);
+#endif
+	}
+}
+
+/*
  * Initialize a SD/MMC memory card.
  */
 int
-sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_card *cs)
+sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	if (sdmmc_select_card(sc, cs) != 0 ||
-	    sdmmc_mem_set_blocklen(sc, cs) != 0)
+	if (sdmmc_select_card(sc, sf) != 0 ||
+	    sdmmc_mem_set_blocklen(sc, sf) != 0)
 		return 1;
 	return 0;
 }
@@ -120,7 +226,7 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr,
 	/*
 	 * If we change the OCR value, retry the command until the OCR
 	 * we receive in response has the "CARD BUSY" bit set, meaning
-	 * that all cards are ready for card identification.
+	 * that all cards are ready for identification.
 	 */
 	for (i = 0; i < 100; i++) {
 		bzero(&cmd, sizeof cmd);
@@ -152,34 +258,34 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr,
  * the card CSD register value.
  */
 int
-sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_card *cs)
+sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	struct sdmmc_command cmd;
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_opcode = MMC_SET_BLOCKLEN;
-	cmd.c_arg = cs->csd.sector_size;
+	cmd.c_arg = sf->csd.sector_size;
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
 	DPRINTF(("%s: read_bl_len=%d sector_size=%d\n", SDMMCDEVNAME(sc),
-	    1 << cs->csd.read_bl_len, cs->csd.sector_size));
+	    1 << sf->csd.read_bl_len, sf->csd.sector_size));
 
 	return sdmmc_mmc_command(sc, &cmd);
 }
 
 int
-sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_card *cs,
+sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
     int blkno, u_char *data, size_t datalen)
 {
 	struct sdmmc_command cmd;
 	int error;
 
-	if ((error = sdmmc_select_card(sc, cs)) != 0)
+	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		return error;
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;
-	cmd.c_blklen = cs->csd.sector_size;
+	cmd.c_blklen = sf->csd.sector_size;
 	cmd.c_opcode = (datalen / cmd.c_blklen) > 1 ?
 	    MMC_READ_BLOCK_MULTIPLE : MMC_READ_BLOCK_SINGLE;
 	cmd.c_arg = blkno << 9;
@@ -192,7 +298,7 @@ sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_card *cs,
 	do {
 		bzero(&cmd, sizeof cmd);
 		cmd.c_opcode = MMC_SEND_STATUS;
-		cmd.c_arg = MMC_ARG_RCA(cs->rca);
+		cmd.c_arg = MMC_ARG_RCA(sf->rca);
 		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
 		error = sdmmc_mmc_command(sc, &cmd);
 		if (error != 0)
@@ -204,19 +310,19 @@ sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_card *cs,
 }
 
 int
-sdmmc_mem_write_block(struct sdmmc_softc *sc, struct sdmmc_card *cs,
+sdmmc_mem_write_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
     int blkno, u_char *data, size_t datalen)
 {
 	struct sdmmc_command cmd;
 	int error;
 
-	if ((error = sdmmc_select_card(sc, cs)) != 0)
+	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		return error;
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;
-	cmd.c_blklen = cs->csd.sector_size;
+	cmd.c_blklen = sf->csd.sector_size;
 	cmd.c_opcode = (datalen / cmd.c_blklen) > 1 ?
 	    MMC_WRITE_BLOCK_MULTIPLE : MMC_WRITE_BLOCK_SINGLE;
 	cmd.c_arg = blkno << 9;
@@ -229,7 +335,7 @@ sdmmc_mem_write_block(struct sdmmc_softc *sc, struct sdmmc_card *cs,
 	do {
 		bzero(&cmd, sizeof cmd);
 		cmd.c_opcode = MMC_SEND_STATUS;
-		cmd.c_arg = MMC_ARG_RCA(cs->rca);
+		cmd.c_arg = MMC_ARG_RCA(sf->rca);
 		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
 		error = sdmmc_mmc_command(sc, &cmd);
 		if (error != 0)

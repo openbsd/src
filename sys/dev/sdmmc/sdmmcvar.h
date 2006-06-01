@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.2 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -20,6 +20,10 @@
 #define _SDMMCVAR_H_
 
 #include <sys/queue.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 
@@ -74,21 +78,57 @@ struct sdmmc_command {
 #define SCF_RSP_R2	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_136)
 #define SCF_RSP_R3	 (SCF_RSP_PRESENT)
 #define SCF_RSP_R4	 (SCF_RSP_PRESENT)
+#define SCF_RSP_R5	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
+#define SCF_RSP_R5B	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
 #define SCF_RSP_R6	 (SCF_RSP_PRESENT|SCF_RSP_CRC)
 	sdmmc_callback	 c_done;	/* callback function */
 	int		 c_error;	/* errno value on completion */
 };
 
-struct sdmmc_card {
-	u_int16_t rca;
-	int flags;
-#define SDMMCF_CARD_ERROR	0x0010	/* card in error state */
-	sdmmc_response raw_cid;
-	struct sdmmc_cid cid;
-	struct sdmmc_csd csd;
-	SIMPLEQ_ENTRY(sdmmc_card) cs_list;
+/*
+ * Decoded PC Card 16 based Card Information Structure (CIS),
+ * per card (function 0) and per function (1 and greater).
+ */
+struct sdmmc_cis {
+	u_int16_t	 manufacturer;
+#define SDMMC_VENDOR_INVALID	0xffff
+	u_int16_t	 product;
+#define SDMMC_PRODUCT_INVALID	0xffff
+	u_int8_t	 function;
+#define SDMMC_FUNCTION_INVALID	0xff
+	u_char		 cis1_major;
+	u_char		 cis1_minor;
+	char		 cis1_info_buf[256];
+	char		*cis1_info[4];
 };
 
+/*
+ * Structure describing either an SD card I/O function or a SD/MMC
+ * memory card from a "stack of cards" that responded to CMD2.  For a
+ * combo card with one I/O function and one memory card, there will be
+ * two of these structures allocated.  Each card slot has such a list
+ * of sdmmc_function structures.
+ */
+struct sdmmc_function {
+	/* common members */
+	struct sdmmc_softc *sc;		/* card slot softc */
+	u_int16_t rca;			/* relative card address */
+	int flags;
+#define SFF_ERROR		0x0001	/* function is poo; ignore it */
+	SIMPLEQ_ENTRY(sdmmc_function) sf_list;
+	/* SD card I/O function members */
+	int number;			/* I/O function number or -1 */
+	struct device *child;		/* function driver */
+	struct sdmmc_cis cis;		/* decoded CIS */
+	/* SD/MMC memory card members */
+	struct sdmmc_csd csd;		/* decoded CSD value */
+	struct sdmmc_cid cid;		/* decoded CID value */
+	sdmmc_response raw_cid;		/* temp. storage for decoding */
+};
+
+/*
+ * Structure describing a single SD/MMC/SDIO card slot.
+ */
 struct sdmmc_softc {
 	struct device sc_dev;		/* base device */
 #define SDMMCDEVNAME(sc)	((sc)->sc_dev.dv_xname)
@@ -96,32 +136,66 @@ struct sdmmc_softc {
 	sdmmc_chipset_handle_t sch;	/* host controller chipset handle */
 	int sc_flags;
 #define SMF_SD_MODE		0x0001	/* host in SD mode (MMC otherwise) */
-#define SMF_IO_MODE		0x0002	/* host in I/O mode (SD only) */
+#define SMF_IO_MODE		0x0002	/* host in I/O mode (SD mode only) */
 #define SMF_MEM_MODE		0x0004	/* host in memory mode (SD or MMC) */
-	SIMPLEQ_HEAD(, sdmmc_card) cs_head;
-	struct sdmmc_card *sc_card;	/* selected card */
+	int sc_function_count;		/* number of I/O functions (SDIO) */
 	void *sc_scsibus;		/* SCSI bus emulation softc */
+	struct sdmmc_function *sc_card;	/* selected card */
+	struct sdmmc_function *sc_fn0;	/* function 0, the card itself */
+	SIMPLEQ_HEAD(, sdmmc_function) sf_head;
+};
+
+/*
+ * Attach devices at the sdmmc bus.
+ */
+struct sdmmc_attach_args {
+	struct scsi_link scsi_link;	/* XXX */
+	struct sdmmc_function *sf;
 };
 
 #define IPL_SDMMC	IPL_BIO
 #define splsdmmc()	splbio()
 
+struct	sdmmc_function *sdmmc_function_alloc(struct sdmmc_softc *);
+void	sdmmc_function_free(struct sdmmc_function *);
 void	sdmmc_delay(u_int);
 int	sdmmc_set_bus_power(struct sdmmc_softc *, u_int32_t, u_int32_t);
 int	sdmmc_mmc_command(struct sdmmc_softc *, struct sdmmc_command *);
 int	sdmmc_app_command(struct sdmmc_softc *, struct sdmmc_command *);
 void	sdmmc_go_idle_state(struct sdmmc_softc *);
-int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_card *);
+int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_set_relative_addr(struct sdmmc_softc *,
+	    struct sdmmc_function *);
+int	sdmmc_decode_csd(struct sdmmc_softc *, sdmmc_response,
+	    struct sdmmc_function *);
+int	sdmmc_decode_cid(struct sdmmc_softc *, sdmmc_response,
+	    struct sdmmc_function *);
+void	sdmmc_print_cid(struct sdmmc_cid *);
 
 int	sdmmc_io_enable(struct sdmmc_softc *);
-void	sdmmc_io_reset(struct sdmmc_softc *);
-int	sdmmc_io_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
+void	sdmmc_io_scan(struct sdmmc_softc *);
+int	sdmmc_io_init(struct sdmmc_softc *, struct sdmmc_function *);
+void	sdmmc_io_attach(struct sdmmc_softc *);
+void	sdmmc_io_detach(struct sdmmc_softc *);
+u_int8_t sdmmc_io_read_1(struct sdmmc_function *, int);
+u_int16_t sdmmc_io_read_2(struct sdmmc_function *, int);
+u_int32_t sdmmc_io_read_4(struct sdmmc_function *, int);
+void	sdmmc_io_write_1(struct sdmmc_function *, int, u_int8_t);
+void	sdmmc_io_write_2(struct sdmmc_function *, int, u_int16_t);
+void	sdmmc_io_write_4(struct sdmmc_function *, int, u_int32_t);
+void	sdmmc_io_function_enable(struct sdmmc_function *);
+void	sdmmc_io_function_disable(struct sdmmc_function *);
+
+int	sdmmc_read_cis(struct sdmmc_function *, struct sdmmc_cis *);
+void	sdmmc_print_cis(struct sdmmc_function *);
+void	sdmmc_check_cis_quirks(struct sdmmc_function *);
 
 int	sdmmc_mem_enable(struct sdmmc_softc *);
-int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_card *);
-int	sdmmc_mem_read_block(struct sdmmc_softc *, struct sdmmc_card *,
-	    int, u_char *, size_t);
-int	sdmmc_mem_write_block(struct sdmmc_softc *, struct sdmmc_card *,
-	    int, u_char *, size_t);
+void	sdmmc_mem_scan(struct sdmmc_softc *);
+int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_mem_read_block(struct sdmmc_softc *,
+	    struct sdmmc_function *, int, u_char *, size_t);
+int	sdmmc_mem_write_block(struct sdmmc_softc *,
+	    struct sdmmc_function *, int, u_char *, size_t);
 
 #endif

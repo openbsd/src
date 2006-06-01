@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.2 2006/05/28 18:45:23 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.3 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -32,27 +32,20 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <dev/sdmmc/sdmmc_ioreg.h>
 #include <dev/sdmmc/sdmmc_scsi.h>
 #include <dev/sdmmc/sdmmcchip.h>
-#ifdef notyet
-#include <dev/sdmmc/sdmmcdevs.h>
-#endif
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
 int	sdmmc_match(struct device *, void *, void *);
 void	sdmmc_attach(struct device *, struct device *, void *);
-
-int	sdmmc_set_relative_addr(struct sdmmc_softc *, struct sdmmc_card *);
-int	sdmmc_set_bus_width(struct sdmmc_softc *, struct sdmmc_card *);
 int	sdmmc_enable(struct sdmmc_softc *);
 void	sdmmc_disable(struct sdmmc_softc *);
-int	sdmmc_decode_csd(struct sdmmc_softc *, sdmmc_response,
-	    struct sdmmc_card *);
-int	sdmmc_decode_cid(struct sdmmc_softc *, sdmmc_response,
-	    struct sdmmc_card *);
-void	sdmmc_print_cid(struct sdmmc_cid *);
-void	sdmmc_identify_all(struct sdmmc_softc *);
+int	sdmmc_scan(struct sdmmc_softc *);
+int	sdmmc_init(struct sdmmc_softc *);
+int	sdmmc_set_bus_width(struct sdmmc_softc *,
+	    struct sdmmc_function *);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -88,7 +81,7 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sct = saa->sct;
 	sc->sch = saa->sch;
 
-	SIMPLEQ_INIT(&sc->cs_head);
+	SIMPLEQ_INIT(&sc->sf_head);
 }
 
 /*
@@ -99,41 +92,44 @@ int
 sdmmc_card_attach(struct device *dev)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)dev;
-	struct sdmmc_card *cs;
 
 	DPRINTF(("%s: attach card\n", SDMMCDEVNAME(sc)));
 
-	/* Power up the card (or card stack). */
+	/*
+	 * Power up the card (or card stack).
+	 */
 	if (sdmmc_enable(sc) != 0) {
 		printf("%s: can't enable card\n", SDMMCDEVNAME(sc));
 		return 1;
 	}
 
-	/* Scan for cards and allocate a card structure for each. */
-	sdmmc_identify_all(sc);
-
-	/* There should be at least one card now; otherwise, bail out. */
-	if (SIMPLEQ_EMPTY(&sc->cs_head)) {
-		printf("%s: can't identify card\n", SDMMCDEVNAME(sc));
-		sdmmc_disable(sc);
+	/*
+	 * Scan for I/O functions and memory cards on the bus,
+	 * allocating a sdmmc_function structure for each.
+	 */
+	if (sdmmc_scan(sc) != 0) {
+		printf("%s: no functions\n", SDMMCDEVNAME(sc));
+		sdmmc_card_detach(dev, DETACH_FORCE);
 		return 1;
 	}
 
-	/* Initialize all identified cards. */
-	SIMPLEQ_FOREACH(cs, &sc->cs_head, cs_list) {
-		/* Boost the bus width. */
-		(void)sdmmc_set_bus_width(sc, cs); /* XXX */
-
-		if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
-		    sdmmc_mem_init(sc, cs) != 0)
-			printf("%s: init failed\n", SDMMCDEVNAME(sc));
+	/*
+	 * Initialize the I/O functions and memory cards.
+	 */
+	if (sdmmc_init(sc) != 0) {
+		printf("%s: init failed\n", SDMMCDEVNAME(sc));
+		sdmmc_card_detach(dev, DETACH_FORCE);
+		return 1;
 	}
-
-	/* XXX attach SDIO driver(s) */
 
 	/* Attach SCSI emulation for memory cards. */
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE))
 		sdmmc_scsi_attach(sc);
+
+	/* Attach I/O function drivers. */
+	if (ISSET(sc->sc_flags, SMF_IO_MODE))
+		sdmmc_io_attach(sc);
+
 	return 0;
 }
 
@@ -145,25 +141,28 @@ void
 sdmmc_card_detach(struct device *dev, int flags)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)dev;
-	struct sdmmc_card *cs, *csnext;
+	struct sdmmc_function *sf, *sfnext;
 
 	DPRINTF(("%s: detach card\n", SDMMCDEVNAME(sc)));
 
 	/* Power down. */
 	sdmmc_disable(sc);
 
-	/* Detach SCSI emulation. */
+	/* Detach I/O function drivers. */
+	if (ISSET(sc->sc_flags, SMF_IO_MODE))
+		sdmmc_io_detach(sc);
+
+	/* Detach the SCSI emulation for memory cards. */
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE))
 		sdmmc_scsi_detach(sc);
 
-	/* XXX detach SDIO driver(s) */
-
-	/* Free all card structures. */
-	for (cs = SIMPLEQ_FIRST(&sc->cs_head); cs != NULL; cs = csnext) {
-		csnext = SIMPLEQ_NEXT(cs, cs_list);
-		FREE(cs, M_DEVBUF);
+	/* Free all sdmmc_function structures. */
+	for (sf = SIMPLEQ_FIRST(&sc->sf_head); sf != NULL; sf = sfnext) {
+		sfnext = SIMPLEQ_NEXT(sf, sf_list);
+		sdmmc_function_free(sf);
 	}
-	SIMPLEQ_INIT(&sc->cs_head);
+	SIMPLEQ_INIT(&sc->sf_head);
+	sc->sc_function_count = 0;
 }
 
 int
@@ -192,15 +191,19 @@ sdmmc_enable(struct sdmmc_softc *sc)
 		goto err;
 	}
 
+	/* XXX wait for card to power up */
+	sdmmc_delay(100000);
+
 	/* Initialize SD I/O card function(s). */
 	if ((error = sdmmc_io_enable(sc)) != 0)
 		goto err;
 
 	/* Initialize SD/MMC memory card(s). */
-	if ((error = sdmmc_mem_enable(sc)) != 0)
+	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
+	    (error = sdmmc_mem_enable(sc)) != 0)
 		goto err;
 
-	/* XXX */
+	/* XXX respect host and card capabilities */
 	if (ISSET(sc->sc_flags, SMF_SD_MODE))
 		(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
 		    SDMMC_SDCLK_25MHZ);
@@ -216,12 +219,86 @@ sdmmc_disable(struct sdmmc_softc *sc)
 {
 	/* XXX complete commands if card is still present. */
 
-	/* Deselect all cards. */
+	/* Make sure no card is still selected. */
 	(void)sdmmc_select_card(sc, NULL);
 
 	/* Turn off bus power and clock. */
 	(void)sdmmc_chip_bus_clock(sc->sct, sc->sch, SDMMC_SDCLK_OFF);
 	(void)sdmmc_chip_bus_power(sc->sct, sc->sch, 0);
+}
+
+struct sdmmc_function *
+sdmmc_function_alloc(struct sdmmc_softc *sc)
+{
+	struct sdmmc_function *sf;
+
+	MALLOC(sf, struct sdmmc_function *, sizeof *sf, M_DEVBUF,
+	    M_WAITOK);
+	bzero(sf, sizeof *sf);
+	sf->sc = sc;
+	sf->number = -1;
+	sf->cis.manufacturer = SDMMC_VENDOR_INVALID;
+	sf->cis.product = SDMMC_PRODUCT_INVALID;
+	sf->cis.function = SDMMC_FUNCTION_INVALID;
+	return sf;
+}
+
+void
+sdmmc_function_free(struct sdmmc_function *sf)
+{
+	FREE(sf, M_DEVBUF);
+}
+
+/*
+ * Scan for I/O functions and memory cards on the bus, allocating a
+ * sdmmc_function structure for each.
+ */
+int
+sdmmc_scan(struct sdmmc_softc *sc)
+{
+	/* Scan for I/O functions. */
+	if (ISSET(sc->sc_flags, SMF_IO_MODE))
+		sdmmc_io_scan(sc);
+
+	/* Scan for memory cards on the bus. */
+	if (ISSET(sc->sc_flags, SMF_MEM_MODE))
+		sdmmc_mem_scan(sc);
+
+	/* There should be at least one function now. */
+	if (SIMPLEQ_EMPTY(&sc->sf_head)) {
+		printf("%s: can't identify card\n", SDMMCDEVNAME(sc));
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Initialize all the distinguished functions of the card, be it I/O
+ * or memory functions.
+ */
+int
+sdmmc_init(struct sdmmc_softc *sc)
+{
+	struct sdmmc_function *sf;
+
+	/* Initialize all identified card functions. */
+	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
+		if (ISSET(sc->sc_flags, SMF_IO_MODE) &&
+		    sdmmc_io_init(sc, sf) != 0)
+			printf("%s: i/o init failed\n", SDMMCDEVNAME(sc));
+
+		if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
+		    sdmmc_mem_init(sc, sf) != 0)
+			printf("%s: mem init failed\n", SDMMCDEVNAME(sc));
+	}
+
+	/* Any good functions left after initialization? */
+	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
+		if (!ISSET(sf->flags, SFF_ERROR))
+			return 0;
+	}
+	/* No, we should probably power down the card. */
+	return 1;
 }
 
 void
@@ -259,99 +336,6 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 	    sdmmc_chip_bus_power(sc->sct, sc->sch, host_ocr) != 0)
 		return 1;
 	return 0;
-}
-
-/*
- * Read the CSD and CID from all cards and assign each card a unique
- * relative card address (RCA).
- */
-void
-sdmmc_identify_all(struct sdmmc_softc *sc)
-{
-	struct sdmmc_command cmd;
-	struct sdmmc_card *cs;
-	u_int16_t next_rca;
-	int error;
-	int i;
-
-	/*
-	 * CMD2 is a broadcast command understood by SD cards and MMC
-	 * cards.  All cards begin to respond to the command, but back
-	 * off if another card drives the CMD line to a different level.
-	 * Only one card will get its entire response through.  That
-	 * card remains silent once it has been assigned a RCA.
-	 */
-	for (i = 0; i < 100; i++) {
-		bzero(&cmd, sizeof cmd);
-		cmd.c_opcode = MMC_ALL_SEND_CID;
-		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R2;
-
-		error = sdmmc_mmc_command(sc, &cmd);
-		if (error == ETIMEDOUT) {
-			/* No more cards there. */
-			break;
-		} else if (error != 0) {
-			DPRINTF(("%s: can't read CID\n", SDMMCDEVNAME(sc)));
-			break;
-		}
-
-		/* In MMC mode, find the next available RCA. */
-		next_rca = 0;
-		if (!ISSET(sc->sc_flags, SMF_SD_MODE))
-			SIMPLEQ_FOREACH(cs, &sc->cs_head, cs_list)
-				next_rca++;
-
-		/* Allocate a card structure. */
-		MALLOC(cs, struct sdmmc_card *, sizeof *cs, M_DEVBUF,
-		    M_WAITOK);
-		bzero(cs, sizeof *cs);
-		cs->rca = next_rca;
-
-		/*
-		 * Remember the CID returned in the CMD2 response for
-		 * later decoding.
-		 */
-		bcopy(cmd.c_resp, cs->raw_cid, sizeof cs->raw_cid);
-
-		/*
-		 * Silence the card by assigning it a unique RCA, or
-		 * querying it for its RCA in case of SD.
-		 */
-		if (sdmmc_set_relative_addr(sc, cs) != 0) {
-			printf("%s: can't set RCA\n", SDMMCDEVNAME(sc));
-			FREE(cs, M_DEVBUF);
-			break;
-		}
-
-		SIMPLEQ_INSERT_TAIL(&sc->cs_head, cs, cs_list);
-	}
-
-	/*
-	 * All cards are either inactive or awaiting further commands.
-	 * Read the CSDs and decode the raw CID for each card.
-	 */
-	SIMPLEQ_FOREACH(cs, &sc->cs_head, cs_list) {
-		bzero(&cmd, sizeof cmd);
-		cmd.c_opcode = MMC_SEND_CSD;
-		cmd.c_arg = MMC_ARG_RCA(cs->rca);
-		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R2;
-
-		if (sdmmc_mmc_command(sc, &cmd) != 0) {
-			SET(cs->flags, SDMMCF_CARD_ERROR);
-			continue;
-		}
-
-		if (sdmmc_decode_csd(sc, cmd.c_resp, cs) != 0 ||
-		    sdmmc_decode_cid(sc, cs->raw_cid, cs) != 0) {
-			SET(cs->flags, SDMMCF_CARD_ERROR);
-			continue;
-		}
-
-#ifdef SDMMC_DEBUG
-		printf("%s: CID: ", SDMMCDEVNAME(sc));
-		sdmmc_print_cid(&cs->cid);
-#endif
-	}
 }
 
 int
@@ -401,7 +385,8 @@ sdmmc_go_idle_state(struct sdmmc_softc *sc)
  * Retrieve (SD) or set (MMC) the relative card address (RCA).
  */
 int
-sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_card *cs)
+sdmmc_set_relative_addr(struct sdmmc_softc *sc,
+    struct sdmmc_function *sf)
 {
 	struct sdmmc_command cmd;
 
@@ -412,7 +397,7 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_card *cs)
 		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R6;
 	} else {
 		cmd.c_opcode = MMC_SET_RELATIVE_ADDR;
-		cmd.c_arg = MMC_ARG_RCA(cs->rca);
+		cmd.c_arg = MMC_ARG_RCA(sf->rca);
 		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
 	}
 
@@ -420,15 +405,15 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_card *cs)
 		return 1;
 
 	if (ISSET(sc->sc_flags, SMF_SD_MODE))
-		cs->rca = SD_R6_RCA(cmd.c_resp);
+		sf->rca = SD_R6_RCA(cmd.c_resp);
 	return 0;
 }
 
 /*
- * Set the maximum supported bus width.
+ * Switch card and host to the maximum supported bus width.
  */
 int
-sdmmc_set_bus_width(struct sdmmc_softc *sc, struct sdmmc_card *cs)
+sdmmc_set_bus_width(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	struct sdmmc_command cmd;
 	int error;
@@ -436,7 +421,7 @@ sdmmc_set_bus_width(struct sdmmc_softc *sc, struct sdmmc_card *cs)
 	if (!ISSET(sc->sc_flags, SMF_SD_MODE))
 		return EOPNOTSUPP;
 
-	if ((error = sdmmc_select_card(sc, cs)) != 0)
+	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		return error;
 
 	bzero(&cmd, sizeof cmd);
@@ -448,29 +433,33 @@ sdmmc_set_bus_width(struct sdmmc_softc *sc, struct sdmmc_card *cs)
 }
 
 int
-sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_card *cs)
+sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	struct sdmmc_command cmd;
 	int error;
 
-	if (sc->sc_card == cs)
+	if (sc->sc_card == sf ||
+	    (sc->sc_card != NULL && sf != NULL &&
+	    sc->sc_card->rca == sf->rca)) {
+		sc->sc_card = sf;
 		return 0;
+	}
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_opcode = MMC_SELECT_CARD;
-	cmd.c_arg = cs == NULL ? 0 : MMC_ARG_RCA(cs->rca);
-	cmd.c_flags = SCF_CMD_AC | (cs == NULL ? SCF_RSP_R0 : SCF_RSP_R1);
+	cmd.c_arg = sf == NULL ? 0 : MMC_ARG_RCA(sf->rca);
+	cmd.c_flags = SCF_CMD_AC | (sf == NULL ? SCF_RSP_R0 : SCF_RSP_R1);
 	error = sdmmc_mmc_command(sc, &cmd);
-	if (error == 0 || cs == NULL)
-		sc->sc_card = cs;
+	if (error == 0 || sf == NULL)
+		sc->sc_card = sf;
 	return error;
 }
 
 int
 sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
-    struct sdmmc_card *cs)
+    struct sdmmc_function *sf)
 {
-	struct sdmmc_csd *csd = &cs->csd;
+	struct sdmmc_csd *csd = &sf->csd;
 
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
 		/*
@@ -507,9 +496,9 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 
 int
 sdmmc_decode_cid(struct sdmmc_softc *sc, sdmmc_response resp,
-    struct sdmmc_card *cs)
+    struct sdmmc_function *sf)
 {
-	struct sdmmc_cid *cid = &cs->cid;
+	struct sdmmc_cid *cid = &sf->cid;
 
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
 		cid->mid = SD_CID_MID(resp);
@@ -519,7 +508,7 @@ sdmmc_decode_cid(struct sdmmc_softc *sc, sdmmc_response resp,
 		cid->psn = SD_CID_PSN(resp);
 		cid->mdt = SD_CID_MDT(resp);
 	} else {
-		switch(cs->csd.mmcver) {
+		switch(sf->csd.mmcver) {
 		case MMC_CSD_MMCVER_1_0:
 		case MMC_CSD_MMCVER_1_4:
 			cid->mid = MMC_CID_MID_V1(resp);
@@ -538,7 +527,7 @@ sdmmc_decode_cid(struct sdmmc_softc *sc, sdmmc_response resp,
 			break;
 		default:
 			printf("%s: unknown MMC version %d\n",
-			    SDMMCDEVNAME(sc), cs->csd.mmcver);
+			    SDMMCDEVNAME(sc), sf->csd.mmcver);
 			return 1;
 		}
 	}

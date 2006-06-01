@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.2 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -37,8 +37,6 @@
 
 /* SD commands */				/* response type */
 #define SD_SEND_RELATIVE_ADDR		3	/* R6 */
-#define SD_IO_SEND_OP_COND		5	/* R4 */
-#define SD_IO_RESET			52	/* R0 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
@@ -71,18 +69,18 @@
 #define MMC_R1_READY_FOR_DATA		(1<<8)	/* ready for next transfer */
 #define MMC_R1_APP_CMD			(1<<5)	/* app. commands supported */
 
+/* 48-bit response decoding (32 bits w/o CRC) */
+#define MMC_R1(resp)			((resp)[0])
+#define MMC_R3(resp)			((resp)[0])
+#define SD_R6(resp)			((resp)[0])
+
 /* RCA argument and response */
 #define MMC_ARG_RCA(rca)		((rca) << 16)
-#define SD_R6_RCA(resp)			((resp)[0] >> 16)
+#define SD_R6_RCA(resp)			(SD_R6((resp)) >> 16)
 
 /* bus width argument */
 #define SD_ARG_BUS_WIDTH_1		0
 #define SD_ARG_BUS_WIDTH_4		2
-
-/* 48-bit response decoding (32 bits w/o CRC) */
-#define MMC_R1(resp)			((resp)[0])
-#define MMC_R3(resp)			((resp)[0])
-#define MMC_R4(resp)			((resp)[0])
 
 /* MMC R2 response (CSD) */
 #define MMC_CSD_CSDVER(resp)		MMC_RSP_BITS((resp), 126, 2)
@@ -189,16 +187,8 @@
 #define SD_CID_PSN(resp)		MMC_RSP_BITS((resp), 24, 32)
 #define SD_CID_MDT(resp)		MMC_RSP_BITS((resp), 8, 12)
 
-/* SD R4 response (IO OCR) */
-#define SD_IO_OCR_MEM_READY		(1<<31)	/* all memory cards ready */
-#define SD_IO_OCR_MP				/* memory present flag */
-#define SD_IO_OCR_NF_SHIFT		28	/* number of functions */
-#define SD_IO_OCR_NF_MASK		0x3	/* 7 functions max. */
-#define SD_IO_OCR_NF(ocr)		(((ocr) >> SD_IO_OCR_NF_SHIFT) & \
-					 SD_IO_OCR_NF_MASK)
-
-/* XXX slow but should work on big and little endian systems. */
-#define MMC_RSP_BITS(resp, start, len) __bitfield((resp), (start)-8, (len))
+/* Might be slow, but it should work on big and little endian systems. */
+#define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
 static __inline int
 __bitfield(u_int32_t *src, int start, int len)
 {
