@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.conf.5,v 1.1 2006/06/01 14:12:20 norby Exp $
+.\"	$OpenBSD: dvmrpd.conf.5,v 1.2 2006/06/01 22:00:30 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -113,28 +113,31 @@ interface em0 {
 Interface specific parameters are listed below.
 .Bl -tag -width Ds
 .It Ic igmp-version Ar number
-Do not use a a newer version than specified. Valid range 1-2.
+Do not use a a newer version than specified.
+Valid range 1\(en2.
 The default version used is 2.
 .It Ic last-member-query-count Ar count
 The default value is equal to the default robustness variable;
-valid range is 1\-255.
+valid range is 1\(en255.
 .It Ic last-member-query-interval Ar seconds
-The default value is 10; valid range is 1\-65535.
+The default value is 10; valid range is 1\(en65535.
 .It Ic metric Ar cost
-Set the interface metric a.k.a. cost. The default value is 1; valid range is
-1-31.
+Set the interface metric a.k.a. cost.
+The default value is 1; valid range is
+1\(en31.
 .It Ic passive
 Prevent transmission and reception of IGMP and DVMRP packets on this interface.
 .It Ic query-interval Ar seconds
 Set the query interval.
-The default value is 125 seconds; valid range is 1\-65535 seconds.
+The default value is 125 seconds; valid range is 1\(en65535 seconds.
 .It Ic query-response-interval Ar seconds
-Set the query-response-interval, note that this must be less
+Set the query-response-interval; note that this must be less
 than the query-interval.
-The default value is 100 seconds; valid range is 1\-65535 seconds.
+The default value is 100 seconds; valid range is 1\(en65535 seconds.
 .It Ic robustness Ar factor
-Set the robustness factor, note that this value might impact other variables.
-The default value is 2; valid range is 1\-4.
+Set the robustness factor; note that this value might
+have an impact on other variables.
+The default value is 2; valid range is 1\(en4.
 .It Ic startup-query-count Ar count
 Set the startup-query-interval, used during startup to speed up the process of
 building the IGMP table for an interface.
