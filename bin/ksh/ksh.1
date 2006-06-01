@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.114 2006/05/30 14:43:45 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.115 2006/06/01 09:31:12 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1528,17 +1528,7 @@ The primary prompt for interactive shells.
 Parameter, command, and arithmetic
 substitutions are performed,
 and the prompt string can be customised using
-backslash-escaped special characters (see below).
-.Ql \&!
-is replaced with the current command number (see the
-.Ic fc
-command below).
-A literal
-.Ql \&!
-can be put in the prompt by placing
-.Ql !!
-in
-.Ev PS1 .
+backslash-escaped special characters.
 .Pp
 Note that since the command-line editors try to figure out how long the prompt
 is (so they know how far it is to the edge of the screen), escape codes in
@@ -1630,10 +1620,17 @@ is abbreviated as
 The basename of
 the current working directory.
 .It Li \e!
-The current history number
-(see
-.Sq \e# ,
-below).
+The current history number.
+An unescaped
+.Ql !\&
+will produce the current history number too,
+as per the POSIX specification.
+A literal
+.Ql \&!
+can be put in the prompt by placing
+.Ql !!
+in
+.Ev PS1 .
 .It Li \e#
 The current command number.
 This could be different to the current history number,
