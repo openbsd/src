@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.1 2006/05/29 17:13:19 drahn Exp $ 
+# $OpenBSD: RAMDISK,v 1.2 2006/06/01 03:50:42 drahn Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,8 +47,7 @@ cpu0		at mainbus?
 obio0		at mainbus?
 
 # On-board 16550 UART
-#com0		at obio? addr 0xfe810000 xint 3
-com0		at obio? addr 0xfe800000 xint 0
+com0		at obio? addr 0xfe800000 xint 3
 
 # i80321 I/O Processor peripheral support
 iopxs0		at mainbus?
