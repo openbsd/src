@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2006/06/01 06:25:51 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2006/06/01 06:28:11 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -659,10 +659,10 @@ pmap_bootstrap(vaddr_t load_start)
 	/* map the kernel text read only */
 	vaddr = pmap_map(s_text, s_text, e_text,
 	    VM_PROT_WRITE | VM_PROT_READ,	/* shouldn't it be RO? XXX*/
-	    CACHE_GLOBAL);
+	    0);
 
 	vaddr = pmap_map(vaddr, e_text, (paddr_t)kmap,
-	    VM_PROT_WRITE | VM_PROT_READ, CACHE_GLOBAL);
+	    VM_PROT_WRITE | VM_PROT_READ, 0);
 
 	/*
 	 * Map system segment & page tables - should be cache inhibited?
@@ -828,7 +828,7 @@ pmap_zero_page(struct vm_page *pg)
 	spl = splvm();
 
 	*pte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_M /* 88110 */ | PG_V | pa;
+	    PG_M /* 88110 */ | PG_V | pa;
 
 	/*
 	 * We don't need the flush_atc_entry() dance, as these pages are
@@ -906,7 +906,7 @@ pmap_create(void)
 
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
-	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_GLOBAL | CACHE_WT);
+	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_WT);
 
 	/*
 	 * Initialize SDT_ENTRIES.
@@ -1524,7 +1524,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
-	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_GLOBAL | CACHE_WT);
+	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_WT);
 
 	spl = splvm();
 	PMAP_LOCK(pmap);
@@ -1751,8 +1751,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH;
-	else
-		template |= CACHE_GLOBAL;
 
 	if (flags & VM_PROT_WRITE)
 		template |= PG_M_U;
@@ -2101,9 +2099,9 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	spl = splvm();
 
 	*dstpte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_M /* 88110 */ | PG_V | dst;
+	    PG_M /* 88110 */ | PG_V | dst;
 	*srcpte = m88k_protection(VM_PROT_READ) |
-	    CACHE_GLOBAL | PG_V | src;
+	    PG_V | src;
 
 	/*
 	 * We don't need the flush_atc_entry() dance, as these pages are
@@ -2506,7 +2504,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH | PG_V | PG_W;
 	else
-		template |= CACHE_GLOBAL | PG_V | PG_W;
+		template |= PG_V | PG_W;
 	*pte = template | pa;
 	flush_atc_entry(kernel_pmap, va);
 
