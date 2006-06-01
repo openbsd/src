@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.19 2006/06/01 09:39:13 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.20 2006/06/01 21:53:52 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -272,8 +272,9 @@ struct cfdriver xge_cd = {
 /*
  * Non-tunable constants.
  */
-#define XGE_MAX_FRAMELEN	9600
-#define XGE_MAX_MTU		(XGE_MAX_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+#define XGE_MAX_FRAMELEN	9622
+#define XGE_MAX_MTU		(XGE_MAX_FRAMELEN - ETHER_HDR_LEN - \
+				 ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 
 #define XGE_TYPE_XENA		1	/* Xframe-I */
 #define XGE_TYPE_HERC		2	/* Xframe-II */
