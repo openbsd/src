@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.49 2006/06/01 06:32:17 mjc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.50 2006/06/01 07:12:18 mjc Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -226,6 +226,9 @@ main(int argc, char **argv)
 	struct stat sb;
 	struct track_info *cur_track;
 	struct track_info *tr;
+	off_t availblk,needblk = 0;
+	u_int blklen;
+	u_int ntracks = 0;
 	char type;
 
 	cdname = getenv("DISC");
@@ -271,6 +274,7 @@ main(int argc, char **argv)
 			usage();
 		SLIST_INIT(&tracks);
 		type = 'd';
+		blklen = 2048;
 		while (argc > 1) {
 			tr = malloc(sizeof(struct track_info));
 			tr->type = type;
@@ -280,15 +284,18 @@ main(int argc, char **argv)
 				switch (ch) {
 				case 'a':
 					type = 'a';
+					blklen = 2352;
 					break;
 				case 'd':
 					type = 'd';
+					blklen = 2048;
 					break;
 				default:
 					usage();
 				}
 			}
 			tr->type = type;
+			tr->blklen = blklen;
 			argc -= optind;
 			argv += optind;
 			if (argv[0] == NULL)
@@ -299,6 +306,8 @@ main(int argc, char **argv)
 				return (-1);
 			}
 			tr->sz = sb.st_size;
+			if (tr->type == 'a')
+				tr->sz -= WAVHDRLEN;
 			if (SLIST_EMPTY(&tracks))
 				SLIST_INSERT_HEAD(&tracks,tr,track_list);
 			else
@@ -307,6 +316,15 @@ main(int argc, char **argv)
 		}
 		if (! open_cd(cdname, 1))
 			exit(1);
+		get_disc_size(&availblk);
+		SLIST_FOREACH(tr, &tracks, track_list) {
+			needblk += tr->sz/tr->blklen;
+			ntracks++;
+		}
+		needblk += (ntracks - 1) * 150; /* transition area between tracks */
+		if (needblk > availblk)
+			errx(1,"Only %llu of the required %llu blocks available",
+			     availblk,needblk);
 		if (writetao(&tracks) != 0)
 			exit(1);
 		else

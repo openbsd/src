@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.5 2006/06/01 06:32:17 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.6 2006/06/01 07:12:18 mjc Exp $ */
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include "extern.h"
 
-#define WAVHDRLEN 44
 extern int errno;
 extern int fd;
 extern char *cdname;
@@ -136,13 +135,11 @@ writetao(struct track_head *thp)
 			modebuf[3+8+bdlen] = 0x04; /* track mode = data */
 			modebuf[4+8+bdlen] = 0x08; /* 2048 block track mode */
 			modebuf[8+8+bdlen] = 0x00; /* turn off XA */
-			tr->blklen = 2048;
 			break;
 		case 'a':
 			modebuf[3+8+bdlen] = 0x00; /* track mode = audio */
 			modebuf[4+8+bdlen] = 0x00; /* 2352 block track mode */
 			modebuf[8+8+bdlen] = 0x00; /* turn off XA */
-			tr->blklen = 2352;
 			break;
 		default:
 			warn("impossible tracktype detected");
@@ -195,8 +192,6 @@ writetrack(struct track_info *tr)
 		warnx("file %s has invalid size",tr->file);
 		return (-1);
 	}
-	if (tr->type == 'a')
-		tr->sz -= WAVHDRLEN;
 	if (tr->sz % tr->blklen) {
 		warnx("file %s is not multiple of block length %d", tr->file, tr->blklen);
 		end_lba = tr->sz / tr->blklen + lba + 1;
@@ -276,6 +271,32 @@ mode_select_write(unsigned char buf[])
 	scr.databuf = (caddr_t)buf;
 
 	r = ioctl(fd, SCIOCCOMMAND, &scr);
+	return (r == 0 ? scr.retsts : -1);
+}
+
+int
+get_disc_size(off_t *availblk)
+{
+	u_char databuf[28];
+	scsireq_t scr;
+	int r,tmp;
+
+	bzero(&scr, sizeof(scr));
+	scr.timeout = 4000;
+	scr.senselen = SENSEBUFLEN;
+	scr.cmd[0] = 0x52; /* READ TRACK INFO */
+	scr.cmd[1] = 0x01;
+	scr.cmd[5] = 0x01; /* Track 01 */
+	scr.cmd[7] = 0x00;
+	scr.cmd[8] = 0x1c;
+	scr.cmdlen = 10;
+	scr.datalen= 0x1c; 
+	scr.flags = SCCMD_ESCAPE|SCCMD_READ;
+	scr.databuf = (caddr_t)databuf;
+
+	r = ioctl(fd, SCIOCCOMMAND, &scr);
+	memcpy(&tmp, &databuf[16], sizeof(tmp));
+	*availblk = betoh32(tmp);
 	return (r == 0 ? scr.retsts : -1);
 }
 
