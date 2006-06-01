@@ -1,10 +1,10 @@
-/*	$OpenBSD: sdmmcdevs.h,v 1.1 2006/06/01 21:16:18 uwe Exp $	*/
+/*	$OpenBSD: sdmmcdevs.h,v 1.2 2006/06/01 21:45:09 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: sdmmcdevs,v 1.1 2006/06/01 21:15:40 uwe Exp 
+ *		OpenBSD: sdmmcdevs,v 1.2 2006/06/01 21:44:55 uwe Exp 
  */
 
 /*
@@ -39,5 +39,5 @@
 #define	SDMMC_PRODUCT_SYCHIP_WLAN6060SD	0x544d
 
 /* Spectec Computer Co., Ltd */
-#define	SDMMC_CID_SPECTEC_SDIOWLAN11B	{ NULL, NULL, NULL, NULL }
-#define	SDMMC_PRODUCT_SPECTEC_SDIOWLAN11B	0x2128
+#define	SDMMC_CID_SPECTEC_SDW820	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_SPECTEC_SDW820	0x2128
