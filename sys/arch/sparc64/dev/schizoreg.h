@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.12 2006/06/01 19:12:45 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.13 2006/06/01 20:58:19 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -102,6 +102,8 @@ struct schizo_regs {
 #define	SCZ_PCI_IOMMU_CTXFLUSH		0x00218
 #define	SCZ_PCI_IMAP_BASE		0x01000
 #define	SCZ_PCI_ICLR_BASE		0x01400
+#define	SCZ_PCI_INTR_RETRY		0x01a00	/* interrupt retry */
+#define	SCZ_PCI_DMA_FLUSH		0x01a08	/* pci consistent dma flush */
 #define	SCZ_PCI_CTRL			0x02000
 #define	SCZ_PCI_AFSR			0x02010
 #define	SCZ_PCI_AFAR			0x02018
@@ -216,6 +218,16 @@ struct schizo_regs {
 #define	SCZ_PCIAFSR_IO			0x0000000010000000UL
 
 #define SCZ_PCIAFSR_BITS "\20\277PMA\276PTA\275PRTRY\274PPERR\273PTTO\272PUNUS\271SMA\270STA\267SRTRY\266SPERR\265STTO\264SUNUS"
+
+#define	SCZ_PCIDIAG_D_BADECC		(1UL << 10UL)	/* disable bad ecc */
+#define	SCZ_PCIDIAG_D_BYPASS		(1UL <<  9UL)	/* disable mmu bypass */
+#define	SCZ_PCIDIAG_D_TTO		(1UL <<  8UL)	/* disable trdy# timeout */
+#define	SCZ_PCIDIAG_D_RTRYARB		(1UL <<  7UL)	/* disable retry arb */
+#define	SCZ_PCIDIAG_D_RETRY		(1UL <<  6UL)	/* disable retry lim */
+#define	SCZ_PCIDIAG_D_INTSYNC		(1UL <<  5UL)	/* disable write sync */
+#define	SCZ_PCIDIAG_I_DMADPAR		(1UL <<  3UL)	/* invert dma parity */
+#define	SCZ_PCIDIAG_I_PIODPAR		(1UL <<  2UL)	/* invert pio data parity */
+#define	SCZ_PCIDIAG_I_PIOAPAR		(1UL <<  1UL)	/* invert pio addr parity */
 
 #define	SCZ_PBM_A_REGS			(0x600000UL - 0x400000UL)
 #define	SCZ_PBM_B_REGS			(0x700000UL - 0x400000UL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.23 2006/06/01 19:12:45 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.24 2006/06/01 20:58:19 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -153,7 +153,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 	struct schizo_pbm *pbm;
 	struct pcibus_attach_args pba;
 	int *busranges = NULL, nranges;
-	u_int64_t match;
+	u_int64_t match, reg;
 
 	pbm = (struct schizo_pbm *)malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT);
 	if (pbm == NULL)
@@ -216,6 +216,11 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	free(busranges, M_DEVBUF);
 
+	schizo_pbm_write(pbm, SCZ_PCI_INTR_RETRY, 5);
+
+	/* clear out the bus errors */
+	schizo_pbm_write(pbm, SCZ_PCI_CTRL, schizo_pbm_read(pbm, SCZ_PCI_CTRL));
+
 	if (busa)
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
 		   pbm, SCZ_PCIERR_A_INO, "pci_a");
@@ -223,8 +228,18 @@ schizo_init(struct schizo_softc *sc, int busa)
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
 		   pbm, SCZ_PCIERR_B_INO, "pci_b");
 
-	schizo_pbm_write(pbm, SCZ_PCI_CTRL, schizo_pbm_read(pbm, SCZ_PCI_CTRL) |
-	    SCZ_PCICTRL_EEN | SCZ_PCICTRL_SBH_INT | SCZ_PCICTRL_DTO_INT);
+	reg = schizo_pbm_read(pbm, SCZ_PCI_CTRL);
+	/* enable/disable error interrupts */
+	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_SBH_INT;
+	reg &= ~SCZ_PCICTRL_DTO_INT;
+	/* enable bus arbiter for all pci slots */
+	reg |= SCZ_PCICTRL_ARB;
+	schizo_pbm_write(pbm, SCZ_PCI_CTRL, reg);
+
+	reg = schizo_pbm_read(pbm, SCZ_PCI_DIAG);
+	reg &= ~(SCZ_PCIDIAG_D_RTRYARB | SCZ_PCIDIAG_D_RETRY |
+	    SCZ_PCIDIAG_D_INTSYNC);
+	schizo_pbm_write(pbm, SCZ_PCI_DIAG, reg);
 
 	/* double mapped */
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO, "ue");
