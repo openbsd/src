@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.3 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.4 2006/06/01 22:33:37 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -487,10 +487,13 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		csd->mmcver = MMC_CSD_MMCVER(resp);
 		csd->capacity = MMC_CSD_CAPACITY(resp);
 		csd->read_bl_len = MMC_CSD_READ_BL_LEN(resp);
-		csd->sector_size = 1 << csd->read_bl_len;
 	}
 	csd->sector_size = MIN(1 << csd->read_bl_len,
 	    sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
+	if (csd->sector_size < (1<<csd->read_bl_len))
+		csd->capacity *= (1<<csd->read_bl_len) /
+		    csd->sector_size;
+
 	return 0;
 }
 
