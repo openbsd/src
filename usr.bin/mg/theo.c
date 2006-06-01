@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.98 2006/03/10 11:01:34 djm Exp $	*/
+/*	$OpenBSD: theo.c,v 1.99 2006/06/01 00:38:35 kjell Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -91,10 +91,7 @@ static const char *talk[] = {
 	"Lazy bums slacking on your asses.",
 	"35 commits an hour? That's pathetic!",
 	"Fine software takes time to prepare.  Give a little slack.",
-	"Just a minute ago we were hugging and now you, guys, do not love me anymore",
 	"I am just stating a fact",
-	"i'd love to hack, but i can't",
-	"Wait, yes, I am on drugs",
 	"you bring new meaning to the terms slackass. I will have to invent a new term.",
 	"if they cut you out, muddy their back yards",
 	"Make them want to start over, and play nice the next time.",
@@ -102,7 +99,6 @@ static const char *talk[] = {
 	"avoid using abort().  it is not nice.",
 	"That's the most ridiculous thing I've heard in the last two or three minutes!",
 	"I'm not just doing this for crowd response. I need to be right.",
-	"i admit you are better than i am...",
 	"I'd put a fan on my bomb.. And blinking lights...",
 	"I love to fight",
 	"No sane people allowed here.  Go home.",
@@ -147,7 +143,8 @@ static const char *talk[] = {
 	"You can call it fart if you want to.",
 	"wavelan is a battle field",
 	"You are in a maze of gpio pins, all alike, all undocumented, and a few are wired to bombs.",
-	"And that is why humppa sucks... cause it has no cause."
+	"And that is why humppa sucks... cause it has no cause.",
+	"cache aliasing is a problem that would have stopped in 1992 if someone had killed about 5 people who worked at Sun."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
