@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.30 2006/06/01 02:19:22 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.31 2006/06/01 06:14:05 todd Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <arpa/inet.h>
 
 #include <err.h>
@@ -371,45 +372,80 @@ static void
 ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
     struct ipsec_addr_wrap *dst, FILE *fd)
 {
-	char *mask, *network, *p;
+	char mask[NI_MAXHOST], *network, *p;
+	struct sockaddr sa;
 
 	if (src->netaddress) {
-		mask = inet_ntoa(src->mask.v4);
+		bzero(&sa, sizeof(struct sockaddr));
+		bzero(mask, sizeof(mask));
+		sa.sa_family = src->af;
+		switch (src->af) {
+		case AF_INET:
+			sa.sa_len = sizeof(struct sockaddr_in);
+			bcopy(&src->mask.ipa, &((struct sockaddr_in *)(&sa))->sin_addr,
+				sizeof(struct in6_addr));
+			break;
+		case AF_INET6:
+			sa.sa_len = sizeof(struct sockaddr_in6);
+			bcopy(&src->mask.ipa, &((struct sockaddr_in6 *)(&sa))->sin6_addr,
+				sizeof(struct in6_addr));
+			break;
+		}
+		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0, NI_NUMERICHOST)) {
+			err(1, "could not get a numeric mask");
+		}
 		if ((network = strdup(src->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
 			*p = '\0';
 
-		fprintf(fd, SET "[lid-%s]:ID-type=IPV4_ADDR_SUBNET force\n",
-		    src->name);
+		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
+		    src->name, ((src->af == AF_INET) ? 4 : 6));
 		fprintf(fd, SET "[lid-%s]:Network=%s force\n", src->name,
 		    network);
 		fprintf(fd, SET "[lid-%s]:Netmask=%s force\n", src->name, mask);
 
 		free(network);
 	} else {
-		fprintf(fd, SET "[lid-%s]:ID-type=IPV4_ADDR force\n",
-		    src->name);
+		fprintf(fd, SET "[lid-%s]:ID-type=IPV%d_ADDR force\n",
+		    src->name, ((src->af == AF_INET) ? 4 : 6));
 		fprintf(fd, SET "[lid-%s]:Address=%s force\n", src->name,
 		    src->name);
 	}
 	if (dst->netaddress) {
-		mask = inet_ntoa(dst->mask.v4);
+		bzero(&sa, sizeof(struct sockaddr));
+		bzero(mask, sizeof(mask));
+		sa.sa_family = dst->af;
+		switch (dst->af) {
+		case AF_INET:
+			sa.sa_len = sizeof(struct sockaddr_in);
+			bcopy(&dst->mask.ipa, &((struct sockaddr_in *)(&sa))->sin_addr,
+				sizeof(struct in6_addr));
+			break;
+		case AF_INET6:
+			sa.sa_len = sizeof(struct sockaddr_in6);
+			bcopy(&dst->mask.ipa, &((struct sockaddr_in6 *)(&sa))->sin6_addr,
+				sizeof(struct in6_addr));
+			break;
+		}
+		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0, NI_NUMERICHOST)) {
+			err(1, "could not get a numeric mask");
+		}
 		if ((network = strdup(dst->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
 			*p = '\0';
 
-		fprintf(fd, SET "[rid-%s]:ID-type=IPV4_ADDR_SUBNET force\n",
-		    dst->name);
+		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
+		    dst->name, ((dst->af == AF_INET) ? 4 : 6));
 		fprintf(fd, SET "[rid-%s]:Network=%s force\n", dst->name,
 		    network);
 		fprintf(fd, SET "[rid-%s]:Netmask=%s force\n", dst->name, mask);
 
 		free(network);
 	} else {
-		fprintf(fd, SET "[rid-%s]:ID-type=IPV4_ADDR force\n",
-		    dst->name);
+		fprintf(fd, SET "[rid-%s]:ID-type=IPV%d_ADDR force\n",
+		    dst->name, ((dst->af == AF_INET) ? 4 : 6));
 		fprintf(fd, SET "[rid-%s]:Address=%s force\n", dst->name,
 		    dst->name);
 	}
