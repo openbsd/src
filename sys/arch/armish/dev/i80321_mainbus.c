@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.3 2006/05/31 05:49:54 drahn Exp $	*/
+/*	$OpenBSD: i80321_mainbus.c,v 1.4 2006/06/01 03:45:15 drahn Exp $	*/
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	printf(": i80321 I/O Processor\n");
 
 	i80321_sdram_bounds(sc->sc_st, sc->sc_mcu_sh, &memstart, &memsize);
-	printf("memstart %x, memsize %x\n", memstart, memsize);
 
 	/*
 	 * We set up the Inbound Windows as follows:
@@ -214,7 +213,6 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	atumembase = bus_space_read_4(sc->sc_st, sc->sc_atu_sh,
 	    PCI_MAPREG_START + 0x08);
-	printf("atumembase %x\n", atumembase);
 
 	if (atumembase == 0x8000000c) {
 		/* iodata: intel std config */
