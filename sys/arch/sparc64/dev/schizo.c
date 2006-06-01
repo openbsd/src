@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.21 2006/05/28 22:14:16 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.22 2006/06/01 07:54:10 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -69,6 +69,13 @@ void schizo_init(struct schizo_softc *, int);
 void schizo_init_iommu(struct schizo_softc *, struct schizo_pbm *);
 int schizo_print(void *, const char *);
 
+void schizo_set_intr(struct schizo_softc *, struct schizo_pbm *, int,
+    int (*handler)(void *), void *, int, char *);
+int schizo_ue(void *);
+int schizo_ce(void *);
+int schizo_safari_error(void *);
+int schizo_pci_error(void *);
+
 pci_chipset_tag_t schizo_alloc_chipset(struct schizo_pbm *, int,
     pci_chipset_tag_t);
 bus_space_tag_t schizo_alloc_mem_tag(struct schizo_pbm *);
@@ -119,7 +126,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bust = ma->ma_bustag;
-	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000;
+	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000UL;
 
 	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
 		busa = 1;
@@ -131,6 +138,11 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to map registers\n");
 		return;
 	}
+
+	/* enable schizo ecc error interrupts */
+	schizo_write(sc, SCZ_ECCCTRL, schizo_read(sc, SCZ_ECCCTRL) |
+	    SCZ_ECCCTRL_EE_INTEN | SCZ_ECCCTRL_UE_INTEN |
+	    SCZ_ECCCTRL_CE_INTEN);
 
 	schizo_init(sc, busa);
 }
@@ -150,6 +162,8 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	pbm->sp_sc = sc;
 	pbm->sp_bus_a = busa;
+	pbm->sp_regt = sc->sc_bust;
+
 	if (getprop(sc->sc_node, "ranges", sizeof(struct schizo_range),
 	    &pbm->sp_nrange, (void **)&pbm->sp_range))
 		panic("schizo: can't get ranges");
@@ -161,10 +175,9 @@ schizo_init(struct schizo_softc *sc, int busa)
 	printf(": bus %c %d to %d\n", busa ? 'A' : 'B',
 	    busranges[0], busranges[1]);
 
-	pbm->sp_regt = sc->sc_bust;
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
 	    busa ? offsetof(struct schizo_regs, pbm_a) :
-		offsetof(struct schizo_regs, pbm_b),
+	    offsetof(struct schizo_regs, pbm_b),
 	    sizeof(struct schizo_pbm_regs),
 	    &pbm->sp_regh)) {
 		panic("schizo: unable to create PBM handle");
@@ -172,8 +185,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	schizo_init_iommu(sc, pbm);
 
-	match = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
-	    (busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH));
+	match = schizo_read(sc, busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH);
 	pbm->sp_confpaddr = match & ~0x8000000000000000UL;
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
@@ -204,7 +216,56 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	free(busranges, M_DEVBUF);
 
+	if (busa)
+		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
+		   pbm, 0x32, "pci_a");
+	else
+		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
+		   pbm, 0x32, "pci_ib");
+
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, 0x30, "ue");
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, 0x31, "ce");
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
+	    0x34, "safari");
+
 	config_found(&sc->sc_dv, &pba, schizo_print);
+}
+
+int
+schizo_ue(void *vsc)
+{
+	struct schizo_softc *sc = vsc;
+
+	panic("%s: uncorrectable error", sc->sc_dv.dv_xname);
+	return (1);
+}
+
+int
+schizo_ce(void *vsc)
+{
+	struct schizo_softc *sc = vsc;
+
+	panic("%s: correctable error", sc->sc_dv.dv_xname);
+	return (1);
+}
+
+int
+schizo_pci_error(void *vpbm)
+{
+	struct schizo_pbm *sp = vpbm;
+	struct schizo_softc *sc = sp->sp_sc;
+
+	panic("%s: pci error", sc->sc_dv.dv_xname);
+	return (1);
+}
+
+int
+schizo_safari_error(void *vsc)
+{
+	struct schizo_softc *sc = vsc;
+
+	panic("%s: safari error", sc->sc_dv.dv_xname);
+	return (1);
 }
 
 void
@@ -275,8 +336,7 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	ino = *ihp;
 
-	agentid = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
-	    SCZ_CONTROL_STATUS);
+	agentid = schizo_read(sc, SCZ_CONTROL_STATUS);
 	agentid = ((agentid >> 20) & 31) << 6;
 
 	if (ino & ~INTMAP_PCIINT) {
@@ -309,6 +369,29 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	*ihp = ino;
 
 	return (0);
+}
+
+void
+schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
+    int (*handler)(void *), void *arg, int ino, char *what)
+{
+	struct intrhand *ih;
+	volatile u_int64_t *map, *clr;
+	struct schizo_pbm_regs *pbmreg;
+
+	pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
+	map = &pbmreg->imap[ino];
+	clr = &pbmreg->iclr[ino];
+	ino |= (*map) & INTMAP_IGN;
+
+	ih = bus_intr_allocate(pbm->sp_regt, handler, arg, ino, ipl,
+	    map, clr, what);
+	if (ih == NULL) {
+		printf("set_intr failed...\n");
+		return;
+	}
+
+	intr_establish(ih->ih_pil, ih);
 }
 
 bus_space_tag_t

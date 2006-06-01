@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizovar.h,v 1.5 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: schizovar.h,v 1.6 2006/06/01 07:54:10 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -59,3 +59,8 @@ struct schizo_softc {
 	bus_addr_t sc_ctrl;
 	bus_space_handle_t sc_ctrlh;
 };
+
+#define	schizo_read(sc,r) \
+    bus_space_read_8((sc)->sc_bust, (sc)->sc_ctrlh, (r))
+#define	schizo_write(sc,r,v) \
+    bus_space_write_8((sc)->sc_bust, (sc)->sc_ctrlh, (r), (v))
