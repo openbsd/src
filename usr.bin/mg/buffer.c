@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.59 2006/06/01 01:41:49 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.60 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -414,6 +414,7 @@ addlinef(struct buffer *bp, char *fmt, ...)
 	lp->l_bp = bp->b_linep->l_bp;
 	bp->b_linep->l_bp = lp;
 	lp->l_fp = bp->b_linep;
+	bp->b_lines++;
 
 	return (TRUE);
 }
@@ -530,6 +531,8 @@ bnew()
 	lp->l_bp = lp;
 	bp->b_bufp = bheadp;
 	bheadp = bp;
+	bp->b_dotline = bp->b_markline = 1;
+	bp->b_lines = 0;
 
 	return (bp);
 }
@@ -560,6 +563,9 @@ bclear(struct buffer *bp)
 	bp->b_doto = 0;
 	bp->b_markp = NULL;	/* Invalidate "mark"	 */
 	bp->b_marko = 0;
+	bp->b_dotline = bp->b_markline = 1;
+	bp->b_lines = 0;
+
 	return (TRUE);
 }
 
@@ -586,6 +592,8 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 			obp->b_doto = wp->w_doto;
 			obp->b_markp = wp->w_markp;
 			obp->b_marko = wp->w_marko;
+			obp->b_dotline = wp->w_dotline;
+			obp->b_markline = wp->w_markline;
 		}
 	}
 	/* Now, attach the new buffer to the window */
@@ -596,6 +604,8 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 		wp->w_doto = bp->b_doto;
 		wp->w_markp = bp->b_markp;
 		wp->w_marko = bp->b_marko;
+		wp->w_dotline = bp->b_dotline;
+		wp->w_markline = bp->b_markline;
 	} else
 		/* already on screen, steal values from other window */
 		for (owp = wheadp; owp != NULL; owp = wp->w_wndp)
@@ -604,6 +614,7 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 				wp->w_doto = owp->w_doto;
 				wp->w_markp = owp->w_markp;
 				wp->w_marko = owp->w_marko;
+				wp->w_dotline = owp->w_dotline;
 				break;
 			}
 	wp->w_flag |= WFMODE | flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.39 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.40 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -377,6 +377,8 @@ lnewline(void)
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
+	curwp->w_bufp->b_lines++;
+	curwp->w_dotline++;
 	return (lnewline_at(curwp->w_dotp, curwp->w_doto));
 }
 
@@ -473,7 +475,8 @@ ldelete(RSIZE n, int kflag)
  * operation.  Even if nothing is done, this makes the kill buffer work
  * "right".  Easy cases can be done by shuffling data around.  Hard cases
  * require that lines be moved about in memory.  Return FALSE on error and
- * TRUE if all looks ok.
+ * TRUE if all looks ok. We do not update w_dotline here, as deletes are done
+ * after moves.
  */
 int
 ldelnewline(void)
@@ -491,6 +494,7 @@ ldelnewline(void)
 	/* at the end of the buffer */
 	if (lp2 == curbp->b_linep)
 		return (TRUE);
+	curwp->w_bufp->b_lines--;
 	if (lp2->l_used <= lp1->l_size - lp1->l_used) {
 		bcopy(&lp2->l_text[0], &lp1->l_text[lp1->l_used], lp2->l_used);
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {

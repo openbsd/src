@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.58 2006/06/01 05:34:52 jason Exp $	*/
+/*	$OpenBSD: file.c,v 1.59 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -282,8 +282,9 @@ insertfile(char *fname, char *newname, int replacebuf)
 	struct line	*lp1, *lp2;
 	struct line	*olp;			/* line we started at */
 	struct mgwin	*wp;
-	int	 nbytes, s, nline, siz, x = -1, x2;
+	int	 nbytes, s, nline = 0, siz, x = -1, x2;
 	int	 opos;			/* offset we started at */
+	int	 oline;			/* original line number */
 
 	if (replacebuf == TRUE)
 		x = undo_enable(FALSE);
@@ -334,8 +335,9 @@ insertfile(char *fname, char *newname, int replacebuf)
 	}
 	opos = curwp->w_doto;
 
-	/* open a new line, at point, and start inserting after it */
+	/* Open a new line, at point, and start inserting after it. */
 	x2 = undo_enable(FALSE);
+	oline = curwp->w_dotline;
 	(void)lnewline();
 	olp = lback(curwp->w_dotp);
 	if (olp == curbp->b_linep) {
@@ -353,10 +355,10 @@ doneread:
 		siz += nbytes + 1;
 		switch (s) {
 		case FIOSUC:
-			++nline;
 			/* FALLTHRU */
 		case FIOEOF:
 			/* the last line of the file */
+			++nline;
 			if ((lp1 = lalloc(nbytes)) == NULL) {
 				/* keep message on the display */
 				s = FIOERR;
@@ -402,7 +404,7 @@ doneread:
 		}
 	}
 endoffile:
-	undo_add_insert(olp, opos, siz-1);
+	undo_add_insert(olp, opos, siz - 1);
 
 	/* ignore errors */
 	ffclose(NULL);
@@ -419,6 +421,7 @@ endoffile:
 	(void)ldelnewline();
 	curwp->w_dotp = olp;
 	curwp->w_doto = opos;
+	curwp->w_dotline = oline;
 	if (olp == curbp->b_linep)
 		curwp->w_dotp = lforw(olp);
 	if (newname != NULL)
@@ -453,6 +456,7 @@ out:		lp2 = NULL;
 			}
 		}
 	}
+	bp->b_lines += nline;
 cleanup:
 	undo_enable(x);
 
@@ -564,8 +568,7 @@ buffsave(struct buffer *bp)
  * Since we don't have variables (we probably should) this is a command
  * processor for changing the value of the make backup flag.  If no argument
  * is given, sets makebackup to true, so backups are made.  If an argument is
- * given, no backup files are made when saving a new version of a file. Only
- * used when BACKUP is #defined.
+ * given, no backup files are made when saving a new version of a file.
  */
 /* ARGSUSED */
 int

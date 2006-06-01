@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.91 2006/06/01 05:34:52 jason Exp $	*/
+/*	$OpenBSD: def.h,v 1.92 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -205,6 +205,8 @@ struct mgwin {
 	char		 w_frame;	/* #lines to reframe by.	*/
 	char		 w_flag;	/* Flags.			*/
 	struct line	*w_wrapline;
+	int		 w_dotline;	/* current line number of dot	*/
+	int		 w_markline;	/* current line number of mark	*/
 };
 #define w_wndp	w_list.l_p.l_wp
 #define w_name	w_list.l_name
@@ -254,6 +256,9 @@ struct buffer {
 	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list		*/
 	int		 b_undopos;	/* Where we were during last undo */
 	struct undo_rec *b_undoptr;
+	int		 b_dotline;	/* Line number of dot */
+	int		 b_markline;	/* Line number of mark */
+	int		 b_lines;	/* Number of lines in file	*/
 };
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
@@ -402,6 +407,7 @@ int		vtresize(int, int, int);
 void		vtinit(void);
 void		vttidy(void);
 void		update(void);
+int		linenotoggle(int, int);
 
 /* echo.c X */
 void		 eerase(void);

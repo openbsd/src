@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.23 2006/05/29 00:02:23 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.24 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -25,6 +25,7 @@ new_window(struct buffer *bp)
 	wp->w_flag = 0;
 	wp->w_frame = 0;
 	wp->w_wrapline = NULL;
+	wp->w_dotline = wp->w_markline = 1;
 	if (bp)
 		bp->b_nwnd++;
 	return (wp);
@@ -223,6 +224,8 @@ splitwind(int f, int n)
 	wp->w_doto = curwp->w_doto;
 	wp->w_markp = curwp->w_markp;
 	wp->w_marko = curwp->w_marko;
+	wp->w_dotline = curwp->w_dotline;
+	wp->w_markline = curwp->w_markline;
 
 	/* figure out which half of the screen we're in */
 	ntru = (curwp->w_ntrows - 1) / 2;	/* Upper size */

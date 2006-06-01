@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.28 2006/05/29 00:02:23 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.29 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -100,6 +100,31 @@ struct video	  blanks;		/* Blank line image.		 */
  * Look at "setscores" to understand what is up.
  */
 struct score *score;			/* [NROW * NROW] */
+
+#ifndef LINENOMODE
+#define LINENOMODE TRUE
+#endif /* !LINENOMODE */ 
+static int      linenos = LINENOMODE;
+
+/*
+ * Since we don't have variables (we probably should) this is a command
+ * processor for changing the value of the line number mode flag.
+ */
+/* ARGSUSED */
+int
+linenotoggle(int f, int n)
+{
+	if (f & FFARG)
+		linenos = n > 0;
+	else
+		linenos = !linenos;
+
+	sgarbf = TRUE;	
+
+	return (TRUE);
+}
+
+
 
 /*
  * Reinit the display data structures, this is called when the terminal
@@ -377,6 +402,13 @@ update(void)
 		wp = wheadp;
 		while (wp != NULL) {
 			wp->w_flag |= WFMODE | WFFULL;
+			wp = wp->w_wndp;
+		}
+	}
+	if (linenos) {
+		wp = wheadp;
+		while (wp != NULL) {
+			wp->w_flag |= WFMODE;
 			wp = wp->w_wndp;
 		}
 	}
@@ -750,6 +782,8 @@ modeline(struct mgwin *wp)
 {
 	int	n, md;
 	struct buffer *bp;
+	char sl[21];		/* Overkill. Space for 2^64 in base 10. */
+	int len;
 
 	n = wp->w_toprow + wp->w_ntrows;	/* Location.		 */
 	vscreen[n]->v_color = CMODE;		/* Mode line color.	 */
@@ -791,6 +825,13 @@ modeline(struct mgwin *wp)
 	}
 	vtputc(')');
 	++n;
+
+	if (linenos) {
+		len = snprintf(sl, sizeof(sl), "--L%d", wp->w_dotline);
+		if (len < sizeof(sl) && len != -1)
+			n += vtputs(sl);
+	}
+
 	while (n < ncol) {			/* Pad out.		 */
 		vtputc('-');
 		++n;

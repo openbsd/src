@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.22 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.23 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -50,6 +50,7 @@ backchar(int f, int n)
 			curwp->w_dotp = lp;
 			curwp->w_doto = llength(lp);
 			curwp->w_flag |= WFMOVE;
+			curwp->w_dotline--;
 		} else
 			curwp->w_doto--;
 	}
@@ -89,6 +90,7 @@ forwchar(int f, int n)
 				return (FALSE);
 			}
 			curwp->w_doto = 0;
+			curwp->w_dotline++;
 			curwp->w_flag |= WFMOVE;
 		} else
 			curwp->w_doto++;
@@ -108,6 +110,7 @@ gotobob(int f, int n)
 	curwp->w_dotp = lforw(curbp->b_linep);
 	curwp->w_doto = 0;
 	curwp->w_flag |= WFFULL;
+	curwp->w_dotline = 1;
 	return (TRUE);
 }
 
@@ -122,6 +125,7 @@ gotoeob(int f, int n)
 	(void) setmark(f, n);
 	curwp->w_dotp = lback(curbp->b_linep);
 	curwp->w_doto = llength(curwp->w_dotp);
+	curwp->w_dotline = curwp->w_bufp->b_lines;
 	curwp->w_flag |= WFFULL;
 	return (TRUE);
 }
@@ -141,34 +145,27 @@ forwline(int f, int n)
 
 	if (n < 0)
 		return (backline(f | FFRAND, -n));
+	if ((dlp = curwp->w_dotp) == curbp->b_linep)
+		return(TRUE);
 	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
 	thisflag |= CFCPCN;
 	if (n == 0)
 		return (TRUE);
-	dlp = curwp->w_dotp;
-	while (dlp != curbp->b_linep && n--)
+	while (n--) {
 		dlp = lforw(dlp);
-	curwp->w_flag |= WFMOVE;
-	if (dlp == curbp->b_linep) {	/* ^N at end of buffer creates lines
-					 * (like gnu) */
-		if (!(curbp->b_flag & BFCHG)) {	/* first change */
-			curbp->b_flag |= BFCHG;
-			curwp->w_flag |= WFMODE;
+		if (dlp == curbp->b_linep) {
+			curwp->w_dotp = lback(dlp);
+			curwp->w_doto = llength(curwp->w_dotp);
+			curwp->w_flag |= WFMOVE;
+			return (TRUE);
 		}
-		curwp->w_doto = 0;
-		while (n-- >= 0) {
-			if ((dlp = lalloc(0)) == NULL)
-				return (FALSE);
-			dlp->l_fp = curbp->b_linep;
-			dlp->l_bp = lback(dlp->l_fp);
-			dlp->l_bp->l_fp = dlp->l_fp->l_bp = dlp;
-		}
-		curwp->w_dotp = lback(curbp->b_linep);
-	} else {
-		curwp->w_dotp = dlp;
-		curwp->w_doto = getgoal(dlp);
+		curwp->w_dotline++;
 	}
+	curwp->w_flag |= WFMOVE;
+	curwp->w_dotp = dlp;
+	curwp->w_doto = getgoal(dlp);
+
 	return (TRUE);
 }
 
@@ -191,8 +188,10 @@ backline(int f, int n)
 		setgoal();
 	thisflag |= CFCPCN;
 	dlp = curwp->w_dotp;
-	while (n-- && lback(dlp) != curbp->b_linep)
+	while (n-- && lback(dlp) != curbp->b_linep) {
 		dlp = lback(dlp);
+		curwp->w_dotline--;
+	}
 	curwp->w_dotp = dlp;
 	curwp->w_doto = getgoal(dlp);
 	curwp->w_flag |= WFMOVE;
@@ -273,8 +272,10 @@ forwpage(int f, int n)
 		n *= curwp->w_ntrows;		/* to lines.		 */
 #endif
 	lp = curwp->w_linep;
-	while (n-- && lforw(lp) != curbp->b_linep)
+	while (n-- && lforw(lp) != curbp->b_linep) {
 		lp = lforw(lp);
+		curwp->w_dotline++;
+	}
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFFULL;
 	/* if in current window, don't move dot */
@@ -311,8 +312,10 @@ backpage(int f, int n)
 		n *= curwp->w_ntrows;		/* to lines.		 */
 #endif
 	lp = curwp->w_linep;
-	while (n-- && lback(lp) != curbp->b_linep)
+	while (n-- && lback(lp) != curbp->b_linep) {
 		lp = lback(lp);
+		curwp->w_dotline--;
+	}
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFFULL;
 	/* if in current window, don't move dot */
@@ -379,6 +382,7 @@ isetmark(void)
 {
 	curwp->w_markp = curwp->w_dotp;
 	curwp->w_marko = curwp->w_doto;
+	curwp->w_markline = curwp->w_dotline;
 }
 
 /*
@@ -407,7 +411,7 @@ int
 swapmark(int f, int n)
 {
 	struct line  *odotp;
-	int    odoto;
+	int odoto, odotline;
 
 	if (curwp->w_markp == NULL) {
 		ewprintf("No mark in this window");
@@ -415,10 +419,13 @@ swapmark(int f, int n)
 	}
 	odotp = curwp->w_dotp;
 	odoto = curwp->w_doto;
+	odotline = curwp->w_dotline;
 	curwp->w_dotp = curwp->w_markp;
 	curwp->w_doto = curwp->w_marko;
+	curwp->w_dotline = curwp->w_markline;
 	curwp->w_markp = odotp;
 	curwp->w_marko = odoto;
+	curwp->w_markline = odotline;
 	curwp->w_flag |= WFMOVE;
 	return (TRUE);
 }
@@ -435,36 +442,39 @@ int
 gotoline(int f, int n)
 {
 	struct line  *clp;
-	char   buf[32], *bufp, *tmp;
-	long   nl;
+	char   buf[32], *bufp;
+	const char *err;
 
 	if (!(f & FFARG)) {
 		if ((bufp = eread("Goto line: ", buf, sizeof(buf),
 		    EFNUL | EFNEW | EFCR)) == NULL)
 			return (ABORT);
-		nl = strtol(bufp, &tmp, 10);
-		if (bufp[0] == '\0' || *tmp != '\0') {
-			ewprintf("Invalid number");
+		n = (int)strtonum(buf, INT_MIN, INT_MAX, &err);
+		if (err) {
+			ewprintf("Line number %s", err);
 			return (FALSE);
 		}
-		if (nl >= INT_MAX || nl <= INT_MIN) {
-			ewprintf("Out of range");
-			return (FALSE);
-		}
-		n = (int)nl;
 	}
 	if (n >= 0) {
+		if (n == 0)
+			n++;
+		curwp->w_dotline = n;
 		clp = lforw(curbp->b_linep);	/* "clp" is first line */
 		while (--n > 0) {
-			if (lforw(clp) == curbp->b_linep)
+			if (lforw(clp) == curbp->b_linep) {
+				curwp->w_dotline = curwp->w_bufp->b_lines;
 				break;
+			}
 			clp = lforw(clp);
 		}
 	} else {
+		curwp->w_dotline = curwp->w_bufp->b_lines + n;
 		clp = lback(curbp->b_linep);	/* "clp" is last line */
 		while (n < 0) {
-			if (lback(clp) == curbp->b_linep)
+			if (lback(clp) == curbp->b_linep) {
+				curwp->w_dotline = 1;
 				break;
+			}
 			clp = lback(clp);
 			n++;
 		}

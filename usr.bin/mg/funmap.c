@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.23 2005/12/20 06:17:36 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.24 2006/06/01 09:00:50 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -128,6 +128,7 @@ static struct funmap functnames[] = {
 	{killpara, "kill-paragraph",},
 	{killregion, "kill-region",},
 	{delfword, "kill-word",},
+	{linenotoggle, "line-number-mode",},
 	{listbuffers, "list-buffers",},
 #ifndef NO_STARTUP
 	{evalfile, "load",},

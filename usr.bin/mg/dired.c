@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.38 2006/06/01 05:34:52 jason Exp $	*/
+/*	$OpenBSD: dired.c,v 1.39 2006/06/01 09:00:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -359,6 +359,7 @@ d_expunge(int f, int n)
 				break;
 			}
 			lfree(lp);
+			curwp->w_bufp->b_lines--;
 			curwp->w_flag |= WFFULL;
 		}
 	}
