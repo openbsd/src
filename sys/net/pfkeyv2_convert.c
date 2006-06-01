@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.27 2006/05/30 17:41:44 todd Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.28 2006/06/01 07:06:09 todd Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -625,12 +625,12 @@ export_flow(void **p, u_int8_t ftype, struct sockaddr_encap *flow,
 	    sizeof(uint64_t);
 	switch (flow->sen_type) {
 #ifdef INET
-	case AF_INET:
+	case SENT_IP4:
 		sab->sadb_protocol_proto = flow->sen_proto;
 		break;
 #endif /* INET */
 #ifdef INET6
-	case AF_INET6:
+	case SENT_IP6:
 		sab->sadb_protocol_proto = flow->sen_ip6_proto;
 		break;
 #endif /* INET6 */
