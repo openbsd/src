@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2006/06/01 05:48:31 todd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.85 2006/06/01 05:55:04 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1552,7 +1552,7 @@ ifa_lookup(const char *ifa_name)
 				continue;
 
 				memcpy(&tmp16, &n->address.v6.s6_addr[2],
-					sizeof(tmp16));
+				    sizeof(tmp16));
 				/* use this when we support link-local
 				 * n->??.scopeid = ntohs(tmp16);
 				 */
