@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.52 2006/06/01 16:13:01 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.53 2006/06/01 16:41:38 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -185,12 +185,18 @@ ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 void
 ipsecctl_free_rule(struct ipsec_rule *rp)
 {
-	/* src and dst are always used. */
-	free(rp->src->name);
-	free(rp->src);
-	free(rp->dst->name);
-	free(rp->dst);
-
+	if (rp->src) {
+		free(rp->src->name);
+		free(rp->src);
+	}
+	if (rp->dst) {
+		free(rp->dst->name);
+		free(rp->dst);
+	}
+	if (rp->dst2) {
+		free(rp->dst2->name);
+		free(rp->dst2);
+	}
 	if (rp->local) {
 		free(rp->local->name);
 		free(rp->local);
