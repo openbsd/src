@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.25 2005/08/01 15:57:44 miod Exp $
+#	$OpenBSD: Makefile.hppa,v 1.26 2006/06/01 21:46:27 pascoe Exp $
 
 # Makefile for OpenBSD
 #
@@ -116,8 +116,9 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 DEBUG?=
 .if ${DEBUG} == "-g"
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S -x
 .endif

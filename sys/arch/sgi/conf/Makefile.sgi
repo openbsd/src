@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.11 2004/11/27 18:27:04 matthieu Exp $
+#	$OpenBSD: Makefile.sgi,v 1.12 2006/06/01 21:46:28 pascoe Exp $
 
 # Makefile for OpenBSD
 #
@@ -113,8 +113,9 @@ SYSTEM_LD_TAIL=	chmod 755 $@; \
 DEBUG?=
 .if ${DEBUG} == "-g"
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .endif
 
 %LOAD

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.22 2005/11/08 20:29:13 kettenis Exp $
+#	$OpenBSD: Makefile.macppc,v 1.23 2006/06/01 21:46:27 pascoe Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -110,8 +110,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S -x
 .endif

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.cats,v 1.4 2006/05/30 18:25:42 miod Exp $
-#	$OpenBSD: Makefile.cats,v 1.4 2006/05/30 18:25:42 miod Exp $
+#	$OpenBSD: Makefile.cats,v 1.5 2006/06/01 21:46:27 pascoe Exp $
+#	$OpenBSD: Makefile.cats,v 1.5 2006/06/01 21:46:27 pascoe Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -116,8 +116,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S -x
 .endif
