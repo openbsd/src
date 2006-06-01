@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.74 2006/06/01 05:34:52 jason Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.75 2006/06/01 05:56:51 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -248,7 +248,7 @@ adjustname(const char *fn, int slashslash)
 
 	path[0] = '\0';
 
-	if (slashslash) {
+	if (slashslash == TRUE) {
 		cp = fn + strlen(fn) - 1;
 		for (; cp >= fn; cp--) {
 			if (ep && (*cp == '/')) {
