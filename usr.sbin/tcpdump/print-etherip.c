@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-etherip.c,v 1.3 2006/05/29 18:05:22 moritz Exp $	*/
+/*	$OpenBSD: print-etherip.c,v 1.4 2006/06/01 17:18:39 moritz Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-etherip.c,v 1.3 2006/05/29 18:05:22 moritz Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-etherip.c,v 1.4 2006/06/01 17:18:39 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -64,12 +64,12 @@ static const char rcsid[] =
 extern u_short extracted_ethertype;
 
 void
-etherip_print(const u_char *bp, u_int len, const u_char *bp2)
+etherip_print(const u_char *bp, u_int caplen, u_int len, const u_char *bp2)
 {
 	const struct ip *ip = (const struct ip *)bp2;
 	struct ether_header *eh;
 	const u_char *pbuf = bp;
-	u_int plen = len, hlen;
+	u_int plen = caplen, hlen;
 	u_int16_t etype;
 
 	if (plen < sizeof(struct etherip_header)) {
@@ -100,22 +100,32 @@ etherip_print(const u_char *bp, u_int len, const u_char *bp2)
 
 	printf(": ");
 
+	if (plen < hlen) {
+		printf("[|etherip]");
+		return;
+	}
 	pbuf += hlen;
 	plen -= hlen;
+	len -= hlen;
 
 	if (eflag)
-		ether_print(pbuf, plen);
+		ether_print(pbuf, len);
 	eh = (struct ether_header *)pbuf;
+	if (plen < sizeof(struct ether_header)) {
+		printf("[|ether]");
+		return;
+	}
 	etype = EXTRACT_16BITS(pbuf + offsetof(struct ether_header, ether_type));
 	pbuf += sizeof(struct ether_header);
 	plen -= sizeof(struct ether_header);
+	len -= sizeof(struct ether_header);
 
 	/* XXX LLC? */
 	extracted_ethertype = 0;
 	if (etype <= ETHERMTU) {
-		if (llc_print(pbuf, plen, plen, ESRC(eh), EDST(eh)) == 0) {
+		if (llc_print(pbuf, len, plen, ESRC(eh), EDST(eh)) == 0) {
 			if (!eflag)
-				ether_print((u_char *)eh, plen);
+				ether_print((u_char *)eh, len);
 			if (extracted_ethertype) {
 				printf("LLC %s",
 				    etherproto_string(htons(extracted_ethertype)));
@@ -123,9 +133,9 @@ etherip_print(const u_char *bp, u_int len, const u_char *bp2)
 			if (!xflag && !qflag)
 				default_print(pbuf, plen);
 		}
-	} else if (ether_encap_print(etype, pbuf, plen, plen) == 0) {
+	} else if (ether_encap_print(etype, pbuf, len, plen) == 0) {
 		if (!eflag)
-			ether_print((u_char *)eh, plen + sizeof(*eh));
+			ether_print((u_char *)eh, len + sizeof(*eh));
 		if (!xflag && !qflag)
 			default_print(pbuf, plen);
 	}

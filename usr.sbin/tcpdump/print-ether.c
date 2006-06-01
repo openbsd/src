@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.21 2006/03/28 15:48:33 reyk Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.22 2006/06/01 17:18:39 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.21 2006/03/28 15:48:33 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.22 2006/06/01 17:18:39 moritz Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -65,17 +65,23 @@ ether_print(register const u_char *bp, u_int length)
 	register const struct ether_header *ep;
 
 	ep = (const struct ether_header *)bp;
-	if (qflag)
+	if (qflag) {
+		TCHECK2(*ep, 12);
 		(void)printf("%s %s %d: ",
 			     etheraddr_string(ESRC(ep)),
 			     etheraddr_string(EDST(ep)),
 			     length);
-	else
+	} else {
+		TCHECK2(*ep, 14);
 		(void)printf("%s %s %s %d: ",
 			     etheraddr_string(ESRC(ep)),
 			     etheraddr_string(EDST(ep)),
 			     etherproto_string(ep->ether_type),
 			     length);
+	}
+	return;
+trunc:
+	printf("[|ether] ");
 }
 
 u_short extracted_ethertype;
@@ -101,9 +107,6 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		goto out;
 	}
 
-	if (eflag)
-		ether_print(p, length);
-
 	/*
 	 * Some printers want to get back at the ethernet addresses,
 	 * and/or check that they're not walking off the end of the packet.
@@ -111,6 +114,9 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	 */
 	packetp = p;
 	snapend = p + caplen;
+
+	if (eflag)
+		ether_print(p, length);
 
 	length -= sizeof(struct ether_header);
 	caplen -= sizeof(struct ether_header);
