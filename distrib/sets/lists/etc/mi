@@ -19,6 +19,7 @@
 ./etc/dhcpd.interfaces
 ./etc/disktab
 ./etc/dumpdates
+./etc/dvmrpd.conf
 ./etc/exports
 ./etc/fbtab
 ./etc/ftpchroot

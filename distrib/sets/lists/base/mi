@@ -1782,6 +1782,8 @@
 ./usr/sbin/dig
 ./usr/sbin/dnssec-keygen
 ./usr/sbin/dnssec-signzone
+./usr/sbin/dvmrpctl
+./usr/sbin/dvmrpd
 ./usr/sbin/editmap
 ./usr/sbin/edquota
 ./usr/sbin/faithd

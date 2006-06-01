@@ -1862,6 +1862,7 @@
 ./usr/share/man/cat5/dirent.0
 ./usr/share/man/cat5/disklabel.0
 ./usr/share/man/cat5/disktab.0
+./usr/share/man/cat5/dvmrpd.conf.0
 ./usr/share/man/cat5/editrc.0
 ./usr/share/man/cat5/elf.0
 ./usr/share/man/cat5/ethers.0
@@ -2110,6 +2111,8 @@
 ./usr/share/man/cat8/dnssec-signzone.0
 ./usr/share/man/cat8/dump.0
 ./usr/share/man/cat8/dumpfs.0
+./usr/share/man/cat8/dvmrpctl.0
+./usr/share/man/cat8/dvmrpd.0
 ./usr/share/man/cat8/editmap.0
 ./usr/share/man/cat8/edquota.0
 ./usr/share/man/cat8/faithd.0
