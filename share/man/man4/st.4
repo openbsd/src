@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.12 2006/06/01 05:55:32 krw Exp $
+.\"	$OpenBSD: st.4,v 1.13 2006/06/01 19:17:04 krw Exp $
 .\"	$NetBSD: st.4,v 1.2 1996/10/20 23:15:24 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -41,14 +41,16 @@ The
 driver provides support for
 .Tn SCSI
 tape drives.
-It allows a tape drive to be run in several different modes depending
-on minor numbers and supports several different
-.Dq sub-modes .
 The device can have both a
 .Em raw
 interface and a
 .Em block
 interface; however, only the raw interface is usually used (or recommended).
+The raw interface devices will have an
+.Sq r
+in their names
+e.g.\&
+.Pa /dev/rst0 .
 .Pp
 .Tn SCSI
 devices have a relatively high level interface and talk to the system via a
@@ -56,11 +58,11 @@ devices have a relatively high level interface and talk to the system via a
 adapter and a
 .Tn SCSI
 adapter driver
-(e.g.,
-.Xr ahc 4 ) .
-A
+e.g.\&
+.Xr ahc 4 .
+The
 .Tn SCSI
-adapter must also be separately configured into the system before a
+adapter must be separately configured into the system before a
 .Tn SCSI
 tape can be configured.
 .Pp
@@ -122,6 +124,16 @@ For example,
 will eject its media on close but
 .Pa /dev/rst0
 will not.
+.Pp
+If both bit 0 and bit 1 are set then an eject will
+be attempted without a rewind and the device will have both an
+.Sq e
+and an
+.Sq n
+in its name.
+For example,
+.Pa /dev/enrst0
+will eject its media without first rewinding it on close.
 .Pp
 There is no guarantee that the attempted eject or rewind will be supported
 by the actual hardware.
@@ -193,22 +205,6 @@ These devices include the QIC family of devices.
 (It might be that this set of devices is the same set as that of fixed.
 This has not yet been determined, and they are treated as separate
 behaviors by the driver at this time.)
-.Sh KERNEL CONFIGURATION
-Because different tape drives behave differently, there is a
-mechanism within the source to
-.Nm
-to quickly and conveniently recognize and deal with brands and
-models of drive that have special requirements.
-.Pp
-There is a table (called the
-.Em quirk table )
-in which the identification strings of known errant drives can be stored.
-Alongside each is a set of flags that allows the setting
-of densities and blocksizes for each of the modes, along with a
-set of
-.Dq QUIRK
-flags that can be used to enable or disable sections
-of code within the driver if a particular drive is recognized.
 .Sh IOCTLS
 The following
 .Xr ioctl 2
