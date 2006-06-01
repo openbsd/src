@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.6 2006/06/01 04:36:19 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.7 2006/06/01 21:32:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -63,7 +63,7 @@ struct mpi_ccb {
 	}			ccb_state;
 	void			(*ccb_done)(struct mpi_ccb *);
 	void			*ccb_reply;
-	paddr_t			ccb_reply_dva;
+	u_int32_t		ccb_reply_dva;
 
 	TAILQ_ENTRY(mpi_ccb)	ccb_link;
 };

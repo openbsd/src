@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.23 2006/06/01 04:36:19 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.24 2006/06/01 21:32:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -243,9 +243,10 @@ mpi_intr(void *arg)
 			    BUS_DMASYNC_POSTREAD);
 
 			reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
-			reply_dva -= (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
 
-			reply_addr = MPI_DMA_KVA(sc->sc_replies) + reply_dva;
+			reply_addr = MPI_DMA_KVA(sc->sc_replies);
+			reply_addr += reply_dva -
+			    (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
 			reply = (struct mpi_msg_reply *)reply_addr;
 
 			id = letoh32(reply->msg_context);
@@ -486,9 +487,10 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 			    BUS_DMASYNC_POSTREAD);
 
 			reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
-			reply_dva -= (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
 
-			reply_addr = MPI_DMA_KVA(sc->sc_replies) + reply_dva;
+			reply_addr = MPI_DMA_KVA(sc->sc_replies);
+			reply_addr += reply_dva -
+			    (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
 			reply = (struct mpi_msg_reply *)reply_addr;
 
 			id = letoh32(reply->msg_context);
