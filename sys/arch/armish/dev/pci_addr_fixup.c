@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.3 2006/05/31 05:57:32 drahn Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.4 2006/06/01 03:44:20 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -219,14 +219,15 @@ pciaddr_resource_manage(struct i80321_softc *sc, pci_chipset_tag_t pc,
 			ex = sc->extent_mem;
 		} else {
 			/* XXX some devices give 32bit value */
-			addr = PCI_MAPREG_IO_ADDR(val);
-			if (sc->sc_iobus_space.bus_base != PCIADDR_PORT_START &&
-			    addr < sc->sc_iobus_space.bus_base) {
-				/* skew address to be in range */
-				addr = PCI_MAPREG_IO_ADDR(val) &
-				     PCIADDR_PORT_END;
-				addr |= sc->sc_iobus_space.bus_base;
+			if (sc->sc_iobus_space.bus_base != PCIADDR_PORT_START) {
+				/*
+				 * if the bus base is not 0 skew all addresses
+				 */
+				val &= PCIADDR_PORT_END;
+				val |= sc->sc_iobus_space.bus_base;
+				pci_conf_write(pc, tag, mapreg, val);
 			}
+			addr = PCI_MAPREG_IO_ADDR(val);
 			size = PCI_MAPREG_IO_SIZE(mask);
 			ex = sc->extent_port;
 		}
@@ -266,7 +267,10 @@ pciaddr_do_resource_allocate(struct i80321_softc *sc, pci_chipset_tag_t pc,
 	bus_addr_t start;
 	int error;
 	
-	if (*addr) /* no need to allocate */
+	if (type == PCI_MAPREG_TYPE_IO) {
+		if ((*addr & PCIADDR_PORT_END) != 0)
+			return (0);
+	} else if (*addr) /* no need to allocate */
 		return (0);
 
 	/* XXX Don't allocate if device is AGP device to avoid conflict. */
@@ -274,7 +278,7 @@ pciaddr_do_resource_allocate(struct i80321_softc *sc, pci_chipset_tag_t pc,
 		return (0);
 	
 	start = (type == PCI_MAPREG_TYPE_MEM ? sc->sc_membus_space.bus_base
-	    : PCIADDR_PORT_START);
+	    : sc->sc_iobus_space.bus_base);
 	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
 		PCIBIOS_PRINTV(("No available resources. fixup failed\n"));
 		return (1);
@@ -312,6 +316,8 @@ pciaddr_do_resource_reserve(struct i80321_softc *sc, pci_chipset_tag_t pc,
 {
 	int error;
 
+	if ((type == PCI_MAPREG_TYPE_IO) && ((*addr & PCIADDR_PORT_END) == 0))
+		return (1);
 	if (*addr == 0)
 		return (1);
 
@@ -368,58 +374,6 @@ pciaddr_device_is_agp(pci_chipset_tag_t pc, pcitag_t tag)
 	}
 	return (0);
 }
-
-
-#if 0
-struct extent *
-pciaddr_search(int mem_port, struct device *parent, bus_addr_t *startp,
-    bus_size_t size)
-{
-	struct i80321_softc *sc;
-
-	/* find the bridge, 'mpcpcibr' */
-
-	sc = NULL;
-	while (parent != NULL) {
-		if (strncmp("mpcpcibr", parent->dv_xname, 8) == 0) {
-			sc = (void *)parent;
-			break;
-		}
-		parent = parent->dv_parent;
-	}
-
-	if (sc && !(pcibr_flags & PCIBR_ADDR_FIXUP)) {
-		struct extent_region *rp;
-		struct extent *ex = mem_port? sc->extent_mem : sc->extent_port;
-
-		/* Search the PCI I/O memory space extent for free
-		 * space that will accommodate size.  Remember that the
-		 * extent stores allocated space and we're searching
-		 * for the gaps.
-		 *
-		 * If we're at the end or the gap between this region
-		 * and the next region big enough, then we're done
-		 */
-		*startp = ex->ex_start;
-		rp = LIST_FIRST(&ex->ex_regions);
-
-		for (rp = LIST_FIRST(&ex->ex_regions);
-		    rp && *startp + size > rp->er_start;
-		    rp = LIST_NEXT(rp, er_link)) {
-			bus_addr_t new_start;
-
-			new_start = (rp->er_end - 1 + size) & ~(size - 1);
-			if (new_start > *startp)
-				*startp = new_start;
-		}
-
-		return (ex);
-	}
-
-	return (NULL);
-}
-#endif
-
 
 void
 pci_device_foreach(struct i80321_softc *sc, pci_chipset_tag_t pc, int maxbus,
