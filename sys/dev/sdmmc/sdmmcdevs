@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.1 2006/06/01 21:15:40 uwe Exp $
+	$OpenBSD: sdmmcdevs,v 1.2 2006/06/01 21:44:55 uwe Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -31,4 +31,4 @@ vendor SPECTEC			0x02fe	Spectec Computer Co., Ltd
 product SYCHIP WLAN6060SD	0x544d	SyChip Pegasus WLAN SDIO Card
 
 /* Spectec Computer Co., Ltd */
-product SPECTEC SDIOWLAN11B	0x2128	Spectec Computer SDIO WLAN Card
+product SPECTEC SDW820		0x2128	Spectec SDIO WLAN Card
