@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.47 2006/05/28 08:04:34 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.48 2006/06/01 20:29:05 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -126,12 +126,12 @@ see the file
 .It Xo
 .Ar from
 .Aq Ar src
+.Ar port
+.Aq Ar sport
 .Ar to
 .Aq Ar dst
-.Ar local
-.Aq Ar localip
-.Ar peer
-.Aq Ar remote
+.Ar port
+.Aq Ar dport
 .Xc
 This rule applies for packets with source address
 .Aq Ar src
@@ -140,10 +140,25 @@ and destination address
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
+The optional
+.Ar port
+modifiers restrict the flows to the specified ports.
+They are only valid in conjunction with the
+.Xr tcp 4
+and
+.Xr udp 4
+protocols.
+Ports can be specified by number or by name.
+For a list of all port name to number mappings used by
+.Xr ipsecctl 8 ,
+see the file
+.Pa /etc/services .
+.It Ar local Aq Ar localip
 The
 .Ar local
 parameter specifies the address or FQDN of the local endpoint of this
 flow and can be usually left out.
+.It Ar peer Aq Ar remote
 The
 .Ar peer
 parameter specifies the address or FQDN of the remote endpoint of this
