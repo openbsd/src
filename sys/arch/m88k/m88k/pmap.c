@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2006/05/25 21:37:45 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2006/06/01 06:25:51 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -488,7 +488,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		 * Data cache should be copied back and invalidated if
 		 * the old mapping was cached.
 		 */
-		if ((opte & CACHE_MASK) != CACHE_INH) {
+		if ((opte & CACHE_INH) == 0) {
 			pa = ptoa(PG_PFNUM(opte));
 #ifdef MULTIPROCESSOR
 			for (cpu = 0; cpu < MAX_CPUS; cpu++)
