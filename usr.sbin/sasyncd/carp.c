@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.2 2006/01/26 09:53:46 moritz Exp $	*/
+/*	$OpenBSD: carp.c,v 1.3 2006/06/01 22:43:12 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -34,7 +34,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <netinet/ip_carp.h>
+#include <net/route.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -43,19 +43,33 @@
 
 #include "sasyncd.h"
 
-/* For some reason, ip_carp.h does not define this.  */
-#define CARP_INIT	0
-#define CARP_BACKUP	1
-#define CARP_MASTER	2
+static enum RUNSTATE
+carp_map_state(u_char link_state)
+{
+	enum RUNSTATE state = FAIL;
+
+	switch(link_state) {
+	case LINK_STATE_UP:
+		state = MASTER;
+		break;
+	case LINK_STATE_DOWN:
+		state = SLAVE;
+		break;
+	case LINK_STATE_UNKNOWN:
+		state = INIT;
+		break;
+	}
+
+	return state;
+}
 
 /* Returns 1 for the CARP MASTER, 0 for BACKUP/INIT, -1 on error.  */
 static enum RUNSTATE
 carp_get_state(char *ifname)
 {
 	struct ifreq	ifr;
-	struct carpreq	carp;
+	struct if_data	ifrdat;
 	int		s, saved_errno;
-	char		*state;
 
 	if (!ifname || !*ifname) {
 		errno = ENOENT;
@@ -69,58 +83,40 @@ carp_get_state(char *ifname)
 	if (s < 0)
 		return FAIL;
 
-	ifr.ifr_data = (caddr_t)&carp;
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1) {
+	ifr.ifr_data = (caddr_t)&ifrdat;
+	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1) {
 		saved_errno = errno;
 		close(s);
 		errno = saved_errno;
 		return FAIL;
 	}
 	close(s);
+	return carp_map_state(ifrdat.ifi_link_state);
+}
 
-	switch (carp.carpr_state) {
-	case CARP_INIT:
-		state = "INIT";
-		break;
+const char*
+carp_state_name(enum RUNSTATE state)
+{
+	static const char	*carpstate[] = CARPSTATES;
 
-	case CARP_BACKUP:
-		state = "BACKUP";
-		break;
-
-	case CARP_MASTER:
-		state = "MASTER";
-		break;
-
-	default:
-		state = "<unknown>";
-		break;
-	}
-
-	log_msg(4, "carp_get_state: %s vhid %d state %s(%d)", ifname,
-	    carp.carpr_vhid, state, carp.carpr_state);
-
-	if (carp.carpr_vhid > 0)
-		return carp.carpr_state == CARP_MASTER ? MASTER : SLAVE;
-	else
-		return FAIL;
+	if (state < 0 || state > FAIL)
+		state = FAIL;
+	return carpstate[state];
 }
 
 void
-carp_check_state(void)
+carp_update_state(enum RUNSTATE current_state)
 {
-	enum RUNSTATE	current_state = carp_get_state(cfgstate.carp_ifname);
-	static char	*carpstate[] = CARPSTATES;
 
 	if (current_state < 0 || current_state > FAIL) {
-		log_err("carp_state_tracker: invalid result on interface "
-		    "%s, abort", cfgstate.carp_ifname);
+		log_err("carp_update_state: invalid carp state, abort");
 		cfgstate.runstate = FAIL;
 		return;
 	}
 
 	if (current_state != cfgstate.runstate) {
-		log_msg(1, "carp_state_tracker: switching state to %s",
-		    carpstate[current_state]);
+		log_msg(1, "carp_update_state: switching state to %s",
+		    carp_state_name(current_state));
 		cfgstate.runstate = current_state;
 		if (current_state == MASTER)
 			pfkey_set_promisc();
@@ -128,49 +124,81 @@ carp_check_state(void)
 	}
 }
 
-static void
-carp_state_tracker(void *v_arg)
+void
+carp_check_state()
 {
-	static int	failures = 0;
-	u_int32_t	next_check;
-
-	carp_check_state();
-
-	if (cfgstate.runstate == FAIL)
-		if (++failures < 3)
-			log_err("carp_state_tracker");
-
-	if (failures > 5)
-		next_check = 600;
-	else
-		next_check = cfgstate.carp_check_interval + failures * 10;
-
-	if (timer_add("carp_state_tracker", next_check, carp_state_tracker,
-	    NULL))
-		log_msg(0, "carp_state_tracker: failed to renew event");
-	return;
+	carp_update_state(carp_get_state(cfgstate.carp_ifname));
 }
 
-/* Initialize the CARP state tracker. */
+void
+carp_set_rfd(fd_set *fds)
+{
+	if (cfgstate.route_socket != -1)
+		FD_SET(cfgstate.route_socket, fds);
+}
+
+static void
+carp_read(void)
+{
+	char msg[2048];
+	struct if_msghdr *ifm = (struct if_msghdr *)&msg;
+	int len;
+
+	len = read(cfgstate.route_socket, msg, sizeof(msg));
+
+	if (len >= sizeof(struct if_msghdr) &&
+	    ifm->ifm_version == RTM_VERSION &&
+	    ifm->ifm_type == RTM_IFINFO)
+		carp_update_state(carp_map_state(ifm->ifm_data.ifi_link_state));
+}
+
+void
+carp_read_message(fd_set *fds)
+{
+	if (cfgstate.route_socket != -1)
+		if (FD_ISSET(cfgstate.route_socket, fds))
+			(void)carp_read();
+}
+
+/* Initialize the CARP state. */
 int
 carp_init(void)
 {
-	enum RUNSTATE initial_state;
+	cfgstate.route_socket = -1;
 
 	if (cfgstate.lockedstate != INIT) {
 		cfgstate.runstate = cfgstate.lockedstate;
 		log_msg(1, "carp_init: locking runstate to %s",
-		    cfgstate.runstate == MASTER ? "MASTER" : "SLAVE");
+		    carp_state_name(cfgstate.runstate));
 		return 0;
 	}
 
-	initial_state = carp_get_state(cfgstate.carp_ifname);
-	if (initial_state == FAIL) {
+	if (!cfgstate.carp_ifname || !*cfgstate.carp_ifname) {
+		fprintf(stderr, "No carp interface\n");
+		return -1;
+	}
+
+	cfgstate.carp_ifindex = if_nametoindex(cfgstate.carp_ifname);
+	if (!cfgstate.carp_ifindex) {
+		fprintf(stderr, "No carp interface index\n");
+		return -1;
+	}
+
+	cfgstate.route_socket = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (cfgstate.route_socket < 0) {
+		fprintf(stderr, "No routing socket\n");
+		return -1;
+	}
+
+	cfgstate.runstate = carp_get_state(cfgstate.carp_ifname);
+	if (cfgstate.runstate == FAIL) {
 		fprintf(stderr, "Failed to check interface \"%s\".\n",
 		    cfgstate.carp_ifname);
 		fprintf(stderr, "Correct or manually select runstate.\n");
 		return -1;
 	}
+	log_msg(1, "carp_init: initializing runstate to %s",
+	    carp_state_name(cfgstate.runstate));	
 
-	return timer_add("carp_state_tracker", 0, carp_state_tracker, NULL);
+	return 0;
 }

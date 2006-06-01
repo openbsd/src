@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.8 2006/03/31 17:38:18 pat Exp $	*/
+/*	$OpenBSD: conf.y,v 1.9 2006/06/01 22:43:12 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -62,7 +62,7 @@ void	yyerror(const char *);
 %token SKIPSLAVE
 %token <string> STRING
 %token <val>	VALUE
-%type  <val>	af port interval mode flushmode
+%type  <val>	af port mode flushmode
 
 %%
 /* Rules */
@@ -97,23 +97,17 @@ modes		: SKIPSLAVE
 		}
 		;
 
-interval	: /* empty */		{ $$ = CARP_DEFAULT_INTERVAL; }
-		| INTERVAL VALUE	{ $$ = $2; }
-		;
-
 flushmode	: STARTUP		{ $$ = FM_STARTUP; }
 		| NEVER			{ $$ = FM_NEVER; }
 		| SYNC			{ $$ = FM_SYNC; }
 		;
 
-setting		: CARP INTERFACE STRING interval
+setting		: CARP INTERFACE STRING
 		{
 			if (cfgstate.carp_ifname)
 				free(cfgstate.carp_ifname);
 			cfgstate.carp_ifname = $3;
-			cfgstate.carp_check_interval = $4;
-			log_msg(2, "config: carp interface %s interval %d",
-			    $3, $4);
+			log_msg(2, "config: carp interface %s", $3);
 		}
 		| FLUSHMODE flushmode
 		{
@@ -204,7 +198,6 @@ match(char *token)
 		{ "inet", INET },
 		{ "inet6", INET6 },
 		{ "interface", INTERFACE },
-		{ "interval", INTERVAL },
 		{ "listen", LISTEN },
 		{ "master", Y_MASTER },
 		{ "mode", MODE },
@@ -346,7 +339,6 @@ conf_init(int argc, char **argv)
 	cfgstate.runstate = INIT;
 	LIST_INIT(&cfgstate.peerlist);
 
-	cfgstate.carp_check_interval = CARP_DEFAULT_INTERVAL;
 	cfgstate.listen_port = SASYNCD_DEFAULT_PORT;
 
 	while ((ch = getopt(argc, argv, "c:dv")) != -1) {

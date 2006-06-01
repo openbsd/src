@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.8 2005/05/28 01:07:52 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.9 2006/06/01 22:43:12 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -46,11 +46,13 @@ struct cfgstate {
 	u_int32_t	 flags;
 
 	char		*carp_ifname;
-	int		 carp_check_interval;
+	int		 carp_ifindex;
 
 	char		*sharedkey;
 
 	int		 pfkey_socket;
+
+	int		 route_socket;
 
 	char		*listen_on;
 	in_port_t	 listen_port;
@@ -94,8 +96,12 @@ extern struct cfgstate	cfgstate;
 int	conf_init(int, char **);
 
 /* carp.c */
-void	carp_check_state(void);
-int	carp_init(void);
+int		carp_init(void);
+void		carp_check_state(void);
+void		carp_update_state(enum RUNSTATE);
+void		carp_set_rfd(fd_set *);
+void		carp_read_message(fd_set *);
+const char*	carp_state_name(enum RUNSTATE);
 
 /* log.c */
 /*

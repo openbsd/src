@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.10 2006/05/26 04:02:59 deraadt Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.11 2006/06/01 22:43:12 mcbride Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -60,16 +60,13 @@ The following configuration settings are understood:
 .Bl -tag -width Ds
 .It Xo
 .Ic carp interface
-.Ar interface Op Ic interval Ar seconds
+.Ar interface
 .Xc
 Specify which
 .Xr carp 4
 interface
 .Nm sasyncd
 should track master/slave state on.
-Optionally state how often the daemon should check the interface
-for state changes.
-Defaults to once every 10 seconds.
 .It Ic flushmode sync | startup | never
 Controls how the
 .Xr sasyncd 8

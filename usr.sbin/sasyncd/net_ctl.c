@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.6 2005/05/26 19:19:51 ho Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.7 2006/06/01 22:43:12 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -53,8 +53,6 @@ struct ctlmsg {
 static int
 net_ctl_check_state(struct syncpeer *p, enum RUNSTATE nstate)
 {
-	static char	*runstate[] = CARPSTATES;
-
 	if (nstate < INIT || nstate > FAIL) {
 		log_msg(0, "net_ctl: got bad state %d from peer \"%s\"",
 		    nstate, p->name);
@@ -70,7 +68,7 @@ net_ctl_check_state(struct syncpeer *p, enum RUNSTATE nstate)
 	if (p->runstate != nstate) {
 		p->runstate = nstate;
 		log_msg(1, "net_ctl: peer \"%s\" state change to %s", p->name,
-		    runstate[nstate]);
+		    carp_state_name(nstate));
 	}
 	return 0;
 }
@@ -181,7 +179,6 @@ void
 net_ctl_update_state(void)
 {
 	struct syncpeer *p;
-	static char	*carpstate[] = CARPSTATES;
 
 	/* We may have new peers available.  */
 	net_connect();
@@ -190,7 +187,7 @@ net_ctl_update_state(void)
 		if (p->socket == -1)
 			continue;
 		log_msg(4, "net_ctl: sending my state %s to peer \"%s\"",
-		    carpstate[cfgstate.runstate], p->name);
+		    carp_state_name(cfgstate.runstate), p->name);
 		net_ctl_send_state(p);
 	}
 }
