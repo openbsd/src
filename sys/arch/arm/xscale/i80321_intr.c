@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_intr.c,v 1.3 2006/06/01 08:24:53 drahn Exp $	*/
+/*	$OpenBSD: i80321_intr.c,v 1.4 2006/06/01 17:33:47 drahn Exp $	*/
 /*	$NetBSD: i80321_icu.c,v 1.11 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
@@ -439,7 +439,8 @@ _splraise(int ipl)
 	int	old;
 
 	old = current_ipl_level;
-	current_ipl_level = ipl;
+	if (ipl > old)
+		current_ipl_level = ipl;
 	if (spl_debug) {
 		nesting ++;
 		if (nesting == 1)
