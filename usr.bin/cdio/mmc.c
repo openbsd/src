@@ -1,4 +1,5 @@
-/* $OpenBSD: mmc.c,v 1.6 2006/06/01 07:12:18 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.7 2006/06/01 07:53:01 deraadt Exp $ */
+
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -26,7 +27,6 @@
 #include <unistd.h>
 #include "extern.h"
 
-extern int errno;
 extern int fd;
 extern char *cdname;
 
@@ -49,7 +49,7 @@ blank(void)
 	if (r == -1 && errno == EPERM) {
 		close(fd);
 		fd = -1;
-		if (! open_cd(cdname, 1))
+		if (!open_cd(cdname, 1))
 			return (-1);
 	}
 	r = ioctl(fd, SCIOCCOMMAND, &scr);
@@ -110,7 +110,6 @@ close_session(void)
 
 	r = ioctl(fd, SCIOCCOMMAND, &scr);
 	return (r == 0 ? scr.retsts : -1);
-
 }
 
 int
@@ -118,8 +117,8 @@ writetao(struct track_head *thp)
 {
 	u_char modebuf[70];
 	struct track_info *tr;
-	int r;
 	u_char bdlen;
+	int r;
 
 	if ((r = mode_sense_write(modebuf)) != SCCMD_OK) {
 		warnx("mode sense failed: %d", r);
@@ -130,7 +129,7 @@ writetao(struct track_head *thp)
 	modebuf[2+8+bdlen] |= 0x01; /* change write type to TAO */
 
 	SLIST_FOREACH(tr, thp, track_list) {
-		switch(tr->type) {
+		switch (tr->type) {
 		case 'd':
 			modebuf[3+8+bdlen] = 0x04; /* track mode = data */
 			modebuf[4+8+bdlen] = 0x08; /* 2048 block track mode */
@@ -193,7 +192,8 @@ writetrack(struct track_info *tr)
 		return (-1);
 	}
 	if (tr->sz % tr->blklen) {
-		warnx("file %s is not multiple of block length %d", tr->file, tr->blklen);
+		warnx("file %s is not multiple of block length %d",
+		    tr->file, tr->blklen);
 		end_lba = tr->sz / tr->blklen + lba + 1;
 	} else {
 		end_lba = tr->sz / tr->blklen + lba;
@@ -214,7 +214,9 @@ writetrack(struct track_info *tr)
 				return (-1);
 			}
 			if (scr.retsts != SCCMD_OK) {
-				warnx("ioctl returned bad status while attempting to write: %d", scr.retsts);
+				warnx("ioctl returned bad status while "
+				    "attempting to write: %d",
+				    scr.retsts);
 				return (r);
 			}
 			lba += nblk;
@@ -243,7 +245,7 @@ mode_sense_write(unsigned char buf[])
 	scr.cmd[7] = 0x00;
 	scr.cmd[8] = 0x46; /* 16 for the header + size from pg. 89 mmc-r10a.pdf */
 	scr.cmdlen = 10;
-	scr.datalen= 0x46; 
+	scr.datalen= 0x46;
 	scr.flags = SCCMD_ESCAPE|SCCMD_READ;
 	scr.databuf = (caddr_t)buf;
 
@@ -290,7 +292,7 @@ get_disc_size(off_t *availblk)
 	scr.cmd[7] = 0x00;
 	scr.cmd[8] = 0x1c;
 	scr.cmdlen = 10;
-	scr.datalen= 0x1c; 
+	scr.datalen= 0x1c;
 	scr.flags = SCCMD_ESCAPE|SCCMD_READ;
 	scr.databuf = (caddr_t)databuf;
 
@@ -316,7 +318,7 @@ get_nwa(int *nwa)
 	scr.cmd[7] = 0x00;
 	scr.cmd[8] = 0x1c;
 	scr.cmdlen = 10;
-	scr.datalen= 0x1c; 
+	scr.datalen= 0x1c;
 	scr.flags = SCCMD_ESCAPE|SCCMD_READ;
 	scr.databuf = (caddr_t)databuf;
 

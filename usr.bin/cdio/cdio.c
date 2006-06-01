@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.50 2006/06/01 07:12:18 mjc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.51 2006/06/01 07:53:01 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -192,7 +192,7 @@ help(void)
 	int i;
 
 	for (c=cmdtab; c->name; ++c) {
-		if (! c->args)
+		if (!c->args)
 			continue;
 		printf("\t");
 		for (i = c->min, s = c->name; *s; s++, i--) {
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 	char type;
 
 	cdname = getenv("DISC");
-	if (! cdname)
+	if (!cdname)
 		cdname = getenv("CDROM");
 
 	cddb_host = getenv("CDDB");
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 	if (argc > 0 && ! strcasecmp(*argv, "help"))
 		usage();
 
-	if (! cdname) {
+	if (!cdname) {
 		cdname = DEFAULT_CD_DRIVE;
 		fprintf(stderr,
 		    "No CD device name specified. Defaulting to %s.\n", cdname);
@@ -314,7 +314,7 @@ main(int argc, char **argv)
 				SLIST_INSERT_AFTER(cur_track,tr,track_list);
 			cur_track = tr;
 		}
-		if (! open_cd(cdname, 1))
+		if (!open_cd(cdname, 1))
 			exit(1);
 		get_disc_size(&availblk);
 		SLIST_FOREACH(tr, &tracks, track_list) {
@@ -441,10 +441,10 @@ run(int cmd, char *arg)
 		if (fd < 0 && ! open_cd(cdname, 0))
 			return (0);
 
-		if (! strcasecmp(arg, "on"))
+		if (!strcasecmp(arg, "on"))
 			return ioctl(fd, CDIOCSETDEBUG);
 
-		if (! strcasecmp(arg, "off"))
+		if (!strcasecmp(arg, "off"))
 			return ioctl(fd, CDIOCCLRDEBUG);
 
 		printf("%s: Invalid command arguments\n", __progname);
@@ -465,7 +465,7 @@ run(int cmd, char *arg)
 		}
 
 		/* open new device */
-		if (! open_cd(arg, 0))
+		if (!open_cd(arg, 0))
 			return (0);
 		(void) strlcpy(newcdname, arg, sizeof(newcdname));
 		cdname = newcdname;
@@ -615,7 +615,7 @@ play(char *arg)
 		rc--;
 	}
 
-	if (! arg || ! *arg) {
+	if (!arg || ! *arg) {
 		/* Play the whole disc */
 		return (play_track(h.starting_track, 1, h.ending_track, 1));
 	}
@@ -940,7 +940,7 @@ play_prev(char *arg)
 		}
 
 		if (trk < h.starting_track)
-			return play_track(h.starting_track, 1, 
+			return play_track(h.starting_track, 1,
 			    h.ending_track + 1, 1);
 		return play_track(trk, 1, h.ending_track, 1);
 	}
@@ -1355,7 +1355,7 @@ play_msf(int start_m, int start_s, int start_f, int end_m, int end_s, int end_f)
 	return ioctl(fd, CDIOCPLAYMSF, (char *) &a);
 }
 
-int 
+int
 status(int *trk, int *min, int *sec, int *frame)
 {
 	struct ioc_read_subchannel s;
@@ -1431,7 +1431,7 @@ parse(char *buf, int *cmd)
 		continue;
 
 	len = p - buf;
-	if (! len)
+	if (!len)
 		return (0);
 
 	if (*p) {		/* It must be a spacing character! */
@@ -1446,7 +1446,7 @@ parse(char *buf, int *cmd)
 	*cmd = -1;
 	for (c=cmdtab; c->name; ++c) {
 		/* Is it an exact match? */
-		if (! strcasecmp(buf, c->name)) {
+		if (!strcasecmp(buf, c->name)) {
   			*cmd = c->command;
   			break;
 		}
