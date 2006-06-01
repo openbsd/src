@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.23 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.24 2006/06/01 09:45:05 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -221,6 +221,8 @@ int
 getgoal(struct line *dlp)
 {
 	int c, i, col = 0;
+	char tmp[5];
+
 
 	for (i = 0; i < llength(dlp); i++) {
 		c = lgetc(dlp, i);
@@ -236,10 +238,7 @@ getgoal(struct line *dlp)
 		} else if (isprint(c))
 			col++;
 		else {
-			char tmp[5];
-
-			snprintf(tmp, sizeof(tmp), "\\%o", c);
-			col += strlen(tmp);
+			col += snprintf(tmp, sizeof(tmp), "\\%o", c);
 		}
 		if (col > curgoal)
 			break;
@@ -448,6 +447,8 @@ gotoline(int f, int n)
 	if (!(f & FFARG)) {
 		if ((bufp = eread("Goto line: ", buf, sizeof(buf),
 		    EFNUL | EFNEW | EFCR)) == NULL)
+			return (ABORT);
+		if (bufp[0] == '\0')
 			return (ABORT);
 		n = (int)strtonum(buf, INT_MIN, INT_MAX, &err);
 		if (err) {
