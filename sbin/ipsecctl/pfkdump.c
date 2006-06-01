@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.14 2006/06/01 06:50:58 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.15 2006/06/01 16:13:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -58,7 +58,7 @@ static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
 
 static struct idname *lookup(struct idname [], u_int8_t);
 static char    *lookup_name(struct idname [], u_int8_t);
-static void	print_ext(struct sadb_ext *, struct sadb_msg *, int);
+static void	print_ext(struct sadb_ext *, struct sadb_msg *);
 
 void		pfkey_print_sa(struct sadb_msg *, int);
 void		pfkey_print_raw(u_int8_t *, ssize_t);
@@ -243,24 +243,16 @@ lookup_name(struct idname tab[], u_int8_t id)
 }
 
 static void
-print_ext(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_ext(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct idname *entry;
-
-	if (ext->sadb_ext_type == SADB_EXT_ADDRESS_SRC ||
-	    ext->sadb_ext_type == SADB_EXT_ADDRESS_DST)
-		return;
 
 	if ((entry = lookup(ext_types, ext->sadb_ext_type)) == NULL) {
 		printf("unknown ext: type %u len %u\n",
 		    ext->sadb_ext_type, ext->sadb_ext_len);
 		return;
 	}
-
-	if (!(opts & IPSECCTL_OPT_VERBOSE) && (entry->id != SADB_EXT_SA))
-		return;
-	if (entry->id != SADB_EXT_SA)
-		printf("\t%s: ", entry->name);
+	printf("\t%s: ", entry->name);
 	if (entry->func != NULL)
 		(*entry->func)(ext, msg);
 	else
@@ -274,34 +266,18 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sa *sa = (struct sadb_sa *)ext;
 
-	/* tunnel/transport is only meaningful for esp/ah/ipcomp */
-	if (msg->sadb_msg_satype != SADB_X_SATYPE_TCPSIGNATURE) {
-		if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
-			printf("tunnel ");
-		else
-			printf("transport ");
-	}
-
-	if (extensions[SADB_EXT_ADDRESS_SRC]) {
-		printf("from ");
-		print_addr(extensions[SADB_EXT_ADDRESS_SRC], msg);
-	}
-	if (extensions[SADB_EXT_ADDRESS_DST]) {
-		printf(" to ");
-		print_addr(extensions[SADB_EXT_ADDRESS_DST], msg);
-	}
-	printf(" spi 0x%08x", ntohl(sa->sadb_sa_spi));
 	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
-		printf(" comp %s", lookup_name(comp_types,
-		    sa->sadb_sa_encrypt));
-	else {
-		if (sa->sadb_sa_encrypt)
-			printf(" enc %s", lookup_name(enc_types,
-			    sa->sadb_sa_encrypt));
-		if (sa->sadb_sa_auth)
-			printf(" auth %s", lookup_name(auth_types,
-			    sa->sadb_sa_auth));
-	}
+		printf("cpi 0x%8.8x comp %s\n",
+		    ntohl(sa->sadb_sa_spi),
+		    lookup_name(comp_types, sa->sadb_sa_encrypt));
+	else
+		printf("spi 0x%8.8x auth %s enc %s\n",
+		    ntohl(sa->sadb_sa_spi),
+		    lookup_name(auth_types, sa->sadb_sa_auth),
+		    lookup_name(enc_types, sa->sadb_sa_encrypt));
+	printf("\t\tstate %s replay %u flags %u",
+	    lookup_name(states, sa->sadb_sa_state),
+	    sa->sadb_sa_replay, sa->sadb_sa_flags);
 }
 
 /* ARGSUSED1 */
@@ -566,59 +542,157 @@ setup_extensions(struct sadb_msg *msg)
 		extensions[ext->sadb_ext_type] = ext;
 }
 
+static void
+parse_addr(struct sadb_ext *ext, struct ipsec_addr_wrap *ipa)
+{
+	struct sadb_address *addr = (struct sadb_address *)ext;
+	struct sockaddr *sa;
+
+	if (addr == NULL)
+		return;
+	sa = (struct sockaddr *)(addr + 1);
+	switch (sa->sa_family) {
+	case AF_INET:
+		ipa->address.v4 = ((struct sockaddr_in *)sa)->sin_addr;
+		set_ipmask(ipa, 32);
+		break;
+	case AF_INET6:
+		ipa->address.v6 = ((struct sockaddr_in6 *)sa)->sin6_addr;
+		set_ipmask(ipa, 128);
+		break;
+	}
+	ipa->af = sa->sa_family;
+	ipa->next = NULL;
+	ipa->tail = ipa;
+}
+
+static void
+parse_key(struct sadb_ext *ext, struct ipsec_key *ikey)
+{
+	struct sadb_key *key = (struct sadb_key *)ext;
+	u_int8_t *data;
+
+	if (key == NULL)
+		return;
+	data = (u_int8_t *)(key + 1);
+	ikey->data = data;
+	ikey->len = key->sadb_key_bits / 8;
+}
+
+/* opposite of pfkey_sa() */
 void
 pfkey_print_sa(struct sadb_msg *msg, int opts)
 {
-	int		 i;
+	int i;
+	struct ipsec_rule r;
+	struct ipsec_key enckey, authkey;
+	struct ipsec_transforms xfs;
+	struct ipsec_addr_wrap src, dst;
+	struct sadb_sa *sa;
 
 	setup_extensions(msg);
+	sa = (struct sadb_sa *)extensions[SADB_EXT_SA];
 
-	printf("%s ", lookup_name(sa_types, msg->sadb_msg_satype));
-	for (i = 0; i < SADB_EXT_MAX; i++)
-		if (extensions[i])
-			print_ext(extensions[i], msg, opts);
+	bzero(&r, sizeof r);
+	r.type |= RULE_SA;
+	r.tmode = (msg->sadb_msg_satype != SADB_X_SATYPE_TCPSIGNATURE) &&
+	    (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL) ?
+	    IPSEC_TUNNEL : IPSEC_TRANSPORT;
+	r.spi = ntohl(sa->sadb_sa_spi);
 
-	fflush(stdout);
-}
-
-static void
-monitor_sa(struct sadb_ext *ext, struct sadb_msg *msg)
-{
-	struct sadb_sa *sa = (struct sadb_sa *) ext;
-
-	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
-		printf("cpi 0x%8.8x comp %s\n",
-		    ntohl(sa->sadb_sa_spi),
-		    lookup_name(comp_types, sa->sadb_sa_encrypt));
-	else
-		printf("spi 0x%8.8x auth %s enc %s\n",
-		    ntohl(sa->sadb_sa_spi),
-		    lookup_name(auth_types, sa->sadb_sa_auth),
-		    lookup_name(enc_types, sa->sadb_sa_encrypt));
-	printf("\t\tstate %s replay %u flags %u",
-	    lookup_name(states, sa->sadb_sa_state),
-	    sa->sadb_sa_replay, sa->sadb_sa_flags);
-}
-
-static void
-monitor_ext(struct sadb_ext *ext, struct sadb_msg *msg)
-{
-	struct idname *entry;
-
-	if ((entry = lookup(ext_types, ext->sadb_ext_type)) == NULL) {
-		printf("unknown ext: type %u len %u\n",
-		    ext->sadb_ext_type, ext->sadb_ext_len);
+	switch (msg->sadb_msg_satype) {
+	case SADB_SATYPE_AH:
+		r.satype = IPSEC_AH;
+		break;
+	case SADB_SATYPE_ESP:
+		r.satype = IPSEC_ESP;
+		break;
+	case SADB_X_SATYPE_IPCOMP:
+		r.satype = IPSEC_IPCOMP;
+		break;
+	case SADB_X_SATYPE_TCPSIGNATURE:
+		r.satype = IPSEC_TCPMD5;
+		break;
+	case SADB_X_SATYPE_IPIP:
+		r.satype = IPSEC_IPIP;
+		break;
+	default:
 		return;
 	}
-	printf("\t%s: ", entry->name);
-	if (entry->func == print_sa)
-		monitor_sa(ext, msg);
-	else if (entry->func != NULL)
-		(*entry->func)(ext, msg);
-	else
-		printf("type %u len %u",
-		    ext->sadb_ext_type, ext->sadb_ext_len);
-	printf("\n");
+	bzero(&dst, sizeof dst);
+	bzero(&src, sizeof src);
+	parse_addr(extensions[SADB_EXT_ADDRESS_SRC], &src);
+	parse_addr(extensions[SADB_EXT_ADDRESS_DST], &dst);
+	r.src = &src;
+	r.dst = &dst;
+	if (sa->sadb_sa_encrypt || sa->sadb_sa_encrypt) {
+		bzero(&xfs, sizeof xfs);
+		r.xfs = &xfs;
+		if (sa->sadb_sa_encrypt) {
+			switch (sa->sadb_sa_encrypt) {
+			case SADB_EALG_3DESCBC:
+				xfs.encxf = &encxfs[ENCXF_3DES_CBC];
+				break;
+			case SADB_EALG_DESCBC:
+				xfs.encxf = &encxfs[ENCXF_DES_CBC];
+				break;
+			case SADB_X_EALG_AES:
+				xfs.encxf = &encxfs[ENCXF_AES];
+				break;
+			case SADB_X_EALG_AESCTR:
+				xfs.encxf = &encxfs[ENCXF_AESCTR];
+				break;
+			case SADB_X_EALG_BLF:
+				xfs.encxf = &encxfs[ENCXF_BLOWFISH];
+				break;
+			case SADB_X_EALG_CAST:
+				xfs.encxf = &encxfs[ENCXF_CAST128];
+				break;
+			case SADB_EALG_NULL:
+				xfs.encxf = &encxfs[ENCXF_NULL];
+				break;
+			case SADB_X_EALG_SKIPJACK:
+				xfs.encxf = &encxfs[ENCXF_SKIPJACK];
+				break;
+			}
+			bzero(&enckey, sizeof enckey);
+			parse_key(extensions[SADB_EXT_KEY_ENCRYPT], &enckey);
+			r.enckey = &enckey;
+		}
+		if (sa->sadb_sa_auth) {
+			switch (sa->sadb_sa_auth) {
+			case SADB_AALG_MD5HMAC:
+				xfs.authxf = &authxfs[AUTHXF_HMAC_MD5];
+				break;
+			case SADB_X_AALG_RIPEMD160HMAC:
+				xfs.authxf = &authxfs[AUTHXF_HMAC_RIPEMD160];
+				break;
+			case SADB_AALG_SHA1HMAC:
+				xfs.authxf = &authxfs[AUTHXF_HMAC_SHA1];
+				break;
+			case SADB_X_AALG_SHA2_256:
+				xfs.authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
+				break;
+			case SADB_X_AALG_SHA2_384:
+				xfs.authxf = &authxfs[AUTHXF_HMAC_SHA2_384];
+				break;
+			case SADB_X_AALG_SHA2_512:
+				xfs.authxf = &authxfs[AUTHXF_HMAC_SHA2_512];
+				break;
+			}
+			bzero(&authkey, sizeof authkey);
+			parse_key(extensions[SADB_EXT_KEY_AUTH], &authkey);
+			r.authkey = &authkey;
+		}
+	}
+	ipsecctl_print_rule(&r, opts);
+
+	if (opts & IPSECCTL_OPT_VERBOSE) {
+		for (i = 0; i < SADB_EXT_MAX; i++)
+			if (extensions[i])
+				print_ext(extensions[i], msg);
+	}
+	fflush(stdout);
 }
 
 /* ARGSUSED1 */
@@ -640,7 +714,7 @@ pfkey_monitor_sa(struct sadb_msg *msg, int opts)
 		    strerror(msg->sadb_msg_errno));
 	for (i = 0; i < SADB_EXT_MAX; i++)
 		if (extensions[i])
-			monitor_ext(extensions[i], msg);
+			print_ext(extensions[i], msg);
 	fflush(stdout);
 }
 

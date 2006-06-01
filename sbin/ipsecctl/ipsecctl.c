@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.51 2006/06/01 15:47:26 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.52 2006/06/01 16:13:01 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -50,7 +50,6 @@ void		 ipsecctl_print_proto(u_int8_t);
 void		 ipsecctl_print_key(struct ipsec_key *);
 void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
-void		 ipsecctl_print_rule(struct ipsec_rule *, int);
 int		 ipsecctl_flush(int);
 void		 ipsecctl_get_rules(struct ipsecctl *);
 void		 ipsecctl_print_title(char *);
