@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2006/06/01 02:20:44 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.84 2006/06/01 05:48:31 todd Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -472,6 +472,16 @@ host		: STRING			{
 			ipa->netaddress = 1;
 			if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
 				err(1, "host: strdup");
+
+			ipa->next = calloc(1, sizeof(struct ipsec_addr_wrap));
+			if (ipa->next == NULL)
+				err(1, "host: calloc");
+
+			ipa->next->af = AF_INET6;
+			ipa->next->netaddress = 1;
+			if ((ipa->next->name = strdup("::/0")) == NULL)
+				err(1, "host: strdup");
+
 			$$ = ipa;
 		}
 		| '{' host_list '}'		{ $$ = $2; }
@@ -1516,7 +1526,7 @@ ifa_lookup(const char *ifa_name)
 		return (n);
 
 	for (p = iftab; p; p = p->next) {
-		if (p->af != AF_INET)
+		if (p->af != AF_INET && p->af != AF_INET6)
 			continue;
 		if (strncmp(p->name, ifa_name, IFNAMSIZ))
 			continue;
@@ -1526,7 +1536,32 @@ ifa_lookup(const char *ifa_name)
 		memcpy(n, p, sizeof(struct ipsec_addr_wrap));
 		if ((n->name = strdup(p->name)) == NULL)
 			err(1, "ifa_lookup: strdup");
-		set_ipmask(n, 32);
+		switch(n->af) {
+		case AF_INET:
+			set_ipmask(n, 32);
+			break;
+		case AF_INET6:
+			/* route/show.c and bgpd/util.c give KAME credit */
+			if (IN6_IS_ADDR_LINKLOCAL(&n->address.v6) ||
+			    IN6_IS_ADDR_MC_LINKLOCAL(&n->address.v6)) {
+				u_int16_t tmp16;
+				/* for now we can not handle link local,
+				 * therefore bail for now
+				 */
+				free(n);
+				continue;
+
+				memcpy(&tmp16, &n->address.v6.s6_addr[2],
+					sizeof(tmp16));
+				/* use this when we support link-local
+				 * n->??.scopeid = ntohs(tmp16);
+				 */
+				n->address.v6.s6_addr[2] = 0;
+				n->address.v6.s6_addr[3] = 0;
+			}
+			set_ipmask(n, 128);
+			break;
+		}
 
 		n->next = NULL;
 		n->tail = n;
