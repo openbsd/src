@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.160 2006/05/17 03:29:55 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.161 2006/06/01 18:54:19 beck Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -629,7 +629,7 @@ main(int argc, char *argv[])
 				err(1, "SIOCDIFADDR");
 		}
 	}
-	if (newaddr) {
+	else if (newaddr) {
 		(void) strlcpy(rafp->af_addreq, name, sizeof(ifr.ifr_name));
 		if (ioctl(s, rafp->af_aifaddr, rafp->af_addreq) < 0)
 			err(1, "SIOCAIFADDR");
