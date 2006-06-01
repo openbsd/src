@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.43 2006/06/01 17:32:20 naddy Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.44 2006/06/01 22:29:19 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -50,6 +50,9 @@ static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *, u_int8_t);
+static int	pfkey_sagroup(int, u_int8_t, u_int8_t,
+		    struct ipsec_addr_wrap *, u_int32_t, u_int32_t,
+		    struct ipsec_addr_wrap *, u_int32_t, u_int32_t);
 static int	pfkey_reply(int, u_int8_t **, ssize_t *);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
@@ -616,6 +619,140 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 }
 
 static int
+pfkey_sagroup(int sd, u_int8_t satype, u_int8_t action,
+    struct ipsec_addr_wrap *dst, u_int32_t proto, u_int32_t spi,
+    struct ipsec_addr_wrap *dst2, u_int32_t proto2, u_int32_t spi2)
+{
+	struct sadb_msg		smsg;
+	struct sadb_sa		sa1, sa2;
+	struct sadb_address	sa_dst, sa_dst2;
+	struct sockaddr_storage	sdst, sdst2;
+	struct sadb_protocol	sa_proto;
+	struct iovec		iov[IOV_CNT];
+	ssize_t			n;
+	int			iov_cnt, len, ret = 0;
+
+	bzero(&sdst, sizeof(sdst));
+	sdst.ss_family = dst->af;
+	switch (dst->af) {
+	case AF_INET:
+		((struct sockaddr_in *)&sdst)->sin_addr = dst->address.v4;
+		sdst.ss_len = sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)&sdst)->sin6_addr = dst->address.v6;
+		sdst.ss_len = sizeof(struct sockaddr_in6);
+		break;
+	default:
+		warnx("unsupported address family %d", dst->af);
+		return -1;
+	}
+
+	bzero(&sdst2, sizeof(sdst2));
+	sdst2.ss_family = dst2->af;
+	switch (dst2->af) {
+	case AF_INET:
+		((struct sockaddr_in *)&sdst2)->sin_addr = dst2->address.v4;
+		sdst2.ss_len = sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)&sdst2)->sin6_addr = dst2->address.v6;
+		sdst2.ss_len = sizeof(struct sockaddr_in6);
+		break;
+	default:
+		warnx("unsupported address family %d", dst2->af);
+		return -1;
+	}
+
+	bzero(&smsg, sizeof(smsg));
+	smsg.sadb_msg_version = PF_KEY_V2;
+	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_pid = getpid();
+	smsg.sadb_msg_len = sizeof(smsg) / 8;
+	smsg.sadb_msg_type = action;
+	smsg.sadb_msg_satype = satype;
+
+	bzero(&sa1, sizeof(sa1));
+	sa1.sadb_sa_len = sizeof(sa1) / 8;
+	sa1.sadb_sa_exttype = SADB_EXT_SA;
+	sa1.sadb_sa_spi = htonl(spi);
+	sa1.sadb_sa_state = SADB_SASTATE_MATURE;
+
+	bzero(&sa2, sizeof(sa2));
+	sa2.sadb_sa_len = sizeof(sa2) / 8;
+	sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
+	sa2.sadb_sa_spi = htonl(spi2);
+	sa2.sadb_sa_state = SADB_SASTATE_MATURE;
+	iov_cnt = 0;
+
+	bzero(&sa_dst, sizeof(sa_dst));
+	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
+
+	bzero(&sa_dst2, sizeof(sa_dst2));
+	sa_dst2.sadb_address_exttype = SADB_X_EXT_DST2;
+	sa_dst2.sadb_address_len = (sizeof(sa_dst2) + ROUNDUP(sdst2.ss_len)) / 8;
+
+	bzero(&sa_proto, sizeof(sa_proto));
+	sa_proto.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+	sa_proto.sadb_protocol_len = sizeof(sa_proto) / 8;
+	sa_proto.sadb_protocol_direction = 0;
+	sa_proto.sadb_protocol_proto = proto;
+
+	/* header */
+	iov[iov_cnt].iov_base = &smsg;
+	iov[iov_cnt].iov_len = sizeof(smsg);
+	iov_cnt++;
+
+	/* sa */
+	iov[iov_cnt].iov_base = &sa1;
+	iov[iov_cnt].iov_len = sizeof(sa1);
+	smsg.sadb_msg_len += sa1.sadb_sa_len;
+	iov_cnt++;
+
+	/* dst addr */
+	iov[iov_cnt].iov_base = &sa_dst;
+	iov[iov_cnt].iov_len = sizeof(sa_dst);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &sdst;
+	iov[iov_cnt].iov_len = ROUNDUP(sdst.ss_len);
+	smsg.sadb_msg_len += sa_dst.sadb_address_len;
+	iov_cnt++;
+
+	/* second sa */
+	iov[iov_cnt].iov_base = &sa2;
+	iov[iov_cnt].iov_len = sizeof(sa2);
+	smsg.sadb_msg_len += sa2.sadb_sa_len;
+	iov_cnt++;
+
+	/* second dst addr */
+	iov[iov_cnt].iov_base = &sa_dst2;
+	iov[iov_cnt].iov_len = sizeof(sa_dst2);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &sdst2;
+	iov[iov_cnt].iov_len = ROUNDUP(sdst2.ss_len);
+	smsg.sadb_msg_len += sa_dst2.sadb_address_len;
+	iov_cnt++;
+
+	/* SA type */
+	iov[iov_cnt].iov_base = &sa_proto;
+	iov[iov_cnt].iov_len = sizeof(sa_proto);
+	smsg.sadb_msg_len += sa_proto.sadb_protocol_len;
+	iov_cnt++;
+
+	len = smsg.sadb_msg_len * 8;
+	if ((n = writev(sd, iov, iov_cnt)) == -1) {
+		warn("writev failed");
+		ret = -1;
+	} else if (n != len) {
+		warnx("short write");
+		ret = -1;
+	}
+
+	return (ret);
+}
+
+static int
 pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 {
 	struct sadb_msg	 hdr;
@@ -1033,6 +1170,36 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
 			    r->src, r->dst, r->xfs, NULL, NULL, r->tmode);
 			break;
+		default:
+			return -1;
+		}
+	} else if (r->type == RULE_GROUP) {
+		switch (r->satype) {
+		case IPSEC_AH:
+			satype = SADB_SATYPE_AH;
+			break;
+		case IPSEC_ESP:
+			satype = SADB_SATYPE_ESP;
+			break;
+		case IPSEC_IPCOMP:
+			satype = SADB_X_SATYPE_IPCOMP;
+			break;
+		case IPSEC_TCPMD5:
+			satype = SADB_X_SATYPE_TCPSIGNATURE;
+			break;
+		case IPSEC_IPIP:
+			satype = SADB_X_SATYPE_IPIP;
+			break;
+		default:
+			return -1;
+		}
+		switch (action) {
+		case ACTION_ADD:
+			ret = pfkey_sagroup(fd, satype, SADB_X_GRPSPIS, r->dst,
+			    r->proto, r->spi, r->dst2, r->proto2, r->spi2);
+			break;
+		case ACTION_DELETE:
+			return 0;
 		default:
 			return -1;
 		}
