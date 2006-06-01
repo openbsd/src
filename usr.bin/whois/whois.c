@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.36 2005/07/22 14:23:13 henning Exp $   */
+/*      $OpenBSD: whois.c,v 1.37 2006/06/01 18:17:35 mk Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -194,8 +194,11 @@ whois(const char *query, const char *server, const char *port, int flags)
 	}
 
 	if (strcmp(server, "whois.denic.de") == 0 ||
-	    strcmp(server, "de.whois-servers.net") == 0)
+	    strcmp(server, "de" QNICHOST_TAIL) == 0)
 		fmt = "-T dn,ace -C ISO-8859-1 %s\r\n";
+	else if (strcmp(server, "whois.dk-hostmaster.dk") == 0 ||
+	    strcmp(server, "dk" QNICHOST_TAIL) == 0)
+		fmt = "--show-handles %s\r\n";
 	else
 		fmt = "%s\r\n";
 
