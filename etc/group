@@ -51,6 +51,7 @@ _ntp:*:83:
 _ftp:*:84:
 _ospfd:*:85:
 _hostapd:*:86:
+_dvmrpd:*:87:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.283 2006/05/29 16:49:42 avsm Exp $
+#	$OpenBSD: rc,v 1.284 2006/06/01 16:43:23 norby Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -569,6 +569,10 @@ fi
 # If $mrouted_flags == NO, then mrouted isn't run.
 if [ X"${mrouted_flags}" != X"NO" ]; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
+fi
+
+if [ X"${dvmrpd_flags}" != X"NO" ]; then
+	echo -n ' dvmrpd';		/usr/sbin/dvmrpd $dvmrpd_flags
 fi
 
 if [ X"${ospfd_flags}" != X"NO" ]; then
