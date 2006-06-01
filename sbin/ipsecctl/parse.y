@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2006/06/01 05:55:04 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.86 2006/06/01 06:50:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1251,7 +1251,7 @@ host_v6(const char *s, int prefixlen)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
 	struct addrinfo		 hints, *res0, *res;
-	char 			 hbuf[NI_MAXHOST];
+	char			 hbuf[NI_MAXHOST];
 
 	bzero(&hints, sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.13 2006/05/31 05:38:45 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.14 2006/06/01 06:50:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -577,7 +577,7 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	for (i = 0; i < SADB_EXT_MAX; i++)
 		if (extensions[i])
 			print_ext(extensions[i], msg, opts);
-	
+
 	fflush(stdout);
 }
 
@@ -649,7 +649,7 @@ pfkey_print_raw(u_int8_t *data, ssize_t len)
 {
 	int i;
 	const u_int8_t *sp = (const u_int8_t *)data;
-	
+
 	printf("RAW PFKEYV2 MESSAGE:\n");
 	for(i = 0; i < len; i++) {
 		if ((i % 8 == 0) && (i != 0))
