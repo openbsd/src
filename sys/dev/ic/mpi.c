@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.21 2006/05/31 21:28:08 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.22 2006/06/01 00:53:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -816,7 +816,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	struct mpi_msg_scsi_io		*io = &mcb->mcb_io;
 	struct mpi_sge			*sge, *nsge = &mcb->mcb_sgl[0];
 	struct mpi_sge			*ce = NULL, *nce;
-	paddr_t				ce_dva;
+	u_int64_t			ce_dva;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	u_int32_t			addr, flags;
 	int				i, error;
@@ -1628,7 +1628,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_config_request		*cq;
 	struct mpi_msg_config_reply		*cp;
-	paddr_t					dva;
+	u_int64_t				dva;
 	char					*kva;
 	int					s;
 
