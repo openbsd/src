@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321_pci.c,v 1.4 2006/06/01 03:44:53 drahn Exp $	*/
+/*	$OpenBSD: iq80321_pci.c,v 1.5 2006/06/01 08:26:36 drahn Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -85,13 +85,13 @@ struct board_id {
 struct irq_map *iq80321_irq_map;
 
 struct irq_map iq80321_thecus_irq_map[] = {
-	{ 1, 1, ICU_INT_XINT(2) }, /* thecus re0 29 ??? */
-	{ 2, 1, ICU_INT_XINT(2) }, /* thecus re1 29 ??? */
+	{ 1, 1, ICU_INT_XINT(0) }, /* thecus re0 27 ??? */
+	{ 2, 1, ICU_INT_XINT(3) }, /* thecus re1 30 */
 	{ 3, 1, ICU_INT_XINT(2) }, /* thecus sata 29 */
-	{ 4, 1, ICU_INT_XINT(2) }, /* thecus uhci0 29 ??? */
-	{ 4, 2, ICU_INT_XINT(2) }, /* thecus uhci1 29 ??? */
+	{ 4, 1, ICU_INT_XINT(0) }, /* thecus uhci0 27 ??? */
+	{ 4, 2, ICU_INT_XINT(0) }, /* thecus uhci1 27 */
 	{ 4, 3, ICU_INT_XINT(2) }, /* thecus ehci0 29 */
-	{ 5, 1, ICU_INT_XINT(2) }, /* thecus minipci slot */
+	{ 5, 1, ICU_INT_XINT(3) }, /* thecus minipci slot */
 
 	{ 0, 0, 255}
 };
