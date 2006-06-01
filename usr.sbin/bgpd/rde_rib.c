@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.87 2006/05/28 23:24:15 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.88 2006/06/01 22:29:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -312,6 +312,8 @@ path_copy(struct rde_aspath *asp)
 	nasp->origin = asp->origin;
 	nasp->rtlabelid = asp->rtlabelid;
 	rtlabel_ref(nasp->rtlabelid);
+	nasp->pftableid = asp->pftableid;
+	pftable_ref(nasp->pftableid);
 
 	nasp->flags = asp->flags & ~F_ATTR_LINKED;
 	attr_copy(nasp, asp);
@@ -351,6 +353,7 @@ path_put(struct rde_aspath *asp)
 		fatalx("path_put: linked object");
 
 	rtlabel_unref(asp->rtlabelid);
+	pftable_unref(asp->pftableid);
 	aspath_put(asp->aspath);
 	attr_freeall(asp);
 	rdemem.path_cnt--;
