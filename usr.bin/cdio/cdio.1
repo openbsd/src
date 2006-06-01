@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.34 2006/05/31 20:59:32 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.35 2006/06/01 06:32:17 mjc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -201,29 +201,22 @@ and the current values of the volume for left and right channels.
 .It Ic stop
 Stop the disc.
 .It Xo Ic tao
-.Op Fl t Ar tracktypes
+.Op Fl a
+.Op Fl d
 .Ar trackfile ...
 .Xc
 Write a track-at-once CD containing each
 .Ar trackfile
 specified.
-The string
-.Ar tracktypes
-is used to assign types to each corresponding
-.Ar trackfile .
-Valid characters for the
-.Ar tracktypes
-string are
-.Sq a
-for audio,
-.Sq d
-for data.
+The tracktype is specified by using the
+.Fl a
+flag for audio and
+.Fl d
+for data tracks.
 If there are more tracks specified than corresponding
 types, the last type will be used for the remainder.
-If
-.Ar tracktypes
-is completely unspecified, a track type of data is used.
-This option is only available from the command line.
+If no tracktypes are specified a track type of data is used.
+This command is only available from the command line.
 .It Ic volume Ar left_channel Ar right_channel
 Set the volume of the left channel to
 .Ar left_channel

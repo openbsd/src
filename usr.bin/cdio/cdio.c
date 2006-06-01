@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.48 2006/05/31 01:14:41 mjc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.49 2006/06/01 06:32:17 mjc Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -56,7 +56,9 @@
 #include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/scsiio.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -145,8 +147,7 @@ int             fd = -1;
 int             verbose = 1;
 int             msf = 1;
 const char 	*cddb_host;
-char		**track_names;
-char            *track_types;
+char            **track_names;
 
 EditLine       *el = NULL;	/* line-editing structure */
 History	       *hist = NULL;	/* line-editing history */
@@ -160,7 +161,6 @@ int             play_msf(int, int, int, int, int, int);
 int             play_track(int, int, int, int);
 int             get_vol(int *, int *);
 int             status(int *, int *, int *, int *);
-int             open_cd(char *, int);
 int             play(char *arg);
 int             info(char *arg);
 int             cddbinfo(char *arg);
@@ -223,6 +223,10 @@ main(int argc, char **argv)
 {
 	int ch, cmd;
 	char *arg;
+	struct stat sb;
+	struct track_info *cur_track;
+	struct track_info *tr;
+	char type;
 
 	cdname = getenv("DISC");
 	if (! cdname)
@@ -263,30 +267,51 @@ main(int argc, char **argv)
 	}
 
 	if (argc > 0 && ! strcasecmp(*argv, "tao")) {
-		optreset = 1;
-		optind = 0;
-		while ((ch = getopt(argc, argv, "t:")) != -1) {
-			switch (ch) {
-			case 't':
-				track_types = optarg;
-				break;
-			default:
-				usage();
-			}
-
-		}
-		argc -= optind;
-		argv += optind;
-		if (argc == 0)
+		if (argc == 1)
 			usage();
+		SLIST_INIT(&tracks);
+		type = 'd';
+		while (argc > 1) {
+			tr = malloc(sizeof(struct track_info));
+			tr->type = type;
+			optreset = 1;
+			optind = 1;
+			while ((ch = getopt(argc, argv, "ad")) != -1) {
+				switch (ch) {
+				case 'a':
+					type = 'a';
+					break;
+				case 'd':
+					type = 'd';
+					break;
+				default:
+					usage();
+				}
+			}
+			tr->type = type;
+			argc -= optind;
+			argv += optind;
+			if (argv[0] == NULL)
+				usage();
+			tr->file = argv[0];
+			if (stat(tr->file, &sb) != 0) {
+				warn("cannot stat file %s",tr->file);
+				return (-1);
+			}
+			tr->sz = sb.st_size;
+			if (SLIST_EMPTY(&tracks))
+				SLIST_INSERT_HEAD(&tracks,tr,track_list);
+			else
+				SLIST_INSERT_AFTER(cur_track,tr,track_list);
+			cur_track = tr;
+		}
 		if (! open_cd(cdname, 1))
 			exit(1);
-		if (writetao(argc,argv) != 0)
+		if (writetao(&tracks) != 0)
 			exit(1);
 		else
 			exit(0);
 	}
-
 	if (argc > 0) {
 		char buf[80], *p;
 		int len;

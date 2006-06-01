@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.4 2006/05/31 23:01:15 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.5 2006/06/01 06:32:17 mjc Exp $ */
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/limits.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/scsiio.h>
 #include <err.h>
 #include <errno.h>
@@ -31,7 +30,6 @@
 extern int errno;
 extern int fd;
 extern char *cdname;
-extern char *track_types;
 
 int
 blank(void)
@@ -117,16 +115,13 @@ close_session(void)
 }
 
 int
-writetao(int ntracks, char *track_files[])
+writetao(struct track_head *thp)
 {
 	u_char modebuf[70];
-	u_int blklen;
-	u_int t;
-	int i,r;
+	struct track_info *tr;
+	int r;
 	u_char bdlen;
-	
-	if (track_types == NULL)
-		track_types = strdup("d");
+
 	if ((r = mode_sense_write(modebuf)) != SCCMD_OK) {
 		warnx("mode sense failed: %d", r);
 		return (r);
@@ -135,20 +130,23 @@ writetao(int ntracks, char *track_files[])
 	modebuf[2+8+bdlen] |= 0x40; /* Buffer Underrun Free Enable */
 	modebuf[2+8+bdlen] |= 0x01; /* change write type to TAO */
 
-	for (i = 0, t = 0; t < ntracks; t++) {
-		if (track_types[i] == 'd') {
+	SLIST_FOREACH(tr, thp, track_list) {
+		switch(tr->type) {
+		case 'd':
 			modebuf[3+8+bdlen] = 0x04; /* track mode = data */
 			modebuf[4+8+bdlen] = 0x08; /* 2048 block track mode */
 			modebuf[8+8+bdlen] = 0x00; /* turn off XA */
-			blklen = 2048;
-		} else if (track_types[i] == 'a') {
+			tr->blklen = 2048;
+			break;
+		case 'a':
 			modebuf[3+8+bdlen] = 0x00; /* track mode = audio */
 			modebuf[4+8+bdlen] = 0x00; /* 2352 block track mode */
 			modebuf[8+8+bdlen] = 0x00; /* turn off XA */
-			blklen = 2352;
-		} else {
-			warnx("invalid track type specified");
-			return (1);
+			tr->blklen = 2352;
+			break;
+		default:
+			warn("impossible tracktype detected");
+			break;
 		}
 		while (unit_ready() != SCCMD_OK)
 			continue;
@@ -156,29 +154,25 @@ writetao(int ntracks, char *track_files[])
 			warnx("mode select failed: %d",r);
 			return (r);
 		}
-		writetrack(track_files[t], blklen, t, track_types[i]);
+		writetrack(tr);
 		synchronize_cache();
-		if (track_types[i+1] != '\0')
-			i++;
 	}
 	fprintf(stderr,"\n");
-	synchronize_cache();
 	close_session();
 	return (0);
 }
 
 int
-writetrack(char *file, u_int blklen, u_int trackno, char type)
+writetrack(struct track_info *tr)
 {
 	u_char databuf[65536];
-	struct stat sb;
 	scsireq_t scr;
 	u_int end_lba, lba;
 	u_int tmp;
 	int r,rfd;
 	u_char nblk;
 
-	nblk = 65535/blklen;
+	nblk = 65535/tr->blklen;
 	bzero(&scr, sizeof(scr));
 	scr.timeout = 300000;
 	scr.cmd[0] = 0x2a;
@@ -186,7 +180,7 @@ writetrack(char *file, u_int blklen, u_int trackno, char type)
 	scr.cmd[8] = nblk; /* Transfer length in blocks (LSB) */
 	scr.cmdlen = 10;
 	scr.databuf = (caddr_t)databuf;
-	scr.datalen = nblk * blklen;
+	scr.datalen = nblk * tr->blklen;
 	scr.senselen = SENSEBUFLEN;
 	scr.flags = SCCMD_ESCAPE|SCCMD_WRITE;
 
@@ -197,32 +191,28 @@ writetrack(char *file, u_int blklen, u_int trackno, char type)
 	tmp = htobe32(lba); /* update lba in cdb */
 	memcpy(&scr.cmd[2], &tmp, sizeof(tmp));
 
-	if (stat(file, &sb) != 0) {
-		warn("cannot stat file %s",file);
+	if (tr->sz / tr->blklen + 1 > UINT_MAX || tr->sz < tr->blklen) {
+		warnx("file %s has invalid size",tr->file);
 		return (-1);
 	}
-	if (sb.st_size / blklen + 1 > UINT_MAX || sb.st_size < blklen) {
-		warnx("file %s has invalid size",file);
-		return (-1);
-	}
-	if (type == 'a')
-		sb.st_size -= WAVHDRLEN;
-	if (sb.st_size % blklen) {
-		warnx("file %s is not multiple of block length %d",file,blklen);
-		end_lba = sb.st_size / blklen + lba + 1;
+	if (tr->type == 'a')
+		tr->sz -= WAVHDRLEN;
+	if (tr->sz % tr->blklen) {
+		warnx("file %s is not multiple of block length %d", tr->file, tr->blklen);
+		end_lba = tr->sz / tr->blklen + lba + 1;
 	} else {
-		end_lba = sb.st_size / blklen + lba;
+		end_lba = tr->sz / tr->blklen + lba;
 	}
-	rfd = open(file, O_RDONLY, 0640);
-	if (type == 'a') {
+	rfd = open(tr->file, O_RDONLY, 0640);
+	if (tr->type == 'a') {
 		if (lseek(rfd, WAVHDRLEN, SEEK_SET) == -1)
 			err(1, "seek failed");
 	}
 	while ((lba < end_lba) && (nblk != 0)) {
 		while (lba + nblk <= end_lba) {
-			read(rfd, databuf, nblk * blklen);
+			read(rfd, databuf, nblk * tr->blklen);
 			scr.cmd[8] = nblk;
-			scr.datalen = nblk * blklen;
+			scr.datalen = nblk * tr->blklen;
 			r = ioctl(fd, SCIOCCOMMAND, &scr);
 			if (r != 0) {
 				warn("ioctl failed while attempting to write");

@@ -24,10 +24,21 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/queue.h>
+
 struct cd_toc_entry;
+struct track_info {
+	off_t sz;
+	u_int blklen;
+	char *file;
+	SLIST_ENTRY(track_info) track_list;
+	char type;
+};
+SLIST_HEAD(track_head, track_info) tracks;
 
 extern unsigned long 	entry2time(struct cd_toc_entry *);
 extern unsigned long 	entry2frames(struct cd_toc_entry *);
+extern int              open_cd(char *, int);
 extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
 extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
@@ -36,8 +47,8 @@ extern int		unit_ready(void);
 extern int		synchronize_cache(void);
 extern int		close_session(void);
 extern int		get_nwa(int *);
-extern int		writetao(int, char *[]);
-extern int		writetrack(char *, u_int, u_int, char);
+extern int		writetao(struct track_head *);
+extern int		writetrack(struct track_info *);
 extern int		mode_sense_write(unsigned char []);
 extern int		mode_select_write(unsigned char []);
 
