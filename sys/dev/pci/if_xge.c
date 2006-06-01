@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.22 2006/06/01 22:58:42 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.23 2006/06/01 23:04:55 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -631,7 +631,9 @@ xge_enable(struct xge_softc *sc)
 	val = PIF_RCSR(ADAPTER_CONTROL);
 	val |= LED_ON;
 	PIF_WCSR(ADAPTER_CONTROL, val);
+#ifdef XGE_DEBUG
 	printf("%s: link up\n", XNAME);
+#endif
 
 }
 
@@ -732,7 +734,9 @@ xge_intr(void *pv)
 
 	if ((val = PIF_RCSR(MAC_RMAC_ERR_REG)) & RMAC_LINK_STATE_CHANGE_INT) {
 		/* Wait for quiescence */
+#ifdef XGE_DEBUG
 		printf("%s: link down\n", XNAME);
+#endif
 		while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 			;
 		PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
