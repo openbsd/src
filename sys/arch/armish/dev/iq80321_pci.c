@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321_pci.c,v 1.5 2006/06/01 08:26:36 drahn Exp $	*/
+/*	$OpenBSD: iq80321_pci.c,v 1.6 2006/06/01 18:46:05 drahn Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -85,14 +85,13 @@ struct board_id {
 struct irq_map *iq80321_irq_map;
 
 struct irq_map iq80321_thecus_irq_map[] = {
-	{ 1, 1, ICU_INT_XINT(0) }, /* thecus re0 27 ??? */
+	{ 1, 1, ICU_INT_XINT(0) }, /* thecus re0 27 */
 	{ 2, 1, ICU_INT_XINT(3) }, /* thecus re1 30 */
 	{ 3, 1, ICU_INT_XINT(2) }, /* thecus sata 29 */
 	{ 4, 1, ICU_INT_XINT(0) }, /* thecus uhci0 27 ??? */
 	{ 4, 2, ICU_INT_XINT(0) }, /* thecus uhci1 27 */
 	{ 4, 3, ICU_INT_XINT(2) }, /* thecus ehci0 29 */
 	{ 5, 1, ICU_INT_XINT(3) }, /* thecus minipci slot */
-
 	{ 0, 0, 255}
 };
 
@@ -102,7 +101,6 @@ struct irq_map iq80321_hdlg_irq_map[] = {
 	{ 3, 1, ICU_INT_XINT(2) }, /* ochi0 29 */
 	{ 3, 2, ICU_INT_XINT(2) }, /* ochi0 29 */
 	{ 3, 3, ICU_INT_XINT(2) }, /* echi0 29 */
-
 	{ 0, 0, 255}
 };
 struct board_id thecus = {
@@ -167,6 +165,16 @@ iq80321_pci_init2(pci_chipset_tag_t pc, void *cookie)
 		printf(": %s", sys->name);
 	iq80321_irq_map = sys->irq_map;
 
+	/* XXX */
+	if (sys == &thecus) {
+		/*
+		 * thecus com irq appears to not be attached, override
+		 * it's irq here, it is tied to the tick timer, irq9
+		 * - yes this is a hack.
+		 */
+		 extern int com_irq_override;
+		 com_irq_override = 28;
+	}
 }
 
 int

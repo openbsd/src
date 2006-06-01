@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_obio.c,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
+/*	$OpenBSD: com_obio.c,v 1.3 2006/06/01 18:46:05 drahn Exp $	*/
 /*	$NetBSD: com_obio.c,v 1.9 2005/12/11 12:17:09 christos Exp $	*/
 
 /*-
@@ -70,57 +70,12 @@ struct cfdriver com_obio_cd = {
 int
 com_obio_match(struct device *parent, void *cf, void *aux)
 {
-
 	/* We take it on faith that the device is there. */
 	return (1);
 }
 
-int comintr0(void *a);
-int comintr1(void *a);
-int comintr2(void *a);
-int comintr3(void *a);
-int
-comintr0(void *a)
-{
-	return comintr(a);
-}
-int
-comintr1(void *a)
-{
-	return comintr(a);
-}
-int
-comintr2(void *a)
-{
-	return comintr(a);
-}
-int
-comintr3(void *a)
-{
-	return comintr(a);
-}
+int com_irq_override = -1;
 
-uint32_t get_pending_irq(void);
-
-struct com_softc *console_comsc;
-int poll_console(void);
-int poll_console()
-{
-	int ret;
-#if 0
-	uint32_t pending0, pending1;
-	pending0 = get_pending_irq();
-#endif
-	ret = comintr(console_comsc);
-#if 0
-	if (ret != 0) {
-		pending1 = get_pending_irq();
-		printf("serviced com irq, opending %x npending %x\n",
-		    pending0, pending1);
-	}
-#endif
-	return ret;
-}
 void
 com_obio_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -129,7 +84,10 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = &osc->sc_com;
 	int error;
 
-	console_comsc = sc;
+	/* XXX old value is already printed */
+	if (com_irq_override != -1)
+		oba->oba_irq = com_irq_override;
+
 	sc->sc_iot = oba->oba_st;
 	sc->sc_iobase = oba->oba_addr;
 	sc->sc_frequency = COM_FREQ;
@@ -143,24 +101,8 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	com_attach_subr(sc);
-	oba->oba_irq = 0x1c;
-#if 1
 	osc->sc_ih = i80321_intr_establish(oba->oba_irq, IPL_TTY,
 	    comintr, sc, sc->sc_dev.dv_xname);
-#else
-#define	ICU_INT_XINT0 27
-#define	ICU_INT_XINT(x)	((x) + ICU_INT_XINT0)
-#if 1
-	osc->sc_ih = i80321_intr_establish(ICU_INT_XINT(0), IPL_TTY,
-	    comintr0, sc, sc->sc_dev.dv_xname);
-#endif
-	osc->sc_ih = i80321_intr_establish(ICU_INT_XINT(1), IPL_TTY,
-	    comintr1, sc, sc->sc_dev.dv_xname);
-	osc->sc_ih = i80321_intr_establish(ICU_INT_XINT(2), IPL_TTY,
-	    comintr2, sc, sc->sc_dev.dv_xname);
-	osc->sc_ih = i80321_intr_establish(ICU_INT_XINT(3), IPL_TTY,
-	    comintr3, sc, sc->sc_dev.dv_xname);
-#endif
 	if (osc->sc_ih == NULL)
 		printf("%s: unable to establish interrupt at CPLD irq %d\n",
 		    sc->sc_dev.dv_xname, oba->oba_irq);
