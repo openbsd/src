@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.65 2006/05/25 03:48:23 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.66 2006/06/01 22:42:11 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.65 2006/05/25 03:48:23 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.66 2006/06/01 22:42:11 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -1129,6 +1129,7 @@ SSL_readline(SSL *ssl, size_t *lenp)
 int
 proxy_connect(int socket, char *host)
 {
+	int l;
 	char buf[1024];
 	char *connstr, *hosttail, *port;
 
@@ -1147,10 +1148,10 @@ proxy_connect(int socket, char *host)
 
 	if (debug)
 		printf("CONNECT %s:%s HTTP/1.1\n\n", host, port);
-	asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\n\n", host, port);
-	if (!connstr)
+	l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\n\n", host, port);
+	if (l == -1)
 		errx(1, "Could not allocate memory to assemble connect string!");
-	if (write(socket, connstr, strlen(connstr)) != strlen(connstr))
+	if (write(socket, connstr, l) != l)
 		 errx(1, "Could not send connect string: %s", strerror(errno));
 	read(socket, &buf, sizeof(buf)); /* only proxy header XXX: error handling? */
 	return(200);
