@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.17 2006/05/31 05:01:59 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.18 2006/06/01 00:30:30 beck Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,8 @@ static	int parse_element_unit(char *);
 static	int parse_special(char *);
 static	int is_special(char *);
 static	char *bits_to_string(int, const char *);
+static	void find_voltag(char *, int *, int *);
+static 	void check_source_drive(int);
 
 static	int do_move(char *, int, char **);
 static	int do_exchange(char *, int, char **);
@@ -182,44 +184,30 @@ do_move(char *cname, int argc, char *argv[])
 	}
 	bzero(&cmd, sizeof(cmd));
 
-	/* <from ET>  */
-	cmd.cm_fromtype = parse_element_type(*argv);
-	++argv; --argc;
-
-	/* <from EU> */
-	cmd.cm_fromunit = parse_element_unit(*argv);
-	++argv; --argc;
-
-	if (cmd.cm_fromtype == CHET_DT) {
-		/*
-		 * from unit is a drive - make sure the tape
-		 * in it is unmounted before we attempt to move
-		 * it to avoid errors in "disconnected" type
-		 * pickers where the drive is on a seperate target
-		 * from the changer.
-		 */
-		struct mtop mtoffl =  { MTOFFL, 1 };
-		char *tapedev;
-		int mtfd;
-
-		tapedev = parse_tapedev(_PATH_CH_CONF, changer_name,
-		    cmd.cm_fromunit);
-		mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
-		    NULL);
-		if (mtfd == -1)
-			err(1, "%s drive %d (%s): open", changer_name,
-			    cmd.cm_fromunit, tapedev);
-		if (ioctl(mtfd, MTIOCTOP, &mtoffl) == -1)
-			err(1, "%s drive %d (%s): rewoffl", changer_name,
-			    cmd.cm_fromunit, tapedev);
-		close(mtfd);
+	/* 
+	 * Get the from ET and EU - we search for it if the ET is
+	 * "voltag", otherwise, we just use the ET and EU given to us.
+	 */
+	if (strcmp(*argv, "voltag") == 0) {
+		++argv; --argc;
+		find_voltag(*argv, &cmd.cm_fromtype, &cmd.cm_fromunit);
+		++argv; --argc;
+	} else {		
+		cmd.cm_fromtype = parse_element_type(*argv);
+		++argv; --argc;
+		cmd.cm_fromunit = parse_element_unit(*argv);
+		++argv; --argc;
 	}
 
-	/* <to ET> */
+	if (cmd.cm_fromtype == CHET_DT)
+		check_source_drive(cmd.cm_fromunit);
+
+	/* 
+	 * Don't allow voltag on the to ET, using a volume
+	 * as a destination makes no sense on a move 
+	 */
 	cmd.cm_totype = parse_element_type(*argv);
 	++argv; --argc;
-
-	/* <to EU> */
 	cmd.cm_tounit = parse_element_unit(*argv);
 	++argv; --argc;
 
@@ -600,6 +588,150 @@ do_status(char *cname, int argc, char *argv[])
 	    cname);
 	return (1);
 }
+
+/*
+ * Check a drive unit as the source for a move or exchange
+ * operation. If the drive is not accessible, we attempt
+ * to unmount the tape in it before moving to avoid
+ * errors in "disconnected" type pickers where the drive
+ * is on a seperate target from the changer. 
+ */
+static void
+check_source_drive(int unit) {
+	struct mtop mtoffl =  { MTOFFL, 1 };
+	struct changer_element_status_request cmd;
+	struct changer_element_status *ces;
+	struct changer_params data;
+	size_t count = 0;
+	int mtfd;
+	char *tapedev;
+
+	/*
+	 * Get params from changer.  Specifically, we need the element
+	 * counts.
+	 */
+	bzero(&data, sizeof(data));
+	if (ioctl(changer_fd, CHIOGPARAMS, &data))
+		err(1, "%s: CHIOGPARAMS", changer_name);
+
+	count = data.cp_ndrives;
+	if (unit < 0 || unit >= count)
+		err(1, "%s: invalid drive: drive %d", changer_name, unit);
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.cesr_type = CHET_DT;
+	/* Allocate storage for the status info. */
+	cmd.cesr_data = calloc(count, sizeof(*cmd.cesr_data));
+	if ((cmd.cesr_data) == NULL)
+		errx(1, "can't allocate status storage");
+
+	if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
+		free(cmd.cesr_data);
+		err(1, "%s: CHIOGSTATUS", changer_name);
+	}
+	ces = &(cmd.cesr_data[unit]);
+	
+	if ((ces->ces_flags & CESTATUS_FULL) != CESTATUS_FULL)
+		err(1, "%s: drive %d is empty!", changer_name, unit);
+
+	if ((ces->ces_flags & CESTATUS_ACCESS) == CESTATUS_ACCESS)
+		return; /* changer thinks all is well - trust it */
+
+	/*
+	 * Otherwise, drive is FULL, but not accessible.
+	 * Try to make it accessible by doing an mt offline.
+	 */
+	
+	tapedev = parse_tapedev(_PATH_CH_CONF, changer_name, unit);
+	mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
+	    NULL);
+	if (mtfd == -1)
+		err(1, "%s drive %d (%s): open", changer_name, unit, tapedev);
+	if (ioctl(mtfd, MTIOCTOP, &mtoffl) == -1)
+		err(1, "%s drive %d (%s): rewoffl", changer_name, unit,
+		    tapedev);
+	close(mtfd);
+}
+
+void
+find_voltag(char *voltag, int *type, int *unit)
+{
+	struct changer_element_status_request cmd;
+	struct changer_params data;
+	int i, chet, schet, echet, found;
+	size_t count = 0;
+
+	/*
+	 * Get params from changer.  Specifically, we need the element
+	 * counts.
+	 */
+	bzero(&data, sizeof(data));
+	if (ioctl(changer_fd, CHIOGPARAMS, &data))
+		err(1, "%s: CHIOGPARAMS", changer_name);
+
+	found = 0;
+	schet = CHET_MT;
+	echet = CHET_DT;
+
+	/* 
+	 * For each type of element, iterate through each one until
+	 * we find the correct volume id.
+	 */ 
+	
+	for (chet = schet; chet <= echet; ++chet) {
+		switch (chet) {
+		case CHET_MT:
+			count = data.cp_npickers;
+			break;
+		case CHET_ST:
+			count = data.cp_nslots;
+			break;
+		case CHET_IE:
+			count = data.cp_nportals;
+			break;
+		case CHET_DT:
+			count = data.cp_ndrives;
+			break;
+		}
+		if (count == 0 || found)
+			continue;		  
+
+		bzero(&cmd, sizeof(cmd));
+		cmd.cesr_type = chet;
+		/* Allocate storage for the status info. */
+		cmd.cesr_data = calloc(count, sizeof(*cmd.cesr_data));
+		if ((cmd.cesr_data) == NULL)
+			errx(1, "can't allocate status storage");
+		cmd.cesr_flags |= CESR_VOLTAGS;
+
+		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
+			free(cmd.cesr_data);
+			err(1, "%s: CHIOGSTATUS", changer_name);
+		}
+
+		/*
+		 * look through each element to see if it has our desired
+		 * volume tag.
+		 */
+		for (i = 0; i < count; ++i) {
+			struct changer_element_status *ces =
+			    &(cmd.cesr_data[i]);
+			if ((ces->ces_flags & CESTATUS_FULL) != CESTATUS_FULL)
+				continue; /* no tape in drive */
+			if (strcasecmp(voltag, ces->ces_pvoltag.cv_volid)
+			    == 0) {
+				*type = chet;
+				*unit = i;
+				found = 1;
+				free(cmd.cesr_data);
+				return;
+			}
+		}
+		free(cmd.cesr_data);
+	}
+	errx(1, "%s: unable to locate voltag: %s", changer_name, voltag);
+}
+
 
 static int
 parse_element_type(char *cp)

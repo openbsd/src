@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.25 2006/05/29 10:49:07 jmc Exp $
+.\"	$OpenBSD: chio.1,v 1.26 2006/06/01 00:30:30 beck Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -59,15 +59,21 @@ rather than the default device
 .Pp
 A medium changer apparatus is made up of
 .Em elements .
-There are four element types:
+There are five element types:
 .Em picker
 (medium transport),
 .Em slot
 (storage),
 .Em portal
-(import/export), and
+(import/export),
 .Em drive
-(data transfer).
+(data transfer), and
+.Em voltag
+(select by volume identifier).
+The
+.Em voltag
+pseudo-element type allows the selection of tapes by their volume code,
+which is typically a barcode on the tape.
 In this command description, the shorthand
 .Sq ET
 will be used to represent an element type, and
@@ -165,12 +171,26 @@ Note that not all changers behave as expected in response to this command.
 .It Cm setpicker Ar unit
 Configure the changer to use picker
 .Ar unit .
-.It Cm status Op Ar ET
+.It Cm status
+.Op Fl vVa
+.Op Ar ET
 Report the status of all elements in the changer.
 If
 .Ar ET
 is specified, report the status of all elements of type
 .Ar ET .
+.Bl -tag -width Ds
+.It Fl v
+Print the primary volume tag for each loaded medium, if any.
+The volume
+tag is printed as
+.Dq \*(LtLABEL:SERIAL\*(Gt .
+.It Fl V
+Print the alternate volume tag for each loaded medium, if any.
+.It Fl a
+Print all additional information (as in
+.Fl vV ) .
+.El
 .Pp
 The status bits output are defined as follows:
 .Bl -tag -width indent
@@ -207,6 +227,10 @@ devices and changer drives.
 Move the media in slot 3 (fourth slot) to drive 0 (first drive):
 .Pp
 .Dl # chio move slot 3 drive 0
+.Pp
+Move the media with volume tag 000007L2 to drive 1 (second drive):
+.Pp
+.Dl # chio move voltag 00007L2 drive 0
 .Pp
 Configure the changer to use picker 2 (third picker) for operations:
 .Pp
