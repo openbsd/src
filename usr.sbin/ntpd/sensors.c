@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.16 2006/05/29 05:20:42 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.17 2006/06/01 04:44:23 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -102,6 +102,7 @@ sensor_add(struct sensor *sensor)
 
 	s->next = time(NULL);
 	s->weight = cs->weight;
+	s->priority = cs->priority;
 	if ((s->device = strdup(sensor->device)) == NULL)
 		fatal("sensor_add strdup");
 	s->sensorid = sensor->num;
@@ -173,6 +174,7 @@ sensor_query(struct ntp_sensor *s)
 int
 sensor_hotplugfd(void)
 {
+#ifdef notyet
 	int	fd, flags;
 
 	if ((fd = open(_PATH_DEV_HOTPLUG, O_RDONLY, 0)) == -1) {
@@ -187,6 +189,9 @@ sensor_hotplugfd(void)
 		fatal("fnctl F_SETFL");
 
 	return (fd);
+#else
+	return (-1);
+#endif
 }
 
 void
