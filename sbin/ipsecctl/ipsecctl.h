@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.42 2006/06/01 16:13:01 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.43 2006/06/01 17:32:20 naddy Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -163,6 +163,8 @@ struct ipsec_rule {
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
 	u_int8_t	 ikemode;
+	u_int16_t	 sport;
+	u_int16_t	 dport;
 	u_int32_t	 spi;
 	u_int32_t	 spi2;
 	u_int32_t	 nr;

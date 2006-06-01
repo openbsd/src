@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.42 2006/06/01 12:19:59 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.43 2006/06/01 17:32:20 naddy Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -42,7 +42,8 @@ static int	fd;
 static u_int32_t sadb_msg_seq = 1;
 
 static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t, u_int8_t,
-		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+		    struct ipsec_addr_wrap *, u_int16_t,
+		    struct ipsec_addr_wrap *, u_int16_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_auth *, u_int8_t);
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
@@ -57,7 +58,8 @@ int		pfkey_init(void);
 
 static int
 pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
-    u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    u_int8_t proto, struct ipsec_addr_wrap *src, u_int16_t sport,
+    struct ipsec_addr_wrap *dst, u_int16_t dport,
     struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
     struct ipsec_auth *auth, u_int8_t flowtype)
 {
@@ -81,11 +83,19 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 		((struct sockaddr_in *)&ssrc)->sin_addr = src->address.v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
 		((struct sockaddr_in *)&smask)->sin_addr = src->mask.v4;
+		if (sport) {
+			((struct sockaddr_in *)&ssrc)->sin_port = sport;
+			((struct sockaddr_in *)&smask)->sin_port = 0xffff;
+		}
 		break;
 	case AF_INET6:
 		((struct sockaddr_in6 *)&ssrc)->sin6_addr = src->address.v6;
 		ssrc.ss_len = sizeof(struct sockaddr_in6);
 		((struct sockaddr_in6 *)&smask)->sin6_addr = src->mask.v6;
+		if (sport) {
+			((struct sockaddr_in6 *)&ssrc)->sin6_port = sport;
+			((struct sockaddr_in6 *)&smask)->sin6_port = 0xffff;
+		}
 		break;
 	default:
 		warnx("unsupported address family %d", src->af);
@@ -101,11 +111,19 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 		((struct sockaddr_in *)&sdst)->sin_addr = dst->address.v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
 		((struct sockaddr_in *)&dmask)->sin_addr = dst->mask.v4;
+		if (dport) {
+			((struct sockaddr_in *)&sdst)->sin_port = dport;
+			((struct sockaddr_in *)&dmask)->sin_port = 0xffff;
+		}
 		break;
 	case AF_INET6:
 		((struct sockaddr_in6 *)&sdst)->sin6_addr = dst->address.v6;
 		sdst.ss_len = sizeof(struct sockaddr_in6);
 		((struct sockaddr_in6 *)&dmask)->sin6_addr = dst->mask.v6;
+		if (dport) {
+			((struct sockaddr_in6 *)&sdst)->sin6_port = dport;
+			((struct sockaddr_in6 *)&dmask)->sin6_port = 0xffff;
+		}
 		break;
 	default:
 		warnx("unsupported address family %d", dst->af);
@@ -822,11 +840,15 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
 				    &rule->src->address.v4,
 				    sizeof(struct in_addr));
+				rule->sport =
+				    ((struct sockaddr_in *)sa)->sin_port;
 				break;
 			case AF_INET6:
 				bcopy(&((struct sockaddr_in6 *)sa)->sin6_addr,
 				    &rule->src->address.v6,
 				    sizeof(struct in6_addr));
+				rule->sport =
+				    ((struct sockaddr_in6 *)sa)->sin6_port;
 				break;
 			default:
 				return (1);
@@ -850,11 +872,15 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
 				    &rule->dst->address.v4,
 				    sizeof(struct in_addr));
+				rule->dport =
+				    ((struct sockaddr_in *)sa)->sin_port;
 				break;
 			case AF_INET6:
 				bcopy(&((struct sockaddr_in6 *)sa)->sin6_addr,
 				    &rule->dst->address.v6,
 				    sizeof(struct in6_addr));
+				rule->dport =
+				    ((struct sockaddr_in6 *)sa)->sin6_port;
 				break;
 			default:
 				return (1);
@@ -965,14 +991,14 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case ACTION_ADD:
 			ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction,
-			    r->proto, r->src, r->dst, r->local, r->peer, r->auth,
-			    r->flowtype);
+			    r->proto, r->src, r->sport, r->dst, r->dport,
+			    r->local, r->peer, r->auth, r->flowtype);
 			break;
 		case ACTION_DELETE:
 			/* No peer for flow deletion. */
 			ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction,
-			    r->proto, r->src, r->dst, NULL, NULL, NULL,
-			    r->flowtype);
+			    r->proto, r->src, r->sport, r->dst, r->dport,
+			    NULL, NULL, NULL, r->flowtype);
 			break;
 		default:
 			return -1;

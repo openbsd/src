@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2006/06/01 15:33:08 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.88 2006/06/01 17:32:20 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -163,8 +163,9 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
-struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct
-			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+struct ipsec_rule	*create_flow(u_int8_t, u_int8_t,
+			     struct ipsec_addr_wrap *, u_int16_t,
+			     struct ipsec_addr_wrap *, u_int16_t,
 			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     u_int8_t, char *, char *, u_int8_t);
 int			 expand_rule(struct ipsec_rule *, u_int8_t, u_int32_t,
@@ -191,7 +192,10 @@ typedef struct {
 		struct {
 			struct ipsec_addr_wrap *src;
 			struct ipsec_addr_wrap *dst;
+			u_int16_t	sport;
+			u_int16_t	dport;
 		} hosts;
+		u_int16_t	 port;
 		struct {
 			struct ipsec_addr_wrap *peer;
 			struct ipsec_addr_wrap *local;
@@ -233,7 +237,7 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
-%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP
+%token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT
 %token	<v.string>		STRING
 %type	<v.string>		string
 %type	<v.dir>			dir
@@ -242,6 +246,7 @@ typedef struct {
 %type	<v.tmode>		tmode
 %type	<v.number>		number
 %type	<v.hosts>		hosts
+%type	<v.port>		port
 %type	<v.peers>		peers
 %type	<v.singlehost>		singlehost
 %type	<v.host>		host host_list
@@ -323,8 +328,9 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 flowrule	: FLOW satype dir proto hosts peers ids type {
 			struct ipsec_rule	*r;
 
-			r = create_flow($3, $4, $5.src, $5.dst, $6.local,
-			    $6.peer, $2, $7.srcid, $7.dstid, $8);
+			r = create_flow($3, $4, $5.src, $5.sport, $5.dst,
+			    $5.dport, $6.local, $6.peer, $2, $7.srcid,
+			    $7.dstid, $8);
 			if (r == NULL)
 				YYERROR;
 
@@ -383,13 +389,38 @@ dir		: /* empty */			{ $$ = IPSEC_INOUT; }
 		| OUT				{ $$ = IPSEC_OUT; }
 		;
 
-hosts		: FROM host TO host		{
+hosts		: FROM host port TO host port		{
 			$$.src = $2;
-			$$.dst = $4;
+			$$.sport = $3;
+			$$.dst = $5;
+			$$.dport = $6;
 		}
-		| TO host FROM host		{
-			$$.src = $4;
+		| TO host port FROM host port		{
+			$$.src = $5;
+			$$.sport = $6;
 			$$.dst = $2;
+			$$.dport = $3;
+		}
+		;
+
+port		: /* empty */				{ $$ = 0; }
+		| PORT STRING				{
+			struct servent *s;
+			const char *errstr;
+			int port;
+
+			if ((s = getservbyname($2, "tcp")) != NULL ||
+			    (s = getservbyname($2, "udp")) != NULL) {
+				$$ = s->s_port;
+			} else {
+				errstr = NULL;
+				port = strtonum($2, 0, USHRT_MAX, &errstr);
+				if (errstr) {
+					yyerror("unknown port: %s", $2);
+					YYERROR;
+				}
+				$$ = htons(port);
+			}
 		}
 		;
 
@@ -794,6 +825,7 @@ lookup(char *s)
 		{ "out",		OUT },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
+		{ "port",		PORT },
 		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
@@ -1730,6 +1762,8 @@ copyrule(struct ipsec_rule *rule)
 	r->tmode = rule->tmode;
 	r->direction = rule->direction;
 	r->flowtype = rule->flowtype;
+	r->sport = rule->sport;
+	r->dport = rule->dport;
 	r->ikemode = rule->ikemode;
 	r->spi = rule->spi;
 	r->nr = rule->nr;
@@ -1895,9 +1929,9 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 
 struct ipsec_rule *
 create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_addr_wrap *src,
-    struct ipsec_addr_wrap *dst, struct ipsec_addr_wrap *local,
-    struct ipsec_addr_wrap *peer, u_int8_t satype, char *srcid, char *dstid,
-    u_int8_t type)
+    u_int16_t sport, struct ipsec_addr_wrap *dst, u_int16_t dport,
+    struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
+    u_int8_t satype, char *srcid, char *dstid, u_int8_t type)
 {
 	struct ipsec_rule *r;
 
@@ -1915,7 +1949,14 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_addr_wrap *src,
 	r->satype = satype;
 	r->proto = proto;
 	r->src = src;
+	r->sport = sport;
 	r->dst = dst;
+	r->dport = dport;
+	if ((sport != 0 || dport != 0) &&
+            (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
+		yyerror("no protocol supplied with source/destination ports");
+		goto errout;
+	}
 
 	if (type == TYPE_DENY || type == TYPE_BYPASS) {
 		r->flowtype = type;
@@ -2032,6 +2073,8 @@ reverse_rule(struct ipsec_rule *rule)
 	reverse->flowtype = rule->flowtype;
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
+	reverse->sport = rule->dport;
+	reverse->dport = rule->sport;
 	if (rule->local)
 		reverse->local = copyhost(rule->local);
 	if (rule->peer)

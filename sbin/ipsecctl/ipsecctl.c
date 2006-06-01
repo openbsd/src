@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.53 2006/06/01 16:41:38 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.54 2006/06/01 17:32:20 naddy Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -47,6 +47,7 @@ int		 ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
 void		 ipsecctl_free_rule(struct ipsec_rule *);
 void		 ipsecctl_print_addr(struct ipsec_addr_wrap *);
 void		 ipsecctl_print_proto(u_int8_t);
+void		 ipsecctl_print_port(u_int16_t, const char *);
 void		 ipsecctl_print_key(struct ipsec_key *);
 void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
@@ -262,6 +263,17 @@ ipsecctl_print_proto(u_int8_t proto)
 }
 
 void
+ipsecctl_print_port(u_int16_t port, const char *proto)
+{
+	struct servent *s;
+
+	if ((s = getservbyport(port, proto)) != NULL)
+		printf("%s", s->s_name);
+	else
+		printf("%u", ntohs(port));
+}
+
+void
 ipsecctl_print_key(struct ipsec_key *key)
 {
 	int	i;
@@ -281,8 +293,18 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 	}
 	printf(" from ");
 	ipsecctl_print_addr(r->src);
+	if (r->sport) {
+		printf(" port ");
+		ipsecctl_print_port(r->sport,
+		    r->proto == IPPROTO_TCP ? "tcp" : "udp");
+	}
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
+	if (r->dport) {
+		printf(" port ");
+		ipsecctl_print_port(r->dport,
+		    r->proto == IPPROTO_TCP ? "tcp" : "udp");
+	}
 	if (r->local) {
 		printf(" local ");
 		ipsecctl_print_addr(r->local);
