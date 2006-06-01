@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.48 2006/06/01 20:29:05 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.49 2006/06/01 22:19:24 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -93,7 +93,7 @@ for details.
 Parameters specify the packets to which a flow applies.
 Some parameters are optional.
 .Pp
-Adresses can be specified in CIDR notation (matching netblocks),
+Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Ar in No or Ar out
@@ -208,7 +208,7 @@ Enter an IPIP pseudo SA.
 Parameters specify the peers, Security Parameter Index (SPI),
 cryptographic transforms, and key material to be used.
 .Pp
-Adresses can be specified in CIDR notation (matching netblocks),
+Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
@@ -366,7 +366,7 @@ cryptographic transforms are used for
 .Xr isakmpd 8 .
 Some parameters are optional.
 .Pp
-Adresses can be specified in CIDR notation (matching netblocks),
+Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
