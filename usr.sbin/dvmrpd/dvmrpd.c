@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.2 2006/06/01 22:07:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -268,6 +268,8 @@ main(int argc, char *argv[])
 	event_add(&ibuf_rde->ev, NULL);
 
 	if (kmr_init(!(conf->flags & DVMRPD_FLAG_NO_FIB_UPDATE)) == -1)
+		dvmrpd_shutdown();
+	if (kr_init() == -1)
 		dvmrpd_shutdown();
 
 	event_set(&conf->ev, conf->mroute_socket, EV_READ|EV_PERSIST,

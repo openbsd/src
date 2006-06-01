@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.2 2006/06/01 18:18:25 norby Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.3 2006/06/01 22:07:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -414,7 +414,7 @@ u_int16_t	 in_cksum(void *, size_t);
 /* kroute.c */
 int		 kif_init(void);
 void		 kif_clear(void);
-int		 kr_init(int);
+int		 kr_init(void);
 void		 kr_shutdown(void);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_ifinfo(char *);
