@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.45 2006/03/30 18:32:07 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.46 2006/06/01 05:34:52 jason Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -662,7 +662,7 @@ load(const char *fname)
 	int	 nbytes = 0;
 	char	 excbuf[128];
 
-	if ((fname = adjustname(fname)) == NULL)
+	if ((fname = adjustname(fname, TRUE)) == NULL)
 		/* just to be careful */
 		return (FALSE);
 

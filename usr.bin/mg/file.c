@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.57 2006/06/01 05:07:39 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.58 2006/06/01 05:34:52 jason Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -28,7 +28,7 @@ fileinsert(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	adjf = adjustname(bufp);
+	adjf = adjustname(bufp, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
 	return (insertfile(adjf, NULL, FALSE));
@@ -56,7 +56,7 @@ filevisit(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	adjf = adjustname(fname);
+	adjf = adjustname(fname, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
@@ -99,7 +99,7 @@ filevisitalt(int f, int n)
 	if (status == ABORT || status == FALSE)
 		return (ABORT);
 
-	adjf = adjustname(fname);
+	adjf = adjustname(fname, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
@@ -147,7 +147,7 @@ poptofile(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	adjf = adjustname(fname);
+	adjf = adjustname(fname, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
@@ -482,7 +482,7 @@ filewrite(int f, int n)
 	else if (bufp[0] == '\0')
 		return (FALSE);
 
-	adjfname = adjustname(fname);
+	adjfname = adjustname(fname, TRUE);
 	if (adjfname == NULL)
 		return (FALSE);
 	/* old attributes are no longer current */

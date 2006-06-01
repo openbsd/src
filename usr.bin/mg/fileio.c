@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.73 2006/05/03 22:25:34 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.74 2006/06/01 05:34:52 jason Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -239,14 +239,29 @@ fbackupfile(const char *fn)
  * and remove all occurences of /./ and /../
  */
 char *
-adjustname(const char *fn)
+adjustname(const char *fn, int slashslash)
 {
 	static char	 fnb[MAXPATHLEN];
-	const char	*cp;
+	const char	*cp, *ep = NULL;
 	char		 user[LOGIN_NAME_MAX], path[MAXPATHLEN];
 	size_t		 ulen, plen;
 
 	path[0] = '\0';
+
+	if (slashslash) {
+		cp = fn + strlen(fn) - 1;
+		for (; cp >= fn; cp--) {
+			if (ep && (*cp == '/')) {
+				fn = ep;
+				break;
+			}
+			if (*cp == '/' || *cp == '~')
+				ep = cp;
+			else
+				ep = NULL;
+		}
+	}
+
 	/* first handle tilde expansion */
 	if (fn[0] == '~') {
 		struct passwd *pw;
@@ -427,10 +442,10 @@ make_file_list(char *buf)
 	len = strlen(buf);
 	if (len && buf[len - 1] == '.') {
 		buf[len - 1] = 'x';
-		dir = adjustname(buf);
+		dir = adjustname(buf, TRUE);
 		buf[len - 1] = '.';
 	} else
-		dir = adjustname(buf);
+		dir = adjustname(buf, TRUE);
 	if (dir == NULL)
 		return (NULL);
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2006/06/01 05:34:52 jason Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 			startrow = lval;
 		} else {
 notnum:
-			cp = adjustname(argv[i]);
+			cp = adjustname(argv[i], FALSE);
 			if (cp != NULL) {
 				if (nfiles == 1)
 					splitwind(0, 1);

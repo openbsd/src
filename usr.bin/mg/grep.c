@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.29 2006/05/27 21:22:45 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.30 2006/06/01 05:34:52 jason Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -321,7 +321,7 @@ compile_goto_error(int f, int n)
 			goto fail;
 		adjf = path;
 	} else {
-		adjf = adjustname(fname);
+		adjf = adjustname(fname, TRUE);
 	}
 	free(line);
 
