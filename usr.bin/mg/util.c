@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2006/06/01 09:54:08 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2006/06/01 10:10:00 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -75,6 +75,7 @@ int
 getcolpos(void)
 {
 	int	col, i, c;
+	char tmp[5];
 
 	/* determine column */
 	col = 0;
@@ -90,12 +91,10 @@ getcolpos(void)
 			col++;
 		} else if (ISCTRL(c) != FALSE)
 			col += 2;
-		else if (isprint(c))
+		else if (isprint(c)) {
 			col++;
-		else {
-			char tmp[5];
-			snprintf(tmp, sizeof(tmp), "\\%o", c);
-			col += strlen(tmp);
+		} else {
+			col += snprintf(tmp, sizeof(tmp), "\\%o", c);
 		}
 
 	}
