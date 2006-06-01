@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.101 2006/05/31 22:24:12 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.102 2006/06/01 20:01:47 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -202,8 +202,6 @@ cvs_diff_local(struct cvs_file *cf)
 		tv2[0].tv_sec = st.st_mtime;
 		tv2[0].tv_usec = 0;
 		tv2[1] = tv2[0];
-
-		diff_rev2 = cf->file_rcsrev;
 	}
 
 	cvs_printf("%s", diffargs);
