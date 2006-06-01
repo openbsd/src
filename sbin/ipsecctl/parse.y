@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2006/06/01 17:32:20 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2006/06/01 22:44:03 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -163,13 +163,16 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
+struct ipsec_rule	*create_sagroup(struct ipsec_addr_wrap *, u_int8_t,
+			     u_int32_t, struct ipsec_addr_wrap *, u_int8_t,
+			     u_int32_t);
 struct ipsec_rule	*create_flow(u_int8_t, u_int8_t,
 			     struct ipsec_addr_wrap *, u_int16_t,
 			     struct ipsec_addr_wrap *, u_int16_t,
 			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     u_int8_t, char *, char *, u_int8_t);
 int			 expand_rule(struct ipsec_rule *, u_int8_t, u_int32_t,
-			     struct ipsec_key *, struct ipsec_key *);
+			     struct ipsec_key *, struct ipsec_key *, int);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
@@ -177,6 +180,7 @@ struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_addr_wrap *, struct
 			     struct ipsec_transforms *, struct
 			     ipsec_transforms *, u_int8_t, u_int8_t, char *,
 			     char *, struct ike_auth *);
+int			 add_sagroup(struct ipsec_rule *);
 
 struct ipsec_transforms *ipsec_transforms;
 
@@ -305,7 +309,7 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
-			if (expand_rule(r, 0, $3.spiin, $4.keyin, NULL))
+			if (expand_rule(r, 0, $3.spiin, $4.keyin, NULL, 0))
 				errx(1, "tcpmd5rule: expand_rule");
 		}
 		;
@@ -320,7 +324,7 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
-			if (expand_rule(r, 0, $4.spiin, $6.keyin, $7.keyin))
+			if (expand_rule(r, 0, $4.spiin, $6.keyin, $7.keyin, 1))
 				errx(1, "sarule: expand_rule");
 		}
 		;
@@ -334,7 +338,7 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 			if (r == NULL)
 				YYERROR;
 
-			if (expand_rule(r, $3, 0, NULL, NULL))
+			if (expand_rule(r, $3, 0, NULL, NULL, 0))
 				errx(1, "flowrule: expand_rule");
 		}
 		;
@@ -348,7 +352,7 @@ ikerule		: IKE ikemode satype proto hosts peers mmxfs qmxfs ids ikeauth {
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
-			if (expand_rule(r, 0, 0, NULL, NULL))
+			if (expand_rule(r, 0, 0, NULL, NULL, 0))
 				errx(1, "ikerule: expand_rule");
 		}
 		;
@@ -1873,6 +1877,38 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 	return 1;
 }
 
+int
+add_sagroup(struct ipsec_rule *r)
+{
+	struct ipsec_rule	*rp, *last, *group;
+	int			 found = 0;
+
+	TAILQ_FOREACH(rp, &ipsec->group_queue, group_entry) {
+		if (strcmp(rp->dst->name, r->dst->name) == 0) {
+			found = 1;
+			break;
+		}
+	}
+	if (found) {
+		last = TAILQ_LAST(&rp->dst_group_queue, dst_group_queue);
+		TAILQ_INSERT_TAIL(&rp->dst_group_queue, r, dst_group_entry);
+
+		group = create_sagroup(last->dst, last->satype, last->spi,
+		    r->dst, r->satype, r->spi);
+		if (group == NULL)
+			return (1);
+		group->nr = ipsec->rule_nr++;
+		if (ipsecctl_add_rule(ipsec, group))
+			return (1);
+	} else {
+		TAILQ_INSERT_TAIL(&ipsec->group_queue, r, group_entry);
+		TAILQ_INIT(&r->dst_group_queue);
+		TAILQ_INSERT_TAIL(&r->dst_group_queue, r, dst_group_entry);
+	}
+
+	return (0);
+}
+
 struct ipsec_rule *
 create_sa(u_int8_t satype, u_int8_t tmode, struct ipsec_addr_wrap *src, struct
     ipsec_addr_wrap *dst, u_int32_t spi, struct ipsec_transforms *xfs,
@@ -1925,6 +1961,29 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 	reverse->enckey = enckey;
 
 	return (reverse);
+}
+
+struct ipsec_rule *
+create_sagroup(struct ipsec_addr_wrap *dst, u_int8_t proto, u_int32_t spi,
+    struct ipsec_addr_wrap *dst2, u_int8_t proto2, u_int32_t spi2)
+{
+	struct ipsec_rule *r;
+
+	r = calloc(1, sizeof(struct ipsec_rule));
+	if (r == NULL)
+		err(1, "create_sagroup: calloc");
+
+	r->type |= RULE_GROUP;
+
+	r->dst = copyhost(dst);
+	r->dst2 = copyhost(dst2);
+	r->proto = proto;
+	r->proto2 = proto2;
+	r->spi = spi;
+	r->spi2 = spi2;
+	r->satype = proto;
+
+	return (r);
 }
 
 struct ipsec_rule *
@@ -2006,7 +2065,7 @@ errout:
 
 int
 expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
-    struct ipsec_key *authkey, struct ipsec_key *enckey)
+    struct ipsec_key *authkey, struct ipsec_key *enckey, int group)
 {
 	struct ipsec_rule	*r, *revr;
 	struct ipsec_addr_wrap	*src, *dst;
@@ -2024,6 +2083,8 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 			r->nr = ipsec->rule_nr++;
 			if (ipsecctl_add_rule(ipsec, r))
 				return (1);
+			if (group && add_sagroup(r))
+				return (1);
 
 			if (direction == IPSEC_INOUT) {
 				/* Create and add reverse flow rule. */
@@ -2034,6 +2095,8 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 				revr->nr = ipsec->rule_nr++;
 				if (ipsecctl_add_rule(ipsec, revr))
 					return (1);
+				if (group && add_sagroup(revr))
+					return (1);
 			} else if (spi != 0 || authkey || enckey) {
 				/* Create and add reverse sa rule. */
 				revr = reverse_sa(r, spi, authkey, enckey);
@@ -2042,6 +2105,8 @@ expand_rule(struct ipsec_rule *rule, u_int8_t direction, u_int32_t spi,
 
 				revr->nr = ipsec->rule_nr++;
 				if (ipsecctl_add_rule(ipsec, revr))
+					return (1);
+				if (group && add_sagroup(revr))
 					return (1);
 			}
 			added++;
