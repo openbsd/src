@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.24 2006/06/01 20:58:19 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.25 2006/06/01 21:16:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -277,13 +277,13 @@ schizo_pci_error(void *vpbm)
 	printf("%s: pci bus %c error\n", sc->sc_dv.dv_xname,
 	    sp->sp_bus_a ? 'A' : 'B');
 
-	printf("PCICTRL=%lb\n",
-	    schizo_pbm_read(sp, SCZ_PCI_CTRL), SCZ_PCICTRL_BITS);
-
 	printf("PCIAFSR=%lb\n",
 	    schizo_pbm_read(sp, SCZ_PCI_AFSR), SCZ_PCIAFSR_BITS);
 
 	printf("PCIAFAR=%lx\n", schizo_pbm_read(sp, SCZ_PCI_AFAR));
+
+	printf("PCICTRL=%lb\n",
+	    schizo_pbm_read(sp, SCZ_PCI_CTRL), SCZ_PCICTRL_BITS);
 
 	panic("%s: fatal", sc->sc_dv.dv_xname);
 
