@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.50 2006/06/01 06:20:30 todd Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.51 2006/06/01 15:47:26 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -87,6 +87,7 @@ ipsecctl_rules(char *filename, int opts)
 	bzero(&ipsec, sizeof(ipsec));
 	ipsec.opts = opts;
 	TAILQ_INIT(&ipsec.rule_queue);
+	TAILQ_INIT(&ipsec.group_queue);
 
 	if (strcmp(filename, "-") == 0) {
 		fin = stdin;

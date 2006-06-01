@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.39 2006/06/01 04:12:34 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.40 2006/06/01 15:47:26 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -136,6 +136,8 @@ struct ipsec_transforms {
 extern const struct ipsec_xf authxfs[];
 extern const struct ipsec_xf encxfs[];
 
+TAILQ_HEAD(dst_group_queue, ipsec_rule);
+
 /* Complete state of one rule. */
 struct ipsec_rule {
 	u_int8_t	 type;
@@ -162,14 +164,20 @@ struct ipsec_rule {
 	u_int32_t	 nr;
 
 	TAILQ_ENTRY(ipsec_rule) rule_entry;
+	TAILQ_ENTRY(ipsec_rule) group_entry;
+	TAILQ_ENTRY(ipsec_rule) dst_group_entry;
+
+	struct dst_group_queue	dst_group_queue;
 };
 
 TAILQ_HEAD(ipsec_rule_queue, ipsec_rule);
+TAILQ_HEAD(ipsec_group_queue, ipsec_rule);
 
 struct ipsecctl {
 	u_int32_t	rule_nr;
 	int		opts;
 	struct ipsec_rule_queue rule_queue;
+	struct ipsec_group_queue group_queue;
 };
 
 int	parse_rules(FILE *, struct ipsecctl *);
