@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.21 2006/06/01 21:56:26 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.22 2006/06/01 22:58:42 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ struct xge_softc {
 	bus_space_handle_t sc_txh;
 	void *sc_ih;
 	int xge_type;			/* chip type */
+	int xge_if_flags;
 	void *sc_shutdownhook;
 
 	struct ifmedia xena_media;
@@ -642,7 +643,7 @@ xge_init(struct ifnet *ifp)
 
 	/* 31+32, setup MAC config */
 	PIF_WKEY(MAC_CFG, TMAC_EN|RMAC_EN|TMAC_APPEND_PAD|RMAC_STRIP_FCS|
-	    RMAC_BCAST_EN|RMAC_DISCARD_PFRM|RMAC_PROM_EN);
+	    RMAC_BCAST_EN|RMAC_DISCARD_PFRM);
 
 	DELAY(1000);
 
@@ -853,6 +854,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct xge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	uint64_t val;
 	int s, error = 0;
 
 	s = splnet();
@@ -886,12 +888,27 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * such as IFF_PROMISC are handled.
 		 */
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				xge_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->xge_if_flags & IFF_PROMISC)) {
+				val = PIF_RCSR(MAC_CFG);
+				val |= RMAC_PROM_EN;
+				PIF_WCSR(MAC_CFG, val);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->xge_if_flags & IFF_PROMISC) {
+				val = PIF_RCSR(MAC_CFG);
+				val &= ~RMAC_PROM_EN;
+				PIF_WCSR(MAC_CFG, val);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					xge_init(ifp);
+			}
                 } else {
 			if (ifp->if_flags & IFF_RUNNING)
 				xge_stop(ifp, 0);
 		}
+		sc->xge_if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
