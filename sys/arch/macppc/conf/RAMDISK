@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.66 2006/05/31 03:25:08 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.67 2006/06/01 23:15:49 brad Exp $
 #
 # PPC GENERIC config file
 #
@@ -80,6 +80,7 @@ stge*		at pci?		# Sundance TC9021 GigE
 an*		at pci?		# Cisco/Aironet 802.11DS
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 vr*		at pci?		# VIA Rhine ethernet
+xge*		at pci?		# Neterion Xframe-I/II 10Gb ethernet
 
 iop*		at pci?		# I2O processor
 ioprbs*		at iop?		# I2O arrays

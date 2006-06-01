@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.172 2006/05/28 17:43:51 martin Exp $
+#	$OpenBSD: GENERIC,v 1.173 2006/06/01 23:11:38 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -226,6 +226,7 @@ ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ath*	at pci?				# Atheros AR5k (802.11)
 musycc*	at pci?				# Conexant HDLC controller
 art*	at musycc?			# Accoom Artery E1/T1 cards
+xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 
 #UNTESTED:  the following drivers are untested.
 en*	at pci?				# ENI PCI ATM (untested)
