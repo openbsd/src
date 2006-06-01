@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.18 2006/06/01 16:24:22 robert Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -69,7 +69,7 @@
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2661_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rt2661_debug >= (n)) printf x; } while (0)
-int rt2661_debug = 0;
+int rt2661_debug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -144,6 +144,7 @@ void		rt2661_read_eeprom(struct rt2661_softc *);
 int		rt2661_bbp_init(struct rt2661_softc *);
 int		rt2661_init(struct ifnet *);
 void		rt2661_stop(struct ifnet *, int);
+void		rt2661_power(int, void *);
 int		rt2661_load_microcode(struct rt2661_softc *, const uint8_t *,
 		    int);
 #ifdef notyet
@@ -490,6 +491,18 @@ rt2661_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2661_TX_RADIOTAP_PRESENT);
 #endif
 
+	/*
+	 * Make sure the interface is shutdown during reboot.
+	 */
+	sc->sc_sdhook = shutdownhook_establish(rt2661_shutdown, sc);
+	if (sc->sc_sdhook == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
+	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
+
 	return 0;
 
 fail6:	rt2661_free_tx_ring(sc, &sc->mgtq);
@@ -511,6 +524,11 @@ rt2661_detach(void *xsc)
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 
 	rt2661_free_tx_ring(sc, &sc->txq[0]);
 	rt2661_free_tx_ring(sc, &sc->txq[1]);
@@ -3011,4 +3029,44 @@ rt2661_get_rssi(struct rt2661_softc *sc, uint8_t raw)
 			rssi -= 100;
 	}
 	return rssi;
+}
+
+void
+rt2661_power(int why, void *arg)
+{
+	struct rt2661_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
+	DPRINTF(("%s: rt2661_power(%d)\n", sc->sc_dev.dv_xname, why));
+	
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		rt2661_stop(ifp, 1);
+		sc->sc_flags &= ~RT2661_FWLOADED; 
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			rt2661_init(ifp);	
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			if (ifp->if_flags & IFF_RUNNING)
+				rt2661_start(ifp);
+		}
+		break;
+	}
+	splx(s);
+}
+
+void
+rt2661_shutdown(void *arg)
+{
+	struct rt2661_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	
+	rt2661_stop(ifp, 1);
 }
