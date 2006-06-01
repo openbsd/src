@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_space.c,v 1.3 2006/05/31 05:43:49 drahn Exp $	*/
+/*	$OpenBSD: i80321_space.c,v 1.4 2006/06/01 03:46:01 drahn Exp $	*/
 /*	$NetBSD: i80321_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $	*/
 
 /*
@@ -286,8 +286,6 @@ i80321_io_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	if (bpa >= sc->sc_ioout_xlate &&
 	    bpa < (sc->sc_ioout_xlate + VERDE_OUT_XLATE_IO_WIN_SIZE)) {
 		busbase = sc->sc_ioout_xlate;
-	} else if (bpa < 0x10000) {
-		busbase = 0;
 	} else 
 		return (EINVAL);
 
