@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtio.h,v 1.6 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: mtio.h,v 1.7 2006/06/01 05:42:01 krw Exp $	*/
 /*	$NetBSD: mtio.h,v 1.14 1997/04/15 06:50:19 lukem Exp $	*/
 
 /*
@@ -72,14 +72,10 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
-/* the following two are not yet implemented */
-	daddr_t	mt_fileno;	/* file number of current position */
-	daddr_t	mt_blkno;	/* block number of current position */
-/* end not yet implemented */
 	daddr_t	mt_blksiz;	/* current block size */
 	daddr_t	mt_density;	/* current density code */
-	daddr_t	mt_mblksiz[4];	/* block size for different modes */
-	daddr_t mt_mdensity[4];	/* density codes for different modes */
+	daddr_t	mt_mblksiz;	/* default block size */
+	daddr_t mt_mdensity;	/* default density code */
 };
 
 /*

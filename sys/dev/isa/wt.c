@@ -1,4 +1,4 @@
-/*	$OpenBSD: wt.c,v 1.16 2002/05/24 13:31:11 art Exp $	*/
+/*	$OpenBSD: wt.c,v 1.17 2006/06/01 05:42:01 krw Exp $	*/
 /*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
@@ -487,8 +487,6 @@ wtioctl(dev, cmd, addr, flag, p)
 		((struct mtget*)addr)->mt_dsreg = sc->flags;	/* status */
 		((struct mtget*)addr)->mt_erreg = sc->error;	/* errors */
 		((struct mtget*)addr)->mt_resid = 0;
-		((struct mtget*)addr)->mt_fileno = 0;		/* file */
-		((struct mtget*)addr)->mt_blkno = 0;		/* block */
 		((struct mtget*)addr)->mt_density = sc->dens;	/* density */
 		return 0;
 	case MTIOCTOP:

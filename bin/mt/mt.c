@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.27 2006/05/27 22:37:03 beck Exp $	*/
+/*	$OpenBSD: mt.c,v 1.28 2006/06/01 05:42:01 krw Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.27 2006/05/27 22:37:03 beck Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.28 2006/06/01 05:42:01 krw Exp $";
 #endif
 #endif /* not lint */
 
@@ -249,12 +249,8 @@ status(struct mtget *bp)
 	printreg("ds", bp->mt_dsreg, mt->t_dsbits);
 	printreg("\ner", bp->mt_erreg, mt->t_erbits);
 	(void)putchar('\n');
-	(void)printf("blocksize: %d (%d, %d, %d, %d)\n",
-		bp->mt_blksiz, bp->mt_mblksiz[0], bp->mt_mblksiz[1],
-		bp->mt_mblksiz[2], bp->mt_mblksiz[3]);
-	(void)printf("density: %d (%d, %d, %d, %d)\n",
-		bp->mt_density, bp->mt_mdensity[0], bp->mt_mdensity[1],
-		bp->mt_mdensity[2], bp->mt_mdensity[3]);
+	(void)printf("blocksize: %d (%d)\n", bp->mt_blksiz, bp->mt_mblksiz);
+	(void)printf("density: %d (%d)\n", bp->mt_density, bp->mt_mdensity);
 }
 
 /*

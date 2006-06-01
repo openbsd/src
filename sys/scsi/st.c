@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.61 2006/05/28 23:58:00 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.62 2006/06/01 05:42:01 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 #define	ST_RETRIES	4	/* only on non IO commands */
 
 #define STMODE(z)	( minor(z)	 & 0x03)
-#define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
 
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
@@ -107,7 +106,7 @@ struct quirkdata {
 #define	ST_Q_IGNORE_LOADS	0x0004
 #define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
-	struct modes modes[4];
+	struct modes modes;
 };
 
 struct st_quirk_inquiry_pattern {
@@ -117,135 +116,66 @@ struct st_quirk_inquiry_pattern {
 
 const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
-	 "        ", "                ", "    "}, {0, {
-		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
-		{ST_Q_FORCE_BLKSIZE, 512, QIC_24},	/* minor 4-7 */
-		{ST_Q_FORCE_BLKSIZE, 0, HALFINCH_1600},	/* minor 8-11 */
-		{ST_Q_FORCE_BLKSIZE, 0, HALFINCH_6250}	/* minor 12-15 */
-	}}},
+	 "        ", "                ", "    "}, {0,
+		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "TANDBERG", " TDC 3600       ", ""},     {0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{ST_Q_FORCE_BLKSIZE, 0, QIC_525},	/* minor 4-7 */
-		{0, 0, QIC_150},			/* minor 8-11 */
-		{0, 0, QIC_120}				/* minor 12-15 */
-	}}},
+	 "TANDBERG", " TDC 3600       ", ""},     {0,
+		{0, 0, 0}}},				/* minor 0-3 */
  	{{T_SEQUENTIAL, T_REMOV,
- 	 "TANDBERG", " TDC 3800       ", ""},     {0, {
-		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
-		{0, 0, QIC_525},			/* minor 4-7 */
-		{0, 0, QIC_150},			/* minor 8-11 */
-		{0, 0, QIC_120}				/* minor 12-15 */
-	}}},
+ 	 "TANDBERG", " TDC 3800       ", ""},     {0,
+		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
 	/*
 	 * At least -005 and -007 need this.  I'll assume they all do unless I
 	 * hear otherwise.  - mycroft, 31MAR1994
 	 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 2525 25462", ""},     {0, {
-		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
-		{ST_Q_SENSE_HELP, 0, QIC_525},		/* minor 4-7 */
-		{0, 0, QIC_150},			/* minor 8-11 */
-		{0, 0, QIC_120}				/* minor 12-15 */
-	}}},
+	 "ARCHIVE ", "VIPER 2525 25462", ""},     {0,
+		{ST_Q_SENSE_HELP, 0, 0}}},		/* minor 0-3 */
 	/*
 	 * One user reports that this works for his tape drive.  It probably
 	 * needs more work.  - mycroft, 09APR1994
 	 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "SANKYO  ", "CP525           ", ""},    {0, {
-		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
-		{ST_Q_FORCE_BLKSIZE, 512, QIC_525},	/* minor 4-7 */
-		{0, 0, QIC_150},			/* minor 8-11 */
-		{0, 0, QIC_120}				/* minor 12-15 */
-	}}},
+	 "SANKYO  ", "CP525           ", ""},    {0,
+		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ANRITSU ", "DMT780          ", ""},     {0, {
-		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
-		{ST_Q_FORCE_BLKSIZE, 512, QIC_525},	/* minor 4-7 */
-		{0, 0, QIC_150},			/* minor 8-11 */
-		{0, 0, QIC_120}				/* minor 12-15 */
-	}}},
+	 "ANRITSU ", "DMT780          ", ""},     {0,
+		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21247", ""},     {0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{0, 0, QIC_150},			/* minor 4-7 */
-		{0, 0, QIC_120},			/* minor 8-11 */
-		{0, 0, QIC_24}				/* minor 12-15 */
-	}}},
+	 "ARCHIVE ", "VIPER 150  21247", ""},     {0,
+		{0, 0, 0}}},				/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21531", ""},     {0, {
-		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
-		{0, 0, QIC_150},			/* minor 4-7 */
-		{0, 0, QIC_120},			/* minor 8-11 */
-		{0, 0, QIC_24}				/* minor 12-15 */
-	}}},
+	 "ARCHIVE ", "VIPER 150  21531", ""},     {0,
+		{ST_Q_SENSE_HELP, 0, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5099ES SCSI", ""},          {0, {
-		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
-		{0, 0, QIC_11},				/* minor 4-7 */
-		{0, 0, QIC_24},				/* minor 8-11 */
-		{0, 0, QIC_24}				/* minor 12-15 */
-	}}},
+	 "WANGTEK ", "5099ES SCSI", ""},          {0,
+		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5150ES SCSI", ""},          {0, {
-		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
-		{0, 0, QIC_24},				/* minor 4-7 */
-		{0, 0, QIC_120},			/* minor 8-11 */
-		{0, 0, QIC_150}				/* minor 12-15 */
-	}}},
+	 "WANGTEK ", "5150ES SCSI", ""},          {0,
+		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5525ES SCSI REV7", ""},     {0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{ST_Q_BLKSIZE, 0, QIC_525},		/* minor 4-7 */
-		{0, 0, QIC_150},			/* minor 8-11 */
-		{0, 0, QIC_120}				/* minor 12-15 */
-	}}},
+	 "WANGTEK ", "5525ES SCSI REV7", ""},     {0,
+		{0, 0, 0}}},				/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WangDAT ", "Model 1300      ", ""},     {0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{ST_Q_FORCE_BLKSIZE, 512, DDS},		/* minor 4-7 */
-		{ST_Q_FORCE_BLKSIZE, 1024, DDS},	/* minor 8-11 */
-		{ST_Q_FORCE_BLKSIZE, 0, DDS}		/* minor 12-15 */
-	}}},
+	 "WangDAT ", "Model 1300      ", ""},     {0,
+		{0, 0, 0}}},				/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "EXABYTE ", "EXB-8200        ", "263H"}, {0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
-	}}},
+	 "EXABYTE ", "EXB-8200        ", "263H"}, {0,
+		{0, 0, 0}}},				/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL, {
-		{0, 0, QIC_3095},			/* minor 0-3 */
-		{0, 0, QIC_3095},			/* minor 4-7 */
-		{0, 0, QIC_3095},			/* minor 8-11 */
-		{0, 0, QIC_3095},			/* minor 12-15 */
-	}}},
+	 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL,
+		{0, 0, QIC_3095}}},			/* minor 0-3 */
 #if 0
 	{{T_SEQUENTIAL, T_REMOV,
-	 "EXABYTE ", "EXB-8200        ", ""},     {0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
-	}}},
+	 "EXABYTE ", "EXB-8200        ", ""},     {0,
+		{0, 0, 0}}},				/* minor 0-3 */
 #endif
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0, {
-		{0, ST_Q_IGNORE_LOADS, 0},		/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
-	}}},
+	 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0,
+		{ST_Q_IGNORE_LOADS, 0, 0}}},		/* minor 0-3 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS, {
-		{0, 0, 0},				/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
-	}}},
-
+	 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS,
+		{0, 0, 0}}},				/* minor 0-3 */
 };
 
 #define NOEJECT 0
@@ -276,8 +206,8 @@ struct st_softc {
 /*--------------------quirks for the whole drive------------------------------*/
 	u_int drive_quirks;	/* quirks of this drive               */
 /*--------------------How we should set up when opening each minor device----*/
-	struct modes modes[4];	/* plus more for each mode            */
-	u_int8_t  modeflags[4];	/* flags for the modes                */
+	struct modes modes;	/* plus more for each mode            */
+	u_int8_t  modeflags;	/* flags for the modes                */
 #define DENSITY_SET_BY_USER	0x01
 #define DENSITY_SET_BY_QUIRK	0x02
 #define BLKSIZE_SET_BY_USER	0x04
@@ -441,27 +371,22 @@ void
 st_loadquirks(st)
 	struct st_softc *st;
 {
-	int i;
 	const struct	modes *mode;
 	struct	modes *mode2;
 
-	mode = st->quirkdata->modes;
-	mode2 = st->modes;
-	for (i = 0; i < 4; i++) {
-		bzero(mode2, sizeof(struct modes));
-		st->modeflags[i] &= ~(BLKSIZE_SET_BY_QUIRK |
-		    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
-		    DENSITY_SET_BY_USER);
-		if ((mode->quirks | st->drive_quirks) & ST_Q_FORCE_BLKSIZE) {
-			mode2->blksize = mode->blksize;
-			st->modeflags[i] |= BLKSIZE_SET_BY_QUIRK;
-		}
-		if (mode->density) {
-			mode2->density = mode->density;
-			st->modeflags[i] |= DENSITY_SET_BY_QUIRK;
-		}
-		mode++;
-		mode2++;
+	mode = &st->quirkdata->modes;
+	mode2 = &st->modes;
+	bzero(mode2, sizeof(struct modes));
+	st->modeflags &= ~(BLKSIZE_SET_BY_QUIRK |
+	    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
+	    DENSITY_SET_BY_USER);
+	if ((mode->quirks | st->drive_quirks) & ST_Q_FORCE_BLKSIZE) {
+		mode2->blksize = mode->blksize;
+		st->modeflags |= BLKSIZE_SET_BY_QUIRK;
+	}
+	if (mode->density) {
+		mode2->density = mode->density;
+		st->modeflags |= DENSITY_SET_BY_QUIRK;
 	}
 }
 
@@ -588,14 +513,13 @@ st_mount_tape(dev, flags)
 	int flags;
 {
 	int unit;
-	u_int mode, dsty;
+	u_int mode;
 	struct st_softc *st;
 	struct scsi_link *sc_link;
 	int error = 0;
 
 	unit = STUNIT(dev);
 	mode = STMODE(dev);
-	dsty = STDSTY(dev);
 	st = st_cd.cd_devs[unit];
 	sc_link = st->sc_link;
 
@@ -603,7 +527,7 @@ st_mount_tape(dev, flags)
 		return 0;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n"));
-	st->quirks = st->drive_quirks | st->modes[dsty].quirks;
+	st->quirks = st->drive_quirks | st->modes.quirks;
 	/*
 	 * If the media is new, then make sure we give it a chance to
 	 * to do a 'load' instruction.  (We assume it is new.)
@@ -649,8 +573,8 @@ st_mount_tape(dev, flags)
 	 * then use it in preference to the one supplied by
 	 * default by the driver.
 	 */
-	if (st->modeflags[dsty] & (DENSITY_SET_BY_QUIRK | DENSITY_SET_BY_USER))
-		st->density = st->modes[dsty].density;
+	if (st->modeflags & (DENSITY_SET_BY_QUIRK | DENSITY_SET_BY_USER))
+		st->density = st->modes.density;
 	else
 		st->density = st->media_density;
 	/*
@@ -659,8 +583,8 @@ st_mount_tape(dev, flags)
 	 * default by the driver.
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
-	if (st->modeflags[dsty] & (BLKSIZE_SET_BY_QUIRK | BLKSIZE_SET_BY_USER)) {
-		st->blksize = st->modes[dsty].blksize;
+	if (st->modeflags & (BLKSIZE_SET_BY_QUIRK | BLKSIZE_SET_BY_USER)) {
+		st->blksize = st->modes.blksize;
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
 	} else {
@@ -1078,7 +1002,7 @@ stioctl(dev, cmd, arg, flag, p)
 {
 	int error = 0;
 	int unit;
-	int nmarks, dsty;
+	int nmarks;
 	int flags;
 	struct st_softc *st;
 	int hold_blksize;
@@ -1091,7 +1015,6 @@ stioctl(dev, cmd, arg, flag, p)
 	 */
 	flags = 0;		/* give error messages, act on errors etc. */
 	unit = STUNIT(dev);
-	dsty = STDSTY(dev);
 	st = st_cd.cd_devs[unit];
 	hold_blksize = st->blksize;
 	hold_density = st->density;
@@ -1113,14 +1036,8 @@ stioctl(dev, cmd, arg, flag, p)
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
 		g->mt_blksiz = st->blksize;
 		g->mt_density = st->density;
-		g->mt_mblksiz[0] = st->modes[0].blksize;
-		g->mt_mblksiz[1] = st->modes[1].blksize;
-		g->mt_mblksiz[2] = st->modes[2].blksize;
-		g->mt_mblksiz[3] = st->modes[3].blksize;
-		g->mt_mdensity[0] = st->modes[0].density;
-		g->mt_mdensity[1] = st->modes[1].density;
-		g->mt_mdensity[2] = st->modes[2].density;
-		g->mt_mdensity[3] = st->modes[3].density;
+ 		g->mt_mblksiz = st->modes.blksize;
+ 		g->mt_mdensity = st->modes.density;
 		if (st->flags & ST_READONLY)
 			g->mt_dsreg |= MT_DS_RDONLY;
 		if (st->flags & ST_MOUNTED)
@@ -1264,12 +1181,12 @@ try_new_value:
 	 */
 	switch (mt->mt_op) {
 	case MTSETBSIZ:
-		st->modes[dsty].blksize = st->blksize;
-		st->modeflags[dsty] |= BLKSIZE_SET_BY_USER;
+		st->modes.blksize = st->blksize;
+		st->modeflags |= BLKSIZE_SET_BY_USER;
 		break;
 	case MTSETDNSTY:
-		st->modes[dsty].density = st->density;
-		st->modeflags[dsty] |= DENSITY_SET_BY_USER;
+		st->modes.density = st->density;
+		st->modeflags |= DENSITY_SET_BY_USER;
 		break;
 	}
 
