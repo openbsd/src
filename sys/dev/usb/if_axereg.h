@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.11 2005/11/29 23:16:59 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.12 2006/06/01 05:19:38 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -51,9 +51,9 @@
  * CC is the command byte, as specified in the manual.
  */
 
-#define AXE_CMD_DIR(x)	(((x) & 0x0F00) >> 8)
 #define AXE_CMD_LEN(x)	(((x) & 0xF000) >> 12)
-#define AXE_CMD_CMD(x)	((x) & 0x00FF)
+#define AXE_CMD_DIR(x)	(((x) & 0x0F00) >> 8)
+#define AXE_CMD_CMD(x)	 ((x) & 0x00FF)
 
 #define AXE_172_CMD_READ_RXTX_SRAM		0x2002
 #define AXE_182_CMD_READ_RXTX_SRAM		0x8002
@@ -133,9 +133,6 @@
 #define AXE_172_BUFSZ		1536
 #define AXE_178_MIN_BUFSZ	2048
 #define AXE_178_MAX_BUFSZ	16384
-#define AXE_MIN_FRAMELEN	60
-#define AXE_RX_FRAMES		1
-#define AXE_TX_FRAMES		1
 
 #define AXE_RX_LIST_CNT		1
 #define AXE_TX_LIST_CNT		1
@@ -187,8 +184,6 @@ struct axe_sframe_hdr {
 	u_int16_t		ilen;
 } __packed;
 
-#define AXE_INC(x, y)		(x) = (x + 1) % y
-
 struct axe_softc {
 	USBBASEDEVICE		axe_dev;
 #if defined(__FreeBSD__)
@@ -231,11 +226,3 @@ struct axe_softc {
 	struct timeval		axe_rx_notice;
 	u_int			axe_bufsz;
 };
-
-#if 0
-#define	AXE_LOCK(_sc)		mtx_lock(&(_sc)->axe_mtx)
-#define	AXE_UNLOCK(_sc)		mtx_unlock(&(_sc)->axe_mtx)
-#else
-#define	AXE_LOCK(_sc)
-#define	AXE_UNLOCK(_sc)
-#endif
