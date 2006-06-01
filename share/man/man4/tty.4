@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.26 2006/04/27 19:30:27 deraadt Exp $
+.\"	$OpenBSD: tty.4,v 1.27 2006/06/01 20:10:28 mbalmer Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -213,6 +213,8 @@ Serial IP line discipline.
 Point to Point Protocol line discipline.
 .It STRIPDISC
 Starmode Radio IP line discipline.
+.It NMEADISC
+NMEA0183 line discipline.
 .El
 .Pp
 .It Dv TIOCGETD Fa int *ldisc
@@ -495,3 +497,7 @@ controlling terminal, if any
 .Xr getty 8
 .Sh HISTORY
 The cua support is inspired by similar support in SunOS.
+The NMEA0183 line discipline was added in
+.Ox 4.0
+by
+.An Marc Balmer Aq mbalmer@openbsd.org

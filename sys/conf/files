@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.374 2006/05/28 17:21:14 uwe Exp $
+#	$OpenBSD: files,v 1.375 2006/06/01 20:10:28 mbalmer Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -935,3 +935,7 @@ file net/pfkey.c			key | ipsec | tcp_signature
 file net/pfkeyv2.c			key | ipsec | tcp_signature
 file net/pfkeyv2_parsemessage.c		key | ipsec | tcp_signature
 file net/pfkeyv2_convert.c		key | ipsec | tcp_signature
+
+# NMEA0183 support
+pseudo-device nmea: tty
+file	kern/tty_nmea.c			nmea needs-flag

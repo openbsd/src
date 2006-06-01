@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.9 2005/12/21 12:43:49 jsg Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.10 2006/06/01 20:10:28 mbalmer Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -94,6 +94,13 @@ int	stripinput(int c, struct tty *tp);
 int	stripstart(struct tty *tp);
 #endif
 
+#include "nmea.h"
+#if NNMEA > 0
+int	nmeaopen(dev_t, struct tty *);
+int	nmeaclose(struct tty *, int);
+int	nmeainput(int, struct tty *);
+#endif
+
 struct	linesw linesw[] =
 {
 	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
@@ -137,6 +144,14 @@ struct	linesw linesw[] =
 #if NSTRIP > 0
 	{ stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
 	  stripinput, stripstart, nullmodem },		/* 6- STRIPDISC */
+#else
+	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem },
+#endif
+
+#if NNMEA > 0
+	{ nmeaopen, nmeaclose, ttread, ttwrite, nullioctl,
+	  nmeainput, ttstart, ttymodem },		/* 7- NMEADISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
