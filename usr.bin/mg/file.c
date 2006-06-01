@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.55 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.56 2006/06/01 01:41:49 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -152,6 +152,8 @@ poptofile(int f, int n)
 		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
+	if (bp == curbp)
+		return (splitwind(f, n));
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
 	curbp = bp;

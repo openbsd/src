@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.58 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.59 2006/06/01 01:41:49 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -89,7 +89,8 @@ poptobuffer(int f, int n)
 		bp = curbp->b_altb;
 	else if ((bp = bfind(bufn, TRUE)) == NULL)
 		return (FALSE);
-
+	if (bp == curbp)
+		return (splitwind(f, n));
 	/* and put it in a new window */
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
