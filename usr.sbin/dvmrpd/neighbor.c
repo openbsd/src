@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.2 2006/06/01 18:18:25 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -149,6 +149,11 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 			gettimeofday(&now, NULL);
 			nbr->uptime = now.tv_sec;
+
+			if (nbr->state & NBR_STA_2_WAY)
+				nbr->iface->adj_cnt++;
+			else
+				nbr->iface->adj_cnt--;
 		}
 
 		log_debug("nbr_fsm: event '%s' resulted in action '%s' and "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.2 2006/06/01 18:18:25 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -629,8 +629,8 @@ if_to_ctl(struct iface *iface)
 	ictl.ifindex = iface->ifindex;
 	ictl.state = iface->state;
 	ictl.mtu = iface->mtu;
-	ictl.nbr_cnt = 0;	/* XXX */
-	ictl.adj_cnt = 0;	/* XXX */
+	ictl.nbr_cnt = iface->nbr_cnt;
+	ictl.adj_cnt = iface->adj_cnt;
 
 	ictl.gen_id = iface->gen_id;
 	ictl.group_cnt = iface->group_cnt;
