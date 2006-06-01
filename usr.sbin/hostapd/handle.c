@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.8 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.9 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -261,7 +261,7 @@ hostapd_handle_action(struct hostapd_apme *apme, struct hostapd_frame *frame,
 			return (0);
 
 		hostapd_log(HOSTAPD_LOG,
-		    "%s: sent IAPP frame HOSTAPD_%s (%u bytes)\n",
+		    "%s: sent IAPP frame HOSTAPD_%s (%u bytes)",
 		    iapp->i_iface, cfg->c_apme_dlt ==
 		    DLT_IEEE802_11_RADIO ? "RADIOTAP" : "PCAP", len);
 		break;
@@ -304,7 +304,7 @@ hostapd_handle_action(struct hostapd_apme *apme, struct hostapd_frame *frame,
 
 		if (ret != 0)  {
 			hostapd_log(HOSTAPD_LOG_DEBUG,
-			    "%s: node add/delete %s failed: %s\n",
+			    "%s: node add/delete %s failed: %s",
 			    apme->a_iface, etheraddr_string(lladdr),
 			    strerror(ret));
 		}

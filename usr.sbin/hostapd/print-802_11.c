@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.3 2006/05/15 16:07:33 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.4 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -441,7 +441,7 @@ ieee802_11_if_print(u_int8_t *buf, u_int len)
 	if (ieee80211_print(wh) != 0)
 		PRINTF("[|802.11]");
 
-	PRINTF("\n");
+	PRINTF(NULL);
 }
 
 void
@@ -460,7 +460,7 @@ ieee802_11_radio_if_print(u_int8_t *buf, u_int len)
 
 	rh_len = letoh16(rh->it_len);
 	if (rh->it_version != 0) {
-		PRINTF("[?radiotap + 802.11 v:%u]\n", rh->it_version);
+		PRINTF("[?radiotap + 802.11 v:%u]", rh->it_version);
 		goto out;
 	}
 
@@ -628,7 +628,7 @@ ieee802_11_radio_if_print(u_int8_t *buf, u_int len)
 	PRINTF("[|radiotap + 802.11]");
 
  out:
-	PRINTF("\n");
+	PRINTF(NULL);
 }
 
 void

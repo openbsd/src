@@ -1,4 +1,4 @@
-/*	$OpenBSD: roaming.c,v 1.1 2006/05/15 20:53:02 reyk Exp $	*/
+/*	$OpenBSD: roaming.c,v 1.2 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -77,7 +77,7 @@ hostapd_roaming_init(struct hostapd_config *cfg)
 		bcopy(&ifr.ifr_addr, &apme->a_addr,
 		    sizeof(struct sockaddr_in));
 		hostapd_log(HOSTAPD_LOG_VERBOSE,
-		    "%s/%s: using gateway address %s\n",
+		    "%s/%s: using gateway address %s",
 		    apme->a_iface, iapp->i_iface,
 		    inet_ntoa(apme->a_addr.sin_addr), apme->a_iface);
 	}
@@ -177,7 +177,7 @@ hostapd_roaming_addr(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 	if (ioctl(cfg->c_apme_ctl, SIOCDIFADDR, &ifra) < 0) {
 		if (errno != EADDRNOTAVAIL) {
 			hostapd_log(HOSTAPD_LOG_VERBOSE,
-			    "%s/%s: failed to delete address %s\n",
+			    "%s/%s: failed to delete address %s",
 			    apme->a_iface, iapp->i_iface,
 			    inet_ntoa(addr->in_v4));
 			return (errno);
@@ -186,7 +186,7 @@ hostapd_roaming_addr(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 	if (add && ioctl(cfg->c_apme_ctl, SIOCAIFADDR, &ifra) < 0) {
 		if (errno != EEXIST) {
 			hostapd_log(HOSTAPD_LOG_VERBOSE,
-			    "%s/%s: failed to add address %s\n",
+			    "%s/%s: failed to add address %s",
 			    apme->a_iface, iapp->i_iface,
 			    inet_ntoa(addr->in_v4));
 			return (errno);
@@ -194,7 +194,7 @@ hostapd_roaming_addr(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 	}
 
 	hostapd_log(HOSTAPD_LOG_VERBOSE,
-	    "%s/%s: %s address %s\n",
+	    "%s/%s: %s address %s",
 	    apme->a_iface, iapp->i_iface,
 	    add ? "added" : "deleted",
 	    inet_ntoa(addr->in_v4));
@@ -265,7 +265,7 @@ hostapd_roaming_rt(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 	}
 
 	hostapd_log(HOSTAPD_LOG_VERBOSE,
-	    "%s/%s: %s route to %s\n",
+	    "%s/%s: %s route to %s",
 	    apme->a_iface, iapp->i_iface,
 	    add ? "added" : "deleted",
 	    inet_ntoa(addr->in_v4));
@@ -274,7 +274,7 @@ hostapd_roaming_rt(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 
  bad:
 	hostapd_log(HOSTAPD_LOG_VERBOSE,
-	    "%s/%s: failed to %s route to %s: %s\n",
+	    "%s/%s: failed to %s route to %s: %s",
 	    apme->a_iface, iapp->i_iface,
 	    add ? "add" : "delete",
 	    inet_ntoa(addr->in_v4),

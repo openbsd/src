@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.19 2006/05/15 20:53:02 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.20 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -213,7 +213,7 @@ hostapd_priv(int fd, short sig, void *arg)
 	switch (cmd) {
 	case PRIV_APME_BSSID:
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "[priv]: msg PRIV_APME_BSSID received\n");
+		    "[priv]: msg PRIV_APME_BSSID received");
 
 		if ((apme = hostapd_priv_getapme(fd, cfg)) == NULL)
 			break;
@@ -232,7 +232,7 @@ hostapd_priv(int fd, short sig, void *arg)
 
 	case PRIV_APME_GETNODE:
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "[priv]: msg PRIV_APME_GETNODE received\n");
+		    "[priv]: msg PRIV_APME_GETNODE received");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
 		bcopy(node.ni_macaddr, nr.nr_macaddr, IEEE80211_ADDR_LEN);
@@ -261,7 +261,7 @@ hostapd_priv(int fd, short sig, void *arg)
 	case PRIV_APME_ADDNODE:
 	case PRIV_APME_DELNODE:
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "[priv]: msg PRIV_APME_[ADD|DEL]NODE received\n");
+		    "[priv]: msg PRIV_APME_[ADD|DEL]NODE received");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
 		bcopy(node.ni_macaddr, nr.nr_macaddr, IEEE80211_ADDR_LEN);
@@ -282,7 +282,7 @@ hostapd_priv(int fd, short sig, void *arg)
 
 	case PRIV_LLC_SEND_XID:
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "[priv]: msg PRIV_LLC_SEND_XID received\n");
+		    "[priv]: msg PRIV_LLC_SEND_XID received");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
 
@@ -294,7 +294,7 @@ hostapd_priv(int fd, short sig, void *arg)
 	case PRIV_APME_ADDROAMING:
 	case PRIV_APME_DELROAMING:
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "[priv]: msg PRIV_APME_[ADD|DEL]ROAMING received\n");
+		    "[priv]: msg PRIV_APME_[ADD|DEL]ROAMING received");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
 
@@ -363,7 +363,7 @@ hostapd_priv_apme_setnode(struct hostapd_apme *apme, struct hostapd_node *node,
 
 	hostapd_must_read(priv_fd, &ret, sizeof(int));
 	if (ret == 0)
-		hostapd_log(HOSTAPD_LOG_VERBOSE, "%s/%s: %s node %s\n",
+		hostapd_log(HOSTAPD_LOG_VERBOSE, "%s/%s: %s node %s",
 		    apme->a_iface, iapp->i_iface,
 		    add ? "added" : "removed",
 		    etheraddr_string(node->ni_macaddr));

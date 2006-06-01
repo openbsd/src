@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.15 2006/05/15 20:53:02 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.16 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -55,7 +55,7 @@ hostapd_iapp_init(struct hostapd_config *cfg)
 		/* Get Host AP's BSSID */
 		hostapd_priv_apme_bssid(apme);
 		hostapd_log(HOSTAPD_LOG,
-		    "%s/%s: attached Host AP interface with BSSID %s\n",
+		    "%s/%s: attached Host AP interface with BSSID %s",
 		    apme->a_iface, iapp->i_iface,
 		    etheraddr_string(apme->a_bssid));
 
@@ -75,7 +75,7 @@ hostapd_iapp_term(struct hostapd_config *cfg)
 
 	TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
 		hostapd_log(HOSTAPD_LOG_VERBOSE,
-		    "%s/%s: detaching from Host AP\n",
+		    "%s/%s: detaching from Host AP",
 		    apme->a_iface, iapp->i_iface);
 	}
 }
@@ -117,12 +117,12 @@ hostapd_iapp_add_notify(struct hostapd_apme *apme, struct hostapd_node *node)
 	if (sendto(iapp->i_udp, &frame, sizeof(frame),
 	    0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) == -1) {
 		hostapd_log(HOSTAPD_LOG,
-		    "%s: failed to send ADD notification: %s\n",
+		    "%s: failed to send ADD notification: %s",
 		    iapp->i_iface, strerror(errno));
 		return (errno);
 	}
 
-	hostapd_log(HOSTAPD_LOG, "%s/%s: sent ADD notification for %s\n",
+	hostapd_log(HOSTAPD_LOG, "%s/%s: sent ADD notification for %s",
 	    apme->a_iface, iapp->i_iface,
 	    etheraddr_string(frame.add.a_macaddr));
 
@@ -177,7 +177,7 @@ hostapd_iapp_radiotap(struct hostapd_apme *apme, u_int8_t *buf,
 
 	if (sendmsg(iapp->i_udp, &msg, 0) == -1) {
 		hostapd_log(HOSTAPD_LOG,
-		    "%s: failed to send HOSTAPD %s: %s\n",
+		    "%s: failed to send HOSTAPD %s: %s",
 		    iapp->i_iface, cfg->c_apme_dlt ==
 		    DLT_IEEE802_11_RADIO ? "radiotap" : "pcap",
 		    strerror(errno));
@@ -273,7 +273,7 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 
 		hostapd_log(iapp->i_flags & HOSTAPD_IAPP_F_ADD ?
 		    HOSTAPD_LOG : HOSTAPD_LOG_VERBOSE,
-		    "%s: %s ADD notification for %s at %s\n",
+		    "%s: %s ADD notification for %s at %s",
 		    iapp->i_iface, ret == 0 ?
 		    "received" : "ignored",
 		    etheraddr_string(node.ni_macaddr),
@@ -310,7 +310,7 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 		 */
 
 		hostapd_log(HOSTAPD_LOG_VERBOSE,
-		    "%s: received unsupported IAPP message %d\n",
+		    "%s: received unsupported IAPP message %d",
 		    iapp->i_iface, frame->hdr.i_command);
 		return;
 

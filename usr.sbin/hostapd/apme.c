@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.12 2006/05/15 20:53:02 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.13 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -64,7 +64,7 @@ hostapd_apme_add(struct hostapd_config *cfg, const char *name)
 	TAILQ_INSERT_TAIL(&cfg->c_apmes, apme, a_entries);
 
 	hostapd_log(HOSTAPD_LOG_DEBUG,
-	    "%s: Host AP interface added\n", apme->a_iface);
+	    "%s: Host AP interface added", apme->a_iface);
 
 	return (0);
 }
@@ -89,14 +89,14 @@ hostapd_apme_deauth(struct hostapd_apme *apme)
 
 	if (write(apme->a_raw, buf, sizeof(buf)) == -1) {
 		hostapd_log(HOSTAPD_LOG_VERBOSE,
-		    "%s/%s: failed to deauthenticate all stations: %s\n",
+		    "%s/%s: failed to deauthenticate all stations: %s",
 		    iapp->i_iface, apme->a_iface,
 		    strerror(errno));
 		return (EIO);
 	}
 
 	hostapd_log(HOSTAPD_LOG_VERBOSE,
-	    "%s/%s: deauthenticated all stations\n",
+	    "%s/%s: deauthenticated all stations",
 	    apme->a_iface, iapp->i_iface);
 
 	return (0);
@@ -131,7 +131,7 @@ hostapd_apme_term(struct hostapd_apme *apme)
 		hostapd_roaming_term(apme);
 
 	hostapd_log(HOSTAPD_LOG_DEBUG,
-	    "%s: Host AP interface removed\n", apme->a_iface);
+	    "%s: Host AP interface removed", apme->a_iface);
 
 	free(apme);
 }
@@ -304,7 +304,7 @@ hostapd_apme_frame(struct hostapd_apme *apme, u_int8_t *buf, u_int len)
 	bcopy(wh->i_addr1, node.ni_macaddr, IEEE80211_ADDR_LEN);
 	if (hostapd_priv_apme_getnode(apme, &node) != 0) {
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "%s: invalid association from %s on the Host AP\n",
+		    "%s: invalid association from %s on the Host AP",
 		    apme->a_iface, etheraddr_string(wh->i_addr1));
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2006/05/26 01:06:12 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -191,7 +191,7 @@ option		: SET HOSTAP INTERFACE hostapifaces
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_IAPP;
 
 			hostapd_log(HOSTAPD_LOG_DEBUG,
-			    "%s: IAPP interface added\n", $4);
+			    "%s: IAPP interface added", $4);
 
 			free($4);
 		}
@@ -1337,7 +1337,7 @@ symset(const char *nam, const char *val, int persist)
 	sym->persist = persist;
 	TAILQ_INSERT_TAIL(&symhead, sym, entry);
 
-	hostapd_log(HOSTAPD_LOG_DEBUG, "%s = \"%s\"\n", sym->nam, sym->val);
+	hostapd_log(HOSTAPD_LOG_DEBUG, "%s = \"%s\"", sym->nam, sym->val);
 
 	return (0);
 }
@@ -1390,12 +1390,12 @@ hostapd_add_file(struct hostapd_config *cfg, const char *name)
 		goto err;
 
 	if ((nfile->stream = fopen(name, "rb")) == NULL) {
-		hostapd_log(HOSTAPD_LOG, "failed to open %s\n", name);
+		hostapd_log(HOSTAPD_LOG, "failed to open %s", name);
 		goto err;
 	}
 
 	if (hostapd_check_file_secrecy(fileno(nfile->stream), name)) {
-		hostapd_log(HOSTAPD_LOG, "invalid permissions for %s\n", name);
+		hostapd_log(HOSTAPD_LOG, "invalid permissions for %s", name);
 		goto err;
 	}
 
@@ -1450,7 +1450,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 		next = TAILQ_NEXT(sym, entry);
 		if (!sym->used)
 			hostapd_log(HOSTAPD_LOG_VERBOSE,
-			    "warning: macro \"%s\" not used\n", sym->nam);
+			    "warning: macro \"%s\" not used", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);
 			free(sym->val);

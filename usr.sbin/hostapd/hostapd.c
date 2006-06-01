@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.28 2006/05/13 18:25:12 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.29 2006/06/01 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -69,6 +69,7 @@ hostapd_usage(void)
 void
 hostapd_log(u_int level, const char *fmt, ...)
 {
+	char *nfmt = NULL;
 	va_list ap;
 
 	if (level > hostapd_cfg.c_verbose)
@@ -76,11 +77,19 @@ hostapd_log(u_int level, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	if (hostapd_cfg.c_debug) {
-		vfprintf(stderr, fmt, ap);
+		if (asprintf(&nfmt, "%s\n", fmt) != -1)
+			vfprintf(stderr, nfmt, ap);
+		else {
+			vfprintf(stderr, fmt, ap);
+			fprintf(stderr, "\n");
+		}
 		fflush(stderr);
 	} else
 		vsyslog(LOG_INFO, fmt, ap);
 	va_end(ap);
+
+	if (nfmt != NULL)
+		free(nfmt);
 }
 
 void
@@ -103,15 +112,13 @@ hostapd_printf(const char *fmt, ...)
 		goto va_flush;
 	va_end(ap);
 
-	if (fmt[0] == '\n')
-		goto flush;
-
 	return;
 
  va_flush:
 	va_end(ap);
  flush:
-	hostapd_log(HOSTAPD_LOG, "%s", printbuf);
+	if (strlen(printbuf))
+		hostapd_log(HOSTAPD_LOG, "%s", printbuf);
 	bzero(printbuf, sizeof(printbuf));
 }
 
@@ -139,19 +146,19 @@ hostapd_check_file_secrecy(int fd, const char *fname)
 
 	if (fstat(fd, &st)) {
 		hostapd_log(HOSTAPD_LOG,
-		    "cannot stat %s\n", fname);
+		    "cannot stat %s", fname);
 		return (-1);
 	}
 
 	if (st.st_uid != 0 && st.st_uid != getuid()) {
 		hostapd_log(HOSTAPD_LOG,
-		    "%s: owner not root or current user\n", fname);
+		    "%s: owner not root or current user", fname);
 		return (-1);
 	}
 
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
 		hostapd_log(HOSTAPD_LOG,
-		    "%s: group/world readable/writeable\n", fname);
+		    "%s: group/world readable/writeable", fname);
 		return (-1);
 	}
 
@@ -264,7 +271,7 @@ hostapd_udp_init(struct hostapd_config *cfg)
 			hostapd_fatal("failed to enable broadcast on socket\n");
 
 		hostapd_log(HOSTAPD_LOG_DEBUG, "%s: using broadcast mode "
-		    "(address %s)\n", iapp->i_iface, inet_ntoa(addr->sin_addr));
+		    "(address %s)", iapp->i_iface, inet_ntoa(addr->sin_addr));
 	} else {
 		/*
 		 * Enable multicast
@@ -293,7 +300,7 @@ hostapd_udp_init(struct hostapd_config *cfg)
 			    "%u: %s\n", iapp->i_ttl, strerror(errno));
 
 		hostapd_log(HOSTAPD_LOG_DEBUG, "%s: using multicast mode "
-		    "(ttl %u, group %s)\n", iapp->i_iface, iapp->i_ttl,
+		    "(ttl %u, group %s)", iapp->i_iface, iapp->i_ttl,
 		    inet_ntoa(iapp->i_multicast.sin_addr));
 	}
 }
@@ -347,7 +354,7 @@ hostapd_cleanup(struct hostapd_config *cfg)
 		if (setsockopt(iapp->i_udp, IPPROTO_IP,
 		    IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)
 			hostapd_log(HOSTAPD_LOG, "failed to remove multicast"
-			    " membership to %s: %s\n",
+			    " membership to %s: %s",
 			    IAPP_MCASTADDR, strerror(errno));
 	}
 
@@ -371,7 +378,7 @@ hostapd_cleanup(struct hostapd_config *cfg)
 		free(table);
 	}
 
-	hostapd_log(HOSTAPD_LOG_VERBOSE, "bye!\n");
+	hostapd_log(HOSTAPD_LOG_VERBOSE, "bye!");
 }
 
 int
@@ -450,7 +457,7 @@ main(int argc, char *argv[])
 		TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries)
 			hostapd_apme_init(apme);
 	} else
-		hostapd_log(HOSTAPD_LOG, "%s: running without a Host AP\n",
+		hostapd_log(HOSTAPD_LOG, "%s: running without a Host AP",
 		    iapp->i_iface);
 
 	/* Drop all privileges in an unprivileged child process */
@@ -498,7 +505,7 @@ main(int argc, char *argv[])
 	    hostapd_iapp_input, cfg);
 	event_add(&iapp->i_udp_ev, NULL);
 
-	hostapd_log(HOSTAPD_LOG, "starting hostapd with pid %u\n",
+	hostapd_log(HOSTAPD_LOG, "starting hostapd with pid %u",
 	    getpid());
 
 	/* Run event loop */
