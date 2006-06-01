@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.51 2006/06/01 04:23:13 pascoe Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.52 2006/06/01 04:27:02 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1253,9 +1253,8 @@ axe_init(void *xsc)
 
 	/* Set transmitter IPG values */
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
-		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, 0,
-		    (sc->axe_ipgs[0]) | (sc->axe_ipgs[1] << 8) |
-		    (sc->axe_ipgs[2] << 16), NULL);
+		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, sc->axe_ipgs[2],
+		    (sc->axe_ipgs[1] << 8) | (sc->axe_ipgs[0]), NULL);
 	else {
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
