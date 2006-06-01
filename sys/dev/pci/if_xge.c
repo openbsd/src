@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.17 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.18 2006/06/01 09:20:04 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ pif_rcsr(struct xge_softc *sc, bus_size_t csr)
 	val = bus_space_read_4(sc->sc_st, sc->sc_sh, csr);
 	val2 = bus_space_read_4(sc->sc_st, sc->sc_sh, csr+4);
 	val |= (val2 << 32);
-	return val;
+	return (val);
 }
 
 static inline void
@@ -503,10 +503,13 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/* XXXX snoop configuration? */
 
 	/* 19, set chip memory assigned to the queue */
-	if (sc->xge_type == XGE_TYPE_XENA)
-		PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 64)); /* all 64M to queue 0 */
-	else
-		PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 32)); /* all 32M to queue 0 */
+	if (sc->xge_type == XGE_TYPE_XENA) {
+		/* all 64M to queue 0 */
+		PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 64));
+	} else {
+		/* all 32M to queue 0 */
+		PIF_WCSR(RX_QUEUE_CFG, MC_QUEUE(0, 32));
+	}
 
 	/* 20, setup RLDRAM parameters */
 	/* do not touch it for now */
@@ -609,7 +612,7 @@ xge_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 xge_xgmii_mediachange(struct ifnet *ifp)
 {
-	return 0;
+	return (0);
 }
 
 void
@@ -654,7 +657,7 @@ xge_init(struct ifnet *ifp)
 		bitmask_snprintf(val, QUIESCENT_BMSK, buf, sizeof buf);
 		printf("%s: ADAPTER_STATUS missing bits %s\n", XNAME, buf);
 #endif
-		return 1;
+		return (1);
 	}
 
 	/* set MRU */
@@ -683,7 +686,7 @@ xge_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	return 0;
+	return (0);
 }
 
 void
@@ -721,7 +724,7 @@ xge_intr(void *pv)
 
 	val = PIF_RCSR(GENERAL_INT_STATUS);
 	if (val == 0)
-		return 0; /* no interrupt here */
+		return (0); /* no interrupt here */
 
 	PIF_WCSR(GENERAL_INT_STATUS, val);
 
@@ -849,10 +852,9 @@ xge_intr(void *pv)
 
 		if (++sc->sc_nextrx == NRXREAL)
 			sc->sc_nextrx = 0;
-
 	}
 
-	return 1;
+	return (1);
 }
 
 int 
@@ -922,7 +924,8 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
-	return(error);
+
+	return (error);
 }
 
 void
@@ -1099,7 +1102,7 @@ xge_alloc_txmem(struct xge_softc *sc)
 		txdp += (NTXFRAGS * sizeof(struct txd));
 	}
 
-	return 0;
+	return (0);
 
 err:
 	if (state > 2)
@@ -1108,7 +1111,7 @@ err:
 		bus_dmamem_unmap(sc->sc_dmat, kva, TXMAPSZ);
 	if (state > 0)
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-	return ENOBUFS;
+	return (ENOBUFS);
 }
 
 /*
@@ -1128,7 +1131,7 @@ xge_alloc_rxmem(struct xge_softc *sc)
 	if (sizeof(struct rxd_4k) != XGE_PAGE) {
 		printf("bad compiler struct alignment, %d != %d\n",
 		    (int)sizeof(struct rxd_4k), XGE_PAGE);
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	state = 0;
@@ -1158,7 +1161,7 @@ xge_alloc_rxmem(struct xge_softc *sc)
 	sc->sc_rxd_4k[NRXPAGES-1]->r4_next = 
 	    (uint64_t)sc->sc_rxmap->dm_segs[0].ds_addr;
 
-	return 0;
+	return (0);
 
 err:
 	if (state > 2)
@@ -1167,7 +1170,7 @@ err:
 		bus_dmamem_unmap(sc->sc_dmat, kva, TXMAPSZ);
 	if (state > 0)
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-	return ENOBUFS;
+	return (ENOBUFS);
 }
 
 
@@ -1198,11 +1201,11 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 #if RX_MODE == RX_MODE_1
 	MGETHDR(m[0], M_DONTWAIT, MT_DATA);
 	if (m[0] == NULL)
-		return ENOBUFS;
+		return (ENOBUFS);
 	MCLGET(m[0], M_DONTWAIT);
 	if ((m[0]->m_flags & M_EXT) == 0) {
 		m_freem(m[0]);
-		return ENOBUFS;
+		return (ENOBUFS);
 	}
 	m[0]->m_len = m[0]->m_pkthdr.len = m[0]->m_ext.ext_size;
 #elif RX_MODE == RX_MODE_3
@@ -1222,7 +1225,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 		for (i = 0; i < 5; i++)
 			if (m[i] != NULL)
 				m_free(m[i]);
-		return ENOBUFS;
+		return (ENOBUFS);
 	}
 	/* Link'em together */
 	m[0]->m_next = m[1];
@@ -1240,7 +1243,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rxm[id], m[0],
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error)
-		return error;
+		return (error);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxm[id], 0,
 	    sc->sc_rxm[id]->dm_mapsize, BUS_DMASYNC_PREREAD);
 
@@ -1261,7 +1264,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 #endif
 
 	XGE_RXSYNC(id, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	return 0;
+	return (0);
 }
 
 /*
@@ -1318,7 +1321,7 @@ xge_setup_xgxs(struct xge_softc *sc)
 	if (val != 0x1804001c0F001cULL) {
 		printf("%s: MDIO_CONTROL: %llx != %llx\n", 
 		    XNAME, val, 0x1804001c0F001cULL);
-		return 1;
+		return (1);
 	}
 #endif
 
@@ -1335,7 +1338,7 @@ xge_setup_xgxs(struct xge_softc *sc)
 	if (val != 0x5152040001cULL) {
 		printf("%s: DTX_CONTROL: %llx != %llx\n", 
 		    XNAME, val, 0x5152040001cULL);
-		return 1;
+		return (1);
 	}
 #endif
 
@@ -1349,8 +1352,8 @@ xge_setup_xgxs(struct xge_softc *sc)
 	if (val != 0x1804001c0f001cULL) {
 		printf("%s: MDIO_CONTROL2: %llx != %llx\n",
 		    XNAME, val, 0x1804001c0f001cULL);
-		return 1;
+		return (1);
 	}
 #endif
-	return 0;
+	return (0);
 }
