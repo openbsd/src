@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.41 2006/06/01 06:20:30 todd Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.42 2006/06/01 12:19:59 markus Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -608,11 +608,6 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 		warnx("short read");
 		return -1;
 	}
-	if (datap == NULL && hdr.sadb_msg_errno != 0) {
-		errno = hdr.sadb_msg_errno;
-		warn("PF_KEY failed");
-		return -1;
-	}
 	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
 	if ((data = malloc(len)) == NULL)
 		err(1, "pfkey_reply: malloc");
@@ -630,7 +625,11 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 		bzero(data, len);
 		free(data);
 	}
-
+	if (datap == NULL && hdr.sadb_msg_errno != 0) {
+		errno = hdr.sadb_msg_errno;
+		warn("PF_KEY failed");
+		return -1;
+	}
 	return 0;
 }
 
