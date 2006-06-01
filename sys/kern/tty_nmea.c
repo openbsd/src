@@ -1,4 +1,4 @@
-/*	$OpenBSD $*/
+/*	$OpenBSD: tty_nmea.c,v 1.2 2006/06/01 22:32:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -59,13 +59,13 @@ void	nmeaattach(int);
 #define MSG_VTG	5657671	/* velocity, direction, speed */
 
 int nmea_count = 0;
-time_t nmea_last = 0;
 
 struct nmea {
 	char		cbuf[NMEAMAX];
 	struct sensor	time;
 	struct timeval	tv;			/* soft timestamp */
 	struct timespec	ts;
+	time_t 		last;			/* last time rcvd */
 	int		state;			/* state we're in */
 	int		pos;
 	int		fpos[MAXFLDS];
@@ -117,6 +117,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 		np->time.rfact = 0;
 		np->time.flags = 0;
 		np->state = S_SYNC;
+		np->last = 0L;
 	}
 
 	return linesw[0].l_open(dev, tp);
@@ -208,7 +209,7 @@ nmea_hdlr(struct nmea *np, int c)
 			    np->cbuf[5];
 			switch (np->msg) {
 			case MSG_RMC:
-				np->flds = 12;
+				np->flds = 12;	/* or 11 */
 				np->state = S_DATA;
 				break;
 			default:
@@ -311,55 +312,55 @@ nmea_rmc(struct nmea *np)
 	time_t nmea_now;
 	int n;
 
-	if (np->fldcnt != np->flds) {
-		DPRINTF("field count mismatch\n");
+	if (np->fldcnt != 11 && np->fldcnt != 12) {
+		DPRINTF(("field count mismatch\n"));
 		return;
 	}
 	if (np->msgcksum >= 0 && np->cksum != np->msgcksum) {
-		DPRINTF("checksum error");
+		DPRINTF(("checksum error"));
 		return;
 	}
 	np->cbuf[13] = '\0';
 	if (nmea_atoi(&np->cbuf[11], &n)) {
-		DPRINTF("error in sec\n");
+		DPRINTF(("error in sec\n"));
 		return;
 	}
 	ymdhms.dt_sec = n;
 	np->cbuf[11] = 0;
 	if (nmea_atoi(&np->cbuf[9], &n)) {
-		DPRINTF("error in min\n");
+		DPRINTF(("error in min\n"));
 		return;
 	}
 	ymdhms.dt_min = n;
 	np->cbuf[9] = 0;
 	if (nmea_atoi(&np->cbuf[7], &n)) {
-		DPRINTF("error in hour\n");
+		DPRINTF(("error in hour\n"));
 		return;
 	}
 	ymdhms.dt_hour = n;
 	if (nmea_atoi(&np->cbuf[np->fpos[8] + 4], &n)) {
-		DPRINTF("error in year\n");
+		DPRINTF(("error in year\n"));
 		return;
 	}
 	ymdhms.dt_year = 2000 + n;
 	np->cbuf[np->fpos[8] + 4] = '\0';
 	if (nmea_atoi(&np->cbuf[np->fpos[8] + 2], &n)) {
-		DPRINTF("error in month\n");
+		DPRINTF(("error in month\n"));
 		return;
 	}
 	ymdhms.dt_mon = n;
 	np->cbuf[np->fpos[8] + 2] = '\0';
 	if (nmea_atoi(&np->cbuf[np->fpos[8]], &n)) {
-		DPRINTF("error in day\n");
+		DPRINTF(("error in day\n"));
 		return;
 	}
 	ymdhms.dt_day = n;
 	nmea_now = clock_ymdhms_to_secs(&ymdhms);
-	if (nmea_now <= nmea_last) {
-		DPRINTF("time not monotonically increasing\n");
+	if (nmea_now <= np->last) {
+		DPRINTF(("time not monotonically increasing\n"));
 		return;
 	}
-	nmea_last = nmea_now;
+	np->last = nmea_now;
 	np->time.value = (np->ts.tv_sec - nmea_now)
 	    * 1000000000 + np->ts.tv_nsec;
 	np->time.tv.tv_sec = np->tv.tv_sec;
@@ -367,27 +368,29 @@ nmea_rmc(struct nmea *np)
 	if (np->time.status == SENSOR_S_UNKNOWN) {
 		strlcpy(np->time.desc, np->ti == TI_GPS ? "GPS  GPS" :
 		    "LORC Loran-C", sizeof(np->time.desc));
-		switch (np->cbuf[np->fpos[11]]) {
-		case 'S':
-			strlcat(np->time.desc, " simulated",
-			    sizeof(np->time.desc));
-			break;
-		case 'E':
-			strlcat(np->time.desc, " estimated",
-			    sizeof(np->time.desc));
-			break;
-		case 'A':
-			strlcat(np->time.desc, " autonomous",
-			    sizeof(np->time.desc));
-			break;
-		case 'D':
-			strlcat(np->time.desc, " differential",
-			    sizeof(np->time.desc));
-			break;
-		case 'N':
-			strlcat(np->time.desc, " not valid",
-			    sizeof(np->time.desc));
-			break;
+		if (np->fldcnt == 12) {
+			switch (np->cbuf[np->fpos[11]]) {
+			case 'S':
+				strlcat(np->time.desc, " simulated",
+				    sizeof(np->time.desc));
+				break;
+			case 'E':
+				strlcat(np->time.desc, " estimated",
+				    sizeof(np->time.desc));
+				break;
+			case 'A':
+				strlcat(np->time.desc, " autonomous",
+				    sizeof(np->time.desc));
+				break;
+			case 'D':
+				strlcat(np->time.desc, " differential",
+				    sizeof(np->time.desc));
+				break;
+			case 'N':
+				strlcat(np->time.desc, " not valid",
+				    sizeof(np->time.desc));
+				break;
+			}
 		}
 		np->time.status = SENSOR_S_OK;
 		sensor_add(&np->time);
@@ -400,6 +403,6 @@ nmea_rmc(struct nmea *np)
 		np->time.status = SENSOR_S_WARN;
 		break;
 	default:
-		DPRINTF("unknown warning indication\n");
+		DPRINTF(("unknown warning indication\n"));
 	}
 }
