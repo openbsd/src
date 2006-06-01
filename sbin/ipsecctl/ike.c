@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.31 2006/06/01 06:14:05 todd Exp $	*/
+/*	$OpenBSD: ike.c,v 1.32 2006/06/01 06:46:35 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -382,18 +382,21 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		switch (src->af) {
 		case AF_INET:
 			sa.sa_len = sizeof(struct sockaddr_in);
-			bcopy(&src->mask.ipa, &((struct sockaddr_in *)(&sa))->sin_addr,
-				sizeof(struct in6_addr));
+			bcopy(&src->mask.ipa,
+			    &((struct sockaddr_in *)(&sa))->sin_addr,
+			    sizeof(struct in6_addr));
 			break;
 		case AF_INET6:
 			sa.sa_len = sizeof(struct sockaddr_in6);
-			bcopy(&src->mask.ipa, &((struct sockaddr_in6 *)(&sa))->sin6_addr,
-				sizeof(struct in6_addr));
+			bcopy(&src->mask.ipa,
+			    &((struct sockaddr_in6 *)(&sa))->sin6_addr,
+			    sizeof(struct in6_addr));
 			break;
 		}
-		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0, NI_NUMERICHOST)) {
-			err(1, "could not get a numeric mask");
-		}
+		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0,
+		    NI_NUMERICHOST))
+			errx(1, "could not get a numeric mask");
+
 		if ((network = strdup(src->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
@@ -419,18 +422,21 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		switch (dst->af) {
 		case AF_INET:
 			sa.sa_len = sizeof(struct sockaddr_in);
-			bcopy(&dst->mask.ipa, &((struct sockaddr_in *)(&sa))->sin_addr,
-				sizeof(struct in6_addr));
+			bcopy(&dst->mask.ipa,
+			    &((struct sockaddr_in *)(&sa))->sin_addr,
+			    sizeof(struct in6_addr));
 			break;
 		case AF_INET6:
 			sa.sa_len = sizeof(struct sockaddr_in6);
-			bcopy(&dst->mask.ipa, &((struct sockaddr_in6 *)(&sa))->sin6_addr,
-				sizeof(struct in6_addr));
+			bcopy(&dst->mask.ipa,
+			    &((struct sockaddr_in6 *)(&sa))->sin6_addr,
+			    sizeof(struct in6_addr));
 			break;
 		}
-		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0, NI_NUMERICHOST)) {
-			err(1, "could not get a numeric mask");
-		}
+		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0,
+		    NI_NUMERICHOST))
+			errx(1, "could not get a numeric mask");
+		
 		if ((network = strdup(dst->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
