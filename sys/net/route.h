@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.40 2006/05/31 01:35:11 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.41 2006/06/01 05:21:06 henning Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -303,6 +303,8 @@ void		 rtlabel_unref(u_int16_t);
 #define	ALL_CLONING 0
 #define	ONNET_CLONING 1
 #define	NO_CLONING 2
+
+#define	RT_TABLEID_MAX	255
 
 extern struct route_cb route_cb;
 extern struct rtstat rtstat;

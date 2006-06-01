@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.75 2006/05/31 02:02:22 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.76 2006/06/01 05:21:06 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ struct	rtstat		   rtstat;
 struct	radix_node_head	***rt_tables;
 u_int8_t		   af2rtafidx[AF_MAX+1];
 u_int8_t		   rtafidx_max;
-u_int			   rtbl_cnt = 0;
+u_int			   rtbl_id_max = 0;
 
 int			rttrash;	/* routes not in table but not freed */
 struct sockaddr		wildcard;	/* zero cookie for wildcard searches */
@@ -144,7 +144,7 @@ struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
 int	rtable_init(struct radix_node_head ***);
-int	rtable_add(char *);
+int	rtable_add(u_int);
 int	okaytoclone(u_int, int);
 int	rtdeletemsg(struct rtentry *);
 int	rtflushclone1(struct radix_node *, void *);
@@ -152,7 +152,6 @@ void	rtflushclone(struct radix_node_head *, struct rtentry *);
 int	rt_if_remove_rtdelete(struct radix_node *, void *);
 
 #define	LABELID_MAX	50000
-#define	RTBL_CNT_INC	4	/* allocate rtables in chunks of 4 */
 
 struct rt_label {
 	TAILQ_ENTRY(rt_label)	rtl_entry;
@@ -209,34 +208,36 @@ route_init()
 		if (dom->dom_rtattach)
 			af2rtafidx[dom->dom_family] = rtafidx_max++;
 
-	if (rtable_add("main") == -1)
+	if (rtable_add(0) == -1)
 		panic("route_init rtable_add");
 }
 
 int
-rtable_add(char *tblname)	/* must be called at splsoftnet */
+rtable_add(u_int id)	/* must be called at splsoftnet */
 {
-	u_int	 i;
 	void	*p;
 
-	for (i = 0; i < rtbl_cnt; i++)
-		if (rt_tables[i] == NULL)
-			break;
+	if (id > RT_TABLEID_MAX)
+		return (-1);
 
-	if (i == rtbl_cnt) {
-		rtbl_cnt += RTBL_CNT_INC;
-		if ((p = malloc(sizeof(void *) * rtbl_cnt, M_RTABLE,
-		    M_NOWAIT)) == NULL)
+	if (id == 0 || id > rtbl_id_max) {
+		size_t	newlen = sizeof(void *) * (id+1);
+
+		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT)) == NULL)
 			return (-1);
-		bzero(p, sizeof(void *) * rtbl_cnt);
-		if (i > 0) {
-			bcopy(rt_tables, p, sizeof(void *) * i);
+		bzero(p, newlen);
+		if (id > 0) {
+			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
 			free(rt_tables, M_RTABLE);
 		}
 		rt_tables = p;
+		rtbl_id_max = id;
 	}
 
-	return (rtable_init(&rt_tables[i]));
+	if (rt_tables[id] != NULL)	/* already exists */
+		return (-1);
+
+	return (rtable_init(&rt_tables[id]));
 }
 
 void
