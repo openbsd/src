@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.38 2006/05/31 14:38:31 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.39 2006/06/01 04:12:34 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -161,7 +161,7 @@ struct ipsec_rule {
 	u_int32_t	 spi;
 	u_int32_t	 nr;
 
-	TAILQ_ENTRY(ipsec_rule) entries;
+	TAILQ_ENTRY(ipsec_rule) rule_entry;
 };
 
 TAILQ_HEAD(ipsec_rule_queue, ipsec_rule);

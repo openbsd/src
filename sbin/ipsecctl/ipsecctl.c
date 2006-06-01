@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.48 2006/05/30 21:56:05 msf Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.49 2006/06/01 04:12:34 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -151,7 +151,7 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 		errx(1, "ipsecctl_commit: failed to open PF_KEY socket");
 
 	while ((rp = TAILQ_FIRST(&ipsec->rule_queue))) {
-		TAILQ_REMOVE(&ipsec->rule_queue, rp, entries);
+		TAILQ_REMOVE(&ipsec->rule_queue, rp, rule_entry);
 
 		if (rp->type & RULE_IKE) {
 			if (ike_ipsec_establish(action, rp) == -1)
@@ -173,7 +173,7 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 int
 ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 {
-	TAILQ_INSERT_TAIL(&ipsec->rule_queue, r, entries);
+	TAILQ_INSERT_TAIL(&ipsec->rule_queue, r, rule_entry);
 
 	if ((ipsec->opts & IPSECCTL_OPT_VERBOSE) && !(ipsec->opts &
 	    IPSECCTL_OPT_SHOW))
@@ -444,7 +444,7 @@ ipsecctl_show_flows(int opts)
 	}
 
 	while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
-		TAILQ_REMOVE(&ipsec.rule_queue, rp, entries);
+		TAILQ_REMOVE(&ipsec.rule_queue, rp, rule_entry);
 
 		ipsecctl_print_rule(rp, ipsec.opts);
 
