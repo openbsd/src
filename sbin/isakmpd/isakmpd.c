@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.91 2006/03/20 16:43:22 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.92 2006/06/01 01:39:16 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -72,7 +72,7 @@ static void     usage(void);
  */
 int             debug = 0;
 
-/* Set when no policy file is found. */
+/* Set when no policy file shall be used. */
 int		acquire_only = 0;
 
 /*
