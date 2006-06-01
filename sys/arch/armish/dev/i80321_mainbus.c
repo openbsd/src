@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.4 2006/06/01 03:45:15 drahn Exp $	*/
+/*	$OpenBSD: i80321_mainbus.c,v 1.5 2006/06/01 17:06:16 drahn Exp $	*/
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 
 #include <machine/bus.h>
 
+#include <arm/mainbus/mainbus.h>
 #include <armish/dev/iq80321reg.h>
 #include <armish/dev/iq80321var.h>
 
@@ -88,24 +89,18 @@ struct cfdriver iopxs_cd = {
 int	i80321_mainbus_found;
 
 int
-i80321_mainbus_match(struct device *parent, void *cf, void *aux)
+i80321_mainbus_match(struct device *parent, void *match, void *aux)
 {
-#if 0
 	struct mainbus_attach_args *ma = aux;
-#endif
+	struct cfdata *cf = match;
 
 	if (i80321_mainbus_found)
 		return (0);
 
-#if 1
-	/* XXX Shoot arch/arm/mainbus in the head. */
-	return (1);
-#else
-	if (strcmp(cf->cf_name, ma->ma_name) == 0)
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0)
 		return (1);
 
 	return (0);
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.2 2006/05/29 17:30:26 drahn Exp $	*/
+/*	$OpenBSD: obio.c,v 1.3 2006/06/01 17:06:16 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.14 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 
 #include <machine/bus.h>
 
+#include <arm/mainbus/mainbus.h>
 #include <arm/xscale/i80321reg.h>
 #include <armish/dev/iq80321reg.h>
 #include <armish/dev/iq80321var.h>
@@ -70,24 +71,18 @@ int	obio_search(struct device *, void *, void *);
 int	obio_found;
 
 int
-obio_match(struct device *parent, void *v, void *aux)
+obio_match(struct device *parent, void *match, void *aux)
 {
-#if 0
 	struct mainbus_attach_args *ma = aux;
-#endif
+	struct cfdata *cf = match;
 
 	if (obio_found)
 		return (0);
 
-#if 1
-	/* XXX Shoot arch/arm/mainbus in the head. */
-	return (1);
-#else
-	if (strcmp(cf->cf_name, ma->ma_name) == 0)
+	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0)
 		return (1);
 
 	return (0);
-#endif
 }
 
 void
