@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.49 2006/04/23 20:21:31 krw Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.50 2006/06/01 04:07:46 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -339,7 +339,7 @@ axe_miibus_statchg(device_ptr_t dev)
 			val |= AXE_178_MEDIA_GMII | AXE_178_MEDIA_ENCK;
 			break;
 		case IFM_100_TX:
-			val |=  AXE_178_MEDIA_100TX;
+			val |= AXE_178_MEDIA_100TX;
 			break;
 		case IFM_10_T:
 			/* doesn't need to be handled */
@@ -536,7 +536,7 @@ USB_MATCH(axe)
 		return(UMATCH_NONE);
 	}
 
-	return (axe_lookup(uaa->vendor, uaa->product) != NULL ? 
+	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
@@ -596,8 +596,8 @@ USB_ATTACH(axe)
 
 	/* decide on what our bufsize will be */
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
-		sc->axe_bufsz = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 
-		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ; 
+		sc->axe_bufsz = (sc->axe_udev->speed == USB_SPEED_HIGH) ?
+		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
 	else
 		sc->axe_bufsz = AXE_172_BUFSZ;
 
@@ -1271,7 +1271,7 @@ axe_init(void *xsc)
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
 			/* largest possible USB buffer size for AX88178 */
-			rxmode |= AXE_178_RXCMD_MFB;  
+			rxmode |= AXE_178_RXCMD_MFB;
 		}
 	} else
 		rxmode |= AXE_172_RXCMD_UNICAST;
