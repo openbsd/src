@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2005/11/22 05:02:44 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2006/06/01 04:17:34 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -116,20 +116,29 @@ twiddle(int f, int n)
 {
 	struct line	*dotp;
 	int	 doto, cr;
+	int	 fudge = FALSE;
 
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;
+	undo_add_boundary();
+	undo_no_boundary(TRUE);
 	if (doto == llength(dotp)) {
 		if (--doto <= 0)
 			return (FALSE);
+		backchar(f, 1);
+		fudge = TRUE;
 	} else {
 		if (doto == 0)
 			return (FALSE);
-		++curwp->w_doto;
 	}
-	cr = lgetc(dotp, doto--);
-	lputc(dotp, doto + 1, lgetc(dotp, doto));
-	lputc(dotp, doto, cr);
+	cr = lgetc(dotp, doto - 1);
+	backdel(f, 1);
+	forwchar(f, 1);
+	linsert(1, cr);
+	if (fudge != TRUE)
+		backchar(f, 1);
+	undo_no_boundary(FALSE);
+	undo_add_boundary();
 	lchange(WFEDIT);
 	return (TRUE);
 }
