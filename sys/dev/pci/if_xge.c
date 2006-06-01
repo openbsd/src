@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.18 2006/06/01 09:20:04 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.19 2006/06/01 09:39:13 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -825,23 +825,12 @@ xge_intr(void *pv)
 
 		ifp->if_ipackets++;
 
-#if XGE_CKSUM
-		if (RXD_CTL1_PROTOS(val) & (RXD_CTL1_P_IPv4|RXD_CTL1_P_IPv6)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (RXD_CTL1_L3CSUM(val) != 0xffff)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
-		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_TCP) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4|M_CSUM_TCPv6;
-			if (RXD_CTL1_L4CSUM(val) != 0xffff)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		}
-		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_UDP) {
-			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4|M_CSUM_UDPv6;
-			if (RXD_CTL1_L4CSUM(val) != 0xffff)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		}
-#endif
+		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_IPv4)
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_TCP)
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_UDP)
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
