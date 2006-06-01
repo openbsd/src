@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.22 2006/06/01 00:53:15 deraadt Exp $ */
+/*	$OpenBSD: mpi.c,v 1.23 2006/06/01 04:36:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -227,7 +227,7 @@ mpi_intr(void *arg)
 	struct mpi_softc		*sc = arg;
 	struct mpi_ccb			*ccb;
 	struct mpi_msg_reply		*reply = NULL;
-	paddr_t				reply_dva;
+	u_int32_t			reply_dva;
 	char				*reply_addr;
 	u_int32_t			reg, id;
 	int				rv = 0;
@@ -243,9 +243,9 @@ mpi_intr(void *arg)
 			    BUS_DMASYNC_POSTREAD);
 
 			reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
+			reply_dva -= (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
 
-			reply_addr = MPI_DMA_KVA(sc->sc_replies) +
-			    (reply_dva - MPI_DMA_DVA(sc->sc_replies));
+			reply_addr = MPI_DMA_KVA(sc->sc_replies) + reply_dva;
 			reply = (struct mpi_msg_reply *)reply_addr;
 
 			id = letoh32(reply->msg_context);
@@ -377,7 +377,7 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 		ccb->ccb_offset = MPI_REQUEST_SIZE * i;
 
 		ccb->ccb_cmd = &cmd[ccb->ccb_offset];
-		ccb->ccb_cmd_dva = MPI_DMA_DVA(sc->sc_requests) +
+		ccb->ccb_cmd_dva = (u_int32_t)MPI_DMA_DVA(sc->sc_requests) +
 		    ccb->ccb_offset;
 
 		mpi_put_ccb(sc, ccb);
@@ -440,7 +440,8 @@ mpi_push_replies(struct mpi_softc *sc)
 	    0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
 
 	for (i = 0; i < PAGE_SIZE / MPI_REPLY_SIZE; i++) {
-		reply = MPI_DMA_DVA(sc->sc_replies) + MPI_REPLY_SIZE * i;
+		reply = (u_int32_t)MPI_DMA_DVA(sc->sc_replies) +
+		    MPI_REPLY_SIZE * i;
 		mpi_push_reply(sc, reply);
 	}
 }
@@ -460,7 +461,7 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 {
 	struct mpi_ccb			*ccb;
 	struct mpi_msg_reply		*reply = NULL;
-	paddr_t				reply_dva;
+	u_int32_t			reply_dva;
 	char				*reply_addr;
 	u_int32_t			reg, id;
 
@@ -485,9 +486,9 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 			    BUS_DMASYNC_POSTREAD);
 
 			reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
+			reply_dva -= (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
 
-			reply_addr = MPI_DMA_KVA(sc->sc_replies) +
-			    (reply_dva - MPI_DMA_DVA(sc->sc_replies));
+			reply_addr = MPI_DMA_KVA(sc->sc_replies) + reply_dva;
 			reply = (struct mpi_msg_reply *)reply_addr;
 
 			id = letoh32(reply->msg_context);
@@ -1316,11 +1317,11 @@ mpi_iocinit(struct mpi_softc *sc)
 
 	iiq.reply_frame_size = htole16(MPI_REPLY_SIZE);
 
-	hi_addr = (u_int32_t)((unsigned long long)MPI_DMA_DVA(sc->sc_requests) >> 32);
+	hi_addr = (u_int32_t)((u_int64_t)MPI_DMA_DVA(sc->sc_requests) >> 32);
 	iiq.host_mfa_hi_addr = htole32(hi_addr);
 	iiq.sense_buffer_hi_addr = htole32(hi_addr);
 
-	hi_addr = (u_int32_t)((unsigned long long)MPI_DMA_DVA(sc->sc_replies) >> 32);
+	hi_addr = (u_int32_t)((u_int64_t)MPI_DMA_DVA(sc->sc_replies) >> 32);
 	iiq.reply_fifo_host_signalling_addr = htole32(hi_addr);
 
 	iiq.msg_version_maj = 0x01;

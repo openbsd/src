@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.5 2006/05/31 00:32:51 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.6 2006/06/01 04:36:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -54,7 +54,7 @@ struct mpi_ccb {
 
 	bus_addr_t		ccb_offset;
 	void			*ccb_cmd;
-	paddr_t			ccb_cmd_dva;
+	bus_addr_t		ccb_cmd_dva;
 
 	volatile enum {
 		MPI_CCB_FREE,
