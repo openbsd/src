@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.10 2006/06/01 07:54:10 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.11 2006/06/01 09:07:09 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -131,6 +131,21 @@ struct schizo_regs {
 #define	SCZ_UEAFSR_MTAG			0x000000000000e000UL
 #define	SCZ_UEAFSR_ECCSYND		0x00000000000001ffUL
 
+#define	SCZ_UEAFAR_PIO			0x0000080000000000UL	/* 0=pio, 1=memory */
+#define	SCZ_UEAFAR_PIO_TYPE		0x0000078000000000UL	/* pio type: */
+#define	SCZ_UEAFAR_PIO_UPA		0x0000078000000000UL	/*  upa */
+#define	SZC_UEAFAR_PIO_SAFARI		0x0000060000000000UL	/*  safari/upa64s */
+#define	SCZ_UEAFAR_PIO_NLAS		0x0000058000000000UL	/*  newlink alt space */
+#define	SCZ_UEAFAR_PIO_NLS		0x0000050000000000UL	/*  newlink space */
+#define	SCZ_UEAFAR_PIO_NLI		0x0000040000000000UL	/*  newlink interface */
+#define	SCZ_UEAFAR_PIO_PCIAM		0x0000030000000000UL	/*  pcia: memory */
+#define	SCZ_UEAFAR_PIO_PCIAI		0x0000020000000000UL	/*  pcia: interface */
+#define	SZC_UEAFAR_PIO_PCIBC		0x0000018000000000UL	/*  pcia: config / i/o */
+#define	SZC_UEAFAR_PIO_PCIBM		0x0000010000000000UL	/*  pcib: memory */
+#define	SZC_UEAFAR_PIO_PCIBI		0x0000000000000000UL	/*  pcib: interface */
+#define	SCZ_UEAFAR_PIO_PCIAC		0x0000038000000000UL	/*  pcib: config / i/o */
+#define	SCZ_UEAFAR_MEMADDR		0x000007fffffffff0UL	/* memory address */
+
 #define	SCZ_CEAFSR_PPIO			0x8000000000000000UL
 #define	SCZ_CEAFSR_PDRD			0x4000000000000000UL
 #define	SCZ_CEAFSR_PDWR			0x2000000000000000UL
@@ -145,6 +160,21 @@ struct schizo_regs {
 #define	SCZ_CEAFSR_MTAGSYND		0x00000000000f0000UL
 #define	SCZ_CEAFSR_MTAG			0x000000000000e000UL
 #define	SCZ_CEAFSR_ECCSYND		0x00000000000001ffUL
+
+#define	SCZ_CEAFAR_PIO			0x0000080000000000UL	/* 0=pio, 1=memory */
+#define	SCZ_CEAFAR_PIO_TYPE		0x0000078000000000UL	/* pio type: */
+#define	SCZ_CEAFAR_PIO_UPA		0x0000078000000000UL	/*  upa */
+#define	SZC_CEAFAR_PIO_SAFARI		0x0000060000000000UL	/*  safari/upa64s */
+#define	SCZ_CEAFAR_PIO_NLAS		0x0000058000000000UL	/*  newlink alt space */
+#define	SCZ_CEAFAR_PIO_NLS		0x0000050000000000UL	/*  newlink space */
+#define	SCZ_CEAFAR_PIO_NLI		0x0000040000000000UL	/*  newlink interface */
+#define	SCZ_CEAFAR_PIO_PCIAM		0x0000030000000000UL	/*  pcia: memory */
+#define	SCZ_CEAFAR_PIO_PCIAI		0x0000020000000000UL	/*  pcia: interface */
+#define	SZC_CEAFAR_PIO_PCIBC		0x0000018000000000UL	/*  pcia: config / i/o */
+#define	SZC_CEAFAR_PIO_PCIBM		0x0000010000000000UL	/*  pcib: memory */
+#define	SZC_CEAFAR_PIO_PCIBI		0x0000000000000000UL	/*  pcib: interface */
+#define	SCZ_CEAFAR_PIO_PCIAC		0x0000038000000000UL	/*  pcib: config / i/o */
+#define	SCZ_CEAFAR_MEMADDR		0x000007fffffffff0UL	/* memory address */
 
 #define	SCZ_PCICTRL_BUS_UNUS		(1UL << 63UL)
 #define	SCZ_PCICTRL_ESLCK		(1UL << 51UL)
