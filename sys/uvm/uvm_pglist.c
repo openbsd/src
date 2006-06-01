@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.15 2006/01/16 13:11:06 mickey Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.16 2006/06/01 05:16:49 krw Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -109,6 +109,9 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	 */
 	if (alignment < PAGE_SIZE)
 		alignment = PAGE_SIZE;
+
+	if (size == 0)
+		return (EINVAL);
 
 	size = round_page(size);
 	try = roundup(low, alignment);
