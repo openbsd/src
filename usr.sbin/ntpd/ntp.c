@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.80 2006/06/01 05:44:35 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.81 2006/06/01 06:04:15 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -378,6 +378,7 @@ ntp_dispatch_imsg(void)
 				dlen -= sizeof(h->ss);
 				if (peer->addr_head.pool) {
 					npeer = new_peer();
+					npeer->weight = peer->weight;
 					h->next = NULL;
 					npeer->addr = h;
 					npeer->addr_head.a = h;
