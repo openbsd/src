@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.50 2006/06/01 04:07:46 pascoe Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.51 2006/06/01 04:23:13 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -330,7 +330,7 @@ axe_miibus_statchg(device_ptr_t dev)
 		val = AXE_MEDIA_FULL_DUPLEX;
 	else
 		val = 0;
-	
+
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		val |= (AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC);
 
@@ -361,18 +361,18 @@ axe_miibus_statchg(device_ptr_t dev)
 Static int
 axe_ifmedia_upd(struct ifnet *ifp)
 {
-        struct axe_softc        *sc = ifp->if_softc;
-        struct mii_data         *mii = GET_MII(sc);
+	struct axe_softc	*sc = ifp->if_softc;
+	struct mii_data		*mii = GET_MII(sc);
 
-        sc->axe_link = 0;
-        if (mii->mii_instance) {
-                struct mii_softc        *miisc;
-                LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-                         mii_phy_reset(miisc);
-        }
-        mii_mediachg(mii);
+	sc->axe_link = 0;
+	if (mii->mii_instance) {
+		struct mii_softc	*miisc;
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
+	}
+	mii_mediachg(mii);
 
-        return (0);
+	return (0);
 }
 
 /*
@@ -381,12 +381,12 @@ axe_ifmedia_upd(struct ifnet *ifp)
 Static void
 axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-        struct axe_softc        *sc = ifp->if_softc;
-        struct mii_data         *mii = GET_MII(sc);
+	struct axe_softc	*sc = ifp->if_softc;
+	struct mii_data		*mii = GET_MII(sc);
 
-        mii_pollstat(mii);
-        ifmr->ifm_active = mii->mii_media_active;
-        ifmr->ifm_status = mii->mii_media_status;
+	mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 }
 
 Static void
@@ -532,9 +532,8 @@ USB_MATCH(axe)
 {
 	USB_MATCH_START(axe, uaa);
 
-	if (!uaa->iface) {
+	if (!uaa->iface)
 		return(UMATCH_NONE);
-	}
 
 	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -760,7 +759,7 @@ USB_DETACH(axe)
 	    sc->axe_ep[AXE_ENDPT_RX] != NULL ||
 	    sc->axe_ep[AXE_ENDPT_INTR] != NULL)
 		printf("%s: detach has active endpoints\n",
-		       USBDEVNAME(sc->axe_dev));
+		    USBDEVNAME(sc->axe_dev));
 #endif
 
 	sc->axe_attached = 0;
@@ -1181,18 +1180,15 @@ axe_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->axe_link) {
+	if (!sc->axe_link)
 		return;
-	}
 
-	if (ifp->if_flags & IFF_OACTIVE) {
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
-	}
 
 	IF_DEQUEUE(&ifp->if_snd, m_head);
-	if (m_head == NULL) {
+	if (m_head == NULL)
 		return;
-	}
 
 	if (axe_encap(sc, m_head, 0)) {
 		IF_PREPEND(&ifp->if_snd, m_head);
@@ -1205,8 +1201,8 @@ axe_start(struct ifnet *ifp)
 	 * to him.
 	 */
 #if NBPFILTER > 0
-	 if (ifp->if_bpf)
-	 	bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
 	ifp->if_flags |= IFF_OACTIVE;
@@ -1461,12 +1457,12 @@ axe_stop(struct axe_softc *sc)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("axe%d: abort rx pipe failed: %s\n",
-		    	sc->axe_unit, usbd_errstr(err));
+			    sc->axe_unit, usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("axe%d: close rx pipe failed: %s\n",
-		    	sc->axe_unit, usbd_errstr(err));
+			    sc->axe_unit, usbd_errstr(err));
 		}
 		sc->axe_ep[AXE_ENDPT_RX] = NULL;
 	}
@@ -1475,7 +1471,7 @@ axe_stop(struct axe_softc *sc)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		if (err) {
 			printf("axe%d: abort tx pipe failed: %s\n",
-		    	sc->axe_unit, usbd_errstr(err));
+			    sc->axe_unit, usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		if (err) {
@@ -1489,7 +1485,7 @@ axe_stop(struct axe_softc *sc)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		if (err) {
 			printf("axe%d: abort intr pipe failed: %s\n",
-		    	sc->axe_unit, usbd_errstr(err));
+			    sc->axe_unit, usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		if (err) {
