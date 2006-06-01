@@ -27,7 +27,6 @@
 ./usr/include/arm/ieeefp.h
 ./usr/include/arm/internal_types.h
 ./usr/include/arm/isa_machdep.h
-./usr/include/arm/katelib.h
 ./usr/include/arm/limits.h
 ./usr/include/arm/lock.h
 ./usr/include/arm/machdep.h
@@ -42,7 +41,6 @@
 ./usr/include/arm/ptrace.h
 ./usr/include/arm/reg.h
 ./usr/include/arm/reloc.h
-./usr/include/arm/rtc.h
 ./usr/include/arm/setjmp.h
 ./usr/include/arm/signal.h
 ./usr/include/arm/softintr.h
@@ -91,7 +89,6 @@
 ./usr/include/cats/ptrace.h
 ./usr/include/cats/reg.h
 ./usr/include/cats/reloc.h
-./usr/include/cats/rtc.h
 ./usr/include/cats/setjmp.h
 ./usr/include/cats/signal.h
 ./usr/include/cats/spinlock.h

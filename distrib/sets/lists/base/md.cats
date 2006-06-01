@@ -656,7 +656,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieeefp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/isa_machdep.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/katelib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/lock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/machdep.ph
@@ -671,7 +670,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ptrace.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/reloc.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/rtc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/setjmp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/signal.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/softintr.ph
@@ -732,7 +730,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/ptrace.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/reloc.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/cats/rtc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/setjmp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/signal.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/cats/spinlock.ph
