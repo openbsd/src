@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.78 2006/05/31 01:27:21 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.79 2006/06/01 04:42:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	struct ntp_sensor	*s, *next_s;
 	struct timespec		 tp;
 	struct stat		 stb;
-	time_t			 nextaction;
+	time_t			 nextaction, last_sensor_scan = 0;
 	void			*newp;
 
 	switch (pid = fork()) {
@@ -152,7 +152,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	conf->scale = 1;
 
 	sensor_init(conf);
-	sensor_scan();
 
 	log_info("ntp engine ready");
 
@@ -237,6 +236,10 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 		}
 
+		if (last_sensor_scan + SENSOR_SCAN_INTERVAL < time(NULL)) {
+			sensor_scan();
+			last_sensor_scan = time(NULL);
+		}
 		sensors_cnt = 0;
 		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 			sensors_cnt++;
@@ -426,18 +429,27 @@ priv_adjtime(void)
 	int			  offset_cnt = 0, i = 0, j;
 	struct ntp_offset	**offsets;
 	double			  offset_median;
+	u_int8_t		  priority = 0;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
 		if (!p->update.good)
 			return;
+		if (p->priority > priority) {
+			priority = p->priority;
+			offset_cnt = 0;
+		}
 		offset_cnt += p->weight;
 	}
 
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 		if (!s->update.good)
 			continue;
+		if (s->priority > priority) {
+			priority = s->priority;
+			offset_cnt = 0;
+		}
 		offset_cnt += p->weight;
 	}
 
@@ -447,12 +459,16 @@ priv_adjtime(void)
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
+		if (p->priority < priority)
+			continue;
 		for (j = 0; j < p->weight; j++)
 			offsets[i++] = &p->update;
 	}
 
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 		if (!s->update.good)
+			continue;
+		if (s->priority < priority)
 			continue;
 		for (j = 0; j < s->weight; j++)
 			offsets[i++] = &s->update;
