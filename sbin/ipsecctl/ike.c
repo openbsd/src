@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.29 2006/05/31 02:28:35 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.30 2006/06/01 02:19:22 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -115,23 +115,28 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
 			    peer->name, "local");
 		else
-			fprintf(fd, SET "[peer-default]:ID=default-ID force\n");
+			fprintf(fd, SET "[peer-default]:ID=%s-ID force\n",
+			    "local");
 
 		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", "local");
 		fprintf(fd, SET "[%s-ID]:Name=%s force\n", "local",
 		    auth->srcid);
 	}
 	if (auth->dstid) {
-		if (peer)
+		if (peer) {
 			fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
 			    peer->name, peer->name);
-		else
+			fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n",
+			    peer->name);
+			fprintf(fd, SET "[%s-ID]:Name=%s force\n", peer->name,
+			    auth->dstid);
+		} else {
 			fprintf(fd, SET
 			    "[peer-default]:Remote-ID=default-ID force\n");
-			
-		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", peer->name);
-		fprintf(fd, SET "[%s-ID]:Name=%s force\n", peer->name,
-		    auth->dstid);
+			fprintf(fd, SET "[default-ID]:ID-type=FQDN force\n");
+			fprintf(fd, SET "[default-ID]:Name=%s force\n",
+			    auth->dstid);
+		}
 	}
 }
 
