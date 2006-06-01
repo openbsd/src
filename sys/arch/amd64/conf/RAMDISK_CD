@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.56 2006/05/31 23:24:43 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.57 2006/06/01 09:50:30 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -248,7 +248,7 @@ stge*	at pci?			# Sundance TC9021 GigE
 hme*	at pci?			# Sun Happy Meal
 vge*	at pci?			# VIA VT612x
 nfe*	at pci?			# NVIDIA nForce Ethernet
-#xge*	at pci?			# Neterion Xframe-I/II 10Gb ethernet
+xge*	at pci?			# Neterion Xframe-I/II 10Gb ethernet
 
 # Wireless network cards
 ath*	at pci?			# Atheros AR5k (802.11a/b/g)
