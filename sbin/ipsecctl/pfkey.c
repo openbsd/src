@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.40 2006/05/31 05:38:45 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.41 2006/06/01 06:20:30 todd Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -675,7 +675,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 			rule->local = calloc(1, sizeof(struct ipsec_addr_wrap));
 			if (rule->local == NULL)
-				err(1, "pfkey_parse: malloc");
+				err(1, "pfkey_parse: calloc");
 
 			rule->local->af = sa->sa_family;
 			switch (sa->sa_family) {
@@ -703,7 +703,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 			rule->peer = calloc(1, sizeof(struct ipsec_addr_wrap));
 			if (rule->peer == NULL)
-				err(1, "pfkey_parse: malloc");
+				err(1, "pfkey_parse: calloc");
 
 			rule->peer->af = sa->sa_family;
 			switch (sa->sa_family) {
