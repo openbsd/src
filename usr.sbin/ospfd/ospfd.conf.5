@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.15 2006/03/30 12:46:47 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.16 2006/06/01 23:00:17 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -75,7 +75,8 @@ globally or within the area declaration.
 All interface related settings can be configured globally, per area and per
 interface.
 The only settings that can be set globally and not overruled are listed below.
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns \&| Ns Ic no
@@ -93,13 +94,23 @@ to
 may result in routing loops and could cause major routing issues in the
 complete OSPF cloud.
 Only routers with just one link to the OSPF cloud may safely set it to
-.Ic \&no .
+.Ic no .
+.Pp
 .It Xo
+.Op Ic no
 .Ic redistribute
 .Sm off
 .Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
-.Ic default Ns \&| Ns Ic none Pc
+.Ic default Pc
 .Sm on
+.Xc
+.It Xo
+.Op Ic no
+.Ic redistribute Ar prefix
+.Xc
+.It Xo
+.Op Ic no
+.Ic redistribute rtlabel Ar label
 .Xc
 If set to
 .Ic connected ,
@@ -110,9 +121,27 @@ static routes will be announced over OSPF.
 If set to
 .Ic default ,
 a default route pointing to this router will be announced over OSPF.
-The default setting is
-.Ic none .
-In this case no additional routes will be announced over OSPF.
+It is possible to specify a network range with
+.Ar prefix ;
+networks needs to be part of that range to be redistributed.
+Additionally it is possible to redistribute based on route labels
+using the
+.Ic rtlabel
+keyword.
+By default no additional routes will be announced over OSPF.
+.Pp
+.Ic redistribute
+statements are evaluated in sequential order, from first to last.
+The first matching rule decides if a route should be redistributed or not.
+Matching rules starting with
+.Ic no
+will force the route to be not announced.
+The only exception is
+.Ic default ,
+which will be set no matter what, and additionally
+.Ic no
+cannot be used together with it.
+.Pp
 .It Xo
 .Ic rfc1583compat
 .Pq Ic yes Ns \&| Ns Ic no
@@ -122,9 +151,11 @@ If set to
 decisions regarding AS-external routes are evaluated according to RFC 1583.
 The default is
 .Ic no .
+.Pp
 .It Ic router-id Ar address
 Set the router ID; if not specified, the lowest IP address of the router
 will be used.
+.Pp
 .It Ic spf-delay Ar seconds
 Set SPF delay in seconds.
 The delay between receiving an update to the link
