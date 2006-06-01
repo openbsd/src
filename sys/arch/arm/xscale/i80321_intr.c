@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_intr.c,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
+/*	$OpenBSD: i80321_intr.c,v 1.3 2006/06/01 08:24:53 drahn Exp $	*/
 /*	$NetBSD: i80321_icu.c,v 1.11 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
@@ -369,7 +369,7 @@ i80321_do_pending(void)
 #define	DO_SOFTINT(si)							\
 	if ((softint_ipending & ~i80321_imask[new]) & SI_TO_IRQBIT(si)){	\
 		softint_ipending &= ~SI_TO_IRQBIT(si);			\
-		current_ipl_level |= si_to_ipl[(si)];			\
+		current_ipl_level = si_to_ipl[(si)];			\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
@@ -618,7 +618,7 @@ i80321_irq_handler(void *v)
 
 		iq = &intrq[irq];
 		uvmexp.intrs++;
-		current_ipl_level |= iq->iq_irq;
+		current_ipl_level = iq->iq_irq;
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
