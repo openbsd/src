@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.40 2006/06/01 15:47:26 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.41 2006/06/01 15:53:39 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -36,6 +36,7 @@ enum {
 #define RULE_FLOW	0x01
 #define RULE_SA		0x02
 #define RULE_IKE	0x04
+#define RULE_GROUP	0x08
 
 enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
@@ -144,6 +145,7 @@ struct ipsec_rule {
 
 	struct ipsec_addr_wrap *src;
 	struct ipsec_addr_wrap *dst;
+	struct ipsec_addr_wrap *dst2;
 	struct ipsec_addr_wrap *local;
 	struct ipsec_addr_wrap *peer;
 	struct ipsec_auth *auth;
@@ -156,11 +158,13 @@ struct ipsec_rule {
 
 	u_int8_t	 satype;	/* encapsulating prococol */
 	u_int8_t	 proto;		/* encapsulated protocol */
+	u_int8_t	 proto2;
 	u_int8_t	 tmode;
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
 	u_int8_t	 ikemode;
 	u_int32_t	 spi;
+	u_int32_t	 spi2;
 	u_int32_t	 nr;
 
 	TAILQ_ENTRY(ipsec_rule) rule_entry;
