@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.86 2006/06/01 06:50:58 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.87 2006/06/01 15:33:08 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1822,13 +1822,15 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 		}
 		if (enckey) {
 			if (enckey->len < xfs->encxf->keymin) {
-				yyerror("encryption key too short, "
-				    "minimum %d bits", xfs->encxf->keymin * 8);
+				yyerror("encryption key too short (%d bits), "
+				    "minimum %d bits", enckey->len * 8,
+				     xfs->encxf->keymin * 8);
 				return (0);
 			}
 			if (xfs->encxf->keymax < enckey->len) {
-				yyerror("encryption key too long, "
-				    "maximum %d bits", xfs->encxf->keymax * 8);
+				yyerror("encryption key too long (%d bits), "
+				    "maximum %d bits", enckey->len * 8,
+				     xfs->encxf->keymax * 8);
 				return (0);
 			}
 		}
