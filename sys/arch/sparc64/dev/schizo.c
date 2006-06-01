@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.22 2006/06/01 07:54:10 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.23 2006/06/01 19:12:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -218,15 +218,19 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	if (busa)
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
-		   pbm, 0x32, "pci_a");
+		   pbm, SCZ_PCIERR_A_INO, "pci_a");
 	else
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
-		   pbm, 0x32, "pci_ib");
+		   pbm, SCZ_PCIERR_B_INO, "pci_b");
 
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, 0x30, "ue");
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, 0x31, "ce");
+	schizo_pbm_write(pbm, SCZ_PCI_CTRL, schizo_pbm_read(pbm, SCZ_PCI_CTRL) |
+	    SCZ_PCICTRL_EEN | SCZ_PCICTRL_SBH_INT | SCZ_PCICTRL_DTO_INT);
+
+	/* double mapped */
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO, "ue");
+	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, SCZ_CE_INO, "ce");
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
-	    0x34, "safari");
+	    SCZ_SERR_INO, "safari");
 
 	config_found(&sc->sc_dv, &pba, schizo_print);
 }
@@ -255,7 +259,19 @@ schizo_pci_error(void *vpbm)
 	struct schizo_pbm *sp = vpbm;
 	struct schizo_softc *sc = sp->sp_sc;
 
-	panic("%s: pci error", sc->sc_dv.dv_xname);
+	printf("%s: pci bus %c error\n", sc->sc_dv.dv_xname,
+	    sp->sp_bus_a ? 'A' : 'B');
+
+	printf("PCICTRL=%lb\n",
+	    schizo_pbm_read(sp, SCZ_PCI_CTRL), SCZ_PCICTRL_BITS);
+
+	printf("PCIAFSR=%lb\n",
+	    schizo_pbm_read(sp, SCZ_PCI_AFSR), SCZ_PCIAFSR_BITS);
+
+	printf("PCIAFAR=%lx\n", schizo_pbm_read(sp, SCZ_PCI_AFAR));
+
+	panic("%s: fatal", sc->sc_dv.dv_xname);
+
 	return (1);
 }
 
