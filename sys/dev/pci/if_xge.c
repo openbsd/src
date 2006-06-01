@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.20 2006/06/01 21:53:52 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.21 2006/06/01 21:56:26 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1258,7 +1258,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 }
 
 /*
- * These magics comes from the FreeBSD driver.
+ * This magic comes from the FreeBSD driver.
  */
 int
 xge_setup_xgxs(struct xge_softc *sc)
