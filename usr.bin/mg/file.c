@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.56 2006/06/01 01:41:49 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.57 2006/06/01 05:07:39 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -209,9 +209,20 @@ readin(char *fname)
 	/* might be old */
 	if (bclear(curbp) != TRUE)
 		return (TRUE);
+	/* Clear readonly. May be set by autoexec path */
+	curbp->b_flag &=~ BFREADONLY;
 	if ((status = insertfile(fname, fname, TRUE)) != TRUE) {
 		ewprintf("File is not readable: %s", fname);
 		return (FALSE);
+	}
+
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
+		if (wp->w_bufp == curbp) {
+			wp->w_dotp = wp->w_linep = lforw(curbp->b_linep);
+			wp->w_doto = 0;
+			wp->w_markp = NULL;
+			wp->w_marko = 0;
+		}
 	}
 
 	/*
@@ -225,14 +236,6 @@ readin(char *fname)
 
 	/* no change */
 	curbp->b_flag &= ~BFCHG;
-	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
-		if (wp->w_bufp == curbp) {
-			wp->w_dotp = wp->w_linep = lforw(curbp->b_linep);
-			wp->w_doto = 0;
-			wp->w_markp = NULL;
-			wp->w_marko = 0;
-		}
-	}
 
 	/*
 	 * We need to set the READONLY flag after we insert the file,
@@ -244,8 +247,6 @@ readin(char *fname)
 		ro = TRUE;
 	if (ro == TRUE)
 		curbp->b_flag |= BFREADONLY;
-	else
-		curbp->b_flag &=~ BFREADONLY;
 
 	if (startrow)
 		gotoline(FFARG, startrow);
