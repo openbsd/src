@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.67 2006/05/31 23:27:38 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.68 2006/06/01 20:00:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -165,7 +165,7 @@ cvs_commit_local(struct cvs_file *cf)
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_REMOVED || (cf->file_status == FILE_ADDED
 	    && cf->file_rcs != NULL && cf->file_rcs->rf_dead == 1))
-		rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+		rcsnum_tostr(rcs_head_get(cf->file_rcs), rbuf, sizeof(rbuf));
 	else
 		strlcpy(rbuf, "Non-existent", sizeof(rbuf));
 
@@ -258,6 +258,11 @@ cvs_commit_local(struct cvs_file *cf)
 		if (rcs_state_set(cf->file_rcs,
 		    cf->file_rcs->rf_head, RCS_STATE_DEAD) == -1)
 			fatal("cvs_commit_local: failed to set state");
+	}
+
+	if (cf->file_rcs->rf_branch != NULL) {
+		rcsnum_free(cf->file_rcs->rf_branch);
+		cf->file_rcs->rf_branch = NULL;
 	}
 
 	rcs_write(cf->file_rcs);

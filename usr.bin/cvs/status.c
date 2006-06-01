@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.61 2006/05/30 21:32:52 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.62 2006/06/01 20:00:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -155,7 +155,8 @@ cvs_status_local(struct cvs_file *cf)
 		if (len >= sizeof(buf))
 			fatal("cvs_status_local: truncation");
 	} else {
-		rcsnum_tostr(cf->file_rcs->rf_head, revbuf, sizeof(revbuf));
+		rcsnum_tostr(rcs_head_get(cf->file_rcs),
+		    revbuf, sizeof(revbuf));
 		l = snprintf(buf, sizeof(buf), "%s\t%s", revbuf,
 		    cf->file_rpath);
 		if (l == -1 || l >= (int)sizeof(buf))

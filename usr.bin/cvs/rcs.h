@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.67 2006/05/31 18:26:14 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.68 2006/06/01 20:00:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -219,7 +219,7 @@ extern int rcs_errno;
 
 RCSFILE			*rcs_open(const char *, int, int, ...);
 void			 rcs_close(RCSFILE *);
-const RCSNUM		*rcs_head_get(RCSFILE *);
+RCSNUM			*rcs_head_get(RCSFILE *);
 int			 rcs_head_set(RCSFILE *, RCSNUM *);
 const RCSNUM		*rcs_branch_get(RCSFILE *);
 int			 rcs_branch_set(RCSFILE *, const RCSNUM *);
