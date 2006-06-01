@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.2 2006/06/01 21:47:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -61,7 +61,6 @@ dvmrpe_sig_handler(int sig, short event, void *bula)
 		/* NOTREACHED */
 	default:
 		fatalx("unexpected signal");
-		/* NOTREACHED */
 	}
 }
 
@@ -78,7 +77,6 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork");
-		/* NOTREACHED */
 	case 0:
 		break;
 	default:
@@ -122,10 +120,9 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	dvmrpd_process = PROC_DVMRP_ENGINE;
 
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-	}
 
 	event_init();
 	nbr_init(NBR_HASHSIZE);
@@ -216,7 +213,6 @@ dvmrpe_shutdown(void)
 	_exit(0);
 }
 
-/* imesg */
 int
 dvmrpe_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {

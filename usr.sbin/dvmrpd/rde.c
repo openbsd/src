@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.2 2006/06/01 21:47:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -62,7 +62,6 @@ rde_sig_handler(int sig, short event, void *arg)
 		/* NOTREACHED */
 	default:
 		fatalx("unexpected signal");
-		/* NOTREACHED */
 	}
 }
 
@@ -78,7 +77,6 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork");
-		/* NOTREACHED */
 	case 0:
 		break;
 	default:
@@ -99,10 +97,9 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 	dvmrpd_process = PROC_RDE_ENGINE;
 
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-	}
 
 	endpwent();
 
