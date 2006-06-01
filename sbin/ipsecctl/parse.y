@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2006/05/31 14:38:31 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.83 2006/06/01 02:20:44 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2041,17 +2041,15 @@ create_ike(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	if (peer == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
 		if (r->direction == IPSEC_IN) {
-			if (r->src->netaddress) {
-				yyerror("no peer specified");
-				goto errout;
-			}
-			r->peer = copyhost(r->src);
+			if (r->src->netaddress)
+				r->peer = NULL;
+			else
+				r->peer = copyhost(r->src);
 		} else {
-			if (r->dst->netaddress) {
-				yyerror("no peer specified");
-				goto errout;
-			}
-			r->peer = copyhost(r->dst);
+			if (r->dst->netaddress)
+				r->peer = NULL;
+			else
+				r->peer = copyhost(r->dst);
 		}
 	} else
 		r->peer = peer;
@@ -2076,17 +2074,4 @@ create_ike(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	r->ikeauth->string = authtype->string;
 
 	return (r);
-
-errout:
-	free(r);
-	if (srcid)
-		free(srcid);
-	if (dstid)
-		free(dstid);
-	free(src);
-	free(dst);
-	if (authtype->string)
-		free(authtype->string);
-
-	return (NULL);
 }
