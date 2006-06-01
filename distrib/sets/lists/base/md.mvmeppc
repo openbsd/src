@@ -1311,8 +1311,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdhcreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdhcvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdmmc_ioreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdmmc_scsi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdmmcchip.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdmmcdevs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sequencervar.ph

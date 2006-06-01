@@ -809,8 +809,10 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdhcreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdhcvar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdmmc_ioreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdmmc_scsi.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdmmcchip.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdmmcdevs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sequencervar.ph

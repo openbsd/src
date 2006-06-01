@@ -1474,6 +1474,7 @@
 ./usr/share/man/cat4/networking.0
 ./usr/share/man/cat4/nfe.0
 ./usr/share/man/cat4/nge.0
+./usr/share/man/cat4/nmea.0
 ./usr/share/man/cat4/noct.0
 ./usr/share/man/cat4/nofn.0
 ./usr/share/man/cat4/nsclpcsio.0
