@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.32 2006/06/01 06:46:35 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.33 2006/06/01 18:03:40 msf Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -114,13 +114,13 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 	if (auth->srcid) {
 		if (peer)
 			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
-			    peer->name, "local");
+			    peer->name, auth->srcid);
 		else
 			fprintf(fd, SET "[peer-default]:ID=%s-ID force\n",
-			    "local");
+			    auth->srcid);
 
-		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", "local");
-		fprintf(fd, SET "[%s-ID]:Name=%s force\n", "local",
+		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", auth->srcid);
+		fprintf(fd, SET "[%s-ID]:Name=%s force\n", auth->srcid,
 		    auth->srcid);
 	}
 	if (auth->dstid) {
