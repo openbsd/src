@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321.c,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
+/*	$OpenBSD: i80321.c,v 1.3 2006/06/01 03:46:19 drahn Exp $	*/
 /*	$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $	*/
 
 /*
@@ -172,14 +172,6 @@ dump_regs(sc);
 	    ATU_OMWTVR1, sc->sc_owin[1].owin_xlate_lo);
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 	    ATU_OUMWTVR1, sc->sc_owin[1].owin_xlate_hi);
-
-	printf("owin_xlate_0 %x %x\n",
-	    sc->sc_owin[0].owin_xlate_lo,
-	    sc->sc_owin[0].owin_xlate_hi);
-	printf("owin_xlate_1 %x %x\n",
-	    sc->sc_owin[1].owin_xlate_hi,
-	    sc->sc_owin[1].owin_xlate_hi);
-
 
 	/*
 	 * Set up the ATU configuration register.  All we do
