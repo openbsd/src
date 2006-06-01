@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.55 2006/05/31 20:11:31 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.56 2006/06/01 01:17:25 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -169,7 +169,6 @@ str2hex(char *str, long *vp)
 	int c;
 
 	if (*str == 'w') {
-		printf("dubbya...%s\n", str);
 		for (v = 1;; v++) {
 			if (str[v] >= '0' && str[v] <= '9')
 				continue;
