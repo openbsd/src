@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.24 2006/05/29 00:22:46 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.25 2006/06/01 05:29:09 pascoe Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -45,6 +45,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -466,7 +467,11 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 	 * the tick handler driving autonegotiation.  Don't want 500ms
 	 * delays all the time while the system is running!
 	 */
-	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
+	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
+		sc->mii_flags |= MIIF_DOINGAUTO;
+		tsleep(&sc->mii_flags, PZERO, "miiaut", hz >> 1);
+		mii_phy_auto_timeout(sc);
+	} else if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		sc->mii_flags |= MIIF_DOINGAUTO;
 		sc->mii_ticks = 0;
 		timeout_set(&sc->mii_phy_timo, mii_phy_auto_timeout, sc);
