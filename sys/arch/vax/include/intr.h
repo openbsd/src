@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2006/05/30 21:25:28 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2006/06/01 06:01:28 miod Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -95,9 +95,9 @@
 #define splhigh()	splx(IPL_HIGH)
 
 /* These are better to use when playing with VAX buses */
-#define	spl4()		splx(0x14)
-#define	spl5()		splx(0x15)
-#define	spl6()		splx(0x16)
-#define	spl7()		splx(0x17)
+#define	spl4()		_splraise(0x14)
+#define	spl5()		_splraise(0x15)
+#define	spl6()		_splraise(0x16)
+#define	spl7()		_splraise(0x17)
 
 #endif	/* _VAX_INTR_H */
