@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.284 2006/06/01 16:43:23 norby Exp $
+#	$OpenBSD: rc,v 1.285 2006/06/01 21:37:43 norby Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -591,6 +591,10 @@ if [ X"${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
 		dhcpd_ifs=`stripcom /etc/dhcpd.interfaces`
 	fi
 	echo -n ' dhcpd';	/usr/sbin/dhcpd ${dhcpd_flags} ${dhcpd_ifs}
+fi
+
+if [ X"${dhcrelay_flags}" != X"NO" ]; then
+	echo -n ' dhcrelay';		/usr/sbin/dhcrelay $dhcrelay_flags
 fi
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
