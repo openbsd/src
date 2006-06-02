@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2006/06/02 04:51:55 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.94 2006/06/02 05:01:27 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,8 +167,8 @@ struct ipsec_rule	*create_sagroup(struct ipsec_addr_wrap *, u_int8_t,
 			     u_int32_t, struct ipsec_addr_wrap *, u_int8_t,
 			     u_int32_t);
 struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_hosts *,
-			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-			     u_int8_t, char *, char *, u_int8_t);
+			     struct ipsec_hosts *, u_int8_t, char *, char *,
+			     u_int8_t);
 int			 expand_rule(struct ipsec_rule *, u_int8_t, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *, int);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
@@ -191,10 +191,7 @@ typedef struct {
 		char		*string;
 		u_int16_t	 port;
 		struct ipsec_hosts hosts;
-		struct {
-			struct ipsec_addr_wrap *peer;
-			struct ipsec_addr_wrap *local;
-		} peers;
+		struct ipsec_hosts peers;
 		struct ipsec_addr_wrap *singlehost;
 		struct ipsec_addr_wrap *host;
 		struct {
@@ -325,8 +322,8 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 flowrule	: FLOW satype dir proto hosts peers ids type {
 			struct ipsec_rule	*r;
 
-			r = create_flow($3, $4, &$5, $6.local, $6.peer, $2,
-			    $7.srcid, $7.dstid, $8);
+			r = create_flow($3, $4, &$5, &$6, $2, $7.srcid,
+			    $7.dstid, $8);
 			if (r == NULL)
 				YYERROR;
 
@@ -339,7 +336,7 @@ ikerule		: IKE ikemode satype proto hosts peers mainmode quickmode
 		      ids ikeauth {
 			struct ipsec_rule	*r;
 
-			r = create_ike($4, &$5, $6.local, $6.peer,
+			r = create_ike($4, &$5, $6.src, $6.dst,
 			    $7, $8, $3, $2, $9.srcid, $9.dstid, &$10);
 			if (r == NULL)
 				YYERROR;
@@ -422,24 +419,24 @@ port		: /* empty */				{ $$ = 0; }
 		;
 
 peers		: /* empty */				{
-			$$.peer = NULL;
-			$$.local = NULL;
+			$$.dst = NULL;
+			$$.src = NULL;
 		}
 		| PEER singlehost LOCAL singlehost	{
-			$$.peer = $2;
-			$$.local = $4;
+			$$.dst = $2;
+			$$.src = $4;
 		}
 		| LOCAL singlehost PEER singlehost	{
-			$$.peer = $4;
-			$$.local = $2;
+			$$.dst = $4;
+			$$.src = $2;
 		}
 		| PEER singlehost			{
-			$$.peer = $2;
-			$$.local = NULL;
+			$$.dst = $2;
+			$$.src = NULL;
 		}
 		| LOCAL singlehost			{
-			$$.peer = NULL;
-			$$.local = $2;
+			$$.dst = NULL;
+			$$.src = $2;
 		}
 		;
 
@@ -2027,7 +2024,7 @@ create_sagroup(struct ipsec_addr_wrap *dst, u_int8_t proto, u_int32_t spi,
 
 struct ipsec_rule *
 create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
-    struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
+    struct ipsec_hosts *peers,
     u_int8_t satype, char *srcid, char *dstid, u_int8_t type)
 {
 	struct ipsec_rule *r;
@@ -2061,8 +2058,8 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 	}
 
 	r->flowtype = type;
-	r->local = local;
-	if (peer == NULL) {
+	r->local = peers->src;
+	if (peers->dst == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
 		if (r->direction == IPSEC_IN) {
 			if (r->src->netaddress) {
@@ -2078,7 +2075,7 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 			r->peer = copyhost(r->dst);
 		}
 	} else
-		r->peer = peer;
+		r->peer = peers->dst;
 
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
