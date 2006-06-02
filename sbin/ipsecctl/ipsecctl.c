@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.55 2006/06/02 05:59:31 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.56 2006/06/02 09:37:34 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -359,7 +359,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		if (r->satype == IPSEC_TCPMD5)
 			printf(" ");
 		else
-			printf("\n\t");
+			printf(" \\\n\t");
 		printf("authkey 0x");
 		ipsecctl_print_key(r->authkey);
 	}
@@ -367,7 +367,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		if (r->satype == IPSEC_TCPMD5)
 			printf(" ");
 		else
-			printf("\n\t");
+			printf(" \\\n\t");
 		printf("enckey 0x");
 		ipsecctl_print_key(r->enckey);
 	}
