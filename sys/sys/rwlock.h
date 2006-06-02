@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.6 2006/05/07 20:12:41 tedu Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.7 2006/06/02 05:02:34 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -94,18 +94,16 @@ void rw_enter_read(struct rwlock *);
 void rw_enter_write(struct rwlock *);
 void rw_exit_read(struct rwlock *);
 void rw_exit_write(struct rwlock *);
-int rw_test_and_set(volatile unsigned long *, unsigned long, unsigned long);
 
 int rw_enter(struct rwlock *, int);
-#define RW_WRITE	0x00UL		/* exclusive lock */	
-#define RW_READ		0x01UL		/* shared lock */
-#define RW_UPGRADE	0x02UL		/* read -> write upgrade */
-#define RW_DOWNGRADE	0x03UL		/* write -> read downgrade */
-#define RW_OPMASK	0x07UL
+void rw_exit(struct rwlock *);
+#define RW_WRITE	0x01UL		/* exclusive lock */	
+#define RW_READ		0x02UL		/* shared lock */
+#define RW_OPMASK	0x03UL
 #define RW_INTR		0x10UL		/* interruptible sleep */
 #define RW_SLEEPFAIL	0x20UL		/* fail if we slept for the lock */
+#define RW_NOSLEEP	0x40UL		/* don't wait for the lock */
 
-int rw_enter_wait(struct rwlock *, struct proc *, int);
-void rw_exit_waiters(struct rwlock *, unsigned long);
+int rw_test_and_set(volatile unsigned long *, unsigned long, unsigned long);
 
 #endif
