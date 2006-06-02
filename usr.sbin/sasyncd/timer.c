@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.2 2005/05/23 19:53:27 ho Exp $	*/
+/*	$OpenBSD: timer.c,v 1.3 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -64,7 +64,7 @@ timer_init(void)
 /*
  * Return the number of seconds until the next event happens. Used for
  * the select() call in the main loop.
- */ 
+ */
 void
 timer_next_event(struct timeval *tv)
 {

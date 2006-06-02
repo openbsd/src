@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.8 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.9 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -64,11 +64,11 @@ monitor_init(void)
 	int		p[2];
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, p) != 0) {
-		log_err("%s: socketpair failed - %s", __progname, 
+		log_err("%s: socketpair failed - %s", __progname,
 		    strerror(errno));
 		exit(1);
 	}
-	
+
 	if (!pw) {
 		log_err("%s: getpwnam(\"%s\") failed", __progname,
 		    SASYNCD_USER);
@@ -97,7 +97,7 @@ monitor_init(void)
 		m_state.s = p[0];
 		close(p[1]);
 
-		if (setgroups(1, &pw->pw_gid) || 
+		if (setgroups(1, &pw->pw_gid) ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
 			log_err("%s: failed to drop privileges", __progname);
@@ -299,7 +299,7 @@ m_priv_pfkey_snap(int s)
 		sadb_buflen = 0;
 		goto try_spd;
 	}
-	
+
 	sadb_buflen = sz;
 	if ((sadb_buf = malloc(sadb_buflen)) == NULL) {
 		log_err("m_priv_pfkey_snap: malloc");
@@ -323,7 +323,7 @@ m_priv_pfkey_snap(int s)
 		spd_buflen = 0;
 		goto out;
 	}
-	
+
 	spd_buflen = sz;
 	if ((spd_buf = malloc(spd_buflen)) == NULL) {
 		log_err("m_priv_pfkey_snap: malloc");

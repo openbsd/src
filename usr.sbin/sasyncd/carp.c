@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.4 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: carp.c,v 1.5 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -112,7 +112,7 @@ carp_demote(int demote, int force)
 		log_msg(1, "carp_demote: couldn't open socket");
 		return;
 	}
-		
+
 	bzero(&ifgr, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, cfgstate.carp_ifgroup, sizeof(ifgr.ifgr_name));
 
@@ -120,11 +120,11 @@ carp_demote(int demote, int force)
 	if (!force) {
 		if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1) {
 			log_msg(1, "carp_demote: unable to get "
-			    "the demote state of group '%s'", 
-			    cfgstate.carp_ifgroup);		
+			    "the demote state of group '%s'",
+			    cfgstate.carp_ifgroup);
 			    goto done;
 		}
-	
+
 		if (ifgr.ifgr_attrib.ifg_carp_demoted == 0)
 			goto done;
 	}
@@ -248,7 +248,7 @@ carp_init(void)
 		return -1;
 	}
 	log_msg(1, "carp_init: initializing runstate to %s",
-	    carp_state_name(cfgstate.runstate));	
+	    carp_state_name(cfgstate.runstate));
 
 	return 0;
 }

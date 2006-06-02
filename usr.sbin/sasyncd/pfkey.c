@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.14 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.15 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -48,7 +48,7 @@
 #include "sasyncd.h"
 #include "net.h"
 
-struct pfkey_msg 
+struct pfkey_msg
 {
 	SIMPLEQ_ENTRY(pfkey_msg)	next;
 
@@ -128,7 +128,7 @@ static const char *
 pfkey_print_type(struct sadb_msg *msg)
 {
 	static char	uk[20];
-	
+
 	if (msg->sadb_msg_type < sizeof msgtypes / sizeof msgtypes[0])
 		return msgtypes[msg->sadb_msg_type];
 	else {
@@ -223,12 +223,12 @@ pfkey_msg_filter(struct sadb_msg *msg)
 				return 1;
 			break;
 		case AF_INET6:
-			if (src && 
+			if (src &&
 			    memcmp(&((struct sockaddr_in6 *)p->sa)->sin6_addr,
 			    &((struct sockaddr_in6 *)src)->sin6_addr,
 			    sizeof(struct in_addr)) == 0)
 				return 1;
-			if (dst && 
+			if (dst &&
 			    memcmp(&((struct sockaddr_in6 *)p->sa)->sin6_addr,
 			    &((struct sockaddr_in6 *)dst)->sin6_addr,
 			    sizeof(struct in_addr)) == 0)
@@ -454,7 +454,7 @@ pfkey_snapshot(void *v)
 
 	if (!p)
 		return;
-		
+
 	if (monitor_get_pfkey_snap(&sadb, &sadbsz, &spd, &spdsz)) {
 		log_msg(0, "pfkey_snapshot: failed to get pfkey snapshot");
 		return;
@@ -506,7 +506,7 @@ pfkey_snapshot(void *v)
 
 			/* Tweak msg type. */
 			m->sadb_msg_type = SADB_X_ADDFLOW;
-			
+
 			if (pfkey_msg_filter(m))
 				continue;
 

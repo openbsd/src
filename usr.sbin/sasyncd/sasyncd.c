@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.11 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.12 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -101,7 +101,7 @@ sasyncd_run(pid_t ppid)
 
 		timeout = &tv;
 		timer_next_event(&tv);
- 
+
 		n = select(maxfd, rfds, wfds, 0, timeout);
 		if (n == -1) {
 			if (errno != EINTR) {

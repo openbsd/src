@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.13 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: net.c,v 1.14 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -139,7 +139,7 @@ net_add_listener(struct sockaddr *sa)
 	}
 
 	if (getnameinfo(sa, sa->sa_len, host, sizeof host, port, sizeof port,
-		NI_NUMERICHOST | NI_NUMERICSERV)) 
+		NI_NUMERICHOST | NI_NUMERICSERV))
 		log_msg(3, "listening on port %u fd %d", cfgstate.listen_port,
 		    s);
 	else
@@ -177,13 +177,13 @@ net_setup_listeners(void)
 		return 0;
 	}
 
-	/* 
+	/*
 	 * If net_set_sa() failed, cfgstate.listen_on is probably an
 	 * interface name, so we should listen on all it's addresses.
 	 */
 
 	if (getifaddrs(&ifap) != 0) {
-		perror("net_setup_listeners: getifaddrs()"); 
+		perror("net_setup_listeners: getifaddrs()");
 		goto errout;
 	}
 
@@ -683,7 +683,7 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 		if (r < 1)
 			net_disconnect_peer(p);
 		return NULL;
-	} 
+	}
 
 	blob_len = ntohl(v);
 	if (blob_len < sizeof hash + AES_IV_LEN + 2 * sizeof(u_int32_t))

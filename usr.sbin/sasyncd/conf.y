@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.10 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: conf.y,v 1.11 2006/06/02 20:31:48 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -59,7 +59,7 @@ void	yyerror(const char *);
 
 %token MODE INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
 %token Y_SLAVE Y_MASTER INET INET6 FLUSHMODE STARTUP NEVER SYNC
-%token GROUP SKIPSLAVE 
+%token GROUP SKIPSLAVE
 %token <string> STRING
 %token <val>	VALUE
 %type  <val>	af port mode flushmode
@@ -230,7 +230,7 @@ match(char *token)
 }
 
 int
-yylex(void) 
+yylex(void)
 {
 	char *p;
 	int v;
@@ -284,7 +284,7 @@ conf_parse_file(char *cfgfile)
 	if ((st.st_uid && st.st_uid != pw->pw_uid) ||
 	    ((st.st_mode & S_IFMT) != S_IFREG) ||
 	    ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)) {
-		log_msg(0, "configuration file has bad owner, type or mode"); 
+		log_msg(0, "configuration file has bad owner, type or mode");
 		goto bad;
 	}
 
