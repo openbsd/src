@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.150 2006/05/31 23:40:08 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.151 2006/06/02 05:58:24 beck Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2419,6 +2419,7 @@ bge_intr(void *xsc)
 {
 	struct bge_softc *sc;
 	struct ifnet *ifp;
+	u_int32_t statusword;
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
@@ -2428,17 +2429,22 @@ bge_intr(void *xsc)
 	 * Reading the PCI State register will confirm whether the
 	 * interrupt is ours and will flush the status block.
 	 */
-	if ((sc->bge_rdata->bge_status_block.bge_status &
-	    BGE_STATFLAG_UPDATED) ||
+
+	/* read status word from status block */
+	statusword = sc->bge_rdata->bge_status_block.bge_status;
+
+	if ((statusword & BGE_STATFLAG_UPDATED) ||
 	    (!(CSR_READ_4(sc, BGE_PCI_PCISTATE) & BGE_PCISTATE_INTR_NOT_ACTIVE))) {
 
 		/* Ack interrupt and stop others from occurring. */
 		CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
+			
+		/* clear status word */
+		sc->bge_rdata->bge_status_block.bge_status = 0;
 
 		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
 		    sc->bge_chipid != BGE_CHIPID_BCM5700_B1) ||
-		    sc->bge_rdata->bge_status_block.bge_status &
-		    BGE_STATFLAG_LINKSTATE_CHANGED ||
+		    statusword & BGE_STATFLAG_LINKSTATE_CHANGED ||
 		    sc->bge_link_evt)
 			bge_link_upd(sc);
 
