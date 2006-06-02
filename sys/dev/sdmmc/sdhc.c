@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.3 2006/06/01 21:47:42 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.4 2006/06/02 20:03:05 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -50,6 +50,7 @@ struct sdhc_host {
 	struct proc *event_thread;	/* event processing thread */
 	struct sdmmc_command *cmd;	/* current command or NULL */
 	struct timeout cmd_to;		/* command timeout */
+	u_int8_t regs[14];		/* host controller state */
 };
 
 #define HDEVNAME(hp)	((hp)->sdmmc->dv_xname)
@@ -293,7 +294,6 @@ sdhc_event_thread(void *arg)
 	struct sdhc_host *hp = arg;
 
 	for (;;) {
-		//DPRINTF(("%s: tsleep sdhcev\n", HDEVNAME(hp)));
 		(void)tsleep((caddr_t)hp, PWAIT, "sdhcev", 0);
 		sdhc_event_process(hp);
 	}
@@ -302,8 +302,6 @@ sdhc_event_thread(void *arg)
 void
 sdhc_event_process(struct sdhc_host *hp)
 {
-	//DPRINTF(("%s: event process\n", HDEVNAME(hp)));
-
 	/* If there's a card, attach it, if it went away, detach it. */
 	if (sdhc_card_detect(hp)) {
 		if (!ISSET(hp->flags, SHF_CARD_PRESENT)) {
@@ -338,15 +336,31 @@ sdhc_event_process(struct sdhc_host *hp)
 void
 sdhc_power(int why, void *arg)
 {
-	/* struct sdhc_softc *sc = arg; */
+	struct sdhc_softc *sc = arg;
+	struct sdhc_host *hp;
+	int n, i;
 
 	switch(why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
-		/* XXX suspend or detach cards */
+		/* XXX poll for command completion or suspend command
+		 * in progress */
+
+		/* Save the host controller state. */
+		for (n = 0; n < sc->sc_nhosts; n++) {
+			hp = &sc->sc_host[n];
+			for (i = 0; i < sizeof hp->regs; i++)
+				hp->regs[i] = HREAD1(hp, i);
+		}
 		break;
+
 	case PWR_RESUME:
-		/* XXX resume or reattach cards */
+		/* Restore the host controller state. */
+		for (n = 0; n < sc->sc_nhosts; n++) {
+			hp = &sc->sc_host[n];
+			for (i = 0; i < sizeof hp->regs; i++)
+				HWRITE1(hp, i, hp->regs[i]);
+		}
 		break;
 	}
 }
