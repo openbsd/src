@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.25 2006/06/01 21:16:29 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.26 2006/06/02 04:48:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -220,6 +220,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 
 	/* clear out the bus errors */
 	schizo_pbm_write(pbm, SCZ_PCI_CTRL, schizo_pbm_read(pbm, SCZ_PCI_CTRL));
+	schizo_pbm_write(pbm, SCZ_PCI_AFSR, schizo_pbm_read(pbm, SCZ_PCI_AFSR));
 
 	if (busa)
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
@@ -229,11 +230,9 @@ schizo_init(struct schizo_softc *sc, int busa)
 		   pbm, SCZ_PCIERR_B_INO, "pci_b");
 
 	reg = schizo_pbm_read(pbm, SCZ_PCI_CTRL);
-	/* enable/disable error interrupts */
-	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_SBH_INT;
-	reg &= ~SCZ_PCICTRL_DTO_INT;
-	/* enable bus arbiter for all pci slots */
-	reg |= SCZ_PCICTRL_ARB;
+	/* enable/disable error interrupts and arbiter */
+	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_DTO_INT | SCZ_PCICTRL_ARB;
+	reg &= ~SCZ_PCICTRL_SBH_INT;
 	schizo_pbm_write(pbm, SCZ_PCI_CTRL, reg);
 
 	reg = schizo_pbm_read(pbm, SCZ_PCI_DIAG);
@@ -273,17 +272,18 @@ schizo_pci_error(void *vpbm)
 {
 	struct schizo_pbm *sp = vpbm;
 	struct schizo_softc *sc = sp->sp_sc;
+	u_int64_t afsr, afar, ctrl;
+
+	afsr = schizo_pbm_read(sp, SCZ_PCI_AFSR);
+	afar = schizo_pbm_read(sp, SCZ_PCI_AFAR);
+	ctrl = schizo_pbm_read(sp, SCZ_PCI_CTRL);
 
 	printf("%s: pci bus %c error\n", sc->sc_dv.dv_xname,
 	    sp->sp_bus_a ? 'A' : 'B');
 
-	printf("PCIAFSR=%lb\n",
-	    schizo_pbm_read(sp, SCZ_PCI_AFSR), SCZ_PCIAFSR_BITS);
-
-	printf("PCIAFAR=%lx\n", schizo_pbm_read(sp, SCZ_PCI_AFAR));
-
-	printf("PCICTRL=%lb\n",
-	    schizo_pbm_read(sp, SCZ_PCI_CTRL), SCZ_PCICTRL_BITS);
+	printf("PCIAFSR=%lb\n", afsr, SCZ_PCIAFSR_BITS, afsr);
+	printf("PCIAFAR=%lx\n", afar);
+	printf("PCICTRL=%lb\n", ctrl, SCZ_PCICTRL_BITS);
 
 	panic("%s: fatal", sc->sc_dv.dv_xname);
 
