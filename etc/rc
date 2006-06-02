@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.286 2006/06/02 19:59:35 mcbride Exp $
+#	$OpenBSD: rc,v 1.287 2006/06/02 21:32:50 mcbride Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -321,6 +321,12 @@ if [ X"${named_flags}" != X"NO" ]; then
 	fi
 
 	echo 'starting named';		named $named_flags
+fi
+
+# $sasyncd_flags is imported from /etc/rc.conf;
+# If $sasyncd_flags == NO, sasyncd isn't run.
+if [ X"${sasyncd_flags}" != X"NO" ]; then
+	echo 'starting sasyncd';	sasyncd ${sasyncd_flags}
 fi
 
 # $isakmpd_flags is imported from /etc/rc.conf;
