@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.46 2006/06/02 04:51:55 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.47 2006/06/02 05:59:31 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -169,7 +169,9 @@ struct ipsec_rule {
 	struct ike_auth *ikeauth;
 	struct ipsec_transforms *xfs;
 	struct ipsec_transforms *mmxfs;
+	struct ipsec_life *mmlife;
 	struct ipsec_transforms *qmxfs;
+	struct ipsec_life *qmlife;
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 

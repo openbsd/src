@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.95 2006/06/02 05:57:05 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.96 2006/06/02 05:59:31 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -148,6 +148,7 @@ void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
 struct ipsec_life	*parse_life(int);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
+struct ipsec_life	*copylife(const struct ipsec_life *);
 struct ipsec_auth	*copyipsecauth(const struct ipsec_auth *);
 struct ike_auth		*copyikeauth(const struct ike_auth *);
 struct ipsec_key	*copykey(struct ipsec_key *);
@@ -655,6 +656,7 @@ mainmode	: /* empty */			{
 			if ((mm = calloc(1, sizeof(struct ike_mode))) == NULL)
 				err(1, "mainmode: calloc");
 			mm->xfs = $2;
+			mm->life = $3;
 			$$ = mm;
 		}
 		;
@@ -673,6 +675,7 @@ quickmode	: /* empty */			{
 			if ((qm = calloc(1, sizeof(struct ike_mode))) == NULL)
 				err(1, "quickmode: calloc");
 			qm->xfs = $2;
+			qm->life = $3;
 			$$ = qm;
 		}
 		;
@@ -684,6 +687,8 @@ life		: /* empty */			{
 			if ((life = calloc(1, sizeof(struct ipsec_life)))
 			    == NULL)
 				err(1, "life: calloc");
+			life->lifetime = -1;
+			life->lifevolume = -1;
 			$$ = life;
 		}
 		| LIFE number			{
@@ -1696,6 +1701,22 @@ copytransforms(const struct ipsec_transforms *xfs)
 	return (newxfs);
 }
 
+struct ipsec_life *
+copylife(const struct ipsec_life *life)
+{
+	struct ipsec_life *newlife;
+
+	if (life == NULL)
+		return (NULL);
+
+	newlife = calloc(1, sizeof(struct ipsec_life));
+	if (newlife == NULL)
+		err(1, "copylife: calloc");
+
+	memcpy(newlife, life, sizeof(struct ipsec_life));
+	return (newlife);
+}
+
 struct ipsec_auth *
 copyipsecauth(const struct ipsec_auth *auth)
 {
@@ -1793,6 +1814,8 @@ copyrule(struct ipsec_rule *rule)
 	r->xfs = copytransforms(rule->xfs);
 	r->mmxfs = copytransforms(rule->mmxfs);
 	r->qmxfs = copytransforms(rule->qmxfs);
+	r->mmlife = copylife(rule->mmlife);
+	r->qmlife = copylife(rule->qmlife);
 	r->authkey = copykey(rule->authkey);
 	r->enckey = copykey(rule->enckey);
 
@@ -2238,10 +2261,14 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 
 	r->satype = satype;
 	r->ikemode = mode;
-	if (mainmode)
+	if (mainmode) {
 		r->mmxfs = mainmode->xfs;
-	if (quickmode)
+		r->mmlife = mainmode->life;
+	}
+	if (quickmode) {
 		r->qmxfs = quickmode->xfs;
+		r->qmlife = quickmode->life;
+	}
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
 		err(1, "create_ike: calloc");
