@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.69 2006/06/01 16:43:23 norby Exp $
+#	$OpenBSD: special,v 1.70 2006/06/02 16:48:54 david Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -24,8 +24,8 @@ csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.local	type=file mode=0644 uname=root gname=wheel optional
 disklabels	type=dir mode=0755 uname=root gname=wheel ignore
-dvmrpd.conf	type=file mode=0600 uname=root gname=wheel
 ..	#disklabels
+dvmrpd.conf	type=file mode=0600 uname=root gname=wheel
 exports		type=file mode=0644 uname=root gname=wheel optional
 fbtab		type=file mode=0644 uname=root gname=wheel
 fstab		type=file mode=0644 uname=root gname=wheel
