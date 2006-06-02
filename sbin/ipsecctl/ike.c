@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.33 2006/06/01 18:03:40 msf Exp $	*/
+/*	$OpenBSD: ike.c,v 1.34 2006/06/02 03:40:26 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -181,7 +181,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	}
 	fprintf(fd, "-");
 
-	if (qmxfs->encxf) {
+	if (qmxfs && qmxfs->encxf) {
 		switch (qmxfs->encxf->id) {
 		case ENCXF_3DES_CBC:
 			fprintf(fd, "3DES");
@@ -206,7 +206,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		fprintf(fd, "AES");
 	fprintf(fd, "-");
 
-	if (qmxfs->authxf) {
+	if (qmxfs && qmxfs->authxf) {
 		switch (qmxfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
 			fprintf(fd, "MD5");
@@ -234,7 +234,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		fprintf(fd, "SHA2-256");
 	fprintf(fd, "-PFS-");
 
-	if (qmxfs->groupxf) {
+	if (qmxfs && qmxfs->groupxf) {
 		switch (qmxfs->groupxf->id) {
 		case GROUPXF_768:
 			fprintf(fd, "GRP1");
@@ -287,7 +287,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		fprintf(fd, ADD "[mm-default]:Transforms=");
 	}
 
-	if (mmxfs->encxf) {
+	if (mmxfs && mmxfs->encxf) {
 		switch (mmxfs->encxf->id) {
 		case ENCXF_3DES_CBC:
 			fprintf(fd, "3DES");
@@ -312,7 +312,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		fprintf(fd, "AES");
 	fprintf(fd, "-");
 
-	if (mmxfs->authxf) {
+	if (mmxfs && mmxfs->authxf) {
 		switch (mmxfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
 			fprintf(fd, "MD5");
@@ -328,7 +328,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		fprintf(fd, "SHA");
 	fprintf(fd, "-");
 
-	if (mmxfs->groupxf) {
+	if (mmxfs && mmxfs->groupxf) {
 		switch (mmxfs->groupxf->id) {
 		case GROUPXF_768:
 			fprintf(fd, "GRP1");

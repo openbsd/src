@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.91 2006/06/02 03:31:20 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.92 2006/06/02 03:40:26 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -657,16 +657,10 @@ transform	: AUTHXF STRING			{
 
 mainmode	: /* empty */			{
 			struct ike_mode		*mm;
-			struct ipsec_transforms	*xfs;
 
 			/* We create just an empty mode */
 			if ((mm = calloc(1, sizeof(struct ike_mode))) == NULL)
 				err(1, "mainmode: calloc");
-			/* And an empty transform */
-			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
-			    == NULL)
-				err(1, "mainmode: calloc");
-			mm->xfs = xfs;
 			$$ = mm;
 		}
 		| MAIN transforms life		{
@@ -681,16 +675,10 @@ mainmode	: /* empty */			{
 
 quickmode	: /* empty */			{
 			struct ike_mode		*qm;
-			struct ipsec_transforms	*xfs;
 
 			/* We create just an empty mode */
 			if ((qm = calloc(1, sizeof(struct ike_mode))) == NULL)
 				err(1, "quickmode: calloc");
-			/* And an empty transform */
-			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
-			    == NULL)
-				err(1, "mainmode: calloc");
-			qm->xfs = xfs;
 			$$ = qm;
 		}
 		| QUICK transforms life		{
