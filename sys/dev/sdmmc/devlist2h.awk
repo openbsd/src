@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.1 2006/06/01 21:15:40 uwe Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 2006/06/02 21:16:44 uwe Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp $
 #
 # Copyright (c) 1998, Christos Zoulas
@@ -122,7 +122,7 @@ $1 == "product" {
 	else {
 		products[nproducts, 4] = "{ NULL, NULL, NULL, NULL }"
 	}
-	printf("#define\tSDMMC_CID_%s_%s\t%s\n",
+	printf("#define\tSDMMC_CIS_%s_%s\t%s\n",
 	    products[nproducts, 1], products[nproducts, 2],
 	    products[nproducts, 4]) > hfile
 	printf("#define\tSDMMC_PRODUCT_%s_%s\t%s\n", products[nproducts, 1],
