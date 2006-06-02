@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.11 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.12 2006/06/02 01:20:41 mjc Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -29,6 +29,30 @@
 /*
  * SCSI command format
  */
+
+struct scsi_blank {
+	u_int8_t opcode;
+	u_int8_t byte2;
+#define BLANK_DISC	0
+#define BLANK_MINIMAL	1
+	u_int8_t addr[4];
+	u_int8_t unused[5];
+	u_int8_t control;
+};
+
+struct scsi_close_track {
+	u_int8_t opcode;
+	u_int8_t flags;
+#define CT_IMMED	1
+	u_int8_t closefunc;
+#define CT_CLOSE_TRACK	1
+#define CT_CLOSE_SESS	2
+#define CT_CLOSE_BORDER 3
+	u_int8_t unused;
+	u_int8_t track[2];
+	u_int8_t unused1[3];
+	u_int8_t control;
+};
 
 struct scsi_pause {
 	u_int8_t opcode;
@@ -122,6 +146,18 @@ struct scsi_read_toc {
 	u_int8_t control;
 };
 
+struct scsi_read_track_info {
+	u_int8_t opcode;
+	u_int8_t addrtype;
+#define RTI_LBA		0
+#define RTI_TRACK	1
+#define RTI_BORDER	2
+	u_int8_t addr[4];
+	u_int8_t unused;
+	u_int8_t data_len[2];
+	u_int8_t control;
+};
+
 struct scsi_read_cd_capacity {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -157,10 +193,20 @@ struct scsi_load_unload {
 #define PLAY_TRACK		0x48	/* cdrom play track/index mode */
 #define PLAY_TRACK_REL		0x49	/* cdrom play track/index mode */
 #define PAUSE			0x4b	/* cdrom pause in 'play audio' mode */
+#define READ_TRACK_INFO		0x52	/* read track/rzone info */
+#define CLOSE_TRACK		0x5b	/* close track/rzone/session/border */
+#define BLANK			0xa1	/* cdrom blank */
 #define PLAY_BIG		0xa5	/* cdrom pause in 'play audio' mode */
 #define	LOAD_UNLOAD		0xa6	/* cdrom load/unload media */
 #define PLAY_TRACK_REL_BIG	0xa9	/* cdrom play track/index mode */
 
+/*
+ * Mode pages
+ */
+
+#define ERR_RECOVERY_PAGE	0x01
+#define WRITE_PARAM_PAGE	0x05
+#define CDVD_CAPABILITIES_PAGE	0x2a
 
 struct scsi_read_cd_cap_data {
 	u_int8_t addr[4];
