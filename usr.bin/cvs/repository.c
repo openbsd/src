@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.2 2006/05/27 15:14:27 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.3 2006/06/02 19:10:24 david Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -79,7 +79,7 @@ cvs_repository_lock(const char *repo)
 		if (errno == EEXIST)
 			fatal("cvs_repository_lock: somebody beat us");
 		else
-			fatal("cvs_repostitory_lock: %s: %s",
+			fatal("cvs_repository_lock: %s: %s",
 			    fpath, strerror(errno));
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.156 2006/06/01 20:00:52 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.157 2006/06/02 19:10:23 david Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -732,7 +732,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 		if (cf->fd == -1) {
 			if (verbose)
 				cvs_log(LP_NOTICE,
-				    "warning: new-born %s has dissapeared",
+				    "warning: new-born %s has disappeared",
 				    cf->file_path);
 			cf->file_status = FILE_REMOVE_ENTRY;
 		} else if (cf->file_rcs == NULL || rcsdead == 1) {

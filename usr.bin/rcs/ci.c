@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.178 2006/06/02 18:04:33 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.179 2006/06/02 19:10:23 david Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -278,7 +278,7 @@ checkin_main(int argc, char **argv)
 		if (!(pb.flags & NEWFILE))
 			pb.flags |= CI_SKIPDESC;
 
-		/* XXX - support for commiting to a file without revisions */
+		/* XXX - support for committing to a file without revisions */
 		if (pb.file->rf_ndelta == 0) {
 			pb.flags |= NEWFILE;
 			pb.file->rf_flags |= RCS_CREATE;

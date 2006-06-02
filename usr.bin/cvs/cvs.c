@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.101 2006/05/30 06:36:09 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.102 2006/06/02 19:10:23 david Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 	if ((current_cvsroot = cvsroot_get(".")) == NULL) {
 		cvs_log(LP_ERR,
 		    "No CVSROOT specified! Please use the '-d' option");
-		fatal("or set the CVSROOT enviroment variable.");
+		fatal("or set the CVSROOT environment variable.");
 	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
