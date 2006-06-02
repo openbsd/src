@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.16 2006/05/27 21:06:16 hshoexer Exp $ */
+/* $OpenBSD: ike.h,v 1.17 2006/06/02 17:40:32 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -48,6 +48,7 @@
 #define IKE_ATTR_ENCRYPT_INITIALIZER					\
 	{ "NONE", "DES_CBC", "IDEA_CBC", "BLOWFISH_CBC",		\
 	  "RC5_R16_B64_CBC", "3DES_CBC", "CAST_CBC", "AES_CBC",		\
+	  "AES_128_CTR"							\
 	}
 #define IKE_ATTR_HASH_INITIALIZER					\
 	{ "NONE", "MD5", "SHA", "TIGER",				\
@@ -344,7 +345,7 @@
 #define IPSEC_ESP_INITIALIZER					\
 	{ "NONE", "DEV_IV64", "DES", "3DES", "RC5", "IDEA",	\
 	  "CAST", "BLOWFISH", "3IDEA", "DES_IV32", "RC4",	\
-	  "NULL", "AES",					\
+	  "NULL", "AES", "AESCTR"				\
 	}
 #define IPCOMP_INITIALIZER					\
 	{ "NONE", "OUI", "DEFLATE", "LZS", "V42BIS",		\
