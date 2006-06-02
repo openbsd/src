@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_subr.c,v 1.1 2006/06/02 20:25:09 pedro Exp $	*/
+/*	$OpenBSD: spec_subr.c,v 1.2 2006/06/02 20:49:08 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006 Pedro Martelletto <pedro@openbsd.org>
@@ -39,7 +39,7 @@ spec_open_clone(struct vop_open_args *ap)
 		}
 
 	if (i == sizeof(vp->v_specbitmap) * NBBY)
-		return (EBUSY);
+		return (EBUSY); /* too many open instances */
 
 	printf("spec_open_clone(): cloning device (%d, %d) for pid %u\n",
 	    major(vp->v_rdev), minor(vp->v_rdev), curproc->p_pid);
@@ -57,7 +57,7 @@ spec_open_clone(struct vop_open_args *ap)
 
 	if (error) {
 		 clrbit(vp->v_specbitmap, i);
-		 return (error);
+		 return (error); /* device open failed */
 	}
 
 	cip = malloc(sizeof(struct cloneinfo), M_TEMP, M_WAITOK);
@@ -83,7 +83,7 @@ spec_close_clone(struct vop_close_args *ap)
 	error = cdevsw[major(vp->v_rdev)].d_close(vp->v_rdev, ap->a_fflag,
 	    S_IFCHR, ap->a_p);
 	if (error)
-		return (error);
+		return (error); /* device close failed */
 
 	pvp = vp->v_specparent; /* get parent device */
 	clrbit(pvp->v_specbitmap, minor(vp->v_rdev));
@@ -91,5 +91,5 @@ spec_close_clone(struct vop_close_args *ap)
 	printf("spec_close_clone(): freeing minor %d of dev %d for"
 	    " pid %u\n", minor(vp->v_rdev), major(vp->v_rdev), curproc->p_pid);
 
-	return (0);
+	return (0); /* clone closed */
 }
