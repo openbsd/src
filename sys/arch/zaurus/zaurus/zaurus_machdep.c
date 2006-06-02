@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.23 2006/01/17 20:30:12 miod Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.24 2006/06/02 20:50:00 miod Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -967,15 +967,8 @@ initarm(void *arg)
 	    minidataclean.pv_pa);
 
 	/* Map the vector page. */
-#if 1
-	/* MULTI-ICE requires that page 0 is NC/NB so that it can download the
-	 * cache-clean code there.  */
-	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#endif
 
 	/*
 	 * map integrated peripherals at same address in l1pagetable
