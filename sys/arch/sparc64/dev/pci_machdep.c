@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.23 2006/03/24 03:08:00 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.24 2006/06/02 08:26:01 jason Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 int sparc_pci_debug = 0x0;
 #define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
 #else
-#define DPRINTF(l, s)
+#define DPRINTF(l, s)	do { } while (0)
 #endif
 
 #include <sys/types.h>
@@ -383,11 +383,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
         if (PCITAG_NODE(tag) != -1) {
                 val = bus_space_read_4(pc->bustag, pc->bushandle,
                         PCITAG_OFFSET(tag) + reg);
-        }
-#ifdef DEBUG
-        else DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
-            (int)PCITAG_OFFSET(tag)));
-#endif
+        } else
+		DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
+	            (int)PCITAG_OFFSET(tag)));
         DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
         return (val);
