@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.57 2006/05/31 06:51:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.58 2006/06/02 01:07:25 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4103,9 +4103,6 @@ dostart:
 	 */
 	ldxa	[%g0] ASI_MCCR, %o1
 	andn	%o1, MCCR_DCACHE_EN, %o1
-#ifdef HORRID_III_HACK
-	andn	%o1, MCCR_ICACHE_EN, %o1	! and Icache...
-#endif	/* HORRID_III_HACK */
 	stxa	%o1, [%g0] ASI_MCCR
 	membar	#Sync
 #endif	/* 0 */
@@ -4160,9 +4157,6 @@ _C_LABEL(cpu_initialize):
 	!! Turn off D$ in LSU
 	ldxa	[%g0] ASI_LSU_CONTROL_REGISTER, %g1
 	bclr	MCCR_DCACHE_EN, %g1
-#ifdef HORRID_III_HACK
-	andn	%o1, MCCR_ICACHE_EN, %o1	! and Icache...
-#endif	/* HORRID_III_HACK */
 	stxa	%g1, [%g0] ASI_LSU_CONTROL_REGISTER
 	membar	#Sync
 #endif	/* NO_VCACHE */
