@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.47 2006/06/02 05:59:31 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.48 2006/06/02 12:29:43 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -153,6 +153,7 @@ struct ike_mode {
 
 extern const struct ipsec_xf authxfs[];
 extern const struct ipsec_xf encxfs[];
+extern const struct ipsec_xf compxfs[];
 
 TAILQ_HEAD(dst_group_queue, ipsec_rule);
 

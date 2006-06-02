@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.17 2006/06/02 04:14:51 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.18 2006/06/02 12:29:43 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -630,7 +630,24 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	parse_addr(extensions[SADB_EXT_ADDRESS_DST], &dst);
 	r.src = &src;
 	r.dst = &dst;
-	if (sa->sadb_sa_encrypt || sa->sadb_sa_encrypt) {
+	if (r.satype == IPSEC_IPCOMP) {
+		if (sa->sadb_sa_encrypt) {
+			bzero(&xfs, sizeof xfs);
+			r.xfs = &xfs;
+			switch (sa->sadb_sa_encrypt) {
+			case SADB_X_CALG_DEFLATE:
+				xfs.encxf = &compxfs[COMPXF_DEFLATE];
+				break;
+			case SADB_X_CALG_LZS:
+				xfs.encxf = &compxfs[COMPXF_LZS];
+				break;
+			}
+		}
+	} else if (r.satype == IPSEC_TCPMD5) {
+		bzero(&authkey, sizeof authkey);
+		parse_key(extensions[SADB_EXT_KEY_AUTH], &authkey);
+		r.authkey = &authkey;
+	} else if (sa->sadb_sa_encrypt || sa->sadb_sa_encrypt) {
 		bzero(&xfs, sizeof xfs);
 		r.xfs = &xfs;
 		if (sa->sadb_sa_encrypt) {
