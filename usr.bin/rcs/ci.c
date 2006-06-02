@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.177 2006/05/29 21:17:44 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.178 2006/06/02 18:04:33 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -300,6 +300,7 @@ checkin_main(int argc, char **argv)
 		pb.flags &= ~NEWFILE;
 
 		rcs_close(pb.file);
+		pb.newrev = NULL;
 	}
 
 	if (!(pb.flags & QUIET) && status == 0)
