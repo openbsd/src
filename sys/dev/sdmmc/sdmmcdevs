@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.2 2006/06/01 21:44:55 uwe Exp $
+	$OpenBSD: sdmmcdevs,v 1.3 2006/06/02 21:17:36 uwe Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -20,15 +20,36 @@
  * List of known SD card vendors
  */
 
+vendor CGUYS			0x0092	C-guys, Inc.
+vendor TOSHIBA			0x0098	Toshiba
+vendor SOCKETCOM		0x0104	Socket Communications, Inc.
 vendor SYCHIP			0x02db	SyChip Inc.
 vendor SPECTEC			0x02fe	Spectec Computer Co., Ltd
+vendor GLOBALSAT		0x0501	Globalsat Technology Co.
 
 /*
  * List of known products, grouped by vendor
  */
 
-/* SyChip Inc. */
-product SYCHIP WLAN6060SD	0x544d	SyChip Pegasus WLAN SDIO Card
+/* C-guys, Inc. */
+product CGUYS TIACX100		0x0001	TI ACX100 SD-Link11b WiFi Card
+product CGUYS SDFMRADIO2	0x0005	C-guys SD FM Radio 2
+product CGUYS SDFMRADIO		0x5544	C-guys SD FM Radio
+
+/* Globalsat Technology Co. */
+product GLOBALSAT SD501		0xf501	Globalsat SD-501 GPS Card
 
 /* Spectec Computer Co., Ltd */
 product SPECTEC SDW820		0x2128	Spectec SDIO WLAN Card
+
+/* SyChip Inc. */
+product SYCHIP WLAN6060SD	0x544d	SyChip Pegasus WLAN SDIO Card
+
+/* Toshiba */
+product TOSHIBA SDBTCARD1	0x0001	Toshiba SD BT Card 1
+product TOSHIBA SDBTCARD2	0x0002	Toshiba SD BT Card 2
+product TOSHIBA SDBTCARD3	0x0003	Toshiba SD BT Card 3
+
+/* Socket Communications, Inc. */
+product SOCKET SDSCANNER	0x005e	Socket SD Scanner
+product SOCKET BTCARD		0x00c5	Socket BT Card
