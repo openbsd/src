@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.375 2006/06/01 20:10:28 mbalmer Exp $
+#	$OpenBSD: files,v 1.376 2006/06/02 20:25:09 pedro Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -696,6 +696,7 @@ file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs
 file miscfs/procfs/procfs_vnops.c	procfs
 file miscfs/specfs/spec_vnops.c
+file miscfs/specfs/spec_subr.c
 file msdosfs/msdosfs_conv.c		msdosfs
 file msdosfs/msdosfs_denode.c		msdosfs
 file msdosfs/msdosfs_fat.c		msdosfs

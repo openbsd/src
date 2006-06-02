@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.78 2005/12/31 21:22:35 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.79 2006/06/02 20:25:09 pedro Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ struct knote;
  * Flags for d_flags
  */
 #define D_KQFILTER	0x0001		/* has kqfilter entry */
+#define D_CLONE		0x0002		/* clone upon open */
 
 #ifdef _KERNEL
 

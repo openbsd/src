@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.17 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.18 2006/06/02 20:25:09 pedro Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,17 @@ struct specinfo {
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
 	daddr_t si_lastr;
+	union {
+		struct vnode *ci_parent; /* pointer back to parent device */
+		u_int8_t ci_bitmap[8]; /* bitmap of devices cloned off us */
+	} si_ci;
 };
+
+struct cloneinfo {
+	struct vnode *ci_vp; /* cloned vnode */
+	void *ci_data; /* original vnode's v_data */
+};
+
 /*
  * Exported shorthand
  */
@@ -53,6 +63,8 @@ struct specinfo {
 #define v_specnext v_specinfo->si_specnext
 #define v_specmountpoint v_specinfo->si_mountpoint
 #define v_speclockf v_specinfo->si_lockf
+#define v_specparent v_specinfo->si_ci.ci_parent
+#define v_specbitmap v_specinfo->si_ci.ci_bitmap
 
 /*
  * Special device management
@@ -119,3 +131,7 @@ int	spec_advlock(void *);
 #define spec_revoke     vop_generic_revoke
 
 int	spec_vnoperate(void *);
+
+/* spec_subr.c */
+int	spec_open_clone(struct vop_open_args *);
+int	spec_close_clone(struct vop_close_args *);

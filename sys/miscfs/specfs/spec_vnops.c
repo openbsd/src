@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.33 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.34 2006/06/02 20:25:09 pedro Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -191,6 +191,8 @@ spec_open(v)
 		}
 		if (cdevsw[maj].d_type == D_TTY)
 			vp->v_flag |= VISTTY;
+		if (cdevsw[maj].d_flags & D_CLONE)
+			return (spec_open_clone(ap));
 		VOP_UNLOCK(vp, 0, p);
 		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, ap->a_p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -624,6 +626,8 @@ spec_close(v)
 		 */
 		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
 			return (0);
+		if (cdevsw[major(dev)].d_flags & D_CLONE)
+			return (spec_close_clone(ap));
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
 		break;

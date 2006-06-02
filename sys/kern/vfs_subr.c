@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.126 2006/05/28 04:03:28 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.127 2006/06/02 20:25:09 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -578,6 +578,7 @@ loop:
 		nvp->v_specnext = *vpp;
 		nvp->v_specmountpoint = NULL;
 		nvp->v_speclockf = NULL;
+		bzero(nvp->v_specbitmap, sizeof(nvp->v_specbitmap));
 		simple_unlock(&spechash_slock);
 		*vpp = nvp;
 		if (vp != NULLVP) {

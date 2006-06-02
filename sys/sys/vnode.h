@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.68 2006/05/01 21:08:44 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.69 2006/06/02 20:25:09 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ struct vnode {
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
+#define	VCLONED		0x0400	/* vnode was cloned */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define VLOCKSWORK	0x4000	/* FS supports locking discipline */
 
