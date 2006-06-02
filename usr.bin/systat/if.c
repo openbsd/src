@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.6 2006/03/31 18:19:44 deraadt Exp $ */
+/*	$OpenBSD: if.c,v 1.7 2006/06/02 08:16:51 claudio Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -38,6 +38,8 @@ struct ifcount {
 	u_long		ifc_op;			/* output packets */
 	u_long		ifc_oe;			/* output errors */
 	u_long		ifc_co;			/* collisions */
+	int		ifc_flags;		/* up / down */
+	int		ifc_state;		/* link state */
 } sum;
 
 struct ifstat {
@@ -49,6 +51,8 @@ struct ifstat {
 
 static	int nifs = 0;
 extern	u_int naptime;
+
+const char	*showlinkstate(int);
 
 WINDOW *
 openifstat(void)
@@ -169,6 +173,8 @@ fetchifstat(void)
 		UPDATE(ifc_ob, ifm_data.ifi_obytes);
 		UPDATE(ifc_oe, ifm_data.ifi_oerrors);
 		UPDATE(ifc_co, ifm_data.ifi_collisions);
+		ifs->ifs_cur.ifc_flags = ifm.ifm_flags;
+		ifs->ifs_cur.ifc_state = ifm.ifm_data.ifi_link_state;
 	}
 	free(buf);
 }
@@ -182,17 +188,31 @@ labelifstat(void)
 	wmove(wnd, 0, 0);
 	wclrtobot(wnd);
 
-	mvwaddstr(wnd, 1, INSET, "Interfaces");
-	mvwaddstr(wnd, 1, INSET+15, "Ibytes");
-	mvwaddstr(wnd, 1, INSET+27, "Ipkts");
-	mvwaddstr(wnd, 1, INSET+34, "Ierrs");
-	mvwaddstr(wnd, 1, INSET+46, "Obytes");
+	mvwaddstr(wnd, 1, INSET, "Iface");
+	mvwaddstr(wnd, 1, INSET+9, "State");
+	mvwaddstr(wnd, 1, INSET+19, "Ibytes");
+	mvwaddstr(wnd, 1, INSET+29, "Ipkts");
+	mvwaddstr(wnd, 1, INSET+36, "Ierrs");
+	mvwaddstr(wnd, 1, INSET+48, "Obytes");
 	mvwaddstr(wnd, 1, INSET+58, "Opkts");
 	mvwaddstr(wnd, 1, INSET+65, "Oerrs");
 	mvwaddstr(wnd, 1, INSET+74, "Colls");
 }
 
-#define FMT "%-10.10s %10lu %10lu %6lu   %10lu %10lu %6lu   %6lu "
+#define FMT "%-8.8s %2s%2s  %10lu %8lu %6lu   %10lu %8lu %6lu   %6lu "
+
+const char *
+showlinkstate(int state)
+{
+	switch (state) {
+	case LINK_STATE_UP:
+		return (":U");
+	case LINK_STATE_DOWN:
+		return (":D");
+	case LINK_STATE_UNKNOWN:
+		return ("");
+	}
+}
 
 void
 showifstat(void)
@@ -208,6 +228,8 @@ showifstat(void)
 			continue;
 		mvwprintw(wnd, row++, INSET, FMT,
 		    ifs->ifs_name,
+		    ifs->ifs_cur.ifc_flags & IFF_UP ? "up" : "dn",
+		    showlinkstate(ifs->ifs_cur.ifc_state),
 		    ifs->ifs_cur.ifc_ib,
 		    ifs->ifs_cur.ifc_ip,
 		    ifs->ifs_cur.ifc_ie,
@@ -218,6 +240,7 @@ showifstat(void)
 	}
 	mvwprintw(wnd, row++, INSET, FMT,
 	    "Totals",
+	    "", "",
 	    sum.ifc_ib,
 	    sum.ifc_ip,
 	    sum.ifc_ie,
