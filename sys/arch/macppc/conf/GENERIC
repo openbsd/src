@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.139 2006/06/01 23:15:49 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.140 2006/06/02 20:31:55 fkr Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -294,6 +294,7 @@ rl*		at cardbus?	# RealTek 81[23]9 ethernet
 rtw*		at cardbus?	# Realtek 8180
 wdc*		at pcmcia?
 com*		at pcmcia?
+com*		at cardbus?
 
 wsdisplay*	at vgafb?
 
