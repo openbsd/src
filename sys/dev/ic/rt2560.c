@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.16 2006/06/01 16:52:54 robert Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.17 2006/06/02 04:30:40 robert Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -146,6 +146,7 @@ void		rt2560_read_eeprom(struct rt2560_softc *);
 int		rt2560_bbp_init(struct rt2560_softc *);
 int		rt2560_init(struct ifnet *);
 void		rt2560_stop(struct ifnet *, int);
+void		rt2560_power(int, void *);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -476,6 +477,16 @@ rt2560_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2560_TX_RADIOTAP_PRESENT);
 #endif
 
+	/*
+	 * Make sure the interface is shutdown during reboot.
+	 */
+	sc->sc_sdhook = shutdownhook_establish(rt2560_shutdown, sc);
+	if (sc->sc_sdhook == NULL)
+		printf(": WARNING: unable to establish shutdown hook\n");
+	sc->sc_powerhook = powerhook_establish(rt2560_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf(": WARNING: unable to establish power hook\n");
+
 	return 0;
 
 fail5:	rt2560_free_tx_ring(sc, &sc->bcnq);
@@ -496,6 +507,11 @@ rt2560_detach(void *xsc)
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
+	
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 
 	rt2560_free_tx_ring(sc, &sc->txq);
 	rt2560_free_tx_ring(sc, &sc->atimq);
@@ -2874,6 +2890,44 @@ rt2560_stop(struct ifnet *ifp, int disable)
 			sc->sc_flags &= ~RT2560_ENABLED;
 		}
 	}
+}
+
+void
+rt2560_power(int why, void *arg)
+{
+	struct rt2560_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
+	DPRINTF(("%s: rt2560_power(%d)\n", sc->sc_dev.dv_xname, why));
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		rt2560_stop(ifp, 1);
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			rt2560_init(ifp);
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			if (ifp->if_flags & IFF_RUNNING)
+				rt2560_start(ifp);
+		}
+		break;
+	}
+	splx(s);
+}
+
+void
+rt2560_shutdown(void *arg)
+{
+	struct rt2560_softc *sc = arg;
+
+	rt2560_stop(&sc->sc_ic.ic_if, 1);
 }
 
 struct cfdriver ral_cd = {
