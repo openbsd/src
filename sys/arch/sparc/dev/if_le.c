@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.26 2005/04/19 21:30:19 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.27 2006/06/02 19:58:32 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -458,22 +458,17 @@ leattach(parent, self, aux)
 	if (lebufchild) {
 		lebuf = (struct lebuf_softc *)parent;
 	} else if (sbuschild) {
-		struct sbus_softc *sbus = (struct sbus_softc *)parent;
-		struct sbusdev *sd;
+		extern struct cfdriver lebuffer_cd;
+		struct lebuf_softc *lebufsc;
+		int i;
 
-		/*
-		 * Find last "unallocated" lebuffer and pair it with
-		 * this `le' device on the assumption that we're on
-		 * a pre-historic ROM that doesn't establish le<=>lebuffer
-		 * parent-child relationships.
-		 */
-		for (sd = sbus->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
-			if (strncmp("lebuffer", sd->sd_dev->dv_xname, 8) != 0)
+		for (i = 0; i < lebuffer_cd.cd_ndevs; i++) {
+			lebufsc = (struct lebuf_softc *)lebuffer_cd.cd_devs[i];
+			if (lebufsc == NULL || lebufsc->attached != 0)
 				continue;
-			if (((struct lebuf_softc *)sd->sd_dev)->attached == 0) {
-				lebuf = (struct lebuf_softc *)sd->sd_dev;
-				break;
-			}
+
+			lebuf = lebufsc;
+			break;
 		}
 	}
 	if (lebuf != NULL) {

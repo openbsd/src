@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.10 2004/09/30 07:28:13 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.11 2006/06/02 19:58:34 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -153,7 +153,7 @@ leattach_sbus(struct device *parent, struct device *self, void *aux)
 	struct sbusdev *sd;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
-
+	extern struct cfdriver lebuffer_cd;
 
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
@@ -171,25 +171,27 @@ leattach_sbus(struct device *parent, struct device *self, void *aux)
 	 * a pre-historic ROM that doesn't establish le<=>lebuffer
 	 * parent-child relationships.
 	 */
-	for (sd = ((struct sbus_softc *)parent)->sc_sbdev; sd != NULL;
-	     sd = sd->sd_bchain) {
-		struct lebuf_softc *lebuf = (struct lebuf_softc *)sd->sd_dev;
+	if (lebuffer_cd.cd_ndevs != 0) {
+		struct lebuf_softc *lebuf;
+		int i;
 
-		if (strncmp("lebuffer", sd->sd_dev->dv_xname, 8) != 0)
-			continue;
+		for (i = 0; i < lebuffer_cd.cd_ndevs; i++) {
+			lebuf = (struct lebuf_softc *)lebuffer_cd.cd_devs[i];
+			if (lebuf == NULL || lebuf->attached != 0)
+				continue;
 
-		if (lebuf->attached != 0)
-			continue;
+			sc->sc_mem = lebuf->sc_buffer;
+			sc->sc_memsize = lebuf->sc_bufsiz;
+			/* Lance view is offset by buffer location */
+			sc->sc_addr = 0;
+			lebuf->attached = 1;
 
-		sc->sc_mem = lebuf->sc_buffer;
-		sc->sc_memsize = lebuf->sc_bufsiz;
-		sc->sc_addr = 0; /* Lance view is offset by buffer location */
-		lebuf->attached = 1;
-
-		/* That old black magic... */
-		sc->sc_conf3 = getpropint(sa->sa_node,
-		    "busmaster-regval", LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
-		break;
+			/* That old black magic... */
+			sc->sc_conf3 = getpropint(sa->sa_node,
+			    "busmaster-regval",
+			    LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+			break;
+		}
 	}
 
 	lesc->sc_sd.sd_reset = (void *)am7990_reset;
