@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.6 2006/06/02 18:53:57 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.7 2006/06/02 19:53:30 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -143,14 +143,6 @@ extern void tlb_flush_ctx(int ctx);
 #define	PGSZ_4M			3
 
 #define	PGSZ_SHIFT		61
-
-/*
- * Why couldn't Sun pick better page sizes?
- *
- * Page sizes are 2**(12+(3*sz)), except for 8K which
- * is 2**12+1 instead of 2**12.
- */
-#define	PG_SZ(s)		(1<<(12+(s?(3*s):1)))
 #define	TLB_SZ(s)		(((uint64_t)(s))<<PGSZ_SHIFT)
 
 /* TLB data masks */

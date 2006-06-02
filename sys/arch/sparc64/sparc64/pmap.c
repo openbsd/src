@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2006/06/02 00:26:08 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2006/06/02 19:53:32 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -466,26 +466,6 @@ struct page_size_map page_size_map[] = {
 	{ (8*1024-1) & ~(8*1024-1), PGSZ_8K  },
 	{ 0, PGSZ_8K&0  }
 };
-
-/*
- * Calculate the largest page size that will map this.
- *
- * You really need to do this both on VA and PA.
- */
-#define	PMAP_PAGE_SIZE(va, pa, len, pgsz, pglen)			\
-do {									\
-	for ((pgsz) = PGSZ_4M; (pgsz); (pgsz)--) {			\
-		(pglen) = PG_SZ(pgsz);					\
-									\
-		if (((len) >= (pgsz)) &&				\
-			((pa) & ((pglen)-1) & ~PG_SZ(PGSZ_8K)) == 0 &&	\
-			((va) & ((pglen)-1) & ~PG_SZ(PGSZ_8K)) == 0)	\
-			break;						\
-	}								\
-	(pgsz) = 0;							\
-	(pglen) = PG_SZ(pgsz);						\
-} while (0)
-
 
 /*
  * Enter a TTE into the kernel pmap only.  Don't do anything else.
@@ -1329,12 +1309,8 @@ remap_data:
 	va = (vaddr_t)msgbufp;
 	prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, -1);
 	while (msgbufsiz) {
-		int pgsz;
-		psize_t psize;
-
-		PMAP_PAGE_SIZE(va, phys_msgbuf, msgbufsiz, pgsz, psize);
 		data = TSB_DATA(0 /* global */, 
-			pgsz,
+			PGSZ_8K,
 			phys_msgbuf,
 			1 /* priv */,
 			1 /* Write */,
@@ -1342,12 +1318,10 @@ remap_data:
 			FORCE_ALIAS /* ALIAS -- Disable D$ */,
 			1 /* valid */,
 			0 /* IE */);
-		do {
-			pmap_enter_kpage(va, data);
-			va += NBPG;
-			msgbufsiz -= NBPG;
-			phys_msgbuf += NBPG;
-		} while (psize-=NBPG);
+		pmap_enter_kpage(va, data);
+		va += PAGE_SIZE;
+		msgbufsiz -= PAGE_SIZE;
+		phys_msgbuf += PAGE_SIZE;
 	}
 	BDPRINTF(PDB_BOOT1, ("Done inserting mesgbuf into pmap_kernel()\r\n"));
 	
