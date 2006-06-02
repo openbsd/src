@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.9 2006/06/01 22:43:12 mcbride Exp $	*/
+/*	$OpenBSD: conf.y,v 1.10 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -57,9 +57,9 @@ void	yyerror(const char *);
 	int	 val;
 }
 
-%token MODE CARP INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
+%token MODE INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
 %token Y_SLAVE Y_MASTER INET INET6 FLUSHMODE STARTUP NEVER SYNC
-%token SKIPSLAVE
+%token GROUP SKIPSLAVE 
 %token <string> STRING
 %token <val>	VALUE
 %type  <val>	af port mode flushmode
@@ -102,12 +102,21 @@ flushmode	: STARTUP		{ $$ = FM_STARTUP; }
 		| SYNC			{ $$ = FM_SYNC; }
 		;
 
-setting		: CARP INTERFACE STRING
+setting		: INTERFACE STRING
 		{
 			if (cfgstate.carp_ifname)
 				free(cfgstate.carp_ifname);
-			cfgstate.carp_ifname = $3;
-			log_msg(2, "config: carp interface %s", $3);
+			cfgstate.carp_ifname = $2;
+			log_msg(2, "config: interface %s",
+			    cfgstate.carp_ifname);
+		}
+		| GROUP STRING
+		{
+			if (cfgstate.carp_ifgroup)
+				free(cfgstate.carp_ifgroup);
+			cfgstate.carp_ifgroup = $2;
+			log_msg(2, "config: group %s",
+			    cfgstate.carp_ifgroup);
 		}
 		| FLUSHMODE flushmode
 		{
@@ -140,6 +149,7 @@ setting		: CARP INTERFACE STRING
 				peer->name = $2;
 			}
 			LIST_INSERT_HEAD(&cfgstate.peerlist, peer, link);
+			cfgstate.peercnt++;
 			log_msg(2, "config: add peer %s", peer->name);
 		}
 		| LISTEN ON STRING af port
@@ -193,8 +203,8 @@ match(char *token)
 {
 	/* Sorted */
 	static const struct keyword keywords[] = {
-		{ "carp", CARP },
 		{ "flushmode", FLUSHMODE },
+		{ "group", GROUP },
 		{ "inet", INET },
 		{ "inet6", INET6 },
 		{ "interface", INTERFACE },
@@ -321,6 +331,9 @@ conf_parse_file(char *cfgfile)
 	confptr = NULL;
 	r = yyparse();
 	free(buf);
+
+	if (!cfgstate.carp_ifgroup)
+		cfgstate.carp_ifgroup = strdup("carp");
 
 	return r;
 

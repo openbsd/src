@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.10 2006/06/01 22:43:12 mcbride Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.11 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -79,6 +79,9 @@ sasyncd_run(pid_t ppid)
 	signal(SIGTERM, sasyncd_stop);
 	signal(SIGHUP, sasyncd_stop);
 
+	timer_add("carp_undemote", CARP_DEMOTE_MAXTIME,
+	    monitor_carpundemote, NULL);
+
 	while (!daemon_shutdown) {
 		memset(rfds, 0, fdsetsize);
 		memset(wfds, 0, fdsetsize);
@@ -98,7 +101,7 @@ sasyncd_run(pid_t ppid)
 
 		timeout = &tv;
 		timer_next_event(&tv);
-
+ 
 		n = select(maxfd, rfds, wfds, 0, timeout);
 		if (n == -1) {
 			if (errno != EINTR) {
@@ -158,6 +161,8 @@ main(int argc, char **argv)
 	}
 	if (r)
 		return 1;
+
+	carp_demote(CARP_INC, 0);
 
 	if (carp_init())
 		return 1;

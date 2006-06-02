@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.7 2006/06/01 22:43:12 mcbride Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.8 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -50,6 +50,8 @@ struct ctlmsg {
 	u_int32_t	data2;
 };
 
+int snapcount = 0;
+
 static int
 net_ctl_check_state(struct syncpeer *p, enum RUNSTATE nstate)
 {
@@ -89,6 +91,18 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 	}
 
 	switch (ntohl(ctl->type)) {
+	case CTL_ENDSNAP:
+		log_msg(4, "net_ctl: got CTL_ENDSNAP from peer \"%s\"",
+		    p->name);
+
+		/* XXX More sophistication required to handle multiple peers. */
+		if (carp_demoted) {
+			snapcount++;
+			if (snapcount >= cfgstate.peercnt)
+				monitor_carpundemote(NULL);
+		}
+		break;
+
 	case CTL_STATE:
 		log_msg(4, "net_ctl: got CTL_STATE from peer \"%s\"", p->name);
 		nstate = (enum RUNSTATE)ntohl(ctl->data);
@@ -172,6 +186,12 @@ int
 net_ctl_send_error(struct syncpeer *p, enum CTLTYPE prevtype)
 {
 	return net_ctl_send(p, CTL_ERROR, (u_int32_t)prevtype, 0);
+}
+
+int
+net_ctl_send_endsnap(struct syncpeer *p)
+{
+	return net_ctl_send(p, CTL_ENDSNAP, 0, 0);
 }
 
 /* After a CARP tracker state change, send an state ctl msg to all peers. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.4 2005/05/27 20:47:11 ho Exp $	*/
+/*	$OpenBSD: net.h,v 1.5 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -43,9 +43,11 @@ struct syncpeer {
 };
 
 /* Control message types. */
-enum CTLTYPE { RESERVED = 0, CTL_STATE, CTL_ERROR, CTL_ACK, CTL_UNKNOWN };
+enum CTLTYPE { RESERVED = 0, CTL_STATE, CTL_ERROR, CTL_ACK,
+    CTL_ENDSNAP, CTL_UNKNOWN };
 #define CTLTYPES { \
-	"RESERVED", "CTL_STATE", "CTL_ERROR", "CTL_ACK", "CTL_UNKNOWN" \
+	"RESERVED", "CTL_STATE", "CTL_ERROR", "CTL_ACK", \
+	"CTL_ENDSNAP", "CTL_UNKNOWN" \
 };
 
 /* net.c */
@@ -56,5 +58,6 @@ void	net_disconnect_peer(struct syncpeer *);
 void	net_ctl_handle_msg(struct syncpeer *, u_int8_t *, u_int32_t);
 int	net_ctl_send_ack(struct syncpeer *, enum CTLTYPE, u_int32_t);
 int	net_ctl_send_error(struct syncpeer *, enum CTLTYPE);
+int	net_ctl_send_endsnap(struct syncpeer *);
 int	net_ctl_send_state(struct syncpeer *);
 

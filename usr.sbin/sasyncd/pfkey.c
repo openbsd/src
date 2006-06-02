@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.13 2006/02/15 05:09:29 david Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.14 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -396,6 +396,7 @@ pfkey_send_message(fd_set *fds)
 	SIMPLEQ_REMOVE_HEAD(&pfkey_msglist, next);
 	free(pmsg->buf);
 	free(pmsg);
+
 	return;
 }
 
@@ -524,5 +525,7 @@ pfkey_snapshot(void *v)
 		memset(spd, 0, spdsz);
 		free(spd);
 	}
+
+	net_ctl_send_endsnap(p);
 	return;
 }

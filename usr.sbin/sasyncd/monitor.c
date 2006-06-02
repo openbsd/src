@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.7 2006/01/26 09:53:46 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.8 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -157,20 +157,58 @@ monitor_loop(void)
 				break;
 		}
 
-		/* Wait for next snapshot task. Disregard read data. */
+		/* Wait for next task */
 		if ((r = m_read(m_state.s, &v, sizeof v)) < 1) {
 			if (r == -1)
 				log_err(0, "monitor_loop: read() ");
 			break;
 		}
 
-		/* Get the data. */
-		m_priv_pfkey_snap(m_state.s);
+		switch (v) {
+		case MONITOR_GETSNAP:
+			/* Get the data. */
+			m_priv_pfkey_snap(m_state.s);
+			break;
+
+		case MONITOR_CARPINC:
+			carp_demote(CARP_INC, 1);
+			break;
+
+		case MONITOR_CARPDEC:
+			carp_demote(CARP_DEC, 1);
+			break;
+		}
 	}
+
+	monitor_carpundemote(NULL);
 
 	if (!sigchld)
 		log_msg(0, "monitor_loop: priv process exiting abnormally");
 	exit(0);
+}
+
+void
+monitor_carpundemote(void *v)
+{
+	u_int32_t mtype = MONITOR_CARPDEC;
+	if (!carp_demoted)
+		return;
+	if (m_write(m_state.s, &mtype, sizeof mtype) < 1)
+		log_msg(1, "monitor_carpundemote: unable to write to monitor");
+	else
+		carp_demoted = 0;
+}
+
+void
+monitor_carpdemote(void *v)
+{
+	u_int32_t mtype = MONITOR_CARPINC;
+	if (carp_demoted)
+		return;
+	if (m_write(m_state.s, &mtype, sizeof mtype) < 1)
+		log_msg(1, "monitor_carpdemote: unable to write to monitor");
+	else
+		carp_demoted = 1;
 }
 
 int
@@ -180,8 +218,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 	u_int32_t	v;
 	ssize_t		rbytes;
 
-	/* We write a (any) value to the monitor socket to start a snapshot. */
-	v = 0;
+	v = MONITOR_GETSNAP;
 	if (m_write(m_state.s, &v, sizeof v) < 1)
 		return -1;
 

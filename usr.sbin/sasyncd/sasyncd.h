@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.9 2006/06/01 22:43:12 mcbride Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.10 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -46,6 +46,7 @@ struct cfgstate {
 	u_int32_t	 flags;
 
 	char		*carp_ifname;
+	char		*carp_ifgroup;
 	int		 carp_ifindex;
 
 	char		*sharedkey;
@@ -58,6 +59,7 @@ struct cfgstate {
 	in_port_t	 listen_port;
 	sa_family_t	 listen_family;
 
+	int		 peercnt;
 	LIST_HEAD(, syncpeer) peerlist;
 };
 
@@ -71,6 +73,7 @@ struct cfgstate {
 #define SKIP_LOCAL_SAS	0x0004
 
 extern struct cfgstate	cfgstate;
+extern int		carp_demoted;
 
 #define SASYNCD_USER	"_isakmpd"
 #define SASYNCD_CFGFILE	"/etc/sasyncd.conf"
@@ -92,12 +95,26 @@ extern struct cfgstate	cfgstate;
 #define MSG_PFKEYDATA	1
 #define MSG_MAXTYPE	1	/* Increase when new types are added. */
 
+
+
+enum {
+	MONITOR_GETSNAP,
+	MONITOR_CARPINC,
+	MONITOR_CARPDEC
+};
+
+#define CARP_DEC	-1
+#define CARP_INC	1
+
+#define CARP_DEMOTE_MAXTIME	60
+
 /* conf.c */
 int	conf_init(int, char **);
 
 /* carp.c */
 int		carp_init(void);
 void		carp_check_state(void);
+void		carp_demote(int, int);
 void		carp_update_state(enum RUNSTATE);
 void		carp_set_rfd(fd_set *);
 void		carp_read_message(fd_set *);
@@ -121,6 +138,8 @@ void	log_err(const char *, ...);
 /* monitor.c */
 pid_t	monitor_init(void);
 void	monitor_loop(void);
+void	monitor_carpdemote(void *);
+void	monitor_carpundemote(void *);
 int	monitor_get_pfkey_snap(u_int8_t **, u_int32_t *, u_int8_t **,
     u_int32_t *);
 

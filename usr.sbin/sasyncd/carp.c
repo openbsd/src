@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.3 2006/06/01 22:43:12 mcbride Exp $	*/
+/*	$OpenBSD: carp.c,v 1.4 2006/06/02 20:09:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -42,6 +42,8 @@
 #include <unistd.h>
 
 #include "sasyncd.h"
+
+int carp_demoted = 0;
 
 static enum RUNSTATE
 carp_map_state(u_char link_state)
@@ -92,6 +94,54 @@ carp_get_state(char *ifname)
 	}
 	close(s);
 	return carp_map_state(ifrdat.ifi_link_state);
+}
+
+void
+carp_demote(int demote, int force)
+{
+	struct ifgroupreq        ifgr;
+	int s;
+
+	if (carp_demoted + demote < 0) {
+		log_msg(1, "carp_demote: mismatched promotion");
+		return;
+	}
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s < 0) {
+		log_msg(1, "carp_demote: couldn't open socket");
+		return;
+	}
+		
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, cfgstate.carp_ifgroup, sizeof(ifgr.ifgr_name));
+
+	/* Unless we force it, don't demote if we're not demoting already. */
+	if (!force) {
+		if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1) {
+			log_msg(1, "carp_demote: unable to get "
+			    "the demote state of group '%s'", 
+			    cfgstate.carp_ifgroup);		
+			    goto done;
+		}
+	
+		if (ifgr.ifgr_attrib.ifg_carp_demoted == 0)
+			goto done;
+	}
+
+	ifgr.ifgr_attrib.ifg_carp_demoted = demote;
+	if (ioctl(s, SIOCSIFGATTR, (caddr_t)&ifgr) == -1)
+		log_msg(1, "carp_demote: unable to %s the demote state "
+		    "of group '%s'", (demote > 0) ?
+		    "increment" : "decrement", cfgstate.carp_ifgroup);
+	else {
+		carp_demoted += demote;
+		log_msg(1, "carp_demote: %sed the demote state "
+		    "of group '%s'", (demote > 0) ?
+		    "increment" : "decrement", cfgstate.carp_ifgroup);
+	}
+done:
+	close(s);
 }
 
 const char*
