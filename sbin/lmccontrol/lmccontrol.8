@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmccontrol.8,v 1.19 2006/06/02 04:50:40 ray Exp $
+.\"	$OpenBSD: lmccontrol.8,v 1.20 2006/06/02 07:01:29 jmc Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -42,9 +42,9 @@
 .Nd configure Lan Media Corporation SSI/HSSI/T1/T3 devices
 .Sh SYNOPSIS
 .Nm lmccontrol
-.Op Ar interface
+.Op Fl CcEeKkOoSs
 .Op Fl l Ar speed
-.Op Fl cCeEsSkKoO
+.Op Ar interface
 .Sh DESCRIPTION
 The
 .Nm
@@ -69,59 +69,51 @@ The T1 card is the LMC1200 and runs at a speed of 1.544Mbps or
 2Mbps for E1 operation, without CSU/DSU.
 .Pp
 The
-.Op Ar interface
-argument given to
-.Nm
-should be the logical interface name associated with the Lan Media
-device (lmc0, lmc1, etc...).
-.Pp
-The
 .Nm
 command given without any additional flags retrieves the current card
 settings from the driver and prints them out.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Ar interface
-The interface name of the Lan Media card (default is lmc0).
-.It Fl l Ar speed
-To manually specify line speed, in bits per second (for devices without
-built-in CSU/DSU).
-.It Fl c
-Sets the interface to use an external clock source.
-This is only valid for SSI/HSSI cards.
 .It Fl C
 Set the interface to use internal clocking.
 On the SSI card this uses the internal baud rate generator.
 On the HSSI card it uses the PCI bus clock.
 This is only valid for SSI/HSSI cards.
-.It Fl e
-Sets 16-bit CRC.
+.It Fl c
+Sets the interface to use an external clock source.
+This is only valid for SSI/HSSI cards.
 .It Fl E
 Sets 32-bit CRC.
-.It Fl k
-Enables layer 2 keepalive.
+.It Fl e
+Sets 16-bit CRC.
 .It Fl K
 Disables layer 2 keepalive.
-.It Fl s
-Turn DS3 scrambler off.
-.It Fl S
-Turn DS3 scrambler on.
+.It Fl k
+Enables layer 2 keepalive.
+.It Fl l Ar speed
+To manually specify line speed, in bits per second (for devices without
+built-in CSU/DSU).
+.It Fl O
+Program the DS3 card for cable length for over 100 feet in length (higher
+power).
 .It Fl o
 Program the DS3 card for cable lengths of less than 100 feet.
 In this mode, the card uses lower power to transmit data for short cable runs,
 which might otherwise overdrive a receiver.
 This is the default, and will work in most situations even with runs
 more than 100 feet.
-.It Fl O
-Program the DS3 card for cable length for over 100 feet in length (higher
-power).
+.It Fl S
+Turn DS3 scrambler on.
+.It Fl s
+Turn DS3 scrambler off.
+.It Ar interface
+The interface name of the Lan Media card (default is lmc0).
 .El
 .Sh EXAMPLES
-To set a SSI card for a speed of 2048000 bits/sec with HDLC keepalive off,
-one could use:
+Set an SSI card for a speed of 2048000 bits/sec with HDLC keepalive off:
 .Pp
-.Li # lmccontrol lmc0 -l 2048000 -K
+.Dl # lmccontrol lmc0 -l 2048000 -K
 .Sh SEE ALSO
 .Xr lmc 4 ,
 .Xr sppp 4 ,
