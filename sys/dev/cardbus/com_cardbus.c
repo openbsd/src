@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.24 2006/06/01 22:26:48 fkr Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.25 2006/06/02 20:11:48 fkr Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -308,17 +308,17 @@ com_cardbus_setup(struct com_cardbus_softc *csc)
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t reg;
 
-	Cardbus_conf_write(ct, csc->cc_tag, csc->cc_reg, csc->cc_base);
+	cardbus_conf_write(cc, cf, csc->cc_tag, csc->cc_reg, csc->cc_base);
 
 	/* enable accesses on cardbus bridge */
 	cf->cardbus_ctrl(cc, csc->cc_cben);
 	cf->cardbus_ctrl(cc, CARDBUS_BM_ENABLE);
 
 	/* and the card itself */
-	reg = Cardbus_conf_read(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG);
+	reg = cardbus_conf_read(cc, cf, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG);
 	reg &= ~(CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
 	reg |= csc->cc_csr;
-	Cardbus_conf_write(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG, reg);
+	cardbus_conf_write(cc, cf, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
