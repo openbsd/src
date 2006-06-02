@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.38 2005/05/05 10:28:41 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.39 2006/06/02 19:35:55 hshoexer Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -516,7 +516,7 @@ policy configuration file.
     Authorizer: "POLICY"
     Licensees: "passphrase-md5-hex:10838982612aff543e2e62a67c786550"
     Comment: This policy accepts anyone using shared-secret
-	     authentication using the password mekmitasisgoat,
+	     authentication using the password mekmitasdigoat,
 	     and does ESP with some form of encryption (not null).
     Conditions: app_domain == "IPsec policy" &&
                 esp_present == "yes" &&

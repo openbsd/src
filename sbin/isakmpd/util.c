@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.60 2005/12/28 10:57:35 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.61 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -190,7 +190,7 @@ hex2raw(char *s, u_int8_t *buf, size_t sz)
 
 /*
  * Convert raw binary buffer to a newly allocated hexadecimal string.  Returns
- * NULL if an error occured.  It is the caller's responsibility to free the
+ * NULL if an error occurred.  It is the caller's responsibility to free the
  * returned string.
  */
 char *

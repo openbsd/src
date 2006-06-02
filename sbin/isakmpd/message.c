@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.118 2006/05/31 04:54:46 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.119 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -2054,7 +2054,7 @@ message_check_duplicate(struct message *msg)
 			    "message_check_duplicate: dropping dup"));
 
 			/*
-			 * Retransmit if the previos sent message was the last
+			 * Retransmit if the previous sent message was the last
 			 * of an exchange, otherwise just wait for the
 			 * ordinary retransmission.
 			 */

@@ -1,4 +1,4 @@
-#	$OpenBSD: exchange_num.cst,v 1.4 2003/06/03 14:28:16 ho Exp $
+#	$OpenBSD: exchange_num.cst,v 1.5 2006/06/02 19:35:55 hshoexer Exp $
 #	$EOM: exchange_num.cst,v 1.1 1998/08/05 09:23:32 niklas Exp $
 
 #
@@ -31,9 +31,9 @@
 
 # Special exchange script symbols.
 EXCHANGE_SCRIPT
-# Special type signifying PAYLOAD_HASH or PALOAD_SIG must be present.
+# Special type signifying PAYLOAD_HASH or PAYLOAD_SIG must be present.
   AUTH		-1
-# Special type signifying PAYLOAD_NOTIFY or PALOAD_DELETE must be present.
+# Special type signifying PAYLOAD_NOTIFY or PAYLOAD_DELETE must be present.
   INFO		-2
 # Switch roles at this point in the exchange.
   SWITCH	-3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.25 2005/11/13 18:24:24 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.26 2006/06/02 19:35:55 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -597,7 +597,7 @@ virtual_handle_message(struct transport *t)
 {
 	/*
 	 * As per the NAT-T draft, in case we have already switched ports,
-	 * any messages recieved on the old (500) port SHOULD be discarded.
+	 * any messages received on the old (500) port SHOULD be discarded.
 	 * (Actually, while phase 1 messages should be discarded,
 	 *  informational exchanges MAY be processed normally. For now, we
 	 *  discard them all.)

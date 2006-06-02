@@ -1,4 +1,4 @@
-$OpenBSD: BUGS,v 1.14 2002/06/09 08:13:06 todd Exp $
+$OpenBSD: BUGS,v 1.15 2006/06/02 19:35:55 hshoexer Exp $
 $EOM: BUGS,v 1.38 2000/02/18 08:47:35 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
@@ -87,7 +87,7 @@ file:
 
 * Wrong error message when policy check fails.
 
-* Restransmit of QM (packet 1) after INFO/PAYLOAD_MALFORMED was received.
+* Retransmit of QM (packet 1) after INFO/PAYLOAD_MALFORMED was received.
 
 * SIGSEGV after sa_enter: sa added to sa list, trigged by DELETE notify (Linux)
 

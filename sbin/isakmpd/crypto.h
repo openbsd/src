@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.17 2005/04/08 18:39:12 deraadt Exp $	 */
+/* $OpenBSD: crypto.h,v 1.18 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	 */
 
 /*
@@ -96,7 +96,7 @@ struct keystate {
  * Information about the cryptotransform.
  *
  * XXX - In regards to the IV (Initialization Vector) the drafts are
- * completly fucked up and specify a MUST as how it is derived, so
+ * completely fucked up and specify a MUST as how it is derived, so
  * we also have to provide for that. I just don't know where.
  * Furthermore is this enum needed at all?  It seems to be Oakley IDs
  * only anyhow, and we already have defines for that in ipsec_doi.h.

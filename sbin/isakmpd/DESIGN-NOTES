@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.24 2005/11/17 21:18:25 grunk Exp $
+$OpenBSD: DESIGN-NOTES,v 1.25 2006/06/02 19:35:55 hshoexer Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -43,12 +43,12 @@ dnssec.c	IKE authentication using signed DNS KEY RRs.
 doi.c		Generic handling of different DOIs.
 exchange.c	Exchange state machinery.
 exchange_num.cst
-		Some constants used for exhange scripts.
+		Some constants used for exchange scripts.
 field.c		Generic handling of fields.
 genconstants.sh
 		Generate constant files from .cst source.
 genfields.sh	Generate field description files from .fld source.
-gmp_util.c	Utilities to ease interfaceing to GMP.
+gmp_util.c	Utilities to ease interfacing to GMP.
 hash.c		Generic hash handling.
 if.c		Network interface details.
 ike_aggressive.c
@@ -144,8 +144,8 @@ Both struct exchange and struct sa does hold a reference count, but this is
 not entirely like a reference count in the traditional meaning where
 every reference gets counted.  Perhaps it will be in the future, but for now
 we increment the count at allocation time and at times we schedule events
-tha might happen sometime in the future where we will need the structure.
-These events then realeases its reference when done.  This way intermediate
+that might happen sometime in the future where we will need the structure.
+These events then release its reference when done.  This way intermediate
 deallocation of these structures are OK.
 
 The basic idea of control flow
@@ -323,7 +323,7 @@ configuration.  Currently this happen to map really well to the
 configuration file format, which on the other hand does not map
 equally well to humans.  It is envisioned that the configuration
 database should be dynamically modifiable, and through a lot of
-differnet mechanisms.  Therefore we have designed an API for this
+different mechanisms.  Therefore we have designed an API for this
 purpose.
 
 int conf_begin ();

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.126 2006/05/31 04:54:46 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.127 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -189,7 +189,7 @@ exchange_script(struct exchange *exchange)
 
 /*
  * Validate the message MSG's contents wrt what payloads the exchange type
- * requires at this point in the dialogoue.  Return -1 if the validation fails,
+ * requires at this point in the dialogue.  Return -1 if the validation fails,
  * 0 if it succeeds and the script is not finished and 1 if it's ready.
  */
 static int
@@ -1755,7 +1755,7 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 			 * original finalize routine was. As a result, if an
 			 * exchange does not manage to get through, there may
 			 * be application-specific information that won't get
-			 * cleaned up, since no error signalling will be done.
+			 * cleaned up, since no error signaling will be done.
 			 * This is the case with dynamic SAs and PFKEY.
 			 */
 			exchange_establish(peer, exchange_establish_finalize,

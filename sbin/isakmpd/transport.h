@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.h,v 1.17 2005/12/28 10:57:35 hshoexer Exp $	 */
+/* $OpenBSD: transport.h,v 1.18 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
@@ -49,7 +49,7 @@ struct transport;
 
 LIST_HEAD(transport_list, transport) transport_list;
 
-/* This describes a tranport "method" like UDP or similar.  */
+/* This describes a transport "method" like UDP or similar.  */
 struct transport_vtbl {
 	/* All transport methods are linked together.  */
 	LIST_ENTRY(transport_vtbl) link;

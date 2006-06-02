@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.24 2005/12/28 10:57:35 hshoexer Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.25 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -33,7 +33,7 @@
 /*
  * B2N is a module for doing arithmetic on the Field GF(2**n) which is
  * isomorph to ring of polynomials GF(2)[x]/p(x) where p(x) is an
- * irreduciable polynomial over GF(2)[x] with grade n.
+ * irreducible polynomial over GF(2)[x] with grade n.
  *
  * First we need functions which operate on GF(2)[x], operation
  * on GF(2)[x]/p(x) can be done as for Z_p then.
@@ -709,7 +709,7 @@ fail:
 
 /*
  * The halftrace yields the square root if the degree of the
- * irreduceable polynomial is odd.
+ * irreducible polynomial is odd.
  */
 int
 b2n_halftrace(b2n_ptr ho, b2n_ptr a, b2n_ptr p)
@@ -747,7 +747,7 @@ fail:
 
 /*
  * Solving the equation: y**2 + y = b in GF(2**m) where ip is the
- * irreduceable polynomial. If m is odd, use the half trace.
+ * irreducible polynomial. If m is odd, use the half trace.
  */
 int
 b2n_sqrt(b2n_ptr zo, b2n_ptr b, b2n_ptr ip)

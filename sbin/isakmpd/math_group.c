@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.30 2006/05/05 09:29:35 djm Exp $	 */
+/* $OpenBSD: math_group.c,v 1.31 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -70,7 +70,7 @@ struct modp_group {
 
 /*
  * This module provides access to the operations on the specified group
- * and is absolutly free of any cryptographic devices. This is math :-).
+ * and is absolutely free of any cryptographic devices. This is math :-).
  */
 
 #define OAKLEY_GRP_1	1
@@ -274,7 +274,7 @@ struct modp_dscr oakley_modp[] =
 /* Describe preconfigured EC2N groups */
 
 /*
- * Related collision-search methods can compute discrete logarithmns
+ * Related collision-search methods can compute discrete logarithms
  * in O(sqrt(r)), r being the subgroup order.
  */
 
@@ -422,7 +422,7 @@ struct group    groups[] = {
 
 /*
  * Initialize the group structure for later use,
- * this is done by converting the values given in the describtion
+ * this is done by converting the values given in the description
  * and converting them to their native representation.
  */
 void
@@ -854,7 +854,7 @@ ec2n_setrandom(struct group *group, ec2np_ptr x)
  * This is an attempt at operation abstraction. It can happen
  * that we need to initialize the y variable for the operation
  * to proceed correctly. When this is the case operation has
- * to supply the variable 'a' with the chunks of the Y cooridnate
+ * to supply the variable 'a' with the chunks of the Y coordinate
  * set to zero.
  */
 int

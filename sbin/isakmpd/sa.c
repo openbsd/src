@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.107 2006/05/31 04:54:46 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.108 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -209,7 +209,7 @@ struct dst_isakmpspi_arg {
 
 /*
  * Check if SA matches what we are asking for through V_ARG.  It has to
- * be a finished phaes 1 (ISAKMP) SA.
+ * be a finished phase 1 (ISAKMP) SA.
  */
 static int
 isakmp_sa_check(struct sa *sa, void *v_arg)

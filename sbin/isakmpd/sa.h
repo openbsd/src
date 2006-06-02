@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.47 2005/09/23 14:44:03 hshoexer Exp $	 */
+/* $OpenBSD: sa.h,v 1.48 2006/06/02 19:35:55 hshoexer Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -205,7 +205,7 @@ struct sa {
 
 	/* IKE DPD (RFC3706) message sequence number.  */
 	u_int32_t	dpd_seq;	/* sent */
-	u_int32_t	dpd_rseq;	/* recieved */
+	u_int32_t	dpd_rseq;	/* received */
 	u_int32_t	dpd_failcount;	/* # of subsequent failures */
 	u_int32_t	dpd_rdupcount;	/* # of subsequent duplicates */
 	struct event   *dpd_event;	/* time of next event */
