@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.2 2006/06/01 18:18:25 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.3 2006/06/02 17:06:50 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -417,8 +417,6 @@ if_act_query_seen(struct iface *iface)
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
-		/* XXX iface p2p */
-		break;
 	case IF_TYPE_BROADCAST:
 		iface->state = IF_STA_NONQUERIER;
 		if_stop_query_timer(iface);
