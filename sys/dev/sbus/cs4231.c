@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.27 2005/07/09 22:23:15 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.28 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -245,8 +245,6 @@ cs4231_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't map registers\n");
 		return;
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
 	if (sbusburst == 0)

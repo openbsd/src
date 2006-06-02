@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.9 2004/12/05 04:31:58 jsg Exp $	*/
+/*	$OpenBSD: qec.c,v 1.10 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -177,8 +177,6 @@ qecattach(parent, self, aux)
 
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/*
 	 * Collect address translations from the OBP.

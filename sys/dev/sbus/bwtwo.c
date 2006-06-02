@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.15 2005/03/15 18:40:16 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.16 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -97,7 +97,6 @@
 
 struct bwtwo_softc {
 	struct sunfb sc_sunfb;
-	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
 	bus_space_handle_t sc_ctrl_regs;
@@ -194,8 +193,6 @@ bwtwoattach(parent, self, aux)
 	printf(": %s", nam);
 
 	console = bwtwo_is_console(node);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	bwtwo_burner(sc, 1, 0);
 

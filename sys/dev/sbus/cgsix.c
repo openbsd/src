@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.52 2005/03/15 18:40:16 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.53 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -207,8 +207,6 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	cgsix_burner(sc, 1, 0);
-
-	sbus_establish(&sc->sc_sd, self);
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);

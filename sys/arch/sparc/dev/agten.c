@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.9 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.10 2006/06/02 20:00:54 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -91,7 +91,6 @@ struct agten_cmap {
 /* per-display variables */
 struct agten_softc {
 	struct	sunfb sc_sunfb;			/* common base part */
-	struct	sbusdev sc_sd;			/* sbus device */
 
 	struct	rom_reg sc_phys;		/* physical address and */
 	off_t	sc_physoffset;			/* offset for frame buffer */
@@ -211,8 +210,6 @@ agtenattach(struct device *parent, struct device *self, void *args)
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	fbwscons_attach(&sc->sc_sunfb, &agten_accessops, isconsole);
 }

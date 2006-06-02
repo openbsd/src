@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.17 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.18 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -81,7 +81,6 @@ static int esp_unit_offset;
 
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
-	struct sbusdev	sc_sd;			/* sbus device */
 
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
@@ -278,10 +277,6 @@ espattach_sbus(struct device *parent, struct device *self, void *aux)
 
 		esc->sc_pri = sa->sa_pri;
 
-		/* add me to the sbus structures */
-		esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-		sbus_establish(&esc->sc_sd, &sc->sc_dev);
-
 		printf("%s", self->dv_xname);
 		espattach(esc, &esp_sbus_glue);
 
@@ -349,10 +344,6 @@ espattach_sbus(struct device *parent, struct device *self, void *aux)
 
 	esc->sc_pri = sa->sa_pri;
 
-	/* add me to the sbus structures */
-	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-	sbus_establish(&esc->sc_sd, &sc->sc_dev);
-
 	if (strcmp("ptscII", sa->sa_name) == 0) {
 		espattach(esc, &esp_sbus_glue1);
 	} else {
@@ -411,10 +402,6 @@ espattach_dma(struct device *parent, struct device *self, void *aux)
 	}
 
 	esc->sc_pri = sa->sa_pri;
-
-	/* Assume SBus is grandparent */
-	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-	sbus_establish(&esc->sc_sd, parent);
 
 	espattach(esc, &esp_sbus_glue);
 }

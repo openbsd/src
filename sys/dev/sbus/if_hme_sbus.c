@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.9 2005/10/21 22:10:56 brad Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.10 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@
 
 struct hmesbus_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
-	struct	sbusdev		hsc_sbus;	/* SBus device */
 };
 
 int	hmematch_sbus(struct device *, void *, void *);
@@ -100,7 +99,6 @@ hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 	struct sbus_attach_args *sa = aux;
 	struct hmesbus_softc *hsc = (void *)self;
 	struct hme_softc *sc = &hsc->hsc_hme;
-	struct sbusdev *sd = &hsc->hsc_sbus;
 	u_int32_t burst, sbusburst;
 	int node;
 	/* XXX the following declarations should be elsewhere */
@@ -158,9 +156,6 @@ hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
 		return;
 	}
-
-	sd->sd_reset = (void *)hme_reset;
-	sbus_establish(sd, self);
 
 	if (OF_getprop(sa->sa_node, "local-mac-address",
 	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)

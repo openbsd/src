@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.12 2005/03/03 01:41:45 miod Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.13 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -86,7 +86,6 @@
 
 struct dma_softc {
 	struct lsi64854_softc	sc_lsi64854;	/* base device */
-	struct sbusdev	sc_sd;			/* sbus device */
 };
 
 int	dmamatch_sbus(struct device *, void *, void *);
@@ -228,7 +227,6 @@ dmaattach_sbus(parent, self, aux)
 		sc->sc_channel = L64854_CHANNEL_SCSI;
 	}
 
-	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
 	sbt = dma_alloc_bustag(dsc);
 	if (lsi64854_attach(sc) != 0)
 		return;

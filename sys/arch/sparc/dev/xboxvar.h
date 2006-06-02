@@ -1,4 +1,4 @@
-/*	$OpenBSD: xboxvar.h,v 1.2 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: xboxvar.h,v 1.3 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -28,7 +28,6 @@
 
 struct xbox_softc {
 	struct device	sc_dv;			/* base device */
-	struct sbusdev	sc_sd;			/* sbus device */
 	u_int32_t	sc_key;			/* device key */
 	int		sc_node;		/* sbus node */
 	int		sc_attached;		/* has sbus attached? */

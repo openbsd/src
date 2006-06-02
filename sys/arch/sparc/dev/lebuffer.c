@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.5 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.6 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -141,9 +141,6 @@ lebufattach(parent, self, aux)
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
-
-	if (ca->ca_bustype == BUS_SBUS)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Propagate bootpath */
 	if (ca->ca_ra.ra_bp != NULL)

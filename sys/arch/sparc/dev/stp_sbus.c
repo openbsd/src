@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.4 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.5 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@
 
 struct stp4020_sbus_softc {
 	struct stp4020_softc stp;
-	struct sbusdev	sc_sd;		/* SBus device */
 	struct rom_reg	sc_reg;
 	struct rom_reg	sc_reg_le;  /* rev. copy for pcmcia bus_space access */
 	struct intrhand	sc_ih[2];
@@ -164,8 +163,6 @@ stpattach(parent, self, aux)
 			sc->sc_socks[1].wintag = &ssc->sc_reg_le;
 		}
 	}
-
-	sbus_establish(&ssc->sc_sd, &sc->sc_dev);
 
 	/*
 	 * We get to use two SBus interrupt levels.

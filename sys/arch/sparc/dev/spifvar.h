@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifvar.h,v 1.3 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: spifvar.h,v 1.4 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -59,7 +59,6 @@ struct sbpp_softc {
 
 struct spif_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_stcih;	/* stc interrupt vectoring */
 	struct	intrhand sc_ppcih;	/* ppc interrupt vectoring */
 	struct	intrhand sc_softih;	/* hard interrupt vectoring */

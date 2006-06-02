@@ -1,4 +1,4 @@
-/*	$OpenBSD: qevar.h,v 1.5 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: qevar.h,v 1.6 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -27,7 +27,6 @@
 
 struct qesoftc {
 	struct	device sc_dev;
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	arpcom sc_arpcom;	/* ethernet common */
 

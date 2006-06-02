@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.16 2005/11/23 11:39:36 mickey Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.17 2006/06/02 20:00:54 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -121,7 +121,6 @@ struct	tslot_data {
 
 struct	tslot_softc {
 	struct device	sc_dev;
-	struct sbusdev	sc_sd;
 
 	struct intrhand	sc_ih;
 	
@@ -246,8 +245,6 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, -1, self->dv_xname);
 	printf(" pri %d", ra->ra_intr[0].int_pri);
-
-	sbus_establish(&sc->sc_sd, self);
 
 	printf(": %d slots\n", TS102_NUM_SLOTS);
 

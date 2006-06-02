@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231var.h,v 1.7 2004/09/29 19:17:43 miod Exp $	*/
+/*	$OpenBSD: ce4231var.h,v 1.8 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -54,7 +54,6 @@ struct cs_volume {
 
 struct ce4231_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	bus_dma_tag_t sc_dmatag;
 	bus_space_tag_t	sc_bustag;	/* CS4231/DMA register tag */

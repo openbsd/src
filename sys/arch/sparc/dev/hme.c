@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.53 2006/05/27 23:59:07 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.54 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -207,8 +207,6 @@ hmeattach(parent, self, aux)
 	sc->sc_burst &= ((struct sbus_softc *)parent)->sc_burst;
 
 	hme_meminit(sc);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	sc->sc_ih.ih_fun = hmeintr;
 	sc->sc_ih.ih_arg = sc;

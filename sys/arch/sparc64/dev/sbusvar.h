@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.7 2005/03/05 01:44:52 miod Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.8 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.7 1999/06/05 05:30:43 mrg Exp $ */
 
 /*-
@@ -100,7 +100,6 @@ struct sbus_softc {
 	bus_space_handle_t	sc_bh;
 	bus_dma_tag_t		sc_dmatag;
 	int			sc_clockfreq;	/* clock frequency (in Hz) */
-	struct sbusdev		*sc_sbdev;	/* list of all children */
 	struct sbus_range	*sc_range;
 	int			sc_nrange;
 	int			sc_burst;	/* burst transfer sizes supported */

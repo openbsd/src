@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.27 2006/06/02 19:58:32 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.28 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -550,14 +550,6 @@ leattach(parent, self, aux)
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 	case BUS_SBUS:
-		lesc->sc_sd.sd_reset = (void *)am7990_reset;
-		if (sbuschild) {
-			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
-		} else {
-			/* Assume SBus is grandparent */
-			sbus_establish(&lesc->sc_sd, parent);
-		}
-
 		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
 		    SAME_LANCE(bp, ca))
 			bp->dev = &sc->sc_dev;

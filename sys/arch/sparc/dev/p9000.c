@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.15 2005/07/09 22:22:12 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.16 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -68,7 +68,6 @@
 /* per-display variables */
 struct p9000_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	rom_reg	sc_phys;	/* phys address description */
 	volatile u_int8_t *sc_cmd;	/* command registers (dac, etc) */
 	volatile u_int8_t *sc_ctl;	/* control registers (draw engine) */
@@ -263,8 +262,6 @@ p9000attach(struct device *parent, struct device *self, void *args)
 	 * Plug-in accelerated console operations.
 	 */
 	p9000_ras_init(sc);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	/* enable video */
 	p9000_burner(sc, 1, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffervar.h,v 1.1 1997/08/08 08:25:18 downsj Exp $	*/
+/*	$OpenBSD: lebuffervar.h,v 1.2 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: lebuffervar.h,v 1.2 1997/03/10 22:56:54 pk Exp $ */
 
 /*
@@ -31,7 +31,6 @@
 
 struct lebuf_softc {
 	struct device sc_dev;		/* us as a device */
-	struct sbusdev sc_sd;		/* sbus device */
 	u_int	sc_rev;			/* revision */
 	int	sc_node;		/* PROM node ID */
 	int	sc_burst;		/* DVMA burst size in effect */

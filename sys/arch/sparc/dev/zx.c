@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.14 2006/03/04 10:26:53 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.15 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ struct zx_cmap {
 
 struct zx_softc {
 	struct	sunfb	sc_sunfb;
-	struct	sbusdev	sc_sd;
 	struct	rom_reg	sc_phys;
 
 	struct	zx_cmap	sc_cmap;	/* shadow color map for overlay plane */
@@ -286,8 +285,6 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	/* enable video */
 	zx_burner(sc, 1, 0);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	fbwscons_attach(&sc->sc_sunfb, &zx_accessops, isconsole);
 }

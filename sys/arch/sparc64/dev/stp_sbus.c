@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.6 2004/03/02 23:10:17 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.7 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 
 struct stp4020_sbus_softc {
 	struct stp4020_softc stp;
-	struct sbusdev	sc_sd;		/* SBus device */
 };
 
 int	stpmatch(struct device *, void *, void *);
@@ -95,7 +94,6 @@ stpattach(parent, self, aux)
 	void *aux;
 {
 	struct sbus_attach_args *sa = aux;
-	struct stp4020_sbus_softc *ssc = (void *)self;
 	struct stp4020_softc *sc = (void *)self;
 	int node;
 	int i;
@@ -160,8 +158,6 @@ stpattach(parent, self, aux)
 			sc->sc_socks[1].wintag = sc->sc_bustag;
 		}
 	}
-
-	sbus_establish(&ssc->sc_sd, &sc->sc_dev);
 
 	/*
 	 * We get to use two SBus interrupt levels.

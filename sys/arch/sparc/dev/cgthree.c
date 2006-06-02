@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.29 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.30 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -107,7 +107,6 @@
 /* per-display variables */
 struct cgthree_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct rom_reg	sc_phys;	/* phys address description */
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
@@ -297,11 +296,6 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 		fbwscons_console_init(&sc->sc_sunfb,
 		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
 	}
-
-#if defined(SUN4C) || defined(SUN4M)
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
-#endif
 
 	fbwscons_attach(&sc->sc_sunfb, &cgthree_accessops, isconsole);
 }

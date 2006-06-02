@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.26 2005/12/25 21:47:15 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.27 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -97,7 +97,6 @@
 /* per-display variables */
 struct tcx_softc {
 	struct	sunfb sc_sunfb;			/* common base part */
-	struct	sbusdev sc_sd;			/* sbus device */
 	struct	rom_reg sc_phys[TCX_NREG];	/* phys addr of h/w */
 	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
 	volatile struct tcx_thc *sc_thc;	/* THC registers */
@@ -245,8 +244,6 @@ tcxattach(struct device *parent, struct device *self, void *args)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 		shutdownhook_establish(tcx_prom, sc);
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	nam = getpropstring(node, "model");
 	if (*nam != '\0')

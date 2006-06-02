@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.10 2003/06/02 15:54:22 deraadt Exp $	*/
+/*	$OpenBSD: qecvar.h,v 1.11 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -27,7 +27,6 @@
 
 struct qec_softc {
 	struct	device	sc_dev;		/* us as a device */
-	struct	sbusdev	sc_sd;		/* sbus device */
 	struct	qecregs	*sc_regs;	/* QEC registers */
 	int		sc_node;	/* PROM node ID */
 	int		sc_burst;	/* DVMA burst size in effect */

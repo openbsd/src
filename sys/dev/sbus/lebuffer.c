@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.5 2003/07/07 15:37:07 jason Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.6 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -129,8 +129,6 @@ lebufattach(struct device *parent, struct device *self, void *aux)
 
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Allocate a bus tag */
 	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT);

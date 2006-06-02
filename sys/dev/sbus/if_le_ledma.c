@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.11 2006/05/15 21:43:23 miod Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.12 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -76,7 +76,6 @@
 
 struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
-	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dmamap_t		sc_dmamap;
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
@@ -381,11 +380,6 @@ leattach_ledma(struct device *parent, struct device *self, void *aux)
 	lesc->sc_laddr = lesc->sc_dmamap->dm_segs[0].ds_addr;
 	sc->sc_addr = lesc->sc_laddr & 0xffffff;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
-
-
-	/* Assume SBus is grandparent */
-	lesc->sc_sd.sd_reset = (void *)am7990_reset;
-	sbus_establish(&lesc->sc_sd, parent);
 
 	ifmedia_init(&sc->sc_ifmedia, 0, lemediachange, lemediastatus);
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);

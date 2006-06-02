@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.3 2005/03/13 23:05:23 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.4 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -75,7 +75,6 @@
 /* per-display variables */
 struct cgtwelve_softc {
 	struct	sunfb	sc_sunfb;	/* common base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;
 
@@ -244,8 +243,6 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 		shutdownhook_establish(cgtwelve_prom, sc);
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	printf("%s: %dx%d", self->dv_xname,
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);

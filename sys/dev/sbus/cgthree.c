@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.40 2005/03/15 18:40:17 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.41 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -119,7 +119,6 @@ union bt_cmap {
 
 struct cgthree_softc {
 	struct sunfb sc_sunfb;
-	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
 	bus_space_handle_t sc_ctrl_regs;
@@ -248,8 +247,6 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", nam);
 
 	console = cgthree_is_console(node);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	cgthree_reset(sc);
 

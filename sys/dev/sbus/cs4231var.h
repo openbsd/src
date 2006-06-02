@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.8 2004/09/29 19:17:43 miod Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.9 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -64,7 +64,6 @@ struct cs_channel {
 
 struct cs4231_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	bus_dma_tag_t sc_dmatag;
 	bus_space_tag_t	sc_bustag;	/* CS4231/APC register tag */

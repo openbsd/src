@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.8 2005/03/08 21:35:04 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.9 2006/06/02 20:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -175,7 +175,6 @@ union vigracmap {
 /* per-display variables */
 struct vigra_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
-	struct	sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;
 	volatile struct	csregs *sc_regs;/* control registers */
@@ -352,8 +351,6 @@ vigraattach(struct device *parent, struct device *self, void *args)
 
 		fbwscons_console_init(&sc->sc_sunfb, row);
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	fbwscons_attach(&sc->sc_sunfb, &vigra_accessops, isconsole);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.13 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.14 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -27,7 +27,6 @@
 
 struct besoftc {
 	struct	device sc_dev;
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	arpcom sc_arpcom;	/* ethernet common */
 	struct	ifmedia sc_ifmedia;	/* interface media */

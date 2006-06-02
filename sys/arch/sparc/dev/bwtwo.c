@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.32 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.33 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -84,7 +84,6 @@
 /* per-display variables */
 struct bwtwo_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
-	struct	sbusdev sc_sd;		/* sbus device */
 	volatile struct fbcontrol *sc_reg;/* control registers */
 	struct rom_reg	sc_phys;	/* phys address description */
 	int	sc_bustype;		/* type of bus we live on */
@@ -281,11 +280,6 @@ obp_name:
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
-
-#if defined(SUN4C) || defined(SUN4M)
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
-#endif
 
 	fbwscons_attach(&sc->sc_sunfb, &bwtwo_accessops, isconsole);
 }

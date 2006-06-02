@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 2006/06/02 19:58:34 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.12 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -74,7 +74,6 @@
 
 struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
-	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
 	bus_dmamap_t		sc_dmamap;
@@ -150,7 +149,6 @@ leattach_sbus(struct device *parent, struct device *self, void *aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_dma_tag_t dmatag;
-	struct sbusdev *sd;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
 	extern struct cfdriver lebuffer_cd;
@@ -193,9 +191,6 @@ leattach_sbus(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 	}
-
-	lesc->sc_sd.sd_reset = (void *)am7990_reset;
-	sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 
 	if (sc->sc_mem == 0) {
 		bus_dma_segment_t seg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.10 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.11 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -106,7 +106,6 @@ struct rfx_cmap {
 
 struct rfx_softc {
 	struct	sunfb		 sc_sunfb;
-	struct	sbusdev		 sc_sd;
 	struct	rom_reg		 sc_phys;
 	struct	intrhand	 sc_ih;
 
@@ -287,8 +286,6 @@ rfxattach(struct device *parent, struct device *self, void *args)
 
 	/* enable video */
 	rfx_burner(sc, 1, 0);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	fbwscons_attach(&sc->sc_sunfb, &rfx_accessops, isconsole);
 }

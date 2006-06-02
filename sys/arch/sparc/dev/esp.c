@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.23 2005/03/02 16:42:37 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.24 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -481,17 +481,6 @@ espattach(parent, self, aux)
 		/* XXX - do actually set FAST* bits */
 		break;
 	}
-
-	/* add me to the sbus structures */
-	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-#if defined(SUN4C) || defined(SUN4M)
-	if (ca->ca_bustype == BUS_SBUS) {
-		if (dmachild)
-			sbus_establish(&esc->sc_sd, sc->sc_dev.dv_parent);
-		else
-			sbus_establish(&esc->sc_sd, &sc->sc_dev);
-	}
-#endif /* SUN4C || SUN4M */
 
 	/* and the interrupts */
 	esc->sc_ih.ih_fun = (void *) ncr53c9x_intr;

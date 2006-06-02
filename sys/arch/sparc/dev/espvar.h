@@ -1,4 +1,4 @@
-/*	$OpenBSD: espvar.h,v 1.5 1997/08/08 08:25:02 downsj Exp $	*/
+/*	$OpenBSD: espvar.h,v 1.6 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: espvar.h,v 1.19 1997/02/27 01:16:21 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 
-	struct sbusdev sc_sd;			/* sbus device */
 	struct intrhand sc_ih;			/* intr handler */
 
 	volatile u_char *sc_reg;		/* the registers */

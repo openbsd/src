@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.14 2006/02/25 23:41:39 kettenis Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.15 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -60,7 +60,6 @@
 #include <sparc/dev/dmareg.h>
 
 int sbus_print(void *, const char *);
-void sbusreset(int);
 
 /* autoconfiguration driver */
 void	sbus_attach(struct device *, struct device *, void *);
@@ -259,62 +258,6 @@ sbus_translate(dev, ca)
 					break;
 				}
 			}
-		}
-	}
-}
-
-/*
- * Each attached device calls sbus_establish after it initializes
- * its sbusdev portion.
- */
-void
-sbus_establish(sd, dev)
-	register struct sbusdev *sd;
-	register struct device *dev;
-{
-	register struct sbus_softc *sc;
-	register struct device *curdev;
-
-	/*
-	 * We have to look for the sbus by name, since it is not necessarily
-	 * our immediate parent (i.e. sun4m /iommu/sbus/espdma/esp)
-	 * We don't just use the device structure of the above-attached
-	 * sbus, since we might (in the future) support multiple sbus's.
-	 */
-	for (curdev = dev->dv_parent; ; curdev = curdev->dv_parent) {
-		if (!curdev || !curdev->dv_xname)
-			panic("sbus_establish: can't find sbus parent for %s",
-			      sd->sd_dev->dv_xname
-					? sd->sd_dev->dv_xname
-					: "<unknown>" );
-
-		if (strncmp(curdev->dv_xname, "sbus", 4) == 0)
-			break;
-	}
-	sc = (struct sbus_softc *) curdev;
-
-	sd->sd_dev = dev;
-	sd->sd_bchain = sc->sc_sbdev;
-	sc->sc_sbdev = sd;
-}
-
-/*
- * Reset the given sbus. (???)
- */
-void
-sbusreset(sbus)
-	int sbus;
-{
-	register struct sbusdev *sd;
-	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
-	struct device *dev;
-
-	printf("reset %s:", sc->sc_dev.dv_xname);
-	for (sd = sc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
-		if (sd->sd_reset) {
-			dev = sd->sd_dev;
-			(*sd->sd_reset)(dev);
-			printf(" %s", dev->dv_xname);
 		}
 	}
 }

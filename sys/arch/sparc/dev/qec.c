@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.16 2003/06/02 15:54:22 deraadt Exp $	*/
+/*	$OpenBSD: qec.c,v 1.17 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -176,9 +176,6 @@ qecattach(parent, self, aux)
 	    (sc->sc_nchannels == 1) ? "" : "s");
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
-
-	if (ca->ca_bustype == BUS_SBUS)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Propagate bootpath */
 	if (ca->ca_ra.ra_bp != NULL)

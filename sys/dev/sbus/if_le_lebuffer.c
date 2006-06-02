@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_lebuffer.c,v 1.6 2006/05/15 21:43:23 miod Exp $	*/
+/*	$OpenBSD: if_le_lebuffer.c,v 1.7 2006/06/02 20:00:56 miod Exp $	*/
 /*	$NetBSD: if_le_lebuffer.c,v 1.10 2002/03/11 16:00:56 pk Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@
 
 struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
-	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
@@ -173,10 +172,6 @@ leattach_lebuffer(struct device *parent, struct device *self, void *aux)
 	/* That old black magic... */
 	sc->sc_conf3 = getpropint(sa->sa_node, "busmaster-regval",
 	    LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
-
-	/* Assume SBus is grandparent */
-	lesc->sc_sd.sd_reset = (void *)am7990_reset;
-	sbus_establish(&lesc->sc_sd, parent);
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 

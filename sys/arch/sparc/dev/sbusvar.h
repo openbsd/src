@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.7 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.8 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.4 1996/04/22 02:35:05 abrown Exp $ */
 
 /*
@@ -44,11 +44,6 @@
 /*
  * S-bus variables.
  */
-struct sbusdev {
-	struct	device *sd_dev;		/* backpointer to generic */
-	struct	sbusdev *sd_bchain;	/* forward link in bus chain */
-	void	(*sd_reset)(struct device *);
-};
 
 /*
  * Sbus driver attach arguments.
@@ -63,13 +58,10 @@ struct sbus_attach_args {
 struct sbus_softc {
 	struct	device sc_dev;		/* base device */
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
-	struct	sbusdev *sc_sbdev;	/* list of all children */
 	struct	rom_range *sc_range;
 	int	sc_nrange;
 	int	sc_burst;		/* burst transfer sizes supported */
 };
 
-int	sbusdev_match(struct cfdata *, void *);
-void	sbus_establish(struct sbusdev *, struct device *);
 void	sbus_translate(struct device *, struct confargs *);
 int	sbus_testdma(struct sbus_softc *, struct confargs *);

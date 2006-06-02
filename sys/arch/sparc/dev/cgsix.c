@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.33 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.34 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -111,7 +111,6 @@
 /* per-display variables */
 struct cgsix_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	rom_reg sc_phys;	/* phys addr of h/w */
 	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
 	volatile int *sc_fhc;			/* FHC register */
@@ -346,11 +345,6 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 		fbwscons_console_init(&sc->sc_sunfb,
 		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
 	}
-
-#if defined(SUN4C) || defined(SUN4M)
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
-#endif
 
 	fbwscons_attach(&sc->sc_sunfb, &cgsix_accessops, isconsole);
 }

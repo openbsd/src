@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.8 2006/02/12 13:18:09 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.9 2006/06/02 20:00:56 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2006, Miodrag Vallat.
  * All rights reserved.
@@ -121,7 +121,6 @@
 /* per-display variables */
 struct tvtwo_softc {
 	struct	sunfb	sc_sunfb;	/* common base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;
@@ -289,8 +288,6 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	printf("%s: %dx%d\n", self->dv_xname,
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);

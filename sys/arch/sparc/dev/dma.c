@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.21 2005/03/02 16:42:37 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.22 2006/06/02 20:00:54 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -217,9 +217,6 @@ dmaattach(parent, self, aux)
 		goto espsearch;
 
 #if defined(SUN4C) || defined(SUN4M)
-	if (ca->ca_bustype == BUS_SBUS)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
 	/* Propagate bootpath */
 	if (ca->ca_ra.ra_bp != NULL &&
 	    (strcmp(ca->ca_ra.ra_bp->name, "espdma") == 0 ||

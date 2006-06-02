@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.2 2003/05/26 18:16:27 tedu Exp $	*/
+/*	$OpenBSD: presto.c,v 1.3 2006/06/02 20:00:54 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -45,7 +45,6 @@
 
 struct presto_softc {
 	struct	device	sc_dev;
-	struct	sbusdev sc_sd;
 	struct	disk	sc_dk;
 
 	vsize_t		sc_memsize;	/* total NVRAM size */
@@ -164,8 +163,6 @@ presto_attach(struct device *parent, struct device *self, void *args)
 	    *(u_int8_t *)(sc->sc_mem + 0x03), *(u_int8_t *)(sc->sc_mem + 0x07),
 	    *(u_int8_t *)(sc->sc_mem + 0x0b), *(u_int8_t *)(sc->sc_mem + 0x0f));
 #endif
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	sc->sc_dk.dk_driver = &presto_dk;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;

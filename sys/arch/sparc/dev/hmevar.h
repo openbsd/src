@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.11 2004/09/28 00:21:23 brad Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.12 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -28,7 +28,6 @@
 
 struct hme_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	int	sc_node;		/* which sbus node */
 

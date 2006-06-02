@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.38 2005/07/19 09:36:04 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.39 2006/06/02 20:00:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, Miodrag Vallat.
@@ -81,7 +81,6 @@
 /* per-display variables */
 struct p9100_softc {
 	struct sunfb	sc_sunfb;	/* common base part */
-	struct sbusdev	sc_sd;		/* sbus device */
 	struct rom_reg	sc_phys;
 	volatile u_int8_t *sc_cmd;	/* command registers (dac, etc) */
 	volatile u_int8_t *sc_ctl;	/* control registers (draw engine) */
@@ -336,8 +335,6 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 */
 	if (sc->sc_sunfb.sf_depth == 8)
 		p9100_ras_init(sc);
-
-	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	/* enable video */
 	p9100_burner(sc, 1, 0);
