@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321.c,v 1.3 2006/06/01 03:46:19 drahn Exp $	*/
+/*	$OpenBSD: i80321.c,v 1.4 2006/06/02 01:33:55 drahn Exp $	*/
 /*	$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $	*/
 
 /*
@@ -85,7 +85,6 @@ static const struct iopxs_device {
 static void i80321_pci_dma_init(struct i80321_softc *);
 
 /* XXX - debug */
-void dump_regs(struct i80321_softc *sc);
 /*
  * i80321_attach:
  *
@@ -101,9 +100,6 @@ i80321_attach(struct i80321_softc *sc)
 
 	i80321_softc = sc;
 
-#if 0
-dump_regs(sc);
-#endif
 	/*
 	 * Program the Inbound windows.
 	 */
@@ -191,10 +187,6 @@ dump_regs(sc);
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 	    PCI_COMMAND_STATUS_REG, preg);
 
-#if 0
-dump_regs(sc);
-#endif
-
 	/* Initialize the bus space tags. */
 	i80321_io_bs_init(&sc->sc_pci_iot, sc);
 	i80321_mem_bs_init(&sc->sc_pci_memt, sc);
@@ -214,10 +206,6 @@ dump_regs(sc);
 		ia.ia_offset = id->id_offset;
 		ia.ia_size = id->id_size;
 
-#if 0
-		(void) config_found_ia(&sc->sc_dev, "iopxs", &ia,
-				       i80321_iopxs_print);
-#endif
 		config_found(&sc->sc_dev, &ia, i80321_iopxs_print);
 	}
 
@@ -238,11 +226,6 @@ dump_regs(sc);
 	pba.pba_intrswiz = 0;	/* XXX what if busno != 0? */
 	pba.pba_intrtag = 0;
 
-#if 0
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
-#endif
 	config_found((struct device *)sc, &pba, i80321_iopxs_print);
 }
 
@@ -284,10 +267,6 @@ i80321_pci_dma_init(struct i80321_softc *sc)
 	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
 	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
 	dmat->_dmamap_unload = _bus_dmamap_unload;
-#if 0
-	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
-	dmat->_dmamap_sync_post = NULL;
-#endif
 	dmat->_dmamap_sync = _bus_dmamap_sync;
 
 	dmat->_dmamem_alloc = _bus_dmamem_alloc;
@@ -317,10 +296,6 @@ i80321_local_dma_init(struct i80321_softc *sc)
 	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
 	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
 	dmat->_dmamap_unload = _bus_dmamap_unload;
-#if 0
-	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
-	dmat->_dmamap_sync_post = NULL;
-#endif
 	dmat->_dmamap_sync = _bus_dmamap_sync;
 
 	dmat->_dmamem_alloc = _bus_dmamem_alloc;
@@ -328,57 +303,4 @@ i80321_local_dma_init(struct i80321_softc *sc)
 	dmat->_dmamem_map = _bus_dmamem_map;
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;
 	dmat->_dmamem_mmap = _bus_dmamem_mmap;
-}
-
-void board_reset(void); /* XXX */
-void
-board_reset()
-{
-	struct i80321_softc *sc = i80321_softc;
-	uint32_t val;
-
-	printf("attempting reset\n");
-	val = bus_space_read_4(sc->sc_st, sc->sc_sh, 0x7CC);
-	val &=  ~0x10;
-	bus_space_write_4(sc->sc_st, sc->sc_sh, 0x7CC, val);
-	val = bus_space_read_4(sc->sc_st, sc->sc_sh, 0x7C4);
-	val &=  ~0x10;
-	bus_space_write_4(sc->sc_st, sc->sc_sh, 0x7C4, val);
-
-}
-void
-dump_regs(struct i80321_softc *sc)
-{
-
-#define printreg(x) \
-	printf("%s %x\n", \
-	    # x, \
-	    bus_space_read_4(sc->sc_st, sc->sc_atu_sh, x));
-
-	printreg(ATU_IALR0);
-	printreg(ATU_IATVR0);
-	printreg(PCI_MAPREG_START);
-	printreg(PCI_MAPREG_START+0x4);
-
-	printreg(ATU_IALR1);
-	printreg(PCI_MAPREG_START+0x8);
-	printreg(PCI_MAPREG_START+0xc);
-
-	printreg(ATU_IALR2);
-	printreg(ATU_IATVR2);
-	printreg(PCI_MAPREG_START+0x10);
-	printreg(PCI_MAPREG_START+0x14);
-
-	printreg(ATU_IALR3);
-	printreg(ATU_IATVR3);
-	printreg(ATU_IABAR3);
-	printreg(ATU_IAUBAR3);
-
-	printreg(ATU_OIOWTVR);
-	printreg(ATU_OMWTVR0);
-	printreg(ATU_OUMWTVR0);
-	printreg(ATU_OMWTVR1);
-	printreg(ATU_OUMWTVR1);
-	printreg(ATU_OUDWTVR);
-	printreg(ATU_ATUCR);
 }

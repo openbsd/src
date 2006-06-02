@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.5 2006/06/01 17:06:16 drahn Exp $	*/
+/*	$OpenBSD: i80321_mainbus.c,v 1.6 2006/06/02 01:33:55 drahn Exp $	*/
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -404,4 +404,22 @@ i80321_gpio_pin_ctl (void *arg, int pin, int flags)
 	printf("writing %x to ctl %x\n", regval, value);
 #endif
 	bus_space_write_4(sc->sc_st, sc->sc_sh, I80219_REG_GPOE, regval);
+}
+
+
+void board_reset(void); /* XXX */
+void
+board_reset()
+{
+	struct i80321_softc *sc = i80321_softc;
+	uint32_t val;
+
+	printf("attempting reset\n");
+	val = bus_space_read_4(sc->sc_st, sc->sc_sh, 0x7CC);
+	val &=  ~0x10;
+	bus_space_write_4(sc->sc_st, sc->sc_sh, 0x7CC, val);
+	val = bus_space_read_4(sc->sc_st, sc->sc_sh, 0x7C4);
+	val &=  ~0x10;
+	bus_space_write_4(sc->sc_st, sc->sc_sh, 0x7C4, val);
+
 }
