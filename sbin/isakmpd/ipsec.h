@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.h,v 1.25 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: ipsec.h,v 1.26 2006/06/02 18:08:56 hshoexer Exp $	 */
 /* $EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	 */
 
 /*
@@ -55,115 +55,116 @@ struct sa;
  * separated.
  */
 struct ipsec_exch {
-	u_int           flags;
-	struct hash    *hash;
+	u_int		 flags;
+	struct hash	*hash;
 	struct ike_auth *ike_auth;
-	struct group   *group;
-	u_int16_t       prf_type;
+	struct group	*group;
+	u_int16_t	 prf_type;
 
 	/* 0 if no KEY_EXCH was proposed, 1 otherwise */
-	u_int8_t        pfs;
+	u_int8_t	 pfs;
 
 	/*
 	 * A copy of the initiator SA payload body for later computation of
 	 * hashes.  Phase 1 only.
-         */
-	size_t          sa_i_b_len;
-	u_int8_t       *sa_i_b;
+	 */
+	size_t		 sa_i_b_len;
+	u_int8_t	*sa_i_b;
 
 	/* Diffie-Hellman values.  */
-	size_t          g_x_len;
-	u_int8_t       *g_xi;
-	u_int8_t       *g_xr;
-	u_int8_t       *g_xy;
+	size_t		 g_x_len;
+	u_int8_t	*g_xi;
+	u_int8_t	*g_xr;
+	u_int8_t	*g_xy;
 
 	/* SKEYIDs.  XXX Phase 1 only?  */
-	size_t          skeyid_len;
-	u_int8_t       *skeyid;
-	u_int8_t       *skeyid_d;
-	u_int8_t       *skeyid_a;
-	u_int8_t       *skeyid_e;
+	size_t		 skeyid_len;
+	u_int8_t	*skeyid;
+	u_int8_t	*skeyid_d;
+	u_int8_t	*skeyid_a;
+	u_int8_t	*skeyid_e;
 
 	/* HASH_I & HASH_R.  XXX Do these need to be saved here?  */
-	u_int8_t       *hash_i;
-	u_int8_t       *hash_r;
+	u_int8_t	*hash_i;
+	u_int8_t	*hash_r;
 
 	/* KEYMAT */
-	size_t          keymat_len;
+	size_t		 keymat_len;
 
 	/* Phase 2.  */
-	u_int8_t       *id_ci;
-	size_t          id_ci_sz;
-	u_int8_t       *id_cr;
-	size_t          id_cr_sz;
+	u_int8_t	*id_ci;
+	size_t		 id_ci_sz;
+	u_int8_t	*id_cr;
+	size_t		 id_cr_sz;
 
 	/* ISAKMP configuration mode parameters */
-	u_int16_t       cfg_id;
-	u_int16_t       cfg_type;
-	                LIST_HEAD(isakmp_cfg_attr_head, isakmp_cfg_attr) attrs;
+	u_int16_t	 cfg_id;
+	u_int16_t	 cfg_type;
+	LIST_HEAD(isakmp_cfg_attr_head, isakmp_cfg_attr) attrs;
 };
 
 #define IPSEC_EXCH_FLAG_NO_ID 1
 
 struct ipsec_sa {
 	/* Phase 1.  */
-	u_int8_t        hash;
-	size_t          skeyid_len;
-	u_int8_t       *skeyid_d;
-	u_int8_t       *skeyid_a;
-	u_int16_t       prf_type;
+	u_int8_t	 hash;
+	size_t		 skeyid_len;
+	u_int8_t	*skeyid_d;
+	u_int8_t	*skeyid_a;
+	u_int16_t	 prf_type;
 
 	/* Phase 2.  */
-	u_int16_t       group_desc;
+	u_int16_t	 group_desc;
 
 	/* Tunnel parameters.  These are in network byte order.  */
 	struct sockaddr *src_net;
 	struct sockaddr *src_mask;
 	struct sockaddr *dst_net;
 	struct sockaddr *dst_mask;
-	u_int8_t        tproto;
-	u_int16_t       sport;
-	u_int16_t       dport;
+	u_int8_t	 tproto;
+	u_int16_t	 sport;
+	u_int16_t	 dport;
 };
 
 struct ipsec_proto {
 	/* Phase 2.  */
-	u_int16_t       encap_mode;
-	u_int16_t       auth;
-	u_int16_t       keylen;
-	u_int16_t       keyrounds;
+	u_int16_t	 encap_mode;
+	u_int16_t	 auth;
+	u_int16_t	 keylen;
+	u_int16_t	 keyrounds;
 
 	/* This is not negotiated, but rather configured.  */
-	int32_t         replay_window;
+	int32_t		 replay_window;
 
 	/* KEYMAT */
-	u_int8_t       *keymat[2];
+	u_int8_t	*keymat[2];
 };
 
 extern u_int8_t *ipsec_add_hash_payload(struct message *, size_t);
-extern int      ipsec_ah_keylength(struct proto *);
+extern int	 ipsec_ah_keylength(struct proto *);
 extern u_int8_t *ipsec_build_id(char *, size_t *);
-extern int      ipsec_decode_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
-extern void	ipsec_decode_transform(struct message *, struct sa *,
-		    struct proto *, u_int8_t *);
-extern int      ipsec_esp_authkeylength(struct proto *);
-extern int      ipsec_esp_enckeylength(struct proto *);
-extern int      ipsec_fill_in_hash(struct message *);
-extern int      ipsec_gen_g_x(struct message *);
-extern int	ipsec_get_id(char *, int *, struct sockaddr **,
-		    struct sockaddr **, u_int8_t *, u_int16_t *);
-extern ssize_t  ipsec_id_size(char *, u_int8_t *);
-extern char    *ipsec_id_string(u_int8_t *, size_t);
-extern void     ipsec_init(void);
-extern int      ipsec_initial_contact(struct message *);
-extern int	ipsec_is_attribute_incompatible(u_int16_t, u_int8_t *,
-		    u_int16_t, void *);
-extern int      ipsec_keymat_length(struct proto *);
-extern int      ipsec_save_g_x(struct message *);
+extern int	 ipsec_decode_attribute(u_int16_t, u_int8_t *, u_int16_t,
+		     void *);
+extern void	 ipsec_decode_transform(struct message *, struct sa *,
+		     struct proto *, u_int8_t *);
+extern int	 ipsec_esp_authkeylength(struct proto *);
+extern int	 ipsec_esp_enckeylength(struct proto *);
+extern int	 ipsec_fill_in_hash(struct message *);
+extern int	 ipsec_gen_g_x(struct message *);
+extern int	 ipsec_get_id(char *, int *, struct sockaddr **,
+		     struct sockaddr **, u_int8_t *, u_int16_t *);
+extern ssize_t	 ipsec_id_size(char *, u_int8_t *);
+extern char	*ipsec_id_string(u_int8_t *, size_t);
+extern void	 ipsec_init(void);
+extern int	 ipsec_initial_contact(struct message *);
+extern int	 ipsec_is_attribute_incompatible(u_int16_t, u_int8_t *,
+		     u_int16_t, void *);
+extern int	 ipsec_keymat_length(struct proto *);
+extern int	 ipsec_save_g_x(struct message *);
 extern struct sa *ipsec_sa_lookup(struct sockaddr *, u_int32_t, u_int8_t);
 
 extern char	*ipsec_decode_ids(char *, u_int8_t *, size_t, u_int8_t *,
-		    size_t, int);
-extern int      ipsec_clone_id(u_int8_t **, size_t *, u_int8_t *, size_t);
+		     size_t, int);
+extern int	 ipsec_clone_id(u_int8_t **, size_t *, u_int8_t *, size_t);
 
 #endif				/* _IPSEC_H_ */
