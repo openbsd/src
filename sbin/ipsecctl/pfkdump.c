@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.16 2006/06/02 03:52:29 msf Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.17 2006/06/02 04:14:51 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -77,11 +77,11 @@ struct idname ext_types[] = {
 	{ SADB_EXT_LIFETIME_CURRENT,	"lifetime_cur",		print_life },
 	{ SADB_EXT_LIFETIME_HARD,	"lifetime_hard",	print_life },
 	{ SADB_EXT_LIFETIME_SOFT,	"lifetime_soft",	print_life },
-	{ SADB_EXT_ADDRESS_SRC,		"address_src",		print_addr},
-	{ SADB_EXT_ADDRESS_DST,		"address_dst",		print_addr},
-	{ SADB_EXT_ADDRESS_PROXY,	"address_proxy",	print_addr},
-	{ SADB_EXT_KEY_AUTH,		"key_auth",		print_key},
-	{ SADB_EXT_KEY_ENCRYPT,		"key_encrypt",		print_key},
+	{ SADB_EXT_ADDRESS_SRC,		"address_src",		print_addr },
+	{ SADB_EXT_ADDRESS_DST,		"address_dst",		print_addr },
+	{ SADB_EXT_ADDRESS_PROXY,	"address_proxy",	print_addr },
+	{ SADB_EXT_KEY_AUTH,		"key_auth",		print_key },
+	{ SADB_EXT_KEY_ENCRYPT,		"key_encrypt",		print_key },
 	{ SADB_EXT_IDENTITY_SRC,	"identity_src",		print_ident },
 	{ SADB_EXT_IDENTITY_DST,	"identity_dst",		print_ident },
 	{ SADB_EXT_SENSITIVITY,		"sensitivity",		print_sens },
@@ -412,7 +412,7 @@ print_supp(struct sadb_ext *ext, struct sadb_msg *msg)
 	    alg++) {
 		struct sadb_alg *next = alg + 1;
 		print_alg(alg, ext->sadb_ext_type);
-		if ((size_t)((u_int8_t *)next - (u_int8_t *)ext) < 
+		if ((size_t)((u_int8_t *)next - (u_int8_t *)ext) <
 		    ext->sadb_ext_len * PFKEYV2_CHUNK)
 			printf("\n");
 	}
