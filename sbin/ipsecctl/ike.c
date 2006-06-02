@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.35 2006/06/02 05:59:31 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.36 2006/06/02 15:43:37 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -44,8 +44,8 @@ static int	ike_section_qm(struct ipsec_addr_wrap *, struct
 		    FILE *);
 static int	ike_section_mm(struct ipsec_addr_wrap *, struct
 		    ipsec_transforms *, FILE *, struct ike_auth *);
-static void	ike_section_qmids(u_int8_t, struct ipsec_addr_wrap *, struct
-		    ipsec_addr_wrap *, FILE *);
+static void	ike_section_qmids(u_int8_t, struct ipsec_addr_wrap *,
+		    u_int16_t, struct ipsec_addr_wrap *, u_int16_t, FILE *);
 static int	ike_connect(u_int8_t, struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, FILE *);
 static int	ike_gen_config(struct ipsec_rule *, FILE *);
@@ -376,7 +376,7 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 
 static void
 ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
-    struct ipsec_addr_wrap *dst, FILE *fd)
+    u_int16_t sport, struct ipsec_addr_wrap *dst, u_int16_t dport, FILE *fd)
 {
 	char mask[NI_MAXHOST], *network, *p;
 	struct sockaddr sa;
@@ -465,6 +465,12 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n", src->name, proto);
 		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n", dst->name, proto);
 	}
+	if (sport)
+		fprintf(fd, SET "[lid-%s]:Port=%d force\n", src->name,
+		    ntohs(sport));
+	if (dport)
+		fprintf(fd, SET "[rid-%s]:Port=%d force\n", src->name,
+		    ntohs(dport));
 }
 
 static int
@@ -498,7 +504,7 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 	ike_section_ipsec(r->src, r->dst, r->peer, fd);
 	if (ike_section_qm(r->src, r->dst, r->satype, r->qmxfs, fd) == -1)
 		return (-1);
-	ike_section_qmids(r->proto, r->src, r->dst, fd);
+	ike_section_qmids(r->proto, r->src, r->sport, r->dst, r->dport, fd);
 
 	if (ike_connect(r->ikemode, r->src, r->dst, fd) == -1)
 		return (-1);

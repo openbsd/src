@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2006/06/02 05:59:31 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.97 2006/06/02 15:43:37 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2238,7 +2238,29 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 
 	r->proto = proto;
 	r->src = hosts->src;
+	r->sport = hosts->sport;
 	r->dst = hosts->dst;
+	r->dport = hosts->dport;
+	if ((hosts->sport != 0 || hosts->dport != 0) &&
+            (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
+		yyerror("no protocol supplied with source/destination ports");
+		free(r);
+		free(hosts->src);
+		free(hosts->dst);
+		if (mainmode) {
+			free(mainmode->xfs);
+			free(mainmode->life);
+		}
+		if (quickmode) {
+			free(quickmode->xfs);
+			free(quickmode->life);
+		}
+		if (srcid)
+			free(srcid);
+		if (dstid)
+			free(dstid);
+		return NULL;
+	}
 
 	if (peers->dst == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
