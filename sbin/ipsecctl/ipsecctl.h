@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.44 2006/06/02 00:33:47 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.45 2006/06/02 03:31:20 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -137,6 +137,11 @@ struct ipsec_transforms {
 struct ipsec_life {
 	int		 lifetime;
 	int		 lifevolume;
+};
+
+struct ike_mode {
+	struct ipsec_transforms	*xfs;
+	struct ipsec_life	*life;
 };
 
 extern const struct ipsec_xf authxfs[];

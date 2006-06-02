@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2006/06/02 00:33:47 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.91 2006/06/02 03:31:20 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -231,9 +231,9 @@ typedef struct {
 			struct ipsec_key *keyin;
 		} keys;
 		struct ipsec_transforms *transforms;
-		struct ipsec_transforms *mmxfs;
-		struct ipsec_transforms *qmxfs;
 		struct ipsec_life	*life;
+		struct ike_mode		*mainmode;
+		struct ike_mode		*quickmode;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -263,12 +263,12 @@ typedef struct {
 %type	<v.enckeys>		enckeyspec
 %type	<v.keys>		keyspec
 %type	<v.transforms>		transforms
-%type	<v.mmxfs>		mmxfs
-%type	<v.qmxfs>		qmxfs
 %type	<v.ikemode>		ikemode
 %type	<v.ikeauth>		ikeauth
 %type	<v.type>		type
 %type	<v.life>		life
+%type	<v.mainmode>		mainmode
+%type	<v.quickmode>		quickmode
 %%
 
 grammar		: /* empty */
@@ -346,12 +346,12 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 		}
 		;
 
-ikerule		: IKE ikemode satype proto hosts peers mmxfs life qmxfs life
+ikerule		: IKE ikemode satype proto hosts peers mainmode quickmode
 		      ids ikeauth {
 			struct ipsec_rule	*r;
 
 			r = create_ike($4, $5.src, $5.dst, $6.local, $6.peer,
-			    $7, $9, $3, $2, $11.srcid, $11.dstid, &$12);
+			    $7->xfs, $8->xfs, $3, $2, $9.srcid, $9.dstid, &$10);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -655,28 +655,52 @@ transform	: AUTHXF STRING			{
 		}
 		;
 
-mmxfs		: /* empty */			{
-			struct ipsec_transforms *xfs;
+mainmode	: /* empty */			{
+			struct ike_mode		*mm;
+			struct ipsec_transforms	*xfs;
 
-			/* We create just an empty transform */
+			/* We create just an empty mode */
+			if ((mm = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "mainmode: calloc");
+			/* And an empty transform */
 			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
 			    == NULL)
-				err(1, "mmxfs: calloc");
-			$$ = xfs;
+				err(1, "mainmode: calloc");
+			mm->xfs = xfs;
+			$$ = mm;
 		}
-		| MAIN transforms		{ $$ = $2; }
+		| MAIN transforms life		{
+			struct ike_mode	*mm;
+
+			if ((mm = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "mainmode: calloc");
+			mm->xfs = $2;
+			$$ = mm;
+		}
 		;
 
-qmxfs		: /* empty */			{
-			struct ipsec_transforms *xfs;
+quickmode	: /* empty */			{
+			struct ike_mode		*qm;
+			struct ipsec_transforms	*xfs;
 
-			/* We create just an empty transform */
+			/* We create just an empty mode */
+			if ((qm = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "quickmode: calloc");
+			/* And an empty transform */
 			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
 			    == NULL)
-				err(1, "qmxfs: calloc");
-			$$ = xfs;
+				err(1, "mainmode: calloc");
+			qm->xfs = xfs;
+			$$ = qm;
 		}
-		| QUICK transforms		{ $$ = $2; }
+		| QUICK transforms life		{
+			struct ike_mode	*qm;
+
+			if ((qm = calloc(1, sizeof(struct ike_mode))) == NULL)
+				err(1, "quickmode: calloc");
+			qm->xfs = $2;
+			$$ = qm;
+		}
 		;
 
 life		: /* empty */			{
