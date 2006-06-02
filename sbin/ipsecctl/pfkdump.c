@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.15 2006/06/01 16:13:01 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.16 2006/06/02 03:52:29 msf Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -409,8 +409,13 @@ print_supp(struct sadb_ext *ext, struct sadb_msg *msg)
 	for (alg = (struct sadb_alg *)(supported + 1);
 	    (size_t)((u_int8_t *)alg - (u_int8_t *)ext) <
 	    ext->sadb_ext_len * PFKEYV2_CHUNK;
-	    alg++)
+	    alg++) {
+		struct sadb_alg *next = alg + 1;
 		print_alg(alg, ext->sadb_ext_type);
+		if ((size_t)((u_int8_t *)next - (u_int8_t *)ext) < 
+		    ext->sadb_ext_len * PFKEYV2_CHUNK)
+			printf("\n");
+	}
 }
 
 /* ARGSUSED1 */
@@ -448,7 +453,7 @@ print_prop(struct sadb_ext *ext, struct sadb_msg *msg)
 	struct sadb_prop *prop = (struct sadb_prop *)ext;
 	struct sadb_comb *comb;
 
-	printf("replay %u", prop->sadb_prop_replay);
+	printf("replay %u\n", prop->sadb_prop_replay);
 	for (comb = (struct sadb_comb *)(prop + 1);
 	    (size_t)((u_int8_t *)comb - (u_int8_t *)ext) <
 	    ext->sadb_ext_len * PFKEYV2_CHUNK;
