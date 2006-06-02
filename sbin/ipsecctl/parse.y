@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2006/06/01 22:44:03 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2006/06/02 00:33:47 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,6 +146,7 @@ struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
 struct ipsec_addr_wrap	*ifa_grouplookup(const char *);
 void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
+struct ipsec_life	*parse_life(int);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
 struct ipsec_auth	*copyipsecauth(const struct ipsec_auth *);
 struct ike_auth		*copyikeauth(const struct ike_auth *);
@@ -232,6 +233,7 @@ typedef struct {
 		struct ipsec_transforms *transforms;
 		struct ipsec_transforms *mmxfs;
 		struct ipsec_transforms *qmxfs;
+		struct ipsec_life	*life;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -240,7 +242,7 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
+%token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFE
 %token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT
 %token	<v.string>		STRING
 %type	<v.string>		string
@@ -266,6 +268,7 @@ typedef struct {
 %type	<v.ikemode>		ikemode
 %type	<v.ikeauth>		ikeauth
 %type	<v.type>		type
+%type	<v.life>		life
 %%
 
 grammar		: /* empty */
@@ -343,11 +346,12 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 		}
 		;
 
-ikerule		: IKE ikemode satype proto hosts peers mmxfs qmxfs ids ikeauth {
+ikerule		: IKE ikemode satype proto hosts peers mmxfs life qmxfs life
+		      ids ikeauth {
 			struct ipsec_rule	*r;
 
 			r = create_ike($4, $5.src, $5.dst, $6.local, $6.peer,
-			    $7, $8, $3, $2, $9.srcid, $9.dstid, &$10);
+			    $7, $9, $3, $2, $11.srcid, $11.dstid, &$12);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -675,6 +679,25 @@ qmxfs		: /* empty */			{
 		| QUICK transforms		{ $$ = $2; }
 		;
 
+life		: /* empty */			{
+			struct ipsec_life *life;
+
+			/* We create just an empty transform */
+			if ((life = calloc(1, sizeof(struct ipsec_life)))
+			    == NULL)
+				err(1, "life: calloc");
+			$$ = life;
+		}
+		| LIFE number			{
+			struct ipsec_life *life;
+
+			life = parse_life($2);
+			if (life == NULL)
+				yyerror("%s not a valid lifetime", $2);
+			$$ = life;
+		}
+		;
+
 authkeyspec	: /* empty */			{
 			$$.keyout = NULL;
 			$$.keyin = NULL;
@@ -824,6 +847,7 @@ lookup(char *s)
 		{ "in",			IN },
 		{ "ipcomp",		IPCOMP },
 		{ "ipip",		IPIP },
+		{ "life",		LIFE },
 		{ "local",		LOCAL },
 		{ "main",		MAIN },
 		{ "out",		OUT },
@@ -1642,6 +1666,20 @@ parse_xf(const char *name, const struct ipsec_xf xfs[])
 		return &xfs[i];
 	}
 	return (NULL);
+}
+
+struct ipsec_life *
+parse_life(int value)
+{
+	struct ipsec_life	*life;
+
+	life = calloc(1, sizeof(struct ipsec_life));
+	if (life == NULL)
+		err(1, "calloc");
+
+	life->lifetime = value;
+
+	return (life);
 }
 
 struct ipsec_transforms *
