@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.145 2006/05/30 08:53:26 jason Exp $
+#	$OpenBSD: GENERIC,v 1.146 2006/06/02 04:46:00 jason Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -208,6 +208,8 @@ audioce*	at ebus?		# ebus cs4231
 
 # parallel ports
 lpt*	at ebus?
+
+ppm*	at ebus?
 
 # performance counters
 uperf*	at ebus?
