@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.157 2006/05/29 16:49:42 avsm Exp $
+.\"	$OpenBSD: sysctl.3,v 1.158 2006/06/02 12:43:01 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1897,7 +1897,7 @@ it is possible to access filesystem dependent information.
 .Pp
 Some filesystems may contain settings.
 .Bl -tag -width "123"
-.It ffs
+.It FFS
 .Bl -column "Third level nameXXXX" "FFS_SD_DIRECT_BLK " -offset ind
 .It Sy Third level name	Type	Changeable
 .It Dv FFS_ASYNCFREE No "	integer	yes"
@@ -1936,11 +1936,18 @@ The amount of memory currently used by all directory hashes.
 When enabled, the kernel will attempt to relocate growing files so that they
 are contiguous on disk, reducing fragmentation.
 .El
-.It nfs
+.It NFS
 .Bl -column "Third level nameXXX" "struct loadavgXXX" -offset ind
 .It Sy Third level name	Type	Changeable
 .It Dv NFS_NFSSTATS No "	struct nfsstats	yes"
 .It Dv NFS_NIOTHREADS No "	int	yes"
+.El
+.Bl -tag -width Ds
+.It Dv NFS_NIOTHREADS
+The number of NFS I/O kernel threads.
+Should be set high enough for the server to handle
+the maximum level of concurrency from its clients,
+typically four to six.
 .El
 .El
 .El
