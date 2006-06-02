@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.31 2006/04/27 15:37:55 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.32 2006/06/02 19:39:49 pascoe Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -391,7 +391,7 @@ pci_mode_detect()
 	/*
 	 * If we have PCI info passed from the BIOS, use the mode given there
 	 * for all of this code.  If not, pass on through to the previous tests
-	 * to try and devine the correct mode.
+	 * to try and divine the correct mode.
 	 */
 	if (bios_pciinfo != NULL) {
 		if (bios_pciinfo->pci_chars & 0x2)
