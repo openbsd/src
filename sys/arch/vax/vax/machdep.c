@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.78 2006/05/30 21:24:28 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.79 2006/06/02 17:39:59 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -985,3 +985,20 @@ generic_reboot(int arg)
 
 	asm("halt");
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	int oldipl = mfpr(PR_IPL);
+
+	if (oldipl < wantipl) {
+		splassert_fail(wantipl, oldipl, func);
+		/*
+		 * If the splassert_ctl is set to not panic, raise the ipl
+		 * in a feeble attempt to reduce damage.
+		 */
+		mtpr(wantipl, PR_IPL);
+	}
+}
+#endif

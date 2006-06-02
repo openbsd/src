@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2006/06/01 06:01:28 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2006/06/02 17:39:58 miod Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -55,9 +55,6 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-/* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
-
 #ifndef lint
 #define splx(reg)						\
 ({								\
@@ -99,5 +96,23 @@
 #define	spl5()		_splraise(0x15)
 #define	spl6()		_splraise(0x16)
 #define	spl7()		_splraise(0x17)
+
+/* SPL asserts */
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define	splassert(wantipl)	do { /* nothing */ } while (0)
+#endif
 
 #endif	/* _VAX_INTR_H */
