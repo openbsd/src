@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.18 2006/06/01 05:44:35 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.19 2006/06/02 21:17:01 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -123,6 +123,7 @@ void
 sensor_query(struct ntp_sensor *s)
 {
 	struct sensor	 sensor;
+	u_int32_t	 refid;
 	int		 mib[3];
 	size_t		 len;
 
@@ -155,10 +156,8 @@ sensor_query(struct ntp_sensor *s)
 	if (sensor.tv.tv_sec == s->update.rcvd)	/* already seen */
 		return;
 
-	/* 1st 4 bytes of the desc are required to be the clock src code */
-	bcopy(sensor.desc, &s->update.status.refid,
-	    sizeof(s->update.status.refid));
-
+	memcpy(&refid, "HARD", sizeof(refid));
+	s->update.status.refid = htonl(refid);
 	s->update.offset = 0 - (float)sensor.value / 1000000000.0;
 	s->update.status.stratum = 0;	/* increased when sent out */
 	s->update.status.rootdelay = 0;
