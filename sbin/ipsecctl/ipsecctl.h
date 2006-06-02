@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.45 2006/06/02 03:31:20 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.46 2006/06/02 04:51:55 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -101,6 +101,13 @@ struct ipsec_addr_wrap {
 	char			*name;
 	struct ipsec_addr_wrap	*next;
 	struct ipsec_addr_wrap	*tail;
+};
+
+struct ipsec_hosts {
+	struct ipsec_addr_wrap	*src;
+	struct ipsec_addr_wrap	*dst;
+	u_int16_t		 sport;
+	u_int16_t		 dport;
 };
 
 struct ipsec_auth {
