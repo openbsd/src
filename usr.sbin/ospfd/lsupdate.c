@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.31 2006/05/29 16:49:40 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.32 2006/06/02 18:49:55 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@ void	ls_retrans_list_remove(struct nbr *, struct lsa_entry *);
 /* link state update packet handling */
 int
 lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
-    void *data, u_int16_t len)
+    void *data)
 {
 	struct nbr		*nbr;
 	struct lsa_entry	*le = NULL;
@@ -451,7 +451,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 			 * flood by rerunning the lsa_flood.
 			 */
 			lsa_flood(nbr->iface, nbr, &le->le_ref->hdr,
-			    le->le_ref->data, le->le_ref->len);
+			    le->le_ref->data);
 			ls_retrans_list_free(nbr, le);
 			/* ls_retrans_list_free retriggers the timer */
 			return;

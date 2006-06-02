@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.46 2006/05/30 22:12:52 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.47 2006/06/02 18:49:55 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -440,7 +440,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				    LIST_FOREACH(iface, &area->iface_list,
 					entry) {
 					    noack += lsa_flood(iface, nbr,
-						&lsa_hdr, imsg.data, l);
+						&lsa_hdr, imsg.data);
 				    }
 				}
 			} else {
@@ -451,7 +451,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				area = nbr->iface->area;
 				LIST_FOREACH(iface, &area->iface_list, entry) {
 					noack += lsa_flood(iface, nbr,
-					    &lsa_hdr, imsg.data, l);
+					    &lsa_hdr, imsg.data);
 				}
 				/* XXX virtual links */
 			}

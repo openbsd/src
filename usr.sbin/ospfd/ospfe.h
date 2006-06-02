@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.30 2006/04/25 08:33:00 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.31 2006/06/02 18:49:55 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -178,7 +178,7 @@ void	 stop_ls_req_tx_timer(struct nbr *);
 
 /* lsupdate.c */
 int		 lsa_flood(struct iface *, struct nbr *, struct lsa_hdr *,
-		     void *, u_int16_t);
+		     void *);
 void		 recv_ls_update(struct nbr *, char *, u_int16_t);
 
 void		 ls_retrans_list_add(struct nbr *, struct lsa_hdr *,
