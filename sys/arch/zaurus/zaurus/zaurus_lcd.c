@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.19 2006/02/02 04:02:59 drahn Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -111,7 +111,7 @@ struct cfattach lcd_pxaip_ca = {
 };
 
 struct cfdriver lcd_cd = {
-	NULL, "lcd_pxaip", DV_DULL
+	NULL, "lcd", DV_DULL
 };
 
 #define CURRENT_DISPLAY &sharp_zaurus_C3000
