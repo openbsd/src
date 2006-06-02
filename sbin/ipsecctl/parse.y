@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.94 2006/06/02 05:01:27 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.95 2006/06/02 05:57:05 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -173,9 +173,9 @@ int			 expand_rule(struct ipsec_rule *, u_int8_t, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *, int);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_hosts *,
-			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-			     struct ike_mode *, struct ike_mode *, u_int8_t,
-			     u_int8_t, char *, char *, struct ike_auth *);
+			     struct ipsec_hosts *, struct ike_mode *,
+			     struct ike_mode *, u_int8_t, u_int8_t, char *,
+			     char *, struct ike_auth *);
 int			 add_sagroup(struct ipsec_rule *);
 
 struct ipsec_transforms *ipsec_transforms;
@@ -336,8 +336,8 @@ ikerule		: IKE ikemode satype proto hosts peers mainmode quickmode
 		      ids ikeauth {
 			struct ipsec_rule	*r;
 
-			r = create_ike($4, &$5, $6.src, $6.dst,
-			    $7, $8, $3, $2, $9.srcid, $9.dstid, &$10);
+			r = create_ike($4, &$5, &$6, $7, $8, $3, $2, $9.srcid,
+			    $9.dstid, &$10);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -2200,9 +2200,7 @@ reverse_rule(struct ipsec_rule *rule)
 }
 
 struct ipsec_rule *
-create_ike(u_int8_t proto,
-    struct ipsec_hosts *hosts,
-    struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
+create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
     struct ike_mode *mainmode, struct ike_mode *quickmode,
     u_int8_t satype, u_int8_t mode, char *srcid, char *dstid,
     struct ike_auth *authtype)
@@ -2219,7 +2217,7 @@ create_ike(u_int8_t proto,
 	r->src = hosts->src;
 	r->dst = hosts->dst;
 
-	if (peer == NULL) {
+	if (peers->dst == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
 		if (r->direction == IPSEC_IN) {
 			if (r->src->netaddress)
@@ -2233,10 +2231,10 @@ create_ike(u_int8_t proto,
 				r->peer = copyhost(r->dst);
 		}
 	} else
-		r->peer = peer;
+		r->peer = peers->dst;
 
-	if (local)
-		r->local = local;
+	if (peers->src)
+		r->local = peers->src;
 
 	r->satype = satype;
 	r->ikemode = mode;
