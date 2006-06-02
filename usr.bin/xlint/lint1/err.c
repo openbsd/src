@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.25 2006/04/27 20:46:44 otto Exp $	*/
+/*	$OpenBSD: err.c,v 1.26 2006/06/02 17:38:59 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.25 2006/04/27 20:46:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.26 2006/06/02 17:38:59 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -349,10 +349,10 @@ const	char *msgs[] = {
 	"cannot concatenate wide and regular string literals",	      /* 292 */
 	"argument %d must be 'char *' for PRINTFLIKE/SCANFLIKE",      /* 293 */
 	"multi-character character constant",			      /* 294 */
-	"%s() arg #%d: conversion of '%s' to '%s' is out of range",     /* 295 */
+	"%s() arg #%d: conversion of '%s' to '%s' is out of range",   /* 295 */
 	"%s() arg #%d: conversion of negative constant to unsigned type",  /* 296 */
 	"%s() arg #%d: conversion from '%s' to '%s' may sign-extend incorrectly",    /* 297 */
-	"%s() arg #%d: converted from '%s' to '%s'",                    /* 298 */
+	"%s() arg #%d: converted from '%s' to '%s'",		      /* 298 */
 	"prototype does not match old style definition, arg #%d",     /* 299 */
 	"old style definition",					      /* 300 */
 	"array of incomplete type",				      /* 301 */

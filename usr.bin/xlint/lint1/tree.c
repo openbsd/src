@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.42 2006/05/29 20:47:22 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.43 2006/06/02 17:38:59 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.42 2006/05/29 20:47:22 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.43 2006/06/02 17:38:59 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -60,7 +60,7 @@ static	void	incompat(op_t, tspec_t, tspec_t);
 static	void	illptrc(mod_t *, type_t *, type_t *);
 static	void	mrgqual(type_t **, type_t *, type_t *);
 static	int	conmemb(type_t *);
-static	void	ptconv(farg_t *, tspec_t, tspec_t, type_t *, tnode_t *);
+static	tspec_t	fcnconv(farg_t *, tspec_t, tspec_t, type_t *, tnode_t *);
 static	void	iiconv(op_t, farg_t *, tspec_t, tspec_t, type_t *, tnode_t *);
 static	void	piconv(op_t, tspec_t, type_t *, tnode_t *);
 static	void	ppconv(op_t, tnode_t *, type_t *);
@@ -1461,7 +1461,11 @@ promote(op_t op, int farg, tnode_t *tn)
 	/*
 	 * ANSI C requires that the result is always of type INT
 	 * if INT can represent all possible values of the previous
-	 * type.
+	 * type (it is "value preserving" rather than "sign
+	 * preserving").
+	 *
+	 * XXX: Adjust value-preserving rules for longs and long
+	 * longs, too.
 	 */
 	if (tn->tn_type->t_isfield) {
 		len = tn->tn_type->t_flen;
@@ -1582,8 +1586,9 @@ convert(op_t op, farg_t *farg, type_t *tp, tnode_t *tn)
 	if ((ot = tn->tn_type->t_tspec) == PTR)
 		ost = tn->tn_type->t_subt->t_tspec;
 
-	if (!sflag && op == FARG)
-		ptconv(farg, nt, ot, tp, tn);
+	if (op == FARG)
+		nt = fcnconv(farg, nt, ot, tp, tn);
+
 	if (isityp(nt) && isityp(ot)) {
 		iiconv(op, farg, nt, ot, tp, tn);
 	} else if (nt == PTR && ((ot == PTR && ost == VOID) || isityp(ot)) &&
@@ -1593,6 +1598,19 @@ convert(op_t op, farg_t *farg, type_t *tp, tnode_t *tn)
 		piconv(op, nt, tp, tn);
 	} else if (nt == PTR && ot == PTR) {
 		ppconv(op, tn, tp);
+	} else if (isftyp(ot) && !isftyp(nt)) {
+		/* conversion from floating point to fixed point */
+		if (tn->tn_op == CON) {
+			/* ok. cvtcon() warns if constant out of range */
+		} else {
+			if (op == FARG)
+				/* %s arg #%d: converted from '%s' to '%s' */
+				warning(259, funcname(farg->fa_func), arg,
+				    tyname(tn->tn_type), tyname(tp));
+			else
+				warning(132, tyname(tn->tn_type),
+				    tyname(tp));
+		}
 	}
 
 	ntn = getnode();
@@ -1611,21 +1629,32 @@ convert(op_t op, farg_t *farg, type_t *tp, tnode_t *tn)
 }
 
 /*
- * Print a warning if a prototype causes a type conversion that is
- * different from what would happen to the same argument in the
- * absence of a prototype.
+ * Print warnings for conversions of function call arguments.  Conversions
+ * happen differently between standard C and traditional C, and also happen
+ * differently in standard C depending on whether a prototype is present.
  *
  * Errors/Warnings about illegal type combinations are already printed
  * in asgntypok().
  */
-static void
-ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
+static tspec_t
+fcnconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 {
 	tnode_t	*ptn;
+	type_t *fcn = farg->fa_func->tn_type->t_subt;
+	tspec_t pt;
 	int arg = farg->fa_num;
 
-	if (!isatyp(nt) || !isatyp(ot))
-		return;
+	/* In standard C, if the function call is governed by a prototype,
+	 * the arguments don't necessarily undergo the usual argument conversions
+	 * before the call. They can be converted directly to the type of the
+	 * formal parameter, without necessarily widening/narrowing.
+	 */
+	if (fcn->t_proto || !isatyp(nt) || !isatyp(ot))
+		return nt;
+
+	/* get default promotion */
+	ptn = promote(NOOP, 1, tn);
+	pt = ptn->tn_type->t_tspec;
 
 	/*
 	 * If the type of the formal parameter is char/short, a warning
@@ -1633,19 +1662,15 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 	 * can't expect char/short arguments.
 	 */
 	if (nt == CHAR || nt == UCHAR || nt == SHORT || nt == USHORT)
-		return;
+		return pt;
 
-	/* get default promotion */
-	ptn = promote(NOOP, 1, tn);
-	ot = ptn->tn_type->t_tspec;
+	/* return if types are the same with and without promotion */
+	if (nt == pt || (nt == ENUM && pt == INT))
+		return pt;
 
-	/* return if types are the same with and without prototype */
-	if (nt == ot || (nt == ENUM && ot == INT))
-		return;
-
-	if (isftyp(nt) != isftyp(ot) || psize(nt) != psize(ot)) {
+	if (isftyp(nt) != isftyp(pt) || psize(nt) != psize(pt)) {
 		/* representation and/or width change */
-		if (styp(nt) != SHORT || !isityp(ot) || psize(ot) > psize(INT)) {
+		if (styp(nt) != SHORT || !isityp(pt) || psize(pt) > psize(INT)) {
 			if (ptn->tn_op == CON) {
 				/* ok. promote() warns if constant out of range */
 			} else {
@@ -1662,7 +1687,7 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		 * if they differ only in sign and the argument is a constant
 		 * and the msb of the argument is not set, print no warning
 		 */
-		if (ptn->tn_op == CON && isityp(nt) && styp(nt) == styp(ot) &&
+		if (ptn->tn_op == CON && isityp(nt) && styp(nt) == styp(pt) &&
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else if (ptn->tn_op != CON) {
@@ -1671,6 +1696,8 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			    tyname(tn->tn_type), tyname(tp));
 		}
 	}
+
+	return pt;
 }
 
 /*
@@ -1689,32 +1716,26 @@ iiconv(op_t op, farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 	if (op == CVT)
 		return;
 
-#if 0
-	if (psize(nt) > psize(ot) && isutyp(nt) != isutyp(ot)) {
-		/* conversion to %s may sign-extend incorrectly */
-		if (pflag) {
-			if (op == FARG) {
-				warning(297, funcname(farg->fa_func), arg,
-				    tyname(tp));
-			} else {
-				warning(131, tyname(tp));
-			}
-		}
-	}
-#endif
-
 	if (rank(nt) < rank(ot)) {
 		/* coercion from greater to lesser width */
 		if (op == FARG) {
-			warning(298, funcname(farg->fa_func), arg,
+			warning(259, funcname(farg->fa_func), arg,
 			    tyname(tn->tn_type), tyname(tp));
 		} else {
 			warning(132, tyname(tn->tn_type), tyname(tp));
 		}
-	} else if (isutyp(nt) != isutyp(ot) && rank(nt) == rank(ot)) {
-		/* coercion to same width but with signedness change */
+	} else if (!isutyp(ot) && isutyp(nt)) {
+		/* signed to unsigned conversion */
 		if (op == FARG) {
-			warning(298, funcname(farg->fa_func), arg,
+			warning(259, funcname(farg->fa_func), arg,
+			    tyname(tn->tn_type), tyname(tp));
+		} else {
+			warning(132, tyname(tn->tn_type), tyname(tp));
+		}
+	} else if (isutyp(ot) && !isutyp(nt) && rank(nt) == rank(ot)) {
+		/* signed to unsigned conversion */
+		if (op == FARG) {
+			warning(259, funcname(farg->fa_func), arg,
 			    tyname(tn->tn_type), tyname(tp));
 		} else {
 			warning(132, tyname(tn->tn_type), tyname(tp));
