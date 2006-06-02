@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: report.c,v 1.2 2006/06/02 15:43:16 norby Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -113,16 +113,8 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 		buf += 3;
 		len -= 3;
 
-		netid_len = 0;
 		prefixlen = mask2prefixlen(netmask);
-		if (prefixlen > 0)
-			netid_len = 1;
-		if (prefixlen > 8)
-			netid_len = 2;
-		if (prefixlen > 16)
-			netid_len = 3;
-		if (prefixlen > 24)
-			netid_len = 4;
+		netid_len = PREFIX_SIZE(prefixlen);
 
 		do {
 			/*
@@ -256,16 +248,7 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 				netmask = netmask >> 8;
 				buf_add(buf, &netmask, 3);
 			}
-
-			netid_len = 0;
-			if (prefixlen > 0)
-				netid_len = 1;
-			if (prefixlen > 8)
-				netid_len = 2;
-			if (prefixlen > 16)
-				netid_len = 3;
-			if (prefixlen > 24)
-				netid_len = 4;
+			netid_len = PREFIX_SIZE(prefixlen);
 
 			/* netid */
 			netid = le->re->net.s_addr;
