@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.56 2006/06/02 09:37:34 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.57 2006/06/02 18:04:17 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -110,8 +110,7 @@ ipsecctl_rules(char *filename, int opts)
 			action = ACTION_ADD;
 
 		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
-			if (ipsecctl_commit(action, &ipsec))
-				err(1, NULL);
+			error = ipsecctl_commit(action, &ipsec);
 	}
 
 	if (fin != stdin) {
@@ -146,7 +145,8 @@ ipsecctl_fopen(const char *name, const char *mode)
 int
 ipsecctl_commit(int action, struct ipsecctl *ipsec)
 {
-	struct ipsec_rule *rp;
+	struct ipsec_rule	*rp;
+	int			 ret = 0;
 
 	if (pfkey_init() == -1)
 		errx(1, "ipsecctl_commit: failed to open PF_KEY socket");
@@ -155,20 +155,24 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 		TAILQ_REMOVE(&ipsec->rule_queue, rp, rule_entry);
 
 		if (rp->type & RULE_IKE) {
-			if (ike_ipsec_establish(action, rp) == -1)
+			if (ike_ipsec_establish(action, rp) == -1) {
 				warnx("failed to %s rule %d",
 				    action == ACTION_DELETE ? "delete" : "add",
 				    rp->nr);
+				ret = 2;
+			}
 		} else {
-			if (pfkey_ipsec_establish(action, rp) == -1)
+			if (pfkey_ipsec_establish(action, rp) == -1) {
 				warnx("failed to %s rule %d",
 				    action == ACTION_DELETE ? "delete" : "add",
 				    rp->nr);
+				ret = 2;
+			}
 		}
 		ipsecctl_free_rule(rp);
 	}
 
-	return (0);
+	return (ret);
 }
 
 int
