@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.13 2006/04/20 20:31:13 miod Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.14 2006/06/02 06:26:15 martin Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-#include <dev/isa/isavar.h>
 
 #include <dev/ic/aic6360var.h>
 
