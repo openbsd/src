@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.125 2006/05/22 23:25:15 krw Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.126 2006/06/02 19:53:12 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -145,7 +145,6 @@ struct carp_softc {
 	LIST_HEAD(__carp_mchead, carp_mc_entry)	carp_mc_listhead;
 };
 
-int carp_suppress_preempt = 0;
 int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 struct carpstats carpstats;
 
@@ -183,6 +182,7 @@ void	carp_send_ad(void *);
 void	carp_send_arp(struct carp_softc *);
 void	carp_master_down(void *);
 int	carp_ioctl(struct ifnet *, u_long, caddr_t);
+void	carp_ifgroup_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
 void	carp_set_state(struct carp_softc *, int);
@@ -206,6 +206,7 @@ int	carp_clone_destroy(struct ifnet *);
 int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
 int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
 void	carp_ether_purgemulti(struct carp_softc *);
+int	carp_group_demote_count(struct carp_softc *);
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -664,7 +665,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 
 	sc_tv.tv_sec = sc->sc_advbase;
-	if (carp_suppress_preempt && sc->sc_advskew <  240)
+	if (carp_group_demote_count(sc) && sc->sc_advskew <  240)
 		sc_tv.tv_usec = 240 * 1000000 / 256;
 	else
 		sc_tv.tv_usec = sc->sc_advskew * 1000000 / 256;
@@ -680,7 +681,9 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 * be more frequent than us, go into BACKUP state.
 		 */
 		if (timercmp(&sc_tv, &ch_tv, >) ||
-		    timercmp(&sc_tv, &ch_tv, ==)) {
+		    (timercmp(&sc_tv, &ch_tv, ==) &&
+		    ch->carp_demote <=
+		    (carp_group_demote_count(sc) & 0xff))) {
 			timeout_del(&sc->sc_ad_tmo);
 			carp_set_state(sc, BACKUP);
 			carp_setrun(sc, 0);
@@ -693,6 +696,15 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 * and this one claims to be slower, treat him as down.
 		 */
 		if (carp_opts[CARPCTL_PREEMPT] && timercmp(&sc_tv, &ch_tv, <)) {
+			carp_master_down(sc);
+			break;
+		}
+
+		/*
+		 * Take over masters advertising with a higher demote count,
+		 * regardless of CARPCTL_PREEMPT.
+		 */ 
+		if (ch->carp_demote > (carp_group_demote_count(sc) & 0xff)) {
 			carp_master_down(sc);
 			break;
 		}
@@ -821,11 +833,11 @@ carpdetach(struct carp_softc *sc)
 	timeout_del(&sc->sc_md6_tmo);
 
 	if (sc->sc_suppress)
-		carp_suppress_preempt--;
+		carp_group_demote_adj(&sc->sc_if, -1);
 	sc->sc_suppress = 0;
 
 	if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS)
-		carp_suppress_preempt--;
+		carp_group_demote_adj(&sc->sc_if, -1);
 	sc->sc_sendad_errors = 0;
 
 	carp_set_state(sc, INIT);
@@ -929,7 +941,7 @@ carp_send_ad(void *v)
 		advskew = 255;
 	} else {
 		advbase = sc->sc_advbase;
-		if (!carp_suppress_preempt || sc->sc_advskew > 240)
+		if (!carp_group_demote_count(sc) || sc->sc_advskew > 240)
 			advskew = sc->sc_advskew;
 		else
 			advskew = 240;
@@ -940,10 +952,10 @@ carp_send_ad(void *v)
 	ch.carp_version = CARP_VERSION;
 	ch.carp_type = CARP_ADVERTISEMENT;
 	ch.carp_vhid = sc->sc_vhid;
+	ch.carp_demote = carp_group_demote_count(sc) & 0xff;
 	ch.carp_advbase = advbase;
 	ch.carp_advskew = advskew;
 	ch.carp_authlen = 7;	/* XXX DEFINE */
-	ch.carp_pad1 = 0;	/* must be zero */
 	ch.carp_cksum = 0;
 
 
@@ -1009,17 +1021,14 @@ carp_send_ad(void *v)
 			sc->sc_if.if_oerrors++;
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
-			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS) {
-				carp_suppress_preempt++;
-				if (carp_suppress_preempt == 1)
-					carp_send_ad_all();
-			}
+			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS)
+				carp_group_demote_adj(&sc->sc_if, 1);
 			sc->sc_sendad_success = 0;
 		} else {
 			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
 				if (++sc->sc_sendad_success >=
 				    CARP_SENDAD_MIN_SUCCESS) {
-					carp_suppress_preempt--;
+					carp_group_demote_adj(&sc->sc_if, -1);
 					sc->sc_sendad_errors = 0;
 				}
 			} else
@@ -1088,17 +1097,14 @@ carp_send_ad(void *v)
 			sc->sc_if.if_oerrors++;
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
-			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS) {
-				carp_suppress_preempt++;
-				if (carp_suppress_preempt == 1)
-					carp_send_ad_all();
-			}
+			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS)
+				carp_group_demote_adj(&sc->sc_if, 1);
 			sc->sc_sendad_success = 0;
 		} else {
 			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
 				if (++sc->sc_sendad_success >=
 				    CARP_SENDAD_MIN_SUCCESS) {
-					carp_suppress_preempt--;
+					carp_group_demote_adj(&sc->sc_if, -1);
 					sc->sc_sendad_errors = 0;
 				}
 			} else
@@ -2016,7 +2022,11 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCDELMULTI:
 		error = carp_ether_delmulti(sc, ifr);
 		break;
-
+	case SIOCAIFGROUP:
+	case SIOCDIFGROUP:
+		if (sc->sc_suppress)
+			carp_ifgroup_ioctl(ifp, cmd, addr);
+		break;
 	default:
 		error = EINVAL;
 	}
@@ -2025,6 +2035,23 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	return (error);
 }
 
+void
+carp_ifgroup_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+{
+	struct ifgroupreq *ifgr = (struct ifgroupreq *)addr;
+	struct ifg_list	*ifgl;
+
+	if (!strcmp(ifgr->ifgr_group, IFG_ALL))
+		return;
+	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next)
+		if (!strcmp(ifgl->ifgl_group->ifg_group, ifgr->ifgr_group)) {
+			if (cmd == SIOCAIFGROUP)
+				ifgl->ifgl_group->ifg_carp_demoted++;
+			else if (cmd == SIOCDIFGROUP &&
+			    ifgl->ifgl_group->ifg_carp_demoted)
+				ifgl->ifgl_group->ifg_carp_demoted--;
+		}
+}
 
 /*
  * Start output on carp interface. This function should never be called.
@@ -2073,6 +2100,42 @@ carp_set_state(struct carp_softc *sc, int state)
 }
 
 void
+carp_group_demote_adj(struct ifnet *ifp, int adj)
+{
+	struct ifg_list	*ifgl;
+	int *dm;
+	struct carp_softc *nil = NULL;
+
+	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next) {
+		if (!strcmp(ifgl->ifgl_group->ifg_group, IFG_ALL))
+			continue;
+		dm = &ifgl->ifgl_group->ifg_carp_demoted;
+
+		if (*dm + adj >= 0)
+			*dm += adj;
+		else
+			*dm = 0;
+
+		if (adj > 0 && *dm == 1)
+			carp_send_ad_all();
+		CARP_LOG(nil, ("%s demoted group %s to %d", ifp->if_xname,
+		    ifgl->ifgl_group->ifg_group, *dm));
+	}
+}
+
+int
+carp_group_demote_count(struct carp_softc *sc)
+{
+	struct ifg_list	*ifgl;
+	int count = 0;
+
+	TAILQ_FOREACH(ifgl, &sc->sc_if.if_groups, ifgl_next)
+		count += ifgl->ifgl_group->ifg_carp_demoted;
+
+	return (count);
+}
+
+void
 carp_carpdev_state(void *v)
 {
 	struct carp_if *cif;
@@ -2096,17 +2159,14 @@ carp_carpdev_state(void *v)
 			carp_set_state(sc, INIT);
 			sc->sc_suppress = 1;
 			carp_setrun(sc, 0);
-			if (!suppressed) {
-				carp_suppress_preempt++;
-				if (carp_suppress_preempt == 1)
-					carp_send_ad_all();
-			}
+			if (!suppressed)
+				carp_group_demote_adj(&sc->sc_if, 1);
 		} else {
 			carp_set_state(sc, INIT);
 			sc->sc_suppress = 0;
 			carp_setrun(sc, 0);
 			if (suppressed)
-				carp_suppress_preempt--;
+				carp_group_demote_adj(&sc->sc_if, -1);
 		}
 	}
 }

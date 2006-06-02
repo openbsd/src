@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.162 2006/06/01 21:01:10 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.163 2006/06/02 19:53:12 mpf Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -380,6 +380,8 @@ const struct	cmd {
 int	getinfo(struct ifreq *, int);
 void	getsock(int);
 int	printgroup(char *, int);
+void	printgroupattribs(char *);
+void	setgroupattribs(char *, int, char *[]);
 void	printif(char *, int);
 void	printb(char *, unsigned short, char *);
 void	printb_status(unsigned short, char *);
@@ -459,6 +461,7 @@ main(int argc, char *argv[])
 	int aflag = 0;
 	int ifaliases = 0;
 	int Cflag = 0;
+	int gflag = 0;
 	int i;
 
 	/* If no args at all, print all interfaces.  */
@@ -480,6 +483,9 @@ main(int argc, char *argv[])
 				aflag = 1;
 				ifaliases = 1;
 				nomore = 1;
+				break;
+			case 'g':
+				gflag = 1;
 				break;
 			case 'm':
 				mflag = 1;
@@ -521,6 +527,13 @@ main(int argc, char *argv[])
 		if (argc > 0 || mflag || aflag)
 			usage(1);
 		list_cloners();
+		exit(0);
+	}
+	if (gflag) {
+		if (argc == 0)
+			printgroupattribs(name);
+		else
+			setgroupattribs(name, argc, argv);
 		exit(0);
 	}
 	if (aflag) {
@@ -723,6 +736,47 @@ printgroup(char *groupname, int ifaliases)
 	free(ifgr.ifgr_groups);
 
 	return (cnt);
+}
+
+void
+printgroupattribs(char *groupname)
+{
+	struct ifgroupreq	 ifgr;
+
+	getsock(AF_INET);
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, groupname, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCGIFGATTR");
+
+	printf("%s:", groupname);
+	printf(" carp demote count %d", ifgr.ifgr_attrib.ifg_carp_demoted);
+	printf("\n");
+}
+
+void
+setgroupattribs(char *groupname, int argc, char *argv[])
+{
+	char *p = argv[0];
+	int neg = 1;
+
+	struct ifgroupreq	 ifgr;
+	struct ifg_attrib	*ifga;
+
+	getsock(AF_INET);
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, groupname, sizeof(ifgr.ifgr_name));
+	if (p[0] == '-') {
+		neg = -1;
+		p++;
+	}
+	if (!strcmp(p, "carpdemote"))
+		ifgr.ifgr_attrib.ifg_carp_demoted = neg;
+	else
+		usage(1);
+
+	if (ioctl(s, SIOCSIFGATTR, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCSIFGATTR");
 }
 
 void
@@ -3811,6 +3865,7 @@ usage(int value)
 	    "\t[authname name] [authkey key] [peerproto proto]\n"
 	    "\t[peername name] [peerkey key] [[-]peerflag flag]\n"
 	    "       ifconfig [-AaCMm] [interface] [address_family]\n"
+	    "       ifconfig -g group-name [[-]carpdemote]\n"
 	    "       ifconfig interface create\n"
 	    "       ifconfig interface destroy\n");
 	exit(value);

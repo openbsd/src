@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.146 2006/03/22 14:37:44 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.147 2006/06/02 19:53:12 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -137,6 +137,8 @@ void	if_detached_watchdog(struct ifnet *);
 
 int	if_getgroup(caddr_t, struct ifnet *);
 int	if_getgroupmembers(caddr_t);
+int	if_getgroupattribs(caddr_t);
+int	if_setgroupattribs(caddr_t);
 
 int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
@@ -1167,6 +1169,12 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		return (if_clone_list((struct if_clonereq *)data));
 	case SIOCGIFGMEMB:
 		return (if_getgroupmembers(data));
+	case SIOCGIFGATTR:
+		return (if_getgroupattribs(data));
+	case SIOCSIFGATTR:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		return (if_setgroupattribs(data));
 	}
 
 	ifp = ifunit(ifr->ifr_name);
@@ -1280,6 +1288,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCAIFGROUP:
 		if ((error = suser(p, 0)))
 			return (error);
+		(*ifp->if_ioctl)(ifp, cmd, data); /* XXX error check */
 		ifgr = (struct ifgroupreq *)data;
 		if ((error = if_addgroup(ifp, ifgr->ifgr_group)))
 			return (error);
@@ -1293,6 +1302,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCDIFGROUP:
 		if ((error = suser(p, 0)))
 			return (error);
+		(*ifp->if_ioctl)(ifp, cmd, data); /* XXX error check */
 		ifgr = (struct ifgroupreq *)data;
 		if ((error = if_delgroup(ifp, ifgr->ifgr_group)))
 			return (error);
@@ -1590,6 +1600,7 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		}
 		strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
 		ifg->ifg_refcnt = 0;
+		ifg->ifg_carp_demoted = 0;
 		TAILQ_INIT(&ifg->ifg_members);
 #if NPF > 0
 		pfi_attach_ifgroup(ifg);
@@ -1728,6 +1739,48 @@ if_getgroupmembers(caddr_t data)
 		len -= sizeof(ifgrq);
 		ifgp++;
 	}
+
+	return (0);
+}
+
+int
+if_getgroupattribs(caddr_t data)
+{
+	struct ifgroupreq	*ifgr = (struct ifgroupreq *)data;
+	struct ifg_group	*ifg;
+
+	TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
+		if (!strcmp(ifg->ifg_group, ifgr->ifgr_name))
+			break;
+	if (ifg == NULL)
+		return (ENOENT);
+
+	ifgr->ifgr_attrib.ifg_carp_demoted = ifg->ifg_carp_demoted;
+
+	return (0);
+}
+
+int
+if_setgroupattribs(caddr_t data)
+{
+	struct ifgroupreq	*ifgr = (struct ifgroupreq *)data;
+	struct ifg_group	*ifg;
+	int			 demote;
+
+	TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
+		if (!strcmp(ifg->ifg_group, ifgr->ifgr_name))
+			break;
+	if (ifg == NULL)
+		return (ENOENT);
+
+	demote = ifgr->ifgr_attrib.ifg_carp_demoted;
+	if (demote > 1 || demote < -1)
+		return (E2BIG);
+
+	if (demote + ifg->ifg_carp_demoted >= 0)
+		ifg->ifg_carp_demoted += demote;
+	else
+		ifg->ifg_carp_demoted = 0;
 
 	return (0);
 }

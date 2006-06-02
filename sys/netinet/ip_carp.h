@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.20 2006/04/27 02:19:32 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.21 2006/06/02 19:53:12 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -37,7 +37,7 @@
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    |Version| Type  | VirtualHostID |    AdvSkew    |    Auth Len   |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *    |   Reserved    |     AdvBase   |          Checksum             |
+ *    |    Demotion   |     AdvBase   |          Checksum             |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    |                         Counter (1)                           |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -68,7 +68,7 @@ struct carp_header {
 	u_int8_t	carp_vhid;	/* virtual host id */
 	u_int8_t	carp_advskew;	/* advertisement skew */
 	u_int8_t	carp_authlen;   /* size of counter+md, 32bit chunks */
-	u_int8_t	carp_pad1;	/* reserved */
+	u_int8_t	carp_demote;	/* demotion indicator */
 	u_int8_t	carp_advbase;	/* advertisement interval */
 	u_int16_t	carp_cksum;
 	u_int32_t	carp_counter[2];
@@ -155,6 +155,7 @@ struct carpreq {
 void		 carp_ifdetach (struct ifnet *);
 void		 carp_proto_input (struct mbuf *, ...);
 void		 carp_carpdev_state(void *);
+void		 carp_group_demote_adj(struct ifnet *, int);
 int		 carp6_proto_input(struct mbuf **, int *, int);
 int		 carp_iamatch(struct in_ifaddr *, u_char *,
 		     u_int32_t *, u_int32_t);

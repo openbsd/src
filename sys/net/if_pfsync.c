@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.65 2006/05/28 02:04:15 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.66 2006/06/02 19:53:12 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -59,7 +59,7 @@
 
 #include "carp.h"
 #if NCARP > 0
-extern int carp_suppress_preempt;
+#include <netinet/ip_carp.h>
 #endif
 
 #include <net/pfvar.h>
@@ -142,6 +142,10 @@ pfsyncattach(int npfsync)
 	timeout_set(&pfsyncif.sc_bulkfail_tmo, pfsync_bulkfail, &pfsyncif);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
+
+#if NCARP > 0
+	if_addgroup(ifp, "carp");
+#endif
 
 #if NBPFILTER > 0
 	bpfattach(&pfsyncif.sc_if.if_bpf, ifp, DLT_PFSYNC, PFSYNC_HDRLEN);
@@ -757,7 +761,7 @@ pfsync_input(struct mbuf *m, ...)
 				timeout_del(&sc->sc_bulkfail_tmo);
 #if NCARP > 0
 				if (!pfsync_sync_ok)
-					carp_suppress_preempt--;
+					carp_group_demote_adj(&sc->sc_if, -1);
 #endif
 				pfsync_sync_ok = 1;
 				if (pf_status.debug >= PF_DEBUG_MISC)
@@ -922,7 +926,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->sc_ureq_sent = time_uptime;
 #if NCARP > 0
 			if (pfsync_sync_ok)
-				carp_suppress_preempt++;
+				carp_group_demote_adj(&sc->sc_if, 1);
 #endif
 			pfsync_sync_ok = 0;
 			if (pf_status.debug >= PF_DEBUG_MISC)
@@ -1424,7 +1428,7 @@ pfsync_bulkfail(void *v)
 		sc->sc_bulk_tries = 0;
 #if NCARP > 0
 		if (!pfsync_sync_ok)
-			carp_suppress_preempt--;
+			carp_group_demote_adj(&sc->sc_if, -1);
 #endif
 		pfsync_sync_ok = 1;
 		if (pf_status.debug >= PF_DEBUG_MISC)

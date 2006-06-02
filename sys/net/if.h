@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.81 2006/05/27 10:03:15 brad Exp $	*/
+/*	$OpenBSD: if.h,v 1.82 2006/06/02 19:53:12 mpf Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -433,6 +433,7 @@ struct ifg_group {
 	char				 ifg_group[IFNAMSIZ];
 	u_int				 ifg_refcnt;
 	caddr_t				 ifg_pf_kif;
+	int				 ifg_carp_demoted;
 	TAILQ_HEAD(, ifg_member)	 ifg_members;
 	TAILQ_ENTRY(ifg_group)		 ifg_next;
 };
@@ -456,6 +457,10 @@ struct ifg_req {
 #define	ifgrq_member	ifgrq_ifgrqu.ifgrqu_member
 };
 
+struct ifg_attrib {
+	int	ifg_carp_demoted;
+};
+
 /*
  * Used to lookup groups for an interface
  */
@@ -463,11 +468,13 @@ struct ifgroupreq {
 	char	ifgr_name[IFNAMSIZ];
 	u_int	ifgr_len;
 	union {
-		char	ifgru_group[IFNAMSIZ];
-		struct	ifg_req *ifgru_groups;
+		char			 ifgru_group[IFNAMSIZ];
+		struct	ifg_req		*ifgru_groups;
+		struct	ifg_attrib	 ifgru_attrib;
 	} ifgr_ifgru;
 #define ifgr_group	ifgr_ifgru.ifgru_group
 #define ifgr_groups	ifgr_ifgru.ifgru_groups
+#define ifgr_attrib	ifgr_ifgru.ifgru_attrib
 };
 
 /*
