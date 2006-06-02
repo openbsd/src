@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.49 2006/06/01 22:19:24 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.50 2006/06/02 06:43:05 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -46,9 +46,9 @@ macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
 Macro names may not be reserved words (for example
-.Ar flow ,
-.Ar from ,
-.Ar esp ) .
+.Ic flow ,
+.Ic from ,
+.Ic esp ) .
 Macros are not expanded inside quotes.
 .Pp
 For example,
@@ -96,23 +96,23 @@ Some parameters are optional.
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
-.It Ar in No or Ar out
+.It Ic in No or Ic out
 This rule applies to incoming or outgoing packets.
 If neither
-.Ar in
+.Ic in
 nor
-.Ar out
+.Ic out
 are specified,
 .Xr ipsecctl 8
 will assume the direction
-.Ar out
+.Ic out
 for this rule and will construct a proper
-.Ar in
+.Ic in
 rule.
 Thus packets in both directions will be matched.
-.It Ar proto Aq Ar protocol
+.It Ic proto Aq Ar protocol
 The optional
-.Ar proto
+.Ic proto
 parameter restricts the flow to a specific IP protocol.
 Common protocols are
 .Xr icmp 4 ,
@@ -124,13 +124,13 @@ For a list of all the protocol name to number mappings used by
 see the file
 .Pa /etc/protocols .
 .It Xo
-.Ar from
+.Ic from
 .Aq Ar src
-.Ar port
+.Ic port
 .Aq Ar sport
-.Ar to
+.Ic to
 .Aq Ar dst
-.Ar port
+.Ic port
 .Aq Ar dport
 .Xc
 This rule applies for packets with source address
@@ -141,7 +141,7 @@ The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
 The optional
-.Ar port
+.Ic port
 modifiers restrict the flows to the specified ports.
 They are only valid in conjunction with the
 .Xr tcp 4
@@ -153,14 +153,14 @@ For a list of all port name to number mappings used by
 .Xr ipsecctl 8 ,
 see the file
 .Pa /etc/services .
-.It Ar local Aq Ar localip
+.It Ic local Aq Ar localip
 The
-.Ar local
+.Ic local
 parameter specifies the address or FQDN of the local endpoint of this
 flow and can be usually left out.
-.It Ar peer Aq Ar remote
+.It Ic peer Aq Ar remote
 The
-.Ar peer
+.Ic peer
 parameter specifies the address or FQDN of the remote endpoint of this
 flow.
 For host-to-host connections where
@@ -168,9 +168,9 @@ For host-to-host connections where
 is identical to
 .Aq Ar remote ,
 the
-.Ar peer
+.Ic peer
 specification can be left out.
-.It Ar type Aq Ar modifier
+.It Ic type Aq Ar modifier
 This optional parameter sets up special flows using the modifiers
 .Ar require ,
 .Ar use ,
@@ -215,10 +215,10 @@ as symbolic host names, interface names or interface group names.
 .Aq Ar mode
 .Xc
 For
-.Ar esp ,
-.Ar ah
+.Ic esp ,
+.Ic ah ,
 and
-.Ar ipcomp
+.Ic ipcomp
 the encapsulation mode to be used can be specified.
 Possible modes are
 .Ar tunnel
@@ -230,9 +230,9 @@ is chosen.
 For details on modes see
 .Xr ipsec 4 .
 .It Xo
-.Ar from
+.Ic from
 .Aq Ar src
-.Ar to
+.Ic to
 .Aq Ar dst
 .Xc
 This SA is for a
@@ -242,20 +242,20 @@ between the peers
 and
 .Aq Ar dst .
 .It Xo
-.Ar spi
+.Ic spi
 .Aq Ar number
 .Xc
 The SPI identifies a specific SA.
 .Ar number
 is a 32-bit value and needs to be unique.
 .It Xo
-.Ar auth
+.Ic auth
 .Aq Ar algorithm
 .Xc
 For both
-.Ar esp
+.Ic esp
 and
-.Ar ah
+.Ic ah
 an authentication algorithm can be specified.
 Possible algorithms are
 .Ar hmac-md5 ,
@@ -272,7 +272,7 @@ will choose
 .Ar hmac-sha2-256
 by default.
 .It Xo
-.Ar comp
+.Ic comp
 .Aq Ar algorithm
 .Xc
 The compression algorithm to be used.
@@ -286,11 +286,11 @@ is only available with
 .Xr hifn 4
 because of the patent held by Hifn, Inc.
 .It Xo
-.Ar enc
+.Ic enc
 .Aq Ar algorithm
 .Xc
 For
-.Ar esp
+.Ic esp
 an encryption algorithm needs to be specified.
 Possible algorithms are
 .Ar 3des-cbc ,
@@ -309,7 +309,7 @@ will choose
 .Ar aesctr
 by default.
 .It Xo
-.Ar authkey
+.Ic authkey
 .Aq Ar keyspec
 .Xc
 .Ar keyspec
@@ -322,7 +322,7 @@ and is specified as follows:
 authkey file "filename"
 .Ed
 .It Xo
-.Ar enckey
+.Ic enckey
 .Aq Ar keyspec
 .Xc
 The encryption key is defined similar to
@@ -336,17 +336,17 @@ $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
 .Pp
 For
-.Ar spi ,
-.Ar authkey ,
+.Ic spi ,
+.Ic authkey ,
 and
-.Ar enckey ,
+.Ic enckey ,
 it is possible to specify two colon separated values.
 .Xr ipsecctl 8
 will then generate the matching incoming SA using the second values for
-.Ar spi ,
-.Ar authkey ,
+.Ic spi ,
+.Ic authkey ,
 and
-.Ar enckey .
+.Ic enckey .
 .Sh AUTOMATIC KEYING USING ISAKMP/IKE
 Rules can also specify IPsec flows and SAs to be established automatically by
 .Xr isakmpd 8 .
@@ -370,9 +370,9 @@ Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
-.Ar ike
+.Ic ike
 .Aq Ar mode
-.Ar esp
+.Ic esp
 .Xc
 When
 .Ar passive
@@ -398,9 +398,9 @@ warriors or dialup hosts.
 If omitted,
 .Ar active
 mode will be used.
-.It Ar proto Aq Ar protocol
+.It Ic proto Aq Ar protocol
 The optional
-.Ar proto
+.Ic proto
 parameter restricts the flow to a specific IP protocol.
 Common protocols are
 .Xr icmp 4 ,
@@ -412,13 +412,13 @@ For a list of all the protocol name to number mappings used by
 see the file
 .Pa /etc/protocols .
 .It Xo
-.Ar from
+.Ic from
 .Aq Ar src
-.Ar to
+.Ic to
 .Aq Ar dst
-.Ar local
+.Ic local
 .Aq Ar localip
-.Ar peer
+.Ic peer
 .Aq Ar remote
 .Xc
 This rule applies for packets with source address
@@ -429,12 +429,12 @@ The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
 The
-.Ar local
+.Ic local
 parameter specifies the local address to be used, if we are multi-homed
 or have aliases.
 Usually this parameter can be left out.
 The
-.Ar peer
+.Ic peer
 parameter specifies the address or FQDN of the remote endpoint of this
 particular flow.
 For host-to-host connections where
@@ -445,22 +445,22 @@ the
 .Ar peer
 specification can be left out.
 .It Xo
-.Ar main auth
+.Ic main auth
 .Aq Ar algorithm
-.Ar enc
+.Ic enc
 .Aq Ar algorithm
-.Ar group
+.Ic group
 .Aq Ar group
 .Xc
 These parameters define the cryptographic transforms to be used for main mode.
 Possible values for
-.Aq Ar auth
+.Ic auth
 are
 .Ar hmac-sha1
 and
 .Ar hmac-md5 .
 For
-.Aq Ar enc
+.Ic enc
 the values
 .Ar des ,
 .Ar 3des ,
@@ -470,7 +470,7 @@ and
 .Ar cast
 are allowed.
 For
-.Aq Ar group
+.Ic group
 the values
 .Ar modp768 ,
 .Ar modp1024 ,
@@ -490,19 +490,19 @@ will use the default values
 and
 .Ar modp3072 .
 .It Xo
-.Ar quick auth
+.Ic quick auth
 .Aq Ar algorithm
-.Ar enc
+.Ic enc
 .Aq Ar algorithm
-.Ar group
+.Ic group
 .Aq Ar group
 .Xc
 Similar to
-.Ar main ,
-.Ar quick
+.Ic main ,
+.Ic quick
 defines the transforms to be used for quick mode.
 However, the possible values for
-.Aq Ar auth
+.Ic auth
 are
 .Ar hmac-md5 ,
 .Ar hmac-sha1 ,
@@ -512,7 +512,7 @@ are
 and
 .Ar hmac-sha2-512 .
 For
-.Ar enc
+.Ic enc
 valid values are again
 .Ar des ,
 .Ar 3des ,
@@ -521,7 +521,7 @@ valid values are again
 and
 .Ar cast .
 For
-.Aq Ar group
+.Ic group
 the values
 .Ar modp768 ,
 .Ar modp1024 ,
@@ -541,20 +541,20 @@ and
 .Ar modp3072
 are chosen.
 .It Xo
-.Ar srcid
+.Ic srcid
 .Aq Ar fqdn
 .Xc
 This optional parameter defines a FQDN that will be used by
 .Xr isakmpd 8
 as the identity of the local peer.
 .It Xo
-.Ar dstid
+.Ic dstid
 .Aq Ar fqdn
 .Xc
 Similar to
-.Ar srcid ,
+.Ic srcid ,
 this optional parameter defines a FQDN to be used by the remote peer.
-.It Ar psk Aq Ar string
+.It Ic psk Aq Ar string
 Use a pre-shared key
 .Ar string
 for authentication.
@@ -577,14 +577,14 @@ A Security Association (SA) for TCP MD5 signatures is set up using the
 following rule:
 .Bl -tag -width xxxx
 .It Xo
-.Ar tcpmd5
-.Ar from
+.Ic tcpmd5
+.Ic from
 .Aq Ar src
-.Ar to
+.Ic to
 .Aq Ar dst
-.Ar spi
+.Ic spi
 .Aq Ar number
-.Ar authkey
+.Ic authkey
 .Aq Ar keyspec
 .Xc
 This rule applies for packets with source address
@@ -592,7 +592,7 @@ This rule applies for packets with source address
 and destination address
 .Aq Ar dst .
 The parameter
-.Ar spi
+.Ic spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
 .Pp
 The authentication key to be used is a hexadecimal string of arbitrary length
@@ -611,15 +611,15 @@ $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
 .Pp
 For both
-.Ar spi
+.Ic spi
 and
-.Ar authkey
+.Ic authkey
 it is possible to specify two values separated by a colon.
 .Xr ipsecctl 8
 will then generate the matching incoming SA using the second values for
-.Ar spi
+.Ic spi
 and
-.Ar authkey .
+.Ic authkey .
 .El
 .Pp
 For details on how to enable TCP MD5 signatures see
