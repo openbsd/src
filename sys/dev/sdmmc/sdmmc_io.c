@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.3 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.4 2006/06/03 03:01:49 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -204,6 +204,9 @@ sdmmc_io_attach(struct sdmmc_softc *sc)
 	struct sdmmc_attach_args saa;
 
 	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
+		if (sf->number < 1)
+			continue;
+
 		bzero(&saa, sizeof saa);
 		saa.sf = sf;
 
@@ -256,6 +259,13 @@ sdmmc_print(void *aux, const char *pnp)
 		printf("%sat %s", i ? " " : "", pnp);
 	}
 	printf(" function %d", sf->number);
+
+	if (!pnp) {
+		for (i = 0; i < 3 && cis->cis1_info[i]; i++)
+			printf("%s%s", i ? ", " : " \"", cis->cis1_info[i]);
+		if (i != 0)
+			printf("\"");
+	}
 	return UNCONF;
 }
 
