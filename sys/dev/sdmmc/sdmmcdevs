@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.3 2006/06/02 21:17:36 uwe Exp $
+	$OpenBSD: sdmmcdevs,v 1.4 2006/06/03 03:04:04 uwe Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -43,7 +43,7 @@ product GLOBALSAT SD501		0xf501	Globalsat SD-501 GPS Card
 product SPECTEC SDW820		0x2128	Spectec SDIO WLAN Card
 
 /* SyChip Inc. */
-product SYCHIP WLAN6060SD	0x544d	SyChip Pegasus WLAN SDIO Card
+product SYCHIP WLAN6060SD	0x0002	SyChip Pegasus WLAN SDIO Card
 
 /* Toshiba */
 product TOSHIBA SDBTCARD1	0x0001	Toshiba SD BT Card 1
