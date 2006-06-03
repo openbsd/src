@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcdevs.h,v 1.3 2006/06/02 21:17:56 uwe Exp $	*/
+/*	$OpenBSD: sdmmcdevs.h,v 1.4 2006/06/03 03:04:19 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -56,7 +56,7 @@
 
 /* SyChip Inc. */
 #define	SDMMC_CIS_SYCHIP_WLAN6060SD	{ NULL, NULL, NULL, NULL }
-#define	SDMMC_PRODUCT_SYCHIP_WLAN6060SD	0x544d
+#define	SDMMC_PRODUCT_SYCHIP_WLAN6060SD	0x0002
 
 /* Toshiba */
 #define	SDMMC_CIS_TOSHIBA_SDBTCARD1	{ NULL, NULL, NULL, NULL }
