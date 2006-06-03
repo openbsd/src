@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.9 2006/05/15 06:58:03 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.10 2006/06/03 03:05:10 niallo Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.9 2006/05/15 06:58:03 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.10 2006/06/03 03:05:10 niallo Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -160,7 +160,6 @@ BUF *
 merge_diff3(char **av, int flags)
 {
 	int argc;
-	char *data, *patch;
 	char *argv[5], *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 
@@ -226,21 +225,13 @@ merge_diff3(char **av, int flags)
 	rcs_buf_putc(diffb, '\0');
 	rcs_buf_putc(b1, '\0');
 
-	patch = rcs_buf_release(diffb);
-	data = rcs_buf_release(b1);
-	diffb = b1 = NULL;
-
-	if ((diffb = rcs_patchfile(data, patch, ed_patch_lines)) == NULL)
+	if ((diffb = rcs_patchfile(b1, diffb, ed_patch_lines)) == NULL)
 		goto out;
 
 	if (!(flags & QUIET) && diff3_conflicts != 0)
 		warnx("warning: overlaps or other problems during merge");
 
-	xfree(data);
-	xfree(patch);
 out:
-	if (b1 != NULL)
-		rcs_buf_free(b1);
 	if (b2 != NULL)
 		rcs_buf_free(b2);
 	if (b3 != NULL)
@@ -274,7 +265,6 @@ BUF *
 rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 {
 	int argc;
-	char *data, *patch;
 	char *argv[5], r1[16], r2[16];
 	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
@@ -350,22 +340,13 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	rcs_buf_putc(diffb, '\0');
 	rcs_buf_putc(b1, '\0');
 
-	patch = rcs_buf_release(diffb);
-	data = rcs_buf_release(b1);
-	diffb = b1 = NULL;
-
-	if ((diffb = rcs_patchfile(data, patch, ed_patch_lines)) == NULL)
+	if ((diffb = rcs_patchfile(b1, diffb, ed_patch_lines)) == NULL)
 		goto out;
 
 	if (verbose == 1 && diff3_conflicts != 0)
 		warnx("warning: overlaps or other problems during merge");
 
-	xfree(data);
-	xfree(patch);
-
 out:
-	if (b1 != NULL)
-		rcs_buf_free(b1);
 	if (b2 != NULL)
 		rcs_buf_free(b2);
 	if (b3 != NULL)

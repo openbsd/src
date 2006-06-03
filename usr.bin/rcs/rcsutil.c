@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.14 2006/05/28 23:16:31 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.15 2006/06/03 03:05:10 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -468,32 +468,38 @@ rcs_set_description(RCSFILE *file, const char *in)
  * Split the contents of a file into a list of lines.
  */
 struct rcs_lines *
-rcs_splitlines(const char *fcont)
+rcs_splitlines(BUF *fcont)
 {
-	char *dcp;
+	u_char *c, *p;
 	struct rcs_lines *lines;
 	struct rcs_line *lp;
+	size_t i, len;
 
+	len = rcs_buf_len(fcont);
 	lines = xmalloc(sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
 	lines->l_nblines = 0;
-	lines->l_data = xstrdup(fcont);
+	lines->l_data = rcs_buf_get(fcont);
 
 	lp = xmalloc(sizeof(*lp));
 	lp->l_line = NULL;
 	lp->l_lineno = 0;
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
-	for (dcp = lines->l_data; *dcp != '\0';) {
-		lp = xmalloc(sizeof(*lp));
-		lp->l_line = dcp;
-		lp->l_lineno = ++(lines->l_nblines);
-		TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
-		dcp = strchr(dcp, '\n');
-		if (dcp == NULL)
-			break;
-		*(dcp++) = '\0';
+	p = c = lines->l_data;
+	for (i = 0; i < rcs_buf_len(fcont); i++) {
+		if (*p == '\n') {
+			len = p - c;
+			lp = xmalloc(sizeof(*lp));
+			lp->l_line = xmalloc(len + 1);
+			memcpy(lp->l_line, c, len);
+			lp->l_line[len] = '\0';
+			lp->l_lineno = ++(lines->l_nblines);
+			TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
+			c = p + 1;
+		}
+		p++;
 	}
 
 	return (lines);
@@ -514,7 +520,7 @@ rcs_freelines(struct rcs_lines *lines)
 }
 
 BUF *
-rcs_patchfile(const char *data, const char *patch,
+rcs_patchfile(BUF *data, BUF *patch,
     int (*p)(struct rcs_lines *, struct rcs_lines *))
 {
 	struct rcs_lines *dlines, *plines;
@@ -523,7 +529,7 @@ rcs_patchfile(const char *data, const char *patch,
 	int lineno;
 	BUF *res;
 
-	len = strlen(data);
+	len = rcs_buf_len(data);
 
 	if ((dlines = rcs_splitlines(data)) == NULL)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.94 2006/05/28 23:16:31 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.95 2006/06/03 03:05:10 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -353,7 +353,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	 */
 	if (file->rf_ndelta != 0)
 		bp = rcs_kwexp_buf(bp, file, rev);
-
 	/*
 	 * File inherits permissions from its ,v file
 	 */

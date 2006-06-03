@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.179 2006/06/02 19:10:23 david Exp $	*/
+/*	$OpenBSD: ci.c,v 1.180 2006/06/03 03:05:10 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -64,13 +64,14 @@ struct checkin_params {
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	const char *description, *symbol;
-	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
+	char fpath[MAXPATHLEN], *rcs_msg, *username, *filename;
 	char *author, *state;
+	BUF *deltatext;
 };
 
 static int	 checkin_attach_symbol(struct checkin_params *);
 static int	 checkin_checklock(struct checkin_params *);
-static char	*checkin_diff_file(struct checkin_params *);
+static BUF	*checkin_diff_file(struct checkin_params *);
 static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *, int);
 static int	 checkin_init(struct checkin_params *);
 static int	 checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
@@ -315,15 +316,14 @@ checkin_main(int argc, char **argv)
  * Generate the diff between the working file and a revision.
  * Returns pointer to a char array on success, NULL on failure.
  */
-static char *
+static BUF *
 checkin_diff_file(struct checkin_params *pb)
 {
 	char *path1, *path2;
 	BUF *b1, *b2, *b3;
-	char rbuf[64], *deltatext;
+	char rbuf[64];
 
 	b1 = b2 = b3 = NULL;
-	deltatext = NULL;
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 
 	if ((b1 = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
@@ -357,10 +357,7 @@ checkin_diff_file(struct checkin_params *pb)
 	if (rcs_diffreg(path1, path2, b3) == D_ERROR)
 		goto out;
 
-	rcs_buf_putc(b3, '\0');
-	deltatext = rcs_buf_release(b3);
-	b3 = NULL;
-
+	return (b3);
 out:
 	if (b1 != NULL)
 		rcs_buf_free(b1);
@@ -373,7 +370,7 @@ out:
 	if (path2 != NULL)
 		xfree(path2);
 
-	return (deltatext);
+	return (NULL);
 }
 
 /*
@@ -436,9 +433,6 @@ checkin_update(struct checkin_params *pb)
 	if ((bp = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
 		goto fail;
 
-	rcs_buf_putc(bp, '\0');
-	filec = (char *)rcs_buf_release(bp);
-
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev))
 		pb->newrev = rcsnum_inc(pb->newrev);
@@ -496,7 +490,7 @@ checkin_update(struct checkin_params *pb)
 	 * If -f is not specified and there are no differences, tell
 	 * the user and revert to latest version.
 	 */
-	if (!(pb->flags & FORCE) && (strlen(pb->deltatext) < 1)) {
+	if (!(pb->flags & FORCE) && (rcs_buf_len(pb->deltatext) < 1)) {
 		checkin_revert(pb);
 		goto out;
 	}
@@ -537,7 +531,7 @@ checkin_update(struct checkin_params *pb)
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
-	if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1)
+	if (rcs_deltatext_set(pb->file, pb->frev, bp) == -1)
 		errx(1, "failed to set new head revision");
 
 	/* Attach a symbolic name to this revision if specified. */
@@ -575,16 +569,9 @@ checkin_update(struct checkin_params *pb)
 	}
 
 out:
-	xfree(pb->deltatext);
-	xfree(filec);
-
 	return (0);
 
 fail:
-	if (filec != NULL)
-		xfree(filec);
-	if (pb->deltatext != NULL)
-		xfree(pb->deltatext);
 	return (-1);
 }
 
@@ -598,11 +585,9 @@ static int
 checkin_init(struct checkin_params *pb)
 {
 	BUF *bp;
-	char *filec, numb[64];
+	char numb[64];
 	int fetchlog = 0;
 	struct stat st;
-
-	filec = NULL;
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev)) {
@@ -616,13 +601,10 @@ checkin_init(struct checkin_params *pb)
 	if ((bp = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
 		goto fail;
 
-	rcs_buf_putc(bp, '\0');
-	filec = rcs_buf_release(bp);
-
 	/* Get default values from working copy if -k specified */
 	if (pb->flags & CI_KEYWORDSCAN)
-		checkin_keywordscan(filec, &pb->newrev, &pb->date, &pb->state,
-		    &pb->author);
+		checkin_keywordscan((char *)rcs_buf_get(bp), &pb->newrev,
+		    &pb->date, &pb->state, &pb->author);
 
 	if (pb->flags & CI_SKIPDESC)
 		goto skipdesc;
@@ -670,7 +652,7 @@ skipdesc:
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
-	if (rcs_deltatext_set(pb->file, pb->file->rf_head, filec) == -1) {
+	if (rcs_deltatext_set(pb->file, pb->file->rf_head, bp) == -1) {
 		warnx("failed to set new head revision");
 		goto fail;
 	}
@@ -692,7 +674,6 @@ skipdesc:
 	pb->file->rf_mode = st.st_mode &
 	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 
-	xfree(filec);
 	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
 
@@ -713,8 +694,6 @@ skipdesc:
 
 	return (0);
 fail:
-	if (filec != NULL)
-		xfree(filec);
 	return (-1);
 }
 

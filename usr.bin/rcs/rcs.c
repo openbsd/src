@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.11 2006/05/28 18:33:49 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.12 2006/06/03 03:05:10 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -234,8 +234,7 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static void	rcs_growbuf(RCSFILE *);
 static void	rcs_strprint(const u_char *, size_t, FILE *);
 
-static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
-                    size_t, int);
+static BUF	*rcs_expand_keywords(char *, struct rcs_delta *, BUF *, int);
 
 RCSFILE *
 rcs_open(const char *path, int fd, int flags, ...)
@@ -1136,9 +1135,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	u_int i, numlen;
 	int isbranch, lookonbranch, found;
 	size_t len;
-	void *bp;
 	RCSNUM *crev, *rev, *brev;
-	BUF *rbuf;
+	BUF *rbuf, *dtext;
 	struct rcs_delta *rdp = NULL;
 	struct rcs_branch *rb;
 
@@ -1252,10 +1250,10 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		if (rdp->rd_tlen == 0)
 			rcs_parse_deltatexts(rfp, rdp->rd_num);
 
-		bp = rcs_buf_release(rbuf);
-		rbuf = rcs_patchfile((char *)bp, (char *)rdp->rd_text,
-		    rcs_patch_lines);
-		xfree(bp);
+
+		dtext = rcs_buf_alloc(len, BUF_AUTOEXT);
+		rcs_buf_append(dtext, rdp->rd_text, rdp->rd_tlen);
+		rbuf = rcs_patchfile(rbuf, dtext, rcs_patch_lines);
 
 		if (rbuf == NULL)
 			break;
@@ -1354,9 +1352,11 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 int
 rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
-	char *newdeltatext, *path_tmp1, *path_tmp2;
+	char *path_tmp1, *path_tmp2;
 	struct rcs_delta *rdp, *prevrdp, *nextrdp;
-	BUF *nextbuf, *prevbuf, *newdiff;
+	BUF *newdeltatext, *nextbuf, *prevbuf, *newdiff;
+
+	nextrdp = prevrdp = NULL;
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
@@ -1377,8 +1377,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	prevrdp = (struct rcs_delta *)TAILQ_NEXT(rdp, rd_list);
 	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, rcs_tqh, rd_list);
 
-	newdeltatext = NULL;
-	prevbuf = nextbuf = NULL;
+	newdeltatext = prevbuf = nextbuf = NULL;
 
 	if (prevrdp != NULL) {
 		if ((prevbuf = rcs_getrev(rf, prevrdp->rd_num)) == NULL)
@@ -1404,9 +1403,9 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		if (rcs_diffreg(path_tmp1, path_tmp2, newdiff) == D_ERROR)
 			errx(1, "rcs_diffreg failed");
 
-		newdeltatext = rcs_buf_release(newdiff);
+		newdeltatext = newdiff;
 	} else if (nextrdp == NULL && prevrdp != NULL) {
-		newdeltatext = rcs_buf_release(prevbuf);
+		newdeltatext = prevbuf;
 	}
 
 	if (newdeltatext != NULL) {
@@ -1434,9 +1433,6 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	rf->rf_flags &= ~RCS_SYNCED;
 
 	rcs_freedelta(rdp);
-
-	if (newdeltatext != NULL)
-		xfree(newdeltatext);
 
 	if (path_tmp1 != NULL)
 		xfree(path_tmp1);
@@ -2093,11 +2089,15 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rdp->rd_text = xmalloc(RCS_TOKLEN(rfp) + 1);
-	if (strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1)) >=
-	    RCS_TOKLEN(rfp) + 1)
-		errx(1, "rcs_parse_deltatext: strlcpy");
-	rdp->rd_tlen = RCS_TOKLEN(rfp);
+	if (RCS_TOKLEN(rfp) == 0) {
+		rdp->rd_text = xmalloc(1);
+		rdp->rd_text[0] = '\0';
+		rdp->rd_tlen = 0;
+	} else {
+		rdp->rd_text = xmalloc(RCS_TOKLEN(rfp));
+		memcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp)));
+		rdp->rd_tlen = RCS_TOKLEN(rfp);
+	}
 
 	return (1);
 }
@@ -2559,18 +2559,18 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
  *
  * On error, return NULL.
  */
-static char *
-rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
-    size_t len, int mode)
+static BUF *
+rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 {
 	ptrdiff_t c_offset, sizdiff, start_offset;
 	size_t i;
 	int kwtype;
 	u_int j, found;
-	char *c, *kwstr, *start, *end, *tbuf;
+	u_char *c, *data, *kwstr, *start, *end, *tbuf, *fin;
 	char expbuf[256], buf[256];
 	struct tm tb;
 	char *fmt;
+	size_t len, newlen, tbuflen;
 
 	kwtype = 0;
 	kwstr = NULL;
@@ -2583,12 +2583,41 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 	if (timezone_flag != NULL)
 		rcs_set_tz(timezone_flag, rdp, &tb);
 
+	len = rcs_buf_len(bp);
+	newlen = 0;
+
+	c = rcs_buf_get(bp);
+	found = 0;
+	for (i = 0; i < len; i++) {
+		if (*c == '$') {
+			c++;
+			i++;
+			for (j = 0; j < RCS_NKWORDS; j++) {
+				if (!strncmp(c, rcs_expkw[j].kw_str,
+				    strlen(rcs_expkw[j].kw_str))) {
+					found = 1;
+					kwstr = rcs_expkw[j].kw_str;
+					kwtype = rcs_expkw[j].kw_type;
+					break;
+				}
+			}
+		}
+		c++;
+	}
+	if (found == 0)
+		return (bp);
+
+	rcs_buf_putc(bp, '\0');
+	data = rcs_buf_release(bp);
+	c = data;
+	fin = c + len;
+	len++;
 	/*
 	 * Keyword formats:
 	 * $Keyword$
 	 * $Keyword: value$
 	 */
-	for (c = data; *c != '\0' && i < len; c++) {
+	for (; c != fin; c++) {
 		if (*c == '$') {
 			/* remember start of this possible keyword */
 			start = c;
@@ -2596,6 +2625,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 
 			/* first following character has to be alphanumeric */
 			c++;
+			i++;
 			if (!isalpha(*c)) {
 				c = start;
 				continue;
@@ -2723,7 +2753,9 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 					errx(1, "rcs_expand_keywords: string truncated");
 
 			sizdiff = strlen(expbuf) - (end - start);
-			tbuf = xstrdup(end);
+			tbuflen = len - (end - start);
+			tbuf = xmalloc(tbuflen);
+			memcpy(tbuf, end, tbuflen);
 			/* only realloc if we have to */
 			if (sizdiff > 0) {
 				char *newdata;
@@ -2736,17 +2768,18 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				 * after realloc()
 				 */
 				start = data + start_offset;
-				c = data + c_offset;
 			}
-			if (strlcpy(start, expbuf, len) >= len ||
-			    strlcat(data, tbuf, len) >= len)
-				errx(1, "rcs_expand_keywords: string truncated");
+			memcpy(start, expbuf, strlen(expbuf));
+			start += strlen(expbuf);
+			memcpy(start, tbuf, tbuflen);
 			xfree(tbuf);
 			i += strlen(expbuf);
 		}
 	}
+	bp = rcs_buf_alloc(len, BUF_AUTOEXT);
+	rcs_buf_set(bp, data, len, 0);
 
-	return (data);
+	return (bp);
 }
 
 /*
@@ -2756,9 +2789,10 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
  * Returns -1 on error, 0 on success.
  */
 int
-rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
+rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, BUF *bp)
 {
 	size_t len;
+	u_char *dtext;
 	struct rcs_delta *rdp;
 
 	/* Write operations require full parsing */
@@ -2770,12 +2804,14 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
 	if (rdp->rd_text != NULL)
 		xfree(rdp->rd_text);
 
-	len = strlen(dtext);
+	len = rcs_buf_len(bp);
+	dtext = rcs_buf_release(bp);
+	bp = NULL;
 	if (len != 0) {
-		/* XXX - use xstrdup() if rd_text changes to char *. */
-		rdp->rd_text = xmalloc(len + 1);
+		rdp->rd_text = xmalloc(len);
 		rdp->rd_tlen = len;
-		(void)memcpy(rdp->rd_text, dtext, len + 1);
+		(void)memcpy(rdp->rd_text, dtext, len);
+		xfree(dtext);
 	} else {
 		rdp->rd_text = NULL;
 		rdp->rd_tlen = 0;
@@ -2894,9 +2930,7 @@ BUF *
 rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 {
 	struct rcs_delta *rdp;
-	char *expanded, *tbuf;
 	int expmode;
-	size_t len;
 
 	/*
 	 * Do keyword expansion if required.
@@ -2909,14 +2943,7 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 	if (!(expmode & RCS_KWEXP_NONE)) {
 		if ((rdp = rcs_findrev(rf, rev)) == NULL)
 			errx(1, "could not fetch revision");
-		rcs_buf_putc(bp, '\0');
-		len = rcs_buf_len(bp);
-		tbuf = rcs_buf_release(bp);
-		expanded = rcs_expand_keywords(rf->rf_path, rdp,
-		    tbuf, len, expmode);
-		bp = rcs_buf_alloc(len, BUF_AUTOEXT);
-		rcs_buf_set(bp, expanded, strlen(expanded), 0);
-		xfree(expanded);
+		return (rcs_expand_keywords(rf->rf_path, rdp, bp, expmode));
 	}
 	return (bp);
 }
