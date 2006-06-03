@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.59 2006/05/31 22:25:59 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.60 2006/06/03 19:07:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -128,7 +128,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
-	char *entry, rev[16], timebuf[64], tbuf[32];
+	char *entry, rev[16], timebuf[64], tbuf[32], stickytag[32];
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
@@ -188,9 +188,17 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 		strlcpy(timebuf, tbuf, sizeof(timebuf));
 	}
 
+	if (flags & CO_SETSTICKY) {
+		l = snprintf(stickytag, sizeof(stickytag), "T%s", rev);
+		if (l == -1 || l >= (int)sizeof(stickytag))
+			fatal("cvs_checkout_file: overflow");
+	} else {
+		stickytag[0] = '\0';
+	}
+
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//", cf->file_name,
-	    rev, timebuf);
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//%s", cf->file_name,
+	    rev, timebuf, stickytag);
 
 	ent = cvs_ent_open(cf->file_wd);
 	cvs_ent_add(ent, entry);

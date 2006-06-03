@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.69 2006/05/31 22:25:59 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.70 2006/06/03 19:07:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -25,6 +25,8 @@
 int	cvs_update(int, char **);
 int	prune_dirs = 0;
 int	build_dirs = 0;
+int	reset_stickies = 0;
+static char *tag = NULL;
 
 static void update_clear_conflict(struct cvs_file *);
 
@@ -52,6 +54,7 @@ cvs_update(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmd_update.cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
+			reset_stickies = 1;
 			break;
 		case 'C':
 		case 'D':
@@ -81,6 +84,7 @@ cvs_update(int argc, char **argv)
 		case 'R':
 			break;
 		case 'r':
+			tag = optarg;
 			break;
 		default:
 			fatal("%s", cvs_cmd_update.cmd_synopsis);
@@ -238,8 +242,8 @@ cvs_update_leavedir(struct cvs_file *cf)
 void
 cvs_update_local(struct cvs_file *cf)
 {
-	int ret;
 	BUF *bp;
+	int ret, flags;
 	CVSENTRIES *entlist;
 
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
@@ -258,8 +262,15 @@ cvs_update_local(struct cvs_file *cf)
 	 * the bp buffer will be released inside rcs_kwexp_buf,
 	 * which is called from cvs_checkout_file().
 	 */
+	flags = 0;
 	bp = NULL;
-	cvs_file_classify(cf, NULL, 1);
+	cvs_file_classify(cf, tag, 1);
+
+	if (cf->file_status == FILE_UPTODATE && cf->file_ent != NULL &&
+	    cf->file_ent->ce_tag != NULL && reset_stickies == 1) {
+		cf->file_status = FILE_CHECKOUT;
+		cf->file_rcsrev = rcs_head_get(cf->file_rcs);
+	}
 
 	switch (cf->file_status) {
 	case FILE_UNKNOWN:
@@ -291,7 +302,10 @@ cvs_update_local(struct cvs_file *cf)
 		if (bp == NULL)
 			fatal("cvs_update_local: failed to get HEAD");
 
-		cvs_checkout_file(cf, cf->file_rcsrev, bp, 0);
+		if (tag != NULL)
+			flags = CO_SETSTICKY;
+
+		cvs_checkout_file(cf, cf->file_rcsrev, bp, flags);
 		cvs_printf("U %s\n", cf->file_path);
 		break;
 	case FILE_MERGE:
