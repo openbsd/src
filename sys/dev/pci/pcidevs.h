@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1071 2006/05/28 03:15:35 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1072 2006/06/03 19:36:36 gwk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -160,6 +160,7 @@
 #define	PCI_VENDOR_PHILIPS	0x1131		/* Philips */
 #define	PCI_VENDOR_ZIATECH	0x1138		/* Ziatech */
 #define	PCI_VENDOR_CYCLONE	0x113c		/* Cyclone */
+#define	PCI_VENDOR_EQUINOX	0x113f		/* Equinox */
 #define	PCI_VENDOR_ALLIANCE	0x1142		/* Alliance Semiconductor */
 #define	PCI_VENDOR_SCHNEIDERKOCH	0x1148		/* Schneider & Koch */
 #define	PCI_VENDOR_DIGI	0x114f		/* Digi */
@@ -1380,6 +1381,15 @@
 
 /* Eumitcom Technology products */
 #define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P */
+
+/* Equinox Systems products */
+#define	PCI_PRODUCT_EQUINOX_SST64	0x0808		/* SST-64P */
+#define	PCI_PRODUCT_EQUINOX_SST128	0x1010		/* SST-128P */
+#define	PCI_PRODUCT_EQUINOX_SST16A	0x80C0		/* SST-16P */
+#define	PCI_PRODUCT_EQUINOX_SST16B	0x80C4		/* SST-16P */
+#define	PCI_PRODUCT_EQUINOX_SST16C	0x80C8		/* SST-16P */
+#define	PCI_PRODUCT_EQUINOX_SST4	0x8888		/* SST-4p */
+#define	PCI_PRODUCT_EQUINOX_SST8	0x9090		/* SST-8p */
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
