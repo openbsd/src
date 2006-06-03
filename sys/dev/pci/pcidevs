@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1071 2006/05/28 03:15:35 jsg Exp $
+$OpenBSD: pcidevs,v 1.1072 2006/06/03 19:36:36 gwk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ vendor	FORE		0x1127	FORE Systems
 vendor	PHILIPS		0x1131	Philips
 vendor	ZIATECH		0x1138	Ziatech
 vendor	CYCLONE		0x113c	Cyclone
+vendor	EQUINOX		0x113f	Equinox
 vendor	ALLIANCE	0x1142	Alliance Semiconductor
 vendor	SCHNEIDERKOCH	0x1148	Schneider & Koch
 vendor	DIGI		0x114f	Digi
@@ -1375,6 +1376,15 @@ product ES FREEDOM		0x0001	Freedom GBus
 
 /* Eumitcom Technology products */
 product EUMITCOM WL11000P	0x1100	WL11000P
+
+/* Equinox Systems products */
+product EQUINOX SST64		0x0808	SST-64P
+product EQUINOX SST128		0x1010	SST-128P
+product EQUINOX SST16A		0x80C0	SST-16P
+product EQUINOX SST16B		0x80C4	SST-16P
+product EQUINOX SST16C		0x80C8	SST-16P
+product EQUINOX SST4		0x8888	SST-4p
+product EQUINOX SST8		0x9090	SST-8p
 
 /* FORE products */
 product FORE PCA200		0x0210	ATM PCA-200
