@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.163 2006/06/02 19:53:12 mpf Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.164 2006/06/03 14:59:44 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -951,7 +951,8 @@ setifaddr(const char *addr, int param)
 	 * and the flags may change when the address is set.
 	 */
 	setaddr++;
-	newaddr = 1;
+	if (doalias >= 0)
+		newaddr = 1;
 	if (doalias == 0)
 		clearaddr = 1;
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
