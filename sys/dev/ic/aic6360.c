@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.11 2006/05/23 20:42:21 miod Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.12 2006/06/03 01:51:54 martin Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -294,6 +294,17 @@ aicattach(sc)
 	sc->sc_link.openings = 2;
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+}
+
+int
+aic_detach(struct device *self, int flags)
+{
+	struct aic_softc *sc = (struct aic_softc *) self;
+	int rv = 0;
+
+	rv = config_detach_children(&sc->sc_dev, flags);
+
+	return (rv);
 }
 
 /* Initialize AIC6360 chip itself

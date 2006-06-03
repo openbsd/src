@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.14 2006/06/02 06:26:15 martin Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.15 2006/06/03 01:51:54 martin Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 
 int	aic_pcmcia_match(struct device *, void *, void *);
 void	aic_pcmcia_attach(struct device *, struct device *, void *);
+int	aic_pcmcia_detach(struct device *, int);
 
 struct aic_pcmcia_softc {
 	struct aic_softc sc_aic;		/* real "aic" softc */
@@ -62,7 +63,8 @@ struct aic_pcmcia_softc {
 };
 
 struct cfattach aic_pcmcia_ca = {
-	sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach
+	sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach,
+	aic_pcmcia_detach
 };
 
 struct aic_pcmcia_product {
@@ -169,4 +171,23 @@ aic_pcmcia_attach(parent, self, aux)
 
 	aicattach(sc);
 
+}
+
+int
+aic_pcmcia_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct aic_pcmcia_softc *sc= (void *)self;
+	int error;
+
+	error = aic_detach(self, flags);
+	if (error)
+		return (error);
+
+	/* Unmap our i/o window and i/o space. */
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_io_window);
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+
+	return (0);
 }
