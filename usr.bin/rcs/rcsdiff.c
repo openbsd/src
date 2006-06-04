@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.65 2006/05/27 05:49:14 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.66 2006/06/04 20:32:56 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -196,6 +196,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	diff_rev1 = rev;
 	diff_rev2 = NULL;
+	path1 = path2 = NULL;
 
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		warn("%s", filename);
@@ -283,6 +284,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 
 	diff_rev1 = rev1;
 	diff_rev2 = rev2;
+	path1 = path2 = NULL;
 
 	rcsnum_tostr(rev1, rbuf1, sizeof(rbuf1));
 	if (!(flags & QUIET))
