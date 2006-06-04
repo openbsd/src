@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2004/12/30 21:26:17 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.16 2006/06/04 17:20:38 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
@@ -53,6 +53,6 @@
  * The hp300 only has one physical memory segment.
  */
 #define	VM_PHYSSEG_MAX		1
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 
 #endif /* _HP300_VMPARAM_H_ */
