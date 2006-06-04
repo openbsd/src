@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.97 2006/04/27 12:46:56 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.98 2006/06/04 20:19:17 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
@@ -137,6 +137,8 @@ with 1 being the fastest,
 and 9 providing the best level of compression.
 The default is 6.
 .El
+.Pp
+.Ex -std cvs
 .Sh COMMANDS
 .Nm
 supports the following commands:
@@ -1959,31 +1961,6 @@ This description is used by
 when archiving this file with the
 .Ic commit
 command.
-.El
-.Sh DIAGNOSTICS
-The
-.Nm
-utility exits 0 on success, or with one of the following return codes.
-The numerical values corresponding to the symbolic ones are given in
-parentheses for easy reference.
-.Bl -tag -width Ds
-.It Dv CVS_EX_USAGE Pq 1
-The
-.Nm
-command was used incorrectly.
-Either with the wrong number of arguments, a bad flag, a bad syntax in
-a parameter, etc...
-.It Dv CVS_EX_DATA Pq 2
-The input data was incorrect in some way.
-.It Dv CVS_EX_PROTO Pq 3
-The remote system returned something that was not possible during
-a protocol exchange.
-.It Dv CVS_EX_FILE Pq 4
-An error occurred while doing an operation on a file.
-.It Dv CVS_EX_BADROOT Pq 5
-The
-.Ev CVSROOT
-was not given or does not match the expected format.
 .El
 .Sh SEE ALSO
 .Xr diff 1 ,
