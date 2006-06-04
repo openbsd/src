@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.12 2006/06/04 01:35:05 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.12 2006/06/04 01:35:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,9 @@ print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
 			break;
 		case STRIPDISC:
 			cnt += printf("strip disc; ");
+			break;
+		case NMEADISC:
+			cnt += printf("nmea disc; ");
 			break;
 		default:
 			cnt += printf("#%d disc; ", ldisc);
