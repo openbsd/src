@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.139 2006/04/25 04:37:01 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.140 2006/06/04 01:34:48 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.139 2006/04/25 04:37:01 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.140 2006/06/04 01:34:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2216,13 +2216,16 @@ print_sensor(struct sensor *s)
 
 	if (s->tv.tv_sec) {
 		time_t t = s->tv.tv_sec;
+		char decimal[10];
 		char *ct;
 
 		ct = ctime(&t);
 		if (ct) {
 			ct = strdup(ct);
 			ct[19] = '\0';
-			printf(", %s.%2f", ct, s->tv.tv_usec / 1000.0);
+			snprintf(decimal, sizeof decimal, "%.3f",
+			    s->tv.tv_usec / 1000000.0);
+			printf(", %s%s", ct, decimal+1);
 		}
 	}
 }
