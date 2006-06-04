@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.181 2006/06/04 09:52:56 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.182 2006/06/04 13:53:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1235,9 +1235,6 @@ next:
 				}
 			}
 
-			/* XXX */
-			if (found == 0)
-				fatal("no matching branch on list");
 			break;
 		}
 
