@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adjtime.2,v 1.13 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: adjtime.2,v 1.14 2006/06/04 18:47:33 otto Exp $
 .\"	$NetBSD: adjtime.2,v 1.5 1995/10/12 15:40:44 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -61,6 +61,9 @@ may not be finished when
 .Fn adjtime
 is called again.
 If
+.Fa delta
+is null, no adjustment is done.
+If
 .Fa olddelta
 is non-null, the structure pointed to will contain, upon return, the
 number of microseconds still to be corrected from the earlier call.
@@ -70,9 +73,9 @@ of computers in a local area network.
 Such time servers would slow down the clocks of some machines
 and speed up the clocks of others to bring them to the average network time.
 .Pp
-The call
+Only the superuser may adjust the time using the
 .Fn adjtime
-is restricted to the superuser.
+function.
 .Sh RETURN VALUES
 A return value of 0 indicates that the call succeeded.
 A return value of \-1 indicates that an error occurred, and in this

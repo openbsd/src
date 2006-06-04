@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.54 2006/01/20 07:53:48 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.55 2006/06/04 18:47:33 otto Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -385,6 +385,12 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	long ndelta, ntickdelta, odelta;
 	int s, error;
 
+	if (!SCARG(uap, delta)) {
+		s = splclock();
+		odelta = timedelta;
+		splx(s);
+		goto out;
+	}
 	if ((error = suser(p, 0)))
 		return (error);
 	if ((error = copyin((void *)SCARG(uap, delta), (void *)&atv,
@@ -432,6 +438,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	tickdelta = ntickdelta;
 	splx(s);
 
+out:
 	if (SCARG(uap, olddelta)) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
