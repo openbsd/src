@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.16 2006/06/04 03:00:29 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.17 2006/06/04 18:57:37 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -367,6 +367,7 @@ rcs_write(RCSFILE *rfp)
 	size_t len;
 	int fd, from_fd, to_fd;
 
+	fn = NULL;
 	from_fd = to_fd = fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
@@ -1357,6 +1358,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	BUF *newdeltatext, *nextbuf, *prevbuf, *newdiff;
 
 	nextrdp = prevrdp = NULL;
+	path_tmp1 = path_tmp2 = NULL;
 
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
