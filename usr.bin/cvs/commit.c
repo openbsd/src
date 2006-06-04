@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.68 2006/06/01 20:00:52 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.69 2006/06/04 09:52:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -158,6 +158,9 @@ cvs_commit_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
 	cvs_file_classify(cf, NULL, 0);
+
+	if (cvs_noexec == 1)
+		return;
 
 	if (cf->file_type != CVS_FILE)
 		fatal("cvs_commit_local: '%s' is not a file", cf->file_path);

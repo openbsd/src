@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.47 2006/06/01 20:01:31 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.48 2006/06/04 09:52:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -89,8 +89,10 @@ cvs_import(int argc, char **argv)
 	if (l == -1 || l >= (int)sizeof(repo))
 		fatal("cvs_import: overflow");
 
-	if (mkdir(repo, 0755) == -1 && errno != EEXIST)
-		fatal("cvs_import: %s: %s", repo, strerror(errno));
+	if (cvs_noexec != 1) {
+		if (mkdir(repo, 0755) == -1 && errno != EEXIST)
+			fatal("cvs_import: %s: %s", repo, strerror(errno));
+	}
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
@@ -132,6 +134,8 @@ cvs_import_local(struct cvs_file *cf)
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "Importing %s", cf->file_path);
 
+		if (cvs_noexec == 1)
+			return;
 
 		if (mkdir(cf->file_rpath, 0755) == -1 && errno != EEXIST)
 			fatal("cvs_import_local: %s: %s", cf->file_rpath,
@@ -166,6 +170,11 @@ import_new(struct cvs_file *cf)
 	RCSNUM *branch, *brev;
 
 	cvs_log(LP_TRACE, "import_new(%s)", cf->file_name);
+
+	if (cvs_noexec == 1) {
+		cvs_printf("N %s/%s\n", import_repository, cf->file_path);
+		return;
+	}
 
 	if ((branch = rcsnum_parse(import_branch)) == NULL)
 		fatal("import_new: failed to parse branch");
@@ -272,6 +281,7 @@ import_update(struct cvs_file *cf)
 
 	if (rcs_deltatext_set(cf->file_rcs, newrev, d) == -1)
 		fatal("import_update: failed to set deltatext");
+
 	xfree(d);
 
 	import_tag(cf, brev, newrev);
@@ -296,11 +306,13 @@ import_tag(struct cvs_file *cf, RCSNUM *branch, RCSNUM *newrev)
 {
 	char b[16];
 
-	rcsnum_tostr(branch, b, sizeof(b));
-	rcs_sym_add(cf->file_rcs, vendor_tag, branch);
+	if (cvs_noexec != 1) {
+		rcsnum_tostr(branch, b, sizeof(b));
+		rcs_sym_add(cf->file_rcs, vendor_tag, branch);
 
-	rcsnum_tostr(newrev, b, sizeof(b));
-	rcs_sym_add(cf->file_rcs, release_tag, newrev);
+		rcsnum_tostr(newrev, b, sizeof(b));
+		rcs_sym_add(cf->file_rcs, release_tag, newrev);
+	}
 }
 
 static char *
@@ -318,17 +330,19 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 
 	b3 = cvs_buf_alloc(128, BUF_AUTOEXT);
 
-	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-	cvs_buf_write_stmp(b1, p1, 0600, NULL);
-	cvs_buf_free(b1);
+	if (cvs_noexec != 1) {
+		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
+		cvs_buf_write_stmp(b1, p1, 0600, NULL);
+		cvs_buf_free(b1);
 
-	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-	cvs_buf_write_stmp(b2, p2, 0600, NULL);
-	cvs_buf_free(b2);
+		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
+		cvs_buf_write_stmp(b2, p2, 0600, NULL);
+		cvs_buf_free(b2);
 
-	diff_format = D_RCSDIFF;
-	if (cvs_diffreg(p2, p1, b3) == D_ERROR)
-		fatal("import_get_rcsdiff: failed to get RCS patch");
+		diff_format = D_RCSDIFF;
+		if (cvs_diffreg(p2, p1, b3) == D_ERROR)
+			fatal("import_get_rcsdiff: failed to get RCS patch");
+	}
 
 	cvs_buf_putc(b3, '\0');
 	delta = cvs_buf_release(b3);

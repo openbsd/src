@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.52 2006/06/01 20:00:52 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.53 2006/06/04 09:52:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -104,7 +104,7 @@ cvs_add_local(struct cvs_file *cf)
 static void
 add_directory(struct cvs_file *cf)
 {
-	int l;
+	int l, added;
 	struct stat st;
 	CVSENTRIES *entlist;
 	char *entry, *repo;
@@ -116,10 +116,12 @@ add_directory(struct cvs_file *cf)
 	if (l == -1 || l >= MAXPATHLEN)
 		fatal("cvs_add_local: overflow");
 
+	added = 1;
 	if (stat(entry, &st) != -1) {
 		cvs_log(LP_NOTICE, "cannot add directory %s: "
 		    "a file with that name already exists",
 		    cf->file_path);
+		added = 0;
 	} else {
 		l = snprintf(entry, MAXPATHLEN, "%s/%s", cf->file_path,
 		    CVS_PATH_CVSDIR);
@@ -134,7 +136,8 @@ add_directory(struct cvs_file *cf)
 				cvs_log(LP_NOTICE, "%s already exists",
 				    entry);
 			}
-		} else {
+			added = 0;
+		} else if (cvs_noexec != 1) {
 			if (mkdir(cf->file_rpath, 0755) == -1 &&
 			    errno != EEXIST)
 				fatal("add_directory: %s: %s", cf->file_path,
@@ -159,10 +162,12 @@ add_directory(struct cvs_file *cf)
 			entlist = cvs_ent_open(cf->file_wd);
 			cvs_ent_add(entlist, entry);
 			cvs_ent_close(entlist, ENT_SYNC);
-
-			cvs_printf("Directory %s added to the repository\n",
-			    cf->file_rpath);
 		}
+	}
+
+	if (added == 1) {
+		cvs_printf("Directory %s added to the repository\n",
+		    cf->file_rpath);
 	}
 
 	cf->file_status = FILE_SKIP;
@@ -194,7 +199,7 @@ add_file(struct cvs_file *cf)
 		if (cf->file_rcs == NULL) {
 			cvs_log(LP_NOTICE, "cannot resurrect %s; "
 			    "RCS file removed by second party", cf->file_name);
-		} else {
+		} else if (cvs_noexec != 1) {
 			/*
 			 * Remove the '-' prefixing the version number and
 			 * restore the file.
@@ -223,14 +228,18 @@ add_file(struct cvs_file *cf)
 			if (b == NULL)
 				fatal("cvs_add_local: failed to get HEAD");
 
-			cvs_checkout_file(cf, cf->file_rcs->rf_head, b, 0);
+			cvs_checkout_file(cf, head, b, 0);
 			cvs_printf("U %s\n", cf->file_path);
 
 			cvs_log(LP_NOTICE, "%s, version %s, resurrected",
 			    cf->file_name, revbuf);
 
 			cf->file_status = FILE_UPTODATE;
+		} else {
+			cvs_log(LP_NOTICE, "%s, version %s, ressurected",
+			    cf->file_name, revbuf);
 		}
+
 		stop = 1;
 		break;
 	case FILE_CONFLICT:
@@ -261,15 +270,17 @@ add_file(struct cvs_file *cf)
 	if (stop == 1)
 		return;
 
-	entry = xmalloc(CVS_ENT_MAXLINELEN);
-	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/0/Initial %s//",
-	    cf->file_name, cf->file_name);
+	if (added != 0 && cvs_noexec != 1) {
+		entry = xmalloc(CVS_ENT_MAXLINELEN);
+		l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/0/Initial %s//",
+		    cf->file_name, cf->file_name);
 
-	entlist = cvs_ent_open(cf->file_wd);
-	cvs_ent_add(entlist, entry);
-	cvs_ent_close(entlist, ENT_SYNC);
+		entlist = cvs_ent_open(cf->file_wd);
+		cvs_ent_add(entlist, entry);
+		cvs_ent_close(entlist, ENT_SYNC);
 
-	xfree(entry);
+		xfree(entry);
+	}
 
 	if (added != 0) {
 		if (verbosity > 0)

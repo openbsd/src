@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.180 2006/06/01 20:00:52 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.181 2006/06/04 09:52:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -373,6 +373,9 @@ rcs_write(RCSFILE *rfp)
 	from_fd = to_fd = fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
+		return;
+
+	if (cvs_noexec == 1)
 		return;
 
 	/* Write operations need the whole file parsed */
