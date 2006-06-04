@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.15 2006/06/04 02:56:53 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.16 2006/06/04 03:00:29 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2771,10 +2771,10 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 				fin = data + len;
 			}
 			memcpy(start, expbuf, strlen(expbuf));
-			start += strlen(expbuf);
+			start += sizdiff;
 			memcpy(start, tbuf, tbuflen);
 			xfree(tbuf);
-			i += strlen(expbuf);
+			i += sizdiff;
 		}
 	}
 	bp = rcs_buf_alloc(len - 1, BUF_AUTOEXT);
