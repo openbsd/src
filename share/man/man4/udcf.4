@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.9 2006/05/28 18:52:16 mbalmer Exp $
+.\" $OpenBSD: udcf.4,v 1.10 2006/06/04 09:52:40 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -36,15 +36,13 @@ interface.
 The driver automatically detects if it is receiving the German DCF77 timecode
 or the Swiss HBG timecode and indicates the clock type in the sensor
 description.
-The first four bytes of the description are the NTP identifier followed
-by a space and the station name (which might be the same).
 This value will not be changed once set, even when the receiver
 module is changed at runtime.
-.Bl -tag -width "DCF  DCFXX"
-.It DCF  DCF77
+.Bl -tag -width "DCFXX"
+.It DCF77
 German DCF77 time signal station
 (77.5 kHz longwave transmitter located in Mainflingen near Frankfurt)
-.It HBG  HBG
+.It HBG
 Swiss HBG time signal station
 (75 kHz longwave transmitter located in Prangins near Geneva)
 .El

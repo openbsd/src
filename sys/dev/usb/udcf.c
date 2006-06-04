@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.9 2006/05/28 18:52:16 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.10 2006/06/04 09:52:40 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -56,8 +56,8 @@ int udcfdebug = 0;
 #define CLOCK_HBG	1
 
 static const char	*clockname[2] = {
-	"DCF  DCF77",
-	"HBG  HBG" };
+	"DCF77",
+	"HBG" };
 
 struct udcf_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -179,6 +179,8 @@ USB_ATTACH(udcf)
 	    sizeof(sc->sc_sensor.device));
 	sc->sc_sensor.type = SENSOR_TIMEDELTA;
 	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+	sc->sc_sensor.flags = SENSOR_FINVALID;
+	sensor_add(&sc->sc_sensor);
 
 	/* Prepare the USB request to probe the value */
 
@@ -290,8 +292,7 @@ USB_DETACH(udcf)
 
 	/* Unregister the clock with the kernel */
 
-	if (sc->sc_sensor.status != SENSOR_S_UNKNOWN)
-		sensor_del(&sc->sc_sensor);
+	sensor_del(&sc->sc_sensor);
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_bv_task);
@@ -409,9 +410,7 @@ udcf_probe(void *xsc)
 					    clockname[CLOCK_HBG] :
 					    clockname[CLOCK_DCF77],
 					    sizeof(sc->sc_sensor.desc));
-					DPRINTF(("add timedelta sensor for %s\n",
-						sc->sc_sensor.desc));
-					sensor_add(&sc->sc_sensor);
+					sc->sc_sensor.flags &= ~SENSOR_FINVALID;
 				}
 				sc->sc_sensor.status = SENSOR_S_OK;
 

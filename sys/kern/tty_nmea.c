@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.3 2006/06/01 23:17:08 ckuethe Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.4 2006/06/04 09:52:40 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -115,7 +115,8 @@ nmeaopen(dev_t dev, struct tty *tp)
 		np->time.type = SENSOR_TIMEDELTA;
 		np->time.value = 0LL;
 		np->time.rfact = 0;
-		np->time.flags = 0;
+		np->time.flags = SENSOR_FINVALID;
+		sensor_add(&np->time);
 		np->state = S_SYNC;
 		np->last = 0L;
 	}
@@ -129,8 +130,7 @@ nmeaclose(struct tty *tp, int flags)
 	struct nmea *np = (struct nmea *)tp->t_sc;
 
 	tp->t_line = 0;	/* switch back to termios */
-	if (np->time.status != SENSOR_S_UNKNOWN)
-		sensor_del(&np->time);
+	sensor_del(&np->time);
 	free(np, M_DEVBUF);
 	nmea_count--;
 	return linesw[0].l_close(tp, flags);
@@ -368,8 +368,8 @@ nmea_rmc(struct nmea *np)
 	np->time.tv.tv_sec = np->tv.tv_sec;
 	np->time.tv.tv_usec = np->tv.tv_usec;
 	if (np->time.status == SENSOR_S_UNKNOWN) {
-		strlcpy(np->time.desc, np->ti == TI_GPS ? "GPS  GPS" :
-		    "LORC Loran-C", sizeof(np->time.desc));
+		strlcpy(np->time.desc, np->ti == TI_GPS ? "GPS" :
+		    "Loran-C", sizeof(np->time.desc));
 		if (np->fldcnt == 12) {
 			switch (np->cbuf[np->fpos[11]]) {
 			case 'S':
@@ -395,7 +395,7 @@ nmea_rmc(struct nmea *np)
 			}
 		}
 		np->time.status = SENSOR_S_OK;
-		sensor_add(&np->time);
+		np->time.flags &= ~SENSOR_FINVALID;
 	}
 	switch (np->cbuf[np->fpos[1]]) {
 	case 'A':
