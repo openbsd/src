@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.14 2006/06/04 02:54:59 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.15 2006/06/04 02:56:53 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2768,6 +2768,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 				 * after realloc()
 				 */
 				start = data + start_offset;
+				fin = data + len;
 			}
 			memcpy(start, expbuf, strlen(expbuf));
 			start += strlen(expbuf);
