@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.62 2006/06/01 20:00:52 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.63 2006/06/04 14:56:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -117,7 +117,17 @@ cvs_status_local(struct cvs_file *cf)
 	    cf->file_ent->ce_conflict != NULL)
 		status = "File had conflicts on merge";
 
-	cvs_printf("File: %-17s\tStatus: %s\n\n", cf->file_name, status);
+	if (cf->file_status == FILE_LOST ||
+	    cf->file_status == FILE_UNKNOWN ||
+	    cf->file_rcs->rf_inattic == 1) {
+		l = snprintf(buf, sizeof(buf), "no file %s\t", cf->file_name);
+		if (l == -1 || l >= (int)sizeof(buf))
+			fatal("cvs_status_local: overflow");
+	} else
+		if (strlcpy(buf, cf->file_name, sizeof(buf)) >= sizeof(buf))
+			fatal("cvs_status_local: overflow");
+
+	cvs_printf("File: %-17s\tStatus: %s\n\n", buf, status);
 
 	if (cf->file_ent == NULL) {
 		l = snprintf(buf, sizeof(buf),
