@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adjtime.2,v 1.14 2006/06/04 18:47:33 otto Exp $
+.\"	$OpenBSD: adjtime.2,v 1.15 2006/06/04 19:45:37 otto Exp $
 .\"	$NetBSD: adjtime.2,v 1.5 1995/10/12 15:40:44 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -88,7 +88,10 @@ will fail if:
 .It Bq Er EFAULT
 Either of the arguments point outside the process's allocated address space.
 .It Bq Er EPERM
-The process's effective user ID is not that of the superuser.
+The
+.Fn delta
+argument is non-null and the process's effective user ID is not that
+of the superuser.
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
@@ -105,3 +108,8 @@ The
 .Fn adjtime
 function call appeared in
 .Bx 4.3 .
+.Sh CAVEATS
+Other operating systems restrict calling
+.Nm
+to the superuser and might not allow requesting the current
+correction without specifying a new value.
