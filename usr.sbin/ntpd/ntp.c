@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.82 2006/06/02 20:45:34 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.83 2006/06/04 18:58:13 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -422,7 +422,7 @@ peer_remove(struct ntp_peer *p)
 	peer_cnt--;
 }
 
-void
+int
 priv_adjtime(void)
 {
 	struct ntp_peer		 *p;
@@ -435,7 +435,7 @@ priv_adjtime(void)
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
 		if (!p->update.good)
-			return;
+			return (1);
 		offset_cnt += p->weight;
 	}
 
@@ -444,6 +444,9 @@ priv_adjtime(void)
 			continue;
 		offset_cnt += s->weight;
 	}
+
+	if (offset_cnt == 0)
+		return (1);
 
 	if ((offsets = calloc(offset_cnt, sizeof(struct ntp_offset *))) == NULL)
 		fatal("calloc priv_adjtime");
@@ -464,43 +467,43 @@ priv_adjtime(void)
 
 	qsort(offsets, offset_cnt, sizeof(struct ntp_offset *), offset_compare);
 
-	if (offset_cnt > 0) {
-		if (offset_cnt > 1 && offset_cnt % 2 == 0) {
-			offset_median =
-			    (offsets[offset_cnt / 2 - 1]->offset +
-			    offsets[offset_cnt / 2]->offset) / 2;
-			conf->status.rootdelay =
-			    (offsets[offset_cnt / 2 - 1]->delay +
-			    offsets[offset_cnt / 2]->delay) / 2;
-			conf->status.stratum = MAX(
-			    offsets[offset_cnt / 2 - 1]->status.stratum,
-			    offsets[offset_cnt / 2]->status.stratum);
-		} else {
-			offset_median = offsets[offset_cnt / 2]->offset;
-			conf->status.rootdelay =
-			    offsets[offset_cnt / 2]->delay;
-			conf->status.stratum =
-			    offsets[offset_cnt / 2]->status.stratum;
-		}
-		conf->status.leap = offsets[offset_cnt / 2]->status.leap;
-
-		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
-		    &offset_median, sizeof(offset_median));
-
-		conf->status.reftime = gettime();
-		conf->status.stratum++;	/* one more than selected peer */
-		update_scale(offset_median);
-
-		conf->status.refid4 =
-		    offsets[offset_cnt / 2]->status.refid4;
-		conf->status.refid =
-		    offsets[offset_cnt / 2]->status.send_refid;
+	if (offset_cnt > 1 && offset_cnt % 2 == 0) {
+		offset_median =
+		    (offsets[offset_cnt / 2 - 1]->offset +
+		    offsets[offset_cnt / 2]->offset) / 2;
+		conf->status.rootdelay =
+		    (offsets[offset_cnt / 2 - 1]->delay +
+		    offsets[offset_cnt / 2]->delay) / 2;
+		conf->status.stratum = MAX(
+		    offsets[offset_cnt / 2 - 1]->status.stratum,
+		    offsets[offset_cnt / 2]->status.stratum);
+	} else {
+		offset_median = offsets[offset_cnt / 2]->offset;
+		conf->status.rootdelay =
+		    offsets[offset_cnt / 2]->delay;
+		conf->status.stratum =
+		    offsets[offset_cnt / 2]->status.stratum;
 	}
+	conf->status.leap = offsets[offset_cnt / 2]->status.leap;
+
+	imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
+	    &offset_median, sizeof(offset_median));
+
+	conf->status.reftime = gettime();
+	conf->status.stratum++;	/* one more than selected peer */
+	update_scale(offset_median);
+
+	conf->status.refid4 =
+	    offsets[offset_cnt / 2]->status.refid4;
+	conf->status.refid =
+	    offsets[offset_cnt / 2]->status.send_refid;
 
 	free(offsets);
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		p->update.good = 0;
+
+	return (0);
 }
 
 int

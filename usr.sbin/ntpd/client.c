@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.68 2006/05/29 20:51:54 ckuethe Exp $ */
+/*	$OpenBSD: client.c,v 1.69 2006/06/04 18:58:13 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -325,12 +325,11 @@ client_update(struct ntp_peer *p)
 		return (-1);
 
 	memcpy(&p->update, &p->reply[best], sizeof(p->update));
-	priv_adjtime();
-
-	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
-		if (p->reply[i].rcvd <= p->reply[best].rcvd)
-			p->reply[i].good = 0;
-
+	if (priv_adjtime() == 0) {
+		for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
+			if (p->reply[i].rcvd <= p->reply[best].rcvd)
+				p->reply[i].good = 0;
+	}
 	return (0);
 }
 
