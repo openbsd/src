@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.1 2005/04/19 21:30:18 miod Exp $ */
+/* $OpenBSD: vmparam.h,v 1.2 2006/06/04 17:21:24 miod Exp $ */
 /* public domain */
 
 #ifndef _SOLBOURNE_VMPARAM_H_
@@ -18,5 +18,10 @@
 #define	IOSPACE_BASE		((vaddr_t)0xff000000)
 #undef	IOSPACE_LEN
 #define	IOSPACE_LEN		0x00f00000		/* 15 MB of iospace */
+
+#undef	VM_PHYSSEG_MAX
+#define	VM_PHYSSEG_MAX		2
+#undef	VM_PHYSSEG_STRAT
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #endif /* _SOLBOURNE_VMPARAM_H_ */

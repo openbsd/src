@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 2005/04/13 04:03:46 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 2006/06/04 17:21:24 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -79,8 +79,8 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define	VM_PHYSSEG_MAX	8	/* this many physmem segments */
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+#define	VM_PHYSSEG_MAX		1	/* this many physmem segments */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 
 #define	VM_PHYSSEG_NOADD	/* XXX until uvm code is fixed */
 
