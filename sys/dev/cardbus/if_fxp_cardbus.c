@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.13 2006/04/16 22:33:32 miod Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.14 2006/06/04 21:07:39 fkr Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -115,10 +115,7 @@ const struct cardbus_matchid fxp_cardbus_devices[] = {
 #endif
 
 int
-fxp_cardbus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+fxp_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
 	    fxp_cardbus_devices,
@@ -126,9 +123,7 @@ fxp_cardbus_match(parent, match, aux)
 }
 
 void
-fxp_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fxp_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	char intrstr[16];
 	struct fxp_softc *sc = (struct fxp_softc *) self;
@@ -147,8 +142,8 @@ fxp_cardbus_attach(parent, self, aux)
 	csc->ct = ca->ca_ct;
 
 	/*
-         * Map control/status registers.
-         */
+	 * Map control/status registers.
+	 */
 	if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE1_REG,
 	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, &adr, &size) == 0) {
 		csc->base1_reg = adr | 1;
@@ -198,7 +193,7 @@ fxp_cardbus_attach(parent, self, aux)
 }
 
 void
-fxp_cardbus_setup(struct fxp_softc * sc)
+fxp_cardbus_setup(struct fxp_softc *sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
 	struct cardbus_softc *psc =
@@ -232,9 +227,7 @@ fxp_cardbus_setup(struct fxp_softc * sc)
 }
 
 int
-fxp_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+fxp_cardbus_detach(struct device *self, int flags)
 {
 	struct fxp_softc *sc = (struct fxp_softc *) self;
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) self;
