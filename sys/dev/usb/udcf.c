@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.10 2006/06/04 09:52:40 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.11 2006/06/05 10:06:12 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -307,7 +307,6 @@ USB_DETACH(udcf)
 }
 
 /* udcf_intr runs in an interrupt context */
-
 void
 udcf_intr(void *xsc)
 {
@@ -316,7 +315,6 @@ udcf_intr(void *xsc)
 }
 
 /* bit value detection */
-
 void
 udcf_bv_intr(void *xsc)
 {
@@ -325,7 +323,6 @@ udcf_bv_intr(void *xsc)
 }
 
 /* minute gap detection */
-
 void
 udcf_mg_intr(void *xsc)
 {
@@ -334,7 +331,6 @@ udcf_mg_intr(void *xsc)
 }
 
 /* signal loss detection */
-
 void
 udcf_sl_intr(void *xsc)
 {
@@ -343,7 +339,6 @@ udcf_sl_intr(void *xsc)
 }
 
 /* degrade the sensor if no new time received for >= DPERIOD seconds. */
-
 void
 udcf_it_intr(void *xsc)
 {
@@ -352,7 +347,6 @@ udcf_it_intr(void *xsc)
 }
 
 /* detect the cloc type (DCF77 or HBG) */
-
 void
 udcf_ct_intr(void *xsc)
 {
@@ -364,7 +358,6 @@ udcf_ct_intr(void *xsc)
  * udcf_probe runs in a process context.  If Bit 0 is set, the transmitter
  * emits at full power.  During the low-power emission we decode a zero bit.
  */
-
 void
 udcf_probe(void *xsc)
 {
@@ -438,7 +431,6 @@ udcf_probe(void *xsc)
 }
 
 /* detect the bit value */
-
 void
 udcf_bv_probe(void *xsc)
 {
@@ -463,7 +455,6 @@ udcf_bv_probe(void *xsc)
 }
 
 /* detect the minute gap */
-
 void
 udcf_mg_probe(void *xsc)
 {
@@ -576,7 +567,6 @@ udcf_mg_probe(void *xsc)
 }
 
 /* detect signal loss */
-
 void
 udcf_sl_probe(void *xsc)
 {
@@ -596,7 +586,6 @@ udcf_sl_probe(void *xsc)
 }
 
 /* invalidate time delta */
-
 void
 udcf_it_probe(void *xsc)
 {
@@ -611,7 +600,6 @@ udcf_it_probe(void *xsc)
 }
 
 /* detect clock type */
-
 void
 udcf_ct_probe(void *xsc)
 {
