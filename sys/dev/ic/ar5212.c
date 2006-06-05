@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.28 2005/12/18 17:59:58 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.29 2006/06/05 15:21:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -544,7 +544,7 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 		    rt->rt_info[i].r_control_rate, AH_FALSE));
 	}
 
-	if (!(channel->c_channel_flags & IEEE80211_CHAN_TURBO)) {
+	if ((channel->c_channel_flags & IEEE80211_CHAN_TURBO) == 0) {
 		rt = ar5k_ar5212_get_rate_table(hal, HAL_MODE_11B);
 		for (i = 0; i < rt->rt_rate_count; i++) {
 			data = AR5K_AR5212_RATE_DUR(rt->rt_info[i].r_rate_code);
@@ -558,6 +558,18 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 				    rt->rt_info[i].r_control_rate, AH_FALSE));
 			}
 		}
+	}
+
+	/* Fix for first revision of the AR5112 RF chipset */
+	if (hal->ah_radio >= AR5K_AR5112 &&
+	    hal->ah_radio_5ghz_revision < AR5K_SREV_RAD_5112A) {
+		AR5K_REG_WRITE(AR5K_AR5212_PHY_CCKTXCTL,
+		    AR5K_AR5212_PHY_CCKTXCTL_WORLD);
+		if (channel->c_channel_flags & IEEE80211_CHAN_OFDM)
+			data = 0xffb81020;
+		else
+			data = 0xffb80d20;
+		AR5K_REG_WRITE(AR5K_AR5212_PHY_FC, data);
 	}
 
 	/*
@@ -721,9 +733,8 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	    AR5K_AR5212_PHY_AGCCTL_NF |
 	    AR5K_AR5212_PHY_AGCCTL_CAL);
 
-	if (channel->c_channel_flags & IEEE80211_CHAN_B) {
-		hal->ah_calibration = AH_FALSE;
-	} else {
+	hal->ah_calibration = AH_FALSE;
+	if ((channel->c_channel_flags & IEEE80211_CHAN_B) == 0) {
 		hal->ah_calibration = AH_TRUE;
 		AR5K_REG_WRITE_BITS(AR5K_AR5212_PHY_IQ,
 		    AR5K_AR5212_PHY_IQ_CAL_NUM_LOG_MAX, 15);
@@ -993,18 +1004,17 @@ ar5k_ar5212_reset_tx_queue(struct ath_hal *hal, u_int queue)
 	/*
 	 * Set registers by channel mode
 	 */
+	cw_min = hal->ah_cw_min = AR5K_TUNE_CWMIN;
+	cw_max = hal->ah_cw_max = AR5K_TUNE_CWMAX;
+	hal->ah_aifs = AR5K_TUNE_AIFS;
 	if (IEEE80211_IS_CHAN_XR(channel)) {
-		hal->ah_cw_min = AR5K_TUNE_CWMIN_XR;
+		cw_min = hal->ah_cw_min = AR5K_TUNE_CWMIN_XR;
 		cw_max = hal->ah_cw_max = AR5K_TUNE_CWMAX_XR;
 		hal->ah_aifs = AR5K_TUNE_AIFS_XR;
 	} else if (IEEE80211_IS_CHAN_B(channel)) {
-		hal->ah_cw_min = AR5K_TUNE_CWMIN_11B;
+		cw_min = hal->ah_cw_min = AR5K_TUNE_CWMIN_11B;
 		cw_max = hal->ah_cw_max = AR5K_TUNE_CWMAX_11B;
 		hal->ah_aifs = AR5K_TUNE_AIFS_11B;
-	} else {
-		hal->ah_cw_min = AR5K_TUNE_CWMIN;
-		hal->ah_cw_max = AR5K_TUNE_CWMAX;
-		hal->ah_aifs = AR5K_TUNE_AIFS;
 	}
 
 	/*

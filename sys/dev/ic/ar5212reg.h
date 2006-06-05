@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212reg.h,v 1.7 2005/12/18 17:59:58 reyk Exp $	*/
+/*	$OpenBSD: ar5212reg.h,v 1.8 2006/06/05 15:21:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -1215,6 +1215,13 @@ typedef enum {
 #define AR5K_AR5212_PHY_MODE_RAD_AR5111	0
 #define AR5K_AR5212_PHY_MODE_RAD_AR5112	8
 #define AR5K_AR5212_PHY_MODE_XR		0x00000010
+
+/*
+ * PHY CCK transmit control register
+ */
+#define AR5K_AR5212_PHY_CCKTXCTL	0xa204
+#define AR5K_AR5212_PHY_CCKTXCTL_WORLD	0x00000000
+#define AR5K_AR5212_PHY_CCKTXCTL_JAPAN	0x00000010
 
 /*
  * PHY 2GHz gain register

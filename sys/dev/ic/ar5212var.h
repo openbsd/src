@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212var.h,v 1.10 2005/12/18 17:59:58 reyk Exp $	*/
+/*	$OpenBSD: ar5212var.h,v 1.11 2006/06/05 15:21:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -429,7 +429,7 @@ struct ar5k_ar5212_ini {
 	{ AR5K_INI_FLAG_BOTH, 0x9908, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x990c, 0x00800000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x9910, 0x00000001 },			\
-	{ AR5K_INI_FLAG_BOTH, 0x991c, 0x00000c80 },			\
+	{ AR5K_INI_FLAG_BOTH, 0x991c, 0x0000092a },			\
 	{ AR5K_INI_FLAG_BOTH, 0x9920, 0x05100000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x9928, 0x00000001 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x992c, 0x00000004 },			\
@@ -477,11 +477,11 @@ struct ar5k_ar5212_ini {
 	{ AR5K_INI_FLAG_BOTH, 0xa1f4, 0x10ff10ff },			\
 	{ AR5K_INI_FLAG_BOTH, 0xa1f8, 0x10ff10ff },			\
 	{ AR5K_INI_FLAG_BOTH, 0xa1fc, 0x10ff10ff },			\
-	{ AR5K_INI_FLAG_BOTH, 0xa210, 0x00806333 },			\
-	{ AR5K_INI_FLAG_BOTH, 0xa214, 0x00106c10 },			\
+	{ AR5K_INI_FLAG_BOTH, 0xa210, 0x0080a333 },			\
+	{ AR5K_INI_FLAG_BOTH, 0xa214, 0x00206c10 },			\
 	{ AR5K_INI_FLAG_BOTH, 0xa218, 0x009c4060 },			\
-	{ AR5K_INI_FLAG_BOTH, 0xa21c, 0x1883800a },			\
-	{ AR5K_INI_FLAG_BOTH, 0xa220, 0x018830c6 },			\
+	{ AR5K_INI_FLAG_BOTH, 0xa21c, 0x1483800a },			\
+	{ AR5K_INI_FLAG_BOTH, 0xa220, 0x01831061 },			\
 	{ AR5K_INI_FLAG_BOTH, 0xa224, 0x00000400 },			\
 	{ AR5K_INI_FLAG_BOTH, 0xa228, 0x000001b5 },			\
 	{ AR5K_INI_FLAG_BOTH, 0xa22c, 0x00000000 },			\
@@ -501,6 +501,7 @@ struct ar5k_ar5212_ini {
 	{ AR5K_INI_FLAG_5111, 0x9930, 0x00004883 },			\
 	{ AR5K_INI_FLAG_5111, 0xa204, 0x00000000 },			\
 	{ AR5K_INI_FLAG_5111, 0xa208, 0xd03e6788 },			\
+	{ AR5K_INI_FLAG_5111, 0xa20c, 0x6448416a },			\
 	{ AR5K_INI_FLAG_5111, 0x9b04, 0x00000020 },			\
 	{ AR5K_INI_FLAG_5111, 0x9b08, 0x00000010 },			\
 	{ AR5K_INI_FLAG_5111, 0x9b0c, 0x00000030 },			\
@@ -716,9 +717,13 @@ struct ar5k_ar5212_ini_mode {
 		{ 0, },								\
 		{ 0x0de8b4e0, 0x0de8b4e0, 0x0de8b4e0, 0x0de8b4e0, 0x0de8b4e0 }	\
 	} },									\
+	{ 0x9858, AR5K_INI_FLAG_511X, {						\
+		{ 0, },								\
+		{ 0x7e800d2e, 0x7e800d2e, 0x7ee84d2e, 0x7ee84d2e, 0x7e800d2e }	\
+	} },									\
 	{ 0x9860, AR5K_INI_FLAG_511X, {						\
 		{ 0, },								\
-		{ 0x00009d10, 0x00009d10, 0x00009d10, 0x00009d10, 0x00009d10 }	\
+		{ 0x00009d10, 0x00009d10, 0x00009d18, 0x00009d10, 0x00009d10 }	\
 	} },									\
 	{ 0x9864, AR5K_INI_FLAG_511X, {						\
 		{ 0, },								\
@@ -760,10 +765,6 @@ struct ar5k_ar5212_ini_mode {
 		{ 0x0018da5a, 0x0018da5a, 0x0018ca69, 0x0018ca69, 0x0018ca69 },	\
 		{ 0x0018da6d, 0x0018da6d, 0x0018ca75, 0x0018ca75, 0x0018ca75 }	\
 	} },									\
-	{ 0x9858, AR5K_INI_FLAG_BOTH, {						\
-		{ 0x7e800d2e, 0x7e800d2e, 0x7ee84d2e, 0x7ee84d2e, 0x7e800d2e },	\
-		{ 0x7e800d2e, 0x7e800d2e, 0x7ee80d2e, 0x7ee80d2e, 0x7e800d2e }	\
-	} },									\
 	{ 0x985c, AR5K_INI_FLAG_BOTH, {						\
 		{ 0x3137665e, 0x3137665e, 0x3137665e, 0x3137665e, 0x3137615e },	\
 		{ 0x3137665e, 0x3137665e, 0x3137665e, 0x3137665e, 0x3137665e }	\
@@ -777,8 +778,8 @@ struct ar5k_ar5212_ini_mode {
 		{ 0x000007d0, 0x000007d0, 0x0000044c, 0x00000898, 0x000007d0 }	\
 	} },									\
 	{ 0x9944, AR5K_INI_FLAG_BOTH, {						\
-		{ 0xf7b81020, 0xf7b81020, 0xf7b80d20, 0xf7b81020, 0xf7b81020 },	\
-		{ 0xf7b81020, 0xf7b81020, 0xf7b80d10, 0xf7b81010, 0xf7b81010 }	\
+		{ 0xffb81020, 0xffb81020, 0xffb80d20, 0xffb81020, 0xffb81020 },	\
+		{ 0xffb81020, 0xffb81020, 0xffb80d10, 0xffb81010, 0xffb81010 }	\
 	} },									\
 	{ 0xa204, AR5K_INI_FLAG_5112, {						\
 		{ 0, },								\
@@ -788,8 +789,8 @@ struct ar5k_ar5212_ini_mode {
 		{ 0, },								\
 		{ 0xd6be6788, 0xd6be6788, 0xd03e6788, 0xd03e6788, 0xd03e6788 }	\
 	} },									\
-	{ 0xa20c, AR5K_INI_FLAG_BOTH, {						\
-		{ 0x642c416a, 0x642c416a, 0x6440416a, 0x6440416a, 0x6440416a },	\
+	{ 0xa20c, AR5K_INI_FLAG_5112, {						\
+		{ 0, },								\
 		{ 0x642c0140, 0x642c0140, 0x6442c160, 0x6442c160, 0x6442c160 }	\
 	} },									\
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.32 2005/12/18 17:59:58 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.33 2006/06/05 15:21:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -108,6 +108,7 @@ static const struct ar5k_gain_opt ar5112_gain_opt = AR5K_AR5112_GAIN_OPT;
  */
 static const struct ar5k_ini_rf ar5111_rf[] = AR5K_AR5111_INI_RF;
 static const struct ar5k_ini_rf ar5112_rf[] = AR5K_AR5112_INI_RF;
+static const struct ar5k_ini_rf ar5112a_rf[] = AR5K_AR5112A_INI_RF;
 static const struct ar5k_ini_rfgain ar5k_rfg[] = AR5K_INI_RFGAIN;
 
 /*
@@ -833,6 +834,21 @@ ar5k_eeprom_init(struct ath_hal *hal)
 	if (hal->ah_ee_version < AR5K_EEPROM_VERSION_3_0)
 		return (0);
 
+#ifdef notyet
+	/*
+	 * Validate the checksum of the EEPROM date. There are some
+	 * devices with invalid EEPROMs.
+	 */
+	for (cksum = 0, offset = 0; offset < AR5K_EEPROM_INFO_MAX; offset++) {
+		AR5K_EEPROM_READ(AR5K_EEPROM_INFO(offset), val);
+		cksum ^= val;
+	}
+	if (cksum != AR5K_EEPROM_INFO_CKSUM) {
+		AR5K_PRINTF("Invalid EEPROM checksum 0x%04x\n", cksum);
+		return (EINVAL);
+	}
+#endif
+
 	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_ANT_GAIN(hal->ah_ee_version),
 	    ee_ant_gain);
 
@@ -1426,7 +1442,10 @@ ar5k_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 		hal->ah_rf_banks_size = sizeof(ar5111_rf);
 		func = ar5k_ar5111_rfregs;
 	} else if (hal->ah_radio == AR5K_AR5112) {
-		hal->ah_rf_banks_size = sizeof(ar5112_rf);
+		if (hal->ah_radio_5ghz_revision >= AR5K_SREV_RAD_5112A)
+			hal->ah_rf_banks_size = sizeof(ar5112a_rf);
+		else
+			hal->ah_rf_banks_size = sizeof(ar5112_rf);
 		func = ar5k_ar5112_rfregs;
 	} else
 		return (AH_FALSE);
@@ -1547,29 +1566,38 @@ HAL_BOOL
 ar5k_ar5112_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
-	const u_int rf_size = AR5K_ELEMENTS(ar5112_rf);
+	u_int rf_size;
 	u_int32_t *rf;
 	int i, obdb = -1, bank = -1;
 	u_int32_t ee_mode;
+	const struct ar5k_ini_rf *rf_ini;
 
 	AR5K_ASSERT_ENTRY(mode, AR5K_INI_VAL_MAX);
 
 	rf = hal->ah_rf_banks;
 
+	if (hal->ah_radio_5ghz_revision >= AR5K_SREV_RAD_5112A) {
+		rf_ini = ar5112a_rf;
+		rf_size = AR5K_ELEMENTS(ar5112a_rf);
+	} else {
+		rf_ini = ar5112_rf;
+		rf_size = AR5K_ELEMENTS(ar5112_rf);
+	}
+
 	/* Copy values to modify them */
 	for (i = 0; i < rf_size; i++) {
-		if (ar5112_rf[i].rf_bank >=
+		if (rf_ini[i].rf_bank >=
 		    AR5K_AR5112_INI_RF_MAX_BANKS) {
 			AR5K_PRINT("invalid bank\n");
 			return (AH_FALSE);
 		}
 
-		if (bank != ar5112_rf[i].rf_bank) {
-			bank = ar5112_rf[i].rf_bank;
+		if (bank != rf_ini[i].rf_bank) {
+			bank = rf_ini[i].rf_bank;
 			hal->ah_offset[bank] = i;
 		}
 
-		rf[i] = ar5112_rf[i].rf_value[mode];
+		rf[i] = rf_ini[i].rf_value[mode];
 	}
 
 	if (channel->c_channel_flags & IEEE80211_CHAN_2GHZ) {
@@ -1662,7 +1690,7 @@ void
 ar5k_txpower_table(struct ath_hal *hal, HAL_CHANNEL *channel, int16_t max_power)
 {
 	u_int16_t txpower, *rates;
-	int i;
+	int i, min, max, n;
 
 	rates = hal->ah_txpower.txp_rates;
 
@@ -1681,6 +1709,15 @@ ar5k_txpower_table(struct ath_hal *hal, HAL_CHANNEL *channel, int16_t max_power)
 	hal->ah_txpower.txp_max = rates[0];
 	hal->ah_txpower.txp_ofdm = rates[0];
 
-	for (i = 0; i < AR5K_ELEMENTS(hal->ah_txpower.txp_pcdac); i++)
-		hal->ah_txpower.txp_pcdac[i] = AR5K_EEPROM_PCDAC_START;
+	/* Calculate the power table */
+	n = AR5K_ELEMENTS(hal->ah_txpower.txp_pcdac);
+	min = AR5K_EEPROM_PCDAC_START;
+	max = AR5K_EEPROM_PCDAC_STOP;
+	for (i = 0; i < n; i += AR5K_EEPROM_PCDAC_STEP)
+		hal->ah_txpower.txp_pcdac[i] =
+#ifdef notyet
+		    min + ((i * (max - min)) / n);
+#else
+		    min;
+#endif
 }
