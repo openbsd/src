@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.22 2006/01/20 23:27:26 miod Exp $	   */
+/*	$OpenBSD: uba.c,v 1.23 2006/06/05 08:46:29 miod Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -69,7 +69,7 @@ static	int ubaprint(void *, const char *);
 #if 0
 static	void ubastray(int);
 #endif
-static	void ubainitmaps(struct uba_softc *);
+static	void ubainitmaps(struct uba_softc *, int);
 
 extern struct cfdriver uba_cd;
 
@@ -719,13 +719,16 @@ ubarelse(uh, amr)
 }
 
 void
-ubainitmaps(uhp)
-	register struct uba_softc *uhp;
+ubainitmaps(uhp, reset)
+	struct uba_softc *uhp;
+	int reset;
 {
 	int error;
 
 	if (uhp->uh_memsize > UBA_MAXMR)
 		uhp->uh_memsize = UBA_MAXMR;
+	if (reset)
+		extent_destroy(uhp->uh_ext);
 	uhp->uh_ext = extent_create("uba", 0, uhp->uh_memsize * VAX_NBPG,
 	    M_DEVBUF, uhp->uh_extspace, EXTENT_FIXED_STORAGE_SIZE(UAMSIZ),
 	    EX_NOWAIT);
@@ -751,7 +754,7 @@ ubareset(uban)
 	SIMPLEQ_INIT(&uh->uh_resq);
 	uh->uh_bdpwant = 0;
 	uh->uh_mrwant = 0;
-	ubainitmaps(uh);
+	ubainitmaps(uh, 1);
 	wakeup((caddr_t)&uh->uh_bdpwant);
 	wakeup((caddr_t)&uh->uh_mrwant);
 	printf("%s: reset", uh->uh_dev.dv_xname);
@@ -821,7 +824,7 @@ uba_attach(sc, iopagephys)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->uh_extspace == NULL)
 		panic("uba_attach");
-	ubainitmaps(sc);
+	ubainitmaps(sc, 0);
 
 	/*
 	 * Map the first page of UNIBUS i/o space to the first page of memory
