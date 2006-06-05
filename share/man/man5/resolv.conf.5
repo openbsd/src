@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.27 2006/04/28 17:26:37 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.28 2006/06/05 16:13:55 ian Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -45,46 +45,60 @@ routines in the C library
 (which provide access to the Internet Domain Name System) should operate.
 The resolver configuration file contains information that is read
 by the resolver routines the first time they are invoked by a process.
+If the
+.Nm resolv.conf
+file does not exist, only the local host file
+.Pa /etc/hosts
+will be consulted,
+i.e. the Domain Name System will not be used to resolve hosts.
+.Pp
 The file is designed to be human readable and contains a list of
 keywords with values that provide various types of resolver information.
+A resolv.conf file is not required for some setups, so this file is optional.
+It can be created manually, and is also created as part of the
+.Ox
+install process
+if use of the DHCP protocol is specified for any interface.
 .Pp
 If
-.Xr dhcp 8
+.Xr dhclient 8
 is used to configure the network,
-the DHCP server will normally provide information
-such as nameserver addresses.
-In this case, it is not normally necessary to provide a
+the DHCP client back-end
+.Xr dhclient-script 8
+will normally overwrite the
 .Nm resolv.conf
-file.
-However the DHCP network configuration script,
-.Xr dhclient-script 8 ,
-will overwrite entries in
-.Nm resolv.conf .
+file with updated information such as nameserver addresses,
+losing any previous values the file contained.
 In order to force options to be passed to the
 .Xr resolver 3
 routines, the file
 .Nm resolv.conf.tail
-may be created.
-This file is appended to the generated
+may be created manually.
+This file will be appended to the generated
 .Nm resolv.conf
 file by
 .Xr dhclient-script 8 ,
 ensuring options remain.
 .Pp
+On a machine whose network connection does not change frequently (such as a desktop
+machine on a local-area network), the
+.Nm resolv.conf.tail
+file should not be necessary.
+However the
+.Nm resolv.conf.tail
+file may be useful on notebooks, to search multiple domains,
+to refer to hard-coded information in local files, or otherwise
+override the defaults.
+.Pp
 A hash mark
 .Ql #
 or semicolon
 .Ql \&;
-indicates the beginning of a comment;
+in the file indicates the beginning of a comment;
 subsequent characters up to the end of the line are not interpreted by
 the routines that read the file.
 .Pp
-On a normally configured system this file should not be necessary.
-The only name server to be queried will be on the local machine,
-the domain name is determined from the host name,
-and the domain search path is constructed from the domain name.
-.Pp
-The different configuration options are:
+The configuration options (which may be placed in either file) are:
 .Bl -tag -width nameserver
 .It Sy nameserver
 IPv4 address (in dot notation)
@@ -96,7 +110,7 @@ Scoped IPv6 address notation is accepted as well
 for details).
 Up to
 .Dv MAXNS
-(currently 3) name servers may be listed, one per keyword.
+(currently 3) name servers may be listed, one per line.
 If there are multiple servers, the resolver library queries them in the
 order listed.
 If no
@@ -167,6 +181,13 @@ for one of the domains.
 .Pp
 The search list is currently limited to six domains
 with a total of 1024 characters.
+Only one
+.Nm search
+line should appear; if more than one is present, the last one found
+overwrites any values found in earlier lines.
+So if such a line appears in the
+.Nm resolv.conf.tail
+file, it should include all the domains that need to be searched.
 .It Sy sortlist
 Allows addresses returned by
 .Xr gethostbyname 3
@@ -254,7 +275,7 @@ environment variable
 .Ev RES_OPTIONS
 to a space-separated list of resolver options as explained above.
 .Pp
-The keyword and value must appear on a single line, and the keyword (e.g.,
+The keyword and value must appear on a single line, and the keyword (e.g.\&
 .Sy nameserver )
 must start the line.
 The value follows the keyword, separated by whitespace.
