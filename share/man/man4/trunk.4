@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.15 2006/05/28 18:47:29 reyk Exp $
+.\"	$OpenBSD: trunk.4,v 1.16 2006/06/05 18:50:10 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -55,7 +55,6 @@ The protocols will choose the active ports for outgoing traffic
 and if they accept incoming traffic from specific ports.
 The interface link state is used to validate if the port is active or
 not.
-.Pp
 .Bl -tag -width loadbalance
 .It Ic roundrobin
 Distributes outgoing traffic using a round-robin scheduler
@@ -109,7 +108,7 @@ device will be used:
 .Sh HISTORY
 The
 .Nm
-device appeared in
+device first appeared in
 .Ox 3.8 .
 .Sh AUTHORS
 The
