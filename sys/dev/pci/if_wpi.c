@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.14 2006/05/29 20:26:54 miod Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.15 2006/06/05 16:42:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -147,7 +147,6 @@ int		wpi_init(struct ifnet *);
 void		wpi_stop(struct ifnet *, int);
 
 /* rate control algorithm: should be moved to net80211 */
-void		wpi_amrr_init(struct wpi_amrr *);
 void		wpi_amrr_init(struct wpi_amrr *);
 void		wpi_amrr_timeout(void *);
 void		wpi_amrr_ratectl(void *, struct ieee80211_node *);
@@ -820,7 +819,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			sc->config.flags |= htole32(WPI_CONFIG_SHSLOT);
 		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 			sc->config.flags |= htole32(WPI_CONFIG_SHPREAMBLE);
-		sc->config.filter |= htole32(WPI_FILTER_BSSID);
+		sc->config.filter |= htole32(WPI_FILTER_BSS);
 
 		DPRINTF(("config chan %d flags %x\n", sc->config.chan,
 		    sc->config.flags));
@@ -833,7 +832,8 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 
 		/* start automatic rate control timer */
-		timeout_add(&sc->amrr_ch, hz / 2);
+		if (ic->ic_fixed_rate != -1)
+			timeout_add(&sc->amrr_ch, hz / 2);
 
 		/* link LED always on while associated */
 		wpi_set_led(sc, WPI_LED_LINK, 0, 1);
@@ -1095,6 +1095,16 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	    letoh16(head->len), (int8_t)stat->rssi, head->rate, head->chan,
 	    letoh64(tail->tstamp)));
 
+	/*
+	 * Discard Rx frames with bad CRC early (XXX we may want to pass them
+	 * to radiotap in monitor mode).
+	 */
+	if ((letoh32(tail->flags) & WPI_RX_NOERROR) != WPI_RX_NOERROR) {
+		DPRINTF(("rx tail flags error %x\n", letoh32(tail->flags)));
+		ifp->if_ierrors++;
+		return;
+	}
+
 	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 	if (mnew == NULL) {
 		ifp->if_ierrors++;
@@ -1209,7 +1219,11 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	    stat->nkill, stat->rate, letoh32(stat->duration),
 	    letoh32(stat->status)));
 
-	/* update rate control statistics for the node */
+	/*
+	 * Update rate control statistics for the node.
+	 * XXX we should not count mgmt frames since they're always sent at
+	 * the lowest available bit-rate.
+	 */
 	amrr->txcnt++;
 	if (stat->ntries > 0) {
 		DPRINTFN(3, ("tx intr ntries %d\n", stat->ntries));
@@ -1490,7 +1504,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	/* retrieve destination node's id */
 	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? WPI_ID_BROADCAST :
-	    WPI_ID_BSSID;
+	    WPI_ID_BSS;
 
 	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 	    IEEE80211_FC0_TYPE_MGT) {
@@ -1516,7 +1530,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	tx->data_ntries = 15;
 
 	tx->ofdm_mask = 0xff;
-	tx->cck_mask = 0xf;;
+	tx->cck_mask = 0xf;
 	tx->lifetime = htole32(0xffffffff);
 
 	tx->len = htole16(m0->m_pkthdr.len);
@@ -1872,12 +1886,20 @@ void
 wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
 {
 	struct wpi_cmd_tsf tsf;
+	uint64_t val, mod;
 
 	bzero(&tsf, sizeof tsf);
 	bcopy(ni->ni_tstamp, &tsf.tstamp, sizeof (uint64_t));
 	tsf.bintval = htole16(ni->ni_intval);
-	tsf.binitval = htole32(102400);	/* XXX */
 	tsf.lintval = htole16(10);
+
+	/* compute remaining time until next beacon */
+	val = (uint64_t)tsf.bintval * 1024;	/* msecs -> usecs */
+	mod = letoh64(tsf.tstamp) % val;
+	tsf.binitval = htole32((uint32_t)(val - mod));
+
+	DPRINTF(("TSF bintval=%u tstamp=%llu, init=%u\n",
+	    ni->ni_intval, letoh64(tsf.tstamp), (uint32_t)(val - mod)));
 
 	if (wpi_cmd(sc, WPI_CMD_TSF, &tsf, sizeof tsf, 1) != 0)
 		printf("%s: could not enable TSF\n", sc->sc_dev.dv_xname);
@@ -1993,7 +2015,7 @@ wpi_auth(struct wpi_softc *sc)
 	/* add default node */
 	bzero(&node, sizeof node);
 	IEEE80211_ADDR_COPY(node.bssid, ni->ni_bssid);
-	node.id = WPI_ID_BSSID;
+	node.id = WPI_ID_BSS;
 	node.rate = wpi_plcp_signal(2);
 	error = wpi_cmd(sc, WPI_CMD_ADD_NODE, &node, sizeof node, 1);
 	if (error != 0) {
@@ -2583,6 +2605,7 @@ wpi_stop(struct ifnet *ifp, int disable)
 #define WPI_AMRR_MIN_SUCCESS_THRESHOLD	 1
 #define WPI_AMRR_MAX_SUCCESS_THRESHOLD	15
 
+/* XXX should reset all nodes on S_INIT */
 void
 wpi_amrr_init(struct wpi_amrr *amrr)
 {

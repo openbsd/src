@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.6 2006/05/25 09:26:58 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.7 2006/06/05 16:42:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -226,6 +226,11 @@ struct wpi_rx_head {
 
 struct wpi_rx_tail {
 	uint32_t	flags;
+#define WPI_RX_NO_CRC_ERR	(1 << 0)
+#define WPI_RX_NO_OVFL_ERR	(1 << 1)
+/* shortcut for the above */
+#define WPI_RX_NOERROR		(WPI_RX_NO_CRC_ERR | WPI_RX_NO_OVFL_ERR)
+
 	uint64_t	tstamp;
 	uint32_t	tbeacon;
 } __packed;
@@ -286,7 +291,7 @@ struct wpi_config {
 #define WPI_FILTER_CTL		(1 << 1)
 #define WPI_FILTER_MULTICAST	(1 << 2)
 #define WPI_FILTER_NODECRYPT	(1 << 3)
-#define WPI_FILTER_BSSID	(1 << 5)
+#define WPI_FILTER_BSS		(1 << 5)
 
 	uint8_t		chan;
 	uint8_t		reserved6[3];
@@ -320,7 +325,7 @@ struct wpi_node {
 	uint8_t		bssid[IEEE80211_ADDR_LEN];
 	uint16_t	reserved2;
 	uint8_t		id;
-#define WPI_ID_BSSID		0
+#define WPI_ID_BSS		0
 #define WPI_ID_BROADCAST	24
 
 	uint8_t		sta_mask;
