@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.4 2006/06/04 09:52:40 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.5 2006/06/05 05:01:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
+#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sensors.h>
 #include <sys/tty.h>
@@ -78,16 +79,13 @@ struct nmea {
 };
 
 /* NMEA protocol state machine */
-
 void	nmea_hdlr(struct nmea *, int c);
 
 /* NMEA decoding */
-
 void	nmea_decode(struct nmea *);
 void	nmea_rmc(struct nmea *);
 
 /* helper functions */
-
 int	nmea_atoi(char *, int *);
 void	nmea_bufadd(struct nmea *, int);
 
@@ -100,28 +98,39 @@ enum states {
 	S_CKSUM
 };
 
+void
+nmeaattach(int dummy)
+{
+}
+
 int
 nmeaopen(dev_t dev, struct tty *tp)
 {
+	struct proc *p = curproc;	/* XXX */
 	struct nmea *np;
+	int error;
 
-	if (tp->t_line != NMEADISC) {
-		np = malloc(sizeof(struct nmea), M_WAITOK, M_DEVBUF);
-		tp->t_sc = (caddr_t)np;
-
-		snprintf(np->time.device, sizeof(np->time.device), "nmea%d",
-		    nmea_count++);
-		np->time.status = SENSOR_S_UNKNOWN;
-		np->time.type = SENSOR_TIMEDELTA;
-		np->time.value = 0LL;
-		np->time.rfact = 0;
-		np->time.flags = SENSOR_FINVALID;
-		sensor_add(&np->time);
-		np->state = S_SYNC;
-		np->last = 0L;
+	if (tp->t_line == NMEADISC)
+		return (ENODEV);
+	if ((error = suser(p, 0)) != 0)
+		return (error);
+	np = malloc(sizeof(struct nmea), M_WAITOK, M_DEVBUF);
+	bzero(np, sizeof(*np));
+	snprintf(np->time.device, sizeof(np->time.device), "nmea%d",
+	    nmea_count++);
+	np->time.status = SENSOR_S_UNKNOWN;
+	np->time.type = SENSOR_TIMEDELTA;
+	np->state = S_SYNC;
+	np->time.flags = SENSOR_FINVALID;
+	sensor_add(&np->time);
+	tp->t_sc = (caddr_t)np;
+	
+	error = linesw[TTYDISC].l_open(dev, tp);
+	if (error) {
+		free(np, M_DEVBUF);
+		tp->t_sc = NULL;
 	}
-
-	return linesw[0].l_open(dev, tp);
+	return (error);
 }
 
 int
@@ -129,11 +138,12 @@ nmeaclose(struct tty *tp, int flags)
 {
 	struct nmea *np = (struct nmea *)tp->t_sc;
 
-	tp->t_line = 0;	/* switch back to termios */
+	tp->t_line = TTYDISC;	/* switch back to termios */
 	sensor_del(&np->time);
 	free(np, M_DEVBUF);
+	tp->t_sc = NULL;
 	nmea_count--;
-	return linesw[0].l_close(tp, flags);
+	return linesw[TTYDISC].l_close(tp, flags);
 }
 
 /* scan input from tty for NMEA telegrams */
@@ -145,12 +155,7 @@ nmeainput(int c, struct tty *tp)
 	nmea_hdlr(np, c);
 
 	/* pass data to termios */
-	return linesw[0].l_rint(c, tp);
-}
-
-void
-nmeaattach(int dummy)
-{
+	return linesw[TTYDISC].l_rint(c, tp);
 }
 
 /* NMEA state machine */
