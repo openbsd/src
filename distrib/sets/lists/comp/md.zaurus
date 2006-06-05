@@ -225,8 +225,6 @@
 ./usr/include/zaurus/ieeefp.h
 ./usr/include/zaurus/internal_types.h
 ./usr/include/zaurus/intr.h
-./usr/include/zaurus/irqhandler.h
-./usr/include/zaurus/isa_machdep.h
 ./usr/include/zaurus/limits.h
 ./usr/include/zaurus/loadfile_machdep.h
 ./usr/include/zaurus/lock.h

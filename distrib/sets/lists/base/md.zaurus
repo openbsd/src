@@ -2265,8 +2265,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/ieeefp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/intr.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/irqhandler.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/lock.ph
