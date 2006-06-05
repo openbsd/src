@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.16 2006/06/05 18:50:10 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.17 2006/06/05 21:42:31 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -51,8 +51,8 @@ The driver currently supports the trunk protocols
 .Ic loadbalance ,
 and
 .Ic none .
-The protocols will choose the active ports for outgoing traffic
-and if they accept incoming traffic from specific ports.
+The protocols determine which ports are used for outgoing traffic
+and whether a specific port accepts incoming traffic.
 The interface link state is used to validate if the port is active or
 not.
 .Bl -tag -width loadbalance
