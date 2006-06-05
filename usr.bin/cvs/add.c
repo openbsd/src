@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.53 2006/06/04 09:52:56 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.54 2006/06/05 02:03:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -258,10 +258,10 @@ add_file(struct cvs_file *cf)
 			    "(instead of dead revision %s)",
 			    cf->file_path, revbuf);
 		} else {
-			added++;
 			cvs_log(LP_NOTICE, "scheduling file '%s' for addition",
 			    cf->file_path);
 		}
+		added++;
 		break;
 	default:
 		break;
