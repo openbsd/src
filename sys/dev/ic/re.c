@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.24 2006/05/29 05:11:15 drahn Exp $	*/
+/*	$OpenBSD: re.c,v 1.25 2006/06/05 23:44:07 drahn Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1593,11 +1593,14 @@ re_init(struct ifnet *ifp)
 	 * register write enable" mode to modify the ID registers.
 	 */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
-	memcpy(&reg, LLADDR(ifp->if_sadl), 4);
-	CSR_WRITE_4(sc, RL_IDR0, htole32(reg));
+
 	reg = 0;
 	memcpy(&reg, LLADDR(ifp->if_sadl) + 4, 4);
 	CSR_WRITE_4(sc, RL_IDR4, htole32(reg));
+
+	memcpy(&reg, LLADDR(ifp->if_sadl), 4);
+	CSR_WRITE_4(sc, RL_IDR0, htole32(reg));
+
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
 	/*
