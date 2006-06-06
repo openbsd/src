@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.51 2006/06/01 07:53:01 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.52 2006/06/06 23:22:28 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -133,52 +133,52 @@ struct cmdtab {
 { CMD_STATUS,   "status",       1, "" },
 { CMD_STOP,     "stop",         3, "" },
 { CMD_VOLUME,   "volume",       1, "<l> <r> | left | right | mute | mono | stereo" },
-{ CMD_CDDB,   	"cddbinfo",     2, "[n]" },
+{ CMD_CDDB,	"cddbinfo",     2, "[n]" },
 { CMD_CDID,	"cdid",		3, "" },
 { CMD_QUIT,	"exit",		2, "" },
 { CMD_BLANK,	"blank",	1, "" },
 { 0, 0, 0, 0}
 };
 
-struct cd_toc_entry     *toc_buffer;
+struct cd_toc_entry *toc_buffer;
 
 char		*cdname;
-int             fd = -1;
-int             verbose = 1;
-int             msf = 1;
-const char 	*cddb_host;
-char            **track_names;
+int		fd = -1;
+int		verbose = 1;
+int		msf = 1;
+const char	*cddb_host;
+char		**track_names;
 
-EditLine       *el = NULL;	/* line-editing structure */
-History	       *hist = NULL;	/* line-editing history */
+EditLine	*el = NULL;	/* line-editing structure */
+History		*hist = NULL;	/* line-editing history */
 void		switch_el(void);
 
-extern char     *__progname;
+extern char	*__progname;
 
-int             setvol(int, int);
-int             read_toc_entrys(int);
-int             play_msf(int, int, int, int, int, int);
-int             play_track(int, int, int, int);
-int             get_vol(int *, int *);
-int             status(int *, int *, int *, int *);
-int             play(char *arg);
-int             info(char *arg);
-int             cddbinfo(char *arg);
-int             pstatus(char *arg);
+int		setvol(int, int);
+int		read_toc_entrys(int);
+int		play_msf(int, int, int, int, int, int);
+int		play_track(int, int, int, int);
+int		get_vol(int *, int *);
+int		status(int *, int *, int *, int *);
+int		play(char *arg);
+int		info(char *arg);
+int		cddbinfo(char *arg);
+int		pstatus(char *arg);
 int		play_next(char *arg);
 int		play_prev(char *arg);
 int		play_same(char *arg);
-char            *input(int *);
+char		*input(int *);
 char		*prompt(void);
-void            prtrack(struct cd_toc_entry *e, int lastflag, char *name);
-void            lba2msf(unsigned long lba, u_char *m, u_char *s, u_char *f);
-unsigned int    msf2lba(u_char m, u_char s, u_char f);
-int             play_blocks(int blk, int len);
-int             run(int cmd, char *arg);
-char            *parse(char *buf, int *cmd);
-void 		help(void);
+void		prtrack(struct cd_toc_entry *e, int lastflag, char *name);
+void		lba2msf(unsigned long lba, u_char *m, u_char *s, u_char *f);
+unsigned int	msf2lba(u_char m, u_char s, u_char f);
+int		play_blocks(int blk, int len);
+int		run(int cmd, char *arg);
+char		*parse(char *buf, int *cmd);
+void		help(void);
 void		usage(void);
-char 		*strstatus(int);
+char		*strstatus(int);
 int		cdid(void);
 void		addmsf(u_int *, u_int *, u_int *, u_char, u_char, u_char);
 int		cmpmsf(u_char, u_char, u_char, u_char, u_char, u_char);
@@ -1060,9 +1060,9 @@ pstatus(char *arg)
 		ss.data->what.media_catalog.mc_valid ? "": "in");
 		if (ss.data->what.media_catalog.mc_valid &&
 		    ss.data->what.media_catalog.mc_number[0]) {
-		    	strvisx(vis_catalog,
-			   (char *)ss.data->what.media_catalog.mc_number,
-			   15, VIS_SAFE);
+			strvisx(vis_catalog,
+			    (char *)ss.data->what.media_catalog.mc_number,
+			    15, VIS_SAFE);
 			printf(", number \"%.15s\"", vis_catalog);
 		}
 		putchar('\n');
@@ -1073,7 +1073,7 @@ pstatus(char *arg)
 	if (rc >= 0) {
 		if (verbose)
 			printf("Left volume = %d, right volume = %d\n",
-				v.vol[0], v.vol[1]);
+			    v.vol[0], v.vol[1]);
 		else
 			printf("%d %d\n", v.vol[0], v.vol[1]);
 	} else
@@ -1447,8 +1447,8 @@ parse(char *buf, int *cmd)
 	for (c=cmdtab; c->name; ++c) {
 		/* Is it an exact match? */
 		if (!strcasecmp(buf, c->name)) {
-  			*cmd = c->command;
-  			break;
+			*cmd = c->command;
+			break;
 		}
 
 		/* Try short hand forms then... */

@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.9 2006/06/06 22:18:11 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.10 2006/06/06 23:22:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -274,11 +274,12 @@ mode_select_write(unsigned char buf[])
 	bzero(&scr, sizeof(scr));
 	scb = (struct scsi_mode_select_big *)scr.cmd;
 	scb->opcode = MODE_SELECT_BIG;
-/*
- * INF-8020 says bit 4 in byte 2 is '1'
- * INF-8090 refers to it as 'PF(1)' then doesn't
- * describe it. 
- */
+
+	/*
+	 * INF-8020 says bit 4 in byte 2 is '1'
+	 * INF-8090 refers to it as 'PF(1)' then doesn't
+	 * describe it.
+	 */
 	scb->byte2 = 0x10;
 	scb->length[1] = 2 + buf[1] + 256 * buf[0];
 	scr.timeout = 4000;
