@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.60 2006/06/03 19:07:13 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.61 2006/06/06 06:58:46 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -23,6 +23,8 @@
 #include "proto.h"
 
 int	cvs_checkout(int, char **);
+int	cvs_export(int, char **);
+static void checkout_check_repository(int, char **);
 static void checkout_repository(const char *, const char *);
 
 extern int prune_dirs;
@@ -43,18 +45,16 @@ struct cvs_cmd cvs_cmd_export = {
 	CVS_OP_EXPORT, CVS_REQ_EXPORT, "export",
 	{ "exp", "ex" },
 	"Export sources from CVS, similar to checkout",
-	"module ...",
-	"",
+	"[-flNnR] [-d dir] [-k mode] -D date | -r rev module ...",
+	"D:d:k:flNnRr:",
 	NULL,
-	cvs_checkout
+	cvs_export
 };
 
 int
 cvs_checkout(int argc, char **argv)
 {
-	int i, ch, l;
-	struct stat st;
-	char repo[MAXPATHLEN];
+	int ch;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_checkout.cmd_opts)) != -1) {
 		switch (ch) {
@@ -72,13 +72,56 @@ cvs_checkout(int argc, char **argv)
 	if (argc == 0)
 		fatal("%s", cvs_cmd_checkout.cmd_synopsis);
 
+	checkout_check_repository(argc, argv);
+
+	return (0);
+}
+
+int
+cvs_export(int argc, char **argv)
+{
+	int ch, flags;
+
+	prune_dirs = 1;
+	flags = CR_RECURSE_DIRS;
+
+	while ((ch = getopt(argc, argv, cvs_cmd_export.cmd_opts)) != -1) {
+		switch (ch) {
+		case 'l':
+			flags &= ~CR_RECURSE_DIRS;
+			break;
+		case 'R':
+			break;
+		default:
+			fatal("%s", cvs_cmd_export.cmd_synopsis);
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
+		fatal("%s", cvs_cmd_export.cmd_synopsis);
+
+	checkout_check_repository(argc, argv);
+
+	return (0);
+}
+
+static void
+checkout_check_repository(int argc, char **argv)
+{
+	int i, l;
+	char repo[MAXPATHLEN];
+	struct stat st;
+
 	for (i = 0; i < argc; i++) {
 		cvs_mkpath(argv[i]);
 
 		l = snprintf(repo, sizeof(repo), "%s/%s",
 		    current_cvsroot->cr_dir, argv[i]);
 		if (l == -1 || l >= (int)sizeof(repo))
-			fatal("cvs_checkout: overflow");
+			fatal("checkout_check_repository: overflow");
 
 		if (stat(repo, &st) == -1) {
 			cvs_log(LP_ERR, "cannot find repository %s - ignored",
@@ -88,8 +131,6 @@ cvs_checkout(int argc, char **argv)
 
 		checkout_repository(repo, argv[i]);
 	}
-
-	return (0);
 }
 
 static void
