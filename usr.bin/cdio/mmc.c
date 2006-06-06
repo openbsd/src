@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.8 2006/06/06 20:48:07 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.9 2006/06/06 22:18:11 mjc Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -181,7 +181,7 @@ writetrack(struct track_info *tr)
 	nblk = 65535/tr->blklen;
 	bzero(&scr, sizeof(scr));
 	scr.timeout = 300000;
-	scr.cmd[0] = 0x2a;
+	scr.cmd[0] = WRITE_BIG;
 	scr.cmd[1] = 0x00;
 	scr.cmd[8] = nblk; /* Transfer length in blocks (LSB) */
 	scr.cmdlen = 10;
