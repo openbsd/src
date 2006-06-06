@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2005/01/10 00:28:15 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2006/06/06 03:41:51 drahn Exp $
 #	etc.zaurus/Makefile.inc -- zaurus-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -12,7 +12,7 @@ bsd:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 notes:
-	cp ${.CURDIR}/etc.i386/INSTALL.* ${DESTDIR}/snapshot
+	cp ${.CURDIR}/etc.zaurus/INSTALL.* ${DESTDIR}/snapshot
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/zboot ${DESTDIR}/snapshot
