@@ -1,0 +1,32 @@
+dnl	$OpenBSD: contents,v 1.1 2006/06/06 04:06:08 drahn Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+dnl not yet...
+dnl OpenBSDcd
+
+DistributionDescription(eleven)
+
+OpenBSDbase(47220942,XXX,shared)
+
+OpenBSDcomp(77089010,XXX,shared)
+
+OpenBSDetc(1158334,XXX)
+
+OpenBSDgame(2647990,XXX)
+
+OpenBSDman(7546451,XXX)
+
+OpenBSDmisc(2280496,7482328)
+
+dnl OpenBSDxbase(11562138,32391047)
+
+dnl OpenBSDxetc(91396,354879)
+
+dnl OpenBSDxfont(33236507,37547572)
+
+dnl OpenBSDxshare(2093518,11018844)

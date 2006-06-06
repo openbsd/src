@@ -1,0 +1,227 @@
+dnl	$OpenBSD: hardware,v 1.1 2006/06/06 04:06:08 drahn Exp $
+dnl When more than one model is supported, turn this into a list...
+OpenBSD/MACHINE runs on the Sharp Zaurus SL-C3000, SL-C3100 and
+SL-C3200 models at the moment.
+
+Supported devices {:-include-:}:
+	Ethernet Adapters
+		ADMtek AN986-based USB adapters, including:
+		    Abocom UFE1000
+		    Abocom DSB650TX
+		    Accton USB320-EC
+		    Accton SpeedStream Ethernet
+		    Admtek Pegasus, Pegasus II
+		    Billionton Systems USB100
+		    Corega FEther USB-TX
+		    D-Link DSB-650, 650TX, 650TX-PNA
+		    Elecom LD-USB
+		    Elsa Microlink USB2Ethernet
+		    I/O Data USB ETTX
+		    Kingston KNU101TX
+		    Linksys USB100TX, USB100H1 and USB10TA
+		    Melco Inc. LUA-TX
+		    Siemens SpeedStream USB
+		    SmartBridges smartNIC 2
+		    SMC 2202USB/ETH
+		    SMC 2206USB/ETH
+		    SOHOware NUB100
+		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		    ATEN UC210T
+		    BAFO BF-320
+		    Billionton Systems USB2AR
+		    Buffalo(MELCO) LUA-U2-KTX
+		    Corega FEther USB2-TX
+		    D-Link DUB-E100
+		    Good Way GWUSB2E
+		    Hawking UF200
+		    Intellinet USB 2.0 to Ethernet (rev A)
+		    JVC MP-PRX1
+		    Linksys USB200M
+		    Netgear FA120
+		    Sitecom LN-029
+		    SMC 2209USB/ETH
+		    SnapPort USB 2.0 LAN Adapter
+		    ST Lab USB 2.0 Fast Ethernet
+		    Surecom EP-1427X-2
+		    System TALKS SGC-X2UL
+		    TRENDnet TU2-ET100
+		    Z-TEK ZK-R01-2
+		CATC USB-EL1210A-based USB adapters, including:
+		    CATC Netmate and Netmate II
+		    Belkin F5U011/F5U111
+		Davicom DM9601 based USB adapters, including:
+		    Corega FEther USB-TXC
+		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
+		    3Com 3c19250
+		    3Com 3c460 HomeConnect
+		    AboCom Systems URE450 Ethernet
+		    ADS Technologies USB-10T
+		    Aox USB101
+		    Asante USB to Ethernet
+		    ATen DSB-650C
+		    ATen UC10T
+		    Corega USB-T
+		    D-Link DSB-650C
+		    Entegra NET-USB-E45
+		    I/O Data USB-ET/T
+		    Jaton USB XpressNet
+		    Kawasaki USB101
+		    Kingston Ethernet
+		    Linksys USB10T
+		    Mobility Ethernet
+		    Netgear EA101
+		    Peracom USB
+		    Portgear Ethernet
+		    Portsmith Express Ethernet
+		    Psion Dacom Gold Port Ethernet
+		    Shark Pocket Adapter
+		    Silicom U2E
+		    SMC 2102/2104USB
+		RealTek RTL8150L based USB adapters, including:
+		    Abocom RTL8151
+		    BAFO BF-310
+		    Billionton USBKR-100
+		    Compex UE202-B
+		    GreenHouse GH-USB100B
+		    GreenHouse GH-USB100B with HomePNA
+		    Hawking Technology HUF11
+		    Linksys USB100M
+		    Longshine LCS-8138TX
+		    Melco Inc. LUA-KTX
+		    Micronet SP128AR
+		    NetComm NP1010
+		    Repotec RP-USB100-A
+		    SMC 2208USB/ETH
+		    TRENDnet TU-ET100C
+		    Zt USB10/100
+		    Z-TEK ZK-R02
+	Wireless Ethernet Adapters
+		Atmel AT76C50x based USB IEEE 802.11b adapters
+		    3Com 3CRSHEW696
+		    AboCom BWU613
+		    Accton 2664W
+		    Acer Peripherals AWL300
+		    Acer Peripherals AWL400
+		    Actiontec 802UAT1
+		    Addtron AWU120
+		    Aincomm AWU2000B
+		    Askey Computer Voyager 1010
+		    Askey Computer WLL013 (Intersil Radio)
+		    Askey Computer WLL013 (RFMD Radio)
+		    Belkin F5D6050
+		    Bluetake BW002
+		    Compaq iPAQ h54xx/h55xx Internal WLAN
+		    Conceptronic C11U
+		    Conceptronic WL210
+		    Corega WLAN USB Stick 11
+		    Dick Smith Electronics CHUSB 611G
+		    Dick Smith Electronics WL200U
+		    Dick Smith Electronics WL240U
+		    Dick Smith Electronics XH1153
+		    D-Link DWL-120 rev E
+		    Geowave GW-US11S
+		    Gigabyte GN-WLBM101
+		    Gigaset WLAN
+		    Hewlett-Packard HN210W
+		    Intel AP310 AnyPoint II
+		    I/O DATA USB WN-B11
+		    Lexar 2662W-AR
+		    Linksys WUSB11
+		    Linksys WUSB11 v2.8
+		    MSI WLAN
+		    Netgear MA101
+		    Netgear MA101 rev B
+		    Ovislink AirLive WL-1120USB
+		    OvisLink AirLive WL-1130USB
+		    Planex Communications GW-US11S
+		    Samsung SWL2100W
+		    Siemens WLL013
+		    SMC 2662W-AR
+		    SMC 2662W-V4
+		    Tekram U-300C
+		    Z-Com M4Y-750
+		Intersil PRISM 2.5/3 based USB IEEE 802.11b adapters
+		    Acer Warplink USB-400
+		    Actiontec HWU01170
+		    AirVast WM168b
+		    Ambit WLAN
+		    Apacer Wireless Steno MB112
+		    ASUS WL-140
+		    Compaq W100
+		    Corega WLUSB-11
+		    Corega WLUSB-11 Key
+		    D-Link DWL-120 (rev F)
+		    D-Link DWL-122
+		    I-O DATA WN-B11/USB
+		    Intel PRO/Wireless 2011B
+		    Intersil Prism 2X
+		    JVC MP-XP7250
+		    Linksys WUSB11 v3.0
+		    Linksys WUSB12
+		    Melco WLI-USB-KB11
+		    Melco WLI-USB-KS11G
+		    Melco WLI-USB-S11
+		    Microsoft MN510
+		    Netgear MA111 (version 1)
+		    Pheenet WL-503IA
+		    Planex GW-US11H
+		    Siemens SpeedStream SS1022
+		    Sitecom WL-022
+		    Syntax USB-400
+		    US Robotics 1120
+		    ViewSonic Airsync
+		    Z-Com XI-725/726
+		    Z-Com XI-735
+		    ZyXEL ZyAIR B-200
+		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
+		    AMIT WL532U
+		    ASUS WL-167g
+		    Belkin F5D7050
+		    Buffalo WLI-U2-KG54
+		    Buffalo WLI-U2-KG54-AI
+		    Buffalo WLI-U2-KG54-YB
+		    CNet CWD-854
+		    Compex WLU54G
+		    Conceptronic C54RU
+		    D-Link DWL-G122 (b1)
+		    Dynalink WLG25USB
+		    E-Tech WGUS02
+		    Eminent 3035
+		    Gigabyte GN-WBKG
+		    Hercules HWGUSB2-54
+		    KCORP LifeStyle KLS-685
+		    Linksys WUSB54G v4
+		    Linksys WUSB54GP v4
+		    MSI MS-6861
+		    MSI MS-6865
+		    MSI MS-6869
+		    SerComm UB801R
+		    SparkLAN WL-685R
+		    Sphairon UB801R
+		    Surecom EP-9001-g
+		    Tonze UW-6200C
+		    Zaapa ZNWUSB-54
+		    Zinwell ZWX-G261
+		    Zonet ZEW2500P
+	Serial ports
+		On-board serial (com) ports
+	Universal Serial Bus (USB) Devices
+		USB Audio
+		USB Diamond Multimedia Rio MP3 players
+		USB Ethernet adapters, see above
+		USB Generic Human Interface Devices (catch-all)
+		USB Handspring Visor
+		USB Hubs
+		USB Keyboards
+		USB Mass Storage devices, i.e., USB floppy drives and
+		  USB memory stick controllers
+		USB Mice
+		USB Modems
+		USB Printers
+		USB Scanners
+		USB-USB cables
+		USB Y@p phone
+	Keyboards
+		USB keyboards ???
+	Pointing Devices
+		USB mice

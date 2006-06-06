@@ -1,0 +1,6 @@
+dnl	$OpenBSD: prep,v 1.1 2006/06/06 04:06:08 drahn Exp $
+To be able to boot the OpenBSD/MACHINE installation program, you will
+need to acquire some limited knowledge of Linux, the low-level
+process that controls the microprocessor after hardware initialization.
+dnl
+dnl XXX bootable partitions

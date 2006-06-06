@@ -1,0 +1,3 @@
+dnl	$OpenBSD: upgrade,v 1.1 2006/06/06 04:06:08 drahn Exp $
+dnl OpenBSDUpgrade({:-the CD-ROM-:})
+OpenBSDUpgrade({:-your usual boot device-:})
