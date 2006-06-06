@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.25 2006/03/17 19:39:46 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.26 2006/06/06 23:24:52 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.25 2006/03/17 19:39:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.26 2006/06/06 23:24:52 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -64,6 +64,7 @@ static int	args(char *, char **, int);
 static void	prtime(char *, time_t);
 static void	tandem(char *);
 static void	hardwareflow(char *);
+void		linedisc(char *);
 static int	anyof(char *, char *);
 
 /*
@@ -789,6 +790,10 @@ variable(int c)
 		else
 			hardwareflow("off");
 	}
+	if (vtable[LINEDISC].v_access&CHANGED) {
+		vtable[LINEDISC].v_access &= ~CHANGED;
+		linedisc(NOSTR);
+	}
 }
 
 /*ARGSUSED*/
@@ -860,6 +865,17 @@ hardwareflow(char *option)
 	else
 		rmtty.c_iflag &= ~CRTSCTS;
 	tcsetattr(FD, TCSADRAIN, &rmtty);
+}
+
+/*
+ * Change line discipline to the specified one.
+ */
+void
+linedisc(char *option)
+{
+	int ld = (int)value(LINEDISC);
+
+	ioctl(FD, TIOCSETD, &ld);
 }
 
 /*

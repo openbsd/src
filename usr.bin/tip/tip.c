@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.28 2006/03/17 21:43:51 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.29 2006/06/06 23:24:52 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.28 2006/03/17 21:43:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.29 2006/06/06 23:24:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -225,6 +225,11 @@ cucommon:
 
 	pipe(fildes); pipe(repdes);
 	(void)signal(SIGALRM, timeout);
+
+	if (value(LINEDISC) != TTYDISC) {
+		int ld = (int)value(LINEDISC);
+		ioctl(FD, TIOCSETD, &ld);
+	}		
 
 	/*
 	 * Everything's set up now:

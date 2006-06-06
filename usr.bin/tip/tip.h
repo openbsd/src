@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.25 2006/03/17 21:43:51 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.26 2006/06/06 23:24:52 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ char	*PR;			/* remote prompt */
 long	DL;			/* line delay for file transfers to remote */
 long	CL;			/* char delay for file transfers to remote */
 long	ET;			/* echocheck timeout */
+long	LD;			/* line disc */
 short	HD;			/* this host is half duplex - do local echo */
 short	DC;			/* this host is directly connected. */
 
@@ -225,6 +226,7 @@ extern value_t	vtable[];	/* variable table */
 #define	LECHO		31
 #define	PARITY		32
 #define	HARDWAREFLOW	33
+#define	LINEDISC	34
 
 #define NOVAL	((value_t *)NULL)
 #define NOACU	((acu_t *)NULL)

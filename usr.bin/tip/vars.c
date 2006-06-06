@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.6 2006/01/01 22:34:07 djm Exp $	*/
+/*	$OpenBSD: vars.c,v 1.7 2006/06/06 23:24:52 deraadt Exp $	*/
 /*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: vars.c,v 1.6 2006/01/01 22:34:07 djm Exp $";
+static const char rcsid[] = "$OpenBSD: vars.c,v 1.7 2006/06/06 23:24:52 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -112,5 +112,7 @@ value_t vtable[] = {
 	  "par",	(char *)&PA },
 	{ "hardwareflow", BOOL,			(READ|WRITE)<<PUBLIC,
 	  "hf",		(char *)FALSE },
+	{ "linedisc",	NUMBER|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
+	  "ld",		(char *)&LD },
 	{ NOSTR, NULL, NULL, NOSTR, NOSTR }
 };
