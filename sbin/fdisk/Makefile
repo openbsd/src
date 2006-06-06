@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.31 2006/04/26 17:10:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2006/06/06 00:01:49 drahn Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -25,9 +25,10 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-.if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
-    (${MACHINE} == "macppc") || (${MACHINE} == "alpha") || \
-    (${MACHINE} == "cats") || (${MACHINE} == "zaurus") 
+.if (${MACHINE} == "alpha") || (${MACHINE} == "amd64") || \
+    (${MACHINE} == "armish") || (${MACHINE} == "cats") || \
+    (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
+    (${MACHINE} == "zaurus")
 PROG=	fdisk
 SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}

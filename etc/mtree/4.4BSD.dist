@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.180 2006/05/09 21:17:13 miod Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.181 2006/06/06 00:01:49 drahn Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1462,6 +1462,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -1511,6 +1513,10 @@ alpha
 amd64
 ..
 
+# ./usr/share/man/cat2/armish
+armish
+..
+
 # ./usr/share/man/cat2/i386
 i386
 
@@ -1538,6 +1544,8 @@ cat3
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
@@ -1589,6 +1597,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -1633,6 +1643,8 @@ cat5
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
@@ -1689,6 +1701,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -1733,6 +1747,8 @@ cat9
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
@@ -1779,6 +1795,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -1824,6 +1842,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -1842,6 +1862,8 @@ ps3
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
@@ -1893,6 +1915,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -1937,6 +1961,8 @@ ps5
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
@@ -1993,6 +2019,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -2038,6 +2066,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -2082,6 +2112,8 @@ man1
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
@@ -2143,6 +2175,8 @@ alpha
 ..
 amd64
 ..
+armish
+..
 aviion
 ..
 cats
@@ -2202,6 +2236,8 @@ man8
 alpha
 ..
 amd64
+..
+armish
 ..
 aviion
 ..
