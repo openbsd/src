@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.6 2005/08/07 07:29:44 miod Exp $	*/
+/*      $OpenBSD: trap.h,v 1.7 2006/06/06 17:42:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,8 @@
 #define _MIPS_TRAP_H_
 
 /*
- * Trap codes also known in trap.c for name strings.
- * Used for indexing so modify with care.
+ * Trap codes (ExcCode in the cause register); also known in trap.c for
+ * name strings.
  */
 
 #define T_INT			0	/* Interrupt pending */
@@ -59,11 +59,15 @@
 #define T_COP_UNUSABLE		11	/* Coprocessor unusable */
 #define T_OVFLOW		12	/* Arithmetic overflow */
 #define	T_TRAP			13	/* Trap instruction */
-#define	T_VCEI			14	/* Virtual coherency instruction */
+#define	T_VCEI			14	/* R4k Virtual coherency instruction */
 #define	T_FPE			15	/* Floating point exception */
-#define	T_IWATCH		16	/* Inst. Watch address reference */
+#define	T_IWATCH		16	/* R4k Inst. Watch address reference */
+#define	T_C2E			18	/* R5k Coprocessor 2 exception */
+#define	T_MDMX			22	/* R5k MDMX unusable */
 #define	T_DWATCH		23	/* Data Watch address reference */
-#define T_VCED			31	/* Virtual coherency data */
+#define	T_MCHECK		24	/* Machine check */
+#define	T_CACHEERR		30	/* Cache error */
+#define T_VCED			31	/* R4k Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
 
