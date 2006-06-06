@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.178 2006/05/29 20:42:27 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.179 2006/06/06 15:19:15 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,8 +78,11 @@ extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 extern int ipsec_ipcomp_default_level;
 extern int ipforwarding;
-extern int ipmforwarding;
 #endif /* IPSEC */
+
+#ifdef MROUTING
+extern int ipmforwarding;
+#endif
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
