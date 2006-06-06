@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2006/01/04 20:26:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2006/06/06 17:34:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -779,14 +779,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 *  If mapping a memory space address invalidate ICache.
 	 */
-#if 0
-	/* XXX The following test have previously been unreliable!!! */
-	if (pg != NULL &&
-	    (prot & (VM_PROT_READ | VM_PROT_EXECUTE)) ==
-	    (VM_PROT_READ | VM_PROT_EXECUTE))
-#endif
-	if (pg != NULL)
-		Mips_InvalidateICachePage(va);
+	if (pg != NULL && (prot & VM_PROT_EXECUTE))
+		Mips_InvalidateICache(va, PAGE_SIZE);
 
 	return 0;
 }
