@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.70 2006/06/03 19:07:13 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.71 2006/06/06 05:13:39 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -58,6 +58,7 @@ cvs_update(int argc, char **argv)
 			break;
 		case 'C':
 		case 'D':
+			tag = optarg;
 			break;
 		case 'd':
 			build_dirs = 1;

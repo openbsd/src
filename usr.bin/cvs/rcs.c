@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.182 2006/06/04 13:53:27 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.183 2006/06/06 05:13:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2945,16 +2945,40 @@ RCSNUM *
 rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 {
 	size_t i;
-	int nextroot;
+	char *sdate;
 	RCSNUM *rev, *brev;
 	struct rcs_branch *brp;
-	struct rcs_delta *rdp, *brdp;
-	char revision[16];
+	struct rcs_delta *rdp;
+	time_t givendate, rcsdate;
+
+	rdp = NULL;
 
 	rev = rcs_sym_getrev(rfp, revstr);
 	if (rev == NULL) {
-		if ((rev = rcsnum_parse(revstr)) == NULL)
-			fatal("tag %s does not exist (0)", revstr);
+		if ((rev = rcsnum_parse(revstr)) == NULL) {
+			if ((givendate = cvs_date_parse(revstr)) == -1)
+				fatal("tag %s does not exist (0)", revstr);
+
+			rcs_parse_deltas(rfp, NULL);
+
+			TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
+				sdate = asctime(&rdp->rd_date);
+				if (sdate == NULL)
+					fatal("failed to parse rcs date");
+				rcsdate = cvs_date_parse(sdate);
+				if (rcsdate == -1)
+					fatal("failed to parse %s", sdate);
+				if (givendate <= rcsdate)
+					continue;
+				break;
+			}
+
+			if (rdp == NULL)
+				fatal("no revision that matches date %s",
+				    revstr);
+
+			rev = rdp->rd_num;
+		}
 	}
 
 	if (RCSNUM_ISBRANCH(rev)) {
