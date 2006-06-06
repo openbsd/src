@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.7 2006/06/01 07:53:01 deraadt Exp $ */
+/* $OpenBSD: mmc.c,v 1.8 2006/06/06 20:48:07 mjc Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -19,6 +19,9 @@
 #include <sys/limits.h>
 #include <sys/types.h>
 #include <sys/scsiio.h>
+#include <scsi/cd.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_disk.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -33,13 +36,15 @@ extern char *cdname;
 int
 blank(void)
 {
+	struct scsi_blank *scb;
 	scsireq_t scr;
 	int r;
 
 	bzero(&scr, sizeof(scr));
-	scr.cmd[0] = 0xa1;
-	scr.cmd[1] = 0x01;
-	scr.cmdlen = 12;
+	scb = (struct scsi_blank *)scr.cmd;
+	scb->opcode = BLANK;
+	scb->byte2 |= BLANK_MINIMAL;
+	scr.cmdlen = sizeof(*scb);
 	scr.datalen = 0;
 	scr.timeout = 120000;
 	scr.flags = SCCMD_ESCAPE;
@@ -59,12 +64,14 @@ blank(void)
 int
 unit_ready(void)
 {
+	struct scsi_test_unit_ready *scb;
 	scsireq_t scr;
 	int r;
 
 	bzero(&scr, sizeof(scr));
-	scr.cmd[0] = 0x00;
-	scr.cmdlen = 6;
+	scb = (struct scsi_test_unit_ready *)scr.cmd;
+	scb->opcode = TEST_UNIT_READY;
+	scr.cmdlen = sizeof(*scb);
 	scr.datalen = 0;
 	scr.timeout = 120000;
 	scr.flags = SCCMD_ESCAPE;
@@ -77,12 +84,14 @@ unit_ready(void)
 int
 synchronize_cache(void)
 {
+	struct scsi_synchronize_cache *scb;
 	scsireq_t scr;
 	int r;
 
 	bzero(&scr, sizeof(scr));
-	scr.cmd[0] = 0x35;
-	scr.cmdlen = 10;
+	scb = (struct scsi_synchronize_cache *)scr.cmd;
+	scb->opcode = SYNCHRONIZE_CACHE;
+	scr.cmdlen = sizeof(*scb);
 	scr.datalen = 0;
 	scr.timeout = 120000;
 	scr.flags = SCCMD_ESCAPE;
@@ -95,14 +104,15 @@ synchronize_cache(void)
 int
 close_session(void)
 {
+	struct scsi_close_track *scb;
 	scsireq_t scr;
 	int r;
 
 	bzero(&scr, sizeof(scr));
-	scr.cmd[0] = 0x5b;
-	scr.cmd[2] = 0x02; /* close session */
-	scr.cmd[5] = 0x00; /* track number */
-	scr.cmdlen = 10;
+	scb = (struct scsi_close_track *)scr.cmd;
+	scb->opcode = CLOSE_TRACK;
+	scb->closefunc = CT_CLOSE_SESS;
+	scr.cmdlen = sizeof(*scb);
 	scr.datalen = 0;
 	scr.timeout = 120000;
 	scr.flags = SCCMD_ESCAPE;
@@ -233,18 +243,19 @@ writetrack(struct track_info *tr)
 int
 mode_sense_write(unsigned char buf[])
 {
+	struct scsi_mode_sense_big *scb;
 	scsireq_t scr;
 	int r;
 
 	bzero(&scr, sizeof(scr));
+	scb = (struct scsi_mode_sense_big *)scr.cmd;
+	scb->opcode = MODE_SENSE_BIG;
+	/* XXX: need to set disable block descriptors and check SCSI drive */
+	scb->page = WRITE_PARAM_PAGE;
+	scb->length[1] = 0x46; /* 16 for the header + size from pg. 89 mmc-r10a.pdf */
+	scr.cmdlen = sizeof(*scb);
 	scr.timeout = 4000;
 	scr.senselen = SENSEBUFLEN;
-	scr.cmd[0] = 0x5a;
-	scr.cmd[1] = 0x00;
-	scr.cmd[2] = 0x05; /* Write parameters mode page */
-	scr.cmd[7] = 0x00;
-	scr.cmd[8] = 0x46; /* 16 for the header + size from pg. 89 mmc-r10a.pdf */
-	scr.cmdlen = 10;
 	scr.datalen= 0x46;
 	scr.flags = SCCMD_ESCAPE|SCCMD_READ;
 	scr.databuf = (caddr_t)buf;
@@ -256,18 +267,23 @@ mode_sense_write(unsigned char buf[])
 int
 mode_select_write(unsigned char buf[])
 {
+	struct scsi_mode_select_big *scb;
 	scsireq_t scr;
 	int r;
 
 	bzero(&scr, sizeof(scr));
+	scb = (struct scsi_mode_select_big *)scr.cmd;
+	scb->opcode = MODE_SELECT_BIG;
+/*
+ * INF-8020 says bit 4 in byte 2 is '1'
+ * INF-8090 refers to it as 'PF(1)' then doesn't
+ * describe it. 
+ */
+	scb->byte2 = 0x10;
+	scb->length[1] = 2 + buf[1] + 256 * buf[0];
 	scr.timeout = 4000;
 	scr.senselen = SENSEBUFLEN;
-	scr.cmd[0] = 0x55;
-	scr.cmd[1] = 0x10; /* pages aren't vendor specific */
-	scr.cmd[2] = 0x00;
-	scr.cmd[7] = 0x00;
-	scr.cmd[8] = 2 + buf[1] + 256 * buf[0];
-	scr.cmdlen = 10;
+	scr.cmdlen = sizeof(*scb);
 	scr.datalen = 2 + buf[1] + 256 * buf[0];
 	scr.flags = SCCMD_ESCAPE|SCCMD_WRITE;
 	scr.databuf = (caddr_t)buf;
@@ -280,18 +296,19 @@ int
 get_disc_size(off_t *availblk)
 {
 	u_char databuf[28];
+	struct scsi_read_track_info *scb;
 	scsireq_t scr;
 	int r,tmp;
 
 	bzero(&scr, sizeof(scr));
+	scb = (struct scsi_read_track_info *)scr.cmd;
 	scr.timeout = 4000;
 	scr.senselen = SENSEBUFLEN;
-	scr.cmd[0] = 0x52; /* READ TRACK INFO */
-	scr.cmd[1] = 0x01;
-	scr.cmd[5] = 0x01; /* Track 01 */
-	scr.cmd[7] = 0x00;
-	scr.cmd[8] = 0x1c;
-	scr.cmdlen = 10;
+	scb->opcode = READ_TRACK_INFO;
+	scb->addrtype = RTI_TRACK;
+	scb->addr[1] = 1;
+	scb->data_len[3] = 0x1c;
+	scr.cmdlen = sizeof(*scb);
 	scr.datalen= 0x1c;
 	scr.flags = SCCMD_ESCAPE|SCCMD_READ;
 	scr.databuf = (caddr_t)databuf;
