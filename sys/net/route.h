@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.41 2006/06/01 05:21:06 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.42 2006/06/06 15:36:07 deraadt Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -304,8 +304,6 @@ void		 rtlabel_unref(u_int16_t);
 #define	ONNET_CLONING 1
 #define	NO_CLONING 2
 
-#define	RT_TABLEID_MAX	255
-
 extern struct route_cb route_cb;
 extern struct rtstat rtstat;
 extern const struct sockaddr_rtin rt_defmask4;
@@ -336,6 +334,7 @@ void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
 void	 rt_timer_remove_all(struct rtentry *);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
+void	 rtable_init(void **);
 void	 rtalloc(struct route *);
 struct rtentry *
 	 rtalloc1(struct sockaddr *, int);
@@ -355,7 +354,7 @@ int	 rtrequest(int, struct sockaddr *,
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 void	 rt_if_remove(struct ifnet *);
 
-struct radix_node_head	*rt_gettable(sa_family_t, u_int);
+struct radix_node_head	*rt_gettable(sa_family_t, int);
 struct radix_node	*rt_lookup(struct sockaddr *, struct sockaddr *, int);
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

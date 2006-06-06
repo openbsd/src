@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.76 2006/06/01 05:21:06 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.77 2006/06/06 15:36:07 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -130,12 +130,9 @@ struct ifaddr	*encap_findgwifa(struct sockaddr *);
 
 #define	SA(p) ((struct sockaddr *)(p))
 
-struct	route_cb	   route_cb;
-struct	rtstat		   rtstat;
-struct	radix_node_head	***rt_tables;
-u_int8_t		   af2rtafidx[AF_MAX+1];
-u_int8_t		   rtafidx_max;
-u_int			   rtbl_id_max = 0;
+struct	route_cb	 route_cb;
+struct	rtstat		 rtstat;
+struct	radix_node_head	*rt_tables[AF_MAX+1];
 
 int			rttrash;	/* routes not in table but not freed */
 struct sockaddr		wildcard;	/* zero cookie for wildcard searches */
@@ -143,8 +140,6 @@ struct sockaddr		wildcard;	/* zero cookie for wildcard searches */
 struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
-int	rtable_init(struct radix_node_head ***);
-int	rtable_add(u_int);
 int	okaytoclone(u_int, int);
 int	rtdeletemsg(struct rtentry *);
 int	rtflushclone1(struct radix_node *, void *);
@@ -170,74 +165,23 @@ encap_findgwifa(struct sockaddr *gw)
 }
 #endif
 
-int
-rtable_init(struct radix_node_head ***table)
+void
+rtable_init(void **table)
 {
-	void		**p;
-	struct domain	 *dom;
-
-	if ((p = malloc(sizeof(void *) * (rtafidx_max + 1), M_RTABLE,
-	    M_NOWAIT)) == NULL)
-		return (-1);
-	bzero(p, sizeof(void *) * (rtafidx_max + 1));
-
-	/* 2nd pass: attach */
+	struct domain *dom;
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
 		if (dom->dom_rtattach)
-			dom->dom_rtattach(&p[af2rtafidx[dom->dom_family]],
+			dom->dom_rtattach(&table[dom->dom_family],
 			    dom->dom_rtoffset);
-
-	*table = (struct radix_node_head **)p;
-	return (0);
 }
 
 void
 route_init()
 {
-	struct domain	 *dom;
-
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
 	    NULL);
 	rn_init();	/* initialize all zeroes, all ones, mask table */
-
-	bzero(af2rtafidx, sizeof(af2rtafidx));
-	rtafidx_max = 0;
-
-	/* find out how many tables to allocate */
-	for (dom = domains; dom != NULL; dom = dom->dom_next)
-		if (dom->dom_rtattach)
-			af2rtafidx[dom->dom_family] = rtafidx_max++;
-
-	if (rtable_add(0) == -1)
-		panic("route_init rtable_add");
-}
-
-int
-rtable_add(u_int id)	/* must be called at splsoftnet */
-{
-	void	*p;
-
-	if (id > RT_TABLEID_MAX)
-		return (-1);
-
-	if (id == 0 || id > rtbl_id_max) {
-		size_t	newlen = sizeof(void *) * (id+1);
-
-		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT)) == NULL)
-			return (-1);
-		bzero(p, newlen);
-		if (id > 0) {
-			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
-			free(rt_tables, M_RTABLE);
-		}
-		rt_tables = p;
-		rtbl_id_max = id;
-	}
-
-	if (rt_tables[id] != NULL)	/* already exists */
-		return (-1);
-
-	return (rtable_init(&rt_tables[id]));
+	rtable_init((void **)rt_tables);
 }
 
 void
@@ -261,14 +205,13 @@ okaytoclone(u_int flags, int howstrict)
 struct rtentry *
 rtalloc2(struct sockaddr *dst, int report, int howstrict)
 {
-	struct radix_node_head	*rnh;
+	struct radix_node_head	*rnh = rt_tables[dst->sa_family];
 	struct rtentry		*rt;
 	struct radix_node	*rn;
 	struct rtentry		*newrt = 0;
 	struct rt_addrinfo	 info;
 	int			 s = splnet(), err = 0, msgtype = RTM_MISS;
 
-	rnh = rt_gettable(dst->sa_family, 0);
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
@@ -314,14 +257,13 @@ rtalloc(struct route *ro)
 struct rtentry *
 rtalloc1(struct sockaddr *dst, int report)
 {
-	struct radix_node_head	*rnh;
+	struct radix_node_head	*rnh = rt_tables[dst->sa_family];
 	struct rtentry		*rt;
 	struct radix_node	*rn;
 	struct rtentry		*newrt = 0;
 	struct rt_addrinfo	 info;
 	int			 s = splsoftnet(), err = 0, msgtype = RTM_MISS;
 
-	rnh = rt_gettable(dst->sa_family, 0);
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
@@ -715,7 +657,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	struct sockaddr_rtlabel	*sa_rl;
 #define senderr(x) { error = x ; goto bad; }
 
-	if ((rnh = rt_gettable(info->rti_info[RTAX_DST]->sa_family, 0)) == NULL)
+	if ((rnh = rt_tables[info->rti_info[RTAX_DST]->sa_family]) == 0)
 		senderr(EAFNOSUPPORT);
 	if (info->rti_flags & RTF_HOST)
 		info->rti_info[RTAX_NETMASK] = NULL;
@@ -1185,9 +1127,10 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 }
 
 struct radix_node_head *
-rt_gettable(sa_family_t af, u_int id)
+rt_gettable(sa_family_t af, int id)
 {
-	return (rt_tables[id][af2rtafidx[af]]);
+	/* ignore id for now */
+	return (rt_tables[af]);
 }
 
 struct radix_node *
@@ -1200,7 +1143,6 @@ rt_lookup(struct sockaddr *dst, struct sockaddr *mask, int tableid)
 
 	return (rnh->rnh_lookup(dst, mask, rnh));
 }
-
 /* ARGSUSED */
 void
 rt_timer_timer(void *arg)
@@ -1317,11 +1259,13 @@ rt_if_remove(struct ifnet *ifp)
 	int			 i;
 	struct radix_node_head	*rnh;
 
-	for (i = 1; i <= AF_MAX; i++)
-		if ((rnh = rt_gettable(i, 0)) != NULL)
+	for (i = 1; i <= AF_MAX; i++) {
+		rnh = rt_tables[i];
+		if (rnh)
 			while ((*rnh->rnh_walktree)(rnh,
 			    rt_if_remove_rtdelete, ifp) == EAGAIN)
-				;	/* nothing */
+				;
+	}
 }
 
 /*
