@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.69 2006/06/04 09:52:56 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.70 2006/06/06 05:18:23 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -46,6 +46,7 @@ int
 cvs_commit(int argc, char **argv)
 {
 	int ch;
+	BUF *bp;
 	char *arg = ".";
 	int flags;
 	struct cvs_recursion cr;
@@ -57,6 +58,12 @@ cvs_commit(int argc, char **argv)
 		case 'f':
 			break;
 		case 'F':
+			bp = cvs_buf_load(optarg, BUF_AUTOEXT);
+			if (bp == NULL)
+				fatal("failed to load commit message %s",
+				    optarg);
+			cvs_buf_putc(bp, '\0');
+			logmsg = cvs_buf_release(bp);
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
