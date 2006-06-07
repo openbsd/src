@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.16 2005/11/06 17:23:41 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.17 2006/06/07 21:53:43 miod Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -162,7 +162,14 @@ sendsig(catcher, sig, mask, code, type, val)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP,
+	    M_WAITOK | M_CANFAIL);
+	if (kfp == NULL) {
+		/* Better halt the process in its track than panicing */
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
+	}
+
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
