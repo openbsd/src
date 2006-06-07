@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.9 2006/06/06 22:15:53 jason Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.10 2006/06/07 18:19:20 jason Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -579,8 +579,6 @@ azalia_attach_intr(struct device *self)
 	/* 4.4.2 Response Inbound Ring Buffer */
 	azalia_init_rirb(az);
 
-	printf("%s: attach_intr...\n", az->dev.dv_xname);
-
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
 
@@ -880,11 +878,6 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 		*result = rirb[az->rirb_rp].resp;
 
 #if 0
-	printf("%s: rirbwp=%d rp=%d resp1=0x%08x resp2=0x%08x\n",
-	    __func__, wp, az->rirb_rp, rirb[az->rirb_rp].resp,
-	    rirb[az->rirb_rp].resp_ex);
-#endif
-#if 0
 	for (i = 0; i < 16 /*az->rirb_size*/; i++) {
 		DPRINTF(("rirb[%d] 0x%8.8x:0x%8.8x ", i, rirb[i].resp, rirb[i].resp_ex));
 		if ((i % 2) == 1)
@@ -974,17 +967,14 @@ azalia_codec_init(codec_t *this)
 		return err;
 	azalia_codec_init_vtbl(this, result);
 
-	if (this->name == NULL) {
-		printf("%s: codec: 0x%4.4x/0x%4.4x (rev. %u.%u)\n",
-		    XNAME(this->az), result >> 16, result & 0xffff,
-		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
-	} else {
-		printf("%s: codec: %s (rev. %u.%u)\n",
-		    XNAME(this->az), this->name,
-		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
-	}
-	printf("%s: codec: High Definition Audio rev. %u.%u\n",
-	    XNAME(this->az), COP_RID_MAJ(rev), COP_RID_MIN(rev));
+	printf("%s: codec:", XNAME(this->az));
+	if (this->name == NULL)
+		printf(" 0x04x/0x%04x", result >> 16, result & 0xffff);
+	else
+		printf(" %s", this->name);
+	printf(" (rev. %u.%u), HDA version %u.%u\n",
+	    COP_RID_REVISION(rev), COP_RID_STEPPING(rev),
+	    COP_RID_MAJ(rev), COP_RID_MIN(rev));
 
 	/* identify function nodes */
 	err = this->comresp(this, CORB_NID_ROOT, CORB_GET_PARAMETER,
@@ -1116,7 +1106,6 @@ azalia_codec_delete(codec_t *this)
 int
 azalia_codec_construct_format(codec_t *this)
 {
-	char flagbuf[FLAGBUFLEN];
 	const convgroup_t *group;
 	uint32_t bits_rates;
 	int pvariation, rvariation;
@@ -1186,34 +1175,13 @@ azalia_codec_construct_format(codec_t *this)
 			chan += WIDGET_CHANNELS(&this->w[group->conv[dac]]);
 		azalia_codec_add_bits(this, chan, bits_rates, AUMODE_PLAY);
 	}
-	/* print playback capability */
-	snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ", XNAME(this->az));
-	azalia_widget_print_audio(&this->w[nid], flagbuf);
-	if (this->w[group->conv[0]].widgetcap & COP_AWCAP_DIGITAL) {
-		printf("%s: playback: max channels=%d, DIGITAL\n",
-		    XNAME(this->az), chan);
-	} else {
-		printf("%s: playback: max channels=%d\n",
-		    XNAME(this->az), chan);
-	}
 
 	/* register formats for recording */
 	nid = this->adcs[this->cur_adc];
 	chan = WIDGET_CHANNELS(&this->w[nid]);
 	bits_rates = this->w[nid].d.audio.bits_rates;
 	azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
-	/* print recording capability */
-	snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
-	azalia_widget_print_audio(&this->w[nid], flagbuf);
-	if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
-		printf("%s: recording: max channels=%d, DIGITAL\n",
-		    XNAME(this->az), chan);
-	} else {
-		printf("%s: recording: max channels=%d\n",
-		    XNAME(this->az), chan);
-	}
 
-	printf("create encodings...\n");
 	err = azalia_create_encodings(this->formats, this->nformats,
 	    &this->encodings);
 	if (err)
@@ -2701,8 +2669,6 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 	if (err)
 		return EINVAL;
 
-	DELAY(1000000);
-
 	intctl = AZ_READ_4(this->az, INTCTL);
 	intctl |= this->intr_bit;
 	AZ_WRITE_4(this->az, INTCTL, intctl);
@@ -3004,8 +2970,6 @@ azalia_allocm(void *v, int dir, size_t size, int pool, int flags)
 		printf("%s: allocm failed\n", az->dev.dv_xname);
 		return NULL;
 	}
-	printf("allocm %p/%08x\n", stream->buffer.addr,
-	    AZALIA_DMA_DMAADDR(&stream->buffer));
 	return stream->buffer.addr;
 }
 
@@ -3169,6 +3133,7 @@ int
 azalia_create_encodings(struct audio_format *formats, int nformats,
     struct audio_encoding_set **encodings)
 {
+#if 0
 	int i;
 	u_int j;
 
@@ -3183,5 +3148,6 @@ azalia_create_encodings(struct audio_format *formats, int nformats,
 		}
 		printf("\n");
 	}
+#endif
 	return (0);
 }
