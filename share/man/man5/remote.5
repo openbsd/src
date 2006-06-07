@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.16 2006/01/01 22:44:12 djm Exp $
+.\"	$OpenBSD: remote.5,v 1.17 2006/06/07 06:35:59 mbalmer Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -219,6 +219,10 @@ connection with the remote host.
 Input end-of-file marks.
 The default is
 .Dv NULL .
+.It Sy \&ld
+(num)
+line discipline to use for remote tty.
+The default is to use the termios(4) line discipline.
 .It Sy \&nb
 (bool)
 Initialize the
