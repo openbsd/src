@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.99 2006/06/07 21:57:52 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.100 2006/06/07 23:02:52 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -558,7 +558,9 @@ spispec		: SPI STRING			{
 					YYERROR;
 				}
 				$$.spiin = spi;
-			}
+			} else
+				$$.spiin = 0;
+
 			if (atospi($2, &spi) == -1) {
 				yyerror("%s is not a valid spi", $2);
 				free($2);
@@ -719,7 +721,8 @@ keyspec		: STRING			{
 				if (!strncmp(p, "0x", 2))
 					p += 2;
 				$$.keyin = parsekey(p, strlen(p));
-			}
+			} else
+				$$.keyin = NULL;
 
 			hex = $1;
 			if (!strncmp(hex, "0x", 2))
