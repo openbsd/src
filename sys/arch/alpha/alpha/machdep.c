@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.99 2006/04/13 14:41:08 brad Exp $ */
+/* $OpenBSD: machdep.c,v 1.100 2006/06/07 21:50:52 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -162,8 +162,6 @@ int allowaperture = 1;
 int allowaperture = 0;
 #endif
 #endif
-
-int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
 int	physmem;		/* physical mem used by OpenBSD + some rsvd */
@@ -618,7 +616,6 @@ nobootinfo:
 
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
-	maxmem = physmem;
 #if 0
 	printf("totalphysmem = %d\n", totalphysmem);
 	printf("physmem = %d\n", physmem);
@@ -1623,13 +1620,8 @@ trash:
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
