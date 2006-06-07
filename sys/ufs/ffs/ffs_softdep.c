@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.68 2006/01/03 23:34:39 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.69 2006/06/07 10:51:43 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -3210,6 +3210,8 @@ handle_workitem_remove(dirrem)
 	}
 	WORKLIST_INSERT(&inodedep->id_inowait, &dirrem->dm_list);
 	FREE_LOCK(&lk);
+	ip->i_flag |= IN_CHANGE;
+	UFS_UPDATE(VTOI(vp), 0);
 	vput(vp);
 }
 
