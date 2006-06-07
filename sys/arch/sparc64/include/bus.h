@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.18 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: bus.h,v 1.19 2006/06/07 19:13:07 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -351,22 +351,6 @@ bus_space_barrier(t, h, o, s, f)
 /* flags for bus_space_barrier() */
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-/*
- * Device space probe assistant.
- * The optional callback function's arguments are:
- *	the temporary virtual address
- *	the passed `arg' argument
- */
-int bus_space_probe(
-		bus_space_tag_t,
-		bus_addr_t,
-		bus_size_t,			/* probe size */
-		size_t,				/* offset */
-		int,				/* flags */
-		int (*)(void *, void *),	/* callback function */
-		void *);			/* callback arg */
-
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 

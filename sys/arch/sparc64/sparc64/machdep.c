@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2006/03/15 21:03:39 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 2006/06/07 19:13:08 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1858,27 +1858,6 @@ sparc_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 	/* Devices are un-cached... although the driver should do that */
 	return ((paddr + off) | PMAP_NC);
-}
-
-/*
- * Establish a temporary bus mapping for device probing.  */
-int
-bus_space_probe(bus_space_tag_t tag, bus_addr_t paddr, bus_size_t size,
-    size_t offset, int flags, int (*callback)(void *, void *), void *arg)
-{
-	bus_space_handle_t bh;
-	paddr_t tmp;
-	int result;
-
-	if (bus_space_map(tag, paddr, size, flags, &bh) != 0)
-		return (0);
-
-	tmp = bh.bh_ptr;
-	result = (probeget(tmp + offset, tag->asi, size) != -1);
-	if (result && callback != NULL)
-		result = (*callback)((char *)(u_long)tmp, arg);
-	bus_space_unmap(tag, bh, size);
-	return (result);
 }
 
 void *
