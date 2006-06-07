@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.17 2006/06/07 06:35:59 mbalmer Exp $
+.\"	$OpenBSD: remote.5,v 1.18 2006/06/07 10:46:14 jmc Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -77,7 +77,7 @@ as follows.
 When
 .Xr tip 1
 is invoked with only a baud rate, it looks for an entry of the form
-.Dq tip<baud rate> .
+.Dq tip Ns Aq baud rate .
 E.g.\&
 .Ic tip -300
 will cause
@@ -221,7 +221,7 @@ The default is
 .Dv NULL .
 .It Sy \&ld
 (num)
-line discipline to use for remote tty.
+The line discipline to use for the remote tty.
 The default is to use the termios(4) line discipline.
 .It Sy \&nb
 (bool)
