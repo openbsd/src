@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.69 2006/06/04 18:58:13 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.70 2006/06/07 06:29:03 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -161,7 +161,7 @@ client_query(struct ntp_peer *p)
 
 	p->query->msg.xmttime.int_partl = arc4random();
 	p->query->msg.xmttime.fractionl = arc4random();
-	p->query->xmttime = gettime();
+	p->query->xmttime = gettime_corrected();
 
 	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg,
 	    NTP_MSGSIZE_NOAUTH, 0) == -1) {
@@ -196,7 +196,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 			fatal("recvfrom");
 	}
 
-	T4 = gettime();
+	T4 = gettime_corrected();
 
 	ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg);
 

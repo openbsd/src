@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.83 2006/06/04 18:58:13 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.84 2006/06/07 06:29:03 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -500,8 +500,11 @@ priv_adjtime(void)
 
 	free(offsets);
 
-	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
+		for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
+			p->reply[i].offset -= offset_median;
 		p->update.good = 0;
+	}
 
 	return (0);
 }
@@ -551,6 +554,7 @@ priv_host_dns(char *name, u_int32_t peerid)
 void
 update_scale(double offset)
 {
+	offset += getoffset();
 	if (offset < 0)
 		offset = -offset;
 

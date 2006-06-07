@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2004/12/08 15:47:38 mickey Exp $ */
+/*	$OpenBSD: util.c,v 1.11 2006/06/07 06:29:03 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -20,6 +20,21 @@
 #include <limits.h>
 
 #include "ntpd.h"
+
+double
+gettime_corrected(void)
+{
+	return (gettime() + getoffset());
+}
+
+double
+getoffset(void)
+{
+	struct timeval	tv;
+	if (adjtime(NULL, &tv) == -1)
+		return (0.0);
+	return (tv.tv_sec + 1.0e-6 * tv.tv_usec);
+}
 
 double
 gettime(void)
