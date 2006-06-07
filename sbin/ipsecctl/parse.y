@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2006/06/07 21:49:46 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.99 2006/06/07 21:57:52 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -496,16 +496,6 @@ host		: STRING			{
 			ipa->netaddress = 1;
 			if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
 				err(1, "host: strdup");
-
-			ipa->next = calloc(1, sizeof(struct ipsec_addr_wrap));
-			if (ipa->next == NULL)
-				err(1, "host: calloc");
-
-			ipa->next->af = AF_INET6;
-			ipa->next->netaddress = 1;
-			if ((ipa->next->name = strdup("::/0")) == NULL)
-				err(1, "host: strdup");
-
 			$$ = ipa;
 		}
 		| '{' host_list '}'		{ $$ = $2; }
