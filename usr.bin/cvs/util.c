@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.85 2006/05/30 19:30:11 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.86 2006/06/07 22:20:59 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -673,7 +673,6 @@ cvs_mkpath(const char *path)
 {
 	FILE *fp;
 	size_t len;
-	struct stat st;
 	char *sp, *dp, *dir, rpath[MAXPATHLEN], repo[MAXPATHLEN];
 
 	dir = xstrdup(path);
@@ -717,9 +716,6 @@ cvs_mkpath(const char *path)
 		len = strlcat(rpath, sp, sizeof(rpath));
 		if (len >= (int)sizeof(rpath))
 			fatal("cvs_mkpath: overflow");
-
-		if (stat(repo, &st) != -1)
-			continue;
 
 		if (mkdir(rpath, 0755) == -1 && errno != EEXIST)
 			fatal("cvs_mkpath: %s: %s", rpath, strerror(errno));
