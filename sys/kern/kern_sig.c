@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.82 2006/03/04 10:22:20 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.83 2006/06/07 18:58:39 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <sys/kernel.h>
 #include <sys/wait.h>
 #include <sys/ktrace.h>
-#include <sys/syslog.h>
 #include <sys/stat.h>
 #include <sys/core.h>
 #include <sys/malloc.h>
@@ -80,7 +79,6 @@ struct filterops sig_filtops =
 	{ 0, filt_sigattach, filt_sigdetach, filt_signal };
 
 void proc_stop(struct proc *p);
-void killproc(struct proc *, char *);
 int cansignal(struct proc *, struct pcred *, struct proc *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
@@ -1276,18 +1274,6 @@ postsig(int signum)
 	}
 
 	KERNEL_PROC_UNLOCK(p);
-}
-
-/*
- * Kill the current process for stated reason.
- */
-void
-killproc(struct proc *p, char *why)
-{
-
-	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
-	uprintf("sorry, pid %d was killed: %s\n", p->p_pid, why);
-	psignal(p, SIGKILL);
 }
 
 /*
