@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2006/06/06 03:41:51 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2006/06/07 18:23:52 deraadt Exp $
 #	etc.zaurus/Makefile.inc -- zaurus-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: bsd notes bootblocks distrib
+snap_md: bsd bootblocks distrib
 	cp ${.CURDIR}/../sys/arch/zaurus/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
@@ -11,13 +11,10 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/zaurus/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-notes:
-	cp ${.CURDIR}/etc.zaurus/INSTALL.* ${DESTDIR}/snapshot
-
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/zboot ${DESTDIR}/snapshot
 	cp ${DESTDIR}/usr/mdec/zbsdmod.o ${DESTDIR}/snapshot
 
-.PHONY: bsd notes bootblocks
+.PHONY: bsd bootblocks
 
 .endif	# DESTDIR check
