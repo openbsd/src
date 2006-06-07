@@ -1,6 +1,7 @@
-/*	$OpenBSD: commit.c,v 1.70 2006/06/06 05:18:23 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.71 2006/06/07 07:01:12 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +28,7 @@ void	cvs_commit_local(struct cvs_file *);
 void	cvs_commit_check_conflicts(struct cvs_file *);
 
 static char *commit_diff_file(struct cvs_file *);
+static void commit_desc_set(struct cvs_file *);
 
 struct	cvs_flisthead files_affected;
 int	conflicts_found;
@@ -226,6 +228,8 @@ cvs_commit_local(struct cvs_file *cf)
 		if (cf->file_rcs == NULL)
 			fatal("cvs_commit_local: failed to create RCS file "
 			    "for %s", cf->file_path);
+
+		commit_desc_set(cf);
 	}
 
 	cvs_printf("Checking in %s:\n", cf->file_path);
@@ -374,4 +378,33 @@ commit_diff_file(struct cvs_file *cf)
 	cvs_buf_putc(b3, '\0');
 	delta = cvs_buf_release(b3);
 	return (delta);
+}
+
+static void
+commit_desc_set(struct cvs_file *cf)
+{
+	BUF *bp;
+	int l;
+	char *desc_path, *desc;
+
+	desc_path = xmalloc(MAXPATHLEN);
+	l = snprintf(desc_path, MAXPATHLEN, "%s/%s%s",
+	    CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
+	if (l == -1 || l >= MAXPATHLEN)
+		fatal("commit_desc_set: overflow");
+
+	if ((bp = cvs_buf_load(desc_path, BUF_AUTOEXT)) == NULL) {
+		xfree(desc_path);
+		return;
+	}
+
+	cvs_buf_putc(bp, '\0');
+	desc = cvs_buf_release(bp);
+
+	rcs_desc_set(cf->file_rcs, desc);
+
+	(void)cvs_unlink(desc_path);
+
+	xfree(desc);
+	xfree(desc_path);
 }

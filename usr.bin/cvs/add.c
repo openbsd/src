@@ -1,6 +1,7 @@
-/*	$OpenBSD: add.c,v 1.54 2006/06/05 02:03:15 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.55 2006/06/07 07:01:12 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +30,7 @@ void	cvs_add_local(struct cvs_file *);
 
 static void add_directory(struct cvs_file *);
 static void add_file(struct cvs_file *);
+static void add_entry(struct cvs_file *);
 
 char	*logmsg;
 
@@ -178,10 +180,9 @@ static void
 add_file(struct cvs_file *cf)
 {
 	BUF *b;
-	int added, l, stop;
-	char *entry, revbuf[16], tbuf[32];
+	int added, stop;
+	char revbuf[16];
 	RCSNUM *head;
-	CVSENTRIES *entlist;
 
 	if (cf->file_rcs != NULL)
 		rcsnum_tostr(rcs_head_get(cf->file_rcs),
@@ -199,30 +200,10 @@ add_file(struct cvs_file *cf)
 		if (cf->file_rcs == NULL) {
 			cvs_log(LP_NOTICE, "cannot resurrect %s; "
 			    "RCS file removed by second party", cf->file_name);
-		} else if (cvs_noexec != 1) {
-			/*
-			 * Remove the '-' prefixing the version number and
-			 * restore the file.
-			 */
-			rcsnum_tostr(cf->file_ent->ce_rev, revbuf,
-			    sizeof(revbuf));
+		} else {
+			add_entry(cf);
 
-			ctime_r(&cf->file_ent->ce_mtime, tbuf);
-			if (tbuf[strlen(tbuf) - 1] == '\n')
-				tbuf[strlen(tbuf) - 1] = '\0';
-
-			entry = xmalloc(CVS_ENT_MAXLINELEN);
-			l = snprintf(entry, CVS_ENT_MAXLINELEN,
-			    "/%s/%s/%s//", cf->file_name, revbuf, tbuf);
-			if (l == -1 || l >= CVS_ENT_MAXLINELEN)
-				fatal("cvs_add_local: overflow");
-
-			entlist = cvs_ent_open(cf->file_wd);
-			cvs_ent_add(entlist, entry);
-			cvs_ent_close(entlist, ENT_SYNC);
-
-			xfree(entry);
-
+			/* Restore the file. */
 			head = rcs_head_get(cf->file_rcs);
 			b = rcs_getrev(cf->file_rcs, head);
 			if (b == NULL)
@@ -235,11 +216,7 @@ add_file(struct cvs_file *cf)
 			    cf->file_name, revbuf);
 
 			cf->file_status = FILE_UPTODATE;
-		} else {
-			cvs_log(LP_NOTICE, "%s, version %s, ressurected",
-			    cf->file_name, revbuf);
 		}
-
 		stop = 1;
 		break;
 	case FILE_CONFLICT:
@@ -270,17 +247,7 @@ add_file(struct cvs_file *cf)
 	if (stop == 1)
 		return;
 
-	if (added != 0 && cvs_noexec != 1) {
-		entry = xmalloc(CVS_ENT_MAXLINELEN);
-		l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/0/Initial %s//",
-		    cf->file_name, cf->file_name);
-
-		entlist = cvs_ent_open(cf->file_wd);
-		cvs_ent_add(entlist, entry);
-		cvs_ent_close(entlist, ENT_SYNC);
-
-		xfree(entry);
-	}
+	add_entry(cf);
 
 	if (added != 0) {
 		if (verbosity > 0)
@@ -288,4 +255,64 @@ add_file(struct cvs_file *cf)
 			    "permanently", __progname,
 			    (added == 1) ? "this file" : "these files");
 	}
+}
+
+static void
+add_entry(struct cvs_file *cf)
+{
+	FILE *fp;
+	int l;
+	char *entry, *path, revbuf[16], tbuf[32];
+	CVSENTRIES *entlist;
+
+	if (cvs_noexec == 1)
+		return;
+
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+
+	if (cf->file_status == FILE_REMOVED) {
+		rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
+
+		ctime_r(&cf->file_ent->ce_mtime, tbuf);
+		if (tbuf[strlen(tbuf) - 1] == '\n')
+			tbuf[strlen(tbuf) - 1] = '\0';
+
+		/* Remove the '-' prefixing the version number. */
+		l = snprintf(entry, CVS_ENT_MAXLINELEN,
+		    "/%s/%s/%s//", cf->file_name, revbuf, tbuf);
+		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
+               		fatal("add_entry: truncation");
+	} else {
+		if (logmsg != NULL) {
+			path = xmalloc(MAXPATHLEN);
+
+			l = snprintf(path, MAXPATHLEN, "%s/%s%s",
+			    CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
+			if (l == -1 || l >= MAXPATHLEN)
+               			fatal("add_entry: truncation");
+
+			if ((fp = fopen(path, "w+")) == NULL)
+				fatal("add_entry: fopen `%s': %s",
+				    path, strerror(errno));
+
+			if (fputs(logmsg, fp) == EOF) {
+				(void)unlink(path);
+				fatal("add_entry: fputs `%s': %s",
+				    path, strerror(errno));
+			}
+			(void)fclose(fp);
+			xfree(path);
+		}
+
+		l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/0/Initial %s//",
+		    cf->file_name, cf->file_name);
+		if (l == -1 || l >= CVS_ENT_MAXLINELEN)
+               		fatal("add_entry: truncation");
+	}
+
+	entlist = cvs_ent_open(cf->file_wd);
+	cvs_ent_add(entlist, entry);
+	cvs_ent_close(entlist, ENT_SYNC);
+
+	xfree(entry);
 }
