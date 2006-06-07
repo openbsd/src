@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.97 2006/06/02 15:43:37 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.98 2006/06/07 21:49:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,8 +157,6 @@ struct ipsec_rule	*copyrule(struct ipsec_rule *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *, u_int8_t);
-int			 validate_af(struct ipsec_addr_wrap *,
-				struct ipsec_addr_wrap *);
 struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_hosts *,
 			     u_int32_t, struct ipsec_transforms *,
 			     struct ipsec_key *, struct ipsec_key *);
