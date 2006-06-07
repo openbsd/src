@@ -1,6 +1,7 @@
-/*	$OpenBSD: status.c,v 1.63 2006/06/04 14:56:09 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.64 2006/06/07 15:21:47 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,12 +25,14 @@
 int	cvs_status(int, char **);
 void	cvs_status_local(struct cvs_file *);
 
+static int show_sym = 0;
+
 struct cvs_cmd cvs_cmd_status = {
 	CVS_OP_STATUS, CVS_REQ_STATUS, "status",
 	{ "st", "stat" },
 	"Display status information on checked out files",
 	"[-lRv]",
-	"lRv:",
+	"lRv",
 	NULL,
 	cvs_status
 };
@@ -69,6 +72,7 @@ cvs_status(int argc, char **argv)
 		case 'R':
 			break;
 		case 'v':
+			show_sym = 1;
 			break;
 		default:
 			fatal("%s", cvs_cmd_status.cmd_synopsis);
@@ -99,6 +103,7 @@ cvs_status_local(struct cvs_file *cf)
 	size_t len;
 	const char *status;
 	char buf[128], timebuf[32], revbuf[32];
+	struct rcs_sym *sym;
 
 	cvs_log(LP_TRACE, "cvs_status_local(%s)", cf->file_path);
 
@@ -187,6 +192,24 @@ cvs_status_local(struct cvs_file *cf)
 			    cf->file_ent->ce_opts);
 		else if (verbosity > 0)
 			cvs_printf("   Sticky Options:\t(none)\n");
+	}
+
+	if (show_sym == 1) {
+		cvs_printf("\n");
+		cvs_printf("   Existing Tags:\n");
+
+		if (!TAILQ_EMPTY(&(cf->file_rcs->rf_symbols))) {
+			TAILQ_FOREACH(sym,
+			    &(cf->file_rcs->rf_symbols), rs_list) {
+				(void)rcsnum_tostr(sym->rs_num, revbuf,
+				    sizeof(revbuf));
+
+				cvs_printf("\t%-25s\t(%s: %s)\n", sym->rs_name,
+				    RCSNUM_ISBRANCH(sym->rs_num) ? "branch" :
+				    "revision", revbuf);
+			 }
+		} else
+			cvs_printf("\tNo Tags Exist\n");
 	}
 
 	cvs_printf("\n");
