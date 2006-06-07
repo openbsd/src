@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.58 2006/06/02 01:07:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.59 2006/06/07 16:57:43 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -56,12 +56,10 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#undef HORRID_III_HACK	/* define this to make a locore.s for usIII */
 #ifdef HORRID_III_HACK
 #define	NO_VCACHE		/* Map w/D$ disabled */
-#else	/* HORRID_III_HACK */
-#undef	NO_VCACHE		/* Map w/D$ disabled */
-#endif	/* HORRID_III_HACK */
+#endif /* HORRID_III_HACK */
+
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
@@ -4097,7 +4095,7 @@ dostart:
 	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
 	st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if 0 || defined(HORRID_III_HACK)
+#if defined(HORRID_III_HACK)
 	/*
 	 * Disable the DCACHE entirely for debug.
 	 */
