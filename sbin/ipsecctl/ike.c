@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.36 2006/06/02 15:43:37 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.37 2006/06/08 18:25:50 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -75,7 +75,7 @@ ike_section_general(struct ipsec_rule *r, FILE *fd)
 	if (r->mmlife && r->mmlife->lifetime != -1)
 		fprintf(fd, SET "[General]:Default-phase-1-lifetime=%d force\n",
 		    r->mmlife->lifetime);
-	if (r->qmlife && r->mmlife->lifetime != -1)
+	if (r->qmlife && r->qmlife->lifetime != -1)
 		fprintf(fd, SET "[General]:Default-phase-2-lifetime=%d force\n",
 		    r->qmlife->lifetime);
 }
