@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.44 2006/06/01 22:29:19 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.45 2006/06/08 22:34:30 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -1306,7 +1306,7 @@ pfkey_monitor(int opts)
 		if (msg->sadb_msg_type == SADB_X_PROMISC) {
 			/* remove extra header from promisc messages */
 			if ((msg->sadb_msg_len * PFKEYV2_CHUNK) >=
-			     2 * sizeof(struct sadb_msg)) {
+			    2 * sizeof(struct sadb_msg)) {
 				msg++;
 			}
 		}

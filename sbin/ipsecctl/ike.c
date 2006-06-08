@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.39 2006/06/08 21:15:21 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.40 2006/06/08 22:34:30 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -454,7 +454,7 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		if (getnameinfo(sa, sa->sa_len, mask, sizeof(mask), NULL, 0,
 		    NI_NUMERICHOST))
 			errx(1, "could not get a numeric mask");
-		
+
 		if ((network = strdup(dst->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)

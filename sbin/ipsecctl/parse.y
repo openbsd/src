@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2006/06/08 21:15:21 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.103 2006/06/08 22:34:30 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -332,7 +332,7 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 		;
 
 ikerule		: IKE ikemode satype tmode proto hosts peers mainmode quickmode
-		      ids ikeauth {
+		    ids ikeauth {
 			struct ipsec_rule	*r;
 
 			r = create_ike($5, &$6, &$7, $8, $9, $3, $4, $2,
@@ -2071,7 +2071,7 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 	r->dst = hosts->dst;
 	r->dport = hosts->dport;
 	if ((hosts->sport != 0 || hosts->dport != 0) &&
-            (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
+	    (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
 		yyerror("no protocol supplied with source/destination ports");
 		goto errout;
 	}
@@ -2243,7 +2243,7 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 	r->dst = hosts->dst;
 	r->dport = hosts->dport;
 	if ((hosts->sport != 0 || hosts->dport != 0) &&
-            (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
+	    (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
 		yyerror("no protocol supplied with source/destination ports");
 		free(r);
 		free(hosts->src);
