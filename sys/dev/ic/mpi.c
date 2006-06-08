@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.26 2006/06/06 14:51:29 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.27 2006/06/08 12:27:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1401,8 +1401,10 @@ mpi_portfacts(struct mpi_softc *sc)
 	}
 
 	pfp = ccb->ccb_reply;
-	if (pfp == NULL)
-		panic("%s: empty portfacts reply\n", DEVNAME(sc));
+	if (pfp == NULL) {
+		DPRINTF("%s: empty portfacts reply\n", DEVNAME(sc));
+		return (1);
+	}
 
 #ifdef MPI_DEBUG
 	if (mpidebug) {
@@ -1539,8 +1541,10 @@ mpi_portenable(struct mpi_softc *sc)
 	}
 
 	pep = ccb->ccb_reply;
-	if (pep == NULL)
-		panic("%s: empty portenable reply\n", DEVNAME(sc));
+	if (pep == NULL) {
+		DPRINTF("%s: empty portenable reply\n", DEVNAME(sc));
+		return (1);
+	}
 
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
