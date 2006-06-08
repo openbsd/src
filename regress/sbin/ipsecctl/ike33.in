@@ -1,1 +1,1 @@
-ike from 10.1.2.0/24 to 3ffe::1/24 peer 3ffe::1
+ike from 1.1.1.1 to 2.2.2.2 main life 3600
