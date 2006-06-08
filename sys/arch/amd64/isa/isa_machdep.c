@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.8 2006/03/08 19:44:02 kettenis Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.9 2006/06/08 03:18:08 weingart Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -770,15 +770,18 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	paddr_t high;
+	int error;
 
-	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
-	else
-		high = trunc_page(avail_end);
+	/* Try in ISA addressable region first */
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, ISA_DMA_BOUNCE_THRESHOLD);
+	if (!error)
+		return (error);
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, high));
+	/* Otherwise try anywhere (we'll bounce later) */
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end));
+	return (error);
 }
 
 /*
