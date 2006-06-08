@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.5 2006/06/01 16:24:22 robert Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.6 2006/06/08 19:58:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -140,6 +140,9 @@ struct rt2661_softc {
 	int				ext_5ghz_lna;
 	int				rssi_2ghz_corr;
 	int				rssi_5ghz_corr;
+
+	int				ncalls;
+	int				avg_rssi;
 
 	uint8_t				bbp18;
 	uint8_t				bbp21;
