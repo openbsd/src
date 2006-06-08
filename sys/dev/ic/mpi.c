@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.27 2006/06/08 12:27:59 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.28 2006/06/08 22:09:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -890,12 +890,12 @@ mpi_load_xs(struct mpi_ccb *ccb)
 
 		DPRINTFN(5, "%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
 		    i, dmap->dm_segs[i].ds_len,
-		    (unsigned long long)dmap->dm_segs[i].ds_addr);
+		    (u_int64_t)dmap->dm_segs[i].ds_addr);
 
 		sge = nsge;
 
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
-		addr = (u_int32_t)((unsigned long long)dmap->dm_segs[i].ds_addr >> 32);
+		addr = (u_int32_t)((u_int64_t)dmap->dm_segs[i].ds_addr >> 32);
 		sge->sg_hi_addr = htole32(addr);
 		addr = (u_int32_t)dmap->dm_segs[i].ds_addr;
 		sge->sg_lo_addr = htole32(addr);
