@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.h,v 1.4 2005/09/13 18:44:38 fgsch Exp $ */
+/*	$OpenBSD: rbus.h,v 1.5 2006/06/08 22:38:40 fkr Exp $ */
 /*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 /*
  * Copyright (c) 1999
@@ -36,32 +36,34 @@
 #define _DEV_CARDBUS_RBUS_H_
 
 /*
- * This file defines rbus (pseudo) class
+ * This file defines the rbus (pseudo) class
  *
  * What is rbus?
  *
  *  Ths rbus is a recursive bus-space administrator.  This means a
  *  parent bus-space administrator, which usually belongs to a bus
  *  bridge, makes some child bus-space administrators and gives
- *  (restricted) bus-space for children.  There are a root bus-space
- *  administrator which maintains whole bus-space.
+ *  (restricted) bus-space to children.  There is a root bus-space
+ *  administrator which maintains the whole bus-space.
  *
  * Why recursive?
  *
- *  The recursive bus-space administration has two virtues.  The
- *  former is this modelling matches the actual memory and io space
- *  management of bridge devices well.  The latter is the rbus is
- *  distributed management system, so it matches well with
+ *  The recursive bus-space administration has two reasons. For one
+ *  this modelling matches the actual memory and io space management 
+ *  of bridge devices quite well. Furthermore  is the rbus a
+ *  distributed management system, as such it plays well with
  *  multi-thread kernel.
  *
  * Abstraction
  *
- *  The rbus models bus-to-bus bridge into three way: dedicate, share
- *  and slave.  Dedicate means that the bridge has dedicate bus space.
- *  Share means that the bridge has bus space, but this bus space is
- *  shared with other bus bridges.  Slave means the bus bridge which
- *  does not have it own bus space and ask a parent bus bridge for bus
- *  space when a client requests bus space to the bridge.
+ *  rbus can model a bus-to-bus bridge in three ways: dedicated, shared
+ *  and slave. 
+ *  Dedicated: the bridge has its own bus space.
+ *  Shared: the bridge has bus space, but this bus space is
+ *  shared with other bus bridges. 
+ *  Slave: the bus bridge does not have its own bus space and has to ask
+ *  a parent bus bridge for bus space once a client is requesting bus space
+ *  to the bridge.
  */
 
 
@@ -76,7 +78,7 @@ struct extent;
 /*
  *     General rule
  *
- * 1) When a rbustag has no space for child (it means rb_extent is
+ * 1) When a rbustag has no space for child (meaning: rb_extent is
  *    NULL), ask bus-space for parent through rb_parent.
  *
  * 2) When a rbustag has its own space (whether shared or dedicated),
