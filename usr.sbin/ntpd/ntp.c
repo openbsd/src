@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.84 2006/06/07 06:29:03 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.85 2006/06/08 06:03:07 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -467,24 +467,20 @@ priv_adjtime(void)
 
 	qsort(offsets, offset_cnt, sizeof(struct ntp_offset *), offset_compare);
 
-	if (offset_cnt > 1 && offset_cnt % 2 == 0) {
+	i = offset_cnt / 2;
+	if (offset_cnt % 2 == 0) {
 		offset_median =
-		    (offsets[offset_cnt / 2 - 1]->offset +
-		    offsets[offset_cnt / 2]->offset) / 2;
+		    (offsets[i - 1]->offset + offsets[i]->offset) / 2;
 		conf->status.rootdelay =
-		    (offsets[offset_cnt / 2 - 1]->delay +
-		    offsets[offset_cnt / 2]->delay) / 2;
+		    (offsets[i - 1]->delay + offsets[i]->delay) / 2;
 		conf->status.stratum = MAX(
-		    offsets[offset_cnt / 2 - 1]->status.stratum,
-		    offsets[offset_cnt / 2]->status.stratum);
+		    offsets[i - 1]->status.stratum, offsets[i]->status.stratum);
 	} else {
-		offset_median = offsets[offset_cnt / 2]->offset;
-		conf->status.rootdelay =
-		    offsets[offset_cnt / 2]->delay;
-		conf->status.stratum =
-		    offsets[offset_cnt / 2]->status.stratum;
+		offset_median = offsets[i]->offset;
+		conf->status.rootdelay = offsets[i]->delay;
+		conf->status.stratum = offsets[i]->status.stratum;
 	}
-	conf->status.leap = offsets[offset_cnt / 2]->status.leap;
+	conf->status.leap = offsets[i]->status.leap;
 
 	imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 	    &offset_median, sizeof(offset_median));
@@ -493,10 +489,8 @@ priv_adjtime(void)
 	conf->status.stratum++;	/* one more than selected peer */
 	update_scale(offset_median);
 
-	conf->status.refid4 =
-	    offsets[offset_cnt / 2]->status.refid4;
-	conf->status.refid =
-	    offsets[offset_cnt / 2]->status.send_refid;
+	conf->status.refid4 = offsets[i]->status.refid4;
+	conf->status.refid = offsets[i]->status.send_refid;
 
 	free(offsets);
 
