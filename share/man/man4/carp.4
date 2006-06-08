@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.20 2006/05/09 19:03:04 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.21 2006/06/08 12:08:54 jmc Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -54,7 +54,8 @@ configuration file for
 .Pp
 To use
 .Nm ,
-the administrator needs to configure at minimum a common virtual host ID and
+the administrator needs to configure at minimum
+a common virtual host ID (VHID) and
 virtual host IP address on each machine which is to take part in the virtual
 group.
 Additional parameters can also be set on a per-interface basis:
