@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.14 2006/06/04 21:07:39 fkr Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.15 2006/06/08 05:43:01 fkr Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ void fxp_cardbus_setup(struct fxp_softc *);
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;
 	cardbus_devfunc_t ct;
+	cardbustag_t ct_tag;
 	pcireg_t base0_reg;
 	pcireg_t base1_reg;
 	bus_size_t size;
@@ -202,19 +203,17 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
 
-	cardbustag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
+	csc->ct_tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
 	    csc->ct->ct_dev, csc->ct->ct_func);
 
-	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
+	command = cardbus_conf_read(cc, cf, csc->ct_tag, CARDBUS_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
-		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE0_REG, csc->base0_reg);
+		cardbus_conf_write(cc, cf, csc->ct_tag, CARDBUS_BASE0_REG, csc->base0_reg);
 		(cf->cardbus_ctrl) (cc, CARDBUS_MEM_ENABLE);
 		command |= CARDBUS_COMMAND_MEM_ENABLE |
 		    CARDBUS_COMMAND_MASTER_ENABLE;
 	} else if (csc->base1_reg) {
-		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE1_REG, csc->base1_reg);
+		cardbus_conf_write(cc, cf, csc->ct_tag, CARDBUS_BASE1_REG, csc->base1_reg);
 		(cf->cardbus_ctrl) (cc, CARDBUS_IO_ENABLE);
 		command |= (CARDBUS_COMMAND_IO_ENABLE |
 		    CARDBUS_COMMAND_MASTER_ENABLE);
@@ -223,7 +222,7 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	(cf->cardbus_ctrl) (cc, CARDBUS_BM_ENABLE);
 
 	/* enable the card */
-	Cardbus_conf_write(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG, command);
+	cardbus_conf_write(cc, cf, csc->ct_tag, CARDBUS_COMMAND_STATUS_REG, command);
 }
 
 int
