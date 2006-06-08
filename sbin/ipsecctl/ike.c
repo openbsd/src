@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.37 2006/06/08 18:25:50 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.38 2006/06/08 20:52:43 todd Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -379,27 +379,28 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
     u_int16_t sport, struct ipsec_addr_wrap *dst, u_int16_t dport, FILE *fd)
 {
 	char mask[NI_MAXHOST], *network, *p;
-	struct sockaddr sa;
+	struct sockaddr_storage sas;
+	struct sockaddr *sa = (struct sockaddr *)&sas;
 
 	if (src->netaddress) {
-		bzero(&sa, sizeof(struct sockaddr));
+		bzero(&sas, sizeof(struct sockaddr_storage));
 		bzero(mask, sizeof(mask));
-		sa.sa_family = src->af;
+		sa->sa_family = src->af;
 		switch (src->af) {
 		case AF_INET:
-			sa.sa_len = sizeof(struct sockaddr_in);
+			sa->sa_len = sizeof(struct sockaddr_in);
 			bcopy(&src->mask.ipa,
-			    &((struct sockaddr_in *)(&sa))->sin_addr,
+			    &((struct sockaddr_in *)(sa))->sin_addr,
 			    sizeof(struct in6_addr));
 			break;
 		case AF_INET6:
-			sa.sa_len = sizeof(struct sockaddr_in6);
+			sa->sa_len = sizeof(struct sockaddr_in6);
 			bcopy(&src->mask.ipa,
-			    &((struct sockaddr_in6 *)(&sa))->sin6_addr,
+			    &((struct sockaddr_in6 *)sa)->sin6_addr,
 			    sizeof(struct in6_addr));
 			break;
 		}
-		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0,
+		if (getnameinfo(sa, sa->sa_len, mask, sizeof(mask), NULL, 0,
 		    NI_NUMERICHOST))
 			errx(1, "could not get a numeric mask");
 
@@ -422,24 +423,24 @@ ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src,
 		    src->name);
 	}
 	if (dst->netaddress) {
-		bzero(&sa, sizeof(struct sockaddr));
+		bzero(&sas, sizeof(struct sockaddr_storage));
 		bzero(mask, sizeof(mask));
-		sa.sa_family = dst->af;
+		sa->sa_family = dst->af;
 		switch (dst->af) {
 		case AF_INET:
-			sa.sa_len = sizeof(struct sockaddr_in);
+			sa->sa_len = sizeof(struct sockaddr_in);
 			bcopy(&dst->mask.ipa,
-			    &((struct sockaddr_in *)(&sa))->sin_addr,
+			    &((struct sockaddr_in *)(sa))->sin_addr,
 			    sizeof(struct in6_addr));
 			break;
 		case AF_INET6:
-			sa.sa_len = sizeof(struct sockaddr_in6);
+			sa->sa_len = sizeof(struct sockaddr_in6);
 			bcopy(&dst->mask.ipa,
-			    &((struct sockaddr_in6 *)(&sa))->sin6_addr,
+			    &((struct sockaddr_in6 *)(sa))->sin6_addr,
 			    sizeof(struct in6_addr));
 			break;
 		}
-		if (getnameinfo(&sa, sa.sa_len, mask, sizeof(mask), NULL, 0,
+		if (getnameinfo(sa, sa->sa_len, mask, sizeof(mask), NULL, 0,
 		    NI_NUMERICHOST))
 			errx(1, "could not get a numeric mask");
 		
