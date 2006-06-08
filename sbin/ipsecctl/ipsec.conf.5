@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.52 2006/06/02 18:15:26 david Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.53 2006/06/08 21:15:21 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -356,7 +356,7 @@ This is accomplished by the following rule:
 Creates an IPsec tunnel using ESP.
 .El
 .Pp
-Note that AH and transport mode are not yet supported.
+Note that AH is not yet supported.
 See
 .Xr isakmpd 8
 for details on ISAKMP/IKE.
@@ -398,6 +398,19 @@ warriors or dialup hosts.
 If omitted,
 .Ar active
 mode will be used.
+.It Xo
+.Aq Ar tmode
+.Xc
+The encapsulation mode to be used can be specified.
+Possible modes are
+.Ar tunnel
+and
+.Ar transport .
+When left out,
+.Ar tunnel
+is chosen.
+For details on modes see
+.Xr ipsec 4 .
 .It Ic proto Aq Ar protocol
 The optional
 .Ic proto

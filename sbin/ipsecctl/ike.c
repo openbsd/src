@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.38 2006/06/08 20:52:43 todd Exp $	*/
+/*	$OpenBSD: ike.c,v 1.39 2006/06/08 21:15:21 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -40,8 +40,8 @@ static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
 static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, FILE *);
 static int	ike_section_qm(struct ipsec_addr_wrap *, struct
-		    ipsec_addr_wrap *, u_int8_t, struct ipsec_transforms *,
-		    FILE *);
+		    ipsec_addr_wrap *, u_int8_t, u_int8_t, struct
+		    ipsec_transforms *, FILE *);
 static int	ike_section_mm(struct ipsec_addr_wrap *, struct
 		    ipsec_transforms *, FILE *, struct ike_auth *);
 static void	ike_section_qmids(u_int8_t, struct ipsec_addr_wrap *,
@@ -171,7 +171,7 @@ ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 
 static int
 ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    u_int8_t satype, struct ipsec_transforms *qmxfs, FILE *fd)
+    u_int8_t satype, u_int8_t tmode, struct ipsec_transforms *qmxfs, FILE *fd)
 {
 	fprintf(fd, SET "[qm-%s-%s]:EXCHANGE_TYPE=QUICK_MODE force\n",
 	    src->name, dst->name);
@@ -186,6 +186,17 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		return (-1);
 	}
 	fprintf(fd, "-");
+
+	switch (tmode) {
+	case IPSEC_TUNNEL:
+		break;
+	case IPSEC_TRANSPORT:
+		fprintf(fd, "TRP-");
+		break;
+	default:
+		warnx("illegal encapsulation mode %d", tmode);
+		return (-1);
+	}
 
 	if (qmxfs && qmxfs->encxf) {
 		switch (qmxfs->encxf->id) {
@@ -503,7 +514,8 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	ike_section_ids(r->peer, r->auth, fd, r->ikemode);
 	ike_section_ipsec(r->src, r->dst, r->peer, fd);
-	if (ike_section_qm(r->src, r->dst, r->satype, r->qmxfs, fd) == -1)
+	if (ike_section_qm(r->src, r->dst, r->satype, r->tmode, r->qmxfs, fd)
+	    == -1)
 		return (-1);
 	ike_section_qmids(r->proto, r->src, r->sport, r->dst, r->dport, fd);
 
