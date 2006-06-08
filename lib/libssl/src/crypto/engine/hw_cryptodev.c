@@ -193,8 +193,10 @@ get_dev_crypto(void)
 
 	if ((fd = open_dev_crypto()) == -1)
 		return (-1);
-	if (ioctl(fd, CRIOGET, &retfd) == -1)
+	if (ioctl(fd, CRIOGET, &retfd) == -1) {
+		close(fd);
 		return (-1);
+	}
 
 	/* close on exec */
 	if (fcntl(retfd, F_SETFD, 1) == -1) {
