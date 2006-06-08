@@ -1,4 +1,4 @@
-/* $OpenBSD: uidswap.c,v 1.28 2006/06/06 10:20:20 markus Exp $ */
+/* $OpenBSD: uidswap.c,v 1.29 2006/06/08 14:45:49 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -111,8 +111,6 @@ restore_uid(void)
 void
 permanently_set_uid(struct passwd *pw)
 {
-	if (pw == NULL)
-		fatal("permanently_set_uid: no user given");
 	if (temporarily_use_uid_effective)
 		fatal("permanently_set_uid: temporarily_use_uid effective");
 	debug("permanently_set_uid: %u/%u", (u_int)pw->pw_uid,
@@ -121,4 +119,12 @@ permanently_set_uid(struct passwd *pw)
 		fatal("setresgid %u: %s", (u_int)pw->pw_gid, strerror(errno));
 	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
 		fatal("setresuid %u: %s", (u_int)pw->pw_uid, strerror(errno));
+}
+
+void
+permanently_drop_suid(uid_t uid)
+{
+	debug("permanently_drop_suid: %u", (u_int)uid);
+	if (setresuid(uid, uid, uid) != 0)
+		fatal("setresuid %u: %s", (u_int)uid, strerror(errno));
 }
