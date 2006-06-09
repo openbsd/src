@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.23 2006/06/01 23:04:55 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.24 2006/06/09 19:09:41 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -128,8 +128,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $");
 #define RXMAPSZ		(NRXPAGES*PAGE_SIZE)
 
 /*
- * Magics to fix a bug when the mac address can't be read correctly.
- * Comes from the Linux driver.
+ * Magic to fix a bug when the MAC address cannot be read correctly.
+ * This came from the Linux driver.
  */
 static uint64_t fix_mac[] = {
 	0x0060000000000000ULL, 0x0060600000000000ULL,
