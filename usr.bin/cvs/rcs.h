@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.68 2006/06/01 20:00:52 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.69 2006/06/09 14:57:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -228,10 +228,11 @@ int			 rcs_access_remove(RCSFILE *, const char *);
 int			 rcs_access_check(RCSFILE *, const char *);
 struct rcs_delta	*rcs_findrev(RCSFILE *, RCSNUM *);
 int			 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
+int			 rcs_sym_check(const char *);
+struct rcs_sym		*rcs_sym_get(RCSFILE *, const char *);
 int			 rcs_sym_remove(RCSFILE *, const char *);
 RCSNUM			*rcs_sym_getrev(RCSFILE *, const char *);
 RCSNUM			*rcs_translate_tag(const char *, RCSFILE *);
-int			 rcs_sym_check(const char *);
 int			 rcs_lock_getmode(RCSFILE *);
 int			 rcs_lock_setmode(RCSFILE *, int);
 int			 rcs_lock_add(RCSFILE *, const char *, RCSNUM *);

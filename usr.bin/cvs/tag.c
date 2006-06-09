@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.45 2006/06/07 18:19:07 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.46 2006/06/09 14:57:13 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -28,11 +28,11 @@ static int tag_del(struct cvs_file *);
 static int tag_add(struct cvs_file *);
 
 static int	tag_delete = 0;
+static int	tag_force_move = 0;
 static char	*tag = NULL;
 static char	*tag_date = NULL;
 static char	*tag_name = NULL;
 static char	*tag_oldname = NULL;
-static RCSNUM	*tag_rev = NULL;
 
 struct cvs_cmd cvs_cmd_tag = {
 	CVS_OP_TAG, CVS_REQ_TAG, "tag",
@@ -59,6 +59,9 @@ cvs_tag(int argc, char **argv)
 			break;
 		case 'd':
 			tag_delete = 1;
+			break;
+		case 'F':
+			tag_force_move = 1;
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
@@ -186,7 +189,9 @@ tag_del(struct cvs_file *cf)
 static int
 tag_add(struct cvs_file *cf)
 {
-	char revbuf[16];
+	char revbuf[16], trevbuf[16];
+	RCSNUM *trev;
+	struct rcs_sym *sym;
 
 	if (cf->file_rcs == NULL) {
 		if (verbosity > 1)
@@ -198,9 +203,33 @@ tag_add(struct cvs_file *cf)
 	if (cvs_noexec == 1)
 		return (0);
 
+	trev = rcs_sym_getrev(cf->file_rcs, tag_name);
+	if (trev != NULL) {
+		if (rcsnum_cmp(cf->file_rcsrev, trev, 0) == 0) {
+			rcsnum_free(trev);
+			return (-1);
+		}
+		(void)rcsnum_tostr(trev, trevbuf, sizeof(trevbuf));
+
+		if (tag_force_move == 0) {
+			cvs_printf("W %s : %s ", cf->file_path, tag_name);
+			cvs_printf("already exists on version %s", trevbuf);
+			cvs_printf(" : NOT MOVING tag to version %s\n", revbuf);
+
+			return (-1);
+		} else if (tag_force_move == 1) {
+			sym = rcs_sym_get(cf->file_rcs, tag_name);
+			rcsnum_cpy(cf->file_rcsrev, sym->rs_num, 0);
+			cf->file_rcs->rf_flags &= ~RCS_SYNCED;
+
+			return (0);
+		}
+	}
+
 	if (rcs_sym_add(cf->file_rcs, tag_name, cf->file_rcsrev) == -1) {
 		if (rcs_errno != RCS_ERR_DUPENT) {
-			(void)rcsnum_tostr(tag_rev, revbuf, sizeof(revbuf));
+			(void)rcsnum_tostr(cf->file_rcsrev, revbuf,
+			    sizeof(revbuf));
 			cvs_log(LP_NOTICE,
 			    "failed to set tag %s to revision %s in %s",
 			    tag_name, revbuf, cf->file_rcs->rf_path);

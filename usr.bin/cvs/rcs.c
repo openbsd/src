@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.183 2006/06/06 05:13:39 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.184 2006/06/09 14:57:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -788,6 +788,25 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
 	/* not synced anymore */
 	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
+}
+
+/*
+ * rcs_sym_get()
+ *
+ * Find a specific symbol <sym> entry in the tree of the RCS file <file>.
+ *
+ * Returns a pointer to the symbol on success, or NULL on failure.
+ */
+struct rcs_sym *
+rcs_sym_get(RCSFILE *file, const char *sym)
+{
+	struct rcs_sym *symp;
+
+	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
+		if (strcmp(symp->rs_name, sym) == 0)
+			return (symp);
+
+	return (NULL);
 }
 
 /*
