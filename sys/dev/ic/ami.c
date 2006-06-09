@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.165 2006/06/09 04:27:10 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.166 2006/06/09 04:48:13 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2000,73 +2000,69 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 
 	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
 	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
+		char vend[8+16+4+1];
+
 	    	/* skip claimed drives */
 	    	if (plist[i])
 			continue;
+
+		/* no size no disk, most of the times */
+		if (!p->apd[i].adp_size)
+			continue;
+
+		ch = (i & 0xf0) >> 4;
+		tg = i & 0x0f;
 
 	    	/*
 		 * poke drive to make sure its there.  If it is it is either
 		 * unused or a hot spare; at this point we dont care which it is
 		 */
-		if (p->apd[i].adp_size) {
-			ch = (i & 0xf0) >> 4;
-			tg = i & 0x0f;
+		if (ami_drv_inq(sc, ch, tg, 0, &inqbuf)) 
+			continue;
+		
+		if (ld != bd->bd_volid) {
+			ld++;
+			continue;
+		}
 
-			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
-				char vend[8+16+4+1];
+		bcopy(inqbuf.vendor, vend, sizeof vend - 1);
 
-				if (ld != bd->bd_volid) {
-					ld++;
-					continue;
-				}
+		vend[sizeof vend - 1] = '\0';
+		strlcpy(bd->bd_vendor, vend, sizeof(bd->bd_vendor));
 
-				bcopy(inqbuf.vendor, vend,
-				    sizeof vend - 1);
+		if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
+			char ser[32 + 1];
 
-				vend[sizeof vend - 1] = '\0';
-				strlcpy(bd->bd_vendor, vend,
-				    sizeof(bd->bd_vendor));
+			bcopy(vpdbuf.serial, ser, sizeof ser - 1);
 
-				if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
-					char ser[32 + 1];
+			ser[sizeof ser - 1] = '\0';
+			if (vpdbuf.page_length < sizeof ser)
+				ser[vpdbuf.page_length] = '\0';
 
-					bcopy(vpdbuf.serial, ser,
-					    sizeof ser - 1);
+			strlcpy(bd->bd_serial, ser, sizeof(bd->bd_serial));
+		}
 
-					ser[sizeof ser - 1] = '\0';
-					if (vpdbuf.page_length < sizeof ser)
-						ser[vpdbuf.page_length] = '\0';
-					strlcpy(bd->bd_serial, ser,
-					    sizeof(bd->bd_serial));
-				}
+		bd->bd_size = (u_quad_t)p->apd[i].adp_size * (u_quad_t)512;
 
-				bd->bd_size = (u_quad_t)p->apd[i].adp_size *
-				    (u_quad_t)512;
+		bd->bd_channel = ch;
+		bd->bd_target = tg;
 
-				bd->bd_channel = ch;
-				bd->bd_target = tg;
+		strlcpy(bd->bd_procdev, sc->sc_rawsoftcs[ch].sc_procdev,
+		    sizeof(bd->bd_procdev));
 
-				strlcpy(bd->bd_procdev,
-				    sc->sc_rawsoftcs[ch].sc_procdev,
-				    sizeof(bd->bd_procdev));
-
-				if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE)
-					bd->bd_status = BIOC_SDHOTSPARE;
-				else
-					bd->bd_status = BIOC_SDUNUSED;
+		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE)
+			bd->bd_status = BIOC_SDHOTSPARE;
+		else
+			bd->bd_status = BIOC_SDUNUSED;
 
 #ifdef AMI_DEBUG
-				if (p->apd[i].adp_type != 0)
-					printf("invalid disk type: %d %d "
-					    "%x inquiry type: %x\n",
-					    ch, tg, p->apd[i].adp_type,
-					    inqbuf.device);
+		if (p->apd[i].adp_type != 0)
+			printf("invalid disk type: %d %d %x inquiry type: %x\n",
+			    ch, tg, p->apd[i].adp_type, inqbuf.device);
 #endif /* AMI_DEBUG */
 
-				error = 0;
-				goto bail;
-			}
-		}
+		error = 0;
+		goto bail;
 	}
 
 bail:
