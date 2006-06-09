@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.85 2006/06/08 06:03:07 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.86 2006/06/09 07:42:08 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,6 +91,12 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		return (pid);
 	}
 
+	/* in this case the parent didn't init logging and didn't daemonize */
+	if (nconf->settime && !nconf->debug) {
+		log_init(nconf->debug);
+		if (setsid() == -1)
+			fatal("setsid");
+	}
 	if ((se = getservbyname("ntp", "udp")) == NULL)
 		fatal("getservbyname");
 
