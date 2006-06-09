@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.41 2005/11/21 01:59:24 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.42 2006/06/09 17:01:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -131,6 +131,8 @@ static const struct part_type {
 	{ 0xE3, "SpeedStor   "},   /* DOS R/O or SpeedStor or Storage Dimensions */
 	{ 0xE4, "SpeedStor   "},   /* SpeedStor 16-bit FAT extended partition < 1024 cyl. */
 	{ 0xEB, "BeOS/i386   "},   /* BeOS for Intel */
+	{ 0xEE, "EFI GPT     "},   /* EFI Protective Partition */
+	{ 0xEF, "EFI Sys     "},   /* EFI System Partition */
 	{ 0xF1, "SpeedStor   "},   /* SpeedStor or Storage Dimensions */
 	{ 0xF2, "DOS 3.3+ Sec"},   /* DOS 3.3+ Secondary */
 	{ 0xF4, "SpeedStor   "},   /* SpeedStor >1024 cyl. or LANstep or IBM PS/2 IML */
