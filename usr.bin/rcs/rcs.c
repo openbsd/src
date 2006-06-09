@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.17 2006/06/04 18:57:37 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.18 2006/06/09 22:09:33 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2614,12 +2614,13 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 	c = data;
 	fin = c + len;
 	len++;
+
 	/*
 	 * Keyword formats:
 	 * $Keyword$
 	 * $Keyword: value$
 	 */
-	for (; c != fin; c++) {
+	for (; c < fin; c++) {
 		if (*c == '$') {
 			/* remember start of this possible keyword */
 			start = c;
@@ -2771,14 +2772,17 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 				 */
 				start = data + start_offset;
 				fin = data + len;
+				c = data + c_offset;
 			}
-			memcpy(start, expbuf, strlen(expbuf));
-			start += sizdiff;
+			memcpy(start, expbuf, strlen(expbuf) + 1);
+			start += strlen(expbuf);
 			memcpy(start, tbuf, tbuflen);
 			xfree(tbuf);
 			i += sizdiff;
+			c = start + strlen(expbuf);
 		}
 	}
+
 	bp = rcs_buf_alloc(len - 1, BUF_AUTOEXT);
 	rcs_buf_set(bp, data, len - 1, 0);
 	xfree(data);
