@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.11 2006/03/04 03:48:37 brad Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.12 2006/06/09 04:04:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -331,7 +331,9 @@ struct fxp_cb_ucode {
 /* 
  * Chip revision values.
  */
-#define FXP_REV_82557		1	/* catchall 82557 */
+#define FXP_REV_82557_A		0	/* 82557 A */
+#define FXP_REV_82557_B		1	/* 82557 B */
+#define FXP_REV_82557_C		2	/* 82557 C */
 #define FXP_REV_82558_A4	4	/* 82558 A4 stepping */
 #define FXP_REV_82558_B0	5	/* 82558 B0 stepping */
 #define FXP_REV_82559_A0	8	/* 82559 A0 stepping */
