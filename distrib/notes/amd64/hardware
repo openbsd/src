@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.74 2006/05/28 17:43:51 martin Exp $
+dnl	$OpenBSD: hardware,v 1.75 2006/06/09 14:07:04 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -409,6 +409,24 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    TRENDnet TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
+		Atheros AR521x based CardBus IEEE 802.11a/b/g adapters
+		    3Com 3CRPAG175
+		    Cisco AIR-CB21AG
+		    D-Link DWL-A650
+		    D-Link DWL-AB650
+		    Elecom LD-WL54
+		    Linksys WPC51AB
+		    Netgear WAB501
+		    Planet WL-3560
+		    Proxim Skyline 4030
+		    SMC SMC2735W
+		    Sony PCWA-C500
+		Atheros AR521x based PCI IEEE 802.11a/b/g adapters
+		    D-Link DWL-A520
+		    IBM 11ABG WL LAN
+		    Proxim Skyline 4032
+		    Senao NL-5354MP
+		    Wistron CM9
 		Atmel AT76C50x based USB IEEE 802.11b adapters
 		    3Com 3CRSHEW696
 		    AboCom BWU613

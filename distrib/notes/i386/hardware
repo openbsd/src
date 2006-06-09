@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.236 2006/05/28 17:43:51 martin Exp $
+dnl	$OpenBSD: hardware,v 1.237 2006/06/09 14:07:04 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -529,43 +529,22 @@ Supported hardware {:-include-:}:
 		Atheros AR521x based CardBus IEEE 802.11a/b/g adapters
 		  [A] [B]
 		    3Com 3CRPAG175
-		    Aztech WL830PC
+		    Cisco AIR-CB21AG
 		    D-Link DWL-A650
 		    D-Link DWL-AB650
-		    D-Link DWL-AG650
-		    D-Link DWL-G650B
-		    Elecom LD-WL54AG
 		    Elecom LD-WL54
-		    Fujitsu E5454
-		    Fujitsu FMV-JW481
-		    Fujitsu E5454
-		    I/O Data WN-AB
-		    I/O Data WN-AG
-		    I/O Data WN-A54
 		    Linksys WPC51AB
-		    Linksys WPC55AG
-		    NEC PA-WL/54AG
 		    Netgear WAB501
-		    Netgear WAG511
-		    Netgear WG511T
-		    Orinoco 8480
-		    Orinoco 8470WD
+		    Planet WL-3560
 		    Proxim Skyline 4030
-		    Samsung SWL-5200N
 		    SMC SMC2735W
-		    Sony PCWA-C700
-		    Sony PCWA-C300S
 		    Sony PCWA-C500
 		Atheros AR521x based PCI IEEE 802.11a/b/g adapters [A] [B]
 		    D-Link DWL-A520
-		    D-Link DWL-AG520
-		    D-Link DWL-G520
-		    HP NC4000
-		    Linksys WMP55AG
-		    Netgear WAG311
-		    Netgear WG311
+		    IBM 11ABG WL LAN
 		    Proxim Skyline 4032
 		    Senao NL-5354MP
+		    Wistron CM9
 		Atmel AT76C50x based USB IEEE 802.11b adapters [G]
 		    3Com 3CRSHEW696
 		    AboCom BWU613
