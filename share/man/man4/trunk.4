@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.17 2006/06/05 21:42:31 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.18 2006/06/09 13:53:34 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -61,8 +61,11 @@ Distributes outgoing traffic using a round-robin scheduler
 through all active ports and accepts incoming traffic from
 any active port.
 .It Ic failover
-Sends and receives traffic only through the master or the next active
-port.
+Sends and receives traffic only through the master port.
+If the master port becomes unavailable,
+the next active port is used.
+The first interface added is the master port;
+any interfaces added after that are used as failover devices.
 .It Ic loadbalance
 Balances outgoing traffic across the active ports based on hashed
 protocol header information and accepts incoming traffic from
