@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sl.4,v 1.12 2006/05/09 19:03:04 jmc Exp $
+.\"	$OpenBSD: sl.4,v 1.13 2006/06/09 18:54:22 jmc Exp $
 .\"	$NetBSD: sl.4,v 1.1 1996/08/10 21:26:14 explorer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -54,9 +54,18 @@ command or by setting up a
 configuration file for
 .Xr netstart 8 .
 .Pp
-The
-.Nm sl
-interface can use Van Jacobson TCP header compression and ICMP filtering.
+The following link-level options are configurable via
+.Xr ifconfig 8 :
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It link0
+Use Van Jacobsen TCP header compression.
+.It link1
+Suppress ICMP traffic.
+.It link2
+Auto-enable Van Jacobsen TCP header compression
+(enabled by default).
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It sl%d: af%d not supported.
