@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.120 2005/06/13 20:18:52 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.121 2006/06/09 15:20:03 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -35,21 +35,19 @@
 .Bk -words
 .Op Fl AdeghmNnOoqRrvz
 .Op Fl a Ar anchor
-.Xo
-.Oo Fl D
-.Ar macro Ns = Ns Ar value Oc
-.Xc
+.Oo Fl D Ar macro Ns =
+.Ar value Oc
 .Op Fl F Ar modifier
 .Op Fl f Ar file
 .Op Fl i Ar interface
 .Op Fl k Ar host | network
 .Op Fl p Ar device
 .Op Fl s Ar modifier
-.Oo Xo
+.Oo
 .Fl t Ar table
 .Fl T Ar command
-.Op Ar address ... Oc
-.Xc
+.Op Ar address ...
+.Oc
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
