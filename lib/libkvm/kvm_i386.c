@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.18 2006/05/07 12:57:21 kettenis Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.19 2006/06/09 09:46:04 mickey Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.18 2006/05/07 12:57:21 kettenis Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.19 2006/06/09 09:46:04 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,10 +128,13 @@ _kvm_initvtop(kvm_t *kd)
 		vm->pg_frame = 0xfffff000;
 		vm->pt_mask = 0x003ff000;
 		vm->pte_size = 4;
-	} else {
+	} else if (ps == NBPG * 4) {
 		vm->pg_frame = 0xffffff000ULL;
 		vm->pt_mask = 0x001ff000;
 		vm->pte_size = 8;
+	} else {
+		_kvm_err(kd, 0, "PTDsize is invalid");
+		return (-1);
 	}
 
 	if (_kvm_pread(kd, kd->pmfd, &pa, vm->pte_size,
@@ -158,9 +161,9 @@ _kvm_initvtop(kvm_t *kd)
 int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
-	u_long offset, pte_pa;
+	u_long offset;
 	struct vmstate *vm;
-	paddr_t pte;
+	paddr_t pte, pte_pa;
 
 	if (!kd->vmst) {
 		_kvm_err(kd, 0, "vatop called before initvtop");
@@ -192,7 +195,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	/* XXX READ PHYSICAL XXX */
 	pte = 0;
 	if (_kvm_pread(kd, kd->pmfd, &pte, pte_size(vm),
-	    (off_t)_kvm_pa2off(kd, pte_pa)) != pte_size(vm))
+	    _kvm_pa2off(kd, pte_pa)) != pte_size(vm))
 		goto invalid;
 
 	*pa = (pte & PG_FRAME(vm)) + offset;
