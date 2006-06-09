@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.124 2006/05/29 06:56:36 mcbride Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.125 2006/06/09 21:37:17 naddy Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -864,17 +864,17 @@ static int
 ipsec_validate_transform_id(u_int8_t proto, u_int8_t transform_id)
 {
 	switch (proto) {
-		/*
-		 * As no unexpected protocols can occur, we just tie the
-		 * default case to the first case, in orer to silence a GCC
-		 * warning.
-		 */
-		default:
-		case ISAKMP_PROTO_ISAKMP:
-			return transform_id != IPSEC_TRANSFORM_KEY_IKE;
-		case IPSEC_PROTO_IPSEC_AH:
-			return transform_id < IPSEC_AH_MD5 ||
-			    transform_id > IPSEC_AH_DES ? -1 : 0;
+	/*
+	 * As no unexpected protocols can occur, we just tie the
+	 * default case to the first case, in order to silence a GCC
+	 * warning.
+	 */
+	default:
+	case ISAKMP_PROTO_ISAKMP:
+		return transform_id != IPSEC_TRANSFORM_KEY_IKE;
+	case IPSEC_PROTO_IPSEC_AH:
+		return transform_id < IPSEC_AH_MD5 ||
+		    transform_id > IPSEC_AH_RIPEMD ? -1 : 0;
 	case IPSEC_PROTO_IPSEC_ESP:
 		return transform_id < IPSEC_ESP_DES_IV64 ||
 		    (transform_id > IPSEC_ESP_AES_128_CTR &&
