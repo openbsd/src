@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.164 2006/05/28 09:21:57 uwe Exp $	*/
+/*	$OpenBSD: ami.c,v 1.165 2006/06/09 04:27:10 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2079,8 +2079,10 @@ int
 ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 {
 	struct ami_big_diskarray *p; /* struct too large for stack */
-	int i, s, t;
+	int i, s, t, off;
 	int error = 0;
+	struct ami_progress perc;
+	u_int8_t bgi[5]; /* 40 LD, 1 bit per LD if BGI is active */
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p)
@@ -2109,11 +2111,54 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 
 	case AMI_RDRV_OPTIMAL:
 		bv->bv_status = BIOC_SVONLINE;
+		bv->bv_percent = -1;
+
+		/* get BGI progress here and over-ride status if so */
+		memset(bgi, 0, sizeof bgi);
+		if (ami_mgmt(sc, AMI_MISC, AMI_GET_BGI, 0, 0, sizeof bgi, &bgi))
+			break;
+
+		if ((bgi[i / 8] & (1 << i % 8)) == 0)
+			break;
+
+		if (!ami_mgmt(sc, AMI_GCHECKPROGR, i, 0, 0, sizeof perc, &perc))
+		    	if (perc.apr_progress < 100) {
+				bv->bv_status = BIOC_SVSCRUB;
+				bv->bv_percent = perc.apr_progress >= 100 ? -1 :
+				    perc.apr_progress;
+			}
 		break;
 
 	default:
 		bv->bv_status = BIOC_SVINVALID;
 	}
+
+	/* over-ride status if a pd is in rebuild status for this ld */
+	for (s = 0; s < p->ald[i].adl_spandepth; s++)
+		for (t = 0; t < p->ald[i].adl_nstripes; t++) {
+			off = p->ald[i].asp[s].adv[t].add_channel *
+			    AMI_MAX_TARGET +
+			    p->ald[i].asp[s].adv[t].add_target;
+
+			if (p->apd[off].adp_ostatus != AMI_PD_RBLD)
+				continue;
+
+			/* get rebuild progress here */
+			bv->bv_status = BIOC_SVREBUILD;
+			if (ami_mgmt(sc, AMI_GRBLDPROGR,
+			    p->ald[i].asp[s].adv[t].add_channel,
+			    p->ald[i].asp[s].adv[t].add_target, 0,
+			    sizeof perc, &perc))
+				bv->bv_percent = -1;
+			else
+				bv->bv_percent = perc.apr_progress >= 100 ? -1 :
+				    perc.apr_progress;
+
+			/* XXX fix this, we should either use lowest percentage
+			 * of all disks in rebuild state or an average
+			 */
+			break;
+		}
 
 	bv->bv_size = 0;
 	bv->bv_level = p->ald[i].adl_raidlvl;

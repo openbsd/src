@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.26 2006/04/26 07:53:22 dlg Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.27 2006/06/09 04:27:10 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -214,6 +214,7 @@
 #define			AMI_FC_EINQ3_SOLICITED_FULL	0x02
 #define			AMI_FC_EINQ3_UNSOLICITED	0x03
 #define	AMI_MISC	0xa4
+#define		AMI_GET_BGI	0x13
 #define		AMI_GET_IO_CMPL	0x5b
 #define		AMI_SET_IO_CMPL	0x5c
 #define	AMI_CHFUNC	0xa9
@@ -678,4 +679,8 @@ struct ami_inq_data {
 	u_int8_t	aid_proctype;
 
 	u_int8_t	resv2[20];
+} __packed;
+
+struct ami_progress {
+	u_int32_t	apr_progress;
 } __packed;
