@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xge.4,v 1.5 2006/06/09 19:35:57 brad Exp $
+.\"	$OpenBSD: xge.4,v 1.6 2006/06/09 19:38:42 brad Exp $
 .\"	$NetBSD: xge.4,v 1.2 2005/09/10 22:48:09 wiz Exp $
 .\"
 .\" Copyright (c) 2005, SUNET, Swedish University Computer Network.
@@ -46,9 +46,7 @@ The
 .Nm
 device driver supports the Neterion Xframe-I and Xframe-II controller chips.
 .Pp
-The Xframe supports IPv4/TCP/UDP checksumming in hardware, as well
-as hardware VLAN handling.
-The driver currently does not support the hardware VLAN feature.
+The Xframe supports IPv4 receive IP/TCP/UDP checksum offload.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It xge%s: failed configuring endian, %llx != %llx!
