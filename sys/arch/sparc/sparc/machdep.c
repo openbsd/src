@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.107 2005/09/25 20:04:03 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.108 2006/06/09 06:41:44 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -1090,7 +1090,6 @@ oldmon_w_cmd(va, ar)
 		printf("w: arg not allowed\n");
 	}
 }
-#endif /* SUN4 */
 
 int
 ldcontrolb(addr)
@@ -1101,11 +1100,6 @@ caddr_t addr;
 	u_long saveonfault;
 	int res;
 	int s;
-
-	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
-		return 0;
-	}
 
 	s = splhigh();
 	if (curproc == NULL)
@@ -1120,3 +1114,4 @@ caddr_t addr;
 	splx(s);
 	return (res);
 }
+#endif /* SUN4 */
