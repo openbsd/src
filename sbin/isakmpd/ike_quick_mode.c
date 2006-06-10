@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.98 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.99 2006/06/10 21:09:45 msf Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -150,6 +150,8 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	return_values[1] = "true";
 
 	/* Create a principal (authorizer) for the SA/ID request.  */
+	fprintf(stderr, "ISAKMP_SA RECV_CERTTYPE: %i\n", 
+	    isakmp_sa->recv_certtype);
 	switch (isakmp_sa->recv_certtype) {
 	case ISAKMP_CERTENC_NONE:
 		/*

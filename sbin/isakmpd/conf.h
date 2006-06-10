@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.31 2005/12/28 10:57:35 hshoexer Exp $	 */
+/* $OpenBSD: conf.h,v 1.32 2006/06/10 21:09:45 msf Exp $	 */
 /* $EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
@@ -63,6 +63,7 @@
 #define CONF_DFLT_X509_CA_DIR          ISAKMPD_ROOT "ca/"
 #define CONF_DFLT_X509_CERT_DIR        ISAKMPD_ROOT "certs/"
 #define CONF_DFLT_X509_PRIVATE_KEY     ISAKMPD_ROOT "private/local.key"
+#define CONF_DFLT_X509_PRIVATE_KEY_DIR ISAKMPD_ROOT "private/"
 #define CONF_DFLT_X509_CRL_DIR         ISAKMPD_ROOT "crls/"
 #define CONF_DFLT_PUBKEY_DIR           ISAKMPD_ROOT "pubkeys/"
 #define CONF_DFLT_KEYNOTE_CRED_DIR     ISAKMPD_ROOT "keynote/"

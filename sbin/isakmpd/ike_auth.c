@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.106 2005/11/17 13:44:11 moritz Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.107 2006/06/10 21:09:45 msf Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -134,11 +134,11 @@ static void *
 ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 {
 	char	*key, *buf;
-	int	 fd;
-	char	*keyfile;
+	char	*keyfile, *privkeyfile;
 	FILE	*keyfp;
 	RSA	*rsakey;
-	size_t	fsize;
+	size_t	 fsize, pkflen;
+	int	 fd;
 
 	switch (type) {
 	case IKE_AUTH_PRE_SHARED:
@@ -200,6 +200,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 				free(keyfile);
 				goto ignorekeynote;
 			}
+			size = (size_t)sb.st_size;
 
 			if (fstat(fd, &sb) < 0) {
 				log_print("ike_auth_get_key: fstat failed");
@@ -256,23 +257,57 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 		}
 ignorekeynote:
 		/* Otherwise, try X.509 */
-		keyfile = conf_get_str("X509-certificates", "Private-key");
 
-		fd = monitor_open(keyfile, O_RDONLY, 0);
-		if (fd < 0) {
-			log_print("ike_auth_get_key: failed opening \"%s\"",
-			    keyfile);
-			return 0;
+		privkeyfile = keyfile = NULL;
+		fd = -1;
+
+		if (local_id) {
+			/* Look in Private-key-directory. */
+			keyfile = conf_get_str("X509-certificates",
+			    "Private-key-directory");
+			pkflen = strlen(keyfile) + strlen(local_id) + sizeof "/";
+			privkeyfile = calloc(pkflen, sizeof(char));
+			if (!privkeyfile) {
+				log_print("ike_auth_get_key: failed to "
+				    "allocate %lu bytes", (unsigned long)pkflen);
+				return 0;
+			}
+
+			snprintf(privkeyfile, pkflen, "%s/%s", keyfile,
+			    local_id);
+			keyfile = privkeyfile;
+
+			fd = monitor_open(keyfile, O_RDONLY, 0);
+			if (fd < 0 && errno != ENOENT) {
+				log_print("ike_auth_get_key: failed opening "
+				    "\"%s\"", keyfile);
+				free(privkeyfile);
+			}
 		}
 
-		if (check_file_secrecy_fd(fd, keyfile, &fsize) < 0) {
-			close(fd);
+		if (fd < 0) {
+			/* No key found, try default key. */
+			keyfile = conf_get_str("X509-certificates",
+			    "Private-key");
+
+			fd = monitor_open(keyfile, O_RDONLY, 0);
+			if (fd < 0) {
+				log_print("ike_auth_get_key: failed opening "
+				    "\"%s\"", keyfile);
+				return 0;
+			}
+		}
+
+		if (check_file_secrecy_fd(fd, keyfile, &fsize)) {
+			if (privkeyfile)
+				free(privkeyfile);
 			return 0;
 		}
 
 		if ((keyfp = fdopen(fd, "r")) == NULL) {
 			log_print("ike_auth_get_key: fdopen failed");
-			close(fd);
+			if (privkeyfile)
+				free(privkeyfile);
 			return 0;
 		}
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
@@ -281,6 +316,9 @@ ignorekeynote:
 		rsakey = PEM_read_RSAPrivateKey(keyfp, NULL, NULL);
 #endif
 		fclose(keyfp);
+
+		if (privkeyfile)
+			free(privkeyfile);
 
 		if (!rsakey) {
 			log_print("ike_auth_get_key: "
