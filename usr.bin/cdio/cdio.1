@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.36 2006/06/01 07:55:10 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.37 2006/06/10 14:05:45 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -34,37 +34,23 @@
 .Os
 .Sh NAME
 .Nm cdio
-.Nd compact disc audio player and control utility
+.Nd compact disc control utility
 .Sh SYNOPSIS
 .Nm cdio
 .Op Fl sv
-.Xo
-.Oo Fl d
-.Ar host : Ns Ar port Oc
-.Xc
+.Oo Fl d Ar host :
+.Ar port Oc
 .Op Fl f Ar device
 .Op Ar command args ...
 .Sh DESCRIPTION
 The
 .Nm
-program controls audio features of a CD drive.
-The
-.Ar device
-is a name such
-as
-.Dq cd0
-or
-.Dq mcd0 .
-.Pp
-If a
-.Ar device
-is not specified, the environment variable
-.Ev DISC
-will be used to find the CD device.
+program is a compact disc control utility,
+with support for playing audio CDs and TAO CD writing.
 .Pp
 If no command is given,
 .Nm
-enters an interactive mode, reading commands from the standard input.
+enters interactive mode, reading commands from the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -82,6 +68,9 @@ Both absolute and relative paths to
 .Pa /dev
 filenames are possible.
 The raw partition name is added if needed.
+If this option is not used, the environment variable
+.Ev DISC
+will be used to find the CD device.
 .It Fl s
 Silent mode.
 Do not print table headers or human-readable comments.
