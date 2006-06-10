@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.113 2006/06/10 21:09:45 msf Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.114 2006/06/10 21:23:50 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -295,6 +295,12 @@ other programs like
 .Xr ipsecctl 8
 or
 .Xr bgpd 8 .
+.It Em Delete-SAs
+This tag controls wether
+.Xr isakmpd 8
+deletes SAs on shutdown or not.
+The default value is
+.Qq no .
 .El
 .It Bq Sy Phase 1
 ISAKMP SA negotiation parameter root
