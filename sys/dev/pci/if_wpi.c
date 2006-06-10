@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.15 2006/06/05 16:42:21 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.16 2006/06/10 20:34:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -735,6 +735,7 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 	}
 }
 
+/* ARGSUSED */
 struct ieee80211_node *
 wpi_node_alloc(struct ieee80211com *ic)
 {
@@ -1894,7 +1895,7 @@ wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
 	tsf.lintval = htole16(10);
 
 	/* compute remaining time until next beacon */
-	val = (uint64_t)tsf.bintval * 1024;	/* msecs -> usecs */
+	val = (uint64_t)ni->ni_intval * 1024;	/* msecs -> usecs */
 	mod = letoh64(tsf.tstamp) % val;
 	tsf.binitval = htole32((uint32_t)(val - mod));
 
@@ -2002,7 +2003,6 @@ wpi_auth(struct wpi_softc *sc)
 		sc->config.flags |= htole32(WPI_CONFIG_SHSLOT);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		sc->config.flags |= htole32(WPI_CONFIG_SHPREAMBLE);
-
 	DPRINTF(("config chan %d flags %x cck %x ofdm %x\n", sc->config.chan,
 	    sc->config.flags, sc->config.cck_mask, sc->config.ofdm_mask));
 	error = wpi_cmd(sc, WPI_CMD_CONFIGURE, &sc->config,
