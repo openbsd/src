@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.8 2006/06/01 20:05:24 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.9 2006/06/10 13:12:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -846,6 +846,63 @@ struct mpi_cfg_spi_port_pg0 {
 #define  MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID_BUSFREE	(0xfe<<24)
 #define  MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID_UNKNOWN	(0xff<<24)
 } __packed;
+
+struct mpi_cfg_spi_port_pg1 {
+	struct mpi_cfg_hdr	config_header;
+
+	/* configuration */
+	u_int16_t		port_resp_ids;
+	u_int8_t		reserved1;
+	u_int8_t		port_scsi_id;
+
+	u_int32_t		on_bus_timer_value;
+
+	u_int8_t		target_config;
+#define MPI_CFG_SPI_PORT_1_TARGCFG_TARGET_ONLY		(0x01)
+#define MPI_CFG_SPI_PORT_1_TARGCFG_INIT_TARGET		(0x02)
+	u_int8_t		reserved2;
+	u_int16_t		id_config;
+} __packed;
+
+struct mpi_cfg_spi_port_pg2 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int32_t		port_flags;
+#define MPI_CFG_SPI_PORT_2_PORT_FLAGS_SCAN_HI2LOW	(1<<0)
+#define MPI_CFG_SPI_PORT_2_PORT_FLAGS_AVOID_RESET	(1<<2)
+#define MPI_CFG_SPI_PORT_2_PORT_FLAGS_ALT_CHS		(1<<3)
+#define MPI_CFG_SPI_PORT_2_PORT_FLAGS_TERM_DISABLED	(1<<4)
+#define MPI_CFG_SPI_PORT_2_PORT_FLAGS_DV_CTL		(0x3<<5)
+#define  MPI_CFG_SPI_PORT_2_PORT_FLAGS_DV_HOST_BE	(0x0<<5)
+#define  MPI_CFG_SPI_PORT_2_PORT_FLAGS_DV_HOST_B	(0x1<<5)
+#define  MPI_CFG_SPI_PORT_2_PORT_FLAGS_DV_HOST_NONE	(0x3<<5)
+
+	u_int32_t		port_settings;
+#define MPI_CFG_SPI_PORT_2_PORT_SET_HOST_ID		(0x7<<0)
+#define MPI_CFG_SPI_PORT_2_PORT_SET_INIT_HBA		(0x3<<4)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_INIT_HBA_DISABLED	(0x0<<4)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_INIT_HBA_BIOS	(0x1<<4)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_INIT_HBA_OS	(0x2<<4)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_INIT_HBA_BIOS_OS	(0x3<<4)
+#define MPI_CFG_SPI_PORT_2_PORT_SET_REMOVABLE		(0x3<<6)
+#define MPI_CFG_SPI_PORT_2_PORT_SET_SPINUP_DELAY	(0xf<<8)
+#define MPI_CFG_SPI_PORT_2_PORT_SET_SYNC		(0x3<<12)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_NEG_SUPPORTED	(0x0<<12)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_NEG_NONE		(0x1<<12)
+#define  MPI_CFG_SPI_PORT_2_PORT_SET_NEG_ALL		(0x3<<12)
+
+	struct {
+		u_int8_t		timeout;
+		u_int8_t		sync_factor;
+		u_int16_t		device_flags;
+#define MPI_CFG_SPI_PORT_2_DEV_FLAG_DISCONNECT_EN	(1<<0)
+#define MPI_CFG_SPI_PORT_2_DEV_FLAG_SCAN_ID_EN		(1<<1)
+#define MPI_CFG_SPI_PORT_2_DEV_FLAG_SCAN_LUN_EN		(1<<2)
+#define MPI_CFG_SPI_PORT_2_DEV_FLAG_TAQ_Q_EN		(1<<3)
+#define MPI_CFG_SPI_PORT_2_DEV_FLAG_WIDE_DIS		(1<<4)
+#define MPI_CFG_SPI_PORT_2_DEV_FLAG_BOOT_CHOICE		(1<<5)
+	} __packed		device_settings[16];
+};
 
 struct mpi_cfg_spi_dev_pg0 {
 	struct mpi_cfg_hdr	config_header;
