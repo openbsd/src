@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.h,v 1.7 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: hash.h,v 1.8 2006/06/10 20:10:02 hshoexer Exp $	 */
 /* $EOM: hash.h,v 1.6 1998/07/25 22:04:36 niklas Exp $	 */
 
 /*
@@ -36,11 +36,17 @@
 
 #define MD5_SIZE	16
 #define SHA1_SIZE	20
-#define HASH_MAX	SHA1_SIZE
+#define SHA2_256_SIZE	32
+#define SHA2_384_SIZE	48
+#define SHA2_512_SIZE	64
+#define HASH_MAX	SHA2_512_SIZE
 
 enum hashes {
 	HASH_MD5 = 0,
-	HASH_SHA1
+	HASH_SHA1,
+	HASH_SHA2_256,
+	HASH_SHA2_384,
+	HASH_SHA2_512
 };
 
 struct hash {

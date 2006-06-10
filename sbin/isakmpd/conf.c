@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.87 2006/05/27 17:01:46 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.88 2006/06/10 20:10:02 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -297,13 +297,14 @@ conf_parse(int trans, char *buf, size_t sz)
  *
  * Resulting section names can be:
  *  For main mode:
- *     {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14,15}][-{DSS,RSA_SIG}]
+ *     {DES,BLF,3DES,CAST,AES}-{MD5,SHA,SHA2-{256,384,512}}[-GRP{1,2,5,14,15}] \
+ *         [-{DSS,RSA_SIG}]
  *  For quick mode:
  *     QM-{proto}[-TRP]-{cipher}[-{hash}][-PFS[-{group}]]-SUITE
  *     where
  *       {proto}  = ESP, AH
- *       {cipher} = DES, 3DES, CAST, BLF, AES
- *       {hash}   = MD5, SHA, RIPEMD, SHA2-{-256,384,512}
+ *       {cipher} = DES, 3DES, CAST, BLF, AES, AESCTR
+ *       {hash}   = MD5, SHA, RIPEMD, SHA2-{256,384,512}
  *       {group}  = GRP1, GRP2, GRP5, GRP14, GRP15
  *
  * DH group defaults to MODP_1024.
@@ -357,11 +358,11 @@ conf_find_trans_xf(int phase, char *xf)
 
 static void
 conf_load_defaults_mm(int tr, char *mme, char *mmh, char *mma, char *dhg,
-    char *mme_p, char *mma_p, char *dhg_p)
+    char *mme_p, char *mma_p, char *dhg_p, char *mmh_p)
 {
 	char sect[CONF_SECT_MAX];
 
-	snprintf(sect, sizeof sect, "%s-%s%s%s", mme_p, mmh, dhg_p, mma_p);
+	snprintf(sect, sizeof sect, "%s%s%s%s", mme_p, mmh_p, dhg_p, mma_p);
 
 	LOG_DBG((LOG_MISC, 95, "conf_load_defaults_mm: main mode %s", sect));
 
@@ -441,7 +442,10 @@ conf_load_defaults(int tr)
 
 	char	*mm_auth[] = {"PRE_SHARED", "DSS", "RSA_SIG", 0};
 	char	*mm_auth_p[] = {"", "-DSS", "-RSA_SIG", 0};
-	char	*mm_hash[] = {"MD5", "SHA", 0};
+	char	*mm_hash[] = {"MD5", "SHA", "SHA2_256", "SHA2_384", "SHA2_512",
+		     0};
+	char	*mm_hash_p[] = {"-MD5", "-SHA", "-SHA2-256", "-SHA2-384",
+		    "-SHA2-512", "", 0 };
 	char	*mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC", "CAST_CBC",
 		    "AES_CBC", 0};
 	char	*mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", 0};
@@ -449,8 +453,10 @@ conf_load_defaults(int tr)
 		    "MODP_1536", "MODP_2048", "MODP_3072", 0};
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", 0};
-	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES", 0};
-	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES", 0};
+	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
+		    "AES_128_CTR", 0};
+	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES",
+		    "-AESCTR", 0};
 	char	*qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
 		    "HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512", "NONE",
 		    0};
@@ -477,6 +483,8 @@ conf_load_defaults(int tr)
 
 	conf_set(tr, "KeyNote", "Credential-directory",
 	    CONF_DFLT_KEYNOTE_CRED_DIR, 0, 1);
+
+	conf_set(tr, "General", "Delete-SAs", CONF_DFLT_DELETE_SAS, 0, 1);
 
 	/* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
 	dflt = conf_get_trans_str(tr, "General", "Default-phase-1-lifetime");
@@ -505,7 +513,8 @@ conf_load_defaults(int tr)
 					conf_load_defaults_mm (tr, mm_enc[enc],
 					    mm_hash[hash], mm_auth[auth],
 					    dhgroup[group], mm_enc_p[enc],
-					    mm_auth_p[auth], dhgroup_p[group]);
+					    mm_auth_p[auth], dhgroup_p[group],
+					    mm_hash_p[hash]);
 
 	/* Setup a default Phase 1 entry */
 	conf_set(tr, "Phase 1", "Default", "Default-phase-1", 0, 1);

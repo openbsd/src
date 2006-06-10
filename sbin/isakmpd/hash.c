@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.20 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: hash.c,v 1.21 2006/06/10 20:10:02 hshoexer Exp $	 */
 /* $EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	 */
 
 /*
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <md5.h>
 #include <sha1.h>
+#include <sha2.h>
 
 #include "hash.h"
 #include "log.h"
@@ -45,6 +46,9 @@ void	hmac_final(unsigned char *, struct hash *);
 static union {
 	MD5_CTX		md5ctx;
 	SHA1_CTX        sha1ctx;
+	SHA256_CTX	sha256ctx;
+	SHA384_CTX	sha384ctx;
+	SHA512_CTX	sha512ctx;
 } Ctx, Ctx2;
 
 /* Temporary hash digest.  */
@@ -69,7 +73,31 @@ static struct hash hashes[] = {
 	(void (*)(unsigned char *, void *))SHA1Final,
 	hmac_init,
 	hmac_final
-    },
+    }, {
+	HASH_SHA2_256, 7, SHA2_256_SIZE, (void *)&Ctx.sha256ctx, digest,
+	sizeof(SHA256_CTX), (void *)&Ctx2.sha256ctx,
+	(void (*)(void *))SHA256_Init,
+	(void (*)(void *, unsigned char *, unsigned int))SHA256_Update,
+	(void (*)(u_int8_t *, void *))SHA256_Final,
+	hmac_init,
+	hmac_final
+    }, {
+	HASH_SHA2_384, 8, SHA2_384_SIZE, (void *)&Ctx.sha384ctx, digest,
+	sizeof(SHA384_CTX), (void *)&Ctx2.sha384ctx,
+	(void (*)(void *))SHA384_Init,
+	(void (*)(void *, unsigned char *, unsigned int))SHA384_Update,
+	(void (*)(u_int8_t *, void *))SHA384_Final,
+	hmac_init,
+	hmac_final
+    }, {
+	HASH_SHA2_512, 9, SHA2_512_SIZE, (void *)&Ctx.sha512ctx, digest,
+	sizeof(SHA512_CTX), (void *)&Ctx2.sha512ctx,
+	(void (*)(void *))SHA512_Init,
+	(void (*)(void *, unsigned char *, unsigned int))SHA512_Update,
+	(void (*)(u_int8_t *, void *))SHA512_Final,
+	hmac_init,
+	hmac_final
+    }
 };
 
 struct hash *
