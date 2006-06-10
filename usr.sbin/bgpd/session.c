@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.249 2006/05/27 21:24:36 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.250 2006/06/10 16:32:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -2317,7 +2318,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			depend_ok = (kif->flags & IFF_UP) &&
 			    (kif->link_state == LINK_STATE_UP ||
 			    (kif->link_state == LINK_STATE_UNKNOWN &&
-			    strncmp(kif->ifname, "carp", 4)));
+			    kif->media_type != IFT_CARP));
 
 			for (p = peers; p != NULL; p = p->next)
 				if (!strcmp(p->conf.if_depend, kif->ifname)) {
