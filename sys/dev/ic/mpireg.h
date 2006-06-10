@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.9 2006/06/10 13:12:33 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.10 2006/06/10 13:27:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -962,6 +962,37 @@ struct mpi_cfg_spi_dev_pg1 {
 #define MPI_CFG_SPI_DEV_1_CONF_SDTR_DISALLOWED		(1<<2)
 #define MPI_CFG_SPI_DEV_1_CONF_EXTPARAMS		(1<<3)
 #define MPI_CFG_SPI_DEV_1_CONF_FORCE_PPR		(1<<4)
+} __packed;
+
+struct mpi_cfg_spi_dev_pg2 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int32_t		domain_validation;
+#define MPI_CFG_SPI_DEV_2_DV_ISI_ENABLED		(1<<4)
+#define MPI_CFG_SPI_DEV_2_DV_SECONDARY_DRV_EN		(1<<5)
+#define MPI_CFG_SPI_DEV_2_DV_SLEW_RATE_CTL		(0x7<<7)
+#define MPI_CFG_SPI_DEV_2_DV_PRIMARY_DRV_STRENGTH	(0x7<<10)
+#define MPI_CFG_SPI_DEV_2_DV_XCLKH_ST			(1<<28)
+#define MPI_CFG_SPI_DEV_2_DV_XCLKS_ST			(1<<29)
+#define MPI_CFG_SPI_DEV_2_DV_XCLKH_DT			(1<<30)
+#define MPI_CFG_SPI_DEV_2_DV_XCLKS_DT			(1<<31)
+
+	u_int32_t		parity_pipe_select;
+#define MPI_CFG_SPI_DEV_2_PARITY_PIPE_SELECT		(0x3)
+
+	u_int32_t		data_pipe_select;
+#define MPI_CFG_SPI_DEV_2_DATA_PIPE_SELECT(x)		(0x3<<((x)*2))
+
+} __packed;
+
+struct mpi_cfg_spi_dev_pg3 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int16_t		msg_reject_count;
+	u_int16_t		phase_error_count;
+
+	u_int16_t		parity_error_count;
+	u_int16_t		reserved;
 } __packed;
 
 struct mpi_cfg_manufacturing_pg0 {
