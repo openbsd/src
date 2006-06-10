@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.24 2006/05/26 00:09:03 deraadt Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.25 2006/06/10 18:47:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -86,7 +86,7 @@ struct bioc_disk {
 #define BIOC_SDUNUSED		0x05
 #define BIOC_SDUNUSED_S		"Unused"
 #define BIOC_SDSCRUB		0x06
-#define BIOC_SDSCRUB_S		"Online/Scrub"
+#define BIOC_SDSCRUB_S		"Scrubbing"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
 	u_quad_t	bd_size;	/* size of the disk */
@@ -115,7 +115,7 @@ struct bioc_vol {
 #define BIOC_SVBUILDING		0x03
 #define BIOC_SVBUILDING_S	"Building"
 #define BIOC_SVSCRUB		0x04
-#define BIOC_SVSCRUB_S		"Online/Scrub"
+#define BIOC_SVSCRUB_S		"Scrubbing"
 #define BIOC_SVREBUILD		0x05
 #define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVINVALID		0xff
