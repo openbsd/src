@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.32 2006/04/27 19:52:21 martin Exp $
+dnl	$OpenBSD: install,v 1.33 2006/06/10 06:46:41 martin Exp $
 OpenBSDInstallShortPrelude
 
 OpenBSDInstallPart2
@@ -107,10 +107,7 @@ on its own partition. You will have to change the kernel name to "bsd"
 or "bsdsbc", depending which one you have installed. Be sure to check that
 the SCSI ID is correct as well.
 
-If you wish to save your preferences, choose the "Save Preferences"
-option in the "File" menu, then quit the application and restart.  Due
-to a long-standing bug, the preferences will not be saved unless you
-quit.  Note that by setting the BSD/Mac68k Booter to boot automatically
+Note that by setting the BSD/Mac68k Booter to boot automatically
 after starting, and by placing an alias to the booter in the "Startup Items"
 folder, one can make the Mac68k autoload OpenBSD upon startup.
 
