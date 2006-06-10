@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.19 2006/06/08 19:58:44 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.20 2006/06/10 20:31:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -169,72 +169,18 @@ static const struct ieee80211_rateset rt2661_rateset_11b =
 static const struct ieee80211_rateset rt2661_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-/*
- * Default values for MAC registers; values taken from the reference driver.
- */
 static const struct {
 	uint32_t	reg;
 	uint32_t	val;
 } rt2661_def_mac[] = {
-	{ RT2661_TXRX_CSR0,        0x0000b032 },
-	{ RT2661_TXRX_CSR1,        0x9eb39eb3 },
-	{ RT2661_TXRX_CSR2,        0x8a8b8c8d },
-	{ RT2661_TXRX_CSR3,        0x00858687 },
-	{ RT2661_TXRX_CSR7,        0x2e31353b },
-	{ RT2661_TXRX_CSR8,        0x2a2a2a2c },
-	{ RT2661_TXRX_CSR15,       0x0000000f },
-	{ RT2661_MAC_CSR6,         0x00000fff },
-	{ RT2661_MAC_CSR8,         0x016c030a },
-	{ RT2661_MAC_CSR10,        0x00000718 },
-	{ RT2661_MAC_CSR12,        0x00000004 },
-	{ RT2661_MAC_CSR13,        0x0000e000 },
-	{ RT2661_SEC_CSR0,         0x00000000 },
-	{ RT2661_SEC_CSR1,         0x00000000 },
-	{ RT2661_SEC_CSR5,         0x00000000 },
-	{ RT2661_PHY_CSR1,         0x000023b0 },
-	{ RT2661_PHY_CSR5,         0x060a100c },
-	{ RT2661_PHY_CSR6,         0x00080606 },
-	{ RT2661_PHY_CSR7,         0x00000a08 },
-	{ RT2661_PCI_CFG_CSR,      0x3cca4808 },
-	{ RT2661_AIFSN_CSR,        0x00002273 },
-	{ RT2661_CWMIN_CSR,        0x00002344 },
-	{ RT2661_CWMAX_CSR,        0x000034aa },
-	{ RT2661_TEST_MODE_CSR,    0x00000200 },
-	{ RT2661_M2H_CMD_DONE_CSR, 0xffffffff }
+	RT2661_DEF_MAC
 };
 
-/*
- * Default values for BBP registers; values taken from the reference driver.
- */
 static const struct {
 	uint8_t	reg;
 	uint8_t	val;
 } rt2661_def_bbp[] = {
-	{   3, 0x00 },
-	{  15, 0x30 },
-	{  17, 0x20 },
-	{  21, 0xc8 },
-	{  22, 0x38 },
-	{  23, 0x06 },
-	{  24, 0xfe },
-	{  25, 0x0a },
-	{  26, 0x0d },
-	{  34, 0x12 },
-	{  37, 0x07 },
-	{  39, 0xf8 },
-	{  41, 0x60 },
-	{  53, 0x10 },
-	{  54, 0x18 },
-	{  60, 0x10 },
-	{  61, 0x04 },
-	{  62, 0x04 },
-	{  75, 0xfe },
-	{  86, 0xfe },
-	{  88, 0xfe },
-	{  90, 0x0f },
-	{  99, 0x00 },
-	{ 102, 0x16 },
-	{ 107, 0x04 }
+	RT2661_DEF_BBP
 };
 
 /*
@@ -242,95 +188,11 @@ static const struct {
  */
 static const struct rfprog {
 	uint8_t		chan;
-	uint32_t	r1;
-	uint32_t	r2;
-	uint32_t	r3;
-	uint32_t	r4;
-} rt2661_rf5225_1[] = {
-	{   1, 0x00b33, 0x011e1, 0x1a014, 0x30282 },
-	{   2, 0x00b33, 0x011e1, 0x1a014, 0x30287 },
-	{   3, 0x00b33, 0x011e2, 0x1a014, 0x30282 },
-	{   4, 0x00b33, 0x011e2, 0x1a014, 0x30287 },
-	{   5, 0x00b33, 0x011e3, 0x1a014, 0x30282 },
-	{   6, 0x00b33, 0x011e3, 0x1a014, 0x30287 },
-	{   7, 0x00b33, 0x011e4, 0x1a014, 0x30282 },
-	{   8, 0x00b33, 0x011e4, 0x1a014, 0x30287 },
-	{   9, 0x00b33, 0x011e5, 0x1a014, 0x30282 },
-	{  10, 0x00b33, 0x011e5, 0x1a014, 0x30287 },
-	{  11, 0x00b33, 0x011e6, 0x1a014, 0x30282 },
-	{  12, 0x00b33, 0x011e6, 0x1a014, 0x30287 },
-	{  13, 0x00b33, 0x011e7, 0x1a014, 0x30282 },
-	{  14, 0x00b33, 0x011e8, 0x1a014, 0x30284 },
-
-	{  36, 0x00b33, 0x01266, 0x26014, 0x30288 },
-	{  40, 0x00b33, 0x01268, 0x26014, 0x30280 },
-	{  44, 0x00b33, 0x01269, 0x26014, 0x30282 },
-	{  48, 0x00b33, 0x0126a, 0x26014, 0x30284 },
-	{  52, 0x00b33, 0x0126b, 0x26014, 0x30286 },
-	{  56, 0x00b33, 0x0126c, 0x26014, 0x30288 },
-	{  60, 0x00b33, 0x0126e, 0x26014, 0x30280 },
-	{  64, 0x00b33, 0x0126f, 0x26014, 0x30282 },
-
-	{ 100, 0x00b33, 0x0128a, 0x2e014, 0x30280 },
-	{ 104, 0x00b33, 0x0128b, 0x2e014, 0x30282 },
-	{ 108, 0x00b33, 0x0128c, 0x2e014, 0x30284 },
-	{ 112, 0x00b33, 0x0128d, 0x2e014, 0x30286 },
-	{ 116, 0x00b33, 0x0128e, 0x2e014, 0x30288 },
-	{ 120, 0x00b33, 0x012a0, 0x2e014, 0x30280 },
-	{ 124, 0x00b33, 0x012a1, 0x2e014, 0x30282 },
-	{ 128, 0x00b33, 0x012a2, 0x2e014, 0x30284 },
-	{ 132, 0x00b33, 0x012a3, 0x2e014, 0x30286 },
-	{ 136, 0x00b33, 0x012a4, 0x2e014, 0x30288 },
-	{ 140, 0x00b33, 0x012a6, 0x2e014, 0x30280 },
-
-	{ 149, 0x00b33, 0x012a8, 0x2e014, 0x30287 },
-	{ 153, 0x00b33, 0x012a9, 0x2e014, 0x30289 },
-	{ 157, 0x00b33, 0x012ab, 0x2e014, 0x30281 },
-	{ 161, 0x00b33, 0x012ac, 0x2e014, 0x30283 },
-	{ 165, 0x00b33, 0x012ad, 0x2e014, 0x30285 }
-
+	uint32_t	r1, r2, r3, r4;
+}  rt2661_rf5225_1[] = {
+	RT2661_RF5225_1
 }, rt2661_rf5225_2[] = {
-	{   1, 0x00b33, 0x011e1, 0x1a014, 0x30282 },
-	{   2, 0x00b33, 0x011e1, 0x1a014, 0x30287 },
-	{   3, 0x00b33, 0x011e2, 0x1a014, 0x30282 },
-	{   4, 0x00b33, 0x011e2, 0x1a014, 0x30287 },
-	{   5, 0x00b33, 0x011e3, 0x1a014, 0x30282 },
-	{   6, 0x00b33, 0x011e3, 0x1a014, 0x30287 },
-	{   7, 0x00b33, 0x011e4, 0x1a014, 0x30282 },
-	{   8, 0x00b33, 0x011e4, 0x1a014, 0x30287 },
-	{   9, 0x00b33, 0x011e5, 0x1a014, 0x30282 },
-	{  10, 0x00b33, 0x011e5, 0x1a014, 0x30287 },
-	{  11, 0x00b33, 0x011e6, 0x1a014, 0x30282 },
-	{  12, 0x00b33, 0x011e6, 0x1a014, 0x30287 },
-	{  13, 0x00b33, 0x011e7, 0x1a014, 0x30282 },
-	{  14, 0x00b33, 0x011e8, 0x1a014, 0x30284 },
-
-	{  36, 0x00b35, 0x11206, 0x26014, 0x30280 },
-	{  40, 0x00b34, 0x111a0, 0x26014, 0x30280 },
-	{  44, 0x00b34, 0x111a1, 0x26014, 0x30286 },
-	{  48, 0x00b34, 0x111a3, 0x26014, 0x30282 },
-	{  52, 0x00b34, 0x111a4, 0x26014, 0x30288 },
-	{  56, 0x00b34, 0x111a6, 0x26014, 0x30284 },
-	{  60, 0x00b34, 0x111a8, 0x26014, 0x30280 },
-	{  64, 0x00b34, 0x111a9, 0x26014, 0x30286 },
-
-	{ 100, 0x00b35, 0x11226, 0x2e014, 0x30280 },
-	{ 104, 0x00b35, 0x11228, 0x2e014, 0x30280 },
-	{ 108, 0x00b35, 0x1122a, 0x2e014, 0x30280 },
-	{ 112, 0x00b35, 0x1122c, 0x2e014, 0x30280 },
-	{ 116, 0x00b35, 0x1122e, 0x2e014, 0x30280 },
-	{ 120, 0x00b34, 0x111c0, 0x2e014, 0x30280 },
-	{ 124, 0x00b34, 0x111c1, 0x2e014, 0x30286 },
-	{ 128, 0x00b34, 0x111c3, 0x2e014, 0x30282 },
-	{ 132, 0x00b34, 0x111c4, 0x2e014, 0x30288 },
-	{ 136, 0x00b34, 0x111c6, 0x2e014, 0x30284 },
-	{ 140, 0x00b34, 0x111c8, 0x2e014, 0x30280 },
-
-	{ 149, 0x00b34, 0x111cb, 0x2e014, 0x30286 },
-	{ 153, 0x00b34, 0x111cd, 0x2e014, 0x30282 },
-	{ 157, 0x00b35, 0x11242, 0x2e014, 0x30285 },
-	{ 161, 0x00b35, 0x11244, 0x2e014, 0x30285 },
-	{ 165, 0x00b35, 0x11246, 0x2e014, 0x30285 }
+	RT2661_RF5225_2
 };
 
 int
@@ -340,7 +202,7 @@ rt2661_attach(void *xsc, int id)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t val;
-	int error, i, ntries;
+	int error, ac, i, ntries;
 
 	sc->sc_id = id;
 
@@ -369,46 +231,28 @@ rt2661_attach(void *xsc, int id)
 	/*
 	 * Allocate Tx and Rx rings.
 	 */
-	error = rt2661_alloc_tx_ring(sc, &sc->txq[0], RT2661_TX_RING_COUNT);
-	if (error != 0) {
-		printf("%s: could not allocate Tx ring 0\n",
-		    sc->sc_dev.dv_xname);
-		goto fail1;
-	}
-
-	error = rt2661_alloc_tx_ring(sc, &sc->txq[1], RT2661_TX_RING_COUNT);
-	if (error != 0) {
-		printf("%s: could not allocate Tx ring 1\n",
-		    sc->sc_dev.dv_xname);
-		goto fail2;
-	}
-
-	error = rt2661_alloc_tx_ring(sc, &sc->txq[2], RT2661_TX_RING_COUNT);
-	if (error != 0) {
-		printf("%s: could not allocate Tx ring 2\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	error = rt2661_alloc_tx_ring(sc, &sc->txq[3], RT2661_TX_RING_COUNT);
-	if (error != 0) {
-		printf("%s: could not allocate Tx ring 3\n",
-		    sc->sc_dev.dv_xname);
-		goto fail4;
+	for (ac = 0; ac < 4; ac++) {
+		error = rt2661_alloc_tx_ring(sc, &sc->txq[ac],
+		    RT2661_TX_RING_COUNT);
+		if (error != 0) {
+			printf("%s: could not allocate Tx ring %d\n",
+			    sc->sc_dev.dv_xname, ac);
+			goto fail1;
+		}
 	}
 
 	error = rt2661_alloc_tx_ring(sc, &sc->mgtq, RT2661_MGT_RING_COUNT);
 	if (error != 0) {
 		printf("%s: could not allocate Mgt ring\n",
 		    sc->sc_dev.dv_xname);
-		goto fail5;
+		goto fail1;
 	}
 
 	error = rt2661_alloc_rx_ring(sc, &sc->rxq, RT2661_RX_RING_COUNT);
 	if (error != 0) {
 		printf("%s: could not allocate Rx ring\n",
 		    sc->sc_dev.dv_xname);
-		goto fail6;
+		goto fail2;
 	}
 
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
@@ -509,12 +353,10 @@ rt2661_attach(void *xsc, int id)
 
 	return 0;
 
-fail6:	rt2661_free_tx_ring(sc, &sc->mgtq);
-fail5:	rt2661_free_tx_ring(sc, &sc->txq[3]);
-fail4:	rt2661_free_tx_ring(sc, &sc->txq[2]);
-fail3:	rt2661_free_tx_ring(sc, &sc->txq[1]);
-fail2:	rt2661_free_tx_ring(sc, &sc->txq[0]);
-fail1:	return ENXIO;
+fail2:	rt2661_free_tx_ring(sc, &sc->mgtq);
+fail1:	while (--ac >= 0)
+		rt2661_free_tx_ring(sc, &sc->txq[ac]);
+	return ENXIO;
 }
 
 int
@@ -522,6 +364,7 @@ rt2661_detach(void *xsc)
 {
 	struct rt2661_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int ac;
 
 	timeout_del(&sc->scan_ch);
 	timeout_del(&sc->rssadapt_ch);
@@ -534,10 +377,8 @@ rt2661_detach(void *xsc)
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
-	rt2661_free_tx_ring(sc, &sc->txq[0]);
-	rt2661_free_tx_ring(sc, &sc->txq[1]);
-	rt2661_free_tx_ring(sc, &sc->txq[2]);
-	rt2661_free_tx_ring(sc, &sc->txq[3]);
+	for (ac = 0; ac < 4; ac++)
+		rt2661_free_tx_ring(sc, &sc->txq[ac]);
 	rt2661_free_tx_ring(sc, &sc->mgtq);
 	rt2661_free_rx_ring(sc, &sc->rxq);
 
@@ -2766,6 +2607,7 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	struct rt2661_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
+	int ac;
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
@@ -2793,10 +2635,8 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	RAL_WRITE(sc, RT2661_MCU_INT_SOURCE_CSR, 0xffffffff);
 
 	/* reset Tx and Rx rings */
-	rt2661_reset_tx_ring(sc, &sc->txq[0]);
-	rt2661_reset_tx_ring(sc, &sc->txq[1]);
-	rt2661_reset_tx_ring(sc, &sc->txq[2]);
-	rt2661_reset_tx_ring(sc, &sc->txq[3]);
+	for (ac = 0; ac < 4; ac++)
+		rt2661_reset_tx_ring(sc, &sc->txq[ac]);
 	rt2661_reset_tx_ring(sc, &sc->mgtq);
 	rt2661_reset_rx_ring(sc, &sc->rxq);
 
