@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.29 2006/06/10 13:45:48 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.30 2006/06/10 14:05:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1661,7 +1661,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	cq->msg_context = htole32(ccb->ccb_id);
 
 	cq->action = (read ? MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT :
-	    MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT);
+	    MPI_CONFIG_REQ_ACTION_PAGE_WRITE_CURRENT);
 
 	cq->config_header = *hdr;
 	cq->config_header.page_type &= MPI_CONFIG_REQ_PAGE_TYPE_MASK;
