@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.19 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.20 2006/06/10 17:50:30 gwk Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -171,10 +171,7 @@ struct cfdriver cpu_cd = {
 };
 
 int
-cpu_match(parent, matchv, aux)
-    struct device *parent;
-    void *matchv;
-    void *aux;
+cpu_match(struct device *parent, void *matchv, void *aux)
 {
   	struct cfdata *match = (struct cfdata *)matchv;
 	struct cpu_attach_args *caa = (struct cpu_attach_args *)aux;
@@ -185,9 +182,7 @@ cpu_match(parent, matchv, aux)
 }
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_info *ci = (struct cpu_info *)self;
 	struct cpu_attach_args *caa = (struct cpu_attach_args *)aux;
@@ -328,8 +323,7 @@ cpu_attach(parent, self, aux)
  */
 
 void
-cpu_init(ci)
-	struct cpu_info *ci;
+cpu_init(struct cpu_info *ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
@@ -404,8 +398,7 @@ cpu_init_idle_pcbs()
 }
 
 void
-cpu_boot_secondary (ci)
-	struct cpu_info *ci;
+cpu_boot_secondary(struct cpu_info *ci)
 {
 	struct pcb *pcb;
 	int i;
