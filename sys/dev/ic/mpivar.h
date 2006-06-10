@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.7 2006/06/01 21:32:15 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.8 2006/06/10 13:45:48 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -17,6 +17,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+
+/* #define MPI_DEBUG */
+#ifdef MPI_DEBUG
+extern uint32_t			mpi_debug;
+#define DPRINTF(x...)		do { if (mpi_debug) printf(x); } while(0)
+#define DNPRINTF(n,x...)	do { if (mpi_debug & n) printf(x); } while(0)
+#define	MPI_D_CMD		0x0001
+#define	MPI_D_INTR		0x0002
+#define	MPI_D_MISC		0x0004
+#define	MPI_D_DMA		0x0008
+#define	MPI_D_IOCTL		0x0010
+#define	MPI_D_RW		0x0020
+#define	MPI_D_MEM		0x0040
+#define	MPI_D_CCB		0x0080
+#else
+#define DPRINTF(x...)
+#define DNPRINTF(n,x...)
+#endif
 
 #define MPI_REQUEST_SIZE	512
 #define MPI_REPLY_SIZE		128

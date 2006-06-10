@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.28 2006/06/08 22:09:03 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.29 2006/06/10 13:45:48 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -34,12 +34,16 @@
 #include <dev/ic/mpivar.h>
 
 #ifdef MPI_DEBUG
-#define DPRINTF(x...)		do { if (mpidebug) printf(x); } while (0)
-#define DPRINTFN(n, x...)	do { if (mpidebug > (n)) printf(x); } while (0)
-int mpidebug = 11; 
-#else
-#define DPRINTF(x...)		/* x */
-#define DPRINTFN(n, x...)	/* n, x */
+uint32_t	mpi_debug = 0
+/*		    | MPI_D_CMD */
+/*		    | MPI_D_INTR */
+		    | MPI_D_MISC
+/*		    | MPI_D_DMA */
+/*		    | MPI_D_IOCTL */
+/*		    | MPI_D_RW */
+/*		    | MPI_D_MEM */
+/*		    | MPI_D_CCB */
+		;
 #endif
 
 struct cfdriver mpi_cd = {
@@ -234,8 +238,8 @@ mpi_intr(void *arg)
 
 	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
 
-		DPRINTF("%s: %s reply_queue: 0x%08x\n", DEVNAME(sc), __func__,
-		    reg);
+		DNPRINTF(MPI_D_INTR, "%s: mpi_intr reply_queue: 0x%08x\n",
+		    DEVNAME(sc), reg);
 
 		if (reg & MPI_REPLY_QUEUE_ADDRESS) {
 			bus_dmamap_sync(sc->sc_dmat,
@@ -266,7 +270,7 @@ mpi_intr(void *arg)
 			}
 		}
 
-		DPRINTF("%s: %s id: %d\n", DEVNAME(sc), __func__, id);
+		DNPRINTF(MPI_D_INTR, "%s: mpi_intr id: %d\n", DEVNAME(sc), id);
 
 		ccb = &sc->sc_ccbs[id];
 
@@ -468,7 +472,7 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 	char				*reply_addr;
 	u_int32_t			reg, id;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_INTR, "%s: mpi_complete\n", DEVNAME(sc));
 
 	do {
 		reg = mpi_pop_reply(sc);
@@ -480,8 +484,8 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 			continue;
 		}
 
-		DPRINTF("%s: %s reply_queue: 0x%08x\n", DEVNAME(sc), __func__,
-		    reg);
+		DNPRINTF(MPI_D_INTR, "%s: mpi_complete reply_queue: 0x%08x\n",
+		    DEVNAME(sc), reg);
 
 		if (reg & MPI_REPLY_QUEUE_ADDRESS) {
 			bus_dmamap_sync(sc->sc_dmat,
@@ -512,7 +516,8 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 			}
 		}
 
-		DPRINTF("%s: %s id: %d\n", DEVNAME(sc), __func__, id);
+		DNPRINTF(MPI_D_INTR, "%s: mpi_complete id: %d\n",
+		    DEVNAME(sc), id);
 
 		ccb = &sc->sc_ccbs[id];
 
@@ -535,7 +540,7 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *ccb, int timeout)
 	int				error;
 	int				s;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_CMD, "%s: mpi_poll\n", DEVNAME(sc));
 
 	s = splbio();
 	mpi_start(sc, ccb);
@@ -555,10 +560,11 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	struct mpi_msg_scsi_io		*io;
 	int				s;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_CMD, "%s: mpi_scsi_cmd\n", DEVNAME(sc));
 
 	if (xs->cmdlen > MPI_CDB_LEN) {
-		DPRINTF("%s: CBD too big %d", DEVNAME(sc), xs->cmdlen);
+		DNPRINTF(MPI_D_CMD, "%s: CBD too big %d\n",
+		    DEVNAME(sc), xs->cmdlen);
 		bzero(&xs->sense, sizeof(xs->sense));
 		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
@@ -576,8 +582,8 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		scsi_done(xs);
 		return (COMPLETE);
 	}
-	DPRINTF("%s: ccb_id: %d xs->flags: 0x%x\n", DEVNAME(sc), ccb->ccb_id,
-	    xs->flags);
+	DNPRINTF(MPI_D_CMD, "%s: ccb_id: %d xs->flags: 0x%x\n",
+	    DEVNAME(sc), ccb->ccb_id, xs->flags);
 
 	ccb->ccb_xs = xs;
 	ccb->ccb_done = mpi_scsi_cmd_done;
@@ -661,8 +667,9 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
 	xs->flags |= ITSDONE;
-	DPRINTFN(10, "%s:  xs cmd: 0x%02x len: %d error: 0x%02x flags 0x%x\n",
-	    DEVNAME(sc), xs->cmd->opcode, xs->datalen, xs->error, xs->flags);
+	DNPRINTF(MPI_D_CMD, "%s:  xs cmd: 0x%02x len: %d error: 0x%02x "
+	    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
+	    xs->error, xs->flags);
 
 	if (sie == NULL) {
 		/* no scsi error, we're ok so drop out early */
@@ -672,38 +679,35 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 		return;
 	}
 
-#ifdef MPI_DEBUG
-	if (mpidebug > 10) {
-		printf("%s:  target_id: %d bus: %d msg_length: %d "
-		    "function: 0x%02x\n", DEVNAME(sc), sie->target_id,
-		    sie->bus, sie->msg_length, sie->function);
+	DNPRINTF(MPI_D_CMD, "%s:  target_id: %d bus: %d msg_length: %d "
+	    "function: 0x%02x\n", DEVNAME(sc), sie->target_id,
+	    sie->bus, sie->msg_length, sie->function);
 
-		printf("%s:  cdb_length: %d sense_buf_length: %d "
-		    "msg_flags: 0x%02x\n", DEVNAME(sc), sie->cdb_length,
-		    sie->bus, sie->msg_flags);
+	DNPRINTF(MPI_D_CMD, "%s:  cdb_length: %d sense_buf_length: %d "
+	    "msg_flags: 0x%02x\n", DEVNAME(sc), sie->cdb_length,
+	    sie->bus, sie->msg_flags);
 
-		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-		    letoh32(sie->msg_context));
+	DNPRINTF(MPI_D_CMD, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(sie->msg_context));
 
-		printf("%s:  scsi_status: 0x%02x scsi_state: 0x%02x "
-		    "ioc_status: 0x%04x\n", DEVNAME(sc), sie->scsi_status,
-		    sie->scsi_state, letoh16(sie->ioc_status));
+	DNPRINTF(MPI_D_CMD, "%s:  scsi_status: 0x%02x scsi_state: 0x%02x "
+	    "ioc_status: 0x%04x\n", DEVNAME(sc), sie->scsi_status,
+	    sie->scsi_state, letoh16(sie->ioc_status));
 
-		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-		    letoh32(sie->ioc_loginfo));
+	DNPRINTF(MPI_D_CMD, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+	    letoh32(sie->ioc_loginfo));
 
-		printf("%s:  transfer_count: %d\n", DEVNAME(sc),
-		    letoh32(sie->transfer_count));
+	DNPRINTF(MPI_D_CMD, "%s:  transfer_count: %d\n", DEVNAME(sc),
+	    letoh32(sie->transfer_count));
 
-		printf("%s:  sense_count: %d\n", DEVNAME(sc),
-		    letoh32(sie->sense_count));
+	DNPRINTF(MPI_D_CMD, "%s:  sense_count: %d\n", DEVNAME(sc),
+	    letoh32(sie->sense_count));
 
-		printf("%s:  response_info: 0x%08x\n", DEVNAME(sc),
-		    letoh32(sie->response_info));
+	DNPRINTF(MPI_D_CMD, "%s:  response_info: 0x%08x\n", DEVNAME(sc),
+	    letoh32(sie->response_info));
 
-		printf("%s:  tag: 0x%04x\n", DEVNAME(sc), letoh16(sie->tag));
-	}
-#endif /* MPI_DEBUG */
+	DNPRINTF(MPI_D_CMD, "%s:  tag: 0x%04x\n", DEVNAME(sc),
+	    letoh16(sie->tag));
 
 	xs->status = sie->scsi_status;
 	switch (letoh16(sie->ioc_status)) {
@@ -799,7 +803,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
                         xs->error = XS_BUSY;
         }
 
-	DPRINTFN(10, "%s:  xs error: 0x%02x len: %d\n", DEVNAME(sc),
+	DNPRINTF(MPI_D_CMD, "%s:  xs error: 0x%02x len: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
@@ -855,7 +859,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 			nsge++;
 			sge->sg_hdr |= htole32(MPI_SGE_FL_LAST);
 
-			DPRINTFN(5, "%s:   - 0x%08x 0x%08x 0x%08x\n",
+			DNPRINTF(MPI_D_DMA, "%s:   - 0x%08x 0x%08x 0x%08x\n",
 			    DEVNAME(sc), sge->sg_hdr,
 			    sge->sg_hi_addr, sge->sg_lo_addr);
 
@@ -881,14 +885,14 @@ mpi_load_xs(struct mpi_ccb *ccb)
 			addr = (u_int32_t)ce_dva;
 			ce->sg_lo_addr = htole32(addr);
 
-			DPRINTFN(5, "%s:  ce: 0x%08x 0x%08x 0x%08x\n",
+			DNPRINTF(MPI_D_DMA, "%s:  ce: 0x%08x 0x%08x 0x%08x\n",
 			    DEVNAME(sc), ce->sg_hdr, ce->sg_hi_addr,
 			    ce->sg_lo_addr);
 
 			ce = nce;
 		}
 
-		DPRINTFN(5, "%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
+		DNPRINTF(MPI_D_DMA, "%s:  %d: %d 0x%016llx\n", DEVNAME(sc),
 		    i, dmap->dm_segs[i].ds_len,
 		    (u_int64_t)dmap->dm_segs[i].ds_addr);
 
@@ -900,8 +904,9 @@ mpi_load_xs(struct mpi_ccb *ccb)
 		addr = (u_int32_t)dmap->dm_segs[i].ds_addr;
 		sge->sg_lo_addr = htole32(addr);
 
-		DPRINTFN(5, "%s:  %d: 0x%08x 0x%08x 0x%08x\n", DEVNAME(sc),
-		    i, sge->sg_hdr, sge->sg_hi_addr, sge->sg_lo_addr);
+		DNPRINTF(MPI_D_DMA, "%s:  %d: 0x%08x 0x%08x 0x%08x\n",
+		    DEVNAME(sc), i, sge->sg_hdr, sge->sg_hi_addr,
+		    sge->sg_lo_addr);
 
 		nsge = sge + 1;
 	}
@@ -987,37 +992,37 @@ mpi_init(struct mpi_softc *sc)
 	/* spin until the IOC leaves the RESET state */
 	if (mpi_wait_ne(sc, MPI_DOORBELL, MPI_DOORBELL_STATE,
 	    MPI_DOORBELL_STATE_RESET) != 0) {
-		DPRINTF("%s: %s timeout waiting to leave reset state\n",
-		    DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_init timeout waiting to leave "
+		    "reset state\n", DEVNAME(sc));
 		return (1);
 	}
 
 	/* check current ownership */
 	db = mpi_read_db(sc);
 	if ((db & MPI_DOORBELL_WHOINIT) == MPI_DOORBELL_WHOINIT_PCIPEER) {
-		DPRINTF("%s: %s initialised by pci peer\n", DEVNAME(sc),
-		    __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_init initialised by pci peer\n",
+		    DEVNAME(sc));
 		return (0);
 	}
 
 	for (i = 0; i < 5; i++) {
 		switch (db & MPI_DOORBELL_STATE) {
 		case MPI_DOORBELL_STATE_READY:
-			DPRINTF("%s: %s ioc is ready\n", DEVNAME(sc),
-			    __func__);
+			DNPRINTF(MPI_D_MISC, "%s: mpi_init ioc is ready\n",
+			    DEVNAME(sc));
 			return (0);
 
 		case MPI_DOORBELL_STATE_OPER:
 		case MPI_DOORBELL_STATE_FAULT:
-			DPRINTF("%s: %s ioc is being reset\n", DEVNAME(sc),
-			    __func__);
+			DNPRINTF(MPI_D_MISC, "%s: mpi_init ioc is being "
+			    "reset\n" , DEVNAME(sc));
 			if (mpi_reset_soft(sc) != 0)
 				mpi_reset_hard(sc);
 			break;
 
 		case MPI_DOORBELL_STATE_RESET:
-			DPRINTF("%s: %s waiting to come out of reset\n",
-			    DEVNAME(sc), __func__);
+			DNPRINTF(MPI_D_MISC, "%s: mpi_init waiting to come "
+			    "out of reset\n", DEVNAME(sc));
 			if (mpi_wait_ne(sc, MPI_DOORBELL, MPI_DOORBELL_STATE,
 			    MPI_DOORBELL_STATE_RESET) != 0)
 				return (1);
@@ -1032,7 +1037,7 @@ mpi_init(struct mpi_softc *sc)
 int
 mpi_reset_soft(struct mpi_softc *sc)
 {
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_reset_soft\n", DEVNAME(sc));
 
 	if (mpi_read_db(sc) & MPI_DOORBELL_INUSE)
 		return (1);
@@ -1053,7 +1058,7 @@ mpi_reset_soft(struct mpi_softc *sc)
 int
 mpi_reset_hard(struct mpi_softc *sc)
 {
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_reset_hard\n", DEVNAME(sc));
 
 	/* enable diagnostic register */
 	mpi_write(sc, MPI_WRITESEQ, 0xff);
@@ -1147,8 +1152,8 @@ mpi_handshake_recv(struct mpi_softc *sc, void *buf, size_t dwords)
 	if (mpi_handshake_recv_dword(sc, &dbuf[0]) != 0)
 		return (1);
 
-	DPRINTFN(10, "%s: %s dwords: %d reply: %d\n", DEVNAME(sc), __func__,
-	    dwords, reply->msg_length);
+	DNPRINTF(MPI_D_CMD, "%s: mpi_handshake_recv dwords: %d reply: %d\n",
+	    DEVNAME(sc), dwords, reply->msg_length);
 
 	/*
 	 * the total length, in dwords, is in the message length field of the
@@ -1163,8 +1168,8 @@ mpi_handshake_recv(struct mpi_softc *sc, void *buf, size_t dwords)
 	while (i++ < reply->msg_length) {
 		if (mpi_handshake_recv_dword(sc, &dummy) != 0)
 			return (1);
-		DPRINTFN(10, "%s: %s dummy read: 0x%08x\n", DEVNAME(sc),
-		    __func__, dummy);
+		DNPRINTF(MPI_D_CMD, "%s: mpi_handshake_recv dummy read: "
+		    "0x%08x\n", DEVNAME(sc), dummy);
 	}
 
 	/* wait for the doorbell used bit to be reset and clear the intr */
@@ -1187,7 +1192,7 @@ mpi_iocfacts(struct mpi_softc *sc)
 	struct mpi_msg_iocfacts_request		ifq;
 	struct mpi_msg_iocfacts_reply		ifp;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_iocfacts\n", DEVNAME(sc));
 
 	bzero(&ifq, sizeof(ifq));
 	bzero(&ifp, sizeof(ifp));
@@ -1198,83 +1203,81 @@ mpi_iocfacts(struct mpi_softc *sc)
 	ifq.msg_context = htole32(0xdeadbeef);
 
 	if (mpi_handshake_send(sc, &ifq, dwordsof(ifq)) != 0) {
-		DPRINTF("%s: %s send failed\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_iocfacts send failed\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
 	if (mpi_handshake_recv(sc, &ifp, dwordsof(ifp)) != 0) {
-		DPRINTF("%s: %s recv failed\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_iocfacts recv failed\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
-#ifdef MPI_DEBUG
-	if (mpidebug) {
-		printf("%s:  func: 0x%02x len: %d msgver: %d.%d\n",
-		    DEVNAME(sc), ifp.function, ifp.msg_length,
-		    ifp.msg_version_maj, ifp.msg_version_min);
+	DNPRINTF(MPI_D_MISC, "%s:  func: 0x%02x len: %d msgver: %d.%d\n",
+	    DEVNAME(sc), ifp.function, ifp.msg_length,
+	    ifp.msg_version_maj, ifp.msg_version_min);
 
-		printf("%s:  msgflags: 0x%02x iocnumber: 0x%02x "
-		    "hdrver: %d.%d\n", DEVNAME(sc), ifp.msg_flags,
-		    ifp.ioc_number, ifp.header_version_maj,
-		    ifp.header_version_min);
+	DNPRINTF(MPI_D_MISC, "%s:  msgflags: 0x%02x iocnumber: 0x%02x "
+	    "hdrver: %d.%d\n", DEVNAME(sc), ifp.msg_flags,
+	    ifp.ioc_number, ifp.header_version_maj,
+	    ifp.header_version_min);
 
-		printf("%s:  message context: 0x%08x\n", DEVNAME(sc),
-		    letoh32(ifp.msg_context));
+	DNPRINTF(MPI_D_MISC, "%s:  message context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(ifp.msg_context));
 
-		printf("%s:  iocstatus: 0x%04x ioexcept: 0x%04x\n",
-		    DEVNAME(sc), letoh16(ifp.ioc_status),
-		    letoh16(ifp.ioc_exceptions));
+	DNPRINTF(MPI_D_MISC, "%s:  iocstatus: 0x%04x ioexcept: 0x%04x\n",
+	    DEVNAME(sc), letoh16(ifp.ioc_status),
+	    letoh16(ifp.ioc_exceptions));
 
-		printf("%s:  iocloginfo: 0x%08x\n", DEVNAME(sc),
-		    letoh32(ifp.ioc_loginfo));
+	DNPRINTF(MPI_D_MISC, "%s:  iocloginfo: 0x%08x\n", DEVNAME(sc),
+	    letoh32(ifp.ioc_loginfo));
 
-		printf("%s:  flags: 0x%02x blocksize: %d whoinit: 0x%02x "
-		    "maxchdepth: %d\n", DEVNAME(sc), ifp.flags,
-		    ifp.block_size, ifp.whoinit, ifp.max_chain_depth);
+	DNPRINTF(MPI_D_MISC, "%s:  flags: 0x%02x blocksize: %d whoinit: 0x%02x "
+	    "maxchdepth: %d\n", DEVNAME(sc), ifp.flags,
+	    ifp.block_size, ifp.whoinit, ifp.max_chain_depth);
 
-		printf("%s:  reqfrsize: %d replyqdepth: %d\n", DEVNAME(sc),
-		    letoh16(ifp.request_frame_size),
-		    letoh16(ifp.reply_queue_depth));
+	DNPRINTF(MPI_D_MISC, "%s:  reqfrsize: %d replyqdepth: %d\n",
+	    DEVNAME(sc), letoh16(ifp.request_frame_size),
+	    letoh16(ifp.reply_queue_depth));
 
-		printf("%s:  productid: 0x%04x\n", DEVNAME(sc),
-		    letoh16(ifp.product_id));
+	DNPRINTF(MPI_D_MISC, "%s:  productid: 0x%04x\n", DEVNAME(sc),
+	    letoh16(ifp.product_id));
 
-		printf("%s:  hostmfahiaddr: 0x%08x\n", DEVNAME(sc),
-		    letoh32(ifp.current_host_mfa_hi_addr));
+	DNPRINTF(MPI_D_MISC, "%s:  hostmfahiaddr: 0x%08x\n", DEVNAME(sc),
+	    letoh32(ifp.current_host_mfa_hi_addr));
 
-		printf("%s:  event_state: 0x%02x number_of_ports: %d "
-		    "global_credits: %d\n",
-		    DEVNAME(sc), ifp.event_state, ifp.number_of_ports,
-		    letoh16(ifp.global_credits));
+	DNPRINTF(MPI_D_MISC, "%s:  event_state: 0x%02x number_of_ports: %d "
+	    "global_credits: %d\n",
+	    DEVNAME(sc), ifp.event_state, ifp.number_of_ports,
+	    letoh16(ifp.global_credits));
 
-		printf("%s:  sensebufhiaddr: 0x%08x\n", DEVNAME(sc),
-		    letoh32(ifp.current_sense_buffer_hi_addr));
+	DNPRINTF(MPI_D_MISC, "%s:  sensebufhiaddr: 0x%08x\n", DEVNAME(sc),
+	    letoh32(ifp.current_sense_buffer_hi_addr));
 
-		printf("%s:  maxbus: %d maxdev: %d replyfrsize: %d\n",
-		    DEVNAME(sc), ifp.max_buses, ifp.max_devices,
-		    letoh16(ifp.current_reply_frame_size));
+	DNPRINTF(MPI_D_MISC, "%s:  maxbus: %d maxdev: %d replyfrsize: %d\n",
+	    DEVNAME(sc), ifp.max_buses, ifp.max_devices,
+	    letoh16(ifp.current_reply_frame_size));
 
-		printf("%s:  fw_image_size: %d\n", DEVNAME(sc),
-		    letoh32(ifp.fw_image_size));
+	DNPRINTF(MPI_D_MISC, "%s:  fw_image_size: %d\n", DEVNAME(sc),
+	    letoh32(ifp.fw_image_size));
 
-		printf("%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
-		    letoh32(ifp.ioc_capabilities));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
+	    letoh32(ifp.ioc_capabilities));
 
-		printf("%s:  fw_version: %d.%d fw_version_unit: 0x%02x "
-		    "fw_version_dev: 0x%02x\n", DEVNAME(sc),
-		    ifp.fw_version_maj, ifp.fw_version_min,
-		    ifp.fw_version_unit, ifp.fw_version_dev);
+	DNPRINTF(MPI_D_MISC, "%s:  fw_version: %d.%d fw_version_unit: 0x%02x "
+	    "fw_version_dev: 0x%02x\n", DEVNAME(sc),
+	    ifp.fw_version_maj, ifp.fw_version_min,
+	    ifp.fw_version_unit, ifp.fw_version_dev);
 
-		printf("%s:  hi_priority_queue_depth: 0x%04x\n", DEVNAME(sc),
-		    letoh16(ifp.hi_priority_queue_depth));
+	DNPRINTF(MPI_D_MISC, "%s:  hi_priority_queue_depth: 0x%04x\n",
+	    DEVNAME(sc), letoh16(ifp.hi_priority_queue_depth));
 
-		printf("%s:  host_page_buffer_sge: hdr: 0x%08x "
-		    "addr 0x%08x %08x\n", DEVNAME(sc),
-		    letoh32(ifp.host_page_buffer_sge.sg_hdr),
-		    letoh32(ifp.host_page_buffer_sge.sg_hi_addr),
-		    letoh32(ifp.host_page_buffer_sge.sg_lo_addr));
-	}
-#endif /* MPI_DEBUG */
+	DNPRINTF(MPI_D_MISC, "%s:  host_page_buffer_sge: hdr: 0x%08x "
+	    "addr 0x%08x %08x\n", DEVNAME(sc),
+	    letoh32(ifp.host_page_buffer_sge.sg_hdr),
+	    letoh32(ifp.host_page_buffer_sge.sg_hi_addr),
+	    letoh32(ifp.host_page_buffer_sge.sg_lo_addr));
 
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
 	sc->sc_buswidth = (ifp.max_devices == 0) ? 256 : ifp.max_devices;
@@ -1286,7 +1289,7 @@ mpi_iocfacts(struct mpi_softc *sc)
 	 */
 	sc->sc_first_sgl_len = ((letoh16(ifp.request_frame_size) * 4) - 
 	    sizeof(struct mpi_msg_scsi_io)) / sizeof(struct mpi_sge);
-	DPRINTF("%s:   first sgl len: %d\n", DEVNAME(sc),
+	DNPRINTF(MPI_D_MISC, "%s:   first sgl len: %d\n", DEVNAME(sc),
 	    sc->sc_first_sgl_len);
 
 	/* the sgl tailing the io cmd loses an entry to the chain element. */
@@ -1294,7 +1297,8 @@ mpi_iocfacts(struct mpi_softc *sc)
 	/* the sgl chains lose an entry for each chain element */
 	sc->sc_max_sgl_len -= (MPI_MAX_SGL - sc->sc_first_sgl_len) /
 	    sc->sc_maxchdepth;
-	DPRINTF("%s:   max sgl len: %d\n", DEVNAME(sc), sc->sc_max_sgl_len);
+	DNPRINTF(MPI_D_MISC, "%s:   max sgl len: %d\n",
+	    DEVNAME(sc), sc->sc_max_sgl_len);
 
 	return (0);
 }
@@ -1306,7 +1310,7 @@ mpi_iocinit(struct mpi_softc *sc)
 	struct mpi_msg_iocinit_reply		iip;
 	u_int32_t				hi_addr;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_iocinit\n", DEVNAME(sc));
 
 	bzero(&iiq, sizeof(iiq));
 	bzero(&iip, sizeof(iip));
@@ -1335,35 +1339,33 @@ mpi_iocinit(struct mpi_softc *sc)
 	iiq.hdr_version_dev = 0x00;
 
 	if (mpi_handshake_send(sc, &iiq, dwordsof(iiq)) != 0) {
-		DPRINTF("%s: %s send failed\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_iocinit send failed\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
 	if (mpi_handshake_recv(sc, &iip, dwordsof(iip)) != 0) {
-		DPRINTF("%s: %s recv failed\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_iocinit recv failed\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
-#ifdef MPI_DEBUG
-	if (mpidebug) {
-		printf("%s:  function: 0x%02x msg_length: %d "
-		    "whoinit: 0x%02x\n", DEVNAME(sc), iip.function,
-		    iip.msg_length, iip.whoinit);
+	DNPRINTF(MPI_D_MISC, "%s:  function: 0x%02x msg_length: %d "
+	    "whoinit: 0x%02x\n", DEVNAME(sc), iip.function,
+	    iip.msg_length, iip.whoinit);
 
-		printf("%s:  msg_flags: 0x%02x max_buses: %d max_devices: %d "
-		    "flags: 0x%02x\n", DEVNAME(sc), iip.msg_flags,
-		    iip.max_buses, iip.max_devices, iip.flags);
+	DNPRINTF(MPI_D_MISC, "%s:  msg_flags: 0x%02x max_buses: %d "
+	    "max_devices: %d flags: 0x%02x\n", DEVNAME(sc), iip.msg_flags,
+	    iip.max_buses, iip.max_devices, iip.flags);
 
-		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-		    letoh32(iip.msg_context));
+	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(iip.msg_context));
 
-		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-		    letoh16(iip.ioc_status));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+	    letoh16(iip.ioc_status));
 
-		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-		    letoh32(iip.ioc_loginfo));
-	}
-#endif /* MPI_DEBUG */
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+	    letoh32(iip.ioc_loginfo));
 
 	return (0);
 }
@@ -1376,13 +1378,14 @@ mpi_portfacts(struct mpi_softc *sc)
 	struct mpi_msg_portfacts_reply		*pfp;
 	int					s;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_portfacts\n", DEVNAME(sc));
 
 	s = splbio();
 	ccb = mpi_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_portfacts ccb_get\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
@@ -1396,49 +1399,46 @@ mpi_portfacts(struct mpi_softc *sc)
 	pfq->msg_context = htole32(ccb->ccb_id);
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
-		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_portfacts poll\n", DEVNAME(sc));
 		return (1);
 	}
 
 	pfp = ccb->ccb_reply;
 	if (pfp == NULL) {
-		DPRINTF("%s: empty portfacts reply\n", DEVNAME(sc));
+		DNPRINTF(MPI_D_MISC, "%s: empty portfacts reply\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
-#ifdef MPI_DEBUG
-	if (mpidebug) {
-		printf("%s:  function: 0x%02x msg_length: %d\n", DEVNAME(sc),
-		    pfp->function, pfp->msg_length);
+	DNPRINTF(MPI_D_MISC, "%s:  function: 0x%02x msg_length: %d\n",
+	    DEVNAME(sc), pfp->function, pfp->msg_length);
 
-		printf("%s:  msg_flags: 0x%02x port_number: %d\n", DEVNAME(sc),
-		    pfp->msg_flags, pfp->port_number);
+	DNPRINTF(MPI_D_MISC, "%s:  msg_flags: 0x%02x port_number: %d\n",
+	    DEVNAME(sc), pfp->msg_flags, pfp->port_number);
 
-		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-		    letoh32(pfp->msg_context));
+	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(pfp->msg_context));
 
-		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-		    letoh16(pfp->ioc_status));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+	    letoh16(pfp->ioc_status));
 
-		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-		    letoh32(pfp->ioc_loginfo));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+	    letoh32(pfp->ioc_loginfo));
 
-		printf("%s:  max_devices: %d port_type: 0x%02x\n", DEVNAME(sc),
-		    letoh16(pfp->max_devices), pfp->port_type);
+	DNPRINTF(MPI_D_MISC, "%s:  max_devices: %d port_type: 0x%02x\n",
+	    DEVNAME(sc), letoh16(pfp->max_devices), pfp->port_type);
 
-		printf("%s:  protocol_flags: 0x%04x port_scsi_id: %d\n",
-		    DEVNAME(sc), letoh16(pfp->protocol_flags),
-		    letoh16(pfp->port_scsi_id));
+	DNPRINTF(MPI_D_MISC, "%s:  protocol_flags: 0x%04x port_scsi_id: %d\n",
+	    DEVNAME(sc), letoh16(pfp->protocol_flags),
+	    letoh16(pfp->port_scsi_id));
 
-		printf("%s:  max_persistent_ids: %d "
-		    "max_posted_cmd_buffers: %d\n", DEVNAME(sc),
-	 	    letoh16(pfp->max_persistent_ids),
-		    letoh16(pfp->max_posted_cmd_buffers));
+	DNPRINTF(MPI_D_MISC, "%s:  max_persistent_ids: %d "
+	    "max_posted_cmd_buffers: %d\n", DEVNAME(sc),
+	    letoh16(pfp->max_persistent_ids),
+	    letoh16(pfp->max_posted_cmd_buffers));
 
-		printf("%s:  max_lan_buckets: %d\n", DEVNAME(sc),
-		    letoh16(pfp->max_lan_buckets));
-	}
-#endif /* MPI_DEBUG */
+	DNPRINTF(MPI_D_MISC, "%s:  max_lan_buckets: %d\n", DEVNAME(sc),
+	    letoh16(pfp->max_lan_buckets));
 
 	sc->sc_porttype = pfp->port_type;
 	sc->sc_target = letoh16(pfp->port_scsi_id);
@@ -1460,7 +1460,8 @@ mpi_eventnotify(struct mpi_softc *sc)
 	ccb = mpi_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_eventnotify ccb_get\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
@@ -1518,13 +1519,14 @@ mpi_portenable(struct mpi_softc *sc)
 	struct mpi_msg_portenable_repy		*pep;
 	int					s;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_portenable\n", DEVNAME(sc));
 
 	s = splbio();
 	ccb = mpi_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_portenable ccb_get\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
@@ -1536,13 +1538,14 @@ mpi_portenable(struct mpi_softc *sc)
 	peq->msg_context = htole32(ccb->ccb_id);
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
-		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_portenable poll\n", DEVNAME(sc));
 		return (1);
 	}
 
 	pep = ccb->ccb_reply;
 	if (pep == NULL) {
-		DPRINTF("%s: empty portenable reply\n", DEVNAME(sc));
+		DNPRINTF(MPI_D_MISC, "%s: empty portenable reply\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
@@ -1561,13 +1564,13 @@ mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	struct mpi_msg_config_reply             *cp;
 	int					s;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_hdr\n", DEVNAME(sc));
 
 	s = splbio();
 	ccb = mpi_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_hdr ccb_get\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -1586,7 +1589,7 @@ mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
-		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_hdr poll\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -1594,33 +1597,29 @@ mpi_cfg_hdr(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	if (cp == NULL)
 		panic("%s: unable to fetch config header\n", DEVNAME(sc));
 
-#ifdef MPI_DEBUG
-	if (mpidebug) {
-		printf("%s:  action: 0x%02x msg_length: %d function: 0x%02x\n",
-		    DEVNAME(sc), cp->action, cp->msg_length, cp->function);
+	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "
+	    "0x%02x\n", DEVNAME(sc), cp->action, cp->msg_length, cp->function);
 
-		printf("%s:  ext_page_length: %d ext_page_type: 0x%02x "
-		    "msg_flags: 0x%02x\n", DEVNAME(sc),
-		    letoh16(cp->ext_page_length), cp->ext_page_type,
-		    cp->msg_flags);
+	DNPRINTF(MPI_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
+	    "msg_flags: 0x%02x\n", DEVNAME(sc),
+	    letoh16(cp->ext_page_length), cp->ext_page_type,
+	    cp->msg_flags);
 
-		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-		    letoh32(cp->msg_context));
+	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(cp->msg_context));
 
-		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-		    letoh16(cp->ioc_status));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+	    letoh16(cp->ioc_status));
 
-		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-		    letoh32(cp->ioc_loginfo));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+	    letoh32(cp->ioc_loginfo));
 
-		printf("%s:  page_version: 0x%02x page_length: %d "
-		    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
-		    cp->config_header.page_version, 
-		    cp->config_header.page_length, 
-		    cp->config_header.page_number, 
-		    cp->config_header.page_type);
-	}
-#endif /* MPI_DEBUG */ 
+	DNPRINTF(MPI_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
+	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
+	    cp->config_header.page_version, 
+	    cp->config_header.page_length, 
+	    cp->config_header.page_number, 
+	    cp->config_header.page_type);
 
 	*hdr = cp->config_header;
 
@@ -1641,7 +1640,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	char					*kva;
 	int					s;
 
-	DPRINTF("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page\n", DEVNAME(sc));
 
 	if (len > MPI_REQUEST_SIZE - sizeof(struct mpi_msg_config_request) ||
 	    len < hdr->page_length * 4)
@@ -1651,7 +1650,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	ccb = mpi_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		DPRINTF("%s: %s ccb_get\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page ccb_get\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -1682,7 +1681,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 		bcopy(page, kva, len);
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
-		DPRINTF("%s: %s poll\n", DEVNAME(sc), __func__);
+		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page poll\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -1692,33 +1691,29 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 		return (1);
 	}
 
-#ifdef MPI_DEBUG
-	if (mpidebug) {
-		printf("%s:  action: 0x%02x msg_length: %d function: 0x%02x\n",
-		    DEVNAME(sc), cp->action, cp->msg_length, cp->function);
+	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "
+	    "0x%02x\n", DEVNAME(sc), cp->action, cp->msg_length, cp->function);
 
-		printf("%s:  ext_page_length: %d ext_page_type: 0x%02x "
-		    "msg_flags: 0x%02x\n", DEVNAME(sc),
-		    letoh16(cp->ext_page_length), cp->ext_page_type,
-		    cp->msg_flags);
+	DNPRINTF(MPI_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
+	    "msg_flags: 0x%02x\n", DEVNAME(sc),
+	    letoh16(cp->ext_page_length), cp->ext_page_type,
+	    cp->msg_flags);
 
-		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-		    letoh32(cp->msg_context));
+	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(cp->msg_context));
 
-		printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-		    letoh16(cp->ioc_status));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+	    letoh16(cp->ioc_status));
 
-		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-		    letoh32(cp->ioc_loginfo));
+	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+	    letoh32(cp->ioc_loginfo));
 
-		printf("%s:  page_version: 0x%02x page_length: %d "
-		    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
-		    cp->config_header.page_version, 
-		    cp->config_header.page_length, 
-		    cp->config_header.page_number, 
-		    cp->config_header.page_type);
-	}
-#endif /* MPI_DEBUG */ 
+	DNPRINTF(MPI_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
+	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
+	    cp->config_header.page_version, 
+	    cp->config_header.page_length, 
+	    cp->config_header.page_number, 
+	    cp->config_header.page_type);
 
 	if (read)
 		bcopy(kva, page, len);
