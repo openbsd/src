@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.17 2006/06/02 04:30:40 robert Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.18 2006/06/10 20:30:00 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -160,178 +160,34 @@ static const struct ieee80211_rateset rt2560_rateset_11b =
 static const struct ieee80211_rateset rt2560_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-/*
- * Default values for MAC registers; values taken from the reference driver.
- */
 static const struct {
 	uint32_t	reg;
 	uint32_t	val;
 } rt2560_def_mac[] = {
-	{ RT2560_PSCSR0,      0x00020002 },
-	{ RT2560_PSCSR1,      0x00000002 },
-	{ RT2560_PSCSR2,      0x00020002 },
-	{ RT2560_PSCSR3,      0x00000002 },
-	{ RT2560_TIMECSR,     0x00003f21 },
-	{ RT2560_CSR9,        0x00000780 },
-	{ RT2560_CSR11,       0x07041483 },
-	{ RT2560_CNT3,        0x00000000 },
-	{ RT2560_TXCSR1,      0x07614562 },
-	{ RT2560_ARSP_PLCP_0, 0x8c8d8b8a },
-	{ RT2560_ACKPCTCSR,   0x7038140a },
-	{ RT2560_ARTCSR1,     0x1d21252d },
-	{ RT2560_ARTCSR2,     0x1919191d },
-	{ RT2560_RXCSR0,      0xffffffff },
-	{ RT2560_RXCSR3,      0xb3aab3af },
-	{ RT2560_PCICSR,      0x000003b8 },
-	{ RT2560_PWRCSR0,     0x3f3b3100 },
-	{ RT2560_GPIOCSR,     0x0000ff00 },
-	{ RT2560_TESTCSR,     0x000000f0 },
-	{ RT2560_PWRCSR1,     0x000001ff },
-	{ RT2560_MACCSR0,     0x00213223 },
-	{ RT2560_MACCSR1,     0x00235518 },
-	{ RT2560_RLPWCSR,     0x00000040 },
-	{ RT2560_RALINKCSR,   0x9a009a11 },
-	{ RT2560_CSR7,        0xffffffff },
-	{ RT2560_BBPCSR1,     0x82188200 },
-	{ RT2560_TXACKCSR0,   0x00000020 },
-	{ RT2560_SECCSR3,     0x0000e78f }
+	RT2560_DEF_MAC
 };
 
-/*
- * Default values for BBP registers; values taken from the reference driver.
- */
 static const struct {
 	uint8_t	reg;
 	uint8_t	val;
 } rt2560_def_bbp[] = {
-	{  3, 0x02 },
-	{  4, 0x19 },
-	{ 14, 0x1c },
-	{ 15, 0x30 },
-	{ 16, 0xac },
-	{ 17, 0x48 },
-	{ 18, 0x18 },
-	{ 19, 0xff },
-	{ 20, 0x1e },
-	{ 21, 0x08 },
-	{ 22, 0x08 },
-	{ 23, 0x08 },
-	{ 24, 0x80 },
-	{ 25, 0x50 },
-	{ 26, 0x08 },
-	{ 27, 0x23 },
-	{ 30, 0x10 },
-	{ 31, 0x2b },
-	{ 32, 0xb9 },
-	{ 34, 0x12 },
-	{ 35, 0x50 },
-	{ 39, 0xc4 },
-	{ 40, 0x02 },
-	{ 41, 0x60 },
-	{ 53, 0x10 },
-	{ 54, 0x18 },
-	{ 56, 0x08 },
-	{ 57, 0x10 },
-	{ 58, 0x08 },
-	{ 61, 0x60 },
-	{ 62, 0x10 },
-	{ 75, 0xff }
+	RT2560_DEF_BBP
 };
 
-/*
- * Default values for RF register R2 indexed by channel numbers; values taken
- * from the reference driver.
- */
-static const uint32_t rt2560_rf2522_r2[] = {
-	0x307f6, 0x307fb, 0x30800, 0x30805, 0x3080a, 0x3080f, 0x30814,
-	0x30819, 0x3081e, 0x30823, 0x30828, 0x3082d, 0x30832, 0x3083e
-};
+static const uint32_t rt2560_rf2522_r2[]    = RT2560_RF2522_R2;
+static const uint32_t rt2560_rf2523_r2[]    = RT2560_RF2523_R2;
+static const uint32_t rt2560_rf2524_r2[]    = RT2560_RF2524_R2;
+static const uint32_t rt2560_rf2525_r2[]    = RT2560_RF2525_R2;
+static const uint32_t rt2560_rf2525_hi_r2[] = RT2560_RF2525_HI_R2;
+static const uint32_t rt2560_rf2525e_r2[]   = RT2560_RF2525E_R2;
+static const uint32_t rt2560_rf2526_r2[]    = RT2560_RF2526_R2;
+static const uint32_t rt2560_rf2526_hi_r2[] = RT2560_RF2526_HI_R2;
 
-static const uint32_t rt2560_rf2523_r2[] = {
-	0x00327, 0x00328, 0x00329, 0x0032a, 0x0032b, 0x0032c, 0x0032d,
-	0x0032e, 0x0032f, 0x00340, 0x00341, 0x00342, 0x00343, 0x00346
-};
-
-static const uint32_t rt2560_rf2524_r2[] = {
-	0x00327, 0x00328, 0x00329, 0x0032a, 0x0032b, 0x0032c, 0x0032d,
-	0x0032e, 0x0032f, 0x00340, 0x00341, 0x00342, 0x00343, 0x00346
-};
-
-static const uint32_t rt2560_rf2525_r2[] = {
-	0x20327, 0x20328, 0x20329, 0x2032a, 0x2032b, 0x2032c, 0x2032d,
-	0x2032e, 0x2032f, 0x20340, 0x20341, 0x20342, 0x20343, 0x20346
-};
-
-static const uint32_t rt2560_rf2525_hi_r2[] = {
-	0x2032f, 0x20340, 0x20341, 0x20342, 0x20343, 0x20344, 0x20345,
-	0x20346, 0x20347, 0x20348, 0x20349, 0x2034a, 0x2034b, 0x2034e
-};
-
-static const uint32_t rt2560_rf2525e_r2[] = {
-	0x2044d, 0x2044e, 0x2044f, 0x20460, 0x20461, 0x20462, 0x20463,
-	0x20464, 0x20465, 0x20466, 0x20467, 0x20468, 0x20469, 0x2046b
-};
-
-static const uint32_t rt2560_rf2526_hi_r2[] = {
-	0x0022a, 0x0022b, 0x0022b, 0x0022c, 0x0022c, 0x0022d, 0x0022d,
-	0x0022e, 0x0022e, 0x0022f, 0x0022d, 0x00240, 0x00240, 0x00241
-};
-
-static const uint32_t rt2560_rf2526_r2[] = {
-	0x00226, 0x00227, 0x00227, 0x00228, 0x00228, 0x00229, 0x00229,
-	0x0022a, 0x0022a, 0x0022b, 0x0022b, 0x0022c, 0x0022c, 0x0022d
-};
-
-/*
- * For dual-band RF, RF registers R1 and R4 also depend on channel number;
- * values taken from the reference driver.
- */
 static const struct {
 	uint8_t		chan;
-	uint32_t	r1;
-	uint32_t	r2;
-	uint32_t	r4;
+	uint32_t	r1, r2, r4;
 } rt2560_rf5222[] = {
-	{   1, 0x08808, 0x0044d, 0x00282 },
-	{   2, 0x08808, 0x0044e, 0x00282 },
-	{   3, 0x08808, 0x0044f, 0x00282 },
-	{   4, 0x08808, 0x00460, 0x00282 },
-	{   5, 0x08808, 0x00461, 0x00282 },
-	{   6, 0x08808, 0x00462, 0x00282 },
-	{   7, 0x08808, 0x00463, 0x00282 },
-	{   8, 0x08808, 0x00464, 0x00282 },
-	{   9, 0x08808, 0x00465, 0x00282 },
-	{  10, 0x08808, 0x00466, 0x00282 },
-	{  11, 0x08808, 0x00467, 0x00282 },
-	{  12, 0x08808, 0x00468, 0x00282 },
-	{  13, 0x08808, 0x00469, 0x00282 },
-	{  14, 0x08808, 0x0046b, 0x00286 },
-
-	{  36, 0x08804, 0x06225, 0x00287 },
-	{  40, 0x08804, 0x06226, 0x00287 },
-	{  44, 0x08804, 0x06227, 0x00287 },
-	{  48, 0x08804, 0x06228, 0x00287 },
-	{  52, 0x08804, 0x06229, 0x00287 },
-	{  56, 0x08804, 0x0622a, 0x00287 },
-	{  60, 0x08804, 0x0622b, 0x00287 },
-	{  64, 0x08804, 0x0622c, 0x00287 },
-
-	{ 100, 0x08804, 0x02200, 0x00283 },
-	{ 104, 0x08804, 0x02201, 0x00283 },
-	{ 108, 0x08804, 0x02202, 0x00283 },
-	{ 112, 0x08804, 0x02203, 0x00283 },
-	{ 116, 0x08804, 0x02204, 0x00283 },
-	{ 120, 0x08804, 0x02205, 0x00283 },
-	{ 124, 0x08804, 0x02206, 0x00283 },
-	{ 128, 0x08804, 0x02207, 0x00283 },
-	{ 132, 0x08804, 0x02208, 0x00283 },
-	{ 136, 0x08804, 0x02209, 0x00283 },
-	{ 140, 0x08804, 0x0220a, 0x00283 },
-
-	{ 149, 0x08808, 0x02429, 0x00281 },
-	{ 153, 0x08808, 0x0242b, 0x00281 },
-	{ 157, 0x08808, 0x0242d, 0x00281 },
-	{ 161, 0x08808, 0x0242f, 0x00281 }
+	RT2560_RF5222
 };
 
 int
@@ -897,7 +753,7 @@ rt2560_iter_func(void *arg, struct ieee80211_node *ni)
 
 /*
  * This function is called periodically (every 100ms) in RUN state to update
- * the rate adaptation statistics.
+ * the rate control statistics.
  */
 void
 rt2560_rssadapt_updatestats(void *arg)
@@ -1379,7 +1235,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		/* send the frame to the 802.11 layer */
 		ieee80211_input(ifp, m, ni, desc->rssi, 0);
 
-		/* give rssi to the rate adatation algorithm */
+		/* give rssi to the rate control algorithm */
 		rn = (struct rt2560_node *)ni;
 		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
 
@@ -1752,6 +1608,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	struct ieee80211_frame *wh;
@@ -1763,6 +1620,17 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 	data = &sc->prioq.data[sc->prioq.cur];
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		m0 = ieee80211_wep_crypt(ifp, m0, 1);
+		if (m0 == NULL)
+			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
+	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1901,7 +1769,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 	if (rate == 0)
 		rate = 2;	/* fallback to 1Mbps; should not happen */
 
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
 		if (m0 == NULL)
 			return ENOBUFS;
