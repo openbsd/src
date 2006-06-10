@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.12 2006/05/02 19:49:05 sturm Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.13 2006/06/10 07:19:13 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -289,6 +289,56 @@ ic_print_sockaddr(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
+static int
+ic_get_msghdr(struct intercept_translate *trans, int fd, pid_t pid,
+    void *addr)
+{
+	struct msghdr msg;
+	int len = sizeof(struct msghdr);
+
+	if (intercept.io(fd, pid, INTERCEPT_READ, addr,
+	    (void *)&msg, len) == -1)
+		return (-1);
+
+	len = msg.msg_namelen;
+	if (msg.msg_name == NULL || len <= 0 || len > 2048) {
+		trans->trans_data = NULL;
+		trans->trans_size = 0;
+		return (0);
+	}
+
+	trans->trans_size = len;
+	trans->trans_data = malloc(len);
+	if (trans->trans_data == NULL)
+		return (-1);
+	if (intercept.io(fd, pid, INTERCEPT_READ, msg.msg_name,
+	    (void *)trans->trans_data, trans->trans_size) == -1)
+		return (-1);
+
+	return (0);
+}
+
+static int
+ic_print_msghdr(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int res = 0;
+
+	if (tl->trans_size == 0) {
+		snprintf(buf, buflen, "<unknown>");
+	} else {
+		res = ic_print_sockaddr(buf, buflen, tl);
+		/*
+		 * disable replacement of this argument because it's two levels
+		 * deep and we cant replace that fast.
+		 */
+		tl->trans_size = 0;
+
+		/* TODO: make this less of a hack */
+	}
+
+	return (res);
+}
+
 struct intercept_translate ic_translate_string = {
 	"string",
 	ic_get_string, ic_print_filename,
@@ -313,4 +363,9 @@ struct intercept_translate ic_translate_connect = {
 	"sockaddr",
 	ic_get_sockaddr, ic_print_sockaddr,
 	/* XXX - Special handling */ 1,
+};
+
+struct intercept_translate ic_translate_sendmsg = {
+	"sockaddr",
+	ic_get_msghdr, ic_print_msghdr,
 };

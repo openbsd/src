@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.19 2006/04/03 21:10:29 sturm Exp $	*/
+/*	$OpenBSD: register.c,v 1.20 2006/06/10 07:19:13 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -58,6 +58,9 @@ systrace_initcb(void)
 	alias = systrace_new_alias("native", "open", "native", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 
+	X(intercept_register_sccb("native", "sendmsg", trans_cb, NULL));
+	intercept_register_translation("native", "sendmsg", 1,
+	    &ic_translate_sendmsg);
 	X(intercept_register_sccb("native", "connect", trans_cb, NULL));
 	intercept_register_translation("native", "connect", 1,
 	    &ic_translate_connect);
