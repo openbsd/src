@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.103 2006/06/08 22:34:30 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.104 2006/06/10 12:02:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1600,7 +1600,7 @@ ifa_lookup(const char *ifa_name)
 		memcpy(n, p, sizeof(struct ipsec_addr_wrap));
 		if ((n->name = strdup(p->name)) == NULL)
 			err(1, "ifa_lookup: strdup");
-		switch(n->af) {
+		switch (n->af) {
 		case AF_INET:
 			set_ipmask(n, 32);
 			break;
@@ -1922,13 +1922,13 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 			if (enckey->len < xfs->encxf->keymin) {
 				yyerror("encryption key too short (%d bits), "
 				    "minimum %d bits", enckey->len * 8,
-				     xfs->encxf->keymin * 8);
+				    xfs->encxf->keymin * 8);
 				return (0);
 			}
 			if (xfs->encxf->keymax < enckey->len) {
 				yyerror("encryption key too long (%d bits), "
 				    "maximum %d bits", enckey->len * 8,
-				     xfs->encxf->keymax * 8);
+				    xfs->encxf->keymax * 8);
 				return (0);
 			}
 		}
@@ -2117,7 +2117,9 @@ errout:
 	if (dstid)
 		free(dstid);
 	free(hosts->src);
+	hosts->src = NULL;
 	free(hosts->dst);
+	hosts->dst = NULL;
 
 	return NULL;
 }
@@ -2247,14 +2249,20 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts, struct ipsec_hosts *peers,
 		yyerror("no protocol supplied with source/destination ports");
 		free(r);
 		free(hosts->src);
+		hosts->src = NULL;
 		free(hosts->dst);
+		hosts->dst = NULL;
 		if (mainmode) {
 			free(mainmode->xfs);
+			mainmode->xfs = NULL;
 			free(mainmode->life);
+			mainmode->life = NULL;
 		}
 		if (quickmode) {
 			free(quickmode->xfs);
+			quickmode->xfs = NULL;
 			free(quickmode->life);
+			quickmode->life = NULL;
 		}
 		if (srcid)
 			free(srcid);
