@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.30 2006/06/10 14:05:29 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.31 2006/06/10 17:50:33 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -470,7 +470,7 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 	struct mpi_msg_reply		*reply = NULL;
 	u_int32_t			reply_dva;
 	char				*reply_addr;
-	u_int32_t			reg, id;
+	u_int32_t			reg, id = 0xffffffff;
 
 	DNPRINTF(MPI_D_INTR, "%s: mpi_complete\n", DEVNAME(sc));
 
