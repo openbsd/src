@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armish,v 1.4 2006/06/01 17:08:14 drahn Exp $
+#	$OpenBSD: files.armish,v 1.5 2006/06/10 03:53:08 drahn Exp $
 
 maxpartitions   16
 maxusers		2 8 64
@@ -23,7 +23,7 @@ file	arch/arm/arm/irq_dispatch.S
 #file	arch/armish/dev/iq80310_intr.c
 #file	arch/armish/dev/iq80310_timer.c
 
-define i2c_bitbang
+include "dev/i2c/files.i2c"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
