@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.88 2006/06/10 20:10:02 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.89 2006/06/10 21:07:10 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -483,8 +483,6 @@ conf_load_defaults(int tr)
 
 	conf_set(tr, "KeyNote", "Credential-directory",
 	    CONF_DFLT_KEYNOTE_CRED_DIR, 0, 1);
-
-	conf_set(tr, "General", "Delete-SAs", CONF_DFLT_DELETE_SAS, 0, 1);
 
 	/* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
 	dflt = conf_get_trans_str(tr, "General", "Default-phase-1-lifetime");
