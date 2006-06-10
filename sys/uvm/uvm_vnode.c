@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.40 2005/11/19 02:18:02 pedro Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.41 2006/06/10 13:37:02 pedro Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
+#include <sys/rwlock.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -78,7 +79,7 @@ static simple_lock_data_t uvn_wl_lock;		/* locks uvn_wlist */
 
 SIMPLEQ_HEAD(uvn_sq_struct, uvm_vnode);
 static struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
-lock_data_t uvn_sync_lock;			/* locks sync operation */
+struct rwlock uvn_sync_lock;			/* locks sync operation */
 
 /*
  * functions
@@ -135,7 +136,7 @@ uvn_init()
 	LIST_INIT(&uvn_wlist);
 	simple_lock_init(&uvn_wl_lock);
 	/* note: uvn_sync_q init'd in uvm_vnp_sync() */
-	lockinit(&uvn_sync_lock, PVM, "uvnsync", 0, 0);
+	rw_init(&uvn_sync_lock, "uvnsync");
 }
 
 /*
@@ -1930,7 +1931,7 @@ uvm_vnp_sync(mp)
 	 * step 1: ensure we are only ones using the uvn_sync_q by locking
 	 * our lock...
 	 */
-	lockmgr(&uvn_sync_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&uvn_sync_lock);
 
 	/*
 	 * step 2: build up a simpleq of uvns of interest based on the
@@ -2025,5 +2026,5 @@ uvm_vnp_sync(mp)
 	/*
 	 * done!  release sync lock
 	 */
-	lockmgr(&uvn_sync_lock, LK_RELEASE, NULL);
+	rw_exit_write(&uvn_sync_lock);
 }
