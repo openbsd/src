@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.5 2006/06/05 05:01:47 deraadt Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.6 2006/06/10 23:15:26 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -27,8 +27,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <dev/clock_subr.h>	/* clock_subr not avail on all arches */
-
 #ifdef NMEA_DEBUG
 #define DPRINTFN(n, x)	do { if (nmeadebug > (n)) printf x; } while (0)
 int nmeadebug = 0;
@@ -36,6 +34,18 @@ int nmeadebug = 0;
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
+
+/* Traditional POSIX base year */
+#define	POSIX_BASE_YEAR	1970
+
+static inline int leapyear(int year);
+#define FEBRUARY	2
+#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
+#define	days_in_month(a) 	(month_days[(a) - 1])
+
+static const int month_days[12] = {
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
 
 int	nmeaopen(dev_t, struct tty *);
 int	nmeaclose(struct tty *, int);
@@ -46,13 +56,11 @@ void	nmeaattach(int);
 #define MAXFLDS	12
 
 /* NMEA talker identifiers */
-
 #define TI_UNK	0
 #define TI_GPS	1
 #define TI_LORC	2
 
 /* NMEA message types */
-
 #define MSG_RMC	5393731	/* recommended minimum sentence C */
 #define MSG_GGA	4671297
 #define MSG_GSA	4674369	/* satellites active */
@@ -66,7 +74,7 @@ struct nmea {
 	struct sensor	time;
 	struct timeval	tv;			/* soft timestamp */
 	struct timespec	ts;
-	time_t 		last;			/* last time rcvd */
+	int64_t		last;			/* last time rcvd */
 	int		state;			/* state we're in */
 	int		pos;
 	int		fpos[MAXFLDS];
@@ -85,8 +93,13 @@ void	nmea_hdlr(struct nmea *, int c);
 void	nmea_decode(struct nmea *);
 void	nmea_rmc(struct nmea *);
 
+/* date and time conversion */
+int	nmea_date_to_nano(char *s, int64_t *nano);
+int	nmea_time_to_nano(char *s, int64_t *nano);
+static inline int leapyear(int year);
+int	nmea_ymd_to_secs(int year, int month, int day, time_t *secs);
+
 /* helper functions */
-int	nmea_atoi(char *, int *);
 void	nmea_bufadd(struct nmea *, int);
 
 enum states {
@@ -146,7 +159,7 @@ nmeaclose(struct tty *tp, int flags)
 	return linesw[TTYDISC].l_close(tp, flags);
 }
 
-/* scan input from tty for NMEA telegrams */
+/* scan input from tty for NMEA sentences */
 int
 nmeainput(int c, struct tty *tp)
 {
@@ -278,29 +291,6 @@ nmea_bufadd(struct nmea *np, int c)
 	}
 }
 
-/*
- * convert a string to a number, stop at the first non-numerical
- * character or the end of the string.  any non-numerical character
- * following the number other than ',' is considered an error.
- */
-int
-nmea_atoi(char *s, int *num)
-{
-	int n;
-
-	for (n = 0; *s && *s >= '0' && *s <= '9'; s++) {
-		if (n)
-			n *= 10;
-		n += *s - '0';
-	}
-
-	if (*s && *s != ',')	/* no numeric character */
-		return (-1);
-
-	*num = n;
-	return (0);
-}
-
 void
 nmea_decode(struct nmea *np)
 {
@@ -315,9 +305,7 @@ nmea_decode(struct nmea *np)
 void
 nmea_rmc(struct nmea *np)
 {
-	struct clock_ymdhms ymdhms;
-	time_t nmea_now;
-	int n;
+	int64_t date_nano, time_nano, nmea_now;
 
 	if (np->fldcnt != 11 && np->fldcnt != 12) {
 		DPRINTF(("field count mismatch\n"));
@@ -327,49 +315,22 @@ nmea_rmc(struct nmea *np)
 		DPRINTF(("checksum error"));
 		return;
 	}
-	np->cbuf[13] = '\0';
-	if (nmea_atoi(&np->cbuf[11], &n)) {
-		DPRINTF(("error in sec\n"));
+	if (nmea_time_to_nano(&np->cbuf[7], &time_nano)) {
+		DPRINTF(("illegal time"));
 		return;
 	}
-	ymdhms.dt_sec = n;
-	np->cbuf[11] = 0;
-	if (nmea_atoi(&np->cbuf[9], &n)) {
-		DPRINTF(("error in min\n"));
+	if (nmea_date_to_nano(&np->cbuf[np->fpos[8]], &date_nano)) {
+		DPRINTF(("illegal date"));
 		return;
 	}
-	ymdhms.dt_min = n;
-	np->cbuf[9] = 0;
-	if (nmea_atoi(&np->cbuf[7], &n)) {
-		DPRINTF(("error in hour\n"));
-		return;
-	}
-	ymdhms.dt_hour = n;
-	if (nmea_atoi(&np->cbuf[np->fpos[8] + 4], &n)) {
-		DPRINTF(("error in year\n"));
-		return;
-	}
-	ymdhms.dt_year = 2000 + n;
-	np->cbuf[np->fpos[8] + 4] = '\0';
-	if (nmea_atoi(&np->cbuf[np->fpos[8] + 2], &n)) {
-		DPRINTF(("error in month\n"));
-		return;
-	}
-	ymdhms.dt_mon = n;
-	np->cbuf[np->fpos[8] + 2] = '\0';
-	if (nmea_atoi(&np->cbuf[np->fpos[8]], &n)) {
-		DPRINTF(("error in day\n"));
-		return;
-	}
-	ymdhms.dt_day = n;
-	nmea_now = clock_ymdhms_to_secs(&ymdhms);
+	nmea_now = date_nano + time_nano;
 	if (nmea_now <= np->last) {
 		DPRINTF(("time not monotonically increasing\n"));
 		return;
 	}
 	np->last = nmea_now;
-	np->time.value = (np->ts.tv_sec - nmea_now)
-	    * 1000000000 + np->ts.tv_nsec;
+	np->time.value = np->ts.tv_sec * 1000000000LL + np->ts.tv_nsec -
+	    nmea_now;
 	np->time.tv.tv_sec = np->tv.tv_sec;
 	np->time.tv.tv_usec = np->tv.tv_usec;
 	if (np->time.status == SENSOR_S_UNKNOWN) {
@@ -412,4 +373,194 @@ nmea_rmc(struct nmea *np)
 	default:
 		DPRINTF(("unknown warning indication\n"));
 	}
+}
+
+/*
+ * convert a NMEA0183 formatted date string to seconds since the epoch
+ * the string must be of the form DDMMYY
+ * return (0) on success, (-1) if illegal characters are encountered
+ */
+int
+nmea_date_to_nano(char *s, int64_t *nano)
+{
+	time_t secs;
+	char *p;
+	int year, month, day;
+	int n;
+
+	/* make sure the input contains only numbers and is six digits long */
+	for (n = 0, p = s; n < 6 && *p && *p >= '0' && *p <= '9'; n++, p++)
+		;
+	if (n != 6 || (*p != '\0' && *p != ','))
+		return (-1);
+
+	year = 2000 + (s[4] - '0') * 10 + (s[5] - '0');
+	month = (s[2] - '0') * 10 + (s[3] - '0');
+	day = (s[0] - '0') * 10 + (s[1] - '0');
+
+	if (nmea_ymd_to_secs(year, month, day, &secs))
+		return (-1);
+	*nano = secs * 1000000000LL;
+	return (0);
+}
+
+/*
+ * convert NMEA0183 formatted time string to nanoseconds since midnight
+ * the string must be of the form HHMMSS[.[sss]]
+ * (e.g. 143724 or 143723.615)
+ * return (0) on success, (-1) if illegal characters are encountered
+ */
+int
+nmea_time_to_nano(char *s, int64_t *nano)
+{
+	long fac, div;
+	long secs, frac;
+	int n;
+	char ul;
+
+	fac = 36000L;
+	div = 6L;
+	secs = 0L;
+
+	ul = '2';
+	for (n = 0, secs = 0; fac && *s && *s >= '0' && *s <= ul; s++, n++) {
+		secs += (*s - '0') * fac;
+		div = 16 - div;
+		fac /= div;
+		switch (n) {
+		case 0:
+			if (*s <= '1')
+				ul = '9';
+			else
+				ul = '3';
+			break;
+		case 1:
+		case 3:
+			ul = '5';
+			break;
+		case 2:
+		case 4:
+			ul = '9';
+			break;
+		}
+	}
+	if (fac)
+		return (-1);
+
+	div = 1L;
+	frac = 0L;
+	/* handle fractions of a second, max. 6 digits */
+	if (*s == '.') {
+		for (++s; div < 1000000 && *s && *s >= '0' && *s <= '9'; s++) {
+			frac *= 10;
+			frac += (*s - '0');
+			div *= 10;
+		}
+	}
+
+	if (*s != '\0' && *s != ',')
+		return (-1);
+
+	*nano = secs * 1000000000LL + (int64_t)frac * (1000000000 / div);
+	return (0);
+}
+
+/*
+ * the leapyear() and nmea_ymd_to_secs() functions to calculate the number
+ * of seconds since the epoch for a certain date are from sys/dev/clock_subr.c,
+ * the following copyright applies to these functions:
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/*
+ * This inline avoids some unnecessary modulo operations
+ * as compared with the usual macro:
+ *   ( ((year % 4) == 0 &&
+ *      (year % 100) != 0) ||
+ *     ((year % 400) == 0) )
+ * It is otherwise equivalent.
+ */
+static inline int
+leapyear(int year)
+{
+	int rv = 0;
+
+	if ((year & 3) == 0) {
+		rv = 1;
+		if ((year % 100) == 0) {
+			rv = 0;
+			if ((year % 400) == 0)
+				rv = 1;
+		}
+	}
+	return (rv);
+}
+
+/* convert year, month, day to seconds since the epoch */
+int
+nmea_ymd_to_secs(int year, int month, int day, time_t *secs)
+{
+	int i, days;
+	int leap;
+
+	if (month < 1 || month > 12)
+		return (-1);
+
+	days = days_in_month(month);
+	leap = leapyear(year);
+	if (month == FEBRUARY && leap)
+		days++;
+	if (day < 1 || day > days)
+		return (-1);
+
+	/*
+	 * Compute days since start of time
+	 * First from years, then from months.
+	 */
+	days = 0;
+	for (i = POSIX_BASE_YEAR; i < year; i++)
+		days += days_in_year(i);
+	if (leap && month > FEBRUARY)
+		days++;
+
+	/* Months */
+	for (i = 1; i < month; i++)
+	  	days += days_in_month(i);
+	days += (day - 1);
+
+	/* convert to seconds. */
+	*secs = days * 86400L;
+	return (0);
 }
