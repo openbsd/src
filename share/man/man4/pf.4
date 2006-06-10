@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.56 2005/08/06 04:38:41 pascoe Exp $
+.\"	$OpenBSD: pf.4,v 1.57 2006/06/10 16:13:00 beck Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -518,10 +518,15 @@ struct pfioc_table {
 .It Dv DIOCRADDTABLES Fa "struct pfioc_table *io"
 Create one or more tables.
 On entry,
-.Va pfrio_buffer[pfrio_size]
-contains a table of
-.Vt pfr_table
-structures.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_table
+containing at least
+.Vt pfrio_size
+elements.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_table .
 On exit,
 .Va pfrio_nadd
 contains the number of tables effectively created.
@@ -536,10 +541,15 @@ struct pfr_table {
 .It Dv DIOCRDELTABLES Fa "struct pfioc_table *io"
 Delete one or more tables.
 On entry,
-.Va pfrio_buffer[pfrio_size]
-contains a table of
-.Vt pfr_table
-structures.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_table
+containing at least
+.Vt pfrio_size
+elements.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_table .
 On exit,
 .Va pfrio_ndel
 contains the number of tables effectively deleted.
@@ -580,10 +590,15 @@ struct pfr_tstats {
 .It Dv DIOCRCLRTSTATS Fa "struct pfioc_table *io"
 Clear the statistics of one or more tables.
 On entry,
-.Va pfrio_buffer[pfrio_size]
-contains a table of
-.Vt pfr_table
-structures.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_table
+containing at least
+.Vt pfrio_size
+elements.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_table .
 On exit,
 .Va pfrio_nzero
 contains the number of tables effectively cleared.
@@ -600,10 +615,15 @@ Add one or more addresses to a table.
 On entry,
 .Va pfrio_table
 contains the table ID and
-.Va pfrio_buffer[pfrio_size]
-contains the list of
-.Vt pfr_addr
-structures to add.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_addr
+containing at least
+.Vt pfrio_size
+elements to add to the table.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_addr .
 On exit,
 .Va pfrio_nadd
 contains the number of addresses effectively added.
@@ -626,10 +646,15 @@ Delete one or more addresses from a table.
 On entry,
 .Va pfrio_table
 contains the table ID and
-.Va pfrio_buffer[pfrio_size]
-contains the list of
-.Vt pfr_addr
-structures to delete.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_addr
+containing at least
+.Vt pfrio_size
+elements to delete from the table.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_addr .
 On exit,
 .Va pfrio_ndel
 contains the number of addresses effectively deleted.
@@ -640,10 +665,15 @@ This is the most complicated command, which uses all the structure members.
 On entry,
 .Va pfrio_table
 contains the table ID and
-.Va pfrio_buffer[pfrio_size]
-contains the new list of
-.Vt pfr_addr
-structures.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_addr
+containing at least
+.Vt pfrio_size
+elements which become the new contents of the table.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_addr .
 Additionally, if
 .Va pfrio_size2
 is non-zero,
@@ -698,10 +728,15 @@ Clear the statistics of one or more addresses.
 On entry,
 .Va pfrio_table
 contains the table ID and
-.Va pfrio_buffer[pfrio_size]
-contains a table of
-.Vt pfr_addr
-structures to clear.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_addr
+containing at least
+.Vt pfrio_size
+elements to be cleared from the table.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_addr .
 On exit,
 .Va pfrio_nzero
 contains the number of addresses effectively cleared.
@@ -710,13 +745,18 @@ Test if the given addresses match a table.
 On entry,
 .Va pfrio_table
 contains the table ID and
-.Va pfrio_buffer[pfrio_size]
-contains a table of
-.Vt pfr_addr
-structures to test.
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_addr
+containing at least
+.Vt pfrio_size
+elements, each of which will be tested for a match in the table.
+.Vt pfrio_esize
+must be the size of
+.Vt struct pfr_addr .
 On exit, the kernel updates the
 .Vt pfr_addr
-table by setting the
+array by setting the
 .Va pfra_fback
 member appropriately.
 .It Dv DIOCRSETTFLAGS Fa "struct pfioc_table *io"
@@ -726,14 +766,19 @@ or
 .Dv PFR_TFLAG_PERSIST
 flags of a table.
 On entry,
-.Va pfrio_buffer[pfrio_size]
-contains a table of
-.Vt pfr_table
-structures, and
+.Va pfrio_buffer
+must point to an array of
+.Vt struct pfr_table
+containing at least
+.Vt pfrio_size
+elements.
+.Va pfrio_esize
+must be the size of
+.Vt struct pfr_table .
 .Va pfrio_setflag
-contains the flags to add, while
+must contain the flags to add, while
 .Va pfrio_clrflag
-contains the flags to remove.
+must contain the flags to remove.
 On exit,
 .Va pfrio_nchange
 and
@@ -748,7 +793,7 @@ On entry,
 .Va pfrio_table
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
-contains the list of
+contains an array of
 .Vt pfr_addr
 structures to put in the table.
 A valid ticket must also be supplied to
