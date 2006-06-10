@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.2 2006/06/10 03:57:45 drahn Exp $ 
+# $OpenBSD: GENERIC,v 1.3 2006/06/10 04:03:39 drahn Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -42,9 +42,9 @@ iopxs0          at mainbus?
 gpio0		at iopxs0
 
 #iopaau*         at iopxs?               # Application Accelerator Unit
-#iopiic*         at iopxs?               # I2C Controller Unit(s)
-#iic0            at iopiic?
-#iic1            at iopiic?
+iopiic*         at iopxs?               # I2C Controller Unit(s)
+iic0            at iopiic?
+iic1            at iopiic?
 #iopwdog*        at iopxs?               # Watchdog timer
 pci0            at iopxs? bus ?         # PCI/PCI-X support
 
