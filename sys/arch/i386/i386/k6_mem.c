@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.6 2006/05/11 13:21:11 mickey Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.7 2006/06/10 18:00:48 gwk Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -48,13 +48,6 @@
  *
  * There are two of these in the 64-bit UWCCR.
  */
-
-/*
- * NOTE: I do _not_ comment my code unless it's truly necessary. Don't
- * 	 expect anything frivolous here, and do NOT touch my bit-shifts
- *	 unless you want to break this.
- */
-
 #define UWCCR 0xc0000085
 
 #define k6_reg_get(reg, addr, mask, wc, uc)	do {			\
@@ -78,12 +71,10 @@ struct mem_range_ops k6_mrops = {
 };
 
 __inline int
-k6_mrmake(desc, mtrr)
-	struct mem_range_desc 	*desc;
-	u_int32_t 		*mtrr;
+k6_mrmake(struct mem_range_desc *desc, u_int32_t *mtrr)
 {
 	u_int32_t len = 0, wc, uc;
-	register int bit;
+	int bit;
 
 	if (desc->mr_base &~ 0xfffe0000)
 		return EINVAL;
@@ -102,8 +93,7 @@ k6_mrmake(desc, mtrr)
 }
 
 void
-k6_mrinit(sc)
-	struct mem_range_softc *sc;
+k6_mrinit(struct mem_range_softc *sc)
 {
 	u_int64_t reg;
 	u_int32_t addr, mask, wc, uc;
@@ -135,10 +125,7 @@ k6_mrinit(sc)
 }
 
 int
-k6_mrset(sc, desc, arg)
-	struct mem_range_softc 	*sc;
-	struct mem_range_desc 	*desc;
-	int 			*arg;
+k6_mrset(struct mem_range_softc *sc, struct mem_range_desc *desc, int *arg)
 {
 	u_int64_t reg;
 	u_int32_t mtrr;
@@ -187,4 +174,3 @@ out:
 
 	return 0;
 }
-
