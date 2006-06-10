@@ -1,4 +1,4 @@
-# $OpenBSD: files.i80321,v 1.1 2006/05/29 17:01:42 drahn Exp $
+# $OpenBSD: files.i80321,v 1.2 2006/06/10 03:51:50 drahn Exp $
 device  iopxs {}: pcibus, bus_space_generic, gpiobus
 file	arch/arm/xscale/i80321_space.c			iopxs
 file	arch/arm/xscale/i80321_mcu.c			iopxs
@@ -7,3 +7,9 @@ file	arch/arm/xscale/i80321_pci.c			iopxs
 
 file	arch/arm/xscale/i80321_intr.c			iopxs
 file	arch/arm/xscale/i80321_timer.c			iopxs
+
+# I2C controller unit
+device	iopiic: i2cbus
+attach	iopiic at iopxs with i80321_i2c
+file	arch/arm/xscale/i80321_i2c.c			iopiic
+file	arch/arm/xscale/iopi2c.c			iopiic
