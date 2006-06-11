@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.18 2006/06/09 22:09:33 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.19 2006/06/11 22:21:23 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2572,7 +2572,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 	char expbuf[256], buf[256];
 	struct tm tb;
 	char *fmt;
-	size_t len, newlen, tbuflen;
+	size_t len, tbuflen;
 
 	kwtype = 0;
 	kwstr = NULL;
@@ -2586,7 +2586,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 		rcs_set_tz(timezone_flag, rdp, &tb);
 
 	len = rcs_buf_len(bp);
-	newlen = 0;
 
 	c = rcs_buf_get(bp);
 	found = 0;
