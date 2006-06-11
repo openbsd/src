@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.62 2006/06/01 05:42:01 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.63 2006/06/11 03:59:59 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -432,7 +432,8 @@ stopen(dev, flags, fmt, p)
 	 * will ensure that media is present.
 	 */
 	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
-	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST);
+	    SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE |
+	    SCSI_IGNORE_ILLEGAL_REQUEST);
 
 	/*
 	 * Terminate any exising mount session if there is no media.
