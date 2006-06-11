@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.79 2006/06/02 17:39:59 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.80 2006/06/11 22:09:33 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -69,6 +69,8 @@
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 
 #include <dev/cons.h>
 
@@ -104,6 +106,7 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 #include <machine/db_machdep.h>
+#include <machine/kcore.h>
 #include <vax/vax/gencons.h>
 
 #ifdef DDB
@@ -140,7 +143,6 @@ extern int virtual_avail, virtual_end;
 int		want_resched;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 int		physmem;
-int		dumpsize = 0;
 int		cold = 1; /* coldstart */
 struct cpmbx	*cpmbx;
 
@@ -191,8 +193,6 @@ cpu_startup()
 	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
-
-	dumpsize = physmem + 1;
 
 	/*
 	 * Find out how much space we need, allocate it, and then give
@@ -291,13 +291,15 @@ cpu_startup()
 	}
 }
 
-long	dumplo = 0;
 long	dumpmag = 0x8fca0101;
+int	dumpsize = 0;
+long	dumplo = 0;
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
 cpu_dumpconf()
 {
-	int		nblks;
+	int nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
@@ -310,12 +312,24 @@ cpu_dumpconf()
 		else if (dumplo == 0)
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
+
 	/*
 	 * Don't dump on the first block in case the dump
 	 * device includes a disk label.
 	 */
 	if (dumplo < btodb(PAGE_SIZE))
 		dumplo = btodb(PAGE_SIZE);
+
+	/* Put dump at the end of partition, and make it fit. */
+	if (dumpsize + 1 > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo) - 1;
+	if (dumplo < nblks - ctod(dumpsize) - 1)
+		dumplo = nblks - ctod(dumpsize) - 1;
+
+	/* memory is contiguous on vax */
+	cpu_kcore_hdr.ram_segs[0].start = 0;
+	cpu_kcore_hdr.ram_segs[0].size = ptoa(physmem);
+	cpu_kcore_hdr.sysmap = (vaddr_t)Sysmap;
 }
 
 int
@@ -595,6 +609,14 @@ haltsys:
 void
 dumpsys()
 {
+	int maj, psize, pg;
+	daddr_t blkno;
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	paddr_t maddr;
+	int error;
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 	extern int msgbufmapped;
 
 	msgbufmapped = 0;
@@ -604,17 +626,64 @@ dumpsys()
 	 * For dumps during autoconfiguration, if dump device has already
 	 * configured...
 	 */
-	if (dumpsize == 0)
+	if (dumpsize == 0) {
 		cpu_dumpconf();
+		if (dumpsize == 0)
+			return;
+	}
+	maj = major(dumpdev);
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %u,%u not possible\n", maj,
 		    minor(dumpdev));
 		return;
 	}
+	dump = bdevsw[maj].d_dump;
+	blkno = dumplo;
+
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
+
+	/* Setup the dump header */
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
+
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	*chdr_p = cpu_kcore_hdr;
+
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump) (dumpdev, 0, 0, 0)) {
+	psize = (*bdevsw[maj].d_psize)(dumpdev);
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+
+	/* Dump the header. */
+	error = (*dump)(dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	if (error != 0)
+		goto abort;
+
+	maddr = (paddr_t)0;
+	for (pg = 0; pg < dumpsize; pg++) {
+#define	NPGMB	(1024 * 1024 / PAGE_SIZE)
+		/* print out how many MBs we have dumped */
+		if (pg != 0 && (pg % NPGMB) == 0)
+			printf("%d ", pg / NPGMB);
+#undef NPGMB
+		error = (*dump)(dumpdev, blkno, (caddr_t)maddr + KERNBASE,
+		    PAGE_SIZE);
+		if (error == 0) {
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
+		} else
+			break;
+	}
+abort:
+	switch (error) {
+	case 0:
+		printf("succeeded\n");
+		break;
 
 	case ENXIO:
 		printf("device bad\n");
@@ -632,8 +701,12 @@ dumpsys()
 		printf("i/o error\n");
 		break;
 
+	case EINTR:
+		printf("aborted from console\n");
+		break;
+
 	default:
-		printf("succeeded\n");
+		printf("error %d\n", error);
 		break;
 	}
 }
