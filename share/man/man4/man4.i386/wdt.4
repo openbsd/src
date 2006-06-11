@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wdt.4,v 1.11 2006/05/31 13:58:58 mk Exp $
+.\"	$OpenBSD: wdt.4,v 1.12 2006/06/11 11:06:20 mk Exp $
 .\"
 .Dd April 25, 1999
 .Dt WDT 4 i386
@@ -32,7 +32,6 @@
 .Nd ICS PCI-WDT500/501 watchdog timer device driver
 .Sh SYNOPSIS
 .Cd "wdt0 at pci?"
-.Cd "option WDT_DISABLE_BUZZER"
 .Sh DESCRIPTION
 The
 .Nm
@@ -40,11 +39,9 @@ driver provides support for the Industrial Computer Source
 PCI-WDT500 and PCI-WDT501 boards.
 .Pp
 For PCI-WDT500 boards, basic watchdog timer functionality is supported.
-For PCI-WDT501 boards, additional access to the onboard buzzer,
-isolated inputs, temperature, and power supply monitors is provided.
-To disable the onboard buzzer on PCI-WDT501 boards, add
-.Ic option WDT_DISABLE_BUZZER
-to your kernel configuration.
+For PCI-WDT501 boards, the onboard buzzer will sound when the watchdog
+counter expires.
+The sensors are not yet supported.
 .Pp
 If the kernel crashes, the watchdog
 timer is not reset and the system will reboot (assuming a proper connection
@@ -52,65 +49,24 @@ is made between the WDT50x and motherboard).
 Alternatively, the watchdog
 can be reinitialized via a userland process which ensures that process
 scheduling, not just kernel timeout processing, is still taking place.
-See the
-.Dv WIOCSCHED
-.Xr ioctl 2
-below for more information.
+See
+.Xr watchdog 4
+and
+.Xr watchdogd 8
+for more information.
 .Pp
 The timer can be configured to have a timeout from 2 to 1800 seconds.
-.Sh INTERFACE
-The
-.Nm
-driver is controlled via
-.Xr ioctl 2
-calls to
-.Pa /dev/wdt0 .
-The following commands are supported:
-.Bl -tag -width WIOCGETSTATE
-.It Dv WIOCGETSTATE
-Returns the current temperature and board status into the
-wdt_state structure pointer passed to
-.Xr ioctl 2 .
-See
-.Aq Pa dev/pci/wdt50x.h
-for the definition of the wdt_state structure and state bits.
-.It Dv WIOCSCHED
-Places the process into an infinite loop (interrupted only via a signal)
-to guarantee process scheduling.
-The driver utilizes the process' context to reinitialize the watchdog timeout.
-Should process scheduling fail, the timeout will not be reinitialized and the
-system will be rebooted.
-Note that it is possible to force a reboot by sending a
-.Dv SIGSTOP
-signal to a process in
-.Dv WIOCSCHED
-and waiting for the watchdog timer to expire.
-Since
-.Dv WIOCSCHED
-can have such dramatic consequences, it may only be issued by superuser
-processes regardless of the permissions on
-.Pa /dev/wdt0 .
-.El
-.Sh FILES
-.Bl -tag -width /usr/include/dev/pci/wdt50x.h -compact
-.It Pa /dev/wdt0
-watchdog control device
-.It Pa /usr/include/dev/pci/wdt50x.h
-structure and ioctl definitions
-.El
 .Sh SEE ALSO
-.Xr ioctl 2 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
-.Xr watchdog 4
+.Xr watchdog 4 ,
+.Xr watchdogd 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 2.6 .
 .Sh BUGS
-The ioctl interface isn't generic.
-.Pp
 It's unwise to combine
 .Nm
 with
