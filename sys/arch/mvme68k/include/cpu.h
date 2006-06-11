@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2005/11/24 22:43:19 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.23 2006/06/11 20:48:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -69,17 +69,6 @@
  */
 
 /*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
-
-/*
  * Get common m68k CPU definiti÷ns.
  */
 #define M68K_MMU_MOTOROLA
@@ -91,7 +80,6 @@
  * Get interrupt glue.
  */
 #include <machine/intr.h>
-#include <sys/evcount.h>
 
 /*
  * definitions of cpu-dependent requirements
@@ -146,6 +134,17 @@ extern int want_resched;
 extern int astpending;
 #define aston() (astpending = 1)
 
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
+
 extern	vaddr_t intiobase, intiolimit;
 extern	vaddr_t iiomapbase;
 extern	int iiomapsize;
@@ -182,6 +181,8 @@ extern int	cputyp;
 #define CPU_172			0x172
 #define CPU_177			0x177
 
+#include <sys/evcount.h>
+
 struct intrhand {
 	SLIST_ENTRY(intrhand) ih_link;
 	int	(*ih_fn)(void *);
@@ -195,37 +196,8 @@ int intr_establish(int, struct intrhand *, const char *);
 
 #define	NVMEINTR	256
 
-struct frame;
-struct fpframe;
-struct pcb;
-
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
-void	DCIA(void);
-void	DCIS(void);
-void	DCIU(void);
-void	ICIA(void);
-void	ICPA(void);
-void	PCIA(void);
-void	TBIA(void);
-void	TBIS(vaddr_t);
-void	TBIAS(void);
-void	TBIAU(void);
-#if defined(M68040) || defined(M68060)
-void	DCFA(void);
-void	DCFP(paddr_t);
-void	DCFL(paddr_t);
-void	DCPL(paddr_t);
-void	DCPP(paddr_t);
-void	ICPL(paddr_t);
-void	ICPP(paddr_t);
-#endif
-int	suline(caddr_t, caddr_t);
-void	savectx(struct pcb *);
-void	switch_exit(struct proc *);
+/* locore.s */
 __dead void	doboot(void);
-void	loadustp(int);
-void	proc_trampoline(void);
 
 int badpaddr(paddr_t, int);
 int badvaddr(vaddr_t, int);

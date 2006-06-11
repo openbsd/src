@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 2006/03/19 01:47:24 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.19 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -61,22 +61,35 @@
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
 #define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+
+#define	PGSHIFT		PAGE_SHIFT
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+#define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
+
+#define	BTOPKERNBASE	((u_long)KERNBASE >> PAGE_SHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
+#define	SEGSHIFT020	(34 - PAGE_SHIFT)
+#define	SEGSHIFT040	(18)
 #ifndef	SEGSHIFT
 #if defined(M68040) || defined(M68060)
-#define	SEGSHIFT	((mmutype <= MMU_68040) ? 18 : (34 - PGSHIFT))
+#if defined(M68020) || defined(M68030)
+#define	SEGSHIFT	((mmutype <= MMU_68040) ? SEGSHIFT040 : SEGSHIFT020)
 #else
-#define	SEGSHIFT	(34 - PGSHIFT)
+#define	SEGSHIFT	SEGSHIFT040
+#endif
+#else
+#define	SEGSHIFT	SEGSHOFT020
 #endif
 #define	NBSEG		(1 << SEGSHIFT)
 #define	SEGOFSET	(NBSEG - 1)
@@ -86,7 +99,7 @@
 #ifndef	UPAGES
 #define UPAGES		2		/* pages of u-area */
 #endif
-#define	USPACE		(UPAGES * NBPG)
+#define	USPACE		(UPAGES * PAGE_SIZE)
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 /*
@@ -114,12 +127,12 @@
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x)		((x) << (PAGE_SHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PAGE_SHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	ctob(x)		((x) << PAGE_SHIFT)
+#define	btoc(x)		(((x) + PAGE_MASK) >> PAGE_SHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
@@ -145,5 +158,7 @@
 #define HPMMBASEADDR(v) \
 	((unsigned)(v) & ~HPMMMASK)
 #endif	/* COMPAT_HPUX */
+
+#include <machine/intr.h>	/* splXXX() */
 
 #endif	/* !_M68K_PARAM_H_ */

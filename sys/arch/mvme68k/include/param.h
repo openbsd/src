@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2005/09/12 23:05:05 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.21 2006/06/11 20:48:13 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,11 +47,7 @@
 #define	_MACHINE 	"mvme68k"
 #define	MACHINE 	"mvme68k"
 
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-
 #define	PAGE_SHIFT	12
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00010000	/* start of kernel text */
@@ -60,20 +56,9 @@
 
 #include <m68k/param.h>
 
-/*
- * spl functions; all but spl0 are done in-line
- */
-#include <machine/psl.h>
-
-/*
- * interrupt glue 
- */
-#include <machine/intr.h>
-
-
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_LOCORE)
 extern void delay(int);
 #define DELAY(n)	delay(n)
-#endif
+#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* _MACHINE_PARAM_H_ */

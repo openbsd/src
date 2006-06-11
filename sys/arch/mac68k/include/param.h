@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2005/09/12 23:05:05 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.21 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.28 1997/03/01 06:57:45 scottr Exp $	*/
 
 /*
@@ -76,29 +76,19 @@
 #ifndef _MAC68K_PARAM_H_
 #define _MAC68K_PARAM_H_
 
-/* Pull in interrupt glue */
-#include <machine/psl.h>
-#include <machine/intr.h>
-
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
  */
 #define	_MACHINE	mac68k
 #define	MACHINE		"mac68k"
 
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-
 #define	PAGE_SHIFT	12
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #define	UPAGES		3  		/* pages of u-area */
 
 #include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define MSGBUFSIZE	4096
 

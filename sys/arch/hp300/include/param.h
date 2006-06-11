@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.24 2005/09/12 23:05:05 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.25 2006/06/11 20:48:11 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:38 veego Exp $	*/
 
 /*
@@ -48,22 +48,11 @@
 #define	_MACHINE	hp300
 #define	MACHINE		"hp300"
 
-/*
- * Interrupt glue.
- */
-#include <machine/intr.h>
-
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-
 #define	PAGE_SHIFT	12
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define MSGBUFSIZE 4096
 

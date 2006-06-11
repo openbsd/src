@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.37 2006/01/24 06:50:11 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.38 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched(ci)	{ want_resched++; aston(); }
+#define	need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process from the softclock
@@ -120,7 +120,7 @@ extern int want_resched;	/* resched() was called */
 #define	signotify(p)	aston()
 
 extern int astpending;		/* need to trap before returning to user mode */
-#define aston() (astpending++)
+#define aston() (astpending = 1)
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2
@@ -253,7 +253,7 @@ struct cpu_model_info {
 	const char	*model;		/* Model description */
 	int		class;		/* Rough class of machine. */
 };
-extern struct cpu_model_info *current_mac_model;
+extern const struct cpu_model_info *current_mac_model;
 
 extern unsigned long		IOBase;		/* Base address of I/O */
 extern unsigned long		NuBusBase;	/* Base address of NuBus */
@@ -280,41 +280,13 @@ extern	unsigned long		load_addr;
 
 #ifdef _KERNEL
 
-struct frame;
-struct fpframe;
-struct pcb;
+/* locore.s */
+void	PCIA(void);
 
 /* machdep.c */
 void	mac68k_set_bell_callback(int (*)(void *, int, int, int), void *);
 int	mac68k_ring_bell(int, int, int);
 u_int	get_mapping(void);
-
-/* locore.s */
-void	m68881_restore(struct fpframe *);
-void	m68881_save(struct fpframe *);
-void	DCIA(void);
-void	DCIS(void);
-void	DCIU(void);
-void	ICIA(void);
-void	ICPA(void);
-void	PCIA(void);
-void	TBIA(void);
-void	TBIAS(void);
-void	TBIAU(void);
-void	TBIS(vaddr_t);
-#if defined(M68040)
-void	DCFA(void);
-void	DCFP(paddr_t);
-void	DCFL(paddr_t);
-void	DCPL(paddr_t);
-void	DCPP(paddr_t);
-void	ICPL(paddr_t);
-void	ICPP(paddr_t);
-#endif
-int	suline(caddr_t, caddr_t);
-void	savectx(struct pcb *);
-void	proc_trampoline(void);
-void	loadustp(int);
 
 /* vm_machdep.c */
 void	physaccess(caddr_t, caddr_t, register int, register int);

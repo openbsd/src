@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.131 2006/05/19 22:51:09 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.132 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -1519,7 +1519,7 @@ get_machine_info()
 	mac68k_machine.cpu_model_index = i;
 }
 
-struct cpu_model_info *current_mac_model;
+const struct cpu_model_info *current_mac_model;
 
 /*
  * Sets a bunch of machine-specific variables

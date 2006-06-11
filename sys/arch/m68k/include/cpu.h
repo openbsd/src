@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2005/08/01 11:54:23 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -54,19 +54,14 @@
  * Individual ports are expected to define the following CPP symbols
  * in <machine/cpu.h> to enable conditional code:
  *
- *	M68K_MMU_MOTOROLA	Machine has a Motorola MMU (incl.
+ *	M68K_MMU_MOTOROLA	Machine may have a Motorola MMU (incl.
  *				68851, 68030, 68040, 68060)
  *
- *	M68K_MMU_HP		Machine has an HP MMU.
+ *	M68K_MMU_HP		Machine may have an HP MMU.
  *
  * Note also that while m68k-generic code conditionalizes on the
  * M68K_MMU_HP CPP symbol, none of the HP MMU definitions are in this
  * file (since none are used in otherwise sharable code).
- */
-
-/*
- * XXX Much more could be pulled out of port-specific header files
- * XXX and placed here.
  */
 
 #ifdef _KERNEL
@@ -184,7 +179,24 @@ extern	int mmutype;		/* MMU on this host */
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
+/* bits in the 68060 Processor Control Register */
+#define	PCR_IDSHIFT	16
+#define	PCR_IDMASK	0xffff
+#define	PCR_68060		0x430
+#define	PCR_68060LC		0x431
+#define	PCR_REVSHIFT	8
+#define	PCR_REVMASK	0xff
+#define	PCR_DEBUG	0x80
+#define	PCR_FPUDIS	0x02
+#define	PCR_SUPERSCALAR	0x01
+
 #ifdef _KERNEL
+struct frame;
+struct fpframe;
+struct pcb;
+struct proc;
+struct trapframe;
+
 void	copypage(void *fromaddr, void *toaddr);
 void	zeropage(void *addr);
 #ifdef MAPPEDCOPY
@@ -194,16 +206,38 @@ extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
 
 /* locore.s */
-u_long getdfc(void);
-u_long getsfc(void);
+void	TBIS(vaddr_t);
+void	TBIAS(void);
+void	TBIAU(void);
+void	ICIA(void);
+void	DCIA(void);
+void	DCIS(void);
+void	DCIU(void);
+#if defined(M68040) || defined(M68060)
+void	ICPA(void);
+void	DCFA(void);
+void	ICPL(paddr_t);
+void	ICPP(paddr_t);
+void	DCPL(paddr_t);
+void	DCPP(paddr_t);
+void	DCFL(paddr_t);
+void	DCFP(paddr_t);
+#endif
+
+u_long	getdfc(void);
+u_long	getsfc(void);
+void	loadustp(int);
+void	m68881_restore(struct fpframe *);
+void	m68881_save(struct fpframe *);
+void	proc_trampoline(void);
+void	savectx(struct pcb *);
+int	suline(caddr_t, caddr_t);
+void	switch_exit(struct proc *);
 
 /* m68k_machdep.c */
-struct proc;
-struct frame;
 void userret(struct proc *, struct frame *, u_quad_t, u_int, int);
 
 /* regdump.c */
-struct trapframe;
 void regdump(struct trapframe *, int);
 
 /* sys_machdep.c */

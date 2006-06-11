@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.17 2006/06/07 21:53:43 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.18 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -81,10 +81,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-extern int fputype;
 extern short exframesize[];
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 
 #define SS_RTEFRAME	1
 #define SS_FPSTATE	2

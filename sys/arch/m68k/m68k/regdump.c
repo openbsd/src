@@ -1,4 +1,4 @@
-/*	$OpenBSD: regdump.c,v 1.5 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: regdump.c,v 1.6 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: regdump.c,v 1.1 1997/04/09 19:21:47 thorpej Exp $	*/
 
 /*
@@ -46,9 +46,6 @@
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
-
-/* XXX until m68k/cpu.h has it */
-void regdump(struct trapframe *, int);
 
 void dumpmem(int *, int, int);
 char *hexstr(int, int);

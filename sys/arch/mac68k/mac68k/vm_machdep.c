@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2005/09/25 22:26:16 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2006/06/11 20:48:13 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -115,8 +115,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 }
-
-void	switch_exit(struct proc *);
 
 /*
  * cpu_exit is called as the last action during exit.

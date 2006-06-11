@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2006/01/02 18:09:23 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2006/06/11 20:48:11 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched(ci)	{ want_resched++; aston(); }
+#define	need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -107,7 +107,7 @@ extern int want_resched;	/* resched() was called */
 #define	signotify(p)	aston()
 
 extern int astpending;		/* need to trap before returning to user mode */
-#define aston() (astpending++)
+#define aston() (astpending = 1)
 
 /*
  * CTL_MACHDEP definitions.
@@ -140,33 +140,7 @@ struct fpframe;
 struct pcb;
 
 /* locore.s functions */
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
-void	DCIA(void);
-void	DCIS(void);
-void	DCIU(void);
-void	ICIA(void);
-void	ICPA(void);
 void	PCIA(void);
-void	TBIA(void);
-void	TBIS(vaddr_t);
-void	TBIAS(void);
-void	TBIAU(void);
-#if defined(M68040)
-void	DCFA(void);
-void	DCFP(paddr_t);
-void	DCFL(paddr_t);
-void	DCPL(paddr_t);
-void	DCPP(paddr_t);
-void	ICPL(paddr_t);
-void	ICPP(paddr_t);
-#endif
-int	suline(caddr_t, caddr_t);
-void	savectx(struct pcb *);
-void	switch_exit(struct proc *);
-void	proc_trampoline(void);
-void	loadustp(int);
-
 __dead void	doboot(void);
 void	ecacheon(void);
 void	ecacheoff(void);
