@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.20 2006/01/17 00:08:36 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.21 2006/06/11 20:57:44 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -156,6 +156,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	extern void TBIA(void);
 
 	pa = trunc_page(bpa);
 	endpa = round_page((bpa + size) - 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.51 2006/05/19 22:51:09 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.52 2006/06/11 20:57:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -518,7 +518,7 @@ Lenab1:
 	addql	#4,sp
 Lenab2:
 /* flush TLB and turn on caches */
-	jbsr	_C_LABEL(TBIA)		| invalidate TLB
+	jbsr	_ASM_LABEL(TBIA)	| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
 	jle	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
@@ -1432,8 +1432,7 @@ Lsldone:
 /*
  * Invalidate entire TLB.
  */
-ENTRY(TBIA)
-_C_LABEL(_TBIA):
+ASENTRY_NOPROFILE(TBIA)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
 	jle	Ltbia040                | yes, goto Ltbia040
 	pflusha				| flush entire TLB
@@ -1460,10 +1459,6 @@ Ltbiano60:
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
 ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush entire TLB
-#endif
 	movl	sp@(4),a0		| get addr to flush
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060 ?
 	jle	Ltbis040                | yes, goto Ltbis040
@@ -1496,43 +1491,21 @@ Ltbisno60:
 /*
  * Invalidate supervisor side of TLB
  */
+#if defined(M68060)
 ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060 ?
-	jle	Ltbias040               | yes, goto Ltbias040
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851c		| 68851?
-	pflush #4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4			| flush supervisor TLB entries
-	rts
-Ltbias040:
-| 68040 cannot specify supervisor/user on pflusha, so we flush all
+	| 68060 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518			| pflusha
-#ifdef M68060
-	cmpl	#MMU_68060,_C_LABEL(mmutype)
-	jne	Ltbiasno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
-Ltbiasno60:
-#endif
 	rts
+#endif
 
+#if defined(COMPAT_HPUX) || defined(M68060)
 /*
  * Invalidate user side of TLB
  */
 ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
 	jle	Ltbiau040
 	tstl	_C_LABEL(mmutype)
@@ -1556,18 +1529,18 @@ Ltbiau040:
 Ltbiauno60:
 #endif
 	rts
+#endif	/* defined(COMPAT_HPUX) || defined(M68060) */
 
 /*
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
 #if defined(M68040) || defined(M68060)
-ENTRY(ICPA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jgt	Lmotommu7		| no, skip
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
+	jgt	1f			| no, skip
 	.word	0xf498			| cinva ic
 	rts
-Lmotommu7:
+1:
 #endif
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			| invalidate i-cache
@@ -1575,45 +1548,38 @@ Lmotommu7:
 
 /*
  * Invalidate data cache.
+ *
  * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
  * problems with DC_WA.  The only cases we have to worry about are context
  * switch and TLB changes, both of which are handled "in-line" in resume
  * and TBI*.
+ * Because of this, since there is no way on 68040 and 68060 to flush
+ * user and supervisor modes specfically, DCIS and DCIU are the same entry
+ * point as DCIA.
+ *
+ * On 68060, since we have disabled cache invalidation on pushes, we need
+ * an explicit cinva after the cpusha.
  */
 ENTRY(DCIA)
-_C_LABEL(_DCIA):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jgt	Lmotommu8		| no, skip
-	.word	0xf478			| cpusha dc
-	rts
-Lmotommu8:
-#endif
-	rts
-
 ENTRY(DCIS)
-_C_LABEL(_DCIS):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jgt	Lmotommu9		| no, skip
-	.word	0xf478			| cpusha dc
-	rts
-Lmotommu9:
-#endif
-	rts
-
 ENTRY(DCIU)
-_C_LABEL(_DCIU):
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jgt	LmotommuA		| no, skip
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
+	jgt	1f			| no, skip
 	.word	0xf478			| cpusha dc
-	rts
-LmotommuA:
+	jeq	1f
+	.word	0xf458			| cinva dc
+1:
 #endif
 	rts
 
 #if defined(M68040) || defined(M68060)
+ENTRY(ICPA)
+	.word	0xf498			| cinva ic
+	rts
+ENTRY(DCFA)
+	.word	0xf478			| cpusha dc
+	rts
 ENTRY(ICPL)
 	movl	sp@(4),a0		| address
 	.word	0xf488			| cinvl ic,a0@
@@ -1630,9 +1596,6 @@ ENTRY(DCPP)
 	movl	sp@(4),a0		| address
 	.word	0xf450			| cinvp dc,a0@
 	rts
-ENTRY(DCPA)
-	.word	0xf458			| cinva dc
-	rts
 ENTRY(DCFL)
 	movl	sp@(4),a0		| address
 	.word	0xf468			| cpushl dc,a0@
@@ -1642,19 +1605,6 @@ ENTRY(DCFP)
 	.word	0xf470			| cpushp dc,a0@
 	rts
 #endif
-
-ENTRY(PCIA)
-#if defined(M68040) || defined(M68060)
-ENTRY(DCFA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jgt	LmotommuB		| no, skip
-	.word	0xf478			| cpusha dc
-	rts
-LmotommuB:
-#endif
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
 
 ENTRY(getsfc)
 	movc	sfc,d0
@@ -1667,16 +1617,19 @@ ENTRY(getdfc)
 /*
  * Load a new user segment table pointer.
  */
-ENTRY(loadustp)       /* XXX - smurph */
+ENTRY(loadustp)
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
-#ifdef M68060
-	cmpl	#MMU_68060,_C_LABEL(mmutype) | 68040 or 68060?
-	jeq	Lldustp060		| yes, goto Lldustp060
-#endif
+#if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
+#ifdef M68060
+	jlt	Lldustp060
+#endif
+#ifdef M68040
 	jeq	Lldustp040
+#endif
+#endif
 	pflusha				| flush entire TLB
 	lea	_C_LABEL(protorp),a0	| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
@@ -1690,15 +1643,11 @@ Lldustp060:
 	movc	cacr,d1
 	orl	#IC60_CUBC,d1		| clear user branch cache entries
 	movc	d1,cacr
+	/* FALLTHROUGH */
 #endif
 Lldustp040:
 	.word	0xf518			| pflusha
 	.long	0x4e7b0806		| movec d0,URP
-	rts
-
-ENTRY(ploadw)
-	movl	sp@(4),a0		| address to load
-	ploadw	#1,a0@			| pre-load translation
 	rts
 
 /*
@@ -1735,8 +1684,8 @@ ENTRY(m68881_save)
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(FPF_REGS)	| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(FPF_FPCR)	| save FP control registers
+	fmovem	fp0-fp7,a0@(FPF_REGS)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(FPF_FPCR)	| save FP control registers
 Lm68881sdone:
 	rts
 
@@ -1744,7 +1693,7 @@ Lm68881sdone:
 Lm68060fpsave:
 	tstb	a0@(2)			| null state frame?
 	jeq	Lm68060sdone		| yes, all done
-	fmovem fp0-fp7,a0@(FPF_REGS)	| save FP general registers
+	fmovem	fp0-fp7,a0@(FPF_REGS)	| save FP general registers
 	fmovem	fpcr,a0@(FPF_FPCR)	| save FP control registers
 	fmovem	fpsr,a0@(FPF_FPSR)
 	fmovem	fpi,a0@(FPF_FPI)
@@ -1880,12 +1829,5 @@ GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space
 GLOBAL(extiobase)
 	.long	0		| KVA of base of external IO space
-
-#ifdef DEBUG
-ASGLOBAL(fulltflush)
-	.long	0
-ASGLOBAL(fullcflush)
-	.long	0
-#endif
 
 #include <mvme68k/mvme68k/vectors.s>

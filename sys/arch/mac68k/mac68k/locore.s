@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.52 2006/06/11 20:49:27 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.53 2006/06/11 20:57:44 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1163,7 +1163,6 @@ Lsldone:
  * Invalidate entire TLB.
  */
 ENTRY(TBIA)
-__TBIA:
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu3		| no, skip
@@ -1185,10 +1184,6 @@ Ltbia851:
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
 ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush entire TLB
-#endif
 	movl	sp@(4),a0
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
@@ -1220,10 +1215,6 @@ Ltbis851:
  * Invalidate supervisor side of TLB
  */
 ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu5		| no, skip
@@ -1243,14 +1234,11 @@ Ltbias851:
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 
+#if defined(COMPAT_HPUX)
 /*
  * Invalidate user side of TLB
  */
 ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu6		| no, skip
@@ -1268,13 +1256,13 @@ Ltbiau851:
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
+#endif	/* COMPAT_HPUX */
 
 /*
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
 #if defined(M68040)
-ENTRY(ICPA)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu7		| no, skip
 	.word	0xf498			| cinva ic
@@ -1287,42 +1275,33 @@ Lmotommu7:
 
 /*
  * Invalidate data cache.
+ *
  * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
  * problems with DC_WA.  The only cases we have to worry about are context
  * switch and TLB changes, both of which are handled "in-line" in resume
  * and TBI*.
+ * Because of this, since there is no way on 68040 and 68060 to flush
+ * user and supervisor modes specfically, DCIS and DCIU are the same entry
+ * point as DCIA.
  */
 ENTRY(DCIA)
-_C_LABEL(_DCIA):
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu8		| no, skip
-	.word	0xf478			| cpusha dc
-Lmotommu8:
-#endif
-	rts
-
 ENTRY(DCIS)
-_C_LABEL(_DCIS):
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu9		| no, skip
-	.word	0xf478			| cpusha dc
-Lmotommu9:
-#endif
-	rts
-
 ENTRY(DCIU)
-_C_LABEL(_DCIU):
 #if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	LmotommuA		| no, skip
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
+	jgt	1f			| no, skip
 	.word	0xf478			| cpusha dc
-LmotommuA:
+1:
 #endif
 	rts
 
 #ifdef M68040
+ENTRY(ICPA)
+	.word	0xf498			| cinva ic
+	rts
+ENTRY(DCFA)
+	.word	0xf478			| cpusha dc
+	rts
 ENTRY(ICPL)	/* invalidate instruction physical cache line */
 	movl	sp@(4),a0		| address
 	.word	0xf488			| cinvl ic,a0@
@@ -1339,9 +1318,6 @@ ENTRY(DCPP)	/* invalidate data physical cache page */
 	movl	sp@(4),a0		| address
 	.word	0xf450			| cinvp dc,a0@
 	rts
-ENTRY(DCPA)	/* invalidate instruction physical cache line */
-	.word	0xf458			| cinva dc
-	rts
 ENTRY(DCFL)	/* data cache flush line */
 	movl	sp@(4),a0		| address
 	.word	0xf468			| cpushl dc,a0@
@@ -1354,7 +1330,6 @@ ENTRY(DCFP)	/* data cache flush page */
 
 ENTRY(PCIA)
 #if defined(M68040)
-ENTRY(DCFA)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuB		| no, skip
 	.word	0xf478			| cpusha dc
@@ -1848,11 +1823,3 @@ GLOBAL(mac68k_vrsrc_cnt)
 	.long	0
 GLOBAL(mac68k_vrsrc_vec)
 	.word	0, 0, 0, 0, 0, 0
-
-#ifdef DEBUG
-ASGLOBAL(fulltflush)
-	.long	0
-
-ASGLOBAL(fullcflush)
-	.long	0
-#endif
