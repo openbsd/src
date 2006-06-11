@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.42 2006/06/11 20:44:20 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.43 2006/06/11 20:48:51 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -980,7 +980,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int npte, error;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
+#ifdef M68K_MMU_HP
 	boolean_t checkpv = TRUE;
+#endif
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
@@ -1043,7 +1045,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/*
 		 * Retain cache inhibition status
 		 */
+#ifdef M68K_MMU_HP
 		checkpv = FALSE;
+#endif
 		if (pmap_pte_ci(pte))
 			cacheable = FALSE;
 		goto validate;
@@ -1185,7 +1189,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * then it must be device memory which may be volatile.
 	 */
 	else {
-		checkpv = cacheable = FALSE;
+#ifdef M68K_MMU_HP
+		checkpv =
+#endif
+		cacheable = FALSE;
 	}
 
 	/*
@@ -1216,10 +1223,17 @@ validate:
 	if (mmutype <= MMU_68040 && pmap != pmap_kernel() &&
 	    (curproc->p_md.md_flags & MDP_UNCACHE_WX) &&
 	    (prot & VM_PROT_EXECUTE) && (prot & VM_PROT_WRITE))
-		checkpv = cacheable = FALSE;
+#ifdef M68K_MMU_HP
+		checkpv =
+#endif
+		cacheable = FALSE;
 #endif
 
+#ifdef M68K_MMU_HP
 	if (!checkpv && !cacheable)
+#else
+	if (!cacheable)
+#endif
 		npte |= PG_CI;
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
