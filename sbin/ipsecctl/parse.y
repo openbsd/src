@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2006/06/10 19:38:24 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.106 2006/06/11 20:21:08 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1872,7 +1872,7 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 		if (!xfs->authxf)
 			xfs->authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
 		if (!xfs->encxf)
-			xfs->encxf = &encxfs[ENCXF_AESCTR];
+			xfs->encxf = &encxfs[ENCXF_AES];
 	}
 	if (satype == IPSEC_IPCOMP) {
 		if (!xfs) {
