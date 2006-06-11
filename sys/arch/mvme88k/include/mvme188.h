@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.26 2006/04/27 20:19:31 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.27 2006/06/11 13:30:44 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -141,7 +141,7 @@
 #define IST_STRING	"\20" \
 	"\40ABRT\37ACF\36ARBTO\35DTI\34SWI7\33SWI6\32SWI5\31SWI4" \
 	"\30IRQ7\26CIOI\25SF\24IRQ6\22DI\21SIGHPI" \
-	"\17IRQ5\15IRQ4\13IRQ3\11LWI" \
+	"\17IRQ5\15IRQ4\13IRQ3\11LMI" \
 	"\10SIGLPI\7IRQ2\5IRQ1\4SWI3\3SWI2\2SWI1\1SWI0"
 
 /* groups by function */
