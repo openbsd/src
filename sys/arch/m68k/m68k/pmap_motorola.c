@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.41 2005/11/04 21:51:35 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.42 2006/06/11 20:44:20 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -285,7 +285,7 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 #if defined(M68K_MMU_HP)
-int		pmap_aliasmask;	/* separation at which VA aliasing is ok */
+extern int	pmap_aliasmask;	/* separation at which VA aliasing is ok */
 #endif
 #if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */

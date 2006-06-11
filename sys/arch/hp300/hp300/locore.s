@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.54 2006/05/20 14:54:52 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.55 2006/06/11 20:44:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -322,11 +322,15 @@ Lishpmmu:
 	RELOC(machineid, a0)
 	movl	#HP_350,a0@		| yes, a 350
 	movl	#0,a1@(MMUCMD)		| clear out MMU again
+	RELOC(pmap_aliasmask, a0)
+	movl	#0x7fff, a0@		| 32KB
 	jra	Lstart1
 Lis320:
 	RELOC(machineid, a0)
 	movl	#HP_320,a0@
 	movl	#0,a1@(MMUCMD)		| clear out MMU again
+	RELOC(pmap_aliasmask, a0)
+	movl	#0x3fff, a0@		| 16KB
 	jra	Lstart1
 
 	/*
@@ -2108,6 +2112,11 @@ GLOBAL(ectype)
 
 GLOBAL(fputype)
 	.long	FPU_68882	| default to 68882 FPU
+
+#if defined(M68K_MMU_HP)
+GLOBAL(pmap_aliasmask)
+	.long	0
+#endif
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.14 2005/11/12 23:11:37 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.15 2006/06/11 20:44:20 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -87,9 +87,6 @@ extern int physmem;
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
 extern vsize_t mem_size;
-#ifdef M68K_MMU_HP
-extern int pmap_aliasmask;
-#endif
 
 void  pmap_bootstrap(paddr_t, paddr_t);
 
@@ -506,18 +503,6 @@ pmap_bootstrap(nextpa, firstpa)
 	RELOC(virtual_avail, vaddr_t) =
 	    VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
-
-#ifdef M68K_MMU_HP
-	/*
-	 * Determine VA aliasing distance if any
-	 */
-	if (RELOC(ectype, int) == EC_VIRT) {
-		if (RELOC(machineid, int) == HP_320)
-			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-		else if (RELOC(machineid, int) == HP_350)
-			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
-	}
-#endif
 
 	/*
 	 * Kernel page/segment table allocated in locore,
