@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 2006/05/19 22:51:09 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.99 2006/06/11 20:50:51 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -150,15 +150,9 @@ int   physmem;			/* size of physical memory, in pages */
  */
 int   safepri = PSL_LOWIPL;
 
-extern   short exframesize[];
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 #ifdef COMPAT_SUNOS
 extern struct emul emul_sunos;
 #endif
-
 
 void dumpsys(void);
 void initvectors(void);
@@ -414,9 +408,6 @@ identifycpu()
 	char mc;
 	char speed[6];
 	char suffix[30];
-#ifdef FPSP
-	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
-#endif
 	int len;
 
 	bzero(suffix, sizeof suffix);
@@ -471,13 +462,11 @@ identifycpu()
 	snprintf(cpu_model, sizeof cpu_model,
 	    "Motorola %s: %sMHz MC680%c0 CPU", suffix, speed, mc);
 	switch (mmutype) {
-#if defined(M68060) || defined(M68040)
+#if defined(M68040)
 	case MMU_68040:
-#ifdef FPSP
-		bcopy(&fpsp_tab, &fpvect_tab,
-		    (&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
-#endif
 		/* FALLTHROUGH */
+#endif
+#if defined(M68060)
 	case MMU_68060:
 		/* FALLTHROUGH */
 #endif
@@ -491,6 +480,7 @@ identifycpu()
 		printf("%s\n", cpu_model);
 		panic("unknown MMU type %d", mmutype);
 	}
+
 	switch (mmutype) {
 #if defined(M68060)
 	case MMU_68060:
@@ -795,22 +785,16 @@ abort:
 }
 
 #if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
+int m68060_pcr_init = PCR_SUPERSCALAR;	/* make this patchable */
 #endif
 
 void
 initvectors()
 {
 	typedef void trapfun(void);
-
-	/* XXX should init '40 vecs here, too */
-#if defined(M68060)
 	extern trapfun *vectab[256];
-	extern trapfun addrerr4060;
-
-	extern trapfun buserr60;
+#if defined(M68060)
 #if defined(M060SP)
-	/*extern u_int8_t I_CALL_TOP[];*/
 	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
 	extern u_int8_t FP_CALL_TOP[];
 #else
@@ -818,9 +802,13 @@ initvectors()
 #endif
 	extern trapfun fpfault;
 #endif
+#if defined(M68040) && defined(FPSP)
+	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
+#endif
 
+	switch (cputype) {
 #ifdef M68060
-	if (cputype == CPU_68060) {
+	case CPU_68060:
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 						  "d"(m68060_pcr_init):"d0" );
 
@@ -848,8 +836,17 @@ initvectors()
 		vectab[61] = illinst;
 #endif
 		vectab[48] = fpfault;
-	}
+		break;
 #endif
+#if defined(M68040) && defined(FPSP)
+	case CPU_68040:
+		bcopy(&fpsp_tab, &fpvect_tab,
+		    (&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
+		break;
+#endif
+	default:
+		break;
+	}
 }
 
 void
