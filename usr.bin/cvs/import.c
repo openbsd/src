@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.48 2006/06/04 09:52:56 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.49 2006/06/11 17:50:11 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -235,7 +235,7 @@ static void
 import_update(struct cvs_file *cf)
 {
 	BUF *b1, *b2;
-	char *d, b[16], branch[16];
+	char *d, branch[16];
 	RCSNUM *newrev, *rev, *brev;
 
 	cvs_log(LP_TRACE, "import_update(%s)", cf->file_path);
