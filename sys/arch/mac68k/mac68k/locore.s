@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.51 2006/01/21 12:27:58 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.52 2006/06/11 20:49:27 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ GLOBAL(proc_trampoline)
 GLOBAL(m68k_fault_addr)
 	.long	0
 
-#if defined(M68040) || defined(M68060)
+#if defined(M68040)
 ENTRY_NOPROFILE(addrerr4060)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
@@ -396,46 +396,6 @@ ENTRY_NOPROFILE(addrerr4060)
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 #endif
 
-#if defined(M68060)
-ENTRY_NOPROFILE(buserr60)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	movel	sp@(FR_HW+12),d0	| FSLW
-	btst	#2,d0			| branch prediction error?
-	jeq	Lnobpe
-	movc	cacr,d2
-	orl	#IC60_CABC,d2		| clear all branch cache entries
-	movc	d2,cacr
-	movl	d0,d1
-	addql	#1,L60bpe
-	andl	#0x7ffd,d1
-	jeq	_ASM_LABEL(faultstkadjnotrap2)
-Lnobpe:
-| we need to adjust for misaligned addresses
-	movl	sp@(FR_HW+8),d1		| grab VA
-	btst	#27,d0			| check for mis-aligned access
-	jeq	Lberr3			| no, skip
-	addl	#28,d1			| yes, get into next page
-					| operand case: 3,
-					| instruction case: 4+12+12
-	andl	#PG_FRAME,d1		| and truncate
-Lberr3:
-	movl	d1,sp@-
-	movl	d0,sp@-			| code is FSLW now.
-	andw	#0x1f80,d0 
-	jeq	Lberr60			| it is a bus error
-	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lberr60:
-	tstl	_C_LABEL(nofault)	| catch bus error?
-	jeq	Lisberr			| no, handle as usual
-	movl	sp@(FR_HW+8+8),_C_LABEL(m68k_fault_addr) | save fault addr
-	movl	_C_LABEL(nofault),sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-	/* NOTREACHED */
-#endif
 #if defined(M68040)
 ENTRY_NOPROFILE(buserr40)
 	clrl	sp@-			| stack adjust count

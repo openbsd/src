@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.132 2006/06/11 20:48:13 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.133 2006/06/11 20:49:27 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -554,12 +554,9 @@ allocsys(v)
 void
 initcpu()
 {
-#if defined(M68040) || defined(M68060)
+#if defined(M68040)
 	extern void (*vectab[256])(void);
 	void addrerr4060(void);
-#endif
-#ifdef M68060
-	void buserr60(void);
 #endif
 #ifdef M68040
 	void buserr40(void);
@@ -569,12 +566,6 @@ initcpu()
 #endif
 
 	switch (cputype) {
-#ifdef M68060
-	case CPU_68060:
-		vectab[2] = buserr60;
-		vectab[3] = addrerr4060;
-		break;
-#endif
 #ifdef M68040
 	case CPU_68040:
 		vectab[2] = buserr40;
