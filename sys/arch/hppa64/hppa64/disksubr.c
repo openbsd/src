@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 2006/03/15 20:20:39 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 2006/06/11 21:15:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -42,8 +42,6 @@
  * XXX The DOS partitioning code is not endian-independent, only native
  * endian DOS partition tables can be parsed yet.
  *
- * XXX Amiga RDB partitioning is not understood yet.
- *
  * XXX HPUX disklabel is not understood yet.
  */
 
@@ -60,13 +58,11 @@
 #define DISKLABEL_ALPHA
 #elif (defined(i386) || defined(arc)) && !defined(DISKLABEL_I386)
 #define DISKLABEL_I386
-#elif defined(amiga) && !defined(DISKLABEL_AMIGA)
-#define DISKLABEL_AMIGA
 #elif (defined(hppa) || defined(hppa64)) && !defined(DISKLABEL_HPPA)
 #define DISKLABEL_HPPA
 #endif
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 void	swapdisklabel(struct disklabel *d);
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
     int, int, struct disklabel *, int);
@@ -75,10 +71,6 @@ char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
 char   *readdoslabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
-#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-char   *readamigalabel(struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int);
-#endif
 #if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 char   *readliflabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
@@ -86,7 +78,7 @@ char   *readliflabel(struct buf *, void (*)(struct buf *),
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 
 /*
  * Byteswap all the fields that might be swapped.
@@ -274,12 +266,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 			if (msg)
 				/* Fallback alternative */
 				fallbacklabel = *lp;
-#endif
-			break;
-
-		case DLT_AMIGA:
-#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-			msg = readamigalabel(bp, strat, lp, osdep, spoofonly);
 #endif
 			break;
 
@@ -553,26 +539,6 @@ donot:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
-}
-#endif
-
-#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-/*
- * XXX RDB parsing is missing still.
- */
-char *
-readamigalabel(bp, strat, lp, osdep, spoofonly)
-	struct buf *bp;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
-{
-	char *msg;
-
-	msg = readbsdlabel(bp, strat, 0, AMIGA_LABELSECTOR, AMIGA_LABELOFFSET,
-	    BIG_ENDIAN, lp, spoofonly);
 	return (msg);
 }
 #endif
@@ -854,14 +820,6 @@ writedisklabel(dev, strat, lp, osdep)
 			    &cyl, 0);
 			labeloffset = I386_LABELOFFSET;
 			endian = LITTLE_ENDIAN;
-#endif
-			break;
-
-		case DLT_AMIGA:
-#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-			msg = readamigalabel(bp, strat, &dl, &cdl, 0);
-			labeloffset = AMIGA_LABELOFFSET;
-			endian = BIG_ENDIAN;
 #endif
 			break;
 

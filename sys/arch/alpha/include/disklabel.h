@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.12 1999/12/04 03:35:55 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.13 2006/06/11 21:15:35 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -34,21 +34,19 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-enum disklabel_tag { DLT_ALPHA, DLT_I386, DLT_AMIGA };
+enum disklabel_tag { DLT_ALPHA, DLT_I386 };
 
 /*
  * What disklabels are we probing for, and in which order?
  */
 #ifndef LABELPROBES
-#define LABELPROBES		DLT_ALPHA, DLT_I386, DLT_AMIGA
+#define LABELPROBES		DLT_ALPHA, DLT_I386
 #endif
 
 #define	ALPHA_LABELSECTOR	0		/* sector containing label */
 #define	ALPHA_LABELOFFSET	64		/* offset of label in sector */
 #define	I386_LABELSECTOR	1		/* sector containing label */
 #define	I386_LABELOFFSET	0		/* offset of label in sector */
-#define	AMIGA_LABELSECTOR	0		/* sector containing label */
-#define	AMIGA_LABELOFFSET	64		/* offset of label in sector */
 
 #define LABELSECTOR		ALPHA_LABELSECTOR
 #define LABELOFFSET		ALPHA_LABELOFFSET
@@ -266,12 +264,6 @@ struct cpu_disklabel {
 			struct dos_partition dosparts[NDOSPART];
 			struct dkbad bad;
 		} _i386;
-		struct {
-			u_int32_t rdblock;		/* RDBNULL -> inval. */
-			u_int32_t pblist[MAXPARTITIONS];/* pblock number */
-			int pbindex[MAXPARTITIONS];	/* index of pblock */
-			int valid;			/* valid? */
-		} _amiga;
 	} u;
 };
 
