@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.27 2006/04/16 11:34:01 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -157,7 +157,6 @@ target(all, joy, 0, 1)dnl
 twrget(all, rnd, random)dnl
 target(all, uk, 0)dnl
 target(all, wt, 0)dnl
-target(all, wdt, 0)dnl
 twrget(all, au, audio, 0)dnl
 twrget(all, speak, speaker)dnl
 target(all, asc, 0)dnl
@@ -291,8 +290,6 @@ _mkdev(flo, fd*,
 	M r${nam}c	c $chr Add($n, 2) 640 operator-}, 664)dnl
 __devitem(iop, iop*, I2O controller devices)dnl
 _mcdev(iop, iop*, iop, {-major_iop_c-}, 660)dnl
-__devitem(wdt, wdt0, Watchdog timer)dnl
-_mcdev(wdt, wdt0, wdt, {-major_wdt_c-}, 440, operator)dnl
 __devitem(wd, {-wd*-}, {-quote(winchester)disk drives (ST506{-,-} IDE{-,-} ESDI{-,-} RLL{-,-} ...)-})dnl
 __devitem(ccd, ccd*, Concatenated disk devices)dnl
 __devitem(raid, raid*, RAIDframe disk devices)dnl
