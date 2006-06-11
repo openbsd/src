@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.25 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.26 2006/06/11 05:21:54 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -722,8 +722,8 @@ stge_start(struct ifnet *ifp)
 		if (error) {
 			if (error == EFBIG) {
 				printf("%s: Tx packet consumes too many "
-				    "DMA segments, dropping...\n",
-				    sc->sc_dev.dv_xname);
+				    "DMA segments (%u), dropping...\n",
+				    sc->sc_dev.dv_xname, dmamap->dm_nsegs);
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
 				m_freem(m0);
 				continue;
