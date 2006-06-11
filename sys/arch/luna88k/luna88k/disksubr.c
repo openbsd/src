@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.7 2006/03/15 20:20:39 miod Exp $ */
+/* $OpenBSD: disksubr.c,v 1.8 2006/06/11 14:08:36 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -137,7 +137,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	}
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = lp->d_secperunit;
-	lp->d_partitions[0].p_offset = 0;
+	lp->d_partitions[i].p_offset = 0;
 
         /* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
