@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.14 2006/01/30 21:23:22 miod Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.15 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_emulate.c,v 1.25 2003/09/22 14:18:34 cl Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <machine/db_machdep.h>
 #endif
 
-#include "fpu_emulate.h"
+#include <m68k/fpe/fpu_emulate.h>
 
 int fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn, int *);
 int fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn, int *);

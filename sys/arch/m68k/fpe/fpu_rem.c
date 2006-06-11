@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_rem.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_rem.c,v 1.5 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_rem.c,v 1.5 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include <sys/signal.h>
 #include <machine/frame.h>
 
-#include "fpu_emulate.h"
+#include <m68k/fpe/fpu_emulate.h>
 
 /*
  *       ALGORITHM

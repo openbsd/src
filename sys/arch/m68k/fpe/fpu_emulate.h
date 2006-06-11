@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.h,v 1.6 2006/01/30 21:23:22 miod Exp $	*/
+/*	$OpenBSD: fpu_emulate.h,v 1.7 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_emulate.h,v 1.11 2005/08/13 05:38:45 he Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ int fpu_emul_fscale(struct fpemu *fe, struct instruction *insn, int *typ);
 /*
  * include function declarations of those which are called by fpu_emul_arith()
  */
-#include "fpu_arith_proto.h"
+#include <m68k/fpe/fpu_arith_proto.h>
 
 int fpu_emulate(struct frame *frame, struct fpframe *fpf, int *typ);
 

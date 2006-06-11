@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_fmovecr.c,v 1.7 2006/01/30 21:23:23 miod Exp $	*/
+/*	$OpenBSD: fpu_fmovecr.c,v 1.8 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_fmovecr.c,v 1.10 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include <sys/systm.h>
 #include <machine/frame.h>
 
-#include "fpu_emulate.h"
+#include <m68k/fpe/fpu_emulate.h>
 
 /* XXX: quick consistency check */
 #if (FP_1 != 0x40000)

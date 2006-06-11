@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_log.c,v 1.5 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_log.c,v 1.6 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_log.c,v 1.8 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include "fpu_emulate.h"
+#include <m68k/fpe/fpu_emulate.h>
 
 static u_int logA6[] = { 0x3FC2499A, 0xB5E4040B };
 static u_int logA5[] = { 0xBFC555B5, 0x848CB7DB };

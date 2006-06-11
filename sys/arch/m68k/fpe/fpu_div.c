@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.5 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_div.c,v 1.4 2003/08/07 16:28:11 agc Exp $ */
 
 /*
@@ -49,8 +49,8 @@
 
 #include <machine/reg.h>
 
-#include "fpu_arith.h"
-#include "fpu_emulate.h"
+#include <m68k/fpe/fpu_arith.h>
+#include <m68k/fpe/fpu_emulate.h>
 
 /*
  * Division of normal numbers is done as follows:

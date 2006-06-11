@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.5 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.6 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_explode.c,v 1.6 2003/10/23 15:07:30 kleink Exp $ */
 
 /*
@@ -52,8 +52,8 @@
 #include <machine/ieee.h>
 #include <machine/reg.h>
 
-#include "fpu_arith.h"
-#include "fpu_emulate.h"
+#include <m68k/fpe/fpu_arith.h>
+#include <m68k/fpe/fpu_emulate.h>
 
 
 /* Conversion to internal format -- note asymmetry. */

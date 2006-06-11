@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_subr.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_subr.c,v 1.5 2006/06/11 20:43:28 miod Exp $	*/
 /*	$NetBSD: fpu_subr.c,v 1.6 2003/08/07 16:28:12 agc Exp $ */
 
 /*
@@ -50,8 +50,8 @@
 
 #include <machine/reg.h>
 
-#include "fpu_emulate.h"
-#include "fpu_arith.h"
+#include <m68k/fpe/fpu_emulate.h>
+#include <m68k/fpe/fpu_arith.h>
 
 /*
  * Shift the given number right rsh bits.  Any bits that `fall off' will get
