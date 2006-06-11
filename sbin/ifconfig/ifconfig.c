@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.164 2006/06/03 14:59:44 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.165 2006/06/11 18:47:58 jmc Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3839,36 +3839,9 @@ void
 usage(int value)
 {
 	fprintf(stderr,
-	    "usage: ifconfig "
-	    "[interface] [address_family] [address [dest_address]]\n"
-	    "\t[[-]alias] [[-]arp] [broadcast addr]\n"
-	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
-	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
-	    "\t[description value] [-description] [[-]group group-name]\n"
-	    "\t[[-]link0] [[-]link1] [[-]link2] [lladdr etheraddr]\n"
-	    "\t[media type] [[-]mediaopt opts] [mode mode] [instance minst]\n"
-	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
-	    "\t[nwid id] [nwkey key] [nwkey persist[:key]] [-nwkey]\n"
-	    "\t[bssid bssid] [-bssid] [chan n] [-chan] [txpower dBm]\n"
-	    "\t[-txpower] [[-]powersave] [powersavesleep duration]\n"
-#ifdef INET6
-	    "\t[[-]anycast] [eui64] [pltime n] [vltime n] [[-]tentative]\n"
-#endif
-	    "\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
-	    "\t[trunkproto proto] [[-]trunkport child-iface]\n"
-	    "\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
-	    "\t[state init | backup | master]\n"
-	    "\t[syncdev iface] [-syncdev] [syncpeer peer_address] [-syncpeer]\n"
-	    "\t[phase n] [range netrange] [timeslot timeslot_range]\n"
-	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
-	    "\t[pppoeac access-concentrator] [-pppoeac]\n"
-	    "\t[pppoesvc service] [-pppoesvc] [authproto proto]\n"
-	    "\t[authname name] [authkey key] [peerproto proto]\n"
-	    "\t[peername name] [peerkey key] [[-]peerflag flag]\n"
-	    "       ifconfig [-AaCMm] [interface] [address_family]\n"
-	    "       ifconfig -g group-name [[-]carpdemote]\n"
-	    "       ifconfig interface create\n"
-	    "       ifconfig interface destroy\n");
+	    "usage: ifconfig [-AaCm] [interface] [address_family] "
+	    "[address [dest_address]]\n"
+	    "\t\t[parameters]\n");
 	exit(value);
 }
 
