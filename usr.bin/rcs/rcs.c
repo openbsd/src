@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.19 2006/06/11 22:21:23 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.20 2006/06/11 22:25:35 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2576,7 +2576,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 
 	kwtype = 0;
 	kwstr = NULL;
-	i = 0;
 
 	/*
 	 * -z support for RCS
@@ -2627,7 +2626,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 
 			/* first following character has to be alphanumeric */
 			c++;
-			i++;
 			if (!isalpha(*c)) {
 				c = start;
 				continue;
@@ -2777,7 +2775,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 			start += strlen(expbuf);
 			memcpy(start, tbuf, tbuflen);
 			xfree(tbuf);
-			i += sizdiff;
 			c = start + strlen(expbuf);
 		}
 	}
