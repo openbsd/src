@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.53 2006/06/08 21:15:21 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.54 2006/06/11 11:13:40 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -513,10 +513,10 @@ are allowed.
 If omitted,
 .Xr ipsecctl 8
 will use the default values
-.Ar hmac-sha1 ,
-.Ar aes
+.Ar hmac-sha1
 and
-.Ar modp3072 .
+.Ar aes
+and no specific group specified.
 .It Xo
 .Ic quick auth
 .Aq Ar algorithm
@@ -563,11 +563,10 @@ and
 are allowed.
 If no quick mode transforms are specified,
 the default values
-.Ar hmac-sha2-256 ,
-.Ar aes
+.Ar hmac-sha2-256
 and
-.Ar modp3072
-are chosen.
+.Ar aes
+and no specific group are chosen.
 .It Xo
 .Ic srcid
 .Aq Ar fqdn
