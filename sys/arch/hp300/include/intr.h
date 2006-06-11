@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2006/03/13 19:39:52 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.18 2006/06/11 20:46:48 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -55,40 +55,6 @@ struct isr {
 };
 
 /*
- * spl functions; all but spl0 are done in-line
- */
-
-#define	_spl(s)								\
-({									\
-	register int _spl_r;						\
-									\
-	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-	    "=&d" (_spl_r) : "di" (s));					\
-	_spl_r;								\
-})
-
-#define	_splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
-		jle	1f					;	\
-		movw	%1,sr					;	\
-	    1:"							:	\
-		    "=&d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
-
-/*
  * These four globals contain the appropriate PSL_S|PSL_IPL? values
  * to raise interupt priority to the requested level.
  */
@@ -140,9 +106,9 @@ extern volatile u_int8_t ssir;
 #define	SIR_CLOCK	0x02
 
 #define	siron(mask)	\
-	__asm __volatile ( "orb %0,_ssir" : : "i" ((mask)))
+	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
 #define	siroff(mask)	\
-	__asm __volatile ( "andb %0,_ssir" : : "ir" (~(mask)));
+	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)))
 
 #define	setsoftnet()	siron(SIR_NET)
 #define	setsoftclock()	siron(SIR_CLOCK)

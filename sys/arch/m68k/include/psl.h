@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 2006/06/11 20:46:50 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.5 1994/10/26 07:50:50 cgd Exp $	*/
 
 /*
@@ -81,10 +81,11 @@
 void splassert_fail(int, int, const char *);
 extern int splassert_ctl;
 void splassert_check(int, const char *);
-#define splassert(__wantipl) do {			\
-	if (__predict_false(splassert_ctl > 0)) {	\
-		splassert_check(__wantipl, __func__);	\
-	}						\
+#define splassert(__wantipl)						\
+do {									\
+	if (__predict_false(splassert_ctl > 0)) {			\
+		splassert_check(__wantipl, __func__);			\
+	}								\
 } while (0)
 #else
 #define	splassert(wantipl)	do { /* nothing */ } while (0)
@@ -95,6 +96,40 @@ void splassert_check(int, const char *);
  */
 #define	PSLTOIPL(x)		(((x) >> 8) & 0xf)
 #define	IPLTOPSL(x)		((((x) & 0xf) << 8) | PSL_S)
+
+/*
+ * spl functions; all but spl0 are done in-line
+ */
+
+#define	_spl(s)								\
+({									\
+	register int _spl_r;						\
+									\
+	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
+	    "=&d" (_spl_r) : "di" (s));					\
+	_spl_r;								\
+})
+
+#define	_splraise(s)							\
+({									\
+	register int _spl_r;						\
+									\
+	__asm __volatile ("						\
+		clrl	d0					;	\
+		movw	sr,d0					;	\
+		movl	d0,%0					;	\
+		andw	#0x700,d0				;	\
+		movw	%1,d1					;	\
+		andw	#0x700,d1				;	\
+		cmpw	d0,d1					;	\
+		jle	1f					;	\
+		movw	%1,sr					;	\
+	    1:"							:	\
+		    "=&d" (_spl_r)				:	\
+		    "di" (s)					:	\
+		    "d0", "d1");					\
+	_spl_r;								\
+})
 
 #endif	/* _KERNEL */
 

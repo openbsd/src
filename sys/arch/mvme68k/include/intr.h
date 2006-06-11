@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2006/03/12 03:28:28 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2006/06/11 20:46:50 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -29,50 +29,28 @@
 #ifndef _MVME68K_INTR_H_
 #define _MVME68K_INTR_H_
 
+#include <machine/psl.h>
+
 #ifdef _KERNEL
 
 /*
- * simulated software interrupt register
+ * Simulated software interrupt register.
  */
-extern unsigned char ssir;
+extern volatile u_int8_t ssir;
 
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
+#define	SIR_NET		0x01
+#define	SIR_CLOCK	0x02
 
-#define setsoftint(x)	ssir |= (x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-u_long	allocate_sir(void (*proc)(void *), void *arg);
+#define	siron(mask)	\
+	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "ir" (mask))
+#define	siroff(mask)	\
+	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)))
 
-#define _spl(s) \
-({ \
-	register int _spl_r; \
-\
-	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-		"=&d" (_spl_r) : "di" (s)); \
-	_spl_r; \
-})
+#define	setsoftint(s)	siron(s)
+#define	setsoftnet()	siron(SIR_NET)
+#define	setsoftclock()	siron(SIR_CLOCK)
 
-#define	_splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
-		jle	1f					;	\
-		movw	%1,sr					;	\
-	    1:"							:	\
-		    "=&d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
+u_int8_t allocate_sir(void (*proc)(void *), void *arg);
 
 /*
  * Interrupt "levels".  These are a more abstract representation
@@ -108,5 +86,6 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 
 /* locore.s */
 int	spl0(void);
+
 #endif /* _KERNEL */
 #endif /* _MVME68K_INTR_H_ */

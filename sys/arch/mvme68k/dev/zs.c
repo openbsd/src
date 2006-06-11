@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.24 2006/03/15 20:04:36 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.25 2006/06/11 20:46:50 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -129,7 +129,7 @@ int   zsirq(void *);
 int   zsregs(vaddr_t, int, volatile u_char **, volatile u_char **);
 int   zspclk(void);
 
-u_long   sir_zs;
+u_int8_t sir_zs;
 void  zs_softint(void *);
 
 #define zsunit(dev)	(minor(dev) >> 1)
