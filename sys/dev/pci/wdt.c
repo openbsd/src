@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.8 2006/05/31 01:40:40 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.9 2006/06/11 10:56:39 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -53,12 +53,6 @@ struct wdt_softc {
 	/* unit number (unlikely more than one would be present though) */
 	int			unit;
 
-	/* how many processes are in WIOCSCHED */
-	unsigned		procs;
-
-	/* watchdog timeout */
-	unsigned		timeout_secs;
-
 	/* device access through bus space */
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
@@ -67,9 +61,6 @@ struct wdt_softc {
 /* externally visible functions */
 int wdtprobe(struct device *, void *, void *);
 void wdtattach(struct device *, struct device *, void *);
-int wdtopen(dev_t, int, int, struct proc *);
-int wdtclose(dev_t, int, int, struct proc *);
-int wdtioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /* static functions */
 static int wdt_is501(struct wdt_softc *wdt);
@@ -78,17 +69,8 @@ static void wdt_8254_mode(struct wdt_softc *wdt, int counter, int mode);
 static int wdt_set_timeout(void *wdt, int seconds);
 static void wdt_init_timer(struct wdt_softc *wdt);
 static void wdt_buzzer_off(struct wdt_softc *wdt);
-static int wdt_read_temperature(struct wdt_softc *wdt);
-static int wdt_read_status(struct wdt_softc *wdt);
-static void wdt_display_status(struct wdt_softc *wdt);
-static int wdt_get_state(struct wdt_softc *wdt, struct wdt_state *state);
-static int wdt_sched(struct wdt_softc *wdt, struct proc *p);
 static void wdt_timer_disable(struct wdt_softc *wdt);
-#if WDT_DISABLE_BUZZER
-static void wdt_buzzer_disable(struct wdt_softc *wdt);
-#else
 static void wdt_buzzer_enable(struct wdt_softc *wdt);
-#endif
 
 struct cfattach wdt_ca = {
 	sizeof(struct wdt_softc), wdtprobe, wdtattach
@@ -164,8 +146,6 @@ wdtattach (parent, self, aux)
 
 	/* initialize the watchdog timer structure */
 	wdt->unit  = unit;
-	wdt->procs = 0;
-	wdt->timeout_secs = 0;
 
 	/* check the feature set available */
 	if (wdt_is501(wdt))
@@ -180,11 +160,7 @@ wdtattach (parent, self, aux)
 		 */
 		wdt_buzzer_off(wdt);
 
-#ifdef WDT_DISABLE_BUZZER
-		wdt_buzzer_disable(wdt);
-#else
 		wdt_buzzer_enable(wdt);
-#endif
 	}
 
 	/* initialize the timer modes and the lower 16-bit counter */
@@ -199,51 +175,6 @@ wdtattach (parent, self, aux)
 	 * register with the watchdog framework
 	 */
 	wdog_register(wdt, wdt_set_timeout);
-
-	printf("\n");
-	wdt_display_status(wdt);
-}
-
-int
-wdtopen (dev_t dev, int flags, int fmt, struct proc *p)
-{
-	if (UNIT(dev) >= wdt_cd.cd_ndevs || wdt_cd.cd_devs[UNIT(dev)] == NULL)
-		return (ENXIO);
-
-	return(0);
-}
-
-int
-wdtclose (dev_t dev, int flags, int fmt, struct proc *p)
-{
-	return(0);
-}
-
-int
-wdtioctl (dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
-{
-	struct wdt_softc *wdt = wdt_cd.cd_devs[UNIT(dev)];
-	int error;
-
-	switch (cmd) {
-		case WIOCSCHED:
-			error = wdt_sched(wdt, p);
-			break;
-
-		case WIOCGETSTATE:
-			if (wdt->features)
-				error = wdt_get_state(wdt,
-					(struct wdt_state *)arg);
-			else
-				error = ENXIO;
-			break;
-
-		default:
-			error = ENXIO;
-			break;
-	}
-
-	return(error);
 }
 
 /*
@@ -312,7 +243,6 @@ wdt_set_timeout (void *self, int seconds)
 	wdt_timer_disable(wdt);
 
 	if (seconds == 0) {
-		wdt->timeout_secs = 0;
 		splx(s);
 		return (0);
 	} else if (seconds < 2)
@@ -328,8 +258,6 @@ wdt_set_timeout (void *self, int seconds)
 
 	/* enable the timer */
 	bus_space_write_1(wdt->iot, wdt->ioh, WDT_ENABLE_TIMER, 0);
-
-	wdt->timeout_secs = seconds;
 
 	splx(s);
 
@@ -403,132 +331,3 @@ wdt_buzzer_disable (struct wdt_softc *wdt)
 	wdt_8254_mode(wdt, WDT_8254_BUZZER, 0);
 }
 #endif
-
-/*
- *	wdt_read_temperature
- *
- *	Returns the temperature (in Fahrenheit) from the board.
- */
-static int
-wdt_read_temperature (struct wdt_softc *wdt)
-{
-	unsigned v = bus_space_read_1(wdt->iot, wdt->ioh, WDT_TEMPERATURE);
-
-	return((v * 11) / 15 + 7);
-}
-
-/*
- *	wdt_read_status
- *
- *	Returns the status register bits minus the counter refresh
- *	and IRQ generated bits.
- */
-static int
-wdt_read_status (struct wdt_softc *wdt)
-{
-	/* mask off counter refresh & IRQ generated bits */
-	return(bus_space_read_1(wdt->iot, wdt->ioh, WDT_STATUS_REG) & 0x7E);
-}
-
-/*
- *	wdt_display_status
- *
- *	Displays the current timeout, temperature, and power supply
- *	over/undervoltages to the console.
- */
-static void
-wdt_display_status (struct wdt_softc *wdt)
-{
-	if (wdt->features) {
-		int status = wdt_read_status(wdt);
-		int temp   = wdt_read_temperature(wdt);
-
-		printf("wdt%d: WDT501 timeout %d secs, temp %d F",
-			   wdt->unit, wdt->timeout_secs, temp);
-
-		/* overvoltage bit is active low */
-		if ((status & WDT_SR_PS_OVER) == 0)
-			printf(" <PS overvoltage>");
-
-		/* undervoltage bit is active low */
-		if ((status & WDT_SR_PS_UNDER) == 0)
-			printf(" <PS undervoltage>");
-	} else {
-		printf("wdt%d: WDT500 timeout %d secs",
-			   wdt->unit, wdt->timeout_secs);
-	}
-
-	printf("\n");
-}
-
-/*
- *	wdt_get_state
- *
- *	Returns the temperature and status bits.
- */
-static int
-wdt_get_state (struct wdt_softc *wdt, struct wdt_state *state)
-{
-	state->temperature	= wdt_read_temperature(wdt);
-	state->status		= wdt_read_status(wdt);
-
-	return(0);
-}
-
-/*
- *	wdt_sched
- *
- *	Put the process into an infinite loop in which:
- *
- *	  - The process sleeps, waiting for a wakeup() from the tsleep()
- *	    handler.
- *	  - When awakened, the process reloads the watchdog counter and
- *	    repeats the loop.
- *
- *	The only way the loop can be broken is if the process is interrupted
- *	via a signal.
- *
- *	The whole point of this is to cause a watchdog timeout to be
- *	generated if processes are no longer being scheduled.
- */
-static int
-wdt_sched (struct wdt_softc *wdt, struct proc *p)
-{
-	int error;
-	int s;
-
-	/*
-	 * Regardless of the device permissions, you must be
-	 * root to do this -- a process which is STOPPED
-	 * while in this function can cause a reboot to occur
-	 * if the counters aren't reloaded within wdt->timeout_secs
-	 * seconds.
-	 */
-	if ((error = suser(p, 0)))
-		return(error);
-
-	/* block out the timeout handler */
-	s = splclock();
-
-	/* indicate that we are sleeping */
-	++wdt->procs;
-
-	/* loop until the process is signaled */
-	while (1) {
-		error = tsleep(wdt, PCATCH | PSWP, "wdtsch", 0);
-
-		wdt_set_timeout(wdt, wdt->timeout_secs);
-
-		if (error != 0)
-			break;
-	}
-
-	/* remove sleeping indication */
-	--wdt->procs;
-
-	/* re-enable timeout handler */
-	splx(s);
-
-	return(error);
-}
-

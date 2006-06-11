@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.112 2005/12/31 22:40:37 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.113 2006/06/11 10:56:39 mk Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -113,12 +113,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
         (dev_type_mmap((*))) enodev, 0 }
 
-/* open, close, read, ioctl */
-#define	cdev_wdt_init(c, n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
-
 /* open, close, read */
 #define cdev_nvram_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -177,8 +171,6 @@ cdev_decl(music);
 cdev_decl(xfs_dev);
 #endif
 #include "bktr.h"
-#include "wdt.h"
-cdev_decl(wdt);
 #include "ksyms.h"
 #include "usb.h"
 #include "uhid.h"
@@ -287,7 +279,7 @@ struct cdevsw	cdevsw[] =
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
-	cdev_wdt_init(NWDT,wdt),	/* 55: WDT50x watchdog timer */
+	cdev_notdef(),			/* 55: */
 	/* The following slots are reserved for isdn4bsd. */
 	cdev_notdef(),			/* 56: i4b main device */
 	cdev_notdef(),			/* 57: i4b control device */
