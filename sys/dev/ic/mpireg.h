@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.10 2006/06/10 13:27:58 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.11 2006/06/11 23:18:24 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -950,9 +950,9 @@ struct mpi_cfg_spi_dev_pg1 {
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_OFFSET(x)	((x) << 16)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_OFFSET_MASK	(0xff<<16)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_IDP_EN		(1<<27)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH		(1<<28)
-#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_NARROW	(0<<28)
-#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE		(1<<28)
+#define MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH		(1<<29)
+#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_NARROW	(0<<29)
+#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE		(1<<29)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_AIP			(1<<31)
 
 	u_int32_t		reserved;
