@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.12 2006/05/18 15:38:57 reyk Exp $
+.\" $OpenBSD: sppp.4,v 1.13 2006/06/12 12:33:19 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -30,19 +30,19 @@
 .Os
 .Sh NAME
 .Nm sppp
-.Nd point to point protocol network layer for synchronous lines
+.Nd PPP and Link Control Protocol
 .Sh SYNOPSIS
 .Cd "pseudo-device sppp" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
-network layer implements the state machine and the Link Control
+network layer implements the state machine and Link Control
 Protocol (LCP) of the
-.Em point to point protocol (PPP)
+Point To Point Protocol (PPP)
 as described in RFC 1661.
 Note that this layer does not provide network interfaces of its own, it is
 rather intended to be layered on
-top of drivers providing a synchronous point-to-point connection that
+top of drivers providing a point-to-point connection that
 wish to run a PPP stack over it.
 The corresponding network interfaces have to be provided by these hardware
 drivers.
