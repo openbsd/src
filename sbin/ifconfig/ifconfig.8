@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.127 2006/06/11 12:48:21 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.128 2006/06/12 09:48:24 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -715,11 +715,26 @@ pseudo-device, broadcast the packets using multicast.
 .Nm ifconfig
 .Bk -words
 .Ar pppoe-interface
+.Op Cm authkey Ar key
+.Op Cm authname Ar name
+.Op Cm authproto Ar proto
+.Op Oo Fl Oc Ns Cm peerflag Ar flag
+.Op Cm peerkey Ar key
+.Op Cm peername Ar name
+.Op Cm peerproto Ar proto
 .Op Oo Fl Oc Cm pppoeac Ar access-concentrator
 .Op Cm pppoedev Ar parent-interface
 .Op Oo Fl Oc Cm pppoesvc Ar service
 .Ek
 .Pp
+.Xr pppoe 4
+uses the
+.Xr sppp 4
+"generic" SPPP framework.
+Any options not described in the section immediately following
+are described in the
+.Sx SPPP
+section, below.
 The options are as follows:
 .Bl -tag -width Ds
 .It Cm pppoeac Ar access-concentrator
@@ -759,7 +774,6 @@ Set the client key or password for the PPP authentication protocol.
 Set the client name for the PPP authentication protocol.
 .It Cm authproto Ar proto
 Set the PPP authentication protocol on the specified
-.Xr sppp 4
 interface acting as a client.
 The protocol name can be either
 .Ql chap ,
@@ -793,7 +807,6 @@ Set the authenticator key or password for the PPP authentication protocol.
 Set the authenticator name for the PPP authentication protocol.
 .It Cm peerproto Ar proto
 Set the PPP authentication protocol on the specified
-.Xr sppp 4
 interface acting as an authenticator.
 The protocol name can be either
 .Ql chap ,
