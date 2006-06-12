@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.19 2006/06/11 20:48:13 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.20 2006/06/12 17:58:24 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -89,7 +89,7 @@
 #define	SEGSHIFT	SEGSHIFT040
 #endif
 #else
-#define	SEGSHIFT	SEGSHOFT020
+#define	SEGSHIFT	SEGSHIFT020
 #endif
 #define	NBSEG		(1 << SEGSHIFT)
 #define	SEGOFSET	(NBSEG - 1)
