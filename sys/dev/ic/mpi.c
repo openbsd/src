@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.32 2006/06/12 03:46:12 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.33 2006/06/12 03:55:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -235,9 +235,9 @@ mpi_run_ppr(struct mpi_softc *sc)
 	struct mpi_cfg_spi_port_pg0	pg;
 	int				period, offset;
 
-        struct device			*dev;
+	struct device			*dev;
 	struct scsibus_softc		*ssc;
-        struct scsi_link		*link;
+	struct scsi_link		*link;
 	int				i, tries;
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT, 0, 0x0,
@@ -288,7 +288,7 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	struct mpi_cfg_hdr		hdr0, hdr1;
 	struct mpi_cfg_spi_dev_pg0	pg0;
 	struct mpi_cfg_spi_dev_pg1	pg1;
-        struct scsi_inquiry_data	inqbuf;
+	struct scsi_inquiry_data	inqbuf;
 	u_int32_t			address;
 	u_int32_t			params;
 
@@ -334,7 +334,7 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 
 	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr pg 1 req_params: 0x%08x conf: "
 	    "0x%08x\n", DEVNAME(sc), letoh32(pg1.req_params),
-	     letoh32(pg1.configuration));
+	    letoh32(pg1.configuration));
 
 	params = letoh32(pg1.req_params);
 	params &= ~(MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH |
@@ -987,20 +987,20 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 
-        case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:
-                /*
-                 * Yikes!  Tagged queue full comes through this path!
-                 *
-                 * So we'll change it to a status error and anything
-                 * that returns status should probably be a status
-                 * error as well.
-                 */
+	case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:
+		/*
+		 * Yikes!  Tagged queue full comes through this path!
+		 *
+		 * So we'll change it to a status error and anything
+		 * that returns status should probably be a status
+		 * error as well.
+		 */
 		xs->resid = xs->datalen - letoh32(sie->transfer_count);
-                if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_NO_SCSI_STATUS) {
+		if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_NO_SCSI_STATUS) {
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
-                /* FALLTHROUGH */
+		/* FALLTHROUGH */
 	case MPI_IOCSTATUS_SUCCESS:
 	case MPI_IOCSTATUS_SCSI_RECOVERED_ERROR:
 		switch (xs->status) {
@@ -1034,7 +1034,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 
 	case MPI_IOCSTATUS_SCSI_INVALID_BUS:
 	case MPI_IOCSTATUS_SCSI_INVALID_TARGETID:
-        case MPI_IOCSTATUS_SCSI_DEVICE_NOT_THERE:
+	case MPI_IOCSTATUS_SCSI_DEVICE_NOT_THERE:
 		xs->error = XS_SELTIMEOUT;
 		break;
 
@@ -1067,13 +1067,13 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 		break;
 	}
 
-	if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_VALID) {
+	if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
 		bcopy(&mcb->mcb_sense, &xs->sense, sizeof(xs->sense));
-        } else if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_FAILED) {
-                /* This will cause the scsi layer to issue a REQUEST SENSE */
-                if (xs->status == SCSI_CHECK)
-                        xs->error = XS_BUSY;
-        }
+	else if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_FAILED) {
+		/* This will cause the scsi layer to issue a REQUEST SENSE */
+		if (xs->status == SCSI_CHECK)
+			xs->error = XS_BUSY;
+	}
 
 	DNPRINTF(MPI_D_CMD, "%s:  xs error: 0x%02x len: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
@@ -1214,9 +1214,9 @@ mpi_read(struct mpi_softc *sc, bus_size_t r)
 {
 	u_int32_t			rv;
 
-        bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
 	    BUS_SPACE_BARRIER_READ);
-        rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
 	DNPRINTF(MPI_D_RW, "%s: mpi_read %#x %#x\n", DEVNAME(sc), r, rv);
 
@@ -1228,9 +1228,9 @@ mpi_write(struct mpi_softc *sc, bus_size_t r, u_int32_t v)
 {
 	DNPRINTF(MPI_D_RW, "%s: mpi_write %#x %#x\n", DEVNAME(sc), r, v);
 
-        bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
-        bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
-            BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 int
@@ -1848,8 +1848,8 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
     u_int32_t address, struct mpi_cfg_hdr *hdr)
 {
 	struct mpi_ccb				*ccb;
-	struct mpi_msg_config_request           *cq;
-	struct mpi_msg_config_reply             *cp;
+	struct mpi_msg_config_request		*cq;
+	struct mpi_msg_config_reply		*cp;
 	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header type: %#x number: %x "

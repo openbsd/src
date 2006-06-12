@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.12 2006/06/12 03:46:12 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.13 2006/06/12 03:55:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -839,7 +839,7 @@ struct mpi_cfg_spi_port_pg0 {
 #define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_WIDE	(1<<29)
 #define MPI_CFG_SPI_PORT_0_CAPABILITIES_AIP		(1<<31)
 
-        u_int32_t               physical_interface;
+	u_int32_t		physical_interface;
 #define MPI_CFG_SPI_PORT_0_PHYS_SIGNAL			(0x3<<0)
 #define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_HVD		(0x1<<0)
 #define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_SE		(0x2<<0)
