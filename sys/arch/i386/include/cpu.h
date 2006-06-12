@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.78 2006/05/29 09:54:20 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.79 2006/06/12 13:18:18 dim Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -312,6 +312,7 @@ extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
 #if defined(I586_CPU) || defined(I686_CPU)
 extern int pentium_mhz;
+extern int bus_clock;
 #endif
 
 #ifdef I586_CPU

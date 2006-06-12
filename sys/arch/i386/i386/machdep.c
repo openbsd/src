@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.358 2006/06/12 07:32:53 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.359 2006/06/12 13:18:18 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -254,6 +254,7 @@ struct vm_map *phys_map = NULL;
 int kbd_reset;
 int p4_model;
 int p3_early;
+int bus_clock;
 int setperf_prio = 0;		/* for concurrent handlers */
 
 void (*delay_func)(int) = i8254_delay;
@@ -346,6 +347,9 @@ void	tm86_cpu_setup(struct cpu_info *);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
 char *	tm86_cpu_name(int);
+void	cyrix3_get_bus_clock(struct cpu_info *);
+void	p4_get_bus_clock(struct cpu_info *);
+void	p3_get_bus_clock(struct cpu_info *);
 void	p4_update_cpuspeed(void);
 void	p3_update_cpuspeed(void);
 int	pentium_cpuspeed(int *);
@@ -765,8 +769,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium III",
 				"Pentium M",
 				"Pentium III Xeon",
-				"Pentium III", 0, 0,
-				0, 0,
+				"Pentium III", 0,
+				"Pentium M",
+				"Core Duo/Solo", 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
 			intel686_cpu_setup
@@ -1177,6 +1182,8 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 
 	pagezero = i686_pagezero;
 
+	cyrix3_get_bus_clock(ci);
+
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(ci->ci_dev.dv_xname, CPUVENDOR_VIA);
@@ -1492,6 +1499,10 @@ intel686_cpu_setup(struct cpu_info *ci)
 	int step = ci->ci_signature & 15;
 	u_quad_t msr119;
 
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	p3_get_bus_clock(ci);
+#endif
+
 	intel686_common_cpu_setup(ci);
 
 	/*
@@ -1524,6 +1535,10 @@ intel686_cpu_setup(struct cpu_info *ci)
 void
 intel686_p4_cpu_setup(struct cpu_info *ci)
 {
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	p4_get_bus_clock(ci);
+#endif
+
 	intel686_common_cpu_setup(ci);
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
@@ -1963,43 +1978,188 @@ tm86_cpu_name(int model)
 #ifndef SMALL_KERNEL
 #ifdef I686_CPU
 void
-p4_update_cpuspeed(void)
+cyrix3_get_bus_clock(struct cpu_info *ci)
 {
 	u_int64_t msr;
-	int bus, mult, freq;
+	int bus;
 
+	msr = rdmsr(MSR_EBL_CR_POWERON);
+	bus = (msr >> 18) & 0x3;
+	switch (bus) {
+	case 0:
+		bus_clock = 10000;
+		break;
+	case 1:
+		bus_clock = 13333;
+		break;
+	case 2:
+		bus_clock = 20000;
+		break;
+	case 3:
+		bus_clock = 16666;
+		break;
+	}
+}
+
+void
+p4_get_bus_clock(struct cpu_info *ci)
+{
+	u_int64_t msr;
+	int model, bus;
+
+	model = (ci->ci_signature >> 4) & 15;
 	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
-	if (p4_model < 2) {
+	if (model < 2) {
 		bus = (msr >> 21) & 0x7;
 		switch (bus) {
 		case 0:
-			bus = 100;
+			bus_clock = 10000;
 			break;
 		case 1:
-			bus = 133;
+			bus_clock = 13333;
+			break;
+		default:
+			printf("%s: unknown Pentium 4 (model %d) "
+			    "EBC_FREQUENCY_ID value %d\n",
+			    ci->ci_dev.dv_xname, model, bus);
 			break;
 		}
 	} else {
 		bus = (msr >> 16) & 0x7;
 		switch (bus) {
 		case 0:
-			bus = 100;
+			bus_clock = (model == 2) ? 10000 : 26666;
 			break;
 		case 1:
-			bus = 133;
+			bus_clock = 13333;
 			break;
 		case 2:
-			bus = 200;
+			bus_clock = 20000;
+			break;
+		case 3:
+			bus_clock = 16666;
+			break;
+		default:
+			printf("%s: unknown Pentium 4 (model %d) "
+			    "EBC_FREQUENCY_ID value %d\n",
+			    ci->ci_dev.dv_xname, model, bus);
+			break;
+		}
+	}
+}
+
+void
+p3_get_bus_clock(struct cpu_info *ci)
+{
+	u_int64_t msr;
+	int model, bus;
+
+	model = (ci->ci_signature >> 4) & 15;
+	switch (model) {
+	case 0x9: /* Pentium M (130 nm, Banias) */
+		bus_clock = 10000;
+		break;
+	case 0xd: /* Pentium M (90 nm, Dothan) */
+		msr = rdmsr(MSR_FSB_FREQ);
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 0:
+			bus_clock = 10000;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		default:
+			printf("%s: unknown Pentium M FSB_FREQ value %d\n",
+			    ci->ci_dev.dv_xname, bus);
+			break;
+		}
+		break;
+	case 0xe: /* Core Duo/Solo */
+		msr = rdmsr(MSR_FSB_FREQ);
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 5:
+			bus_clock = 10000;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		case 3:
+			bus_clock = 16666;
+			break;
+		default:
+			printf("%s: unknown Core Duo/Solo FSB_FREQ value %d\n",
+			    ci->ci_dev.dv_xname, bus);
+			break;
+		}
+		break;
+	case 0x3: /* Pentium II, model 3 */
+	case 0x5: /* Pentium II, II Xeon, Celeron, model 5 */
+	case 0x6: /* Celeron, model 6 */
+	case 0x7: /* Pentium III, III Xeon, model 7 */
+	case 0x8: /* Pentium III, III Xeon, Celeron, model 8 */
+	case 0xa: /* Pentium III Xeon, model A */
+	case 0xb: /* Pentium III, model B */
+		msr = rdmsr(MSR_EBL_CR_POWERON);
+		bus = (msr >> 18) & 0x3;
+		switch (bus) {
+		case 0:
+			bus_clock = 6666;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		case 2:
+			bus_clock = 10000;
+			break;
+		default:
+			printf("%s: unknown i686 EBL_CR_POWERON value %d\n",
+			    ci->ci_dev.dv_xname, bus);
+			break;
+		}
+	default: 
+		printf("%s: unknown i686 model %d, can't get bus clock\n",
+		    ci->ci_dev.dv_xname, model);
+		break;
+		
+	}
+}
+
+void
+p4_update_cpuspeed(void)
+{
+	u_int64_t msr;
+	int bus, mult;
+
+	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
+	if (p4_model < 2) {
+		bus = (msr >> 21) & 0x7;
+		switch (bus) {
+		case 0:
+			bus = 10000;
+			break;
+		case 1:
+			bus = 13333;
+			break;
+		}
+	} else {
+		bus = (msr >> 16) & 0x7;
+		switch (bus) {
+		case 0:
+			bus = 10000;
+			break;
+		case 1:
+			bus = 13333;
+			break;
+		case 2:
+			bus = 20000;
 			break;
 		}
 	}
 	mult = ((msr >> 24) & 0xff);
-	freq = bus * mult;
-	/* 133MHz actually means 133.(3)MHz */
-	if (bus == 133)
-		freq += mult / 3;
 
-	pentium_mhz = freq;
+	pentium_mhz = bus * mult / 100;
 }
 
 void
@@ -2014,13 +2174,13 @@ p3_update_cpuspeed(void)
 	bus = (msr >> 18) & 0x3;
 	switch (bus) {
 	case 0:
-		bus = 66;
+		bus = 6666;
 		break;
 	case 1:
-		bus = 133;
+		bus = 13333;
 		break;
 	case 2:
-		bus = 100;
+		bus = 10000;
 		break;
 	}
 
@@ -2029,7 +2189,7 @@ p3_update_cpuspeed(void)
 	if (!p3_early)
 		mult += ((msr >> 27) & 0x1) * 40;
 
-	pentium_mhz = (bus * mult) / 10;
+	pentium_mhz = (bus * mult) / 1000;
 }
 #endif	/* I686_CPU */
 
