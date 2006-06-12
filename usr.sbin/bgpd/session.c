@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.250 2006/06/10 16:32:38 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.251 2006/06/12 12:45:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1072,7 +1072,7 @@ session_setup_socket(struct peer *p)
 	int	nodelay = 1;
 	int	bsize;
 
-	if (p->conf.ebgp && p->sa_remote.ss_family == AF_INET)
+	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET)
 		/* set TTL to foreign router's distance - 1=direct n=multihop */
 		if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
 		    sizeof(ttl)) == -1) {
@@ -1081,7 +1081,7 @@ session_setup_socket(struct peer *p)
 			return (-1);
 		}
 
-	if (p->conf.ebgp && p->sa_remote.ss_family == AF_INET6)
+	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET6)
 		/* set hoplimit to foreign router's distance */
 		if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ttl,
 		    sizeof(ttl)) == -1) {
@@ -1099,7 +1099,7 @@ session_setup_socket(struct peer *p)
 	}
 
 	/* set precedence, see rfc1771 appendix 5 */
-	if (p->sa_remote.ss_family == AF_INET &&
+	if (p->conf.remote_addr.af == AF_INET &&
 	    setsockopt(p->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
 		log_peer_warn(&p->conf,
 		    "session_setup_socket setsockopt TOS");
