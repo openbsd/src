@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.20 2005/08/01 05:31:49 djm Exp $
+.\"	$OpenBSD: random.9,v 1.21 2006/06/12 09:45:36 mbalmer Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -61,7 +61,7 @@ and
 .Fn add_audio_randomness
 routines are used to
 supply data for the random data source device for further processing.
-The processing involves calculating inter-event time delta and measuring
+The processing involves calculating inter-event timedelta and measuring
 entropy contained in the resulting delta-T; the argument data supplied
 is just mixed into the pool and does not increase the entropy counter.
 .Pp
