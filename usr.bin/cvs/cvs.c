@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.102 2006/06/02 19:10:23 david Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.103 2006/06/12 13:56:00 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -228,7 +228,7 @@ main(int argc, char **argv)
 
 	i = snprintf(fpath, sizeof(fpath), "%s/%s", current_cvsroot->cr_dir,
 	    CVS_PATH_ROOT);
-	if (stat(fpath, &st) == -1) {
+	if (stat(fpath, &st) == -1 && cvs_cmdop != CVS_OP_INIT) {
 		if (errno == ENOENT)
 			fatal("'%s' does not seem to be a valid repository",
 			    current_cvsroot->cr_dir);
@@ -241,7 +241,8 @@ main(int argc, char **argv)
 			    current_cvsroot->cr_dir);
 	}
 
-	cvs_parse_configfile();
+	if (cvs_cmdop != CVS_OP_INIT)
+		cvs_parse_configfile();
 
 	umask(cvs_umask);
 

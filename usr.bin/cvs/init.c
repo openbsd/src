@@ -1,6 +1,7 @@
-/*	$OpenBSD: init.c,v 1.22 2006/02/10 10:15:48 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.23 2006/06/12 13:56:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+ * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,37 +28,43 @@
 #include "includes.h"
 
 #include "cvs.h"
+#include "init.h"
 #include "log.h"
 #include "proto.h"
 
+int	cvs_init(int, char **);
+void	cvs_init_local(void);
 
-#define CFT_FILE	1
-#define CFT_DIR		2
-
+static void init_mkdir(const char *, mode_t);
+static void init_mkfile(char *, const char *const *);
 
 struct cvsroot_file {
-	char	*cf_path;	/* path relative to CVS root directory */
-	u_int	 cf_type;
-	mode_t	 cf_mode;
-} cvsroot_files[] = {
-	{ CVS_PATH_ROOT,   CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
-	{ CVS_PATH_EMPTYDIR, CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
-	{ CVS_PATH_COMMITINFO,  CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_CONFIG,      CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_CVSIGNORE,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_CVSWRAPPERS, CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_EDITINFO,    CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_HISTORY,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_LOGINFO,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_MODULES,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_NOTIFY_R,    CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_RCSINFO,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_TAGINFO,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_VERIFYMSG,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
+	char			*cf_path;
+	const char *const	*cf_content;
 };
 
-static int	cvs_init_pre_exec(struct cvsroot *);
-static void	cvs_init_create_files(struct cvsroot *);
+static const struct cvsroot_file cvsroot_files[] = {
+	{ CVS_PATH_CHECKOUTLIST,	NULL			},
+	{ CVS_PATH_COMMITINFO,		NULL			},
+	{ CVS_PATH_CONFIG,		config_contents		},
+	{ CVS_PATH_CVSWRAPPERS,		NULL			},
+	{ CVS_PATH_EDITINFO,		NULL			},
+	{ CVS_PATH_HISTORY,		NULL			},
+	{ CVS_PATH_LOGINFO,		NULL			},
+	{ CVS_PATH_MODULES,		NULL			},
+	{ CVS_PATH_NOTIFY_R,		NULL			},
+	{ CVS_PATH_RCSINFO,		NULL			},
+	{ CVS_PATH_TAGINFO,		NULL			},
+	{ CVS_PATH_VALTAGS,		NULL			},
+	{ CVS_PATH_VERIFYMSG,		NULL			}
+};
+
+static const char *cvsroot_dirs[2] = {
+	CVS_PATH_ROOT, CVS_PATH_EMPTYDIR
+};
+
+#define INIT_NFILES	(sizeof(cvsroot_files)/sizeof(cvsroot_files[0]))
+#define INIT_NDIRS	(sizeof(cvsroot_dirs)/sizeof(cvsroot_dirs[0]))
 
 struct cvs_cmd cvs_cmd_init = {
 	CVS_OP_INIT, CVS_REQ_INIT, "init",
@@ -66,89 +73,137 @@ struct cvs_cmd cvs_cmd_init = {
 	"",
 	"",
 	NULL,
-	0,
-	NULL,
-	cvs_init_pre_exec,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0
+	cvs_init
 };
 
-/*
- * cvs_init_pre_exec()
- *
- * Local/remote handler for the "cvs init" command.
- * Returns 0 on success, -1 on failure.
- */
-static int
-cvs_init_pre_exec(struct cvsroot *root)
+int
+cvs_init(int argc, char **argv)
 {
-	if (root->cr_method == CVS_METHOD_LOCAL)
-		cvs_init_create_files(root);
+	if (argc > 1)
+		fatal("%s", cvs_cmd_init.cmd_synopsis);
+
+	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL)
+		cvs_init_local();
 
 	return (0);
 }
 
-/*
- * cvs_init_create_files
- *
- * Create all required files for the "cvs init" command.
- * Used by the local handlers.
- * Returns 0 on success, -1 on failure.
- *
- */
-static void
-cvs_init_create_files(struct cvsroot *root)
+void
+cvs_init_local(void)
 {
-	size_t len;
-	int fd;
 	u_int i;
-	char path[MAXPATHLEN];
-	RCSFILE *rfp;
-	struct stat st;
+	char *path;
+
+	cvs_log(LP_TRACE, "cvs_init_local()");
 
 	/* Create repository root directory if it does not already exist */
-	if (mkdir(root->cr_dir, 0777) == -1) {
-		if (!(errno == EEXIST || (errno == EACCES &&
-		    (stat(root->cr_dir, &st) == 0) && S_ISDIR(st.st_mode)))) {
-			fatal("cvs_init_create_files: mkdir: %s: %s",
-			    root->cr_dir, strerror(errno));
+	init_mkdir(current_cvsroot->cr_dir, 0777);
+
+	path = xmalloc(MAXPATHLEN);
+
+	for (i = 0; i < INIT_NDIRS; i++) {
+		if (cvs_path_cat(current_cvsroot->cr_dir,
+		    cvsroot_dirs[i], path, MAXPATHLEN) >= MAXPATHLEN)
+			fatal("cvs_init_local: truncation");
+
+		init_mkdir(path, 0777);
+	}
+
+	for (i = 0; i < INIT_NFILES; i++) {
+		if (cvs_path_cat(current_cvsroot->cr_dir,
+		    cvsroot_files[i].cf_path, path, MAXPATHLEN) >= MAXPATHLEN)
+			fatal("cvs_init_local: truncation");
+
+		init_mkfile(path, cvsroot_files[i].cf_content);
+	}
+
+	xfree(path);
+}
+
+static void
+init_mkdir(const char *path, mode_t mode)
+{
+	struct stat st;
+
+	if (mkdir(path, mode) == -1) {
+		if (!(errno == EEXIST ||
+		    (errno == EACCES && (stat(path, &st) == 0) &&
+		    S_ISDIR(st.st_mode)))) {
+			fatal("init_mkdir: mkdir: `%s': %s",
+			    path, strerror(errno));
+		}
+	}
+}
+
+static void
+init_mkfile(char *path, const char *const *content)
+{
+	BUF *b;
+	size_t len;
+	int fd, openflags, rcsflags;
+	char *d, *rpath;
+	const char *const *p;
+	RCSFILE *file;
+
+	len = 0;
+	fd = -1;
+	d = NULL;
+	openflags = O_WRONLY|O_CREAT|O_EXCL;
+	rcsflags = RCS_RDWR|RCS_CREATE;
+
+	if ((fd = open(path, openflags, 0444)) == -1)
+		fatal("init_mkfile: open: `%s': %s", path, strerror(errno));
+
+	if (content != NULL) {
+		for (p = content; *p != NULL; ++p) {
+			len = strlen(*p);
+			b = cvs_buf_alloc(len, BUF_AUTOEXT);
+
+			if (cvs_buf_append(b, *p, strlen(*p)) < 0)
+				fatal("init_mkfile: cvs_buf_append");
+
+			if (cvs_buf_write_fd(b, fd) < 0)
+				fatal("init_mkfile: cvs_buf_write_fd");
+
+			cvs_buf_free(b);
 		}
 	}
 
-	/* Create the repository administrative files */
-	for (i = 0; i < sizeof(cvsroot_files)/sizeof(cvsroot_files[i]); i++) {
-		len = cvs_path_cat(root->cr_dir, cvsroot_files[i].cf_path,
-		    path, sizeof(path));
-		if (len >= sizeof(path))
-			fatal("cvs_init_create_files: path truncation");
-
-		if (cvsroot_files[i].cf_type == CFT_DIR) {
-			if (mkdir(path, cvsroot_files[i].cf_mode) == -1) {
-				if (!(errno == EEXIST || (errno == EACCES &&
-				    (stat(path, &st) == 0) &&
-				    S_ISDIR(st.st_mode)))) {
-					fatal("cvs_init_create_files: mkdir: "
-					    "%s: %s", path, strerror(errno));
-				}
-			}
-		} else if (cvsroot_files[i].cf_type == CFT_FILE) {
-			fd = open(path, O_WRONLY|O_CREAT|O_EXCL,
-			    cvsroot_files[i].cf_mode);
-			if (fd == -1)
-				fatal("cvs_init_create_file: open failed: %s",
-				    strerror(errno));
-
-			(void)close(fd);
-
-			strlcat(path, RCS_FILE_EXT, sizeof(path));
-			rfp = rcs_open(path, RCS_WRITE|RCS_CREATE, 0640);
-			if (rfp == NULL)
-				return;
-
-			rcs_close(rfp);
-		}
+	/*
+	 * Make sure history and val-tags files are world-writable.
+	 * Every user should be able to write to them.
+	 */
+	if (strcmp(strrchr(CVS_PATH_HISTORY, '/'), strrchr(path, '/')) == 0 ||
+	    strcmp(strrchr(CVS_PATH_VALTAGS, '/'), strrchr(path, '/')) == 0) {
+		(void)fchmod(fd, 0666);
+		goto out;
 	}
+
+	rpath = xstrdup(path);
+	if (strlcat(rpath, RCS_FILE_EXT, MAXPATHLEN) >= MAXPATHLEN)
+		fatal("init_mkfile: truncation");
+
+	if ((file = rcs_open(rpath, fd, rcsflags, 0444)) == NULL)
+		fatal("failed to create RCS file for `%s'", path);
+
+	if ((b = cvs_buf_load(path, BUF_AUTOEXT)) == NULL)
+		fatal("init_mkfile: failed to load %s", path);
+
+	cvs_buf_putc(b, '\0');
+	d = cvs_buf_release(b);
+
+	if (rcs_rev_add(file, RCS_HEAD_REV, "initial checkin", -1, NULL) == -1)
+		fatal("init_mkfile: failed to add new revision");
+
+	if (rcs_deltatext_set(file, file->rf_head, d) == -1)
+		fatal("init_mkfile: failed to set delta");
+
+	file->rf_flags &= ~RCS_SYNCED;
+	rcs_close(file);
+	xfree(rpath);
+out:
+	(void)close(fd);
+
+	if (d != NULL)
+		xfree(d);
 }

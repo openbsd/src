@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.111 2006/06/03 19:07:13 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.112 2006/06/12 13:56:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -108,6 +108,7 @@
 #define CVS_PATH_DEVNULL	"/dev/null"
 #define CVS_PATH_ROOT		"CVSROOT"
 #define CVS_PATH_EMPTYDIR	CVS_PATH_ROOT "/Emptydir"
+#define CVS_PATH_CHECKOUTLIST	CVS_PATH_ROOT "/checkoutlist"
 #define CVS_PATH_COMMITINFO	CVS_PATH_ROOT "/commitinfo"
 #define CVS_PATH_CONFIG		CVS_PATH_ROOT "/config"
 #define CVS_PATH_CVSIGNORE	CVS_PATH_ROOT "/cvsignore"
@@ -119,6 +120,7 @@
 #define CVS_PATH_NOTIFY_R	CVS_PATH_ROOT "/notify"
 #define CVS_PATH_RCSINFO	CVS_PATH_ROOT "/rcsinfo"
 #define CVS_PATH_TAGINFO	CVS_PATH_ROOT "/taginfo"
+#define CVS_PATH_VALTAGS	CVS_PATH_ROOT "/val-tags"
 #define CVS_PATH_VERIFYMSG	CVS_PATH_ROOT "/verifymsg"
 
 /* client-side paths */
