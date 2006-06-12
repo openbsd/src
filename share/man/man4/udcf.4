@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.10 2006/06/04 09:52:40 mbalmer Exp $
+.\" $OpenBSD: udcf.4,v 1.11 2006/06/12 09:44:52 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -28,7 +28,7 @@ The
 driver provides support for the Gude ADS Expert mouseCLOCK, a receiver for the
 German DCF77 and the Swiss HBG time signal stations.
 .Nm
-implements a time delta sensor and the delta (in nanoseconds) between the
+implements a timedelta sensor and the delta (in nanoseconds) between the
 received time information and the local time can be accessed through the
 .Xr sysctl 8
 interface.
@@ -47,22 +47,22 @@ Swiss HBG time signal station
 (75 kHz longwave transmitter located in Prangins near Geneva)
 .El
 .Sh SENSOR STATES
-The quality of the time delta is reported as the sensor status:
+The quality of the timedelta is reported as the sensor status:
 .Bl -tag -width "CRITICALXX"
 .It OK
 The time information is valid and the receiver is fully synchronized to the
 time signal station.
-The time delta is safe to use for applications like
+The timedelta is safe to use for applications like
 .Xr ntpd 8 .
 .It WARN
 The time information is valid, but there has been a reception or parity error.
 The sensor value is adjusted using the local clock for at most 15 minutes.
-The time delta should be used with care.
+The timedelta should be used with care.
 .It CRITICAL
 No valid time information has been received for more than 15 minutes.
 This is an indication that hardware should be checked
 to see if it is still functional.
-The time delta will eventually degrade to a lie
+The timedelta will eventually degrade to a lie
 as all computer internal clocks have a drift.
 .El
 .Sh SEE ALSO
