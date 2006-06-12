@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.128 2006/06/12 09:48:24 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.129 2006/06/12 10:44:54 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -428,17 +428,18 @@ described in the following sections:
 .It
 .Xr carp 4
 .It
+IEEE 802.11 (wireless devices)
+.It
+.Xr inet6 4
+.It
 interface groups
-.It
-IEEE 802.11 (wireless) devices
-.It
-.Xr ip6 4
 .It
 .Xr pfsync 4
 .It
 .Xr pppoe 4
 .It
 .Xr sppp 4
+(PPP Link Control Protocol)
 .It
 .Xr trunk 4
 .It
@@ -520,28 +521,8 @@ The formula is
 / 256).
 If the master does not advertise within three times this interval, this host
 will begin advertising as master.
-.\" GROUPS
-.Sh GROUPS
-.Nm ifconfig
-.Fl g
-.Ar group-name
-.Op Oo Fl Oc Ns Cm carpdemote
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl g Ar group-name
-Specify the group.
-.It Cm carpdemote
-Increase
-.Xr carp 4
-demote count for given interface group.
-.It Fl carpdemote
-Decrease
-.Xr carp 4
-demote count for given interface group.
-.El
 .\" IEEE 802.11
-.Sh IEEE 802.11 (wireless devices)
+.Sh IEEE 802.11 (WIRELESS DEVICES)
 .Nm ifconfig
 .Ar wireless-interface
 .Op Fl M
@@ -666,6 +647,26 @@ Clear the IPv6 tentative address bit.
 .It Cm vltime Ar n
 Set valid lifetime for the address.
 .El
+.\" INTERFACE GROUPS
+.Sh INTERFACE GROUPS
+.Nm ifconfig
+.Fl g
+.Ar group-name
+.Op Oo Fl Oc Ns Cm carpdemote
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl g Ar group-name
+Specify the group.
+.It Cm carpdemote
+Increase
+.Xr carp 4
+demote count for given interface group.
+.It Fl carpdemote
+Decrease
+.Xr carp 4
+demote count for given interface group.
+.El
 .\" PFSYNC
 .Sh PFSYNC
 .Nm ifconfig
@@ -755,7 +756,7 @@ interface.
 Clear a previously set service name.
 .El
 .\" SPPP
-.Sh SPPP
+.Sh SPPP (PPP LINK CONTROL PROTOCOL)
 .Nm
 .Ar sppp-interface
 .Op Cm authkey Ar key
