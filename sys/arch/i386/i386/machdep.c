@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.357 2006/05/31 10:34:54 todd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.358 2006/06/12 07:32:53 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -586,8 +586,7 @@ allocsys(v)
 }
 
 void
-setup_buffers(maxaddr)
-	vaddr_t *maxaddr;
+setup_buffers(vaddr_t *maxaddr)
 {
 	vsize_t size;
 	vaddr_t addr;
@@ -1943,8 +1942,7 @@ identifycpu(struct cpu_info *ci)
 }
 
 char *
-tm86_cpu_name(model)
-	int model;
+tm86_cpu_name(int model)
 {
 	u_int32_t regs[4];
 	char *name = NULL;
@@ -2049,12 +2047,8 @@ pentium_cpuspeed(int *freq)
 void ibcs2_sendsig(sig_t, int, int, u_long, int, union sigval);
 
 void
-ibcs2_sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+ibcs2_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	extern int bsd_to_ibcs2_sig[];
 
@@ -2073,12 +2067,8 @@ ibcs2_sendsig(catcher, sig, mask, code, type, val)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 #ifdef I686_CPU
 	extern char sigcode, sigcode_xmm;
@@ -2200,10 +2190,7 @@ sendsig(catcher, sig, mask, code, type, val)
  * a machine fault.
  */
 int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -2276,8 +2263,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(howto)
-	int howto;
+boot(int howto)
 {
 	if (cold) {
 		/*
@@ -2552,8 +2538,7 @@ dumpsys()
  * for HZ=100.
  */
 void
-i8254_microtime(tvp)
-	register struct timeval *tvp;
+i8254_microtime(struct timeval *tvp)
 {
 	int s = splhigh();
 
@@ -2571,11 +2556,8 @@ i8254_microtime(tvp)
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
+setregs(struct proc *p, struct exec_package *pack, u_long stack,
+    register_t *retval)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
@@ -2648,10 +2630,8 @@ struct gate_descriptor *idt = idt_region;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, args, type, dpl, seg)
-	struct gate_descriptor *gd;
-	void *func;
-	int args, type, dpl, seg;
+setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
+    int seg)
 {
 
 	gd->gd_looffset = (int)func;
@@ -2665,8 +2645,7 @@ setgate(gd, func, args, type, dpl, seg)
 }
 
 void
-unsetgate(gd)
-	struct gate_descriptor *gd;
+unsetgate(struct gate_descriptor *gd)
 {
 	gd->gd_p = 0;
 	gd->gd_hioffset = 0;
@@ -2679,10 +2658,7 @@ unsetgate(gd)
 }
 
 void
-setregion(rd, base, limit)
-	struct region_descriptor *rd;
-	void *base;
-	size_t limit;
+setregion(struct region_descriptor *rd, void *base, size_t limit)
 {
 
 	rd->rd_limit = (int)limit;
@@ -2690,11 +2666,8 @@ setregion(rd, base, limit)
 }
 
 void
-setsegment(sd, base, limit, type, dpl, def32, gran)
-	struct segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, def32, gran;
+setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
+    int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -3087,9 +3060,7 @@ init386(paddr_t first_avail)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	return ENOEXEC;
 }
@@ -3213,14 +3184,8 @@ idt_vec_free(int vec)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
@@ -3304,12 +3269,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int
-bus_space_map(t, bpa, size, cacheable, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	int error;
 	struct extent *ex;
@@ -3370,12 +3331,8 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-_bus_space_map(t, bpa, size, cacheable, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
+    int cacheable, bus_space_handle_t *bshp)
 {
 	/*
 	 * For I/O space, that's all she wrote.
@@ -3393,14 +3350,9 @@ _bus_space_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+    int cacheable, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	struct extent *ex;
 	u_long bpa;
@@ -3466,11 +3418,8 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 }
 
 int
-bus_mem_add_mapping(bpa, size, cacheable, bshp)
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	u_long pa, endpa;
 	u_int32_t bits;
@@ -3527,10 +3476,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 }
 
 void
-bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	struct extent *ex;
 	u_long va, endva;
@@ -3616,10 +3562,7 @@ ok:
 }
 
 void
-bus_space_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* bus_space_unmap() does all that we need to do. */
@@ -3627,11 +3570,8 @@ bus_space_free(t, bsh, size)
 }
 
 int
-bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 	*nbshp = bsh + offset;
 	return (0);
@@ -3642,14 +3582,8 @@ bus_space_subregion(t, bsh, offset, size, nbshp)
  * DMA map creation functions.
  */
 int
-_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct i386_bus_dmamap *map;
 	void *mapstore;
@@ -3749,9 +3683,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * DMA map destruction functions.
  */
 void
-_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	free(map, M_DEVBUF);
@@ -3762,13 +3694,8 @@ _bus_dmamap_destroy(t, map)
  * be called by bus-specific DMA map load functions.
  */
 int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	paddr_t lastaddr;
 	int seg, error;
@@ -3796,11 +3723,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf(t, map, m0, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	paddr_t lastaddr;
 	int seg, error, first;
@@ -3841,11 +3765,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
  * Like _bus_dmamap_load(), but for uios.
  */
 int
-_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	paddr_t lastaddr;
 	int seg, i, error, first;
@@ -3903,13 +3824,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t size, int flags)
 {
 	if (nsegs > map->_dm_segcnt || size > map->_dm_size)
 		return (EINVAL);
@@ -3940,9 +3856,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * bus-specific DMA map unload functions.
  */
 void
-_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	/*
@@ -3959,12 +3873,8 @@ _bus_dmamap_unload(t, map)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(t, map, offset, size, op)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t size;
-	int op;
+_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t size, int op)
 {
 #ifndef SMALL_KERNEL
 	bus_dma_segment_t *sg;
@@ -4007,13 +3917,9 @@ _bus_dmamap_sync(t, map, offset, size, op)
  * by bus-specific DMA memory allocation functions.
  */
 int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
@@ -4025,10 +3931,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  * bus-specific DMA memory free functions.
  */
 void
-_bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct vm_page *m;
 	bus_addr_t addr;
@@ -4056,13 +3959,8 @@ _bus_dmamem_free(t, segs, nsegs)
  * bus-specific DMA memory map functions.
  */
 int
-_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -4096,10 +3994,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -4116,12 +4011,8 @@ _bus_dmamem_unmap(t, kva, size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
+    int prot, int flags)
 {
 	int i;
 
@@ -4157,16 +4048,9 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-	paddr_t *lastaddrp;
-	int *segp;
-	int first;
+_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp, int *segp,
+    int first)
 {
 	bus_size_t sgsize;
 	paddr_t curaddr, lastaddr, oaddr, baddr, bmask;
@@ -4272,16 +4156,9 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-	paddr_t low;
-	paddr_t high;
+_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags, paddr_t low, paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
@@ -4412,9 +4289,7 @@ i386_softintunlock(void)
  * We hand-code this to ensure that it's atomic.
  */
 void
-softintr(sir, vec)
-	int sir;
-	int vec;
+softintr(int sir, int vec)
 {
 	__asm __volatile("orl %1, %0" : "=m" (ipending) : "ir" (sir));
 #ifdef MULTIPROCESSOR
@@ -4427,8 +4302,7 @@ softintr(sir, vec)
  * Raise current interrupt priority level, and return the old one.
  */
 int
-splraise(ncpl)
-	int ncpl;
+splraise(int ncpl)
 {
 	int ocpl;
 
@@ -4441,8 +4315,7 @@ splraise(ncpl)
  * interrupts are pending, call Xspllower() to process them.
  */
 void
-splx(ncpl)
-	int ncpl;
+splx(int ncpl)
 {
 	_SPLX(ncpl);
 }
@@ -4452,12 +4325,10 @@ splx(ncpl)
  * benefit of some splsoftclock() callers.
  */
 int
-spllower(ncpl)
-	int ncpl;
+spllower(int ncpl)
 {
 	int ocpl = lapic_tpr;
 
 	splx(ncpl);
 	return (ocpl);
 }
-
