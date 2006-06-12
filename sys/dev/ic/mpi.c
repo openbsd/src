@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.34 2006/06/12 12:31:58 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.35 2006/06/12 14:06:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -517,7 +517,8 @@ mpi_intr(void *arg)
 			reply = NULL;
 		}
 
-		DNPRINTF(MPI_D_INTR, "%s: mpi_intr id: %d\n", DEVNAME(sc), id);
+		DNPRINTF(MPI_D_INTR, "%s: mpi_intr id: %d reply: %p\n",
+		    DEVNAME(sc), id, reply);
 
 		ccb = &sc->sc_ccbs[id];
 
@@ -1139,11 +1140,11 @@ mpi_load_xs(struct mpi_ccb *ccb)
 			    DEVNAME(sc), sge->sg_hdr,
 			    sge->sg_hi_addr, sge->sg_lo_addr);
 
-			if ((dmap->dm_nsegs - i) > sc->sc_maxchdepth) {
-				nce = &nsge[sc->sc_maxchdepth - 1];
-				addr = ((u_int8_t *)nce - (u_int8_t *)ce) / 4;
+			if ((dmap->dm_nsegs - i) > sc->sc_chain_len) {
+				nce = &nsge[sc->sc_chain_len - 1];
+				addr = ((u_int8_t *)nce - (u_int8_t *)nsge) / 4;
 				addr = addr << 16 |
-				    sizeof(struct mpi_sge) * sc->sc_maxchdepth;
+				    sizeof(struct mpi_sge) * sc->sc_chain_len;
 			} else {
 				nce = NULL;
 				addr = sizeof(struct mpi_sge) *
@@ -1582,13 +1583,20 @@ mpi_iocfacts(struct mpi_softc *sc)
 	DNPRINTF(MPI_D_MISC, "%s:   first sgl len: %d\n", DEVNAME(sc),
 	    sc->sc_first_sgl_len);
 
+	sc->sc_chain_len = (letoh16(ifp.request_frame_size) * 4) /
+	    sizeof(struct mpi_sge);
+	DNPRINTF(MPI_D_MISC, "%s:   chain len: %d\n", DEVNAME(sc),
+	    sc->sc_chain_len);
+
 	/* the sgl tailing the io cmd loses an entry to the chain element. */
 	sc->sc_max_sgl_len = MPI_MAX_SGL - 1;
 	/* the sgl chains lose an entry for each chain element */
 	sc->sc_max_sgl_len -= (MPI_MAX_SGL - sc->sc_first_sgl_len) /
-	    sc->sc_maxchdepth;
-	DNPRINTF(MPI_D_MISC, "%s:   max sgl len: %d\n",
-	    DEVNAME(sc), sc->sc_max_sgl_len);
+	    sc->sc_chain_len;
+	DNPRINTF(MPI_D_MISC, "%s:   max sgl len: %d\n", DEVNAME(sc),
+	    sc->sc_max_sgl_len);
+
+	/* XXX we're ignoring the max chain depth */
 
 	return (0);
 }
