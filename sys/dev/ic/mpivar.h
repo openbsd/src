@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.8 2006/06/10 13:45:48 marco Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.9 2006/06/12 03:46:12 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -31,6 +31,7 @@ extern uint32_t			mpi_debug;
 #define	MPI_D_RW		0x0020
 #define	MPI_D_MEM		0x0040
 #define	MPI_D_CCB		0x0080
+#define	MPI_D_PPR		0x0100
 #else
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)

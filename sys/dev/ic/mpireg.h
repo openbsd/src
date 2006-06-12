@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.11 2006/06/11 23:18:24 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.12 2006/06/12 03:46:12 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -121,6 +121,8 @@
 #define  MPI_SGE_FL_SIZE_32		(0x0<<25) /* address size */
 #define  MPI_SGE_FL_SIZE_64		(0x1<<25) /* address size */
 #define MPI_SGE_FL_EOL			(0x1<<24) /* end of list */
+#define MPI_SGE_FLAGS_IOC_TO_HOST	(0x00)
+#define MPI_SGE_FLAGS_HOST_TO_IOC	(0x04)
 
 struct mpi_sge32 {
 	u_int32_t		sg_hdr;
@@ -921,9 +923,9 @@ struct mpi_cfg_spi_dev_pg0 {
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_XFER_OFFSET(x)	\
     (((x) >> 16) & 0xff)
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_IDP_EN		(1<<27)
-#define MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH		(1<<28)
-#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_NARROW	(0<<28)
-#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE		(1<<28)
+#define MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH		(1<<29)
+#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_NARROW	(0<<29)
+#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE		(1<<29)
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_AIP			(1<<31)
 
 	u_int32_t		information;
