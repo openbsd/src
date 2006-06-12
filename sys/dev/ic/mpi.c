@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.35 2006/06/12 14:06:05 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.36 2006/06/12 23:25:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1154,8 +1154,8 @@ mpi_load_xs(struct mpi_ccb *ccb)
 			ce->sg_hdr = htole32(MPI_SGE_FL_TYPE_CHAIN |
 			    MPI_SGE_FL_SIZE_64 | addr);
 
-			ce_dva = MPI_DMA_DVA(sc->sc_requests) + ccb->ccb_offset;
-			ce_dva += (u_int8_t *)nsge - (u_int8_t *)mcb;
+			ce_dva = ccb->ccb_cmd_dva +
+			    ((u_int8_t *)nsge - (u_int8_t *)mcb);
 
 			addr = (u_int32_t)(ce_dva >> 32);
 			ce->sg_hi_addr = htole32(addr);
@@ -1975,13 +1975,13 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	    (read ? MPI_SGE_FL_DIR_IN : MPI_SGE_FL_DIR_OUT));
 
 	/* bounce the page via the request space to avoid more bus_dma games */
-	dva = MPI_DMA_DVA(sc->sc_requests) + ccb->ccb_offset +
-	    sizeof(struct mpi_msg_config_request);
+	dva = ccb->ccb_cmd_dva + sizeof(struct mpi_msg_config_request);
+
 	cq->page_buffer.sg_hi_addr = htole32((u_int32_t)(dva >> 32));
 	cq->page_buffer.sg_lo_addr = htole32((u_int32_t)dva);
 
-	kva = MPI_DMA_KVA(sc->sc_requests);
-	kva += ccb->ccb_offset + sizeof(struct mpi_msg_config_request);
+	kva = ccb->ccb_cmd;
+	kva += sizeof(struct mpi_msg_config_request);
 	if (!read)
 		bcopy(page, kva, len);
 
