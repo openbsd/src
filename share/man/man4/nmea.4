@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.4 2006/06/12 09:11:08 mbalmer Exp $
+.\"	$OpenBSD: nmea.4,v 1.5 2006/06/12 09:23:25 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -32,9 +32,8 @@ int ldisc = NMEADISC, fildes; ...
 ioctl(fildes, TIOCSETD, &ldisc);
 .Ed
 .Pp
-While applications can still use the device as if it had the
-default (termios) line discipline attached, the line discipline
-maintains a timedelta sensor in the kernel.
+The byte stream is unaltered by the line discipline which
+maintains a timedelta sensor using the NMEA data.
 .Sh SEE ALSO
 .Xr tty 4
 .Sh HISTORY
