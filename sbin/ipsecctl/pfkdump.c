@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.18 2006/06/02 12:29:43 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.19 2006/06/12 19:17:51 naddy Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -647,7 +647,7 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 		bzero(&authkey, sizeof authkey);
 		parse_key(extensions[SADB_EXT_KEY_AUTH], &authkey);
 		r.authkey = &authkey;
-	} else if (sa->sadb_sa_encrypt || sa->sadb_sa_encrypt) {
+	} else if (sa->sadb_sa_encrypt || sa->sadb_sa_auth) {
 		bzero(&xfs, sizeof xfs);
 		r.xfs = &xfs;
 		if (sa->sadb_sa_encrypt) {
