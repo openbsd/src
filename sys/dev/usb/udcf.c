@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.11 2006/06/05 10:06:12 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.12 2006/06/12 09:51:09 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -386,7 +386,7 @@ udcf_probe(void *xsc)
 				if (sc->sc_sensor.status == SENSOR_S_UNKNOWN)
 					sc->sc_clocktype = -1;
 			} else {
-				/* provide the time delta */
+				/* provide the timedelta */
 
 				microtime(&sc->sc_sensor.tv);
 				nanotime(&now);
@@ -585,7 +585,7 @@ udcf_sl_probe(void *xsc)
 	timeout_add(&sc->sc_sl_to, t6);
 }
 
-/* invalidate time delta */
+/* invalidate timedelta */
 void
 udcf_it_probe(void *xsc)
 {
