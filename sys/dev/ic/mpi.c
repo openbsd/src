@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.33 2006/06/12 03:55:39 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.34 2006/06/12 12:31:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -475,7 +475,7 @@ mpi_intr(void *arg)
 {
 	struct mpi_softc		*sc = arg;
 	struct mpi_ccb			*ccb;
-	struct mpi_msg_reply		*reply = NULL;
+	struct mpi_msg_reply		*reply;
 	u_int32_t			reply_dva;
 	char				*reply_addr;
 	u_int32_t			reg, id;
@@ -513,6 +513,8 @@ mpi_intr(void *arg)
 				panic("%s: unsupported context reply\n",
 				    DEVNAME(sc));
 			}
+
+			reply = NULL;
 		}
 
 		DNPRINTF(MPI_D_INTR, "%s: mpi_intr id: %d\n", DEVNAME(sc), id);
@@ -738,7 +740,7 @@ int
 mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 {
 	struct mpi_ccb			*ccb;
-	struct mpi_msg_reply		*reply = NULL;
+	struct mpi_msg_reply		*reply;
 	u_int32_t			reply_dva;
 	char				*reply_addr;
 	u_int32_t			reg, id = 0xffffffff;
@@ -786,6 +788,8 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 				panic("%s: unsupported context reply\n",
 				    DEVNAME(sc));
 			}
+
+			reply = NULL;
 		}
 
 		DNPRINTF(MPI_D_INTR, "%s: mpi_complete id: %d\n",
