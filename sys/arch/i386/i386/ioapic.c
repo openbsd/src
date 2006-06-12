@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.10 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.11 2006/06/12 04:41:30 gwk Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -106,6 +106,8 @@ extern int bus_mem_add_mapping(bus_addr_t, bus_size_t, int,
 
 void	apic_set_redir(struct ioapic_softc *, int);
 void	apic_vectorset(struct ioapic_softc *, int, int, int);
+
+void	apic_stray(int);
 
 int apic_verbose = 0;
 
@@ -779,6 +781,18 @@ apic_intr_disestablish(void *arg)
 
 	evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF);
+}
+
+void
+apic_stray(int irqnum) {
+	unsigned int apicid;
+	struct ioapic_softc *sc;
+
+	apicid = APIC_IRQ_APIC(irqnum);
+	sc = ioapic_find(apicid);
+	if (sc == NULL)
+		return;
+	printf("%s: stray interrupt %d\n", sc->sc_dev.dv_xname, irqnum);
 }
 
 #ifdef DDB

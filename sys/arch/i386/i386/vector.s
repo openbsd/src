@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.7 2005/12/13 16:14:49 aaron Exp $	*/
+/*	$OpenBSD: vector.s,v 1.8 2006/06/12 04:41:30 gwk Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ _C_LABEL(Xintr_/**/name/**/num):					;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
 	UNLOCK_KERNEL(IF_PPL(%esp))					;\
-	STRAY_TEST			/* see if it's a stray */	;\
+	STRAY_TEST(name,num)		/* see if it's a stray */	;\
 6:	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
@@ -154,18 +154,18 @@ IDTVEC(hold_/**/name/**/num)						;\
 	orb	$IRQ_BIT(num),_C_LABEL(ipending) + IRQ_BYTE(num)	;\
 	INTRFASTEXIT
 
-#if defined(DEBUG) && defined(notdef)
+#if defined(DEBUG)
 #define	STRAY_INITIALIZE \
 	xorl	%esi,%esi
 #define	STRAY_INTEGRATE \
 	orl	%eax,%esi
-#define	STRAY_TEST \
+#define	STRAY_TEST(name,num) \
 	testl	%esi,%esi						;\
 	jz	_C_LABEL(Xstray_/**/name/**/num)
 #else /* !DEBUG */
 #define	STRAY_INITIALIZE
 #define	STRAY_INTEGRATE
-#define	STRAY_TEST
+#define	STRAY_TEST(name,num)
 #endif /* DEBUG */
 
 #ifdef DDB

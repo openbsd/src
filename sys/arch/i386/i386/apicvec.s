@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.6 2006/03/14 14:46:53 mickey Exp $ */
+/* $OpenBSD: apicvec.s,v 1.7 2006/06/12 04:41:30 gwk Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -47,6 +47,8 @@
 #else
 #define XINTR(vec) _Xintr/**/vec
 #endif
+
+	.globl  _C_LABEL(apic_stray)
 
 #ifdef MULTIPROCESSOR
 	.globl	XINTR(ipi)
@@ -167,7 +169,6 @@ XINTR(softtty):
 	 * We sort out which one is which based on the value of
 	 * the processor priority register.
 	 *
-	 * XXX no stray interrupt mangling stuff..
 	 * XXX use cmove when appropriate.
 	 */
 
@@ -189,7 +190,8 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	incl	_C_LABEL(apic_intrcount)(,%eax,4)			;\
 	movl	_C_LABEL(apic_intrhand)(,%eax,4),%ebx /* chain head */	;\
 	testl	%ebx,%ebx						;\
-	jz	8f			/* oops, no handlers.. */	;\
+	jz      _C_LABEL(Xstray_/**/name/**/num)			;\
+	APIC_STRAY_INIT			/* nobody claimed it yet */	;\
 7:									 \
 	LOCK_KERNEL(IF_PPL(%esp))					;\
 	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
@@ -200,6 +202,7 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	pushl	%eax							;\
 	call	*IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
+	APIC_STRAY_INTEGRATE		/* maybe he claimed it */	;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	4f							;\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
@@ -209,10 +212,30 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
+	APIC_STRAY_TEST(name,num)	/* see if it's a stray */	;\
 8:									 \
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
-	jmp	_C_LABEL(Xdoreti)
+	jmp	_C_LABEL(Xdoreti)					;\
+_C_LABEL(Xstray_/**/name/**/num):					 \
+	pushl	$num							;\
+	call	_C_LABEL(apic_stray)					;\
+	addl	$4,%esp							;\
+	jmp	8b							;\
+
+#if defined(DEBUG)
+#define APIC_STRAY_INIT \
+	xorl	%esi,%esi
+#define	APIC_STRAY_INTEGRATE \
+	orl	%eax,%esi
+#define APIC_STRAY_TEST(name,num) \
+	testl 	%esi,%esi						;\
+	jz 	_C_LABEL(Xstray_/**/name/**/num)
+#else /* !DEBUG */
+#define APIC_STRAY_INIT
+#define APIC_STRAY_INTEGRATE
+#define APIC_STRAY_TEST(name,num)
+#endif /* DEBUG */
 
 APICINTR(ioapic,0, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 APICINTR(ioapic,1, voidop, ioapic_asm_ack, voidop, voidop, voidop)
