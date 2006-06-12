@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.13 2006/06/12 12:33:19 jmc Exp $
+.\" $OpenBSD: sppp.4,v 1.14 2006/06/12 12:57:29 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -50,7 +50,7 @@ drivers.
 The
 .Nm
 layer provides three basic modes of operation.
-The default mode, with no special flags to be set, is to create the
+The default mode, with no special flags set, is to create the
 PPP connection (administrative
 .Em Open
 event to the LCP layer) as soon as the interface is taken up with the
@@ -62,7 +62,7 @@ The link will also terminate itself as soon as no Network Control Protocol
 (NCP) is open anymore, indicating that the lower layers are no longer needed.
 .Pp
 Setting the link-level flag
-.Em link0
+.Cm link0
 with
 .Xr ifconfig 8
 will cause the respective network interface to go into
@@ -71,11 +71,11 @@ mode.
 This means the administrative
 .Em Open
 event to the LCP layer will be delayed until after the lower layers
-signals an
+signal an
 .Em Up
 event (rise of
 .Dq carrier ) .
-This can be used by lower layers to support
+This can be used by the lower layers to support
 a dial-in connection where the physical layer isn't available
 immediately at startup, but only after some external event arrives.
 Receipt of a
@@ -84,16 +84,16 @@ event from the lower layer will not take the interface completely down
 in this case.
 .Pp
 Finally, setting the flag
-.Em link1
+.Cm link1
 will cause the interface to operate in
 .Em dial-on-demand
 mode.
-This is also only useful if the lower layer supports the notion
+This is also only useful if the lower layers support the notion
 of a carrier (like with an ISDN line).
 Upon configuring the respective interface, it will delay the administrative
 .Em Open
 event to the LCP layer until either an outbound network packet
-arrives, or until the lower layer signals an
+arrives, or until the lower layers signal an
 .Em Up
 event, indicating an inbound connection.
 As with passive mode, receipt of a
@@ -105,7 +105,7 @@ The
 .Nm
 layer supports the
 .Em debug
-interface flag that can be set with
+interface flag, which can be set with
 .Xr ifconfig 8 .
 If this flag is set, the various control protocol packets being
 exchanged as well as the option negotiation between both ends of the
@@ -122,21 +122,21 @@ negotiation by setting it to 0.0.0.0.
 This requires that the remote peer can correctly supply a value for it
 based on the identity of the caller, or on the remote address supplied
 by this side.
-Due to the way the IPCP option negotiation works, this address is being
-supplied late during the negotiation, which might cause the remote peer
-to make wrong assumptions.
+Due to the way the IPCP option negotiation works, this address is
+supplied late during the negotiation, which could cause the remote peer
+to make false assumptions.
 .Pp
 In a similar spirit the remote address can be set to the magical
-value 0.0.0.1 which means that we don't care what address the remote
+value 0.0.0.1, which means that we don't care what address the remote
 side will use, as long as it is not 0.0.0.0.
 This is useful if your ISP has several dial-in servers.
 You can of course
 .Ic route add something or other 0.0.0.1
 and it will do exactly what you would want it to.
 .Pp
-The PAP and CHAP authentication protocols as described in RFC 1334,
-and RFC 1994 resp., are also implemented.
-Their parameters are being controlled by the
+The PAP and CHAP authentication protocols, as described in RFCs 1334
+and 1994, respectively, are also implemented.
+Their parameters are controlled by the
 .Xr ifconfig 8
 utility.
 .Sh EXAMPLES
@@ -253,7 +253,7 @@ in
 .Ox 4.0
 in order to remove the original
 .Ql spppcontrol
-utility, which has been previously used to configure and display the
+utility, which was previously used to configure and display the
 .Nm
 settings.
 .Sh BUGS
