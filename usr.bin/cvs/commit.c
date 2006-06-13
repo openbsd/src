@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.71 2006/06/07 07:01:12 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.72 2006/06/13 06:51:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -86,7 +86,7 @@ cvs_commit(int argc, char **argv)
 	argv += optind;
 
 	if (logmsg == NULL)
-		fatal("please use -m to specify a log message for now");
+		fatal("please use -m or -F to specify a log message for now");
 
 	TAILQ_INIT(&files_affected);
 	conflicts_found = 0;
@@ -143,7 +143,8 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	}
 
 	if (cf->file_status == FILE_MERGE ||
-	    cf->file_status == FILE_PATCH) {
+	    cf->file_status == FILE_PATCH ||
+	    cf->file_status == FILE_CHECKOUT) {
 		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
 		    cf->file_path);
 		conflicts_found++;
