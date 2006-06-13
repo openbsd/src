@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.23 2006/06/12 13:56:00 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.24 2006/06/13 06:52:11 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -80,7 +80,7 @@ int
 cvs_init(int argc, char **argv)
 {
 	if (argc > 1)
-		fatal("%s", cvs_cmd_init.cmd_synopsis);
+		fatal("init does not take any extra arguments");
 
 	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL)
 		cvs_init_local();
