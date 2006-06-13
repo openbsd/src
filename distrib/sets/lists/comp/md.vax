@@ -136,6 +136,7 @@
 ./usr/include/vax/ka680.h
 ./usr/include/vax/ka750.h
 ./usr/include/vax/ka820.h
+./usr/include/vax/kcore.h
 ./usr/include/vax/limits.h
 ./usr/include/vax/macros.h
 ./usr/include/vax/mtpr.h
