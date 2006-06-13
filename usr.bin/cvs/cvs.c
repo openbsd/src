@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.103 2006/06/12 13:56:00 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.104 2006/06/13 06:53:45 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 	    CVS_PATH_ROOT);
 	if (stat(fpath, &st) == -1 && cvs_cmdop != CVS_OP_INIT) {
 		if (errno == ENOENT)
-			fatal("'%s' does not seem to be a valid repository",
+			fatal("repository '%s' does not exist",
 			    current_cvsroot->cr_dir);
 		else
 			fatal("%s: %s", current_cvsroot->cr_dir,
