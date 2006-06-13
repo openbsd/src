@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.36 2006/06/12 23:25:57 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.37 2006/06/13 02:07:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -523,7 +523,8 @@ mpi_intr(void *arg)
 		ccb = &sc->sc_ccbs[id];
 
 		bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
-		    ccb->ccb_offset, MPI_REQUEST_SIZE, BUS_DMASYNC_POSTWRITE);
+		    ccb->ccb_offset, MPI_REQUEST_SIZE,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		ccb->ccb_state = MPI_CCB_READY;
 		ccb->ccb_reply = reply;
 		ccb->ccb_reply_dva = reply_dva;
@@ -731,7 +732,8 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 	    ccb->ccb_cmd_dva);
 
 	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
-	    ccb->ccb_offset, MPI_REQUEST_SIZE, BUS_DMASYNC_PREWRITE);
+	    ccb->ccb_offset, MPI_REQUEST_SIZE,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	ccb->ccb_state = MPI_CCB_QUEUED;
 	mpi_write(sc, MPI_REQ_QUEUE, ccb->ccb_cmd_dva);
@@ -799,7 +801,8 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 		ccb = &sc->sc_ccbs[id];
 
 		bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
-		    ccb->ccb_offset, MPI_REQUEST_SIZE, BUS_DMASYNC_POSTWRITE);
+		    ccb->ccb_offset, MPI_REQUEST_SIZE,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		ccb->ccb_state = MPI_CCB_READY;
 		ccb->ccb_reply = reply;
 		ccb->ccb_reply_dva = reply_dva;
