@@ -98,7 +98,7 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fo krb5_get_init_creds_opt_set_etype_list
 .Fa "krb5_get_init_creds_opt *opt"
 .Fa "krb5_enctype *etype_list"
-.Fa int etype_list_length"
+.Fa "int etype_list_length"
 .Fc
 .Ft void
 .Fo krb5_get_init_creds_opt_set_forwardable
@@ -205,7 +205,7 @@ and
 .Fa krb5_in_cred
 functions.
 .Pp
-If you only to verify a user and password, consider using
+If you only want to verify a username and password, consider using
 .Xr krb5_verify_user 3
 instead, since it also verifies that initial credentials with using a
 keytab to make sure the response was from the KDC.
@@ -236,8 +236,8 @@ or
 functions.
 .Fn krb5_get_init_creds
 is the least specialized function and can, with the right in data,
-behave like the later two.
-The later two are there for compatibly with older releases and that
+behave like the latter two.
+The latter two are there for compatibility with older releases and
 they are slightly easier to use.
 .Pp
 .Li krb5_prompt
@@ -258,7 +258,7 @@ If
 is set, the prompter function shouldn't echo the output to the display
 device.
 .Fa reply
-must be preallocated, it will not be allocated in by the prompter
+must be preallocated; it will not be allocated by the prompter
 function.
 Possible values for the
 .Fa type
@@ -271,7 +271,7 @@ element are:
 .El
 .Pp
 .Fn krb5_prompter_posix
-is a the default prompter function in a posix environment.
+is a the default prompter function in a POSIX environment.
 It matches the
 .Fa krb5_prompter_fct
 and can be used in the
@@ -334,16 +334,16 @@ or
 .Fa key_proc
 can be
 .Dv NULL
-if the caller what to use the default values.
+if the caller wants to use the default values.
 If the
 .Fa password
-is unset and needed, the use will be prompted for it.
+is unset and needed, the user will be prompted for it.
 .Pp
 .Fn krb5_get_init_creds_opt_set_paq_request
 sets the password that is going to be used to get a new ticket.
 .Pp
 .Fn krb5_get_init_creds_opt_set_preauth_list
-sets the list of client supported preauth types.
+sets the list of client-supported preauth types.
 .Pp
 .Fn krb5_get_init_creds_opt_set_proxiable
 makes the request proxiable.
@@ -352,7 +352,7 @@ makes the request proxiable.
 sets the requested renewable lifetime.
 .Pp
 .Fn krb5_get_init_creds_opt_set_salt
-sets that that is going to be used in the request.
+sets the salt that is going to be used in the request.
 .Pp
 .Fn krb5_get_init_creds_opt_set_tkt_life
 sets requested ticket lifetime.

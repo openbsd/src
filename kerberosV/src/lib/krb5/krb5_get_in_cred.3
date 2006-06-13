@@ -42,7 +42,7 @@
 .Nm krb5_get_in_tkt_with_skey ,
 .Nm krb5_free_kdc_rep ,
 .Nm krb5_password_key_proc
-.Nd krb5 ticket functions
+.Nd deprecated initial authentication functions
 .Sh LIBRARY
 Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
@@ -120,7 +120,7 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fa "krb5_kdc_rep *rep"
 .Fc
 .Ft krb5_error_code
-.Fo krb5_password_key_proc 
+.Fo krb5_password_key_proc
 .Fa "krb5_context context"
 .Fa "krb5_enctype type"
 .Fa "krb5_salt salt"
@@ -130,10 +130,10 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh DESCRIPTION
 .Bf Em
 All the functions in this manual page are deprecated in the MIT
-implementation, and will soon deprecated in Heimdal too, do't use them.
+implementation, and will soon deprecated in Heimdal too, don't use them.
 .Ef
 .Pp
-Getting initial credential ticket for a principal. 
+Getting initial credential ticket for a principal.
 .Nm krb5_get_in_cred
 is the function all other krb5_get_in function uses to fetch tickets.
 The other krb5_get_in function are more specialized and therefor
@@ -239,12 +239,12 @@ Upon return of the function it will be contain the content of the
 requested credential
 .Fa ( krb5_get_in_cred ) ,
 or it will be freed with
-.Xr krb5_free_creds 3 
+.Xr krb5_free_creds 3
 (all the other krb5_get_in functions).
 .Pp
 .Fa ccache
 will store the credential in the credential cache
-.Fa ccache.
+.Fa ccache .
 The credential cache will not be initialized, thats up the the caller.
 .Pp
 .Nm krb5_password_key_proc
@@ -261,7 +261,7 @@ terminated string or
 .Dv NULL .
 .Nm krb5_password_key_proc
 will query the user for the pass on the console if the password isn't
-given as the argument 
+given as the argument
 .Fa keyseed .
 .Pp
 .Fn krb5_free_kdc_rep
