@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.62 2006/05/28 14:58:12 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.63 2006/06/13 03:01:04 gwk Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -116,6 +116,9 @@ cpu_configure()
 
 	gdt_init();		/* XXX - pcibios uses gdt stuff */
 
+	/* Set up proc0's TSS and LDT */
+	i386_proc0_tss_ldt_init();
+
 #ifndef SMALL_KERNEL
 	pmap_bootstrap_pae();
 #endif
@@ -129,6 +132,8 @@ cpu_configure()
 	ioapic_enable();
 #endif
 
+	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
+
 #ifdef MULTIPROCESSOR
 	/* propagate TSS and LDT configuration to the idle pcb's. */
 	cpu_init_idle_pcbs();
@@ -141,9 +146,6 @@ cpu_configure()
 	 */
 	md_diskconf = diskconf;
 	cold = 0;
-
-	/* Set up proc0's TSS and LDT (after the FPU is configured). */
-	i386_proc0_tss_ldt_init();
 
 #ifdef I686_CPU
 	/*
