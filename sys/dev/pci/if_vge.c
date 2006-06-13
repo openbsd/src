@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.24 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.25 2006/06/13 01:33:45 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -782,7 +782,9 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = vge_watchdog;
 	ifp->if_init = vge_init;
 	ifp->if_baudrate = 1000000000;
+#ifdef VGE_JUMBO
 	ifp->if_hardmtu = VGE_JUMBO_MTU;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, VGE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
