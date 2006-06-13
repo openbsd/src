@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.6 2006/06/10 23:15:26 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.7 2006/06/13 07:01:59 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* line discipline to decode NMEA0183 data */
+/* line discipline to decode NMEA 0183 data */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,63 +53,28 @@ int	nmeainput(int, struct tty *);
 void	nmeaattach(int);
 
 #define NMEAMAX	82
-#define MAXFLDS	12
-
-/* NMEA talker identifiers */
-#define TI_UNK	0
-#define TI_GPS	1
-#define TI_LORC	2
-
-/* NMEA message types */
-#define MSG_RMC	5393731	/* recommended minimum sentence C */
-#define MSG_GGA	4671297
-#define MSG_GSA	4674369	/* satellites active */
-#define MSG_GSV	4674390	/* satellites in view */
-#define MSG_VTG	5657671	/* velocity, direction, speed */
+#define MAXFLDS	16
 
 int nmea_count = 0;
 
 struct nmea {
 	char		cbuf[NMEAMAX];
 	struct sensor	time;
-	struct timeval	tv;			/* soft timestamp */
 	struct timespec	ts;
 	int64_t		last;			/* last time rcvd */
-	int		state;			/* state we're in */
+	int		sync;
 	int		pos;
-	int		fpos[MAXFLDS];
-	int		flds;			/* expect nr of fields */
-	int		fldcnt;			/* actual count of fields */
-	int		cksum;			/* calculated checksum */
-	int		msgcksum;		/* received cksum */
-	int		ti;			/* talker identifier */
-	int		msg;			/* NMEA msg type */
 };
 
-/* NMEA protocol state machine */
-void	nmea_hdlr(struct nmea *, int c);
-
 /* NMEA decoding */
-void	nmea_decode(struct nmea *);
-void	nmea_rmc(struct nmea *);
+void	nmea_scan(struct nmea *);
+void	nmea_gprmc(struct nmea *, char *fld[], int fldcnt);
 
 /* date and time conversion */
 int	nmea_date_to_nano(char *s, int64_t *nano);
 int	nmea_time_to_nano(char *s, int64_t *nano);
 static inline int leapyear(int year);
 int	nmea_ymd_to_secs(int year, int month, int day, time_t *secs);
-
-/* helper functions */
-void	nmea_bufadd(struct nmea *, int);
-
-enum states {
-	S_SYNC = 0,
-	S_TI_1,
-	S_TI_2,
-	S_MSG,
-	S_DATA,
-	S_CKSUM
-};
 
 void
 nmeaattach(int dummy)
@@ -133,7 +98,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 	    nmea_count++);
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
-	np->state = S_SYNC;
+	np->sync = 1;
 	np->time.flags = SENSOR_FINVALID;
 	sensor_add(&np->time);
 	tp->t_sc = (caddr_t)np;
@@ -159,185 +124,142 @@ nmeaclose(struct tty *tp, int flags)
 	return linesw[TTYDISC].l_close(tp, flags);
 }
 
-/* scan input from tty for NMEA sentences */
+/* collect NMEA sentence from tty */
 int
 nmeainput(int c, struct tty *tp)
 {
 	struct nmea *np = (struct nmea *)tp->t_sc;
 
-	nmea_hdlr(np, c);
+	switch (c) {
+	case '$':
+		/* timestamp and delta refs now */
+		nanotime(&np->ts);
+		np->pos = 0;
+		np->sync = 0;
+		break;
+	case '\r':
+	case '\n':
+		if (!np->sync) {
+			np->cbuf[np->pos] = '\0';
+			nmea_scan(np);
+			np->sync = 1;
+		}
+		break;
+	default:
+		if (!np->sync && np->pos < (NMEAMAX - 1))
+			np->cbuf[np->pos++] = c;
+		break;
+	}
 
 	/* pass data to termios */
 	return linesw[TTYDISC].l_rint(c, tp);
 }
 
-/* NMEA state machine */
+/* Scan the NMEA sentence just received */
 void
-nmea_hdlr(struct nmea *np, int c)
+nmea_scan(struct nmea *np)
 {
-	switch (np->state) {
-	case S_SYNC:
-		switch (c) {
-		case '$':
-			/* timestamp and delta refs now */
-			microtime(&np->tv);
-			nanotime(&np->ts);
-			np->pos = 0;
-			np->fldcnt = 0;
-			np->flds = 0;
-			np->cbuf[np->pos++] = c;
-			np->cksum = 0;
-			np->msgcksum = -1;
-			np->ti = TI_UNK;
-			np->state = S_TI_1;
-		}
-		break;
-	case S_TI_1:
-		nmea_bufadd(np, c);
-		np->state = S_TI_2;
-		switch (c) {
-		case 'G':
-			np->ti = TI_GPS;
-			break;
-		case 'L':
-			np->ti = TI_LORC;
-			break;
-		default:
-			np->state = S_SYNC;
-		}
-		break;
-	case S_TI_2:
-		nmea_bufadd(np, c);
-		np->state = S_SYNC;
-		switch (c) {
-		case 'P':
-			if (np->ti == TI_GPS)
-				np->state = S_MSG;
-			break;
-		case 'C':
-			if (np->ti == TI_LORC)
-				np->state = S_MSG;
-			break;
-		}
-		break;
-	case S_MSG:
-		nmea_bufadd(np, c);
-		if (np->pos == 6) {
-			np->msg = (np->cbuf[3] << 16) + (np->cbuf[4] << 8) +
-			    np->cbuf[5];
-			switch (np->msg) {
-			case MSG_RMC:
-				np->flds = 12;	/* or 11 */
-				np->state = S_DATA;
-				break;
-			default:
-				np->state = S_SYNC;
-			}
-		}
-		break;
-	case S_DATA:
-		switch (c) {
-		case '\n':
-			np->cbuf[np->pos] = '\0';
-			nmea_decode(np);
-			np->state = S_SYNC;
-			break;
+	char *fld[MAXFLDS];
+	char *cs;
+	int fldcnt;
+	int cksum, msgcksum;
+	int n;
+
+	fldcnt = 0;
+	cksum = 0;
+
+	/* split into fields and calc checksum */
+	fld[fldcnt++] = &np->cbuf[0];	/* message type */
+	for (cs = NULL, n = 0; n < np->pos && cs == NULL; n++) {
+		switch (np->cbuf[n]) {
 		case '*':
-			np->cbuf[np->pos++] = c;
-			np->msgcksum = 0;
-			np->state = S_CKSUM;
+			np->cbuf[n] = '\0';
+			cs = &np->cbuf[n + 1];
 			break;
 		case ',':
-			np->fpos[np->fldcnt++] = np->pos + 1;
-		default:
-			if (np->pos < NMEAMAX)
-				nmea_bufadd(np, c);
-			else
-				np->state = S_SYNC;
-		}
-		break;
-	case S_CKSUM:
-		switch (c) {
-		case '\r':
-		case '\n':
-			np->cbuf[np->pos] = '\0';
-			nmea_decode(np);
-			np->state = S_SYNC;
+			if (fldcnt < MAXFLDS) {
+				cksum ^= np->cbuf[n];
+				np->cbuf[n] = '\0';
+				fld[fldcnt++] = &np->cbuf[n + 1];
+			} else {
+				DPRINTF(("nr of fields in %s sentence exceeds "
+				    "maximum of %d\n", fld[0], MAXFLDS));
+				return;
+			}
 			break;
 		default:
-			if (np->pos < NMEAMAX && ((c >= '0' && c<= '9') ||
-			    (c >= 'A' && c <= 'F'))) {
-				np->cbuf[np->pos++] = c;
-				if (np->msgcksum)
-					np->msgcksum <<= 4;
-				if (c >= '0' && c<= '9')
-					np->msgcksum += c - '0';
-				else if (c >= 'A' && c <= 'F')
-					np->msgcksum += 10 + c - 'A';
-			} else
-				np->state = S_SYNC;
+			cksum ^= np->cbuf[n];
 		}
-		break;
 	}
-}
 
-/* add a character to the buffer and update the checksum */
-void
-nmea_bufadd(struct nmea *np, int c)
-{
-	if (np->pos < NMEAMAX){
-		np->cbuf[np->pos++] = c;
-		np->cksum ^= c;
+	/* if we have a checksum, verify it */
+	if (cs != NULL) {
+		msgcksum = 0;
+		while (*cs) {
+			if ((*cs >= '0' && *cs <= '9') ||
+			    (*cs >= 'A' && *cs <= 'F')) {
+				if (msgcksum)
+					msgcksum <<= 4;
+				if (*cs >= '0' && *cs<= '9')
+					msgcksum += *cs - '0';
+				else if (*cs >= 'A' && *cs <= 'F')
+					msgcksum += 10 + *cs - 'A';
+				cs++;
+			} else {
+				DPRINTF(("bad char %c in checksum\n", *cs));
+				return;
+			}
+		}
+		if (msgcksum != cksum) {
+			DPRINTF(("cksum mismatch"));
+			return;
+		}
 	}
-}
 
-void
-nmea_decode(struct nmea *np)
-{
-	switch (np->msg) {
-	case MSG_RMC:
-		nmea_rmc(np);
-		break;
-	}
+	/* check message type */
+	if (!strcmp(fld[0], "GPRMC"))
+		nmea_gprmc(np, fld, fldcnt);
 }
 
 /* Decode the minimum recommended nav info sentence (RMC) */
 void
-nmea_rmc(struct nmea *np)
+nmea_gprmc(struct nmea *np, char *fld[], int fldcnt)
 {
 	int64_t date_nano, time_nano, nmea_now;
+#ifdef NMEA_DEBUG
+	int n;
 
-	if (np->fldcnt != 11 && np->fldcnt != 12) {
-		DPRINTF(("field count mismatch\n"));
+	for (n = 0; n < fldcnt; n++)
+		DPRINTF(("%s ", fld[n]));
+	DPRINTF(("\n"));
+#endif
+
+	if (fldcnt != 12 && fldcnt != 13) {
+		DPRINTF(("gprmc: field count mismatch, %d\n", fldcnt));
 		return;
 	}
-	if (np->msgcksum >= 0 && np->cksum != np->msgcksum) {
-		DPRINTF(("checksum error"));
+	if (nmea_time_to_nano(fld[1], &time_nano)) {
+		DPRINTF(("gprmc: illegal time, %s\n", fld[1]));
 		return;
 	}
-	if (nmea_time_to_nano(&np->cbuf[7], &time_nano)) {
-		DPRINTF(("illegal time"));
-		return;
-	}
-	if (nmea_date_to_nano(&np->cbuf[np->fpos[8]], &date_nano)) {
-		DPRINTF(("illegal date"));
+	if (nmea_date_to_nano(fld[9], &date_nano)) {
+		DPRINTF(("gprmc: illegal date, %s\n", fld[9]));
 		return;
 	}
 	nmea_now = date_nano + time_nano;
 	if (nmea_now <= np->last) {
-		DPRINTF(("time not monotonically increasing\n"));
+		DPRINTF(("gprmc: time not monotonically increasing\n"));
 		return;
 	}
 	np->last = nmea_now;
 	np->time.value = np->ts.tv_sec * 1000000000LL + np->ts.tv_nsec -
 	    nmea_now;
-	np->time.tv.tv_sec = np->tv.tv_sec;
-	np->time.tv.tv_usec = np->tv.tv_usec;
+	np->time.tv.tv_sec = np->ts.tv_sec;
+	np->time.tv.tv_usec = np->ts.tv_nsec / 1000L;
 	if (np->time.status == SENSOR_S_UNKNOWN) {
-		strlcpy(np->time.desc, np->ti == TI_GPS ? "GPS" :
-		    "Loran-C", sizeof(np->time.desc));
-		if (np->fldcnt == 12) {
-			switch (np->cbuf[np->fpos[11]]) {
+		strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
+		if (fldcnt == 13) {
+			switch (*fld[12]) {
 			case 'S':
 				strlcat(np->time.desc, " simulated",
 				    sizeof(np->time.desc));
@@ -363,7 +285,7 @@ nmea_rmc(struct nmea *np)
 		np->time.status = SENSOR_S_OK;
 		np->time.flags &= ~SENSOR_FINVALID;
 	}
-	switch (np->cbuf[np->fpos[1]]) {
+	switch (*fld[2]) {
 	case 'A':
 		np->time.status = SENSOR_S_OK;
 		break;
@@ -371,12 +293,12 @@ nmea_rmc(struct nmea *np)
 		np->time.status = SENSOR_S_WARN;
 		break;
 	default:
-		DPRINTF(("unknown warning indication\n"));
+		DPRINTF(("gprmc: unknown warning indication\n"));
 	}
 }
 
 /*
- * convert a NMEA0183 formatted date string to seconds since the epoch
+ * convert a NMEA 0183 formatted date string to seconds since the epoch
  * the string must be of the form DDMMYY
  * return (0) on success, (-1) if illegal characters are encountered
  */
@@ -391,7 +313,7 @@ nmea_date_to_nano(char *s, int64_t *nano)
 	/* make sure the input contains only numbers and is six digits long */
 	for (n = 0, p = s; n < 6 && *p && *p >= '0' && *p <= '9'; n++, p++)
 		;
-	if (n != 6 || (*p != '\0' && *p != ','))
+	if (n != 6 || (*p != '\0'))
 		return (-1);
 
 	year = 2000 + (s[4] - '0') * 10 + (s[5] - '0');
@@ -405,7 +327,7 @@ nmea_date_to_nano(char *s, int64_t *nano)
 }
 
 /*
- * convert NMEA0183 formatted time string to nanoseconds since midnight
+ * convert NMEA 0183 formatted time string to nanoseconds since midnight
  * the string must be of the form HHMMSS[.[sss]]
  * (e.g. 143724 or 143723.615)
  * return (0) on success, (-1) if illegal characters are encountered
@@ -458,7 +380,7 @@ nmea_time_to_nano(char *s, int64_t *nano)
 		}
 	}
 
-	if (*s != '\0' && *s != ',')
+	if (*s != '\0')
 		return (-1);
 
 	*nano = secs * 1000000000LL + (int64_t)frac * (1000000000 / div);
