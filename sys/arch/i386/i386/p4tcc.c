@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.5 2004/06/06 17:34:37 grange Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.6 2006/06/13 00:36:39 gwk Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -96,7 +96,7 @@ int
 p4tcc_setperf(int level)
 {
 	int i;
-	uint64_t msreg;
+	uint64_t msreg, vet;
 
 	for (i = 0; i < TCC_LEVELS; i++) {
 		if (level >= tcc[i].level)
@@ -108,9 +108,12 @@ p4tcc_setperf(int level)
 	if (tcc[i].reg != 0) /* enable it */
 		msreg |= tcc[i].reg << 1 | 1 << 4;
 	wrmsr(MSR_THERM_CONTROL, msreg);
+	vet = rdmsr(MSR_THERM_CONTROL);
+	vet &= ~0x1e;
 
-	if (update_cpuspeed != NULL)
-		update_cpuspeed();
-
+	if (vet != msreg) {
+		printf("p4_tcc: cpu did not honor request\n");
+		return (EIO);
+	}
 	return (0);
 }
