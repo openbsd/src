@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.14 2006/04/18 19:18:32 deraadt Exp $ */
+/*	$OpenBSD: confpars.c,v 1.15 2006/06/13 08:47:57 jmc Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -112,7 +112,7 @@ read_leases(void)
 		warning("Can't open lease database %s: %m -- %s",
 		    path_dhcpd_db,
 		    "check for failed database rewrite attempt!");
-		warning("Please read the dhcpd.leases manual page if you.");
+		warning("Please read the dhcpd.leases manual page if you");
 		error("don't know what to do about this.");
 	}
 
