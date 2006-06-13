@@ -1610,6 +1610,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/intrdefs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/joystick.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/kvm86.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/linux_machdep.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/loadfile_machdep.ph

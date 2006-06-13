@@ -186,6 +186,7 @@
 ./usr/include/i386/intrdefs.h
 ./usr/include/i386/ioctl_fd.h
 ./usr/include/i386/joystick.h
+./usr/include/i386/kvm86.h
 ./usr/include/i386/limits.h
 ./usr/include/i386/linux_machdep.h
 ./usr/include/i386/loadfile_machdep.h
