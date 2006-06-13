@@ -1,6 +1,6 @@
 esp from 1.1.1.1 to 2.2.2.2 spi 0x1eadbeef:0xbeef1ead \
 	authkey file "DIR/ak256:DIR/ak256" \
-	enckey file "DIR/ek160:DIR/ek160"
+	enckey file "DIR/ek128:DIR/ek128"
 esp from 1.1.1.2 to 2.2.2.2 spi 0x2eadbeef:0xbeef2ead \
 	enc 3des-cbc \
 	auth hmac-sha1 \
