@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.147 2006/05/28 17:21:14 uwe Exp $
+#	$OpenBSD: files.i386,v 1.148 2006/06/13 03:01:59 gwk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -248,6 +248,10 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 
 # VM86 mode
 file	arch/i386/i386/vm86.c			vm86
+
+# VM86 in kernel
+file	arch/i386/i386/kvm86.c			kvm86
+file	arch/i386/i386/kvm86call.S		kvm86
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "../../../compat/aout/files.aout"
