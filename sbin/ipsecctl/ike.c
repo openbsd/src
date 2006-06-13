@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.41 2006/06/10 19:21:10 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.42 2006/06/13 16:13:41 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -209,6 +209,9 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		case ENCXF_AES:
 			fprintf(fd, "AES");
 			break;
+		case ENCXF_AESCTR:
+			fprintf(fd, "AESCTR");
+			break;
 		case ENCXF_BLOWFISH:
 			fprintf(fd, "BLF");
 			break;
@@ -334,6 +337,15 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 			break;
 		case AUTHXF_HMAC_SHA1:
 			fprintf(fd, "SHA");
+			break;
+		case AUTHXF_HMAC_SHA2_256:
+			fprintf(fd, "SHA2-256");
+			break;
+		case AUTHXF_HMAC_SHA2_384:
+			fprintf(fd, "SHA2-384");
+			break;
+		case AUTHXF_HMAC_SHA2_512:
+			fprintf(fd, "SHA2-512");
 			break;
 		default:
 			warnx("illegal transform %s", mmxfs->authxf->name);

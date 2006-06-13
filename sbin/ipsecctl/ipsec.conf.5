@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.55 2006/06/11 21:14:34 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.56 2006/06/13 16:13:41 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -484,16 +484,19 @@ These parameters define the cryptographic transforms to be used for main mode.
 Possible values for
 .Ic auth
 are
-.Ar hmac-sha1
+.Ar hmac-md5 ,
+.Ar hmac-sha1 ,
+.Ar hmac-sha2-256 ,
+.Ar hmac-sha2-384 ,
 and
-.Ar hmac-md5 .
+.Ar hmac-sha2-512 .
 For
 .Ic enc
 the values
 .Ar des ,
 .Ar 3des ,
 .Ar aes ,
-.Ar blowfish
+.Ar blowfish ,
 and
 .Ar cast
 are allowed.
@@ -506,7 +509,7 @@ the values
 .Ar modp2048 ,
 .Ar modp3072 ,
 .Ar modp4096 ,
-.Ar modp6144
+.Ar modp6144 ,
 and
 .Ar modp8192
 are allowed.
@@ -536,16 +539,17 @@ are
 .Ar hmac-sha1 ,
 .Ar hmac-ripemd160 ,
 .Ar hmac-sha2-256 ,
-.Ar hmac-sha2-384
+.Ar hmac-sha2-384 ,
 and
 .Ar hmac-sha2-512 .
 For
 .Ic enc
-valid values are again
+valid values are
 .Ar des ,
 .Ar 3des ,
 .Ar aes ,
-.Ar blowfish
+.Ar aesctr ,
+.Ar blowfish ,
 and
 .Ar cast .
 For
@@ -557,7 +561,7 @@ the values
 .Ar modp2048 ,
 .Ar modp3072 ,
 .Ar modp4096 ,
-.Ar modp6144
+.Ar modp6144 ,
 and
 .Ar modp8192
 are allowed.
