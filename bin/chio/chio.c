@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.18 2006/06/01 00:30:30 beck Exp $	*/
+/*	$OpenBSD: chio.c,v 1.19 2006/06/13 19:35:17 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ static	int parse_special(char *);
 static	int is_special(char *);
 static	char *bits_to_string(int, const char *);
 static	void find_voltag(char *, int *, int *);
-static 	void check_source_drive(int);
+static	void check_source_drive(int);
 
 static	int do_move(char *, int, char **);
 static	int do_exchange(char *, int, char **);
@@ -110,19 +110,10 @@ main(int argc, char *argv[])
 {
 	int ch, i;
 
-	while ((ch = getopt(argc, argv, "af:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "f:")) != -1) {
 		switch (ch) {
-		case 'v':
-			pvoltag = 1;
-			break;
-		case 'V':
-			avoltag = 1;
-			break;
 		case 'f':
 			changer_name = optarg;
-			break;
-		case 'a':
-			pvoltag = avoltag = 1;
 			break;
 		default:
 			usage();
@@ -157,8 +148,6 @@ main(int argc, char *argv[])
 	if (commands[i].cc_name == NULL)
 		errx(1, "unknown command: %s", *argv);
 
-	/* Skip over the command name and call handler. */
-	++argv; --argc;
 	exit((*commands[i].cc_handler)(commands[i].cc_name, argc, argv));
 }
 
@@ -175,6 +164,9 @@ do_move(char *cname, int argc, char *argv[])
 	 *
 	 * where ET == element type and EU == element unit.
 	 */
+
+	++argv; --argc;
+
 	if (argc < 4) {
 		warnx("%s: too few arguments", cname);
 		goto usage;
@@ -184,7 +176,7 @@ do_move(char *cname, int argc, char *argv[])
 	}
 	bzero(&cmd, sizeof(cmd));
 
-	/* 
+	/*
 	 * Get the from ET and EU - we search for it if the ET is
 	 * "voltag", otherwise, we just use the ET and EU given to us.
 	 */
@@ -192,7 +184,7 @@ do_move(char *cname, int argc, char *argv[])
 		++argv; --argc;
 		find_voltag(*argv, &cmd.cm_fromtype, &cmd.cm_fromunit);
 		++argv; --argc;
-	} else {		
+	} else {
 		cmd.cm_fromtype = parse_element_type(*argv);
 		++argv; --argc;
 		cmd.cm_fromunit = parse_element_unit(*argv);
@@ -202,9 +194,9 @@ do_move(char *cname, int argc, char *argv[])
 	if (cmd.cm_fromtype == CHET_DT)
 		check_source_drive(cmd.cm_fromunit);
 
-	/* 
+	/*
 	 * Don't allow voltag on the to ET, using a volume
-	 * as a destination makes no sense on a move 
+	 * as a destination makes no sense on a move
 	 */
 	cmd.cm_totype = parse_element_type(*argv);
 	++argv; --argc;
@@ -251,6 +243,9 @@ do_exchange(char *cname, int argc, char *argv[])
 	 *
 	 * where ET == element type and EU == element unit.
 	 */
+
+	++argv; --argc;
+
 	if (argc < 4) {
 		warnx("%s: too few arguments", cname);
 		goto usage;
@@ -342,6 +337,9 @@ do_position(char *cname, int argc, char *argv[])
 	 *
 	 * where ET == element type and EU == element unit.
 	 */
+
+	++argv; --argc;
+
 	if (argc < 2) {
 		warnx("%s: too few arguments", cname);
 		goto usage;
@@ -392,6 +390,9 @@ do_params(char *cname, int argc, char *argv[])
 	struct changer_params data;
 
 	/* No arguments to this command. */
+
+	++argv; --argc;
+
 	if (argc) {
 		warnx("%s: no arguments expected", cname);
 		goto usage;
@@ -425,6 +426,9 @@ do_getpicker(char *cname, int argc, char *argv[])
 	int picker;
 
 	/* No arguments to this command. */
+
+	++argv; --argc;
+
 	if (argc) {
 		warnx("%s: no arguments expected", cname);
 		goto usage;
@@ -447,6 +451,8 @@ static int
 do_setpicker(char *cname, int argc, char *argv[])
 {
 	int picker;
+
+	++argv; --argc;
 
 	if (argc < 1) {
 		warnx("%s: too few arguments", cname);
@@ -474,7 +480,7 @@ do_status(char *cname, int argc, char *argv[])
 {
 	struct changer_element_status_request cmd;
 	struct changer_params data;
-	int i, chet, schet, echet;
+	int i, chet, schet, echet, c;
 	char *description;
 	size_t count;
 
@@ -482,6 +488,27 @@ do_status(char *cname, int argc, char *argv[])
 	count = 0;
 	description = NULL;
 #endif
+
+	optreset = 1;
+	optind = 1;
+	while ((c = getopt(argc, argv, "vVa")) != -1) {
+		switch (c) {
+		case 'v':
+			pvoltag = 1;
+			break;
+		case 'V':
+			avoltag = 1;
+			break;
+		case 'a':
+			pvoltag = avoltag = 1;
+			break;
+		default:
+			goto usage;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
 
 	/*
 	 * On a status command, we expect the following:
@@ -594,10 +621,11 @@ do_status(char *cname, int argc, char *argv[])
  * operation. If the drive is not accessible, we attempt
  * to unmount the tape in it before moving to avoid
  * errors in "disconnected" type pickers where the drive
- * is on a seperate target from the changer. 
+ * is on a seperate target from the changer.
  */
 static void
-check_source_drive(int unit) {
+check_source_drive(int unit)
+{
 	struct mtop mtoffl =  { MTOFFL, 1 };
 	struct changer_element_status_request cmd;
 	struct changer_element_status *ces;
@@ -630,7 +658,7 @@ check_source_drive(int unit) {
 		err(1, "%s: CHIOGSTATUS", changer_name);
 	}
 	ces = &(cmd.cesr_data[unit]);
-	
+
 	if ((ces->ces_flags & CESTATUS_FULL) != CESTATUS_FULL)
 		err(1, "%s: drive %d is empty!", changer_name, unit);
 
@@ -641,7 +669,6 @@ check_source_drive(int unit) {
 	 * Otherwise, drive is FULL, but not accessible.
 	 * Try to make it accessible by doing an mt offline.
 	 */
-	
 	tapedev = parse_tapedev(_PATH_CH_CONF, changer_name, unit);
 	mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
 	    NULL);
@@ -673,11 +700,10 @@ find_voltag(char *voltag, int *type, int *unit)
 	schet = CHET_MT;
 	echet = CHET_DT;
 
-	/* 
+	/*
 	 * For each type of element, iterate through each one until
 	 * we find the correct volume id.
-	 */ 
-	
+	 */
 	for (chet = schet; chet <= echet; ++chet) {
 		switch (chet) {
 		case CHET_MT:
@@ -694,7 +720,7 @@ find_voltag(char *voltag, int *type, int *unit)
 			break;
 		}
 		if (count == 0 || found)
-			continue;		  
+			continue;
 
 		bzero(&cmd, sizeof(cmd));
 		cmd.cesr_type = chet;
@@ -813,7 +839,7 @@ usage(void)
 {
 	int i;
 
-	fprintf(stderr, "usage: %s [-avV] [-f device] command [args ...]\n",
+	fprintf(stderr, "usage: %s [-f device] command [args ...]\n",
 	    __progname);
 	fprintf(stderr, "commands:");
 	for (i = 0; commands[i].cc_name; i++)
