@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.139 2006/06/13 01:18:36 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.140 2006/06/13 02:17:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1081,8 +1081,8 @@ main(int ac, char **av)
 			exit(1);
 		}
 		format = c_flag ? "unsetenv %s;\n" : "unset %s;\n";
-		printf(format, "%s", SSH_AUTHSOCKET_ENV_NAME);
-		printf(format, "%s", SSH_AGENTPID_ENV_NAME);
+		printf(format, SSH_AUTHSOCKET_ENV_NAME);
+		printf(format, SSH_AGENTPID_ENV_NAME);
 		printf("echo Agent pid %ld killed;\n", (long)pid);
 		exit(0);
 	}
