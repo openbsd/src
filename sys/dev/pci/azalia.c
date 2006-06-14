@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.11 2006/06/14 19:34:52 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.12 2006/06/14 20:24:12 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -989,10 +989,13 @@ azalia_codec_init(codec_t *this)
 		if (COP_FTYPE(result) == COP_FTYPE_AUDIO) {
 			this->audiofunc = n + i;
 			break;	/* XXX multiple audio functions? */
+		} else if (COP_FTYPE(result) == COP_FTYPE_MODEM) {
+			printf("%s: codec[%d]: No support for modem function groups\n",
+			    XNAME(this->az), addr);
 		}
 	}
 	if (this->audiofunc < 0) {
-		printf("%s: codec[%d]: No audio functions\n",
+		printf("%s: codec[%d]: No audio function groups\n",
 		    XNAME(this->az), addr);
 		return -1;
 	}
