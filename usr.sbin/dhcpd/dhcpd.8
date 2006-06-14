@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.11 2006/06/14 14:58:51 ckuethe Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.12 2006/06/14 20:19:20 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -48,8 +48,8 @@
 .Op Fl dfn
 .Op Fl A Ar abandoned_ip_table
 .Op Fl C Ar changed_ip_table
-.Op Fl L Ar leased_ip_table
 .Op Fl c Ar config-file
+.Op Fl L Ar leased_ip_table
 .Op Fl l Ar lease-file
 .Op Fl p Ar pf-device
 .Op Ar if0 Op Ar ... ifN
@@ -179,21 +179,6 @@ When the address is leased to a different machine,
 .Nm
 can remove the address from the overload table, thus allowing a well-behaved
 machine to reuse the address.
-.It Fl L Ar leased_ip_table
-When an address is leased
-.Nm
-will insert it into the
-.Xr pf 4
-table named
-.Ar leased_ip_table .
-Addresses are removed from the table when the lease expires.
-Combined with the table of abandoned addresses, this can help enforce a
-requirement to use DHCP on a network, or can place DHCP users in a different
-class of service.
-Users are cautioned against placing much trust in Ethernet or IP addresses;
-.Xr ifconfig 8
-can be used to trivially change the interface's address, and on a busy DHCP
-network, IP addresses will likely be quickly recycled.
 .It Fl c Ar config-file
 Use an alternate configuration file,
 .Ar config-file .
@@ -226,6 +211,21 @@ background.
 This is useful when running
 .Nm
 under a debugger, or when running it out of inittab on System V systems.
+.It Fl L Ar leased_ip_table
+When an address is leased
+.Nm
+will insert it into the
+.Xr pf 4
+table named
+.Ar leased_ip_table .
+Addresses are removed from the table when the lease expires.
+Combined with the table of abandoned addresses, this can help enforce a
+requirement to use DHCP on a network, or can place DHCP users in a different
+class of service.
+Users are cautioned against placing much trust in Ethernet or IP addresses;
+.Xr ifconfig 8
+can be used to trivially change the interface's address, and on a busy DHCP
+network, IP addresses will likely be quickly recycled.
 .It Fl l Ar lease-file
 Use an alternate lease file,
 .Ar lease-file .
