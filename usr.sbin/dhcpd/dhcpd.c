@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.27 2006/06/01 06:06:27 ckuethe Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.28 2006/06/14 14:58:52 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -60,6 +60,7 @@ char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
 char *abandoned_tab = NULL;
 char *changedmac_tab = NULL;
+char *leased_tab = NULL;
 
 int
 main(int argc, char *argv[])
@@ -71,13 +72,16 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "A:C:c:dfl:nq")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nq")) != -1)
 		switch (ch) {
 		case 'A':
 			abandoned_tab = optarg;
 			break;
 		case 'C':
 			changedmac_tab = optarg;
+			break;
+		case 'L':
+			leased_tab = optarg;
 			break;
 		case 'c':
 			path_dhcpd_conf = optarg;
@@ -141,7 +145,9 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 	/* don't go near /dev/pf unless we actually intend to use it */
-	if ((abandoned_tab != NULL) || (changedmac_tab != NULL)){
+	if ((abandoned_tab != NULL) ||
+	    (changedmac_tab != NULL) ||
+	    (leased_tab != NULL)){
 		if (pipe(pfpipe) == -1)
 			error("pipe (%m)");
 		switch (pfproc_pid = fork()){
@@ -170,6 +176,7 @@ main(int argc, char *argv[])
 		error("can't drop privileges: %m");
 
 	bootp_packet_handler = do_packet;
+	add_timeout(cur_time + 5, periodic_scan, NULL);
 	dispatch();
 
 	/* not reached */
@@ -183,8 +190,9 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-dfn] [-A abandoned_ip_table]", __progname);
 	fprintf(stderr, " [-C changed_ip_table]\n");
-	fprintf(stderr, "\t[-c config-file] [-l lease-file]");
-	fprintf(stderr, " [-p pf-device] [if0 [...ifN]]\n");
+	fprintf(stderr, "\t[-L leased_ip_table] [-c config-file]");
+	fprintf(stderr, " [-l lease-file]\n");
+	fprintf(stderr, "\t[-p pf-device] [if0 [...ifN]]\n");
 	exit(1);
 }
 
@@ -249,4 +257,40 @@ lease_ping_timeout(void *vlp)
 		release_lease(lp);
 	} else
 		dhcp_reply(lp);
+}
+
+/* from memory.c - needed to be able to walk the lease table */
+extern struct subnet *subnets;
+
+void
+periodic_scan(void *p)
+{
+	time_t x, y;
+	struct subnet		*n;
+	struct group		*g;
+	struct shared_network	*s;
+	struct lease		*l;
+
+	/* find the shortest lease this server gives out */
+	x = MIN(root_group.default_lease_time, root_group.max_lease_time);
+	for (n = subnets; n; n = n->next_subnet)
+		for (g = n->group; g; g = g->next)
+			x = MIN(x, g->default_lease_time);
+
+	/* use half of the shortest lease as the scan interval */
+	y = x / 2;
+	if (y < 1)
+		y = 1;
+
+	/* walk across all leases to find the exired ones */
+	for (n = subnets; n; n = n->next_subnet)
+		for (g = n->group; g; g = g->next)
+			for (s = g->shared_network; s; s = s->next)
+				for (l = s->leases; l && l->ends; l = l->next)
+					if (cur_time >= l->ends){
+						release_lease(l);
+						pfmsg('R', l);
+					}
+
+	add_timeout(cur_time + y, periodic_scan, NULL);
 }

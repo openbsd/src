@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.20 2006/06/14 14:49:46 ckuethe Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.21 2006/06/14 14:58:52 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -566,6 +566,7 @@ int	main(int, char *[]);
 void	cleanup(void);
 void	lease_pinged(struct iaddr, u_int8_t *, int);
 void	lease_ping_timeout(void *);
+void	periodic_scan(void *);
 
 /* conflex.c */
 extern int	 lexline, lexchar;

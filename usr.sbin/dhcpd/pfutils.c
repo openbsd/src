@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.4 2006/06/14 14:49:46 ckuethe Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.5 2006/06/14 14:58:52 ckuethe Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -43,6 +43,7 @@ extern int pfpipe[2];
 extern int gotpipe;
 extern char *abandoned_tab;
 extern char *changedmac_tab;
+extern char *leased_tab;
 
 __dead void
 pftable_handler()
@@ -80,16 +81,44 @@ pftable_handler()
 				error("pf pipe error: %m");
 
 			switch (cmd.type){
-			case 'A':
-				pf_change_table(fd, 1, cmd.ip, abandoned_tab);
-				pf_kill_state(fd, cmd.ip);
-				break;
-			case 'C':
-				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
-				pf_change_table(fd, 0, cmd.ip, changedmac_tab);
-				break;
-			case 'L':
-				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
+ 			case 'A':
+				/*
+				 * When we abandon an address, we add it to the
+				 * the table of abandoned addresses, and remove
+				 * it from the table of active leases.
+				 */
+ 				pf_change_table(fd, 1, cmd.ip, abandoned_tab);
+				pf_change_table(fd, 0, cmd.ip, leased_tab);
+ 				pf_kill_state(fd, cmd.ip);
+ 				break;
+ 			case 'C':
+				/*
+				 * When the hardware address for an IP changes,
+				 * remove it from the table of abandoned
+				 * addresses, and from the table of overloaded
+				 * addresses.
+				 */
+ 				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
+ 				pf_change_table(fd, 0, cmd.ip, changedmac_tab);
+ 				break;
+ 			case 'L':
+				/*
+				 * When a lease is granted or renewed, remove
+				 * it from the table of abandoned addresses,
+				 * and ensure it is in the table of active
+				 * leases.
+				 */
+ 				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
+				pf_change_table(fd, 1, cmd.ip, leased_tab);
+ 				break;
+			case 'R':
+				/*
+				 * When we release or expire a lease, remove
+				 * it from the table of active leases. As long
+				 * as dhcpd doesn't abandon the address, no
+				 * further action is required.
+				 */
+				pf_change_table(fd, 0, cmd.ip, leased_tab);
 				break;
 			default:
 				break;
@@ -216,6 +245,11 @@ pfmsg(char c, struct lease *lp)
 		break;
 	case 'L': /* Address is being leased (unabandoned) */
 		if (abandoned_tab != NULL)
+			(void)atomicio(vwrite, pfpipe[1], &cmd,
+			    sizeof(struct pf_cmd));
+		break;
+	case 'R': /* Address is being released or lease has expired */
+		if (leased_tab != NULL)
 			(void)atomicio(vwrite, pfpipe[1], &cmd,
 			    sizeof(struct pf_cmd));
 		break;
