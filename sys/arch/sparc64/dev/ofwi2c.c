@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2c.c,v 1.3 2006/02/09 12:16:25 dlg Exp $	*/
+/*	$OpenBSD: ofwi2c.c,v 1.4 2006/06/14 01:15:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -46,7 +46,8 @@ ofwiic_pci_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 		if (name[0] == '\0')
 			continue;
 
-		if (strcmp(name, "i2c-smbus") == 0)
+		if (strcmp(name, "i2c-smbus") == 0 ||
+		    strcmp(name, "i2c") == 0)
 			ofwiic_scan(self, iba, &node);
 	}
 }
@@ -75,7 +76,7 @@ ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 
 		memset(&ia, 0, sizeof(ia));
 		ia.ia_tag = iba->iba_tag;
-		ia.ia_addr = reg[1] >> 1;
+		ia.ia_addr = (reg[0] << 7) | (reg[1] >> 1);
 		ia.ia_name = name;
 		ia.ia_cookie = &node;
 

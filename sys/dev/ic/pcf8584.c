@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584.c,v 1.2 2006/02/01 11:09:16 dlg Exp $ */
+/*	$OpenBSD: pcf8584.c,v 1.3 2006/06/14 01:15:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -85,17 +85,11 @@ int		pcfiic_xmit(struct pcfiic_softc *, u_int8_t, const u_int8_t *,
 int		pcfiic_recv(struct pcfiic_softc *, u_int8_t, u_int8_t *,
 		    size_t);
 
-u_int8_t	pcfiic_read(struct pcfiic_softc *, bus_size_t);
-void		pcfiic_write(struct pcfiic_softc *, bus_size_t, u_int8_t);
+volatile u_int8_t pcfiic_read(struct pcfiic_softc *, bus_size_t);
+volatile void	pcfiic_write(struct pcfiic_softc *, bus_size_t, u_int8_t);
+void		pcfiic_choose_bus(struct pcfiic_softc *, u_int8_t);
 int		pcfiic_wait_nBB(struct pcfiic_softc *);
 int		pcfiic_wait_pin(struct pcfiic_softc *, volatile u_int8_t *);
-
-#define pcfiic_ctrl_start(_sc)		pcfiic_write((_sc), PCF_S1, \
-					    PCF_CTRL_START)
-#define pcfiic_ctrl_repstart(_sc)	pcf_write((_sc), PCF_S1, \
-					    PCF_CTRL_REPSTART)
-#define pcfiic_ctrl_stop(_sc)		pcfiic_write((_sc), PCF_S1, \
-					    PCF_CTRL_STOP)
 
 void
 pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr,
@@ -113,10 +107,14 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr,
 	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN|PCF_CTRL_ES1);
 	pcfiic_write(sc, PCF_S0, PCF_CLOCK_12);
 
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN | PCF_CTRL_ESO | PCF_CTRL_ENI |
-	    PCF_CTRL_ACK);
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_IDLE);
+
+//	pcfiic_read(sc, PCF_S0);	/* dummy read */
 
 	printf("\n");
+
+	if (sc->sc_master)
+		pcfiic_choose_bus(sc, 0);
 
 	lockinit(&sc->sc_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
 	sc->sc_i2c.ic_cookie = sc;
@@ -175,16 +173,19 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
+	if (sc->sc_master)
+		pcfiic_choose_bus(sc, addr >> 7);
+
 	if (cmdlen > 0) {
-		if (pcfiic_xmit(sc, addr, cmdbuf, cmdlen) != 0)
+		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
 			return (1);
 	}
 
 	if (len > 0) {
 		if (I2C_OP_WRITE_P(op))
-			ret = pcfiic_xmit(sc, addr, buf, len);
+			ret = pcfiic_xmit(sc, addr & 0x7f, buf, len);
 		else
-			ret = pcfiic_recv(sc, addr, buf, len);
+			ret = pcfiic_recv(sc, addr & 0x7f, buf, len);
 	}
 
 	return (ret);
@@ -198,13 +199,11 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
 	int				err = 0;
 	volatile u_int8_t		r;
 
-
 	while ((pcfiic_read(sc, PCF_S1) & PCF_STAT_nBB) == 0)
 		;
 
 	pcfiic_write(sc, PCF_S0, addr << 1);
-	
-	pcfiic_write(sc, PCF_S1, 0xc5);
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
 
 	for (i = 0; i <= len; i++) {
 		while ((r = pcfiic_read(sc, PCF_S1)) & PCF_STAT_PIN)
@@ -219,7 +218,7 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
 			pcfiic_write(sc, PCF_S0, buf[i]);
 	}
 
-	pcfiic_write(sc, PCF_S1, 0xc3);
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
 
 	return (err);
 }
@@ -235,25 +234,25 @@ pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len)
 
 	if (pcfiic_wait_nBB(sc) != 0)
 		return (1);
-	
-	pcfiic_ctrl_start(sc);
+
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
 
 	i = 0;
 	for (i = 0; i <= len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
-			pcfiic_ctrl_stop(sc);
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
 			return (1);
 		}
 
 		if ((i != len) && (r & PCF_STAT_LRB)) {
-			pcfiic_ctrl_stop(sc);
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
 			return (1);
 		}
 
 		if (i == len - 1) {
 			pcfiic_write(sc, PCF_S1, PCF_CTRL_ESO);
 		} else if (i == len) {
-			pcfiic_ctrl_stop(sc);
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
 		}
 
 		r = pcfiic_read(sc, PCF_S0);
@@ -264,8 +263,7 @@ pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len)
 	return (err);
 }
 
-
-u_int8_t
+volatile u_int8_t
 pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 {
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 1,
@@ -273,11 +271,19 @@ pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, r));
 }
 
-void
+volatile void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 1,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+pcfiic_choose_bus(struct pcfiic_softc *sc, u_int8_t bus)
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh2, 0, bus);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh2, 0, 1,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
