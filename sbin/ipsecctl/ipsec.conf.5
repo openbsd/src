@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.56 2006/06/13 16:13:41 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.57 2006/06/14 19:04:26 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -328,6 +328,28 @@ authkey file "filename"
 The encryption key is defined similar to
 .Ar authkey .
 .El
+.Pp
+Different cipher types may require different sized keys.
+.Pp
+.Bl -column "CipherXX" "Key Length" -offset indent -compact
+.It Em Cipher	Key Length
+.It Li DES Ta "56 bits"
+.It Li 3DES Ta "168 bits"
+.It Li AES Ta "variable (128 bits recommended)"
+.It Li Blowfish Ta "variable (160 bits recommended)"
+.It Li CAST Ta "variable (128 bits maximum and recommended)"
+.It Li Skipjack Ta "80 bits"
+.El
+.Pp
+Use of DES or Skipjack as an encryption algorithm is not recommended
+(except for backwards compatibility) due to their short key length.
+Furthermore, attacks on Skipjack have shown severe weaknesses
+in its structure.
+.Pp
+Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
+to form its 168-bit key.
+This is because the most significant bit of each byte is ignored by both
+algorithms.
 .Pp
 It is very important that keys are not guessable.
 One practical way of generating 160-bit (20-byte) keys is a follows:
