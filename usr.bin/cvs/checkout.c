@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.61 2006/06/06 06:58:46 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.62 2006/06/14 20:28:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -201,8 +201,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 
 	if (exists == 0) {
 		rcstime = rcs_rev_getdate(cf->file_rcs, rnum);
-		if ((rcstime = cvs_hack_time(rcstime, 0)) == 0)
-			fatal("cvs_checkout_file: time conversion failed");
+		rcstime = cvs_hack_time(rcstime, 0);
 	} else {
 		time(&rcstime);
 	}
@@ -213,8 +212,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	if (futimes(cf->fd, tv) == -1)
 		fatal("cvs_checkout_file: futimes: %s", strerror(errno));
 
-	if ((rcstime = cvs_hack_time(rcstime, 1)) == 0)
-		fatal("cvs_checkout_file: to gmt failed");
+	rcstime = cvs_hack_time(rcstime, 1);
 
 	ctime_r(&rcstime, tbuf);
 	if (tbuf[strlen(tbuf) - 1] == '\n')

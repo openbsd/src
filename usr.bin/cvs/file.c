@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.159 2006/06/14 14:10:50 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.160 2006/06/14 20:28:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -660,9 +660,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 			fatal("cvs_file_classify: %s", strerror(errno));
 
 		mtime = cvs_hack_time(st.st_mtime, 1);
-		if (mtime == 0)
-			fatal("to gmt failed");
-
 		if (mtime != cf->file_ent->ce_mtime)
 			ismodified = 1;
 	}

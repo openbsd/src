@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.87 2006/06/14 15:14:47 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.88 2006/06/14 20:28:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -551,7 +551,7 @@ cvs_hack_time(time_t oldtime, int togmt)
 	if (togmt == 1) {
 		t = gmtime(&oldtime);
 		if (t == NULL)
-			return (0);
+			fatal("gmtime failed");
 
 		return (mktime(t));
 	}
@@ -562,7 +562,7 @@ cvs_hack_time(time_t oldtime, int togmt)
 	    t->tm_mon + 1, t->tm_mday, t->tm_year + 1900, t->tm_hour,
 	    t->tm_min, t->tm_sec);
 	if (l == -1 || l >= (int)sizeof(tbuf))
-		return (0);
+		fatal("cvs_hack_time: overflow");
 
 	return (cvs_date_parse(tbuf));
 }
