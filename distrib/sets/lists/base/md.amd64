@@ -68,7 +68,7 @@
 ./usr/lib/gcc-lib/amd64-unknown-openbsd3.9/3.3.5/collect2
 ./usr/lib/gcc-lib/amd64-unknown-openbsd3.9/3.3.5/specs
 ./usr/lib/libasn1.so.16.0
-./usr/lib/libc.so.39.1
+./usr/lib/libc.so.39.2
 ./usr/lib/libcom_err.so.16.0
 ./usr/lib/libcrypto.so.12.1
 ./usr/lib/libcurses.so.10.0

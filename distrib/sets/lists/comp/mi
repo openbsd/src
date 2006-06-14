@@ -1806,6 +1806,7 @@
 ./usr/share/man/cat2/accept.0
 ./usr/share/man/cat2/access.0
 ./usr/share/man/cat2/acct.0
+./usr/share/man/cat2/adjfreq.0
 ./usr/share/man/cat2/adjtime.0
 ./usr/share/man/cat2/alpha/dense_base.0
 ./usr/share/man/cat2/alpha/inb.0
