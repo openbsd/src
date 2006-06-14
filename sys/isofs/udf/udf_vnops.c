@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.11 2006/01/18 19:27:48 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.12 2006/06/14 16:48:10 pat Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -100,8 +100,11 @@ udf_hashlookup(struct udf_mnt *udfmp, ino_t id, int flags, struct vnode **vpp)
 loop:
 	mtx_enter(&udfmp->hash_mtx);
 	lh = &udfmp->hashtbl[id & udfmp->hashsz];
-	if (lh == NULL)
+	if (lh == NULL) {
+		mtx_leave(&udfmp->hash_mtx);
 		return (ENOENT);
+	}
+
 	LIST_FOREACH(node, lh, le) {
 		if (node->hash_id == id) {
 			mtx_leave(&udfmp->hash_mtx);
