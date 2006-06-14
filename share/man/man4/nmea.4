@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.6 2006/06/12 09:27:13 mbalmer Exp $
+.\"	$OpenBSD: nmea.4,v 1.7 2006/06/14 08:03:08 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -23,7 +23,8 @@
 .Sh SYNOPSIS
 .Cd "pseudo-device nmea" Op Ar count
 .Sh DESCRIPTION
-This line discipline interfaces NMEA devices.
+This line discipline interfaces NMEA devices,
+such as GPS receivers attached to a serial or USB port.
 .Pp
 The line discipline is enabled by the following sequence:
 .Bd -literal -offset indent
@@ -34,12 +35,44 @@ ioctl(fildes, TIOCSETD, &ldisc);
 .Pp
 The byte stream is unaltered by the line discipline which
 maintains a timedelta sensor using the NMEA data.
+The timedelta sensor will appear as nmea* in the list of sensors and the delta
+(in nanoseconds) between the received time information and the local time can
+be accessed through the
+.Xr sysctl 8
+interface.
+.Sh NMEA SENTENCES
+The
+.Nm
+line discipline decodes the following NMEA 0183 sentences:
+.Bl -tag -width "GPRMCXX"
+.It GPRMC
+Recommended minimal navigation information C.
+Only the time and date information is extracted.
+The warning indication is used to provide the sensor status (see below).
+If the attached device sends the GPRMC message in the 13-field format,
+the operation mode of the GPS device is reported in the sensor description.
+The sensor timestamp is taken when the initial '$' character is received
+from the NMEA device.
+.El
+.Sh SENSOR STATES
+The quality of the timedelta is reported as the sensor status:
+.Bl -tag -width "WARNXX"
+.It OK
+The time information is valid.
+The timedelta is safe to use for applications like
+.Xr ntpd 8 .
+.It WARN
+The attached GPS receiver indicates a warning condition.
+The timedelta should be used with care.
+.El
 .Sh SEE ALSO
-.Xr tty 4
+.Xr tty 4 ,
+.Xr ntpd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
-interface appeared in
+interface first appeared in
 .Ox 4.0 .
 .Sh AUTHORS
 The
