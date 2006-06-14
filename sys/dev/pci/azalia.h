@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.6 2006/05/11 23:34:35 brad Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.7 2006/06/14 19:34:52 brad Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -518,8 +518,14 @@ typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
 	int (*init_widget)(const struct codec_t *, widget_t *, nid_t);
+	int (*mixer_init)(struct codec_t *);
+	int (*mixer_delete)(struct codec_t *);
+	int (*set_port)(struct codec_t *, mixer_ctrl_t *);
+	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
 
 	struct azalia_t *az;
+	uint32_t vid;		/* codec vendor/device ID */
+	uint32_t subid;		/* PCI subvendor/device ID */
 	const char *name;
 	int address;
 	int nfunctions;
@@ -536,6 +542,7 @@ typedef struct codec_t {
 	int nadcs;
 	nid_t adcs[32];
 	int cur_adc;		/* currently selected ADC index */
+	int running;
 
 	int nmixers, maxmixers;
 	mixer_item_t *mixers;
@@ -546,4 +553,5 @@ typedef struct codec_t {
 } codec_t;
 
 
-int	azalia_codec_init_vtbl(codec_t *, uint32_t);
+int	azalia_codec_init_vtbl(codec_t *);
+int	azalia_codec_construct_format(codec_t *);
