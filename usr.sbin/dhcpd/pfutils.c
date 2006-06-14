@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.2 2006/05/31 14:40:14 ckuethe Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.3 2006/06/14 14:44:39 ckuethe Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -105,6 +105,9 @@ pf_change_table(int fd, int op, struct in_addr ip, char *table)
 {
 	struct pfioc_table	io;
 	struct pfr_addr		addr;
+
+	if (table == NULL)
+		return;
 
 	bzero(&io, sizeof(io));
 	strlcpy(io.pfrio_table.pfrt_name, table,
