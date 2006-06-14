@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.63 2006/06/13 03:01:04 gwk Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.64 2006/06/14 19:46:54 gwk Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@
 #include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/biosvar.h>
+#include <machine/kvm86.h>
 
 #include <dev/cons.h>
 
@@ -118,6 +119,10 @@ cpu_configure()
 
 	/* Set up proc0's TSS and LDT */
 	i386_proc0_tss_ldt_init();
+
+#ifdef KVM86
+	kvm86_init();
+#endif
 
 #ifndef SMALL_KERNEL
 	pmap_bootstrap_pae();
