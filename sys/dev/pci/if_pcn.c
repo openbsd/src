@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.13 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.14 2006/06/14 19:30:44 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -819,6 +819,7 @@ pcn_shutdown(void *arg)
 	struct pcn_softc *sc = arg;
 
 	pcn_stop(&sc->sc_arpcom.ac_if, 1);
+	pcn_reset(sc);
 }
 
 /*
