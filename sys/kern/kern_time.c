@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.55 2006/06/04 18:47:33 otto Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.56 2006/06/14 19:52:07 otto Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -354,7 +354,39 @@ struct timeval adjtimedelta;		/* unapplied time correction */
 int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
+int64_t	ntp_tick_permanent;
+int64_t	ntp_tick_acc;
 #endif
+
+/* ARGSUSED */
+int
+sys_adjfreq(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_adjfreq_args /* {
+		syscallarg(const int64_t *) freq;
+		syscallarg(int64_t *) oldfreq;
+	} */ *uap = v;
+	int error, s;
+	int64_t f;
+
+	if (SCARG(uap, oldfreq)) {
+		f = ntp_tick_permanent * hz;
+		if ((error = copyout((void *)&f, (void *)SCARG(uap, oldfreq),
+		    sizeof(int64_t))))
+			return (error);
+	}
+	if (SCARG(uap, freq)) {
+		if ((error = suser(p, 0)))
+			return (error);
+		if ((error = copyin((void *)SCARG(uap, freq), (void *)&f,
+		    sizeof(int64_t))))
+			return (error);
+		s = splclock();
+		ntp_tick_permanent = f / hz;
+		splx(s);
+	}
+	return (0);
+}
 
 /* ARGSUSED */
 int
@@ -449,6 +481,7 @@ out:
 	return (0);
 #endif
 }
+
 
 /*
  * Get value of an interval timer.  The process virtual and

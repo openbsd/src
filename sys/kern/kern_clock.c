@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.58 2006/01/20 07:53:48 tedu Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.59 2006/06/14 19:52:07 otto Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -222,6 +222,8 @@ hardclock(struct clockframe *frame)
 	int delta;
 	extern int tickdelta;
 	extern long timedelta;
+	extern int64_t ntp_tick_permanent;
+	extern int64_t ntp_tick_acc;
 #endif
 #ifdef __HAVE_CPUINFO
 	struct cpu_info *ci = curcpu();
@@ -285,6 +287,25 @@ hardclock(struct clockframe *frame)
 	if (timedelta != 0) {
 		delta += tickdelta;
 		timedelta -= tickdelta;
+	}
+
+	/*
+	 * ntp_tick_permanent accumulates the clock correction each
+	 * tick. The unit is ns per tick shifted left 32 bits. If we have
+	 * accumulated more than 1us, we bump delta in the right
+	 * direction. Use a loop to avoid long long div; typicallly
+	 * the loops will be executed 0 or 1 iteration.
+	 */
+	if (ntp_tick_permanent != 0) {
+		ntp_tick_acc += ntp_tick_permanent;
+		while (ntp_tick_acc >= (1000LL << 32)) {
+			delta++;
+			ntp_tick_acc -= (1000LL << 32);
+		}
+		while (ntp_tick_acc <= -(1000LL << 32)) {
+			delta--;
+			ntp_tick_acc += (1000LL << 32);
+		}
 	}
 
 	BUMPTIME(&time, delta);
