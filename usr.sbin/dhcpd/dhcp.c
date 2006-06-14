@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.23 2006/05/31 02:43:15 ckuethe Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.24 2006/06/14 14:49:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -39,10 +39,6 @@
  */
 
 #include "dhcpd.h"
-extern int pfpipe[2];
-extern int gotpipe;
-extern char *abandoned_tab;
-extern char *changedmac_tab;
 
 int outstanding_pings;
 
@@ -85,7 +81,6 @@ dhcpdiscover(struct packet *packet)
 {
 	struct lease *lease = find_lease(packet, packet->shared_network, 0);
 	struct host_decl *hp;
-	struct pf_cmd cmd;
 
 	note("DHCPDISCOVER from %s via %s",
 	    print_hw_addr(packet->raw->htype, packet->raw->hlen,
@@ -141,13 +136,7 @@ dhcpdiscover(struct packet *packet)
 				    piaddr(lease->ip_addr));
 				lease->flags &= ~ABANDONED_LEASE;
 
-				if (gotpipe && (abandoned_tab != NULL)){
-					cmd.type = 'L';
-					bcopy(lease->ip_addr.iabuf,
-					    &cmd.ip.s_addr, 4);
-					(void)atomicio(vwrite, pfpipe[1],
-					    &cmd, sizeof(struct pf_cmd));
-				}
+				pfmsg('L', lease); /* unabandon address */
 			}
 		}
 

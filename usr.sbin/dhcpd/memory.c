@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.11 2006/05/31 02:43:15 ckuethe Exp $ */
+/*	$OpenBSD: memory.c,v 1.12 2006/06/14 14:49:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -39,10 +39,6 @@
  */
 
 #include "dhcpd.h"
-extern int pfpipe[2];
-extern int gotpipe;
-extern char *abandoned_tab;
-extern char *changedmac_tab;
 
 static struct subnet *subnets;
 static struct shared_network *shared_networks;
@@ -441,7 +437,6 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 	int enter_hwaddr = 0;
 	int do_pftable = 0;
 	struct lease *lp;
-	struct pf_cmd cmd;
 
 	/* Static leases are not currently kept in the database... */
 	if (lease->flags & STATIC_LEASE)
@@ -604,17 +599,9 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 		comp->ends = lease->ends;
 	}
 
-	if (gotpipe && (abandoned_tab != NULL)){
-		cmd.type = 'L';
-		bcopy(lease->ip_addr.iabuf, &cmd.ip.s_addr, 4);
-		(void)atomicio(vwrite, pfpipe[1], &cmd, sizeof(struct pf_cmd));
-	}
-
-	if (gotpipe && do_pftable && (changedmac_tab != NULL)){
-		cmd.type = 'C';
-		bcopy(lease->ip_addr.iabuf, &cmd.ip.s_addr, 4);
-		(void)atomicio(vwrite, pfpipe[1], &cmd, sizeof(struct pf_cmd));
-	}
+	pfmsg('L', lease); /* address is leased. remove from purgatory */
+	if (do_pftable) /* address changed hwaddr. remove from overload */
+		pfmsg('C', lease);
 
 	/* Return zero if we didn't commit the lease to permanent storage;
 	   nonzero if we did. */
@@ -647,7 +634,6 @@ void
 abandon_lease(struct lease *lease, char *message)
 {
 	struct lease lt;
-	struct pf_cmd cmd;
 	time_t abtime;
 
 	abtime = lease->subnet->group->default_lease_time;
@@ -662,11 +648,7 @@ abandon_lease(struct lease *lease, char *message)
 	lt.uid_len = 0;
 	supersede_lease(lease, &lt, 1);
 
-	if (gotpipe && abandoned_tab != NULL){
-		cmd.type = 'A';
-		bcopy(lease->ip_addr.iabuf, &cmd.ip.s_addr, 4);
-		(void)atomicio(vwrite, pfpipe[1], &cmd, sizeof(struct pf_cmd));
-	}
+	pfmsg('A', lease); /* address is abandoned. send to purgatory */
 	return;
 }
 

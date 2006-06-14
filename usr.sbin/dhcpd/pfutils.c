@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.3 2006/06/14 14:44:39 ckuethe Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.4 2006/06/14 14:49:46 ckuethe Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -40,6 +40,7 @@
 
 extern struct passwd *pw;
 extern int pfpipe[2];
+extern int gotpipe;
 extern char *abandoned_tab;
 extern char *changedmac_tab;
 
@@ -183,4 +184,42 @@ atomicio(ssize_t (*f) (int, void *, size_t), int fd, void *_s, size_t n)
 		}
 	}
 	return (pos);
+}
+
+/*
+ * This function sends commands to the pf table handler. It will safely and
+ * silently return if the handler is unconfigured, therefore it can be called
+ * on all interesting lease events, whether or not the user actually wants to
+ * use the pf table feature.
+ */
+void
+pfmsg(char c, struct lease *lp)
+{
+	struct pf_cmd cmd;
+
+	if (gotpipe == 0)
+		return;
+
+	cmd.type = c;
+	bcopy(lp->ip_addr.iabuf, &cmd.ip.s_addr, 4);
+
+	switch(c){
+	case 'A': /* address is being abandoned */
+		if (abandoned_tab != NULL)
+			(void)atomicio(vwrite, pfpipe[1], &cmd,
+			    sizeof(struct pf_cmd));
+		break;
+	case 'C': /* IP moved to different ethernet address */
+		if (changedmac_tab != NULL)
+			(void)atomicio(vwrite, pfpipe[1], &cmd,
+			    sizeof(struct pf_cmd));
+		break;
+	case 'L': /* Address is being leased (unabandoned) */
+		if (abandoned_tab != NULL)
+			(void)atomicio(vwrite, pfpipe[1], &cmd,
+			    sizeof(struct pf_cmd));
+		break;
+	default: /* silently ignore unknown commands */
+		break;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.19 2006/05/31 02:43:15 ckuethe Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.20 2006/06/14 14:49:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -792,3 +792,4 @@ void pf_change_table(int , int , struct in_addr , char *);
 void pf_kill_state(int , struct in_addr );
 size_t atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 #define vwrite (ssize_t (*)(int, void *, size_t))write
+void pfmsg(char, struct lease *);
