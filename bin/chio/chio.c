@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.19 2006/06/13 19:35:17 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.20 2006/06/14 02:14:25 krw Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -670,8 +670,7 @@ check_source_drive(int unit)
 	 * Try to make it accessible by doing an mt offline.
 	 */
 	tapedev = parse_tapedev(_PATH_CH_CONF, changer_name, unit);
-	mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART | OPENDEV_DRCT,
-	    NULL);
+	mtfd = opendev(tapedev, O_RDONLY, OPENDEV_PART, NULL);
 	if (mtfd == -1)
 		err(1, "%s drive %d (%s): open", changer_name, unit, tapedev);
 	if (ioctl(mtfd, MTIOCTOP, &mtoffl) == -1)

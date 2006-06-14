@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.26 2004/07/13 21:09:48 millert Exp $	*/
+/*	$OpenBSD: util.h,v 1.27 2006/06/14 02:14:25 krw Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
  * opendev() specific operation flags.
  */
 #define OPENDEV_PART	0x01		/* Try to open the raw partition. */
-#define OPENDEV_DRCT	0x02		/* Obsolete (now default behavior). */
 #define OPENDEV_BLCK	0x04		/* Open block, not character device. */
 
 /*

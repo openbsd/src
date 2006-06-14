@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.28 2006/06/01 05:42:01 krw Exp $	*/
+/*	$OpenBSD: mt.c,v 1.29 2006/06/14 02:14:25 krw Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.28 2006/06/01 05:42:01 krw Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.29 2006/06/14 02:14:25 krw Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
 	if ((mtfd = host ? rmtopen(tape, flags) : opendev(tape, flags,
-	    OPENDEV_PART | OPENDEV_DRCT, &realtape)) < 0) {
+	    OPENDEV_PART, &realtape)) < 0) {
 		if (errno != 0)
 			warn("%s", host ? tape : realtape);
 		exit(2);
