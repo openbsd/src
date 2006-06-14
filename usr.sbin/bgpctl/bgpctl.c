@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.105 2006/05/27 21:25:06 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.106 2006/06/14 17:10:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1039,7 +1039,7 @@ show_rib_summary_msg(struct imsg *imsg)
 		memcpy(&rib, imsg->data, sizeof(rib));
 
 		print_prefix(&rib.prefix, rib.prefixlen, rib.flags);
-		printf("%-15s ", log_addr(&rib.nexthop));
+		printf("%-15s ", log_addr(&rib.exit_nexthop));
 
 		printf(" %5u %5u ", rib.local_pref, rib.med);
 
@@ -1089,7 +1089,8 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 		free(aspath);
 
 		s = fmt_peer(rib.descr, &rib.remote_addr, -1, nodescr);
-		printf("    Nexthop %s from %s (", log_addr(&rib.nexthop), s);
+		printf("    Nexthop %s ", log_addr(&rib.exit_nexthop));
+		printf("(via %s) from %s (", log_addr(&rib.true_nexthop), s);
 		free(s);
 		id.s_addr = htonl(rib.remote_id);
 		printf("%s)\n", inet_ntoa(id));
