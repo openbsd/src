@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.44 2006/04/02 23:29:05 brad Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.45 2006/06/14 08:36:31 fkr Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #define SHOW_REGS
 #define PCCBB_PCMCIA_POLL
 */
-/* #define CBB_DEBUG */
 
 /*
 #define CB_PCMCIA_POLL
