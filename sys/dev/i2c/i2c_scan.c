@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.82 2006/04/29 12:04:26 djm Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.83 2006/06/14 20:42:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -611,6 +611,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 */
 		if (iicprobe(0x58) == 0x31)
 			name = "as99127f";	/* rev 1 */
+	} else if ((addr == 0x2d || addr == 0x2e) &&
+	    addr * 2 == iicprobe(0x04) &&
+	    iicprobe(0x5d) == 0x19 && iicprobe(0x5e) == 0x34 &&
+	    iicprobe(0x5a) == 0x03 && iicprobe(0x5b) == 0x06) {
+		name = "f75375";	/* Fintek */
 	} else if (addr == 0x2d &&
 	    ((iicprobe(0x4f) == 0x06 && (iicprobe(0x4e) & 0x80)) ||
 	    (iicprobe(0x4f) == 0x94 && !(iicprobe(0x4e) & 0x80)))) {
