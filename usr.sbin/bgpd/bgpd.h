@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.201 2006/05/27 21:24:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.202 2006/06/14 17:08:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -469,7 +469,8 @@ struct kroute6_label {
 #define	F_RIB_ANNOUNCE	0x08
 
 struct ctl_show_rib {
-	struct bgpd_addr	nexthop;
+	struct bgpd_addr	true_nexthop;
+	struct bgpd_addr	exit_nexthop;
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	remote_addr;
 	char			descr[PEER_DESCR_LEN];

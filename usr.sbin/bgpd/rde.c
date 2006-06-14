@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.206 2006/05/28 22:07:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.207 2006/06/14 17:08:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1527,13 +1527,17 @@ rde_dump_rib_as(struct prefix *p, pid_t pid, int all)
 	memcpy(&rib.remote_addr, &p->aspath->peer->remote_addr,
 	    sizeof(rib.remote_addr));
 	rib.remote_id = p->aspath->peer->remote_bgpid;
-	if (p->aspath->nexthop != NULL)
-		memcpy(&rib.nexthop, &p->aspath->nexthop->true_nexthop,
-		    sizeof(rib.nexthop));
-	else {
+	if (p->aspath->nexthop != NULL) {
+		memcpy(&rib.true_nexthop, &p->aspath->nexthop->true_nexthop,
+		    sizeof(rib.true_nexthop));
+		memcpy(&rib.exit_nexthop, &p->aspath->nexthop->exit_nexthop,
+		    sizeof(rib.exit_nexthop));
+	} else {
 		/* announced network may have a NULL nexthop */
-		bzero(&rib.nexthop, sizeof(rib.nexthop));
-		rib.nexthop.af = p->prefix->af;
+		bzero(&rib.true_nexthop, sizeof(rib.true_nexthop));
+		bzero(&rib.exit_nexthop, sizeof(rib.exit_nexthop));
+		rib.true_nexthop.af = p->prefix->af;
+		rib.exit_nexthop.af = p->prefix->af;
 	}
 	pt_getaddr(p->prefix, &rib.prefix);
 	rib.prefixlen = p->prefix->prefixlen;
