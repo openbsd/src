@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584.c,v 1.3 2006/06/14 01:15:17 deraadt Exp $ */
+/*	$OpenBSD: pcf8584.c,v 1.4 2006/06/14 04:13:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -198,16 +198,25 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
 	int				i;
 	int				err = 0;
 	volatile u_int8_t		r;
+	int				tries = 100;
 
-	while ((pcfiic_read(sc, PCF_S1) & PCF_STAT_nBB) == 0)
-		;
+	while ((pcfiic_read(sc, PCF_S1) & PCF_STAT_nBB) == 0) {
+		if (--tries == 0)
+			return (1);
+		DELAY(1);
+	}
 
 	pcfiic_write(sc, PCF_S0, addr << 1);
 	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
 
 	for (i = 0; i <= len; i++) {
-		while ((r = pcfiic_read(sc, PCF_S1)) & PCF_STAT_PIN)
-			;
+		while ((r = pcfiic_read(sc, PCF_S1)) & PCF_STAT_PIN) {
+			if (--tries == 0) {
+				err = 1;
+				break;
+			}
+			DELAY(1);
+		}
 
 		if (r & PCF_STAT_LRB) {
 			err = 1;
