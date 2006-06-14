@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.31 2006/05/26 05:07:15 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.32 2006/06/14 17:06:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -515,7 +515,7 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 	bzero(addr, sizeof(struct bgpd_addr));
 	bzero(&ina, sizeof(ina));
 
-	if (inet_pton(AF_INET, word, &ina) == 1) {
+	if (inet_net_pton(AF_INET, word, &ina, sizeof(ina)) != -1) {
 		addr->af = AF_INET;
 		addr->v4 = ina;
 		return (1);
