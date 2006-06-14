@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.58 2006/06/06 05:13:39 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.59 2006/06/14 15:14:47 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -330,4 +330,112 @@ ent_get_line(CVSENTRIES *ep, const char *name)
 	}
 
 	return (NULL);
+}
+
+void
+cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
+{
+	FILE *fp;
+	int linenum;
+	size_t len;
+	char linebuf[128], *tagpath;
+
+	if (tagp != NULL)
+		*tagp = (char *)NULL;
+
+	if (datep != NULL)
+		*datep = (char *)NULL;
+
+	if (nbp != NULL)
+		*nbp = 0;
+
+	tagpath = xmalloc(MAXPATHLEN);
+
+	if (cvs_path_cat(dir, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
+		goto out;
+
+	if ((fp = fopen(tagpath, "r")) == NULL) {
+		if (errno != ENOENT)
+			cvs_log(LP_NOTICE, "failed to open `%s' : %s", tagpath,
+			    strerror(errno));
+		goto out;
+        }
+
+	linenum = 0;
+
+	while (fgets(linebuf, (int)sizeof(linebuf), fp) != NULL) {
+		linenum++;
+		if ((len = strlen(linebuf)) == 0)
+			continue;
+		if (linebuf[len - 1] != '\n') {
+			cvs_log(LP_NOTICE, "line too long in `%s:%d'",
+			    tagpath, linenum);
+			break;
+		}
+		linebuf[--len] = '\0';
+
+		switch (*linebuf) {
+		case 'T':
+			if (tagp != NULL)
+				*tagp = xstrdup(linebuf + 1);
+			break;
+		case 'D':
+			if (datep != NULL)
+				*datep = xstrdup(linebuf + 1);
+			break;
+		case 'N':
+			if (tagp != NULL)
+				*tagp = xstrdup(linebuf + 1);
+			if (nbp != NULL)
+				*nbp = 1;
+			break;
+		default:
+			break;
+		}
+	}
+	if (ferror(fp))
+		cvs_log(LP_NOTICE, "failed to read line from `%s'", tagpath);
+
+	(void)fclose(fp);
+out:
+	xfree(tagpath);
+}
+
+void
+cvs_write_tagfile(char *dir, char *tag, char *date, int nb)
+{
+	FILE *fp;
+	char *tagpath;
+
+	if (cvs_noexec == 1)
+		return;
+
+	tagpath = xmalloc(MAXPATHLEN);
+
+	if (cvs_path_cat(dir, CVS_PATH_TAG, tagpath, MAXPATHLEN) >= MAXPATHLEN)
+		goto out;
+
+	if ((tag != NULL) || (date != NULL)) {
+		if ((fp = fopen(tagpath, "w+")) == NULL) {
+			if (errno != ENOENT) {
+				cvs_log(LP_NOTICE, "failed to open `%s' : %s",
+				    tagpath, strerror(errno));
+			}
+			goto out;
+		}
+		if (tag != NULL) {
+			if (nb != 0)
+				(void)fprintf(fp, "N%s\n", tag);
+			else
+				(void)fprintf(fp, "T%s\n", tag);
+		} else
+			(void)fprintf(fp, "D%s\n", date);
+
+		(void)fclose(fp);
+	} else {
+		(void)cvs_unlink(tagpath);
+		goto out;
+	}
+out:
+	xfree(tagpath);
 }

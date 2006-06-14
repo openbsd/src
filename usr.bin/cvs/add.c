@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.55 2006/06/07 07:01:12 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.56 2006/06/14 15:14:47 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -106,10 +106,10 @@ cvs_add_local(struct cvs_file *cf)
 static void
 add_directory(struct cvs_file *cf)
 {
-	int l, added;
+	int l, added, nb;
 	struct stat st;
 	CVSENTRIES *entlist;
-	char *entry, *repo;
+	char *date, *entry, msg[1024], *repo, *tag;
 
 	cvs_log(LP_TRACE, "add_directory(%s)", cf->file_path);
 
@@ -125,6 +125,9 @@ add_directory(struct cvs_file *cf)
 		    cf->file_path);
 		added = 0;
 	} else {
+		/* Let's see if we have any per-directory tags first. */
+		cvs_parse_tagfile(cf->file_wd, &tag, &date, &nb);
+
 		l = snprintf(entry, MAXPATHLEN, "%s/%s", cf->file_path,
 		    CVS_PATH_CVSDIR);
 		if (l == -1 || l >= MAXPATHLEN)
@@ -153,7 +156,7 @@ add_directory(struct cvs_file *cf)
 			    cf->file_path);
 
 			cvs_mkadmin(cf->file_path, current_cvsroot->cr_dir,
-			    entry);
+			    entry, tag, date, nb);
 
 			xfree(repo);
 			xfree(entry);
@@ -168,8 +171,27 @@ add_directory(struct cvs_file *cf)
 	}
 
 	if (added == 1) {
-		cvs_printf("Directory %s added to the repository\n",
-		    cf->file_rpath);
+		snprintf(msg, sizeof(msg),
+		    "Directory %s added to the repository", cf->file_rpath);
+
+		if (tag != NULL) {
+			(void)strlcat(msg,
+			    "\n--> Using per-directory sticky tag ",
+			    sizeof(msg));
+			(void)strlcat(msg, tag, sizeof(msg));
+		}
+		if (date != NULL) {
+			(void)strlcat(msg,
+			    "\n--> Using per-directory sticky date ",
+			    sizeof(msg));
+			(void)strlcat(msg, date, sizeof(msg));
+		}
+		cvs_printf("%s\n", msg);
+
+		if (tag != NULL)
+			xfree(tag);
+		if (date != NULL)
+			xfree(date);
 	}
 
 	cf->file_status = FILE_SKIP;

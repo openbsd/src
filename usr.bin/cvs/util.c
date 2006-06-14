@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.86 2006/06/07 22:20:59 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.87 2006/06/14 15:14:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -620,14 +620,17 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 }
 
 void
-cvs_mkadmin(const char *path, const char *root, const char *repo)
+cvs_mkadmin(const char *path, const char *root, const char *repo,
+    char *tag, char *date, int nb)
 {
 	FILE *fp;
 	size_t len;
 	struct stat st;
 	char buf[MAXPATHLEN];
 
-	cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s)", path, root, repo);
+	cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s, %s, %s, %d)",
+	    path, root, repo, (tag != NULL) ? tag : "",
+	    (date != NULL) ? date : "", nb);
 
 	len = cvs_path_cat(path, CVS_PATH_CVSDIR, buf, sizeof(buf));
 	if (len >= sizeof(buf))
@@ -666,6 +669,8 @@ cvs_mkadmin(const char *path, const char *root, const char *repo)
 	if ((fp = fopen(buf, "w")) == NULL)
 		fatal("cvs_mkadmin: %s: %s", buf, strerror(errno));
 	(void)fclose(fp);
+
+	cvs_write_tagfile(path, tag, date, nb);
 }
 
 void
@@ -720,7 +725,8 @@ cvs_mkpath(const char *path)
 		if (mkdir(rpath, 0755) == -1 && errno != EEXIST)
 			fatal("cvs_mkpath: %s: %s", rpath, strerror(errno));
 
-		cvs_mkadmin(rpath, current_cvsroot->cr_dir, repo);
+		cvs_mkadmin(rpath, current_cvsroot->cr_dir, repo,
+		    NULL, NULL, 0);
 	}
 
 	xfree(dir);

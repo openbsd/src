@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.112 2006/06/12 13:56:00 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.113 2006/06/14 15:14:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -340,6 +340,8 @@ void	 	cvs_ent_remove(CVSENTRIES *, const char *);
 void	 	cvs_ent_close(CVSENTRIES *, int);
 void		cvs_ent_free(struct cvs_ent *);
 int		cvs_ent_exists(CVSENTRIES *, const char *);
+void		cvs_parse_tagfile(char *, char **, char **, int *);
+void		cvs_write_tagfile(char *, char *, char *, int);
 
 /* root.c */
 struct cvsroot	*cvsroot_parse(const char *);
