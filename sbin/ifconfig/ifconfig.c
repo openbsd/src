@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.165 2006/06/11 18:47:58 jmc Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.166 2006/06/14 18:46:21 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1334,7 +1334,6 @@ void
 setifnwkey(const char *val, int d)
 {
 	int i, len;
-	char *cp = NULL;
 	struct ieee80211_nwkey nwkey;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 
@@ -1372,7 +1371,7 @@ setifnwkey(const char *val, int d)
 				nwkey.i_key[i].i_keylen = len;
 				nwkey.i_key[i].i_keydat = keybuf[i];
 			}
-			if (cp != NULL) {
+			if (*val != '\0') {
 				warnx("SIOCS80211NWKEY: too many keys.");
 				return;
 			}
