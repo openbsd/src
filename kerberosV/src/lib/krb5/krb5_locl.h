@@ -159,7 +159,7 @@ struct _krb5_krb_auth_data;
 
 /* should this be public? */
 
-#define KEYTAB_DEFAULT "ANY:FILE:/etc/kerberosV/krb5.keytab,krb4:/etc/kerberosIV/srvtab"
+#define KEYTAB_DEFAULT "ANY:FILE:/etc/kerberosV/krb5.keytab"
 #define KEYTAB_DEFAULT_MODIFY "FILE:/etc/kerberosV/krb5.keytab"
 
 #ifndef O_BINARY
