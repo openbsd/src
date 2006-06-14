@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.57 2006/05/17 19:54:10 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.58 2006/06/14 18:40:23 brad Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -301,7 +301,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ipw_detach(struct device* self, int flags)
+ipw_detach(struct device *self, int flags)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -803,6 +803,7 @@ void
 ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	uint32_t state;
 
 	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, sizeof state,
@@ -834,6 +835,7 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 		break;
 
 	case IPW_STATE_RADIO_DISABLED:
+		ifp->if_flags &= ~IFF_UP;
 		ipw_stop(&ic->ic_if, 1);
 		break;
 	}
@@ -1059,6 +1061,7 @@ int
 ipw_intr(void *arg)
 {
 	struct ipw_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r;
 
 	if ((r = CSR_READ_4(sc, IPW_CSR_INTR)) == 0 || r == 0xffffffff)
@@ -1071,6 +1074,7 @@ ipw_intr(void *arg)
 
 	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
+		ifp->if_flags &= ~IFF_UP;
 		ipw_stop(&sc->sc_ic.ic_if, 1);
 		return 1;
 	}
@@ -1374,6 +1378,7 @@ ipw_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+			ifp->if_flags &= ~IFF_UP;
 			ipw_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;

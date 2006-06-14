@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.16 2006/06/10 20:34:45 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.17 2006/06/14 18:40:23 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -364,7 +364,7 @@ fail1:	while (--ac >= 0)
 }
 
 int
-wpi_detach(struct device* self, int flags)
+wpi_detach(struct device *self, int flags)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1690,6 +1690,7 @@ wpi_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+			ifp->if_flags &= ~IFF_UP;
 			wpi_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;

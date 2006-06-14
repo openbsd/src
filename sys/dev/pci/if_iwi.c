@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.68 2006/05/17 19:54:10 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.69 2006/06/14 18:40:23 brad Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -378,7 +378,7 @@ fail1:	iwi_free_cmd_ring(sc, &sc->cmdq);
 }
 
 int
-iwi_detach(struct device* self, int flags)
+iwi_detach(struct device *self, int flags)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1183,6 +1183,7 @@ int
 iwi_intr(void *arg)
 {
 	struct iwi_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r;
 
 	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0 || r == 0xffffffff)
@@ -1196,6 +1197,7 @@ iwi_intr(void *arg)
 
 	if (r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
+		ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_ic.ic_if, 1);
 		return 1;
 	}
@@ -1207,6 +1209,7 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_RADIO_OFF) {
 		DPRINTF(("radio transmitter off\n"));
+		ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_ic.ic_if, 1);
 		r = 0;	/* don't process more interrupts */
 	}
@@ -1452,6 +1455,7 @@ iwi_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+			ifp->if_flags &= ~IFF_UP;
 			iwi_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;
