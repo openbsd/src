@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.72 2006/06/14 14:10:50 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.73 2006/06/14 15:17:54 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -183,7 +183,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 	isempty = 1;
 	buf = xmalloc(bufsize);
 
-	if (lseek(cf->fd, SEEK_SET, 0) == -1)
+	if (lseek(cf->fd, 0, SEEK_SET) == -1)
 		fatal("cvs_update_leavedir: %s", strerror(errno));
 
 	while ((nbytes = getdirentries(cf->fd, buf, bufsize, &base)) > 0) {
