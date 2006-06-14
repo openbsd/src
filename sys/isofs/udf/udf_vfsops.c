@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.6 2006/01/14 23:59:32 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.7 2006/06/14 16:40:15 pat Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -239,7 +239,8 @@ udf_checktag(struct desc_tag *tag, uint16_t id)
 }
 
 int
-udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p) {
+udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
+{
 	struct buf *bp = NULL;
 	struct anchor_vdp avdp;
 	struct udf_mnt *udfmp = NULL;
@@ -408,14 +409,17 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p) {
 	return (0);
 
 bail:
-	if (udfmp != NULL)
+	if (udfmp != NULL) {
 		FREE(udfmp, M_UDFMOUNT);
+		mp->mnt_data = NULL;
+		mp->mnt_flag &= ~MNT_LOCAL;
+	}
 	if (bp != NULL)
 		brelse(bp);
 	VOP_CLOSE(devvp, FREAD, FSCRED, p);
 
 	return (error);
-};
+}
 
 int
 udf_unmount(struct mount *mp, int mntflags, struct proc *p)
@@ -578,6 +582,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	if ((error = udf_allocv(mp, &vp, p))) {
 		printf("Error from udf_allocv\n");
+		FREE(unode->fentry, M_UDFFENTRY);
 		pool_put(&udf_node_pool, unode);
 		return (error);
 	}
