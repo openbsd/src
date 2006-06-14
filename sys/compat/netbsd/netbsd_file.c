@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_file.c,v 1.9 2006/04/30 14:20:07 sturm Exp $	*/
+/*	$OpenBSD: netbsd_file.c,v 1.10 2006/06/14 20:01:50 sturm Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -634,7 +634,7 @@ netbsd_sys_getfsstat(p, v, retval)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT)) {
+		if (vfs_busy(mp, VB_READ|VB_UMIGNORE)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}

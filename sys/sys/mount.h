@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.71 2006/05/28 03:55:56 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.72 2006/06/14 20:01:50 sturm Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/ucred.h>
 #endif
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 
@@ -372,7 +372,7 @@ struct mount {
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnode    *mnt_syncer;            /* syncer vnode */
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
-	struct lock     mnt_lock;               /* mount structure lock */
+	struct rwlock   mnt_lock;               /* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
@@ -564,6 +564,11 @@ struct netexport {
  * exported vnode operations
  */
 int	vfs_busy(struct mount *, int);
+#define VB_READ		0x01
+#define VB_WRITE	0x02
+#define VB_UMIGNORE	0x04	/* ignore unmount in progress */
+#define VB_UMWAIT	0x08	/* wait for unmount to finish */
+
 int     vfs_isbusy(struct mount *);
 int     vfs_mount_foreach_vnode(struct mount *, int (*func)(struct vnode *,
 				    void *), void *);

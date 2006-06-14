@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.46 2006/04/30 14:20:07 sturm Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.47 2006/06/14 20:01:50 sturm Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ nfs_clientd(struct nfsmount *nmp, struct ucred *cred, struct nfsd_cargs *ncd,
 		    error = tsleep((caddr_t)&nmp->nm_authstr, PSOCK | PCATCH,
 			"nqnfstimr", hz / 3);
 		    if (error == EINTR || error == ERESTART) {
-			if (vfs_busy(nmp->nm_mountp, LK_EXCLUSIVE) == 0)
+			if (vfs_busy(nmp->nm_mountp, VB_WRITE|VB_UMWAIT) == 0)
 			    dounmount(nmp->nm_mountp, MNT_FORCE, p, NULL);
 		    }
 	    }

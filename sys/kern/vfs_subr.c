@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.127 2006/06/02 20:25:09 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.128 2006/06/14 20:01:50 sturm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -145,36 +145,31 @@ vntblinit(void)
  * Mark a mount point as busy. Used to synchronize access and to delay
  * unmounting.
  *
- * historical behavior:
- *  - LK_NOWAIT means that we should just ignore the mount point if it's
- *     being unmounted.
- *  - no flags means that we should sleep on the mountpoint and then
- *     fail.
+ * Default behaviour is to attempt getting a READ lock and in case of an
+ * ongoing unmount, to wait for it to finish and then return failure.
  */
 int
 vfs_busy(struct mount *mp, int flags)
 {
-	int lkflags;
+	int rwflags = 0;
 
-	switch (flags) {
-	case LK_NOWAIT:
-		lkflags = LK_SHARED|LK_NOWAIT;
-		break;
-	case 0:
-		lkflags = LK_SHARED;
-		break;
-	default:
-		lkflags = flags;
-	}
+	/* new mountpoints need their lock initialised */
+	if (mp->mnt_lock.rwl_name == NULL)
+		rw_init(&mp->mnt_lock, "vfslock");
 
-	/*
-	 * Always sleepfail. We will only sleep for an exclusive lock
-	 * and the exclusive lock will only be acquired when unmounting.
-	 */
-	lkflags |= LK_SLEEPFAIL;
+	if (flags & VB_WRITE)
+		rwflags |= RW_WRITE;
+	else
+		rwflags |= RW_READ;
 
-	if (lockmgr(&mp->mnt_lock, lkflags, NULL))
-		return (ENOENT);
+	if (flags & VB_UMWAIT)
+		rwflags |= RW_SLEEPFAIL;
+	else
+		rwflags |= RW_NOSLEEP;
+
+	if (rw_enter(&mp->mnt_lock, rwflags))
+		return (EBUSY);
+
 	return (0);
 }
 
@@ -184,13 +179,16 @@ vfs_busy(struct mount *mp, int flags)
 void
 vfs_unbusy(struct mount *mp)
 {
-	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL);
+	rw_exit(&mp->mnt_lock);
 }
 
 int
 vfs_isbusy(struct mount *mp) 
 {
-	return (lockstatus(&mp->mnt_lock));
+	if (RWLOCK_OWNER(&mp->mnt_lock) > 0)
+		return (1);
+	else
+		return (0);
 }
 
 /*
@@ -212,8 +210,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 		return (ENODEV);
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	(void)vfs_busy(mp, LK_NOWAIT);
+	(void) vfs_busy(mp, VB_READ|VB_UMIGNORE);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vfc = vfsp;
 	mp->mnt_op = vfsp->vfc_vfsops;
@@ -1165,7 +1162,7 @@ vgonel(struct vnode *vp, struct proc *p)
 		 */
 		mp = vp->v_specmountpoint;
 		if (mp != NULL) {
-			if (!vfs_busy(mp, LK_EXCLUSIVE)) {
+			if (!vfs_busy(mp, VB_WRITE|VB_UMWAIT)) {
 				flags = MNT_FORCE | MNT_DOOMED;
 				dounmount(mp, flags, p, NULL);
 			}
@@ -1332,7 +1329,7 @@ printlockedvnodes(void)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT)) {
+		if (vfs_busy(mp, VB_READ|VB_UMIGNORE)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1419,7 +1416,7 @@ sysctl_vnode(char *where, size_t *sizep, struct proc *p)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT)) {
+		if (vfs_busy(mp, VB_READ|VB_UMIGNORE)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1720,7 +1717,7 @@ vfs_unmountall(void)
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
-		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT)) != 0)
+		if ((vfs_busy(mp, VB_WRITE|VB_UMIGNORE)) != 0)
 			continue;
 		if ((error = dounmount(mp, MNT_FORCE, curproc, NULL)) != 0) {
 			printf("unmount of %s failed with error %d\n",
