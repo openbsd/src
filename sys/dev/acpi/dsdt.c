@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.46 2006/05/31 14:02:12 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.47 2006/06/14 16:30:07 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1722,6 +1722,8 @@ aml_addvname(struct acpi_context *ctx, const char *name, int opcode,
 	pn->opcode = opcode;
 	pn->mnem   = aml_opname(opcode);
 	if (val != NULL) {
+		if (val->type == AML_OBJTYPE_STATICINT)
+			val = aml_allocvalue(AML_OBJTYPE_INTEGER, val->v_integer, NULL);
 		val->name = name;
 		val->node = pn;
 	}
