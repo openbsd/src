@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.72 2006/06/13 06:51:32 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.73 2006/06/14 14:10:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -245,7 +245,7 @@ cvs_commit_local(struct cvs_file *cf)
 		if (b == NULL)
 			fatal("cvs_commit_local: failed to get HEAD");
 	} else {
-		if ((b = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		if ((b = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("cvs_commit_local: failed to load file");
 	}
 
@@ -347,7 +347,7 @@ commit_diff_file(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_ADDED) {
-		if ((b1 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("commit_diff_file: failed to load '%s'",
 			    cf->file_path);
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.49 2006/06/11 17:50:11 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.50 2006/06/14 14:10:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -179,7 +179,7 @@ import_new(struct cvs_file *cf)
 	if ((branch = rcsnum_parse(import_branch)) == NULL)
 		fatal("import_new: failed to parse branch");
 
-	if ((bp = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+	if ((bp = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 		fatal("import_new: failed to load %s", cf->file_path);
 
 	cvs_buf_putc(bp, '\0');
@@ -249,8 +249,7 @@ import_update(struct cvs_file *cf)
 		if ((b1 = rcs_getrev(cf->file_rcs, rev)) == NULL)
 			fatal("import_update: failed to grab revision");
 
-		/* XXX */
-		if ((b2 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("import_update: failed to load %s",
 			    cf->file_path);
 
@@ -321,8 +320,7 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 	char *delta, *p1, *p2;
 	BUF *b1, *b2, *b3;
 
-	/* XXX */
-	if ((b1 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+	if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 		fatal("import_get_rcsdiff: failed loading %s", cf->file_path);
 
 	if ((b2 = rcs_getrev(cf->file_rcs, rev)) == NULL)

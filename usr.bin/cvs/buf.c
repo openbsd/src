@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.53 2006/05/29 04:47:28 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.54 2006/06/14 14:10:50 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,30 +78,35 @@ cvs_buf_alloc(size_t len, u_int flags)
 	return (b);
 }
 
-/*
- * cvs_buf_load()
- *
- * Open the file specified by <path> and load all of its contents into a
- * buffer.
- * Returns the loaded buffer on success.
- */
 BUF *
 cvs_buf_load(const char *path, u_int flags)
 {
 	int fd;
+	BUF *bp;
+
+	if ((fd = open(path, O_RDONLY, 0600)) == -1)
+		fatal("cvs_buf_load: failed to load '%s' : %s", path,
+		    strerror(errno));
+
+	bp = cvs_buf_load_fd(fd, flags);
+	(void)close(fd);
+	return (bp);
+}
+
+BUF *
+cvs_buf_load_fd(int fd, u_int flags)
+{
 	ssize_t ret;
 	size_t len;
 	u_char *bp;
 	struct stat st;
 	BUF *buf;
 
-	if ((fd = open(path, O_RDONLY, 0600)) == -1) {
-		cvs_log(LP_ERR, "%s", path);
-		return (NULL);
-	}
-
 	if (fstat(fd, &st) == -1)
-		fatal("cvs_buf_load: fstat: %s", strerror(errno));
+		fatal("cvs_buf_load_fd: fstat: %s", strerror(errno));
+
+	if (lseek(fd, 0, SEEK_SET) == -1)
+		fatal("cvs_buf_load_fd: lseek: %s", strerror(errno));
 
 	buf = cvs_buf_alloc(st.st_size, flags);
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
@@ -114,8 +119,6 @@ cvs_buf_load(const char *path, u_int flags)
 
 		buf->cb_len += (size_t)ret;
 	}
-
-	(void)close(fd);
 
 	return (buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.24 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.25 2006/06/14 14:10:50 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.24 2006/05/27 03:30:30 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.25 2006/06/14 14:10:50 joris Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -155,7 +155,8 @@ static int diff3_internal(int, char **, const char *, const char *);
 int diff3_conflicts = 0;
 
 BUF *
-cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
+cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
+	RCSNUM *rev2, int verbose)
 {
 	int argc;
 	char *data, *patch;
@@ -169,7 +170,7 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	rcsnum_tostr(rev1, r1, sizeof(r1));
 	rcsnum_tostr(rev2, r2, sizeof(r2));
 
-	if ((b1 = cvs_buf_load(workfile, BUF_AUTOEXT)) == NULL)
+	if ((b1 = cvs_buf_load_fd(workfd, BUF_AUTOEXT)) == NULL)
 		goto out;
 
 	if (verbose == 1)

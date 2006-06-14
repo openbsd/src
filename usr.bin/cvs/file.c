@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.158 2006/06/03 19:07:13 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.159 2006/06/14 14:10:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -674,8 +674,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag, int loud)
 
 		b1 = rcs_kwexp_buf(b1, cf->file_rcs, cf->file_rcsrev);
 
-		/* XXX */
-		b2 = cvs_buf_load(cf->file_path, BUF_AUTOEXT);
+		b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT);
 		if (b2 == NULL)
 			fatal("failed to get file content for comparison");
 

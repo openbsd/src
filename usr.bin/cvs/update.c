@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.71 2006/06/06 05:13:39 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.72 2006/06/14 14:10:50 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -310,7 +310,7 @@ cvs_update_local(struct cvs_file *cf)
 		cvs_printf("U %s\n", cf->file_path);
 		break;
 	case FILE_MERGE:
-		bp = cvs_diff3(cf->file_rcs, cf->file_path,
+		bp = cvs_diff3(cf->file_rcs, cf->file_path, cf->fd,
 		    cf->file_ent->ce_rev, cf->file_rcsrev, 1);
 		if (bp == NULL)
 			fatal("cvs_update_local: failed to merge");
@@ -381,7 +381,7 @@ update_has_conflict_markers(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "update_has_conflict_markers(%s)", cf->file_path);
 
-	if ((bp = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+	if ((bp = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 		fatal("update_has_conflict_markers: failed to load %s",
 		    cf->file_path);
 
