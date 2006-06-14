@@ -39,5 +39,5 @@ const char *krb5_config_file =
 #ifdef __APPLE__
 "/Library/Preferences/edu.mit.Kerberos:"
 #endif
-SYSCONFDIR "/krb5.conf:/etc/krb5.conf";
+SYSCONFDIR "/krb5.conf";
 const char *krb5_defkeyname = KEYTAB_DEFAULT;
