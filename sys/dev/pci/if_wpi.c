@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.17 2006/06/14 18:40:23 brad Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.18 2006/06/14 19:31:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1422,6 +1422,9 @@ wpi_plcp_signal(int rate)
 	}
 }
 
+/* quickly determine if a given rate is CCK or OFDM */
+#define WPI_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
+
 int
 wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
     int ac)
@@ -1498,7 +1501,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
 		tx->flags |= htole32(WPI_TX_NEED_ACK);
-	else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
+	else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
+	    ((ic->ic_flags & IEEE80211_F_USEPROT) && WPI_RATE_IS_OFDM(rate)))
 		tx->flags |= htole32(WPI_TX_NEED_RTS | WPI_TX_FULL_TXOP);
 
 	tx->flags |= htole32(WPI_TX_AUTO_SEQ);

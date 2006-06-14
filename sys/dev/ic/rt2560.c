@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.18 2006/06/10 20:30:00 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.19 2006/06/14 19:31:47 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1673,7 +1673,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 		    RAL_SIFS;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
-		/* tell hardware to add timestamp for probe responses */
+		/* tell hardware to set timestamp for probe responses */
 		if ((wh->i_fc[0] &
 		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
@@ -1746,7 +1746,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
-	int rate, error;
+	int rate, useprot, error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
@@ -1778,13 +1778,19 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
-	/*
+	/*-
 	 * IEEE Std 802.11-1999, pp 82: "A STA shall use an RTS/CTS exchange
 	 * for directed frames only when the length of the MPDU is greater
-	 * than the length threshold indicated by [...]" ic_rtsthreshold.
+	 * than the length threshold indicated by" ic_rtsthreshold.
+	 *
+	 * IEEE Std 802.11-2003g, pp 13: "ERP STAs shall use protection
+	 * mechanism (such as RTS/CTS or CTS-to-self) for ERP-OFDM MPDUs of
+	 * type Data or an MMPDU".
 	 */
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    m0->m_pkthdr.len > ic->ic_rtsthreshold) {
+	useprot = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
+	     ((ic->ic_flags & IEEE80211_F_USEPROT) && RAL_RATE_IS_OFDM(rate)));
+	if (useprot) {
 		struct mbuf *m;
 		uint16_t dur;
 		int rtsrate, ackrate;
@@ -1798,6 +1804,12 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		      3 * RAL_SIFS;
 
 		m = rt2560_get_rts(sc, wh, dur);
+		if (m == NULL) {
+			printf("%s: could not allocate RTS frame\n",
+			    sc->sc_dev.dv_xname);
+			m_freem(m0);
+			return ENOBUFS;
+		}
 
 		desc = &sc->txq.desc[sc->txq.cur_encrypt];
 		data = &sc->txq.data[sc->txq.cur_encrypt];
@@ -1836,9 +1848,9 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		    (sc->txq.cur_encrypt + 1) % RT2560_TX_RING_COUNT;
 
 		/*
-		 * IEEE Std 802.11-1999: when an RTS/CTS exchange is used, the
+		 * IEEE Std 802.11-1999: "when an RTS/CTS exchange is used, the
 		 * asynchronous data frame shall be transmitted after the CTS
-		 * frame and a SIFS period.
+		 * frame and a SIFS period".
 		 */
 		flags |= RT2560_TX_LONG_RETRY | RT2560_TX_IFS_SIFS;
 	}
@@ -1979,8 +1991,7 @@ rt2560_start(struct ifnet *ifp)
 			m0->m_pkthdr.rcvif = NULL;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0,
-				    BPF_DIRECTION_OUT);
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
 			if (rt2560_tx_mgt(sc, m0, ni) != 0)
 				break;
@@ -2005,8 +2016,7 @@ rt2560_start(struct ifnet *ifp)
 				continue;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0,
-				    BPF_DIRECTION_OUT);
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
 			if (rt2560_tx_data(sc, m0, ni) != 0) {
 				if (ni != NULL)
@@ -2799,5 +2809,5 @@ rt2560_shutdown(void *arg)
 }
 
 struct cfdriver ral_cd = {
-	0, "ral", DV_IFNET
+	NULL, "ral", DV_IFNET
 };

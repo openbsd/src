@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.20 2006/06/10 20:31:59 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.21 2006/06/14 19:31:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -183,9 +183,6 @@ static const struct {
 	RT2661_DEF_BBP
 };
 
-/*
- * Default settings for RF registers; values taken from the reference driver.
- */
 static const struct rfprog {
 	uint8_t		chan;
 	uint32_t	r1, r2, r3, r4;
@@ -1118,9 +1115,8 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			    htole64(((uint64_t)tsf_hi << 32) | tsf_lo);
 			tap->wr_flags = 0;
 			tap->wr_rate = rt2661_rxrate(desc);
-			tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-			tap->wr_chan_flags =
-			    htole16(ic->ic_ibss_chan->ic_flags);
+			tap->wr_chan_freq = htole16(sc->sc_curchan->ic_freq);
+			tap->wr_chan_flags = htole16(sc->sc_curchan->ic_flags);
 			tap->wr_antsignal = desc->rssi;
 
 			M_DUP_PKTHDR(&mb, m);
@@ -1172,7 +1168,6 @@ skip:		desc->flags |= htole32(RT2661_RX_BUSY);
 		rt2661_start(ifp);
 }
 
-/* ARGSUSED */
 void
 rt2661_mcu_beacon_expire(struct rt2661_softc *sc)
 {
@@ -1490,8 +1485,8 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
 		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)tap;
@@ -1512,7 +1507,7 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		    RAL_SIFS;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
-		/* tell hardware to add timestamp in probe responses */
+		/* tell hardware to set timestamp in probe responses */
 		if ((wh->i_fc[0] &
 		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
@@ -1587,7 +1582,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
-	int rate, error;
+	int rate, useprot, error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
@@ -1619,13 +1614,19 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
-	/*
+	/*-
 	 * IEEE Std 802.11-1999, pp 82: "A STA shall use an RTS/CTS exchange
 	 * for directed frames only when the length of the MPDU is greater
-	 * than the length threshold indicated by [...]" ic_rtsthreshold.
+	 * than the length threshold indicated by" ic_rtsthreshold.
+	 *
+	 * IEEE Std 802.11-2003g, pp 13: "ERP STAs shall use protection
+	 * mechanism (such as RTS/CTS or CTS-to-self) for ERP-OFDM MPDUs of
+	 * type Data or an MMPDU".
 	 */
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
+	useprot = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
+	     ((ic->ic_flags & IEEE80211_F_USEPROT) && RAL_RATE_IS_OFDM(rate)));
+	if (useprot) {
 		struct mbuf *m;
 		uint16_t dur;
 		int rtsrate, ackrate;
@@ -1639,6 +1640,12 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		      3 * RAL_SIFS;
 
 		m = rt2661_get_rts(sc, wh, dur);
+		if (m == NULL) {
+			printf("%s: could not allocate RTS frame\n",
+			    sc->sc_dev.dv_xname);
+			m_freem(m0);
+			return ENOBUFS;
+		}
 
 		desc = &txq->desc[txq->cur];
 		data = &txq->data[txq->cur];
@@ -1676,11 +1683,11 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		txq->cur = (txq->cur + 1) % RT2661_TX_RING_COUNT;
 
 		/*
-		 * IEEE Std 802.11-1999: when an RTS/CTS exchange is used, the
+		 * IEEE Std 802.11-1999: "when an RTS/CTS exchange is used, the
 		 * asynchronous data frame shall be transmitted after the CTS
-		 * frame and a SIFS period.
+		 * frame and a SIFS period".
 		 */
-		flags |= RT2661_TX_LONG_RETRY | RT2661_TX_IFS;
+		flags |= RT2661_TX_LONG_RETRY | RT2661_TX_IFS_SIFS;
 	}
 
 	data = &txq->data[txq->cur];
@@ -1738,8 +1745,8 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
+		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
 		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)tap;
@@ -1817,8 +1824,7 @@ rt2661_start(struct ifnet *ifp)
 			m0->m_pkthdr.rcvif = NULL;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0,
-				    BPF_DIRECTION_OUT);
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
 			if (rt2661_tx_mgt(sc, m0, ni) != 0)
 				break;
@@ -2912,7 +2918,7 @@ rt2661_power(int why, void *arg)
 	int s;
 
 	DPRINTF(("%s: rt2661_power(%d)\n", sc->sc_dev.dv_xname, why));
-	
+
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
@@ -2940,7 +2946,6 @@ rt2661_shutdown(void *arg)
 {
 	struct rt2661_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	
+
 	rt2661_stop(ifp, 1);
 }
-

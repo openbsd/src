@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.6 2006/06/10 20:31:59 damien Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.7 2006/06/14 19:31:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -218,7 +218,7 @@ struct rt2661_tx_desc {
 #define RT2661_TX_NEED_ACK	(1 << 3)
 #define RT2661_TX_TIMESTAMP	(1 << 4)
 #define RT2661_TX_OFDM		(1 << 5)
-#define RT2661_TX_IFS		(1 << 6)
+#define RT2661_TX_IFS_SIFS	(1 << 6)
 #define RT2661_TX_LONG_RETRY	(1 << 7)
 #define RT2661_TX_BURST		(1 << 28)
 
