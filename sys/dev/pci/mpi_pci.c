@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.5 2006/05/31 05:48:36 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.6 2006/06/14 01:51:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -81,12 +81,8 @@ mpi_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args		*pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMBIOS &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMBIOS_1030)
-		return (1);
-
 	return (pci_matchbyid(pa, mpi_devices,
-	    sizeof(mpi_devices) / sizeof(mpi_devices[0])) * 3);
+	    sizeof(mpi_devices) / sizeof(mpi_devices[0])));
 }
 
 void
