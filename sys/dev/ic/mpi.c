@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.40 2006/06/15 04:59:21 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.41 2006/06/15 05:22:08 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1861,6 +1861,8 @@ void
 mpi_get_raid(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_raid_vol		*raidvol;
+	int				i;
 
 	DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid\n", DEVNAME(sc));
 
@@ -1885,6 +1887,15 @@ mpi_get_raid(struct mpi_softc *sc)
 	    sc->sc_ioc_pg2->no_active_vols, sc->sc_ioc_pg2->max_vols,
 	    sc->sc_ioc_pg2->no_active_phys_disks,
 	    sc->sc_ioc_pg2->max_phys_disks);
+
+	for (i = 0; i < sc->sc_ioc_pg2->max_vols; i++) {
+		raidvol = &sc->sc_ioc_pg2->raid_vol[i];
+		DNPRINTF(MPI_D_RAID, "%s:  id: %#02x bus: %d ioc: %d page: %d "
+		    "type: %#02x flags: %#02x\n", DEVNAME(sc), raidvol->vol_id,
+		    raidvol->vol_bus, raidvol->vol_ioc, raidvol->vol_page,
+		    raidvol->vol_type, raidvol->flags);
+
+	}
 }
 
 int
