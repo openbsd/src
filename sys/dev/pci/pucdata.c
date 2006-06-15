@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.42 2005/11/02 17:08:22 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.43 2006/06/15 15:29:25 jason Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -789,6 +789,19 @@ const struct puc_device_description puc_devices[] = {
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* SIIG 2050 (uses Oxford 16PCI954 and a 10x clock) */
+	{   /* "Oxford Semiconductor OX16PCI954 UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,
+		PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2050 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
 	    },
 	},
 
