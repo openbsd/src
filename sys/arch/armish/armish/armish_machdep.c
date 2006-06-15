@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.2 2006/05/31 05:54:09 drahn Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.3 2006/06/15 21:28:59 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -126,7 +126,7 @@
  * The range 0xc1000000 - 0xcfffffff is available for kernel VM space
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
-#define KERNEL_VM_SIZE		0x0c000000
+#define KERNEL_VM_SIZE		0x20000000
 
 
 /*
@@ -393,9 +393,6 @@ initarm(void *arg)
 	 */
 	i80321_sdram_bounds(&obio_bs_tag, VERDE_PMMR_BASE + VERDE_MCU_BASE,
 	    &memstart, &memsize);
-#if 1
-	memsize = 128* 1024 * 1024;
-#endif
 
 #define DEBUG
 #ifdef DEBUG
