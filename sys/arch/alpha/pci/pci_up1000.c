@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.10 2006/03/26 20:23:08 brad Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.11 2006/06/15 20:08:29 brad Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -96,7 +96,6 @@ pci_up1000_pickintr(struct irongate_config *icp)
 
 #if NSIO
 	sio_intr_setup(pc, iot);
-	set_iointr(&sio_iointr);
 #else
 	panic("pci_up1000_pickintr: no I/O interrupt handler (no sio)");
 #endif

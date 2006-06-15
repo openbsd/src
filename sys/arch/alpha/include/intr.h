@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.22 2006/03/12 03:14:36 brad Exp $ */
+/* $OpenBSD: intr.h,v 1.23 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -72,6 +72,34 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <machine/atomic.h>
+
+/*
+ * The Alpha System Control Block.  This is 8k long, and you get
+ * 16 bytes per vector (i.e. the vector numbers are spaced 16
+ * apart).
+ *
+ * This is sort of a "shadow" SCB -- rather than the CPU jumping
+ * to (SCBaddr + (16 * vector)), like it does on the VAX, we get
+ * a vector number in a1.  We use the SCB to look up a routine/arg
+ * and jump to it.
+ *
+ * Since we use the SCB only for I/O interrupts, we make it shorter
+ * than normal, starting it at vector 0x800 (the start of the I/O
+ * interrupt vectors).
+ */
+#define	SCB_IOVECBASE	0x0800
+#define	SCB_VECSIZE	0x0010
+#define	SCB_SIZE	0x2000
+
+#define	SCB_VECTOIDX(x)	((x) >> 4)
+#define	SCB_IDXTOVEC(x)	((x) << 4)
+
+#define	SCB_NIOVECS	SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)
+
+struct scbvec { 
+	void	(*scb_func)(void *, u_long);
+	void	*scb_arg;
+};
 
 /*
  * Alpha interrupts come in at one of 4 levels:
@@ -237,6 +265,8 @@ int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,
 	    unsigned int);
 int	alpha_shared_intr_isactive(struct alpha_shared_intr *,
 	    unsigned int);
+int	alpha_shared_intr_firstactive(struct alpha_shared_intr *,
+	    unsigned int);
 void	alpha_shared_intr_set_dfltsharetype(struct alpha_shared_intr *,
 	    unsigned int, int);
 void	alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *,
@@ -250,7 +280,14 @@ void	alpha_shared_intr_set_private(struct alpha_shared_intr *,
 void	*alpha_shared_intr_get_private(struct alpha_shared_intr *,
 	    unsigned int);
 
-void	set_iointr(void (*)(void *, unsigned long));
+extern struct scbvec scb_iovectab[];
+
+void	scb_init(void);
+void	scb_set(u_long, void (*)(void *, u_long), void *);
+u_long	scb_alloc(void (*)(void *, u_long), void *);
+void	scb_free(u_long);
+
+#define	SCB_ALLOC_FAILED	((u_long) -1)
 
 #endif /* _KERNEL */
 #endif /* ! _ALPHA_INTR_H_ */

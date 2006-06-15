@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.100 2006/06/07 21:50:52 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.101 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -249,6 +249,9 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	alpha_pal_wrfen(0);
 	ALPHA_TBIA();
 	alpha_pal_imb();
+
+	/* Initialize the SCB. */
+	scb_init();
 
 	cpu_id = cpu_number();
 

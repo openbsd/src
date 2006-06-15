@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.14 2006/03/26 20:23:08 brad Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.15 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -88,7 +88,7 @@ void  dec_6600_pciide_compat_intr_disestablish(void *, void *);
 
 struct alpha_shared_intr *dec_6600_pci_intr;
 
-void dec_6600_iointr(void *framep, unsigned long vec);
+void dec_6600_iointr(void *arg, unsigned long vec);
 extern void dec_6600_intr_enable(int irq);
 extern void dec_6600_intr_disable(int irq);
 
@@ -129,7 +129,6 @@ pci_6600_pickintr(pcp)
 		sio_intr_setup(pc, iot);
 		dec_6600_intr_enable(55);	/* irq line for sio */
 #endif
-		set_iointr(dec_6600_iointr);
 	}
 }
 
@@ -239,8 +238,11 @@ dec_6600_intr_establish(acv, ih, level, func, arg, name)
 	cookie = alpha_shared_intr_establish(dec_6600_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, name);
 
-	if (cookie != NULL && alpha_shared_intr_isactive(dec_6600_pci_intr, ih))
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(dec_6600_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_6600_iointr, NULL);
 		dec_6600_intr_enable(ih);
+	}
 	return (cookie);
 }
 
@@ -272,40 +274,31 @@ dec_6600_intr_disestablish(acv, cookie)
 		dec_6600_intr_disable(irq);
 		alpha_shared_intr_set_dfltsharetype(dec_6600_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
  
 	splx(s);
 }
 
 void
-dec_6600_iointr(framep, vec)
-	void *framep;
+dec_6600_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq; 
 
-	if (vec >= 0x900) {
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		if (irq >= PCI_NIRQ)
-			panic("iointr: irq %d is too high", irq);
+	if (irq >= PCI_NIRQ)
+		panic("iointr: irq %d is too high", irq);
 
-		if (!alpha_shared_intr_dispatch(dec_6600_pci_intr, irq)) {
-			alpha_shared_intr_stray(dec_6600_pci_intr, irq,
-			    irqtype);
-			if (ALPHA_SHARED_INTR_DISABLE(dec_6600_pci_intr, irq))
-				dec_6600_intr_disable(irq);
-		} else
-			alpha_shared_intr_reset_strays(dec_6600_pci_intr, irq);
-		return;
-	}
-#if NSIO
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	}
-#endif
-	panic("iointr: weird vec 0x%lx", vec);
+	if (!alpha_shared_intr_dispatch(dec_6600_pci_intr, irq)) {
+		alpha_shared_intr_stray(dec_6600_pci_intr, irq,
+		    irqtype);
+		if (ALPHA_SHARED_INTR_DISABLE(dec_6600_pci_intr, irq))
+			dec_6600_intr_disable(irq);
+	} else
+		alpha_shared_intr_reset_strays(dec_6600_pci_intr, irq);
 }
 
 void

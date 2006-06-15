@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.4 2006/03/26 20:23:08 brad Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.5 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -103,7 +103,7 @@ void	dec_1000_intr_disestablish(void *, void *);
 
 struct alpha_shared_intr *dec_1000_pci_intr;
 
-void dec_1000_iointr(void *framep, unsigned long vec);
+void dec_1000_iointr(void *arg, unsigned long vec);
 void dec_1000_enable_intr(int irq);
 void dec_1000_disable_intr(int irq);
 void pci_1000_imi(void);
@@ -146,7 +146,6 @@ pci_1000_pickintr(core, iot, memt, pc)
 #if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 #endif
-	set_iointr(dec_1000_iointr);
 }
 
 int     
@@ -227,7 +226,8 @@ dec_1000_intr_establish(ccv, ih, level, func, arg, name)
 	    level, func, arg, name);
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(dec_1000_pci_intr, ih)) {
+	    alpha_shared_intr_firstactive(dec_1000_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_1000_iointr, NULL);
 		dec_1000_enable_intr(ih);
 	}
 	return (cookie);
@@ -249,39 +249,28 @@ dec_1000_intr_disestablish(ccv, cookie)
 		dec_1000_disable_intr(irq);
 		alpha_shared_intr_set_dfltsharetype(dec_1000_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
 }
 
 void
-dec_1000_iointr(framep, vec)
-	void *framep;
+dec_1000_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq;
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (PCI_NIRQ << 4))
-			panic("dec_1000_iointr: vec 0x%lx out of range", vec);
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		if (!alpha_shared_intr_dispatch(dec_1000_pci_intr, irq)) {
-			alpha_shared_intr_stray(dec_1000_pci_intr, irq,
-			    "dec_1000 irq");
-			if (ALPHA_SHARED_INTR_DISABLE(dec_1000_pci_intr, irq))
-				dec_1000_disable_intr(irq);
-		} else
-			alpha_shared_intr_reset_strays(dec_1000_pci_intr, irq);
-		return;
-	}
-#if NSIO > 0 || NPCEB > 0
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	}
-#endif
-	panic("dec_1000_intr: weird vec 0x%lx", vec);
+	if (!alpha_shared_intr_dispatch(dec_1000_pci_intr, irq)) {
+		alpha_shared_intr_stray(dec_1000_pci_intr, irq,
+		    "dec_1000 irq");
+		if (ALPHA_SHARED_INTR_DISABLE(dec_1000_pci_intr, irq))
+			dec_1000_disable_intr(irq);
+	} else
+		alpha_shared_intr_reset_strays(dec_1000_pci_intr, irq);
 }
 
 /*

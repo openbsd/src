@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.14 2006/01/29 10:47:35 martin Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.15 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -213,6 +213,14 @@ alpha_shared_intr_isactive(intr, num)
 {
 
 	return (!TAILQ_EMPTY(&intr[num].intr_q));
+}
+
+int
+alpha_shared_intr_firstactive(struct alpha_shared_intr *intr, unsigned int num)
+{
+
+	return (!TAILQ_EMPTY(&intr[num].intr_q) &&
+		TAILQ_NEXT(intr[num].intr_q.tqh_first, ih_q) == NULL);
 }
 
 void

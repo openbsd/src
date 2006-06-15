@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.21 2006/01/29 10:47:35 martin Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.22 2006/06/15 20:08:29 brad Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ void	dec_kn20aa_intr_disestablish(void *, void *);
 struct alpha_shared_intr *kn20aa_pci_intr;
 struct evcount kn20aa_intr_count;
 
-void	kn20aa_iointr(void *framep, unsigned long vec);
+void	kn20aa_iointr(void *arg, unsigned long vec);
 void	kn20aa_enable_intr(int irq);
 void	kn20aa_disable_intr(int irq);
 
@@ -101,8 +101,6 @@ pci_kn20aa_pickintr(ccp)
 	sio_intr_setup(pc, iot);
 	kn20aa_enable_intr(KN20AA_PCEB_IRQ);
 #endif
-
-	set_iointr(kn20aa_iointr);
 }
 
 int     
@@ -211,8 +209,10 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
 	    level, func, arg, name);
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(kn20aa_pci_intr, ih))
+	    alpha_shared_intr_firstactive(kn20aa_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), kn20aa_iointr, NULL);
 		kn20aa_enable_intr(ih);
+	}
 	return (cookie);
 }
 
@@ -232,42 +232,27 @@ dec_kn20aa_intr_disestablish(ccv, cookie)
 		kn20aa_disable_intr(irq);
 		alpha_shared_intr_set_dfltsharetype(kn20aa_pci_intr, irq,
 		    IST_NONE);
-		/* scb_free(0x900 + SCB_IDXTOVEC(irq)); */
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
 	splx(s);
 }
 
 void
-kn20aa_iointr(framep, vec)
-	void *framep;
+kn20aa_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq;
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (KN20AA_MAX_IRQ << 4))
-			panic("kn20aa_iointr: vec 0x%x out of range", vec);
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		kn20aa_intr_count.ec_count++;
-
-		if (!alpha_shared_intr_dispatch(kn20aa_pci_intr, irq)) {
-			alpha_shared_intr_stray(kn20aa_pci_intr, irq,
-			    "kn20aa irq");
-			if (kn20aa_pci_intr[irq].intr_nstrays ==
-			    kn20aa_pci_intr[irq].intr_maxstrays)
-				kn20aa_disable_intr(irq);
-		} else
-			alpha_shared_intr_reset_strays(kn20aa_pci_intr, irq);
-		return;
-	}
-#if NSIO
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	} 
-#endif
-	panic("kn20aa_iointr: weird vec 0x%x", vec);
+	if (!alpha_shared_intr_dispatch(kn20aa_pci_intr, irq)) {
+		alpha_shared_intr_stray(kn20aa_pci_intr, irq,
+		    "kn20aa irq");
+		if (ALPHA_SHARED_INTR_DISABLE(kn20aa_pci_intr, irq))
+			kn20aa_disable_intr(irq);
+	} else
+		alpha_shared_intr_reset_strays(kn20aa_pci_intr, irq);
 }
 
 void

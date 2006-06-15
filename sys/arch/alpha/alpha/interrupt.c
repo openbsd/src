@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.19 2006/02/23 20:14:13 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.20 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -124,7 +124,104 @@ static u_int schedclk2;
 
 extern struct evcount clk_count;
 
+struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
+
 void netintr(void);
+
+void	scb_stray(void *, u_long);
+
+void
+scb_init(void)
+{
+	u_long i;
+
+	for (i = 0; i < SCB_NIOVECS; i++) {
+		scb_iovectab[i].scb_func = scb_stray;
+		scb_iovectab[i].scb_arg = NULL;
+	}
+}
+
+void
+scb_stray(void *arg, u_long vec)
+{
+
+	printf("WARNING: stray interrupt, vector 0x%lx\n", vec);
+}
+
+void
+scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
+{
+	u_long idx;
+	int s;
+
+	s = splhigh();
+
+	if (vec < SCB_IOVECBASE || vec >= SCB_SIZE ||
+	    (vec & (SCB_VECSIZE - 1)) != 0)
+		panic("scb_set: bad vector 0x%lx", vec);
+
+	idx = SCB_VECTOIDX(vec - SCB_IOVECBASE);
+
+	if (scb_iovectab[idx].scb_func != scb_stray)
+		panic("scb_set: vector 0x%lx already occupied", vec);
+
+	scb_iovectab[idx].scb_func = func;
+	scb_iovectab[idx].scb_arg = arg;
+
+	splx(s);
+}
+
+u_long
+scb_alloc(void (*func)(void *, u_long), void *arg)
+{
+	u_long vec, idx;
+	int s;
+
+	s = splhigh();
+
+	/*
+	 * Allocate "downwards", to avoid bumping into
+	 * interrupts which are likely to be at the lower
+	 * vector numbers.
+	 */
+	for (vec = SCB_SIZE - SCB_VECSIZE;
+	     vec >= SCB_IOVECBASE; vec -= SCB_VECSIZE) {
+		idx = SCB_VECTOIDX(vec - SCB_IOVECBASE);
+		if (scb_iovectab[idx].scb_func == scb_stray) {
+			scb_iovectab[idx].scb_func = func;
+			scb_iovectab[idx].scb_arg = arg;
+			splx(s);
+			return (vec);
+		}
+	}
+
+	splx(s);
+
+	return (SCB_ALLOC_FAILED);
+}
+
+void
+scb_free(u_long vec)
+{
+	u_long idx;
+	int s;
+
+	s = splhigh();
+
+	if (vec < SCB_IOVECBASE || vec >= SCB_SIZE ||
+	    (vec & (SCB_VECSIZE - 1)) != 0)
+		panic("scb_free: bad vector 0x%lx", vec);
+
+	idx = SCB_VECTOIDX(vec - SCB_IOVECBASE); 
+
+	if (scb_iovectab[idx].scb_func == scb_stray)
+		panic("scb_free: vector 0x%lx is empty", vec);
+
+	scb_iovectab[idx].scb_func = scb_stray;
+	scb_iovectab[idx].scb_arg = (void *) vec;
+
+	splx(s);
+}
 
 void
 interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
@@ -205,15 +302,22 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
+	    {
+		struct scbvec *scb;
+
+		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
+
 #if defined(MULTIPROCESSOR)
 		/* XXX XXX XXX */
 		if (CPU_IS_PRIMARY(ci) == 0)
 			return;
 #endif
 		uvmexp.intrs++;
-		if (platform.iointr)
-			(*platform.iointr)(framep, a1);
+
+		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
+		(*scb->scb_func)(scb->scb_arg, a1);
 		break;
+	    }
 
 	case ALPHA_INTR_PERF:	/* performance counter interrupt */
 		printf("WARNING: received performance counter interrupt!\n");
@@ -241,16 +345,6 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		/* NOTREACHED */
 	}
 }
-
-void
-set_iointr(void (*niointr)(void *, unsigned long))
-{
-
-	if (platform.iointr)
-		panic("set iointr twice");
-	platform.iointr = niointr;
-}
-
 
 void
 machine_check(unsigned long mces, struct trapframe *framep,

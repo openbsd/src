@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.18 2006/03/26 20:23:08 brad Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.19 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -115,7 +115,7 @@ struct alpha_shared_intr *eb164_pci_intr;
 bus_space_tag_t eb164_intrgate_iot;
 bus_space_handle_t eb164_intrgate_ioh;
 
-void	eb164_iointr(void *framep, unsigned long vec);
+void	eb164_iointr(void *arg, unsigned long vec);
 extern void	eb164_intr_enable(int irq);	/* pci_eb164_intr.S */
 extern void	eb164_intr_disable(int irq);	/* pci_eb164_intr.S */
 
@@ -161,8 +161,6 @@ pci_eb164_pickintr(ccp)
 	sio_intr_setup(pc, iot);
 	eb164_intr_enable(EB164_SIO_IRQ);
 #endif
-
-	set_iointr(eb164_iointr);
 }
 
 int     
@@ -283,8 +281,11 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg, name)
 	cookie = alpha_shared_intr_establish(eb164_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, name);
 
-	if (cookie != NULL && alpha_shared_intr_isactive(eb164_pci_intr, ih))
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(eb164_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), eb164_iointr, NULL);
 		eb164_intr_enable(ih);
+	}
 	return (cookie);
 }
 
@@ -307,6 +308,7 @@ dec_eb164_intr_disestablish(ccv, cookie)
 		eb164_intr_disable(irq);
 		alpha_shared_intr_set_dfltsharetype(eb164_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
  
 	splx(s);
@@ -350,33 +352,21 @@ dec_eb164_pciide_compat_intr_disestablish(void *v, void *cookie)
 }
 
 void
-eb164_iointr(framep, vec)
-	void *framep;
+eb164_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq; 
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (EB164_MAX_IRQ << 4))
-			panic("eb164_iointr: vec 0x%lx out of range", vec);
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		if (!alpha_shared_intr_dispatch(eb164_pci_intr, irq)) {
-			alpha_shared_intr_stray(eb164_pci_intr, irq,
-			    "eb164 irq");
-			if (ALPHA_SHARED_INTR_DISABLE(eb164_pci_intr, irq))
-				eb164_intr_disable(irq);
-		} else
-			alpha_shared_intr_reset_strays(eb164_pci_intr, irq);
-		return;
-	}
-#if NSIO
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	}
-#endif
-	panic("eb164_iointr: weird vec 0x%lx", vec);
+	if (!alpha_shared_intr_dispatch(eb164_pci_intr, irq)) {
+		alpha_shared_intr_stray(eb164_pci_intr, irq,
+		    "eb164 irq");
+		if (ALPHA_SHARED_INTR_DISABLE(eb164_pci_intr, irq))
+			eb164_intr_disable(irq);
+	} else
+		alpha_shared_intr_reset_strays(eb164_pci_intr, irq);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb164_intr.S. */

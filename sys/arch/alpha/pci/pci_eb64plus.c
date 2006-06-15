@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.8 2006/03/26 20:23:08 brad Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.9 2006/06/15 20:08:29 brad Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -143,7 +143,6 @@ pci_eb64plus_pickintr(acp)
 #if NSIO
 	sio_intr_setup(pc, iot);
 #endif
-	set_iointr(eb64plus_iointr);
 }
 
 int     
@@ -217,9 +216,11 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg, name)
 	cookie = alpha_shared_intr_establish(eb64plus_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, name);
 
-	if (cookie != NULL && alpha_shared_intr_isactive(eb64plus_pci_intr, ih))
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(eb64plus_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), eb64plus_iointr, NULL);
 		eb64plus_intr_enable(ih);
-
+	}
 	return (cookie);
 }
 
@@ -239,39 +240,28 @@ dec_eb64plus_intr_disestablish(acv, cookie)
 		eb64plus_intr_disable(irq);
 		alpha_shared_intr_set_dfltsharetype(eb64plus_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
  
 	splx(s);
 }
 
 void
-eb64plus_iointr(framep, vec)
-	void *framep;
+eb64plus_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq; 
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (EB64PLUS_MAX_IRQ << 4))
-			panic("eb64plus_iointr: vec 0x%lx out of range", vec);
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		if (!alpha_shared_intr_dispatch(eb64plus_pci_intr, irq)) {
-		    alpha_shared_intr_stray(eb64plus_pci_intr, irq,
-			"eb64+ irq");
-			if (ALPHA_SHARED_INTR_DISABLE(eb64plus_pci_intr, irq))
-				eb64plus_intr_disable(irq);
-		} else
-			alpha_shared_intr_reset_strays(eb64plus_pci_intr, irq);
-		return;
-	}
-#if NSIO
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	}
-#endif
-	panic("eb64plus_iointr: weird vec 0x%lx", vec);
+	if (!alpha_shared_intr_dispatch(eb64plus_pci_intr, irq)) {
+		alpha_shared_intr_stray(eb64plus_pci_intr, irq,
+		    "eb64+ irq");
+		if (ALPHA_SHARED_INTR_DISABLE(eb64plus_pci_intr, irq))
+			eb64plus_intr_disable(irq);
+	} else
+		alpha_shared_intr_reset_strays(eb64plus_pci_intr, irq);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb64plus_intr.S. */

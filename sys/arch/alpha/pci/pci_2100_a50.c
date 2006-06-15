@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.19 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.20 2006/06/15 20:08:29 brad Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -91,7 +91,6 @@ pci_2100_a50_pickintr(acp)
 
 #if NSIO
         sio_intr_setup(pc, iot);
-	set_iointr(&sio_iointr);
 #else
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");
 #endif

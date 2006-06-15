@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.25 2006/01/29 10:47:35 martin Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.26 2006/06/15 20:08:29 brad Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -67,6 +67,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
@@ -463,9 +464,12 @@ sio_intr_establish(v, irq, type, level, fn, arg, name)
 	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level, fn,
 	    arg, name);
 
-	if (cookie)
-		sio_setirqstat(irq, alpha_shared_intr_isactive(sio_intr, irq),
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(sio_intr, irq)) {
+		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL);
+		sio_setirqstat(irq, 1,
 		    alpha_shared_intr_get_sharetype(sio_intr, irq));
+	}
 
 	return (cookie);
 }
@@ -513,19 +517,23 @@ sio_intr_disestablish(v, cookie)
 		}
 		sio_setirqstat(irq, 0, ist);
 		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
+
+		/* Release our SCB vector. */
+		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
 }
 
 void
-sio_iointr(framep, vec)
-	void *framep;
+sio_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq;
 
-	irq = (vec - 0x800) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x800);
+
 #ifdef DIAGNOSTIC
 	if (irq >= ICU_LEN || irq < 0)
 		panic("sio_iointr: irq out of range (%d)", irq);
