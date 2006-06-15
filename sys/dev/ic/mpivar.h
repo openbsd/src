@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.11 2006/06/15 04:44:59 marco Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.12 2006/06/15 04:59:21 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -114,6 +114,8 @@ struct mpi_softc {
 	struct mpi_ccb_list	sc_ccb_free;
 
 	struct mpi_dmamem	*sc_replies;
+
+	struct mpi_cfg_ioc_pg2	*sc_ioc_pg2;
 };
 
 int	mpi_attach(struct mpi_softc *);

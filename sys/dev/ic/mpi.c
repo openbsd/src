@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.39 2006/06/15 04:44:59 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.40 2006/06/15 04:59:21 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1861,7 +1861,6 @@ void
 mpi_get_raid(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
-	struct mpi_cfg_ioc_pg2		pg;
 
 	DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid\n", DEVNAME(sc));
 
@@ -1872,7 +1871,9 @@ mpi_get_raid(struct mpi_softc *sc)
 	}
 
 	/* make page length bytes instead of dwords */
-	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, hdr.page_length * 4) != 0) {
+	sc->sc_ioc_pg2 = malloc(hdr.page_length * 4, M_DEVBUF, M_WAITOK);
+	if (mpi_cfg_page(sc, 0, &hdr, 1, sc->sc_ioc_pg2,
+	    hdr.page_length * 4) != 0) {
 		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch IOC "
 		    "page 2\n", DEVNAME(sc));
 		return;
@@ -1880,8 +1881,10 @@ mpi_get_raid(struct mpi_softc *sc)
 
 	DNPRINTF(MPI_D_RAID, "%s:  capabilities: %x active vols %d max vols: %d"
 	    " active phys disks: %d max disks: %d\n",
-	    DEVNAME(sc), letoh32(pg.capabilities), pg.no_active_vols,
-	    pg.max_vols, pg.no_active_phys_disks, pg.max_phys_disks);
+	    DEVNAME(sc), letoh32(sc->sc_ioc_pg2->capabilities),
+	    sc->sc_ioc_pg2->no_active_vols, sc->sc_ioc_pg2->max_vols,
+	    sc->sc_ioc_pg2->no_active_phys_disks,
+	    sc->sc_ioc_pg2->max_phys_disks);
 }
 
 int
