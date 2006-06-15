@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.14 2006/06/15 04:44:59 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.15 2006/06/15 05:21:46 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1008,8 +1008,6 @@ struct mpi_cfg_manufacturing_pg0 {
 } __packed;
 
 struct mpi_cfg_raid_vol {
-	struct mpi_cfg_hdr	config_header;
-
 	u_int8_t		vol_id;
 	u_int8_t		vol_bus;
 	u_int8_t		vol_ioc;
