@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.37 2006/06/13 02:07:19 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.38 2006/06/15 02:56:51 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -37,13 +37,13 @@
 uint32_t	mpi_debug = 0
 /*		    | MPI_D_CMD */
 /*		    | MPI_D_INTR */
-		    | MPI_D_MISC
-/*		    | MPI_D_DMA */
+/*		    | MPI_D_MISC */
+		    | MPI_D_DMA
 /*		    | MPI_D_IOCTL */
 /*		    | MPI_D_RW */
 /*		    | MPI_D_MEM */
 /*		    | MPI_D_CCB */
-		    | MPI_D_PPR
+/*		    | MPI_D_PPR */
 		;
 #endif
 
@@ -947,9 +947,6 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
 	xs->flags |= ITSDONE;
-	DNPRINTF(MPI_D_CMD, "%s:  xs cmd: 0x%02x len: %d error: 0x%02x "
-	    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
-	    xs->error, xs->flags);
 
 	if (sie == NULL) {
 		/* no scsi error, we're ok so drop out early */
@@ -958,36 +955,6 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 		scsi_done(xs);
 		return;
 	}
-
-	DNPRINTF(MPI_D_CMD, "%s:  target_id: %d bus: %d msg_length: %d "
-	    "function: 0x%02x\n", DEVNAME(sc), sie->target_id,
-	    sie->bus, sie->msg_length, sie->function);
-
-	DNPRINTF(MPI_D_CMD, "%s:  cdb_length: %d sense_buf_length: %d "
-	    "msg_flags: 0x%02x\n", DEVNAME(sc), sie->cdb_length,
-	    sie->bus, sie->msg_flags);
-
-	DNPRINTF(MPI_D_CMD, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
-	    letoh32(sie->msg_context));
-
-	DNPRINTF(MPI_D_CMD, "%s:  scsi_status: 0x%02x scsi_state: 0x%02x "
-	    "ioc_status: 0x%04x\n", DEVNAME(sc), sie->scsi_status,
-	    sie->scsi_state, letoh16(sie->ioc_status));
-
-	DNPRINTF(MPI_D_CMD, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(sie->ioc_loginfo));
-
-	DNPRINTF(MPI_D_CMD, "%s:  transfer_count: %d\n", DEVNAME(sc),
-	    letoh32(sie->transfer_count));
-
-	DNPRINTF(MPI_D_CMD, "%s:  sense_count: %d\n", DEVNAME(sc),
-	    letoh32(sie->sense_count));
-
-	DNPRINTF(MPI_D_CMD, "%s:  response_info: 0x%08x\n", DEVNAME(sc),
-	    letoh32(sie->response_info));
-
-	DNPRINTF(MPI_D_CMD, "%s:  tag: 0x%04x\n", DEVNAME(sc),
-	    letoh16(sie->tag));
 
 	xs->status = sie->scsi_status;
 	switch (letoh16(sie->ioc_status)) {
@@ -1083,8 +1050,35 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 			xs->error = XS_BUSY;
 	}
 
-	DNPRINTF(MPI_D_CMD, "%s:  xs error: 0x%02x len: %d\n", DEVNAME(sc),
-	    xs->error, xs->status);
+	if (xs->error != XS_NOERROR && !cold) {
+		printf("%s:  xs cmd: 0x%02x len: %d error: 0x%02x "
+		    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
+		    xs->error, xs->flags);
+		printf("%s:  target_id: %d bus: %d msg_length: %d "
+		    "function: 0x%02x\n", DEVNAME(sc), sie->target_id,
+		    sie->bus, sie->msg_length, sie->function);
+		printf("%s:  cdb_length: %d sense_buf_length: %d "
+		    "msg_flags: 0x%02x\n", DEVNAME(sc), sie->cdb_length,
+		    sie->bus, sie->msg_flags);
+		printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+		    letoh32(sie->msg_context));
+		printf("%s:  scsi_status: 0x%02x scsi_state: 0x%02x "
+		    "ioc_status: 0x%04x\n", DEVNAME(sc), sie->scsi_status,
+		    sie->scsi_state, letoh16(sie->ioc_status));
+		printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+		    letoh32(sie->ioc_loginfo));
+		printf("%s:  transfer_count: %d\n", DEVNAME(sc),
+		    letoh32(sie->transfer_count));
+		printf("%s:  sense_count: %d\n", DEVNAME(sc),
+		    letoh32(sie->sense_count));
+		printf("%s:  response_info: 0x%08x\n", DEVNAME(sc),
+		    letoh32(sie->response_info));
+		printf("%s:  tag: 0x%04x\n", DEVNAME(sc),
+		    letoh16(sie->tag));
+		printf("%s:  xs error: 0x%02x xs status: %d\n", DEVNAME(sc),
+		    xs->error, xs->status);
+	}
+
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 	scsi_done(xs);
