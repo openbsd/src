@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_struct.h,v 1.2 2006/05/13 05:59:28 deraadt Exp $ */
+/* $OpenBSD: prebind_struct.h,v 1.3 2006/06/15 22:09:32 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -76,6 +76,7 @@ void	elf_dump_footer(struct prebind_footer *footer);
 
 extern	int verbose;
 extern	int merge;
+extern	int safe;
 
 extern int64_t prebind_blocks;
 extern struct elf_object *load_object;

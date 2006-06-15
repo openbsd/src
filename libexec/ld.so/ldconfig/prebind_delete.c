@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.5 2006/05/17 02:59:08 deraadt Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.6 2006/06/15 22:09:32 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 #include <errno.h>
 #include "prebind.h"
 
@@ -41,11 +42,78 @@ int
 prebind_delete(char **argv)
 {
 	while (*argv) {
-		if (strip_prebind(*argv) == -1)
+		if (strip_file_or_dir(*argv) == -1)
 			return (1);
 		argv++;
 	}
 	return (0);
+}
+
+int
+strip_file_or_dir(char *name)
+{
+	struct stat sb;
+	int ret = -1;
+
+	ret = lstat(name, &sb);
+	if (ret != 0)
+		return;
+	switch (sb.st_mode & S_IFMT) {
+	case S_IFREG:
+		ret =  strip_prebind(name);
+		break;
+	case S_IFDIR:
+		if (verbose > 0)
+			printf("loading dir %s\n", name);
+		ret = strip_dir(name);
+		break;
+	default:
+		; /* links and other files we skip */
+	}
+	return -1;
+}
+
+int
+strip_dir(char *dir)
+{
+	struct dirent *dp;
+	struct stat sb;
+	DIR *dirp;
+	char *buf;
+	int ret;
+
+	dirp = opendir(dir);
+
+	/* if dir failes to open, skip */
+	if (dirp == NULL)
+		return;
+
+	while ((dp = readdir(dirp)) != NULL && ret != -1) {
+		ret = -1;
+		switch (dp->d_type) {
+		case DT_UNKNOWN:
+			/*
+			 * NFS will return unknown, since load_file
+			 * does stat the file, this just
+			 */
+			asprintf(&buf, "%s/%s", dir, dp->d_name);
+			lstat(buf, &sb);
+			if (sb.st_mode == S_IFREG)
+				ret = strip_prebind(buf);
+			free(buf);
+			break;
+		case DT_REG:
+			asprintf(&buf, "%s/%s", dir, dp->d_name);
+			ret = strip_prebind(buf);
+			free(buf);
+			break;
+		default:
+			/* other files symlinks, dirs, ... we ignore */
+			ret = 0;
+			;
+		}
+	}
+	return ret;
 }
 
 int

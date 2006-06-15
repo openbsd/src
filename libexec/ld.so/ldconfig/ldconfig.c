@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.22 2006/05/18 17:00:06 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.23 2006/06/15 22:09:32 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -64,6 +64,7 @@ static int			doprebind;
 static int			nostd;
 static int			justread;
 int				merge;
+int				safe;
 static int			rescan;
 static int			unconfig;
 
@@ -91,7 +92,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-DmPrRsUv] [path ...]\n", __progname);
+	    "usage: %s [-DmPrRsSUv] [path ...]\n", __progname);
 	exit(1);
 }
 
@@ -101,7 +102,7 @@ main(int argc, char *argv[])
 	int i, c;
 	int rval = 0;
 
-	while ((c = getopt(argc, argv, "DmPrRsUv")) != -1) {
+	while ((c = getopt(argc, argv, "DmPrRsSUv")) != -1) {
 		switch (c) {
 		case 'R':
 			rescan = 1;
@@ -117,6 +118,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			nostd = 1;
+			break;
+		case 'S':
+			safe = 1;
 			break;
 		case 'v':
 			verbose = 1;

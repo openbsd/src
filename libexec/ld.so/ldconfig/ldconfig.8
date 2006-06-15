@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.20 2006/05/12 23:23:20 deraadt Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.21 2006/06/15 22:09:32 drahn Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -116,6 +116,11 @@ The hints file will not be modified.
 Do not scan the built-in system directory
 .Pq Dq /usr/lib
 for shared libraries.
+.It Fl S
+Perform prelinking operations in a safe mode, always copies the binaries
+when prelinking data is added to a file. Use to elminate the possibility
+that ETXTBUSY will occur when attempting to run a binary while prelinking
+is running.
 .It Fl U
 Unconfigure directories specified on the command line or remove inaccessible
 directories from search path if no directories specified.
@@ -135,7 +140,7 @@ program startup can be significantly improved because
 .Xr ld.so 1
 can initialize the shared library environment much faster.
 Prebinding information adds a small amount of data to the end of each
-specified library and program.
+specified program and associated shared libraries.
 .Sh SECURITY
 Special care must be taken when loading shared libraries into the address
 space of

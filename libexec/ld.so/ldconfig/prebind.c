@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.5 2006/05/18 17:00:06 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.6 2006/06/15 22:09:32 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -71,6 +71,8 @@ char *shstrtab;
 #define RELOC_JMP_SLOT 21
 #endif
 
+#define BUFSZ (256 * 1024)
+
 #include "prebind_struct.h"
 struct proglist *curbin;
 
@@ -94,10 +96,28 @@ struct objarray_list {
 	TAILQ_HEAD(, objlist) inst_list;
 } *objarray;
 
+
+struct prebind_info {
+	struct elf_object *object;
+	struct prebind_footer *footer;
+	u_int32_t footer_offset;
+	u_int32_t nfixup;
+	struct nameidx *nameidx;
+	struct symcachetab *symcache;
+	struct symcachetab *pltsymcache;
+	u_int32_t *fixuptab;
+	u_int32_t *fixupcnt;
+	struct fixup **fixup;
+	u_int32_t *maptab;
+	u_int32_t **libmap;
+	u_int32_t *libmapcnt;
+	char *nametab;
+	u_int32_t nametablen;
+};
+
 int	objarray_cnt;
 int	objarray_sz;
 
-int	write_txtbusy_file(char *name);
 void	copy_oldsymcache(int objidx, void *prebind_data);
 void	elf_load_existing_prebind(struct elf_object *object, int fd);
 
@@ -128,8 +148,9 @@ int	elf_prep_lib_prebind(struct elf_object *object);
 int	elf_prep_bin_prebind(struct proglist *pl);
 void	add_fixup_prog(struct elf_object *prog, struct elf_object *obj, int idx,
 	    const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag);
-void	add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj, int idx,
-	    const struct elf_object *ref_obj, const Elf_Sym *ref_sym, int flag);
+void	add_fixup_oldprog(struct elf_object *prog, struct elf_object *obj,
+	    int idx, const struct elf_object *ref_obj, const Elf_Sym *ref_sym,
+	    int flag);
 
 void	elf_dump_footer(struct prebind_footer *footer);
 
@@ -148,6 +169,8 @@ void	elf_find_symbol_rela(const char *s, struct elf_object *object,
 int	elf_find_symbol_obj(elf_object_t *object, const char *name,
 	    unsigned long hash, int flags, const Elf_Sym **this,
 	    const Elf_Sym **weak_sym, elf_object_t **weak_object);
+
+int prebind_writefile(int fd, struct prebind_info *info);
 
 struct elf_object *load_object;
 
@@ -173,7 +196,6 @@ prebind(char **argv)
 	}
 	elf_sum_reloc();
 
-	printf("total new blocks %lld\n", prebind_blocks);
 	return (0);
 }
 
@@ -1657,10 +1679,8 @@ elf_prep_bin_prebind(struct proglist *pl)
 	free(nameidx);
 	free(nametab);
 	free(libmap);
-	return ret;
 }
 
-int64_t prebind_blocks;
 
 int
 elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
@@ -1670,44 +1690,52 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
     struct symcachetab *symcachetab, int symcache_cnt,
     struct symcachetab *pltsymcachetab, int pltsymcache_cnt)
 {
+	struct prebind_footer footer;
+	struct prebind_info info;
 	u_int32_t footer_offset, *maptab = NULL;
 	u_int32_t next_start, *fixuptab = NULL;
-	struct prebind_footer footer;
 	struct stat ifstat;
 	off_t base_offset;
 	size_t len;
-	int fd, i;
+	int fd = -1, i;
+	int readonly = 0;
 
-	/* open the file */
-	fd = open(object->load_name, O_RDWR);
+	/* open the file, if in safe mode, only open it readonly */
+	if (safe == 0)
+		fd = open(object->load_name, O_RDWR);
 	if (fd == -1) {
-		if (errno == ETXTBSY)
-			fd = write_txtbusy_file(object->load_name);
+		if (safe != 0 || errno == ETXTBSY)
+			fd = open(object->load_name, O_RDONLY);
 		if (fd == -1) {
 			perror(object->load_name);
 			return 1;
 		}
+		readonly = 1;
 	}
 	lseek(fd, -((off_t)sizeof(struct prebind_footer)), SEEK_END);
 	len = read(fd, &footer, sizeof(struct prebind_footer));
-
-	if (footer.bind_id[0] == BIND_ID0 &&
-	    footer.bind_id[1] == BIND_ID1 &&
-	    footer.bind_id[2] == BIND_ID2 &&
-	    footer.bind_id[3] == BIND_ID3) {
-
-		ftruncate(fd, footer.orig_size);
-		elf_clear_prog_load(fd, object);
-	}
 
 	if (fstat(fd, &ifstat) == -1) {
 		perror(object->load_name);
 		exit(10);
 	}
+
+	if (footer.bind_id[0] == BIND_ID0 &&
+	    footer.bind_id[1] == BIND_ID1 &&
+	    footer.bind_id[2] == BIND_ID2 &&
+	    footer.bind_id[3] == BIND_ID3 &&
+	    readonly == 0) {
+
+		ftruncate(fd, footer.orig_size);
+		elf_clear_prog_load(fd, object);
+
+		base_offset = footer.orig_size;
+	} else {
+		base_offset = ifstat.st_size;
+	}
+
 	bzero(&footer, sizeof(struct prebind_footer));
 
-	base_offset = ifstat.st_size;
-	prebind_blocks -= ifstat.st_blocks; /* subtract old size */
 
 	/* verify dev/inode - do we care about last modified? */
 
@@ -1755,8 +1783,8 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 			maptab[i] = next_start;
 			next_start += libmapcnt[i] * sizeof(u_int32_t);
 		}
-
 	}
+
 	footer.nametab_idx = next_start;
 	next_start += nametablen;
 	next_start = ELF_ROUND(next_start, sizeof(u_int64_t));
@@ -1774,56 +1802,41 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 	footer.bind_id[2] = BIND_ID2;
 	footer.bind_id[3] = BIND_ID3;
 
-	lseek(fd, footer.prebind_base, SEEK_SET);
-	write(fd, &footer_offset, sizeof(u_int32_t));
 
-	lseek(fd, footer.prebind_base+footer.nameidx_idx, SEEK_SET);
-	write(fd, nameidx, numlibs * sizeof (struct nameidx));
+	info.object = object;
+	info.footer = &footer;
+	info.footer_offset = footer_offset;
+	info.nameidx = nameidx;
+	info.symcache = symcachetab;
 
-	lseek(fd, footer.prebind_base+footer.symcache_idx, SEEK_SET);
-	write(fd, symcachetab, symcache_cnt * sizeof (struct symcachetab));
 
-	lseek(fd, footer.prebind_base+footer.pltsymcache_idx, SEEK_SET);
-	write(fd, pltsymcachetab, pltsymcache_cnt *
-	    sizeof (struct symcachetab));
-
-	if (verbose > 3)
-		dump_symcachetab(symcachetab, symcache_cnt, object, 0);
-	if (verbose > 3)
-		dump_symcachetab(pltsymcachetab, pltsymcache_cnt, object, 0);
-
+	info.pltsymcache = pltsymcachetab;
+	info.nfixup = nfixup;
 	if (nfixup != 0) {
-		lseek(fd, footer.prebind_base+footer.fixup_idx, SEEK_SET);
-		write(fd, fixuptab, 2*nfixup * sizeof(u_int32_t));
-		lseek(fd, footer.prebind_base+footer.fixupcnt_idx, SEEK_SET);
-		write(fd, fixupcnt, 2*nfixup * sizeof(u_int32_t));
-		for (i = 0; i < 2*nfixup; i++) {
-			lseek(fd, footer.prebind_base+fixuptab[i],
-			    SEEK_SET);
-			write(fd, fixup[i], fixupcnt[i] * sizeof(struct fixup));
-		}
-
-		lseek(fd, footer.prebind_base+footer.libmap_idx, SEEK_SET);
-		write(fd, maptab, nfixup * sizeof(u_int32_t));
-		for (i = 0; i < nfixup; i++) {
-			lseek(fd, footer.prebind_base+maptab[i],
-			    SEEK_SET);
-			write(fd, libmap[i], libmapcnt[i] * sizeof(u_int32_t));
-		}
+		info.fixuptab = fixuptab;
+		info.fixupcnt = fixupcnt;
+		info.fixup = fixup;
+		info.maptab = maptab;
+		info.libmap = libmap;
+		info.libmapcnt = libmapcnt;
 	}
-	lseek(fd, footer.prebind_base+footer.nametab_idx, SEEK_SET);
-	write(fd, nametab, nametablen);
-	lseek(fd, footer.prebind_base+footer_offset, SEEK_SET);
-	write(fd, &footer, sizeof (struct prebind_footer));
+
+	info.nametab = nametab;
+	info.nametablen = nametablen;
+
+
+	if (readonly) {
+		prebind_writenewfile(fd, object->load_name, ifstat,
+		    footer.orig_size, &info);
+	} else {
+		prebind_writefile(fd, &info);
+	}
 
 	if (fstat(fd, &ifstat) == -1) {
 		perror(object->load_name);
 		exit(10);
 	}
-	prebind_blocks += ifstat.st_blocks; /* add new size */
 	if (nfixup != 0) {
-		elf_fixup_prog_load(fd, &footer, object);
-
 		free(fixuptab);
 		free(maptab);
 	}
@@ -1839,6 +1852,145 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 	close(fd);
 	return 0;
 }
+
+int
+prebind_writefile(int fd, struct prebind_info *info)
+{
+	int i;
+
+	struct prebind_footer *footer = info->footer;
+
+	lseek(fd, footer->prebind_base, SEEK_SET);
+	write(fd, &info->footer_offset, sizeof(u_int32_t));
+
+	lseek(fd, footer->prebind_base+footer->nameidx_idx, SEEK_SET);
+	write(fd, info->nameidx, footer->numlibs * sizeof (struct nameidx));
+
+	lseek(fd, footer->prebind_base+footer->symcache_idx, SEEK_SET);
+	write(fd, info->symcache, footer->symcache_cnt *
+	    sizeof (struct symcachetab));
+
+	lseek(fd, footer->prebind_base+footer->pltsymcache_idx, SEEK_SET);
+	write(fd, info->pltsymcache, footer->pltsymcache_cnt *
+	    sizeof (struct symcachetab));
+
+	if (info->nfixup != 0) {
+		lseek(fd, footer->prebind_base+footer->fixup_idx, SEEK_SET);
+		write(fd, info->fixuptab, 2*info->nfixup * sizeof(u_int32_t));
+		lseek(fd, footer->prebind_base+footer->fixupcnt_idx, SEEK_SET);
+		write(fd, info->fixupcnt, 2*info->nfixup * sizeof(u_int32_t));
+		for (i = 0; i < 2*info->nfixup; i++) {
+			lseek(fd, footer->prebind_base+info->fixuptab[i],
+			    SEEK_SET);
+			write(fd, info->fixup[i], info->fixupcnt[i] *
+			    sizeof(struct fixup));
+		}
+
+		lseek(fd, footer->prebind_base+footer->libmap_idx, SEEK_SET);
+		write(fd, info->maptab, info->nfixup * sizeof(u_int32_t));
+		for (i = 0; i < info->nfixup; i++) {
+			lseek(fd, footer->prebind_base+info->maptab[i],
+			    SEEK_SET);
+			write(fd, info->libmap[i], info->libmapcnt[i] *
+			    sizeof(u_int32_t));
+		}
+	}
+	lseek(fd, footer->prebind_base+footer->nametab_idx, SEEK_SET);
+	write(fd, info->nametab, info->nametablen);
+
+	lseek(fd, footer->prebind_base+info->footer_offset, SEEK_SET);
+	write(fd, footer, sizeof (struct prebind_footer));
+
+	if (info->object->obj_type == OBJTYPE_EXE)
+		elf_fixup_prog_load(fd, info->footer, info->object);
+
+}
+
+int
+prebind_writenewfile(int infd, char *name, struct stat *st, off_t orig_size,
+    struct prebind_info *info)
+{
+	struct timeval tv[2];
+	char *newname, *buf;
+	ssize_t len, wlen;
+	int outfd;
+
+	if (asprintf(&newname, "%s.XXXXXXXXXX", name) == -1) {
+		if (verbose)
+			warn("asprintf");
+		return (-1);
+	}
+	outfd = open(newname, O_CREAT|O_RDWR|O_TRUNC, 0600);
+	if (outfd == -1) {
+		warn("%s", newname);
+		free(newname);
+		return (-1);
+	}
+
+	buf = malloc(BUFSZ);
+	if (buf == NULL) {
+		if (verbose)
+			warn("malloc");
+		goto fail;
+	}
+
+	/* copy old file to new file */
+	lseek(infd, (off_t)0, SEEK_SET);
+	while (1) {
+		len = read(infd, buf, BUFSIZ);
+		if (len == -1) {
+			if (verbose)
+				warn("read");
+			free(buf);
+			goto fail;
+		}
+		if (len == 0)
+			break;
+		wlen = write(outfd, buf, len);
+		if (wlen != len) {
+			free(buf);
+			goto fail;
+		}
+	}
+	free(buf);
+
+	/* now back track, and delete the header */
+	if (prebind_remove_load_section(outfd, newname) == -1)
+		goto fail;
+	if (orig_size != (off_t)-1 &&
+	    ftruncate(outfd, orig_size) == -1)
+		goto fail;
+
+	prebind_writefile(outfd, info);
+
+	/* move new file into place */
+	TIMESPEC_TO_TIMEVAL(&tv[0], &st->st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tv[1], &st->st_mtimespec);
+	if (futimes(outfd, tv) == -1)
+		goto fail;
+	if (fchown(outfd, st->st_uid, st->st_gid) == -1)
+		goto fail;
+	if (fchmod(outfd, st->st_mode) == -1)
+		goto fail;
+	if (fchflags(outfd, st->st_flags) == -1)
+		goto fail;
+	if (fstat(outfd, st) == -1) {
+		/* XXX */
+		goto fail;
+	}
+	if (rename(newname, name) == -1)
+		goto fail;
+
+	close (outfd);
+	return (0);
+
+fail:
+	free(newname);
+	unlink(newname);
+	close(outfd);
+	return (-1);
+}
+
 void
 elf_fixup_prog_load(int fd, struct prebind_footer *footer,
     struct elf_object *object)
@@ -2011,57 +2163,6 @@ elf_print_objarray(void)
 			printf("\tprog %s\n", ol->load_prog->load_name);
 		}
 	}
-}
-
-int
-write_txtbusy_file(char *name)
-{
-	char *prebind_name;
-	int fd;
-	int oldfd;
-	int err;
-	struct stat sb;
-	void *buf;
-	size_t len, wlen;
-
-	err = lstat(name, &sb);	/* get mode of old file (preserve mode) */
-	if (err != 0)
-		return -1; /* stat shouldn't fail but if it does */
-
-	/* pick a better filename (pulling apart string?) */
-	err = asprintf(&prebind_name, "%s%s", name, ".prebXXXXXXXXXX");
-	if (err == -1) {
-		/* fail */
-		exit(10);	/* bail on memory failure */
-	}
-	mkstemp(prebind_name);
-
-	/* allocate a 256k buffer to copy the file */
-#define BUFSZ (256 * 1024)
-	buf = xmalloc(BUFSZ);
-
-	fd = open(prebind_name, O_RDWR|O_CREAT|O_TRUNC, sb.st_mode);
-	oldfd = open(name, O_RDONLY);
-	while ((len = read(oldfd, buf, BUFSZ)) > 0) {
-		wlen = write(fd, buf, len);
-		if (wlen != len) {
-			/* write failed */
-				close(fd);
-				close(oldfd);
-				unlink(prebind_name);
-				free(buf);
-				return -1;
-		}
-	}
-
-	/* this mode is used above, but is modified by umask */
-	chmod(prebind_name, sb.st_mode);
-	close(oldfd);
-	unlink(name);
-	rename(prebind_name, name);
-	free(buf);
-
-	return fd;
 }
 
 void
