@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321var.h,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
+/*	$OpenBSD: i80321var.h,v 1.3 2006/06/15 21:35:30 drahn Exp $	*/
 /*	$NetBSD: i80321var.h,v 1.10 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -59,8 +59,6 @@ struct intrhand {
 	struct evcount  	ih_count;
 	char *ih_name;
 };
-
-#define	IRQNAMESIZE	sizeof("iop321 irq 31")
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
@@ -193,7 +191,6 @@ struct iopxs_attach_args {
 
 extern struct bus_space i80321_bs_tag;
 extern struct i80321_softc *i80321_softc;
-extern const char *i80321_irqnames[];
 
 extern void (*i80321_hardclock_hook)(void);
 
@@ -202,10 +199,10 @@ void	i80321_sdram_bounds(bus_space_tag_t, bus_space_handle_t,
 
 void	i80321_calibrate_delay(void);
 
-void	i80321_icu_init(void);
-void	i80321_intr_init(void);
-void	*i80321_intr_establish(int, int, int (*)(void *), void *, char *);
-void	i80321_intr_disestablish(void *);
+void	i80321intc_init(void);
+void	i80321intc_intr_init(void);
+void	*i80321intc_establish(int, int, int (*)(void *), void *, char *);
+void	i80321intc_disestablish(void *);
 
 void	i80321_gpio_set_direction(uint8_t, uint8_t);
 void	i80321_gpio_set_val(uint8_t, uint8_t);

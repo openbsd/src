@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.6 2006/05/29 17:01:42 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.7 2006/06/15 21:35:30 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1095,7 +1095,7 @@ set_cpufuncs()
 	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600 ||
 	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0 ||
 	    cputype == CPU_ID_80219_400 || cputype == CPU_ID_80219_600) {
-		i80321_icu_init();
+		i80321intc_init();
 
 #ifdef PERFCTRS
 		/*
