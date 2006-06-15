@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.21 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.22 2006/06/15 10:08:34 pascoe Exp $	*/
 
 /*-
  *
@@ -300,7 +300,7 @@ ipxipoutput(ifp, m, dst, rt)
 	/*
 	 * Output final datagram.
 	 */
-	error = ip_output(m, NULL, ro, SO_BROADCAST, NULL, NULL, NULL);
+	error = ip_output(m, NULL, ro, SO_BROADCAST, NULL, NULL);
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;
