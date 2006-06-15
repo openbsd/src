@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.10 2006/06/06 23:22:28 deraadt Exp $ */
+/* $OpenBSD: mmc.c,v 1.11 2006/06/15 23:49:58 mjc Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -175,7 +175,7 @@ writetrack(struct track_info *tr)
 	scsireq_t scr;
 	u_int end_lba, lba;
 	u_int tmp;
-	int r,rfd;
+	int r;
 	u_char nblk;
 
 	nblk = 65535/tr->blklen;
@@ -208,14 +208,13 @@ writetrack(struct track_info *tr)
 	} else {
 		end_lba = tr->sz / tr->blklen + lba;
 	}
-	rfd = open(tr->file, O_RDONLY, 0640);
 	if (tr->type == 'a') {
-		if (lseek(rfd, WAVHDRLEN, SEEK_SET) == -1)
-			err(1, "seek failed");
+		if (lseek(tr->fd, WAVHDRLEN, SEEK_SET) == -1)
+			err(1, "seek failed for file %s", tr->file);
 	}
 	while ((lba < end_lba) && (nblk != 0)) {
 		while (lba + nblk <= end_lba) {
-			read(rfd, databuf, nblk * tr->blklen);
+			read(tr->fd, databuf, nblk * tr->blklen);
 			scr.cmd[8] = nblk;
 			scr.datalen = nblk * tr->blklen;
 			r = ioctl(fd, SCIOCCOMMAND, &scr);
@@ -236,7 +235,7 @@ writetrack(struct track_info *tr)
 		}
 		nblk--;
 	}
-	close(rfd);
+	close(tr->fd);
 	return (0);
 }
 

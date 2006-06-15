@@ -30,6 +30,7 @@ struct cd_toc_entry;
 struct track_info {
 	off_t sz;
 	u_int blklen;
+	int   fd;
 	char *file;
 	SLIST_ENTRY(track_info) track_list;
 	char type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.52 2006/06/06 23:22:28 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.53 2006/06/15 23:49:58 mjc Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -301,17 +301,18 @@ main(int argc, char **argv)
 			if (argv[0] == NULL)
 				usage();
 			tr->file = argv[0];
-			if (stat(tr->file, &sb) != 0) {
-				warn("cannot stat file %s",tr->file);
-				return (-1);
-			}
+			tr->fd = open(tr->file, O_RDONLY, 0640);
+			if (tr->fd == -1)
+				err(1, "cannot open file %s", tr->file);
+			if (fstat(tr->fd, &sb) == -1)
+				err(1, "cannot stat file %s", tr->file);
 			tr->sz = sb.st_size;
 			if (tr->type == 'a')
 				tr->sz -= WAVHDRLEN;
 			if (SLIST_EMPTY(&tracks))
-				SLIST_INSERT_HEAD(&tracks,tr,track_list);
+				SLIST_INSERT_HEAD(&tracks, tr, track_list);
 			else
-				SLIST_INSERT_AFTER(cur_track,tr,track_list);
+				SLIST_INSERT_AFTER(cur_track, tr, track_list);
 			cur_track = tr;
 		}
 		if (!open_cd(cdname, 1))
