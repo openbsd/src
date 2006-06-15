@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armish,v 1.5 2006/06/10 03:53:08 drahn Exp $
+#	$OpenBSD: files.armish,v 1.6 2006/06/15 20:42:53 drahn Exp $
 
 maxpartitions   16
 maxusers		2 8 64
@@ -9,6 +9,7 @@ major	{rd = 18}
 
 file	arch/arm/arm/conf.c
 file	arch/armish/armish/armish_machdep.c
+file	dev/clock_subr.c
 
 file	arch/armish/armish/autoconf.c
 file	arch/arm/arm/disksubr.c		disk

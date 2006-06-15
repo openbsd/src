@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_timer.c,v 1.3 2006/06/01 18:46:05 drahn Exp $	*/
+/*	$OpenBSD: i80321_timer.c,v 1.4 2006/06/15 20:42:53 drahn Exp $	*/
 /*	$NetBSD: i80321_timer.c,v 1.13 2005/12/24 20:06:52 perry Exp $	*/
 
 /*
@@ -352,6 +352,7 @@ void
 inittodr(time_t base)
 {
 	time_t deltat;
+	struct timeval rtctime;
 	int badbase;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
@@ -363,8 +364,8 @@ inittodr(time_t base)
 		badbase = 0;
 
 	if (todr_handle == NULL ||
-/*	    todr_gettime(todr_handle, &time) != 0 || */
-	    time.tv_sec == 0) {
+	    todr_gettime(todr_handle, &rtctime) != 0 ||
+	    rtctime.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -376,6 +377,9 @@ inittodr(time_t base)
 			resettodr();
 		}
 		goto bad;
+	} else {
+		time.tv_sec = rtctime.tv_sec;
+		time.tv_usec = rtctime.tv_usec;
 	}
 
 	if (!badbase) {
@@ -404,12 +408,16 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval rtctime;
 
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_handle != NULL /* && */
-	   /* todr_settime(todr_handle, &time) != 0 */)
+	rtctime.tv_sec = time.tv_sec;
+	rtctime.tv_usec = time.tv_usec;
+
+	if (todr_handle != NULL &&
+	   todr_settime(todr_handle, &rtctime) != 0)
 		printf("resettodr: failed to set time\n");
 }
 
