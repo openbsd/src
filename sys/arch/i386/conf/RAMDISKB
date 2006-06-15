@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.89 2006/05/19 04:17:31 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.90 2006/06/15 22:25:37 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -129,8 +129,8 @@ pccom2	at isa? port 0x3e8 irq 5
 #scsibus* at ahc?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
-mpt*	at pci?			# LSI Fusion-MPT SCSI/Fibre
-scsibus* at mpt?
+mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
+scsibus* at mpi?
 dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
 dpt*	at eisa?		# DPT SmartCache/SmartRAID EISA
 scsibus* at dpt?
