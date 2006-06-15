@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.38 2006/06/15 02:56:51 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.39 2006/06/15 04:44:59 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -38,12 +38,13 @@ uint32_t	mpi_debug = 0
 /*		    | MPI_D_CMD */
 /*		    | MPI_D_INTR */
 /*		    | MPI_D_MISC */
-		    | MPI_D_DMA
+/*		    | MPI_D_DMA */
 /*		    | MPI_D_IOCTL */
 /*		    | MPI_D_RW */
 /*		    | MPI_D_MEM */
 /*		    | MPI_D_CCB */
 /*		    | MPI_D_PPR */
+		    | MPI_D_RAID
 		;
 #endif
 
@@ -109,6 +110,7 @@ int			mpi_portfacts(struct mpi_softc *);
 int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *);
 int			mpi_portenable(struct mpi_softc *);
+void			mpi_get_raid(struct mpi_softc *);
 
 int			mpi_cfg_header(struct mpi_softc *, u_int8_t, u_int8_t,
 			    u_int32_t, struct mpi_cfg_hdr *);
@@ -205,6 +207,9 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.openings = sc->sc_maxcmds / sc->sc_buswidth;
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	/* get raid pages */
+	mpi_get_raid(sc);
 
 	/* do domain validation */
 	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SCSI)
@@ -1850,6 +1855,33 @@ mpi_portenable(struct mpi_softc *sc)
 	mpi_put_ccb(sc, ccb);
 
 	return (0);
+}
+
+void
+mpi_get_raid(struct mpi_softc *sc)
+{
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_ioc_pg2		pg;
+
+	DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid\n", DEVNAME(sc));
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 2, 0, &hdr) != 0) {
+		DNPRINTF(MPI_D_PPR, "%s: mpi_get_raid unable to fetch header"
+		    "for IOC page 2\n", DEVNAME(sc));
+		return;
+	}
+
+	/* make page length bytes instead of dwords */
+	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, hdr.page_length * 4) != 0) {
+		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch IOC "
+		    "page 2\n", DEVNAME(sc));
+		return;
+	}
+
+	DNPRINTF(MPI_D_RAID, "%s:  capabilities: %x active vols %d max vols: %d"
+	    " active phys disks: %d max disks: %d\n",
+	    DEVNAME(sc), letoh32(pg.capabilities), pg.no_active_vols,
+	    pg.max_vols, pg.no_active_phys_disks, pg.max_phys_disks);
 }
 
 int
