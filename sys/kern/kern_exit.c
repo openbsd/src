@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.60 2006/04/06 21:43:28 mickey Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.61 2006/06/15 20:08:01 miod Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -309,15 +309,9 @@ exit1(struct proc *p, int rv, int flags)
 			wakeup(pp);
 	}
 
-	if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
+	if (p->p_exitsig != 0)
 		psignal(p->p_pptr, P_EXITSIG(p));
 	wakeup(p->p_pptr);
-
-	/*
-	 * Notify procfs debugger
-	 */
-	if (p->p_flag & P_FSTRACE)
-		wakeup(p);
 
 	/*
 	 * Release the process's signal state.

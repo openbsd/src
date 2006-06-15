@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.83 2006/06/07 18:58:39 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.84 2006/06/15 20:08:01 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1040,21 +1040,9 @@ issignal(struct proc *p)
 			p->p_xstat = signum;
 
 			SCHED_LOCK(s);	/* protect mi_switch */
-			if (p->p_flag & P_FSTRACE) {
-#ifdef	PROCFS
-				/* procfs debugging */
-				p->p_stat = SSTOP;
-				wakeup(p);
-				mi_switch();
-#else
-				panic("procfs debugging");
-#endif
-			} else {
-				/* ptrace debugging */
-				psignal(p->p_pptr, SIGCHLD);
-				proc_stop(p);
-				mi_switch();
-			}
+			psignal(p->p_pptr, SIGCHLD);
+			proc_stop(p);
+			mi_switch();
 			SCHED_UNLOCK(s);
 
 			/*

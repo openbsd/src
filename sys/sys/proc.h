@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.86 2006/05/29 20:42:53 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.87 2006/06/15 20:08:02 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -277,7 +277,6 @@ struct	proc {
 #define	P_OWEUPC	0x008000	/* Owe proc an addupc() at next ast. */
 
 /* XXX Not sure what to do with these, yet. */
-#define	P_FSTRACE	0x010000	/* tracing via fs (elsewhere?) */
 #define	P_SSTEP		0x020000	/* proc needs single-step fixup ??? */
 #define	P_SUGIDEXEC	0x040000	/* last execve() was set[ug]id */
 
@@ -294,13 +293,13 @@ struct	proc {
 #define	P_BITS \
     ("\20\01ADVLOCK\02CTTY\03INMEM\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \
      "\010SINTR\011SUGID\012SYSTEM\013TIMEOUT\014TRACED\015WAITED\016WEXIT" \
-     "\017EXEC\020PWEUPC\021FSTRACE\022SSTEP\023SUGIDEXEC\024NOCLDWAIT" \
+     "\017EXEC\020PWEUPC\022SSTEP\023SUGIDEXEC\024NOCLDWAIT" \
      "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED\031SWAPIN\032BIGLOCK" \
      "\033THREAD\034IGNEXITRV")
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \
-    (((p)->p_flag & (P_TRACED | P_FSTRACE)) ? SIGCHLD : (p)->p_exitsig)
+    (((p)->p_flag & P_TRACED) ? SIGCHLD : (p)->p_exitsig)
 
 #ifndef __HAVE_CPUINFO
 /*
