@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.42 2006/06/13 16:13:41 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.43 2006/06/15 16:57:24 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -549,7 +549,10 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	}
 
-	fprintf(fd, DELETE "[peer-%s]\n", r->peer->name);
+	if (r->peer) {
+		fprintf(fd, DELETE "[peer-%s]\n", r->peer->name);
+		fprintf(fd, DELETE "[mm-%s]\n", r->peer->name);
+	}
 	if (r->auth) {
 		if (r->auth->srcid)
 			fprintf(fd, DELETE "[%s-ID]\n", r->auth->srcid);
@@ -558,7 +561,6 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	}
 	fprintf(fd, DELETE "[IPsec-%s-%s]\n", r->src->name, r->dst->name);
 	fprintf(fd, DELETE "[qm-%s-%s]\n", r->src->name, r->dst->name);
-	fprintf(fd, DELETE "[mm-%s]\n", r->peer->name);
 	fprintf(fd, DELETE "[lid-%s]\n", r->src->name);
 	fprintf(fd, DELETE "[rid-%s]\n", r->dst->name);
 
