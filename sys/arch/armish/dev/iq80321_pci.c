@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321_pci.c,v 1.6 2006/06/01 18:46:05 drahn Exp $	*/
+/*	$OpenBSD: iq80321_pci.c,v 1.7 2006/06/15 21:26:05 drahn Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ struct irq_map iq80321_thecus_irq_map[] = {
 };
 
 struct irq_map iq80321_hdlg_irq_map[] = {
-	{ 1, 1, ICU_INT_XINT(0) }, /* em0 27 ??? */
-	{ 2, 1, ICU_INT_XINT(1) }, /* wdc0 28 ??? */
+	{ 1, 1, ICU_INT_XINT(0) }, /* em0 27 */
+	{ 2, 1, ICU_INT_XINT(1) }, /* wdc0 28 */
 	{ 3, 1, ICU_INT_XINT(2) }, /* ochi0 29 */
 	{ 3, 2, ICU_INT_XINT(2) }, /* ochi0 29 */
 	{ 3, 3, ICU_INT_XINT(2) }, /* echi0 29 */
@@ -225,8 +225,10 @@ iq80321_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 iq80321_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
+	static char irqname[32];
 
-	return (i80321_irqnames[ih]);
+	snprintf(irqname, sizeof irqname, "irq %d", ih);
+	return (irqname);
 }
 
 const struct evcnt *
