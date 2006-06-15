@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.202 2006/06/14 17:08:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.203 2006/06/15 10:04:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -506,6 +506,15 @@ enum as_spec {
 struct filter_as {
 	enum as_spec	type;
 	u_int16_t	as;
+};
+
+struct ctl_show_rib_request {
+	struct bgpd_addr	prefix;
+	struct filter_as	as;
+	pid_t			pid;
+	u_int16_t		flags;
+	sa_family_t		af;
+	u_int8_t		prefixlen;
 };
 
 enum filter_actions {
