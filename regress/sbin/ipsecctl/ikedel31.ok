@@ -1,0 +1,7 @@
+t IPsec-3ffe:2::1-::/0
+C rms [peer-3ffe::1]
+C rms [mm-3ffe::1]
+C rms [IPsec-3ffe:2::1-::/0]
+C rms [qm-3ffe:2::1-::/0]
+C rms [lid-3ffe:2::1]
+C rms [rid-::/0]

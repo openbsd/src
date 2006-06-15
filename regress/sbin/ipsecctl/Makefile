@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.33 2006/06/15 11:05:58 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.34 2006/06/15 17:03:21 hshoexer Exp $
 
 # TARGETS
 # ipsec: feed ipsecNN.in through ipsecctl and check wether the output matches
@@ -18,7 +18,12 @@ IKEFAIL=1 3 4 5
 IKETESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
 IKETESTS+=16 17 18 19 20 21 22 23
 IKETESTS+=29 30 31 32 33 34 35 36 37 38 39 40
-IKETESTS+=41 42 43 46
+IKETESTS+=41 42 43 46 47
+
+IKEDELTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+IKEDELTESTS+=16 17 18 19 20 21 22 23
+IKEDELTESTS+=29 30 31 32 33 34 35 36 37 38 39 40
+IKEDELTESTS+=41 42 43 46 47
 
 SHELL=/bin/sh
 
@@ -80,6 +85,14 @@ ikefail${n}:
 	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/ikefail${n}.ok /dev/stdin
 .endfor
 
+.for n in ${IKEDELTESTS}
+IKEDEL_TARGETS+=ikedel${n}
+
+ikedel${n}:
+	cat ${.CURDIR}/ikedel${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -dnv -f - | diff -u ${.CURDIR}/ikedel${n}.ok /dev/stdin
+.endfor
+
 ipsec:		${IPSEC_TARGETS}
 REGRESS_TARGETS+=ipsec
 
@@ -100,6 +113,9 @@ REGRESS_TARGETS+=ike
 
 ikefail:	${IKEFAIL_TARGETS}
 REGRESS_TARGETS+=ikefail
+
+ikedel:		${IKEDEL_TARGETS}
+REGRESS_TARGETS+=ikedel
 
 alltests: ${REGRESS_TARGETS}
 

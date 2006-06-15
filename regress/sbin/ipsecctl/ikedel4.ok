@@ -1,0 +1,9 @@
+t IPsec-10.1.1.0/24-10.1.2.0/24
+C rms [peer-131.188.33.29]
+C rms [mm-131.188.33.29]
+C rms [sharleena.as10.net-ID]
+C rms [faui31o.informatik.uni-erlangen.de-ID]
+C rms [IPsec-10.1.1.0/24-10.1.2.0/24]
+C rms [qm-10.1.1.0/24-10.1.2.0/24]
+C rms [lid-10.1.1.0/24]
+C rms [rid-10.1.2.0/24]

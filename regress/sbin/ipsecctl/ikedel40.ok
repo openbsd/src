@@ -1,0 +1,16 @@
+C rms [Phase 2]
+t IPsec-3ffe:1::/64-3ffe:2::/64
+C rms [peer-3ffe::51]
+C rms [mm-3ffe::51]
+C rms [IPsec-3ffe:1::/64-3ffe:2::/64]
+C rms [qm-3ffe:1::/64-3ffe:2::/64]
+C rms [lid-3ffe:1::/64]
+C rms [rid-3ffe:2::/64]
+C rms [Phase 2]
+t IPsec-3ffe::29-3ffe::51
+C rms [peer-3ffe::51]
+C rms [mm-3ffe::51]
+C rms [IPsec-3ffe::29-3ffe::51]
+C rms [qm-3ffe::29-3ffe::51]
+C rms [lid-3ffe::29]
+C rms [rid-3ffe::51]

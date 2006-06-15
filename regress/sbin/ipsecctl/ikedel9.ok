@@ -1,0 +1,8 @@
+t IPsec-3.3.3.0/24-4.4.4.0/24
+C rms [peer-2.2.2.2]
+C rms [mm-2.2.2.2]
+C rms [noname.my.domain-ID]
+C rms [IPsec-3.3.3.0/24-4.4.4.0/24]
+C rms [qm-3.3.3.0/24-4.4.4.0/24]
+C rms [lid-3.3.3.0/24]
+C rms [rid-4.4.4.0/24]
