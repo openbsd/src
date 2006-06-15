@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.23 2005/06/08 06:18:54 henning Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.24 2006/06/15 10:46:58 henning Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -96,12 +96,6 @@ domaininit(void)
 #endif
 #ifdef NATM
 	ADDDOMAIN(natm);
-#endif
-#ifdef notdef /* XXXX */
-#include "imp.h"
-#if NIMP > 0
-	ADDDOMAIN(imp);
-#endif
 #endif
 #ifdef IPSEC
 #ifdef __KAME__
