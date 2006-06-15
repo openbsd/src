@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.15 2006/06/15 05:21:46 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.16 2006/06/15 06:45:53 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1036,4 +1036,19 @@ struct mpi_cfg_ioc_pg2 {
 	u_int8_t		no_active_phys_disks;
 	u_int8_t		max_phys_disks;
 	struct mpi_cfg_raid_vol	raid_vol[1]; /* length is stored in header */
+} __packed;
+
+struct mpi_cfg_raid_pd {
+	u_int8_t		phys_disk_id;
+	u_int8_t		phys_disk_bus;
+	u_int8_t		phys_disk_ioc;
+	u_int8_t		phys_disk_num;
+} __packed;
+
+struct mpi_cfg_ioc_pg3 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int8_t		no_phys_disks;
+	u_int8_t		reserved[3];
+	struct mpi_cfg_raid_pd phys_disks[1]; /* length stored in header */
 } __packed;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.41 2006/06/15 05:22:08 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.42 2006/06/15 06:45:53 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1881,20 +1881,46 @@ mpi_get_raid(struct mpi_softc *sc)
 		return;
 	}
 
-	DNPRINTF(MPI_D_RAID, "%s:  capabilities: %x active vols %d max vols: %d"
-	    " active phys disks: %d max disks: %d\n",
-	    DEVNAME(sc), letoh32(sc->sc_ioc_pg2->capabilities),
-	    sc->sc_ioc_pg2->no_active_vols, sc->sc_ioc_pg2->max_vols,
-	    sc->sc_ioc_pg2->no_active_phys_disks,
+	DNPRINTF(MPI_D_RAID, "%s:  capabilities: %x active vols %d "
+	    "max vols: %d\n", DEVNAME(sc),
+	    letoh32(sc->sc_ioc_pg2->capabilities),
+	    sc->sc_ioc_pg2->no_active_vols, sc->sc_ioc_pg2->max_vols);
+	DNPRINTF(MPI_D_RAID, "%s:  active phys disks: %d max disks: %d\n",
+	    DEVNAME(sc), sc->sc_ioc_pg2->no_active_phys_disks,
 	    sc->sc_ioc_pg2->max_phys_disks);
 
 	for (i = 0; i < sc->sc_ioc_pg2->max_vols; i++) {
 		raidvol = &sc->sc_ioc_pg2->raid_vol[i];
-		DNPRINTF(MPI_D_RAID, "%s:  id: %#02x bus: %d ioc: %d page: %d "
+		DNPRINTF(MPI_D_RAID, "%s:   id: %#02x bus: %d ioc: %d page: %d "
 		    "type: %#02x flags: %#02x\n", DEVNAME(sc), raidvol->vol_id,
 		    raidvol->vol_bus, raidvol->vol_ioc, raidvol->vol_page,
 		    raidvol->vol_type, raidvol->flags);
 
+	}
+
+	/* reuse hdr */
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 3, 0, &hdr) != 0) {
+		DNPRINTF(MPI_D_PPR, "%s: mpi_get_raid unable to fetch header"
+		    "for IOC page 3\n", DEVNAME(sc));
+		return;
+	}
+
+	/* make page length bytes instead of dwords */
+	sc->sc_ioc_pg3 = malloc(hdr.page_length * 4, M_DEVBUF, M_WAITOK);
+	if (mpi_cfg_page(sc, 0, &hdr, 1, sc->sc_ioc_pg3,
+	    hdr.page_length * 4) != 0) {
+		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch IOC "
+		    "page 3\n", DEVNAME(sc));
+		return;
+	}
+
+	for (i = 0; i < sc->sc_ioc_pg3->no_phys_disks; i++) {
+		DNPRINTF(MPI_D_RAID, "%s:    id: %#02x bus: %d ioc: %d "
+		    "num: %#02x\n", DEVNAME(sc),
+		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_id,
+		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_bus,
+		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_ioc,
+		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_num);
 	}
 }
 

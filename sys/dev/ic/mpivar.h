@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.12 2006/06/15 04:59:21 marco Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.13 2006/06/15 06:45:53 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -115,7 +115,9 @@ struct mpi_softc {
 
 	struct mpi_dmamem	*sc_replies;
 
+	/* RAID pages */
 	struct mpi_cfg_ioc_pg2	*sc_ioc_pg2;
+	struct mpi_cfg_ioc_pg3  *sc_ioc_pg3;
 };
 
 int	mpi_attach(struct mpi_softc *);
