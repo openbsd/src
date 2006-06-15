@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.7 2006/06/15 21:32:40 drahn Exp $ */
+/*	$OpenBSD: i80321_mainbus.c,v 1.8 2006/06/15 22:19:47 drahn Exp $ */
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $ */
 
 /*
@@ -344,7 +344,9 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 #define	PLD_INTEN	3
 #define	PLD_PWRMNG	4
 
+#if 0
 	uint8_t val;
+#endif
 
 		if (bus_space_map(sc->sc_st, I80321_PLD, I80321_PLD_SIZE, 0,
 		    /* &sc->sc_pld_sh */ &sc_pld_sh))
