@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.111 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.112 2006/06/15 20:12:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1821,11 +1821,18 @@ sk_watchdog(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
-	printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
+	/*
+	 * Reclaim first as there is a possibility of losing Tx completion
+	 * interrupts.
+	 */
+	sk_txeof(sc_if);
+	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
+		printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
 
-	ifp->if_oerrors++;
+		ifp->if_oerrors++;
 
-	sk_init(sc_if);
+		sk_init(sc_if);
+	}
 }
 
 void
@@ -2247,8 +2254,7 @@ sk_intr(void *xsc)
 	if (sc_if1 != NULL)
 		ifp1 = &sc_if1->arpcom.ac_if;
 
-	status &= sc->sk_intrmask;
-	if ((status & sc->sk_intrmask) != 0) {
+	for (; (status &= sc->sk_intrmask) != 0;) {
 		claimed = 1;
 
 		/* Handle receive interrupts first. */
@@ -2302,6 +2308,7 @@ sk_intr(void *xsc)
 			    sc_if1->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if1);
 		}
+		status = CSR_READ_4(sc, SK_ISSR);
 	}
 
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
