@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.359 2006/06/12 13:18:18 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.360 2006/06/15 02:53:15 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2118,6 +2118,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			    ci->ci_dev.dv_xname, bus);
 			break;
 		}
+		break;
 	default: 
 		printf("%s: unknown i686 model %d, can't get bus clock\n",
 		    ci->ci_dev.dv_xname, model);
