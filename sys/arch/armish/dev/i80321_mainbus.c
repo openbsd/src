@@ -1,5 +1,5 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.6 2006/06/02 01:33:55 drahn Exp $	*/
-/*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $	*/
+/*	$OpenBSD: i80321_mainbus.c,v 1.7 2006/06/15 21:32:40 drahn Exp $ */
+/*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -102,6 +102,9 @@ i80321_mainbus_match(struct device *parent, void *match, void *aux)
 
 	return (0);
 }
+
+/* XXX */
+bus_space_handle_t sc_pld_sh;
 
 void
 i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
@@ -331,7 +334,35 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found(&sc->sc_dev, &gba, gpiobus_print);
 #endif
 	}
+	{
+#define I80321_PLD 0xfe8d0000UL
+#define I80321_PLD_SIZE 0x1000
 
+#define	PLD_LED		0
+#define	PLD_PLED	1
+#define	PLD_BTN		2
+#define	PLD_INTEN	3
+#define	PLD_PWRMNG	4
+
+	uint8_t val;
+
+		if (bus_space_map(sc->sc_st, I80321_PLD, I80321_PLD_SIZE, 0,
+		    /* &sc->sc_pld_sh */ &sc_pld_sh))
+			panic("%s: unable to map PLD registers",
+			    sc->sc_dev.dv_xname);
+
+#if 0
+		printf("dlectl %x\n", bus_space_read_1(sc->sc_st, sc_pld_sh,
+		    PLD_LED));
+		val = bus_space_read_1(sc->sc_st, sc_pld_sh, PLD_LED);
+		val |= 0x3;
+		bus_space_write_1(sc->sc_st, sc_pld_sh, PLD_LED, val);
+		printf("dlectl %x\n", bus_space_read_1(sc->sc_st, sc_pld_sh,
+		    PLD_PLED));
+		printf("dlectl %x\n", bus_space_read_1(sc->sc_st, sc_pld_sh,
+		    PLD_BTN));
+#endif
+	}
 }
 
 void
@@ -421,5 +452,7 @@ board_reset()
 	val = bus_space_read_4(sc->sc_st, sc->sc_sh, 0x7C4);
 	val &=  ~0x10;
 	bus_space_write_4(sc->sc_st, sc->sc_sh, 0x7C4, val);
+
+	bus_space_write_1(sc->sc_st, sc_pld_sh, PLD_PWRMNG, 0x2);
 
 }
