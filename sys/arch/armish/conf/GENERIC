@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.3 2006/06/10 04:03:39 drahn Exp $ 
+# $OpenBSD: GENERIC,v 1.4 2006/06/15 20:38:01 drahn Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -19,15 +19,15 @@ makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
 makeoptions	BOARDTYPE="armish"
 
-options         CPU_XSCALE_80321        # Support the XScale core
-options         XSCALE_CACHE_READ_WRITE_ALLOCATE
-options         CACHE_CLEAN_BLOCK_INTR
+options	CPU_XSCALE_80321	# Support the XScale core
+options	XSCALE_CACHE_READ_WRITE_ALLOCATE
+options	CACHE_CLEAN_BLOCK_INTR
 
-#options         PERFCTRS        # performance counters
+#options	PERFCTRS	# performance counters
 
 option		PCIVERBOSE
 
-config          bsd     swap generic
+config	bsd	swap generic
 
 # The main bus device
 mainbus0	at root
@@ -38,33 +38,34 @@ obio0		at mainbus?
 com0		at obio? addr 0xfe800000 xint 3
 
 # i80321 I/O Processor peripheral support
-iopxs0          at mainbus?
+iopxs0	at mainbus?
 gpio0		at iopxs0
 
-#iopaau*         at iopxs?               # Application Accelerator Unit
-iopiic*         at iopxs?               # I2C Controller Unit(s)
-iic0            at iopiic?
-iic1            at iopiic?
-#iopwdog*        at iopxs?               # Watchdog timer
-pci0            at iopxs? bus ?         # PCI/PCI-X support
+#iopaau*	at iopxs?		# Application Accelerator Unit
+iopiic*		at iopxs?		# I2C Controller Unit(s)
+iic0		at iopiic?
+iic1		at iopiic?
+
+#iopwdog*	at iopxs?	# Watchdog timer
+pci0		at iopxs? bus ?	# PCI/PCI-X support
 
 
-siop*           at pci? disable         # NCR 538XX SCSI controllers(new)
-scsibus*        at siop?
-em*             at pci?
+siop*		at pci? disable	# NCR 538XX SCSI controllers(new)
+scsibus*	at siop?
+em*		at pci?
 re*		at pci?
 ral*		at pci?
 # IDE controllers
-pciide* at pci? flags 0x0000
-wd*     at pciide? flags 0x0000
+pciide* 	at pci? flags 0x0000
+wd*		at pciide? flags 0x0000
 
 
-sd*             at scsibus?             # SCSI disk drives
-#st*            at scsibus?             # SCSI tape drives
-cd*             at scsibus?             # SCSI CD-ROM drives
-#ch*            at scsibus?             # SCSI autochangers
-#ss*            at scsibus?             # SCSI scanners
-#uk*            at scsibus?             # unknown SCSI
+sd*		at scsibus?	# SCSI disk drives
+#st*		at scsibus?	# SCSI tape drives
+cd*		at scsibus?	# SCSI CD-ROM drives
+#ch*		at scsibus?	# SCSI autochangers
+#ss*		at scsibus?	# SCSI scanners
+#uk*		at scsibus?	# unknown SCSI
 
 # USB Controllers
 ohci*		at pci?		# Open Host Controller
@@ -160,9 +161,9 @@ ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?		# generic unknown PHYs
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device   wsmux           2
-pseudo-device   crypto          1
-pseudo-device   bio             1       # ioctl multiplexing device
-pseudo-device   hotplug         1       # devices hot plugging
-#pseudo-device  raid            4       # RAIDframe disk driver
+#pseudo-device	wsmux		2
+pseudo-device	crypto		1
+pseudo-device	bio		1	# ioctl multiplexing device
+pseudo-device	hotplug		1	# devices hot plugging
+#pseudo-device	raid		4	# RAIDframe disk driver
 

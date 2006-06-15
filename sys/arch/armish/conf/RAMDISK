@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.3 2006/06/10 04:03:39 drahn Exp $ 
+# $OpenBSD: RAMDISK,v 1.4 2006/06/15 20:38:01 drahn Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -56,6 +56,7 @@ iopxs0		at mainbus?
 iopiic*	at iopxs?		# I2C Controller Unit(s)
 iic0		at iopiic?
 iic1		at iopiic?
+
 #iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
 
@@ -171,16 +172,16 @@ ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?		# generic unknown PHYs
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device   wsmux		2
-pseudo-device   crypto		1
-pseudo-device   bio		1	# ioctl multiplexing device
-pseudo-device   hotplug		1	# devices hot plugging
-#pseudo-device  raid		4	# RAIDframe disk driver
+#pseudo-device	wsmux		2
+pseudo-device	crypto		1
+pseudo-device	bio		1	# ioctl multiplexing device
+pseudo-device	hotplug		1	# devices hot plugging
+#pseudo-device	raid		4	# RAIDframe disk driver
 
 #
-pseudo-device loop		1	# network loopback
-pseudo-device bpfilter		1	# packet filter
-pseudo-device rd		1	# ram disk
+pseudo-device	loop		1	# network loopback
+pseudo-device	bpfilter		1	# packet filter
+pseudo-device	rd		1	# ram disk
 
 option		BOOT_CONFIG		# boot-time kernel config
 
