@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.27 2006/05/31 03:38:01 deraadt Exp $	*/
+/*	$OpenBSD: ch.c,v 1.28 2006/06/15 15:02:31 beck Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -224,10 +224,8 @@ chopen(dev, flags, fmt, p)
 		oldcounts[i] = sc->sc_counts[i];
 	}
 	error = ch_get_params(sc, scsi_autoconf);
-	if (error) {
-		printf("%s: offline\n", sc->sc_dev.dv_xname);
+	if (error)
 		goto bad;
-	}
 
 	for (i = 0; i < 4; i++) {
 		if (oldcounts[i] != sc->sc_counts[i]) {
@@ -235,6 +233,7 @@ chopen(dev, flags, fmt, p)
 		}
 	}
 	if (i < 4) {
+#ifdef CHANGER_DEBUG
 #define PLURAL(c)	(c) == 1 ? "" : "s"
 		printf("%s: %d slot%s, %d drive%s, %d picker%s, %d portal%s\n",
 		    sc->sc_dev.dv_xname,
@@ -243,7 +242,6 @@ chopen(dev, flags, fmt, p)
 		    sc->sc_counts[CHET_MT], PLURAL(sc->sc_counts[CHET_MT]),
 		    sc->sc_counts[CHET_IE], PLURAL(sc->sc_counts[CHET_IE]));
 #undef PLURAL
-#ifdef CHANGER_DEBUG
 		printf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
 		    sc->sc_dev.dv_xname,
 		    sc->sc_movemask[CHET_MT], sc->sc_movemask[CHET_ST],
@@ -603,9 +601,10 @@ ch_usergetelemstatus(sc, cesr)
 	    sizeof(struct read_element_status_header));
 
 	avail = _2btol(st_hdr->count);
-	if (avail != sc->sc_counts[chet])
-		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
-		    sc->sc_dev.dv_xname);
+	if (avail != sc->sc_counts[chet]) {
+		error = EINVAL;
+		goto done;
+	}
 	udsize = avail * sizeof(struct changer_element_status);
 
 	user_data = malloc(udsize, M_DEVBUF, M_WAITOK);
@@ -688,8 +687,10 @@ ch_get_params(sc, flags)
 	if (error == 0 && ea == NULL)
 		error = EIO;
 	if (error != 0) {
+#ifdef CHANGER_DEBUG
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
+#endif
 		free(data, M_TEMP);
 		return (error);
 	}
@@ -713,8 +714,10 @@ ch_get_params(sc, flags)
 	if (cap == NULL)
 		error = EIO;
 	if (error != 0) {
+#ifdef CHANGER_DEBUG
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
+#endif
 		free(data, M_TEMP);
 		return (error);
 	}
