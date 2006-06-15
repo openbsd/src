@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.56 2006/06/14 19:52:07 otto Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.57 2006/06/15 15:17:52 jsg Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -362,6 +362,7 @@ int64_t	ntp_tick_acc;
 int
 sys_adjfreq(struct proc *p, void *v, register_t *retval)
 {
+#ifndef __HAVE_TIMECOUNTER
 	struct sys_adjfreq_args /* {
 		syscallarg(const int64_t *) freq;
 		syscallarg(int64_t *) oldfreq;
@@ -385,6 +386,7 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 		ntp_tick_permanent = f / hz;
 		splx(s);
 	}
+#endif
 	return (0);
 }
 
