@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.42 2006/06/15 06:45:53 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.43 2006/06/15 07:35:44 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -243,7 +243,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 	struct device			*dev;
 	struct scsibus_softc		*ssc;
 	struct scsi_link		*link;
-	int				i, tries;
+	int				i, r, tries;
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT, 0, 0x0,
 	    &hdr) != 0) {
@@ -279,6 +279,16 @@ mpi_run_ppr(struct mpi_softc *sc)
 
 		if (link == NULL)
 			continue;
+
+
+		/* is this a RAID device? */
+		for (r = 0; r < sc->sc_ioc_pg2->max_vols; r++)
+			if (i == sc->sc_ioc_pg2->raid_vol[r].vol_id) {
+				DNPRINTF(MPI_D_PPR, "%s: mpi_run_ppr scsibus "
+				    "%d ioc %d target %d RAID\n", DEVNAME(sc),
+				    sc->sc_link.scsibus, sc->sc_ioc_number, i);
+				/* XXX fan out ppr */
+			}
 
 		while (mpi_ppr(sc, link, period, offset, tries) == EAGAIN)
 			tries++;
@@ -1575,6 +1585,7 @@ mpi_iocfacts(struct mpi_softc *sc)
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
 	sc->sc_buswidth = (ifp.max_devices == 0) ? 256 : ifp.max_devices;
 	sc->sc_maxchdepth = ifp.max_chain_depth;
+	sc->sc_ioc_number = ifp.ioc_number;
 
 	/*
 	 * you can fit sg elements on the end of the io cmd if they fit in the
