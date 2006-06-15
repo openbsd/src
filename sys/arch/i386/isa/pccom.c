@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.51 2006/04/27 19:31:43 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.52 2006/06/15 15:44:45 jason Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ comspeed(freq, speed)
 	x = divrnd((freq / 16), speed);
 	if (x <= 0)
 		return -1;
-	err = divrnd((freq / 16) * 1000, speed * x) - 1000;
+	err = divrnd((quad_t)freq * 1000 / 16, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
