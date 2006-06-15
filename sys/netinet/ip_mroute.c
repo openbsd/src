@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.44 2006/05/11 20:12:50 hshoexer Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.45 2006/06/15 10:11:27 pascoe Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -2049,7 +2049,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		/* If tunnel options */
 		ip_output(m, (struct mbuf *)NULL, &vifp->v_route,
 		    IP_FORWARDING, (struct ip_moptions *)NULL,
-		    (struct socket *)NULL);
+		    (struct inpcb *)NULL);
 	} else {
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
@@ -2063,7 +2063,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 
 		error = ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
 		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
-		    (struct socket *)NULL);
+		    (struct inpcb *)NULL);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
