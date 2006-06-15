@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.21 2006/06/08 12:08:54 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.22 2006/06/15 07:58:45 mcbride Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -117,6 +117,41 @@ Disabled by default.
 .It net.inet.carp.arpbalance
 Balance local traffic using ARP.
 Disabled by default.
+.Sh ARP LEVEL LOAD BALANCING
+.Nm
+has limited abilities for load balancing the incoming connections
+between hosts in an Ethernet network.
+For load balancing, several
+.Nm
+interfaces are configured to the same IP address, but to different VHIDs.
+Once an ARP request is received, the CARP protocol will use a hashing
+function against the source IP address in the ARP request to determine
+which VHID the request belongs to.
+If the corresponding
+.Nm
+interface is in master state, the ARP request will be answered, otherwise
+it will be ignored.
+See the
+.Sx EXAMPLES
+section for a practical example of load balancing.
+.Pp
+The ARP load balancing has some limitations.
+First, ARP balancing only works on the local network segment.
+It cannot balance traffic that crosses a router, because the
+router itself will always be balanced to the same virtual host.
+Second, ARP load balancing can lead to asymmetric routing
+of incoming and outgoing traffic, and thus combining it with
+.Xr pfsync 4
+requires special care, because this can create a race condition between
+balanced routers and the host they are serving.
+ARP balancing safely can be used with pfsync if the
+.Xr pf
+ruleset is translates the source address to an unshared address on the
+outgoing interface using a nat rule.
+This requires multiple CARP groups with
+.Em different
+IP addresses on the outgoing interface, configured so that each host is the
+master of one group.
 .El
 .Sh EXAMPLES
 For firewalls and routers with multiple interfaces, it is desirable to
@@ -203,10 +238,6 @@ This way, locally connected systems will receive different ARP replies and
 subsequent IP traffic will be balanced among the hosts.
 If one of the hosts fails, the other will take over the virtual MAC address,
 and begin answering ARP requests on its behalf.
-.Pp
-Note: ARP balancing only works on the local network segment.
-It cannot balance traffic that crosses a router, because the router
-itself will always be balanced to the same virtual host.
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr inet 4 ,
