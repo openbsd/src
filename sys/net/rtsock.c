@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.61 2006/06/16 16:52:08 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.62 2006/06/16 17:45:37 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -921,10 +921,11 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	int			 i, s, error = EINVAL;
 	u_char  		 af;
 	struct walkarg		 w;
+	u_int			 tableid = 0;
 
 	if (new)
 		return (EPERM);
-	if (namelen != 3)
+	if (namelen < 3 || namelen > 4)
 		return (EINVAL);
 	af = name[0];
 	bzero(&w, sizeof(w));
@@ -934,13 +935,20 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	w.w_op = name[1];
 	w.w_arg = name[2];
 
+	if (namelen == 4) {
+		tableid = name[3];
+		if (!rtable_exists(tableid))
+			return (EINVAL);
+	}
+
 	s = splsoftnet();
 	switch (w.w_op) {
 
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
 		for (i = 1; i <= AF_MAX; i++)
-			if ((rnh = rt_gettable(i, 0)) && (af == 0 || af == i) &&
+			if ((rnh = rt_gettable(i, tableid)) != NULL &&
+			    (af == 0 || af == i) &&
 			    (error = (*rnh->rnh_walktree)(rnh,
 			    sysctl_dumpentry, &w)))
 				break;
