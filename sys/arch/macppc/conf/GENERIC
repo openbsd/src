@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.140 2006/06/02 20:31:55 fkr Exp $g
+#	$OpenBSD: GENERIC,v 1.141 2006/06/16 14:25:17 pedro Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -13,7 +13,7 @@ machine		macppc powerpc
 include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
-# default type, instructs system to try to determin what proper type is
+# default type, instructs system to try to determine what proper type is
 # actual machine type probed via name of openfirmware root node.
 option		SYS_TYPE=APPL
 
