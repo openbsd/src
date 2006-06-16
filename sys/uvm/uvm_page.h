@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.21 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.22 2006/06/16 23:05:23 miod Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -390,13 +390,6 @@ vm_physseg_find(pframe, offp)
 
 #endif
 }
-
-
-/*
- * IS_VM_PHYSADDR: only used my mips/pmax/pica trap/pmap.
- */
-
-#define IS_VM_PHYSADDR(PA) (vm_physseg_find(atop(PA), NULL) != -1)
 
 /*
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
