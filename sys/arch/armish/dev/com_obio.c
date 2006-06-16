@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_obio.c,v 1.3 2006/06/01 18:46:05 drahn Exp $	*/
+/*	$OpenBSD: com_obio.c,v 1.4 2006/06/16 01:31:35 drahn Exp $	*/
 /*	$NetBSD: com_obio.c,v 1.9 2005/12/11 12:17:09 christos Exp $	*/
 
 /*-
@@ -67,14 +67,21 @@ struct cfdriver com_obio_cd = {
 	NULL, "com_obio", DV_DULL
 };
 
+int com_irq_override = -1;
+
 int
 com_obio_match(struct device *parent, void *cf, void *aux)
 {
+	struct obio_attach_args *oba = aux;
+
+	/* if the irq does not match, do not attach */
+	if (com_irq_override != -1)
+		oba->oba_irq = com_irq_override;
+
 	/* We take it on faith that the device is there. */
 	return (1);
 }
 
-int com_irq_override = -1;
 
 void
 com_obio_attach(struct device *parent, struct device *self, void *aux)
@@ -83,10 +90,6 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct com_obio_softc *osc = (void *) self;
 	struct com_softc *sc = &osc->sc_com;
 	int error;
-
-	/* XXX old value is already printed */
-	if (com_irq_override != -1)
-		oba->oba_irq = com_irq_override;
 
 	sc->sc_iot = oba->oba_st;
 	sc->sc_iobase = oba->oba_addr;
