@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.7 2006/06/05 16:42:21 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.8 2006/06/16 18:54:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -273,7 +273,7 @@ struct wpi_config {
 	uint8_t		ofdm_mask;
 	uint8_t		cck_mask;
 	uint16_t	state;
-#define WPI_CONFIG_ASSOCIATED	4
+#define WPI_STATE_ASSOCIATED	4
 
 	uint32_t	flags;
 #define WPI_CONFIG_24GHZ	(1 << 0)

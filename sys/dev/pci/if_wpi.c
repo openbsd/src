@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.18 2006/06/14 19:31:47 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.19 2006/06/16 18:54:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -115,6 +115,8 @@ void		wpi_mem_write_region_4(struct wpi_softc *, uint16_t,
 		    const uint32_t *, int);
 uint16_t	wpi_read_prom_word(struct wpi_softc *, uint32_t);
 int		wpi_load_microcode(struct wpi_softc *, const char *, int);
+int		wpi_load_firmware_block(struct wpi_softc *, uint32_t,
+		    bus_dma_segment_t *);
 int		wpi_load_firmware(struct wpi_softc *, uint32_t, const char *,
 		    int);
 void		wpi_rx_intr(struct wpi_softc *, struct wpi_rx_desc *,
@@ -795,6 +797,10 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		return 0;
 
 	case IEEE80211_S_AUTH:
+		/* reset state to handle reassociations correctly */
+		sc->config.state = 0;
+		sc->config.filter &= ~htole32(WPI_FILTER_BSS);
+
 		if ((error = wpi_auth(sc)) != 0) {
 			printf("%s: could not send authentication request\n",
 			    sc->sc_dev.dv_xname);
@@ -812,7 +818,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		wpi_enable_tsf(sc, ic->ic_bss);
 
 		/* update adapter's configuration */
-		sc->config.state = htole16(WPI_CONFIG_ASSOCIATED);
+		sc->config.state = htole16(WPI_STATE_ASSOCIATED);
 		/* short preamble/slot time are negotiated when associating */
 		sc->config.flags &= ~htole32(WPI_CONFIG_SHPREAMBLE |
 		    WPI_CONFIG_SHSLOT);
@@ -961,78 +967,27 @@ wpi_load_microcode(struct wpi_softc *sc, const char *ucode, int size)
 	return 0;
 }
 
-/*
- * The firmware text and data segments are transferred to the NIC using DMA.
- * The driver just copies the firmware into DMA-safe memory and tells the NIC
- * where to find it.  Once the NIC has copied the firmware into its internal
- * memory, we can free our local copy in the driver.
- */
 int
-wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
-    int size)
+wpi_load_firmware_block(struct wpi_softc *sc, uint32_t target,
+    bus_dma_segment_t *seg)
 {
-	bus_dmamap_t map;
-	bus_dma_segment_t seg;
-	caddr_t virtaddr;
 	struct wpi_tx_desc desc;
-	int i, ntries, nsegs, error;
+	int ntries, error = 0;
 
-	/*
-	 * Allocate DMA-safe memory to store the firmware.
-	 */
-	error = bus_dmamap_create(sc->sc_dmat, size, WPI_MAX_SCATTER,
-	    WPI_MAX_SEG_LEN, 0, BUS_DMA_NOWAIT, &map);
-	if (error != 0) {
-		printf("%s: could not create firmware DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail1;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not allocate firmware DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail2;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &seg, nsegs, size, &virtaddr,
-	    BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map firmware DMA memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, map, virtaddr, size, NULL,
-	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
-	if (error != 0) {
-		printf("%s: could not load firmware DMA map\n",
-		    sc->sc_dev.dv_xname);
-		goto fail4;
-	}
-
-	/* copy firmware image to DMA-safe memory */
-	bcopy(fw, virtaddr, size);
-
-	/* make sure the adapter will get up-to-date values */
-	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_PREWRITE);
+	DPRINTFN(2, ("loading firmware block target=%x addr=%x len=%d\n",
+	    target, seg->ds_addr, seg->ds_len));
 
 	bzero(&desc, sizeof desc);
-	desc.flags = htole32(WPI_PAD32(size) << 28 | map->dm_nsegs << 24);
-	for (i = 0; i < map->dm_nsegs; i++) {
-		desc.segs[i].addr = htole32(map->dm_segs[i].ds_addr);
-		desc.segs[i].len  = htole32(map->dm_segs[i].ds_len);
-	}
+	desc.flags = htole32(WPI_PAD32(seg->ds_len) << 28 | 1 << 24);
+	desc.segs[0].addr = htole32(seg->ds_addr);
+	desc.segs[0].len  = htole32(seg->ds_len);
 
-	wpi_mem_lock(sc);
-
-	/* tell adapter where to copy image in its internal memory */
+	/* tell adapter where to copy firmware block in its internal memory */
 	WPI_WRITE(sc, WPI_FW_TARGET, target);
 
 	WPI_WRITE(sc, WPI_TX_CONFIG(6), 0);
 
-	/* copy firmware descriptor into NIC memory */
+	/* copy firmware block descriptor into NIC memory */
 	WPI_WRITE_REGION_4(sc, WPI_TX_DESC(6), (uint32_t *)&desc,
 	    sizeof desc / sizeof (uint32_t));
 
@@ -1040,26 +995,72 @@ wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
 	WPI_WRITE(sc, WPI_TX_STATE(6), 0x4001);
 	WPI_WRITE(sc, WPI_TX_CONFIG(6), 0x80000001);
 
-	/* wait while the adapter is busy copying the firmware */
+	/* wait while the adapter is busy copying the firmware block */
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (WPI_READ(sc, WPI_TX_STATUS) & WPI_TX_IDLE(6))
 			break;
 		DELAY(1000);
 	}
 	if (ntries == 100) {
-		printf("%s: timeout transferring firmware\n",
+		printf("%s: timeout transferring firmware block\n",
 		    sc->sc_dev.dv_xname);
 		error = ETIMEDOUT;
 	}
 
 	WPI_WRITE(sc, WPI_TX_CREDIT(6), 0);
 
+	return error;
+}
+
+/*
+ * The firmware text and data segments are transferred to the NIC using DMA.
+ * The driver just DMA-maps the firmware and tells the NIC where to find it.
+ * Once the NIC has copied the firmware into its internal memory, we can free
+ * our local copy in the driver.
+ */
+int
+wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
+    int size)
+{
+	bus_dmamap_t map;
+	int i, nsegs, error;
+
+	nsegs = 1 + ((size + PAGE_SIZE - 1) / PAGE_SIZE);
+
+	error = bus_dmamap_create(sc->sc_dmat, size, nsegs, WPI_MAX_SEG_LEN,
+	    0, BUS_DMA_NOWAIT, &map);
+	if (error != 0) {
+		printf("%s: could not create firmware DMA map (error=%d)\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail1;
+	}
+
+	/* XXX: we're discarding a const qualifier here! */
+	error = bus_dmamap_load(sc->sc_dmat, map, (void *)fw, size, NULL,
+	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	if (error != 0) {
+		printf("%s: could not load firmware DMA map (error=%d)\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail2;
+	}
+
+	DPRINTF(("load firmware target=%x size=%d nsegs=%d\n", target, size,
+	    map->dm_nsegs));
+
+	/* make sure the adapter will get up-to-date values */
+	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_PREWRITE);
+
+	wpi_mem_lock(sc);
+	for (i = 0; i < map->dm_nsegs; i++) {
+		error = wpi_load_firmware_block(sc, target, &map->dm_segs[i]);
+		if (error != 0)
+			break;
+		target += map->dm_segs[i].ds_len;
+	}
 	wpi_mem_unlock(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, map);
-fail4:	bus_dmamem_unmap(sc->sc_dmat, virtaddr, size);
-fail3:	bus_dmamem_free(sc->sc_dmat, &seg, 1);
 fail2:	bus_dmamap_destroy(sc->sc_dmat, map);
 fail1:	return error;
 }
@@ -1101,7 +1102,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	 * to radiotap in monitor mode).
 	 */
 	if ((letoh32(tail->flags) & WPI_RX_NOERROR) != WPI_RX_NOERROR) {
-		DPRINTF(("rx tail flags error %x\n", letoh32(tail->flags)));
+		DPRINTFN(2, ("rx tail flags error %x\n",
+		    letoh32(tail->flags)));
 		ifp->if_ierrors++;
 		return;
 	}
