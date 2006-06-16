@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.11 2006/06/16 06:00:46 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.12 2006/06/16 07:29:24 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -126,13 +126,13 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->init_dacgroup = azalia_alc882_init_dacgroup;
 		this->init_widget = azalia_alc882_init_widget;
 		break;
-#if 0
 	case 0x11d41981:
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
 		this->name = "Analog Devices AD1981HD";
+#if 0
 		this->init_widget = azalia_ad1981hd_init_widget;
-		break;
 #endif
+		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
