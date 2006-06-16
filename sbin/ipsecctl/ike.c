@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.43 2006/06/15 16:57:24 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.44 2006/06/16 18:46:26 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -300,7 +300,8 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		    peer->name);
 		fprintf(fd, ADD "[mm-%s]:Transforms=", peer->name);
 	} else {
-		fprintf(fd, SET "[peer-default]:Configuration=mm-default\n");
+		fprintf(fd, SET
+		    "[peer-default]:Configuration=mm-default force\n");
 		fprintf(fd, SET "[mm-default]:EXCHANGE_TYPE=ID_PROT force\n");
 		fprintf(fd, ADD "[mm-default]:Transforms=");
 	}
