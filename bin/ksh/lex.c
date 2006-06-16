@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.40 2006/05/29 18:22:24 otto Exp $	*/
+/*	$OpenBSD: lex.c,v 1.41 2006/06/16 20:34:22 drahn Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1128,8 +1128,7 @@ special_prompt_expand(char *str)
 	char *p = str;
 
 	while ((p = strstr(p, "\\$")) != NULL) {
-		memmove(p, p + 1, strlen(p));
-		*p = ksheuid ? '$' : '#';
+		*(p+1) = 'p';
 	}
 	return str;
 }
@@ -1258,6 +1257,10 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				strbuf[1] = '\0';
 				totlen = 0;	/* reset for prompt re-print */
 				sp = cp + 1;
+				break;
+			case 'p':	/* '\' '$' $ or # */
+				strbuf[0] = ksheuid ? '$' : '#';
+				strbuf[1] = '\0';
 				break;
 			case 'r':	/* '\' 'r' return */
 				strbuf[0] = '\r';
