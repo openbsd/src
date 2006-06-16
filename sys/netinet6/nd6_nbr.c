@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.39 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.40 2006/06/16 15:41:19 pascoe Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ nd6_ns_input(m, off, icmp6len)
 		 * If source address is unspecified address, it is for
 		 * duplicated address detection.
 		 *
-		 * If not, the packet is for addess resolution;
+		 * If not, the packet is for address resolution;
 		 * silently ignore it.
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))

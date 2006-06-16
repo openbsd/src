@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.38 2006/04/22 19:43:07 claudio Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.39 2006/06/16 15:41:19 pascoe Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -797,7 +797,7 @@ insert:
 	/*
 	 * Insert the new router in the Default Router List;
 	 * The Default Router List should be in the descending order
-	 * of router-preferece.  Routers with the same preference are
+	 * of router-preference.  Routers with the same preference are
 	 * sorted in the arriving time order.
 	 */
 
@@ -894,7 +894,7 @@ nd6_prelist_add(pr, dr, newp)
 	if (newp != NULL)
 		*newp = new;
 
-	/* initilization */
+	/* initialization */
 	LIST_INIT(&new->ndpr_advrtrs);
 	in6_prefixlen2mask(&new->ndpr_mask, new->ndpr_plen);
 	/* make prefix in the canonical form */
