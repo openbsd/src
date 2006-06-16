@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.54 2006/04/22 19:26:05 moritz Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.55 2006/06/16 16:55:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.54 2006/04/22 19:26:05 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.55 2006/06/16 16:55:46 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -662,17 +662,12 @@ set_slave_signals(void)
 __dead void
 usage(void)
 {
-	extern char version[];
-	extern char pcap_version[];
-
-	(void)fprintf(stderr, "%s version %s\n", program_name, version);
-	(void)fprintf(stderr, "libpcap version %s\n", pcap_version);
 	(void)fprintf(stderr,
 "Usage: %s [-adefLlNnOopqStvXx] [-c count] [-E [espalg:]espkey] [-F file]\n",
 	    program_name);
 	(void)fprintf(stderr,
-"\t\t[-i interface] [-r file] [-s snaplen] [-T type] [-w file]\n");
+"\t       [-i interface] [-r file] [-s snaplen] [-T type] [-w file]\n");
 	(void)fprintf(stderr,
-"\t\t[-y datalinktype] [expression]\n");
+"\t       [-y datalinktype] [expression]\n");
 	exit(1);
 }
