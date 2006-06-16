@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.86 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.87 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2222,7 +2222,7 @@ icmp6_redirect_input(m, off)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&reddst6, &sin6.sin6_addr, sizeof(reddst6));
-	rt = rtalloc1((struct sockaddr *)&sin6, 0);
+	rt = rtalloc1((struct sockaddr *)&sin6, 0, 0);
 	if (rt) {
 		if (rt->rt_gateway == NULL ||
 		    rt->rt_gateway->sa_family != AF_INET6) {
@@ -2767,7 +2767,7 @@ icmp6_mtudisc_clone(dst)
 	struct rtentry *rt;
 	int    error;
 
-	rt = rtalloc1(dst, 1);
+	rt = rtalloc1(dst, 1, 0);
 	if (rt == 0)
 		return NULL;
 
@@ -2778,7 +2778,7 @@ icmp6_mtudisc_clone(dst)
 		error = rtrequest((int) RTM_ADD, dst,
 		    (struct sockaddr *) rt->rt_gateway,
 		    (struct sockaddr *) 0,
-		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt, 0);
 		if (error) {
 			rtfree(rt);
 			return NULL;
@@ -2807,7 +2807,7 @@ icmp6_mtudisc_timeout(rt, r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
 			rt->rt_rmx.rmx_mtu = 0;
@@ -2824,7 +2824,7 @@ icmp6_redirect_timeout(rt, r)
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
 	}
 }
 

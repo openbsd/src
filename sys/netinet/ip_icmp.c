@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.70 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.71 2006/06/16 16:49:40 henning Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -830,13 +830,15 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
+
+/* XXX only handles table 0 right now */
 struct rtentry *
 icmp_mtudisc_clone(struct sockaddr *dst)
 {
 	struct rtentry *rt;
 	int error;
 
-	rt = rtalloc1(dst, 1);
+	rt = rtalloc1(dst, 1, 0);
 	if (rt == 0)
 		return (NULL);
 
@@ -848,7 +850,7 @@ icmp_mtudisc_clone(struct sockaddr *dst)
 		error = rtrequest((int) RTM_ADD, dst,
 		    (struct sockaddr *) rt->rt_gateway,
 		    (struct sockaddr *) 0,
-		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt, 0);
 		if (error) {
 			rtfree(rt);
 			return (NULL);
@@ -929,6 +931,7 @@ icmp_mtudisc(struct icmp *icp)
 	rtfree(rt);
 }
 
+/* XXX only handles table 0 right now */
 void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
@@ -942,7 +945,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 
 		sa = *(struct sockaddr_in *)rt_key(rt);
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
 
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
@@ -974,6 +977,7 @@ icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 	return 0;
 }
 
+/* XXX only handles table 0 right now */
 static void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
@@ -982,6 +986,6 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
 	}
 }

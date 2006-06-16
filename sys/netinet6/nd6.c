@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.71 2006/06/16 15:41:19 pascoe Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.72 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -686,7 +686,7 @@ nd6_lookup(addr6, create, ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = *addr6;
 
-	rt = rtalloc1((struct sockaddr *)&sin6, create);
+	rt = rtalloc1((struct sockaddr *)&sin6, create, 0);
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
@@ -724,7 +724,7 @@ nd6_lookup(addr6, create, ifp)
 			if ((e = rtrequest(RTM_ADD, (struct sockaddr *)&sin6,
 			    ifa->ifa_addr, (struct sockaddr *)&all1_sa,
 			    (ifa->ifa_flags | RTF_HOST | RTF_LLINFO) &
-			    ~RTF_CLONING, &rt)) != 0) {
+			    ~RTF_CLONING, &rt, 0)) != 0) {
 #if 0
 				log(LOG_ERR,
 				    "nd6_lookup: failed to add route for a "
@@ -933,7 +933,7 @@ nd6_free(rt, gc)
 	 * cached routes.
 	 */
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
-	    rt_mask(rt), 0, (struct rtentry **)0);
+	    rt_mask(rt), 0, (struct rtentry **)0, 0);
 
 	return (next);
 }
@@ -1057,7 +1057,7 @@ nd6_rtrequest(req, rt, info)
 			 * (RTF_LLINFO && !ln case).
 			 */
 			rt_setgate(rt, rt_key(rt),
-				   (struct sockaddr *)&null_sdl);
+				   (struct sockaddr *)&null_sdl, 0);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = ifp->if_type;
 			SDL(gate)->sdl_index = ifp->if_index;
@@ -1745,7 +1745,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst,
-			    1)) != NULL)
+			    1, 0)) != NULL)
 			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
@@ -1783,7 +1783,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
 			lookup:
-				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1, 0);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}

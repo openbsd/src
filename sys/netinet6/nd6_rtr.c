@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.39 2006/06/16 15:41:19 pascoe Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.40 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ nd6_rtmsg(cmd, rt)
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
-	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0);
+	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0, 0);
 }
 
 void
@@ -458,7 +458,7 @@ defrouter_addreq(new)
 	s = splsoftnet();
 	error = rtrequest(RTM_ADD, (struct sockaddr *)&def,
 	    (struct sockaddr *)&gate, (struct sockaddr *)&mask,
-	    RTF_GATEWAY, &newrt);
+	    RTF_GATEWAY, &newrt, 0);
 	if (newrt) {
 		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
 		newrt->rt_refcnt--;
@@ -558,7 +558,7 @@ defrouter_delreq(dr)
 
 	rtrequest(RTM_DELETE, (struct sockaddr *)&def,
 	    (struct sockaddr *)&gw,
-	    (struct sockaddr *)&mask, RTF_GATEWAY, &oldrt);
+	    (struct sockaddr *)&mask, RTF_GATEWAY, &oldrt, 0);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
 		if (oldrt->rt_refcnt <= 0) {
@@ -1499,7 +1499,7 @@ nd6_prefix_onlink(pr)
 		rtflags &= ~RTF_CLONING;
 	}
 	error = rtrequest(RTM_ADD, (struct sockaddr *)&pr->ndpr_prefix,
-	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags, &rt);
+	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags, &rt, 0);
 	if (error == 0) {
 		if (rt != NULL) /* this should be non NULL, though */
 			nd6_rtmsg(RTM_ADD, rt);
@@ -1548,7 +1548,7 @@ nd6_prefix_offlink(pr)
 	mask6.sin6_len = sizeof(sa6);
 	bcopy(&pr->ndpr_mask, &mask6.sin6_addr, sizeof(struct in6_addr));
 	error = rtrequest(RTM_DELETE, (struct sockaddr *)&sa6, NULL,
-	    (struct sockaddr *)&mask6, 0, &rt);
+	    (struct sockaddr *)&mask6, 0, &rt, 0);
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
 
@@ -1831,7 +1831,7 @@ rt6_deleteroute(rn, arg)
 		return (0);
 
 	return (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
-	    rt_mask(rt), rt->rt_flags, 0));
+	    rt_mask(rt), rt->rt_flags, 0, 0));
 #undef SIN6
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.63 2006/03/22 14:37:44 henning Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.64 2006/06/16 16:49:40 henning Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ arp_rtrequest(req, rt, info)
 			 * Case 1: This route should come from a route to iface.
 			 */
 			rt_setgate(rt, rt_key(rt),
-					(struct sockaddr *)&null_sdl);
+			    (struct sockaddr *)&null_sdl, 0);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
@@ -738,7 +738,7 @@ arptfree(la)
 		return;
 	}
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0, rt_mask(rt),
-	    0, (struct rtentry **)0);
+	    0, (struct rtentry **)0, 0);
 }
 
 /*
@@ -756,7 +756,7 @@ arplookup(addr, create, proxy)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = proxy ? SIN_PROXY : 0;
-	rt = rtalloc1(sintosa(&sin), create);
+	rt = rtalloc1(sintosa(&sin), create, 0);
 	if (rt == 0)
 		return (0);
 	rt->rt_refcnt--;
@@ -771,7 +771,7 @@ arplookup(addr, create, proxy)
 				rtrequest(RTM_DELETE,
 				    (struct sockaddr *)rt_key(rt),
 				    rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-				    0);
+				    0, 0);
 			}
 		}
 		return (0);

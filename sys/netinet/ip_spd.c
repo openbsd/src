@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.51 2005/02/17 18:07:36 jfb Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.52 2006/06/16 16:49:40 henning Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -575,7 +575,7 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 		err = rtrequest(RTM_DELETE, (struct sockaddr *) &ipo->ipo_addr,
 		    (struct sockaddr *) 0,
 		    (struct sockaddr *) &ipo->ipo_mask,
-		    0, (struct rtentry **) 0);
+		    0, (struct rtentry **) 0, 0);	/* XXX other tables? */
 
 	if (ipo->ipo_tdb != NULL)
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,

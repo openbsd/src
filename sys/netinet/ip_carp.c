@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.126 2006/06/02 19:53:12 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.127 2006/06/16 16:49:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -364,7 +364,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			/* Remove the existing host route, if any */
 			rtrequest(RTM_DELETE, ifa->ifa_addr,
 			    ifa->ifa_addr, ifa->ifa_netmask,
-			    RTF_HOST, NULL);
+			    RTF_HOST, NULL, 0);
 
 			/* Check for our address on another interface */
 			/* XXX cries for proper API */
@@ -390,21 +390,22 @@ carp_setroute(struct carp_softc *sc, int cmd)
 
 					rtrequest(RTM_ADD, ifa->ifa_addr,
 					    ifa->ifa_addr, ifa->ifa_netmask,
-					    RTF_UP | RTF_HOST, NULL);
+					    RTF_UP | RTF_HOST, NULL, 0);
 				}
 				if (!hr_otherif || nr_ourif || !rt) {
 					if (nr_ourif && !(rt->rt_flags &
 					    RTF_CLONING))
 						rtrequest(RTM_DELETE, &sa,
 						    ifa->ifa_addr,
-						    ifa->ifa_netmask, 0, NULL);
+						    ifa->ifa_netmask, 0, NULL,
+						    0);
 
 					ifa->ifa_rtrequest = arp_rtrequest;
 					ifa->ifa_flags |= RTF_CLONING;
 
 					if (rtrequest(RTM_ADD, ifa->ifa_addr,
 					    ifa->ifa_addr, ifa->ifa_netmask, 0,
-					    NULL) == 0)
+					    NULL, 0) == 0)
 						ifa->ifa_flags |= IFA_ROUTE;
 				}
 				break;

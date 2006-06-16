@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.41 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.42 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -694,13 +694,13 @@ in6_ifdetach(ifp)
 
 		/* remove from the routing table */
 		if ((ia->ia_flags & IFA_ROUTE) &&
-		    (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0))) {
+		    (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0, 0))) {
 			rtflags = rt->rt_flags;
 			rtfree(rt);
 			rtrequest(RTM_DELETE, (struct sockaddr *)&ia->ia_addr,
 			    (struct sockaddr *)&ia->ia_addr,
 			    (struct sockaddr *)&ia->ia_prefixmask,
-			    rtflags, (struct rtentry **)0);
+			    rtflags, (struct rtentry **)0, 0);
 		}
 
 		/* remove from the linked list */
@@ -745,10 +745,10 @@ in6_ifdetach(ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = in6addr_linklocal_allnodes;
 	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	rt = rtalloc1((struct sockaddr *)&sin6, 0);
+	rt = rtalloc1((struct sockaddr *)&sin6, 0, 0);
 	if (rt && rt->rt_ifp == ifp) {
 		rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0, 0);
 		rtfree(rt);
 	}
 }

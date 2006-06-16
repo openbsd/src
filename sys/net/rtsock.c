@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.59 2006/05/30 21:58:28 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.60 2006/06/16 16:49:39 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ route_output(struct mbuf *m, ...)
 	struct sockaddr_rtlabel	 sa_rt;
 	const char		*label;
 	va_list			 ap;
+	u_int			 tableid = 0;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -244,7 +245,7 @@ route_output(struct mbuf *m, ...)
 			error = EINVAL;
 			goto flush;
 		}
-		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
+		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt, tableid);
 		if (error == 0 && saved_nrt) {
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &saved_nrt->rt_rmx);
@@ -254,7 +255,7 @@ route_output(struct mbuf *m, ...)
 		}
 		break;
 	case RTM_DELETE:
-		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
+		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt, tableid);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
 			goto report;
@@ -263,11 +264,11 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-		if ((rnh = rt_gettable(dst->sa_family, 0)) == NULL) {
+		if ((rnh = rt_gettable(dst->sa_family, tableid)) == NULL) {
 			error = EAFNOSUPPORT;
 			goto flush;
 		}
-		rn = rt_lookup(dst, netmask, 0);
+		rn = rt_lookup(dst, netmask, tableid);
 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
 			error = ESRCH;
 			goto flush;
@@ -366,7 +367,7 @@ report:
 			 */
 			if ((error = rt_getifa(&info)) != 0)
 				goto flush;
-			if (gate && rt_setgate(rt, rt_key(rt), gate)) {
+			if (gate && rt_setgate(rt, rt_key(rt), gate, tableid)) {
 				error = EDQUOT;
 				goto flush;
 			}
@@ -639,8 +640,8 @@ again:
  * destination.
  */
 void
-rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, struct ifnet *ifp,
-    int error)
+rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags,
+    struct ifnet *ifp, int error, u_int tableid)
 {
 	struct rt_msghdr	*rtm;
 	struct mbuf		*m;

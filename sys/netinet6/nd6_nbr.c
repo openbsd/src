@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.40 2006/06/16 15:41:19 pascoe Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.41 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ nd6_ns_input(m, off, icmp6len)
 		tsin6.sin6_family = AF_INET6;
 		tsin6.sin6_addr = taddr6;
 
-		rt = rtalloc1((struct sockaddr *)&tsin6, 0);
+		rt = rtalloc1((struct sockaddr *)&tsin6, 0, 0);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			/*

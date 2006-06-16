@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.66 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.67 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -160,9 +160,10 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * would be happy.  Note that we assume the caller of the function
 	 * (probably implicitly) set nd6_rtrequest() to ifa->ifa_rtrequest,
 	 * which changes the outgoing interface to the loopback interface.
+	 * XXX only table 0 for now
 	 */
 	e = rtrequest(cmd, ifa->ifa_addr, ifa->ifa_addr,
-	    (struct sockaddr *)&all1_sa, RTF_UP|RTF_HOST|RTF_LLINFO, &nrt);
+	    (struct sockaddr *)&all1_sa, RTF_UP|RTF_HOST|RTF_LLINFO, &nrt, 0);
 	if (e != 0) {
 		log(LOG_ERR, "in6_ifloop_request: "
 		    "%s operation failed for %s (errno=%d)\n",
@@ -218,7 +219,7 @@ in6_ifaddloop(struct ifaddr *ifa)
 	struct rtentry *rt;
 
 	/* If there is no loopback entry, allocate one. */
-	rt = rtalloc1(ifa->ifa_addr, 0);
+	rt = rtalloc1(ifa->ifa_addr, 0, 0);
 	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
 	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
 		in6_ifloop_request(RTM_ADD, ifa);
@@ -269,7 +270,7 @@ in6_ifremloop(struct ifaddr *ifa)
 		 * a subnet-router anycast address on an interface attahced
 		 * to a shared medium.
 		 */
-		rt = rtalloc1(ifa->ifa_addr, 0);
+		rt = rtalloc1(ifa->ifa_addr, 0, 0);
 		if (rt != NULL && (rt->rt_flags & RTF_HOST) != 0 &&
 		    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0) {
 			rt->rt_refcnt--;
@@ -1082,7 +1083,7 @@ in6_update_ifa(ifp, ifra, ia)
 		 * actually do not need the routes, since they usually specify
 		 * the outgoing interface.
 		 */
-		rt = rtalloc1((struct sockaddr *)&mltaddr, 0);
+		rt = rtalloc1((struct sockaddr *)&mltaddr, 0, 0);
 		if (rt) {
 			/*
 			 * 32bit came from "mltmask"
@@ -1108,7 +1109,7 @@ in6_update_ifa(ifp, ifra, ia)
 			    (struct sockaddr *)&ia->ia_addr;
 			/* XXX: we need RTF_CLONING to fake nd6_rtrequest */
 			info.rti_flags = RTF_UP | RTF_CLONING;
-			error = rtrequest1(RTM_ADD, &info, NULL);
+			error = rtrequest1(RTM_ADD, &info, NULL, 0);
 			if (error)
 				goto cleanup;
 		} else {
@@ -1153,7 +1154,7 @@ in6_update_ifa(ifp, ifra, ia)
 			mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
 
 			/* XXX: again, do we really need the route? */
-			rt = rtalloc1((struct sockaddr *)&mltaddr, 0);
+			rt = rtalloc1((struct sockaddr *)&mltaddr, 0, 0);
 			if (rt) {
 				/* 32bit came from "mltmask" */
 				if (memcmp(&mltaddr.sin6_addr,
@@ -1175,7 +1176,7 @@ in6_update_ifa(ifp, ifra, ia)
 				info.rti_info[RTAX_IFA] =
 				    (struct sockaddr *)&ia->ia_addr;
 				info.rti_flags = RTF_UP | RTF_CLONING;
-				error = rtrequest1(RTM_ADD, &info, NULL);
+				error = rtrequest1(RTM_ADD, &info, NULL, 0);
 				if (error)
 					goto cleanup;
 			} else {

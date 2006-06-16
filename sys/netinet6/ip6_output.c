@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.91 2006/06/16 15:31:08 pascoe Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.92 2006/06/16 16:49:40 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		if (ifp == NULL) {
 			if (ro->ro_rt == 0) {
 				ro->ro_rt = rtalloc1((struct sockaddr *)
-				    &ro->ro_dst, 0);
+				    &ro->ro_dst, 0, 0);
 			}
 			if (ro->ro_rt == 0) {
 				ip6stat.ip6s_noroute++;

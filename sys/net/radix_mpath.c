@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.4 2005/05/15 19:03:04 henning Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.5 2006/06/16 16:49:39 henning Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
 }
 
 void
-rtalloc_mpath(struct route *ro, int hash)
+rtalloc_mpath(struct route *ro, int hash, u_int tableid)
 {
 	struct radix_node *rn0, *rn;
 	int n;
@@ -220,7 +220,7 @@ rtalloc_mpath(struct route *ro, int hash)
 	 */
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;				 /* XXX */
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
+	ro->ro_rt = rtalloc1(&ro->ro_dst, 1, tableid);
 	/* if the route does not exist or it is not multipath, don't care */
 	if (!ro->ro_rt || !rn_mpath_next((struct radix_node *)ro->ro_rt))
 		return;

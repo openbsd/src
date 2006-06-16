@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.110 2006/05/06 17:43:47 mcbride Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.111 2006/06/16 16:49:39 henning Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1678,7 +1678,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				 (struct sockaddr *) &encapgw,
 				 (struct sockaddr *) &encapnetmask,
 				 RTF_UP | RTF_GATEWAY | RTF_STATIC,
-				 (struct rtentry **) 0)) != 0) {
+				 (struct rtentry **) 0, 0)) != 0) {
 				/* Remove from linked list of policies on TDB */
 				if (ipo->ipo_tdb)
 					TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,
