@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.73 2006/06/14 15:17:54 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.74 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include "cvs.h"
 #include "log.h"
 #include "diff.h"
-#include "proto.h"
 
 int	cvs_update(int, char **);
 int	prune_dirs = 0;
@@ -31,7 +30,7 @@ static char *tag = NULL;
 static void update_clear_conflict(struct cvs_file *);
 
 struct cvs_cmd cvs_cmd_update = {
-	CVS_OP_UPDATE, CVS_REQ_UPDATE, "update",
+	CVS_OP_UPDATE, 0, "update",
 	{ "up", "upd" },
 	"Bring work tree in sync with repository",
 	"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "

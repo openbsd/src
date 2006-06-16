@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.52 2006/05/31 07:12:32 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.53 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -19,7 +19,6 @@
 
 #include "cvs.h"
 #include "log.h"
-#include "proto.h"
 
 extern char *__progname;
 
@@ -31,7 +30,7 @@ static int	removed = 0;
 static int	existing = 0;
 
 struct cvs_cmd cvs_cmd_remove = {
-	CVS_OP_REMOVE, CVS_REQ_REMOVE, "remove",
+	CVS_OP_REMOVE, 0, "remove",
 	{ "rm", "delete" },
 	"Remove an entry from the repository",
 	"[-flR] [file ...]",

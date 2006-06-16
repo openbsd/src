@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2006/05/28 15:45:31 joris Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include "config.h"
 #include "diff.h"
 #include "log.h"
-#include "proto.h"
 
 void
 cvs_parse_configfile(void)

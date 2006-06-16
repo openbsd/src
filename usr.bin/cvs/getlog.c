@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.62 2006/06/02 19:10:24 david Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.63 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
-#include "proto.h"
 
 #define LOG_REVSEP \
 "----------------------------"
@@ -34,7 +33,7 @@ void	cvs_log_local(struct cvs_file *);
 char 	*logrev = NULL;
 
 struct cvs_cmd cvs_cmd_log = {
-	CVS_OP_LOG, CVS_REQ_LOG, "log",
+	CVS_OP_LOG, 0, "log",
 	{ "lo" },
 	"Print out history information for files",
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",

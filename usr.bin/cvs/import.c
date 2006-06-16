@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.51 2006/06/16 14:02:37 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.52 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
-#include "proto.h"
 
 int	cvs_import(int, char **);
 void	cvs_import_local(struct cvs_file *);
@@ -43,7 +42,7 @@ char *import_repository = NULL;
 int import_conflicts = 0;
 
 struct cvs_cmd cvs_cmd_import = {
-	CVS_OP_IMPORT, CVS_REQ_IMPORT, "import",
+	CVS_OP_IMPORT, 0, "import",
 	{ "im", "imp" },
 	"Import sources into CVS, using vendor branches",
 	"[-d] [-b branch] [-m message] repository vendor-tag release-tags",

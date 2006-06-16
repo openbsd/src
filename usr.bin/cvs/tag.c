@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.46 2006/06/09 14:57:13 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.47 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -19,7 +19,6 @@
 
 #include "cvs.h"
 #include "log.h"
-#include "proto.h"
 
 int	cvs_tag(int, char **);
 void	cvs_tag_local(struct cvs_file *);
@@ -35,7 +34,7 @@ static char	*tag_name = NULL;
 static char	*tag_oldname = NULL;
 
 struct cvs_cmd cvs_cmd_tag = {
-	CVS_OP_TAG, CVS_REQ_TAG, "tag",
+	CVS_OP_TAG, 0, "tag",
 	{ "ta", "freeze" },
 	"Add a symbolic tag to checked out version of files",
 	"[-bcdFflR] [-D date | -r rev] tag [file ...]",

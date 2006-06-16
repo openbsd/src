@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.24 2006/06/13 06:52:11 joris Exp $	*/
+/*	$OpenBSD: init.c,v 1.25 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -30,7 +30,6 @@
 #include "cvs.h"
 #include "init.h"
 #include "log.h"
-#include "proto.h"
 
 int	cvs_init(int, char **);
 void	cvs_init_local(void);
@@ -67,7 +66,7 @@ static const char *cvsroot_dirs[2] = {
 #define INIT_NDIRS	(sizeof(cvsroot_dirs)/sizeof(cvsroot_dirs[0]))
 
 struct cvs_cmd cvs_cmd_init = {
-	CVS_OP_INIT, CVS_REQ_INIT, "init",
+	CVS_OP_INIT, 0, "init",
 	{ },
 	"Create a CVS repository if it doesn't exist",
 	"",

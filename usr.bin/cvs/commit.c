@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.73 2006/06/14 14:10:50 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.74 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -21,7 +21,6 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
-#include "proto.h"
 
 int	cvs_commit(int, char **);
 void	cvs_commit_local(struct cvs_file *);
@@ -35,7 +34,7 @@ int	conflicts_found;
 char	*logmsg;
 
 struct cvs_cmd cvs_cmd_commit = {
-	CVS_OP_COMMIT, CVS_REQ_CI, "commit",
+	CVS_OP_COMMIT, 0, "commit",
 	{ "ci", "com" },
 	"Check files into the repository",
 	"[-flR] [-F logfile | -m msg] [-r rev] ...",

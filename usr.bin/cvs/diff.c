@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.103 2006/06/14 20:28:53 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.104 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
-#include "proto.h"
 
 int	cvs_diff(int, char **);
 void	cvs_diff_local(struct cvs_file *);
@@ -30,7 +29,7 @@ static char *rev1 = NULL;
 static char *rev2 = NULL;
 
 struct cvs_cmd cvs_cmd_diff = {
-	CVS_OP_DIFF, CVS_REQ_DIFF, "diff",
+	CVS_OP_DIFF, 0, "diff",
 	{ "di", "dif" },
 	"Show differences between revisions",
 	"[-cilNnpu] [[-D date] [-r rev] [-D date2 | -r rev2]] "

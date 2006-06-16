@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.56 2006/06/14 15:14:47 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.57 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -21,7 +21,6 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
-#include "proto.h"
 
 extern char *__progname;
 
@@ -35,7 +34,7 @@ static void add_entry(struct cvs_file *);
 char	*logmsg;
 
 struct cvs_cmd cvs_cmd_add = {
-	CVS_OP_ADD, CVS_REQ_ADD, "add",
+	CVS_OP_ADD, 0, "add",
 	{ "ad", "new" },
 	"Add a new file or directory to the repository",
 	"[-m message] ...",

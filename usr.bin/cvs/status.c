@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.64 2006/06/07 15:21:47 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.65 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -20,7 +20,6 @@
 
 #include "cvs.h"
 #include "log.h"
-#include "proto.h"
 
 int	cvs_status(int, char **);
 void	cvs_status_local(struct cvs_file *);
@@ -28,7 +27,7 @@ void	cvs_status_local(struct cvs_file *);
 static int show_sym = 0;
 
 struct cvs_cmd cvs_cmd_status = {
-	CVS_OP_STATUS, CVS_REQ_STATUS, "status",
+	CVS_OP_STATUS, 0, "status",
 	{ "st", "stat" },
 	"Display status information on checked out files",
 	"[-lRv]",

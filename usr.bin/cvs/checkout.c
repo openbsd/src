@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.62 2006/06/14 20:28:53 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.63 2006/06/16 14:07:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include "cvs.h"
 #include "log.h"
 #include "diff.h"
-#include "proto.h"
 
 int	cvs_checkout(int, char **);
 int	cvs_export(int, char **);
@@ -31,7 +30,7 @@ extern int prune_dirs;
 extern int build_dirs;
 
 struct cvs_cmd cvs_cmd_checkout = {
-	CVS_OP_CHECKOUT, CVS_REQ_CO, "checkout",
+	CVS_OP_CHECKOUT, 0, "checkout",
 	{ "co", "get" },
 	"Checkout a working copy of a repository",
 	"[-AcflNnPpRs] [-D date | -r tag] [-d dir] [-j rev] [-k mode] "
@@ -42,7 +41,7 @@ struct cvs_cmd cvs_cmd_checkout = {
 };
 
 struct cvs_cmd cvs_cmd_export = {
-	CVS_OP_EXPORT, CVS_REQ_EXPORT, "export",
+	CVS_OP_EXPORT, 0, "export",
 	{ "exp", "ex" },
 	"Export sources from CVS, similar to checkout",
 	"[-flNnR] [-d dir] [-k mode] -D date | -r rev module ...",
