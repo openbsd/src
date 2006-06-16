@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.18 2005/04/12 15:26:47 cloder Exp $	*/
+/*	$OpenBSD: table.c,v 1.19 2006/06/16 13:50:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -660,10 +660,6 @@ again:
 	w.w_rtm.rtm_flags = flags;
 	w.w_rtm.rtm_seq = ++rt_sock_seqno;
 	w.w_rtm.rtm_addrs = RTA_DST|RTA_GATEWAY;
-	if (metric != 0) {
-		w.w_rtm.rtm_rmx.rmx_hopcount = metric;
-		w.w_rtm.rtm_inits |= RTV_HOPCOUNT;
-	}
 	w.w_dst.sin_family = AF_INET;
 	w.w_dst.sin_addr.s_addr = dst;
 	w.w_gate.sin_family = AF_INET;
@@ -842,11 +838,7 @@ rtm_add(struct rt_msghdr *rtm,
 	if (k->k_state & KS_NEW)
 		k->k_keep = now.tv_sec+keep;
 	k->k_gate = S_ADDR(INFO_GATE(info));
-	k->k_metric = rtm->rtm_rmx.rmx_hopcount;
-	if (k->k_metric < 0)
-		k->k_metric = 0;
-	else if (k->k_metric > HOPCNT_INFINITY)
-		 k->k_metric = HOPCNT_INFINITY;
+	k->k_metric = 0;
 	k->k_state &= ~(KS_DELETED | KS_GATEWAY | KS_STATIC | KS_NEW);
 	if (rtm->rtm_flags & RTF_GATEWAY)
 		k->k_state |= KS_GATEWAY;
