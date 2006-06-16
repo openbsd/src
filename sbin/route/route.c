@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.97 2006/05/27 18:26:45 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.98 2006/06/16 16:55:19 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
 u_long	rtm_inits;
 uid_t	uid;
+u_int	tableid = 0;
 
 struct rt_metrics	rt_metrics;
 
@@ -101,6 +102,7 @@ void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
 void	 interfaces(void);
 void	 getlabel(char *);
+void	 gettable(const char *);
 
 __dead void
 usage(char *cp)
@@ -130,7 +132,7 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "dnqtv")) != -1)
+	while ((ch = getopt(argc, argv, "dnqtT:v")) != -1)
 		switch (ch) {
 		case 'n':
 			nflag = 1;
@@ -143,6 +145,9 @@ main(int argc, char **argv)
 			break;
 		case 't':
 			tflag = 1;
+			break;
+		case 'T':
+			gettable(optarg);
 			break;
 		case 'd':
 			debugonly = 1;
@@ -972,6 +977,7 @@ rtmsg(int cmd, int flags, int fmask)
 	rtm.rtm_addrs = rtm_addrs;
 	rtm.rtm_rmx = rt_metrics;
 	rtm.rtm_inits = rtm_inits;
+	rtm.rtm_tableid = tableid;
 
 	if (rtm_addrs & RTA_NETMASK)
 		mask_addr(&so_dst, &so_mask, RTA_DST);
@@ -1081,7 +1087,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    rtm->rtm_version);
 		return;
 	}
-	printf("%s: len %d, ", msgtypes[rtm->rtm_type], rtm->rtm_msglen);
+	printf("%s: len %d, table %u, ", msgtypes[rtm->rtm_type],
+	    rtm->rtm_msglen, rtm->rtm_tableid);
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
@@ -1409,4 +1416,14 @@ getlabel(char *name)
 	    sizeof(so_label.rtlabel.sr_label))
 		errx(1, "label too long");
 	rtm_addrs |= RTA_LABEL;
+}
+
+void
+gettable(const char *s)
+{
+	const char	*errstr;
+
+	tableid = strtonum(s, 0, RT_TABLEID_MAX, &errstr);
+	if (errstr)
+		errx(1, "invalid table id: %s", errstr);
 }
