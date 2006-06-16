@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile.cross,v 1.18 2006/06/06 00:01:49 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.19 2006/06/16 17:43:54 mickey Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
 
 # Have to compute TARGET_ARCH directly in the Makefile, for .if tests involving
 # this variable to work.
-.if	(${TARGET} == "armish" | ${TARGET} == "cats" || ${TARGET} == "zaurus")
+.if	(${TARGET} == "armish" || ${TARGET} == "cats" || ${TARGET} == "zaurus")
 TARGET_ARCH=	arm
 .elif	(${TARGET} == "hp300" || ${TARGET} == "mac68k" || \
 	 ${TARGET} == "mvme68k")
