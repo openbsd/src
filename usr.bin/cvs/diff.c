@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.104 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.105 2006/06/16 20:01:10 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -191,7 +191,7 @@ cvs_diff_local(struct cvs_file *cf)
 	} else if (cf->file_status != FILE_REMOVED) {
 		if (fstat(cf->fd, &st) == -1)
 			fatal("fstat failed %s", strerror(errno));
-		if ((b2 = cvs_buf_load(cf->file_path, BUF_AUTOEXT)) == NULL)
+		if ((b2 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
 			fatal("failed to load %s", cf->file_path);
 
 		st.st_mtime = cvs_hack_time(st.st_mtime, 1);
