@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.23 2006/06/13 00:32:35 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -218,13 +218,8 @@ k7_powernow_setperf(int level)
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	cfid = PN7_STA_CFID(status);
 	cvid = PN7_STA_CVID(status);
-	if (cfid != fid || cvid != vid) {
-		printf("%s transition to fid: %d vid: %d failed.", __func__,
-		    fid, vid);
-		return (EIO);
-	}
-	
-	pentium_mhz = cstate->state_table[i].freq;
+	if (cfid == fid || cvid == vid)
+		pentium_mhz = cstate->state_table[i].freq;
 
 	return (0);
 }
