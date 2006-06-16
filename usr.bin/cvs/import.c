@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.50 2006/06/14 14:10:50 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.51 2006/06/16 14:02:37 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -37,6 +37,8 @@ static char *logmsg = NULL;
 static char *vendor_tag = NULL;
 static char *release_tag = NULL;
 
+static int dflag = 0;
+
 char *import_repository = NULL;
 int import_conflicts = 0;
 
@@ -44,8 +46,8 @@ struct cvs_cmd cvs_cmd_import = {
 	CVS_OP_IMPORT, CVS_REQ_IMPORT, "import",
 	{ "im", "imp" },
 	"Import sources into CVS, using vendor branches",
-	"[-b vendor branch id] [-m message] repository vendor-tag release-tags",
-	"b:m:",
+	"[-d] [-b branch] [-m message] repository vendor-tag release-tags",
+	"b:dm:",
 	NULL,
 	cvs_import
 };
@@ -61,6 +63,9 @@ cvs_import(int argc, char **argv)
 		switch (ch) {
 		case 'b':
 			import_branch = optarg;
+			break;
+		case 'd':
+			dflag = 1;
 			break;
 		case 'm':
 			logmsg = optarg;
@@ -165,15 +170,26 @@ import_new(struct cvs_file *cf)
 {
 	BUF *bp;
 	char *content;
+	time_t tstamp;
+	struct stat st;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
 	RCSNUM *branch, *brev;
+
+	tstamp = -1;
 
 	cvs_log(LP_TRACE, "import_new(%s)", cf->file_name);
 
 	if (cvs_noexec == 1) {
 		cvs_printf("N %s/%s\n", import_repository, cf->file_path);
 		return;
+	}
+
+	if (dflag == 1) {
+		if (fstat(cf->fd, &st) == -1)
+			fatal("import_new: %s", strerror(errno));
+
+		tstamp = st.st_mtime;
 	}
 
 	if ((branch = rcsnum_parse(import_branch)) == NULL)
@@ -205,10 +221,10 @@ import_new(struct cvs_file *cf)
 	if (rcs_sym_add(cf->file_rcs, release_tag, brev) == -1)
 		fatal("import_new: failed to add vendor tag");
 
-	if (rcs_rev_add(cf->file_rcs, brev, logmsg, -1, NULL) == -1)
+	if (rcs_rev_add(cf->file_rcs, brev, logmsg, tstamp, NULL) == -1)
 		fatal("import_new: failed to create first branch revision");
 
-	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, logmsg, -1, NULL) == -1)
+	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, logmsg, tstamp, NULL) == -1)
 		fatal("import_new: failed to create first revision");
 
 	if ((rdp = rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
