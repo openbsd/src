@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.1 2006/06/16 22:01:30 jason Exp $	*/
+/*	$OpenBSD: power.c,v 1.2 2006/06/16 22:21:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -45,6 +45,11 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
+#define	POWER_REG		0
+
+#define	POWER_REG_CPWR_OFF	0x00000002	/* courtesy power off */
+#define	POWER_REG_SPWR_OFF	0x00000001	/* system power off */
+
 struct power_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_tag;
@@ -87,6 +92,11 @@ power_attach(parent, self, aux)
 
 	sc->sc_tag = ea->ea_memtag;
 
+	if (ea->ea_nregs < 1) {
+		printf(": no registers\n");
+		return;
+	}
+
 	/* Use prom address if available, otherwise map it. */
 	if (ea->ea_nvaddrs) {
 		if (bus_space_map(sc->sc_tag, ea->ea_vaddrs[0], 0,
@@ -116,5 +126,10 @@ power_attach(parent, self, aux)
 int
 power_intr(void *vsc)
 {
-	return (0);
+	/*
+	 * to turn the machine off:
+	 *	bus_space_write_4(sc->sc_tag, sc->sc_handle, POWER_REG,
+	 *	    POWER_REG_CPWR_OFF | POWER_REG_SPWR_OFF);
+	 */
+	return (1);
 }
