@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.51 2006/05/03 16:10:51 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.52 2006/06/16 21:34:53 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -212,6 +212,7 @@ void _dl_unload_dlopen(void);
 
 void _dl_run_all_dtors(void);
 
+/* Please don't rename; gdb(1) knows about this. */
 Elf_Addr _dl_bind(elf_object_t *object, int index);
 
 int	_dl_match_file(struct sod *sodp, char *name, int namelen);
