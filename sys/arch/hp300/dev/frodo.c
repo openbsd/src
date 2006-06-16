@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.7 2005/11/16 21:37:02 miod Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.8 2006/06/16 20:44:23 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -245,7 +245,7 @@ frodo_intr_establish(struct device *frdev, int line, struct isr *isr,
 	struct frodo_softc *sc = (struct frodo_softc *)frdev;
 	int priority = isr->isr_priority;
 
-	if (line < 0 || line >= FRODO_NINTR) {
+	if (line <= 0 || line >= FRODO_NINTR) {
 		panic("%s: bad interrupt line %d",
 		    sc->sc_dev.dv_xname, line);
 	}
