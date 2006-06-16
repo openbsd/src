@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.53 2006/06/15 23:49:58 mjc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.54 2006/06/16 17:06:04 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -189,9 +189,9 @@ help(void)
 {
 	struct cmdtab *c;
 	char *s, n;
-	int i;
+	u_int i;
 
-	for (c=cmdtab; c->name; ++c) {
+	for (c = cmdtab; c->name; ++c) {
 		if (!c->args)
 			continue;
 		printf("\t");
