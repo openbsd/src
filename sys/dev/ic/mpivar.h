@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.14 2006/06/15 07:35:44 marco Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.15 2006/06/16 05:36:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -93,6 +93,9 @@ TAILQ_HEAD(mpi_ccb_list, mpi_ccb);
 struct mpi_softc {
 	struct device		sc_dev;
 	struct scsi_link	sc_link;
+
+	int			sc_flags;
+#define MPI_F_VMWARE			(1<<0)
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

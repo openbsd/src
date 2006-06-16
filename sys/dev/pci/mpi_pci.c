@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.7 2006/06/14 08:26:31 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.8 2006/06/16 05:36:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -135,6 +135,10 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 	printf(": %s", intrstr);
+
+	/* vmware doesn't fill in the pci subsystem register */
+	if (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG) == 0x0)
+		sc->sc_flags |= MPI_F_VMWARE;
 
 	if (mpi_attach(sc) != 0) {
 		/* error printed by mpi_attach */

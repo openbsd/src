@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.43 2006/06/15 07:35:44 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.44 2006/06/16 05:36:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1583,9 +1583,13 @@ mpi_iocfacts(struct mpi_softc *sc)
 	    letoh32(ifp.host_page_buffer_sge.sg_lo_addr));
 
 	sc->sc_maxcmds = letoh16(ifp.global_credits);
-	sc->sc_buswidth = (ifp.max_devices == 0) ? 256 : ifp.max_devices;
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_ioc_number = ifp.ioc_number;
+	if (sc->sc_flags & MPI_F_VMWARE)
+		sc->sc_buswidth = 16;
+	else
+		sc->sc_buswidth =
+		    (ifp.max_devices == 0) ? 256 : ifp.max_devices;
 
 	/*
 	 * you can fit sg elements on the end of the io cmd if they fit in the
