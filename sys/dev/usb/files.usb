@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.57 2006/04/29 02:15:06 jsg Exp $
+#	$OpenBSD: files.usb,v 1.58 2006/06/16 22:30:46 niallo Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -241,6 +241,11 @@ file	dev/usb/if_ubt.c		ubt
 device	ural: ether, ifnet, ifmedia, wlan
 attach	ural at uhub
 file	dev/usb/if_ral.c		ural
+
+# Ralink Technology RT2501USB
+device	rum: ether, ifnet, ifmedia, wlan
+attach	rum at uhub
+file	dev/usb/if_rum.c		rum
 
 # Analog Devices Eagle driver
 device	ueagle: atm, ifnet, ezload, firmload
