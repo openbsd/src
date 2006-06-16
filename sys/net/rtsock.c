@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.60 2006/06/16 16:49:39 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.61 2006/06/16 16:52:08 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ route_output(struct mbuf *m, ...)
 	struct sockaddr_rtlabel	 sa_rt;
 	const char		*label;
 	va_list			 ap;
-	u_int			 tableid = 0;
+	u_int			 tableid;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -206,6 +206,19 @@ route_output(struct mbuf *m, ...)
 		goto flush;
 	}
 	rtm->rtm_pid = curproc->p_pid;
+
+	tableid = rtm->rtm_tableid;
+	if (!rtable_exists(tableid)) {
+		if (rtm->rtm_type == RTM_ADD) {
+			if (rtable_add(tableid)) {
+				error = EINVAL;
+				goto flush;
+			}
+		} else {
+			error = EINVAL;
+			goto flush;
+		}
+	}
 
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
@@ -655,6 +668,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags,
 	rtm = mtod(m, struct rt_msghdr *);
 	rtm->rtm_flags = RTF_DONE | flags;
 	rtm->rtm_errno = error;
+	rtm->rtm_tableid = tableid;
 	rtm->rtm_addrs = rtinfo->rti_addrs;
 	if (ifp != NULL)
 		rtm->rtm_index = ifp->if_index;
