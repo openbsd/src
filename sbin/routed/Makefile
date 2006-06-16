@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.16 2006/05/10 02:36:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2006/06/16 15:48:42 claudio Exp $
 
 PROG=	routed
 SRCS=	if.c input.c main.c output.c parms.c radix.c rdisc.c table.c trace.c
 MAN=	routed.8
-CFLAGS+=-D_ROUTED -D'min(a,b)=((a) < (b) ? (a) : (b))' -D'log=syslog'
+CFLAGS+=-D'min(a,b)=((a) < (b) ? (a) : (b))' -D'log=syslog'
 CFLAGS+=-D'panic(s)={log(LOG_ERR, "%s", s); exit(1);}'
 SUBDIR=	rtquery
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.8 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.9 2006/06/16 15:48:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -543,3 +543,31 @@ extern struct interface *ifwithaddr(naddr, int, int);
 extern struct interface *ifwithname(char *, naddr);
 extern struct interface *ifwithindex(u_short);
 extern struct interface *iflookup(naddr);
+
+/* defines formerly included from radix.h via a super ugly hack */
+void	rn_init(void);
+int	rn_inithead(void **, int);
+int	rn_inithead0(struct radix_node_head *, int);
+int	rn_refines(void *, void *);
+int	rn_walktree(struct radix_node_head *,
+    	    int (*)(struct radix_node *, void *), void *);
+
+struct radix_node	*rn_addmask(void *, int, int);
+struct radix_node	*rn_addroute(void *, void *, struct radix_node_head *,
+    			    struct radix_node [2]);
+struct radix_node	*rn_delete(void *, void *, struct radix_node_head *,
+    			    struct radix_node *);
+struct radix_node	*rn_insert(void *, struct radix_node_head *, int *,
+    			    struct radix_node [2]);
+struct radix_node	*rn_lookup(void *, void *, struct radix_node_head *);
+struct radix_node	*rn_match(void *, struct radix_node_head *);
+struct radix_node	*rn_newpair(void *, int, struct radix_node[2]);
+struct radix_node	*rn_search(void *, struct radix_node *);
+struct radix_node	*rn_search_m(void *, struct radix_node *, void *);
+
+#define Bcmp(a, b, n) bcmp(((char *)(a)), ((char *)(b)), (n))
+#define Bcopy(a, b, n) bcopy(((char *)(a)), ((char *)(b)), (unsigned)(n))
+#define Bzero(p, n) bzero((char *)(p), (int)(n));
+#define R_Malloc(p, t, n) (p = (t) malloc((unsigned int)(n)))
+#define Free(p) free((char *)p);
+

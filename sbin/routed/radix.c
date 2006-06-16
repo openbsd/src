@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.4 2006/02/06 17:13:34 jmc Exp $	*/
+/*	$OpenBSD: radix.c,v 1.5 2006/06/16 15:48:42 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -38,17 +38,11 @@
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
-#ifdef _KERNEL
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#define	M_DONTWAIT M_NOWAIT
-#include <sys/domain.h>
-#else
 #include <stdlib.h>
 #include <string.h>
-#endif
 #include <sys/syslog.h>
 #include <net/radix.h>
+#include "defs.h"
 #endif
 
 int	max_keylen;
@@ -954,13 +948,7 @@ void
 rn_init()
 {
 	char *cp, *cplim;
-#ifdef _KERNEL
-	struct domain *dom;
 
-	for (dom = domains; dom; dom = dom->dom_next)
-		if (dom->dom_maxrtkey > max_keylen)
-			max_keylen = dom->dom_maxrtkey;
-#endif
 	if (max_keylen == 0) {
 		log(LOG_ERR,
 		    "rn_init: radix functions require max_keylen be set\n");
