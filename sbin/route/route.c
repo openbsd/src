@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.98 2006/06/16 16:55:19 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.99 2006/06/16 17:46:43 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -601,7 +601,7 @@ show(int argc, char *argv[])
 			usage(*argv);
 	}
 
-	p_rttables(af);
+	p_rttables(af, tableid);
 }
 
 void

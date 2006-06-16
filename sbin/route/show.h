@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.h,v 1.5 2006/05/27 18:26:45 claudio Exp $ */
+/*	$OpenBSD: show.h,v 1.6 2006/06/16 17:46:43 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -19,7 +19,7 @@
 #ifndef __SHOW_H__
 #define __SHOW_H__
 
-void	 p_rttables(int);
+void	 p_rttables(int, u_int);
 char	*routename(struct sockaddr *);
 char	*netname(struct sockaddr *, struct sockaddr *);
 

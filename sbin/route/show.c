@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.53 2006/05/30 19:42:58 todd Exp $	*/
+/*	$OpenBSD: show.c,v 1.54 2006/06/16 17:46:43 henning Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -118,13 +118,13 @@ void	 index_pfk(struct sadb_msg *, void **);
  * Print routing tables.
  */
 void
-p_rttables(int af)
+p_rttables(int af, u_int tableid)
 {
 	struct rt_msghdr *rtm;
 	struct sadb_msg *msg;
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
-	int mib[6];
+	int mib[7];
 	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
@@ -133,12 +133,14 @@ p_rttables(int af)
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	mib[6] = tableid;
+
+	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == 0)
 			err(1, NULL);
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
 			err(1, "sysctl of routing table");
 		lim = buf + needed;
 	}
