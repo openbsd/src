@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2006/01/09 20:03:40 damien Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2006/06/16 22:27:53 niallo Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -52,6 +52,7 @@ main(void)
 {
 	output("ral-rt2561",  rt2561,  sizeof rt2561);
 	output("ral-rt2561s", rt2561s, sizeof rt2561s);
+	output("ral-rt2573", rt2573, sizeof rt2573);
 	output("ral-rt2661",  rt2661,  sizeof rt2661);
 
 	return 0;
