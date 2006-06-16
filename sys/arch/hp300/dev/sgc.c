@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgc.c,v 1.2 2005/01/23 00:03:10 miod Exp $	*/
+/*	$OpenBSD: sgc.c,v 1.3 2006/06/16 20:44:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -132,7 +132,7 @@ sgc_slottopa(int slot)
 {
 	u_long rval;
 
-	if (slot < 0 || slot > SGC_NSLOTS)
+	if (slot < 0 || slot >= SGC_NSLOTS)
 		rval = 0;
 	else
 		rval = SGC_BASE + (slot * SGC_DEVSIZE);
