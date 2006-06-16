@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.12 2006/06/14 20:24:12 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.13 2006/06/16 06:00:46 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1063,18 +1063,19 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 #ifdef AZALIA_DEBUG
-	for (i = 0; i < this->ndacgroups; i++) {
+	for (i = 0; i < this->dacs.ngroups; i++) {
 		DPRINTF(("%s: dacgroup[%d]:", __func__, i));
-		for (n = 0; n < this->dacgroups[i].nconv; n++) {
-			DPRINTF((" %2.2x", this->dacgroups[i].conv[n]));
+		for (n = 0; n < this->dacs.groups[i].nconv; n++) {
+			DPRINTF((" %2.2x", this->dacs.groups[i].conv[n]));
 		}
 		DPRINTF(("\n"));
 	}
 #endif
-	this->cur_dac = 0;
-	this->cur_adc = 0;
 
-	err = azalia_codec_construct_format(this);
+	/* set invalid values for azalia_codec_construct_format() to work */
+	this->dacs.cur = -1;
+	this->adcs.cur = -1;
+	err = azalia_codec_construct_format(this, 0, 0);
 	if (err)
 		return err;
 
@@ -1096,15 +1097,18 @@ azalia_codec_delete(codec_t *this)
 }
 
 int
-azalia_codec_construct_format(codec_t *this)
+azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 {
 	const convgroup_t *group;
 	uint32_t bits_rates;
+	int prev_dac, prev_adc;
 	int pvariation, rvariation;
 	int nbits, dac, chan, i, err;
 	nid_t nid;
 
-	group = &this->dacgroups[this->cur_dac];
+	prev_dac = this->dacs.cur;
+	this->dacs.cur = newdac;
+	group = &this->dacs.groups[this->dacs.cur];
 	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
 	nbits = 0;
 	if (bits_rates & COP_PCM_B8)
@@ -1124,7 +1128,10 @@ azalia_codec_construct_format(codec_t *this)
 	}
 	pvariation = group->nconv * nbits;
 
-	bits_rates = this->w[this->adcs[this->cur_adc]].d.audio.bits_rates;
+	prev_adc = this->adcs.cur;
+	this->adcs.cur = newadc;
+	group = &this->adcs.groups[this->adcs.cur];
+	bits_rates = this->w[group->conv[0]].d.audio.bits_rates;
 	nbits = 0;
 	if (bits_rates & COP_PCM_B8)
 		nbits++;
@@ -1159,6 +1166,7 @@ azalia_codec_construct_format(codec_t *this)
 	    (pvariation + rvariation));
 
 	/* register formats for playback */
+	group = &this->dacs.groups[this->dacs.cur];
 	nid = group->conv[0];
 	chan = 0;
 	bits_rates = this->w[nid].d.audio.bits_rates;
@@ -1169,7 +1177,8 @@ azalia_codec_construct_format(codec_t *this)
 	}
 
 	/* register formats for recording */
-	nid = this->adcs[this->cur_adc];
+	group = &this->adcs.groups[this->adcs.cur];
+	nid = group->conv[0];
 	chan = WIDGET_CHANNELS(&this->w[nid]);
 	bits_rates = this->w[nid].d.audio.bits_rates;
 	azalia_codec_add_bits(this, chan, bits_rates, AUMODE_RECORD);
@@ -1278,17 +1287,10 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 
 	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
-	if (dir == AUMODE_RECORD) {
-		nid = this->adcs[this->cur_adc];
-		DPRINTF(("%s: record: nid=0x%.2x\n", __func__, nid));
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
-		if (err)
-			goto exit;
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    (number << 4) | 0, NULL);
-		goto exit;
-	}
-	group = &this->dacgroups[this->cur_dac];
+	if (dir == AUMODE_RECORD)
+		group = &this->adcs.groups[this->adcs.cur];
+	else
+		group = &this->dacs.groups[this->dacs.cur];
 	flag222 = group->nconv >= 3 &&
 	    (WIDGET_CHANNELS(&this->w[group->conv[0]]) == 2) &&
 	    (WIDGET_CHANNELS(&this->w[group->conv[1]]) == 2) &&

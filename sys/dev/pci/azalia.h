@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.7 2006/06/14 19:34:52 brad Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.8 2006/06/16 06:00:46 brad Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -511,8 +511,13 @@ typedef struct {
 
 typedef struct {
 	int nconv;
-	nid_t conv[HDA_MAX_CHANNELS];
+	nid_t conv[HDA_MAX_CHANNELS]; /* front, surround, clfe, side, ... */
 } convgroup_t;
+typedef struct {
+	int cur;
+	int ngroups;
+	convgroup_t groups[32];
+} convgroupset_t;
 
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
@@ -536,12 +541,8 @@ typedef struct codec_t {
 				 * w[0] to w[wstart-1] are unused. */
 #define FOR_EACH_WIDGET(this, i)	for (i = (this)->wstart; i < (this)->wend; i++)
 
-	int ndacgroups;
-	convgroup_t dacgroups[32];
-	int cur_dac;		/* currently selected DAC group index */
-	int nadcs;
-	nid_t adcs[32];
-	int cur_adc;		/* currently selected ADC index */
+	convgroupset_t dacs;
+	convgroupset_t adcs;
 	int running;
 
 	int nmixers, maxmixers;
@@ -554,4 +555,4 @@ typedef struct codec_t {
 
 
 int	azalia_codec_init_vtbl(codec_t *);
-int	azalia_codec_construct_format(codec_t *);
+int	azalia_codec_construct_format(codec_t *, int, int);
