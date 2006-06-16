@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.85 2006/06/01 16:37:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.86 2006/06/16 16:17:16 reyk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2275,6 +2275,9 @@ fork_privchld(int fd, int fd2)
 	default:
 		return (0);
 	}
+
+	if (chdir("/") == -1)
+		error("chdir(\"/\")");
 
 	setproctitle("%s [priv]", ifi->name);
 
