@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.84 2006/04/05 14:29:46 kurt Exp $
+#	$OpenBSD: GENERIC,v 1.85 2006/06/16 05:22:25 marco Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -216,6 +216,8 @@ pms*	at gsckbc?		# PS/2 mouse
 #ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
+scsibus* at mpi?
 #option	BHADEBUG
 #bha*	at eisa?
 #bha*	at pci?
