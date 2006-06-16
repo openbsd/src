@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.90 2006/06/16 15:16:41 pascoe Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.91 2006/06/16 15:31:08 pascoe Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 
 			/*
 			 * XXX what should we do if ip6_hlim == 0 and the
-			 * packet gets tunnelled?
+			 * packet gets tunneled?
 			 */
 		}
 
@@ -618,7 +618,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		/*
 		 * If caller did not provide an interface lookup a
 		 * default in the routing table.  This is either a
-		 * default for the speicfied group (i.e. a host
+		 * default for the specified group (i.e. a host
 		 * route), or a multicast default (a route for the
 		 * ``net'' ff00::/8).
 		 */
