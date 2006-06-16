@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.89 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.90 2006/06/16 15:16:41 pascoe Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -698,7 +698,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	}
 
 	/*
-	 * Fill the outgoing inteface to tell the upper layer
+	 * Fill the outgoing interface to tell the upper layer
 	 * to increment per-interface statistics.
 	 */
 	if (ifpp)
