@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321_pci.c,v 1.7 2006/06/15 21:26:05 drahn Exp $	*/
+/*	$OpenBSD: iq80321_pci.c,v 1.8 2006/06/16 06:24:12 drahn Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -103,6 +103,16 @@ struct irq_map iq80321_hdlg_irq_map[] = {
 	{ 3, 3, ICU_INT_XINT(2) }, /* echi0 29 */
 	{ 0, 0, 255}
 };
+struct irq_map certance_irq_map[] = {
+	{ 0, 1, ICU_INT_XINT(0) }, /* em0 27 */
+	{ 0, 2, ICU_INT_XINT(0) }, /* em0 27 */
+	{ 1, 1, ICU_INT_XINT(1) }, /* sata 28 */
+#if 0
+	{ 2, 1, ICU_INT_XINT(0) }, /* scsi 29 */
+#endif
+	{ 2, 2, ICU_INT_XINT(3) }, /* scsi 30 */
+	{ 0, 0, 255}
+};
 struct board_id thecus = {
 	"Thecus Nx100",
 	iq80321_thecus_irq_map,
@@ -121,10 +131,22 @@ struct board_id iodata = {
 	{ 0, 	0,	0,	0 }
 	}
 };
+struct board_id certance = {
+	"Certance CP3100",
+	certance_irq_map,
+	{
+	{ 0, 	0,	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_COPPER },
+	{ 0, 	1,	PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_31244 },
+	{ 0, 	2,	PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1010_2 },
+	/* fill in the rest of the devices */
+	{ 0, 	0,	0,	0 }
+	}
+};
 
 struct board_id *systems[] = {
 	&thecus,
 	&iodata,
+	&certance,
 	NULL
 };
 
@@ -144,14 +166,21 @@ iq80321_pci_init2(pci_chipset_tag_t pc, void *cookie)
 	pcitag_t tag;
 	int i, j;
 	struct board_id *sys;
+	u_int32_t reg;
 
-	tag = pci_make_tag(pc, 0, 1, 0);
 
 	for (i = 0; systems[i] != NULL; i++) {
 		sys = systems[i];
 		for (j = 0; sys->list[j].vend != 0; j++) {
+			tag = pci_make_tag(pc, sys->list[j].bus,
+			    sys->list[j].dev, 0);
+			reg = pci_conf_read(pc, tag, 0 /* ID */);
+#ifdef PROBE_NEW_BOARD
+			printf("read %x expected %x\n", reg,
+			    (sys->list[j].vend | sys->list[j].prod << 16));
+#endif
 			if ((sys->list[j].vend | sys->list[j].prod << 16)  !=
-			     pci_conf_read(pc, tag, 0 /* ID */)) {
+			     reg){ 
 				sys = NULL;
 				break;
 			}
@@ -159,9 +188,16 @@ iq80321_pci_init2(pci_chipset_tag_t pc, void *cookie)
 		if (sys != NULL)
 			break;
 	}
-	if (sys == NULL)
+	if (sys == NULL) {
 		printf("board id failed\n");
-	else
+#ifdef PROBE_NEW_BOARD
+		for (i = 0; i < 16; i++) {
+			tag = pci_make_tag(pc, 0, i, 0);
+			printf("bus 0, dev %d: %x\n", i,
+			    pci_conf_read(pc, tag, 0 /* ID */));
+		}
+#endif
+	} else
 		printf(": %s", sys->name);
 	iq80321_irq_map = sys->irq_map;
 
