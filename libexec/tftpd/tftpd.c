@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.43 2006/04/25 16:14:27 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.44 2006/06/16 22:40:35 beck Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.43 2006/04/25 16:14:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.44 2006/06/16 22:40:35 beck Exp $";
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.43 2006/04/25 16:14:27 deraadt Exp 
 #include <sys/uio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <vis.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -376,7 +377,7 @@ tftp(struct tftphdr *tp, int size)
 	int i, first = 1, has_options = 0, ecode;
 	struct formats *pf;
 	char *filename, *mode = NULL, *option, *ccp;
-	char fnbuf[MAXPATHLEN];
+	char fnbuf[MAXPATHLEN], nicebuf[MAXPATHLEN];
 
 	cp = tp->th_stuff;
 again:
@@ -449,17 +450,23 @@ option_fail:
 			options[OPT_TIMEOUT].o_request = NULL;
 	}
 
+	(void) strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
 	ecode = (*pf->f_validate)(filename, tp->th_opcode);
 	if (has_options)
 		oack();
 	if (ecode) {
+		syslog(LOG_INFO, "denied %s access to '%s'",
+		    tp->th_opcode == WRQ ? "write" : "read", nicebuf);
 		nak(ecode);
 		exit(1);
 	}
-	if (tp->th_opcode == WRQ)
+	if (tp->th_opcode == WRQ) {
+		syslog(LOG_DEBUG, "receiving file '%s'", nicebuf);
 		(*pf->f_recv)(pf);
-	else
+	} else {
+		syslog(LOG_DEBUG, "sending file '%s'", nicebuf);
 		(*pf->f_send)(pf);
+	}
 	exit(0);
 }
 
