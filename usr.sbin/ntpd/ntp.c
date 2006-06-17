@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.86 2006/06/09 07:42:08 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.87 2006/06/17 18:40:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,6 +149,14 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		client_peer_init(p);
 
 	bzero(&conf->status, sizeof(conf->status));
+
+	conf->freq.samples = 0;
+	conf->freq.x = 0.0;
+	conf->freq.xx = 0.0;
+	conf->freq.xy = 0.0;
+	conf->freq.y = 0.0;
+	conf->freq.overall_offset = 0.0;
+
 	conf->status.synced = 0;
 	clock_getres(CLOCK_REALTIME, &tp);
 	b = 1000000000 / tp.tv_nsec;	/* convert to Hz */
@@ -428,6 +436,50 @@ peer_remove(struct ntp_peer *p)
 	peer_cnt--;
 }
 
+static void
+priv_adjfreq(double offset)
+{
+	double curtime, freq;
+
+	if (!conf->status.synced)
+		return;
+
+	conf->freq.samples++;
+
+	if (conf->freq.samples <= 0)
+		return;
+
+	conf->freq.overall_offset += offset;
+	offset = conf->freq.overall_offset;	
+
+	curtime = gettime_corrected();
+	conf->freq.xy += offset * curtime;
+	conf->freq.x += curtime;
+	conf->freq.y += offset;
+	conf->freq.xx += curtime * curtime;
+
+	if (conf->freq.samples % FREQUENCY_SAMPLES != 0)
+		return;
+
+	freq =
+	    (conf->freq.xy - conf->freq.x * conf->freq.y / conf->freq.samples)
+	    /
+	    (conf->freq.xx - conf->freq.x * conf->freq.x / conf->freq.samples);
+
+	if (freq > MAX_FREQUENCY_ADJUST)
+		freq = MAX_FREQUENCY_ADJUST;
+	else if (freq < -MAX_FREQUENCY_ADJUST)
+		freq = -MAX_FREQUENCY_ADJUST;
+
+	imsg_compose(ibuf_main, IMSG_ADJFREQ, 0, 0, &freq, sizeof(freq));
+	conf->freq.xy = 0.0;
+	conf->freq.x = 0.0;
+	conf->freq.y = 0.0;
+	conf->freq.xx = 0.0;
+	conf->freq.samples = 0;
+	conf->freq.overall_offset = 0.0;
+}
+
 int
 priv_adjtime(void)
 {
@@ -490,6 +542,8 @@ priv_adjtime(void)
 
 	imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 	    &offset_median, sizeof(offset_median));
+
+	priv_adjfreq(offset_median);
 
 	conf->status.reftime = gettime();
 	conf->status.stratum++;	/* one more than selected peer */

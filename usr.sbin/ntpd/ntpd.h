@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.71 2006/06/07 06:29:03 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.72 2006/06/17 18:40:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,10 @@
 #define	OFFSET_ARRAY_SIZE	8
 #define	SETTIME_MIN_OFFSET	180	/* min offset for settime at start */
 #define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
-#define	LOG_NEGLIGEE		128	/* negligible drift to not log (ms) */
+#define	LOG_NEGLIGEE		32	/* negligible drift to not log (ms) */
+#define	FREQUENCY_SAMPLES	8	/* samples for est. of permanent drift */
+#define	MAX_FREQUENCY_ADJUST	128e-5	/* max correction per iteration */
+
 
 #define	SENSOR_DATA_MAXAGE	15*60
 #define	SENSOR_QUERY_INTERVAL	30
@@ -143,12 +146,20 @@ struct ntp_conf_sensor {
 	u_int8_t				 weight;
 };
 
+struct ntp_freq {
+	double				overall_offset;
+	double				x, y;
+	double				xx, xy;
+	int				samples;
+};
+
 struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)		listen_addrs;
 	TAILQ_HEAD(ntp_peers, ntp_peer)			ntp_peers;
 	TAILQ_HEAD(ntp_sensors, ntp_sensor)		ntp_sensors;
 	TAILQ_HEAD(ntp_conf_sensors, ntp_conf_sensor)	ntp_conf_sensors;	
 	struct ntp_status				status;
+	struct ntp_freq					freq;
 	u_int8_t					listen_all;
 	u_int8_t					settime;
 	u_int8_t					debug;
@@ -190,6 +201,7 @@ struct imsgbuf {
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_ADJTIME,
+	IMSG_ADJFREQ,
 	IMSG_SETTIME,
 	IMSG_HOST_DNS
 };
