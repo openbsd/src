@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.112 2006/06/15 20:12:40 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.113 2006/06/17 01:04:34 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1146,7 +1146,6 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc_if->arpcom.ac_enaddr[i] =
 		    sk_win_read_1(sc, SK_MAC0_0 + (sa->skc_port * 8) + i);
-
 
 	printf(", address %s\n",
 	    ether_sprintf(sc_if->arpcom.ac_enaddr));
@@ -2547,7 +2546,7 @@ void sk_init_yukon(struct sk_if_softc *sc_if)
 	DPRINTFN(6, ("sk_init_yukon: YUKON_PAR=%#x\n", reg));
 	DPRINTFN(6, ("sk_init_yukon: 4b\n"));
 	SK_YU_WRITE_2(sc_if, YUKON_PAR, reg);
-        
+
 	/* MIB Counter Clear Mode clear */
 	DPRINTFN(6, ("sk_init_yukon: 5\n"));
         reg &= ~YU_PAR_MIB_CLR;
@@ -2616,7 +2615,7 @@ void sk_init_yukon(struct sk_if_softc *sc_if)
 	/* Configure TX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_CLEAR);
 	SK_IF_WRITE_2(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON);
-		
+
 	DPRINTFN(6, ("sk_init_yukon: end\n"));
 }
 
