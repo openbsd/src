@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.6 2006/06/15 20:50:44 drahn Exp $ 
+# $OpenBSD: RAMDISK,v 1.7 2006/06/17 04:47:06 drahn Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -56,6 +56,8 @@ iopxs0		at mainbus?
 iopiic*	at iopxs?		# I2C Controller Unit(s)
 iic0		at iopiic?
 iic1		at iopiic?
+#pcaled0		at iic? addr 0x60	# led controller
+#gpio*		at pcaled0
 ricohrtc0	at iic? addr 0x32	# Ricoh RTC
 fintek0		at iic?			# temp/fan controller
 
@@ -63,7 +65,7 @@ fintek0		at iic?			# temp/fan controller
 pci0		at iopxs? bus ?		# PCI/PCI-X support
 
 
-siop*		at pci? disable		# NCR 538XX SCSI controllers(new)
+siop*		at pci? 		# NCR 538XX SCSI controllers(new)
 scsibus*	at siop?
 em*		at pci?
 re*		at pci?
