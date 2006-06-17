@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.45 2006/05/21 15:55:02 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.46 2006/06/17 17:33:33 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -281,21 +281,6 @@ The value of
 is set to the
 .Ar addr
 plus the size of the data examined.
-.\" --------------------
-.It Ic xf
-Examine forward.
-Execute an
-.Ic examine
-command with the last specified parameters to it
-except that the next address displayed by it is used as the start address.
-.\" --------------------
-.It Ic xb
-Examine backward.
-Execute an
-.Ic examine
-command with the last specified parameters to it
-except that the last start address subtracted by the size displayed by it
-is used as the start address.
 .\" --------------------
 .It Xo
 .Ic print
