@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.73 2006/06/17 09:22:44 fkr Exp $
+dnl	$OpenBSD: hardware,v 1.74 2006/06/17 16:53:21 fkr Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -484,4 +484,3 @@ Supported devices {:-include-:}:
 The following devices are not supported currently:
 	- built-in Texas Instrument TSB12LV23 firewire (IEEE1394) ports
 	- built-in USB modems
-	- built-in CardBus slots non-TI PCI1211
