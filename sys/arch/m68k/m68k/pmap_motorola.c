@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.43 2006/06/11 20:48:51 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.44 2006/06/17 16:29:11 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1291,12 +1291,32 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
+	pt_entry_t pte;
+
+	pte = pte_prot(prot);
+#if defined(M68040) || defined(M68060)
+	if (mmutype <= MMU_68040 && (pte & (PG_PROT)) == PG_RW)
+		pte |= PG_CCB;
+#endif
+	pmap_kenter_cache(va, pa, pte);
+}
+
+/*
+ * Similar to pmap_kenter_pa(), but allows the caller to control the
+ * cacheability of the mapping.
+ */
+void
+pmap_kenter_cache(va, pa, template)
+	vaddr_t va;
+	paddr_t pa;
+	pt_entry_t template;
+{
 	struct pmap *pmap = pmap_kernel();
 	pt_entry_t *pte;
 	int s, npte, error;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
-	    ("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot));
+	    ("pmap_kenter_cache(%lx, %lx, %x)\n", va, pa, prot));
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
@@ -1306,14 +1326,14 @@ pmap_kenter_pa(va, pa, prot)
 		s = splvm();
 		error = pmap_enter_ptpage(pmap, va);
 		if (error != 0)
-			panic("pmap_kenter_pa: out of address space");
+			panic("pmap_kenter_cache: out of address space");
 		splx(s);
 	}
 
 	pa = trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 
-	PMAP_DPRINTF(PDB_ENTER, ("enter: pte %p, *pte %x\n", pte, *pte));
+	PMAP_DPRINTF(PDB_ENTER, ("kenter: pte %p, *pte %x\n", pte, *pte));
 	KASSERT(!pmap_pte_v(pte));
 
 	/*
@@ -1327,13 +1347,9 @@ pmap_kenter_pa(va, pa, prot)
 	 * Build the new PTE.
 	 */
 
-	npte = pa | pte_prot(prot) | PG_V | PG_W;
-#if defined(M68040) || defined(M68060)
-	if (mmutype <= MMU_68040 && (npte & (PG_PROT)) == PG_RW)
-		npte |= PG_CCB;
-#endif
+	npte = pa | template | PG_V | PG_W;
 
-	PMAP_DPRINTF(PDB_ENTER, ("enter: new pte value %x\n", npte));
+	PMAP_DPRINTF(PDB_ENTER, ("kenter: new pte value %x\n", npte));
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
 		DCFP(pa);
