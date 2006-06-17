@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.12 2006/06/12 09:51:09 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.13 2006/06/17 12:26:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/time.h>
 #include <sys/sensors.h>
 
-#include <dev/clock_subr.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
@@ -42,6 +41,18 @@ int udcfdebug = 0;
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
+
+/* Traditional POSIX base year */
+#define	POSIX_BASE_YEAR	1970
+
+static inline int leapyear(int year);
+#define FEBRUARY	2
+#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
+#define	days_in_month(a)	(month_days[(a) - 1])
+
+static const int month_days[12] = {
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
 
 #define UDCF_READ_REQ	0xc0
 #define UDCF_READ_IDX	0x1f
@@ -112,6 +123,11 @@ void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
 void	udcf_it_probe(void *);
 void	udcf_ct_probe(void *);
+
+#define FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
+static inline int leapyear(int year);
+int	udcf_ymdhm_to_secs(int y, int mon, int d, int h, int m, time_t *secs);
+
 
 USB_DECLARE_DRIVER(udcf);
 
@@ -460,7 +476,7 @@ udcf_mg_probe(void *xsc)
 {
 	struct udcf_softc	*sc = xsc;
 
-	struct clock_ymdhms	 ymdhm;
+	int			 year, month, day, hour, minute;
 	int			 minute_bits, hour_bits, day_bits;
 	int			 month_bits, year_bits, wday;
 	int			 p1, p2, p3;
@@ -529,18 +545,23 @@ udcf_mg_probe(void *xsc)
 
 				/* Decode valid time */
 
-				ymdhm.dt_min = FROMBCD(minute_bits);
-				ymdhm.dt_hour = FROMBCD(hour_bits);
-				ymdhm.dt_day = FROMBCD(day_bits);
-				ymdhm.dt_mon = FROMBCD(month_bits);
-				ymdhm.dt_year = 2000 + FROMBCD(year_bits);
-				ymdhm.dt_sec = 0;
+				minute = FROMBCD(minute_bits);
+				hour = FROMBCD(hour_bits);
+				day = FROMBCD(day_bits);
+				month = FROMBCD(month_bits);
+				year = 2000 + FROMBCD(year_bits);
 
-				sc->sc_next = clock_ymdhms_to_secs(&ymdhm);
+				if (!udcf_ymdhm_to_secs(year, month, day,
+				    hour, minute, &sc->sc_next)) {
 
-				/* convert to coordinated universal time */
+					/* convert to UTC */
 
-				sc->sc_next -= z1_bit ? 7200 : 3600;
+					sc->sc_next -= z1_bit ? 7200 : 3600;
+				} else {
+					sc->sc_sensor.status = SENSOR_S_WARN;
+					timeout_add(&sc->sc_it_to, t8);
+					sc->sc_sync = 1;
+				}
 
 				DPRINTF(("\n%02d.%02d.%04d %02d:%02d:00 %s",
 				    ymdhm.dt_day, ymdhm.dt_mon + 1,
@@ -635,5 +656,106 @@ udcf_activate(device_ptr_t self, enum devact act)
 		sc->sc_dying = 1;
 		break;
 	}
+	return (0);
+}
+
+/*
+ * the leapyear() and udcf_ymdhms_to_secs() functions to calculate the number
+ * of seconds since the epoch for a certain date are from sys/dev/clock_subr.c,
+ * the following copyright applies to these functions:
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/*
+ * This inline avoids some unnecessary modulo operations
+ * as compared with the usual macro:
+ *   ( ((year % 4) == 0 &&
+ *      (year % 100) != 0) ||
+ *     ((year % 400) == 0) )
+ * It is otherwise equivalent.
+ */
+static inline int
+leapyear(int year)
+{
+	int rv = 0;
+
+	if ((year & 3) == 0) {
+		rv = 1;
+		if ((year % 100) == 0) {
+			rv = 0;
+			if ((year % 400) == 0)
+				rv = 1;
+		}
+	}
+	return (rv);
+}
+
+/* convert year, month, day, hour, minute to seconds since the epoch */
+int
+udcf_ymdhm_to_secs(int year, int month, int day, int hour, int minute,
+   time_t *secs)
+{
+	int i, days;
+	int leap;
+
+	if (month < 1 || month > 12)
+		return (-1);
+
+	days = days_in_month(month);
+	leap = leapyear(year);
+	if (month == FEBRUARY && leap)
+		days++;
+	if (day < 1 || day > days)
+		return (-1);
+
+	/*
+	 * Compute days since start of time
+	 * First from years, then from months.
+	 */
+	days = 0;
+	for (i = POSIX_BASE_YEAR; i < year; i++)
+		days += days_in_year(i);
+	if (leap && month > FEBRUARY)
+		days++;
+
+	/* Months */
+	for (i = 1; i < month; i++)
+	  	days += days_in_month(i);
+	days += (day - 1);
+
+	/* convert to seconds. */
+	*secs = days * 86400L + hour * 3600L + minute * 60L;
 	return (0);
 }
