@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.2 2006/06/02 15:43:16 norby Exp $ */
+/*	$OpenBSD: report.c,v 1.3 2006/06/17 16:53:33 norby Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -107,7 +107,9 @@ recv_report(struct nbr *nbr, char *buf, u_int16_t len)
 		/* read four bytes */
 		memcpy(&netmask, buf, sizeof(netmask));
 		/* ditch one byte, since we only need three */
-		netmask = netmask << 8;
+		netmask = ntohl(netmask) >> 8;
+		netmask = htonl(netmask);
+
 		/* set the highest byte to 255 */
 		netmask = netmask | htonl(0xff000000);
 		buf += 3;
@@ -245,7 +247,8 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 			netmask = le->re->mask.s_addr;
 			if (prefixlen != mask2prefixlen(netmask)) {
 				prefixlen = mask2prefixlen(netmask);
-				netmask = netmask >> 8;
+				netmask = ntohl(netmask) << 8;
+				netmask = htonl(netmask);
 				buf_add(buf, &netmask, 3);
 			}
 			netid_len = PREFIX_SIZE(prefixlen);
