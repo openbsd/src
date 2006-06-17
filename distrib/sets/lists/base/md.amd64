@@ -30,6 +30,7 @@
 ./etc/firmware/ral-license
 ./etc/firmware/ral-rt2561
 ./etc/firmware/ral-rt2561s
+./etc/firmware/ral-rt2573
 ./etc/firmware/ral-rt2661
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license

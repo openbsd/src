@@ -1,4 +1,3 @@
-./usr/include/armish/pci_machdep.h
 ./usr/bin/addr2line
 ./usr/bin/gccbug
 ./usr/bin/objcopy
@@ -80,6 +79,7 @@
 ./usr/include/armish/lock.h
 ./usr/include/armish/param.h
 ./usr/include/armish/pcb.h
+./usr/include/armish/pci_machdep.h
 ./usr/include/armish/pio.h
 ./usr/include/armish/pmap.h
 ./usr/include/armish/proc.h
