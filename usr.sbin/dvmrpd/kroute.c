@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2006/06/01 22:07:30 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.3 2006/06/17 11:39:52 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 #include <net/route.h>
 #include <err.h>
 #include <errno.h>
@@ -346,13 +347,19 @@ fetchifs(int ifindex)
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
 		kif->k.mtu = ifm.ifm_data.ifi_mtu;
 		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
-		    (ifm.ifm_data.ifi_link_state != LINK_STATE_DOWN);
+		    (ifm.ifm_data.ifi_link_state == LINK_STATE_UP ||
+		    (ifm.ifm_data.ifi_link_state == LINK_STATE_UNKNOWN &&
+		    ifm.ifm_data.ifi_type != IFT_CARP));
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
 				sdl = (struct sockaddr_dl *)sa;
-				if (sdl->sdl_nlen > 0)
-					strlcpy(kif->k.ifname, sdl->sdl_data,
-					    sizeof(kif->k.ifname));
+				if (sdl->sdl_nlen >= sizeof(kif->k.ifname))
+					memcpy(kif->k.ifname, sdl->sdl_data,
+					    sizeof(kif->k.ifname) - 1);
+				else if (sdl->sdl_nlen > 0)
+					memcpy(kif->k.ifname, sdl->sdl_data,
+					    sdl->sdl_nlen);
+				/* string already terminated via calloc() */
 			}
 
 		kif_insert(kif);
