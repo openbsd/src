@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.70 2006/04/27 19:30:28 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.71 2006/06/17 00:47:16 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2345,13 +2345,13 @@ ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd)
 {
 	int doit = 0;
 
-	if (ncts ^ octs) {
-		doit = (ncts && ISSET(tp->t_flags, TS_TSTAMPCTSSET)) ||
-		    (!ncts && ISSET(tp->t_flags, TS_TSTAMPCTSCLR));
-	} else if (ndcd ^ odcd) {
-		doit = (ndcd && ISSET(tp->t_flags, TS_TSTAMPDCDSET)) ||
-		    (!ndcd && ISSET(tp->t_flags, TS_TSTAMPDCDCLR));
-	}
+	if (ncts ^ octs)
+		doit |= ncts ? ISSET(tp->t_flags, TS_TSTAMPCTSSET) :
+		    ISSET(tp->t_flags, TS_TSTAMPCTSCLR);
+	if (ndcd ^ odcd)
+		doit |= ndcd ? ISSET(tp->t_flags, TS_TSTAMPDCDSET) :
+		    ISSET(tp->t_flags, TS_TSTAMPDCDCLR);
+
 	if (doit)
 		microtime(&tp->t_tv);
 }
