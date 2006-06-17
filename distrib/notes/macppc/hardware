@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.72 2006/05/23 19:46:10 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.73 2006/06/17 09:22:44 fkr Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -69,6 +69,8 @@ Supported devices {:-include-:}:
 	Serial ports
 		Built-in Zilog 8530-based serial ports (zs)
 		Internal non-USB modems.
+		Most modems, digital cellular modems, and serial
+		cards attached through PC-Cards should work (com)
 
 	Ethernet adapters
 		Onboard Older iMac 10-100Mbs (bm) Ethernet
