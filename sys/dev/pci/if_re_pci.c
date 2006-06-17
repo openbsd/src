@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.10 2006/06/09 00:59:33 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.11 2006/06/17 18:00:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

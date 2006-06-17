@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.25 2006/06/05 23:44:07 drahn Exp $	*/
+/*	$OpenBSD: re.c,v 1.26 2006/06/17 17:56:10 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -118,6 +118,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

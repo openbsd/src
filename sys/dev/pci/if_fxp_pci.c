@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.46 2006/03/08 20:51:59 miod Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.47 2006/06/17 18:00:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -44,6 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+#include <sys/timeout.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>

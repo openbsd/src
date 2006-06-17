@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.62 2006/05/29 01:00:02 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.63 2006/06/17 18:00:43 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -32,6 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #include <sys/socket.h>
 
 #include <machine/bus.h>

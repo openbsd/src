@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.63 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.64 2006/06/17 18:00:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -69,6 +69,7 @@
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

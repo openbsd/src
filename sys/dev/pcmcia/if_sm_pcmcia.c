@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.26 2006/04/20 20:31:13 miod Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.27 2006/06/17 18:01:52 brad Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/selinfo.h>
+#include <sys/timeout.h>
 #include <sys/device.h>
 
 #include <net/if.h>

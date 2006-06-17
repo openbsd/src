@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.25 2006/06/13 01:33:45 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.26 2006/06/17 18:00:43 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -92,6 +92,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

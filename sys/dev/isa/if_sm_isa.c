@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.8 2006/02/24 01:50:31 brad Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.9 2006/06/17 17:57:00 brad Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/selinfo.h>
+#include <sys/timeout.h>
 #include <sys/device.h>
 
 #include <net/if.h>

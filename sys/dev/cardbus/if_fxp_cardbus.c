@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.15 2006/06/08 05:43:01 fkr Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.16 2006/06/17 17:58:17 brad Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 #include <sys/device.h>
 
 #include <net/if.h>

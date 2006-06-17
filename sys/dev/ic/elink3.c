@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.67 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.68 2006/06/17 17:56:10 brad Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/selinfo.h>
+#include <sys/timeout.h>
 #include <sys/device.h>
 
 #include <net/if.h>
