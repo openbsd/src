@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.6 2006/05/25 09:26:58 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.7 2006/06/17 19:07:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -91,13 +91,9 @@ struct wpi_rx_ring {
 	int			cur;
 };
 
-struct wpi_amrr {
-	struct	ieee80211_node ni;	/* must be the first */
-	int	txcnt;
-	int	retrycnt;
-	int	success;
-	int	success_threshold;
-	int	recovery;
+struct wpi_node {
+	struct	ieee80211_node		ni;	/* must be the first */
+	struct	ieee80211_amrr_node	amn;
 };
 
 struct wpi_softc {
@@ -106,6 +102,7 @@ struct wpi_softc {
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	struct ieee80211_amrr	amrr;
 
 	uint32_t		flags;
 #define WPI_FLAG_FW_INITED	(1 << 0)

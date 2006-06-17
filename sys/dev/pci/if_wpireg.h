@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.8 2006/06/16 18:54:09 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.9 2006/06/17 19:07:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -317,7 +317,7 @@ struct wpi_cmd_tsf {
 } __packed;
 
 /* structure for WPI_CMD_ADD_NODE */
-struct wpi_node {
+struct wpi_node_info {
 	uint8_t		control;
 #define WPI_NODE_UPDATE	(1 << 0)
 

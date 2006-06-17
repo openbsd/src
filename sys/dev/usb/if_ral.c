@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.68 2006/06/10 20:28:11 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.69 2006/06/17 19:07:19 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -56,7 +56,7 @@
 #include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/usb/usb.h>
@@ -171,8 +171,6 @@ Static void		ural_amrr_start(struct ural_softc *,
 Static void		ural_amrr_timeout(void *);
 Static void		ural_amrr_update(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status status);
-Static void		ural_ratectl(struct ural_amrr *,
-			    struct ieee80211_node *);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -290,6 +288,9 @@ USB_ATTACH(ural)
 
 	usb_init_task(&sc->sc_task, ural_task, sc);
 	timeout_set(&sc->scan_ch, ural_next_scan, sc);
+
+	sc->amrr.amrr_min_success_threshold =  1;
+	sc->amrr.amrr_max_success_threshold = 10;
 	timeout_set(&sc->amrr_ch, ural_amrr_timeout, sc);
 
 	/* retrieve RT2570 rev. no */
@@ -939,7 +940,7 @@ ural_txtime(int len, int rate, uint32_t flags)
 	uint16_t txtime;
 
 	if (RAL_RATE_IS_OFDM(rate)) {
-		/* IEEE Std 802.11a-1999, pp. 37 */
+		/* IEEE Std 802.11g-2003, pp. 44 */
 		txtime = (8 + 4 * len + 3 + rate - 1) / rate;
 		txtime = 16 + 4 + 4 * txtime + 6;
 	} else {
@@ -2165,28 +2166,20 @@ ural_stop(struct ifnet *ifp, int disable)
 	ural_free_tx_list(sc);
 }
 
-#define URAL_AMRR_MIN_SUCCESS_THRESHOLD	 1
-#define URAL_AMRR_MAX_SUCCESS_THRESHOLD	10
-
 Static void
 ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 {
-	struct ural_amrr *amrr = &sc->amrr;
 	int i;
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
 	ural_read_multi(sc, RAL_STA_CSR0, sc->sta, sizeof sc->sta);
 
-	amrr->success = 0;
-	amrr->recovery = 0;
-	amrr->txcnt = amrr->retrycnt = 0;
-	amrr->success_threshold = URAL_AMRR_MIN_SUCCESS_THRESHOLD;
+	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
 
 	/* set rate to some reasonable initial value */
 	for (i = ni->ni_rates.rs_nrates - 1;
 	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
 	     i--);
-
 	ni->ni_txrate = i;
 
 	timeout_add(&sc->amrr_ch, hz);
@@ -2223,7 +2216,6 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct ural_softc *sc = (struct ural_softc *)priv;
-	struct ural_amrr *amrr = &sc->amrr;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -2235,85 +2227,18 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/* count TX retry-fail as Tx errors */
 	ifp->if_oerrors += sc->sta[9];
 
-	amrr->retrycnt =
+	sc->amn.amn_retrycnt =
 	    sc->sta[7] +	/* TX one-retry ok count */
 	    sc->sta[8] +	/* TX more-retry ok count */
 	    sc->sta[9];		/* TX retry-fail count */
 
-	amrr->txcnt =
-	    amrr->retrycnt +
+	sc->amn.amn_txcnt =
+	    sc->amn.amn_retrycnt +
 	    sc->sta[6];		/* TX no-retry ok count */
 
-	ural_ratectl(amrr, sc->sc_ic.ic_bss);
+	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
 	timeout_add(&sc->amrr_ch, hz);
-}
-
-/*-
- * Naive implementation of the Adaptive Multi Rate Retry algorithm:
- *     "IEEE 802.11 Rate Adaptation: A Practical Approach"
- *     Mathieu Lacage, Hossein Manshaei, Thierry Turletti
- *     INRIA Sophia - Projet Planete
- *     http://www-sop.inria.fr/rapports/sophia/RR-5208.html
- *
- * This algorithm is particularly well suited for ural since it does not
- * require per-frame retry statistics.  Note however that since h/w does
- * not provide per-frame stats, we can't do per-node rate adaptation and
- * thus automatic rate adaptation is only enabled in STA operating mode.
- */
-#define is_success(amrr)	\
-	((amrr)->retrycnt < (amrr)->txcnt / 10)
-#define is_failure(amrr)	\
-	((amrr)->retrycnt > (amrr)->txcnt / 3)
-#define is_enough(amrr)		\
-	((amrr)->txcnt > 10)
-#define is_min_rate(ni)		\
-	((ni)->ni_txrate == 0)
-#define is_max_rate(ni)		\
-	((ni)->ni_txrate == (ni)->ni_rates.rs_nrates - 1)
-#define increase_rate(ni)	\
-	((ni)->ni_txrate++)
-#define decrease_rate(ni)	\
-	((ni)->ni_txrate--)
-#define reset_cnt(amrr)		\
-	do { (amrr)->txcnt = (amrr)->retrycnt = 0; } while (0)
-Static void
-ural_ratectl(struct ural_amrr *amrr, struct ieee80211_node *ni)
-{
-	int need_change = 0;
-
-	if (is_success(amrr) && is_enough(amrr)) {
-		amrr->success++;
-		if (amrr->success >= amrr->success_threshold &&
-		    !is_max_rate(ni)) {
-			amrr->recovery = 1;
-			amrr->success = 0;
-			increase_rate(ni);
-			need_change = 1;
-		} else {
-			amrr->recovery = 0;
-		}
-	} else if (is_failure(amrr)) {
-		amrr->success = 0;
-		if (!is_min_rate(ni)) {
-			if (amrr->recovery) {
-				amrr->success_threshold *= 2;
-				if (amrr->success_threshold >
-				    URAL_AMRR_MAX_SUCCESS_THRESHOLD)
-					amrr->success_threshold =
-					    URAL_AMRR_MAX_SUCCESS_THRESHOLD;
-			} else {
-				amrr->success_threshold =
-				    URAL_AMRR_MIN_SUCCESS_THRESHOLD;
-			}
-			decrease_rate(ni);
-			need_change = 1;
-		}
-		amrr->recovery = 0;	/* original paper was incorrect */
-	}
-
-	if (is_enough(amrr) || need_change)
-		reset_cnt(amrr);
 }
 
 Static int

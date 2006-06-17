@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.376 2006/06/02 20:25:09 pedro Exp $
+#	$OpenBSD: files,v 1.377 2006/06/17 19:07:19 damien Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -742,6 +742,7 @@ file net/if_enc.c			enc			needs-count
 file net/if_gre.c			gre			needs-count
 file net/if_trunk.c			trunk			needs-count
 file net80211/ieee80211.c		wlan
+file net80211/ieee80211_amrr.c		wlan
 file net80211/ieee80211_crypto.c	wlan
 file net80211/ieee80211_input.c		wlan
 file net80211/ieee80211_ioctl.c		wlan
