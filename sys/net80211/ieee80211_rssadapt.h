@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_rssadapt.h,v 1.2 2005/09/08 13:24:53 reyk Exp $ */
+/* $OpenBSD: ieee80211_rssadapt.h,v 1.3 2006/06/17 19:26:00 damien Exp $ */
 /* $NetBSD: ieee80211_rssadapt.h,v 1.3 2004/05/06 03:03:20 dyoung Exp $ */
 
 /*-
@@ -30,6 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
+#ifndef _NET80211_IEEE80211_RSSADAPT_H_
+#define _NET80211_IEEE80211_RSSADAPT_H_
 
 /* Data-rate adaptation loosely based on "Link Adaptation Strategy
  * for IEEE 802.11 WLAN via Received Signal Strength Measurement"
@@ -100,3 +102,5 @@ int	ieee80211_rssadapt_choose(struct ieee80211_rssadapt *,
 #ifdef IEEE80211_DEBUG
 extern int ieee80211_rssadapt_debug;
 #endif /* IEEE80211_DEBUG */
+
+#endif /* _NET80211_IEEE80211_RSSADAPT_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.h,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.h,v 1.2 2006/06/17 19:26:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef _NET80211_IEEE80211_AMRR_H_
+#define _NET80211_IEEE80211_AMRR_H_
 
 /*-
  * Naive implementation of the Adaptive Multi Rate Retry algorithm:
@@ -52,3 +54,5 @@ void	ieee80211_amrr_node_init(struct ieee80211_amrr *,
 	    struct ieee80211_amrr_node *);
 void	ieee80211_amrr_choose(struct ieee80211_amrr *, struct ieee80211_node *,
 	    struct ieee80211_amrr_node *);
+
+#endif /* _NET80211_IEEE80211_AMRR_H_ */
