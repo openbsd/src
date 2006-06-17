@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.87 2005/11/14 23:25:11 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.88 2006/06/17 10:06:21 hshoexer Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2200,6 +2200,7 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		log_error("keynote_cert_obtain: failed to allocate %lu bytes",
 		    (unsigned long)size);
 		free(file);
+		close(fd);
 		return 0;
 	}
 
