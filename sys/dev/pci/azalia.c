@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.14 2006/06/16 08:03:42 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.15 2006/06/17 18:33:27 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -562,9 +562,11 @@ azalia_attach_intr(struct device *self)
 	AZ_WRITE_4(az, DPUBASE, 0);
 
 	/* 4.4.1 Command Outbound Ring Buffer */
-	azalia_init_corb(az);
+	if (azalia_init_corb(az))
+		goto err_exit;
 	/* 4.4.2 Response Inbound Ring Buffer */
-	azalia_init_rirb(az);
+	if (azalia_init_rirb(az))
+		goto err_exit;
 
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
