@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.1 2006/06/17 15:04:18 henning Exp $ */
+/*	$OpenBSD: carp.c,v 1.2 2006/06/17 15:54:32 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -91,7 +91,8 @@ carp_demote_shutdown(void)
 	while ((c = TAILQ_FIRST(&carpgroups)) != NULL) {
 		TAILQ_REMOVE(&carpgroups, c, entry);
 		for (; c->changed_by > 0; c->changed_by--)
-			carp_demote_set(c->group, -1);
+			if (c->do_demote)
+				carp_demote_ioctl(c->group, -1);
 
 		free(c->group);
 		free(c);
