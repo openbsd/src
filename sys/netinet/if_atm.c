@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.12 2005/04/16 14:28:57 deraadt Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.13 2006/06/17 10:22:06 henning Exp $       */
 
 /*
  *
@@ -109,7 +109,7 @@ atm_rtrequest(req, rt, info)
 		 */
 
 		if ((rt->rt_flags & RTF_HOST) == 0) {
-			rt_setgate(rt,rt_key(rt),(struct sockaddr *)&null_sdl);
+			rt_setgate(rt,rt_key(rt),(struct sockaddr *)&null_sdl, 0);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
@@ -174,7 +174,7 @@ failed:
 		}
 #endif
 		rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
-			rt_mask(rt), 0, (struct rtentry **) 0);
+			rt_mask(rt), 0, (struct rtentry **) 0, 0);
 		break;
 
 	case RTM_DELETE:
