@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.500 2006/05/28 03:05:53 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.501 2006/06/17 11:38:41 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -463,7 +463,7 @@ typedef struct {
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
-%type  <v.matchtag_opts>       matchtag matchtag_list matchtag_item
+%type	<v.matchtag_opts>       matchtag matchtag_list matchtag_item
 %type	<v.tagged>		tagged
 %%
 
@@ -494,7 +494,7 @@ option		: SET OPTIMIZATION STRING		{
 				free($3);
 				YYERROR;
 			}
-			free ($3);
+			free($3);
 		}
 		| SET TIMEOUT timeout_spec
 		| SET TIMEOUT '{' timeout_list '}'
@@ -743,11 +743,12 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			loadanchor = calloc(1, sizeof(struct loadanchors));
 			if (loadanchor == NULL)
 				err(1, "loadrule: calloc");
-			if ((loadanchor->anchorname = malloc(MAXPATHLEN)) == NULL)
+			if ((loadanchor->anchorname = malloc(MAXPATHLEN)) ==
+			    NULL)
 				err(1, "loadrule: malloc");
 			if (pf->anchor[0])
-				snprintf(loadanchor->anchorname, MAXPATHLEN, "%s/%s",
-				    pf->anchor, $3);
+				snprintf(loadanchor->anchorname, MAXPATHLEN,
+				    "%s/%s", pf->anchor, $3);
 			else
 				strlcpy(loadanchor->anchorname, $3, MAXPATHLEN);
 			if ((loadanchor->filename = strdup($5)) == NULL)
@@ -1677,8 +1678,8 @@ pfrule		: action dir logquick interface route af proto fromto
 					if (o->data.max_src_conn_rate.limit >
 					    PF_THRESHOLD_MAX) {
 						yyerror("'max-src-conn-rate' "
-						   "maximum rate must be < %u",
-						   PF_THRESHOLD_MAX);
+						    "maximum rate must be < %u",
+						    PF_THRESHOLD_MAX);
 						YYERROR;
 					}
 					r.max_src_conn_rate.limit =
@@ -1931,8 +1932,8 @@ filter_opt	: USER uids {
 		| TAG string				{
 			filter_opts.tag = $2;
 		}
-		| not matchtag 				{ 
-			filter_opts.match_tags = $2; 
+		| not matchtag				{
+			filter_opts.match_tags = $2;
 			filter_opts.match_tag_not = $1;
 			if ($1 && ($2 != $2->tail)) {
 				yyerror("cannot negate tag list");
@@ -1963,23 +1964,23 @@ filter_opt	: USER uids {
 		}
 		;
 
-matchtag	: TAGGED matchtag_item		{ 
-			$$ = $2; 
+matchtag	: TAGGED matchtag_item			{
+			$$ = $2;
 		}
-		| TAGGED '{' matchtag_list '}' 		{ 
+		| TAGGED '{' matchtag_list '}'		{
 			$$ = $3;
 		}
 		;
 
 matchtag_list	: matchtag_item				{ $$ = $1; }
-		| matchtag_list comma matchtag_item 	{
+		| matchtag_list comma matchtag_item	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
 		}
 		;
 
-matchtag_item	: STRING 				{
+matchtag_item	: STRING				{
 			$$ = calloc(1, sizeof (struct node_matchtag));
 			if ($$ == NULL)
 				err(1, "matchtag_item: calloc");
@@ -2841,7 +2842,8 @@ icmp6type	: STRING			{
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
-					yyerror("illegal icmp6-type %lu", ulval);
+					yyerror("illegal icmp6-type %lu",
+					    ulval);
 					free($1);
 					YYERROR;
 				}
