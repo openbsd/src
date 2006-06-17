@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.33 2005/11/21 18:16:43 millert Exp $ */
+/*	$OpenBSD: ugen.c,v 1.34 2006/06/17 16:27:58 miod Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -66,6 +66,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdevs.h>
 
 #ifdef UGEN_DEBUG
 #define DPRINTF(x)	do { if (ugendebug) logprintf x; } while (0)
@@ -189,9 +190,20 @@ USB_MATCH(ugen)
 	if (uaa->matchlvl)
 		return (uaa->matchlvl);
 #endif
-	if (uaa->usegeneric)
+	if (uaa->usegeneric) {
+#ifdef __macppc__
+		/*
+		 * Some Apple laptops have USB phantom devices which match
+		 * the ADB devices.  We want to ignore them to avoid
+		 * confusing users, as the real hardware underneath is adb
+		 * and has already attached.
+		 */
+		if (uaa->vendor == USB_VENDOR_APPLE &&
+		    uaa->product == USB_PRODUCT_APPLE_ADB)
+			return (UMATCH_NONE);
+#endif
 		return (UMATCH_GENERIC);
-	else
+	} else
 		return (UMATCH_NONE);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.30 2006/02/12 16:50:13 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.31 2006/06/17 16:27:55 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include "zstty.h"
 #include <dev/usb/ukbdvar.h>
 #include <dev/adb/akbdvar.h>
+#include <dev/usb/usbdevs.h>
 
 /* XXX, called from asm */
 int save_ofw_mapping(void);
@@ -243,7 +244,6 @@ ofwconprobe()
 #define DEVTREE_UNKNOWN 0
 #define DEVTREE_USB	1
 #define DEVTREE_ADB	2
-#define DEVTREE_HID	3
 int ofw_devtree = DEVTREE_UNKNOWN;
 
 #define OFW_HAVE_USBKBD 1
@@ -260,6 +260,7 @@ ofw_recurse_keyboard(int pnode)
 	int old_devtree;
 	int len;
 	int node;
+	int vendor, product;
 
 	for (node = OF_child(pnode); node != 0; node = OF_peer(node)) {
 
@@ -270,7 +271,23 @@ ofw_recurse_keyboard(int pnode)
 		if (strcmp(name, "keyboard") == 0) {
 			/* found a keyboard node, where is it? */
 			if (ofw_devtree == DEVTREE_USB) {
-				ofw_have_kbd |= OFW_HAVE_USBKBD;
+				/*
+				 * On some machines, such as PowerBook6,8,
+				 * the built-in ADB keyboard and mouse also
+				 * appears as an USB device, which we will
+				 * ignore.
+				 * We need to tell these shadow devices apart
+				 * from regular external USB keyboards.
+				 */
+				if (OF_getprop(pnode, "vendor-id", &vendor,
+				    sizeof vendor) != sizeof vendor)
+					vendor = 0;
+				if (OF_getprop(pnode, "product-id", &product,
+				    sizeof product) != sizeof product)
+					product = 0;
+				if (vendor != USB_VENDOR_APPLE ||
+				    product != USB_PRODUCT_APPLE_ADB)
+					ofw_have_kbd |= OFW_HAVE_USBKBD;
 			} else if (ofw_devtree == DEVTREE_ADB) {
 				ofw_have_kbd |= OFW_HAVE_ADBKBD;
 			} else {
@@ -319,12 +336,12 @@ ofw_find_keyboard()
 #endif
 	}
 
-	if (ofw_have_kbd == (OFW_HAVE_USBKBD|OFW_HAVE_ADBKBD)) {
+	if (ofw_have_kbd == (OFW_HAVE_USBKBD | OFW_HAVE_ADBKBD)) {
 #if NUKBD > 0
 		printf("USB and ADB found, using USB\n");
 		ukbd_cnattach();
 #else
-		ofw_have_kbd = OFW_HAVE_ADBKBD; /* ??? */
+		ofw_have_kbd = OFW_HAVE_ADBKBD;
 #endif
 	}
 	if (ofw_have_kbd == OFW_HAVE_USBKBD) {
