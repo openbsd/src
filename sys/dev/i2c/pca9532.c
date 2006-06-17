@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9532.c,v 1.1 2006/06/17 04:43:01 drahn Exp $ */
+/*	$OpenBSD: pca9532.c,v 1.2 2006/06/17 23:00:47 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -74,10 +74,14 @@ pcaled_match(struct device *parent, void *v, void *arg)
 	if (iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
 	    &cmd, 1, &data, 1, I2C_F_POLL))
 		goto fail;
+	cmd = 9;
+	if (iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
+	    &cmd, 1, &data, 1, I2C_F_POLL))
+		goto fail;
 	ok = 1;
 fail:
 	iic_release_bus(ia->ia_tag, I2C_F_POLL);
-	return (1);
+	return (ok);
 }
 
 void
