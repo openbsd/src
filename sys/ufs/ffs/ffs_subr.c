@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.17 2005/11/08 02:29:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.18 2006/06/17 16:30:58 miod Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ ffs_isblock(struct fs *fs, unsigned char *cp, daddr_t h)
 	unsigned char mask;
 
 	switch ((int)fs->fs_frag) {
+	default:
 	case 8:
 		return (cp[h] == 0xff);
 	case 4:
@@ -172,8 +173,6 @@ ffs_isblock(struct fs *fs, unsigned char *cp, daddr_t h)
 	case 1:
 		mask = 0x01 << (h & 0x7);
 		return ((cp[h >> 3] & mask) == mask);
-	default:
-		panic("ffs_isblock");
 	}
 }
 
@@ -185,6 +184,7 @@ ffs_clrblock(struct fs *fs, u_char *cp, daddr_t h)
 {
 
 	switch ((int)fs->fs_frag) {
+	default:
 	case 8:
 		cp[h] = 0;
 		return;
@@ -197,8 +197,6 @@ ffs_clrblock(struct fs *fs, u_char *cp, daddr_t h)
 	case 1:
 		cp[h >> 3] &= ~(0x01 << (h & 0x7));
 		return;
-	default:
-		panic("ffs_clrblock");
 	}
 }
 
@@ -210,7 +208,7 @@ ffs_setblock(struct fs *fs, unsigned char *cp, daddr_t h)
 {
 
 	switch ((int)fs->fs_frag) {
-
+	default:
 	case 8:
 		cp[h] = 0xff;
 		return;
@@ -223,8 +221,6 @@ ffs_setblock(struct fs *fs, unsigned char *cp, daddr_t h)
 	case 1:
 		cp[h >> 3] |= (0x01 << (h & 0x7));
 		return;
-	default:
-		panic("ffs_setblock");
 	}
 }
 
@@ -236,6 +232,7 @@ ffs_isfreeblock(struct fs *fs, unsigned char *cp, daddr_t h)
 {
 
 	switch ((int)fs->fs_frag) {
+	default:
 	case 8:
 		return (cp[h] == 0);
 	case 4:
@@ -244,7 +241,5 @@ ffs_isfreeblock(struct fs *fs, unsigned char *cp, daddr_t h)
 		return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
 	case 1:
 		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
-	default:
-		panic("ffs_isfreeblock");
 	}
 }
