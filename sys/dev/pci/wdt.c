@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.9 2006/06/11 10:56:39 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.10 2006/06/17 19:30:51 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -30,10 +30,10 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 
@@ -58,19 +58,17 @@ struct wdt_softc {
 	bus_space_handle_t	ioh;
 };
 
-/* externally visible functions */
 int wdtprobe(struct device *, void *, void *);
 void wdtattach(struct device *, struct device *, void *);
 
-/* static functions */
-static int wdt_is501(struct wdt_softc *wdt);
-static void wdt_8254_count(struct wdt_softc *wdt, int counter, u_int16_t v);
-static void wdt_8254_mode(struct wdt_softc *wdt, int counter, int mode);
-static int wdt_set_timeout(void *wdt, int seconds);
-static void wdt_init_timer(struct wdt_softc *wdt);
-static void wdt_buzzer_off(struct wdt_softc *wdt);
-static void wdt_timer_disable(struct wdt_softc *wdt);
-static void wdt_buzzer_enable(struct wdt_softc *wdt);
+int wdt_is501(struct wdt_softc *);
+void wdt_8254_count(struct wdt_softc *, int, u_int16_t);
+void wdt_8254_mode(struct wdt_softc *, int, int);
+int wdt_set_timeout(void *, int);
+void wdt_init_timer(struct wdt_softc *);
+void wdt_buzzer_off(struct wdt_softc *);
+void wdt_timer_disable(struct wdt_softc *);
+void wdt_buzzer_enable(struct wdt_softc *);
 
 struct cfattach wdt_ca = {
 	sizeof(struct wdt_softc), wdtprobe, wdtattach
@@ -182,7 +180,7 @@ wdtattach (parent, self, aux)
  *
  *	Returns non-zero if the card is a 501 model.
  */
-static int
+int
 wdt_is501 (struct wdt_softc *wdt)
 {
 	/*
@@ -204,7 +202,7 @@ wdt_is501 (struct wdt_softc *wdt)
  *
  *	Loads the specified counter with the 16-bit value 'v'.
  */
-static void
+void
 wdt_8254_count (struct wdt_softc *wdt, int counter, u_int16_t v)
 {
 	bus_space_write_1(wdt->iot, wdt->ioh,
@@ -217,7 +215,7 @@ wdt_8254_count (struct wdt_softc *wdt, int counter, u_int16_t v)
  *
  *	Sets the mode of the specified counter.
  */
-static void
+void
 wdt_8254_mode (struct wdt_softc *wdt, int counter, int mode)
 {
 	bus_space_write_1(wdt->iot, wdt->ioh, WDT_8254_CTL,
@@ -230,7 +228,7 @@ wdt_8254_mode (struct wdt_softc *wdt, int counter, int mode)
  *	Load the watchdog timer with the specified number of seconds.
  *	Clamp seconds to be in the interval [2; 1800].
  */
-static int
+int
 wdt_set_timeout (void *self, int seconds)
 {
 	struct wdt_softc *wdt = (struct wdt_softc *)self;
@@ -270,7 +268,7 @@ wdt_set_timeout (void *self, int seconds)
  *	Disables the watchdog timer and cancels the scheduled (if any)
  *	kernel timeout.
  */
-static void
+void
 wdt_timer_disable (struct wdt_softc *wdt)
 {
 	(void)bus_space_read_1(wdt->iot, wdt->ioh, WDT_DISABLE_TIMER);
@@ -283,7 +281,7 @@ wdt_timer_disable (struct wdt_softc *wdt)
  *	the low 16-bits of the watchdog counter to have a period of
  *	approximately 1/50th of a second.
  */
-static void
+void
 wdt_init_timer (struct wdt_softc *wdt)
 {
 	wdt_8254_mode(wdt, WDT_8254_TC_LO, 3);
@@ -300,7 +298,7 @@ wdt_init_timer (struct wdt_softc *wdt)
  *
  *	Turns the buzzer off.
  */
-static void
+void
 wdt_buzzer_off (struct wdt_softc *wdt)
 {
 	bus_space_write_1(wdt->iot, wdt->ioh, WDT_STOP_BUZZER, 0);
@@ -312,7 +310,7 @@ wdt_buzzer_off (struct wdt_softc *wdt)
  *
  *	Enables the buzzer when the watchdog counter expires.
  */
-static void
+void
 wdt_buzzer_enable (struct wdt_softc *wdt)
 {
 	bus_space_write_1(wdt->iot, wdt->ioh, WDT_8254_BUZZER, 1);
@@ -325,7 +323,7 @@ wdt_buzzer_enable (struct wdt_softc *wdt)
  *	Disables the buzzer from sounding when the watchdog counter
  *	expires.
  */
-static void
+void
 wdt_buzzer_disable (struct wdt_softc *wdt)
 {
 	wdt_8254_mode(wdt, WDT_8254_BUZZER, 0);
