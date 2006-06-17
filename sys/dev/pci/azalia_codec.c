@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.13 2006/06/16 08:03:42 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.14 2006/06/17 18:38:12 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -854,6 +854,7 @@ int
 azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 {
 	uint32_t result;
+	nid_t n;
 	int err;
 
 	/* inamp mute */
@@ -875,7 +876,8 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_
 			return err;
 		mc->un.value.level[0] = azalia_generic_mixer_from_device_value(this,
 		    nid, target, CORB_GAGM_GAIN(result));
-		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[nid]);
+		n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[n]);
 		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
