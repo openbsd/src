@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.8 2006/06/15 13:18:51 dim Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.9 2006/06/17 17:23:39 dim Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -62,29 +62,31 @@ static struct {
 extern int setperf_prio;
 
 void
-p4tcc_init(int model, int step)
+p4tcc_init(int family, int step)
 {
 	if (setperf_prio > 1)
 		return;
 
-	switch (step) {
-	case 0x22:	/* errata O50 P44 and Z21 */
-	case 0x24:
-	case 0x25:
-	case 0x27:
-	case 0x29:
-		/* hang with 12.5 */
-		tcc[TCC_LEVELS - 1].reg = 2;
-		break;
-	case 0x07:	/* errata N44 and P18 */
-	case 0x0a:
-	case 0x12:
-	case 0x13:
-		/* hang at 12.5 and 25 */
-		tcc[TCC_LEVELS - 1].reg = 3;
-		tcc[TCC_LEVELS - 2].reg = 3;
-		break;
-	default:
+	switch (family) {
+	case 0xf:	/* Pentium 4 */
+		switch (step) {
+		case 0x22:	/* errata O50 P44 and Z21 */
+		case 0x24:
+		case 0x25:
+		case 0x27:
+		case 0x29:
+			/* hang with 12.5 */
+			tcc[TCC_LEVELS - 1].reg = 2;
+			break;
+		case 0x07:	/* errata N44 and P18 */
+		case 0x0a:
+		case 0x12:
+		case 0x13:
+			/* hang at 12.5 and 25 */
+			tcc[TCC_LEVELS - 1].reg = 3;
+			tcc[TCC_LEVELS - 2].reg = 3;
+			break;
+		}
 		break;
 	}
 

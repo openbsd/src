@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.360 2006/06/15 02:53:15 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.361 2006/06/17 17:23:39 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1435,7 +1435,7 @@ amd_family6_setup(struct cpu_info *ci)
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
 #if !defined(MULTIPROCESSOR)
-	int family = (ci->ci_signature >> 8) & 15;	
+	int family = (ci->ci_signature >> 8) & 15;
 #endif
 
 	if (cpu_feature & CPUID_SSE2)
@@ -1461,7 +1461,7 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 {
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
-	int model = (ci->ci_signature >> 4) & 15;
+	int family = (ci->ci_signature >> 8) & 15;
 	int step = ci->ci_signature & 15;
 
 	if (cpu_ecxfeature & CPUIDECX_EST) {
@@ -1472,7 +1472,7 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 			    ci->ci_dev.dv_xname);
 	} else if ((cpu_feature & (CPUID_ACPI | CPUID_TM)) ==
 	    (CPUID_ACPI | CPUID_TM))
-		p4tcc_init(model, step);
+		p4tcc_init(family, step);
 
 	{
 	extern void (*pagezero)(void *, size_t);
