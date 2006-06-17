@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.1 2006/06/16 22:30:46 niallo Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.2 2006/06/17 20:17:12 jolan Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -806,7 +806,7 @@ rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc->tx_queued--;
 	ifp->if_opackets++;
 
-	DPRINTFN(10, ("tx done\n"));
+	DPRINTFN(10, ("%s: tx done\n", USBDEVNAME(sc->sc_dev)));
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -854,7 +854,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		 * This should not happen since we did not request to receive
 		 * those frames when we filled RT2573_TXRX_CSR2.
 		 */
-		DPRINTFN(5, ("PHY or CRC error\n"));
+		DPRINTFN(5, ("%s: PHY or CRC error\n", USBDEVNAME(sc->sc_dev)));
 		ifp->if_ierrors++;
 		goto skip;
 	}
@@ -926,7 +926,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	splx(s);
 
-	DPRINTFN(15, ("rx done\n"));
+	DPRINTFN(15, ("%s: rx done\n", USBDEVNAME(sc->sc_dev)));
 
 skip:	/* setup a new transfer */
 	usbd_setup_xfer(xfer, sc->sc_rx_pipeh, data, data->buf, MCLBYTES,
@@ -1137,8 +1137,8 @@ rum_tx_bcn(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	rum_setup_tx_desc(sc, desc, RT2573_TX_IFS_NEWBACKOFF | RT2573_TX_TIMESTAMP,
 	    m0->m_pkthdr.len, rate);
 
-	DPRINTFN(10, ("sending beacon frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
+	DPRINTFN(10, ("%s: sending beacon frame len=%u rate=%u xfer len=%u\n",
+	    USBDEVNAME(sc->sc_dev), m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RT2573_TX_TIMEOUT, NULL);
@@ -1217,14 +1217,16 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 2;
 
-	DPRINTFN(10, ("sending mgt frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
+	DPRINTFN(10, ("%s: sending mgt frame len=%u rate=%u xfer len=%u\n",
+	    USBDEVNAME(sc->sc_dev), m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RT2573_TX_TIMEOUT, rum_txeof);
 
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
+		DPRINTFN(10, ("%s: %s\n", USBDEVNAME(sc->sc_dev),
+		    usbd_errstr(error)));
 		m_freem(m0);
 		return error;
 	}
@@ -1317,8 +1319,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 2;
 
-	DPRINTFN(10, ("sending data frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
+	DPRINTFN(10, ("%s: sending data frame len=%u rate=%u xfer len=%u\n",
+	    USBDEVNAME(sc->sc_dev), m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RT2573_TX_TIMEOUT, rum_txeof);
@@ -1736,7 +1738,7 @@ rum_enable_tsf_sync(struct rum_softc *sc)
 
 	rum_write(sc, RT2573_TXRX_CSR9, tmp);
 
-	DPRINTF(("enabling TSF synchronization\n"));
+	DPRINTF(("%s: enabling TSF synchronization\n", USBDEVNAME(sc->sc_dev)));
 }
 
 void
@@ -1798,7 +1800,8 @@ rum_set_bssid(struct rum_softc *sc, uint8_t *bssid)
 	tmp = bssid[4] | bssid[5] << 8 | 0x00030000;
 	rum_write(sc, RT2573_MAC_CSR5, tmp);
 
-	DPRINTF(("setting BSSID to %s\n", ether_sprintf(bssid)));
+	DPRINTF(("%s: setting BSSID to %s\n", USBDEVNAME(sc->sc_dev),
+	    ether_sprintf(bssid)));
 }
 
 void
@@ -1812,7 +1815,8 @@ rum_set_macaddr(struct rum_softc *sc, uint8_t *addr)
 	tmp = addr[4] | addr[5] << 8;
 	rum_write(sc, RT2573_MAC_CSR3, tmp);
 
-	DPRINTF(("setting MAC address to %s\n", ether_sprintf(addr)));
+	DPRINTF(("%s: setting MAC address to %s\n", USBDEVNAME(sc->sc_dev),
+	    ether_sprintf(addr)));
 }
 
 void
@@ -1829,8 +1833,8 @@ rum_update_promisc(struct rum_softc *sc)
 
 	rum_write(sc, RT2573_TXRX_CSR0, tmp);
 
-	DPRINTF(("%s promiscuous mode\n", (ifp->if_flags & IFF_PROMISC) ?
-	    "entering" : "leaving"));
+	DPRINTF(("%s: %s promiscuous mode\n", USBDEVNAME(sc->sc_dev),
+	    (ifp->if_flags & IFF_PROMISC) ? "entering" : "leaving"));
 }
 
 const char *
