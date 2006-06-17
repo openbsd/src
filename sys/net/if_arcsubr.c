@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.22 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.23 2006/06/17 14:14:12 henning Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ arc_output(ifp, m0, dst, rt0)
 
 	if ((rt = rt0)) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)))
+			if ((rt0 = rt = rtalloc1(dst, 1, 0)))
 				rt->rt_refcnt--;
 			else 
 				senderr(EHOSTUNREACH);
@@ -121,7 +121,7 @@ arc_output(ifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1, 0);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}

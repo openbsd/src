@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.17 2006/05/26 01:10:01 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.18 2006/06/17 14:14:12 henning Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ nfs_boot_init(nd, procp)
 		printf("nfs_boot: gateway=%s\n", inet_ntoa(gw_ip));
 		/* add, dest, gw, mask, flags, 0 */
 		error = rtrequest(RTM_ADD, &dst, (struct sockaddr *)&gw,
-		    &mask, (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL);
+		    &mask, (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL, 0);
 		if (error)
 			printf("nfs_boot: add route, error=%d\n", error);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.21 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.22 2006/06/17 14:14:12 henning Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #define senderr(e) { error = (e); goto bad;}
 
 #if defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
-#define	RTALLOC1(a, b)			rtalloc1(a, b)
+#define	RTALLOC1(a, b)			rtalloc1(a, b, 0)
 #define	ARPRESOLVE(a, b, c, d, e, f)	arpresolve(a, b, c, d, e)
 #define	TYPEHTONS(t)			(t)
 #elif defined(__FreeBSD__)

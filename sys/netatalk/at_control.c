@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.8 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.9 2006/06/17 14:14:12 henning Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -650,5 +650,5 @@ aa_dosingleroute(struct ifaddr *ifa,
     flags |= RTF_HOST;
   return(rtrequest(cmd, (struct sockaddr *) &addr,
 	(flags & RTF_HOST)?(ifa->ifa_dstaddr):(ifa->ifa_addr),
-	(struct sockaddr *) &mask, flags, NULL));
+	(struct sockaddr *) &mask, flags, NULL, 0));
 }
