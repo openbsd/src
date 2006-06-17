@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.203 2006/06/15 10:04:40 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.204 2006/06/17 14:06:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@
 #define	BGPD_OPT_VERBOSE		0x0001
 #define	BGPD_OPT_VERBOSE2		0x0002
 #define	BGPD_OPT_NOACTION		0x0004
+#define	BGPD_OPT_FORCE_DEMOTE		0x0008
 
 #define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
@@ -220,6 +221,7 @@ struct peer_config {
 	char			 group[PEER_DESCR_LEN];
 	char			 descr[PEER_DESCR_LEN];
 	char			 if_depend[IFNAMSIZ];
+	char			 demote_group[IFNAMSIZ];
 	u_int32_t		 id;
 	u_int32_t		 groupid;
 	u_int32_t		 max_prefix;
@@ -327,7 +329,8 @@ enum imsg_type {
 	IMSG_CTL_SHOW_RIB_MEM,
 	IMSG_CTL_SHOW_TERSE,
 	IMSG_REFRESH,
-	IMSG_IFINFO
+	IMSG_IFINFO,
+	IMSG_DEMOTE
 };
 
 struct imsg_hdr {
@@ -340,6 +343,11 @@ struct imsg_hdr {
 struct imsg {
 	struct imsg_hdr	 hdr;
 	void		*data;
+};
+
+struct demote_msg {
+	char		 demote_group[IFNAMSIZ];
+	int		 level;
 };
 
 enum ctl_results {

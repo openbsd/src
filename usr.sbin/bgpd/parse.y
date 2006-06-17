@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.190 2006/05/31 02:16:25 pat Exp $ */
+/*	$OpenBSD: parse.y,v 1.191 2006/06/17 14:06:09 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,7 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	RDE EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
-%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
+%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE DEMOTE
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
@@ -909,6 +909,24 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($3);
 		}
+		| DEMOTE STRING		{
+			if (strlcpy(curpeer->conf.demote_group, $2,
+			    sizeof(curpeer->conf.demote_group)) >=
+			    sizeof(curpeer->conf.demote_group)) {
+				yyerror("demote group name \"%s\" too long: "
+				    "max %u", $2,
+				    sizeof(curpeer->conf.demote_group) - 1);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (carp_demote_init(curpeer->conf.demote_group,
+			    conf->opts & BGPD_OPT_FORCE_DEMOTE) == -1) {
+				yyerror("error initializing group \"%s\"",
+				    curpeer->conf.demote_group);
+				YYERROR;
+			}
+		}
 		| SOFTRECONFIG inout yesno {
 			if ($2)
 				curpeer->conf.softreconfig_in = $3;
@@ -1558,6 +1576,7 @@ lookup(char *s)
 		{ "compare",		COMPARE},
 		{ "connected",		CONNECTED},
 		{ "delete",		DELETE},
+		{ "demote",		DEMOTE},
 		{ "deny",		DENY},
 		{ "depend",		DEPEND},
 		{ "descr",		DESCR},

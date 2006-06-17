@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.18 2006/03/23 20:20:45 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.19 2006/06/17 14:06:09 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -72,6 +72,28 @@ utility.
 .Pp
 The options are as follows:
 .Bl -tag -width "-f fileXXX"
+.It Fl c
+Force
+.Nm
+to do
+.Xr carp 4
+demotion when the
+.Em demote
+functionality is used.
+Normally,
+.Nm
+will only do demotion when the demotion counter for the group in question
+is already greater than 0.
+At system startup,
+.Xr rc 8
+has the demotion counter for the group
+.Em carp
+increased until after
+.Nm
+is started, so this option should
+.Em not
+be used in
+.Xr rc.conf 8 .
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro
