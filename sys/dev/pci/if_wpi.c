@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.19 2006/06/16 18:54:09 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.20 2006/06/17 18:35:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -839,7 +839,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 
 		/* start automatic rate control timer */
-		if (ic->ic_fixed_rate != -1)
+		if (ic->ic_fixed_rate == -1)
 			timeout_add(&sc->amrr_ch, hz / 2);
 
 		/* link LED always on while associated */
@@ -1233,7 +1233,7 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		amrr->retrycnt++;
 	}
 
-	bus_dmamap_unload(sc->sc_dmat, data->map);
+	bus_dmamap_unload(sc->sc_dmat, txdata->map);
 
 	m_freem(txdata->m);
 	txdata->m = NULL;
