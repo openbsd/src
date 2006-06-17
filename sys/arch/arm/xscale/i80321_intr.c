@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.5 2006/06/15 21:35:30 drahn Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.6 2006/06/17 20:48:18 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -107,6 +107,10 @@ i80321intc_setipl(int new)
 
 struct intrq i80321_handler[NIRQ];
 
+/*
+ * Recompute the irq mask bits.
+ * Must be called with interrupts disabled.
+ */
 void
 i80321intc_calc_mask(void)
 {
@@ -129,7 +133,7 @@ i80321intc_calc_mask(void)
 		i80321_handler[irq].iq_irq = max;
 
 		if (max == IPL_NONE)
-			min = IPL_NONE;
+			min = IPL_NONE; /* interrupt not enabled */
 #if 0
 		printf("irq %d: min %x max %x\n", irq, min, max);
 #endif
@@ -142,7 +146,7 @@ i80321intc_calc_mask(void)
 			i80321intc_imask[i] &= ~(1 << irq);
 	}
 	/* initialize soft interrupt mask */
-	for (i = IPL_NONE; i < IPL_HIGH; i++)  {
+	for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
 		i80321intc_smask[i] = 0;
 		if (i < IPL_SOFT)
 			i80321intc_smask[i] |= SI_TO_IRQBIT(SI_SOFT);
