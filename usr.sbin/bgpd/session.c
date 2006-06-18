@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.252 2006/06/17 14:06:09 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.253 2006/06/18 13:54:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2616,6 +2616,7 @@ getpeerbyip(struct sockaddr *ip)
 		newpeer->conf.template = 0;
 		newpeer->conf.cloned = 1;
 		newpeer->state = newpeer->prev_state = STATE_NONE;
+		newpeer->conf.reconf_action = RECONF_REINIT;
 		newpeer->rbuf = NULL;
 		init_peer(newpeer);
 		bgp_fsm(newpeer, EVNT_START);
