@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.16 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.17 2006/06/18 18:55:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1667,8 +1667,7 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 	else
 		sign = 1;
 
-	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid,
-	    IEEE80211_ADDR_LEN) == 0) {
+	if (IEEE80211_ADDR_EQ(ni->ni_bssid, ic->ic_bss->ni_bssid)) {
 		if (!ieee80211_do_slow_print(ic, &did_print))
 			return 0;
 		printf("%s: tsft offset %s%llu\n", ic->ic_if.if_xname,
