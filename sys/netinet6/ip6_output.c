@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.92 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.93 2006/06/18 11:47:46 pascoe Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -530,7 +530,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			 * non-bsdi always clone routes, if parent is
 			 * PRF_CLONING.
 			 */
-			rtalloc((struct route *)ro);
+			rtalloc_mpath((struct route *)ro, NULL, 0);
 		}
 		if (ro->ro_rt == 0) {
 			ip6stat.ip6s_noroute++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.141 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.142 2006/06/18 11:47:45 pascoe Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ char ipsec_def_comp[20];
 /* values controllable via sysctl */
 int	ipforwarding = 0;
 int	ipmforwarding = 0;
+int	ipmultipath = 0;
 int	ipsendredirects = 1;
 int	ip_dosourceroute = 0;
 int	ip_defttl = IPDEFTTL;
@@ -1437,7 +1438,7 @@ ip_forward(m, srcrt)
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = ip->ip_dst;
 
-		rtalloc(&ipforward_rt);
+		rtalloc_mpath(&ipforward_rt, &ip->ip_src.s_addr, 0);
 		if (ipforward_rt.ro_rt == 0) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
 			return;
@@ -1497,14 +1498,11 @@ ip_forward(m, srcrt)
 		ipstat.ips_forward++;
 		if (type)
 			ipstat.ips_redirectsent++;
-		else {
-			if (mcopy)
-				m_freem(mcopy);
-			return;
-		}
+		else 
+			goto freecopy;
 	}
 	if (mcopy == NULL)
-		return;
+		goto freert;
 
 	switch (error) {
 
@@ -1546,9 +1544,7 @@ ip_forward(m, srcrt)
 		 * source quench could be a big problem under DoS attacks,
 		 * or the underlying interface is rate-limited.
 		 */
-		if (mcopy)
-			m_freem(mcopy);
-		return;
+		goto freecopy;
 #else
 		type = ICMP_SOURCEQUENCH;
 		code = 0;
@@ -1557,6 +1553,20 @@ ip_forward(m, srcrt)
 	}
 
 	icmp_error(mcopy, type, code, dest, destmtu);
+	goto freert;
+
+ freecopy:
+	if (mcopy)
+		m_free(mcopy);
+ freert:
+#ifndef SMALL_KERNEL
+	if (ipmultipath && ipforward_rt.ro_rt &&
+	    (ipforward_rt.ro_rt->rt_flags & RTF_MPATH)) {
+		RTFREE(ipforward_rt.ro_rt);
+		ipforward_rt.ro_rt = 0;
+	}
+#endif
+	return;
 }
 
 int

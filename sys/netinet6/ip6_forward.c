@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.34 2004/07/14 20:19:58 dhartmei Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.35 2006/06/18 11:47:46 pascoe Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -237,7 +237,8 @@ ip6_forward(m, srcrt)
 				ip6_forward_rt.ro_rt = 0;
 			}
 			/* this probably fails but give it a try again */
-			rtalloc((struct route *)&ip6_forward_rt);
+			rtalloc_mpath((struct route *)&ip6_forward_rt,
+			    &ip6->ip6_src.s6_addr32[0], 0);
 		}
 
 		if (ip6_forward_rt.ro_rt == 0) {
@@ -261,7 +262,8 @@ ip6_forward(m, srcrt)
 		dst->sin6_family = AF_INET6;
 		dst->sin6_addr = ip6->ip6_dst;
 
-		rtalloc((struct route *)&ip6_forward_rt);
+		rtalloc_mpath((struct route *)&ip6_forward_rt,
+		    &ip6->ip6_src.s6_addr32[0], 0);
 
 		if (ip6_forward_rt.ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
@@ -303,7 +305,7 @@ ip6_forward(m, srcrt)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
 		m_freem(m);
-		return;
+		goto freert;
 	}
 
 #ifdef IPSEC
@@ -330,7 +332,7 @@ ip6_forward(m, srcrt)
 		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
 		splx(s);
 		m_freem(mcopy);
-		return;  /* Nothing more to be done */
+		goto freert;
 	}
 #endif /* IPSEC */
 
@@ -344,7 +346,7 @@ ip6_forward(m, srcrt)
 			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
 		}
 		m_freem(m);
-		return;
+		goto freert;
 	}
 
 	if (rt->rt_flags & RTF_GATEWAY)
@@ -381,7 +383,7 @@ ip6_forward(m, srcrt)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);
 			m_freem(m);
-			return;
+			goto freert;
 		}
 		type = ND_REDIRECT;
 	}
@@ -458,12 +460,12 @@ ip6_forward(m, srcrt)
 senderr:
 #endif
 	if (mcopy == NULL)
-		return;
+		goto freert;
 	switch (error) {
 	case 0:
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
-			return;
+			goto freert;
 		}
 		goto freecopy;
 
@@ -485,9 +487,17 @@ senderr:
 		break;
 	}
 	icmp6_error(mcopy, type, code, 0);
-	return;
+	goto freert;
 
  freecopy:
 	m_freem(mcopy);
+ freert:
+#ifndef SMALL_KERNEL
+	if (ip6_multipath && ip6_forward_rt.ro_rt &&
+	    (ip6_forward_rt.ro_rt->rt_flags & RTF_MPATH)) {
+		RTFREE(ip6_forward_rt.ro_rt);
+		ip6_forward_rt.ro_rt = 0;
+	}
+#endif
 	return;
 }

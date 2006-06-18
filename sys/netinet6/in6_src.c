@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.18 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.19 2006/06/18 11:47:46 pascoe Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 				ro->ro_rt = rtalloc1(&((struct route *)ro)
 						     ->ro_dst, 0, 0);
 			} else {
-				rtalloc((struct route *)ro);
+				rtalloc_mpath((struct route *)ro, NULL, 0);
 			}
 		}
 

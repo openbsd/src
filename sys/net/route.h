@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.45 2006/06/16 16:52:08 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.46 2006/06/18 11:47:45 pascoe Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -343,6 +343,9 @@ void	 rt_timer_remove_all(struct rtentry *);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
 void	 rtalloc(struct route *);
+#ifdef SMALL_KERNEL
+#define	rtalloc_mpath(r, s, t)	rtalloc(r)
+#endif
 struct rtentry *
 	 rtalloc1(struct sockaddr *, int, u_int);
 void	 rtalloc_noclone(struct route *, int);

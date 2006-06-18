@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.26 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.27 2006/06/18 11:47:46 pascoe Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -207,6 +207,7 @@ extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_mforwarding;	/* act as multicast router? */
+extern int	ip6_multipath;		/* use multipath routes */
 extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
 extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */

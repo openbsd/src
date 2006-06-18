@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.20 2006/02/06 17:37:28 jmc Exp $	*/
+/*	$OpenBSD: radix.c,v 1.21 2006/06/18 11:47:45 pascoe Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -537,14 +537,18 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 			/* permit multipath, if enabled for the family */
 			if (rn_mpath_capable(head) && netmask == tt->rn_mask) {
 				/*
-				 * go down to the end of multipaths, so that
-				 * new entry goes into the end of rn_dupedkey
-				 * chain.
+				 * Try to insert the new node in the middle
+				 * of the list of any preexisting multipaths,
+				 * to reduce the number of path disruptions
+				 * that occur as a result of an insertion,
+				 * per RFC2992.
 				 */
+				int mid = rn_mpath_count(tt) / 2;
 				do {
 					t = tt;
 					tt = tt->rn_dupedkey;
-				} while (tt && t->rn_mask == tt->rn_mask);
+				} while (tt && t->rn_mask == tt->rn_mask
+				    && --mid > 0);
 				break;
 			}
 #endif

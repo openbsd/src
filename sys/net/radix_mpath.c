@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.5 2006/06/16 16:49:39 henning Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.6 2006/06/18 11:47:45 pascoe Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -46,6 +46,13 @@
 #include <net/route.h>
 #include <dev/rndvar.h>
 
+#include <netinet/in.h>
+
+extern int ipmultipath;
+extern int ip6_multipath;
+
+u_int32_t rn_mpath_hash(struct route *, u_int32_t *);
+
 /*
  * give some jitter to hash, to avoid synchronization between routers
  */
@@ -54,7 +61,6 @@ static u_int32_t hashjitter;
 int
 rn_mpath_capable(struct radix_node_head *rnh)
 {
-
 	return rnh->rnh_multipath;
 }
 
@@ -208,35 +214,52 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
 	return 0;
 }
 
+/*
+ * allocate a route, potentially using multipath to select the peer.
+ */
 void
-rtalloc_mpath(struct route *ro, int hash, u_int tableid)
+rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp, u_int tableid)
 {
-	struct radix_node *rn0, *rn;
-	int n;
+#if defined(INET) || defined(INET6)
+	struct radix_node *rn;
+	int hash, npaths, threshold;
+#endif
 
 	/*
-	 * XXX we don't attempt to lookup cached route again; what should
-	 * be done for sendto(2) case?
-	 */
+	 * return a cached entry if it is still valid, otherwise we increase
+	 * the risk of disrupting local flows.
+	 */ 
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
+		return;
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1, tableid);
+
 	/* if the route does not exist or it is not multipath, don't care */
-	if (!ro->ro_rt || !rn_mpath_next((struct radix_node *)ro->ro_rt))
+	if (!ro->ro_rt || !(ro->ro_rt->rt_flags & RTF_MPATH))
 		return;
 
-	/* beyond here, we use rn as the master copy */
-	rn0 = rn = (struct radix_node *)ro->ro_rt;
-	n = rn_mpath_count(rn0);
+	/* check if multipath routing is enabled for the specified protocol */
+	if (!(0
+#ifdef INET
+	    || (ipmultipath && ro->ro_dst.sa_family == AF_INET)
+#endif
+#ifdef INET6
+	    || (ip6_multipath && ro->ro_dst.sa_family == AF_INET6)
+#endif
+	    ))
+		return;
 
-	/* gw selection by Modulo-N Hash (RFC2991) XXX need improvement? */
-	hash += hashjitter;
-	hash %= n;
-	while (hash-- > 0 && rn) {
+#if defined(INET) || defined(INET6)
+	/* gw selection by Hash-Threshold (RFC 2992) */
+	rn = (struct radix_node *)ro->ro_rt;
+	npaths = rn_mpath_count(rn);
+	hash = rn_mpath_hash(ro, srcaddrp) & 0xffff;
+	threshold = 1 + (0xffff / npaths);
+	while (hash > threshold && rn) {
 		/* stay within the multipath routes */
 		if (rn->rn_dupedkey && rn->rn_mask != rn->rn_dupedkey->rn_mask)
 			break;
 		rn = rn->rn_dupedkey;
+		hash -= threshold;
 	}
 
 	/* XXX try filling rt_gwroute and avoid unreachable gw  */
@@ -248,6 +271,7 @@ rtalloc_mpath(struct route *ro, int hash, u_int tableid)
 	rtfree(ro->ro_rt);
 	ro->ro_rt = (struct rtentry *)rn;
 	ro->ro_rt->rt_refcnt++;
+#endif
 }
 
 int
@@ -255,11 +279,79 @@ rn_mpath_inithead(void **head, int off)
 {
 	struct radix_node_head *rnh;
 
-	hashjitter = arc4random();
+	while (hashjitter == 0)
+		hashjitter = arc4random();
 	if (rn_inithead(head, off) == 1) {
 		rnh = (struct radix_node_head *)*head;
 		rnh->rnh_multipath = 1;
 		return 1;
 	} else
 		return 0;
+}
+
+/*
+ * hash function based on pf_hash in pf.c
+ */
+#define mix(a,b,c) \
+	do {					\
+		a -= b; a -= c; a ^= (c >> 13);	\
+		b -= c; b -= a; b ^= (a << 8);	\
+		c -= a; c -= b; c ^= (b >> 13);	\
+		a -= b; a -= c; a ^= (c >> 12);	\
+		b -= c; b -= a; b ^= (a << 16);	\
+		c -= a; c -= b; c ^= (b >> 5);	\
+		a -= b; a -= c; a ^= (c >> 3);	\
+		b -= c; b -= a; b ^= (a << 10);	\
+		c -= a; c -= b; c ^= (b >> 15);	\
+	} while (0)
+
+u_int32_t
+rn_mpath_hash(struct route *ro, u_int32_t *srcaddrp)
+{
+	u_int32_t a, b, c;
+
+	a = b = 0x9e3779b9;
+	c = hashjitter;
+
+	switch (ro->ro_dst.sa_family) {
+#ifdef INET
+	case AF_INET:
+	    {
+		struct sockaddr_in *sin_dst;
+
+		sin_dst = (struct sockaddr_in *)&ro->ro_dst;
+		a += sin_dst->sin_addr.s_addr;
+		b += srcaddrp ? srcaddrp[0] : 0;
+		mix(a, b, c);
+		break;
+	    }
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sin6_dst;
+
+		sin6_dst = (struct sockaddr_in6 *)&ro->ro_dst;
+		a += sin6_dst->sin6_addr.s6_addr32[0];
+		b += sin6_dst->sin6_addr.s6_addr32[2];
+		c += srcaddrp ? srcaddrp[0] : 0;
+		mix(a, b, c);
+		a += sin6_dst->sin6_addr.s6_addr32[1];
+		b += sin6_dst->sin6_addr.s6_addr32[3];
+		c += srcaddrp ? srcaddrp[1] : 0;
+		mix(a, b, c);
+		a += sin6_dst->sin6_addr.s6_addr32[2];
+		b += sin6_dst->sin6_addr.s6_addr32[1];
+		c += srcaddrp ? srcaddrp[2] : 0;
+		mix(a, b, c);
+		a += sin6_dst->sin6_addr.s6_addr32[3];
+		b += sin6_dst->sin6_addr.s6_addr32[0];
+		c += srcaddrp ? srcaddrp[3] : 0;
+		mix(a, b, c);
+		break;
+	    }
+#endif /* INET6 */
+	}
+
+	return c;
 }

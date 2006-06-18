@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.67 2006/05/27 23:40:27 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.68 2006/06/18 11:47:46 pascoe Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -413,7 +413,8 @@ ip6_input(m)
 		ip6_forward_rt.ro_dst.sin6_family = AF_INET6;
 		ip6_forward_rt.ro_dst.sin6_addr = ip6->ip6_dst;
 
-		rtalloc((struct route *)&ip6_forward_rt);
+		rtalloc_mpath((struct route *)&ip6_forward_rt,
+		    &ip6->ip6_src.s6_addr32[0], 0);
 	}
 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))

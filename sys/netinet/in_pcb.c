@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.87 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.88 2006/06/18 11:47:45 pascoe Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -775,7 +775,7 @@ in_pcbrtentry(inp)
 			ro->ro_dst.sa_len = sizeof(struct sockaddr_in6);
 			((struct sockaddr_in6 *) &ro->ro_dst)->sin6_addr =
 			    inp->inp_faddr6;
-			rtalloc(ro);
+			rtalloc_mpath(ro, &inp->inp_laddr6.s6_addr32[0], 0);
 			break;
 #endif /* INET6 */
 		case PF_INET:
@@ -784,7 +784,7 @@ in_pcbrtentry(inp)
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-			rtalloc(ro);
+			rtalloc_mpath(ro, &inp->inp_laddr.s_addr, 0);
 			break;
 		}
 	}
@@ -821,7 +821,7 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
-		rtalloc(ro);
+		rtalloc_mpath(ro, NULL, 0);
 
 		/*
 		 * It is important to bzero out the rest of the
