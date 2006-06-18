@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.57 2006/06/14 19:04:26 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.58 2006/06/18 18:18:01 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -535,13 +535,18 @@ the values
 and
 .Ar modp8192
 are allowed.
+When a group is specified perfect forward security (PFS) will be used.
+When the value
+.Ar none
+is used instead, PFS will be disabled.
 If omitted,
 .Xr ipsecctl 8
 will use the default values
 .Ar hmac-sha1
 and
 .Ar aes
-and no specific group specified.
+and PFS with the group
+.Ar modp1024 .
 .It Xo
 .Ic quick auth
 .Aq Ar algorithm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.107 2006/06/16 10:09:51 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.108 2006/06/18 18:18:01 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,6 +90,7 @@ const struct ipsec_xf compxfs[] = {
 
 const struct ipsec_xf groupxfs[] = {
 	{ "unknown",		GROUPXF_UNKNOWN,	0,	0 },
+	{ "none",		GROUPXF_NONE,		0,	0 },
 	{ "modp768",		GROUPXF_768,		768,	0 },
 	{ "grp1",		GROUPXF_768,		768,	0 },
 	{ "modp1024",		GROUPXF_1024,		1024,	0 },

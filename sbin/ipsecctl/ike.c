@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.44 2006/06/16 18:46:26 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.45 2006/06/18 18:18:01 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -255,6 +255,8 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 
 	if (qmxfs && qmxfs->groupxf) {
 		switch (qmxfs->groupxf->id) {
+		case GROUPXF_NONE:
+			break;
 		case GROUPXF_768:
 			fprintf(fd, "-PFS-GRP1");
 			break;
@@ -283,7 +285,8 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 			warnx("illegal group %s", qmxfs->groupxf->name);
 			return (-1);
 		};
-	} 
+	} else
+		fprintf(fd, "-PFS");
 	fprintf(fd, "-SUITE force\n");
 
 	return (0);
