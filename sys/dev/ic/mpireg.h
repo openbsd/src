@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.16 2006/06/15 06:45:53 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.17 2006/06/18 00:08:00 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -303,6 +303,9 @@ struct mpi_sgl_tce {
 #define MPI_WHOINIT_PCI_PEER		0x03
 #define MPI_WHOINIT_HOST_DRIVER		0x04
 #define MPI_WHOINIT_MANUFACTURER	0x05
+
+/* page address fields */
+#define MPI_PAGE_ADDRESS_FC_BTID	(1<<24)	/* Bus Target ID */
 
 /* default messages */
 
@@ -1051,4 +1054,47 @@ struct mpi_cfg_ioc_pg3 {
 	u_int8_t		no_phys_disks;
 	u_int8_t		reserved[3];
 	struct mpi_cfg_raid_pd phys_disks[1]; /* length stored in header */
+} __packed;
+
+struct mpi_cfg_fc_port_pg0 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int32_t		flags;
+	u_int8_t		mpi_port_nr;
+	u_int8_t		link_type;
+	u_int8_t		port_state;
+	u_int8_t		reserved1;
+	u_int32_t		port_id;
+	u_int64_t		wwnn;
+	u_int64_t		wwpn;
+	u_int32_t		supported_service_class;
+	u_int32_t		supported_speeds;
+	u_int32_t		current_speed;
+	u_int32_t		max_frame_size;
+	u_int64_t		fabric_wwnn;
+	u_int64_t		fabric_wwpn;
+	u_int32_t		discovered_port_count;
+	u_int32_t		max_initiators;
+	u_int8_t		max_aliases_supported;
+	u_int8_t		max_hard_aliases_supported;
+	u_int8_t		num_current_aliases;
+	u_int8_t		reserved2;
+} __packed;
+
+struct mpi_cfg_fc_device_pg0 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int64_t		wwnn;
+	u_int64_t		wwpn;
+	u_int32_t		port_id;
+	u_int8_t		protocol;
+	u_int8_t		flags;
+	u_int16_t		bb_credit;
+	u_int16_t		max_rx_frame_size;
+	u_int8_t		adisc_hard_alpa;
+	u_int8_t		port_nr;
+	u_int8_t		fc_ph_low_version;
+	u_int8_t		fc_ph_high_version;
+	u_int8_t		current_target_id;
+	u_int8_t		current_bus;
 } __packed;
