@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.22 2006/06/18 12:32:46 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.23 2006/06/18 18:44:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -138,7 +138,8 @@ void		rt2661_set_chan(struct rt2661_softc *,
 void		rt2661_set_bssid(struct rt2661_softc *, const uint8_t *);
 void		rt2661_set_macaddr(struct rt2661_softc *, const uint8_t *);
 void		rt2661_update_promisc(struct rt2661_softc *);
-void		rt2661_update_slot(struct rt2661_softc *);
+void		rt2661_updateslot(struct ieee80211com *);
+void		rt2661_set_slottime(struct rt2661_softc *);
 const char	*rt2661_get_rf(int);
 void		rt2661_read_eeprom(struct rt2661_softc *);
 int		rt2661_bbp_init(struct rt2661_softc *);
@@ -314,6 +315,7 @@ rt2661_attach(void *xsc, int id)
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = rt2661_node_alloc;
 	ic->ic_node_copy = rt2661_node_copy;
+	ic->ic_updateslot = rt2661_updateslot;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -812,7 +814,7 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ni = ic->ic_bss;
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			rt2661_update_slot(sc);
+			rt2661_set_slottime(sc);
 			rt2661_enable_mrr(sc);
 			rt2661_set_txpreamble(sc);
 			rt2661_set_basicrates(sc);
@@ -1168,10 +1170,30 @@ skip:		desc->flags |= htole32(RT2661_RX_BUSY);
 		rt2661_start(ifp);
 }
 
+/*
+ * This function is called in HostAP or IBSS modes when it's time to send a
+ * new beacon (every ni_intval milliseconds).
+ */
 void
 rt2661_mcu_beacon_expire(struct rt2661_softc *sc)
 {
-	/* do nothing */
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (sc->sc_flags & RT2661_UPDATE_SLOT) {
+		sc->sc_flags &= ~RT2661_UPDATE_SLOT;
+		sc->sc_flags |= RT2661_SET_SLOTTIME;
+	} else if (sc->sc_flags & RT2661_SET_SLOTTIME) {
+		sc->sc_flags &= ~RT2661_SET_SLOTTIME;
+		rt2661_set_slottime(sc);
+	}
+
+	if (ic->ic_curmode == IEEE80211_MODE_11G) {
+		/* update ERP Information Element */
+		RAL_WRITE_1(sc, sc->erp_csr, ic->ic_bss->ni_erp);
+		RAL_RW_BARRIER_1(sc, sc->erp_csr);
+	}
+
+	DPRINTFN(15, ("beacon expired\n"));
 }
 
 void
@@ -1339,7 +1361,7 @@ rt2661_txtime(int len, int rate, uint32_t flags)
 	uint16_t txtime;
 
 	if (RAL_RATE_IS_OFDM(rate)) {
-		/* IEEE Std 802.11a-1999, pp. 37 */
+		/* IEEE Std 802.11g-2003, pp. 44 */
 		txtime = (8 + 4 * len + 3 + rate - 1) / rate;
 		txtime = 16 + 4 + 4 * txtime + 6;
 	} else {
@@ -2291,7 +2313,23 @@ rt2661_update_promisc(struct rt2661_softc *sc)
 }
 
 void
-rt2661_update_slot(struct rt2661_softc *sc)
+rt2661_updateslot(struct ieee80211com *ic)
+{
+	struct rt2661_softc *sc = ic->ic_if.if_softc;
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		/*
+		 * In HostAP mode, we defer setting of new slot time until
+		 * updated ERP Information Element has propagated to all
+		 * associated STAs.
+		 */
+		sc->sc_flags |= RT2661_UPDATE_SLOT;
+	} else
+		rt2661_set_slottime(sc);
+}
+
+void
+rt2661_set_slottime(struct rt2661_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t slottime;
@@ -2302,6 +2340,8 @@ rt2661_update_slot(struct rt2661_softc *sc)
 	tmp = RAL_READ(sc, RT2661_MAC_CSR9);
 	tmp = (tmp & ~0xff) | slottime;
 	RAL_WRITE(sc, RT2661_MAC_CSR9, tmp);
+
+	DPRINTF(("setting slot time to %uus\n", slottime));
 }
 
 const char *
@@ -2814,11 +2854,12 @@ int
 rt2661_prepare_beacon(struct rt2661_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
 	struct rt2661_tx_desc desc;
 	struct mbuf *m0;
 	int rate;
 
-	m0 = ieee80211_beacon_alloc(ic, ic->ic_bss);
+	m0 = ieee80211_beacon_alloc(ic, ni);
 	if (m0 == NULL) {
 		printf("%s: could not allocate beacon frame\n",
 		    sc->sc_dev.dv_xname);
@@ -2826,7 +2867,7 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 	}
 
 	/* send beacons at the lowest available rate */
-	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan) ? 12 : 2;
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
 	rt2661_setup_tx_desc(sc, &desc, RT2661_TX_TIMESTAMP, RT2661_TX_HWSEQ,
 	    m0->m_pkthdr.len, rate, NULL, 0, RT2661_QID_MGT);
@@ -2839,6 +2880,23 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 	    mtod(m0, uint8_t *), m0->m_pkthdr.len);
 
 	m_freem(m0);
+
+	/*
+	 * Store offset of ERP Information Element so that we can update it
+	 * dynamically when the slot time changes.
+	 * XXX: this is ugly since it depends on how net80211 builds beacon
+	 * frames but ieee80211_beacon_alloc() don't store offsets for us.
+	 */
+	if (ic->ic_curmode == IEEE80211_MODE_11G) {
+		sc->erp_csr =
+		    RT2661_HW_BEACON_BASE0 + 24 +
+		    sizeof (struct ieee80211_frame) +
+		    8 + 2 + 2 + 2 + ni->ni_esslen + 2 + 1 +
+		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 3 : 6) +
+		    2 + ni->ni_rates.rs_nrates +
+		    ((ni->ni_rates.rs_nrates > IEEE80211_RATE_SIZE) ? 2 : 0) +
+		    2;
+	}
 
 	return 0;
 }

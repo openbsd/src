@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.7 2006/06/14 19:31:47 damien Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.8 2006/06/18 18:44:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -323,6 +323,13 @@ struct rt2661_rx_desc {
 
 #define RAL_WRITE(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+
+#define RAL_WRITE_1(sc, reg, val)					\
+	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+
+#define RAL_RW_BARRIER_1(sc, reg)					\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, (reg), 1,		\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
 #define RAL_WRITE_REGION_1(sc, offset, datap, count)			\
 	bus_space_write_region_1((sc)->sc_st, (sc)->sc_sh, (offset),	\

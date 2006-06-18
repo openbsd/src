@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.6 2006/06/08 19:58:44 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.7 2006/06/18 18:44:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -108,8 +108,10 @@ struct rt2661_softc {
 
 	int				sc_id;
 	int				sc_flags;
-#define RT2661_ENABLED	(1 << 0)
-#define RT2661_FWLOADED	(1 << 1)
+#define RT2661_ENABLED		(1 << 0)
+#define RT2661_FWLOADED		(1 << 1)
+#define RT2661_UPDATE_SLOT	(1 << 2)
+#define RT2661_SET_SLOTTIME	(1 << 3)
 
 	int				sc_tx_timer;
 
@@ -143,6 +145,8 @@ struct rt2661_softc {
 
 	int				ncalls;
 	int				avg_rssi;
+
+	uint32_t			erp_csr;
 
 	uint8_t				bbp18;
 	uint8_t				bbp21;

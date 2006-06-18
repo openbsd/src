@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.20 2006/06/18 12:32:46 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.21 2006/06/18 18:44:04 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -132,7 +132,8 @@ void		rt2560_set_chan(struct rt2560_softc *,
 void		rt2560_disable_rf_tune(struct rt2560_softc *);
 void		rt2560_enable_tsf_sync(struct rt2560_softc *);
 void		rt2560_update_plcp(struct rt2560_softc *);
-void		rt2560_update_slot(struct rt2560_softc *);
+void		rt2560_updateslot(struct ieee80211com *);
+void		rt2560_set_slottime(struct rt2560_softc *);
 void		rt2560_set_basicrates(struct rt2560_softc *);
 void		rt2560_update_led(struct rt2560_softc *, int, int);
 void		rt2560_set_bssid(struct rt2560_softc *, uint8_t *);
@@ -314,6 +315,7 @@ rt2560_attach(void *xsc, int id)
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = rt2560_node_alloc;
 	ic->ic_node_copy = rt2560_node_copy;
+	ic->ic_updateslot = rt2560_updateslot;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -337,12 +339,16 @@ rt2560_attach(void *xsc, int id)
 	 * Make sure the interface is shutdown during reboot.
 	 */
 	sc->sc_sdhook = shutdownhook_establish(rt2560_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf(": WARNING: unable to establish shutdown hook\n");
-	sc->sc_powerhook = powerhook_establish(rt2560_power, sc);
-	if (sc->sc_powerhook == NULL)
-		printf(": WARNING: unable to establish power hook\n");
+	if (sc->sc_sdhook == NULL) {
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
+	}
 
+	sc->sc_powerhook = powerhook_establish(rt2560_power, sc);
+	if (sc->sc_powerhook == NULL) {
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
+	}
 	return 0;
 
 fail5:	rt2560_free_tx_ring(sc, &sc->bcnq);
@@ -810,7 +816,8 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ni = ic->ic_bss;
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			rt2560_update_slot(sc);
+			rt2560_update_plcp(sc);
+			rt2560_set_slottime(sc);
 			rt2560_set_basicrates(sc);
 			rt2560_set_bssid(sc, ni->ni_bssid);
 		}
@@ -1319,8 +1326,8 @@ rt2560_rx_intr(struct rt2560_softc *sc)
 }
 
 /*
- * This function is called periodically in IBSS mode when a new beacon must be
- * sent out.
+ * This function is called in HostAP or IBSS modes when it's time to send a
+ * new beacon (every ni_intval milliseconds).
  */
 void
 rt2560_beacon_expire(struct rt2560_softc *sc)
@@ -1334,7 +1341,22 @@ rt2560_beacon_expire(struct rt2560_softc *sc)
 
 	data = &sc->bcnq.data[sc->bcnq.next];
 
-#if NBPFILTER > 0
+	if (sc->sc_flags & RT2560_UPDATE_SLOT) {
+		sc->sc_flags &= ~RT2560_UPDATE_SLOT;
+		sc->sc_flags |= RT2560_SET_SLOTTIME;
+	} else if (sc->sc_flags & RT2560_SET_SLOTTIME) {
+		sc->sc_flags &= ~RT2560_SET_SLOTTIME;
+		rt2560_set_slottime(sc);
+	}
+
+	if (ic->ic_curmode == IEEE80211_MODE_11G) {
+		/* update ERP Information Element */
+		*sc->erp = ic->ic_bss->ni_erp;
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	}
+
+#if defined(RT2560_DEBUG) && NBPFILTER > 0
 	if (ic->ic_rawbpf != NULL)
 		bpf_mtap(ic->ic_rawbpf, data->m, BPF_DIRECTION_OUT);
 #endif
@@ -1481,7 +1503,7 @@ rt2560_txtime(int len, int rate, uint32_t flags)
 	uint16_t txtime;
 
 	if (RAL_RATE_IS_OFDM(rate)) {
-		/* IEEE Std 802.11a-1999, pp. 37 */
+		/* IEEE Std 802.11g-2003, pp. 44 */
 		txtime = (8 + 4 * len + 3 + rate - 1) / rate;
 		txtime = 16 + 4 + 4 * txtime + 6;
 	} else {
@@ -1569,6 +1591,7 @@ int
 rt2560_tx_bcn(struct rt2560_softc *sc, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	int rate, error;
@@ -1599,6 +1622,23 @@ rt2560_tx_bcn(struct rt2560_softc *sc, struct mbuf *m0,
 	bus_dmamap_sync(sc->sc_dmat, sc->bcnq.map,
 	    sc->bcnq.cur * RT2560_TX_DESC_SIZE, RT2560_TX_DESC_SIZE,
 	    BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * Store pointer to ERP Information Element so that we can update it
+	 * dynamically when the slot time changes.
+	 * XXX: this is ugly since it depends on how net80211 builds beacon
+	 * frames but ieee80211_beacon_alloc() don't store offsets for us.
+	 */
+	if (ic->ic_curmode == IEEE80211_MODE_11G) {
+		sc->erp =
+		    mtod(m0, uint8_t *) +
+		    sizeof (struct ieee80211_frame) +
+		    8 + 2 + 2 + 2 + ni->ni_esslen + 2 + 1 +
+		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 3 : 6) +
+		    2 + ni->ni_rates.rs_nrates +
+		    ((ni->ni_rates.rs_nrates > IEEE80211_RATE_SIZE) ? 2 : 0) +
+		    2;
+	}
 
 	return 0;
 }
@@ -2378,12 +2418,28 @@ rt2560_update_plcp(struct rt2560_softc *sc)
 	    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ? "short" : "long"));
 }
 
+void
+rt2560_updateslot(struct ieee80211com *ic)
+{
+	struct rt2560_softc *sc = ic->ic_if.if_softc;
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		/*
+		 * In HostAP mode, we defer setting of new slot time until
+		 * updated ERP Information Element has propagated to all
+		 * associated STAs.
+		 */
+		sc->sc_flags |= RT2560_UPDATE_SLOT;
+	} else
+		rt2560_set_slottime(sc);
+}
+
 /*
- * IEEE 802.11a uses short slot time. Refer to IEEE Std 802.11-1999 pp. 85 to
- * know how these values are computed.
+ * IEEE 802.11a (and possibly 802.11g) use short slot time. Refer to
+ * IEEE Std 802.11-1999 pp. 85 to know how these values are computed.
  */
 void
-rt2560_update_slot(struct rt2560_softc *sc)
+rt2560_set_slottime(struct rt2560_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t slottime;
@@ -2679,7 +2735,7 @@ rt2560_init(struct ifnet *ifp)
 
 	rt2560_set_txantenna(sc, 1);
 	rt2560_set_rxantenna(sc, 1);
-	rt2560_update_slot(sc);
+	rt2560_set_slottime(sc);
 	rt2560_update_plcp(sc);
 	rt2560_update_led(sc, 0, 0);
 
