@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.14 2006/02/19 17:34:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.15 2006/06/18 18:39:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -32,8 +32,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 #include "bridge.h"
@@ -87,6 +85,10 @@ static void ieee80211_free_node(struct ieee80211com *,
 static struct ieee80211_node *
     ieee80211_alloc_node_helper(struct ieee80211com *);
 static void ieee80211_node_cleanup(struct ieee80211com *,
+    struct ieee80211_node *);
+static void ieee80211_node_join_11g(struct ieee80211com *,
+    struct ieee80211_node *);
+static void ieee80211_node_leave_11g(struct ieee80211com *,
     struct ieee80211_node *);
 
 #define M_80211_NODE	M_DEVBUF
@@ -468,6 +470,15 @@ ieee80211_end_scan(struct ifnet *ifp)
 	if (selbs == NULL)
 		goto notfound;
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
+
+	/*
+	 * Set the erp state (mostly the slot time) to deal with
+	 * the auto-select case; this should be redundant if the
+	 * mode is locked.
+	 */
+	ic->ic_curmode = ieee80211_chan2mode(ic, selbs->ni_chan);
+	ieee80211_reset_erp(ic);
+
 	ieee80211_node_newstate(selbs, IEEE80211_STA_BSS);
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		ieee80211_fix_rate(ic, ic->ic_bss, IEEE80211_F_DOFRATE |
@@ -907,6 +918,78 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 	IEEE80211_NODE_UNLOCK(ic);
 }
 
+/*
+ * Check if the specified node supports ERP.
+ */
+int
+ieee80211_iserp_sta(struct ieee80211_node *ni)
+{
+#define N(a)	(sizeof (a) / sizeof (a)[0])
+	static const uint8_t rates[] = { 2, 4, 11, 22, 12, 24, 48 };
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	int i, j;
+
+	/*
+	 * A STA supports ERP operation if it includes all the Clause 19
+	 * mandatory rates in its supported rate set.
+	 */
+	for (i = 0; i < N(rates); i++) {
+		for (j = 0; j < rs->rs_nrates; j++) {
+			if ((rs->rs_rates[j] & IEEE80211_RATE_VAL) == rates[i])
+				break;
+		}
+		if (j == rs->rs_nrates)
+			return 0;
+	}
+	return 1;
+#undef N
+}
+
+/*
+ * Handle a station joining an 11g network.
+ */
+static void
+ieee80211_node_join_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	if (!(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME)) {
+		/*
+		 * Joining STA doesn't support short slot time.  We must
+		 * disable the use of short slot time for all other associated
+		 * STAs and give the driver a chance to reconfigure the
+		 * hardware.
+		 */
+		if (++ic->ic_longslotsta == 1) {
+			if (ic->ic_caps & IEEE80211_C_SHSLOT)
+				ieee80211_set_shortslottime(ic, 0);
+		}
+		IEEE80211_DPRINTF(("[%s] station needs long slot time, "
+		    "count %d\n", ether_sprintf(ni->ni_macaddr),
+		    ic->ic_longslotsta));
+	}
+
+	if (!ieee80211_iserp_sta(ni)) {
+		/*
+		 * Joining STA is non-ERP.
+		 */
+		ic->ic_nonerpsta++;
+
+		IEEE80211_DPRINTF(("[%s] station is non-ERP, %d non-ERP "
+		    "stations associated\n", ether_sprintf(ni->ni_macaddr),
+		    ic->ic_nonerpsta));
+
+		/* must enable the use of protection */
+		if (ic->ic_protmode != IEEE80211_PROT_NONE) {
+			IEEE80211_DPRINTF(("%s: enable use of protection\n",
+			    __func__));
+			ic->ic_flags |= IEEE80211_F_USEPROT;
+		}
+
+		if (!(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE))
+			ic->ic_flags &= ~IEEE80211_F_SHPREAMBLE;
+	} else
+		ni->ni_flags |= IEEE80211_NODE_ERP;
+}
+
 void
 ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
     int resp)
@@ -934,8 +1017,8 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ni->ni_associd = aid | 0xc000;
 		IEEE80211_AID_SET(ni->ni_associd, ic->ic_aid_bitmap);
 		newassoc = 1;
-		/* XXX for 11g must turn off short slot time if long
-		   slot time sta associates */
+		if (ic->ic_curmode == IEEE80211_MODE_11G)
+			ieee80211_node_join_11g(ic, ni);
 	} else
 		newassoc = 0;
 
@@ -962,6 +1045,59 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 /*
+ * Handle a station leaving an 11g network.
+ */
+static void
+ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	if (!(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME)) {
+#ifdef DIAGNOSTIC
+		if (ic->ic_longslotsta == 0) {
+			panic("bogus long slot station count %d",
+			    ic->ic_longslotsta);
+		}
+#endif
+		/* leaving STA did not support short slot time */
+		if (--ic->ic_longslotsta == 0) {
+			/*
+			 * All associated STAs now support short slot time, so
+			 * enable this feature and give the driver a chance to
+			 * reconfigure the hardware. Notice that IBSS always
+			 * use a long slot time.
+			 */
+			if ((ic->ic_caps & IEEE80211_C_SHSLOT) &&
+			    ic->ic_opmode != IEEE80211_M_IBSS)
+				ieee80211_set_shortslottime(ic, 1);
+		}
+		IEEE80211_DPRINTF(("[%s] long slot time station leaves, "
+		    "count now %d\n", ether_sprintf(ni->ni_macaddr),
+		    ic->ic_longsta));
+	}
+
+	if (!(ni->ni_flags & IEEE80211_NODE_ERP)) {
+#ifdef DIAGNOSTIC
+		if (ic->ic_nonerpsta == 0) {
+			panic("bogus non-ERP station count %d\n",
+			    ic->ic_nonerpsta);
+		}
+#endif
+		/* leaving STA was non-ERP */
+		if (--ic->ic_nonerpsta == 0) {
+			/*
+			 * All associated STAs are now ERP capable, disable use
+			 * of protection and re-enable short preamble support.
+			 */
+			ic->ic_flags &= ~IEEE80211_F_USEPROT;
+			if (ic->ic_caps & IEEE80211_C_SHPREAMBLE)
+				ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
+		}
+		IEEE80211_DPRINTF(("[%s] non-ERP station leaves, "
+		    "count now %d\n", ether_sprintf(ni->ni_macaddr),
+		    ic->ic_nonerpsta));
+	}
+}
+
+/*
  * Handle bookkeeping for station deauthentication/disassociation
  * when operating as an ap.
  */
@@ -978,6 +1114,10 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		return;
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	ni->ni_associd = 0;
+
+	if (ic->ic_curmode == IEEE80211_MODE_11G)
+		ieee80211_node_leave_11g(ic, ni);
+
 	ieee80211_node_newstate(ni, IEEE80211_STA_COLLECT);
 
 #if NBRIDGE > 0
@@ -1004,4 +1144,3 @@ ieee80211_node_cmp(struct ieee80211_node *b1, struct ieee80211_node *b2)
  * Generate red-black tree function logic
  */
 RB_GENERATE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
-

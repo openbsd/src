@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.19 2006/05/21 07:47:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.20 2006/06/18 18:39:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -33,8 +33,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -65,7 +63,7 @@
 /*
  * IEEE 802.11 output routine. Normally this will directly call the
  * Ethernet output routine because 802.11 encapsulation is called
- * later by the driver. This function could be used to send raw frames
+ * later by the driver. This function can be used to send raw frames
  * if the mbuf has been tagged with a 802.11 data link type.
  */
 int
@@ -551,6 +549,41 @@ ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
 	return frm + len;
 }
 
+/*
+ * Add an ERP element to a frame.
+ */
+u_int8_t *
+ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
+{
+	u_int8_t erp;
+
+	*frm++ = IEEE80211_ELEMID_ERP;
+	*frm++ = 1;
+	erp = 0;
+	/*
+	 * The NonERP_Present bit shall be set to 1 when a NonERP STA
+	 * is associated with the BSS.
+	 */
+	if (ic->ic_nonerpsta != 0)
+		erp |= IEEE80211_ERP_NON_ERP_PRESENT;
+	/*
+	 * If one or more NonERP STAs are associated in the BSS, the
+	 * Use_Protection bit shall be set to 1 in transmitted ERP
+	 * Information Elements.
+	 */
+	if (ic->ic_flags & IEEE80211_F_USEPROT)
+		erp |= IEEE80211_ERP_USE_PROTECTION;
+	/*
+	 * The Barker_Preamble_Mode bit shall be set to 1 by the ERP
+	 * Information Element sender if one or more associated NonERP
+	 * STAs are not short preamble capable.
+	 */
+	if (!(ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+		erp |= IEEE80211_ERP_BARKER_MODE;
+	*frm++ = erp;
+	return frm;
+}
+
 static struct mbuf *
 ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
@@ -603,7 +636,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] extended supported rates
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-		    2 + ic->ic_des_esslen + 2 + IEEE80211_RATE_SIZE +
+		    2 + ic->ic_des_esslen +
+		    2 + IEEE80211_RATE_SIZE +
 		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
@@ -629,12 +663,18 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] supported rates
 		 *	[tlv] parameter set (FH/DS)
 		 *	[tlv] parameter set (IBSS)
+		 *	[tlv] extended rate phy (ERP)
 		 *	[tlv] extended supported rates
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-		    8 + 2 + 2 + 2 + 2 + ni->ni_esslen +
-		    2 + IEEE80211_RATE_SIZE +
-		    (ic->ic_phytype == IEEE80211_T_FH ? 7 : 3) + 6 +
+		    8 +				/* time stamp */
+		    2 +				/* beacon interval */
+		    2 +				/* cabability information */
+		    2 + ni->ni_esslen +		/* ssid */
+		    2 + IEEE80211_RATE_SIZE +	/* supported rates */
+		    7 +				/* parameter set (FH/DS) */
+		    6 +				/* parameter set (IBSS) */
+		    2 + 1 +			/* extended rate phy (ERP) */
 		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
@@ -654,6 +694,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
+		if (ic->ic_flags & IEEE80211_F_SHSLOT)
+			capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 		*(u_int16_t *)frm = htole16(capinfo);
 		frm += 2;
 
@@ -690,6 +732,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			*frm++ = 0;	/* bitmap control */
 			*frm++ = 0;	/* Partial Virtual Bitmap (variable) */
 		}
+		if (ic->ic_curmode == IEEE80211_MODE_11G)
+			frm = ieee80211_add_erp(frm, ic);
 		frm = ieee80211_add_xrates(frm, &ic->ic_bss->ni_rates);
 		m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 		break;
@@ -763,10 +807,12 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] extended supported rates
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-		    sizeof(capinfo) + sizeof(u_int16_t) +
-		    IEEE80211_ADDR_LEN + 2 + ni->ni_esslen +
-		    2 + IEEE80211_RATE_SIZE + 2 +
-		    (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+		    2 +				/* capability information */
+		    2 +				/* listen interval */
+		    IEEE80211_ADDR_LEN +	/* current AP address */
+		    2 + ni->ni_esslen +		/* ssid */
+		    2 + IEEE80211_RATE_SIZE +	/* supported rates */
+		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
@@ -786,7 +832,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-		if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME) &&
+		    (ic->ic_flags & IEEE80211_F_SHSLOT))
 			capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 		*(u_int16_t *)frm = htole16(capinfo);
 		frm += 2;
@@ -818,8 +865,10 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] extended supported rates
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-		    sizeof(capinfo) + sizeof(u_int16_t) +
-		    sizeof(u_int16_t) + 2 + IEEE80211_RATE_SIZE +
+		    2 +				/* capability information */
+		    2 +				/* status */
+		    2 +				/* association ID */
+		    2 + IEEE80211_RATE_SIZE +	/* supported rates */
 		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
@@ -832,6 +881,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
+		if (ic->ic_flags & IEEE80211_F_SHSLOT)
+			capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 		*(u_int16_t *)frm = htole16(capinfo);
 		frm += 2;
 
@@ -883,18 +934,31 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ieee80211_frame *wh;
 	struct mbuf *m;
-	int pktlen;
 	u_int8_t *frm;
 	u_int16_t capinfo;
 	struct ieee80211_rateset *rs;
 
-	rs = &ni->ni_rates;
-	pktlen = sizeof (struct ieee80211_frame)
-	    + 8 + 2 + 2 + 2+ni->ni_esslen + 2+rs->rs_nrates + 3 + 6;
-	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
-		pktlen += 2;
+	/*
+	 * beacon frame format
+	 *	[8] time stamp
+	 *	[2] beacon interval
+	 *	[2] cabability information
+	 *	[tlv] ssid
+	 *	[tlv] supported rates
+	 *	[3] parameter set (DS)
+	 *	[tlv] parameter set (IBSS/TIM)
+	 *	[tlv] extended rate phy (ERP)
+	 *	[tlv] extended supported rates
+	 */
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-	    2 + ni->ni_esslen + 2 + IEEE80211_RATE_SIZE +
+	    8 +				/* time stamp */
+	    2 +				/* beacon interval */
+	    2 +				/* cabability information */
+	    2 + ni->ni_esslen +		/* ssid */
+	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
+	    2 + 1 +			/* parameter set (DS) */
+	    6 +				/* parameter set (IBSS/TIM) */
+	    2 + 1 +			/* extended rate phy (ERP) */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 	if (m == NULL)
 		return NULL;
@@ -909,16 +973,6 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
 	*(u_int16_t *)wh->i_seq = 0;
 
-	/*
-	 * beacon frame format
-	 *	[8] time stamp
-	 *	[2] beacon interval
-	 *	[2] cabability information
-	 *	[tlv] ssid
-	 *	[tlv] supported rates
-	 *	[tlv] parameter set (IBSS)
-	 *	[tlv] extended supported rates
-	 */
 	frm = (u_int8_t *)&wh[1];
 	bzero(frm, 8);	/* timestamp is set by hardware */
 	frm += 8;
@@ -939,6 +993,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	*(u_int16_t *)frm = htole16(capinfo);
 	frm += 2;
 	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
+	rs = &ni->ni_rates;
 	frm = ieee80211_add_rates(frm, rs);
 	*frm++ = IEEE80211_ELEMID_DSPARMS;
 	*frm++ = 1;
@@ -956,12 +1011,12 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 		*frm++ = 0;	/* bitmap control */
 		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
 	}
+	if (ic->ic_curmode == IEEE80211_MODE_11G)
+		frm = ieee80211_add_erp(frm, ic);
 	frm = ieee80211_add_xrates(frm, rs);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.rcvif = (void *)ni;
-	if (m->m_pkthdr.len > pktlen)
-		panic("beacon bigger than expected, len %u calculated %u",
-		    m->m_pkthdr.len, pktlen);
+
 	return m;
 }
 

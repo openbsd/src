@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.9 2005/09/13 12:11:03 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.10 2006/06/18 18:39:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -32,8 +32,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * IEEE 802.11 protocol support.
@@ -305,6 +303,51 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 #undef RV
 }
 
+/*
+ * Reset 11g-related state.
+ */
+void
+ieee80211_reset_erp(struct ieee80211com *ic)
+{
+	ic->ic_flags &= ~IEEE80211_F_USEPROT;
+	ic->ic_nonerpsta = 0;
+	ic->ic_longslotsta = 0;
+
+	/*
+	 * Enable short slot time iff:
+	 * - we're operating in 802.11a or
+	 * - we're operating in 802.11g and we're not in IBSS mode and
+	 *   the device supports short slot time
+	 */
+	ieee80211_set_shortslottime(ic,
+	    ic->ic_curmode == IEEE80211_MODE_11A ||
+	    (ic->ic_curmode == IEEE80211_MODE_11G &&
+	     ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	     (ic->ic_caps & IEEE80211_C_SHSLOT)));
+
+	if (ic->ic_curmode == IEEE80211_MODE_11A ||
+	    (ic->ic_caps & IEEE80211_C_SHPREAMBLE))
+		ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
+	else
+		ic->ic_flags &= ~IEEE80211_F_SHPREAMBLE;
+}
+
+/*
+ * Set the short slot time state and notify the driver.
+ */
+void
+ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
+{
+	if (on)
+		ic->ic_flags |= IEEE80211_F_SHSLOT;
+	else
+		ic->ic_flags &= ~IEEE80211_F_SHSLOT;
+
+	/* notify the driver */
+	if (ic->ic_updateslot != NULL)
+		ic->ic_updateslot(ic);
+}
+
 static int
 ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
     int mgt)
@@ -508,8 +551,15 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				    ether_sprintf(ni->ni_bssid));
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
-				printf(" channel %d start %uMb\n",
+				printf(" channel %d start %uMb",
 				    ieee80211_chan2ieee(ic, ni->ni_chan), mbps);
+				printf(" %s preamble %s slot time%s\n",
+				    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ?
+					"short" : "long",
+				    (ic->ic_flags & IEEE80211_F_SHSLOT) ?
+					"short" : "long",
+				    (ic->ic_flags & IEEE80211_F_USEPROT) ?
+					" protection enabled" : "");
 			}
 			ic->ic_mgt_timer = 0;
 			(*ifp->if_start)(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.8 2005/09/13 12:11:03 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.9 2006/06/18 18:39:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -122,6 +122,8 @@ struct ieee80211_node {
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
+	u_int8_t		ni_flags;	/* special-purpose state */
+#define IEEE80211_NODE_ERP	0x01
 };
 
 RB_HEAD(ieee80211_tree, ieee80211_node);
@@ -202,6 +204,7 @@ typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
 extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
 		ieee80211_iter_func *, void *);
 extern	void ieee80211_clean_nodes(struct ieee80211com *);
+extern  int ieee80211_iserp_sta(struct ieee80211_node *);
 
 extern	void ieee80211_node_join(struct ieee80211com *,
 		struct ieee80211_node *, int);

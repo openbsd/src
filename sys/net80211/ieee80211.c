@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.16 2006/01/04 06:04:42 canacar Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.17 2006/06/18 18:39:41 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -32,8 +32,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * IEEE 802.11 generic handler
@@ -79,8 +77,6 @@ struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
 
 static void ieee80211_setbasicrates(struct ieee80211com *);
-
-#define	LOGICALLY_EQUAL(x, y)	(!(x) == !(y))
 
 #if 0
 static const char *ieee80211_phymode_name[] = {
@@ -529,6 +525,12 @@ ieee80211_media_change(struct ifnet *ifp)
 			ic->ic_flags |= IEEE80211_F_IBSSON;
 			break;
 		}
+		/*
+		 * Yech, slot time may change depending on the
+		 * operating mode so reset it to be sure everything
+		 * is setup appropriately.
+		 */
+		ieee80211_reset_erp(ic);
 		error = ENETRESET;
 	}
 #ifdef notdef
@@ -733,28 +735,9 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 */
 	ieee80211_reset_scan(ifp);
 
-	/*
-	 * Set/reset state flags that influence beacon contents, etc.
-	 *
-	 * XXX what if we have stations already associated???
-	 * XXX probably not right for autoselect?
-	 *
-	 * Short preamble is not interoperable with legacy .11b
-	 * equipment, so it should not be the default for b or
-	 * mixed b/g networks. -dcy
-	 */
-#if 0
-	if (ic->ic_caps & IEEE80211_C_SHPREAMBLE)
-		ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
-#endif
-	if (mode == IEEE80211_MODE_11G) {
-		if (ic->ic_caps & IEEE80211_C_SHSLOT)
-			ic->ic_flags |= IEEE80211_F_SHSLOT;
-	} else {
-		ic->ic_flags &= ~IEEE80211_F_SHSLOT;
-	}
-
 	ic->ic_curmode = mode;
+	ieee80211_reset_erp(ic);	/* reset ERP state */
+
 	return 0;
 #undef N
 }
