@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.21 2006/06/14 19:31:47 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.22 2006/06/18 12:32:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1614,6 +1614,13 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
+	/*
+	 * Packet Bursting: backoff after ppb=8 frames to give other STAs a
+	 * chance to contend for the wireless medium.
+	 */
+	if (ic->ic_opmode == IEEE80211_M_STA && (ni->ni_txseq & 7))
+		flags |= RT2661_TX_IFS_SIFS;
+
 	/*-
 	 * IEEE Std 802.11-1999, pp 82: "A STA shall use an RTS/CTS exchange
 	 * for directed frames only when the length of the MPDU is greater
@@ -1682,11 +1689,6 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		txq->queued++;
 		txq->cur = (txq->cur + 1) % RT2661_TX_RING_COUNT;
 
-		/*
-		 * IEEE Std 802.11-1999: "when an RTS/CTS exchange is used, the
-		 * asynchronous data frame shall be transmitted after the CTS
-		 * frame and a SIFS period".
-		 */
 		flags |= RT2661_TX_LONG_RETRY | RT2661_TX_IFS_SIFS;
 	}
 
