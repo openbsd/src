@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.46 2006/06/18 00:10:24 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.47 2006/06/18 22:31:06 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -250,19 +250,21 @@ mpi_fc_print(struct mpi_softc *sc)
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT, 0, 0,
 	    &hdr) != 0) {
-		DNPRINTF(MPI_D_PPR, "%s: mpi_fc_print unable to fetch header\n",
-		    DEVNAME(sc));
+		DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
+		    "FC port header 0\n", DEVNAME(sc));
 		return;
 	}
 
 	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, sizeof(pg)) != 0) {
-		DNPRINTF(MPI_D_PPR, "%s: mpi_fc_print unable to fetch page\n",
+		DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
+		    "FC port page 0\n",
 		    DEVNAME(sc));
 		return;
 	}
 
-	printf("%s: at: %dGHz WWNN: %016llx WWPN: %016llx\n", DEVNAME(sc),
-	    letoh32(pg.current_speed), letoh64(pg.wwnn), letoh64(pg.wwpn));
+	DNPRINTF(MPI_D_MISC, "%s: at: %dGHz WWNN: %016llx WWPN: %016llx\n",
+	    DEVNAME(sc), letoh32(pg.current_speed), letoh64(pg.wwnn),
+	    letoh64(pg.wwpn));
 
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
 		if (dev->dv_parent == &sc->sc_dev)
@@ -284,21 +286,24 @@ mpi_fc_print(struct mpi_softc *sc)
 		btid = i | MPI_PAGE_ADDRESS_FC_BTID;
 		if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV, 0,
 		    btid, &hdr) != 0) {
-			DNPRINTF(MPI_D_PPR, "%s: mpi_fc_print unable to fetch "
+			DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
 			    "device header 0\n", DEVNAME(sc));
 			return;
 		}
 
 		bzero(&dpg, sizeof(dpg));
 		if (mpi_cfg_page(sc, btid, &hdr, 1, &dpg, sizeof(dpg)) != 0) {
-			DNPRINTF(MPI_D_PPR, "%s: mpi_fc_print unable to fetch "
+			DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
 			    "device page 0\n", DEVNAME(sc));
 			continue;
 		}
 
-		printf("%s: target %d WWNN: %016llx WWPN: %016llx\n",
-		    DEVNAME(sc), i, letoh64(dpg.wwnn),
-		    letoh64(dpg.wwpn));
+		link->port_wwn = letoh64(dpg.wwpn);
+		link->node_wwn = letoh64(dpg.wwnn);
+
+		DNPRINTF(MPI_D_MISC, "%s: target %d WWNN: %016llx "
+		    "WWPN: %016llx\n", DEVNAME(sc), i,
+		    letoh64(dpg.wwnn), letoh64(dpg.wwpn));
 	}
 }
 
