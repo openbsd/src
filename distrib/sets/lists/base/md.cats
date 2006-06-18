@@ -1782,6 +1782,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_amrr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_crypto.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_ioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_node.ph

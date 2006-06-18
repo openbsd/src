@@ -1027,6 +1027,7 @@
 ./usr/include/net/zlib.h
 ./usr/include/net80211
 ./usr/include/net80211/ieee80211.h
+./usr/include/net80211/ieee80211_amrr.h
 ./usr/include/net80211/ieee80211_crypto.h
 ./usr/include/net80211/ieee80211_ioctl.h
 ./usr/include/net80211/ieee80211_node.h
