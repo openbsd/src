@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.253 2006/06/18 13:54:01 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.254 2006/06/18 13:54:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -864,7 +864,7 @@ change_state(struct peer *peer, enum session_state state,
 
 	switch (state) {
 	case STATE_IDLE:
-		/* carp demotion first. new peers handled in peer_init */
+		/* carp demotion first. new peers handled in init_peer */
 		if (peer->state == STATE_ESTABLISHED &&
 		    peer->conf.demote_group[0] && !peer->demoted)
 			session_demote(peer, +1);
