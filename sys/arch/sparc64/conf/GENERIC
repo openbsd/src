@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.146 2006/06/02 04:46:00 jason Exp $
+#	$OpenBSD: GENERIC,v 1.147 2006/06/18 12:07:18 naddy Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -172,6 +172,7 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
+udcf*	at uhub?		# Gude Expert mouseCLOCK
 
 #### Standard system devices -- all required for a given architecture
 
