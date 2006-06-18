@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.6 2006/06/18 11:47:45 pascoe Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.7 2006/06/18 12:03:19 pascoe Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp, u_int tableid)
 	/*
 	 * return a cached entry if it is still valid, otherwise we increase
 	 * the risk of disrupting local flows.
-	 */ 
+	 */
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1, tableid);
