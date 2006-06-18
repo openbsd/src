@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.64 2006/03/20 16:43:22 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.65 2006/06/18 10:25:27 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -547,16 +547,21 @@ m_priv_setsockopt(void)
 	socklen_t	 optlen;
 
 	sock = mm_receive_fd(m_state.s);
-	if (sock < 0)
-		goto errout;
+	if (sock < 0) {
+		log_print("m_priv_setsockopt: read/write error");
+		return;
+	}
 
 	must_read(&level, sizeof level);
 	must_read(&optname, sizeof optname);
 	must_read(&optlen, sizeof optlen);
 
 	optval = (char *)malloc(optlen);
-	if (!optval)
-		goto errout;
+	if (!optval) {
+		log_print("m_priv_setsockopt: malloc failed");
+		close(sock);
+		return;
+	}
 
 	must_read(optval, optlen);
 
@@ -577,11 +582,6 @@ m_priv_setsockopt(void)
 
 	free(optval);
 	return;
-
-errout:
-	log_print("m_priv_setsockopt: read/write error");
-	if (sock >= 0)
-		close(sock);
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -593,13 +593,18 @@ m_priv_bind(void)
 	socklen_t        namelen;
 
 	sock = mm_receive_fd(m_state.s);
-	if (sock < 0)
-		goto errout;
+	if (sock < 0) {
+		log_print("m_priv_bind: read/write error");
+		return;
+	}
 
 	must_read(&namelen, sizeof namelen);
 	name = (struct sockaddr *)malloc(namelen);
-	if (!name)
-		goto errout;
+	if (!name) {
+		log_print("m_priv_bind: malloc failed");
+		close(sock);
+		return;
+	}
 	must_read((char *)name, namelen);
 
 	if (m_priv_check_bind(name, namelen) != 0) {
@@ -622,11 +627,6 @@ m_priv_bind(void)
 
 	free(name);
 	return;
-
-errout:
-	log_print("m_priv_bind: read/write error");
-	if (sock >= 0)
-		close(sock);
 }
 
 /*
