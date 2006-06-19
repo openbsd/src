@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.15 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.16 2006/06/19 12:17:56 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1071,7 +1071,7 @@ ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 		}
 		IEEE80211_DPRINTF(("[%s] long slot time station leaves, "
 		    "count now %d\n", ether_sprintf(ni->ni_macaddr),
-		    ic->ic_longsta));
+		    ic->ic_longslotsta));
 	}
 
 	if (!(ni->ni_flags & IEEE80211_NODE_ERP)) {
