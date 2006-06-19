@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.61 2006/06/19 21:06:22 miod Exp $ */
+/* $OpenBSD: mfi.c,v 1.62 2006/06/19 21:49:44 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1361,7 +1361,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	bv->bv_nodisk = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span *
 	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth;
 
-	bv->bv_size = sc->sc_ld_details.mld_size * (u_quad_t)512;
+	bv->bv_size = sc->sc_ld_details.mld_size / 2; /* XXX why? / 2 */
 
 	rv = 0;
 done:
@@ -1465,7 +1465,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	    sizeof *pd, pd, mbox))
 		goto freeme;
 
-	bd->bd_size = pd->mpd_size;
+	bd->bd_size = pd->mpd_size / 2; /* XXX why? / 2 */
 
 	/* if pd->mpd_enc_idx is 0 then it is not in an enclosure */
 	bd->bd_channel = pd->mpd_enc_idx;
@@ -1728,7 +1728,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	case MFI_MGMT_VD:
 		vdhs = bio_hs;
 		vdhs->bv_status = BIOC_SVONLINE;
-		vdhs->bv_size = pd->mpd_size;
+		vdhs->bv_size = pd->mpd_size / 2; /* XXX why? / 2 */
 		vdhs->bv_level = -1; /* hotspare */
 		vdhs->bv_nodisk = 1;
 		break;
@@ -1736,7 +1736,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	case MFI_MGMT_SD:
 		sdhs = bio_hs;
 		sdhs->bd_status = BIOC_SDHOTSPARE;
-		sdhs->bd_size = pd->mpd_size;
+		sdhs->bd_size = pd->mpd_size / 2; /* XXX why? / 2 */
 		sdhs->bd_channel = pd->mpd_enc_idx;
 		sdhs->bd_target = pd->mpd_enc_slot;
 		inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;
