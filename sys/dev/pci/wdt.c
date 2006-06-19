@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.10 2006/06/17 19:30:51 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.11 2006/06/19 11:42:07 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -49,9 +49,6 @@ struct wdt_softc {
 
 	/* feature set: 0 = none   1 = temp, buzzer, etc. */
 	int			features;
-
-	/* unit number (unlikely more than one would be present though) */
-	int			unit;
 
 	/* device access through bus space */
 	bus_space_tag_t		iot;
@@ -125,25 +122,23 @@ wdtattach (parent, self, aux)
 	struct wdt_softc *wdt = (struct wdt_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	bus_size_t iosize;
-	int unit;
-
-	unit = wdt->wdt_dev.dv_unit;
 
 	/* retrieve the I/O region (BAR2) */
 	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &wdt->iot, &wdt->ioh, NULL, &iosize, 0) != 0) {
-		printf("wdt%d: couldn't find PCI I/O region\n", unit);
+		printf("%s: couldn't find PCI I/O region\n",
+		    wdt->wdt_dev.dv_xname);
 		return;
 	}
 
 	/* sanity check I/O size */
 	if (iosize != (bus_size_t)16) {
-		printf("wdt%d: invalid I/O region size\n", unit);
+		printf("%s: invalid I/O region size\n",
+		    wdt->wdt_dev.dv_xname);
 		return;
 	}
 
 	/* initialize the watchdog timer structure */
-	wdt->unit  = unit;
 
 	/* check the feature set available */
 	if (wdt_is501(wdt))
