@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.14 2006/06/19 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: udcf.c,v 1.15 2006/06/19 16:23:32 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/time.h>
 #include <sys/sensors.h>
 
-#include <dev/clock_subr.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
