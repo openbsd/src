@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.138 2006/06/17 14:06:09 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.139 2006/06/19 20:48:36 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,7 +85,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnv] ", __progname);
+	fprintf(stderr, "usage: %s [-cdnv] ", __progname);
 	fprintf(stderr, "[-D macro=value] [-f file] [-r path] [-s path]\n");
 	exit(1);
 }
