@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.71 2006/06/17 14:06:09 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.72 2006/06/19 20:51:46 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -427,12 +427,14 @@ announced and processed.
 .Pp
 .It Ic demote Ar group
 Increase the
-.Xr carp
+.Xr carp 4
 demotion counter on the given group, usually
 .Ar carp ,
 when the session is not in state
 .Em ESTABLISHED .
-The demotion counter will be increased as soon as bgpd starts and decreased
+The demotion counter will be increased as soon as
+.Xr bgpd 8
+starts and decreased
 60 seconds after the session went to state
 .Em ESTABLISHED.
 For neighbors added at runtime, the demotion counter is only increased after
