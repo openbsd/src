@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.70 2006/05/11 18:50:19 miod Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.71 2006/06/19 16:03:19 mk Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -939,9 +939,9 @@ atu_internal_firmware(void *arg)
 			break;
 
 		default:
-			usbd_delay_ms(sc->atu_udev, 100);
 			DPRINTFN(20, ("%s: sleeping for a while\n",
 			    USBDEVNAME(sc->atu_dev)));
+			usbd_delay_ms(sc->atu_udev, 100);
 			break;
 		}
 
