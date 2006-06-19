@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.80 2006/06/17 17:20:00 pascoe Exp $	*/
+/*	$OpenBSD: route.c,v 1.81 2006/06/19 08:14:06 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -891,9 +891,9 @@ makeroute:
 		}
 
 #ifndef SMALL_KERNEL
-		if (rn_mpath_capable(rnh)) {
-			rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
-			    info->rti_info[RTAX_NETMASK], rnh);
+		if (rn_mpath_capable(rnh) &&
+		    (rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
+		    info->rti_info[RTAX_NETMASK], rnh)) != NULL) {
 			if (rn_mpath_next(rn) == NULL)
 				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
 			else
