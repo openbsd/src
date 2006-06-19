@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.25 2006/02/10 21:45:41 kettenis Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.26 2006/06/19 22:42:33 miod Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -115,6 +115,9 @@ wdc_obio_probe(struct device *parent, void *match, void *aux)
 	struct confargs *ca = aux;
 	char compat[32];
 
+	if (ca->ca_nreg < 8)
+		return 0;
+
 	/* XXX should not use name */
 	if (strcmp(ca->ca_name, "ATA") == 0 ||
 	    strncmp(ca->ca_name, "ata", 3) == 0 ||
@@ -140,7 +143,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t cmdbase;
 
 	sc->sc_use_dma = 0;
-	if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
+	if (ca->ca_nreg >= 16)
 		sc->sc_use_dma = 1;	/* Enable dma */
 
 	sc->sc_dmat = ca->ca_dmat;

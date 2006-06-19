@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.9 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.10 2006/06/19 22:42:33 miod Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -214,7 +214,8 @@ mesh_match(parent, cf, aux)
 	struct confargs *ca = aux;
 	printf("MESH_MATCH called ,ca->ca_name= %s\n",ca->ca_name);
 
-	if (strcmp(ca->ca_name, "mesh") != 0)
+	if (strcmp(ca->ca_name, "mesh") != 0 ||
+	    ca->ca_nintr < 4 || ca->ca_nreg < 16)
 		return 0;
 
 	return 1;

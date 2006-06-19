@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.16 2006/02/14 23:05:28 kettenis Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.17 2006/06/19 22:42:35 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -182,8 +182,8 @@ macobio_attach(struct device *parent, struct device *self, void *aux)
 		ca.ca_nreg  = 0;
 		ca.ca_nintr = 0;
 
-		ca.ca_reg = 0;
-		ca.ca_intr = 0;
+		ca.ca_reg = NULL;
+		ca.ca_intr = NULL;
 
 		config_found(self, &ca, macobio_print);
 	}

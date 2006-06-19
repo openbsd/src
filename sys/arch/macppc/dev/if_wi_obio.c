@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.14 2005/10/31 05:37:13 jsg Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.15 2006/06/19 22:42:33 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -98,7 +98,8 @@ wi_obio_match(parent, match, aux)
 {
 	struct confargs *ca = aux;
 
-	if (strcmp(ca->ca_name, "radio") == 0) 
+	if (strcmp(ca->ca_name, "radio") == 0 &&
+	    ca->ca_nintr >= 4 && ca->ca_nreg >= 8) 
 		return (1);
 	return (0);
 }

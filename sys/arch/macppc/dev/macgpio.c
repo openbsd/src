@@ -1,4 +1,4 @@
-/*	$OpenBSD: macgpio.c,v 1.4 2006/02/14 23:05:28 kettenis Exp $	*/
+/*	$OpenBSD: macgpio.c,v 1.5 2006/06/19 22:42:33 miod Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ macgpio_match(struct device *parent, void *cf, void *aux)
 	if (strcmp(ca->ca_name, "gpio") != 0)
 		return 0;
 
-	if (ca->ca_nreg == 0)
+	if (ca->ca_nreg < 8)
 		return 0;
 
 	return 1;
@@ -147,7 +147,7 @@ macgpio_gpio_match(struct device *parent, void *cf, void *aux)
 	if (strcmp(ca->ca_name, "extint-gpio1") != 0)
 		return 0;
 
-	if (ca->ca_nintr < 0)
+	if (ca->ca_nintr < 4)
 		return 0;
 
 	return 1;

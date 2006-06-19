@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.12 2006/01/01 20:52:25 deraadt Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.13 2006/06/19 22:42:33 miod Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -75,7 +75,8 @@ ki2c_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
-	if (strcmp(ca->ca_name, "i2c") == 0)
+	if (strcmp(ca->ca_name, "i2c") == 0 &&
+	   ca->ca_nreg >= 4)
 		return (1);
 
 	return (0);
