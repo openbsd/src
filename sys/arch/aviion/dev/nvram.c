@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.2 2006/05/21 12:22:02 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.3 2006/06/19 21:10:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -566,11 +566,27 @@ nvramwrite(dev_t dev, struct uio *uio, int flags)
 	dest = (u_int32_t *)bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
 	cnt = sc->sc_len;
 	while (cnt-- != 0) {
-		if ((*dest & 0xff) != *src)
+		if ((*dest & 0xff) != *src) {
 			*dest = (u_int32_t)*src;
+			/*
+			 * A jumper on the motherboard may write-protect
+			 * the 0x80 bytes at offset 0x80 (i.e. addresses
+			 * 0x200-0x3ff), so check our write had successed.
+			 * If it failed, discard the remainder of the changes
+			 * and return EROFS.
+			 */
+			if ((*dest & 0xff) != *src)
+				rc = EROFS;
+			}
+		}
 		dest++;
 		src++;
 	}
 
-	return (0);
+	if (rc != 0) {
+		/* reset NVRAM copy contents */
+		read_nvram(sc);
+	}
+
+	return (rc);
 }
