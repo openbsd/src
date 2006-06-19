@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.7 2006/05/14 12:40:23 kettenis Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.8 2006/06/19 14:33:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -271,7 +271,7 @@ w83l784r_refresh_volt(struct wbenv_softc *sc, int n)
 
 	data = wbenv_readreg(sc, reg);
 	sensor->value = (data << 4); /* 16 mV LSB */
-	sensor->value *= sensor->rfact;
+	sensor->value *= sc->sc_wbenv_sensors[n].rfact;
 	sensor->value /= 10;
 }
 
@@ -283,7 +283,7 @@ w83l785r_refresh_volt(struct wbenv_softc *sc, int n)
 
 	data = wbenv_readreg(sc, reg);
 	sensor->value = (data << 3); /* 8 mV LSB */
-	sensor->value *= sensor->rfact;
+	sensor->value *= sc->sc_wbenv_sensors[n].rfact;
 	sensor->value /= 10;
 }
 
