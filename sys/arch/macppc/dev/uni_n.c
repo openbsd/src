@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.14 2006/02/14 23:06:41 kettenis Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.15 2006/06/19 22:41:35 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn.
@@ -36,7 +36,6 @@
 
 struct memc_softc {
 	struct device sc_dev;
-	char *baseaddr;
 	struct ppc_bus_space sc_membus_space;
 
 };
@@ -55,7 +54,7 @@ struct cfattach memc_ca = {
 	sizeof(struct memc_softc), memcmatch, memcattach
 };
 
-void *uni_n_config(int handle);
+void uni_n_config(char *, int);
 
 int
 memcmatch(struct device *parent, void *cf, void *aux)
@@ -83,9 +82,7 @@ memcattach(struct device *parent, struct device *self, void *aux)
 	if (len > 0)
 		name[len] = 0;
 
-	if (strcmp(name, "uni-n") == 0 || strcmp(name, "u3") == 0
-	    || strcmp(name, "u4") == 0)
-		sc->baseaddr = uni_n_config(ca->ca_node);
+	uni_n_config(name, ca->ca_node);
 
 	printf (": %s\n", name);
 
@@ -98,7 +95,6 @@ memc_attach_children(struct memc_softc *sc, int memc_node)
 	struct confargs ca;
 	int node, namelen;
 	u_int32_t reg[20];
-	int32_t	intr[8];
 	char	name[32];
 
         sc->sc_membus_space.bus_base = ca.ca_baseaddr;
@@ -121,7 +117,7 @@ memc_attach_children(struct memc_softc *sc, int memc_node)
 		ca.ca_nreg  = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg = reg;
 		ca.ca_nintr = 0; /* XXX */
-		ca.ca_intr = intr; /* XXX */
+		ca.ca_intr = NULL; /* XXX */
 
 		config_found((struct device *)sc, &ca, memc_print);
 	}
@@ -139,26 +135,21 @@ memc_print(void *aux, const char *name)
 	return UNCONF;
 }
 
-void *
-uni_n_config(int handle)
+void
+uni_n_config(char *name, int handle)
 {
-	char name[20];
 	char *baseaddr;
 	int *ctladdr;
 	u_int32_t address;
 
-	if (OF_getprop(handle, "name", name, sizeof name) > 0) {
-		/* sanity test */
-		if (strcmp (name, "uni-n") == 0 || strcmp (name, "u3") == 0
-		    || strcmp (name, "u4") == 0) {
-			if (OF_getprop(handle, "reg", &address,
-			    sizeof address) > 0) {
-				baseaddr = mapiodev(address, NBPG);
-				ctladdr = (void *)(baseaddr + 0x20);
-				*ctladdr |= 0x02;
-				return baseaddr;
-			}
+	/* sanity test */
+	if (strcmp (name, "uni-n") == 0 || strcmp (name, "u3") == 0
+	    || strcmp (name, "u4") == 0) {
+		if (OF_getprop(handle, "reg", &address,
+		    sizeof address) > 0) {
+			baseaddr = mapiodev(address, NBPG);
+			ctladdr = (void *)(baseaddr + 0x20);
+			*ctladdr |= 0x02;
 		}
 	}
-	return 0;
 }
