@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.60 2006/06/19 19:09:04 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.61 2006/06/19 21:06:22 miod Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -644,7 +644,8 @@ mfi_attach(struct mfi_softc *sc)
 #endif /* NBIO > 0 */
 
 	if (mfi_get_info(sc)) {
-		printf("%s: could not retrieve controller information\n");
+		printf("%s: could not retrieve controller information\n",
+		    DEVNAME(sc));
 		goto noinit;
 	}
 
