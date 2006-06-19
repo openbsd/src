@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep_stub.c,v 1.12 2005/12/02 18:02:47 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep_stub.c,v 1.13 2006/06/19 22:52:23 miod Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -64,6 +64,8 @@ softdep_initialize(void)
 {
 	return;
 }
+
+#ifndef __OPTIMIZE__
 
 void
 softdep_setup_inomapdep(struct buf *bp, struct inode *ip, ino_t newinum)
@@ -157,6 +159,8 @@ softdep_update_inodeblock(struct inode *ip, struct buf *bp, int waitfor)
 	panic("softdep_update_inodeblock called");
 }
 
+#endif
+
 void
 softdep_fsync_mountdev(struct vnode *vp)
 {
@@ -176,10 +180,14 @@ softdep_sync_metadata(struct vop_fsync_args *ap)
 	return (0);
 }
 
+#ifndef __OPTIMIZE__
+
 int
 softdep_slowdown(struct vnode *vp)
 {
 	panic("softdep_slowdown called");
 }
+
+#endif
 
 #endif /* !FFS_SOFTUPDATES */
