@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.9 2006/05/07 17:45:16 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.10 2006/06/19 14:40:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -504,7 +504,6 @@ lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
 		sc->sensors[i].type = sensors[i].type;
 		strlcpy(sc->sensors[i].desc, sensors[i].desc,
 		    sizeof(sc->sensors[i].desc));
-		sc->sensors[i].rfact = sensors[i].rfact;
 		sc->numsensors++;
 	}
 	sc->lm_sensors = sensors;
@@ -535,7 +534,7 @@ lm_refresh_volt(struct lm_softc *sc, int n)
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
 	sensor->value = (data << 4);
-	sensor->value *= sensor->rfact;
+	sensor->value *= sc->lm_sensors[n].rfact;
 	sensor->value /= 10;
 }
 
@@ -621,7 +620,7 @@ wb_refresh_nvolt(struct lm_softc *sc, int n)
 
 	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
 	sensor->value = ((data << 4) - WB_VREF);
-	sensor->value *= sensor->rfact;
+	sensor->value *= sc->lm_sensors[n].rfact;
 	sensor->value /= 10;
 	sensor->value += WB_VREF * 1000;
 }
