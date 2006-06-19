@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.21 2006/06/15 22:09:32 drahn Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.22 2006/06/19 20:43:13 jmc Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl DmPRrsUv
+.Op Fl DmPRrSsUv
 .Op Ar path ...
 .Sh DESCRIPTION
 .Nm
@@ -112,15 +112,17 @@ List the current contents of
 .Pa ld.so.hints
 on the standard output.
 The hints file will not be modified.
+.It Fl S
+Perform prelinking operations in a safe mode; always copies the binaries
+when prelinking data is added to a file.
+Use this to elminate the possibility that
+.Dv ETXTBUSY
+will occur when attempting to run a binary while prelinking
+is running.
 .It Fl s
 Do not scan the built-in system directory
 .Pq Dq /usr/lib
 for shared libraries.
-.It Fl S
-Perform prelinking operations in a safe mode, always copies the binaries
-when prelinking data is added to a file. Use to elminate the possibility
-that ETXTBUSY will occur when attempting to run a binary while prelinking
-is running.
 .It Fl U
 Unconfigure directories specified on the command line or remove inaccessible
 directories from search path if no directories specified.
