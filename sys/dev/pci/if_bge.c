@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.155 2006/06/19 05:11:56 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.156 2006/06/19 05:15:23 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -353,6 +353,8 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5752, "unknown BCM5752" },
 	{ BGE_ASICREV_BCM5780, "unknown BCM5780" },
 	{ BGE_ASICREV_BCM5714, "unknown BCM5714" },
+	{ BGE_ASICREV_BCM5755, "unknown BCM5755" },
+	{ BGE_ASICREV_BCM5787, "unknown BCM5787" },
 
 	{ 0, NULL }
 };
