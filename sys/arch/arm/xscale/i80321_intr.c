@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.6 2006/06/17 20:48:18 drahn Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.7 2006/06/19 05:09:14 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -34,13 +34,13 @@ int		i80321intc_match(struct device *, void *, void *);
 void		i80321intc_attach(struct device *, struct device *, void *);
 
 /* internal functions */
-void		i80321intc_write_intctl(uint32_t mask);
+static void	i80321intc_write_intctl(uint32_t mask);
 void		i80321intc_write_steer(uint32_t mask);
 uint32_t	i80321intc_read_intsrc(void);
 void		i80321intc_calc_mask(void);
 void		i80321intc_init(void);
 void		i80321intc_intr_init(void);
-void		i80321intc_setipl(int new);
+static void	i80321intc_setipl(int new);
 void		i80321intc_do_pending(void);
 
 uint32_t	i80321intc_imask[NIPL];
@@ -77,7 +77,7 @@ i80321intc_attach(struct device *parent, struct device *self, void *args)
 	i80321intc_init();
 }
 
-void
+static inline void
 i80321intc_write_intctl(uint32_t mask)
 {
 	__asm__ volatile ("mcr p6, 0, %0, c0, c0, 0" : : "r" (mask));
@@ -97,7 +97,7 @@ i80321intc_read_intsrc(void)
 	return mask;
 }
 
-void
+static inline void
 i80321intc_setipl(int new)
 {
 	current_ipl_level = new;
@@ -226,8 +226,19 @@ _splraise(int new)
 {
 	int old;
 	old = current_ipl_level;
-	if (new > old)
-		i80321intc_setipl(new);
+
+	/* 
+	 * setipl must always be called because there is a race window
+	 * where the variable is updated before the mask is set
+	 * an interrupt occurs in that window without the mask always
+	 * being set, the hardware might not get updated on the next
+	 * splraise completely messing up spl protection.
+	 */
+	if (old > new)
+		new = old;
+
+	i80321intc_setipl(new);
+
 	return (old);
 }
 
