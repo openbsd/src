@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.58 2006/05/26 00:53:54 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.59 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -79,8 +79,8 @@ void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
 int		mfi_transition_firmware(struct mfi_softc *);
 int		mfi_initialize_firmware(struct mfi_softc *);
 int		mfi_get_info(struct mfi_softc *);
-u_int32_t	mfi_read(struct mfi_softc *, bus_size_t);
-void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
+uint32_t	mfi_read(struct mfi_softc *, bus_size_t);
+void		mfi_write(struct mfi_softc *, bus_size_t, uint32_t);
 int		mfi_poll(struct mfi_ccb *);
 int		mfi_despatch_cmd(struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_ccb *, int);
@@ -102,6 +102,7 @@ int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
 int		mfi_ioctl_alarm(struct mfi_softc *, struct bioc_alarm *);
 int		mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *);
 int		mfi_ioctl_setstate(struct mfi_softc *, struct bioc_setstate *);
+int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 #endif /* NBIO > 0 */
 
 struct mfi_ccb *
@@ -212,10 +213,10 @@ destroy:
 	return (1);
 }
 
-u_int32_t
+uint32_t
 mfi_read(struct mfi_softc *sc, bus_size_t r)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
 	    BUS_SPACE_BARRIER_READ);
@@ -226,7 +227,7 @@ mfi_read(struct mfi_softc *sc, bus_size_t r)
 }
 
 void
-mfi_write(struct mfi_softc *sc, bus_size_t r, u_int32_t v)
+mfi_write(struct mfi_softc *sc, bus_size_t r, uint32_t v)
 {
 	DNPRINTF(MFI_D_RW, "%s: mw 0x%x 0x%08x", DEVNAME(sc), r, v);
 
@@ -1253,17 +1254,30 @@ mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 int
 mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 {
+	struct mfi_conf		*cfg;
+	int			rv = EINVAL;
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_inq\n", DEVNAME(sc));
+
 	if (mfi_get_info(sc)) {
 		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_inq failed\n",
 		    DEVNAME(sc));
 		return (EIO);
 	}
 
+	/* get figures */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+		goto freeme;
+
 	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
-	bi->bi_novol = sc->sc_info.mci_lds_present;
+	bi->bi_novol = cfg->mfc_no_ld + cfg->mfc_no_hs;
 	bi->bi_nodisk = sc->sc_info.mci_pd_disks_present;
 
-	return (0);
+	rv = 0;
+freeme:
+	free(cfg, M_DEVBUF);
+	return (rv);
 }
 
 int
@@ -1288,8 +1302,9 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox))
 		goto done;
 
-	if (bv->bv_volid > sc->sc_ld_list.mll_no_ld) {
-		/* XXX go do hotspares */
+	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
+		/* go do hotspares */
+		rv = mfi_bio_hs(sc, bv->bv_volid, MFI_MGMT_VD, bv);
 		goto done;
 	}
 
@@ -1401,8 +1416,9 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	vol = bd->bd_volid;
 
-	if (vol > cfg->mfc_no_ld) {
-		/* XXX do hotspares */
+	if (vol >= cfg->mfc_no_ld) {
+		/* do hotspares */
+		rv = mfi_bio_hs(sc, bd->bd_volid, MFI_MGMT_SD, bd);
 		goto freeme;
 	}
 
@@ -1422,7 +1438,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 		bd->bd_status = BIOC_SDUNUSED;
 		break;
 
-	case MFI_PD_HOTSPARE:
+	case MFI_PD_HOTSPARE: /* XXX dedicated hotspare part of array? */
 		bd->bd_status = BIOC_SDHOTSPARE;
 		break;
 
@@ -1530,6 +1546,9 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	uint32_t		cmd;
 	struct mfi_pd_list	*pd;
 
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_blink %x\n", DEVNAME(sc),
+	    bb->bb_status);
+
 	/* channel 0 means not in an enclosure so can't be blinked */
 	if (bb->bb_channel == 0)
 		return (EINVAL);
@@ -1552,14 +1571,14 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 
 	memset(mbox, 0, sizeof mbox);
 
+	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
+
 	switch (bb->bb_status) {
 	case BIOC_SBUNBLINK:
-		*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
 		cmd = MR_DCMD_PD_UNBLINK;
 		break;
 
 	case BIOC_SBBLINK:
-		*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
 		cmd = MR_DCMD_PD_BLINK;
 		break;
 
@@ -1583,6 +1602,166 @@ done:
 int
 mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 {
-	return (ENOTTY); /* XXX not yet */
+	struct mfi_pd_list	*pd;
+	int			i, found, rv = EINVAL;
+	uint8_t			mbox[MFI_MBOX_SIZE];
+	uint32_t		cmd;
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate %x\n", DEVNAME(sc),
+	    bs->bs_status);
+
+	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
+	    MFI_PD_LIST_SIZE, pd, NULL))
+		goto done;
+
+	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
+		if (bs->bs_channel == pd->mpl_address[i].mpa_enc_index &&
+		    bs->bs_target == pd->mpl_address[i].mpa_enc_slot) {
+		    	found = 1;
+			break;
+		}
+
+	if (!found)
+		goto done;
+
+	memset(mbox, 0, sizeof mbox);
+
+	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
+
+	switch (bs->bs_status) {
+	case BIOC_SSONLINE:
+		mbox[2] = MFI_PD_ONLINE;
+		cmd = MD_DCMD_PD_SET_STATE;
+		break;
+
+	case BIOC_SSOFFLINE:
+		mbox[2] = MFI_PD_OFFLINE;
+		cmd = MD_DCMD_PD_SET_STATE;
+		break;
+
+	case BIOC_SSHOTSPARE:
+		mbox[2] = MFI_PD_HOTSPARE;
+		cmd = MD_DCMD_PD_SET_STATE;
+		break;
+/*
+	case BIOC_SSREBUILD:
+		cmd = MD_DCMD_PD_REBUILD;
+		break;
+*/
+	default:
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate invalid "
+		    "opcode %x\n", DEVNAME(sc), bs->bs_status);
+		goto done;
+	}
+
+
+	if (mfi_mgmt(sc, MD_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL, mbox))
+		goto done;
+
+	rv = 0;
+done:
+	free(pd, M_DEVBUF);
+	return (rv);
 }
+
+int
+mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
+{
+	struct mfi_conf		*cfg;
+	struct mfi_hotspare	*hs;
+	struct mfi_pd_details	*pd;
+	struct bioc_disk	*sdhs;
+	struct bioc_vol		*vdhs;
+	struct scsi_inquiry_data *inqbuf;
+	char			vend[8+16+4+1];
+	int			i, rv = EINVAL;
+	uint32_t		size;
+	uint8_t			mbox[MFI_MBOX_SIZE];
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs %d\n", DEVNAME(sc), volid);
+
+	if (!bio_hs)
+		return (EINVAL);
+
+	pd = malloc(sizeof *pd, M_DEVBUF, M_WAITOK);
+
+	/* send single element command to retrieve size for full structure */
+	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+		goto freeme;
+
+	size = cfg->mfc_size;
+	free(cfg, M_DEVBUF);
+
+	/* memory for read config */
+	cfg = malloc(size, M_DEVBUF, M_WAITOK);
+	memset(cfg, 0, size);
+	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+		goto freeme;
+
+	/* calculate offset to hs structure */
+	hs = (struct mfi_hotspare *)(
+	    ((uint8_t *)cfg) + offsetof(struct mfi_conf, mfc_array) +
+	    cfg->mfc_array_size * cfg->mfc_no_array +
+	    cfg->mfc_ld_size * cfg->mfc_no_ld);
+
+	if (volid < cfg->mfc_no_ld)
+		goto freeme; /* not a hotspare */
+
+	if (volid > (cfg->mfc_no_ld + cfg->mfc_no_hs))
+		goto freeme; /* not a hotspare */
+
+	/* offset into hotspare structure */
+	i = volid - cfg->mfc_no_ld;
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs i %d volid %d no_ld %d no_hs %d "
+	    "hs %p cfg %p id %02x\n", DEVNAME(sc), i, volid, cfg->mfc_no_ld,
+	    cfg->mfc_no_hs, hs, cfg, hs[i].mhs_pd.mfp_id);
+
+	/* get pd fields */
+	memset(mbox, 0, sizeof mbox);
+	*((uint16_t *)&mbox) = hs[i].mhs_pd.mfp_id;
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
+	    sizeof *pd, pd, mbox)) {
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs illegal PD\n",
+		    DEVNAME(sc));
+		goto freeme;
+	}
+
+	switch (type) {
+	case MFI_MGMT_VD:
+		vdhs = bio_hs;
+		vdhs->bv_status = BIOC_SVONLINE;
+		vdhs->bv_size = pd->mpd_size;
+		vdhs->bv_level = -1; /* hotspare */
+		vdhs->bv_nodisk = 1;
+		break;
+
+	case MFI_MGMT_SD:
+		sdhs = bio_hs;
+		sdhs->bd_status = BIOC_SDHOTSPARE;
+		sdhs->bd_size = pd->mpd_size;
+		sdhs->bd_channel = pd->mpd_enc_idx;
+		sdhs->bd_target = pd->mpd_enc_slot;
+		inqbuf = (struct scsi_inquiry_data *)&pd->mpd_inq_data;
+		memcpy(vend, inqbuf->vendor, sizeof vend - 1);
+		vend[sizeof vend - 1] = '\0';
+		strlcpy(sdhs->bd_vendor, vend, sizeof(sdhs->bd_vendor));
+		break;
+
+	default:
+		goto freeme;
+	}
+
+	DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs 6\n", DEVNAME(sc));
+	rv = 0;
+freeme:
+	free(pd, M_DEVBUF);
+	free(cfg, M_DEVBUF);
+
+	return (rv);
+}
+
 #endif /* NBIO > 0 */

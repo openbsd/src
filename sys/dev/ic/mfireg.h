@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.23 2006/05/26 00:53:54 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -15,7 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* management interface constants */
+#define MFI_MGMT_VD				0x01
+#define MFI_MGMT_SD				0x02
 
+/* generic constants */
 #define MFI_FRAME_SIZE				64
 #define MFI_SENSE_SIZE				128
 #define MFI_OSTS_INTR_VALID			0x00000002 /* valid interrupt */
@@ -94,6 +98,8 @@
 #define MR_DCMD_CTRL_EVENT_WAIT			0x01040500
 #define MR_DCMD_PD_GET_LIST			0x02010000
 #define MR_DCMD_PD_GET_INFO			0x02020000
+#define MD_DCMD_PD_SET_STATE			0x02030100
+#define MD_DCMD_PD_REBUILD			0x02040100
 #define MR_DCMD_PD_BLINK			0x02070100
 #define MR_DCMD_PD_UNBLINK			0x02070200
 #define MR_DCMD_LD_GET_LIST			0x03010000
@@ -859,7 +865,7 @@ struct mfi_pd_details {
 	u_quad_t		mpd_coerce_size;
 	uint16_t		mpd_enc_id;
 	uint8_t			mpd_enc_idx;
-	uint8_t			mpd_slot;
+	uint8_t			mpd_enc_slot;
 	struct mfi_pd_progress	mpd_progress;
 	uint8_t			mpd_bblock_full;
 	uint8_t			mpd_unusable;
