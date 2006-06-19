@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.66 2006/01/19 03:30:05 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.67 2006/06/19 19:52:04 steven Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -143,7 +143,7 @@
 #define MAXFRAG 	8
 
 /*
- * MAXPATHLEN defines the longest permissable path length after expanding
+ * MAXPATHLEN defines the longest permissible path length after expanding
  * symbolic links. It is used to allocate a temporary buffer from the buffer
  * pool in which to do the name expansion, hence should be a power of two,
  * and must be less than or equal to MAXBSIZE.  MAXSYMLINKS defines the
