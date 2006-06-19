@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.7 2006/04/10 00:57:54 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.8 2006/06/19 14:43:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -151,12 +151,10 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	sc->sensors[APS_SENSOR_XACCEL].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_XACCEL].desc,
 	    sizeof(sc->sensors[APS_SENSOR_XACCEL].desc), "X_ACCEL");
-	sc->sensors[APS_SENSOR_XACCEL].rfact = 1;
 
 	sc->sensors[APS_SENSOR_YACCEL].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_YACCEL].desc,
 	    sizeof(sc->sensors[APS_SENSOR_YACCEL].desc), "Y_ACCEL");
-	sc->sensors[APS_SENSOR_YACCEL].rfact = 1;
 
 	sc->sensors[APS_SENSOR_TEMP1].type = SENSOR_TEMP;
 	snprintf(sc->sensors[APS_SENSOR_TEMP1].desc,
@@ -169,32 +167,26 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	sc->sensors[APS_SENSOR_XVAR].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_XVAR].desc,
 	    sizeof(sc->sensors[APS_SENSOR_XVAR].desc), "X_VAR");
-	sc->sensors[APS_SENSOR_XVAR].rfact = 1;
 
 	sc->sensors[APS_SENSOR_YVAR].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_YVAR].desc,
 	    sizeof(sc->sensors[APS_SENSOR_YVAR].desc), "Y_VAR");
-	sc->sensors[APS_SENSOR_YVAR].rfact = 1;
 
 	sc->sensors[APS_SENSOR_UNK].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_UNK].desc,
 	    sizeof(sc->sensors[APS_SENSOR_UNK].desc), "unknown");
-	sc->sensors[APS_SENSOR_YVAR].rfact = 1;
 
 	sc->sensors[APS_SENSOR_KBACT].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_KBACT].desc,
 	    sizeof(sc->sensors[APS_SENSOR_KBACT].desc), "Keyboard Active");
-	sc->sensors[APS_SENSOR_KBACT].rfact = 1;
 
 	sc->sensors[APS_SENSOR_MSACT].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_MSACT].desc,
 	    sizeof(sc->sensors[APS_SENSOR_MSACT].desc), "Mouse Active");
-	sc->sensors[APS_SENSOR_MSACT].rfact = 1;
 
 	sc->sensors[APS_SENSOR_LIDOPEN].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_LIDOPEN].desc,
 	    sizeof(sc->sensors[APS_SENSOR_LIDOPEN].desc), "Lid Open");
-	sc->sensors[APS_SENSOR_LIDOPEN].rfact = 1;
 
 	/* stop hiding and report to the authorities */
 	for (i = 0; i < sc->numsensors; i++) {

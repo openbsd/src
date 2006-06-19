@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.7 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.8 2006/06/19 14:43:54 kettenis Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -305,7 +305,6 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 
 	for (i = 5; i <= 9; ++i) {
 		sc->sc_data[i].type = SENSOR_VOLTS_DC;
-		sc->sc_data[i].rfact = 1;	/* what is this used for? */
 	}
 	strlcpy(sc->sc_data[5].desc, "VSENS1",
 	    sizeof(sc->sc_data[5].desc));	/* CPU core (2V) */
