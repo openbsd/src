@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.113 2006/06/14 15:14:47 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.114 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -161,8 +161,7 @@ struct cvsroot;
 struct cvs_recursion {
 	void	(*enterdir)(struct cvs_file *);
 	void	(*leavedir)(struct cvs_file *);
-	void	(*local)(struct cvs_file *);
-	void	(*remote)(struct cvs_file *, struct cvsroot *);
+	void	(*fileproc)(struct cvs_file *);
 	int	flags;
 };
 

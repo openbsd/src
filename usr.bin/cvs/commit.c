@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.74 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.75 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -92,8 +92,7 @@ cvs_commit(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.local = cvs_commit_check_conflicts;
-	cr.remote = NULL;
+	cr.fileproc = cvs_commit_check_conflicts;
 	cr.flags = flags;
 
 	if (argc > 0)
@@ -105,7 +104,7 @@ cvs_commit(int argc, char **argv)
 		fatal("%d conflicts found, please correct these first",
 		    conflicts_found);
 
-	cr.local = cvs_commit_local;
+	cr.fileproc = cvs_commit_local;
 	cvs_file_walklist(&files_affected, &cr);
 	cvs_file_freelist(&files_affected);
 

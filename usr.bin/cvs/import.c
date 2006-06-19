@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.52 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.53 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -100,8 +100,7 @@ cvs_import(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.remote = NULL;
-	cr.local = cvs_import_local;
+	cr.fileproc = cvs_import_local;
 	cr.flags = CR_RECURSE_DIRS;
 	cvs_file_run(1, &arg, &cr);
 

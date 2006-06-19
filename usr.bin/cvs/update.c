@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.74 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.75 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -96,8 +96,7 @@ cvs_update(int argc, char **argv)
 
 	cr.enterdir = cvs_update_enterdir;
 	cr.leavedir = cvs_update_leavedir;
-	cr.local = cvs_update_local;
-	cr.remote = NULL;
+	cr.fileproc = cvs_update_local;
 	cr.flags = flags;
 
 	if (argc > 0)

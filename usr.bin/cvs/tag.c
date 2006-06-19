@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.47 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.48 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -108,8 +108,7 @@ cvs_tag(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.local = cvs_tag_local;
-	cr.remote = NULL;
+	cr.fileproc = cvs_tag_local;
 	cr.flags = flags;
 
 	cvs_file_run(argc, argv, &cr);

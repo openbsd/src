@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.160 2006/06/14 20:28:53 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.161 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -323,8 +323,8 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		if (cf->file_type == CVS_DIR) {
 			cvs_file_walkdir(cf, cr);
 		} else {
-			if (cr->local != NULL)
-				cr->local(cf);
+			if (cr->fileproc != NULL)
+				cr->fileproc(cf);
 		}
 
 		cvs_file_free(cf);
@@ -364,8 +364,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	if (cr->enterdir != NULL)
 		cr->enterdir(cf);
 
-	if (cr->local != NULL)
-		cr->local(cf);
+	if (cr->fileproc != NULL)
+		cr->fileproc(cf);
 
 	if (cf->file_status == FILE_SKIP)
 		return;

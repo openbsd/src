@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.53 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.54 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -68,8 +68,7 @@ cvs_remove(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.local = cvs_remove_local;
-	cr.remote = NULL;
+	cr.fileproc = cvs_remove_local;
 	cr.flags = flags;
 
 	if (argc > 0)

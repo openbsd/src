@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.63 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.64 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -71,8 +71,7 @@ cvs_getlog(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.remote = NULL;
-	cr.local = cvs_log_local;
+	cr.fileproc = cvs_log_local;
 	cr.flags = flags;
 
 	if (argc > 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.65 2006/06/16 14:07:42 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.66 2006/06/19 05:05:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -83,8 +83,7 @@ cvs_status(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.local = cvs_status_local;
-	cr.remote = NULL;
+	cr.fileproc = cvs_status_local;
 	cr.flags = flags;
 
 	if (argc > 0)
