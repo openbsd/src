@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.50 2006/03/19 22:00:29 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.51 2006/06/19 20:23:53 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -289,8 +289,8 @@ trap(a0, a1, a2, entry, framep)
 	const unsigned long a0, a1, a2, entry;
 	struct trapframe *framep;
 {
-	register struct proc *p;
-	register int i;
+	struct proc *p;
+	int i;
 	u_int64_t ucode;
 	u_quad_t sticks;
 	int user;
@@ -301,6 +301,7 @@ trap(a0, a1, a2, entry, framep)
 	int typ;
 	union sigval sv;
 	vm_prot_t ftype;
+	unsigned long onfault;
 
 	uvmexp.traps++;
 	p = curproc;
@@ -473,15 +474,22 @@ do_fault:
 			 * argument space is lazy-allocated.
 			 */
 			if (!user && (a0 >= VM_MIN_KERNEL_ADDRESS ||
-			    p == NULL || p->p_addr->u_pcb.pcb_onfault == 0))
+			    p == NULL || p->p_addr->u_pcb.pcb_onfault == 0)) {
+				vm = NULL;
 				map = kernel_map;
-			else {
+			} else {
 				vm = p->p_vmspace;
 				map = &vm->vm_map;
 			}
 	
 			va = trunc_page((vaddr_t)a0);
+			if (p != NULL) {
+				onfault = p->p_addr->u_pcb.pcb_onfault;
+				p->p_addr->u_pcb.pcb_onfault = 0;
+			}
 			rv = uvm_fault(map, va, 0, ftype);
+			if (p != NULL)
+				p->p_addr->u_pcb.pcb_onfault = onfault;
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
