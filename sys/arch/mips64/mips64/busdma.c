@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.9 2006/05/27 00:29:55 krw Exp $ */
+/*	$OpenBSD: busdma.c,v 1.10 2006/06/19 20:26:54 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -483,7 +483,7 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg;
 
 	size = round_page(size);
-	va = uvm_km_valloc(kmem_map, size);
+	va = uvm_km_valloc(kernel_map, size);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -526,7 +526,7 @@ _dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_km_free(kmem_map, (vaddr_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*
