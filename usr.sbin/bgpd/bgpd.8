@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.19 2006/06/17 14:06:09 henning Exp $
+.\" $OpenBSD: bgpd.8,v 1.20 2006/06/19 12:06:24 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -77,13 +77,16 @@ Force
 .Nm
 to do
 .Xr carp 4
-demotion when the
+demotion at startup when the
 .Em demote
 functionality is used.
 Normally,
 .Nm
-will only do demotion when the demotion counter for the group in question
-is already greater than 0.
+will only do demotion at startup when the demotion counter for the group
+in question is already greater than 0.
+.Nm
+will start handling demotion after all sessions with demotion configured for
+the given group have been successfully established.
 At system startup,
 .Xr rc 8
 has the demotion counter for the group

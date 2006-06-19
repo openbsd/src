@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.2 2006/06/17 15:54:32 henning Exp $ */
+/*	$OpenBSD: carp.c,v 1.3 2006/06/19 12:06:24 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -145,6 +145,11 @@ carp_demote_set(char *group, int demote)
 		return (-1);
 
 	c->changed_by += demote;
+
+	/* enable demotion when we return to 0, i. e. all sessions up */
+	if (demote < 0 && c->changed_by == 0)
+		c->do_demote = 1;
+
 	return (0);
 }
 
