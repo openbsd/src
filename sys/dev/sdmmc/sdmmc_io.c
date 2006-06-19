@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.4 2006/06/03 03:01:49 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.5 2006/06/19 21:14:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -162,7 +162,7 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		    CCCR_BUS_WIDTH_1);
 
 		if (sdmmc_read_cis(sf, &sf->cis) != 0) {
-			printf("%s: can't read CIS\n");
+			printf("%s: can't read CIS\n", SDMMCDEVNAME(sc));
 			SET(sf->flags, SFF_ERROR);
 			return 1;
 		}
