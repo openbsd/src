@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.11 2006/05/13 07:49:38 jmc Exp $
+.\"	$OpenBSD: ugen.4,v 1.12 2006/06/19 20:11:45 mbalmer Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ from 0 to
 and for each of these iterating the
 .Fa endpoint_index
 from 0 to
-.Fa interface_desc-*(GtbNumEndpoints .
+.Fa interface_desc-\*(GtbNumEndpoints-1 .
 The
 .Fa config_index
 should be set to
