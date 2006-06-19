@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2005/05/02 18:17:52 grange Exp $ */
+/*	$OpenBSD: clock.c,v 1.17 2006/06/19 15:13:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -73,8 +73,6 @@ struct timecounter cp0_timecounter = {
 	0			/* quality */
 };
 
-#define	SECDAY	(24*SECHOUR)	/* seconds per day */
-#define	SECYR	(365*SECDAY)	/* seconds per common year */
 #define	SECMIN	(60)		/* seconds per minute */
 #define	SECHOUR	(60*SECMIN)	/* seconds per hour */
 

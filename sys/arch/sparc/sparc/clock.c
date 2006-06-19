@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.20 2006/04/16 22:24:44 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.21 2006/06/19 15:13:35 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -787,7 +787,6 @@ statintr(cap)
 #define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
 #define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
-#define	SECDAY		(24 * 60 * 60)
 #define	SECYR		(SECDAY * 365)
 /*
  * should use something like

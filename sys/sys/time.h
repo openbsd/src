@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.22 2006/06/14 19:52:07 otto Exp $	*/
+/*	$OpenBSD: time.h,v 1.23 2006/06/19 15:13:35 deraadt Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ timespec2bintime(struct timespec *ts, struct bintime *bt)
 
 	bt->sec = ts->tv_sec;
 	/* 18446744073 = int(2^64 / 1000000000) */
-	bt->frac = ts->tv_nsec * (uint64_t)18446744073LL; 
+	bt->frac = ts->tv_nsec * (uint64_t)18446744073ULL; 
 }
 
 static __inline void
@@ -221,7 +221,7 @@ timeval2bintime(struct timeval *tv, struct bintime *bt)
 
 	bt->sec = (time_t)tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
-	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
+	bt->frac = tv->tv_usec * (uint64_t)18446744073709ULL;
 }
 
 /*
@@ -311,6 +311,35 @@ int	itimerdecr(struct itimerval *itp, int usec);
 int	settime(struct timespec *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
+
+/*
+ * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
+ */
+struct clock_ymdhms {
+        u_short dt_year;
+        u_char dt_mon;
+        u_char dt_day;
+        u_char dt_wday; /* Day of week */
+        u_char dt_hour;
+        u_char dt_min;
+        u_char dt_sec;
+};
+
+time_t clock_ymdhms_to_secs(struct clock_ymdhms *);
+void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
+/*
+ * BCD to decimal and decimal to BCD.
+ */
+#define FROMBCD(x)      (((x) >> 4) * 10 + ((x) & 0xf))
+#define TOBCD(x)        (((x) / 10 * 16) + ((x) % 10))
+
+/* Some handy constants. */
+#define SECDAY          86400L
+#define SECYR           (SECDAY * 365)
+
+/* Traditional POSIX base year */
+#define POSIX_BASE_YEAR 1970
+
 #else /* !_KERNEL */
 #include <time.h>
 

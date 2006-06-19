@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.148 2006/06/13 03:01:59 gwk Exp $
+#	$OpenBSD: files.i386,v 1.149 2006/06/19 15:13:34 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -161,7 +161,6 @@ file	arch/i386/isa/isa_machdep.c	isabus
 
 # PC clock
 file	arch/i386/isa/clock.c		isabus
-file	dev/clock_subr.c		isabus
 
 # Numeric Processing Extension; Math Co-processor
 device	npx

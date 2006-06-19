@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.377 2006/06/17 19:07:19 damien Exp $
+#	$OpenBSD: files,v 1.378 2006/06/19 15:13:35 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -596,6 +596,7 @@ file isofs/cd9660/cd9660_vnops.c	cd9660
 file isofs/udf/udf_subr.c		udf
 file isofs/udf/udf_vfsops.c		udf
 file isofs/udf/udf_vnops.c		udf
+file kern/clock_subr.c
 file kern/exec_aout.c
 file kern/exec_conf.c
 file kern/exec_ecoff.c

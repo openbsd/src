@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.70 2006/06/16 22:01:30 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.71 2006/06/19 15:13:35 deraadt Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -120,7 +120,6 @@ attach	timer at mainbus, sbus
 device	eeprom
 attach	eeprom at sbus, ebus
 file	arch/sparc64/sparc64/clock.c
-file	dev/clock_subr.c
 
 device	cpu
 attach	cpu at mainbus

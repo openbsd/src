@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.35 2006/05/09 09:40:50 otto Exp $	*/
+/*	$OpenBSD: clock.c,v 1.36 2006/06/19 15:13:35 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
-#include <dev/clock_subr.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>

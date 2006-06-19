@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.h,v 1.3 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: clock_subr.h,v 1.4 2006/06/19 15:13:35 deraadt Exp $	*/
 /*	$NetBSD: clock_subr.h,v 1.2 1997/03/15 18:11:17 is Exp $	*/
 
 /*-
@@ -36,35 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
- */
-struct clock_ymdhms {
-	u_short dt_year;
-	u_char dt_mon;
-	u_char dt_day;
-	u_char dt_wday;	/* Day of week */
-	u_char dt_hour;
-	u_char dt_min;
-	u_char dt_sec;
-};
-
-time_t clock_ymdhms_to_secs(struct clock_ymdhms *);
-void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
-
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-/* Some handy constants. */
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
-
-/* Traditional POSIX base year */
-#define POSIX_BASE_YEAR 1970
 
 /*
  * Interface to time-of-day clock devices.

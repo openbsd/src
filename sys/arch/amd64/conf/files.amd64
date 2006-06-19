@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.23 2006/05/29 01:06:26 matthieu Exp $
+#	$OpenBSD: files.amd64,v 1.24 2006/06/19 15:13:34 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -55,7 +55,6 @@ file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 
 # Basic clock - required
 file	arch/amd64/isa/clock.c
-file	dev/clock_subr.c
 
 file	arch/amd64/amd64/powernow-k8.c
 

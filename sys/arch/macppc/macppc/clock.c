@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.17 2006/06/19 15:13:35 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -57,7 +57,6 @@ static u_int32_t ns_per_tick = 320;
 static int32_t ticks_per_intr;
 static volatile u_int64_t lasttb;
 
-#define SECDAY          (24 * 60 * 60)
 #define SECYR           (SECDAY * 365)
 
 time_read_t  *time_read;

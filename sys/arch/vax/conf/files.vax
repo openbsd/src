@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.33 2006/01/17 20:26:16 miod Exp $
+#	$OpenBSD: files.vax,v 1.34 2006/06/19 15:13:35 deraadt Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -309,7 +309,6 @@ file	arch/vax/uba/dh.c			dh needs-flag
 
 # These are general files needed for compilation.
 file	dev/cninit.c
-file	dev/clock_subr.c	vax8200|vax410|vax43|vax630|vax660|vax670|vax680|vax46|vax48|vax49|vax53
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c

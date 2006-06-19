@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.28 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.29 2006/06/19 15:13:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -169,7 +169,6 @@ microtime(tvp)
 #define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
 #define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
-#define	SECDAY		(24 * 60 * 60)
 #define	SECYR		(SECDAY * 365)
 #define	LEAPYEAR(y)	(((y) & 3) == 0)
 
