@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.158 2006/06/20 06:54:56 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.159 2006/06/20 07:04:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2708,7 +2708,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->bge_link || ifp->if_snd.ifq_len < 10)
+	if (!sc->bge_link || IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
