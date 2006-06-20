@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.8 2006/06/19 16:27:17 mbalmer Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.9 2006/06/20 14:06:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -44,7 +44,7 @@ void	nmeaattach(int);
 #define NMEAMAX	82
 #define MAXFLDS	16
 
-int nmea_count = 0;
+int nmea_count;
 
 struct nmea {
 	char		cbuf[NMEAMAX];
@@ -89,7 +89,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 	np->time.flags = SENSOR_FINVALID;
 	sensor_add(&np->time);
 	tp->t_sc = (caddr_t)np;
-	
+
 	error = linesw[TTYDISC].l_open(dev, tp);
 	if (error) {
 		free(np, M_DEVBUF);
@@ -146,14 +146,8 @@ nmeainput(int c, struct tty *tp)
 void
 nmea_scan(struct nmea *np, struct tty *tp)
 {
-	char *fld[MAXFLDS];
-	char *cs;
-	int fldcnt;
-	int cksum, msgcksum;
-	int n;
-
-	fldcnt = 0;
-	cksum = 0;
+	int fldcnt = 0, cksum = 0, msgcksum, n;
+	char *fld[MAXFLDS], *cs;
 
 	/* split into fields and calc checksum */
 	fld[fldcnt++] = &np->cbuf[0];	/* message type */
@@ -340,16 +334,10 @@ nmea_date_to_nano(char *s, int64_t *nano)
 int
 nmea_time_to_nano(char *s, int64_t *nano)
 {
-	long fac, div;
-	long secs, frac;
+	long fac = 36000L, div = 6L, secs = 0L, frac;
+	char ul = '2';
 	int n;
-	char ul;
 
-	fac = 36000L;
-	div = 6L;
-	secs = 0L;
-
-	ul = '2';
 	for (n = 0, secs = 0; fac && *s && *s >= '0' && *s <= ul; s++, n++) {
 		secs += (*s - '0') * fac;
 		div = 16 - div;
