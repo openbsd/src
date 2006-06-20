@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2006/06/16 23:04:49 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2006/06/20 20:31:04 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -873,9 +873,9 @@ remap_data:
 	/* 
 	 * Calculate approx TSB size.  This probably needs tweaking.
 	 */
-	if (physmem < 64 * 1024 * 1024)
+	if (physmem < atop(64 * 1024 * 1024))
 		tsbsize = 0;
-	else if (physmem < 512 * 1024 * 1024)
+	else if (physmem < atop(512 * 1024 * 1024))
 		tsbsize = 1;
 	else
 		tsbsize = 2;
