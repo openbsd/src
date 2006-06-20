@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.44 2006/06/17 16:29:11 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.45 2006/06/20 20:40:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1716,11 +1716,11 @@ ok:
 		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
 			pmapdebug = opmapdebug;
 
-		if (!(*ste & SG_V))
+		if (*ste & SG_V)
 			printf("collect: kernel STE at %p still valid (%x)\n",
 			       ste, *ste);
 		ste = &Sysptmap[ste - pmap_ste(pmap_kernel(), 0)];
-		if (!(*ste & SG_V))
+		if (*ste & SG_V)
 			printf("collect: kernel PTmap at %p still valid (%x)\n",
 			       ste, *ste);
 #endif
