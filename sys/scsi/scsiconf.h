@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.65 2006/05/31 19:43:56 jason Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.66 2006/06/20 00:58:56 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -163,11 +163,11 @@ struct scsi_link {
 	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
-	u_int64_t port_wwn;
-	u_int64_t node_wwn;
+	u_int16_t openings;		/* available operations */
+	u_int64_t port_wwn;		/* world wide name of port */
+	u_int64_t node_wwn;		/* world wide name of node */
 	u_int16_t adapter_target;	/* what are we on the scsi bus */
 	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
-	u_int16_t openings;		/* available operations */
 	u_int16_t active;		/* operations in progress */
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x0001	/* media is removable */
