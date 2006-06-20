@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.101 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: machdep.c,v 1.102 2006/06/20 14:06:01 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -620,8 +620,8 @@ nobootinfo:
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
 #if 0
-	printf("totalphysmem = %d\n", totalphysmem);
-	printf("physmem = %d\n", physmem);
+	printf("totalphysmem = %u\n", totalphysmem);
+	printf("physmem = %u\n", physmem);
 	printf("resvmem = %d\n", resvmem);
 	printf("unusedmem = %d\n", unusedmem);
 	printf("unknownmem = %d\n", unknownmem);
@@ -892,17 +892,17 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("total memory = %ld (%ldK)\n", (long)ptoa(totalphysmem),
-	    (long)ptoa(totalphysmem) / 1024);
-	printf("(%ld reserved for PROM, ", (long)ptoa(resvmem));
-	printf("%ld used by OpenBSD)\n", (long)ptoa(physmem));
+	printf("total memory = %ld (%ldK)\n", ptoa((u_long)totalphysmem),
+	    ptoa((u_long)totalphysmem) / 1024);
+	printf("(%ld reserved for PROM, ", ptoa((u_long)resvmem));
+	printf("%ld used by OpenBSD)\n", ptoa((u_long)physmem));
 	if (unusedmem) {
 		printf("WARNING: unused memory = %ld (%ldK)\n",
-		    (long)ptoa(unusedmem), (long)ptoa(unusedmem) / 1024);
+		    ptoa((u_long)unusedmem), ptoa((u_long)unusedmem) / 1024);
 	}
 	if (unknownmem) {
 		printf("WARNING: %ld (%ldK) of memory with unknown purpose\n",
-		    (long)ptoa(unknownmem), (long)ptoa(unknownmem) / 1024);
+		    ptoa((u_long)unknownmem), ptoa((u_long)unknownmem) / 1024);
 	}
 
 	/*
