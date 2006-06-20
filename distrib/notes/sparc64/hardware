@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.115 2006/05/23 19:46:10 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.116 2006/06/20 18:56:41 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -8,6 +8,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Enterprise 250
 	Enterprise 420R
 	Enterprise 450
+	Enterprise 4000/5000/6000
 	Enterprise 4500/5500
 	Netra T1 100/105
 	Netra T1 AC200/DC200
