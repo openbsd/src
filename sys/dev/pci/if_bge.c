@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.156 2006/06/19 05:15:23 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.157 2006/06/20 03:45:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -266,14 +266,18 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
 
 #define BGE_IS_575X_PLUS(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
 
 #define BGE_IS_5714_FAMILY(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
