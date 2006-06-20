@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2005/04/26 18:54:39 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2006/06/20 20:31:32 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -442,12 +442,12 @@ clockattach(node, bt, bh)
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 	hostid = h;
-	printf(": hostid %x\n", (u_int)hostid);
-
+	printf("\n");
 }
 
 struct idprom *
-getidprom() {
+getidprom()
+{
 	struct idprom *idp = NULL;
 	int node, n;
 
