@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.157 2006/06/20 03:45:22 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.158 2006/06/20 06:54:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1582,7 +1582,7 @@ bge_blockinit(struct bge_softc *sc)
  	} else {
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
-		    sc->bge_chipid != BGE_CHIPID_BCM5700_B1)
+		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
@@ -2708,7 +2708,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->bge_link && ifp->if_snd.ifq_len < 10)
+	if (!sc->bge_link || ifp->if_snd.ifq_len < 10)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
