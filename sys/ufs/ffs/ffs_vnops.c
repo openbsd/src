@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.37 2006/03/31 12:33:33 pedro Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.38 2006/06/21 10:01:10 mickey Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ ffs_fsync(void *v)
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
-		softdep_fsync_mountdev(vp);
+		softdep_fsync_mountdev(vp, ap->a_waitfor);
 
 	/*
 	 * Flush all dirty buffers associated with a vnode.

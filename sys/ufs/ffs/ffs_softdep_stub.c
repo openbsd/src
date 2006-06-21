@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep_stub.c,v 1.13 2006/06/19 22:52:23 miod Exp $	*/
+/*	$OpenBSD: ffs_softdep_stub.c,v 1.14 2006/06/21 10:01:10 mickey Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -162,7 +162,7 @@ softdep_update_inodeblock(struct inode *ip, struct buf *bp, int waitfor)
 #endif
 
 void
-softdep_fsync_mountdev(struct vnode *vp)
+softdep_fsync_mountdev(struct vnode *vp, int waitfor)
 {
 	return;
 }

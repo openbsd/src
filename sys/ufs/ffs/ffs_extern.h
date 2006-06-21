@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.28 2006/03/31 12:19:42 pedro Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.29 2006/06/21 10:01:10 mickey Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ void  softdep_setup_allocindir_meta(struct buf *, struct inode *,
             struct buf *, int, daddr_t);
 void  softdep_setup_allocindir_page(struct inode *, ufs_lbn_t,
             struct buf *, int, daddr_t, daddr_t, struct buf *);
-void  softdep_fsync_mountdev(struct vnode *);
+void  softdep_fsync_mountdev(struct vnode *, int);
 int   softdep_sync_metadata(struct vop_fsync_args *);
 int   softdep_fsync(struct vnode *);
 __END_DECLS

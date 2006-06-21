@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.69 2006/06/07 10:51:43 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.70 2006/06/21 10:01:10 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4664,8 +4664,9 @@ softdep_fsync(vp)
  * the number of dependencies that will have to be rolled back.
  */
 void
-softdep_fsync_mountdev(vp)
+softdep_fsync_mountdev(vp, waitfor)
 	struct vnode *vp;
+	int waitfor;
 {
 	struct buf *bp, *nbp;
 	struct worklist *wk;
@@ -4705,7 +4706,8 @@ softdep_fsync_mountdev(vp)
 		 */
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
-	drain_output(vp, 1);
+	if (waitfor == MNT_WAIT)
+		drain_output(vp, 1);
 	FREE_LOCK(&lk);
 }
 
