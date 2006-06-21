@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.4 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: frame.h,v 1.5 2006/06/21 20:52:18 jason Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2001/03/04 09:28:35 mrg Exp $ */
 
 /*
@@ -53,21 +53,6 @@
  * windows to the stack.
  */
 #ifndef _LOCORE
-#ifndef SUN4U
-struct frame {
-	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
-	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
-	struct	frame *fr_fp;	/* space to save frame pointer (%i6) */
-	int32_t	fr_pc;		/* space to save return pc (%i7) */
-	/*
-	 * SunOS reserves another 8 words here; this is pointless
-	 * but we do it for compatibility.
-	 */
-	int32_t	fr_xxx;		/* `structure return pointer' (unused) */
-	int32_t	fr_argd[6];	/* `arg dump area' (lunacy) */
-	int32_t	fr_argx[1];	/* arg extension (args 7..n; variable size) */
-};
-#else
 struct frame32 {
 	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
@@ -81,7 +66,6 @@ struct frame32 {
 	int32_t	fr_argd[6];	/* `arg dump area' (lunacy) */
 	int32_t	fr_argx[1];	/* arg extension (args 7..n; variable size) */
 };
-#endif
 #endif
 
 /*
