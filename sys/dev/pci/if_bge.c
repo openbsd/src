@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.160 2006/06/21 17:21:41 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.161 2006/06/21 19:11:01 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2233,13 +2233,13 @@ bge_rxeof(struct bge_softc *sc)
 			sumflags |= M_IPV4_CSUM_IN_OK;
 		else
 			sumflags |= M_IPV4_CSUM_IN_BAD;
-#if 0
+
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
 			m->m_pkthdr.csum_data =
 				cur_rx->bge_tcp_udp_csum;
 			m->m_pkthdr.csum_flags |= CSUM_DATA_VALID;
 		}
-#endif
+
 		m->m_pkthdr.csum_flags = sumflags;
 		sumflags = 0;
 #endif
@@ -2478,8 +2478,8 @@ bge_stats_update(struct bge_softc *sc)
 int
 bge_compact_dma_runt(struct mbuf *pkt)
 {
-	struct mbuf	*m, *prev;
-	int 		totlen, prevlen;
+	struct mbuf	*m, *prev, *n = NULL;
+	int 		totlen, prevlen, newprevlen;
 
 	prev = NULL;
 	totlen = 0;
@@ -2538,49 +2538,34 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			if ((prev->m_len - shortfall) < 8)
 				shortfall = prev->m_len;
 
-#ifdef notyet	/* just do the safe slow thing for now */
-			if (!M_READONLY(m)) {
-				if (M_LEADINGSPACE(m) < shorfall) {
-					void *m_dat;
+			newprevlen = prev->m_len - shortfall;
 
-					m_dat = (m->m_flags & M_PKTHDR) ?
-					    m->m_pktdat : m->dat;
-					memmove(m_dat, mtod(m, void*), m->m_len);
-					m->m_data = m_dat;
-				}
-			} else
-#endif	/* just do the safe slow thing */
-			{
-				struct mbuf * n = NULL;
-				int newprevlen = prev->m_len - shortfall;
+			MGET(n, M_NOWAIT, MT_DATA);
+			if (n == NULL)
+				return (ENOBUFS);
+			KASSERT(m->m_len + shortfall < MLEN
+				/*,
+				  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
 
-				MGET(n, M_NOWAIT, MT_DATA);
-				if (n == NULL)
-					return (ENOBUFS);
-				KASSERT(m->m_len + shortfall < MLEN
-					/*,
-					  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
+			/* first copy the data we're stealing from prev */
+			bcopy(prev->m_data + newprevlen, n->m_data, shortfall);
 
-				/* first copy the data we're stealing from prev */
-				bcopy(prev->m_data + newprevlen, n->m_data, shortfall);
+			/* update prev->m_len accordingly */
+			prev->m_len -= shortfall;
 
-				/* update prev->m_len accordingly */
-				prev->m_len -= shortfall;
+			/* copy data from runt m */
+			bcopy(m->m_data, n->m_data + shortfall, m->m_len);
 
-				/* copy data from runt m */
-				bcopy(m->m_data, n->m_data + shortfall, m->m_len);
+			/* n holds what we stole from prev, plus m */
+			n->m_len = shortfall + m->m_len;
 
-				/* n holds what we stole from prev, plus m */
-				n->m_len = shortfall + m->m_len;
-
-				/* stitch n into chain and free m */
-				n->m_next = m->m_next;
-				prev->m_next = n;
-				/* KASSERT(m->m_next == NULL); */
-				m->m_next = NULL;
-				m_free(m);
-				m = n;	/* for continuing loop */
-			}
+			/* stitch n into chain and free m */
+			n->m_next = m->m_next;
+			prev->m_next = n;
+			/* KASSERT(m->m_next == NULL); */
+			m->m_next = NULL;
+			m_free(m);
+			m = n;	/* for continuing loop */
 		}
 		prevlen = m->m_len;
 	}
@@ -2718,25 +2703,6 @@ bge_start(struct ifnet *ifp)
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
-
-		/*
-		 * XXX
-		 * safety overkill.  If this is a fragmented packet chain
-		 * with delayed TCP/UDP checksums, then only encapsulate
-		 * it if we have enough descriptors to handle the entire
-		 * chain at once.
-		 * (paranoia -- may not actually be needed)
-		 */
-#ifdef fake
-		if (m_head->m_flags & M_FIRSTFRAG &&
-		    m_head->m_pkthdr.csum_flags & (CSUM_DELAY_DATA)) {
-			if ((BGE_TX_RING_CNT - sc->bge_txcnt) <
-			    m_head->m_pkthdr.csum_data + 16) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
-		}
-#endif
 
 		/*
 		 * Pack the data into the transmit ring. If we
