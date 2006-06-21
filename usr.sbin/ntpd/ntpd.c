@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.43 2006/06/17 18:40:42 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.44 2006/06/21 07:42:00 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -137,6 +137,7 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_chld) == -1)
 		fatal("socketpair");
 
+	signal(SIGCHLD, sighdlr);
 	/* fork child process */
 	chld_pid = ntp_main(pipe_chld, &conf);
 
@@ -144,7 +145,6 @@ main(int argc, char *argv[])
 
 	signal(SIGTERM, sighdlr);
 	signal(SIGINT, sighdlr);
-	signal(SIGCHLD, sighdlr);
 	signal(SIGHUP, sighdlr);
 
 	close(pipe_chld[1]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.87 2006/06/17 18:40:42 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.88 2006/06/21 07:42:00 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,6 +139,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	signal(SIGINT, ntp_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
+	signal(SIGCHLD, SIG_DFL);
 
 	close(pipe_prnt[0]);
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
