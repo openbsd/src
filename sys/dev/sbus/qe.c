@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.19 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: qe.c,v 1.20 2006/06/21 18:08:47 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -521,9 +521,6 @@ qestop(sc)
 	bus_space_handle_t cr = sc->sc_cr;
 	int n;
 
-#if defined(SUN4U) || defined(__GNUC__)
-	(void)&t;
-#endif
 	/* Stop the schwurst */
 	bus_space_write_1(t, mr, QE_MRI_BIUCC, QE_MR_BIUCC_SWRST);
 	for (n = 200; n > 0; n--) {
@@ -582,9 +579,6 @@ qeintr(arg)
 	u_int32_t qecstat, qestat;
 	int r = 0;
 
-#if defined(SUN4U) || defined(__GNUC__)
-	(void)&t;
-#endif
 	/* Read QEC status and channel status */
 	qecstat = bus_space_read_4(t, sc->sc_qr, QEC_QRI_STAT);
 #ifdef QEDEBUG
@@ -1013,9 +1007,6 @@ qeinit(sc)
 	u_int8_t *ea;
 	int s;
 
-#if defined(SUN4U) || defined(__GNUC__)
-	(void)&t;
-#endif
 	s = splnet();
 
 	qestop(sc);
@@ -1122,10 +1113,6 @@ qe_mcreset(sc)
 	u_int16_t hash[4];
 	u_int8_t octet, maccc, *ladrp = (u_int8_t *)&hash[0];
 	int i, j;
-
-#if defined(SUN4U) || defined(__GNUC__)
-	(void)&t;
-#endif
 
 	/* We also enable transmitter & receiver here */
 	maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV;
