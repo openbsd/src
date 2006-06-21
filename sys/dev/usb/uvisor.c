@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.25 2006/03/27 09:29:01 jsg Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.26 2006/06/21 01:23:05 jsg Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -176,6 +176,7 @@ struct uvisor_type {
 #define CLIE4	(VISOR|NOFRE)
 };
 static const struct uvisor_type uvisor_devs[] = {
+	{{ USB_VENDOR_ACEECA, USB_PRODUCT_ACEECA_MEZ1000 }, PALM4 },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, VISOR },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO }, PALM4 },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO600 }, VISOR },
