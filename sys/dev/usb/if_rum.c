@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.2 2006/06/17 20:17:12 jolan Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.3 2006/06/21 13:04:10 jsg Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -81,8 +81,14 @@ int rum_debug = 0;
 
 /* various supported device vendors/products */
 static const struct usb_devno rum_devs[] = {
-	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2573 },
-	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050A }
+	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050A },
+	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GC },
+	{ USB_VENDOR_CONCEPTRONIC2,	USB_PRODUCT_CONCEPTRONIC2_C54RU2 },
+	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
+	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
+	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_WUA1340 },
+	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWB01GS },
+	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2573 }
 };
 
 int		rum_alloc_tx_list(struct rum_softc *);
