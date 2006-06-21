@@ -1,4 +1,4 @@
-/* $Id: if_zydreg.h,v 1.1 2006/06/21 18:45:11 deraadt Exp $ */
+/*	$OpenBSD: if_zydreg.h,v 1.2 2006/06/21 18:52:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 /*
  * ZyDAS ZD1211 USB WLAN driver
  */
@@ -28,7 +28,7 @@
  * - EEPROM register space (16-bit registers)
  * - Firmware register space (16-bit registers)
  *
- * I'll use the masks and type constants below to handle 
+ * I'll use the masks and type constants below to handle
  * register filtering in code (require different treatment).
  */
 
@@ -39,7 +39,7 @@ enum zyd_masks {
 
 enum zyd_ranges {
 	ZYD_RANGE_USB	= 0x10000, /* Range: USB */
-	ZYD_RANGE_CTL	= 0x20000, /* Range: Control */ 
+	ZYD_RANGE_CTL	= 0x20000, /* Range: Control */
 	ZYD_RANGE_E2P	= 0x40000, /* Range: EEPROM */
 	ZYD_RANGE_FW	= 0x80000  /* Range: Firmware */
 };
@@ -54,7 +54,7 @@ enum zyd_ranges {
 /* Mask register offset (kick the range off) */
 #define ZYD_GET_OFFS(addr) \
 	(ZYD_MASK_NORM & ((uint32_t)(addr) & ZYD_MASK_ADDR_OFFS))
-	
+
 /* Combine range and offset */
 #define ZYD_BUILDCOMBO(range, offs) \
 	(ZYD_GET_RANGE(range) | ZYD_GET_OFFS(offs))
@@ -71,7 +71,7 @@ enum zyd_ranges {
 #define ZYD_CR_ENABLE_PS_MANUAL_AGC	ZYD_REG_CTL(0x43C)
 #define ZYD_CR_CONFIG_PHILIPS		ZYD_REG_CTL(0x440)
 #define ZYD_CR_SA2400_SER_AP		ZYD_REG_CTL(0x444)
-#define ZYD_CR_I2C_WRITE		ZYD_REG_CTL(0x444)	
+#define ZYD_CR_I2C_WRITE		ZYD_REG_CTL(0x444)
 #define ZYD_CR_SA2400_SER_RP		ZYD_REG_CTL(0x448)
 #define ZYD_CR_RADIO_PE			ZYD_REG_CTL(0x458)
 #define ZYD_CR_RST_BUS_MASTER		ZYD_REG_CTL(0x45C)
@@ -88,7 +88,7 @@ enum zyd_ranges {
 #define ZYD_CR_ADDA_MBIAS_WARMTIME	ZYD_REG_CTL(0x508)
 #define ZYD_CR_INTERRUPT		ZYD_REG_CTL(0x510)
 #define ZYD_CR_MAC_PS_STATE		ZYD_REG_CTL(0x50C)
- 
+
 /*
  * Following three values are in time units (1024us)
  * Following condition must be met:
@@ -100,7 +100,7 @@ enum zyd_ranges {
 
 /*
  * MAC registers
- */ 
+ */
 #define ZYD_MAC_MACADDRL	ZYD_REG_CTL(0x610) /* MAC address (low) */
 #define ZYD_MAC_MACADDRH	ZYD_REG_CTL(0x614) /* MAC address (high) */
 #define ZYD_MAC_BSSADRL		ZYD_REG_CTL(0x618) /* BSS address (low) */
@@ -220,7 +220,7 @@ enum zyd_ranges {
 #define ZYD_FIRMDOWN_REQ	0x40 /* Firmware dl request type */
 #define ZYD_FIRMDOWN_ID		0x30 /* Firmware dl ID */
 #define ZYD_FIRMSTAT_REQ	0xC0 /* Firmware stat query type */
-#define ZYD_FIRMSTAT_ID		0x31 /* Firmware stat query ID */ 
+#define ZYD_FIRMSTAT_ID		0x31 /* Firmware stat query ID */
 
 /*
  * Firmware uploader - status
@@ -289,7 +289,7 @@ enum zyd_ranges {
 #define ZYD_RF_REG_BITS		6
 #define ZYD_RF_VALUE_BITS	18
 #define ZYD_RF_RV_BITS		ZYD_RF_REG_BITS + ZYD_RF_VALUE_BITS
- 
+
 /*
  * Various
  */
@@ -332,11 +332,11 @@ enum zyd_ranges {
 
 #define ZYD_CR9		ZYD_REG_CTL(0x0024)
 /*	bit 2: antenna switch (together with ZYD_CR10) */
-#define ZYD_CR10  	ZYD_REG_CTL(0x0028)
+#define ZYD_CR10	ZYD_REG_CTL(0x0028)
 /*	bit 1: antenna switch (together with ZYD_CR9)
  *	RF2959 controls with ZYD_CR11 radion on and off
  */
-#define ZYD_CR11  	ZYD_REG_CTL(0x002C)
+#define ZYD_CR11	ZYD_REG_CTL(0x002C)
 /*	bit 6:  TX power control for OFDM
  *	RF2959 controls with ZYD_CR10 radio on and off
  */
@@ -588,7 +588,7 @@ enum zyd_ranges {
 /*
  * Device configurations and types
  */
- 
+
 struct zyd_type {
 	uint16_t vid;
 	uint16_t pid;
@@ -612,7 +612,7 @@ struct zyd_type zyd_devs[] = {
 	{ 0x2019, 0xc007 }, /* Planex GW-US54GZL */
 	{ 0x5173, 0x1809 }, /* Sweex wireless USB 54 Mbps */
 	{ 0x6891, 0xa727 }, /* 3COM 3CRUSB10075 */
-	{ }	
+	{ }
 };
 
 static const char *zyd_rfs[] = {
@@ -640,7 +640,7 @@ struct zyd_channel_range {
 	uint8_t end; /* exclusive (channel must be less than end) */
 };
 
-/* 
+/*
  * Blows size up (132 bytes, but not that smaller than extra
  * mapping code, so ...
  */
@@ -660,11 +660,11 @@ static const struct zyd_channel_range zyd_channel_ranges[] = {
  * Supported rates for 802.11b/g modes (in 500Kbps unit).
  */
 static const struct ieee80211_rateset zyd_rateset_11b = {
-	4, { 2, 4, 11, 22 } 
+	4, { 2, 4, 11, 22 }
 };
 
-static const struct ieee80211_rateset zyd_rateset_11g =	{ 
-	8, { 12, 18, 24, 36, 48, 72, 96, 108 } 
+static const struct ieee80211_rateset zyd_rateset_11g =	{
+	8, { 12, 18, 24, 36, 48, 72, 96, 108 }
 };
 
 /*
@@ -674,7 +674,7 @@ static const struct ieee80211_rateset zyd_rateset_11g =	{
 /*
  * Driver internal
  */
- 
+
 enum zyd_operationmode {
 	OM_NONEYET		= 0,
 	OM_ADHOC		= 1,
@@ -721,14 +721,14 @@ enum zyd_stohostflags {
 
 /*
  * Control set format
- */ 
+ */
 enum zyd_controlsetformatrate {
 	/*  MBPS rates for Direct Sequence Spread Spectrum */
 	CSF_RT_CCK_1	= 0x00,
 	CSF_RT_CCK_2	= 0x01,
 	CSF_RT_CCK_5_5	= 0x02,
 	CSF_RT_CCK_11	= 0x03,
-	
+
 	/* MBPS rates for Orthogonal Frequency Division Multiplexing */
 	CSF_RT_OFDM_6	= 0x0b,
 	CSF_RT_OFDM_9	= 0x0f,
@@ -828,15 +828,15 @@ enum zyd_rxstatusreportframestaterrind {
 /*
  * Structures
  */
- 
+
 struct zyd_controlsetformat {
 	uint8_t rate		:4;
 	uint8_t modulationtype	:1;
 	uint8_t preamble	:1;
 	uint8_t reserved	:2;
-	
+
 	uint16_t txlen;
-	
+
 	uint8_t needbackoff	:1;
 	uint8_t multicast	:1;
 	uint8_t frametype	:2;
@@ -844,7 +844,7 @@ struct zyd_controlsetformat {
 	uint8_t rts		:1;
 	uint8_t encryption	:1;
 	uint8_t selfcts		:1;
-	
+
 	uint16_t packetlength;
 	uint16_t currentlength;
 	uint8_t service;
@@ -856,7 +856,7 @@ struct zyd_rxstatusreport {
 	uint8_t signalqualitycck;
 	uint8_t signalqualityofdm;
 	uint8_t decryptiontype;
-	
+
 	uint8_t modulationtype	:1;
 	uint8_t rxerrorreason	:6;
 	uint8_t errorindication	:1;
@@ -919,7 +919,7 @@ struct zyd_intinsingle
 	uWord sts2;
 	uWord sts3;
 	uWord sts4;
-	uWord sts5;	
+	uWord sts5;
 } UPACKED;
 
 /* Int/bulk OUT interface @ EP 4 (single register access) */
@@ -948,7 +948,7 @@ struct zyd_intinmultioutput {
 /* Int/bulk OUT interface @ EP 4 (multi register access) read */
 struct zyd_intoutmultiread {
 	uWord id;
-	uWord addr[15];	
+	uWord addr[15];
 } UPACKED;
 
 /* Int/bulk OUT interface @ EP 4 (multi register access) write */
@@ -1055,16 +1055,16 @@ struct zyd_softc {
 	USBBASEDEVICE zyd_dev;
 	struct ieee80211com sc_ic;
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
-	
+
 	/* Interrupt related */
 	int pending;
-   	struct clist q_reply; /* queue for register read replies */
+	struct clist q_reply; /* queue for register read replies */
 	uint8_t *ibuf;
 	struct selinfo rsel;
-	
+
 	/* Device state */
 	enum ieee80211_state sc_state;
-	
+
 	/* Command to device (for usb task) */
 	enum zyd_cmd sc_cmd;
 
@@ -1079,7 +1079,7 @@ struct zyd_softc {
 	/* Calibration tables */
 	uint8_t pwr_cal_values[ZYD_E2P_CHANNEL_COUNT];
 	uint8_t pwr_int_values[ZYD_E2P_CHANNEL_COUNT];
-	uint8_t ofdm_cal_values[3][ZYD_E2P_CHANNEL_COUNT];	
+	uint8_t ofdm_cal_values[3][ZYD_E2P_CHANNEL_COUNT];
 
 	/* USB stuff */
 	struct usb_task sc_task;
@@ -1087,11 +1087,11 @@ struct zyd_softc {
 	usbd_interface_handle zyd_iface;
 	int zyd_ed[ZYD_ENDPT_CNT];
 	usbd_pipe_handle zyd_ep[ZYD_ENDPT_CNT];
-	
+
 	/* Ethernet stuff */
 /*	struct ethercom zyd_ec;*/
 	struct ifmedia zyd_media;
-	
+
 	/* TX/RX */
 	struct zyd_rx_data rx_data[ZYD_RX_LIST_CNT];
 	struct zyd_tx_data tx_data[ZYD_TX_LIST_CNT];
@@ -1101,11 +1101,11 @@ struct zyd_softc {
 	int zyd_if_flags;
 
 	struct timeval zyd_rx_notice;
-		
+
 	struct timeout scan_ch;
-	
+
 	int tx_timer;
-	
+
 	/* WLAN specific */
 	enum zyd_operationmode zyd_operation;
 	uint8_t zyd_bssid[ETHER_ADDR_LEN];
