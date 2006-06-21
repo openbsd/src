@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.18 2006/05/28 00:04:24 jason Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.19 2006/06/21 07:15:58 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -608,7 +608,7 @@ ixgb_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
-	ifmr->ifm_active |= IFM_1000_SX | IFM_FDX;
+	ifmr->ifm_active |= IFM_10G_SR | IFM_FDX;
 
 	return;
 }
@@ -1047,9 +1047,9 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	 */
 	ifmedia_init(&sc->media, IFM_IMASK, ixgb_media_change,
 		     ixgb_media_status);
-	ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_SX | IFM_FDX,
+	ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR | IFM_FDX,
 		    0, NULL);
-	ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_SX,
+	ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR,
 		    0, NULL);
 	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);

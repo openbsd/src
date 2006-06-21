@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.24 2006/06/09 19:09:41 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.25 2006/06/21 07:15:58 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -555,8 +555,8 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ifmedia_init(&sc->xena_media, IFM_IMASK, xge_xgmii_mediachange,
 	    xge_ifmedia_status);
-	ifmedia_add(&sc->xena_media, IFM_ETHER|IFM_1000_SX, 0, NULL);
-	ifmedia_set(&sc->xena_media, IFM_ETHER|IFM_1000_SX);
+	ifmedia_add(&sc->xena_media, IFM_ETHER|IFM_10G_SR, 0, NULL);
+	ifmedia_set(&sc->xena_media, IFM_ETHER|IFM_10G_SR);
 
 	ifp = &sc->sc_arpcom.ac_if;
 	strlcpy(ifp->if_xname, XNAME, IFNAMSIZ);
@@ -604,7 +604,7 @@ xge_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	uint64_t reg;
 
 	ifmr->ifm_status = IFM_AVALID;
-	ifmr->ifm_active = IFM_ETHER|IFM_1000_SX;
+	ifmr->ifm_active = IFM_ETHER|IFM_10G_SR;
 
 	reg = PIF_RCSR(ADAPTER_STATUS);
 	if ((reg & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)	
