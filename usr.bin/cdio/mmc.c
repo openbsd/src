@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.11 2006/06/15 23:49:58 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.12 2006/06/21 21:53:36 mjc Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -217,10 +217,15 @@ writetrack(struct track_info *tr)
 			read(tr->fd, databuf, nblk * tr->blklen);
 			scr.cmd[8] = nblk;
 			scr.datalen = nblk * tr->blklen;
+again:
 			r = ioctl(fd, SCIOCCOMMAND, &scr);
 			if (r != 0) {
 				warn("ioctl failed while attempting to write");
 				return (-1);
+			}
+			if (scr.retsts == SCCMD_SENSE && scr.sense[2] == 0x2) {
+				usleep(1000);
+				goto again;
 			}
 			if (scr.retsts != SCCMD_OK) {
 				warnx("ioctl returned bad status while "
