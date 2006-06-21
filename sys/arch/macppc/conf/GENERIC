@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.141 2006/06/16 14:25:17 pedro Exp $g
+#	$OpenBSD: GENERIC,v 1.142 2006/06/21 22:10:38 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -273,7 +273,7 @@ adc*		at iic?
 tsl*		at iic?
 admtmp*		at iic?
 pcagpio*	at iic?
-gpio*		at pcagpio?
+#gpio*		at pcagpio?
 maxds*		at iic?
 fcu*		at iic?
 adt*		at iic?
