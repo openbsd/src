@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.13 2003/07/03 17:49:17 avsm Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.14 2006/06/21 19:57:42 jasper Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.13 2003/07/03 17:49:17 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: getNAME.c,v 1.14 2006/06/21 19:57:42 jasper Exp $";
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ again:
 	if (*dp)
 		dp++;
 	while (*dp)
-		putchar (*dp++);
+		putchar(*dp++);
 	putchar(')');
 	putchar(' ');
 }
@@ -341,12 +341,13 @@ again:
 	if (*dp)
 		dp++;
 	while (*dp)
-		putchar (*dp++);
+		putchar(*dp++);
 }
 
-void
+static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: getNAME [-itw] file ...\n");
+	extern char *__progname;
+	(void)fprintf(stderr, "usage: %s [-itw] file ...\n", __progname);
 	exit(1);
 }
