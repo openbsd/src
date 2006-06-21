@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.28 2006/03/31 03:59:40 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.29 2006/06/21 16:20:05 mickey Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.28 2006/03/31 03:59:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.29 2006/06/21 16:20:05 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -228,7 +228,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	if (KREAD(kd, addr, &anon))
 		return (NULL);
 
-	addr = (u_long)anon.u.an_page;
+	addr = (u_long)anon.an_page;
 	if (addr) {
 		if (KREAD(kd, addr, &pg))
 			return (NULL);

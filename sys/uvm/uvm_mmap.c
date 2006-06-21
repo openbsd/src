@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.60 2006/04/06 20:58:06 kurt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.61 2006/06/21 16:20:05 mickey Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ sys_mincore(p, v, retval)
 				anon = amap_lookup(&entry->aref,
 				    start - entry->start);
 				/* Don't need to lock anon here. */
-				if (anon != NULL && anon->u.an_page != NULL) {
+				if (anon != NULL && anon->an_page != NULL) {
 					/*
 					 * Anon has the page for this entry
 					 * offset.
@@ -1197,7 +1197,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
-		uvm_unmap_p(map, *addr, *addr + size, p);	/* zap! */
+		uvm_unmap(map, *addr, *addr + size);	/* zap! */
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.20 2003/12/08 22:19:57 mickey Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.21 2006/06/21 16:20:05 mickey Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ uvm_loananon(ufi, output, flags, anon)
 	 */
 	if (flags & UVM_LOAN_TOANON) {
 		simple_lock(&anon->an_lock);
-		pg = anon->u.an_page;
+		pg = anon->an_page;
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1)
 			/* read protect it */
 			pmap_page_protect(pg, VM_PROT_READ);
@@ -379,7 +379,7 @@ uvm_loananon(ufi, output, flags, anon)
 	 * we have the page and its owner locked: do the loan now.
 	 */
 
-	pg = anon->u.an_page;
+	pg = anon->an_page;
 	uvm_lock_pageq();
 	if (pg->loan_count == 0)
 		pmap_page_protect(pg, VM_PROT_READ);
@@ -584,7 +584,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return(-1);
 	}
-	anon->u.an_page = pg;
+	anon->an_page = pg;
 	pg->uanon = anon;
 	uvm_lock_pageq();
 	if (pg->loan_count == 0)
