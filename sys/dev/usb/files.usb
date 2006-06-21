@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.58 2006/06/16 22:30:46 niallo Exp $
+#	$OpenBSD: files.usb,v 1.59 2006/06/21 18:45:11 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -246,6 +246,11 @@ file	dev/usb/if_ral.c		ural
 device	rum: ether, ifnet, ifmedia, wlan
 attach	rum at uhub
 file	dev/usb/if_rum.c		rum
+
+# Zydas ZD1211
+device	zyd: ether, ifnet, ifmedia, wlan
+attach	zyd at uhub
+file	dev/usb/if_zyd.c		zyd
 
 # Analog Devices Eagle driver
 device	ueagle: atm, ifnet, ezload, firmload
