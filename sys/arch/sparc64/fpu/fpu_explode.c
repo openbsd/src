@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.3 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.4 2006/06/21 19:24:38 jason Exp $	*/
 /*	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -102,7 +102,6 @@ fpu_itof(fp, i)
 	return (FPC_NUM);
 }
 
-#ifdef SUN4U
 /*
  * 64-bit int -> fpn.
  */
@@ -127,7 +126,6 @@ fpu_xtof(fp, i)
 	fpu_norm(fp);
 	return (FPC_NUM);
 }
-#endif /* SUN4U */
 
 #define	mask(nbits) ((1L << (nbits)) - 1)
 
@@ -244,24 +242,20 @@ fpu_explode(fe, fp, type, reg)
 	int type, reg;
 {
 	register u_int s, *space;
-#ifdef SUN4U
 	u_int64_t l, *xspace;
 
 	xspace = (u_int64_t *)&fe->fe_fpstate->fs_regs[reg & ~1];
 	l = xspace[0];
-#endif /* SUN4U */
 	space = &fe->fe_fpstate->fs_regs[reg];
 	s = space[0];
 	fp->fp_sign = s >> 31;
 	fp->fp_sticky = 0;
 	DPRINTF(FPE_INSN, ("fpu_explode: "));
 	switch (type) {
-#ifdef SUN4U
 	case FTYPE_LNG:
 		DPRINTF(FPE_INSN, ("LNG: %llx", l));
 		s = fpu_xtof(fp, l);
 		break;
-#endif /* SUN4U */
 
 	case FTYPE_INT:
 		DPRINTF(FPE_INSN, ("INT: %x", s));

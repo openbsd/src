@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.5 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.6 2006/06/21 19:24:38 jason Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -230,7 +230,6 @@ fpu_ftoi(fe, fp)
 	return (0x7fffffff + sign);
 }
 
-#ifdef SUN4U
 /*
  * fpn -> extended int (high bits of int value returned as return value).
  *
@@ -286,7 +285,6 @@ out:
 	res[1] = i & 0xffffffff;
 	return (i >> 32);
 }
-#endif /* SUN4U */
 
 /*
  * fpn -> single (32 bit single returned as return value).
@@ -507,12 +505,10 @@ fpu_implode(fe, fp, type, space)
 	DPRINTF(FPE_INSN, ("fpu_implode: "));
 	switch (type) {
 
-#ifdef SUN4U
 	case FTYPE_LNG:
 		space[0] = fpu_ftox(fe, fp, space);
 		DPRINTF(FPE_INSN, ("LNG %x %x\n", space[0], space[1]));
 		break;
-#endif /* SUN4U */
 
 	case FTYPE_INT:
 		space[0] = fpu_ftoi(fe, fp);

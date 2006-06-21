@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.11 2006/05/14 21:58:05 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.12 2006/06/21 19:24:38 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -189,11 +189,7 @@ fpu_fcopy(src, dst, type)
 void
 fpu_cleanup(p, fs)
 	register struct proc *p;
-#ifndef SUN4U
-	register struct fpstate *fs;
-#else /* SUN4U */
 	register struct fpstate64 *fs;
-#endif /* SUN4U */
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
@@ -222,14 +218,12 @@ fpu_cleanup(p, fs)
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
-#ifdef SUN4U
 		if (fs->fs_qsize == 0) {
 			printf("fpu_cleanup: unfinished fpop");
 			/* The book says reexecute or emulate. */
 			return;
 		}
 		break;
-#endif /* SUN4U */
 	case FSR_TT_UNIMP:
 		if (fs->fs_qsize == 0)
 			panic("fpu_cleanup: unimplemented fpop");
