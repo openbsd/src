@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.9 2006/06/20 14:06:21 deraadt Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.10 2006/06/21 06:24:50 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -49,8 +49,9 @@ int nmea_count;
 struct nmea {
 	char		cbuf[NMEAMAX];
 	struct sensor	time;
-	struct timespec	ts;
-	int64_t		last;			/* last time rcvd */
+	struct timespec	ts;		/* soft timestamp */
+	struct timeval	tv;		/* tty timestamp */
+	int64_t		last;		/* last time rcvd */
 	int		sync;
 	int		pos;
 };
@@ -119,8 +120,21 @@ nmeainput(int c, struct tty *tp)
 
 	switch (c) {
 	case '$':
-		/* capture the moment */
+		/*
+		 * capture the moment, take a soft timestamp in any case,
+		 * it is possible that tty timestamping has been requested
+		 * but device device does not privide a PPS signal.  In this
+		 * case we use the soft timestamp later.
+		 */
 		nanotime(&np->ts);
+#ifdef NMEA_TSTAMP
+		/* if a tty timestamp is available, copy it now */
+		if (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
+		    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR)) {
+			np->tv.tv_sec = tp->t_tv.tv_sec;
+			np->tv.tv_usec = tp->t_tv.tv_usec;
+		}
+#endif
 		np->pos = 0;
 		np->sync = 0;
 		break;
@@ -242,10 +256,10 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	 */
 	if (tp->t_flags & (TS_TSTAMPDCDSET | TS_TSTAMPDCDCLR |
 	    TS_TSTAMPCTSSET | TS_TSTAMPCTSCLR)) {
-		np->time.value = tp->t_tv.tv_sec + 1000000000LL +
-		    tp->t_tv.tv_usec * 1000LL - nmea_now;
-		np->time.tv.tv_sec = tp->t_tv.tv_sec;
-		np->time.tv.tv_usec = tp->t_tv.tv_usec;
+		np->time.value = np->tv.tv_sec + 1000000000LL +
+		    np->tv.tv_usec * 1000LL - nmea_now;
+		np->time.tv.tv_sec = np->tv.tv_sec;
+		np->time.tv.tv_usec = np->tv.tv_usec;
 	} else {
 #endif
 		np->time.value = np->ts.tv_sec * 1000000000LL +
