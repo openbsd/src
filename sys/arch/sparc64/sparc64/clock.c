@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.24 2006/06/20 20:31:32 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.25 2006/06/21 22:28:56 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -573,7 +573,10 @@ timermatch(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp("counter-timer", ma->ma_name) == 0);
+	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr)
+		return (strcmp("counter-timer", ma->ma_name) == 0);
+	else
+		return (0);
 }
 
 static void
@@ -709,7 +712,6 @@ cpu_initclocks()
 	 */
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
-
 		printf("No counter-timer -- using %%tick at %ldMHz as "
 		    "system clock.\n", (long)(cpu_clockrate/1000000));
 		/* We don't have a counter-timer -- use %tick */
