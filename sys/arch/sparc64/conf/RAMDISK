@@ -1,9 +1,7 @@
-#	$OpenBSD: RAMDISK,v 1.50 2005/11/15 01:12:49 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.51 2006/06/21 19:28:08 jason Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
-
-option		SUN4U
 
 # maxusers means mostly "let's get small" in terms of kernel malloc's
 maxusers	2
