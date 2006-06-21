@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2006/06/07 19:13:08 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.83 2006/06/21 21:53:32 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -194,6 +194,7 @@ u_long	_randseed;
 extern	caddr_t msgbufaddr;
 
 int sparc_led_blink;
+int kbd_reset;
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -544,6 +545,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, ceccerrs));
 	case CPU_CECCLAST:
 		return (sysctl_rdquad(oldp, oldlenp, newp, cecclast));
+	case CPU_KBDRESET:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp, kbd_reset));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &kbd_reset));
 	default:
 		return (EOPNOTSUPP);
 	}

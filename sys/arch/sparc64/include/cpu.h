@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2006/02/22 22:17:07 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2006/06/21 21:53:32 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -52,7 +52,8 @@
 #define	CPU_CPUTYPE		4	/* cpu type */
 #define	CPU_CECCERRORS		5	/* Correctable ECC errors */
 #define	CPU_CECCLAST		6	/* Correctable ECC last fault addr */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
+#define	CPU_KBDRESET		7	/* soft reset via keyboard */
+#define	CPU_MAXID		8	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
@@ -62,6 +63,7 @@
 	{ "cputype", CTLTYPE_INT },		\
 	{ "ceccerrs", CTLTYPE_INT },		\
 	{ "cecclast", CTLTYPE_QUAD },		\
+	{ "kbdreset", CTLTYPE_INT },		\
 }
 
 #ifdef _KERNEL
