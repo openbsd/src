@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.13 2006/05/30 15:09:18 mickey Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.14 2006/06/21 09:50:52 mickey Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -78,8 +78,8 @@ struct pool		ufsdirhash_pool;
 #define	DIRHASHLIST_UNLOCK()
 #define	DIRHASH_LOCK(dh)
 #define	DIRHASH_UNLOCK(dh)
-#define	DIRHASH_BLKALLOC_WAITOK()	pool_get(&ufsdirhash_pool, PR_WAITOK)
-#define	DIRHASH_BLKFREE(v)		pool_put(&ufsdirhash_pool, v)
+#define	DIRHASH_BLKALLOC()	pool_get(&ufsdirhash_pool, PR_NOWAIT)
+#define	DIRHASH_BLKFREE(v)	pool_put(&ufsdirhash_pool, v)
 
 #define	mtx_assert(l, f)	/* nothing */
 #define DIRHASH_ASSERT(e, m)	KASSERT((e))
@@ -182,7 +182,7 @@ ufsdirhash_build(struct inode *ip)
 		goto fail;
 	memset(dh->dh_hash, 0, narrays * sizeof(dh->dh_hash[0]));
 	for (i = 0; i < narrays; i++) {
-		if ((dh->dh_hash[i] = DIRHASH_BLKALLOC_WAITOK()) == NULL)
+		if ((dh->dh_hash[i] = DIRHASH_BLKALLOC()) == NULL)
 			goto fail;
 		for (j = 0; j < DH_NBLKOFF; j++)
 			dh->dh_hash[i][j] = DIRHASH_EMPTY;
