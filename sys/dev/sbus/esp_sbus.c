@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.18 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.19 2006/06/21 22:25:17 miod Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -178,8 +178,7 @@ espattach_sbus(struct device *parent, struct device *self, void *aux)
 	sc->sc_id = getpropint(sa->sa_node, "initiator-id", 7);
 	sc->sc_freq = getpropint(sa->sa_node, "clock-frequency", -1);
 	if (sc->sc_freq < 0)
-		sc->sc_freq = ((struct sbus_softc *)
-		    sc->sc_dev.dv_parent)->sc_clockfreq;
+		sc->sc_freq = sa->sa_frequency;
 
 #ifdef ESP_SBUS_DEBUG
 	printf("%s: espattach_sbus: sc_id %d, freq %d\n",
