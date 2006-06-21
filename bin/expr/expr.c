@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.16 2005/11/12 00:49:55 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.17 2006/06/21 18:28:24 deraadt Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -494,6 +494,10 @@ main(int argc, char *argv[])
 	struct val     *vp;
 
 	(void) setlocale(LC_ALL, "");
+
+	if (argc > 1 && !strcmp(argv[1], "--"))
+		argv++;
+
 	av = argv + 1;
 
 	nexttoken(0);
