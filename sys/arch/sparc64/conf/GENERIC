@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.148 2006/06/21 19:28:08 jason Exp $
+#	$OpenBSD: GENERIC,v 1.149 2006/06/21 22:55:38 jason Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -177,6 +177,7 @@ udcf*	at uhub?		# Gude Expert mouseCLOCK
 auxio*	at ebus?
 auxio*	at sbus?
 beeper*	at ebus?
+power*	at ebus?
 
 # SAB82532 based serial ports
 sab*	at ebus?

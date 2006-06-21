@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.2 2006/06/16 22:21:22 jason Exp $	*/
+/*	$OpenBSD: power.c,v 1.3 2006/06/21 22:55:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -37,6 +37,8 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/timeout.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -113,23 +115,23 @@ power_attach(parent, self, aux)
 
 	if (ea->ea_nintrs > 0 && OF_getproplen(ea->ea_node, "button") >= 0) {
 	        sc->sc_ih = bus_intr_establish(sc->sc_tag, ea->ea_intrs[0],
-		    IPL_HIGH, 0, power_intr, sc, self->dv_xname);
+		    IPL_BIO, 0, power_intr, sc, self->dv_xname);
 		if (sc->sc_ih == NULL) {
 			printf(": can't establish interrupt\n");
 			return;
 		}
 	}
-
 	printf("\n");
 }
 
 int
 power_intr(void *vsc)
 {
-	/*
-	 * to turn the machine off:
-	 *	bus_space_write_4(sc->sc_tag, sc->sc_handle, POWER_REG,
-	 *	    POWER_REG_CPWR_OFF | POWER_REG_SPWR_OFF);
-	 */
+	extern int kbd_reset;
+
+	if (kbd_reset == 1) {
+		kbd_reset = 0;
+		psignal(initproc, SIGUSR1);
+	}
 	return (1);
 }
