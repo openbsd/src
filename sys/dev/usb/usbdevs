@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.200 2006/05/13 20:32:52 matthieu Exp $
+$OpenBSD: usbdevs,v 1.201 2006/06/21 01:21:14 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -463,6 +463,7 @@ vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
+vendor ACEECA		0x4766	Aceeca
 vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec
 vendor ZINWELL		0x5a57	Zinwell
@@ -510,6 +511,9 @@ product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
 product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
+
+/* Aceeca products */
+product ACEECA MEZ1000		0x0001	MEZ1000 RDA
 
 /* Acer Labs products */
 product ACERLABS M5632		0x5632	USB 2.0 Data Link
