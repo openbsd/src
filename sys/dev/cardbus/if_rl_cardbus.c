@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.12 2006/06/17 17:58:17 brad Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.13 2006/06/21 11:27:03 fkr Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -170,10 +170,6 @@ rl_cardbus_attach(parent, self, aux)
 #ifdef RL_USEIOSPACE
 	if (Cardbus_mapreg_map(ct, RL_PCI_LOIO, CARDBUS_MAPREG_TYPE_IO, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_cben = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RL_PCI_LOIO;
@@ -182,10 +178,6 @@ rl_cardbus_attach(parent, self, aux)
 #else
 	if (Cardbus_mapreg_map(ct, RL_PCI_LOMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RL_PCI_LOMEM;

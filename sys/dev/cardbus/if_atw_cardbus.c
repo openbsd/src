@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.12 2005/09/24 09:09:15 jsg Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.13 2006/06/21 11:27:03 fkr Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -179,10 +179,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		printf(": atw_cardbus_attach mapped %d bytes mem space\n%s",
 		    csc->sc_mapsize, sc->sc_dev.dv_xname);
 #endif
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_MMBA;
@@ -193,10 +189,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 #if 0
 		printf(": atw_cardbus_attach mapped %d bytes I/O space\n%s",
 		    csc->sc_mapsize, sc->sc_dev.dv_xname);
-#endif
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
 		csc->sc_cben = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;

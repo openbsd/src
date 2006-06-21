@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.h,v 1.5 2006/06/08 22:38:40 fkr Exp $ */
+/*	$OpenBSD: rbus.h,v 1.6 2006/06/21 11:27:03 fkr Exp $ */
 /*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 /*
  * Copyright (c) 1999
@@ -69,8 +69,6 @@
 
 /* require sys/extent.h */
 /* require machine/bus.h */
-
-#define rbus 1
 
 struct extent;
 

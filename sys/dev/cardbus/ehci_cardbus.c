@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.5 2005/12/30 04:11:40 dlg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.6 2006/06/21 11:27:03 fkr Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -130,10 +130,6 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ct = ct;
 	sc->sc.sc_bus.dmatag = ca->ca_dmat;
 
-#if rbus
-#else
-XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
-#endif
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 

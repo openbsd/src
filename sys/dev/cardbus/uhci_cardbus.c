@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.2 2005/12/30 04:01:18 dlg Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.3 2006/06/21 11:27:03 fkr Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,10 +118,6 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ct = ct;
 	sc->sc.sc_bus.dmatag = ca->ca_dmat;
 
-#if rbus
-#else
-XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
-#endif
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 

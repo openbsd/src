@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.15 2004/10/07 21:16:59 brad Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.16 2006/06/21 11:27:03 fkr Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -242,10 +242,6 @@ xl_cardbus_attach(parent, self, aux)
 	iob = adr;
 	sc->xl_bhandle = ioh;
 
-#if rbus
-#else
-	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
-#endif
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 
 	command = cardbus_conf_read(cc, cf, ca->ca_tag,

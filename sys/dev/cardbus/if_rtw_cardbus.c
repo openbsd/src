@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.9 2005/09/08 12:44:56 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.10 2006/06/21 11:27:03 fkr Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -237,10 +237,6 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %lu bytes mem space\n",
 		     sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize));
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RTW_PCI_MMBA;
@@ -251,10 +247,6 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %lu bytes I/O space\n",
 		     sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize));
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_cben = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RTW_PCI_IOBA;

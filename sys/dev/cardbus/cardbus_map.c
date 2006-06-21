@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.5 2005/09/13 18:44:38 fgsch Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.6 2006/06/21 11:27:03 fkr Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -228,9 +228,7 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg,
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	bus_space_tag_t bustag;
-#if rbus
 	rbus_tag_t rbustag;
-#endif
 	bus_space_handle_t handle;
 	bus_addr_t base;
 	bus_size_t size;
@@ -248,20 +246,15 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg,
 		    &flags))
 			status = 1;
 		bustag = sc->sc_iot;
-#if rbus
 		rbustag = sc->sc_rbus_iot;
-#endif
 	} else {
 		if (cardbus_mem_find(cc, cf, tag, reg, type, &base, &size,
 		    &flags))
 			status = 1;
 		bustag = sc->sc_memt;
-#if rbus
 		rbustag = sc->sc_rbus_memt;
-#endif
 	}
 	if (status == 0) {
-#if rbus
 		bus_addr_t mask = size - 1;
 		if (base != 0)
 			mask = 0xffffffff;
@@ -269,18 +262,6 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg,
 		    size, busflags | flags, &base, &handle)) {
 			panic("io alloc");
 		}
-#else
-		bus_addr_t start = 0x8300;
-		bus_addr_t end = 0x8400;
-		if (base != 0) {
-			bus_addr_t start = base;
-			bus_addr_t end = base + size;
-		}
-		if (bus_space_alloc(bustag, start, end, size, size, 0, 0,
-		    &base, &handle)) {
-			panic("io alloc");
-		}
-#endif
 	}
 	cardbus_conf_write(cc, cf, tag, reg, base);
 
@@ -320,7 +301,6 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg,
 	cardbus_function_tag_t cf = sc->sc_cf;
 	int st = 1;
 	cardbustag_t cardbustag;
-#if rbus
 	rbus_tag_t rbustag;
 
 	if (sc->sc_iot == tag) {
@@ -333,15 +313,12 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg,
 		rbustag = sc->sc_rbus_memt;
 	} else
 		return (1);
-#endif
 
 	cardbustag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
 
 	cardbus_conf_write(cc, cf, cardbustag, reg, 0);
 
-#if rbus
 	(*cf->cardbus_space_free)(cc, rbustag, handle, size);
-#endif
 
 	cardbus_free_tag(cc, cf, cardbustag);
 

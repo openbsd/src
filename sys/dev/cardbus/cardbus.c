@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.32 2005/12/07 12:42:16 fgsch Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.33 2006/06/21 11:27:03 fkr Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -127,11 +127,8 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = cba->cba_dmat;	/* DMA tag */
 	sc->sc_cc = cba->cba_cc;
 	sc->sc_cf = cba->cba_cf;
-
-#if rbus
 	sc->sc_rbus_iot = cba->cba_rbus_iot;
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
-#endif
 
 	sc->sc_funcs = NULL;
 
@@ -510,12 +507,8 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		ca.ca_iot = sc->sc_iot;
 		ca.ca_memt = sc->sc_memt;
 		ca.ca_dmat = sc->sc_dmat;
-
-#if rbus
 		ca.ca_rbus_iot = sc->sc_rbus_iot;
 		ca.ca_rbus_memt = sc->sc_rbus_memt;
-#endif
-
 		ca.ca_tag = tag;
 		ca.ca_bus = sc->sc_bus;
 		ca.ca_device = sc->sc_device;

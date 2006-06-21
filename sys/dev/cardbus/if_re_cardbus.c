@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.4 2006/06/17 17:58:17 brad Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.5 2006/06/21 11:27:03 fkr Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -132,10 +132,6 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (Cardbus_mapreg_map(ct, RL_PCI_LOMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RL_PCI_LOMEM;

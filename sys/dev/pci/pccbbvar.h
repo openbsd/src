@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.10 2006/04/02 23:29:05 brad Exp $	*/
+/*	$OpenBSD: pccbbvar.h,v 1.11 2006/06/21 11:27:03 fkr Exp $	*/
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -120,10 +120,8 @@ struct pccbb_softc {
 	bus_space_tag_t sc_memt;
 	bus_dma_tag_t sc_dmat;
 
-#if rbus
 	rbus_tag_t sc_rbus_iot;		/* rbus for i/o donated from parent */
 	rbus_tag_t sc_rbus_memt;	/* rbus for mem donated from parent */
-#endif
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
