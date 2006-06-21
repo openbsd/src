@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.20 2005/08/10 15:10:35 claudio Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.21 2006/06/21 07:08:41 brad Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -180,6 +180,9 @@ int	ifmedia_baudrate(int);
 #define	IFM_1000_T	16		/* 1000baseT - 4 pair cat 5 */
 #define	IFM_1000_TX	IFM_1000_T	/* for backwards compatibility */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
+#define	IFM_10G_LR	18		/* 10GBase-LR - single-mode fiber */
+#define	IFM_10G_SR	19		/* 10GBase-SR - multi-mode fiber */
+#define	IFM_10G_CX4	20		/* 10GBase-CX4 - copper */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 
@@ -419,6 +422,15 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_T,		"1000TX" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
+	{ IFM_ETHER|IFM_10G_LR,		"10GbaseLR" },			\
+	{ IFM_ETHER|IFM_10G_LR,		"10GLR" },			\
+	{ IFM_ETHER|IFM_10G_LR,		"10GBASE-LR" },			\
+	{ IFM_ETHER|IFM_10G_SR,		"10GbaseSR" },			\
+	{ IFM_ETHER|IFM_10G_SR,		"10GSR" },			\
+	{ IFM_ETHER|IFM_10G_SR,		"10GBASE-SR" },			\
+	{ IFM_ETHER|IFM_10G_CX4,	"10GbaseCX4" },			\
+	{ IFM_ETHER|IFM_10G_CX4,	"10GCX4" },			\
+	{ IFM_ETHER|IFM_10G_CX4,	"10GBASE-CX4" },		\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
@@ -544,6 +556,9 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_1000_T,		IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
+	{ IFM_ETHER|IFM_10G_LR,		IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_10G_SR,		IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_10G_CX4,	IF_Mbps(1000) },		\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN|IFM_TOK_STP16,	IF_Mbps(16) },			\
