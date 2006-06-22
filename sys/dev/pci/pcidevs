@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1077 2006/06/21 17:21:40 brad Exp $
+$OpenBSD: pcidevs,v 1.1078 2006/06/22 05:17:16 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1306,8 +1306,8 @@ product DLINK DWL610		0x3300	DWL-610
 product DLINK DGE550T		0x4000	DGE-550T
 product DLINK DGE528T		0x4300	DGE-528T
 product DLINK DGE560T		0x4b00	DGE-560T
-product DLINK DGE560T_2		0x4b01	DGE-560T_2
-product DLINK DGE530T		0x4c00	DGE-530T
+product DLINK DGE530T_B1	0x4b01	DGE-530T B1
+product DLINK DGE530T_A1	0x4c00	DGE-530T A1
 
 /* Distributed Processing Technology products */
 product DPT MEMCTLR		0x1012	Memory Control
