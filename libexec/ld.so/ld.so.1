@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.10 2006/05/04 01:55:00 drahn Exp $
+.\"	$OpenBSD: ld.so.1,v 1.11 2006/06/22 09:11:23 mk Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -182,10 +182,10 @@ When set, be verbose about what
 .Nm
 does.
 .Pp
-.It Ev LD_NOPREBIND=
+.It Ev LD_NOPREBIND
 When set, ignore any prebind data associated with the program or libraries.
 .Pp
-.It Ev LD_PREBINDVALIDATE=
+.It Ev LD_PREBINDVALIDATE
 When set, perform symbol relocation of the given binary and the associated
 libraries, compare the results against the prebind values, then exit.
 .El
