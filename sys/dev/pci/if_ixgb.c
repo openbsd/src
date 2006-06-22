@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.19 2006/06/21 07:15:58 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.20 2006/06/22 04:57:28 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -44,7 +44,7 @@ int             ixgb_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char ixgb_driver_version[] = "5.0.1";
+char ixgb_driver_version[] = "6.0.5";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -608,7 +608,11 @@ ixgb_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
-	ifmr->ifm_active |= IFM_10G_SR | IFM_FDX;
+	if ((sc->hw.phy_type == ixgb_phy_type_g6104) ||
+	    (sc->hw.phy_type == ixgb_phy_type_txn17401))
+		ifmr->ifm_active |= IFM_10G_LR | IFM_FDX;
+	else
+		ifmr->ifm_active |= IFM_10G_SR | IFM_FDX;
 
 	return;
 }
@@ -919,7 +923,8 @@ ixgb_identify_hardware(struct ixgb_softc *sc)
 		break;
 	default:
 		INIT_DEBUGOUT1("Unknown device if 0x%x", sc->hw.device_id);
-		printf("%s: unsupported device id 0x%x\n", sc->sc_dv.dv_xname, sc->hw.device_id);
+		printf("%s: unsupported device id 0x%x\n",
+		    sc->sc_dv.dv_xname, sc->hw.device_id);
 	}
 }
 
@@ -1047,10 +1052,14 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	 */
 	ifmedia_init(&sc->media, IFM_IMASK, ixgb_media_change,
 		     ixgb_media_status);
-	ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR | IFM_FDX,
-		    0, NULL);
-	ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR,
-		    0, NULL);
+	if ((sc->hw.phy_type == ixgb_phy_type_g6104) ||
+	    (sc->hw.phy_type == ixgb_phy_type_txn17401)) {
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_LR |
+		    IFM_FDX, 0, NULL);
+	} else {
+		ifmedia_add(&sc->media, IFM_ETHER | IFM_10G_SR |
+		    IFM_FDX, 0, NULL);
+	}
 	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);
 
@@ -1318,7 +1327,8 @@ ixgb_transmit_checksum_setup(struct ixgb_softc *sc,
 			ENET_HEADER_SIZE + sizeof(struct ip) +
 			offsetof(struct udphdr, uh_sum);
 	}
-	TXD->cmd_type_len = htole32(IXGB_CONTEXT_DESC_CMD_TCP | IXGB_TX_DESC_CMD_RS | IXGB_CONTEXT_DESC_CMD_IDE);
+	TXD->cmd_type_len = htole32(IXGB_CONTEXT_DESC_CMD_TCP |
+	    IXGB_TX_DESC_CMD_RS | IXGB_CONTEXT_DESC_CMD_IDE);
 
 	tx_buffer->m_head = NULL;
 
