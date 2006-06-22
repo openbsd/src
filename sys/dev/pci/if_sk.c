@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.115 2006/06/22 05:18:20 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.116 2006/06/22 23:06:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -574,23 +574,22 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 {
 	struct sk_chain_data	*cd = &sc_if->sk_cdata;
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
-	int			i;
+	int			i, nexti;
 
 	bzero((char *)rd->sk_rx_ring,
 	    sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
 		cd->sk_rx_chain[i].sk_desc = &rd->sk_rx_ring[i];
-		if (i == (SK_RX_RING_CNT - 1)) {
-			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[0];
-			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if, 0);
-		} else {
-			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[i + 1];
-			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if,i+1);
-		}
-		rd->sk_rx_ring[i].sk_csum1_start = ETHER_HDR_LEN;
-		rd->sk_rx_ring[i].sk_csum2_start = ETHER_HDR_LEN +
-		    sizeof(struct ip);
+		if (i == (SK_RX_RING_CNT - 1))
+			nexti = 0;
+		else
+			nexti = i + 1;
+		cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[nexti];
+		rd->sk_rx_ring[i].sk_next = htole32(SK_RX_RING_ADDR(sc_if, nexti));
+		rd->sk_rx_ring[i].sk_csum1_start = htole16(ETHER_HDR_LEN);
+		rd->sk_rx_ring[i].sk_csum2_start = htole16(ETHER_HDR_LEN +
+		    sizeof(struct ip));
 	}
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -616,7 +615,7 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	bus_dmamap_t		dmamap;
 	struct sk_txmap_entry	*entry;
-	int			i;
+	int			i, nexti;
 
 	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
 	    sizeof(struct sk_tx_desc) * SK_TX_RING_CNT);
@@ -624,13 +623,12 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 	SIMPLEQ_INIT(&sc_if->sk_txmap_head);
 	for (i = 0; i < SK_TX_RING_CNT; i++) {
 		cd->sk_tx_chain[i].sk_desc = &rd->sk_tx_ring[i];
-		if (i == (SK_TX_RING_CNT - 1)) {
-			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[0];
-			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if, 0);
-		} else {
-			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[i + 1];
-			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if,i+1);
-		}
+		if (i == (SK_TX_RING_CNT - 1))
+			nexti = 0;
+		else
+			nexti = i + 1;
+		cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[nexti];
+		rd->sk_tx_ring[i].sk_next = htole32(SK_TX_RING_ADDR(sc_if, nexti));
 
 		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
 		   SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap))
@@ -697,10 +695,10 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 	c = &sc_if->sk_cdata.sk_rx_chain[i];
 	r = c->sk_desc;
 	c->sk_mbuf = m_new;
-	r->sk_data_lo = dmamap->dm_segs[0].ds_addr +
+	r->sk_data_lo = htole32(dmamap->dm_segs[0].ds_addr +
 	    (((vaddr_t)m_new->m_data
-             - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf));
-	r->sk_ctl = SK_JLEN | SK_RXSTAT;
+             - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf)));
+	r->sk_ctl = htole32(SK_JLEN | SK_RXSTAT);
 
 	SK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
@@ -1671,7 +1669,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur, cnt = 0, sk_ctl;
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
@@ -1715,13 +1713,13 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 			return (ENOBUFS);
 		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
-		f->sk_data_lo = txmap->dm_segs[i].ds_addr;
-		f->sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
+		f->sk_data_lo = htole32(txmap->dm_segs[i].ds_addr);
+		sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
 		if (cnt == 0)
-			f->sk_ctl |= SK_TXCTL_FIRSTFRAG;
+			sk_ctl |= SK_TXCTL_FIRSTFRAG;
 		else
-			f->sk_ctl |= SK_TXCTL_OWN;
-
+			sk_ctl |= SK_TXCTL_OWN;
+		f->sk_ctl = htole32(sk_ctl);
 		cur = frag;
 		SK_INC(frag, SK_TX_RING_CNT);
 		cnt++;
@@ -1732,13 +1730,14 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	sc_if->sk_cdata.sk_tx_map[cur] = entry;
 	sc_if->sk_rdata->sk_tx_ring[cur].sk_ctl |=
-		SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR;
+		htole32(SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR);
 
 	/* Sync descriptors before handing to chip */
 	SK_CDTXSYNC(sc_if, *txidx, txmap->dm_nsegs,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |= SK_TXCTL_OWN;
+	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |=
+		htole32(SK_TXCTL_OWN);
 
 	/* Sync first descriptor to hand it off */
 	SK_CDTXSYNC(sc_if, *txidx, 1, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1774,7 +1773,7 @@ sk_start(struct ifnet *ifp)
 
 	DPRINTFN(2, ("sk_start\n"));
 
-	while(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
+	while (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
@@ -1860,7 +1859,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	struct sk_chain		*cur_rx;
 	struct sk_rx_desc	*cur_desc;
 	int			i, cur, total_len = 0;
-	u_int32_t		rxstat;
+	u_int32_t		rxstat, sk_ctl;
 	bus_dmamap_t		dmamap;
 	u_int16_t		csum1, csum2;
 
@@ -1875,7 +1874,8 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		SK_CDRXSYNC(sc_if, cur,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		if (sc_if->sk_rdata->sk_rx_ring[i].sk_ctl & SK_RXCTL_OWN) {
+		sk_ctl = letoh32(sc_if->sk_rdata->sk_rx_ring[i].sk_ctl);
+		if (sk_ctl & SK_RXCTL_OWN) {
 			/* Invalidate the descriptor -- it's not ready yet */
 			SK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_PREREAD);
 			sc_if->sk_cdata.sk_rx_prod = i;
@@ -1889,13 +1889,13 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 		    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		rxstat = cur_desc->sk_xmac_rxstat;
+		rxstat = letoh32(cur_desc->sk_xmac_rxstat);
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
-		total_len = SK_RXBYTES(cur_desc->sk_ctl);
+		total_len = SK_RXBYTES(letoh32(cur_desc->sk_ctl));
 
-		csum1 = sc_if->sk_rdata->sk_rx_ring[i].sk_csum1;
-		csum2 = sc_if->sk_rdata->sk_rx_ring[i].sk_csum2;
+		csum1 = letoh16(sc_if->sk_rdata->sk_rx_ring[i].sk_csum1);
+		csum2 = letoh16(sc_if->sk_rdata->sk_rx_ring[i].sk_csum2);
 
 		SK_INC(i, SK_RX_RING_CNT);
 
@@ -2036,7 +2036,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
-	u_int32_t		idx;
+	u_int32_t		idx, sk_ctl;
 	struct sk_txmap_entry	*entry;
 
 	DPRINTFN(2, ("sk_txeof\n"));
@@ -2046,20 +2046,21 @@ sk_txeof(struct sk_if_softc *sc_if)
 	 * frames that have been sent.
 	 */
 	idx = sc_if->sk_cdata.sk_tx_cons;
-	while(idx != sc_if->sk_cdata.sk_tx_prod) {
+	while (idx != sc_if->sk_cdata.sk_tx_prod) {
 		SK_CDTXSYNC(sc_if, idx, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
+		sk_ctl = letoh32(cur_tx->sk_ctl);
 #ifdef SK_DEBUG
 		if (skdebug >= 2)
 			sk_dump_txdesc(cur_tx, idx);
 #endif
-		if (cur_tx->sk_ctl & SK_TXCTL_OWN) {
+		if (sk_ctl & SK_TXCTL_OWN) {
 			SK_CDTXSYNC(sc_if, idx, 1, BUS_DMASYNC_PREREAD);
 			break;
 		}
-		if (cur_tx->sk_ctl & SK_TXCTL_LASTFRAG)
+		if (sk_ctl & SK_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
@@ -2937,20 +2938,20 @@ void
 sk_dump_txdesc(struct sk_tx_desc *desc, int idx)
 {
 #define DESC_PRINT(X)					\
-	if (desc->X)					\
+	if (X)					\
 		printf("txdesc[%d]." #X "=%#x\n",	\
-		       idx, desc->X);
+		       idx, X);
 
-	DESC_PRINT(sk_ctl);
-	DESC_PRINT(sk_next);
-	DESC_PRINT(sk_data_lo);
-	DESC_PRINT(sk_data_hi);
-	DESC_PRINT(sk_xmac_txstat);
-	DESC_PRINT(sk_rsvd0);
-	DESC_PRINT(sk_csum_startval);
-	DESC_PRINT(sk_csum_startpos);
-	DESC_PRINT(sk_csum_writepos);
-	DESC_PRINT(sk_rsvd1);
+	DESC_PRINT(letoh32(desc->sk_ctl));
+	DESC_PRINT(letoh32(desc->sk_next));
+	DESC_PRINT(letoh32(desc->sk_data_lo));
+	DESC_PRINT(letoh32(desc->sk_data_hi));
+	DESC_PRINT(letoh32(desc->sk_xmac_txstat));
+	DESC_PRINT(letoh16(desc->sk_rsvd0));
+	DESC_PRINT(letoh16(desc->sk_csum_startval));
+	DESC_PRINT(letoh16(desc->sk_csum_startpos));
+	DESC_PRINT(letoh16(desc->sk_csum_writepos));
+	DESC_PRINT(letoh16(desc->sk_rsvd1));
 #undef PRINT
 }
 
