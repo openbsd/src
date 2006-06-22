@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.c,v 1.1 2005/11/14 23:25:43 brad Exp $ */
+/* $OpenBSD: ixgb_hw.c,v 1.2 2006/06/22 04:50:31 brad Exp $ */
 
 /* ixgb_hw.c
  * Shared functions for accessing and configuring the adapter
@@ -253,6 +253,18 @@ ixgb_identify_phy(struct ixgb_hw *hw)
 	case IXGB_DEVICE_ID_82597EX_LR:
 		DEBUGOUT("Identified G6104 optics\n");
 		phy_type = ixgb_phy_type_g6104;
+		break;
+
+	case IXGB_DEVICE_ID_82597EX_CX4:
+		DEBUGOUT("Identified CX4\n");
+		xpak_vendor = ixgb_identify_xpak_vendor(hw);
+		if(xpak_vendor == ixgb_xpak_vendor_intel) {
+			DEBUGOUT("Identified TXN17201 optics\n");
+			phy_type = ixgb_phy_type_txn17201;
+		} else {
+			DEBUGOUT("Identified G6005 optics\n");
+			phy_type = ixgb_phy_type_g6005;
+		}
 		break;
 
 	default:
