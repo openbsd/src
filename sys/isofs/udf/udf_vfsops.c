@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.8 2006/06/22 00:10:01 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.9 2006/06/22 00:48:31 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -606,25 +606,25 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	default:
 		vp->v_type = VBAD;
 		break;
-	case 4:
+	case UDF_ICB_TYPE_DIR:
 		vp->v_type = VDIR;
 		break;
-	case 5:
+	case UDF_ICB_TYPE_FILE:
 		vp->v_type = VREG;
 		break;
-	case 6:
+	case UDF_ICB_TYPE_BLKDEV:
 		vp->v_type = VBLK;
 		break;
-	case 7:
+	case UDF_ICB_TYPE_CHRDEV:
 		vp->v_type = VCHR;
 		break;
-	case 9:
+	case UDF_ICB_TYPE_FIFO:
 		vp->v_type = VFIFO;
 		break;
-	case 10:
+	case UDF_ICB_TYPE_SOCKET:
 		vp->v_type = VSOCK;
 		break;
-	case 12:
+	case UDF_ICB_TYPE_SYMLINK:
 		vp->v_type = VLNK;
 		break;
 	}
