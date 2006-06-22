@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.38 2006/03/19 18:43:56 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.39 2006/06/22 00:25:22 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.38 2006/03/19 18:43:56 otto Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.39 2006/06/22 00:25:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ state_func_t multi_user(void);
 state_func_t clean_ttys(void);
 state_func_t catatonia(void);
 state_func_t death(void);
+state_func_t hard_death(void);
 state_func_t nice_death(void);
 
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
@@ -243,11 +244,13 @@ main(int argc, char *argv[])
 	handle(badsys, SIGSYS, 0);
 	handle(disaster, SIGABRT, SIGFPE, SIGILL, SIGSEGV,
 	    SIGBUS, SIGXCPU, SIGXFSZ, 0);
-	handle(transition_handler, SIGHUP, SIGTERM, SIGTSTP, SIGUSR1, 0);
+	handle(transition_handler, SIGHUP, SIGTERM, SIGTSTP, SIGUSR1,
+	    SIGUSR2, 0);
 	handle(alrm_handler, SIGALRM, 0);
 	sigfillset(&mask);
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGSYS,
-	    SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGUSR1, SIGTSTP, SIGALRM, 0);
+	    SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGUSR1, SIGUSR2,
+	    SIGTSTP, SIGALRM, 0);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 	memset(&sa, 0, sizeof sa);
 	sigemptyset(&sa.sa_mask);
@@ -1149,6 +1152,9 @@ transition_handler(int sig)
 	case SIGUSR1:
 		requested_transition = nice_death;
 		break;
+	case SIGUSR2:
+		requested_transition = hard_death;
+		break;
 	case SIGTSTP:
 		requested_transition = catatonia;
 		break;
@@ -1281,6 +1287,19 @@ alrm_handler(int sig)
 	clang = 1;
 }
 
+int death_howto = RB_HALT;
+
+/*
+ * Bring the system down nicely, then we must powerdown because something
+ * is very wrong.
+ */
+state_func_t
+hard_death(void)
+{
+	death_howto |= RB_POWERDOWN;	
+	return nice_death();
+}
+
 /*
  * Bring the system down to single user nicely, after run the shutdown script.
  */
@@ -1291,7 +1310,6 @@ nice_death(void)
 	int i;
 	pid_t pid;
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
-	int howto = RB_HALT;
 	int status;
 
 	for (sp = sessions; sp; sp = sp->se_next) {
@@ -1334,7 +1352,7 @@ nice_death(void)
 		default:
 			waitpid(pid, &status, 0);
 			if (WIFEXITED(status) && WEXITSTATUS(status) == 2)
-				howto |= RB_POWERDOWN;
+				death_howto |= RB_POWERDOWN;
 		}
 	}
 
@@ -1356,7 +1374,7 @@ nice_death(void)
 	warning("some processes would not die; ps axl advised");
 
 die:
-	reboot(howto);
+	reboot(death_howto);
 
 	/* ... and if that fails.. oh well */
 	return (state_func_t) single_user;
