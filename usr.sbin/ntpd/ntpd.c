@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.44 2006/06/21 07:42:00 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.45 2006/06/22 11:11:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,6 +40,8 @@ int		dispatch_imsg(struct ntpd_conf *);
 int		ntpd_adjtime(double);
 void		ntpd_adjfreq(double);
 void		ntpd_settime(double);
+void		readfreq(void);
+void		writefreq(double);
 
 volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
@@ -142,6 +144,7 @@ main(int argc, char *argv[])
 	chld_pid = ntp_main(pipe_chld, &conf);
 
 	setproctitle("[priv]");
+	readfreq();
 
 	signal(SIGTERM, sighdlr);
 	signal(SIGINT, sighdlr);
@@ -362,6 +365,7 @@ ntpd_adjfreq(double relfreq)
 
 	if (adjfreq(&curfreq, NULL) == -1) 
 		log_warn("adjfreq failed");
+	writefreq(curfreq / 1e9 / (1LL << 32));
 }
 
 void
@@ -392,4 +396,44 @@ ntpd_settime(double d)
 	strftime(buf, sizeof(buf), "%a %b %e %H:%M:%S %Z %Y",
 	    localtime(&tval));
 	log_info("set local clock to %s (offset %fs)", buf, d);
+}
+
+void
+readfreq(void)
+{
+	FILE *fp;
+	int64_t current;
+	double d;
+
+	/* if we're adjusting frequency already, don't override */
+	if (adjfreq(NULL, &current) == -1) {
+		log_warn("adjfreq failed");
+		return;
+	}
+	if (current != 0)
+		return;
+
+	fp = fopen(DRIFTFILE, "r");
+	if (fp == NULL)
+		return;
+
+	if (fscanf(fp, "%le", &d) == 1)
+		ntpd_adjfreq(d);
+	fclose(fp);
+}
+
+void
+writefreq(double d)
+{
+	int r;
+	FILE *fp;
+
+	fp = fopen(DRIFTFILE, "w");
+	if (fp == NULL)
+		return;
+
+	fprintf(fp, "%e\n", d);
+	r = ferror(fp);
+	if (fclose(fp) != 0 || r != 0)
+		unlink(DRIFTFILE);
 }

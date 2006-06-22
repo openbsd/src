@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.73 2006/06/18 19:38:11 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.74 2006/06/22 11:11:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 
 #define	NTPD_USER	"_ntp"
 #define	CONFFILE	"/etc/ntpd.conf"
+#define DRIFTFILE	"/var/db/ntpd.drift"
 
 #define	READ_BUF_SIZE		4096
 
