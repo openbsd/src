@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.15 2006/05/27 17:05:52 henning Exp $
+.\" $OpenBSD: ntpd.8,v 1.16 2006/06/22 11:11:53 otto Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -102,11 +102,15 @@ before starting
 .Nm .
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ntpd.confXXX" -compact
+.Bl -tag -width "/var/db/ntpd.driftXXX" -compact
 .It Pa /etc/ntpd.conf
 default
 .Nm
 configuration file
+.It Pa /var/db/ntpd.drift
+drift file, written by
+.Nm
+periodically and used at startup to get the initial clock drift
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
