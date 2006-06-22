@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.7 2006/06/14 16:40:15 pat Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.8 2006/06/22 00:10:01 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -692,30 +692,31 @@ udf_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
 int
 udf_find_partmaps(struct udf_mnt *udfmp, struct logvol_desc *lvd)
 {
-	union udf_pmap *pmap;
 	struct part_map_spare *pms;
 	struct regid *pmap_id;
 	struct buf *bp;
 	unsigned char regid_id[UDF_REGID_ID_SIZE + 1];
 	int i, ptype, psize, error;
+	uint8_t *pmap = (uint8_t *) &lvd->maps[0];
 
 	for (i = 0; i < letoh32(lvd->n_pm); i++) {
-		pmap = (union udf_pmap *)&lvd->maps[i * UDF_PMAP_SIZE];
-		ptype = pmap->data[0];
-		psize = pmap->data[1];
-		if (((ptype != 1) && (ptype != 2)) ||
-		    ((psize != UDF_PMAP_SIZE) && (psize != 6))) {
-			printf("Invalid partition map found\n");
-			return (1);
-		}
+		ptype = pmap[0];
+		psize = pmap[1];
+
+		if (ptype != 1 && ptype != 2)
+			return (1); /* Invalid partition map type */
+
+		if (psize != UDF_PMAP_TYPE1_SIZE &&
+		    psize != UDF_PMAP_TYPE2_SIZE)
+			return (1); /* Invalid partition map size */
 
 		if (ptype == 1) {
-			/* Type 1 map.  We don't care */
+			pmap += UDF_PMAP_TYPE1_SIZE;
 			continue;
 		}
 
 		/* Type 2 map.  Gotta find out the details */
-		pmap_id = (struct regid *)&pmap->data[4];
+		pmap_id = (struct regid *) &pmap[4];
 		bzero(&regid_id[0], UDF_REGID_ID_SIZE);
 		bcopy(&pmap_id->id[0], &regid_id[0], UDF_REGID_ID_SIZE);
 
@@ -725,7 +726,9 @@ udf_find_partmaps(struct udf_mnt *udfmp, struct logvol_desc *lvd)
 			return (1);
 		}
 
-		pms = &pmap->pms;
+		pms = (struct part_map_spare *) pmap;
+		pmap += UDF_PMAP_TYPE2_SIZE;
+
 		MALLOC(udfmp->s_table, struct udf_sparing_table *,
 		    letoh32(pms->st_size), M_UDFMOUNT, M_NOWAIT);
 		if (udfmp->s_table == NULL)
