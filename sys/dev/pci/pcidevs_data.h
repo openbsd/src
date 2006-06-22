@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1077 2006/06/21 17:21:40 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1078 2006/06/22 05:17:16 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3455,12 +3455,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DGE-560T",
 	},
 	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
-	    "DGE-560T_2",
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T_B1,
+	    "DGE-530T B1",
 	},
 	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
-	    "DGE-530T",
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T_A1,
+	    "DGE-530T A1",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,

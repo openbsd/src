@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1077 2006/06/21 17:21:40 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1078 2006/06/22 05:17:16 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1311,8 +1311,8 @@
 #define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
 #define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T */
 #define	PCI_PRODUCT_DLINK_DGE560T	0x4b00		/* DGE-560T */
-#define	PCI_PRODUCT_DLINK_DGE560T_2	0x4b01		/* DGE-560T_2 */
-#define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T */
+#define	PCI_PRODUCT_DLINK_DGE530T_B1	0x4b01		/* DGE-530T B1 */
+#define	PCI_PRODUCT_DLINK_DGE530T_A1	0x4c00		/* DGE-530T A1 */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_MEMCTLR	0x1012		/* Memory Control */
