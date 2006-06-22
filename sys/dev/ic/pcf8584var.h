@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584var.h,v 1.2 2006/06/14 01:15:17 deraadt Exp $ */
+/*	$OpenBSD: pcf8584var.h,v 1.3 2006/06/22 08:33:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,9 @@ struct pcfiic_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_space_handle_t	sc_ioh2;
 	int			sc_master;
+	u_int8_t		sc_addr;
+	u_int8_t		sc_clock;
+	u_int8_t		sc_regmap[2];
 
 	int			sc_poll;
 
@@ -30,7 +33,14 @@ struct pcfiic_softc {
 	struct lock		sc_lock;
 };
 
-void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t,
+/* clock divisor settings */
+#define PCF_CLOCK_3		0x00 /* 3 MHz */
+#define PCF_CLOCK_4_43		0x10 /* 4.43 MHz */
+#define PCF_CLOCK_6		0x14 /* 6 MHz */
+#define PCF_CLOCK_8		0x18 /* 8 MHz */
+#define PCF_CLOCK_12		0x1c /* 12 MHz */
+
+void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t, int,
 	    void (*)(struct device *, struct i2cbus_attach_args *, void *),
 	    void *);
 int	pcfiic_intr(void *);
