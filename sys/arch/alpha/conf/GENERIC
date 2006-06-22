@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.173 2006/06/01 23:11:38 brad Exp $
+#	$OpenBSD: GENERIC,v 1.174 2006/06/22 01:54:53 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -177,6 +177,8 @@ pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 twe*	at pci?				# 3ware Escalade RAID controllers
 scsibus* at twe?
+mpi*	at pci?				# LSI Logic Message Passing Interface
+scsibus* at mpi?
 
 #UNTESTED: the following drivers are untested.
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
