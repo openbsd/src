@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.37 2006/06/10 14:05:45 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.38 2006/06/22 11:25:01 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -58,19 +58,17 @@ The options are as follows:
 .Fl d
 .Ar host : Ns Ar port
 .Xc
-Specifies cddb host (default: freedb.freedb.org:cddb).
+Specifies a CDDB host
+.Bq default: freedb.freedb.org:cddb .
 .It Fl f Ar device
-Specifies a device name such as
+Specifies the name of the CD device, such as
 .Pa /dev/rcd0d
 or
 .Pa mcd0 .
 Both absolute and relative paths to
 .Pa /dev
-filenames are possible.
-The raw partition name is added if needed.
-If this option is not used, the environment variable
-.Ev DISC
-will be used to find the CD device.
+filenames are possible;
+the raw partition name is added if needed.
 .It Fl s
 Silent mode.
 Do not print table headers or human-readable comments.
@@ -89,11 +87,11 @@ may be omitted.
 .It Ic blank
 Minimally blank the disc.
 .It Ic cddb Op Ar n
-Print the table of contents after matching the disc with the cddb.
+Print the table of contents after matching the disc with the CDDB.
 In case of multiple matches, reissue the command with
 .Ar n .
 .It Ic cdid
-Print the disc ID that will be used for matching with the cddb.
+Print the disc ID that will be used for matching with the CDDB.
 .It Ic close
 Inject the disc.
 .It Ic debug Ar on | off
@@ -198,7 +196,8 @@ Stop the disc.
 .Ar trackfile .
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It Fl a
 Write files as audio tracks.
 .It Fl d
@@ -223,6 +222,14 @@ play the right subtrack on both left and right channels;
 set mono mode;
 set stereo mode;
 turn the sound off.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "DICSXXX"
+.It Ev DISC
+Specifies the name of the CD device
+(see also the
+.Fl f
+option).
 .El
 .Sh FILES
 .Bl -tag -width /dev/rmcd0c -compact
