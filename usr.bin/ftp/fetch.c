@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.66 2006/06/01 22:42:11 ray Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.67 2006/06/23 20:35:25 steven Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.66 2006/06/01 22:42:11 ray Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.67 2006/06/23 20:35:25 steven Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -534,12 +534,10 @@ again:
 				fclose(fin);
 			else if (s != -1)
 				close(s);
-			if (proxyurl)
-				free(proxyurl);
+			free(proxyurl);
 			free(newline);
 			rval = url_get(cp, proxyenv, outfile);
-			if (buf)
-				free(buf);
+			free(buf);
 			return (rval);
 		}
 	}
@@ -636,10 +634,8 @@ cleanup_url_get:
 		fclose(fin);
 	else if (s != -1)
 		close(s);
-	if (buf)
-		free(buf);
-	if (proxyurl)
-		free(proxyurl);
+	free(buf);
+	free(proxyurl);
 	free(newline);
 	return (rval);
 }

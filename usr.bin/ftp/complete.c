@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.18 2006/04/25 05:45:20 tedu Exp $	*/
+/*	$OpenBSD: complete.c,v 1.19 2006/06/23 20:35:25 steven Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: complete.c,v 1.18 2006/04/25 05:45:20 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: complete.c,v 1.19 2006/06/23 20:35:25 steven Exp $";
 #endif /* not lint */
 
 /*
@@ -236,8 +236,7 @@ complete_remote(char *word, int list)
 	if (dirchange || strcmp(dir, lastdir) != 0) {	/* dir not cached */
 		char *emesg;
 
-		if (dirlist != NULL)
-			sl_free(dirlist, 1);
+		sl_free(dirlist, 1);
 		dirlist = sl_init();
 
 		mflag = 1;

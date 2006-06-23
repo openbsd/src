@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.64 2006/05/16 23:43:16 ray Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.65 2006/06/23 20:35:25 steven Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.64 2006/05/16 23:43:16 ray Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.65 2006/06/23 20:35:25 steven Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -923,8 +923,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	if (fstat(fileno(fout), &st) < 0 || st.st_blksize == 0)
 		st.st_blksize = BUFSIZ;
 	if (st.st_blksize > bufsize) {
-		if (buf)
-			(void)free(buf);
+		(void)free(buf);
 		buf = malloc((unsigned)st.st_blksize);
 		if (buf == NULL) {
 			warn("malloc");
