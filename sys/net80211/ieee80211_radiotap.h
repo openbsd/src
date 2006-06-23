@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.7 2005/07/30 17:13:17 reyk Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.8 2006/06/23 21:34:15 reyk Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -162,6 +162,10 @@ struct ieee80211_radiotap_header {
  * IEEE80211_RADIOTAP_HWQUEUE           u_int8_t       data
  *
  *	A specific hardware queue (used by WME)
+ *
+ * IEEE80211_RADIOTAP_RSSI              2x u_int8_t    RSSI, max RSSI
+ *
+ *	A relative Received Signal Strength Index
  */
 enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TSFT = 0,
@@ -180,6 +184,7 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
 	IEEE80211_RADIOTAP_FCS = 14,
 	IEEE80211_RADIOTAP_HWQUEUE = 15,
+	IEEE80211_RADIOTAP_RSSI = 16,
 	IEEE80211_RADIOTAP_EXT = 31
 };
 

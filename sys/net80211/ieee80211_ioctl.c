@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.13 2005/09/13 12:11:03 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.14 2006/06/23 21:34:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ ieee80211_node2req(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* Node status information */
 	nr->nr_rssi = (*ic->ic_node_getrssi)(ic, ni);
+	nr->nr_max_rssi = ic->ic_max_rssi;
 	bcopy(ni->ni_tstamp, nr->nr_tstamp, sizeof(nr->nr_tstamp));
 	nr->nr_intval = ni->ni_intval;
 	nr->nr_capinfo = ni->ni_capinfo;

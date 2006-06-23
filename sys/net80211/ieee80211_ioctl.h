@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.5 2005/09/08 13:24:52 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.6 2006/06/23 21:34:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -196,6 +196,7 @@ struct ieee80211_nodereq {
 
 	/* Node status information */
 	u_int8_t	nr_rssi;	/* received signal strength */
+	u_int8_t	nr_max_rssi;	/* maximum rssi */
 	u_int8_t	nr_tstamp[8];	/* from last received beacon */
 	u_int16_t	nr_intval;	/* beacon interval */
 	u_int16_t	nr_capinfo;	/* capabilities */
@@ -218,6 +219,9 @@ struct ieee80211_nodereq {
 #define IEEE80211_NODEREQ_STATE(_s)	(1 << _s)
 #define IEEE80211_NODEREQ_STATE_BITS					\
 	"\20\01CACHE\02BSS\03AUTH\04ASSOC\05COLLECT"
+
+#define IEEE80211_NODEREQ_RSSI(_nr)					\
+	((u_int)(((float)(_nr)->nr_rssi / (_nr)->nr_max_rssi) * 100))
 
 #define IEEE80211_NODEREQ_STA		0x00	/* station */
 #define IEEE80211_NODEREQ_AP		0x01	/* access point */

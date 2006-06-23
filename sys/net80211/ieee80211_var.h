@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.13 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.14 2006/06/23 21:34:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -194,6 +194,7 @@ struct ieee80211com {
 					const struct ieee80211_node *);
 	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
 					struct ieee80211_node *);
+	u_int8_t		ic_max_rssi;
 	struct ieee80211_tree	ic_tree;
 	int			ic_nnodes;	/* length of ic_nnodes */
 	int			ic_max_nnodes;	/* max length of ic_nnodes */
