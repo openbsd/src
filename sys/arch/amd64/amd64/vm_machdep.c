@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 2006/06/23 13:46:05 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -190,7 +190,6 @@ cpu_exit(struct proc *p)
 	 * pmap_destroy().
 	 */
 
-	uvmexp.swtch++;
 	switch_exit(p, exit2);
 }
 

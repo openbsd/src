@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.61 2006/06/15 20:08:01 miod Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.62 2006/06/23 13:46:05 mickey Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -351,6 +351,7 @@ exit1(struct proc *p, int rv, int flags)
 	 * Note that cpu_exit() will end with a call equivalent to
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
+	uvmexp.swtch++;
 	cpu_exit(p);
 }
 

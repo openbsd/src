@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.44 2006/05/11 13:21:12 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.45 2006/06/23 13:46:05 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -168,7 +168,6 @@ cpu_exit(p)
 		npxsave_proc(p, 0);
 #endif
 
-	uvmexp.swtch++;
 	switch_exit(p);
 }
 
