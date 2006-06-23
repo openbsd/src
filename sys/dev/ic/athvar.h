@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.17 2005/10/20 21:44:42 jmc Exp $  */
+/*      $OpenBSD: athvar.h,v 1.18 2006/06/23 21:53:01 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ struct ath_stats {
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
 	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
-	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)	| \
+	(1 << IEEE80211_RADIOTAP_RSSI)		| \
 	0)
 
 struct ath_rx_radiotap_header {
@@ -141,7 +141,8 @@ struct ath_rx_radiotap_header {
 	u_int16_t	wr_chan_freq;
 	u_int16_t	wr_chan_flags;
 	u_int8_t	wr_antenna;
-	u_int8_t	wr_antsignal;
+	u_int8_t	wr_rssi;
+	u_int8_t	wr_max_rssi;
 } __packed;
 
 #define ATH_TX_RADIOTAP_PRESENT (		\

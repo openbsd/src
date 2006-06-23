@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.6 2005/12/18 17:52:46 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.7 2006/06/23 21:53:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -638,6 +638,18 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 		if (vflag)
 			printf(", fcs %08x", letoh32(*(u_int32_t*)t));
 		t += 4;
+	}
+
+	if (RADIOTAP(RSSI)) {
+		u_int8_t rssi, max_rssi;
+		TCHECK(*t);
+		rssi = *(u_int8_t*)t;
+		t += 1;
+		TCHECK(*t);
+		max_rssi = *(u_int8_t*)t;
+		t += 1;
+
+		printf(", rssi %u/%u", rssi, max_rssi);
 	}
 
 #undef RADIOTAP

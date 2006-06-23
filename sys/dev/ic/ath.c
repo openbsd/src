@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.51 2006/06/23 06:27:11 miod Exp $  */
+/*      $OpenBSD: ath.c,v 1.52 2006/06/23 21:53:01 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -379,6 +379,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_newstate = ath_newstate;
 	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
 	ic->ic_recv_mgmt = ath_recv_mgmt;
+	ic->ic_max_rssi = AR5K_MAX_RSSI;
 	bcopy(etherbroadcastaddr, sc->sc_broadcast_addr, IEEE80211_ADDR_LEN);
 
 	/* complete initialization */
@@ -2001,8 +2002,9 @@ ath_rx_proc(void *arg, int npending)
 			sc->sc_rxtap.wr_rate =
 			    sc->sc_hwmap[ds->ds_rxstat.rs_rate] &
 			    IEEE80211_RATE_VAL;
-			sc->sc_rxtap.wr_antsignal = ds->ds_rxstat.rs_rssi;
 			sc->sc_rxtap.wr_antenna = ds->ds_rxstat.rs_antenna;
+			sc->sc_rxtap.wr_rssi = ds->ds_rxstat.rs_rssi;
+			sc->sc_rxtap.wr_max_rssi = ic->ic_max_rssi;
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)&sc->sc_rxtap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.31 2006/06/05 15:21:43 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.32 2006/06/23 21:53:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -114,6 +114,8 @@ typedef int HAL_STATUS;
 
 #define HAL_OK		0
 #define HAL_EINPROGRESS EINPROGRESS
+
+#define AR5K_MAX_RSSI	64
 
 /*
  * TX queues
