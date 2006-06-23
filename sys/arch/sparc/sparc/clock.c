@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2006/06/19 15:13:35 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2006/06/23 19:54:30 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -196,11 +196,8 @@ struct cfdriver timer_cd = {
 	NULL, "timer", DV_DULL
 };
 
-struct chiptime;
 void clk_wenable(int);
 void myetheraddr(u_char *);
-int chiptotime(int, int, int, int, int, int);
-void timetochip(struct chiptime *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
@@ -782,109 +779,6 @@ statintr(cap)
 }
 
 /*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-#define	SECYR		(SECDAY * 365)
-/*
- * should use something like
- * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
- * but it's unlikely that we'll still be around in 2100.
- */
-#define	LEAPYEAR(y)	(((y) & 3) == 0)
-
-/*
- * This code is defunct after 2068.
- * Will Unix still be here then??
- */
-const short dayyr[12] =
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
-
-int
-chiptotime(sec, min, hour, day, mon, year)
-	int sec, min, hour, day, mon, year;
-{
-	int days, yr;
-
-	sec = FROMBCD(sec);
-	min = FROMBCD(min);
-	hour = FROMBCD(hour);
-	day = FROMBCD(day);
-	mon = FROMBCD(mon);
-	year = FROMBCD(year) + YEAR0;
-
-	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31)
-		return (0);
-	days = 0;
-	for (yr = 70; yr < year; yr++)
-		days += LEAPYEAR(yr) ? 366 : 365;
-	days += dayyr[mon - 1] + day - 1;
-	if (LEAPYEAR(yr) && mon > 2)
-		days++;
-	/* now have days since Jan 1, 1970; the rest is easy... */
-	return (days * SECDAY + hour * 3600 + min * 60 + sec);
-}
-
-struct chiptime {
-	int	sec;
-	int	min;
-	int	hour;
-	int	wday;
-	int	day;
-	int	mon;
-	int	year;
-};
-
-void
-timetochip(c)
-	struct chiptime *c;
-{
-	int t, t2, t3, now = time.tv_sec;
-
-	/* compute the year */
-	t2 = now / SECDAY;
-	t3 = (t2 + 2) % 7;	/* day of week */
-	c->wday = TOBCD(t3 + 1);
-
-	t = 69;
-	while (t2 >= 0) {	/* whittle off years */
-		t3 = t2;
-		t++;
-		t2 -= LEAPYEAR(t) ? 366 : 365;
-	}
-	c->year = t;
-
-	/* t3 = month + day; separate */
-	t = LEAPYEAR(t);
-	for (t2 = 1; t2 < 12; t2++)
-		if (t3 < dayyr[t2] + (t && t2 > 1))
-			break;
-
-	/* t2 is month */
-	c->mon = t2;
-	c->day = t3 - dayyr[t2 - 1] + 1;
-	if (t && t2 > 2)
-		c->day--;
-
-	/* the rest is easy */
-	t = now % SECDAY;
-	c->hour = t / 3600;
-	t %= 3600;
-	c->min = t / 60;
-	c->sec = t % 60;
-
-	c->sec = TOBCD(c->sec);
-	c->min = TOBCD(c->min);
-	c->hour = TOBCD(c->hour);
-	c->day = TOBCD(c->day);
-	c->mon = TOBCD(c->mon);
-	c->year = TOBCD(c->year - YEAR0);
-}
-
-/*
  * Set up the system's time, given a `reasonable' time value.
  */
 void
@@ -892,7 +786,7 @@ inittodr(base)
 	time_t base;
 {
 	struct clockreg *cl = clockreg;
-	int sec, min, hour, day, mon, year;
+	struct clock_ymdhms dt;
 	int badbase = 0, waszero = base == 0;
 	char *bad = NULL;
 
@@ -915,15 +809,15 @@ inittodr(base)
 #endif
 	clk_wenable(1);
 	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-	sec = cl->cl_sec;
-	min = cl->cl_min;
-	hour = cl->cl_hour;
-	day = cl->cl_mday;
-	mon = cl->cl_month;
-	year = cl->cl_year;
+	dt.dt_sec = FROMBCD(cl->cl_sec);
+	dt.dt_min = FROMBCD(cl->cl_min);
+	dt.dt_hour = FROMBCD(cl->cl_hour);
+	dt.dt_day = FROMBCD(cl->cl_mday);
+	dt.dt_mon = FROMBCD(cl->cl_month);
+	dt.dt_year = FROMBCD(cl->cl_year) + CLOCK_BASE_YEAR;
 	cl->cl_csr &= ~CLK_READ;	/* time wears on */
 	clk_wenable(0);
-	time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
+	time.tv_sec = clock_ymdhms_to_secs(&dt);
 
 #if defined(SUN4)
 forward:
@@ -967,7 +861,7 @@ void
 resettodr()
 {
 	struct clockreg *cl;
-	struct chiptime c;
+	struct clock_ymdhms dt;
 
 #if defined(SUN4)
 	if (oldclk) {
@@ -980,16 +874,18 @@ resettodr()
 
 	if (!time.tv_sec || (cl = clockreg) == NULL)
 		return;
-	timetochip(&c);
+
+	clock_secs_to_ymdhms(time.tv_sec, &dt);
+
 	clk_wenable(1);
 	cl->cl_csr |= CLK_WRITE;	/* enable write */
-	cl->cl_sec = c.sec;
-	cl->cl_min = c.min;
-	cl->cl_hour = c.hour;
-	cl->cl_wday = c.wday;
-	cl->cl_mday = c.day;
-	cl->cl_month = c.mon;
-	cl->cl_year = c.year;
+	cl->cl_sec = TOBCD(dt.dt_sec);
+	cl->cl_min = TOBCD(dt.dt_min);
+	cl->cl_hour = TOBCD(dt.dt_hour);
+	cl->cl_wday = TOBCD(dt.dt_wday);
+	cl->cl_mday = TOBCD(dt.dt_day);
+	cl->cl_month = TOBCD(dt.dt_mon);
+	cl->cl_year = TOBCD(dt.dt_year - CLOCK_BASE_YEAR);
 	cl->cl_csr &= ~CLK_WRITE;	/* load them up */
 	clk_wenable(0);
 }
@@ -1074,12 +970,6 @@ oclk_set_dt(dt)
         splx(s);
 }
 
-
-/*
- * Machine dependent base year:
- * Note: must be < 1970
- */
-#define CLOCK_BASE_YEAR 1968
 
 /* Traditional UNIX base year */
 #define POSIX_BASE_YEAR 1970
