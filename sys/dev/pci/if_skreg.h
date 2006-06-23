@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.33 2006/06/22 23:07:03 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.34 2006/06/23 03:47:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1473,7 +1473,7 @@ struct sk_tx_desc {
 
 #define SK_TX_RING_CNT		512
 #ifdef __sparc64__
-#define SK_RX_RING_CNT		36
+#define SK_RX_RING_CNT		39
 #else
 #define SK_RX_RING_CNT		256
 #endif
