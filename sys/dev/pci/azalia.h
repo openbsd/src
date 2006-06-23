@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.8 2006/06/16 06:00:46 brad Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.9 2006/06/23 23:26:20 brad Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -339,8 +339,13 @@
 #define		CORB_PWC_VREF_100	0x05
 #define CORB_GET_UNSOLICITED_RESPONSE	0xf08
 #define CORB_SET_UNSOLICITED_RESPONSE	0x708
+#define		CORB_UNSOL_ENABLE	0x80
+#define		CORB_UNSOL_TAG(x)	(x & 0x3f)
 #define CORB_GET_PIN_SENSE		0xf09
+#define		CORB_PS_PRESENSE	0x80000000
+#define		CORB_PS_IMPEDANCE(x)	(x & 0x7fffffff)
 #define CORB_EXECUTE_PIN_SENSE		0x709
+#define		CORB_PS_RIGHT		0x1
 #define CORB_GET_EAPD_BTL_ENABLE	0xf0c
 #define CORB_SET_EAPD_BTL_ENABLE	0x70c
 #define CORB_GET_GPI_DATA		0xf10
