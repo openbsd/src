@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.20 2005/11/21 18:16:44 millert Exp $	*/
+/*	$OpenBSD: urio.c,v 1.21 2006/06/23 06:27:12 miod Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -296,7 +296,6 @@ urio_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

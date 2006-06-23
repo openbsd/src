@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.41 2006/03/25 22:41:47 djm Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.42 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -614,7 +614,6 @@ kue_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
+/*	$OpenBSD: owid.c,v 1.2 2006/06/23 06:27:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -107,7 +107,7 @@ owid_activate(struct device *self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;

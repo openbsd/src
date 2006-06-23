@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.10 2005/08/01 05:36:49 brad Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.11 2006/06/23 06:27:12 miod Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -440,7 +440,6 @@ usscanner_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

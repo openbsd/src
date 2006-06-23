@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.20 2005/11/21 18:16:44 millert Exp $ */
+/*	$OpenBSD: umodem.c,v 1.21 2006/06/23 06:27:12 miod Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -718,7 +718,7 @@ umodem_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

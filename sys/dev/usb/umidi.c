@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.15 2006/04/07 22:41:33 jsg Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.16 2006/06/23 06:27:12 miod Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,8 +235,6 @@ umidi_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		DPRINTFN(1,("umidi_activate (activate)\n"));
-
-		return EOPNOTSUPP;
 		break;
 	case DVACT_DEACTIVATE:
 		DPRINTFN(1,("umidi_activate (deactivate)\n"));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.1 2006/03/24 10:31:22 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.2 2006/06/23 06:27:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -178,7 +178,7 @@ umsm_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

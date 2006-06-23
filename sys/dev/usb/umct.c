@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.16 2005/11/21 18:16:44 millert Exp $	*/
+/*	$OpenBSD: umct.c,v 1.17 2006/06/23 06:27:12 miod Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ umct_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

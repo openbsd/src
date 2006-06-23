@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.52 2006/06/01 04:27:02 pascoe Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.53 2006/06/23 06:27:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -785,7 +785,6 @@ axe_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

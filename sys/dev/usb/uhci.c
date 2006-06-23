@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.47 2006/05/31 06:18:09 pascoe Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.48 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -540,7 +540,7 @@ uhci_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)

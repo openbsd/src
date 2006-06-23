@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.3 2006/04/16 04:01:12 brad Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.4 2006/06/23 06:27:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -359,7 +359,6 @@ uipaq_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

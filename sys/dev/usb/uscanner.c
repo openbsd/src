@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.19 2005/11/21 18:16:44 millert Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.20 2006/06/23 06:27:12 miod Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -610,7 +610,7 @@ uscanner_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

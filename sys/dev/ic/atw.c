@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.46 2006/05/22 20:35:12 krw Exp $	*/
+/*	$OpenBSD: atw.c,v 1.47 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -324,7 +324,6 @@ atw_activate(struct device *self, enum devact act)
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:

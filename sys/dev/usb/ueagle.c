@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.10 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.11 2006/06/23 06:27:11 miod Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -1457,7 +1457,7 @@ ueagle_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
+		break;
 
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_if);

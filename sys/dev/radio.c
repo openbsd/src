@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.6 2002/05/30 15:22:26 mickey Exp $ */
+/* $OpenBSD: radio.c,v 1.7 2006/06/23 06:27:11 miod Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -196,7 +196,6 @@ radioactivate(struct device *self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

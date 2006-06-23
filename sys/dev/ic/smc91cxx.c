@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.25 2006/06/17 17:56:10 brad Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.26 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1235,7 +1235,6 @@ smc91cxx_activate(self, act)
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.29 2006/04/15 04:37:52 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.30 2006/06/23 06:27:12 miod Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -451,7 +451,7 @@ uplcom_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

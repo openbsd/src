@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.24 2006/03/25 22:41:47 djm Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.25 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -382,7 +382,6 @@ upl_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.34 2006/06/17 16:27:58 miod Exp $ */
+/*	$OpenBSD: ugen.c,v 1.35 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -789,7 +789,7 @@ ugen_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

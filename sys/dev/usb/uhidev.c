@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.15 2006/06/17 16:27:58 miod Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.16 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -336,14 +336,13 @@ int
 uhidev_activate(device_ptr_t self, enum devact act)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
-	int i, rv;
+	int i, rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
-		rv = 0;
 		for (i = 0; i < sc->sc_nrepid; i++)
 			if (sc->sc_subdevs[i] != NULL)
 				rv |= config_deactivate(

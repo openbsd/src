@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.50 2006/05/29 20:23:13 miod Exp $	*/
+/*	$OpenBSD: audio.c,v 1.51 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -343,7 +343,6 @@ audioactivate(self, act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

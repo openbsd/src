@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.60 2006/05/31 07:27:28 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.61 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -922,7 +922,7 @@ ehci_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)

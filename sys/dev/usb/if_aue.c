@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.47 2006/05/22 20:35:12 krw Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.48 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -920,7 +920,6 @@ aue_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

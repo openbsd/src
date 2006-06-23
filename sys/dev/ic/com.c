@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.111 2006/04/27 19:31:44 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.112 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -249,7 +249,6 @@ com_activate(self, act)
 	s = spltty();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:

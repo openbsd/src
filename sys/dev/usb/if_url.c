@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.31 2006/03/25 22:41:47 djm Exp $ */
+/*	$OpenBSD: if_url.c,v 1.32 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -632,7 +632,6 @@ url_activate(device_ptr_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:

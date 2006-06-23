@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.21 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: awi.c,v 1.22 2006/06/23 06:27:11 miod Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -414,7 +414,6 @@ awi_activate(self, act)
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.43 2005/08/01 05:36:49 brad Exp $ */
+/*	$OpenBSD: umass.c,v 1.44 2006/06/23 06:27:11 miod Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -700,7 +700,6 @@ umass_activate(struct device *dev, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
