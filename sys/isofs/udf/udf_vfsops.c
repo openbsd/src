@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.9 2006/06/22 00:48:31 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.10 2006/06/23 11:21:29 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -105,6 +105,8 @@ struct pool udf_node_pool;
 struct pool udf_ds_pool;
 
 int udf_find_partmaps(struct udf_mnt *, struct logvol_desc *);
+int udf_get_vpartmap(struct udf_mnt *, struct part_map_virt *);
+int udf_get_spartmap(struct udf_mnt *, struct part_map_spare *);
 
 const struct vfsops udf_vfsops = {
 	.vfs_fhtovp =		udf_fhtovp,
@@ -448,7 +450,7 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	vrele(devvp);
 
 	if (udfmp->s_table != NULL)
-		FREE(udfmp->s_table, M_UDFMOUNT);
+		free(udfmp->s_table, M_UDFMOUNT);
 
 	if (udfmp->hashtbl != NULL)
 		FREE(udfmp->hashtbl, M_UDFMOUNT);
@@ -685,16 +687,68 @@ int
 udf_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
     struct ucred **credanonp)
 {
-	/* For the time being. */
-	return (EACCES);
+	return (EACCES); /* For the time being */
 }
 
+/* Handle a virtual partition map */
+int
+udf_get_vpartmap(struct udf_mnt *udfmp, struct part_map_virt *pmv)
+{
+	return (EOPNOTSUPP); /* Not supported yet */
+}
+
+/* Handle a sparable partition map */
+int
+udf_get_spartmap(struct udf_mnt *udfmp, struct part_map_spare *pms)
+{
+	struct buf *bp;
+	int i, error;
+
+	udfmp->s_table = malloc(letoh32(pms->st_size), M_UDFMOUNT, M_NOWAIT);
+	if (udfmp->s_table == NULL)
+		return (ENOMEM);
+
+	bzero(udfmp->s_table, letoh32(pms->st_size));
+
+	/* Calculate the number of sectors per packet */
+	udfmp->p_sectors = letoh16(pms->packet_len) / udfmp->bsize;
+
+	error = udf_readlblks(udfmp, letoh32(pms->st_loc[0]),
+	    letoh32(pms->st_size), &bp);
+
+	if (error) {
+		if (bp != NULL)
+			brelse(bp);
+		free(udfmp->s_table, M_UDFMOUNT);
+		return (error); /* Failed to read sparing table */
+	}
+
+	bcopy(bp->b_data, udfmp->s_table, letoh32(pms->st_size));
+	brelse(bp);
+
+	if (udf_checktag(&udfmp->s_table->tag, 0)) {
+		free(udfmp->s_table, M_UDFMOUNT);
+		return (EINVAL); /* Invalid sparing table found */
+	}
+
+	/*
+	 * See how many valid entries there are here. The list is
+	 * supposed to be sorted, 0xfffffff0 and higher are not valid.
+	 */
+	for (i = 0; i < letoh16(udfmp->s_table->rt_l); i++) {
+		udfmp->s_table_entries = i;
+		if (letoh32(udfmp->s_table->entries[i].org) >= 0xfffffff0)
+			break;
+	}
+
+	return (0);
+}
+
+/* Scan the partition maps */
 int
 udf_find_partmaps(struct udf_mnt *udfmp, struct logvol_desc *lvd)
 {
-	struct part_map_spare *pms;
 	struct regid *pmap_id;
-	struct buf *bp;
 	unsigned char regid_id[UDF_REGID_ID_SIZE + 1];
 	int i, ptype, psize, error;
 	uint8_t *pmap = (uint8_t *) &lvd->maps[0];
@@ -704,72 +758,37 @@ udf_find_partmaps(struct udf_mnt *udfmp, struct logvol_desc *lvd)
 		psize = pmap[1];
 
 		if (ptype != 1 && ptype != 2)
-			return (1); /* Invalid partition map type */
+			return (EINVAL); /* Invalid partition map type */
 
 		if (psize != UDF_PMAP_TYPE1_SIZE &&
 		    psize != UDF_PMAP_TYPE2_SIZE)
-			return (1); /* Invalid partition map size */
+			return (EINVAL); /* Invalid partition map size */
 
 		if (ptype == 1) {
 			pmap += UDF_PMAP_TYPE1_SIZE;
 			continue;
 		}
 
-		/* Type 2 map.  Gotta find out the details */
+		/* Type 2 map. Find out the details */
 		pmap_id = (struct regid *) &pmap[4];
 		bzero(&regid_id[0], UDF_REGID_ID_SIZE);
 		bcopy(&pmap_id->id[0], &regid_id[0], UDF_REGID_ID_SIZE);
 
-		if (bcmp(&regid_id[0], "*UDF Sparable Partition",
-		    UDF_REGID_ID_SIZE)) {
-			printf("Unsupported partition map: %s\n", &regid_id[0]);
-			return (1);
-		}
+		if (!bcmp(&regid_id[0], "*UDF Virtual Partition",
+		    UDF_REGID_ID_SIZE))
+			error = udf_get_vpartmap(udfmp,
+			    (struct part_map_virt *) pmap);
+		else if (!bcmp(&regid_id[0], "*UDF Sparable Partition",
+		    UDF_REGID_ID_SIZE))
+			error = udf_get_spartmap(udfmp,
+			    (struct part_map_spare *) pmap);
+		else
+			return (EINVAL); /* Unsupported partition map */
 
-		pms = (struct part_map_spare *) pmap;
+		if (error)
+			return (error); /* Error getting partition */
+
 		pmap += UDF_PMAP_TYPE2_SIZE;
-
-		MALLOC(udfmp->s_table, struct udf_sparing_table *,
-		    letoh32(pms->st_size), M_UDFMOUNT, M_NOWAIT);
-		if (udfmp->s_table == NULL)
-			return (ENOMEM);
-
-		bzero(udfmp->s_table, letoh32(pms->st_size));
-
-		/* Calculate the number of sectors per packet. */
-		/* XXX Logical or physical? */
-		udfmp->p_sectors = letoh16(pms->packet_len) / udfmp->bsize;
-
-		/*
-		 * XXX If reading the first Sparing Table fails, should look
-		 * for another table.
-		 */
-		if ((error = udf_readlblks(udfmp, letoh32(pms->st_loc[0]),
-					   letoh32(pms->st_size), &bp)) != 0) {
-			if (bp != NULL)
-				brelse(bp);
-			printf("Failed to read Sparing Table at sector %d\n",
-			    letoh32(pms->st_loc[0]));
-			return (error);
-		}
-		bcopy(bp->b_data, udfmp->s_table, letoh32(pms->st_size));
-		brelse(bp);
-
-		if (udf_checktag(&udfmp->s_table->tag, 0)) {
-			printf("Invalid sparing table found\n");
-			return (EINVAL);
-		}
-
-		/*
-		 * See how many valid entries there are here.  The list is
-		 * supposed to be sorted. 0xfffffff0 and higher are not valid
-		 */
-		for (i = 0; i < letoh16(udfmp->s_table->rt_l); i++) {
-			udfmp->s_table_entries = i;
-			if (letoh32(udfmp->s_table->entries[i].org) >=
-			    0xfffffff0)
-				break;
-		}
 	}
 
 	return (0);
