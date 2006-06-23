@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.167 2006/06/15 16:19:59 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.168 2006/06/23 21:41:30 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1484,6 +1484,7 @@ ieee80211_status(void)
 	struct ieee80211chanreq channel;
 	struct ieee80211_bssid bssid;
 	struct ieee80211_txpower txpower;
+	struct ieee80211_nodereq nr;
 	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 	struct ether_addr ea;
@@ -1541,6 +1542,16 @@ ieee80211_status(void)
 		memcpy(&ea.ether_addr_octet, bssid.i_bssid,
 		    sizeof(ea.ether_addr_octet));
 		printf("bssid %s ", ether_ntoa(&ea));
+
+		bzero(&nr, sizeof(nr));
+		bcopy(bssid.i_bssid, &nr.nr_macaddr, sizeof(nr.nr_macaddr));
+		strlcpy(nr.nr_ifname, name, sizeof(nr.nr_ifname));		
+		if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
+			if (nr.nr_max_rssi)
+				printf("%u%% ", IEEE80211_NODEREQ_RSSI(&nr));
+			else
+				printf("%udB ", nr.nr_rssi);
+		}
 	}
 
 	if (inwkey == 0 && nwkey.i_wepon > 0) {
@@ -1687,7 +1698,10 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 		printf("lladdr %s ",
 		    ether_ntoa((struct ether_addr*)nr->nr_macaddr));
 
-	printf("%udB ", nr->nr_rssi);
+	if (nr->nr_max_rssi)
+		printf("%u%% ", IEEE80211_NODEREQ_RSSI(nr));
+	else
+		printf("%udB ", nr->nr_rssi);
 
 	if (nr->nr_pwrsave)
 		printf("powersave ");
