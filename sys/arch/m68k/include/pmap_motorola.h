@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.14 2006/06/17 16:29:10 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.15 2006/06/24 13:22:14 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -135,6 +135,7 @@ extern char		*vmmap;		/* map for mem, dumps, etc. */
 
 void	pmap_proc_iflush(struct proc *, vaddr_t, vsize_t);
 
+int	pmap_enter_cache(pmap_t, vaddr_t, paddr_t, vm_prot_t, int, pt_entry_t);
 void	pmap_kenter_cache(vaddr_t, paddr_t, pt_entry_t);
 
 #ifdef M68K_MMU_HP

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.45 2006/06/20 20:40:18 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.46 2006/06/24 13:22:15 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -975,6 +975,33 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
+	pt_entry_t pte;
+
+	pte = 0;
+#if defined(M68040) || defined(M68060)
+	if (mmutype <= MMU_68040 && (pte_prot(prot) & PG_PROT) == PG_RW)
+#ifdef PMAP_DEBUG
+		if (dowriteback && (dokwriteback || pmap != pmap_kernel()))
+#endif
+		pte |= PG_CCB;
+#endif
+	return (pmap_enter_cache(pmap, va, pa, prot, flags, pte));
+}
+
+/*
+ * Similar to pmap_enter(), but allows the caller to control the
+ * cacheability of the mapping. However if it is found that this mapping
+ * needs to be cache inhibited, the cache bits from the caller are ignored.
+ */
+int
+pmap_enter_cache(pmap, va, pa, prot, flags, template)
+	pmap_t pmap;
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+	int flags;
+	pt_entry_t template;
+{
 	struct vm_page *pg;
 	pt_entry_t *pte;
 	int npte, error;
@@ -986,8 +1013,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
-	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
-	    pmap, va, pa, prot, wired));
+	    ("pmap_enter_cache(%p, %lx, %lx, %x, %x, %x)\n",
+	    pmap, va, pa, prot, wired, template));
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1235,13 +1262,8 @@ validate:
 	if (!cacheable)
 #endif
 		npte |= PG_CI;
-#if defined(M68040) || defined(M68060)
-	if (mmutype <= MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
-#ifdef PMAP_DEBUG
-		if (dowriteback && (dokwriteback || pmap != pmap_kernel()))
-#endif
-		npte |= PG_CCB;
-#endif
+	else
+		npte |= template;
 
 	PMAP_DPRINTF(PDB_ENTER, ("enter: new pte value %x\n", npte));
 
