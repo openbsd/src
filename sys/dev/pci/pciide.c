@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.239 2006/04/27 00:34:19 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.240 2006/06/24 07:51:30 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -240,6 +240,9 @@ int  pdc203xx_pci_intr(void *);
 void pdc203xx_irqack(struct channel_softc *);
 void pdc203xx_dma_start(void *,int ,int);
 int  pdc203xx_dma_finish(void *, int, int, int);
+int  pdc205xx_pci_intr(void *);
+void pdc205xx_do_reset(struct channel_softc *);
+void pdc205xx_drv_probe(struct channel_softc *);
 
 void opti_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void opti_setup_channel(struct channel_softc *);
@@ -708,6 +711,30 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20379,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC40718,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC40719,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20571,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20575,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20579,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20775,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	}
@@ -6254,9 +6281,35 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-	    intrhandle, IPL_BIO, pdc203xx_pci_intr, sc,
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_PROMISE_PDC20318:
+	case PCI_PRODUCT_PROMISE_PDC20319:
+	case PCI_PRODUCT_PROMISE_PDC20371:
+	case PCI_PRODUCT_PROMISE_PDC20375:
+	case PCI_PRODUCT_PROMISE_PDC20376:
+	case PCI_PRODUCT_PROMISE_PDC20377:
+	case PCI_PRODUCT_PROMISE_PDC20378:
+	case PCI_PRODUCT_PROMISE_PDC20379:
+	default:
+		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+	    	    intrhandle, IPL_BIO, pdc203xx_pci_intr, sc,
+	    	    sc->sc_wdcdev.sc_dev.dv_xname);
+		break;
+
+	case PCI_PRODUCT_PROMISE_PDC40518:
+	case PCI_PRODUCT_PROMISE_PDC40718:
+	case PCI_PRODUCT_PROMISE_PDC40719:
+	case PCI_PRODUCT_PROMISE_PDC20571:
+	case PCI_PRODUCT_PROMISE_PDC20575:
+	case PCI_PRODUCT_PROMISE_PDC20579:
+	case PCI_PRODUCT_PROMISE_PDC20775:
+		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+	    	    intrhandle, IPL_BIO, pdc205xx_pci_intr, sc,
+	    	    sc->sc_wdcdev.sc_dev.dv_xname);
+		break;
+	}
+		
 	if (sc->sc_pci_ih == NULL) {
 		printf(": couldn't establish native-PCI interrupt");
 		if (intrstr != NULL)
@@ -6296,10 +6349,45 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.UDMA_cap = 6;
 	sc->sc_wdcdev.set_modes = pdc203xx_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x06c, 0x00ff0033);
-	sc->sc_wdcdev.nchannels =
-	    (bus_space_read_4(ps->ba5_st, ps->ba5_sh, 0x48) & 0x02) ?
-	    PDC203xx_NCHANNELS : 3;
+
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_PROMISE_PDC20318:
+	case PCI_PRODUCT_PROMISE_PDC20319:
+	case PCI_PRODUCT_PROMISE_PDC20371:
+	case PCI_PRODUCT_PROMISE_PDC20375:
+	case PCI_PRODUCT_PROMISE_PDC20376:
+	case PCI_PRODUCT_PROMISE_PDC20377:
+	case PCI_PRODUCT_PROMISE_PDC20378:
+	case PCI_PRODUCT_PROMISE_PDC20379:
+	default:
+		bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x06c, 0x00ff0033);
+		sc->sc_wdcdev.nchannels =
+		    (bus_space_read_4(ps->ba5_st, ps->ba5_sh, 0x48) & 0x02) ?
+		    PDC203xx_NCHANNELS : 3;
+		break;
+
+	case PCI_PRODUCT_PROMISE_PDC40518:
+	case PCI_PRODUCT_PROMISE_PDC40718:
+	case PCI_PRODUCT_PROMISE_PDC40719:
+	case PCI_PRODUCT_PROMISE_PDC20571:
+		bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x60, 0x00ff00ff);
+		sc->sc_wdcdev.nchannels = PDC40718_NCHANNELS;
+  	 
+		sc->sc_wdcdev.reset = pdc205xx_do_reset;
+		sc->sc_wdcdev.drv_probe = pdc205xx_drv_probe;
+		
+		break;
+	case PCI_PRODUCT_PROMISE_PDC20575:
+	case PCI_PRODUCT_PROMISE_PDC20579:
+	case PCI_PRODUCT_PROMISE_PDC20775:
+		bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x60, 0x00ff00ff);
+		sc->sc_wdcdev.nchannels = PDC20575_NCHANNELS;
+
+		sc->sc_wdcdev.reset = pdc205xx_do_reset;
+		sc->sc_wdcdev.drv_probe = pdc205xx_drv_probe;
+		
+		break;
+	}
 
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = pciide_dma_init;
@@ -6449,6 +6537,39 @@ pdc203xx_pci_intr(void *arg)
 	return (rv);
 }
 
+int
+pdc205xx_pci_intr(void *arg)
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	struct pciide_pdcsata *ps = sc->sc_cookie;
+	int i, rv, crv;
+	u_int32_t scr, status;
+
+	rv = 0;
+	scr = bus_space_read_4(ps->ba5_st, ps->ba5_sh, 0x40);
+	bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x40, scr & 0x0000ffff);
+
+	status = bus_space_read_4(ps->ba5_st, ps->ba5_sh, 0x60);
+	bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x60, status & 0x000000ff);
+
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+		if (scr & (1 << (i + 1))) {
+			crv = wdcintr(wdc_cp);
+			if (crv == 0) {
+				printf("%s:%d: bogus intr (reg 0x%x)\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    i, scr);
+			} else
+				rv = 1;
+		}
+	}
+	return rv;
+}
+
 void
 pdc203xx_irqack(struct channel_softc *chp)
 {
@@ -6544,6 +6665,117 @@ pdc203xx_write_reg(struct channel_softc *chp, enum wdc_regs reg, u_int8_t val)
 		bus_space_write_1(ps->regs[chp->channel].cmd_iot,
 		    ps->regs[chp->channel].cmd_iohs[reg & _WDC_REGMASK],
 		    0, val);
+}
+
+void
+pdc205xx_do_reset(struct channel_softc *chp)
+{
+	struct pciide_channel *cp = (struct pciide_channel *)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_pdcsata *ps = sc->sc_cookie;
+	u_int32_t scontrol;
+
+	wdc_do_reset(chp);
+
+	/* reset SATA */
+	scontrol = SControl_DET_INIT | SControl_SPD_ANY | SControl_IPM_NONE;
+	SCONTROL_WRITE(ps, chp->channel, scontrol);
+	delay(50*1000);
+
+	scontrol &= ~SControl_DET_INIT;
+	SCONTROL_WRITE(ps, chp->channel, scontrol);
+	delay(50*1000);
+}
+
+void
+pdc205xx_drv_probe(struct channel_softc *chp)
+{
+	struct pciide_channel *cp = (struct pciide_channel *)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_pdcsata *ps = sc->sc_cookie;
+	bus_space_handle_t *iohs;
+	u_int32_t scontrol, sstatus;
+	u_int16_t scnt, sn, cl, ch;
+	int i, s;
+
+	/* XXX This should be done by other code. */
+	for (i = 0; i < 2; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
+
+	SCONTROL_WRITE(ps, chp->channel, 0);
+	delay(50*1000);
+
+	scontrol = SControl_DET_INIT | SControl_SPD_ANY | SControl_IPM_NONE;
+	SCONTROL_WRITE(ps,chp->channel,scontrol);
+	delay(50*1000);
+
+	scontrol &= ~SControl_DET_INIT;
+	SCONTROL_WRITE(ps,chp->channel,scontrol);
+	delay(50*1000);
+
+	sstatus = SSTATUS_READ(ps,chp->channel);
+
+	switch (sstatus & SStatus_DET_mask) {
+	case SStatus_DET_NODEV:
+		/* No Device; be silent.  */
+		break;
+
+	case SStatus_DET_DEV_NE:
+		printf("%s: port %d: device connected, but "
+		    "communication not established\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		break;
+
+	case SStatus_DET_OFFLINE:
+		printf("%s: port %d: PHY offline\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		break;
+
+	case SStatus_DET_DEV:
+		iohs = ps->regs[chp->channel].cmd_iohs;
+		bus_space_write_1(chp->cmd_iot, iohs[wdr_sdh], 0,
+		    WDSD_IBM);
+		delay(10);	/* 400ns delay */
+		scnt = bus_space_read_2(chp->cmd_iot, iohs[wdr_seccnt], 0);
+		sn = bus_space_read_2(chp->cmd_iot, iohs[wdr_sector], 0);
+		cl = bus_space_read_2(chp->cmd_iot, iohs[wdr_cyl_lo], 0);
+		ch = bus_space_read_2(chp->cmd_iot, iohs[wdr_cyl_hi], 0);
+#if 0
+		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel,
+		    scnt, sn, cl, ch);
+#endif
+		/*
+		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
+		 * cases we get wrong values here, so ignore it.
+		 */
+		s = splbio();
+		if (cl == 0x14 && ch == 0xeb)
+			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
+		else
+			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
+		splx(s);
+#if 0
+		printf("%s: port %d: device present",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		switch ((sstatus & SStatus_SPD_mask) >> SStatus_SPD_shift) {
+		case 1:
+			printf(", speed: 1.5Gb/s");
+			break;
+		case 2:
+			printf(", speed: 3.0Gb/s");
+			break;
+		}
+		printf("\n");
+#endif
+		break;
+
+	default:
+		printf("%s: port %d: unknown SStatus: 0x%08x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus);
+	}
 }
 
 #ifdef notyet

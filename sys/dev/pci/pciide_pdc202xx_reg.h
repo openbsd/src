@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.13 2006/02/10 21:45:41 kettenis Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.14 2006/06/24 07:51:30 jsg Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -131,6 +131,27 @@ static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
  */
 #define PDC203xx_NCHANNELS	4
 #define PDC203xx_BAR_IDEREGS	0x1c
+
+/*
+ * PDC205xx register definitions.
+ */
+#define PDC40718_NCHANNELS	4
+#define PDC20575_NCHANNELS	3
+
+#define	PDC205_REGADDR(base,ch)	((base)+((ch)<<8))
+#define	PDC205_SSTATUS(ch)	PDC205_REGADDR(0x400,ch)
+#define	PDC205_SERROR(ch)	PDC205_REGADDR(0x404,ch)
+#define	PDC205_SCONTROL(ch)	PDC205_REGADDR(0x408,ch)
+#define	PDC205_MULTIPLIER(ch)	PDC205_REGADDR(0x4e8,ch)
+
+#define	SCONTROL_WRITE(ps,channel,scontrol)	\
+	bus_space_write_4((ps)->ba5_st, (ps)->ba5_sh,	\
+	PDC205_SCONTROL(channel), scontrol)
+
+#define	SSTATUS_READ(sc,channel)	\
+	bus_space_read_4((ps)->ba5_st, (ps)->ba5_sh,	\
+	PDC205_SSTATUS(channel))
+
 
 /* Private data */
 struct pciide_pdcsata {

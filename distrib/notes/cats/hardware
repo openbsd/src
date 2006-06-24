@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.31 2006/03/05 05:41:48 brad Exp $
+dnl	$OpenBSD: hardware,v 1.32 2006/06/24 07:51:30 jsg Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -16,9 +16,12 @@ Supported devices {:-include-:}:
 		Intel 6300ESB
 		National Semiconductor PC87415
 		NVIDIA nForce/nForce2
+		NVIDIA nForce/nForce2/nForce2-400/nForce3/nForce3-250/nForce4
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
-		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276, PDC20277
-		    (RAID mode is not supported)
+		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276, PDC20277,
+		    PDC20318, PDC20319, PDC20371, PDC20375, PDC20376, PDC20377,
+		    PDC20378, PDC20379, PDC20571, PDC20575, PDC20579, PDC20775,
+		    PDC40518, PDC40718, PDC40719
 		ServerWorks OSB4, CSB5, CSB6
 		Silicon Integrated System 180, 181, 5513 (5597/5598), 540,
 		    550, 620, 630, 630S, 633, 635, 640, 645, 645DX, 648, 650,
