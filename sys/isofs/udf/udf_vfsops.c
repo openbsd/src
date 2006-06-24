@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.11 2006/06/24 15:09:17 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.12 2006/06/24 15:32:37 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -743,7 +743,7 @@ udf_find_partmaps(struct udf_mnt *udfmp, struct logvol_desc *lvd)
 
 		/* Type 2 map. Find out the details */
 		pmap_id = (struct regid *) &pmap[4];
-		bzero(&regid_id[0], UDF_REGID_ID_SIZE);
+		regid_id[UDF_REGID_ID_SIZE] = '\0';
 		bcopy(&pmap_id->id[0], &regid_id[0], UDF_REGID_ID_SIZE);
 
 		if (!bcmp(&regid_id[0], "*UDF Virtual Partition",
