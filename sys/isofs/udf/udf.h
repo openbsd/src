@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.2 2006/01/14 19:04:17 miod Exp $	*/
+/*	$OpenBSD: udf.h,v 1.3 2006/06/24 15:09:17 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -88,7 +88,7 @@ struct udf_dirstream {
 /*
  * The block layer refers to things in terms of 512 byte blocks by default.
  * btodb() is expensive, so speed things up.
- * XXX Can the block layer be forced to use a different block size?
+ * Can the block layer be forced to use a different block size?
  */
 #define	RDSECTOR(devvp, sector, size, bp) \
 	bread(devvp, sector << (udfmp->bshift - DEV_BSHIFT), size, NOCRED, bp)
@@ -119,8 +119,8 @@ udf_readalblks(struct udf_mnt *udfmp, int lsector, int size, struct buf **bp)
  * Produce a suitable file number from an ICB.  The passed in ICB is expected
  * to be in little endian (meaning that it hasn't been swapped for big
  * endian machines yet).
- * XXX If the fileno resolves to 0, we might be in big trouble.
- * XXX Assumes the ICB is a long_ad.  This struct is compatible with short_ad,
+ * If the fileno resolves to 0, we might be in big trouble.
+ * Assumes the ICB is a long_ad.  This struct is compatible with short_ad,
  *     but not ext_ad.
  */
 static __inline ino_t

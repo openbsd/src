@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.10 2006/06/23 11:21:29 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.11 2006/06/24 15:09:17 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -44,34 +44,6 @@
  * One caveat is unclosed CD media.  For that, sector 256 cannot be written,
  * so the Anchor Volume Descriptor Pointer can exist at sector 512 until the
  * media is closed.
- *
- *  Sector:
- *     256:
- *       n: Anchor Volume Descriptor Pointer
- * n - 256:	|
- *		|
- *		|-->Main Volume Descriptor Sequence
- *			|	|
- *			|	|
- *			|	|-->Logical Volume Descriptor
- *			|			  |
- *			|-->Partition Descriptor  |
- *				|		  |
- *				|		  |
- *				|-->Fileset Descriptor
- *					|
- *					|
- *					|-->Root Dir File Entry
- *						|
- *						|
- *						|-->File data:
- *						    File Id Descriptor
- *							|
- *							|
- *							|-->File Entry
- *								|
- *								|
- *								|-->File data
  */
 
 #include <sys/types.h>
@@ -289,11 +261,11 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	udfmp->im_dev = devvp->v_rdev;
 	udfmp->im_devvp = devvp;
 
-	bsize = 2048;	/* XXX Should probe the media for its size. */
+	bsize = 2048;	/* Should probe the media for its size. */
 
 	/* 
 	 * Get the Anchor Volume Descriptor Pointer from sector 256.
-	 * XXX Should also check sector n - 256, n, and 512.
+	 * Should also check sector n - 256, n, and 512.
 	 */
 	sector = 256;
 	if ((error = bread(devvp, sector * btodb(bsize), bsize, NOCRED,
@@ -309,8 +281,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	/*
 	 * Extract the Partition Descriptor and Logical Volume Descriptor
 	 * from the Volume Descriptor Sequence.
-	 * XXX Should we care about the partition type right now?
-	 * XXX What about multiple partitions?
+	 * Should we care about the partition type right now?
+	 * What about multiple partitions?
 	 */
 	mvds_start = letoh32(avdp.main_vds_ex.loc);
 	mvds_end = mvds_start + (letoh32(avdp.main_vds_ex.len) - 1) / bsize;

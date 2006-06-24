@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.12 2006/06/14 16:48:10 pat Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.13 2006/06/24 15:09:17 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -251,7 +251,7 @@ udf_isaleapyear(int year)
 }
 
 /*
- * XXX This is just a rough hack.  Daylight savings isn't calculated and tv_nsec
+ * This is just a rough hack.  Daylight savings isn't calculated and tv_nsec
  * is ignored.
  * Timezone calculation compliments of Julian Elischer <julian@elischer.org>.
  */
@@ -337,15 +337,15 @@ udf_getattr(void *v)
 	vap->va_mode = udf_permtomode(node);
 	vap->va_nlink = letoh16(fentry->link_cnt);
 	/*
-	 * XXX The spec says that -1 is valid for uid/gid and indicates an
+	 * The spec says that -1 is valid for uid/gid and indicates an
 	 * invalid uid/gid.  How should this be represented?
 	 */
 	vap->va_uid = (letoh32(fentry->uid) == -1) ? 0 : letoh32(fentry->uid);
 	vap->va_gid = (letoh32(fentry->gid) == -1) ? 0 : letoh32(fentry->gid);
 	udf_timetotimespec(&fentry->atime, &vap->va_atime);
 	udf_timetotimespec(&fentry->mtime, &vap->va_mtime);
-	vap->va_ctime = vap->va_mtime; /* XXX Stored as an Extended Attribute */
-	vap->va_rdev = 0; /* XXX */
+	vap->va_ctime = vap->va_mtime; /* Stored as an Extended Attribute */
+	vap->va_rdev = 0;
 	if (vp->v_type & VDIR) {
 		vap->va_nlink++; /* Count a reference to ourselves */
 		/*
@@ -368,7 +368,7 @@ udf_getattr(void *v)
 	vap->va_blocksize = node->udfmp->bsize;
 	vap->va_bytes = letoh64(fentry->inf_len);
 	vap->va_type = vp->v_type;
-	vap->va_filerev = 0; /* XXX */
+	vap->va_filerev = 0;
 
 	return (0);
 }
@@ -376,21 +376,13 @@ udf_getattr(void *v)
 int
 udf_open(void *v)
 {
-	/*
-	 * Dummy. Nothing to be done at this point.
-	 */
-
-	return (0);
+	return (0); /* Nothing to be done at this point */
 }
 
 int
 udf_close(void *v)
 {
-	/*
-	 * Dummy. Nothing to be done at this point.
-	 */
-
-	return (0);
+	return (0); /* Nothing to be done at this point */
 }
 
 /*
@@ -527,7 +519,7 @@ udf_cmpname(char *cs0string, char *cmpname, int cs0len, int cmplen, struct udf_m
 	char *transname;
 	int error = 0;
 
-	/* This is overkill, but not worth creating a new zone */
+	/* This is overkill, but not worth creating a new pool */
 	transname = pool_get(&udf_trans_pool, PR_WAITOK);
 
 	cs0len = udf_transname(cs0string, transname, cs0len, udfmp);
@@ -613,7 +605,7 @@ udf_getfid(struct udf_dirstream *ds)
 
 	/*
 	 * Clean up from a previous fragmented FID.
-	 * XXX Is this the right place for this?
+	 * Is this the right place for this?
 	 */
 	if (ds->fid_fragment && ds->buf != NULL) {
 		ds->fid_fragment = 0;
@@ -774,7 +766,7 @@ udf_readdir(void *v)
 
 	while ((fid = udf_getfid(ds)) != NULL) {
 
-		/* XXX Should we return an error on a bad fid? */
+		/* Should we return an error on a bad fid? */
 		if (udf_checktag(&fid->tag, TAGID_FID)) {
 			printf("Invalid FID tag\n");
 			error = EIO;
