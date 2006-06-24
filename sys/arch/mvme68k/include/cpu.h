@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2006/06/11 20:48:13 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.24 2006/06/24 14:04:02 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -206,8 +206,6 @@ int intr_findvec(int, int);
 
 void dma_cachectl(caddr_t, int);
 paddr_t kvtop(vaddr_t);
-void physaccess(vaddr_t, paddr_t, size_t, int);
-void physunaccess(vaddr_t, size_t);
 
 #endif	/* _KERNEL */
 #endif	/* _MVME68K_CPU_H_ */

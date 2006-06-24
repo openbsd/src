@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2006/01/11 07:22:00 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.34 2006/06/24 14:04:04 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -85,6 +85,8 @@
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -213,7 +215,7 @@ mapiodev(pa, size)
 	int size;
 {
 	int error;
-	vaddr_t kva;
+	vaddr_t va, iova;
 
 	if (size <= 0)
 		return NULL;
@@ -224,13 +226,20 @@ mapiodev(pa, size)
 #endif
 
 	error = extent_alloc(extio, size, EX_NOALIGN, 0, EX_NOBOUNDARY,
-	    EX_NOWAIT | EX_MALLOCOK, (u_long *)&kva);
+	    EX_NOWAIT | EX_MALLOCOK, &iova);
 
 	if (error != 0)
 	        return NULL;
 
-	physaccess(kva, pa, size, PG_RW | PG_CI);
-	return (kva);
+	va = iova;
+	while (size != 0) {
+		pmap_kenter_cache(va, pa, PG_RW | PG_CI);
+		size -= PAGE_SIZE;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+	return (iova);
 }
 
 void
@@ -246,12 +255,14 @@ unmapiodev(kva, size)
 	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
 	        panic("unmapiodev: bad address");
 #endif
-	physunaccess(kva, size);
+	pmap_kremove(kva, size);
+	pmap_update(pmap_kernel());
 
-	error = extent_free(extio, (u_long)kva, size, EX_NOWAIT);
-
+	error = extent_free(extio, kva, size, EX_NOWAIT);
+#ifdef DIAGNOSTIC
 	if (error != 0)
 		printf("unmapiodev: extent_free failed\n");
+#endif
 }
 
 /*

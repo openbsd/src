@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.41 2006/06/23 13:46:05 mickey Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.42 2006/06/24 14:04:04 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,43 +221,6 @@ pagemove(from, to, size)
 		size -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
-}
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */ 
-void
-physaccess(vaddr, paddr, size, prot)
-	vaddr_t vaddr;
-	paddr_t paddr;
-	size_t size;
-	int prot;
-{
-	pt_entry_t *pte;
-	u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += NBPG;
-	}
-	TBIAS();
-}
-
-void
-physunaccess(vaddr, size)
-	vaddr_t vaddr;
-	size_t size;
-{
-	pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
 }
 
 /*
