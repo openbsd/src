@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.11 2006/06/17 18:00:43 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.12 2006/06/24 02:36:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -74,8 +74,8 @@ const struct pci_matchid re_pci_devices[] = {
 
 #define RE_LINKSYS_EG1032_SUBID 0x00241737
 
-int re_pci_probe(struct device *, void *, void *);
-void re_pci_attach(struct device *, struct device *, void *);
+int	re_pci_probe(struct device *, void *, void *);
+void	re_pci_attach(struct device *, struct device *, void *);
 
 /*
  * PCI autoconfig definitions
