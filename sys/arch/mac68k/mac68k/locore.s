@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.53 2006/06/11 20:57:44 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.54 2006/06/24 13:24:21 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ Lloaddone:
 	movl	a1,_C_LABEL(curpcb)	| proc0 is running
 
 /* flush TLB and turn on caches */
-	jbsr	_C_LABEL(TBIA)		| invalidate TLB
+	jbsr	_ASM_LABEL(TBIA)	| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
@@ -1162,7 +1162,7 @@ Lsldone:
 /*
  * Invalidate entire TLB.
  */
-ENTRY(TBIA)
+ASENTRY_NOPROFILE(TBIA)
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu3		| no, skip

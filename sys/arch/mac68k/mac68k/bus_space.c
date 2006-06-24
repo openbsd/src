@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.21 2006/06/11 20:57:44 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.22 2006/06/24 13:24:21 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -155,8 +155,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 {
 	u_long pa, endpa;
 	vaddr_t va;
-	pt_entry_t *pte;
-	extern void TBIA(void);
+	pt_entry_t pte;
 
 	pa = trunc_page(bpa);
 	endpa = round_page((bpa + size) - 1);
@@ -197,17 +196,14 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	bshp->bssr2 = mac68k_bssr2;
 	bshp->bssr4 = mac68k_bssr4;
 
-	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		pte = kvtopte(va);
-		if ((flags & BUS_SPACE_MAP_CACHEABLE))
-			*pte &= ~PG_CI;
-		else
-			*pte |= PG_CI;
-		TBIA();
-	}
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		pte = PG_CWT;
+	else
+		pte = PG_CI;
+
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_enter_cache(pmap_kernel(), va, pa,
+		    UVM_PROT_RW, UVM_PROT_RW | PMAP_WIRED, pte);
 	pmap_update(pmap_kernel());
  
 	return 0;
@@ -236,6 +232,8 @@ bus_space_unmap(t, bsh, size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
+	pmap_remove(pmap_kernel(), va, endva);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, endva - va);
 
 	if (extent_free(iomem_ex, bpa, size,

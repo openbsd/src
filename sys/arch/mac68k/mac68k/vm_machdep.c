@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2006/06/23 13:46:05 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2006/06/24 13:24:21 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -227,58 +227,6 @@ pagemove(from, to, size)
 		size -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
-}
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */ 
-void
-physaccess(vaddr, paddr, size, prot)
-	caddr_t vaddr, paddr;
-	int size, prot;
-{
-	pt_entry_t *pte;
-	u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += NBPG;
-	}
-	TBIAS();
-}
-
-void
-physunaccess(vaddr, size)
-	caddr_t vaddr;
-	int size;
-{
-	pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
-}
-
-int	kvtop(caddr_t addr);
-
-/*
- * Convert kernel VA to physical address
- */
-int
-kvtop(addr)
-	caddr_t addr;
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
-		panic("kvtop: zero page frame");
-
-	return((int)pa);
 }
 
 /*

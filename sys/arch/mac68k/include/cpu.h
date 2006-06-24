@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2006/06/11 20:48:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2006/06/24 13:24:20 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -287,10 +287,6 @@ void	PCIA(void);
 void	mac68k_set_bell_callback(int (*)(void *, int, int, int), void *);
 int	mac68k_ring_bell(int, int, int);
 u_int	get_mapping(void);
-
-/* vm_machdep.c */
-void	physaccess(caddr_t, caddr_t, register int, register int);
-void	physunaccess(caddr_t, register int);
 
 #endif
 
