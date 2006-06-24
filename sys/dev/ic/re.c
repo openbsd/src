@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.26 2006/06/17 17:56:10 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.27 2006/06/24 02:11:29 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -103,8 +103,8 @@
  * interrupt moderation using the timer interrupt registers, which
  * significantly reduces TX interrupt load. There is also support
  * for jumbo frames, however the 8169/8169S/8110S can not transmit
- * jumbo frames larger than 7.5K, so the max MTU possible with this
- * driver is 7500 bytes.
+ * jumbo frames larger than 7440, so the max MTU possible with this
+ * driver is 7422 bytes.
  */
 
 #include "bpfilter.h"
@@ -1377,8 +1377,8 @@ re_encap(sc, m_head, idx)
 	/*
 	 * Set up checksum offload. Note: checksum offload bits must
 	 * appear in all descriptors of a multi-descriptor transmit
-	 * attempt. (This is according to testing done with an 8169
-	 * chip. I'm not sure if this is a requirement or a bug.)
+	 * attempt. This is according to testing done with an 8169
+	 * chip. This is a requirement.
 	 */
 
 	/*
@@ -1450,7 +1450,7 @@ re_encap(sc, m_head, idx)
 	/*
 	 * Ensure that the map for this transmission
 	 * is placed at the array index of the last descriptor
-	 * in this chain.
+	 * in this chain.  (Swap last and first dmamaps.)
 	 */
 	sc->rl_ldata.rl_tx_dmamap[*idx] =
 	    sc->rl_ldata.rl_tx_dmamap[curidx];
@@ -1691,7 +1691,6 @@ re_init(struct ifnet *ifp)
 	 * reloaded on each transmit. This gives us TX interrupt
 	 * moderation, which dramatically improves TX frame rate.
 	 */
-
 	if (sc->rl_type == RL_8169)
 		CSR_WRITE_4(sc, RL_TIMERINT_8169, 0x800);
 	else
