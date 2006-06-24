@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_snvar.h,v 1.13 2005/07/23 23:28:58 martin Exp $      */
+/*    $OpenBSD: if_snvar.h,v 1.14 2006/06/24 13:23:27 miod Exp $      */
 /*    $NetBSD: if_snvar.h,v 1.8 1997/04/25 03:40:09 briggs Exp $      */
 
 /*
@@ -44,9 +44,6 @@
 					((sc)->sc_reg_map[reg]),	\
 					(val)))
 
-extern int	kvtop(caddr_t addr);
-#define	SONIC_GETDMA(p)	(u_int32_t)(kvtop((caddr_t)(p)))
-
 #define	SN_REGSIZE	SN_NREGS*4
 
 /* mac68k does not have any write buffers to flush... */
@@ -84,13 +81,13 @@ extern int	kvtop(caddr_t addr);
  */
 #define TXBSIZE	1536	/* 6*2^8 -- the same size as the 8390 TXBUF */
 
-#define	SN_NPAGES	2 + NRBA + (NTDA/2)
+#define	SN_NPAGES	(2 + NRBA + (NTDA/2))
 
 typedef struct mtd {
 	void		*mtd_txp;
-	u_int32_t	mtd_vtxp;
+	paddr_t		mtd_vtxp;
 	caddr_t		mtd_buf;
-	u_int32_t	mtd_vbuf;
+	paddr_t		mtd_vbuf;
 	struct mbuf	*mtd_mbuf;
 } mtd_t;
 
@@ -115,16 +112,17 @@ typedef struct sn_softc {
 
 	int		sc_rramark;	/* index into p_rra of wp */
 	void		*p_rra[NRRA];	/* RX resource descs */
-	u_int32_t	v_rra[NRRA];	/* DMA addresses of p_rra */
+	paddr_t		v_rra[NRRA];	/* DMA addresses of p_rra */
 	u_int32_t	v_rea;		/* ptr to the end of the rra space */
 
 	int		sc_rxmark;	/* current hw pos in rda ring */
 	int		sc_rdamark;	/* current sw pos in rda ring */
 	int		sc_nrda;	/* total number of RDAs */
 	caddr_t		p_rda;
-	u_int32_t	v_rda;
+	paddr_t		v_rda;
 
 	caddr_t		rbuf[NRBA];
+	paddr_t		rbuf_phys[NRBA];
 
 	struct mtd	mtda[NTDA];
 	int		mtd_hw;		/* idx of first mtd given to hw */
@@ -140,7 +138,7 @@ typedef struct sn_softc {
 	void		*p_cda;
 	u_int32_t	v_cda;
 
-	unsigned char	*space;
+	vaddr_t		space;
 } sn_softc_t;
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcvar.h,v 1.4 2004/12/15 06:48:24 martin Exp $	*/
+/*	$OpenBSD: if_mcvar.h,v 1.5 2006/06/24 13:23:27 miod Exp $	*/
 /*	$NetBSD: if_mcvar.h,v 1.8 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ struct mc_softc {
 	bus_space_handle_t	sc_regh;
 
 	u_char		*sc_txbuf, *sc_rxbuf;
-	int		sc_txbuf_phys, sc_rxbuf_phys;
+	paddr_t		sc_txbuf_phys, sc_rxbuf_phys;
 	int		sc_tail;
 	int		sc_rxset;
 	int		sc_txset, sc_txseti;

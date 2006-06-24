@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc_obio.c,v 1.5 2004/12/15 06:48:24 martin Exp $	*/
+/*	$OpenBSD: if_mc_obio.c,v 1.6 2006/06/24 13:23:27 miod Exp $	*/
 /*	$NetBSD: if_mc_obio.c,v 1.13 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 
@@ -69,8 +68,6 @@ void	mc_reset_rxdma(struct mc_softc *sc);
 void	mc_reset_rxdma_set(struct mc_softc *, int set);
 void	mc_reset_txdma(struct mc_softc *sc);
 int	mc_obio_getaddr(struct mc_softc *, u_int8_t *);
-
-extern int	kvtop(register caddr_t addr);
 
 struct cfattach mc_obio_ca = {
 	sizeof(struct mc_softc), mc_obio_match, mc_obio_attach
@@ -117,8 +114,10 @@ mc_obio_attach(parent, self, aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct mc_softc *sc = (void *)self;
+	struct pglist rxlist, txlist;
+	vm_page_t pg;
+	vaddr_t va;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	int i, noncontig = 0;
 
 	sc->sc_regt = oa->oa_tag;
 	sc->sc_biucc = XMTSP_64;
@@ -134,41 +133,50 @@ mc_obio_attach(parent, self, aux)
 
 	if (mc_obio_getaddr(sc, myaddr)) {
 		printf(": failed to get MAC address.\n");
-		return;
+		goto out1;
 	}
 
 	/* allocate memory for transmit buffer and mark it non-cacheable */
-	sc->sc_txbuf = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
-	sc->sc_txbuf_phys = kvtop(sc->sc_txbuf);
-	physaccess (sc->sc_txbuf, (caddr_t)sc->sc_txbuf_phys, PAGE_SIZE,
-	    PG_V | PG_RW | PG_CI);
+	TAILQ_INIT(&txlist);
+	if (uvm_pglistalloc(PAGE_SIZE, 0, -PAGE_SIZE, PAGE_SIZE, 0,
+	    &txlist, 1, 0) != 0) {
+		printf(": could not allocate transmit buffer memory\n");
+		goto out1;
+	}
+	sc->sc_txbuf = (u_char *)uvm_km_valloc(kernel_map, PAGE_SIZE);
+	if (sc->sc_txbuf == NULL) {
+		printf(": could not map transmit buffer memory\n");
+		goto out2;
+	}
+	pg = TAILQ_FIRST(&txlist);
+	sc->sc_txbuf_phys = VM_PAGE_TO_PHYS(pg);
+	pmap_enter_cache(pmap_kernel(), (vaddr_t)sc->sc_txbuf,
+	    sc->sc_txbuf_phys, UVM_PROT_RW, UVM_PROT_RW | PMAP_WIRED, PG_CI);
+	pmap_update(pmap_kernel());
 
 	/*
 	 * allocate memory for receive buffer and mark it non-cacheable
-	 * XXX This should use the bus_dma interface, since the buffer
-	 * needs to be physically contiguous. However, it seems that
-	 * at least on my system, malloc() does allocate contiguous
-	 * memory. If it's not, suggest reducing the number of buffers
-	 * to 2, which will fit in one 4K page.
 	 */
-	sc->sc_rxbuf = malloc(MC_NPAGES * PAGE_SIZE, M_DEVBUF, M_WAITOK);
-	sc->sc_rxbuf_phys = kvtop(sc->sc_rxbuf);
-	for (i = 0; i < MC_NPAGES; i++) {
-		int pa;
-
-		pa = kvtop(sc->sc_rxbuf + PAGE_SIZE*i);
-		physaccess (sc->sc_rxbuf + PAGE_SIZE*i, (caddr_t)pa, PAGE_SIZE,
-		    PG_V | PG_RW | PG_CI);
-		if (pa != sc->sc_rxbuf_phys + PAGE_SIZE*i)
-			noncontig = 1;
+	TAILQ_INIT(&rxlist);
+	if (uvm_pglistalloc(MC_NPAGES * PAGE_SIZE, 0, -PAGE_SIZE, PAGE_SIZE, 0,
+	    &rxlist, 1, 0) != 0) {
+		printf(": could not allocate receive buffer memory\n");
+		goto out3;
 	}
-
-	if (noncontig) {
-		printf("%s: receive DMA buffer not contiguous! "
-		    "Try compiling with \"options MC_RXDMABUFS=2\"\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	sc->sc_rxbuf = (u_char *)(va = uvm_km_valloc(kernel_map,
+	    MC_NPAGES * PAGE_SIZE));
+	if (sc->sc_rxbuf == NULL) {
+		printf(": could not map receive buffer memory\n");
+		goto out4;
 	}
+	pg = TAILQ_FIRST(&rxlist);
+	sc->sc_rxbuf_phys = VM_PAGE_TO_PHYS(pg);
+	TAILQ_FOREACH(pg, &rxlist, pageq) {
+		pmap_enter_cache(pmap_kernel(), va, VM_PAGE_TO_PHYS(pg),
+		    UVM_PROT_RW, UVM_PROT_RW | PMAP_WIRED, PG_CI);
+		va += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
 
 	sc->sc_bus_init = mc_obio_init;
 	sc->sc_putpacket = mc_obio_put;
@@ -202,17 +210,31 @@ mc_obio_attach(parent, self, aux)
 	psc_reg1(PSC_LEV3_IER) = 0x80 | (1 << PSCINTR_ENET);
 
 	/* mcsetup returns 1 if something fails */
-	if (mcsetup(sc, myaddr)) {
-		/* disable interrupts */
-		psc_reg1(PSC_LEV4_IER) = (1 << PSCINTR_ENET_DMA);
-		psc_reg1(PSC_LEV3_IER) = (1 << PSCINTR_ENET);
-		/* remove interrupt handlers */
-		remove_psc_lev4_intr(PSCINTR_ENET_DMA);
-		remove_psc_lev3_intr();
+	if (mcsetup(sc, myaddr) != 0)
+		goto out5;
 
-		bus_space_unmap(sc->sc_regt, sc->sc_regh, MC_REGSIZE);
-		return;
-	}
+	return;
+
+out5:
+	/* disable interrupts */
+	psc_reg1(PSC_LEV4_IER) = (1 << PSCINTR_ENET_DMA);
+	psc_reg1(PSC_LEV3_IER) = (1 << PSCINTR_ENET);
+	/* remove interrupt handlers */
+	remove_psc_lev4_intr(PSCINTR_ENET_DMA);
+	remove_psc_lev3_intr();
+	pmap_remove(pmap_kernel(), (vaddr_t)sc->sc_rxbuf,
+	    (vaddr_t)sc->sc_rxbuf + MC_NPAGES * PAGE_SIZE);
+	pmap_update(pmap_kernel());
+out4:
+	uvm_pglistfree(&rxlist);
+out3:
+	pmap_remove(pmap_kernel(), (vaddr_t)sc->sc_txbuf,
+	    (vaddr_t)sc->sc_txbuf + PAGE_SIZE);
+	pmap_update(pmap_kernel());
+out2:
+	uvm_pglistfree(&txlist);
+out1:
+	bus_space_unmap(sc->sc_regt, sc->sc_regh, MC_REGSIZE);
 }
 
 /* Bus-specific initialization */

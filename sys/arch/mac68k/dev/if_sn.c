@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.44 2006/04/16 20:37:23 miod Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.45 2006/06/24 13:23:27 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -102,17 +102,44 @@ int
 snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	u_char	*p;
-	u_char	*pp;
-	int	i;
-	int	offset;
+	struct pglist pglist;
+	vm_page_t pg;
+	paddr_t phys;
+	vaddr_t	p, pp;
+	int	i, offset, error;
 
 	/*
 	 * XXX if_sn.c is intended to be MI. Should it allocate memory
 	 * for its descriptor areas, or expect the MD attach code
 	 * to do that?
 	 */
-	sc->space = malloc((SN_NPAGES + 1) * PAGE_SIZE, M_DEVBUF, M_WAITOK);
+	TAILQ_INIT(&pglist);
+	error = uvm_pglistalloc(SN_NPAGES * PAGE_SIZE, 0, -PAGE_SIZE,
+	    PAGE_SIZE, 0, &pglist, 1, 0);
+	if (error != 0) {
+		printf(": could not allocate descriptor memory\n");
+		return (error);
+	}
+	
+	/*
+	 * Map the pages uncached.
+	 */
+	sc->space = uvm_km_valloc(kernel_map, SN_NPAGES * PAGE_SIZE);
+	if (sc->space == NULL) {
+		printf(": could not map descriptor memory\n");
+		uvm_pglistfree(&pglist);
+		return (ENOMEM);
+	}
+
+	phys = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
+	p = pp = sc->space;
+	TAILQ_FOREACH(pg, &pglist, pageq) {
+		pmap_enter_cache(pmap_kernel(), p, VM_PAGE_TO_PHYS(pg),
+		    UVM_PROT_RW, UVM_PROT_RW | PMAP_WIRED, PG_CI);
+		p += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+	p = pp;
 
 	/*
 	 * Put the pup in reset mode (sninit() will fix it later),
@@ -127,90 +154,71 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 	NIC_PUT(sc, SNR_ISR, ISR_ALL);
 	wbflush();
 
-	/*
-	 * because the SONIC is basically 16bit device it 'concatenates'
-	 * a higher buffer address to a 16 bit offset--this will cause wrap
-	 * around problems near the end of 64k !!
-	 */
-	p = sc->space;
-	pp = (u_char *)ROUNDUP ((int)p, PAGE_SIZE);
-	p = pp;
-
-	/*
-	 * Disable caching on the SONIC's data space.
-	 * The pages might not be physically contiguous, so set
-	 * each page individually.
-	 */
-	for (i = 0; i < SN_NPAGES; i++) {
-		physaccess (p, (caddr_t)SONIC_GETDMA(p), PAGE_SIZE,
-			PG_V | PG_RW | PG_CI);
-		p += PAGE_SIZE;
-	}
-	p = pp;
-
 	for (i = 0; i < NRRA; i++) {
 		sc->p_rra[i] = (void *)p;
-		sc->v_rra[i] = SONIC_GETDMA(p);
+		sc->v_rra[i] = (p - sc->space) + phys;
 		p += RXRSRC_SIZE(sc);
 	}
-	sc->v_rea = SONIC_GETDMA(p);
+	sc->v_rea = (p - sc->space) + phys;
 
-	p = (u_char *)SOALIGN(sc, p);
+	p = SOALIGN(sc, p);
 
 	sc->p_cda = (void *)(p);
-	sc->v_cda = SONIC_GETDMA(p);
+	sc->v_cda = (p - sc->space) + phys;
 	p += CDA_SIZE(sc);
 
-	p = (u_char *)SOALIGN(sc, p);
+	p = SOALIGN(sc, p);
 
 	for (i = 0; i < NTDA; i++) {
 		struct mtd *mtdp = &sc->mtda[i];
 		mtdp->mtd_txp = (void *)p;
-		mtdp->mtd_vtxp = SONIC_GETDMA(p);
+		mtdp->mtd_vtxp = (p - sc->space) + phys;
 		p += TXP_SIZE(sc);
 	}
 
-	p = (u_char *)SOALIGN(sc, p);
+	p = SOALIGN(sc, p);
 
+#ifdef DIAGNOSTIC
 	if ((p - pp) > PAGE_SIZE) {
-		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
+		printf (": sizeof RRA (%ld) + CDA (%ld) +"
 		    "TDA (%ld) > PAGE_SIZE (%d). Punt!\n",
-		    sc->sc_dev.dv_xname,
 		    (ulong)sc->p_cda - (ulong)sc->p_rra[0],
 		    (ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 		    (ulong)p - (ulong)sc->mtda[0].mtd_txp,
 		    PAGE_SIZE);
-		return(1);
+		return (EINVAL);
 	}
+#endif
 
 	p = pp + PAGE_SIZE;
 	pp = p;
 
 	sc->sc_nrda = PAGE_SIZE / RXPKT_SIZE(sc);
-	sc->p_rda = (caddr_t) p;
-	sc->v_rda = SONIC_GETDMA(p);
+	sc->p_rda = (caddr_t)p;
+	sc->v_rda = (p - sc->space) + phys;
 
 	p = pp + PAGE_SIZE;
 
 	for (i = 0; i < NRBA; i++) {
 		sc->rbuf[i] = (caddr_t)p;
+		sc->rbuf_phys[i] = (p - sc->space) + phys;
 		p += PAGE_SIZE;
 	}
 
 	pp = p;
-	offset = TXBSIZE;
+	offset = 0;
 	for (i = 0; i < NTDA; i++) {
 		struct mtd *mtdp = &sc->mtda[i];
 
-		mtdp->mtd_buf = p;
-		mtdp->mtd_vbuf = SONIC_GETDMA(p);
+		mtdp->mtd_buf = (caddr_t)p;
+		mtdp->mtd_vbuf = (p - sc->space) + phys;
 		offset += TXBSIZE;
-		if (offset < PAGE_SIZE) {
+		if (offset < PAGE_SIZE - TXBSIZE) {
 			p += TXBSIZE;
 		} else {
 			p = pp + PAGE_SIZE;
 			pp = p;
-			offset = TXBSIZE;
+			offset = 0;
 		}
 	}
 
@@ -796,7 +804,7 @@ initialise_rra(struct sn_softc *sc)
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
-		v = SONIC_GETDMA(sc->rbuf[i]);
+		v = sc->rbuf_phys[i];
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRHI, UPPER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRLO, LOWER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(PAGE_SIZE/2));
