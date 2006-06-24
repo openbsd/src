@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.14 2006/06/23 21:34:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.15 2006/06/24 14:14:18 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -275,8 +275,6 @@ int	ieee80211_media_change(struct ifnet *);
 void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
 int	ieee80211_ioctl(struct ifnet *, u_long, caddr_t);
 int	ieee80211_get_rate(struct ieee80211com *);
-int	ieee80211_cfgget(struct ifnet *, u_long, caddr_t);
-int	ieee80211_cfgset(struct ifnet *, u_long, caddr_t);
 void	ieee80211_watchdog(struct ifnet *);
 int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
 int	ieee80211_rate2media(struct ieee80211com *, int,

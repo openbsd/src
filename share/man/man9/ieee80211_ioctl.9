@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_ioctl.9,v 1.2 2005/09/30 20:34:25 jaredy Exp $
+.\"	$OpenBSD: ieee80211_ioctl.9,v 1.3 2006/06/24 14:14:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,39 +26,24 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_ioctl.9,v 1.2 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_ioctl.9,v 1.2 2005/09/30 20:34:25 jaredy Exp $
+.\" $Id: ieee80211_ioctl.9,v 1.3 2006/06/24 14:14:30 deraadt Exp $
 .\"
 .Dd March 2, 2004
 .Dt IEEE80211_IOCTL 9
 .Os
 .Sh NAME
-.Nm ieee80211_cfgget , ieee80211_cfgset , ieee80211_ioctl
+.Nm ieee80211_ioctl
 .Nd 802.11 interface ioctl commands
 .Sh SYNOPSIS
 .In net80211/ieee80211_var.h
 .In net80211/ieee80211_proto.h
 .In net80211/ieee80211_ioctl.h
 .Ft int
-.Fn ieee80211_cfgget "struct ifnet *ifp" "u_long cmd" "caddr_t data"
-.Ft int
-.Fn ieee80211_cfgset "struct ifnet *ifp" "u_long cmd" "caddr_t data"
-.Ft int
 .Fn ieee80211_ioctl "struct ifnet *ifp" "u_long cmd" "caddr_t data"
 .Sh DESCRIPTION
 These
 functions are typically invoked by drivers in response to requests
 for information or to change settings from the userland.
-.Pp
-.\"
-The
-.Fn ieee80211_cfgget
-and
-.Fn ieee80211_cfgset
-functions implement a legacy interface for getting and setting 802.11
-interface attributes respectively.
-The interface is compatible with the RIDs used by the
-.Xr wicontrol 8
-utility.
 .Pp
 .\"
 The
@@ -79,7 +64,6 @@ to use this as the catch-all in a switch statement to avoid code duplication.
 .\"
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
-.Xr wicontrol 8 ,
 .Xr ieee80211 9
 .Sh HISTORY
 The

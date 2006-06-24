@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.114 2006/05/29 00:56:50 mk Exp $
+#	$OpenBSD: Makefile,v 1.115 2006/06/24 14:14:30 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -141,8 +141,6 @@ MLINKS+=ieee80211_crypto.9 ieee80211_crypto_attach.9 \
 	ieee80211_crypto.9 ieee80211_wep_crypt.9
 MLINKS+=ieee80211_input.9 ieee80211_decap.9 \
 	ieee80211_input.9 ieee80211_recv_mgmt.9
-MLINKS+=ieee80211_ioctl.9 ieee80211_cfgget.9 \
-	ieee80211_ioctl.9 ieee80211_cfgset.9
 MLINKS+=ieee80211_node.9 ieee80211_node_attach.9 \
 	ieee80211_node.9 ieee80211_node_lateattach.9 \
 	ieee80211_node.9 ieee80211_node_detach.9 \
