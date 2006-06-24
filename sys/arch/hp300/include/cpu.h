@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2006/06/11 20:48:11 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2006/06/24 13:20:19 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -152,10 +152,6 @@ void	hp300_calibrate_delay(void);
 int	badaddr(caddr_t);
 int	badbaddr(caddr_t);
 void	dumpconf(void);
-
-/* vm_machdep.c functions */
-void	physaccess(caddr_t, caddr_t, int, int);
-void	physunaccess(caddr_t, int);
 
 #endif /* _KERNEL */
 

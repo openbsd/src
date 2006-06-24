@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2005/12/31 18:13:44 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2006/06/24 13:20:17 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -92,6 +92,8 @@
 #include <hp300/dev/hpibvar.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include "sgc.h"
 
@@ -1209,49 +1211,55 @@ iomap(pa, size)
 	caddr_t pa;
 	int size;
 {
+	vaddr_t iova, tva, off;
+	paddr_t ppa;
 	int error;
-	caddr_t kva;
 
-	if (size == 0)
+	if (size <= 0)
 		return NULL;
 
-#ifdef DEBUG
-	if (((int)pa & PGOFSET) || (size & PGOFSET))
-		panic("iomap: unaligned");
-#endif
+	ppa = trunc_page((paddr_t)pa);
+	off = (paddr_t)pa & PAGE_MASK;
+	size = round_page(off + size);
+
 	error = extent_alloc(extio, size, PAGE_SIZE, 0, EX_NOBOUNDARY,
-	    EX_NOWAIT | EX_MALLOCOK, (u_long *)&kva);
+	    EX_NOWAIT | EX_MALLOCOK, &iova);
 
 	if (error != 0)
-		return NULL;
+		return (NULL);
 
-	physaccess(kva, pa, size, PG_RW | PG_CI);
-	return (kva);
+	tva = iova;
+	while (size != 0) {
+		pmap_kenter_cache(tva, ppa, PG_RW | PG_CI);
+		size -= PAGE_SIZE;
+		tva += PAGE_SIZE;
+		ppa += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+	return ((void *)(iova + off));
 }
 
 /*
  * Unmap a previously mapped device.
  */
 void
-iounmap(kva, size)
-	caddr_t kva;
+iounmap(va, size)
+	caddr_t va;
 	int size;
 {
+	vaddr_t kva, off;
 	int error;
 
-#ifdef DEBUG
-	extern int eiomapsize;
+	off = (vaddr_t)va & PAGE_MASK;
+	kva = trunc_page((vaddr_t)va);
+	size = round_page(off + size);
 
-	if (((int)kva & PGOFSET) || (size & PGOFSET))
-		panic("iounmap: unaligned");
-	if (kva < extiobase || kva >= extiobase + ctob(eiomapsize))
-		panic("iounmap: bad address");
-#endif
+	pmap_kremove(kva, size);
+	pmap_update(pmap_kernel());
 
-	physunaccess(kva, size);
-
-	error = extent_free(extio, (u_long)kva, size, EX_NOWAIT);
-
+	error = extent_free(extio, kva, size, EX_NOWAIT);
+#ifdef DIAGNOSTIC
 	if (error != 0)
 		printf("iounmap: extent_free failed\n");
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.56 2006/06/11 20:57:41 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.57 2006/06/24 13:20:17 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1619,37 +1619,6 @@ Lhpmmu5:
 	moveq	#FC_USERD,d0		| back to old
 	movc	d0,dfc			|   address space
 	movw	d1,sr			| restore IPL
-#endif
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu5		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-	rts
-Lmotommu5:
-#endif
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu7			| yes, skip
-	jpl	Lmc68851c		| 68851?
-	pflush #4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4			| flush supervisor TLB entries
-	rts
-Lhpmmu7:
-#endif
-#if defined(M68K_MMU_HP)
-	MMUADDR(a0)
-	movl	#0x8000,d0		| more
-	movl	d0,a0@(MMUTBINVAL)	|   HP magic
 #endif
 	rts
 

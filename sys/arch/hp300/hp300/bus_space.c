@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.3 2005/09/15 18:52:44 martin Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.4 2006/06/24 13:20:17 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
 
 /*-
@@ -50,15 +50,15 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <hp300/dev/sgcvar.h>
-
-#include "sgc.h"
-
+#ifdef DIAGNOSTIC
 extern char *extiobase;
+#endif
 extern struct extent *extio;
 extern int *nofault;
 
-/* ARGSUSED */
+/*
+ * Memory mapped devices (intio, dio and sgc)
+ */
 int
 bus_space_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
@@ -68,85 +68,52 @@ bus_space_map(t, bpa, size, flags, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long kva;
+	pt_entry_t template;
 	int error;
-	pt_entry_t ptemask;
 
 	switch (HP300_TAG_BUS(t)) {
 	case HP300_BUS_INTIO:
 		/*
-		 * Intio space is direct-mapped in pmap_bootstrap(); just
-		 * do the translation.
+		 * intio space is direct-mapped in pmap_bootstrap(); just
+		 * do the translation in this case.
 		 */
-		*bshp = (bus_space_handle_t)IIOV(INTIOBASE + bpa);
+		*bshp = IIOV(INTIOBASE + bpa);
 		return (0);
-	case HP300_BUS_DIO:
-		break;
-#if NSGC > 0
-	case HP300_BUS_SGC:
-#if 0
-		bpa += (bus_addr_t)sgc_slottopa(HP300_TAG_CODE(t));
-#endif
-		break;
-#endif
 	default:
-		panic("bus_space_map: bad space tag");
+		break;
 	}
 
 	/*
 	 * Allocate virtual address space from the extio extent map.
 	 */
-	size = round_page(size);
+	size = round_page(bpa + size) - trunc_page(bpa);
 	error = extent_alloc(extio, size, PAGE_SIZE, 0, EX_NOBOUNDARY,
 	    EX_NOWAIT | EX_MALLOCOK, &kva);
 	if (error)
 		return (error);
 
+	*bshp = (bus_space_handle_t)kva + (bpa & PAGE_MASK);
+	bpa = trunc_page(bpa);
+
 	/*
 	 * Map the range.
 	 */
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
-		ptemask = PG_RW;
+		template = PG_RW;
 	else
-		ptemask = PG_RW | PG_CI;
-	physaccess((caddr_t)kva, (caddr_t)bpa, size, ptemask);
+		template = PG_RW | PG_CI;
+	while (size != 0) {
+		pmap_kenter_cache(kva, bpa, template);
+		size -= PAGE_SIZE;
+		kva += PAGE_SIZE;
+		bpa += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * All done.
 	 */
-	*bshp = (bus_space_handle_t)kva;
 	return (0);
-}
-
-/* ARGSUSED */
-int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-
-	/*
-	 * Not meaningful on any currently-supported hp300 bus.
-	 */
-	return (EINVAL);
-}
-
-/* ARGSUSED */
-void
-bus_space_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-
-	/*
-	 * Not meaningful on any currently-supported hp300 bus.
-	 */
-	panic("bus_space_free: shouldn't be here");
 }
 
 void
@@ -158,47 +125,46 @@ bus_space_unmap(t, bsh, size)
 #ifdef DIAGNOSTIC
 	extern int eiomapsize;
 #endif
+	int error;
 
 	switch (HP300_TAG_BUS(t)) {
 	case HP300_BUS_INTIO:
 		/*
-		 * Intio space is direct-mapped in pmap_bootstrap(); nothing
+		 * intio space is direct-mapped in pmap_bootstrap(); nothing
 		 * to do.
 		 */
 		return;
-	case HP300_BUS_DIO:
-#if NSGC > 0
-	case HP300_BUS_SGC:
-#endif
-#ifdef DIAGNOSTIC
-		if ((caddr_t)bsh < extiobase ||
-		    (caddr_t)bsh >= (extiobase + ptoa(eiomapsize)))
-			panic("bus_space_unmap: bad bus space handle");
-#endif
-		break;
 	default:
-		panic("bus_space_unmap: bad space tag");
+		break;
 	}
 
-	size = round_page(size);
-
 #ifdef DIAGNOSTIC
-	if (bsh & PGOFSET)
-		panic("bus_space_unmap: unaligned");
+	if ((caddr_t)bsh < extiobase ||
+	    (caddr_t)bsh >= extiobase + ptoa(eiomapsize)) {
+		printf("bus_space_unmap: bad bus space handle %x\n", bsh);
+		return;
+	}
 #endif
+
+	size = round_page(bsh + size) - trunc_page(bsh);
+	bsh = trunc_page(bsh);
 
 	/*
 	 * Unmap the range.
 	 */
-	physunaccess((caddr_t)bsh, size);
+	pmap_kremove(bsh, size);
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Free it from the extio extent map.
 	 */
-	if (extent_free(extio, (u_long)bsh, size,
-	    EX_NOWAIT | EX_MALLOCOK))
+	error = extent_free(extio, (u_long)bsh, size, EX_NOWAIT | EX_MALLOCOK);
+#ifdef DIAGNOSTIC
+	if (error != 0) {
 		printf("bus_space_unmap: kva 0x%lx size 0x%lx: "
-		    "can't free region\n", (u_long) bsh, size);
+		    "can't free region (%d)\n", (vaddr_t)bsh, size, error);
+	}
+#endif
 }
 
 /* ARGSUSED */
@@ -212,43 +178,4 @@ bus_space_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset;
 	return (0);
-}
-
-/* ARGSUSED */
-int
-hp300_bus_space_probe(t, bsh, offset, sz)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	int sz;
-{
-	label_t faultbuf;
-	int i;
-
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = NULL;
-		return (0);
-	}
-
-	switch (sz) {
-	case 1:
-		i = bus_space_read_1(t, bsh, offset);
-		break;
-
-	case 2:
-		i = bus_space_read_2(t, bsh, offset);
-		break;
-
-	case 4:
-		i = bus_space_read_4(t, bsh, offset);
-		break;
-
-	default:
-		panic("bus_space_probe: unupported data size %d", sz);
-		/* NOTREACHED */
-	}
-
-	nofault = NULL;
-	return (1);
 }
