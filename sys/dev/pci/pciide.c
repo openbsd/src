@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.240 2006/06/24 07:51:30 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.241 2006/06/24 10:11:03 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -711,6 +711,10 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20379,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC40518,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
