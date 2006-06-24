@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
+/*	$OpenBSD: it.c,v 1.20 2006/06/24 13:42:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -43,6 +43,16 @@
 #define DPRINTF(x)
 #endif
 
+/*
+ * IT87-compatible chips can typically measure voltages up to 4.096 V.
+ * To measure higher voltages the input is attenuated with (external)
+ * resistors.  Negative voltages are measured using a reference
+ * voltage.  So we have to convert the sensor values back to real
+ * voltages by applying the appropriate resistor factor.
+ */
+#define RFACT_NONE	10000
+#define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
+
 int  it_match(struct device *, void *, void *);
 void it_attach(struct device *, struct device *, void *);
 u_int8_t it_readreg(struct it_softc *, int);
@@ -66,6 +76,18 @@ struct cfattach it_ca = {
 
 struct cfdriver it_cd = {
 	NULL, "it", DV_DULL
+};
+
+const int it_vrfact[] = {
+	RFACT_NONE,
+	RFACT_NONE,
+	RFACT_NONE,
+	RFACT(68, 100),
+	RFACT(30, 10),
+	RFACT(21, 10),
+	RFACT(83, 20),
+	RFACT(68, 100),
+	RFACT_NONE
 };
 
 int
@@ -175,31 +197,22 @@ it_setup_volt(struct it_softc *sc, int start, int n)
 		sc->sensors[start + i].type = SENSOR_VOLTS_DC;
 	}
 
-	sc->sensors[start + 0].rfact = 10000;
 	snprintf(sc->sensors[start + 0].desc, sizeof(sc->sensors[0].desc),
 	    "VCORE_A");
-	sc->sensors[start + 1].rfact = 10000;
 	snprintf(sc->sensors[start + 1].desc, sizeof(sc->sensors[1].desc),
 	    "VCORE_B");
-	sc->sensors[start + 2].rfact = 10000;
 	snprintf(sc->sensors[start + 2].desc, sizeof(sc->sensors[2].desc),
 	    "+3.3V");
-	sc->sensors[start + 3].rfact = (int)(( 16.8 / 10) * 10000);
 	snprintf(sc->sensors[start + 3].desc, sizeof(sc->sensors[3].desc),
 	    "+5V");
-	sc->sensors[start + 4].rfact = (int)(( 40 / 10) * 10000);
 	snprintf(sc->sensors[start + 4].desc, sizeof(sc->sensors[4].desc),
 	    "+12V");
-	sc->sensors[start + 5].rfact = (int)(( 31.0 / 10) * 10000);
 	snprintf(sc->sensors[start + 5].desc, sizeof(sc->sensors[5].desc),
 	    "Unused");
-	sc->sensors[start + 6].rfact = (int)(( 103.0 / 20) * 10000);
 	snprintf(sc->sensors[start + 6].desc, sizeof(sc->sensors[6].desc),
 	    "-12V");
-	sc->sensors[start + 7].rfact = (int)(( 16.8 / 10) * 10000);
 	snprintf(sc->sensors[start + 7].desc, sizeof(sc->sensors[7].desc),
 	    "+5VSB");
-	sc->sensors[start + 8].rfact = 10000;
 	snprintf(sc->sensors[start + 8].desc, sizeof(sc->sensors[8].desc),
 	    "VBAT");
 }
@@ -252,18 +265,15 @@ it_generic_svolt(struct it_softc *sc, struct sensor *sensors)
 		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 		/* voltage returned as (mV >> 4) */
 		sensors[i].value = (sdata << 4);
-		/* rfact is (factor * 10^4) */
-		sensors[i].value *= sensors[i].rfact;
 		/* these two values are negative and formula is different */
-		if (i == 5)
-			sensors[i].value -=
-			    (int) (21.0 / 10 * IT_VREF * 10000);
-		if (i == 6)
-			sensors[i].value -=
-			    (int) (83.0 / 20 * IT_VREF * 10000);
+		if (i == 5 || i == 6)
+			sensors[i].value = ((sdata << 4) - IT_VREF);
+		/* rfact is (factor * 10^4) */
+		sensors[i].value *= it_vrfact[i];
 		/* division by 10 gets us back to uVDC */
 		sensors[i].value /= 10;
-
+		if (i == 5 || i == 6)
+			sensors[i].value += IT_VREF * 1000;
 	}
 }
 
