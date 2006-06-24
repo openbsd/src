@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.131 2006/05/31 02:09:18 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.132 2006/06/24 00:49:36 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -144,7 +144,7 @@ int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
 void em_process_receive_interrupts(struct em_softc *, int);
 #ifdef __STRICT_ALIGNMENT
-int  em_fixup_rx(struct em_softc *);
+void em_fixup_rx(struct em_softc *);
 #endif
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
@@ -2452,11 +2452,10 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
  * Be aware, best performance of the 8254x chipset is achived only when Jumbo
  * frames are not used at all on strict alignment architectures.
  */
-int
+void
 em_fixup_rx(struct em_softc *sc)
 {
 	struct mbuf *m, *n;
-	int error = 0;
 
 	m = sc->fmp;
 	if (m->m_len <= (MCLBYTES - ETHER_HDR_LEN)) {
@@ -2476,11 +2475,8 @@ em_fixup_rx(struct em_softc *sc)
 			sc->dropped_pkts++;
 			m_freem(sc->fmp);
 			sc->fmp = NULL;
-			error = ENOMEM;
 		}
 	}
-
-	return (error);
 }
 #endif
 
