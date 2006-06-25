@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.17 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.18 2006/06/25 00:45:00 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1458,15 +1458,24 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 		if (err)
 			return err;
 		this->d.audio.encodings = result;
-		if ((result & COP_STREAM_FORMAT_PCM) == 0) {
-			printf("%s: %s: No PCM support: %x\n",
-			    XNAME(codec->az), this->name, result);
-			return -1;
+		if (result == 0) { /* quirk for CMI9880.
+				    * This must not occuur usually... */
+			this->d.audio.encodings =
+			    codec->w[codec->audiofunc].d.audio.encodings;
+			this->d.audio.bits_rates =
+			    codec->w[codec->audiofunc].d.audio.bits_rates;
+		} else {
+			if ((result & COP_STREAM_FORMAT_PCM) == 0) {
+				printf("%s: %s: No PCM support: %x\n",
+				    XNAME(codec->az), this->name, result);
+				return -1;
+			}
+			err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
+			    COP_PCM, &result);
+			if (err)
+				return err;
+			this->d.audio.bits_rates = result;
 		}
-		err = codec->comresp(codec, this->nid, CORB_GET_PARAMETER,
-		    COP_PCM, &result);
-		if (err)
-			return err;
 		this->d.audio.bits_rates = result;
 	} else {
 		this->d.audio.encodings =
