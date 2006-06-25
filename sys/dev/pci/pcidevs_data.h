@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1082 2006/06/25 05:38:13 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1083 2006/06/25 11:37:00 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -9604,7 +9604,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
-	    "Surecom NE-34",
+	    "NE-34",
 	},
 	{
 	    PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S2P,

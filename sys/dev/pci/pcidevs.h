@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1082 2006/06/25 05:38:13 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1083 2006/06/25 11:37:00 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3117,7 +3117,7 @@
 #define	PCI_PRODUCT_SUNIX_4018A	0x7268		/* 4018A */
 
 /* Surecom products */
-#define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* Surecom NE-34 */
+#define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 */
 
 /* Syba */
 #define	PCI_PRODUCT_SYBA_4S2P	0x0781		/* 4S2P */
