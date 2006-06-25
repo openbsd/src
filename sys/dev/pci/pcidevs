@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1081 2006/06/24 14:02:28 jsg Exp $
+$OpenBSD: pcidevs,v 1.1082 2006/06/25 05:38:13 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -297,6 +297,7 @@ vendor	ADP		0x9004	Adaptec
 vendor	ADP2		0x9005	Adaptec
 vendor	ATRONICS	0x907f	Atronics
 vendor	NETMOS		0x9710	NetMos
+vendor	PARALLELS	0xaaaa	Parallels
 vendor	3COM2		0xa727	3Com
 vendor	TIGERJET	0xe159	TigerJet Network
 vendor	ENDACE		0xeace	Endace
@@ -2712,6 +2713,10 @@ product PDC QSTOR_SATA		0x2068	QStor SATA
 
 /* Packet Engines products */
 product PE GNIC2		0x0911	PMC/GNIC2
+
+/* Parallels products */
+product PARALLELS TOOLS		0x1112	Tools
+product PARALLELS VIDEO		0x1121	Video
 
 /* PC Tech products */
 product PCTECH RZ1000		0x1000	RZ1000
