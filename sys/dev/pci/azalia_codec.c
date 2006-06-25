@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.14 2006/06/17 18:38:12 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.15 2006/06/25 00:54:16 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -87,8 +87,8 @@ boolean_t azalia_generic_mixer_validate_value
 int	azalia_generic_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 
-int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc260_init_dacgroup(codec_t *);
+int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc260_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc880_init_dacgroup(codec_t *);
 int	azalia_alc882_init_dacgroup(codec_t *);
@@ -98,6 +98,8 @@ int	azalia_alc882_get_port(codec_t *, mixer_ctrl_t *);
 #if 0
 int	azalia_ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 #endif
+int	azalia_cmi9880_init_dacgroup(codec_t *);
+int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
 int	azalia_stac9220_mixer_init(codec_t *);
 
@@ -143,6 +145,11 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
+		break;
+	case 0x434d4980:
+		this->name = "CMedia CMI9880";
+		this->init_dacgroup = azalia_cmi9880_init_dacgroup;
+		this->mixer_init = azalia_cmi9880_mixer_init;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
@@ -1928,6 +1935,106 @@ azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	return 0;
 }
 #endif
+
+/* ----------------------------------------------------------------
+ * CMedia CMI9880
+ * ---------------------------------------------------------------- */
+
+static const mixer_item_t cmi9880_mixer_items[] = {
+	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
+	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
+	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
+
+	{{0, {AudioNmaster"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x03, MI_TARGET_OUTAMP},
+	{{0, {AudioNsurround"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x04, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNclfe"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x05, MI_TARGET_OUTAMP},
+	{{0, {AzaliaNside"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x06, MI_TARGET_OUTAMP},
+	{{0, {"digital."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x07, MI_TARGET_OUTAMP},
+
+	{{0, {AzaliaNfront"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, ENUM_OFFON}, 0x08, MI_TARGET_INAMP(0)},
+	{{0, {AzaliaNfront}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(30)}}, 0x08, MI_TARGET_INAMP(0)},
+	{{0, {AzaliaNfront"."AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, .un.e={4, {{{AudioNmicrophone}, 5}, {{AudioNcd}, 6},
+			   {{"line1"}, 7}, {{"line2"}, 8}}}},
+	 0x08, MI_TARGET_CONNLIST},
+	{{0, {AudioNsurround"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, ENUM_OFFON}, 0x09, MI_TARGET_INAMP(0)},
+	{{0, {AudioNsurround}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(30)}}, 0x09, MI_TARGET_INAMP(0)},
+	{{0, {AudioNsurround"."AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, .un.e={4, {{{AudioNmicrophone}, 5}, {{AudioNcd}, 6},
+			   {{"line1"}, 7}, {{"line2"}, 8}}}},
+	 0x09, MI_TARGET_CONNLIST},
+
+	{{0, {AudioNspeaker"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x23, MI_TARGET_OUTAMP},
+	{{0, {AudioNspeaker}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 1, MIXER_DELTA(15)}}, 0x23, MI_TARGET_OUTAMP}
+};
+
+int
+azalia_cmi9880_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	this->nmixers = sizeof(cmi9880_mixer_items) / sizeof(mixer_item_t);
+	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
+	    M_DEVBUF, M_NOWAIT);
+	if (this->mixers == NULL) {
+		printf("%s: out of memory in %s\n", XNAME(this), __func__);
+		return ENOMEM;
+	}
+	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
+	memcpy(this->mixers, cmi9880_mixer_items,
+	    sizeof(mixer_item_t) * this->nmixers);
+	azalia_generic_mixer_fix_indexes(this);
+	azalia_generic_mixer_default(this);
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 5;		/* record.front.source=mic */
+	azalia_generic_mixer_set(this, 0x08, MI_TARGET_CONNLIST, &mc);
+	mc.un.ord = 7;		/* record.surround.source=line1 */
+	azalia_generic_mixer_set(this, 0x09, MI_TARGET_CONNLIST, &mc);
+	mc.un.ord = 1;		/* pindir: output */
+	azalia_generic_mixer_set(this, 0x0b, MI_TARGET_PINDIR, &mc);
+	azalia_generic_mixer_set(this, 0x0c, MI_TARGET_PINDIR, &mc);
+	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc);
+	azalia_generic_mixer_set(this, 0x0e, MI_TARGET_PINDIR, &mc);
+	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc);
+	mc.un.ord = 0;		/* front DAC -> headphones */
+	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_CONNLIST, &mc);
+	mc.un.ord = 0;		/* pindir: input */
+	azalia_generic_mixer_set(this, 0x10, MI_TARGET_PINDIR, &mc);	/* mic */
+	azalia_generic_mixer_set(this, 0x13, MI_TARGET_PINDIR, &mc);	/* SPDIF-in */
+	azalia_generic_mixer_set(this, 0x1f, MI_TARGET_PINDIR, &mc);	/* line1 */
+	azalia_generic_mixer_set(this, 0x20, MI_TARGET_PINDIR, &mc);	/* line2 */
+	return 0;
+}
+
+int
+azalia_cmi9880_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x03, 0x04, 0x05, 0x06}}, /* analog 8ch */
+		 {1, {0x07}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09}}, /* analog 4ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
 
 /* ----------------------------------------------------------------
  * Sigmatel STAC9221 and STAC9221D
