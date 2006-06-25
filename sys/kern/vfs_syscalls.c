@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.136 2006/06/14 20:01:50 sturm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.137 2006/06/25 15:01:54 sturm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			if (flag & MNT_NOEXEC)
 				SCARG(uap, flags) |= MNT_NOEXEC;
 		}
-		if ((error = vfs_busy(mp, VB_READ|VB_UMIGNORE)) != 0) {
+		if ((error = vfs_busy(mp, VB_READ|VB_NOWAIT)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -236,7 +236,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-	(void) vfs_busy(mp, VB_READ|VB_UMIGNORE);
+	(void) vfs_busy(mp, VB_READ|VB_NOWAIT);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
 	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
@@ -402,7 +402,7 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp, VB_WRITE|VB_UMWAIT))
+	if (vfs_busy(mp, VB_WRITE|VB_WAIT))
 		return (EBUSY);
 
 	return (dounmount(mp, SCARG(uap, flags), p, vp));
@@ -471,7 +471,7 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_UMIGNORE)) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
 			nmp = CIRCLEQ_PREV(mp, mnt_list);
 			continue;
 		}
@@ -626,7 +626,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_UMIGNORE)) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -702,7 +702,7 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
-		if (vfs_busy(mp, VB_READ|VB_UMWAIT))
+		if (vfs_busy(mp, VB_READ|VB_WAIT))
 			continue;
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);

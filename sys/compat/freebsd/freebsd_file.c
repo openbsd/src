@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.24 2006/06/14 20:01:50 sturm Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.25 2006/06/25 15:01:53 sturm Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -660,7 +660,7 @@ freebsd_sys_getfsstat(p, v, retval)
 
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_UMIGNORE)) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}

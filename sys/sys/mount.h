@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.72 2006/06/14 20:01:50 sturm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.73 2006/06/25 15:01:54 sturm Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -566,8 +566,8 @@ struct netexport {
 int	vfs_busy(struct mount *, int);
 #define VB_READ		0x01
 #define VB_WRITE	0x02
-#define VB_UMIGNORE	0x04	/* ignore unmount in progress */
-#define VB_UMWAIT	0x08	/* wait for unmount to finish */
+#define VB_NOWAIT	0x04	/* immediately fail on busy lock */
+#define VB_WAIT		0x08	/* sleep fail on busy lock */
 
 int     vfs_isbusy(struct mount *);
 int     vfs_mount_foreach_vnode(struct mount *, int (*func)(struct vnode *,
