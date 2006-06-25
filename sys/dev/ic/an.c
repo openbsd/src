@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.51 2006/05/22 20:35:12 krw Exp $	*/
+/*	$OpenBSD: an.c,v 1.52 2006/06/25 18:50:51 mickey Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -146,7 +146,7 @@ void	an_linkstat_intr(struct an_softc *);
 
 int	an_cmd(struct an_softc *, int, int);
 int	an_seek_bap(struct an_softc *, int, int);
-int	an_read_bap(struct an_softc *, int, int, void *, int);
+int	an_read_bap(struct an_softc *, int, int, void *, int, int);
 int	an_write_bap(struct an_softc *, int, int, void *, int);
 int	an_mwrite_bap(struct an_softc *, int, int, struct mbuf *, int);
 int	an_read_rid(struct an_softc *, int, void *, int *);
@@ -367,7 +367,7 @@ an_rxeof(struct an_softc *sc)
 	fid = CSR_READ_2(sc, AN_RX_FID);
 
 	/* First read in the frame header */
-	if (an_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {
+	if (an_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr), sizeof(frmhdr)) != 0) {
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 		ifp->if_ierrors++;
 		DPRINTF(("an_rxeof: read fid %x failed\n", fid));
@@ -437,12 +437,13 @@ an_rxeof(struct an_softc *sc)
 		 */
 		gap = m->m_data + sizeof(struct ieee80211_frame) -
 		    sizeof(uint16_t);
-		an_read_bap(sc, fid, -1, gap, gaplen + sizeof(u_int16_t));
+		an_read_bap(sc, fid, -1, gap, gaplen + sizeof(u_int16_t),
+		    gaplen + sizeof(u_int16_t));
 	} else
 		gaplen = 0;
 
 	an_read_bap(sc, fid, -1,
-	    m->m_data + sizeof(struct ieee80211_frame) + gaplen, len);
+	    m->m_data + sizeof(struct ieee80211_frame) + gaplen, len, len);
 	an_swap16((u_int16_t *)(m->m_data + sizeof(struct ieee80211_frame) + gaplen), (len+1)/2);
 	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + gaplen +
 	    len;
@@ -695,11 +696,11 @@ an_wait(struct an_softc *sc)
 }
 
 int
-an_read_bap(struct an_softc *sc, int id, int off, void *buf, int buflen)
+an_read_bap(struct an_softc *sc, int id, int off, void *buf, int len, int blen)
 {
-	int error, cnt;
+	int error, cnt, cnt2;
 
-	if (buflen == 0)
+	if (len == 0 || blen == 0)
 		return 0;
 	if (off == -1)
 		off = sc->sc_bap_off;
@@ -708,8 +709,10 @@ an_read_bap(struct an_softc *sc, int id, int off, void *buf, int buflen)
 			return EIO;
 	}
 
-	cnt = (buflen + 1) / 2;
+	cnt = (blen + 1) / 2;
 	CSR_READ_MULTI_STREAM_2(sc, AN_DATA0, (u_int16_t *)buf, cnt);
+	for (cnt2 = (len + 1) / 2; cnt < cnt2; cnt++)
+		(void) CSR_READ_2(sc, AN_DATA0);
 	sc->sc_bap_off += cnt * 2;
 
 	return 0;
@@ -841,19 +844,12 @@ an_read_rid(struct an_softc *sc, int rid, void *buf, int *buflenp)
 		return error;
 
 	/* length in byte, including length itself */
-	error = an_read_bap(sc, rid, 0, &len, sizeof(len));
+	error = an_read_bap(sc, rid, 0, &len, sizeof(len), sizeof(len));
 	if (error)
 		return error;
 
 	len -= 2;
-	if (*buflenp < len) {
-		printf("%s: record buffer is too small, "
-		    "rid=%x, size=%d, len=%d\n",
-		    sc->sc_dev.dv_xname, rid, *buflenp, len);
-		return ENOSPC;
-	}
-	*buflenp = len;
-	return an_read_bap(sc, rid, sizeof(len), buf, len);
+	return an_read_bap(sc, rid, sizeof(len), buf, len, *buflenp);
 }
 
 int
