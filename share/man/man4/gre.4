@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.27 2006/05/09 19:03:04 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.28 2006/06/25 08:58:13 brad Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -184,7 +184,15 @@ alias on Host A for the Ethernet interface:
 and on the Cisco:
 .Pp
 .Dl ip route Y mask tunnelX
-.Sh NOTE
+.Sh NOTES
+The MTU of
+.Nm
+interfaces is set to 1476 by default to match the value used by Cisco routers.
+This may not be an optimal value, depending on the link between the two tunnel
+endpoints.
+It can be adjusted via
+.Xr ifconfig 8 .
+.Pp
 For correct operation, the
 .Nm
 device needs a route to the destination, that is less specific than the
