@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1082 2006/06/25 05:38:13 brad Exp $
+$OpenBSD: pcidevs,v 1.1083 2006/06/25 11:37:00 martin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3112,7 +3112,7 @@ product SUNIX 40XX		0x7168	40XX
 product SUNIX 4018A		0x7268	4018A
 
 /* Surecom products */
-product SURECOM NE34		0x0e34	Surecom NE-34
+product SURECOM NE34		0x0e34	NE-34
 
 /* Syba */
 product SYBA 4S2P		0x0781	4S2P
