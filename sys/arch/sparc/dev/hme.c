@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.54 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: hme.c,v 1.55 2006/06/25 21:53:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -1231,6 +1231,8 @@ hme_mii_statchg(self)
 	struct hme_softc *sc = (struct hme_softc *)self;
 	struct hme_cr *cr = sc->sc_cr;
 
+	/* Apparently the hme chip is SIMPLEX if working in full duplex mode,
+	   but not otherwise. */
 	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0) {
 		cr->tx_cfg |= CR_TXCFG_FULLDPLX;
 		sc->sc_arpcom.ac_if.if_flags |= IFF_SIMPLEX;
