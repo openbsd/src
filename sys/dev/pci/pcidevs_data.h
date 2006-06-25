@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1081 2006/06/24 14:02:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1082 2006/06/25 05:38:13 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8303,6 +8303,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PMC/GNIC2",
 	},
 	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS,
+	    "Tools",
+	},
+	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO,
+	    "Video",
+	},
+	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
 	    "RZ1000",
 	},
@@ -12377,6 +12385,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETMOS,
 	    "NetMos",
+	},
+	{
+	    PCI_VENDOR_PARALLELS,
+	    "Parallels",
 	},
 	{
 	    PCI_VENDOR_3COM2,

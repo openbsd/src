@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1081 2006/06/24 14:02:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1082 2006/06/25 05:38:13 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -302,6 +302,7 @@
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
+#define	PCI_VENDOR_PARALLELS	0xaaaa		/* Parallels */
 #define	PCI_VENDOR_3COM2	0xa727		/* 3Com */
 #define	PCI_VENDOR_TIGERJET	0xe159		/* TigerJet Network */
 #define	PCI_VENDOR_ENDACE	0xeace		/* Endace */
@@ -2717,6 +2718,10 @@
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_PE_GNIC2	0x0911		/* PMC/GNIC2 */
+
+/* Parallels products */
+#define	PCI_PRODUCT_PARALLELS_TOOLS	0x1112		/* Tools */
+#define	PCI_PRODUCT_PARALLELS_VIDEO	0x1121		/* Video */
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
