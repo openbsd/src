@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.2 2006/06/26 05:37:05 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.3 2006/06/26 05:52:04 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -578,7 +578,9 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
                 ifp->if_baudrate = IF_Gbps(2.5);
         else
                 ifp->if_baudrate = IF_Gbps(1);
+#if 0
 	ifp->if_hardmtu = BNX_MAX_JUMBO_MTU;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
