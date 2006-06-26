@@ -20,6 +20,8 @@
 ./etc/firmware/ral-rt2561s
 ./etc/firmware/ral-rt2573
 ./etc/firmware/ral-rt2661
+./etc/firmware/zd1211
+./etc/firmware/zd1211-licence
 ./sbin/fdisk
 ./sbin/kbd
 ./usr/lib/apache/modules/libproxy.so

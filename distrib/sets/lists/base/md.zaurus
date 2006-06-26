@@ -18,6 +18,8 @@
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
+./etc/firmware/zd1211
+./etc/firmware/zd1211-licence
 ./sbin/fdisk
 ./sbin/kbd
 ./sbin/wsconsctl

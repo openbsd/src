@@ -36,6 +36,8 @@
 ./etc/firmware/uyap-license
 ./etc/firmware/yds
 ./etc/firmware/yds-license
+./etc/firmware/zd1211
+./etc/firmware/zd1211-licence
 ./sbin/fdisk
 ./sbin/iopctl
 ./sbin/kbd
