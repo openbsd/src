@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.5 2006/06/23 21:53:01 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.6 2006/06/26 23:06:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -627,7 +627,7 @@ ieee802_11_radio_if_print(u_int8_t *buf, u_int len)
 		max_rssi = *(u_int8_t*)t;
 		t += 1;
 
-		printf(", rssi %u/%u", rssi, max_rssi);
+		PRINTF(", rssi %u/%u", rssi, max_rssi);
 	}
 
 #undef RADIOTAP
