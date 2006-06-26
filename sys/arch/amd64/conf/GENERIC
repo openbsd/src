@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.143 2006/06/26 03:36:30 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.144 2006/06/26 06:31:31 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -339,7 +339,8 @@ em*	at pci?				# Intel Pro/1000 ethernet
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
 txp*	at pci?				# 3com 3CR990
 #nge*	at pci?				# NS DP83820/DP83821 GigE
-bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
+bge*	at pci?				# Broadcom BCM57xx (aka Tigon3)
+#bnx*	at pci?				# Broadcom BCM5706/5708 GigE
 re*	at pci?				# Realtek 8169/8169S/8110S
 stge*	at pci?				# Sundance TC9021 GigE
 #lge*	at pci?				# Level1 LXT1001 GigE
