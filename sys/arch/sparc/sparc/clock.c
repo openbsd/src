@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2006/06/23 19:54:30 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.23 2006/06/26 20:21:02 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -123,10 +123,8 @@ struct intersil7170 *i7;
 
 long	oclk_get_secs(void);
 void	oclk_get_dt(struct intersil_dt *);
-void	dt_to_gmt(struct intersil_dt *, long *);
 void	oclk_set_dt(struct intersil_dt *);
 void	oclk_set_secs(long);
-void	gmt_to_dt(long *, struct intersil_dt *);
 #endif
 
 int	oclockmatch(struct device *, void *, void *);
@@ -897,24 +895,36 @@ resettodr()
 long
 oclk_get_secs()
 {
-        struct intersil_dt dt;
-        long gmt;
+        struct intersil_dt idt;
+	struct clock_ymdhms dt;
 
-        oclk_get_dt(&dt);
-        dt_to_gmt(&dt, &gmt);
-        return (gmt);
+        oclk_get_dt(&idt);
+	dt.dt_sec = idt.dt_sec;
+	dt.dt_min = idt.dt_min;
+	dt.dt_hour = idt.dt_hour;
+	dt.dt_day = idt.dt_day;
+	dt.dt_mon = idt.dt_month;
+	dt.dt_year = idt.dt_year + CLOCK_BASE_YEAR;
+        return clock_ymdhms_to_secs(&dt);
 }
 
 void
 oclk_set_secs(secs)
 	long secs;
 {
-        struct intersil_dt dt;
-        long gmt;
+        struct intersil_dt idt;
+	struct clock_ymdhms dt;
 
-        gmt = secs;
-        gmt_to_dt(&gmt, &dt);
-        oclk_set_dt(&dt);
+	clock_secs_to_ymdhms(secs, &dt);
+	
+	idt.dt_hour = dt.dt_sec;
+	idt.dt_min = dt.dt_min;
+	idt.dt_sec = dt.dt_sec;
+	idt.dt_month = dt.dt_mon;
+	idt.dt_day = dt.dt_day;
+	idt.dt_year = dt.dt_year - CLOCK_BASE_YEAR;
+	idt.dt_dow = dt.dt_wday;
+        oclk_set_dt(&idt);
 }
 
 /*
@@ -968,110 +978,6 @@ oclk_set_dt(dt)
         i7->clk_cmd_reg =
                 intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
         splx(s);
-}
-
-
-/* Traditional UNIX base year */
-#define POSIX_BASE_YEAR 1970
-#define FEBRUARY        2
-
-#define leapyear(year)          ((year) % 4 == 0)
-#define days_in_year(a)         (leapyear(a) ? 366 : 365)
-#define days_in_month(a)        (month_days[(a) - 1])
-
-static int month_days[12] = {
-        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-void
-gmt_to_dt(tp, dt)
-	long *tp;
-	struct intersil_dt *dt;
-{
-        int i;
-        long days, secs;
-
-        days = *tp / SECDAY;
-        secs = *tp % SECDAY;
-
-        /* Hours, minutes, seconds are easy */
-        dt->dt_hour = secs / 3600;
-        secs = secs % 3600;
-        dt->dt_min  = secs / 60;
-        secs = secs % 60;
-        dt->dt_sec  = secs;
-
-        /* Day of week (Note: 1/1/1970 was a Thursday) */
-        dt->dt_dow = (days + 4) % 7;
-
-        /* Number of years in days */
-        i = POSIX_BASE_YEAR;
-        while (days >= days_in_year(i)) {
-                days -= days_in_year(i);
-                i++;
-        }
-        dt->dt_year = i - CLOCK_BASE_YEAR;
-
-        /* Number of months in days left */
-        if (leapyear(i))
-                days_in_month(FEBRUARY) = 29;
-        for (i = 1; days >= days_in_month(i); i++)
-                days -= days_in_month(i);
-        days_in_month(FEBRUARY) = 28;
-        dt->dt_month = i;
-
-        /* Days are what is left over (+1) from all that. */
-        dt->dt_day = days + 1;
-}
-
-
-void
-dt_to_gmt(dt, tp)
-	struct intersil_dt *dt;
-	long *tp;
-{
-        int i;
-        long tmp;
-        int year;
-
-        /*
-         * Hours are different for some reason. Makes no sense really.
-         */
-
-        tmp = 0;
-
-        if (dt->dt_hour >= 24) goto out;
-        if (dt->dt_day  >  31) goto out;
-        if (dt->dt_month > 12) goto out;
-
-        year = dt->dt_year + CLOCK_BASE_YEAR;
-
-
-        /*
-         * Compute days since start of time
-         * First from years, then from months.
-         */
-        for (i = POSIX_BASE_YEAR; i < year; i++)
-                tmp += days_in_year(i);
-        if (leapyear(year) && dt->dt_month > FEBRUARY)
-                tmp++;
-
-        /* Months */
-        for (i = 1; i < dt->dt_month; i++)
-                tmp += days_in_month(i);
-        tmp += (dt->dt_day - 1);
-
-        /* Now do hours */
-        tmp = tmp * 24 + dt->dt_hour;
-
-        /* Now do minutes */
-        tmp = tmp * 60 + dt->dt_min;
-
-        /* Now do seconds */
-        tmp = tmp * 60 + dt->dt_sec;
-
-out:
-        *tp = tmp;
 }
 #endif /* SUN4 */
 
