@@ -1,8 +1,7 @@
-#	$OpenBSD: list,v 1.7 2006/01/09 23:44:40 deraadt Exp $
+#	$OpenBSD: list,v 1.8 2006/06/26 03:42:39 deraadt Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel
-LINK	instbin					sbin/wicontrol
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
 

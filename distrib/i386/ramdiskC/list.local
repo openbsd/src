@@ -1,7 +1,4 @@
-# $OpenBSD: list.local,v 1.5 2006/06/23 16:23:05 deraadt Exp $
-
-# add local links; use instbin since instbin has already been unlinked
-#LINK	instbin					sbin/wicontrol
+# $OpenBSD: list.local,v 1.6 2006/06/26 03:40:57 deraadt Exp $
 
 # firmwares that might need loading
 COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
