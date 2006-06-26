@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2006/02/14 18:11:04 miod Exp $
+#	$OpenBSD: GENERIC,v 1.19 2006/06/26 22:26:29 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -64,8 +64,10 @@ pci*		at macepcibr?
 #### SCSI
 ahc*		at pci?
 siop*		at pci?
+mpi*		at pci?
 scsibus*	at siop?
 scsibus*	at ahc?
+scsibus*	at mpi?
 
 #### NICs
 dc*		at pci?		# 21143, "tulip" clone ethernet
