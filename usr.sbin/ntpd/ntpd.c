@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.45 2006/06/22 11:11:25 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.46 2006/06/26 08:10:45 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@ __dead void	usage(void);
 int		main(int, char *[]);
 int		check_child(pid_t, const char *);
 int		dispatch_imsg(struct ntpd_conf *);
+void		reset_adjtime(void);
 int		ntpd_adjtime(double);
 void		ntpd_adjfreq(double);
 void		ntpd_settime(double);
@@ -128,6 +129,7 @@ main(int argc, char *argv[])
 	}
 	endpwent();
 
+	reset_adjtime();
 	if (!conf.settime) {
 		log_init(conf.debug);
 		if (!conf.debug)
@@ -321,6 +323,17 @@ dispatch_imsg(struct ntpd_conf *conf)
 		imsg_free(&imsg);
 	}
 	return (0);
+}
+
+void
+reset_adjtime(void)
+{
+	struct timeval	tv;
+
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	if (adjtime(&tv, NULL) == -1)
+		log_warn("reset adjtime failed");
 }
 
 int
