@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.6 2006/06/15 22:09:32 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.7 2006/06/26 23:26:12 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <err.h>
 #include "resolve.h"
 #include "link.h"
 #include "sod.h"
@@ -171,6 +172,8 @@ int	elf_find_symbol_obj(elf_object_t *object, const char *name,
 	    const Elf_Sym **weak_sym, elf_object_t **weak_object);
 
 int prebind_writefile(int fd, struct prebind_info *info);
+int prebind_writenewfile(int infd, char *name, struct stat *st, off_t orig_size,
+    struct prebind_info *info);
 
 struct elf_object *load_object;
 
@@ -1679,6 +1682,8 @@ elf_prep_bin_prebind(struct proglist *pl)
 	free(nameidx);
 	free(nametab);
 	free(libmap);
+
+	return ret;
 }
 
 
@@ -1826,8 +1831,8 @@ elf_write_lib(struct elf_object *object, struct nameidx *nameidx,
 
 
 	if (readonly) {
-		prebind_writenewfile(fd, object->load_name, ifstat,
-		    footer.orig_size, &info);
+		prebind_writenewfile(fd, object->load_name, &ifstat,
+		    (off_t)footer.orig_size, &info);
 	} else {
 		prebind_writefile(fd, &info);
 	}
@@ -1904,6 +1909,7 @@ prebind_writefile(int fd, struct prebind_info *info)
 	if (info->object->obj_type == OBJTYPE_EXE)
 		elf_fixup_prog_load(fd, info->footer, info->object);
 
+	return 0;
 }
 
 int

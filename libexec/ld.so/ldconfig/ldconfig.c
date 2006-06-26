@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.24 2006/06/19 20:44:27 jmc Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.25 2006/06/26 23:26:12 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -50,6 +50,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "prebind.h"
 
 #include "ld.h"
 
@@ -487,7 +489,7 @@ readhints(void)
 	}
 
 	if (hdr->hh_ehints > msize) {
-		warnx("%s: hintsize greater than filesize: 0x%x > 0x%x ",
+		warnx("%s: hintsize greater than filesize: 0x%lx > 0x%lx ",
 		    _PATH_LD_HINTS, hdr->hh_ehints, msize);
 		    return -1;
 	}

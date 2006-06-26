@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.h,v 1.1 2006/05/12 23:20:52 deraadt Exp $ */
+/* $OpenBSD: prebind.h,v 1.2 2006/06/26 23:26:12 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -62,3 +62,7 @@ struct fixup {
 	u_int32_t obj_idx;
 	u_int32_t sym_idx;
 };
+
+int prebind_delete(char **argv);
+int prebind(char **argv);
+int	prebind_remove_load_section(int fd, char *name);

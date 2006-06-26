@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.6 2006/06/15 22:09:32 drahn Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.7 2006/06/26 23:26:12 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include "prebind.h"
 
@@ -35,6 +36,8 @@
 int	strip_prebind(char *file);
 int	prebind_remove_load_section(int fd, char *name);
 int	prebind_newfile(int fd, char *name, struct stat *st, off_t orig_size);
+int	strip_file_or_dir(char *name);
+int	strip_dir(char *dir);
 
 extern	int verbose;
 
@@ -57,7 +60,7 @@ strip_file_or_dir(char *name)
 
 	ret = lstat(name, &sb);
 	if (ret != 0)
-		return;
+		return 0;
 	switch (sb.st_mode & S_IFMT) {
 	case S_IFREG:
 		ret =  strip_prebind(name);
@@ -86,8 +89,9 @@ strip_dir(char *dir)
 
 	/* if dir failes to open, skip */
 	if (dirp == NULL)
-		return;
+		return 0;
 
+	ret = 0;
 	while ((dp = readdir(dirp)) != NULL && ret != -1) {
 		ret = -1;
 		switch (dp->d_type) {
