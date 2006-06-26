@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.21 2006/06/26 13:56:29 brad Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.22 2006/06/26 15:52:59 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -150,7 +150,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (sc->sc_poll)
 			printf(": polling");
-	}
+	} else
+		printf(": polling");
 
 	printf("\n");
 
