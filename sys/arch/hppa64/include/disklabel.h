@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.3 2006/06/19 01:52:19 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 2006/06/26 23:11:31 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ struct dos_partition {
 #define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
 #define DOSPTYP_FAT32L	0x0c		/* 32-bit FAT, LBA-mapped */
 #define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
+#define DOSPTYP_EXTENDL 0x0f		/* Extended, LBA-mapped; contains sub-partitions */
 #define DOSPTYP_ONTRACK	0x54
 #define	DOSPTYP_LINUX	0x83		/* That other thing */
 #define DOSPTYP_FREEBSD	0xa5		/* FreeBSD partition type */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.5 2005/11/04 13:33:59 uwe Exp $	*/
-/*	$OpenBSD: disklabel.h,v 1.5 2005/11/04 13:33:59 uwe Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2006/06/26 23:11:31 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2006/06/26 23:11:31 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ struct dos_partition {
 #define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
 #define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
 #define DOSPTYP_FAT32L	0x0c		/* 32-bit FAT, LBA-mapped */
-#define DOSPTYP_FAT16C	0x0e		/* 16-bit FAT, CHS-mapped */
+#define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
 #define DOSPTYP_EXTENDL 0x0f		/* Extended, LBA-mapped; contains sub-partitions */
 #define DOSPTYP_ONTRACK	0x54
 #define	DOSPTYP_LINUX	0x83		/* That other thing */
@@ -108,12 +108,12 @@ struct dos_partition {
 #ifdef __ARMEL__
 #define get_le(x) (*((u_int32_t *)x))
 #else
-static __inline u_int32_t get_le(void *p);
+static __inline u_int32_t get_le(void *);
 static __inline u_int32_t
 get_le(void *p)
 {
 	u_int8_t *_p = (u_int8_t *)p;
-	int x;
+	u_int32_t x;
 	x = _p[0];
 	x |= _p[1] << 8;
 	x |= _p[2] << 16;
@@ -123,9 +123,8 @@ get_le(void *p)
 #endif
 
 
-#define NMBRPART 4
 struct cpu_disklabel {
-	struct dos_partition dosparts[NMBRPART];
+	struct dos_partition dosparts[NDOSPART];
 	struct dkbad bad;
 };
 

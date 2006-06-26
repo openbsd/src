@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 2004/11/10 10:36:12 grange Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2006/06/26 23:11:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -50,16 +50,16 @@
 #define	DOSACTIVE	0x80
 
 struct dos_partition {
-	unsigned char	dp_flag;	/* default boot flag */
-	unsigned char	dp_shd;	/* start head, IsN't Always Meaningful */
-	unsigned char	dp_ssect;	/* start sector, INAM */
-	unsigned char	dp_scyl;	/* start cylinder, INAM */
-	unsigned char	dp_typ;		/* partition type */
-	unsigned char	dp_ehd;	/* end head, INAM */
-	unsigned char	dp_esect;	/* end sector, INAM */
-	unsigned char	dp_ecyl;	/* end cylinder, INAM */
-	unsigned long	dp_start;	/* absolute start sector number */
-	unsigned long	dp_size;	/* partition size in sectors */
+	u_int8_t	dp_flag;	/* default boot flag */
+	u_int8_t	dp_shd;	/* start head, IsN't Always Meaningful */
+	u_int8_t	dp_ssect;	/* start sector, INAM */
+	u_int8_t	dp_scyl;	/* start cylinder, INAM */
+	u_int8_t	dp_typ;		/* partition type */
+	u_int8_t	dp_ehd;	/* end head, INAM */
+	u_int8_t	dp_esect;	/* end sector, INAM */
+	u_int8_t	dp_ecyl;	/* end cylinder, INAM */
+	u_int32_t	dp_start;	/* absolute start sector number */
+	u_int32_t	dp_size;	/* partition size in sectors */
 };
 
 /* Known DOS partition types. */
@@ -70,7 +70,7 @@ struct dos_partition {
 #define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
 #define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
 #define DOSPTYP_FAT32L	0x0c		/* 32-bit FAT, LBA-mapped */
-#define DOSPTYP_FAT16C	0x0e		/* 16-bit FAT, CHS-mapped */
+#define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
 #define DOSPTYP_EXTENDL 0x0f		/* Extended, LBA-mapped; contains sub-partitions */
 #define DOSPTYP_ONTRACK	0x54
 #define	DOSPTYP_LINUX	0x83		/* That other thing */
@@ -84,13 +84,13 @@ struct dos_partition {
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
-static __inline u_int32_t get_le(void *p);
+static __inline u_int32_t get_le(void *);
 
 static __inline u_int32_t
 get_le(void *p)
 {
 	u_int8_t *_p = (u_int8_t *)p;
-	int x;
+	u_int32_t x;
 	x = _p[0];
 	x |= _p[1] << 8;
 	x |= _p[2] << 16;
