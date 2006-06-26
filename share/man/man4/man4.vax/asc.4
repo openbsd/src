@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asc.4,v 1.4 2003/05/25 23:03:56 miod Exp $
+.\"	$OpenBSD: asc.4,v 1.5 2006/06/26 22:16:23 miod Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
 .\" Copyright (c) 2000 Matt Thomas.
@@ -31,7 +31,7 @@
 .\"
 .\"	$NetBSD: asc.4,v 1.7 2002/01/15 02:03:42 wiz Exp $
 .\"
-.Dd April 23, 2000
+.Dd June 22, 2006
 .Dt ASC 4 vax
 .Os
 .Sh NAME
@@ -62,12 +62,12 @@ for use in
 .Xr config 8
 files:
 .Pp
-.Bl -tag -compact -width "bits 8-15:"
+.Bl -tag -compact -width "bits 16-23:"
 .It bits 0-7 :
 disable disconnect/reselect for the corresponding
 .Tn SCSI
 target
-.It bits 8-15 :
+.It bits 16-23 :
 disable synchronous negotiation for
 .Tn SCSI
 target

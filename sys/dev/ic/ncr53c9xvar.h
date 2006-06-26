@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.16 2006/05/23 20:35:40 miod Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.17 2006/06/26 22:16:23 miod Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 #endif
 
 /* Wide or differential can have 16 targets */
-#define NCR_NTARG		8
+#define NCR_NTARG		16
 #define NCR_NLUN		8
 
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
@@ -270,6 +270,7 @@ struct ncr53c9x_softc {
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 
+	int	sc_ntarg;			/* number of targets */
 	int	sc_cfflags;			/* Copy of config flags */
 
 	/* register defaults */

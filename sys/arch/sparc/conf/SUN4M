@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.70 2005/12/12 20:39:36 miod Exp $
+#	$OpenBSD: SUN4M,v 1.71 2006/06/26 22:16:23 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -100,12 +100,12 @@ sbus*	at xbox?
 # sun4c or sun4m SCSI - an NCR53c94 or equivalent behind
 # specialized DMA glue
 dma0	at sbus0					# on-board SCSI
-esp0	at dma0 flags 0xff0f				# sun4m
+esp0	at dma0 flags 0x00ff000f			# sun4m
 
 # FSBE/S SCSI - an NCR53c94 or equivalent behind
 dma*	at sbus?					# SBus SCSI
-esp*	at sbus? flags 0xff0f				# two flavours
-esp*	at dma? flags 0xff0f				# depending on model
+esp*	at sbus? flags 0x00ff000f			# two flavours
+esp*	at dma? flags 0x00ff000f			# depending on model
 
 #sun4c, sun4m
 isp*	at sbus?

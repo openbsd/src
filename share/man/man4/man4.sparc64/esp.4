@@ -1,10 +1,10 @@
-.\"	$OpenBSD: esp.4,v 1.6 2004/09/30 19:59:28 mickey Exp $
+.\"	$OpenBSD: esp.4,v 1.7 2006/06/26 22:16:23 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd October 8, 2001
+.Dd June 22, 2006
 .Dt ESP 4 sparc64
 .Os
 .Sh NAME
@@ -12,8 +12,8 @@
 .Nd ESP NCR 53c94 on-board or SBus SCSI controller
 .Sh SYNOPSIS
 .Cd "dma* at sbus?              " Pq "SBus SCSI"
-.Cd "esp* at dma? flags 0x0000  " Pq "two flavours"
-.Cd "esp* at sbus? flags 0x0000 " Pq "depending on model"
+.Cd "esp* at dma?               " Pq "two flavours"
+.Cd "esp* at sbus?              " Pq "depending on model"
 .Cd "scsibus* at esp?"
 .Sh DESCRIPTION
 The
@@ -24,10 +24,10 @@ on some
 UltraSPARC workstations.
 .Sh DEVICE FLAGS
 .Bl -tag -width "Bits XX-XX" -compact
-.It Bits 0-7
+.It Bits 0-15
 Disable disconnect/reselect for the corresponding target
-.It Bits 8-15
-Disable synchronous negotiation for target "[bit - 8]"
+.It Bits 16-31
+Disable synchronous negotiation for target "[bit - 16]"
 .El
 .Pp
 The

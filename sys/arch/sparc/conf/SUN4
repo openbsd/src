@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.32 2005/12/12 20:39:36 miod Exp $
+#	$OpenBSD: SUN4,v 1.33 2006/06/26 22:16:23 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -79,7 +79,7 @@ wskbd* at zskbd?
 # sun4/300 SCSI - an NCR53c94 or equivalent behind
 # an LSI Logic DMA controller
 dma0	at obio0 addr 0xfa001000 level 4		# sun4/300
-esp0	at obio0 addr 0xfa000000 level 4 flags 0xff0f	#
+esp0	at obio0 addr 0xfa000000 level 4 flags 0x00ff000f
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at obio0 addr 0xf9000000 level 6		# sun4/300

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.144 2006/06/22 23:10:28 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.145 2006/06/26 22:16:23 miod Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -132,7 +132,7 @@ macintr0	at macobio?	# old interrupt controller
 openpic*	at macobio?	# openpic interrupt controller
 bm*		at macobio?	# BMAC ethernet
 #mc*		at macobio?	# MACE ethernet
-#esp*		at macobio? flags 0x00ff # 53c9x SCSI
+#esp*		at macobio? flags 0x0000ffff # 53c9x SCSI
 #mesh*		at macobio? flags 0xffff # MESH SCSI
 #nvram*		at macobio?	# nvram
 adb*		at macobio?	# Apple Desktop Bus

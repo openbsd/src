@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.150 2006/06/22 23:10:28 brad Exp $
+#	$OpenBSD: GENERIC,v 1.151 2006/06/26 22:16:23 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -268,7 +268,7 @@ scsibus* at atapiscsi?
 #	      to operate acceptably.
 #
 dma*	at sbus?				# SBus
-esp*	at dma? flags 0x0000			# SBus
+esp*	at dma?					# SBus
 esp*	at sbus?
 
 isp*	at sbus?
