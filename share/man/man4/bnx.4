@@ -1,3 +1,5 @@
+.\"	$OpenBSD: bnx.4,v 1.3 2006/06/26 07:54:49 jmc Exp $
+.\"
 .\"Copyright (c) 2006 Broadcom Corporation
 .\" David Christensen <davidch@broadcom.com>.  All rights reserved.
 .\"
@@ -51,13 +53,15 @@ HP NC370F PCI-X Multifunction Gigabit server adapter
 HP NC370T PCI-X Multifunction Gigabit server adapter
 .El
 .Pp
-The NetXtreme II product family is composed of various Converged NIC (or CNIC) 
-Ethernet controllers which support a TCP Offload Engine (TOE), Remote DMA (RDMA), 
-and iSCSI acceleration, in addition to standard L2 Ethernet traffic, all on the 
-same controller.
-The following features are supported in the 
+The NetXtreme II product family is composed of various Converged NIC (or CNIC)
+Ethernet controllers which support a TCP Offload Engine (TOE),
+Remote DMA (RDMA), and iSCSI acceleration,
+in addition to standard L2 Ethernet traffic,
+all on the same controller.
+The following features are supported in the
 .Nm
-driver under OpenBSD:
+driver under
+.Ox :
 .Bd -literal -offset indent
 .\" IP/TCP/UDP checksum offload
 .\" Jumbo frames (up to 9022 bytes)
@@ -74,8 +78,8 @@ driver supports the following media types:
 .It Cm autoselect
 Enable autoselection of the media type and options.
 The user can manually override
-the autoselected mode by adding media options to
-.Xr rc.conf 5 .
+the autoselected mode via
+.Xr ifconfig 8 .
 .It Cm 10baseT/UTP
 Set 10Mbps operation.
 The
