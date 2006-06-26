@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.207 2006/05/28 17:21:14 uwe Exp $
+#	$OpenBSD: files.pci,v 1.208 2006/06/26 04:57:54 brad Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -506,10 +506,15 @@ device	lge: ether, ifnet, mii, ifmedia, mii_phy
 attach	lge at pci
 file	dev/pci/if_lge.c		lge
 
-# Broadcom BCM570x gigabit ethernet
+# Broadcom BCM57xx gigabit ethernet
 device	bge: ether, ifnet, mii, ifmedia, mii_phy
 attach	bge at pci
 file	dev/pci/if_bge.c		bge
+
+# Broadcom BCM570[68] gigabit ethernet
+device	bnx: ether, ifnet, mii, ifmedia, mii_phy
+attach	bnx at pci
+file	dev/pci/if_bnx.c		bnx
 
 # VIA VT6122
 device	vge: ether, ifnet, mii, ifmedia, mii_phy
