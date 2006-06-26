@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.6 2006/01/17 11:38:50 mbalmer Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.7 2006/06/26 06:16:09 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
@@ -42,6 +42,7 @@ usage(void)
 	exit(1);
 }
 
+/* ARGSUSED */
 void
 sighdlr(int signum)
 {
@@ -53,15 +54,10 @@ main(int argc, char *argv[])
 {
 	const char	*errstr;
 	size_t		 len;
-	u_int		 interval, period, nperiod;
+	u_int		 interval = 0, period = 30, nperiod;
 	int		 ch, trigauto, sauto, speriod;
-	int		 daemonize, retval;
+	int		 daemonize = 1, retval = 1;
 	int		 mib[3];
-
-	interval = 0;
-	period = 30;
-	daemonize = 1;
-	retval = 1;
 
 	while ((ch = getopt(argc, argv, "di:p:")) != -1) {
 		switch (ch) {
@@ -69,18 +65,18 @@ main(int argc, char *argv[])
 			daemonize = 0;
 			break;
 		case 'i':
-			interval = (int)strtonum(optarg, 1LL, 86400LL, &errstr);
+			interval = (u_int)strtonum(optarg, 1LL, 86400LL,
+			    &errstr);
 			if (errstr)
 				errx(1, "interval is %s: %s", errstr, optarg);
 			break;
 		case 'p':
-			period = (int)strtonum(optarg, 2LL, 86400LL, &errstr);
+			period = (u_int)strtonum(optarg, 2LL, 86400LL, &errstr);
 			if (errstr)
 				errx(1, "period is %s: %s", errstr, optarg);
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 
