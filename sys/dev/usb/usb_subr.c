@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.43 2006/05/31 06:18:09 pascoe Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.44 2006/06/26 19:12:38 mjc Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1159,7 +1159,7 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
 	err = usbd_set_address(dev, addr);
 	if (err) {
-		DPRINTFN(-1,("usb_new_device: set address %d failed\n", addr));
+		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
 		err = USBD_SET_ADDR_FAILED;
 		usbd_remove_device(dev, up);
 		return (err);
