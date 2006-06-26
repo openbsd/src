@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.24 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.25 2006/06/26 22:14:12 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -145,6 +145,80 @@ Static const u_int8_t ukbd_trtab[256] = {
 };
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
+const kbd_t ukbd_countrylayout[HCC_MAX] = {
+	(kbd_t)-1,
+	(kbd_t)-1,	/* arabic */
+	KB_BE,		/* belgian */
+	(kbd_t)-1,	/* canadian bilingual */
+	KB_CF,		/* canadian french */
+	(kbd_t)-1,	/* czech */
+	KB_DK,		/* danish */
+	(kbd_t)-1,	/* finnish */
+	KB_FR,		/* french */
+	KB_DE,		/* german */
+	(kbd_t)-1,	/* greek */
+	(kbd_t)-1,	/* hebrew */
+	KB_HU,		/* hungary */
+	(kbd_t)-1,	/* international (iso) */
+	KB_IT,		/* italian */
+	KB_JP,		/* japanese (katakana) */
+	(kbd_t)-1,	/* korean */
+	KB_LA,		/* latin american */
+	(kbd_t)-1,	/* netherlands/dutch */
+	KB_NO,		/* norwegian */
+	(kbd_t)-1,	/* persian (farsi) */
+	KB_PL,		/* polish */
+	KB_PT,		/* portuguese */
+	KB_RU,		/* russian */
+	(kbd_t)-1,	/* slovakia */
+	KB_ES,		/* spanish */
+	KB_SF,		/* swiss french */
+	KB_SG,		/* swiss german */
+	(kbd_t)-1,	/* switzerland */
+	(kbd_t)-1,	/* taiwan */
+	KB_TR,		/* turkish Q */
+	KB_UK,		/* uk */
+	KB_US,		/* us */
+	(kbd_t)-1,	/* yugoslavia */
+	(kbd_t)-1	/* turkish F */
+};
+
+#define	SUN_HCC_MIN	0x21
+#define	SUN_HCC_MAX	0x3f
+const kbd_t ukbd_sunlayout[1 + SUN_HCC_MAX - SUN_HCC_MIN] = {
+	KB_US,	/* 021 USA */
+	KB_US,	/* 022 UNIX */
+	KB_FR,	/* 023 France */
+	KB_DK,	/* 024 Denmark */
+	KB_DE,	/* 025 Germany */
+	KB_IT,	/* 026 Italy */
+	KB_NL,	/* 027 The Netherlands */
+	KB_NO,	/* 028 Norway */
+	KB_PT,	/* 029 Portugal */
+	KB_ES,	/* 02a Spain */
+	KB_SV,	/* 02b Sweden */
+	KB_SF,	/* 02c Switzerland/French */
+	KB_SG,	/* 02d Switzerland/German */
+	KB_UK,	/* 02e Great Britain */
+	-1,	/* 02f Korea */
+	-1,	/* 030 Taiwan */
+	KB_JP,	/* 031 Japan */
+	-1,	/* 032 Canada/French */
+	-1,	/* 033 Hungary */
+	-1,	/* 034 Poland */
+	-1,	/* 035 Czech */
+	-1,	/* 036 Russia */
+	-1,	/* 037 Latvia */
+	-1,	/* 038 Turkey-Q5 */
+	-1,	/* 039 Greece */
+	-1,	/* 03a Arabic */
+	-1,	/* 03b Lithuania */
+	-1,	/* 03c Belgium */
+	-1,	/* 03d unaffected */
+	-1,	/* 03e Turkey-F5 */
+	-1,	/* 03f Canada/French */
+};
+
 #define KEY_ERROR 0x01
 
 #define MAXKEYS (MAXMOD+2*MAXKEYCODE)
@@ -259,13 +333,8 @@ const struct wskbd_accessops ukbd_accessops = {
 
 extern const struct wscons_keydesc ukbd_keydesctab[];
 
-const struct wskbd_mapdata ukbd_keymapdata = {
-	ukbd_keydesctab,
-#ifdef UKBD_LAYOUT
-	UKBD_LAYOUT,
-#else
-	KB_US,
-#endif
+struct wskbd_mapdata ukbd_keymapdata = {
+	ukbd_keydesctab
 };
 
 USB_DECLARE_DRIVER(ukbd);
@@ -289,8 +358,10 @@ USB_ATTACH(ukbd)
 {
 	USB_ATTACH_START(ukbd, sc, uaa);
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	usb_hid_descriptor_t *hid;
 	u_int32_t qflags;
 	const char *parseerr;
+	kbd_t layout = (kbd_t)-1;
 	struct wskbddev_attach_args a;
 
 	sc->sc_hdev.sc_intr = ukbd_intr;
@@ -304,12 +375,12 @@ USB_ATTACH(ukbd)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-#ifdef DIAGNOSTIC
-	printf(": %d modifier keys, %d key codes", sc->sc_nmod,
-	       sc->sc_nkeycode);
-#endif
-	printf("\n");
+	hid = usbd_get_hid_descriptor(uha->uaa->iface);
 
+#ifdef DIAGNOSTIC
+	printf(": %d modifier keys, %d key codes",
+	    sc->sc_nmod, sc->sc_nkeycode);
+#endif
 
 	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
 	sc->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
@@ -324,6 +395,36 @@ USB_ATTACH(ukbd)
 		/* Don't let any other keyboard have it. */
 		ukbd_is_console = 0;
 	}
+
+	if (uha->uaa->vendor == USB_VENDOR_SUN &&
+	    (uha->uaa->product == USB_PRODUCT_SUN_KEYBOARD6 ||
+	     uha->uaa->product == USB_PRODUCT_SUN_KEYBOARD7)) {
+		/* Sun keyboard use Sun-style layout codes */
+		if (hid->bCountryCode >= SUN_HCC_MIN &&
+		    hid->bCountryCode <= SUN_HCC_MAX)
+			layout = ukbd_sunlayout[hid->bCountryCode - SUN_HCC_MIN];
+#ifdef DIAGNOSTIC
+		if (hid->bCountryCode != 0)
+			printf(", layout %d", hid->bCountryCode);
+#endif
+	} else {
+		if (hid->bCountryCode <= HCC_MAX)
+			layout = ukbd_countrylayout[hid->bCountryCode];
+#ifdef DIAGNOSTIC
+		if (hid->bCountryCode != 0)
+			printf(", country code %d", hid->bCountryCode);
+#endif
+	}
+	if (layout == (kbd_t)-1) {
+#ifdef UKBD_LAYOUT
+		layout = UKBD_LAYOUT;
+#else
+		layout = KB_US;
+#endif
+	}
+	ukbd_keymapdata.layout = layout;
+
+	printf("\n");
 
 	if (sc->sc_console_keyboard) {
 		DPRINTF(("ukbd_attach: console keyboard sc=%p\n", sc));

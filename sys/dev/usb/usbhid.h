@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.7 2002/05/09 15:06:29 nate Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.8 2006/06/26 22:14:12 miod Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -194,5 +194,9 @@ typedef struct usb_hid_descriptor {
 #define HIO_NULLSTATE	0x040
 #define HIO_VOLATILE	0x080
 #define HIO_BUFBYTES	0x100
+
+/* Valid values for the country codes */
+#define	HCC_UNDEFINED	0x00
+#define	HCC_MAX		0x23
 
 #endif /* _USBHID_H_ */
