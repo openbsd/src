@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.8 2005/08/01 19:58:59 kettenis Exp $
+dnl	$OpenBSD: prep,v 1.9 2006/06/26 21:11:11 dlg Exp $
 Before you install your system, you should familiarize yourself with the
 ARCS setup and how to run programs from the Command monitor prompt.
 
@@ -60,7 +60,7 @@ Disk numbering
     slot number to compensate for the lost slot.
 
     When the kernel searches for the boot device it uses the ARCBios
-    environment variable OsLoadPartition. Since the disk number in
+    environment variable OSLoadPartition. Since the disk number in
     the variable is the absolute number, in contrast to the kernels
     relative numbers, the kernel will not be able to find the boot
     device if the disk slots are not filled from the lowest and up.
