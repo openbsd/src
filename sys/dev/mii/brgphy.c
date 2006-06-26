@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.48 2006/05/20 23:03:53 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.49 2006/06/26 04:59:26 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -65,6 +65,7 @@
 #include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bgereg.h>
+#include <dev/pci/if_bnxreg.h>
 
 int brgphy_probe(struct device *, void *, void *);
 void brgphy_attach(struct device *, struct device *, void *);
@@ -475,40 +476,62 @@ brgphy_loop(struct mii_softc *sc)
 void
 brgphy_reset(struct mii_softc *sc)
 {
-	struct bge_softc *bge_sc;
+	struct bge_softc *bge_sc = NULL;
+	struct bnx_softc *bnx_sc = NULL;
 	struct ifnet *ifp;
 	u_int32_t val;
 
 	mii_phy_reset(sc);
 
 	ifp = sc->mii_pdata->mii_ifp;
-	bge_sc = ifp->if_softc;
+
+	/* Find the driver associated with this PHY. */
+	if (strcmp(ifp->if_xname, "bge") == 0)
+		bge_sc = ifp->if_softc;
+	else if (strcmp(ifp->if_xname, "bnx") == 0)
+		bnx_sc = ifp->if_softc;
 
 	brgphy_load_dspcode(sc);
 
-	/*
-	 * Don't enable Ethernet@WireSpeed for the 5700 or 5705
-	 * other than A0 and A1 chips. Make sure we only do this
-	 * test on "bge" NICs, since other drivers may use this
-	 * same PHY subdriver.
-	 */
-	if (strncmp(ifp->if_xname, "bge", 3) == 0 &&
-	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
-	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
-	     (bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
-	      bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A1))))
-		return;
+	if (bge_sc) {
+		/*
+		 * Don't enable Ethernet@WireSpeed for the 5700 or 5705
+		 * other than A0 and A1 chips. Make sure we only do this
+		 * test on "bge" NICs, since other drivers may use this
+		 * same PHY subdriver.
+		 */
+		if (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
+		   (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
+		    (bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
+		     bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A1)))
+			return;
  
-	/* Enable Ethernet@WireSpeed. */
-	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
-	val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, val | (1 << 15) | (1 << 4));
+		/* Enable Ethernet@WireSpeed. */
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
+		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, val | (1 << 15) | (1 << 4));
 
-	/* Enable Link LED on Dell boxes */
-	if (bge_sc->bge_no_3_led) {
+		/* Enable Link LED on Dell boxes */
+		if (bge_sc->bge_no_3_led) {
+			PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
+			PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
+			    & ~BRGPHY_PHY_EXTCTL_3_LED);
+		}
+	} else if (bnx_sc) {
+		/* Set Jumbo frame settings in the PHY. */
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
+		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 
+			val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
+
+		val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
 		PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
-		    PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
-		    & ~BRGPHY_PHY_EXTCTL_3_LED);
+			val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+
+		/* Enable Ethernet@Wirespeed */
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
+		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, (val | (1 << 15) | (1 << 4)));
 	}
 }
 
