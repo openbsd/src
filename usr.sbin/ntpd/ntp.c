@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.88 2006/06/21 07:42:00 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.89 2006/06/26 09:43:06 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -151,6 +151,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 
 	bzero(&conf->status, sizeof(conf->status));
 
+	conf->freq.num = 0;
 	conf->freq.samples = 0;
 	conf->freq.x = 0.0;
 	conf->freq.xx = 0.0;
@@ -479,6 +480,7 @@ priv_adjfreq(double offset)
 	conf->freq.xx = 0.0;
 	conf->freq.samples = 0;
 	conf->freq.overall_offset = 0.0;
+	conf->freq.num++;
 }
 
 int
@@ -613,7 +615,8 @@ update_scale(double offset)
 	if (offset < 0)
 		offset = -offset;
 
-	if (offset > QSCALE_OFF_MAX)
+	if (offset > QSCALE_OFF_MAX || !conf->status.synced ||
+	    conf->freq.num < 3)
 		conf->scale = 1;
 	else if (offset < QSCALE_OFF_MIN)
 		conf->scale = QSCALE_OFF_MAX / QSCALE_OFF_MIN;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.74 2006/06/22 11:11:25 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.75 2006/06/26 09:43:06 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,8 +50,8 @@
 
 #define	MAX_SERVERS_DNS			8
 
-#define	QSCALE_OFF_MIN			0.05
-#define	QSCALE_OFF_MAX			0.50
+#define	QSCALE_OFF_MIN			0.001
+#define	QSCALE_OFF_MAX			0.050
 
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
@@ -152,6 +152,7 @@ struct ntp_freq {
 	double				x, y;
 	double				xx, xy;
 	int				samples;
+	u_int				num;
 };
 
 struct ntpd_conf {
