@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.47 2006/05/27 23:01:21 deraadt Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.48 2006/06/26 03:12:37 brad Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -17,7 +17,7 @@ CXXFLAGS+=     ${CXXDIAGFLAGS}
 CFLAGS+=	${COPTS}
 CXXFLAGS+=     ${CXXOPTS}
 
-.if (${ELF_TOOLCHAIN:L} == "yes")
+.if ${ELF_TOOLCHAIN:L} == "yes"
 CRTBEGIN?=       ${DESTDIR}/usr/lib/crtbegin.o
 CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
 .endif
@@ -63,8 +63,8 @@ LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
-.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \
-     ${MACHINE_ARCH} == "i386")
+.if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \
+    ${MACHINE_ARCH} == "i386"
 LIBARCH?=	${DESTDIR}/usr/lib/lib${MACHINE_ARCH}.a
 .else
 LIBARCH?=

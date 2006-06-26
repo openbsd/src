@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.94 2005/11/23 18:34:33 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.95 2006/06/26 03:12:37 brad Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -117,12 +117,12 @@ STATIC?=	-static
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "m88k")
+.if ${MACHINE_ARCH} == "m88k" || ${MACHINE_ARCH} == "vax"
 NOPIC=
 .endif
 
 # pic relocation flags.
-.if (${MACHINE_ARCH} == "sparc64")
+.if ${MACHINE_ARCH} == "sparc64"
 PICFLAG=-fPIC
 .else
 PICFLAG=-fpic
@@ -135,9 +135,9 @@ PICFLAG+=-fno-function-cse
 . endif
 .endif
 
-.if (${MACHINE_ARCH} == "sparc64") || (${MACHINE_ARCH} == "sparc")
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 ASPICFLAG=-KPIC
-.elif (${ELF_TOOLCHAIN:L} == "no")
+.elif ${ELF_TOOLCHAIN:L} == "no"
 ASPICFLAG=-k
 .endif
 
