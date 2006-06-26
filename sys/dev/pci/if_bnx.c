@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.1 2006/06/26 04:57:54 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.2 2006/06/26 05:37:05 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -52,7 +52,7 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
 #define BNX_DEBUG
 
 #include <dev/pci/if_bnxreg.h>
-#include <dev/pci/if_bnxfw.h>
+#include <dev/microcode/bnx/bnxfw.h>
 
 /****************************************************************************/
 /* BNX Driver Version                                                       */
