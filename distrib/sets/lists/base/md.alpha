@@ -37,7 +37,6 @@
 ./sbin/fdisk
 ./sbin/iopctl
 ./sbin/kbd
-./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so

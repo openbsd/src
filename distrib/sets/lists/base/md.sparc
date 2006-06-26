@@ -2,7 +2,6 @@
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
 ./sbin/kbd
-./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so

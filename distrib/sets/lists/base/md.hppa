@@ -38,7 +38,6 @@
 ./etc/firmware/yds
 ./etc/firmware/yds-license
 ./sbin/kbd
-./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/gccbug
 ./usr/lib/apache/modules/libproxy.so

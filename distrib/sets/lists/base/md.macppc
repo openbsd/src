@@ -41,7 +41,6 @@
 ./sbin/iopctl
 ./sbin/kbd
 ./sbin/pdisk
-./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/addr2line
 ./usr/bin/gccbug

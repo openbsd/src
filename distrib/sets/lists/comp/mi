@@ -5667,8 +5667,6 @@
 ./usr/share/man/cat9/ieee80211_add_xrates.0
 ./usr/share/man/cat9/ieee80211_alloc_node.0
 ./usr/share/man/cat9/ieee80211_begin_scan.0
-./usr/share/man/cat9/ieee80211_cfgget.0
-./usr/share/man/cat9/ieee80211_cfgset.0
 ./usr/share/man/cat9/ieee80211_chan2ieee.0
 ./usr/share/man/cat9/ieee80211_chan2mode.0
 ./usr/share/man/cat9/ieee80211_compute_duration.0

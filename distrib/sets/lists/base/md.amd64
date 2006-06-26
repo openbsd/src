@@ -40,7 +40,6 @@
 ./sbin/iopctl
 ./sbin/kbd
 ./sbin/mount_ntfs
-./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/gccbug
 ./usr/lib/apache/modules/libproxy.so
