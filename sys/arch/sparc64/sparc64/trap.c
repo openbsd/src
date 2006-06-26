@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2006/05/15 21:56:54 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2006/06/26 22:18:06 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -693,13 +693,10 @@ badtrap:
 			copyin((caddr_t)pc, &p->p_md.md_fpstate->fs_queue[0].fq_instr, sizeof(int));
 			p->p_md.md_fpstate->fs_queue[0].fq_addr = (int *)pc;
 			p->p_md.md_fpstate->fs_qsize = 1;
-			ADVANCE;
 		}
+		ADVANCE;
 		fpu_cleanup(p, p->p_md.md_fpstate);
 		/* fpu_cleanup posts signals if needed */
-#if 0		/* ??? really never??? */
-		ADVANCE;
-#endif
 		break;
 
 	case T_TAGOF:
