@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.6 2006/04/10 00:57:54 deraadt Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.7 2006/06/26 17:33:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -296,8 +296,6 @@ viasio_hm_init(struct viasio_softc *sc)
 		} else {
 			sc->sc_hm_sensors[VT1211_HMS_UCH1 + i - 1].type =
 			    SENSOR_VOLTS_DC;
-			sc->sc_hm_sensors[VT1211_HMS_UCH1 + i - 1].rfact =
-			    vt1211_hm_vrfact[i - 1];
 		}
 		snprintf(sc->sc_hm_sensors[VT1211_HMS_UCH1 + i - 1].desc,
 		    sizeof(sc->sc_hm_sensors[VT1211_HMS_UCH1 + i - 1].desc),
@@ -308,7 +306,6 @@ viasio_hm_init(struct viasio_softc *sc)
 	sc->sc_hm_sensors[VT1211_HMS_33V].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_hm_sensors[VT1211_HMS_33V].desc, "+3.3V",
 	    sizeof(sc->sc_hm_sensors[VT1211_HMS_33V].desc));
-	sc->sc_hm_sensors[VT1211_HMS_33V].rfact = vt1211_hm_vrfact[5];
 
 	/* FAN reading 1, 2 */
 	sc->sc_hm_sensors[VT1211_HMS_FAN1].type = SENSOR_FANRPM;
@@ -387,8 +384,7 @@ viasio_hm_refresh(void *arg)
 
 			/* Convert to uV */
 			/* XXX: conversion function is guessed */
-			rfact = sc->sc_hm_sensors[VT1211_HMS_UCH1 +
-			    i - 1].rfact;
+			rfact = vt1211_hm_vrfact[i - 1];
 			sc->sc_hm_sensors[VT1211_HMS_UCH1 + i - 1].value =
 			    ((val * 100000000000ULL) / (rfact * 958));
 		}
@@ -400,7 +396,7 @@ viasio_hm_refresh(void *arg)
 
 	/* Convert to uV */
 	/* XXX: conversion function is guessed */
-	rfact = sc->sc_hm_sensors[VT1211_HMS_33V].rfact;
+	rfact = vt1211_hm_vrfact[5];
 	sc->sc_hm_sensors[VT1211_HMS_33V].value = ((val * 100000000000ULL) /
 	    (rfact * 958));
 
