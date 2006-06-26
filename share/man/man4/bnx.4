@@ -1,0 +1,136 @@
+.\"Copyright (c) 2006 Broadcom Corporation
+.\" David Christensen <davidch@broadcom.com>.  All rights reserved.
+.\"
+.\"Redistribution and use in source and binary forms, with or without
+.\"modification, are permitted provided that the following conditions
+.\"are met:
+.\"
+.\"1. Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\"2. Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\"3. Neither the name of Broadcom Corporation nor the name of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written consent.
+.\"
+.\"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS'
+.\"AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\"ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+.\"BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\"INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\"CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\"ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\"THE POSSIBILITY OF SUCH DAMAGE.
+\"
+.\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/bce.4,v 1.2 2006/04/10 20:12:17 brueffer Exp $
+.\"
+.Dd April 4, 2006
+.Dt BNX 4
+.Os
+.Sh NAME
+.Nm bnx
+.Nd "Broadcom NetXtreme II Gigabit Ethernet adapter driver"
+.Sh SYNOPSIS
+.Cd "bnx* at pci?"
+.Cd "brgphy* at mii?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports Broadcom's NetXtreme II product family, such as the
+BCM5706 PCI-X and BCM5708 PCI Express Ethernet controllers, which
+includes the following:
+.Pp
+.Bl -bullet -compact
+.It
+HP NC370T Multifunction Gigabit Server Adapter
+.It
+HP NC370i Multifunction Gigabit Server Adapter
+.El
+.Pp
+The NetXtreme II product family is composed of various Converged NIC (or CNIC) 
+Ethernet controllers which support a TCP Offload Engine (TOE), Remote DMA (RDMA), 
+and iSCSI acceleration, in addition to standard L2 Ethernet traffic, all on the 
+same controller.
+The following features are supported in the 
+.Nm
+driver under OpenBSD:
+.Bd -literal -offset indent
+.\" IP/TCP/UDP checksum offload
+.\" Jumbo frames (up to 9022 bytes)
+.\" VLAN tag stripping
+Interrupt coalescing
+10/100/1000Mbps operation in full-duplex mode
+10/100Mbps operation in half-duplex mode
+.Ed
+.Pp
+The
+.Nm
+driver supports the following media types:
+.Bl -tag -width ".Cm 10baseT/UTP"
+.It Cm autoselect
+Enable autoselection of the media type and options.
+The user can manually override
+the autoselected mode by adding media options to
+.Xr rc.conf 5 .
+.It Cm 10baseT/UTP
+Set 10Mbps operation.
+The
+.Xr ifconfig 8
+.Ic mediaopt
+option can also be used to select either
+.Cm full-duplex
+or
+.Cm half-duplex
+modes.
+.It Cm 100baseTX
+Set 100Mbps (Fast Ethernet) operation.
+The
+.Xr ifconfig 8
+.Ic mediaopt
+option can also be used to select either
+.Cm full-duplex
+or
+.Cm half-duplex
+modes.
+.It Cm 1000baseTX
+Set 1000baseTX operation over twisted pair.
+Only
+.Cm full-duplex
+mode is supported.
+.El
+.Pp
+The
+.Nm
+driver supports the following media options:
+.Bl -tag -width ".Cm full-duplex"
+.It Cm full-duplex
+Force full duplex operation.
+.It Cm half-duplex
+Force half duplex operation.
+.El
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr brgphy 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An David Christensen Aq davidch@broadcom.com .
