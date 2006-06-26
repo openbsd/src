@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.154 2006/05/28 17:22:48 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.155 2006/06/26 05:40:42 brad Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -198,6 +198,8 @@ ADMtek ADM8211 IEEE 802.11b wireless network adapters.
 Broadcom BCM4401 Ethernet.
 .It Xr bge 4
 Broadcom BCM570x PCI Gigabit Ethernet.
+.It Xr bnx 4
+Broadcom BCM5706/5708 Gigabit Ethernet.
 .It Xr dc 4
 Various Tulip-like Ethernet
 interfaces such as the DEC/Intel 21143;
@@ -532,6 +534,7 @@ driver.
 .Xr bge 4 ,
 .Xr bha 4 ,
 .Xr bktr 4 ,
+.Xr bnx 4 ,
 .Xr cac 4 ,
 .Xr cardbus 4 ,
 .Xr cia 4 ,
