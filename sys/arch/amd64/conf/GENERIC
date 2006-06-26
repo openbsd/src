@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.142 2006/06/15 22:25:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.143 2006/06/26 03:36:30 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -310,7 +310,7 @@ san*	at pci?				# Sangoma PCI AFT card
 de*	at pci?				# DC21X4X-based ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 fxp*	at cardbus?			# Intel PRO/100 ethernet
-#ne*	at pci?				# NE2000-compat ethernet
+ne*	at pci?				# NE2000-compat ethernet
 ep*	at pci?				# 3C59x ethernet
 ne*	at pcmcia?			# PCMCIA based NE2000 ethernet
 ep*	at pcmcia?			# PCMCIA based 3C5xx ethernet
