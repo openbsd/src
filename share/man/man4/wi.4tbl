@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.82 2006/02/19 17:32:17 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.83 2006/06/26 07:49:37 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -126,9 +126,7 @@ below.
 .Sh CONFIGURATION
 The
 .Nm
-driver can be configured using
-.Xr wicontrol 8 .
-It can also be configured at runtime with
+driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
 .Xr hostname.if 5
@@ -408,27 +406,6 @@ The following such adapters are supported or expected to work:
 .It US Robotics 2415 (rebadged WL11000P)
 .El
 .Sh EXAMPLES
-Note that when setting options via
-.Xr wicontrol 8
-in a
-.Xr hostname.if 5
-file (e.g.\&
-.Pa /etc/hostname.wi0 ) ,
-the
-.Xr wicontrol 8
-commands should be specified first.
-.Pp
-The following
-.Xr hostname.if 5
-example will set the channel to 11, enable software
-WEP, and turn on enhanced security (SSID hiding) before configuring
-the interface as a host-based access point:
-.Bd -literal -offset indent
-!/sbin/wicontrol \e$if -f 11 -x 1 -E 3
-inet 192.168.1.1 255.255.255.0 NONE nwid my_net \e
-	nwkey 0x8736639624 mediaopt hostap
-.Ed
-.Pp
 The following
 .Xr hostname.if 5
 example configures wi0 to join whatever network is available on boot,
@@ -437,6 +414,14 @@ using WEP key
 channel 11, obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+The following
+.Xr hostname.if 5
+example creates a host-based access point on boot:
+.Bd -literal -offset indent
+inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
 Configure wi0 for WEP, using hex key
@@ -477,8 +462,7 @@ command.
 .Xr pcmcia 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
-.Xr ifconfig 8 ,
-.Xr wicontrol 8
+.Xr ifconfig 8
 .Rs
 .%T HCF Light programming specification
 .%O http://www.wavelan.com
@@ -506,7 +490,7 @@ newer cards use channel 10 by default.
 Non-Lucent cards vary, for instance the Addtron cards use channel
 11 by default.
 See
-.Xr wicontrol 8
+.Xr ifconfig 8
 for information on how to change the channel.
 .Pp
 Not all 3.3V
