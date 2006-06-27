@@ -13,7 +13,7 @@
  *
  * ISBN 3-924521-59-X
  *
- * $OpenBSD: calendar.geschichte,v 1.4 2006/01/11 19:07:03 mickey Exp $
+ * $OpenBSD: calendar.geschichte,v 1.5 2006/06/27 11:32:22 mickey Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_geschichte_
@@ -70,6 +70,7 @@ LANG=de_DE.ISO_8859-1
 01/11	Besetzung des Ruhrgebietes durch Frankreich+Belgien, 1923
 09/10	Eintritt Deutschlands in den Völkerbund, 1926
 10/25	Schwarzer Freitag in New York, Beginn der Weltwirtschaftskrise, 1929
+08/06	Europas erste Autobahn eingeweiht, 1932
 
 
 /* II. Weltkrieg */
@@ -111,7 +112,6 @@ LANG=de_DE.ISO_8859-1
 
 /* Deutschland nach dem 2. Weltkrieg */
 04/11	Attentat auf Dutschke, Studentenunruhen, 1958
-04/26	GAU in Tschernobyl
 05/05	Natobeitritt, Wiederbewaffnung, Souveränität der Bundesrepublik, 1955
 05/06	Rücktritt von Brandt, 1974
 05/16	Wahl von Schmidt (SPD) zum Bundeskanzler, 1974
@@ -178,6 +178,7 @@ LANG=de_DE.ISO_8859-1
 03/05	Tod Stalins, 1953
 03/18	Erste demokratische Volkskammerwahl, 1990
 04/21	Zwangsvereinigung von KPD und SPD zur SED, 1946
+04/25	GAU in Tschernobyl, 1986
 05/14	Gründung des Warschauer Paktes, 1955
 06/17	Arbeiteraufstand am 17. Juni 1953
 06/25	Beginn des Korea-Krieges, 1950
