@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.132 2006/06/27 20:55:51 reyk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.133 2006/06/27 22:31:40 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -555,7 +555,7 @@ wireless network interfaces from the given channel ID
 .It Fl chan
 Unset the desired channel to be used for IEEE 802.11-based wireless
 network interfaces.
-It doesn't affect the channel to be created for IBSS or hostap mode.
+It doesn't affect the channel to be created for IBSS or Host AP mode.
 .It Cm nwflag Ar flag
 Set a specified flag for the wireless network interface.
 The flag name can be either
@@ -577,7 +577,7 @@ communications.
 .Pp
 Note that the
 .Ql hidenwid
-and 
+and
 .Ql nobridge
 options do not provide any security.
 The hidden network ID will be sent in clear text by associating
