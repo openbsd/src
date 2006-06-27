@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321reg.h,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
+/*	$OpenBSD: i80321reg.h,v 1.3 2006/06/27 05:18:25 drahn Exp $	*/
 /*	$NetBSD: i80321reg.h,v 1.15 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
@@ -299,6 +299,7 @@
 #define	TMRx_TC			(1U << 0)
 #define	TMRx_ENABLE		(1U << 1)
 #define	TMRx_RELOAD		(1U << 2)
+#define	TMRx_PRIV		(1U << 3)
 #define	TMRx_CSEL_CORE		(0 << 4)
 #define	TMRx_CSEL_CORE_div4	(1 << 4)
 #define	TMRx_CSEL_CORE_div8	(2 << 4)
