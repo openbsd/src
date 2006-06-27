@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.46 2006/06/26 10:29:52 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.47 2006/06/27 15:27:56 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -271,6 +271,7 @@
 08/13	Berlin wall erected, 1961
 08/13	Li'l Abner debut, 1934
 08/14	Social Security begins in U.S., 1935
+08/14	NYNEX merges with Bell Atlantic, 1997
 08/14	North-East American blackout, 2003
 08/15	Hurricane hits Plymouth Plantation, 1635
 08/15	Gandhi's movement obtains independence for Pakistan and India, 1947
