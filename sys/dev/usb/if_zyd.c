@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.5 2006/06/27 13:30:01 xsa Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.6 2006/06/27 13:40:35 xsa Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -103,7 +103,7 @@ static const struct usb_devno zyd_devs[] = {
 	{ USB_VENDOR_ZYXEL,		USB_PRODUCT_ZYXEL_ZYAIRG220 }
 };
 
-USB_DECLARE_DRIVER(zyd);
+USB_DECLARE_DRIVER_CLASS(zyd, DV_IFNET);
 
 uint16_t	zyd_getrealaddr(struct zyd_softc *, uint32_t);
 usbd_status	zyd_usbrequest(struct zyd_softc *, uint8_t, uint8_t,
