@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.4 2006/06/27 09:21:55 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.5 2006/06/27 13:30:01 xsa Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -105,110 +105,119 @@ static const struct usb_devno zyd_devs[] = {
 
 USB_DECLARE_DRIVER(zyd);
 
-/*
- * Prototypes
- */
-uint16_t zyd_getrealaddr(struct zyd_softc *, uint32_t);
-usbd_status zyd_usbrequest(struct zyd_softc *, uint8_t, uint8_t,
-	uint16_t, uint16_t, uint16_t, uint8_t *);
-usbd_status zyd_usbrequestzc(struct zyd_softc *, struct zyd_control *);
-void zyd_reset(struct zyd_softc *);
-usbd_status zyd_usb_bulk_read(struct zyd_softc *, void *, uint32_t, uint32_t *);
-usbd_status zyd_usb_bulk_write(struct zyd_softc *, void *, uint32_t);
-Static void zydintr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-int zyd_usb_intr_read(struct zyd_softc *, void *, uint32_t);
-usbd_status zyd_usb_intr_write(struct zyd_softc *, void *, uint32_t);
-uint32_t zyd_addrinc(uint32_t);
-int zyd_singleregread16(struct zyd_softc *, uint32_t, uint16_t *);
-int zyd_singleregread32(struct zyd_softc *, uint32_t, uint32_t *);
-int zyd_multiregread16(struct zyd_softc *, uint32_t *, uint16_t *, uint8_t);
-int zyd_multiregread32(struct zyd_softc *, uint32_t *, uint32_t *, uint8_t);
+uint16_t	zyd_getrealaddr(struct zyd_softc *, uint32_t);
+usbd_status	zyd_usbrequest(struct zyd_softc *, uint8_t, uint8_t,
+		    uint16_t, uint16_t, uint16_t, uint8_t *);
+usbd_status	zyd_usbrequestzc(struct zyd_softc *, struct zyd_control *);
+void		zyd_reset(struct zyd_softc *);
+usbd_status	zyd_usb_bulk_read(struct zyd_softc *, void *, uint32_t,
+		    uint32_t *);
+usbd_status	zyd_usb_bulk_write(struct zyd_softc *, void *, uint32_t);
+Static void	zydintr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+int		zyd_usb_intr_read(struct zyd_softc *, void *, uint32_t);
+usbd_status	zyd_usb_intr_write(struct zyd_softc *, void *, uint32_t);
+uint32_t	zyd_addrinc(uint32_t);
+int		zyd_singleregread16(struct zyd_softc *, uint32_t, uint16_t *);
+int		zyd_singleregread32(struct zyd_softc *, uint32_t, uint32_t *);
+int		zyd_multiregread16(struct zyd_softc *, uint32_t *, uint16_t *,
+		    uint8_t);
+int		zyd_multiregread32(struct zyd_softc *, uint32_t *, uint32_t *,
+		    uint8_t);
 
-usbd_status zyd_singleregwrite16(struct zyd_softc *, uint32_t, uint16_t);
-usbd_status zyd_singleregwrite32(struct zyd_softc *, uint32_t, uint32_t);
-usbd_status zyd_multiregwrite16(struct zyd_softc *, uint32_t *, uint16_t *, uint8_t);
-usbd_status zyd_multiregwrite32(struct zyd_softc *, uint32_t *, uint32_t *, uint8_t);
-usbd_status zyd_batchwrite16(struct zyd_softc *,
-	const struct zyd_adpairs16 *, int);
-usbd_status zyd_batchwrite32(struct zyd_softc *,
-	const struct zyd_adpairs32 *, int);
-usbd_status zyd_rfwrite(struct zyd_softc *, uint32_t, uint8_t);
+usbd_status	zyd_singleregwrite16(struct zyd_softc *, uint32_t, uint16_t);
+usbd_status	zyd_singleregwrite32(struct zyd_softc *, uint32_t, uint32_t);
+usbd_status	zyd_multiregwrite16(struct zyd_softc *, uint32_t *,
+		    uint16_t *, uint8_t);
+usbd_status	zyd_multiregwrite32(struct zyd_softc *, uint32_t *,
+		    uint32_t *, uint8_t);
+usbd_status	zyd_batchwrite16(struct zyd_softc *,
+	 	    const struct zyd_adpairs16 *, int);
+usbd_status	zyd_batchwrite32(struct zyd_softc *,
+		    const struct zyd_adpairs32 *, int);
+usbd_status	zyd_rfwrite(struct zyd_softc *, uint32_t, uint8_t);
 
-int zyd_openpipes(struct zyd_softc *);
-void zyd_closepipes(struct zyd_softc *);
-int zyd_alloc_tx(struct zyd_softc *);
-void zyd_free_tx(struct zyd_softc *);
-int zyd_alloc_rx(struct zyd_softc *);
-void zyd_free_rx(struct zyd_softc *);
-void zyd_stateoutput(struct zyd_softc *);
-void zyd_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void zyd_rxframeproc(struct zyd_rx_data *, uint8_t *, uint16_t);
-void zyd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+int		zyd_openpipes(struct zyd_softc *);
+void		zyd_closepipes(struct zyd_softc *);
+int		zyd_alloc_tx(struct zyd_softc *);
+void		zyd_free_tx(struct zyd_softc *);
+int		zyd_alloc_rx(struct zyd_softc *);
+void		zyd_free_rx(struct zyd_softc *);
+void		zyd_stateoutput(struct zyd_softc *);
+void		zyd_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		zyd_rxframeproc(struct zyd_rx_data *, uint8_t *, uint16_t);
+void		zyd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-int zyd_uploadfirmware(struct zyd_softc *);
-void zyd_lock_phy(struct zyd_softc *);
-void zyd_unlock_phy(struct zyd_softc *);
-usbd_status zyd_get_aw_pt_bi(struct zyd_softc *, struct zyd_aw_pt_bi *);
-usbd_status zyd_set_aw_pt_bi(struct zyd_softc *, struct zyd_aw_pt_bi *);
-usbd_status zyd_set_beacon_interval(struct zyd_softc *, uint32_t);
-const char *zyd_rf_name(uint8_t);
-usbd_status zyd_read_rf_pa_types(struct zyd_softc *, uint8_t *, uint8_t *);
+int		zyd_uploadfirmware(struct zyd_softc *);
+void		zyd_lock_phy(struct zyd_softc *);
+void		zyd_unlock_phy(struct zyd_softc *);
+usbd_status	zyd_get_aw_pt_bi(struct zyd_softc *, struct zyd_aw_pt_bi *);
+usbd_status	zyd_set_aw_pt_bi(struct zyd_softc *, struct zyd_aw_pt_bi *);
+usbd_status	zyd_set_beacon_interval(struct zyd_softc *, uint32_t);
+const char	*zyd_rf_name(uint8_t);
+usbd_status	zyd_read_rf_pa_types(struct zyd_softc *, uint8_t *, uint8_t *);
 
-usbd_status zyd_rf_rfmd_init(struct zyd_softc *, struct zyd_rf *);
-usbd_status zyd_rf_rfmd_switchradio(struct zyd_softc *, uint8_t);
-usbd_status zyd_rf_rfmd_set_channel(struct zyd_softc *, struct zyd_rf *, uint8_t);
+usbd_status	zyd_rf_rfmd_init(struct zyd_softc *, struct zyd_rf *);
+usbd_status	zyd_rf_rfmd_switchradio(struct zyd_softc *, uint8_t);
+usbd_status	zyd_rf_rfmd_set_channel(struct zyd_softc *, struct zyd_rf *,
+		    uint8_t);
 
-usbd_status zyd_rf_al2230_init(struct zyd_softc *, struct zyd_rf *);
-usbd_status zyd_rf_al2230_switchradio(struct zyd_softc *, uint8_t);
-usbd_status zyd_rf_al2230_set_channel(struct zyd_softc *, struct zyd_rf *, uint8_t);
+usbd_status	zyd_rf_al2230_init(struct zyd_softc *, struct zyd_rf *);
+usbd_status	zyd_rf_al2230_switchradio(struct zyd_softc *, uint8_t);
+usbd_status	zyd_rf_al2230_set_channel(struct zyd_softc *, struct zyd_rf *,
+		    uint8_t);
 
-usbd_status zyd_rf_init_hw(struct zyd_softc *, struct zyd_rf *, uint8_t);
+usbd_status	zyd_rf_init_hw(struct zyd_softc *, struct zyd_rf *, uint8_t);
 
-usbd_status zyd_hw_init(struct zyd_softc *, struct ieee80211com *);
-usbd_status zyd_get_e2p_mac_addr(struct zyd_softc *, struct zyd_macaddr *);
-usbd_status zyd_set_mac_addr(struct zyd_softc *, const struct zyd_macaddr *);
-usbd_status zyd_read_regdomain(struct zyd_softc *, uint8_t *);
-int zyd_regdomain_supported(uint8_t);
+usbd_status	zyd_hw_init(struct zyd_softc *, struct ieee80211com *);
+usbd_status	zyd_get_e2p_mac_addr(struct zyd_softc *, struct zyd_macaddr *);
+usbd_status	zyd_set_mac_addr(struct zyd_softc *,
+		    const struct zyd_macaddr *);
+usbd_status	zyd_read_regdomain(struct zyd_softc *, uint8_t *);
+int		zyd_regdomain_supported(uint8_t);
 
-int zyd_tblreader(struct zyd_softc *, uint8_t *, size_t, uint32_t, uint32_t);
-int zyd_readcaltables(struct zyd_softc *);
+int		zyd_tblreader(struct zyd_softc *, uint8_t *, size_t,
+		    uint32_t, uint32_t);
+int		zyd_readcaltables(struct zyd_softc *);
 
-int zyd_reset_channel(struct zyd_softc *);
-usbd_status zyd_set_encryption_type(struct zyd_softc *, uint32_t);
-usbd_status zyd_switch_radio(struct zyd_softc *, uint8_t);
-usbd_status zyd_enable_hwint(struct zyd_softc *);
-usbd_status zyd_disable_hwint(struct zyd_softc *);
-usbd_status zyd_set_basic_rates(struct zyd_softc *, int);
-usbd_status zyd_set_mandatory_rates(struct zyd_softc *, int);
-usbd_status zyd_reset_mode(struct zyd_softc *);
-usbd_status zyd_set_bssid(struct zyd_softc *, uint8_t *);
-usbd_status zyd_complete_attach(struct zyd_softc *);
-int zyd_media_change(struct ifnet *);
-int zyd_newstate(struct ieee80211com *, enum ieee80211_state, int);
-int zyd_initial_config(struct zyd_softc *);
-void zyd_update_promisc(struct zyd_softc *);
-uint16_t zyd_txtime(int, int, uint32_t);
-uint8_t zyd_plcp_signal(int);
-uint16_t zyd_calc_useclen(int, uint16_t, uint8_t *);
+int		zyd_reset_channel(struct zyd_softc *);
+usbd_status	zyd_set_encryption_type(struct zyd_softc *, uint32_t);
+usbd_status	zyd_switch_radio(struct zyd_softc *, uint8_t);
+usbd_status	zyd_enable_hwint(struct zyd_softc *);
+usbd_status	zyd_disable_hwint(struct zyd_softc *);
+usbd_status	zyd_set_basic_rates(struct zyd_softc *, int);
+usbd_status	zyd_set_mandatory_rates(struct zyd_softc *, int);
+usbd_status	zyd_reset_mode(struct zyd_softc *);
+usbd_status	zyd_set_bssid(struct zyd_softc *, uint8_t *);
+usbd_status	zyd_complete_attach(struct zyd_softc *);
+int		zyd_media_change(struct ifnet *);
+int		zyd_newstate(struct ieee80211com *, enum ieee80211_state, int);
+int		zyd_initial_config(struct zyd_softc *);
+void		zyd_update_promisc(struct zyd_softc *);
+uint16_t	zyd_txtime(int, int, uint32_t);
+uint8_t		zyd_plcp_signal(int);
+uint16_t	zyd_calc_useclen(int, uint16_t, uint8_t *);
 
-void zyd_setup_tx_desc(struct zyd_softc *, struct zyd_controlsetformat *,
-	struct mbuf *, int, int);
+void		zyd_setup_tx_desc(struct zyd_softc *,
+		    struct zyd_controlsetformat *, struct mbuf *, int, int);
 
-int zyd_tx_mgt(struct zyd_softc *, struct mbuf *, struct ieee80211_node *);
-int zyd_tx_data(struct zyd_softc *, struct mbuf *, struct ieee80211_node *);
-int	zyd_tx_bcn(struct zyd_softc *, struct mbuf *, struct ieee80211_node *);
+int		zyd_tx_mgt(struct zyd_softc *, struct mbuf *,
+		    struct ieee80211_node *);
+int		zyd_tx_data(struct zyd_softc *, struct mbuf *,
+		    struct ieee80211_node *);
+int		zyd_tx_bcn(struct zyd_softc *, struct mbuf *,
+		    struct ieee80211_node *);
 
-void zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
+void		zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
 
 /* Registered @ if */
-int	zyd_if_init(struct ifnet *);
-/*void zyd_if_stop(struct ifnet *, int);*/
-void zyd_if_start(struct ifnet *);
-int	zyd_if_ioctl(struct ifnet *, u_long, caddr_t);
-void zyd_if_watchdog(struct ifnet *);
+int		zyd_if_init(struct ifnet *);
+/*void		zyd_if_stop(struct ifnet *, int);*/
+void		zyd_if_start(struct ifnet *);
+int		zyd_if_ioctl(struct ifnet *, u_long, caddr_t);
+void		zyd_if_watchdog(struct ifnet *);
 
-void zyd_next_scan(void *);
-void zyd_task(void *);
+void		zyd_next_scan(void *);
+void		zyd_task(void *);
 
 /*
  * Debug dump
