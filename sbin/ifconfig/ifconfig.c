@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.169 2006/06/27 20:55:51 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.170 2006/06/27 21:47:10 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1582,7 +1582,7 @@ ieee80211_status(void)
 
 		bzero(&nr, sizeof(nr));
 		bcopy(bssid.i_bssid, &nr.nr_macaddr, sizeof(nr.nr_macaddr));
-		strlcpy(nr.nr_ifname, name, sizeof(nr.nr_ifname));		
+		strlcpy(nr.nr_ifname, name, sizeof(nr.nr_ifname));
 		if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
 			if (nr.nr_max_rssi)
 				printf("%u%% ", IEEE80211_NODEREQ_RSSI(&nr));
