@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.57 2006/06/15 15:17:52 jsg Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.58 2006/06/27 10:41:27 otto Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -362,13 +362,14 @@ int64_t	ntp_tick_acc;
 int
 sys_adjfreq(struct proc *p, void *v, register_t *retval)
 {
-#ifndef __HAVE_TIMECOUNTER
 	struct sys_adjfreq_args /* {
 		syscallarg(const int64_t *) freq;
 		syscallarg(int64_t *) oldfreq;
 	} */ *uap = v;
-	int error, s;
+	int error;
 	int64_t f;
+#ifndef __HAVE_TIMECOUNTER
+	int s;
 
 	if (SCARG(uap, oldfreq)) {
 		f = ntp_tick_permanent * hz;
@@ -386,6 +387,13 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 		ntp_tick_permanent = f / hz;
 		splx(s);
 	}
+#else
+	if (SCARG(uap, oldfreq)) {
+		f = 0;
+		if ((error = copyout((void *)&f, (void *)SCARG(uap, oldfreq),
+		    sizeof(int64_t))))
+			return (error);
+	}
 #endif
 	return (0);
 }
@@ -401,17 +409,19 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 #ifdef __HAVE_TIMECOUNTER
 	int error;
 
-	if ((error = suser(p, 0)))
-		return (error);
-
 	if (SCARG(uap, olddelta))
 		if ((error = copyout((void *)&adjtimedelta,
 		    (void *)SCARG(uap, olddelta), sizeof(struct timeval))))
 			return (error);
 
-	if ((error = copyin((void *)SCARG(uap, delta), (void *)&adjtimedelta,
-	    sizeof(struct timeval))))
-		return (error);
+	if (SCARG(uap, delta)) {
+		if ((error = suser(p, 0)))
+			return (error);
+
+		if ((error = copyin((void *)SCARG(uap, delta),
+		    (void *)&adjtimedelta, sizeof(struct timeval))))
+			return (error);
+	}
 
 	return (0);
 #else
