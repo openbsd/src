@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.168 2006/06/27 08:01:05 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.169 2006/06/27 23:10:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -69,10 +69,10 @@
 #include <dev/ic/amireg.h>
 #include <dev/ic/amivar.h>
 
-#include <sys/sensors.h>
 
 #if NBIO > 0
 #include <dev/biovar.h>
+#include <sys/sensors.h>
 #endif
 
 #ifdef AMI_DEBUG
@@ -548,10 +548,10 @@ ami_attach(struct ami_softc *sc)
 		printf("%s: controller registration failed\n", DEVNAME(sc));
 	else
 		sc->sc_ioctl = ami_ioctl;
-#endif
 
 	if (sensor_task_register(sc, ami_refresh, 10))
 		printf("%s: unable to register update task\n", DEVNAME(sc));
+#endif
 
 	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
 	    M_DEVBUF, M_NOWAIT);
