@@ -1,7 +1,7 @@
-/*	$OpenBSD: handle.c,v 1.9 2006/06/01 22:09:09 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.10 2006/06/27 18:14:59 reyk Exp $	*/
 
 /*
- * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,9 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_radiotap.h>
+
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,6 +52,9 @@ void	 hostapd_handle_addr(const u_int32_t, u_int32_t *, u_int8_t *,
 	    u_int8_t *, struct hostapd_table *);
 void	 hostapd_handle_ref(u_int, u_int, u_int8_t *, u_int8_t *, u_int8_t *,
 	    u_int8_t *);
+int	 hostapd_handle_radiotap(struct hostapd_radiotap *, u_int8_t *,
+	    const u_int);
+int	 hostapd_cmp(enum hostapd_op, int, int);
 
 int
 hostapd_handle_input(struct hostapd_apme *apme, u_int8_t *buf, u_int len)
@@ -103,12 +109,14 @@ int
 hostapd_handle_frame(struct hostapd_apme *apme, struct hostapd_frame *frame,
     u_int8_t *buf, const u_int len)
 {
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
 	struct ieee80211_frame *wh;
 	struct hostapd_ieee80211_frame *mh;
+	struct hostapd_radiotap rtap;
 	u_int8_t *wfrom, *wto, *wbssid;
 	struct timeval t_now;
 	u_int32_t flags;
-	int offset, min_rate = 0;
+	int offset, min_rate = 0, val;
 
 	if ((offset = hostapd_apme_offset(apme, buf, len)) < 0)
 		return (0);
@@ -202,6 +210,35 @@ hostapd_handle_frame(struct hostapd_apme *apme, struct hostapd_frame *frame,
 	    mh->i_to, frame->f_to);
 	hostapd_handle_addr(HOSTAPD_FRAME_F_BSSID_M, &flags, wbssid,
 	    mh->i_bssid, frame->f_bssid);
+
+	/* parse the optional radiotap header if required */
+	if (frame->f_radiotap) {
+		if (hostapd_handle_radiotap(&rtap, buf, len) != 0)
+			return (0);
+		else if ((rtap.r_present & frame->f_radiotap) !=
+		    frame->f_radiotap) {
+			cfg->c_stats.cn_rtap_miss++;
+			return (0);
+		}
+		if (flags & HOSTAPD_FRAME_F_RSSI && rtap.r_max_rssi) {
+			val = ((float)rtap.r_rssi / rtap.r_max_rssi) * 100;
+			if (hostapd_cmp(frame->f_rssi_op,
+			    val, frame->f_rssi))
+				flags &= ~HOSTAPD_FRAME_F_RSSI;
+		}
+		if (flags & HOSTAPD_FRAME_F_RATE) {
+			val = rtap.r_txrate;
+			if (hostapd_cmp(frame->f_txrate_op,
+			    val, frame->f_txrate))
+				flags &= ~HOSTAPD_FRAME_F_RATE;
+		}
+		if (flags & HOSTAPD_FRAME_F_CHANNEL) {
+			val = rtap.r_chan;
+			if (hostapd_cmp(frame->f_chan_op,
+			    val, frame->f_chan))
+				flags &= ~HOSTAPD_FRAME_F_CHANNEL;
+		}
+	}
 
 	/* Handle if frame matches */
 	if ((flags & HOSTAPD_FRAME_F_M) != 0)
@@ -346,4 +383,88 @@ hostapd_handle_action(struct hostapd_apme *apme, struct hostapd_frame *frame,
 	}
 
 	return (ret);
+}
+
+int
+hostapd_handle_radiotap(struct hostapd_radiotap *rtap,
+    u_int8_t *buf, const u_int len)
+{
+	struct ieee80211_radiotap_header *rh =
+	    (struct ieee80211_radiotap_header*)buf;
+	u_int8_t *t, *ptr = NULL;
+	u_int rh_len;
+	const u_int8_t *snapend = buf + len;
+
+	TCHECK(*rh);
+
+	rh_len = letoh16(rh->it_len);
+	if (rh->it_version != 0)
+		return (EINVAL);
+	if (len <= rh_len)
+		goto trunc;
+
+	bzero(rtap, sizeof(struct hostapd_radiotap));
+
+	t = (u_int8_t*)buf + sizeof(struct ieee80211_radiotap_header);
+	if ((rtap->r_present = letoh32(rh->it_present)) == 0)
+		return (0);
+
+#define RADIOTAP(_x, _len)						\
+	if (rtap->r_present & HOSTAPD_RADIOTAP_F(_x)) {			\
+		TCHECK2(*t, _len);					\
+		ptr = t;						\
+		t += _len;						\
+	} else								\
+		ptr = NULL;
+
+	/* radiotap doesn't use TLV header fields, ugh */
+	RADIOTAP(TSFT, 8);
+	RADIOTAP(FLAGS, 1);
+
+	RADIOTAP(RATE, 1);
+	if (ptr != NULL) {
+		rtap->r_txrate = *(u_int8_t *)ptr;
+	}
+
+	RADIOTAP(CHANNEL, 4);
+	if (ptr != NULL) {
+		rtap->r_chan = letoh16(*(u_int16_t*)ptr);
+		rtap->r_chan_flags = letoh16(*(u_int16_t*)ptr + 1);
+	}
+
+	RADIOTAP(FHSS, 2);
+	RADIOTAP(DBM_ANTSIGNAL, 1);
+	RADIOTAP(DBM_ANTNOISE, 1);
+	RADIOTAP(LOCK_QUALITY, 2);
+	RADIOTAP(TX_ATTENUATION, 2);
+	RADIOTAP(DB_TX_ATTENUATION, 2);
+	RADIOTAP(DBM_TX_POWER, 1);
+	RADIOTAP(ANTENNA, 1);
+	RADIOTAP(DB_ANTSIGNAL, 1);
+	RADIOTAP(DB_ANTNOISE, 1);
+	RADIOTAP(FCS, 4);
+
+	RADIOTAP(RSSI, 2);
+	if (ptr != NULL) {
+		rtap->r_rssi = *(u_int8_t *)ptr;
+		rtap->r_max_rssi = *(u_int8_t *)ptr + 1;
+	}
+
+	return (0);
+
+ trunc:
+	return (EINVAL);
+}
+
+int
+hostapd_cmp(enum hostapd_op op, int val1, int val2)
+{
+	if ((op == HOSTAPD_OP_EQ && val1 == val2) ||
+	    (op == HOSTAPD_OP_NE && val1 != val2) ||
+	    (op == HOSTAPD_OP_LE && val1 <= val2) ||
+	    (op == HOSTAPD_OP_LT && val1 <  val2) ||
+	    (op == HOSTAPD_OP_GE && val1 >= val2) ||
+	    (op == HOSTAPD_OP_GT && val1 >  val2))
+		return (1);
+	return (0);
 }

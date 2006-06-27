@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.17 2006/05/15 20:53:02 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.18 2006/06/27 18:14:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,7 @@ struct hostapd_counter {
 	u_int64_t	cn_tx_iapp;	/* sent IAPP messages */
 	u_int64_t	cn_rx_apme;	/* received Host AP messages */
 	u_int64_t	cn_tx_apme;	/* sent Host AP messages */
+	u_int64_t	cn_rtap_miss;	/* missing radiotap field */
 };
 
 #define HOSTAPD_ENTRY_MASK_ADD(_a, _m)	do {					\
@@ -139,6 +140,16 @@ struct hostapd_table {
 	TAILQ_ENTRY(hostapd_table)	t_entries;
 };
 
+struct hostapd_radiotap {
+	u_int32_t	r_present;
+	u_int8_t	r_txrate;
+	u_int16_t	r_chan;
+	u_int16_t	r_chan_flags;
+	u_int8_t	r_rssi;
+	u_int8_t	r_max_rssi;
+};
+#define HOSTAPD_RADIOTAP_F(_x)	(1 << IEEE80211_RADIOTAP_##_x)
+
 struct hostapd_ieee80211_frame {
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
@@ -158,6 +169,15 @@ enum hostapd_action {
 	HOSTAPD_ACTION_ADDNODE	= 4,
 	HOSTAPD_ACTION_DELNODE	= 5,
 	HOSTAPD_ACTION_RESEND	= 6
+};
+
+enum hostapd_op {
+	HOSTAPD_OP_EQ		= 0,
+	HOSTAPD_OP_NE		= 1,
+	HOSTAPD_OP_LE		= 2,
+	HOSTAPD_OP_LT		= 3,
+	HOSTAPD_OP_GE		= 4,
+	HOSTAPD_OP_GT		= 5
 };
 
 struct hostapd_action_data {
@@ -188,6 +208,8 @@ struct hostapd_action_data {
 
 struct hostapd_frame {
 	struct hostapd_ieee80211_frame	f_frame;
+	u_int32_t			f_radiotap;
+
 	u_int32_t			f_flags;
 
 #define HOSTAPD_FRAME_F_TYPE		0x00000001
@@ -211,6 +233,10 @@ struct hostapd_frame {
 #define HOSTAPD_FRAME_F_APME		0x00008000
 #define HOSTAPD_FRAME_F_APME_N		0x00010000
 #define HOSTAPD_FRAME_F_APME_M		0x00018000
+#define HOSTAPD_FRAME_F_RSSI		0x00020000
+#define HOSTAPD_FRAME_F_RATE		0x00040000
+#define HOSTAPD_FRAME_F_CHANNEL		0x00080000
+#define HOSTAPD_FRAME_F_RADIOTAP_M	0x000e0000
 #define HOSTAPD_FRAME_F_M		0x0fffffff
 #define HOSTAPD_FRAME_F_RET_OK		0x00000000
 #define HOSTAPD_FRAME_F_RET_QUICK	0x10000000
@@ -230,6 +256,9 @@ struct hostapd_frame {
 	struct timeval			f_limit, f_then, f_last;
 	long				f_rate, f_rate_intval;
 	long				f_rate_cnt, f_rate_delay;
+
+	enum hostapd_op			f_rssi_op, f_txrate_op, f_chan_op;
+	short				f_rssi, f_txrate, f_chan;
 
 	enum hostapd_action		f_action;
 	u_int32_t			f_action_flags;

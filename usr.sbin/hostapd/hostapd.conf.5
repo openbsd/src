@@ -1,6 +1,6 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.32 2006/05/15 21:09:49 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.33 2006/06/27 18:14:59 reyk Exp $
 .\"
-.\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
+.\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -304,6 +304,7 @@ Match all frames.
 .Op Ar from
 .Op Ar to
 .Op Ar bssid
+.Op Ar radiotap
 .Xc
 Apply rules to frames matching the given parameters.
 The parameters are explained below.
@@ -358,6 +359,51 @@ See the
 .Sx Frame Directions
 section below for available direction specifications.
 .El
+.Pp
+The
+.Ar radiotap
+rules allow parsing and matching of the extra information reported by
+the radiotap header.
+Support for the specified radiotap headers is optional and the
+specific parameters depend on the radiotap elements reported
+by the wireless interface.
+Support for the radiotap data link type can be verified with the
+.Xr tcpdump 8
+command.
+These rules require
+.Ic hostap mode radiotap
+in the global configuration.
+.Bl -tag -width Ds
+.It Xo
+.Ic signal
+.Op Ic operator
+.Ar percentage Ic %
+.Xc
+Match the signal quality of the received frame.
+.It Xo
+.Ic freq
+.Op Ic operator
+.Ar value Ic ( GHz \*(Ba MHz )
+.Xc
+Match the transmit rate of the received frame.
+.It Xo
+.Ic txrate
+.Op Ic operator
+.Ar rate Ic Mb
+.Xc
+Match the frequency of the received frame.
+.El
+.Pp
+The radiotap rules support the following operators.
+If omitted, the specified value will be checked if it is equal or not.
+.Bd -literal -offset indent
+=	(equal)
+!=	(not equal)
+\*(Lt	(less than)
+\*(Le	(less than or equal)
+\*(Gt	(greater than)
+\*(Ge	(greater than or equal)
+.Ed
 .Pp
 The
 .Ar from , to ,
@@ -667,6 +713,12 @@ hostap handle on ath0 type management subtype auth with resend
 # Remove a blacklisted node from the kernel node tree
 hostap handle type management subtype auth from <blacklist> \e
     with node delete &from
+
+# Log rogue accesspoints with a strong signal quality on
+# channel 3 (2.422GHz) transmitting frames with 1Mb.
+hostap handle type management subtype beacon bssid !<myess> \e
+    signal >= 50% txrate 1Mb freq 2.422GHz \e
+    with log
 .Ed
 .Sh IP ROAMING
 In a traditional wireless network, multiple access points are
