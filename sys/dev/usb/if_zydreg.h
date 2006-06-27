@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.2 2006/06/21 18:52:02 deraadt Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.3 2006/06/27 03:49:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1099,6 +1099,7 @@ struct zyd_softc {
 
 	int zyd_unit;
 	int zyd_if_flags;
+	int zyd_attached;
 
 	struct timeval zyd_rx_notice;
 

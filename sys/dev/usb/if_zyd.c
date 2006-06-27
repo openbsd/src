@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.2 2006/06/21 18:49:20 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.3 2006/06/27 03:49:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -883,23 +883,21 @@ zyd_openpipes(struct zyd_softc *sc)
 void
 zyd_closepipes(struct zyd_softc *sc)
 {
-	usbd_abort_pipe(sc->zyd_ep[ZYD_ENDPT_IIN]);
-	usbd_close_pipe(sc->zyd_ep[ZYD_ENDPT_IIN]);
+	int i;
 
-	usbd_abort_pipe(sc->zyd_ep[ZYD_ENDPT_IOUT]);
-	usbd_close_pipe(sc->zyd_ep[ZYD_ENDPT_IOUT]);
-
-	usbd_abort_pipe(sc->zyd_ep[ZYD_ENDPT_BIN]);
-	usbd_close_pipe(sc->zyd_ep[ZYD_ENDPT_BIN]);
-
-	usbd_abort_pipe(sc->zyd_ep[ZYD_ENDPT_BOUT]);
-	usbd_close_pipe(sc->zyd_ep[ZYD_ENDPT_BOUT]);
+	for (i = 0; i < ZYD_ENDPT_CNT; i++)
+		if (sc->zyd_ep[i]) {
+			usbd_abort_pipe(sc->zyd_ep[i]);
+			usbd_close_pipe(sc->zyd_ep[i]);
+		}
 
 	ndflush(&sc->q_reply, sc->q_reply.c_cc);
 	clfree(&sc->q_reply);
 
-	free(sc->ibuf, M_USBDEV);
-	sc->ibuf = NULL;
+	if (sc->ibuf) {
+		free(sc->ibuf, M_USBDEV);
+		sc->ibuf = NULL;
+	}
 }
 
 /*
@@ -1516,6 +1514,7 @@ USB_ATTACH(zyd)
 	/* Complete the attach process (hardware init) */
 	if (zyd_complete_attach(sc) != 0)
 		USB_ATTACH_ERROR_RETURN;
+	sc->zyd_attached = 1;
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -2640,8 +2639,11 @@ USB_DETACH(zyd)
 	zyd_free_rx(sc);
 	zyd_free_tx(sc);
 
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
+	if (sc->zyd_attached) {
+		ieee80211_ifdetach(ifp);
+		if_detach(ifp);
+	}
+	sc->zyd_attached = 0;
 
 	splx(s);
 
