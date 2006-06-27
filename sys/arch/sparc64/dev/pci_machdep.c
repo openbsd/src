@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.24 2006/06/02 08:26:01 jason Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.25 2006/06/27 21:22:14 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ pci_intr_map(pa, ihp)
 
 	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
 		sizeof(interrupts)) < 0) {
-		printf("OF_mapintr failed\n");
+		interrupts = -1;
 	}
 	/* Try to find an IPL for this type of device. */
 	if (OF_getprop(node, "device_type", &devtype, sizeof(devtype)) > 0) {
@@ -464,7 +464,7 @@ pci_intr_string(pc, ih)
 	static char str[16];
 
 	DPRINTF(SPDB_INTR, ("pci_intr_string: ih %u", ih));
-	snprintf(str, sizeof str, "ivec %x", ih);
+	snprintf(str, sizeof str, "ivec 0x%x", INTVEC(ih));
 	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
 
 	return (str);

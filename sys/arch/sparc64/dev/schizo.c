@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.27 2006/06/23 16:09:45 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.28 2006/06/27 21:22:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -364,18 +364,25 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	struct schizo_pbm *sp = pa->pa_pc->cookie;
 	struct schizo_softc *sc = sp->sp_sc;
 	u_int dev;
-	u_int ino;
 	u_int64_t agentid;
-
-	ino = *ihp;
 
 	agentid = schizo_read(sc, SCZ_CONTROL_STATUS);
 	agentid = ((agentid >> 20) & 31) << 6;
 
-	if (ino & ~INTMAP_PCIINT) {
+	if (*ihp != (pci_intr_handle_t)-1) {
 		*ihp |= agentid;
 		return (0);
 	}
+
+	/*
+	 * We didn't find a PROM mapping for this interrupt.  Try to
+	 * construct one ourselves based on the swizzled interrupt pin
+	 * and the interrupt mapping for PCI slots documented in the
+	 * UltraSPARC-IIi User's Manual.
+	 */
+
+	if (pa->pa_intrpin == 0)
+		return (-1);
 
 	/*
 	 * This deserves some documentation.  Should anyone
@@ -383,23 +390,9 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 */
 	dev = pa->pa_device - 1;
 
-	if (ino == 0 || ino > 4) {
-		u_int32_t intreg;
-
-		intreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		     PCI_INTERRUPT_REG);
-
-		ino = PCI_INTERRUPT_PIN(intreg) - 1;
-	} else
-		ino -= 1;
-
-	ino &= INTMAP_PCIINT;
-	ino |= agentid;
-	ino |= (dev << 2) & INTMAP_PCISLOT;
-
-	printf("******** mapping interrupt %x -> %x\n", *ihp, ino);
-
-	*ihp = ino;
+	*ihp = (pa->pa_intrpin - 1) & INTMAP_PCIINT;
+	*ihp |= (dev << 2) & INTMAP_PCISLOT;
+	*ihp |= agentid;
 
 	return (0);
 }

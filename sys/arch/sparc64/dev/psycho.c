@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.43 2006/03/19 02:43:38 brad Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.44 2006/06/27 21:22:14 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1031,40 +1031,37 @@ psycho_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	struct psycho_pbm *pp = pa->pa_pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 	u_int dev;
-	u_int ino;
 
-	ino = *ihp;
-
-	if ((ino & ~INTMAP_PCIINT) == 0) {
-		/*
-		 * This deserves some documentation.  Should anyone
-		 * have anything official looking, please speak up.
-		 */
-		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
-		    pp->pp_id == PSYCHO_PBM_B)
-			dev = pa->pa_device - 2;
-		else
-			dev = pa->pa_device - 1;
-
-		if (ino == 0 || ino > 4) {
-			u_int32_t intreg;
-
-			intreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			     PCI_INTERRUPT_REG);
-			
-			ino = PCI_INTERRUPT_PIN(intreg) - 1;
-		} else
-			ino -= 1;
-
-		ino &= INTMAP_PCIINT;
-				
-		ino |= sc->sc_ign;
-		ino |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
-		ino |= (dev << 2) & INTMAP_PCISLOT;
-			
-		*ihp = ino;
+	if (*ihp != (pci_intr_handle_t)-1) {
+		*ihp |= sc->sc_ign;
+		return (0);
 	}
-  
+
+	/*
+	 * We didn't find a PROM mapping for this interrupt.  Try to
+	 * construct one ourselves based on the swizzled interrupt pin
+	 * and the interrupt mapping for PCI slots documented in the
+	 * UltraSPARC-IIi User's Manual.
+	 */
+
+	if (pa->pa_intrpin == 0)
+		return (-1);
+
+	/*
+	 * This deserves some documentation.  Should anyone
+	 * have anything official looking, please speak up.
+	 */
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+	    pp->pp_id == PSYCHO_PBM_B)
+		dev = PCITAG_DEV(pa->pa_intrtag) - 2;
+	else
+		dev = PCITAG_DEV(pa->pa_intrtag) - 1;
+
+	*ihp = (pa->pa_intrpin - 1) & INTMAP_PCIINT;
+	*ihp |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
+	*ihp |= (dev << 2) & INTMAP_PCISLOT;
+	*ihp |= sc->sc_ign;
+
 	return (0);
 }
 
