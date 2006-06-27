@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.55 2006/06/01 10:21:23 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.56 2006/06/27 14:23:52 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -978,7 +978,7 @@ certificate's DN.
 .It Ar msie_hack
 The same as
 .Fl msie_hack .
-.It Ar nameopt , certopt
+.It Ar name_opt , cert_opt
 These options allow the format used to display the certificate details
 when asking the user to confirm signing.
 All the options supported by the
@@ -1169,8 +1169,8 @@ A sample configuration file with the relevant sections for
 \& policy         = policy_any            # default policy
 \& email_in_dn    = no                    # Don't add the email into cert DN
 
-\& nameopt        = ca_default            # Subject name display option
-\& certopt        = ca_default            # Certificate display option
+\& name_opt        = ca_default           # Subject name display option
+\& cert_opt        = ca_default           # Certificate display option
 \& copy_extensions = none                 #Don't copy extensions from request
 
 \& [ policy_any ]
@@ -2654,12 +2654,12 @@ des-ecb            DES in ECB mode
 des-ofb            DES in OFB mode
 
 des-ede-cbc        Two key triple DES EDE in CBC mode
-des-ede            Alias for des-ede
+des-ede            Two key triple DES EDE in ECB mode
 des-ede-cfb        Two key triple DES EDE in CFB mode
 des-ede-ofb        Two key triple DES EDE in OFB mode
 
 des-ede3-cbc       Three key triple DES EDE in CBC mode
-des-ede3           Alias for des-ede3-cbc
+des-ede3           Three key triple DES EDE in ECB mode
 des3               Alias for des-ede3-cbc
 des-ede3-cfb       Three key triple DES EDE CFB mode
 des-ede3-ofb       Three key triple DES EDE in OFB mode
@@ -2669,9 +2669,9 @@ desx               Alias for desx-cbc
 
 rc2-cbc            128-bit RC2 in CBC mode
 rc2                Alias for rc2-cbc
-rc2-cfb            128-bit RC2 in CBC mode
-rc2-ecb            128-bit RC2 in CBC mode
-rc2-ofb            128-bit RC2 in CBC mode
+rc2-cfb            128-bit RC2 in CFB mode
+rc2-ecb            128-bit RC2 in ECB mode
+rc2-ofb            128-bit RC2 in OFB mode
 rc2-64-cbc         64-bit RC2 in CBC mode
 rc2-40-cbc         40-bit RC2 in CBC mode
 
