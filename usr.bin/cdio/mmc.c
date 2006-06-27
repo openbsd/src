@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.13 2006/06/27 02:02:30 deraadt Exp $ */
+/* $OpenBSD: mmc.c,v 1.14 2006/06/27 02:43:18 mjc Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -163,7 +163,7 @@ writetao(struct track_head *thp)
 		writetrack(tr);
 		synchronize_cache();
 	}
-	fprintf(stderr,"\n");
+	fprintf(stderr,"Closing session.\n");
 	close_session();
 	return (0);
 }
