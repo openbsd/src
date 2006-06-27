@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.44 2005/11/24 20:49:21 deraadt Exp $
+# $OpenBSD: Makefile,v 1.45 2006/06/27 05:07:47 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -63,10 +63,11 @@ SRCS+=	bn_mul.c bn_print.c bn_rand.c bn_shift.c
 SRCS+=	bn_word.c bn_blind.c bn_gcd.c bn_prime.c bn_err.c
 SRCS+=	bn_sqr.c bn_recp.c bn_mont.c bn_mpi.c bn_mod.c
 SRCS+=	bn_exp2.c bn_ctx.c
-SRCS+=	bn_sqrt.c bn_kron.c
+SRCS+=	bn_sqrt.c bn_kron.c bn_x931p.c
 SRCS+=	rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c
 SRCS+=	rsa_saos.c rsa_err.c rsa_pk1.c rsa_ssl.c
 SRCS+=	rsa_none.c rsa_chk.c rsa_oaep.c rsa_null.c rsa_asn1.c
+SRCS+=	rsa_pss.c rsa_x931.c
 SRCS+=	dsa_gen.c dsa_key.c dsa_lib.c dsa_vrf.c 	
 SRCS+=	dsa_sign.c dsa_err.c dsa_asn1.c dsa_ossl.c
 SRCS+=	dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_asn1.c
