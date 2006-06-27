@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.167 2006/06/27 07:56:55 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.168 2006/06/27 08:01:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -69,9 +69,10 @@
 #include <dev/ic/amireg.h>
 #include <dev/ic/amivar.h>
 
+#include <sys/sensors.h>
+
 #if NBIO > 0
 #include <dev/biovar.h>
-#include <sys/sensors.h>
 #endif
 
 #ifdef AMI_DEBUG
@@ -152,6 +153,8 @@ void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_load_ptmem(struct ami_softc*, struct ami_ccb *,
 		    void *, size_t, int, int);
 
+void		ami_refresh(void *);
+
 #if NBIO > 0
 int		ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
 		    u_int8_t, size_t, void *);
@@ -167,7 +170,6 @@ int		ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
 int		ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
 int		ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
 int		ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
-void		ami_refresh(void *);
 #endif /* NBIO > 0 */
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
