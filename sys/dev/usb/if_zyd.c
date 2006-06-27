@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.3 2006/06/27 03:49:44 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.4 2006/06/27 09:21:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -82,6 +82,26 @@ int zyddebug = 1;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+static const struct usb_devno zyd_devs[] = {
+	{ USB_VENDOR_3COM2,		USB_PRODUCT_3COM2_3CRUSB10075 },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_WL54 },
+	{ USB_VENDOR_ASUS,		USB_PRODUCT_ASUS_WL159G },
+	{ USB_VENDOR_CYBERTAN,		USB_PRODUCT_CYBERTAN_TG54USB },
+	{ USB_VENDOR_DRAYTEK,		USB_PRODUCT_DRAYTEK_VIGOR550 },
+	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUS54GZL },
+	{ USB_VENDOR_PLANEX3,		USB_PRODUCT_PLANEX3_GWUS54MINI },
+	{ USB_VENDOR_SAGEM,		USB_PRODUCT_SAGEM_XG760A },
+	{ USB_VENDOR_SITECOMEU,		USB_PRODUCT_SITECOMEU_WL113 },
+	{ USB_VENDOR_SWEEX,		USB_PRODUCT_SWEEX_ZD1211 },
+	{ USB_VENDOR_TEKRAM,		USB_PRODUCT_TEKRAM_QUICKWLAN },
+	{ USB_VENDOR_TEKRAM,		USB_PRODUCT_TEKRAM_ZD1211 },
+	{ USB_VENDOR_TWINMOS,		USB_PRODUCT_TWINMOS_G240 },
+	{ USB_VENDOR_UMEDIA,		USB_PRODUCT_UMEDIA_TEW429UB },
+	{ USB_VENDOR_WISTRONNEWEB,	USB_PRODUCT_WISTRONNEWEB_UR055G },
+	{ USB_VENDOR_ZYDAS,		USB_PRODUCT_ZYDAS_ZD1211 },
+	{ USB_VENDOR_ZYXEL,		USB_PRODUCT_ZYXEL_ZYAIRG220 }
+};
 
 USB_DECLARE_DRIVER(zyd);
 
@@ -1438,20 +1458,12 @@ cleanup:
 USB_MATCH(zyd)
 {
 	USB_MATCH_START(zyd, uaa);
-	int i;
 
 	if (!uaa->iface)
 		return (UMATCH_NONE);
 
-	for (i = 0; i < sizeof(zyd_devs)/sizeof(zyd_devs[0]); i++) {
-		struct zyd_type *t = &zyd_devs[i];
-
-		if ((uaa->vendor == t->vid) && (uaa->product == t->pid)) {
-			return (UMATCH_VENDOR_PRODUCT);
-		}
-	}
-
-	return (UMATCH_NONE);
+	return (usb_lookup(zyd_devs, uaa->vendor, uaa->product) != NULL) ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 /*

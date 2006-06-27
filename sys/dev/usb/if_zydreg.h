@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.3 2006/06/27 03:49:44 deraadt Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.4 2006/06/27 09:21:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -592,27 +592,6 @@ enum zyd_ranges {
 struct zyd_type {
 	uint16_t vid;
 	uint16_t pid;
-};
-
-struct zyd_type zyd_devs[] = {
-	{ 0x0586, 0x3401 }, /* Zyxel ZyAIR G-220 */
-	{ 0x0675, 0x0550 }, /* DrayTek Vigor 550 */
-	{ 0x079b, 0x004a }, /* Sagem XG 760A */
-	{ 0x07b8, 0x6001 }, /* AOpen 802.11g WL54 */
-	{ 0x0ace, 0x1211 }, /* Fiberline Networks WL-43OU, Airlink+ AWLL3025, X-Micro XWL-11GUZX, Edimax EW-7317UG, Planet WL-U356, Acer WLAN-G-US1, Trendnet TEW-424UB */
-	{ 0x0b05, 0x170c }, /* Asus WL-159g */
-	{ 0x0b3b, 0x5630 }, /* Tekram/Siemens USB adapter */
-	{ 0x0df6, 0x9071 }, /* Sitecom WL-113 */
-	{ 0x0b3b, 0x1630 }, /* Yakumo QuickWLAN USB */
-	{ 0x126f, 0xa006 }, /* TwinMOS G240 */
-	{ 0x129b, 0x1666 }, /* Telegent TG54USB */
-	{ 0x1435, 0x0711 }, /* iNexQ UR055g */
-	{ 0x14ea, 0xab13 }, /* Planex GW-US54Mini */
-	{ 0x157e, 0x300b }, /* Trendnet TEW-429UB */
-	{ 0x2019, 0xc007 }, /* Planex GW-US54GZL */
-	{ 0x5173, 0x1809 }, /* Sweex wireless USB 54 Mbps */
-	{ 0x6891, 0xa727 }, /* 3COM 3CRUSB10075 */
-	{ }
 };
 
 static const char *zyd_rfs[] = {
