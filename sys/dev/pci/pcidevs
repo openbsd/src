@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1083 2006/06/25 11:37:00 martin Exp $
+$OpenBSD: pcidevs,v 1.1084 2006/06/27 05:38:24 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2860,8 +2860,10 @@ product RALINK RT2661		0x0401	RT2661
 /* Realtek products */
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8129		0x8129	8129
+product REALTEK RT8101E		0x8136	8101E
 product REALTEK RT8138		0x8138	8138
 product REALTEK RT8139		0x8139	8139
+product REALTEK RT8169SC	0x8167	8169SC
 product REALTEK RT8168		0x8168	8168
 product REALTEK RT8169		0x8169	8169
 product REALTEK RT8180		0x8180	8180
