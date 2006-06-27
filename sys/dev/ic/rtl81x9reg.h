@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.22 2006/06/27 05:53:37 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.23 2006/06/27 07:29:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -146,13 +146,19 @@
 #define RL_LOOPTEST_ON		0x00020000
 #define RL_LOOPTEST_ON_CPLUS	0x00060000
 
+/* Known revision codes. */
+
 #define RL_HWREV_8169		0x00000000
-#define RL_HWREV_8169S		0x04000000
-#define RL_HWREV_8169SB		0x10000000
 #define RL_HWREV_8110S		0x00800000
+#define RL_HWREV_8169S		0x04000000
+#define RL_HWREV_8169_8110SB	0x10000000
+#define RL_HWREV_8169_8110SC	0x18000000
+#define RL_HWREV_8100E		0x30800000
+#define RL_HWREV_8101E		0x34000000
+#define RL_HWREV_8168		0x38000000
 #define RL_HWREV_8139		0x60000000
 #define RL_HWREV_8139A		0x70000000
-#define RL_HWREV_8139AG	0x70800000
+#define RL_HWREV_8139AG		0x70800000
 #define RL_HWREV_8139B		0x78000000
 #define RL_HWREV_8130		0x7C000000
 #define RL_HWREV_8139C		0x74000000
@@ -300,6 +306,15 @@
 #define RL_EEMODE_WRITECFG	(0x80|0x40)
 
 /* 9346/9356 EEPROM commands */
+
+#define RL_9346_WRITE		0x5
+#define RL_9346_READ		0x6
+#define RL_9346_ERASE		0x7
+#define RL_9346_EWEN		0x4
+#define RL_9346_EWEN_ADDR	0x30
+#define RL_9456_EWDS		0x4
+#define RL_9346_EWDS_ADDR	0x00
+
 #define RL_EECMD_WRITE		0x5	/* 0101b */
 #define RL_EECMD_READ		0x6	/* 0110b */
 #define RL_EECMD_ERASE		0x7	/* 0111b */
@@ -567,6 +582,7 @@ struct rl_stats {
 
 #define RL_RX_DESC_CNT		64
 #define RL_TX_DESC_CNT		64
+
 #define RL_RX_LIST_SZ		(RL_RX_DESC_CNT * sizeof(struct rl_desc))
 #define RL_TX_LIST_SZ		(RL_TX_DESC_CNT * sizeof(struct rl_desc))
 #define RL_RING_ALIGN		256
@@ -662,6 +678,7 @@ struct rl_softc {
 	struct mii_data		sc_mii;		/* MII information */
 	u_int8_t		rl_type;
 	int			rl_eecmd_read;
+	int			rl_eewidth;
 	void			*sc_sdhook;	/* shutdownhook */
 	void			*sc_pwrhook;
 	int			rl_txthresh;
@@ -675,6 +692,9 @@ struct rl_softc {
 	u_int32_t		rl_rxlenmask;
 	int			rl_testmode;
 	struct timeout		timer_handle;
+
+	int			rl_txstart;
+	int			rl_link;
 };
 
 #define RL_ATTACHED	0x00000001	/* attach has succeeded */
@@ -700,6 +720,24 @@ struct rl_softc {
 #define CSR_READ_1(sc, csr) \
 	bus_space_read_1(sc->rl_btag, sc->rl_bhandle, csr)
 
+#define CSR_SETBIT_1(sc, offset, val)		\
+	CSR_WRITE_1(sc, offset, CSR_READ_1(sc, offset) | (val))
+
+#define CSR_CLRBIT_1(sc, offset, val)		\
+	CSR_WRITE_1(sc, offset, CSR_READ_1(sc, offset) & ~(val))
+
+#define CSR_SETBIT_2(sc, offset, val)		\
+	CSR_WRITE_2(sc, offset, CSR_READ_2(sc, offset) | (val))
+
+#define CSR_CLRBIT_2(sc, offset, val)		\
+	CSR_WRITE_2(sc, offset, CSR_READ_2(sc, offset) & ~(val))
+
+#define CSR_SETBIT_4(sc, offset, val)		\
+	CSR_WRITE_4(sc, offset, CSR_READ_4(sc, offset) | (val))
+
+#define CSR_CLRBIT_4(sc, offset, val)		\
+	CSR_WRITE_4(sc, offset, CSR_READ_4(sc, offset) & ~(val))
+
 #define RL_TIMEOUT		1000
 
 /*
@@ -712,11 +750,14 @@ struct rl_softc {
 /*
  * RealTek chip device IDs.
  */
-#define	RT_DEVICEID_8129			0x8129
-#define	RT_DEVICEID_8138			0x8138
-#define	RT_DEVICEID_8139			0x8139
-#define	RT_DEVICEID_8169			0x8169
-#define	RT_DEVICEID_8100			0x8100
+#define RT_DEVICEID_8129			0x8129
+#define RT_DEVICEID_8101E			0x8136
+#define RT_DEVICEID_8138			0x8138
+#define RT_DEVICEID_8139			0x8139
+#define RT_DEVICEID_8169SC			0x8167
+#define RT_DEVICEID_8168			0x8168
+#define RT_DEVICEID_8169			0x8169
+#define RT_DEVICEID_8100			0x8100
 
 /*
  * Accton PCI vendor ID
