@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.13 2006/02/25 17:48:39 kettenis Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.14 2006/06/27 20:20:48 jason Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -205,10 +205,10 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	DPRINTF(EDB_CHILD, ("ebus node %08x, searching children...\n", node));
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
-
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
-			printf("ebus_attach: %s: incomplete\n", name);
+			DPRINTF(EDB_CHILD,
+			    ("ebus_attach: %s: incomplete\n",
+			    getpropstring(node, "name")));
 			continue;
 		} else {
 			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n",

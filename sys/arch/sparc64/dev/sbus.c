@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.24 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.25 2006/06/27 20:20:48 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -129,6 +129,7 @@
 #ifdef DEBUG
 #define SDB_DVMA	0x1
 #define SDB_INTR	0x2
+#define SDB_CHILD	0x4
 int sbus_debug = 0;
 #define DPRINTF(l, s)   do { if (sbus_debug & l) printf s; } while (0)
 #else
@@ -417,11 +418,11 @@ sbus_attach_common(struct sbus_softc *sc, int node, int indirect)
 	 */
 	node0 = firstchild(node);
 	for (node = node0; node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
-
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
 					   node, &sa) != 0) {
-			printf("sbus_attach: %s: incomplete\n", name);
+			DPRINTF(SDB_CHILD,
+			    ("sbus_attach: %s: incomplete\n",
+			    getpropstring(node, "name")));
 			continue;
 		}
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
