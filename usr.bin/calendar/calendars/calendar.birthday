@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.39 2006/06/22 09:21:25 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.40 2006/06/27 13:51:58 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -12,6 +12,7 @@
 01/01	Heinz Zemanek born in Vienna, Austria, 1920
 01/01	Dolores Haze (prototype for Lolita) born, 1935
 01/02	Isaac Asimov born in Petrovichi, Russian SFSR (now part of USSR), 1920
+01/03	J.R.R. Tolkien born, 1892
 01/04	George Washington Carver born in Missouri, 1864
 01/04	Jakob Grimm born, 1785
 01/04	Wilhelm Beer born, 1797, first astronomer to map Mars
@@ -37,6 +38,7 @@
 01/22	Sir Francis Bacon born, 1561
 01/23	Joseph Hewes born, 1730
 01/23	Ernst Abbe born, 1840, formulated diffraction theory
+01/23	Grigori Yefimovich Rasputin born, 1869
 01/23	Sergei M. Eisenstein born in Riga, Latvia, 1898
 01/23	Samuel Barber died, 1981
 01/24	John Belushi is born in Chicago, 1949
@@ -221,6 +223,7 @@
 08/27	Lyndon B. Johnson born, 1908
 08/29	Oliver Wendell Holmes born, 1809, physician & father of the jurist
 08/30	John W. Mauchly born, 1907
+09/02	J.R.R. Tolkien died, 1973
 09/05	King Louis XIV of France born, 1638
 09/05	Raquel Welch born, 1942
 09/06	Word is received that Perry has reached the North Pole and died, 1909
@@ -318,5 +321,6 @@
 12/25	Isaac Newton (Sir) born in Lincolnshire, England, 1642
 12/25	Humphrey Bogart born in New York City, 1899
 12/26	Charles Babbage born, 1791
+12/29	Grigori Yefimovich Rasputin assasinated, 1916
 
 #endif /* !_calendar_birthday_ */
