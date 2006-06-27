@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.129 2006/05/22 20:35:12 krw Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.130 2006/06/27 09:48:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.129 2006/05/22 20:35:12 krw Exp $";
+	"$OpenBSD: if_wi.c,v 1.130 2006/06/27 09:48:02 reyk Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -180,6 +180,7 @@ STATIC int wi_alloc_nicmem_io(struct wi_softc *, int, int *);
 STATIC int wi_get_fid_io(struct wi_softc *sc, int fid);
 STATIC void wi_intr_enable(struct wi_softc *sc, int mode);
 STATIC void wi_intr_ack(struct wi_softc *sc, int mode);
+void	 wi_scan_timeout(void *);
 
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
@@ -1541,13 +1542,19 @@ wi_setdef(struct wi_softc *sc, struct wi_req *wreq)
 STATIC int
 wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	int			s, error = 0;
+	int			s, error = 0, i, j, len;
 	struct wi_softc		*sc;
-	struct wi_req		wreq;
 	struct ifreq		*ifr;
 	struct proc		*p = curproc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct ieee80211_nwid	nwid;
+	struct wi_scan_res	*res;
+	struct wi_scan_p2_hdr	*p2;
+	struct wi_req		wreq;
+
+	struct ieee80211_nwid		nwid;
+	struct ieee80211_nodereq	nr;
+	struct ieee80211_nodereq_all	*na;
+	struct ieee80211_bssid		*bssid;
 
 	s = splnet();
 
@@ -1861,6 +1868,122 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		((struct ieee80211chanreq *)data)->i_channel =
 		    letoh16(wreq.wi_val[0]);
 		break;
+	case SIOCG80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		wreq.wi_type = WI_RID_CURRENT_BSSID;
+		wreq.wi_len = WI_MAX_DATALEN;
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
+			error = EINVAL;
+			break;
+		}
+		IEEE80211_ADDR_COPY(bssid->i_bssid, wreq.wi_val);
+		break;
+	case SIOCS80211SCAN:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP)
+			break;
+		if ((ifp->if_flags & IFF_UP) == 0) {
+			error = ENETDOWN;
+			break;
+		}
+		if (sc->sc_firmware_type == WI_LUCENT) {
+			wi_cmd(sc, WI_CMD_INQUIRE,
+			    WI_INFO_SCAN_RESULTS, 0, 0);
+		} else {
+			wreq.wi_len = 3;
+			wreq.wi_type = WI_RID_SCAN_REQ;
+			wreq.wi_val[0] = 0x3FFF;
+			wreq.wi_val[1] = 0x000F;
+
+			error = wi_write_record(sc,
+			    (struct wi_ltv_gen *)&wreq);
+			if (error)
+				break;
+		}
+		sc->wi_scan_lock = 0;
+		timeout_set(&sc->wi_scan_timeout, wi_scan_timeout, sc);
+		len = WI_WAVELAN_RES_TIMEOUT;
+		if (sc->wi_flags & WI_FLAGS_BUS_USB) {
+			/* Use a longer timeout for wi@usb */
+			len = WI_WAVELAN_RES_TIMEOUT * 4;
+		}
+		timeout_add(&sc->wi_scan_timeout, len);
+
+		/* Let the userspace process wait for completion */
+		error = tsleep(&sc->wi_scan_lock, PCATCH, "wiscan",
+		    hz * IEEE80211_SCAN_TIMEOUT);
+		break;
+	case SIOCG80211ALLNODES:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		na = (struct ieee80211_nodereq_all *)data;
+		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
+			/* List all associated stations */
+			error = wihap_ioctl(sc, command, data);
+			break;
+		}
+		wreq.wi_len = WI_MAX_DATALEN;
+		wreq.wi_type = WI_RID_SCAN_RES;
+		if (sc->sc_firmware_type == WI_LUCENT) {
+			bcopy(sc->wi_scanbuf, wreq.wi_val,
+			    sc->wi_scanbuf_len * 2);
+			wreq.wi_len = sc->wi_scanbuf_len;
+			i = 0;
+			len = WI_WAVELAN_RES_SIZE;
+		} else {
+			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
+				error = EINVAL;
+				break;
+			}
+			p2 = (struct wi_scan_p2_hdr *)wreq.wi_val;
+			if (p2->wi_reason == 0)
+				break;
+			i = sizeof(*p2);
+			len = WI_PRISM2_RES_SIZE;
+		}
+
+		for (na->na_nodes = j = 0; (i < (wreq.wi_len * 2) - len) &&
+		    (na->na_size >= j + sizeof(struct ieee80211_nodereq));
+		    i += len) {
+			res = (struct wi_scan_res *)((char *)wreq.wi_val + i);
+			if (res == NULL)
+				break;
+
+			bzero(&nr, sizeof(nr));
+			IEEE80211_ADDR_COPY(nr.nr_macaddr, res->wi_bssid);
+			IEEE80211_ADDR_COPY(nr.nr_bssid, res->wi_bssid);
+			nr.nr_channel = letoh16(res->wi_chan);
+			nr.nr_rssi = letoh16(res->wi_signal);
+			nr.nr_max_rssi = 0; /* XXX */
+			nr.nr_nwid_len = letoh16(res->wi_ssid_len);
+			bcopy(res->wi_ssid, nr.nr_nwid, nr.nr_nwid_len);
+			nr.nr_intval = letoh16(res->wi_interval);
+			nr.nr_capinfo = letoh16(res->wi_capinfo);
+			nr.nr_txrate = res->wi_rate == WI_WAVELAN_RES_1M ? 2 :
+			    (res->wi_rate == WI_WAVELAN_RES_2M ? 4 :
+			    (res->wi_rate == WI_WAVELAN_RES_5M ? 11 :
+			    (res->wi_rate == WI_WAVELAN_RES_11M ? 22 : 0)));
+			nr.nr_nrates = 0;
+			while (res->wi_srates[nr.nr_nrates] != 0) {
+				nr.nr_rates[nr.nr_nrates] =
+				    res->wi_srates[nr.nr_nrates] &
+				    WI_VAR_SRATES_MASK;
+				nr.nr_nrates++;
+			}
+			nr.nr_flags = 0;
+			if (bcmp(nr.nr_macaddr, nr.nr_bssid,
+			    IEEE80211_ADDR_LEN) == 0)
+				nr.nr_flags |= IEEE80211_NODEREQ_AP;
+
+			error = copyout(&nr, (caddr_t)na->na_node + j,
+			    sizeof(struct ieee80211_nodereq));
+			if (error)
+				break;
+			j += sizeof(struct ieee80211_nodereq);
+			na->na_nodes++;
+		}
+		break;
 	case SIOCHOSTAP_ADD:
 	case SIOCHOSTAP_DEL:
 	case SIOCHOSTAP_GET:
@@ -1877,6 +2000,45 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	splx(s);
 	return(error);
+}
+
+void
+wi_scan_timeout(void *arg)
+{
+	struct wi_softc		*sc = (struct wi_softc *)arg;
+	struct wi_req		wreq;
+
+	if (sc->wi_scan_lock++ < WI_WAVELAN_RES_TRIES &&
+	    sc->sc_firmware_type != WI_LUCENT &&
+	    (sc->wi_flags & WI_FLAGS_BUS_USB) == 0) {
+		/*
+		 * The Prism2/2.5/3 chipsets will set an extra field in the
+		 * scan result if the scan request has been completed by the
+		 * firmware. This allows to poll for completion and to
+		 * wait for some more time if the scan is still in progress.
+		 *
+		 * XXX This doesn't work with wi@usb because it isn't safe
+		 * to call wi_read_record_usb() while beeing in the timeout
+		 * handler.
+		 */
+		wreq.wi_len = WI_MAX_DATALEN;
+		wreq.wi_type = WI_RID_SCAN_RES;
+
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) == 0 &&
+		    ((struct wi_scan_p2_hdr *)wreq.wi_val)->wi_reason == 0) {
+			/* Wait some more time for scan completion */
+			timeout_add(&sc->wi_scan_timeout, WI_WAVELAN_RES_TIMEOUT);
+			return;
+		}
+	}
+
+	if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
+		printf(WI_PRT_FMT ": wi_scan_timeout: %d tries\n",
+		    WI_PRT_ARG(sc), sc->wi_scan_lock);
+
+	/* Wakeup the userland */
+	wakeup(&sc->wi_scan_lock);	
+	sc->wi_scan_lock = 0;
 }
 
 STATIC void

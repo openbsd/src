@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.34 2006/04/20 20:31:12 miod Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.35 2006/06/27 09:48:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -1209,6 +1209,9 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 	struct hostap_sta	stabuf;
 	int			s, error = 0, n, flag;
 
+	struct ieee80211_nodereq nr;
+	struct ieee80211_nodereq_all *na;
+
 	if (!(sc->sc_ic.ic_if.if_flags & IFF_RUNNING))
 		return ENODEV;
 
@@ -1326,6 +1329,43 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			error = copyout(&reqall, ifr->ifr_data,
 			    sizeof(reqall));
 		break;
+
+	case SIOCG80211ALLNODES:
+		na = (struct ieee80211_nodereq_all *)data;
+		na->na_nodes = n = 0;
+		s = splnet();
+		sta = TAILQ_FIRST(&whi->sta_list);
+		while (sta && na->na_size >=
+		    n + sizeof(struct ieee80211_nodereq)) {
+			bzero(&nr, sizeof(nr));
+			IEEE80211_ADDR_COPY(nr.nr_macaddr, sta->addr);
+			IEEE80211_ADDR_COPY(nr.nr_bssid,
+			    &sc->sc_ic.ic_myaddr);
+			nr.nr_associd = sta->asid;
+			nr.nr_rssi = sta->sig_info >> 8;
+			nr.nr_max_rssi = 0;
+			nr.nr_capinfo = sta->capinfo;
+			nr.nr_nrates = 0;
+			if (sta->rates & WI_SUPPRATES_1M)
+				nr.nr_rates[nr.nr_nrates++] = 2;
+			if (sta->rates & WI_SUPPRATES_2M)
+				nr.nr_rates[nr.nr_nrates++] = 4;
+			if (sta->rates & WI_SUPPRATES_5M)
+				nr.nr_rates[nr.nr_nrates++] = 11;
+			if (sta->rates & WI_SUPPRATES_11M)
+				nr.nr_rates[nr.nr_nrates++] = 22;
+
+			error = copyout(&nr, (caddr_t)na->na_node + n,
+			    sizeof(struct ieee80211_nodereq));
+			if (error)
+				break;
+			n += sizeof(struct ieee80211_nodereq);
+			na->na_nodes++;
+			sta = TAILQ_NEXT(sta, list);
+		}
+		splx(s);
+		break;
+
 	default:
 		printf("wihap_ioctl: i shouldn't get other ioctls!\n");
 		error = EINVAL;

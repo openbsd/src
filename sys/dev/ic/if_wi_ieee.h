@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.27 2005/12/13 10:30:35 jsg Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.28 2006/06/27 09:48:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -665,14 +665,20 @@ struct wi_scan_res {
 	u_int8_t	wi_rate;
 	u_int8_t	wi_rsvd;
 };
+#define WI_WAVELAN_RES_1M	0x0a
+#define WI_WAVELAN_RES_2M	0x14
+#define WI_WAVELAN_RES_5M	0x37
+#define WI_WAVELAN_RES_11M	0x6e
+
 #define WI_WAVELAN_RES_SIZE	50
+#define WI_WAVELAN_RES_TIMEOUT	((hz / 10) * 2)		/* 200ms */
+#define WI_WAVELAN_RES_TRIES	100
 
 struct wi_scan_p2_hdr {
 	u_int16_t	wi_rsvd;
 	u_int16_t	wi_reason;
 };
 #define WI_PRISM2_RES_SIZE	62
-
 
 /*
  * prism2 debug mode definitions
