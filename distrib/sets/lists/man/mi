@@ -1232,6 +1232,7 @@
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/fdc.0
 ./usr/share/man/cat4/fea.0
+./usr/share/man/cat4/fintek.0
 ./usr/share/man/cat4/fms.0
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fta.0
@@ -1497,6 +1498,7 @@
 ./usr/share/man/cat4/owid.0
 ./usr/share/man/cat4/owtemp.0
 ./usr/share/man/cat4/pcagpio.0
+./usr/share/man/cat4/pcaled.0
 ./usr/share/man/cat4/pccom.0
 ./usr/share/man/cat4/pcdisplay.0
 ./usr/share/man/cat4/pcfadc.0
@@ -1536,6 +1538,7 @@
 ./usr/share/man/cat4/rd.0
 ./usr/share/man/cat4/re.0
 ./usr/share/man/cat4/rgephy.0
+./usr/share/man/cat4/ricohrtc.0
 ./usr/share/man/cat4/rl.0
 ./usr/share/man/cat4/rln.0
 ./usr/share/man/cat4/rlphy.0
