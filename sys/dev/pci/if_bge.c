@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.163 2006/06/27 16:40:11 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.164 2006/06/27 16:46:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -181,7 +181,6 @@ void bge_miibus_statchg(struct device *);
 void bge_reset(struct bge_softc *);
 void bge_link_upd(struct bge_softc *);
 
-#define BGE_DEBUG
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	if (bgedebug) printf x
 #define DPRINTFN(n,x)	if (bgedebug >= (n)) printf x
