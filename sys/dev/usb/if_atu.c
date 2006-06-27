@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.72 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.73 2006/06/27 03:58:07 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -210,25 +210,29 @@ struct atu_radfirm {
 	enum	atu_radio_type atur_type;
 	char	*atur_internal;
 	char	*atur_external;
+	u_int8_t max_rssi;
 } atu_radfirm[] = {
-	{ RadioRFMD,		"atu-rfmd-int",		"atu-rfmd-ext" },
-	{ RadioRFMD2958,	"atu-rfmd2958-int",	"atu-rfmd2958-ext" },
-	{ RadioRFMD2958_SMC,	"atu-rfmd2958smc-int",	"atu-rfmd2958smc-ext" },
-	{ RadioIntersil,	"atu-intersil-int",	"atu-intersil-ext" },
+	{ RadioRFMD,		"atu-rfmd-int",		"atu-rfmd-ext",	0 },
+	{ RadioRFMD2958,	"atu-rfmd2958-int",	"atu-rfmd2958-ext", 81 },
+	{ RadioRFMD2958_SMC,	"atu-rfmd2958smc-int",	"atu-rfmd2958smc-ext", 0 },
+	{ RadioIntersil,	"atu-intersil-int",	"atu-intersil-ext", 0 },
 	{
 		AT76C503_i3863,
 		"atu-at76c503-i3863-int",
-		"atu-at76c503-i3863-ext"
+		"atu-at76c503-i3863-ext",
+		0
 	},
 	{
 		AT76C503_rfmd_acc,
 		"atu-at76c503-rfmd-acc-int",
-		"atu-at76c503-rfmd-acc-ext"
+		"atu-at76c503-rfmd-acc-ext",
+		0
 	},
 	{
 		AT76C505_rfmd,
 		"atu-at76c505-rfmd-int",
-		"atu-at76c505-rfmd-ext"
+		"atu-at76c505-rfmd-ext",
+		0
 	}
 };
 
@@ -1430,6 +1434,7 @@ atu_complete_attach(struct atu_softc *sc)
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_WEP | IEEE80211_C_SCANALL;
+	ic->ic_max_rssi = atu_radfirm[sc->atu_radio].max_rssi;
 
 	i = 0;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 2;
@@ -1740,7 +1745,8 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		    htole16(ic->ic_bss->ni_chan->ic_freq);
 		rr->rr_chan_flags =
 		    htole16(ic->ic_bss->ni_chan->ic_flags);
-		rr->rr_antsignal = h->rssi;
+		rr->rr_rssi = h->rssi;
+		rr->rr_max_rssi = ic->ic_max_rssi;
 
 		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)rr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.25 2005/07/07 22:47:08 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.26 2006/06/27 03:58:07 jsg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -124,7 +124,7 @@ struct atu_chain {
 	 (1 << IEEE80211_RADIOTAP_RATE)			|	\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL)		|	\
 	 (1 << IEEE80211_RADIOTAP_LOCK_QUALITY)		|	\
-	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)		|	\
+	 (1 << IEEE80211_RADIOTAP_RSSI)			|	\
 	 0)
 
 struct atu_rx_radiotap_header {
@@ -135,7 +135,8 @@ struct atu_rx_radiotap_header {
 	u_int16_t				rr_chan_freq;
 	u_int16_t				rr_chan_flags;
 	u_int16_t				rr_barker_lock;
-	u_int8_t				rr_antsignal;
+	u_int8_t				rr_rssi;
+	u_int8_t				rr_max_rssi;
 } __attribute__((__packed__));
 
 #define ATU_TX_RADIOTAP_PRESENT				\
