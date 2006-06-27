@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.21 2006/01/05 05:36:06 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.22 2006/06/27 04:25:12 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ struct rtw_rx_radiotap_header {
 	u_int16_t				rr_chan_flags;
 	u_int16_t				rr_barker_lock;
 	u_int8_t				rr_antsignal;
-} __attribute__((__packed__));
+} __packed;
 
 #define RTW_TX_RADIOTAP_PRESENT				\
 	((1 << IEEE80211_RADIOTAP_FLAGS)	|	\
@@ -281,7 +281,7 @@ struct rtw_tx_radiotap_header {
 	u_int8_t				rt_rate;
 	u_int16_t				rt_chan_freq;
 	u_int16_t				rt_chan_flags;
-} __attribute__((__packed__));
+} __packed;
 
 struct rtw_hooks {
 	void			*rh_shutdown;	/* shutdown hook */
