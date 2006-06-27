@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -145,30 +198,13 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
+	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
 		{
-		BN_MONT_CTX* bn_mont_ctx;
-		if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
+		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
+					CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
-		if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->n,ctx))
-			{
-			BN_MONT_CTX_free(bn_mont_ctx);
-			goto err;
-			}
-		if (rsa->_method_mod_n == NULL) /* other thread may have finished first */
-			{
-			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-			if (rsa->_method_mod_n == NULL)
-				{
-				rsa->_method_mod_n = bn_mont_ctx;
-				bn_mont_ctx = NULL;
-				}
-			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-			}
-		if (bn_mont_ctx)
-			BN_MONT_CTX_free(bn_mont_ctx);
 		}
-		
+
 	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
 
@@ -249,7 +285,7 @@ err:
 static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM f,ret;
+	BIGNUM f,ret, *res;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
@@ -331,19 +367,43 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		(rsa->dmp1 != NULL) &&
 		(rsa->dmq1 != NULL) &&
 		(rsa->iqmp != NULL)) )
-		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
+		{ 
+		if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err;
+		}
 	else
 		{
-		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL)) goto err;
+		BIGNUM local_d;
+		BIGNUM *d = NULL;
+		
+		if (!(rsa->flags & RSA_FLAG_NO_EXP_CONSTTIME))
+			{
+			BN_init(&local_d);
+			d = &local_d;
+			BN_with_flags(d, rsa->d, BN_FLG_EXP_CONSTTIME);
+			}
+		else
+			d = rsa->d;
+		if (!rsa->meth->bn_mod_exp(&ret,&f,d,rsa->n,ctx,NULL)) goto err;
 		}
 
 	if (blinding)
 		if (!BN_BLINDING_invert(&ret, blinding, ctx)) goto err;
 
+	if (padding == RSA_X931_PADDING)
+		{
+		BN_sub(&f, rsa->n, &ret);
+		if (BN_cmp(&ret, &f))
+			res = &f;
+		else
+			res = &ret;
+		}
+	else
+		res = &ret;
+
 	/* put in leading 0 bytes if the number is less than the
 	 * length of the modulus */
-	j=BN_num_bytes(&ret);
-	i=BN_bn2bin(&ret,&(to[num-j]));
+	j=BN_num_bytes(res);
+	i=BN_bn2bin(res,&(to[num-j]));
 	for (k=0; k<(num-i); k++)
 		to[k]=0;
 
@@ -444,10 +504,22 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		(rsa->dmp1 != NULL) &&
 		(rsa->dmq1 != NULL) &&
 		(rsa->iqmp != NULL)) )
-		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
+		{
+		if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err;
+		}
 	else
 		{
-		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL))
+		BIGNUM local_d;
+		BIGNUM *d = NULL;
+		
+		if (!(rsa->flags & RSA_FLAG_NO_EXP_CONSTTIME))
+			{
+			d = &local_d;
+			BN_with_flags(d, rsa->d, BN_FLG_EXP_CONSTTIME);
+			}
+		else
+			d = rsa->d;
+		if (!rsa->meth->bn_mod_exp(&ret,&f,d,rsa->n,ctx,NULL))
 			goto err;
 		}
 
@@ -534,32 +606,19 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 		}
 
 	/* do the decrypt */
-	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
+
+	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
 		{
-		BN_MONT_CTX* bn_mont_ctx;
-		if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
+		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
+					CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
-		if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->n,ctx))
-			{
-			BN_MONT_CTX_free(bn_mont_ctx);
-			goto err;
-			}
-		if (rsa->_method_mod_n == NULL) /* other thread may have finished first */
-			{
-			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-			if (rsa->_method_mod_n == NULL)
-				{
-				rsa->_method_mod_n = bn_mont_ctx;
-				bn_mont_ctx = NULL;
-				}
-			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-			}
-		if (bn_mont_ctx)
-			BN_MONT_CTX_free(bn_mont_ctx);
 		}
-		
+
 	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
+
+	if ((padding == RSA_X931_PADDING) && ((ret.d[0] & 0xf) != 12))
+		BN_sub(&ret, rsa->n, &ret);
 
 	p=buf;
 	i=BN_bn2bin(&ret,p);
@@ -594,6 +653,8 @@ err:
 static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	BIGNUM r1,m1,vrfy;
+	BIGNUM local_dmp1, local_dmq1;
+	BIGNUM *dmp1, *dmq1;
 	int ret=0;
 	BN_CTX *ctx;
 
@@ -604,61 +665,34 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	if (rsa->flags & RSA_FLAG_CACHE_PRIVATE)
 		{
-		if (rsa->_method_mod_p == NULL)
-			{
-			BN_MONT_CTX* bn_mont_ctx;
-			if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
-				goto err;
-			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->p,ctx))
-				{
-				BN_MONT_CTX_free(bn_mont_ctx);
-				goto err;
-				}
-			if (rsa->_method_mod_p == NULL) /* other thread may have finished first */
-				{
-				CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-				if (rsa->_method_mod_p == NULL)
-					{
-					rsa->_method_mod_p = bn_mont_ctx;
-					bn_mont_ctx = NULL;
-					}
-				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-				}
-			if (bn_mont_ctx)
-				BN_MONT_CTX_free(bn_mont_ctx);
-			}
-
-		if (rsa->_method_mod_q == NULL)
-			{
-			BN_MONT_CTX* bn_mont_ctx;
-			if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
-				goto err;
-			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->q,ctx))
-				{
-				BN_MONT_CTX_free(bn_mont_ctx);
-				goto err;
-				}
-			if (rsa->_method_mod_q == NULL) /* other thread may have finished first */
-				{
-				CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-				if (rsa->_method_mod_q == NULL)
-					{
-					rsa->_method_mod_q = bn_mont_ctx;
-					bn_mont_ctx = NULL;
-					}
-				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-				}
-			if (bn_mont_ctx)
-				BN_MONT_CTX_free(bn_mont_ctx);
-			}
+		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_p,
+					CRYPTO_LOCK_RSA, rsa->p, ctx))
+			goto err;
+		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_q,
+					CRYPTO_LOCK_RSA, rsa->q, ctx))
+			goto err;
 		}
-		
+
 	if (!BN_mod(&r1,I,rsa->q,ctx)) goto err;
-	if (!rsa->meth->bn_mod_exp(&m1,&r1,rsa->dmq1,rsa->q,ctx,
+	if (!(rsa->flags & RSA_FLAG_NO_EXP_CONSTTIME))
+		{
+		dmq1 = &local_dmq1;
+		BN_with_flags(dmq1, rsa->dmq1, BN_FLG_EXP_CONSTTIME);
+		}
+	else
+		dmq1 = rsa->dmq1;
+	if (!rsa->meth->bn_mod_exp(&m1,&r1,dmq1,rsa->q,ctx,
 		rsa->_method_mod_q)) goto err;
 
 	if (!BN_mod(&r1,I,rsa->p,ctx)) goto err;
-	if (!rsa->meth->bn_mod_exp(r0,&r1,rsa->dmp1,rsa->p,ctx,
+	if (!(rsa->flags & RSA_FLAG_NO_EXP_CONSTTIME))
+		{
+		dmp1 = &local_dmp1;
+		BN_with_flags(dmp1, rsa->dmp1, BN_FLG_EXP_CONSTTIME);
+		}
+	else
+		dmp1 = rsa->dmp1;
+	if (!rsa->meth->bn_mod_exp(r0,&r1,dmp1,rsa->p,ctx,
 		rsa->_method_mod_p)) goto err;
 
 	if (!BN_sub(r0,r0,&m1)) goto err;
@@ -693,10 +727,23 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		if (vrfy.neg)
 			if (!BN_add(&vrfy, &vrfy, rsa->n)) goto err;
 		if (!BN_is_zero(&vrfy))
+			{
 			/* 'I' and 'vrfy' aren't congruent mod n. Don't leak
 			 * miscalculated CRT output, just do a raw (slower)
 			 * mod_exp and return that instead. */
-			if (!rsa->meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,NULL)) goto err;
+
+			BIGNUM local_d;
+			BIGNUM *d = NULL;
+		
+			if (!(rsa->flags & RSA_FLAG_NO_EXP_CONSTTIME))
+				{
+				d = &local_d;
+				BN_with_flags(d, rsa->d, BN_FLG_EXP_CONSTTIME);
+				}
+			else
+				d = rsa->d;
+			if (!rsa->meth->bn_mod_exp(r0,I,d,rsa->n,ctx,NULL)) goto err;
+			}
 		}
 	ret=1;
 err:

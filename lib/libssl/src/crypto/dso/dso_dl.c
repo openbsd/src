@@ -126,7 +126,8 @@ static int dl_load(DSO *dso)
 		DSOerr(DSO_F_DL_LOAD,DSO_R_NO_FILENAME);
 		goto err;
 		}
-	ptr = shl_load(filename, BIND_IMMEDIATE|DYNAMIC_PATH, 0L);
+	ptr = shl_load(filename, BIND_IMMEDIATE |
+		(dso->flags&DSO_FLAG_NO_NAME_TRANSLATION?0:DYNAMIC_PATH), 0L);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DL_LOAD,DSO_R_LOAD_FAILED);
@@ -280,5 +281,37 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 		sprintf(translated, "%s", filename);
 	return(translated);
 	}
+
+#ifdef OPENSSL_FIPS
+static void dl_ref_point(){}
+
+int DSO_pathbyaddr(void *addr,char *path,int sz)
+	{
+	struct shl_descriptor inf;
+	int i,len;
+
+	if (addr == NULL)
+		{
+		union { void(*f)(); void *p; } t = { dl_ref_point };
+		addr = t.p;
+		}
+
+	for (i=-1;shl_get_r(i,&inf)==0;i++)
+		{
+		if (((size_t)addr >= inf.tstart && (size_t)addr < inf.tend) ||
+		    ((size_t)addr >= inf.dstart && (size_t)addr < inf.dend))
+			{
+			len = (int)strlen(inf.filename);
+			if (sz <= 0) return len+1;
+			if (len >= sz) len=sz-1;
+			memcpy(path,inf.filename,len);
+			path[len++] = 0;
+			return len;
+			}
+		}
+
+	return -1;
+	}
+#endif
 
 #endif /* DSO_DL */

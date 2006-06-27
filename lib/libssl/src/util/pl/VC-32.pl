@@ -3,15 +3,28 @@
 #
 
 $ssl=	"ssleay32";
-$crypto="libeay32";
+
+if ($fips && !$shlib)
+	{
+	$crypto="libeayfips32";
+	$crypto_compat = "libeaycompat32.lib";
+	}
+else
+	{
+	$crypto="libeay32";
+	}
 
 $o='\\';
 $cp='copy nul+';	# Timestamps get stuffed otherwise
 $rm='del';
 
+$zlib_lib="zlib1.lib";
+
 # C compiler stuff
 $cc='cl';
-$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
+$cflags=' /MD /W3 /WX /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
+$cflags.=' -D_CRT_SECURE_NO_DEPRECATE';		# shut up VC8
+$cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
 
@@ -100,25 +113,56 @@ $cflags.=" /Fd$out_def";
 
 sub do_lib_rule
 	{
-	local($objs,$target,$name,$shlib)=@_;
+	local($objs,$target,$name,$shlib,$ign,$base_addr) = @_;
 	local($ret,$Name);
 
 	$taget =~ s/\//$o/g if $o ne '/';
 	($Name=$name) =~ tr/a-z/A-Z/;
+	my $base_arg;
+	if ($base_addr ne "")
+		{
+		$base_arg= " /base:$base_addr";
+		}
+	else
+		{
+		$base_arg = "";
+		}
+
 
 #	$target="\$(LIB_D)$o$target";
-	$ret.="$target: $objs\n";
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
+		$ret.="$target: $objs\n";
 		$ex =' advapi32.lib';
+ 		$ex.=" \$(FIPSLIB_D)${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
 		{
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
-		$ex.=' wsock32.lib gdi32.lib advapi32.lib';
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+		$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
+ 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
+ 		if ($fips && $target =~ /O_CRYPTO/)
+			{
+ 			$ex.=" \$(FIPSLIB_D)${o}_chkstk.o";
+			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)\n";
+			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="\tSET FIPS_CC=\$(CC)\n";
+			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
+			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
+			$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
+			$ret.="\tSET FIPS_TARGET=$target\n";
+			$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
+			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) $base_arg $efile$target ";
+			$ret.="/def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs ";
+			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
+			}
+		else
+			{
+			$ret.="$target: $objs\n";
+			$ret.="\t\$(LINK) \$(MLFLAGS) $base_arg $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+			}
 		}
 	$ret.="\n";
 	return($ret);
@@ -126,20 +170,51 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
+	local($target,$files,$dep_libs,$libs,$standalone)=@_;
 	local($ret,$_);
-	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
-	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
-	if (defined $sha1file)
+	if ($standalone)
 		{
-		$ret.="  $openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
+		$ret.="\$(FIPSLIB_D)${o}_chkstk.o " if ($files =~ /O_FIPSCANISTER/);
+		$ret.="$files $libs\n<<\n";
+		}
+	elsif ($fips && !$shlib)
+		{
+		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+		$ret.="\tSET FIPS_CC=\$(CC)\n";
+		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
+		$ret.="\tSET PREMAIN_DSO_EXE=\n";
+		$ret.="\tSET FIPS_TARGET=$target\n";
+		$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
+		$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
+		$ret.="  \$(FIPSLINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="  \$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
+		}
+	else
+		{
+		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
 	$ret.="\n";
 	return($ret);
 	}
+
+sub do_rlink_rule
+	{
+	local($target,$files,$dep_libs,$libs)=@_;
+	local($ret,$_);
+
+	$file =~ s/\//$o/g if $o ne '/';
+	$n=&bname($targer);
+	$ret.="$target: $files $dep_libs\n";
+	$ret.="  \$(MKCANISTER) $target <<\n";
+	$ret.="INPUT($files)\n<<\n";
+	$ret.="\n";
+	return($ret);
+	}
+
 
 1;

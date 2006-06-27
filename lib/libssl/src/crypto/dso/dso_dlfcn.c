@@ -56,6 +56,10 @@
  *
  */
 
+#ifdef __linux
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
@@ -228,7 +232,7 @@ static void *dlfcn_bind_var(DSO *dso, const char *symname)
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 	{
 	void *ptr;
-	DSO_FUNC_TYPE sym;
+	DSO_FUNC_TYPE sym, *tsym = &sym;
 
 	if((dso == NULL) || (symname == NULL))
 		{
@@ -246,7 +250,7 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_NULL_HANDLE);
 		return(NULL);
 		}
-	sym = (DSO_FUNC_TYPE)dlsym(ptr, symname);
+	*(void**)(tsym) = dlsym(ptr, symname);
 	if(sym == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_SYM_FAILURE);
@@ -290,4 +294,32 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	return(translated);
 	}
 
+#ifdef OPENSSL_FIPS
+static void dlfcn_ref_point(){}
+
+int DSO_pathbyaddr(void *addr,char *path,int sz)
+	{
+	Dl_info dli;
+	int len;
+
+	if (addr == NULL)
+		{
+		union { void(*f)(void); void *p; } t = { dlfcn_ref_point };
+		addr = t.p;
+		}
+
+	if (dladdr(addr,&dli))
+		{
+		len = (int)strlen(dli.dli_fname);
+		if (sz <= 0) return len+1;
+		if (len >= sz) len=sz-1;
+		memcpy(path,dli.dli_fname,len);
+		path[len++]=0;
+		return len;
+		}
+
+	ERR_add_error_data(4, "dlfcn_pathbyaddr(): ", dlerror());
+	return -1;
+	}
+#endif
 #endif /* DSO_DLFCN */

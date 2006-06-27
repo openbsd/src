@@ -125,7 +125,7 @@
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
-OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
+SSL3_ENC_METHOD ssl3_undef_enc_method={
 	/* evil casts, but these functions are only called if there's a library bug */
 	(int (*)(SSL *,int))ssl_undefined_function,
 	(int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
@@ -1130,8 +1130,21 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	
 	sk=ssl_create_cipher_list(ctx->method,&ctx->cipher_list,
 		&ctx->cipher_list_by_id,str);
-/* XXXX */
-	return((sk == NULL)?0:1);
+	/* ssl_create_cipher_list may return an empty stack if it
+	 * was unable to find a cipher matching the given rule string
+	 * (for example if the rule string specifies a cipher which
+	 * has been disabled). This is not an error as far as 
+	 * ssl_create_cipher_list is concerned, and hence 
+	 * ctx->cipher_list and ctx->cipher_list_by_id has been
+	 * updated. */
+	if (sk == NULL)
+		return 0;
+	else if (sk_SSL_CIPHER_num(sk) == 0)
+		{
+		SSLerr(SSL_F_SSL_CTX_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
+		return 0;
+		}
+	return 1;
 	}
 
 /** specify the ciphers to be used by the SSL */
@@ -1141,8 +1154,15 @@ int SSL_set_cipher_list(SSL *s,const char *str)
 	
 	sk=ssl_create_cipher_list(s->ctx->method,&s->cipher_list,
 		&s->cipher_list_by_id,str);
-/* XXXX */
-	return((sk == NULL)?0:1);
+	/* see comment in SSL_CTX_set_cipher_list */
+	if (sk == NULL)
+		return 0;
+	else if (sk_SSL_CIPHER_num(sk) == 0)
+		{
+		SSLerr(SSL_F_SSL_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
+		return 0;
+		}
+	return 1;
 	}
 
 /* works well for SSLv2, not so good for SSLv3 */
@@ -1181,7 +1201,8 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	return(buf);
 	}
 
-int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
+int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
+                             int (*put_cb)(const SSL_CIPHER *, unsigned char *))
 	{
 	int i,j=0;
 	SSL_CIPHER *c;
@@ -1200,7 +1221,8 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
                 if ((c->algorithms & SSL_KRB5) && nokrb5)
                     continue;
 #endif /* OPENSSL_NO_KRB5 */                    
-		j=ssl_put_cipher_by_char(s,c,p);
+
+		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
 	return(p-q);
@@ -1694,7 +1716,7 @@ void ssl_update_cache(SSL *s,int mode)
 			?s->ctx->stats.sess_connect_good
 			:s->ctx->stats.sess_accept_good) & 0xff) == 0xff)
 			{
-			SSL_CTX_flush_sessions(s->ctx,time(NULL));
+			SSL_CTX_flush_sessions(s->ctx,(unsigned long)time(NULL));
 			}
 		}
 	}

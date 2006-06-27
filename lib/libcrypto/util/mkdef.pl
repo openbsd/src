@@ -83,7 +83,7 @@ my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
-			 "RIPEMD",
+			 "SHA256", "SHA512", "RIPEMD",
 			 "MDC2", "RSA", "DSA", "DH", "EC", "HMAC", "AES",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
@@ -267,7 +267,7 @@ $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
-$crypto.=" fips/fips.h fips/rand/fips_rand.h";
+$crypto.=" fips-1.0/fips.h fips-1.0/rand/fips_rand.h fips-1.0/sha/fips_sha.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -864,6 +864,9 @@ sub do_defs
 			$a .= ",RSA" if($s =~ /PEM_Seal(Final|Init|Update)/);
 			$a .= ",RSA" if($s =~ /RSAPrivateKey/);
 			$a .= ",RSA" if($s =~ /SSLv23?_((client|server)_)?method/);
+			# SHA2 algorithms only defined in FIPS mode for
+			# OpenSSL 0.9.7
+			$p .= "OPENSSL_FIPS" if($s =~ /SHA[235]/);
 
 			$platform{$s} =
 			    &reduce_platforms((defined($platform{$s})?$platform{$s}.',':"").$p);
@@ -1011,7 +1014,7 @@ sub is_valid
 {
 	my ($keywords_txt,$platforms) = @_;
 	my (@keywords) = split /,/,$keywords_txt;
-	my ($falsesum, $truesum) = (0, !grep(/^[^!]/,@keywords));
+	my ($falsesum, $truesum) = (0, 1);
 
 	# Param: one keyword
 	sub recognise
@@ -1079,7 +1082,7 @@ sub is_valid
 		if ($k =~ /^!(.*)$/) {
 			$falsesum += &recognise($1,$platforms);
 		} else {
-			$truesum += &recognise($k,$platforms);
+			$truesum *= &recognise($k,$platforms);
 		}
 	}
 	print STDERR "DEBUG: [",$#keywords,",",$#keywords < 0,"] is_valid($keywords_txt) => (\!$falsesum) && $truesum = ",(!$falsesum) && $truesum,"\n" if $debug;

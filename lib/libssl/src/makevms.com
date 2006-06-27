@@ -480,16 +480,18 @@ $!
 $ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
-$! Copy All The ".H" Files From The [.FIPS] Directories.
+$! Copy All The ".H" Files From The [.FIPS-1_0] Directories.
 $!
-$ FDIRS := ,SHA1,RAND,DES,AES,DSA,RSA
+$ FDIRS := ,SHA,RAND,DES,AES,DSA,RSA,DH,HMAC
 $ EXHEADER_ := fips.h
-$ EXHEADER_SHA1 :=
+$ EXHEADER_SHA := fips_sha.h
 $ EXHEADER_RAND := fips_rand.h
 $ EXHEADER_DES :=
 $ EXHEADER_AES :=
 $ EXHEADER_DSA :=
 $ EXHEADER_RSA :=
+$ EXHEADER_DH :=
+$ EXHEADER_HMAC :=
 $
 $ I = 0
 $ LOOP_FDIRS: 
@@ -500,9 +502,9 @@ $ tmp = EXHEADER_'D'
 $ IF tmp .EQS. "" THEN GOTO LOOP_FDIRS
 $ IF D .EQS. ""
 $ THEN
-$   COPY [.FIPS]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$   COPY [.FIPS-1_0]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ELSE
-$   COPY [.FIPS.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$   COPY [.FIPS-1_0.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ENDIF
 $ GOTO LOOP_FDIRS
 $ LOOP_FDIRS_END:
@@ -536,9 +538,9 @@ $! Go Back To The Main Directory.
 $!
 $ SET DEFAULT [-]
 $!
-$! Go To The [.FIPS] Directory.
+$! Go To The [.FIPS-1_0] Directory.
 $!
-$ SET DEFAULT SYS$DISK:[.FIPS]
+$ SET DEFAULT SYS$DISK:[.FIPS-1_0]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  

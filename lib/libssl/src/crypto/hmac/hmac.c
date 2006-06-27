@@ -61,6 +61,8 @@
 #include <openssl/hmac.h>
 #include "cryptlib.h"
 
+#ifndef OPENSSL_FIPS
+
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl)
 	{
@@ -77,15 +79,6 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 
 	if (key != NULL)
 		{
-#ifdef OPENSSL_FIPS
-		if (FIPS_mode() && !(md->flags & EVP_MD_FLAG_FIPS)
-		&& (!(ctx->md_ctx.flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
-		 || !(ctx->i_ctx.flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
-		 || !(ctx->o_ctx.flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)))
-		OpenSSLDie(__FILE__,__LINE__,
-			"HMAC: digest not allowed in FIPS mode");
-#endif
-		
 		reset=1;
 		j=EVP_MD_block_size(md);
 		OPENSSL_assert(j <= sizeof ctx->key);
@@ -187,3 +180,4 @@ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
 	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
 	}
 
+#endif

@@ -434,12 +434,9 @@ void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
 /* die if we have to */
 void OpenSSLDie(const char *file,int line,const char *assertion);
-#define OPENSSL_assert(e)	((e) ? (void)0 : OpenSSLDie(__FILE__, __LINE__, #e))
+#define OPENSSL_assert(e)	(void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
 
 #ifdef OPENSSL_FIPS
-int FIPS_mode(void);
-void *FIPS_rand_check(void);
-
 #define FIPS_ERROR_IGNORED(alg) OpenSSLDie(__FILE__, __LINE__, \
 		alg " previous FIPS forbidden algorithm error ignored");
 

@@ -158,7 +158,7 @@ SSL_METHOD *SSLv23_server_method(void)
 int ssl23_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long Time=time(NULL);
+	unsigned long Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state;
@@ -268,9 +268,6 @@ int ssl23_get_client_hello(SSL *s)
 	int n=0,j;
 	int type=0;
 	int v[2];
-#ifndef OPENSSL_NO_RSA
-	int use_sslv2_strong=0;
-#endif
 
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{

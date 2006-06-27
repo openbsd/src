@@ -68,9 +68,11 @@
 
 #include <openssl/opensslconf.h>
 
-#define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
+#define _XOPEN_SOURCE 500 /* glibc2 needs this to declare strptime() */
 #include <time.h>
+#if 0 /* Experimental */
 #undef _XOPEN_SOURCE /* To avoid clashes with anything else... */
+#endif
 #include <string.h>
 
 #define KRB5_PRIVATE	1
@@ -295,7 +297,7 @@ load_krb5_dll(void)
 	HANDLE hKRB5_32;
     
 	krb5_loaded++;
-	hKRB5_32 = LoadLibrary("KRB5_32");
+	hKRB5_32 = LoadLibrary(TEXT("KRB5_32"));
 	if (!hKRB5_32)
 		return;
 

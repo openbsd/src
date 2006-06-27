@@ -118,7 +118,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->verify_result = 1; /* avoid 0 (= X509_V_OK) just in case */
 	ss->references=1;
 	ss->timeout=60*5+4; /* 5 minute timeout by default */
-	ss->time=time(NULL);
+	ss->time=(unsigned long)time(NULL);
 	ss->prev=NULL;
 	ss->next=NULL;
 	ss->compress_meth=0;
@@ -377,7 +377,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
 #endif
 
-	if ((long)(ret->time+ret->timeout) < (long)time(NULL)) /* timeout */
+	if (ret->timeout < (long)(time(NULL) - ret->time)) /* timeout */
 		{
 		s->ctx->stats.sess_timeout++;
 		/* remove it from the cache */

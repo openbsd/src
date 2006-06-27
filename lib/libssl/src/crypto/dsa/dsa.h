@@ -80,6 +80,20 @@
 #endif
 
 #define DSA_FLAG_CACHE_MONT_P	0x01
+#define DSA_FLAG_NO_EXP_CONSTTIME       0x02 /* new with 0.9.7h; the built-in DSA
+                                              * implementation now uses constant time
+                                              * modular exponentiation for secret exponents
+                                              * by default. This flag causes the
+                                              * faster variable sliding window method to
+                                              * be used for all exponents.
+                                              */
+
+/* If this flag is set external DSA_METHOD callbacks are allowed in FIPS mode
+ * it is then the applications responsibility to ensure the external method
+ * is compliant.
+ */
+
+#define DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW	0x04
 
 #if defined(OPENSSL_FIPS)
 #define FIPS_DSA_SIZE_T	int

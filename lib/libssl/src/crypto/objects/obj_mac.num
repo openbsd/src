@@ -287,9 +287,9 @@ qcStatements		286
 ac_auditEntity		287
 ac_targeting		288
 aaControls		289
-sbqp_ipAddrBlock		290
-sbqp_autonomousSysNum		291
-sbqp_routerIdentifier		292
+sbgp_ipAddrBlock		290
+sbgp_autonomousSysNum		291
+sbgp_routerIdentifier		292
 textNotice		293
 ipsecEndSystem		294
 ipsecTunnel		295
@@ -663,5 +663,13 @@ id_ppl		662
 proxyCertInfo		663
 id_ppl_anyLanguage		664
 id_ppl_inheritAll		665
-id_ppl_independent		666
+name_constraints		666
 Independent		667
+sha256WithRSAEncryption		668
+sha384WithRSAEncryption		669
+sha512WithRSAEncryption		670
+sha224WithRSAEncryption		671
+sha256		672
+sha384		673
+sha512		674
+sha224		675

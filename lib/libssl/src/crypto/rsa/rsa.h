@@ -157,33 +157,41 @@ struct rsa_st
 #define RSA_3	0x3L
 #define RSA_F4	0x10001L
 
-#define RSA_METHOD_FLAG_NO_CHECK	0x01 /* don't check pub/private match */
+#define RSA_METHOD_FLAG_NO_CHECK	0x0001 /* don't check pub/private match */
 
-#define RSA_FLAG_CACHE_PUBLIC		0x02
-#define RSA_FLAG_CACHE_PRIVATE		0x04
-#define RSA_FLAG_BLINDING		0x08
-#define RSA_FLAG_THREAD_SAFE		0x10
+#define RSA_FLAG_CACHE_PUBLIC		0x0002
+#define RSA_FLAG_CACHE_PRIVATE		0x0004
+#define RSA_FLAG_BLINDING		0x0008
+#define RSA_FLAG_THREAD_SAFE		0x0010
 /* This flag means the private key operations will be handled by rsa_mod_exp
  * and that they do not depend on the private key components being present:
  * for example a key stored in external hardware. Without this flag bn_mod_exp
  * gets called when private key components are absent.
  */
-#define RSA_FLAG_EXT_PKEY		0x20
+#define RSA_FLAG_EXT_PKEY		0x0020
 
 /* This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify functions.
  */
-#define RSA_FLAG_SIGN_VER		0x40
+#define RSA_FLAG_SIGN_VER		0x0040
 
-#define RSA_FLAG_NO_BLINDING		0x80 /* new with 0.9.6j and 0.9.7b; the built-in
-                                              * RSA implementation now uses blinding by
-                                              * default (ignoring RSA_FLAG_BLINDING),
-                                              * but other engines might not need it
-                                              */
+#define RSA_FLAG_NO_BLINDING		0x0080 /* new with 0.9.6j and 0.9.7b; the built-in
+                                                * RSA implementation now uses blinding by
+                                                * default (ignoring RSA_FLAG_BLINDING),
+                                                * but other engines might not need it
+                                                */
+#define RSA_FLAG_NO_EXP_CONSTTIME	0x0100 /* new with 0.9.7h; the built-in RSA
+                                                * implementation now uses constant time
+                                                * modular exponentiation for secret exponents
+                                                * by default. This flag causes the
+                                                * faster variable sliding window method to
+                                                * be used for all exponents.
+                                                */
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
+#define RSA_X931_PADDING	5
 
 #define RSA_PKCS1_PADDING_SIZE	11
 
@@ -196,6 +204,15 @@ int	RSA_size(const RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
 int	RSA_check_key(const RSA *);
+#ifdef OPENSSL_FIPS
+int RSA_X931_derive(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
+			void (*cb)(int, int, void *), void *cb_arg,
+			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
+			const BIGNUM *Xq1, const BIGNUM *Xq2, const BIGNUM *Xq,
+			const BIGNUM *e);
+RSA *RSA_X931_generate_key(int bits, const BIGNUM *e,
+	     void (*cb)(int,int,void *), void *cb_arg);
+#endif
 	/* next 4 return -1 on error */
 int	RSA_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
@@ -268,6 +285,8 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to,int tlen,
 	const unsigned char *f,int fl);
 int RSA_padding_check_PKCS1_type_2(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,int rsa_len);
+int PKCS1_MGF1(unsigned char *mask, long len,
+	const unsigned char *seed, long seedlen, const EVP_MD *dgst);
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,
 	const unsigned char *p,int pl);
@@ -282,6 +301,17 @@ int RSA_padding_add_none(unsigned char *to,int tlen,
 	const unsigned char *f,int fl);
 int RSA_padding_check_none(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,int rsa_len);
+int RSA_padding_add_X931(unsigned char *to,int tlen,
+	const unsigned char *f,int fl);
+int RSA_padding_check_X931(unsigned char *to,int tlen,
+	const unsigned char *f,int fl,int rsa_len);
+int RSA_X931_hash_id(int nid);
+
+int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
+			const EVP_MD *Hash, const unsigned char *EM, int sLen);
+int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
+			const unsigned char *mHash,
+			const EVP_MD *Hash, int sLen);
 
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
@@ -311,20 +341,24 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_NULL					 124
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
 #define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
+#define RSA_F_RSA_PADDING_ADD_PKCS1_PSS			 125
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
 #define RSA_F_RSA_PADDING_ADD_SSLV23			 110
+#define RSA_F_RSA_PADDING_ADD_X931			 127
 #define RSA_F_RSA_PADDING_CHECK_NONE			 111
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP		 122
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 112
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 113
 #define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
+#define RSA_F_RSA_PADDING_CHECK_X931			 128
 #define RSA_F_RSA_PRINT					 115
 #define RSA_F_RSA_PRINT_FP				 116
 #define RSA_F_RSA_SIGN					 117
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
 #define RSA_F_RSA_VERIFY				 119
 #define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 120
+#define RSA_F_RSA_VERIFY_PKCS1_PSS			 126
 
 /* Reason codes. */
 #define RSA_R_ALGORITHM_MISMATCH			 100
@@ -344,9 +378,14 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
 #define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
+#define RSA_R_FIRST_OCTET_INVALID			 133
+#define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
+#define RSA_R_INVALID_PADDING				 138
+#define RSA_R_INVALID_TRAILER				 139
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
+#define RSA_R_LAST_OCTET_INVALID			 134
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
 #define RSA_R_N_DOES_NOT_EQUAL_P_Q			 127
 #define RSA_R_OAEP_DECODING_ERROR			 121
@@ -354,6 +393,8 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_P_NOT_PRIME				 128
 #define RSA_R_Q_NOT_PRIME				 129
 #define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED		 130
+#define RSA_R_SLEN_CHECK_FAILED				 136
+#define RSA_R_SLEN_RECOVERY_FAILED			 135
 #define RSA_R_SSLV3_ROLLBACK_ATTACK			 115
 #define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117

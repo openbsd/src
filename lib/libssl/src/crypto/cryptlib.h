@@ -93,6 +93,10 @@ extern "C" {
 #define DECIMAL_SIZE(type)	((sizeof(type)*8+2)/3+1)
 #define HEX_SIZE(type)		(sizeof(type)*2)
 
+void OPENSSL_showfatal(const char *,...);
+void *OPENSSL_stderr(void);
+extern int OPENSSL_NONPIC_relocated;
+
 #ifdef  __cplusplus
 }
 #endif

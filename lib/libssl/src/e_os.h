@@ -214,6 +214,8 @@ extern "C" {
 #    define _setmode setmode
 #    define _O_TEXT O_TEXT
 #    define _O_BINARY O_BINARY
+#    undef DEVRANDOM
+#    define DEVRANDOM "/dev/urandom\x24"
 #  endif /* __DJGPP__ */
 
 #  ifndef S_IFDIR

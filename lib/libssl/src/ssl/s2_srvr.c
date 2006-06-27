@@ -162,7 +162,7 @@ SSL_METHOD *SSLv2_server_method(void)
 
 int ssl2_accept(SSL *s)
 	{
-	unsigned long l=time(NULL);
+	unsigned long l=(unsigned long)time(NULL);
 	BUF_MEM *buf=NULL;
 	int ret= -1;
 	long num1;
@@ -797,7 +797,7 @@ static int server_hello(SSL *s)
 			/* lets send out the ciphers we like in the
 			 * prefered order */
 			sk= s->session->ciphers;
-			n=ssl_cipher_list_to_bytes(s,s->session->ciphers,d);
+			n=ssl_cipher_list_to_bytes(s,s->session->ciphers,d,0);
 			d+=n;
 			s2n(n,p);		/* add cipher length */
 			}
