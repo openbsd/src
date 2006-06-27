@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.21 2005/09/17 00:45:44 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.22 2006/06/27 05:53:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -527,6 +527,8 @@ struct rl_desc {
 #define RL_RDESC_STAT_TCPSUMBAD	0x00002000	/* TCP checksum bad */
 #define RL_RDESC_STAT_FRAGLEN	0x00001FFF	/* RX'ed frame/frag len */
 #define RL_RDESC_STAT_GFRAGLEN	0x00003FFF	/* RX'ed frame/frag len */
+#define RL_RDESC_STAT_ERRS	(RL_RDESC_STAT_GIANT|RL_RDESC_STAT_RUNT| \
+				 RL_RDESC_STAT_CRCERR)
 
 #define RL_RDESC_VLANCTL_TAG	0x00010000	/* VLAN tag available
 						   (rl_vlandata valid)*/
@@ -573,6 +575,13 @@ struct rl_stats {
 #define RL_OWN(x)		(letoh32((x)->rl_cmdstat) & RL_RDESC_STAT_OWN)
 #define RL_RXBYTES(x)		(letoh32((x)->rl_cmdstat) & sc->rl_rxlenmask)
 #define RL_PKTSZ(x)		((x)/* >> 3*/)
+#ifdef __STRICT_ALIGNMENT
+#define RE_ETHER_ALIGN	sizeof(uint64_t)
+#define RE_RX_DESC_BUFLEN	(MCLBYTES - RE_ETHER_ALIGN)
+#else
+#define RE_ETHER_ALIGN	0
+#define RE_RX_DESC_BUFLEN	MCLBYTES
+#endif
 
 #define RL_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
 #define RL_ADDR_HI(y)	((u_int64_t) (y) >> 32)

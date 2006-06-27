@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.28 2006/06/24 02:36:15 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.29 2006/06/27 05:53:37 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -161,6 +161,9 @@ int	re_allocmem(struct rl_softc *);
 int	re_newbuf(struct rl_softc *, int, struct mbuf *);
 int	re_rx_list_init(struct rl_softc *);
 int	re_tx_list_init(struct rl_softc *);
+#ifdef __STRICT_ALIGNMENT
+void	re_fixup_rx(struct mbuf *);
+#endif
 void	re_rxeof(struct rl_softc *);
 void	re_txeof(struct rl_softc *);
 int	re_intr(void *);
@@ -946,13 +949,21 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	} else
 		m->m_data = m->m_ext.ext_buf;
 
-	/*
-	 * Initialize mbuf length fields and fixup
-	 * alignment so that the frame payload is
-	 * longword aligned.
-	 */
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
-	m_adj(m, ETHER_ALIGN);
+#ifdef __STRICT_ALIGNMENT
+	/*
+	 * This is part of an evil trick to deal with strict alignment
+	 * architectures. The RealTek chip requires RX buffers to be
+	 * aligned on 64-bit boundaries, but that will hose strict
+	 * alignment architectures. To get around this, we leave some
+	 * empty space at the start of each buffer and for strict
+	 * alignment architectures, we copy the buffer back six
+	 * bytes to achieve word alignment. This is slightly more
+	 * efficient than allocating a new buffer, copying the
+	 * contents, and discarding the old buffer.
+	 */
+	m_adj(m, RE_ETHER_ALIGN);
+#endif
 
 	map = sc->rl_ldata.rl_rx_dmamap[idx];
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
@@ -989,6 +1000,23 @@ out:
 		m_freem(n);
 	return (ENOMEM);
 }
+
+#ifdef __STRICT_ALIGNMENT
+void
+re_fixup_rx(struct mbuf *m)
+{
+	int		i;
+	uint16_t	*src, *dst;
+
+	src = mtod(m, uint16_t *);
+	dst = src - (RE_ETHER_ALIGN - ETHER_ALIGN) / sizeof *src;
+
+	for (i = 0; i < (m->m_len / sizeof(uint16_t) + 1); i++)
+		*dst++ = *src++;
+
+	m->m_data -= RE_ETHER_ALIGN - ETHER_ALIGN;
+}
+#endif
 
 int
 re_tx_list_init(struct rl_softc *sc)
@@ -1074,7 +1102,7 @@ re_rxeof(struct rl_softc *sc)
 		    sc->rl_ldata.rl_rx_dmamap[i]);
 
 		if (!(rxstat & RL_RDESC_STAT_EOF)) {
-			m->m_len = MCLBYTES - ETHER_ALIGN;
+			m->m_len = RE_RX_DESC_BUFLEN;
 			if (sc->rl_head == NULL)
 				sc->rl_head = sc->rl_tail = m;
 			else {
@@ -1106,7 +1134,12 @@ re_rxeof(struct rl_softc *sc)
 		if (sc->rl_type == RL_8169)
 			rxstat >>= 1;
 
-		if (rxstat & RL_RDESC_STAT_RXERRSUM) {
+		/*
+		 * if total_len > 2^13-1, both _RXERRSUM and _GIANT will be
+		 * set, but if CRC is clear, it will still be a valid frame.
+		 */
+		if (rxstat & RL_RDESC_STAT_RXERRSUM && !(total_len > 8191 &&
+		    (rxstat & RL_RDESC_STAT_ERRS) == RL_RDESC_STAT_GIANT)) {
 			ifp->if_ierrors++;
 			/*
 			 * If this is part of a multi-fragment packet,
@@ -1140,7 +1173,9 @@ re_rxeof(struct rl_softc *sc)
 		RL_DESC_INC(i);
 
 		if (sc->rl_head != NULL) {
-			m->m_len = total_len % (MCLBYTES - ETHER_ALIGN);
+			m->m_len = total_len % RE_RX_DESC_BUFLEN;
+			if (m->m_len == 0)
+				m->m_len = RE_RX_DESC_BUFLEN;
 			/* 
 			 * Special case: if there's 4 bytes or less
 			 * in this buffer, the mbuf can be discarded:
@@ -1163,6 +1198,9 @@ re_rxeof(struct rl_softc *sc)
 			m->m_pkthdr.len = m->m_len =
 			    (total_len - ETHER_CRC_LEN);
 
+#ifdef __STRICT_ALIGNMENT
+		re_fixup_rx(m);
+#endif
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
@@ -1326,8 +1364,8 @@ re_intr(void *arg)
 		}
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		(*ifp->if_start)(ifp);
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+		re_start(ifp);
 
 	return (claimed);
 }
