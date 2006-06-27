@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.24 2006/03/31 04:10:59 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.25 2006/06/27 10:28:25 dlg Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.24 2006/03/31 04:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.25 2006/06/27 10:28:25 dlg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,18 +51,16 @@ static char rcsid[] = "$OpenBSD: iostat.c,v 1.24 2006/03/31 04:10:59 deraadt Exp
 #include "dkstats.h"
 extern struct _disk	cur, last;
 
-static  int linesperregion;
-static  double etime;
-static  int numbers = 0;		/* default display bar graphs */
-static  int secs = 0;			/* default seconds shown */
-static	int split = 0;			/* whether to split r/w stats */
+static double etime;
 
-static int barlabels(int);
-static void histogram(double, int, double);
-static int numlabels(int);
-static int stats(int, int, int);
-static void stat1(int, int);
+static void numlabels(void);
 
+#define ATIME(x,y) (					\
+        (double)x[y].tv_sec +				\
+        ((double)x[y].tv_usec / (double)1000000)	\
+             )
+#define NFMT "%-8.8s %12.0f %14.0f %10.0f %10.0f %10.1f"
+#define SFMT "%6s %14s %14s %10s %10s %10s"
 
 WINDOW *
 openiostat(void)
@@ -96,129 +94,29 @@ fetchiostat(void)
 	dkreadstats();
 }
 
-#define	INSET	10
-
 void
 labeliostat(void)
 {
-	int row;
-
-	row = 0;
-	wmove(wnd, row, 0); wclrtobot(wnd);
-	mvwaddstr(wnd, row++, INSET,
-	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
-	mvwaddstr(wnd, row++, 0, "cpu  user|");
-	mvwaddstr(wnd, row++, 0, "     nice|");
-	mvwaddstr(wnd, row++, 0, "   system|");
-	mvwaddstr(wnd, row++, 0, "interrupt|");
-	mvwaddstr(wnd, row++, 0, "     idle|");
-	if (numbers)
-		row = numlabels(row + 1);
-	else
-		row = barlabels(row + 1);
+	mvwprintw(wnd, 1, 0, SFMT, "Device", "rbytes", "wbytes", "rtps",
+	    "wtps", "msec");
 }
-
-static int
-numlabels(int row)
-{
-	int i, col, regions, ndrives;
-
-	if (cur.dk_ndrive == 0) {
-		mvwaddstr(wnd, row++, INSET, "No drives attached.");
-		return (row);
-	}
-#define COLWIDTH	(split ? 30 : 17)
-#define DRIVESPERLINE	((wnd->_maxx - INSET) / COLWIDTH)
-	for (ndrives = 0, i = 0; i < cur.dk_ndrive; i++)
-		if (cur.dk_select[i])
-			ndrives++;
-	regions = howmany(ndrives, DRIVESPERLINE);
-	/*
-	 * Deduct -regions for blank line after each scrolling region.
-	 */
-	linesperregion = (wnd->_maxy - row - regions) / regions;
-	/*
-	 * Minimum region contains space for two
-	 * label lines and one line of statistics.
-	 */
-	if (linesperregion < 3)
-		linesperregion = 3;
-	col = INSET;
-	for (i = 0; i < cur.dk_ndrive; i++)
-		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->_maxx) {
-				col = INSET, row += linesperregion + 1;
-				if (row > wnd->_maxy - (linesperregion + 1))
-					break;
-			}
-			mvwaddstr(wnd, row, col + 4, cur.dk_name[i]);
-			if (split)
-				mvwaddstr(wnd, row + 1, col, " rKBps wKBps "
-				    "rtps wtps  sec");
-			else
-				mvwaddstr(wnd, row + 1, col, " KBps tps  sec");
-			col += COLWIDTH;
-		}
-	if (col)
-		row += linesperregion + 1;
-	return (row);
-}
-
-static int
-barlabels(int row)
-{
-	int i;
-
-	if (cur.dk_ndrive == 0) {
-		mvwaddstr(wnd, row++, INSET, "No drives attached.");
-		return (row);
-	}
-	mvwaddstr(wnd, row++, INSET,
-	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
-	linesperregion = 2 + secs;
-	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (row > wnd->_maxy - linesperregion)
-				break;
-			if (split) {
-				mvwprintw(wnd, row++, 0, "%4.4s rKps|",
-				    cur.dk_name[i]);
-				mvwaddstr(wnd, row++, 0, "     wKps|");
-				mvwaddstr(wnd, row++, 0, "     rtps|");
-				mvwaddstr(wnd, row++, 0, "     wtps|");
-			} else {
-				mvwprintw(wnd, row++, 0, "%4.4s  Kps|",
-				    cur.dk_name[i]);
-				mvwaddstr(wnd, row++, 0, "      tps|");
-			}
-			if (secs)
-				mvwaddstr(wnd, row++, 0, "     msec|");
-		}
-	return (row);
-}
-
 
 void
 showiostat(void)
 {
-	int i, row, col;
+	int i;
 
 	dkswap();
 
-	etime = 0;
+	etime = 0.0;
 	for (i = 0; i < CPUSTATES; i++) {
 		etime += cur.cp_time[i];
 	}
+
 	if (etime == 0.0)
 		etime = 1.0;
-	etime /= (float) hz;
-	row = 1;
 
-	/*
-	 * Interrupt CPU state not calculated yet.
-	 */
-	for (i = 0; i < CPUSTATES; i++)
-		stat1(row++, i);
+	etime /= (float) hz;
 
 	if (last.dk_ndrive != cur.dk_ndrive)
 		labeliostat();
@@ -226,132 +124,47 @@ showiostat(void)
 	if (cur.dk_ndrive == 0)
 		return;
 
-	if (!numbers) {
-		row += 2;
-		for (i = 0; i < cur.dk_ndrive; i++)
-			if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-				if (row > wnd->_maxy - linesperregion)
-					break;
-				row = stats(row, INSET, i);
-			}
+	numlabels();
+}
+
+void
+numlabels(void)
+{
+	double rsum, wsum, rtsum, wtsum, mssum;
+	int row, dn;
+
+	row = 2;
+	wmove(wnd, 0, 0);
+	wclrtoeol(wnd);
+
+	if (cur.dk_ndrive == 0) {
+		mvwaddstr(wnd, row, 0, "No drives attached.");
 		return;
 	}
-	col = INSET;
-	wmove(wnd, row + linesperregion, 0);
-	wdeleteln(wnd);
-	wmove(wnd, row + 3, 0);
-	winsertln(wnd);
-	for (i = 0; i < cur.dk_ndrive; i++)
-		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->_maxx) {
-				col = INSET, row += linesperregion + 1;
-				if (row > wnd->_maxy - (linesperregion + 1))
-					break;
-				wmove(wnd, row + linesperregion, 0);
-				wdeleteln(wnd);
-				wmove(wnd, row + 3, 0);
-				winsertln(wnd);
-			}
-			(void) stats(row + 3, col, i);
-			col += COLWIDTH;
-		}
-}
 
-static int
-stats(int row, int col, int dn)
-{
-	double atime, rwords, wwords;
+	rsum = wsum = rtsum = wtsum = mssum = 0.0;
 
-	/* time busy in disk activity */
-	atime = (double)cur.dk_time[dn].tv_sec +
-		((double)cur.dk_time[dn].tv_usec / (double)1000000);
-
-	rwords = cur.dk_rbytes[dn] / 1024.0;	/* # of K read */
-	wwords = cur.dk_wbytes[dn] / 1024.0;	/* # of K written */
-	if (numbers) {
-		if (split)
-			mvwprintw(wnd, row, col, "%6.0f%6.0f%5.0f%5.0f%5.1f",
-			    rwords / etime, wwords / etime, cur.dk_rxfer[dn] /
-			    etime, cur.dk_wxfer[dn] / etime, atime / etime);
-		else
-			mvwprintw(wnd, row, col, "%5.0f%4.0f%5.1f",
-			    (rwords + wwords) / etime,
-			    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime,
-			    atime / etime);
-		return (row);
+	for (dn = 0; dn < cur.dk_ndrive; dn++) {
+		rsum += cur.dk_rbytes[dn] / etime;
+		wsum += cur.dk_wbytes[dn] /etime;
+		rtsum += cur.dk_rxfer[dn] / etime;
+		wtsum += cur.dk_wxfer[dn] / etime;
+		mssum += ATIME(cur.dk_time, dn) / etime;
+		mvwprintw(wnd, row++, 0, NFMT,
+		    cur.dk_name[dn],
+		    cur.dk_rbytes[dn] / etime,
+		    cur.dk_wbytes[dn] / etime,
+		    cur.dk_rxfer[dn] / etime,
+		    cur.dk_wxfer[dn] / etime,
+		    ATIME(cur.dk_time, dn) / etime);
 	}
-	if (split) {
-		wmove(wnd, row++, col);
-		histogram(rwords / etime, 50, 0.5);
-		wmove(wnd, row++, col);
-		histogram(wwords / etime, 50, 0.5);
-		wmove(wnd, row++, col);
-		histogram(cur.dk_rxfer[dn] / etime, 50, 0.5);
-		wmove(wnd, row++, col);
-		histogram(cur.dk_wxfer[dn] / etime, 50, 0.5);
-	} else {
-		wmove(wnd, row++, col);
-		histogram((rwords + wwords) / etime, 50, 0.5);
-		wmove(wnd, row++, col);
-		histogram((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime, 50,
-		    0.5);
-	}
-	if (secs) {
-		wmove(wnd, row++, col);
-		atime *= 1000;	/* In milliseconds */
-		histogram(atime / etime, 50, 0.5);
-	}
-	return (row);
-}
-
-static void
-stat1(int row, int o)
-{
-	int i;
-	double tim;
-
-	tim = 0;
-	for (i = 0; i < CPUSTATES; i++)
-		tim += cur.cp_time[i];
-	if (tim == 0.0)
-		tim = 1.0;
-	wmove(wnd, row, INSET);
-#define CPUSCALE	0.5
-	histogram(100.0 * cur.cp_time[o] / tim, 50, CPUSCALE);
-}
-
-static void
-histogram(double val, int colwidth, double scale)
-{
-	int v = (int)(val * scale + 0.5);
-	int factor = 1;
-	int y, x;
-
-	while (v > colwidth) {
-		v = (v + 5) / 10;
-		factor *= 10;
-	}
-	getyx(wnd, y, x);
-	wclrtoeol(wnd);
-	whline(wnd, 'X', v);
-	if (factor != 1)
-		mvwprintw(wnd, y, x + colwidth + 1, "* %d ", factor);
+	mvwprintw(wnd, row++, 0, NFMT,
+	    "Totals", rsum, wsum, rtsum, wtsum, mssum);
 }
 
 int
 cmdiostat(char *cmd, char *args)
 {
-
-	if (prefix(cmd, "secs"))
-		secs = !secs;
-	else if (prefix(cmd, "numbers"))
-		numbers = 1;
-	else if (prefix(cmd, "bars"))
-		numbers = 0;
-	else if (prefix(cmd, "split"))
-		split = ~split;
-	else if (!dkcmd(cmd, args))
-		return (0);
 	wclear(wnd);
 	labeliostat();
 	refresh();
