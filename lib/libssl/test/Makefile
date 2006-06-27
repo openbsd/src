@@ -39,7 +39,7 @@ EXPTEST=	exptest
 IDEATEST=	ideatest
 SHATEST=	shatest
 SHA1TEST=	sha1test
-FIPS_SHA1TEST=	fips_sha1test
+FIPS_SHATEST=	fips_shatest
 MDC2TEST=	mdc2test
 RMDTEST=	rmdtest
 MD2TEST=	md2test
@@ -64,32 +64,47 @@ RSATEST=	rsa_test
 ENGINETEST=	enginetest
 EVPTEST=	evp_test
 FIPS_AESTEST=	fips_aesavs
+FIPS_HMACTEST=	fips_hmactest
+FIPS_RSAVTEST=	fips_rsavtest
+FIPS_RSASTEST=	fips_rsastest
+FIPS_RSAGTEST=	fips_rsagtest
+FIPS_DSSVS=	fips_dssvs
+FIPS_RNGVS=	fips_rngvs
+FIPS_TEST_SUITE=fips_test_suite
 
 TESTS=		alltests
 
 EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) $(MD2TEST)$(EXE_EXT)  $(MD4TEST)$(EXE_EXT) $(MD5TEST)$(EXE_EXT) $(HMACTEST)$(EXE_EXT) \
 	$(RC2TEST)$(EXE_EXT) $(RC4TEST)$(EXE_EXT) $(RC5TEST)$(EXE_EXT) \
-	$(DESTEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(FIPS_SHA1TEST)$(EXE_EXT) $(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
+	$(DESTEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(FIPS_SHATEST)$(EXE_EXT) $(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(FIPS_RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(FIPS_DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
-	$(EVPTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT)
+	$(EVPTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
+	$(FIPS_HMACTEST)$(EXE_EXT) $(FIPS_RSAVTEST)$(EXE_EXT) \
+	$(FIPS_RSASTEST)$(EXE_EXT) $(FIPS_RSAGTEST)$(EXE_EXT) \
+	$(FIPS_DSSVS)$(EXE_EXT) $(FIPS_RNGVS)$(EXE_EXT) \
+	$(FIPS_TEST_SUITE)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
 OBJ=	$(BNTEST).o $(ECTEST).o $(IDEATEST).o $(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
-	$(DESTEST).o $(FIPS_DESTEST).o $(SHATEST).o $(SHA1TEST).o $(FIPS_SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
+	$(DESTEST).o $(FIPS_DESTEST).o $(SHATEST).o $(SHA1TEST).o $(FIPS_SHATEST).o $(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(FIPS_RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o $(FIPS_DSATEST).o $(EXPTEST).o $(RSATEST).o \
-	$(EVPTEST).o $(FIPS_AESTEST).o
+	$(EVPTEST).o $(FIPS_AESTEST).o $(FIPS_HMACTEST).o $(FIPS_RSAVTEST).o \
+	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o $(FIPS_DSSVS).o $(FIPS_RNGVS).o \
+	$(FIPS_TEST_SUITE).o
 SRC=	$(BNTEST).c $(ECTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
-	$(DESTEST).c $(FIPS_DESTEST).c $(SHATEST).c $(SHA1TEST).c $(FIPS_SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
+	$(DESTEST).c $(FIPS_DESTEST).c $(SHATEST).c $(SHA1TEST).c $(FIPS_SHATEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(FIPS_RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c $(FIPS_DSATEST).c $(EXPTEST).c $(RSATEST).c \
-	$(EVPTEST).c $(FIPS_AESTEST).c
+	$(EVPTEST).c $(FIPS_AESTEST).c $(FIPS_HMACTEST).c $(FIPS_RSAVTEST).c \
+	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c $(FIPS_DSSVS).c $(FIPS_RNGVS).c \
+	$(FIPS_TEST_SUITE).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -153,7 +168,7 @@ test_sha:
 	../util/shlib_wrap.sh ./$(SHATEST)
 	../util/shlib_wrap.sh ./$(SHA1TEST)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  ../util/shlib_wrap.sh ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt - ; \
+	  ../util/shlib_wrap.sh ./$(FIPS_SHATEST) < SHAmix.req | diff -w SHAmix.fax - ; \
 	fi
 
 test_mdc2:
@@ -311,20 +326,43 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-BUILD_CMD=if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
+	if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+		SHARED_LIBS=""; \
+	fi; \
+	if [ -z "$$SHARED_LIBS" ]; then \
 		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
-	elif [ -z "$(SHARED_LIBS)" ]; then \
-		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	else \
-		set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
+	else	set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi;
+	fi
+
+FIPS_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+	  FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
+	fi; $(BUILD_CMD)
 
 $(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_AESTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST); \
-	fi
+	@target=$(FIPS_AESTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_HMACTEST)$(EXE_EXT): $(FIPS_HMACTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_HMACTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RSAVTEST)$(EXE_EXT): $(FIPS_RSAVTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RSAVTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RSASTEST)$(EXE_EXT): $(FIPS_RSASTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RSASTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RSAGTEST)$(EXE_EXT): $(FIPS_RSAGTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RSAGTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_DSSVS)$(EXE_EXT): $(FIPS_DSSVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_DSSVS); $(FIPS_BUILD_CMD)
+
+$(FIPS_RNGVS)$(EXE_EXT): $(FIPS_RNGVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_RNGVS); $(FIPS_BUILD_CMD)
+
+$(FIPS_TEST_SUITE)$(EXE_EXT): $(FIPS_TEST_SUITE).o $(DLIBCRYPTO)
+	@target=$(FIPS_TEST_SUITE); $(FIPS_BUILD_CMD)
 
 $(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
 	@target=$(RSATEST); $(BUILD_CMD)
@@ -350,11 +388,8 @@ $(SHATEST)$(EXE_EXT): $(SHATEST).o $(DLIBCRYPTO)
 $(SHA1TEST)$(EXE_EXT): $(SHA1TEST).o $(DLIBCRYPTO)
 	@target=$(SHA1TEST); $(BUILD_CMD)
 
-$(FIPS_SHA1TEST)$(EXE_EXT): $(FIPS_SHA1TEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_SHA1TEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHA1TEST); \
-	fi
+$(FIPS_SHATEST)$(EXE_EXT): $(FIPS_SHATEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_SHATEST); $(FIPS_BUILD_CMD)
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	@target=$(RMDTEST); $(BUILD_CMD)
@@ -390,19 +425,13 @@ $(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO)
 	@target=$(DESTEST); $(BUILD_CMD)
 
 $(FIPS_DESTEST)$(EXE_EXT): $(FIPS_DESTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_DESTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST); \
-	fi
+	@target=$(FIPS_DESTEST); $(FIPS_BUILD_CMD)
 
 $(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO)
 	@target=$(RANDTEST); $(BUILD_CMD)
 
 $(FIPS_RANDTEST)$(EXE_EXT): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RANDTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST); \
-	fi
+	@target=$(FIPS_RANDTEST); $(FIPS_BUILD_CMD)
 
 $(DHTEST)$(EXE_EXT): $(DHTEST).o $(DLIBCRYPTO)
 	@target=$(DHTEST); $(BUILD_CMD)
@@ -411,19 +440,13 @@ $(DSATEST)$(EXE_EXT): $(DSATEST).o $(DLIBCRYPTO)
 	@target=$(DSATEST); $(BUILD_CMD)
 
 $(FIPS_DSATEST)$(EXE_EXT): $(FIPS_DSATEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_DSATEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST); \
-	fi
+	@target=$(FIPS_DSATEST); $(FIPS_BUILD_CMD)
 
 $(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO)
 	@target=$(METHTEST); $(BUILD_CMD)
 
 $(SSLTEST)$(EXE_EXT): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
-	@target=$(SSLTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(SSLTEST); \
-	fi
+	@target=$(SSLTEST); $(FIPS_BUILD_CMD)
 
 $(ENGINETEST)$(EXE_EXT): $(ENGINETEST).o $(DLIBCRYPTO)
 	@target=$(ENGINETEST); $(BUILD_CMD)
@@ -587,6 +610,29 @@ fips_dsatest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips_dsatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips_dsatest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 fips_dsatest.o: fips_dsatest.c
+fips_dssvs.o: ../include/openssl/opensslconf.h fips_dssvs.c
+fips_hmactest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_hmactest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_hmactest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+fips_hmactest.o: ../include/openssl/cast.h ../include/openssl/conf.h
+fips_hmactest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_hmactest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_hmactest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_hmactest.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_hmactest.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_hmactest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_hmactest.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_hmactest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_hmactest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_hmactest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_hmactest.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+fips_hmactest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_hmactest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips_hmactest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_hmactest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_hmactest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_hmactest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+fips_hmactest.o: ../include/openssl/x509v3.h fips_hmactest.c
 fips_randtest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
 fips_randtest.o: ../include/openssl/des.h ../include/openssl/des_old.h
 fips_randtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
@@ -596,13 +642,117 @@ fips_randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 fips_randtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 fips_randtest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips_randtest.o: ../include/openssl/ui_compat.h fips_randtest.c
-fips_sha1test.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
-fips_sha1test.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_sha1test.o: ../include/openssl/fips.h ../include/openssl/lhash.h
-fips_sha1test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips_sha1test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-fips_sha1test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_sha1test.o: fips_sha1test.c
+fips_rngvs.o: ../include/openssl/opensslconf.h fips_rngvs.c
+fips_rsagtest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_rsagtest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_rsagtest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+fips_rsagtest.o: ../include/openssl/cast.h ../include/openssl/conf.h
+fips_rsagtest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_rsagtest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_rsagtest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_rsagtest.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_rsagtest.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_rsagtest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_rsagtest.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_rsagtest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_rsagtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_rsagtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_rsagtest.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+fips_rsagtest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_rsagtest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips_rsagtest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_rsagtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_rsagtest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_rsagtest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+fips_rsagtest.o: ../include/openssl/x509v3.h fips_rsagtest.c
+fips_rsastest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_rsastest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_rsastest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+fips_rsastest.o: ../include/openssl/cast.h ../include/openssl/conf.h
+fips_rsastest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_rsastest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_rsastest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_rsastest.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_rsastest.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_rsastest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_rsastest.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_rsastest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_rsastest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_rsastest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_rsastest.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+fips_rsastest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_rsastest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips_rsastest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_rsastest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_rsastest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_rsastest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+fips_rsastest.o: ../include/openssl/x509v3.h fips_rsastest.c
+fips_rsavtest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_rsavtest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_rsavtest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+fips_rsavtest.o: ../include/openssl/cast.h ../include/openssl/conf.h
+fips_rsavtest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_rsavtest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_rsavtest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_rsavtest.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_rsavtest.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_rsavtest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_rsavtest.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_rsavtest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_rsavtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_rsavtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_rsavtest.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+fips_rsavtest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_rsavtest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips_rsavtest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_rsavtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_rsavtest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_rsavtest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+fips_rsavtest.o: ../include/openssl/x509v3.h fips_rsavtest.c
+fips_shatest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_shatest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_shatest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+fips_shatest.o: ../include/openssl/cast.h ../include/openssl/conf.h
+fips_shatest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_shatest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_shatest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_shatest.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_shatest.o: ../include/openssl/idea.h ../include/openssl/lhash.h
+fips_shatest.o: ../include/openssl/md2.h ../include/openssl/md4.h
+fips_shatest.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+fips_shatest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+fips_shatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_shatest.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+fips_shatest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+fips_shatest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+fips_shatest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+fips_shatest.o: ../include/openssl/sha.h ../include/openssl/stack.h
+fips_shatest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+fips_shatest.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
+fips_shatest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
+fips_shatest.o: fips_shatest.c
+fips_test_suite.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_test_suite.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_test_suite.o: ../include/openssl/bn.h ../include/openssl/cast.h
+fips_test_suite.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_test_suite.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_test_suite.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_test_suite.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_test_suite.o: ../include/openssl/fips.h ../include/openssl/fips_sha.h
+fips_test_suite.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_test_suite.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_test_suite.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_test_suite.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_test_suite.o: ../include/openssl/objects.h
+fips_test_suite.o: ../include/openssl/opensslconf.h
+fips_test_suite.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+fips_test_suite.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_test_suite.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips_test_suite.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_test_suite.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_test_suite.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_test_suite.o: fips_test_suite.c
 hmactest.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 hmactest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 hmactest.o: ../include/openssl/bn.h ../include/openssl/cast.h
