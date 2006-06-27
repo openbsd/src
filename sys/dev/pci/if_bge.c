@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.162 2006/06/22 04:15:47 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.163 2006/06/27 16:40:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -289,9 +289,6 @@ const struct pci_matchid bge_devices[] = {
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 
 
