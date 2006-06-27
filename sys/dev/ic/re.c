@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.29 2006/06/27 05:53:37 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.30 2006/06/27 07:41:05 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -43,8 +43,8 @@
 /*
  * This driver is designed to support RealTek's next generation of
  * 10/100 and 10/100/1000 PCI ethernet controllers. There are currently
- * four devices in this family: the RTL8139C+, the RTL8169, the RTL8169S
- * and the RTL8110S.
+ * seven devices in this family: the RTL8139C+, the RTL8169, the RTL8169S,
+ * RTL8110S, the RTL8168, the RTL8111 and the RTL8101E.
  *
  * The 8139C+ is a 10/100 ethernet chip. It is backwards compatible
  * with the older 8139 family, however it also supports a special
@@ -190,7 +190,9 @@ void	re_miibus_statchg(struct device *);
 void	re_setmulti(struct rl_softc *);
 void	re_reset(struct rl_softc *);
 
+#ifdef RE_DIAG
 int	re_diag(struct rl_softc *);
+#endif
 
 struct cfdriver re_cd = {
 	0, "re", DV_IFNET
@@ -539,6 +541,8 @@ re_reset(struct rl_softc *sc)
 	CSR_WRITE_1(sc, 0x82, 1);
 }
 
+#ifdef RE_DIAG
+
 /*
  * The following routine is designed to test for a defect on some
  * 32-bit 8169 cards. Some of these NICs have the REQ64# and ACK64#
@@ -569,7 +573,7 @@ re_diag(struct rl_softc *sc)
 	bus_dmamap_t		dmamap;
 	u_int16_t		status;
 	u_int32_t		rxstat;
-	int			total_len, i, s, error = 0;
+	int			total_len, i, s, error = 0, phyaddr;
 	u_int8_t		dst[] = { 0x00, 'h', 'e', 'l', 'l', 'o' };
 	u_int8_t		src[] = { 0x00, 'w', 'o', 'r', 'l', 'd' };
 
@@ -591,10 +595,28 @@ re_diag(struct rl_softc *sc)
 
 	ifp->if_flags |= IFF_PROMISC;
 	sc->rl_testmode = 1;
+	re_reset(sc);
 	re_init(ifp);
-	re_stop(sc);
+	sc->rl_link = 1;
+	if (sc->rl_type == RL_8169)
+		phyaddr = 1;
+	else
+		phyaddr = 0;
+
+	re_miibus_writereg((struct device *)sc, phyaddr, MII_BMCR,
+	    BMCR_RESET);
+	for (i = 0; i < RL_TIMEOUT; i++) {
+		status = re_miibus_readreg((struct device *)sc,
+		    phyaddr, MII_BMCR);
+		if (!(status & BMCR_RESET))
+			break;
+	}
+
+	re_miibus_writereg((struct device *)sc, phyaddr, MII_BMCR,
+	    BMCR_LOOP);
+	CSR_WRITE_2(sc, RL_ISR, RL_INTRS);
+
 	DELAY(100000);
-	re_init(ifp);
 
 	/* Put some data in the mbuf */
 
@@ -622,6 +644,7 @@ re_diag(struct rl_softc *sc)
 	DELAY(100000);
 	for (i = 0; i < RL_TIMEOUT; i++) {
 		status = CSR_READ_2(sc, RL_ISR);
+		CSR_WRITE_2(sc, RL_ISR, status);
 		if ((status & (RL_ISR_TIMEOUT_EXPIRED|RL_ISR_RX_OK)) ==
 		    (RL_ISR_TIMEOUT_EXPIRED|RL_ISR_RX_OK))
 			break;
@@ -692,6 +715,7 @@ done:
 	/* Turn interface off, release resources */
 
 	sc->rl_testmode = 0;
+	sc->rl_link = 0;
 	ifp->if_flags &= ~IFF_PROMISC;
 	re_stop(sc);
 	if (m0 != NULL)
@@ -700,6 +724,8 @@ done:
 
 	return (error);
 }
+
+#endif
 
 int
 re_allocmem(struct rl_softc *sc)
@@ -808,13 +834,12 @@ re_attach_common(struct rl_softc *sc)
 	re_reset(sc);
 
 	if (sc->rl_type == RL_8169) {
-
 		/* Set RX length mask */
-
 		sc->rl_rxlenmask = RL_RDESC_STAT_GFRAGLEN;
 
-		/* Force station address autoload from the EEPROM */
+		sc->rl_txstart = RL_GTXSTART;
 
+		/* Force station address autoload from the EEPROM */
 		CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_AUTOLOAD);
 		for (i = 0; i < RL_TIMEOUT; i++) {
 			if (!(CSR_READ_1(sc, RL_EECMD) & RL_EEMODE_AUTOLOAD))
@@ -827,10 +852,10 @@ re_attach_common(struct rl_softc *sc)
 			for (i = 0; i < ETHER_ADDR_LEN; i++)
 				eaddr[i] = CSR_READ_1(sc, RL_IDR0 + i);
 	} else {
-
 		/* Set RX length mask */
-
 		sc->rl_rxlenmask = RL_RDESC_STAT_FRAGLEN;
+
+		sc->rl_txstart = RL_TXSTART;
 
 		sc->rl_eecmd_read = RL_EECMD_READ_6BIT;
 		re_read_eeprom(sc, (caddr_t)&re_did, 0, 1, 0);
@@ -912,15 +937,20 @@ re_attach_common(struct rl_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	/* Perform hardware diagnostic. */
+#ifdef RE_DIAG
+	/*
+	 * Perform hardware diagnostic on the original RTL8169.
+	 * Some 32-bit cards were incorrectly wired and would
+	 * malfunction if plugged into a 64-bit slot.
+	 */
 	error = re_diag(sc);
-
 	if (error) {
 		printf("%s: attach aborted due to hardware diag failure\n",
 		    sc->sc_dev.dv_xname);
 		ether_ifdetach(ifp);
 		return;
 	}
+#endif
 
 	DPRINTF(("leaving re_attach\n"));
 }
@@ -1331,9 +1361,8 @@ re_intr(void *arg)
 		/* If the card has gone away the read returns 0xffff. */
 		if (status == 0xffff)
 			break;
-		if (status) {
+		if (status)
 			CSR_WRITE_2(sc, RL_ISR, status);
-		}
 
 		if ((status & RL_INTRS_CPLUS) == 0)
 			break;
@@ -1553,11 +1582,7 @@ re_start(struct ifnet *ifp)
 	 * RealTek put the TX poll request register in a different
 	 * location on the 8169 gigE chip. I don't know why.
 	 */
-
-	if (sc->rl_type == RL_8169)
-		CSR_WRITE_2(sc, RL_GTXSTART, RL_TXSTART_START);
-	else
-		CSR_WRITE_2(sc, RL_TXSTART, RL_TXSTART_START);
+	CSR_WRITE_2(sc, sc->rl_txstart, RL_TXSTART_START);
 
 	/*
 	 * Use the countdown timer for interrupt moderation.
@@ -1869,11 +1894,14 @@ re_stop(struct rl_softc *sc)
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_timer = 0;
 
+	sc->rl_link = 0;
+
 	timeout_del(&sc->timer_handle);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
+	CSR_WRITE_2(sc, RL_ISR, 0xFFFF);
 
 	if (sc->rl_head != NULL) {
 		m_freem(sc->rl_head);
