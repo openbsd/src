@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.12 2006/06/21 21:53:36 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.13 2006/06/27 02:02:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -212,7 +212,7 @@ writetrack(struct track_info *tr)
 		if (lseek(tr->fd, WAVHDRLEN, SEEK_SET) == -1)
 			err(1, "seek failed for file %s", tr->file);
 	}
-	while ((lba < end_lba) && (nblk != 0)) {
+	while (lba < end_lba && nblk != 0) {
 		while (lba + nblk <= end_lba) {
 			read(tr->fd, databuf, nblk * tr->blklen);
 			scr.cmd[8] = nblk;
@@ -220,6 +220,7 @@ writetrack(struct track_info *tr)
 again:
 			r = ioctl(fd, SCIOCCOMMAND, &scr);
 			if (r != 0) {
+				printf("\r");
 				warn("ioctl failed while attempting to write");
 				return (-1);
 			}
@@ -228,18 +229,21 @@ again:
 				goto again;
 			}
 			if (scr.retsts != SCCMD_OK) {
+				printf("\r");
 				warnx("ioctl returned bad status while "
 				    "attempting to write: %d",
 				    scr.retsts);
 				return (r);
 			}
 			lba += nblk;
-			fprintf(stderr,"\rLBA: 0x%06x/0x%06x",lba,end_lba);
+			fprintf(stderr,"\rLBA: %08u/%08u",
+			    lba, end_lba);
 			tmp = htobe32(lba); /* update lba in cdb */
 			memcpy(&scr.cmd[2], &tmp, sizeof(tmp));
 		}
 		nblk--;
 	}
+	printf("\n");
 	close(tr->fd);
 	return (0);
 }
