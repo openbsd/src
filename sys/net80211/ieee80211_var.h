@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.15 2006/06/24 14:14:18 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.16 2006/06/27 20:55:51 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -248,6 +248,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_F_SHSLOT	0x00020000	/* STATUS: short slot time */
 #define	IEEE80211_F_SHPREAMBLE	0x00040000	/* STATUS: short preamble */
 #define	IEEE80211_F_USEPROT	0x00100000	/* STATUS: protection enabled */
+#define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
 /* ic_caps */
 #define	IEEE80211_C_WEP		0x00000001	/* CAPABILITY: WEP available */

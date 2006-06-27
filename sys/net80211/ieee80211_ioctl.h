@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.6 2006/06/23 21:34:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.7 2006/06/27 20:55:51 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -245,5 +245,25 @@ struct ieee80211_nodereq_all {
 };
 
 #define SIOCG80211ALLNODES	_IOWR('i', 214, struct ieee80211_nodereq)
+
+/* net80211 specific interface flags */
+#define IEEE80211_F_HIDENWID	0x10000000	/* CONF: hidden ssid mode */
+#define IEEE80211_F_NOBRIDGE	0x20000000	/* CONF: no internal bridging */
+#define IEEE80211_F_HOSTAPMASK	0x30000000
+#define IEEE80211_F_USERSHIFT	28
+#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE"
+
+struct ieee80211_flags {
+	const char		*f_name;
+	u_int			f_flag;
+};
+
+#define IEEE80211_FLAGS	{						\
+	{ "hidenwid", IEEE80211_F_HIDENWID >> IEEE80211_F_USERSHIFT },	\
+	{ "nobridge", IEEE80211_F_NOBRIDGE >> IEEE80211_F_USERSHIFT }	\
+}
+
+#define SIOCG80211FLAGS		_IOWR('i', 216, struct ifreq)
+#define SIOCS80211FLAGS		 _IOW('i', 217, struct ifreq)
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */

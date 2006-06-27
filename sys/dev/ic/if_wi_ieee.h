@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.28 2006/06/27 09:48:02 reyk Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.29 2006/06/27 20:55:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -226,6 +226,9 @@ struct wi_counters {
 #define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
 #define WI_RID_CUR_BEACON_INT	0xFC33 /* beacon xmit time for BSS creation */
 #define	WI_RID_ENH_SECURITY	0xFC43 /* hide SSID name (prism fw >= 1.6.3) */
+#define WI_HIDESSID		0x01
+#define WI_IGNPROBES		0x02
+#define WI_HIDESSID_IGNPROBES	0x03
 #define	WI_RID_DBM_ADJUST	0xFC46 /* Get DBM adjustment factor */
 #define	WI_RID_SYMBOL_PREAMBLE	0xFC8C /* Enable/disable short preamble */
 #define	WI_RID_P2_SHORT_PREAMBLE	0xFCB0 /* Short preamble support */

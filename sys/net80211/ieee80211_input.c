@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.17 2006/06/18 18:55:27 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.18 2006/06/27 20:55:51 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -314,7 +314,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 		/* perform as a bridge within the AP */
 		m1 = NULL;
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+		    (ic->ic_flags & IEEE80211_F_NOBRIDGE) == 0) {
 			eh = mtod(m, struct ether_header *);
 			if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 				m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
@@ -1217,6 +1218,12 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 		IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
 		IEEE80211_VERIFY_SSID(ic->ic_bss, ssid, "probe");
+		if ((ic->ic_flags & IEEE80211_F_HIDENWID) && ssid[1] == 0) {
+			IEEE80211_DPRINTF(("%s: no ssid "
+			    "with ssid suppression enabled", __func__));
+			ic->ic_stats.is_rx_ssidmismatch++;
+			return;
+		}
 
 		if (ni == ic->ic_bss) {
 			ni = ieee80211_dup_bss(ic, wh->i_addr2);

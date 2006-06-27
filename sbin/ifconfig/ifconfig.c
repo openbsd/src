@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.168 2006/06/23 21:41:30 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.169 2006/06/27 20:55:51 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -161,6 +161,8 @@ void	setifchan(const char *, int);
 void	setiftxpower(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifpowersavesleep(const char *, int);
+void	setifnwflag(const char *, int);
+void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
 void	setipxframetype(const char *, int);
@@ -349,6 +351,8 @@ const struct	cmd {
 	{ "peerkey",	NEXTARG,	0,		setsppppeerkey },
 	{ "peerflag",	NEXTARG,	0,		setsppppeerflag },
 	{ "-peerflag",	NEXTARG,	0,		unsetsppppeerflag },
+	{ "nwflag",	NEXTARG,	0,		setifnwflag },
+	{ "-nwflag",	NEXTARG,	0,		unsetifnwflag },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
@@ -1434,6 +1438,39 @@ setiftxpower(const char *val, int d)
 	if (ioctl(s, SIOCS80211TXPOWER, (caddr_t)&txpower) == -1)
 		warn("SIOCS80211TXPOWER");
 }
+
+void
+setifnwflag(const char *val, int d)
+{
+	static const struct ieee80211_flags nwflags[] = IEEE80211_FLAGS;
+	u_int i, flag = 0;
+
+	for (i = 0; i < (sizeof(nwflags) / sizeof(nwflags[0])); i++) {
+		if (strcmp(val, nwflags[i].f_name) == 0) {
+			flag = nwflags[i].f_flag;
+			break;
+		}
+	}
+	if (flag == 0)
+		errx(1, "Invalid nwflag: %s", val);
+
+	if (ioctl(s, SIOCG80211FLAGS, (caddr_t)&ifr) != 0)
+		err(1, "SIOCG80211FLAGS");
+
+	if (d)
+		ifr.ifr_flags &= ~flag;
+	else
+		ifr.ifr_flags |= flag;
+
+	if (ioctl(s, SIOCS80211FLAGS, (caddr_t)&ifr) != 0)
+		err(1, "SIOCS80211FLAGS");
+}
+
+void
+unsetifnwflag(const char *val, int d)
+{
+	setifnwflag(val, 1);
+}
 #endif
 
 /* ARGSUSED */
@@ -1619,6 +1656,10 @@ ieee80211_status(void)
 		printf("%ddBm %s", txpower.i_val,
 		    txpower.i_mode == IEEE80211_TXPOWER_MODE_AUTO ?
 		    "(auto) " : "");
+
+	if (ioctl(s, SIOCG80211FLAGS, (caddr_t)&ifr) == 0 &&
+	    ifr.ifr_flags)
+		printb_status(ifr.ifr_flags, IEEE80211_F_USERBITS);
 
 	putchar('\n');
 	if (net80211flag)

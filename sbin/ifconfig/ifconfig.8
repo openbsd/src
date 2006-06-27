@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.131 2006/06/23 18:06:36 todd Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.132 2006/06/27 20:55:51 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -524,15 +524,18 @@ will begin advertising as master.
 .\" IEEE 802.11
 .Sh IEEE 802.11 (WIRELESS DEVICES)
 .Nm ifconfig
+.Bk -words
 .Op Fl M
 .Ar wireless-interface
 .Op Oo Fl Oc Cm bssid Ar bssid
 .Op Oo Fl Oc Cm chan Ar n
+.Op Oo Fl Oc Ns Cm nwflag Ar flag
 .Op Cm nwid Ar id
 .Op Oo Fl Oc Cm nwkey Ar key
 .Op Oo Fl Oc Cm powersave
 .Op Cm powersavesleep Ar duration
 .Op Oo Fl Oc Cm txpower Ar dBm
+.Ek
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -553,6 +556,37 @@ wireless network interfaces from the given channel ID
 Unset the desired channel to be used for IEEE 802.11-based wireless
 network interfaces.
 It doesn't affect the channel to be created for IBSS or hostap mode.
+.It Cm nwflag Ar flag
+Set a specified flag for the wireless network interface.
+The flag name can be either
+.Ql hidenwid
+or
+.Ql nobridge .
+The
+.Ql hidenwid
+flag will hide the network ID (ESSID) in beacon frames when operating
+in Host AP mode.
+It will also prevent responses to probe requests with an unspecified
+network ID.
+The
+.Ql nobridge
+flag will disable the direct bridging of frames between associated
+nodes when operating in Host AP mode.
+Setting this flag will block and filter direct inter-station
+communications.
+.Pp
+Note that the
+.Ql hidenwid
+and 
+.Ql nobridge
+options do not provide any security.
+The hidden network ID will be sent in clear text by associating
+stations and can be easily discovered with tools like
+.Xr tcpdump 8
+and
+.Xr hostapd 8 .
+.It Fl nwflag Ar flag
+Remove a specified flag for the wireless network interface.
 .It Cm nwid Ar id
 Configure network ID for IEEE 802.11-based wireless network interfaces.
 The

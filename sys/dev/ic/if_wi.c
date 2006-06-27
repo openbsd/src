@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.130 2006/06/27 09:48:02 reyk Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.131 2006/06/27 20:55:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.130 2006/06/27 09:48:02 reyk Exp $";
+	"$OpenBSD: if_wi.c,v 1.131 2006/06/27 20:55:51 reyk Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1550,6 +1550,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct wi_scan_res	*res;
 	struct wi_scan_p2_hdr	*p2;
 	struct wi_req		wreq;
+	u_int32_t		flags;
 
 	struct ieee80211_nwid		nwid;
 	struct ieee80211_nodereq	nr;
@@ -1982,6 +1983,37 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				break;
 			j += sizeof(struct ieee80211_nodereq);
 			na->na_nodes++;
+		}
+		break;
+	case SIOCG80211FLAGS:
+		if (sc->wi_ptype != WI_PORTTYPE_HOSTAP)
+			break;
+		ifr->ifr_flags = 0;
+		if (sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY) {
+			wreq.wi_len = WI_MAX_DATALEN;
+			wreq.wi_type = WI_RID_ENH_SECURITY;
+			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
+				error = EINVAL;
+				break;
+			}
+			sc->wi_enh_security = letoh16(wreq.wi_val[0]);
+			if (sc->wi_enh_security == WI_HIDESSID_IGNPROBES)
+				ifr->ifr_flags |= IEEE80211_F_HIDENWID >>
+				    IEEE80211_F_USERSHIFT;
+		}
+		break;
+	case SIOCS80211FLAGS:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		if (sc->wi_ptype != WI_PORTTYPE_HOSTAP) {
+			error = EINVAL;
+			break;
+		}
+		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
+		if (sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY) {
+			sc->wi_enh_security = (flags & IEEE80211_F_HIDENWID) ?
+			    WI_HIDESSID_IGNPROBES : 0;
+			WI_SETVAL(WI_RID_ENH_SECURITY, sc->wi_enh_security);
 		}
 		break;
 	case SIOCHOSTAP_ADD:

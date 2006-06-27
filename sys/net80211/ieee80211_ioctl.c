@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.14 2006/06/23 21:34:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.15 2006/06/27 20:55:51 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -155,6 +155,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211_nodereq *nr, nrbuf;
 	struct ieee80211_nodereq_all *na;
 	struct ieee80211_node *ni;
+	u_int32_t flags;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -512,6 +513,24 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			na->na_nodes++;
 			ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
 		}
+		break;
+	case SIOCG80211FLAGS:
+		flags = ic->ic_flags;
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+			flags &= ~IEEE80211_F_HOSTAPMASK;
+		ifr->ifr_flags = flags >> IEEE80211_F_USERSHIFT;
+		break;
+	case SIOCS80211FLAGS:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
+		    (flags & IEEE80211_F_HOSTAPMASK)) {
+			error = EINVAL;
+			break;
+		}
+		ic->ic_flags = (ic->ic_flags & ~IEEE80211_F_USERMASK) | flags;
+		error = ENETRESET;
 		break;
 	default:
 		error = EINVAL;
