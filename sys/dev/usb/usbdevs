@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.203 2006/06/26 22:11:59 miod Exp $
+$OpenBSD: usbdevs,v 1.204 2006/06/27 09:19:09 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -226,6 +226,7 @@ vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
 vendor SIGMATEL		0x066f	Sigmatel
+vendor DRAYTEK		0x0675	DrayTek
 vendor AIWA		0x0677	Aiwa
 vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
@@ -388,6 +389,7 @@ vendor ABC		0x0d8c	ABC
 vendor CONCEPTRONIC	0x0d8e	Conceptronic
 vendor MSI		0x0db0	Micro Star International
 vendor ELCON		0x0db7	ELCON Systemtechnik
+vendor SITECOMEU	0x0df6	Sitecom Europe
 vendor MOBILEACTION	0x0df7	Mobile Action
 vendor SPEEDDRAGON	0x0e55	Speed Dragon Multimedia
 vendor HAWKING		0x0e66	Hawking
@@ -422,7 +424,9 @@ vendor ALCATEL		0x11f7	Alcatel
 vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
 vendor RAPTORGAMING	0x1267	Raptor Gaming
+vendor TWINMOS		0x126f	TwinMOS
 vendor BELKIN2		0x1293	Belkin Components
+vendor CYBERTAN		0x129b	CyberTAN Technology
 vendor ARANEUS		0x12d8	Araneus Information Systems
 vendor TAPWAVE		0x12ef	Tapwave
 vendor AINCOMM		0x12fd	Aincomm
@@ -431,12 +435,15 @@ vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor NOVATEL		0x1410	Novatel Wireless
+vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor RADIOSHACK	0x1453	Radio Shack
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
+vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
+vendor UMEDIA		0x157e	U-MEDIA Communications
 vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems
 vendor INSIDEOUT	0x1608	Inside Out Networks
@@ -465,9 +472,11 @@ vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
 vendor ACEECA		0x4766	Aceeca
 vendor AVERATEC		0x50c2	Averatec
+vendor SWEEX		0x5173	Sweex
 vendor ONSPEC2		0x55aa	OnSpec
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
+vendor 3COM2		0x6891	3Com
 vendor INTEL		0x8086	Intel
 vendor SITECOM2		0x9016	Sitecom
 vendor HP2		0xf003	Hewlett Packard
@@ -484,6 +493,7 @@ product 3COM 3CRSHEW696		0x0a01	3CRSHEW696
 product 3COM 3C460		0x11f8	HomeConnect 3C460
 product 3COM USR56K		0x3021	U.S.Robotics 56000
 product 3COM 3C460B		0x4601	HomeConnect 3C460B
+product 3COM2 3CRUSB10075	0xa727	3CRUSB10075
 
 product 3COMUSR OFFICECONN	0x0082	3Com OfficeConnect Analog Modem
 product 3COMUSR USRISDN		0x008f	3Com U.S. Robotics Pro ISDN TA
@@ -503,6 +513,7 @@ product ABOCOM RTL8151		0x401a	RTL8151
 product ABOCOM XX7		0x400c	XX7
 product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
+product ABOCOM WL54		0x6001	WL54
 product ABOCOM XX10		0xabc1	XX10
 product ABOCOM BWU613		0xb000	BWU613
 
@@ -662,6 +673,7 @@ product ASIX AX88772		0x7720	AX88772
 /* ASUS products */
 product ASUS RT2570		0x1706	RT2570
 product ASUS RT2570_2		0x1707	RT2570
+product ASUS WL159G		0x170c	WL-159g
 product ASUS MYPAL_A730		0x4202	MyPal A730
 
 /* ASUSTeK Computer products */
@@ -838,6 +850,9 @@ product CSR BLUECORE		0x1000	BlueCore
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
 
+/* CyberTAN Technology products */
+product CYBERTAN TG54USB	0x1666	TG54USB
+
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
@@ -898,6 +913,9 @@ product DLINK DSB650		0xabc1	10/100 ethernet
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
+
+/* DrayTek products */
+product DRAYTEK VIGOR550	0x0550	Vigor550
 
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
@@ -1617,6 +1635,8 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
+product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
+product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
@@ -1720,6 +1740,7 @@ product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
 
 /* Sagem products */
 product SAGEM SERIAL		0x0027	Serial
+product SAGEM XG760A		0x004a	XG-760A
 
 /* Saitek products */
 product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
@@ -1826,6 +1847,9 @@ product SITECOM LN029		0x182d	LN029
 product SITECOM2 WL022		0x182d	WL-022
 product SITECOM CN104		0x2068	CN104
 
+/* Sitecom Europe products */
+product SITECOMEU WL113		0x9071	WL-113
+
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink Ethernet
 product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP
@@ -1914,6 +1938,9 @@ product ACERCM EP1427X2		0x0893	EP-1427X-2 Ethernet
 /* Susteen, Inc. products */
 product SUSTEEN DCU11		0x0528	Ericsson DCU-10/11
 
+/* Sweex products */
+product SWEEX ZD1211		0x1809	ZD1211
+
 /* Syntech Information products */
 product SYNTECH SERIAL		0x0001	Serial
 
@@ -1939,6 +1966,8 @@ product TEAC FD05PUB		0x0000	FD-05PUB
 product TEKRAM 0193		0x1601	ALLNET 0193 WLAN
 product TEKRAM ZYAIR_B200	0x1602	ZyXEL ZyAIR B200 WLAN
 product TEKRAM U300C		0x1612	U-300C
+product TEKRAM QUICKWLAN	0x1630	QuickWLAN
+product TEKRAM ZD1211		0x5630	ZD1211
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Microphone
@@ -1967,6 +1996,12 @@ product TRUMPION XXX1100	0x1100	XXX 1100
 
 /* Tsunami products */
 product TSUNAMI SM2000		0x1111	SM-2000
+
+/* TwinMOS products */
+product TWINMOS G240		0xa006	G240
+
+/* U-MEDIA Communications products */
+product UMEDIA TEW429UB		0x300b	TEW-429UB
 
 /* Ultima products */
 product ULTIMA 1200UBPLUS	0x4002	1200 UB Plus
@@ -2032,6 +2067,9 @@ product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
 
+/* Wistron NeWeb products */
+product WISTRONNEWEB UR055G	0x0711	UR055G
+
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	Imaging Device
 product XIRLINK PCCAM		0x8080	IBM PC Camera
@@ -2070,3 +2108,4 @@ product ZYDAS ZD1211B		0x1215	ZD1211B
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
 product ZYXEL 980N		0x2011	Scorpion-980N
+product ZYXEL ZYAIRG220		0x3401	ZyAIR G-220
