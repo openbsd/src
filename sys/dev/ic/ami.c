@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.166 2006/06/09 04:48:13 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.167 2006/06/27 07:56:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -535,21 +535,21 @@ ami_attach(struct ami_softc *sc)
 	/* lock around ioctl requests */
 	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
 
+	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	/* can't do bioctls, sensors, or pass-through on broken devices */
+	if (sc->sc_flags & AMI_BROKEN)
+		return (0);
+
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
-		printf("%s: controller registration failed", DEVNAME(sc));
+		printf("%s: controller registration failed\n", DEVNAME(sc));
 	else
 		sc->sc_ioctl = ami_ioctl;
+#endif
 
 	if (sensor_task_register(sc, ami_refresh, 10))
 		printf("%s: unable to register update task\n", DEVNAME(sc));
-#endif /* NBIO > 0 */
-
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-
-	/* can't do pass-through on broken device for now */
-	if (sc->sc_flags & AMI_BROKEN)
-		return (0);
 
 	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
 	    M_DEVBUF, M_NOWAIT);
@@ -561,8 +561,6 @@ ami_attach(struct ami_softc *sc)
 	bzero(rsc, sizeof(struct ami_rawsoftc) * sc->sc_channels);
 	for (sc->sc_rawsoftcs = rsc;
 	     rsc < &sc->sc_rawsoftcs[sc->sc_channels]; rsc++) {
-
-		/* TODO fetch and print channel properties */
 
 		rsc->sc_softc = sc;
 		rsc->sc_channel = rsc - sc->sc_rawsoftcs;
