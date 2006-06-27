@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.7 2006/01/19 17:49:50 deraadt Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.8 2006/06/27 03:51:29 pedro Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -83,7 +83,7 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	error = VOP_READ(nid.ni_vp, &uio, 0, NOCRED);
+	error = VOP_READ(nid.ni_vp, &uio, 0, p->p_ucred);
 
 	if (error == 0) {
 		*bufp = ptr;
