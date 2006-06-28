@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.76 2006/06/28 17:59:06 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.77 2006/06/28 18:52:05 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -160,7 +160,7 @@ cvs_commit_local(struct cvs_file *cf)
 	BUF *b;
 	int isnew;
 	int l, openflags, rcsflags;
-	char *d, *f, rbuf[24];
+	char *d, *f, rbuf[24], nbuf[24];
 	CVSENTRIES *entlist;
 	char *attic, *repo, *rcsfile;
 
@@ -231,9 +231,11 @@ cvs_commit_local(struct cvs_file *cf)
 		commit_desc_set(cf);
 	}
 
-	cvs_printf("Checking in %s:\n", cf->file_path);
-	cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
-	cvs_printf("old revision: %s; ", rbuf);
+	if (verbosity > 1) {
+		cvs_printf("Checking in %s:\n", cf->file_path);
+		cvs_printf("%s <- %s\n", cf->file_rpath, cf->file_path);
+		cvs_printf("old revision: %s; ", rbuf);
+	}
 
 	if (isnew == 0)
 		d = commit_diff_file(cf);
@@ -281,18 +283,19 @@ cvs_commit_local(struct cvs_file *cf)
 	rcs_write(cf->file_rcs);
 
 	if (cf->file_status == FILE_REMOVED) {
-		strlcpy(rbuf, "Removed", sizeof(rbuf));
+		strlcpy(nbuf, "Removed", sizeof(nbuf));
 	} else if (cf->file_status == FILE_ADDED) {
 		if (cf->file_rcs->rf_dead == 1)
-			strlcpy(rbuf, "Initial Revision", sizeof(rbuf));
+			strlcpy(nbuf, "Initial Revision", sizeof(nbuf));
 		else
 			rcsnum_tostr(cf->file_rcs->rf_head,
-			    rbuf, sizeof(rbuf));
+			    nbuf, sizeof(nbuf));
 	} else if (cf->file_status == FILE_MODIFIED) {
-		rcsnum_tostr(cf->file_rcs->rf_head, rbuf, sizeof(rbuf));
+		rcsnum_tostr(cf->file_rcs->rf_head, nbuf, sizeof(nbuf));
 	}
 
-	cvs_printf("new revision: %s\n", rbuf);
+	if (verbosity > 1)
+		cvs_printf("new revision: %s\n", nbuf);
 
 	(void)unlink(cf->file_path);
 	(void)close(cf->fd);
@@ -333,8 +336,12 @@ cvs_commit_local(struct cvs_file *cf)
 		xfree(attic);
 	}
 
-	cvs_printf("done\n");
-
+	if (verbosity > 1)
+		cvs_printf("done\n");
+	else {
+		cvs_log(LP_NOTICE, "checking in '%s'; revision %s -> %s",
+		    cf->file_path, rbuf, nbuf);
+	}
 }
 
 static char *
