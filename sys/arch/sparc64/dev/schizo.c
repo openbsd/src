@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.29 2006/06/28 20:06:32 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.30 2006/06/28 20:07:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -311,6 +311,8 @@ void
 schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 {
 	struct iommu_state *is = &pbm->sp_is;
+	int *vdma = NULL, nitem, tsbsize;
+	u_int32_t iobase = -1;
 	vaddr_t va;
 	char *name;
 
@@ -349,7 +351,31 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
 
-	iommu_init(name, is, 128 * 1024, -1);
+	/*
+	 * Separate the men from the boys.  If the `virtual-dma'
+	 * property exists, use it.
+	 */
+	if (!getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+	    (void **)&vdma)) {
+		/* Damn.  Gotta use these values. */
+		iobase = vdma[0];
+#define	TSBCASE(x)	case 1 << ((x) + 23): tsbsize = (x); break
+		switch (vdma[1]) { 
+			TSBCASE(1); TSBCASE(2); TSBCASE(3);
+			TSBCASE(4); TSBCASE(5); TSBCASE(6);
+		default: 
+			printf("bogus tsb size %x, using 7\n", vdma[1]);
+			TSBCASE(7);
+		}
+#undef TSBCASE
+		DPRINTF(SDB_BUSMAP, ("schizo_iommu_init: iobase=0x%x\n", iobase));
+		free(vdma, M_DEVBUF);
+	} else {
+		DPRINTF(SDB_BUSMAP, ("schizo_iommu_init: getprop failed, "
+		    "iobase=0x%x\n", iobase));
+	}
+
+	iommu_init(name, is, tsbsize, iobase);
 	iommu_reset(is);
 }
 
