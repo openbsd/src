@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.39 2006/04/19 11:55:55 pedro Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.40 2006/06/28 15:07:00 pedro Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -367,9 +367,7 @@ iso_mountfs(devvp, mp, p, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 
-	devvp->v_specmountpoint = mp;
-
-	/* Check the Rock Ridge Extention support */
+	/* Check the Rock Ridge Extension support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		if ((error = bread(isomp->im_devvp, (isomp->root_extent +
 		    isonum_711(rootp->ext_attr_length)) <<
@@ -424,6 +422,8 @@ iso_mountfs(devvp, mp, p, argp)
 		supbp = NULL;
 	}
   
+	devvp->v_specmountpoint = mp;
+
 	return (0);
 out:
 	if (bp)
