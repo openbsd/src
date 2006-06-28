@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.58 2006/06/18 18:18:01 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.59 2006/06/28 13:15:41 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -92,6 +92,9 @@ for details.
 .Pp
 Parameters specify the packets to which a flow applies.
 Some parameters are optional.
+Certain parameters can be expressed as lists, in which case
+.Xr ipsecctl 8
+generates all needed rule combinations.
 .Pp
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
@@ -207,6 +210,9 @@ Enter an IPIP pseudo SA.
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),
 cryptographic transforms, and key material to be used.
+Certain parameters can be expressed as lists, in which case
+.Xr ipsecctl 8
+generates all needed rule combinations.
 .Pp
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
@@ -387,6 +393,9 @@ Parameters specify the packets that will go through the tunnel and which
 cryptographic transforms are used for
 .Xr isakmpd 8 .
 Some parameters are optional.
+Certain parameters can be expressed as lists, in which case
+.Xr ipsecctl 8
+generates all needed rule combinations.
 .Pp
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names or interface group names.
