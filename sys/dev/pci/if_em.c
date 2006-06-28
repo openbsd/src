@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.132 2006/06/24 00:49:36 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.133 2006/06/28 02:46:54 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2434,8 +2434,6 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 		i = sc->num_rx_desc - 1;
 	E1000_WRITE_REG(&sc->hw, RDT, i);
 }
-
-
 
 #ifdef __STRICT_ALIGNMENT
 /*
