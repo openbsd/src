@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.170 2006/06/28 04:48:56 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.171 2006/06/28 08:26:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -168,7 +168,9 @@ int		ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
 int		ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
 int		ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
 int		ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
-void		ami_refresh(void *);
+
+int		ami_create_sensors(struct ami_softc *);
+void		ami_refresh_sensors(void *);
 #endif /* NBIO > 0 */
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
@@ -548,8 +550,8 @@ ami_attach(struct ami_softc *sc)
 	else
 		sc->sc_ioctl = ami_ioctl;
 
-	if (sensor_task_register(sc, ami_refresh, 10))
-		printf("%s: unable to register update task\n", DEVNAME(sc));
+	if (ami_create_sensors(sc) != 0)
+		printf("%s: unable to create sensors\n", DEVNAME(sc));
 #endif
 
 	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
@@ -2384,55 +2386,97 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 	return (0);
 }
 
+int
+ami_create_sensors(struct ami_softc *sc)
+{
+	struct device *dev;
+	struct scsibus_softc *ssc;
+	int i;
+
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (dev->dv_parent != &sc->sc_dev)
+			continue;
+
+		/* check if this is the scsibus for the logical disks */
+		ssc = (struct scsibus_softc *)dev;
+		if (ssc->adapter_link == &sc->sc_link)
+			break;
+	}
+
+	if (ssc == NULL)
+		return (1);
+
+	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_nunits,
+	    M_DEVBUF, M_WAITOK);
+	if (sc->sc_sensors == NULL)
+		return (1);
+
+	for (i = 0; i < sc->sc_nunits; i++) {
+		if (ssc->sc_link[i][0] == NULL)
+			goto bad;
+
+		dev = ssc->sc_link[i][0]->device_softc;
+
+		sc->sc_sensors[i].type = SENSOR_DRIVE;
+		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+
+		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
+		    sizeof(sc->sc_sensors[i].device));
+		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
+		    sizeof(sc->sc_sensors[i].desc));
+
+		sensor_add(&sc->sc_sensors[i]);
+	}
+
+	sc->sc_bd = malloc(sizeof(*sc->sc_bd), M_DEVBUF, M_WAITOK);
+	if (sc->sc_bd == NULL)
+		goto bad;
+
+	if (sensor_task_register(sc, ami_refresh_sensors, 10) != 0)
+		goto freebd;
+
+	return (0);
+
+freebd:
+	free(sc->sc_bd, M_DEVBUF);
+bad:
+	while (--i >= 0)
+		sensor_del(&sc->sc_sensors[i]);
+	free(sc->sc_sensors, M_DEVBUF);
+
+	return (1);
+}
+
 void
-ami_refresh(void *arg)
+ami_refresh_sensors(void *arg)
 {
 	struct ami_softc *sc = arg;
 	int i;
 
-	if (sc->sc_first_poll == 0) {
-		sc->sc_first_poll = 1;
-		sc->sc_sens_ld = malloc(sizeof(struct sensor) * sc->sc_nunits,
-		    M_DEVBUF, M_WAITOK);
-		sc->sc_bd = malloc(sizeof *sc->sc_bd, M_DEVBUF, M_WAITOK);
-
-		for (i = 0; i < sc->sc_nunits; i++) {
-			strlcpy(sc->sc_sens_ld[i].device, sc->sc_hdr[i].dev,
-			    sizeof(sc->sc_sens_ld[i].device));
-			snprintf(sc->sc_sens_ld[i].desc,
-			    sizeof(sc->sc_sens_ld[i].desc), "%s %d",
-			    DEVNAME(sc), i);
-			sc->sc_sens_ld[i].type = SENSOR_DRIVE;
-			sensor_add(&sc->sc_sens_ld[i]);
-			sc->sc_sens_ld[i].value = SENSOR_DRIVE_ONLINE;
-			sc->sc_sens_ld[i].status = SENSOR_S_OK;
-		}
-	}
-
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *sc->sc_bd,
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof(*sc->sc_bd),
 	    sc->sc_bd))
 		return;
 
 	for (i = 0; i < sc->sc_nunits; i++) {
 		switch (sc->sc_bd->ald[i].adl_status) {
 		case AMI_RDRV_OFFLINE:
-			sc->sc_sens_ld[i].value = SENSOR_DRIVE_FAIL;
-			sc->sc_sens_ld[i].status = SENSOR_S_CRIT;
+			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[i].status = SENSOR_S_CRIT;
 			break;
 
 		case AMI_RDRV_DEGRADED:
-			sc->sc_sens_ld[i].value = SENSOR_DRIVE_PFAIL;
-			sc->sc_sens_ld[i].status = SENSOR_S_WARN;
+			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[i].status = SENSOR_S_WARN;
 			break;
 
 		case AMI_RDRV_OPTIMAL:
-			sc->sc_sens_ld[i].value = SENSOR_DRIVE_ONLINE;
-			sc->sc_sens_ld[i].status = SENSOR_S_OK;
+			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[i].status = SENSOR_S_OK;
 			break;
 
 		default:
-			sc->sc_sens_ld[i].value = 0xffff; /* unknown */
-			sc->sc_sens_ld[i].status = SENSOR_S_UNKNOWN;
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 		}
 	}
 }
