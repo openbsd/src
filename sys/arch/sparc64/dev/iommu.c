@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.38 2005/06/07 20:40:01 kurt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.39 2006/06/28 20:09:15 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #define IDB_XXX		0x10
 #define IDB_PRINT_MAP	0x20
 #define IDB_BREAK	0x40
-int iommudebug = 0x0;
+int iommudebug = IDB_INFO;
 #define DPRINTF(l, s)   do { if (iommudebug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -209,20 +209,20 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 #endif
 
 	/*
-	 * now actually start up the IOMMU
-	 */
-	iommu_reset(is);
-
-	/*
 	 * Now all the hardware's working we need to allocate a dvma map.
 	 */
-	printf("DVMA map: %x to %x\n", is->is_dvmabase, is->is_dvmaend);
-	printf("IOTDB: %llx to %llx\n", 
+	printf("dvma map %x-%x, ", is->is_dvmabase, is->is_dvmaend - 1);
+	printf("iotdb %llx-%llx",
 	    (unsigned long long)is->is_ptsb,
 	    (unsigned long long)(is->is_ptsb + size));
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, is->is_dvmaend - PAGE_SIZE,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
+
+	/*
+	 * now actually start up the IOMMU
+	 */
+	iommu_reset(is);
 }
 
 /*

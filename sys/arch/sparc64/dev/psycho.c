@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.44 2006/06/27 21:22:14 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.45 2006/06/28 20:09:15 deraadt Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -229,8 +229,6 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	int psycho_br[2], n;
 	struct psycho_type *ptype;
 
-	printf("\n");
-
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
@@ -303,7 +301,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
 
-	printf("%s: impl %d, version %d: ign %x ", ptype->p_name,
+	printf(": %s, impl %d, version %d, ign %x\n", ptype->p_name,
 	    PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr), sc->sc_ign);
 
 	/*
@@ -360,8 +358,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = psycho_br[0];
 	pba.pba_bridgetag = NULL;
 
-	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
-	printf("; PCI bus %d", psycho_br[0]);
+	printf("%s: bus range %u-%u, PCI bus %d", sc->sc_dev.dv_xname,
+	    psycho_br[0], psycho_br[1], psycho_br[0]);
 
 	pp->pp_pcictl = sc->sc_pcictl;
 
@@ -377,8 +375,6 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 
 	/* setup the rest of the psycho pbm */
 	pba.pba_pc = pp->pp_pc;
-
-	printf("\n");
 
 	/*
 	 * And finally, if we're a sabre or the first of a pair of psycho's to
@@ -480,7 +476,9 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		/* Point out iommu at the strbuf_ctl. */
 		sc->sc_is->is_sb[0] = &pp->pp_sb;
 
+		printf(", ");
 		psycho_iommu_init(sc, 2);
+		printf("\n");
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 		if (bus_space_map(sc->sc_configtag,
@@ -520,6 +518,14 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		/* Point out iommu at the strbuf_ctl. */
 		sc->sc_is->is_sb[1] = &pp->pp_sb;
 
+		printf(", ");
+		printf("dvma map %x-%x, ", sc->sc_is->is_dvmabase,
+		    sc->sc_is->is_dvmaend);
+		printf("iotdb %llx-%llx",
+		    (unsigned long long)sc->sc_is->is_ptsb,
+		    (unsigned long long)(sc->sc_is->is_ptsb +
+		    (PAGE_SIZE << sc->sc_is->is_tsbsize)));
+		printf("\n");
 		iommu_reset(sc->sc_is);
 	}
 
@@ -797,11 +803,10 @@ psycho_wakeup(void *arg)
 void
 psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 {
-	char *name;
 	struct iommu_state *is = sc->sc_is;
+	int *vdma = NULL, nitem;
 	u_int32_t iobase = -1;
-	int *vdma = NULL;
-	int nitem;
+	char *name;
 
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
@@ -810,15 +815,11 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	    &is->is_iommu);
 
 	/*
-	 * Separate the men from the boys.  Get the `virtual-dma'
-	 * property for sabre and use that to make sure the damn
-	 * iommu works.
-	 *
-	 * We could query the `#virtual-dma-size-cells' and
-	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
+	 * Separate the men from the boys.  If it has a `virtual-dma'
+	 * property, use it.
 	 */
 	if (!getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
-		(void **)&vdma)) {
+	    (void **)&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1 << ((x) + 23): tsbsize = (x); break
@@ -832,8 +833,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 #undef TSBCASE
 		DPRINTF(PDB_CONF, ("psycho_iommu_init: iobase=0x%x\n", iobase));
 		free(vdma, M_DEVBUF);
-	}
-	else {
+	} else {
 		DPRINTF(PDB_CONF, ("psycho_iommu_init: getprop failed, "
 		    "iobase=0x%x\n", iobase));
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.30 2006/06/28 20:07:51 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.31 2006/06/28 20:09:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -191,7 +191,9 @@ schizo_init(struct schizo_softc *sc, int busa)
 		panic("schizo: unable to create PBM handle");
 	}
 
+	printf("%s: ", sc->sc_dv.dv_xname);
 	schizo_init_iommu(sc, pbm);
+	printf("\n");
 
 	match = schizo_read(sc, busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH);
 	pbm->sp_confpaddr = match & ~0x8000000000000000UL;
@@ -571,7 +573,7 @@ _schizo_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	DPRINTF(SDB_BUSMAP, (" cspace %d", ss));
 
 	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
-		printf("\n_psycho_bus_map: invalid parent");
+		printf("\n_schizo_bus_map: invalid parent");
 		return (EINVAL);
 	}
 
