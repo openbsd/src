@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.8 2006/06/28 04:15:40 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.9 2006/06/28 04:30:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -148,6 +148,7 @@ void		zyd_rxframeproc(struct zyd_rx_data *, uint8_t *, uint16_t);
 void		zyd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 int		zyd_uploadfirmware(struct zyd_softc *);
+void		zyd_attachhook(void *);
 void		zyd_lock_phy(struct zyd_softc *);
 void		zyd_unlock_phy(struct zyd_softc *);
 usbd_status	zyd_get_aw_pt_bi(struct zyd_softc *, struct zyd_aw_pt_bi *);
@@ -1360,6 +1361,23 @@ skip:	/* setup a new transfer */
 	usbd_transfer(xfer);
 }
 
+void
+zyd_attachhook(void *xsc)
+{
+	struct zyd_softc *sc = xsc;
+
+	if (zyd_uploadfirmware(sc))
+		USB_ATTACH_ERROR_RETURN;
+
+	/* Perform a device reset */
+	zyd_reset(sc);
+
+	/* Complete the attach process (hardware init) */
+	if (zyd_complete_attach(sc) != 0)
+		USB_ATTACH_ERROR_RETURN;
+	sc->zyd_attached = 1;
+}
+
 /*
  * Upload firmware to device.
  *
@@ -1388,7 +1406,7 @@ zyd_uploadfirmware(struct zyd_softc *sc)
 
 	if (result) {
 		printf("%s: failed loadfirmware of file %s: errno %d\n",
-		    USBDEVNAME(sc->zyd_dev), "zyd", result);
+		    USBDEVNAME(sc->zyd_dev), "zd1211", result);
 
 		return -1;
 	}
@@ -1523,20 +1541,14 @@ USB_ATTACH(zyd)
 	sc->zyd_udev = dev;
 
 	/* Now upload the firmware */
-	if (zyd_uploadfirmware(sc) != 0)
-		USB_ATTACH_ERROR_RETURN;
+	if (rootvp == NULL)
+		mountroothook_establish(zyd_attachhook, sc);
+	else
+		zyd_attachhook(sc);
 
 	DPRINTF(("Setting debug flags\n"));
 	/* TODO: What about debugging flags in OpenBSD? */
 /*	sc->sc_ic.ic_debug = IEEE80211_MSG_ANY;*/  /* <<<--- this is the NetBSD version */
-
-	/* Perform a device reset */
-	zyd_reset(sc);
-
-	/* Complete the attach process (hardware init) */
-	if (zyd_complete_attach(sc) != 0)
-		USB_ATTACH_ERROR_RETURN;
-	sc->zyd_attached = 1;
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
