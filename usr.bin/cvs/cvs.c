@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.104 2006/06/13 06:53:45 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.105 2006/06/28 20:19:05 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -35,7 +35,7 @@
 extern char *__progname;
 
 /* verbosity level: 0 = really quiet, 1 = quiet, 2 = verbose */
-int verbosity = 2;
+int verbosity = 1;
 
 /* compression level used with zlib, 0 meaning no compression taking place */
 int	cvs_compress = 0;
@@ -102,7 +102,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-flnQqrtvw] [-d root] [-e editor] [-s var=val] "
+	    "Usage: %s [-flnQqrtvVw] [-d root] [-e editor] [-s var=val] "
 	    "[-T tmpdir] [-z level] command [...]\n", __progname);
 }
 
@@ -258,7 +258,7 @@ cvs_getopt(int argc, char **argv)
 	int ret;
 	char *ep;
 
-	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:T:tvwz:")) != -1) {
+	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:T:tvVwz:")) != -1) {
 		switch (ret) {
 		case 'b':
 			/*
@@ -287,9 +287,9 @@ cvs_getopt(int argc, char **argv)
 			verbosity = 0;
 			break;
 		case 'q':
-			/* don't override -Q */
-			if (verbosity > 1)
-				verbosity = 1;
+			/*
+			 * Be quiet. This is the default in OpenCVS.
+			 */
 			break;
 		case 'r':
 			cvs_readonly = 1;
@@ -309,6 +309,11 @@ cvs_getopt(int argc, char **argv)
 			break;
 		case 't':
 			cvs_trace = 1;
+			break;
+		case 'V':
+			/* don't override -Q */
+			if (verbosity)
+				verbosity = 2;
 			break;
 		case 'v':
 			printf("%s\n", CVS_VERSION);

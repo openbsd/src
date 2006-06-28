@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.98 2006/06/04 20:19:17 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.99 2006/06/28 20:19:05 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl flnQqrtvw
+.Op Fl flnQqrtvVw
 .Op Fl d Ar root
 .Op Fl e Ar editor
 .Xo
@@ -103,6 +103,7 @@ Be extra quiet.
 Only error messages will be displayed.
 .It Fl q
 Be quiet about reporting.
+This is the default.
 .It Fl r
 Extract files in read-only mode.
 .It Fl s Ar var Ns = Ns Ar val
@@ -116,6 +117,9 @@ The default is set to
 .Pa /tmp .
 .It Fl t
 Trace program execution.
+.It Fl V
+Verbose mode.
+All messages will be displayed.
 .It Fl v
 Display version information and exit.
 .It Fl w
