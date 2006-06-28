@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.18 2006/06/25 00:45:00 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.19 2006/06/28 08:23:06 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -427,19 +427,28 @@ azalia_pci_detach(struct device *self, int flags)
 	azalia_t *az;
 	int i;
 
+	DPRINTF(("%s\n", __func__));
 	az = (azalia_t*)self;
 	if (az->audiodev != NULL) {
 		config_detach(az->audiodev, flags);
 		az->audiodev = NULL;
 	}
+
+	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
 	azalia_stream_delete(&az->pstream, az);
+
+	DPRINTF(("%s: delete codecs\n", __func__));
 	for (i = 0; i < az->ncodecs; i++) {
 		azalia_codec_delete(&az->codecs[i]);
 	}
 	az->ncodecs = 0;
+
+	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
 	azalia_delete_corb(az);
 	azalia_delete_rirb(az);
+
+	DPRINTF(("%s: delete PCI resources\n", __func__));
 	if (az->ih != NULL) {
 		pci_intr_disestablish(az->pc, az->ih);
 		az->ih = NULL;
@@ -1087,7 +1096,8 @@ azalia_codec_init(codec_t *this)
 int
 azalia_codec_delete(codec_t *this)
 {
-	this->mixer_delete(this);
+	if (this->mixer_delete != NULL)
+		this->mixer_delete(this);
 	if (this->formats != NULL) {
 		free(this->formats, M_DEVBUF);
 		this->formats = NULL;
