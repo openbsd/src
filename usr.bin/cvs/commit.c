@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.75 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.76 2006/06/28 17:59:06 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -383,7 +383,7 @@ static void
 commit_desc_set(struct cvs_file *cf)
 {
 	BUF *bp;
-	int l;
+	int l, fd;
 	char *desc_path, *desc;
 
 	desc_path = xmalloc(MAXPATHLEN);
@@ -392,16 +392,18 @@ commit_desc_set(struct cvs_file *cf)
 	if (l == -1 || l >= MAXPATHLEN)
 		fatal("commit_desc_set: overflow");
 
-	if ((bp = cvs_buf_load(desc_path, BUF_AUTOEXT)) == NULL) {
+	if ((fd = open(desc_path, O_RDONLY)) == -1) {
 		xfree(desc_path);
 		return;
 	}
 
+	cvs_buf_load_fd(fd, BUF_AUTOEXT);
 	cvs_buf_putc(bp, '\0');
 	desc = cvs_buf_release(bp);
 
 	rcs_desc_set(cf->file_rcs, desc);
 
+	(void)close(fd);
 	(void)cvs_unlink(desc_path);
 
 	xfree(desc);
