@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.17 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.18 2006/06/28 12:04:31 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -79,7 +79,6 @@ void	pflogattach(int);
 int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    	       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, caddr_t);
-void	pflogrtrequest(int, struct rtentry *, struct sockaddr *);
 void	pflogstart(struct ifnet *);
 
 extern int ifqmaxlen;
@@ -141,14 +140,6 @@ pflogoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 {
 	m_freem(m);
 	return (0);
-}
-
-/* ARGSUSED */
-void
-pflogrtrequest(int cmd, struct rtentry *rt, struct sockaddr *sa)
-{
-	if (rt)
-		rt->rt_rmx.rmx_mtu = PFLOGMTU;
 }
 
 /* ARGSUSED */
