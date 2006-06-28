@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.37 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.38 2006/06/28 12:13:24 claudio Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -276,12 +276,7 @@ struct ether_multistep {
 
 extern struct ifnet *myip_ifp;
 
-void arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
-int arpresolve(struct arpcom *, struct rtentry *, struct mbuf *,
-		    struct sockaddr *, u_char *);
-void arpintr(void);
 int arpioctl(u_long, caddr_t);
-void arp_ifinit(struct arpcom *, struct ifaddr *);
 void arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
 void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);
