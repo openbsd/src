@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.43 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.44 2006/06/28 12:02:26 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -77,7 +77,6 @@ void	encattach(int);
 int	encoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    	       struct rtentry *);
 int	encioctl(struct ifnet *, u_long, caddr_t);
-void	encrtrequest(int, struct rtentry *, struct sockaddr *);
 void	encstart(struct ifnet *);
 
 extern int ifqmaxlen;
@@ -144,17 +143,6 @@ register struct rtentry *rt;
 {
     m_freem(m);
     return (0);
-}
-
-/* ARGSUSED */
-void
-encrtrequest(cmd, rt, sa)
-int cmd;
-struct rtentry *rt;
-struct sockaddr *sa;
-{
-    if (rt)
-      rt->rt_rmx.rmx_mtu = ENCMTU;
 }
 
 /* ARGSUSED */
