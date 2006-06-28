@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.70 2006/06/21 10:01:10 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.71 2006/06/28 14:17:07 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5233,20 +5233,23 @@ request_cleanup(resource, islocked)
 	/*
 	 * We never hold up the filesystem syncer process.
 	 */
-	if (p == filesys_syncer)
+	if (p == filesys_syncer || (p->p_flag & P_SOFTDEP))
 		return (0);
 	/*
 	 * First check to see if the work list has gotten backlogged.
 	 * If it has, co-opt this process to help clean up two entries.
 	 * Because this process may hold inodes locked, we cannot
 	 * handle any remove requests that might block on a locked
-	 * inode as that could lead to deadlock.
+	 * inode as that could lead to deadlock. We set P_SOFTDEP
+	 * to avoid recursively processing the worklist.
 	 */
 	if (num_on_worklist > max_softdeps / 10) {
+		p->p_flag |= P_SOFTDEP;
 		if (islocked)
 			FREE_LOCK(&lk);
 		process_worklist_item(NULL, LK_NOWAIT);
 		process_worklist_item(NULL, LK_NOWAIT);
+		p->p_flag &= ~P_SOFTDEP;
 		stat_worklist_push += 2;
 		if (islocked)
 			ACQUIRE_LOCK(&lk);
@@ -5453,7 +5456,6 @@ clear_inodedeps(p)
 		vn_finished_write(mp);
 #endif
 		ACQUIRE_LOCK(&lk);
-		drain_output(vp, 1);
 	}
 	FREE_LOCK(&lk);
 }
