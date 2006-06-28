@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.41 2006/05/26 17:26:33 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.42 2006/06/28 07:30:11 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -381,6 +381,26 @@ period, such as from boot time (see the
 option below).
 .It Ic ifstat
 Display, in the lower window, interface statistics.
+The
+.Dq State
+column has the format
+.Sm off
+.Xo
+.Cm up \*(Ba dn
+.Bq : Cm U \*(Ba D .
+.Xc
+.Sm on
+.Sq up
+and
+.Sq dn
+represent whether the interface is up or down.
+.Sq U
+and
+.Sq D
+represent whether the interface is connected or not;
+in the case of
+.Xr carp 4
+interfaces, whether the interface is in master or backup state, respectively.
 See below for more options.
 .It Ic netstat
 Display, in the lower window, network connections.
