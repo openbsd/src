@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.6 2006/06/27 13:40:35 xsa Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.7 2006/06/28 03:48:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1494,8 +1494,9 @@ USB_ATTACH(zyd)
 
 	ddesc = usbd_get_device_descriptor(dev);
 
-	if (UGETW(ddesc->bcdDevice) != ZYD_ALLOWED_DEV_VERSION) {
-		printf("%s: device version mismatch: 0x%X (only 43.30 supported)\n",
+	if (UGETW(ddesc->bcdDevice) < ZYD_ALLOWED_DEV_VERSION) {
+		printf("%s: device version mismatch: 0x%X "
+		    "(only >= 43.30 supported)\n",
 		    USBDEVNAME(sc->zyd_dev), UGETW(ddesc->bcdDevice));
 
 		USB_ATTACH_ERROR_RETURN;
