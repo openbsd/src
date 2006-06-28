@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.4 2006/06/27 09:21:55 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.5 2006/06/28 03:46:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -588,11 +588,6 @@ enum zyd_ranges {
 /*
  * Device configurations and types
  */
-
-struct zyd_type {
-	uint16_t vid;
-	uint16_t pid;
-};
 
 static const char *zyd_rfs[] = {
 	"unknown",
