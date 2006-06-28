@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.46 2006/05/30 22:06:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.47 2006/06/28 10:53:39 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -91,6 +91,7 @@ pid_t
 rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
     int pipe_parent2ospfe[2])
 {
+	struct timeval		 now;
 	struct passwd		*pw;
 	struct redistribute	*r;
 	struct event		 ev_sigint, ev_sigterm;
@@ -165,6 +166,9 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
 		free(r);
 	}
+
+	gettimeofday(&now, NULL);
+	rdeconf->uptime = now.tv_sec;
 
 	event_dispatch();
 
@@ -695,6 +699,7 @@ void
 rde_send_summary(pid_t pid)
 {
 	static struct ctl_sum	 sumctl;
+	struct timeval		 now;
 	struct area		*area;
 	struct vertex		*v;
 
@@ -709,6 +714,12 @@ rde_send_summary(pid_t pid)
 
 	RB_FOREACH(v, lsa_tree, &asext_tree)
 		sumctl.num_ext_lsa++;
+
+	gettimeofday(&now, NULL);
+	if (rdeconf->uptime < now.tv_sec)
+		sumctl.uptime = now.tv_sec - rdeconf->uptime;
+	else
+		sumctl.uptime = 0;
 
 	sumctl.rfc1583compat = rdeconf->rfc1583compat;
 

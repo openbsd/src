@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.59 2006/05/31 03:24:06 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.60 2006/06/28 10:53:39 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -388,6 +388,7 @@ struct ospfd_conf {
 #define OSPFD_OPT_NOACTION	0x00000004
 	u_int32_t		spf_delay;
 	u_int32_t		spf_hold_time;
+	time_t			uptime;
 	int			spf_state;
 	int			ospf_socket;
 	int			flags;
@@ -491,6 +492,7 @@ struct ctl_sum {
 	u_int32_t		 spf_hold_time;
 	u_int32_t		 num_ext_lsa;
 	u_int32_t		 num_area;
+	time_t			 uptime;
 	u_int8_t		 rfc1583compat;
 };
 
