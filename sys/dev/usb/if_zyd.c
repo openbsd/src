@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.7 2006/06/28 03:48:46 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.8 2006/06/28 04:15:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -2628,11 +2628,11 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 /*	ieee80211_announce(ic);*/
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->zyd_udev,
-	    USBDEV(sc->zyd_dev));
-
 	timeout_set(&sc->scan_ch, zyd_next_scan, sc);
 	timeout_add(&sc->scan_ch, hz);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->zyd_udev,
+	    USBDEV(sc->zyd_dev));
 
 leave:
 	DPRINTF(("EXITING complete_attach(): Status = %d\n", rv));
