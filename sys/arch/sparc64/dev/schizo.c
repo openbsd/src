@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.28 2006/06/27 21:22:14 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.29 2006/06/28 20:06:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -124,6 +124,11 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	int busa;
+	char *str;
+
+	str = getpropstring(ma->ma_node, "compatible");
+	if (strcmp(str, "pci108e,a801") == 0)
+		sc->sc_tomatillo = 1;
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
@@ -174,8 +179,9 @@ schizo_init(struct schizo_softc *sc, int busa)
 	    (void **)&busranges))
 		panic("schizo: can't get bus-range");
 
-	printf(": bus %c %d to %d\n", busa ? 'A' : 'B',
-	    busranges[0], busranges[1]);
+	printf(": \"%s\", bus %c %d to %d\n",
+	    sc->sc_tomatillo ? "Tomatillo" : "Schizo",
+	    busa ? 'A' : 'B', busranges[0], busranges[1]);
 
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
 	    busa ? offsetof(struct schizo_regs, pbm_a) :
