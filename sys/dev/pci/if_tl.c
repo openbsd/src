@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.41 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.42 2006/06/29 21:35:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2006,13 +2006,8 @@ tl_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef TL_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
-		return;
-	}
 	if (pci_mapreg_map(pa, TL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)) {
 		if (pci_mapreg_map(pa, TL_PCI_LOMEM, PCI_MAPREG_TYPE_IO, 0,
@@ -2022,10 +2017,6 @@ tl_attach(parent, self, aux)
 		}
 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
 	if (pci_mapreg_map(pa, TL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)){
 		if (pci_mapreg_map(pa, TL_PCI_LOIO, PCI_MAPREG_TYPE_MEM, 0,
