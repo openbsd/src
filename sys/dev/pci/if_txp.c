@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.82 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.83 2006/06/29 21:36:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -261,21 +261,9 @@ txp_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
-	u_int32_t command;
 
 	sc->sc_cold = 1;
 
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(command & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
-		return;
-	}
-
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
 	if (pci_mapreg_map(pa, TXP_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_bt, &sc->sc_bh, NULL, &iosize, 0)) {
 		printf(": can't map mem space %d\n", 0);
