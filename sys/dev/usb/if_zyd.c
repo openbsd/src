@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.9 2006/06/28 04:30:24 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.10 2006/06/29 12:13:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -219,6 +219,23 @@ void		zyd_if_watchdog(struct ifnet *);
 
 void		zyd_next_scan(void *);
 void		zyd_task(void *);
+
+
+static const struct zyd_adpairs16 zyd_def_cr[] = {
+	ZYD_DEF_CR
+};
+
+static const struct zyd_adpairs32 zyd_def_mac[] = {
+	ZYD_DEF_MAC
+};
+
+static const struct zyd_adpairs16 zyd_rfmd_cr[] = {
+	ZYD_RFMD_CR
+};
+
+static const uint32_t zyd_rfmd_rf[] = {
+	ZYD_RFMD_RF
+};
 
 /*
  * Debug dump
@@ -1699,91 +1716,21 @@ zyd_read_rf_pa_types(struct zyd_softc *sc, uint8_t *rf_type,
 usbd_status
 zyd_rf_rfmd_init(struct zyd_softc *sc, struct zyd_rf *rf)
 {
-	/* Copied nearly verbatim from the Linux driver rewrite */
-	static const struct zyd_adpairs16 ir1[] = {
-		{ ZYD_CR2,   0x1E }, { ZYD_CR9,   0x20 }, { ZYD_CR10,  0x89 },
-		{ ZYD_CR11,  0x00 }, { ZYD_CR15,  0xD0 }, { ZYD_CR17,  0x68 },
-		{ ZYD_CR19,  0x4a }, { ZYD_CR20,  0x0c }, { ZYD_CR21,  0x0E },
-		{ ZYD_CR23,  0x48 },
-		/* normal size for cca threshold */
-		{ ZYD_CR24,  0x14 },
-		/* { ZYD_CR24,  0x20 }, */
-		{ ZYD_CR26,  0x90 }, { ZYD_CR27,  0x30 }, { ZYD_CR29,  0x20 },
-		{ ZYD_CR31,  0xb2 }, { ZYD_CR32,  0x43 }, { ZYD_CR33,  0x28 },
-		{ ZYD_CR38,  0x30 }, { ZYD_CR34,  0x0f }, { ZYD_CR35,  0xF0 },
-		{ ZYD_CR41,  0x2a }, { ZYD_CR46,  0x7F }, { ZYD_CR47,  0x1e },
-		{ ZYD_CR51,  0xc5 }, { ZYD_CR52,  0xc5 }, { ZYD_CR53,  0xc5 },
-		{ ZYD_CR79,  0x58 }, { ZYD_CR80,  0x30 }, { ZYD_CR81,  0x30 },
-		{ ZYD_CR82,  0x00 }, { ZYD_CR83,  0x24 }, { ZYD_CR84,  0x04 },
-		{ ZYD_CR85,  0x00 }, { ZYD_CR86,  0x10 }, { ZYD_CR87,  0x2A },
-		{ ZYD_CR88,  0x10 }, { ZYD_CR89,  0x24 }, { ZYD_CR90,  0x18 },
-		/* { ZYD_CR91,  0x18 }, */
-		/* should solve continous CTS frame problems */
-		{ ZYD_CR91,  0x00 },
-		{ ZYD_CR92,  0x0a }, { ZYD_CR93,  0x00 }, { ZYD_CR94,  0x01 },
-		{ ZYD_CR95,  0x00 }, { ZYD_CR96,  0x40 }, { ZYD_CR97,  0x37 },
-		{ ZYD_CR98,  0x05 }, { ZYD_CR99,  0x28 }, { ZYD_CR100, 0x00 },
-		{ ZYD_CR101, 0x13 }, { ZYD_CR102, 0x27 }, { ZYD_CR103, 0x27 },
-		{ ZYD_CR104, 0x18 }, { ZYD_CR105, 0x12 },
-		/* normal size */
-		{ ZYD_CR106, 0x1a },
-		/* { ZYD_CR106, 0x22 }, */
-		{ ZYD_CR107, 0x24 }, { ZYD_CR108, 0x0a }, { ZYD_CR109, 0x13 },
-		{ ZYD_CR110, 0x2F }, { ZYD_CR111, 0x27 }, { ZYD_CR112, 0x27 },
-		{ ZYD_CR113, 0x27 }, { ZYD_CR114, 0x27 }, { ZYD_CR115, 0x40 },
-		{ ZYD_CR116, 0x40 }, { ZYD_CR117, 0xF0 }, { ZYD_CR118, 0xF0 },
-		{ ZYD_CR119, 0x16 },
-		/* no TX continuation */
-		{ ZYD_CR122, 0x00 },
-		/* { ZYD_CR122, 0xff }, */
-		{ ZYD_CR127, 0x03 }, { ZYD_CR131, 0x08 }, { ZYD_CR138, 0x28 },
-		{ ZYD_CR148, 0x44 }, { ZYD_CR150, 0x10 }, { ZYD_CR169, 0xBB },
-		{ ZYD_CR170, 0xBB }
-	};
-
-	static const uint32_t ir2[] = {
-		0x000007,  /* REG0(CFG1) */
-		0x07dd43,  /* REG1(IFPLL1) */
-		0x080959,  /* REG2(IFPLL2) */
-		0x0e6666,
-		0x116a57,  /* REG4 */
-		0x17dd43,  /* REG5 */
-		0x1819f9,  /* REG6 */
-		0x1e6666,
-		0x214554,
-		0x25e7fa,
-		0x27fffa,
-		/* The Zydas driver somehow forgets to set this value. It's
-		 * only set for Japan. We are using internal power control
-		 * for now.
-		 */
-		0x294128, /* internal power */
-		/* 0x28252c, */ /* External control TX power */
-		/* CR31_CCK, CR51_6-36M, CR52_48M, CR53_54M */
-		0x2c0000,
-		0x300000,
-		0x340000,  /* REG13(0xD) */
-		0x381e0f,  /* REG14(0xE) */
-		/* Bogus, RF2959's data sheet doesn't know register 27, which is
-		 * actually referenced here.
-		 */
-		0x6c180f  /* REG27(0x11) */
-	};
-
 	int i;
 	usbd_status rv;
 
 	DPRINTF(("rf_init(): ir1 = %d, ir2 = %d\n",
-	    (sizeof(ir1) / sizeof(struct zyd_adpairs16)),
-	    (sizeof(ir2) / sizeof(uint32_t))));
+	    (sizeof(zyd_rfmd_cr) / sizeof(struct zyd_adpairs16)),
+	    (sizeof(zyd_rfmd_rf) / sizeof(uint32_t))));
 
-	rv = zyd_batchwrite16(sc, ir1, (sizeof(ir1) / sizeof(struct zyd_adpairs16)));
+	rv = zyd_batchwrite16(sc, zyd_rfmd_cr, (sizeof(zyd_rfmd_cr) /
+	    sizeof(struct zyd_adpairs16)));
 
 	if (rv)
 		return rv;
 
-	for (i = 0; i < (sizeof(ir2) / sizeof(uint32_t)); i++) {
-		rv = zyd_rfwrite(sc, ir2[i], ZYD_RF_RV_BITS);
+	for (i = 0; i < (sizeof(zyd_rfmd_rf) / sizeof(uint32_t)); i++) {
+		rv = zyd_rfwrite(sc, zyd_rfmd_rf[i], ZYD_RF_RV_BITS);
 
 		if (rv)
 			break;
@@ -1801,18 +1748,16 @@ usbd_status
 zyd_rf_rfmd_switchradio(struct zyd_softc *sc, uint8_t onoff)
 {
 	static const struct zyd_adpairs16 ir_on[] = {
-		{ ZYD_CR10, 0x89 },
-		{ ZYD_CR11, 0x00 }
+		ZYD_RFMD_RADIO_ON
 	};
 
 	static const struct zyd_adpairs16 ir_off[] = {
-		{ ZYD_CR10, 0x15 },
-		{ ZYD_CR11, 0x81 }
+		ZYD_RFMD_RADIO_OFF
 	};
 
 	if (onoff)
-		return zyd_batchwrite16(sc, ir_on, (sizeof(ir_on) /
-		    sizeof(struct zyd_adpairs16)));
+		return zyd_batchwrite16(sc, ir_on,
+		    (sizeof(ir_on) / sizeof(struct zyd_adpairs16)));
 
 	return zyd_batchwrite16(sc, ir_off, (sizeof(ir_off) /
 	    sizeof(struct zyd_adpairs16)));
@@ -1826,20 +1771,7 @@ zyd_rf_rfmd_set_channel(struct zyd_softc *sc, struct zyd_rf *rf,
 	uint8_t channel)
 {
 	static const uint32_t rfmd_table[][2] = {
-		{ 0x181979, 0x1e6666 },
-		{ 0x181989, 0x1e6666 },
-		{ 0x181999, 0x1e6666 },
-		{ 0x1819a9, 0x1e6666 },
-		{ 0x1819b9, 0x1e6666 },
-		{ 0x1819c9, 0x1e6666 },
-		{ 0x1819d9, 0x1e6666 },
-		{ 0x1819e9, 0x1e6666 },
-		{ 0x1819f9, 0x1e6666 },
-		{ 0x181a09, 0x1e6666 },
-		{ 0x181a19, 0x1e6666 },
-		{ 0x181a29, 0x1e6666 },
-		{ 0x181a39, 0x1e6666 },
-		{ 0x181a60, 0x1c0000 }
+		ZYD_RFMD_CHANTABLE
 	};
 
 	const uint32_t *dp;
@@ -1936,94 +1868,6 @@ leave:
 usbd_status
 zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 {
-	/* Copied nearly verbatim from the Linux driver rewrite */
-	static const struct zyd_adpairs16 ir1[] = {
-		{ ZYD_CR0,   0x0a }, { ZYD_CR1,   0x06 }, { ZYD_CR2,   0x26 },
-		{ ZYD_CR3,   0x38 }, { ZYD_CR4,   0x80 }, { ZYD_CR9,   0xa0 },
-		{ ZYD_CR10,  0x81 }, { ZYD_CR11,  0x00 }, { ZYD_CR12,  0x7f },
-		{ ZYD_CR13,  0x8c }, { ZYD_CR14,  0x80 }, { ZYD_CR15,  0x3d },
-		{ ZYD_CR16,  0x20 }, { ZYD_CR17,  0x1e }, { ZYD_CR18,  0x0a },
-		{ ZYD_CR19,  0x48 }, { ZYD_CR20,  0x0c }, { ZYD_CR21,  0x0c },
-		{ ZYD_CR22,  0x23 }, { ZYD_CR23,  0x90 }, { ZYD_CR24,  0x14 },
-		{ ZYD_CR25,  0x40 }, { ZYD_CR26,  0x10 }, { ZYD_CR27,  0x19 },
-		{ ZYD_CR28,  0x7f }, { ZYD_CR29,  0x80 }, { ZYD_CR30,  0x4b },
-		{ ZYD_CR31,  0x60 }, { ZYD_CR32,  0x43 }, { ZYD_CR33,  0x08 },
-		{ ZYD_CR34,  0x06 }, { ZYD_CR35,  0x0a }, { ZYD_CR36,  0x00 },
-		{ ZYD_CR37,  0x00 }, { ZYD_CR38,  0x38 }, { ZYD_CR39,  0x0c },
-		{ ZYD_CR40,  0x84 }, { ZYD_CR41,  0x2a }, { ZYD_CR42,  0x80 },
-		{ ZYD_CR43,  0x10 }, { ZYD_CR44,  0x12 }, { ZYD_CR46,  0xff },
-		{ ZYD_CR47,  0x08 }, { ZYD_CR48,  0x26 }, { ZYD_CR49,  0x5b },
-		{ ZYD_CR64,  0xd0 }, { ZYD_CR65,  0x04 }, { ZYD_CR66,  0x58 },
-		{ ZYD_CR67,  0xc9 }, { ZYD_CR68,  0x88 }, { ZYD_CR69,  0x41 },
-		{ ZYD_CR70,  0x23 }, { ZYD_CR71,  0x10 }, { ZYD_CR72,  0xff },
-		{ ZYD_CR73,  0x32 }, { ZYD_CR74,  0x30 }, { ZYD_CR75,  0x65 },
-		{ ZYD_CR76,  0x41 }, { ZYD_CR77,  0x1b }, { ZYD_CR78,  0x30 },
-		{ ZYD_CR79,  0x68 }, { ZYD_CR80,  0x64 }, { ZYD_CR81,  0x64 },
-		{ ZYD_CR82,  0x00 }, { ZYD_CR83,  0x00 }, { ZYD_CR84,  0x00 },
-		{ ZYD_CR85,  0x02 }, { ZYD_CR86,  0x00 }, { ZYD_CR87,  0x00 },
-		{ ZYD_CR88,  0xff }, { ZYD_CR89,  0xfc }, { ZYD_CR90,  0x00 },
-		{ ZYD_CR91,  0x00 }, { ZYD_CR92,  0x00 }, { ZYD_CR93,  0x08 },
-		{ ZYD_CR94,  0x00 }, { ZYD_CR95,  0x00 }, { ZYD_CR96,  0xff },
-		{ ZYD_CR97,  0xe7 }, { ZYD_CR98,  0x00 }, { ZYD_CR99,  0x00 },
-		{ ZYD_CR100, 0x00 }, { ZYD_CR101, 0xae }, { ZYD_CR102, 0x02 },
-		{ ZYD_CR103, 0x00 }, { ZYD_CR104, 0x03 }, { ZYD_CR105, 0x65 },
-		{ ZYD_CR106, 0x04 }, { ZYD_CR107, 0x00 }, { ZYD_CR108, 0x0a },
-		{ ZYD_CR109, 0xaa }, { ZYD_CR110, 0xaa }, { ZYD_CR111, 0x25 },
-		{ ZYD_CR112, 0x25 }, { ZYD_CR113, 0x00 }, { ZYD_CR119, 0x1e },
-		{ ZYD_CR125, 0x90 }, { ZYD_CR126, 0x00 }, { ZYD_CR127, 0x00 },
-		{ ZYD_CR5,   0x00 }, { ZYD_CR6,   0x00 }, { ZYD_CR7,   0x00 },
-		{ ZYD_CR8,   0x00 }, { ZYD_CR9,   0x20 }, { ZYD_CR12,  0xf0 },
-		{ ZYD_CR20,  0x0e }, { ZYD_CR21,  0x0e }, { ZYD_CR27,  0x10 },
-		{ ZYD_CR44,  0x33 }, { ZYD_CR47,  0x30 }, { ZYD_CR83,  0x24 },
-		{ ZYD_CR84,  0x04 }, { ZYD_CR85,  0x00 }, { ZYD_CR86,  0x0C },
-		{ ZYD_CR87,  0x12 }, { ZYD_CR88,  0x0C }, { ZYD_CR89,  0x00 },
-		{ ZYD_CR90,  0x10 }, { ZYD_CR91,  0x08 }, { ZYD_CR93,  0x00 },
-		{ ZYD_CR94,  0x01 }, { ZYD_CR95,  0x00 }, { ZYD_CR96,  0x50 },
-		{ ZYD_CR97,  0x37 }, { ZYD_CR98,  0x35 }, { ZYD_CR101, 0x13 },
-		{ ZYD_CR102, 0x27 }, { ZYD_CR103, 0x27 }, { ZYD_CR104, 0x18 },
-		{ ZYD_CR105, 0x12 }, { ZYD_CR109, 0x27 }, { ZYD_CR110, 0x27 },
-		{ ZYD_CR111, 0x27 }, { ZYD_CR112, 0x27 }, { ZYD_CR113, 0x27 },
-		{ ZYD_CR114, 0x27 }, { ZYD_CR115, 0x26 }, { ZYD_CR116, 0x24 },
-		{ ZYD_CR117, 0xfc }, { ZYD_CR118, 0xfa }, { ZYD_CR120, 0x4f },
-		{ ZYD_CR123, 0x27 }, { ZYD_CR125, 0xaa }, { ZYD_CR127, 0x03 },
-		{ ZYD_CR128, 0x14 }, { ZYD_CR129, 0x12 }, { ZYD_CR130, 0x10 },
-		{ ZYD_CR131, 0x0C }, { ZYD_CR136, 0xdf }, { ZYD_CR137, 0x40 },
-		{ ZYD_CR138, 0xa0 }, { ZYD_CR139, 0xb0 }, { ZYD_CR140, 0x99 },
-		{ ZYD_CR141, 0x82 }, { ZYD_CR142, 0x54 }, { ZYD_CR143, 0x1c },
-		{ ZYD_CR144, 0x6c }, { ZYD_CR147, 0x07 }, { ZYD_CR148, 0x4c },
-		{ ZYD_CR149, 0x50 }, { ZYD_CR150, 0x0e }, { ZYD_CR151, 0x18 },
-		{ ZYD_CR160, 0xfe }, { ZYD_CR161, 0xee }, { ZYD_CR162, 0xaa },
-		{ ZYD_CR163, 0xfa }, { ZYD_CR164, 0xfa }, { ZYD_CR165, 0xea },
-		{ ZYD_CR166, 0xbe }, { ZYD_CR167, 0xbe }, { ZYD_CR168, 0x6a },
-		{ ZYD_CR169, 0xba }, { ZYD_CR170, 0xba }, { ZYD_CR171, 0xba },
-		/* Note: ZYD_CR204 must lead the ZYD_CR203 */
-		{ ZYD_CR204, 0x7d }, { ZYD_CR203, 0x30 }/*, { ZYD_CR240, 0x80 }*/
-	};
-
-	static const struct zyd_adpairs32 ir2[] = {
-		{ ZYD_MAC_ACK_EXT,		0x20 },
-		{ ZYD_CR_ADDA_MBIAS_WARMTIME,	0x30000808 },
-		{ ZYD_MAC_RETRY,		0x2 },
-		{ ZYD_MAC_SNIFFER,		0 },
-		{ ZYD_MAC_STOHOSTSETTING,	0 },//ZYD_AP_RX_FILTER },
-		{ ZYD_MAC_GHTBL,		0x00 },
-		{ ZYD_MAC_GHTBH,		0x80000000 },
-		{ ZYD_MAC_MISC,			0xa4 },
-		{ ZYD_CR_ADDA_PWR_DWN,		0x7f },
-		{ ZYD_MAC_BCNCFG,		0x00f00401 },
-		{ ZYD_MAC_PHY_DELAY2,		0x00 },
-		{ ZYD_MAC_ACK_EXT,		0x80 },
-		{ ZYD_CR_ADDA_PWR_DWN,		0x00 },
-		{ ZYD_MAC_SIFS_ACK_TIME,	0x100 },
-		{ ZYD_MAC_DIFS_EIFS_SIFS,	0x547c032 },
-		{ ZYD_CR_RX_PE_DELAY,		0x70 },
-		{ ZYD_CR_PS_CTRL,		0x10000000 },
-		{ ZYD_MAC_RTSCTSRATE,		0x02030203 },
-		{ ZYD_MAC_RX_THRESHOLD,		0x000c0640 },
-		{ ZYD_MAC_AFTER_PNP,		0x1 },
-		{ ZYD_MAC_BACKOFF_PROTECT,	0x114 }
-	};
-
 	usbd_status rv;
 	int stage = 0;
 	uint8_t rf, pa;
@@ -2072,8 +1916,8 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 
 	/* PHY init ("reset") */
 	zyd_lock_phy(sc);
-	rv = zyd_batchwrite16(sc, ir1,
-	    (sizeof(ir1) / sizeof(struct zyd_adpairs16)));
+	rv = zyd_batchwrite16(sc, zyd_def_cr,
+	    (sizeof(zyd_def_cr) / sizeof(struct zyd_adpairs16)));
 	zyd_unlock_phy(sc);
 
 	if (rv)
@@ -2082,8 +1926,8 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 	stage++;
 
 	/* HMAC init */
-	rv = zyd_batchwrite32(sc, ir2,
-	    (sizeof(ir2) / sizeof(struct zyd_adpairs32)));
+	rv = zyd_batchwrite32(sc, zyd_def_mac,
+	    (sizeof(zyd_def_mac) / sizeof(struct zyd_adpairs32)));
 
 	if (rv)
 		goto leave;
