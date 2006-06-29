@@ -166,7 +166,7 @@ int pmap_count_res(pmap_t pmap);
 
 void pmap_bootstrap(u_long kernelstart, u_long kernelend, u_int numctx);
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
-#define PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT+1))))
+#define PMAP_PREFER(pa, va)	(*(va) += (((*(va)) ^ (pa)) & VA_ALIAS_MASK))
 
 #define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 
