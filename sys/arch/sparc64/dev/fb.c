@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.10 2006/03/12 22:53:02 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.11 2006/06/29 17:54:32 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -235,8 +235,6 @@ fbwscons_console_init(struct sunfb *sf, int row)
 	if (sf->sf_depth > 8) {
 		wscol_white = 0;
 		wscol_black = 255;
-		wskernel_bg = 0;
-		wskernel_fg = 255;
 	}
 
 	if (ISSET(sf->sf_ro.ri_caps, WSSCREEN_WSCOLORS) &&

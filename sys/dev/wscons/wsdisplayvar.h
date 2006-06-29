@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.16 2005/09/27 21:45:20 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.17 2006/06/29 17:54:32 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -92,7 +92,6 @@ struct wsdisplay_emulops {
 /* XXX should be #if NWSEMUL_SUN > 1 */
 #if defined(__sparc__) || defined(__sparc64__)
 extern int wscol_white, wscol_black;
-extern int wskernel_fg, wskernel_bg;
 #endif
 
 #define	WSSCREEN_NAME_SIZE	16

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.13 2005/03/09 17:48:41 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.14 2006/06/29 17:54:32 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -127,8 +127,6 @@ struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
  */
 int	wscol_white = 0;	/* 0 */
 int	wscol_black = 7;	/* 255 */
-int	wskernel_bg = 7;	/* 0 */
-int	wskernel_fg = 0;	/* 255 */
 
 void
 wsemul_sun_init(edp, type, cookie, ccol, crow, defattr)
@@ -174,10 +172,10 @@ wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 	wsemul_sun_init(edp, type, cookie, ccol, crow, defattr);
 
 #ifndef WS_KERNEL_FG
-#define WS_KERNEL_FG wskernel_bg
+#define WS_KERNEL_FG WSCOL_BLACK
 #endif
 #ifndef WS_KERNEL_BG
-#define WS_KERNEL_BG wskernel_fg
+#define WS_KERNEL_BG WSCOL_WHITE
 #endif
 #ifndef WS_KERNEL_COLATTR
 #define WS_KERNEL_COLATTR 0
