@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.3 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.4 2006/06/29 01:40:51 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -131,7 +131,7 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 		}
 
 		/* In MMC mode, find the next available RCA. */
-		next_rca = 0;
+		next_rca = 1;
 		if (!ISSET(sc->sc_flags, SMF_SD_MODE))
 			SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list)
 				next_rca++;
@@ -168,6 +168,13 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 		/* Deselect. */
 		(void)sdmmc_select_card(sc, NULL);
 #endif
+
+		/*
+		 * If this is a memory-only card, the card responding
+		 * first becomes an alias for SDIO function 0.
+		 */
+		if (sc->sc_fn0 == NULL)
+			sc->sc_fn0 = sf;
 
 		SIMPLEQ_INSERT_TAIL(&sc->sf_head, sf, sf_list);
 	}
