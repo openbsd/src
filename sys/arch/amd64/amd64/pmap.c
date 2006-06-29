@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2005/11/28 16:56:31 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2006/06/29 10:22:25 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2848,7 +2848,7 @@ pmap_dump(pmap, sva, eva)
 	for (/* null */ ; sva < eva ; sva = blkendva) {
 
 		/* determine range of block */
-		blkendva = round_pdr(sva+1);
+		blkendva = x86_round_pdr(sva+1);
 		if (blkendva > eva)
 			blkendva = eva;
 
