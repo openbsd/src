@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.2 2006/06/29 01:26:13 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -24,6 +24,14 @@
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+/*
+ * 8-bit PCI configuration register that tells us how many slots there
+ * are and which BAR entry corresponds to the first slot.
+ */
+#define SDHC_PCI_CONF_SLOT_INFO		0x40
+#define SDHC_PCI_NUM_SLOTS(info)	((((info) >> 4) & 0x7) + 1)
+#define SDHC_PCI_FIRST_BAR(info)	((info) & 0x7)
 
 struct sdhc_pci_softc {
 	struct sdhc_softc sc;
@@ -56,11 +64,13 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	char const *intrstr;
+	int slotinfo;
+	int nslots;
+	int usedma;
+	int reg;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t size;
-	int usedma;
-	int reg;
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
@@ -82,7 +92,14 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map and attach all hosts supported by the host controller.
 	 */
-	for (reg = SDHC_PCI_BAR_START; reg < SDHC_PCI_BAR_END; reg += 4) {
+	slotinfo = pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    SDHC_PCI_CONF_SLOT_INFO);
+	/* XXX: handle 64-bit BARs */
+	for (reg = SDHC_PCI_BAR_START + SDHC_PCI_FIRST_BAR(slotinfo) *
+		 sizeof(u_int32_t),
+	     nslots = SDHC_PCI_NUM_SLOTS(slotinfo);
+	     reg < SDHC_PCI_BAR_END && nslots > 0;
+	     reg += sizeof(u_int32_t), nslots--) {
 
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg,
 		    NULL, NULL, NULL) != 0)
