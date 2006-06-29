@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.86 2006/06/10 21:23:50 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.87 2006/06/29 10:00:49 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -229,6 +229,9 @@ and other utilities using
 As option
 .Fl L
 above, but capture to a specified file.
+Note that only paths beginning with
+.Pa /var/run
+are allowed.
 .It Fl N Ar udpencap-port
 The
 .Fl N
