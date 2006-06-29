@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.158 2006/06/29 16:47:14 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.159 2006/06/29 20:09:36 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -504,8 +504,6 @@ reading registers, above, also apply to writing
 .Tn PCI
 configuration registers.
 .El
-.Sh SEE ALSO
-.Xr intro 4
 .Sh FILES
 .Bl -tag -width /dev/pci -compact
 .It Pa /dev/pci
@@ -513,6 +511,8 @@ Character device for the
 .Nm
 driver.
 .El
+.Sh SEE ALSO
+.Xr intro 4
 .Sh HISTORY
 The machine-independent
 .Tn PCI
