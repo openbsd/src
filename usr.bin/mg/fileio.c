@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.75 2006/06/01 05:56:51 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.76 2006/06/29 21:59:08 jason Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,15 +8,15 @@
 #include "def.h"
 
 
-#include <sys/dir.h>
-#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 
 #include <fcntl.h>
 #include <limits.h>
+#include <dirent.h>
 #include <pwd.h>
 #include <string.h>
 #include <unistd.h>
