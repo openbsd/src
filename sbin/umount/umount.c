@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.16 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.17 2006/06/29 12:51:26 jmc Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.16 2003/07/29 18:38:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.17 2006/06/29 12:51:26 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -389,7 +389,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s\n       %s\n",
-	    "umount [-fv] [-t fstypelist] special | node",
-	    "umount -a[fv] [-h host] [-t fstypelist]");
+	    "umount [-fv] special | node",
+	    "umount -a [-fv] [-h host] [-t type]");
 	exit(1);
 }
