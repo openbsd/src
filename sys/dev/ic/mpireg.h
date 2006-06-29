@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.18 2006/06/29 08:23:26 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.19 2006/06/29 08:35:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -619,7 +619,7 @@ struct mpi_msg_scsi_io {
 
 	u_int8_t		cdb_length;
 	u_int8_t		sense_buf_len;
-	u_int8_t		reserved;
+	u_int8_t		reserved1;
 	u_int8_t		msg_flags;
 #define MPI_SCSIIO_EEDP					0xf0
 #define MPI_SCSIIO_CMD_DATA_DIR				(1<<2)
@@ -632,19 +632,19 @@ struct mpi_msg_scsi_io {
 
 	u_int16_t		lun[4];
 
-	u_int32_t		control;
-#define MPI_SCSIIO_ADDITIONAL_CDB_LEN			(0xf<<26)
-#define MPI_SCSIIO_DATA_DIR				(0x3<<24)
-#define MPI_SCSIIO_DATA_DIR_NONE			(0x0<<24)
-#define MPI_SCSIIO_DATA_DIR_WRITE			(0x1<<24)
-#define MPI_SCSIIO_DATA_DIR_READ			(0x2<<24)
-#define MPI_SCSIIO_TASK_ATTR				(0x7<<8)
-#define MPI_SCSIIO_TASK_ATTR_SIMPLE_Q			(0x0<<8)
-#define MPI_SCSIIO_TASK_ATTR_HEAD_OF_Q			(0x1<<8)
-#define MPI_SCSIIO_TASK_ATTR_ORDERED_Q			(0x2<<8)
-#define MPI_SCSIIO_TASK_ATTR_ACA_Q			(0x4<<8)
-#define MPI_SCSIIO_TASK_ATTR_UNTAGGED			(0x5<<8)
-#define MPI_SCSIIO_TASK_ATTR_NO_DISCONNECT		(0x7<<8)
+	u_int8_t		reserved2;
+	u_int8_t		tagging;
+#define MPI_SCSIIO_ATTR_SIMPLE_Q			(0x0)
+#define MPI_SCSIIO_ATTR_HEAD_OF_Q			(0x1)
+#define MPI_SCSIIO_ATTR_ORDERED_Q			(0x2)
+#define MPI_SCSIIO_ATTR_ACA_Q				(0x4)
+#define MPI_SCSIIO_ATTR_UNTAGGED			(0x5)
+#define MPI_SCSIIO_ATTR_NO_DISCONNECT			(0x7)
+	u_int8_t		direction;
+#define MPI_SCSIIO_DIR_NONE				(0x0)
+#define MPI_SCSIIO_DIR_WRITE				(0x1)
+#define MPI_SCSIIO_DIR_READ				(0x2)
+	u_int8_t		extra_cdb_len;
 
 #define MPI_CDB_LEN					16
 	u_int8_t		cdb[MPI_CDB_LEN];

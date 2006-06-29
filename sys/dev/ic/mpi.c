@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.48 2006/06/19 21:06:22 miod Exp $ */
+/*	$OpenBSD: mpi.c,v 1.49 2006/06/29 08:35:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -976,13 +976,13 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 	case SCSI_DATA_IN:
-		io->control = htole32(MPI_SCSIIO_DATA_DIR_READ);
+		io->direction = MPI_SCSIIO_DIR_READ;
 		break;
 	case SCSI_DATA_OUT:
-		io->control = htole32(MPI_SCSIIO_DATA_DIR_WRITE);
+		io->direction = MPI_SCSIIO_DIR_WRITE;
 		break;
 	default:
-		io->control = htole32(MPI_SCSIIO_DATA_DIR_NONE);
+		io->direction = MPI_SCSIIO_DIR_NONE;
 		break;
 	}
 
