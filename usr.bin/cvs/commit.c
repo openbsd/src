@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.77 2006/06/28 18:52:05 reyk Exp $	*/
+/*	$OpenBSD: commit.c,v 1.78 2006/06/29 00:41:52 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -404,7 +404,7 @@ commit_desc_set(struct cvs_file *cf)
 		return;
 	}
 
-	cvs_buf_load_fd(fd, BUF_AUTOEXT);
+	bp = cvs_buf_load_fd(fd, BUF_AUTOEXT);
 	cvs_buf_putc(bp, '\0');
 	desc = cvs_buf_release(bp);
 
