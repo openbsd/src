@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.25 2006/06/27 10:28:25 dlg Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.26 2006/06/29 21:17:27 dlg Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.25 2006/06/27 10:28:25 dlg Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.26 2006/06/29 21:17:27 dlg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,12 +55,11 @@ static double etime;
 
 static void numlabels(void);
 
-#define ATIME(x,y) (					\
-        (double)x[y].tv_sec +				\
-        ((double)x[y].tv_usec / (double)1000000)	\
-             )
-#define NFMT "%-8.8s %12.0f %14.0f %10.0f %10.0f %10.1f"
-#define SFMT "%6s %14s %14s %10s %10s %10s"
+#define ATIME(x,y) ((double)x[y].tv_sec + \
+        ((double)x[y].tv_usec / (double)1000000))
+
+#define NFMT "%-8.8s  %14.0f %14.0f  %10.0f %10.0f  %10.1f"
+#define SFMT "%-8.8s  %14s %14s  %10s %10s  %10s"
 
 WINDOW *
 openiostat(void)
@@ -97,7 +96,7 @@ fetchiostat(void)
 void
 labeliostat(void)
 {
-	mvwprintw(wnd, 1, 0, SFMT, "Device", "rbytes", "wbytes", "rtps",
+	mvwprintw(wnd, 1, 0, SFMT, "Device", "rKBytes", "wKBytes", "rtps",
 	    "wtps", "msec");
 }
 
@@ -146,20 +145,20 @@ numlabels(void)
 
 	for (dn = 0; dn < cur.dk_ndrive; dn++) {
 		rsum += cur.dk_rbytes[dn] / etime;
-		wsum += cur.dk_wbytes[dn] /etime;
+		wsum += cur.dk_wbytes[dn] / etime;
 		rtsum += cur.dk_rxfer[dn] / etime;
 		wtsum += cur.dk_wxfer[dn] / etime;
 		mssum += ATIME(cur.dk_time, dn) / etime;
 		mvwprintw(wnd, row++, 0, NFMT,
 		    cur.dk_name[dn],
-		    cur.dk_rbytes[dn] / etime,
-		    cur.dk_wbytes[dn] / etime,
+		    cur.dk_rbytes[dn] / 1024.0 / etime,
+		    cur.dk_wbytes[dn] / 1024.0 / etime,
 		    cur.dk_rxfer[dn] / etime,
 		    cur.dk_wxfer[dn] / etime,
 		    ATIME(cur.dk_time, dn) / etime);
 	}
 	mvwprintw(wnd, row++, 0, NFMT,
-	    "Totals", rsum, wsum, rtsum, wtsum, mssum);
+	    "Totals", rsum / 1024.0, wsum / 1024.0, rtsum, wtsum, mssum);
 }
 
 int
