@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.33 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.34 2006/06/29 17:52:21 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -213,8 +213,8 @@ cgtwoattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_cmap = (volatile u_short *)
 	    mapiodev(ca->ca_ra.ra_reg,
-		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
-		     3 * CG2_CMSIZE);
+		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap),
+		     3 * CG2_CMSIZE * sizeof(u_short));
 
 	/* enable video */
 	cgtwo_burner(sc, 1, 0);
