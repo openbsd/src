@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.4 2006/06/02 20:03:05 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.5 2006/06/29 01:32:33 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -105,7 +105,7 @@ void	sdhc_command_timeout(void *);
 void	sdhc_dump_regs(struct sdhc_host *);
 #define DPRINTF(s)	printf s
 #else
-#define DPRINTF(s)	/**/
+#define DPRINTF(s)	do {} while(0)
 #endif
 
 struct sdmmc_chip_functions sdhc_functions = {
@@ -176,10 +176,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Reset the host controller and enable interrupts.
 	 */
-	if (sdhc_host_reset(hp) != 0) {
-		printf("%s: host reset failed\n", sc->sc_dev.dv_xname);
-		goto err;
-	}
+	(void)sdhc_host_reset(hp);
 
 	/* Determine host capabilities. */
 	caps = HREAD4(hp, SDHC_CAPABILITIES);
@@ -358,6 +355,7 @@ sdhc_power(int why, void *arg)
 		/* Restore the host controller state. */
 		for (n = 0; n < sc->sc_nhosts; n++) {
 			hp = &sc->sc_host[n];
+			(void)sdhc_host_reset(hp);
 			for (i = 0; i < sizeof hp->regs; i++)
 				HWRITE1(hp, i, hp->regs[i]);
 		}
@@ -378,20 +376,23 @@ sdhc_shutdown(void *arg)
 	/* XXX chip locks up if we don't disable it before reboot. */
 	for (i = 0; i < sc->sc_nhosts; i++) {
 		hp = &sc->sc_host[i];
-		sdhc_host_reset(hp);
+		(void)sdhc_host_reset(hp);
 	}
 }
 
 /*
  * Reset the host controller.  Called during initialization, when
- * cards are removed and during error recovery.
+ * cards are removed, upon resume, and during error recovery.
+ *
+ * Unfortunately, at least one vendor does not follow the simplified
+ * SDHC specification: TI's PCI7621 does not clear reset bits, so we
+ * have no way to tell whether the reset was successful or timed out.
  */
 int
 sdhc_host_reset(sdmmc_chipset_handle_t sch)
 {
 	struct sdhc_host *hp = sch;
 	u_int16_t imask;
-	int error = 0;
 	int timo;
 	int s;
 
@@ -401,7 +402,8 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	HWRITE2(hp, SDHC_NINTR_SIGNAL_EN, 0);
 
 	/*
-	 * Reset the entire host controller and wait up to 100ms.
+	 * Reset the entire host controller and wait up to 100ms for
+	 * the controller to clear the reset bit.
 	 */
 	HWRITE1(hp, SDHC_SOFTWARE_RESET, SDHC_RESET_MASK);
 	for (timo = 10; timo > 0; timo--) {
@@ -411,7 +413,7 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	}
 	if (timo == 0) {
 		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
-		error = ETIMEDOUT;
+		/* return ETIMEDOUT; but see above. */
 	}
 
 	/* Set data timeout counter value to max for now. */
@@ -428,7 +430,7 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	HWRITE2(hp, SDHC_EINTR_SIGNAL_EN, SDHC_EINTR_SIGNAL_MASK);
 
 	splx(s);
-	return error;
+	return 0;
 }
 
 u_int32_t
@@ -477,8 +479,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 	/* If power is disabled, reset the host and return now. */
 	if (ocr == 0) {
 		splx(s);
-		if (sdhc_host_reset(hp) != 0)
-			DPRINTF(("%s: host reset failed\n", HDEVNAME(hp)));
+		(void)sdhc_host_reset(hp);
 		return 0;
 	}
 
