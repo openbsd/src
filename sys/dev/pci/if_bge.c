@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.164 2006/06/27 16:46:24 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.165 2006/06/29 01:43:34 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2037,11 +2037,9 @@ bge_reset(struct bge_softc *sc)
 		DELAY(10);
 	}
 
-	if (i >= BGE_TIMEOUT) {
+	if (i >= BGE_TIMEOUT)
 		printf("%s: firmware handshake timed out\n",
 		    sc->bge_dev.dv_xname);
-		return;
-	}
 
 	/*
 	 * XXX Wait for the value of the PCISTATE register to
