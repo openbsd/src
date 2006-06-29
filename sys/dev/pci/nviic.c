@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.5 2006/01/30 00:18:06 dlg Exp $ */
+/*	$OpenBSD: nviic.c,v 1.6 2006/06/29 17:59:47 brad Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -32,8 +32,11 @@
 #include <dev/i2c/i2cvar.h>
 
 /* PCI Configuration space registers */
-#define NVI_PCI_SMBASE1		0x50
-#define NVI_PCI_SMBASE2		0x54
+#define NVI_PCI_SMBASE1		0x20
+#define NVI_PCI_SMBASE2		0x24
+
+#define NVI_OLD_PCI_SMBASE1	0x50
+#define NVI_OLD_PCI_SMBASE2	0x54
 
 #define NVI_SMBASE(x)		((x) & 0xfffc)
 #define NVI_SMBASE_SIZE		8
@@ -115,7 +118,9 @@ const struct pci_matchid nviic_ids[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SMB },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_SMB },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SMB },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMB }
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMB },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_SMB },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB }
 };
 
 int
@@ -140,8 +145,21 @@ nviic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	baseregs[0] = NVI_PCI_SMBASE1;
-	baseregs[1] = NVI_PCI_SMBASE2;
+	/* Older chipsets used non-standard BARs */
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_NVIDIA_NFORCE2_SMB:
+	case PCI_PRODUCT_NVIDIA_NFORCE2_400_SMB:
+	case PCI_PRODUCT_NVIDIA_NFORCE3_SMB:
+	case PCI_PRODUCT_NVIDIA_NFORCE3_250_SMB:
+	case PCI_PRODUCT_NVIDIA_NFORCE4_SMB:
+		baseregs[0] = NVI_OLD_PCI_SMBASE1;
+		baseregs[1] = NVI_OLD_PCI_SMBASE2;
+		break;
+	default:
+		baseregs[0] = NVI_PCI_SMBASE1;
+		baseregs[1] = NVI_PCI_SMBASE2;
+	}
+
 	for (i = 0; i < NVIIC_NBUS; i++) {
 		nc = &sc->sc_nc[i];
 
