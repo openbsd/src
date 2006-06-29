@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.5 2006/06/22 08:33:45 deraadt Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.6 2006/06/29 00:01:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -83,8 +83,6 @@ pcfiic_ebus_attach(struct device *parent, struct device *self, void *aux)
 	u_int8_t			clock = PCF_CLOCK_12;
 	int				swapregs = 0;
 
-	sc->sc_iot = ea->ea_memtag;
-
 	if (ea->ea_nregs < 1 || ea->ea_nregs > 2) {
 		printf(": expected 1 or 2 registers, got %d\n", ea->ea_nregs);
 		return;
@@ -115,13 +113,31 @@ pcfiic_ebus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (ebus_bus_map(sc->sc_iot, 0, EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) != 0) {
+	/* Prefer prom mapping, then memory mapping, then io mapping */
+	if (ea->ea_nvaddrs) {
+		if (bus_space_map(ea->ea_memtag, ea->ea_vaddrs[0], 0,
+		    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_ioh) != 0)
+			goto fail;
+		sc->sc_iot = ea->ea_memtag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_memtag;
+	} else if (ebus_bus_map(ea->ea_iotag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_iotag;
+	} else {
+fail:
 		printf(": can't map register space\n");
-		return;
+               	return;
 	}
 
 	if (ea->ea_nregs == 2) {
+		/*
+		 * Second register only occurs on BBC-based machines,
+		 * and is likely not prom mapped
+		*/
 		if (ebus_bus_map(sc->sc_iot, 0, EBUS_PADDR_FROM_REG(&ea->ea_regs[1]),
 		    ea->ea_regs[1].size, 0, 0, &sc->sc_ioh2) != 0) {
 			printf(": can't map 2nd register space\n");
