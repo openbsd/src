@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.17 2006/06/18 00:08:00 marco Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.18 2006/06/29 08:23:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -856,9 +856,9 @@ struct mpi_cfg_spi_port_pg1 {
 	struct mpi_cfg_hdr	config_header;
 
 	/* configuration */
-	u_int16_t		port_resp_ids;
-	u_int8_t		reserved1;
 	u_int8_t		port_scsi_id;
+	u_int8_t		reserved1;
+	u_int16_t		port_resp_ids;
 
 	u_int32_t		on_bus_timer_value;
 
