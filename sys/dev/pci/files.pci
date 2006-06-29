@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.208 2006/06/26 04:57:54 brad Exp $
+#	$OpenBSD: files.pci,v 1.209 2006/06/29 22:14:41 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -187,10 +187,6 @@ file	dev/pci/ciss_pci.c		ciss_pci
 # device declaration in sys/conf/files
 attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
-
-# LSILogic Fusion-MPT I/O Processor SCSI/FC family
-attach	mpt at pci with mpt_pci
-file	dev/pci/mpt_pci.c		mpt_pci
 
 # LSI Logic Fusion-MPT Message Passing Interface
 attach	mpi at pci with mpi_pci
