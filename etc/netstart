@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.113 2005/12/28 04:55:35 david Exp $
+#	$OpenBSD: netstart,v 1.114 2006/06/29 17:23:28 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -102,7 +102,7 @@ ifstart() {
 			else
 				alias=
 			fi
-			cmd="ifconfig $if $af $alias $name "
+			cmd="ifconfig $if $af $alias $name"
 			case "$dt" in
 			dest)
 				cmd="$cmd $dtaddr"
