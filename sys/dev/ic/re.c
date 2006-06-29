@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.30 2006/06/27 07:41:05 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.31 2006/06/29 20:41:19 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -178,7 +178,7 @@ void	re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 void	re_eeprom_putbyte(struct rl_softc *, int);
 void	re_eeprom_getword(struct rl_softc *, int, u_int16_t *);
-void	re_read_eeprom(struct rl_softc *, caddr_t, int, int, int);
+void	re_read_eeprom(struct rl_softc *, caddr_t, int, int);
 
 int	re_gmii_readreg(struct device *, int, int);
 void	re_gmii_writereg(struct device *, int, int, int);
@@ -214,12 +214,13 @@ re_eeprom_putbyte(struct rl_softc *sc, int addr)
 {
 	int	d, i;
 
-	d = addr | sc->rl_eecmd_read;
+	d = addr | (RL_9346_READ << sc->rl_eewidth);
 
 	/*
 	 * Feed in each bit and strobe the clock.
 	 */
-	for (i = 0x400; i; i >>= 1) {
+
+	for (i = 1 << (sc->rl_eewidth + 3); i; i >>= 1) {
 		if (d & i)
 			EE_SET(RL_EE_DATAIN);
 		else
@@ -241,15 +242,10 @@ re_eeprom_getword(struct rl_softc *sc, int addr, u_int16_t *dest)
 	int		i;
 	u_int16_t	word = 0;
 
-	/* Enter EEPROM access mode. */
-	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_PROGRAM|RL_EE_SEL);
-
 	/*
 	 * Send address of word we want to read.
 	 */
 	re_eeprom_putbyte(sc, addr);
-
-	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_PROGRAM|RL_EE_SEL);
 
 	/*
 	 * Start reading bits from EEPROM.
@@ -263,9 +259,6 @@ re_eeprom_getword(struct rl_softc *sc, int addr, u_int16_t *dest)
 		DELAY(100);
 	}
 
-	/* Turn off EEPROM access mode. */
-	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
-
 	*dest = word;
 }
 
@@ -273,20 +266,24 @@ re_eeprom_getword(struct rl_softc *sc, int addr, u_int16_t *dest)
  * Read a sequence of words from the EEPROM.
  */
 void
-re_read_eeprom(struct rl_softc *sc, caddr_t dest, int off,
-    int cnt, int swap)
+re_read_eeprom(struct rl_softc *sc, caddr_t dest, int off, int cnt)
 {
 	int		i;
 	u_int16_t	word = 0, *ptr;
 
+	CSR_SETBIT_1(sc, RL_EECMD, RL_EEMODE_PROGRAM);
+
+	DELAY(100);
+
 	for (i = 0; i < cnt; i++) {
+		CSR_SETBIT_1(sc, RL_EECMD, RL_EE_SEL);
 		re_eeprom_getword(sc, off + i, &word);
+		CSR_CLRBIT_1(sc, RL_EECMD, RL_EE_SEL);
 		ptr = (u_int16_t *)(dest + (i * 2));
-		if (swap)
-			*ptr = ntohs(word);
-		else
-			*ptr = word;
+		*ptr = letoh16(word);
 	}
+
+	CSR_CLRBIT_1(sc, RL_EECMD, RL_EEMODE_PROGRAM);
 }
 
 int
@@ -833,43 +830,27 @@ re_attach_common(struct rl_softc *sc)
 	/* Reset the adapter. */
 	re_reset(sc);
 
+	sc->rl_eewidth = 6;
+	re_read_eeprom(sc, (caddr_t)&re_did, 0, 1);
+	if (re_did != 0x8129)
+		sc->rl_eewidth = 8;
+
+	/*
+	 * Get station address from the EEPROM.
+	 */
+	re_read_eeprom(sc, (caddr_t)as, RL_EE_EADDR, 3);
+	for (i = 0; i < 3; i++) {
+		eaddr[(i * 2) + 0] = as[i] & 0xff;
+		eaddr[(i * 2) + 1] = as[i] >> 8;
+	}
+
+	/* Set RX length mask */
 	if (sc->rl_type == RL_8169) {
-		/* Set RX length mask */
 		sc->rl_rxlenmask = RL_RDESC_STAT_GFRAGLEN;
-
 		sc->rl_txstart = RL_GTXSTART;
-
-		/* Force station address autoload from the EEPROM */
-		CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_AUTOLOAD);
-		for (i = 0; i < RL_TIMEOUT; i++) {
-			if (!(CSR_READ_1(sc, RL_EECMD) & RL_EEMODE_AUTOLOAD))
-				break;
-			DELAY(100);
-		}
-		if (i == RL_TIMEOUT)
-			printf ("%s: eeprom autoload timed out\n", sc->sc_dev.dv_xname);
-
-			for (i = 0; i < ETHER_ADDR_LEN; i++)
-				eaddr[i] = CSR_READ_1(sc, RL_IDR0 + i);
 	} else {
-		/* Set RX length mask */
 		sc->rl_rxlenmask = RL_RDESC_STAT_FRAGLEN;
-
 		sc->rl_txstart = RL_TXSTART;
-
-		sc->rl_eecmd_read = RL_EECMD_READ_6BIT;
-		re_read_eeprom(sc, (caddr_t)&re_did, 0, 1, 0);
-		if (re_did != 0x8129)
-			sc->rl_eecmd_read = RL_EECMD_READ_8BIT;
-
-		/*
-		 * Get station address from the EEPROM.
-		 */
-		re_read_eeprom(sc, (caddr_t)as, RL_EE_EADDR, 3, 0);
-		for (i = 0; i < 3; i++) {
-			eaddr[(i * 2) + 0] = as[i] & 0xff;
-			eaddr[(i * 2) + 1] = as[i] >> 8;
-		}
 	}
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -1333,10 +1314,27 @@ void
 re_tick(void *xsc)
 {
 	struct rl_softc	*sc = xsc;
+	struct mii_data	*mii;
+	struct ifnet	*ifp;
 	int s;
 
+	ifp = &sc->sc_arpcom.ac_if;
+	mii = &sc->sc_mii;
+
 	s = splnet();
-	mii_tick(&sc->sc_mii);
+
+	mii_tick(mii);
+	if (sc->rl_link) {
+		if (!(mii->mii_media_status & IFM_ACTIVE))
+			sc->rl_link = 0;
+	} else {
+		if (mii->mii_media_status & IFM_ACTIVE &&
+		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+			sc->rl_link = 1;
+			if (!IFQ_IS_EMPTY(&ifp->if_snd))
+				re_start(ifp);
+		}
+	}
 	splx(s);
 
 	timeout_add(&sc->timer_handle, hz);
@@ -1544,6 +1542,9 @@ re_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
+	if (!sc->rl_link || ifp->if_flags & IFF_OACTIVE)
+		return;
+
 	idx = sc->rl_ldata.rl_tx_prodidx;
 	while (sc->rl_ldata.rl_tx_mbuf[idx] == NULL) {
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
@@ -1605,8 +1606,11 @@ re_init(struct ifnet *ifp)
 {
 	struct rl_softc *sc = ifp->if_softc;
 	u_int32_t	rxcfg = 0;
-	u_int32_t	reg;
 	int		s;
+	union {
+		u_int32_t align_dummy;
+		u_char eaddr[ETHER_ADDR_LEN];
+	} eaddr;
 
 	s = splnet();
 
@@ -1628,15 +1632,12 @@ re_init(struct ifnet *ifp)
 	 * documentation doesn't mention it, we need to enter "Config
 	 * register write enable" mode to modify the ID registers.
 	 */
+	bcopy(sc->sc_arpcom.ac_enaddr, eaddr.eaddr, ETHER_ADDR_LEN);
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
-
-	reg = 0;
-	memcpy(&reg, LLADDR(ifp->if_sadl) + 4, 4);
-	CSR_WRITE_4(sc, RL_IDR4, htole32(reg));
-
-	memcpy(&reg, LLADDR(ifp->if_sadl), 4);
-	CSR_WRITE_4(sc, RL_IDR0, htole32(reg));
-
+	CSR_WRITE_4(sc, RL_IDR0,
+	    htole32(*(u_int32_t *)(&eaddr.eaddr[0])));
+	CSR_WRITE_4(sc, RL_IDR4,
+	    htole32(*(u_int32_t *)(&eaddr.eaddr[4])));
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
 	/*
