@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 2006/06/09 06:41:44 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.109 2006/06/29 17:53:35 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -982,7 +982,7 @@ mapdev(phys, virt, offset, size)
 	int offset, virt, size;
 {
 	vaddr_t va;
-	paddr_t pa;
+	paddr_t pa, base;
 	void *ret;
 	static vaddr_t iobase;
 	unsigned int pmtype;
@@ -990,22 +990,24 @@ mapdev(phys, virt, offset, size)
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
 
-	size = round_page(size);
-	if (size == 0)
-		panic("mapdev: zero size");
-
-	if (virt)
+	base = (paddr_t)phys->rr_paddr + offset;
+	if (virt != 0) {
 		va = trunc_page(virt);
-	else {
+		size = round_page(virt + size) - va;
+	} else {
+		size = round_page(base + size) - trunc_page(base);
 		va = iobase;
 		iobase += size;
 		if (iobase > IODEV_END)	/* unlikely */
 			panic("mapiodev");
 	}
-	ret = (void *)(va | (((u_long)phys->rr_paddr + offset) & PGOFSET));
+	if (size == 0)
+		panic("mapdev: zero size");
+
+	ret = (void *)(va | (base & PGOFSET));
 			/* note: preserve page offset */
 
-	pa = trunc_page((vaddr_t)phys->rr_paddr + offset);
+	pa = trunc_page(base);
 	pmtype = PMAP_IOENC(phys->rr_iospace);
 
 	do {
