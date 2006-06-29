@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1087 2006/06/29 04:36:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1088 2006/06/29 19:03:35 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4135,12 +4135,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCIE-PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP331_C0,
-	    "IOP331 Channel 0",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP332_A,
+	    "IOP332 PCIE-PCIX",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP331_C1,
-	    "IOP331 Channel 1",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP332_B,
+	    "IOP332 PCIE-PCIX",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP331,
+	    "IOP331 PCIX-PCIX",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_41210_A,
