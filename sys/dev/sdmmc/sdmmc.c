@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.5 2006/06/03 03:53:47 martin Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.6 2006/06/29 01:35:37 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -162,6 +162,7 @@ sdmmc_card_detach(struct device *dev, int flags)
 	}
 	SIMPLEQ_INIT(&sc->sf_head);
 	sc->sc_function_count = 0;
+	sc->sc_fn0 = NULL;
 }
 
 int
