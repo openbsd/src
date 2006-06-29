@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1086 2006/06/28 01:14:44 brad Exp $
+$OpenBSD: pcidevs,v 1.1087 2006/06/29 04:36:57 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -462,6 +462,7 @@ product ALI M1535		0x1535	M1535 PCI
 product ALI M1541		0x1541	M1541 PCI
 product ALI M1543		0x1543	M1543 ISA
 product ALI M1563		0x1563	M1563 ISA
+product ALI M1575		0x1575	M1575 ISA
 product ALI M1621		0x1621	M1621 PCI
 product ALI M1631		0x1631	M1631 PCI
 product ALI M1644		0x1644	M1644 PCI
@@ -485,10 +486,12 @@ product ALI M5261		0x5261	M5261 LAN
 product ALI M5263		0x5263	M5263 LAN
 product ALI M5281		0x5281	M5281 SATA
 product ALI M5287		0x5287	M5287 SATA
+product ALI M5288		0x5288	M5288 SATA
 product ALI M5289		0x5289	M5289 SATA
 product ALI M5451		0x5451	M5451 Audio
 product ALI M5455		0x5455	M5455 Audio
 product ALI M5457		0x5457	M5457 Modem
+product ALI M5461		0x5461	M5461 HD Audio
 product ALI M7101		0x7101	M7101 Power
 
 /* ADMtek products */
