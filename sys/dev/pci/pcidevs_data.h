@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1086 2006/06/28 01:14:44 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1087 2006/06/29 04:36:57 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -551,6 +551,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M1563 ISA",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1575,
+	    "M1575 ISA",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1621,
 	    "M1621 PCI",
 	},
@@ -643,6 +647,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M5287 SATA",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5288,
+	    "M5288 SATA",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5289,
 	    "M5289 SATA",
 	},
@@ -657,6 +665,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5457,
 	    "M5457 Modem",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5461,
+	    "M5461 HD Audio",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
