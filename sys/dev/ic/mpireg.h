@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.20 2006/06/29 08:40:30 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.21 2006/06/29 10:43:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -828,28 +828,27 @@ struct mpi_msg_config_reply {
 struct mpi_cfg_spi_port_pg0 {
 	struct mpi_cfg_hdr	config_header;
 
-	u_int32_t		capabilities;
+	u_int8_t		capabilities1;
 #define MPI_CFG_SPI_PORT_0_CAPABILITIES_PACKETIZED	(1<<0)
 #define MPI_CFG_SPI_PORT_0_CAPABILITIES_DT		(1<<1)
 #define MPI_CFG_SPI_PORT_0_CAPABILITIES_QAS		(1<<2)
-#define MPI_CFG_SPI_PORT_0_CAPABILITIES_MIN_PERIOD(x)	\
-    (((x) >> 8) & 0xff)
-#define MPI_CFG_SPI_PORT_0_CAPABILITIES_MAX_OFFSET(x)	\
-    (((x) >> 16) & 0xff)
-#define MPI_CFG_SPI_PORT_0_CAPABILITIES_IDP		(1<<27)
-#define MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH		(1<<29)
-#define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_NARROW	(0<<29)
-#define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_WIDE	(1<<29)
-#define MPI_CFG_SPI_PORT_0_CAPABILITIES_AIP		(1<<31)
+	u_int8_t		min_period;
+	u_int8_t		max_offset;
+	u_int8_t		capabilities2;
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_IDP		(1<<3)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH		(1<<5)
+#define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_NARROW	(0<<5)
+#define  MPI_CFG_SPI_PORT_0_CAPABILITIES_WIDTH_WIDE	(1<<5)
+#define MPI_CFG_SPI_PORT_0_CAPABILITIES_AIP		(1<<7)
 
-	u_int32_t		physical_interface;
-#define MPI_CFG_SPI_PORT_0_PHYS_SIGNAL			(0x3<<0)
-#define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_HVD		(0x1<<0)
-#define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_SE		(0x2<<0)
-#define  MPI_CFG_SPI_PORT_0_PHYS_SIGNAL_LVD		(0x3<<0)
-#define MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID		(0xff<<24)
-#define  MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID_BUSFREE	(0xfe<<24)
-#define  MPI_CFG_SPI_PORT_0_PHYS_CONNECTEDID_UNKNOWN	(0xff<<24)
+	u_int8_t		signalling_type;
+#define MPI_CFG_SPI_PORT_0_SIGNAL_HVD			(0x1)
+#define MPI_CFG_SPI_PORT_0_SIGNAL_SE			(0x2)
+#define MPI_CFG_SPI_PORT_0_SIGNAL_LVD			(0x3)
+	u_int16_t		reserved;
+	u_int8_t		connected_id;
+#define  MPI_CFG_SPI_PORT_0_CONNECTEDID_BUSFREE		(0xfe)
+#define  MPI_CFG_SPI_PORT_0_CONNECTEDID_UNKNOWN		(0xff)
 } __packed;
 
 struct mpi_cfg_spi_port_pg1 {
@@ -912,7 +911,7 @@ struct mpi_cfg_spi_port_pg2 {
 struct mpi_cfg_spi_dev_pg0 {
 	struct mpi_cfg_hdr	config_header;
 
-	u_int32_t		neg_params;
+	u_int8_t		neg_params1;
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_PACKETIZED		(1<<0)
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_DUALXFERS		(1<<1)
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_QAS			(1<<2)
@@ -921,15 +920,14 @@ struct mpi_cfg_spi_dev_pg0 {
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_RD_STRM		(1<<5)
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_RTI			(1<<6)
 #define MPI_CFG_SPI_DEV_0_NEGPARAMS_PCOMP_EN		(1<<7)
-#define MPI_CFG_SPI_DEV_0_NEGPARAMS_XFER_PERIOD(x)	\
-    (((x) >> 8) & 0xff)
-#define MPI_CFG_SPI_DEV_0_NEGPARAMS_XFER_OFFSET(x)	\
-    (((x) >> 16) & 0xff)
-#define MPI_CFG_SPI_DEV_0_NEGPARAMS_IDP_EN		(1<<27)
-#define MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH		(1<<29)
-#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_NARROW	(0<<29)
-#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE		(1<<29)
-#define MPI_CFG_SPI_DEV_0_NEGPARAMS_AIP			(1<<31)
+	u_int8_t		neg_period;
+	u_int8_t		neg_offset;
+	u_int8_t		neg_params2;
+#define MPI_CFG_SPI_DEV_0_NEGPARAMS_IDP_EN		(1<<3)
+#define MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH		(1<<5)
+#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_NARROW	(0<<5)
+#define  MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE		(1<<5)
+#define MPI_CFG_SPI_DEV_0_NEGPARAMS_AIP			(1<<7)
 
 	u_int32_t		information;
 #define MPI_CFG_SPI_DEV_0_INFO_NEG_OCCURRED		(1<<0)
@@ -941,7 +939,7 @@ struct mpi_cfg_spi_dev_pg0 {
 struct mpi_cfg_spi_dev_pg1 {
 	struct mpi_cfg_hdr	config_header;
 
-	u_int32_t		req_params;
+	u_int8_t		req_params1;
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_PACKETIZED		(1<<0)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_DUALXFERS		(1<<1)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_QAS			(1<<2)
@@ -950,15 +948,14 @@ struct mpi_cfg_spi_dev_pg1 {
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_RD_STRM		(1<<5)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_RTI			(1<<6)
 #define MPI_CFG_SPI_DEV_1_REQPARAMS_PCOMP_EN		(1<<7)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_PERIOD(x)	((x) << 8)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_PERIOD_MASK	(0xff<<8)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_OFFSET(x)	((x) << 16)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_OFFSET_MASK	(0xff<<16)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_IDP_EN		(1<<27)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH		(1<<29)
-#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_NARROW	(0<<29)
-#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE		(1<<29)
-#define MPI_CFG_SPI_DEV_1_REQPARAMS_AIP			(1<<31)
+	u_int8_t		req_period;
+	u_int8_t		req_offset;
+	u_int8_t		req_params2;
+#define MPI_CFG_SPI_DEV_1_REQPARAMS_IDP_EN		(1<<3)
+#define MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH		(1<<5)
+#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_NARROW	(0<<5)
+#define  MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE		(1<<5)
+#define MPI_CFG_SPI_DEV_1_REQPARAMS_AIP			(1<<7)
 
 	u_int32_t		reserved;
 

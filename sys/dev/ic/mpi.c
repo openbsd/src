@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.49 2006/06/29 08:35:08 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.50 2006/06/29 10:43:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -312,7 +312,6 @@ mpi_run_ppr(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
 	struct mpi_cfg_spi_port_pg0	pg;
-	int				period, offset;
 
 	struct device			*dev;
 	struct scsibus_softc		*ssc;
@@ -331,11 +330,6 @@ mpi_run_ppr(struct mpi_softc *sc)
 		    DEVNAME(sc));
 		return;
 	}
-
-	period = MPI_CFG_SPI_PORT_0_CAPABILITIES_MIN_PERIOD(
-	    letoh32(pg.capabilities));
-	offset = MPI_CFG_SPI_PORT_0_CAPABILITIES_MAX_OFFSET(
-	    letoh32(pg.capabilities));
 
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
 		if (dev->dv_parent == &sc->sc_dev)
@@ -364,7 +358,8 @@ mpi_run_ppr(struct mpi_softc *sc)
 				/* XXX fan out ppr */
 			}
 
-		while (mpi_ppr(sc, link, period, offset, tries) == EAGAIN)
+		while (mpi_ppr(sc, link, pg.min_period, pg.max_offset,
+		    tries) == EAGAIN)
 			tries++;
 	}
 }
@@ -378,10 +373,10 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	struct mpi_cfg_spi_dev_pg1	pg1;
 	struct scsi_inquiry_data	inqbuf;
 	u_int32_t			address;
-	u_int32_t			params;
 
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr sc: %p link: %p period: %d "
-	    "offset: %d try: %d\n", DEVNAME(sc), sc, link, period, offset, try);
+	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr period: %d offset: %d try: %d "
+	    "link quirks: 0x%x\n", DEVNAME(sc), period, offset, try,
+	    link->quirks);
 
 	if (try >= 3)
 		return (EIO);
@@ -405,14 +400,18 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 		return (EIO);
 	}
 
+#ifdef MPI_DEBUG
 	if (mpi_cfg_page(sc, address, &hdr0, 1, &pg0, sizeof(pg0)) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr unable to fetch page 0\n",
 		    DEVNAME(sc));
 		return (EIO);
 	}
 
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr neg_params: 0x%08x info: 0x%08x\n",
-	    DEVNAME(sc), letoh32(pg0.neg_params), letoh32(pg0.information));
+	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr dev pg 0 neg_params1: 0x%02x "
+	    "neg_offset: %d neg_period: 0x%02x neg_params2: 0x%02x "
+	    "info: 0x%08x\n", DEVNAME(sc), pg0.neg_params1, pg0.neg_offset,
+	    pg0.neg_period, pg0.neg_params2, letoh32(pg0.information));
+#endif
 
 	if (mpi_cfg_page(sc, address, &hdr1, 1, &pg1, sizeof(pg1)) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr unable to fetch page 1\n",
@@ -420,50 +419,46 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 		return (EIO);
 	}
 
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr pg 1 req_params: 0x%08x conf: "
-	    "0x%08x\n", DEVNAME(sc), letoh32(pg1.req_params),
-	    letoh32(pg1.configuration));
+	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr dev pg 1 req_params1: 0x%02x "
+	    "req_offset: 0x%02x req_period: 0x%02x req_params2: 0x%02x "
+	    "conf: 0x%08x\n", DEVNAME(sc), pg1.req_params1, pg1.req_offset,
+	    pg1.req_period, pg1.req_params2, letoh32(pg1.configuration));
 
-	params = letoh32(pg1.req_params);
-	params &= ~(MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH |
-	    MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_PERIOD_MASK |
-	    MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_OFFSET_MASK |
-	    MPI_CFG_SPI_DEV_1_REQPARAMS_DUALXFERS |
-	    MPI_CFG_SPI_DEV_1_REQPARAMS_QAS |
-	    MPI_CFG_SPI_DEV_1_REQPARAMS_PACKETIZED);
+	pg1.req_params1 = 0;
+	pg1.req_offset = offset;
+	pg1.req_period = period;
+	pg1.req_params2 &= ~MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH;
 
 	if (!(link->quirks & SDEV_NOSYNC)) {
-		params |= MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE;
+		pg1.req_params2 |= MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE;
 
 		switch (try) {
 		case 0: /* U320 */
 			break;
 		case 1: /* U160 */
-			period = 0x09;
+			pg1.req_period = 0x09;
 			break;
 		case 2: /* U80 */
-			period = 0x0a;
+			pg1.req_period = 0x0a;
 			break;
 		}
 
-		if (period < 0x09) {
+		if (pg1.req_period < 0x09) {
 			/* Ultra320: enable QAS & PACKETIZED */
-			params |= MPI_CFG_SPI_DEV_1_REQPARAMS_QAS |
+			pg1.req_params1 |= MPI_CFG_SPI_DEV_1_REQPARAMS_QAS |
 			    MPI_CFG_SPI_DEV_1_REQPARAMS_PACKETIZED;
 		}
-		if (period < 0xa) {
+		if (pg1.req_period < 0xa) {
 			/* >= Ultra160: enable dual xfers */
-			params |= MPI_CFG_SPI_DEV_1_REQPARAMS_DUALXFERS;
+			pg1.req_params1 |=
+			    MPI_CFG_SPI_DEV_1_REQPARAMS_DUALXFERS;
 		}
-		pg1.req_params = htole32(params |
-		    MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_PERIOD(period) |
-		    MPI_CFG_SPI_DEV_1_REQPARAMS_XFER_OFFSET(offset));
 	}
 
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr pg 1 req_params: 0x%08x conf: "
-	    "0x%08x period: %0x address: %d\n", DEVNAME(sc),
-	    letoh32(pg1.req_params), letoh32(pg1.configuration), period,
-	    address);
+	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr dev pg 1 req_params1: 0x%02x "
+	    "req_offset: 0x%02x req_period: 0x%02x req_params2: 0x%02x "
+	    "conf: 0x%08x\n", DEVNAME(sc), pg1.req_params1, pg1.req_offset,
+	    pg1.req_period, pg1.req_params2, letoh32(pg1.configuration));
 
 	if (mpi_cfg_page(sc, address, &hdr1, 0, &pg1, sizeof(pg1)) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr unable to write page 1\n",
@@ -477,9 +472,10 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 		return (EIO);
 	}
 
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr pg 1 readback req_params: 0x%08x "
-	    "conf: 0x%08x\n", DEVNAME(sc), letoh32(pg1.req_params),
-	    letoh32(pg1.configuration));
+	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr dev pg 1 req_params1: 0x%02x "
+	    "req_offset: 0x%02x req_period: 0x%02x req_params2: 0x%02x "
+	    "conf: 0x%08x\n", DEVNAME(sc), pg1.req_params1, pg1.req_offset,
+	    pg1.req_period, pg1.req_params2, letoh32(pg1.configuration));
 
 	if (scsi_inquire(link, &inqbuf, SCSI_POLL) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr unable to do inquiry against "
@@ -493,10 +489,10 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 		return (EIO);
 	}
 
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr neg_params: 0x%08x info: 0x%08x "
-	    "try: %d\n",
-	    DEVNAME(sc), letoh32(pg0.neg_params), letoh32(pg0.information),
-	    try);
+	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr dev pg 0 neg_params1: 0x%02x "
+	    "neg_offset: %d neg_period: 0x%02x neg_params2: 0x%02x "
+	    "info: 0x%08x\n", DEVNAME(sc), pg0.neg_params1, pg0.neg_offset,
+	    pg0.neg_period, pg0.neg_params2, letoh32(pg0.information));
 
 	if (!(letoh32(pg0.information) & 0x07) && (try == 0)) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr U320 ppr rejected\n",
@@ -516,10 +512,7 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 		return (EAGAIN);
 	}
 
-	params = letoh32(pg0.neg_params);
-	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr params %08x\n", DEVNAME(sc), params);
-
-	switch(MPI_CFG_SPI_DEV_0_NEGPARAMS_XFER_PERIOD(params)) {
+	switch(pg0.neg_period) {
 	case 0x08:
 		period = 160;
 		break;
@@ -543,11 +536,11 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	printf("%s: target %d %s at %dMHz width %dbit offset %d "
 	    "QAS %d DT %d IU %d\n", DEVNAME(sc), link->target,
 	    period ? "Sync" : "Async", period,
-	    (params & MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE) ? 16 : 8,
-	    MPI_CFG_SPI_DEV_0_NEGPARAMS_XFER_OFFSET(params),
-	    (params & MPI_CFG_SPI_DEV_0_NEGPARAMS_QAS) ? 1 : 0,
-	    (params & MPI_CFG_SPI_DEV_0_NEGPARAMS_DUALXFERS) ? 1 : 0,
-	    (params & MPI_CFG_SPI_DEV_0_NEGPARAMS_PACKETIZED) ? 1 : 0);
+	    (pg0.neg_params2 & MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE) ? 16 : 8,
+	    pg0.neg_offset,
+	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_QAS) ? 1 : 0,
+	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_DUALXFERS) ? 1 : 0,
+	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_PACKETIZED) ? 1 : 0);
 
 	return (0);
 }
