@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.58 2006/06/27 10:41:27 otto Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.59 2006/06/29 19:52:47 kettenis Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -423,6 +423,15 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 			return (error);
 	}
 
+	/* Normalize the correction. */
+	while (adjtimedelta.tv_usec >= 1000000) {
+		adjtimedelta.tv_usec -= 1000000;
+		adjtimedelta.tv_sec += 1;
+	}
+	while (adjtimedelta.tv_usec < 0) {
+		adjtimedelta.tv_usec += 1000000;
+		adjtimedelta.tv_sec -= 1;
+	}
 	return (0);
 #else
 	struct timeval atv;
