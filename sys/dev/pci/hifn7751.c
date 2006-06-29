@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.151 2006/01/04 00:02:29 brad Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.152 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -148,7 +148,6 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	char rbase;
 	bus_size_t iosize0, iosize1;
-	u_int32_t cmd;
 	u_int16_t ena;
 	int rseg;
 	caddr_t kva;
@@ -171,16 +170,6 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
 		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS |
 		    HIFN_NO_BURSTWRITE;
-
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": memory mapping not enabled\n");
-		return;
-	}
-	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": bus mastering not enabled\n");
-		return;
-	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0, 0)) {

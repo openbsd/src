@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.26 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.27 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -106,18 +106,7 @@ lofn_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
-	u_int32_t cmd;
 	int algs[CRK_ALGORITHM_MAX + 1];
-
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
 
 	if (pci_mapreg_map(pa, LOFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {

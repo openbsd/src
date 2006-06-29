@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.18 2006/04/22 02:36:28 brad Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.19 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -216,7 +216,6 @@ aac_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct aac_softc *sc = (void *)self;
-	pcireg_t command;
 	bus_addr_t membase;
 	bus_size_t memsize;
 	pci_intr_handle_t ih;
@@ -238,20 +237,6 @@ aac_pci_attach(parent, self, aux)
 				break;
 			}
 		}
-	}
-
-	/*
-	 * Verify that the adapter is correctly set up in PCI space.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	AAC_DPRINTF(AAC_D_MISC, ("pci command status reg 0x08x "));
-	if (!(command & PCI_COMMAND_MASTER_ENABLE)) {
-		printf("can't enable bus-master feature\n");
-		goto bail_out;
-	}
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("memory window not available\n");
-		goto bail_out;
 	}
 
 	/*

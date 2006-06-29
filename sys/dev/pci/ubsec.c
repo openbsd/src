@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.136 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.137 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -154,7 +154,7 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	struct ubsec_dma *dmap;
 	bus_size_t iosize;
-	u_int32_t cmd, i;
+	u_int32_t i;
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
 	int kalgs[CRK_ALGORITHM_MAX + 1];
 
@@ -191,18 +191,6 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		    BS_STAT_MCR2_ALLEMPTY;
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
-	}
-
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
-
-	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
-		return;
 	}
 
 	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,

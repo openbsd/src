@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.14 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.15 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -111,20 +111,8 @@ nofn_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t bar0size = 0, bar3size = 0;
-	u_int32_t cmd;
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
-
-	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
-		goto fail;
-	}
 
 	if (pci_mapreg_map(pa, NOFN_BAR0_REGS, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &bar0size, 0)) {

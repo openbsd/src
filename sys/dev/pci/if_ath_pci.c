@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.11 2005/09/22 10:17:04 reyk Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.12 2006/06/29 21:34:09 deraadt Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -126,7 +126,6 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 	struct ath_softc *sc = &psc->sc_sc;
-	pcireg_t res;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t pt = pa->pa_tag;
@@ -138,17 +137,6 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->sc_pc = pc;
 	psc->sc_pcitag = pt;
-
-	res = pci_conf_read(pc, pt, PCI_COMMAND_STATUS_REG);
-	if ((res & PCI_COMMAND_MEM_ENABLE) == 0) {
-		printf(": couldn't enable memory mapping\n");
-		goto bad;
-	}
-
-	if ((res & PCI_COMMAND_MASTER_ENABLE) == 0) {
-		printf(": couldn't enable bus mastering\n");
-		goto bad;
-	}
 
 	/* 
 	 * Setup memory-mapping of PCI registers.

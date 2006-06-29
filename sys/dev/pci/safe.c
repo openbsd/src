@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.19 2006/03/12 19:41:13 deraadt Exp $	*/
+/*	$OpenBSD: safe.c,v 1.20 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -159,25 +159,13 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	bus_size_t iosize;
 	bus_addr_t raddr;
-	u_int32_t cmd, devinfo;
+	u_int32_t devinfo;
 	int algs[CRYPTO_ALGORITHM_MAX + 1], i;
 
 	/* XXX handle power management */
 
 	SIMPLEQ_INIT(&sc->sc_pkq);
 	sc->sc_dmat = pa->pa_dmat;
-
-	cmd = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
-
-	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
-		return;
-	}
 
 	/* 
 	 * Setup memory-mapping of PCI registers.

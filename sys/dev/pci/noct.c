@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.16 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: noct.c,v 1.17 2006/06/29 21:34:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -141,17 +141,6 @@ noct_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize = 0;
-	u_int32_t cmd;
-
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
 
 	if (pci_mapreg_map(pa, NOCT_BAR0, PCI_MAPREG_MEM_TYPE_64BIT, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
