@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 2006/06/30 16:14:31 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ caddr_t allocsys(caddr_t);
 
 /*
  * Extent maps to manage I/O. Allocate storage for 8 regions in each,
- * initially. Later devio_malloc_safe will indicate that it's save to
+ * initially. Later devio_malloc_safe will indicate that it's safe to
  * use malloc() to dynamically allocate region descriptors.
  */
 static long devio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];

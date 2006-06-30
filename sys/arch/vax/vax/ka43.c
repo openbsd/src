@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.9 2002/03/14 03:16:02 millert Exp $ */
+/*	$OpenBSD: ka43.c,v 1.10 2006/06/30 16:14:31 miod Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -309,7 +309,7 @@ ka43_conf()
 	    (KA43_CT2_SIZE/VAX_NBPG));
 
 	/*
-	 * ka43_conf() gets called with MMU enabled, now it's save to
+	 * ka43_conf() gets called with MMU enabled, now it's safe to
 	 * init/reset the caches.
 	 */
 	ka43_cache_init();

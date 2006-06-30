@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.7 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.8 2006/06/30 16:14:31 miod Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -197,7 +197,7 @@ ka670_conf()
 	printf("cpu0: KA670, ucode rev %d\n", vax_cpudata % 0377);
 
 	/*
-	 * ka670_conf() gets called with MMU enabled, now it's save to
+	 * ka670_conf() gets called with MMU enabled, now it's safe to
 	 * init/reset the caches.
 	 */
 	ka670_cache_init();
