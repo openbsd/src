@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.17 2006/06/29 17:54:32 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.18 2006/06/30 21:38:19 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -68,8 +68,8 @@ struct wsdisplay_emulops {
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 /* XXX should be #if NWSEMUL_SUN > 1 */
 #if defined(__sparc__) || defined(__sparc64__)
-#define WSCOL_WHITE	wscol_white
-#define WSCOL_BLACK	wscol_black
+#define WSCOL_WHITE	0
+#define WSCOL_BLACK	15
 #else
 #define WSCOL_BLACK	0
 #define WSCOL_WHITE	7
@@ -88,11 +88,6 @@ struct wsdisplay_emulops {
 #define WSATTR_WSCOLORS 16
 	/* XXX need a free_attr() ??? */
 };
-
-/* XXX should be #if NWSEMUL_SUN > 1 */
-#if defined(__sparc__) || defined(__sparc64__)
-extern int wscol_white, wscol_black;
-#endif
 
 #define	WSSCREEN_NAME_SIZE	16
 

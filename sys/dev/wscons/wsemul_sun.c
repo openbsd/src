@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.14 2006/06/29 17:54:32 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.15 2006/06/30 21:38:19 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -119,14 +119,6 @@ struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 #define	NORMALIZE(arg)		((arg) != 0 ? (arg) : 1)
 #define	COLS_LEFT		(edp->ncols - 1 - edp->ccol)
 #define	ROWS_LEFT		(edp->nrows - 1 - edp->crow)
-
-/*
- * wscons color codes
- * To compensate for Sun color choices on older framebuffers, these need to
- * be variables.
- */
-int	wscol_white = 0;	/* 0 */
-int	wscol_black = 7;	/* 255 */
 
 void
 wsemul_sun_init(edp, type, cookie, ccol, crow, defattr)

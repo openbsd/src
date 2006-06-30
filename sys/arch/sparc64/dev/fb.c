@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.11 2006/06/29 17:54:32 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.12 2006/06/30 21:38:19 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -187,19 +187,21 @@ fbwscons_init(struct sunfb *sf, int flags)
 void
 fbwscons_console_init(struct sunfb *sf, int row)
 {
+	struct rasops_info *ri = &sf->sf_ro;
+	int32_t tmp;
 	long defattr;
 
 	if (romgetcursoraddr(&sf->sf_crowp, &sf->sf_ccolp))
 		sf->sf_ccolp = sf->sf_crowp = NULL;
 	if (sf->sf_ccolp != NULL)
-		sf->sf_ro.ri_ccol = *sf->sf_ccolp;
+		ri->ri_ccol = *sf->sf_ccolp;
 
 	if (row < 0) {
 		if (sf->sf_crowp != NULL)
-			sf->sf_ro.ri_crow = *sf->sf_crowp;
+			ri->ri_crow = *sf->sf_crowp;
 		else
 			/* assume last row */
-			sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
+			ri->ri_crow = ri->ri_rows - 1;
 	} else {
 		/*
 		 * If we force the display row, this is because the screen
@@ -209,45 +211,43 @@ fbwscons_console_init(struct sunfb *sf, int row)
 		 * upon shutdown...
 		 */
 		sf->sf_crowp = sf->sf_ccolp = NULL;
-		sf->sf_ro.ri_crow = row;
+		ri->ri_crow = row;
 	}
 
 	/*
 	 * Scale back rows and columns if the font would not otherwise
 	 * fit on this display. Without this we would panic later.
 	 */
-	if (sf->sf_ro.ri_crow >= sf->sf_ro.ri_rows)
-		sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
-	if (sf->sf_ro.ri_ccol >= sf->sf_ro.ri_cols)
-		sf->sf_ro.ri_ccol = sf->sf_ro.ri_cols - 1;
+	if (ri->ri_crow >= ri->ri_rows)
+		ri->ri_crow = ri->ri_rows - 1;
+	if (ri->ri_ccol >= ri->ri_cols)
+		ri->ri_ccol = ri->ri_cols - 1;
 
 	/*
 	 * Take care of updating the PROM cursor position as weel if we can.
 	 */
-	if (sf->sf_ro.ri_updatecursor != NULL &&
+	if (ri->ri_updatecursor != NULL &&
 	    (sf->sf_ccolp != NULL || sf->sf_crowp != NULL))
-		sf->sf_ro.ri_updatecursor = fb_updatecursor;
+		ri->ri_updatecursor = fb_updatecursor;
 
 	/*
 	 * Select appropriate color settings to mimic a
 	 * black on white Sun console.
 	 */
 	if (sf->sf_depth > 8) {
-		wscol_white = 0;
-		wscol_black = 255;
+		tmp = ri->ri_devcmap[WSCOL_WHITE];
+		ri->ri_devcmap[WSCOL_WHITE] = ri->ri_devcmap[WSCOL_BLACK];
+		ri->ri_devcmap[WSCOL_BLACK] = tmp;
 	}
 
-	if (ISSET(sf->sf_ro.ri_caps, WSSCREEN_WSCOLORS) &&
-	    sf->sf_depth == 8) {
-		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro,
+	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
+		ri->ri_ops.alloc_attr(ri,
 		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
-	} else {
-		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro, 0, 0, 0, &defattr);
-	}
+	else
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 
 	fb_initwsd(sf);
-	wsdisplay_cnattach(&sf->sf_wsd, &sf->sf_ro,
-	    sf->sf_ro.ri_ccol, sf->sf_ro.ri_crow, defattr);
+	wsdisplay_cnattach(&sf->sf_wsd, ri, ri->ri_ccol, ri->ri_crow, defattr);
 }
 
 void

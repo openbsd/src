@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.35 2006/05/15 21:38:36 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.36 2006/06/30 21:38:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -447,7 +447,7 @@ creator_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*curyp = 0;
 	*curxp = 0;
 	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    0, 0, 0, attrp);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
