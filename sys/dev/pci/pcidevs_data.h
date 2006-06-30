@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1089 2006/06/30 23:31:43 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1090 2006/06/30 23:57:39 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6555,6 +6555,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8841,
+	    "KSZ8841 10/100",
+	},
+	{
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8842,
+	    "KSZ8842 dual-port 10/100 switch",
+	},
+	{
 	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120,
 	    "MN-120 10/100",
 	},
@@ -12281,6 +12289,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SAFENET,
 	    "SafeNet",
+	},
+	{
+	    PCI_VENDOR_MICREL,
+	    "Micrel",
 	},
 	{
 	    PCI_VENDOR_USR2,

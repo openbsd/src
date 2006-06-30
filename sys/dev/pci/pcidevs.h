@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1089 2006/06/30 23:31:43 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1090 2006/06/30 23:57:39 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -266,6 +266,7 @@
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
+#define	PCI_VENDOR_MICREL	0x16c6		/* Micrel */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_VITESSE	0x1725		/* Vitesse */
 #define	PCI_VENDOR_LINKSYS	0x1737		/* Linksys */
@@ -2203,6 +2204,10 @@
 /* Mentor */
 #define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* PCI */
 #define	PCI_PRODUCT_MENTOR_PCI0661	0x0661		/* PCI-PCI */
+
+/* Micrel products */
+#define	PCI_PRODUCT_MICREL_KSZ8841	0x8841		/* KSZ8841 10/100 */
+#define	PCI_PRODUCT_MICREL_KSZ8842	0x8842		/* KSZ8842 dual-port 10/100 switch */
 
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 */
