@@ -886,9 +886,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/monitors.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mpireg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mpivar.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mpt.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mpt_mpilib.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mpt_openbsd.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mpuvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mtd8xxreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/mtd8xxvar.ph
