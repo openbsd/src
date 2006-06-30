@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.23 2006/05/29 00:54:23 canacar Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.24 2006/06/30 01:09:47 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -77,6 +77,8 @@ typedef SIMPLEQ_HEAD(, acpi_q) acpi_qhead_t;
 #define ACPIREG_PM1_STS	    0x0E
 #define ACPIREG_PM1_EN	    0x0F
 #define ACPIREG_PM1_CNT	    0x10
+#define ACPIREG_GPE_STS     0x11
+#define ACPIREG_GPE_EN      0x12
 
 struct acpi_parsestate
 {

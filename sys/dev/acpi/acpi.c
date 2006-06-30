@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.51 2006/05/31 10:34:54 todd Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.52 2006/06/30 01:09:47 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -55,8 +55,8 @@ int	acpi_print(void *, const char *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
 void	acpi_unmap_pmregs(struct acpi_softc *);
-int	acpi_read_pmreg(struct acpi_softc *, int);
-void	acpi_write_pmreg(struct acpi_softc *, int, int);
+int	acpi_read_pmreg(struct acpi_softc *, int, int);
+void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
 
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
@@ -77,6 +77,9 @@ int	acpi_filtread(struct knote *, long);
 
 #define	ACPI_LOCK(sc)
 #define	ACPI_UNLOCK(sc)
+
+#define GPE0_LEN(sc) (sc->sc_pmregs[ACPIREG_GPE0_EN].size >> 3)
+#define GPE1_LEN(sc) (sc->sc_pmregs[ACPIREG_GPE1_EN].size >> 3)
 
 /* XXX move this into dsdt softc at some point */
 extern struct aml_node aml_root;
@@ -379,26 +382,28 @@ acpi_unmap_pmregs(struct acpi_softc *sc)
 
 /* Read from power management register */
 int
-acpi_read_pmreg(struct acpi_softc *sc, int reg)
+acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 {
 	bus_space_handle_t ioh;
 	bus_size_t size;
 	int regval;
 
 	/* Special cases: 1A/1B blocks can be OR'ed together */
-	if (reg == ACPIREG_PM1_EN) {
-		return (acpi_read_pmreg(sc, ACPIREG_PM1A_EN) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_EN));
+	switch (reg) {
+	case ACPIREG_PM1_EN:
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_EN, offset) |
+			acpi_read_pmreg(sc, ACPIREG_PM1B_EN, offset));
+	case ACPIREG_PM1_STS:
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_STS, offset) |
+			acpi_read_pmreg(sc, ACPIREG_PM1B_STS, offset));
+	case ACPIREG_PM1_CNT:
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, offset) |
+			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
+	case ACPIREG_GPE_STS:
+	case ACPIREG_GPE_EN:
+		break;
 	}
-	else if (reg == ACPIREG_PM1_STS) {
-		return (acpi_read_pmreg(sc, ACPIREG_PM1A_STS) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_STS));
-	}
-	else if (reg == ACPIREG_PM1_CNT) {
-		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT));
-	}
-
+	
 	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
 		return (0);
 
@@ -410,41 +415,43 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg)
 
 	switch (size) {
 	case 1:
-		regval = bus_space_read_1(sc->sc_iot, ioh, 0);
+		regval = bus_space_read_1(sc->sc_iot, ioh, offset);
 		break;
 	case 2:
-		regval = bus_space_read_2(sc->sc_iot, ioh, 0);
+		regval = bus_space_read_2(sc->sc_iot, ioh, offset);
 		break;
 	case 4:
-		regval = bus_space_read_4(sc->sc_iot, ioh, 0);
+		regval = bus_space_read_4(sc->sc_iot, ioh, offset);
 		break;
 	}
 
-	dnprintf(30, "acpi_readpm: %s = %.4x %x\n",
+	dnprintf(30, "acpi_readpm: %s = %.4x:%.4x %x\n",
 		 sc->sc_pmregs[reg].name,
-		 sc->sc_pmregs[reg].addr, regval);
+		 sc->sc_pmregs[reg].addr, offset, regval);
 	return (regval);
 }
 
 /* Write to power management register */
 void
-acpi_write_pmreg(struct acpi_softc *sc, int reg, int regval)
+acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 {
 	bus_space_handle_t ioh;
 	bus_size_t size;
 
 	/* Special cases: 1A/1B blocks can be written with same value */
-	if (reg == ACPIREG_PM1_EN) {
-		acpi_write_pmreg(sc, ACPIREG_PM1A_EN, regval);
-		acpi_write_pmreg(sc, ACPIREG_PM1B_EN, regval);
-	}
-	else if (reg == ACPIREG_PM1_STS) {
-		acpi_write_pmreg(sc, ACPIREG_PM1A_STS, regval);
-		acpi_write_pmreg(sc, ACPIREG_PM1B_STS, regval);
-	}
-	else if (reg == ACPIREG_PM1_CNT) {
-		acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, regval);
-		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, regval);
+	switch (reg) {
+	case ACPIREG_PM1_EN:
+		acpi_write_pmreg(sc, ACPIREG_PM1A_EN, offset, regval);
+		acpi_write_pmreg(sc, ACPIREG_PM1B_EN, offset, regval);
+		break;
+	case ACPIREG_PM1_STS:
+		acpi_write_pmreg(sc, ACPIREG_PM1A_STS, offset, regval);
+		acpi_write_pmreg(sc, ACPIREG_PM1B_STS, offset, regval);
+		break;
+	case ACPIREG_PM1_CNT:
+		acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, offset, regval);
+		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, offset, regval);
+		break;
 	}
 
 	/* All special case return here */
@@ -457,19 +464,20 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int regval)
 		size = 4;
 	switch (size) {
 	case 1:
-		bus_space_write_1(sc->sc_iot, ioh, 0, regval);
+		bus_space_write_1(sc->sc_iot, ioh, offset, regval);
 		break;
 	case 2:
-		bus_space_write_2(sc->sc_iot, ioh, 0, regval);
+		bus_space_write_2(sc->sc_iot, ioh, offset, regval);
 		break;
 	case 4:
-		bus_space_write_4(sc->sc_iot, ioh, 0, regval);
+		bus_space_write_4(sc->sc_iot, ioh, offset, regval);
 		break;
 	}
 
-	dnprintf(30, "acpi_writepm: %s = %.4x %x\n",
+	dnprintf(30, "acpi_writepm: %s = %.4x:%.4x %x\n",
 		 sc->sc_pmregs[reg].name,
 		 sc->sc_pmregs[reg].addr,
+		 offset,
 		 regval);
 }
 
@@ -754,14 +762,14 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 #ifdef ACPI_ENABLE
 	int idx;
 
-	acpi_write_pmreg(sc, ACPIREG_SMICMD, sc->sc_fadt->acpi_enable);
+	acpi_write_pmreg(sc, ACPIREG_SMICMD, 0, sc->sc_fadt->acpi_enable);
 	idx = 0;
 	do {
 		if (idx++ > ACPIEN_RETRIES) {
 			printf(": can't enable ACPI\n");
 			return;
 		}
-	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT) & ACPI_PM1_SCI_EN));
+	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT, 0) & ACPI_PM1_SCI_EN));
 #endif
 
 	acpi_attach_machdep(sc);
@@ -998,13 +1006,13 @@ acpi_interrupt(void *arg)
 	ec = 0;
 	processed = 0;
 
-	sts = acpi_read_pmreg(sc, ACPIREG_GPE0_STS);
-	en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
+	sts = acpi_read_pmreg(sc, ACPIREG_GPE0_STS, 0);
+	en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN, 0);
 	if (sts & en) {
 		dnprintf(10, "GPE interrupt: %.8x %.8x %.8x\n",
 		   sts, en, sts & en);
 		/* disable interrupts until handled */
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en & ~sts);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en & ~sts);
 
 		sc->sc_gpe_sts = sts;
 		sc->sc_gpe_en = en;
@@ -1016,13 +1024,13 @@ acpi_interrupt(void *arg)
 		}
 	}
 
-	sts = acpi_read_pmreg(sc, ACPIREG_PM1_STS);
-	en  = acpi_read_pmreg(sc, ACPIREG_PM1_EN);
+	sts = acpi_read_pmreg(sc, ACPIREG_PM1_STS, 0);
+	en  = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 	if (sts & en) {
 		dnprintf(10,"GEN interrupt: %.4x\n", sts & en);
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, en & ~sts);
-		acpi_write_pmreg(sc, ACPIREG_PM1_STS, en);
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, en);
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en & ~sts);
+		acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, en);
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
 		if (sts & ACPI_PM1_PWRBTN_STS)
 			sc->sc_powerbtn = 1;
 		if (sts & ACPI_PM1_SLPBTN_STS)
@@ -1035,11 +1043,11 @@ acpi_interrupt(void *arg)
 			processed = 1;
 
 		sts = sc->sc_ec_gpemask;
-		en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
+		en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN, 0);
 
 		/* enable SCI once again */
-		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, sts);
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en | sts);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, sts);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en | sts);
 	}
 
 	if (processed) {
@@ -1086,8 +1094,8 @@ acpi_enable_gpe(struct acpi_softc *sc, u_int32_t gpemask)
 {
 	u_int32_t mask;
 	dnprintf(10, "acpi_enable_gpe: mask 0x%08x\n", gpemask);
-	mask = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
-	acpi_write_pmreg(sc, ACPIREG_GPE0_EN, mask | gpemask);
+	mask = acpi_read_pmreg(sc, ACPIREG_GPE0_EN, 0);
+	acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, mask | gpemask);
 	dnprintf(10, "acpi_enable_gpe: GPE 0x%08x\n", mask | gpemask);
 }
 
@@ -1181,28 +1189,28 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	disable_intr();
 
 	/* Clear WAK_STS bit */
-	acpi_write_pmreg(sc, ACPIREG_PM1_STS, ACPI_PM1_WAK_STS);
+	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, ACPI_PM1_WAK_STS);
 
 	/* Write SLP_TYPx values */
-	rega = acpi_read_pmreg(sc, ACPIREG_PM1A_CNT);
-	regb = acpi_read_pmreg(sc, ACPIREG_PM1B_CNT);
+	rega = acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, 0);
+	regb = acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, 0);
 	rega &= ~(ACPI_PM1_SLP_TYPX_MASK | ACPI_PM1_SLP_EN);
 	regb &= ~(ACPI_PM1_SLP_TYPX_MASK | ACPI_PM1_SLP_EN);
 	rega |= ACPI_PM1_SLP_TYPX(sc->sc_sleeptype[state].slp_typa);
 	regb |= ACPI_PM1_SLP_TYPX(sc->sc_sleeptype[state].slp_typb);
-	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, rega);
-	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, regb);
+	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, 0, rega);
+	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, 0, regb);
 
 	/* Set SLP_EN bit */
 	rega |= ACPI_PM1_SLP_EN;
 	regb |= ACPI_PM1_SLP_EN;
-	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, rega);
-	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, regb);
+	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, 0, rega);
+	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, 0, regb);
 
 	/* Loop on WAK_STS */
 	for (retries = 1000; retries > 0; retries--) {
-		rega = acpi_read_pmreg(sc, ACPIREG_PM1A_STS);
-		regb = acpi_read_pmreg(sc, ACPIREG_PM1B_STS);
+		rega = acpi_read_pmreg(sc, ACPIREG_PM1A_STS, 0);
+		regb = acpi_read_pmreg(sc, ACPIREG_PM1B_STS, 0);
 		if (rega & ACPI_PM1_WAK_STS ||
 		    regb & ACPI_PM1_WAK_STS)
 			break;
@@ -1414,18 +1422,29 @@ acpi_isr_thread(void *arg)
 		sc->sc_wakeup = 1;
 
 		/* Enable Sleep/Power buttons if they exist */
-		flag = acpi_read_pmreg(sc, ACPIREG_PM1_EN);
+		flag = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 		if (!(sc->sc_fadt->flags & FADT_PWR_BUTTON)) {
 			flag |= ACPI_PM1_PWRBTN_EN;
 		}
 		if (!(sc->sc_fadt->flags & FADT_SLP_BUTTON)) {
 			flag |= ACPI_PM1_SLPBTN_EN;
 		}
-		acpi_write_pmreg(sc, ACPIREG_PM1_EN, flag);
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, flag);
 
 		/* Clear GPE interrupts */
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN,	0);
-		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, -1);
+#if 0
+		for (idx=0; idx<GPE0_LEN(sc); idx++) {
+		  acpi_write_pmreg(sc, ACPIREG_GPE0_EN, idx, 0);
+		  acpi_write_pmreg(sc, ACPIREG_GPE0_STS, idx, -1);
+		}
+		for (idx=0; idx<GPE1_LEN(sc); idx++) {
+		  acpi_write_pmreg(sc, ACPIREG_GPE1_EN, idx, 0);
+		  acpi_write_pmreg(sc, ACPIREG_GPE1_STS, idx, -1);
+		}
+#else
+		acpi_write_pmreg(sc, ACPIREG_GPE0_EN,  0, 0);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, -1);
+#endif
 
 		/* Enable EC interrupt */
 		if (sc->sc_ec != NULL)
@@ -1453,8 +1472,8 @@ acpi_isr_thread(void *arg)
 					aml_eval_object(sc, sc->sc_gpes[gpe].gpe_handler, &res, 0, NULL);
 				}
 			}
-			acpi_write_pmreg(sc, ACPIREG_GPE0_STS, en & sts);
-			acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en);
+			acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, en & sts);
+			acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en);
 		}
 			
 		if (sc->sc_powerbtn) {
