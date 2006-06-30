@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.10 2006/03/12 22:52:59 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.11 2006/06/30 15:15:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -287,11 +287,7 @@ diofb_cnattach(struct diofb *fb)
 	struct rasops_info *ri;
 
 	ri = &fb->ri;
-	if (ri->ri_caps & WSSCREEN_WSCOLORS)
-		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
-		    WSATTR_WSCOLORS, &defattr);
-	else
-		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&fb->wsd, ri, 0, 0, defattr);
 }
 
@@ -442,11 +438,7 @@ diofb_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	if (ri->ri_caps & WSSCREEN_WSCOLORS)
-		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
-		    WSATTR_WSCOLORS, attrp);
-	else
-		ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
 	fb->nscreens++;
 
 	return (0);
