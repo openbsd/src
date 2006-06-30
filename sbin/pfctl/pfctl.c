@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.246 2006/05/28 02:45:45 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.247 2006/06/30 16:52:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1002,7 +1002,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 			while ((pa = TAILQ_FIRST(&r->rpool.list)) != NULL) {
 				TAILQ_REMOVE(&r->rpool.list, pa, entries);
 				TAILQ_INSERT_TAIL(&pfr->por_rule.rpool.list, pa,
-			    	entries);
+				    entries);
 			}
 		} else {
 			memset(&pfr->por_rule.rpool, 0,

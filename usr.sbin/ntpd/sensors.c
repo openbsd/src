@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.19 2006/06/02 21:17:01 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.20 2006/06/30 16:52:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -31,8 +31,8 @@
 
 #include "ntpd.h"
 
-#define SENSORS_MAX	255
-#define	_PATH_DEV_HOTPLUG               "/dev/hotplug"
+#define SENSORS_MAX		255
+#define	_PATH_DEV_HOTPLUG	"/dev/hotplug"
 
 void	sensor_probe(int);
 void	sensor_add(struct sensor *);

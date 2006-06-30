@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.47 2006/06/30 06:39:00 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.48 2006/06/30 16:52:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -224,7 +224,7 @@ int
 check_child(pid_t pid, const char *pname)
 {
 	int	 status, sig;
-	char 	*signame;
+	char	*signame;
 
 	if (waitpid(pid, &status, WNOHANG) > 0) {
 		if (WIFEXITED(status)) {
@@ -362,7 +362,7 @@ void
 ntpd_adjfreq(double relfreq, int wrlog)
 {
 	int64_t curfreq;
-	
+
 	if (adjfreq(NULL, &curfreq) == -1) {
 		log_warn("adjfreq failed");
 		return;
@@ -377,7 +377,7 @@ ntpd_adjfreq(double relfreq, int wrlog)
 		log_info("adjusting clock frequency by %f to %fppm",
 		    relfreq * 1e6, curfreq / 1e3 / (1LL << 32));
 
-	if (adjfreq(&curfreq, NULL) == -1) 
+	if (adjfreq(&curfreq, NULL) == -1)
 		log_warn("adjfreq failed");
 	writefreq(curfreq / 1e9 / (1LL << 32));
 }

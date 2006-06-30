@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.75 2006/06/26 09:43:06 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.76 2006/06/30 16:52:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,7 +159,7 @@ struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)		listen_addrs;
 	TAILQ_HEAD(ntp_peers, ntp_peer)			ntp_peers;
 	TAILQ_HEAD(ntp_sensors, ntp_sensor)		ntp_sensors;
-	TAILQ_HEAD(ntp_conf_sensors, ntp_conf_sensor)	ntp_conf_sensors;	
+	TAILQ_HEAD(ntp_conf_sensors, ntp_conf_sensor)	ntp_conf_sensors;
 	struct ntp_status				status;
 	struct ntp_freq					freq;
 	u_int8_t					listen_all;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.89 2006/06/26 09:43:06 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.90 2006/06/30 16:52:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -452,7 +452,7 @@ priv_adjfreq(double offset)
 		return;
 
 	conf->freq.overall_offset += offset;
-	offset = conf->freq.overall_offset;	
+	offset = conf->freq.overall_offset;
 
 	curtime = gettime_corrected();
 	conf->freq.xy += offset * curtime;
