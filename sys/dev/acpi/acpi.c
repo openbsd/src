@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.54 2006/06/30 04:16:15 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.55 2006/06/30 23:09:41 gwk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -155,30 +155,36 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			if (iodir == ACPI_IOREAD) {
 				switch (access_size) {
 				case 1:
-					*(uint8_t *)(pb+reg) = bus_space_read_1(sc->sc_iot, ioh, reg);
-					dnprintf(80, "os_in8(%llx) = %x\n", reg+address, *(uint8_t *)(pb+reg));
+					*(uint8_t *)(pb+reg) = bus_space_read_1(
+					    sc->sc_iot, ioh, reg);
+					dnprintf(80, "os_in8(%llx) = %x\n", reg+
+					    address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					*(uint16_t *)(pb+reg) = bus_space_read_2(sc->sc_iot, ioh, reg);
-					dnprintf(80, "os_in16(%llx) = %x\n", reg+address, *(uint16_t *)(pb+reg));
+					*(uint16_t *)(pb+reg) = bus_space_read_2
+					    (sc->sc_iot, ioh, reg);
+					dnprintf(80, "os_in16(%llx) = %x\n", reg					    +address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					*(uint32_t *)(pb+reg) = bus_space_read_4(sc->sc_iot, ioh, reg);
+					*(uint32_t *)(pb+reg) = bus_space_read_4					    (sc->sc_iot, ioh, reg);
 					break;
 				}
 			}
 			else {
 				switch (access_size) {
 				case 1:
-					bus_space_write_1(sc->sc_iot, ioh, reg, *(uint8_t *)(pb+reg));
-					dnprintf(80, "os_out8(%llx,%x)\n", reg+address, *(uint8_t *)(pb+reg));
+					bus_space_write_1(sc->sc_iot, ioh, reg, 					    *(uint8_t *)(pb+reg));
+					dnprintf(80, "os_out8(%llx,%x)\n", reg+
+					    address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					bus_space_write_2(sc->sc_iot, ioh, reg, *(uint16_t *)(pb+reg));
-					dnprintf(80, "os_out16(%llx,%x)\n", reg+address, *(uint16_t *)(pb+reg));
+					bus_space_write_2(sc->sc_iot, ioh, reg, 
+					    *(uint16_t *)(pb+reg));
+					dnprintf(80, "os_out16(%llx,%x)\n", reg+					    address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					bus_space_write_4(sc->sc_iot, ioh, reg, *(uint32_t *)(pb+reg));
+					bus_space_write_4(sc->sc_iot, ioh, reg, 
+					    *(uint32_t *)(pb+reg));
 					break;
 				}
 			}
@@ -203,11 +209,10 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		 */
 		pc = NULL;
 		tag = pci_make_tag(pc, 
-				   ACPI_PCI_BUS(address),
-				   ACPI_PCI_DEV(address),
-				   ACPI_PCI_FN(address));
+		    ACPI_PCI_BUS(address), ACPI_PCI_DEV(address),
+		    ACPI_PCI_FN(address));
 
-		/* XXX: This is ugly.. read-modify-write does a byte at a time */
+		/* XXX: This is ugly. read-modify-write does a byte at a time */
 		reg = ACPI_PCI_REG(address);
 		for (idx=reg; idx<reg+len; idx++) {
 			ival = pci_conf_read(pc, tag, idx & ~0x3);
@@ -330,8 +335,10 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = sc->sc_fadt->gpe0_blk_len >> 1;
 			addr = sc->sc_fadt->gpe0_blk;
 
-			dnprintf(20, "gpe0 block len : %x\n", sc->sc_fadt->gpe0_blk_len >> 1);
-			dnprintf(20, "gpe0 block addr: %x\n", sc->sc_fadt->gpe0_blk);
+			dnprintf(20, "gpe0 block len : %x\n",
+			    sc->sc_fadt->gpe0_blk_len >> 1);
+			dnprintf(20, "gpe0 block addr: %x\n",
+			    sc->sc_fadt->gpe0_blk);
 			if (reg == ACPIREG_GPE0_EN && addr) {
 				addr += size;
 				name = "gpe0_en";
@@ -343,8 +350,10 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = sc->sc_fadt->gpe1_blk_len >> 1;
 			addr = sc->sc_fadt->gpe1_blk;
 
-			dnprintf(20, "gpe1 block len : %x\n", sc->sc_fadt->gpe1_blk_len >> 1);
-			dnprintf(20, "gpe1 block addr: %x\n", sc->sc_fadt->gpe1_blk);
+			dnprintf(20, "gpe1 block len : %x\n",
+			    sc->sc_fadt->gpe1_blk_len >> 1);
+			dnprintf(20, "gpe1 block addr: %x\n",	
+			    sc->sc_fadt->gpe1_blk);
 			if (reg == ACPIREG_GPE1_EN && addr) {
 				addr += size;
 				name = "gpe1_en";
@@ -353,11 +362,11 @@ acpi_map_pmregs(struct acpi_softc *sc)
 		}
 		if (size && addr) {
 			dnprintf(50, "mapping: %.4x %.4x %s\n",
-			       addr, size, name);
+			    addr, size, name);
 
 			/* Size and address exist; map register space */
 			bus_space_map(sc->sc_iot, addr, size, 0,
-				      &sc->sc_pmregs[reg].ioh);
+			    &sc->sc_pmregs[reg].ioh);
 
 			sc->sc_pmregs[reg].name = name;
 			sc->sc_pmregs[reg].size = size;
@@ -374,7 +383,7 @@ acpi_unmap_pmregs(struct acpi_softc *sc)
 	for (idx = 0; idx < ACPIREG_MAXREG; idx++) {
 		if (sc->sc_pmregs[idx].size) {
 			bus_space_unmap(sc->sc_iot, sc->sc_pmregs[idx].ioh,
-					sc->sc_pmregs[idx].size);
+			    sc->sc_pmregs[idx].size);
 		}
 	}
 }
@@ -392,19 +401,17 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	switch (reg) {
 	case ACPIREG_PM1_EN:
 		return (acpi_read_pmreg(sc, ACPIREG_PM1A_EN, offset) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_EN, offset));
+		    acpi_read_pmreg(sc, ACPIREG_PM1B_EN, offset));
 	case ACPIREG_PM1_STS:
 		return (acpi_read_pmreg(sc, ACPIREG_PM1A_STS, offset) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_STS, offset));
+		    acpi_read_pmreg(sc, ACPIREG_PM1B_STS, offset));
 	case ACPIREG_PM1_CNT:
 		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, offset) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
+		    acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
 	case ACPIREG_GPE_STS:
 		__size = 1;
-		dnprintf(0, "read GPE_STS  offset: %.2x %.2x %.2x\n", 
-			 offset, 
-			 sc->sc_fadt->gpe0_blk_len>>1,
-			 sc->sc_fadt->gpe1_blk_len>>1);
+		dnprintf(0, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset, 
+		    sc->sc_fadt->gpe0_blk_len>>1, sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_STS;
 		}
@@ -412,9 +419,8 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	case ACPIREG_GPE_EN:
 		__size = 1;
 		dnprintf(0, "read GPE_EN   offset: %.2x %.2x %.2x\n", 
-			 offset, 
-			 sc->sc_fadt->gpe0_blk_len>>1,
-			 sc->sc_fadt->gpe1_blk_len>>1);
+		    offset, sc->sc_fadt->gpe0_blk_len>>1,
+		    sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_EN;
 		}
@@ -445,8 +451,8 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	}
 
 	dnprintf(30, "acpi_readpm: %s = %.4x:%.4x %x\n",
-		 sc->sc_pmregs[reg].name,
-		 sc->sc_pmregs[reg].addr, offset, regval);
+	    sc->sc_pmregs[reg].name,
+	    sc->sc_pmregs[reg].addr, offset, regval);
 	return (regval);
 }
 
@@ -475,9 +481,8 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	case ACPIREG_GPE_STS:
 		__size = 1;
 		dnprintf(0, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n", 
-			 offset, 
-			 sc->sc_fadt->gpe0_blk_len>>1,
-			 sc->sc_fadt->gpe1_blk_len>>1, regval);
+		    offset, sc->sc_fadt->gpe0_blk_len>>1,
+		    sc->sc_fadt->gpe1_blk_len>>1, regval);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_STS;
 		}
@@ -485,9 +490,8 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	case ACPIREG_GPE_EN:
 		__size = 1;
 		dnprintf(0, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n", 
-			 offset, 
-			 sc->sc_fadt->gpe0_blk_len>>1,
-			 sc->sc_fadt->gpe1_blk_len>>1, regval);
+		    offset, sc->sc_fadt->gpe0_blk_len>>1,
+		    sc->sc_fadt->gpe1_blk_len>>1, regval);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_EN;
 		}
@@ -517,10 +521,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	}
 
 	dnprintf(30, "acpi_writepm: %s = %.4x:%.4x %x\n",
-		 sc->sc_pmregs[reg].name,
-		 sc->sc_pmregs[reg].addr,
-		 offset,
-		 regval);
+	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
 void
@@ -762,7 +763,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(SSDT_SIG) - 1) == 0) {
 			p_dsdt = entry->q_table;
 			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
-				       sizeof(p_dsdt->hdr));
+			    sizeof(p_dsdt->hdr));
 		}
 	}
 
@@ -951,11 +952,10 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		    sizeof(xsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			acpi_map(xsdt->table_offsets[i], sizeof(*hdr),
-				 &handle);
+			acpi_map(xsdt->table_offsets[i], sizeof(*hdr), &handle);
 			hdr = (struct acpi_table_header *)handle.va;
 			acpi_load_table(xsdt->table_offsets[i], hdr->length,
-					&sc->sc_tables);
+			    &sc->sc_tables);
 			acpi_unmap(&handle);
 		}
 		acpi_unmap(&hrsdt);
@@ -979,11 +979,10 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		    sizeof(rsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			acpi_map(rsdt->table_offsets[i], sizeof(*hdr),
-				 &handle);
+			acpi_map(rsdt->table_offsets[i], sizeof(*hdr), &handle);
 			hdr = (struct acpi_table_header *)handle.va;
 			acpi_load_table(rsdt->table_offsets[i], hdr->length,
-					&sc->sc_tables);
+			    &sc->sc_tables);
 			acpi_unmap(&handle);
 		}
 		acpi_unmap(&hrsdt);
@@ -1053,8 +1052,9 @@ acpi_interrupt(void *arg)
 		sts = acpi_read_pmreg(sc, ACPIREG_GPE_STS, idx>>3);
 		en  = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  idx>>3);
 		if (en & sts) {
-			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts, en);
-			acpi_write_pmreg(sc,  ACPIREG_GPE_EN, idx>>3, en & ~sts);
+			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts,
+			    en);
+			acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx>>3, en & ~sts);
 			for (jdx=0; jdx<8; jdx++) {
 				if (en & sts & (1L << jdx)) {
 					/* Signal this GPE */
@@ -1109,8 +1109,7 @@ __acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
 	/* Read enabled register */
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
 	dnprintf(0, "%sabling GPE %.2x (current: %sabled) %.2x\n", 
-		 enable ? "en" : "dis", gpe,
-		 (en & mask) ? "en" : "dis", en);
+	    enable ? "en" : "dis", gpe, (en & mask) ? "en" : "dis", en);
 	if (enable)
 		en |= mask;
 	else
@@ -1119,8 +1118,8 @@ __acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
 }
 
 int
-acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)(struct acpi_softc *, int, void *), void *arg,
-		    const char *label)
+acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
+    (struct acpi_softc *, int, void *), void *arg, const char *label)
 {
 	if (gpe >= sc->sc_lastgpe || handler == NULL)
 		return -EINVAL;
@@ -1187,7 +1186,8 @@ acpi_init_gpes(struct acpi_softc *sc)
 	dnprintf(0, "Last GPE: %.2x\n", sc->sc_lastgpe);
 
 	/* Allocate GPE table */
-	sc->gpe_table = malloc(sc->sc_lastgpe * sizeof(struct gpe_block), M_DEVBUF, M_WAITOK);
+	sc->gpe_table = malloc(sc->sc_lastgpe * sizeof(struct gpe_block),
+	    M_DEVBUF, M_WAITOK);
 	memset(sc->gpe_table, 0, sc->sc_lastgpe * sizeof(struct gpe_block));
 
 	ngpe = 0;
@@ -1204,14 +1204,16 @@ acpi_init_gpes(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
-			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe, "level");
+			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe,
+			    "level");
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			sc->sc_gpes[ngpe].gpe_type = GPE_EDGE;
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
-				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe, "edge");
+				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe,
+				    "edge");
 		}
 		if (gpe != NULL) {
 			sc->sc_gpes[ngpe].gpe_number  = idx;
@@ -1249,8 +1251,10 @@ acpi_init_states(struct acpi_softc *sc)
 		if (aml_eval_name(sc, aml_root.child, name, &res, &env))
 			continue;
 		if (res.type == AML_OBJTYPE_PACKAGE) {
-			sc->sc_sleeptype[i].slp_typa = aml_val2int(ctx, res.v_package[0]);
-			sc->sc_sleeptype[i].slp_typb = aml_val2int(ctx, res.v_package[1]);
+			sc->sc_sleeptype[i].slp_typa = aml_val2int(ctx,
+			    res.v_package[0]);
+			sc->sc_sleeptype[i].slp_typb = aml_val2int(ctx,
+			    res.v_package[1]);
 		}
 	}
 }
@@ -1548,8 +1552,8 @@ acpi_isr_thread(void *arg)
 		int16_t flag;
 
 		dnprintf(1,"slpbtn:%c  pwrbtn:%c\n",
-			 sc->sc_fadt->flags & FADT_SLP_BUTTON ? 'n' : 'y',
-			 sc->sc_fadt->flags & FADT_PWR_BUTTON ? 'n' : 'y');
+		    sc->sc_fadt->flags & FADT_SLP_BUTTON ? 'n' : 'y',
+		    sc->sc_fadt->flags & FADT_PWR_BUTTON ? 'n' : 'y');
 		dnprintf(10, "Enabling acpi interrupts...\n");
 		sc->sc_wakeup = 1;
 
@@ -1600,7 +1604,7 @@ acpi_isr_thread(void *arg)
 			acpi_evindex++;
 			dnprintf(1,"power button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
-							      acpi_evindex));
+			    acpi_evindex));
 		}
 		if (sc->sc_sleepbtn) {
 			sc->sc_sleepbtn = 0;
@@ -1610,7 +1614,7 @@ acpi_isr_thread(void *arg)
 			acpi_evindex++;
 			dnprintf(1,"sleep button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
-							      acpi_evindex));
+			    acpi_evindex));
 		}
 		if (sc->sc_ec)
 			acpiec_handle_events(sc->sc_ec);
@@ -1625,10 +1629,10 @@ acpi_create_thread(void *arg)
 {
 	struct acpi_softc *sc = arg;
 
-	if (kthread_create(acpi_isr_thread, sc->sc_thread, NULL,
-			   DEVNAME(sc)) != 0) {
+	if (kthread_create(acpi_isr_thread, sc->sc_thread, NULL, DEVNAME(sc))
+	    != 0) {
 		printf("%s: unable to create isr thread, GPEs disabled\n",
-		       DEVNAME(sc));
+		    DEVNAME(sc));
 		return;
 	}
 }
