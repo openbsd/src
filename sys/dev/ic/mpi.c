@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.52 2006/06/30 12:32:53 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.53 2006/06/30 17:42:28 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -606,7 +606,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 
 	sge->sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE | MPI_SGE_FL_SIZE_64 |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
-	    sizeof(inq));
+	    (u_int32_t)sizeof(inq));
 
 	addr = ccb->ccb_cmd_dva + 
 	    ((u_int8_t *)&bundle->inqbuf - (u_int8_t *)bundle);
