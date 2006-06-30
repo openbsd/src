@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.10 2006/06/29 12:13:43 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.11 2006/06/30 12:27:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1699,9 +1699,6 @@ zyd_read_rf_pa_types(struct zyd_softc *sc, uint8_t *rf_type,
 	if (!rv) {
 		rf = value & 0x0f;
 		pa = (value >> 16) & 0x0f;
-
-		printf("%s: Radio %s (%#01x), PA %#01x\n",
-		    USBDEVNAME(sc->zyd_dev), zyd_rf_name(rf), rf, pa);
 	}
 
 	*rf_type = rf;
@@ -1870,8 +1867,7 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 {
 	usbd_status rv;
 	int stage = 0;
-	uint8_t rf, pa;
-	uint16_t theversion;
+	uint8_t rf;
 
 	rv = zyd_singleregwrite32(sc, ZYD_MAC_AFTER_PNP, 1);
 
@@ -1886,15 +1882,12 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 	DPRINTF(("zyd_hw_init: firmware_base = 0x%04X\n", sc->firmware_base));
 
 	/* Print the firmware version */
-	rv = zyd_singleregread16(sc, ZYD_FW_FIRMWARE_VER, &theversion);
+	rv = zyd_singleregread16(sc, ZYD_FW_FIRMWARE_VER, &sc->fw_ver);
 
 	if (rv)
 		goto leave;
 
 	stage++;
-
-	printf("%s: Firmware version is 0x%04X\n",
-	    USBDEVNAME(sc->zyd_dev), theversion);
 
 	rv = zyd_singleregwrite32(sc, ZYD_CR_GPI_EN, 0);
 
@@ -1935,7 +1928,7 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 	stage++;
 
 	/* RF/PA types */
-	rv = zyd_read_rf_pa_types(sc, &rf, &pa);
+	rv = zyd_read_rf_pa_types(sc, &rf, &sc->pa_ver);
 
 	if (rv)
 		goto leave;
@@ -1988,11 +1981,6 @@ zyd_get_e2p_mac_addr(struct zyd_softc *sc, struct zyd_macaddr *mac_addr)
 	mac_addr->addr[3] = mac[0] >> 24;
 	mac_addr->addr[4] = mac[1];
 	mac_addr->addr[5] = mac[1] >>  8;
-
-	printf("%s: E2P MAC address is %02X:%02X:%02X:%02X:%02X:%02X\n",
-	    USBDEVNAME(sc->zyd_dev), mac_addr->addr[0], mac_addr->addr[1],
-	    mac_addr->addr[2], mac_addr->addr[3], mac_addr->addr[4],
-	    mac_addr->addr[5]);
 
 leave:
 	return rv;
@@ -2395,6 +2383,10 @@ zyd_complete_attach(struct zyd_softc *sc)
 	/* Read MAC from EEPROM and copy to interface */
 	rv = zyd_get_e2p_mac_addr(sc, &mac);
 	memcpy(&sc->sc_ic.ic_myaddr, &mac, IEEE80211_ADDR_LEN);
+
+	printf("%s: Firmware 0x%04X, Radio %s, PA %#01x, address %s\n",
+	    USBDEVNAME(sc->zyd_dev), sc->fw_ver, zyd_rf_name(sc->rf.type),
+	    sc->pa_ver, ether_sprintf(ic->ic_myaddr));
 
 	if (rv)
 		goto leave;

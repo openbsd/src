@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.6 2006/06/29 12:13:43 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.7 2006/06/30 12:27:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1228,6 +1228,8 @@ struct zyd_softc {
 	uint8_t regdomain;
 	uint8_t channel;
 	uint8_t mac_flags;
+	uint8_t pa_ver;
+	uint16_t fw_ver;
 
 	/* Calibration tables */
 	uint8_t pwr_cal_values[ZYD_E2P_CHANNEL_COUNT];
