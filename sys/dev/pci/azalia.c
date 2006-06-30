@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.19 2006/06/28 08:23:06 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.20 2006/06/30 16:51:50 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -369,7 +369,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* enable bus mastering */
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    v | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
+	    v | PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x44, v & (~0x7));
