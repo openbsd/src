@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1089 2006/06/30 23:31:43 brad Exp $
+$OpenBSD: pcidevs,v 1.1090 2006/06/30 23:57:39 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ vendor	SAMSUNG		0x167d	Samsung
 vendor	ATHEROS		0x168c	Atheros
 vendor	GLOBALSUN	0x16ab	Global Sun
 vendor	SAFENET		0x16ae	SafeNet
+vendor	MICREL		0x16c6	Micrel
 vendor	USR2		0x16ec	US Robotics
 vendor	VITESSE		0x1725	Vitesse
 vendor	LINKSYS		0x1737	Linksys
@@ -2198,6 +2199,10 @@ product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 /* Mentor */
 product MENTOR PCI0660		0x0660	PCI
 product MENTOR PCI0661		0x0661	PCI-PCI
+
+/* Micrel products */
+product MICREL KSZ8841		0x8841	KSZ8841 10/100
+product MICREL KSZ8842		0x8842	KSZ8842 dual-port 10/100 switch
 
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120 10/100
