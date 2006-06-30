@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.31 2006/06/28 20:09:15 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.32 2006/06/30 05:02:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -313,7 +313,7 @@ void
 schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 {
 	struct iommu_state *is = &pbm->sp_is;
-	int *vdma = NULL, nitem, tsbsize;
+	int *vdma = NULL, nitem, tsbsize = 128 * 1024;
 	u_int32_t iobase = -1;
 	vaddr_t va;
 	char *name;
