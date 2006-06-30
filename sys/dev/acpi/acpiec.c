@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.1 2006/05/29 00:54:23 canacar Exp $ */
+/* $OpenBSD: acpiec.c,v 1.2 2006/06/30 04:03:13 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -57,6 +57,8 @@ void	acpiec_wait_nosleep(struct acpiec_softc *, u_int8_t, u_int8_t);
 void	acpiec_sci_event(struct acpiec_softc *);
 
 void	acpiec_get_events(struct acpiec_softc *);
+
+int     acpiec_gpehandler(struct acpi_softc *, int, void *);
 
 struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
 		    const char *);
@@ -332,6 +334,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	dnprintf(10, "%s: GPE: %d (%x)\n", DEVNAME(sc),
 	    sc->sc_gpe, sc->sc_acpi->sc_ec_gpemask);
 
+	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler, sc, "acpiec");
+
 	/* Enable EC interrupt */
 	acpi_enable_gpe(sc->sc_acpi, sc->sc_acpi->sc_ec_gpemask);
 
@@ -351,6 +355,13 @@ acpiec_get_events(struct acpiec_softc *sc)
 		if (sc->sc_events[idx].event != NULL)
 			dnprintf(10, "%s: Found event %s\n", DEVNAME(sc), name);
 	}
+}
+
+int
+acpiec_gpehandler(struct acpi_softc *sc, int gpe, void *arg)
+{
+  dnprintf(10, "ACPIEC: got gpe\n");
+  return (0);
 }
 
 void

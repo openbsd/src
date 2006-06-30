@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.24 2006/06/30 01:09:47 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.25 2006/06/30 04:03:13 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -99,6 +99,12 @@ struct acpi_thread {
 	volatile int	    running;
 };
 
+struct gpe_block {
+	int  (*handler)(struct acpi_softc *, int, void *);
+	void *arg;
+	int   active;
+};
+
 struct acpi_softc {
 	struct device		sc_dev;
 
@@ -146,6 +152,9 @@ struct acpi_softc {
 		struct aml_node *gpe_handler;
 	}			sc_gpes[256];
 	int			sc_maxgpe;
+        int                     sc_lastgpe;
+
+	struct gpe_block       *gpe_table;
 
 	int			sc_wakeup;
 	u_int32_t		sc_gpe_sts;
@@ -202,6 +211,7 @@ void	 acpi_resume(struct acpi_softc *);
 void acpi_delay(struct acpi_softc *, int64_t);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
+int     acpi_set_gpehandler(struct acpi_softc *, int, int (*)(struct acpi_softc *, int, void *), void *, const char *);
 void	acpi_enable_gpe(struct acpi_softc *, u_int32_t);
 
 int	acpiec_intr(struct acpiec_softc *);

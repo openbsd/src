@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.52 2006/06/30 01:09:47 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.53 2006/06/30 04:03:13 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -75,11 +75,12 @@ void	acpi_init_pm(struct acpi_softc *);
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
 
+void    __acpi_enable_gpe(struct acpi_softc *, int, int);
+int     acpi_gpe_level(struct acpi_softc *, int, void *);
+int     acpi_gpe_edge(struct acpi_softc *, int, void *);
+
 #define	ACPI_LOCK(sc)
 #define	ACPI_UNLOCK(sc)
-
-#define GPE0_LEN(sc) (sc->sc_pmregs[ACPIREG_GPE0_EN].size >> 3)
-#define GPE1_LEN(sc) (sc->sc_pmregs[ACPIREG_GPE1_EN].size >> 3)
 
 /* XXX move this into dsdt softc at some point */
 extern struct aml_node aml_root;
@@ -385,9 +386,10 @@ int
 acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 {
 	bus_space_handle_t ioh;
-	bus_size_t size;
+	bus_size_t size, __size;
 	int regval;
 
+	__size = 0;
 	/* Special cases: 1A/1B blocks can be OR'ed together */
 	switch (reg) {
 	case ACPIREG_PM1_EN:
@@ -400,8 +402,25 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT, offset) |
 			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
 	case ACPIREG_GPE_STS:
-	case ACPIREG_GPE_EN:
+		__size = 1;
+		dnprintf(0, "read GPE_STS  offset: %.2x %.2x %.2x\n", 
+			 offset, 
+			 sc->sc_fadt->gpe0_blk_len>>1,
+			 sc->sc_fadt->gpe1_blk_len>>1);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_STS;
+		}
 		break;
+	case ACPIREG_GPE_EN:
+		__size = 1;
+		dnprintf(0, "read GPE_EN   offset: %.2x %.2x %.2x\n", 
+			 offset, 
+			 sc->sc_fadt->gpe0_blk_len>>1,
+			 sc->sc_fadt->gpe1_blk_len>>1);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_EN;
+		}
+		break;	
 	}
 	
 	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
@@ -410,6 +429,8 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	regval = 0;
 	ioh = sc->sc_pmregs[reg].ioh;
 	size = sc->sc_pmregs[reg].size;
+	if (__size)
+		size = __size;
 	if (size > 4)
 		size = 4;
 
@@ -436,8 +457,9 @@ void
 acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 {
 	bus_space_handle_t ioh;
-	bus_size_t size;
+	bus_size_t size, __size;
 
+	__size = 0;
 	/* Special cases: 1A/1B blocks can be written with same value */
 	switch (reg) {
 	case ACPIREG_PM1_EN:
@@ -452,6 +474,26 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, offset, regval);
 		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, offset, regval);
 		break;
+	case ACPIREG_GPE_STS:
+		__size = 1;
+		dnprintf(0, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n", 
+			 offset, 
+			 sc->sc_fadt->gpe0_blk_len>>1,
+			 sc->sc_fadt->gpe1_blk_len>>1, regval);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_STS;
+		}
+		break;
+	case ACPIREG_GPE_EN:
+		__size = 1;
+		dnprintf(0, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n", 
+			 offset, 
+			 sc->sc_fadt->gpe0_blk_len>>1,
+			 sc->sc_fadt->gpe1_blk_len>>1, regval);
+		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
+			reg = ACPIREG_GPE0_EN;
+		}
+		break;	
 	}
 
 	/* All special case return here */
@@ -460,6 +502,8 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 
 	ioh = sc->sc_pmregs[reg].ioh;
 	size = sc->sc_pmregs[reg].size;
+	if (__size)
+		size = __size;
 	if (size > 4)
 		size = 4;
 	switch (size) {
@@ -728,9 +772,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Find available sleeping states */
 	acpi_init_states(sc);
 
-	/* Initialize GPE handlers */
-	acpi_init_gpes(sc);
-
 	/* Find available sleep/resume related methods. */
 	acpi_init_pm(sc);
 	
@@ -749,6 +790,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map Power Management registers */
 	acpi_map_pmregs(sc);
+
+	/* Initialize GPE handlers */
+	acpi_init_gpes(sc);
 
 	/*
 	 * Take over ACPI control.  Note that once we do this, we
@@ -1001,26 +1045,25 @@ int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t ec, processed, sts, en;
+	u_int32_t ec, processed, sts, en, idx, jdx;
 
 	ec = 0;
 	processed = 0;
 
-	sts = acpi_read_pmreg(sc, ACPIREG_GPE0_STS, 0);
-	en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN, 0);
-	if (sts & en) {
-		dnprintf(10, "GPE interrupt: %.8x %.8x %.8x\n",
-		   sts, en, sts & en);
-		/* disable interrupts until handled */
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en & ~sts);
-
-		sc->sc_gpe_sts = sts;
-		sc->sc_gpe_en = en;
-		processed = 1;
-		if ((sc->sc_ec != NULL) && (sts & sc->sc_ec_gpemask)) {
-			ec = 1;
-			if ((sts & en) == sc->sc_ec_gpemask)
-				processed = 0;
+	dnprintf(40, "ACPI Interrupt\n");
+	for (idx=0; idx<sc->sc_lastgpe; idx+=8) {
+		sts = acpi_read_pmreg(sc, ACPIREG_GPE_STS, idx>>3);
+		en  = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  idx>>3);
+		if (en & sts) {
+			dnprintf(10, "GPE block: %.2x %.2x %.2x\n", idx, sts, en);
+			acpi_write_pmreg(sc,  ACPIREG_GPE_EN, idx>>3, en & ~sts);
+			for (jdx=0; jdx<8; jdx++) {
+				if (en & sts & (1L << jdx)) {
+					/* Signal this GPE */
+					sc->gpe_table[idx+jdx].active = 1;
+					processed = 1;
+				}
+			}
 		}
 	}
 
@@ -1059,25 +1102,117 @@ acpi_interrupt(void *arg)
 }
 
 void
+__acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
+{
+	uint8_t mask = (1L << (gpe & 7));
+	uint8_t en;
+
+	/* Read enabled register */
+	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
+	dnprintf(0, "%sabling GPE %.2x (current: %sabled) %.2x\n", 
+		 enable ? "en" : "dis", gpe,
+		 (en & mask) ? "en" : "dis", en);
+	if (enable)
+		en |= mask;
+	else
+		en &= ~mask;
+	acpi_write_pmreg(sc, ACPIREG_GPE_EN, gpe>>3, en);
+}
+
+int
+acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)(struct acpi_softc *, int, void *), void *arg,
+		    const char *label)
+{
+	if (gpe >= sc->sc_lastgpe || handler == NULL)
+		return -EINVAL;
+
+	if (sc->gpe_table[gpe].handler != NULL) {
+		dnprintf(10, "error: GPE %.2x already enabled!\n", gpe);
+		return -EBUSY;
+	}
+
+	dnprintf(0, "Adding GPE handler %.2x (%s)\n", gpe, label);
+	sc->gpe_table[gpe].handler = handler;
+	sc->gpe_table[gpe].arg = arg;
+
+	/* Defer enabling GPEs */
+
+	return (0);
+}
+
+int
+acpi_gpe_level(struct acpi_softc *sc, int gpe, void *arg)
+{
+	struct aml_node *node = arg;
+	struct aml_value res;
+	uint8_t mask;
+
+	dnprintf(10, "handling Level-sensitive GPE %.2x\n", gpe);
+	mask = (1L << (gpe & 7));
+	if (node != NULL)
+		aml_eval_object(sc, node, &res, 0, NULL);
+	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
+	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+
+	return (0);
+}
+
+int
+acpi_gpe_edge(struct acpi_softc *sc, int gpe, void *arg)
+{
+
+	struct aml_node *node = arg;
+	struct aml_value res;
+	uint8_t mask;
+
+	dnprintf(10, "handling Edge-sensitive GPE %.2x\n", gpe);
+	mask = (1L << (gpe & 7));
+	if (node != NULL)
+		aml_eval_object(sc, node, &res, 0, NULL);
+	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
+	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+
+	return (0);
+}
+
+void
 acpi_init_gpes(struct acpi_softc *sc)
 {
 	struct aml_node *gpe;
 	char name[12];
 	int  idx, ngpe;
 
+	sc->sc_lastgpe = sc->sc_fadt->gpe0_blk_len << 2;
+	if (sc->sc_fadt->gpe1_blk_len) {
+	}
+	dnprintf(0, "Last GPE: %.2x\n", sc->sc_lastgpe);
+
+	/* Allocate GPE table */
+	sc->gpe_table = malloc(sc->sc_lastgpe * sizeof(struct gpe_block), M_DEVBUF, M_WAITOK);
+	memset(sc->gpe_table, 0, sc->sc_lastgpe * sizeof(struct gpe_block));
+
 	ngpe = 0;
 	memset(sc->sc_gpes, 0, sizeof(sc->sc_gpes));
-	for (idx=0; idx<256; idx++) {
 
+	/* Clear GPE status */
+	for (idx=0; idx<sc->sc_lastgpe; idx+=8) {
+		acpi_write_pmreg(sc, ACPIREG_GPE_EN,  idx>>3, 0);
+		acpi_write_pmreg(sc, ACPIREG_GPE_STS, idx>>3, -1);
+	}
+	for (idx=0; idx<sc->sc_lastgpe; idx++) {
 		/* Search Level-sensitive GPES */
 		sc->sc_gpes[ngpe].gpe_type = GPE_LEVEL;
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
+		if (gpe != NULL)
+			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe, "level");
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			sc->sc_gpes[ngpe].gpe_type = GPE_EDGE;
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
+			if (gpe != NULL)
+				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe, "edge");
 		}
 		if (gpe != NULL) {
 			sc->sc_gpes[ngpe].gpe_number  = idx;
@@ -1403,9 +1538,7 @@ acpi_isr_thread(void *arg)
 {
 	struct acpi_thread *thread = arg;
 	struct acpi_softc  *sc = thread->sc;
-	u_int32_t gpemask, gpe;
-	struct aml_value res;
-	u_int32_t sts, en;
+	u_int32_t gpe;
 
 	/*
 	 * If we have an interrupt handler, we can get notification
@@ -1431,20 +1564,11 @@ acpi_isr_thread(void *arg)
 		}
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, flag);
 
-		/* Clear GPE interrupts */
-#if 0
-		for (idx=0; idx<GPE0_LEN(sc); idx++) {
-		  acpi_write_pmreg(sc, ACPIREG_GPE0_EN, idx, 0);
-		  acpi_write_pmreg(sc, ACPIREG_GPE0_STS, idx, -1);
+		/* Enable handled GPEs here */
+		for (gpe=0; gpe<sc->sc_lastgpe; gpe++) {
+			if (sc->gpe_table[gpe].handler)
+				__acpi_enable_gpe(sc, gpe, 1);
 		}
-		for (idx=0; idx<GPE1_LEN(sc); idx++) {
-		  acpi_write_pmreg(sc, ACPIREG_GPE1_EN, idx, 0);
-		  acpi_write_pmreg(sc, ACPIREG_GPE1_STS, idx, -1);
-		}
-#else
-		acpi_write_pmreg(sc, ACPIREG_GPE0_EN,  0, 0);
-		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, -1);
-#endif
 
 		/* Enable EC interrupt */
 		if (sc->sc_ec != NULL)
@@ -1452,30 +1576,23 @@ acpi_isr_thread(void *arg)
 	}
 
 	while (thread->running) {
-		dnprintf(10, "sleep...\n");
+		dnprintf(10, "sleep... %d\n", sc->sc_wakeup);
 		while (sc->sc_wakeup)
 			tsleep(sc, PWAIT, "acpi_idle", 0);
 		sc->sc_wakeup = 1;
 		dnprintf(10, "wakeup..\n");
 
-		sts = sc->sc_gpe_sts;
-		en  = sc->sc_gpe_en;
-		if (en & sts) {
-			sc->sc_gpe_en = 0;
-			sc->sc_gpe_sts = 0;
-		
-			gpemask = en & sts;	
-			dnprintf(10, "softgpe: %x\n", en & sts);
-			for (gpe=0; gpe<sc->sc_maxgpe; gpe++) {
-				if (gpemask & (1L << sc->sc_gpes[gpe].gpe_number)) {
-					dnprintf(10, "Got GPE: %x %x\n", gpe, sc->sc_gpes[gpe].gpe_number);
-					aml_eval_object(sc, sc->sc_gpes[gpe].gpe_handler, &res, 0, NULL);
+		for (gpe=0; gpe < sc->sc_lastgpe; gpe++) {
+			struct gpe_block *pgpe = &sc->gpe_table[gpe];
+
+			if (pgpe->active) {
+				pgpe->active = 0;
+				dnprintf(0, "softgpe: %.2x\n", gpe);
+				if (pgpe->handler) {
+					pgpe->handler(sc, gpe, pgpe->arg);
 				}
 			}
-			acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, en & sts);
-			acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en);
 		}
-			
 		if (sc->sc_powerbtn) {
 			sc->sc_powerbtn = 0;
 
