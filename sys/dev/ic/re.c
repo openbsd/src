@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.31 2006/06/29 20:41:19 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.32 2006/06/30 06:17:55 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -171,7 +171,7 @@ void	re_tick(void *);
 void	re_start(struct ifnet *);
 int	re_ioctl(struct ifnet *, u_long, caddr_t);
 int	re_init(struct ifnet *);
-void	re_stop(struct rl_softc *);
+void	re_stop(struct ifnet *, int);
 void	re_watchdog(struct ifnet *);
 int	re_ifmedia_upd(struct ifnet *);
 void	re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -714,7 +714,7 @@ done:
 	sc->rl_testmode = 0;
 	sc->rl_link = 0;
 	ifp->if_flags &= ~IFF_PROMISC;
-	re_stop(sc);
+	re_stop(ifp, 1);
 	if (m0 != NULL)
 		m_freem(m0);
 	DPRINTF(("leaving re_diag\n"));
@@ -1617,7 +1617,7 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-	re_stop(sc);
+	re_stop(ifp, 0);
 
 	/*
 	 * Enable C+ RX and TX mode, as well as RX checksum offload.
@@ -1830,7 +1830,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			re_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				re_stop(sc);
+				re_stop(ifp, 1);
 		}
 		error = 0;
 		break;
@@ -1887,18 +1887,20 @@ re_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 void
-re_stop(struct rl_softc *sc)
+re_stop(struct ifnet *ifp, int disable)
 {
-	struct ifnet *ifp;
+	struct rl_softc *sc;
 	int	i;
 
-	ifp = &sc->sc_arpcom.ac_if;
-	ifp->if_timer = 0;
+	sc = ifp->if_softc;
 
+	ifp->if_timer = 0;
 	sc->rl_link = 0;
 
 	timeout_del(&sc->timer_handle);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	mii_down(&sc->sc_mii);
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
@@ -1910,7 +1912,6 @@ re_stop(struct rl_softc *sc)
 	}
 
 	/* Free the TX list buffers. */
-
 	for (i = 0; i < RL_TX_DESC_CNT; i++) {
 		if (sc->rl_ldata.rl_tx_mbuf[i] != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
@@ -1921,7 +1922,6 @@ re_stop(struct rl_softc *sc)
 	}
 
 	/* Free the RX list buffers. */
-
 	for (i = 0; i < RL_RX_DESC_CNT; i++) {
 		if (sc->rl_ldata.rl_rx_mbuf[i] != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
