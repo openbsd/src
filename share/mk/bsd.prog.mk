@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.48 2006/06/26 03:12:37 brad Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.49 2006/06/30 19:00:29 otto Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -81,6 +81,8 @@ LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 SRCS?=	${PROG}.c
 .  if !empty(SRCS:N*.h:N*.sh)
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+_LEXINTM+=${SRCS:M*.l:.l=.c}
+_YACCINTM+=${SRCS:M*.y:.y=.c}
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln} ${SRCS:M*.y:.y=.ln} ${SRCS:M*.l:.l=.ln}
 .  endif
 
@@ -104,8 +106,8 @@ all: ${PROG} _SUBDIRUSE
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog core *.core \
-	    ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
+	rm -f a.out [Ee]rrs mklog core *.core y.tab.h \
+	    ${PROG} ${OBJS} ${LOBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 .endif
 
 cleandir: _SUBDIRUSE clean
