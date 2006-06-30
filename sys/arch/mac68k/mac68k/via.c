@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.27 2006/01/16 21:48:22 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.28 2006/06/30 15:12:47 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ via_init()
 		    "via2");
 	} else if (current_mac_model->class == MACH_CLASSIIfx) { /* OSS */
 		volatile u_char *ossintr;
-		ossintr = (volatile u_char *)IOBase + 0x1a006;
+		ossintr = (volatile u_char *)Via2Base + 6;
 		*ossintr = 0;
 		intr_establish(oss_intr, NULL, mac68k_machine.via2_ipl,
 		    "via2");
