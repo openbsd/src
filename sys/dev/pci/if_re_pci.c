@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.13 2006/06/27 07:09:49 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.14 2006/06/30 16:51:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -160,23 +160,11 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
-		printf(": neither i/o nor mem enabled\n");
-		return;
-	}
-
-	if (command & PCI_COMMAND_MEM_ENABLE) {
-		if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
-			printf(": can't map mem space\n");
-			return;
-		}
-	} else {
+	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
 		if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
-			printf(": can't map i/o space\n");
+			printf(": can't map mem or i/o space\n");
 			return;
 		}
 	}
