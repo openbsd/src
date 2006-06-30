@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.16 2004/09/14 22:35:51 deraadt Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.17 2006/06/30 16:09:27 tedu Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -54,6 +54,8 @@
 #include <unistd.h>
 #include <util.h>
 
+#include "pkcs5_pbkdf2.h"
+
 #define DEFAULT_VND	"vnd0"
 
 #define VND_CONFIG	1
@@ -63,16 +65,18 @@
 int verbose = 0;
 
 __dead void usage(void);
-int config(char *, char *, int, char *);
+int config(char *, char *, int, char *, size_t);
 int getinfo(const char *);
 
 int
 main(int argc, char **argv)
 {
-	int ch, rv, action = VND_CONFIG;
+	int ch, rv, rounds, action = VND_CONFIG;
 	char *key = NULL;
+	size_t keylen = 0;
+	const char *errstr;
 
-	while ((ch = getopt(argc, argv, "cluvk")) != -1) {
+	while ((ch = getopt(argc, argv, "cluvK:k")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = VND_CONFIG;
@@ -86,8 +90,71 @@ main(int argc, char **argv)
 		case 'v':
 			verbose = 1;
 			break;
+		case 'K':
+		{
+			char keybuf[128];
+			char saltbuf[128];
+			char saltfilebuf[PATH_MAX];
+			char *saltfile;
+
+			rounds = strtonum(optarg, 1000, INT_MAX, &errstr);
+			if (errstr)
+				err(1, "rounds: %s", errstr);
+			key = getpass("Encryption key: ");
+			if (!key || strlen(key) == 0)
+				errx(1, "Need an encryption key");
+			strncpy(keybuf, key, sizeof(keybuf));
+			printf("Salt file: ");
+			fflush(stdout);
+			saltfile = fgets(saltfilebuf, sizeof(saltfilebuf),
+			    stdin);
+			if (!saltfile || saltfile[0] == '\n') {
+				warnx("Skipping salt file, insecure");
+				saltfile = 0;
+			} else {
+				size_t len = strlen(saltfile);
+				if (saltfile[len - 1] == '\n')
+					saltfile[len - 1] = 0;
+			}
+			if (saltfile) {
+				int fd;
+				
+				fd = open(saltfile, O_RDONLY);
+				if (fd == -1) {
+					int *s;
+
+					fprintf(stderr, "Salt file not found, attempting to create one\n");
+					fd = open(saltfile,
+					    O_RDWR|O_CREAT|O_EXCL, 0600);
+					if (fd == -1)
+						err(1, "Unable to create salt file: '%s'", saltfile);
+					for (s = (int *)saltbuf; s <
+					    (int *)(saltbuf + sizeof(saltbuf));
+					    s++)
+						*s = arc4random();
+					if (write(fd, saltbuf, sizeof(saltbuf))
+					    != sizeof(saltbuf))
+						err(1, "Unable to write salt file: '%s'", key);
+					fprintf(stderr, "Salt file created as '%s'\n", saltfile);
+				} else {
+					if (read(fd, saltbuf, sizeof(saltbuf))
+					    != sizeof(saltbuf))
+						err(1, "Unable to read salt file: '%s'", saltfile);
+				}
+				close(fd);
+			} else {
+				memset(saltbuf, 0, sizeof(saltbuf));
+			}
+			if (pkcs5_pbkdf2((u_int8_t**)&key, 128, keybuf,
+			    sizeof(keybuf), saltbuf, sizeof(saltbuf),
+			    rounds, 0))
+				errx(1, "pkcs5_pbkdf2 failed");
+			keylen = 128;
+			break;
+		}
 		case 'k':
 			key = getpass("Encryption key: ");
+			keylen = strlen(key);
 			break;
 		default:
 			usage();
@@ -99,9 +166,9 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (action == VND_CONFIG && argc == 2)
-		rv = config(argv[0], argv[1], action, key);
+		rv = config(argv[0], argv[1], action, key, keylen);
 	else if (action == VND_UNCONFIG && argc == 1)
-		rv = config(argv[0], NULL, action, key);
+		rv = config(argv[0], NULL, action, key, keylen);
 	else if (action == VND_GET)
 		rv = getinfo(argc ? argv[0] : NULL);
 	else
@@ -152,7 +219,7 @@ query:
 }
 
 int
-config(char *dev, char *file, int action, char *key)
+config(char *dev, char *file, int action, char *key, size_t keylen)
 {
 	struct vnd_ioctl vndio;
 	FILE *f;
@@ -169,7 +236,7 @@ config(char *dev, char *file, int action, char *key)
 	}
 	vndio.vnd_file = file;
 	vndio.vnd_key = (u_char *)key;
-	vndio.vnd_keylen = key == NULL ? 0 : strlen(key);
+	vndio.vnd_keylen = keylen;
 
 	/*
 	 * Clear (un-configure) the device
@@ -197,7 +264,7 @@ config(char *dev, char *file, int action, char *key)
 	fflush(stdout);
  out:
 	if (key)
-		memset(key, 0, strlen(key));
+		memset(key, 0, keylen);
 	return (rv < 0);
 }
 
@@ -207,7 +274,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-c] [-vk] rawdev regular-file\n"
+	    "usage: %s [-c] [-vk] [-K rounds] rawdev regular-file\n"
 	    "       %s -u [-v] rawdev\n"
 	    "       %s -l [rawdev]\n", __progname, __progname, __progname);
 	exit(1);
