@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.13 2003/04/10 16:31:02 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2006/06/30 19:10:23 otto Exp $
 
 PROG=	atc
 CFLAGS+=-I${.CURDIR} -I.
-SRCS=	extern.c grammar.c graphics.c input.c lex.c list.c log.c \
+SRCS=	extern.c grammar.y graphics.c input.c lex.l list.c log.c \
 	main.c update.c
 MAN=	atc.6
 LDADD=	-ll -lm -lcurses
@@ -10,7 +10,6 @@ DPADD=	${LIBL} ${LIBM} ${LIBCURSES}
 GAMES=	Game_List Killer crossover default easy game_2 \
 	Atlantis OHare Tic-Tac-Toe airports box crosshatch game_3 \
 	game_4 novice two-corners
-CLEANFILES=grammar.c y.tab.h lex.c
 BINMODE=2555
 
 beforeinstall: 
