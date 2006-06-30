@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.3 2004/02/27 23:45:55 deraadt Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.4 2006/06/30 21:34:45 miod Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -299,7 +299,7 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 	if (!allowaperture && securelevel > 0)
 		return EPERM;
 #else
-	if (securelevel > 1)
+	if (securelevel > 0)
 		return EPERM;
 #endif
 

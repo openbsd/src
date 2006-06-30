@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.15 2004/04/02 04:39:51 deraadt Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.16 2006/06/30 21:34:47 miod Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -341,7 +341,7 @@ wsdisplay_usl_ioctl1(sc, cmd, data, flag, p)
 		for (idx = 0; idx <= maxidx; idx++)
 			if (wsdisplay_screenstate(sc, idx) == EBUSY)
 				ss->v_state |= (1 << (idx + 1));
-#undef s
+#undef ss
 		return (0);
 
 #ifdef WSDISPLAY_COMPAT_PCVT
@@ -426,7 +426,7 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 		return (0);
 
 	    case KDENABIO:
-		if (suser(p, 0) || securelevel > 1)
+		if (suser(p, 0) || securelevel > 0)
 			return (EPERM);
 		/* FALLTHRU */
 	    case KDDISABIO:
