@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.53 2006/06/30 04:03:13 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.54 2006/06/30 04:16:15 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -55,8 +55,6 @@ int	acpi_print(void *, const char *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
 void	acpi_unmap_pmregs(struct acpi_softc *);
-int	acpi_read_pmreg(struct acpi_softc *, int, int);
-void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
 
 void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
@@ -1080,7 +1078,7 @@ acpi_interrupt(void *arg)
 			sc->sc_sleepbtn = 1;
 		processed = 1;
 	}
-
+#if 0
 	if (ec) {
 		if (acpiec_intr(sc->sc_ec))
 			processed = 1;
@@ -1092,6 +1090,7 @@ acpi_interrupt(void *arg)
 		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, 0, sts);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, en | sts);
 	}
+#endif
 
 	if (processed) {
 		sc->sc_wakeup = 0;

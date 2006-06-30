@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.2 2006/06/30 04:03:13 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.3 2006/06/30 04:16:15 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -336,8 +336,10 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler, sc, "acpiec");
 
+#if 0
 	/* Enable EC interrupt */
 	acpi_enable_gpe(sc->sc_acpi, sc->sc_acpi->sc_ec_gpemask);
+#endif
 
 	printf(": %s\n", sc->sc_devnode->parent->name);
 }
@@ -358,10 +360,20 @@ acpiec_get_events(struct acpiec_softc *sc)
 }
 
 int
-acpiec_gpehandler(struct acpi_softc *sc, int gpe, void *arg)
+acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 {
-  dnprintf(10, "ACPIEC: got gpe\n");
-  return (0);
+	struct acpiec_softc *sc = arg;
+	uint8_t mask;
+
+	dnprintf(10, "ACPIEC: got gpe\n");
+	printf("ACPIEC: got gpe: %x\n", gpe);
+	acpiec_intr(sc);
+
+	/* Reset GPE event */
+	mask = (1L << (gpe & 7));
+	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_STS, gpe>>3, mask);
+	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN,  gpe>>3, mask);
+	return (0);
 }
 
 void

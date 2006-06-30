@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.25 2006/06/30 04:03:13 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.26 2006/06/30 04:16:15 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -218,6 +218,9 @@ int	acpiec_intr(struct acpiec_softc *);
 void	acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 void	acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 void	acpiec_handle_events(struct acpiec_softc *);
+
+int	acpi_read_pmreg(struct acpi_softc *, int, int);
+void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
 #endif
 
 #endif	/* !_DEV_ACPI_ACPIVAR_H_ */
