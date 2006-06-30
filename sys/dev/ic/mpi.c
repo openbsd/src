@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.51 2006/06/30 08:29:42 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.52 2006/06/30 12:32:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -562,8 +562,8 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 
 	DNPRINTF(MPI_D_PPR, "%s: mpi_inq\n", DEVNAME(sc));
 
-        bzero(&inq, sizeof(inq));
-        inq.opcode = INQUIRY;
+	bzero(&inq, sizeof(inq));
+	inq.opcode = INQUIRY;
 
 	ccb = mpi_get_ccb(sc);
 	if (ccb == NULL)
