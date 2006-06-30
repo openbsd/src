@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2006/06/24 13:24:20 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2006/06/30 15:13:18 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ extern  struct mac68k_machine_S	mac68k_machine;
 extern	unsigned long		load_addr;
 #endif /* _KERNEL */
 
-#define IIOMAPSIZE	btoc(0x00100000)	/* 1MB should be enough */
+#define IIOMAPSIZE		(0x040000 / PAGE_SIZE)
 
 /* XXX -- Need to do something about superspace.
  * Technically, NuBus superspace starts at 0x60000000, but no
