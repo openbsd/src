@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xge.4,v 1.6 2006/06/09 19:38:42 brad Exp $
+.\"	$OpenBSD: xge.4,v 1.7 2006/06/30 23:29:17 brad Exp $
 .\"	$NetBSD: xge.4,v 1.2 2005/09/10 22:48:09 wiz Exp $
 .\"
 .\" Copyright (c) 2005, SUNET, Swedish University Computer Network.
@@ -38,39 +38,31 @@
 .Os
 .Sh NAME
 .Nm xge
-.Nd Neterion Xframe-I/II Ten Gigabit Ethernet driver
+.Nd Neterion Xframe/Xframe II Ten Gigabit Ethernet driver
 .Sh SYNOPSIS
 .Cd "xge* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports the Neterion Xframe-I and Xframe-II controller chips.
+device driver provides support for various NICs based on the Neterion
+Xframe and Xframe II controller chips, including the following:
 .Pp
-The Xframe supports IPv4 receive IP/TCP/UDP checksum offload.
-.Sh DIAGNOSTICS
-.Bl -diag
-.It xge%s: failed configuring endian, %llx != %llx!
-The Xframe could not be turned into the correct endian operation.
-This is most likely a hardware error.
-.Pp
-.It xge%d: failed allocating txmem.
-.It xge%d: failed allocating rxmem.
-The computer has run out of kernel memory.
-.Pp
-.It xge%d: adapter not quiescent, aborting
-.It xge%d: ADAPTER_STATUS missing bits %s
-The Xframe could not be turned into a usable state.
-Most likely an Xframe hardware error.
-.Pp
-.It xge%d: cannot create TX DMA maps
-.It xge%d: cannot create RX DMA maps
-This error is either a kernel error or that the kernel has run out
-of available memory.
-.Pp
-.It xge%d: bad compiler struct alignment, %d != %d
-The compiler did not align the structure correctly.
-This is a compiler problem.
+.Bl -bullet -compact
+.It
+HP 10 Gigabit Ethernet Adapter (Xframe)
+.It
+IBM 10GbE SR Server Adapter (Xframe II)
+.It
+Neterion Xframe (Xframe)
+.It
+Neterion Xframe II (Xframe II)
+.It
+Neterion Xframe E (Xframe II)
+.It
+SGI 10 Gigabit Ethernet Network Adapter (Xframe)
 .El
+.Pp
+The Xframe and Xframe II support IPv4 receive IP/TCP/UDP checksum offload.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
