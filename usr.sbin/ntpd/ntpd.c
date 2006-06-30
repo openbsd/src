@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.46 2006/06/26 08:10:45 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.47 2006/06/30 06:39:00 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@ int		check_child(pid_t, const char *);
 int		dispatch_imsg(struct ntpd_conf *);
 void		reset_adjtime(void);
 int		ntpd_adjtime(double);
-void		ntpd_adjfreq(double);
+void		ntpd_adjfreq(double, int);
 void		ntpd_settime(double);
 void		readfreq(void);
 void		writefreq(double);
@@ -280,7 +280,7 @@ dispatch_imsg(struct ntpd_conf *conf)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
 				fatalx("invalid IMSG_ADJFREQ received");
 			memcpy(&d, imsg.data, sizeof(d));
-			ntpd_adjfreq(d);
+			ntpd_adjfreq(d, 1);
 			break;
 		case IMSG_SETTIME:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
@@ -359,7 +359,7 @@ ntpd_adjtime(double d)
 }
 
 void
-ntpd_adjfreq(double relfreq)
+ntpd_adjfreq(double relfreq, int wrlog)
 {
 	int64_t curfreq;
 	
@@ -373,8 +373,9 @@ ntpd_adjfreq(double relfreq)
 	 * that unit before adding. We log values in part per million.
 	 */
 	curfreq += relfreq * 1e9 * (1LL << 32);
-	log_info("adjusting clock frequency by %f to %fppm", relfreq * 1e6,
-	    curfreq / 1e3 / (1LL << 32));
+	if (wrlog)
+		log_info("adjusting clock frequency by %f to %fppm",
+		    relfreq * 1e6, curfreq / 1e3 / (1LL << 32));
 
 	if (adjfreq(&curfreq, NULL) == -1) 
 		log_warn("adjfreq failed");
@@ -431,7 +432,7 @@ readfreq(void)
 		return;
 
 	if (fscanf(fp, "%le", &d) == 1)
-		ntpd_adjfreq(d);
+		ntpd_adjfreq(d, 0);
 	fclose(fp);
 }
 
