@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.50 2006/06/29 10:43:21 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.51 2006/06/30 08:29:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -83,6 +83,7 @@ void			mpi_fc_print(struct mpi_softc *);
 void			mpi_run_ppr(struct mpi_softc *);
 int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
 			    int, int, int);
+int			mpi_inq(struct mpi_softc *, u_int16_t, int);
 
 void			mpi_timeout_xs(void *);
 int			mpi_load_xs(struct mpi_ccb *);
@@ -371,7 +372,6 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	struct mpi_cfg_hdr		hdr0, hdr1;
 	struct mpi_cfg_spi_dev_pg0	pg0;
 	struct mpi_cfg_spi_dev_pg1	pg1;
-	struct scsi_inquiry_data	inqbuf;
 	u_int32_t			address;
 
 	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr period: %d offset: %d try: %d "
@@ -477,7 +477,7 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	    "conf: 0x%08x\n", DEVNAME(sc), pg1.req_params1, pg1.req_offset,
 	    pg1.req_period, pg1.req_params2, letoh32(pg1.configuration));
 
-	if (scsi_inquire(link, &inqbuf, SCSI_POLL) != 0) {
+	if (mpi_inq(sc, link->target, 0) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr unable to do inquiry against "
 		    "target %d\n", DEVNAME(sc), link->target);
 		return (EIO);
@@ -541,6 +541,85 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_QAS) ? 1 : 0,
 	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_DUALXFERS) ? 1 : 0,
 	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_PACKETIZED) ? 1 : 0);
+
+	return (0);
+}
+
+int
+mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
+{
+	struct mpi_ccb			*ccb;
+	struct scsi_inquiry		inq;
+	struct {
+		struct mpi_msg_scsi_io		io;
+		struct mpi_sge			sge;
+		struct scsi_inquiry_data	inqbuf;
+		struct scsi_sense_data		sense;
+	} __packed			*bundle;
+	struct mpi_msg_scsi_io		*io;
+	struct mpi_sge			*sge;
+	u_int64_t			addr;
+
+	DNPRINTF(MPI_D_PPR, "%s: mpi_inq\n", DEVNAME(sc));
+
+        bzero(&inq, sizeof(inq));
+        inq.opcode = INQUIRY;
+
+	ccb = mpi_get_ccb(sc);
+	if (ccb == NULL)
+		return (1);
+
+	ccb->ccb_done = mpi_empty_done;
+
+	bundle = ccb->ccb_cmd;
+	io = &bundle->io;
+	sge = &bundle->sge;
+
+	io->function = physdisk ? MPI_FUNCTION_RAID_SCSI_IO_PASSTHROUGH :
+	    MPI_FUNCTION_SCSI_IO_REQUEST;
+	/*
+	 * bus is always 0
+	 * io->bus = htole16(sc->sc_bus);
+	 */
+	io->target_id = target;
+
+	io->cdb_length = sizeof(inq);
+	io->sense_buf_len = sizeof(struct scsi_sense_data);
+	io->msg_flags = MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_64;
+
+	io->msg_context = htole32(ccb->ccb_id);
+
+	/*
+	 * always lun 0
+	 * io->lun[0] = htobe16(link->lun);
+	 */
+
+	io->direction = MPI_SCSIIO_DIR_READ;
+	io->tagging = MPI_SCSIIO_ATTR_NO_DISCONNECT;
+
+	bcopy(&inq, io->cdb, sizeof(inq));
+
+	io->data_length = htole32(sizeof(struct scsi_inquiry_data));
+
+	io->sense_buf_low_addr = htole32(ccb->ccb_cmd_dva +
+	    ((u_int8_t *)&bundle->sense - (u_int8_t *)bundle));
+
+	sge->sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE | MPI_SGE_FL_SIZE_64 |
+	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
+	    sizeof(inq));
+
+	addr = ccb->ccb_cmd_dva + 
+	    ((u_int8_t *)&bundle->inqbuf - (u_int8_t *)bundle);
+	sge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
+	sge->sg_lo_addr = htole32((u_int32_t)addr);
+
+	if (mpi_poll(sc, ccb, 5000) != 0)
+		return (1);
+
+	if (ccb->ccb_reply != NULL)
+		mpi_push_reply(sc, ccb->ccb_reply_dva);
+
+	mpi_put_ccb(sc, ccb);
 
 	return (0);
 }
