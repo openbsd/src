@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2006/06/26 22:18:06 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2006/07/01 16:24:17 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -866,13 +866,15 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			: VM_PROT_READ;
 	}
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
-		extern char Lfsbail[];
+#ifdef DDB
+		extern char Lfsprobe[];
 		/*
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsbail)
+		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsprobe)
 			goto kfault;
+#endif
 
 		/*
 		 * During autoconfiguration, faults are never OK unless

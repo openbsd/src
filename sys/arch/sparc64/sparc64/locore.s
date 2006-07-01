@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.59 2006/06/07 16:57:43 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.60 2006/07/01 16:24:17 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6187,25 +6187,8 @@ ENTRY(proc_trampoline)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
-Lfserr:
-	stx	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return error indicator
-	 mov	-1, %o0
+#ifdef DDB
 
-	/*
-	 * This is just like Lfserr, but it's a global label that allows
-	 * mem_access_fault() to check to see that we don't want to try to
-	 * page in the fault.  It's used by fuswintr() etc.
-	 */
-	.globl	_C_LABEL(Lfsbail)
-_C_LABEL(Lfsbail):
-	stx	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return error indicator
-	 mov	-1, %o0
-
-/* probeget is meant to be used during autoconfiguration */
 /*
  * The following probably need to be changed, but to what I don't know.
  */
@@ -6227,8 +6210,8 @@ ENTRY(probeget)
 	mov	%o2, %o4
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4)
 	sethi	%hi(CPCB), %o2
-	ldx	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
-	set	_C_LABEL(Lfsbail), %o5
+	ldx	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfsprobe;
+	set	_C_LABEL(Lfsprobe), %o5
 	stx	%o5, [%o2 + PCB_ONFAULT]
 	or	%o0, 0x9, %o3		! if (PHYS_ASI(asi)) {
 	sub	%o3, 0x1d, %o3
@@ -6270,6 +6253,7 @@ ENTRY(probeget)
 	/*
 	 * Fault handler for probeget
 	 */
+	.globl	_C_LABEL(Lfsprobe)
 _C_LABEL(Lfsprobe):
 	stx	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	mov	-1, %o1
@@ -6277,6 +6261,8 @@ _C_LABEL(Lfsprobe):
 	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	-1, %o0
+
+#endif	/* DDB */
 
 /*
  * pmap_zero_page(pa)
