@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.38 2006/06/30 21:38:17 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.39 2006/07/01 16:15:58 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -111,6 +111,7 @@ static int a2int(char *, int);
 #endif
 static void fb_initwsd(struct sunfb *);
 static void fb_updatecursor(struct rasops_info *);
+int	fb_alloc_cattr(void *, int, int, int, long *);
 int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
 void	fb_free_screen(void *, void *);
@@ -330,14 +331,15 @@ fb_updatecursor(struct rasops_info *ri)
 void
 fbwscons_init(struct sunfb *sf, int flags)
 {
+	struct rasops_info *ri = &sf->sf_ro;
 	int cols, rows;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	sf->sf_ro.ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
-	sf->sf_ro.ri_depth = sf->sf_depth;
-	sf->sf_ro.ri_stride = sf->sf_linebytes;
-	sf->sf_ro.ri_width = sf->sf_width;
-	sf->sf_ro.ri_height = sf->sf_height;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
+	ri->ri_depth = sf->sf_depth;
+	ri->ri_stride = sf->sf_linebytes;
+	ri->ri_width = sf->sf_width;
+	ri->ri_height = sf->sf_height;
 
 #if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4COR4M) {
@@ -364,7 +366,9 @@ fbwscons_init(struct sunfb *sf, int flags)
 	}
 #endif
 
-	rasops_init(&sf->sf_ro, rows, cols);
+	rasops_init(ri, rows, cols);
+	if (ri->ri_caps & WSSCREEN_WSCOLORS)
+		ri->ri_ops.alloc_attr = fb_alloc_cattr;
 }
 
 void
@@ -498,20 +502,19 @@ fb_alloc_screen(void *v, const struct wsscreen_descr *type,
     void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct sunfb *sf = v;
+	struct rasops_info *ri = &sf->sf_ro;
 
 	if (sf->sf_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sf->sf_ro;
+	*cookiep = ri;
 	*curyp = 0;
 	*curxp = 0;
-	if (sf->sf_depth == 8) {
-		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro,
+	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
+		ri->ri_ops.alloc_attr(ri,
 		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	} else {
-		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro,
-		    0, 0, 0, attrp);
-	}
+	else
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
 	sf->sf_nscreens++;
 	return (0);
 }
@@ -528,6 +531,48 @@ int
 fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
     void *cbarg)
 {
+	return (0);
+}
+
+/*
+ * A variant of rasops_alloc_cattr() which handles the WSCOL_BLACK and
+ * WSCOL_WHITE specific values wrt highlighting.
+ */
+int
+fb_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attrp)
+{
+	int swap;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return (EINVAL);
+
+	if ((flg & WSATTR_WSCOLORS) == 0) {
+		fg = WSCOL_WHITE;
+		bg = WSCOL_BLACK;
+	}
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		swap = fg;
+		fg = bg;
+		bg = swap;
+	}
+
+	if ((flg & WSATTR_HILIT) != 0) {
+		if (fg == WSCOL_BLACK)
+			fg = 8;	/* ``regular'' dark gray */
+		else if (fg != WSCOL_WHITE) /* white is always highlighted */
+			fg += 8;
+	}
+
+	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
+
+	/* we're lucky we do not need a different isgray table... */
+	if (rasops_isgray[fg])
+		flg |= 2;
+	if (rasops_isgray[bg])
+		flg |= 4;
+
+	*attrp = (bg << 16) | (fg << 24) | flg;
 	return (0);
 }
 

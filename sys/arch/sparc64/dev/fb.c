@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.12 2006/06/30 21:38:19 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.13 2006/07/01 16:15:59 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -105,6 +105,7 @@ fb_unblank()
 static int a2int(char *, int);
 static void fb_initwsd(struct sunfb *);
 static void fb_updatecursor(struct rasops_info *);
+int	fb_alloc_cattr(void *, int, int, int, long *);
 
 void
 fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
@@ -169,19 +170,22 @@ fb_updatecursor(struct rasops_info *ri)
 void
 fbwscons_init(struct sunfb *sf, int flags)
 {
+	struct rasops_info *ri = &sf->sf_ro;
 	int cols, rows;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	sf->sf_ro.ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
-	sf->sf_ro.ri_depth = sf->sf_depth;
-	sf->sf_ro.ri_stride = sf->sf_linebytes;
-	sf->sf_ro.ri_width = sf->sf_width;
-	sf->sf_ro.ri_height = sf->sf_height;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
+	ri->ri_depth = sf->sf_depth;
+	ri->ri_stride = sf->sf_linebytes;
+	ri->ri_width = sf->sf_width;
+	ri->ri_height = sf->sf_height;
 
 	rows = a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	cols = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 
-	rasops_init(&sf->sf_ro, rows, cols);
+	rasops_init(ri, rows, cols);
+	if (ri->ri_caps & WSSCREEN_WSCOLORS)
+		ri->ri_ops.alloc_attr = fb_alloc_cattr;
 }
 
 void
@@ -297,6 +301,48 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 	waa.accessops = op;
 	waa.accesscookie = sf;
 	config_found(&sf->sf_dev, &waa, wsemuldisplaydevprint);
+}
+
+/*
+ * A variant of rasops_alloc_cattr() which handles the WSCOL_BLACK and
+ * WSCOL_WHITE specific values wrt highlighting.
+ */
+int
+fb_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attrp)
+{
+	int swap;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return (EINVAL);
+
+	if ((flg & WSATTR_WSCOLORS) == 0) {
+		fg = WSCOL_WHITE;
+		bg = WSCOL_BLACK;
+	}
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		swap = fg;
+		fg = bg;
+		bg = swap;
+	}
+
+	if ((flg & WSATTR_HILIT) != 0) {
+		if (fg == WSCOL_BLACK)
+			fg = 8; /* ``regular'' dark gray */
+		else if (fg != WSCOL_WHITE) /* white is always highlighted */
+			fg += 8;
+	}
+
+	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
+
+	/* we're lucky we do not need a different isgray table... */
+	if (rasops_isgray[fg])
+		flg |= 2;
+	if (rasops_isgray[bg])
+		flg |= 4;
+
+	*attrp = (bg << 16) | (fg << 24) | flg;
+	return (0);
 }
 
 #endif	/* NWSDISPLAY */
