@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1090 2006/06/30 23:57:39 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1091 2006/07/01 01:23:31 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4375,6 +4375,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/10GbE LR (82597EX)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_M_AMT,
+	    "ICH8 IGP M AMT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_AMT,
+	    "ICH8 IGP AMT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_C,
+	    "ICH8 IGP C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE,
+	    "ICH8 IFE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_M,
+	    "ICH8 IGP M",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_4,
 	    "PRO/100 VE",
 	},
@@ -4585,6 +4605,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_2,
 	    "PRO/1000 PL (82573L)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_CPR_SPT,
+	    "PRO/1000 PT (80003ES2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_SDS_SPT,
+	    "PRO/1000 PF (80003ES2)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_CPR_K,
