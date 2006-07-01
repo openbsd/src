@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.12 2006/06/24 15:32:37 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.13 2006/07/01 00:08:57 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -425,7 +425,7 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 		free(udfmp->s_table, M_UDFMOUNT);
 
 	if (udfmp->hashtbl != NULL)
-		FREE(udfmp->hashtbl, M_UDFMOUNT);
+		free(udfmp->hashtbl, M_UDFMOUNT);
 
 	FREE(udfmp, M_UDFMOUNT);
 
@@ -539,14 +539,14 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		brelse(bp);
 		return (ENOMEM);
 	}
+
 	size = UDF_FENTRY_SIZE + letoh32(fe->l_ea) + letoh32(fe->l_ad);
-	MALLOC(unode->fentry, struct file_entry *, size, M_UDFFENTRY,
-	    M_NOWAIT);
+
+	unode->fentry = malloc(size, M_UDFFENTRY, M_NOWAIT);
 	if (unode->fentry == NULL) {
-		printf("Cannot allocate file entry block\n");
 		pool_put(&udf_node_pool, unode);
 		brelse(bp);
-		return (ENOMEM);
+		return (ENOMEM); /* Cannot allocate file entry block */
 	}
 
 	bcopy(bp->b_data, unode->fentry, size);
@@ -555,10 +555,9 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	bp = NULL;
 
 	if ((error = udf_allocv(mp, &vp, p))) {
-		printf("Error from udf_allocv\n");
-		FREE(unode->fentry, M_UDFFENTRY);
+		free(unode->fentry, M_UDFFENTRY);
 		pool_put(&udf_node_pool, unode);
-		return (error);
+		return (error); /* Error from udf_allocv() */
 	}
 
 	unode->i_vnode = vp;

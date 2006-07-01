@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.13 2006/06/24 15:09:17 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.14 2006/07/01 00:08:57 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -609,7 +609,7 @@ udf_getfid(struct udf_dirstream *ds)
 	 */
 	if (ds->fid_fragment && ds->buf != NULL) {
 		ds->fid_fragment = 0;
-		FREE(ds->buf, M_UDFFID);
+		free(ds->buf, M_UDFFID);
 	}
 
 	fid = (struct fileid_desc*)&ds->data[ds->off];
@@ -634,8 +634,7 @@ udf_getfid(struct udf_dirstream *ds)
 		 * File ID descriptors can only be at most one
 		 * logical sector in size.
 		 */
-		MALLOC(ds->buf, uint8_t*, ds->udfmp->bsize, M_UDFFID,
-		     M_WAITOK);
+		ds->buf = malloc(ds->udfmp->bsize, M_UDFFID, M_WAITOK);
 		bzero(ds->buf, ds->udfmp->bsize);
 		bcopy(fid, ds->buf, frag_size);
 
@@ -704,7 +703,7 @@ udf_closedir(struct udf_dirstream *ds)
 		brelse(ds->bp);
 
 	if (ds->fid_fragment && ds->buf != NULL)
-		FREE(ds->buf, M_UDFFID);
+		free(ds->buf, M_UDFFID);
 
 	pool_put(&udf_ds_pool, ds);
 }
@@ -1201,7 +1200,8 @@ udf_reclaim(void *v)
 		}
 
 		if (unode->fentry != NULL)
-			FREE(unode->fentry, M_UDFFENTRY);
+			free(unode->fentry, M_UDFFENTRY);
+
 		pool_put(&udf_node_pool, unode);
 		vp->v_data = NULL;
 	}
