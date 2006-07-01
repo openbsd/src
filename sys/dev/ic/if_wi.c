@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.132 2006/07/01 19:30:51 reyk Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.133 2006/07/01 20:22:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.132 2006/07/01 19:30:51 reyk Exp $";
+	"$OpenBSD: if_wi.c,v 1.133 2006/07/01 20:22:22 reyk Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1955,6 +1955,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			IEEE80211_ADDR_COPY(nr.nr_macaddr, res->wi_bssid);
 			IEEE80211_ADDR_COPY(nr.nr_bssid, res->wi_bssid);
 			nr.nr_channel = letoh16(res->wi_chan);
+			nr.nr_chan_flags = IEEE80211_CHAN_B;
 			nr.nr_rssi = letoh16(res->wi_signal);
 			nr.nr_max_rssi = 0; /* XXX */
 			nr.nr_nwid_len = letoh16(res->wi_ssid_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.35 2006/06/27 09:48:02 reyk Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.36 2006/07/01 20:22:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -1341,6 +1341,8 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			IEEE80211_ADDR_COPY(nr.nr_macaddr, sta->addr);
 			IEEE80211_ADDR_COPY(nr.nr_bssid,
 			    &sc->sc_ic.ic_myaddr);
+			nr.nr_channel = sc->wi_channel;
+			nr.nr_chan_flags = IEEE80211_CHAN_B;
 			nr.nr_associd = sta->asid;
 			nr.nr_rssi = sta->sig_info >> 8;
 			nr.nr_max_rssi = 0;
