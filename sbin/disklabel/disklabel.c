@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.97 2005/11/13 20:27:10 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.98 2006/07/01 16:50:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.97 2005/11/13 20:27:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.98 2006/07/01 16:50:33 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -422,7 +422,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
 		    dosdp->dp_typ == DOSPTYP_NETBSD)) {
-		        sectoffset = (off_t)get_le(&dosdp->dp_start) *
+		        sectoffset = (off_t)letoh32(dosdp->dp_start) *
 			    lp->d_secsize;
 		} else {
 			if (dosdp) {
@@ -616,29 +616,29 @@ readmbr(int f)
 	}
 	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
+		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
 			fprintf(stderr, "# Inside MBR partition %d: "
 			    "type %02X start %u size %u\n",
 			    part, dp[part].dp_typ,
-			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_size));
+			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
 	for (part = 0; part < NDOSPART; part++) {
-		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_FREEBSD) {
+		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_FREEBSD) {
 			fprintf(stderr, "# Inside MBR partition %d: "
 			    "type %02X start %u size %u\n",
 			    part, dp[part].dp_typ,
-			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_size));
+			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
 	for (part = 0; part < NDOSPART; part++) {
-		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_NETBSD) {
+		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_NETBSD) {
 			fprintf(stderr, "# Inside MBR partition %d: "
 			    "type %02X start %u size %u\n",
 			    part, dp[part].dp_typ,
-			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_size));
+			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
@@ -652,7 +652,7 @@ readmbr(int f)
 
 	/* If no OpenBSD partition, find first used partition. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (get_le(&dp[part].dp_size)) {
+		if (letoh32(dp[part].dp_size)) {
 			warnx("warning, DOS partition table with no valid OpenBSD partition");
 			return (&dp[part]);
 		}
@@ -676,11 +676,11 @@ readlabel(int f)
 		off_t sectoffset = 0;
 
 #ifdef DOSLABEL
-		if (dosdp && get_le(&dosdp->dp_size) &&
+		if (dosdp && letoh32(dosdp->dp_size) &&
 		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
 		    dosdp->dp_typ == DOSPTYP_NETBSD))
-			sectoffset = (off_t)get_le(&dosdp->dp_start) *
+			sectoffset = (off_t)letoh32(dosdp->dp_start) *
 			    DEV_BSIZE;
 #endif
 		if (verbose)

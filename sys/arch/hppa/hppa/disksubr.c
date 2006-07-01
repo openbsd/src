@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.24 2006/06/11 21:15:35 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.25 2006/07/01 16:50:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -369,7 +369,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			bp->b_flags = B_BUSY | B_READ;
 			bp->b_cylinder = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
-
+ 
 			/* if successful, wander through dos partition table */
 			if (biowait(bp)) {
 				msg = "dos partition I/O error";
@@ -382,19 +382,19 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 
 			if (ourpart == -1) {
 				/* Search for our MBR partition */
-				for (dp2=dp, i=0;
-				    i < NDOSPART && ourpart == -1; i++, dp2++)
-					if (dp2->dp_size &&
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
+				    i++, dp2++)
+					if (letoh32(dp2->dp_size) &&
 					    dp2->dp_typ == DOSPTYP_OPENBSD)
 						ourpart = i;
-				for (dp2=dp, i=0;
-				    i < NDOSPART && ourpart == -1; i++, dp2++)
-					if (dp2->dp_size &&
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
+				    i++, dp2++)
+					if (letoh32(dp2->dp_size) &&
 					    dp2->dp_typ == DOSPTYP_FREEBSD)
 						ourpart = i;
-				for (dp2=dp, i=0;
-				    i < NDOSPART && ourpart == -1; i++, dp2++)
-					if (dp2->dp_size &&
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
+				    i++, dp2++)
+					if (letoh32(dp2->dp_size) &&
 					    dp2->dp_typ == DOSPTYP_NETBSD)
 						ourpart = i;
 				if (ourpart == -1)
@@ -405,13 +405,13 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 				 * ESDI/ST506/RLL
 				 */
 				dp2 = &dp[ourpart];
-				dospartoff = dp2->dp_start + part_blkno;
+				dospartoff = letoh32(dp2->dp_start) + part_blkno;
 				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 				/* XXX build a temporary disklabel */
-				lp->d_partitions[0].p_size = dp2->dp_size;
-				lp->d_partitions[0].p_offset = dp2->dp_start +
-				    part_blkno;
+				lp->d_partitions[0].p_size = letoh32(dp2->dp_size);
+				lp->d_partitions[0].p_offset =
+				    letoh32(dp2->dp_start) + part_blkno;
 				if (lp->d_ntracks == 0)
 					lp->d_ntracks = dp2->dp_ehd + 1;
 				if (lp->d_nsectors == 0)
@@ -430,11 +430,13 @@ donot:
 
 				if (dp2->dp_typ == DOSPTYP_OPENBSD)
 					continue;
-				if (dp2->dp_size)
-					pp->p_size = dp2->dp_size;
-				if (dp2->dp_start)
+				if (letoh32(dp2->dp_size) > lp->d_secperunit)
+					continue;
+				if (letoh32(dp2->dp_size))
+					pp->p_size = letoh32(dp2->dp_size);
+				if (letoh32(dp2->dp_start))
 					pp->p_offset =
-					    dp2->dp_start + part_blkno;
+					    letoh32(dp2->dp_start) + part_blkno;
 
 				switch (dp2->dp_typ) {
 				case DOSPTYP_UNUSED:
@@ -468,9 +470,11 @@ donot:
 					n++;
 					break;
 				case DOSPTYP_EXTEND:
-					part_blkno = dp2->dp_start + extoff;
+				case DOSPTYP_EXTENDL:
+					part_blkno =
+					    letoh32(dp2->dp_start) + extoff;
 					if (!extoff) {
-						extoff = dp2->dp_start;
+						extoff = letoh32(dp2->dp_start);
 						part_blkno = 0;
 					}
 					wander = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 2006/06/26 23:11:31 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2006/07/01 16:50:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -89,19 +89,5 @@ struct cpu_disklabel {
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
-
-static __inline u_int32_t get_le(void *);
-
-static __inline u_int32_t
-get_le(void *p)
-{
-	u_int8_t *_p = (u_int8_t *)p;
-	u_int32_t x;
-	x = _p[0];
-	x |= _p[1] << 8;
-	x |= _p[2] << 16;
-	x |= _p[3] << 24;
-	return x;
-}
 
 #endif /* _MACHINE_DISKLABEL_H_ */
