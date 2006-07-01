@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.22 2006/07/01 03:30:31 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.23 2006/07/01 12:56:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1115,4 +1115,84 @@ struct mpi_cfg_fc_device_pg0 {
 	u_int8_t		fc_ph_high_version;
 	u_int8_t		current_target_id;
 	u_int8_t		current_bus;
+} __packed;
+
+struct mpi_cfg_raid_vol_pg0 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int8_t		volume_id;
+	u_int8_t		volume_bus;
+	u_int8_t		volume_ioc;
+	u_int8_t		volume_type;
+
+	u_int8_t		volume_status;
+#define MPI_CFG_RAID_VOL_2_STATUS_ENABLED		(1<<0)
+#define MPI_CFG_RAID_VOL_2_STATUS_QUIESCED		(1<<1)
+#define MPI_CFG_RAID_VOL_2_STATUS_RESYNCING		(1<<2)
+#define MPI_CFG_RAID_VOL_2_STATUS_ACTIVE		(1<<3)
+	u_int8_t		volume_state;
+#define MPI_CFG_RAID_VOL_2_STATE_OPTIMAL		(0x00)
+#define MPI_CFG_RAID_VOL_2_STATE_DEGRADED		(0x01)
+#define MPI_CFG_RAID_VOL_2_STATE_FAILED			(0x02)
+	u_int16_t		reserved1;
+
+	u_int16_t		volume_settings;
+#define MPI_CFG_RAID_VOL_2_SETTINGS_WRITE_CACHE_EN	(1<<0)
+#define MPI_CFG_RAID_VOL_2_SETTINGS_OFFLINE_SMART_ERR	(1<<1)
+#define MPI_CFG_RAID_VOL_2_SETTINGS_OFFLINE_SMART	(1<<2)
+#define MPI_CFG_RAID_VOL_2_SETTINGS_AUTO_SWAP		(1<<3)
+#define MPI_CFG_RAID_VOL_2_SETTINGS_HI_PRI_RESYNC	(1<<4)
+#define MPI_CFG_RAID_VOL_2_SETTINGS_PROD_SUFFIX		(1<<5)
+#define MPI_CFG_RAID_VOL_2_SETTINGS_FAST_SCRUB		(1<<6) /* obsolete */
+#define MPI_CFG_RAID_VOL_2_SETTINGS_DEFAULTS		(1<<15)
+	u_int8_t		hot_spare_pool;
+	u_int8_t		reserved2;
+
+	u_int32_t		max_lba;
+
+	u_int32_t		reserved3;
+
+	u_int32_t		stripe_size;
+
+	u_int32_t		reserved4;
+
+	u_int32_t		reserved5;
+
+	u_int8_t		num_phys_disks;
+	u_int8_t		data_scrub_rate;
+	u_int8_t		resync_rate;
+	u_int8_t		inactive_status;
+#define MPI_CFG_RAID_VOL_2_INACTIVE_UNKNOWN		(0x00)
+#define MPI_CFG_RAID_VOL_2_INACTIVE_STALE_META		(0x01)
+#define MPI_CFG_RAID_VOL_2_INACTIVE_FOREIGN_VOL		(0x02)
+#define MPI_CFG_RAID_VOL_2_INACTIVE_NO_RESOURCES	(0x03)
+#define MPI_CFG_RAID_VOL_2_INACTIVE_CLONED_VOL		(0x04)
+#define MPI_CFG_RAID_VOL_2_INACTIVE_INSUF_META		(0x05)
+
+	/* followed by a list of mpi_cfg_raid_vol_pg0_physdisk structs */
+} __packed;
+
+struct mpi_cfg_raid_vol_pg0_physdisk {
+	u_int16_t		reserved;
+	u_int8_t		phys_disk_map;
+	u_int8_t		phys_disk_num;
+} __packed;
+
+struct mpi_cfg_raid_vol_pg1 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int8_t		volume_id;
+	u_int8_t		volume_bus;
+	u_int8_t		volume_ioc;
+	u_int8_t		reserved1;
+
+	u_int8_t		guid[24];
+
+	u_int8_t		name[32];
+
+	u_int64_t		wwid;
+
+	u_int32_t		reserved2;
+
+	u_int32_t		reserved3;
 } __packed;
