@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.59 2006/06/28 18:52:05 reyk Exp $	*/
+/*	$OpenBSD: add.c,v 1.60 2006/07/01 12:02:06 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -151,7 +151,7 @@ add_directory(struct cvs_file *cf)
 			    MAXPATHLEN);
 
 			l = snprintf(entry, MAXPATHLEN, "%s/%s", repo,
-			    cf->file_path);
+			    cf->file_name);
 
 			cvs_mkadmin(cf->file_path, current_cvsroot->cr_dir,
 			    entry, tag, date, nb);
