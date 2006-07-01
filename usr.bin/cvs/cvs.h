@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.114 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.115 2006/07/01 20:30:46 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -356,5 +356,6 @@ int	update_has_conflict_markers(struct cvs_file *);
 
 #define CO_MERGE	0x01
 #define CO_SETSTICKY	0x02
+#define CO_DUMP		0x04
 
 #endif
