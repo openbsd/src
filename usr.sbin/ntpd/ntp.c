@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.90 2006/06/30 16:52:13 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.91 2006/07/01 18:52:46 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,6 @@
 #include <unistd.h>
 
 #include "ntpd.h"
-#include "ntp.h"
 
 #define	PFD_PIPE_MAIN	0
 #define	PFD_HOTPLUG	1

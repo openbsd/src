@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.29 2006/06/07 06:29:03 otto Exp $ */
+/*	$OpenBSD: server.c,v 1.30 2006/07/01 18:52:46 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,7 +26,6 @@
 #include <unistd.h>
 
 #include "ntpd.h"
-#include "ntp.h"
 
 int
 setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)

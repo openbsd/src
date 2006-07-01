@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.15 2005/09/24 00:32:03 dtucker Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.16 2006/07/01 18:52:46 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,7 +24,6 @@
 #include <errno.h>
 
 #include "ntpd.h"
-#include "ntp.h"
 
 int
 ntp_getmsg(struct sockaddr *sa, char *p, ssize_t len, struct ntp_msg *msg)
