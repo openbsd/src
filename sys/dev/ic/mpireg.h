@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.21 2006/06/29 10:43:21 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.22 2006/07/01 03:30:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -640,11 +640,11 @@ struct mpi_msg_scsi_io {
 #define MPI_SCSIIO_ATTR_ACA_Q				(0x4)
 #define MPI_SCSIIO_ATTR_UNTAGGED			(0x5)
 #define MPI_SCSIIO_ATTR_NO_DISCONNECT			(0x7)
+	u_int8_t		reserved3;
 	u_int8_t		direction;
 #define MPI_SCSIIO_DIR_NONE				(0x0)
 #define MPI_SCSIIO_DIR_WRITE				(0x1)
 #define MPI_SCSIIO_DIR_READ				(0x2)
-	u_int8_t		extra_cdb_len;
 
 #define MPI_CDB_LEN					16
 	u_int8_t		cdb[MPI_CDB_LEN];
