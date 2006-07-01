@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.25 2006/07/01 07:36:27 jmc Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.26 2006/07/01 07:47:49 jmc Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -53,23 +53,25 @@ command configures vnode pseudo disk devices.
 It will associate (or disassociate) the special file
 .Ar rawdev
 with the regular file
-.Ar regular_file
+.Ar regular_file ,
 allowing the latter to be accessed as though it were a disk.
 Hence a regular file within the file system can be used for swapping
 or can contain a file system that is mounted in the name space.
+.Pp
 Both traditional devices,
-.Pa vnd ,
+.Xr vnd 4 ,
 and the cache-coherent devices,
 .Pa svnd ,
 are configured through
 .Nm vnconfig .
-.Pp
-If you read the regular file while using
-.Pa svnd ,
-you need to mount the
 .Pa svnd
-with the mount option
-.Ar sync
+should be mounted with the
+.Xr mount 8
+option
+.Dq sync
+if
+.Ar regular_file
+is being read from,
 to ensure consistency in the buffer cache.
 For normal operation this is not necessary.
 .Pp
@@ -99,7 +101,7 @@ written to the disk.
 Encryption only works with
 .Pa svnd .
 .It Fl l
-List the vnd devices and indicate which ones are in use.
+List the (s)vnd devices and indicate which ones are in use.
 If a specific
 .Ar rawdev
 is given, then only that one will be described.
@@ -109,10 +111,6 @@ Unconfigures a
 .It Fl v
 Print messages to stdout describing actions taken.
 .El
-.Pp
-If no action option is given,
-.Fl c
-is assumed.
 .Sh FILES
 .Bl -tag -width /etc/rvnd?? -compact
 .It Pa /dev/{,r}{,s}vnd*
