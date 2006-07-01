@@ -1,4 +1,4 @@
-.\" $OpenBSD: ixgb.4,v 1.5 2006/03/24 00:05:36 deraadt Exp $
+.\" $OpenBSD: ixgb.4,v 1.6 2006/07/01 07:48:10 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -72,16 +72,6 @@ Only full-duplex mode is supported at this speed.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "ixgb%d: Unable to allocate bus resource: memory"
-A fatal initialization error has occurred.
-.It "ixgb%d: Unable to allocate bus resource: interrupt"
-A fatal initialization error has occurred.
-.It "ixgb%d: watchdog timeout -- resetting"
-The device has stopped responding to the network, or there is a problem with
-the network connection (cable).
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -90,9 +80,6 @@ the network connection (cable).
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
-.Pp
-For general information and support, go to the Intel support website at
-.Pa http://support.intel.com .
 .Sh HISTORY
 The
 .Nm
@@ -102,7 +89,7 @@ device driver first appeared in
 The
 .Nm
 driver was written by
-.An Intel Corporation Aq freebsdnic@mailbox.intel.com .
+.An Intel Corporation .
 .Sh BUGS
 Under small packet UDP stress tests with 10GbE driver, the
 .Ox
