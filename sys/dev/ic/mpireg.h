@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.23 2006/07/01 12:56:23 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.24 2006/07/01 13:23:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1126,25 +1126,25 @@ struct mpi_cfg_raid_vol_pg0 {
 	u_int8_t		volume_type;
 
 	u_int8_t		volume_status;
-#define MPI_CFG_RAID_VOL_2_STATUS_ENABLED		(1<<0)
-#define MPI_CFG_RAID_VOL_2_STATUS_QUIESCED		(1<<1)
-#define MPI_CFG_RAID_VOL_2_STATUS_RESYNCING		(1<<2)
-#define MPI_CFG_RAID_VOL_2_STATUS_ACTIVE		(1<<3)
+#define MPI_CFG_RAID_VOL_0_STATUS_ENABLED		(1<<0)
+#define MPI_CFG_RAID_VOL_0_STATUS_QUIESCED		(1<<1)
+#define MPI_CFG_RAID_VOL_0_STATUS_RESYNCING		(1<<2)
+#define MPI_CFG_RAID_VOL_0_STATUS_ACTIVE		(1<<3)
 	u_int8_t		volume_state;
-#define MPI_CFG_RAID_VOL_2_STATE_OPTIMAL		(0x00)
-#define MPI_CFG_RAID_VOL_2_STATE_DEGRADED		(0x01)
-#define MPI_CFG_RAID_VOL_2_STATE_FAILED			(0x02)
+#define MPI_CFG_RAID_VOL_0_STATE_OPTIMAL		(0x00)
+#define MPI_CFG_RAID_VOL_0_STATE_DEGRADED		(0x01)
+#define MPI_CFG_RAID_VOL_0_STATE_FAILED			(0x02)
 	u_int16_t		reserved1;
 
 	u_int16_t		volume_settings;
-#define MPI_CFG_RAID_VOL_2_SETTINGS_WRITE_CACHE_EN	(1<<0)
-#define MPI_CFG_RAID_VOL_2_SETTINGS_OFFLINE_SMART_ERR	(1<<1)
-#define MPI_CFG_RAID_VOL_2_SETTINGS_OFFLINE_SMART	(1<<2)
-#define MPI_CFG_RAID_VOL_2_SETTINGS_AUTO_SWAP		(1<<3)
-#define MPI_CFG_RAID_VOL_2_SETTINGS_HI_PRI_RESYNC	(1<<4)
-#define MPI_CFG_RAID_VOL_2_SETTINGS_PROD_SUFFIX		(1<<5)
-#define MPI_CFG_RAID_VOL_2_SETTINGS_FAST_SCRUB		(1<<6) /* obsolete */
-#define MPI_CFG_RAID_VOL_2_SETTINGS_DEFAULTS		(1<<15)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN	(1<<0)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART_ERR	(1<<1)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART	(1<<2)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_AUTO_SWAP		(1<<3)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_HI_PRI_RESYNC	(1<<4)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_PROD_SUFFIX		(1<<5)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_FAST_SCRUB		(1<<6) /* obsolete */
+#define MPI_CFG_RAID_VOL_0_SETTINGS_DEFAULTS		(1<<15)
 	u_int8_t		hot_spare_pool;
 	u_int8_t		reserved2;
 
@@ -1162,12 +1162,12 @@ struct mpi_cfg_raid_vol_pg0 {
 	u_int8_t		data_scrub_rate;
 	u_int8_t		resync_rate;
 	u_int8_t		inactive_status;
-#define MPI_CFG_RAID_VOL_2_INACTIVE_UNKNOWN		(0x00)
-#define MPI_CFG_RAID_VOL_2_INACTIVE_STALE_META		(0x01)
-#define MPI_CFG_RAID_VOL_2_INACTIVE_FOREIGN_VOL		(0x02)
-#define MPI_CFG_RAID_VOL_2_INACTIVE_NO_RESOURCES	(0x03)
-#define MPI_CFG_RAID_VOL_2_INACTIVE_CLONED_VOL		(0x04)
-#define MPI_CFG_RAID_VOL_2_INACTIVE_INSUF_META		(0x05)
+#define MPI_CFG_RAID_VOL_0_INACTIVE_UNKNOWN		(0x00)
+#define MPI_CFG_RAID_VOL_0_INACTIVE_STALE_META		(0x01)
+#define MPI_CFG_RAID_VOL_0_INACTIVE_FOREIGN_VOL		(0x02)
+#define MPI_CFG_RAID_VOL_0_INACTIVE_NO_RESOURCES	(0x03)
+#define MPI_CFG_RAID_VOL_0_INACTIVE_CLONED_VOL		(0x04)
+#define MPI_CFG_RAID_VOL_0_INACTIVE_INSUF_META		(0x05)
 
 	/* followed by a list of mpi_cfg_raid_vol_pg0_physdisk structs */
 } __packed;
@@ -1195,4 +1195,91 @@ struct mpi_cfg_raid_vol_pg1 {
 	u_int32_t		reserved2;
 
 	u_int32_t		reserved3;
+} __packed;
+
+struct mpi_cfg_raid_physdisk_pg0 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int8_t		phys_disk_id;
+	u_int8_t		phys_disk_bus;
+	u_int8_t		phys_disk_ioc;
+	u_int8_t		phys_disk_num;
+
+	u_int8_t		enc_id;
+	u_int8_t		enc_bus;
+	u_int8_t		hot_spare_pool;
+	u_int8_t		enc_type;
+#define MPI_CFG_RAID_PHYDISK_0_ENCTYPE_NONE		(0x0)
+#define MPI_CFG_RAID_PHYDISK_0_ENCTYPE_SAFTE		(0x1)
+#define MPI_CFG_RAID_PHYDISK_0_ENCTYPE_SES		(0x2)
+
+	u_int32_t		reserved1;
+
+	u_int8_t		ext_disk_id[8];
+
+	u_int8_t		disk_id[16];
+
+	u_int8_t		vendor_id[8];
+
+	u_int8_t		product_id[16];
+
+	u_int8_t		product_rev[4];
+
+	u_int8_t		info[32];
+
+	u_int8_t		phys_disk_status;
+#define MPI_CFG_RAID_PHYDISK_0_STATUS_OUTOFSYNC		(1<<0)
+#define MPI_CFG_RAID_PHYDISK_0_STATUS_QUIESCED		(1<<1)
+	u_int8_t		phys_disk_state;
+#define MPI_CFG_RAID_PHYDISK_0_STATE_ONLINE		(0x00)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_MISSING		(0x01)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_INCOMPAT		(0x02)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_FAILED		(0x03)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_INIT		(0x04)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_OFFLINE		(0x05)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_HOSTFAIL		(0x06)
+#define MPI_CFG_RAID_PHYDISK_0_STATE_OTHER		(0xff)
+	u_int16_t		reserved2;
+
+	u_int32_t		max_lba;
+
+	u_int8_t		error_cdb_byte;
+	u_int8_t		error_sense_key;
+	u_int16_t		reserved3;
+
+	u_int16_t		error_count;
+	u_int8_t		error_asc;
+	u_int8_t		error_ascq;
+
+	u_int16_t		smart_count;
+	u_int8_t		smart_asc;
+	u_int8_t		smart_ascq;
+} __packed;
+
+struct mpi_cfg_raid_physdisk_pg1 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int8_t		num_phys_disk_paths;
+	u_int8_t		phys_disk_num;
+	u_int16_t		reserved1;
+
+	u_int32_t		reserved2;
+
+	/* followed by mpi_cfg_raid_physdisk_path structs */
+} __packed;
+
+struct mpi_cfg_raid_physdisk_path {
+	u_int8_t		phys_disk_id;
+	u_int8_t		phys_disk_bus;
+	u_int16_t		reserved1;
+
+	u_int64_t		wwwid;
+
+	u_int64_t		owner_wwid;
+
+	u_int8_t		ownder_id;
+	u_int8_t		reserved2;
+	u_int16_t		flags;
+#define MPI_CFG_RAID_PHYDISK_PATH_INVALID		(1<<0)
+#define MPI_CFG_RAID_PHYDISK_PATH_BROKEN		(1<<1)
 } __packed;
