@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.7 2006/06/30 12:27:21 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.8 2006/07/01 04:25:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1203,6 +1203,35 @@ struct zyd_rx_data {
 
 struct zyd_softc;
 
+struct zyd_rx_radiotap_header {
+	struct ieee80211_radiotap_header wr_ihdr;
+	uint8_t		wr_flags;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_rssi;
+	uint8_t		wr_max_rssi;
+} __packed;
+
+#define ZYD_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_RSSI))
+
+struct zyd_tx_radiotap_header {
+	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint8_t		wt_rate;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
+	uint8_t		wt_rssi;
+	uint8_t		wt_max_rssi;
+} __packed;
+
+#define ZYD_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
 struct zyd_softc {
 	/* Driver handling */
 	USBBASEDEVICE zyd_dev;
@@ -1275,4 +1304,22 @@ struct zyd_softc {
 	int zyd_wepkey;
 	int zyd_wepkeylen;
 	uint8_t zyd_wepkeys[4][13];
+
+#if NBPFILTER > 0
+	caddr_t				sc_drvbpf;
+
+	union {
+		struct zyd_rx_radiotap_header th;
+		uint8_t pad[64];
+	}				sc_rxtapu;
+#define sc_rxtap        sc_rxtapu.th
+	int				sc_rxtap_len;
+
+	union {
+		struct zyd_tx_radiotap_header th;
+		uint8_t pad[64];
+	}				sc_txtapu;
+#define sc_txtap	sc_txtapu.th
+	int				sc_txtap_len;
+#endif
 };

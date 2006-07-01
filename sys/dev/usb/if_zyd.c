@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.11 2006/06/30 12:27:21 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.12 2006/07/01 04:25:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1263,6 +1263,26 @@ zyd_rxframeproc(struct zyd_rx_data *data, uint8_t *buf, uint16_t len)
 
 	s = splnet();
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct zyd_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->wr_flags = 0;
+		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		tap->wr_rssi = desc->signalstrength;
+		tap->wr_max_rssi = 0;	/* XXX */
+
+		M_DUP_PKTHDR(&mb, m);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_rxtap_len;
+		mb.m_next = m;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+	}
+#endif
+
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 	ieee80211_input(ifp, m, ni, desc->signalstrength, 0);
@@ -2472,6 +2492,19 @@ zyd_complete_attach(struct zyd_softc *sc)
 	/* setup ifmedia interface */
 	ieee80211_media_init(ifp, zyd_media_change, ieee80211_media_status);
 
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
+	    sizeof (struct ieee80211_frame) + 64);
+
+	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(ZYD_RX_RADIOTAP_PRESENT);
+	
+	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(ZYD_TX_RADIOTAP_PRESENT);
+#endif
+
 	usb_init_task(&sc->sc_task, zyd_task, sc);
 
 /*	ieee80211_announce(ic);*/
@@ -3001,6 +3034,25 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			flags |= RAL_TX_TIMESTAMP;*/
 	}
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct zyd_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+		
+		M_DUP_PKTHDR(&mb, m0);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
+
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + ZYD_TX_DESC_SIZE);
 
 
@@ -3100,6 +3152,25 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			ic->ic_flags) + ZYD_SIFS;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 	}*/
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct zyd_tx_radiotap_header *tap = &sc->sc_txtap;
+	
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
+
+		M_DUP_PKTHDR(&mb, m0);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m0;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + ZYD_TX_DESC_SIZE);
 	zyd_setup_tx_desc(sc, desc, m0, m0->m_pkthdr.len, rate);
@@ -3407,6 +3478,11 @@ zyd_if_start(struct ifnet *ifp)
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
 
+#if NBPFILTER > 0
+			if (ic->ic_rawbpf != NULL)
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
+#endif
+
 			DPRINTF(("if_state: @1\n"));
 
 			if (zyd_tx_mgt(sc, m0, ni) != 0)
@@ -3448,12 +3524,23 @@ zyd_if_start(struct ifnet *ifp)
 			}
 
 			DPRINTF(("if_state: @7\n"));
+
+#if NBPFILTER > 0
+			if (ifp->if_bpf != NULL)
+				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+#endif
+
 			m0 = ieee80211_encap(ifp, m0, &ni);
 
 			if (m0 == NULL) {
 				ieee80211_release_node(ic, ni);
 				continue;
 			}
+
+#if NBPFILTER > 0
+			if (ic->ic_rawbpf != NULL)
+				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
+#endif
 
 			DPRINTF(("if_state: @8\n"));
 
