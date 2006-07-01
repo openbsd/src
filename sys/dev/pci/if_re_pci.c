@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.14 2006/06/30 16:51:30 deraadt Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.15 2006/07/01 21:48:08 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -200,5 +200,5 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->rl_type = RL_8169;
 
 	/* Call bus-independent attach routine */
-	re_attach_common(sc);
+	re_attach(sc);
 }

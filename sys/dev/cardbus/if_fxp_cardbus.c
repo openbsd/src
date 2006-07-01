@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.16 2006/06/17 17:58:17 brad Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.17 2006/07/01 21:48:08 brad Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ fxp_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_revision = PCI_REVISION(ca->ca_class);
 
-	fxp_attach_common(sc, intrstr);
+	fxp_attach(sc, intrstr);
 }
 
 void

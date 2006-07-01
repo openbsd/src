@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.47 2006/06/17 18:00:43 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.48 2006/07/01 21:48:08 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -247,7 +247,7 @@ fxp_pci_attach(parent, self, aux)
 		}
 
 	/* Do generic parts of attach. */
-	if (fxp_attach_common(sc, intrstr)) {
+	if (fxp_attach(sc, intrstr)) {
 		/* Failed! */
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);

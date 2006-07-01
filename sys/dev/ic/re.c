@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.32 2006/06/30 06:17:55 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.33 2006/07/01 21:48:08 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -153,7 +153,7 @@
 int redebug = 0;
 #define DPRINTF(x)	if (redebug) printf x
 
-void	re_attach_common(struct rl_softc *);
+void	re_attach(struct rl_softc *);
 
 int	re_encap(struct rl_softc *, struct mbuf *, int *);
 
@@ -819,7 +819,7 @@ re_allocmem(struct rl_softc *sc)
  * setup and ethernet/BPF attach.
  */
 void
-re_attach_common(struct rl_softc *sc)
+re_attach(struct rl_softc *sc)
 {
 	u_char		eaddr[ETHER_ADDR_LEN];
 	u_int16_t	as[3];
