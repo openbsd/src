@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.131 2006/06/27 20:55:51 reyk Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.132 2006/07/01 19:30:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.131 2006/06/27 20:55:51 reyk Exp $";
+	"$OpenBSD: if_wi.c,v 1.132 2006/07/01 19:30:51 reyk Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2148,8 +2148,10 @@ wi_init_io(struct wi_softc *sc)
 	/* Set our MAC address. */
 	mac.wi_len = 4;
 	mac.wi_type = WI_RID_MAC_NODE;
+	bcopy(LLADDR(ifp->if_sadl),
+	    (char *)&sc->sc_ic.ic_myaddr, ETHER_ADDR_LEN);
 	bcopy((char *)&sc->sc_ic.ic_myaddr,
-	   (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
+	    (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
 	/*
