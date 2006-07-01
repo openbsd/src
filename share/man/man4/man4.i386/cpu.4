@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpu.4,v 1.9 2006/06/30 21:26:38 deraadt Exp $
+.\"	$OpenBSD: cpu.4,v 1.10 2006/07/01 07:28:13 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\" All rights reserved.
@@ -40,8 +40,8 @@ functionality, such as power and frequency control or additional instructions.
 .Sh FREQUENCY CONTROL
 The
 .Xr sysctl 3
-hw.cpuspeed will return the current operating frequency of the processor.
-This value may be an appoximation on some processors.
+hw.cpuspeed will return the current operating frequency of the processor
+(on some processors this value may be an approximation).
 If possible, speed may be adjusted by altering hw.setperf from 0 to 100,
 representing percentage of maximum speed.
 There are several possible implementations for setperf, all transparent
