@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.12 2006/07/01 04:25:07 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.13 2006/07/01 05:07:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1583,10 +1583,6 @@ USB_ATTACH(zyd)
 	else
 		zyd_attachhook(sc);
 
-	DPRINTF(("Setting debug flags\n"));
-	/* TODO: What about debugging flags in OpenBSD? */
-/*	sc->sc_ic.ic_debug = IEEE80211_MSG_ANY;*/  /* <<<--- this is the NetBSD version */
-
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -1795,8 +1791,6 @@ zyd_rf_rfmd_set_channel(struct zyd_softc *sc, struct zyd_rf *rf,
 	int i;
 	usbd_status rv;
 
-	DPRINTF(("Entering zyd_rf_rfmd_set_channel()\n"));
-
 	dp = rfmd_table[channel - 1];
 
 	for (i = 0; i < 2; i++) {
@@ -1805,8 +1799,6 @@ zyd_rf_rfmd_set_channel(struct zyd_softc *sc, struct zyd_rf *rf,
 		if (rv)
 			break;
 	}
-
-	DPRINTF(("Finished zyd_rf_rfmd_set_channel()\n"));
 
 	return rv;
 }
@@ -3270,8 +3262,6 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 	u_int i, chan;*/
 	unsigned int chan;
 
-	DPRINTF(("Entering zyd_set_chan()\n"));
-
 	chan = ieee80211_chan2ieee(ic, c);
 
 	DPRINTF(("zyd_set_chan: Will try %d\n", chan));
@@ -3281,8 +3271,6 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 		DPRINTF(("zyd_set_chan(): 0 or ANY, exiting\n"));
 		return;
 	}
-
-	DPRINTF(("@1: zyd_set_chan()\n"));
 
 	zyd_lock_phy(sc);
 
@@ -3295,8 +3283,6 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 	zyd_singleregwrite32(sc, ZYD_CR68, sc->pwr_cal_values[chan - 1]);
 
 	zyd_unlock_phy(sc);
-
-	DPRINTF(("Finished zyd_set_chan()\n"));
 }
 
 /*
@@ -3570,8 +3556,6 @@ zyd_if_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifreq *ifr;
 	int err = 0, s;
 
-	DPRINTF(("Entering zyd_if_ioctl()\n"));
-
 	s = splnet();
 
 	switch (command) {
@@ -3585,7 +3569,6 @@ zyd_if_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:
-		DPRINTF(("IOCTL: SIOCSIFFLAGS\n"));
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
 				zyd_update_promisc(sc);
@@ -3599,7 +3582,6 @@ zyd_if_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		DPRINTF(("IOCTL: SIOCADDMULTI\n"));
 		ifr = (struct ifreq *)data;
 		err = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &ic->ic_ac) :
@@ -3644,8 +3626,6 @@ zyd_if_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	}
 
 	splx(s);
-
-	DPRINTF(("Finished zyd_if_ioctl()\n"));
 
 	return (err);
 }
