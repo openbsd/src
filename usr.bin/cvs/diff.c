@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.106 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.107 2006/07/01 01:07:50 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -216,7 +216,7 @@ cvs_diff_local(struct cvs_file *cf)
 	if (cf->file_status != FILE_ADDED) {
 		len = strlcpy(p1, cvs_tmpdir, sizeof(p1));
 		if (len >= sizeof(p1))
-		fatal("cvs_diff_local: truncation");
+			fatal("cvs_diff_local: truncation");
 
 		len = strlcat(p1, "/diff1.XXXXXXXXXX", sizeof(p1));
 		if (len >= sizeof(p1))
