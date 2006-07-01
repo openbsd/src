@@ -1,4 +1,4 @@
-.\" $OpenBSD: ixgb.4,v 1.6 2006/07/01 07:48:10 brad Exp $
+.\" $OpenBSD: ixgb.4,v 1.7 2006/07/01 07:54:15 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -62,11 +62,11 @@ driver supports the following media types:
 .Bl -tag -width autoselect -offset indent
 .It autoselect
 Enables auto-negotiation for speed and duplex.
-.It 1000baseSX
-Sets 1000Mbps operation.
+.It 10GbaseLR
+Sets 10Gbps operation.
 Only full-duplex mode is supported at this speed.
-.It 1000baseT
-Sets 1000Mbps operation.
+.It 10GbaseSR
+Sets 10Gbps operation.
 Only full-duplex mode is supported at this speed.
 .El
 .Pp
