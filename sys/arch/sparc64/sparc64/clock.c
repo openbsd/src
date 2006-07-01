@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.25 2006/06/21 22:28:56 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.26 2006/07/01 20:05:11 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -610,11 +610,8 @@ timerattach(parent, self, aux)
 	strlcpy(level14.ih_name, "prof", sizeof(level14.ih_name));
 	intr_establish(14, &level14);
 
-	printf(" irq vectors %lx and %lx", 
-	       (u_long)level10.ih_number, 
-	       (u_long)level14.ih_number);
-
-	printf("\n");
+	printf(" ivec 0x%x, 0x%x\n", INTVEC(level10.ih_number),
+	    INTVEC(level14.ih_number));
 }
 
 void
