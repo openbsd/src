@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.204 2006/06/27 09:19:09 jsg Exp $
+$OpenBSD: usbdevs,v 1.205 2006/07/01 10:33:12 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -754,7 +754,9 @@ product BTC BTC7932		0x6782	Keyboard/Mouse
 
 /* Canon, Inc. products */
 product CANON N656U		0x2206	CANOSCAN N656U
+product CANON N1220U		0x2207	CANOSCAN N1220U
 product CANON N670U		0x220d	CANOSCAN N670U
+product CANON N1240U		0x220e	CANOSCAN N1240U
 product CANON S10		0x3041	PowerShot S10
 product CANON S20		0x3043	PowerShot S20
 product CANON S100_US		0x3045	PowerShot S100
