@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.172 2006/01/07 15:24:31 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.173 2006/07/01 11:10:42 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -374,6 +374,10 @@ See also
 for possible
 .Ar post-patch
 clean-up.
+.It Ar peek-ftp
+Connect to the first site in
+.Ev MASTER_SITES ,
+in the right directory, and leaves user at ftp prompt.
 .It Ar print-package-signature
 Print the package signature, in the same format used for
 .Xr pkg_info 1
