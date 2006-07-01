@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2006/06/20 20:31:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2006/07/01 16:23:31 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1987,7 +1987,7 @@ pmap_kenter_pa(va, pa, prot)
 	ASSERT(va < kdata || va > ekdata);
 
 #ifdef DIAGNOSTIC
-	if (pa & (PMAP_NVC|PMAP_NC))
+	if (pa & (PMAP_NVC|PMAP_NC|PMAP_LITTLE))
 		panic("pmap_kenter_pa: illegal cache flags %ld", pa);
 #endif
 
@@ -3447,7 +3447,7 @@ pmap_enter_pv(pmap, va, pa)
 
 				data = pseg_get(pm, va);
 				if (data >= 0 ||
-				    data&TLB_PA_MASK != pa)
+				    data&TLB_PA_MASK != pa&TLB_PA_MASK)
 					printf(
 		"pmap_enter: found va %lx pa %lx in pv_table but != %lx\n",
 						va, pa, (long)data);
