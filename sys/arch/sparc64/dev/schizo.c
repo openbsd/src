@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.32 2006/06/30 05:02:11 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.33 2006/07/01 16:41:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -378,7 +378,6 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	}
 
 	iommu_init(name, is, tsbsize, iobase);
-	iommu_reset(is);
 }
 
 int

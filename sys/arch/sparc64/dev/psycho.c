@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.46 2006/07/01 13:57:50 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.47 2006/07/01 16:41:26 deraadt Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = psycho_br[0];
 	pba.pba_bridgetag = NULL;
 
-	printf("%s: bus range %u-%u, PCI bus %d", sc->sc_dev.dv_xname,
+	printf("%s: bus range %u-%u, PCI bus %d\n", sc->sc_dev.dv_xname,
 	    psycho_br[0], psycho_br[1], psycho_br[0]);
 
 	pp->pp_pcictl = sc->sc_pcictl;
@@ -476,9 +476,8 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		/* Point out iommu at the strbuf_ctl. */
 		sc->sc_is->is_sb[0] = &pp->pp_sb;
 
-		printf(", ");
+		printf("%s: ", sc->sc_dev.dv_xname);
 		psycho_iommu_init(sc, 2);
-		printf("\n");
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 		if (bus_space_map(sc->sc_configtag,
@@ -518,15 +517,15 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		/* Point out iommu at the strbuf_ctl. */
 		sc->sc_is->is_sb[1] = &pp->pp_sb;
 
-		printf(", ");
+		printf("%s: ", sc->sc_dev.dv_xname);
 		printf("dvma map %x-%x, ", sc->sc_is->is_dvmabase,
 		    sc->sc_is->is_dvmaend);
 		printf("iotdb %llx-%llx",
 		    (unsigned long long)sc->sc_is->is_ptsb,
 		    (unsigned long long)(sc->sc_is->is_ptsb +
 		    (PAGE_SIZE << sc->sc_is->is_tsbsize)));
-		printf("\n");
 		iommu_reset(sc->sc_is);
+		printf("\n");
 	}
 
 	/*
