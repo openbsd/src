@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.45 2006/06/28 20:09:15 deraadt Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.46 2006/07/01 13:57:50 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1090,7 +1090,6 @@ psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	 * interrupt which has a full vector that can be set arbitrarily.  
 	 */
 
-
 	DPRINTF(PDB_INTR,
 	    ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
 	ino = INTINO(vec);
@@ -1112,17 +1111,12 @@ psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	    ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
 	    (long)ino, intrlev[ino]));
 
-	/* Hunt thru obio first */
-	for (intrmapptr = psycho_psychoreg_vaddr(sc, scsi_int_map),
-	    intrclrptr = psycho_psychoreg_vaddr(sc, scsi_clr_int);
-	    intrmapptr < (volatile u_int64_t *)
-		psycho_psychoreg_vaddr(sc, ffb0_int_map);
-	    intrmapptr++, intrclrptr++) {
-		if (INTINO(*intrmapptr) == ino)
-			goto found;
-	}
+	/* 
+	 * First look for PCI interrupts, otherwise the PCI A slot 0
+	 * INTA# interrupt might match an unused non-PCI (obio)
+	 * interrupt.
+	 */
 
-	/* Now do PCI interrupts */
 	for (intrmapptr = psycho_psychoreg_vaddr(sc, pcia_slot0_int),
 	    intrclrptr = psycho_psychoreg_vaddr(sc, pcia0_clr_int[0]);
 	    intrmapptr <= (volatile u_int64_t *)
@@ -1141,6 +1135,17 @@ psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 			goto found;
 		}
 	}
+
+	/* Now hunt through obio.  */
+	for (intrmapptr = psycho_psychoreg_vaddr(sc, scsi_int_map),
+	    intrclrptr = psycho_psychoreg_vaddr(sc, scsi_clr_int);
+	    intrmapptr < (volatile u_int64_t *)
+		psycho_psychoreg_vaddr(sc, ffb0_int_map);
+	    intrmapptr++, intrclrptr++) {
+		if (INTINO(*intrmapptr) == ino)
+			goto found;
+	}
+
 	printf("Cannot find interrupt vector %lx\n", vec);
 	return (NULL);
 
