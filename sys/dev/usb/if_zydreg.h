@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.8 2006/07/01 04:25:07 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.9 2006/07/01 04:47:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1017,85 +1017,87 @@ struct zyd_rxstatusreport {
 
 /* Appended length info for multiframe transmission */
 struct zyd_rxleninfoapp {
-	uWord len[3];
-	uWord marker; /* 0x697E */
+	uWord		len[3];
+	uWord		marker; /* 0x697E */
 #define ZYD_MULTIFRAME_MARKER 0x697E
 } UPACKED;
 
 struct zyd_aw_pt_bi {
-	uint32_t atim_wnd_period;
-	uint32_t pre_tbtt;
-	uint32_t beacon_interval;
+	uint32_t	atim_wnd_period;
+	uint32_t	pre_tbtt;
+	uint32_t	beacon_interval;
 };
 
 /* RF control. Kinda driver-in-driver via function pointers. */
 struct zyd_softc; /* FORWARD */
 struct zyd_rf {
-	uint8_t flags;
-	uint8_t type;
-	usbd_status (*init_hw)(struct zyd_softc *, struct zyd_rf *);
-	usbd_status (*switch_radio)(struct zyd_softc *, uint8_t onoff);
-	usbd_status (*set_channel)(struct zyd_softc *, struct zyd_rf *, uint8_t);
+	uint8_t		flags;
+	uint8_t		type;
+	usbd_status	(*init_hw)(struct zyd_softc *, struct zyd_rf *);
+	usbd_status	(*switch_radio)(struct zyd_softc *, uint8_t onoff);
+	usbd_status	(*set_channel)(struct zyd_softc *, struct zyd_rf *,
+			    uint8_t);
 };
 
 struct zyd_req_rfwrite {
-	uWord id;
-	uWord value;
+	uWord		id;
+	uWord		value;
 	/* 1: 3683a */
 	/* 2: other (default) */
-	uWord bits;
+	uWord		bits;
 	/* RF2595: 24 */
-	uWord bit_values[0];
+	uWord		bit_values[0];
 	/* (CR203 & ~(RF_IF_LE | RF_CLK | RF_DATA)) | (bit ? RF_DATA : 0) */
 } UPACKED;
 
 struct zyd_macaddr {
-	uint8_t addr[6];
+	uint8_t		addr[6];
 } UPACKED;
 
 /* Control interface @ EP 0 */
 struct zyd_control
 {
-	uint8_t type;
-	uint8_t id;
-	uint16_t value;
-	uint16_t index;
-	uint16_t length;
-	void* data;
+	uint8_t		type;
+	uint8_t		id;
+	uint16_t	value;
+	uint16_t	index;
+	uint16_t	length;
+	void*		data;
 } UPACKED;
 
 /* Int IN interface @ EP 3 (single register access) */
 struct zyd_intinsingle
 {
-	uWord id;
-	uWord sts1;
-	uWord sts2;
-	uWord sts3;
-	uWord sts4;
-	uWord sts5;
+	uWord	id;
+	uWord	sts1;
+	uWord	sts2;
+	uWord	sts3;
+	uWord	sts4;
+	uWord	sts5;
 } UPACKED;
 
 /* Int/bulk OUT interface @ EP 4 (single register access) */
 struct zyd_intoutsingle
 {
-	uWord id;
-	uWord par1;
-	uWord par2;
-	uWord length;
-	uWord data1;
-	uWord data2;
+	uWord	id;
+	uWord	par1;
+	uWord	par2;
+	uWord	length;
+	uWord	data1;
+	uWord	data2;
 } UPACKED;
 
 /* Register addr/data combo */
 struct zyd_regadcombo {
-	uWord addr;
-	uWord data;
+	uWord	addr;
+	uWord	data;
 } UPACKED;
 
 /* Int IN interface @ EP 3 (multi register access) output */
 struct zyd_intinmultioutput {
-	uWord id;
-	struct zyd_regadcombo registers[15]; /* pairs of addr-data-addr-data-... */
+	uWord			id;
+	/* pairs of addr-data-addr-data-... */
+	struct zyd_regadcombo	registers[15]; 
 } UPACKED;
 
 /* Int/bulk OUT interface @ EP 4 (multi register access) read */
@@ -1106,8 +1108,9 @@ struct zyd_intoutmultiread {
 
 /* Int/bulk OUT interface @ EP 4 (multi register access) write */
 struct zyd_intoutmultiwrite {
-	uWord id;
-	struct zyd_regadcombo registers[15]; /* pairs of addr-data-addr-data-... */
+	uWord			id;
+	/* pairs of addr-data-addr-data-... */
+	struct zyd_regadcombo	registers[15];
 } UPACKED;
 
 /* Pairs of address and 16-bit data. For batch write. */
@@ -1126,18 +1129,18 @@ struct zyd_adpairs32 {
  * RX/TX
  */
 struct zyd_tx_data {
-	struct zyd_softc *sc;
-	usbd_xfer_handle xfer;
-	uint8_t	*buf;
-	struct mbuf	*m;
-	struct ieee80211_node *ni;
+	struct zyd_softc	*sc;
+	usbd_xfer_handle	xfer;
+	uint8_t			*buf;
+	struct mbuf		*m;
+	struct ieee80211_node	*ni;
 };
 
 struct zyd_rx_data {
-	struct zyd_softc *sc;
-	usbd_xfer_handle xfer;
-	uint8_t	*buf;
-	struct mbuf *m;
+	struct zyd_softc	*sc;
+	usbd_xfer_handle	xfer;
+	uint8_t			*buf;
+	struct mbuf		*m;
 };
 
 /*
@@ -1234,92 +1237,93 @@ struct zyd_tx_radiotap_header {
 
 struct zyd_softc {
 	/* Driver handling */
-	USBBASEDEVICE zyd_dev;
-	struct ieee80211com sc_ic;
-	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
+	USBBASEDEVICE		zyd_dev;
+	struct ieee80211com	sc_ic;
+	int			(*sc_newstate)(struct ieee80211com *,
+				    enum ieee80211_state, int);
 
 	/* Interrupt related */
-	int pending;
-	struct clist q_reply; /* queue for register read replies */
-	uint8_t *ibuf;
-	struct selinfo rsel;
+	int 			pending;
+	struct clist 		q_reply; /* queue for register read replies */
+	uint8_t 		*ibuf;
+	struct selinfo		rsel;
 
 	/* Device state */
-	enum ieee80211_state sc_state;
+	enum ieee80211_state	sc_state;
 
 	/* Command to device (for usb task) */
-	enum zyd_cmd sc_cmd;
+	enum zyd_cmd		sc_cmd;
 
 	/* Device hardware constellation */
-	uint16_t firmware_base;
-	struct zyd_rf rf;
-	uint8_t default_regdomain;
-	uint8_t regdomain;
-	uint8_t channel;
-	uint8_t mac_flags;
-	uint8_t pa_ver;
-	uint16_t fw_ver;
+	uint16_t		firmware_base;
+	struct zyd_rf		rf;
+	uint8_t			default_regdomain;
+	uint8_t			regdomain;
+	uint8_t			channel;
+	uint8_t			mac_flags;
+	uint8_t			pa_ver;
+	uint16_t		fw_ver;
 
 	/* Calibration tables */
-	uint8_t pwr_cal_values[ZYD_E2P_CHANNEL_COUNT];
-	uint8_t pwr_int_values[ZYD_E2P_CHANNEL_COUNT];
-	uint8_t ofdm_cal_values[3][ZYD_E2P_CHANNEL_COUNT];
+	uint8_t			pwr_cal_values[ZYD_E2P_CHANNEL_COUNT];
+	uint8_t			pwr_int_values[ZYD_E2P_CHANNEL_COUNT];
+	uint8_t			ofdm_cal_values[3][ZYD_E2P_CHANNEL_COUNT];
 
 	/* USB stuff */
-	struct usb_task sc_task;
-	usbd_device_handle zyd_udev;
-	usbd_interface_handle zyd_iface;
-	int zyd_ed[ZYD_ENDPT_CNT];
-	usbd_pipe_handle zyd_ep[ZYD_ENDPT_CNT];
+	struct usb_task		sc_task;
+	usbd_device_handle	zyd_udev;
+	usbd_interface_handle	zyd_iface;
+	int			zyd_ed[ZYD_ENDPT_CNT];
+	usbd_pipe_handle	zyd_ep[ZYD_ENDPT_CNT];
 
 	/* Ethernet stuff */
-/*	struct ethercom zyd_ec;*/
-	struct ifmedia zyd_media;
+/*	struct ethercom		zyd_ec;*/
+	struct ifmedia		zyd_media;
 
 	/* TX/RX */
-	struct zyd_rx_data rx_data[ZYD_RX_LIST_CNT];
-	struct zyd_tx_data tx_data[ZYD_TX_LIST_CNT];
-	int tx_queued;
+	struct zyd_rx_data	rx_data[ZYD_RX_LIST_CNT];
+	struct zyd_tx_data	tx_data[ZYD_TX_LIST_CNT];
+	int			tx_queued;
 
-	int zyd_unit;
-	int zyd_if_flags;
-	int zyd_attached;
+	int			zyd_unit;
+	int			zyd_if_flags;
+	int			zyd_attached;
 
-	struct timeval zyd_rx_notice;
+	struct timeval		zyd_rx_notice;
 
-	struct timeout scan_ch;
+	struct timeout		scan_ch;
 
-	int tx_timer;
+	int			tx_timer;
 
 	/* WLAN specific */
-	enum zyd_operationmode zyd_operation;
-	uint8_t zyd_bssid[ETHER_ADDR_LEN];
-	uint8_t zyd_ssid[ZYD_MAX_SSID_LEN];
-	uint8_t zyd_ssidlen;
-	uint16_t zyd_desired_channel;
-	uint8_t zyd_radio_on;
-	enum zyd_encrtypes zyd_encrypt;
+	enum zyd_operationmode	zyd_operation;
+	uint8_t			zyd_bssid[ETHER_ADDR_LEN];
+	uint8_t			zyd_ssid[ZYD_MAX_SSID_LEN];
+	uint8_t			zyd_ssidlen;
+	uint16_t		zyd_desired_channel;
+	uint8_t			zyd_radio_on;
+	enum zyd_encrtypes	zyd_encrypt;
 
 	/* WEP configuration */
-	int zyd_wepkey;
-	int zyd_wepkeylen;
-	uint8_t zyd_wepkeys[4][13];
+	int			zyd_wepkey;
+	int			zyd_wepkeylen;
+	uint8_t			zyd_wepkeys[4][13];
 
 #if NBPFILTER > 0
-	caddr_t				sc_drvbpf;
+	caddr_t			sc_drvbpf;
 
 	union {
 		struct zyd_rx_radiotap_header th;
 		uint8_t pad[64];
-	}				sc_rxtapu;
+	}			sc_rxtapu;
 #define sc_rxtap        sc_rxtapu.th
-	int				sc_rxtap_len;
+	int			sc_rxtap_len;
 
 	union {
 		struct zyd_tx_radiotap_header th;
 		uint8_t pad[64];
-	}				sc_txtapu;
+	}			sc_txtapu;
 #define sc_txtap	sc_txtapu.th
-	int				sc_txtap_len;
+	int			sc_txtap_len;
 #endif
 };
