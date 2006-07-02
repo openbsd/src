@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.78 2006/06/29 00:41:52 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.79 2006/07/02 21:01:48 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -129,23 +129,27 @@ cvs_commit_check_conflicts(struct cvs_file *cf)
 	}
 
 	if (cf->file_status == FILE_CONFLICT ||
-	    cf->file_status == FILE_LOST ||
-	    cf->file_status == FILE_UNLINK)
+	    cf->file_status == FILE_UNLINK) {
 		conflicts_found++;
+		return;
+	}
 
 	if (cf->file_status != FILE_REMOVED &&
 	    update_has_conflict_markers(cf)) {
 		cvs_log(LP_ERR, "conflict: unresolved conflicts in %s from "
 		    "merging, please fix these first", cf->file_path);
 		conflicts_found++;
+		return;
 	}
 
 	if (cf->file_status == FILE_MERGE ||
 	    cf->file_status == FILE_PATCH ||
-	    cf->file_status == FILE_CHECKOUT) {
+	    cf->file_status == FILE_CHECKOUT ||
+	    cf->file_status == FILE_LOST) {
 		cvs_log(LP_ERR, "conflict: %s is not up-to-date",
 		    cf->file_path);
 		conflicts_found++;
+		return;
 	}
 
 	if (cf->file_status == FILE_ADDED ||
