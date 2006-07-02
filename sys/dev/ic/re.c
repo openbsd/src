@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.33 2006/07/01 21:48:08 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.34 2006/07/02 03:20:48 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1634,9 +1634,9 @@ re_init(struct ifnet *ifp)
 	 */
 	bcopy(sc->sc_arpcom.ac_enaddr, eaddr.eaddr, ETHER_ADDR_LEN);
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
-	CSR_WRITE_4(sc, RL_IDR0,
-	    htole32(*(u_int32_t *)(&eaddr.eaddr[0])));
 	CSR_WRITE_4(sc, RL_IDR4,
+	    htole32(*(u_int32_t *)(&eaddr.eaddr[0])));
+	CSR_WRITE_4(sc, RL_IDR0,
 	    htole32(*(u_int32_t *)(&eaddr.eaddr[4])));
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
