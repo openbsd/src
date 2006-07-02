@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.14 2006/07/02 00:56:14 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.15 2006/07/02 01:04:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -221,6 +221,7 @@ void		zyd_next_scan(void *);
 void		zyd_task(void *);
 
 
+/* Device, regardless of RF */
 static const struct zyd_adpairs16 zyd_def_cr[] = {
 	ZYD_DEF_CR
 };
@@ -229,6 +230,7 @@ static const struct zyd_adpairs32 zyd_def_mac[] = {
 	ZYD_DEF_MAC
 };
 
+/* RF2959 */
 static const struct zyd_adpairs16 zyd_rfmd_cr[] = {
 	ZYD_RFMD_CR
 };
@@ -236,6 +238,16 @@ static const struct zyd_adpairs16 zyd_rfmd_cr[] = {
 static const uint32_t zyd_rfmd_rf[] = {
 	ZYD_RFMD_RF
 };
+
+/* AL2230 */
+static const struct zyd_adpairs16 zyd_al2230_cr[] = {
+	ZYD_AL2230_CR
+};
+
+static const uint32_t zyd_al2230_rf[] = {
+	ZYD_AL2230_RF
+};
+
 
 /*
  * Debug dump
@@ -1809,7 +1821,20 @@ zyd_rf_rfmd_set_channel(struct zyd_softc *sc, struct zyd_rf *rf,
 usbd_status
 zyd_rf_al2230_switchradio(struct zyd_softc *sc, uint8_t onoff)
 {
-	return 0;
+	static const struct zyd_adpairs16 ir_on[] = {
+		ZYD_AL2230_RADIO_ON
+	};
+
+	static const struct zyd_adpairs16 ir_off[] = {
+		ZYD_AL2230_RADIO_OFF
+	};
+
+	if (onoff)
+		return zyd_batchwrite16(sc, ir_on,
+		    (sizeof(ir_on) / sizeof(struct zyd_adpairs16)));
+
+	return zyd_batchwrite16(sc, ir_off, (sizeof(ir_off) /
+	    sizeof(struct zyd_adpairs16)));
 }
 
 /*
@@ -1818,7 +1843,23 @@ zyd_rf_al2230_switchradio(struct zyd_softc *sc, uint8_t onoff)
 usbd_status
 zyd_rf_al2230_init(struct zyd_softc *sc, struct zyd_rf *rf)
 {
-	return 0;
+	int i;
+	usbd_status rv;
+
+	rv = zyd_batchwrite16(sc, zyd_al2230_cr, (sizeof(zyd_al2230_cr) /
+	    sizeof(struct zyd_adpairs16)));
+
+	if (rv)
+		return rv;
+
+	for (i = 0; i < (sizeof(zyd_al2230_rf) / sizeof(uint32_t)); i++) {
+		rv = zyd_rfwrite(sc, zyd_al2230_rf[i], ZYD_RF_RV_BITS);
+
+		if (rv)
+			break;
+	}
+
+	return rv;
 }
 
 /*
@@ -1828,7 +1869,28 @@ usbd_status
 zyd_rf_al2230_set_channel(struct zyd_softc *sc, struct zyd_rf *rf,
 	uint8_t channel)
 {
-	return 0;
+	static const struct zyd_adpairs16 sc_cmd[] = {
+		ZYD_AL2230_SETCHANNEL
+	};
+
+	static const uint32_t al2230_table[][3] = {
+		ZYD_AL2230_CHANTABLE
+	};
+	
+	usbd_status rv;
+	int i;
+	const uint32_t *ptr = al2230_table[channel - 1];
+	
+	for (i = 0; i < 3; i++) {
+		rv = zyd_rfwrite(sc, *ptr, ZYD_RF_RV_BITS);
+		ptr++;
+		
+		if (rv)
+			return rv;
+	}
+	
+	return zyd_batchwrite16(sc, sc_cmd, (sizeof(sc_cmd) /
+	    sizeof(struct zyd_adpairs16)));
 }
 
 /*

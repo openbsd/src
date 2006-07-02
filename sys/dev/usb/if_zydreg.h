@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.9 2006/07/01 04:47:48 jsg Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.10 2006/07/02 01:04:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -763,6 +763,98 @@ enum zyd_ranges {
 #define ZYD_RFMD_RADIO_OFF	\
 	{ ZYD_CR10, 0x15 },	\
 	{ ZYD_CR11, 0x81 }
+
+#define ZYD_AL2230_CR								\
+	{ ZYD_CR15,   0x20 }, { ZYD_CR23,   0x40 }, { ZYD_CR24,  0x20 },	\
+	{ ZYD_CR26,   0x11 }, { ZYD_CR28,   0x3e }, { ZYD_CR29,  0x00 },	\
+	{ ZYD_CR44,   0x33 }, { ZYD_CR106,  0x2a }, { ZYD_CR107, 0x1a },	\
+	{ ZYD_CR109,  0x09 }, { ZYD_CR110,  0x27 }, { ZYD_CR111, 0x2b },	\
+	{ ZYD_CR112,  0x2b }, { ZYD_CR119,  0x0a }, { ZYD_CR10,  0x89 },	\
+	/* for newest (3rd cut) AL2300 */					\
+	{ ZYD_CR17,   0x28 },							\
+	{ ZYD_CR26,   0x93 }, { ZYD_CR34,   0x30 },				\
+	/* for newest (3rd cut) AL2300 */					\
+	{ ZYD_CR35,   0x3e },							\
+	{ ZYD_CR41,   0x24 }, { ZYD_CR44,   0x32 },				\
+	/* for newest (3rd cut) AL2300 */					\
+	{ ZYD_CR46,   0x96 },							\
+	{ ZYD_CR47,   0x1e }, { ZYD_CR79,   0x58 }, { ZYD_CR80,  0x30 },	\
+	{ ZYD_CR81,   0x30 }, { ZYD_CR87,   0x0a }, { ZYD_CR89,  0x04 },	\
+	{ ZYD_CR92,   0x0a }, { ZYD_CR99,   0x28 }, { ZYD_CR100, 0x00 },	\
+	{ ZYD_CR101,  0x13 }, { ZYD_CR102,  0x27 }, { ZYD_CR106, 0x24 },	\
+	{ ZYD_CR107,  0x2a }, { ZYD_CR109,  0x09 }, { ZYD_CR110, 0x13 },	\
+	{ ZYD_CR111,  0x1f }, { ZYD_CR112,  0x1f }, { ZYD_CR113, 0x27 },	\
+	{ ZYD_CR114,  0x27 },							\
+	/* for newest (3rd cut) AL2300 */					\
+	{ ZYD_CR115,  0x24 },							\
+	{ ZYD_CR116,  0x24 }, { ZYD_CR117,  0xf4 }, { ZYD_CR118, 0xfc },	\
+	{ ZYD_CR119,  0x10 }, { ZYD_CR120,  0x4f }, { ZYD_CR121, 0x77 },	\
+	{ ZYD_CR122,  0xe0 }, { ZYD_CR137,  0x88 }, { ZYD_CR252, 0xff },	\
+	{ ZYD_CR253,  0xff },							\
+	/* These following happen separately in vendor drv */			\
+	{ },									\
+	/* shdnb(PLL_ON)=0 */							\
+	{ ZYD_CR251,  0x2f },							\
+	/* shdnb(PLL_ON)=1 */							\
+	{ ZYD_CR251,  0x3f },							\
+	{ ZYD_CR138,  0x28 }, { ZYD_CR203,  0x06 }
+	
+#define ZYD_AL2230_RF							\
+	/* Channel 1 */							\
+	0x03f790,							\
+	0x033331,							\
+	0x00000d,							\
+									\
+	0x0b3331,							\
+	0x03b812,							\
+	0x00fff3,							\
+	0x000da4,							\
+	0x0f4dc5, /* fix freq shift, 0x04edc5 */			\
+	0x0805b6,							\
+	0x011687,							\
+	0x000688,							\
+	0x0403b9, /* external control TX power (CR31) */		\
+	0x00dbba,							\
+	0x00099b,							\
+	0x0bdffc,							\
+	0x00000d,							\
+	0x00500f,							\
+									\
+	/* These writes happen separately in the vendor driver */	\
+	0x00d00f,							\
+	0x004c0f,							\
+	0x00540f,							\
+	0x00700f,							\
+	0x00500f
+	
+#define ZYD_AL2230_CHANTABLE			\
+	{ 0x03f790, 0x033331, 0x00000d },	\
+	{ 0x03f790, 0x0b3331, 0x00000d },	\
+	{ 0x03e790, 0x033331, 0x00000d },	\
+	{ 0x03e790, 0x0b3331, 0x00000d },	\
+	{ 0x03f7a0, 0x033331, 0x00000d },	\
+	{ 0x03f7a0, 0x0b3331, 0x00000d },	\
+	{ 0x03e7a0, 0x033331, 0x00000d },	\
+	{ 0x03e7a0, 0x0b3331, 0x00000d },	\
+	{ 0x03f7b0, 0x033331, 0x00000d },	\
+	{ 0x03f7b0, 0x0b3331, 0x00000d },	\
+	{ 0x03e7b0, 0x033331, 0x00000d },	\
+	{ 0x03e7b0, 0x0b3331, 0x00000d },	\
+	{ 0x03f7c0, 0x033331, 0x00000d },	\
+	{ 0x03e7c0, 0x066661, 0x00000d }
+	
+#define ZYD_AL2230_SETCHANNEL	\
+	{ ZYD_CR138, 0x28 },	\
+	{ ZYD_CR203, 0x06 }
+
+#define ZYD_AL2230_RADIO_ON	\
+	{ ZYD_CR11, 0x00 },	\
+	{ ZYD_CR251, 0x3f }
+
+#define ZYD_AL2230_RADIO_OFF	\
+	{ ZYD_CR11, 0x04 },	\
+	{ ZYD_CR251, 0x2f }
+	
 
 /*
  * Device configurations and types
