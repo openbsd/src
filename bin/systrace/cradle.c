@@ -1,4 +1,4 @@
-/*	$OpenBSD: cradle.c,v 1.3 2006/04/26 20:19:25 sturm Exp $	*/
+/*	$OpenBSD: cradle.c,v 1.4 2006/07/02 12:34:15 sturm Exp $	*/
 
 /*
  * Copyright (c) 2003 Marius Aamodt Eriksen <marius@monkey.org>
@@ -61,11 +61,11 @@ extern char dirpath[];
 static struct event listen_ev;
 static struct event uilisten_ev;
 
-static int	cradle_server(char *path, char *uipath, char *guipath);
-static void	listen_cb(int, short, void *);
-static void	msg_cb(int, short, void *);
-static void	ui_cb(int, short, void *);
-static void	gensig_cb(int, short, void *);
+static int   cradle_server(char *, char *, char *);
+static void  listen_cb(int, short, void *);
+static void  msg_cb(int, short, void *);
+static void  ui_cb(int, short, void *);
+static void  gensig_cb(int, short, void *);
 
 static FILE *ui_fl = NULL;
 static struct event ui_ev, sigterm_ev, sigint_ev;

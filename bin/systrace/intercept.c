@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.51 2006/04/26 20:19:25 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.52 2006/07/02 12:34:15 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -28,6 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,7 +242,7 @@ intercept_register_pfreecb(void (*cb)(int, void *), void *arg)
 /* ARGSUSED */
 static void
 sigusr1_handler(int signum)
-{                                                                              
+{
 	/* all we need to do is pretend to handle it */
 	got_sigusr1 = 1;
 }
@@ -549,6 +550,9 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 	static char name[8192];
 	int off = 0, done = 0, stride;
 
+	if (addr == NULL)
+		return (NULL);
+
 	stride = 32;
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
@@ -636,7 +640,6 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 		havecwd = 1;
 	}
 
-	/* Need concatenated path for simplifypath */
 	if (havecwd && name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
 			return (NULL);
@@ -658,8 +661,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 
 		if (userp == ICLINK_NOLAST) {
 			/* Check if the last component has special meaning */
-			if (strcmp(base, "..") == 0 ||
-			    strcmp(base, "/") == 0)
+			if (strcmp(base, "..") == 0 || strcmp(base, "/") == 0)
 				userp = ICLINK_ALL;
 			else
 				goto nolast;
@@ -867,7 +869,6 @@ intercept_newimage(int fd, pid_t pid, int policynr,
 		    icpid->name, intercept_newimagecbarg);
 }
 
-
 int
 intercept_newpolicy(int fd)
 {
@@ -882,6 +883,12 @@ int
 intercept_assignpolicy(int fd, pid_t pid, int policynr)
 {
 	return (intercept.assignpolicy(fd, pid, policynr));
+}
+
+int
+intercept_modifypolicy_nr(int fd, int policynr, int code, short policy)
+{
+	return (intercept.policy(fd, policynr, code, policy));
 }
 
 int
@@ -958,12 +965,27 @@ intercept_ugid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
 }
 
 /*
+ * Returns the number of a system call
+ */
+
+int
+intercept_getsyscallnumber(const char *emulation, const char *name)
+{
+	int nr = intercept.getsyscallnumber(emulation, name);
+
+	if (nr >= INTERCEPT_MAXSYSCALLNR)
+		err(1, "%s: system call number too high: %d", __func__, nr);
+
+	return (nr);
+}
+
+/*
  * Checks if the given emulation has a certain system call.
  * This is a very slow function.
  */
 
 int
-intercept_isvalidsystemcall(char *emulation, char *name)
+intercept_isvalidsystemcall(const char *emulation, const char *name)
 {
 	int res;
 

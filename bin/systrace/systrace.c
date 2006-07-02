@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.53 2006/05/02 19:49:05 sturm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.54 2006/07/02 12:34:15 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -48,6 +48,7 @@
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <event.h>
 
 #include "intercept.h"
 #include "systrace.h"
@@ -55,6 +56,8 @@
 
 #define CRADLE_SERVER "cradle_server"
 #define CRADLE_UI     "cradle_ui"
+
+#define VERSION "1.6d (OpenBSD)"
 
 pid_t trpid;
 int trfd;
@@ -66,15 +69,21 @@ int userpolicy = 1;		/* Permit user defined policies */
 int noalias = 0;		/* Do not do system call aliasing */
 int iamroot = 0;		/* Set if we are running as root */
 int cradle = 0;			/* Set if we are running in cradle mode */
-int logstderr = 0;		/* Log to STDERR instead of syslog */
+int logtofile = 0;		/* Log to file instead of syslog */
+FILE *logfile;			/* default logfile to send to if enabled */
 char cwd[MAXPATHLEN];		/* Current working directory */
 char home[MAXPATHLEN];		/* Home directory of user */
-char username[MAXLOGNAME];	/* Username: predicate match and expansion */
+char username[LOGIN_NAME_MAX];	/* Username: predicate match and expansion */
 char *guipath = _PATH_XSYSTRACE; /* Path to GUI executable */
 char dirpath[MAXPATHLEN];
 
+static struct event ev_read;
+static struct event ev_timeout;
+
 static void child_handler(int);
 static void log_msg(int, const char *, ...);
+static void systrace_read(int, short, void *);
+static void systrace_timeout(int, short, void *);
 static void usage(void);
 
 void
@@ -164,7 +173,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	const char *binname = NULL;
 	char output[_POSIX2_LINE_MAX];
 	pid_t ppid;
-	int dolog = 0;
+	int done = 0, dolog = 0;
 
 	action = ICPOLICY_PERMIT;
 
@@ -181,48 +190,63 @@ trans_cb(int fd, pid_t pid, int policynr,
 	ppid = ipid->ppid;
 
 	/* Required to set up replacements */
-	make_output(output, sizeof(output), binname, pid, ppid, policynr,
-	    policy->name, policy->nfilters, emulation, name, code,
-	    tls, repl);
+	do {
+		make_output(output, sizeof(output), binname, pid, ppid,
+		    policynr, policy->name, policy->nfilters,
+		    emulation, name, code, tls, repl);
 
-	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
-		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
+		/* Fast-path checking */
+		if ((action = policy->kerneltable[code]) != ICPOLICY_ASK)
+			goto out;
 
-	action = filter_evaluate(tls, pflq, ipid);
-	if (action != ICPOLICY_ASK)
-		goto done;
-
-	/* Do aliasing here */
-	if (!noalias)
-		alias = systrace_find_alias(emulation, name);
-	if (alias != NULL) {
-		int i;
-
-		/* Set up variables for further filter actions */
-		tls = &alitls;
-		emulation = alias->aemul;
-		name = alias->aname;
-
-		/* Create an aliased list for filter_evaluate */
-		TAILQ_INIT(tls);
-		for (i = 0; i < alias->nargs; i++) {
-			memcpy(&alitl[i], alias->arguments[i], 
-			    sizeof(struct intercept_translate));
-			TAILQ_INSERT_TAIL(tls, &alitl[i], next);
-		}
-
-		if ((pflq = systrace_policyflq(policy,
-			 alias->aemul, alias->aname)) == NULL)
+		pflq = systrace_policyflq(policy, emulation, name);
+		if (pflq == NULL)
 			errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
 		action = filter_evaluate(tls, pflq, ipid);
 		if (action != ICPOLICY_ASK)
 			goto done;
 
-		make_output(output, sizeof(output), binname, pid, ppid,
-		    policynr, policy->name, policy->nfilters,
-		    alias->aemul, alias->aname, code, tls, NULL);
-	}
+		/* Do aliasing here */
+		if (!noalias)
+			alias = systrace_find_alias(emulation, name);
+		if (alias != NULL) {
+			int i;
+
+			/* Set up variables for further filter actions */
+			tls = &alitls;
+			emulation = alias->aemul;
+			name = alias->aname;
+
+			/* Create an aliased list for filter_evaluate */
+			TAILQ_INIT(tls);
+			for (i = 0; i < alias->nargs; i++) {
+				memcpy(&alitl[i], alias->arguments[i], 
+				    sizeof(struct intercept_translate));
+				TAILQ_INSERT_TAIL(tls, &alitl[i], next);
+			}
+
+			if ((pflq = systrace_policyflq(policy,
+			    alias->aemul, alias->aname)) == NULL)
+				errx(1, "%s:%d: no filter queue",
+				    __func__, __LINE__);
+
+			action = filter_evaluate(tls, pflq, ipid);
+			if (action != ICPOLICY_ASK)
+				goto done;
+
+			make_output(output, sizeof(output), binname, pid, ppid,
+			    policynr, policy->name, policy->nfilters,
+			    alias->aemul, alias->aname, code, tls, NULL);
+		}
+
+		/*
+		 * At this point, we have to ask the user, but we may check
+		 * if the policy has been updated in the meanwhile.
+		 */
+		if (systrace_updatepolicy(fd, policy) == -1)
+			done = 1;
+	} while (!done);
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
@@ -268,7 +292,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	struct filterq *pflq = NULL;
 	short action = ICPOLICY_PERMIT;
 	short future;
-	int off, dolog = 0;
+	int off, done = 0, dolog = 0;
 	size_t len;
 
 	if (policynr == -1)
@@ -295,18 +319,27 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
 		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
-	action = filter_evaluate(NULL, pflq, ipid);
+	do {
+		/* Fast-path checking */
+		if ((action = policy->kerneltable[code]) != ICPOLICY_ASK)
+			goto out;
 
-	if (ipid->uflags & SYSCALL_LOG)
-		dolog = 1;
+		action = filter_evaluate(NULL, pflq, ipid);
 
-	if (action != ICPOLICY_ASK)
-		goto out;
+		if (action != ICPOLICY_ASK)
+			goto haveresult;
+		/*
+		 * At this point, we have to ask the user, but we may check
+		 * if the policy has been updated in the meanwhile.
+		 */
+		if (systrace_updatepolicy(fd, policy) == -1)
+			done = 1;
+	} while (!done);
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
 		dolog = 1;
-		goto out;
+		goto haveresult;
 	}
 
 	action = filter_ask(fd, NULL, pflq, policynr, emulation, name,
@@ -321,12 +354,15 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 		kill(pid, SIGKILL);
 		return (ICPOLICY_NEVER);
 	}
- out:
+
+ haveresult:
+	if (ipid->uflags & SYSCALL_LOG)
+		dolog = 1;
 	if (dolog)
 		log_msg(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
 		    ipid->username, output);
-
+ out:
 	return (action);
 }
 
@@ -426,9 +462,9 @@ log_msg(int priority, const char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	if (logstderr) {
+	if (logtofile) {
 		vsnprintf(buf, sizeof(buf), fmt, ap);
-		fprintf(stderr, "%s: %s\n", __progname, buf);
+		fprintf(logfile, "%s: %s\n", __progname, buf);
 	} else
 		vsyslog(priority, fmt, ap);
 
@@ -439,8 +475,8 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-AaCeitUu] [-c uid:gid] [-d policydir] [-f file]\n"
-	    "\t [-g gui] [-p pid] command ...\n");
+	    "Usage: systrace [-AaCeitUuV] [-c user:group] [-d policydir] [-E logfile]\n"
+	    "\t [-f file] [-g gui] [-p pid] command ...\n");
 	exit(1);
 }
 
@@ -575,6 +611,36 @@ get_uid_gid(const char *argument, uid_t *uid, gid_t *gid)
 	return (0);
 }
 
+static void
+systrace_timeout(int fd, short what, void *arg)
+{
+	struct timeval tv;
+
+	/* Reschedule timeout */
+	timerclear(&tv);
+	tv.tv_sec = SYSTRACE_UPDATETIME;
+	evtimer_add(&ev_timeout, &tv);
+
+	systrace_updatepolicies(trfd);
+	if (userpolicy)
+		systrace_dumppolicies(trfd);
+}
+
+/*
+ * Read from the kernel if something happened.
+ */
+
+static void
+systrace_read(int fd, short what, void *arg)
+{
+	intercept_read(fd);
+
+	if (!intercept_existpids()) {
+		event_del(&ev_read);
+		event_del(&ev_timeout);
+	}
+}
+
 int
 main(int argc, char **argv)
 {
@@ -582,16 +648,19 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *policypath = NULL;
-	struct timeval tv, tv_wait = {60, 0};
+	struct timeval tv;
 	pid_t pidattach = 0;
-	int usex11 = 1, count;
+	int usex11 = 1;
 	int background;
 	int setcredentials = 0;
 	uid_t cr_uid;
 	gid_t cr_gid;
 
-	while ((c = getopt(argc, argv, "c:aAeituUCd:g:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "Vc:aAeE:ituUCd:g:f:p:")) != -1) {
 		switch (c) {
+		case 'V':
+			fprintf(stderr, "%s V%s\n", argv[0], VERSION);
+			exit(0);
 		case 'c':
 			setcredentials = 1;
 			if (get_uid_gid(optarg, &cr_uid, &cr_gid) == -1)
@@ -606,7 +675,15 @@ main(int argc, char **argv)
 			policypath = optarg;
 			break;
 		case 'e':
-			logstderr = 1;
+			logtofile = 1;
+			logfile = stderr;
+			break;
+		case 'E':
+			logtofile = 1;
+			logfile = fopen(optarg, "a");
+			if (logfile == NULL)
+				err(1, "Cannot open \"%s\" for writing",
+				    optarg);
 			break;
 		case 'A':
 			if (automatic)
@@ -660,6 +737,10 @@ main(int argc, char **argv)
 		usage();
 	}
 
+	/* Initalize libevent but without kqueue because of systrace fd */
+	setenv("EVENT_NOKQUEUE", "yes", 0);
+	event_init();
+
 	/* Local initialization */
 	systrace_initalias();
 	systrace_initpolicy(filename, policypath);
@@ -708,7 +789,10 @@ main(int argc, char **argv)
 	if (signal(SIGCHLD, child_handler) == SIG_ERR)
 		err(1, "signal");
 
-	/* Start the policy gui or cradle if necessary */
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+		err(1, "signal");
+
+	/* Start the policy GUI or cradle if necessary */
 	if (usex11 && (!automatic && !allow)) {
 		if (cradle)
 			cradle_setup(guipath);
@@ -717,34 +801,22 @@ main(int argc, char **argv)
 
 	}
 
-	/* Loop on requests */
-	count = 0;
-	while (intercept_read(trfd) != -1) {
-		if (!intercept_existpids())
-			break;
-		if (userpolicy) {
-			/* Periodically save modified policies */
-			if (count == 0) {
-				/* Set new wait time */
-				gettimeofday(&tv, NULL);
-				timeradd(&tv, &tv_wait, &tv);
-			} else if (count > 10) {
-				struct timeval now;
-				gettimeofday(&now, NULL);
+	/* Register read events */
+	event_set(&ev_read, trfd, EV_READ|EV_PERSIST, systrace_read, NULL);
+	event_add(&ev_read, NULL);
 
-				count = 0;
-				if (timercmp(&now, &tv, >)) {
-					/* Dump policy and cause new time */
-					systrace_dumppolicy();
-					continue;
-				}
-			}
-			count++;
-		}
+	if (userpolicy || automatic) {
+		evtimer_set(&ev_timeout, systrace_timeout, &ev_timeout);
+		timerclear(&tv);
+		tv.tv_sec = SYSTRACE_UPDATETIME;
+		evtimer_add(&ev_timeout, &tv);
 	}
 
+	/* Wait for events */
+	event_dispatch();
+
 	if (userpolicy)
-		systrace_dumppolicy();
+		systrace_dumppolicies(trfd);
 
 	close(trfd);
 

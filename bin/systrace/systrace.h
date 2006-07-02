@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.26 2006/03/12 20:56:10 sturm Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.27 2006/07/02 12:34:15 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -98,14 +98,17 @@ struct policy {
 	const char *name;
 	char emulation[16];
 
+	struct timespec ts_last;	/* last time we read the file */
+
 	SPLAY_HEAD(syscalltree, policy_syscall) pflqs;
 
-	int policynr;
+	int policynr;			/* in-kernel policy number */
+	short kerneltable[INTERCEPT_MAXSYSCALLNR];
 	int flags;
 
 	struct filterq filters;
-	int nfilters;
-	struct filterq prefilters;
+	int nfilters;			/* nr of installed policy statements */
+	struct filterq prefilters;	/* filters we need to install*/
 };
 
 struct template {
@@ -131,6 +134,8 @@ TAILQ_HEAD(tmplqueue, template);
 #define SYSCALL_LOG		0x04	/* Log this system call */
 #define PROCESS_PROMPT		0x08	/* Prompt but nothing else */
 
+#define SYSTRACE_UPDATETIME	30	/* update policies every 30 seconds */
+
 void systrace_parameters(void);
 int systrace_initpolicy(char *, char *);
 void systrace_setupdir(char *);
@@ -138,19 +143,24 @@ struct template *systrace_readtemplate(char *, struct policy *,
     struct template *);
 void systrace_initcb(void);
 struct policy *systrace_newpolicy(const char *, const char *);
+void systrace_cleanpolicy(struct policy *);
 void systrace_freepolicy(struct policy *);
 int systrace_newpolicynr(int, struct policy *);
 int systrace_modifypolicy(int, int, const char *, short);
 struct policy *systrace_findpolicy(const char *);
+struct policy *systrace_findpolicy_wildcard(const char *);
 struct policy *systrace_findpolnr(int);
-int systrace_dumppolicy(void);
-int systrace_readpolicy(char *);
+int systrace_dumppolicies(int);
+int systrace_updatepolicies(int);
+struct policy *systrace_readpolicy(const char *);
 int systrace_addpolicy(const char *);
+int systrace_updatepolicy(int fd, struct policy *policy);
 struct filterq *systrace_policyflq(struct policy *, const char *, const char *);
+char *systrace_getpolicyname(const char *);
 
 int systrace_error_translate(char *);
 
-#define SYSTRACE_MAXALIAS	5
+#define SYSTRACE_MAXALIAS	10
 
 struct systrace_alias {
 	SPLAY_ENTRY(systrace_alias) node;
@@ -233,6 +243,7 @@ extern struct intercept_translate ic_pidname;
 extern struct intercept_translate ic_signame;
 extern struct intercept_translate ic_fcntlcmd;
 extern struct intercept_translate ic_memprot;
+extern struct intercept_translate ic_linux_memprot;
 extern struct intercept_translate ic_fileflags;
 
 extern struct intercept_translate ic_linux_oflags;

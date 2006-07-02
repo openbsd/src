@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.20 2006/06/10 07:19:13 sturm Exp $	*/
+/*	$OpenBSD: register.c,v 1.21 2006/07/02 12:34:15 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -39,6 +39,7 @@
 
 #include "intercept.h"
 #include "systrace.h"
+#include "linux-translate.h"
 
 #define X(x)	if ((x) == -1) \
 	err(1, "%s:%d: intercept failed", __func__, __LINE__)
@@ -235,6 +236,23 @@ systrace_initcb(void)
 	X(intercept_register_sccb("linux", "chmod", trans_cb, NULL));
 	intercept_register_translink("linux", "chmod", 0);
 	intercept_register_translation("linux", "chmod", 1, &ic_modeflags);
+
+	X(intercept_register_sccb("linux", "socketcall", trans_cb, NULL));
+	alias = systrace_new_alias("linux", "socketcall", "linux", "_socketcall");
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_socket_sockdom);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_socket_socktype);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_connect_sockaddr);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_bind_sockaddr);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 0, &ic_linux_socketcall_catchall);
+	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("linux", "kill", trans_cb, NULL));
+	intercept_register_translation("linux", "kill", 0, &ic_pidname);
+	intercept_register_translation("linux", "kill", 1, &ic_signame);
 
 	X(intercept_register_execcb(execres_cb, NULL));
 	X(intercept_register_pfreecb(policyfree_cb, NULL));

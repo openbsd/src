@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.17 2003/11/27 17:39:08 sturm Exp $	*/
+/*	$OpenBSD: lex.l,v 1.18 2006/07/02 12:34:15 sturm Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -137,8 +137,8 @@ as		{ return AS; }
 			yylval.string = strdup(quotestr);
 			return CMDSTRING;
 		  } else {
-		        strlcat(quotestr, "\"", sizeof(quotestr));
-		        quoteescape = 0;
+			strlcat(quotestr, "\"", sizeof(quotestr));
+			quoteescape = 0;
 		  }
 		}
 \[		{ return LSQBRACE; }

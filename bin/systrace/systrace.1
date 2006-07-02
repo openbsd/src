@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.42 2006/05/03 05:16:26 sturm Exp $
+.\"	$OpenBSD: systrace.1,v 1.43 2006/07/02 12:34:15 sturm Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -39,9 +39,10 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Bk -words
-.Op Fl AaCeitUu
+.Op Fl AaCeitUuV
 .Op Fl c Ar user:group
 .Op Fl d Ar policydir
+.Op Fl E Ar logfile
 .Op Fl f Ar file
 .Op Fl g Ar gui
 .Op Fl p Ar pid
@@ -120,6 +121,9 @@ root privilege.
 .It Fl d Ar policydir
 Specifies an alternative location for the user's directory from
 which policies are loaded and to which changed policies are stored.
+.It Fl E Ar logfile
+Logs all policy violations or specifically logged system calls to
+.Ar logfile .
 .It Fl e
 Specifies to log to
 .Em stderr
@@ -131,6 +135,9 @@ The policies specified in
 are added to the policies that
 .Nm
 knows about.
+The dirname in the policy may contain an "*" to match any possible pathname.
+The wildcard is removed from the policy database the first time that
+a filename matches.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl i
@@ -158,6 +165,9 @@ and
 .Fn access
 are translated to
 .Fn fsread .
+.It Fl V
+Prints the version number of
+.Nm .
 .El
 .Ss POLICY
 The policy is specified via the following grammar:
