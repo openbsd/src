@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.48 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.49 2006/07/02 21:11:54 reyk Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -47,6 +47,7 @@ int
 cvs_tag(int argc, char **argv)
 {
 	int ch, flags;
+	char *arg = ".";
 	struct cvs_recursion cr;
 
 	flags = CR_RECURSE_DIRS;
@@ -111,7 +112,10 @@ cvs_tag(int argc, char **argv)
 	cr.fileproc = cvs_tag_local;
 	cr.flags = flags;
 
-	cvs_file_run(argc, argv, &cr);
+	if (argc > 0)
+		cvs_file_run(argc, argv, &cr);
+	else
+		cvs_file_run(1, &arg, &cr);
 
 	return (0);
 }
