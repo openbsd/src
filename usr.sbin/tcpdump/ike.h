@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.17 2006/06/02 17:40:32 hshoexer Exp $ */
+/* $OpenBSD: ike.h,v 1.18 2006/07/02 13:25:52 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -462,6 +462,12 @@ static const struct vendor_id
 			0x5c, 0x57, 0x28, 0xf2, 0x0e, 0x95, 0x45, 0x2f,
 		},
 		"NAT-T, RFC 3947"
-	}
+	},
+	{
+		{
+			0x6c, 0x0d, 0xcd, 0x48, 0x1d, 0xea, 0xe8, 0xae,
+			0x0b, 0x0a, 0x68, 0x38, 0x4b, 0x30, 0x72, 0xf9,
+		},
+		"OpenBSD-4.0"
+	},
 };
-
