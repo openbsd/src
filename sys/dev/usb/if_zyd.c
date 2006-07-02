@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.18 2006/07/02 02:59:21 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.19 2006/07/02 06:52:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -3583,10 +3583,8 @@ zyd_start(struct ifnet *ifp)
 				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-			m0 = ieee80211_encap(ifp, m0, &ni);
-
-			if (m0 == NULL) {
-				ieee80211_release_node(ic, ni);
+			if ((m0 = ieee80211_encap(ifp, m0, &ni)) == NULL) {
+				ifp->if_oerrors++;
 				continue;
 			}
 
