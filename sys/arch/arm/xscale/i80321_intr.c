@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.7 2006/06/19 05:09:14 drahn Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.8 2006/07/02 02:51:13 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/evcount.h>
+
+#include <uvm/uvm.h>	/* uvmexp */
 
 #include <machine/intr.h>
 
@@ -389,6 +391,7 @@ i80321_irq_handler(void *arg)
 #endif
 		hwpend &= ~(1<<irq);
 	}
+	uvmexp.intrs++;
 
 	/* restore spl to that was when this interrupt happen */
 	i80321intc_setipl(saved_spl_level);
