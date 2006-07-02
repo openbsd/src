@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.115 2006/06/24 14:14:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.116 2006/07/02 11:54:10 sturm Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -23,8 +23,8 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	sensor_add.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
 	style.9 syscall.9 systrace.9 sysctl_int.9 \
-	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_cache.9 \
-	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
+	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_busy.9 \
+	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
 	VOP_GETATTR.9 VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 \
 	vwaitforio.9 vwakeup.9 wdog_register.9
@@ -298,6 +298,7 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 strcmp.9 kern.9 strncmp.9 kern.9 strncasecmp.9 \
 	kern.9 srandom.9 kern.9 getsn.9
 
+MLINKS+=vfs_busy.9 vfs_isbusy.9 vfs_busy.9 vfs_unbusy.9
 MLINKS+=vfs_cache.9 cache_enter.9 vfs_cache.9 cache_lookup.9 \
 	vfs_cache.9 cache_purge.9 vfs_cache.9 cache_purgevfs.9 \
 	vfs_cache.9 cache_revlookup.9
