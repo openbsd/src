@@ -6004,7 +6004,10 @@
 ./usr/share/man/cat9/vflush.0
 ./usr/share/man/cat9/vflushbuf.0
 ./usr/share/man/cat9/vfs.0
+./usr/share/man/cat9/vfs_busy.0
 ./usr/share/man/cat9/vfs_cache.0
+./usr/share/man/cat9/vfs_isbusy.0
+./usr/share/man/cat9/vfs_unbusy.0
 ./usr/share/man/cat9/vget.0
 ./usr/share/man/cat9/vgone.0
 ./usr/share/man/cat9/vgonel.0
