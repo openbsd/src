@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.65 2005/07/05 11:59:51 hshoexer Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.66 2006/07/02 13:19:00 hshoexer Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -59,11 +59,12 @@
 #include "sa.h"
 #include "transport.h"
 #include "util.h"
+#include "vendor.h"
 
 static int      attribute_unacceptable(u_int16_t, u_int8_t *, u_int16_t,
-    void *);
+		    void *);
 static int	ike_phase_1_validate_prop(struct exchange *, struct sa *,
-    struct sa *);
+		    struct sa *);
 
 /* Offer a set of transforms to the responder in the MSG message.  */
 int
@@ -358,6 +359,10 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		transforms_len += transform_len[i];
 	}
 
+	/* Advertise OpenBSD isakmpd. */
+	if (add_vendor_openbsd(msg))
+		goto bail_out;
+
 	/* Advertise NAT-T capability.  */
 	if (nat_t_add_vendor_payloads(msg))
 		goto bail_out;
@@ -516,6 +521,10 @@ ike_phase_1_responder_send_SA(struct message *msg)
 {
 	/* Add the SA payload with the transform that was chosen.  */
 	if (message_add_sa_payload(msg))
+		return -1;
+
+	/* Advertise OpenBSD isakmpd. */
+	if (add_vendor_openbsd(msg))
 		return -1;
 
 	/* Advertise NAT-T capability.  */

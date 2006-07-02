@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2005/05/18 20:15:22 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.78 2006/07/02 13:19:00 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -42,7 +42,8 @@ SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		prf.c sa.c sysdep.c timer.c transport.c virtual.c udp.c \
 		ui.c util.c x509.c \
 		pf_key_v2.c policy.c math_ec2n.c ike_aggressive.c isakmp_cfg.c \
-		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c
+		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c \
+		vendor.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h

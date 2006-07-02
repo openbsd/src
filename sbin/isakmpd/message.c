@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.119 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.120 2006/07/02 13:19:00 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -58,6 +58,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+#include "vendor.h"
 #include "virtual.h"
 
 /* A local set datatype, coincidentally fd_set suits our purpose fine.  */
@@ -1144,6 +1145,7 @@ message_validate_vendor(struct message *msg, struct payload *p)
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE, 0, 1, 1);
 		return -1;
 	}
+	check_vendor_openbsd(msg, p);
 	dpd_check_vendor_payload(msg, p);
 	nat_t_check_vendor_payload(msg, p);
 	if (!(p->flags & PL_MARK))
