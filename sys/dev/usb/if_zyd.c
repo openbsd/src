@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.16 2006/07/02 01:25:10 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.17 2006/07/02 02:16:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -3070,7 +3070,7 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &sc->tx_data[0];
 	desc = (struct zyd_controlsetformat *)data->buf;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan) ? 12 : 2;
 
 	data->m = m0;
 	data->ni = ni;
