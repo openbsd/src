@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.40 2006/07/01 16:41:26 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.41 2006/07/02 06:22:03 dlg Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -250,11 +250,8 @@ iommu_reset(struct iommu_state *is)
 		sb->sb_iommu = is;
 		strbuf_reset(sb);
 
-		if (sb->sb_flush) {
-			char buf[64];
-			bus_space_render_tag(sb->sb_bustag, buf, sizeof buf);
+		if (sb->sb_flush)
 			printf(", STC%d enabled", i);
-		}
 	}
 }
 
