@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.17 2006/07/02 02:16:49 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.18 2006/07/02 02:59:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -451,7 +451,7 @@ zydintr(usbd_xfer_handle xfer, usbd_private_handle thehandle,
 	char tmpbuf[100];
 	int i;*/
 
-	DPRINTF(("zydintr: status=%d\n", status));
+	DPRINTFN(2, ("zydintr: status=%d\n", status));
 
 	if (status == USBD_CANCELLED)
 		return;
@@ -831,7 +831,7 @@ zyd_rfwrite(struct zyd_softc *sc, uint32_t value, uint8_t bits)
 	uint16_t bw_template;
 	usbd_status rv;
 
-	DPRINTF(("Entering zyd_rfwrite()\n"));
+	DPRINTFN(4, ("Entering zyd_rfwrite()\n"));
 
 	rv = zyd_read16(sc, ZYD_CR203, &bw_template);
 
@@ -864,7 +864,8 @@ zyd_rfwrite(struct zyd_softc *sc, uint32_t value, uint8_t bits)
 
 	free(req, M_TEMP);
 
-	DPRINTF(("Finished zyd_rfwrite(): rv = %d, wrote %d bits\n", rv, bits));
+	DPRINTFN(4, ("Finished zyd_rfwrite(): rv = %d, wrote %d bits\n", rv,
+	    bits));
 
 leave:
 	return rv;
@@ -1233,7 +1234,7 @@ zyd_rxframeproc(struct zyd_rx_data *data, uint8_t *buf, uint16_t len)
 	 */
 
 	/* Print RX debug info */
-	DPRINTF(("Rx status: signalstrength = %d, signalqualitycck = %d, "
+	DPRINTFN(3, ("Rx status: signalstrength = %d, signalqualitycck = %d, "
 	    "signalqualityofdm = %d, decryptiontype = %d, "
 	    "modulationtype = %d, rxerrorreason = %d, errorindication = %d\n",
 	    desc->signalstrength, desc->signalqualitycck, desc->signalqualityofdm,
@@ -1300,7 +1301,7 @@ zyd_rxframeproc(struct zyd_rx_data *data, uint8_t *buf, uint16_t len)
 	ieee80211_input(ifp, m, ni, desc->signalstrength, 0);
 	ieee80211_release_node(ic, ni);
 
-	DPRINTF(("iee80211_input() -> %d\n", optype));
+	DPRINTFN(3, ("iee80211_input() -> %d\n", optype));
 
 	splx(s);
 
@@ -1323,8 +1324,6 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 /*	int i;
 	uint16_t tfs;*/
 
-	DPRINTF(("Entering zyd_rxeof\n"));
-
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
@@ -1337,10 +1336,12 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	DPRINTF(("zyd_rxeof: Len = %d\n", len));
-	DPRINTF(("zyd_rxeof: Raw dump follows\n"));
-
-	bindump(data->buf, len);
+#ifdef ZYD_DEBUG
+	if (zyddebug > 10) {
+		printf("zyd_rxeof: Len = %d, raw dump follows\n", len);
+		bindump(data->buf, len);
+	}
+#endif
 
 	/*
 	 * It must be at least 4 bytes - still broken if it is
@@ -1359,7 +1360,7 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	if (UGETW(leninfoapp->marker) == ZYD_MULTIFRAME_MARKER) {
 		/* Multiframe received */
-		DPRINTF(("Received multi-frame transmission\n"));
+		DPRINTFN(3, ("Received multi-frame transmission\n"));
 
 		/* TODO: Support 'em properly */
 
@@ -1376,7 +1377,7 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto skip;
 
 	} else {
-		DPRINTF(("Received single-frame transmission\n"));
+		DPRINTFN(3, ("Received single-frame transmission\n"));
 		zyd_rxframeproc(data, data->buf + ZYD_PLCP_HDR_SIZE,
 		    len - ZYD_PLCP_HDR_SIZE);
 	}
@@ -1401,8 +1402,6 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 	data->buf = mtod(data->m, uint8_t *);
-
-	DPRINTF(("Leaving zyd_rxeof()\n"));
 
 skip:	/* setup a new transfer */
 	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_BIN], data, data->buf,
@@ -3115,10 +3114,13 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	xferlen = sizeof(winbuf);
 
 
-	DPRINTF(("Raw dump before desc setup:\n"));
-
-	bindump(data->buf, xferlen);
-/*	bindump(data->buf + ZYD_TX_DESC_SIZE, m0->m_pkthdr.len);*/
+#ifdef ZYD_DEBUG
+	if (zyddebug >= 3) {
+		printf("%s: Raw dump before desc setup:\n",
+		    USBDEVNAME(sc->zyd_dev));
+		bindump(data->buf, xferlen);
+	}
+#endif
 
 /*	zyd_setup_tx_desc(sc, desc, m0, m0->m_pkthdr.len, rate);*/
 
@@ -3132,9 +3134,12 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	DPRINTF(("sending mgt frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
 
-	DPRINTF(("Raw send data output:\n"));
-
-	bindump(data->buf, xferlen);
+#ifdef ZYD_DEBUG
+	if (zyddebug >= 3) {
+		printf("%s: Raw send data output:\n", USBDEVNAME(sc->zyd_dev));
+		bindump(data->buf, xferlen);
+	}
+#endif
 
 	usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], data,
 	    data->buf, xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
