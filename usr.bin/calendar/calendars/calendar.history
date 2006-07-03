@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.49 2006/07/03 11:08:55 jasper Exp $
+ * $OpenBSD: calendar.history,v 1.50 2006/07/03 15:46:22 jasper Exp $
  */
 
 #ifndef _calendar_history_
@@ -10,125 +10,52 @@
 01/01	Anniversary of the Triumph of the Revolution in Cuba
 01/01	Castro expels Cuban President Batista, 1959
 01/01	Churchill delivers his "Iron Curtain" speech, 1947
-01/01	First Rose Bowl; Michigan 49 - Stanford 0, 1902
-01/02	First military deployment of helicopters (VS-300 by Igor Sikorsky),
-	with a brittish american convoy, 1944
-01/02	Soviet rocket carrying Lunokhod-1 leaves the Earth's orbit
-	the first time ever (though did not reach the moon), 1959
-01/03	After 218 years since discovery by europeans and 92 years after
-	it was purchased from Russian Empire, Alaska becomes 49th state, 1959
-01/04	Quadrantid meteor shower (look north)
-01/05	-50 degrees F, Strawberry UT, 1913
-01/05	The FCC hears the first demonstration of FM radio, 1940
 01/05	Twelfth night
-01/08	Battle of New Orleans
 01/09	Plough Monday
 01/10	First meeting of United Nations General Assembly in London, 1946
 01/10	Thomas Paine's Common Sense published, 1776
 01/11	Anniversary of the Peoples Republic of Albania
 01/11	De Hostos' Birthday in Puerto Rico
-01/11	Milk delivered in bottles for the first time, 1878
 01/11	Prithvi Jayanti in Nepal
-01/11	Surgeon General condemned cigarettes, 1964
-01/11	The Whiskey-A-Go-Go opens on Sunset Boulevard in Los Angeles, 1963
 01/14	Julian Calendar New Year's Day
-01/14	The first "Be-In" is held in Golden Gate Park, 1967
-01/16	Prohibition begins, 1920
-01/18	Grey whale migration, California
 01/20	St. Agnes Eve (Ah, bitter chill it was...)
-01/24	Eskimo Pie patented by Christian Nelson, 1922
-01/24	Gold discovered in California at Sutter's Mill, 1848
-01/24	A B-52 bomber carrying two 24 megaton bombs crashes at Goldsboro,
-	North Carolina; 5 of 6 safety devices failed on one of them, 1961
 01/26	Sydney Aust. settled, 1788
-01/27	Grissom, White and Chaffee burned to death in Apollo 1, 1967
 01/27	Vietnam War cease-fire signed, 1973
-01/28	First ski tow, Woodstock VT, 1914
-01/28	Space Shuttle Challenger (51-L) explodes 74 seconds after liftoff
-	killing Scobee, Smith, McNair, Resnick, Jarvis, Onizuka and McAuliffe,
-	1986
 01/30	Mohandas Gandhi assassinated in New Delhi by Hindu fanatic, 1948
-01/30	Tet Offensive, 1968
-01/31	"Ham" the chimpanzee soars into space aboard Mercury-Redstone 2, 1961
-01/31	Explorer I launched, 1958.  Van Allen Belt discovered
 01/31	Irving Langmuir, 1881, invented tungsten filament lamp
 01/31	Dmitry Mendeleev, 1865, established optimal alcohol-water mixture ratio
 	in his PhD work on alcohol-water mixtures
-02/01	First TV soap: Secret Storm, 1954
-02/01	Space Shuttle Columbia (STS-107) explodes prior to landing, 2003
 02/01	Forces led by Khomeini take over Iran, 1979
 02/04	Cybernet inaugurated, 1969
 02/04	Patricia Hearst kidnaped by Symbionese Liberation Army, 1974
 02/08	1963 Revolution Anniversary in Iraq
-02/09	-51 degrees F, Vanderbilt MI, 1934
-02/12	Lincoln's real birthday
-02/12	Santa Barbara oil leak, 1969
 02/14	Bombing of Dresden, 1945
 02/15	Chicago Seven convicted, 1970
 02/16	Nylon patented, 1937
-02/16	Stephen Decatur burns US frigate in Tripoli, 1804
-02/18	Pluto discovered by Clyde Tombaugh, Lowell Observatory, AZ, 1930
-02/19	US Marines land on Iwo Jima, 1945
-02/20	John Glenn orbits the Earth 3 times, 1962
 02/21	Battle of Verdun begins, 1916 1M casualties
-02/21	First telephone directory, New Haven, Connecticut, 1878
-02/21	Malcom X shot to death in Harlem, 1965
 02/23	Lt. Calley confesses, implicates Cpt. Medina, 1971
 02/24	Impeachment proceedings against Andrew Johnson begin, 1868
 02/27	The Lionheart crowned, 1189
 02/28	The "French Connection" drug bust occurs in Marseilles, 1972
-02/29	French and Indian raid on Deerfield MA, 1704
-03/01	Sarah Goode, Sarah Osborne, and Tituba arrested for witchcraft
-	in Salem, Massachusetts, 1692
-03/02	Blackthorn winds (New England)
-03/03	Gemini III launched with Virgil Grissom and John Young on board, 1965
-03/04	First meeting of Congress, 1789, in N.Y.C.
 03/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1939
 03/13	"Striptease" introduced, Paris, 1894
-03/14	Teddy Roosevelt excludes Japanese laborers from continental US, 1907
-03/15	Buzzards return to Hinckley OH
 03/15	France assumes protectorate over Vietnam, 1874
-03/15	Watts, Los Angeles, riots kill two, injure 25, 1966
-03/16	MyLai Massacre; 300 non-combatant villagers killed by U.S. infantrymen
-03/16	Robert Goddard launches first liquid-fueled rocket, Auburn MA, 1926
-03/17	Vanguard I launched, 1958.  Earth proved pear-shaped
-03/18	Aleksei Leonov performs first spacewalk, 1965
 03/19	Swallows return to Capistrano
 03/20	Radio Caroline, the original British pirate radio station, sinks, 1980
 03/24	Construction of New York subway system begins, 1900
-03/25	Triangle Shirt Waist Fire, 1911
-03/26	Popeye statue unveiled, Crystal City TX Spinach Festival, 1937
 03/27	Khrushchev becomes Premier of Soviet Union, 1958
-03/28	First reaction thrust motor demonstration, 1883
 03/28	Three Mile Island releases radioactive gas, 1979
-03/29	Swedish settled Christiana (Wilmington) DE, 1638
-03/30	Five rings around Uranus discovered, 1977
 03/30	Pencil with eraser patented, 1858
 04/01	People of superb intelligence, savoir-faire, etc. born this day.
-04/04	Martin Luther King assassinated in Memphis, Tennessee, 1968
 04/04	NATO Established, 1949
 04/06	Joseph Smith founds Mormon Church, 1830
 04/07	Albert Hofmann synthesizes LSD in Switzerland, 1943
 04/07	Alewives run, Cape Cod
-04/09	Lee surrenders to Grant at Appomattox Courthouse, 1865
-04/09	Alaska purchased from Russia for $7.2 million, 1867
-04/12	Confederate troops fire first shots of Civil War at Ft Sumter, 1861
-04/12	Yuri Gagarin becomes the first man in space, 1961
-04/12	Space Shuttle Columbia launched, 1981
 04/13	Laotian New Year (3 days) in Laos
-04/13	Apollo 13 aborts moon landing due to oxygen tank explosion, 1970
-04/14	Lincoln shot in Ford's Theatre by John Wilkes Booth, 1865
 04/14	Titanic hits iceberg and sinks, 1912
-04/15	Ray Kroc opens first McDonalds in Des Plaines, IL, 1955
 04/17	Bay of Pigs invasion crushed by Castro forces, 1961
-04/18	Einstein's Death, 1955
-04/18	First Laundromat opens, Fort Worth Texas, 1934
-04/18	San Francisco earthquake, 1906
 04/19	Landing of the "33" in Uruguay
 04/19	Warsaw Ghetto uprising, 1943
-04/20	Supreme Court unanimously rules in favor of busing, 1971
-04/21	Lyrid meteor shower
-04/23	Hank Aaron hits his first home run, 1954
 04/23	Bavarian co-rulers Duke Wilhelm IV and Duke Ludwig X proclaimed the
 	weighty and consequential Bavarian Beer Purity Law
 	(later Reinheitsgebot), 1516
@@ -318,16 +245,9 @@
 09/02	Great Britain adopts Gregorian Calendar, 1752
 09/02	Japan signs unconditional surrender on US battleship `Missouri', 1945
 09/03	Anniversary of the Founding of the Republic in San Marino
-09/05	Kennedy orders resumption of underground nuclear tests, 1961
-09/05	The first Continental Congress was convened in Philadelphia, 1774
 09/06	149 Pilgrims set forth from England aboard the Mayflower, 1620
-09/06	Pres. McKinley shot, 1901
 09/06	Somhlolo in Swaziland
-09/08	Star Trek debuts on NBC (1966) with "The Man Trap"
 09/08	Jack the Ripper kills again, Annie Chapman is second victim, 1888
-09/08	President Ford pardons Richard M. Nixon, 1974
-09/09	California becomes the 31st state, 1850
-09/09	United Colonies is renamed the United States, 1776
 09/10	Mountain Meadows Massacre.  Mormons kill Gentile wagon train, 1857
 09/12	German paratroopers rescue Mussolini from captivity in Rome, 1943
 09/12	Germany annexes Sudetenland, 1938
@@ -335,29 +255,14 @@
 09/13	British defeat the French at Plains of Abraham near Quebec City, 1788
 09/13	Building of Hadrian's Wall begun, 122
 09/13	Chiang Kai-Shek becomes president of China, 1943
-09/14	Benjamin Franklin is sent to France as an American minister, 1778
-09/14	Salem, Massachusetts, is founded, 1629
 09/14	The Selective Service Act establishes the first peacetime draft, 1940
-09/15	Soviet Premier Nikita Khrushchev begins his 13 day tour of the US, 1959
-09/15	The U.S. Foreign Affairs Dept. becomes the U.S. State Department, 1789
-09/16	The village of Shawmut, Massachusetts, becomes the city of Boston, 1630
 09/17	Joshua A. Norton proclaims himself 'Emperor Norton I', 1859
 09/17	Battle of Antietam, 1862
 09/18	Victory of Uprona in Burundi
-09/20	Equal Rights Party nominates Belva Lockwood for President, 1884
-09/20	First meeting of the American Association for the Advancement of
-	Science, 1848
-09/20	First meeting of the National Research Council, 1916
 09/20	Magellan leaves Spain on the first Round the World passage, 1519
-09/20	The Roxy Theater opens in Hollywood, 1973
 09/22	Allied forces form the independent nation West Germany, 1953
-09/22	President Lincoln issues the Emancipation Proclamation, 1862
-09/22	Special prosecutor Leon Jeworski subpoenas President Nixon, 1974
 09/22	The first Soviet atomic bomb explodes, 1949
 09/23	Philippine President Ferdinand Marcos declares martial law, 1972
-09/23	The New York Knickerbockers becomes the first U.S. Baseball club, 1845
-09/23	V.P. Nixon denies campaign fund fraud with his "Checkers" speech, 1952
-09/25	Sandra Day O'Connor becomes first woman on US Supreme Court, 1981
 09/27	The first passenger was hauled in a locomotive in England, 1825
 09/28	"Pilgrim's Progress" published, 1678
 09/28	A Greek soldier runs 26+ miles after the Persian defeat at Marathon,
@@ -366,27 +271,18 @@
 	1888
 09/30	The first tooth is extracted under anesthesia in Charleston, Mass, 1846
 09/30	The verdicts of the Nuremberg trials are announced, 1946
-10/01	NASA officially begins operations, 1958
-10/02	Thurgood Marshall sworn as the first black Supreme Court Justice, 1967
 10/04	Crimean war begins, 1853
-10/04	First space vehicle, Sputnik I, launched, 1957
 10/06	Antioch College is the first public school to admit men and women, 1853
 10/06	Egyptian President Anwar Sadat is assassinated in Cairo, 1981
 10/06	Israel is attacked by the alliance of Egypt and Syria, 1973
 10/07	Foundation of the GDR in 1949 in German Democratic Republic
 10/07	Georgia Tech. beats Cumberland Univ. 222-0, 1916
-10/07	Maryland Governor Marvin Mandel sent to prison on fraud charges, 1977
 10/07	Mother Teresa of Calcutta awarded the Nobel Peace Prize, 1979
 10/07	Police stop Wilbur Mills car, Fanne Fox jumps into water, 1974
-10/08	Great Chicago Fire, 1871
 10/09	First two-way telephone conversation, 1876
-10/10	Mercury at Superior Conjunction with Sun.  Moves into night sky. (1984)
 10/10	Beginning of the Wars for Independence in Cuba
 10/10	Foundation of the Workers Party in North Korea
-10/10	Spiro T. Agnew resigns as Vice-President due to income tax fraud, 1973
-10/11	"Saturday Night Live" premiers on NBC-TV, 1975
 10/11	The Gang of Four are arrested in Peking, 1976
-10/11	The first steam powered ferry ran between New York and Hoboken, 1811
 10/11	The second Vatican Ecumenical Council opens in Rome, 1962
 10/12	Bahama Natives discover Columbus of Europe lost on their shores, 1492
 10/12	Bavarian Crown Prince Ludwig married Princess Therese of
@@ -394,13 +290,7 @@
 10/12	Khrushchev pounds his desk with shoe during a speech to the UN, 1960
 10/12	Man O'War's last race, 1920
 10/13	Italy declares war on Germany, 1943
-10/13	U.S. Navy born, 1775, authorized by the Second Continental Congress
 10/14	Battle of Hastings won by William the Conqueror and the Normans, 1066
-10/14	Chuck Yeager breaks sound barrier, 1947
-10/15	First draft card burned, 1965
-10/15	d.b.a. ("drink good stuff") opens in n.y.c., 1994
-10/18	Boston Shoemakers form first U.S. labor org., 1648
-10/18	Soviets announce their probe took photos of the Moon's far side, 1959
 10/19	Mao Tse-tung establishes the People's Republic of China, 1949
 10/19	Napoleon's beaten army begins the long retreat from Moscow, 1812
 10/20	"Saturday Night Massacre", 1973
@@ -412,94 +302,47 @@
 10/23	South African troops invade Angola in support of UNITA and FNLA, 1975
 10/25	The UN removes Taiwan and admits the People's Republic of China, 1971
 10/26	UN's World Health Organization declares smallpox eradicated, 1978
-10/27	New York's Boss Tweed is arrested on fraud charges, 1871
-10/27	The first New York Subway is opened, 1904
 10/28	Columbus discovers Cuba, 1492
 10/28	Constantine's army defeats forces of Maxentius at Mulvian Bridge, 312
-10/28	Harvard was founded in Massachusetts, 1636
-10/28	Statue of Liberty was dedicated on Bedloe's Island, 1886
-10/29	Stock Market Crash, 1929
-10/30	Orson Welles' "War of the Worlds" broadcast, 1938
 10/31	Luther nails 95 Theses to door of Castle Church, Wittenberg, 1517
 11/01	Austria-Hungary become two separate nations, 1918
 11/01	Puerto Rican nationalists try to kill Truman at the Blair House, 1950
 11/02	Luftwaffe completes 57 consecutive nights of bombing of London, 1940
 11/02	Two Frenchmen make the first free hot air balloon flight, 1783
-11/03	Beef rises to 3 cents a pound, IL, 1837
 11/03	Linus Pauling wins Nobel Chemistry Prize, 1954
-11/03	Sputnik II launched, 1957, bearing space dog Laika
-11/04	Iranian militants seize US embassy personnel in Teheran, 1979
 11/04	Soviet forces crush the anti-communist revolt in Hungary, 1956
 11/05	Guy Fawkes' Plot, 1605
 11/06	Anniversary of the October Socialist Revolution (2 days) in U.S.S.R.
 11/07	Abolitionist newspaperman Elijah P. Lovejoy murdered by mob, 1837
 11/07	Lewis and Clark Expedition in sight of the Pacific Ocean, 1805
-11/09	Blackout of New York, New England, and Eastern Canada, 1965
 11/09	Giant panda discovered (?!), China, 1927
 11/09	Jack the Ripper kills fifth and final victim, Jane Kelly, 1888
-11/09	Margaret Sanger forms American Birth Control League, 1921
-11/09	Roosevelt establishes the Civil Works Administration, 1933
-11/10	41 Women arrested in suffragette demonstrations near White House, 1917
-11/10	Cpt. Wirz, commandant of Andersonville Prison hanged, 1865
 11/10	Henry Stanley asks David Livingston, "Dr. Livingston, I presume?", 1871
-11/11	Washington becomes the 42nd state, 1889
 11/12	Dr. Sun Yat-sen's Birthday in Taiwan
-11/12	U.S. first exports oil to Europe, 1861
-11/14	Quarter Pounder price raised from $0.53 to $0.55 in violation of Nixon
-	price controls (but okayed by Price Commission after formal request
-	from McDonald's), 1971
-11/15	Niagara Falls power plant startup, 1896
-11/15	Space Shuttle Buran launched, 1988
 11/16	Opening of the Suez Canal, 1869
-11/17	46,000 meteoroids fall over AZ in 20 minutes, 1966
-11/17	Richard Nixon says "I am not a crook.", 1973
-11/18	Local standard time zones established for US, 1883
 11/18	First hydrogen bomb blasts Enewetok, 1952
-11/19	Gettysburg Address delivered, 1863
-11/21	Announcement of 18 1/2 minute gap on Watergate tape, 1973
-11/22	Kennedy shot in Dallas, Texas by Lee Harvey Oswald, 1963
-11/23	First broadcast of Dr. Who (longest running TV series), 1963
-11/24	Lee Harvey Oswald killed by Jack Ruby, 1963
 11/25	Alfred Nobel invents dynamite, 1867
 11/27	Alfred Nobel establishes Nobel Prize, 1895
 11/27	Friction match invented, England, 1826
-11/27	Hoosac Railroad Tunnel completed, 1873, in NW Massachusetts
 11/29	King Tut's tomb opened, 1922
-12/01	First national corn-husking championship, Alleman IA, 1924
-12/01	Rosa Parks refuses to move to back of the bus (Montgomery, AL), 1955
 12/03	First neon light display, Paris, 1910
 12/03	First successful human heart transplant led by Dr. Barnard, 1967
 12/03	The Montreux Casino burns down during a Frank Zappa concert, 1971
-12/04	Washington takes leave of his officers at Fraunce's Tavern, NYC, 1783
 12/05	Phi Beta Kappa founded, 1776
-12/05	The Eighteenth Amendment repealed,
-	ending the Prohibition of alcohol, 1933
-12/05	Martin Luther King Jr., leads black boycott of Montgomery buses, 1955
 12/07	Japan bombs Pearl Harbor, 1941
 12/09	Ball-bearing roller skates patented, 1884
 12/10	Metric system established in France, 1799
 12/10	Nobel Peace Prize awarded each year
 12/12	First wireless message sent across Atlantic by Marconi, 1901
-12/13	Apollo 17 leaves the moon, with "last" men to walk on moon aboard, 1972
 12/13	Dartmouth College chartered, 1769
-12/13	Geminid meteor shower (look south)
 12/15	Argo Merchant oil spill, 1976
-12/15	Bill of Rights adopted, 1791
 12/15	James Naismith invents basketball, Canada, 1891
-12/15	Sitting Bull shot in head while submitting to arrest, 1890
-12/20	U.S. buys ~1,000,000 sq. miles of Louisiana for ~$20/sq.mi.
-12/24	KKK formed in Pulaski, Tenn, 1865
-12/24	Apollo 8 first manned lunar orbit, 1968
 12/26	DPMA founded, 1951
-12/27	APT report published, 1956
 12/27	Ether first used as anesthetic in childbirth, 1845
-12/28	Comet Kohoutek at perihelion, 1973
 12/29	Battle of Wounded knee, 1890
 12/29	Edison receives patent for Radio, 1891
-12/30	First Los Angeles freeway dedicated, 1940
 12/31	St. Sylvester in Switzerland
 12/31	Windows tax in England, 1695
 12/31	First supersonic commercial flight by Tu-144, 1968
-12/31	Winterland closes its doors, 1978
 
 #endif /* !_calendar_history_ */

@@ -1,0 +1,51 @@
+/*
+ * Space
+ *
+ * $OpenBSD: calendar.space,v 1.1 2006/07/03 15:46:22 jasper Exp $
+ */
+
+#ifndef _calendar_space_
+#define _calendar_space_
+
+01/02	Soviet rocket carrying Lunokhod-1 leaves the Earth's orbit
+	the first time ever (though did not reach the moon), 1959
+01/04	Quadrantid meteor shower (look north)
+01/31	"Ham" the chimpanzee soars into space aboard Mercury-Redstone 2, 1961
+01/31	Explorer I launched, 1958.  Van Allen Belt discovered
+02/18	Pluto discovered by Clyde Tombaugh, Lowell Observatory, AZ, 1930
+02/20	John Glenn orbits the Earth 3 times, 1962
+03/03	Gemini III launched with Virgil Grissom and John Young on board, 1965
+03/16	Robert Goddard launches first liquid-fueled rocket, Auburn MA, 1926
+03/17	Vanguard I launched, 1958.  Earth proved pear-shaped
+03/18	Aleksei Leonov performs first spacewalk, 1965
+03/28	First reaction thrust motor demonstration, 1883
+03/30	Five rings around Uranus discovered, 1977
+04/12	Yuri Gagarin becomes the first man in space, 1961
+04/12	Space Shuttle Columbia launched, 1981
+04/13	Apollo 13 aborts moon landing due to oxygen tank explosion, 1970
+04/21	Lyrid meteor shower
+05/05	Alan Shepard becomes the first American in space, 1961
+05/14	Skylab (first U.S. space station) launched, 1973
+06/03	Edward White becomes the first American to perform a "Space Walk", 1965
+06/13	Pioneer 10 flies past Neptune's orbit, and becomes the first human
+	artifact to travel beyond the orbits of all known planets, 1983
+07/11	Skylab enters Earth's atmosphere and is destroyed, 1979
+07/20	Neil Armstrong and Edwin "Buzz" Aldrin land on moon, 1969
+08/03	First ICBM (P-7) test (5T of iron is launched to Kamchatka), 1957
+08/11	Perseid meteor shower (look north; three days)
+08/12	First test flight of Space Shuttle "Enterprise" from 747, 1977
+08/19	Air Force cargo plane snares payload from Discoverer 14 spy satellite,
+	marking start of practical military reconnaissance from space, 1960
+08/29	Star in Cygnus goes nova and becomes 4th brightest in sky, 1975;
+	Nova Cygni 1975.
+10/01	NASA officially begins operations, 1958
+10/04	First space vehicle, Sputnik I, launched, 1957
+10/10	Mercury at Superior Conjunction with Sun.  Moves into night sky. (1984)
+10/18	Soviets announce their probe took photos of the Moon's far side, 1959
+11/03	Sputnik II launched, 1957, bearing space dog Laika
+11/15	Space Shuttle Buran launched, 1988
+12/13	Apollo 17 leaves the moon, with "last" men to walk on moon aboard, 1972
+12/13	Geminid meteor shower (look south)
+12/24	Apollo 8 first manned lunar orbit, 1968
+
+#endif /* !_calendar_space_ */
