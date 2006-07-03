@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.17 2006/04/25 03:14:19 deraadt Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.18 2006/07/03 21:17:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -70,17 +70,16 @@ enum sensor_status {
 /* Sensor data */
 struct sensor {
 	SLIST_ENTRY(sensor) list;
-	int num;			/* sensor number */
-	char device[16];		/* device name */
-	enum sensor_type type;		/* sensor type */
 	char desc[32];			/* sensor description */
+	char device[16];		/* device name */
+	struct timeval tv;		/* sensor value last change time */
 	int64_t value;			/* current value */
-	u_int rfact;			/* resistor factor */
+	enum sensor_type type;		/* sensor type */
 	enum sensor_status status;	/* sensor status */
+	int num;			/* sensor number */
 	int flags;			/* sensor flags */
 #define SENSOR_FINVALID		0x0001	/* sensor is invalid */
 #define SENSOR_FUNKNOWN		0x0002	/* sensor value is unknown */
-	struct timeval tv;		/* sensor value last change time */
 };
 
 #ifdef _KERNEL
