@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.20 2006/07/03 13:12:58 xsa Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.21 2006/07/03 14:16:12 xsa Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -1001,10 +1001,8 @@ fail:
 	return error;
 }
 
-/*
- * Free TX list
- */
-void zyd_free_tx(struct zyd_softc *sc)
+void
+zyd_free_tx(struct zyd_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct zyd_tx_data *data;
@@ -1025,10 +1023,8 @@ void zyd_free_tx(struct zyd_softc *sc)
 	}
 }
 
-/*
- * Allocate RX list
- */
-int zyd_alloc_rx(struct zyd_softc *sc)
+int
+zyd_alloc_rx(struct zyd_softc *sc)
 {
 	struct zyd_rx_data *data;
 	int i, error;
@@ -1082,10 +1078,8 @@ fail:
 	return error;
 }
 
-/*
- * Free RX list
- */
-void zyd_free_rx(struct zyd_softc *sc)
+void
+zyd_free_rx(struct zyd_softc *sc)
 {
 	struct zyd_rx_data *data;
 	int i;
@@ -1108,7 +1102,8 @@ void zyd_free_rx(struct zyd_softc *sc)
 /*
  * Fetch and print state flags of zydas
  */
-void zyd_stateoutput(struct zyd_softc *sc)
+void
+zyd_stateoutput(struct zyd_softc *sc)
 {
 	uint32_t debug;
 
@@ -2755,7 +2750,8 @@ zyd_plcp_signal(int rate)
 	}
 }
 /*
-int zyd_calc_useclen2(uint8_t *service, uint8_t cs_rate, uint16_t tx_length)
+int
+zyd_calc_useclen2(uint8_t *service, uint8_t cs_rate, uint16_t tx_length)
 {
 	static const uint8_t rate_divisor[] = {
 		[ZD_CS_CCK_RATE_1M]	=  1,
@@ -3478,9 +3474,6 @@ fail:
 }
 
 /*
- * Interface: stop
- */
-/*
 void
 zyd_stop(struct ifnet *ifp, int disable)
 {
@@ -3501,9 +3494,6 @@ zyd_stop(struct ifnet *ifp, int disable)
 	DPRINTF(("Leaving zyd_stop()\n"));
 }*/
 
-/*
- * Interface: start
- */
 void
 zyd_start(struct ifnet *ifp)
 {
@@ -3616,9 +3606,6 @@ zyd_start(struct ifnet *ifp)
 	DPRINTF(("Finished zyd_start()\n"));
 }
 
-/*
- * Interface: ioctl
- */
 int
 zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
@@ -3680,11 +3667,11 @@ zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 
-		default:
-			DPRINTFN(15, ("%s: ieee80211_ioctl (%lu)\n",
-			    USBDEVNAME(sc->zyd_dev), command));
-			err = ieee80211_ioctl(ifp, command, data);
-			break;
+	default:
+		DPRINTFN(15, ("%s: ieee80211_ioctl (%lu)\n",
+		    USBDEVNAME(sc->zyd_dev), command));
+		err = ieee80211_ioctl(ifp, command, data);
+		break;
 	}
 
 	if (err == ENETRESET) {
@@ -3702,9 +3689,6 @@ zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	return (err);
 }
 
-/*
- * Interface: watchdog
- */
 void
 zyd_watchdog(struct ifnet *ifp)
 {
