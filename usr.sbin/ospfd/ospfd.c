@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.33 2006/05/31 03:24:06 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.34 2006/07/03 13:05:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -515,11 +515,13 @@ ospf_redistribute(struct kroute *kr)
 				continue;
 			if (kr->flags & F_STATIC)
 				return (r->type & REDIST_NO ? 0 : 1);
+			break;
 		case REDIST_CONNECTED:
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED)
 				return (r->type & REDIST_NO ? 0 : 1);
+			break;
 		case REDIST_ADDR:
 			if (kr->flags & F_DYNAMIC)
 				continue;
