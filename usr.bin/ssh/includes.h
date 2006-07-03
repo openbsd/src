@@ -1,4 +1,4 @@
-/* $OpenBSD: includes.h,v 1.42 2006/07/03 08:54:20 stevesk Exp $ */
+/* $OpenBSD: includes.h,v 1.43 2006/07/03 17:59:32 stevesk Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -22,7 +22,6 @@
 #include <sys/time.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 
 #include <stddef.h>
