@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.48 2006/06/28 10:57:25 jasper Exp $
+ * $OpenBSD: calendar.history,v 1.49 2006/07/03 11:08:55 jasper Exp $
  */
 
 #ifndef _calendar_history_
@@ -214,9 +214,16 @@
 06/28	Archduke Franz Ferdinand of Austria assassinated in Sarajevo,
 	marking the beginning of World War I, 1914
 06/28	World War I ended with the signing of the Treaty of Versailles, 1919
+06/30	Albert Einstein published his theory of special relativity, 1905
 06/30	"That" explosion in Siberia at 7:17 local time, 1908
 06/30	China and Soviet Union announce split over ideology, 1960
 07/01	Battle of Gettysburg begins, 1863
+07/01	Warsaw Pact officially dissolved, 1991
+07/01	The first day on the Somme marked the beginning of the
+	Battle of the Somme, 1916
+07/01	Hong Kong becomes a special administrative region of the People's
+	Republic of China, 1997
+07/02	Vermont abolishes slavery, as the first state, 1777
 07/03	Dog days begin
 07/04	Battles of Vicksburg and Gettysburg won by Union forces, 1863
 07/04	Cloudy, 76 degrees, Philadelphia PA, 1776
