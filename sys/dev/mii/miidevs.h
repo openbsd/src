@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.78 2006/04/15 01:39:13 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.79 2006/07/03 01:24:30 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.75 2006/04/15 01:38:52 brad Exp 
+ *	OpenBSD: miidevs,v 1.76 2006/07/03 01:23:22 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -186,7 +186,7 @@
 #define	MII_MODEL_BROADCOM_BCM4401	0x0036
 #define	MII_STR_BROADCOM_BCM4401	"BCM4401 10/100baseTX PHY"
 
-/* Cicada Semiconductor PHYs (now owned by Vitesse?) */
+/* Cicada Semiconductor PHYs (now owned by Vitesse) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
 #define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201A	0x0020
@@ -271,6 +271,10 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 PHY"
+#define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
+#define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 10/100/1000 PHY"
+#define	MII_MODEL_LEVEL1_LXT1000	0x000c
+#define	MII_STR_LEVEL1_LXT1000	"LXT1000 10/100/1000 PHY"
 #define	MII_MODEL_xxLEVEL1a_LXT971	0x000e
 #define	MII_STR_xxLEVEL1a_LXT971	"LXT971 10/100 PHY"
 
