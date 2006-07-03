@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.76 2006/07/03 01:23:22 brad Exp $
+$OpenBSD: miidevs,v 1.77 2006/07/03 01:47:06 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -61,6 +61,7 @@ oui LEVEL1			0x00207b	Level 1
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PLESSEY			0x046b40	Plessey Semiconductor
+oui PMCSIERRA			0x00e004	PMC-Sierra
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui REALTEK			0x000020	Realtek Semiconductor
 oui REALTEK2			0x00e04c	Realtek Semiconductor
