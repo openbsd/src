@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.133 2006/06/28 02:46:54 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.134 2006/07/03 20:55:55 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -45,7 +45,7 @@ int             em_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "5.1.5";
+char em_driver_version[] = "6.0.5";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -53,6 +53,8 @@ char em_driver_version[] = "5.1.5";
 const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_CPR_DPT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_SDS_DPT },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_CPR_SPT },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_SDS_SPT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP },
@@ -106,7 +108,12 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573V_PM }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573V_PM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_M_AMT },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_AMT },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_C },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IGP_M }
 };
 
 /*********************************************************************
@@ -181,6 +188,8 @@ struct cfattach em_ca = {
 struct cfdriver em_cd = {
 	0, "em", DV_IFNET
 };
+
+static int em_smart_pwr_down = FALSE;
 
 /*********************************************************************
  *  Device identification routine
@@ -290,6 +299,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_80003es2lan:	/* Limit Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
 			break;
+		case em_ich8lan:
+			/* ICH8 does not support jumbo frames */
+			sc->hw.max_frame_size = ETHER_MAX_LEN;
+			break;
 		default:
 			sc->hw.max_frame_size =
 			    MAX_JUMBO_FRAME_SIZE;
@@ -300,10 +313,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->hw.mac_type >= em_82544)
 	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
-		EM_MAX_TXD_82544 * sizeof(struct em_tx_desc));
+		EM_MAX_TXD * sizeof(struct em_tx_desc));
 	else
 	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
-		EM_MAX_TXD * sizeof(struct em_tx_desc));
+		EM_MAX_TXD_82543 * sizeof(struct em_tx_desc));
 	tsize = EM_ROUNDUP(tsize, PAGE_SIZE);
 
 	/* Allocate Transmit Descriptor ring */
@@ -602,9 +615,9 @@ em_init(void *arg)
 
 	if (ifp->if_flags & IFF_UP) {
 		if (sc->hw.mac_type >= em_82544)
-		    sc->num_tx_desc = EM_MAX_TXD_82544;
-		else
 		    sc->num_tx_desc = EM_MAX_TXD;
+		else
+		    sc->num_tx_desc = EM_MAX_TXD_82543;
 		sc->num_rx_desc = EM_MAX_RXD;
 	} else {
 		sc->num_tx_desc = EM_MIN_TXD;
@@ -615,6 +628,12 @@ em_init(void *arg)
 	/* Packet Buffer Allocation (PBA)
 	 * Writing PBA sets the receive portion of the buffer
 	 * the remainder is used for the transmit buffer.
+	 *
+	 * Devices before the 82547 had a Packet Buffer of 64K.
+	 *   Default allocation: PBA=48K for Rx, leaving 16K for Tx.
+	 * After the 82547 the buffer was reduced to 40K.
+	 *   Default allocation: PBA=30K for Rx, leaving 10K for Tx.
+	 *   Note: default does not leave enough room for Jumbo Frame >10k.
 	 */
 	switch (sc->hw.mac_type) {
 	case em_82547:
@@ -635,6 +654,9 @@ em_init(void *arg)
 	case em_82573: /* 82573: Total Packet Buffer is 32K */
 		/* Jumbo frames not supported */
 		pba = E1000_PBA_12K; /* 12K for Rx, 20K for Tx */
+		break;
+	case em_ich8lan:
+		pba = E1000_PBA_8K;
 		break;
 	default:
 		/* Devices before 82547 had a Packet Buffer of 64K.   */
@@ -1246,6 +1268,8 @@ em_local_timer(void *arg)
 	splx(s);
 }
 
+#define SPEED_MODE_BIT	(1<<21)		/* On PCI-E MACs only */
+
 void
 em_update_link_status(struct em_softc *sc)
 {
@@ -1256,6 +1280,15 @@ em_update_link_status(struct em_softc *sc)
 			em_get_speed_and_duplex(&sc->hw,
 						&sc->link_speed,
 						&sc->link_duplex);
+			/* Check if we may set SPEED_MODE bit on PCI-E */
+			if ((sc->link_speed == SPEED_1000) &&
+			    ((sc->hw.mac_type == em_82571) ||
+			    (sc->hw.mac_type == em_82572))) {
+				int tarc0;
+				tarc0 = E1000_READ_REG(&sc->hw, TARC0);
+				tarc0 |= SPEED_MODE_BIT;
+				E1000_WRITE_REG(&sc->hw, TARC0, tarc0);
+			}
 			sc->link_active = 1;
 			sc->smartspeed = 0;
 			ifp->if_baudrate = sc->link_speed * 1000000;
@@ -1371,17 +1404,32 @@ em_allocate_pci_resources(struct em_softc *sc)
 			    PCI_MAPREG_MEM_TYPE_64BIT)
 				rid += 4;	/* skip high bits, too */
 		}
+
 		if (pci_mapreg_map(pa, rid, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->osdep.em_iobtag,
-				   &sc->osdep.em_iobhandle,
-				   &sc->osdep.em_iobase,
-				   &sc->osdep.em_iosize, 0)) {
+		    &sc->osdep.io_bus_space_tag, &sc->osdep.io_bus_space_handle,
+		    &sc->osdep.em_iobase, &sc->osdep.em_iosize, 0)) {
 			printf(": can't find io space\n");
 			return (ENXIO);
 		}
 
-		sc->hw.io_base = 0;
+		sc->hw.io_base = sc->osdep.em_iobase;
 	}
+
+	/* for ICH8 we need to find the flash memory */
+	if (sc->hw.mac_type == em_ich8lan) {
+		val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_FLASH);
+		if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
+			printf(": flash isn't memory");
+			return (ENXIO);
+		}
+
+		if (pci_mapreg_map(pa, EM_FLASH, PCI_MAPREG_MEM_TYPE(val), 0,
+		    &sc->osdep.flash_bus_space_tag, &sc->osdep.flash_bus_space_handle,
+		    &sc->osdep.em_flashbase, &sc->osdep.em_flashsize, 0)) {
+			printf(": can't find mem space\n");
+			return (ENXIO);
+		}
+        }
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
@@ -1411,16 +1459,21 @@ em_free_pci_resources(struct em_softc *sc)
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 
-	if(sc->sc_intrhand)
+	if (sc->sc_intrhand)
 		pci_intr_disestablish(pc, sc->sc_intrhand);
 	sc->sc_intrhand = 0;
 
-	if(sc->osdep.em_iobase)
-		bus_space_unmap(sc->osdep.em_iobtag, sc->osdep.em_iobhandle,
+	if (sc->osdep.em_flashbase)
+		bus_space_unmap(sc->osdep.flash_bus_space_tag, sc->osdep.flash_bus_space_handle,
+				sc->osdep.em_flashsize);
+	sc->osdep.em_flashbase = 0;
+
+	if (sc->osdep.em_iobase)
+		bus_space_unmap(sc->osdep.io_bus_space_tag, sc->osdep.io_bus_space_handle,
 				sc->osdep.em_iosize);
 	sc->osdep.em_iobase = 0;
 
-	if(sc->osdep.em_membase)
+	if (sc->osdep.em_membase)
 		bus_space_unmap(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
 				sc->osdep.em_memsize);
 	sc->osdep.em_membase = 0;
@@ -1457,6 +1510,17 @@ em_hardware_init(struct em_softc *sc)
 		printf("%s: EEPROM read error while reading part number\n",
 		       sc->sc_dv.dv_xname);
 		return (EIO);
+	}
+
+	/* Set up smart power down as default off on newer adapters */
+	if (!em_smart_pwr_down &&
+	     (sc->hw.mac_type == em_82571 ||
+	      sc->hw.mac_type == em_82572)) {
+		uint16_t phy_tmp = 0;
+		/* speed up time to link by disabling smart power down */
+		em_read_phy_reg(&sc->hw, IGP02E1000_PHY_POWER_MGMT, &phy_tmp);
+		phy_tmp &= ~IGP02E1000_PM_SPD;
+		em_write_phy_reg(&sc->hw, IGP02E1000_PHY_POWER_MGMT, phy_tmp);
 	}
 
 	/*
@@ -1750,22 +1814,22 @@ em_setup_transmit_structures(struct em_softc *sc)
 void
 em_initialize_transmit_unit(struct em_softc *sc)
 {
-	u_int32_t	reg_tctl, tarc;
+	u_int32_t	reg_tctl, reg_tarc;
 	u_int32_t	reg_tipg = 0;
 	u_int64_t	bus_addr;
 
 	INIT_DEBUGOUT("em_initialize_transmit_unit: begin");
 	/* Setup the Base and Length of the Tx Descriptor Ring */
 	bus_addr = sc->txdma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, TDBAL, (u_int32_t)bus_addr);
-	E1000_WRITE_REG(&sc->hw, TDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, TDLEN, 
 			sc->num_tx_desc *
 			sizeof(struct em_tx_desc));
+	E1000_WRITE_REG(&sc->hw, TDBAH, (u_int32_t)(bus_addr >> 32));
+	E1000_WRITE_REG(&sc->hw, TDBAL, (u_int32_t)bus_addr);
 
 	/* Setup the HW Tx Head and Tail descriptor pointers */
-	E1000_WRITE_REG(&sc->hw, TDH, 0);
 	E1000_WRITE_REG(&sc->hw, TDT, 0);
+	E1000_WRITE_REG(&sc->hw, TDH, 0);
 
 	HW_DEBUGOUT2("Base = %x, Length = %x\n", 
 		     E1000_READ_REG(&sc->hw, TDBAL),
@@ -1797,6 +1861,26 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	if(sc->hw.mac_type >= em_82540)
 		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
 
+	/* Do adapter specific tweaks before we enable the transmitter */
+	if (sc->hw.mac_type == em_82571 || sc->hw.mac_type == em_82572) {
+		reg_tarc = E1000_READ_REG(&sc->hw, TARC0);
+		reg_tarc |= (1 << 25);
+		E1000_WRITE_REG(&sc->hw, TARC0, reg_tarc);
+		reg_tarc = E1000_READ_REG(&sc->hw, TARC1);
+		reg_tarc |= (1 << 25);
+		reg_tarc &= ~(1 << 28);
+		E1000_WRITE_REG(&sc->hw, TARC1, reg_tarc);
+	} else if (sc->hw.mac_type == em_80003es2lan) {
+		reg_tarc = E1000_READ_REG(&sc->hw, TARC0);
+		reg_tarc |= 1;
+		if (sc->hw.media_type == em_media_type_internal_serdes)
+			reg_tarc |= (1 << 20);
+		E1000_WRITE_REG(&sc->hw, TARC0, reg_tarc);
+		reg_tarc = E1000_READ_REG(&sc->hw, TARC1);
+		reg_tarc |= 1;
+		E1000_WRITE_REG(&sc->hw, TARC1, reg_tarc);
+	}
+
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
 		   (E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT);
@@ -1806,29 +1890,8 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		reg_tctl |= E1000_FDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
 	else
 		reg_tctl |= E1000_HDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
+	/* This write will effectively turn on the transmit unit */
 	E1000_WRITE_REG(&sc->hw, TCTL, reg_tctl);
-
-	if (sc->hw.mac_type == em_82571 || sc->hw.mac_type == em_82572) {
-		tarc = E1000_READ_REG(&sc->hw, TARC0);
-		tarc |= ((1 << 25) | (1 << 21));
-		E1000_WRITE_REG(&sc->hw, TARC0, tarc);
-		tarc = E1000_READ_REG(&sc->hw, TARC1);
-		tarc |= (1 << 25);
-		if (reg_tctl & E1000_TCTL_MULR)
-			tarc &= ~(1 << 28);
-		else
-			tarc |= (1 << 28);
-		E1000_WRITE_REG(&sc->hw, TARC1, tarc);
-	} else if (sc->hw.mac_type == em_80003es2lan) {
-		tarc = E1000_READ_REG(&sc->hw, TARC0);
-		tarc |= 1;
-		if (sc->hw.media_type == em_media_type_internal_serdes)
-			tarc |= (1 << 20);
-		E1000_WRITE_REG(&sc->hw, TARC0, tarc);
-		tarc = E1000_READ_REG(&sc->hw, TARC1);
-		tarc |= 1;
-		E1000_WRITE_REG(&sc->hw, TARC1, tarc);
-	}
 
 	/* Setup Transmit Descriptor Settings for this adapter */   
 	sc->txd_cmd = E1000_TXD_CMD_IFCS | E1000_TXD_CMD_RS;
@@ -2186,14 +2249,14 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Setup the Base and Length of the Rx Descriptor Ring */
 	bus_addr = sc->rxdma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
-	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, RDLEN, sc->num_rx_desc *
 			sizeof(struct em_rx_desc));
+	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
+	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
 
 	/* Setup the HW Rx Head and Tail Descriptor Pointers */
-	E1000_WRITE_REG(&sc->hw, RDH, 0);
 	E1000_WRITE_REG(&sc->hw, RDT, sc->num_rx_desc - 1);
+	E1000_WRITE_REG(&sc->hw, RDH, 0);
 
 	/* Setup the Receive Control Register */
 	reg_rctl = E1000_RCTL_EN | E1000_RCTL_BAM | E1000_RCTL_LBM_NO |
@@ -2735,7 +2798,7 @@ em_update_stats_counters(struct em_softc *sc)
 	    sc->stats.rxerrc +
 	    sc->stats.crcerrs +
 	    sc->stats.algnerrc +
-	    sc->stats.rlec + sc->stats.rnbc +
+	    sc->stats.ruc + sc->stats.roc +
 	    sc->stats.mpc + sc->stats.cexterr +
 	    sc->rx_overruns;
 
@@ -2769,8 +2832,10 @@ em_print_hw_stats(struct em_softc *sc)
 		(long long)sc->stats.mpc);
 	printf("%s: Receive No Buffers = %lld\n", unit,
 		(long long)sc->stats.rnbc);
-	printf("%s: Receive length errors = %lld\n", unit,
-		(long long)sc->stats.rlec);
+	/* RLEC is inaccurate on some hardware, calculate our own */
+	printf("%s: Receive Length Errors = %lld\n", unit,
+		((long long)sc->stats.roc +
+		(long long)sc->stats.ruc));
 	printf("%s: Receive errors = %lld\n", unit,
 		(long long)sc->stats.rxerrc);
 	printf("%s: Crc errors = %lld\n", unit,

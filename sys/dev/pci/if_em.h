@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.23 2006/03/05 19:55:10 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.24 2006/07/03 20:55:55 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -83,20 +83,23 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Tunables */
 
 /*
- * EM_(MIN/MAX)_TXD: Maximum number of Transmit Descriptors
+ * EM_TXD: Maximum number of Transmit Descriptors
  * Valid Range: 80-256 for 82542 and 82543-based adapters
  *              80-4096 for others
  * Default Value: 256
  *   This value is the number of transmit descriptors allocated by the driver.
  *   Increasing this value allows the driver to queue more transmits. Each
  *   descriptor is 16 bytes.
+ *   Since TDLEN should be multiple of 128bytes, the number of transmit
+ *   desscriptors should meet the following condition.
+ *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
 #define EM_MIN_TXD			12
-#define EM_MAX_TXD			256
-#define EM_MAX_TXD_82544		512
+#define EM_MAX_TXD_82543		256
+#define EM_MAX_TXD			512
 
 /*
- * EM_(MIN/MAX)_RXD - Maximum number of receive Descriptors
+ * EM_RXD - Maximum number of receive Descriptors
  * Valid Range: 80-256 for 82542 and 82543-based adapters
  *              80-4096 for others
  * Default Value: 256
@@ -104,7 +107,9 @@ POSSIBILITY OF SUCH DAMAGE.
  *   Increasing this value allows the driver to buffer more incoming packets.
  *   Each descriptor is 16 bytes.  A receive buffer is also allocated for each
  *   descriptor. The maximum MTU size is 16110.
- *
+ *   Since TDLEN should be multiple of 128bytes, the number of transmit
+ *   desscriptors should meet the following condition.
+ *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
 #define EM_MIN_RXD			12
 #define EM_MAX_RXD			256
@@ -213,6 +218,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					 ADVERTISE_1000_FULL)
 
 #define EM_MMBA				0x0010 /* Mem base address */
+#define EM_FLASH			0x0014 /* Flash memory on ICH8 */
 #define EM_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
 
 #define EM_SMARTSPEED_DOWNSHIFT		3
@@ -302,12 +308,6 @@ struct em_softc {
 	struct timeout	tx_fifo_timer_handle;
 	void		*sc_powerhook;
 	void		*sc_shutdownhook;
-
-#ifdef __STRICT_ALIGNMENT
-	/* Used for carrying forward alignment adjustments */
-	unsigned char	align_buf[ETHER_ALIGN];	/* tail of unaligned packet */
-	u_int8_t	align_buf_len;		/* bytes in tail */
-#endif /* __STRICT_ALIGNMENT */
 
 	/* Info about the board itself */
 	u_int32_t	part_num;
