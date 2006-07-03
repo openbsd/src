@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.52 2006/06/11 20:57:44 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.53 2006/07/03 18:55:36 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1556,9 +1556,6 @@ ENTRY(ICIA)
  * Because of this, since there is no way on 68040 and 68060 to flush
  * user and supervisor modes specfically, DCIS and DCIU are the same entry
  * point as DCIA.
- *
- * On 68060, since we have disabled cache invalidation on pushes, we need
- * an explicit cinva after the cpusha.
  */
 ENTRY(DCIA)
 ENTRY(DCIS)
@@ -1567,9 +1564,6 @@ ENTRY(DCIU)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
 	jgt	1f			| no, skip
 	.word	0xf478			| cpusha dc
-	jeq	1f
-	.word	0xf458			| cinva dc
-1:
 #endif
 	rts
 
