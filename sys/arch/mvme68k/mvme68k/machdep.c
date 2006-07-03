@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2006/06/11 20:50:51 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.100 2006/07/03 20:48:27 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -785,7 +785,7 @@ abort:
 }
 
 #if defined(M68060)
-int m68060_pcr_init = PCR_SUPERSCALAR;	/* make this patchable */
+int m68060_pcr_init = 0x20 | PCR_SUPERSCALAR;	/* make this patchable */
 #endif
 
 void
