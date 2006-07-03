@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.45 2006/07/01 16:50:32 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.46 2006/07/03 20:00:22 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -38,9 +38,6 @@
  * This disksubr.c module started to take its present form on OpenBSD/alpha
  * but it was always thought it should be made completely MI and not need to
  * be in that alpha-specific tree at all.
- *
- * XXX The DOS partitioning code is not endian-independent, only native
- * endian DOS partition tables can be parsed yet.
  */
 
 #include <sys/param.h>
@@ -52,91 +49,33 @@
 #include <sys/disk.h>
 
 /* The native defaults... */
-#if defined(alpha) && !defined(DISKLABEL_ALPHA)
-#define DISKLABEL_ALPHA
-#elif (defined(i386) || defined(arc)) && !defined(DISKLABEL_I386)
+#if defined(DISKLABEL_ALL) && !defined(DISKLABEL_I386)
 #define DISKLABEL_I386
 #endif
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
-void	swapdisklabel(struct disklabel *d);
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
-    int, int, struct disklabel *, int);
-#endif
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+    int, struct disklabel *, int);
+#if defined(DISKLABEL_I386)
 char   *readdoslabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
-
-/*
- * Byteswap all the fields that might be swapped.
- */
-void
-swapdisklabel(dlp)
-	struct disklabel *dlp;
-{
-	int i;
-	struct partition *pp;
-
-	swap32(dlp->d_magic);
-	swap16(dlp->d_type);
-	swap16(dlp->d_subtype);
-	swap32(dlp->d_secsize);
-	swap32(dlp->d_nsectors);
-	swap32(dlp->d_ntracks);
-	swap32(dlp->d_ncylinders);
-	swap32(dlp->d_secpercyl);
-	swap32(dlp->d_secperunit);
-	swap16(dlp->d_sparespertrack);
-	swap16(dlp->d_sparespercyl);
-	swap32(dlp->d_acylinders);
-	swap16(dlp->d_rpm);
-	swap16(dlp->d_interleave);
-	swap16(dlp->d_trackskew);
-	swap16(dlp->d_cylskew);
-	swap32(dlp->d_headswitch);
-	swap32(dlp->d_trkseek);
-	swap32(dlp->d_flags);
-	for (i = 0; i < NDDATA; i++)
-		swap32(dlp->d_drivedata[i]);
-	for (i = 0; i < NSPARE; i++)
-		swap32(dlp->d_spare[i]);
-	swap32(dlp->d_magic2);
-	swap16(dlp->d_checksum);
-	swap16(dlp->d_npartitions);
-	swap32(dlp->d_bbsize);
-	swap32(dlp->d_sbsize);
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		pp = &dlp->d_partitions[i];
-		swap32(pp->p_size);
-		swap32(pp->p_offset);
-		swap32(pp->p_fsize);
-		swap16(pp->p_cpg);
-	}
-}
-
 /*
  * Try to read a standard BSD disklabel at a certain sector.
  */
 char *
-readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
+readbsdlabel(bp, strat, cyl, sec, off, lp, spoofonly)
 	struct buf *bp;
 	void (*strat)(struct buf *);
-	int cyl, sec, off, endian;
+	int cyl, sec, off;
 	struct disklabel *lp;
 	int spoofonly;
 {
 	struct disklabel *dlp;
 	char *msg = NULL;
 	u_int16_t cksum;
-	u_int32_t magic;
-
-	if (endian != LITTLE_ENDIAN && endian != BIG_ENDIAN)
-		panic("readbsdlabel: unsupported byteorder %d", endian);
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -155,8 +94,6 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 		return (msg);
 	}
 
-	magic = endian == BIG_ENDIAN ? htobe32(DISKMAGIC) : htole32(DISKMAGIC);
-
 	/*
 	 * If off is negative, search until the end of the sector for
 	 * the label, otherwise, just look at the specific location
@@ -164,25 +101,15 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 	 */
 	dlp = (struct disklabel *)(bp->b_data + (off >= 0 ? off : 0));
 	do {
-		if (dlp->d_magic != magic || dlp->d_magic2 != magic) {
+		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
 				msg = "no disk label";
 		} else {
 			cksum = dkcksum(dlp);
-			if (endian != BYTE_ORDER)
-				swapdisklabel(dlp);
 			if (dlp->d_npartitions > MAXPARTITIONS || cksum != 0) {
 				msg = "disk label corrupted";
-				/* swap back if necessary.  */
-				if (off < 0 && endian != BYTE_ORDER)
-					swapdisklabel(dlp);
 			} else {
 				*lp = *dlp;
-				/* Recalc magic on foreign labels */
-				if (endian != BYTE_ORDER) {
-					lp->d_checksum = 0;
-					lp->d_checksum = dkcksum(lp);
-				}
 				msg = NULL;
 				break;
 			}
@@ -194,7 +121,6 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 	    sizeof(*dlp)));
 	return (msg);
 }
-#endif
 
 /*
  * Attempt to read a disk label from a device
@@ -246,14 +172,12 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	for (tp = probe_order; msg && *tp != -1; tp++) {
 		switch (*tp) {
 		case DLT_ALPHA:
-#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, lp, spoofonly);
-#endif
+			    ALPHA_LABELOFFSET, lp, spoofonly);
 			break;
 
 		case DLT_I386:
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 			msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
 			if (msg)
 				/* Fallback alternative */
@@ -295,7 +219,7 @@ done:
 	return (msg);
 }
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 /*
  * If dos partition table requested, attempt to load it and
  * find disklabel inside a DOS partition. Also, if bad block
@@ -485,7 +409,7 @@ donot:
 
 	/* next, dig out disk label */
 	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
-	    LITTLE_ENDIAN, lp, spoofonly);
+	    lp, spoofonly);
 	if (msg)
 		return (msg);
 
@@ -616,10 +540,10 @@ writedisklabel(dev, strat, lp, osdep)
 	char *msg = "no disk label";
 	struct buf *bp;
 	struct disklabel dl;
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 	struct cpu_disklabel cdl;
 #endif
-	int labeloffset, error, i, endian, partoff = 0, cyl = 0;
+	int labeloffset, error, i, partoff = 0, cyl = 0;
 	u_int64_t csum, *p;
 
 	/* get a buffer and initialize it */
@@ -636,20 +560,16 @@ writedisklabel(dev, strat, lp, osdep)
 		dl = *lp;
 		switch (*tp) {
 		case DLT_ALPHA:
-#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, &dl, 0);
+			    ALPHA_LABELOFFSET, &dl, 0);
 			labeloffset = ALPHA_LABELOFFSET;
-			endian = LITTLE_ENDIAN;
-#endif
 			break;
 
 		case DLT_I386:
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 			msg = readdoslabel(bp, strat, &dl, &cdl, &partoff,
 			    &cyl, 0);
 			labeloffset = I386_LABELOFFSET;
-			endian = LITTLE_ENDIAN;
 #endif
 			break;
 
@@ -664,17 +584,9 @@ writedisklabel(dev, strat, lp, osdep)
 
 		/* Write it in the regular place with native byte order. */
 		labeloffset = LABELOFFSET;
-		endian = BYTE_ORDER;
 		bp->b_blkno = partoff + LABELSECTOR;
 		bp->b_cylinder = cyl;
 		bp->b_bcount = lp->d_secsize;
-	}
-
-	if (endian != BYTE_ORDER) {
-		swapdisklabel(lp);
-		/* recalc checksum */
-		lp->d_checksum = 0;
-		lp->d_checksum = dkcksum(lp);
 	}
 
 	*(struct disklabel *)(bp->b_data + labeloffset) = *lp;

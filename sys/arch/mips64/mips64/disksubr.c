@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.14 2006/07/01 16:50:33 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.15 2006/07/03 20:00:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -39,9 +39,6 @@
  * but it was always thought it should be made completely MI and not need to
  * be in that alpha-specific tree at all.
  *
- * XXX The DOS partitioning code is not endian-independent, only native
- * endian DOS partition tables can be parsed yet.
- *
  * XXX HPUX disklabel is not understood yet.
  */
 
@@ -54,104 +51,36 @@
 #include <sys/disk.h>
 
 /* The native defaults... */
-#if defined(alpha) && !defined(DISKLABEL_ALPHA)
-#define DISKLABEL_ALPHA
-#elif (defined(i386) || defined(arc)) && !defined(DISKLABEL_I386)
+#if defined(DISKLABEL_ALL) && !defined(DISKLABEL_I386)
 #define DISKLABEL_I386
-#elif defined(hppa) && !defined(DISKLABEL_HPPA)
-#define DISKLABEL_HPPA
-#elif defined(__sgi__) && !defined(DISKLABEL_SGI)
-#define DISKLABEL_SGI
 #endif
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
-void	swapdisklabel(struct disklabel *d);
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
-    int, int, struct disklabel *, int);
-#endif
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+    int, struct disklabel *, int);
+#if defined(DISKLABEL_I386)
 char   *readdoslabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
-#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-char   *readliflabel(struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
-#endif
-#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
 char   *readsgilabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 void map_sgi_label(struct disklabel *, struct sgilabel *);
-#endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
-
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
-
-/*
- * Byteswap all the fields that might be swapped.
- */
-void
-swapdisklabel(dlp)
-	struct disklabel *dlp;
-{
-	int i;
-	struct partition *pp;
-
-	swap32(dlp->d_magic);
-	swap16(dlp->d_type);
-	swap16(dlp->d_subtype);
-	swap32(dlp->d_secsize);
-	swap32(dlp->d_nsectors);
-	swap32(dlp->d_ntracks);
-	swap32(dlp->d_ncylinders);
-	swap32(dlp->d_secpercyl);
-	swap32(dlp->d_secperunit);
-	swap16(dlp->d_sparespertrack);
-	swap16(dlp->d_sparespercyl);
-	swap32(dlp->d_acylinders);
-	swap16(dlp->d_rpm);
-	swap16(dlp->d_interleave);
-	swap16(dlp->d_trackskew);
-	swap16(dlp->d_cylskew);
-	swap32(dlp->d_headswitch);
-	swap32(dlp->d_trkseek);
-	swap32(dlp->d_flags);
-	for (i = 0; i < NDDATA; i++)
-		swap32(dlp->d_drivedata[i]);
-	for (i = 0; i < NSPARE; i++)
-		swap32(dlp->d_spare[i]);
-	swap32(dlp->d_magic2);
-	swap16(dlp->d_checksum);
-	swap16(dlp->d_npartitions);
-	swap32(dlp->d_bbsize);
-	swap32(dlp->d_sbsize);
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		pp = &dlp->d_partitions[i];
-		swap32(pp->p_size);
-		swap32(pp->p_offset);
-		swap32(pp->p_fsize);
-		swap16(pp->p_cpg);
-	}
-}
 
 /*
  * Try to read a standard BSD disklabel at a certain sector.
  */
 char *
-readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
+readbsdlabel(bp, strat, cyl, sec, off, lp, spoofonly)
 	struct buf *bp;
 	void (*strat)(struct buf *);
-	int cyl, sec, off, endian;
+	int cyl, sec, off;
 	struct disklabel *lp;
 	int spoofonly;
 {
 	struct disklabel *dlp;
 	char *msg = NULL;
 	u_int16_t cksum;
-	u_int32_t magic;
-
-	if (endian != LITTLE_ENDIAN && endian != BIG_ENDIAN)
-		panic("readbsdlabel: unsupported byteorder %d", endian);
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -170,8 +99,6 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 		return (msg);
 	}
 
-	magic = endian == BIG_ENDIAN ? htobe32(DISKMAGIC) : htole32(DISKMAGIC);
-
 	/*
 	 * If off is negative, search until the end of the sector for
 	 * the label, otherwise, just look at the specific location
@@ -179,25 +106,15 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 	 */
 	dlp = (struct disklabel *)(bp->b_data + (off >= 0 ? off : 0));
 	do {
-		if (dlp->d_magic != magic || dlp->d_magic2 != magic) {
+		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
 				msg = "no disk label";
 		} else {
 			cksum = dkcksum(dlp);
-			if (endian != BYTE_ORDER)
-				swapdisklabel(dlp);
 			if (dlp->d_npartitions > MAXPARTITIONS || cksum != 0) {
 				msg = "disk label corrupted";
-				/* swap back if necessary.  */
-				if (off < 0 && endian != BYTE_ORDER)
-					swapdisklabel(dlp);
 			} else {
 				*lp = *dlp;
-				/* Recalc magic on foreign labels */
-				if (endian != BYTE_ORDER) {
-					lp->d_checksum = 0;
-					lp->d_checksum = dkcksum(lp);
-				}
 				msg = NULL;
 				break;
 			}
@@ -209,7 +126,6 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 	    sizeof(*dlp)));
 	return (msg);
 }
-#endif
 
 /*
  * Attempt to read a disk label from a device
@@ -260,15 +176,8 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 
 	for (tp = probe_order; msg && *tp != -1; tp++) {
 		switch (*tp) {
-		case DLT_ALPHA:
-#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
-			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, lp, spoofonly);
-#endif
-			break;
-
 		case DLT_I386:
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 			msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
 			if (msg)
 				/* Fallback alternative */
@@ -276,19 +185,11 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 #endif
 			break;
 
-		case DLT_HPPA:
-#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-			msg = readliflabel(bp, strat, lp, osdep, 0, 0, spoofonly);
-#endif
-			break;
-
 		case DLT_SGI:
-#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
 			msg = readsgilabel(bp, strat, lp, osdep, 0, 0, spoofonly);
 			if (msg)
 				/* Fallback alternative */
 				fallbacklabel = *lp;
-#endif
 			break;
 
 		default:
@@ -325,7 +226,7 @@ done:
 	return (msg);
 }
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 /*
  * If dos partition table requested, attempt to load it and
  * find disklabel inside a DOS partition. Also, if bad block
@@ -515,7 +416,7 @@ donot:
 
 	/* next, dig out disk label */
 	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
-	    LITTLE_ENDIAN, lp, spoofonly);
+	    lp, spoofonly);
 	if (msg)
 		return (msg);
 
@@ -567,171 +468,6 @@ donot:
 }
 #endif
 
-#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-char *
-readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
-	struct buf *bp;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *partoffp;
-	int *cylp;
-	int spoofonly;
-{
-	int fsoff;
-
-	/* read LIF volume header */
-	bp->b_blkno = btodb(LIF_VOLSTART);
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = btodb(LIF_VOLSTART) / lp->d_secpercyl;
-	(*strat)(bp);
-
-	if (biowait(bp)) {
-		if (partoffp)
-			*partoffp = -1;
-		return "LIF volume header I/O error";
-	}
-
-	bcopy (bp->b_data, &osdep->u._hppa.lifvol, sizeof(struct lifvol));
-	if (osdep->u._hppa.lifvol.vol_id != LIF_VOL_ID) {
-		fsoff = 0;
-	} else {
-		struct lifdir *p;
-		struct buf *dbp;
-		dev_t dev;
-
-		dev = bp->b_dev;
-		dbp = geteblk(LIF_DIRSIZE);
-		dbp->b_dev = dev;
-
-		/* read LIF directory */
-		dbp->b_blkno = lifstodb(osdep->u._hppa.lifvol.vol_addr);
-		dbp->b_bcount = lp->d_secsize;
-		dbp->b_flags = B_BUSY | B_READ;
-		dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
-		(*strat)(dbp);
-
-		if (biowait(dbp)) {
-			if (partoffp)
-				*partoffp = -1;
-
-			dbp->b_flags |= B_INVAL;
-			brelse(dbp);
-			return ("LIF directory I/O error");
-		}
-
-		bcopy(dbp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
-		dbp->b_flags |= B_INVAL;
-		brelse(dbp);
-
-		/* scan for LIF_DIR_FS dir entry */
-		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
-		    fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++) {
-			if (p->dir_type == LIF_DIR_FS ||
-			    p->dir_type == LIF_DIR_HPLBL)
-				break;
-		}
-
-		if (p->dir_type == LIF_DIR_FS)
-			fsoff = lifstodb(p->dir_addr);
-		else if (p->dir_type == LIF_DIR_HPLBL) {
-			struct hpux_label *hl;
-			struct partition *pp;
-			u_int8_t fstype;
-			int i;
-
-			dev = bp->b_dev;
-			dbp = geteblk(LIF_DIRSIZE);
-			dbp->b_dev = dev;
-
-			/* read LIF directory */
-			dbp->b_blkno = lifstodb(p->dir_addr);
-			dbp->b_bcount = lp->d_secsize;
-			dbp->b_flags = B_BUSY | B_READ;
-			dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
-			(*strat)(dbp);
-
-			if (biowait(dbp)) {
-				if (partoffp)
-					*partoffp = -1;
-
-				dbp->b_flags |= B_INVAL;
-				brelse(dbp);
-				return ("HOUX label I/O error");
-			}
-
-			bcopy(dbp->b_data, &osdep->u._hppa.hplabel,
-			    sizeof(osdep->u._hppa.hplabel));
-			dbp->b_flags |= B_INVAL;
-			brelse(dbp);
-
-			hl = &osdep->u._hppa.hplabel;
-			if (hl->hl_magic1 != hl->hl_magic2 ||
-			    hl->hl_magic != HPUX_MAGIC ||
-			    hl->hl_version != 1) {
-				if (partoffp)
-					*partoffp = -1;
-
-				return "HPUX label magic mismatch";
-			}
-
-			lp->d_bbsize = 8192;
-			lp->d_sbsize = 8192;
-			for (i = 0; i < MAXPARTITIONS; i++) {
-				lp->d_partitions[i].p_size = 0;
-				lp->d_partitions[i].p_offset = 0;
-				lp->d_partitions[i].p_fstype = 0;
-			}
-
-			for (i = 0; i < HPUX_MAXPART; i++) {
-				if (!hl->hl_flags[i])
-					continue;
-
-				if (hl->hl_flags[i] == HPUX_PART_ROOT) {
-					pp = &lp->d_partitions[0];
-					fstype = FS_BSDFFS;
-				} else if (hl->hl_flags[i] == HPUX_PART_SWAP) {
-					pp = &lp->d_partitions[1];
-					fstype = FS_SWAP;
-				} else if (hl->hl_flags[i] == HPUX_PART_BOOT) {
-					pp = &lp->d_partitions[RAW_PART + 1];
-					fstype = FS_BSDFFS;
-				} else
-					continue;
-
-				pp->p_size = hl->hl_parts[i].hlp_length * 2;
-				pp->p_offset = hl->hl_parts[i].hlp_start * 2;
-				pp->p_fstype = fstype;
-			}
-
-			lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-			lp->d_partitions[RAW_PART].p_offset = 0;
-			lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-			lp->d_npartitions = MAXPARTITIONS;
-			lp->d_magic = DISKMAGIC;
-			lp->d_magic2 = DISKMAGIC;
-			lp->d_checksum = 0;
-			lp->d_checksum = dkcksum(lp);
-
-			return (NULL);
-		}
-
-		/* if no suitable lifdir entry found assume zero */
-		if (fsoff < 0) {
-			fsoff = 0;
-		}
-	}
-
-	if (partoffp)
-		*partoffp = fsoff;
-
-	return readbsdlabel(bp, strat, 0,  fsoff + HPPA_LABELSECTOR,
-	    HPPA_LABELOFFSET, BIG_ENDIAN, lp, spoofonly);
-}
-#endif
-
-#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
 /*
  * 
  */
@@ -835,7 +571,6 @@ static struct {int m; int b;} maptab[] = {
 		}
 	}
 }
-#endif
 
 /*
  * Check new disk label for sensibility
@@ -916,11 +651,8 @@ writedisklabel(dev, strat, lp, osdep)
 	char *msg = "no disk label";
 	struct buf *bp;
 	struct disklabel dl;
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
 	struct cpu_disklabel cdl;
-#endif
-	int labeloffset, error, i, endian, partoff = 0, cyl = 0;
-	u_int64_t csum, *p;
+	int labeloffset, error, partoff = 0, cyl = 0;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -935,40 +667,18 @@ writedisklabel(dev, strat, lp, osdep)
 	for (tp = probe_order; msg && *tp != -1; tp++) {
 		dl = *lp;
 		switch (*tp) {
-		case DLT_ALPHA:
-#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
-			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, &dl, 0);
-			labeloffset = ALPHA_LABELOFFSET;
-			endian = LITTLE_ENDIAN;
-#endif
-			break;
-
 		case DLT_I386:
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386)
 			msg = readdoslabel(bp, strat, &dl, &cdl, &partoff,
 			    &cyl, 0);
 			labeloffset = I386_LABELOFFSET;
-			endian = LITTLE_ENDIAN;
-#endif
-			break;
-
-		case DLT_HPPA:
-#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-			msg = readliflabel(bp, strat, &dl, &cdl, &partoff,
-			    &cyl, 0);
-			labeloffset = HPPA_LABELOFFSET;
-			endian = BIG_ENDIAN;
 #endif
 			break;
 
 		case DLT_SGI:
-#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
 			msg = readsgilabel(bp, strat, &dl, &cdl, &partoff,
 			    &cyl, 0);
 			labeloffset = SGI_LABELOFFSET;
-			endian = BIG_ENDIAN;
-#endif
 			break;
 
 		default:
@@ -982,27 +692,12 @@ writedisklabel(dev, strat, lp, osdep)
 
 		/* Write it in the regular place with native byte order. */
 		labeloffset = LABELOFFSET;
-		endian = BYTE_ORDER;
 		bp->b_blkno = partoff + LABELSECTOR;
 		bp->b_cylinder = cyl;
 		bp->b_bcount = lp->d_secsize;
 	}
 
-	if (endian != BYTE_ORDER) {
-		swapdisklabel(lp);
-		/* recalc checksum */
-		lp->d_checksum = 0;
-		lp->d_checksum = dkcksum(lp);
-	}
-
 	*(struct disklabel *)(bp->b_data + labeloffset) = *lp;
-
-	/* Alpha bootblocks are checksummed.  */
-	if (*tp == DLT_ALPHA) {
-		for (csum = i = 0, p = (u_int64_t *)bp->b_data; i < 63; i++)
-			csum += *p++;
-		*p = csum;
-	}
 
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);

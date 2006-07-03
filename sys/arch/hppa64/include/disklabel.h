@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 2006/06/26 23:11:31 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 2006/07/03 20:00:22 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -34,17 +34,15 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-enum disklabel_tag { DLT_ALPHA, DLT_I386, DLT_HPPA };
+enum disklabel_tag { DLT_I386, DLT_HPPA };
 
 /*
  * What disklabels are we probing for, and in which order?
  */
 #ifndef LABELPROBES
-#define LABELPROBES		DLT_ALPHA, DLT_I386, DLT_HPPA
+#define LABELPROBES		DLT_I386, DLT_HPPA
 #endif
 
-#define	ALPHA_LABELSECTOR	0		/* sector containing label */
-#define	ALPHA_LABELOFFSET	64		/* offset of label in sector */
 #define	I386_LABELSECTOR	1		/* sector containing label */
 #define	I386_LABELOFFSET	0		/* offset of label in sector */
 #define	HPPA_LABELSECTOR	1		/* sector containing label */
@@ -191,8 +189,6 @@ struct cpu_disklabel {
 	enum disklabel_tag labeltag;
 	int labelsector;
 	union {
-		struct {
-		} _alpha;
 		struct {
 			struct dos_partition dosparts[NDOSPART];
 			struct dkbad bad;
