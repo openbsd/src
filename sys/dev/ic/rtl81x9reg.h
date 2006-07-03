@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.24 2006/07/01 23:39:36 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.25 2006/07/03 02:28:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -607,7 +607,9 @@ struct rl_stats {
 #define RL_JUMBO_FRAMELEN	7440
 #define RL_JUMBO_MTU		(RL_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 
-#define	MAX_NUM_MULTICAST_ADDRESSES	128
+#define RL_NTXSEGS		32
+
+#define MAX_NUM_MULTICAST_ADDRESSES	128
 
 #define RL_INC(x)		(x = (x + 1) % RL_TX_LIST_CNT)
 #define RL_CUR_TXADDR(x)	((x->rl_cdata.cur_tx * 4) + RL_TXADDR0)
@@ -662,9 +664,11 @@ struct rl_list_data {
 	bus_dmamap_t		rl_rx_list_map;
 	struct rl_desc		*rl_rx_list;
 	bus_dma_segment_t	rl_rx_listseg;
+	int			rl_rx_listnseg;
 	bus_dmamap_t		rl_tx_list_map;
 	struct rl_desc		*rl_tx_list;
 	bus_dma_segment_t	rl_tx_listseg;
+	int			rl_tx_listnseg;
 };
 
 struct rl_softc {

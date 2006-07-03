@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.34 2006/07/02 03:20:48 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.35 2006/07/03 02:28:39 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -153,11 +153,10 @@
 int redebug = 0;
 #define DPRINTF(x)	if (redebug) printf x
 
-void	re_attach(struct rl_softc *);
+int	re_attach(struct rl_softc *);
 
 int	re_encap(struct rl_softc *, struct mbuf *, int *);
 
-int	re_allocmem(struct rl_softc *);
 int	re_newbuf(struct rl_softc *, int, struct mbuf *);
 int	re_rx_list_init(struct rl_softc *);
 int	re_tx_list_init(struct rl_softc *);
@@ -724,101 +723,11 @@ done:
 
 #endif
 
-int
-re_allocmem(struct rl_softc *sc)
-{
-	int	error;
-	int	nseg, rseg;
-	int	i;
-
-	nseg = 32;
-
-	/* Allocate DMA'able memory for the TX ring */
-
-	error = bus_dmamap_create(sc->sc_dmat, RL_TX_LIST_SZ, 1,
-	    RL_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
-	    &sc->rl_ldata.rl_tx_list_map);
-        if (error)
-                return (ENOMEM);
-        error = bus_dmamem_alloc(sc->sc_dmat, RL_TX_LIST_SZ,
-	    ETHER_ALIGN, 0, 
-	    &sc->rl_ldata.rl_tx_listseg, 1, &rseg, BUS_DMA_NOWAIT);
-        if (error)
-                return (ENOMEM);
-
-	/* Load the map for the TX ring. */
-	error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_tx_listseg,
-	    1, RL_TX_LIST_SZ,
-	    (caddr_t *)&sc->rl_ldata.rl_tx_list, BUS_DMA_NOWAIT);
-        if (error)
-                return (ENOMEM);
-	memset(sc->rl_ldata.rl_tx_list, 0, RL_TX_LIST_SZ);
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->rl_ldata.rl_tx_list_map,
-	    sc->rl_ldata.rl_tx_list, RL_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
-        if (error)
-                return (ENOMEM);
-
-	/* Create DMA maps for TX buffers */
-
-	for (i = 0; i < RL_TX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * nseg, nseg,
-		    MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-		    &sc->rl_ldata.rl_tx_dmamap[i]);
-		if (error) {
-			printf("%s: can't create DMA map for TX\n",
-			    sc->sc_dev.dv_xname);
-			return (ENOMEM);
-		}
-	}
-
-	/* Allocate DMA'able memory for the RX ring */
-
-	error = bus_dmamap_create(sc->sc_dmat, RL_RX_LIST_SZ, 1,
-	    RL_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
-	    &sc->rl_ldata.rl_rx_list_map);
-        if (error)
-                return (ENOMEM);
-
-        error = bus_dmamem_alloc(sc->sc_dmat, RL_RX_LIST_SZ, RL_RING_ALIGN,
-	    0, &sc->rl_ldata.rl_rx_listseg, 1, &rseg, BUS_DMA_NOWAIT);
-        if (error)
-                return (ENOMEM);
-
-	/* Load the map for the RX ring. */
-	error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_rx_listseg,
-	    1, RL_RX_LIST_SZ,
-	    (caddr_t *)&sc->rl_ldata.rl_rx_list, BUS_DMA_NOWAIT);
-        if (error)
-                return (ENOMEM);
-	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_LIST_SZ);
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->rl_ldata.rl_rx_list_map,
-	     sc->rl_ldata.rl_rx_list, RL_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
-        if (error)
-                return (ENOMEM);
-
-	/* Create DMA maps for RX buffers */
-
-	for (i = 0; i < RL_RX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * nseg, nseg,
-		    MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-		    &sc->rl_ldata.rl_rx_dmamap[i]);
-		if (error) {
-			printf("%s: can't create DMA map for RX\n",
-			    sc->sc_dev.dv_xname);
-			return (ENOMEM);
-		}
-	}
-
-	return (0);
-}
-
 /*
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void
+int
 re_attach(struct rl_softc *sc)
 {
 	u_char		eaddr[ETHER_ADDR_LEN];
@@ -858,10 +767,101 @@ re_attach(struct rl_softc *sc)
 	printf(", address %s\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	error = re_allocmem(sc);
+	/* Allocate DMA'able memory for the TX ring */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_TX_LIST_SZ,
+		    RE_ETHER_ALIGN, 0, &sc->rl_ldata.rl_tx_listseg, 1,
+		    &sc->rl_ldata.rl_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: can't allocate tx listseg, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_0;
+	}
 
-	if (error)
-		return;
+	/* Load the map for the TX ring. */
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_tx_listseg,
+		    sc->rl_ldata.rl_tx_listnseg, RL_TX_LIST_SZ,
+		    (caddr_t *)&sc->rl_ldata.rl_tx_list,
+		    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: can't map tx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_1;
+	}
+	memset(sc->rl_ldata.rl_tx_list, 0, RL_TX_LIST_SZ);
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, RL_TX_LIST_SZ, 1,
+		    RL_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
+		    &sc->rl_ldata.rl_tx_list_map)) != 0) {
+		printf("%s: can't create tx list map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_2;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat,
+		    sc->rl_ldata.rl_tx_list_map, sc->rl_ldata.rl_tx_list,
+		    RL_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: can't load tx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_3;
+	}
+
+	/* Create DMA maps for TX buffers */
+	for (i = 0; i < RL_TX_DESC_CNT; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * RL_NTXSEGS,
+		    RL_NTXSEGS, MCLBYTES, 0, BUS_DMA_ALLOCNOW,
+		    &sc->rl_ldata.rl_tx_dmamap[i]);
+		if (error) {
+			printf("%s: can't create DMA map for TX\n",
+			    sc->sc_dev.dv_xname);
+			goto fail_4;
+		}
+	}
+
+        /* Allocate DMA'able memory for the RX ring */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_RX_LIST_SZ,
+		    RL_RING_ALIGN, 0, &sc->rl_ldata.rl_rx_listseg, 1,
+		    &sc->rl_ldata.rl_rx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: can't allocate rx listnseg, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_4;
+	}
+
+        /* Load the map for the RX ring. */
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_rx_listseg,
+		    sc->rl_ldata.rl_rx_listnseg, RL_RX_LIST_SZ,
+		    (caddr_t *)&sc->rl_ldata.rl_rx_list,
+		    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: can't map rx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_5;
+
+	}
+	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_LIST_SZ);
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, RL_RX_LIST_SZ, 1,
+		    RL_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
+		    &sc->rl_ldata.rl_rx_list_map)) != 0) {
+		printf("%s: can't create rx list map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_6;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat,
+		    sc->rl_ldata.rl_rx_list_map, sc->rl_ldata.rl_rx_list,
+		    RL_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: can't load rx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_7;
+	}
+
+        /* Create DMA maps for RX buffers */
+        for (i = 0; i < RL_RX_DESC_CNT; i++) {
+                error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+                    0, BUS_DMA_ALLOCNOW, &sc->rl_ldata.rl_rx_dmamap[i]);
+                if (error) {
+                        printf("%s: can't create DMA map for RX\n",
+                            sc->sc_dev.dv_xname);
+			goto fail_8;
+                }
+        }
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -929,11 +929,52 @@ re_attach(struct rl_softc *sc)
 		printf("%s: attach aborted due to hardware diag failure\n",
 		    sc->sc_dev.dv_xname);
 		ether_ifdetach(ifp);
-		return;
+		goto fail_8;
 	}
 #endif
 
 	DPRINTF(("leaving re_attach\n"));
+	return (1);
+
+fail_8:
+	/* Destroy DMA maps for RX buffers. */
+	for (i = 0; i < RL_RX_DESC_CNT; i++) {
+		if (sc->rl_ldata.rl_rx_dmamap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->rl_ldata.rl_rx_dmamap[i]);
+	}
+
+	/* Free DMA'able memory for the RX ring. */
+	bus_dmamap_unload(sc->sc_dmat, sc->rl_ldata.rl_rx_list_map);
+fail_7:
+	bus_dmamap_destroy(sc->sc_dmat, sc->rl_ldata.rl_rx_list_map);
+fail_6:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->rl_ldata.rl_rx_list, RL_RX_LIST_SZ);
+fail_5:
+	bus_dmamem_free(sc->sc_dmat,
+	    &sc->rl_ldata.rl_rx_listseg, sc->rl_ldata.rl_rx_listnseg);
+
+fail_4:
+	/* Destroy DMA maps for TX buffers. */
+	for (i = 0; i < RL_TX_DESC_CNT; i++) {
+		if (sc->rl_ldata.rl_tx_dmamap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->rl_ldata.rl_tx_dmamap[i]);
+	}
+
+	/* Free DMA'able memory for the TX ring. */
+	bus_dmamap_unload(sc->sc_dmat, sc->rl_ldata.rl_tx_list_map);
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->rl_ldata.rl_tx_list_map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->rl_ldata.rl_tx_list, RL_TX_LIST_SZ);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat,
+	    &sc->rl_ldata.rl_tx_listseg, sc->rl_ldata.rl_tx_listnseg);
+fail_0:
+ 	return (1);
 }
 
 
@@ -977,10 +1018,8 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 #endif
 
 	map = sc->rl_ldata.rl_rx_dmamap[idx];
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 
-	if (map->dm_nsegs > 1)
-		goto out;
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 	if (error)
 		goto out;
 
@@ -1398,7 +1437,7 @@ re_intr(void *arg)
 }
 
 int
-re_encap(struct rl_softc *sc, struct mbuf *m_head, int *idx)
+re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t	map;
 	int		error, i, curidx;
@@ -1425,28 +1464,31 @@ re_encap(struct rl_softc *sc, struct mbuf *m_head, int *idx)
 	 * RL_TDESC_CMD_UDPCSUM does not take affect.
 	 */
 
-	if ((m_head->m_pkthdr.csum_flags &
+	if ((m->m_pkthdr.csum_flags &
 	    (M_IPV4_CSUM_OUT|M_TCPV4_CSUM_OUT|M_UDPV4_CSUM_OUT)) != 0) {
 		rl_flags |= RL_TDESC_CMD_IPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			rl_flags |= RL_TDESC_CMD_TCPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			rl_flags |= RL_TDESC_CMD_UDPCSUM;
 	}
 #endif
 
 	map = sc->rl_ldata.rl_tx_dmamap[*idx];
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT);
 
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 	if (error) {
+		/* XXX try to defrag if EFBIG? */
 		printf("%s: can't map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		return (ENOBUFS);
+		return (error);
 	}
 
-	if (map->dm_nsegs > sc->rl_ldata.rl_tx_free - 4)
-		return (ENOBUFS);
+	if (map->dm_nsegs > sc->rl_ldata.rl_tx_free - 4) {
+		error = EFBIG;
+		goto fail_unload;
+	}
+
 	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
@@ -1462,8 +1504,16 @@ re_encap(struct rl_softc *sc, struct mbuf *m_head, int *idx)
 	curidx = *idx;
 	while (1) {
 		d = &sc->rl_ldata.rl_tx_list[curidx];
-		if (letoh32(d->rl_cmdstat) & RL_RDESC_STAT_OWN)
-			return (ENOBUFS);
+		if (letoh32(d->rl_cmdstat) & RL_RDESC_STAT_OWN) {
+			while (i > 0) {
+				sc->rl_ldata.rl_tx_list[
+				    (curidx + RL_TX_DESC_CNT - i) %
+				    RL_TX_DESC_CNT].rl_cmdstat = 0;
+				i--;
+			}
+			error = ENOBUFS;
+			goto fail_unload;
+		}
 
 		cmdstat = map->dm_segs[i].ds_len;
 		d->rl_bufaddr_lo =
@@ -1493,7 +1543,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m_head, int *idx)
 	sc->rl_ldata.rl_tx_dmamap[*idx] =
 	    sc->rl_ldata.rl_tx_dmamap[curidx];
 	sc->rl_ldata.rl_tx_dmamap[curidx] = map;
-	sc->rl_ldata.rl_tx_mbuf[curidx] = m_head;
+	sc->rl_ldata.rl_tx_mbuf[curidx] = m;
 	sc->rl_ldata.rl_tx_free -= map->dm_nsegs;
 
 	/*
@@ -1527,6 +1577,11 @@ re_encap(struct rl_softc *sc, struct mbuf *m_head, int *idx)
 	*idx = curidx;
 
 	return (0);
+
+fail_unload:
+	bus_dmamap_unload(sc->sc_dmat, map);
+
+	return (error);
 }
 
 /*
@@ -1547,11 +1602,20 @@ re_start(struct ifnet *ifp)
 
 	idx = sc->rl_ldata.rl_tx_prodidx;
 	while (sc->rl_ldata.rl_tx_mbuf[idx] == NULL) {
+		int error;
+
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		if (re_encap(sc, m_head, &idx)) {
+		error = re_encap(sc, m_head, &idx);
+		if (error == EFBIG &&
+		    sc->rl_ldata.rl_tx_free == RL_TX_DESC_CNT) {
+			ifp->if_oerrors++;
+			m_freem(m_head);
+			continue;
+		}
+		if (error) {
 			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
