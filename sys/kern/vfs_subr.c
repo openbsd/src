@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.129 2006/06/25 15:01:53 sturm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.130 2006/07/03 12:39:52 mickey Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1281,8 +1281,8 @@ vprint(char *label, struct vnode *vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("type %s, usecount %u, writecount %u, holdcount %u,",
-		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
+	printf("%p, type %s, use %u, write %u, hold %u,",
+		vp, typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 		vp->v_holdcnt);
 	buf[0] = '\0';
 	if (vp->v_flag & VROOT)
