@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.19 2006/07/02 06:52:36 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.20 2006/07/03 13:12:58 xsa Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -3512,6 +3512,13 @@ zyd_start(struct ifnet *ifp)
 	struct ether_header *eh;
 	struct ieee80211_node *ni;
 	struct mbuf *m0;
+
+	/*
+	 * net80211 may still try to send management frames even if the
+	 * IFF_RUNNING flag is not set...
+	 */
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
 	DPRINTF(("Entering zyd_start()\n"));
 
