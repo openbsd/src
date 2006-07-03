@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.79 2006/07/03 01:24:30 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.80 2006/07/03 01:47:36 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.76 2006/07/03 01:23:22 brad Exp 
+ *	OpenBSD: miidevs,v 1.77 2006/07/03 01:47:06 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -68,6 +68,7 @@
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PLESSEY	0x046b40	/* Plessey Semiconductor */
+#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_REALTEK	0x000020	/* Realtek Semiconductor */
 #define	MII_OUI_REALTEK2	0x00e04c	/* Realtek Semiconductor */
