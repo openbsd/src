@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.22 2006/07/04 06:53:17 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.23 2006/07/04 15:49:19 xsa Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -882,7 +882,8 @@ zyd_openpipes(struct zyd_softc *sc)
 	usb_endpoint_descriptor_t *edesc;
 
 	/* Interrupt in */
-	edesc = usbd_interface2endpoint_descriptor(sc->zyd_iface, ZYD_ENDPT_IIN);
+	edesc = usbd_interface2endpoint_descriptor(sc->zyd_iface,
+	    ZYD_ENDPT_IIN);
 
 	isize = UGETW(edesc->wMaxPacketSize);
 
@@ -897,44 +898,41 @@ zyd_openpipes(struct zyd_softc *sc)
 	err = usbd_open_pipe_intr(sc->zyd_iface, sc->zyd_ed[ZYD_ENDPT_IIN],
 	    USBD_SHORT_XFER_OK, &sc->zyd_ep[ZYD_ENDPT_IIN],
 	    sc, sc->ibuf, isize, zydintr, USBD_DEFAULT_INTERVAL);
-
 	if (err) {
-		free(sc->ibuf, M_USBDEV);
-		clfree(&sc->q_reply);
-		return (EIO);
+		printf("%s: open intr pipe failed: %s\n",
+		    USBDEVNAME(sc->zyd_dev), usbd_errstr(err));
+		goto fail;
 	}
 
 	/* Interrupt out (not neccessary really an interrupt pipe) */
 	err = usbd_open_pipe(sc->zyd_iface, sc->zyd_ed[ZYD_ENDPT_IOUT],
 	    0, &sc->zyd_ep[ZYD_ENDPT_IOUT]);
-
-	if (err) {
-		free(sc->ibuf, M_USBDEV);
-		clfree(&sc->q_reply);
-		return (EIO);
-	}
+	if (err)
+		goto fail;
 
 	/* Bulk in */
 	err = usbd_open_pipe(sc->zyd_iface, sc->zyd_ed[ZYD_ENDPT_BIN],
 	    0, &sc->zyd_ep[ZYD_ENDPT_BIN]);
-
 	if (err) {
-		free(sc->ibuf, M_USBDEV);
-		clfree(&sc->q_reply);
-		return (EIO);
+		printf("%s: open rx pipe failed: %s\n",
+		    USBDEVNAME(sc->zyd_dev), usbd_errstr(err));
+		goto fail;
 	}
 
 	/* Bulk out */
 	err = usbd_open_pipe(sc->zyd_iface, sc->zyd_ed[ZYD_ENDPT_BOUT],
 	    0, &sc->zyd_ep[ZYD_ENDPT_BOUT]);
-
 	if (err) {
-		free(sc->ibuf, M_USBDEV);
-		clfree(&sc->q_reply);
-		return (EIO);
+		printf("%s: open tx pipe failed: %s\n",
+		    USBDEVNAME(sc->zyd_dev), usbd_errstr(err));
+		goto fail;
 	}
 
 	return 0;
+
+fail:	free(sc->ibuf, M_USBDEV);
+	clfree(&sc->q_reply);
+	return (EIO);
 }
 
 /*
