@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.40 2006/07/02 11:01:06 reyk Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.41 2006/07/04 17:18:37 deraadt Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1130,7 +1130,8 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		if (! (ifp->if_flags & IFF_UP) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 			if_up(ifp);
-			log(LOG_INFO, SPP_FMT "up\n", SPP_ARGS(ifp));
+			if (debug)
+				log(LOG_INFO, SPP_FMT "up\n", SPP_ARGS(ifp));
 		}
 		break;
 	case CISCO_ADDR_REQ:
@@ -2378,7 +2379,8 @@ sppp_lcp_tlu(struct sppp *sp)
 	    (ifp->if_flags & IFF_RUNNING)) {
 		/* Coming out of loopback mode. */
 		if_up(ifp);
-		log(LOG_INFO, SPP_FMT "up\n", SPP_ARGS(ifp));
+		if (ifp->if_flags & IFF_DEBUG)
+			log(LOG_INFO, SPP_FMT "up\n", SPP_ARGS(ifp));
 	}
 
 	for (i = 0; i < IDX_COUNT; i++)
