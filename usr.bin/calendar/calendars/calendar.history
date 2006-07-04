@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.51 2006/07/03 16:40:34 jasper Exp $
+ * $OpenBSD: calendar.history,v 1.52 2006/07/04 16:02:37 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -150,7 +150,6 @@
 08/22	St. Columbia reports seeing monster in Loch Ness, 565
 08/23	Sacco and Vanzetti executed, 1927
 08/24	-126.9 F at Vostok, Antarctica, 1960
-08/25	First reaction thrust motor design, 1898
 08/25	Gen. DeGaulle leads French forces into Paris, 1944
 08/26	Women get the vote, 1920
 08/27	"Tarzan of the Apes" published, 1912
@@ -198,7 +197,6 @@
 10/06	Egyptian President Anwar Sadat is assassinated in Cairo, 1981
 10/06	Israel is attacked by the alliance of Egypt and Syria, 1973
 10/07	Foundation of the GDR in 1949 in German Democratic Republic
-10/07	Georgia Tech. beats Cumberland Univ. 222-0, 1916
 10/07	Mother Teresa of Calcutta awarded the Nobel Peace Prize, 1979
 10/07	Police stop Wilbur Mills car, Fanne Fox jumps into water, 1974
 10/09	First two-way telephone conversation, 1876
@@ -245,7 +243,7 @@
 11/18	First hydrogen bomb blasts Enewetok, 1952
 11/25	Alfred Nobel invents dynamite, 1867
 11/27	Alfred Nobel establishes Nobel Prize, 1895
-11/27	Friction match invented, England, 1826
+11/27	Friction match invented by englishman John Walker, Sweden, 1826
 11/29	King Tut's tomb opened, 1922
 12/03	First neon light display, Paris, 1910
 12/03	First successful human heart transplant led by Dr. Barnard, 1967

@@ -1,7 +1,7 @@
 /*
  * Space
  *
- * $OpenBSD: calendar.space,v 1.1 2006/07/03 15:46:22 jasper Exp $
+ * $OpenBSD: calendar.space,v 1.2 2006/07/04 16:02:37 mickey Exp $
  */
 
 #ifndef _calendar_space_
@@ -18,6 +18,7 @@
 03/16	Robert Goddard launches first liquid-fueled rocket, Auburn MA, 1926
 03/17	Vanguard I launched, 1958.  Earth proved pear-shaped
 03/18	Aleksei Leonov performs first spacewalk, 1965
+03/23	Mir station Flares Farewell after 15 years of service, 2001
 03/28	First reaction thrust motor demonstration, 1883
 03/30	Five rings around Uranus discovered, 1977
 04/12	Yuri Gagarin becomes the first man in space, 1961
@@ -30,12 +31,14 @@
 06/13	Pioneer 10 flies past Neptune's orbit, and becomes the first human
 	artifact to travel beyond the orbits of all known planets, 1983
 07/11	Skylab enters Earth's atmosphere and is destroyed, 1979
+07/04	NASA's Pathfinder lands on Mars, 1997
 07/20	Neil Armstrong and Edwin "Buzz" Aldrin land on moon, 1969
 08/03	First ICBM (P-7) test (5T of iron is launched to Kamchatka), 1957
 08/11	Perseid meteor shower (look north; three days)
 08/12	First test flight of Space Shuttle "Enterprise" from 747, 1977
 08/19	Air Force cargo plane snares payload from Discoverer 14 spy satellite,
 	marking start of practical military reconnaissance from space, 1960
+08/25	First reaction thrust motor design, 1898
 08/29	Star in Cygnus goes nova and becomes 4th brightest in sky, 1975;
 	Nova Cygni 1975.
 10/01	NASA officially begins operations, 1958
