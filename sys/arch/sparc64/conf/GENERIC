@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.151 2006/06/26 22:16:23 miod Exp $
+#	$OpenBSD: GENERIC,v 1.152 2006/07/04 17:10:18 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -316,8 +316,8 @@ ukphy*	at mii?				# Unknown PHYs
 # sensors
 pcfiic*	at ebus?
 iic*	at pcfiic?
-alipm*	at pci?
-iic*	at alipm?
+#alipm*	at pci?
+#iic*	at alipm?
 
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
 admtemp* at iic?			# Analog Devices ADM1021
