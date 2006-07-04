@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.15 2006/03/19 21:57:55 brad Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.16 2006/07/04 18:26:30 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -66,13 +66,10 @@ ppbmatch(struct device *parent, void *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	/*
-	 * These devices are mislabeled.  They are not PCI bridges.
+	 * This device is mislabeled.  It is not a PCI bridge.
 	 */
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C586_PWR) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI && 
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RS480_PCIE_2 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RS480_PCIE_3)))
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C586_PWR)
 		return (0);
 	/*
 	 * Check the ID register to see that it's a PCI bridge.
