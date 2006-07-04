@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.21 2006/07/03 14:16:12 xsa Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.22 2006/07/04 06:53:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -3043,13 +3043,6 @@ dump_fw_registers(struct zyd_softc *sc)
 int
 zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
-	static const uint8_t winbuf[]  = {
-		0x01, 0x2e, 0x00, 0x03, 0x43, 0x00, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0xff,
-		0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x11, 0xf6, 0x7f, 0x9b, 0x3c, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0xff, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x82, 0x84, 0x0b, 0x16, 0x32, 0x08, 0x0c, 0x12, 0x18,
-		0x24, 0x30, 0x48, 0x60, 0x6c
-	};
-
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct zyd_controlsetformat *desc;
 	struct zyd_tx_data *data;
@@ -3104,12 +3097,6 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + ZYD_TX_DESC_SIZE);
 
-
-/* DEBUG: Use exactly what windoof does */
-	memcpy(data->buf, winbuf, sizeof(winbuf));
-	xferlen = sizeof(winbuf);
-
-
 #ifdef ZYD_DEBUG
 	if (zyddebug >= 3) {
 		printf("%s: Raw dump before desc setup:\n",
@@ -3118,9 +3105,9 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
-/*	zyd_setup_tx_desc(sc, desc, m0, m0->m_pkthdr.len, rate);*/
+	zyd_setup_tx_desc(sc, desc, m0, m0->m_pkthdr.len, rate);
 
-	// xfer length needs to be a multiple of two!
+	/* xfer length needs to be a multiple of two! */
 	xferlen = (ZYD_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
 
 	/* Make sure padding is 0x00 */
