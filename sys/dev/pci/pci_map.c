@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.16 2006/05/31 08:58:05 jason Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.17 2006/07/04 18:07:29 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -306,8 +306,18 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 	bus_space_handle_t handle;
 	bus_addr_t base;
 	bus_size_t size;
+	pcireg_t csr;
 	int flags;
 	int rv;
+
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
+		csr |= PCI_COMMAND_IO_ENABLE;
+	else
+		csr |= PCI_COMMAND_MEM_ENABLE;
+	/* XXX Should this only be done for devices that do DMA?  */
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0)
