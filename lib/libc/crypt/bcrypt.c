@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.20 2006/04/03 19:55:49 deraadt Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.21 2006/07/04 19:06:00 otto Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -73,7 +73,7 @@ static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
 static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
 
 static char    encrypted[_PASSWORD_LEN];
-static char    gsalt[BCRYPT_MAXSALT * 4 / 3 + 1];
+static char    gsalt[7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1];
 static char    error[] = ":";
 
 const static u_int8_t Base64Code[] =
