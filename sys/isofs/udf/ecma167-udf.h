@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecma167-udf.h,v 1.5 2006/06/22 00:48:31 pedro Exp $	*/
+/*	$OpenBSD: ecma167-udf.h,v 1.6 2006/07/04 01:11:29 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -140,6 +140,7 @@ struct icb_tag {
 	uint16_t	flags;
 } __packed;
 
+#define	UDF_ICB_TYPE_VAT_150		0x00
 #define	UDF_ICB_TYPE_DIR		0x04
 #define	UDF_ICB_TYPE_FILE		0x05
 #define	UDF_ICB_TYPE_BLKDEV		0x06
@@ -147,7 +148,7 @@ struct icb_tag {
 #define	UDF_ICB_TYPE_FIFO		0x09
 #define	UDF_ICB_TYPE_SOCKET		0x0a
 #define	UDF_ICB_TYPE_SYMLINK		0x0c	
-#define	UDF_ICB_TYPE_VAT		0xf8
+#define	UDF_ICB_TYPE_VAT_250		0xf8
 #define	UDF_ICB_TAG_FLAGS_SETUID	0x40
 #define	UDF_ICB_TAG_FLAGS_SETGID	0x80
 #define	UDF_ICB_TAG_FLAGS_STICKY	0x100
