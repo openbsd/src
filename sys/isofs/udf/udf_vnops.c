@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.14 2006/07/01 00:08:57 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.15 2006/07/05 17:57:50 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -55,8 +55,6 @@
 #include <isofs/udf/udf.h>
 #include <isofs/udf/udf_extern.h>
 
-int udf_readatoffset(struct udf_node *, int *, off_t, struct buf **,
-    uint8_t **);
 int udf_bmap_internal(struct udf_node *, off_t, daddr_t *, uint32_t *);
 
 int (**udf_vnodeop_p)(void *);

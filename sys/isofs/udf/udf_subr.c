@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.4 2006/01/15 00:04:42 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.5 2006/07/05 17:57:50 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -41,6 +41,8 @@
 #include <isofs/udf/ecma167-udf.h>
 #include <isofs/udf/udf.h>
 #include <isofs/udf/udf_extern.h>
+
+int udf_vat_read(struct udf_mnt *, uint32_t *);
 
 /*
  * Convert a CS0 dstring to a 16-bit Unicode string.
@@ -177,4 +179,85 @@ out:
 	brelse(bp);
 
 	return (error);
+}
+
+/* Get a vnode for the Virtual Allocation Table (VAT) */
+int
+udf_vat_get(struct udf_mnt *ump)
+{
+	struct vnode *vp;
+	struct udf_node *unp;
+	int error;
+
+	error = udf_vget(ump->im_mountp, ump->part_len - 3, &vp);
+	if (error)
+		return (error);
+
+	unp = VTON(vp);
+	unp->vatlen = (letoh64(unp->fentry->inf_len) - 36) >> 2;
+
+	ump->im_vat = vp;
+	ump->im_flags &= ~UDF_MNT_FIND_VAT;
+	ump->im_flags |=  UDF_MNT_USES_VAT;
+
+	vput(vp);
+
+	return (0);
+}
+
+/* Look up a sector in the VAT */
+int
+udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
+{
+	/* If there's no VAT, then it's easy */
+	if (!(ump->im_flags & UDF_MNT_USES_VAT)) {
+		*sector += ump->part_start;
+		return (0);
+	}
+
+	/* Sanity check the given sector */
+	if (*sector >= VTON(ump->im_vat)->vatlen)
+		return (EINVAL);
+
+	return (udf_vat_read(ump, sector));
+}
+
+/* Read from the VAT */
+int
+udf_vat_read(struct udf_mnt *ump, uint32_t *sector)
+{
+	struct udf_node *unp;
+	struct buf *bp;
+	uint8_t *data;
+	int error, size;
+
+	unp = VTON(ump->im_vat);
+	size = 4;
+
+	/*
+	 * Note that we rely on the buffer cache to keep frequently accessed
+	 * buffers around to avoid reading them from the disk all the time.
+	 */
+	error = udf_readatoffset(unp, &size, *sector << 2, &bp, &data);
+	if (error) {
+		if (bp != NULL)
+			brelse(bp);
+
+		return (error);
+	}
+
+	/* Make sure we read at least a whole entry */
+	if (size < 4) {
+		if (bp != NULL)
+			brelse(bp);
+
+		return (EINVAL);
+	}
+
+	/* Map the sector */
+	*sector = letoh32(*(uint32_t *)data) + ump->part_start;
+
+	brelse(bp);
+
+	return (0);
 }

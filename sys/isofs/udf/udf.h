@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.4 2006/06/24 21:47:50 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.5 2006/07/05 17:57:50 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -42,9 +42,15 @@ struct udf_node {
 	struct lock	i_lock;
 	dev_t		i_dev;
 	ino_t		hash_id;
-	long		diroff;
+	union {
+		long diroff;
+		long vatlen;
+	} un_u;
 	struct file_entry *fentry;
 };
+
+#define	diroff	un_u.diroff
+#define	vatlen	un_u.vatlen
 
 struct udf_mnt {
 	int			im_flags;
@@ -56,6 +62,7 @@ struct udf_mnt {
 	int			bmask;
 	uint32_t		part_start;
 	uint32_t		part_len;
+	struct vnode		*im_vat;
 	struct vnode		*root_vp;
 	struct long_ad		root_icb;
 	LIST_HEAD(udf_hash_lh, udf_node)	*hashtbl;
@@ -65,6 +72,9 @@ struct udf_mnt {
 	int			s_table_entries;
 	struct udf_sparing_table *s_table;
 };
+
+#define	UDF_MNT_FIND_VAT	0x01	/* Indicates a VAT must be found */
+#define	UDF_MNT_USES_VAT	0x02	/* Indicates a VAT must be used */
 
 struct udf_dirstream {
 	struct udf_node	*node;

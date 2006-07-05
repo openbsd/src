@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.13 2006/07/01 00:08:57 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.14 2006/07/05 17:57:50 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -328,13 +328,24 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		goto bail;
 	}
 
+	mtx_init(&udfmp->hash_mtx, IPL_NONE);
+	udfmp->hashtbl = hashinit(UDF_HASHTBLSIZE, M_UDFMOUNT, M_WAITOK,
+	    &udfmp->hashsz);
+
+	/* Get the VAT, if needed */
+	if (udfmp->im_flags & UDF_MNT_FIND_VAT) {
+		error = udf_vat_get(udfmp);
+		if (error)
+			goto bail;
+	}
 
 	/*
 	 * Grab the Fileset Descriptor
 	 * Thanks to Chuck McCrobie <mccrobie@cablespeed.com> for pointing
 	 * me in the right direction here.
 	 */
-	sector = udfmp->part_start + fsd_offset;
+	sector = fsd_offset;
+	udf_vat_map(udfmp, &sector);
 	if ((error = RDSECTOR(devvp, sector, udfmp->bsize, &bp)) != 0) {
 		printf("Cannot read sector %d of FSD\n", sector);
 		goto bail;
@@ -358,8 +369,9 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	/*
 	 * Find the file entry for the root directory.
 	 */
-	sector = letoh32(udfmp->root_icb.loc.lb_num) + udfmp->part_start;
+	sector = letoh32(udfmp->root_icb.loc.lb_num);
 	size = letoh32(udfmp->root_icb.len);
+	udf_vat_map(udfmp, &sector);
 	if ((error = udf_readlblks(udfmp, sector, size, &bp)) != 0) {
 		printf("Cannot read sector %d\n", sector);
 		goto bail;
@@ -374,15 +386,14 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	brelse(bp);
 	bp = NULL;
 
-	mtx_init(&udfmp->hash_mtx, IPL_NONE);
-	udfmp->hashtbl = hashinit(UDF_HASHTBLSIZE, M_UDFMOUNT, M_WAITOK,
-	    &udfmp->hashsz);
-
 	devvp->v_specmountpoint = mp;
 
 	return (0);
 
 bail:
+	if (udfmp->hashtbl != NULL)
+		free(udfmp->hashtbl, M_UDFMOUNT);
+
 	if (udfmp != NULL) {
 		FREE(udfmp, M_UDFMOUNT);
 		mp->mnt_data = NULL;
@@ -522,8 +533,9 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	/*
 	 * Copy in the file entry.  Per the spec, the size can only be 1 block.
 	 */
-	sector = ino + udfmp->part_start;
+	sector = ino;
 	devvp = udfmp->im_devvp;
+	udf_vat_map(udfmp, &sector);
 	if ((error = RDSECTOR(devvp, sector, udfmp->bsize, &bp)) != 0) {
 		printf("Cannot read sector %d\n", sector);
 		pool_put(&udf_node_pool, unode);
@@ -600,6 +612,9 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	case UDF_ICB_TYPE_SYMLINK:
 		vp->v_type = VLNK;
 		break;
+	case UDF_ICB_TYPE_VAT_150:
+		vp->v_type = VREG;
+		break;
 	}
 
 	*vpp = vp;
@@ -665,7 +680,8 @@ udf_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
 int
 udf_get_vpartmap(struct udf_mnt *udfmp, struct part_map_virt *pmv)
 {
-	return (EOPNOTSUPP); /* Not supported yet */
+	udfmp->im_flags |= UDF_MNT_FIND_VAT; /* Should do more than this */
+	return (0);
 }
 
 /* Handle a sparable partition map */
