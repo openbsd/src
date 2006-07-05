@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpi.4,v 1.5 2006/06/23 09:38:18 dlg Exp $
+.\"	$OpenBSD: mpi.4,v 1.6 2006/07/05 08:11:40 dlg Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -26,26 +26,66 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support
-for the LSI Logic Fusion-MPT family of storage controllers:
+driver provides support for storage controllers using the
+LSI Logic Fusion-MPT Message Passing Interface
+family of chipsets:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+LSI Logic LSI53C1020,
+LSI53C1020A,
+LSI53C1030,
+LSI53C1030T,
+LSI53C1035,
+LSIFC909,
+LSIFC919,
+LSIFC919X,
+LSIFC929,
+LSIFC929X,
+LSIFC949,
+LSIFC949X,
+LSISAS1064,
+LSISAS1064E,
+LSISAS1068,
+LSISAS1068E
+.El
+.Pp
+These chipsets can be found on the following controllers:
 .Pp
 .Bl -dash -offset indent -compact
 .It
 Hewlett-Packard 8 Internal Port SAS Host Bus Adapter with RAID
 .It
-LSI Logic 53c1020,
-53c1030,
-FC909,
-FC909A,
-FC919,
-FC929,
-SAS3041X-R,
-SAS3442X,
-SAS3442X-R,
-SAS3800X
+LSI Logic LSI20320-R,
+LSI21320-IS,
+LSI21320-R,
+LSI22320-R,
+LSI40919H,
+LSI40919LH,
+LSI40919LO,
+LSI40919O,
+LSI40929H,
+LSI40929LH,
+LSI40929LO,
+LSI40929O,
+LSI7102XP,
+LSI7202CP-LC,
+LSI7202XP,
+LSI7402XP,
+LSI7104XP-LC,
+LSI7204XP-LC,
+LSI7404XP-LC,
+LSISAS3041E-R,
+LSISAS3041X-R,
+LSISAS3080X-R,
+LSISAS3442E-R,
+LSISAS3442X,
+LSISAS3442X-R,
+LSISAS3800X,
+LSIU320
 .El
 .Pp
-The LSI Logic 53c1030 is emulated in the following products:
+The LSI Logic LSI53C1030 is emulated in the following products:
 .Pp
 .Bl -dash -offset indent -compact
 .It
