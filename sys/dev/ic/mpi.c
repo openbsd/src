@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.53 2006/06/30 17:42:28 kettenis Exp $ */
+/*	$OpenBSD: mpi.c,v 1.54 2006/07/05 23:50:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -2096,6 +2096,7 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_config_request		*cq;
 	struct mpi_msg_config_reply		*cp;
+	int					rv = 0;
 	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header type: %#x number: %x "
@@ -2135,21 +2136,16 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 
 	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "
 	    "0x%02x\n", DEVNAME(sc), cp->action, cp->msg_length, cp->function);
-
 	DNPRINTF(MPI_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
 	    "msg_flags: 0x%02x\n", DEVNAME(sc),
 	    letoh16(cp->ext_page_length), cp->ext_page_type,
 	    cp->msg_flags);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(cp->msg_context));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
 	    letoh16(cp->ioc_status));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(cp->ioc_loginfo));
-
 	DNPRINTF(MPI_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
 	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
 	    cp->config_header.page_version, 
@@ -2157,12 +2153,15 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	    cp->config_header.page_number, 
 	    cp->config_header.page_type);
 
-	*hdr = cp->config_header;
+	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
+		rv = 1;
+	else
+		*hdr = cp->config_header;
 
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 
-	return (0);
+	return (rv);
 }
 
 int
@@ -2174,6 +2173,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	struct mpi_msg_config_reply		*cp;
 	u_int64_t				dva;
 	char					*kva;
+	int					rv = 0;
 	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page address: %d read: %d type: %x\n",
@@ -2232,21 +2232,16 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 
 	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "
 	    "0x%02x\n", DEVNAME(sc), cp->action, cp->msg_length, cp->function);
-
 	DNPRINTF(MPI_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
 	    "msg_flags: 0x%02x\n", DEVNAME(sc),
 	    letoh16(cp->ext_page_length), cp->ext_page_type,
 	    cp->msg_flags);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(cp->msg_context));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
 	    letoh16(cp->ioc_status));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(cp->ioc_loginfo));
-
 	DNPRINTF(MPI_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
 	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
 	    cp->config_header.page_version, 
@@ -2254,11 +2249,13 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	    cp->config_header.page_number, 
 	    cp->config_header.page_type);
 
-	if (read)
+	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
+		rv = 1;
+	else if (read)
 		bcopy(kva, page, len);
 
 	mpi_push_reply(sc, ccb->ccb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 
-	return (0);
+	return (rv);
 }
