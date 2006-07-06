@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.26 2006/07/06 09:59:43 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.27 2006/07/06 10:52:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -118,40 +118,29 @@
 #define  MPI_SGE_FL_DIR_OUT		(0x1<<26)
 #define  MPI_SGE_FL_DIR_IN		(0x0<<26)
 #define MPI_SGE_FL_SIZE			(0x1<<25) /* address size */
-#define  MPI_SGE_FL_SIZE_32		(0x0<<25) /* address size */
-#define  MPI_SGE_FL_SIZE_64		(0x1<<25) /* address size */
+#define  MPI_SGE_FL_SIZE_32		(0x0<<25)
+#define  MPI_SGE_FL_SIZE_64		(0x1<<25)
 #define MPI_SGE_FL_EOL			(0x1<<24) /* end of list */
 #define MPI_SGE_FLAGS_IOC_TO_HOST	(0x00)
 #define MPI_SGE_FLAGS_HOST_TO_IOC	(0x04)
 
-struct mpi_sge32 {
-	u_int32_t		sg_hdr;
-	u_int32_t		sg_addr;
-} __packed;
-
-struct mpi_sge64 {
-	u_int32_t		sg_hdr;
-	u_int32_t		sg_loaddr;
-	u_int32_t		sg_hiaddr;
-} __packed;
-
-/* XXX */
 struct mpi_sge {
 	u_int32_t		sg_hdr;
 	u_int32_t		sg_lo_addr;
 	u_int32_t		sg_hi_addr;
 } __packed;
 
-struct mpi_sgl_ce {
-	u_int32_t		sg_hdr;
-	u_int32_t		sg_loaddr;
-	u_int32_t		sg_hiaddr;
-} __packed;
+struct mpi_fw_tce {
+	u_int8_t		reserved1;
+	u_int8_t		context_size;
+	u_int8_t		details_length;
+	u_int8_t		flags;
 
-struct mpi_sgl_tce {
-	u_int32_t		sg_hdr;
-	u_int32_t		sg_loaddr;
-	u_int32_t		sg_hiaddr;
+	u_int32_t		reserved2;
+
+	u_int32_t		image_offset;
+
+	u_int32_t		image_size;
 } __packed;
 
 /*
@@ -609,6 +598,41 @@ struct mpi_msg_event_reply {
 	u_int32_t		event_context;
 
 	/* event data follows */
+} __packed;
+
+struct mpi_msg_fwupload_request {
+	u_int8_t		image_type;
+	u_int8_t		reserved1;
+	u_int8_t		chain_offset;
+	u_int8_t		function;
+
+	u_int8_t		reserved2[3];
+	u_int8_t		msg_flags;
+
+	u_int32_t		msg_context;
+
+	struct mpi_fw_tce	tce;
+
+	/* followed by an sgl */
+} __packed;
+
+struct mpi_msg_fwupload_reply {
+	u_int8_t		image_type;
+	u_int8_t		reserved1;
+	u_int8_t		msg_length;
+	u_int8_t		function;
+
+	u_int8_t		reserved2[3];
+	u_int8_t		msg_flags;
+
+	u_int32_t		msg_context;
+
+	u_int16_t		reserved3;
+	u_int16_t		ioc_status;
+
+	u_int32_t		ioc_loginfo;
+
+	u_int32_t		actual_image_size;
 } __packed;
 
 struct mpi_msg_scsi_io {
