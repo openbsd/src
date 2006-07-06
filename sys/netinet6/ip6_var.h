@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.27 2006/06/18 11:47:46 pascoe Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.28 2006/07/06 02:56:58 brad Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -136,37 +136,37 @@ struct	ip6_pktopts {
 };
 
 struct	ip6stat {
-	u_quad_t ip6s_total;		/* total packets received */
-	u_quad_t ip6s_tooshort;		/* packet too short */
-	u_quad_t ip6s_toosmall;		/* not enough data */
-	u_quad_t ip6s_fragments;	/* fragments received */
-	u_quad_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
-	u_quad_t ip6s_fragtimeout;	/* fragments timed out */
-	u_quad_t ip6s_fragoverflow;	/* fragments that exceeded limit */
-	u_quad_t ip6s_forward;		/* packets forwarded */
-	u_quad_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
-	u_quad_t ip6s_redirectsent;	/* packets forwarded on same net */
-	u_quad_t ip6s_delivered;	/* datagrams delivered to upper level*/
-	u_quad_t ip6s_localout;		/* total ip packets generated here */
-	u_quad_t ip6s_odropped;		/* lost packets due to nobufs, etc. */
-	u_quad_t ip6s_reassembled;	/* total packets reassembled ok */
-	u_quad_t ip6s_fragmented;	/* datagrams successfully fragmented */
-	u_quad_t ip6s_ofragments;	/* output fragments created */
-	u_quad_t ip6s_cantfrag;		/* don't fragment flag was set, etc. */
-	u_quad_t ip6s_badoptions;	/* error in option processing */
-	u_quad_t ip6s_noroute;		/* packets discarded due to no route */
-	u_quad_t ip6s_badvers;		/* ip6 version != 6 */
-	u_quad_t ip6s_rawout;		/* total raw ip packets generated */
-	u_quad_t ip6s_badscope;		/* scope error */
-	u_quad_t ip6s_notmember;	/* don't join this multicast group */
-	u_quad_t ip6s_nxthist[256];	/* next header history */
-	u_quad_t ip6s_m1;		/* one mbuf */
-	u_quad_t ip6s_m2m[32];		/* two or more mbuf */
-	u_quad_t ip6s_mext1;		/* one ext mbuf */
-	u_quad_t ip6s_mext2m;		/* two or more ext mbuf */
-	u_quad_t ip6s_exthdrtoolong;	/* ext hdr are not continuous */
-	u_quad_t ip6s_nogif;		/* no match gif found */
-	u_quad_t ip6s_toomanyhdr;	/* discarded due to too many headers */
+	u_int64_t ip6s_total;		/* total packets received */
+	u_int64_t ip6s_tooshort;	/* packet too short */
+	u_int64_t ip6s_toosmall;	/* not enough data */
+	u_int64_t ip6s_fragments;	/* fragments received */
+	u_int64_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
+	u_int64_t ip6s_fragtimeout;	/* fragments timed out */
+	u_int64_t ip6s_fragoverflow;	/* fragments that exceeded limit */
+	u_int64_t ip6s_forward;		/* packets forwarded */
+	u_int64_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
+	u_int64_t ip6s_redirectsent;	/* packets forwarded on same net */
+	u_int64_t ip6s_delivered;	/* datagrams delivered to upper level*/
+	u_int64_t ip6s_localout;	/* total ip packets generated here */
+	u_int64_t ip6s_odropped;	/* lost packets due to nobufs, etc. */
+	u_int64_t ip6s_reassembled;	/* total packets reassembled ok */
+	u_int64_t ip6s_fragmented;	/* datagrams successfully fragmented */
+	u_int64_t ip6s_ofragments;	/* output fragments created */
+	u_int64_t ip6s_cantfrag;	/* don't fragment flag was set, etc. */
+	u_int64_t ip6s_badoptions;	/* error in option processing */
+	u_int64_t ip6s_noroute;		/* packets discarded due to no route */
+	u_int64_t ip6s_badvers;		/* ip6 version != 6 */
+	u_int64_t ip6s_rawout;		/* total raw ip packets generated */
+	u_int64_t ip6s_badscope;	/* scope error */
+	u_int64_t ip6s_notmember;	/* don't join this multicast group */
+	u_int64_t ip6s_nxthist[256];	/* next header history */
+	u_int64_t ip6s_m1;		/* one mbuf */
+	u_int64_t ip6s_m2m[32];		/* two or more mbuf */
+	u_int64_t ip6s_mext1;		/* one ext mbuf */
+	u_int64_t ip6s_mext2m;		/* two or more ext mbuf */
+	u_int64_t ip6s_exthdrtoolong;	/* ext hdr are not continuous */
+	u_int64_t ip6s_nogif;		/* no match gif found */
+	u_int64_t ip6s_toomanyhdr;	/* discarded due to too many headers */
 
 	/*
 	 * statistics for improvement of the source address selection
@@ -174,26 +174,26 @@ struct	ip6stat {
 	 * XXX: hardcoded 16 = # of ip6 multicast scope types + 1
 	 */
 	/* number of times that address selection fails */
-	u_quad_t ip6s_sources_none;
+	u_int64_t ip6s_sources_none;
 	/* number of times that an address on the outgoing I/F is chosen */
-	u_quad_t ip6s_sources_sameif[16];
+	u_int64_t ip6s_sources_sameif[16];
 	/* number of times that an address on a non-outgoing I/F is chosen */
-	u_quad_t ip6s_sources_otherif[16];
+	u_int64_t ip6s_sources_otherif[16];
 	/*
 	 * number of times that an address that has the same scope
 	 * from the destination is chosen.
 	 */
-	u_quad_t ip6s_sources_samescope[16];
+	u_int64_t ip6s_sources_samescope[16];
 	/*
 	 * number of times that an address that has a different scope
 	 * from the destination is chosen.
 	 */
-	u_quad_t ip6s_sources_otherscope[16];
+	u_int64_t ip6s_sources_otherscope[16];
 	/* number of times that an deprecated address is chosen */
-	u_quad_t ip6s_sources_deprecated[16];
+	u_int64_t ip6s_sources_deprecated[16];
 
-	u_quad_t ip6s_forward_cachehit;
-	u_quad_t ip6s_forward_cachemiss;
+	u_int64_t ip6s_forward_cachehit;
+	u_int64_t ip6s_forward_cachemiss;
 };
 
 #ifdef _KERNEL

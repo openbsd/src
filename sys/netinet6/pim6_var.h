@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim6_var.h,v 1.7 2004/11/10 03:38:52 mcbride Exp $	*/
+/*	$OpenBSD: pim6_var.h,v 1.8 2006/07/06 02:56:58 brad Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -42,13 +42,13 @@
  */
 
 struct pim6stat {
-	u_quad_t pim6s_rcv_total;	/* total PIM messages received	*/
-	u_quad_t pim6s_rcv_tooshort;	/* received with too few bytes	*/
-	u_quad_t pim6s_rcv_badsum;	/* received with bad checksum	*/
-	u_quad_t pim6s_rcv_badversion;	/* received bad PIM version	*/
-	u_quad_t pim6s_rcv_registers;	/* received registers		*/
-	u_quad_t pim6s_rcv_badregisters; /* received invalid registers	*/
-	u_quad_t pim6s_snd_registers;	/* sent registers		*/
+	u_int64_t pim6s_rcv_total;	/* total PIM messages received	*/
+	u_int64_t pim6s_rcv_tooshort;	/* received with too few bytes	*/
+	u_int64_t pim6s_rcv_badsum;	/* received with bad checksum	*/
+	u_int64_t pim6s_rcv_badversion;	/* received bad PIM version	*/
+	u_int64_t pim6s_rcv_registers;	/* received registers		*/
+	u_int64_t pim6s_rcv_badregisters; /* received invalid registers	*/
+	u_int64_t pim6s_snd_registers;	/* sent registers		*/
 };
 
 #if (defined(KERNEL)) || (defined(_KERNEL))

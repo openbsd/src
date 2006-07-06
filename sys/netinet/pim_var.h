@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim_var.h,v 1.1 2005/01/14 14:51:28 mcbride Exp $	*/
+/*	$OpenBSD: pim_var.h,v 1.2 2006/07/06 02:56:58 brad Exp $	*/
 /*	$NetBSD: pim_var.h,v 1.1 2004/09/04 23:32:29 manu Exp $	*/
 
 /*
@@ -49,17 +49,17 @@
  * PIM statistics kept in the kernel
  */
 struct pimstat {
-	u_quad_t pims_rcv_total_msgs;	   /* total PIM messages received    */
-	u_quad_t pims_rcv_total_bytes;	   /* total PIM bytes received	     */
-	u_quad_t pims_rcv_tooshort;	   /* rcvd with too few bytes	     */
-	u_quad_t pims_rcv_badsum;	   /* rcvd with bad checksum	     */
-	u_quad_t pims_rcv_badversion;	   /* rcvd bad PIM version	     */
-	u_quad_t pims_rcv_registers_msgs;  /* rcvd regs. msgs (data only)    */
-	u_quad_t pims_rcv_registers_bytes; /* rcvd regs. bytes (data only)   */
-	u_quad_t pims_rcv_registers_wrongiif; /* rcvd regs. on wrong iif     */
-	u_quad_t pims_rcv_badregisters;	   /* rcvd invalid registers	     */
-	u_quad_t pims_snd_registers_msgs;  /* sent regs. msgs (data only)    */
-	u_quad_t pims_snd_registers_bytes; /* sent regs. bytes (data only)   */
+	u_int64_t pims_rcv_total_msgs;	   /* total PIM messages received    */
+	u_int64_t pims_rcv_total_bytes;	   /* total PIM bytes received	     */
+	u_int64_t pims_rcv_tooshort;	   /* rcvd with too few bytes	     */
+	u_int64_t pims_rcv_badsum;	   /* rcvd with bad checksum	     */
+	u_int64_t pims_rcv_badversion;	   /* rcvd bad PIM version	     */
+	u_int64_t pims_rcv_registers_msgs;  /* rcvd regs. msgs (data only)    */
+	u_int64_t pims_rcv_registers_bytes; /* rcvd regs. bytes (data only)   */
+	u_int64_t pims_rcv_registers_wrongiif; /* rcvd regs. on wrong iif     */
+	u_int64_t pims_rcv_badregisters;    /* rcvd invalid registers	     */
+	u_int64_t pims_snd_registers_msgs;  /* sent regs. msgs (data only)    */
+	u_int64_t pims_snd_registers_bytes; /* sent regs. bytes (data only)   */
 };
 
 /*

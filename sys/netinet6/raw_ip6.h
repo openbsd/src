@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.h,v 1.1 2002/06/07 21:47:44 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.h,v 1.2 2006/07/06 02:56:58 brad Exp $	*/
 /*	$KAME: raw_ip6.h,v 1.2 2001/05/27 13:28:35 itojun Exp $	*/
 
 /*
@@ -37,14 +37,14 @@
  * ICMPv6 stat is counted separately.  see netinet/icmp6.h
  */
 struct rip6stat {
-	u_quad_t rip6s_ipackets;	/* total input packets */
-	u_quad_t rip6s_isum;		/* input checksum computations */
-	u_quad_t rip6s_badsum;		/* of above, checksum error */
-	u_quad_t rip6s_nosock;		/* no matching socket */
-	u_quad_t rip6s_nosockmcast;	/* of above, arrived as multicast */
-	u_quad_t rip6s_fullsock;	/* not delivered, input socket full */
+	u_int64_t rip6s_ipackets;	/* total input packets */
+	u_int64_t rip6s_isum;		/* input checksum computations */
+	u_int64_t rip6s_badsum;		/* of above, checksum error */
+	u_int64_t rip6s_nosock;		/* no matching socket */
+	u_int64_t rip6s_nosockmcast;	/* of above, arrived as multicast */
+	u_int64_t rip6s_fullsock;	/* not delivered, input socket full */
 
-	u_quad_t rip6s_opackets;	/* total output packets */
+	u_int64_t rip6s_opackets;	/* total output packets */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.31 2006/04/27 02:19:32 tedu Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.32 2006/07/06 02:56:58 brad Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -511,39 +511,39 @@ do {								\
  * of the internet control message protocol version 6.
  */
 struct icmp6errstat {
-	u_quad_t icp6errs_dst_unreach_noroute;
-	u_quad_t icp6errs_dst_unreach_admin;
-	u_quad_t icp6errs_dst_unreach_beyondscope;
-	u_quad_t icp6errs_dst_unreach_addr;
-	u_quad_t icp6errs_dst_unreach_noport;
-	u_quad_t icp6errs_packet_too_big;
-	u_quad_t icp6errs_time_exceed_transit;
-	u_quad_t icp6errs_time_exceed_reassembly;
-	u_quad_t icp6errs_paramprob_header;
-	u_quad_t icp6errs_paramprob_nextheader;
-	u_quad_t icp6errs_paramprob_option;
-	u_quad_t icp6errs_redirect; /* we regard redirect as an error here */
-	u_quad_t icp6errs_unknown;
+	u_int64_t icp6errs_dst_unreach_noroute;
+	u_int64_t icp6errs_dst_unreach_admin;
+	u_int64_t icp6errs_dst_unreach_beyondscope;
+	u_int64_t icp6errs_dst_unreach_addr;
+	u_int64_t icp6errs_dst_unreach_noport;
+	u_int64_t icp6errs_packet_too_big;
+	u_int64_t icp6errs_time_exceed_transit;
+	u_int64_t icp6errs_time_exceed_reassembly;
+	u_int64_t icp6errs_paramprob_header;
+	u_int64_t icp6errs_paramprob_nextheader;
+	u_int64_t icp6errs_paramprob_option;
+	u_int64_t icp6errs_redirect; /* we regard redirect as an error here */
+	u_int64_t icp6errs_unknown;
 };
 
 struct icmp6stat {
 /* statistics related to icmp6 packets generated */
-	u_quad_t icp6s_error;		/* # of calls to icmp6_error */
-	u_quad_t icp6s_canterror;	/* no error because old was icmp */
-	u_quad_t icp6s_toofreq;		/* no error because rate limitation */
-	u_quad_t icp6s_outhist[256];
+	u_int64_t icp6s_error;		/* # of calls to icmp6_error */
+	u_int64_t icp6s_canterror;	/* no error because old was icmp */
+	u_int64_t icp6s_toofreq;	/* no error because rate limitation */
+	u_int64_t icp6s_outhist[256];
 /* statistics related to input message processed */
-	u_quad_t icp6s_badcode;		/* icmp6_code out of range */
-	u_quad_t icp6s_tooshort;	/* packet < sizeof(struct icmp6_hdr) */
-	u_quad_t icp6s_checksum;	/* bad checksum */
-	u_quad_t icp6s_badlen;		/* calculated bound mismatch */
+	u_int64_t icp6s_badcode;	/* icmp6_code out of range */
+	u_int64_t icp6s_tooshort;	/* packet < sizeof(struct icmp6_hdr) */
+	u_int64_t icp6s_checksum;	/* bad checksum */
+	u_int64_t icp6s_badlen;		/* calculated bound mismatch */
 	/*
 	 * number of responses: this member is inherited from netinet code, but
 	 * for netinet6 code, it is already available in icp6s_outhist[].
 	 */
-	u_quad_t icp6s_reflect;
-	u_quad_t icp6s_inhist[256];
-	u_quad_t icp6s_nd_toomanyopt;	/* too many ND options */
+	u_int64_t icp6s_reflect;
+	u_int64_t icp6s_inhist[256];
+	u_int64_t icp6s_nd_toomanyopt;	/* too many ND options */
 	struct icmp6errstat icp6s_outerrhist;
 #define icp6s_odst_unreach_noroute \
 	icp6s_outerrhist.icp6errs_dst_unreach_noroute
@@ -563,13 +563,13 @@ struct icmp6stat {
 #define icp6s_oparamprob_option icp6s_outerrhist.icp6errs_paramprob_option
 #define icp6s_oredirect icp6s_outerrhist.icp6errs_redirect
 #define icp6s_ounknown icp6s_outerrhist.icp6errs_unknown
-	u_quad_t icp6s_pmtuchg;		/* path MTU changes */
-	u_quad_t icp6s_nd_badopt;	/* bad ND options */
-	u_quad_t icp6s_badns;		/* bad neighbor solicitation */
-	u_quad_t icp6s_badna;		/* bad neighbor advertisement */
-	u_quad_t icp6s_badrs;		/* bad router advertisement */
-	u_quad_t icp6s_badra;		/* bad router advertisement */
-	u_quad_t icp6s_badredirect;	/* bad redirect message */
+	u_int64_t icp6s_pmtuchg;	/* path MTU changes */
+	u_int64_t icp6s_nd_badopt;	/* bad ND options */
+	u_int64_t icp6s_badns;		/* bad neighbor solicitation */
+	u_int64_t icp6s_badna;		/* bad neighbor advertisement */
+	u_int64_t icp6s_badrs;		/* bad router advertisement */
+	u_int64_t icp6s_badra;		/* bad router advertisement */
+	u_int64_t icp6s_badredirect;	/* bad redirect message */
 };
 
 /*
