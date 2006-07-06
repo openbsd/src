@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.56 2006/07/06 09:04:45 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.57 2006/07/06 09:21:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -82,7 +82,7 @@ int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
 void			mpi_fc_print(struct mpi_softc *);
 void			mpi_run_ppr(struct mpi_softc *);
 int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
-			    int, int, int);
+			    struct mpi_cfg_raid_physdisk *, int, int, int);
 int			mpi_inq(struct mpi_softc *, u_int16_t, int);
 
 void			mpi_timeout_xs(void *);
@@ -320,7 +320,10 @@ void
 mpi_run_ppr(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
-	struct mpi_cfg_spi_port_pg0	pg;
+	struct mpi_cfg_spi_port_pg0	port_pg;
+	struct mpi_cfg_ioc_pg3		*physdisk_pg;
+	struct mpi_cfg_raid_physdisk	*physdisk_list, *physdisk;
+	size_t				pagelen;
 	struct scsi_link		*link;
 	int				i, tries;
 
@@ -331,7 +334,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 		return;
 	}
 
-	if (mpi_cfg_page(sc, 0x0, &hdr, 1, &pg, sizeof(pg)) != 0) {
+	if (mpi_cfg_page(sc, 0x0, &hdr, 1, &port_pg, sizeof(port_pg)) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_run_ppr unable to fetch page\n",
 		    DEVNAME(sc));
 		return;
@@ -347,20 +350,70 @@ mpi_run_ppr(struct mpi_softc *sc)
 			continue;
 
 		tries = 0;
-		while (mpi_ppr(sc, link, pg.min_period, pg.max_offset,
-		    tries) == EAGAIN)
+		while (mpi_ppr(sc, link, NULL, port_pg.min_period,
+		    port_pg.max_offset, tries) == EAGAIN)
 			tries++;
 	}
+
+	if ((sc->sc_flags & MPI_F_RAID) == 0)
+		return;
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 3, 0x0,
+	    &hdr) != 0) {
+		DNPRINTF(MPI_D_RAID|MPI_D_PPR, "%s: mpi_run_ppr unable to "
+		    "fetch ioc pg 3 header\n", DEVNAME(sc));
+		return;
+	}
+
+	pagelen = hdr.page_length * 4; /* dwords to bytes */
+	physdisk_pg = malloc(pagelen, M_TEMP, M_WAITOK);
+	if (physdisk_pg == NULL) {
+		DNPRINTF(MPI_D_RAID|MPI_D_PPR, "%s: mpi_run_ppr unable to "
+		    "allocate ioc pg 3\n", DEVNAME(sc));
+		return;
+	}
+	physdisk_list = (struct mpi_cfg_raid_physdisk *)(physdisk_pg + 1);
+
+	if (mpi_cfg_page(sc, 0, &hdr, 1, physdisk_pg, pagelen) != 0) {
+		DNPRINTF(MPI_D_PPR|MPI_D_PPR, "%s: mpi_run_ppr unable to "
+		    "fetch ioc page 3\n", DEVNAME(sc));
+		goto out;
+	}
+
+	DNPRINTF(MPI_D_PPR|MPI_D_PPR, "%s:  no_phys_disks: %d\n", DEVNAME(sc),
+	    physdisk_pg->no_phys_disks);
+
+	for (i = 0; i < physdisk_pg->no_phys_disks; i++) {
+		physdisk = &physdisk_list[i];
+
+		DNPRINTF(MPI_D_PPR|MPI_D_PPR, "%s:  id: %d bus: %d ioc: %d "
+		    "num: %d\n", DEVNAME(sc), physdisk->phys_disk_id,
+		    physdisk->phys_disk_bus, physdisk->phys_disk_ioc,
+		    physdisk->phys_disk_num);
+
+		if (physdisk->phys_disk_ioc != sc->sc_ioc_number)
+			continue;
+ 
+                tries = 0;
+		while (mpi_ppr(sc, NULL, physdisk, port_pg.min_period,
+		    port_pg.max_offset, tries) == EAGAIN)
+			tries++;
+	}
+
+out:
+	free(physdisk_pg, M_TEMP);
 }
 
 int
-mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
-    int try)
+mpi_ppr(struct mpi_softc *sc, struct scsi_link *link,
+    struct mpi_cfg_raid_physdisk *physdisk, int period, int offset, int try)
 {
 	struct mpi_cfg_hdr		hdr0, hdr1;
 	struct mpi_cfg_spi_dev_pg0	pg0;
 	struct mpi_cfg_spi_dev_pg1	pg1;
 	u_int32_t			address;
+	int				id;
+	int				raid = 0;
 
 	DNPRINTF(MPI_D_PPR, "%s: mpi_ppr period: %d offset: %d try: %d "
 	    "link quirks: 0x%x\n", DEVNAME(sc), period, offset, try,
@@ -369,10 +422,18 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	if (try >= 3)
 		return (EIO);
 
-	if ((link->inqdata.device & SID_TYPE) == T_PROCESSOR)
-		return (EIO);
+	if (physdisk == NULL) {
+		if ((link->inqdata.device & SID_TYPE) == T_PROCESSOR)
+			return (EIO);
 
-	address = link->target;
+		address = link->target;
+		id = link->target;
+	} else {
+		raid = 1;
+		address = (physdisk->phys_disk_bus << 8) |
+		    (physdisk->phys_disk_id);
+		id = physdisk->phys_disk_num;
+	}
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_DEV, 0,
 	    address, &hdr0) != 0) {
@@ -417,7 +478,7 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	pg1.req_period = period;
 	pg1.req_params2 &= ~MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH;
 
-	if (!(link->quirks & SDEV_NOSYNC)) {
+	if (raid || !(link->quirks & SDEV_NOSYNC)) {
 		pg1.req_params2 |= MPI_CFG_SPI_DEV_1_REQPARAMS_WIDTH_WIDE;
 
 		switch (try) {
@@ -465,7 +526,7 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 	    "conf: 0x%08x\n", DEVNAME(sc), pg1.req_params1, pg1.req_offset,
 	    pg1.req_period, pg1.req_params2, letoh32(pg1.configuration));
 
-	if (mpi_inq(sc, link->target, 0) != 0) {
+	if (mpi_inq(sc, id, raid) != 0) {
 		DNPRINTF(MPI_D_PPR, "%s: mpi_ppr unable to do inquiry against "
 		    "target %d\n", DEVNAME(sc), link->target);
 		return (EIO);
@@ -521,9 +582,9 @@ mpi_ppr(struct mpi_softc *sc, struct scsi_link *link, int period, int offset,
 		break;
 	}
 
-	printf("%s: target %d %s at %dMHz width %dbit offset %d "
-	    "QAS %d DT %d IU %d\n", DEVNAME(sc), link->target,
-	    period ? "Sync" : "Async", period,
+	printf("%s: %s %d %s at %dMHz width %dbit offset %d "
+	    "QAS %d DT %d IU %d\n", DEVNAME(sc), raid ? "phys disk" : "target",
+	    id, period ? "Sync" : "Async", period,
 	    (pg0.neg_params2 & MPI_CFG_SPI_DEV_0_NEGPARAMS_WIDTH_WIDE) ? 16 : 8,
 	    pg0.neg_offset,
 	    (pg0.neg_params1 & MPI_CFG_SPI_DEV_0_NEGPARAMS_QAS) ? 1 : 0,
