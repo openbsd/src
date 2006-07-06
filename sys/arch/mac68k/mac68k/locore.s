@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.54 2006/06/24 13:24:21 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.55 2006/07/06 17:48:55 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -831,12 +831,14 @@ ENTRY_NOPROFILE(rtclock_intr)
 	movl	d2,sp@-			| save d2
 	movw	sr,d2			| save SPL
 	movw	_C_LABEL(mac68k_clockipl),sr	| raise SPL to splclock()
-	movl	a6@(8),a1		| get pointer to frame in via1_intr
-	movl	a1@(64),sp@-		| push ps
-	movl	a1@(68),sp@-		| push pc
-	movl	sp,sp@-			| push pointer to ps, pc
+	movl	a6@,a1			| unwind to frame in intr_dispatch
+	lea	a1@(28),a1		| push pointer to interrupt frame
+	movl	a1,sp@-			| 28 = 16 for regs in intrhand,
+					|    + 4 for args to intr_dispatch
+					|    + 4 for return address to intrhand
+					|    + 4 for value of A6
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
-	lea	sp@(12),sp		| pop params
+	addql	#4,sp			| pop params
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
 	movl	#1,d0			| clock taken care of
