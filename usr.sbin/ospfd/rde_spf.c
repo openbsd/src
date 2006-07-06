@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.54 2006/05/30 22:15:55 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.55 2006/07/06 13:03:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -674,6 +674,11 @@ rt_invalidate(struct area *area)
 			    r->p_type != PT_TYPE2_EXT)
 				continue;
 		} else {
+			/* ignore all as_ext routes */
+			if (r->p_type == PT_TYPE1_EXT ||
+			    r->p_type == PT_TYPE2_EXT)
+				continue;
+
 			/* look only at routes matching the area */
 			if (r->area.s_addr != area->id.s_addr)
 				continue;
