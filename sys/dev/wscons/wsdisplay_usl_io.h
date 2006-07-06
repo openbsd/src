@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_usl_io.h,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wsdisplay_usl_io.h,v 1.2 2006/07/06 18:20:45 miod Exp $ */
 /* $NetBSD: wsdisplay_usl_io.h,v 1.1 1998/06/11 22:00:04 drochner Exp $ */
 
 #define VT_OPENQRY	_IOR('v', 1, int)
@@ -21,7 +21,7 @@ typedef struct vt_mode vtmode_t;
 #define VT_RELDISP	_IO('v', 4 /*, int */)
 #define VT_FALSE	0		/* release of VT refused */
 #define VT_TRUE		1		/* VT released */
-#define VT_ACKACQ	2		/* acknowledging VT acquiration */
+#define VT_ACKACQ	2		/* acknowledging VT acquisition */
 
 #define VT_ACTIVATE	_IO('v', 5 /*, int */)
 #define VT_WAITACTIVE	_IO('v', 6 /*, int */)
