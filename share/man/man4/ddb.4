@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.46 2006/06/17 17:33:33 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.47 2006/07/06 18:16:19 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -177,19 +177,9 @@ previous in command history
 next in command history
 .It Ic ^r
 redraw line
+.It Ic ^t
+exchange the two characters to the left of the cursor
 .El
-.\" .Pp
-.\" During command execution,
-.\" .Nm ddb
-.\" is sensitive only to the following keystrokes:
-.\" .Bl -tag -width 10n -compact -offset indent
-.\" .It Ic \&^s
-.\" pause
-.\" .It Ic \&^q
-.\" unpause
-.\" .It Ic \&^c
-.\" abort command (even if paused)
-.\" .El
 .Sh COMMANDS
 The following commands may be typed at the
 .Ql ddb\*(Gt
@@ -378,7 +368,6 @@ Power down the machine whenever possible; if it fails, just halt.
 .\" --------------------
 .It Xo
 .Ic break
-.Op Cm /u
 .Op Ar addr Ns
 .Op Ic \&, Ns Ar count
 .Xc
@@ -398,24 +387,6 @@ displayed, in the form
 .Ic # Ns Ar number .
 This can later be used in deleting the break point
 or for adding conditions to it.
-.Pp
-When the
-.Cm /u
-modifier is specified,
-.Ar addr
-is taken as a user space address.
-Without it, the address is considered as a kernel space address.
-Wrong space addresses are rejected with an error message.
-The
-.Cm /u
-modifier can be used only if it is supported by machine dependent
-routines.
-.Pp
-.Sy Warning:
-if a user text is shadowed by a normal user space debugger,
-user space break points may not work correctly.
-Setting a breakpoint at the low-level code paths may also cause strange
-behavior.
 .\" --------------------
 .\" .It Xo Ic d
 .\" .Op Ar addr | Ic # Ns Ar number
@@ -799,12 +770,15 @@ This is used by the
 feature.
 .It Va $tabstops
 Tab stop width.
-.It Va $work Ns Ar xx
-Work variables.
-The suffix
-.Ar xx
-is a number from 0 to 31.
+.It Va $log
+Controls whether the output of ddb will also appear in the system message
+buffer.
 .El
+.Pp
+These variables can also be controlled outside ddb via the
+.Sq ddb
+.Xr sysctl 8
+hierarchy.
 .Sh EXPRESSIONS
 Almost all expression operators in C are supported except for
 .Ql ~ ,
