@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.55 2006/07/06 17:48:55 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.56 2006/07/06 17:49:45 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -84,6 +84,11 @@
  */
 	.text
 GLOBAL(kernel_text)
+
+/*
+ * Clear and skip the first page of text; it will not be mapped.
+ */
+	.fill	NBPG / 4, 4, 0
 
 /*
  * Initialization
@@ -201,13 +206,21 @@ Lstart1:
 1:
 #endif
 #if defined(M68020) || defined(M68030)
-	cmpl	#CPU_68040,a0@		| 68040?
-	jeq	1f			| yes, skip
+#if defined(M68030)
+	cmpl	#CPU_68030,a0@		| 68030?
+	jeq	1f			| yes, ok
+#endif
+#if defined(M68020)
+	cmpl	#CPU_68020,a0@		| 68020?
+	jeq	1f			| yes, ok
+#endif
+	jra	9f
+1:
 	movl	#_C_LABEL(busaddrerr2030),a2@(8)
 	movl	#_C_LABEL(busaddrerr2030),a2@(12)
 	jra	Lstart2
-1:
 #endif
+9:
 	/* Config botch; no hope. */
 	movl	_C_LABEL(MacOSROMBase),a1 | Load MacOS ROMBase
 	jra	Ldoboot1
