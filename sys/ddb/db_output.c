@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.24 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.25 2006/07/06 18:14:14 miod Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -80,9 +80,7 @@ int	db_max_line = DB_MAX_LINE;	/* output max lines */
 int	db_max_width = DB_MAX_WIDTH;	/* output line width */
 int	db_radix = 16;			/* output numbers radix */
 
-#ifdef DDB
 static void db_more(void);
-#endif
 
 /*
  * Force pending whitespace.
@@ -109,7 +107,6 @@ db_force_whitespace(void)
 	db_last_non_space = db_output_position;
 }
 
-#ifdef DDB
 static void
 db_more(void)
 {
@@ -139,7 +136,6 @@ db_more(void)
 	    /* NOTREACHED */
 	}
 }
-#endif
 
 /*
  * Output character.  Buffer whitespace.
@@ -147,10 +143,9 @@ db_more(void)
 void
 db_putchar(int c)
 {
-#ifdef DDB
 	if (db_max_line >= DB_MIN_MAX_LINE && db_output_line >= db_max_line-1)
 	    db_more();
-#endif
+
 	if (c > ' ' && c <= '~') {
 	    /*
 	     * Printing character.
@@ -176,9 +171,6 @@ db_putchar(int c)
 	    db_output_position = 0;
 	    db_last_non_space = 0;
 	    db_output_line++;
-#ifdef DDB
-	    db_check_interrupt();
-#endif
 	}
 	else if (c == '\t') {
 	    /* assume tabs every 8 positions */

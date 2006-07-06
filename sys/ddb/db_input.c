@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_input.c,v 1.10 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_input.c,v 1.11 2006/07/06 18:14:14 miod Exp $	*/
 /*	$NetBSD: db_input.c,v 1.7 1996/02/05 01:57:02 christos Exp $	*/
 
 /* 
@@ -71,8 +71,6 @@ char *  db_history_prev = (char *) 0;	/* start of previous line */
 #define	isspace(c)	((c) == ' ' || (c) == '\t')
 #define	BLANK		' '
 #define	BACKUP		'\b'
-
-static int cnmaygetc(void);
 
 void
 db_putstring(char *s, int count)
@@ -343,39 +341,4 @@ db_readline(char *lstart, int lsize)
 
 	*db_le = 0;
 	return (db_le - db_lbuf_start);
-}
-
-void
-db_check_interrupt(void)
-{
-	int	c;
-
-	c = cnmaygetc();
-	switch (c) {
-	    case -1:		/* no character */
-		return;
-
-	    case CTRL('c'):
-		db_error((char *)0);
-		/*NOTREACHED*/
-
-	    case CTRL('s'):
-		do {
-		    c = cnmaygetc();
-		    if (c == CTRL('c'))
-			db_error(NULL);
-			/*NOTREACHED*/
-		} while (c != CTRL('q'));
-		break;
-
-	    default:
-		/* drop on floor */
-		break;
-	}
-}
-
-static int
-cnmaygetc(void)
-{
-	return (-1);
 }
