@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.54 2006/07/05 23:50:49 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.55 2006/07/06 00:55:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -139,6 +139,7 @@ int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
 int
 mpi_attach(struct mpi_softc *sc)
 {
+	struct device			*dev;
 	struct mpi_ccb			*ccb;
 
 	printf("\n");
@@ -209,6 +210,13 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.openings = sc->sc_maxcmds / sc->sc_buswidth;
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	/* find our scsibus */
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (dev->dv_parent == &sc->sc_dev)
+			break;
+	}
+	sc->sc_scsibus = (struct scsibus_softc *)dev;
 
 	/* get raid pages */
 	mpi_get_raid(sc);
@@ -313,9 +321,6 @@ mpi_run_ppr(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
 	struct mpi_cfg_spi_port_pg0	pg;
-
-	struct device			*dev;
-	struct scsibus_softc		*ssc;
 	struct scsi_link		*link;
 	int				i, r, tries;
 
@@ -332,25 +337,13 @@ mpi_run_ppr(struct mpi_softc *sc)
 		return;
 	}
 
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (dev->dv_parent == &sc->sc_dev)
-			break;
-	}
-
-	/* im too nice to punish idiots who don't configure scsibus */
-	if (dev == NULL)
-		return;
-
-	ssc = (struct scsibus_softc *)dev;
 	for (i = 0; i < sc->sc_link.adapter_buswidth; i++) {
-		link = ssc->sc_link[i][0];
-		tries = 0;
-
+		link = sc->sc_scsibus->sc_link[i][0];
 		if (link == NULL)
 			continue;
 
-
 		/* is this a RAID device? */
+		tries = 0;
 		for (r = 0; r < sc->sc_ioc_pg2->max_vols; r++)
 			if (i == sc->sc_ioc_pg2->raid_vol[r].vol_id) {
 				DNPRINTF(MPI_D_PPR, "%s: mpi_run_ppr scsibus "

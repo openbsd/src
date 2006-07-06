@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.15 2006/06/16 05:36:46 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.16 2006/07/06 00:55:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -96,6 +96,8 @@ struct mpi_softc {
 
 	int			sc_flags;
 #define MPI_F_VMWARE			(1<<0)
+
+	struct scsibus_softc	*sc_scsibus;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
