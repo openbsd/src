@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.19 2004/12/25 23:02:25 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.20 2006/07/06 17:51:26 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -74,7 +74,7 @@ extern struct traptrace {
 	u_int tfault;		/* MMU tag access */
 } trap_trace[], trap_trace_end[];
 
-static int nil;
+static long nil;
 
 static int
 db__char_value(struct db_variable *var, db_expr_t *expr, int mode)
