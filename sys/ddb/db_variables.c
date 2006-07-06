@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.10 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.11 2006/07/06 18:14:48 miod Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /* 
@@ -47,6 +47,7 @@ struct db_variable db_vars[] = {
 	{ "maxwidth",	(long *)&db_max_width, FCN_NULL },
 	{ "tabstops",	(long *)&db_tab_stop_width, FCN_NULL },
 	{ "lines",	(long *)&db_max_line, FCN_NULL },
+	{ "log",	(long *)&db_log, FCN_NULL }
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 

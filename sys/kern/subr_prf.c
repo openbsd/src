@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.66 2006/06/01 23:17:23 jason Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.67 2006/07/06 18:14:49 miod Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
 #endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
-extern	int db_radix;		/* XXX: for non-standard '%r' format */
+#include <ddb/db_var.h>		/* db_log, db_radix */
 #endif
 #if defined(UVM_SWAP_ENCRYPT)
 extern int uvm_doswapencrypt;
