@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.11 2006/07/06 18:14:48 miod Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.12 2006/07/06 19:05:58 miod Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /* 
@@ -42,12 +42,12 @@
 #include <ddb/db_var.h>
 
 struct db_variable db_vars[] = {
-	{ "radix",	(long *)&db_radix, FCN_NULL },
-	{ "maxoff",	(long *)&db_maxoff, FCN_NULL },
-	{ "maxwidth",	(long *)&db_max_width, FCN_NULL },
-	{ "tabstops",	(long *)&db_tab_stop_width, FCN_NULL },
-	{ "lines",	(long *)&db_max_line, FCN_NULL },
-	{ "log",	(long *)&db_log, FCN_NULL }
+	{ "radix",	(long *)&db_radix, db_var_rw_int },
+	{ "maxoff",	(long *)&db_maxoff, db_var_rw_int },
+	{ "maxwidth",	(long *)&db_max_width, db_var_rw_int },
+	{ "tabstops",	(long *)&db_tab_stop_width, db_var_rw_int },
+	{ "lines",	(long *)&db_max_line, db_var_rw_int },
+	{ "log",	(long *)&db_log, db_var_rw_int }
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
@@ -159,3 +159,15 @@ db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	db_write_variable(vp, &value);
 }
+
+int
+db_var_rw_int(struct db_variable *var, db_expr_t *expr, int mode)
+{
+
+	if (mode == DB_VAR_SET)
+		*var->valuep = *(int *)expr;
+	else
+		*expr = *(int *)var->valuep;
+	return (0);
+}
+

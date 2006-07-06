@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.20 2006/07/06 17:51:26 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.21 2006/07/06 19:05:56 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -120,33 +120,12 @@ db__short_value(struct db_variable *var, db_expr_t *expr, int mode)
 }
 #endif
 
-static int
-db__int_value(struct db_variable *var, db_expr_t *expr, int mode)
-{
-
-	switch (mode) {
-	case DB_VAR_SET:
-		*var->valuep = *(int *)expr;
-		break;
-	case DB_VAR_GET:
-		*expr = *(int *)var->valuep;
-		break;
-#ifdef DIAGNOSTIC
-	default:
-		printf("db__int_value: mode %d\n", mode);
-		break;
-#endif
-	}
-
-	return 0;
-}
-
 struct db_variable db_regs[] = {
 	{ "tstate", (long *)&DDB_TF->tf_tstate, FCN_NULL, },
 	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
 	{ "ipl", (long *)&DDB_TF->tf_oldpil, db__char_value, },
-	{ "y", (long *)&DDB_TF->tf_y, db__int_value, },
+	{ "y", (long *)&DDB_TF->tf_y, db_var_rw_int, },
 	{ "g0", (long *)&nil, FCN_NULL, },
 	{ "g1", (long *)&DDB_TF->tf_global[1], FCN_NULL, },
 	{ "g2", (long *)&DDB_TF->tf_global[2], FCN_NULL, },

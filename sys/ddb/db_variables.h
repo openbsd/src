@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.h,v 1.6 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: db_variables.h,v 1.7 2006/07/06 19:05:58 miod Exp $	*/
 /*	$NetBSD: db_variables.h,v 1.5 1996/02/05 01:57:21 christos Exp $	*/
 
 /* 
@@ -51,11 +51,12 @@ extern struct db_variable	*db_evars;
 extern struct db_variable	db_regs[];	/* machine registers */
 extern struct db_variable	*db_eregs;
 
-int db_find_variable(struct db_variable **);
-int db_get_variable(db_expr_t *);
-int db_set_variable(db_expr_t);
-void db_read_variable(struct db_variable *, db_expr_t *);
-void db_write_variable(struct db_variable *, db_expr_t *);
-void db_set_cmd(db_expr_t, int, db_expr_t, char *);
+int	db_find_variable(struct db_variable **);
+int	db_get_variable(db_expr_t *);
+int	db_set_variable(db_expr_t);
+void	db_read_variable(struct db_variable *, db_expr_t *);
+void	db_write_variable(struct db_variable *, db_expr_t *);
+void	db_set_cmd(db_expr_t, int, db_expr_t, char *);
+int	db_var_rw_int(struct db_variable *, db_expr_t *, int);
 
 #endif	/* _DB_VARIABLES_H_ */
