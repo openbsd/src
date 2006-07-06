@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.15 2006/07/06 16:43:02 grunk Exp $
+.\"	$OpenBSD: ktrace.1,v 1.16 2006/07/06 21:10:06 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,30 +143,31 @@ options are mutually exclusive.
 default ktrace dump file
 .El
 .Sh EXAMPLES
-# trace all kernel operations of process ID 34
+Trace all kernel operations of process ID 34:
 .Dl $ ktrace -p 34
-.Bd -unfilled
-# trace all kernel operations of processes in process group 15 and
-# pass the trace flags to all current and future children
-.Ed
+.Pp
+Trace all kernel operations of processes in process group 15 and
+pass the trace flags to all current and future children:
 .Dl $ ktrace -idg 15
 .Pp
-# disable all tracing of process 65
+Disable all tracing of process 65:
 .Dl $ ktrace -cp 65
 .Pp
-# disable tracing signals on process 70 and all current children
+Disable tracing signals on process 70 and all current children:
 .Dl $ ktrace -t s -cdp 70
 .Pp
-# enable tracing of I/O on process 67
+Enable tracing of I/O on process 67:
 .Dl $ ktrace -ti -p 67
 .Pp
-# run the command "w", tracing only system calls
+Run the command
+.Xr w 1 ,
+tracing only system calls:
 .Dl $ ktrace -tc w
 .Pp
-# disable all tracing to the file "tracedata"
+Disable all tracing to the file "tracedata":
 .Dl $ ktrace -c -f tracedata
 .Pp
-# disable tracing of all processes owned by the user
+Disable tracing of all processes owned by the user:
 .Dl $ ktrace -C
 .Sh SEE ALSO
 .Xr kdump 1 ,
