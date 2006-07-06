@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.29 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.30 2006/07/06 18:12:50 miod Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.29 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /* 
@@ -82,11 +82,6 @@ static char *strtab;
 static int slen;
 
 #define X_db_getname(t, s)	(s->n_un.n_strx ? t->end + s->n_un.n_strx : NULL)
-
-/* XXX */
-#ifndef ALIGNED_POINTER
-#define ALIGNED_POINTER(p,t)        ((((u_long)(p)) & (sizeof(t)-1)) == 0)
-#endif
 
 /*
  * Find the symbol table and strings; tell ddb about them.
