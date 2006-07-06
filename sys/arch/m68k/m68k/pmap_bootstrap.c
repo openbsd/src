@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.15 2006/06/11 20:44:20 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.16 2006/07/06 17:50:16 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -74,7 +74,6 @@
  * PMAP_MD_RELOC3()	general purpose kernel virtual addresses relocation
  * PMAP_MD_MAPIOSPACE()	setup machine-specific internal iospace components
  * PMAP_MD_MEMSIZE()	compute avail_end
- * PMAP_MD_RWLOW	number of pages to keep writeable, starting at address 0
  */
 
 extern char *etext;
@@ -396,15 +395,8 @@ pmap_bootstrap(nextpa, firstpa)
 #else
 	protopte = firstpa | PG_RO | PG_V | PG_U;
 #endif
-#ifdef	PMAP_MD_RWLOW
-	for (num = PMAP_MD_RWLOW; num != 0; num--) {
-		*pte++ = (protopte & ~PG_RO) | PG_RW;
-		protopte += PAGE_SIZE;
-	}
-#else
 	*pte++ = PG_NV;		/* make *NULL fail in the kernel */
 	protopte += PAGE_SIZE;
-#endif
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
