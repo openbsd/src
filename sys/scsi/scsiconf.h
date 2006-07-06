@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.66 2006/06/20 00:58:56 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.67 2006/07/06 00:41:37 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -179,6 +179,7 @@ struct scsi_link {
 #define	SDEV_ATAPI		0x0200	/* device is ATAPI */
 #define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */
 #define SDEV_UMASS		0x0800	/* device is UMASS SCSI */
+#define SDEV_VIRTUAL		0x1000	/* device is virtualised on the hba */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
