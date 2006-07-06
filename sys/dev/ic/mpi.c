@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.55 2006/07/06 00:55:03 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.56 2006/07/06 09:04:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -322,7 +322,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 	struct mpi_cfg_hdr		hdr;
 	struct mpi_cfg_spi_port_pg0	pg;
 	struct scsi_link		*link;
-	int				i, r, tries;
+	int				i, tries;
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_PORT, 0, 0x0,
 	    &hdr) != 0) {
@@ -342,16 +342,11 @@ mpi_run_ppr(struct mpi_softc *sc)
 		if (link == NULL)
 			continue;
 
-		/* is this a RAID device? */
-		tries = 0;
-		for (r = 0; r < sc->sc_ioc_pg2->max_vols; r++)
-			if (i == sc->sc_ioc_pg2->raid_vol[r].vol_id) {
-				DNPRINTF(MPI_D_PPR, "%s: mpi_run_ppr scsibus "
-				    "%d ioc %d target %d RAID\n", DEVNAME(sc),
-				    sc->sc_link.scsibus, sc->sc_ioc_number, i);
-				/* XXX fan out ppr */
-			}
+		/* do not ppr volumes */
+		if (link->flags & SDEV_VIRTUAL)
+			continue;
 
+		tries = 0;
 		while (mpi_ppr(sc, link, pg.min_period, pg.max_offset,
 		    tries) == EAGAIN)
 			tries++;
@@ -2015,71 +2010,78 @@ void
 mpi_get_raid(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
-	struct mpi_cfg_raid_vol		*raidvol;
+	struct mpi_cfg_ioc_pg2		*vol_page;
+	struct mpi_cfg_raid_vol		*vol_list, *vol;
+	size_t				pagelen;
+	u_int32_t			capabilities;
+	struct scsi_link		*link;
 	int				i;
 
 	DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid\n", DEVNAME(sc));
 
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 2, 0, &hdr) != 0) {
-		DNPRINTF(MPI_D_PPR, "%s: mpi_get_raid unable to fetch header"
+		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch header"
 		    "for IOC page 2\n", DEVNAME(sc));
 		return;
 	}
 
-	/* make page length bytes instead of dwords */
-	sc->sc_ioc_pg2 = malloc(hdr.page_length * 4, M_DEVBUF, M_WAITOK);
-	if (mpi_cfg_page(sc, 0, &hdr, 1, sc->sc_ioc_pg2,
-	    hdr.page_length * 4) != 0) {
+	pagelen = hdr.page_length * 4; /* dwords to bytes */
+	vol_page = malloc(pagelen, M_TEMP, M_WAITOK);
+	if (vol_page == NULL) {
+		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to allocate "
+		    "space for ioc config page 2\n", DEVNAME(sc));
+		return;
+	}
+	vol_list = (struct mpi_cfg_raid_vol *)(vol_page + 1);
+
+	if (mpi_cfg_page(sc, 0, &hdr, 1, vol_page, pagelen) != 0) {
 		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch IOC "
 		    "page 2\n", DEVNAME(sc));
-		return;
+		goto out;
 	}
 
-	DNPRINTF(MPI_D_RAID, "%s:  capabilities: %x active vols %d "
-	    "max vols: %d\n", DEVNAME(sc),
-	    letoh32(sc->sc_ioc_pg2->capabilities),
-	    sc->sc_ioc_pg2->no_active_vols, sc->sc_ioc_pg2->max_vols);
-	DNPRINTF(MPI_D_RAID, "%s:  active phys disks: %d max disks: %d\n",
-	    DEVNAME(sc), sc->sc_ioc_pg2->no_active_phys_disks,
-	    sc->sc_ioc_pg2->max_phys_disks);
+	capabilities = letoh32(vol_page->capabilities);
+
+	DNPRINTF(MPI_D_RAID, "%s:  capabilities: 0x08%x\n", DEVNAME(sc),
+	    letoh32(vol_page->capabilities));
+	DNPRINTF(MPI_D_RAID, "%s:  active_vols: %d max_vols: %d "
+	    "active_physdisks: %d max_physdisks: %d\n", DEVNAME(sc),
+	    vol_page->active_vols, vol_page->max_vols,
+	    vol_page->active_physdisks, vol->max_physdisks);
 
 	/* don't walk list if there are no RAID capability */
-	if (letoh32(sc->sc_ioc_pg2->capabilities) == 0xdeadbeef)
-		return;
-
-	for (i = 0; i < sc->sc_ioc_pg2->max_vols; i++) {
-		raidvol = &sc->sc_ioc_pg2->raid_vol[i];
-		DNPRINTF(MPI_D_RAID, "%s:   id: %#02x bus: %d ioc: %d page: %d "
-		    "type: %#02x flags: %#02x\n", DEVNAME(sc), raidvol->vol_id,
-		    raidvol->vol_bus, raidvol->vol_ioc, raidvol->vol_page,
-		    raidvol->vol_type, raidvol->flags);
-
+	if (capabilities == 0xdeadbeef) {
+		printf("%s: deadbeef in raid configuration\n", DEVNAME(sc));
+		goto out;
 	}
 
-	/* reuse hdr */
-	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 3, 0, &hdr) != 0) {
-		DNPRINTF(MPI_D_PPR, "%s: mpi_get_raid unable to fetch header"
-		    "for IOC page 3\n", DEVNAME(sc));
-		return;
+	if ((capabilities & MPI_CFG_IOC_2_CAPABILITIES_RAID) == 0 ||
+	    (vol_page->active_vols == 0))
+		goto out;
+
+	sc->sc_flags |= MPI_F_RAID;
+
+	for (i = 0; i < vol_page->active_vols; i++) {
+		vol = &vol_list[i];
+
+		DNPRINTF(MPI_D_RAID, "%s:   id: %d bus: %d ioc: %d pg: %d\n",
+		    DEVNAME(sc), vol->vol_id, vol->vol_bus, vol->vol_ioc,
+		    vol->vol_page);
+		DNPRINTF(MPI_D_RAID, "%s:   type: 0x%02x flags: 0x%02x\n",
+		    DEVNAME(sc), vol->vol_type, vol->flags);
+
+		if (vol->vol_ioc != sc->sc_ioc_number || vol->vol_bus != 0)
+			continue;
+
+		link = sc->sc_scsibus->sc_link[vol->vol_id][0];
+		if (link == NULL)
+			continue;
+
+		link->flags |= SDEV_VIRTUAL;
 	}
 
-	/* make page length bytes instead of dwords */
-	sc->sc_ioc_pg3 = malloc(hdr.page_length * 4, M_DEVBUF, M_WAITOK);
-	if (mpi_cfg_page(sc, 0, &hdr, 1, sc->sc_ioc_pg3,
-	    hdr.page_length * 4) != 0) {
-		DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid unable to fetch IOC "
-		    "page 3\n", DEVNAME(sc));
-		return;
-	}
-
-	for (i = 0; i < sc->sc_ioc_pg3->no_phys_disks; i++) {
-		DNPRINTF(MPI_D_RAID, "%s:    id: %#02x bus: %d ioc: %d "
-		    "num: %#02x\n", DEVNAME(sc),
-		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_id,
-		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_bus,
-		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_ioc,
-		    sc->sc_ioc_pg3->phys_disks[i].phys_disk_num);
-	}
+out:
+	free(vol_page, M_TEMP);
 }
 
 int

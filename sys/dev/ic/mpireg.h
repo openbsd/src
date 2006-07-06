@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.24 2006/07/01 13:23:14 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.25 2006/07/06 09:04:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1007,6 +1007,28 @@ struct mpi_cfg_manufacturing_pg0 {
 	char			board_tracer_number[16];
 } __packed;
 
+struct mpi_cfg_ioc_pg2 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int32_t		capabilities;
+#define MPI_CFG_IOC_2_CAPABILITIES_IS			(1<<0)
+#define MPI_CFG_IOC_2_CAPABILITIES_IME			(1<<1)
+#define MPI_CFG_IOC_2_CAPABILITIES_IM			(1<<2)
+#define  MPI_CFG_IOC_2_CAPABILITIES_RAID		( \
+    MPI_CFG_IOC_2_CAPABILITIES_IS | MPI_CFG_IOC_2_CAPABILITIES_IME | \
+    MPI_CFG_IOC_2_CAPABILITIES_IM)
+#define MPI_CFG_IOC_2_CAPABILITIES_SES			(1<<29)
+#define MPI_CFG_IOC_2_CAPABILITIES_SAFTE		(1<<30)
+#define MPI_CFG_IOC_2_CAPABILITIES_XCHANNEL		(1<<31)
+
+	u_int8_t		active_vols;
+	u_int8_t		max_vols;
+	u_int8_t		active_physdisks;
+	u_int8_t		physdisks;
+
+	/* followed by a list of mpi_cf_raid_vol structs */
+} __packed;
+
 struct mpi_cfg_raid_vol {
 	u_int8_t		vol_id;
 	u_int8_t		vol_bus;
@@ -1014,37 +1036,12 @@ struct mpi_cfg_raid_vol {
 	u_int8_t		vol_page;
 
 	u_int8_t		vol_type;
-#define MPI_CFG_RAID_TYPE_RAID_IS	(1<<0)	/* RAID 0 */
-#define MPI_CFG_RAID_TYPE_RAID_IME	(1<<1)	/* RAID 1 */
-#define MPI_CFG_RAID_TYPE_RAID_IM	(1<<2)	/* RAID 1 */
-#define MPI_CFG_RAID_TYPE_RAID5		(1<<3)
-#define MPI_CFG_RAID_TYPE_RAID6		(1<<4)
-#define MPI_CFG_RAID_TYPE_RAID10	(1<<5)
-#define MPI_CFG_RAID_TYPE_RAID50	(1<<6)
-#define MPI_CFG_RAID_TYPE_UNKNOWN	(0xff)
+#define MPI_CFG_RAID_TYPE_RAID_IS			(0x00)
+#define MPI_CFG_RAID_TYPE_RAID_IME			(0x01)
+#define MPI_CFG_RAID_TYPE_RAID_IM			(0x02)
 	u_int8_t		flags;
-#define MPI_CFG_RAID_VOL_ACTIVE		(0<<3)
 #define MPI_CFG_RAID_VOL_INACTIVE	(1<<3)
 	u_int16_t		reserved;
-} __packed;
-
-struct mpi_cfg_ioc_pg2 {
-	struct mpi_cfg_hdr	config_header;
-
-	u_int32_t		capabilities;
-
-	u_int8_t		no_active_vols;
-	u_int8_t		max_vols;
-	u_int8_t		no_active_phys_disks;
-	u_int8_t		max_phys_disks;
-	struct mpi_cfg_raid_vol	raid_vol[1]; /* length is stored in header */
-} __packed;
-
-struct mpi_cfg_raid_pd {
-	u_int8_t		phys_disk_id;
-	u_int8_t		phys_disk_bus;
-	u_int8_t		phys_disk_ioc;
-	u_int8_t		phys_disk_num;
 } __packed;
 
 struct mpi_cfg_ioc_pg3 {
@@ -1053,7 +1050,14 @@ struct mpi_cfg_ioc_pg3 {
 	u_int8_t		no_phys_disks;
 	u_int8_t		reserved[3];
 
-	struct mpi_cfg_raid_pd phys_disks[1]; /* length stored in header */
+	/* followed by a list of mpi_cf_raid_physdisk structs */
+} __packed;
+
+struct mpi_cfg_raid_physdisk {
+	u_int8_t		phys_disk_id;
+	u_int8_t		phys_disk_bus;
+	u_int8_t		phys_disk_ioc;
+	u_int8_t		phys_disk_num;
 } __packed;
 
 struct mpi_cfg_fc_port_pg0 {

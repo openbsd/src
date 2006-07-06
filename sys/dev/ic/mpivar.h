@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.16 2006/07/06 00:55:03 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.17 2006/07/06 09:04:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -96,6 +96,7 @@ struct mpi_softc {
 
 	int			sc_flags;
 #define MPI_F_VMWARE			(1<<0)
+#define MPI_F_RAID			(1<<1)
 
 	struct scsibus_softc	*sc_scsibus;
 
@@ -120,10 +121,6 @@ struct mpi_softc {
 	struct mpi_ccb_list	sc_ccb_free;
 
 	struct mpi_dmamem	*sc_replies;
-
-	/* RAID pages */
-	struct mpi_cfg_ioc_pg2	*sc_ioc_pg2;
-	struct mpi_cfg_ioc_pg3  *sc_ioc_pg3;
 };
 
 int	mpi_attach(struct mpi_softc *);
