@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.c,v 1.67 2006/03/30 11:40:21 dtucker Exp $ */
+/* $OpenBSD: auth.c,v 1.68 2006/07/06 16:03:53 stevesk Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -30,6 +30,7 @@
 
 #include <libgen.h>
 #include <paths.h>
+#include <pwd.h>
 
 #include "xmalloc.h"
 #include "match.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: sshpty.c,v 1.20 2006/07/02 22:45:59 stevesk Exp $ */
+/* $OpenBSD: sshpty.c,v 1.21 2006/07/06 16:03:53 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -20,6 +20,7 @@
 
 #include <grp.h>
 #include <paths.h>
+#include <pwd.h>
 #include <termios.h>
 #include <util.h>
 

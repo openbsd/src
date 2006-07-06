@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.77 2006/03/30 11:40:21 dtucker Exp $ */
+/* $OpenBSD: monitor.c,v 1.78 2006/07/06 16:03:53 stevesk Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -30,14 +30,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <openssl/dh.h>
+
 #include <paths.h>
+#include <pwd.h>
 #include <signal.h>
 
 #ifdef SKEY
 #include <skey.h>
 #endif
-
-#include <openssl/dh.h>
 
 #include "ssh.h"
 #include "auth.h"
