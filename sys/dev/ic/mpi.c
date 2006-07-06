@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.57 2006/07/06 09:21:59 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.58 2006/07/06 09:59:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -2108,7 +2108,7 @@ mpi_get_raid(struct mpi_softc *sc)
 	DNPRINTF(MPI_D_RAID, "%s:  active_vols: %d max_vols: %d "
 	    "active_physdisks: %d max_physdisks: %d\n", DEVNAME(sc),
 	    vol_page->active_vols, vol_page->max_vols,
-	    vol_page->active_physdisks, vol->max_physdisks);
+	    vol_page->active_physdisks, vol_page->max_physdisks);
 
 	/* don't walk list if there are no RAID capability */
 	if (capabilities == 0xdeadbeef) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.25 2006/07/06 09:04:45 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.26 2006/07/06 09:59:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1024,7 +1024,7 @@ struct mpi_cfg_ioc_pg2 {
 	u_int8_t		active_vols;
 	u_int8_t		max_vols;
 	u_int8_t		active_physdisks;
-	u_int8_t		physdisks;
+	u_int8_t		max_physdisks;
 
 	/* followed by a list of mpi_cf_raid_vol structs */
 } __packed;
