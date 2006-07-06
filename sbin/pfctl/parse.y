@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.501 2006/06/17 11:38:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.502 2006/07/06 13:26:41 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -205,10 +205,12 @@ struct filter_opts {
 	char			*tag;
 	struct node_matchtag	*match_tags;
 	u_int8_t		 match_tag_not;
+	int			 rtableid;
 } filter_opts;
 
 struct antispoof_opts {
 	char			*label;
+	int			 rtableid;
 } antispoof_opts;
 
 struct scrub_opts {
@@ -222,6 +224,7 @@ struct scrub_opts {
 	int			fragcache;
 	int			randomid;
 	int			reassemble_tcp;
+	int			rtableid;
 } scrub_opts;
 
 struct queue_opts {
@@ -332,6 +335,7 @@ typedef struct {
 		u_int32_t		 number;
 		int			 i;
 		char			*string;
+		int			 rtableid;
 		struct {
 			u_int8_t	 b1;
 			u_int8_t	 b2;
@@ -414,7 +418,7 @@ typedef struct {
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
-%token	QUEUE PRIORITY QLIMIT
+%token	QUEUE PRIORITY QLIMIT RTABLE
 %token	LOAD
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
@@ -465,6 +469,7 @@ typedef struct {
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
 %type	<v.matchtag_opts>       matchtag matchtag_list matchtag_item
 %type	<v.tagged>		tagged
+%type	<v.rtableid>		rtable
 %%
 
 ruleset		: /* empty */
@@ -623,6 +628,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			r.direction = $3;
 			r.af = $5;
 			r.prob = $8.prob;
+			r.rtableid = $8.rtableid;
 
 			r.match_tag_not = $8.match_tag_not;
 
@@ -634,7 +640,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			    0, 0, 0, $8.match_tags, $2);
 			free($2);
 		}
-		| NATANCHOR string interface af proto fromto {
+		| NATANCHOR string interface af proto fromto rtable {
 			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_NAT)) {
@@ -645,6 +651,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			memset(&r, 0, sizeof(r));
 			r.action = PF_NAT;
 			r.af = $4;
+			r.rtableid = $7;
 
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
@@ -654,7 +661,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			    0, 0, 0, 0, $2);
 			free($2);
 		}
-		| RDRANCHOR string interface af proto fromto {
+		| RDRANCHOR string interface af proto fromto rtable {
 			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_NAT)) {
@@ -665,6 +672,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			memset(&r, 0, sizeof(r));
 			r.action = PF_RDR;
 			r.af = $4;
+			r.rtableid = $7;
 
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
@@ -695,7 +703,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			    0, 0, 0, 0, $2);
 			free($2);
 		}
-		| BINATANCHOR string interface af proto fromto {
+		| BINATANCHOR string interface af proto fromto rtable {
 			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_NAT)) {
@@ -706,6 +714,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			memset(&r, 0, sizeof(r));
 			r.action = PF_BINAT;
 			r.af = $4;
+			r.rtableid = $7;
 			if ($5 != NULL) {
 				if ($5->next != NULL) {
 					yyerror("proto list expansion"
@@ -807,6 +816,7 @@ scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 				r.max_mss = $8.maxmss;
 			if ($8.fragcache)
 				r.rule_flag |= $8.fragcache;
+			r.rtableid = $8.rtableid;
 
 			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
@@ -815,12 +825,14 @@ scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 		;
 
 scrub_opts	:	{
-			bzero(&scrub_opts, sizeof scrub_opts);
-		}
+				bzero(&scrub_opts, sizeof scrub_opts);
+				scrub_opts.rtableid = -1;
+			}
 		    scrub_opts_l
 			{ $$ = scrub_opts; }
 		| /* empty */ {
 			bzero(&scrub_opts, sizeof scrub_opts);
+			scrub_opts.rtableid = -1;
 			$$ = scrub_opts;
 		}
 		;
@@ -889,6 +901,13 @@ scrub_opt	: NODF	{
 			}
 			scrub_opts.randomid = 1;
 		}
+		| RTABLE number				{
+			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+				yyerror("invalid rtable id");
+				YYERROR;
+			}
+			scrub_opts.rtableid = $2;
+		}
 		;
 
 fragcache	: FRAGMENT REASSEMBLE	{ $$ = 0; /* default */ }
@@ -914,6 +933,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				r.af = $4;
 				if (rule_label(&r, $5.label))
 					YYERROR;
+				r.rtableid = $5.rtableid;
 				j = calloc(1, sizeof(struct node_if));
 				if (j == NULL)
 					err(1, "antispoof: calloc");
@@ -964,6 +984,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					r.af = $4;
 					if (rule_label(&r, $5.label))
 						YYERROR;
+					r.rtableid = $5.rtableid;
 					if (hh != NULL)
 						h = hh;
 					else
@@ -999,11 +1020,15 @@ antispoof_if  : if_item				{ $$ = $1; }
 		}
 		;
 
-antispoof_opts	:	{ bzero(&antispoof_opts, sizeof antispoof_opts); }
+antispoof_opts	:	{
+				bzero(&antispoof_opts, sizeof antispoof_opts);
+				antispoof_opts.rtableid = -1;
+			}
 		    antispoof_opts_l
 			{ $$ = antispoof_opts; }
 		| /* empty */	{
 			bzero(&antispoof_opts, sizeof antispoof_opts);
+			antispoof_opts.rtableid = -1;
 			$$ = antispoof_opts;
 		}
 		;
@@ -1018,6 +1043,13 @@ antispoof_opt	: label	{
 				YYERROR;
 			}
 			antispoof_opts.label = $1;
+		}
+		| RTABLE number				{
+			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+				yyerror("invalid rtable id");
+				YYERROR;
+			}
+			antispoof_opts.rtableid = $2;
 		}
 		;
 
@@ -1536,6 +1568,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.log = $3.log;
 			r.quick = $3.quick;
 			r.prob = $9.prob;
+			r.rtableid = $9.rtableid;
 
 			r.af = $6;
 			if ($9.tag)
@@ -1850,11 +1883,15 @@ pfrule		: action dir logquick interface route af proto fromto
 		}
 		;
 
-filter_opts	:	{ bzero(&filter_opts, sizeof filter_opts); }
+filter_opts	:	{
+				bzero(&filter_opts, sizeof filter_opts);
+				filter_opts.rtableid = -1;
+			}
 		    filter_opts_l
 			{ $$ = filter_opts; }
 		| /* empty */	{
 			bzero(&filter_opts, sizeof filter_opts);
+			filter_opts.rtableid = -1;
 			$$ = filter_opts;
 		}
 		;
@@ -1961,6 +1998,13 @@ filter_opt	: USER uids {
 			}
 			filter_opts.prob = (u_int32_t)p;
 			free($2);
+		}
+		| RTABLE number				{
+			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+				yyerror("invalid rtable id");
+				YYERROR;
+			}
+			filter_opts.rtableid = $2;
 		}
 		;
 
@@ -3284,7 +3328,8 @@ nataction	: no NAT natpass {
 		}
 		;
 
-natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
+natrule		: nataction interface af proto fromto tag tagged rtable
+		    redirpool pool_opts
 		{
 			struct pf_rule	r;
 
@@ -3323,47 +3368,48 @@ natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 					YYERROR;
 				}
 			r.match_tag_not = $7.neg;
+			r.rtableid = $8;
 
 			if (r.action == PF_NONAT || r.action == PF_NORDR) {
-				if ($8 != NULL) {
+				if ($9 != NULL) {
 					yyerror("translation rule with 'no' "
 					    "does not need '->'");
 					YYERROR;
 				}
 			} else {
-				if ($8 == NULL || $8->host == NULL) {
+				if ($9 == NULL || $9->host == NULL) {
 					yyerror("translation rule requires '-> "
 					    "address'");
 					YYERROR;
 				}
-				if (!r.af && ! $8->host->ifindex)
-					r.af = $8->host->af;
+				if (!r.af && ! $9->host->ifindex)
+					r.af = $9->host->af;
 
-				remove_invalid_hosts(&$8->host, &r.af);
-				if (invalid_redirect($8->host, r.af))
+				remove_invalid_hosts(&$9->host, &r.af);
+				if (invalid_redirect($9->host, r.af))
 					YYERROR;
-				if (check_netmask($8->host, r.af))
+				if (check_netmask($9->host, r.af))
 					YYERROR;
 
-				r.rpool.proxy_port[0] = ntohs($8->rport.a);
+				r.rpool.proxy_port[0] = ntohs($9->rport.a);
 
 				switch (r.action) {
 				case PF_RDR:
-					if (!$8->rport.b && $8->rport.t &&
+					if (!$9->rport.b && $9->rport.t &&
 					    $5.dst.port != NULL) {
 						r.rpool.proxy_port[1] =
-						    ntohs($8->rport.a) +
+						    ntohs($9->rport.a) +
 						    (ntohs(
 						    $5.dst.port->port[1]) -
 						    ntohs(
 						    $5.dst.port->port[0]));
 					} else
 						r.rpool.proxy_port[1] =
-						    ntohs($8->rport.b);
+						    ntohs($9->rport.b);
 					break;
 				case PF_NAT:
 					r.rpool.proxy_port[1] =
-					    ntohs($8->rport.b);
+					    ntohs($9->rport.b);
 					if (!r.rpool.proxy_port[0] &&
 					    !r.rpool.proxy_port[1]) {
 						r.rpool.proxy_port[0] =
@@ -3378,25 +3424,25 @@ natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 					break;
 				}
 
-				r.rpool.opts = $9.type;
+				r.rpool.opts = $10.type;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
-				    PF_POOL_NONE && ($8->host->next != NULL ||
-				    $8->host->addr.type == PF_ADDR_TABLE ||
-				    DYNIF_MULTIADDR($8->host->addr)))
+				    PF_POOL_NONE && ($9->host->next != NULL ||
+				    $9->host->addr.type == PF_ADDR_TABLE ||
+				    DYNIF_MULTIADDR($9->host->addr)))
 					r.rpool.opts = PF_POOL_ROUNDROBIN;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
-				    disallow_table($8->host, "tables are only "
+				    disallow_table($9->host, "tables are only "
 				    "supported in round-robin redirection "
 				    "pools"))
 					YYERROR;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
-				    disallow_alias($8->host, "interface (%s) "
+				    disallow_alias($9->host, "interface (%s) "
 				    "is only supported in round-robin "
 				    "redirection pools"))
 					YYERROR;
-				if ($8->host->next != NULL) {
+				if ($9->host->next != NULL) {
 					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("only round-robin "
@@ -3407,14 +3453,14 @@ natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 				}
 			}
 
-			if ($9.key != NULL)
-				memcpy(&r.rpool.key, $9.key,
+			if ($10.key != NULL)
+				memcpy(&r.rpool.key, $10.key,
 				    sizeof(struct pf_poolhashkey));
 
-			 if ($9.opts)
-				r.rpool.opts |= $9.opts;
+			 if ($10.opts)
+				r.rpool.opts |= $10.opts;
 
-			if ($9.staticport) {
+			if ($10.staticport) {
 				if (r.action != PF_NAT) {
 					yyerror("the 'static-port' option is "
 					    "only valid with nat rules");
@@ -3433,15 +3479,15 @@ natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 				r.rpool.proxy_port[1] = 0;
 			}
 
-			expand_rule(&r, $2, $8 == NULL ? NULL : $8->host, $4,
+			expand_rule(&r, $2, $9 == NULL ? NULL : $9->host, $4,
 			    $5.src_os, $5.src.host, $5.src.port, $5.dst.host,
 			    $5.dst.port, 0, 0, 0, 0, "");
-			free($8);
+			free($9);
 		}
 		;
 
-binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
-		    redirection
+binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
+		    tagged rtable redirection
 		{
 			struct pf_rule		binat;
 			struct pf_pooladdr	*pa;
@@ -3470,8 +3516,8 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 			if (!binat.af && $10 != NULL && $10->af)
 				binat.af = $10->af;
 
-			if (!binat.af && $13 != NULL && $13->host)
-				binat.af = $13->host->af;
+			if (!binat.af && $14 != NULL && $14->host)
+				binat.af = $14->host->af;
 			if (!binat.af) {
 				yyerror("address family (inet/inet6) "
 				    "undefined");
@@ -3500,6 +3546,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 					YYERROR;
 				}
 			binat.match_tag_not = $12.neg;
+			binat.rtableid = $13;
 
 			if ($6 != NULL) {
 				binat.proto = $6->proto;
@@ -3513,12 +3560,12 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 			    "interface (%s) as the source address of a binat "
 			    "rule"))
 				YYERROR;
-			if ($13 != NULL && $13->host != NULL && disallow_table(
-			    $13->host, "invalid use of table <%s> as the "
+			if ($14 != NULL && $14->host != NULL && disallow_table(
+			    $14->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
-			if ($13 != NULL && $13->host != NULL && disallow_alias(
-			    $13->host, "invalid use of interface (%s) as the "
+			if ($14 != NULL && $14->host != NULL && disallow_alias(
+			    $14->host, "invalid use of interface (%s) as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
 
@@ -3557,33 +3604,33 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 			}
 
 			if (binat.action == PF_NOBINAT) {
-				if ($13 != NULL) {
+				if ($14 != NULL) {
 					yyerror("'no binat' rule does not need"
 					    " '->'");
 					YYERROR;
 				}
 			} else {
-				if ($13 == NULL || $13->host == NULL) {
+				if ($14 == NULL || $14->host == NULL) {
 					yyerror("'binat' rule requires"
 					    " '-> address'");
 					YYERROR;
 				}
 
-				remove_invalid_hosts(&$13->host, &binat.af);
-				if (invalid_redirect($13->host, binat.af))
+				remove_invalid_hosts(&$14->host, &binat.af);
+				if (invalid_redirect($14->host, binat.af))
 					YYERROR;
-				if ($13->host->next != NULL) {
+				if ($14->host->next != NULL) {
 					yyerror("binat rule must redirect to "
 					    "a single address");
 					YYERROR;
 				}
-				if (check_netmask($13->host, binat.af))
+				if (check_netmask($14->host, binat.af))
 					YYERROR;
 
 				if (!PF_AZERO(&binat.src.addr.v.a.mask,
 				    binat.af) &&
 				    !PF_AEQ(&binat.src.addr.v.a.mask,
-				    &$13->host->addr.v.a.mask, binat.af)) {
+				    &$14->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
@@ -3593,12 +3640,12 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 				pa = calloc(1, sizeof(struct pf_pooladdr));
 				if (pa == NULL)
 					err(1, "binat: calloc");
-				pa->addr = $13->host->addr;
+				pa->addr = $14->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
 				    pa, entries);
 
-				free($13);
+				free($14);
 			}
 
 			pfctl_add_rule(pf, &binat, "");
@@ -3611,6 +3658,16 @@ tag		: /* empty */		{ $$ = NULL; }
 
 tagged		: /* empty */		{ $$.neg = 0; $$.name = NULL; }
 		| not TAGGED string	{ $$.neg = $1; $$.name = $3; }
+		;
+
+rtable		: /* empty */		{ $$ = -1; }
+		| RTABLE number		{
+			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+				yyerror("invalid rtable id");
+				YYERROR;
+			}
+			$$ = $2;
+		}
 		;
 
 route_host	: STRING			{
@@ -4737,6 +4794,7 @@ lookup(char *s)
 		{ "round-robin",	ROUNDROBIN},
 		{ "route",		ROUTE},
 		{ "route-to",		ROUTETO},
+		{ "rtable",		RTABLE},
 		{ "rule",		RULE},
 		{ "scrub",		SCRUB},
 		{ "set",		SET},

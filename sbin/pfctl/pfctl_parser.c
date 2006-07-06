@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.225 2006/06/30 16:52:27 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.226 2006/07/06 13:26:41 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -967,6 +967,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf(" !");
 		printf(" tagged %s", r->match_tagname);
 	}
+	if (r->rtableid != -1)
+		printf(" rtable %u", r->rtableid);
 	if (!anchor_call[0] && (r->action == PF_NAT ||
 	    r->action == PF_BINAT || r->action == PF_RDR)) {
 		printf(" -> ");
