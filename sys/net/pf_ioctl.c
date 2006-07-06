@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.166 2006/05/28 02:45:45 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.167 2006/07/06 13:25:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -170,6 +170,7 @@ pfattach(int num)
 	pf_default_rule.entries.tqe_prev = &pf_default_rule.entries.tqe_next;
 	pf_default_rule.action = PF_PASS;
 	pf_default_rule.nr = -1;
+	pf_default_rule.rtableid = -1;
 
 	/* initialize default timeouts */
 	timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
@@ -1393,6 +1394,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pfi_kif_ref(rule->kif, PFI_KIF_REF_RULE);
 		}
 
+		if (rule->rtableid > 0 && !rtable_exists(rule->rtableid))
+			error = EBUSY;
+
 #ifdef ALTQ
 		/* set queue IDs */
 		if (rule->qname[0] != 0) {
@@ -1618,6 +1622,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pfi_kif_ref(newrule->kif, PFI_KIF_REF_RULE);
 			} else
 				newrule->kif = NULL;
+
+			if (newrule->rtableid > 0 &&
+			    !rtable_exists(newrule->rtableid))
+				error = EBUSY;
 
 #ifdef ALTQ
 			/* set queue IDs */

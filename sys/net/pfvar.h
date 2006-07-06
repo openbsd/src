@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.235 2006/05/28 02:45:45 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.236 2006/07/06 13:25:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -530,6 +530,7 @@ struct pf_rule {
 
 	pf_osfp_t		 os_fingerprint;
 
+	int			 rtableid;
 	u_int32_t		 timeout[PFTM_MAX];
 	u_int32_t		 states;
 	u_int32_t		 max_states;
@@ -1153,6 +1154,7 @@ struct pf_altq {
 
 struct pf_mtag {
 	void		*hdr;		/* saved hdr pos in mbuf, for ECN */
+	u_int		 rtableid;	/* alternate routing table id */
 	u_int32_t	 qid;		/* queue id */
 	u_int16_t	 tag;		/* tag id */
 	u_int8_t	 flags;
@@ -1586,7 +1588,7 @@ u_int16_t	 pf_tagname2tag(char *);
 void		 pf_tag2tagname(u_int16_t, char *);
 void		 pf_tag_ref(u_int16_t);
 void		 pf_tag_unref(u_int16_t);
-int		 pf_tag_packet(struct mbuf *, struct pf_mtag *, int);
+int		 pf_tag_packet(struct mbuf *, struct pf_mtag *, int, int);
 u_int32_t	 pf_qname2qid(char *);
 void		 pf_qid2qname(u_int32_t, char *);
 void		 pf_qid_unref(u_int32_t);

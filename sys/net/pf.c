@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.512 2006/05/17 14:50:47 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.513 2006/07/06 13:25:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1601,7 +1601,11 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	}
 	if (tag)
 		pf_mtag->flags |= PF_TAG_GENERATED;
+
 	pf_mtag->tag = rtag;
+
+	if (r != NULL && r->rtableid >= 0)
+		pf_mtag->rtableid = r->rtableid;
 
 #ifdef ALTQ
 	if (r != NULL && r->qid) {
@@ -1726,6 +1730,9 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	if ((pf_mtag = pf_get_mtag(m0)) == NULL)
 		return;
 	pf_mtag->flags |= PF_TAG_GENERATED;
+
+	if (r->rtableid >= 0)
+		pf_mtag->rtableid = r->rtableid;
 
 #ifdef ALTQ
 	if (r->qid) {
@@ -1887,15 +1894,18 @@ pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_mtag *pf_mtag,
 }
 
 int
-pf_tag_packet(struct mbuf *m, struct pf_mtag *pf_mtag, int tag)
+pf_tag_packet(struct mbuf *m, struct pf_mtag *pf_mtag, int tag, int rtableid)
 {
-	if (tag <= 0)
+	if (tag <= 0 && rtableid < 0)
 		return (0);
 
 	if (pf_mtag == NULL)
 		if ((pf_mtag = pf_get_mtag(m)) == NULL)
 			return (1);
-	pf_mtag->tag = tag;
+	if (tag > 0)
+		pf_mtag->tag = tag;
+	if (rtableid >= 0)
+		pf_mtag->rtableid = rtableid;
 
 	return (0);
 }
@@ -2355,6 +2365,7 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 	struct pf_rule		*r, *rm = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	int			 tag = -1;
+	int			 rtableid = -1;
 	int			 asd = 0;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[rs_num].active.ptr);
@@ -2407,6 +2418,8 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		else {
 			if (r->tag)
 				tag = r->tag;
+			if (r->rtableid >= 0)
+				rtableid = r->rtableid;
 			if (r->anchor == NULL) {
 				rm = r;
 			} else
@@ -2415,7 +2428,7 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		if (r == NULL)
 			pf_step_out_of_anchor(&asd, &ruleset, rs_num, &r, NULL);
 	}
-	if (pf_tag_packet(m, pd->pf_mtag, tag))
+	if (pf_tag_packet(m, pd->pf_mtag, tag, rtableid))
 		return (NULL);
 	if (rm != NULL && (rm->action == PF_NONAT ||
 	    rm->action == PF_NORDR || rm->action == PF_NOBINAT))
@@ -2821,7 +2834,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_src_node	*nsn = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
-	int			 tag = -1;
+	int			 tag = -1, rtableid = -1;
 	u_int16_t		 mss = tcp_mssdflt;
 	int			 asd = 0;
 
@@ -2910,6 +2923,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else {
 			if (r->tag)
 				tag = r->tag;
+			if (r->rtableid >= 0)
+				rtableid = r->rtableid;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -2978,7 +2993,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action == PF_DROP)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag, rtableid)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3198,7 +3213,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_src_node	*nsn = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
-	int			 tag = -1;
+	int			 tag = -1, rtableid = -1;
 	int			 asd = 0;
 
 	if (pf_check_congestion(ifq)) {
@@ -3283,6 +3298,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else {
 			if (r->tag)
 				tag = r->tag;
+			if (r->rtableid >= 0)
+				rtableid = r->rtableid;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -3337,7 +3354,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action == PF_DROP)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag, rtableid)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3476,7 +3493,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	sa_family_t		 af = pd->af;
 	u_int8_t		 icmptype, icmpcode;
 	int			 state_icmp = 0;
-	int			 tag = -1;
+	int			 tag = -1, rtableid = -1;
 #ifdef INET6
 	int			 rewrite = 0;
 #endif /* INET6 */
@@ -3610,6 +3627,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else {
 			if (r->tag)
 				tag = r->tag;
+			if (r->rtableid >= 0)
+				rtableid = r->rtableid;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -3644,7 +3663,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action != PF_PASS)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag, rtableid)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3780,7 +3799,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
-	int			 tag = -1;
+	int			 tag = -1, rtableid = -1;
 	int			 asd = 0;
 
 	if (pf_check_congestion(ifq)) {
@@ -3865,6 +3884,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else {
 			if (r->tag)
 				tag = r->tag;
+			if (r->rtableid >= 0)
+				rtableid = r->rtableid;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -3927,7 +3948,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action != PF_PASS)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag, rtableid)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -4104,7 +4125,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	if (r->action != PF_PASS)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag, -1)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -6046,7 +6067,7 @@ done:
 	}
 
 	if (s && s->tag)
-		pf_tag_packet(m, pd.pf_mtag, s->tag);
+		pf_tag_packet(m, pd.pf_mtag, s->tag, r->rtableid);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
@@ -6392,7 +6413,7 @@ done:
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
 	if (s && s->tag)
-		pf_tag_packet(m, pd.pf_mtag, s->tag);
+		pf_tag_packet(m, pd.pf_mtag, s->tag, r->rtableid);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
