@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.205 2006/07/01 10:33:12 miod Exp $
+$OpenBSD: usbdevs,v 1.206 2006/07/07 15:02:04 pedro Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -378,6 +378,7 @@ vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
+vendor MICRODIA		0x0c45	Microdia
 vendor SEALEVEL		0x0c52	Sealevel System
 vendor EASYDISK		0x0c76	EasyDisk
 vendor KYOCERA2		0x0c88	Kyocera
