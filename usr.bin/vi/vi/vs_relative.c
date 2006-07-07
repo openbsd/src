@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.5 2006/05/21 19:21:30 otto Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.6 2006/07/07 12:05:10 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -146,10 +146,6 @@ done:		if (diffp != NULL)		/* XXX */
 	 */
 	p = lp;
 	curoff = 0;
-
-	/* Leading number if O_NUMBER option set. */
-	if (O_ISSET(sp, O_NUMBER))
-		scno += O_NUMBER_LENGTH;
 
 	/* Macro to return the display length of any signal character. */
 #define	CHLEN(val) (ch = *(u_char *)p++) == '\t' &&			\
