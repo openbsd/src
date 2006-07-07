@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.243 2006/06/26 22:14:59 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.244 2006/07/07 00:01:15 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1051,22 +1051,36 @@ pciide_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	/*
-	 * Check the ID register to see that it's a PCI IDE controller.
-	 * If it is, we assume that we can deal with it; it _should_
-	 * work in a standardized way...
-	 */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
-		return (1);
-	}
-
-	/*
  	 * Some controllers (e.g. promise Ultra-33) don't claim to be PCI IDE
 	 * controllers. Let see if we can deal with it anyway.
 	 */
 	pp = pciide_lookup_product(pa->pa_id);
-	if (pp  && (pp->ide_flags & IDE_PCI_CLASS_OVERRIDE)) {
+	if (pp  && (pp->ide_flags & IDE_PCI_CLASS_OVERRIDE))
 		return (1);
+
+	/*
+	 * Check the ID register to see that it's a PCI IDE controller.
+	 * If it is, we assume that we can deal with it; it _should_
+	 * work in a standardized way...
+	 */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE) {
+		switch (PCI_SUBCLASS(pa->pa_class)) {
+		case PCI_SUBCLASS_MASS_STORAGE_IDE:
+			return (1);
+
+		/*
+		 * We only match these if we know they have
+		 * a match, as we may not support native interfaces
+		 * on them.
+		 */
+		case PCI_SUBCLASS_MASS_STORAGE_SATA:
+		case PCI_SUBCLASS_MASS_STORAGE_RAID:
+			if (pp)
+				return (1);
+			else
+				return (0);
+			break;
+		}
 	}
 
 	return (0);
