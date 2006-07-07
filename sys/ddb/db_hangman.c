@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.26 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.27 2006/07/07 12:42:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -127,7 +127,7 @@ db_randomsym(size_t *lenp)
 
 	/* don't show symtab name if there are less than 3 of 'em */
 	if (nsymtabs < 3)
-		while(*q++ != ':');
+		while (*q++ != ':');
 
 	/* strlen(q) && ignoring underscores and colons */
 	for ((*lenp) = 0, p = q; *p; p++)
@@ -147,7 +147,7 @@ db_hang(int tries, char *word, struct _abc *sabc)
 	int m;
 #endif
 
-	for(p = hangpic; *p; p++)
+	for (p = hangpic; *p; p++)
 		cnputc((*p >= '0' && *p <= '9') ? ((tries <= (*p) - '0') ?
 		    substchar[(*p) - '0'] : ' ') : *p);
 
@@ -237,9 +237,12 @@ db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				if (ISALPHA(*p))
 					ABC_SETRIGHT(TOLOWER(*p));
 		}
+		if (tries)
+			db_guesses++;
 		db_hang(tries, word, sabc);
-		db_printf("\nScore: %lu/%lu\n", db_plays, ++db_guesses);
+		db_printf("\nScore: %lu/%lu\n", db_plays, db_guesses);
 		word = NULL;
-		if (tries) break;
+		if (tries)
+			break;
 	}
 }
