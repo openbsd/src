@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.66 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.67 2006/07/07 13:01:40 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -122,7 +122,7 @@ cvs_status_local(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNKNOWN ||
-	    cf->file_rcs->rf_inattic == 1) {
+	    (cf->file_rcs != NULL && cf->file_rcs->rf_inattic == 1)) {
 		l = snprintf(buf, sizeof(buf), "no file %s\t", cf->file_name);
 		if (l == -1 || l >= (int)sizeof(buf))
 			fatal("cvs_status_local: overflow");
