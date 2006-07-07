@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.67 2006/06/23 20:35:25 steven Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.68 2006/07/07 12:00:25 ray Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.67 2006/06/23 20:35:25 steven Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.68 2006/07/07 12:00:25 ray Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -1142,13 +1142,13 @@ proxy_connect(int socket, char *host)
 	if (!port)
 		port = "443";
 
-	if (debug)
-		printf("CONNECT %s:%s HTTP/1.1\n\n", host, port);
 	l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\n\n", host, port);
 	if (l == -1)
 		errx(1, "Could not allocate memory to assemble connect string!");
+	if (debug)
+		printf("%s", connstr);
 	if (write(socket, connstr, l) != l)
-		 errx(1, "Could not send connect string: %s", strerror(errno));
+		err(1, "Could not send connect string");
 	read(socket, &buf, sizeof(buf)); /* only proxy header XXX: error handling? */
 	return(200);
 }
