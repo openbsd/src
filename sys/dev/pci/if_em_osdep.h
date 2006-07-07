@@ -1,6 +1,6 @@
 /**************************************************************************
 
-Copyright (c) 2001-2003, Intel Corporation
+Copyright (c) 2001-2006, Intel Corporation
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.8 2006/07/05 01:15:30 brad Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.9 2006/07/07 02:56:18 brad Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -65,74 +65,106 @@ struct em_osdep
 {
 	bus_space_tag_t		mem_bus_space_tag;
 	bus_space_handle_t	mem_bus_space_handle;
+	bus_space_tag_t		io_bus_space_tag;
+	bus_space_handle_t	io_bus_space_handle;
+	bus_space_tag_t		flash_bus_space_tag;
+	bus_space_handle_t	flash_bus_space_handle;
 	struct device		*dev;
 
 	struct pci_attach_args	em_pa;
 
 	bus_size_t		em_memsize;
 	bus_addr_t		em_membase;
-
-	bus_space_handle_t	em_iobhandle;
-	bus_space_tag_t		em_iobtag;
 	bus_size_t		em_iosize;
 	bus_addr_t		em_iobase;
+	bus_size_t		em_flashsize;
+	bus_addr_t		em_flashbase;
 };
 
 #define E1000_WRITE_FLUSH(hw)	E1000_READ_REG(hw, STATUS)
 
 /* Read from an absolute offset in the adapter's memory space */
 #define E1000_READ_OFFSET(hw, offset) \
-	bus_space_read_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			    offset)
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			  offset)
 
 /* Write to an absolute offset in the adapter's memory space */
 #define E1000_WRITE_OFFSET(hw, offset, value) \
-	bus_space_write_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			    offset, value)
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			   offset, value)
 
 /* Convert a register name to its offset in the adapter's memory space */
 #define E1000_REG_OFFSET(hw, reg) \
 	((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg)
 
+/* Register READ/WRITE macros */
+
 #define E1000_READ_REG(hw, reg) \
-	E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg))
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			  ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg))
 
 #define E1000_WRITE_REG(hw, reg, value) \
-	E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg), value)
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg), \
+			   value)
 
 #define E1000_READ_REG_ARRAY(hw, reg, index) \
-	E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2))
-
-#define E1000_READ_REG_ARRAY_DWORD	E1000_READ_REG_ARRAY
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			  ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg) \
+			  + ((index) << 2))
 
 #define E1000_WRITE_REG_ARRAY(hw, reg, index, value) \
-	E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg) \
+			   + ((index) << 2), value)
+
+#define E1000_READ_REG_ARRAY_DWORD E1000_READ_REG_ARRAY
+#define E1000_WRITE_REG_ARRAY_DWORD E1000_WRITE_REG_ARRAY
 
 #define E1000_WRITE_REG_ARRAY_BYTE(hw, reg, index, value) \
-	bus_space_write_1( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			    E1000_REG_OFFSET(hw, reg) + (index), \
-			    value)
+	bus_space_write_1(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg \
+			   + index), value)
 
 #define E1000_WRITE_REG_ARRAY_WORD(hw, reg, index, value) \
-	bus_space_write_2( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			    E1000_REG_OFFSET(hw, reg) + (index), \
-			    value)
+	bus_space_write_2(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg \
+			   + (index << 1)), value)
 
-#define E1000_WRITE_REG_ARRAY_DWORD(hw, reg, index, value) \
-	E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
+#define E1000_READ_ICH8_REG(hw, reg) \
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, reg)
+
+#define E1000_READ_ICH8_REG16(hw, reg) \
+	bus_space_read_2(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, reg)
+
+#define E1000_WRITE_ICH8_REG(hw, reg, value) \
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
+			   reg, value)
+
+#define E1000_WRITE_ICH8_REG16(hw, reg, value) \
+	bus_space_write_2(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->flash_bus_space_handle, \
+			   reg, value)
 
 #define em_io_read(hw, port) \
-	bus_space_read_4(((struct em_osdep *)(hw)->back)->em_iobtag, \
-			    ((struct em_osdep *)(hw)->back)->em_iobhandle, (port))
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->io_bus_space_tag, \
+			 ((struct em_osdep *)(hw)->back)->io_bus_space_handle, (port))
 
 #define em_io_write(hw, port, value) \
-	bus_space_write_4(((struct em_osdep *)(hw)->back)->em_iobtag, \
-			    ((struct em_osdep *)(hw)->back)->em_iobhandle, \
-			    (port), (value))
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->io_bus_space_tag, \
+			  ((struct em_osdep *)(hw)->back)->io_bus_space_handle, \
+			   (port), (value))
 
 #ifdef DEBUG
 #define EM_KASSERT(exp,msg)	do { if (!(exp)) panic msg; } while (0)
