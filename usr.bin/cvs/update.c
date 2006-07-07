@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.79 2006/07/03 07:09:35 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.80 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,8 +20,8 @@
 #include "cvs.h"
 #include "log.h"
 #include "diff.h"
+#include "remote.h"
 
-int	cvs_update(int, char **);
 int	prune_dirs = 0;
 int	print = 0;
 int	build_dirs = 0;
@@ -49,7 +49,7 @@ cvs_update(int argc, char **argv)
 	int flags;
 	struct cvs_recursion cr;
 
-	flags = CR_REPO | CR_RECURSE_DIRS;
+	flags = CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_update.cmd_opts)) != -1) {
 		switch (ch) {
@@ -97,15 +97,41 @@ cvs_update(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	cr.enterdir = cvs_update_enterdir;
-	cr.leavedir = cvs_update_leavedir;
-	cr.fileproc = cvs_update_local;
+	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+		cr.enterdir = cvs_update_enterdir;
+		cr.leavedir = cvs_update_leavedir;
+		cr.fileproc = cvs_update_local;
+		flags |= CR_REPO;
+	} else {
+		if (reset_stickies)
+			cvs_client_send_request("Argument -A");
+		if (build_dirs)
+			cvs_client_send_request("Argument -d");
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+		if (prune_dirs)
+			cvs_client_send_request("Argument -P");
+		if (print)
+			cvs_client_send_request("Argument -p");
+
+		cr.enterdir = NULL;
+		cr.leavedir = NULL;
+		cr.fileproc = cvs_client_sendfile;
+	}
+
 	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
 	else
 		cvs_file_run(1, &arg, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("update");
+		cvs_client_get_responses();
+	}
 
 	return (0);
 }

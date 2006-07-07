@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.64 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.65 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
+#include "remote.h"
 
 #define LOG_REVSEP \
 "----------------------------"
@@ -27,7 +28,6 @@
 #define LOG_REVEND \
  "============================================================================="
 
-int	cvs_getlog(int, char **);
 void	cvs_log_local(struct cvs_file *);
 
 char 	*logrev = NULL;
@@ -71,13 +71,32 @@ cvs_getlog(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.fileproc = cvs_log_local;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+
+		if (logrev != NULL)
+			cvs_client_send_request("Argument -r%s", logrev);
+	} else {
+		cr.fileproc = cvs_log_local;
+	}
+
 	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
 	else
 		cvs_file_run(1, &arg, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("log");
+		cvs_client_get_responses();
+	}
 
 	return (0);
 }
@@ -114,65 +133,65 @@ cvs_log_local(struct cvs_file *cf)
 		return;
 	}
 
-	printf("\nRCS file: %s", cf->file_rpath);
-	printf("\nWorking file: %s", cf->file_path);
-	printf("\nhead:");
+	cvs_printf("\nRCS file: %s", cf->file_rpath);
+	cvs_printf("\nWorking file: %s", cf->file_path);
+	cvs_printf("\nhead:");
 	if (cf->file_rcs->rf_head != NULL)
-		printf(" %s", rcsnum_tostr(cf->file_rcs->rf_head,
+		cvs_printf(" %s", rcsnum_tostr(cf->file_rcs->rf_head,
 		    numb, sizeof(numb)));
 
-	printf("\nbranch:");
+	cvs_printf("\nbranch:");
 	if (rcs_branch_get(cf->file_rcs) != NULL) {
-		printf(" %s", rcsnum_tostr(rcs_branch_get(cf->file_rcs),
+		cvs_printf(" %s", rcsnum_tostr(rcs_branch_get(cf->file_rcs),
 		    numb, sizeof(numb)));
 	}
 
-	printf("\nlocks: %s", (cf->file_rcs->rf_flags & RCS_SLOCK)
+	cvs_printf("\nlocks: %s", (cf->file_rcs->rf_flags & RCS_SLOCK)
 	    ? "strict" : "");
 	TAILQ_FOREACH(lkp, &(cf->file_rcs->rf_locks), rl_list)
-		printf("\n\t%s: %s", lkp->rl_name,
+		cvs_printf("\n\t%s: %s", lkp->rl_name,
 		    rcsnum_tostr(lkp->rl_num, numb, sizeof(numb)));
 
-	printf("\naccess list:\n");
+	cvs_printf("\naccess list:\n");
 	TAILQ_FOREACH(acp, &(cf->file_rcs->rf_access), ra_list)
-		printf("\t%s\n", acp->ra_name);
+		cvs_printf("\t%s\n", acp->ra_name);
 
-	printf("symbolic names:\n");
+	cvs_printf("symbolic names:\n");
 	TAILQ_FOREACH(sym, &(cf->file_rcs->rf_symbols), rs_list) {
-		printf("\t%s: %s\n", sym->rs_name,
+		cvs_printf("\t%s: %s\n", sym->rs_name,
 		    rcsnum_tostr(sym->rs_num, numb, sizeof(numb)));
 	}
 
-	printf("keyword substitution: %s\n",
+	cvs_printf("keyword substitution: %s\n",
 	    cf->file_rcs->rf_expand == NULL ? "kv" : cf->file_rcs->rf_expand);
 
-	printf("total revisions: %u", cf->file_rcs->rf_ndelta);
+	cvs_printf("total revisions: %u", cf->file_rcs->rf_ndelta);
 
 	if (logrev != NULL)
 		nrev = cvs_revision_select(cf->file_rcs, logrev);
 	else
 		nrev = cf->file_rcs->rf_ndelta;
 
-	printf(";\tselected revisions: %u", nrev);
-	printf("\n");
-	printf("description:\n%s", cf->file_rcs->rf_desc);
+	cvs_printf(";\tselected revisions: %u", nrev);
+	cvs_printf("\n");
+	cvs_printf("description:\n%s", cf->file_rcs->rf_desc);
 
 	TAILQ_FOREACH(rdp, &(cf->file_rcs->rf_delta), rd_list) {
 		if (logrev != NULL &&
 		    !(rdp->rd_flags & RCS_RD_SELECT))
 			continue;
 
-		printf("%s\n", LOG_REVSEP);
+		cvs_printf("%s\n", LOG_REVSEP);
 
 		rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
-		printf("revision %s", numb);
+		cvs_printf("revision %s", numb);
 
 		strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S",
 		    &rdp->rd_date);
-		printf("\ndate: %s;  author: %s;  state: %s;\n", timeb,
+		cvs_printf("\ndate: %s;  author: %s;  state: %s;\n", timeb,
 		    rdp->rd_author, rdp->rd_state);
-		printf("%s", rdp->rd_log);
+		cvs_printf("%s", rdp->rd_log);
 	}
 
-	printf("%s\n", LOG_REVEND);
+	cvs_printf("%s\n", LOG_REVEND);
 }

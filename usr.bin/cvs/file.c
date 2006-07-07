@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.161 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.162 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -279,7 +279,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				(void)close(fd);
 				goto next;
 			}
-		} else {
+		} else if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
 			if (stat(d, &st) == -1) {
 				cvs_log(LP_ERRNO, "%s", d);
 				goto next;

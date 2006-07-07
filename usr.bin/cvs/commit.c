@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.79 2006/07/02 21:01:48 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.80 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -21,8 +21,8 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
+#include "remote.h"
 
-int	cvs_commit(int, char **);
 void	cvs_commit_local(struct cvs_file *);
 void	cvs_commit_check_conflicts(struct cvs_file *);
 
@@ -86,6 +86,26 @@ cvs_commit(int argc, char **argv)
 
 	if (logmsg == NULL)
 		fatal("please use -m or -F to specify a log message for now");
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.enterdir = NULL;
+		cr.leavedir = NULL;
+		cr.fileproc = cvs_client_sendfile;
+		cr.flags = flags;
+
+		if (argc > 0)
+			cvs_file_run(argc, argv, &cr);
+		else
+			cvs_file_run(1, &arg, &cr);
+
+		cvs_client_send_request("Argument -m%s", logmsg);
+
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("ci");
+		cvs_client_get_responses();
+		return (0);
+	}
 
 	TAILQ_INIT(&files_affected);
 	conflicts_found = 0;

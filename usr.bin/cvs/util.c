@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.88 2006/06/14 20:28:53 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.89 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -99,8 +99,7 @@ cvs_strtomode(const char *str, mode_t *mode)
 		memset(ms, 0, sizeof ms);
 		if (sscanf(sp, "%c=%3s", &type, ms) != 2 &&
 			sscanf(sp, "%c=", &type) != 1) {
-			cvs_log(LP_ERR, "failed to scan mode string `%s'", sp);
-			continue;
+			fatal("failed to scan mode string `%s'", sp);
 		}
 
 		if (type <= 'a' || type >= 'z' ||
@@ -117,8 +116,7 @@ cvs_strtomode(const char *str, mode_t *mode)
 		for (sp = ms; *sp != '\0'; sp++) {
 			if (*sp <= 'a' || *sp >= 'z' ||
 			    cvs_modes[(int)type][*sp - 'a'] == 0) {
-				cvs_log(LP_ERR,
-				    "invalid permission bit `%c'", *sp);
+				fatal("invalid permission bit `%c'", *sp);
 			} else
 				m |= cvs_modes[(int)type][*sp - 'a'];
 		}

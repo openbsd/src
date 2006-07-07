@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.35 2006/05/27 03:30:30 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.36 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -31,7 +31,6 @@
 #include "log.h"
 
 extern char *__progname;
-
 static int send_m = 1;
 
 /*
@@ -85,8 +84,10 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	/* The cvs program appends the command name to the program name */
 	if (level == LP_TRACE) {
 		strlcpy(prefix, " -> ", sizeof(prefix));
-		if (cvs_cmdop == CVS_OP_SERVER)
+		if (cvs_server_active)
 			prefix[0] = 'S';
+		else
+			prefix[0] = 'C';
 	} else if (cvs_command != NULL) {
 		if (level == LP_ABORT)
 			snprintf(prefix, sizeof(prefix), "%s [%s aborted]",
@@ -108,7 +109,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	else
 		out = stderr;
 
-	if (cvs_cmdop == CVS_OP_SERVER) {
+	if (cvs_server_active) {
 		if (out == stdout)
 			putc('M', out);
 		else {
@@ -145,7 +146,7 @@ cvs_printf(const char *fmt, ...)
 
 	va_start(vap, fmt);
 
-	if (cvs_cmdop == CVS_OP_SERVER) {
+	if (cvs_server_active) {
 		ret = vasprintf(&nstr, fmt, vap);
 		if (ret == -1)
 			fatal("cvs_printf: %s", strerror(errno));

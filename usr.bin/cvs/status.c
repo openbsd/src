@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.67 2006/07/07 13:01:40 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.68 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -20,8 +20,8 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "remote.h"
 
-int	cvs_status(int, char **);
 void	cvs_status_local(struct cvs_file *);
 
 static int show_sym = 0;
@@ -61,7 +61,7 @@ cvs_status(int argc, char **argv)
 	char *arg = ".";
 	struct cvs_recursion cr;
 
-	flags = CR_REPO | CR_RECURSE_DIRS;
+	flags = CR_RECURSE_DIRS;
 
 	while ((ch = getopt(argc, argv, cvs_cmd_status.cmd_opts)) != -1) {
 		switch (ch) {
@@ -83,13 +83,31 @@ cvs_status(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.fileproc = cvs_status_local;
+
+	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+		flags |= CR_REPO;
+		cr.fileproc = cvs_status_local;
+	} else {
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+		if (show_sym)
+			cvs_client_send_request("Argument -v");
+		cr.fileproc = cvs_client_sendfile;
+	}
+
 	cr.flags = flags;
 
 	if (argc > 0)
 		cvs_file_run(argc, argv, &cr);
 	else
 		cvs_file_run(1, &arg, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("status");
+		cvs_client_get_responses();
+	}
 
 	return (0);
 }

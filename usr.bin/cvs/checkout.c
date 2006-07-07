@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.65 2006/07/01 20:30:46 reyk Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.66 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include "cvs.h"
 #include "log.h"
 #include "diff.h"
+#include "remote.h"
 
 int	cvs_checkout(int, char **);
 int	cvs_export(int, char **);
@@ -167,55 +168,66 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	time_t rcstime;
 	CVSENTRIES *ent;
 	struct timeval tv[2];
-	char *entry, rev[16], timebuf[64], tbuf[32], stickytag[32];
+	char *p, *entry, rev[16], timebuf[64], tbuf[32], stickytag[32];
 
 	rcsnum_tostr(rnum, rev, sizeof(rev));
 
-	cvs_log(LP_TRACE, "cvs_checkout_file(%s, %s, %d)",
-	    cf->file_path, rev, flags);
+	cvs_log(LP_TRACE, "cvs_checkout_file(%s, %s, %d) -> %s",
+	    cf->file_path, rev, flags,
+	    (cvs_server_active) ? "to client" : "to disk");
 
 	nbp = rcs_kwexp_buf(bp, cf->file_rcs, rnum);
 
 	if (flags & CO_DUMP) {
-		if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
-			fatal("cvs_checkout_file: %s", strerror(errno));
+		if (cvs_server_active) {
+			cvs_printf("dump file %s to client\n", cf->file_path);
+		} else {
+			if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
+				fatal("cvs_checkout_file: %s", strerror(errno));
+		}
+
 		cvs_buf_free(nbp);
 		return;
 	}
 
-	oflags = O_WRONLY | O_TRUNC;
-	if (cf->fd != -1) {
-		exists = 1;
-		(void)close(cf->fd);
-	} else  {
-		exists = 0;
-		oflags |= O_CREAT;
-	}
+	if (cvs_server_active == 0) {
+		oflags = O_WRONLY | O_TRUNC;
+		if (cf->fd != -1) {
+			exists = 1;
+			(void)close(cf->fd);
+		} else  {
+			exists = 0;
+			oflags |= O_CREAT;
+		}
 
-	cf->fd = open(cf->file_path, oflags);
-	if (cf->fd == -1)
-		fatal("cvs_checkout_file: open: %s", strerror(errno));
+		cf->fd = open(cf->file_path, oflags);
+		if (cf->fd == -1)
+			fatal("cvs_checkout_file: open: %s", strerror(errno));
 
-	if (cvs_buf_write_fd(nbp, cf->fd) == -1)
-		fatal("cvs_checkout_file: %s", strerror(errno));
+		if (cvs_buf_write_fd(nbp, cf->fd) == -1)
+			fatal("cvs_checkout_file: %s", strerror(errno));
 
-	cvs_buf_free(nbp);
+		cvs_buf_free(nbp);
 
-	if (fchmod(cf->fd, 0644) == -1)
-		fatal("cvs_checkout_file: fchmod: %s", strerror(errno));
+		if (fchmod(cf->fd, 0644) == -1)
+			fatal("cvs_checkout_file: fchmod: %s", strerror(errno));
 
-	if (exists == 0) {
-		rcstime = rcs_rev_getdate(cf->file_rcs, rnum);
-		rcstime = cvs_hack_time(rcstime, 0);
+		if (exists == 0) {
+			rcstime = rcs_rev_getdate(cf->file_rcs, rnum);
+			rcstime = cvs_hack_time(rcstime, 0);
+		} else {
+			time(&rcstime);
+		}
+
+		tv[0].tv_sec = rcstime;
+		tv[0].tv_usec = 0;
+		tv[1] = tv[0];
+		if (futimes(cf->fd, tv) == -1)
+			fatal("cvs_checkout_file: futimes: %s",
+			    strerror(errno));
 	} else {
 		time(&rcstime);
 	}
-
-	tv[0].tv_sec = rcstime;
-	tv[0].tv_usec = 0;
-	tv[1] = tv[0];
-	if (futimes(cf->fd, tv) == -1)
-		fatal("cvs_checkout_file: futimes: %s", strerror(errno));
 
 	rcstime = cvs_hack_time(rcstime, 1);
 
@@ -244,9 +256,29 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, BUF *bp, int flags)
 	l = snprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s//%s", cf->file_name,
 	    rev, timebuf, stickytag);
 
-	ent = cvs_ent_open(cf->file_wd);
-	cvs_ent_add(ent, entry);
-	cvs_ent_close(ent, ENT_SYNC);
+	if (cvs_server_active == 0) {
+		ent = cvs_ent_open(cf->file_wd);
+		cvs_ent_add(ent, entry);
+		cvs_ent_close(ent, ENT_SYNC);
+	} else {
+		if ((p = strrchr(cf->file_rpath, ',')) != NULL)
+			*p = '\0';
+
+		cvs_server_send_response("Updated %s/", cf->file_wd);
+		cvs_remote_output(cf->file_rpath);
+		cvs_remote_output(entry);
+		cvs_remote_output("u=rw,g=rw,o=rw");
+
+		/* XXX */
+		printf("%ld\n", cvs_buf_len(nbp));
+
+		if (cvs_buf_write_fd(nbp, STDOUT_FILENO) == -1)
+			fatal("cvs_checkout_file: failed to send file");
+		cvs_buf_free(nbp);
+
+		if (p != NULL)
+			*p = ',';
+	}
 
 	xfree(entry);
 }

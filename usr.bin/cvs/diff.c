@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.107 2006/07/01 01:07:50 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.108 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,8 +20,8 @@
 #include "cvs.h"
 #include "diff.h"
 #include "log.h"
+#include "remote.h"
 
-int	cvs_diff(int, char **);
 void	cvs_diff_local(struct cvs_file *);
 
 static int Nflag = 0;
@@ -95,7 +95,41 @@ cvs_diff(int argc, char **argv)
 
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
-	cr.fileproc = cvs_diff_local;
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cr.fileproc = cvs_client_sendfile;
+
+		if (!(flags & CR_RECURSE_DIRS))
+			cvs_client_send_request("Argument -l");
+
+		switch (diff_format) {
+		case D_CONTEXT:
+			cvs_client_send_request("Argument -c");
+			break;
+		case D_RCSDIFF:
+			cvs_client_send_request("Argument -n");
+			break;
+		case D_UNIFIED:
+			cvs_client_send_request("Argument -u");
+			break;
+		default:
+			break;
+		}
+
+		if (Nflag == 1)
+			cvs_client_send_request("Argument -N");
+
+		if (diff_pflag == 1)
+			cvs_client_send_request("Argument -p");
+
+		if (rev1 != NULL)
+			cvs_client_send_request("Argument -r%s", rev1);
+		if (rev2 != NULL)
+			cvs_client_send_request("Argument -r%s", rev2);
+	} else {
+		cr.fileproc = cvs_diff_local;
+	}
+
 	cr.flags = flags;
 
 	diff_rev1 = diff_rev2 = NULL;
@@ -104,6 +138,13 @@ cvs_diff(int argc, char **argv)
 		cvs_file_run(argc, argv, &cr);
 	else
 		cvs_file_run(1, &arg, &cr);
+
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request("diff");
+		cvs_client_get_responses();
+	}
 
 	return (0);
 }

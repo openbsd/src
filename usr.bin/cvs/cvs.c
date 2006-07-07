@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.105 2006/06/28 20:19:05 reyk Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.106 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -31,6 +31,7 @@
 #include "config.h"
 #include "log.h"
 #include "file.h"
+#include "remote.h"
 
 extern char *__progname;
 
@@ -48,6 +49,7 @@ int	cvs_noexec = 0;	/* set to 1 to disable disk operations (-n option) */
 int	cvs_error = -1;	/* set to the correct error code on failure */
 int	cvs_cmdop;
 int	cvs_umask = CVS_UMASK_DEFAULT;
+int	cvs_server_active = 0;
 
 char	*cvs_tagname = NULL;
 char	*cvs_defargs;		/* default global arguments from .cvsrc */
@@ -96,6 +98,14 @@ cvs_cleanup(void)
 
 	cvs_log(LP_TRACE, "cvs_cleanup: removing temp files");
 	cvs_worklist_run(&temp_files, cvs_worklist_unlink);
+
+	if (cvs_server_active) {
+		if (cvs_rmdir(cvs_server_path) == -1)
+			cvs_log(LP_ERR,
+			    "warning: failed to remove server directory: %s",
+			    cvs_server_path);
+		xfree(cvs_server_path);
+	}
 }
 
 void
@@ -115,6 +125,7 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	struct stat st;
 	char fpath[MAXPATHLEN];
+	char *root, *rootp;
 
 	tzset();
 
@@ -217,14 +228,33 @@ main(int argc, char **argv)
 
 	cvs_file_init();
 
+	if (cvs_cmdop == CVS_OP_SERVER) {
+		setvbuf(stdin, NULL, _IOLBF, 0);
+		setvbuf(stdout, NULL, _IOLBF, 0);
+
+		cvs_server_active = 1;
+		root = cvs_remote_input();
+		if ((rootp = strchr(root, ' ')) == NULL)
+			fatal("bad Root request");
+		cvs_rootstr = xstrdup(rootp + 1);
+		xfree(root);
+	}
+
 	if ((current_cvsroot = cvsroot_get(".")) == NULL) {
 		cvs_log(LP_ERR,
 		    "No CVSROOT specified! Please use the '-d' option");
 		fatal("or set the CVSROOT environment variable.");
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
-		fatal("remote setups are not supported yet");
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_server_active == 1)
+			fatal("remote Root while already running as server?");
+
+		cvs_client_connect_to_server();
+		cmdp->cmd(cmd_argc, cmd_argv);
+		cvs_cleanup();
+		return (0);
+	}
 
 	i = snprintf(fpath, sizeof(fpath), "%s/%s", current_cvsroot->cr_dir,
 	    CVS_PATH_ROOT);

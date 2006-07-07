@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.115 2006/07/01 20:30:46 reyk Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.116 2006/07/07 17:37:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -274,6 +274,7 @@ extern char *cvs_msg;
 extern char *cvs_rsh;
 extern char *cvs_tmpdir;
 extern char *import_repository;
+extern char *cvs_server_path;
 
 extern int  cvs_umask;
 extern int  verbosity;
@@ -285,6 +286,7 @@ extern int  cvs_nocase;
 extern int  cvs_noexec;
 extern int  cvs_readonly;
 extern int  cvs_error;
+extern int  cvs_server_active;
 
 extern struct cvs_cmd *cvs_cdt[];
 
@@ -357,5 +359,12 @@ int	update_has_conflict_markers(struct cvs_file *);
 #define CO_MERGE	0x01
 #define CO_SETSTICKY	0x02
 #define CO_DUMP		0x04
+
+/* commands */
+int	cvs_commit(int, char **);
+int	cvs_diff(int, char **);
+int	cvs_status(int, char **);
+int	cvs_update(int, char **);
+int	cvs_getlog(int, char **);
 
 #endif
