@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.183 2006/05/08 14:36:10 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.184 2006/07/07 19:36:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -127,18 +127,6 @@ int physmem;	  /* available physical memory, in pages */
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
-
-/*
- * iomap stuff is for managing chunks of virtual address space that
- * can be allocated to IO devices.
- * VMEbus drivers use this at this now. Only on-board IO devices' addresses
- * are mapped so that pa == va. XXX smurph.
- */
-
-vaddr_t iomapbase;
-
-struct extent *iomap_extent;
-struct vm_map *iomap_map;
 
 #ifdef MULTIPROCESSOR
 __cpu_simple_lock_t cpu_mutex = __SIMPLELOCK_UNLOCKED;
@@ -447,17 +435,6 @@ cpu_startup()
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * Allocate map for external I/O.
-	 */
-	iomap_map = uvm_km_suballoc(kernel_map, &iomapbase, &maxaddr,
-	    IOMAP_SIZE, 0, FALSE, NULL);
-
-	iomap_extent = extent_create("iomap", iomapbase,
-	    iomapbase + IOMAP_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	if (iomap_extent == NULL)
-		panic("unable to allocate extent for iomap");
 
 	printf("avail mem = %ld (%d pages)\n", ptoa(uvmexp.free), uvmexp.free);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,

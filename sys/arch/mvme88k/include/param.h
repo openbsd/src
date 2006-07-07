@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.37 2005/11/27 23:48:44 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.38 2006/07/07 19:36:52 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -52,12 +52,6 @@
  */
 #define KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00010000	/* start of kernel text */
-
-/*
- * IO space
- */
-
-#define	IOMAP_SIZE	0x01000000	/* roughly 0xff000000 - 0xffffffff */
 
 #ifdef   _KERNEL
 #if !defined(_LOCORE)

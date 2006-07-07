@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.20 2006/05/06 16:59:28 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.21 2006/07/07 19:36:50 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -32,6 +32,7 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/extent.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,14 +76,14 @@ const struct mvme88k_bus_space_tag mainbus_bustag = {
 	mainbus_vaddr
 };
 
-extern struct extent *iomap_extent;
-extern struct vm_map *iomap_map;
+bus_addr_t	 bs_threshold;
+struct extent	*bs_extent;
 
 /*
  * Obio (internal IO) space is mapped 1:1 (see pmap_bootstrap() for details).
  *
  * However, sram attaches as a child of mainbus, but does not reside in
- * internal IO space. As a result, we have to allow both 1:1 and iomap
+ * internal IO space. As a result, we have to allow both 1:1 and regular
  * translations, depending upon the address to map.
  */
 
@@ -91,25 +92,8 @@ mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
     bus_space_handle_t *ret)
 {
 	vaddr_t map;
-	static bus_addr_t threshold = 0;
 
-	if (threshold == 0) {
-#ifdef M88100
-		if (CPU_IS88100)
-			threshold = BATC8_VA;	/* hardwired BATC */
-#endif
-#ifdef MVME197
-		if (CPU_IS88110)
-			threshold = OBIO197_START;
-#endif
-	}
-
-	if (addr >= threshold)
-		map = (vaddr_t)addr;
-	else {
-		map = mapiodev((paddr_t)addr, size);
-	}
-
+	map = mapiodev((paddr_t)addr, size);
 	if (map == NULL)
 		return ENOMEM;
 
@@ -138,7 +122,7 @@ mainbus_vaddr(bus_space_handle_t handle)
 }
 
 /*
- * Map a range [pa, pa+size] in the given map to a kernel address
+ * Map a range [pa, pa+size) in the given map to a kernel address
  * in iomap space.
  *
  * Note: To be flexible, I did not put a restriction on the alignment
@@ -146,41 +130,50 @@ mainbus_vaddr(bus_space_handle_t handle)
  * we might have several mappings for a given chunk of the IO page.
  */
 vaddr_t
-mapiodev(pa, size)
-	paddr_t pa;
+mapiodev(addr, size)
+	paddr_t addr;
 	int size;
 {
-	vaddr_t	iova, tva, off;
-	paddr_t ppa;
+	vaddr_t	va, iova, off;
+	paddr_t pa;
 	int s, error;
 
 	if (size <= 0)
 		return NULL;
 
-	ppa = trunc_page(pa);
-	off = pa & PGOFSET;
+	if (addr >= bs_threshold)
+		return ((vaddr_t)addr);
+
+	pa = trunc_page(addr);
+	off = addr & PGOFSET;
 	size = round_page(off + size);
 
 	s = splhigh();
-	error = extent_alloc(iomap_extent, size, PAGE_SIZE, 0, EX_NOBOUNDARY,
-	    EX_WAITSPACE, &iova);
+	error = extent_alloc_region(bs_extent, pa, size,
+	    EX_MALLOCOK | (cold ? 0 : EX_WAITSPACE));
 	splx(s);
 
 	if (error != 0)
 		return NULL;
 
-	tva = iova;
-	while (size != 0) {
-		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
-			   VM_PROT_WRITE | VM_PROT_READ,
-			   VM_PROT_WRITE | VM_PROT_READ | PMAP_WIRED);
-		size -= PAGE_SIZE;
-		tva += PAGE_SIZE;
-		ppa += PAGE_SIZE;
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0) {
+		extent_free(bs_extent, pa, size,
+		    EX_MALLOCOK | (cold ? 0 : EX_WAITSPACE));
+		return NULL;
 	}
-	pmap_update(vm_map_pmap(iomap_map));
 
-	return (iova + off);
+	iova = va + off;
+	while (size != 0) {
+		pmap_enter(pmap_kernel(), va, pa, UVM_PROT_RW,
+		    UVM_PROT_RW | PMAP_WIRED);
+		size -= PAGE_SIZE;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+
+	return (iova);
 }
 
 /*
@@ -192,20 +185,30 @@ unmapiodev(va, size)
 	int size;
 {
 	vaddr_t kva, off;
+	paddr_t pa;
 	int s, error;
+
+	if (va >= bs_threshold)
+		return;
 
 	off = va & PGOFSET;
 	kva = trunc_page(va);
 	size = round_page(off + size);
 
-	pmap_remove(vm_map_pmap(iomap_map), kva, kva + size);
-	pmap_update(vm_map_pmap(iomap_map));
+	if (pmap_extract(pmap_kernel(), kva, &pa) == FALSE)
+		panic("unmapiodev(%p,%p)", kva, size);
+
+	pmap_remove(pmap_kernel(), kva, kva + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, kva, size);
 
 	s = splhigh();
-	error = extent_free(iomap_extent, kva, size, EX_NOWAIT);
+	error = extent_free(bs_extent, pa, size,
+	    EX_MALLOCOK | (cold ? 0 : EX_WAITSPACE));
 #ifdef DIAGNOSTIC
 	if (error != 0)
-		printf("unmapiodev: extent_free failed\n");
+		printf("unmapiodev(%p pa %p, %p): extent_free failed\n",
+		    kva, pa, size);
 #endif
 	splx(s);
 }
@@ -277,6 +280,22 @@ mainbus_attach(parent, self, args)
 	 * Display cpu/mmu details for the main processor.
 	 */
 	cpu_configuration_print(1);
+
+	/*
+	 * Initialize an extent to keep track of I/O mappings.
+	 */
+#ifdef M88100
+	if (CPU_IS88100)
+		bs_threshold = BATC8_VA;	/* hardwired BATC */
+#endif
+#ifdef MVME197
+	if (CPU_IS88110)
+		bs_threshold = OBIO197_START;
+#endif
+	bs_extent = extent_create("bus_space", physmem,
+	    bs_threshold, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	if (bs_extent == NULL)
+		panic("unable to allocate bus_space extent");
 
 	(void)config_search(mainbus_scan, self, args);
 }
