@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.69 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.70 2006/07/07 04:06:11 gwk Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -192,8 +192,7 @@ apm_get_event(struct apmregs *r)
 }
 
 const char *
-apm_err_translate(code)
-	int code;
+apm_err_translate(int code)
 {
 	switch(code) {
 	case APM_ERR_PM_DISABLED:
@@ -230,9 +229,7 @@ apm_err_translate(code)
 int apmerrors = 0;
 
 void
-apm_perror(str, regs)
-	const char *str;
-	struct apmregs *regs;
+apm_perror(const char *str, struct apmregs *regs)
 {
 	printf("apm0: APM %s: %s (%d)\n", str,
 	    apm_err_translate(APM_ERR_CODE(regs)),
@@ -243,9 +240,7 @@ apm_perror(str, regs)
 }
 
 void
-apm_power_print (sc, regs)
-	struct apm_softc *sc;
-	struct apmregs *regs;
+apm_power_print (struct apm_softc *sc, struct apmregs *regs)
 {
 #if !defined(APM_NOPRINT)
 	sc->batt_life = BATT_LIFE(regs);
@@ -344,9 +339,7 @@ apm_standby()
 }
 
 void
-apm_resume(sc, regs)
-	struct apm_softc *sc;
-	struct apmregs *regs;
+apm_resume(struct apm_softc *sc, struct apmregs *regs)
 {
 	extern int perflevel;
 
@@ -369,9 +362,7 @@ apm_resume(sc, regs)
 }
 
 int
-apm_record_event(sc, type)
-	struct apm_softc *sc;
-	u_int type;
+apm_record_event(struct apm_softc *sc, u_int type)
 {
 	if (!apm_error && (sc->sc_flags & SCFLAG_OPEN) == 0) {
 		DPRINTF(("apm_record_event: no user waiting\n"));
@@ -386,9 +377,7 @@ apm_record_event(sc, type)
 }
 
 int
-apm_handle_event(sc, regs)
-	struct apm_softc *sc;
-	struct apmregs *regs;
+apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 {
 	struct apmregs nregs;
 	int ret = 0;
@@ -517,8 +506,7 @@ apm_handle_event(sc, regs)
 }
 
 int
-apm_periodic_check(sc)
-	struct apm_softc *sc;
+apm_periodic_check(struct apm_softc *sc)
 {
 	struct apmregs regs;
 	int ret = 0;
@@ -557,8 +545,7 @@ apm_periodic_check(sc)
 }
 
 void
-apm_powmgt_enable(onoff)
-	int onoff;
+apm_powmgt_enable(int onoff)
 {
 	struct apmregs regs;
 	bzero(&regs, sizeof(regs));
@@ -569,9 +556,7 @@ apm_powmgt_enable(onoff)
 }
 
 void
-apm_powmgt_engage(onoff, dev)
-	int onoff;
-	u_int dev;
+apm_powmgt_engage(int onoff, u_int dev)
 {
 	struct apmregs regs;
 	if (apm_minver == 0)
@@ -586,9 +571,7 @@ apm_powmgt_engage(onoff, dev)
 
 #ifdef notused
 void
-apm_devpowmgt_enable(onoff, dev)
-	int onoff;
-	u_int dev;
+apm_devpowmgt_enable(int onoff, u_int dev)
 {
 	struct apmregs regs;
 	if (apm_minver == 0)
@@ -606,8 +589,7 @@ apm_devpowmgt_enable(onoff, dev)
 #endif
 
 int
-apm_set_powstate(dev, state)
-	u_int dev, state;
+apm_set_powstate(u_int dev, u_int state)
 {
 	struct apmregs regs;
 	if (!apm_cd.cd_ndevs || (apm_minver == 0 && state > APM_SYS_OFF))
@@ -688,8 +670,7 @@ apm_cpu_idle(void)
 }
 
 void
-apm_set_ver(self)
-	struct apm_softc *self;
+apm_set_ver(struct apm_softc *self)
 {
 	struct apmregs regs;
 	int rv = 0;
@@ -747,8 +728,7 @@ apm_set_ver(self)
 }
 
 void
-apm_disconnect(sc)
-	struct apm_softc *sc;
+apm_disconnect(struct apm_softc *sc)
 {
 	struct apmregs regs;
 	bzero(&regs, sizeof(regs));
@@ -764,9 +744,7 @@ apm_disconnect(sc)
 }
 
 int
-apmprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+apmprobe(struct device *parent, void *match, void *aux)
 {
 	struct bios_attach_args *ba = aux;
 	bios_apminfo_t *ap = ba->bios_apmp;
@@ -810,9 +788,7 @@ apmprobe(parent, match, aux)
 }
 
 void
-apmattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct bios_attach_args *ba = aux;
 	bios_apminfo_t *ap = ba->bios_apmp;
@@ -936,8 +912,7 @@ apmattach(parent, self, aux)
 }
 
 void
-apm_thread_create(v)
-	void *v;
+apm_thread_create(void *v)
 {
 	struct apm_softc *sc = v;
 
@@ -959,8 +934,7 @@ apm_thread_create(v)
 }
 
 void
-apm_thread(v)
-	void *v;
+apm_thread(void *v)
 {
 	struct apm_softc *sc = v;
 
@@ -973,10 +947,7 @@ apm_thread(v)
 }
 
 int
-apmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+apmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct apm_softc *sc;
 	int error = 0;
@@ -1021,10 +992,7 @@ apmopen(dev, flag, mode, p)
 }
 
 int
-apmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+apmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct apm_softc *sc;
 
@@ -1049,12 +1017,7 @@ apmclose(dev, flag, mode, p)
 }
 
 int
-apmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct apm_softc *sc;
 	struct apmregs regs;
@@ -1168,8 +1131,7 @@ apmioctl(dev, cmd, data, flag, p)
 }
 
 void
-filt_apmrdetach(kn)
-	struct knote *kn;
+filt_apmrdetach(struct knote *kn)
 {
 	struct apm_softc *sc = (struct apm_softc *)kn->kn_hook;
 
@@ -1179,9 +1141,7 @@ filt_apmrdetach(kn)
 }
 
 int
-filt_apmread(kn, hint)
-	struct knote *kn;
-	long hint;
+filt_apmread(struct knote *kn, long hint)
 {
 	/* XXX weird kqueue_scan() semantics */
 	if (hint && !kn->kn_data)
@@ -1191,9 +1151,7 @@ filt_apmread(kn, hint)
 }
 
 int
-apmkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+apmkqfilter(dev_t dev, struct knote *kn)
 {
 	struct apm_softc *sc;
 
