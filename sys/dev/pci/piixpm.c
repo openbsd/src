@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.22 2006/06/26 15:52:59 brad Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.23 2006/07/07 03:23:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -137,21 +137,23 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		/* No PCI IRQ */
 		printf(": SMI");
-	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
-		/* Install interrupt handler */
-		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih);
-			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-			    piixpm_intr, sc, sc->sc_dev.dv_xname);
-			if (sc->sc_ih != NULL) {
-				printf(": %s", intrstr);
-				sc->sc_poll = 0;
+	} else {
+		if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
+			/* Install interrupt handler */
+			if (pci_intr_map(pa, &ih) == 0) {
+				intrstr = pci_intr_string(pa->pa_pc, ih);
+				sc->sc_ih = pci_intr_establish(pa->pa_pc,
+				    ih, IPL_BIO, piixpm_intr, sc,
+				    sc->sc_dev.dv_xname);
+				if (sc->sc_ih != NULL) {
+					printf(": %s", intrstr);
+					sc->sc_poll = 0;
+				}
 			}
 		}
 		if (sc->sc_poll)
 			printf(": polling");
-	} else
-		printf(": polling");
+	}
 
 	printf("\n");
 
