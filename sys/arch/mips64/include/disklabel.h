@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.7 2006/07/03 20:00:22 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 2006/07/07 23:47:37 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -34,19 +34,10 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-enum disklabel_tag { DLT_I386, DLT_SGI };
-
-/*
- * What disklabels are we probing for, and in which order?
- */
-#ifndef LABELPROBES
-#define LABELPROBES	DLT_I386, DLT_SGI
-#endif
-
-#define	I386_LABELSECTOR	1		/* sector containing label */
-#define	I386_LABELOFFSET	0		/* offset of label in sector */
 #define	SGI_LABELSECTOR		1		/* sector containing label */
 #define	SGI_LABELOFFSET		0		/* offset of label in sector */
+#define	I386_LABELSECTOR	1		/* sector containing label */
+#define	I386_LABELOFFSET	0		/* offset of label in sector */
 
 #define LABELSECTOR		SGI_LABELSECTOR
 #define LABELOFFSET		SGI_LABELOFFSET
@@ -158,7 +149,6 @@ struct sgilabel {
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	enum disklabel_tag labeltag;
 	int labelsector;
 	union {
 		struct {
