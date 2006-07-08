@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.245 2006/07/07 03:56:33 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.246 2006/07/08 06:39:00 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -917,6 +917,14 @@ const struct pciide_product_desc pciide_ati_products[] = {
 	  0,
 	  ixp_chip_map
 	},
+	{ PCI_PRODUCT_ATI_IXP_IDE_600,
+	  0,
+	  ixp_chip_map
+	},
+	{ PCI_PRODUCT_ATI_IXP_SATA_300,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  sii3112_chip_map
+	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_1,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
@@ -924,10 +932,6 @@ const struct pciide_product_desc pciide_ati_products[] = {
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_2,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
-	},
-	{ PCI_PRODUCT_ATI_IXP_IDE_600,
-	  0,
-	  ixp_chip_map
 	}
 };
 
