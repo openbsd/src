@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.10 2006/07/08 00:34:20 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.11 2006/07/08 01:02:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -137,6 +137,9 @@ client_check_directory(char *data)
 
 	if ((parent = dirname(data)) == NULL)
 		fatal("client_check_directory: overflow");
+
+	if (!strcmp(parent, "."))
+		return;
 
 	entry = xmalloc(CVS_ENT_MAXLINELEN);
 	l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", base);
