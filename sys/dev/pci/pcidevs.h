@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1093 2006/07/08 18:45:17 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1094 2006/07/08 19:15:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2006,8 +2006,7 @@
 #define	PCI_PRODUCT_INTEL_RCUxx	0x9622		/* RCUxx I2O RAID */
 #define	PCI_PRODUCT_INTEL_RCU31	0x9641		/* RCU31 I2O RAID */
 #define	PCI_PRODUCT_INTEL_RCU31L	0x96a1		/* RCU31L I2O RAID */
-#define	PCI_PRODUCT_INTEL_21152_1	0xb150		/* S21152BB PCI-PCI */
-#define	PCI_PRODUCT_INTEL_21152_2	0xb152		/* S21152BB PCI-PCI */
+#define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21154AE/BE PCI-PCI */
 
 /* Intergraph products */
