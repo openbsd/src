@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.93 2006/07/08 02:54:43 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.94 2006/07/08 03:10:22 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -141,11 +141,11 @@
  *	the DEC 21041 PCI Ethernet Controller.
  *	the DEC 21140 PCI Fast Ethernet Controller.
  */
-int tulip_pci_probe(struct device *parent, void *match, void *aux);
-void tulip_pci_attach(struct device * const parent, struct device * const self, void * const aux);
+int tulip_probe(struct device *parent, void *match, void *aux);
+void tulip_attach(struct device * const parent, struct device * const self, void * const aux);
 
 struct cfattach de_ca = {
-	sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
+	sizeof(tulip_softc_t), tulip_probe, tulip_attach
 };
 
 struct cfdriver de_cd = {
@@ -232,7 +232,6 @@ int tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data);
 void tulip_ifstart(struct ifnet *ifp);
 void tulip_ifstart_one(struct ifnet *ifp);
 void tulip_ifwatchdog(struct ifnet *ifp);
-void tulip_attach(tulip_softc_t * const sc);
 int tulip_busdma_allocmem(tulip_softc_t * const sc, size_t size,
     bus_dmamap_t *map_p, tulip_desc_t **desc_p);
 int tulip_busdma_init(tulip_softc_t * const sc);
@@ -4401,46 +4400,6 @@ tulip_ifwatchdog(struct ifnet *ifp)
 #undef printf
 #endif
 
-void
-tulip_attach(tulip_softc_t * const sc)
-{
-    struct ifnet * const ifp = &sc->tulip_if;
-
-    ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
-    ifp->if_ioctl = tulip_ifioctl;
-    ifp->if_start = tulip_ifstart;
-    ifp->if_watchdog = tulip_ifwatchdog;
-    ifp->if_timer = 1;
-
-    printf(
-	   TULIP_PRINTF_FMT ": %s%s pass %d.%d%s address %s\n",
-	   TULIP_PRINTF_ARGS,
-	   sc->tulip_boardid,
-#if defined(TULIP_DEBUG)
-	   tulip_chipdescs[sc->tulip_chipid],
-#else
-	"",
-#endif
-	   (sc->tulip_revinfo & 0xF0) >> 4,
-	   sc->tulip_revinfo & 0x0F,
-	   (sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
-		 == TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "",
-	   ether_sprintf(sc->tulip_enaddr));
-
-    (*sc->tulip_boardsw->bd_media_probe)(sc);
-    ifmedia_init(&sc->tulip_ifmedia, 0,
-		 tulip_ifmedia_change,
-		 tulip_ifmedia_status);
-    sc->tulip_flags &= ~TULIP_DEVICEPROBE;
-    tulip_ifmedia_add(sc);
-
-    tulip_reset(sc);
-
-    IFQ_SET_READY(&ifp->if_snd);
-    if_attach(ifp);
-    ether_ifattach(ifp);
-}
-
 int
 tulip_busdma_allocmem(tulip_softc_t * const sc, size_t size,
     bus_dmamap_t *map_p, tulip_desc_t **desc_p)
@@ -4580,7 +4539,7 @@ tulip_initring(tulip_softc_t * const sc, tulip_ringinfo_t * const ri,
 }
 
 int
-tulip_pci_probe(struct device *parent, void *match, void *aux)
+tulip_probe(struct device *parent, void *match, void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -4606,10 +4565,11 @@ tulip_shutdown(void *arg)
 }
 
 void
-tulip_pci_attach(struct device * const parent, struct device * const self, void * const aux)
+tulip_attach(struct device * const parent, struct device * const self, void * const aux)
 {
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
+    struct ifnet * const ifp = &sc->tulip_if;
     const int unit = sc->tulip_dev.dv_unit;
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
@@ -4780,6 +4740,35 @@ tulip_pci_attach(struct device * const parent, struct device * const self, void 
 	    printf("%s: warning: couldn't establish shutdown hook\n",
 		   sc->tulip_xname);
 
-	tulip_attach(sc);
+	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+	ifp->if_ioctl = tulip_ifioctl;
+	ifp->if_start = tulip_ifstart;
+	ifp->if_watchdog = tulip_ifwatchdog;
+	ifp->if_timer = 1;
+
+	printf(TULIP_PRINTF_FMT ": %s%s pass %d.%d%s address %s\n",
+	       TULIP_PRINTF_ARGS, sc->tulip_boardid,
+#if defined(TULIP_DEBUG)
+	       tulip_chipdescs[sc->tulip_chipid],
+#else
+	       "",
+#endif
+	(sc->tulip_revinfo & 0xF0) >> 4,  
+	  sc->tulip_revinfo & 0x0F,
+	    (sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
+		== TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "",
+	ether_sprintf(sc->tulip_enaddr));
+
+	(*sc->tulip_boardsw->bd_media_probe)(sc);
+	ifmedia_init(&sc->tulip_ifmedia, 0,
+	    tulip_ifmedia_change, tulip_ifmedia_status);
+	sc->tulip_flags &= ~TULIP_DEVICEPROBE;
+	tulip_ifmedia_add(sc);
+
+	tulip_reset(sc);
+
+	IFQ_SET_READY(&ifp->if_snd);
+	if_attach(ifp);
+	ether_ifattach(ifp);
     }
 }
