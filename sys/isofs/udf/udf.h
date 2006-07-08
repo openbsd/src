@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.5 2006/07/05 17:57:50 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.6 2006/07/08 20:53:31 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -92,7 +92,7 @@ struct udf_dirstream {
 };
 
 #define	VFSTOUDFFS(mp)	((struct udf_mnt *)((mp)->mnt_data))
-#define	VTON(vp)	((struct udf_node *)((vp)->v_data))
+#define	VTOU(vp)	((struct udf_node *)((vp)->v_data))
 
 /*
  * The block layer refers to things in terms of 512 byte blocks by default.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.14 2006/07/05 17:57:50 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.15 2006/07/08 20:53:31 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -654,7 +654,7 @@ udf_vptofh(struct vnode *vp, struct fid *fhp)
 	struct udf_node *node;
 	struct ifid *ifhp;
 
-	node = VTON(vp);
+	node = VTOU(vp);
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
 	ifhp->ifid_ino = node->hash_id;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.15 2006/07/05 17:57:50 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.16 2006/07/08 20:53:31 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -210,7 +210,7 @@ udf_access(void *v)
 	mode_t a_mode, mode;
 
 	vp = ap->a_vp;
-	node = VTON(vp);
+	node = VTOU(vp);
 	a_mode = ap->a_mode;
 
 	if (a_mode & VWRITE) {
@@ -327,7 +327,7 @@ udf_getattr(void *v)
 
 	vp = ap->a_vp;
 	vap = ap->a_vap;
-	node = VTON(vp);
+	node = VTOU(vp);
 	fentry = node->fentry;
 
 	vap->va_fsid = node->i_dev;
@@ -431,7 +431,7 @@ udf_read(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct udf_node *node = VTON(vp);
+	struct udf_node *node = VTOU(vp);
 	struct buf *bp;
 	uint8_t *data;
 	off_t fsize, offset;
@@ -734,7 +734,7 @@ udf_readdir(void *v)
 
 	vp = ap->a_vp;
 	uio = ap->a_uio;
-	node = VTON(vp);
+	node = VTOU(vp);
 	udfmp = node->udfmp;
 	uiodir.eofflag = 1;
 
@@ -860,7 +860,7 @@ udf_strategy(void *v)
 
 	bp = ap->a_bp;
 	vp = bp->b_vp;
-	node = VTON(vp);
+	node = VTOU(vp);
 
 	/* cd9660 has this test reversed, but it seems more logical this way */
 	if (bp->b_blkno != bp->b_lblkno) {
@@ -911,7 +911,7 @@ udf_lock(void *v)
 
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTON(vp)->i_lock, ap->a_flags, &vp->v_interlock));
+	return (lockmgr(&VTOU(vp)->i_lock, ap->a_flags, &vp->v_interlock));
 }
 
 int
@@ -925,7 +925,7 @@ udf_unlock(void *v)
 
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTON(vp)->i_lock, ap->a_flags | LK_RELEASE,
+	return (lockmgr(&VTOU(vp)->i_lock, ap->a_flags | LK_RELEASE,
 	    &vp->v_interlock));
 }
 
@@ -936,7 +936,7 @@ udf_islocked(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	return (lockstatus(&VTON(ap->a_vp)->i_lock));
+	return (lockstatus(&VTOU(ap->a_vp)->i_lock));
 }
 
 int
@@ -946,7 +946,7 @@ udf_print(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct udf_node *node = VTON(vp);
+	struct udf_node *node = VTOU(vp);
 
 	/*
 	 * Complete the information given by vprint().
@@ -973,7 +973,7 @@ udf_bmap(void *v)
 	daddr_t lsector;
 	int error;
 
-	node = VTON(ap->a_vp);
+	node = VTOU(ap->a_vp);
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = node->i_devvp;
@@ -1025,7 +1025,7 @@ udf_lookup(void *v)
 	extern struct nchstats nchstats;
 
 	dvp = ap->a_dvp;
-	node = VTON(dvp);
+	node = VTOU(dvp);
 	udfmp = node->udfmp;
 	nameiop = ap->a_cnp->cn_nameiop;
 	flags = ap->a_cnp->cn_flags;
@@ -1188,7 +1188,7 @@ udf_reclaim(void *v)
 	struct udf_node *unode;
 
 	vp = ap->a_vp;
-	unode = VTON(vp);
+	unode = VTOU(vp);
 
 	if (unode != NULL) {
 		udf_hashrem(unode);

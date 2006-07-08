@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.5 2006/07/05 17:57:50 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.6 2006/07/08 20:53:31 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -193,7 +193,7 @@ udf_vat_get(struct udf_mnt *ump)
 	if (error)
 		return (error);
 
-	unp = VTON(vp);
+	unp = VTOU(vp);
 	unp->vatlen = (letoh64(unp->fentry->inf_len) - 36) >> 2;
 
 	ump->im_vat = vp;
@@ -216,7 +216,7 @@ udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
 	}
 
 	/* Sanity check the given sector */
-	if (*sector >= VTON(ump->im_vat)->vatlen)
+	if (*sector >= VTOU(ump->im_vat)->vatlen)
 		return (EINVAL);
 
 	return (udf_vat_read(ump, sector));
@@ -231,7 +231,7 @@ udf_vat_read(struct udf_mnt *ump, uint32_t *sector)
 	uint8_t *data;
 	int error, size;
 
-	unp = VTON(ump->im_vat);
+	unp = VTOU(ump->im_vat);
 	size = 4;
 
 	/*
