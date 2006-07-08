@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.80 2006/07/03 01:47:36 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.81 2006/07/08 18:00:28 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.77 2006/07/03 01:47:06 brad Exp 
+ *	OpenBSD: miidevs,v 1.78 2006/07/08 18:00:12 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -76,6 +76,7 @@
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_SMSC	0x00800f	/* Standard Microsystems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
+#define	MII_OUI_TOPIC	0x0090c3	/* Topic Semiconductor */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_VIA	0x004063	/* VIA Networking Technologies */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
@@ -242,8 +243,14 @@
 #define	MII_STR_xxDEC_xxDC	"DC"
 
 /* IC Plus Corp. PHYs */
+#define	MII_MODEL_ICPLUS_IP100	0x0004
+#define	MII_STR_ICPLUS_IP100	"IP100 10/100 PHY"
 #define	MII_MODEL_ICPLUS_IP101	0x0005
 #define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
+#define	MII_MODEL_ICPLUS_IP1000A	0x0008
+#define	MII_STR_ICPLUS_IP1000A	"IP1000A 10/100/1000 PHY"
+#define	MII_MODEL_ICPLUS_IP1001	0x0025
+#define	MII_STR_ICPLUS_IP1001	"IP1001 10/100/1000 PHY"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_xxICS_1890	0x0002
