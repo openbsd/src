@@ -1,4 +1,4 @@
-/* $OpenBSD: includes.h,v 1.45 2006/07/06 16:03:53 stevesk Exp $ */
+/* $OpenBSD: includes.h,v 1.46 2006/07/08 21:47:12 stevesk Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,12 +17,10 @@
 #define INCLUDES_H
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/param.h>
 #include <sys/time.h>
 
 #include <netdb.h>
-
 #include <stddef.h>
 #include <stdio.h>
 #include <errno.h>

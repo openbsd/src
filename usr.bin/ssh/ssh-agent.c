@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.140 2006/06/13 02:17:07 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.141 2006/07/08 21:47:12 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,6 +39,7 @@
 #include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <paths.h>
