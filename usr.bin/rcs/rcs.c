@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.20 2006/06/11 22:25:35 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.21 2006/07/08 07:48:58 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1082,6 +1082,9 @@ rcs_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 			for (i = 0; (i < nbln) && (dlp != NULL); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
+				if (dlp->l_line != NULL)
+					xfree(dlp->l_line);
+				xfree(dlp);
 				dlp = ndlp;
 				/* last line is gone - reset dlp */
 				if (dlp == NULL) {
