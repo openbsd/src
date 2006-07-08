@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.16 2006/07/08 23:11:59 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.17 2006/07/08 23:29:20 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -508,7 +508,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct udf_mnt *udfmp;
 	struct proc *p;
 	struct vnode *vp;
-	struct unode *unode;
+	struct unode *up;
 	struct file_entry *fe;
 	int error, sector, size;
 
@@ -527,8 +527,8 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Allocate memory and check the tag id's before grabbing a new
 	 * vnode, since it's hard to roll back if there is a problem.
 	 */
-	unode = pool_get(&unode_pool, PR_WAITOK);
-	bzero(unode, sizeof(struct unode));
+	up = pool_get(&unode_pool, PR_WAITOK);
+	bzero(up, sizeof(struct unode));
 
 	/*
 	 * Copy in the file entry.  Per the spec, the size can only be 1 block.
@@ -538,7 +538,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	udf_vat_map(udfmp, &sector);
 	if ((error = RDSECTOR(devvp, sector, udfmp->bsize, &bp)) != 0) {
 		printf("Cannot read sector %d\n", sector);
-		pool_put(&unode_pool, unode);
+		pool_put(&unode_pool, up);
 		if (bp != NULL)
 			brelse(bp);
 		return (error);
@@ -547,47 +547,47 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	fe = (struct file_entry *)bp->b_data;
 	if (udf_checktag(&fe->tag, TAGID_FENTRY)) {
 		printf("Invalid file entry!\n");
-		pool_put(&unode_pool, unode);
+		pool_put(&unode_pool, up);
 		brelse(bp);
 		return (ENOMEM);
 	}
 
 	size = UDF_FENTRY_SIZE + letoh32(fe->l_ea) + letoh32(fe->l_ad);
 
-	unode->u_fentry = malloc(size, M_UDFFENTRY, M_NOWAIT);
-	if (unode->u_fentry == NULL) {
-		pool_put(&unode_pool, unode);
+	up->u_fentry = malloc(size, M_UDFFENTRY, M_NOWAIT);
+	if (up->u_fentry == NULL) {
+		pool_put(&unode_pool, up);
 		brelse(bp);
 		return (ENOMEM); /* Cannot allocate file entry block */
 	}
 
-	bcopy(bp->b_data, unode->u_fentry, size);
+	bcopy(bp->b_data, up->u_fentry, size);
 	
 	brelse(bp);
 	bp = NULL;
 
 	if ((error = udf_allocv(mp, &vp, p))) {
-		free(unode->u_fentry, M_UDFFENTRY);
-		pool_put(&unode_pool, unode);
+		free(up->u_fentry, M_UDFFENTRY);
+		pool_put(&unode_pool, up);
 		return (error); /* Error from udf_allocv() */
 	}
 
-	unode->u_vnode = vp;
-	unode->u_ino = ino;
-	unode->u_devvp = udfmp->im_devvp;
-	unode->u_dev = udfmp->im_dev;
-	unode->u_ump = udfmp;
-	vp->v_data = unode;
+	up->u_vnode = vp;
+	up->u_ino = ino;
+	up->u_devvp = udfmp->im_devvp;
+	up->u_dev = udfmp->im_dev;
+	up->u_ump = udfmp;
+	vp->v_data = up;
 	VREF(udfmp->im_devvp);
 
-	lockinit(&unode->u_lock, PINOD, "unode", 0, 0);
+	lockinit(&up->u_lock, PINOD, "unode", 0, 0);
 
 	/*
 	 * udf_hashins() will lock the vnode for us.
 	 */
-	udf_hashins(unode);
+	udf_hashins(up);
 
-	switch (unode->u_fentry->icbtag.file_type) {
+	switch (up->u_fentry->icbtag.file_type) {
 	default:
 		vp->v_type = VBAD;
 		break;
@@ -651,13 +651,13 @@ udf_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 int
 udf_vptofh(struct vnode *vp, struct fid *fhp)
 {
-	struct unode *node;
+	struct unode *up;
 	struct ifid *ifhp;
 
-	node = VTOU(vp);
+	up = VTOU(vp);
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
-	ifhp->ifid_ino = node->u_ino;
+	ifhp->ifid_ino = up->u_ino;
 
 	return (0);
 }

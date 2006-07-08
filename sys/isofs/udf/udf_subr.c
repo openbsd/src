@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.7 2006/07/08 23:11:59 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.8 2006/07/08 23:29:20 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -186,15 +186,15 @@ int
 udf_vat_get(struct udf_mnt *ump)
 {
 	struct vnode *vp;
-	struct unode *unp;
+	struct unode *up;
 	int error;
 
 	error = udf_vget(ump->im_mountp, ump->part_len - 3, &vp);
 	if (error)
 		return (error);
 
-	unp = VTOU(vp);
-	unp->u_vatlen = (letoh64(unp->u_fentry->inf_len) - 36) >> 2;
+	up = VTOU(vp);
+	up->u_vatlen = (letoh64(up->u_fentry->inf_len) - 36) >> 2;
 
 	ump->im_vat = vp;
 	ump->im_flags &= ~UDF_MNT_FIND_VAT;
@@ -226,19 +226,19 @@ udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
 int
 udf_vat_read(struct udf_mnt *ump, uint32_t *sector)
 {
-	struct unode *unp;
+	struct unode *up;
 	struct buf *bp;
 	uint8_t *data;
 	int error, size;
 
-	unp = VTOU(ump->im_vat);
+	up = VTOU(ump->im_vat);
 	size = 4;
 
 	/*
 	 * Note that we rely on the buffer cache to keep frequently accessed
 	 * buffers around to avoid reading them from the disk all the time.
 	 */
-	error = udf_readatoffset(unp, &size, *sector << 2, &bp, &data);
+	error = udf_readatoffset(up, &size, *sector << 2, &bp, &data);
 	if (error) {
 		if (bp != NULL)
 			brelse(bp);
