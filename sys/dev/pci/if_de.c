@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.92 2006/06/01 09:45:48 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.93 2006/07/08 02:54:43 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4749,7 +4749,6 @@ tulip_pci_attach(struct device * const parent, struct device * const self, void 
 #endif
 	       (sc->tulip_revinfo & 0xF0) >> 4, sc->tulip_revinfo & 0x0F);
     } else {
-	int s;
 	int (*intr_rtn)(void *) = tulip_intr_normal;
 
 	if (sc->tulip_features & TULIP_HAVE_SHAREDINTR)
@@ -4781,8 +4780,6 @@ tulip_pci_attach(struct device * const parent, struct device * const self, void 
 	    printf("%s: warning: couldn't establish shutdown hook\n",
 		   sc->tulip_xname);
 
-	s = splnet();
 	tulip_attach(sc);
-	splx(s);
     }
 }
