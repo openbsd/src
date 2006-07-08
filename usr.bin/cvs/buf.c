@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.54 2006/06/14 14:10:50 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.55 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -374,7 +374,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
  * <template>, as per mkstemp
  */
 void
-cvs_buf_write_stmp(BUF *b, char *template, mode_t mode, struct timeval *tv)
+cvs_buf_write_stmp(BUF *b, char *template, struct timeval *tv)
 {
 	int fd;
 
@@ -385,10 +385,6 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode, struct timeval *tv)
 		(void)unlink(template);
 		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
 	}
-
-	if (fchmod(fd, mode) < 0)
-		cvs_log(LP_ERR, "permissions not set on temporary file %s",
-		    template);
 
 	if (tv != NULL) {
 		if (futimes(fd, tv) == -1)

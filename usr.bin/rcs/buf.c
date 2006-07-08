@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.5 2006/06/03 03:05:10 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.6 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -379,7 +379,7 @@ rcs_buf_write(BUF *b, const char *path, mode_t mode)
  * <template>, as per mkstemp
  */
 void
-rcs_buf_write_stmp(BUF *b, char *template, mode_t mode)
+rcs_buf_write_stmp(BUF *b, char *template)
 {
 	int fd;
 
@@ -392,10 +392,6 @@ rcs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 		(void)unlink(template);
 		errx(1, "rcs_buf_write_stmp: rcs_buf_write_fd: `%s'", template);
 	}
-
-	if (fchmod(fd, mode) < 0)
-		warn("permissions not set on temporary file %s",
-		    template);
 
 	(void)close(fd);
 }

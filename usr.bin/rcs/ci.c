@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.180 2006/06/03 03:05:10 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.181 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -342,13 +342,13 @@ checkin_diff_file(struct checkin_params *pb)
 	}
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b1, path1);
 
 	rcs_buf_free(b1);
 	b1 = NULL;
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b2, path2);
 
 	rcs_buf_free(b2);
 	b2 = NULL;

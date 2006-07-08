@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.66 2006/06/04 20:32:56 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.67 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -234,7 +234,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	tv2[1].tv_sec = t;
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b1, path1);
 
 	rcs_buf_free(b1);
 	b1 = NULL;
@@ -243,7 +243,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 		warn("utimes");
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b2, path2);
 
 	rcs_buf_free(b2);
 	b2 = NULL;
@@ -316,7 +316,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b1, path1, 0600);
+	rcs_buf_write_stmp(b1, path1);
 
 	rcs_buf_free(b1);
 	b1 = NULL;
@@ -325,7 +325,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 		warn("utimes");
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(b2, path2, 0600);
+	rcs_buf_write_stmp(b2, path2);
 
 	rcs_buf_free(b2);
 	b2 = NULL;

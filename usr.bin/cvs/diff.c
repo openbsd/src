@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.108 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.109 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -263,7 +263,7 @@ cvs_diff_local(struct cvs_file *cf)
 		if (len >= sizeof(p1))
 			fatal("cvs_diff_local: truncation");
 
-		cvs_buf_write_stmp(b1, p1, 0600, tv);
+		cvs_buf_write_stmp(b1, p1, tv);
 		cvs_buf_free(b1);
 	} else {
 		len = strlcpy(p1, CVS_PATH_DEVNULL, sizeof(p1));
@@ -280,7 +280,7 @@ cvs_diff_local(struct cvs_file *cf)
 		if (len >= sizeof(p2))
 			fatal("cvs_diff_local: truncation");
 
-		cvs_buf_write_stmp(b2, p2, 0600, tv2);
+		cvs_buf_write_stmp(b2, p2, tv2);
 		cvs_buf_free(b2);
 	} else {
 		len = strlcpy(p2, CVS_PATH_DEVNULL, sizeof(p2));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.53 2006/06/19 05:05:17 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.54 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -344,11 +344,11 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 
 	if (cvs_noexec != 1) {
 		(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-		cvs_buf_write_stmp(b1, p1, 0600, NULL);
+		cvs_buf_write_stmp(b1, p1, NULL);
 		cvs_buf_free(b1);
 
 		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		cvs_buf_write_stmp(b2, p2, 0600, NULL);
+		cvs_buf_write_stmp(b2, p2, NULL);
 		cvs_buf_free(b2);
 
 		diff_format = D_RCSDIFF;

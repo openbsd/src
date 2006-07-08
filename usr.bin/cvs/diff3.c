@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.25 2006/06/14 14:10:50 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.26 2006/07/08 09:25:44 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.25 2006/06/14 14:10:50 joris Exp $";
+    "$OpenBSD: diff3.c,v 1.26 2006/07/08 09:25:44 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -188,13 +188,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 
 	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
-	cvs_buf_write_stmp(b1, path1, 0600, NULL);
+	cvs_buf_write_stmp(b1, path1, NULL);
 
 	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
-	cvs_buf_write_stmp(b2, path2, 0600, NULL);
+	cvs_buf_write_stmp(b2, path2, NULL);
 
 	strlcpy(path3, "/tmp/diff3.XXXXXXXXXX", sizeof(path3));
-	cvs_buf_write_stmp(b3, path3, 0600, NULL);
+	cvs_buf_write_stmp(b3, path3, NULL);
 
 	cvs_buf_free(b2);
 	b2 = NULL;
@@ -203,13 +203,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, int workfd, RCSNUM *rev1,
 	cvs_diffreg(path2, path3, d2);
 
 	strlcpy(dp13, "/tmp/d13.XXXXXXXXXX", sizeof(dp13));
-	cvs_buf_write_stmp(d1, dp13, 0600, NULL);
+	cvs_buf_write_stmp(d1, dp13, NULL);
 
 	cvs_buf_free(d1);
 	d1 = NULL;
 
 	strlcpy(dp23, "/tmp/d23.XXXXXXXXXX", sizeof(dp23));
-	cvs_buf_write_stmp(d2, dp23, 0600, NULL);
+	cvs_buf_write_stmp(d2, dp23, NULL);
 
 	cvs_buf_free(d2);
 	d2 = NULL;

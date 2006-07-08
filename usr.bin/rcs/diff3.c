@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.10 2006/06/03 03:05:10 niallo Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.11 2006/07/08 09:25:44 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.10 2006/06/03 03:05:10 niallo Exp $";
+    "$OpenBSD: diff3.c,v 1.11 2006/07/08 09:25:44 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -181,9 +181,9 @@ merge_diff3(char **av, int flags)
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", rcs_tmpdir);
 
-	rcs_buf_write_stmp(b1, path1, 0600);
-	rcs_buf_write_stmp(b2, path2, 0600);
-	rcs_buf_write_stmp(b3, path3, 0600);
+	rcs_buf_write_stmp(b1, path1);
+	rcs_buf_write_stmp(b2, path2);
+	rcs_buf_write_stmp(b3, path3);
 
 	rcs_buf_free(b2);
 	b2 = NULL;
@@ -196,13 +196,13 @@ merge_diff3(char **av, int flags)
 	}
 
 	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d1, dp13, 0600);
+	rcs_buf_write_stmp(d1, dp13);
 
 	rcs_buf_free(d1);
 	d1 = NULL;
 
 	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d2, dp23, 0600);
+	rcs_buf_write_stmp(d2, dp23);
 
 	rcs_buf_free(d2);
 	d2 = NULL;
@@ -296,9 +296,9 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
 	(void)xasprintf(&path3, "%s/diff3.XXXXXXXXXX", rcs_tmpdir);
 
-	rcs_buf_write_stmp(b1, path1, 0600);
-	rcs_buf_write_stmp(b2, path2, 0600);
-	rcs_buf_write_stmp(b3, path3, 0600);
+	rcs_buf_write_stmp(b1, path1);
+	rcs_buf_write_stmp(b2, path2);
+	rcs_buf_write_stmp(b3, path3);
 
 	rcs_buf_free(b2);
 	b2 = NULL;
@@ -311,13 +311,13 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	}
 
 	(void)xasprintf(&dp13, "%s/d13.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d1, dp13, 0600);
+	rcs_buf_write_stmp(d1, dp13);
 
 	rcs_buf_free(d1);
 	d1 = NULL;
 
 	(void)xasprintf(&dp23, "%s/d23.XXXXXXXXXX", rcs_tmpdir);
-	rcs_buf_write_stmp(d2, dp23, 0600);
+	rcs_buf_write_stmp(d2, dp23);
 
 	rcs_buf_free(d2);
 	d2 = NULL;

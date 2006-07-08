@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.80 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.81 2006/07/08 09:25:44 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -394,11 +394,11 @@ commit_diff_file(struct cvs_file *cf)
 		fatal("commit_diff_file: failed to create diff buf");
 
 	(void)xasprintf(&p1, "%s/diff1.XXXXXXXXXX", cvs_tmpdir);
-	cvs_buf_write_stmp(b1, p1, 0600, NULL);
+	cvs_buf_write_stmp(b1, p1, NULL);
 	cvs_buf_free(b1);
 
 	(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-	cvs_buf_write_stmp(b2, p2, 0600, NULL);
+	cvs_buf_write_stmp(b2, p2, NULL);
 	cvs_buf_free(b2);
 
 	diff_format = D_RCSDIFF;
