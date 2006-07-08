@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.22 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.23 2006/07/08 17:50:30 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -33,7 +33,10 @@ killregion(int f, int n)
 	thisflag |= CFKILL;
 	curwp->w_dotp = region.r_linep;
 	curwp->w_doto = region.r_offset;
-	return (ldelete(region.r_size, KFORW));
+	s = ldelete(region.r_size, KFORW);
+	if (s == TRUE && curwp->w_dotline > curwp->w_markline)
+		curwp->w_dotline = curwp->w_markline;
+	return (s);
 }
 
 /*

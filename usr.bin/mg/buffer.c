@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.60 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.61 2006/07/08 17:50:30 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -532,7 +532,7 @@ bnew()
 	bp->b_bufp = bheadp;
 	bheadp = bp;
 	bp->b_dotline = bp->b_markline = 1;
-	bp->b_lines = 0;
+	bp->b_lines = 1;
 
 	return (bp);
 }
@@ -564,7 +564,7 @@ bclear(struct buffer *bp)
 	bp->b_markp = NULL;	/* Invalidate "mark"	 */
 	bp->b_marko = 0;
 	bp->b_dotline = bp->b_markline = 1;
-	bp->b_lines = 0;
+	bp->b_lines = 1;
 
 	return (TRUE);
 }

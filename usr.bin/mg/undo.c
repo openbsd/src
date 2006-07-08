@@ -1,6 +1,7 @@
-/* $OpenBSD: undo.c,v 1.38 2005/12/20 05:04:28 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.39 2006/07/08 17:50:30 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
+ * Copyright (c) 2005, 2006 Kjell Wooding <kjell@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +51,7 @@ int undo_disable_flag;
  * Local functions
  */
 static int find_dot(struct line *, int);
-static int find_lo(int, struct line **, int *);
+static int find_lo(int, struct line **, int *, int *);
 static struct undo_rec *new_undo_record(void);
 static int drop_oldest_undo_record(void);
 
@@ -84,11 +85,13 @@ find_dot(struct line *lp, int off)
 }
 
 static int
-find_lo(int pos, struct line **olp, int *offset)
+find_lo(int pos, struct line **olp, int *offset, int *lnum)
 {
 	struct line *p;
+	int lineno;
 
 	p = curbp->b_linep;
+	lineno = 0;
 	while (pos > llength(p)) {
 		pos -= llength(p) + 1;
 		if ((p = lforw(p)) == curbp->b_linep) {
@@ -96,9 +99,11 @@ find_lo(int pos, struct line **olp, int *offset)
 			*offset = 0;
 			return (FALSE);
 		}
+		lineno++;
 	}
 	*olp = p;
 	*offset = pos;
+	*lnum = lineno;
 
 	return (TRUE);
 }
@@ -438,6 +443,7 @@ undo(int f, int n)
 	struct line	*lp;
 	int		 offset, save, dot;
 	static int	 nulled = FALSE;
+	int		 lineno;
 
 	dot = find_dot(curwp->w_dotp, curwp->w_doto);
 
@@ -492,13 +498,15 @@ undo(int f, int n)
 			 */
 			if (ptr->type != BOUNDARY) {
 				if (find_lo(ptr->pos, &lp,
-				    &offset) == FALSE) {
+				    &offset, &lineno) == FALSE) {
 					ewprintf("Internal error in Undo!");
 					rval = FALSE;
 					break;
 				}
 				curwp->w_dotp = lp;
 				curwp->w_doto = offset;
+				curwp->w_markline = curwp->w_dotline;
+				curwp->w_dotline = lineno;
 			}
 
 			/*
