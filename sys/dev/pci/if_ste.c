@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.37 2006/05/28 00:04:24 jason Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.38 2006/07/08 19:56:38 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -607,7 +607,7 @@ int ste_intr(xsc)
 	/* Re-enable interrupts */
 	CSR_WRITE_2(sc, STE_IMR, STE_INTRS);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 		ste_start(ifp);
 
 	return claimed;
@@ -814,10 +814,8 @@ void ste_stats_update(xsc)
 			 * we don't get a call-back on re-init so do it
 			 * otherwise we get stuck in the wrong link state
 			 */
-#if 0
-			ste_miibus_statchg(&mii->mii_dev.dv_parent);
-#endif
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+			ste_miibus_statchg((struct device *)sc);
+			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				ste_start(ifp);
 		}
 	}
@@ -1529,7 +1527,7 @@ void ste_watchdog(ifp)
 	ste_reset(sc);
 	ste_init(sc);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		ste_start(ifp);
 
 	return;
