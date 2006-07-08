@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.136 2006/07/07 02:56:18 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.137 2006/07/08 04:34:34 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1603,9 +1603,11 @@ em_setup_interface(struct em_softc *sc)
 			    0, NULL);
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_100_TX | IFM_FDX, 
 			    0, NULL);
-		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T | IFM_FDX, 
-			    0, NULL);
-		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T, 0, NULL);
+		if (sc->hw.phy_type != em_phy_ife) {
+			ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T | IFM_FDX, 
+				    0, NULL);
+			ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T, 0, NULL);
+		}
 	}
 	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);
