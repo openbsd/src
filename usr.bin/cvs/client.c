@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.10 2006/07/08 00:34:20 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -90,6 +90,7 @@ struct cvs_req cvs_requests[] = {
 	{ "",				-1,	NULL, 0 }
 };
 
+static void client_check_directory(char *);
 static char *client_get_supported_responses(void);
 static char *lastdir = NULL;
 static int end_of_response = 0;
@@ -118,6 +119,35 @@ client_get_supported_responses(void)
 	cvs_buf_putc(bp, '\0');
 	d = cvs_buf_release(bp);
 	return (d);
+}
+
+static void
+client_check_directory(char *data)
+{
+	int l;
+	CVSENTRIES *entlist;
+	char *entry, *parent, *base;
+
+	STRIP_SLASH(data);
+
+	cvs_mkpath(data);
+
+	if ((base = basename(data)) == NULL)
+		fatal("client_check_directory: overflow");
+
+	if ((parent = dirname(data)) == NULL)
+		fatal("client_check_directory: overflow");
+
+	entry = xmalloc(CVS_ENT_MAXLINELEN);
+	l = snprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////", base);
+	if (l == -1 || l >= CVS_ENT_MAXLINELEN)
+		fatal("client_check_directory: overflow");
+
+	entlist = cvs_ent_open(parent);
+	cvs_ent_add(entlist, entry);
+	cvs_ent_close(entlist, ENT_SYNC);
+
+	xfree(entry);
 }
 
 void
@@ -302,6 +332,9 @@ cvs_client_sendfile(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_client_sendfile(%s)", cf->file_path);
 	cvs_remote_classify_file(cf);
+
+	if (cf->file_type == CVS_DIR)
+		return;
 
 	if (cf->file_ent != NULL) {
 		if (cf->file_status == FILE_ADDED) {
@@ -488,6 +521,8 @@ cvs_client_updated(char *data)
 	char revbuf[32], *len, *fpath, *wdir;
 
 	cvs_log(LP_TRACE, "cvs_client_updated(%s)", data);
+
+	client_check_directory(data);
 
 	rpath = cvs_remote_input();
 	entry = cvs_remote_input();
