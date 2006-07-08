@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.95 2006/07/08 03:58:09 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.96 2006/07/08 04:15:36 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4678,11 +4678,7 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 
     if ((retval = tulip_read_macaddr(sc)) < 0) {
 	printf(", %s%s pass %d.%d", sc->tulip_boardid,
-#if defined(TULIP_DEBUG)
 	     tulip_chipdescs[sc->tulip_chipid],
-#else
-	     "",
-#endif
 	      (sc->tulip_revinfo & 0xF0) >> 4, sc->tulip_revinfo & 0x0F);
 	printf(": can't read ENET ROM (why=%d) (", retval);
 	for (idx = 0; idx < 32; idx++)
@@ -4716,11 +4712,7 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 
 	    printf(", %s%s pass %d.%d%s: %s, address %s\n",
 		   sc->tulip_boardid,
-#if defined(TULIP_DEBUG)
 		   tulip_chipdescs[sc->tulip_chipid],
-#else
-		   "",
-#endif
 		   (sc->tulip_revinfo & 0xF0) >> 4,
 			sc->tulip_revinfo & 0x0F,
 			(sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
