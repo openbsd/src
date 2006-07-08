@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.77 2006/07/03 01:47:06 brad Exp $
+$OpenBSD: miidevs,v 1.78 2006/07/08 18:00:12 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -69,6 +69,7 @@ oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
 oui SMSC			0x00800f	Standard Microsystems
 oui TI				0x080028	Texas Instruments
+oui TOPIC			0x0090c3	Topic Semiconductor
 oui TSC				0x00c039	TDK Semiconductor
 oui VIA				0x004063	VIA Networking Technologies
 oui XAQTI			0x00e0ae	XaQti Corp.
@@ -180,7 +181,10 @@ model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model xxDEC xxDC		0x0001 DC
 
 /* IC Plus Corp. PHYs */
+model ICPLUS IP100		0x0004 IP100 10/100 PHY
 model ICPLUS IP101		0x0005 IP101 10/100 PHY
+model ICPLUS IP1000A		0x0008 IP1000A 10/100/1000 PHY
+model ICPLUS IP1001		0x0025 IP1001 10/100/1000 PHY
 
 /* Integrated Circuit Systems PHYs */
 model xxICS 1890		0x0002 ICS1890 10/100 PHY
