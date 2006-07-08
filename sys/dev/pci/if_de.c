@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.94 2006/07/08 03:10:22 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.95 2006/07/08 03:58:09 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -84,18 +84,6 @@
  */
 #if defined(__i386__)
 #define	TULIP_IOMAPPED
-#endif
-
-/*
- * This turns on all sort of debugging stuff and makes the
- * driver much larger.
- */
-#if 0
-#define TULIP_DEBUG
-#endif
-
-#if 0
-#define TULIP_PERFSTATS
 #endif
 
 #define	TULIP_HZ	10
@@ -3526,11 +3514,6 @@ tulip_tx_intr(tulip_softc_t * const sc)
 			bpf_mtap(sc->tulip_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		    m_freem(m);
-#if defined(TULIP_DEBUG)
-		} else {
-		    printf(TULIP_PRINTF_FMT ": tx_intr: failed to dequeue mbuf?!?\n",
-			TULIP_PRINTF_ARGS);
-#endif
 		}
 		if (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) {
 		    tulip_mediapoll_event_t event = TULIP_MEDIAPOLL_TXPROBE_OK;
@@ -4607,9 +4590,8 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 	       revinfo >> 4, revinfo & 0x0f);
 	return;
     } else if (chipid == TULIP_21140 && revinfo < 0x11) {
-	printf("\n");
-	printf("de%d: not configured; 21140 pass 1.1 required (%d.%d found)\n",
-	       unit, revinfo >> 4, revinfo & 0x0f);
+	printf(": not configured; 21140 pass 1.1 required (%d.%d found)\n",
+	       revinfo >> 4, revinfo & 0x0f);
 	return;
     }
 
@@ -4679,7 +4661,7 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
     tulip_initcsrs(sc, csr_base + csroffset, csrsize);
 
     if ((retval = tulip_busdma_init(sc)) != 0) {
-	printf("error initing bus_dma: %d\n", retval);
+	printf(": error initing bus_dma: %d\n", retval);
 	return;
     }
 
@@ -4695,19 +4677,17 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 		   bit longer anyways) */
 
     if ((retval = tulip_read_macaddr(sc)) < 0) {
+	printf(", %s%s pass %d.%d", sc->tulip_boardid,
+#if defined(TULIP_DEBUG)
+	     tulip_chipdescs[sc->tulip_chipid],
+#else
+	     "",
+#endif
+	      (sc->tulip_revinfo & 0xF0) >> 4, sc->tulip_revinfo & 0x0F);
 	printf(": can't read ENET ROM (why=%d) (", retval);
 	for (idx = 0; idx < 32; idx++)
 	    printf("%02x", sc->tulip_rombuf[idx]);
-	printf("\n");
-	printf(TULIP_PRINTF_FMT ": %s%s pass %d.%d address unknown",
-	       TULIP_PRINTF_ARGS,
-	       sc->tulip_boardid,
-#if defined(TULIP_DEBUG)
- tulip_chipdescs[sc->tulip_chipid],
-#else
- "",
-#endif
-	       (sc->tulip_revinfo & 0xF0) >> 4, sc->tulip_revinfo & 0x0F);
+	printf(", address unknown\n");
     } else {
 	int (*intr_rtn)(void *) = tulip_intr_normal;
 
@@ -4719,22 +4699,35 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 	    const char *intrstr;
 
 	    if (pci_intr_map(pa, &intrhandle)) {
-		printf(", couldn't map interrupt\n");
+		printf(": couldn't map interrupt\n");
 		return;
 	    }
+
 	    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 					      intr_rtn, sc, self->dv_xname);
 	    if (sc->tulip_ih == NULL) {
-		printf(", couldn't establish interrupt");
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 		    printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	    }
-	    printf(": %s", intrstr);
+
+	    printf(", %s%s pass %d.%d%s: %s, address %s\n",
+		   sc->tulip_boardid,
+#if defined(TULIP_DEBUG)
+		   tulip_chipdescs[sc->tulip_chipid],
+#else
+		   "",
+#endif
+		   (sc->tulip_revinfo & 0xF0) >> 4,
+			sc->tulip_revinfo & 0x0F,
+			(sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
+			== TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "",
+		   intrstr, ether_sprintf(sc->tulip_enaddr));
 	}
-	printf("\n");
+
 	sc->tulip_ats = shutdownhook_establish(tulip_shutdown, sc);
 	if (sc->tulip_ats == NULL)
 	    printf("%s: warning: couldn't establish shutdown hook\n",
@@ -4745,19 +4738,6 @@ tulip_attach(struct device * const parent, struct device * const self, void * co
 	ifp->if_start = tulip_ifstart;
 	ifp->if_watchdog = tulip_ifwatchdog;
 	ifp->if_timer = 1;
-
-	printf(TULIP_PRINTF_FMT ": %s%s pass %d.%d%s address %s\n",
-	       TULIP_PRINTF_ARGS, sc->tulip_boardid,
-#if defined(TULIP_DEBUG)
-	       tulip_chipdescs[sc->tulip_chipid],
-#else
-	       "",
-#endif
-	(sc->tulip_revinfo & 0xF0) >> 4,  
-	  sc->tulip_revinfo & 0x0F,
-	    (sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
-		== TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "",
-	ether_sprintf(sc->tulip_enaddr));
 
 	(*sc->tulip_boardsw->bd_media_probe)(sc);
 	ifmedia_init(&sc->tulip_ifmedia, 0,
