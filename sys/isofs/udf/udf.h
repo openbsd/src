@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.6 2006/07/08 20:53:31 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.7 2006/07/08 23:11:59 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -34,23 +34,23 @@
 
 #define UDF_HASHTBLSIZE 100
 
-struct udf_node {
-	LIST_ENTRY(udf_node)	le;
-	struct vnode	*i_vnode;
-	struct vnode	*i_devvp;
-	struct udf_mnt	*udfmp;
-	struct lock	i_lock;
-	dev_t		i_dev;
-	ino_t		hash_id;
+struct unode {
+	LIST_ENTRY(unode) u_le;
+	struct vnode *u_vnode;
+	struct vnode *u_devvp;
+	struct udf_mnt *u_ump;
+	struct lock u_lock;
+	dev_t u_dev;
+	ino_t u_ino;
 	union {
-		long diroff;
-		long vatlen;
+		long u_diroff;
+		long u_vatlen;
 	} un_u;
-	struct file_entry *fentry;
+	struct file_entry *u_fentry;
 };
 
-#define	diroff	un_u.diroff
-#define	vatlen	un_u.vatlen
+#define	u_diroff	un_u.u_diroff
+#define	u_vatlen	un_u.u_vatlen
 
 struct udf_mnt {
 	int			im_flags;
@@ -65,7 +65,7 @@ struct udf_mnt {
 	struct vnode		*im_vat;
 	struct vnode		*root_vp;
 	struct long_ad		root_icb;
-	LIST_HEAD(udf_hash_lh, udf_node)	*hashtbl;
+	LIST_HEAD(udf_hash_lh, unode)	*hashtbl;
 	u_long			hashsz;
 	struct mutex		hash_mtx;
 	int			p_sectors;
@@ -77,7 +77,7 @@ struct udf_mnt {
 #define	UDF_MNT_USES_VAT	0x02	/* Indicates a VAT must be used */
 
 struct udf_dirstream {
-	struct udf_node	*node;
+	struct unode	*node;
 	struct udf_mnt	*udfmp;
 	struct buf	*bp;
 	uint8_t		*data;
@@ -92,7 +92,7 @@ struct udf_dirstream {
 };
 
 #define	VFSTOUDFFS(mp)	((struct udf_mnt *)((mp)->mnt_data))
-#define	VTOU(vp)	((struct udf_node *)((vp)->v_data))
+#define	VTOU(vp)	((struct unode *)((vp)->v_data))
 
 /*
  * The block layer refers to things in terms of 512 byte blocks by default.
@@ -140,8 +140,8 @@ udf_getid(struct long_ad *icb)
 
 int udf_allocv(struct mount *, struct vnode **, struct proc *);
 int udf_hashlookup(struct udf_mnt *, ino_t, int, struct vnode **);
-int udf_hashins(struct udf_node *);
-int udf_hashrem(struct udf_node *);
+int udf_hashins(struct unode *);
+int udf_hashrem(struct unode *);
 int udf_checktag(struct desc_tag *, uint16_t);
 
 typedef	uint16_t unicode_t;

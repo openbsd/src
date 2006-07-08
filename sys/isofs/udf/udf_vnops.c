@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.16 2006/07/08 20:53:31 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.17 2006/07/08 23:11:59 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -55,7 +55,7 @@
 #include <isofs/udf/udf.h>
 #include <isofs/udf/udf_extern.h>
 
-int udf_bmap_internal(struct udf_node *, off_t, daddr_t *, uint32_t *);
+int udf_bmap_internal(struct unode *, off_t, daddr_t *, uint32_t *);
 
 int (**udf_vnodeop_p)(void *);
 struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
@@ -84,11 +84,11 @@ struct vnodeopv_desc udf_vnodeop_opv_desc =
 
 #define UDF_INVALID_BMAP	-1
 
-/* Look up a udf_node based on the ino_t passed in and return it's vnode */
+/* Look up a unode based on the ino_t passed in and return it's vnode */
 int
 udf_hashlookup(struct udf_mnt *udfmp, ino_t id, int flags, struct vnode **vpp)
 {
-	struct udf_node *node;
+	struct unode *node;
 	struct udf_hash_lh *lh;
 	struct proc *p = curproc;
 	int error;
@@ -103,15 +103,15 @@ loop:
 		return (ENOENT);
 	}
 
-	LIST_FOREACH(node, lh, le) {
-		if (node->hash_id == id) {
+	LIST_FOREACH(node, lh, u_le) {
+		if (node->u_ino == id) {
 			mtx_leave(&udfmp->hash_mtx);
-			error = vget(node->i_vnode, flags | LK_INTERLOCK, p);
+			error = vget(node->u_vnode, flags | LK_INTERLOCK, p);
 			if (error == ENOENT)
 				goto loop;
 			if (error)
 				return (error);
-			*vpp = node->i_vnode;
+			*vpp = node->u_vnode;
 			return (0);
 		}
 	}
@@ -122,38 +122,38 @@ loop:
 }
 
 int
-udf_hashins(struct udf_node *node)
+udf_hashins(struct unode *node)
 {
 	struct udf_mnt *udfmp;
 	struct udf_hash_lh *lh;
 	struct proc *p = curproc;
 
-	udfmp = node->udfmp;
+	udfmp = node->u_ump;
 
-	vn_lock(node->i_vnode, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(node->u_vnode, LK_EXCLUSIVE | LK_RETRY, p);
 	mtx_enter(&udfmp->hash_mtx);
-	lh = &udfmp->hashtbl[node->hash_id & udfmp->hashsz];
+	lh = &udfmp->hashtbl[node->u_ino & udfmp->hashsz];
 	if (lh == NULL)
 		LIST_INIT(lh);
-	LIST_INSERT_HEAD(lh, node, le);
+	LIST_INSERT_HEAD(lh, node, u_le);
 	mtx_leave(&udfmp->hash_mtx);
 
 	return (0);
 }
 
 int
-udf_hashrem(struct udf_node *node)
+udf_hashrem(struct unode *node)
 {
 	struct udf_mnt *udfmp;
 	struct udf_hash_lh *lh;
 
-	udfmp = node->udfmp;
+	udfmp = node->u_ump;
 
 	mtx_enter(&udfmp->hash_mtx);
-	lh = &udfmp->hashtbl[node->hash_id & udfmp->hashsz];
+	lh = &udfmp->hashtbl[node->u_ino & udfmp->hashsz];
 	if (lh == NULL)
-		panic("hash entry is NULL, node->hash_id= %d", node->hash_id);
-	LIST_REMOVE(node, le);
+		panic("hash entry is NULL, node->u_ino= %d", node->u_ino);
+	LIST_REMOVE(node, u_le);
 	mtx_leave(&udfmp->hash_mtx);
 
 	return (0);
@@ -177,14 +177,14 @@ udf_allocv(struct mount *mp, struct vnode **vpp, struct proc *p)
 
 /* Convert file entry permission (5 bits per owner/group/user) to a mode_t */
 static mode_t
-udf_permtomode(struct udf_node *node)
+udf_permtomode(struct unode *node)
 {
 	uint32_t perm;
 	uint16_t flags;
 	mode_t mode;
 
-	perm = letoh32(node->fentry->perm);
-	flags = letoh16(node->fentry->icbtag.flags);
+	perm = letoh32(node->u_fentry->perm);
+	flags = letoh16(node->u_fentry->icbtag.flags);
 
 	mode = perm & UDF_FENTRY_PERM_USER_MASK;
 	mode |= ((perm & UDF_FENTRY_PERM_GRP_MASK) >> 2);
@@ -206,7 +206,7 @@ udf_access(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct udf_node *node;
+	struct unode *node;
 	mode_t a_mode, mode;
 
 	vp = ap->a_vp;
@@ -227,7 +227,7 @@ udf_access(void *v)
 
 	mode = udf_permtomode(node);
 
-	return (vaccess(mode, node->fentry->uid, node->fentry->gid, a_mode,
+	return (vaccess(mode, node->u_fentry->uid, node->u_fentry->gid, a_mode,
 	    ap->a_cred));
 }
 
@@ -318,7 +318,7 @@ udf_getattr(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct udf_node *node;
+	struct unode *node;
 	struct vattr *vap;
 	struct file_entry *fentry;
 	struct timespec ts;
@@ -328,10 +328,10 @@ udf_getattr(void *v)
 	vp = ap->a_vp;
 	vap = ap->a_vap;
 	node = VTOU(vp);
-	fentry = node->fentry;
+	fentry = node->u_fentry;
 
-	vap->va_fsid = node->i_dev;
-	vap->va_fileid = node->hash_id;
+	vap->va_fsid = node->u_dev;
+	vap->va_fileid = node->u_ino;
 	vap->va_mode = udf_permtomode(node);
 	vap->va_nlink = letoh16(fentry->link_cnt);
 	/*
@@ -354,16 +354,16 @@ udf_getattr(void *v)
 		 */
 		if (fentry->logblks_rec != 0) {
 			vap->va_size =
-			    letoh64(fentry->logblks_rec) * node->udfmp->bsize;
+			    letoh64(fentry->logblks_rec) * node->u_ump->bsize;
 		} else {
-			vap->va_size = node->udfmp->bsize;
+			vap->va_size = node->u_ump->bsize;
 		}
 	} else {
 		vap->va_size = letoh64(fentry->inf_len);
 	}
 	vap->va_flags = 0;
 	vap->va_gen = 1;
-	vap->va_blocksize = node->udfmp->bsize;
+	vap->va_blocksize = node->u_ump->bsize;
 	vap->va_bytes = letoh64(fentry->inf_len);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = 0;
@@ -431,7 +431,7 @@ udf_read(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct udf_node *node = VTOU(vp);
+	struct unode *node = VTOU(vp);
 	struct buf *bp;
 	uint8_t *data;
 	off_t fsize, offset;
@@ -441,7 +441,7 @@ udf_read(void *v)
 	if (uio->uio_offset < 0)
 		return (EINVAL);
 
-	fsize = letoh64(node->fentry->inf_len);
+	fsize = letoh64(node->u_fentry->inf_len);
 
 	while (uio->uio_offset < fsize && uio->uio_resid > 0) {
 		offset = uio->uio_offset;
@@ -561,7 +561,7 @@ udf_uiodir(struct udf_uiodir *uiodir, int de_size, struct uio *uio, long cookie)
 }
 
 static struct udf_dirstream *
-udf_opendir(struct udf_node *node, int offset, int fsize, struct udf_mnt *udfmp)
+udf_opendir(struct unode *node, int offset, int fsize, struct udf_mnt *udfmp)
 {
 	struct udf_dirstream *ds;
 
@@ -720,7 +720,7 @@ udf_readdir(void *v)
 	struct vnode *vp;
 	struct uio *uio;
 	struct dirent dir;
-	struct udf_node *node;
+	struct unode *node;
 	struct udf_mnt *udfmp;
 	struct fileid_desc *fid;
 	struct udf_uiodir uiodir;
@@ -735,7 +735,7 @@ udf_readdir(void *v)
 	vp = ap->a_vp;
 	uio = ap->a_uio;
 	node = VTOU(vp);
-	udfmp = node->udfmp;
+	udfmp = node->u_ump;
 	uiodir.eofflag = 1;
 
 	if (ap->a_ncookies != NULL) {
@@ -758,8 +758,8 @@ udf_readdir(void *v)
 	 * Iterate through the file id descriptors.  Give the parent dir
 	 * entry special attention.
 	 */
-	ds = udf_opendir(node, uio->uio_offset, letoh64(node->fentry->inf_len),
-	    node->udfmp);
+	ds = udf_opendir(node, uio->uio_offset,
+	    letoh64(node->u_fentry->inf_len), node->u_ump);
 
 	while ((fid = udf_getfid(ds)) != NULL) {
 
@@ -779,7 +779,7 @@ udf_readdir(void *v)
 			 * used for the cookies since the offset here is
 			 * usually zero, and NFS doesn't like that value
 			 */
-			dir.d_fileno = node->hash_id;
+			dir.d_fileno = node->u_ino;
 			dir.d_type = DT_DIR;
 			dir.d_name[0] = '.';
 			dir.d_name[1] = '\0';
@@ -855,7 +855,7 @@ udf_strategy(void *v)
 	} */ *ap = v;
 	struct buf *bp;
 	struct vnode *vp;
-	struct udf_node *node;
+	struct unode *node;
 	int maxsize, s, error;
 
 	bp = ap->a_bp;
@@ -868,7 +868,7 @@ udf_strategy(void *v)
 		 * Files that are embedded in the fentry don't translate well
 		 * to a block number.  Reject.
 		 */
-		if (udf_bmap_internal(node, bp->b_lblkno * node->udfmp->bsize,
+		if (udf_bmap_internal(node, bp->b_lblkno * node->u_ump->bsize,
 		    &bp->b_lblkno, &maxsize)) {
 			clrbuf(bp);
 			bp->b_blkno = -1;
@@ -894,7 +894,7 @@ udf_strategy(void *v)
 		splx(s);
 	} else {
 		bp->b_dev = vp->v_rdev;
-		VOCALL(node->i_devvp->v_op, VOFFSET(vop_strategy), ap);
+		VOCALL(node->u_devvp->v_op, VOFFSET(vop_strategy), ap);
 	}
 
 	return (0);
@@ -911,7 +911,7 @@ udf_lock(void *v)
 
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOU(vp)->i_lock, ap->a_flags, &vp->v_interlock));
+	return (lockmgr(&VTOU(vp)->u_lock, ap->a_flags, &vp->v_interlock));
 }
 
 int
@@ -925,7 +925,7 @@ udf_unlock(void *v)
 
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTOU(vp)->i_lock, ap->a_flags | LK_RELEASE,
+	return (lockmgr(&VTOU(vp)->u_lock, ap->a_flags | LK_RELEASE,
 	    &vp->v_interlock));
 }
 
@@ -936,7 +936,7 @@ udf_islocked(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	return (lockstatus(&VTOU(ap->a_vp)->i_lock));
+	return (lockstatus(&VTOU(ap->a_vp)->u_lock));
 }
 
 int
@@ -946,13 +946,13 @@ udf_print(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct udf_node *node = VTOU(vp);
+	struct unode *node = VTOU(vp);
 
 	/*
 	 * Complete the information given by vprint().
 	 */
-	printf("tag VT_UDF, hash id %u\n", node->hash_id);
-	lockmgr_printinfo(&node->i_lock);
+	printf("tag VT_UDF, hash id %u\n", node->u_ino);
+	lockmgr_printinfo(&node->u_lock);
 	printf("\n");
 
 	return (0);
@@ -968,7 +968,7 @@ udf_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
-	struct udf_node *node;
+	struct unode *node;
 	uint32_t max_size;
 	daddr_t lsector;
 	int error;
@@ -976,17 +976,17 @@ udf_bmap(void *v)
 	node = VTOU(ap->a_vp);
 
 	if (ap->a_vpp != NULL)
-		*ap->a_vpp = node->i_devvp;
+		*ap->a_vpp = node->u_devvp;
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	error = udf_bmap_internal(node, ap->a_bn * node->udfmp->bsize, &lsector,
-	    &max_size);
+	error = udf_bmap_internal(node, ap->a_bn * node->u_ump->bsize,
+	    &lsector, &max_size);
 	if (error)
 		return (error);
 
 	/* Translate logical to physical sector number */
-	*ap->a_bnp = lsector << (node->udfmp->bshift - DEV_BSHIFT);
+	*ap->a_bnp = lsector << (node->u_ump->bshift - DEV_BSHIFT);
 
 	/* Punt on read-ahead for now */
 	if (ap->a_runp)
@@ -1009,7 +1009,7 @@ udf_lookup(void *v)
 	struct vnode *dvp;
 	struct vnode *tdp = NULL;
 	struct vnode **vpp = ap->a_vpp;
-	struct udf_node *node;
+	struct unode *node;
 	struct udf_mnt *udfmp;
 	struct fileid_desc *fid = NULL;
 	struct udf_dirstream *ds;
@@ -1026,12 +1026,12 @@ udf_lookup(void *v)
 
 	dvp = ap->a_dvp;
 	node = VTOU(dvp);
-	udfmp = node->udfmp;
+	udfmp = node->u_ump;
 	nameiop = ap->a_cnp->cn_nameiop;
 	flags = ap->a_cnp->cn_flags;
 	nameptr = ap->a_cnp->cn_nameptr;
 	namelen = ap->a_cnp->cn_namelen;
-	fsize = letoh64(node->fentry->inf_len);
+	fsize = letoh64(node->u_fentry->inf_len);
 	p = ap->a_cnp->cn_proc;
 	*vpp = NULL;
 
@@ -1066,11 +1066,12 @@ udf_lookup(void *v)
 	 * directory may need to be searched twice.  For a full description,
 	 * see /sys/isofs/cd9660/cd9660_lookup.c:cd9660_lookup()
 	 */
-	if (nameiop != LOOKUP || node->diroff == 0 || node->diroff > fsize) {
+	if (nameiop != LOOKUP || node->u_diroff == 0 ||
+	    node->u_diroff > fsize) {
 		offset = 0;
 		numdirpasses = 1;
 	} else {
-		offset = node->diroff;
+		offset = node->u_diroff;
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
 	}
@@ -1121,7 +1122,7 @@ lookloop:
 			 * component.
 			 */
 			if ((flags & ISLASTCN) && nameiop == LOOKUP)
-				node->diroff = ds->offset + ds->off;
+				node->u_diroff = ds->offset + ds->off;
 			if (numdirpasses == 2)
 				nchstats.ncs_pass2++;
 			if (!(flags & LOCKPARENT) || !(flags & ISLASTCN)) {
@@ -1185,22 +1186,22 @@ udf_reclaim(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct udf_node *unode;
+	struct unode *unode;
 
 	vp = ap->a_vp;
 	unode = VTOU(vp);
 
 	if (unode != NULL) {
 		udf_hashrem(unode);
-		if (unode->i_devvp) {
-			vrele(unode->i_devvp);
-			unode->i_devvp = 0;
+		if (unode->u_devvp) {
+			vrele(unode->u_devvp);
+			unode->u_devvp = 0;
 		}
 
-		if (unode->fentry != NULL)
-			free(unode->fentry, M_UDFFENTRY);
+		if (unode->u_fentry != NULL)
+			free(unode->u_fentry, M_UDFFENTRY);
 
-		pool_put(&udf_node_pool, unode);
+		pool_put(&unode_pool, unode);
 		vp->v_data = NULL;
 	}
 	
@@ -1217,7 +1218,7 @@ udf_reclaim(void *v)
  *
  */
 int
-udf_readatoffset(struct udf_node *node, int *size, off_t offset,
+udf_readatoffset(struct unode *node, int *size, off_t offset,
     struct buf **bp, uint8_t **data)
 {
 	struct udf_mnt *udfmp;
@@ -1227,7 +1228,7 @@ udf_readatoffset(struct udf_node *node, int *size, off_t offset,
 	daddr_t sector;
 	int error;
 
-	udfmp = node->udfmp;
+	udfmp = node->u_ump;
 
 	*bp = NULL;
 	error = udf_bmap_internal(node, offset, &sector, &max_size);
@@ -1236,7 +1237,7 @@ udf_readatoffset(struct udf_node *node, int *size, off_t offset,
 		 * This error means that the file *data* is stored in the
 		 * allocation descriptor field of the file entry.
 		 */
-		fentry = node->fentry;
+		fentry = node->u_fentry;
 		*data = &fentry->data[letoh32(fentry->l_ea)];
 		*size = letoh32(fentry->l_ad);
 		return (0);
@@ -1265,7 +1266,7 @@ udf_readatoffset(struct udf_node *node, int *size, off_t offset,
  * block.
  */
 int
-udf_bmap_internal(struct udf_node *node, off_t offset, daddr_t *sector,
+udf_bmap_internal(struct unode *node, off_t offset, daddr_t *sector,
     uint32_t *max_size)
 {
 	struct udf_mnt *udfmp;
@@ -1277,8 +1278,8 @@ udf_bmap_internal(struct udf_node *node, off_t offset, daddr_t *sector,
 	int ad_offset, ad_num = 0;
 	int i, p_offset;
 
-	udfmp = node->udfmp;
-	fentry = node->fentry;
+	udfmp = node->u_ump;
+	fentry = node->u_fentry;
 	tag = &fentry->icbtag;
 
 	switch (letoh16(tag->strat_type)) {
@@ -1351,7 +1352,7 @@ udf_bmap_internal(struct udf_node *node, off_t offset, daddr_t *sector,
 		 * allocation descriptor field of the file entry.
 		 */
 		*max_size = 0;
-		*sector = node->hash_id + udfmp->part_start;
+		*sector = node->u_ino + udfmp->part_start;
 
 		return (UDF_INVALID_BMAP);
 	case 2:

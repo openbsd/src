@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.6 2006/07/08 20:53:31 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.7 2006/07/08 23:11:59 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -186,7 +186,7 @@ int
 udf_vat_get(struct udf_mnt *ump)
 {
 	struct vnode *vp;
-	struct udf_node *unp;
+	struct unode *unp;
 	int error;
 
 	error = udf_vget(ump->im_mountp, ump->part_len - 3, &vp);
@@ -194,7 +194,7 @@ udf_vat_get(struct udf_mnt *ump)
 		return (error);
 
 	unp = VTOU(vp);
-	unp->vatlen = (letoh64(unp->fentry->inf_len) - 36) >> 2;
+	unp->u_vatlen = (letoh64(unp->u_fentry->inf_len) - 36) >> 2;
 
 	ump->im_vat = vp;
 	ump->im_flags &= ~UDF_MNT_FIND_VAT;
@@ -216,7 +216,7 @@ udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
 	}
 
 	/* Sanity check the given sector */
-	if (*sector >= VTOU(ump->im_vat)->vatlen)
+	if (*sector >= VTOU(ump->im_vat)->u_vatlen)
 		return (EINVAL);
 
 	return (udf_vat_read(ump, sector));
@@ -226,7 +226,7 @@ udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
 int
 udf_vat_read(struct udf_mnt *ump, uint32_t *sector)
 {
-	struct udf_node *unp;
+	struct unode *unp;
 	struct buf *bp;
 	uint8_t *data;
 	int error, size;
