@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.92 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.93 2006/07/08 17:56:10 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -279,7 +279,8 @@ struct undo_rec {
 	enum {
 		INSERT = 1,
 		DELETE,
-		BOUNDARY
+		BOUNDARY,
+		MODIFIED
 	} type;
 	struct region	 region;
 	int		 pos;
@@ -598,6 +599,7 @@ void		 free_undo_record(struct undo_rec *);
 int		 undo_dump(int, int);
 int		 undo_enable(int);
 void		 undo_add_boundary(void);
+void		 undo_add_modified(void);
 int		 undo_add_insert(struct line *, int, int);
 int		 undo_add_delete(struct line *, int, int);
 void		 undo_no_boundary(int);

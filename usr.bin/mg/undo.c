@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.39 2006/07/08 17:50:30 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.40 2006/07/08 17:56:10 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * Copyright (c) 2005, 2006 Kjell Wooding <kjell@openbsd.org>
@@ -208,21 +208,39 @@ undo_no_boundary(int flag)
 
 /*
  * Record an undo boundary, unless 'nobound' is set via undo_no_boundary.
- * Does nothing if previous undo entry is already a boundary.
+ * Does nothing if previous undo entry is already a boundary or 'modified' flag.
  */
 void
 undo_add_boundary(void)
 {
 	struct undo_rec *rec;
+	int last;
 
 	if (nobound)
 		return;
 
-	if (lastrectype() == BOUNDARY)
+	last = lastrectype();
+	if (last == BOUNDARY || last == MODIFIED)
 		return;
 
 	rec = new_undo_record();
 	rec->type = BOUNDARY;
+
+	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
+
+	return;
+}
+
+/*
+ * Record an undo "modified" boundary
+ */
+void
+undo_add_modified(void)
+{
+	struct undo_rec *rec;
+
+	rec = new_undo_record();
+	rec->type = MODIFIED;
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
@@ -379,7 +397,8 @@ undo_dump(int f, int n)
 		    "%d:\t %s at %d ", num,
 		    (rec->type == DELETE) ? "DELETE":
 		    (rec->type == INSERT) ? "INSERT":
-		    (rec->type == BOUNDARY) ? "----" : "UNKNOWN",
+		    (rec->type == BOUNDARY) ? "----" :
+		    (rec->type == MODIFIED) ? "MODIFIED": "UNKNOWN",
 		    rec->pos);
 
 		if (rec->content) {
@@ -492,11 +511,11 @@ undo(int f, int n)
 			/*
 			 * Move to where this has to apply
 			 *
-			 * Boundaries are put as position 0 (to save
-			 * lookup time in find_dot) so we must
-			 * not move there...
+			 * Boundaries (and the modified flag)  are put as
+			 * position 0 (to save lookup time in find_dot)
+			 * so we must not move there...
 			 */
-			if (ptr->type != BOUNDARY) {
+			if (ptr->type != BOUNDARY && ptr->type != MODIFIED) {
 				if (find_lo(ptr->pos, &lp,
 				    &offset, &lineno) == FALSE) {
 					ewprintf("Internal error in Undo!");
@@ -522,6 +541,9 @@ undo(int f, int n)
 				break;
 			case BOUNDARY:
 				done = 1;
+				break;
+			case MODIFIED:
+				curbp->b_flag &= ~BFCHG;
 				break;
 			default:
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.59 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.60 2006/07/08 17:56:10 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -251,6 +251,7 @@ readin(char *fname)
 	if (startrow)
 		gotoline(FFARG, startrow);
 
+	undo_add_modified();
 	return (status);
 }
 
