@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.16 2006/07/04 22:14:56 niallo Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.17 2006/07/08 09:14:03 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -533,11 +533,8 @@ rcs_patchfile(BUF *data, BUF *patch,
 
 	len = rcs_buf_len(data);
 
-	if ((dlines = rcs_splitlines(data)) == NULL)
-		return (NULL);
-
-	if ((plines = rcs_splitlines(patch)) == NULL)
-		return (NULL);
+	dlines = rcs_splitlines(data);
+	plines = rcs_splitlines(patch);
 
 	if (p(dlines, plines) < 0) {
 		rcs_freelines(dlines);
