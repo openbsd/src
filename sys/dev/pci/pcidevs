@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1095 2006/07/09 03:35:10 brad Exp $
+$OpenBSD: pcidevs,v 1.1096 2006/07/09 22:32:34 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2866,6 +2866,7 @@ product QLOGIC ISP2100		0x2100	ISP2100
 product QLOGIC ISP2200		0x2200	ISP2200
 product QLOGIC ISP2300		0x2300	ISP2300
 product QLOGIC ISP2312		0x2312	ISP2312
+product QLOGIC ISP2322		0x2322	ISP2322
 product QLOGIC ISP6312		0x6312	ISP6312
 
 /* Quantum Designs products */
