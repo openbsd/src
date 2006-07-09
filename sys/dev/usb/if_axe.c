@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.53 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.54 2006/07/09 22:46:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,12 +73,6 @@
  * with bits and pieces from the aue and url drivers.
  */
 
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "rnd.h"
-#endif
-
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -87,9 +81,7 @@
 #include <sys/lock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#if defined(__OpenBSD__)
 #include <sys/proc.h>
-#endif
 #include <sys/socket.h>
 
 #include <sys/device.h>
@@ -97,9 +89,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#if defined(__NetBSD__)
-#include <net/if_arp.h>
-#endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
@@ -107,15 +96,6 @@
 #include <net/bpf.h>
 #endif
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-#endif /* defined(__NetBSD__) */
-
-#if defined(__OpenBSD__)
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -123,7 +103,6 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-#endif /* defined(__OpenBSD__) */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
