@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.8 2006/07/09 04:14:25 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.9 2006/07/09 04:23:09 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -77,7 +77,7 @@ struct umount {
 
 struct udf_dirstream {
 	struct unode	*node;
-	struct umount	*udfmp;
+	struct umount	*ump;
 	struct buf	*bp;
 	uint8_t		*data;
 	uint8_t		*buf;
@@ -99,27 +99,27 @@ struct udf_dirstream {
  * Can the block layer be forced to use a different block size?
  */
 #define	RDSECTOR(devvp, sector, size, bp) \
-    bread(devvp, sector << (udfmp->um_bshift - DEV_BSHIFT), size, NOCRED, bp)
+	bread(devvp, sector << (ump->um_bshift - DEV_BSHIFT), size, NOCRED, bp)
 
 static __inline int
-udf_readlblks(struct umount *udfmp, int sector, int size, struct buf **bp)
+udf_readlblks(struct umount *ump, int sector, int size, struct buf **bp)
 {
-	return (RDSECTOR(udfmp->um_devvp, sector,
-			 (size + udfmp->um_bmask) & ~udfmp->um_bmask, bp));
+	return (RDSECTOR(ump->um_devvp, sector,
+			 (size + ump->um_bmask) & ~ump->um_bmask, bp));
 }
 
 static __inline int
-udf_readalblks(struct umount *udfmp, int lsector, int size, struct buf **bp)
+udf_readalblks(struct umount *ump, int lsector, int size, struct buf **bp)
 {
 	daddr_t rablock, lblk;
 	int rasize;
 
-	lblk = (lsector + udfmp->um_start) << (udfmp->um_bshift - DEV_BSHIFT);
-	rablock = (lblk + 1) << udfmp->um_bshift;
+	lblk = (lsector + ump->um_start) << (ump->um_bshift - DEV_BSHIFT);
+	rablock = (lblk + 1) << ump->um_bshift;
 	rasize = size;
 
-	return (breadn(udfmp->um_devvp, lblk,
-		       (size + udfmp->um_bmask) & ~udfmp->um_bmask,
+	return (breadn(ump->um_devvp, lblk,
+		       (size + ump->um_bmask) & ~ump->um_bmask,
 		       &rablock, &rasize, 1,  NOCRED, bp));
 }
 
