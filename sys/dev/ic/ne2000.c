@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.15 2005/10/22 23:26:02 brad Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.16 2006/07/09 16:00:48 miod Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -307,7 +307,10 @@ ne2000_detect(nsc)
 	bus_space_handle_t asich = nsc->sc_asich;
 	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	u_int8_t test_buffer[32], tmp;
-	int i, rv = 0;
+	int state, i, rv = 0;
+
+	state = dsc->sc_enabled;
+	dsc->sc_enabled = 0;
 
 	/* Reset the board. */
 #ifdef GWETHER
@@ -446,6 +449,8 @@ ne2000_detect(nsc)
 	bus_space_write_1(nict, nich, ED_P0_ISR, 0xff);
 
  out:
+	dsc->sc_enabled = state;
+
 	return (rv);
 }
 
