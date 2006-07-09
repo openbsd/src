@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmeaattach.8,v 1.1 2006/07/04 05:31:54 mbalmer Exp $
+.\"	$OpenBSD: nmeaattach.8,v 1.2 2006/07/09 09:03:19 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -24,10 +24,11 @@
 .Nm nmeaattach
 .Op Fl dhm
 .Op Fl s Ar baudrate
+.Op Fl t Ar cond
 .Ar device
 .Sh DESCRIPTION
 .Nm
-is used to designate a serial line with a NMEA 0183 device as a source of
+is used to designate a serial line with an NMEA 0183 device as a source of
 timedelta sensors.
 The following operands are supported by
 .Nm nmeaattach :
@@ -47,7 +48,8 @@ If not specified, the default of 4800 baud is used.
 Chooses the condition which will cause the current system
 time to be immediately copied to the terminal timestamp storage.
 Only one can be used.
-.Bl -tag -width DCDXX
+.Pp
+.Bl -tag -width DCDXX -offset indent -compact
 .It dcd
 Copy the timestamp when DCD is asserted.
 .It !dcd
@@ -60,8 +62,9 @@ Copy the timestamp when CTS is deasserted.
 .Pp
 If no condition is specified, the
 .Xr nmea 4
-line discipline will timestamp on receiving the leading '$' character
-of each GPRMC sentence.
+line discipline will timestamp on receiving the leading
+.Sq $
+character of each GPRMC sentence.
 .It Ar device
 Specifies the name of the serial line.
 .Ar device
@@ -82,5 +85,5 @@ process.
 .Sh HISTORY
 The
 .Nm
-command appeared in
+command first appeared in
 .Ox 4.0 .

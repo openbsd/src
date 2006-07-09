@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmeaattach.c,v 1.1 2006/07/04 05:31:54 mbalmer Exp $	*/
+/*	$OpenBSD: nmeaattach.c,v 1.2 2006/07/09 09:03:19 jmc Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dhm] [-s speed] [-t cond] device\n",
+	fprintf(stderr, "usage: %s [-dhm] [-s baudrate] [-t cond] device\n",
 	    __progname);
 	exit(1);
 }
