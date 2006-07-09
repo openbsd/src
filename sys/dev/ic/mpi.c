@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.60 2006/07/09 13:45:36 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.61 2006/07/09 14:10:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -130,7 +130,7 @@ int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
 #define mpi_read_intr(s)	mpi_read((s), MPI_INTR_STATUS)
 #define mpi_write_intr(s, v)	mpi_write((s), MPI_INTR_STATUS, (v))
 #define mpi_pop_reply(s)	mpi_read((s), MPI_REPLY_QUEUE)
-#define mpi_push_reply(s, v)	mpi_write((s), MPI_REPLY_QUEUE, (v)) 
+#define mpi_push_reply(s, v)	mpi_write((s), MPI_REPLY_QUEUE, (v))
 
 #define mpi_wait_db_int(s)	mpi_wait_ne((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_DOORBELL, 0)
@@ -399,8 +399,8 @@ mpi_run_ppr(struct mpi_softc *sc)
 
 		if (physdisk->phys_disk_ioc != sc->sc_ioc_number)
 			continue;
- 
-                tries = 0;
+
+		tries = 0;
 		while (mpi_ppr(sc, NULL, physdisk, port_pg.min_period,
 		    port_pg.max_offset, tries) == EAGAIN)
 			tries++;
@@ -663,7 +663,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL |
 	    (u_int32_t)sizeof(inq));
 
-	addr = ccb->ccb_cmd_dva + 
+	addr = ccb->ccb_cmd_dva +
 	    ((u_int8_t *)&bundle->inqbuf - (u_int8_t *)bundle);
 	sge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
 	sge->sg_lo_addr = htole32((u_int32_t)addr);
@@ -1721,62 +1721,46 @@ mpi_iocfacts(struct mpi_softc *sc)
 	DNPRINTF(MPI_D_MISC, "%s:  func: 0x%02x len: %d msgver: %d.%d\n",
 	    DEVNAME(sc), ifp.function, ifp.msg_length,
 	    ifp.msg_version_maj, ifp.msg_version_min);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msgflags: 0x%02x iocnumber: 0x%02x "
 	    "hdrver: %d.%d\n", DEVNAME(sc), ifp.msg_flags,
 	    ifp.ioc_number, ifp.header_version_maj,
 	    ifp.header_version_min);
-
 	DNPRINTF(MPI_D_MISC, "%s:  message context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(ifp.msg_context));
-
 	DNPRINTF(MPI_D_MISC, "%s:  iocstatus: 0x%04x ioexcept: 0x%04x\n",
 	    DEVNAME(sc), letoh16(ifp.ioc_status),
 	    letoh16(ifp.ioc_exceptions));
-
 	DNPRINTF(MPI_D_MISC, "%s:  iocloginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(ifp.ioc_loginfo));
-
 	DNPRINTF(MPI_D_MISC, "%s:  flags: 0x%02x blocksize: %d whoinit: 0x%02x "
 	    "maxchdepth: %d\n", DEVNAME(sc), ifp.flags,
 	    ifp.block_size, ifp.whoinit, ifp.max_chain_depth);
-
 	DNPRINTF(MPI_D_MISC, "%s:  reqfrsize: %d replyqdepth: %d\n",
 	    DEVNAME(sc), letoh16(ifp.request_frame_size),
 	    letoh16(ifp.reply_queue_depth));
-
 	DNPRINTF(MPI_D_MISC, "%s:  productid: 0x%04x\n", DEVNAME(sc),
 	    letoh16(ifp.product_id));
-
 	DNPRINTF(MPI_D_MISC, "%s:  hostmfahiaddr: 0x%08x\n", DEVNAME(sc),
 	    letoh32(ifp.current_host_mfa_hi_addr));
-
 	DNPRINTF(MPI_D_MISC, "%s:  event_state: 0x%02x number_of_ports: %d "
 	    "global_credits: %d\n",
 	    DEVNAME(sc), ifp.event_state, ifp.number_of_ports,
 	    letoh16(ifp.global_credits));
-
 	DNPRINTF(MPI_D_MISC, "%s:  sensebufhiaddr: 0x%08x\n", DEVNAME(sc),
 	    letoh32(ifp.current_sense_buffer_hi_addr));
-
 	DNPRINTF(MPI_D_MISC, "%s:  maxbus: %d maxdev: %d replyfrsize: %d\n",
 	    DEVNAME(sc), ifp.max_buses, ifp.max_devices,
 	    letoh16(ifp.current_reply_frame_size));
-
 	DNPRINTF(MPI_D_MISC, "%s:  fw_image_size: %d\n", DEVNAME(sc),
 	    letoh32(ifp.fw_image_size));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_capabilities: 0x%08x\n", DEVNAME(sc),
 	    letoh32(ifp.ioc_capabilities));
-
 	DNPRINTF(MPI_D_MISC, "%s:  fw_version: %d.%d fw_version_unit: 0x%02x "
 	    "fw_version_dev: 0x%02x\n", DEVNAME(sc),
 	    ifp.fw_version_maj, ifp.fw_version_min,
 	    ifp.fw_version_unit, ifp.fw_version_dev);
-
 	DNPRINTF(MPI_D_MISC, "%s:  hi_priority_queue_depth: 0x%04x\n",
 	    DEVNAME(sc), letoh16(ifp.hi_priority_queue_depth));
-
 	DNPRINTF(MPI_D_MISC, "%s:  host_page_buffer_sge: hdr: 0x%08x "
 	    "addr 0x%08x %08x\n", DEVNAME(sc),
 	    letoh32(ifp.host_page_buffer_sge.sg_hdr),
@@ -1798,7 +1782,7 @@ mpi_iocfacts(struct mpi_softc *sc)
 	 * you can fit sg elements on the end of the io cmd if they fit in the
 	 * request frame size.
 	 */
-	sc->sc_first_sgl_len = ((letoh16(ifp.request_frame_size) * 4) - 
+	sc->sc_first_sgl_len = ((letoh16(ifp.request_frame_size) * 4) -
 	    sizeof(struct mpi_msg_scsi_io)) / sizeof(struct mpi_sge);
 	DNPRINTF(MPI_D_MISC, "%s:   first sgl len: %d\n", DEVNAME(sc),
 	    sc->sc_first_sgl_len);
@@ -1871,17 +1855,13 @@ mpi_iocinit(struct mpi_softc *sc)
 	DNPRINTF(MPI_D_MISC, "%s:  function: 0x%02x msg_length: %d "
 	    "whoinit: 0x%02x\n", DEVNAME(sc), iip.function,
 	    iip.msg_length, iip.whoinit);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msg_flags: 0x%02x max_buses: %d "
 	    "max_devices: %d flags: 0x%02x\n", DEVNAME(sc), iip.msg_flags,
 	    iip.max_buses, iip.max_devices, iip.flags);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(iip.msg_context));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
 	    letoh16(iip.ioc_status));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(iip.ioc_loginfo));
 
@@ -1930,31 +1910,23 @@ mpi_portfacts(struct mpi_softc *sc)
 
 	DNPRINTF(MPI_D_MISC, "%s:  function: 0x%02x msg_length: %d\n",
 	    DEVNAME(sc), pfp->function, pfp->msg_length);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msg_flags: 0x%02x port_number: %d\n",
 	    DEVNAME(sc), pfp->msg_flags, pfp->port_number);
-
 	DNPRINTF(MPI_D_MISC, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(pfp->msg_context));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
 	    letoh16(pfp->ioc_status));
-
 	DNPRINTF(MPI_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(pfp->ioc_loginfo));
-
 	DNPRINTF(MPI_D_MISC, "%s:  max_devices: %d port_type: 0x%02x\n",
 	    DEVNAME(sc), letoh16(pfp->max_devices), pfp->port_type);
-
 	DNPRINTF(MPI_D_MISC, "%s:  protocol_flags: 0x%04x port_scsi_id: %d\n",
 	    DEVNAME(sc), letoh16(pfp->protocol_flags),
 	    letoh16(pfp->port_scsi_id));
-
 	DNPRINTF(MPI_D_MISC, "%s:  max_persistent_ids: %d "
 	    "max_posted_cmd_buffers: %d\n", DEVNAME(sc),
 	    letoh16(pfp->max_persistent_ids),
 	    letoh16(pfp->max_posted_cmd_buffers));
-
 	DNPRINTF(MPI_D_MISC, "%s:  max_lan_buckets: %d\n", DEVNAME(sc),
 	    letoh16(pfp->max_lan_buckets));
 
@@ -2286,9 +2258,9 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	    letoh32(cp->ioc_loginfo));
 	DNPRINTF(MPI_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
 	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
-	    cp->config_header.page_version, 
-	    cp->config_header.page_length, 
-	    cp->config_header.page_number, 
+	    cp->config_header.page_version,
+	    cp->config_header.page_length,
+	    cp->config_header.page_number,
 	    cp->config_header.page_type);
 
 	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
@@ -2382,9 +2354,9 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	    letoh32(cp->ioc_loginfo));
 	DNPRINTF(MPI_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
 	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
-	    cp->config_header.page_version, 
-	    cp->config_header.page_length, 
-	    cp->config_header.page_number, 
+	    cp->config_header.page_version,
+	    cp->config_header.page_length,
+	    cp->config_header.page_number,
 	    cp->config_header.page_type);
 
 	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
