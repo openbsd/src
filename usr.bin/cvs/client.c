@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.12 2006/07/09 01:47:20 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.13 2006/07/09 04:39:43 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -372,7 +372,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 				fatal("cvs_client_sendfile: overflow");
 		}
 
-		cvs_client_send_request("Entry /%s/%s%s/%s/%s/",
+		cvs_client_send_request("Entry /%s/%s%s/%s//%s",
 		    cf->file_name, (cf->file_status == FILE_REMOVED) ? "-" : "",
 		   rev, timebuf, sticky);
 	}
@@ -598,6 +598,10 @@ cvs_client_merged(char *data)
 void
 cvs_client_removed(char *data)
 {
+	char *dir;
+
+	dir = cvs_remote_input();
+	xfree(dir);
 }
 
 void
