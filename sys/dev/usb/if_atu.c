@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.74 2006/07/09 22:10:05 mk Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.75 2006/07/09 22:39:50 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -274,10 +274,6 @@ int	atu_tx_list_init(struct atu_softc *);
 int	atu_rx_list_init(struct atu_softc *);
 void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 	    int listlen);
-
-#ifdef ATU_DEBUG
-void	atu_print_a_bunch_of_debug_things(struct atu_softc *sc);
-#endif
 
 void atu_task(void *);
 int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
@@ -2139,90 +2135,6 @@ atu_init(struct ifnet *ifp)
 
 	return 0;
 }
-
-#ifdef ATU_DEBUG
-void
-atu_print_a_bunch_of_debug_things(struct atu_softc *sc)
-{
-	usbd_status		err;
-	u_int8_t		tmp[32];
-
-	/* DEBUG */
-	if ((err = atu_get_mib(sc, MIB_MAC_MGMT__CURRENT_BSSID, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: current BSSID=%s\n", USBDEVNAME(sc->atu_dev),
-	    ether_sprintf(tmp)));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_MGMT__BEACON_PERIOD, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: beacon period=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_WEP__PRIVACY_INVOKED, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: privacy invoked=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_WEP__ENCR_LEVEL, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: encr_level=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_WEP__ICV_ERROR_COUNT, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: icv error count=%d\n", USBDEVNAME(sc->atu_dev),
-	    *(short *)tmp));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_WEP__EXCLUDED_COUNT, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: wep excluded count=%d\n",
-	    USBDEVNAME(sc->atu_dev), *(short *)tmp));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_MGMT__POWER_MODE, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: power mode=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_PHY__CHANNEL, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: channel=%d\n", USBDEVNAME(sc->atu_dev), tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_PHY__REG_DOMAIN, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: reg domain=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_LOCAL__SSID_SIZE, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: ssid size=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_LOCAL__BEACON_ENABLE, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: beacon enable=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_LOCAL__AUTO_RATE_FALLBACK, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: auto rate fallback=%d\n",
-	    USBDEVNAME(sc->atu_dev), tmp[0]));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_ADDR__ADDR, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: mac addr=%s\n", USBDEVNAME(sc->atu_dev),
-	    ether_sprintf(tmp)));
-
-	if ((err = atu_get_mib(sc, MIB_MAC__DESIRED_SSID, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: desired ssid=%s\n", USBDEVNAME(sc->atu_dev),
-	    tmp));
-
-	if ((err = atu_get_mib(sc, MIB_MAC_MGMT__CURRENT_ESSID, tmp)))
-		return;
-	DPRINTF(("%s: DEBUG: current ESSID=%s\n", USBDEVNAME(sc->atu_dev),
-	    tmp));
-}
-#endif /* ATU_DEBUG */
 
 int
 atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
