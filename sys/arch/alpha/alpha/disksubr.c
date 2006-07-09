@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.46 2006/07/03 20:00:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.47 2006/07/09 21:00:17 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -59,8 +59,6 @@ char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
 char   *readdoslabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
-
-static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
 
 /*
  * Try to read a standard BSD disklabel at a certain sector.
@@ -142,7 +140,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg = "no disk label";
-	enum disklabel_tag *tp;
 	int i;
 	struct disklabel minilabel, fallbacklabel;
 
@@ -169,33 +166,23 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	for (tp = probe_order; msg && *tp != -1; tp++) {
-		switch (*tp) {
-		case DLT_ALPHA:
-			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, lp, spoofonly);
-			break;
-
-		case DLT_I386:
+	msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR, ALPHA_LABELOFFSET,
+	    lp, spoofonly);
+	if (msg)
+		*lp = minilabel;
 #if defined(DISKLABEL_I386)
-			msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
-			if (msg)
-				/* Fallback alternative */
-				fallbacklabel = *lp;
-#endif
-			break;
-
-		default:
-			panic("unrecognized disklabel tag %d", *tp);
-		}
-		if (msg)
+	if (msg) {
+		msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
+		if (msg) {
+			/* Fallback alternative */
+			fallbacklabel = *lp;
 			*lp = minilabel;
+		}
 	}
-
+#endif
 	/* Record metainformation about the disklabel.  */
 	if (msg == NULL) {
 		osdep->labelsector = bp->b_blkno;
-		osdep->labeltag = *tp;
 	}
 
 #if defined(CD9660)
@@ -536,14 +523,13 @@ writedisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	enum disklabel_tag *tp;
 	char *msg = "no disk label";
 	struct buf *bp;
 	struct disklabel dl;
 #if defined(DISKLABEL_I386)
 	struct cpu_disklabel cdl;
 #endif
-	int labeloffset, error, i, partoff = 0, cyl = 0;
+	int labeloffset, error, i, partoff = 0, cyl = 0, needcsum = 0;
 	u_int64_t csum, *p;
 
 	/* get a buffer and initialize it */
@@ -556,28 +542,19 @@ writedisklabel(dev, strat, lp, osdep)
 	 * think it might be useful to reprobe if someone has written
 	 * a newer disklabel of another type with disklabel(8) and -r.
 	 */
-	for (tp = probe_order; msg && *tp != -1; tp++) {
-		dl = *lp;
-		switch (*tp) {
-		case DLT_ALPHA:
-			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, &dl, 0);
-			labeloffset = ALPHA_LABELOFFSET;
-			break;
-
-		case DLT_I386:
+	dl = *lp;
+	msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR, ALPHA_LABELOFFSET,
+	    &dl, 0);
+	labeloffset = ALPHA_LABELOFFSET;
+	if (msg == NULL)
+		needcsum = 1;
 #if defined(DISKLABEL_I386)
-			msg = readdoslabel(bp, strat, &dl, &cdl, &partoff,
-			    &cyl, 0);
-			labeloffset = I386_LABELOFFSET;
-#endif
-			break;
-
-		default:
-			panic("unrecognized disklabel tag %d", *tp);
-		}
+	if (msg) {
+		dl = *lp;
+		msg = readdoslabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
+		labeloffset = I386_LABELOFFSET;
 	}
-
+#endif
 	if (msg) {
 		if (partoff == -1)
 			return EIO;
@@ -591,8 +568,8 @@ writedisklabel(dev, strat, lp, osdep)
 
 	*(struct disklabel *)(bp->b_data + labeloffset) = *lp;
 
-	/* Alpha bootblocks are checksummed.  */
-	if (*tp == DLT_ALPHA) {
+	/* Alpha bootblocks are checksummed. */
+	if (needcsum) {
 		for (csum = i = 0, p = (u_int64_t *)bp->b_data; i < 63; i++)
 			csum += *p++;
 		*p = csum;
