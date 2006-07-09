@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1094 2006/07/08 19:15:18 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1095 2006/07/09 03:35:10 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2045,6 +2045,7 @@
 #define	PCI_PRODUCT_JMICRON_JMB363	0x2363		/* JMB363 IDE/SATA */
 #define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 IDE/SATA */
 #define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 IDE/SATA */
+#define	PCI_PRODUCT_JMICRON_JMB368	0x2368		/* JMB368 IDE/SATA */
 
 /* KTI */
 #define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
