@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.89 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.90 2006/07/09 01:47:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -417,7 +417,8 @@ cvs_chdir(const char *path, int rm)
 int
 cvs_rename(const char *from, const char *to)
 {
-	cvs_log(LP_TRACE, "cvs_rename(%s,%s)", from, to);
+	if (cvs_server_active == 0)
+		cvs_log(LP_TRACE, "cvs_rename(%s,%s)", from, to);
 
 	if (cvs_noexec == 1)
 		return (0);
@@ -438,7 +439,8 @@ cvs_rename(const char *from, const char *to)
 int
 cvs_unlink(const char *path)
 {
-	cvs_log(LP_TRACE, "cvs_unlink(%s)", path);
+	if (cvs_server_active == 0)
+		cvs_log(LP_TRACE, "cvs_unlink(%s)", path);
 
 	if (cvs_noexec == 1)
 		return (0);
@@ -466,7 +468,8 @@ cvs_rmdir(const char *path)
 	struct dirent *ent;
 	char fpath[MAXPATHLEN];
 
-	cvs_log(LP_TRACE, "cvs_rmdir(%s)", path);
+	if (cvs_server_active == 0)
+		cvs_log(LP_TRACE, "cvs_rmdir(%s)", path);
 
 	if (cvs_noexec == 1)
 		return (0);
@@ -626,9 +629,10 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 	struct stat st;
 	char buf[MAXPATHLEN];
 
-	cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s, %s, %s, %d)",
-	    path, root, repo, (tag != NULL) ? tag : "",
-	    (date != NULL) ? date : "", nb);
+	if (cvs_server_active == 0)
+		cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s, %s, %s, %d)",
+		    path, root, repo, (tag != NULL) ? tag : "",
+		    (date != NULL) ? date : "", nb);
 
 	len = cvs_path_cat(path, CVS_PATH_CVSDIR, buf, sizeof(buf));
 	if (len >= sizeof(buf))
@@ -681,7 +685,9 @@ cvs_mkpath(const char *path)
 	dir = xstrdup(path);
 
 	STRIP_SLASH(dir);
-	cvs_log(LP_TRACE, "cvs_mkpath(%s)", dir);
+
+	if (cvs_server_active == 0)
+		cvs_log(LP_TRACE, "cvs_mkpath(%s)", dir);
 
 	repo[0] = '\0';
 	rpath[0] = '\0';

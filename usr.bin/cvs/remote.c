@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.2 2006/07/08 00:34:20 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.3 2006/07/09 01:47:20 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -58,9 +58,6 @@ cvs_remote_output(const char *data)
 	else
 		out = current_cvsroot->cr_srvin;
 
-	if (cvs_server_active == 0)
-		cvs_log(LP_TRACE, "cvs_remote_output(%s)", data);
-
 	fputs(data, out);
 	fputs("\n", out);
 }
@@ -116,8 +113,6 @@ cvs_remote_receive_file(size_t len)
 	else
 		in = current_cvsroot->cr_srvout;
 
-	cvs_log(LP_TRACE, "cvs_remote_receive_file(%ld)", len);
-
 	data = xmalloc(len);
 	ret = fread(data, sizeof(char), len, in);
 	if (ret != len)
@@ -143,8 +138,6 @@ cvs_remote_send_file(const char *path)
 		out = stdout;
 	else
 		out = current_cvsroot->cr_srvin;
-
-	cvs_log(LP_TRACE, "cvs_remote_send_file(%s)", path);
 
 	if ((fd = open(path, O_RDONLY)) == -1)
 		fatal("cvs_remote_send_file: %s: %s", path, strerror(errno));
@@ -177,8 +170,6 @@ cvs_remote_classify_file(struct cvs_file *cf)
 	time_t mtime;
 	struct stat st;
 	CVSENTRIES *entlist;
-
-	cvs_log(LP_TRACE, "cvs_remote_classify_file(%s)", cf->file_path);
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cf->file_ent = cvs_ent_get(entlist, cf->file_name);

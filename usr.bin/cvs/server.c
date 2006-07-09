@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.29 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.30 2006/07/09 01:47:20 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -145,6 +145,7 @@ cvs_server_send_response(char *fmt, ...)
 	if (s != NULL)
 		*s = ' ';
 
+	cvs_log(LP_TRACE, "%s", data);
 	cvs_remote_output(data);
 	xfree(data);
 }
@@ -226,8 +227,6 @@ cvs_server_globalopt(char *data)
 
 	if (!strcmp(data, "-V"))
 		verbosity = 2;
-
-	cvs_log(LP_TRACE, "cvs_server_globalopt(%s)", data);
 }
 
 void
@@ -236,8 +235,6 @@ cvs_server_directory(char *data)
 	int l;
 	CVSENTRIES *entlist;
 	char *dir, *repo, *parent, *entry, *dirn;
-
-	cvs_log(LP_TRACE, "cvs_server_directory(%s)", data);
 
 	dir = cvs_remote_input();
 	if (strlen(dir) < strlen(current_cvsroot->cr_dir) + 1)
@@ -276,8 +273,6 @@ cvs_server_entry(char *data)
 {
 	CVSENTRIES *entlist;
 
-	cvs_log(LP_TRACE, "cvs_server_entry(%s)", data);
-
 	entlist = cvs_ent_open(server_currentdir);
 	cvs_ent_add(entlist, data);
 	cvs_ent_close(entlist, ENT_SYNC);
@@ -292,8 +287,6 @@ cvs_server_modified(char *data)
 	mode_t fmode;
 	const char *errstr;
 	char *mode, *len, *fpath;
-
-	cvs_log(LP_TRACE, "cvs_server_modified(%s)", data);
 
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
@@ -330,7 +323,6 @@ cvs_server_modified(char *data)
 void
 cvs_server_useunchanged(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_useunchanged()");
 }
 
 void
@@ -341,8 +333,6 @@ cvs_server_unchanged(char *data)
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent;
 	struct timeval tv[2];
-
-	cvs_log(LP_TRACE, "cvs_server_unchanged(%s)", data);
 
 	fpath = xmalloc(MAXPATHLEN);
 	l = snprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
@@ -375,13 +365,11 @@ cvs_server_unchanged(char *data)
 void
 cvs_server_questionable(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_questionable(%s)", data);
 }
 
 void
 cvs_server_argument(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_argument(%s)", data);
 
 	if (server_argc > CVS_CMD_MAXARG)
 		fatal("cvs_server_argument: too many arguments sent");
@@ -392,8 +380,6 @@ cvs_server_argument(char *data)
 void
 cvs_server_commit(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_commit()");
-
 	if (chdir(server_currentdir) == -1)
 		fatal("cvs_server_commit: %s", strerror(errno));
 
@@ -405,8 +391,6 @@ cvs_server_commit(char *data)
 void
 cvs_server_diff(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_diff()");
-
 	if (chdir(server_currentdir) == -1)
 		fatal("cvs_server_diff: %s", strerror(errno));
 
@@ -418,8 +402,6 @@ cvs_server_diff(char *data)
 void
 cvs_server_status(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_status()");
-
 	if (chdir(server_currentdir) == -1)
 		fatal("cvs_server_status: %s", strerror(errno));
 
@@ -431,8 +413,6 @@ cvs_server_status(char *data)
 void
 cvs_server_log(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_log()");
-
 	if (chdir(server_currentdir) == -1)
 		fatal("cvs_server_log: %s", strerror(errno));
 
@@ -444,8 +424,6 @@ cvs_server_log(char *data)
 void
 cvs_server_update(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_server_update()");
-
 	if (chdir(server_currentdir) == -1)
 		fatal("cvs_server_update: %s", strerror(errno));
 

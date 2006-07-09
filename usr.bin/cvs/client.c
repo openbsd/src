@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.11 2006/07/08 01:02:03 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.12 2006/07/09 01:47:20 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -265,6 +265,7 @@ cvs_client_send_request(char *fmt, ...)
 	if (s != NULL)
 		*s = ' ';
 
+	cvs_log(LP_TRACE, "%s", data);
 	cvs_remote_output(data);
 	xfree(data);
 }
@@ -304,8 +305,6 @@ cvs_client_senddir(const char *dir)
 {
 	char *repo;
 
-	cvs_log(LP_TRACE, "cvs_client_senddir(%s)", dir);
-
 	if (lastdir != NULL && !strcmp(dir, lastdir))
 		return;
 
@@ -332,8 +331,6 @@ cvs_client_sendfile(struct cvs_file *cf)
 		return;
 
 	cvs_client_senddir(cf->file_wd);
-
-	cvs_log(LP_TRACE, "cvs_client_sendfile(%s)", cf->file_path);
 	cvs_remote_classify_file(cf);
 
 	if (cf->file_type == CVS_DIR)
@@ -409,14 +406,12 @@ cvs_client_send_files(char **argv, int argc)
 void
 cvs_client_ok(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_client_ok()");
 	end_of_response = 1;
 }
 
 void
 cvs_client_error(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_client_error()");
 	end_of_response = 1;
 }
 
@@ -470,8 +465,6 @@ cvs_client_checkedin(char *data)
 	struct cvs_ent *ent, *newent;
 	char *dir, *entry, rev[16], timebuf[64], sticky[16];
 
-	cvs_log(LP_TRACE, "cvs_client_checkedin(%s)", data);
-
 	dir = cvs_remote_input();
 	entry = cvs_remote_input();
 	xfree(dir);
@@ -522,8 +515,6 @@ cvs_client_updated(char *data)
 	struct timeval tv[2];
 	char timebuf[32], *repo, *rpath, *entry, *mode;
 	char revbuf[32], *len, *fpath, *wdir;
-
-	cvs_log(LP_TRACE, "cvs_client_updated(%s)", data);
 
 	client_check_directory(data);
 
@@ -602,21 +593,17 @@ cvs_client_updated(char *data)
 void
 cvs_client_merged(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_client_merged(%s)", data);
 }
 
 void
 cvs_client_removed(char *data)
 {
-	cvs_log(LP_TRACE, "cvs_client_removed(%s)", data);
 }
 
 void
 cvs_client_remove_entry(char *data)
 {
 	char *dir;
-
-	cvs_log(LP_TRACE, "cvs_client_remove_entry(%s)", data);
 
 	dir = cvs_remote_input();
 	xfree(dir);
