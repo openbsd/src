@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.40 2005/05/01 20:53:38 jmc Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.41 2006/07/09 21:19:41 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -68,7 +68,11 @@ main(int argc, char *argv[])
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	disk_t disk;
 	DISK_metrics *usermetrics;
+#if defined(__amd64__) || defined(__i386__) || defined (__powerpc__)
 	char *mbrfile = _PATH_MBR;
+#else
+	char *mbrfile = NULL;
+#endif
 	mbr_t mbr;
 	char mbr_buf[DEV_BSIZE];
 
@@ -143,9 +147,12 @@ main(int argc, char *argv[])
 		exit(USER_print_disk(&disk));
 
 	/* Parse mbr template, to pass on later */
-	if ((fd = open(mbrfile, O_RDONLY)) == -1) {
+	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
 		warn("%s", mbrfile);
 		warnx("using builtin MBR");
+		mbrfile == NULL;
+	}
+	if (mbrfile == NULL) {
 		memcpy(mbr_buf, builtin_mbr, sizeof(mbr_buf));
 	} else {
 		MBR_read(fd, 0, mbr_buf);
