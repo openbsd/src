@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.58 2006/07/06 09:59:42 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.59 2006/07/09 13:35:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -113,6 +113,7 @@ int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *);
 int			mpi_portenable(struct mpi_softc *);
 void			mpi_get_raid(struct mpi_softc *);
+int			mpi_fwupload(struct mpi_softc *);
 
 int			mpi_cfg_header(struct mpi_softc *, u_int8_t, u_int8_t,
 			    u_int32_t, struct mpi_cfg_hdr *);
@@ -198,6 +199,11 @@ mpi_attach(struct mpi_softc *sc)
 
 	if (mpi_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
+		goto free_replies;
+	}
+
+	if (mpi_fwupload(sc) != 0) {
+		printf("%s: unable to upload firmware\n", DEVNAME(sc));
 		goto free_replies;
 	}
 
@@ -1785,6 +1791,8 @@ mpi_iocfacts(struct mpi_softc *sc)
 	else
 		sc->sc_buswidth =
 		    (ifp.max_devices == 0) ? 256 : ifp.max_devices;
+	if (ifp.flags & MPI_IOCFACTS_FLAGS_FW_DOWNLOAD_BOOT)
+		sc->sc_fw_len = letoh32(ifp.fw_image_size);
 
 	/*
 	 * you can fit sg elements on the end of the io cmd if they fit in the
@@ -2065,6 +2073,80 @@ mpi_portenable(struct mpi_softc *sc)
 	mpi_put_ccb(sc, ccb);
 
 	return (0);
+}
+
+int
+mpi_fwupload(struct mpi_softc *sc)
+{
+	struct mpi_ccb				*ccb;
+	struct {
+		struct mpi_msg_fwupload_request		req;
+		struct mpi_sge				sge;
+	} __packed				*bundle;
+	struct mpi_msg_fwupload_reply		*upp;
+	u_int64_t				addr;
+	int					s;
+	int					rv = 0;
+
+	if (sc->sc_fw_len == 0)
+		return (0);
+
+	DNPRINTF(MPI_D_MISC, "%s: mpi_fwupload\n", DEVNAME(sc));
+
+	sc->sc_fw = mpi_dmamem_alloc(sc, sc->sc_fw_len);
+	if (sc->sc_fw == NULL) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_fwupload unable to allocate %d\n",
+		    DEVNAME(sc), sc->sc_fw_len);
+		return (1);
+	}
+
+	s = splbio();
+	ccb = mpi_get_ccb(sc);
+	splx(s);
+	if (ccb == NULL) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_fwupload ccb_get\n",
+		    DEVNAME(sc));
+		goto err;
+	}
+
+	ccb->ccb_done = mpi_empty_done;
+	bundle = ccb->ccb_cmd;
+
+	bundle->req.function = MPI_FUNCTION_FW_UPLOAD;
+	bundle->req.msg_context = htole32(ccb->ccb_id);
+
+	bundle->req.image_type = MPI_FWUPLOAD_IMAGETYPE_IOC_FW;
+
+	bundle->req.tce.details_length = 12;
+	bundle->req.tce.image_size = htole32(sc->sc_fw_len);
+
+	bundle->sge.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
+	    MPI_SGE_FL_SIZE_64 | MPI_SGE_FL_LAST | MPI_SGE_FL_EOB |
+	    MPI_SGE_FL_EOL | (u_int32_t)sc->sc_fw_len);
+	addr = MPI_DMA_DVA(sc->sc_fw);
+	bundle->sge.sg_hi_addr = htole32((u_int32_t)(addr >> 32));
+	bundle->sge.sg_lo_addr = htole32((u_int32_t)addr);
+
+	if (mpi_poll(sc, ccb, 50000) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n", DEVNAME(sc));
+		goto err;
+	}
+
+	upp = ccb->ccb_reply;
+	if (upp == NULL)
+		panic("%s: unable to do fw upload\n", DEVNAME(sc));
+
+	if (letoh16(upp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
+		rv = 1;
+
+	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_put_ccb(sc, ccb);
+
+	return (rv);
+
+err:
+	mpi_dmamem_free(sc, sc->sc_fw);
+	return (1);
 }
 
 void
