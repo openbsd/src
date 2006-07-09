@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_dagdegwr.c,v 1.5 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_dagdegwr.c,v 1.6 2006/07/09 22:10:05 mk Exp $	*/
 /*	$NetBSD: rf_dagdegwr.c,v 1.5 2000/01/07 03:40:57 oster Exp $	*/
 
 /*
@@ -578,7 +578,7 @@ rf_WriteGenerateFailedAccessASMs(RF_Raid_t *raidPtr,
 	/*
 	 * Determine how many pda's we will have to generate per unaccessed
 	 * stripe. If there is only one failed data unit, it is one; if two,
-	 * possibly two, depending wether they overlap.
+	 * possibly two, depending whether they overlap.
 	 */
 
 	fone_start = rf_StripeUnitOffset(layoutPtr, fone->startSector);

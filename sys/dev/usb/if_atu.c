@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.73 2006/06/27 03:58:07 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.74 2006/07/09 22:10:05 mk Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -560,7 +560,7 @@ atu_start_scan(struct atu_softc *sc)
 	/* the time we stay on one channel */
 	USETW(Scan.MinChannelTime, 100);
 	USETW(Scan.MaxChannelTime, 200);
-	/* wether or not we scan all channels */
+	/* whether or not we scan all channels */
 	Scan.InternationalScan = 0xc1;
 
 #ifdef ATU_DEBUG
