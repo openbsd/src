@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.50 2006/04/21 08:48:01 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.51 2006/07/09 21:51:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -71,7 +71,7 @@ it with the
 .Tn I2C
 commands.
 .Sh SUPPORTED MASTERS
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width 13n -compact
 .It Xr alipm 4
 Acer Labs M7101 SMBus host controller
 .It Xr amdiic 4
@@ -100,7 +100,7 @@ Apple System Management Unit driver
 VIA VT8233/8235/8237 SMBus host controller
 .El
 .Sh SUPPORTED SLAVES
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width 13n -compact
 .It Xr adc 4
 Analog Devices AD7416/AD7417/7418 temperature sensor
 .It Xr admcts 4
@@ -123,8 +123,12 @@ Asus ASB 100 temperature sensor
 Apple sudden motion sensor
 .It Xr fcu 4
 Apple FCU fan controller
+.It Xr fintek 4
+Fintek F75375 temperature sensor
 .It Xr glenv 4
 Genesys Logic GL518SM hardware monitor
+.It Xr lm 4
+National Semiconductor LM78/79/81 hardware monitors
 .It Xr lmenv 4
 National Semiconductor LM87 temperature sensor
 .It Xr lmtemp 4
@@ -135,10 +139,16 @@ Maxim DS1624/DS1631/DS1721 temperature sensor
 Maxim MAX6642/MAX6690 temperature sensor
 .It Xr pcagpio 4
 Philips PCA955[467] GPIO
+.It Xr pcaled 4
+Philips PCA9532 LED dimmer
 .It Xr pcfadc 4
 Philips PCF8591 I2C Analogue to Digital Converter
+.It Xr ricohrtc 4
+Ricoh RS5C372 Real Time Clock
 .It Xr tsl 4
 TAOS TSL2560/61 light-to-digital converter
+.It Xr wbenv 4
+Winbond W83L784R/W83L785R/W83L785TS-L hardware monitor
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
