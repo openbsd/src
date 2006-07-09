@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.14 2006/05/29 20:47:22 cloder Exp $	*/
+/*	$OpenBSD: chk.c,v 1.15 2006/07/09 19:37:00 miod Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.14 2006/05/29 20:47:22 cloder Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.15 2006/07/09 19:37:00 miod Exp $";
 #endif
 
 #include <stdlib.h>
@@ -371,7 +371,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 		}
 		if (!eq || (sflag && warn)) {
 			pos1 = xstrdup(mkpos(&def->s_pos));
-			/* %s: %s used inconsistenty (%s) */
+			/* %s: %s used inconsistently (%s) */
 			msg(4, pos1, hte->h_name, mkpos(&call->f_pos));
 			free(pos1);
 		}

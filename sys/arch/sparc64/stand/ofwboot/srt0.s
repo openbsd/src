@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.5 2004/01/10 22:47:54 pvalchev Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.6 2006/07/09 19:36:57 miod Exp $	*/
 /*	$NetBSD: srt0.s,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ _start:
 	sub	%sp, %g1, %g1
 	save	%g1, %g0, %sp
 	
-!	mov	%i0, %i4		! Apparenty we get our CIF in i0
+!	mov	%i0, %i4		! Apparently we get our CIF in i0
 	
 	/*
 	 * Set the psr into a known state:
