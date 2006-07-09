@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.27 2005/12/02 16:50:11 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.28 2006/07/09 14:42:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -105,9 +105,14 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	struct hostent *hp;
 	struct passwd *pw;
 	struct addrinfo hints, *res0;
+	struct sigaction sa;
 
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = SIG_DFL; 
 	for (i = 1; i < _NSIG; i++)
-		signal(i, SIG_DFL);
+		sigaction(i, &sa, NULL);
 
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
@@ -151,11 +156,14 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 	/* Father */
 	/* Pass TERM/HUP/INT/QUIT through to child, and accept CHLD */
-	signal(SIGTERM, sig_pass_to_chld);
-	signal(SIGHUP, sig_pass_to_chld);
-	signal(SIGINT, sig_pass_to_chld);
-	signal(SIGQUIT, sig_pass_to_chld);
-	signal(SIGCHLD, sig_got_chld);
+	sa.sa_handler = sig_pass_to_chld; 
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
+	sa.sa_handler = sig_got_chld;
+	sa.sa_flags |= SA_NOCLDSTOP;
+	sigaction(SIGCHLD, &sa, NULL);
 
 	setproctitle("[priv]");
 	close(socks[1]);
