@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1095 2006/07/09 03:35:10 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1096 2006/07/09 22:32:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2871,6 +2871,7 @@
 #define	PCI_PRODUCT_QLOGIC_ISP2200	0x2200		/* ISP2200 */
 #define	PCI_PRODUCT_QLOGIC_ISP2300	0x2300		/* ISP2300 */
 #define	PCI_PRODUCT_QLOGIC_ISP2312	0x2312		/* ISP2312 */
+#define	PCI_PRODUCT_QLOGIC_ISP2322	0x2322		/* ISP2322 */
 #define	PCI_PRODUCT_QLOGIC_ISP6312	0x6312		/* ISP6312 */
 
 /* Quantum Designs products */
