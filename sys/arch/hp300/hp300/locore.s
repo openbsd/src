@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.57 2006/06/24 13:20:17 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.58 2006/07/09 19:41:21 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ Lmmu_enable:
 	.long	0x4e7b1807		| movc d1,srp
 	jra	Lstploaddone
 Lmotommu1:
-	RELOC(protorp, a0)
+	ASRELOC(protorp, a0)
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
 	movl	d1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
@@ -590,8 +590,18 @@ Lhighcode:
 	moveq	#0,d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc d0,itt0
 	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
 	.long	0x4e7b0007		| movc d0,dtt1
+
+	/*
+	 * Set up transparent translation for supervisor data access.
+	 * The range 0xc0000000-0xffffffff will not be translated, and
+	 * thus yields a 1:1 mapping of the physical memory in the top
+	 * of the address space (as long as we don't have more than
+	 * 1GB of memory, which will be very unlikely...)
+	 */
+	movl	#0xc03fa000,d0
+	.long	0x4e7b0006		| movc d0,dtt0
+
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
 	movl	#0x8000,d0
@@ -600,9 +610,19 @@ Lhighcode:
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
+	cmpl	#MMU_68030,a0@		| 68030?
+	jne	Lmotommu2b		| no, skip
+	/*
+	 * Set up transparent translation for supervisor data access
+	 * (FC == 5), similar to the 68040 logic above.
+	 */
+	ASRELOC(mmuscratch, a2)
+	movl	#0xc03f8150,a2@		| build our TT0 value
+	.long	0xf0120800		| pmove a2@,tt0
+Lmotommu2b:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
-					| enable 68881 and i-cache
-	RELOC(prototc, a2)
+					| enable MMU and i-cache
+	ASRELOC(mmuscratch, a2)
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 	jmp	Lenab1
@@ -1831,7 +1851,7 @@ ENTRY(loadustp)
 LmotommuC:
 #endif
 	pflusha				| flush entire TLB
-	lea	_C_LABEL(protorp),a0	| CRP prototype
+	lea	_ASM_LABEL(protorp),a0	| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
 	movl	#CACHE_CLR,d0
@@ -2046,16 +2066,14 @@ GLOBAL(ectype)
 GLOBAL(fputype)
 	.long	FPU_68882	| default to 68882 FPU
 
-#if defined(M68K_MMU_HP)
 GLOBAL(pmap_aliasmask)
 	.long	0
-#endif
 
-GLOBAL(protorp)
+ASLOCAL(protorp)
 	.long	0,0		| prototype root pointer
 
-GLOBAL(prototc)
-	.long	0		| prototype translation control
+ASLOCAL(mmuscratch)
+	.long	0		| scratch space for 68851/68030 MMU operation
 
 GLOBAL(internalhpib)
 	.long	1		| has internal HP-IB, default to yes
