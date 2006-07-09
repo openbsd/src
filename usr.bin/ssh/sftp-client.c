@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-client.c,v 1.65 2006/04/16 00:54:10 djm Exp $ */
+/* $OpenBSD: sftp-client.c,v 1.66 2006/07/09 15:15:11 stevesk Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -25,6 +25,8 @@
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <fcntl.h>
 
 #include "buffer.h"
 #include "bufaux.h"
