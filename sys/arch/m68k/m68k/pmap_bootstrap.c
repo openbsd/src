@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.16 2006/07/06 17:50:16 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.17 2006/07/09 19:39:53 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -193,6 +193,7 @@ pmap_bootstrap(nextpa, firstpa)
 
 	nptpages += (RELOC(physmem, int) * 15 * sizeof(struct vm_anon)) / 16;
 
+#if !defined(__HAVE_PMAP_DIRECT)
 	{
 		extern int uvm_km_pages_lowat;
 
@@ -203,6 +204,7 @@ pmap_bootstrap(nextpa, firstpa)
 		}
 	}
 	nptpages += ptoa(num);
+#endif
 
 	nptpages = (atop(round_page(nptpages)) + NPTEPG - 1) / NPTEPG;
 
