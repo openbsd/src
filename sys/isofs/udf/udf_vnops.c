@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.18 2006/07/08 23:29:20 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.19 2006/07/09 04:14:25 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -86,7 +86,7 @@ struct vnodeopv_desc udf_vnodeop_opv_desc =
 
 /* Look up a unode based on the ino_t passed in and return it's vnode */
 int
-udf_hashlookup(struct udf_mnt *udfmp, ino_t id, int flags, struct vnode **vpp)
+udf_hashlookup(struct umount *udfmp, ino_t id, int flags, struct vnode **vpp)
 {
 	struct unode *up;
 	struct udf_hash_lh *lh;
@@ -96,16 +96,16 @@ udf_hashlookup(struct udf_mnt *udfmp, ino_t id, int flags, struct vnode **vpp)
 	*vpp = NULL;
 
 loop:
-	mtx_enter(&udfmp->hash_mtx);
-	lh = &udfmp->hashtbl[id & udfmp->hashsz];
+	mtx_enter(&udfmp->um_hashmtx);
+	lh = &udfmp->um_hashtbl[id & udfmp->um_hashsz];
 	if (lh == NULL) {
-		mtx_leave(&udfmp->hash_mtx);
+		mtx_leave(&udfmp->um_hashmtx);
 		return (ENOENT);
 	}
 
 	LIST_FOREACH(up, lh, u_le) {
 		if (up->u_ino == id) {
-			mtx_leave(&udfmp->hash_mtx);
+			mtx_leave(&udfmp->um_hashmtx);
 			error = vget(up->u_vnode, flags | LK_INTERLOCK, p);
 			if (error == ENOENT)
 				goto loop;
@@ -116,7 +116,7 @@ loop:
 		}
 	}
 
-	mtx_leave(&udfmp->hash_mtx);
+	mtx_leave(&udfmp->um_hashmtx);
 
 	return (0);
 }
@@ -124,19 +124,19 @@ loop:
 int
 udf_hashins(struct unode *up)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct udf_hash_lh *lh;
 	struct proc *p = curproc;
 
 	udfmp = up->u_ump;
 
 	vn_lock(up->u_vnode, LK_EXCLUSIVE | LK_RETRY, p);
-	mtx_enter(&udfmp->hash_mtx);
-	lh = &udfmp->hashtbl[up->u_ino & udfmp->hashsz];
+	mtx_enter(&udfmp->um_hashmtx);
+	lh = &udfmp->um_hashtbl[up->u_ino & udfmp->um_hashsz];
 	if (lh == NULL)
 		LIST_INIT(lh);
 	LIST_INSERT_HEAD(lh, up, u_le);
-	mtx_leave(&udfmp->hash_mtx);
+	mtx_leave(&udfmp->um_hashmtx);
 
 	return (0);
 }
@@ -144,17 +144,17 @@ udf_hashins(struct unode *up)
 int
 udf_hashrem(struct unode *up)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct udf_hash_lh *lh;
 
 	udfmp = up->u_ump;
 
-	mtx_enter(&udfmp->hash_mtx);
-	lh = &udfmp->hashtbl[up->u_ino & udfmp->hashsz];
+	mtx_enter(&udfmp->um_hashmtx);
+	lh = &udfmp->um_hashtbl[up->u_ino & udfmp->um_hashsz];
 	if (lh == NULL)
 		panic("hash entry is NULL, up->u_ino = %d", up->u_ino);
 	LIST_REMOVE(up, u_le);
-	mtx_leave(&udfmp->hash_mtx);
+	mtx_leave(&udfmp->um_hashmtx);
 
 	return (0);
 }
@@ -354,16 +354,16 @@ udf_getattr(void *v)
 		 */
 		if (fentry->logblks_rec != 0) {
 			vap->va_size =
-			    letoh64(fentry->logblks_rec) * up->u_ump->bsize;
+			    letoh64(fentry->logblks_rec) * up->u_ump->um_bsize;
 		} else {
-			vap->va_size = up->u_ump->bsize;
+			vap->va_size = up->u_ump->um_bsize;
 		}
 	} else {
 		vap->va_size = letoh64(fentry->inf_len);
 	}
 	vap->va_flags = 0;
 	vap->va_gen = 1;
-	vap->va_blocksize = up->u_ump->bsize;
+	vap->va_blocksize = up->u_ump->um_bsize;
 	vap->va_bytes = letoh64(fentry->inf_len);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = 0;
@@ -467,7 +467,7 @@ udf_read(void *v)
  * that the kernel/user expects.  Return the length of the translated string.
  */
 int
-udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
+udf_transname(char *cs0string, char *destname, int len, struct umount *udfmp)
 {
 	unicode_t *transname;
 	int i, unilen = 0, destlen;
@@ -512,7 +512,7 @@ udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
  * done here also.
  */
 static int
-udf_cmpname(char *cs0string, char *cmpname, int cs0len, int cmplen, struct udf_mnt *udfmp)
+udf_cmpname(char *cs0string, char *cmpname, int cs0len, int cmplen, struct umount *udfmp)
 {
 	char *transname;
 	int error = 0;
@@ -561,7 +561,7 @@ udf_uiodir(struct udf_uiodir *uiodir, int de_size, struct uio *uio, long cookie)
 }
 
 static struct udf_dirstream *
-udf_opendir(struct unode *up, int offset, int fsize, struct udf_mnt *udfmp)
+udf_opendir(struct unode *up, int offset, int fsize, struct umount *udfmp)
 {
 	struct udf_dirstream *ds;
 
@@ -622,7 +622,7 @@ udf_getfid(struct udf_dirstream *ds)
 
 		/* Copy what we have of the fid into a buffer */
 		frag_size = ds->size - ds->off;
-		if (frag_size >= ds->udfmp->bsize) {
+		if (frag_size >= ds->udfmp->um_bsize) {
 			printf("udf: invalid FID fragment\n");
 			ds->error = EINVAL;
 			return (NULL);
@@ -632,8 +632,8 @@ udf_getfid(struct udf_dirstream *ds)
 		 * File ID descriptors can only be at most one
 		 * logical sector in size.
 		 */
-		ds->buf = malloc(ds->udfmp->bsize, M_UDFFID, M_WAITOK);
-		bzero(ds->buf, ds->udfmp->bsize);
+		ds->buf = malloc(ds->udfmp->um_bsize, M_UDFFID, M_WAITOK);
+		bzero(ds->buf, ds->udfmp->um_bsize);
 		bcopy(fid, ds->buf, frag_size);
 
 		/* Reduce all of the casting magic */
@@ -666,7 +666,7 @@ udf_getfid(struct udf_dirstream *ds)
 		 * allocation.
 		 */
 		total_fid_size = UDF_FID_SIZE + letoh16(fid->l_iu) + fid->l_fi;
-		if (total_fid_size > ds->udfmp->bsize) {
+		if (total_fid_size > ds->udfmp->um_bsize) {
 			printf("udf: invalid FID\n");
 			ds->error = EIO;
 			return (NULL);
@@ -721,7 +721,7 @@ udf_readdir(void *v)
 	struct uio *uio;
 	struct dirent dir;
 	struct unode *up;
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct fileid_desc *fid;
 	struct udf_uiodir uiodir;
 	struct udf_dirstream *ds;
@@ -868,7 +868,7 @@ udf_strategy(void *v)
 		 * Files that are embedded in the fentry don't translate well
 		 * to a block number.  Reject.
 		 */
-		if (udf_bmap_internal(up, bp->b_lblkno * up->u_ump->bsize,
+		if (udf_bmap_internal(up, bp->b_lblkno * up->u_ump->um_bsize,
 		    &bp->b_lblkno, &maxsize)) {
 			clrbuf(bp);
 			bp->b_blkno = -1;
@@ -980,13 +980,13 @@ udf_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	error = udf_bmap_internal(up, ap->a_bn * up->u_ump->bsize,
+	error = udf_bmap_internal(up, ap->a_bn * up->u_ump->um_bsize,
 	    &lsector, &max_size);
 	if (error)
 		return (error);
 
 	/* Translate logical to physical sector number */
-	*ap->a_bnp = lsector << (up->u_ump->bshift - DEV_BSHIFT);
+	*ap->a_bnp = lsector << (up->u_ump->um_bshift - DEV_BSHIFT);
 
 	/* Punt on read-ahead for now */
 	if (ap->a_runp)
@@ -1010,7 +1010,7 @@ udf_lookup(void *v)
 	struct vnode *tdp = NULL;
 	struct vnode **vpp = ap->a_vpp;
 	struct unode *up;
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct fileid_desc *fid = NULL;
 	struct udf_dirstream *ds;
 	struct proc *p;
@@ -1114,7 +1114,7 @@ lookloop:
 
 	/* Did we have a match? */
 	if (id) {
-		error = udf_vget(udfmp->im_mountp, id, &tdp);
+		error = udf_vget(udfmp->um_mountp, id, &tdp);
 		if (!error) {
 			/*
 			 * Remember where this entry was if it's the final
@@ -1220,7 +1220,7 @@ int
 udf_readatoffset(struct unode *up, int *size, off_t offset,
     struct buf **bp, uint8_t **data)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct file_entry *fentry = NULL;
 	struct buf *bp1;
 	uint32_t max_size;
@@ -1256,7 +1256,7 @@ udf_readatoffset(struct unode *up, int *size, off_t offset,
 	}
 
 	bp1 = *bp;
-	*data = (uint8_t *)&bp1->b_data[offset % udfmp->bsize];
+	*data = (uint8_t *)&bp1->b_data[offset % udfmp->um_bsize];
 	return (0);
 }
 
@@ -1268,7 +1268,7 @@ int
 udf_bmap_internal(struct unode *up, off_t offset, daddr_t *sector,
     uint32_t *max_size)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct file_entry *fentry;
 	void *icb;
 	struct icb_tag *tag;
@@ -1314,7 +1314,7 @@ udf_bmap_internal(struct unode *up, off_t offset, daddr_t *sector,
 			ad_num++;
 		} while(offset >= icblen);
 
-		lsector = (offset  >> udfmp->bshift) +
+		lsector = (offset  >> udfmp->um_bshift) +
 		    letoh32(((struct short_ad *)(icb))->pos);
 
 		*max_size = GETICBLEN(short_ad, icb);
@@ -1339,7 +1339,7 @@ udf_bmap_internal(struct unode *up, off_t offset, daddr_t *sector,
 			ad_num++;
 		} while(offset >= icblen);
 
-		lsector = (offset >> udfmp->bshift) +
+		lsector = (offset >> udfmp->um_bshift) +
 		    letoh32(((struct long_ad *)(icb))->loc.lb_num);
 
 		*max_size = GETICBLEN(long_ad, icb);
@@ -1351,7 +1351,7 @@ udf_bmap_internal(struct unode *up, off_t offset, daddr_t *sector,
 		 * allocation descriptor field of the file entry.
 		 */
 		*max_size = 0;
-		*sector = up->u_ino + udfmp->part_start;
+		*sector = up->u_ino + udfmp->um_start;
 
 		return (UDF_INVALID_BMAP);
 	case 2:
@@ -1362,19 +1362,19 @@ udf_bmap_internal(struct unode *up, off_t offset, daddr_t *sector,
 		return (ENODEV);
 	}
 
-	*sector = lsector + udfmp->part_start;
+	*sector = lsector + udfmp->um_start;
 
 	/*
 	 * Check the sparing table.  Each entry represents the beginning of
 	 * a packet.
 	 */
-	if (udfmp->s_table != NULL) {
-		for (i = 0; i< udfmp->s_table_entries; i++) {
+	if (udfmp->um_stbl != NULL) {
+		for (i = 0; i< udfmp->um_stbl_len; i++) {
 			p_offset =
-			    lsector - letoh32(udfmp->s_table->entries[i].org);
-			if ((p_offset < udfmp->p_sectors) && (p_offset >= 0)) {
+			    lsector - letoh32(udfmp->um_stbl->entries[i].org);
+			if ((p_offset < udfmp->um_psecs) && (p_offset >= 0)) {
 				*sector =
-				   letoh32(udfmp->s_table->entries[i].map) +
+				   letoh32(udfmp->um_stbl->entries[i].map) +
 				    p_offset;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.8 2006/07/08 23:29:20 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.9 2006/07/09 04:14:25 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -42,7 +42,7 @@
 #include <isofs/udf/udf.h>
 #include <isofs/udf/udf_extern.h>
 
-int udf_vat_read(struct udf_mnt *, uint32_t *);
+int udf_vat_read(struct umount *, uint32_t *);
 
 /*
  * Convert a CS0 dstring to a 16-bit Unicode string.
@@ -183,22 +183,22 @@ out:
 
 /* Get a vnode for the Virtual Allocation Table (VAT) */
 int
-udf_vat_get(struct udf_mnt *ump)
+udf_vat_get(struct umount *ump)
 {
 	struct vnode *vp;
 	struct unode *up;
 	int error;
 
-	error = udf_vget(ump->im_mountp, ump->part_len - 3, &vp);
+	error = udf_vget(ump->um_mountp, ump->um_len - 3, &vp);
 	if (error)
 		return (error);
 
 	up = VTOU(vp);
 	up->u_vatlen = (letoh64(up->u_fentry->inf_len) - 36) >> 2;
 
-	ump->im_vat = vp;
-	ump->im_flags &= ~UDF_MNT_FIND_VAT;
-	ump->im_flags |=  UDF_MNT_USES_VAT;
+	ump->um_vat = vp;
+	ump->um_flags &= ~UDF_MNT_FIND_VAT;
+	ump->um_flags |=  UDF_MNT_USES_VAT;
 
 	vput(vp);
 
@@ -207,16 +207,16 @@ udf_vat_get(struct udf_mnt *ump)
 
 /* Look up a sector in the VAT */
 int
-udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
+udf_vat_map(struct umount *ump, uint32_t *sector)
 {
 	/* If there's no VAT, then it's easy */
-	if (!(ump->im_flags & UDF_MNT_USES_VAT)) {
-		*sector += ump->part_start;
+	if (!(ump->um_flags & UDF_MNT_USES_VAT)) {
+		*sector += ump->um_start;
 		return (0);
 	}
 
 	/* Sanity check the given sector */
-	if (*sector >= VTOU(ump->im_vat)->u_vatlen)
+	if (*sector >= VTOU(ump->um_vat)->u_vatlen)
 		return (EINVAL);
 
 	return (udf_vat_read(ump, sector));
@@ -224,14 +224,14 @@ udf_vat_map(struct udf_mnt *ump, uint32_t *sector)
 
 /* Read from the VAT */
 int
-udf_vat_read(struct udf_mnt *ump, uint32_t *sector)
+udf_vat_read(struct umount *ump, uint32_t *sector)
 {
 	struct unode *up;
 	struct buf *bp;
 	uint8_t *data;
 	int error, size;
 
-	up = VTOU(ump->im_vat);
+	up = VTOU(ump->um_vat);
 	size = 4;
 
 	/*
@@ -255,7 +255,7 @@ udf_vat_read(struct udf_mnt *ump, uint32_t *sector)
 	}
 
 	/* Map the sector */
-	*sector = letoh32(*(uint32_t *)data) + ump->part_start;
+	*sector = letoh32(*(uint32_t *)data) + ump->um_start;
 
 	brelse(bp);
 

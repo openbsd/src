@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.17 2006/07/08 23:29:20 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.18 2006/07/09 04:14:25 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -76,9 +76,9 @@ struct pool udf_trans_pool;
 struct pool unode_pool;
 struct pool udf_ds_pool;
 
-int udf_find_partmaps(struct udf_mnt *, struct logvol_desc *);
-int udf_get_vpartmap(struct udf_mnt *, struct part_map_virt *);
-int udf_get_spartmap(struct udf_mnt *, struct part_map_spare *);
+int udf_find_partmaps(struct umount *, struct logvol_desc *);
+int udf_get_vpartmap(struct umount *, struct part_map_virt *);
+int udf_get_spartmap(struct umount *, struct part_map_spare *);
 
 const struct vfsops udf_vfsops = {
 	.vfs_fhtovp =		udf_fhtovp,
@@ -217,7 +217,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 {
 	struct buf *bp = NULL;
 	struct anchor_vdp avdp;
-	struct udf_mnt *udfmp = NULL;
+	struct umount *udfmp = NULL;
 	struct part_desc *pd;
 	struct logvol_desc *lvd;
 	struct fileset_desc *fsd;
@@ -249,17 +249,17 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (error)
 		return (error);
 
-	MALLOC(udfmp, struct udf_mnt *, sizeof(struct udf_mnt), M_UDFMOUNT,
+	MALLOC(udfmp, struct umount *, sizeof(struct umount), M_UDFMOUNT,
 	    M_WAITOK);
-	bzero(udfmp, sizeof(struct udf_mnt));
+	bzero(udfmp, sizeof(struct umount));
 
 	mp->mnt_data = (qaddr_t)udfmp;
 	mp->mnt_stat.f_fsid.val[0] = devvp->v_rdev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_UDF);
 	mp->mnt_flag |= MNT_LOCAL;
-	udfmp->im_mountp = mp;
-	udfmp->im_dev = devvp->v_rdev;
-	udfmp->im_devvp = devvp;
+	udfmp->um_mountp = mp;
+	udfmp->um_dev = devvp->v_rdev;
+	udfmp->um_devvp = devvp;
 
 	bsize = 2048;	/* Should probe the media for its size. */
 
@@ -294,9 +294,9 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		}
 		lvd = (struct logvol_desc *)bp->b_data;
 		if (!udf_checktag(&lvd->tag, TAGID_LOGVOL)) {
-			udfmp->bsize = letoh32(lvd->lb_size);
-			udfmp->bmask = udfmp->bsize - 1;
-			udfmp->bshift = ffs(udfmp->bsize) - 1;
+			udfmp->um_bsize = letoh32(lvd->lb_size);
+			udfmp->um_bmask = udfmp->um_bsize - 1;
+			udfmp->um_bshift = ffs(udfmp->um_bsize) - 1;
 			fsd_part = letoh16(lvd->_lvd_use.fsd_loc.loc.part_num);
 			fsd_offset = letoh32(lvd->_lvd_use.fsd_loc.loc.lb_num);
 			if (udf_find_partmaps(udfmp, lvd))
@@ -307,8 +307,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if (!udf_checktag(&pd->tag, TAGID_PARTITION)) {
 			part_found = 1;
 			part_num = letoh16(pd->part_num);
-			udfmp->part_len = letoh32(pd->part_len);
-			udfmp->part_start = letoh32(pd->start_loc);
+			udfmp->um_len = letoh32(pd->part_len);
+			udfmp->um_start = letoh32(pd->start_loc);
 		}
 
 		brelse(bp); 
@@ -328,12 +328,12 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		goto bail;
 	}
 
-	mtx_init(&udfmp->hash_mtx, IPL_NONE);
-	udfmp->hashtbl = hashinit(UDF_HASHTBLSIZE, M_UDFMOUNT, M_WAITOK,
-	    &udfmp->hashsz);
+	mtx_init(&udfmp->um_hashmtx, IPL_NONE);
+	udfmp->um_hashtbl = hashinit(UDF_HASHTBLSIZE, M_UDFMOUNT, M_WAITOK,
+	    &udfmp->um_hashsz);
 
 	/* Get the VAT, if needed */
-	if (udfmp->im_flags & UDF_MNT_FIND_VAT) {
+	if (udfmp->um_flags & UDF_MNT_FIND_VAT) {
 		error = udf_vat_get(udfmp);
 		if (error)
 			goto bail;
@@ -346,14 +346,14 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 */
 	sector = fsd_offset;
 	udf_vat_map(udfmp, &sector);
-	if ((error = RDSECTOR(devvp, sector, udfmp->bsize, &bp)) != 0) {
+	if ((error = RDSECTOR(devvp, sector, udfmp->um_bsize, &bp)) != 0) {
 		printf("Cannot read sector %d of FSD\n", sector);
 		goto bail;
 	}
 	fsd = (struct fileset_desc *)bp->b_data;
 	if (!udf_checktag(&fsd->tag, TAGID_FSD)) {
 		fsd_found = 1;
-		bcopy(&fsd->rootdir_icb, &udfmp->root_icb,
+		bcopy(&fsd->rootdir_icb, &udfmp->um_root_icb,
 		    sizeof(struct long_ad));
 	}
 
@@ -369,8 +369,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	/*
 	 * Find the file entry for the root directory.
 	 */
-	sector = letoh32(udfmp->root_icb.loc.lb_num);
-	size = letoh32(udfmp->root_icb.len);
+	sector = letoh32(udfmp->um_root_icb.loc.lb_num);
+	size = letoh32(udfmp->um_root_icb.len);
 	udf_vat_map(udfmp, &sector);
 	if ((error = udf_readlblks(udfmp, sector, size, &bp)) != 0) {
 		printf("Cannot read sector %d\n", sector);
@@ -391,8 +391,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	return (0);
 
 bail:
-	if (udfmp->hashtbl != NULL)
-		free(udfmp->hashtbl, M_UDFMOUNT);
+	if (udfmp->um_hashtbl != NULL)
+		free(udfmp->um_hashtbl, M_UDFMOUNT);
 
 	if (udfmp != NULL) {
 		FREE(udfmp, M_UDFMOUNT);
@@ -409,12 +409,12 @@ bail:
 int
 udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct vnode *devvp;
 	int error, flags = 0;
 
 	udfmp = VFSTOUDFFS(mp);
-	devvp = udfmp->im_devvp;
+	devvp = udfmp->um_devvp;
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -432,11 +432,11 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	devvp->v_specmountpoint = NULL;
 	vrele(devvp);
 
-	if (udfmp->s_table != NULL)
-		free(udfmp->s_table, M_UDFMOUNT);
+	if (udfmp->um_stbl != NULL)
+		free(udfmp->um_stbl, M_UDFMOUNT);
 
-	if (udfmp->hashtbl != NULL)
-		free(udfmp->hashtbl, M_UDFMOUNT);
+	if (udfmp->um_hashtbl != NULL)
+		free(udfmp->um_hashtbl, M_UDFMOUNT);
 
 	FREE(udfmp, M_UDFMOUNT);
 
@@ -449,14 +449,14 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 int
 udf_root(struct mount *mp, struct vnode **vpp)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct vnode *vp;
 	ino_t id;
 	int error;
 
 	udfmp = VFSTOUDFFS(mp);
 
-	id = udf_getid(&udfmp->root_icb);
+	id = udf_getid(&udfmp->um_root_icb);
 
 	error = udf_vget(mp, id, vpp);
 	if (error)
@@ -464,7 +464,6 @@ udf_root(struct mount *mp, struct vnode **vpp)
 
 	vp = *vpp;
 	vp->v_flag |= VROOT;
-	udfmp->root_vp = vp;
 
 	return (0);
 }
@@ -479,13 +478,13 @@ udf_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 int
 udf_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 
 	udfmp = VFSTOUDFFS(mp);
 
-	sbp->f_bsize = udfmp->bsize;
-	sbp->f_iosize = udfmp->bsize;
-	sbp->f_blocks = udfmp->part_len;
+	sbp->f_bsize = udfmp->um_bsize;
+	sbp->f_iosize = udfmp->um_bsize;
+	sbp->f_blocks = udfmp->um_len;
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
 	sbp->f_files = 0;
@@ -505,7 +504,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct buf *bp;
 	struct vnode *devvp;
-	struct udf_mnt *udfmp;
+	struct umount *udfmp;
 	struct proc *p;
 	struct vnode *vp;
 	struct unode *up;
@@ -534,9 +533,9 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Copy in the file entry.  Per the spec, the size can only be 1 block.
 	 */
 	sector = ino;
-	devvp = udfmp->im_devvp;
+	devvp = udfmp->um_devvp;
 	udf_vat_map(udfmp, &sector);
-	if ((error = RDSECTOR(devvp, sector, udfmp->bsize, &bp)) != 0) {
+	if ((error = RDSECTOR(devvp, sector, udfmp->um_bsize, &bp)) != 0) {
 		printf("Cannot read sector %d\n", sector);
 		pool_put(&unode_pool, up);
 		if (bp != NULL)
@@ -574,11 +573,11 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	up->u_vnode = vp;
 	up->u_ino = ino;
-	up->u_devvp = udfmp->im_devvp;
-	up->u_dev = udfmp->im_dev;
+	up->u_devvp = udfmp->um_devvp;
+	up->u_dev = udfmp->um_dev;
 	up->u_ump = udfmp;
 	vp->v_data = up;
-	VREF(udfmp->im_devvp);
+	VREF(udfmp->um_devvp);
 
 	lockinit(&up->u_lock, PINOD, "unode", 0, 0);
 
@@ -678,27 +677,27 @@ udf_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
 
 /* Handle a virtual partition map */
 int
-udf_get_vpartmap(struct udf_mnt *udfmp, struct part_map_virt *pmv)
+udf_get_vpartmap(struct umount *udfmp, struct part_map_virt *pmv)
 {
-	udfmp->im_flags |= UDF_MNT_FIND_VAT; /* Should do more than this */
+	udfmp->um_flags |= UDF_MNT_FIND_VAT; /* Should do more than this */
 	return (0);
 }
 
 /* Handle a sparable partition map */
 int
-udf_get_spartmap(struct udf_mnt *udfmp, struct part_map_spare *pms)
+udf_get_spartmap(struct umount *udfmp, struct part_map_spare *pms)
 {
 	struct buf *bp;
 	int i, error;
 
-	udfmp->s_table = malloc(letoh32(pms->st_size), M_UDFMOUNT, M_NOWAIT);
-	if (udfmp->s_table == NULL)
+	udfmp->um_stbl = malloc(letoh32(pms->st_size), M_UDFMOUNT, M_NOWAIT);
+	if (udfmp->um_stbl == NULL)
 		return (ENOMEM);
 
-	bzero(udfmp->s_table, letoh32(pms->st_size));
+	bzero(udfmp->um_stbl, letoh32(pms->st_size));
 
 	/* Calculate the number of sectors per packet */
-	udfmp->p_sectors = letoh16(pms->packet_len) / udfmp->bsize;
+	udfmp->um_psecs = letoh16(pms->packet_len) / udfmp->um_bsize;
 
 	error = udf_readlblks(udfmp, letoh32(pms->st_loc[0]),
 	    letoh32(pms->st_size), &bp);
@@ -706,15 +705,15 @@ udf_get_spartmap(struct udf_mnt *udfmp, struct part_map_spare *pms)
 	if (error) {
 		if (bp != NULL)
 			brelse(bp);
-		free(udfmp->s_table, M_UDFMOUNT);
+		free(udfmp->um_stbl, M_UDFMOUNT);
 		return (error); /* Failed to read sparing table */
 	}
 
-	bcopy(bp->b_data, udfmp->s_table, letoh32(pms->st_size));
+	bcopy(bp->b_data, udfmp->um_stbl, letoh32(pms->st_size));
 	brelse(bp);
 
-	if (udf_checktag(&udfmp->s_table->tag, 0)) {
-		free(udfmp->s_table, M_UDFMOUNT);
+	if (udf_checktag(&udfmp->um_stbl->tag, 0)) {
+		free(udfmp->um_stbl, M_UDFMOUNT);
 		return (EINVAL); /* Invalid sparing table found */
 	}
 
@@ -722,9 +721,9 @@ udf_get_spartmap(struct udf_mnt *udfmp, struct part_map_spare *pms)
 	 * See how many valid entries there are here. The list is
 	 * supposed to be sorted, 0xfffffff0 and higher are not valid.
 	 */
-	for (i = 0; i < letoh16(udfmp->s_table->rt_l); i++) {
-		udfmp->s_table_entries = i;
-		if (letoh32(udfmp->s_table->entries[i].org) >= 0xfffffff0)
+	for (i = 0; i < letoh16(udfmp->um_stbl->rt_l); i++) {
+		udfmp->um_stbl_len = i;
+		if (letoh32(udfmp->um_stbl->entries[i].org) >= 0xfffffff0)
 			break;
 	}
 
@@ -733,7 +732,7 @@ udf_get_spartmap(struct udf_mnt *udfmp, struct part_map_spare *pms)
 
 /* Scan the partition maps */
 int
-udf_find_partmaps(struct udf_mnt *udfmp, struct logvol_desc *lvd)
+udf_find_partmaps(struct umount *udfmp, struct logvol_desc *lvd)
 {
 	struct regid *pmap_id;
 	unsigned char regid_id[UDF_REGID_ID_SIZE + 1];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.7 2006/07/08 23:11:59 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.8 2006/07/09 04:14:25 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -38,7 +38,7 @@ struct unode {
 	LIST_ENTRY(unode) u_le;
 	struct vnode *u_vnode;
 	struct vnode *u_devvp;
-	struct udf_mnt *u_ump;
+	struct umount *u_ump;
 	struct lock u_lock;
 	dev_t u_dev;
 	ino_t u_ino;
@@ -52,25 +52,24 @@ struct unode {
 #define	u_diroff	un_u.u_diroff
 #define	u_vatlen	un_u.u_vatlen
 
-struct udf_mnt {
-	int			im_flags;
-	struct mount		*im_mountp;
-	struct vnode		*im_devvp;
-	dev_t			im_dev;
-	int			bsize;
-	int			bshift;
-	int			bmask;
-	uint32_t		part_start;
-	uint32_t		part_len;
-	struct vnode		*im_vat;
-	struct vnode		*root_vp;
-	struct long_ad		root_icb;
-	LIST_HEAD(udf_hash_lh, unode)	*hashtbl;
-	u_long			hashsz;
-	struct mutex		hash_mtx;
-	int			p_sectors;
-	int			s_table_entries;
-	struct udf_sparing_table *s_table;
+struct umount {
+	int um_flags;
+	struct mount *um_mountp;
+	struct vnode *um_devvp;
+	dev_t um_dev;
+	int um_bsize;
+	int um_bshift;
+	int um_bmask;
+	uint32_t um_start;
+	uint32_t um_len;
+	struct vnode *um_vat;
+	struct long_ad um_root_icb;
+	LIST_HEAD(udf_hash_lh, unode) *um_hashtbl;
+	u_long um_hashsz;
+	struct mutex um_hashmtx;
+	int um_psecs;
+	int um_stbl_len;
+	struct udf_sparing_table *um_stbl;
 };
 
 #define	UDF_MNT_FIND_VAT	0x01	/* Indicates a VAT must be found */
@@ -78,7 +77,7 @@ struct udf_mnt {
 
 struct udf_dirstream {
 	struct unode	*node;
-	struct udf_mnt	*udfmp;
+	struct umount	*udfmp;
 	struct buf	*bp;
 	uint8_t		*data;
 	uint8_t		*buf;
@@ -91,7 +90,7 @@ struct udf_dirstream {
 	int		fid_fragment;
 };
 
-#define	VFSTOUDFFS(mp)	((struct udf_mnt *)((mp)->mnt_data))
+#define	VFSTOUDFFS(mp)	((struct umount *)((mp)->mnt_data))
 #define	VTOU(vp)	((struct unode *)((vp)->v_data))
 
 /*
@@ -100,27 +99,27 @@ struct udf_dirstream {
  * Can the block layer be forced to use a different block size?
  */
 #define	RDSECTOR(devvp, sector, size, bp) \
-	bread(devvp, sector << (udfmp->bshift - DEV_BSHIFT), size, NOCRED, bp)
+    bread(devvp, sector << (udfmp->um_bshift - DEV_BSHIFT), size, NOCRED, bp)
 
 static __inline int
-udf_readlblks(struct udf_mnt *udfmp, int sector, int size, struct buf **bp)
+udf_readlblks(struct umount *udfmp, int sector, int size, struct buf **bp)
 {
-	return (RDSECTOR(udfmp->im_devvp, sector,
-			 (size + udfmp->bmask) & ~udfmp->bmask, bp));
+	return (RDSECTOR(udfmp->um_devvp, sector,
+			 (size + udfmp->um_bmask) & ~udfmp->um_bmask, bp));
 }
 
 static __inline int
-udf_readalblks(struct udf_mnt *udfmp, int lsector, int size, struct buf **bp)
+udf_readalblks(struct umount *udfmp, int lsector, int size, struct buf **bp)
 {
 	daddr_t rablock, lblk;
 	int rasize;
 
-	lblk = (lsector + udfmp->part_start) << (udfmp->bshift - DEV_BSHIFT);
-	rablock = (lblk + 1) << udfmp->bshift;
+	lblk = (lsector + udfmp->um_start) << (udfmp->um_bshift - DEV_BSHIFT);
+	rablock = (lblk + 1) << udfmp->um_bshift;
 	rasize = size;
 
-	return (breadn(udfmp->im_devvp, lblk,
-		       (size + udfmp->bmask) & ~udfmp->bmask,
+	return (breadn(udfmp->um_devvp, lblk,
+		       (size + udfmp->um_bmask) & ~udfmp->um_bmask,
 		       &rablock, &rasize, 1,  NOCRED, bp));
 }
 
@@ -139,7 +138,7 @@ udf_getid(struct long_ad *icb)
 }
 
 int udf_allocv(struct mount *, struct vnode **, struct proc *);
-int udf_hashlookup(struct udf_mnt *, ino_t, int, struct vnode **);
+int udf_hashlookup(struct umount *, ino_t, int, struct vnode **);
 int udf_hashins(struct unode *);
 int udf_hashrem(struct unode *);
 int udf_checktag(struct desc_tag *, uint16_t);
