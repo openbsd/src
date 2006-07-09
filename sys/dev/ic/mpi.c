@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.59 2006/07/09 13:35:10 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.60 2006/07/09 13:45:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -233,7 +233,7 @@ mpi_attach(struct mpi_softc *sc)
 	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_FC)
 		mpi_fc_print(sc);
 
-	/* XXX enable interrupts */
+	/* enable interrupts */
 	mpi_write(sc, MPI_INTR_MASK, MPI_INTR_MASK_DOORBELL);
 
 	return (0);
