@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.12 2006/07/09 21:18:45 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.13 2006/07/09 21:44:06 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -55,17 +55,17 @@ struct wdt_softc {
 	bus_space_handle_t	ioh;
 };
 
-int wdtprobe(struct device *, void *, void *);
-void wdtattach(struct device *, struct device *, void *);
+int	wdtprobe(struct device *, void *, void *);
+void	wdtattach(struct device *, struct device *, void *);
 
-int wdt_is501(struct wdt_softc *);
-void wdt_8254_count(struct wdt_softc *, int, u_int16_t);
-void wdt_8254_mode(struct wdt_softc *, int, int);
-int wdt_set_timeout(void *, int);
-void wdt_init_timer(struct wdt_softc *);
-void wdt_buzzer_off(struct wdt_softc *);
-void wdt_timer_disable(struct wdt_softc *);
-void wdt_buzzer_enable(struct wdt_softc *);
+int	wdt_is501(struct wdt_softc *);
+void	wdt_8254_count(struct wdt_softc *, int, u_int16_t);
+void	wdt_8254_mode(struct wdt_softc *, int, int);
+int	wdt_set_timeout(void *, int);
+void	wdt_init_timer(struct wdt_softc *);
+void	wdt_buzzer_off(struct wdt_softc *);
+void	wdt_timer_disable(struct wdt_softc *);
+void	wdt_buzzer_enable(struct wdt_softc *);
 
 struct cfattach wdt_ca = {
 	sizeof(struct wdt_softc), wdtprobe, wdtattach
