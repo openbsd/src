@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.7 2006/04/23 08:51:24 fgsch Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.8 2006/07/09 23:02:21 mk Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -56,7 +56,7 @@
 
 int verbose = 0;
 int isdemon = 0;
-int reparse = 1;
+int reparse = 0;
 
 struct command {
 	struct command *next;
@@ -136,6 +136,9 @@ main(int argc, char **argv)
 		    isdigit(dev[0]) ? "uhid" : "", dev);
 		dev = devnamebuf;
 	}
+
+	if (demon && conf[0] != '/')
+		errx(1, "config file must have an absolute path, %s", conf);
 
 	fd = open(dev, O_RDWR);
 	if (fd < 0)
