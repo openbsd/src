@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.29 2005/11/26 12:26:18 miod Exp $
+dnl	$OpenBSD: install,v 1.30 2006/07/09 19:44:59 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 
@@ -26,9 +26,6 @@ blocks should work as well.
 
 
 Booting from Network:
-
-Note:  Booting SYS_UBOOT via the network is only possible if your bootrom
-is `rev. c' or later.  (This only applies to the 320/350 era machines.)
 
 If you wish to load the SYS_UBOOT program via the network, you need to
 either have another OpenBSD system on the network, or something else

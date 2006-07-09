@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.27 2006/04/14 21:05:43 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.28 2006/07/09 19:45:01 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -6,11 +6,8 @@
 machine hp300 m68k
 
 # Support for various CPU types
-option		HP320
-option		HP330		# includes 318, 319
 option		HP340
 option		HP345
-option		HP350
 option		HP360
 option		HP362
 option		HP370
