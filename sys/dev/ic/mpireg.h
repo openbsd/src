@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.27 2006/07/06 10:52:58 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.28 2006/07/09 13:29:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -602,6 +602,12 @@ struct mpi_msg_event_reply {
 
 struct mpi_msg_fwupload_request {
 	u_int8_t		image_type;
+#define MPI_FWUPLOAD_IMAGETYPE_IOC_FW			(0x00)
+#define MPI_FWUPLOAD_IMAGETYPE_NV_FW			(0x01)
+#define MPI_FWUPLOAD_IMAGETYPE_MPI_NV_FW		(0x02)
+#define MPI_FWUPLOAD_IMAGETYPE_NV_DATA			(0x03)
+#define MPI_FWUPLOAD_IMAGETYPE_BOOT			(0x04)
+#define MPI_FWUPLOAD_IMAGETYPE_NV_BACKUP		(0x05)
 	u_int8_t		reserved1;
 	u_int8_t		chain_offset;
 	u_int8_t		function;
