@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.2 2006/07/10 16:04:06 drahn Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.3 2006/07/10 16:11:08 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -44,7 +44,6 @@ uint32_t nexttickevent;
 uint32_t ticks_per_intr;
 uint32_t ticks_per_second;
 uint32_t lastnow;
-uint32_t stat_error_cnt, tick_error_cnt;
 uint32_t statvar, statmin;
 int i80321_timer_inited;
 
@@ -257,7 +256,6 @@ cpu_initclocks()
 	setstatclockrate(stathz);
 
 	ticks_per_intr = ticks_per_second / hz;
-	tick_error_cnt = ticks_per_second % hz;
 
 	printf("clock: hz= %d stathz = %d\n", hz, stathz);
 
@@ -362,7 +360,6 @@ setstatclockrate(int newhz)
 	s = splclock();
 
 	statint = ticks_per_second / newhz;
-	stat_error_cnt = ticks_per_second % stathz;
 	/* calculate largest 2^n which is smaller that just over half statint */
 	statvar = 0x40000000; /* really big power of two */
 	minint = statint / 2 + 100;
