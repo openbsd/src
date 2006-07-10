@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.56 2006/07/10 12:46:51 dtucker Exp $ */
+/* $OpenBSD: misc.c,v 1.57 2006/07/10 16:37:36 stevesk Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
+#include <stdarg.h>
 
 #include "misc.h"
 #include "log.h"
