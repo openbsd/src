@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.8 2005/12/30 03:43:04 dlg Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.9 2006/07/10 07:54:43 dlg Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -36,11 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,14 +109,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	usbd_status r;
-
-#if defined(__NetBSD__)
-	char devinfo[256];
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
-#endif
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
