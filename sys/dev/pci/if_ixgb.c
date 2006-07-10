@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.20 2006/06/22 04:57:28 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.21 2006/07/10 00:25:23 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -955,6 +955,8 @@ ixgb_allocate_pci_resources(struct ixgb_softc *sc)
 		return (ENXIO);
 	}
 
+	sc->hw.back = &sc->osdep;
+
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, ixgb_intr, sc,
 					    sc->sc_dv.dv_xname);
@@ -967,8 +969,6 @@ ixgb_allocate_pci_resources(struct ixgb_softc *sc)
 	}
 	printf(": %s", intrstr);
 
-	sc->hw.back = &sc->osdep;
-
 	return(0);
 }
 
@@ -978,11 +978,11 @@ ixgb_free_pci_resources(struct ixgb_softc *sc)
 	struct pci_attach_args *pa = &sc->osdep.ixgb_pa;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 
-	if(sc->sc_intrhand)
+	if (sc->sc_intrhand)
 		pci_intr_disestablish(pc, sc->sc_intrhand);
 	sc->sc_intrhand = 0;
 
-	if(sc->osdep.ixgb_membase)
+	if (sc->osdep.ixgb_membase)
 		bus_space_unmap(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
 				sc->osdep.ixgb_memsize);
 	sc->osdep.ixgb_membase = 0;
