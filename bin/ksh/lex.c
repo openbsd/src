@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.41 2006/06/16 20:34:22 drahn Exp $	*/
+/*	$OpenBSD: lex.c,v 1.42 2006/07/10 17:12:41 beck Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1414,7 +1414,7 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				totlen += len;
 			continue;
 		}
-		if (ntruncate)
+		if (counting && ntruncate)
 			--ntruncate;
 		else if (doprint) {
 			shf_putc(c, shl_out);

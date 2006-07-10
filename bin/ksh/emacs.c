@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.39 2005/09/26 19:25:22 otto Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.40 2006/07/10 17:12:41 beck Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -106,6 +106,7 @@ static	int	killsp, killtp;
 static	int	x_curprefix;
 static	char    *macroptr;
 static	int	prompt_skip;
+static	int	prompt_redraw;
 
 static int      x_ins(char *);
 static void     x_delete(int, int);
@@ -326,10 +327,19 @@ x_emacs(char *buf, size_t len)
 	x_col = promptlen(prompt, &p);
 	prompt_skip = p - prompt;
 	x_adj_ok = 1;
+	prompt_redraw = 1;
+	if (x_col > xx_cols)
+		x_col = x_col - (x_col / xx_cols) * xx_cols;
 	x_displen = xx_cols - 2 - x_col;
 	x_adj_done = 0;
 
 	pprompt(prompt, 0);
+	if (x_displen < 1) {
+		x_col = 0;
+		x_displen = xx_cols - 2;
+		x_e_putc('\n');
+		prompt_redraw = 0;
+	}
 
 	if (x_nextcmd >= 0) {
 		int off = source->line - x_nextcmd;
@@ -985,7 +995,7 @@ x_draw_line(int c)
 static void
 x_redraw(int limit)
 {
-	int	i, j;
+	int	i, j, truncate = 0;
 	char	*cp;
 
 	x_adj_ok = 0;
@@ -995,10 +1005,19 @@ x_redraw(int limit)
 		x_e_putc('\r');
 	x_flush();
 	if (xbp == xbuf) {
-		pprompt(prompt + prompt_skip, 0);
 		x_col = promptlen(prompt, (const char **) 0);
+		if (x_col > xx_cols)
+			truncate = (x_col / xx_cols) * xx_cols;
+		if (prompt_redraw)
+			pprompt(prompt + prompt_skip, truncate);
 	}
+	if (x_col > xx_cols)
+		x_col = x_col - (x_col / xx_cols) * xx_cols;
 	x_displen = xx_cols - 2 - x_col;
+	if (x_displen < 1) {
+		x_col = 0;
+		x_displen = xx_cols - 2;
+	}
 	xlp_valid = false;
 	cp = x_lastcp();
 	x_zots(xbp);
