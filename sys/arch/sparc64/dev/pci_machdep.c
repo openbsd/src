@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.25 2006/06/27 21:22:14 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.26 2006/07/10 21:38:01 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -73,21 +73,6 @@ struct sparc_pci_chipset _sparc_pci_chipset = {
 };
 
 static int pci_bus_frequency(int node);
-
-static pcitag_t
-ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
-{
-	pcitag_t tag;
-
-	tag = PCITAG_CREATE(node, b, d, f);
-
-	/* Enable all the different spaces for this device */
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-		PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
-		PCI_COMMAND_IO_ENABLE);
-
-	return (tag);
-}
 
 /*
  * functions provided to the MI code.
@@ -221,7 +206,7 @@ pci_make_tag(pc, b, d, f)
 			continue;
 
 		/* Got a match */
-		tag = ofpci_make_tag(pc, node, b, d, f);
+		tag = PCITAG_CREATE(node, b, d, f);
 
 		return (tag);
 	}
@@ -294,7 +279,7 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 	    (cacheline/4)*4 == cacheline);
 
 	/* Turn on parity for the bus. */
-	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
+	tag = PCITAG_CREATE(node, sc->sc_bus, 0, 0);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_PARITY_ENABLE;
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
@@ -329,7 +314,7 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 			continue;
 		}
 
-		tag = ofpci_make_tag(pc, node, b, d, f);
+		tag = PCITAG_CREATE(node, b, d, f);
 
 		/*
 		 * Turn on parity and fast-back-to-back for the device.
