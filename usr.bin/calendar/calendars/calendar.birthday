@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.42 2006/07/10 13:24:45 martin Exp $
+ * $OpenBSD: calendar.birthday,v 1.43 2006/07/10 13:38:27 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -18,6 +18,7 @@
 01/04	Wilhelm Beer born, 1797, first astronomer to map Mars
 01/05	DeWitt B. Brace born, 1859, inventor of spectrophotometer
 01/06	Millard Fillmore's birthday (let's party!)
+01/07	Nikola Tesla died in the Hotel New Yorker room 3327, 1943
 01/11	Alexander Hamilton born in Nevis, British West Indies, 1755/57?
 01/11	Albert Hofman born in  Baden, Switzerland 1906
 01/12	John Hancock born, 1737
@@ -58,7 +59,8 @@
 02/08	Friedleib F. Runge born, 1795, father of paper chromatography
 02/08	Jules Verne born in Nantes, France, 1828
 02/08	Dmitry Ivanovich Mendeleev born, an excellent suit-case master, 1834
-02/09	George Hartmann born, 1489, designed astrolabes, timepieces, etc.
+02/09	George Hartmann born, designed astrolabes, timepieces, etc., 1489
+02/09	Fyodor Mikhailovich Dostoevsky died in St. Petersburg, Russia, 1881
 02/10	Charles Lamb born, 1775
 02/10	William Allen White born, 1868
 02/11	William Henry Fox Talbot born, 1800, photographic pioneer
@@ -286,6 +288,7 @@
 11/09	Carl Sagan born, 1934
 11/10	Martin Luther born in Eisleben, Germany, 1483
 11/10	Soviet President Leonid Brezhnev dies at age 75, 1982
+11/11	Fyodor Mikhailovich Dostoevsky born in Moscow, Russia, 1821
 11/11	Kurt Vonnegut, Jr, born in Indianapolis, 1922
 11/13	Robert Louis Stevenson born, 1850
 11/13	St. Augustine of Hippo born in Numidia, Algeria, 354
