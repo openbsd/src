@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.3 2006/07/09 01:47:20 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.4 2006/07/10 01:32:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -113,14 +113,18 @@ cvs_remote_receive_file(size_t len)
 	else
 		in = current_cvsroot->cr_srvout;
 
-	data = xmalloc(len);
-	ret = fread(data, sizeof(char), len, in);
-	if (ret != len)
-		fatal("length mismatch, expected %ld, got %ld", len, ret);
-
 	bp = cvs_buf_alloc(len, BUF_AUTOEXT);
-	cvs_buf_set(bp, data, len, 0);
-	xfree(data);
+
+	if (len != 0) {
+		data = xmalloc(len);
+		ret = fread(data, sizeof(char), len, in);
+		if (ret != len)
+			fatal("length mismatch, expected %ld, got %ld",
+			    len, ret);
+		cvs_buf_set(bp, data, len, 0);
+		xfree(data);
+	}
+
 	return (bp);
 }
 
@@ -155,12 +159,15 @@ cvs_remote_send_file(const char *path)
 
 	bp = cvs_buf_load_fd(fd, BUF_AUTOEXT);
 	fcont = cvs_buf_release(bp);
-	ret = fwrite(fcont, sizeof(char), st.st_size, out);
-	if (ret != st.st_size)
-		fatal("length mismatch, tried to write %lld only wrote %ld",
-		    st.st_size, ret);
 
-	xfree(fcont);
+	if (fcont != NULL) {
+		ret = fwrite(fcont, sizeof(char), st.st_size, out);
+		if (ret != st.st_size)
+			fatal("tried to write %lld only wrote %ld",
+			    st.st_size, ret);
+		xfree(fcont);
+	}
+
 	(void)close(fd);
 }
 
