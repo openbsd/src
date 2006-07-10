@@ -2066,6 +2066,7 @@
 ./usr/share/man/cat8/apxs.0
 ./usr/share/man/cat8/armish
 ./usr/share/man/cat8/armish/MAKEDEV.0
+./usr/share/man/cat8/armish/fdisk.0
 ./usr/share/man/cat8/armish/hotplugd.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
