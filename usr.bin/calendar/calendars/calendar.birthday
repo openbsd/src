@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.41 2006/06/27 14:53:26 jasper Exp $
+ * $OpenBSD: calendar.birthday,v 1.42 2006/07/10 13:24:45 martin Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -197,6 +197,7 @@
 07/07	P.T. Barnum dies, 1891
 07/08	Count Ferdinand von Zeppelin born, 1838
 07/10	John Calvin born, 1509
+07/10	Nikola Tesla born, 1856
 07/11	John Quincy Adams born, 1767
 07/12	Henry David Thoreau born, 1817
 07/15	Clement Clarke Moore born, 1779, author of "A Visit from
