@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.137 2006/07/08 04:34:34 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.138 2006/07/10 00:16:18 drahn Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1436,6 +1436,8 @@ em_allocate_pci_resources(struct em_softc *sc)
 		return (ENXIO);
 	}
 
+	sc->hw.back = &sc->osdep;
+
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, em_intr, sc,
 					      sc->sc_dv.dv_xname);
@@ -1447,8 +1449,6 @@ em_allocate_pci_resources(struct em_softc *sc)
 		return (ENXIO);
 	}
 	printf(": %s", intrstr);
-		
-	sc->hw.back = &sc->osdep;
 
 	return (0);
 }
