@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.246 2006/07/08 06:39:00 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.247 2006/07/10 21:28:29 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -992,7 +992,6 @@ struct cfdriver pciide_cd = {
 	NULL, "pciide", DV_DULL
 };
 
-int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
 int	pciide_mapregs_compat( struct pci_attach_args *,
 	    struct pciide_channel *, int, bus_size_t *, bus_size_t *);
 int	pciide_mapregs_native(struct pci_attach_args *,
@@ -1124,33 +1123,22 @@ pciide_attach(struct device *parent, struct device *self, void *aux)
 	    DEBUG_PROBE);
 }
 
-/* tell whether the chip is enabled or not */
-int
-pciide_chipen(struct pciide_softc *sc, struct pci_attach_args *pa)
-{
-	pcireg_t csr;
-
-	csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
-	if ((csr & PCI_COMMAND_IO_ENABLE) == 0 ) {
-		printf("\n%s: device disabled\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
-		return (0);
-	}
-
-	return (1);
-}
-
 int
 pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp,
     int compatchan, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	pcireg_t csr;
 
 	cp->compat = 1;
 	*cmdsizep = PCIIDE_COMPAT_CMD_SIZE;
 	*ctlsizep = PCIIDE_COMPAT_CTL_SIZE;
 
+	csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG,
+	    csr | PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE);
+	
 	wdc_cp->cmd_iot = pa->pa_iot;
 
 	if (bus_space_map(wdc_cp->cmd_iot, PCIIDE_COMPAT_CMD_BASE(compatchan),
@@ -1829,9 +1817,6 @@ default_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	bus_size_t cmdsize, ctlsize;
 	char *failreason;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 		printf(": DMA");
 		if (sc->sc_pp == &default_product_desc &&
@@ -1964,9 +1949,6 @@ sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	bus_size_t cmdsize, ctlsize;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	if (interface == 0) {
 		WDCDEBUG_PRINT(("sata_chip_map interface == 0\n"),
 		    DEBUG_PROBE);
@@ -2052,9 +2034,6 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	bus_size_t cmdsize, ctlsize;
 
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
@@ -2233,9 +2212,6 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	bus_size_t cmdsize, ctlsize;
 	u_int8_t reg, ich7 = 0;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
@@ -2680,9 +2656,6 @@ amd756_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t chanenable;
 	bus_size_t cmdsize, ctlsize;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
@@ -2877,9 +2850,6 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6410) { 
 		printf(": ATA133");
@@ -3247,20 +3217,6 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	int channel;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	/*
- 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
-	 * and base address registers can be disabled at
- 	 * hardware level. In this case, the device is wired
-	 * in compat mode and its first channel is always enabled,
-	 * but we can't rely on PCI_COMMAND_IO_ENABLE.
-	 * In fact, it seems that the first channel of the CMD PCI0640
-	 * can't be disabled.
- 	 */
-
-#ifdef PCIIDE_CMD064x_DISABLE
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-#endif
 
 	printf(": no DMA");
 	sc->sc_dma_ok = 0;
@@ -3299,20 +3255,6 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		interface = PCI_INTERFACE(pa->pa_class);
 	}
 
-	/*
-	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
-	 * and base address registers can be disabled at
-	 * hardware level. In this case, the device is wired
-	 * in compat mode and its first channel is always enabled,
- 	 * but we can't rely on PCI_COMMAND_IO_ENABLE.
-	 * In fact, it seems that the first channel of the CMD PCI0640
-	 * can't be disabled.
-	*/
-
-#ifdef PCIIDE_CMD064x_DISABLE
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-#endif
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
@@ -3506,8 +3448,6 @@ cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 	printf("\n%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -3715,9 +3655,6 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface, scs_cmd, cfgctl;
 	int channel;
 	struct pciide_satalink *sl = sc->sc_cookie;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(struct pciide_satalink), M_DEVBUF,
@@ -3996,9 +3933,6 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	const char *intrstr;
 	int channel;
 	struct pciide_satalink *sl = sc->sc_cookie;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(struct pciide_satalink), M_DEVBUF,
@@ -4333,9 +4267,6 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	bus_size_t cmdsize, ctlsize;
 	struct pciide_cy *cy;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(struct pciide_cy), M_DEVBUF, M_NOWAIT);
 	cy = sc->sc_cookie;
@@ -4592,9 +4523,6 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcitag_t br_tag;
 	struct pci_attach_args br_pa;
 	struct pciide_sis *sis;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(struct pciide_sis), M_DEVBUF, M_NOWAIT);
@@ -4913,9 +4841,6 @@ natsemi_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface, ctl;
 	bus_size_t cmdsize, ctlsize;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
@@ -5106,9 +5031,6 @@ ns_scx200_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 
@@ -5264,9 +5186,6 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t cr, interface;
 	bus_size_t cmdsize, ctlsize;
 	int rev = sc->sc_rev;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
@@ -5488,8 +5407,6 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface;
 	bus_size_t cmdsize, ctlsize;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 	revision = sc->sc_rev;
 
 	/*
@@ -5832,8 +5749,6 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		WDCDEBUG_PRINT(("pdc202xx_setup_chip: controller state 0x%x\n",
 		    st), DEBUG_PROBE);
 	}
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	/* turn off  RAID mode */
 	if (!PDC_IS_268(sc))
@@ -6864,8 +6779,6 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	u_int8_t init_ctrl;
 	int channel;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 	printf(": DMA");
 	/*
 	 * XXXSCW:
@@ -7035,9 +6948,6 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcitag_t pcib_tag;
 	int channel;
 	bus_size_t cmdsize, ctlsize;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
@@ -7213,9 +7123,6 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	const char *intrstr;
 	int channel;
 	struct pciide_svwsata *ss;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(struct pciide_svwsata), M_DEVBUF,
@@ -7551,9 +7458,6 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface;
 	bus_size_t cmdsize, ctlsize;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	/*
 	 * when the chip is in native mode it identifies itself as a
 	 * 'misc mass storage'. Fake interface in this case.
@@ -7769,9 +7673,6 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	WDCDEBUG_PRINT(("%s: conf register 0x%x\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname, conf), DEBUG_PROBE);
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 
@@ -7975,9 +7876,6 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface;
 	int channel;
 
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
 	printf("%s: DMA",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 #ifndef PCIIDE_I31244_ENABLEDMA
@@ -8044,9 +7942,6 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	WDCDEBUG_PRINT(("%s: cfg=0x%x, modectl=0x%x\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname, cfg & IT_CFG_MASK,
 	    modectl & IT_MODE_MASK), DEBUG_PROBE);
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
@@ -8205,9 +8100,6 @@ ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
