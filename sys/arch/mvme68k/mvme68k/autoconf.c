@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2006/06/24 14:04:04 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.35 2006/07/10 19:23:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -215,15 +215,15 @@ mapiodev(pa, size)
 	int size;
 {
 	int error;
+	paddr_t base;
 	vaddr_t va, iova;
 
 	if (size <= 0)
 		return NULL;
 
-#ifdef DEBUG
-	if ((pa & PGOFSET) || (size & PGOFSET))
-		panic("mapiodev: unaligned");
-#endif
+	base = pa & PAGE_MASK;
+	pa = trunc_page(pa);
+	size = round_page(base + size);
 
 	error = extent_alloc(extio, size, EX_NOALIGN, 0, EX_NOBOUNDARY,
 	    EX_NOWAIT | EX_MALLOCOK, &iova);
@@ -239,7 +239,7 @@ mapiodev(pa, size)
 		pa += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
-	return (iova);
+	return (iova + base);
 }
 
 void
@@ -248,17 +248,19 @@ unmapiodev(kva, size)
 	int size;
 {
 	int error;
+	vaddr_t va;
 
 #ifdef DEBUG
-	if ((kva & PGOFSET) || (size & PGOFSET))
-	        panic("unmapiodev: unaligned");
-	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
+	if (kva < extiobase || kva + size >= extiobase + ctob(EIOMAPSIZE))
 	        panic("unmapiodev: bad address");
 #endif
-	pmap_kremove(kva, size);
+
+	va = trunc_page(kva);
+	size = round_page(kva + size) - va;
+	pmap_kremove(va, size);
 	pmap_update(pmap_kernel());
 
-	error = extent_free(extio, kva, size, EX_NOWAIT);
+	error = extent_free(extio, va, size, EX_NOWAIT);
 #ifdef DIAGNOSTIC
 	if (error != 0)
 		printf("unmapiodev: extent_free failed\n");
