@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.71 2006/05/28 00:04:24 jason Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.72 2006/07/10 03:06:28 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1649,6 +1649,12 @@ sis_init(void *xsc)
 	 */
 	sis_stop(sc);
 	sc->sis_stopped = 0;
+
+#if NS_IHR_DELAY > 0
+	/* Configure interrupt holdoff register. */
+	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr == NS_SRR_16A)
+		CSR_WRITE_4(sc, NS_IHR, NS_IHR_VALUE);
+#endif
 
 	mii = &sc->sc_mii;
 
