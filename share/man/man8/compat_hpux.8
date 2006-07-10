@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_hpux.8,v 1.8 2005/03/27 06:29:16 jmc Exp $
+.\"	$OpenBSD: compat_hpux.8,v 1.9 2006/07/10 12:21:25 martin Exp $
 .\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
@@ -41,8 +41,7 @@
 .Ox
 supports running HP-UX binaries.
 This applies to m68k (such as hp300) and hppa systems.
-Most programs should work, such as Matlab 4.2c and the HP-UX X11R5 server
-on m68k platforms.
+Most programs should work, such as Matlab 4.2c on m68k platforms.
 Programs that will not work are fairly uncommon, and often involve very low
 level hardware access, such as the X11 server on hppa machines.
 .Pp
@@ -169,61 +168,6 @@ from the HP-UX system
 for example,
 .Pc
 and that might not be desirable.
-.El
-.Ss Setting up X11R5
-Although the
-.Ox
-based X11R5 server is the preferred way to run X, it is
-possible to run the HP-UX X11R5 server instead.
-To do so, a few additional files are necessary:
-.Bd -unfilled -offset indent
-/usr/bin/X11/X
-/usr/lib/grmd
-The shared libraries in /usr/lib/X11R5.
-/usr/lib/Motif1.2/libXm.sl
-All the subdirectories and files in /usr/lib/X11/fonts.
-All the files in /usr/lib/X11/nls/Xhp.
-All the files in /usr/lib/X11/extensions.
-/usr/lib/X11/XHPKeymaps
-/usr/lib/X11/XHPmodmap
-/usr/lib/X11/XPCmodmap
-/usr/lib/X11/XKeysymDB
-/usr/lib/X11/Xconsoles
-/usr/lib/X11/X0screens
-/usr/lib/X11/X0devices
-/usr/lib/X11/X0pointerkeys
-/usr/lib/X11/rgb.txt
-/usr/lib/X11/rgb.dir
-/usr/lib/X11/rgb.pag
-.Ed
-.Pp
-The following configuration steps will also need to be performed:
-.Bl -enum
-.It
-Get and extract the
-.Pa xbase.tgz
-set for
-.Ox
-to provide the X11R6 clients which are going to be used with the new X server.
-.It
-Create the following directory for the X server to deposit its socket files
-in:
-.Pp
-.Dl $ mkdir -p /usr/spool/sockets/X11
-.Dl $ chmod 777 /usr/spool/sockets/X11
-.It
-Add the following lines to
-.Pa /etc/rc.local
-to create the necessary directories for the X server to deposit its files in,
-when the system boots:
-.Pp
-.Dl $ mkdir /tmp/.X11-unix
-.Dl $ chmod 777 /tmp/.X11-unix
-.Dl $ ln -s /usr/spool/sockets/X11/0 /tmp/.X11-unix/X0
-.It
-It's also possible to link the X server to a more convenient location, such as:
-.Pp
-.Dl $ ln -s /emul/hpux/usr/bin/X /usr/X11R6/bin/X
 .El
 .Sh SEE ALSO
 .Xr options 4 ,
