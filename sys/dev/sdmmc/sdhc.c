@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.5 2006/06/29 01:32:33 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.6 2006/07/10 17:58:23 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -198,7 +198,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	} else if (hp->clkbase < 10000 || hp->clkbase > 63000) {
 		/* SDHC 1.0 supports only 10-63 Mhz. */
 		printf("%s: base clock frequency out of range: %u MHz\n",
-		    sc->sc_dev.dv_xname, hp->clkbase);
+		    sc->sc_dev.dv_xname, hp->clkbase / 1000);
 		goto err;
 	}
 
