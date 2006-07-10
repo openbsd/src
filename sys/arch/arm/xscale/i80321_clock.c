@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.1 2006/06/27 05:18:25 drahn Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.2 2006/07/10 16:04:06 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -245,42 +245,27 @@ i80321_intr(void *frame)
 void
 cpu_initclocks()
 {
-	int minint;
 	uint32_t now;
-	uint32_t statint;
-	int s;
 
-	s = splclock();
 	/* would it make sense to have this be 100/1000 to round nicely? */
 	/* 100/1000 or 128/1024 ? */
 	stathz = 100;
 	profhz = 1000;
 
 	ticks_per_second = 200 * 1000000; /* 200 MHz */
-	statint = ticks_per_second / stathz;
-	stat_error_cnt = ticks_per_second % stathz;
 
-	/* calculate largest 2^n which is smaller that just over half statint */
-	statvar = 0x40000000;
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
-
-	statmin = statint - (statvar >> 1);
+	setstatclockrate(stathz);
 
 	ticks_per_intr = ticks_per_second / hz;
 	tick_error_cnt = ticks_per_second % hz;
 
 	printf("clock: hz= %d stathz = %d\n", hz, stathz);
-	printf("ticks_per_intr %x tick_error_cnt %x statmin %x statvar %x\n",
-	 ticks_per_intr, tick_error_cnt, statmin, statvar);
 
 	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
 	evcount_attach(&stat_count, "stat", (void *)&stat_irq, &evcount_intr);
 
 	(void) i80321_intr_establish(ICU_INT_TMR0, IPL_CLOCK, i80321_intr,
-	    NULL, "tick");
-
+	    NULL, NULL);
 
 	now = 0xffffffff;
 	nextstatevent = now - ticks_per_intr;
@@ -295,7 +280,6 @@ cpu_initclocks()
 	tcr0_write(ticks_per_intr);
 
 	i80321_timer_inited = 1;
-	splx(s);
 }
 
 void
@@ -378,8 +362,9 @@ setstatclockrate(int newhz)
 	s = splclock();
 
 	statint = ticks_per_second / newhz;
+	stat_error_cnt = ticks_per_second % stathz;
+	/* calculate largest 2^n which is smaller that just over half statint */
 	statvar = 0x40000000; /* really big power of two */
-	/* find largest 2^n which is nearly smaller than statint/2 */
 	minint = statint / 2 + 100;
 	while (statvar > minint)
 		statvar >>= 1;
