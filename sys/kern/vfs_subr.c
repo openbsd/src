@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.132 2006/07/09 23:20:50 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.133 2006/07/11 21:17:58 mickey Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2265,3 +2265,128 @@ vn_isdisk(struct vnode *vp, int *errp)
 
 	return (1);
 }
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
+void
+vfs_buf_print(struct buf *bp, int full, int (*pr)(const char *, ...))
+{
+
+	(*pr)("  vp %p lblkno 0x%x blkno 0x%x dev 0x%x\n"
+	      "  proc %p error %d flags %b\n",
+	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev,
+	    bp->b_proc, bp->b_error, bp->b_flags, B_BITS);
+
+	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%zx sync 0x%x\n"
+	      "  data %p saveaddr %p dep %p iodone %p\n",
+	    bp->b_bufsize, bp->b_bcount, bp->b_resid, bp->b_synctime,
+	    bp->b_data, bp->b_saveaddr, LIST_FIRST(&bp->b_dep), bp->b_iodone);
+
+	(*pr)("  dirty {off 0x%x end 0x%x} valid {off 0x%x end 0x%x}\n",
+	    bp->b_dirtyoff, bp->b_dirtyend, bp->b_validoff, bp->b_validend);
+
+#ifdef FFS_SOFTUPDATES
+	if (full)
+		softdep_print(bp, full, pr);
+#endif
+}
+
+const char *vtypes[] = { VTYPE_NAMES };
+const char *vtags[] = { VTAG_NAMES };
+
+void
+vfs_vnode_print(struct vnode *vp, int full, int (*pr)(const char *, ...))
+{
+
+#define	NENTS(n)	(sizeof n / sizeof(n[0]))
+	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
+	      vp->v_tag > NENTS(vtags)? "<unk>":vtags[vp->v_tag], vp->v_tag,
+	      vp->v_type > NENTS(vtypes)? "<unk>":vtypes[vp->v_tag],vp->v_type,
+	      vp->v_mount, vp->v_mountedhere);
+
+	(*pr)("data %p usecount %d writecount %ld holdcnt %ld numoutput %d\n",
+	      vp->v_data, vp->v_usecount, vp->v_writecount,
+	      vp->v_holdcnt, vp->v_numoutput);
+
+	/* uvm_object_printit(&vp->v_uobj, full, pr); */
+
+	if (full) {
+		struct buf *bp;
+
+		(*pr)("clean bufs:\n");
+		LIST_FOREACH(bp, &vp->v_cleanblkhd, b_vnbufs) {
+			(*pr)(" bp %p\n", bp);
+			vfs_buf_print(bp, full, pr);
+		}
+
+		(*pr)("dirty bufs:\n");
+		LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
+			(*pr)(" bp %p\n", bp);
+			vfs_buf_print(bp, full, pr);
+		}
+	}
+}
+
+void
+vfs_mount_print(struct mount *mp, int full, int (*pr)(const char *, ...))
+{
+	struct vfsconf *vfc = mp->mnt_vfc;
+	struct vnode *vp;
+	int cnt = 0;
+
+	(*pr)("flags %b\nvnodecovered %p syncer %p data %p\n",
+	    mp->mnt_flag, MNT_BITS,
+	    mp->mnt_vnodecovered, mp->mnt_syncer, mp->mnt_data);
+
+	(*pr)("vfsconf: ops %p name \"%s\" num %d ref %d flags 0x%x\n",
+            vfc->vfc_vfsops, vfc->vfc_name, vfc->vfc_typenum,
+	    vfc->vfc_refcount, vfc->vfc_flags);
+
+	(*pr)("statvfs cache: bsize %x iosize %x\nblocks %u free %u avail %u\n",
+	    mp->mnt_stat.f_bsize, mp->mnt_stat.f_iosize, mp->mnt_stat.f_blocks,
+	    mp->mnt_stat.f_bfree, mp->mnt_stat.f_bavail);
+
+	(*pr)("  files %u ffiles %u\n", mp->mnt_stat.f_files,
+	    mp->mnt_stat.f_ffree);
+
+	(*pr)("  f_fsidx {0x%x, 0x%x} owner %u ctime 0x%x\n",
+	    mp->mnt_stat.f_fsid.val[0], mp->mnt_stat.f_fsid.val[1],
+	    mp->mnt_stat.f_owner, mp->mnt_stat.f_ctime);
+
+ 	(*pr)("  syncwrites %lu asyncwrites = %lu\n",
+	    mp->mnt_stat.f_syncwrites, mp->mnt_stat.f_asyncwrites);
+
+	(*pr)("  fstype \"%s\" mnton \"%s\" mntfrom \"%s\"\n",
+	    mp->mnt_stat.f_fstypename, mp->mnt_stat.f_mntonname,
+	    mp->mnt_stat.f_mntfromname);
+
+	(*pr)("locked vnodes:");
+	/* XXX would take mountlist lock, except ddb has no context */
+	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
+		if (VOP_ISLOCKED(vp)) {
+			if (!LIST_NEXT(vp, v_mntvnodes))
+				(*pr)(" %p", vp);
+			else if (!(cnt++ % (72 / (sizeof(void *) * 2 + 4))))
+				(*pr)("\n\t%p", vp);
+			else
+				(*pr)(", %p", vp);
+		}
+	(*pr)("\n");
+
+	if (full) {
+		(*pr)("all vnodes:\n\t");
+		/* XXX would take mountlist lock, except ddb has no context */
+		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
+			if (!LIST_NEXT(vp, v_mntvnodes))
+				(*pr)(" %p", vp);
+			else if (!(cnt++ % (72 / (sizeof(void *) * 2 + 4))))
+				(*pr)(" %p,\n\t", vp);
+			else
+				(*pr)(" %p,", vp);
+		(*pr)("\n", vp);
+	}
+}
+#endif /* DDB */

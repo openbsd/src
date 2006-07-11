@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.46 2004/11/30 12:39:43 pedro Exp $	*/
+/*	$OpenBSD: buf.h,v 1.47 2006/07/11 21:17:58 mickey Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -168,7 +168,13 @@ struct buf *bufq_default_get(struct bufq *);
 #define	B_XXX		0x02000000	/* Debugging flag. */
 #define	B_DEFERRED	0x04000000	/* Skipped over for cleaning */
 #define	B_SCANNED	0x08000000	/* Block already pushed during sync */
-#define B_PDAEMON	0x10000000	/* I/O started by pagedaemon */
+#define	B_PDAEMON	0x10000000	/* I/O started by pagedaemon */
+
+#define	B_BITS	"\010\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY\006CACHE" \
+    "\007CALL\010DELWRI\011DIRTY\012DONE\013EINTR\014ERROR\015GATHERED" \
+    "\016INVAL\017LOCKED\020NOCACHE\021PAGET\022PGIN\023PHYS\024RAW\025READ" \
+    "\026TAPE\027UAREA\030WANTED\031WRITEINPROG\032XXX\033DEFERRED" \
+    "\034SCANNED\035PDAEMON"
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr

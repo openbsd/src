@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.71 2006/06/28 14:17:07 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.72 2006/07/11 21:17:58 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5634,3 +5634,128 @@ softdep_error(func, error)
 	/* XXX should do something better! */
 	printf("%s: got error %d while accessing filesystem\n", func, error);
 }
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
+void
+softdep_print(struct buf *bp, int full, int (*pr)(const char *, ...))
+{
+	struct worklist *wk;
+
+	(*pr)("  deps:\n");
+	LIST_FOREACH(wk, &bp->b_dep, wk_list)
+		worklist_print(wk, full, pr);
+}
+
+void
+worklist_print(struct worklist *wk, int full, int (*pr)(const char *, ...))
+{
+	struct pagedep *pagedep;
+	struct inodedep *inodedep;
+	struct newblk *newblk;
+	struct bmsafemap *bmsafemap;
+	struct allocdirect *adp;
+	struct indirdep *indirdep;
+	struct allocindir *aip;
+	struct freefrag *freefrag;
+	struct freeblks *freeblks;
+	struct freefile *freefile;
+	struct diradd *dap;
+	struct mkdir *mkdir;
+	struct dirrem *dirrem;
+	struct newdirblk *newdirblk;
+	char prefix[33];
+	int i;
+
+	for (prefix[i = 2 * MIN(16, full)] = '\0'; i--; prefix[i] = ' ')
+		;
+
+	(*pr)("%s%s(%p) state %b\n%s", prefix, TYPENAME(wk->wk_type), wk,
+	    wk->wk_state, DEP_BITS, prefix);
+	switch (wk->wk_type) {
+	case D_PAGEDEP:
+		pagedep = WK_PAGEDEP(wk);
+		(*pr)("mount %p ino %u lbn %lld\n", pagedep->pd_mnt,
+		    pagedep->pd_ino, pagedep->pd_lbn);
+		break;
+	case D_INODEDEP:
+		inodedep = WK_INODEDEP(wk);
+		(*pr)("fs %p ino %u nlinkdelta %u dino %p\n%s"
+		    "%s  bp %p savsz %lld", inodedep->id_fs,
+		    inodedep->id_ino, inodedep->id_nlinkdelta,
+		    inodedep->id_un.idu_savedino1,
+		    prefix, inodedep->id_buf, inodedep->id_savedsize);
+		break;
+	case D_NEWBLK:
+		newblk = WK_NEWBLK(wk);
+		(*pr)("fs %p newblk %d state %d bmsafemap %p\n",
+		    newblk->nb_fs, newblk->nb_newblkno, newblk->nb_state,
+		    newblk->nb_bmsafemap);
+		break;
+	case D_BMSAFEMAP:
+		bmsafemap = WK_BMSAFEMAP(wk);
+		(*pr)("buf %p\n", bmsafemap->sm_buf);
+		break;
+	case D_ALLOCDIRECT:
+		adp = WK_ALLOCDIRECT(wk);
+		(*pr)("lbn %lld newlbk %d oldblk %d newsize %lu olsize %lu\n"
+		    "%s  bp %p inodedep %p freefrag %p\n", adp->ad_lbn,
+		    adp->ad_newblkno, adp->ad_oldblkno, adp->ad_newsize,
+		    adp->ad_oldsize,
+		    prefix, adp->ad_buf, adp->ad_inodedep, adp->ad_freefrag);
+		break;
+	case D_INDIRDEP:
+		indirdep = WK_INDIRDEP(wk);
+		(*pr)("savedata %p savebp %p\n", indirdep->ir_saveddata,
+		    indirdep->ir_savebp);
+		break;
+	case D_ALLOCINDIR:
+		aip = WK_ALLOCINDIR(wk);
+		(*pr)("off %d newblk %d oldblk %d freefrag %p\n"
+		    "%s  indirdep %p buf %p\n", aip->ai_offset,
+		    aip->ai_newblkno, aip->ai_oldblkno, aip->ai_freefrag,
+		    prefix, aip->ai_indirdep, aip->ai_buf);
+		break;
+	case D_FREEFRAG:
+		freefrag = WK_FREEFRAG(wk);
+		(*pr)("vnode %p mp %p blkno %d fsize %ld ino %u\n",
+		    freefrag->ff_devvp, freefrag->ff_mnt, freefrag->ff_blkno,
+		    freefrag->ff_fragsize, freefrag->ff_inum);
+		break;
+	case D_FREEBLKS:
+		freeblks = WK_FREEBLKS(wk);
+		(*pr)("previno %u devvp %p mp %p oldsz %lld newsz %lld\n"
+		    "%s  chkcnt %d uid %d\n", freeblks->fb_previousinum,
+		    freeblks->fb_devvp, freeblks->fb_mnt, freeblks->fb_oldsize,
+		    freeblks->fb_newsize,
+		    prefix, freeblks->fb_chkcnt, freeblks->fb_uid);
+		break;
+	case D_FREEFILE:
+		freefile = WK_FREEFILE(wk);
+		(*pr)("mode %x oldino %u vnode %p mp %p\n", freefile->fx_mode,
+		    freefile->fx_oldinum, freefile->fx_devvp, freefile->fx_mnt);
+		break;
+	case D_DIRADD:
+		dap = WK_DIRADD(wk);
+		(*pr)("off %ld ino %u da_un %p\n", dap->da_offset, 
+		    dap->da_newinum, dap->da_un.dau_previous);
+		break;
+	case D_MKDIR:
+		mkdir = WK_MKDIR(wk);
+		(*pr)("diradd %p bp %p\n", mkdir->md_diradd, mkdir->md_buf);
+		break;
+	case D_DIRREM:
+		dirrem = WK_DIRREM(wk);
+		(*pr)("mp %p ino %u dm_un %p\n", dirrem->dm_mnt, 
+		    dirrem->dm_oldinum, dirrem->dm_un.dmu_pagedep);
+		break;
+	case D_NEWDIRBLK:
+		newdirblk = WK_NEWDIRBLK(wk);
+		(*pr)("pagedep %p\n", newdirblk->db_pagedep);
+		break;
+	}
+}
+#endif

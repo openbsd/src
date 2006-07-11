@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.69 2006/06/02 20:25:09 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.70 2006/07/11 21:17:58 mickey Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -51,6 +51,9 @@
  */
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 
+#define	VTYPE_NAMES \
+    "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD"
+
 /*
  * Vnode tag types.
  * These are for the benefit of external programs only (e.g., pstat)
@@ -64,6 +67,11 @@ enum vtagtype	{
 	VT_PORTAL, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS, VT_ADOSFS, VT_EXT2FS,
 	VT_NCPFS, VT_VFS, VT_XFS, VT_NTFS, VT_UDF
 };
+
+#define	VTAG_NAMES \
+    "NON", "UFS", "NFS", "MFS", "MSDOSFS", "LFS", "LOFS", \
+    "FDESC", "PORTAL", "KERNFS", "PROCFS", "AFS", "ISOFS", \
+    "ADOSFS", "EXT2FS", "NCPFS", "VFS", "XFS", "NTFS", "UDF"
 
 /*
  * Each underlying filesystem allocates its own private area and hangs
@@ -129,7 +137,9 @@ struct vnode {
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VCLONED		0x0400	/* vnode was cloned */
 #define	VALIASED	0x0800	/* vnode has an alias */
-#define VLOCKSWORK	0x4000	/* FS supports locking discipline */
+#define	VLOCKSWORK	0x4000	/* FS supports locking discipline */
+#define	VBITS	"\010\001ROOT\002TEXT\003SYSTEM\004ISTTY\010XLOCK" \
+    "\011XWANT\013ALIASED\016LOCKSWORK"
 
 /*
  * (v_bioflag) Flags that may be manipulated by interrupt handlers

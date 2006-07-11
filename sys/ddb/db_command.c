@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.42 2006/05/20 18:29:23 mickey Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.43 2006/07/11 21:17:58 mickey Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -282,6 +282,18 @@ db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
 
 /*ARGSUSED*/
 void
+db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+				   
+	vfs_buf_print((struct buf *) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
 db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
         boolean_t full = FALSE;
@@ -291,6 +303,7 @@ db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
         uvm_map_printit((struct vm_map *) addr, full, db_printf);
 }
+
 /*ARGSUSED*/
 void
 db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
@@ -305,6 +318,18 @@ db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 #else
 	db_printf("Malloc debugging not enabled.\n");
 #endif
+}
+
+/*ARGSUSED*/
+void
+db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_mount_print((struct mount *) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -331,6 +356,19 @@ db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	uvm_page_printit((struct vm_page *) addr, full, db_printf);
 }
 
+/*ARGSUSED*/
+void     
+db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_vnode_print((struct vnode *) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
 void
 db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -385,9 +423,11 @@ struct db_command db_show_all_cmds[] = {
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
+	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "extents",	db_extent_print_cmd,	0,	NULL },
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
+	{ "mount",	db_mount_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
 	{ "panic",	db_show_panic_cmd,	0,	NULL },
@@ -395,6 +435,7 @@ struct db_command db_show_cmds[] = {
 	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
+	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };

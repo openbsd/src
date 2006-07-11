@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.74 2006/07/11 16:24:09 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.75 2006/07/11 21:17:58 mickey Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -415,6 +415,11 @@ struct mount {
  * Mask of flags that are visible to statfs()
  */
 #define	MNT_VISFLAGMASK	0x0400ffff
+
+#define	MNT_BITS \
+    "\010\001RDONLY\002SYNCHRONOUS\003NOEXEC\004NOSUID\005NODEV" \
+    "\007ASYNC\010EXRDONLY\011EXPORTED\012DEFEXPORTED\013EXPORTANON" \
+    "\014EXKERB\015LOCAL\016QUOTA\017ROOTFS"
 
 /*
  * filesystem control flags.
