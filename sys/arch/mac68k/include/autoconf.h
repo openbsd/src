@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.12 2006/01/13 21:01:28 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.13 2006/07/11 18:58:15 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
 
 /*
@@ -51,11 +51,7 @@ void	dumpconf(void);
 
 /* clock.h */
 
-void	cpu_initclocks(void);
-void	setstatclockrate(int);
 u_long	clkread(void);
-void	inittodr(time_t);
-void	resettodr(void);
 void	mac68k_calibrate_delay(void);
 void	startrtclock(void);
 
