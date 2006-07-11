@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.67 2006/04/16 20:43:36 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.68 2006/07/11 05:57:20 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -104,8 +104,11 @@ struct wsscreen {
 #define SCR_WAITACTIVE 2	/* someone waiting on activation */
 #define SCR_GRAPHICS 4		/* graphics mode, no text (emulation) output */
 #define	SCR_DUMBFB 8		/* in use as dumb fb (iff SCR_GRAPHICS) */
+
+#ifdef WSDISPLAY_COMPAT_USL
 	const struct wscons_syncops *scr_syncops;
 	void *scr_synccookie;
+#endif
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int scr_rawkbd;
@@ -315,7 +318,10 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	scr->scr_hold_screen = 0;
 	scr->scr_flags = 0;
 
-	scr->scr_syncops = 0;
+#ifdef WSDISPLAY_COMPAT_USL
+	scr->scr_syncops = NULL;
+#endif
+
 	scr->sc = sc;
 #ifdef WSMOUSED_SUPPORT
 	scr->mouse_flags = 0;
@@ -490,7 +496,9 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 		return (ENXIO);
 
 	if (scr->scr_dconf == &wsdisplay_console_conf ||
+#ifdef WSDISPLAY_COMPAT_USL
 	    scr->scr_syncops ||
+#endif
 	    ((scr->scr_flags & SCR_OPEN) && !(flags & WSDISPLAY_DELSCR_FORCE)))
 		return (EBUSY);
 
@@ -862,8 +870,10 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 		ttyclose(tp);
 	}
 
+#ifdef WSDISPLAY_COMPAT_USL
 	if (scr->scr_syncops)
 		(*scr->scr_syncops->destroy)(scr->scr_synccookie);
+#endif
 
 	scr->scr_flags &= ~SCR_GRAPHICS;
 	(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
@@ -1572,6 +1582,7 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 	int no;
 	struct wsscreen *scr;
 
+#ifdef WSDISPLAY_COMPAT_USL
 	if (!(sc->sc_flags & SC_SWITCHPENDING)) {
 		printf("wsdisplay_switch3: not switching\n");
 		return (EINVAL);
@@ -1603,6 +1614,15 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(arg, 0, waitok));
 	}
+#else
+	/*
+	 * If we do not have syncops support, we come straight from
+	 * wsdisplay_switch2 which has already validated our arguments
+	 * and did not sleep.
+	 */
+	no = sc->sc_screenwanted;
+	scr = sc->sc_scr[no];
+#endif
 
 	sc->sc_flags &= ~SC_SWITCHPENDING;
 
@@ -1655,6 +1675,7 @@ wsdisplay_switch2(void *arg, int error, int waitok)
 #endif
 	/* keyboard map??? */
 
+#ifdef WSDISPLAY_COMPAT_USL
 #define wsswitch_cb3 ((void (*)(void *, int, int))wsdisplay_switch3)
 	if (scr->scr_syncops) {
 		error = (*scr->scr_syncops->attach)(scr->scr_synccookie, waitok,
@@ -1665,6 +1686,7 @@ wsdisplay_switch2(void *arg, int error, int waitok)
 			return (0);
 		}
 	}
+#endif
 
 	return (wsdisplay_switch3(sc, error, waitok));
 }
@@ -1797,6 +1819,7 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	}
 #endif	/* WSMOUSED_SUPPORT */
 
+#ifdef WSDISPLAY_COMPAT_USL
 #define wsswitch_cb1 ((void (*)(void *, int, int))wsdisplay_switch1)
 	if (scr->scr_syncops) {
 		res = (*scr->scr_syncops->detach)(scr->scr_synccookie, waitok,
@@ -1810,6 +1833,7 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 		/* no way to save state */
 		res = EBUSY;
 	}
+#endif
 
 	return (wsdisplay_switch1(sc, res, waitok));
 }
@@ -1837,6 +1861,7 @@ wsdisplay_reset(struct device *dev, enum wsdisplay_resetops op)
 	}
 }
 
+#ifdef WSDISPLAY_COMPAT_USL
 /*
  * Interface for (external) VT switch / process synchronization code
  */
@@ -1876,6 +1901,7 @@ wsscreen_lookup_sync(struct wsscreen *scr,
 	*cookiep = scr->scr_synccookie;
 	return (0);
 }
+#endif
 
 /*
  * Interface to virtual screen stuff
