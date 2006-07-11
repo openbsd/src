@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.56 2006/04/05 14:29:46 kurt Exp $
+#	$OpenBSD: RAMDISK,v 1.57 2006/07/11 21:44:01 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -219,6 +219,8 @@ gsckbd*	at gsckbc?		# PS/2 keyboard
 #ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
+scsibus* at mpi?
 #option	BHADEBUG
 #bha*	at eisa?
 #bha*	at pci?
