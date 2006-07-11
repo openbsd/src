@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.31 2005/09/01 17:59:13 otto Exp $
+.\"	$OpenBSD: ping.8,v 1.32 2006/07/11 21:18:56 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -35,9 +35,7 @@
 .Os
 .Sh NAME
 .Nm ping
-.Nd send
-.Tn ICMP ECHO_REQUEST
-packets to network hosts
+.Nd send ICMP ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
 .Bk -words
@@ -55,31 +53,26 @@ packets to network hosts
 .Ek
 .Sh DESCRIPTION
 .Nm
-uses the
-.Tn ICMP
-protocol's mandatory
-.Tn ECHO_REQUEST
-datagram to elicit an
-.Tn ICMP ECHO_REPLY
+uses the ICMP protocol's mandatory
+.Dv ECHO_REQUEST
+datagram to elicit an ICMP
+.Dv ECHO_REPLY
 from a host or gateway.
-.Tn ECHO_REQUEST
+.Dv ECHO_REQUEST
 datagrams
 .Pq Dq pings
-have an IP and
-.Tn ICMP
-header,
+have an IP and ICMP header,
 followed by a
 .Dq struct timeval
 and then an arbitrary number of
 .Dq pad
-bytes used to fill out the
-packet.
+bytes used to fill out the packet.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar count
 Stop sending after
 .Ar count
-.Tn ECHO_REQUEST
+.Dv ECHO_REQUEST
 packets have been sent.
 .It Fl D
 Set the
@@ -94,11 +87,11 @@ Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
-.Tn ECHO_REQUEST
-sent a period
-.Dq \&.
+.Dv ECHO_REQUEST
+sent, a period
+.Sq \&.
 is printed, while for every
-.Tn ECHO_REPLY
+.Dv ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
 Only the superuser may use this option.
@@ -119,6 +112,10 @@ a value less than one second.
 This option is incompatible with the
 .Fl f
 option.
+.It Fl L
+Disable the loopback, so the transmitting host doesn't see the ICMP
+requests.
+For multicast pings.
 .It Fl l Ar preload
 If
 .Ar preload
@@ -136,9 +133,8 @@ You may specify up to 16
 bytes to fill out the packet you send.
 This is useful for diagnosing data-dependent problems in a network.
 For example,
-.Dq Li \-p ff
-will cause the sent packet to be filled with all
-ones.
+.Dq -p ff
+will cause the sent packet to be filled with all ones.
 .It Fl q
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
@@ -146,9 +142,9 @@ when finished.
 .It Fl R
 Record route.
 Includes the
-.Tn RECORD_ROUTE
+.Dv RECORD_ROUTE
 option in the
-.Tn ECHO_REQUEST
+.Dv ECHO_REQUEST
 packet and displays
 the route buffer on returned packets.
 Note that the IP header is only large enough for nine such routes.
@@ -166,12 +162,9 @@ that has no route through it (e.g., after the interface was dropped by
 .Xr routed 8 ) .
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
-The default is 56, which translates into 64
-.Tn ICMP
-data bytes when combined
-with the 8 bytes of
-.Tn ICMP
-header data.
+The default is 56,
+which translates into 64 ICMP data bytes
+when combined with the 8 bytes of ICMP header data.
 If the
 .Fl D
 or
@@ -187,21 +180,13 @@ Use the specified type of service.
 Use the specified time-to-live.
 .It Fl v
 Verbose output.
-.Tn ICMP
-packets other than
-.Tn ECHO_REPLY
+ICMP packets other than
+.Dv ECHO_REPLY
 that are received are listed.
 .It Fl w Ar maxwait
 Specifies the maximum number of seconds to wait for responses
 after the last request has been sent.
 The default is 10.
-.El
-.Pp
-In addition, the following option may be used for multicast pings:
-.Bl -tag -width Ds
-.It Fl L
-Disable the loopback, so the transmitting host doesn't see the ICMP
-requests.
 .El
 .Pp
 When using
@@ -236,26 +221,22 @@ management.
 Because of the load it can impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
+.Pp
+.Ex -std ping
 .Sh ICMP PACKET DETAILS
 An IP header without options is 20 bytes.
-An
-.Tn ICMP
-.Tn ECHO_REQUEST
-packet contains an additional 8 bytes worth
-of
-.Tn ICMP
-header followed by an arbitrary amount of data.
+An ICMP
+.Dv ECHO_REQUEST
+packet contains an additional 8 bytes worth of
+ICMP header followed by an arbitrary amount of data.
 When a
 .Ar packetsize
 is given, this indicates the size of this extra piece of data (the
 default is 56).
-Thus the amount of data received inside of an IP packet of type
-.Tn ICMP
-.Tn ECHO_REPLY
+Thus the amount of data received inside of an IP packet of type ICMP
+.Dv ECHO_REPLY
 will always be 8 bytes more than the requested data space
-(the
-.Tn ICMP
-header).
+(the ICMP header).
 .Pp
 If the data space is at least eight bytes large,
 .Nm
@@ -302,32 +283,20 @@ using the
 option of
 .Nm ping .
 .Sh TTL DETAILS
-The
-.Tn TTL
-value of an IP packet represents the maximum number of IP routers
+The TTL value of an IP packet represents the maximum number of IP routers
 that the packet can go through before being thrown away.
 In current practice you can expect each router in the Internet to decrement
-the
-.Tn TTL
-field by exactly one.
+the TTL field by exactly one.
 .Pp
-The
-.Tn TCP/IP
-specification states that the
-.Tn TTL
-field for
-.Tn TCP
-packets should
-be set to 60, but many systems use smaller values (4.3
-.Tn BSD
-uses 30, 4.2 used
-15).
+The TCP/IP specification states that the TTL field
+for TCP packets should be set to 60,
+but many systems use smaller values
+(4.3 BSD uses 30, 4.2 used 15).
 .Pp
-The maximum possible value of this field is 255, and most Unix systems set
-the
-.Tn TTL
-field of
-.Tn ICMP ECHO_REQUEST
+The maximum possible value of this field is 255, and most
+.Ux
+systems set the TTL field of ICMP
+.Dv ECHO_REQUEST
 packets to 255.
 This is why you will find you can
 .Dq ping
@@ -341,32 +310,23 @@ In normal operation,
 .Nm
 prints the TTL value from the packet it receives.
 When a remote system receives a ping packet, it can do one of three things
-with the
-.Tn TTL
-field in its response:
+with the TTL field in its response:
 .Bl -bullet
 .It
 Not change it; this is what Berkeley Unix systems did before the
 .Bx 4.3 tahoe
 release.
-In this case the
-.Tn TTL
-value in the received packet will be 255 minus the
-number of routers in the round trip path.
+In this case the TTL value in the received packet will be
+255 minus the number of routers in the round trip path.
 .It
 Set it to 255; this is what current Berkeley Unix systems do.
-In this case the
-.Tn TTL
-value in the received packet will be 255 minus the
-number of routers in the path from
-the remote system to the pinging host.
+In this case the TTL value in the received packet will be
+255 minus the number of routers in the path from the remote system
+to the pinging host.
 .It
 Set it to some other value.
-Some machines use the same value for
-.Tn ICMP
-packets that they use for
-.Tn TCP
-packets, for example either 30 or 60.
+Some machines use the same value for ICMP packets
+that they use for TCP packets, for example either 30 or 60.
 Others may use completely wild values.
 .El
 .Sh SEE ALSO
@@ -381,11 +341,11 @@ command appeared in
 .Bx 4.3 .
 .Sh BUGS
 Many hosts and gateways ignore the
-.Tn RECORD_ROUTE
+.Dv RECORD_ROUTE
 option.
 .Pp
 The maximum IP header length is too small for options like
-.Tn RECORD_ROUTE
+.Dv RECORD_ROUTE
 to
 be completely useful.
 There's not much that can be done about this, however.
