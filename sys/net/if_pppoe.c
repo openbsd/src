@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.8 2006/03/25 22:41:47 djm Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.9 2006/07/11 21:21:59 canacar Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $")
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -391,7 +392,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	struct pppoetag *pt;
 	struct mbuf *n;
 	struct ether_header *eh;
-	const char *err_msg, *err_txt;
+	const char *err_msg, *devname;
 	size_t ac_cookie_len;
 	int noff, err, errortag;
 	u_int16_t tag, len;
@@ -402,7 +403,8 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	size_t hunique_len;
 #endif
 
-	err_msg = err_txt = NULL;
+	err_msg = NULL;
+	devname = "pppoe";
 	errortag = 0;
 
 	if (m->m_len < sizeof(*eh)) {
@@ -457,8 +459,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	while (off + sizeof(*pt) <= m->m_pkthdr.len) {
 		n = m_pulldown(m, off, sizeof(*pt), &noff);
 		if (n == NULL) {
-			printf("%s: parse error\n",
-			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe");
+			printf("%s: parse error\n", devname);
 			m = NULL;
 			goto done;
 		}
@@ -466,8 +467,8 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		tag = ntohs(pt->tag);
 		len = ntohs(pt->len);
 		if (off + len > m->m_pkthdr.len) {
-			printf("pppoe: tag 0x%x len 0x%x is too long\n",
-			    tag, len);
+			printf("%s: tag 0x%x len 0x%x is too long\n",
+			    devname, tag, len);
 			goto done;
 		}
 		switch (tag) {
@@ -492,6 +493,8 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 #endif
 			sc = pppoe_find_softc_by_hunique(mtod(n, caddr_t) + noff,
 			    len, m->m_pkthdr.rcvif);
+			if (sc != NULL)
+				devname = sc->sc_sppp.pp_if.if_xname;
 			break;
 		case PPPOE_TAG_ACCOOKIE:
 			if (ac_cookie == NULL) {
@@ -520,16 +523,17 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;
 		}
 		if (err_msg) {
-			err_txt = "";
+			log(LOG_INFO, "%s: %s: ", devname, err_msg);
 			if (errortag && len) {
 				n = m_pulldown(m, off + sizeof(*pt), len,
 				    &noff);
-				if (n)
-					err_txt = mtod(n, caddr_t) + noff;
+				if (n) {
+					u_int8_t *et = mtod(n, caddr_t) + noff;
+					while (len--)
+						addlog("%c", *et++);
+				}
 			}
-			printf("%s: %s: %*s\n",
-			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe*",
-			    err_msg, len, err_txt);
+			addlog("\n");
 			goto done;
 		}
 		off += sizeof(*pt) + len;
@@ -701,7 +705,6 @@ breakbreak:
 
 done:
 	m_freem(m);
-	return;
 }
 
 /* Input function for discovery packets. */
