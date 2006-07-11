@@ -967,7 +967,7 @@ static void finish_dollar_format_checking	PARAMS ((int *, format_check_results *
 static const format_flag_spec *get_flag_spec	PARAMS ((const format_flag_spec *,
 							 int, const char *));
 
-static void check_format_types	PARAMS ((int *, format_wanted_type *));
+static void check_format_types	PARAMS ((int *, format_wanted_type *, bool));
 
 /* Decode a format type from a string, returning the type, or
    format_type_error if not valid, in which case the caller should print an
@@ -2232,8 +2232,10 @@ check_format_info_main (status, res, info, format_chars, format_length,
 	  last_wanted_type = &main_wanted_type;
 	}
 
-      if (first_wanted_type != 0)
-	check_format_types (status, first_wanted_type);
+      if (first_wanted_type != 0) {
+        bool apply_bounded = strchr(fci->format_chars, 's') || strchr(fci->format_chars, 'c');
+	check_format_types (status, first_wanted_type, apply_bounded);
+      }
 
     }
 }
@@ -2242,9 +2244,10 @@ check_format_info_main (status, res, info, format_chars, format_length,
 /* Check the argument types from a single format conversion (possibly
    including width and precision arguments).  */
 static void
-check_format_types (status, types)
+check_format_types (status, types, apply_bounded)
      int *status;
      format_wanted_type *types;
+     bool apply_bounded;
 {
   for (; types != 0; types = types->next)
     {
@@ -2308,7 +2311,7 @@ check_format_types (status, types)
 		cur_param = 0;
 
 	      /* Test static string bounds for sscan if -Wbounded is on as well */
-	      if (warn_bounded
+	      if (warn_bounded && apply_bounded
 		  && types->writing_in_flag
 		  && i == 0
 		  && cur_param != 0
@@ -2316,15 +2319,14 @@ check_format_types (status, types)
 		  && TREE_CODE (TREE_TYPE (cur_param)) == ARRAY_TYPE
 		  && TREE_CODE (TREE_TYPE (TREE_TYPE (cur_param))) == INTEGER_TYPE)
 		{
-		  tree array_domain = TYPE_DOMAIN (TREE_TYPE (cur_param));
 		  tree array_size_expr = TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (cur_param)));
-		  int f = types->size_equals_width ? 0 : 1;
 		  if (array_size_expr != 0 && types->field_width > 0)
 		    {
+                      int f = types->size_equals_width ? 0 : 1;
 		      int array_size = TREE_INT_CST_LOW (array_size_expr) + 1;
 		      if (array_size < (types->field_width + f))
-			warning ("Array size (%d) smaller than format string size (%d)",
-				 array_size, types->field_width + f);
+			warning ("Array size (%d) smaller than format string size (%d) (arg %d)",
+				 array_size, types->field_width + f, arg_num);
 		    }
 		}
 
