@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.24 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.25 2006/07/11 09:26:47 dlg Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -53,20 +53,20 @@
 #include <sys/scsiio.h>
 
 struct scsi_ioctl {
-	LIST_ENTRY(scsi_ioctl) si_list;
-	struct buf si_bp;
-	struct uio si_uio;
-	struct iovec si_iov;
-	scsireq_t si_screq;
-	struct scsi_link *si_sc_link;
+	LIST_ENTRY(scsi_ioctl)	si_list;
+	struct buf		si_bp;
+	struct uio		si_uio;
+	struct iovec		si_iov;
+	scsireq_t		si_screq;
+	struct scsi_link	*si_sc_link;
 };
 
-LIST_HEAD(, scsi_ioctl) si_head;
+LIST_HEAD(, scsi_ioctl)		si_head;
 
-struct scsi_ioctl *si_get(void);
-void si_free(struct scsi_ioctl *);
-struct scsi_ioctl *si_find(struct buf *);
-void scsistrategy(struct buf *);
+struct scsi_ioctl	*si_get(void);
+void			si_free(struct scsi_ioctl *);
+struct scsi_ioctl	*si_find(struct buf *);
+void			scsistrategy(struct buf *);
 
 const unsigned char scsi_readsafe_cmd[256] = {
 	[0x00] = 1,	/* TEST UNIT READY */
@@ -112,8 +112,8 @@ const unsigned char scsi_readsafe_cmd[256] = {
 struct scsi_ioctl *
 si_get(void)
 {
-	struct scsi_ioctl *si;
-	int s;
+	struct scsi_ioctl			*si;
+	int					s;
 
 	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK);
 	bzero(si, sizeof(struct scsi_ioctl));
@@ -126,7 +126,7 @@ si_get(void)
 void
 si_free(struct scsi_ioctl *si)
 {
-	int s;
+	int					s;
 
 	s = splbio();
 	LIST_REMOVE(si, si_list);
@@ -137,14 +137,16 @@ si_free(struct scsi_ioctl *si)
 struct scsi_ioctl *
 si_find(struct buf *bp)
 {
-	struct scsi_ioctl *si;
-	int s;
+	struct scsi_ioctl			*si;
+	int					s;
 
 	s = splbio();
-	LIST_FOREACH(si, &si_head, si_list)
+	LIST_FOREACH(si, &si_head, si_list) {
 		if (bp == &si->si_bp)
 			break;
+	}
 	splx(s);
+
 	return (si);
 }
 
@@ -159,25 +161,27 @@ si_find(struct buf *bp)
 void
 scsi_user_done(struct scsi_xfer *xs)
 {
-	struct buf *bp;
-	struct scsi_ioctl *si;
-	scsireq_t *screq;
-	struct scsi_link *sc_link;
+	struct buf				*bp;
+	struct scsi_ioctl			*si;
+	scsireq_t				*screq;
+	struct scsi_link			*sc_link;
 
 	splassert(IPL_BIO);
 
 	bp = xs->bp;
-	if (!bp) {	/* ALL user requests must have a buf */
+	if (bp == NULL) {	/* ALL user requests must have a buf */
 		sc_print_addr(xs->sc_link);
 		printf("User command with no buf\n");
 		return;
 	}
+
 	si = si_find(bp);
-	if (!si) {
+	if (si == NULL) {
 		sc_print_addr(xs->sc_link);
 		printf("User command with no ioctl\n");
 		return;
 	}
+
 	screq = &si->si_screq;
 	sc_link = si->si_sc_link;
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("user-done\n"));
@@ -187,7 +191,8 @@ scsi_user_done(struct scsi_xfer *xs)
 	switch (xs->error) {
 	case XS_NOERROR:
 		SC_DEBUG(sc_link, SDEV_DB3, ("no error\n"));
-		screq->datalen_used = xs->datalen - xs->resid; /* probably rubbish */
+		/* probably rubbish */
+		screq->datalen_used = xs->datalen - xs->resid;
 		screq->retsts = SCCMD_OK;
 		break;
 	case XS_SENSE:
@@ -222,6 +227,7 @@ scsi_user_done(struct scsi_xfer *xs)
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	}
+
 	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
 }
 
@@ -244,19 +250,20 @@ scsi_user_done(struct scsi_xfer *xs)
 void
 scsistrategy(struct buf *bp)
 {
-	struct scsi_ioctl *si;
-	scsireq_t *screq;
-	struct scsi_link *sc_link;
-	int error;
-	int flags = 0;
-	int s;
+	struct scsi_ioctl			*si;
+	scsireq_t				*screq;
+	struct scsi_link			*sc_link;
+	int					error;
+	int					flags = 0;
+	int					s;
 
 	si = si_find(bp);
-	if (!si) {
+	if (si == NULL) {
 		printf("user_strat: No ioctl\n");
 		error = EINVAL;
 		goto bad;
 	}
+
 	screq = &si->si_screq;
 	sc_link = si->si_sc_link;
 	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
@@ -326,10 +333,10 @@ bad:
  * in the context of the calling process
  */
 int
-scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
+scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
     int flag, struct proc *p)
 {
-	int error;
+	int					error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
