@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.67 2006/07/06 00:41:37 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.68 2006/07/11 21:55:46 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -192,12 +192,11 @@ struct scsi_link {
 #define	ADEV_NOTUR		0x1000	/* No TEST UNIT READY */
 #define	ADEV_NODOORLOCK		0x2000	/* can't lock door */
 #define SDEV_ONLYBIG		0x4000  /* always use READ_BIG and WRITE_BIG */
-	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
+	u_char	luns;
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
-	u_char	luns;
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 };
 

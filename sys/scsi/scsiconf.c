@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.104 2006/07/11 09:45:53 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.105 2006/07/11 21:55:46 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -556,7 +556,6 @@ scsi_probedev(struct scsibus_softc *scsi, struct scsi_inquiry_data *inqbuflun0,
 	sc_link->target = target;
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
-	sc_link->inquiry_flags = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
 
@@ -655,9 +654,8 @@ scsi_probedev(struct scsibus_softc *scsi, struct scsi_inquiry_data *inqbuflun0,
 	sc_link->scsi_version = inqbuf.version;
 
 	/*
-	 * Save INQUIRY "flags" (SID_Linked, etc.) for low-level drivers.
+	 * Save INQUIRY.
 	 */
-	sc_link->inquiry_flags = inqbuf.flags;
 	memcpy(&sc_link->inqdata, &inqbuf, sizeof(sc_link->inqdata));
 
 	/*

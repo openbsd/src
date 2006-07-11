@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.27 2006/04/14 09:36:49 martin Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.28 2006/07/11 21:55:46 dlg Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -369,7 +369,7 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		} while (tmp->next && (tmp = tmp->next));
 		tmp->next = reqp;
 #ifdef AUTO_SENSE
-		if (link && (   (xs->sc_link->inquiry_flags & SID_Linked)
+		if (link && ((xs->sc_link->inqdata.flags & SID_Linked)
 			     || ((1<<reqp->targ_id) & ncr5380_allow_linked))
 			 && !((1<<reqp->targ_id) & ncr5380_disallow_linked)) {
 			link->link = reqp;
