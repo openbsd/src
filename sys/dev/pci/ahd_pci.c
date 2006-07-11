@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.13 2006/05/18 21:27:24 miod Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.14 2006/07/11 18:50:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -339,7 +339,7 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ahd_softc *ahd = (void *)self;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	pcireg_t command, devconfig, memtype, reg, subid;
+	pcireg_t devconfig, memtype, reg, subid;
 	uint16_t device, subvendor; 
 	int error, ioh_valid, ioh2_valid, l, memh_valid, offset;
 
@@ -349,7 +349,6 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (ahd_alloc(ahd, ahd->sc_dev.dv_xname) == NULL)
 		return;
 
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	entry = ahd_find_pci_device(pa->pa_id, subid);
 	if (entry == NULL)
@@ -425,11 +424,6 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 
-		if (memh_valid) {
-			command &= ~PCI_COMMAND_IO_ENABLE;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-			    PCI_COMMAND_STATUS_REG, command);
-		}
 #ifdef AHD_DEBUG
 		printf("%s: doing memory mapping tag0 0x%x, tag1 0x%x, shs0 "
 		    "0x%lx, shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0],
@@ -437,7 +431,7 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 
-	if (command & PCI_COMMAND_IO_ENABLE) {
+	if (!memh_valid) {
 		/* First BAR */
 		ioh_valid = (pci_mapreg_map(pa, AHD_PCI_IOADDR,
 		    PCI_MAPREG_TYPE_IO, 0, &ahd->tags[0], &ahd->bshs[0], NULL,
@@ -448,12 +442,6 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 		    PCI_MAPREG_TYPE_IO, 0, &ahd->tags[1], &ahd->bshs[1], NULL,
 		    NULL, 0) == 0);
 
-		if (ioh_valid && ioh2_valid) {
-			KASSERT(memh_valid == 0);
-			command &= ~PCI_COMMAND_MEM_ENABLE;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-			    PCI_COMMAND_STATUS_REG, command);
-		}
 #ifdef AHD_DEBUG
 		printf("%s: doing io mapping tag0 0x%x, tag1 0x%x, shs0 0x%lx, "
 		    "shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0], ahd->tags[1],
