@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.10 2006/07/11 08:16:06 dlg Exp $	*/
+/*	$OpenBSD: uk.c,v 1.11 2006/07/11 21:18:12 dlg Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ ukattach(struct device *parent, struct device *self, void *aux)
 	sc_link->openings = 1;
 
 	printf("\n");
-	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
 }
 
 /*
@@ -127,10 +126,8 @@ ukopen(dev_t dev, int flag, int fmt, struct proc *p)
 	    dev, unit, uk_cd.cd_ndevs));
 
 	/* Only allow one at a time */
-	if (sc_link->flags & SDEV_OPEN) {
-		printf("%s: already open\n", uk->sc_dev.dv_xname);
-		return EBUSY;
-	}
+	if (sc_link->flags & SDEV_OPEN)
+		return (EBUSY);
 
 	sc_link->flags |= SDEV_OPEN;
 
