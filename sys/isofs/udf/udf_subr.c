@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.10 2006/07/11 16:24:09 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.11 2006/07/11 22:02:08 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -30,6 +30,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
@@ -196,7 +197,9 @@ udf_vat_get(struct umount *ump, uint32_t lb)
 	up = VTOU(vp);
 	up->u_vatlen = (letoh64(up->u_fentry->inf_len) - 36) >> 2;
 
-	ump->um_vat = vp;
+	ump->um_vat = malloc(sizeof(struct unode), M_UDFMOUNT, M_WAITOK);
+       *ump->um_vat = *up;
+
 	ump->um_flags &= ~UDF_MNT_FIND_VAT;
 	ump->um_flags |=  UDF_MNT_USES_VAT;
 
@@ -216,7 +219,7 @@ udf_vat_map(struct umount *ump, uint32_t *sector)
 	}
 
 	/* Sanity check the given sector */
-	if (*sector >= VTOU(ump->um_vat)->u_vatlen)
+	if (*sector >= ump->um_vat->u_vatlen)
 		return (EINVAL);
 
 	return (udf_vat_read(ump, sector));
@@ -226,19 +229,17 @@ udf_vat_map(struct umount *ump, uint32_t *sector)
 int
 udf_vat_read(struct umount *ump, uint32_t *sector)
 {
-	struct unode *up;
 	struct buf *bp;
 	uint8_t *data;
 	int error, size;
 
-	up = VTOU(ump->um_vat);
 	size = 4;
 
 	/*
 	 * Note that we rely on the buffer cache to keep frequently accessed
 	 * buffers around to avoid reading them from the disk all the time.
 	 */
-	error = udf_readatoffset(up, &size, *sector << 2, &bp, &data);
+	error = udf_readatoffset(ump->um_vat, &size, *sector << 2, &bp, &data);
 	if (error) {
 		if (bp != NULL)
 			brelse(bp);
