@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.23 2006/06/27 07:26:04 brad Exp $
+.\" $OpenBSD: re.4,v 1.24 2006/07/11 05:06:17 brad Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -162,18 +162,6 @@ Force half duplex operation.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "re%d: can't map mem space"
-A fatal initialization error has occurred.
-.It "re%d: can't map i/o space"
-A fatal initialization error has occurred.
-.It "re%d: couldn't map interrupt"
-A fatal initialization error has occurred.
-.It "re%d: watchdog timeout"
-The device has stopped responding to the network, or there is a problem with
-the network connection (cable).
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -214,15 +202,6 @@ not actually exist.
 .Pp
 Unfortunately, it is not possible to correct this problem in software,
 however it is possible to detect it.
-When the
-.Nm
-driver is loaded, it will run a diagnostic routine designed to
-validate DMA operation by placing the chip in digital loopback mode
-and initiating a packet transmission.
-If the card functions properly, the transmitted data will be echoed back
-unmodified.
-If the echoed data is corrupt, the driver will print an error message on
-the console and abort the device attach.
 The user should ensure the NIC is installed in a 32-bit PCI slot to avoid
 this problem.
 .Pp
