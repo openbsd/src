@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.14 2005/10/31 06:14:53 drahn Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.15 2006/07/11 06:33:48 gwk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
@@ -51,6 +52,9 @@ struct cfattach mainbus_ca = {
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
+
+/* hw.product sysctl see sys/kern/kern_sysctl.c */
+extern char *hw_prod;
 
 void	mb_intr_establish(struct confargs *, int (*)(void *), void *);
 void	mb_intr_disestablish(struct confargs *);
@@ -81,6 +85,9 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	if (len > 1) {
 		name[len] = '\0';
 		printf(": model %s", name);
+		len = strlen(name)+1;
+		if ((hw_prod = malloc(len, M_DEVBUF, M_NOWAIT)) != NULL)
+			strlcpy(hw_prod, name, len);	
 	}
 
 	printf("\n");
