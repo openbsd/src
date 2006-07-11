@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.9 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.10 2006/07/11 08:16:06 dlg Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -49,13 +49,12 @@
 #define	UKUNIT(z)	(minor(z))
 
 struct uk_softc {
-	struct device sc_dev;
-
-	struct scsi_link *sc_link;	/* all the inter level info */
+	struct device		sc_dev;
+	struct scsi_link	*sc_link; /* all the inter level info */
 };
 
-int ukmatch(struct device *, void *, void *);
-void ukattach(struct device *, struct device *, void *);
+int	ukmatch(struct device *, void *, void *);
+void	ukattach(struct device *, struct device *, void *);
 
 struct cfattach uk_ca = {
 	sizeof(struct uk_softc), ukmatch, ukattach
@@ -76,12 +75,9 @@ struct scsi_device uk_switch = {
 };
 
 int
-ukmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ukmatch(struct device *parent, void *match, void *aux)
 {
-
-	return 1;
+	return (1);
 }
 
 /*
@@ -89,19 +85,15 @@ ukmatch(parent, match, aux)
  * a device suitable for this driver.
  */
 void
-ukattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ukattach(struct device *parent, struct device *self, void *aux)
 {
-	struct uk_softc *uk = (void *)self;
-	struct scsibus_attach_args *sa = aux;
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct uk_softc			*uk = (void *)self;
+	struct scsibus_attach_args	*sa = aux;
+	struct scsi_link		*sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
 
-	/*
-	 * Store information needed to contact our base driver
-	 */
+	/* Store information needed to contact our base driver */
 	uk->sc_link = sc_link;
 	sc_link->device = &uk_switch;
 	sc_link->device_softc = uk;
@@ -115,30 +107,26 @@ ukattach(parent, self, aux)
  * open the device.
  */
 int
-ukopen(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+ukopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	int unit;
-	struct uk_softc *uk;
-	struct scsi_link *sc_link;
+	int				unit;
+	struct uk_softc			*uk;
+	struct scsi_link		*sc_link;
 
 	unit = UKUNIT(dev);
 	if (unit >= uk_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
+
 	uk = uk_cd.cd_devs[unit];
-	if (!uk)
-		return ENXIO;
+	if (uk == NULL)
+		return (ENXIO);
 
 	sc_link = uk->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit, uk_cd.cd_ndevs));
+	SC_DEBUG(sc_link, SDEV_DB1, ("ukopen: dev=0x%x (unit %d (of %d))\n",
+	    dev, unit, uk_cd.cd_ndevs));
 
-	/*
-	 * Only allow one at a time
-	 */
+	/* Only allow one at a time */
 	if (sc_link->flags & SDEV_OPEN) {
 		printf("%s: already open\n", uk->sc_dev.dv_xname);
 		return EBUSY;
@@ -147,7 +135,8 @@ ukopen(dev, flag, fmt, p)
 	sc_link->flags |= SDEV_OPEN;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
-	return 0;
+
+	return (0);
 }
 
 /*
@@ -155,17 +144,14 @@ ukopen(dev, flag, fmt, p)
  * occurence of an open device
  */
 int
-ukclose(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+ukclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc			*uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
 	uk->sc_link->flags &= ~SDEV_OPEN;
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -173,14 +159,9 @@ ukclose(dev, flag, fmt, p)
  * Only does generic scsi ioctls.
  */
 int
-ukioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+ukioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc			*uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
+	return (scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p));
 }
