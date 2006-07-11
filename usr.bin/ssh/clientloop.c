@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.167 2006/07/11 18:50:47 markus Exp $ */
+/* $OpenBSD: clientloop.c,v 1.168 2006/07/11 20:07:25 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -67,6 +67,7 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <paths.h>
 #include <signal.h>
 #include <termios.h>
