@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.49 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.50 2006/07/11 18:48:27 kettenis Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.49 2005/08/09 04:10:10 mickey Exp $
+ * $Id: ahc_pci.c,v 1.50 2006/07/11 18:48:27 kettenis Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -751,7 +751,6 @@ ahc_pci_attach(parent, self, aux)
 	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
 	ahc->parent_dmat = pa->pa_dmat;
 
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	entry = ahc_find_pci_device(pa->pa_id, subid, pa->pa_function);
 	if (entry == NULL)
@@ -857,9 +856,12 @@ ahc_pci_attach(parent, self, aux)
 	 * the parity timing wrong and thus generate lots of spurious
 	 * errors.
 	 */
-	if ((ahc->flags & AHC_DISABLE_PCI_PERR) != 0)
-	  command &= ~PCI_COMMAND_PARITY_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+	if ((ahc->flags & AHC_DISABLE_PCI_PERR) != 0) {
+		command = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    command & ~PCI_COMMAND_PARITY_ENABLE);
+	}
 
 	/* On all PCI adapters, we allow SCB paging */
 	ahc->flags |= AHC_PAGESCBS;
