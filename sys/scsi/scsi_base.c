@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.105 2006/07/11 09:12:54 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.106 2006/07/11 13:15:30 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ scsi_get_xs(struct scsi_link *sc_link, int flags)
 		if (tsleep(sc_link, PRIBIO|PCATCH, "getxs", 0)) {
 			/* Bail out on getting a signal. */
 			sc_link->flags &= ~SDEV_WAITING;
+			splx(s);
 			return (NULL);
 		}
 	}
@@ -904,9 +905,10 @@ scsi_delay(struct scsi_xfer *xs, int seconds)
 	}
 
 	while (seconds-- > 0) {
-		if (tsleep(&lbolt, PRIBIO|PCATCH, "scbusy", 0))
+		if (tsleep(&lbolt, PRIBIO|PCATCH, "scbusy", 0)) {
 			/* Signal == abort xs. */
 			return (EIO);
+		}
 	}
 
 	return (ERESTART);
