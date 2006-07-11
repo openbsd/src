@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_udf.c,v 1.2 2005/04/08 20:09:38 jaredy Exp $	*/
+/*	$OpenBSD: mount_udf.c,v 1.3 2006/07/11 16:24:09 pedro Exp $	*/
 
 /*
  * Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
@@ -19,8 +19,12 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/ioctl.h>
+#include <sys/cdio.h>
 
 #include <err.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -36,6 +40,30 @@ usage(void)
 	fprintf(stderr, "usage: %s special node\n", __progname);
 
 	exit(EXIT_FAILURE);
+}
+
+/* Find out media's last block by looking at the LBA of the lead-out track. */
+u_int32_t
+lastblock(char *dev)
+{
+	int fd, error;
+	struct ioc_read_toc_entry t;
+	struct cd_toc_entry te;
+
+	fd = open(dev, O_RDONLY, 0);
+	if (fd < 0)
+		err(1, "open");
+
+	t.address_format = CD_LBA_FORMAT;
+	t.starting_track = CD_TRACK_LEADOUT;
+	t.data_len = sizeof(struct cd_toc_entry);
+	t.data = &te;
+
+	error = ioctl(fd, CDIOREADTOCENTRIES, &t);
+
+	close(fd);
+
+	return (error == -1 ? 0 : te.addr.lba);
 }
 
 int
@@ -61,6 +89,7 @@ main(int argc, char **argv)
 		usage();
 
 	args.fspec = argv[0];
+	args.lastblock = lastblock(argv[0]);
 
 	if (realpath(argv[1], node) == NULL)
 		err(1, "realpath %s", argv[1]);

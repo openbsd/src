@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_extern.h,v 1.6 2006/07/09 04:14:25 pedro Exp $	*/
+/*	$OpenBSD: udf_extern.h,v 1.7 2006/07/11 16:24:09 pedro Exp $	*/
 
 /*
  * Written by Pedro Martelletto <pedro@openbsd.org> in February 2005.
@@ -9,7 +9,7 @@
  * udf_subr.c
  */
 int udf_rawnametounicode(u_int len, char *, unicode_t *);
-int udf_vat_get(struct umount *);
+int udf_vat_get(struct umount *, uint32_t);
 int udf_vat_map(struct umount *, uint32_t *);
 
 /*

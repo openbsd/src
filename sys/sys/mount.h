@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.73 2006/06/25 15:01:54 sturm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.74 2006/07/11 16:24:09 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -252,11 +252,10 @@ struct ntfs_args {
 #define	NTFS_MFLAG_CASEINS      0x00000001
 #define	NTFS_MFLAG_ALLNAMES     0x00000002
 
-/*
- * Arguments to mount UDF filesystems.
- */
+/* Arguments to mount UDF file systems */
 struct udf_args {
-	char	*fspec;			/* block special device to mount */
+	char *fspec; /* Block special device to mount */
+	u_int32_t lastblock; /* Special device last block */
 };
 
 /*

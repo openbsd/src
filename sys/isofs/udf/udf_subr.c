@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.9 2006/07/09 04:14:25 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.10 2006/07/11 16:24:09 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -183,13 +183,13 @@ out:
 
 /* Get a vnode for the Virtual Allocation Table (VAT) */
 int
-udf_vat_get(struct umount *ump)
+udf_vat_get(struct umount *ump, uint32_t lb)
 {
 	struct vnode *vp;
 	struct unode *up;
 	int error;
 
-	error = udf_vget(ump->um_mountp, ump->um_len - 3, &vp);
+	error = udf_vget(ump->um_mountp, lb - ump->um_start - 3, &vp);
 	if (error)
 		return (error);
 

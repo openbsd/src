@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.19 2006/07/09 04:23:09 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.20 2006/07/11 16:24:09 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -79,6 +79,7 @@ struct pool udf_ds_pool;
 int udf_find_partmaps(struct umount *, struct logvol_desc *);
 int udf_get_vpartmap(struct umount *, struct part_map_virt *);
 int udf_get_spartmap(struct umount *, struct part_map_spare *);
+int udf_mountfs(struct vnode *, struct mount *, uint32_t, struct proc *);
 
 const struct vfsops udf_vfsops = {
 	.vfs_fhtovp =		udf_fhtovp,
@@ -95,8 +96,6 @@ const struct vfsops udf_vfsops = {
 	.vfs_sysctl =		udf_sysctl,
 	.vfs_checkexp =		udf_checkexp,
 };
-
-int udf_mountfs(struct vnode *, struct mount *, struct proc *);
 
 int
 udf_init(struct vfsconf *foo)
@@ -171,7 +170,7 @@ udf_mount(struct mount *mp, const char *path, void *data,
 		}
 	}
 
-	if ((error = udf_mountfs(devvp, mp, p))) {
+	if ((error = udf_mountfs(devvp, mp, args.lastblock, p))) {
 		vrele(devvp);
 		return (error);
 	}
@@ -213,7 +212,7 @@ udf_checktag(struct desc_tag *tag, uint16_t id)
 }
 
 int
-udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
+udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 {
 	struct buf *bp = NULL;
 	struct anchor_vdp avdp;
@@ -335,7 +334,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	/* Get the VAT, if needed */
 	if (ump->um_flags & UDF_MNT_FIND_VAT) {
-		error = udf_vat_get(ump);
+		error = udf_vat_get(ump, lb);
 		if (error)
 			goto bail;
 	}
