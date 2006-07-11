@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.174 2006/06/22 01:54:53 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.175 2006/07/11 00:51:21 krw Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -32,9 +32,7 @@ option		COMPAT_OSF1	# OSF/1 binary compatibility
 option		COMPAT_NETBSD	# NetBSD compatibility
 
 # Disklabel compatibility options
-option		DISKLABEL_ALL	# All of the ones mentioned below
-#option		DISKLABEL_ALPHA	# Redundant, just here for completeness
-#option		DISKLABEL_I386	# i386/arc style of partitioning
+option		DISKLABEL_I386	# i386/arc style of partitioning
 
 # Misc. options
 option		EISAVERBOSE		# recognize "unknown" EISA devices

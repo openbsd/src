@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.47 2006/07/09 21:00:17 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.48 2006/07/11 00:51:21 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -47,11 +47,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
-
-/* The native defaults... */
-#if defined(DISKLABEL_ALL) && !defined(DISKLABEL_I386)
-#define DISKLABEL_I386
-#endif
 
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
     int, struct disklabel *, int);
