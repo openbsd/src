@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.37 2006/05/28 00:04:24 jason Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.38 2006/07/11 23:14:41 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -948,7 +948,7 @@ sf_txthresh_adjust(sc)
 		txthresh++;
 		txfctl &= ~SF_TXFRMCTL_TXTHRESH;
 		txfctl |= txthresh;
-#ifdef DIAGNOSTIC
+#ifdef SF_DEBUG
 		printf("%s: tx underrun, increasing tx threshold to %d bytes\n",
 		    sc->sc_dev.dv_xname, txthresh * 4);
 #endif
