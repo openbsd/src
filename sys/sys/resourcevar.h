@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.8 2004/08/04 21:49:18 art Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.9 2006/07/11 19:10:20 kurt Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -45,11 +45,10 @@ struct pstats {
 #define	pstat_startzero	p_ru
 	struct	rusage p_ru;		/* stats for this proc */
 	struct	rusage p_cru;		/* sum of stats for reaped children */
+	struct	itimerval p_timer[3];	/* virtual-time timers */
 #define	pstat_endzero	pstat_startcopy
 
-#define	pstat_startcopy	p_timer
-	struct	itimerval p_timer[3];	/* virtual-time timers */
-
+#define	pstat_startcopy	p_prof
 	struct uprof {			/* profile arguments */
 		caddr_t	pr_base;	/* buffer base */
 		size_t  pr_size;	/* buffer size */
