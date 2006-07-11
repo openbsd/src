@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.58 2006/04/15 04:10:06 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.59 2006/07/11 00:52:38 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -924,8 +924,10 @@ gem_rint(sc)
 		}
 
 		if (rxstat & GEM_RD_BAD_CRC) {
+#ifdef GEM_DEBUG
 			printf("%s: receive error: CRC error\n",
 				sc->sc_dev.dv_xname);
+#endif
 			GEM_INIT_RXDESC(sc, i);
 			continue;
 		}
