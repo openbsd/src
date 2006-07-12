@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.9 2006/07/12 17:26:19 miod Exp $
+#	$OpenBSD: files.arm,v 1.10 2006/07/12 17:29:55 miod Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
@@ -117,7 +117,6 @@ file	arch/arm/arm/exception.S
 file	arch/arm/arm/fault.c
 file	arch/arm/arm/mem.c
 file	arch/arm/arm/pmap.c
-file	arch/arm/arm/setcpsr.S
 file	arch/arm/arm/setstack.S
 file	arch/arm/arm/stubs.c
 file	arch/arm/arm/sys_machdep.c

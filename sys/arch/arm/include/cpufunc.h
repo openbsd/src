@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.3 2006/07/12 17:29:55 miod Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -429,7 +429,9 @@ void	xscale_setup		(char *string);
  * Macros for manipulating CPU interrupts
  */
 #ifdef __PROG32
-static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
+/* Functions to manipulate the CPSR. */
+static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor);
+static __inline u_int32_t __get_cpsr(void);
 
 static __inline u_int32_t
 __set_cpsr_c(u_int bic, u_int eor)
@@ -443,6 +445,16 @@ __set_cpsr_c(u_int bic, u_int eor)
 		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
 	: "=&r" (ret), "=&r" (tmp)
 	: "r" (bic), "r" (eor));
+
+	return ret;
+}
+
+static __inline u_int32_t
+__get_cpsr()
+{
+	u_int32_t	ret;
+
+	__asm __volatile("mrs	%0, cpsr" : "=&r" (ret));
 
 	return ret;
 }
@@ -467,13 +479,7 @@ __set_cpsr_c(u_int bic, u_int eor)
 #define	restore_interrupts(old_r15)					\
 	(set_r15((R15_IRQ_DISABLE | R15_FIQ_DISABLE),			\
 		 (old_r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
-#endif /* __PROG32 */
 
-#ifdef __PROG32
-/* Functions to manipulate the CPSR. */
-u_int	SetCPSR(u_int bic, u_int eor);
-u_int	GetCPSR(void);
-#else
 /* Functions to manipulate the processor control bits in r15. */
 u_int	set_r15(u_int bic, u_int eor);
 u_int	get_r15(void);
