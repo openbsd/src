@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.4 2003/08/22 13:49:33 hin Exp $
+# $Id: Makefile,v 1.5 2006/07/12 23:00:07 espie Exp $
 
 KRBDEPTH=..
 .include "../Makefile.inc"
 
 .PATH:	${KRB5SRC}/doc
 
-MAKEINFO = /usr/bin/makeinfo
+MAKEINFO = /usr/bin/makeinfo --no-split
 INSTALL-INFO = /usr/bin/install-info
 
 infodir = ${DESTDIR}/usr/share/info

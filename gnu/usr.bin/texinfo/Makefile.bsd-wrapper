@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.37 2003/02/16 18:28:41 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.38 2006/07/12 23:00:07 espie Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -7,7 +7,8 @@ MAN=	doc/info.1 doc/install-info.1 doc/makeinfo.1 doc/texi2dvi.1
 MAN+= doc/texindex.1 doc/info.5 doc/texinfo.5 doc/infokey.1
 
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
-	ACLOCAL=true AUTOHEADER=true AUTOCONF=true AUTOMAKE=true
+	ACLOCAL=true AUTOHEADER=true AUTOCONF=true AUTOMAKE=true \
+	MAKEINFO='makeinfo --no-split'
 
 FSFMAKE=	${MAKE} ${GNUCFLAGS} ${INFODIR} ${INFOPATH} 
 FSFALL=all-recursive
@@ -32,12 +33,14 @@ config: .FORCE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CFLAGS="${CFLAGS} ${COPTS}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	MAKEINFO='makeinfo --no-split' \
 		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CFLAGS="${CFLAGS} ${COPTS}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	MAKEINFO='makeinfo --no-split' \
 		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 .ifdef NOMAN

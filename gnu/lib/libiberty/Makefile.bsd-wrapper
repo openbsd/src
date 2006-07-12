@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2004/09/18 20:55:16 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2006/07/12 23:00:07 espie Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/include -I$(.OBJDIR)
@@ -43,6 +43,7 @@ needed-list: config.status
 config.status: Makefile.in configure 
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	MAKEINFO='makeinfo --no-split' \
 	/bin/sh ${.CURDIR}/src/configure \
 		--prefix=/usr --with-local-prefix=/usr ${CF} \
 		&& touch config.status

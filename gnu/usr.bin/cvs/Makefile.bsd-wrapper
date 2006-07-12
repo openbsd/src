@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.45 2004/06/21 16:53:59 avsm Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.46 2006/07/12 23:00:07 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -37,6 +37,7 @@ config: .FORCE
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY}" \
 		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
+		MAKEINFO='makeinfo --no-split' \
 		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
 			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
 
@@ -45,6 +46,7 @@ config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		INSTALL_SCRIPT="${INSTALL} ${INSTALL_COPY}" \
 		ACLOCAL=true AUTOCONF=true AUTOMAKE=true AUTOHEADER=true \
+		MAKEINFO='makeinfo --no-split' \
 		sh ${.CURDIR}/configure --prefix=/usr --mandir=/usr/share/man \
 			--datadir=/usr/libdata ${KRB} ${KRB5} ${CF}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2005/12/16 23:06:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2006/07/12 23:00:07 espie Exp $
 #	$NetBSD: Makefile,v 1.25 1997/10/25 10:10:35 lukem Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
@@ -83,10 +83,10 @@ MAN=	as.1
 
 all:
 	(cd ${.CURDIR}/doc; m4 pretex.m4 none.m4 all.m4 as.texinfo) > as-all.texinfo
-	makeinfo --split-size 200000 -o as.info as-all.texinfo
+	makeinfo --no-split -o as.info as-all.texinfo
 
 afterinstall: as.info
 	${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
-	    as.info as.info-1 ${DESTDIR}/usr/share/info/
+	    as.info ${DESTDIR}/usr/share/info/
 
 .include <bsd.prog.mk>

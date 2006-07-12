@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.65 2006/05/04 19:40:38 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.66 2006/07/12 23:00:07 espie Exp $
 
 NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sparc sparc64
 
@@ -72,6 +72,8 @@ all:	config.status
 	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
+	    MAKEINFO='makeinfo --no-split' \
+	    MAKEINFOFLAGS='' \
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
@@ -92,6 +94,7 @@ CF=
 
 do-config: .USE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	MAKEINFO='makeinfo --no-split' \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
 	    --disable-nls --disable-gdbtk --disable-commonbfdlib ${CF} \
