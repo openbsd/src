@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.16 2006/01/02 05:21:28 brad Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.17 2006/07/12 15:36:04 martin Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
