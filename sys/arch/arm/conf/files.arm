@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.8 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.arm,v 1.9 2006/07/12 17:26:19 miod Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
@@ -122,7 +122,6 @@ file	arch/arm/arm/setstack.S
 file	arch/arm/arm/stubs.c
 file	arch/arm/arm/sys_machdep.c
 file	arch/arm/arm/vm_machdep.c
-file	arch/arm/arm/atomic.S
 
 # arm library functions
 file	arch/arm/arm/bcopy_page.S	
