@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.24 2006/06/23 19:25:07 miod Exp $ */
+/*	$OpenBSD: usb.h,v 1.25 2006/07/12 18:12:55 miod Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -81,7 +81,7 @@ typedef u_int8_t uDWord[4];
 
 #define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
 
-#if 1
+#if defined(__STRICT_ALIGNMENT) || _BYTE_ORDER != _LITTLE_ENDIAN
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
 #define USETW(w,v) ((w)[0] = (u_int8_t)(v), (w)[1] = (u_int8_t)((v) >> 8))
 #define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
