@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.84 2006/07/12 12:34:32 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.85 2006/07/12 12:39:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -526,6 +526,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1032";	/* or adm1020 */
 			skip_fc = 1;
 		}
+		break;
 	case 0x4d:		/* Maxim */
 		if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
 		     addr == 0x29 || addr == 0x2a || addr == 0x2b ||
