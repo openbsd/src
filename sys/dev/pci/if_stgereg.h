@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stgereg.h,v 1.7 2006/07/12 03:29:51 brad Exp $	*/
+/*	$OpenBSD: if_stgereg.h,v 1.8 2006/07/12 19:02:25 brad Exp $	*/
 /*	$NetBSD: if_stgereg.h,v 1.3 2003/02/10 21:10:07 christos Exp $	*/
 
 /*-
@@ -39,10 +39,6 @@
 
 #ifndef _DEV_PCI_IF_STGEREG_H_
 #define	_DEV_PCI_IF_STGEREG_H_
-
-#define STGE_JUMBO_FRAMELEN	10240
-#define STGE_JUMBO_MTU		(STGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - \
-				 ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 
 /*
  * Register description for the Sundance Tech. TC9021 10/100/1000
@@ -477,5 +473,158 @@ struct stge_rfd {
 #define	STGE_EtherStatsPkts512to1023Octets		0x14c
 
 #define	STGE_EtherStatsPkts1024to1518Octets		0x150
+
+/*
+ * Transmit descriptor list size.
+ */
+#define STGE_NTXDESC		256
+#define STGE_NTXDESC_MASK	(STGE_NTXDESC - 1)
+#define STGE_NEXTTX(x)		(((x) + 1) & STGE_NTXDESC_MASK)
+ 
+/*
+ * Receive descriptor list size.
+ */
+#define STGE_NRXDESC		256
+#define STGE_NRXDESC_MASK	(STGE_NRXDESC - 1)
+#define STGE_NEXTRX(x)		(((x) + 1) & STGE_NRXDESC_MASK)
+
+/*
+ * Only interrupt every N frames.  Must be a power-of-two.
+ */   
+#define STGE_TXINTR_SPACING	16
+#define STGE_TXINTR_SPACING_MASK (STGE_TXINTR_SPACING - 1)
+
+#define STGE_JUMBO_FRAMELEN	9022
+#define STGE_JUMBO_MTU \
+	(STGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+/*
+ * Control structures are DMA'd to the TC9021 chip.  We allocate them in
+ * a single clump that maps to a single DMA segment to make several things
+ * easier.
+ */
+struct stge_control_data {
+	/*
+	 * The transmit descriptors.
+	 */
+	struct stge_tfd scd_txdescs[STGE_NTXDESC];
+
+	/*
+	 * The receive descriptors.
+	 */
+	struct stge_rfd scd_rxdescs[STGE_NRXDESC];
+};
+
+#define STGE_CDOFF(x)	offsetof(struct stge_control_data, x)
+#define STGE_CDTXOFF(x)	STGE_CDOFF(scd_txdescs[(x)])
+#define STGE_CDRXOFF(x)	STGE_CDOFF(scd_rxdescs[(x)])
+
+/*
+ * Software state for transmit and receive jobs.
+ */
+struct stge_descsoft {
+	struct mbuf *ds_mbuf;		/* head of our mbuf chain */
+	bus_dmamap_t ds_dmamap;		/* our DMA map */
+};
+
+/*
+ * Software state per device.
+ */
+struct stge_softc {
+	struct device sc_dev;		/* generic device information */
+	bus_space_tag_t sc_st;		/* bus space tag */
+	bus_space_handle_t sc_sh;	/* bus space handle */ 
+	bus_dma_tag_t sc_dmat;		/* bus DMA tag */ 
+	struct arpcom sc_arpcom;	/* ethernet common data */
+	void *sc_sdhook;		/* shutdown hook */
+	int sc_rev;			/* silicon revision */ 
+	int stge_if_flags;
+	void *sc_ih;			/* interrupt cookie */
+
+	struct mii_data sc_mii;		/* MII/media information */
+
+	struct timeout sc_timeout;	/* tick timeout */
+        
+	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
+#define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+
+	/*
+	 * Software state for transmit and receive descriptors.
+	*/
+	struct stge_descsoft sc_txsoft[STGE_NTXDESC];
+	struct stge_descsoft sc_rxsoft[STGE_NRXDESC];
+
+	/*
+	 * Control data structures.
+	*/
+	struct stge_control_data *sc_control_data;
+#define sc_txdescs	sc_control_data->scd_txdescs
+#define sc_rxdescs	sc_control_data->scd_rxdescs
+
+	int	sc_txpending;		/* number of Tx requests pending */
+	int	sc_txdirty;		/* first dirty Tx descriptor */
+	int	sc_txlast;		/* last used Tx descriptor */
+
+	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
+	int	sc_rxdiscard;
+	int	sc_rxlen;
+	struct mbuf *sc_rxhead;
+	struct mbuf *sc_rxtail;
+	struct mbuf **sc_rxtailp;
+
+	int	sc_txthresh;		/* Tx threshold */
+	uint32_t sc_usefiber:1;		/* if we're fiber */
+	uint32_t sc_stge1023:1;		/* are we a 1023 */
+	uint32_t sc_DMACtrl;		/* prototype DMACtrl register */
+	uint32_t sc_MACCtrl;		/* prototype MacCtrl register */
+	uint16_t sc_IntEnable;		/* prototype IntEnable register */
+	uint16_t sc_ReceiveMode;	/* prototype ReceiveMode register */
+	uint8_t sc_PhyCtrl;		/* prototype PhyCtrl register */
+};
+
+#define STGE_RXCHAIN_RESET(sc)						\
+do {									\
+	(sc)->sc_rxtailp = &(sc)->sc_rxhead;				\
+	*(sc)->sc_rxtailp = NULL;					\
+	(sc)->sc_rxlen = 0;						\
+} while (/*CONSTCOND*/0)
+ 
+#define STGE_RXCHAIN_LINK(sc, m)					\
+do {									\
+	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
+	(sc)->sc_rxtailp = &(m)->m_next;				\
+} while (/*CONSTCOND*/0)
+
+#define STGE_CDTXADDR(sc, x)	((sc)->sc_cddma + STGE_CDTXOFF((x)))
+#define STGE_CDRXADDR(sc, x)	((sc)->sc_cddma + STGE_CDRXOFF((x)))
+
+#define STGE_CDTXSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    STGE_CDTXOFF((x)), sizeof(struct stge_tfd), (ops))
+
+#define STGE_CDRXSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    STGE_CDRXOFF((x)), sizeof(struct stge_rfd), (ops))
+
+#define STGE_INIT_RXDESC(sc, x)						\
+do {									\
+	struct stge_descsoft *__ds = &(sc)->sc_rxsoft[(x)];		\
+	struct stge_rfd *__rfd = &(sc)->sc_rxdescs[(x)];		\
+									\
+	/*								\
+	 * Note: We scoot the packet forward 2 bytes in the buffer	\
+	 * so that the payload after the Ethernet header is aligned	\
+	 * to a 4-byte boundary.					\
+	 */								\
+	__rfd->rfd_frag.frag_word0 =					\
+	    htole64(FRAG_ADDR(__ds->ds_dmamap->dm_segs[0].ds_addr + 2) |\
+	    FRAG_LEN(MCLBYTES - 2));					\
+	__rfd->rfd_next =						\
+	    htole64((uint64_t)STGE_CDRXADDR((sc), STGE_NEXTRX((x))));	\
+	__rfd->rfd_status = 0;						\
+	STGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+} while (/*CONSTCOND*/0)
+
+#define STGE_TIMEOUT	1000
 
 #endif /* _DEV_PCI_IF_STGEREG_H_ */
