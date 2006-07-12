@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.9 2003/09/24 20:21:40 deraadt Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.10 2006/07/12 16:58:51 mglocker Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -34,23 +34,26 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.9 2003/09/24 20:21:40 deraadt Exp $";
+static const char rcsid[] =
+    "$OpenBSD: tftpsubs.c,v 1.10 2006/07/12 16:58:51 mglocker Exp $";
 #endif /* not lint */
 
-/* Simple minded read-ahead/write-behind subroutines for tftp user and
-   server.  Written originally with multiple buffers in mind, but current
-   implementation has two buffer logic wired in.
-
-   Todo:  add some sort of final error check so when the write-buffer
-   is finally flushed, the caller can detect if the disk filled up
-   (or had an i/o error) and return a nak to the other side.
-
-			Jim Guyton 10/85
+/*
+ * Simple minded read-ahead/write-behind subroutines for tftp user and
+ * server.  Written originally with multiple buffers in mind, but current
+ * implementation has two buffer logic wired in.
+ *
+ * Todo:  add some sort of final error check so when the write-buffer
+ * is finally flushed, the caller can detect if the disk filled up
+ * (or had an i/o error) and return a nak to the other side.
+ *
+ *			Jim Guyton 10/85
  */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+
 #include <netinet/in.h>
 #include <arpa/tftp.h>
 
@@ -59,90 +62,92 @@ static const char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.9 2003/09/24 20:21:40 dera
 
 #include "tftpsubs.h"
 
-#define PKTSIZE SEGSIZE+4       /* should be moved to tftp.h */
-
-struct bf {
-	int counter;            /* size of data in buffer, or flag */
-	char buf[PKTSIZE];      /* room for data packet */
-} bfs[2];
-
-				/* Values for bf.counter  */
-#define BF_ALLOC -3             /* alloc'd but not yet filled */
-#define BF_FREE  -2             /* free */
+#define PKTSIZE		SEGSIZE + 4	/* should be moved to tftp.h */
+					/* values for bf.counter */
+#define BF_ALLOC	-3		/* alloc'd but not yet filled */
+#define BF_FREE		-2		/* free */
 /* [-1 .. SEGSIZE] = size of data in the data buffer */
 
-static int nextone;		/* index of next buffer to use */
-static int current;		/* index of buffer in use */
+static struct tftphdr	*rw_init(int);
 
+struct bf {
+	int	counter;	/* size of data in buffer, or flag */
+	char	buf[PKTSIZE];	/* room for data packet */
+} bfs[2];
+
+static int	nextone;	/* index of next buffer to use */
+static int	current;	/* index of buffer in use */
 				/* control flags for crlf conversions */
-int newline = 0;		/* fillbuf: in middle of newline expansion */
-int prevchar = -1;		/* putbuf: previous char (cr check) */
-
-static struct tftphdr *rw_init(int);
+int		newline = 0;	/* fillbuf: in middle of newline expansion */
+int		prevchar = -1;	/* putbuf: previous char (cr check) */
 
 struct tftphdr *
 w_init(void)
 {
-	return rw_init(0);	/* write-behind */
+	return (rw_init(0));	/* write-behind */
 }
 
 struct tftphdr *
 r_init(void)
 {
-	return rw_init(1);	/* read-ahead */
+	return (rw_init(1));	/* read-ahead */
 }
 
-/* init for either read-ahead or write-behind */
-/* zero for write-behind, one for read-head */
+/*
+ * Init for either read-ahead or write-behind.
+ * Zero for write-behind, one for read-head.
+ */
 static struct tftphdr *
 rw_init(int x)
 {
-	newline = 0;		/* init crlf flag */
+	newline = 0;			/* init crlf flag */
 	prevchar = -1;
-	bfs[0].counter =  BF_ALLOC;     /* pass out the first buffer */
+	bfs[0].counter =  BF_ALLOC;	/* pass out the first buffer */
 	current = 0;
 	bfs[1].counter = BF_FREE;
-	nextone = x;                    /* ahead or behind? */
-	return (struct tftphdr *)bfs[0].buf;
+	nextone = x;			/* ahead or behind? */
+
+	return ((struct tftphdr *)bfs[0].buf);
 }
 
-
-/* Have emptied current buffer by sending to net and getting ack.
-   Free it and return next buffer filled with data.
+/*
+ * Have emptied current buffer by sending to net and getting ack.
+ * Free it and return next buffer filled with data.
  */
 int
 readit(FILE *file, struct tftphdr **dpp, int convert)
 {
-	struct bf *b;
+	struct bf	*b;
 
-	bfs[current].counter = BF_FREE; /* free old one */
-	current = !current;             /* "incr" current */
+	bfs[current].counter = BF_FREE;		/* free old one */
+	current = !current;			/* "incr" current */
 
-	b = &bfs[current];              /* look at new buffer */
-	if (b->counter == BF_FREE)      /* if it's empty */
-		read_ahead(file, convert);      /* fill it */
-/*      assert(b->counter != BF_FREE);*//* check */
-	*dpp = (struct tftphdr *)b->buf;        /* set caller's ptr */
-	return b->counter;
+	b = &bfs[current];			/* look at new buffer */
+	if (b->counter == BF_FREE)		/* if it's empty */
+		read_ahead(file, convert);	/* fill it */
+	/* assert(b->counter != BF_FREE); */	/* check */
+	*dpp = (struct tftphdr *)b->buf;	/* set caller's ptr */
+
+	return (b->counter);
 }
 
 /*
- * fill the input buffer, doing ascii conversions if requested
- * conversions are  lf -> cr,lf  and cr -> cr, nul
+ * Fill the input buffer, doing ascii conversions if requested.
+ * Conversions are lf -> cr, lf and cr -> cr, nul.
  */
 void
 read_ahead(FILE *file, int convert)
 {
-	int i;
-	char *p;
-	int c;
-	struct bf *b;
-	struct tftphdr *dp;
+	int		 i;
+	char		*p;
+	int		 c;
+	struct bf	*b;
+	struct tftphdr	*dp;
 
-	b = &bfs[nextone];              /* look at "next" buffer */
-	if (b->counter != BF_FREE)      /* nop if not free */
+	b = &bfs[nextone];			/* look at "next" buffer */
+	if (b->counter != BF_FREE)		/* nop if not free */
 		return;
-	nextone = !nextone;             /* "incr" next buffer ptr */
+	nextone = !nextone;			/* "incr" next buffer ptr */
 
 	dp = (struct tftphdr *)b->buf;
 
@@ -152,16 +157,17 @@ read_ahead(FILE *file, int convert)
 	}
 
 	p = dp->th_data;
-	for (i = 0 ; i < SEGSIZE; i++) {
+	for (i = 0; i < SEGSIZE; i++) {
 		if (newline) {
 			if (prevchar == '\n')
-				c = '\n';       /* lf to cr,lf */
+				c = '\n';	/* lf to cr, lf */
 			else
-				c = '\0';       /* cr to cr,nul */
+				c = '\0';	/* cr to cr, nul */
 			newline = 0;
 		} else {
 			c = getc(file);
-			if (c == EOF) break;
+			if (c == EOF)
+				break;
 			if (c == '\n' || c == '\r') {
 				prevchar = c;
 				c = '\r';
@@ -173,74 +179,80 @@ read_ahead(FILE *file, int convert)
 	b->counter = (int)(p - dp->th_data);
 }
 
-/* Update count associated with the buffer, get new buffer
-   from the queue.  Calls write_behind only if next buffer not
-   available.
+/*
+ * Update count associated with the buffer, get new buffer
+ * from the queue.  Calls write_behind only if next buffer not
+ * available.
  */
 int
 writeit(FILE *file, struct tftphdr **dpp, int ct, int convert)
 {
-	bfs[current].counter = ct;      /* set size of data to write */
-	current = !current;             /* switch to other buffer */
-	if (bfs[current].counter != BF_FREE)     /* if not free */
-		(void)write_behind(file, convert); /* flush it */
-	bfs[current].counter = BF_ALLOC;        /* mark as alloc'd */
+	bfs[current].counter = ct;		/* set size of data to write */
+	current = !current;			/* switch to other buffer */
+	if (bfs[current].counter != BF_FREE)	/* if not free */
+		/* flush it */
+		(void)write_behind(file, convert);
+	bfs[current].counter = BF_ALLOC;	/* mark as alloc'd */
 	*dpp =  (struct tftphdr *)bfs[current].buf;
-	return ct;                      /* this is a lie of course */
+
+	return (ct);				/* this is a lie of course */
 }
 
 /*
  * Output a buffer to a file, converting from netascii if requested.
- * CR,NUL -> CR  and CR,LF => LF.
+ * CR, NUL -> CR and CR, LF -> LF.
  * Note spec is undefined if we get CR as last byte of file or a
  * CR followed by anything else.  In this case we leave it alone.
-n */
+ */
 int
 write_behind(FILE *file, int convert)
 {
-	char *buf;
-	int count;
-	int ct;
-	char *p;
-	int c;                          /* current character */
-	struct bf *b;
-	struct tftphdr *dp;
+	char		*buf;
+	int		 count;
+	int		 ct;
+	char		*p;
+	int		 c; /* current character */
+	struct bf	*b;
+	struct tftphdr	*dp;
 
 	b = &bfs[nextone];
-	if (b->counter < -1)            /* anything to flush? */
-		return 0;               /* just nop if nothing to do */
+	if (b->counter < -1)		/* anything to flush? */
+		return (0);		/* just nop if nothing to do */
 
-	count = b->counter;             /* remember byte count */
-	b->counter = BF_FREE;           /* reset flag */
+	count = b->counter;		/* remember byte count */
+	b->counter = BF_FREE;		/* reset flag */
 	dp = (struct tftphdr *)b->buf;
-	nextone = !nextone;             /* incr for next time */
+	nextone = !nextone;		/* incr for next time */
 	buf = dp->th_data;
 
-	if (count <= 0) return -1;      /* nak logic? */
+	if (count <= 0)			/* nak logic? */
+		return (-1);
 
 	if (convert == 0)
-		return write(fileno(file), buf, count);
+		return (write(fileno(file), buf, count));
 
 	p = buf;
 	ct = count;
-	while (ct--) {                  /* loop over the buffer */
-		c = *p++;                   /* pick up a character */
-		if (prevchar == '\r') {     /* if prev char was cr */
-			if (c == '\n')          /* if have cr,lf then just */
-				fseek(file, -1, 1);  /* smash lf on top of the cr */
-			else if (c == '\0')       /* if have cr,nul then */
-				goto skipit;    /* just skip over the putc */
-			/* else just fall through and allow it */
+	while (ct--) {				/* loop over the buffer */
+		c = *p++;			/* pick up a character */
+		if (prevchar == '\r') {		/* if prev char was cr */
+			if (c == '\n')		/* if have cr,lf then just */
+				/* smash lf on top of the cr */
+				fseek(file, -1, 1);
+			else if (c == '\0')	/* if have cr,nul then */
+				goto skipit;	/* just skip over the putc */
+			/* FALLTHROUGH */
 		}
 		putc(c, file);
 skipit:
 		prevchar = c;
 	}
-	return count;
+
+	return (count);
 }
 
-
-/* When an error has occurred, it is possible that the two sides
+/*
+ * When an error has occurred, it is possible that the two sides
  * are out of synch.  Ie: that what I think is the other side's
  * response to packet N is really their response to packet N-1.
  *
@@ -250,24 +262,22 @@ skipit:
  * We return the number of packets we flushed (mostly for reporting
  * when trace is active).
  */
-
 int
 synchnet(int f)
 {
-	int i, j = 0;
-	char rbuf[PKTSIZE];
-	struct sockaddr_in from;
-	socklen_t fromlen;
+	int			i, j = 0;
+	char			rbuf[PKTSIZE];
+	struct sockaddr_in	from;
+	socklen_t		fromlen;
 
-	while (1) {
-		(void) ioctl(f, FIONREAD, &i);
+	for (;;) {
+		(void)ioctl(f, FIONREAD, &i);
 		if (i) {
 			j++;
-			fromlen = sizeof from;
-			(void) recvfrom(f, rbuf, sizeof (rbuf), 0,
+			fromlen = sizeof(from);
+			(void)recvfrom(f, rbuf, sizeof(rbuf), 0,
 			    (struct sockaddr *)&from, &fromlen);
-		} else {
-			return(j);
-		}
+		} else
+			return (j);
 	}
 }

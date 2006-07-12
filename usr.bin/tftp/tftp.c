@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.16 2006/05/08 13:02:51 claudio Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.17 2006/07/12 16:58:51 mglocker Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftp.c,v 1.16 2006/05/08 13:02:51 claudio Exp $";
+static const char rcsid[] =
+    "$OpenBSD: tftp.c,v 1.17 2006/07/12 16:58:51 mglocker Exp $";
 #endif /* not lint */
-
-/* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
 
 /*
  * TFTP User Program -- Protocol Machines
+ *
+ * This version includes many modifications by Jim Guyton <guyton@rand-unix>
  */
 
 #include <sys/types.h>
@@ -50,6 +51,7 @@ static const char rcsid[] = "$OpenBSD: tftp.c,v 1.16 2006/05/08 13:02:51 claudio
 #include <netinet/in.h>
 #include <arpa/tftp.h>
 
+#include <err.h>
 #include <errno.h>
 #include <poll.h>
 #include <signal.h>
@@ -57,29 +59,35 @@ static const char rcsid[] = "$OpenBSD: tftp.c,v 1.16 2006/05/08 13:02:51 claudio
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #include "extern.h"
 #include "tftpsubs.h"
 
 #define	PKTSIZE	SEGSIZE + 4
 
-extern struct sockaddr_in	peeraddr;	/* filled in by main */
-extern int			f;		/* the opened socket */
-extern int			trace;
-extern int			verbose;
-extern int			rexmtval;
-extern int			maxtimeout;
+static int	makerequest(int, const char *, struct tftphdr *, const char *);
+static void	nak(int);
+static void 	tpacket(const char *, struct tftphdr *, int);
+static void	startclock(void);
+static void	stopclock(void);
+static void	printstats(const char *, unsigned long);
+static void	printtimeout(void);
+
+extern struct sockaddr_in	 peeraddr;	/* filled in by main */
+extern int			 f;		/* the opened socket */
+extern int			 trace;
+extern int			 verbose;
+extern int			 rexmtval;
+extern int			 maxtimeout;
 extern FILE			*file;
-extern volatile sig_atomic_t	intrflag;
+extern volatile sig_atomic_t	 intrflag;
 
-char	ackbuf[PKTSIZE];
-
+char		ackbuf[PKTSIZE];
 struct timeval	tstart;
 struct timeval	tstop;
 
 struct errmsg {
-	int	e_code;
+	int	 e_code;
 	char	*e_msg;
 } errmsgs[] = {
 	{ EUNDEF,	"Undefined error code" },
@@ -93,26 +101,18 @@ struct errmsg {
 	{ -1,		NULL }
 };
 
-static int	makerequest(int, const char *, struct tftphdr *, const char *);
-static void	nak(int);
-static void 	tpacket(const char *, struct tftphdr *, int);
-static void	startclock(void);
-static void	stopclock(void);
-static void	printstats(const char *, unsigned long);
-static void	printtimeout(void);
-
 /*
  * Send the requested file.
  */
 void
 sendfile(int fd, char *name, char *mode)
 {
-	struct tftphdr *dp, *ap;	/* data and ack packets */
-	struct sockaddr_in from;
-	struct pollfd pfd[1];
-	unsigned long amount;
-	int convert;			/* true if converting crlf -> lf */
-	int n, nfds, error, fromlen, timeouts, block, size;
+	struct tftphdr		*dp, *ap; /* data and ack packets */
+	struct sockaddr_in	 from;
+	struct pollfd		 pfd[1];
+	unsigned long		 amount;
+	int			 convert; /* true if converting crlf -> lf */
+	int			 n, nfds, error, fromlen, timeouts, block, size;
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
@@ -230,12 +230,13 @@ abort:
 void
 recvfile(int fd, char *name, char *mode)
 {
-	struct tftphdr *dp, *ap;	/* data and ack packets */
-	struct sockaddr_in from;
-	struct pollfd pfd[1];
-	unsigned long amount;
-	int convert;			/* true if converting crlf -> lf */
-	int n, nfds, error, fromlen, timeouts, block, size, firsttrip;
+	struct tftphdr		*dp, *ap; /* data and ack packets */
+	struct sockaddr_in	 from;
+	struct pollfd		 pfd[1];
+	unsigned long		 amount;
+	int			 convert; /* true if converting crlf -> lf */
+	int			 n, nfds, error, fromlen, timeouts, block, size;
+	int			 firsttrip;
 
 	startclock();		/* start stat's clock */
 	dp = w_init();		/* reset fillbuf/read-ahead code */
@@ -345,7 +346,7 @@ abort:
 	/* ok to ack, since user has seen err msg */
 	ap->th_opcode = htons((u_short)ACK);
 	ap->th_block = htons((u_short)block);
-	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peeraddr,
+	(void)sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peeraddr,
 	    sizeof(peeraddr));
 	write_behind(file, convert);	/* flush last buffer */
 
@@ -362,8 +363,8 @@ static int
 makerequest(int request, const char *name, struct tftphdr *tp,
     const char *mode)
 {
-	char *cp;
-	int len, pktlen;
+	char	*cp;
+	int	 len, pktlen;
 
 	tp->th_opcode = htons((u_short)request);
 	cp = tp->th_stuff;
@@ -372,6 +373,7 @@ makerequest(int request, const char *name, struct tftphdr *tp,
 	strlcpy(cp, name, pktlen);
 	strlcpy(cp + len, mode, pktlen - len);
 	len += strlen(mode) + 1;
+
 	return (cp + len - (char *)tp);
 }
 
@@ -384,9 +386,9 @@ makerequest(int request, const char *name, struct tftphdr *tp,
 static void
 nak(int error)
 {
-	struct errmsg *pe;
-	struct tftphdr *tp;
-	int length;
+	struct errmsg	*pe;
+	struct tftphdr	*tp;
+	int		 length;
 
 	tp = (struct tftphdr *)ackbuf;
 	tp->th_opcode = htons((u_short)ERROR);
@@ -411,9 +413,10 @@ nak(int error)
 static void
 tpacket(const char *s, struct tftphdr *tp, int n)
 {
-	static char *opcodes[] =
+	char		*cp, *file;
+	static char	*opcodes[] =
 	    { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
-	char *cp, *file;
+
 	u_short op = ntohs(tp->th_opcode);
 
 	if (op < RRQ || op > ERROR)
@@ -444,19 +447,19 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 static void
 startclock(void)
 {
-	(void) gettimeofday(&tstart, NULL);
+	(void)gettimeofday(&tstart, NULL);
 }
 
 static void
 stopclock(void)
 {
-	(void) gettimeofday(&tstop, NULL);
+	(void)gettimeofday(&tstop, NULL);
 }
 
 static void
 printstats(const char *direction, unsigned long amount)
 {
-	double delta;
+	double	delta;
 
 	/* compute delta in 1/10's second units */
 	delta = ((tstop.tv_sec * 10.) + (tstop.tv_usec / 100000)) -
