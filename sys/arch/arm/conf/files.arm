@@ -1,35 +1,10 @@
-#	$OpenBSD: files.arm,v 1.10 2006/07/12 17:29:55 miod Exp $
+#	$OpenBSD: files.arm,v 1.11 2006/07/12 17:31:23 miod Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
-# CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
-#defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
-#defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
-#				CPU_ARM9 CPU_ARM10 CPU_SA110 CPU_SA1100
-#				CPU_SA1110 CPU_IXP12X0 CPU_XSCALE_80200
-#				CPU_XSCALE_80321 CPU_XSCALE_PXA2X0
-#				CPU_XSCALE_IXP425
-
-#defparam opt_cpuoptions.h	XSCALE_CCLKCFG
-#defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
-#defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_BACK
-#defflag  opt_cpuoptions.h	XSCALE_NO_COALESCE_WRITES
-#defflag  opt_cpuoptions.h	XSCALE_CACHE_READ_WRITE_ALLOCATE
-#defflag  opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
-
-# Interrupt implementation header definition.
-#defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
-
-# Board-specific bus_space(9) definitions
-#defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
-
 # Floating point emulator
-#defflag				ARMFPE
 #file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
 #file	arch/arm/fpe-arm/armfpe_init.c		armfpe
 #file	arch/arm/fpe-arm/armfpe.S		armfpe
-
-# PMAP_DEBUG (heavily abused option)
-#defflag				PMAP_DEBUG
 
 # generic networking files
 file	arch/arm/arm/in_cksum_arm.S		inet
