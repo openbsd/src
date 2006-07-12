@@ -4796,6 +4796,8 @@
 ./usr/share/man/cat3/rip.0
 ./usr/share/man/cat3/ripoffline.0
 ./usr/share/man/cat3/rmd160.0
+./usr/share/man/cat3/round.0
+./usr/share/man/cat3/roundf.0
 ./usr/share/man/cat3/rpc.0
 ./usr/share/man/cat3/rpc_createerr.0
 ./usr/share/man/cat3/rpcauth.0
