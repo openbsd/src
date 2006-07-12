@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.85 2006/07/12 12:39:13 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.86 2006/07/12 15:35:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -478,7 +478,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		break;
 	}
 
-	switch(iicprobe(0xfe)) {
+	switch (iicprobe(0xfe)) {
 	case 0x01:		/* National Semiconductor */
 		if (addr == 0x4c &&
 		    iicprobe(0xff) == 0x11 && (iicprobe(0x03) & 0x2a) == 0 &&
