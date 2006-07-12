@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stgereg.h,v 1.5 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_stgereg.h,v 1.6 2006/07/12 02:02:19 brad Exp $	*/
 /*	$NetBSD: if_stgereg.h,v 1.3 2003/02/10 21:10:07 christos Exp $	*/
 
 /*-
@@ -40,8 +40,9 @@
 #ifndef _DEV_PCI_IF_STGEREG_H_
 #define	_DEV_PCI_IF_STGEREG_H_
 
-#define STGE_JUMBO_FRAMELEN	9018
-#define STGE_JUMBO_MTU		(STGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+#define STGE_JUMBO_FRAMELEN	10240
+#define STGE_JUMBO_MTU		(STGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - \
+				 ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 
 /*
  * Register description for the Sundance Tech. TC9021 10/100/1000
@@ -330,7 +331,7 @@ struct stge_rfd {
 
 #define	STGE_VLANId			0x80
 
-#define	STGE_MaxFrameSize		0x84
+#define	STGE_MaxFrameSize		0x86
 
 #define	STGE_ReceiveMode		0x88	/* 16-bit */
 #define	RM_ReceiveUnicast		(1U << 0)

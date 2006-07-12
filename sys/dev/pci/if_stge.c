@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.26 2006/06/11 05:21:54 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.27 2006/07/12 02:02:19 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -551,6 +551,9 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = stge_ioctl;
 	ifp->if_start = stge_start;
 	ifp->if_watchdog = stge_watchdog;
+#ifdef STGE_JUMBO
+	ifp->if_hardmtu = STGE_JUMBO_MTU;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, STGE_NTXDESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
