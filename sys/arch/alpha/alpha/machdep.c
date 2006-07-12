@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.102 2006/06/20 14:06:01 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.103 2006/07/12 15:32:57 martin Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -99,8 +99,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
