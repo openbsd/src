@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.28 2006/07/12 02:06:31 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.29 2006/07/12 03:29:51 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -475,8 +475,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * Determine if we're copper or fiber.  It affects how we
 	 * reset the card.
 	 */
-	if (bus_space_read_4(sc->sc_st, sc->sc_sh, STGE_AsicCtrl) &
-	    AC_PhyMedia)
+	if (CSR_READ_4(sc, STGE_AsicCtrl) & AC_PhyMedia)
 		sc->sc_usefiber = 1;
 	else
 		sc->sc_usefiber = 0;
@@ -494,18 +493,18 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * from EEPROM.
 	 */
 	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_SUNDANCE_ST1023) {
-		sc->sc_arpcom.ac_enaddr[0] = bus_space_read_2(sc->sc_st,
-		    sc->sc_sh, STGE_StationAddress0) & 0xff;
-		sc->sc_arpcom.ac_enaddr[1] = bus_space_read_2(sc->sc_st,
-		    sc->sc_sh, STGE_StationAddress0) >> 8;
-		sc->sc_arpcom.ac_enaddr[2] = bus_space_read_2(sc->sc_st,
-		    sc->sc_sh, STGE_StationAddress1) & 0xff;
-		sc->sc_arpcom.ac_enaddr[3] = bus_space_read_2(sc->sc_st,
-		    sc->sc_sh, STGE_StationAddress1) >> 8;
-		sc->sc_arpcom.ac_enaddr[4] = bus_space_read_2(sc->sc_st,
-		    sc->sc_sh, STGE_StationAddress2) & 0xff;
-		sc->sc_arpcom.ac_enaddr[5] = bus_space_read_2(sc->sc_st,
-		    sc->sc_sh, STGE_StationAddress2) >> 8;
+		sc->sc_arpcom.ac_enaddr[0] = CSR_READ_2(sc,
+		    STGE_StationAddress0) & 0xff;
+		sc->sc_arpcom.ac_enaddr[1] = CSR_READ_2(sc,
+		    STGE_StationAddress0) >> 8;
+		sc->sc_arpcom.ac_enaddr[2] = CSR_READ_2(sc,
+		    STGE_StationAddress1) & 0xff;
+		sc->sc_arpcom.ac_enaddr[3] = CSR_READ_2(sc,
+		    STGE_StationAddress1) >> 8;
+		sc->sc_arpcom.ac_enaddr[4] = CSR_READ_2(sc,
+		    STGE_StationAddress2) & 0xff;
+		sc->sc_arpcom.ac_enaddr[5] = CSR_READ_2(sc,
+		    STGE_StationAddress2) >> 8;
 		sc->sc_stge1023 = 0;
 	} else {
 		uint16_t myaddr[ETHER_ADDR_LEN / 2];
@@ -524,8 +523,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Read some important bits from the PhyCtrl register.
 	 */
-	sc->sc_PhyCtrl = bus_space_read_1(sc->sc_st, sc->sc_sh,
-	    STGE_PhyCtrl) & (PC_PhyDuplexPolarity | PC_PhyLnkPolarity);
+	sc->sc_PhyCtrl = CSR_READ_1(sc, STGE_PhyCtrl) &
+	    (PC_PhyDuplexPolarity | PC_PhyLnkPolarity);
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -648,8 +647,7 @@ stge_dma_wait(struct stge_softc *sc)
 
 	for (i = 0; i < STGE_TIMEOUT; i++) {
 		delay(2);
-		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, STGE_DMACtrl) &
-		     DMAC_TxDMAInProg) == 0)
+		if ((CSR_READ_4(sc, STGE_DMACtrl) & DMAC_TxDMAInProg) == 0)
 			break;
 	}
 
@@ -785,7 +783,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Kick the transmit DMA logic.
 		 */
-		bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_DMACtrl,
+		CSR_WRITE_4(sc, STGE_DMACtrl,
 		    sc->sc_DMACtrl | DMAC_TxDMAPollNow);
 
 		/*
@@ -962,12 +960,11 @@ stge_intr(void *arg)
 	int wantinit;
 	uint16_t isr;
 
-	if ((bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_IntStatus) &
-	     IS_InterruptStatus) == 0)
+	if ((CSR_READ_2(sc, STGE_IntStatus) & IS_InterruptStatus) == 0)
 		return (0);
 
 	for (wantinit = 0; wantinit == 0;) {
-		isr = bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_IntStatusAck);
+		isr = CSR_READ_2(sc, STGE_IntStatusAck);
 		if ((isr & sc->sc_IntEnable) == 0)
 			break;
 
@@ -1004,8 +1001,7 @@ stge_intr(void *arg)
 		/* Transmission errors. */
 		if (isr & IS_TxComplete) {
 			for (;;) {
-				txstat = bus_space_read_4(sc->sc_st, sc->sc_sh,
-				    STGE_TxStatus);
+				txstat = CSR_READ_4(sc, STGE_TxStatus);
 				if ((txstat & TS_TxComplete) == 0)
 					break;
 				if (txstat & TS_TxUnderrun) {
@@ -1029,8 +1025,7 @@ stge_intr(void *arg)
 	if (wantinit)
 		stge_init(ifp);
 
-	bus_space_write_2(sc->sc_st, sc->sc_sh, STGE_IntEnable,
-	    sc->sc_IntEnable);
+	CSR_WRITE_2(sc, STGE_IntEnable, sc->sc_IntEnable);
 
 	/* Try to get more packets going. */
 	stge_start(ifp);
@@ -1276,30 +1271,28 @@ void
 stge_stats_update(struct stge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_space_tag_t st = sc->sc_st;
-	bus_space_handle_t sh = sc->sc_sh;
 
-	(void) bus_space_read_4(st, sh, STGE_OctetRcvOk);
+	(void) CSR_READ_4(sc, STGE_OctetRcvOk);
 
 	ifp->if_ipackets +=
-	    bus_space_read_4(st, sh, STGE_FramesRcvdOk);
+	    CSR_READ_4(sc, STGE_FramesRcvdOk);
 
 	ifp->if_ierrors +=
-	    (u_int) bus_space_read_2(st, sh, STGE_FramesLostRxErrors);
+	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors);
 
-	(void) bus_space_read_4(st, sh, STGE_OctetXmtdOk);
+	(void) CSR_READ_4(sc, STGE_OctetXmtdOk);
 
 	ifp->if_opackets +=
-	    bus_space_read_4(st, sh, STGE_FramesXmtdOk);
+	    CSR_READ_4(sc, STGE_FramesXmtdOk);
 
 	ifp->if_collisions +=
-	    bus_space_read_4(st, sh, STGE_LateCollisions) +
-	    bus_space_read_4(st, sh, STGE_MultiColFrames) +
-	    bus_space_read_4(st, sh, STGE_SingleColFrames);
+	    CSR_READ_4(sc, STGE_LateCollisions) +
+	    CSR_READ_4(sc, STGE_MultiColFrames) +
+	    CSR_READ_4(sc, STGE_SingleColFrames);
 
 	ifp->if_oerrors +=
-	    (u_int) bus_space_read_2(st, sh, STGE_FramesAbortXSColls) +
-	    (u_int) bus_space_read_2(st, sh, STGE_FramesWEXDeferal);
+	    (u_int) CSR_READ_2(sc, STGE_FramesAbortXSColls) +
+	    (u_int) CSR_READ_2(sc, STGE_FramesWEXDeferal);
 }
 
 /*
@@ -1313,14 +1306,14 @@ stge_reset(struct stge_softc *sc)
 	uint32_t ac;
 	int i;
 
-	ac = bus_space_read_4(sc->sc_st, sc->sc_sh, STGE_AsicCtrl);
+	ac = CSR_READ_4(sc, STGE_AsicCtrl);
 
 	/*
 	 * Only assert RstOut if we're fiber.  We need GMII clocks
 	 * to be present in order for the reset to complete on fiber
 	 * cards.
 	 */
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_AsicCtrl,
+	CSR_WRITE_4(sc, STGE_AsicCtrl,
 	    ac | AC_GlobalReset | AC_RxReset | AC_TxReset |
 	    AC_DMA | AC_FIFO | AC_Network | AC_Host | AC_AutoInit |
 	    (sc->sc_usefiber ? AC_RstOut : 0));
@@ -1329,8 +1322,7 @@ stge_reset(struct stge_softc *sc)
 
 	for (i = 0; i < STGE_TIMEOUT; i++) {
 		delay(5000);
-		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, STGE_AsicCtrl) &
-		     AC_ResetBusy) == 0)
+		if ((CSR_READ_4(sc, STGE_AsicCtrl) & AC_ResetBusy) == 0)
 			break;
 	}
 
@@ -1349,8 +1341,6 @@ int
 stge_init(struct ifnet *ifp)
 {
 	struct stge_softc *sc = ifp->if_softc;
-	bus_space_tag_t st = sc->sc_st;
-	bus_space_handle_t sh = sc->sc_sh;
 	struct stge_descsoft *ds;
 	int i, error = 0;
 
@@ -1404,15 +1394,15 @@ stge_init(struct ifnet *ifp)
 
 	/* Set the station address. */
 	for (i = 0; i < 6; i++)
-		bus_space_write_1(st, sh, STGE_StationAddress0 + i,
+		CSR_WRITE_1(sc, STGE_StationAddress0 + i,
 		    sc->sc_arpcom.ac_enaddr[i]);
 
 	/*
 	 * Set the statistics masks.  Disable all the RMON stats,
 	 * and disable selected stats in the non-RMON stats registers.
 	 */
-	bus_space_write_4(st, sh, STGE_RMONStatisticsMask, 0xffffffff);
-	bus_space_write_4(st, sh, STGE_StatisticsMask,
+	CSR_WRITE_4(sc, STGE_RMONStatisticsMask, 0xffffffff);
+	CSR_WRITE_4(sc, STGE_StatisticsMask,
 	    (1U << 1) | (1U << 2) | (1U << 3) | (1U << 4) | (1U << 5) |
 	    (1U << 6) | (1U << 7) | (1U << 8) | (1U << 9) | (1U << 10) |
 	    (1U << 13) | (1U << 14) | (1U << 15) | (1U << 19) | (1U << 20) |
@@ -1424,12 +1414,12 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Give the transmit and receive ring to the chip.
 	 */
-	bus_space_write_4(st, sh, STGE_TFDListPtrHi, 0); /* NOTE: 32-bit DMA */
-	bus_space_write_4(st, sh, STGE_TFDListPtrLo,
+	CSR_WRITE_4(sc, STGE_TFDListPtrHi, 0); /* NOTE: 32-bit DMA */
+	CSR_WRITE_4(sc, STGE_TFDListPtrLo,
 	    STGE_CDTXADDR(sc, sc->sc_txdirty));
 
-	bus_space_write_4(st, sh, STGE_RFDListPtrHi, 0); /* NOTE: 32-bit DMA */
-	bus_space_write_4(st, sh, STGE_RFDListPtrLo,
+	CSR_WRITE_4(sc, STGE_RFDListPtrHi, 0); /* NOTE: 32-bit DMA */
+	CSR_WRITE_4(sc, STGE_RFDListPtrLo,
 	    STGE_CDRXADDR(sc, sc->sc_rxptr));
 
 	/*
@@ -1437,17 +1427,17 @@ stge_init(struct ifnet *ifp)
 	 * large (255 is the max, but we use 127) -- we explicitly kick the
 	 * transmit engine when there's actually a packet.
 	 */
-	bus_space_write_1(st, sh, STGE_TxDMAPollPeriod, 127);
+	CSR_WRITE_1(sc, STGE_TxDMAPollPeriod, 127);
 
 	/* ..and the Rx auto-poll period. */
-	bus_space_write_1(st, sh, STGE_RxDMAPollPeriod, 64);
+	CSR_WRITE_1(sc, STGE_RxDMAPollPeriod, 64);
 
 	/* Initialize the Tx start threshold. */
-	bus_space_write_2(st, sh, STGE_TxStartThresh, sc->sc_txthresh);
+	CSR_WRITE_2(sc, STGE_TxStartThresh, sc->sc_txthresh);
 
 	/* RX DMA thresholds, from linux */
-	bus_space_write_1(st, sh, STGE_RxDMABurstThresh, 0x30);
-	bus_space_write_1(st, sh, STGE_RxDMAUrgentThresh, 0x30);
+	CSR_WRITE_1(sc, STGE_RxDMABurstThresh, 0x30);
+	CSR_WRITE_1(sc, STGE_RxDMAUrgentThresh, 0x30);
 
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
@@ -1456,7 +1446,7 @@ stge_init(struct ifnet *ifp)
 	 * interrupts pending reaches 8, we stop deferring the
 	 * interrupt, and signal it immediately.
 	 */
-	bus_space_write_4(st, sh, STGE_RxDMAIntCtrl,
+	CSR_WRITE_4(sc, STGE_RxDMAIntCtrl,
 	    RDIC_RxFrameCount(8) | RDIC_RxDMAWaitTime(512));
 
 	/*
@@ -1464,14 +1454,14 @@ stge_init(struct ifnet *ifp)
 	 */
 	sc->sc_IntEnable = IS_HostError | IS_TxComplete | IS_UpdateStats |
 	    IS_TxDMAComplete | IS_RxDMAComplete | IS_RFDListEnd;
-	bus_space_write_2(st, sh, STGE_IntStatus, 0xffff);
-	bus_space_write_2(st, sh, STGE_IntEnable, sc->sc_IntEnable);
+	CSR_WRITE_2(sc, STGE_IntStatus, 0xffff);
+	CSR_WRITE_2(sc, STGE_IntEnable, sc->sc_IntEnable);
 
 	/*
 	 * Configure the DMA engine.
 	 * XXX Should auto-tune TxBurstLimit.
 	 */
-	bus_space_write_4(st, sh, STGE_DMACtrl, sc->sc_DMACtrl |
+	CSR_WRITE_4(sc, STGE_DMACtrl, sc->sc_DMACtrl |
 	    DMAC_TxBurstLimit(3));
 
 	/*
@@ -1479,13 +1469,13 @@ stge_init(struct ifnet *ifp)
 	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
 	 * empty again.
 	 */
-	bus_space_write_2(st, sh, STGE_FlowOnTresh, 29696 / 16);
-	bus_space_write_2(st, sh, STGE_FlowOffThresh, 0);
+	CSR_WRITE_2(sc, STGE_FlowOnTresh, 29696 / 16);
+	CSR_WRITE_2(sc, STGE_FlowOffThresh, 0);
 
 	/*
 	 * Set the maximum frame size.
 	 */
-	bus_space_write_2(st, sh, STGE_MaxFrameSize,
+	CSR_WRITE_2(sc, STGE_MaxFrameSize,
 	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
 	    ETHER_VLAN_ENCAP_LEN);
 
@@ -1497,20 +1487,20 @@ stge_init(struct ifnet *ifp)
 	 * anything else.
 	 */
 	sc->sc_MACCtrl = MC_IFSSelect(0);
-	bus_space_write_4(st, sh, STGE_MACCtrl, sc->sc_MACCtrl);
+	CSR_WRITE_4(sc, STGE_MACCtrl, sc->sc_MACCtrl);
 	sc->sc_MACCtrl |= MC_StatisticsEnable | MC_TxEnable | MC_RxEnable;
 
 	if (sc->sc_rev >= 6) {		/* >= B.2 */
 		/* Multi-frag frame bug work-around. */
-		bus_space_write_2(st, sh, STGE_DebugCtrl,
-		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0200);
+		CSR_WRITE_2(sc, STGE_DebugCtrl,
+		    CSR_READ_2(sc, STGE_DebugCtrl) | 0x0200);
 
 		/* Tx Poll Now bug work-around. */
-		bus_space_write_2(st, sh, STGE_DebugCtrl,
-		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0010);
+		CSR_WRITE_2(sc, STGE_DebugCtrl,
+		    CSR_READ_2(sc, STGE_DebugCtrl) | 0x0010);
 		/* XXX ? from linux */
-		bus_space_write_2(st, sh, STGE_DebugCtrl,
-		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0020);
+		CSR_WRITE_2(sc, STGE_DebugCtrl,
+		    CSR_READ_2(sc, STGE_DebugCtrl) | 0x0020);
 	}
 
 	/*
@@ -1586,22 +1576,22 @@ stge_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Disable interrupts.
 	 */
-	bus_space_write_2(sc->sc_st, sc->sc_sh, STGE_IntEnable, 0);
+	CSR_WRITE_2(sc, STGE_IntEnable, 0);
 
 	/*
 	 * Stop receiver, transmitter, and stats update.
 	 */
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_MACCtrl,
+	CSR_WRITE_4(sc, STGE_MACCtrl,
 	    MC_StatisticsDisable | MC_TxDisable | MC_RxDisable);
 
 	/*
 	 * Stop the transmit and receive DMA.
 	 */
 	stge_dma_wait(sc);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_TFDListPtrHi, 0);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_TFDListPtrLo, 0);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_RFDListPtrHi, 0);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_RFDListPtrLo, 0);
+	CSR_WRITE_4(sc, STGE_TFDListPtrHi, 0);
+	CSR_WRITE_4(sc, STGE_TFDListPtrLo, 0);
+	CSR_WRITE_4(sc, STGE_RFDListPtrHi, 0);
+	CSR_WRITE_4(sc, STGE_RFDListPtrLo, 0);
 
 	/*
 	 * Release any queued transmit buffers.
@@ -1626,8 +1616,7 @@ stge_eeprom_wait(struct stge_softc *sc)
 
 	for (i = 0; i < STGE_TIMEOUT; i++) {
 		delay(1000);
-		if ((bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_EepromCtrl) &
-		     EC_EepromBusy) == 0)
+		if ((CSR_READ_2(sc, STGE_EepromCtrl) & EC_EepromBusy) == 0)
 			return (0);
 	}
 	return (1);
@@ -1646,12 +1635,12 @@ stge_read_eeprom(struct stge_softc *sc, int offset, uint16_t *data)
 		printf("%s: EEPROM failed to come ready\n",
 		    sc->sc_dev.dv_xname);
 
-	bus_space_write_2(sc->sc_st, sc->sc_sh, STGE_EepromCtrl,
+	CSR_WRITE_2(sc, STGE_EepromCtrl,
 	    EC_EepromAddress(offset) | EC_EepromOpcode(EC_OP_RR));
 	if (stge_eeprom_wait(sc))
 		printf("%s: EEPROM read timed out\n",
 		    sc->sc_dev.dv_xname);
-	*data = bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_EepromData);
+	*data = CSR_READ_2(sc, STGE_EepromData);
 }
 
 /*
@@ -1780,14 +1769,11 @@ stge_set_filter(struct stge_softc *sc)
 		/*
 		 * Program the multicast hash table.
 		 */
-		bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_HashTable0,
-		    mchash[0]);
-		bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_HashTable1,
-		    mchash[1]);
+		CSR_WRITE_4(sc, STGE_HashTable0, mchash[0]);
+		CSR_WRITE_4(sc, STGE_HashTable1, mchash[1]);
 	}
 
-	bus_space_write_2(sc->sc_st, sc->sc_sh, STGE_ReceiveMode,
-	    sc->sc_ReceiveMode);
+	CSR_WRITE_2(sc, STGE_ReceiveMode, sc->sc_ReceiveMode);
 }
 
 /*
@@ -1831,7 +1817,7 @@ stge_mii_statchg(struct device *self)
 
 	/* XXX 802.1x flow-control? */
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_MACCtrl, sc->sc_MACCtrl);
+	CSR_WRITE_4(sc, STGE_MACCtrl, sc->sc_MACCtrl);
 }
 
 /*
@@ -1844,7 +1830,7 @@ stge_mii_bitbang_read(struct device *self)
 {
 	struct stge_softc *sc = (void *) self;
 
-	return (bus_space_read_1(sc->sc_st, sc->sc_sh, STGE_PhyCtrl));
+	return (CSR_READ_1(sc, STGE_PhyCtrl));
 }
 
 /*
@@ -1857,8 +1843,7 @@ stge_mii_bitbang_write(struct device *self, uint32_t val)
 {
 	struct stge_softc *sc = (void *) self;
 
-	bus_space_write_1(sc->sc_st, sc->sc_sh, STGE_PhyCtrl,
-	    val | sc->sc_PhyCtrl);
+	CSR_WRITE_1(sc, STGE_PhyCtrl, val | sc->sc_PhyCtrl);
 }
 
 /*

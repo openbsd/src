@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stgereg.h,v 1.6 2006/07/12 02:02:19 brad Exp $	*/
+/*	$OpenBSD: if_stgereg.h,v 1.7 2006/07/12 03:29:51 brad Exp $	*/
 /*	$NetBSD: if_stgereg.h,v 1.3 2003/02/10 21:10:07 christos Exp $	*/
 
 /*-
@@ -51,6 +51,23 @@
  * Note that while DMA addresses are all in 64-bit fields, only
  * the lower 40 bits of a DMA address are valid.
  */
+
+/*
+ * Register access macros
+ */
+#define CSR_WRITE_4(_sc, reg, val)	\
+	bus_space_write_4((_sc)->sc_st, (_sc)->sc_sh, (reg), (val))
+#define CSR_WRITE_2(_sc, reg, val)	\
+	bus_space_write_2((_sc)->sc_st, (_sc)->sc_sh, (reg), (val))
+#define CSR_WRITE_1(_sc, reg, val)	\
+	bus_space_write_1((_sc)->sc_st, (_sc)->sc_sh, (reg), (val))
+
+#define CSR_READ_4(_sc, reg)		\
+	bus_space_read_4((_sc)->sc_st, (_sc)->sc_sh, (reg))
+#define CSR_READ_2(_sc, reg)		\
+	bus_space_read_2((_sc)->sc_st, (_sc)->sc_sh, (reg))
+#define CSR_READ_1(_sc, reg)		\
+	bus_space_read_1((_sc)->sc_st, (_sc)->sc_sh, (reg))
 
 /*
  * TC9021 buffer fragment descriptor.
