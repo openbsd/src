@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stge.4,v 1.10 2005/08/23 16:51:55 jmc Exp $
+.\"	$OpenBSD: stge.4,v 1.11 2006/07/12 19:09:03 brad Exp $
 .\"	$NetBSD: stge.4,v 1.5 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 .Sh SYNOPSIS
 .Cd "stge* at pci?"
 .Cd "eephy* at mii?"
+.Cd "ipgphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -70,6 +71,7 @@ The TC9021 supports IPv4 receive IP/TCP/UDP checksum offload.
 .Xr eephy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
+.Xr ipgphy 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
