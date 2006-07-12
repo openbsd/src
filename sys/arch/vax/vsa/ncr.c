@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.16 2005/11/12 03:44:24 pedro Exp $ */
+/* $OpenBSD: ncr.c,v 1.17 2006/07/12 18:09:56 miod Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -251,7 +251,7 @@ si_attach(parent, self, aux)
 	else
 		target = (clk_page[0xbc/2] >> tweak) & 7;
 
-	printf("\n%s: NCR5380, SCSI ID %d\n", ncr_sc->sc_dev.dv_xname, target);
+	printf(": SCSI ID %d\n", target);
 
 	ncr_sc->sc_link.adapter_softc =	sc;
 	ncr_sc->sc_link.adapter_target = target;
