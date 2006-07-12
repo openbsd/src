@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.4 2006/04/19 09:55:32 dlg Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.5 2006/07/12 21:31:23 mk Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -35,7 +35,7 @@ int	(*wdog_ctl_cb)(void *, int) = NULL;
 void	*wdog_ctl_cb_arg = NULL;
 int	wdog_period = 0;
 int	wdog_auto = 1;
-struct timeout	wdog_timeout;
+struct	timeout wdog_timeout;
 
 void
 wdog_register(void *cb_arg, int (*cb)(void *, int))
