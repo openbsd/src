@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.13 2006/07/12 06:43:31 brad Exp $	*/
+/*	$OpenBSD: math.h,v 1.14 2006/07/12 07:26:07 brad Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -141,6 +141,7 @@ extern double fabs(double);
 extern double floor(double);
 extern double fmod(double, double);
 
+extern double round(double);
 extern double trunc(double);
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
@@ -236,6 +237,7 @@ extern float fabsf(float);
 extern float floorf(float);
 extern float fmodf(float, float);
 
+extern float roundf(float);
 extern float truncf(float);
 
 extern float erff(float);
