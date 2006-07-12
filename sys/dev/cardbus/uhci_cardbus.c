@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.3 2006/06/21 11:27:03 fkr Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.4 2006/07/12 06:26:34 jolan Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,9 +99,13 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t csr;
+	char devinfo[256];
 	usbd_status r;
 	const char *vendor;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+
+	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
+	printf(" %s", devinfo);
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_CBIO, CARDBUS_MAPREG_TYPE_IO, 0,

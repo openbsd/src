@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.6 2006/06/21 11:27:03 fkr Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.7 2006/07/12 06:26:34 jolan Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -115,8 +115,7 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	       CARDBUS_REVISION(ca->ca_class));
+	printf(" %s", devinfo);
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
@@ -142,16 +141,16 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
-	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
+	DPRINTF((": offs=%d", devname, sc->sc.sc_offs));
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		printf(": unable to establish interrupt\n");
 		return;
 	}
-	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
+	printf(": irq %d\n", ca->ca_intrline);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = cardbus_findvendor(ca->ca_id);
