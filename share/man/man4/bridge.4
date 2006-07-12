@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.60 2006/05/26 04:02:59 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.61 2006/07/12 13:33:57 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -32,6 +32,12 @@
 .Nd Ethernet bridge interface
 .Sh SYNOPSIS
 .Cd "pseudo-device bridge"
+.Pp
+.Fd #include <sys/types.h>
+.Fd #include <net/if.h>
+.Fd #include <netinet/in.h>
+.Fd #include <netinet/if_ether.h>
+.Fd #include <net/if_bridge.h>
 .Sh DESCRIPTION
 The
 .Nm
