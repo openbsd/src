@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-options.c,v 1.36 2006/07/06 16:03:53 stevesk Exp $ */
+/* $OpenBSD: auth-options.c,v 1.37 2006/07/12 22:28:51 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include <sys/types.h>
 
+#include <netdb.h>
 #include <pwd.h>
 
 #include "xmalloc.h"
