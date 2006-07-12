@@ -1106,6 +1106,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/iophyreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/ipgphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/lxtphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/mii.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/mii_bitbang.ph
