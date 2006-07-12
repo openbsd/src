@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.16 2006/03/15 20:04:36 miod Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.17 2006/07/12 19:56:18 thib Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -219,7 +219,7 @@ raopen(dev, flag, fmt, p)
 #if notyet
 	while (ra->ra_state != DK_OPEN)
 		if ((error = tsleep((caddr_t)ra, (PZERO + 1) | PCATCH,
-		    devopn, 0))) {
+		    "devopen", 0))) {
 			splx(s);
 			return (error);
 		}

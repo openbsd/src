@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.34 2006/06/02 20:25:09 pedro Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.35 2006/07/12 19:56:18 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -54,15 +54,6 @@
 #define v_lastr v_specinfo->si_lastr
 
 struct vnode *speclisth[SPECHSZ];
-
-/* symbolic sleep message strings for devices */
-char	devopn[] = "devopn";
-char	devio[] = "devio";
-char	devwait[] = "devwait";
-char	devin[] = "devin";
-char	devout[] = "devout";
-char	devioc[] = "devioc";
-char	devcls[] = "devcls";
 
 int (**spec_vnodeop_p)(void *);
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
