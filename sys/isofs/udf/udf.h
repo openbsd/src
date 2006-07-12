@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.10 2006/07/11 22:02:08 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.11 2006/07/12 14:26:44 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -106,21 +106,6 @@ udf_readlblks(struct umount *ump, int sector, int size, struct buf **bp)
 {
 	return (RDSECTOR(ump->um_devvp, sector,
 			 (size + ump->um_bmask) & ~ump->um_bmask, bp));
-}
-
-static __inline int
-udf_readalblks(struct umount *ump, int lsector, int size, struct buf **bp)
-{
-	daddr_t rablock, lblk;
-	int rasize;
-
-	lblk = (lsector + ump->um_start) << (ump->um_bshift - DEV_BSHIFT);
-	rablock = (lblk + 1) << ump->um_bshift;
-	rasize = size;
-
-	return (breadn(ump->um_devvp, lblk,
-		       (size + ump->um_bmask) & ~ump->um_bmask,
-		       &rablock, &rasize, 1,  NOCRED, bp));
 }
 
 /*
