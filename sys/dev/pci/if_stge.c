@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.30 2006/07/12 19:02:25 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.31 2006/07/12 20:12:15 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -724,18 +724,13 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+		if (!(ifp->if_flags & IFF_RUNNING))
+			stge_init(ifp);
 
-		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET:
-			stge_init(ifp);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif
-		default:
-			stge_init(ifp);
-			break;
-		}
 		break;
 
 	case SIOCSIFMTU:
@@ -749,14 +744,16 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->stge_if_flags & IFF_PROMISC))
+			    !(sc->stge_if_flags & IFF_PROMISC)) {
 				stge_set_filter(sc);
-			else if (ifp->if_flags & IFF_RUNNING &&
+			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->stge_if_flags & IFF_PROMISC)
+			    sc->stge_if_flags & IFF_PROMISC) {
 				stge_set_filter(sc);
-			else
-				stge_init(ifp);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					stge_init(ifp);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				stge_stop(ifp, 1);
@@ -1326,9 +1323,11 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Set the maximum frame size.
 	 */
-	CSR_WRITE_2(sc, STGE_MaxFrameSize,
-	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
-	    ETHER_VLAN_ENCAP_LEN);
+#ifdef STGE_JUMBO
+	CSR_WRITE_2(sc, STGE_MaxFrameSize, STGE_JUMBO_FRAMELEN);
+#else
+	CSR_WRITE_2(sc, STGE_MaxFrameSize, ETHER_MAX_LEN);
+#endif
 
 	/*
 	 * Initialize MacCtrl -- do it before setting the media,
