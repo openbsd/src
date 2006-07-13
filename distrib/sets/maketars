@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: maketars,v 1.17 2004/09/02 19:55:36 millert Exp $
+#	$OpenBSD: maketars,v 1.18 2006/07/13 02:19:28 nick Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -52,6 +52,6 @@ cd $fsdir
 for i in base comp etc game man misc; do
 	echo -n "$i: "
 	cat ${lists}/$i/mi ${lists}/$i/md.${arch} | sort | \
-	    pax -w -d | gzip -9 > ${tardir}/$i${RELEASE}.tgz
+	    pax -w -d | gzip > ${tardir}/$i${RELEASE}.tgz
 	echo    "done."
 done
