@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.13 2006/01/17 20:30:12 miod Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.14 2006/07/13 10:35:04 martin Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -52,6 +52,8 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
