@@ -588,7 +588,7 @@ install-data-local: install-info
 # Maintenance
 
 # We need it for the taz target in ../../Makefile.in.
-info: $(MANS)
+info: $(MANS) $(INFO_DEPS)
 
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
