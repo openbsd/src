@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.53 2006/06/21 16:20:05 mickey Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.54 2006/07/13 22:51:26 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1042,7 +1042,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
 	pg->version++;
 	if (anon) {
-		anon->an_page = pg;
+		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
 #ifdef UBC
 		uvm_pgcnt_anon++;
@@ -1171,7 +1171,7 @@ uvm_pagefree(pg)
 
 		if (saved_loan_count) 
 			return;
-	} else if (saved_loan_count && pg->uanon) {
+	} else if (saved_loan_count && (pg->pqflags & PQ_ANON)) {
 
 		/*
 		 * if our page is owned by an anon and is loaned out to the
@@ -1182,7 +1182,6 @@ uvm_pagefree(pg)
 		 */
 
 		pg->pqflags &= ~PQ_ANON;
-		pg->uanon->an_page = NULL;
 		pg->uanon = NULL;
 		return;
 	}
@@ -1214,12 +1213,11 @@ uvm_pagefree(pg)
 		pg->wire_count = 0;
 		uvmexp.wired--;
 	}
-	if (pg->uanon) {
-		pg->uanon->an_page = NULL;
 #ifdef UBC
+	if (pg->uanon) {
 		uvm_pgcnt_anon--;
-#endif
 	}
+#endif
 
 	/*
 	 * and put on free queue
