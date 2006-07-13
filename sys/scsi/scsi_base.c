@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.106 2006/07/11 13:15:30 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.107 2006/07/13 11:46:16 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ scsi_make_xs(struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
 	 * than SCSI-2 would not need it, but why risk it?  This was the
 	 * old conditional:
 	 *
-	 * if ((sc_link->scsi_version & SID_ANSII) <= 2)
+	 * if ((sc_link->inqdata.version & SID_ANSII) <= 2)
 	 */
 	xs->cmd->bytes[0] &= ~SCSI_CMD_LUN_MASK;
 	xs->cmd->bytes[0] |=

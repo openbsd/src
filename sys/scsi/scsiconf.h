@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.68 2006/07/11 21:55:46 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.69 2006/07/13 11:46:16 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -159,8 +159,8 @@ struct scsi_device {
  * as well.
  */
 struct scsi_link {
-	u_int8_t scsi_version;		/* SCSI-I, SCSI-II, etc. */
 	u_int8_t scsibus;		/* the Nth scsibus */
+	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
 	u_int16_t openings;		/* available operations */
@@ -192,7 +192,6 @@ struct scsi_link {
 #define	ADEV_NOTUR		0x1000	/* No TEST UNIT READY */
 #define	ADEV_NODOORLOCK		0x2000	/* can't lock door */
 #define SDEV_ONLYBIG		0x4000  /* always use READ_BIG and WRITE_BIG */
-	u_char	luns;
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */

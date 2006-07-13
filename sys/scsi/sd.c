@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.107 2006/07/11 21:55:46 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.108 2006/07/13 11:46:16 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1460,7 +1460,7 @@ sd_flush(sd, flags)
 	 *
 	 * XXX What about older devices?
 	 */
-	if ((sc_link->scsi_version & SID_ANSII) >= 2 &&
+	if ((sc_link->inqdata.version & SID_ANSII) >= 2 &&
 	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
 		bzero(&sync_cmd, sizeof(sync_cmd));
 		sync_cmd.opcode = SYNCHRONIZE_CACHE;

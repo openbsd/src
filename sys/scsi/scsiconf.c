@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.105 2006/07/11 21:55:46 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.106 2006/07/13 11:46:16 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -651,7 +651,6 @@ scsi_probedev(struct scsibus_softc *scsi, struct scsi_inquiry_data *inqbuflun0,
 	 */
 	if (priority != 0)
 		sc_link->quirks |= finger->quirks;
-	sc_link->scsi_version = inqbuf.version;
 
 	/*
 	 * Save INQUIRY.
