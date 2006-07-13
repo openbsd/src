@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.9 2003/12/20 22:40:27 miod Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.10 2006/07/13 18:02:18 kettenis Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -50,7 +50,12 @@ void pciaddr_resource_manage(struct pcibr_softc *,
     pci_chipset_tag_t, pcitag_t, pciaddr_resource_manage_func_t);
 void pciaddr_resource_reserve(struct pcibr_softc *,
     pci_chipset_tag_t, pcitag_t);
+void pciaddr_resource_reserve_disabled(struct pcibr_softc *,
+    pci_chipset_tag_t, pcitag_t);
 int pciaddr_do_resource_reserve(struct pcibr_softc *,
+    pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
+    bus_addr_t *, bus_size_t);
+int pciaddr_do_resource_reserve_disabled(struct pcibr_softc *,
     pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
     bus_addr_t *, bus_size_t);
 void pciaddr_resource_allocate(struct pcibr_softc *,
@@ -72,7 +77,7 @@ void pci_device_foreach(struct pcibr_softc *sc, pci_chipset_tag_t pc,
 #define PCIADDR_PORT_START	0x0
 #define PCIADDR_PORT_END	0xffff
 
-int pcibr_flags = 0;
+int pcibr_flags = 1;
 #define PCIBR_VERBOSE		1
 #define PCIBR_ADDR_FIXUP	2
 
@@ -105,6 +110,7 @@ pci_addr_fixup(struct pcibr_softc *sc, pci_chipset_tag_t pc, int maxbus)
 	 */
 	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
 	pci_device_foreach(sc, pc, maxbus, pciaddr_resource_reserve);
+	pci_device_foreach(sc, pc, maxbus, pciaddr_resource_reserve_disabled);
 	PCIBIOS_PRINTV((verbose_footer, sc->nbogus));
 
 	{
@@ -122,9 +128,6 @@ pci_addr_fixup(struct pcibr_softc *sc, pci_chipset_tag_t pc, int maxbus)
 		}
 	}
 
-	if (sc->nbogus == 0)
-		return; /* no need to fixup */
-
 	/* 
 	 * 4. do fixup 
 	 */
@@ -141,7 +144,17 @@ pciaddr_resource_reserve(struct pcibr_softc *sc, pci_chipset_tag_t pc,
 {
 	if (pcibr_flags & PCIBR_VERBOSE)
 		pciaddr_print_devid(pc, tag);
-	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_reserve);	
+	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_reserve);
+}
+
+void
+pciaddr_resource_reserve_disabled(struct pcibr_softc *sc,
+    pci_chipset_tag_t pc, pcitag_t tag)
+{
+	if (pcibr_flags & PCIBR_VERBOSE)
+		pciaddr_print_devid(pc, tag);
+	pciaddr_resource_manage(sc, pc, tag,
+	    pciaddr_do_resource_reserve_disabled);
 }
 
 void
@@ -228,17 +241,7 @@ pciaddr_resource_manage(struct pcibr_softc *sc, pci_chipset_tag_t pc,
 				mapreg, type ? "port" : "mem ", 
 				(unsigned int)addr, (unsigned int)size));
 	}
-    
-	/* enable/disable PCI device */
-	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);	
-	if (error == 0)
-		val |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			PCI_COMMAND_MASTER_ENABLE);
-	else
-		val &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			 PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, val);
-    
+
 	if (error)
 		sc->nbogus++;
 
@@ -297,10 +300,48 @@ pciaddr_do_resource_reserve(struct pcibr_softc *sc, pci_chipset_tag_t pc,
     pcitag_t tag, int mapreg, struct extent *ex, int type, bus_addr_t *addr,
     bus_size_t size)
 {
+	pcireg_t val;
 	int error;
 
 	if (*addr == 0)
+		return (0);
+
+	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (type == PCI_MAPREG_TYPE_MEM &&
+	    (val & PCI_COMMAND_MEM_ENABLE) != PCI_COMMAND_MEM_ENABLE)
+		return (0);
+	if (type == PCI_MAPREG_TYPE_IO &&
+	    (val & PCI_COMMAND_IO_ENABLE) != PCI_COMMAND_IO_ENABLE)
+		return (0);
+
+	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT | EX_MALLOCOK);
+	if (error) {
+		PCIBIOS_PRINTV(("Resource conflict.\n"));
+		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		return (1);
+	}
+
+	return (0);
+}
+
+int
+pciaddr_do_resource_reserve_disabled(struct pcibr_softc *sc,
+    pci_chipset_tag_t pc, pcitag_t tag, int mapreg, struct extent *ex,
+    int type, bus_addr_t *addr, bus_size_t size)
+{
+	pcireg_t val;
+	int error;
+
+	if (*addr == 0)
+		return (0);
+
+	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (type == PCI_MAPREG_TYPE_MEM &&
+	    (val & PCI_COMMAND_MEM_ENABLE) == PCI_COMMAND_MEM_ENABLE)
+		return (0);
+	if (type == PCI_MAPREG_TYPE_IO &&
+	    (val & PCI_COMMAND_IO_ENABLE) == PCI_COMMAND_IO_ENABLE)
+		return (0);
 
 	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT | EX_MALLOCOK);
 	if (error) {
