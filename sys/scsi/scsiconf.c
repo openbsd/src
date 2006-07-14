@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.106 2006/07/13 11:46:16 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.107 2006/07/14 01:27:40 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -59,8 +59,7 @@
 /*
  * Declarations
  */
-int	scsi_probedev(struct scsibus_softc *, struct scsi_inquiry_data *,
-	    int, int);
+int	scsi_probedev(struct scsibus_softc *, int, int);
 int	scsi_probe_bus(int, int, int);
 
 struct scsi_device probe_switch = {
@@ -221,10 +220,9 @@ scsi_probe_busses(int bus, int target, int lun)
 int
 scsi_probe_bus(int bus, int target, int lun)
 {
-	struct scsi_inquiry_data	inqbuflun0;
-	struct scsibus_softc		*scsi;
-	u_int16_t			scsi_addr;
-	int				maxtarget, mintarget, maxlun, minlun;
+	struct scsibus_softc *scsi;
+	u_int16_t scsi_addr;
+	int maxtarget, mintarget, maxlun, minlun;
 
 	if (bus < 0 || bus >= scsibus_cd.cd_ndevs)
 		return (ENXIO);
@@ -259,18 +257,12 @@ scsi_probe_bus(int bus, int target, int lun)
 	}
 
 	for (target = mintarget; target <= maxtarget; target++) {
-		if (target != scsi_addr) {
-			bzero(&inqbuflun0, sizeof(inqbuflun0));
-			if (minlun != 0 &&
-			    (scsi_inquire(scsi->sc_link[target][0], &inqbuflun0,
-			    0) != 0))
-				continue;
-
-			for (lun = minlun; lun <= maxlun; lun++) {
-				if (scsi_probedev(scsi, &inqbuflun0, target,
-				    lun) == EINVAL)
-					break;
-			}
+		if (target == scsi_addr)
+			continue;
+			
+		for (lun = minlun; lun <= maxlun; lun++) {
+			if (scsi_probedev(scsi, target, lun) == EINVAL)
+				break;
 		}
 	}
 
@@ -534,15 +526,14 @@ scsibusprint(void *aux, const char *pnp)
  * Return 0 if further LUNs are possible, EINVAL if not.
  */
 int
-scsi_probedev(struct scsibus_softc *scsi, struct scsi_inquiry_data *inqbuflun0,
-    int target, int lun)
+scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 {
-	struct scsi_link		*sc_link;
-	static struct scsi_inquiry_data	inqbuf;
 	const struct scsi_quirk_inquiry_pattern *finger;
-	int				priority, rslt = 0;
-	struct scsibus_attach_args	sa;
-	struct cfdata			*cf;
+	static struct scsi_inquiry_data	inqbuf;
+	struct scsibus_attach_args sa;
+	struct scsi_link *sc_link;
+	struct cfdata *cf;
+	int priority, rslt = 0;
 
 	/* Skip this slot if it is already attached and try the next LUN. */
 	if (scsi->sc_link[target][lun] != NULL)
@@ -615,14 +606,15 @@ scsi_probedev(struct scsibus_softc *scsi, struct scsi_inquiry_data *inqbuflun0,
 		break;
 	}
 
-	if (lun == 0)
-		bcopy(&inqbuf, inqbuflun0, sizeof *inqbuflun0);
+	if (lun == 0 || scsi->sc_link[target][0] == NULL)
+		;
 	else if (((1 << sc_link->scsibus) & scsiforcelun_buses) &&
 	    ((1 << target) & scsiforcelun_targets))
 		;
 	else if (sc_link->flags & SDEV_UMASS)
 		;
-	else if (memcmp(&inqbuf, inqbuflun0, sizeof inqbuf) == 0) {
+	else if (memcmp(&inqbuf, &scsi->sc_link[target][0]->inqdata,
+	    sizeof inqbuf) == 0) {
 		/* The device doesn't distinguish between LUNs. */
 		SC_DEBUG(sc_link, SDEV_DB1, ("IDENTIFY not supported.\n"));
 		rslt = EINVAL;
