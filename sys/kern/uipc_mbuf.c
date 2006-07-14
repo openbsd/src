@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.75 2006/05/07 20:06:50 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.76 2006/07/14 01:58:58 pedro Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ const char *mclpool_warnmsg =
     "WARNING: mclpool limit reached; increase kern.maxclusters";
 
 /*
- * Initialize the mbuf allcator.
+ * Initialize the mbuf allocator.
  */
 void
 mbinit(void)
