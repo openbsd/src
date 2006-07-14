@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.25 2006/06/21 07:15:58 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.26 2006/07/14 02:32:14 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -181,6 +181,17 @@ struct xge_softc {
 	struct mbuf *sc_rxb[NRXREAL];	/* mbufs on receive descriptors */
 	int sc_nextrx;			/* next descriptor to check */
 };
+
+#define XGE_DEBUG
+
+#ifdef XGE_DEBUG
+#define DPRINTF(x)	if (xgedebug) printf x
+#define DPRINTFN(n,x)	if (xgedebug >= (n)) printf x
+int	xgedebug = 0;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
+#endif
 
 int xge_match(struct device *, void *, void *);
 void xge_attach(struct device *, struct device *, void *);
