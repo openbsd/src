@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.45 2006/07/14 22:48:13 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.46 2006/07/14 22:57:46 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.45 2006/07/14 22:48:13 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.46 2006/07/14 22:57:46 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -80,7 +80,7 @@ int		writeit(FILE *, struct tftphdr **, int, int);
 int		write_behind(FILE *, int);
 int		synchnet(int);
 
-static void	usage(void);
+__dead void	usage(void);
 void		tftp(struct tftphdr *, int);
 int		validate_access(char *, int);
 int		sendfile(struct formats *);
@@ -145,10 +145,10 @@ struct errmsg {
 	{ -1,		NULL }
 };
 
-static void
+__dead void
 usage(void)
 {
-	syslog(LOG_ERR, "Usage: %s [-cs] [directory ...]", __progname);
+	syslog(LOG_ERR, "usage: %s [-cs] [directory ...]", __progname);
 	exit(1);
 }
 
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 
 		d = realloc(dirs, (ndirs + 2) * sizeof(char *));
 		if (d == NULL) {
-			syslog(LOG_ERR, "malloc: %m");
+			syslog(LOG_ERR, "realloc: %m");
 			exit(1);
 		}
 		dirs = d;
@@ -588,7 +588,7 @@ sendfile(struct formats *pf)
 
 			if (!error) {
 				if (send(peer, dp, size + 4, 0) != size + 4) {
-					syslog(LOG_ERR, "tftpd: send: %m");
+					syslog(LOG_ERR, "send: %m");
 					goto abort;
 				}
 				read_ahead(file, pf->f_convert);
@@ -606,7 +606,7 @@ sendfile(struct formats *pf)
 				error = 1;
 				if (errno == EINTR)
 					continue;
-				syslog(LOG_ERR, "tftpd: poll: %m");
+				syslog(LOG_ERR, "poll: %m");
 				goto abort;
 			}
 			n = recv(peer, ackbuf, sizeof(ackbuf), 0);
@@ -614,7 +614,7 @@ sendfile(struct formats *pf)
 				error = 1;
 				if (errno == EINTR)
 					continue;
-				syslog(LOG_ERR, "tftpd: recv: %m");
+				syslog(LOG_ERR, "recv: %m");
 				goto abort;
 			}
 			ap->th_opcode = ntohs((u_short)ap->th_opcode);
@@ -669,7 +669,7 @@ recvfile(struct formats *pf)
 
 			if (!error) {
 				if (send(peer, ackbuf, 4, 0) != 4) {
-					syslog(LOG_ERR, "tftpd: send: %m");
+					syslog(LOG_ERR, "send: %m");
 					goto abort;
 				}
 				write_behind(file, pf->f_convert);
@@ -687,7 +687,7 @@ recvfile(struct formats *pf)
 				error = 1;
 				if (errno == EINTR)
 					continue;
-				syslog(LOG_ERR, "tftpd: poll: %m");
+				syslog(LOG_ERR, "poll: %m");
 				goto abort;
 			}
 			n = recv(peer, dp, PKTSIZE, 0);
@@ -695,7 +695,7 @@ recvfile(struct formats *pf)
 				error = 1;
 				if (errno == EINTR)
 					continue;
-				syslog(LOG_ERR, "tftpd: recv: %m");
+				syslog(LOG_ERR, "recv: %m");
 				goto abort;
 			}
 			dp->th_opcode = ntohs((u_short)dp->th_opcode);
