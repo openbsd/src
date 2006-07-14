@@ -1,8 +1,9 @@
-#	$OpenBSD: files.armish,v 1.8 2006/07/12 17:30:21 miod Exp $
+#	$OpenBSD: files.armish,v 1.9 2006/07/14 20:41:30 miod Exp $
 
 maxpartitions   16
-maxusers		2 8 64
+maxusers	2 8 64
 
+major	{wd = 16}
 major	{sd = 24}
 major	{cd = 26}
 major	{rd = 18}
@@ -11,7 +12,7 @@ file	arch/arm/arm/conf.c
 file	arch/armish/armish/armish_machdep.c
 
 file	arch/armish/armish/autoconf.c
-file	arch/arm/arm/disksubr.c		disk
+file	arch/arm/arm/disksubr.c				disk
 
 include "../../../scsi/files.scsi"
 
@@ -32,9 +33,9 @@ include "dev/i2o/files.i2o"
 include "arch/arm/xscale/files.i80321"
 
 attach  iopxs at mainbus with iopxs_mainbus
-file	arch/armish/dev/i80321_mainbus.c	iopxs_mainbus
-file	arch/armish/dev/pci_addr_fixup.c	iopxs
-file	arch/armish/dev/iq80321_pci.c		iopxs
+file	arch/armish/dev/i80321_mainbus.c		iopxs_mainbus
+file	arch/armish/dev/pci_addr_fixup.c		iopxs
+file	arch/armish/dev/iq80321_pci.c			iopxs
 
 # IQ80310 on-board devices (including CPLD)
 device	obio {addr, [size = -1], [width = -1], [xint = -1]}: bus_space_generic
