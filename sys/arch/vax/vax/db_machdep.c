@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.15 2006/01/02 21:44:52 miod Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.16 2006/07/14 15:22:55 miod Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
 
 /* 
@@ -152,8 +152,6 @@ kdb_trap(frame)
 	if (!panicstr)
 		bcopy(&ddb_regs, frame, sizeof(struct trapframe));
 	frame->sp = mfpr(PR_USP);
-
-	return;
 }
 
 extern char *traptypes[];
@@ -238,7 +236,8 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
  *	stackbase - Lowest stack value
  */
 static void
-db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase, int (*pr)(const char *, ...)) {
+db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase, int (*pr)(const char *, ...))
+{
 	u_int nargs, arg_base, regs;
 	VAX_CALLFRAME *tmp_frame;
 	db_expr_t	diff;
@@ -251,9 +250,8 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase, int (*pr)(const char *, ...)) 
 		return;
 	}
 
-	while (((u_int)(fp->vax_fp) > stackbase) && 
-			((u_int)(fp->vax_fp) < (stackbase + USPACE))) {
-
+	while ((u_int)(fp->vax_fp) > stackbase &&
+	    (u_int)(fp->vax_fp) <= (stackbase + USPACE)) {
 		diff = INT_MAX;
 		symname = NULL;
 		sym = db_search_symbol(fp->vax_pc, DB_STGY_ANY, &diff);
@@ -318,7 +316,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
         char            *modif;		/* pointer to flag modifier 't' */
 	int		(*pr)(const char *, ...);
 {
-	extern vaddr_t 	proc0paddr;
+	extern vaddr_t 	proc0paddr, istack;
 	struct proc	*p = curproc;
 	struct user	*uarea;
 	int		trace_proc;
@@ -335,13 +333,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 	/* Trace a panic */
 	if (! trace_proc) {
-		if (! panicstr) {
-			(*pr)("Not a panic, use trace/t to trace a process.\n");
-			return;
-		}
-		(*pr)("panic: %s\n", panicstr);
-		/* xxx ? where did we panic and whose stack are we using? */
-		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.fp), ddb_regs.ap, pr);
+		if (have_addr == 0)
+			db_dump_stack((VAX_CALLFRAME *)ddb_regs.fp,
+			    ddb_regs.ap, pr);
+		else
+			db_dump_stack((VAX_CALLFRAME *)addr, istack, pr);
 		return;
 	}
 
@@ -350,47 +346,32 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	 * if no address then either current proc or panic
 	 */
 	if (have_addr) {
-		if (trace_proc) {
-			p = pfind((int)addr);
-			/* Try to be helpful by looking at it as if it were decimal */
-			if (p == NULL) {
-				u_int	tpid = 0;
-				u_int	foo = addr;
+		p = pfind((int)addr);
+		/* Try to be helpful by looking at it as if it were decimal */
+		if (p == NULL) {
+			u_int	tpid = 0;
+			u_int	foo = addr;
 
-				while (foo != 0) {
-					int digit = (foo >> 28) & 0xf;
-					if (digit > 9) {
-						(*pr)("  No such process.\n");
-						return;
-					}
-					tpid = tpid * 10 + digit;
-					foo = foo << 4;
-				}
-				p = pfind(tpid);
-				if (p == NULL) {
+			while (foo != 0) {
+				int digit = (foo >> 28) & 0xf;
+				if (digit > 9) {
 					(*pr)("  No such process.\n");
 					return;
 				}
+				tpid = tpid * 10 + digit;
+				foo = foo << 4;
 			}
-		} else {
-			p = (struct proc *)(addr);
-			if (pfind(p->p_pid) != p) {
-				(*pr)("  This address does not point to a valid process.\n");
+			p = pfind(tpid);
+			if (p == NULL) {
+				(*pr)("  No such process.\n");
 				return;
 			}
 		}
 	} else {
-		if (trace_proc) {
-			p = curproc;
-			if (p == NULL) {
-				(*pr)("trace: no current process! (ignored)\n");
-				return;
-			}
-		} else {
-			if (! panicstr) {
-				(*pr)("Not a panic, no active process, ignored.\n");
-				return;
-			}
+		p = curproc;
+		if (p == NULL) {
+			(*pr)("trace: no current process! (ignored)\n");
+			return;
 		}
 	}
 	if (p == NULL) {
@@ -424,80 +405,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	(*pr)("	PSL = 0x%x\n", (unsigned int)(uarea->u_pcb.PSL));
 	(*pr)("	Trap frame pointer: 0x%x\n", 
 							(unsigned int)(uarea->u_pcb.framep));
-	db_dump_stack((VAX_CALLFRAME *)(uarea->u_pcb.FP), (u_int) uarea->u_pcb.KSP, pr);
-	return;
-#if 0
-	while (((u_int)(cur_frame->vax_fp) > stackbase) && 
-			((u_int)(cur_frame->vax_fp) < (stackbase + USPACE))) {
-		u_int nargs;
-		VAX_CALLFRAME *tmp_frame;
-
-		diff = INT_MAX;
-		symname = NULL;
-		sym = db_search_symbol(cur_frame->vax_pc, DB_STGY_ANY, &diff);
-		db_symbol_values(sym, &symname, 0);
-		(*pr)("%s+0x%lx(", symname, diff);
-
-		/*
-		 * Figure out the arguments by using a bit of subterfuge
-		 * since the argument pointer may have been used as a temporary
-		 * by the callee ... recreate what it would have pointed to
-		 * as follows:
-		 *  The vax_regs value has a 12 bit bitmask of the registers
-		 *    that were saved on the stack.
-		 *	Store that in 'regs' and then for every bit that is
-		 *    on (indicates the register contents are on the stack)
-		 *    increment the argument base (arg_base) by one.
-		 *  When that is done, args[arg_base] points to the longword
-		 *    that identifies the number of arguments.
-		 *	arg_base+1 - arg_base+n are the argument pointers/contents.
-		 */
-
-		/* First get the frame that called this function ... */
-		tmp_frame = cur_frame->vax_fp;
-
-		/* Isolate the saved register bits, and count them */
-		regs = tmp_frame->vax_regs;
-		for (arg_base = 0; regs != 0; regs >>= 1) {
-			if (regs & 1)
-				arg_base++;
-		}
-
-		/* number of arguments is then pointed to by vax_args[arg_base] */
-		nargs = tmp_frame->vax_args[arg_base];
-		if (nargs) {
-			nargs--; /* reduce by one for formatting niceties */
-			arg_base++; /* skip past the actual number of arguments */
-			while (nargs--)
-				(*pr)("0x%x,", tmp_frame->vax_args[arg_base++]);
-
-			/* now print out the last arg with closing brace and \n */
-			(*pr)("0x%x)\n", tmp_frame->vax_args[++arg_base]);
-		} else
-			(*pr)("void)\n");
-		/* move to the next frame */
-		cur_frame = cur_frame->vax_fp;
-	}
-
-	/*
-	 * DEAD CODE, previous panic tracing code.
-	 */
-	if (! have_addr) {
-		printf("Trace default\n");
-		if (panicstr) {
-			cf = (int *)ddb_regs.sp;
-		} else {
-			printf("Don't know what to do without panic\n");
-			return;
-		}
-		if (p)
-			paddr = (u_int)p->p_addr;
-		else
-			paddr = proc0paddr;
-
-		stackbase = (ddb_regs.psl & PSL_IS ? istack : paddr);
- 	}
-#endif
+	db_dump_stack((VAX_CALLFRAME *)(uarea->u_pcb.FP),
+	    (u_int)uarea->u_pcb.KSP, pr);
 }
 
 static int ddbescape = 0;
