@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.44 2006/06/16 22:40:35 beck Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.45 2006/07/14 22:48:13 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.44 2006/06/16 22:40:35 beck Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.45 2006/07/14 22:48:13 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -46,82 +46,91 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.44 2006/06/16 22:40:35 beck Exp $";
  * This version includes many modifications by Jim Guyton <guyton@rand-unix>
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <vis.h>
 
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/tftp.h>
 #include <netdb.h>
 
-#include <poll.h>
-#include <syslog.h>
-#include <stdio.h>
-#include <errno.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <vis.h>
 
 #define	TIMEOUT		5
 #define	MAX_TIMEOUTS	5
+#define	PKTSIZE		SEGSIZE + 4
 
-extern	char *__progname;
-struct	sockaddr_storage s_in;
-int	peer;
-int	rexmtval = TIMEOUT;
-int	max_rexmtval = 2*TIMEOUT;
+struct formats;
 
-#define	PKTSIZE	SEGSIZE+4
-char	buf[PKTSIZE];
-char	ackbuf[PKTSIZE];
-struct	sockaddr_storage from;
+int		readit(FILE *, struct tftphdr **, int);
+void		read_ahead(FILE *, int);
+int		writeit(FILE *, struct tftphdr **, int, int);
+int		write_behind(FILE *, int);
+int		synchnet(int);
 
-int	ndirs;
-char	**dirs;
+static void	usage(void);
+void		tftp(struct tftphdr *, int);
+int		validate_access(char *, int);
+int		sendfile(struct formats *);
+int		recvfile(struct formats *);
+void		nak(int);
+void		oack(void);
 
-int	secure;
-int	cancreate;
-
-struct	formats;
-int	validate_access(char *filename, int mode);
-int	recvfile(struct formats *pf);
-int	sendfile(struct formats *pf);
-
-FILE *file;
+FILE			 *file;
+extern char		 *__progname;
+struct sockaddr_storage	  s_in;
+int			  peer;
+int			  rexmtval = TIMEOUT;
+int			  max_rexmtval = 2 * TIMEOUT;
+char			  buf[PKTSIZE];
+char			  ackbuf[PKTSIZE];
+struct sockaddr_storage	  from;
+int			  ndirs;
+char 			**dirs;
+int			  secure;
+int			  cancreate;
 
 struct formats {
 	const char	*f_mode;
-	int	(*f_validate)(char *, int);
-	int	(*f_send)(struct formats *);
-	int	(*f_recv)(struct formats *);
-	int	f_convert;
+	int		 (*f_validate)(char *, int);
+	int		 (*f_send)(struct formats *);
+	int		 (*f_recv)(struct formats *);
+	int		 f_convert;
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
 	{ "octet",	validate_access,	sendfile,	recvfile, 0 },
 	{ NULL,		NULL,			NULL,		NULL,	  0 }
 };
+
 struct options {
 	const char	*o_type;
 	char		*o_request;
-	int		o_reply;	/* turn into union if need be */
+	int		 o_reply;	/* turn into union if need be */
 } options[] = {
 	{ "tsize",	NULL, 0 },	/* OPT_TSIZE */
 	{ "timeout",	NULL, 0 },	/* OPT_TIMEOUT */
 	{ NULL,		NULL, 0 }
 };
+
 enum opt_enum {
 	OPT_TSIZE = 0,
 	OPT_TIMEOUT
 };
 
 struct errmsg {
-	int	e_code;
+	int		 e_code;
 	const char	*e_msg;
 } errmsgs[] = {
 	{ EUNDEF,	"Undefined error code" },
@@ -136,17 +145,6 @@ struct errmsg {
 	{ -1,		NULL }
 };
 
-int	validate_access(char *filename, int mode);
-void	tftp(struct tftphdr *tp, int size);
-void	nak(int error);
-void	oack(void);
-
-int	readit(FILE *file, struct tftphdr **dpp, int convert);
-void	read_ahead(FILE *file, int convert);
-int	writeit(FILE *file, struct tftphdr **dpp, int ct, int convert);
-int	write_behind(FILE *file, int convert);
-int	synchnet(int f);
-
 static void
 usage(void)
 {
@@ -157,19 +155,19 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int n = 0, on = 1, fd = 0, i, c;
-	struct tftphdr *tp;
-	struct passwd *pw;
-	char cbuf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
-	struct cmsghdr *cmsg;
-	struct msghdr msg;
-	struct iovec iov;
-	pid_t pid = 0;
-	socklen_t j;
+	int		 n = 0, on = 1, fd = 0, i, c;
+	struct tftphdr	*tp;
+	struct passwd	*pw;
+	char		 cbuf[CMSG_SPACE(sizeof(struct sockaddr_storage))];
+	struct cmsghdr	*cmsg;
+	struct msghdr	 msg;
+	struct iovec	 iov;
+	pid_t		 pid = 0;
+	socklen_t	 j;
 
-	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "cs")) != -1)
+	while ((c = getopt(argc, argv, "cs")) != -1) {
 		switch (c) {
 		case 'c':
 			cancreate = 1;
@@ -179,13 +177,14 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			break;
+			/* NOTREACHED */
 		}
+	}
 
 	for (; optind != argc; optind++) {
 		char **d;
 
-		d = realloc(dirs, (ndirs+2) * sizeof (char *));
+		d = realloc(dirs, (ndirs + 2) * sizeof(char *));
 		if (d == NULL) {
 			syslog(LOG_ERR, "malloc: %m");
 			exit(1);
@@ -197,7 +196,7 @@ main(int argc, char *argv[])
 	}
 
 	pw = getpwnam("_tftpd");
-	if (!pw) {
+	if (pw == NULL) {
 		syslog(LOG_ERR, "no _tftpd: %m");
 		exit(1);
 	}
@@ -290,7 +289,7 @@ main(int argc, char *argv[])
 		if (pid < 0) {
 			sleep(i);
 			/*
-			 * flush out to most recently sent request.
+			 * Flush out to most recently sent request.
 			 *
 			 * This may drop some requests, but those
 			 * will be resent by the clients when
@@ -311,9 +310,8 @@ main(int argc, char *argv[])
 			    CMSG_LEN(sizeof(struct sockaddr_storage));
 
 			i = recvmsg(fd, &msg, 0);
-			if (i > 0) {
+			if (i > 0)
 				n = i;
-			}
 		} else
 			break;
 	}
@@ -373,11 +371,11 @@ main(int argc, char *argv[])
 void
 tftp(struct tftphdr *tp, int size)
 {
-	char *cp;
-	int i, first = 1, has_options = 0, ecode;
-	struct formats *pf;
-	char *filename, *mode = NULL, *option, *ccp;
-	char fnbuf[MAXPATHLEN], nicebuf[MAXPATHLEN];
+	char		*cp;
+	int		 i, first = 1, has_options = 0, ecode;
+	struct formats	*pf;
+	char		*filename, *mode = NULL, *option, *ccp;
+	char		 fnbuf[MAXPATHLEN], nicebuf[MAXPATHLEN];
 
 	cp = tp->th_stuff;
 again:
@@ -435,7 +433,7 @@ again:
 				options[i].o_request = ++cp;
 				has_options = 1;
 			}
-		cp = ccp-1;
+		cp = ccp - 1;
 	}
 
 option_fail:
@@ -450,7 +448,7 @@ option_fail:
 			options[OPT_TIMEOUT].o_request = NULL;
 	}
 
-	(void) strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
+	(void)strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
 	ecode = (*pf->f_validate)(filename, tp->th_opcode);
 	if (has_options)
 		oack();
@@ -484,24 +482,24 @@ option_fail:
 int
 validate_access(char *filename, int mode)
 {
-	struct stat stbuf;
-	char *cp, **dirp;
-	int fd, wmode;
+	struct stat	 stbuf;
+	char		*cp, **dirp;
+	int		 fd, wmode;
 
 	if (!secure) {
 		if (*filename != '/')
 			return (EACCESS);
 		/*
-		 * prevent tricksters from getting around the directory
-		 * restrictions
+		 * Prevent tricksters from getting around the directory
+		 * restrictions.
 		 */
 		for (cp = filename + 1; *cp; cp++)
-			if (*cp == '.' && strncmp(cp-1, "/../", 4) == 0)
-				return(EACCESS);
+			if (*cp == '.' && strncmp(cp - 1, "/../", 4) == 0)
+				return (EACCESS);
 		for (dirp = dirs; *dirp; dirp++)
 			if (strncmp(filename, *dirp, strlen(*dirp)) == 0)
 				break;
-		if (*dirp==0 && dirp!=dirs)
+		if (*dirp == 0 && dirp != dirs)
 			return (EACCESS);
 	}
 
@@ -517,14 +515,14 @@ validate_access(char *filename, int mode)
 			if ((errno == ENOENT) && (mode != RRQ))
 				wmode |= O_CREAT;
 			else
-				return(EACCESS);
+				return (EACCESS);
 		}
 	} else {
 		if (mode == RRQ) {
-			if ((stbuf.st_mode&(S_IREAD >> 6)) == 0)
+			if ((stbuf.st_mode & (S_IREAD >> 6)) == 0)
 				return (EACCESS);
 		} else {
-			if ((stbuf.st_mode&(S_IWRITE >> 6)) == 0)
+			if ((stbuf.st_mode & (S_IWRITE >> 6)) == 0)
 				return (EACCESS);
 		}
 	}
@@ -532,9 +530,9 @@ validate_access(char *filename, int mode)
 		if (mode == RRQ)
 			options[OPT_TSIZE].o_reply = stbuf.st_size;
 		else
-			/* XXX Allows writes of all sizes. */
+			/* XXX allows writes of all sizes */
 			options[OPT_TSIZE].o_reply =
-				atoi(options[OPT_TSIZE].o_request);
+			    atoi(options[OPT_TSIZE].o_request);
 	}
 	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode), 0666);
 	if (fd < 0)
@@ -550,7 +548,7 @@ validate_access(char *filename, int mode)
 
 		return (serrno + 100);
 	}
-	file = fdopen(fd, (mode == RRQ)? "r":"w");
+	file = fdopen(fd, mode == RRQ ? "r" : "w");
 	if (file == NULL) {
 		close(fd);
 		return (errno + 100);
@@ -564,11 +562,11 @@ validate_access(char *filename, int mode)
 int
 sendfile(struct formats *pf)
 {
-	struct tftphdr *dp, *r_init(void);
-	struct tftphdr *ap;	/* ack packet */
-	struct pollfd pfd[1];
-	volatile unsigned short block = 1;
-	int n, size, nfds, error, timeouts;
+	struct tftphdr		*dp, *r_init(void);
+	struct tftphdr		*ap;	/* ack packet */
+	struct pollfd		 pfd[1];
+	volatile unsigned short	 block = 1;
+	int			 n, size, nfds, error, timeouts;
 
 	dp = r_init();
 	ap = (struct tftphdr *)ackbuf;
@@ -628,7 +626,7 @@ sendfile(struct formats *pf)
 				if (ap->th_block == block)
 					break;
 				/* re-synchronize with the other side */
-				(void) synchnet(peer);
+				(void)synchnet(peer);
 				if (ap->th_block == (block - 1))
 					continue;
 			}
@@ -649,11 +647,11 @@ abort:
 int
 recvfile(struct formats *pf)
 {
-	struct tftphdr *dp, *w_init(void);
-	struct tftphdr *ap;	/* ack buffer */
-	struct pollfd pfd[1];
-	volatile unsigned short block = 0;
-	int n, size, nfds, error, timeouts;
+	struct tftphdr		*dp, *w_init(void);
+	struct tftphdr		*ap;	/* ack buffer */
+	struct pollfd		 pfd[1];
+	volatile unsigned short	 block = 0;
+	int			 n, size, nfds, error, timeouts;
 
 	dp = w_init();
 	ap = (struct tftphdr *)ackbuf;
@@ -709,7 +707,7 @@ recvfile(struct formats *pf)
 				if (dp->th_block == block)
 					break;
 				/* re-synchronize with the other side */
-				(void) synchnet(peer);
+				(void)synchnet(peer);
 				if (dp->th_block == (block - 1))
 					continue;
 			}
@@ -729,12 +727,12 @@ recvfile(struct formats *pf)
 
 	/* close data file */
 	write_behind(file, pf->f_convert);
-	(void) fclose(file);
+	(void)fclose(file);
 
 	/* send final ack */
 	ap->th_opcode = htons((u_short)ACK);
 	ap->th_block = htons((u_short)(block));
-	(void) send(peer, ackbuf, 4, 0);
+	(void)send(peer, ackbuf, 4, 0);
 
 	/* just quit on timeout */
 	pfd[0].fd = peer;
@@ -744,11 +742,11 @@ recvfile(struct formats *pf)
 		exit(1);
 	n = recv(peer, buf, sizeof(buf), 0);
 	/*
-	 * if read some data and got a data block then my last ack was lost
-	 * resend final ack
+	 * If read some data and got a data block then my last ack was lost
+	 * resend final ack.
 	 */
 	if (n >= 4 && dp->th_opcode == DATA && block == dp->th_block)
-		(void) send(peer, ackbuf, 4, 0);
+		(void)send(peer, ackbuf, 4, 0);
 
 abort:
 	return (1);
@@ -763,9 +761,9 @@ abort:
 void
 nak(int error)
 {
-	struct tftphdr *tp;
-	struct errmsg *pe;
-	int length;
+	struct tftphdr	*tp;
+	struct errmsg	*pe;
+	int		 length;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);
@@ -790,10 +788,10 @@ nak(int error)
 void
 oack(void)
 {
-	struct tftphdr *tp, *ap;
-	struct pollfd pfd[1];
-	char *bp;
-	int i, n, size, nfds, error, timeouts;
+	struct tftphdr	*tp, *ap;
+	struct pollfd	 pfd[1];
+	char		*bp;
+	int		 i, n, size, nfds, error, timeouts;
 
 	tp = (struct tftphdr *)buf;
 	bp = buf + 2;
