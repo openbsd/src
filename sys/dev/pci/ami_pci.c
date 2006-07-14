@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.39 2006/07/14 08:30:27 dlg Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.40 2006/07/14 13:05:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -44,11 +44,8 @@
 #include <dev/ic/amireg.h>
 #include <dev/ic/amivar.h>
 
-#define	AMI_BAR		0x10
+#define	AMI_BAR		PCI_MAPREG_START
 #define	AMI_PCI_MEMSIZE	0x1000
-#define	AMI_SUBSYSID	0x2c
-#define	PCI_EBCR	0x40
-#define	AMI_WAKEUP	0x64
 
 /* "Quartz" i960 Config space */
 #define	AMI_PCI_INIT	0x9c
@@ -138,9 +135,10 @@ struct ami_pci_vendor {
 };
 
 int
-ami_pci_find_device(void *aux) {
-	int i;
+ami_pci_find_device(void *aux)
+{
 	struct pci_attach_args *pa = aux;
+	int i;
 
 	for (i = 0; ami_pci_devices[i].vendor; i++) {
 		if (ami_pci_devices[i].vendor == PCI_VENDOR(pa->pa_id) &&
@@ -159,8 +157,8 @@ int
 ami_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	int i;
 	pcireg_t sig;
+	int i;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O)
 		return (0);
