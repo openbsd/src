@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.38 2006/05/21 00:56:23 dlg Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.39 2006/07/14 08:30:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -196,21 +196,15 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t size;
 	pcireg_t csr;
 	int i;
-#if 0
-	/* reset */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_EBCR,
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_EBCR) | 0x20);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, AMI_WAKEUP, 0);
-#endif
+
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMI_BAR);
-	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, AMI_BAR, csr, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &size, AMI_PCI_MEMSIZE)) {
 		printf(": can't map controller pci space\n");
 		return;
 	}
 
-	if (csr == PCI_MAPREG_TYPE_IO) {
+	if (PCI_MAPREG_TYPE(csr) == PCI_MAPREG_TYPE_IO) {
 		sc->sc_init = ami_schwartz_init;
 		sc->sc_exec = ami_schwartz_exec;
 		sc->sc_done = ami_schwartz_done;
