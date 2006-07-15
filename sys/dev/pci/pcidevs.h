@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1098 2006/07/14 08:48:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1099 2006/07/15 20:12:13 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2473,6 +2473,7 @@
 #define	PCI_PRODUCT_NVIDIA_RIVA_TNT2_ULTRA	0x0029		/* Riva TNT2 Ultra */
 #define	PCI_PRODUCT_NVIDIA_VANTA1	0x002c		/* Vanta */
 #define	PCI_PRODUCT_NVIDIA_VANTA2	0x002d		/* Vanta */
+#define	PCI_PRODUCT_NVIDIA_MCP04_ISA	0x0030		/* MCP04 ISA */
 #define	PCI_PRODUCT_NVIDIA_MCP04_SMB	0x0034		/* MCP04 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP04_IDE	0x0035		/* MCP04 IDE */
 #define	PCI_PRODUCT_NVIDIA_MCP04_SATA	0x0036		/* MCP04 SATA */
