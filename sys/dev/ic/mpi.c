@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.61 2006/07/09 14:10:57 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.62 2006/07/15 03:59:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -80,6 +80,7 @@ int			mpi_complete(struct mpi_softc *, struct mpi_ccb *, int);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
 
 void			mpi_fc_print(struct mpi_softc *);
+void			mpi_squash_ppr(struct mpi_softc *);
 void			mpi_run_ppr(struct mpi_softc *);
 int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
 			    struct mpi_cfg_raid_physdisk *, int, int, int);
@@ -207,6 +208,9 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
+	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SCSI)
+		mpi_squash_ppr(sc);
+
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.device = &mpi_dev;
 	sc->sc_link.adapter = &mpi_switch;
@@ -323,6 +327,40 @@ mpi_fc_print(struct mpi_softc *sc)
 }
 
 void
+mpi_squash_ppr(struct mpi_softc *sc)
+{
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_spi_dev_pg1	page;
+	int				i;
+
+	DNPRINTF(MPI_D_PPR, "%s: mpi_squash_ppr\n", DEVNAME(sc));
+
+	for (i = 0; i < sc->sc_buswidth; i++) {
+		if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_SCSI_SPI_DEV,
+		    1, i, &hdr) != 0)
+			return;
+
+		if (mpi_cfg_page(sc, i, &hdr, 1, &page, sizeof(page)) != 0)
+			return;
+
+		DNPRINTF(MPI_D_PPR, "%s:  target: %d req_params1: 0x%02x "
+		    "req_offset: 0x%02x req_period: 0x%02x "
+		    "req_params2: 0x%02x conf: 0x%08x\n", DEVNAME(sc), i,
+		    page.req_params1, page.req_offset, page.req_period,
+		    page.req_params2, letoh32(page.configuration));
+
+		page.req_params1 = 0x0;
+		page.req_offset = 0x0;
+		page.req_period = 0x0;
+		page.req_params2 = 0x0;
+		page.configuration = htole32(0x0);
+
+		if (mpi_cfg_page(sc, i, &hdr, 0, &page, sizeof(page)) != 0)
+			return;
+	}
+}
+
+void
 mpi_run_ppr(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
@@ -346,7 +384,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 		return;
 	}
 
-	for (i = 0; i < sc->sc_link.adapter_buswidth; i++) {
+	for (i = 0; i < sc->sc_buswidth; i++) {
 		link = sc->sc_scsibus->sc_link[i][0];
 		if (link == NULL)
 			continue;
