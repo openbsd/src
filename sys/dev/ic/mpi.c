@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.62 2006/07/15 03:59:50 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.63 2006/07/15 04:09:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1150,6 +1150,11 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		io->direction = MPI_SCSIIO_DIR_NONE;
 		break;
 	}
+
+	if (link->quirks & SDEV_NOTAGS)
+		io->tagging = MPI_SCSIIO_ATTR_UNTAGGED;
+	else 
+		io->tagging = MPI_SCSIIO_ATTR_SIMPLE_Q;
 
 	bcopy(xs->cmd, io->cdb, xs->cmdlen);
 
