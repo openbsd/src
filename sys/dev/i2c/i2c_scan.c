@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.86 2006/07/12 15:35:40 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.87 2006/07/15 19:39:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -497,6 +497,17 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
 			name = "lm90";
 		break;
+	case 0x23:		/* Genesys Logic? */
+		if ((addr == 0x4c) &&
+		    (iicprobe(0x03) & 0x3f) == 0x00 && iicprobe(0x04) <= 0x08)
+			/*
+			 * Genesys Logic doesn't make the datasheet
+			 * for the GL523SM publically available, so
+			 * the checks above are nothing more than a
+			 * (conservative) educated guess.
+			 */
+			name = "gl523sm";
+		break;
 	case 0x41:		/* Analog Devices */
 		if ((addr == 0x4c || addr == 0x4d) &&
 		    iicprobe(0xff) == 0x51 &&
@@ -526,6 +537,14 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1032";	/* or adm1020 */
 			skip_fc = 1;
 		}
+		break;
+	case 0x47:		/* Global Mixed-mode Technology */
+		if (addr == 0x4c && iicprobe(0xff) == 0x01 &&
+		    (iicprobe(0x03) & 0x3f) == 0x00 && iicprobe(0x04) <= 0x08)
+			name = "g781";
+		if (addr == 0x4d && iicprobe(0xff) == 0x03 &&
+		    (iicprobe(0x03) & 0x3f) == 0x00 && iicprobe(0x04) <= 0x08)
+			name = "g781-1";
 		break;
 	case 0x4d:		/* Maxim */
 		if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
