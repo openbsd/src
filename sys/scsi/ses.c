@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.37 2006/05/11 00:45:59 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.38 2006/07/16 22:08:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -384,13 +384,17 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 #endif
 	enum sensor_type		stype;
 	char				*fmt;
-	int				typecnt[SES_NUM_TYPES];
+	int				*typecnt;
 	int				i, j;
 
 	if (ses_read_status(sc) != 0)
 		return (1);
 
-	memset(typecnt, 0, sizeof(typecnt));
+	typecnt = malloc(sizeof(int) * SES_NUM_TYPES, M_TEMP, M_NOWAIT);
+	if (typecnt == NULL)
+		return (1);
+	memset(typecnt, 0, sizeof(int) * SES_NUM_TYPES);
+
 	TAILQ_INIT(&sc->sc_sensors);
 #if NBIO > 0
 	TAILQ_INIT(&sc->sc_slots);
@@ -472,6 +476,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 		status++;
 	}
 
+	free(typecnt, M_TEMP);
 	return (0);
 error:
 #if NBIO > 0
@@ -486,6 +491,7 @@ error:
 		TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
 		free(sensor, M_DEVBUF);
 	}
+	free(typecnt, M_TEMP);
 	return (1);
 }
 
