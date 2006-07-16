@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.7 2005/11/09 18:08:37 martin Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.8 2006/07/16 00:18:33 drahn Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -388,6 +388,10 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	case BUS_DMASYNC_PREWRITE:
 		cpu_dcache_wb_range(addr, len);
 		break;
+
+	case BUS_DMASYNC_POSTREAD:
+		cpu_dcache_inv_range(addr, len);
+		break;
 	}
 }
 
@@ -555,14 +559,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	we are doing a PREREAD|PREWRITE, we can collapse
 	 *	the whole thing into a single Wb-Inv.
 	 *
-	 *	POSTREAD -- Nothing.
+	 *	POSTREAD -- Invalidate the D-Cache. Contents of
+	 *	the cache could be from before a device wrote
+	 *	to the memory.
 	 *
 	 *	POSTWRITE -- Nothing.
 	 */
-
-	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	if (ops == 0)
-		return;
 
 	/* Skip cache frobbing if mapping was COHERENT. */
 	if (map->_dm_flags & ARM32_DMAMAP_COHERENT) {
