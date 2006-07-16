@@ -7,7 +7,6 @@
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
 ./usr/include/arm/asm.h
-./usr/include/arm/atomic.h
 ./usr/include/arm/blockio.h
 ./usr/include/arm/bus.h
 ./usr/include/arm/cdefs.h
@@ -56,7 +55,6 @@
 ./usr/include/cats
 ./usr/include/cats/_types.h
 ./usr/include/cats/asm.h
-./usr/include/cats/atomic.h
 ./usr/include/cats/bootconfig.h
 ./usr/include/cats/bus.h
 ./usr/include/cats/cdefs.h
