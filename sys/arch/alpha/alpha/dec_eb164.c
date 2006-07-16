@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb164.c,v 1.12 2005/05/09 21:55:12 martin Exp $ */
+/* $OpenBSD: dec_eb164.c,v 1.13 2006/07/16 21:52:05 miod Exp $ */
 /* $NetBSD: dec_eb164.c,v 1.33 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -127,8 +127,17 @@ dec_eb164_cons_init()
 		/* XXX */
 		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
+
+		/*
+		 * On at least LX164, SRM reports an isa video board
+		 * as a pci slot with 0xff as the bus and slot numbers.
+		 * Since these values are not plausible from a pci point
+		 * of view, it is safe to check for them.
+		 */
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
-		    CTB_TURBOSLOT_TYPE_ISA)
+		    CTB_TURBOSLOT_TYPE_ISA ||
+		    (CTB_TURBOSLOT_BUS(ctb->ctb_turboslot) == 0xff &&
+		     CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot) == 0xff))
 			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
 		else
 			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
