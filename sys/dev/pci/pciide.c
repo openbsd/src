@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.247 2006/07/10 21:28:29 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.248 2006/07/16 13:24:14 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -718,11 +718,19 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
+	{ PCI_PRODUCT_PROMISE_PDC40519,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
 	{ PCI_PRODUCT_PROMISE_PDC40718,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC40719,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC40779,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
@@ -735,6 +743,10 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20579,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20771,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
@@ -6235,11 +6247,14 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 
 	case PCI_PRODUCT_PROMISE_PDC40518:
+	case PCI_PRODUCT_PROMISE_PDC40519:
 	case PCI_PRODUCT_PROMISE_PDC40718:
 	case PCI_PRODUCT_PROMISE_PDC40719:
+	case PCI_PRODUCT_PROMISE_PDC40779:
 	case PCI_PRODUCT_PROMISE_PDC20571:
 	case PCI_PRODUCT_PROMISE_PDC20575:
 	case PCI_PRODUCT_PROMISE_PDC20579:
+	case PCI_PRODUCT_PROMISE_PDC20771:
 	case PCI_PRODUCT_PROMISE_PDC20775:
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 	    	    intrhandle, IPL_BIO, pdc205xx_pci_intr, sc,
@@ -6304,8 +6319,10 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 
 	case PCI_PRODUCT_PROMISE_PDC40518:
+	case PCI_PRODUCT_PROMISE_PDC40519:
 	case PCI_PRODUCT_PROMISE_PDC40718:
 	case PCI_PRODUCT_PROMISE_PDC40719:
+	case PCI_PRODUCT_PROMISE_PDC40779:
 	case PCI_PRODUCT_PROMISE_PDC20571:
 		bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.nchannels = PDC40718_NCHANNELS;
@@ -6316,6 +6333,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_PROMISE_PDC20575:
 	case PCI_PRODUCT_PROMISE_PDC20579:
+	case PCI_PRODUCT_PROMISE_PDC20771:
 	case PCI_PRODUCT_PROMISE_PDC20775:
 		bus_space_write_4(ps->ba5_st, ps->ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.nchannels = PDC20575_NCHANNELS;
