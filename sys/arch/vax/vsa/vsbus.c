@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.15 2004/07/07 23:10:46 deraadt Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.16 2006/07/16 22:40:44 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -105,6 +105,8 @@ struct	cfattach vsbus_ca = {
 struct  cfdriver vsbus_cd = {
 	    NULL, "vsbus", DV_DULL
 };
+
+int	oldvsbus;
 
 int
 vsbus_print(aux, name)
@@ -260,6 +262,14 @@ vsbus_search(parent, cfd, aux)
 		goto fail;
 	if (vec == 0)
 		goto fail;
+
+	/*
+	 * For proper splassert operation, we need to know if we are on
+	 * a vsbus system where its devices interrupt at level 0x14 instead
+	 * of 0x15.
+	 */
+	if (br == 0x14)
+		oldvsbus = 1;
 
 	va.va_br = br;
 	va.va_cvec = vec;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.80 2006/06/11 22:09:33 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.81 2006/07/16 22:40:42 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -1063,8 +1063,19 @@ generic_reboot(int arg)
 void
 splassert_check(int wantipl, const char *func)
 {
+	extern int oldvsbus;
 	int oldipl = mfpr(PR_IPL);
 
+	/*
+	 * Do not complain for older vsbus systems where vsbus interrupts
+	 * at 0x14, instead of the expected 0x15. Since these systems are
+	 * not expandable and all their devices interrupt at the same
+	 * level, there is no risk of them interrupting each other while
+	 * they are servicing an interrupt, even at level 0x14.
+	 */
+	if (oldvsbus != 0 && oldipl == 0x14)
+		oldipl = 0x15;
+		
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);
 		/*
