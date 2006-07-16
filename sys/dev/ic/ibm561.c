@@ -1,5 +1,5 @@
 /* $NetBSD: ibm561.c,v 1.1 2001/12/12 07:46:48 elric Exp $ */
-/* $OpenBSD: ibm561.c,v 1.3 2002/11/09 22:51:48 miod Exp $ */
+/* $OpenBSD: ibm561.c,v 1.4 2006/07/16 21:50:58 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,6 +147,8 @@ ibm561_funcs(void)
 	return &ibm561_funcsstruct;
 }
 
+struct ibm561data ibm561_console_data;
+
 struct ramdac_cookie *
 ibm561_register(v, sched_update, wr, rd)
 	void *v;
@@ -156,7 +158,11 @@ ibm561_register(v, sched_update, wr, rd)
 {
 	struct ibm561data *data;
 
-	data = malloc(sizeof *data, M_DEVBUF, M_WAITOK); // XXX |M_ZERO);
+	if (ibm561_console_data.cookie == NULL) {
+		data = malloc(sizeof *data, M_DEVBUF, M_WAITOK);
+		bzero(data, sizeof *data);
+	} else
+		data = &ibm561_console_data;
 	data->cookie = v;
 	data->ramdac_sched_update = sched_update;
 	data->ramdac_wr = wr;
@@ -170,8 +176,6 @@ ibm561_register(v, sched_update, wr, rd)
  * initializing the console early on.
  */
 
-struct ibm561data *saved_console_data;
-
 void
 ibm561_cninit(v, sched_update, wr, rd, dotclock)
 	void *v;
@@ -180,16 +184,13 @@ ibm561_cninit(v, sched_update, wr, rd, dotclock)
 	u_int8_t (*rd)(void *, u_int);
 	u_int dotclock;
 {
-	struct ibm561data tmp, *data = &tmp;
-	memset(data, 0x0, sizeof *data);
+	struct ibm561data *data = &ibm561_console_data;
 	data->cookie = v;
 	data->ramdac_sched_update = sched_update;
 	data->ramdac_wr = wr;
 	data->ramdac_rd = rd;
 	ibm561_set_dotclock((struct ramdac_cookie *)data, dotclock);
-	saved_console_data = data;
 	ibm561_init((struct ramdac_cookie *)data);
-	saved_console_data = NULL;
 }
 
 void
@@ -426,7 +427,7 @@ ibm561_update(vp)
 
 	/* XXX see comment above ibm561_cninit() */
 	if (!data)
-		data = saved_console_data;
+		data = &ibm561_console_data;
 
 	if (data->changed & CHANGED_WTYPE) {
 		ibm561_regbegin(data, IBM561_FB_WINTYPE);
