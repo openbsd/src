@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.44 2006/06/26 19:12:38 mjc Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.45 2006/07/16 01:51:18 dlg Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -43,13 +43,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/selinfo.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#endif
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -61,11 +56,6 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
-
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#define delay(d)         DELAY(d)
-#endif
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	do { if (usbdebug) logprintf x; } while (0)
@@ -81,13 +71,8 @@ Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
 Static void usbd_devinfo_vp(usbd_device_handle, char *, char *, int);
 Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
-#if defined(__NetBSD__)
-Static int usbd_print(void *aux, const char *pnp);
-Static int usbd_submatch(device_ptr_t, struct cfdata *cf, void *);
-#elif defined(__OpenBSD__)
 Static int usbd_print(void *aux, const char *pnp);
 Static int usbd_submatch(device_ptr_t, void *, void *);
-#endif
 Static void usbd_free_iface_data(usbd_device_handle dev, int ifcno);
 Static void usbd_kill_pipe(usbd_pipe_handle);
 Static usbd_status usbd_probe_and_attach(device_ptr_t parent,
@@ -865,20 +850,6 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	device_ptr_t dv;
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
-#if defined(__FreeBSD__)
-	/*
-	 * XXX uaa is a static var. Not a problem as it _should_ be used only
-	 * during probe and attach. Should be changed however.
-	 */
-	device_t bdev;
-	bdev = device_add_child(parent, NULL, -1, &uaa);
-	if (!bdev) {
-	    printf("%s: Device creation failed\n", USBDEVNAME(dev->bus->bdev));
-	    return (USBD_INVAL);
-	}
-	device_quiet(bdev);
-#endif
-
 	uaa.device = dev;
 	uaa.iface = NULL;
 	uaa.ifaces = NULL;
@@ -921,9 +892,6 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			printf("%s: port %d, set config at addr %d failed\n",
 			       USBDEVPTRNAME(parent), port, addr);
 #endif
-#if defined(__FreeBSD__)
-			device_delete_child(parent, bdev);
-#endif
 
  			return (err);
 		}
@@ -936,9 +904,6 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 		len = (nifaces+1) * sizeof dv;
 		dev->subdevs = malloc(len, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL) {
-#if defined(__FreeBSD__)
-			device_delete_child(parent, bdev);
-#endif
 			return (USBD_NOMEM);
 		}
 		bzero(dev->subdevs, len);
@@ -955,24 +920,9 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			if (dv != NULL) {
 				dev->subdevs[found++] = dv;
 				ifaces[i] = 0; /* consumed */
-
-#if defined(__FreeBSD__)
-				/* create another child for the next iface */
-				bdev = device_add_child(parent, NULL, -1,&uaa);
-				if (!bdev) {
-					printf("%s: Device creation failed\n",
-					USBDEVNAME(dev->bus->bdev));
-					return (USBD_NORMAL_COMPLETION);
-				}
-				device_quiet(bdev);
-#endif
 			}
 		}
 		if (found != 0) {
-#if defined(__FreeBSD__)
-			/* remove the last created child again; it is unused */
-			device_delete_child(parent, bdev);
-#endif
 			return (USBD_NORMAL_COMPLETION);
 		}
 		free(dev->subdevs, M_USB);
@@ -1006,9 +956,6 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	 * fully operational and not harming anyone.
 	 */
 	DPRINTF(("usbd_probe_and_attach: generic attach failed\n"));
-#if defined(__FreeBSD__)
-	device_delete_child(parent, bdev);
-#endif
  	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1217,7 +1164,6 @@ usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
 	free(dev, M_USB);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 usbd_print(void *aux, const char *pnp)
 {
@@ -1253,16 +1199,10 @@ usbd_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-#if defined(__NetBSD__)
-int
-usbd_submatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-#elif defined(__OpenBSD__)
 int
 usbd_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
-#endif
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(5,("usbd_submatch port=%d,%d configno=%d,%d "
@@ -1309,8 +1249,6 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 		uaa->matchlvl = 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
-
-#endif
 
 void
 usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
