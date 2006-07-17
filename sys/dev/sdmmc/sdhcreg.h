@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.2 2006/07/17 15:30:04 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -131,7 +131,7 @@
 #define  SDHC_MAX_BLK_LEN_SHIFT		16
 #define  SDHC_MAX_BLK_LEN_MASK		0x3
 #define  SDHC_BASE_FREQ_SHIFT		8
-#define  SDHC_BASE_FREQ_MASK		0x2f
+#define  SDHC_BASE_FREQ_MASK		0x3f
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
