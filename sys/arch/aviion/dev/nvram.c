@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.3 2006/06/19 21:10:19 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.4 2006/07/17 04:21:30 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -150,14 +150,6 @@ microtime(tvp)
 	splx(s);
 }
 
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-#define	SECDAY		(24 * 60 * 60)
-#define	SECYR		(SECDAY * 365)
 #define	LEAPYEAR(y)	(((y) & 3) == 0)
 
 /*
@@ -577,7 +569,6 @@ nvramwrite(dev_t dev, struct uio *uio, int flags)
 			 */
 			if ((*dest & 0xff) != *src)
 				rc = EROFS;
-			}
 		}
 		dest++;
 		src++;
