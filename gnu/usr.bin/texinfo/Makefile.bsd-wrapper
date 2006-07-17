@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.39 2006/07/17 16:41:02 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.40 2006/07/17 21:40:56 espie Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -12,6 +12,7 @@ GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 
 FSFMAKE=	${MAKE} ${GNUCFLAGS} ${INFODIR} ${INFOPATH} 
 FSFALL=all-recursive
+MAN+=		texi2pdf.1
 
 .include <bsd.own.mk>
 
