@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.6 2006/07/10 17:58:23 fgsch Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.7 2006/07/17 20:48:27 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -156,17 +156,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	/* Allocate one more host structure. */
 	sc->sc_nhosts++;
-	MALLOC(hp, struct sdhc_host *, sizeof(struct sdhc_host) *
-	    sc->sc_nhosts, M_DEVBUF, M_WAITOK);
-	if (sc->sc_host != NULL) {
-		bcopy(sc->sc_host, hp, sizeof(struct sdhc_host) *
-		    (sc->sc_nhosts-1));
-		FREE(sc->sc_host, M_DEVBUF);
-	}
-	sc->sc_host = hp;
+	MALLOC(hp, struct sdhc_host *, sizeof(struct sdhc_host),
+	    M_DEVBUF, M_WAITOK);
+	sc->sc_host[sc->sc_nhosts - 1] = hp;
 
 	/* Fill in the new host structure. */
-	hp = &sc->sc_host[sc->sc_nhosts-1];
 	bzero(hp, sizeof(struct sdhc_host));
 	hp->sc = sc;
 	hp->iot = iot;
@@ -263,7 +257,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	return 0;
 
 err:
-	/* XXX: Leaking one sdhc_host structure here. */
+	timeout_del(&hp->cmd_to);
+	FREE(hp, M_DEVBUF);
+	sc->sc_host[sc->sc_nhosts - 1] = NULL;
 	sc->sc_nhosts--;
 	return 1;
 }
@@ -345,7 +341,7 @@ sdhc_power(int why, void *arg)
 
 		/* Save the host controller state. */
 		for (n = 0; n < sc->sc_nhosts; n++) {
-			hp = &sc->sc_host[n];
+			hp = sc->sc_host[n];
 			for (i = 0; i < sizeof hp->regs; i++)
 				hp->regs[i] = HREAD1(hp, i);
 		}
@@ -354,7 +350,7 @@ sdhc_power(int why, void *arg)
 	case PWR_RESUME:
 		/* Restore the host controller state. */
 		for (n = 0; n < sc->sc_nhosts; n++) {
-			hp = &sc->sc_host[n];
+			hp = sc->sc_host[n];
 			(void)sdhc_host_reset(hp);
 			for (i = 0; i < sizeof hp->regs; i++)
 				HWRITE1(hp, i, hp->regs[i]);
@@ -375,7 +371,7 @@ sdhc_shutdown(void *arg)
 
 	/* XXX chip locks up if we don't disable it before reboot. */
 	for (i = 0; i < sc->sc_nhosts; i++) {
-		hp = &sc->sc_host[i];
+		hp = sc->sc_host[i];
 		(void)sdhc_host_reset(hp);
 	}
 }
@@ -964,7 +960,7 @@ sdhc_intr(void *arg)
 
 	/* We got an interrupt, but we don't know from which slot. */
 	for (host = 0; host < sc->sc_nhosts; host++) {
-		struct sdhc_host *hp = &sc->sc_host[host];
+		struct sdhc_host *hp = sc->sc_host[host];
 		u_int16_t status;
 
 		if (hp == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.2 2006/06/29 01:26:13 uwe Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.3 2006/07/17 20:48:26 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/sdmmc/sdhcreg.h>
@@ -94,10 +95,15 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	slotinfo = pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    SDHC_PCI_CONF_SLOT_INFO);
+	nslots = SDHC_PCI_NUM_SLOTS(slotinfo);
+
+	/* Allocate an array big enough to hold all the possible hosts */
+	MALLOC(sc->sc.sc_host, struct sdhc_host **,
+	    sizeof(struct sdhc_host *) * nslots, M_DEVBUF, M_WAITOK);
+
 	/* XXX: handle 64-bit BARs */
 	for (reg = SDHC_PCI_BAR_START + SDHC_PCI_FIRST_BAR(slotinfo) *
-		 sizeof(u_int32_t),
-	     nslots = SDHC_PCI_NUM_SLOTS(slotinfo);
+		 sizeof(u_int32_t);
 	     reg < SDHC_PCI_BAR_END && nslots > 0;
 	     reg += sizeof(u_int32_t), nslots--) {
 
@@ -113,6 +119,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		if (sdhc_host_found(&sc->sc, iot, ioh, size, usedma) != 0)
+			/* XXX: sc->sc_host leak */
 			printf("%s at 0x%x: can't initialize host\n",
 			    sc->sc.sc_dev.dv_xname, reg);
 	}
