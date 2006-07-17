@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.4 2002/06/10 13:51:03 espie Exp $
+# $Id: Makefile.am,v 1.5 2006/07/17 16:12:36 espie Exp $
 # Makefile.am for texinfo/makeinfo.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -14,17 +14,15 @@ bin_PROGRAMS = makeinfo
 
 localedir = $(datadir)/locale
 INCLUDES = -I$(top_srcdir)/lib -I../intl -DLOCALEDIR=\"$(localedir)\"
-LDADD = ../lib/libtxi.a @LIBINTL@
+LDADD = ../lib/libtxi.a $(LIBINTL)
 
 makeinfo_SOURCES = \
-  cmds.c cmds.h defun.c defun.h docbook.c docbook.h \
-  files.c files.h footnote.c footnote.h \
+  cmds.c cmds.h defun.c defun.h \
+  files.c files.h float.c float.h footnote.c footnote.h \
   html.c html.h index.c index.h insertion.c insertion.h lang.c lang.h \
-  macro.c macro.h makeinfo.c makeinfo.h multi.c node.c node.h \
-  sectioning.c sectioning.h toc.c toc.h xml.c xml.h
+  macro.c macro.h makeinfo.c makeinfo.h multi.c multi.h node.c node.h \
+  sectioning.c sectioning.h toc.c toc.h xml.c xml.h xref.c xref.h
 
-pkgdata_DATA = texinfo.dtd texinfo.xsl
-
-EXTRA_DIST = README $(pkgdata_DATA)
+EXTRA_DIST = README
 
 SUBDIRS = tests

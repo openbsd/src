@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.4 2002/06/10 13:51:02 espie Exp $
+# $Id: Makefile.am,v 1.5 2006/07/17 16:12:36 espie Exp $
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -14,26 +14,28 @@
 info_TEXINFOS = texinfo.txi info-stnd.texi info.texi
 DISTCLEANFILES = texinfo texinfo-* info*.info*
 
-man_MANS = info.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
+man_MANS = info.1 infokey.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
            info.5 texinfo.5
-HELP2MAN = help2man
-noinst_SCRIPTS = $(HELP2MAN)
 
-# Use the programs built in our distribution.
-MAKEINFO = ../makeinfo/makeinfo
-INSTALL_INFO = ../util/install-info
+# Use the programs built in our distribution, taking account of possible
+# cross-compiling.
+MAKEINFO = $(top_builddir)/$(native_tools)/makeinfo/makeinfo
+INSTALL_INFO = $(top_builddir)/$(native_tools)/util/install-info
 
 TXI_XLATE = txi-cs.tex txi-de.tex txi-en.tex txi-es.tex txi-fr.tex \
-	    txi-nl.tex txi-no.tex txi-pt.tex
+	    txi-it.tex txi-nl.tex txi-no.tex txi-pl.tex txi-pt.tex txi-tr.tex
 
 # Include our texinfo.tex, not Automake's.
 EXTRA_DIST = epsf.tex pdfcolor.tex texinfo.tex \
-             fdl.texi macro.texi userdoc.texi \
-	     $(man_MANS) $(noinst_SCRIPTS) $(TXI_XLATE)
+             fdl.texi \
+	     $(man_MANS) $(TXI_XLATE)
 
+if INSTALL_WARNINGS
 install-data-local:
 	@echo
-	@echo "WARNING: You must install texinfo.tex and txi-??.tex manually,"
+	@echo "WARNING: If your texmf tree does not already contain"
+	@echo "         up-to-date versions, you must install"
+	@echo "             texinfo.tex and txi-??.tex manually,"
 	@echo "         perhaps in TEXMF/tex/texinfo/,"
 	@echo "         where TEXMF is a root of your TeX tree."
 	@echo "         See doc/README for some considerations."
@@ -43,6 +45,7 @@ install-data-local:
 	@echo "         use pdftex) pdfcolor.tex in TEXMF/tex/generic/dvips"
 	@echo "         and TEXMF/pdftex/plain/misc/pdfcolor.tex respectively,"
 	@echo "         if your TeX installation did not include them."
+endif
 
 texmf_texinfo = $(TEXMF)/tex/texinfo
 texmf_dvips = $(TEXMF)/tex/generic/dvips
@@ -56,26 +59,22 @@ install-tex:
 	for f in $(TXI_XLATE); do \
 	  $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(texmf_texinfo)/$$f; done
 
-# Don't want to run help2man at every installation.
-if TEXINFO_MAINT
-info.1: ../info/ginfo $(HELP2MAN)
-	$(HELP2MAN) --name="read Info documents" $< >$@
-install-info.1: $(INSTALL_INFO) $(HELP2MAN)
-	$(HELP2MAN) --name="update info/dir entries" $< >$@
-makeinfo.1: $(MAKEINFO) $(HELP2MAN)
-	$(HELP2MAN) --name="translate Texinfo documents" $< >$@
-texi2dvi.1: ../util/texi2dvi $(HELP2MAN)
-	$(HELP2MAN) --name="print Texinfo documents" $< >$@
-texindex.1: ../util/texindex $(HELP2MAN)
-	$(HELP2MAN) --name="sort Texinfo index files" $< >$@
+# The man pages depend on the --help strings and the version number.
+if MAINTAINER_MODE
+common_mandeps = $(top_srcdir)/configure.ac
+info.1: $(top_srcdir)/info/info.c $(common_mandeps)
+	$(HELP2MAN) --name="read Info documents" `basename $@ .1` >$@
+infokey.1: $(top_srcdir)/info/infokey.c $(common_mandeps)
+	$(HELP2MAN) --name="compile customizations for Info" `basename $@ .1` >$@
+install-info.1: $(top_srcdir)/util/install-info.c $(common_mandeps)
+	$(HELP2MAN) --name="update info/dir entries" `basename $@ .1` >$@
+makeinfo.1: $(top_srcdir)/makeinfo/makeinfo.c $(common_mandeps)
+	$(HELP2MAN) --name="translate Texinfo documents" `basename $@ .1` >$@
+texi2dvi.1: $(top_srcdir)/util/texi2dvi $(common_mandeps)
+	$(HELP2MAN) --name="print Texinfo documents" `basename $@ .1` >$@
+texindex.1: $(top_srcdir)/util/texindex.c $(common_mandeps)
+	$(HELP2MAN) --name="sort Texinfo index files" `basename $@ .1` >$@
 endif
 
-# Do not create info files for distribution, but do create man pages.
+# Do not create info files for distribution.
 dist-info:
-
-# Do not try to build the info files in $(srcdir),
-# since we don't distribute them.
-.texi.info:
-	$(MAKEINFO) -I$(srcdir) `echo $< | sed 's,.*/,,'`
-texinfo: $(srcdir)/texinfo.txi
-	$(MAKEINFO) -I$(srcdir) texinfo.txi

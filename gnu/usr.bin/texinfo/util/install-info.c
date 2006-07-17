@@ -1,7 +1,8 @@
 /* install-info -- create Info directory entry(ies) for an Info file.
-   $Id: install-info.c,v 1.7 2002/06/10 13:51:04 espie Exp $
+   $Id: install-info.c,v 1.8 2006/07/17 16:12:36 espie Exp $
 
-   Copyright (C) 1996, 97, 98, 99, 2000, 01, 02 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,11 +23,14 @@
 
 static char *progname = "install-info";
 
-struct line_data *findlines ();
-void insert_entry_here ();
-int compare_section_names (), compare_entries_text ();
-
 struct spec_entry;
+struct spec_section;
+
+struct line_data *findlines (char *data, int size, int *nlinesp);
+void insert_entry_here (struct spec_entry *entry, int line_number,
+                        struct line_data *dir_lines, int n_entries); 
+int compare_section_names (const void *s1, const void *s2);
+int compare_entries_text (const void *e1, const void *e2); 
 
 /* Data structures.  */
 
@@ -119,6 +123,7 @@ struct option longopts[] =
   { "dir-file",  required_argument, NULL, 'd' },
   { "entry",     required_argument, NULL, 'e' },
   { "help",      no_argument, NULL, 'h' },
+  { "infodir",   required_argument, NULL, 'D' },
   { "info-dir",  required_argument, NULL, 'D' },
   { "info-file", required_argument, NULL, 'i' },
   { "item",      required_argument, NULL, 'e' },
@@ -135,8 +140,7 @@ struct option longopts[] =
 
 /* VARARGS1 */
 void
-error (s1, s2, s3)
-     char *s1, *s2, *s3;
+error (const char *s1, const char *s2, const char *s3)
 {
   fprintf (stderr, "%s: ", progname);
   fprintf (stderr, s1, s2, s3);
@@ -145,8 +149,7 @@ error (s1, s2, s3)
 
 /* VARARGS1 */
 void
-warning (s1, s2, s3)
-     char *s1, *s2, *s3;
+warning (const char *s1, const char *s2, const char *s3)
 {
   fprintf (stderr, _("%s: warning: "), progname);
   fprintf (stderr, s1, s2, s3);
@@ -156,45 +159,16 @@ warning (s1, s2, s3)
 /* Print error message and exit.  */
 
 void
-fatal (s1, s2, s3)
-     char *s1, *s2, *s3;
+fatal (const char *s1, const char *s2, const char *s3)
 {
   error (s1, s2, s3);
   xexit (1);
 }
 
-/* Memory allocation and string operations.  */
-
-/* Like malloc but get fatal error if memory is exhausted.  */
-void *
-xmalloc (size)
-     unsigned int size;
-{
-  extern void *malloc ();
-  void *result = malloc (size);
-  if (result == NULL)
-    fatal (_("virtual memory exhausted"), 0, 0);
-  return result;
-}
-
-/* Like realloc but get fatal error if memory is exhausted.  */
-void *
-xrealloc (obj, size)
-     void *obj;
-     unsigned int size;
-{
-  extern void *realloc ();
-  void *result = realloc (obj, size);
-  if (result == NULL)
-    fatal (_("virtual memory exhausted"), 0, 0);
-  return result;
-}
-
 /* Return a newly-allocated string
    whose contents concatenate those of S1, S2, S3.  */
 char *
-concat (s1, s2, s3)
-     char *s1, *s2, *s3;
+concat (const char *s1, const char *s2, const char *s3)
 {
   int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
   char *result = (char *) xmalloc (len1 + len2 + len3 + 1);
@@ -211,9 +185,7 @@ concat (s1, s2, s3)
    copied from starting at STRING.  */
 
 char *
-copy_string (string, size)
-     char *string;
-     int size;
+copy_string (const char *string, int size)
 {
   int i;
   char *copy = (char *) xmalloc (size + 1);
@@ -226,19 +198,71 @@ copy_string (string, size)
 /* Print fatal error message based on errno, with file name NAME.  */
 
 void
-pfatal_with_name (name)
-     char *name;
+pfatal_with_name (const char *name)
 {
   char *s = concat ("", strerror (errno), _(" for %s"));
   fatal (s, name, 0);
 }
 
+/* Compare the menu item names in LINE1 (line length LEN1)
+   and LINE2 (line length LEN2).  Return 1 if the item name
+   in LINE1 is less, 0 otherwise.  */
+
+static int
+menu_line_lessp (char *line1, int len1, char *line2, int len2)
+{
+  int minlen = (len1 < len2 ? len1 : len2);
+  int i;
+
+  for (i = 0; i < minlen; i++)
+    {
+      /* If one item name is a prefix of the other,
+         the former one is less.  */
+      if (line1[i] == ':' && line2[i] != ':')
+        return 1;
+      if (line2[i] == ':' && line1[i] != ':')
+        return 0;
+      /* If they both continue and differ, one is less.  */
+      if (line1[i] < line2[i])
+        return 1;
+      if (line1[i] > line2[i])
+        return 0;
+    }
+  /* With a properly formatted dir file,
+     we can only get here if the item names are equal.  */
+  return 0;
+}
+
+/* Compare the menu item names in LINE1 (line length LEN1)
+   and LINE2 (line length LEN2).  Return 1 if the item names are equal,
+   0 otherwise.  */
+
+static int
+menu_line_equal (char *line1, int len1, char *line2, int len2)
+{
+  int minlen = (len1 < len2 ? len1 : len2);
+  int i;
+
+  for (i = 0; i < minlen; i++)
+    {
+      /* If both item names end here, they are equal.  */
+      if (line1[i] == ':' && line2[i] == ':')
+        return 1;
+      /* If they both continue and differ, one is less.  */
+      if (line1[i] != line2[i])
+        return 0;
+    }
+  /* With a properly formatted dir file,
+     we can only get here if the item names are equal.  */
+  return 1;
+}
+
+
 /* Given the full text of a menu entry, null terminated,
    return just the menu item name (copied).  */
 
 char *
-extract_menu_item_name (item_text)
-     char *item_text;
+extract_menu_item_name (char *item_text)
 {
   char *p;
 
@@ -256,8 +280,7 @@ extract_menu_item_name (item_text)
    return just the menu item file (copied).  */
 
 char *
-extract_menu_file_name (item_text)
-     char *item_text;
+extract_menu_file_name (char *item_text)
 {
   char *p = item_text;
 
@@ -300,8 +323,7 @@ extract_menu_file_name (item_text)
 /* Return FNAME with any [.info][.gz] suffix removed.  */
 
 static char *
-strip_info_suffix (fname)
-     char *fname;
+strip_info_suffix (char *fname)
 {
   char *ret = xstrdup (fname);
   unsigned len = strlen (ret);
@@ -309,6 +331,11 @@ strip_info_suffix (fname)
   if (len > 3 && FILENAME_CMP (ret + len - 3, ".gz") == 0)
     {
       len -= 3;
+      ret[len] = 0;
+    }
+  else if (len > 4 && FILENAME_CMP (ret + len - 4, ".bz2") == 0)
+    {
+      len -= 4;
       ret[len] = 0;
     }
 
@@ -340,14 +367,32 @@ strip_info_suffix (fname)
    TERM_CHAR) and still match.  */
 
 static int
-menu_item_equal (item, term_char, name)
-     char *item;
-     char term_char;
-     char *name;
+menu_item_equal (const char *item, char term_char, const char *name)
 {
+  int ret;
+  const char *item_basename = item;
   unsigned name_len = strlen (name);
+
+  /* We must compare the basename in ITEM, since we are passed the
+     basename of the original info file.  Otherwise, a new entry like
+     "lilypond/lilypond" won't match "lilypond".
+     
+     Actually, it seems to me that we should really compare the whole
+     name, and not just the basename.  Couldn't there be dir1/foo.info
+     and dir2/foo.info?  Also, it seems like we should be using the
+     filename from the new dir entries, not the filename on the command
+     line.  Not worrying about those things right now, though.  --karl,
+     26mar04.  */
+  while (*item_basename && !IS_SLASH (*item_basename)
+	 && *item_basename != term_char)
+    item_basename++;
+  if (! *item_basename || *item_basename == term_char)
+    item_basename = item;  /* no /, use original */
+  else
+    item_basename++;       /* have /, move past it */
+    
   /* First, ITEM must actually match NAME (usually it won't).  */
-  int ret = strncasecmp (item, name, name_len) == 0;
+  ret = strncasecmp (item_basename, name, name_len) == 0;
   if (ret)
     {
       /* Then, `foobar' doesn't match `foo', so be sure we've got all of
@@ -365,8 +410,8 @@ menu_item_equal (item, term_char, name)
         {
           char *suffix = suffixes[i];
           unsigned suffix_len = strlen (suffix);
-          ret = strncasecmp (item + name_len, suffix, suffix_len) == 0
-                && item[name_len + suffix_len] == term_char;
+          ret = strncasecmp (item_basename + name_len, suffix, suffix_len) == 0
+                && item_basename[name_len + suffix_len] == term_char;
         }
     }
 
@@ -376,7 +421,7 @@ menu_item_equal (item, term_char, name)
 
 
 void
-suggest_asking_for_help ()
+suggest_asking_for_help (void)
 {
   fprintf (stderr, _("\tTry `%s --help' for a complete list of options.\n"),
            progname);
@@ -384,7 +429,7 @@ suggest_asking_for_help ()
 }
 
 void
-print_help ()
+print_help (void)
 {
   printf (_("Usage: %s [OPTION]... [INFO-FILE [DIR-FILE]]\n\
 \n\
@@ -429,8 +474,7 @@ Texinfo home page: http://www.gnu.org/software/texinfo/"));
    already exists, do nothing.  */
 
 void
-ensure_dirfile_exists (dirfile)
-     char *dirfile;
+ensure_dirfile_exists (char *dirfile)
 {
   int desc = open (dirfile, O_RDONLY);
   if (desc < 0 && errno == ENOENT)
@@ -444,7 +488,7 @@ ensure_dirfile_exists (dirfile)
           fprintf (f, _("This is the file .../info/dir, which contains the\n\
 topmost node of the Info hierarchy, called (dir)Top.\n\
 The first time you invoke Info you start off looking at this node.\n\
-\n\
+\x1f\n\
 %s\tThis is the top of the INFO tree\n\
 \n\
   This (the Directory node) gives a menu of major topics.\n\
@@ -455,8 +499,10 @@ The first time you invoke Info you start off looking at this node.\n\
   In Emacs, you can click mouse button 2 on a menu item or cross reference\n\
   to select it.\n\
 \n\
-* Menu:\n\
-"), "File: dir,\tNode: Top"); /* This part must not be translated.  */
+%s\n\
+"), "File: dir,\tNode: Top",  /* These keywords must not be translated.  */
+    "* Menu:"
+);
           if (fclose (f) < 0)
             pfatal_with_name (dirfile);
         }
@@ -484,13 +530,9 @@ The first time you invoke Info you start off looking at this node.\n\
    magic number, not the filename.  */
 
 FILE *
-open_possibly_compressed_file (filename, create_callback,
-                               opened_filename, compression_program, is_pipe)
-     char *filename;
-     void (*create_callback) ();
-     char **opened_filename;
-     char **compression_program;
-     int  *is_pipe;
+open_possibly_compressed_file (char *filename,
+    void (*create_callback) (char *),
+    char **opened_filename, char **compression_program, int *is_pipe) 
 {
   char *local_opened_filename, *local_compression_program;
   int nread;
@@ -508,6 +550,13 @@ open_possibly_compressed_file (filename, create_callback,
     {
       *opened_filename = concat (filename, ".gz", "");
       f = fopen (*opened_filename, FOPEN_RBIN);
+  if (!f)
+    {
+      free (*opened_filename);
+      *opened_filename = concat (filename, ".bz2", "");
+      f = fopen (*opened_filename, FOPEN_RBIN);
+    }
+
 #ifdef __MSDOS__
       if (!f)
         {
@@ -563,6 +612,18 @@ open_possibly_compressed_file (filename, create_callback,
 #else
     *compression_program = "gzip";
 #endif
+  else if(data[0] == 'B' && data[1] == 'Z' && data[2] == 'h')
+#ifndef STRIP_DOT_EXE
+    *compression_program = "bzip2.exe";
+#else
+    *compression_program = "bzip2";
+#endif
+  else if(data[0] == 'B' && data[1] == 'Z' && data[2] == '0')
+#ifndef STRIP_DOT_EXE
+    *compression_program = "bzip.exe";
+#else
+    *compression_program = "bzip";
+#endif
   else
     *compression_program = NULL;
 
@@ -601,13 +662,9 @@ open_possibly_compressed_file (filename, create_callback,
    a fatal error.  */
 
 char *
-readfile (filename, sizep, create_callback,
-          opened_filename, compression_program)
-     char *filename;
-     int *sizep;
-     void (*create_callback) ();
-     char **opened_filename;
-     char **compression_program;
+readfile (char *filename, int *sizep,
+    void (*create_callback) (char *), char **opened_filename,
+    char **compression_program)
 {
   char *real_name;
   FILE *f;
@@ -658,16 +715,9 @@ readfile (filename, sizep, create_callback,
    we'll write dir.gz on output.  */
 
 static void
-output_dirfile (dirfile, dir_nlines, dir_lines,
-                n_entries_to_add, entries_to_add, input_sections,
-                compression_program)
-      char *dirfile;
-      int dir_nlines;
-      struct line_data *dir_lines;
-      int n_entries_to_add;
-      struct spec_entry *entries_to_add;
-      struct spec_section *input_sections;
-      char *compression_program;
+output_dirfile (char *dirfile, int dir_nlines, struct line_data *dir_lines,
+                int n_entries_to_add, struct spec_entry *entries_to_add,
+                struct spec_section *input_sections, char *compression_program)
 {
   int i;
   FILE *output;
@@ -796,11 +846,8 @@ output_dirfile (dirfile, dir_nlines, dir_lines,
 /* Parse the input to find the section names and the entry names it
    specifies.  Return the number of entries to add from this file.  */
 int
-parse_input (lines, nlines, sections, entries)
-     const struct line_data *lines;
-     int nlines;
-     struct spec_section **sections;
-     struct spec_entry **entries;
+parse_input (const struct line_data *lines, int nlines,
+             struct spec_section **sections, struct spec_entry **entries) 
 {
   int n_entries = 0;
   int prefix_length = strlen ("INFO-DIR-SECTION ");
@@ -904,7 +951,7 @@ parse_input (lines, nlines, sections, entries)
     }
   if (start_of_this_entry != 0)
     fatal (_("START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"),
-	   0, 0);
+           0, 0);
 
   /* If we ignored the INFO-DIR-ENTRY directives, we need now go back
      and plug the names of all the sections we found into every
@@ -926,11 +973,8 @@ parse_input (lines, nlines, sections, entries)
 /* Parse the dir file whose basename is BASE_NAME.  Find all the
    nodes, and their menus, and the sections of their menus.  */
 int
-parse_dir_file (lines, nlines, nodes, base_name)
-     struct line_data *lines;
-     int nlines;
-     struct node **nodes;
-     const char *base_name;
+parse_dir_file (struct line_data *lines, int nlines, struct node **nodes,
+                const char *base_name)
 {
   int node_header_flag = 0;
   int something_deleted = 0;
@@ -1080,15 +1124,12 @@ parse_dir_file (lines, nlines, nodes, base_name)
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char *opened_dirfilename;
   char *compression_program;
   char *infile_sans_info;
   char *infile = 0, *dirfile = 0;
-  unsigned infilelen_sans_info;
 
   /* Record the text of the Info file, as a sequence of characters
      and as a sequence of lines.  */
@@ -1147,8 +1188,8 @@ main (argc, argv)
         case 'd':
           if (dirfile)
             {
-              fprintf (stderr, _("%s: Specify the Info directory only once.\n"),
-                       progname);
+              fprintf (stderr, _("%s: already have dir file: %s\n"),
+                       progname, dirfile);
               suggest_asking_for_help ();
             }
           dirfile = optarg;
@@ -1157,8 +1198,8 @@ main (argc, argv)
         case 'D':
           if (dirfile)
             {
-              fprintf (stderr, _("%s: Specify the Info directory only once.\n"),
-                       progname);
+              fprintf (stderr, _("%s: already have dir file: %s\n"),
+                       progname, dirfile);
               suggest_asking_for_help ();
             }
           dirfile = concat (optarg, "", "/dir");
@@ -1221,11 +1262,10 @@ main (argc, argv)
         case 'V':
           printf ("install-info (GNU %s) %s\n", PACKAGE, VERSION);
           puts ("");
-	  printf (_("Copyright (C) %s Free Software Foundation, Inc.\n\
-There is NO warranty.  You may redistribute this software\n\
+          puts ("Copyright (C) 2004 Free Software Foundation, Inc.");
+          printf (_("There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
-For more information about these matters, see the files named COPYING.\n"),
-		  "2002");
+For more information about these matters, see the files named COPYING.\n"));
           xexit (0);
 
         default:
@@ -1246,7 +1286,7 @@ For more information about these matters, see the files named COPYING.\n"),
 
   if (!infile)
     fatal (_("No input file specified; try --help for more information."),
-	   0, 0);
+           0, 0);
   if (!dirfile)
     fatal (_("No dir file specified; try --help for more information."), 0, 0);
 
@@ -1313,13 +1353,12 @@ For more information about these matters, see the files named COPYING.\n"),
     char *infile_basename = infile + strlen (infile);
 
     if (HAVE_DRIVE (infile))
-      infile += 2;	/* get past the drive spec X: */
+      infile += 2;      /* get past the drive spec X: */
 
     while (infile_basename > infile && !IS_SLASH (infile_basename[-1]))
       infile_basename--;
 
     infile_sans_info = strip_info_suffix (infile_basename);
-    infilelen_sans_info = strlen (infile_sans_info);
   }
 
   something_deleted
@@ -1329,7 +1368,6 @@ For more information about these matters, see the files named COPYING.\n"),
      Find the menu sections to add them in.
      In each section, find the proper alphabetical place to add
      each of the entries.  */
-
   if (!delete_flag)
     {
       struct node *node;
@@ -1369,7 +1407,7 @@ For more information about these matters, see the files named COPYING.\n"),
                       }
                     if (!spec || spec == entry->entry_sections_tail)
                       continue;
-                    
+
                     /* Subtract one because dir_lines is zero-based,
                        but the `end_line' and `start_line' members are
                        one-based.  */
@@ -1414,6 +1452,7 @@ For more information about these matters, see the files named COPYING.\n"),
                   entries_to_add, input_sections, compression_program);
 
   xexit (0);
+  return 0; /* Avoid bogus warnings.  */
 }
 
 /* Divide the text at DATA (of SIZE bytes) into lines.
@@ -1421,10 +1460,7 @@ For more information about these matters, see the files named COPYING.\n"),
    Store the length of that vector into *NLINESP.  */
 
 struct line_data *
-findlines (data, size, nlinesp)
-     char *data;
-     int size;
-     int *nlinesp;
+findlines (char *data, int size, int *nlinesp)
 {
   int i;
   int lineflag = 1;
@@ -1469,75 +1505,16 @@ findlines (data, size, nlinesp)
   return lines;
 }
 
-/* Compare the menu item names in LINE1 (line length LEN1)
-   and LINE2 (line length LEN2).  Return 1 if the item name
-   in LINE1 is less, 0 otherwise.  */
-
-int
-menu_line_lessp (line1, len1, line2, len2)
-     char *line1;
-     int len1;
-     char *line2;
-     int len2;
-{
-  int minlen = (len1 < len2 ? len1 : len2);
-  int i;
-
-  for (i = 0; i < minlen; i++)
-    {
-      /* If one item name is a prefix of the other,
-         the former one is less.  */
-      if (line1[i] == ':' && line2[i] != ':')
-        return 1;
-      if (line2[i] == ':' && line1[i] != ':')
-        return 0;
-      /* If they both continue and differ, one is less.  */
-      if (line1[i] < line2[i])
-        return 1;
-      if (line1[i] > line2[i])
-        return 0;
-    }
-  /* With a properly formatted dir file,
-     we can only get here if the item names are equal.  */
-  return 0;
-}
-
-/* Compare the menu item names in LINE1 (line length LEN1)
-   and LINE2 (line length LEN2).  Return 1 if the item names are equal,
-   0 otherwise.  */
-
-int
-menu_line_equal (line1, len1, line2, len2)
-     char *line1;
-     int len1;
-     char *line2;
-     int len2;
-{
-  int minlen = (len1 < len2 ? len1 : len2);
-  int i;
-
-  for (i = 0; i < minlen; i++)
-    {
-      /* If both item names end here, they are equal.  */
-      if (line1[i] == ':' && line2[i] == ':')
-        return 1;
-      /* If they both continue and differ, one is less.  */
-      if (line1[i] != line2[i])
-        return 0;
-    }
-  /* With a properly formatted dir file,
-     we can only get here if the item names are equal.  */
-  return 1;
-}
-
-/* This is the comparison function for qsort
-   for a vector of pointers to struct spec_section.
+/* This is the comparison function for qsort for a vector of pointers to
+   struct spec_section.  (Have to use const void * as the parameter type
+   to avoid incompatible-with-qsort warnings.)
    Compare the section names.  */
 
 int
-compare_section_names (sec1, sec2)
-     struct spec_section **sec1, **sec2;
+compare_section_names (const void *p1, const void *p2)
 {
+  struct spec_section **sec1 = (struct spec_section **) p1;
+  struct spec_section **sec2 = (struct spec_section **) p2;
   char *name1 = (*sec1)->name;
   char *name2 = (*sec2)->name;
   return strcmp (name1, name2);
@@ -1548,9 +1525,10 @@ compare_section_names (sec1, sec2)
    Compare the entries' text.  */
 
 int
-compare_entries_text (entry1, entry2)
-     struct spec_entry **entry1, **entry2;
+compare_entries_text (const void *p1, const void *p2)
 {
+  struct spec_entry **entry1 = (struct spec_entry **) p1;
+  struct spec_entry **entry2 = (struct spec_entry **) p2;
   char *text1 = (*entry1)->text;
   char *text2 = (*entry2)->text;
   char *colon1 = strchr (text1, ':');
@@ -1574,11 +1552,8 @@ compare_entries_text (entry1, entry2)
    in main.  */
 
 void
-insert_entry_here (entry, line_number, dir_lines, n_entries)
-     struct spec_entry *entry;
-     int line_number;
-     struct line_data *dir_lines;
-     int n_entries;
+insert_entry_here (struct spec_entry *entry, int line_number,
+                   struct line_data *dir_lines, int n_entries)
 {
   int i, j;
 

@@ -1,7 +1,8 @@
 /* nodemenu.c -- produce a menu of all visited nodes.
-   $Id: nodemenu.c,v 1.3 2000/02/09 02:18:40 espie Exp $
+   $Id: nodemenu.c,v 1.4 2006/07/17 16:12:36 espie Exp $
 
-   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 1998, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,9 +22,11 @@
 
 #include "info.h"
 
+NODE * get_visited_nodes (Function *filter_func);
+
 /* Return a line describing the format of a node information line. */
-static char *
-nodemenu_format_info ()
+static const char *
+nodemenu_format_info (void)
 {
   return (_("\n\
 * Menu:\n\
@@ -42,8 +45,7 @@ nodemenu_format_info ()
 * (dir)Top::                        40      589    /usr/gnu/info/dir
 */
 static char *
-format_node_info (node)
-     NODE *node;
+format_node_info (NODE *node)
 {
   register int i, len;
   char *parent, *containing_file;
@@ -101,7 +103,7 @@ format_node_info (node)
   if (node->filename && *(node->filename))
     {
       len = pad_to (51, line_buffer);
-      sprintf (line_buffer + len, node->filename);
+      strcpy (line_buffer + len, node->filename);
     }
 
   return xstrdup (line_buffer);
@@ -109,10 +111,12 @@ format_node_info (node)
 
 /* Little string comparison routine for qsort (). */
 static int
-compare_strings (string1, string2)
-     char **string1, **string2;
+compare_strings (const void *entry1, const void *entry2)
 {
-  return (strcasecmp (*string1, *string2));
+  char **e1 = (char **) entry1;
+  char **e2 = (char **) entry2;
+
+  return (strcasecmp (*e1, *e2));
 }
 
 /* The name of the nodemenu node. */
@@ -123,8 +127,7 @@ static char *nodemenu_nodename = "*Node Menu*";
    which nodes will appear in the listing.  FILTER_FUNC takes an argument
    of NODE, and returns non-zero if the node should appear in the listing. */
 NODE *
-get_visited_nodes (filter_func)
-     Function *filter_func;
+get_visited_nodes (Function *filter_func)
 {
   register int i, iw_index;
   INFO_WINDOW *info_win;
@@ -196,14 +199,16 @@ get_visited_nodes (filter_func)
 
   printf_to_message_buffer
     ("%s", replace_in_documentation
-     (_("Here is the menu of nodes you have recently visited.\n\
-Select one from this menu, or use `\\[history-node]' in another window.\n")));
+     ((char *) _("Here is the menu of nodes you have recently visited.\n\
+Select one from this menu, or use `\\[history-node]' in another window.\n"), 0),
+     NULL, NULL);
 
-  printf_to_message_buffer ("%s\n", nodemenu_format_info ());
+  printf_to_message_buffer ("%s\n", (char *) nodemenu_format_info (),
+      NULL, NULL);
 
   for (i = 0; (lines != (char **)NULL) && (i < lines_index); i++)
     {
-      printf_to_message_buffer ("%s\n", lines[i]);
+      printf_to_message_buffer ("%s\n", lines[i], NULL, NULL);
       free (lines[i]);
     }
 
@@ -308,7 +313,8 @@ DECLARE_INFO_COMMAND (select_visited_node,
   free (node);
 
   line =
-    info_read_completing_in_echo_area (window, _("Select visited node: "), menu);
+    info_read_completing_in_echo_area (window,
+        (char *) _("Select visited node: "), menu);
 
   window = active_window;
 
@@ -328,7 +334,7 @@ DECLARE_INFO_COMMAND (select_visited_node,
       entry = info_get_labeled_reference (line, menu);
 
       if (!entry)
-        info_error (_("The reference disappeared! (%s)."), line);
+        info_error ((char *) _("The reference disappeared! (%s)."), line, NULL);
       else
         info_select_reference (window, entry);
     }

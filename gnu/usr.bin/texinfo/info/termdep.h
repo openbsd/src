@@ -1,7 +1,8 @@
-/* termdep.h -- System things that terminal.c depends on.
-   $Id: termdep.h,v 1.4 2002/06/10 13:51:03 espie Exp $
+/* termdep.h -- system things that terminal.c depends on.
+   $Id: termdep.h,v 1.5 2006/07/17 16:12:36 espie Exp $
 
-   Copyright (C) 1993, 96, 97, 98, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1996, 1997, 1998, 2001, 2002 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

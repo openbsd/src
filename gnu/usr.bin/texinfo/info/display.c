@@ -1,7 +1,7 @@
 /* display.c -- How to display Info windows.
-   $Id: display.c,v 1.3 2002/06/10 13:51:03 espie Exp $
+   $Id: display.c,v 1.4 2006/07/17 16:12:36 espie Exp $
 
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,15 +17,19 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Written by Brian Fox (bfox@ai.mit.edu). */
+   Originally written by Brian Fox (bfox@ai.mit.edu). */
 
 #include "info.h"
 #include "display.h"
 
-extern int info_any_buffered_input_p (); /* Found in session.c. */
+extern int info_any_buffered_input_p (void); /* Found in session.c. */
 
-static void free_display ();
-static DISPLAY_LINE **make_display ();
+static void free_display (DISPLAY_LINE **display);
+static DISPLAY_LINE **make_display (int width, int height);
+
+void handle_tag (char *tag);
+void handle_tag_start (char *tag);
+void handle_tag_end (char *tag);
 
 /* An array of display lines which tell us what is currently visible on
    the display.  */
@@ -36,8 +40,7 @@ int display_inhibited = 0;
 
 /* Initialize THE_DISPLAY to WIDTH and HEIGHT, with nothing in it. */
 void
-display_initialize_display (width, height)
-     int width, height;
+display_initialize_display (int width, int height)
 {
   free_display (the_display);
   the_display = make_display (width, height);
@@ -46,13 +49,11 @@ display_initialize_display (width, height)
 
 /* Clear all of the lines in DISPLAY making the screen blank. */
 void
-display_clear_display (display)
-     DISPLAY_LINE **display;
+display_clear_display (DISPLAY_LINE **display)
 {
   register int i;
-  register DISPLAY_LINE *display_line;
 
-  for (i = 0; (display_line = display[i]); i++)
+  for (i = 0; display[i]; i++)
     {
       display[i]->text[0] = '\0';
       display[i]->textlen = 0;
@@ -66,8 +67,7 @@ int display_was_interrupted_p = 0;
 /* Update the windows pointed to by WINDOW in the_display.  This actually
    writes the text on the screen. */
 void
-display_update_display (window)
-     WINDOW *window;
+display_update_display (WINDOW *window)
 {
   register WINDOW *win;
 
@@ -91,11 +91,36 @@ display_update_display (window)
   display_update_one_window (the_echo_area);
 }
 
+void
+handle_tag_start (char *tag)
+{
+  /* TODO really handle this tag.  */
+  return;
+}
+
+void
+handle_tag_end (char *tag)
+{
+  /* TODO really handle this tag.  */
+  return;
+}
+
+void
+handle_tag (char *tag)
+{
+    if (tag[0] == '/')
+      {
+	tag++;
+	handle_tag_end (tag);
+      }
+    else
+      handle_tag_start (tag);
+}
+
 /* Display WIN on the_display.  Unlike display_update_display (), this
    function only does one window. */
 void
-display_update_one_window (win)
-     WINDOW *win;
+display_update_one_window (WINDOW *win)
 {
   register char *nodetext;      /* Current character to display. */
   register char *last_node_char; /* Position of the last character in node. */
@@ -136,7 +161,7 @@ display_update_one_window (win)
 
   for (; nodetext < last_node_char; nodetext++)
     {
-      char *rep, *rep_carried_over, rep_temp[2];
+      char *rep = NULL, *rep_carried_over, rep_temp[2];
       int replen;
 
       if (isprint (*nodetext))
@@ -152,6 +177,43 @@ display_update_one_window (win)
             {
               replen = win->width - pl_index + pl_ignore;
             }
+	  else if (*nodetext == '\0'
+		   && (nodetext + 2) < last_node_char
+		   && *(nodetext + 1) == '\b'
+		   && *(nodetext + 2) == '[')
+	    {
+	      /* Found new style tag/cookie \0\b[
+		 Read until the closing tag \0\b] */
+	      int element_len = 0;
+	      char *element;
+
+	      /* Skip the escapes.  */
+	      nodetext += 3;
+
+	      while (!(*nodetext == '\0'
+		    && *(nodetext + 1) == '\b'
+		    && *(nodetext + 2) == ']'))
+		{
+		  nodetext++;
+		  element_len++;
+		}
+
+	      element = (char *) malloc (element_len + 1);
+	      strncpy (element, nodetext - element_len, element_len);
+
+	      /* Skip the escapes.  */
+	      nodetext += 2;
+	      pl_ignore += element_len + 5;
+	      /* Append string terminator.  */
+	      element[element_len] = '\0';
+
+	      handle_tag (element);
+
+	      /* Over and out */
+	      free (element);
+
+	      continue;
+	    }
           else
             {
               rep = printed_representation (*nodetext, pl_index);
@@ -211,7 +273,7 @@ display_update_one_window (win)
                  to the next line. */
               for (i = 0; pl_index < (win->width + pl_ignore - 1);)
                 printed_line[pl_index++] = rep[i++];
-              
+
               rep_carried_over = rep + i;
 
               /* If printing the last character in this window couldn't
@@ -233,8 +295,10 @@ display_update_one_window (win)
           entry = display[line_index + win->first_row];
 
           /* If the screen line is inversed, then we have to clear
-             the line from the screen first.  Why, I don't know. */
-          if (entry->inverse
+             the line from the screen first.  Why, I don't know.
+             (But don't do this if we have no visible entries, as can
+             happen if the window is shrunk very small.)  */
+          if ((entry && entry->inverse)
 	      /* Need to erase the line if it has escape sequences.  */
 	      || (raw_escapes_p && strchr (entry->text, '\033') != 0))
             {
@@ -272,7 +336,7 @@ display_update_one_window (win)
               fflush (stdout);
 
               /* Update the display text buffer. */
-	      if (strlen (printed_line) > screenwidth)
+	      if (strlen (printed_line) > (unsigned int) screenwidth)
 		/* printed_line[] can include more than screenwidth
 		   characters if we are under -R and there are escape
 		   sequences in it.  However, entry->text was
@@ -322,7 +386,7 @@ display_update_one_window (win)
               printed_line[0] = '\0';
 
               begin = nodetext;
-              
+
               while ((nodetext < last_node_char) && (*nodetext != '\n'))
                 nodetext++;
             }
@@ -384,8 +448,7 @@ display_update_one_window (win)
    for no scrolling to take place in the case that the terminal doesn't
    support it.  This doesn't matter to us. */
 void
-display_scroll_display (start, end, amount)
-     int start, end, amount;
+display_scroll_display (int start, int end, int amount)
 {
   register int i, last;
   DISPLAY_LINE *temp;
@@ -455,10 +518,8 @@ display_scroll_display (start, end, amount)
    starts that used to appear in this window.  OLD_COUNT is the number of lines
    that appear in the OLD_STARTS array. */
 void
-display_scroll_line_starts (window, old_pagetop, old_starts, old_count)
-     WINDOW *window;
-     int old_pagetop, old_count;
-     char **old_starts;
+display_scroll_line_starts (WINDOW *window, int old_pagetop,
+    char **old_starts, int old_count)
 {
   register int i, old, new;     /* Indices into the line starts arrays. */
   int last_new, last_old;       /* Index of the last visible line. */
@@ -530,8 +591,7 @@ display_scroll_line_starts (window, old_pagetop, old_starts, old_count)
 
 /* Move the screen cursor to directly over the current character in WINDOW. */
 void
-display_cursor_at_point (window)
-     WINDOW *window;
+display_cursor_at_point (WINDOW *window)
 {
   int vpos, hpos;
 
@@ -549,8 +609,7 @@ display_cursor_at_point (window)
 
 /* Make a DISPLAY_LINE ** with width and height. */
 static DISPLAY_LINE **
-make_display (width, height)
-     int width, height;
+make_display (int width, int height)
 {
   register int i;
   DISPLAY_LINE **display;
@@ -570,8 +629,7 @@ make_display (width, height)
 
 /* Free the storage allocated to DISPLAY. */
 static void
-free_display (display)
-     DISPLAY_LINE **display;
+free_display (DISPLAY_LINE **display)
 {
   register int i;
   register DISPLAY_LINE *display_line;

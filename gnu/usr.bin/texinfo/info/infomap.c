@@ -1,7 +1,8 @@
 /* infomap.c -- keymaps for Info.
-   $Id: infomap.c,v 1.4 2002/06/10 13:51:03 espie Exp $
+   $Id: infomap.c,v 1.5 2006/07/17 16:12:36 espie Exp $
 
-   Copyright (C) 1993, 97, 98, 99, 2001, 02 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,10 +30,13 @@
 #include "variables.h"
 #endif /* INFOKEY */
 
+static int keymap_bind_keyseq (Keymap map, const char *keyseq,
+    KEYMAP_ENTRY *keyentry);
+
 /* Return a new keymap which has all the uppercase letters mapped to run
    the function info_do_lowercase_version (). */
 Keymap
-keymap_make_keymap ()
+keymap_make_keymap (void)
 {
   int i;
   Keymap keymap;
@@ -58,85 +62,196 @@ keymap_make_keymap ()
   return (keymap);
 }
 
+#if defined(INFOKEY)
+static FUNCTION_KEYSEQ *
+find_function_keyseq (Keymap map, int c, Keymap rootmap)
+{
+  FUNCTION_KEYSEQ *k;
+
+  if (map[c].type != ISFUNC)
+    abort();
+  if (map[c].function == NULL)
+    return NULL;
+  for (k = map[c].function->keys; k; k = k->next)
+    {
+      const unsigned char *p;
+      Keymap m = rootmap;
+      if (k->map != rootmap)
+	continue;
+      for (p = (unsigned char *) k->keyseq; *p && m[*p].type == ISKMAP; p++)
+	m = (Keymap)m[*p].function;
+      if (*p != c || p[1])
+	continue;
+      if (m[*p].type != ISFUNC)
+	abort ();
+      break;
+    }
+  return k;
+}
+
+static void
+add_function_keyseq (InfoCommand *function,
+    const char *keyseq, Keymap rootmap)
+{
+  FUNCTION_KEYSEQ *ks;
+
+  if (function == NULL ||
+      function == InfoCmd(info_do_lowercase_version) ||
+      function == InfoCmd(ea_insert))
+    return;
+  ks = (FUNCTION_KEYSEQ *)xmalloc (sizeof(FUNCTION_KEYSEQ));
+  ks->next = function->keys;
+  ks->map = rootmap;
+  ks->keyseq = xstrdup(keyseq);
+  function->keys = ks;
+}
+
+static void
+remove_function_keyseq (InfoCommand *function,
+    const char *keyseq, Keymap rootmap)
+{
+
+  FUNCTION_KEYSEQ *k, *kp;
+
+  if (function == NULL ||
+      function == InfoCmd(info_do_lowercase_version) ||
+      function == InfoCmd(ea_insert))
+    return;
+  for (kp = NULL, k = function->keys; k; kp = k, k = k->next)
+    if (k->map == rootmap && strcmp(k->keyseq, keyseq) == 0)
+      break;
+  if (!k)
+    abort ();
+  if (kp)
+    kp->next = k->next;
+  else
+    function->keys = k->next;
+}
+#endif /* INFOKEY */
+
 /* Return a new keymap which is a copy of MAP. */
 Keymap
-keymap_copy_keymap (map)
-     Keymap map;
+keymap_copy_keymap (Keymap map, Keymap rootmap, Keymap newroot)
 {
   int i;
   Keymap keymap;
+#if defined(INFOKEY)
+  FUNCTION_KEYSEQ *ks;
+#endif /* INFOKEY */
 
   keymap = keymap_make_keymap ();
+  if (!newroot)
+    newroot = keymap;
 
   for (i = 0; i < 256; i++)
     {
       keymap[i].type = map[i].type;
-      keymap[i].function = map[i].function;
+      switch (map[i].type)
+	{
+	case ISFUNC:
+	  keymap[i].function = map[i].function;
+#if defined(INFOKEY)
+	  ks = find_function_keyseq (map, i, rootmap);
+	  if (ks)
+	    add_function_keyseq(map[i].function, ks->keyseq, newroot);
+#endif /* INFOKEY */
+	  break;
+	case ISKMAP:
+	  keymap[i].function = (InfoCommand *)keymap_copy_keymap
+            ((Keymap)map[i].function, rootmap, NULL);
+	  break;
+	}
     }
   return (keymap);
 }
 
 /* Free the keymap and its descendants. */
 void
-keymap_discard_keymap (map)
-     Keymap (map);
+keymap_discard_keymap (Keymap map, Keymap rootmap)
 {
   int i;
 
   if (!map)
     return;
+  if (!rootmap)
+    rootmap = map;
 
   for (i = 0; i < 256; i++)
     {
+#if defined(INFOKEY)
+      FUNCTION_KEYSEQ *ks;
+#endif /* INFOKEY */
       switch (map[i].type)
         {
         case ISFUNC:
+#if defined(INFOKEY)
+	  ks = find_function_keyseq(map, i, rootmap);
+	  if (ks)
+	    remove_function_keyseq (map[i].function, ks->keyseq, rootmap);
+#endif /* INFOKEY */
           break;
 
         case ISKMAP:
-          keymap_discard_keymap ((Keymap)map[i].function);
+          keymap_discard_keymap ((Keymap)map[i].function, rootmap);
           break;
 
         }
     }
+  free(map);
 }
 
 /* Conditionally bind key sequence. */
-int
-keymap_bind_keyseq (map, keyseq, keyentry)
-     Keymap map;
-     const unsigned char *keyseq;
-     KEYMAP_ENTRY *keyentry;
+static int
+keymap_bind_keyseq (Keymap map,
+    const char *keyseq, KEYMAP_ENTRY *keyentry)
 {
   Keymap m = map;
-  const unsigned char *s = keyseq;
+  const unsigned char *s = (unsigned char *) keyseq;
   int c;
 
   if (s == NULL || *s == '\0') return 0;
 
   while ((c = *s++) != '\0')
     {
+#if defined(INFOKEY)
+      FUNCTION_KEYSEQ *ks;
+#endif /* INFOKEY */
       switch (m[c].type)
         {
         case ISFUNC:
+#if defined(INFOKEY)
+	  ks = find_function_keyseq(m, c, map);
+	  if (ks)
+	    remove_function_keyseq (m[c].function, ks->keyseq, map);
+#else /* !INFOKEY */
           if (!(m[c].function == NULL || (
-#if !defined(INFOKEY)
                 m != map &&
-#endif /* !INFOKEY */
                 m[c].function == InfoCmd(info_do_lowercase_version))
 	      ))
             return 0;
+#endif /* !INFOKEY */
 
           if (*s != '\0')
             {
               m[c].type = ISKMAP;
+              /* Here we are casting the Keymap pointer returned from
+                 keymap_make_keymap to an InfoCommand pointer.  Ugh.
+                 This makes the `function' structure garbage
+                 if it's actually interpreted as an InfoCommand.
+                 Should really be using a union, and taking steps to
+                 avoid the possible error.  */
               m[c].function = (InfoCommand *)keymap_make_keymap ();
             }
           break;
 
         case ISKMAP:
+#if defined(INFOKEY)
+	  if (*s == '\0')
+	    keymap_discard_keymap ((Keymap)m[c].function, map);
+#else /* !INFOKEY */
           if (*s == '\0')
             return 0;
+#endif
           break;
         }
       if (*s != '\0')
@@ -146,18 +261,7 @@ keymap_bind_keyseq (map, keyseq, keyentry)
       else
         {
 #if defined(INFOKEY)
-	  FUNCTION_KEYSEQ *k;
-
-	  for (k = keyentry->function->keys; k && k->map != map; k = k->next)
-	    ;
-	  if (!k)
-	    {
-	      FUNCTION_KEYSEQ *ks = (FUNCTION_KEYSEQ *)xmalloc (sizeof(FUNCTION_KEYSEQ));
-	      ks->next = keyentry->function->keys;
-	      ks->map = map;
-	      ks->keyseq = xstrdup (keyseq);
-	      keyentry->function->keys = ks;
-	    }
+	  add_function_keyseq (keyentry->function, keyseq, map);
 #endif /* INFOKEY */
           m[c] = *keyentry;
         }
@@ -505,8 +609,8 @@ initialize_vi_like_keymaps ()
   map['b'].function = ea_backward_word;
   map['d'].function = ea_kill_word;
   map['f'].function = ea_forward_word;
-  map['h'].function = ea_forward;
-  map['l'].function = ea_backward;
+  map['h'].function = ea_backward;
+  map['l'].function = ea_forward;
   map['w'].function = ea_forward_word;
   map['x'].function = ea_delete;
   map['X'].function = ea_kill_word;
@@ -600,8 +704,8 @@ initialize_vi_like_keymaps ()
   map['H'].function = info_get_help_window;
   map['i'].function = info_index_search;
   map['I'].function = info_goto_invocation_node;
-  map['j'].function = info_down_line;
-  map['k'].function = info_up_line;
+  map['j'].function = info_next_line;
+  map['k'].function = info_prev_line;
   map['l'].function = info_history_node;
   map['m'].function = info_menu_item;
   map['n'].function = info_search_next;
@@ -1078,8 +1182,8 @@ static unsigned char default_vi_like_info_keys[] =
 	'H', NUL,			A_info_get_help_window,
 	'i', NUL,			A_info_index_search,
 	'I', NUL,			A_info_goto_invocation_node,
-	'j', NUL,			A_info_down_line,
-	'k', NUL,			A_info_up_line,
+	'j', NUL,			A_info_next_line,
+	'k', NUL,			A_info_prev_line,
 	'l', NUL,			A_info_history_node,
 	'm', NUL,			A_info_menu_item,
 	'n', NUL,			A_info_search_next,
@@ -1317,8 +1421,7 @@ static unsigned int user_vars_len;
  * Return the size of a file, or 0 if the size can't be determined.
  */
 static unsigned long
-filesize(f)
-	int f;
+filesize(int f)
 {
 	long pos = lseek(f, 0L, SEEK_CUR);
 	long sz = -1L;
@@ -1334,8 +1437,7 @@ filesize(f)
    Integers are stored as two bytes, low order first, in radix INFOKEY_RADIX.
  */
 static int
-getint(sp)
-	unsigned char **sp;
+getint(unsigned char **sp)
 {
 	int n;
 
@@ -1350,7 +1452,7 @@ getint(sp)
 /* Fetch the contents of the standard infokey file "$HOME/.info".  Return
    true if ok, false if not.  */
 static int
-fetch_user_maps()
+fetch_user_maps(void)
 {
 	char *filename = NULL;
 	char *homedir;
@@ -1378,9 +1480,10 @@ fetch_user_maps()
 #endif
 	if (filename == NULL || (f = open(filename, O_RDONLY)) == (-1))
 	{
-		if (filename)
+		if (filename && errno != ENOENT)
 		{
-			info_error(filesys_error_string(filename, errno));
+			info_error(filesys_error_string(filename, errno),
+                            NULL, NULL);
 			free(filename);
 		}
 		return 0;
@@ -1394,11 +1497,11 @@ fetch_user_maps()
 		/* Bad file (a valid file must have at least 9 chars, and
 		   more than 100 KB is a problem). */
 		if (len < INFOKEY_NMAGIC + 2)
-			info_error(_("Ignoring invalid infokey file `%s' - too small"),
-				   filename);
+			info_error((char *) _("Ignoring invalid infokey file `%s' - too small"),
+				   filename, NULL);
 		else
-			info_error(_("Ignoring invalid infokey file `%s' - too big"),
-				   filename);
+			info_error((char *) _("Ignoring invalid infokey file `%s' - too big"),
+				   filename, NULL);
 		close(f);
 		free(filename);
 		return 0;
@@ -1408,9 +1511,10 @@ fetch_user_maps()
 	buf = (unsigned char *)xmalloc((int)len);
 	nread = read(f, buf, (unsigned int) len);
 	close(f);
-	if (nread != len)
+	if ((unsigned int) nread != len)
 	{
-		info_error(_("Error reading infokey file `%s' - short read"), filename);
+		info_error((char *) _("Error reading infokey file `%s' - short read"),
+                    filename, NULL);
 		free(buf);
 		free(filename);
 		return 0;
@@ -1428,26 +1532,33 @@ fetch_user_maps()
 		|| buf[len - 1] != INFOKEY_MAGIC_E3
 	)
 	{
-		info_error(_("Invalid infokey file `%s' (bad magic numbers) -- run infokey to update it"), filename);
+		info_error((char *) _("Invalid infokey file `%s' (bad magic numbers) -- run infokey to update it"),
+                    filename, NULL);
 		free(filename);
 		return 0;
 	}
-	if (len < INFOKEY_NMAGIC + strlen(VERSION) + 1 || strcmp(VERSION, buf + 4) != 0)
+	if (len < INFOKEY_NMAGIC + strlen(VERSION) + 1
+            || strcmp(VERSION, (char *) (buf + 4)) != 0)
 	{
-		info_error(_("Your infokey file `%s' is out of date -- run infokey to update it"), filename);
+		info_error
+                  ((char *) _("Your infokey file `%s' is out of date -- run infokey to update it"),
+                    filename, NULL);
 		free(filename);
 		return 0;
 	}
 
 	/* Extract the pieces.  */
-	for (p = buf + 4 + strlen(VERSION) + 1; p - buf < len - 4; p += n)
+	for (p = buf + 4 + strlen(VERSION) + 1;
+             (unsigned int) (p - buf) < len - 4;
+             p += n)
 	{
 		int s = *p++;
 
 		n = getint(&p);
-		if (n < 0 || n > len - 4 - (p - buf))
+		if (n < 0 || (unsigned int) n > len - 4 - (p - buf))
 		{
-			info_error(_("Invalid infokey file `%s' (bad section length) -- run infokey to update it"), filename);
+			info_error((char *) _("Invalid infokey file `%s' (bad section length) -- run infokey to update it"),
+                            filename, NULL);
 			free(filename);
 			return 0;
 		}
@@ -1467,7 +1578,8 @@ fetch_user_maps()
 			user_vars_len = n;
 			break;
 		default:
-			info_error(_("Invalid infokey file `%s' (bad section code) -- run infokey to update it"), filename);
+			info_error((char *) _("Invalid infokey file `%s' (bad section code) -- run infokey to update it"),
+                            filename, NULL);
 			free(filename);
 			return 0;
 		}
@@ -1482,27 +1594,26 @@ fetch_user_maps()
    doesn't define.
  */
 static int
-decode_keys(src, slen, dst, dlen)
-	unsigned char *src;
-	unsigned int slen;
-	unsigned char *dst;
-	unsigned int dlen;
+decode_keys(unsigned char *src, unsigned int slen,
+    unsigned char *dst, unsigned int dlen)
 {
 	unsigned char *s = src;
 	unsigned char *d = dst;
 
-#define To_dst(c) do { if (d - dst < dlen) *d++ = (c); } while (0)
+#define To_dst(c) do { \
+  if ((unsigned int) (d - dst) < dlen) *d++ = (c); \
+} while (0)
 
-	while (s - src < slen)
+	while ((unsigned int) (s - src) < slen)
 	{
 		unsigned char c = ISMETA(*s) ? UNMETA(*s) : *s;
 
 		if (c == SK_ESCAPE)
 		{
-			unsigned char *t;
+			char *t;
 			static char lit[] = { SK_ESCAPE, NUL };
 
-			switch (s + 1 - src < slen ? s[1] : '\0')
+			switch ((unsigned int) (s + 1 - src) < slen ? s[1] : '\0')
 			{
 			case SK_RIGHT_ARROW:	t = term_kr; break;
 			case SK_LEFT_ARROW:	t = term_kl; break;
@@ -1543,21 +1654,17 @@ decode_keys(src, slen, dst, dlen)
 /* Convert an infokey file section to keymap bindings.  Return false if
    the default bindings are to be suppressed.  */
 static int
-section_to_keymaps(map, table, len)
-	Keymap map;
-	unsigned char *table;
-	unsigned int len;
+section_to_keymaps(Keymap map, unsigned char *table, unsigned int len)
 {
 	int stop;
 	unsigned char *p;
-	unsigned char *seq;
-	unsigned int seqlen;
-	KEYMAP_ENTRY ke;
+	unsigned char *seq = NULL;
+	unsigned int seqlen = 0;
 	enum { getseq, gotseq, getaction } state = getseq;
 
 	stop = len > 0 ? table[0] : 0;
 
-	for (p = table + 1; p - table < len; p++)
+	for (p = table + 1; (unsigned int) (p - table) < len; p++)
 	{
 		switch (state)
 		{
@@ -1598,30 +1705,30 @@ section_to_keymaps(map, table, len)
 					  action < A_NCOMMANDS
 					  ? &function_doc_array[action]
 					  : NULL;
-					keymap_bind_keyseq(map, keyseq, &ke);
+					keymap_bind_keyseq(map,
+                                            (const char *) keyseq, &ke);
 				}
 			}
 			break;
 		}
 	}
 	if (state != getseq)
-		info_error(_("Bad data in infokey file -- some key bindings ignored"));
+		info_error((char *) _("Bad data in infokey file -- some key bindings ignored"),
+                    NULL, NULL);
 	return !stop;
 }
 
 /* Convert an infokey file section to variable settings.
  */
 static void
-section_to_vars(table, len)
-	unsigned char *table;
-	unsigned int len;
+section_to_vars(unsigned char *table, unsigned int len)
 {
 	enum { getvar, gotvar, getval, gotval } state = getvar;
 	unsigned char *var = NULL;
 	unsigned char *val = NULL;
 	unsigned char *p;
 
-	for (p = table; p - table < len; p++)
+	for (p = table; (unsigned int) (p - table) < len; p++)
 	  {
 	    switch (state)
 	      {
@@ -1649,23 +1756,23 @@ section_to_vars(table, len)
 	      case gotval:
 		if (!*p)
 		  {
-		    set_variable_to_value(var, val);
+		    set_variable_to_value((char *) var, (char *) val);
 		    state = getvar;
 		  }
 		break;
 	      }
 	  }
       if (state != getvar)
-	info_error(_("Bad data in infokey file -- some var settings ignored"));
+	info_error((char *) _("Bad data in infokey file -- some var settings ignored"),
+            NULL, NULL);
 }
 
 void
-initialize_info_keymaps ()
+initialize_info_keymaps (void)
 {
   int i;
   int suppress_info_default_bindings = 0;
   int suppress_ea_default_bindings = 0;
-  Keymap map;
 
   if (!info_keymap)
     {
@@ -1721,3 +1828,4 @@ initialize_info_keymaps ()
 }
 
 #endif /* defined(INFOKEY) */
+/* vim: set sw=2 cino={1s>2sn-s^-se-s: */

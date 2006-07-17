@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.5 2002/12/13 03:12:26 millert Exp $
+# $Id: Makefile.am,v 1.6 2006/07/17 16:12:36 espie Exp $
 # Makefile.am for texinfo/lib.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -14,8 +14,8 @@ noinst_LIBRARIES = libtxi.a
 INCLUDES = -I../intl
 
 # Don't need to list alloca.c, etc., Automake includes them.
-libtxi_a_SOURCES = gettext.h substring.c system.h xexit.c xmalloc.c xstrdup.c
-libtxi_a_LIBADD = @LIBOBJS@ @ALLOCA@
+libtxi_a_SOURCES = gettext.h substring.c system.h xalloc.h xexit.c xmalloc.c xstrdup.c
+libtxi_a_LIBADD = $(LIBOBJS) $(ALLOCA)
 libtxi_a_DEPENDENCIES = $(libtxi_a_LIBADD)
 
 ## xx configure for bzero?, clib, other common stuff
