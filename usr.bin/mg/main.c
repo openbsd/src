@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2006/06/01 05:34:52 jason Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2006/07/17 14:11:55 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -20,13 +20,24 @@ int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start		*/
-struct buffer		*curbp;				/* current buffer	*/
-struct buffer		*bheadp;			/* BUFFER list head	*/
-struct mgwin		*curwp;				/* current window	*/
-struct mgwin		*wheadp;			/* MGWIN listhead	*/
+struct buffer 	*curbp;				/* current buffer	*/
+struct buffer	*bheadp;			/* BUFFER list head	*/
+struct mgwin	*curwp;				/* current window	*/
+struct mgwin	*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
 static void	 edinit(PF);
+static __dead void usage(void);
+
+extern char	*__progname;
+
+static __dead void
+usage()
+{
+	fprintf(stderr, "usage: %s [+line] [-hn] [-f mode] [file ...]\n",
+	    __progname);
+	exit(1);
+}
 
 int
 main(int argc, char **argv)
@@ -36,7 +47,7 @@ main(int argc, char **argv)
 	int	 o, i, nfiles;
 	int	 nobackups = 0;
 
-	while ((o = getopt(argc, argv, "nf:")) != -1)
+	while ((o = getopt(argc, argv, "hnf:")) != -1)
 		switch (o) {
 		case 'n':
 			nobackups = 1;
@@ -47,8 +58,10 @@ main(int argc, char **argv)
 				    "initial function");
 			init_fcn_name = optarg;
 			break;
+		case 'h':
+			/* FALLTHRU */
 		default:
-			errx(1, "usage: mg [options] [file ...]");
+			usage();
 		}
 	argc -= optind;
 	argv += optind;
