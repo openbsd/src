@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1100 2006/07/17 14:59:48 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1101 2006/07/17 20:26:37 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7339,6 +7339,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Packet Engines G-NIC",
 	},
 	{
+	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_PI7C21P100,
+	    "PI7C21P100 PCIX-PCIX",
+	},
+	{
 	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
 	    "FNW-3603-TX 10/100",
 	},
@@ -12157,6 +12161,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_STB2,
 	    "NVIDIA/SGS-Thomson",
+	},
+	{
+	    PCI_VENDOR_PERICOM,
+	    "Pericom",
 	},
 	{
 	    PCI_VENDOR_AUREAL,
