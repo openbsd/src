@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1099 2006/07/15 20:12:13 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1100 2006/07/17 14:59:48 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -271,6 +271,7 @@ vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
 vendor	HAWKING		0x17b3	Hawking Technology
+vendor	ARECA		0x17d3	Areca
 vendor	NETERION	0x17d5	Neterion
 vendor	INPROCOMM	0x17fe	INPROCOMM
 vendor	LANERGY		0x1812	Lanergy
@@ -731,6 +732,16 @@ product ARC 1000PV		0xa091	1000PV
 product ARC 2000PV		0xa099	2000PV
 product ARC 2000MT		0xa0a1	2000MT
 product ARC 2000MI		0xa0a9	2000MI
+
+/* Areca products */
+product ARECA ARC1110		0x1110	ARC-1110
+product ARECA ARC1120		0x1120	ARC-1120
+product ARECA ARC1130		0x1130	ARC-1130
+product ARECA ARC1160		0x1160	ARC-1160
+product ARECA ARC1210		0x1210	ARC-1210
+product ARECA ARC1220		0x1220	ARC-1220
+product ARECA ARC1230		0x1230	ARC-1230
+product ARECA ARC1260		0x1260	ARC-1260
 
 /* ASIX Electronics products */
 product ASIX AX88140A		0x1400	AX88140A/88141
