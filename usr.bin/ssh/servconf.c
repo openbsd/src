@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.155 2006/07/17 01:31:09 stevesk Exp $ */
+/* $OpenBSD: servconf.c,v 1.156 2006/07/17 12:06:00 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -29,6 +29,7 @@
 #include "kex.h"
 #include "mac.h"
 #include "match.h"
+#include "channels.h"
 
 static void add_listen_addr(ServerOptions *, char *, u_short);
 static void add_one_listen_addr(ServerOptions *, char *, u_short);
@@ -256,7 +257,7 @@ typedef enum {
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval,
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
 	sGssAuthentication, sGssCleanupCreds, sAcceptEnv, sPermitTunnel,
-	sMatch,
+	sMatch, sPermitOpen,
 	sUsePrivilegeSeparation,
 	sDeprecated, sUnsupported
 } ServerOpCodes;
@@ -354,6 +355,7 @@ static struct {
 	{ "acceptenv", sAcceptEnv, SSHCFG_GLOBAL },
 	{ "permittunnel", sPermitTunnel, SSHCFG_GLOBAL },
 	{ "match", sMatch, SSHCFG_ALL },
+	{ "permitopen", sPermitOpen, SSHCFG_ALL },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -1104,6 +1106,28 @@ parse_flag:
 			fatal("%s line %d: Bad Match condition", filename,
 			    linenum);
 		*activep = value;
+		break;
+
+	case sPermitOpen:
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing PermitOpen specification",
+			    filename, linenum);
+		if (strcmp(arg, "any") == 0) {
+			if (*activep)
+				channel_clear_adm_permitted_opens();
+			break;
+		}
+		p = hpdelim(&arg);
+		if (p == NULL)
+			fatal("%s line %d: missing host in PermitOpen",
+			    filename, linenum);
+		p = cleanhostname(p);
+		if (arg == NULL || (port = a2port(arg)) == 0)
+			fatal("%s line %d: bad port number in PermitOpen",
+			    filename, linenum);
+		if (*activep)
+			channel_add_adm_permitted_opens(p, port);
 		break;
 
 	case sDeprecated:
