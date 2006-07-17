@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.109 2006/06/15 10:12:36 pascoe Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.110 2006/07/17 12:16:36 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -463,6 +463,9 @@ udp_input(struct mbuf *m, ...)
 					if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS))
 						ip6_savecontrol(inp, &opts, ip6, n);
 #endif /* INET6 */
+					if (ip && (inp->inp_flags & INP_CONTROLOPTS))
+						ip_savecontrol(inp, &opts, ip, n);
+
 					m_adj(n, iphlen);
 					if (sbappendaddr(&last->so_rcv,
 					    &srcsa.sa, n, opts) == 0) {
@@ -503,6 +506,9 @@ udp_input(struct mbuf *m, ...)
 		if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS))
 			ip6_savecontrol(inp, &opts, ip6, m);
 #endif /* INET6 */
+		if (ip && (inp->inp_flags & INP_CONTROLOPTS))
+			ip_savecontrol(inp, &opts, ip, m);
+
 		m_adj(m, iphlen);
 		if (sbappendaddr(&last->so_rcv,
 		    &srcsa.sa, m, opts) == 0) {
