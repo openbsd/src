@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1100 2006/07/17 14:59:48 dlg Exp $
+$OpenBSD: pcidevs,v 1.1101 2006/07/17 20:26:37 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ vendor	TRITECH		0x1292	TriTech Microelectronics
 vendor	ALTEON		0x12ae	Alteon
 vendor	USR		0x12b9	US Robotics
 vendor	STB2		0x12d2	NVIDIA/SGS-Thomson
+vendor	PERICOM		0x12d8	Pericom
 vendor	AUREAL		0x12eb	Aureal
 vendor	ADMTEK		0x1317	ADMtek
 vendor	PE		0x1318	Packet Engines
@@ -2450,6 +2451,9 @@ product SYMBIOS MSAS		0x0411	MegaRAID SAS 1064R
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
+
+/* Pericom products */
+product PERICOM PI7C21P100	0x01a7	PI7C21P100 PCIX-PCIX
 
 /* Planex products */
 product PLANEX FNW_3603_TX	0xab06	FNW-3603-TX 10/100
