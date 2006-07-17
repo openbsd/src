@@ -1,6 +1,6 @@
 /* intl-compat.c - Stub functions to call gettext functions from GNU gettext
    Library.
-   Copyright (C) 1995, 2000, 2001 Software Foundation, Inc.
+   Copyright (C) 1995, 2000-2003 Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -21,52 +21,18 @@
 # include <config.h>
 #endif
 
-#include "libgnuintl.h"
 #include "gettextP.h"
 
 /* @@ end of prolog @@ */
 
-/* This file redirects the gettext functions (without prefix or suffix) to
-   those defined in the included GNU gettext library (with "__" suffix).
-   It is compiled into libintl when the included GNU gettext library is
-   configured --with-included-gettext.
-
-   This redirection works also in the case that the system C library or
-   the system libintl library contain gettext/textdomain/... functions.
-   If it didn't, we would need to add preprocessor level redirections to
-   libgnuintl.h of the following form:
-
-#    define gettext gettext__
-#    define dgettext dgettext__
-#    define dcgettext dcgettext__
-#    define ngettext ngettext__
-#    define dngettext dngettext__
-#    define dcngettext dcngettext__
-#    define textdomain textdomain__
-#    define bindtextdomain bindtextdomain__
-#    define bind_textdomain_codeset bind_textdomain_codeset__
-
-   How does this redirection work? There are two cases.
-   A. When libintl.a is linked into an executable, it works because
-      functions defined in the executable always override functions in
-      the shared libraries.
-   B. When libintl.so is used, it works because
-      1. those systems defining gettext/textdomain/... in the C library
-         (namely, Solaris 2.4 and newer, and GNU libc 2.0 and newer) are
-         ELF systems and define these symbols as weak, thus explicitly
-         letting other shared libraries override it.
-      2. those systems defining gettext/textdomain/... in a standalone
-         libintl.so library (namely, Solaris 2.3 and newer) have this
-         shared library in /usr/lib, and the linker will search /usr/lib
-         *after* the directory where the GNU gettext library is installed.
-
-   A third case, namely when libintl.a is linked into a shared library
-   whose name is not libintl.so, is not supported. In this case, on
-   Solaris, when -lintl precedes the linker option for the shared library
-   containing GNU gettext, the system's gettext would indeed override
-   the GNU gettext. Anyone doing this kind of stuff must be clever enough
-   to 1. compile libintl.a with -fPIC, 2. remove -lintl from his linker
-   command line.  */
+/* This file redirects the gettext functions (without prefix) to those
+   defined in the included GNU libintl library (with "libintl_" prefix).
+   It is compiled into libintl in order to make the AM_GNU_GETTEXT test
+   of gettext <= 0.11.2 work with the libintl library >= 0.11.3 which
+   has the redirections primarily in the <libintl.h> include file.
+   It is also compiled into libgnuintl so that libgnuintl.so can be used
+   as LD_PRELOADable library on glibc systems, to provide the extra
+   features that the functions in the libc don't have (namely, logging).  */
 
 
 #undef gettext
@@ -80,87 +46,86 @@
 #undef bind_textdomain_codeset
 
 
+/* When building a DLL, we must export some functions.  Note that because
+   the functions are only defined for binary backward compatibility, we
+   don't need to use __declspec(dllimport) in any case.  */
+#if defined _MSC_VER && BUILDING_DLL
+# define DLL_EXPORTED __declspec(dllexport)
+#else
+# define DLL_EXPORTED
+#endif
+
+
+DLL_EXPORTED
 char *
-gettext (msgid)
-     const char *msgid;
+gettext (const char *msgid)
 {
-  return gettext__ (msgid);
+  return libintl_gettext (msgid);
 }
 
 
+DLL_EXPORTED
 char *
-dgettext (domainname, msgid)
-     const char *domainname;
-     const char *msgid;
+dgettext (const char *domainname, const char *msgid)
 {
-  return dgettext__ (domainname, msgid);
+  return libintl_dgettext (domainname, msgid);
 }
 
 
+DLL_EXPORTED
 char *
-dcgettext (domainname, msgid, category)
-     const char *domainname;
-     const char *msgid;
-     int category;
+dcgettext (const char *domainname, const char *msgid, int category)
 {
-  return dcgettext__ (domainname, msgid, category);
+  return libintl_dcgettext (domainname, msgid, category);
 }
 
 
+DLL_EXPORTED
 char *
-ngettext (msgid1, msgid2, n)
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
+ngettext (const char *msgid1, const char *msgid2, unsigned long int n)
 {
-  return ngettext__ (msgid1, msgid2, n);
+  return libintl_ngettext (msgid1, msgid2, n);
 }
 
 
+DLL_EXPORTED
 char *
-dngettext (domainname, msgid1, msgid2, n)
-     const char *domainname;
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
+dngettext (const char *domainname,
+	   const char *msgid1, const char *msgid2, unsigned long int n)
 {
-  return dngettext__ (domainname, msgid1, msgid2, n);
+  return libintl_dngettext (domainname, msgid1, msgid2, n);
 }
 
 
+DLL_EXPORTED
 char *
-dcngettext (domainname, msgid1, msgid2, n, category)
-     const char *domainname;
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
-     int category;
+dcngettext (const char *domainname,
+	    const char *msgid1, const char *msgid2, unsigned long int n,
+	    int category)
 {
-  return dcngettext__ (domainname, msgid1, msgid2, n, category);
+  return libintl_dcngettext (domainname, msgid1, msgid2, n, category);
 }
 
 
+DLL_EXPORTED
 char *
-textdomain (domainname)
-     const char *domainname;
+textdomain (const char *domainname)
 {
-  return textdomain__ (domainname);
+  return libintl_textdomain (domainname);
 }
 
 
+DLL_EXPORTED
 char *
-bindtextdomain (domainname, dirname)
-     const char *domainname;
-     const char *dirname;
+bindtextdomain (const char *domainname, const char *dirname)
 {
-  return bindtextdomain__ (domainname, dirname);
+  return libintl_bindtextdomain (domainname, dirname);
 }
 
 
+DLL_EXPORTED
 char *
-bind_textdomain_codeset (domainname, codeset)
-     const char *domainname;
-     const char *codeset;
+bind_textdomain_codeset (const char *domainname, const char *codeset)
 {
-  return bind_textdomain_codeset__ (domainname, codeset);
+  return libintl_bind_textdomain_codeset (domainname, codeset);
 }

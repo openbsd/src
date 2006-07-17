@@ -1,11 +1,16 @@
 #!/bin/sh
 # Test encoded accent info output.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 input=`basename $0`.txi
 output=`basename $0`.info
 
-../makeinfo --enable-encoding --no-split -I$srcdir $srcdir/$input
+# we expect two invalid encoded characters:
+# accent-text.txi:45: warning: invalid encoded character `#156'.
+# accent-text.txi:45: warning: invalid encoded character `#140'.
+# These are oe and OE, and they are not supported in Latin 1.
+../makeinfo --enable-encoding --no-split -I$srcdir $srcdir/$input 2>/dev/null
 exit_status=$?
 if test $exit_status = 0; then
   grep 'ì' $output >/dev/null \

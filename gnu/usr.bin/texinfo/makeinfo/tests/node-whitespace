@@ -1,6 +1,7 @@
 #!/bin/sh
 # Test whitespace collapse in node names.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 
 ../makeinfo $srcdir/node-whitespace.txi

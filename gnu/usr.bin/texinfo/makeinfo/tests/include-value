@@ -1,0 +1,22 @@
+#!/bin/sh
+# $Id: include-value,v 1.1.1.1 2006/07/17 16:03:49 espie Exp $
+# Test @value expansion in @include and @verbatiminclude names.
+
+unset TEXINFO_OUTPUT
+: ${srcdir=.}
+
+../makeinfo -I $srcdir $srcdir/include-value.txi
+exit_status=$?
+
+if test $exit_status = 0; then
+  # should have three instances of _included_,
+  # and three of {included}.
+  count=`grep _included_ include-value.info | wc -l`
+  test $count = 3 || exit_status=`expr $exit_status + 1`
+
+  count=`grep '{included}' include-value.info | wc -l`
+  test $count = 3 || exit_status=`expr $exit_status + 1`
+fi
+
+rm -f include-value.info
+exit $exit_status

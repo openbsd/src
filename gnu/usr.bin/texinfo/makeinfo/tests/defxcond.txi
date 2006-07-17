@@ -1,0 +1,18 @@
+\input texinfo
+@setfilename defxcond.info
+
+@c set this from the command line.
+@c set bar
+
+@c deffnx inside conditional.
+@deffn foo
+
+@ifset bar
+@deffnx bar
+@end ifset
+
+Documentation.
+
+@end deffn
+
+@bye

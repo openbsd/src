@@ -206,6 +206,9 @@ echo Running the ./configure script...
 sh ./configure @arguments
 if errorlevel 1 goto cfg_error
 rm arguments
+
+Rem Remove files created by the gl_FUNC_MKSTEMP test.
+rm co*.tmp
 echo Done.
 goto End
 

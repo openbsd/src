@@ -1,6 +1,7 @@
 #!/bin/sh
 # Test @@ in macro expansions, etc.  --eliz, 14nov99.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 ../makeinfo $srcdir/macro-at.txi || exit 1
 

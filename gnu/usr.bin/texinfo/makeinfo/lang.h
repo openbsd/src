@@ -1,7 +1,7 @@
 /* lang.h -- declarations for language codes etc.
-   $Id: lang.h,v 1.1.1.2 2002/06/10 13:21:18 espie Exp $
+   $Id: lang.h,v 1.1.1.3 2006/07/17 16:03:47 espie Exp $
 
-   Copyright (C) 1999, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -73,33 +73,35 @@ extern language_type language_table[];
 
 
 
-/* The document encoding. This is usefull if we working e.g.
- * with german Texinfo so we can produce correct german umlaut
- * while creating output (--no-headers ASCII like).
- */
+/* The document encoding. This is useful to produce true 8-bit
+   characters according to the @documentencoding.  */
+
 typedef enum {
-    no_encoding,
-    ISO_8859_1,    /* default for en, de, */
-    ISO_8859_2,    /* actualy not supported like the rest below */
-    ISO_8859_3,
-    ISO_8859_4,
-    ISO_8859_5,
-    ISO_8859_6,
-    ISO_8859_7,
-    ISO_8859_8,
-    ISO_8859_9,
-    ISO_8859_10,
-    ISO_8859_11,
-    ISO_8859_12,
-    ISO_8859_13,
-    ISO_8859_14,
-    ISO_8859_15,
-    last_encoding_code
+  no_encoding,
+  US_ASCII,
+  ISO_8859_1,
+  ISO_8859_2,
+  ISO_8859_3,    /* this and none of the rest are supported. */
+  ISO_8859_4,
+  ISO_8859_5,
+  ISO_8859_6,
+  ISO_8859_7,
+  ISO_8859_8,
+  ISO_8859_9,
+  ISO_8859_10,
+  ISO_8859_11,
+  ISO_8859_12,
+  ISO_8859_13,
+  ISO_8859_14,
+  ISO_8859_15,
+  last_encoding_code
 } encoding_code_type;
 
 /* The current document encoding, or null if not set.  */
 extern encoding_code_type document_encoding_code;
 
+/* If an encoding is not supported, just keep it as a string.  */
+extern char *unknown_encoding;
 
 /* Maps an HTML abbreviation to ISO and Unicode codes for a given code.  */
 
@@ -117,7 +119,8 @@ typedef struct
 typedef struct
 {
   encoding_code_type ec; /* document encoding type (see above enum) */
-  char *ecname;          /* encoding name like ISO-8859-1 */
+  char *encname;         /* encoding name like "iso-8859-1", valid in
+                            HTML and Emacs */
   iso_map_type *isotab;  /* address of ISO translation table */
 } encoding_type;
 
@@ -126,12 +129,20 @@ extern encoding_type encoding_table[];
 
 
 /* The commands.  */
-extern void cm_documentlanguage (), cm_documentencoding ();
+extern void cm_documentlanguage (void),
+     cm_documentencoding (void);
 
 /* Accents, other non-English characters.  */
-void cm_accent (), cm_special_char (), cm_dotless ();
+void cm_accent (int arg), cm_special_char (int arg),
+     cm_dotless (int arg, int start, int end);
 
-extern void cm_accent_umlaut (), cm_accent_acute (), cm_accent_cedilla (),
-  cm_accent_hat (), cm_accent_grave (), cm_accent_tilde ();
+extern void cm_accent_umlaut (int arg, int start, int end),
+     cm_accent_acute (int arg, int start, int end),
+     cm_accent_cedilla (int arg, int start, int end),
+     cm_accent_hat (int arg, int start, int end),
+     cm_accent_grave (int arg, int start, int end),
+     cm_accent_tilde (int arg, int start, int end);
+
+extern char *current_document_encoding (void);
 
 #endif /* not LANG_H */

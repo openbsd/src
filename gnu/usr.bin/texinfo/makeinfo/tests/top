@@ -1,6 +1,7 @@
 #!/bin/sh
 # Test that a top node can be ignored.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 ../makeinfo $srcdir/top.txi || exit 1
 

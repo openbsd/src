@@ -1,0 +1,1 @@
+This is the @emph{included} file (include-value2.txi).

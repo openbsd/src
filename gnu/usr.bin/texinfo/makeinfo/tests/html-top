@@ -1,0 +1,13 @@
+#!/bin/sh
+# Test that a bare top node does not crash with --html.
+
+: ${srcdir=.}
+
+# But this input file is erroneous, so throw away errors.
+../makeinfo --no-split --force -o html-top.html --html $srcdir/html-top.txi \
+2>/dev/null
+test -s html-top.html
+exit_status=$?
+
+rm -f html-top.html
+exit $exit_status

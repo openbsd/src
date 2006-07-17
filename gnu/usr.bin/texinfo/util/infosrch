@@ -1,0 +1,104 @@
+#!/usr/local/bin/perl -w
+# $Id: infosrch,v 1.1.1.1 2006/07/17 16:03:50 espie Exp $
+# infosrch does a regex search on an info manual.
+# By Harry Putnam <reader@newsguy.com>.
+
+($myscript = $0) =~ s:^.*/::; 
+$six = '';
+
+if($ARGV[0] eq "help"){
+   &usage;
+   exit;
+}
+if($ARGV[0] eq "-e"){
+   shift;
+   $six = "true";
+}
+if(!$ARGV[1]){
+   &usage;
+   exit;
+}
+
+$target = shift;
+$regex  = shift;
+
+$shell_proc  =  "info --output - --subnodes 2>/dev/null $target";
+
+open(SHELL_PROC," $shell_proc|");
+while(<SHELL_PROC>){
+  chomp;
+  push @lines,$_;
+} 
+close(SHELL_PROC);
+$cnt = 0;
+for(@lines){
+   if(/$regex/ && !$six){
+      print "$target\n   $lines[($cnt-1)]\n<$cnt> $lines[$cnt]\n   $lines[($cnt+1)]\n";
+      print "-- \n";
+   }elsif(/$regex/ && $six){
+        print "$target\n";
+        if($lines[($cnt-6)]){
+           print "    $lines[($cnt-6)]\n";
+        }
+        if($lines[($cnt-5)]){
+           print "    $lines[($cnt-5)]\n";
+        }
+        if($lines[($cnt-4)]){
+           print "    $lines[($cnt-4)]\n";
+        }
+        if($lines[($cnt-3)]){
+           print "    $lines[($cnt-3)]\n";
+        }
+        if($lines[($cnt-2)]){
+           print "    $lines[($cnt-2)]\n";
+        }
+        if($lines[($cnt-1)]){
+           print "    $lines[($cnt-1)]\n";
+        }
+        if($lines[$cnt]){
+           print "$cnt $lines[$cnt]\n";
+        }
+        if($lines[($cnt+1)]){
+           print "    $lines[($cnt+1)]\n";
+        }
+        if($lines[($cnt+2)]){
+           print "    $lines[($cnt+2)]\n";
+        }
+        if($lines[($cnt+3)]){
+           print "    $lines[($cnt+3)]\n";
+        }
+        if($lines[($cnt+4)]){
+           print "    $lines[($cnt+4)]\n";
+        }
+        if($lines[($cnt+5)]){
+           print "    $lines[($cnt+5)]\n";
+        }
+        if($lines[($cnt+6)]){
+           print "    $lines[($cnt+6)]\n";
+        }
+        print "-- \n";
+     }
+     $cnt++;
+}        
+
+sub usage {
+  print <<EOM;
+
+Purpose: Extract full text from info node and search it by regex
+Usage: $myscript [-e] TARGET REGEX
+
+Where TARGET is an info node such as `emacs', `bash' etc, and
+REGEX is what you want to find in it.
+
+The -e flag is not required but if used then 6 lines preceding and six
+lines following any hits will be printed.  The default (with no -e flag)
+is to print one line before and after.
+
+The output has the line number prepended to the line containing the
+actual regex.
+
+Info command used:
+  info --output - --subnodes 2>/dev/null TARGET
+
+EOM
+}

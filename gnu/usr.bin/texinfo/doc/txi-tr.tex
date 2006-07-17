@@ -1,0 +1,82 @@
+% txi-en.tex -- adaptation to Turkish for texinfo.tex.
+% $Id: txi-tr.tex,v 1.1.1.1 2006/07/17 16:03:58 espie Exp $
+%
+% Copyright (C) 2003 Free Software Foundation, Inc.
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2, or (at your option)
+% any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+%
+% Written by Alper Ersoy, 5 January 2003, <aersoy@tfz.net>
+%
+%%
+%% Turkish translations of the used words.
+%%
+%%
+\gdef\putwordAppendix{Ek}
+\gdef\putwordChapter{Kesim}
+\gdef\putwordfile{dosya}
+\gdef\putwordInfo{Bilgi}
+\gdef\putwordpage{Sayfa}
+\gdef\putwordsection{b\"ol\"um}
+\gdef\putwordSection{B\"ol\"um}
+\gdef\putwordsee{bkz.}
+\gdef\putwordSee{Bkz.}
+\gdef\putwordShortTOC{\dotaccent{I}\,cindekiler (K\dotless{i}saca)}
+\gdef\putwordTOC{\dotaccent{I}\,cindekiler}
+%%
+%% This one really sucks :\
+\gdef\putwordMethodon{S\dotless{i}n\dotless{i}f:}
+%%
+%% I could not translate these ones, need examples :\
+%% If anybody out there is using these in turkish, please
+%% don't hesitate to send me patches ;)
+\gdef\putwordin{in}
+\gdef\putwordon{on}
+\gdef\putwordof{of}
+%%
+%%
+\gdef\putwordNoTitle{Ba\,sl\dotless{i}s\dotless{i}z}
+\gdef\putwordIndexNonexistent{(Dizin bulunmamakta)}
+\gdef\putwordIndexIsEmpty{(Dizin bo\,s)}
+%%
+%% Months
+\gdef\putwordMJan{Ocak}
+\gdef\putwordMFeb{\,Subat}
+\gdef\putwordMMar{Mart}
+\gdef\putwordMApr{Nisan}
+\gdef\putwordMMai{May\dotless{i}s}
+\gdef\putwordMJun{Haziran}
+\gdef\putwordMJul{Temmuz}
+\gdef\putwordMAug{A\u{g}ustos}
+\gdef\putwordMSep{Eyl\"ul}
+\gdef\putwordMOct{Ekim}
+\gdef\putwordMNov{Kas\dotless{i}m}
+\gdef\putwordMDec{Aral\dotless{i}k}
+%%
+%% Definitions
+\gdef\putwordDefmac{Makro}
+\gdef\putwordDefspec{\"Ozel Yap\dotless{i}}
+\gdef\putwordDefopt{Se\,cenek}
+\gdef\putwordDefvar{De\u{g}i\,sken}
+\gdef\putwordDeffunc{Fonksiyon}
+%%
+% Produces Day Month Year style of output.
+\def\today{%
+  \number\day\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMay\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}

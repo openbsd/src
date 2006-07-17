@@ -1,5 +1,5 @@
 /* Implementation of the dcngettext(3) function.
-   Copyright (C) 1995-1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -37,19 +37,16 @@
 # define DCNGETTEXT __dcngettext
 # define DCIGETTEXT __dcigettext
 #else
-# define DCNGETTEXT dcngettext__
-# define DCIGETTEXT dcigettext__
+# define DCNGETTEXT libintl_dcngettext
+# define DCIGETTEXT libintl_dcigettext
 #endif
 
 /* Look up MSGID in the DOMAINNAME message catalog for the current CATEGORY
    locale.  */
 char *
-DCNGETTEXT (domainname, msgid1, msgid2, n, category)
-     const char *domainname;
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
-     int category;
+DCNGETTEXT (const char *domainname,
+	    const char *msgid1, const char *msgid2, unsigned long int n,
+	    int category)
 {
   return DCIGETTEXT (domainname, msgid1, msgid2, 1, n, category);
 }

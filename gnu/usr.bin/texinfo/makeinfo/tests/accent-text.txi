@@ -54,7 +54,7 @@ es-zet or sharp S: @ss{}
 
 pounds sterling: @pounds{}      
 
-@c arg is command
+@c arg is command -- @dotless{i} is special-cased for HTML
 should be dotless i`: @`{@dotless{i}}
 
 should be dotless i': @'{@dotless{i}}
@@ -62,3 +62,12 @@ should be dotless i': @'{@dotless{i}}
 should be dotless i^: @^{@dotless{i}}
 
 should be dotless i": @"{@dotless{i}}
+
+@c arg is command -- @dotless{j}
+should be dotless j`: @`{@dotless{j}}
+
+should be dotless j': @'{@dotless{j}}
+
+should be dotless j^: @^{@dotless{j}}
+
+should be dotless j": @"{@dotless{j}}

@@ -17,8 +17,7 @@ if [ -z "$dir" ]; then
   dir='.'
 fi
 
-if [ \( 2 -lt $# \) -o \
-     \( ! -f $dir/texinfo.tex \)   ]; then
+if [ 2 -lt $# ] || [ ! -f "$dir/texinfo.tex" ]; then
   echo "To patch texinfo.tex for peaceful coexistence with Unix TeX 3.0,"
   echo "run    $0"
   echo "with no arguments in the same directory as texinfo.tex; or run"
@@ -36,7 +35,7 @@ echo "Checking for \`dummy.tfm'"
 ( cd $TMPDIR; tex '\relax \batchmode \font\foo=dummy \bye' )
 
 grep -s '3.0' $TMPDIR/texput.log
-if [ 1 = "$?" -a "$ANYVERSION" != "yes" ]; then
+if [ 1 = "$?" ] && [ "$ANYVERSION" != "yes" ]; then
 	echo "You probably do not need this patch,"
         echo "since your TeX does not seem to be version 3.0."
 	echo "If you insist on applying the patch, run $0"

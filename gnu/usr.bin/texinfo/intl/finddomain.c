@@ -1,5 +1,5 @@
 /* Handle list of needed message catalogs
-   Copyright (C) 1995-1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1995-1999, 2000-2001, 2003 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@gnu.org>, 1995.
 
    This program is free software; you can redistribute it and/or modify it
@@ -47,11 +47,8 @@ static struct loaded_l10nfile *_nl_loaded_domains;
    established bindings.  */
 struct loaded_l10nfile *
 internal_function
-_nl_find_domain (dirname, locale, domainname, domainbinding)
-     const char *dirname;
-     char *locale;
-     const char *domainname;
-     struct binding *domainbinding;
+_nl_find_domain (const char *dirname, char *locale,
+		 const char *domainname, struct binding *domainbinding)
 {
   struct loaded_l10nfile *retval;
   const char *language;
@@ -178,8 +175,7 @@ _nl_find_domain (dirname, locale, domainname, domainbinding)
 
 
 #ifdef _LIBC
-static void __attribute__ ((unused))
-free_mem (void)
+libc_freeres_fn (free_mem)
 {
   struct loaded_l10nfile *runp = _nl_loaded_domains;
 
@@ -193,6 +189,4 @@ free_mem (void)
       free (here);
     }
 }
-
-text_set_element (__libc_subfreeres, free_mem);
 #endif

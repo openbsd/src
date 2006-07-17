@@ -1,5 +1,5 @@
 #!@BASH@
-# $Id: install-info-html,v 1.1.1.1 2002/06/10 13:21:26 espie Exp $
+# $Id: install-info-html,v 1.1.1.2 2006/07/17 16:03:50 espie Exp $
 
 name=install-info-html
 version=1.0
@@ -109,13 +109,13 @@ shift `expr $OPTIND - 1`
 #
 # Input file name
 #
-if [ -z "$all" -a -z "$1" ]; then
+if [ -z "$all" ] && [ -z "$1" ]; then
 	help
 	echo "$name: No HTML documents given"
 	exit 2
 fi
 
-if [ -n "$all" -a -n "$1" ]; then
+if [ -n "$all" ] && [ -n "$1" ]; then
 	echo "$name: --all specified, ignoring DIRECTORY-DIRs"
 fi
 

@@ -1,5 +1,5 @@
 /* Handle aliases for locale names.
-   Copyright (C) 1995-1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1995-1999, 2000-2001, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -35,17 +35,23 @@
 #include <sys/types.h>
 
 #ifdef __GNUC__
+# undef alloca
 # define alloca __builtin_alloca
 # define HAVE_ALLOCA 1
 #else
-# if defined HAVE_ALLOCA_H || defined _LIBC
-#  include <alloca.h>
+# ifdef _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
 # else
-#  ifdef _AIX
- #pragma alloca
+#  if defined HAVE_ALLOCA_H || defined _LIBC
+#   include <alloca.h>
 #  else
-#   ifndef alloca
+#   ifdef _AIX
+ #pragma alloca
+#   else
+#    ifndef alloca
 char *alloca ();
+#    endif
 #   endif
 #  endif
 # endif
@@ -55,6 +61,12 @@ char *alloca ();
 #include <string.h>
 
 #include "gettextP.h"
+
+#if ENABLE_RELOCATABLE
+# include "relocatable.h"
+#else
+# define relocate(pathname) (pathname)
+#endif
 
 /* @@ end of prolog @@ */
 
@@ -98,11 +110,11 @@ __libc_lock_define_initialized (static, lock);
 # define freea(p) free (p)
 #endif
 
-#if defined _LIBC_REENTRANT || defined HAVE_FGETS_UNLOCKED
+#if defined _LIBC_REENTRANT || HAVE_DECL_FGETS_UNLOCKED
 # undef fgets
 # define fgets(buf, len, s) fgets_unlocked (buf, len, s)
 #endif
-#if defined _LIBC_REENTRANT || defined HAVE_FEOF_UNLOCKED
+#if defined _LIBC_REENTRANT || HAVE_DECL_FEOF_UNLOCKED
 # undef feof
 # define feof(s) feof_unlocked (s)
 #endif
@@ -115,25 +127,28 @@ struct alias_map
 };
 
 
-static char *string_space;
+#ifndef _LIBC
+# define libc_freeres_ptr(decl) decl
+#endif
+
+libc_freeres_ptr (static char *string_space);
 static size_t string_space_act;
 static size_t string_space_max;
-static struct alias_map *map;
+libc_freeres_ptr (static struct alias_map *map);
 static size_t nmap;
 static size_t maxmap;
 
 
 /* Prototypes for local functions.  */
-static size_t read_alias_file PARAMS ((const char *fname, int fname_len))
+static size_t read_alias_file (const char *fname, int fname_len)
      internal_function;
-static int extend_alias_table PARAMS ((void));
-static int alias_compare PARAMS ((const struct alias_map *map1,
-				  const struct alias_map *map2));
+static int extend_alias_table (void);
+static int alias_compare (const struct alias_map *map1,
+			  const struct alias_map *map2);
 
 
 const char *
-_nl_expand_alias (name)
-    const char *name;
+_nl_expand_alias (const char *name)
 {
   static const char *locale_alias_path;
   struct alias_map *retval;
@@ -156,8 +171,8 @@ _nl_expand_alias (name)
       if (nmap > 0)
 	retval = (struct alias_map *) bsearch (&item, map, nmap,
 					       sizeof (struct alias_map),
-					       (int (*) PARAMS ((const void *,
-								 const void *))
+					       (int (*) (const void *,
+							 const void *)
 						) alias_compare);
       else
 	retval = NULL;
@@ -199,9 +214,7 @@ _nl_expand_alias (name)
 
 static size_t
 internal_function
-read_alias_file (fname, fname_len)
-     const char *fname;
-     int fname_len;
+read_alias_file (const char *fname, int fname_len)
 {
   FILE *fp;
   char *full_fname;
@@ -217,7 +230,7 @@ read_alias_file (fname, fname_len)
   memcpy (&full_fname[fname_len], aliasfile, sizeof aliasfile);
 #endif
 
-  fp = fopen (full_fname, "r");
+  fp = fopen (relocate (full_fname), "r");
   freea (full_fname);
   if (fp == NULL)
     return 0;
@@ -234,8 +247,10 @@ read_alias_file (fname, fname_len)
 	 a) we are only interested in the first two fields
 	 b) these fields must be usable as file names and so must not
 	    be that long
-       */
-      char buf[BUFSIZ];
+	 We avoid a multi-kilobyte buffer here since this would use up
+	 stack space which we might not have if the program ran out of
+	 memory.  */
+      char buf[400];
       char *alias;
       char *value;
       char *cp;
@@ -243,19 +258,6 @@ read_alias_file (fname, fname_len)
       if (FGETS (buf, sizeof buf, fp) == NULL)
 	/* EOF reached.  */
 	break;
-
-      /* Possibly not the whole line fits into the buffer.  Ignore
-	 the rest of the line.  */
-      if (strchr (buf, '\n') == NULL)
-	{
-	  char altbuf[BUFSIZ];
-	  do
-	    if (FGETS (altbuf, sizeof altbuf, fp) == NULL)
-	      /* Make sure the inner loop will be left.  The outer loop
-		 will exit at the `feof' test.  */
-	      break;
-	  while (strchr (altbuf, '\n') == NULL);
-	}
 
       cp = buf;
       /* Ignore leading white space.  */
@@ -340,6 +342,14 @@ read_alias_file (fname, fname_len)
 	      ++added;
 	    }
 	}
+
+      /* Possibly not the whole line fits into the buffer.  Ignore
+	 the rest of the line.  */
+      while (strchr (buf, '\n') == NULL)
+	if (FGETS (buf, sizeof buf, fp) == NULL)
+	  /* Make sure the inner loop will be left.  The outer loop
+	     will exit at the `feof' test.  */
+	  break;
     }
 
   /* Should we test for ferror()?  I think we have to silently ignore
@@ -348,7 +358,7 @@ read_alias_file (fname, fname_len)
 
   if (added > 0)
     qsort (map, nmap, sizeof (struct alias_map),
-	   (int (*) PARAMS ((const void *, const void *))) alias_compare);
+	   (int (*) (const void *, const void *)) alias_compare);
 
   return added;
 }
@@ -373,23 +383,8 @@ extend_alias_table ()
 }
 
 
-#ifdef _LIBC
-static void __attribute__ ((unused))
-free_mem (void)
-{
-  if (string_space != NULL)
-    free (string_space);
-  if (map != NULL)
-    free (map);
-}
-text_set_element (__libc_subfreeres, free_mem);
-#endif
-
-
 static int
-alias_compare (map1, map2)
-     const struct alias_map *map1;
-     const struct alias_map *map2;
+alias_compare (const struct alias_map *map1, const struct alias_map *map2)
 {
 #if defined _LIBC || defined HAVE_STRCASECMP
   return strcasecmp (map1->alias, map2->alias);

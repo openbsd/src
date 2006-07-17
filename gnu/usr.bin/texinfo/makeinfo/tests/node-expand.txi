@@ -14,7 +14,7 @@
 @ifnottex
 
 @node Top, (dir), (dir), (dir)
-@top
+@top Expansion in Node Names
 
 @end ifnottex
 

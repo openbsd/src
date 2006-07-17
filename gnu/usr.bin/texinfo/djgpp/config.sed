@@ -22,7 +22,7 @@
   }
 
 # Makefile.in.in is renamed to Makefile.in-in.
-/^ac_config_files=/,/_ACEOF/ {
+/ac_config_files=/,/_ACEOF/ {
   s|po/Makefile\.in|&:po/Makefile.in-in|
 }
 /CONFIG_FILES=/ s|po/Makefile\.in|&:po/Makefile.in-in|2
@@ -51,10 +51,10 @@ s,\.deps,_deps,g
 # the package has not been configured for.
 /MISSING=/,/^$/ {
   /^fi$/ a\
-am_missing_run=`echo "$am_missing_run" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
+am_missing_run=`echo "$am_missing_run" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%;s%.:.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
 }
 /^install_sh=/a\
-install_sh=`echo "$install_sh" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
+install_sh=`echo "$install_sh" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%;s%.:.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
 
 # The following makes sure we are not going to remove a directory
 # which is the cwd on its drive (DOS doesn't allow to remove such

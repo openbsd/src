@@ -1,7 +1,7 @@
 /* substring.c -- extract substring.
-   $Id: substring.c,v 1.1.1.1 2000/02/09 01:24:23 espie Exp $
+   $Id: substring.c,v 1.1.1.2 2006/07/17 16:03:41 espie Exp $
 
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,13 +20,11 @@
 #include "system.h"
 
 char *
-substring (start, end)
-     char *start;
-     char *end;
+substring (const char *start, const char *end)
 {
   char *result = xmalloc (end - start + 1);
   char *scan_result = result;
-  char *scan = start;
+  const char *scan = start;
 
   while (scan < end)
     *scan_result++ = *scan++;

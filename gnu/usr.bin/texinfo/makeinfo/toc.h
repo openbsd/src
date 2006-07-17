@@ -1,5 +1,5 @@
 /* toc.h -- table of contents handling.
-   $Id: toc.h,v 1.1.1.2 2002/06/10 13:21:22 espie Exp $
+   $Id: toc.h,v 1.1.1.3 2006/07/17 16:03:48 espie Exp $
 
    Copyright (C) 1999 Free Software Foundation, Inc.
 
@@ -22,12 +22,6 @@
 #ifndef TOC_H
 #define TOC_H
 
-/* the file where we found the @contents directive */
-extern char *contents_filename;
-
-/* the file where we found the @shortcontents directive */
-extern char *shortcontents_filename;
-
 /* Structure to hold one entry for the toc. */
 typedef struct toc_entry_elt {
   char *name;
@@ -41,10 +35,11 @@ typedef struct toc_entry_elt {
 
 /* all routines which have relationship with TOC should start with
    toc_ (this is a kind of name-space) */
-extern int toc_add_entry (); /* return the number for the toc-entry */
-extern void toc_free ();
-extern char *toc_find_section_of_node ();
+extern int toc_add_entry (char *tocname, int level,
+    char *node_name, char *anchor); /* return the number for the toc-entry */
+extern void toc_free (void);
+extern char *toc_find_section_of_node (char *node);
 
-extern void cm_contents (), cm_shortcontents ();
+extern void cm_contents (int arg);
 
 #endif /* not TOC_H */

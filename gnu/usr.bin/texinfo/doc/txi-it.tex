@@ -1,0 +1,69 @@
+% English non-translation for texinfo.tex.  This is read when a source
+% document says @documentlanguage en (which might happen after another
+% @documentlanguage).  The actual values are the same as defaults.
+% $Id: txi-it.tex,v 1.1.1.1 2006/07/17 16:03:58 espie Exp $
+%
+% Copyright (C) 1999 Free Software Foundation.
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+\gdef\putwordAppendix{Appendice}
+\gdef\putwordChapter{Capitolo}
+\gdef\putwordfile{file}
+\gdef\putwordin{in}
+\gdef\putwordIndexIsEmpty{(L'indice \'e vuoto)}
+\gdef\putwordIndexNonexistent{(L'indice non esiste)}
+\gdef\putwordInfo{Info}
+\gdef\putwordInstanceVariableof{Variabile di istanza di}
+\gdef\putwordMethodon{Metodo di}
+\gdef\putwordNoTitle{Nessun titolo}
+\gdef\putwordof{di}
+\gdef\putwordon{su}
+\gdef\putwordpage{pagina}
+\gdef\putwordsection{sezione}
+\gdef\putwordSection{Sezione}
+\gdef\putwordsee{vedi}
+\gdef\putwordSee{Vedi}
+\gdef\putwordShortTOC{Sommario abbreviato}
+\gdef\putwordTOC{Sommario}
+%
+\gdef\putwordMJan{Gennaio}
+\gdef\putwordMFeb{Febbraio}
+\gdef\putwordMMar{Marzo}
+\gdef\putwordMApr{Aprile}
+\gdef\putwordMMay{Maggio}
+\gdef\putwordMJun{Giugno}
+\gdef\putwordMJul{Luglio}
+\gdef\putwordMAug{Agosto}
+\gdef\putwordMSep{Settembre}
+\gdef\putwordMOct{Ottobre}
+\gdef\putwordMNov{Novembre}
+\gdef\putwordMDec{Dicembre}
+%
+\gdef\putwordDefmac{Macro}
+\gdef\putwordDefspec{Forma speciale}
+\gdef\putwordDefvar{Variabile}
+\gdef\putwordDefopt{Opzione}
+\gdef\putwordDeffunc{Funzione}
+
+% Produces Day Month Year style of output.
+\def\today{%
+  \number\day\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMay\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}

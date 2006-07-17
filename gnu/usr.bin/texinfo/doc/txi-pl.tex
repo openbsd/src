@@ -1,0 +1,73 @@
+% txi-pl.tex -- adaptation to Polish for texinfo.tex.
+% $Id: txi-pl.tex,v 1.1.1.1 2006/07/17 16:03:58 espie Exp $
+%
+% Copyright (C) 2003 Free Software Foundation.
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+%
+% Written by Wojciech Polak <polak@gnu.org> on 29-03-2003.
+% Modified by Staszek Wawrykiewicz <staw@gust.org.pl> on 01-04-2003.
+%
+\prefixing
+\gdef\putwordAppendix{Suplement}
+\gdef\putwordChapter{Rozdzia/l}
+\gdef\putwordfile{plik}
+\gdef\putwordin{w}
+\gdef\putwordIndexIsEmpty{(Skorowidz jest pusty)}
+\gdef\putwordIndexNonexistent{(Brak skorowidza)}
+\gdef\putwordInfo{Info}
+\gdef\putwordInstanceVariableof{Przyk/ladowa zmienna}
+\gdef\putwordMethodon{Metoda}
+\gdef\putwordNoTitle{Brak tytu/lu}
+\gdef\putwordof{z}
+\gdef\putwordon{na}
+\gdef\putwordpage{strona}
+\gdef\putwordsection{cz/e/s/c}
+\gdef\putwordSection{Cz/e/s/c}
+\gdef\putwordsee{zobacz}
+\gdef\putwordSee{Zobacz}
+\gdef\putwordShortTOC{Kr/otka zawarto/s/c}
+\gdef\putwordTOC{Spis tre/sci}
+%
+\gdef\putwordMJan{stycznia}
+\gdef\putwordMFeb{lutego}
+\gdef\putwordMMar{marca}
+\gdef\putwordMApr{kwietnia}
+\gdef\putwordMMay{maja}
+\gdef\putwordMJun{czerwca}
+\gdef\putwordMJul{lipca}
+\gdef\putwordMAug{sierpnia}
+\gdef\putwordMSep{wrze/snia}
+\gdef\putwordMOct{pa/xdziernika}
+\gdef\putwordMNov{listopada}
+\gdef\putwordMDec{grudnia}
+%
+\gdef\putwordDefmac{Makro}
+\gdef\putwordDefspec{Specjalna forma}
+\gdef\putwordDefvar{Zmienna}
+\gdef\putwordDefopt{Opcja u/zytkownika}
+\gdef\putwordDeffunc{Funkcja}
+\nonprefixing
+%
+% Produces Day Month Year style of output.
+%
+\def\today{%
+  \number\day\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMay\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}

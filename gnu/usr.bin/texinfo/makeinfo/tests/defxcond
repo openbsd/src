@@ -1,0 +1,16 @@
+#!/bin/sh
+# Test conditionalized @deffnx.
+# Report from: Akim Demaille <akim@epita.fr>, 14 Aug 2003 12:10:37 +0200.
+
+unset TEXINFO_OUTPUT
+: ${srcdir=.}
+
+test=defxcond
+
+../makeinfo -Dbar -o $test.out $srcdir/$test.txi || exit 1
+grep ' -- bar:' $test.out >/dev/null || exit 2
+
+../makeinfo -Ubar -o $test.out $srcdir/$test.txi || exit 3
+grep ' -- bar:' $test.out >/dev/null && exit 4
+
+rm -f $test.out

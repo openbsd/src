@@ -1,7 +1,8 @@
-/* signals.c -- install and maintain Info signal handlers.
-   $Id: signals.c,v 1.1.1.3 2000/02/09 01:25:00 espie Exp $
+/* signals.c -- install and maintain signal handlers.
+   $Id: signals.c,v 1.1.1.4 2006/07/17 16:03:44 espie Exp $
 
-   Copyright (C) 1993, 94, 95, 98 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1998, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,10 +18,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Written by Brian Fox (bfox@ai.mit.edu). */
+   Originally written by Brian Fox (bfox@ai.mit.edu). */
 
 #include "info.h"
 #include "signals.h"
+
+void initialize_info_signal_handler (void);
 
 /* **************************************************************** */
 /*                                                                  */
@@ -28,14 +31,10 @@
 /*                                                                  */
 /* **************************************************************** */
 
-/* Non-zero when our signal handler has been called to handle SIGWINCH. */
-static int in_sigwinch = 0;
-
 #if !defined (HAVE_SIGPROCMASK) && defined (HAVE_SIGSETMASK)
 /* Perform OPERATION on NEWSET, perhaps leaving information in OLDSET. */
 static void
-sigprocmask (operation, newset, oldset)
-     int operation, *newset, *oldset;
+sigprocmask (int operation, int *newset, int *oldset)
 {
   switch (operation)
     {
@@ -63,37 +62,98 @@ sigprocmask (operation, newset, oldset)
 /*                                                                  */
 /* **************************************************************** */
 
-typedef RETSIGTYPE signal_handler ();
+#if defined (HAVE_SIGACTION) || defined (HAVE_SIGPROCMASK) ||\
+  defined (HAVE_SIGSETMASK)
+static void
+mask_termsig (sigset_t *set)
+{
+# if defined (SIGTSTP)
+  sigaddset (set, SIGTSTP);
+  sigaddset (set, SIGTTOU);
+  sigaddset (set, SIGTTIN);
+# endif
+# if defined (SIGWINCH)
+  sigaddset (set, SIGWINCH);
+# endif
+#if defined (SIGQUIT)
+  sigaddset (set, SIGQUIT);
+#endif
+#if defined (SIGINT)
+  sigaddset (set, SIGINT);
+#endif
+# if defined (SIGUSR1)
+  sigaddset (set, SIGUSR1);
+# endif
+}
+#endif /* HAVE_SIGACTION || HAVE_SIGPROCMASK || HAVE_SIGSETMASK */
 
-static RETSIGTYPE info_signal_handler ();
-static signal_handler *old_TSTP, *old_TTOU, *old_TTIN;
-static signal_handler *old_WINCH, *old_INT, *old_USR1;
+static RETSIGTYPE info_signal_proc (int sig);
+#if defined (HAVE_SIGACTION)
+typedef struct sigaction signal_info;
+signal_info info_signal_handler;
+
+static void
+set_termsig (int sig, signal_info *old)
+{
+  sigaction (sig, &info_signal_handler, old);
+}
+
+static void
+restore_termsig (int sig, const signal_info *saved)
+{
+  sigaction (sig, saved, NULL);
+}
+#else /* !HAVE_SIGACTION */
+typedef RETSIGTYPE (*signal_info) ();
+#define set_termsig(sig, old) (void)(*(old) = signal (sig, info_signal_proc))
+#define restore_termsig(sig, saved) (void)signal (sig, *(saved))
+#define info_signal_handler info_signal_proc
+static int term_conf_busy = 0;
+#endif /* !HAVE_SIGACTION */
+
+static signal_info old_TSTP, old_TTOU, old_TTIN;
+static signal_info old_WINCH, old_INT, old_USR1;
+static signal_info old_QUIT;
 
 void
-initialize_info_signal_handler ()
+initialize_info_signal_handler (void)
 {
+#ifdef SA_NOCLDSTOP
+  /* (Based on info from Paul Eggert found in coreutils.)  Don't use
+     HAVE_SIGACTION to decide whether to use the sa_handler, sa_flags,
+     sa_mask members, as some systems (Solaris 7+) don't define them.  Use
+     SA_NOCLDSTOP instead; it's been part of POSIX.1 since day 1 (in 1988).  */
+  info_signal_handler.sa_handler = info_signal_proc;
+  info_signal_handler.sa_flags = 0;
+  mask_termsig (&info_signal_handler.sa_mask);
+#endif /* SA_NOCLDSTOP */
+
 #if defined (SIGTSTP)
-  old_TSTP = (signal_handler *) signal (SIGTSTP, info_signal_handler);
-  old_TTOU = (signal_handler *) signal (SIGTTOU, info_signal_handler);
-  old_TTIN = (signal_handler *) signal (SIGTTIN, info_signal_handler);
+  set_termsig (SIGTSTP, &old_TSTP);
+  set_termsig (SIGTTOU, &old_TTOU);
+  set_termsig (SIGTTIN, &old_TTIN);
 #endif /* SIGTSTP */
 
 #if defined (SIGWINCH)
-  old_WINCH = (signal_handler *) signal (SIGWINCH, info_signal_handler);
+  set_termsig (SIGWINCH, &old_WINCH);
+#endif
+
+#if defined (SIGQUIT)
+  set_termsig (SIGQUIT, &old_QUIT);
 #endif
 
 #if defined (SIGINT)
-  old_INT = (signal_handler *) signal (SIGINT, info_signal_handler);
+  set_termsig (SIGINT, &old_INT);
 #endif
 
 #if defined (SIGUSR1)
   /* Used by DJGPP to simulate SIGTSTP on Ctrl-Z.  */
-  old_USR1 = (signal_handler *) signal (SIGUSR1, info_signal_handler);
+  set_termsig (SIGUSR1, &old_USR1);
 #endif
 }
 
 static void
-redisplay_after_signal ()
+redisplay_after_signal (void)
 {
   terminal_clear_screen ();
   display_clear_display (the_display);
@@ -104,7 +164,7 @@ redisplay_after_signal ()
 }
 
 static void
-reset_info_window_sizes ()
+reset_info_window_sizes (void)
 {
   terminal_goto_xy (0, 0);
   fflush (stdout);
@@ -112,22 +172,38 @@ reset_info_window_sizes ()
   terminal_get_screen_size ();
   terminal_prep_terminal ();
   display_initialize_display (screenwidth, screenheight);
-  window_new_screen_size (screenwidth, screenheight, NULL);
+  window_new_screen_size (screenwidth, screenheight);
   redisplay_after_signal ();
 }
 
 static RETSIGTYPE
-info_signal_handler (sig)
-     int sig;
+info_signal_proc (int sig)
 {
-  signal_handler **old_signal_handler;
+  signal_info *old_signal_handler = NULL;
 
+#if !defined (HAVE_SIGACTION)
+  /* best effort: first increment this counter and later block signals */
+  if (term_conf_busy)
+    return;
+  term_conf_busy++;
+#if defined (HAVE_SIGPROCMASK) || defined (HAVE_SIGSETMASK)
+    {
+      sigset_t nvar, ovar;
+      sigemptyset (&nvar);
+      mask_termsig (&nvar);
+      sigprocmask (SIG_BLOCK, &nvar, &ovar);
+    }
+#endif /* HAVE_SIGPROCMASK || HAVE_SIGSETMASK */
+#endif /* !HAVE_SIGACTION */
   switch (sig)
     {
 #if defined (SIGTSTP)
     case SIGTSTP:
     case SIGTTOU:
     case SIGTTIN:
+#endif
+#if defined (SIGQUIT)
+    case SIGQUIT:
 #endif
 #if defined (SIGINT)
     case SIGINT:
@@ -141,8 +217,14 @@ info_signal_handler (sig)
         if (sig == SIGTTIN)
           old_signal_handler = &old_TTIN;
 #endif /* SIGTSTP */
+#if defined (SIGQUIT)
+        if (sig == SIGQUIT)
+          old_signal_handler = &old_QUIT;
+#endif /* SIGQUIT */
+#if defined (SIGINT)
         if (sig == SIGINT)
           old_signal_handler = &old_INT;
+#endif /* SIGINT */
 
         /* For stop signals, restore the terminal IO, leave the cursor
            at the bottom of the window, and stop us. */
@@ -150,17 +232,17 @@ info_signal_handler (sig)
         terminal_clear_to_eol ();
         fflush (stdout);
         terminal_unprep_terminal ();
-        signal (sig, *old_signal_handler);
-        UNBLOCK_SIGNAL (sig);
-        kill (getpid (), sig);
+	restore_termsig (sig, old_signal_handler);
+	UNBLOCK_SIGNAL (sig);
+	kill (getpid (), sig);
 
         /* The program is returning now.  Restore our signal handler,
            turn on terminal handling, redraw the screen, and place the
            cursor where it belongs. */
         terminal_prep_terminal ();
-        *old_signal_handler = (signal_handler *) signal (sig, info_signal_handler);
-        redisplay_after_signal ();
-        fflush (stdout);
+	set_termsig (sig, old_signal_handler);
+	/* window size might be changed while sleeping */
+	reset_info_window_sizes ();
       }
       break;
 
@@ -172,35 +254,42 @@ info_signal_handler (sig)
     case SIGUSR1:
 #endif
       {
-        if (!in_sigwinch) {
-          in_sigwinch++;
-          
-          /* Turn off terminal IO, tell our parent that the window has changed,
-             then reinitialize the terminal and rebuild our windows. */
+	/* Turn off terminal IO, tell our parent that the window has changed,
+	   then reinitialize the terminal and rebuild our windows. */
 #ifdef SIGWINCH
-          if (sig == SIGWINCH)
-            old_signal_handler = &old_WINCH;
+	if (sig == SIGWINCH)
+	  old_signal_handler = &old_WINCH;
 #endif
 #ifdef SIGUSR1
-          if (sig == SIGUSR1)
-            old_signal_handler = &old_USR1;
+	if (sig == SIGUSR1)
+	  old_signal_handler = &old_USR1;
 #endif
-          terminal_goto_xy (0, 0);
-          fflush (stdout);
-          terminal_unprep_terminal ();
-          signal (sig, *old_signal_handler);
-          UNBLOCK_SIGNAL (sig);
-          kill (getpid (), sig);
+	terminal_goto_xy (0, 0);
+	fflush (stdout);
+	terminal_unprep_terminal (); /* needless? */
+	restore_termsig (sig, old_signal_handler);
+	UNBLOCK_SIGNAL (sig);
+	kill (getpid (), sig);
 
-          /* After our old signal handler returns... */
-          *old_signal_handler
-            = (signal_handler *) signal (sig, info_signal_handler);
-          terminal_prep_terminal ();
-          reset_info_window_sizes ();
-          in_sigwinch--;
-        }
+	/* After our old signal handler returns... */
+	set_termsig (sig, old_signal_handler); /* needless? */
+	terminal_prep_terminal ();
+	reset_info_window_sizes ();
       }
       break;
 #endif /* SIGWINCH || SIGUSR1 */
     }
+#if !defined (HAVE_SIGACTION)
+  /* at this time it is safer to perform unblock after decrement */
+  term_conf_busy--;
+#if defined (HAVE_SIGPROCMASK) || defined (HAVE_SIGSETMASK)
+    {
+      sigset_t nvar, ovar;
+      sigemptyset (&nvar);
+      mask_termsig (&nvar);
+      sigprocmask (SIG_UNBLOCK, &nvar, &ovar);
+    }
+#endif /* HAVE_SIGPROCMASK || HAVE_SIGSETMASK */
+#endif /* !HAVE_SIGACTION */
 }
+/* vim: set sw=2 cino={1s>2sn-s^-se-s: */

@@ -1,5 +1,5 @@
 /* infokey.h -- Custom keystroke definition support.
-   $Id: infokey.h,v 1.1.1.1 2002/06/10 13:21:13 espie Exp $
+   $Id: infokey.h,v 1.1.1.2 2006/07/17 16:03:45 espie Exp $
 
    Copyright (C) 1999, 2002 Free Software Foundation, Inc.
 

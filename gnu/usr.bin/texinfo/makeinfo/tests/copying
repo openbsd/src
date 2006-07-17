@@ -1,0 +1,13 @@
+#!/bin/sh
+# $Id: copying,v 1.1.1.1 2006/07/17 16:03:49 espie Exp $
+# Test @copying.  The configure script for tramp uses this to make sure
+# the makeinfo that is present supports @copying.
+
+unset TEXINFO_OUTPUT LANG LANGUAGE
+LC_ALL=POSIX; export LC_ALL
+: ${srcdir=.}
+
+../makeinfo -o copying.out $srcdir/copying.txi || exit 1
+fgrep 'produced by' copying.out >/dev/null || exit 2
+
+rm -f copying.out

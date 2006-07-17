@@ -1,0 +1,4 @@
+\input texinfo   @c -*-texinfo-*-
+@copying
+@end copying
+@bye

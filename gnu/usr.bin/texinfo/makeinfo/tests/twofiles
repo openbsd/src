@@ -1,0 +1,23 @@
+#!/bin/sh
+# $Id: twofiles,v 1.1.1.1 2006/07/17 16:03:49 espie Exp $
+# Test that an existing and nonexisting file doesn't cause a
+# segmentation fault.
+# From: Arkadiusz Miskiewicz <misiek@pld.ORG.PL>, 15 Feb 2003 13:22:49 +0100.
+
+unset TEXINFO_OUTPUT
+: ${srcdir=.}
+
+outfile=outfile
+errfile=errfile
+trap 'status=$?; rm -f $outfile $errfile && exit $status' 0
+
+../makeinfo -o /dev/null $srcdir/html-min.txi /nonexistent.texinfo \
+>$outfile 2>$errfile
+exit_status=$?
+
+# we expect one error message about /nonexistent.texinfo and bad exit status.
+test $exit_status -ne 0 \
+&& grep /nonexistent $errfile >/dev/null \
+&& exit_status=0
+
+exit $exit_status
