@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csplit.1,v 1.1 2006/07/17 16:38:02 millert Exp $
+.\"	$OpenBSD: csplit.1,v 1.2 2006/07/17 20:09:34 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -137,11 +137,11 @@ file
 .Pa foo.1
 into one file for each section (up to 20):
 .Pp
-.Dl "csplit -k foo.1 '%^\e.Sh%' '/^\e.Sh/' '{20}'"
+.Dl "$ csplit -k foo.1 '%^\e.Sh%' '/^\e.Sh/' '{20}'"
 .Pp
 Split standard input after the first 99 lines and every 100 lines thereafter:
 .Pp
-.Dl "csplit -k - 100 '{19}'"
+.Dl "$ csplit -k - 100 '{19}'"
 .Sh SEE ALSO
 .Xr sed 1 ,
 .Xr split 1 ,
