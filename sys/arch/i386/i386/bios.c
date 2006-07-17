@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.65 2006/05/20 22:38:52 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.66 2006/07/17 20:31:57 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -746,11 +746,11 @@ fixstring(char *s)
 void
 smbios_info(char * str)
 {
-	static char vend[40], prod[30], ver[30], ser[20];
+	char *sminfop, sminfo[64];
 	struct smbtable stbl, btbl;
 	struct smbios_sys *sys;
 	struct smbios_board *board;
-	int i, uuidf, havebb;
+	int i, infolen, uuidf, havebb;
 	char *p;
 
 	if (smbios_entry.mjr < 2)
@@ -775,34 +775,62 @@ smbios_info(char * str)
 	 * perhaps naieve belief that motherboard vendors will supply this
 	 * information.
 	 */
-	if ((p = smbios_get_string(&stbl, sys->vendor, vend, sizeof(vend))) != 
-	    NULL)
-		hw_vendor = fixstring(p);
-	if (hw_vendor == NULL) {
+	sminfop = NULL;
+	if ((p = smbios_get_string(&stbl, sys->vendor, sminfo,
+	    sizeof(sminfo))) != NULL)
+		sminfop = fixstring(p);
+	if (sminfop == NULL) {
 		if (havebb) {
-			if ((p = smbios_get_string(&btbl, board->vendor, vend,
-			   sizeof(vend))) != NULL)
-				hw_vendor = fixstring(p);
+			if ((p = smbios_get_string(&btbl, board->vendor,
+			    sminfo, sizeof(sminfo))) != NULL)
+				sminfop = fixstring(p);
 		}
 	}
-	if ((p = smbios_get_string(&stbl, sys->product, prod, sizeof(prod))) !=
-	     NULL)
-		hw_prod = fixstring(p);
-	if (hw_prod == NULL) {
+	if (sminfop) {
+		infolen = strlen(sminfop) + 1;
+		hw_vendor = malloc(infolen, M_DEVBUF, M_NOWAIT);
+		if (hw_vendor)
+			strlcpy(hw_vendor, sminfop, infolen);
+		sminfop = NULL;
+	}
+	if ((p = smbios_get_string(&stbl, sys->product, sminfo,
+	    sizeof(sminfo))) != NULL)
+		sminfop = fixstring(p);
+	if (sminfop == NULL) {
 		if (havebb) {
-			if ((p = smbios_get_string(&btbl, board->product, prod, 
-			    sizeof(prod))) != NULL)
-				hw_prod = fixstring(p);
+			if ((p = smbios_get_string(&btbl, board->product,
+			    sminfo, sizeof(sminfo))) != NULL)
+				sminfop = fixstring(p);
 		}
+	}
+	if (sminfop) {
+		infolen = strlen(sminfop) + 1;
+		hw_prod = malloc(infolen, M_DEVBUF, M_NOWAIT);
+		if (hw_prod)
+			strlcpy(hw_prod, sminfop, infolen);
+		sminfop = NULL;
 	}
 	if (hw_vendor != NULL && hw_prod != NULL)
 		printf("\n%s: %s %s", str, hw_vendor, hw_prod);
-	if ((p = smbios_get_string(&stbl, sys->version, ver, sizeof(ver))) != 
-	    NULL)
-		hw_ver = fixstring(p);
-	if ((p = smbios_get_string(&stbl, sys->serial, ser, sizeof(ser))) != 
-	    NULL)
-		hw_serial = fixstring(p);
+	if ((p = smbios_get_string(&stbl, sys->version, sminfo,
+	    sizeof(sminfo))) != NULL)
+		sminfop = fixstring(p);
+	if (sminfop) {
+		infolen = strlen(sminfop) + 1;
+		hw_ver = malloc(infolen, M_DEVBUF, M_NOWAIT);
+		if (hw_ver)
+			strlcpy(hw_ver, sminfop, infolen);
+		sminfop = NULL;
+	}
+	if ((p = smbios_get_string(&stbl, sys->serial, sminfo,
+	    sizeof(sminfo))) != NULL)
+		sminfop = fixstring(p);
+	if (sminfop) {
+		infolen = strlen(sminfop) + 1;
+		hw_serial = malloc(infolen, M_DEVBUF, M_NOWAIT);
+		if (hw_serial)
+			strlcpy(hw_serial, sminfop, infolen);
+	}
 	if (smbios_entry.mjr > 2 || (smbios_entry.mjr == 2 &&
 	    smbios_entry.min >= 1)) {
 		/*
