@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1099 2006/07/15 20:12:13 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1100 2006/07/17 14:59:48 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -276,6 +276,7 @@
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
+#define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_NETERION	0x17d5		/* Neterion */
 #define	PCI_VENDOR_INPROCOMM	0x17fe		/* INPROCOMM */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
@@ -736,6 +737,16 @@
 #define	PCI_PRODUCT_ARC_2000PV	0xa099		/* 2000PV */
 #define	PCI_PRODUCT_ARC_2000MT	0xa0a1		/* 2000MT */
 #define	PCI_PRODUCT_ARC_2000MI	0xa0a9		/* 2000MI */
+
+/* Areca products */
+#define	PCI_PRODUCT_ARECA_ARC1110	0x1110		/* ARC-1110 */
+#define	PCI_PRODUCT_ARECA_ARC1120	0x1120		/* ARC-1120 */
+#define	PCI_PRODUCT_ARECA_ARC1130	0x1130		/* ARC-1130 */
+#define	PCI_PRODUCT_ARECA_ARC1160	0x1160		/* ARC-1160 */
+#define	PCI_PRODUCT_ARECA_ARC1210	0x1210		/* ARC-1210 */
+#define	PCI_PRODUCT_ARECA_ARC1220	0x1220		/* ARC-1220 */
+#define	PCI_PRODUCT_ARECA_ARC1230	0x1230		/* ARC-1230 */
+#define	PCI_PRODUCT_ARECA_ARC1260	0x1260		/* ARC-1260 */
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A/88141 */
