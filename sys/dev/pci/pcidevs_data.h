@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1101 2006/07/17 20:26:37 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1102 2006/07/17 21:03:33 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4051,7 +4051,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82G2675",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0020,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCA,
 	    "MCA",
 	},
 	{
@@ -4063,7 +4063,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ServeRAID",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0036,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MIAMI,
 	    "Miami/PCI",
 	},
 	{
@@ -4079,8 +4079,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FireGL2",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_PCIX,
-	    "PCIX-PCIX",
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX,
+	    "133 PCIX-PCIX",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID2,
