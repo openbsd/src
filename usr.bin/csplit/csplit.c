@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.1 2006/07/17 16:38:02 millert Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.2 2006/07/17 17:11:32 millert Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -257,12 +257,9 @@ cleanup(void)
 		return;
 
 	/*
-	 * NOTE: One cannot portably assume to be able to call snprintf()
-	 * from inside a signal handler. It does, however, appear to be safe
-	 * to do on FreeBSD. The solution to this problem is worse than the
-	 * problem itself.
+	 * NOTE: One cannot portably assume to be able to call snprintf() from
+	 * inside a signal handler.  It is, however, safe to do on OpenBSD.
 	 */
-
 	for (i = 0; i < nfiles; i++) {
 		snprintf(fnbuf, sizeof(fnbuf), "%s%0*ld", prefix,
 		    (int)sufflen, i);
