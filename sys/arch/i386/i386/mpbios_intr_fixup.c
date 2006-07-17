@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios_intr_fixup.c,v 1.1 2006/05/01 17:01:14 kettenis Exp $	*/
+/*	$OpenBSD: mpbios_intr_fixup.c,v 1.2 2006/07/17 19:15:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -31,6 +31,7 @@ const struct mpbios_icu_table *mpbios_icu_lookup(pcireg_t);
 
 void via8237_mpbios_fixup(pci_chipset_tag_t, pcitag_t);
 void nforce4_mpbios_fixup(pci_chipset_tag_t, pcitag_t);
+void mcp04_mpbios_fixup(pci_chipset_tag_t, pcitag_t);
 
 const struct mpbios_icu_table {
 	pci_vendor_id_t mpit_vendor;
@@ -42,7 +43,9 @@ const struct mpbios_icu_table {
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE4_ISA,
 	  nforce4_mpbios_fixup },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE4_ISA2,
-	  nforce4_mpbios_fixup }
+	  nforce4_mpbios_fixup },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_MCP04_ISA,
+	  mcp04_mpbios_fixup }
 };
 
 const struct mpbios_icu_table *
@@ -102,6 +105,27 @@ nforce4_mpbios_fixup(pci_chipset_tag_t pc, pcitag_t tag)
 	pin = (reg & NFORCE4_LAN_MASK) >> NFORCE4_LAN_SHIFT;
 	if (pin != 0)
 		mpbios_pin_fixup(bus, 10, PCI_INTERRUPT_PIN_A, pin);
+}
+
+/*
+ * NVIDIA MCP04 PCI-ISA bridge.
+ */
+
+void
+mcp04_mpbios_fixup(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+	int bus, pin;
+
+	pci_decompose_tag (pc, tag, &bus, NULL, NULL);
+
+	reg = pci_conf_read(pc, tag, NFORCE4_PNPIRQ2);
+	pin = (reg & NFORCE4_SATA1_MASK) >> NFORCE4_SATA1_SHIFT;
+	if (pin != 0)
+		mpbios_pin_fixup(bus, 16, PCI_INTERRUPT_PIN_A, pin);
+	pin = (reg & NFORCE4_SATA2_MASK) >> NFORCE4_SATA2_SHIFT;
+	if (pin != 0)
+		mpbios_pin_fixup(bus, 17, PCI_INTERRUPT_PIN_A, pin);
 }
 
 /*
