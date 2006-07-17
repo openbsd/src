@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.4 2006/06/01 03:44:20 drahn Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.5 2006/07/17 16:59:53 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -51,7 +51,12 @@ void pciaddr_resource_manage(struct i80321_softc *,
     pci_chipset_tag_t, pcitag_t, pciaddr_resource_manage_func_t);
 void pciaddr_resource_reserve(struct i80321_softc *,
     pci_chipset_tag_t, pcitag_t);
+void pciaddr_resource_reserve_disabled(struct i80321_softc *,
+    pci_chipset_tag_t, pcitag_t);
 int pciaddr_do_resource_reserve(struct i80321_softc *,
+    pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
+    bus_addr_t *, bus_size_t);
+int pciaddr_do_resource_reserve_disabled(struct i80321_softc *,
     pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
     bus_addr_t *, bus_size_t);
 void pciaddr_resource_allocate(struct i80321_softc *,
@@ -110,6 +115,8 @@ pci_addr_fixup(void *v, int maxbus)
 	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
 	pci_device_foreach(sc, &sc->sc_pci_chipset, maxbus,
 	    pciaddr_resource_reserve);
+	pci_device_foreach(sc, &sc->sc_pci_chipset, maxbus,
+	    pciaddr_resource_reserve_disabled);
 	PCIBIOS_PRINTV((verbose_footer, sc->nbogus));
 
 	{
@@ -126,9 +133,6 @@ pci_addr_fixup(void *v, int maxbus)
 		    rp; rp = LIST_NEXT(rp, er_link)) {
 		}
 	}
-
-	if (sc->nbogus == 0)
-		return; /* no need to fixup */
 
 	/* 
 	 * 4. do fixup 
@@ -149,6 +153,16 @@ pciaddr_resource_reserve(struct i80321_softc *sc, pci_chipset_tag_t pc,
 		pciaddr_print_devid(pc, tag);
 	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_reserve);	
 }
+void
+pciaddr_resource_reserve_disabled(struct i80321_softc *sc,
+    pci_chipset_tag_t pc, pcitag_t tag)
+{
+	if (pcibr_flags & PCIBR_VERBOSE)
+		pciaddr_print_devid(pc, tag);
+	pciaddr_resource_manage(sc, pc, tag,
+	    pciaddr_do_resource_reserve_disabled);
+}
+
 
 void
 pciaddr_resource_allocate(struct i80321_softc *sc, pci_chipset_tag_t pc,
@@ -243,16 +257,6 @@ pciaddr_resource_manage(struct i80321_softc *sc, pci_chipset_tag_t pc,
 				(unsigned int)addr, (unsigned int)size));
 	}
     
-	/* enable/disable PCI device */
-	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);	
-	if (error == 0)
-		val |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			PCI_COMMAND_MASTER_ENABLE);
-	else
-		val &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			 PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, val);
-    
 	if (error)
 		sc->nbogus++;
 
@@ -314,12 +318,52 @@ pciaddr_do_resource_reserve(struct i80321_softc *sc, pci_chipset_tag_t pc,
     pcitag_t tag, int mapreg, struct extent *ex, int type, bus_addr_t *addr,
     bus_size_t size)
 {
+	pcireg_t val;
 	int error;
 
 	if ((type == PCI_MAPREG_TYPE_IO) && ((*addr & PCIADDR_PORT_END) == 0))
-		return (1);
+		return (0);
 	if (*addr == 0)
+		return (0);
+
+	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (type == PCI_MAPREG_TYPE_MEM &&
+	    (val & PCI_COMMAND_MEM_ENABLE) != PCI_COMMAND_MEM_ENABLE)
+		return (0);
+	if (type == PCI_MAPREG_TYPE_IO &&
+	    (val & PCI_COMMAND_IO_ENABLE) != PCI_COMMAND_IO_ENABLE)
+		return (0);
+
+	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT | EX_MALLOCOK);
+	if (error) {
+		PCIBIOS_PRINTV(("Resource conflict.\n"));
+		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		return (1);
+	}
+
+	return (0);
+}
+
+int
+pciaddr_do_resource_reserve_disabled(struct i80321_softc *sc,
+    pci_chipset_tag_t pc, pcitag_t tag, int mapreg, struct extent *ex,
+    int type, bus_addr_t *addr, bus_size_t size)
+{
+	pcireg_t val;
+	int error;
+
+	if ((type == PCI_MAPREG_TYPE_IO) && ((*addr & PCIADDR_PORT_END) == 0))
+		return (0);
+	if (*addr == 0)
+		return (0);
+
+	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (type == PCI_MAPREG_TYPE_MEM &&
+	    (val & PCI_COMMAND_MEM_ENABLE) == PCI_COMMAND_MEM_ENABLE)
+		return (0);
+	if (type == PCI_MAPREG_TYPE_IO &&
+	    (val & PCI_COMMAND_IO_ENABLE) == PCI_COMMAND_IO_ENABLE)
+		return (0);
 
 	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT | EX_MALLOCOK);
 	if (error) {
