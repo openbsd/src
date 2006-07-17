@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.7 2006/07/17 20:48:27 fgsch Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.8 2006/07/17 20:50:58 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -138,6 +138,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
 	u_int32_t caps;
+	int error = 1;
 #ifdef SDHC_DEBUG
 	u_int16_t version;
 
@@ -241,7 +242,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	hp->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (hp->sdmmc == NULL) {
-		printf("%s: can't attach bus\n", sc->sc_dev.dv_xname);
+		error = 0;
 		goto err;
 	}
 
@@ -261,7 +262,7 @@ err:
 	FREE(hp, M_DEVBUF);
 	sc->sc_host[sc->sc_nhosts - 1] = NULL;
 	sc->sc_nhosts--;
-	return 1;
+	return (error);
 }
 
 void
