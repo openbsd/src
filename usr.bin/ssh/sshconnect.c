@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.191 2006/07/12 22:28:52 stevesk Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.192 2006/07/17 01:31:10 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -27,6 +27,7 @@
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include "ssh.h"
 #include "xmalloc.h"
