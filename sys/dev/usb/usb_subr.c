@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.46 2006/07/16 02:01:37 dlg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.47 2006/07/17 05:24:16 miod Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -848,7 +848,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 	int found, i, confi, nifaces, len;
 	usbd_status err;
 	device_ptr_t dv;
-	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
+	usbd_interface_handle *ifaces;
 
 	uaa.device = dev;
 	uaa.iface = NULL;
@@ -897,6 +897,10 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = dev->cdesc->bConfigurationValue;
+		ifaces = malloc(nifaces * sizeof(usbd_interface_handle),
+		    M_USB, M_NOWAIT);
+		if (ifaces == NULL)
+			return (USBD_NOMEM);
 		for (i = 0; i < nifaces; i++)
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
@@ -904,6 +908,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 		len = (nifaces+1) * sizeof dv;
 		dev->subdevs = malloc(len, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL) {
+			free(ifaces, M_USB);
 			return (USBD_NOMEM);
 		}
 		bzero(dev->subdevs, len);
@@ -919,9 +924,10 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 
 			if (dv != NULL) {
 				dev->subdevs[found++] = dv;
-				ifaces[i] = 0; /* consumed */
+				ifaces[i] = NULL; /* consumed */
 			}
 		}
+		free(ifaces, M_USB);
 		if (found != 0) {
 			return (USBD_NORMAL_COMPLETION);
 		}
