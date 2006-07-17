@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.75 2006/07/09 22:39:50 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.76 2006/07/17 11:43:12 mk Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -539,7 +539,6 @@ atu_start_scan(struct atu_softc *sc)
 	for (Cnt=0; Cnt<6; Cnt++)
 		Scan.BSSID[Cnt] = 0xff;
 
-	memset(Scan.SSID, 0x00, sizeof(Scan.SSID));
 	memcpy(Scan.SSID, ic->ic_des_essid, ic->ic_des_esslen);
 	Scan.SSID_Len = ic->ic_des_esslen;
 
@@ -694,7 +693,6 @@ atu_initial_config(struct atu_softc *sc)
 	}
 
 	/* Setting the SSID here doesn't seem to do anything */
-	memset(cmd.SSID, 0x00, sizeof(cmd.SSID));
 	memcpy(cmd.SSID, ic->ic_des_essid, ic->ic_des_esslen);
 	cmd.SSID_Len = ic->ic_des_esslen;
 
@@ -789,7 +787,6 @@ atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 	DPRINTFN(15, ("%s: mode=%d\n", USBDEVNAME(sc->atu_dev),
 	    sc->atu_mode));
 	memcpy(join.bssid, node->ni_bssid, IEEE80211_ADDR_LEN);
-	memset(join.essid, 0x00, 32);
 	memcpy(join.essid, node->ni_essid, node->ni_esslen);
 	join.essid_size = node->ni_esslen;
 	if (node->ni_capinfo & IEEE80211_CAPINFO_IBSS)
