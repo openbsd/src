@@ -85,6 +85,7 @@
 ./usr/share/man/cat1/cpp.0
 ./usr/share/man/cat1/crontab.0
 ./usr/share/man/cat1/csh.0
+./usr/share/man/cat1/csplit.0
 ./usr/share/man/cat1/ctags.0
 ./usr/share/man/cat1/cu.0
 ./usr/share/man/cat1/cut.0
@@ -2651,5 +2652,6 @@
 ./usr/share/man/ps9/vax
 ./usr/share/man/ps9/zaurus
 ./usr/share/texinfo
+./usr/share/texinfo/texinfo.cat
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl

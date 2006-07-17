@@ -205,6 +205,7 @@
 ./usr/bin/cpan
 ./usr/bin/cpp
 ./usr/bin/crontab
+./usr/bin/csplit
 ./usr/bin/ctags
 ./usr/bin/cu
 ./usr/bin/cut
@@ -447,6 +448,7 @@
 ./usr/bin/tee
 ./usr/bin/telnet
 ./usr/bin/texi2dvi
+./usr/bin/texi2pdf
 ./usr/bin/texindex
 ./usr/bin/tfmtodit
 ./usr/bin/tftp
