@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.26 2006/05/08 19:28:21 kjell Exp $
+.\"	$OpenBSD: mg.1,v 1.27 2006/07/17 15:31:23 kjell Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -178,16 +178,3 @@ terminal-specific startup file
 .El
 .Sh SEE ALSO
 .Xr vi 1
-.Sh BUGS
-When you type
-.Ql \&?
-to list possible file names, buffer names, etc.,
-a help buffer is created for the possibilities.
-In Gnu Emacs,
-this buffer goes away the next time you type a real command.
-In
-.Nm mg ,
-you must use "^X-1" to get rid of it.
-.Pp
-The undo feature has minor differences compared to the same feature in
-Gnu Emacs.
