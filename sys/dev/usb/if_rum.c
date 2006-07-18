@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.4 2006/07/02 00:56:14 jsg Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.5 2006/07/18 19:56:12 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -169,136 +169,28 @@ static const struct ieee80211_rateset rum_rateset_11b =
 static const struct ieee80211_rateset rum_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-/*
- * Default values for MAC registers; values taken from the reference driver.
- */
 static const struct {
 	uint32_t	reg;
 	uint32_t	val;
 } rum_def_mac[] = {
-        { RT2573_TXRX_CSR0,        0x025fb032 },
-        { RT2573_TXRX_CSR1,        0x9eaa9eaf },
-        { RT2573_TXRX_CSR2,        0x8a8b8c8d },
-        { RT2573_TXRX_CSR3,        0x00858687 },
-        { RT2573_TXRX_CSR7,        0x2E31353B },
-        { RT2573_TXRX_CSR8,        0x2a2a2a2c },
-        { RT2573_TXRX_CSR15,       0x0000000f },
-        { RT2573_MAC_CSR6,         0x00000fff },
-        { RT2573_MAC_CSR8,         0x016c030a },
-        { RT2573_MAC_CSR10,        0x00000718 },
-        { RT2573_MAC_CSR12,        0x00000004 },
-        { RT2573_MAC_CSR13,        0x00007f00 },
-        { RT2573_SEC_CSR0,         0x00000000 },
-        { RT2573_SEC_CSR1,         0x00000000 },
-        { RT2573_SEC_CSR5,         0x00000000 },
-        { RT2573_PHY_CSR1,         0x000023b0 },
-        { RT2573_PHY_CSR5,         0x00040a06 },
-        { RT2573_PHY_CSR6,         0x00080606 },
-        { RT2573_PHY_CSR7,         0x00000408 },
-        { RT2573_AIFSN_CSR,        0x00002273 },
-        { RT2573_CWMIN_CSR,        0x00002344 },
-        { RT2573_CWMAX_CSR,        0x000034aa }
+        RT2573_DEF_MAC
 };
 
-/*
- * Default values for BBP registers; values taken from the reference driver.
- */
 static const struct {
 	uint8_t	reg;
 	uint8_t	val;
 } rum_def_bbp[] = {
-	{  3, 0x80 },
-	{ 15, 0x30 },
-	{ 17, 0x20 },
-	{ 21, 0xc8 },
-	{ 22, 0x38 },
-	{ 23, 0x06 },
-	{ 24, 0xfe },
-	{ 25, 0x0a },
-	{ 26, 0x0d },
-	{ 32, 0x0b },
-	{ 34, 0x12 },
-	{ 37, 0x07 },
-	{ 41, 0x60 },
-	{ 53, 0x10 },
-	{ 54, 0x18 },
-	{ 60, 0x10 },
-	{ 61, 0x04 },
-	{ 62, 0x04 },
-	{ 75, 0xfe },
-	{ 86, 0xfe },
-	{ 88, 0xfe },
-	{ 90, 0x0f },
-	{ 99, 0x00 },
-	{ 102, 0x16 },
-	{ 107, 0x04 }
+	RT2573_DEF_BBP
 };
 
-/*
- * Default values for RF register R2 indexed by channel numbers.
- */
+static const uint32_t rum_rf2528_r2[] = RT2573_RF2528_R2;
+static const uint32_t rum_rf2528_r4[] = RT2573_RF2528_R4;
 
-static const uint32_t rum_rf2528_r2[] = {
-	0x001e1, 0x001e1, 0x001e2, 0x001e2, 0x001e3, 0x001e3, 0x001e4,
-	0x001e4, 0x001e5, 0x001e5, 0x001e6, 0x001e6, 0x001e7, 0x001e8
-};
-
-static const uint32_t rum_rf2528_r4[] = {
-	0x30282, 0x30287, 0x30282, 0x30287, 0x30282, 0x30287, 0x30282,
-	0x30287, 0x30282, 0x30287, 0x39282, 0x30287, 0x30282, 0x30284
-};
-
-/*
- * For dual-band RF, RF registers R1 and R4 also depend on channel number;
- * values taken from the reference driver.
- */
 static const struct rfprog {
 	uint8_t		chan;
-	uint32_t	r1;
-	uint32_t	r2;
-	uint32_t	r3;
-	uint32_t	r4;
+	uint32_t	r1, r2, r3, r4;
 } rum_rf5222[] = {
-	{   1, 0x08808, 0x0044d, 0x00282 },
-	{   2, 0x08808, 0x0044e, 0x00282 },
-	{   3, 0x08808, 0x0044f, 0x00282 },
-	{   4, 0x08808, 0x00460, 0x00282 },
-	{   5, 0x08808, 0x00461, 0x00282 },
-	{   6, 0x08808, 0x00462, 0x00282 },
-	{   7, 0x08808, 0x00463, 0x00282 },
-	{   8, 0x08808, 0x00464, 0x00282 },
-	{   9, 0x08808, 0x00465, 0x00282 },
-	{  10, 0x08808, 0x00466, 0x00282 },
-	{  11, 0x08808, 0x00467, 0x00282 },
-	{  12, 0x08808, 0x00468, 0x00282 },
-	{  13, 0x08808, 0x00469, 0x00282 },
-	{  14, 0x08808, 0x0046b, 0x00286 },
-
-	{  36, 0x08804, 0x06225, 0x00287 },
-	{  40, 0x08804, 0x06226, 0x00287 },
-	{  44, 0x08804, 0x06227, 0x00287 },
-	{  48, 0x08804, 0x06228, 0x00287 },
-	{  52, 0x08804, 0x06229, 0x00287 },
-	{  56, 0x08804, 0x0622a, 0x00287 },
-	{  60, 0x08804, 0x0622b, 0x00287 },
-	{  64, 0x08804, 0x0622c, 0x00287 },
-
-	{ 100, 0x08804, 0x02200, 0x00283 },
-	{ 104, 0x08804, 0x02201, 0x00283 },
-	{ 108, 0x08804, 0x02202, 0x00283 },
-	{ 112, 0x08804, 0x02203, 0x00283 },
-	{ 116, 0x08804, 0x02204, 0x00283 },
-	{ 120, 0x08804, 0x02205, 0x00283 },
-	{ 124, 0x08804, 0x02206, 0x00283 },
-	{ 128, 0x08804, 0x02207, 0x00283 },
-	{ 132, 0x08804, 0x02208, 0x00283 },
-	{ 136, 0x08804, 0x02209, 0x00283 },
-	{ 140, 0x08804, 0x0220a, 0x00283 },
-
-	{ 149, 0x08808, 0x02429, 0x00281 },
-	{ 153, 0x08808, 0x0242b, 0x00281 },
-	{ 157, 0x08808, 0x0242d, 0x00281 },
-	{ 161, 0x08808, 0x0242f, 0x00281 }
+	RT2573_RF5222
 };
 
 USB_DECLARE_DRIVER_CLASS(rum, DV_IFNET);
