@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.7 2006/07/18 20:07:59 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.8 2006/07/18 20:12:15 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1556,7 +1556,7 @@ rum_rf_write(struct rum_softc *sc, uint8_t reg, uint32_t val)
 		return;
 	}
 
-	tmp = RT2573_RF_BUSY | RT2573_RF_21BIT | (val & 0xfffff) << 2 |
+	tmp = RT2573_RF_BUSY | RT2573_RF_20BIT | (val & 0xfffff) << 2 |
 	    (reg & 3);
 	rum_write(sc, RT2573_PHY_CSR4,  tmp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.2 2006/07/18 19:56:12 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.3 2006/07/18 20:12:15 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -319,8 +319,8 @@ struct rum_rx_desc {
 #define RT2573_BBP_READ (1 << 15)
 #define RT2573_BBP_BUSY (1 << 16)
 /* possible flags for register PHY_CSR4 */
-#define RT2573_RF_21BIT (21 << 24)
-#define RT2573_RF_BUSY  (1 << 31)
+#define RT2573_RF_20BIT	(20 << 24)
+#define RT2573_RF_BUSY	(1 << 31)
 
 /* possible values for register STA_CSR4 */
 #define RT2573_TX_STAT_VALID    (1 << 0)
