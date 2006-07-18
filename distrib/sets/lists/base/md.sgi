@@ -1769,7 +1769,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet/icmp6.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet/icmp_var.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netinet/if_arc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet/if_atm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet/if_ether.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet/igmp.ph

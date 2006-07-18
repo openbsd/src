@@ -1060,7 +1060,6 @@
 ./usr/include/netinet
 ./usr/include/netinet/icmp6.h
 ./usr/include/netinet/icmp_var.h
-./usr/include/netinet/if_arc.h
 ./usr/include/netinet/if_atm.h
 ./usr/include/netinet/if_ether.h
 ./usr/include/netinet/igmp.h

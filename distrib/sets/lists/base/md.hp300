@@ -1735,7 +1735,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/icmp6.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/icmp_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/if_arc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/if_atm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/if_ether.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/igmp.ph
