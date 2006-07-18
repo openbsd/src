@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.27 2006/06/27 04:21:13 jsg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.28 2006/07/18 18:20:17 mk Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -35,11 +35,11 @@
 #define ATU_CONFIG_NO		1
 #define ATU_IFACE_IDX		0
 
-/* the number of simultaniuously requested RX transfers */
+/* the number of simultaneously requested RX transfers */
 #define ATU_RX_LIST_CNT	1
 
 /*
- * the number of simultaniously started TX transfers
+ * the number of simultaneously started TX transfers
  * my measurements :
  * 1		430.82 KB/sec
  * 2		534.66 KB/sec
@@ -58,7 +58,7 @@
  */
 #define ATU_RX_BUFSZ		(ATU_RX_HDRLEN + \
 				 sizeof(struct ieee80211_frame_addr4) + 2312 + 4)
-/* BE CAREFULL! should add ATU_TX_PADDING */
+/* BE CAREFUL! should add ATU_TX_PADDING */
 #define ATU_TX_BUFSZ		(ATU_TX_HDRLEN + \
 				 sizeof(struct ieee80211_frame_addr4) + 2312)
 
