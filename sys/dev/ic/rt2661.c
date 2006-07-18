@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.23 2006/06/18 18:44:04 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.24 2006/07/18 16:40:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1223,19 +1223,22 @@ rt2661_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r1, r2;
 
+	r1 = RAL_READ(sc, RT2661_INT_SOURCE_CSR);
+	r2 = RAL_READ(sc, RT2661_MCU_INT_SOURCE_CSR);
+	if (r1 == 0 && r2 == 0)
+		return 0;	/* not for us */
+
 	/* disable MAC and MCU interrupts */
 	RAL_WRITE(sc, RT2661_INT_MASK_CSR, 0xffffff7f);
 	RAL_WRITE(sc, RT2661_MCU_INT_MASK_CSR, 0xffffffff);
 
+	/* acknowledge interrupts */
+	RAL_WRITE(sc, RT2661_INT_SOURCE_CSR, r1);
+	RAL_WRITE(sc, RT2661_MCU_INT_SOURCE_CSR, r2);
+
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return 0;
-
-	r1 = RAL_READ(sc, RT2661_INT_SOURCE_CSR);
-	RAL_WRITE(sc, RT2661_INT_SOURCE_CSR, r1);
-
-	r2 = RAL_READ(sc, RT2661_MCU_INT_SOURCE_CSR);
-	RAL_WRITE(sc, RT2661_MCU_INT_SOURCE_CSR, r2);
 
 	if (r1 & RT2661_MGT_DONE)
 		rt2661_tx_dma_intr(sc, &sc->mgtq);

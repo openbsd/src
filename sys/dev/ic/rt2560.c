@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.21 2006/06/18 18:44:04 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.22 2006/07/18 16:40:30 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1377,15 +1377,18 @@ rt2560_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r;
 
+	if ((r = RAL_READ(sc, RT2560_CSR7)) == 0)
+		return 0;	/* not for us */
+
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2560_CSR8, 0xffffffff);
+
+	/* acknowledge interrupts */
+	RAL_WRITE(sc, RT2560_CSR7, r);
 
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return 0;
-
-	r = RAL_READ(sc, RT2560_CSR7);
-	RAL_WRITE(sc, RT2560_CSR7, r);
 
 	if (r & RT2560_BEACON_EXPIRE)
 		rt2560_beacon_expire(sc);
