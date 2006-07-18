@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.5 2006/07/18 05:05:28 deraadt Exp $
+	$OpenBSD: sdmmcdevs,v 1.6 2006/07/18 19:40:05 deraadt Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -55,5 +55,5 @@ product TOSHIBA SDBTCARD2	0x0002	Toshiba SD BT Card 2
 product TOSHIBA SDBTCARD3	0x0003	Toshiba SD BT Card 3
 
 /* Socket Communications, Inc. */
-product SOCKET SDSCANNER	0x005e	Socket SD Scanner
-product SOCKET BTCARD		0x00c5	Socket BT Card
+product SOCKETCOM SDSCANNER	0x005e	Socket SD Scanner
+product SOCKETCOM BTCARD	0x00c5	Socket BT Card
