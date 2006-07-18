@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.4 2006/06/03 03:04:04 uwe Exp $
+	$OpenBSD: sdmmcdevs,v 1.5 2006/07/18 05:05:28 deraadt Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -26,6 +26,7 @@ vendor SOCKETCOM		0x0104	Socket Communications, Inc.
 vendor SYCHIP			0x02db	SyChip Inc.
 vendor SPECTEC			0x02fe	Spectec Computer Co., Ltd
 vendor GLOBALSAT		0x0501	Globalsat Technology Co.
+vendor MEDIATEK			0x037a	MediaTek Inc.
 
 /*
  * List of known products, grouped by vendor
@@ -38,6 +39,9 @@ product CGUYS SDFMRADIO		0x5544	C-guys SD FM Radio
 
 /* Globalsat Technology Co. */
 product GLOBALSAT SD501		0xf501	Globalsat SD-501 GPS Card
+
+/* MediaTek Inc. */
+product MEDIATEK S2YWLAN	0x5911	MediaTek/Spectec WLAN-11b/g
 
 /* Spectec Computer Co., Ltd */
 product SPECTEC SDW820		0x2128	Spectec SDIO WLAN Card
