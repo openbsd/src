@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.53 2006/06/17 18:00:43 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.54 2006/07/18 23:56:47 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -94,6 +94,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983 },
+	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983B },
 	{ PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
@@ -322,6 +323,7 @@ void dc_pci_attach(parent, self, aux)
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983B ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3CSHO100BTX ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MICROSOFT_MN130) {
 			found = 1;
