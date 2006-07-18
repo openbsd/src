@@ -1252,7 +1252,7 @@ dns_zonemgr_releasezone(dns_zonemgr_t *zmgr, dns_zone_t *zone);
 void
 dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, isc_uint32_t value);
 /*
- *	Set the maximum number of simultanious transfers in allowed by
+ *	Set the maximum number of simultaneous transfers in allowed by
  *	the zone manager.
  *
  * Requires:
@@ -1262,7 +1262,7 @@ dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, isc_uint32_t value);
 isc_uint32_t
 dns_zonemgr_getttransfersin(dns_zonemgr_t *zmgr);
 /*
- *	Return the the maximum number of simultanious transfers in allowed.
+ *	Return the the maximum number of simultaneous transfers in allowed.
  *
  * Requires:
  *	'zmgr' to be a valid zone manager.
