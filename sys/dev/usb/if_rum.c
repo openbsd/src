@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.13 2006/07/18 21:13:33 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.14 2006/07/18 21:24:40 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -55,7 +55,6 @@
 #include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/usb/usb.h>
@@ -592,8 +591,6 @@ rum_task(void *arg)
 
 	switch (sc->sc_state) {
 	case IEEE80211_S_INIT:
-		timeout_del(&sc->rssadapt_ch);
-
 		if (ostate == IEEE80211_S_RUN) {
 			/* abort TSF synchronization */
 			tmp = rum_read(sc, RT2573_TXRX_CSR9);
@@ -633,10 +630,8 @@ rum_task(void *arg)
 		/* make tx led blink on tx (controlled by ASIC) */
 		rum_led_write(sc, RT2573_LED_RADIO|RT2573_LED_A|RT2573_LED_G, 1);
 
-		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			timeout_add(&sc->rssadapt_ch, hz / 10);
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			rum_enable_tsf_sync(sc);
-		}
 		break;
 	}
 
