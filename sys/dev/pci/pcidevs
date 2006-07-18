@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1104 2006/07/18 20:18:25 moritz Exp $
+$OpenBSD: pcidevs,v 1.1105 2006/07/18 23:18:37 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -503,6 +503,7 @@ product ADMTEK AL981		0x0981	AL981
 product ADMTEK AN983		0x0985	AN983
 product ADMTEK AN985		0x1985	AN985
 product ADMTEK ADM8211		0x8201	ADM8211 WLAN
+product ADMTEK AN983B		0x9511	AN983B
 
 /* Adaptec products */
 product ADP AIC7810		0x1078	AIC-7810
