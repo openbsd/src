@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.8 2006/07/18 20:12:15 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.9 2006/07/18 20:23:14 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1570,7 +1570,7 @@ void
 rum_set_chan(struct rum_softc *sc, struct ieee80211_channel *c)
 {
         struct ieee80211com *ic = &sc->sc_ic;
-        uint8_t bbp3, bbp94 = RT2573_BBPR94_DEFAULT;
+        uint8_t bbp94 = RT2573_BBPR94_DEFAULT;
         int8_t power;
         u_int chan;
 
@@ -1588,21 +1588,25 @@ rum_set_chan(struct rum_softc *sc, struct ieee80211_channel *c)
         }
         sc->sc_curchan = c;
 
-	rum_rf_write(sc, RT2573_RF1, 0x0c808);
+	rum_rf_write(sc, RT2573_RF1, 0xb03);
 	rum_rf_write(sc, RT2573_RF2, rum_rf2528_r2[chan - 1]);
-	rum_rf_write(sc, RT2573_RF3, power << 7 | 0x18044);
+	rum_rf_write(sc, RT2573_RF3, 0x1a014 | power << 7);
 	rum_rf_write(sc, RT2573_RF4, rum_rf2528_r4[chan - 1]);
 
-        DELAY(200);
+	rum_rf_write(sc, RT2573_RF1, 0xb03);
+	rum_rf_write(sc, RT2573_RF2, rum_rf2528_r2[chan - 1]);
+	rum_rf_write(sc, RT2573_RF3, 0x1a015 | power << 7);
+	rum_rf_write(sc, RT2573_RF4, rum_rf2528_r4[chan - 1]);
 
-        bbp3 = rum_bbp_read(sc, 3);
+	rum_rf_write(sc, RT2573_RF1, 0xb03);
+	rum_rf_write(sc, RT2573_RF2, rum_rf2528_r2[chan - 1]);
+	rum_rf_write(sc, RT2573_RF3, 0x1a014 | power << 7);
+	rum_rf_write(sc, RT2573_RF4, rum_rf2528_r4[chan - 1]);
+
+	DELAY(10);
 
         if (bbp94 != RT2573_BBPR94_DEFAULT)
                 rum_bbp_write(sc, 94, bbp94);
-
-        /* 5GHz radio needs a 1ms delay here */
-        if (IEEE80211_IS_CHAN_5GHZ(c))
-                DELAY(1000);
 }
 
 /*
