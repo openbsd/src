@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.28 2003/10/25 07:40:37 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.29 2006/07/18 08:32:05 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -315,6 +315,10 @@ management.
 Because of the load it can impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
+.Pp
+.Nm
+exits 0 if at least one reply is received,
+and \*(Gt0 if no reply is received or an error occurred.
 .\" .Sh ICMP PACKET DETAILS
 .\" An IP header without options is 20 bytes.
 .\" An
@@ -387,10 +391,6 @@ using the
 .Fl p
 option of
 .Nm ping6 .
-.Sh RETURN VALUES
-.Nm
-returns 0 on success (the host is alive),
-and non-zero if the arguments are incorrect or the host is not responding.
 .Sh EXAMPLES
 Normally,
 .Nm

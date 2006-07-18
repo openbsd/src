@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.33 2006/07/11 21:23:08 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.34 2006/07/18 08:32:05 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -222,7 +222,9 @@ Because of the load it can impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
 .Pp
-.Ex -std ping
+.Nm
+exits 0 if at least one reply is received,
+and \*(Gt0 if no reply is received or an error occurred.
 .Sh ICMP PACKET DETAILS
 An IP header without options is 20 bytes.
 An ICMP
