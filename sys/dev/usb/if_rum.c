@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.10 2006/07/18 20:29:16 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.11 2006/07/18 20:37:44 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1500,7 +1500,7 @@ rum_bbp_write(struct rum_softc *sc, uint8_t reg, uint8_t val)
 	int ntries;
 
 	for (ntries = 0; ntries < 5; ntries++) {
-		if (!((rum_read(sc, RT2573_PHY_CSR3_RT71) >> 16) & RT2573_BBP_BUSY))
+		if (!(rum_read(sc, RT2573_PHY_CSR3_RT71) & RT2573_BBP_BUSY))
 			break;
 	}
 	if (ntries == 5) {
@@ -1519,7 +1519,7 @@ rum_bbp_read(struct rum_softc *sc, uint8_t reg)
 	int ntries;
 
 	for (ntries = 0; ntries < 5; ntries++) {
-		if (!((rum_read(sc, RT2573_PHY_CSR3) >> 16) & RT2573_BBP_BUSY))
+		if (!(rum_read(sc, RT2573_PHY_CSR3) & RT2573_BBP_BUSY))
 			break;
 	}
 	if (ntries == 5) {
@@ -1533,7 +1533,7 @@ rum_bbp_read(struct rum_softc *sc, uint8_t reg)
 	for (ntries = 0; ntries < 100; ntries++) {
 		val = rum_read(sc, RT2573_PHY_CSR3);
 		if (!(val & RT2573_BBP_BUSY))
-			return (val & 0xff);
+			return val & 0xff;
 		DELAY(1);
 	}
 
@@ -1558,12 +1558,12 @@ rum_rf_write(struct rum_softc *sc, uint8_t reg, uint32_t val)
 
 	tmp = RT2573_RF_BUSY | RT2573_RF_20BIT | (val & 0xfffff) << 2 |
 	    (reg & 3);
-	rum_write(sc, RT2573_PHY_CSR4,  tmp);
+	rum_write(sc, RT2573_PHY_CSR4, tmp);
 
 	/* remember last written value in sc */
 	sc->rf_regs[reg] = val;
 
-	//DPRINTFN(15, ("RF R[%u] <- 0x%05x\n", reg & 3, val & 0xfffff));
+	/*DPRINTFN(15, ("RF R[%u] <- 0x%05x\n", reg & 3, val & 0xfffff));*/
 }
 
 void
