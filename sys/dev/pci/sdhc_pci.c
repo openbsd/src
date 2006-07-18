@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.3 2006/07/17 20:48:26 fgsch Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.4 2006/07/18 17:28:14 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
@@ -34,6 +35,10 @@
 #define SDHC_PCI_NUM_SLOTS(info)	((((info) >> 4) & 0x7) + 1)
 #define SDHC_PCI_FIRST_BAR(info)	((info) & 0x7)
 
+/* TI specific register */
+#define SDHC_PCI_GENERAL_CTL		0x4c
+#define  MMC_SD_DIS			0x02
+
 struct sdhc_pci_softc {
 	struct sdhc_softc sc;
 	void *sc_ih;
@@ -41,6 +46,7 @@ struct sdhc_pci_softc {
 
 int	sdhc_pci_match(struct device *, void *, void *);
 void	sdhc_pci_attach(struct device *, struct device *, void *);
+void	sdhc_takecontroller(struct pci_attach_args *);
 
 struct cfattach sdhc_pci_ca = {
 	sizeof(struct sdhc_pci_softc), sdhc_pci_match, sdhc_pci_attach
@@ -72,6 +78,12 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t size;
+
+	/* Some TI controllers needs special treatment. */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_PCI7XX1_FLASH &&
+            pa->pa_function == 4)
+		sdhc_takecontroller(pa);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
@@ -129,4 +141,25 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	(void)powerhook_establish(sdhc_power, &sc->sc);
 	(void)shutdownhook_establish(sdhc_shutdown, &sc->sc);
+}
+
+void
+sdhc_takecontroller(struct pci_attach_args *pa)
+{
+	pcitag_t tag;
+	pcireg_t id, reg;
+
+	/* Look at func 3 for the flash device */
+	tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 3);
+	id = pci_conf_read(pa->pa_pc, tag, PCI_ID_REG);
+	if (PCI_PRODUCT(id) != PCI_PRODUCT_TI_PCI7XX1_FLASH)
+		return;
+
+	/*
+	 * Disable MMC/SD on the flash media controller so the
+	 * SD host takes over.
+	 */
+	reg = pci_conf_read(pa->pa_pc, tag, SDHC_PCI_GENERAL_CTL);
+	reg |= MMC_SD_DIS;
+	pci_conf_write(pa->pa_pc, tag, SDHC_PCI_GENERAL_CTL, reg);
 }
