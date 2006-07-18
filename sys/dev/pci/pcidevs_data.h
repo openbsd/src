@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1103 2006/07/18 01:55:51 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1105 2006/07/18 23:18:37 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -693,6 +693,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
 	    "ADM8211 WLAN",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983B,
+	    "AN983B",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7810,
