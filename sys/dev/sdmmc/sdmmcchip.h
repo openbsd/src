@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.1 2006/05/28 17:21:14 uwe Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.2 2006/07/18 04:10:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -36,7 +36,7 @@ struct sdmmc_chip_functions {
 	int	(*bus_power)(sdmmc_chipset_handle_t, u_int32_t);
 	int	(*bus_clock)(sdmmc_chipset_handle_t, int);
 	/* command execution */
-	int	(*exec_command)(sdmmc_chipset_handle_t,
+	void	(*exec_command)(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
 };
 
@@ -71,8 +71,7 @@ struct sdmmcbus_attach_args {
 	sdmmc_chipset_handle_t sch;
 };
 
-/* host controller calls to sdmmc */
-int	sdmmc_card_attach(struct device *);
-void	sdmmc_card_detach(struct device *, int);
+void	sdmmc_needs_discover(struct device *);
+void	sdmmc_delay(u_int);
 
 #endif

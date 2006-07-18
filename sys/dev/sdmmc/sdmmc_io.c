@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.5 2006/06/19 21:14:30 miod Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.6 2006/07/18 04:10:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -178,23 +178,29 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 void
 sdmmc_io_function_enable(struct sdmmc_function *sf)
 {
-	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_function *sf0 = sc->sc_fn0;
 	u_int8_t rv;
 
+	SDMMC_LOCK(sc);
 	rv = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_ENABLE);
 	rv |= (1<<sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, rv);
+	SDMMC_UNLOCK(sc);
 }
 
 void
 sdmmc_io_function_disable(struct sdmmc_function *sf)
 {
-	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_function *sf0 = sc->sc_fn0;
 	u_int8_t rv;
 
+	SDMMC_LOCK(sc);
 	rv = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_ENABLE);
 	rv &= ~(1<<sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, rv);
+	SDMMC_UNLOCK(sc);
 }
 
 void
@@ -289,9 +295,13 @@ sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	struct sdmmc_command cmd;
 	int error;
 
+	SDMMC_LOCK(sc);
+
 	/* Make sure the card is selected. */
-	if ((error = sdmmc_select_card(sc, sf)) != 0)
+	if ((error = sdmmc_select_card(sc, sf)) != 0) {
+		SDMMC_UNLOCK(sc);
 		return error;
+	}
 
 	arg |= ((sf == NULL ? 0 : sf->number) & SD_ARG_CMD52_FUNC_MASK) <<
 	    SD_ARG_CMD52_FUNC_SHIFT;
@@ -307,6 +317,8 @@ sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	*datap = SD_R5_DATA(cmd.c_resp);
+
+	SDMMC_UNLOCK(sc);
 	return error;
 }
 
@@ -317,9 +329,13 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	struct sdmmc_command cmd;
 	int error;
 
+	SDMMC_LOCK(sc);
+
 	/* Make sure the card is selected. */
-	if ((error = sdmmc_select_card(sc, sf)) != 0)
+	if ((error = sdmmc_select_card(sc, sf)) != 0) {
+		SDMMC_UNLOCK(sc);
 		return error;
+	}
 
 	arg |= ((sf == NULL ? 0 : sf->number) & SD_ARG_CMD53_FUNC_MASK) <<
 	    SD_ARG_CMD53_FUNC_SHIFT;
@@ -339,7 +355,9 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	if (!ISSET(arg, SD_ARG_CMD53_WRITE))
 		cmd.c_flags |= SCF_CMD_READ;
 
-	return sdmmc_mmc_command(sc, &cmd);
+	error = sdmmc_mmc_command(sc, &cmd);
+	SDMMC_UNLOCK(sc);
+	return error;
 }
 
 u_int8_t
@@ -431,6 +449,8 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 	int error;
 	int i;
 
+	SDMMC_LOCK(sc);
+
 	/*
 	 * If we change the OCR value, retry the command until the OCR
 	 * we receive in response has the "CARD BUSY" bit set, meaning
@@ -453,5 +473,7 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 	}
 	if (error == 0 && ocrp != NULL)
 		*ocrp = MMC_R4(cmd.c_resp);
+
+	SDMMC_UNLOCK(sc);
 	return error;
 }

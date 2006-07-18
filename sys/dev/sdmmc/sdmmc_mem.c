@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.4 2006/06/29 01:40:51 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.5 2006/07/18 04:10:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -59,7 +59,6 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	 */
  mmc_mode:
 	if (sdmmc_mem_send_op_cond(sc, 0, &card_ocr) != 0) {
-		DPRINTF(("flags %x\n", sc->sc_flags));
 		if (ISSET(sc->sc_flags, SMF_SD_MODE) &&
 		    !ISSET(sc->sc_flags, SMF_IO_MODE)) {
 			/* Not a SD card, switch to MMC mode. */
@@ -213,10 +212,14 @@ sdmmc_mem_scan(struct sdmmc_softc *sc)
 int
 sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
+	int error = 0;
+
+	SDMMC_LOCK(sc);
 	if (sdmmc_select_card(sc, sf) != 0 ||
 	    sdmmc_mem_set_blocklen(sc, sf) != 0)
-		return 1;
-	return 0;
+		error = 1;
+	SDMMC_UNLOCK(sc);
+	return error;
 }
 
 /*
@@ -229,6 +232,8 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr,
 	struct sdmmc_command cmd;
 	int error;
 	int i;
+
+	SDMMC_LOCK(sc);
 
 	/*
 	 * If we change the OCR value, retry the command until the OCR
@@ -257,6 +262,8 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr,
 	}
 	if (error == 0 && ocrp != NULL)
 		*ocrp = MMC_R3(cmd.c_resp);
+
+	SDMMC_UNLOCK(sc);
 	return error;
 }
 
@@ -280,14 +287,17 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 }
 
 int
-sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
-    int blkno, u_char *data, size_t datalen)
+sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
+    size_t datalen)
 {
+	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
 	int error;
 
+	SDMMC_LOCK(sc);
+
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
-		return error;
+		goto err;
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_data = data;
@@ -300,7 +310,7 @@ sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error != 0)
-		return error;
+		goto err;
 
 	do {
 		bzero(&cmd, sizeof cmd);
@@ -313,18 +323,23 @@ sdmmc_mem_read_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		/* XXX time out */
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
+err:
+	SDMMC_UNLOCK(sc);
 	return error;
 }
 
 int
-sdmmc_mem_write_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
-    int blkno, u_char *data, size_t datalen)
+sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
+    size_t datalen)
 {
+	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
 	int error;
 
+	SDMMC_LOCK(sc);
+
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
-		return error;
+		goto err;
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_data = data;
@@ -337,7 +352,7 @@ sdmmc_mem_write_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error != 0)
-		return error;
+		goto err;
 
 	do {
 		bzero(&cmd, sizeof cmd);
@@ -350,5 +365,7 @@ sdmmc_mem_write_block(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		/* XXX time out */
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
+err:
+	SDMMC_UNLOCK(sc);
 	return error;
 }

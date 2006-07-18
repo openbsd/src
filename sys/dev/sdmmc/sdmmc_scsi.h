@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.h,v 1.2 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.h,v 1.3 2006/07/18 04:10:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -20,18 +20,6 @@
 #define _SDMMC_SCSI_H_
 
 struct sdmmc_softc;
-
-struct sdmmc_scsi_target {
-	struct sdmmc_function *card;
-};
-
-struct sdmmc_scsi_softc {
-	struct scsi_adapter sc_adapter;
-	struct scsi_link sc_link;
-	struct device *sc_child;
-	struct sdmmc_scsi_target *sc_tgt;
-	int sc_ntargets;
-};
 
 void	sdmmc_scsi_attach(struct sdmmc_softc *);
 void	sdmmc_scsi_detach(struct sdmmc_softc *);

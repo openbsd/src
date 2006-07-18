@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.2 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.3 2006/07/18 04:10:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -45,12 +45,29 @@ struct sdmmc_cid {
 	int	mdt;		/* manufacturing date */
 };
 
-struct sdmmc_command;
-
 typedef u_int32_t sdmmc_response[4];
-typedef void (*sdmmc_callback)(struct device *, struct sdmmc_command *);
+
+struct sdmmc_softc;
+
+struct sdmmc_task {
+	void (*func)(void *arg);
+	void *arg;
+	int onqueue;
+	struct sdmmc_softc *sc;
+	TAILQ_ENTRY(sdmmc_task) next;
+};
+
+#define	sdmmc_init_task(xtask, xfunc, xarg) do {			\
+	(xtask)->func = (xfunc);					\
+	(xtask)->arg = (xarg);						\
+	(xtask)->onqueue = 0;						\
+	(xtask)->sc = NULL;						\
+} while (0)
+
+#define sdmmc_task_pending(xtask) ((xtask)->onqueue)
 
 struct sdmmc_command {
+	struct sdmmc_task c_task;	/* task queue entry */
 	u_int16_t	 c_opcode;	/* SD or MMC command index */
 	u_int32_t	 c_arg;		/* SD/MMC command argument */
 	sdmmc_response	 c_resp;	/* response buffer */
@@ -58,10 +75,7 @@ struct sdmmc_command {
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */
 	int		 c_flags;	/* see below */
-#define SCF_DONE	 0x0001		/* command is finished */
-#define SCF_BUF_READY	 0x0002		/* buffer ready int occurred */
-#define SCF_CMD_DONE	 0x0004		/* cmd complete int occurred */
-#define SCF_XFR_DONE	 0x0008		/* transfer complete int occurred */
+#define SCF_ITSDONE	 0x0001		/* command is complete */
 #define SCF_CMD_AC	 0x0000
 #define SCF_CMD_ADTC	 0x0010
 #define SCF_CMD_BC	 0x0020
@@ -81,7 +95,6 @@ struct sdmmc_command {
 #define SCF_RSP_R5	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 #define SCF_RSP_R5B	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
 #define SCF_RSP_R6	 (SCF_RSP_PRESENT|SCF_RSP_CRC)
-	sdmmc_callback	 c_done;	/* callback function */
 	int		 c_error;	/* errno value on completion */
 };
 
@@ -138,11 +151,18 @@ struct sdmmc_softc {
 #define SMF_SD_MODE		0x0001	/* host in SD mode (MMC otherwise) */
 #define SMF_IO_MODE		0x0002	/* host in I/O mode (SD mode only) */
 #define SMF_MEM_MODE		0x0004	/* host in memory mode (SD or MMC) */
+#define SMF_CARD_PRESENT	0x0010	/* card presence noticed */
+#define SMF_CARD_ATTACHED	0x0020	/* card driver(s) attached */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
-	void *sc_scsibus;		/* SCSI bus emulation softc */
 	struct sdmmc_function *sc_card;	/* selected card */
 	struct sdmmc_function *sc_fn0;	/* function 0, the card itself */
-	SIMPLEQ_HEAD(, sdmmc_function) sf_head;
+	SIMPLEQ_HEAD(, sdmmc_function) sf_head; /* list of card functions */
+	int sc_dying;			/* bus driver is shutting down */
+	struct proc *sc_task_thread;	/* asynchronous tasks */
+	TAILQ_HEAD(, sdmmc_task) sc_tskq;   /* task thread work queue */
+	struct sdmmc_task sc_discover_task; /* card attach/detach task */
+	struct lock sc_lock;		/* lock around host controller */
+	void *sc_scsibus;		/* SCSI bus emulation softc */
 };
 
 /*
@@ -156,9 +176,14 @@ struct sdmmc_attach_args {
 #define IPL_SDMMC	IPL_BIO
 #define splsdmmc()	splbio()
 
+#define SDMMC_LOCK(sc)	 lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
+#define SDMMC_UNLOCK(sc) lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
+
+void	sdmmc_add_task(struct sdmmc_softc *, struct sdmmc_task *);
+void	sdmmc_del_task(struct sdmmc_task *);
+
 struct	sdmmc_function *sdmmc_function_alloc(struct sdmmc_softc *);
 void	sdmmc_function_free(struct sdmmc_function *);
-void	sdmmc_delay(u_int);
 int	sdmmc_set_bus_power(struct sdmmc_softc *, u_int32_t, u_int32_t);
 int	sdmmc_mmc_command(struct sdmmc_softc *, struct sdmmc_command *);
 int	sdmmc_app_command(struct sdmmc_softc *, struct sdmmc_command *);
@@ -193,9 +218,7 @@ void	sdmmc_check_cis_quirks(struct sdmmc_function *);
 int	sdmmc_mem_enable(struct sdmmc_softc *);
 void	sdmmc_mem_scan(struct sdmmc_softc *);
 int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
-int	sdmmc_mem_read_block(struct sdmmc_softc *,
-	    struct sdmmc_function *, int, u_char *, size_t);
-int	sdmmc_mem_write_block(struct sdmmc_softc *,
-	    struct sdmmc_function *, int, u_char *, size_t);
+int	sdmmc_mem_read_block(struct sdmmc_function *, int, u_char *, size_t);
+int	sdmmc_mem_write_block(struct sdmmc_function *, int, u_char *, size_t);
 
 #endif

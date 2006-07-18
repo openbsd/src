@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.8 2006/07/17 20:50:58 fgsch Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.9 2006/07/18 04:10:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,7 +27,6 @@
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -35,8 +34,9 @@
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#define SDHC_COMMAND_TIMEOUT	(hz*2)	/* 2 seconds */
-#define SDHC_DATA_TIMEOUT	(hz*2)	/* 2 seconds */
+#define SDHC_COMMAND_TIMEOUT	hz
+#define SDHC_BUFFER_TIMEOUT	hz
+#define SDHC_TRANSFER_TIMEOUT	hz
 
 struct sdhc_host {
 	struct sdhc_softc *sc;		/* host controller device */
@@ -47,18 +47,15 @@ struct sdhc_host {
 	int maxblklen;			/* maximum block length */
 	int flags;			/* flags for this host */
 	u_int32_t ocr;			/* OCR value from capabilities */
-	struct proc *event_thread;	/* event processing thread */
-	struct sdmmc_command *cmd;	/* current command or NULL */
-	struct timeout cmd_to;		/* command timeout */
 	u_int8_t regs[14];		/* host controller state */
+	u_int16_t intr_status;		/* soft interrupt status */
+	u_int16_t intr_error_status;	/* soft error status */
 };
 
-#define HDEVNAME(hp)	((hp)->sdmmc->dv_xname)
+#define HDEVNAME(hp)	((hp)->sc->sc_dev.dv_xname)
 
 /* flag values */
 #define SHF_USE_DMA		0x0001
-#define SHF_CARD_PRESENT	0x0002
-#define SHF_CARD_ATTACHED	0x0004
 
 #define HREAD1(hp, reg)							\
 	(bus_space_read_1((hp)->iot, (hp)->ioh, (reg)))
@@ -81,25 +78,20 @@ struct sdhc_host {
 #define HSET2(hp, reg, bits)						\
 	HWRITE2((hp), (reg), HREAD2((hp), (reg)) | (bits))
 
-void	sdhc_create_event_thread(void *);
-void	sdhc_event_thread(void *);
-void	sdhc_event_process(struct sdhc_host *);
-
 int	sdhc_host_reset(sdmmc_chipset_handle_t);
 u_int32_t sdhc_host_ocr(sdmmc_chipset_handle_t);
 int	sdhc_host_maxblklen(sdmmc_chipset_handle_t);
 int	sdhc_card_detect(sdmmc_chipset_handle_t);
 int	sdhc_bus_power(sdmmc_chipset_handle_t, u_int32_t);
 int	sdhc_bus_clock(sdmmc_chipset_handle_t, int);
-int	sdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
-int	sdhc_wait_state(struct sdhc_host *, u_int32_t, u_int32_t);
+void	sdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
-int	sdhc_wait_command(struct sdhc_host *, int);
-int	sdhc_finish_command(struct sdhc_host *);
-void	sdhc_transfer_data(struct sdhc_host *);
+int	sdhc_wait_state(struct sdhc_host *, u_int32_t, u_int32_t);
+void	sdhc_soft_reset(struct sdhc_host *);
+int	sdhc_wait_intr(struct sdhc_host *, int, int);
+void	sdhc_transfer_data(struct sdhc_host *, struct sdmmc_command *);
 void	sdhc_read_data(struct sdhc_host *, u_char *, int);
 void	sdhc_write_data(struct sdhc_host *, u_char *, int);
-void	sdhc_command_timeout(void *);
 
 #ifdef SDHC_DEBUG
 void	sdhc_dump_regs(struct sdhc_host *);
@@ -166,7 +158,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	hp->sc = sc;
 	hp->iot = iot;
 	hp->ioh = ioh;
-	timeout_set(&hp->cmd_to, sdhc_command_timeout, hp);
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -245,83 +236,14 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		error = 0;
 		goto err;
 	}
-
-	/*
-	 * Create the event thread that will attach and detach cards
-	 * and perform other lengthy operations.
-	 */
-#ifdef DO_CONFIG_PENDING
-	config_pending_incr();
-#endif
-	kthread_create_deferred(sdhc_create_event_thread, hp);
 	
 	return 0;
 
 err:
-	timeout_del(&hp->cmd_to);
 	FREE(hp, M_DEVBUF);
 	sc->sc_host[sc->sc_nhosts - 1] = NULL;
 	sc->sc_nhosts--;
 	return (error);
-}
-
-void
-sdhc_create_event_thread(void *arg)
-{
-	struct sdhc_host *hp = arg;
-
-	/* If there's a card, attach it. */
-	sdhc_event_process(hp);
-
-	if (kthread_create(sdhc_event_thread, hp, &hp->event_thread,
-	    HDEVNAME(hp)) != 0)
-		printf("%s: can't create event thread\n", HDEVNAME(hp));
-
-#ifdef DO_CONFIG_PENDING
-	config_pending_decr();
-#endif
-}
-
-void
-sdhc_event_thread(void *arg)
-{
-	struct sdhc_host *hp = arg;
-
-	for (;;) {
-		(void)tsleep((caddr_t)hp, PWAIT, "sdhcev", 0);
-		sdhc_event_process(hp);
-	}
-}
-
-void
-sdhc_event_process(struct sdhc_host *hp)
-{
-	/* If there's a card, attach it, if it went away, detach it. */
-	if (sdhc_card_detect(hp)) {
-		if (!ISSET(hp->flags, SHF_CARD_PRESENT)) {
-			SET(hp->flags, SHF_CARD_PRESENT);
-			if (sdmmc_card_attach(hp->sdmmc) == 0)
-				SET(hp->flags, SHF_CARD_ATTACHED);
-		}
-	} else {
-		/* XXX If a command was in progress, abort it. */
-		int s = splsdmmc();
-		if (hp->cmd != NULL) {
-			timeout_del(&hp->cmd_to);
-			printf("%s: interrupted command %u\n",
-			    HDEVNAME(hp), hp->cmd->c_opcode);
-			hp->cmd = NULL;
-		}
-		splx(s);
-
-		if (ISSET(hp->flags, SHF_CARD_PRESENT)) {
-			CLR(hp->flags, SHF_CARD_PRESENT);
-			if (ISSET(hp->flags, SHF_CARD_ATTACHED)) {
-				sdmmc_card_detach(hp->sdmmc, DETACH_FORCE);
-				CLR(hp->flags, SHF_CARD_ATTACHED);
-			}
-		}
-	}
 }
 
 /*
@@ -597,39 +519,6 @@ ret:
 	return error;
 }
 
-/*
- * Send a command and data to the card and return the command response
- * and data from the card.
- *
- * If no callback function is specified, execute the command
- * synchronously; otherwise, return immediately and call the function
- * from the event thread after the command has completed.
- */
-int
-sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
-{
-	struct sdhc_host *hp = sch;
-	int error;
-
-	if (hp->cmd != NULL)
-		return EBUSY;
-
-	error = sdhc_start_command(hp, cmd);
-	if (error != 0)
-		goto err;
-	if (cmd->c_done != NULL)
-		/* Execute this command asynchronously. */
-		return error;
-
-	error = sdhc_wait_command(hp, SCF_DONE|SCF_CMD_DONE);
-	if (error != 0)
-		goto err;
-	return sdhc_finish_command(hp);
- err:
-	cmd->c_error = error;
-	SET(cmd->c_flags, SCF_DONE);
-	return sdhc_finish_command(hp);
-}
 
 int
 sdhc_wait_state(struct sdhc_host *hp, u_int32_t mask, u_int32_t value)
@@ -648,6 +537,64 @@ sdhc_wait_state(struct sdhc_host *hp, u_int32_t mask, u_int32_t value)
 	return ETIMEDOUT;
 }
 
+void
+sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
+{
+	struct sdhc_host *hp = sch;
+	int error;
+
+	/*
+	 * Start the MMC command, or mark `cmd' as failed and return.
+	 */
+	error = sdhc_start_command(hp, cmd);
+	if (error != 0) {
+		cmd->c_error = error;
+		SET(cmd->c_flags, SCF_ITSDONE);
+		return;
+	}
+
+	/*
+	 * Wait until the command phase is done, or until the command
+	 * is marked done for any other reason.
+	 */
+	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE,
+	    SDHC_COMMAND_TIMEOUT)) {
+		cmd->c_error = ETIMEDOUT;
+		SET(cmd->c_flags, SCF_ITSDONE);
+		return;
+	}
+
+	/*
+	 * The host controller removes bits [0:7] from the response
+	 * data (CRC) and we pass the data up unchanged to the bus
+	 * driver (without padding).
+	 */
+	if (cmd->c_error == 0 && ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
+		if (ISSET(cmd->c_flags, SCF_RSP_136)) {
+			u_char *p = (u_char *)cmd->c_resp;
+			int i;
+
+			for (i = 0; i < 15; i++)
+				*p++ = HREAD1(hp, SDHC_RESPONSE + i);
+		} else
+			cmd->c_resp[0] = HREAD4(hp, SDHC_RESPONSE);
+	}
+
+	/*
+	 * If the command has data to transfer in any direction,
+	 * execute the transfer now.
+	 */
+	if (cmd->c_error == 0 && cmd->c_data != NULL)
+		sdhc_transfer_data(hp, cmd);
+
+	/* Turn off the LED. */
+	HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
+
+	DPRINTF(("%s: cmd %u done (flags=%#x error=%d)\n",
+	    HDEVNAME(hp), cmd->c_opcode, cmd->c_flags, cmd->c_error));
+	SET(cmd->c_flags, SCF_ITSDONE);
+}
+
 int
 sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
@@ -658,13 +605,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int error;
 	int s;
 	
-	DPRINTF(("%s: start cmd %u arg=%#x\n", HDEVNAME(hp), cmd->c_opcode,
-	    cmd->c_arg));
-	hp->cmd = cmd;
-
-	/* If the card went away, finish the command immediately. */
-	if (!ISSET(hp->flags, SHF_CARD_PRESENT))
-		return ETIMEDOUT;
+	DPRINTF(("%s: start cmd %u arg=%#x proc=%#x\"%s\"\n",
+	    HDEVNAME(hp), cmd->c_opcode, cmd->c_arg, curproc,
+	    curproc ? curproc->p_comm : ""));
 
 	/*
 	 * The maximum block length for commands should be the minimum
@@ -748,97 +691,13 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	HWRITE2(hp, SDHC_TRANSFER_MODE, mode);
 	HWRITE2(hp, SDHC_COMMAND, command);
 
-	/*
-	 * Start a software timeout.  In the unlikely event that the
-	 * controller's own timeout detection mechanism fails we will
-	 * abort the transfer in software.
-	 */
-	timeout_add(&hp->cmd_to, SDHC_COMMAND_TIMEOUT);
-
 	splx(s);
 	return 0;
 }
 
-int
-sdhc_wait_command(struct sdhc_host *hp, int flags)
-{
-	int s;
-
-	for (;;) {
-		/* Return if the command was aborted. */
-		if (hp->cmd == NULL)
-			return EIO;
-
-		s = splsdmmc();
-
-		/* Return if the command has reached the awaited state. */
-		if (ISSET(hp->cmd->c_flags, flags)) {
-			splx(s);
-			return 0;
-		}
-
-		(void)tsleep((caddr_t)hp, PWAIT, "sdhccmd", 0);
-
-		/* Process card events. */
-		sdhc_event_process(hp);
-
-		splx(s);
-	}
-}
-
-int
-sdhc_finish_command(struct sdhc_host *hp)
-{
-	struct sdmmc_command *cmd = hp->cmd;
-	int error;
-
-	if (cmd == NULL) {
-		DPRINTF(("%s: finish NULL cmd\n", HDEVNAME(hp)));
-		return 0;
-	}
-
-	/* Cancel command timeout. */
-	timeout_del(&hp->cmd_to);
-
-	/*
-	 * The host controller removes bits [0:7] from the response
-	 * data (CRC) and we pass the data up unchanged to the bus
-	 * driver (without padding).
-	 */
-	if (cmd->c_error == 0 && ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
-		if (ISSET(cmd->c_flags, SCF_RSP_136)) {
-			u_char *p = (u_char *)cmd->c_resp;
-			int i;
-
-			for (i = 0; i < 15; i++)
-				*p++ = HREAD1(hp, SDHC_RESPONSE + i);
-		} else
-			cmd->c_resp[0] = HREAD4(hp, SDHC_RESPONSE);
-	}
-
-	if (cmd->c_error == 0 && cmd->c_data != NULL) {
-		timeout_add(&hp->cmd_to, SDHC_DATA_TIMEOUT);
-		sdhc_transfer_data(hp);
-	}
-
-	/* Turn off the LED. */
-	HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
-
-	error = cmd->c_error;
-	hp->cmd = NULL;
-
-	SET(cmd->c_flags, SCF_DONE);
-	DPRINTF(("%s: cmd %u done (flags=%#x error=%d)\n",
-	    HDEVNAME(hp), cmd->c_opcode, cmd->c_flags, error));
-	if (cmd->c_done != NULL)
-		cmd->c_done(hp->sdmmc, cmd);
-	return error;
-}
-
 void
-sdhc_transfer_data(struct sdhc_host *hp)
+sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
-	struct sdmmc_command *cmd = hp->cmd;
 	u_char *datap = cmd->c_data;
 	int i, datalen;
 	int mask;
@@ -849,15 +708,17 @@ sdhc_transfer_data(struct sdhc_host *hp)
 	error = 0;
 	datalen = cmd->c_datalen;
 
-	DPRINTF(("%s: resp=%#x ", HDEVNAME(hp), MMC_R1(cmd->c_resp)));
-	DPRINTF(("datalen %u\n", datalen));
-	while (datalen > 0) {
-		error = sdhc_wait_command(hp, SCF_DONE|SCF_BUF_READY);
-		if (error != 0)
-			break;
+	DPRINTF(("%s: resp=%#x datalen %u\n", HDEVNAME(hp),
+	    MMC_R1(cmd->c_resp), datalen));
 
-		error = sdhc_wait_state(hp, mask, mask);
-		if (error != 0)
+	while (datalen > 0) {
+		if (!sdhc_wait_intr(hp, SDHC_BUFFER_READ_READY|
+		    SDHC_BUFFER_WRITE_READY, SDHC_BUFFER_TIMEOUT)) {
+			error = ETIMEDOUT;
+			break;
+		}
+
+		if ((error = sdhc_wait_state(hp, mask, mask)) != 0)
 			break;
 
 		i = MIN(datalen, cmd->c_blklen);
@@ -868,18 +729,15 @@ sdhc_transfer_data(struct sdhc_host *hp)
 
 		datap += i;
 		datalen -= i;
-		CLR(cmd->c_flags, SCF_BUF_READY);
 	}
 
-	if (error == 0)
-		error = sdhc_wait_command(hp, SCF_DONE|SCF_XFR_DONE);
+	if (error == 0 && !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE,
+	    SDHC_TRANSFER_TIMEOUT))
+		error = ETIMEDOUT;
 
-	timeout_del(&hp->cmd_to);
-
-	if (cmd->c_error == 0) {
+	if (error != 0)
 		cmd->c_error = error;
-		SET(cmd->c_flags, SCF_DONE);
-	}
+	SET(cmd->c_flags, SCF_ITSDONE);
 
 	DPRINTF(("%s: data transfer done (error=%d)\n",
 	    HDEVNAME(hp), cmd->c_error));
@@ -922,31 +780,47 @@ sdhc_write_data(struct sdhc_host *hp, u_char *datap, int datalen)
 	}
 }
 
+/* Prepare for another command. */
 void
-sdhc_command_timeout(void *arg)
+sdhc_soft_reset(struct sdhc_host *hp)
 {
-	struct sdhc_host *hp = arg;
-	struct sdmmc_command *cmd = hp->cmd;
+	DPRINTF(("%s: software reset\n", HDEVNAME(hp)));
+	HWRITE1(hp, SDHC_SOFTWARE_RESET, SDHC_RESET_DAT|SDHC_RESET_CMD);
+	sdmmc_delay(10000);
+}
+
+int
+sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
+{
+	int status;
 	int s;
 
-	if (cmd == NULL)
-		return;
+	mask |= SDHC_ERROR_INTERRUPT;
 
 	s = splsdmmc();
-	if (!ISSET(cmd->c_flags, SCF_DONE)) {
-		DPRINTF(("%s: timeout cmd %u, resetting...\n",
-		    HDEVNAME(hp), cmd->c_opcode));
-		cmd->c_error = ETIMEDOUT;
-		SET(cmd->c_flags, SCF_DONE);
-		HWRITE1(hp, SDHC_SOFTWARE_RESET, SDHC_RESET_DAT|
-		    SDHC_RESET_CMD);
-		timeout_add(&hp->cmd_to, hz/2);
-	} else {
-		DPRINTF(("%s: timeout cmd %u, resetting...done\n",
-		    HDEVNAME(hp), cmd->c_opcode));
-		wakeup(hp);
+	status = hp->intr_status & mask;
+	while (status == 0) {
+		if (tsleep(&hp->intr_status, PWAIT, "hcintr", timo)
+		    == EWOULDBLOCK) {
+			status |= SDHC_ERROR_INTERRUPT;
+			break;
+		}
+		status = hp->intr_status & mask;
 	}
+	hp->intr_status &= ~status;
+
+	DPRINTF(("%s: intr status %#x error %#x\n", HDEVNAME(hp), status,
+	    hp->intr_error_status));
+	
+	/* Command timeout has higher priority than command complete. */
+	if (ISSET(status, SDHC_ERROR_INTERRUPT)) {
+		hp->intr_error_status = 0;
+		sdhc_soft_reset(hp);
+		status = 0;
+	}
+
 	splx(s);
+	return status;
 }
 
 /*
@@ -956,8 +830,8 @@ int
 sdhc_intr(void *arg)
 {
 	struct sdhc_softc *sc = arg;
-	int done = 0;
 	int host;
+	int done = 0;
 
 	/* We got an interrupt, but we don't know from which slot. */
 	for (host = 0; host < sc->sc_nhosts; host++) {
@@ -967,78 +841,62 @@ sdhc_intr(void *arg)
 		if (hp == NULL)
 			continue;
 
+		/* Acknowledge interrupts we are about to handle. */
 		status = HREAD2(hp, SDHC_NINTR_STATUS);
+		HWRITE2(hp, SDHC_NINTR_STATUS, status);
+		DPRINTF(("%s: interrupt status=%b\n", HDEVNAME(hp),
+		    status, SDHC_NINTR_STATUS_BITS));
+
 		if (!ISSET(status, SDHC_NINTR_STATUS_MASK))
 			continue;
 
-		/* Clear interrupts we are about to handle. */
-		HWRITE2(hp, SDHC_NINTR_STATUS, status);
-#ifdef SDHC_DEBUG
-		printf("%s: interrupt status=%b\n", HDEVNAME(hp),
-		    status, SDHC_NINTR_STATUS_BITS);
-#endif
+		/* Claim this interrupt. */
+		done = 1;
 
 		/*
-		 * Wake up the event thread to service the interrupt(s).
+		 * Service error interrupts.
 		 */
-		if (ISSET(status, SDHC_BUFFER_READ_READY|
-		    SDHC_BUFFER_WRITE_READY)) {
-			if (hp->cmd != NULL &&
-			    !ISSET(hp->cmd->c_flags, SCF_DONE)) {
-				SET(hp->cmd->c_flags, SCF_BUF_READY);
-				wakeup(hp);
-			}
-			done++;
-		}
-		if (ISSET(status, SDHC_COMMAND_COMPLETE)) {
-			if (hp->cmd != NULL &&
-			    !ISSET(hp->cmd->c_flags, SCF_DONE)) {
-				SET(hp->cmd->c_flags, SCF_CMD_DONE);
-				wakeup(hp);
-			}
-			done++;
-		}
-		if (ISSET(status, SDHC_TRANSFER_COMPLETE)) {
-			if (hp->cmd != NULL &&
-			    !ISSET(hp->cmd->c_flags, SCF_DONE)) {
-				SET(hp->cmd->c_flags, SCF_XFR_DONE);
-				wakeup(hp);
-			}
-			done++;
-		}
-		if (ISSET(status, SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION)) {
-			wakeup(hp);
-			done++;
-		}
-
 		if (ISSET(status, SDHC_ERROR_INTERRUPT)) {
 			u_int16_t error;
 
+			/* Acknowledge error interrupts. */
 			error = HREAD2(hp, SDHC_EINTR_STATUS);
 			HWRITE2(hp, SDHC_EINTR_STATUS, error);
-
 			DPRINTF(("%s: error interrupt, status=%b\n",
 			    HDEVNAME(hp), error, SDHC_EINTR_STATUS_BITS));
 
-			/* XXX command timeout has higher priority
-			 * than command complete */
 			if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR|
-			    SDHC_DATA_TIMEOUT_ERROR) && hp->cmd != NULL &&
-			    !ISSET(hp->cmd->c_flags, SCF_DONE)) {
-				hp->cmd->c_error = ETIMEDOUT;
-				SET(hp->cmd->c_flags, SCF_DONE);
-				/* XXX can this reset be avoided? */
-				HWRITE1(hp, SDHC_SOFTWARE_RESET,
-				    SDHC_RESET_DAT|SDHC_RESET_CMD);
-				timeout_add(&hp->cmd_to, hz/2);
+			    SDHC_DATA_TIMEOUT_ERROR)) {
+				hp->intr_error_status |= error;
+				hp->intr_status |= status;
+				wakeup(&hp->intr_status);
 			}
-			done++;
 		}
 
+		/*
+		 * Wake up the sdmmc event thread to scan for cards.
+		 */
+		if (ISSET(status, SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION))
+			sdmmc_needs_discover(hp->sdmmc);
+
+		/*
+		 * Wake up the blocking process to service command
+		 * related interrupt(s).
+		 */
+		if (ISSET(status, SDHC_BUFFER_READ_READY|
+		    SDHC_BUFFER_WRITE_READY|SDHC_COMMAND_COMPLETE|
+		    SDHC_TRANSFER_COMPLETE)) {
+			hp->intr_status |= status;
+			wakeup(&hp->intr_status);
+		}
+
+		/*
+		 * Service SD card interrupts.
+		 */
 		if (ISSET(status, SDHC_CARD_INTERRUPT)) {
+			printf("%s: card interrupt\n", HDEVNAME(hp));
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 			/* XXX service card interrupt */
-			printf("%s: card interrupt\n", HDEVNAME(hp));
 			HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 		}
 	}
