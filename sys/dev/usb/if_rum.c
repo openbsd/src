@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.12 2006/07/18 20:54:15 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.13 2006/07/18 21:13:33 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1779,12 +1779,11 @@ rum_bbp_init(struct rum_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	int i, ntries;
-	uint32_t tmp;
+	uint8_t tmp;
 
 	/* wait for BBP and RF to wake up (this can take a long time!) */
 	for (ntries = 0; ntries < 1000; ntries++) {
-		tmp = rum_read(sc, RT2573_MAC_CSR12);
-		if (tmp & 8)
+		if (rum_read(sc, RT2573_MAC_CSR12) & 8)
 			break;
 		/* force wakeup */
 		rum_write(sc, RT2573_MAC_CSR12, 0x4);
@@ -1797,8 +1796,8 @@ rum_bbp_init(struct rum_softc *sc)
 
 	/* wait for BBP */
 	for (ntries = 0; ntries < 100; ntries++) {
-		tmp = rum_read(sc, 0);
-		if ((tmp < 0xff) || (tmp > 0))
+		tmp = rum_bbp_read(sc, RT2573_BBP_VERSION);
+		if (tmp != 0 && tmp != 0xff)
 			break;
 		DELAY(1000);
 	}
