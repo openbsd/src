@@ -1,10 +1,10 @@
-/*	$OpenBSD: sdmmcdevs.h,v 1.4 2006/06/03 03:04:19 uwe Exp $	*/
+/*	$OpenBSD: sdmmcdevs.h,v 1.5 2006/07/18 05:05:37 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: sdmmcdevs,v 1.3 2006/06/02 21:17:36 uwe Exp 
+ *		OpenBSD: sdmmcdevs,v 1.5 2006/07/18 05:05:28 deraadt Exp 
  */
 
 /*
@@ -33,6 +33,7 @@
 #define	SDMMC_VENDOR_SYCHIP	0x02db	/* SyChip Inc. */
 #define	SDMMC_VENDOR_SPECTEC	0x02fe	/* Spectec Computer Co., Ltd */
 #define	SDMMC_VENDOR_GLOBALSAT	0x0501	/* Globalsat Technology Co. */
+#define	SDMMC_VENDOR_MEDIATEK	0x037a	/* MediaTek Inc. */
 
 /*
  * List of known products, grouped by vendor
@@ -49,6 +50,10 @@
 /* Globalsat Technology Co. */
 #define	SDMMC_CIS_GLOBALSAT_SD501	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_GLOBALSAT_SD501	0xf501
+
+/* MediaTek Inc. */
+#define	SDMMC_CIS_MEDIATEK_S2YWLAN	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_MEDIATEK_S2YWLAN	0x5911
 
 /* Spectec Computer Co., Ltd */
 #define	SDMMC_CIS_SPECTEC_SDW820	{ NULL, NULL, NULL, NULL }
