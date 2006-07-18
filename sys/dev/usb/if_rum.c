@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.5 2006/07/18 19:56:12 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.6 2006/07/18 19:59:04 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1012,7 +1012,7 @@ rum_tx_bcn(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		return ENOMEM;
 
 	/* xfer length needs to be a multiple of two! */
-	xferlen = (RT2573_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+	xferlen = (RT2573_TX_DESC_SIZE + m0->m_pkthdr.len + 3) & ~3;
 
 	buf = usbd_alloc_buffer(xfer, xferlen);
 	if (buf == NULL) {
@@ -1105,15 +1105,15 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RT2573_TX_DESC_SIZE);
 	rum_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
 
-	/* align end on a 2-bytes boundary */
-	xferlen = (RT2573_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+	/* align end on a 4-bytes boundary */
+	xferlen = (RT2573_TX_DESC_SIZE + m0->m_pkthdr.len + 3) & ~3;
 
 	/*
-	 * No space left in the last URB to store the extra 2 bytes, force
+	 * No space left in the last URB to store the extra 4 bytes, force
 	 * sending of another URB.
 	 */
 	if ((xferlen % 64) == 0)
-		xferlen += 2;
+		xferlen += 4;
 
 	DPRINTFN(10, ("%s: sending mgt frame len=%u rate=%u xfer len=%u\n",
 	    USBDEVNAME(sc->sc_dev), m0->m_pkthdr.len, rate, xferlen));
@@ -1208,14 +1208,14 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	rum_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
 
 	/* align end on a 2-bytes boundary */
-	xferlen = (RT2573_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+	xferlen = (RT2573_TX_DESC_SIZE + m0->m_pkthdr.len + 3) & ~3;
 
 	/*
 	 * No space left in the last URB to store the extra 2 bytes, force
 	 * sending of another URB.
 	 */
 	if ((xferlen % 64) == 0)
-		xferlen += 2;
+		xferlen += 4;
 
 	DPRINTFN(10, ("%s: sending data frame len=%u rate=%u xfer len=%u\n",
 	    USBDEVNAME(sc->sc_dev), m0->m_pkthdr.len, rate, xferlen));
