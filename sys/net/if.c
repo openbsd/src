@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.147 2006/06/02 19:53:12 mpf Exp $	*/
+/*	$OpenBSD: if.c,v 1.148 2006/07/18 09:23:43 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ if_attachsetup(struct ifnet *ifp)
 	/*
 	 * We have some arrays that should be indexed by if_index.
 	 * since if_index will grow dynamically, they should grow too.
-	 *	struct ifadd **ifnet_addrs
+	 *	struct ifaddr **ifnet_addrs
 	 *	struct ifnet **ifindex2ifnet
 	 */
 	if (ifnet_addrs == 0 || ifindex2ifnet == 0 || if_index >= if_indexlim) {
