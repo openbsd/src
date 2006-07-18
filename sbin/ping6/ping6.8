@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.29 2006/07/18 08:32:05 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.30 2006/07/18 08:40:11 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,23 +108,24 @@ The options are as follows:
 .It Fl a Ar addrtype
 Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 .Ar addrtype
-must be a string constructed of the following characters.
+must be a string constructed of the following characters:
+.Pp
 .Bl -tag -width Ds -compact
 .It Ic a
-requests unicast addresses from all of the responder's interfaces.
+Requests unicast addresses from all of the responder's interfaces.
 If the character is omitted,
 only those addresses which belong to the interface which has the
 responder's address are requests.
 .It Ic c
-requests responder's IPv4-compatible and IPv4-mapped addresses.
+Requests responder's IPv4-compatible and IPv4-mapped addresses.
 .It Ic g
-requests responder's global-scope addresses.
+Requests responder's global-scope addresses.
 .It Ic s
-requests responder's site-local addresses.
+Requests responder's site-local addresses.
 .It Ic l
-requests responder's link-local addresses.
+Requests responder's link-local addresses.
 .It Ic A
-requests responder's anycast addresses.
+Requests responder's anycast addresses.
 Without this character, the responder will return unicast addresses only.
 With this character, the responder will return anycast addresses only.
 Note that the specification does not specify how to get responder's
@@ -153,7 +154,7 @@ whichever is more.
 For every
 .Tn ECHO_REQUEST
 sent a period
-.Dq \&.
+.Pq Sq \&.
 is printed, while for every
 .Tn ECHO_REPLY
 received a backspace is printed.
