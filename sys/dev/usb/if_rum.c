@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.6 2006/07/18 19:59:04 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.7 2006/07/18 20:07:59 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1433,7 +1433,7 @@ rum_read(struct rum_softc *sc, uint32_t reg)
 		return 0;
 	}
 
-	return le16toh(val);
+	return le32toh(val);
 }
 
 void
@@ -1496,7 +1496,7 @@ rum_write_multi(struct rum_softc *sc, uint16_t reg, void *buf, size_t len)
 void
 rum_bbp_write(struct rum_softc *sc, uint8_t reg, uint8_t val)
 {
-	uint16_t tmp;
+	uint32_t tmp;
 	int ntries;
 
 	for (ntries = 0; ntries < 5; ntries++) {
@@ -1515,7 +1515,7 @@ rum_bbp_write(struct rum_softc *sc, uint8_t reg, uint8_t val)
 uint8_t
 rum_bbp_read(struct rum_softc *sc, uint8_t reg)
 {
-	uint16_t val;
+	uint32_t val;
 	int ntries;
 
 	for (ntries = 0; ntries < 5; ntries++) {
@@ -1531,7 +1531,7 @@ rum_bbp_read(struct rum_softc *sc, uint8_t reg)
 	rum_write(sc, RT2573_PHY_CSR3, val);
 
 	for (ntries = 0; ntries < 100; ntries++) {
-		val - rum_read(sc, RT2573_PHY_CSR3);
+		val = rum_read(sc, RT2573_PHY_CSR3);
 		if (!(val & RT2573_BBP_BUSY))
 			return (val & 0xff);
 		DELAY(1);
@@ -1657,7 +1657,7 @@ rum_update_slot(struct rum_softc *sc)
 void
 rum_set_txpreamble(struct rum_softc *sc)
 {
-	uint16_t tmp;
+	uint32_t tmp;
 
 	tmp = rum_read(sc, RT2573_TXRX_CSR10);
 
@@ -1721,7 +1721,7 @@ void
 rum_update_promisc(struct rum_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	uint16_t tmp;
+	uint32_t tmp;
 
 	tmp = rum_read(sc, RT2573_TXRX_CSR0);
 
@@ -1779,7 +1779,7 @@ rum_bbp_init(struct rum_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	int i, ntries;
-	uint16_t tmp;
+	uint32_t tmp;
 
 	/* wait for BBP and RF to wake up (this can take a long time!) */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -1823,7 +1823,7 @@ rum_bbp_init(struct rum_softc *sc)
 void
 rum_set_txantenna(struct rum_softc *sc, int antenna)
 {
-	uint16_t tmp;
+	uint32_t tmp;
 	uint8_t tx;
 
 	tx = rum_bbp_read(sc, RT2573_BBP_TX) & ~RT2573_BBP_ANTMASK;
