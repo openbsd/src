@@ -75,6 +75,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "OZ711Mx CardBus",
 	},
 	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7113,
+	    "OZ711EC1 SmartCardBus",
+	},
+	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7114,
 	    "OZ711M1 CardBus",
 	},
