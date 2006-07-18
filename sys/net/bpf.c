@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.62 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.63 2006/07/18 11:52:12 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <net/bpfdesc.h>
 
 #include <netinet/in.h>
-#include <netinet/if_arc.h>
 #include <netinet/if_ether.h>
 
 #define BPF_BUFSIZE 32768
@@ -138,11 +137,6 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		sockp->sa_family = AF_UNSPEC;
 		/* XXX Would MAXLINKHDR be better? */
 		hlen = ETHER_HDR_LEN;
-		break;
-
-	case DLT_ARCNET:
-		sockp->sa_family = AF_UNSPEC;
-		hlen = ARC_HDRLEN;
 		break;
 
 	case DLT_FDDI:

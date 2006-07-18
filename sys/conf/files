@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.379 2006/06/29 22:14:41 dlg Exp $
+#	$OpenBSD: files,v 1.380 2006/07/18 11:52:12 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -50,9 +50,8 @@ define	rasops24
 define	rasops32
 define	rasops_rotation
 
-# net device attributes - we have generic code for arc(net), ether(net),
+# net device attributes - we have generic code for ether(net),
 # and fddi.
-define	arc
 define	atm
 define	crypto
 define	systrace
@@ -706,7 +705,6 @@ file ntfs/ntfs_vnops.c			ntfs
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
-file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm			needs-flag
 file net/if_ethersubr.c			ether | inet | fddi | token needs-flag
 file net/if_fddisubr.c			fddi

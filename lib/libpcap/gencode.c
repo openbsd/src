@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.25 2005/10/07 19:32:39 mpf Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.26 2006/07/18 11:52:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -32,7 +32,6 @@ struct rtentry;
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/if_arc.h>
 
 #include <net/if_pflog.h>
 #include <net/pfvar.h>
@@ -131,7 +130,6 @@ static struct block *gen_hostop(bpf_u_int32, bpf_u_int32, int, int, u_int, u_int
 #ifdef INET6
 static struct block *gen_hostop6(struct in6_addr *, struct in6_addr *, int, int, u_int, u_int);
 #endif
-static struct block *gen_ahostop(const u_char *, int);
 static struct block *gen_ehostop(const u_char *, int);
 static struct block *gen_fhostop(const u_char *, int);
 static struct block *gen_dnhostop(bpf_u_int32, int, u_int);
@@ -555,11 +553,6 @@ init_linktype(type)
 
 	switch (type) {
 
-	case DLT_ARCNET:
-		off_linktype = 2;
-		off_nl = 6;	/* XXX in reality, variable! */
-		return;
-
 	case DLT_EN10MB:
 		off_linktype = 12;
 		off_nl = 14;
@@ -820,38 +813,6 @@ gen_linktype(proto)
 			return gen_false();
 		break;
 
-	case DLT_ARCNET:
-		/*
-		 * XXX should we check for first fragment if the protocol
-		 * uses PHDS?
-		 */
-		switch(proto) {
-		default:
-			return gen_false();
-#ifdef INET6
-		case ETHERTYPE_IPV6:
-			return(gen_cmp(2, BPF_B,
-					(bpf_int32)htonl(ARCTYPE_INET6)));
-#endif /* INET6 */
-		case ETHERTYPE_IP:
-			b0 = gen_cmp(2, BPF_B, (bpf_int32)htonl(ARCTYPE_IP));
-			b1 = gen_cmp(2, BPF_B,
-					(bpf_int32)htonl(ARCTYPE_IP_OLD));
-			gen_or(b0, b1);
-			return(b1);
-		case ETHERTYPE_ARP:
-			b0 = gen_cmp(2, BPF_B, (bpf_int32)htonl(ARCTYPE_ARP));
-			b1 = gen_cmp(2, BPF_B,
-					(bpf_int32)htonl(ARCTYPE_ARP_OLD));
-			gen_or(b0, b1);
-			return(b1);
-		case ETHERTYPE_REVARP:
-			return(gen_cmp(2, BPF_B,
-					(bpf_int32)htonl(ARCTYPE_REVARP)));
-		case ETHERTYPE_ATALK:
-			return(gen_cmp(2, BPF_B,
-					(bpf_int32)htonl(ARCTYPE_ATALK)));
-		}
 	}
 	return gen_cmp(off_linktype, BPF_H, (bpf_int32)proto);
 }
@@ -2873,8 +2834,6 @@ gen_byteop(op, idx, val)
 	return b;
 }
 
-static u_char abroadcast[] = { 0x0 };
-
 struct block *
 gen_broadcast(proto)
 	int proto;
@@ -2887,8 +2846,6 @@ gen_broadcast(proto)
 
 	case Q_DEFAULT:
 	case Q_LINK:
-		if (linktype == DLT_ARCNET)
-			return gen_ahostop(abroadcast, Q_DST);
 		if (linktype == DLT_EN10MB)
 			return gen_ehostop(ebroadcast, Q_DST);
 		if (linktype == DLT_FDDI)
@@ -2920,10 +2877,6 @@ gen_multicast(proto)
 
 	case Q_DEFAULT:
 	case Q_LINK:
-		if (linktype == DLT_ARCNET)
-			/* all ARCnet multicasts use the same address */
-			return gen_ahostop(abroadcast, Q_DST);
-
 		if (linktype == DLT_EN10MB) {
 			/* ether[0] & 1 != 0 */
 			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);
@@ -3132,49 +3085,4 @@ gen_pf_action(int action)
 	}
 
 	return (b0);
-}
-
-struct block *
-gen_acode(eaddr, q)
-	register const u_char *eaddr;
-	struct qual q;
-{
-	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
-		if (linktype == DLT_ARCNET)
-			return gen_ahostop(eaddr, (int)q.dir);
-	}
-	bpf_error("ARCnet address used in non-arc expression");
-	/* NOTREACHED */
-}
-
-static struct block *
-gen_ahostop(eaddr, dir)
-	register const u_char *eaddr;
-	register int dir;
-{
-	register struct block *b0, *b1;
-
-	switch (dir) {
-	/* src comes first, different from Ethernet */
-	case Q_SRC:
-		return gen_bcmp(0, 1, eaddr);
-
-	case Q_DST:
-		return gen_bcmp(1, 1, eaddr);
-
-	case Q_AND:
-		b0 = gen_ahostop(eaddr, Q_SRC);
-		b1 = gen_ahostop(eaddr, Q_DST);
-		gen_and(b0, b1);
-		return b1;
-
-	case Q_DEFAULT:
-	case Q_OR:
-		b0 = gen_ahostop(eaddr, Q_SRC);
-		b1 = gen_ahostop(eaddr, Q_DST);
-		gen_or(b0, b1);
-		return b1;
-	}
-	abort();
-	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.12 2005/10/07 19:32:39 mpf Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.13 2006/07/18 11:52:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.12 2005/10/07 19:32:39 mpf Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.13 2006/07/18 11:52:12 dlg Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -162,7 +162,6 @@ void gen_not(struct block *);
 
 struct block *gen_scode(const char *, struct qual);
 struct block *gen_ecode(const u_char *, struct qual);
-struct block *gen_acode(const u_char *, struct qual);
 struct block *gen_mcode(const char *, const char *, int, struct qual);
 #ifdef INET6
 struct block *gen_mcode6(const char *, const char *, int, struct qual);
