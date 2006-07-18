@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.11 2006/07/18 20:37:44 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.12 2006/07/18 20:54:15 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -173,7 +173,7 @@ static const struct {
 	uint32_t	reg;
 	uint32_t	val;
 } rum_def_mac[] = {
-        RT2573_DEF_MAC
+	RT2573_DEF_MAC
 };
 
 static const struct {
@@ -199,25 +199,22 @@ void
 rum_attachhook(void *xsc)
 {
 	struct rum_softc *sc = xsc;
-	u_char				*ucode;
-	char				*name;
-	size_t				size;
-	int				err;
+	const char *name = "ral-rt2573";
+	u_char *ucode;
+	size_t size;
+	int error;
 
-        name = "ral-rt2573";
-
-	if ((err = loadfirmware(name, &ucode, &size)) != 0) {
-		printf("%s: failed loadfirmware of file %s: errno %d\n",
-		    USBDEVNAME(sc->sc_dev), name, err);
-		USB_ATTACH_ERROR_RETURN;
+	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
+		printf("%s: failed loadfirmware of file %s (error %d)\n",
+		    USBDEVNAME(sc->sc_dev), name, error);
+		return;
 	}
 
 	if (rum_load_microcode(sc, ucode, size) != 0) {
 		printf("%s: could not load 8051 microcode\n",
 		    USBDEVNAME(sc->sc_dev));
-		free(ucode, M_DEVBUF);
-		USB_ATTACH_ERROR_RETURN;
 	}
+
 	free(ucode, M_DEVBUF);
 }
 
@@ -322,7 +319,6 @@ USB_ATTACH(rum)
 		mountroothook_establish(rum_attachhook, sc);
 	else
 		rum_attachhook(sc);
-
 
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
@@ -1569,24 +1565,24 @@ rum_rf_write(struct rum_softc *sc, uint8_t reg, uint32_t val)
 void
 rum_set_chan(struct rum_softc *sc, struct ieee80211_channel *c)
 {
-        struct ieee80211com *ic = &sc->sc_ic;
-        uint8_t bbp94 = RT2573_BBPR94_DEFAULT;
-        int8_t power;
-        u_int chan;
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t bbp94 = RT2573_BBPR94_DEFAULT;
+	int8_t power;
+	u_int chan;
 
-        chan = ieee80211_chan2ieee(ic, c);
-        if (chan == 0 || chan == IEEE80211_CHAN_ANY)
-                return;
+	chan = ieee80211_chan2ieee(ic, c);
+	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
+		return;
 
-        power = sc->txpow[chan - 1];
-        if (power < 0) {
-                bbp94 += power;
-                power = 0;
-        } else if (power > 31) {
-                bbp94 += power - 31;
-                power = 31;
-        }
-        sc->sc_curchan = c;
+	power = sc->txpow[chan - 1];
+	if (power < 0) {
+		bbp94 += power;
+		power = 0;
+	} else if (power > 31) {
+		bbp94 += power - 31;
+		power = 31;
+	}
+	sc->sc_curchan = c;
 
 	rum_rf_write(sc, RT2573_RF1, 0xb03);
 	rum_rf_write(sc, RT2573_RF2, rum_rf2528_r2[chan - 1]);
@@ -1605,8 +1601,8 @@ rum_set_chan(struct rum_softc *sc, struct ieee80211_channel *c)
 
 	DELAY(10);
 
-        if (bbp94 != RT2573_BBPR94_DEFAULT)
-                rum_bbp_write(sc, 94, bbp94);
+	if (bbp94 != RT2573_BBPR94_DEFAULT)
+		rum_bbp_write(sc, 94, bbp94);
 }
 
 /*
@@ -1617,26 +1613,26 @@ void
 rum_enable_tsf_sync(struct rum_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-        uint32_t tmp;
+	uint32_t tmp;
 
-        if (ic->ic_opmode != IEEE80211_M_STA) {
-                /*
-                 * Change default 16ms TBTT adjustment to 8ms.
-                 * Must be done before enabling beacon generation.
-                 */
-                rum_write(sc, RT2573_TXRX_CSR10, 1 << 12 | 8);
-        }
+	if (ic->ic_opmode != IEEE80211_M_STA) {
+		/*
+		 * Change default 16ms TBTT adjustment to 8ms.
+		 * Must be done before enabling beacon generation.
+		 */
+		rum_write(sc, RT2573_TXRX_CSR10, 1 << 12 | 8);
+	}
 
-        tmp = rum_read(sc, RT2573_TXRX_CSR9) & 0xff000000;
+	tmp = rum_read(sc, RT2573_TXRX_CSR9) & 0xff000000;
 
-        /* set beacon interval (in 1/16ms unit) */
-        tmp |= ic->ic_bss->ni_intval * 16;
+	/* set beacon interval (in 1/16ms unit) */
+	tmp |= ic->ic_bss->ni_intval * 16;
 
-        tmp |= RT2573_TSF_TICKING | RT2573_ENABLE_TBTT;
-        if (ic->ic_opmode == IEEE80211_M_STA)
-                tmp |= RT2573_TSF_MODE(1);
-        else
-                tmp |= RT2573_TSF_MODE(2) | RT2573_GENERATE_BEACON;
+	tmp |= RT2573_TSF_TICKING | RT2573_ENABLE_TBTT;
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		tmp |= RT2573_TSF_MODE(1);
+	else
+		tmp |= RT2573_TSF_MODE(2) | RT2573_GENERATE_BEACON;
 
 	rum_write(sc, RT2573_TXRX_CSR9, tmp);
 
@@ -2046,21 +2042,21 @@ rum_activate(device_ptr_t self, enum devact act)
 int
 rum_led_write(struct rum_softc *sc, uint16_t reg, uint8_t strength)
 {
-        usb_device_request_t req;
-        usbd_status error;
+	usb_device_request_t req;
+	usbd_status error;
 
-        req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-        req.bRequest = RT2573_WRITE_LED;
-        USETW(req.wValue, reg);
-        USETW(req.wIndex, strength);
-        USETW(req.wLength, 0);
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = RT2573_WRITE_LED;
+	USETW(req.wValue, reg);
+	USETW(req.wIndex, strength);
+	USETW(req.wLength, 0);
 
-        error = usbd_do_request(sc->sc_udev, &req, NULL);
-        if (error != 0) {
-                printf("%s: could not write LED register: %s\n",
-                    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+	error = usbd_do_request(sc->sc_udev, &req, NULL);
+	if (error != 0) {
+		printf("%s: could not write LED register: %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
 		return (-1);
-        }
+	}
 
 	return (0);
 }
@@ -2068,19 +2064,19 @@ rum_led_write(struct rum_softc *sc, uint16_t reg, uint8_t strength)
 int
 rum_firmware_run(struct rum_softc *sc)
 {
-        usb_device_request_t req;
-        usbd_status error;
+	usb_device_request_t req;
+	usbd_status error;
 
-        req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-        req.bRequest = RT2573_FIRMWARE_RUN;
-        USETW(req.wValue, 0x8);
-        USETW(req.wIndex, 0);
-        USETW(req.wLength, 0);
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = RT2573_FIRMWARE_RUN;
+	USETW(req.wValue, 0x8);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
 
-        error = usbd_do_request(sc->sc_udev, &req, NULL);
-        if (error != 0) {
-                printf("%s: could not run firmware: %s\n",
-                    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+	error = usbd_do_request(sc->sc_udev, &req, NULL);
+	if (error != 0) {
+		printf("%s: could not run firmware: %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
 		return (-1);
 	}
 	return (0);
@@ -2096,12 +2092,12 @@ rum_load_microcode(struct rum_softc *sc, const u_char *ucode, size_t size)
 			(ucode[i+1] << 8) | ucode[i]);
 	}
 	/* run the firmware */
-        if (rum_firmware_run(sc) < 0) {
+	if (rum_firmware_run(sc) < 0) {
 		return (-1);
 	}
 	DELAY(1000);
 
-        return (0);
+	return (0);
 }
 
 int
