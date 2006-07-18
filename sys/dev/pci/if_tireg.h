@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.23 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.24 2006/07/18 01:24:46 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -783,9 +783,8 @@ struct ti_tx_desc {
  */
 
 #define TI_JUMBO_FRAMELEN	9018
-#define TI_JUMBO_MTU		(TI_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
+#define TI_JUMBO_MTU		(TI_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define TI_PAGE_SIZE		PAGE_SIZE
-#define TI_MIN_FRAMELEN		60
 
 /*
  * Buffer descriptor error flags.
@@ -993,7 +992,7 @@ struct ti_event_desc {
 #define TI_SSLOTS	256
 #define TI_MSLOTS	256
 #ifdef __sparc64__
-#define TI_JSLOTS	54
+#define TI_JSLOTS	57
 #else
 #define TI_JSLOTS	384
 #endif

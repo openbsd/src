@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.50 2006/07/01 06:26:51 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.51 2006/07/18 01:24:46 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2198,7 +2198,6 @@ struct bge_gib {
 #define BGE_JUMBO_FRAMELEN	9018
 #define BGE_JUMBO_MTU		(BGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define BGE_PAGE_SIZE		PAGE_SIZE
-#define BGE_MIN_FRAMELEN		60
 
 /*
  * Other utility macros.
@@ -2245,7 +2244,7 @@ struct bge_gib {
 #define BGE_SSLOTS	256
 #define BGE_MSLOTS	256
 #ifdef __sparc64__
-#define BGE_JSLOTS	54
+#define BGE_JSLOTS	57
 #else
 #define BGE_JSLOTS	384
 #endif
