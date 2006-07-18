@@ -503,6 +503,7 @@
 ./usr/share/man/cat1/telnet.0
 ./usr/share/man/cat1/test.0
 ./usr/share/man/cat1/texi2dvi.0
+./usr/share/man/cat1/texi2pdf.0
 ./usr/share/man/cat1/texindex.0
 ./usr/share/man/cat1/tfmtodit.0
 ./usr/share/man/cat1/tftp.0
