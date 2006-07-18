@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.9 2006/07/18 20:23:14 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.10 2006/07/18 20:29:16 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1879,16 +1879,12 @@ rum_init(struct ifnet *ifp)
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_wepkey *wk;
 	struct rum_rx_data *data;
 	usbd_status error;
-	int i;
 	uint32_t tmp;
+	int i;
 
 	rum_stop(ifp, 0);
-
-
-	tmp = rum_read(sc, RT2573_MAC_CSR0);
 
 	/* initialize MAC registers to default values */
 	for (i = 0; i < N(rum_def_mac); i++)
@@ -1898,9 +1894,7 @@ rum_init(struct ifnet *ifp)
 	rum_write(sc, RT2573_MAC_CSR1, 0x3);
 	rum_write(sc, RT2573_MAC_CSR1, 0x0);
 
-
-	error = rum_bbp_init(sc);
-	if (error != 0)
+	if ((error = rum_bbp_init(sc)) != 0)
 		goto fail;
 	/* set host ready */
 	rum_write(sc, RT2573_MAC_CSR1, 0x4);
@@ -1915,15 +1909,6 @@ rum_init(struct ifnet *ifp)
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	rum_set_macaddr(sc, ic->ic_myaddr);
-
-	/*
-	 * Copy WEP keys into adapter's memory (SEC_CSR0 to SEC_CSR31).
-	 */
-	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		wk = &ic->ic_nw_keys[i];
-		rum_write_multi(sc, RT2573_SEC_CSR0 + i * IEEE80211_KEYBUF_SIZE,
-		    wk->wk_key, IEEE80211_KEYBUF_SIZE);
-	}
 
 	/*
 	 * Open Tx and Rx USB bulk pipes.
@@ -1995,7 +1980,6 @@ rum_init(struct ifnet *ifp)
 	rum_led_write(sc, RT2573_LED_A|RT2573_LED_G|RT2573_LED_RADIO,
 	    5);
 	rum_write(sc, RT2573_MAC_CSR14, RT2573_LED_ON);
-
 
 	return 0;
 
