@@ -1,10 +1,10 @@
-/*	$OpenBSD: sdmmcdevs.h,v 1.5 2006/07/18 05:05:37 deraadt Exp $	*/
+/*	$OpenBSD: sdmmcdevs.h,v 1.6 2006/07/18 19:40:12 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: sdmmcdevs,v 1.5 2006/07/18 05:05:28 deraadt Exp 
+ *		OpenBSD: sdmmcdevs,v 1.6 2006/07/18 19:40:05 deraadt Exp 
  */
 
 /*
@@ -72,7 +72,7 @@
 #define	SDMMC_PRODUCT_TOSHIBA_SDBTCARD3	0x0003
 
 /* Socket Communications, Inc. */
-#define	SDMMC_CIS_SOCKET_SDSCANNER	{ NULL, NULL, NULL, NULL }
-#define	SDMMC_PRODUCT_SOCKET_SDSCANNER	0x005e
-#define	SDMMC_CIS_SOCKET_BTCARD	{ NULL, NULL, NULL, NULL }
-#define	SDMMC_PRODUCT_SOCKET_BTCARD	0x00c5
+#define	SDMMC_CIS_SOCKETCOM_SDSCANNER	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_SOCKETCOM_SDSCANNER	0x005e
+#define	SDMMC_CIS_SOCKETCOM_BTCARD	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_SOCKETCOM_BTCARD	0x00c5
