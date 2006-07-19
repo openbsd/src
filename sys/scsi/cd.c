@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.107 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.108 2006/07/19 01:21:28 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -133,6 +133,8 @@ int    dvd_read_bca(struct cd_softc *, union dvd_struct *);
 int    dvd_read_manufact(struct cd_softc *, union dvd_struct *);
 int    dvd_read_struct(struct cd_softc *, union dvd_struct *);
 
+void	cd_powerhook(int why, void *arg);
+
 struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach,
 	cddetach, cdactivate
@@ -221,6 +223,10 @@ cdattach(parent, self, aux)
 		cd->flags |= CDF_ANCIENT;
 
 	printf("\n");
+
+	if ((cd->sc_cdpwrhook = powerhook_establish(cd_powerhook, cd)) == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    cd->sc_dev.dv_xname);
 }
 
 
@@ -274,6 +280,10 @@ cddetach(self, flags)
 	for (cmaj = 0; cmaj < nchrdev; cmaj++)
 		if (cdevsw[cmaj].d_open == cdopen)
 			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+
+	/* Get rid of the power hook. */
+	if (sc->sc_cdpwrhook != NULL)
+		powerhook_disestablish(sc->sc_cdpwrhook);
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
@@ -1994,4 +2004,18 @@ dvd_read_struct(cd, s)
 	default:
 		return (EINVAL);
 	}
+}
+
+void
+cd_powerhook(int why, void *arg)
+{
+	struct cd_softc *cd = arg;
+
+	/*
+	 * When resuming, hardware may have forgotten we locked it. So if
+	 * there are any open partitions, lock the CD.
+	 */
+	if (why == PWR_RESUME && cd->sc_dk.dk_openmask != 0)
+		scsi_prevent(cd->sc_link, PR_PREVENT,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 }
