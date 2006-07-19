@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.19 2006/07/19 19:22:02 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.20 2006/07/19 19:23:26 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1867,13 +1867,11 @@ rum_init(struct ifnet *ifp)
 		rum_write(sc, rum_def_mac[i].reg, rum_def_mac[i].val);
 
 	/* set host ready */
-	rum_write(sc, RT2573_MAC_CSR1, 0x3);
-	rum_write(sc, RT2573_MAC_CSR1, 0x0);
+	rum_write(sc, RT2573_MAC_CSR1, 3);
+	rum_write(sc, RT2573_MAC_CSR1, 0);
 
 	if ((error = rum_bbp_init(sc)) != 0)
 		goto fail;
-	/* set host ready */
-	rum_write(sc, RT2573_MAC_CSR1, 0x4);
 
 	/* set default BSS channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
@@ -1885,6 +1883,9 @@ rum_init(struct ifnet *ifp)
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	rum_set_macaddr(sc, ic->ic_myaddr);
+
+	/* initialize ASIC */
+	rum_write(sc, RT2573_MAC_CSR1, 4);
 
 	/*
 	 * Open Tx and Rx USB bulk pipes.
