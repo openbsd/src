@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.4 2006/07/18 17:28:14 fgsch Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.5 2006/07/19 20:58:45 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -81,7 +81,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Some TI controllers needs special treatment. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_PCI7XX1_FLASH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_PCI7XX1_SD &&
             pa->pa_function == 4)
 		sdhc_takecontroller(pa);
 
