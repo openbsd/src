@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.9 2006/07/19 20:07:30 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.10 2006/07/19 20:22:56 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -149,14 +149,9 @@ struct rum_rx_desc {
 /*
  * Control and status registers.
  */
-#define RT2573_HOST_CMD_CSR		0x0008
-#define RT2573_MCU_CNTL_CSR		0x000c
-#define RT2573_SOFT_RESET_CSR		0x0010
-#define RT2573_MCU_INT_SOURCE_CSR	0x0014
-#define RT2573_MCU_INT_MASK_CSR		0x0018
-#define RT2573_PCI_USEC_CSR		0x001c
-#define RT2573_H2M_MAILBOX_CSR		0x2100
-#define RT2573_M2H_CMD_DONE_CSR		0x2104
+#define RT2573_AIFSN_CSR		0x0400
+#define RT2573_CWMIN_CSR		0x0404
+#define RT2573_CWMAX_CSR		0x0408
 #define RT2573_HW_BEACON_BASE0		0x2400
 #define RT2573_MAC_CSR0			0x3000
 #define RT2573_MAC_CSR1			0x3004
@@ -209,31 +204,7 @@ struct rum_rx_desc {
 #define RT2573_STA_CSR2			0x30c8
 #define RT2573_STA_CSR3			0x30cc
 #define RT2573_STA_CSR4			0x30d0
-#define RT2573_AC0_BASE_CSR		0x3400
-#define RT2573_AC1_BASE_CSR		0x3404
-#define RT2573_AC2_BASE_CSR		0x3408
-#define RT2573_AC3_BASE_CSR		0x340c
-#define RT2573_MGT_BASE_CSR		0x3410
-#define RT2573_TX_RING_CSR0		0x3418
-#define RT2573_TX_RING_CSR1		0x341c
-#define RT2573_AIFSN_CSR		0x3420
-#define RT2573_CWMIN_CSR		0x3424
-#define RT2573_CWMAX_CSR		0x3428
-#define RT2573_TX_DMA_DST_CSR		0x342c
-#define RT2573_TX_CNTL_CSR		0x3430
-#define RT2573_LOAD_TX_RING_CSR		0x3434
-#define RT2573_RX_BASE_CSR		0x3450
-#define RT2573_RX_RING_CSR		0x3454
-#define RT2573_RX_CNTL_CSR		0x3458
-#define RT2573_PCI_CFG_CSR		0x3460
-#define RT2573_INT_SOURCE_CSR		0x3468
-#define RT2573_INT_MASK_CSR		0x346c
-#define RT2573_E2PROM_CSR		0x3470
-#define RT2573_AC_TXOP_CSR0		0x3474
-#define RT2573_AC_TXOP_CSR1		0x3478
-#define RT2573_TEST_MODE_CSR		0x3484
-#define RT2573_IO_CNTL_CSR		0x3498
-
+#define RT2573_STA_CSR5			0x30d4
 
 /* possible flags for register HOST_CMD_CSR */
 #define RT2573_KICK_CMD		(1 << 7)
