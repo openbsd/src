@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.15 2006/06/25 00:54:16 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.16 2006/07/19 19:22:04 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -883,7 +883,19 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_
 			return err;
 		mc->un.value.level[0] = azalia_generic_mixer_from_device_value(this,
 		    nid, target, CORB_GAGM_GAIN(result));
-		n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+		if (this->w[nid].type == COP_AWTYPE_AUDIO_SELECTOR ||
+		    this->w[nid].type == COP_AWTYPE_AUDIO_MIXER) {
+			n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+#ifdef AZALIA_DEBUG
+			if (!VALID_WIDGET_NID(n, this)) {
+				DPRINTF(("%s: invalid target: nid=%d nconn=%d index=%d\n",
+				   __func__, nid, this->w[nid].nconnections,
+				   MI_TARGET_INAMP(target)));
+				return EINVAL;
+			}
+#endif
+		} else
+			n = nid;
 		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[n]);
 		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, nid,
