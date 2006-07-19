@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.16 2006/07/19 19:10:52 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.17 2006/07/19 19:15:04 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -122,7 +122,7 @@ void		rum_watchdog(struct ifnet *);
 int		rum_ioctl(struct ifnet *, u_long, caddr_t);
 void		rum_eeprom_read(struct rum_softc *, uint16_t, void *,
 		    int);
-uint32_t	rum_read(struct rum_softc *, uint32_t);
+uint32_t	rum_read(struct rum_softc *, uint16_t);
 void		rum_read_multi(struct rum_softc *, uint16_t, void *,
 		    int);
 void		rum_write(struct rum_softc *, uint16_t, uint32_t);
@@ -1405,24 +1405,11 @@ rum_eeprom_read(struct rum_softc *sc, uint16_t addr, void *buf, int len)
 }
 
 uint32_t
-rum_read(struct rum_softc *sc, uint32_t reg)
+rum_read(struct rum_softc *sc, uint16_t reg)
 {
-	usb_device_request_t req;
-	usbd_status error;
 	uint32_t val;
 
-	req.bmRequestType = UT_READ_VENDOR_DEVICE;
-	req.bRequest = RT2573_READ_MAC;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, reg);
-	USETW(req.wLength, sizeof (uint32_t));
-
-	error = usbd_do_request(sc->sc_udev, &req, &val);
-	if (error != 0) {
-		printf("%s: could not read MAC register: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
-		return 0;
-	}
+	rum_read_multi(sc, reg, &val, sizeof val);
 
 	return le32toh(val);
 }
