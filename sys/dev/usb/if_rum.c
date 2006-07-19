@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.24 2006/07/19 19:51:01 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.25 2006/07/19 19:54:00 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -143,8 +143,6 @@ void		rum_update_promisc(struct rum_softc *);
 const char	*rum_get_rf(int);
 void		rum_read_eeprom(struct rum_softc *);
 int		rum_bbp_init(struct rum_softc *);
-void		rum_set_txantenna(struct rum_softc *, int);
-void		rum_set_rxantenna(struct rum_softc *, int);
 int		rum_init(struct ifnet *);
 void		rum_stop(struct ifnet *, int);
 int		rum_load_microcode(struct rum_softc *,
@@ -657,8 +655,6 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #define RT2573_CTS_SIZE	14	/* 10 + 4(FCS) */
 
 #define RT2573_SIFS		10	/* us */
-
-#define RT2573_RXTX_TURNAROUND	5	/* us */
 
 void
 rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
@@ -1785,55 +1781,6 @@ rum_bbp_init(struct rum_softc *sc)
 
 	return 0;
 #undef N
-}
-
-void
-rum_set_txantenna(struct rum_softc *sc, int antenna)
-{
-	uint32_t tmp;
-	uint8_t tx;
-
-	tx = rum_bbp_read(sc, RT2573_BBP_TX) & ~RT2573_BBP_ANTMASK;
-	if (antenna == 1)
-		tx |= RT2573_BBP_ANTA;
-	else if (antenna == 2)
-		tx |= RT2573_BBP_ANTB;
-	else
-		tx |= RT2573_BBP_DIVERSITY;
-
-	/* need to force I/Q flip for RF 2525e, 2526 and 5222 */
-	if (sc->rf_rev == RT2573_RF_2525E || sc->rf_rev == RT2573_RF_2526 ||
-	    sc->rf_rev == RT2573_RF_5222)
-		tx |= RT2573_BBP_FLIPIQ;
-
-	rum_bbp_write(sc, RT2573_BBP_TX, tx);
-
-	/* update flags in PHY_CSR5 and PHY_CSR6 too */
-	tmp = rum_read(sc, RT2573_PHY_CSR5) & ~0x7;
-	rum_write(sc, RT2573_PHY_CSR5, tmp | (tx & 0x7));
-
-	tmp = rum_read(sc, RT2573_PHY_CSR6) & ~0x7;
-	rum_write(sc, RT2573_PHY_CSR6, tmp | (tx & 0x7));
-}
-
-void
-rum_set_rxantenna(struct rum_softc *sc, int antenna)
-{
-	uint8_t rx;
-
-	rx = rum_bbp_read(sc, RT2573_BBP_RX) & ~RT2573_BBP_ANTMASK;
-	if (antenna == 1)
-		rx |= RT2573_BBP_ANTA;
-	else if (antenna == 2)
-		rx |= RT2573_BBP_ANTB;
-	else
-		rx |= RT2573_BBP_DIVERSITY;
-
-	/* need to force no I/Q flip for RF 2525e and 2526 */
-	if (sc->rf_rev == RT2573_RF_2525E || sc->rf_rev == RT2573_RF_2526)
-		rx &= ~RT2573_BBP_FLIPIQ;
-
-	rum_bbp_write(sc, RT2573_BBP_RX, rx);
 }
 
 int

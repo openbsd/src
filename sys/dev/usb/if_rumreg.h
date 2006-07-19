@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.6 2006/07/19 19:51:01 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.7 2006/07/19 19:54:00 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -57,16 +57,6 @@
 #define RT2573_RF_2528	0x00
 
 #define RT2573_BBP_VERSION	0
-#define RT2573_BBP_TX		2
-#define RT2573_BBP_RX		14
-
-#define RT2573_BBP_ANTA		0x00
-#define RT2573_BBP_DIVERSITY	0x01
-#define RT2573_BBP_ANTB		0x02
-#define RT2573_BBP_ANTMASK	0x03
-#define RT2573_BBP_FLIPIQ	0x04
-
-#define RT2573_JAPAN_FILTER	0x08
 
 struct rum_tx_desc {
 	uint32_t	flags;
