@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.10 2006/07/19 20:22:56 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.11 2006/07/19 20:27:30 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -62,24 +62,21 @@ struct rum_tx_desc {
 #define RT2573_TX_TIMESTAMP		(1 << 10)
 #define RT2573_TX_OFDM			(1 << 11)
 #define RT2573_TX_NEWSEQ		(1 << 12)
-
 #define RT2573_TX_IFS_MASK		0x00006000
 #define RT2573_TX_IFS_BACKOFF		(0 << 13)
 #define RT2573_TX_IFS_SIFS		(1 << 13)
 #define RT2573_TX_IFS_NEWBACKOFF	(2 << 13)
 #define RT2573_TX_IFS_NONE		(3 << 13)
-
 #define RT2573_TX_BURST			(1 << 28)
 
 	uint16_t	wme;
 #define RT2573_QID(v)		(v)
 #define RT2573_AIFSN(v)		((v) << 4)
-#define RT2573_LOGCWMAX(x)	(((x) & 0xf) << 12)
-#define RT2573_LOGCWMIN(x)	(((x) & 0xf) << 8)
-#define RT2573_IVOFFSET(x)	(((x) & 0x3f))
+#define RT2573_LOGCWMIN(v)	((v) << 8)
+#define RT2573_LOGCWMAX(v)	((v) << 12)
 
 	uint16_t	xflags;
-	uint16_t	reserved;
+
 	uint8_t		plcp_signal;
 	uint8_t		plcp_service;
 #define RT2573_PLCP_LENGEXT	0x80
@@ -87,11 +84,18 @@ struct rum_tx_desc {
 
 	uint8_t		plcp_length_lo;
 	uint8_t		plcp_length_hi;
+
 	uint32_t	iv;
 	uint32_t	eiv;
+
 	uint8_t		offset;
 	uint8_t		qid;
 #define RT2573_QID_MGT	13
+
+	uint8_t		txpower;
+#define RT2573_DEFAULT_TXPOWER	0
+
+	uint8_t		reserved;
 } __packed;
 
 struct rum_rx_desc {
