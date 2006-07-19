@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.24 2006/06/29 16:47:14 deraadt Exp $
+.\"	$OpenBSD: scsi.4,v 1.25 2006/07/19 11:03:54 dlg Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -36,12 +36,12 @@
 .Pp
 .Cd "cd* at scsibus?"
 .Cd "ch* at scsibus?"
+.Cd "safte* at scsibus?"
 .Cd "sd* at scsibus?"
+.Cd "ses* at scsibus?"
 .Cd "st* at scsibus?"
 .Cd "ss* at scsibus?"
 .Cd "uk* at scsibus?"
-.Pp
-.Cd "ses* at scsibus?"
 .Sh DESCRIPTION
 The
 .Em SCSI
@@ -148,13 +148,6 @@ bus and the system.
 The maximum size of a transfer is governed by the adapter.
 Most adapters can transfer 64KB in a single operation, and many can transfer
 larger amounts.
-.Sh TARGET MODE
-Some adapters support
-.Em target mode
-in which the system is capable of operating as a device, responding to
-operations initiated by another system.
-Target mode will be supported for some adapters, but is not yet complete for
-this version of the scsi system.
 .Sh DIAGNOSTICS
 When the kernel is compiled with option SCSIDEBUG, the SCIOCDEBUG ioctl
 can be used to enable various amounts of tracing information on any
@@ -176,6 +169,14 @@ shows more detailed information including DMA scatter-gather logs.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr safte 4 ,
+.Xr sd 4 ,
+.Xr ses 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4 ,
 .Xr scsi 8
 .Sh HISTORY
 This
