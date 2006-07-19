@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.8 2006/07/19 19:57:02 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.9 2006/07/19 20:07:30 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -52,7 +52,11 @@
 
 struct rum_tx_desc {
 	uint32_t	flags;
+#define RT2573_TX_BUSY			(1 << 0)
+#define RT2573_TX_VALID			(1 << 1)
 #define RT2573_TX_RETRY(x)		((x) << 4)
+#define RT2573_TX_IFS			(1 << 6)
+#define RT2573_TX_LONG_RETRY		(1 << 7)
 #define RT2573_TX_MORE_FRAG		(1 << 8)
 #define RT2573_TX_ACK			(1 << 9)
 #define RT2573_TX_TIMESTAMP		(1 << 10)
@@ -64,6 +68,8 @@ struct rum_tx_desc {
 #define RT2573_TX_IFS_SIFS		(1 << 13)
 #define RT2573_TX_IFS_NEWBACKOFF	(2 << 13)
 #define RT2573_TX_IFS_NONE		(3 << 13)
+
+#define RT2573_TX_BURST			(1 << 28)
 
 	uint16_t	wme;
 #define RT2573_QID(v)		(v)
@@ -90,21 +96,19 @@ struct rum_tx_desc {
 
 struct rum_rx_desc {
 	uint32_t	flags;
-#define RT2573_RX_CRC_ERROR	(1 << 5)
-#define RT2573_RX_OFDM		(1 << 6)
-#define RT2573_RX_PHY_ERROR	(1 << 7)
-#define RT2573_TX_BUSY		(1 << 0)
-#define RT2573_TX_VALID		(1 << 1)
-#define RT2573_TX_IFS		(1 << 6)
-#define RT2573_TX_LONG_RETRY	(1 << 7)
-#define RT2573_TX_BURST		(1 << 28)
+#define RT2573_RX_BUSY		(1 << 0)
+#define RT2573_RX_DROP		(1 << 1)
+#define RT2573_RX_CRC_ERROR	(1 << 6)
+#define RT2573_RX_OFDM		(1 << 7)
+#define RT2573_RX_PHY_ERROR	(1 << 8)
 
 	uint8_t		rate;
 	uint8_t		rssi;
-	uint16_t	reserved;
-
+	uint8_t		reserved1;
+	uint8_t		offset;
 	uint32_t	iv;
 	uint32_t	eiv;
+	uint32_t	reserved2[2];
 } __packed;
 
 #define RT2573_RF_LOBUSY	(1 << 15)
@@ -137,9 +141,7 @@ struct rum_rx_desc {
 #define RT2573_RX_RING_COUNT	64
 
 #define RT2573_TX_DESC_SIZE	(sizeof (struct rum_tx_desc))
-#define RT2573_TX_DESC_WSIZE	(RT2661_TX_DESC_SIZE / 4)
 #define RT2573_RX_DESC_SIZE	(sizeof (struct rum_rx_desc))
-#define RT2573_RX_DESC_WSIZE	(RT2661_RX_DESC_SIZE / 4)
 
 #define RT2573_MAX_SCATTER	5
 
