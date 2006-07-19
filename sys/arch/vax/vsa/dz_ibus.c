@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.14 2006/01/17 20:26:16 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.15 2006/07/19 20:22:12 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -52,6 +52,7 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/nexus.h>
+#include <machine/ka420.h>
 
 #include <vax/vax/gencons.h>
 
@@ -257,7 +258,7 @@ dzcnprobe(cndev)
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
-		diagcons = (vax_confdata & 0x20 ? 3 : 0);
+		diagcons = (vax_confdata & KA420_CFG_L3CON ? 3 : 0);
 		break;
 
 	case VAX_BTYP_46:
@@ -266,6 +267,10 @@ dzcnprobe(cndev)
 		break;
 
 	case VAX_BTYP_49:
+		ioaddr = 0x25000000;
+		diagcons = (vax_confdata & 8 ? 3 : 0);
+		break;
+
 	case VAX_BTYP_1303:
 		ioaddr = 0x25000000;
 		diagcons = 3;
@@ -278,12 +283,9 @@ dzcnprobe(cndev)
 		cndev->cn_pri = CN_REMOTE;
 	else
 		cndev->cn_pri = CN_NORMAL;
-#if 0
-	cndev->cn_dev = makedev(DZMAJOR, diagcons);
-	dz_regs = iospace;
-#endif
 	cndev->cn_dev = makedev(getmajor(dzopen), diagcons);
-	(vaddr_t)dz = dz_regs = iospace;
+	dz_regs = iospace;
+	dz = (void *)dz_regs;
 	ioaccess(iospace, ioaddr, 1);
 }
 
