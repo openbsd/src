@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.7 2006/07/19 19:54:00 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.8 2006/07/19 19:57:02 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -43,18 +43,10 @@
 
 #define RT2573_BBP_WRITE	(1 << 15)
 
-#define RT2573_RF1_AUTOTUNE	0x08000
-#define RT2573_RF3_AUTOTUNE	0x00040
-
-#define RT2573_RF_2522	0x00
-#define RT2573_RF_2523	0x01
-#define RT2573_RF_2524	0x02
-#define RT2573_RF_2525	0x03
-#define RT2573_RF_2525E	0x04
-#define RT2573_RF_2526	0x05
+/* single-band RF */
+#define RT2573_RF_2528	0
 /* dual-band RF */
-#define RT2573_RF_5222	0x10
-#define RT2573_RF_2528	0x00
+#define RT2573_RF_5222	16
 
 #define RT2573_BBP_VERSION	0
 
