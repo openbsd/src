@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2006/05/27 22:30:09 thib Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2006/07/19 10:44:23 tom Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.11 2006/05/27 22:30:09 thib Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.12 2006/07/19 10:44:23 tom Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -156,8 +156,23 @@ readboot(int dosfs, struct bootblock *boot)
 			xperror("could not read backup bootblock");
 			return FSFATAL;
 		}
-		if (memcmp(block, backup, DOSBOOTBLOCKSIZE)) {
-			/* Correct?					XXX */
+
+		/*
+		 * Check that the backup boot block matches the primary one.
+		 * We don't check every byte, since some vendor utilities
+		 * seem to overwrite the boot code when they feel like it,
+		 * without changing the backup block.  Specifically, we check
+		 * the two-byte signature at the end, the BIOS parameter
+		 * block (which starts after the 3-byte JMP and the 8-byte
+		 * OEM name/version) and the filesystem information that
+		 * follows the BPB (bsPBP[53] and bsExt[26] for FAT32, so we
+		 * check 79 bytes).
+		 */
+		if (backup[510] != 0x55 || backup[511] != 0xaa) {
+			pfatal("Invalid signature in backup boot block: %02x%02x\n", backup[511], backup[510]);
+			return FSFATAL;
+		}
+		if (memcmp(block + 11, backup + 11, 79)) {
 			pfatal("backup doesn't compare to primary bootblock\n");
 			return FSFATAL;
 		}
