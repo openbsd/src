@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.24 2006/04/21 01:35:27 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.25 2006/07/19 20:25:08 miod Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/lock.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
+#include <sys/queue.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -107,6 +108,8 @@ struct mutex timeout_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 #define CIRCQ_REMOVE(elem) do {                 \
         (elem)->next->prev = (elem)->prev;      \
         (elem)->prev->next = (elem)->next;      \
+	_Q_INVALIDATE((elem)->prev);		\
+	_Q_INVALIDATE((elem)->next);		\
 } while (0)
 
 #define CIRCQ_FIRST(elem) ((elem)->next)
