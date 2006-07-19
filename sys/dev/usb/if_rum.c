@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.21 2006/07/19 19:27:30 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.22 2006/07/19 19:32:46 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -137,8 +137,8 @@ void		rum_enable_tsf_sync(struct rum_softc *);
 void		rum_update_slot(struct rum_softc *);
 void		rum_set_txpreamble(struct rum_softc *);
 void		rum_set_basicrates(struct rum_softc *);
-void		rum_set_bssid(struct rum_softc *, uint8_t *);
-void		rum_set_macaddr(struct rum_softc *, uint8_t *);
+void		rum_set_bssid(struct rum_softc *, const uint8_t *);
+void		rum_set_macaddr(struct rum_softc *, const uint8_t *);
 void		rum_update_promisc(struct rum_softc *);
 const char	*rum_get_rf(int);
 void		rum_read_eeprom(struct rum_softc *);
@@ -1657,15 +1657,14 @@ rum_set_basicrates(struct rum_softc *sc)
 }
 
 void
-rum_set_bssid(struct rum_softc *sc, uint8_t *bssid)
+rum_set_bssid(struct rum_softc *sc, const uint8_t *bssid)
 {
 	uint32_t tmp;
 
 	tmp = bssid[0] | bssid[1] << 8 | bssid[2] << 16 | bssid[3] << 24;
 	rum_write(sc, RT2573_MAC_CSR4, tmp);
 
-	/* XXX: magic number! */
-	tmp = bssid[4] | bssid[5] << 8 | 0x00030000;
+	tmp = bssid[4] | bssid[5] << 8 | RT2573_ONE_BSSID << 16;
 	rum_write(sc, RT2573_MAC_CSR5, tmp);
 
 	DPRINTF(("%s: setting BSSID to %s\n", USBDEVNAME(sc->sc_dev),
@@ -1673,14 +1672,14 @@ rum_set_bssid(struct rum_softc *sc, uint8_t *bssid)
 }
 
 void
-rum_set_macaddr(struct rum_softc *sc, uint8_t *addr)
+rum_set_macaddr(struct rum_softc *sc, const uint8_t *addr)
 {
 	uint32_t tmp;
 
 	tmp = addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24;
 	rum_write(sc, RT2573_MAC_CSR2, tmp);
 
-	tmp = addr[4] | addr[5] << 8;
+	tmp = addr[4] | addr[5] << 8 | 0xff << 16;
 	rum_write(sc, RT2573_MAC_CSR3, tmp);
 
 	DPRINTF(("%s: setting MAC address to %s\n", USBDEVNAME(sc->sc_dev),
