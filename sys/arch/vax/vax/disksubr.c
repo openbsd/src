@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.27 2006/03/15 20:20:41 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.28 2006/07/19 20:19:59 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ disk_reallymapin(bp, map, reg, flag)
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	struct pcb *pcb;
-	int pfnum, npf, o, i;
+	int pfnum, npf, o;
 	caddr_t addr;
 
 	o = (int)bp->b_data & VAX_PGOFSET;
@@ -318,21 +318,6 @@ disk_reallymapin(bp, map, reg, flag)
 		pte = uvtopte(addr, pcb);
 	}
 
-	/*
-	 * When we are doing DMA to user space, be sure that all pages
-	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
-	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
-	 */
-	for (i = 0; i < (npf - 1); i++) {
-		if ((pte[i] & PG_FRAME) == 0) {
-			int rv;
-			rv = uvm_fault(&p->p_vmspace->vm_map,
-			    (unsigned)addr + i * VAX_NBPG, 0,
-			    VM_PROT_READ|VM_PROT_WRITE);
-			if (rv)
-				panic("DMA to nonexistent page, %d", rv);
-		}
-	}
 	if (map) {
 		io = &map[reg];
 		while (--npf > 0) {
