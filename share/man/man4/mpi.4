@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpi.4,v 1.8 2006/07/10 18:58:46 jmc Exp $
+.\"	$OpenBSD: mpi.4,v 1.9 2006/07/19 07:07:27 dlg Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -54,6 +54,14 @@ These chipsets can be found on the following controllers:
 .Pp
 .Bl -dash -offset indent -compact
 .It
+Apple Fibre Channel PCI Express Card,
+Fibre Channel PCI-X Card
+.It
+Dell PERC 4/im,
+SAS 5/E,
+SAS 5/i,
+SAS 5/iR
+.It
 Hewlett-Packard 8 Internal Port SAS Host Bus Adapter with RAID,
 A7173A,
 AB290A
@@ -99,7 +107,7 @@ Workstation 4.5 and higher
 .El
 .Pp
 Some models of these controllers have varying degrees of support for RAID 0,
-RAID 1, and RAID 10.
+and RAID 1.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
