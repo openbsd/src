@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.81 2006/07/16 22:40:42 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.82 2006/07/19 20:38:33 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -508,8 +508,8 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	syscf->pc = p->p_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
-	syscf->ap = (unsigned) sigf + offsetof(struct sigframe, sf_pc);
-	syscf->sp = cursp;
+	syscf->sp = syscf->ap =
+	    (unsigned) sigf + offsetof(struct sigframe, sf_pc);
 
 	if (onstack)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.22 2005/05/06 18:55:02 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.23 2006/07/19 20:38:33 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -99,8 +99,7 @@ eskip:
  */
 
 		.globl	_sigcode,_esigcode
-_sigcode:	addl2	$0x24, sp
-		pushr	$0x3f
+_sigcode:	pushr	$0x3f
 		subl2	$0xc,sp
 		movl	0x24(sp),r0
 		calls	$3,(r0)
