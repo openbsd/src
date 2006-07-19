@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.82 2006/07/19 20:38:33 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.83 2006/07/19 20:41:34 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -473,13 +473,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	/* Set up positions for structs on stack */
 	sigf = (struct sigframe *) (cursp - sizeof(struct sigframe));
 
-	/*
-	 * Place sp at the beginning of sigf; this ensures that possible
-	 * further calls to sendsig won't overwrite this struct
-	 * sigframe/struct sigcontext pair with their own.
-	 */
-	cursp = (unsigned) sigf;
-
 	bzero(&gsigf, sizeof gsigf);
 	gsigf.sf_arg = (register_t)&sigf->sf_sc;
 	gsigf.sf_pc = (register_t)catcher;
@@ -508,6 +501,11 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	syscf->pc = p->p_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
+	/*
+	 * Place sp at the beginning of sigf; this ensures that possible
+	 * further calls to sendsig won't overwrite this struct
+	 * sigframe/struct sigcontext pair with their own.
+	 */
 	syscf->sp = syscf->ap =
 	    (unsigned) sigf + offsetof(struct sigframe, sf_pc);
 
