@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.9 2006/07/18 04:10:35 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.10 2006/07/19 23:56:03 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -331,6 +331,8 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 		sdmmc_delay(10000);
 	}
 	if (timo == 0) {
+		DPRINTF(("%s: timeout reg=%#x\n", HDEVNAME(hp),
+		    HREAD1(hp, SDHC_SOFTWARE_RESET)));
 		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
 		/* return ETIMEDOUT; but see above. */
 	}
@@ -605,8 +607,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int error;
 	int s;
 	
-	DPRINTF(("%s: start cmd %u arg=%#x proc=%#x\"%s\"\n",
-	    HDEVNAME(hp), cmd->c_opcode, cmd->c_arg, curproc,
+	DPRINTF(("%s: start cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
+	    "proc=%#x \"%s\"\n", HDEVNAME(hp), cmd->c_opcode, cmd->c_arg,
+	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc,
 	    curproc ? curproc->p_comm : ""));
 
 	/*
@@ -680,6 +683,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	HSET1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 
 	/* XXX: Set DMA start address if SHF_USE_DMA is set. */
+
+	DPRINTF(("%s: writing cmd: blksize=%d blkcount=%d mode=%#x cmd=%#x\n",
+	    HDEVNAME(hp), blksize, blkcount, mode, command));
 
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
