@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.14 2006/07/18 21:24:40 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.15 2006/07/19 19:07:36 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1491,7 +1491,7 @@ rum_bbp_write(struct rum_softc *sc, uint8_t reg, uint8_t val)
 	int ntries;
 
 	for (ntries = 0; ntries < 5; ntries++) {
-		if (!(rum_read(sc, RT2573_PHY_CSR3_RT71) & RT2573_BBP_BUSY))
+		if (!(rum_read(sc, RT2573_PHY_CSR3) & RT2573_BBP_BUSY))
 			break;
 	}
 	if (ntries == 5) {
