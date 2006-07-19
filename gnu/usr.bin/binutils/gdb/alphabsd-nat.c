@@ -150,6 +150,38 @@ alphabsd_store_inferior_registers (int regno)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
+
+
+/* Support for debugging kernel virtual memory images.  */
+
+#include <sys/types.h>
+#include <machine/pcb.h>
+
+#include "bsd-kvm.h"
+
+static int
+alphabsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  int regnum;
+
+  /* The following is true for OpenBSD 3.9:
+
+     The pcb contains the register state at the context switch inside
+     cpu_switch().  */
+
+  /* The stack pointer shouldn't be zero.  */
+  if (pcb->pcb_hw.apcb_ksp == 0)
+    return 0;
+
+  regcache_raw_supply (regcache, ALPHA_SP_REGNUM, &pcb->pcb_hw.apcb_ksp);
+
+  for (regnum = 9; regnum < 16; regnum ++)	/* s0-s6 */
+    regcache_raw_supply (regcache, regnum, &pcb->pcb_context[regnum - 9]);
+  regcache_raw_supply (regcache, ALPHA_RA_REGNUM, &pcb->pcb_context[7]);
+
+  return 1;
+}
+
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_alphabsd_nat (void);
@@ -163,4 +195,7 @@ _initialize_alphabsd_nat (void)
   t->to_fetch_registers = alphabsd_fetch_inferior_registers;
   t->to_store_registers = alphabsd_store_inferior_registers;
   add_target (t);
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (alphabsd_supply_pcb);
 }

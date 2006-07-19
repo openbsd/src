@@ -43,7 +43,7 @@ alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
 			gdb_host=fbsd ;;
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
-alpha*-*-openbsd*)	gdb_host=nbsd ;;
+alpha*-*-openbsd*)	gdb_host=obsd ;;
 
 arm*-*-linux*)		gdb_host=linux ;;
 arm*-*-netbsdelf* | arm*-*-knetbsd*-gnu)
