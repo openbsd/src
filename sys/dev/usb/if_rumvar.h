@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumvar.h,v 1.2 2006/07/18 21:24:40 damien Exp $  */
+/*	$OpenBSD: if_rumvar.h,v 1.3 2006/07/19 19:22:02 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -123,7 +123,6 @@ struct rum_softc {
 
 	int				sc_tx_timer;
 
-	uint16_t			sta[11];
 	uint32_t			rf_regs[4];
 	uint8_t				txpow[14];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.18 2006/07/19 19:18:11 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.19 2006/07/19 19:22:02 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1857,7 +1857,7 @@ rum_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rum_rx_data *data;
 	usbd_status error;
-	uint32_t tmp;
+	uint32_t tmp, sta[3];
 	int i;
 
 	rum_stop(ifp, 0);
@@ -1880,8 +1880,8 @@ rum_init(struct ifnet *ifp)
 	rum_select_antenna(sc);
 	rum_set_chan(sc, ic->ic_bss->ni_chan);
 
-	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
-	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof sc->sta);
+	/* clear STA registers */
+	rum_read_multi(sc, RT2573_STA_CSR0, sta, sizeof sta);
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	rum_set_macaddr(sc, ic->ic_myaddr);
