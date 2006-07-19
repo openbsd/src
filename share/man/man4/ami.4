@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.33 2006/04/21 08:35:00 jmc Exp $
+.\"	$OpenBSD: ami.4,v 1.34 2006/07/19 11:11:09 dlg Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -21,8 +21,11 @@ including:
 .It
 ACER MegaRAID ROMB-2E
 .It
+Apple Xserve G5 PCI Hardware RAID Card
+.It
 Dell CERC-PATA,
 PERC 2/DC,
+PERC 2/SC,
 PERC 3/DC,
 PERC 3/DCL,
 PERC 3/Di,
@@ -42,29 +45,47 @@ Hewlett-Packard 438,
 466,
 T[567]
 .It
-Intel RAID Controller SROMBU42E,
-SRCU42X,
-SRCU42E,
-SRCU41L,
-SRCS16,
+Intel RAID Controller SRCS16,
 SRCS28X,
+SRCU41L,
+SRCU42E,
+SRCU42X,
+SROMBU42E,
 SRCZCRX
 .It
-LSI/AMI/Symbios MegaRAID,
-MegaRAID 320-0,
-MegaRAID 320-1,
-MegaRAID 320-2,
-MegaRAID 320-1E,
-MegaRAID 320-2E,
-MegaRAID 320-0X,
-MegaRAID 320-2X,
-MegaRAID 320-4X,
-MegaRAID i4,
+LSI Logic/AMI/Symbios MegaRAID,
 523 SATA,
-MegaRAID 150-4,
-MegaRAID 150-6,
-MegaRAID 300-4x,
-MegaRAID 300-8x
+i4 133 RAID,
+ATA 133-2
+Elite 1400,
+Elite 1600,
+Elite 1650,
+Enterprise 1200,
+Enterprise 1300,
+Enterprise 1400,
+Enterprise 1500,
+Enterprise 1600,
+Express 100,
+Express 200,
+Express 300,
+Express 500,
+Series 418,
+SCSI 320-0,
+SCSI 320-0X,
+SCSI 320-1,
+SCSI 320-1E,
+SCSI 320-1LP,
+SCSI 320-2,
+SCSI 320-2E,
+SCSI 320-2X,
+SCSI 320-4X,
+SATA 150-2,
+SATA 150-4,
+SATA 150-6,
+SATA 300-4X,
+SATA 300-8ELP,
+SATA 300-8X,
+SATA 300-8XLP
 .It
 NEC MegaRAID PCI Express ROMB
 .El
@@ -104,9 +125,9 @@ and can be monitored using
 For example:
 .Bd -literal -offset indent
 $ sysctl hw.sensors
-hw.sensors.0=sd0, ami0 0, drive online, OK
-hw.sensors.1=sd1, ami0 1, degraded, WARN
-hw.sensors.2=sd2, ami0 2, failed, CRITICAL
+hw.sensors.0=ami0, sd0, drive online, OK
+hw.sensors.0=ami0, sd1, drive degraded, WARNING
+hw.sensors.0=ami0, sd2, drive failed, CRITICAL
 .Ed
 .Sh SEE ALSO
 .Xr bio 4 ,
