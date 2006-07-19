@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.22 2006/07/12 07:46:41 jmc Exp $
+# $OpenBSD: ppp.conf.sample,v 1.23 2006/07/19 06:10:17 fkr Exp $
 #
 #################################################################
 
@@ -101,12 +101,23 @@ ondemand:
  add default HISADDR
  enable dns
 
-# To connect via a GPRS device (e.g. a mobile phone), it's often
-# necessary to set the access-point name (in this case 'internet')
-# which requires quotes in the dial string. This section shows
-# the escaping required.
+# To connect via a GPRS or UMTS device (e.g. a mobile phone or a PC Card), 
+# it's often necessary to set the access-point name (in this case 'internet')
+# which requires quotes in the dial string. This section shows the escaping
+# required. Devices that have not already authenticated the SIM card (like a
+# PC Card) need to issue the "AT+CPIN=xxxx" (xxxx being the PIN for the SIM 
+# card) first.
+# For certain devices it is necessary to adjust the baud rate (speed setting) 
+# and/or change the dial string to "*99***1#".
+# UMTS devices often allow control of the connect mode (UMTS only, GPRS only
+# or default to which is available); this can be controlled with the number 
+# passed to the AT+CGDCONT command and is device dependant.
+# Some ISPs do special things in their IPCP session in order to negotiate
+# the IP addresses; in this case it may be necessary to play with the ifaddr
+# setting.
+# See also: com(4), ubsa(4), ucom(4) and umodem(4)
 #
-gprs:
+mobile:
  set device /dev/cuaU0
  set dial "ABORT ERROR ABORT BUSY ABORT NO\\sCARRIER TIMEOUT 5 \
            \"\" ATZ OK-ATZ-OK AT+CGDCONT=1,\\\"IP\\\",\\\"internet\\\" OK \\dATD\\T TIMEOUT 40 CONNECT"
