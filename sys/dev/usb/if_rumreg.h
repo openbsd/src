@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumreg.h,v 1.5 2006/07/19 19:07:36 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.6 2006/07/19 19:51:01 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -19,13 +19,15 @@
 #define RT2573_CONFIG_NO	1
 #define RT2573_IFACE_INDEX	0
 
-#define RT2573_FIRMWARE_RUN	0x01
+#define RT2573_MCU_CNTL		0x01
 #define RT2573_WRITE_MAC	0x02
 #define RT2573_READ_MAC		0x03
 #define RT2573_WRITE_MULTI_MAC	0x06
 #define RT2573_READ_MULTI_MAC	0x07
 #define RT2573_READ_EEPROM	0x09
 #define RT2573_WRITE_LED	0x0a
+
+#define RT2573_MCU_RUN	(1 << 3)
 
 #define RT2573_HOST_READY	(1 << 2)
 #define RT2573_RESET_ASIC	(1 << 0)

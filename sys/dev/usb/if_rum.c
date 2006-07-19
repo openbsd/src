@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.23 2006/07/19 19:36:19 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.24 2006/07/19 19:51:01 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -149,7 +149,6 @@ int		rum_init(struct ifnet *);
 void		rum_stop(struct ifnet *, int);
 int		rum_load_microcode(struct rum_softc *,
 		    const u_char *, size_t);
-int		rum_firmware_run(struct rum_softc *sc);
 int		rum_led_write(struct rum_softc *, uint16_t, uint8_t);
 
 void		rum_attachhook(void *);
@@ -2031,14 +2030,19 @@ rum_led_write(struct rum_softc *sc, uint16_t reg, uint8_t strength)
 }
 
 int
-rum_firmware_run(struct rum_softc *sc)
+rum_load_microcode(struct rum_softc *sc, const u_char *ucode, size_t size)
 {
 	usb_device_request_t req;
 	usbd_status error;
+	uint16_t reg = RT2573_MCU_CODE_BASE;
+
+	/* XXX would rum_write_multi(sc, ucode, size) work? */
+	for (; size >= 4; reg += 4, ucode += 4, size -= 4)
+		rum_write(sc, reg, UGETDW(ucode));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req.bRequest = RT2573_FIRMWARE_RUN;
-	USETW(req.wValue, 0x8);
+	req.bRequest = RT2573_MCU_CNTL;
+	USETW(req.wValue, RT2573_MCU_RUN);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 0);
 
@@ -2046,27 +2050,8 @@ rum_firmware_run(struct rum_softc *sc)
 	if (error != 0) {
 		printf("%s: could not run firmware: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
-		return (-1);
 	}
-	return (0);
-}
-
-int
-rum_load_microcode(struct rum_softc *sc, const u_char *ucode, size_t size)
-{
-	size_t i;
-
-	for (i = 0; i < size; i += 2) {
-		rum_write(sc, RT2573_MCU_CODE_BASE + i,
-			(ucode[i+1] << 8) | ucode[i]);
-	}
-	/* run the firmware */
-	if (rum_firmware_run(sc) < 0) {
-		return (-1);
-	}
-	DELAY(1000);
-
-	return (0);
+	return error;
 }
 
 int
