@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.25 2006/07/19 19:54:00 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.26 2006/07/19 20:16:20 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -729,8 +729,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto skip;
 	}
 
-	/* rx descriptor is located at the end */
-	desc = (struct rum_rx_desc *)(data->buf + len - RT2573_RX_DESC_SIZE);
+	desc = (struct rum_rx_desc *)data->buf;
 
 	if (letoh32(desc->flags) & (RT2573_RX_PHY_ERROR | RT2573_RX_CRC_ERROR)) {
 		/*
@@ -765,6 +764,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
+	m->m_data = (caddr_t)(desc + 1);
 	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
 	m_adj(m, -IEEE80211_CRC_LEN);	/* trim FCS */
 
