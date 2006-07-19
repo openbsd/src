@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.17 2006/07/12 18:09:56 miod Exp $ */
+/* $OpenBSD: ncr.c,v 1.18 2006/07/19 20:22:38 miod Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -148,8 +148,6 @@ struct cfattach ncr_ca = {
 struct cfdriver ncr_cd = {
 	NULL, "ncr", DV_DULL
 };
-
-extern struct cfdriver sd_cd;
 
 static int
 si_match(parent, cf, aux)

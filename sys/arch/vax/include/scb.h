@@ -1,4 +1,4 @@
-/*	$OpenBSD: scb.h,v 1.7 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: scb.h,v 1.8 2006/07/19 20:22:36 miod Exp $	*/
 /*	$NetBSD: scb.h,v 1.11 2000/07/10 09:14:34 ragge Exp $	*/
 
 /*
@@ -130,7 +130,6 @@ struct ivec_dsp {
 extern	const struct ivec_dsp idsptch;
 extern	struct scb *scb;
 extern	struct ivec_dsp *scb_vec;
-extern	struct evcount devipl_intrcnts[4];	/* IPL 2[0123] */
 
 extern	paddr_t scb_init (paddr_t);
 extern	int scb_vecref (int *, int *);
