@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumvar.h,v 1.3 2006/07/19 19:22:02 damien Exp $  */
+/*	$OpenBSD: if_rumvar.h,v 1.4 2006/07/19 20:00:36 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -68,23 +68,6 @@ struct rum_rx_data {
 	struct mbuf		*m;
 };
 
-struct rum_tx_ring {
-	struct rum_tx_data	*data;
-	struct rum_tx_desc	*desc;
-	int			count;
-	int			queued;
-	int			cur;
-	int			next;
-	int			stat;
-};
-struct rum_rx_ring {
-	struct rum_rx_data	*data;
-	struct rum_rx_desc	*desc;
-	int			cur;
-	int			next;
-	int			stat;
-};
-
 struct rum_softc {
 	USBBASEDEVICE			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -114,10 +97,6 @@ struct rum_softc {
 	struct rum_rx_data		rx_data[RT2573_RX_LIST_COUNT];
 	struct rum_tx_data		tx_data[RT2573_TX_LIST_COUNT];
 	int				tx_queued;
-
-	struct rum_tx_ring		txq[5];
-	struct rum_tx_ring		mgtq;
-	struct rum_rx_ring		rxq;
 
 	struct timeout			scan_ch;
 
