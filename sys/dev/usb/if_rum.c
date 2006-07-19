@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.15 2006/07/19 19:07:36 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.16 2006/07/19 19:10:52 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1434,9 +1434,9 @@ rum_read_multi(struct rum_softc *sc, uint16_t reg, void *buf, int len)
 	usbd_status error;
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
-	req.bRequest = 0x7;
+	req.bRequest = RT2573_READ_MULTI_MAC;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, 0x0800);
+	USETW(req.wIndex, reg);
 	USETW(req.wLength, len);
 
 	error = usbd_do_request(sc->sc_udev, &req, buf);
