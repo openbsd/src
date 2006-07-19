@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.17 2006/07/19 19:15:04 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.18 2006/07/19 19:18:11 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -291,20 +291,9 @@ USB_ATTACH(rum)
 	usb_init_task(&sc->sc_task, rum_task, sc);
 	timeout_set(&sc->scan_ch, rum_next_scan, sc);
 
-	/* retrieve RT2573 rev. no */
-	sc->asic_rev = rum_read(sc, RT2573_MAC_CSR0);
-
-	/* retrieve MAC address and various other things from EEPROM */
-	rum_read_eeprom(sc);
-
-	printf("%s: MAC/BBP RT%02x (rev 0x%02x), RF %s, address %s\n",
-	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, sc->asic_rev,
-	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
-
 	/* wait for chip to settle */
 	for (ntries = 0; ntries < 1000; ntries++) {
-		tmp = rum_read(sc, RT2573_MAC_CSR0);
-		if (tmp != 0)
+		if ((tmp = rum_read(sc, RT2573_MAC_CSR0)) != 0)
 			break;
 		DELAY(1000);
 	}
@@ -313,6 +302,16 @@ USB_ATTACH(rum)
 		    USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	/* retrieve RT2573 rev. no */
+	sc->asic_rev = tmp;
+
+	/* retrieve MAC address and various other things from EEPROM */
+	rum_read_eeprom(sc);
+
+	printf("%s: MAC/BBP RT%02x (rev 0x%02x), RF %s, address %s\n",
+	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, sc->asic_rev,
+	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
 	if (rootvp == NULL)
 		mountroothook_establish(rum_attachhook, sc);
