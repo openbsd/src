@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.20 2006/07/19 19:23:26 damien Exp $  */
+/*	$OpenBSD: if_rum.c,v 1.21 2006/07/19 19:27:30 damien Exp $  */
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -1435,20 +1435,9 @@ rum_read_multi(struct rum_softc *sc, uint16_t reg, void *buf, int len)
 void
 rum_write(struct rum_softc *sc, uint16_t reg, uint32_t val)
 {
-	usb_device_request_t req;
-	usbd_status error;
+	uint32_t tmp = htole32(val);
 
-	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req.bRequest = RT2573_WRITE_MAC;
-	USETW(req.wValue, val);
-	USETW(req.wIndex, reg);
-	USETW(req.wLength, 0);
-
-	error = usbd_do_request(sc->sc_udev, &req, NULL);
-	if (error != 0) {
-		printf("%s: could not write MAC register: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
-	}
+	rum_write_multi(sc, reg, &tmp, sizeof tmp);
 }
 
 void
