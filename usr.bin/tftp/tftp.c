@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.17 2006/07/12 16:58:51 mglocker Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.18 2006/07/20 09:42:44 mglocker Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftp.c,v 1.17 2006/07/12 16:58:51 mglocker Exp $";
+    "$OpenBSD: tftp.c,v 1.18 2006/07/20 09:42:44 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -127,7 +127,7 @@ sendfile(int fd, char *name, char *mode)
 		if (!block)
 			size = makerequest(WRQ, name, dp, mode) - 4;
 		else {
-			size = readit(file, &dp, convert);
+			size = readit(file, &dp, convert, SEGSIZE);
 			if (size < 0) {
 				nak(errno + 100);
 				break;
@@ -152,7 +152,7 @@ sendfile(int fd, char *name, char *mode)
 					warn("sendto");
 					goto abort;
 				}
-				read_ahead(file, convert);
+				read_ahead(file, convert, SEGSIZE);
 			}
 			error = 0;
 

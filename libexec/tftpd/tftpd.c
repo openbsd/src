@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.46 2006/07/14 22:57:46 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.47 2006/07/20 09:42:44 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.46 2006/07/14 22:57:46 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.47 2006/07/20 09:42:44 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -70,12 +70,11 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.46 2006/07/14 22:57:46 mglocker Exp
 
 #define	TIMEOUT		5
 #define	MAX_TIMEOUTS	5
-#define	PKTSIZE		SEGSIZE + 4
 
 struct formats;
 
-int		readit(FILE *, struct tftphdr **, int);
-void		read_ahead(FILE *, int);
+int		readit(FILE *, struct tftphdr **, int, int);
+void		read_ahead(FILE *, int, int);
 int		writeit(FILE *, struct tftphdr **, int, int);
 int		write_behind(FILE *, int);
 int		synchnet(int);
@@ -94,13 +93,15 @@ struct sockaddr_storage	  s_in;
 int			  peer;
 int			  rexmtval = TIMEOUT;
 int			  max_rexmtval = 2 * TIMEOUT;
-char			  buf[PKTSIZE];
-char			  ackbuf[PKTSIZE];
+char			 *buf;
+char			 *ackbuf;
 struct sockaddr_storage	  from;
 int			  ndirs;
 char 			**dirs;
 int			  secure;
 int			  cancreate;
+unsigned int		  segment_size = SEGSIZE;
+unsigned int		  packet_size = SEGSIZE + 4;
 
 struct formats {
 	const char	*f_mode;
@@ -121,12 +122,14 @@ struct options {
 } options[] = {
 	{ "tsize",	NULL, 0 },	/* OPT_TSIZE */
 	{ "timeout",	NULL, 0 },	/* OPT_TIMEOUT */
+	{ "blksize",	NULL, 0 },	/* OPT_BLKSIZE */
 	{ NULL,		NULL, 0 }
 };
 
 enum opt_enum {
 	OPT_TSIZE = 0,
-	OPT_TIMEOUT
+	OPT_TIMEOUT,
+	OPT_BLKSIZE
 };
 
 struct errmsg {
@@ -254,9 +257,18 @@ main(int argc, char *argv[])
 		break;
 	}
 
+	if ((buf = malloc(packet_size)) == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		exit(1);
+	}
+	if ((ackbuf = malloc(packet_size)) == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		exit(1);
+	}
+
 	bzero(&msg, sizeof(msg));
 	iov.iov_base = buf;
-	iov.iov_len = sizeof(buf);
+	iov.iov_len = packet_size;
 	msg.msg_name = &from;
 	msg.msg_namelen = sizeof(from);
 	msg.msg_iov = &iov;
@@ -300,7 +312,7 @@ main(int argc, char *argv[])
 			 */
 			bzero(&msg, sizeof(msg));
 			iov.iov_base = buf;
-			iov.iov_len = sizeof(buf);
+			iov.iov_len = packet_size;
 			msg.msg_name = &from;
 			msg.msg_namelen = sizeof(from);
 			msg.msg_iov = &iov;
@@ -374,8 +386,9 @@ tftp(struct tftphdr *tp, int size)
 	char		*cp;
 	int		 i, first = 1, has_options = 0, ecode;
 	struct formats	*pf;
-	char		*filename, *mode = NULL, *option, *ccp;
+	char		*filename, *mode = NULL, *option, *ccp, *newp = NULL;
 	char		 fnbuf[MAXPATHLEN], nicebuf[MAXPATHLEN];
+	const char	*errstr;
 
 	cp = tp->th_stuff;
 again:
@@ -446,6 +459,27 @@ option_fail:
 			options[OPT_TIMEOUT].o_reply = rexmtval = to;
 		else
 			options[OPT_TIMEOUT].o_request = NULL;
+	}
+
+	if (options[OPT_BLKSIZE].o_request) {
+		segment_size = strtonum(options[OPT_BLKSIZE].o_request,
+		    SEGSIZE_MIN, SEGSIZE_MAX, &errstr);
+		if (errstr) {
+			nak(EBADOP);
+			exit(1);
+		}
+		packet_size = segment_size + 4;
+		if ((newp = realloc(buf, packet_size)) == NULL) {
+			syslog(LOG_ERR, "realloc: %m");
+			exit(1);
+		}
+		buf = newp;
+		if ((newp = realloc(ackbuf, packet_size)) == NULL) {
+			syslog(LOG_ERR, "realloc: %m");
+			exit(1);
+		}
+		ackbuf = newp;
+		options[OPT_BLKSIZE].o_reply = segment_size;
 	}
 
 	(void)strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
@@ -573,7 +607,7 @@ sendfile(struct formats *pf)
 
 	do {
 		/* read data from file */
-		size = readit(file, &dp, pf->f_convert);
+		size = readit(file, &dp, pf->f_convert, segment_size);
 		if (size < 0) {
 			nak(errno + 100);
 			goto abort;
@@ -591,7 +625,7 @@ sendfile(struct formats *pf)
 					syslog(LOG_ERR, "send: %m");
 					goto abort;
 				}
-				read_ahead(file, pf->f_convert);
+				read_ahead(file, pf->f_convert, segment_size);
 			}
 			error = 0;
 
@@ -609,7 +643,7 @@ sendfile(struct formats *pf)
 				syslog(LOG_ERR, "poll: %m");
 				goto abort;
 			}
-			n = recv(peer, ackbuf, sizeof(ackbuf), 0);
+			n = recv(peer, ackbuf, packet_size, 0);
 			if (n == -1) {
 				error = 1;
 				if (errno == EINTR)
@@ -634,7 +668,7 @@ sendfile(struct formats *pf)
 		}
 
 		block++;
-	} while (size == SEGSIZE);
+	} while (size == segment_size);
 
 abort:
 	fclose(file);
@@ -690,7 +724,7 @@ recvfile(struct formats *pf)
 				syslog(LOG_ERR, "poll: %m");
 				goto abort;
 			}
-			n = recv(peer, dp, PKTSIZE, 0);
+			n = recv(peer, dp, packet_size, 0);
 			if (n == -1) {
 				error = 1;
 				if (errno == EINTR)
@@ -723,7 +757,7 @@ recvfile(struct formats *pf)
 				nak(ENOSPACE);
 			goto abort;
 		}
-	} while (size == SEGSIZE);
+	} while (size == segment_size);
 
 	/* close data file */
 	write_behind(file, pf->f_convert);
@@ -740,7 +774,7 @@ recvfile(struct formats *pf)
 	nfds = poll(pfd, 1, TIMEOUT * 1000);
 	if (nfds < 1)
 		exit(1);
-	n = recv(peer, buf, sizeof(buf), 0);
+	n = recv(peer, buf, packet_size, 0);
 	/*
 	 * If read some data and got a data block then my last ack was lost
 	 * resend final ack.
@@ -775,9 +809,9 @@ nak(int error)
 		pe->e_msg = strerror(error - 100);
 		tp->th_code = EUNDEF;   /* set 'undef' errorcode */
 	}
-	length = strlcpy(tp->th_msg, pe->e_msg, sizeof(buf)) + 5;
-	if (length > sizeof(buf))
-		length = sizeof(buf);
+	length = strlcpy(tp->th_msg, pe->e_msg, packet_size) + 5;
+	if (length > packet_size)
+		length = packet_size;
 	if (send(peer, buf, length, 0) != length)
 		syslog(LOG_ERR, "nak: %m");
 }
@@ -795,7 +829,7 @@ oack(void)
 
 	tp = (struct tftphdr *)buf;
 	bp = buf + 2;
-	size = sizeof(buf) - 2;
+	size = packet_size - 2;
 	tp->th_opcode = htons((u_short)OACK);
 	for (i = 0; options[i].o_type != NULL; i++) {
 		if (options[i].o_request) {
@@ -843,7 +877,7 @@ oack(void)
 			syslog(LOG_ERR, "poll: %m");
 			exit(1);
 		}
-		n = recv(peer, ackbuf, sizeof(ackbuf), 0);
+		n = recv(peer, ackbuf, packet_size, 0);
 		if (n == -1) {
 			error = 1;
 			if (errno == EINTR)

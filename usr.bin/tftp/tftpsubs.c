@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.10 2006/07/12 16:58:51 mglocker Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.11 2006/07/20 09:42:44 mglocker Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftpsubs.c,v 1.10 2006/07/12 16:58:51 mglocker Exp $";
+    "$OpenBSD: tftpsubs.c,v 1.11 2006/07/20 09:42:44 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,6 @@ static const char rcsid[] =
 
 #include "tftpsubs.h"
 
-#define PKTSIZE		SEGSIZE + 4	/* should be moved to tftp.h */
 					/* values for bf.counter */
 #define BF_ALLOC	-3		/* alloc'd but not yet filled */
 #define BF_FREE		-2		/* free */
@@ -71,8 +70,8 @@ static const char rcsid[] =
 static struct tftphdr	*rw_init(int);
 
 struct bf {
-	int	counter;	/* size of data in buffer, or flag */
-	char	buf[PKTSIZE];	/* room for data packet */
+	int	counter;		/* size of data in buffer, or flag */
+	char	buf[SEGSIZE_MAX + 4];	/* room for data packet */
 } bfs[2];
 
 static int	nextone;	/* index of next buffer to use */
@@ -115,7 +114,7 @@ rw_init(int x)
  * Free it and return next buffer filled with data.
  */
 int
-readit(FILE *file, struct tftphdr **dpp, int convert)
+readit(FILE *file, struct tftphdr **dpp, int convert, int segment_size)
 {
 	struct bf	*b;
 
@@ -124,7 +123,7 @@ readit(FILE *file, struct tftphdr **dpp, int convert)
 
 	b = &bfs[current];			/* look at new buffer */
 	if (b->counter == BF_FREE)		/* if it's empty */
-		read_ahead(file, convert);	/* fill it */
+		read_ahead(file, convert, segment_size);	/* fill it */
 	/* assert(b->counter != BF_FREE); */	/* check */
 	*dpp = (struct tftphdr *)b->buf;	/* set caller's ptr */
 
@@ -136,7 +135,7 @@ readit(FILE *file, struct tftphdr **dpp, int convert)
  * Conversions are lf -> cr, lf and cr -> cr, nul.
  */
 void
-read_ahead(FILE *file, int convert)
+read_ahead(FILE *file, int convert, int segment_size)
 {
 	int		 i;
 	char		*p;
@@ -152,12 +151,12 @@ read_ahead(FILE *file, int convert)
 	dp = (struct tftphdr *)b->buf;
 
 	if (convert == 0) {
-		b->counter = read(fileno(file), dp->th_data, SEGSIZE);
+		b->counter = read(fileno(file), dp->th_data, segment_size);
 		return;
 	}
 
 	p = dp->th_data;
-	for (i = 0; i < SEGSIZE; i++) {
+	for (i = 0; i < segment_size; i++) {
 		if (newline) {
 			if (prevchar == '\n')
 				c = '\n';	/* lf to cr, lf */
@@ -266,7 +265,7 @@ int
 synchnet(int f)
 {
 	int			i, j = 0;
-	char			rbuf[PKTSIZE];
+	char			rbuf[SEGSIZE_MIN];
 	struct sockaddr_in	from;
 	socklen_t		fromlen;
 

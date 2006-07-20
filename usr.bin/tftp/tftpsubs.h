@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.h,v 1.5 2006/07/12 16:58:51 mglocker Exp $	*/
+/*	$OpenBSD: tftpsubs.h,v 1.6 2006/07/20 09:42:44 mglocker Exp $	*/
 /*	$NetBSD: tftpsubs.h,v 1.2 1994/12/08 09:51:32 jtc Exp $	*/
 
 /*
@@ -37,8 +37,8 @@
  * server.
  */
 struct tftphdr	*r_init(void);
-void		 read_ahead(FILE *, int);
-int		 readit(FILE *, struct tftphdr **, int);
+void		 read_ahead(FILE *, int, int);
+int		 readit(FILE *, struct tftphdr **, int, int);
 
 int		synchnet(int);
 
