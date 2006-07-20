@@ -1494,6 +1494,12 @@ int warn_cast_align;
 int warn_larger_than;
 HOST_WIDE_INT larger_than_size;
 
+/* Nonzero means warn about any function whose stack usage is larger
+   than N bytes.  The value N is in `stack_larger_than_size'.  */
+
+int warn_stack_larger_than;
+HOST_WIDE_INT stack_larger_than_size;
+
 /* Nonzero means warn if inline function is too large.  */
 
 int warn_inline;
@@ -4157,6 +4163,12 @@ decode_W_option (arg)
       larger_than_size = read_integral_parameter (option_value, arg - 2, -1);
 
       warn_larger_than = larger_than_size != -1;
+    }
+  else if ((option_value = skip_leading_substring (arg, "stack-larger-than-")))
+    {
+      stack_larger_than_size = read_integral_parameter (option_value, arg - 2, -1);
+
+      warn_stack_larger_than = stack_larger_than_size != -1;
     }
   else if (!strcmp (arg, "unused"))
     {

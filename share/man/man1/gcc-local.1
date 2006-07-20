@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.12 2006/04/11 10:36:23 espie Exp $
+.\" $OpenBSD: gcc-local.1,v 1.13 2006/07/20 21:05:22 miod Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 3, 2005
+.Dd July 16, 2006
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -225,6 +225,15 @@ that lets comments in macros pass through to the output (except in
 mode).
 This is used to allow annotations in macros for
 .Xr lint 1 .
+.It
+A new warning,
+.Fl Wstack-larger-than-N ,
+will report functions using more than
+.Va N
+bytes of stack space for their local variables.
+Stack space used for other purposes (such as register window saving,
+callee-saved registers, outbound arguments storage, etc)
+is not taken in account for this check.
 .El
 .Sh ATTRIBUTES
 The

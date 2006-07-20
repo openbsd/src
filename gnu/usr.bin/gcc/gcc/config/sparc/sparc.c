@@ -3873,6 +3873,10 @@ sparc_output_function_prologue (file, size)
      FILE *file;
      HOST_WIDE_INT size;
 {
+  if (warn_stack_larger_than &&
+      SPARC_STACK_ALIGN (size) > stack_larger_than_size)
+    warning ("stack usage is %d bytes", SPARC_STACK_ALIGN (size));
+
   if (TARGET_FLAT)
     sparc_flat_function_prologue (file, size);
   else

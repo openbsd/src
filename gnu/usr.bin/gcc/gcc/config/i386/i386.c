@@ -647,6 +647,8 @@ struct ix86_frame
   HOST_WIDE_INT frame_pointer_offset;
   HOST_WIDE_INT hard_frame_pointer_offset;
   HOST_WIDE_INT stack_pointer_offset;
+
+  HOST_WIDE_INT local_size;
 };
 
 /* Used to enable/disable debugging features.  */
@@ -4541,6 +4543,7 @@ ix86_compute_frame_layout (frame)
   int preferred_alignment = cfun->preferred_stack_boundary / BITS_PER_UNIT;
   HOST_WIDE_INT size = get_frame_size ();
 
+  frame->local_size = size;
   frame->nregs = ix86_nsaved_regs ();
   total_size = size;
 
@@ -4703,6 +4706,9 @@ ix86_expand_prologue ()
         use_mov = use_fast_prologue_epilogue;
     }
   ix86_compute_frame_layout (&frame);
+
+  if (warn_stack_larger_than && frame.local_size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", frame.local_size);
 
   /* Note: AT&T enter does NOT have reversed args.  Enter is probably
      slower on all targets.  Also sdb doesn't like it.  */

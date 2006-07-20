@@ -3252,6 +3252,9 @@ hppa_expand_prologue ()
   fr_saved = 0;
   save_fregs = 0;
 
+  if (warn_stack_larger_than && size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", size);
+
   /* Allocate space for frame pointer + filler. If any frame is allocated
      we need to add this in because of STARTING_FRAME_OFFSET.
 

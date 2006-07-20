@@ -1257,6 +1257,12 @@ unsigned id_clash_len;
 int warn_larger_than;
 unsigned larger_than_size;
 
+/* Nonzero means warn about any function whose stack usage is larger
+   than N bytes.  The value N is in `stack_larger_than_size'.  */
+ 
+int warn_stack_larger_than;
+unsigned stack_larger_than_size;
+
 /* Nonzero means warn if inline function is too large.  */
 
 int warn_inline;
@@ -4576,6 +4582,7 @@ display_help ()
   
   printf ("  -Wid-clash-<num>        Warn if 2 identifiers have the same first <num> chars\n");
   printf ("  -Wlarger-than-<number>  Warn if an object is larger than <number> bytes\n");
+  printf ("  -Wstack-larger-than-<number>  Warn if a function stack usage is larger than <number> bytes\n");
   printf ("  -p                      Enable function profiling\n");
 #if defined (BLOCK_PROFILER) || defined (FUNCTION_BLOCK_PROFILER)
   printf ("  -a                      Enable block profiling \n");
@@ -5217,6 +5224,16 @@ main (argc, argv)
 		    {
 		      larger_than_size = larger_than_val;
 		      warn_larger_than = 1;
+		    }
+		}
+	      else if (!strncmp (p, "stack-larger-than-", 18))
+		{
+		  const int stack_larger_than_val
+		    = read_integral_parameter (p + 18, p - 2, -1);
+		  if (stack_larger_than_val != -1)
+		    {
+		      stack_larger_than_size = stack_larger_than_val;
+		      warn_stack_larger_than = 1;
 		    }
 		}
 	      else

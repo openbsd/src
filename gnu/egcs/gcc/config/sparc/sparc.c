@@ -3116,6 +3116,10 @@ output_function_prologue (file, size, leaf_function)
      int size;
      int leaf_function;
 {
+  if (warn_stack_larger_than &&
+      SPARC_STACK_ALIGN (size) > stack_larger_than_size)
+    warning ("stack usage is %d bytes", SPARC_STACK_ALIGN (size));
+
   /* Need to use actual_fsize, since we are also allocating
      space for our callee (and our own register save area).  */
   actual_fsize = compute_frame_size (size, leaf_function);

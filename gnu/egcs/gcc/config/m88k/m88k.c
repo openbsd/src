@@ -1920,6 +1920,9 @@ m88k_expand_prologue ()
 {
   m88k_layout_frame ();
 
+  if (warn_stack_larger_than && m88k_stack_size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", m88k_stack_size);
+
   if (m88k_stack_size)
     emit_add (stack_pointer_rtx, stack_pointer_rtx, -m88k_stack_size);
 

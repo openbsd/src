@@ -151,6 +151,8 @@ output_function_prologue (stream, size)
   int fsize = (size + 3) & -4;
   int cfa_offset = INCOMING_FRAME_SP_OFFSET, cfa_store_offset = cfa_offset;
   
+  if (warn_stack_larger_than && fsize > stack_larger_than_size)
+    warning ("stack usage is %d bytes", fsize);
 
   if (frame_pointer_needed)
     {

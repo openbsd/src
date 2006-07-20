@@ -7501,6 +7501,10 @@ mips_expand_prologue ()
 
   tsize = compute_frame_size (get_frame_size ());
 
+  if (warn_stack_larger_than
+      && cfun->machine->frame.var_size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", cfun->machine->frame.var_size);
+
   /* If this function is a varargs function, store any registers that
      would normally hold arguments ($4 - $7) on the stack.  */
   if (store_args_on_stack

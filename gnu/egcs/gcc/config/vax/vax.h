@@ -466,8 +466,13 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
        mask |= 1 << regno;					\
   fprintf (FILE, "\t.word 0x%x\n", mask);			\
   MAYBE_VMS_FUNCTION_PROLOGUE(FILE)				\
-  if ((size) >= 64) fprintf (FILE, "\tmovab %d(sp),sp\n", -size);\
-  else if (size) fprintf (FILE, "\tsubl2 $%d,sp\n", (size)); }
+  if (warn_stack_larger_than && size > stack_larger_than_size)	\
+    warning ("stack usage is %d bytes", size);			\
+  if ((size) >= 64)						\
+    fprintf (FILE, "\tmovab %d(sp),sp\n", -size);		\
+  else if (size)						\
+    fprintf (FILE, "\tsubl2 $%d,sp\n", (size));			\
+}
 
 /* vms.h redefines this.  */
 #define MAYBE_VMS_FUNCTION_PROLOGUE(FILE)

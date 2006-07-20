@@ -132,6 +132,12 @@ extern unsigned id_clash_len;
 extern int warn_larger_than;
 extern unsigned larger_than_size;
 
+/* Nonzero means warn about any function whose stack usage is larger
+   than N bytes.  The value N is in `stack_larger_than_size'.  */
+ 
+extern int warn_stack_larger_than;
+extern unsigned stack_larger_than_size;
+
 /* Warn if a function returns an aggregate,
    since there are often incompatible calling conventions for doing this.  */
 
