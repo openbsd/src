@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.23 2006/07/15 19:39:55 kettenis Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.24 2006/07/20 21:23:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -67,6 +67,7 @@ admtemp_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "adm1021") == 0 ||
+	    strcmp(ia->ia_name, "adm1023") == 0 ||
 	    strcmp(ia->ia_name, "adm1032") == 0 ||
 	    strcmp(ia->ia_name, "g781") == 0 ||
 	    strcmp(ia->ia_name, "g781-1") == 0 ||
