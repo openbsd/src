@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.23 2006/03/16 21:32:34 matthieu Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.24 2006/07/20 20:54:51 kettenis Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -142,6 +142,14 @@ void
 vga_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	pcireg_t reg;
+
+	/*
+	 * Enable bus master; X might need this for accelerated graphics.
+	 */
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 #ifdef PCIAGP
 	agp_attach(parent, self, aux);
