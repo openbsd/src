@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.23 2006/05/29 20:25:30 miod Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.24 2006/07/20 10:46:02 mickey Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.6 2005/05/23 21:33:03 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.31 2006/05/29 20:23:13 miod Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.32 2006/07/20 10:44:40 mickey Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -956,6 +956,23 @@ static const keysym_t ukbd_keydesc_cf_nodead[] = {
     KC(56),	KS_eacute,	KS_Eacute,	KS_acute,
 };
 
+static const keysym_t ukbd_keydesc_lv[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(4),	KS_a,		KS_A,		KS_L7_amacron,KS_L7_Amacron,
+    KC(6),	KS_c,		KS_C,		KS_L7_ccaron,KS_L7_Ccaron,
+    KC(8),	KS_e,		KS_E,		KS_L7_emacron,KS_L7_Emacron,
+    KC(10),	KS_g,		KS_G,		KS_L7_gcedilla,KS_L7_Gcedilla,
+    KC(12),	KS_i,		KS_I,		KS_L7_imacron,KS_L7_Imacron,
+    KC(14),	KS_k,		KS_K,		KS_L7_kcedilla,KS_L7_Kcedilla,
+    KC(17),	KS_n,		KS_N,		KS_L7_ncedilla,KS_L7_Ncedilla,
+    KC(22),	KS_s,		KS_S,		KS_L7_scaron,KS_L7_Scaron,
+    KC(24),	KS_u,		KS_U,		KS_L7_umacron,KS_L7_Umacron,
+    KC(29),	KS_z,		KS_Z,		KS_L7_zcaron,KS_L7_Zcaron,
+    KC(51),	KS_l,		KS_L,		KS_L7_lcedilla,KS_L7_Lcedilla,
+    KC(53),	KS_Mode_switch,	KS_Multi_key,	KS_Mode_switch,	KS_Multi_key,
+    KC(230),	KS_Multi_key,
+};
+
 #endif	/* SMALL_KERNEL */
 
 #define KBD_MAP(name, base, map) \
@@ -1009,6 +1026,7 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_SI,			KB_US,	ukbd_keydesc_si),
 	KBD_MAP(KB_CF,			KB_US, 	ukbd_keydesc_cf),
 	KBD_MAP(KB_CF | KB_NODEAD,	KB_CF,	ukbd_keydesc_cf_nodead),
+	KBD_MAP(KB_LV,			KB_US,	ukbd_keydesc_lv),
 #endif	/* SMALL_KERNEL */
 	{0, 0, 0, 0}
 };
