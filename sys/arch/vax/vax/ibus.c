@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibus.c,v 1.6 2006/07/20 19:08:15 miod Exp $	*/
+/*	$OpenBSD: ibus.c,v 1.7 2006/07/20 19:52:08 miod Exp $	*/
 /*	$NetBSD: ibus.c,v 1.7 2001/02/04 20:36:32 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -57,7 +57,7 @@ ibus_print(void *aux, const char *name)
 	struct bp_conf *bp = aux;
 
 	if (name)
-		printf("device %s at %s", bp->type, name);
+		printf("%s at %s", bp->type, name);
 
 	return (UNCONF);
 }
