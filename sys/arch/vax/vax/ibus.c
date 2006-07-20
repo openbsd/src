@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibus.c,v 1.5 2002/03/14 03:16:02 millert Exp $	*/
+/*	$OpenBSD: ibus.c,v 1.6 2006/07/20 19:08:15 miod Exp $	*/
 /*	$NetBSD: ibus.c,v 1.7 2001/02/04 20:36:32 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -66,7 +66,9 @@ ibus_print(void *aux, const char *name)
 int
 ibus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	if (vax_bustype == VAX_IBUS)
+	struct mainbus_attach_args *maa = aux;
+
+	if (maa->maa_bustype == VAX_IBUS)
 		return 1;
 	return 0;
 }

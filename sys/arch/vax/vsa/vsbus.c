@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.16 2006/07/16 22:40:44 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.17 2006/07/20 19:08:15 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -126,12 +126,9 @@ vsbus_match(parent, cf, aux)
 	struct	cfdata	*cf;
 	void	*aux;
 {
-#if VAX53
-	/* Kludge: VAX53 is... special */
-	if (vax_boardtype == VAX_BTYP_1303 && (int)aux == 1)
-		return 1; /* Hack */
-#endif
-	if (vax_bustype == VAX_VSBUS)
+	struct mainbus_attach_args *maa = aux;
+
+	if (maa->maa_bustype == VAX_VSBUS)
 		return 1;
 	return 0;
 }

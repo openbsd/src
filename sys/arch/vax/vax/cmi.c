@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmi.c,v 1.3 2002/03/14 03:16:02 millert Exp $	*/
+/*	$OpenBSD: cmi.c,v 1.4 2006/07/20 19:08:15 miod Exp $	*/
 /*	$NetBSD: cmi.c,v 1.2 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -69,7 +69,9 @@ cmi_match(parent, cf, aux)
 	struct cfdata *cf;
 	void	*aux;
 {
-	if (vax_bustype == VAX_CMIBUS)
+	struct mainbus_attach_args *maa = aux;
+
+	if (maa->maa_bustype == VAX_CMIBUS)
 		return 1;
 	return 0;
 }
