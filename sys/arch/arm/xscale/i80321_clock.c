@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.3 2006/07/10 16:11:08 drahn Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.4 2006/07/20 02:34:04 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -228,8 +228,15 @@ i80321_intr(void *frame)
 	if (nextevent < 10 /* XXX */)
 		nextevent = 10;
 	if (nextevent > ticks_per_intr) {
-		printf("nextevent out of bounds %x\n", nextevent);
+		/*
+		 * If interrupts are blocked too long, like during
+		 * the root prompt or ddb, the timer can roll over,
+		 * this will allow the system to continue to run
+		 * even if time is lost.
+		 */
 		nextevent = ticks_per_intr;
+		nexttickevent = now;
+		nextstatevent = now;
 	}
 
 
