@@ -1,4 +1,4 @@
-/*	$OpenBSD: nexus.h,v 1.11 2006/07/20 19:08:14 miod Exp $	*/
+/*	$OpenBSD: nexus.h,v 1.12 2006/07/20 19:15:34 miod Exp $	*/
 /*	$NetBSD: nexus.h,v 1.17 2000/06/04 17:58:19 ragge Exp $	*/
 
 /*-
@@ -53,6 +53,8 @@ struct	mainbus_attach_args {
 #define	VAX_VSBUS	7	/* Virtual vaxstation bus */
 #define	VAX_IBUS	8	/* Internal Microvax bus */
 #define	VAX_XMIBUS	9	/* XMI master bus (6000) */
+
+#define	VAX_LEDS	0x42	/* pseudo value to attach led0 */
 
 /*
  * Information about nexus's.

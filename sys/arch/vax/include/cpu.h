@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.19 2006/01/04 15:41:29 martin Exp $      */
+/*      $OpenBSD: cpu.h,v 1.20 2006/07/20 19:15:34 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -140,11 +140,13 @@ int	kdbrint(int);
  * CTL_MACHDEP definitions.
  */
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_LED_BLINK		2	/* int: display led patterns */
+#define CPU_MAXID		3	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "led_blink", CTLTYPE_INT } \
 }
 
 #endif /* _VAX_CPU_H_ */

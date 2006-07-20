@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.83 2006/07/19 20:41:34 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.84 2006/07/20 19:15:35 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -115,7 +115,7 @@
 #endif
 #include <vax/vax/db_disasm.h>
 
-#include "smg.h"
+#include "led.h"
 
 caddr_t allocsys(caddr_t);
 
@@ -161,6 +161,11 @@ struct vm_map *phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;
+#endif
+
+/* sysctl settable */
+#if NLED > 0
+int	vax_led_blink = 0;
 #endif
 
 void cpu_dumpconf(void);
@@ -342,6 +347,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+#if NLED > 0
+	int oldval, ret;
+#endif
 	dev_t consdev;
 
 	/* all sysctl names at this level are terminal */
@@ -356,6 +364,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+	case CPU_LED_BLINK:
+#if NLED > 0
+		oldval = vax_led_blink;
+		ret =  sysctl_int(oldp, oldlenp, newp, newlen, &vax_led_blink);
+		if (oldval != vax_led_blink) {
+			extern void led_blink(void *);
+			led_blink(NULL);
+		}
+		return (ret);
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

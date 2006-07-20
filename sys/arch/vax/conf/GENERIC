@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2005/08/03 02:10:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.41 2006/07/20 19:15:34 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -152,3 +152,6 @@ lkkbd0		at dz0 line 0
 wskbd*		at lkkbd?
 lkms0		at dz0 line 1
 wsmouse*	at lkms?
+
+# Machine leds
+led0		at mainbus0
