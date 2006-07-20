@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.13 2006/07/09 04:39:43 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.14 2006/07/20 15:14:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -165,7 +165,7 @@ cvs_client_connect_to_server(void)
 	case CVS_METHOD_GSERVER:
 	case CVS_METHOD_FORK:
 	case CVS_METHOD_EXT:
-		fatal("the specified connection method is not support");
+		fatal("the specified connection method is not supported");
 	default:
 		break;
 	}
