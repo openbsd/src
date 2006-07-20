@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.21 2006/06/30 17:15:04 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.22 2006/07/20 02:06:17 brad Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -183,6 +183,7 @@ typedef struct azalia_t {
 	bus_space_handle_t ioh;
 	bus_size_t map_size;
 	bus_dma_tag_t dmat;
+	pcireg_t pciid;
 	uint32_t subid;
 
 	codec_t codecs[15];
@@ -332,6 +333,11 @@ static const char *pin_devices[16] = {
  * PCI functions
  * ================================================================ */
 
+#define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
+#define PCIID_MCP51		PCI_ID_CODE0(NVIDIA, MCP51_HDA)
+#define PCIID_MCP55		PCI_ID_CODE0(NVIDIA, MCP55_HDA)
+#define PCIID_M5461		PCI_ID_CODE0(ALI, M5461)
+
 int
 azalia_pci_match(struct device *parent, void *match, void *aux)
 {
@@ -391,6 +397,8 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s\n", intrrupt_str);
+
+	sc->pciid = pa->pa_id;
 
 	if (azalia_attach(sc)) {
 		printf("%s: initialization failure\n", XNAME(sc));
@@ -668,7 +676,10 @@ azalia_init_corb(azalia_t *az)
 		if (corbrp & HDA_CORBRP_CORBRPRST)
 			break;
 	}
-	if (i <= 0) {
+	if (i <= 0 &&
+	    az->pciid != PCIID_MCP51 &&
+	    az->pciid != PCIID_MCP55 &&
+	    az->pciid != PCIID_M5461) {
 		printf("%s: CORBRP reset failure\n", XNAME(az));
 		return -1;
 	}
