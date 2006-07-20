@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.210 2006/07/19 13:07:10 dtucker Exp $ */
+/* $OpenBSD: session.c,v 1.211 2006/07/20 15:26:15 stevesk Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -46,6 +46,7 @@
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "ssh.h"
 #include "ssh1.h"
