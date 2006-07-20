@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtworeg.h,v 1.2 2004/02/01 15:39:37 miod Exp $	*/
+/*	$OpenBSD: cgtworeg.h,v 1.3 2006/07/20 11:23:49 martin Exp $	*/
 /*	$NetBSD: cgtworeg.h,v 1.3 1995/10/04 00:21:27 pk Exp $ */
 
 /*
@@ -120,7 +120,7 @@ struct cg2_extstatus {
  */
 struct dblbufreg {
 	u_int display_b : 1;	/* display memory B (set) or A (reset) */
-	u_int read_b : 1;	/* accesss memory B (set) or A (reset) */
+	u_int read_b : 1;	/* access memory B (set) or A (reset) */
 	u_int nowrite_b : 1;	/* when set, writes don't update memory B */
 	u_int nowrite_a : 1;	/* when set, writes don't update memory A */
 	u_int read_ecmap : 1;	/* copy from(clear)/to(set) shadow colour map */

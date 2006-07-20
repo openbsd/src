@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.38 2006/07/11 23:14:41 brad Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.39 2006/07/20 11:23:49 martin Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -71,7 +71,7 @@
  * PHYs is done through a special register map rather than with the
  * usual bitbang MDIO method.
  *
- * Acesssing the registers on the Starfire is a little tricky. The
+ * Accessing the registers on the Starfire is a little tricky. The
  * Starfire has a 512K internal register space. When programmed for
  * PCI memory mapped mode, the entire register space can be accessed
  * directly. However in I/O space mode, only 256 bytes are directly
