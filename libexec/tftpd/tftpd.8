@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.19 2006/01/02 16:33:43 jmc Exp $
+.\"   $OpenBSD: tftpd.8,v 1.20 2006/07/20 10:17:04 mglocker Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.19 2006/01/02 16:33:43 jmc Exp $
+.\"	$OpenBSD: tftpd.8,v 1.20 2006/07/20 10:17:04 mglocker Exp $
 .\"
 .Dd June 11, 1997
 .Dt TFTPD 8
@@ -133,13 +133,6 @@ The
 flag was added in
 .Ox 2.1 .
 .Sh BUGS
-This implementation of
-.Nm
-does not support blocksize negotiation
-.Pq RFC 1783 ,
-so files larger than 33488896 octets
-.Pq 65535 blocks
-cannot be transferred.
 .Pp
 Many TFTP clients will not transfer files over 16744448 octets
 .Pq 32767 blocks .
