@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.16 2006/07/19 19:22:04 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.17 2006/07/20 23:51:48 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -95,9 +95,7 @@ int	azalia_alc882_init_dacgroup(codec_t *);
 int	azalia_alc882_mixer_init(codec_t *);
 int	azalia_alc882_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc882_get_port(codec_t *, mixer_ctrl_t *);
-#if 0
 int	azalia_ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
-#endif
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
@@ -138,9 +136,7 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41981:
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
 		this->name = "Analog Devices AD1981HD";
-#if 0
 		this->init_widget = azalia_ad1981hd_init_widget;
-#endif
 		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
@@ -1908,7 +1904,6 @@ azalia_alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
-#if 0
 int
 azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
@@ -1946,7 +1941,6 @@ azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	}
 	return 0;
 }
-#endif
 
 /* ----------------------------------------------------------------
  * CMedia CMI9880
