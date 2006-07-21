@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.47 2006/07/20 09:42:44 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.48 2006/07/21 21:28:47 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.47 2006/07/20 09:42:44 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.48 2006/07/21 21:28:47 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -85,7 +85,7 @@ int		validate_access(char *, int);
 int		sendfile(struct formats *);
 int		recvfile(struct formats *);
 void		nak(int);
-void		oack(void);
+void		oack(int);
 
 FILE			 *file;
 extern char		 *__progname;
@@ -102,6 +102,7 @@ int			  secure;
 int			  cancreate;
 unsigned int		  segment_size = SEGSIZE;
 unsigned int		  packet_size = SEGSIZE + 4;
+int			  has_options = 0;
 
 struct formats {
 	const char	*f_mode;
@@ -257,11 +258,11 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	if ((buf = malloc(packet_size)) == NULL) {
+	if ((buf = malloc(SEGSIZE_MAX + 4)) == NULL) {
 		syslog(LOG_ERR, "malloc: %m");
 		exit(1);
 	}
-	if ((ackbuf = malloc(packet_size)) == NULL) {
+	if ((ackbuf = malloc(SEGSIZE_MAX + 4)) == NULL) {
 		syslog(LOG_ERR, "malloc: %m");
 		exit(1);
 	}
@@ -384,9 +385,9 @@ void
 tftp(struct tftphdr *tp, int size)
 {
 	char		*cp;
-	int		 i, first = 1, has_options = 0, ecode;
+	int		 i, first = 1, ecode, opcode;
 	struct formats	*pf;
-	char		*filename, *mode = NULL, *option, *ccp, *newp = NULL;
+	char		*filename, *mode = NULL, *option, *ccp;
 	char		 fnbuf[MAXPATHLEN], nicebuf[MAXPATHLEN];
 	const char	*errstr;
 
@@ -469,30 +470,23 @@ option_fail:
 			exit(1);
 		}
 		packet_size = segment_size + 4;
-		if ((newp = realloc(buf, packet_size)) == NULL) {
-			syslog(LOG_ERR, "realloc: %m");
-			exit(1);
-		}
-		buf = newp;
-		if ((newp = realloc(ackbuf, packet_size)) == NULL) {
-			syslog(LOG_ERR, "realloc: %m");
-			exit(1);
-		}
-		ackbuf = newp;
 		options[OPT_BLKSIZE].o_reply = segment_size;
 	}
 
+	/* save opcode before it gets overwritten by oack() */
+	opcode = tp->th_opcode;
+
 	(void)strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
-	ecode = (*pf->f_validate)(filename, tp->th_opcode);
+	ecode = (*pf->f_validate)(filename, opcode);
 	if (has_options)
-		oack();
+		oack(opcode);
 	if (ecode) {
 		syslog(LOG_INFO, "denied %s access to '%s'",
-		    tp->th_opcode == WRQ ? "write" : "read", nicebuf);
+		    opcode == WRQ ? "write" : "read", nicebuf);
 		nak(ecode);
 		exit(1);
 	}
-	if (tp->th_opcode == WRQ) {
+	if (opcode == WRQ) {
 		syslog(LOG_DEBUG, "receiving file '%s'", nicebuf);
 		(*pf->f_recv)(pf);
 	} else {
@@ -690,6 +684,12 @@ recvfile(struct formats *pf)
 	dp = w_init();
 	ap = (struct tftphdr *)ackbuf;
 
+	/* if we have options, do not send a first ACK */
+	if (has_options) {
+		block++;
+		goto noack;
+	}
+
 	do {
 		/* create new ACK packet */
 		ap->th_opcode = htons((u_short)ACK);
@@ -724,6 +724,7 @@ recvfile(struct formats *pf)
 				syslog(LOG_ERR, "poll: %m");
 				goto abort;
 			}
+noack:
 			n = recv(peer, dp, packet_size, 0);
 			if (n == -1) {
 				error = 1;
@@ -820,7 +821,7 @@ nak(int error)
  * Send an oack packet (option acknowledgement).
  */
 void
-oack(void)
+oack(int opcode)
 {
 	struct tftphdr	*tp, *ap;
 	struct pollfd	 pfd[1];
@@ -877,6 +878,11 @@ oack(void)
 			syslog(LOG_ERR, "poll: %m");
 			exit(1);
 		}
+
+		/* no client ACK for write requests with options */
+		if (opcode == WRQ)
+			break;
+
 		n = recv(peer, ackbuf, packet_size, 0);
 		if (n == -1) {
 			error = 1;
