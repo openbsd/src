@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.29 2006/01/25 17:42:08 markus Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.30 2006/07/21 22:56:58 ray Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.29 2006/01/25 17:42:08 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.30 2006/07/21 22:56:58 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -408,9 +408,10 @@ wr_archive(ARCHD *arcn, int is_app)
 	if (ftree_start() < 0) {
 		if (is_app)
 			goto trailer;
-		if (((*frmt->st_wr)() < 0))
-			return;
-	}
+		return;
+	} else if (((*frmt->st_wr)() < 0))
+		return;
+
 	wrf = frmt->wr;
 
 	/*
