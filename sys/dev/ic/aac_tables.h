@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_tables.h,v 1.3 2005/11/18 05:39:10 nate Exp $	*/
+/*	$OpenBSD: aac_tables.h,v 1.4 2006/07/21 19:11:11 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -36,7 +36,7 @@
  * XXX many of these would not normally be returned, as they are
  * relevant only to FSA operations.
  */
-static struct aac_code_lookup aac_command_status_table[] = {
+const struct aac_code_lookup aac_command_status_table[] = {
 	{ "OK",					0 },
 	{ "operation not permitted",		1 },
 	{ "not found",				2 },

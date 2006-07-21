@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.31 2006/04/28 02:51:27 brad Exp $	*/
+/*	$OpenBSD: aac.c,v 1.32 2006/07/21 19:11:11 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1078,20 +1078,14 @@ aac_bio_complete(struct aac_command *cm)
 	struct aac_blockread_response *brr;
 	struct aac_blockwrite_response *bwr;
 	struct scsi_xfer *xs = (struct scsi_xfer *)cm->cm_private;
-	struct buf *bp = xs->bp;
 	AAC_FSAStatus status;
 	int s;
 
 	AAC_DPRINTF(AAC_D_CMD,
 		    ("%s: bio complete\n", cm->cm_sc->aac_dev.dv_xname));
 
-	s = splbio();
-	aac_release_command(cm);
-	if (bp == NULL)
-		goto exit;
-
 	/* fetch relevant status and then release the command */
-	if (bp->b_flags & B_READ) {
+	if (xs->flags & SCSI_DATA_IN) {
 		brr = (struct aac_blockread_response *)&cm->cm_fib->data[0];
 		status = brr->Status;
 	} else {
@@ -1099,19 +1093,10 @@ aac_bio_complete(struct aac_command *cm)
 		status = bwr->Status;
 	}
 
-	/* fix up the bio based on status */
-	if (status == ST_OK) {
-		bp->b_resid = 0;
-	} else {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
+	s = splbio();
+	aac_release_command(cm);
 
-		/* pass an error string out to the disk layer */
-		aac_describe_code(aac_command_status_table, status);
-	}
-
- exit:
-	xs->error = XS_NOERROR;
+	xs->error = status == ST_OK? XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->resid = 0;
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
