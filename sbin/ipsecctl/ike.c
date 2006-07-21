@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.45 2006/06/18 18:18:01 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.46 2006/07/21 12:34:52 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -90,16 +90,24 @@ ike_section_peer(struct ipsec_addr_wrap *peer, struct ipsec_addr_wrap *local,
 		fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
 		fprintf(fd, SET "[peer-%s]:Address=%s force\n", peer->name,
 		    peer->name);
+		if (local)
+			fprintf(fd, SET "[peer-%s]:Local-address=%s force\n",
+			    peer->name, local->name);
+		if (auth->type == IKE_AUTH_PSK)
+			fprintf(fd, SET "[peer-%s]:Authentication=%s force\n",
+			    peer->name, auth->string);
 	} else {
 		fprintf(fd, SET "[Phase 1]:Default=peer-default force\n");
 		fprintf(fd, SET "[peer-default]:Phase=1 force\n");
+		if (local)
+			fprintf(fd, SET
+			    "[peer-default]:Local-address=%s force\n",
+			    local->name);
+		if (auth->type == IKE_AUTH_PSK)
+			fprintf(fd, SET
+			    "[peer-default]:Authentication=%s force\n",
+			    auth->string);
 	}
-	if (local)
-		fprintf(fd, SET "[peer-%s]:Local-address=%s force\n",
-		    peer->name, local->name);
-	if (auth->type == IKE_AUTH_PSK)
-		fprintf(fd, SET "[peer-%s]:Authentication=%s force\n",
-		    peer->name, auth->string);
 }
 
 static void
