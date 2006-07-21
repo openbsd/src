@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.5 2006/01/25 17:42:08 markus Exp $
+# $OpenBSD: Makefile,v 1.6 2006/07/21 22:59:05 ray Exp $
 
-TESTSCRIPTS=t1 t2 t3 t4 t5
+TESTSCRIPTS=t1 t2 t3 t4 t5 t6
 
 .for t in ${TESTSCRIPTS}
 REGRESS_TARGETS+=t-${t}
