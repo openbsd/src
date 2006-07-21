@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.167 2006/07/06 13:25:40 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.168 2006/07/21 01:21:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1683,7 +1683,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    (newrule->action == PF_RDR) ||
 			    (newrule->action == PF_BINAT) ||
 			    (newrule->rt > PF_FASTROUTE)) &&
-			    !pcr->anchor[0])) &&
+			    !newrule->anchor)) &&
 			    (TAILQ_FIRST(&newrule->rpool.list) == NULL))
 				error = EINVAL;
 
