@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.108 2006/07/15 00:04:11 beck Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.109 2006/07/22 18:44:28 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -199,17 +199,18 @@ scsi_make_xs(struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
 	xs->bp = bp;
 
 	/*
-	 * Set the LUN in the CDB.  This may only be needed if we have an
-	 * older device.  However, we also set it for more modern SCSI
-	 * devices "just in case".  The old code assumed everything newer
-	 * than SCSI-2 would not need it, but why risk it?  This was the
-	 * old conditional:
+	 * Set the LUN in the CDB if it fits in the three bits available. This
+	 * may only be needed if we have an older device.  However, we also set
+	 * it for more modern SCSI devices "just in case".  The old code
+	 * assumed everything newer than SCSI-2 would not need it, but why risk
+	 * it?  This was the old conditional:
 	 *
 	 * if ((sc_link->inqdata.version & SID_ANSII) <= 2)
 	 */
 	xs->cmd->bytes[0] &= ~SCSI_CMD_LUN_MASK;
-	xs->cmd->bytes[0] |=
-	    ((sc_link->lun << SCSI_CMD_LUN_SHIFT) & SCSI_CMD_LUN_MASK);
+	if (sc_link->lun < 8)
+		xs->cmd->bytes[0] |= ((sc_link->lun << SCSI_CMD_LUN_SHIFT) &
+		    SCSI_CMD_LUN_MASK);
 
 	return (xs);
 }
