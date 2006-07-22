@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.69 2006/07/13 11:46:16 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.70 2006/07/22 18:03:07 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -94,21 +94,6 @@ struct scsi_link;
  * Temporary hack
  */
 extern int scsi_autoconf;
-
-/*
- * Specify which buses and targets must scan all LUNs, even when IDENTIFY does
- * not seem to be working. Some devices (e.g. some external RAID devices) may
- * seem to have non-functional IDENTIFY because they return identical INQUIRY
- * data for all LUNs.
- */
-#ifndef SCSIFORCELUN_BUSES
-#define SCSIFORCELUN_BUSES	0
-#endif
-#ifndef SCSIFORCELUN_TARGETS
-#define	SCSIFORCELUN_TARGETS	0
-#endif
-
-extern int scsiforcelun_buses, scsiforcelun_targets;
 
 /*
  * These entrypoints are called by the high-end drivers to get services from
