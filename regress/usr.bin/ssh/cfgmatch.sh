@@ -1,4 +1,4 @@
-#	$OpenBSD: cfgmatch.sh,v 1.1 2006/07/17 12:08:02 dtucker Exp $
+#	$OpenBSD: cfgmatch.sh,v 1.2 2006/07/22 01:50:00 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="sshd_config match"
@@ -14,6 +14,8 @@ stop_client()
 		kill $pid
 	fi
 }
+
+cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
 
 echo "PermitOpen 127.0.0.1:1" >>$OBJ/sshd_config
 echo "Match Address 127.0.0.1" >>$OBJ/sshd_config
@@ -81,5 +83,23 @@ for p in 1 2; do
 	sleep 1;
 	${SSH} -q -$p -p $fwdport -F $OBJ/ssh_config somehost true || \
 	    fail "match permitopen permit proto $p"
+	stop_client
+done
+
+cp $OBJ/sshd_proxy_bak $OBJ/sshd_proxy
+echo "PermitOpen 127.0.0.1:1 127.0.0.1:$PORT 127.0.0.2:2" >>$OBJ/sshd_proxy
+echo "Match User $USER" >>$OBJ/sshd_proxy
+echo "PermitOpen 127.0.0.1:1 127.0.0.1:2" >>$OBJ/sshd_proxy
+
+# Test that a Match overrides a PermitOpen in the global section
+for p in 1 2; do
+	rm -f $pidfile
+	trace "match permitopen proxy w/key opts proto $p"
+	${SSH} -q -$p $fwd -F $OBJ/ssh_proxy -f somehost \
+	    "echo \$\$ > $pidfile; exec sleep 100" >>$TEST_SSH_LOGFILE 2>&1 ||\
+	    fail "match override permitopen proto $p sshd failed"
+	sleep 1;
+	${SSH} -q -$p -p $fwdport -F $OBJ/ssh_config somehost true && \
+	    fail "match override permitopen proto $p"
 	stop_client
 done
