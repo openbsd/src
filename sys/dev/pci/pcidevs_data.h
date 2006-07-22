@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1106 2006/07/20 02:46:04 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1107 2006/07/22 00:48:45 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1699,12 +1699,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP400 USB",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_400,
-	    "IXP400 ISA",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400,
 	    "IXP400 IDE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_400,
+	    "IXP400 ISA",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_MODEM_400,
@@ -1727,8 +1727,56 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP600 SATA",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_600,
+	    "IXP600 AC97",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_HDA_600,
+	    "IXP600 HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_PCI_600,
+	    "IXP600 PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMB_600,
+	    "IXP600 SMBus",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_EHCI_600,
+	    "IXP600 USB2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_600_1,
+	    "IXP600 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_600_2,
+	    "IXP600 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_600_3,
+	    "IXP600 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_600_4,
+	    "IXP600 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_600_5,
+	    "IXP600 USB",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600,
 	    "IXP600 IDE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_LPC_600,
+	    "IXP600 LPC",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_MODEM_600,
+	    "IXP600 Modem",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
