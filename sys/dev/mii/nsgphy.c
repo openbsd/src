@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.16 2005/05/27 09:24:01 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.17 2006/07/22 04:45:13 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -109,6 +109,7 @@ nsgphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
+	int anar;
 
 	mpd = mii_phy_match(ma, nsgphys);
 	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
@@ -120,10 +121,26 @@ nsgphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
 
+	PHY_RESET(sc);
+
 	sc->mii_capabilities =
 		PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
         if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+
+	/*
+	 * The PHY seems to have the 10baseT BMSR bits
+	 * hard-wired to 0, even though the device supports
+	 * 10baseT.  What we do instead is read the post-reset
+	 * ANAR, who's 10baseT-related bits are set by strapping
+	 * pin 180, and fake the BMSR bits.
+	 */
+	anar = PHY_READ(sc, MII_ANAR);
+	if (anar & ANAR_10)
+		sc->mii_capabilities |= (BMSR_10THDX & ma->mii_capmask);
+	if (anar & ANAR_10_FD)
+		sc->mii_capabilities |= (BMSR_10TFDX & ma->mii_capmask);
+
         if ((sc->mii_capabilities & BMSR_MEDIAMASK) ||
             (sc->mii_extcapabilities & EXTSR_MEDIAMASK))
                 mii_phy_add_media(sc);
