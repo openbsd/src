@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.59 2006/06/28 13:15:41 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.60 2006/07/22 16:47:49 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -711,7 +711,7 @@ flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
 	local 192.168.1.1 peer 192.168.3.12
 
-# Protect remote bridges (IP over Ethernet)
+# Protect remote bridges (Ethernet frames over IP)
 flow esp proto etherip from 192.168.100.1 to 192.168.200.1
 
 # Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
@@ -741,7 +741,7 @@ ike esp from 192.168.3.1 to 192.168.3.2
 # Using interface group names and symbolic host names
 ike esp from egress to 10.1.2.0/24 peer mygate.home.net
 
-# Protect remote bridges (IP over Ethernet)
+# Protect remote bridges (Ethernet frames over IP)
 ike esp proto etherip from 192.168.100.1 to 192.168.200.1
 
 # Use bypass flow to exclude local subnets from larger VPNs
