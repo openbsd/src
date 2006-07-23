@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.h,v 1.54 2006/07/06 16:03:53 stevesk Exp $ */
+/* $OpenBSD: auth.h,v 1.55 2006/07/23 01:11:05 stevesk Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <openssl/rsa.h>
 
 #include <pwd.h>
+#include <signal.h>
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>

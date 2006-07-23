@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.h,v 1.42 2006/04/20 09:27:09 djm Exp $ */
+/* $OpenBSD: kex.h,v 1.43 2006/07/23 01:11:05 stevesk Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -27,6 +27,9 @@
 #define KEX_H
 
 #include <openssl/evp.h>
+
+#include <signal.h>
+
 #include "buffer.h"
 #include "cipher.h"
 #include "key.h"
