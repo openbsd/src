@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.17 2006/07/20 23:51:48 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.18 2006/07/23 20:23:51 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -96,6 +96,7 @@ int	azalia_alc882_mixer_init(codec_t *);
 int	azalia_alc882_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_alc882_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
+int	azalia_ad1981hd_mixer_init(codec_t *);
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
@@ -137,6 +138,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
 		this->name = "Analog Devices AD1981HD";
 		this->init_widget = azalia_ad1981hd_init_widget;
+		this->mixer_init = azalia_ad1981hd_mixer_init;
 		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
@@ -1904,6 +1906,8 @@ azalia_alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
+#define AD1981HD_THINKPAD	0x201017aa
+
 int
 azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
@@ -1938,6 +1942,24 @@ azalia_ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x1d:
 		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
 		break;
+	}
+	return 0;
+}
+
+int
+azalia_ad1981hd_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+	int err;
+
+	err = azalia_generic_mixer_init(this);
+	if (err)
+		return err;
+	if (this->subid == AD1981HD_THINKPAD) {
+		mc.dev = -1;
+		mc.type = AUDIO_MIXER_ENUM;
+		mc.un.ord = 1;
+		azalia_generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
 	}
 	return 0;
 }
