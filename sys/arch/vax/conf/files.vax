@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.35 2006/07/20 19:15:34 miod Exp $
+#	$OpenBSD: files.vax,v 1.36 2006/07/23 19:17:21 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -132,7 +132,9 @@ major	{ry = 24}
 include	"arch/vax/dec/files.dec"
 
 # wscons files.
+include "dev/rasops/files.rasops"
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 # RAM Disk for install floppy
 major	{rd = 23}
@@ -156,7 +158,7 @@ attach	le at vsbus with le_vsbus
 file	arch/vax/vsa/if_le_vsbus.c		le_vsbus
 
 # Monochrome framebuffer on VS3100.
-device	smg: wsemuldisplaydev
+device	smg: wsemuldisplaydev, rasops1
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c			smg needs-flag
 
