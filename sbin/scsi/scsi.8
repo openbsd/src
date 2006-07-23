@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.29 2006/07/23 07:14:45 dlg Exp $
+.\"	$OpenBSD: scsi.8,v 1.30 2006/07/23 07:16:24 dlg Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -337,10 +337,6 @@ The
 command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
 and user SCSI commands.
 .Sh BUGS
-Some devices respond to an inquiry for all LUNs.
-This will cause them
-to come online up to 8 times during reprobe to different logical units.
-.Pp
 .Ic scsi\ -f /dev/rsd0c -c \*q4 0 0 0 0 0\*q
 permits anyone who can write to
 .Pa /dev/rsd0c
