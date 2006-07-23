@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.109 2006/07/22 18:25:42 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.110 2006/07/23 14:34:55 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -217,9 +217,11 @@ scsi_probe_busses(int bus, int target, int lun)
 int
 scsi_probe_bus(int bus, int target, int lun)
 {
+	struct scsi_report_luns_data *data = NULL;
 	struct scsibus_softc *scsi;
+	struct scsi_link *sc_link;
 	u_int16_t scsi_addr;
-	int maxtarget, mintarget, maxlun, minlun;
+	int i, luncount, maxtarget, mintarget, maxlun, minlun;
 
 	if (bus < 0 || bus >= scsibus_cd.cd_ndevs)
 		return (ENXIO);
@@ -252,16 +254,54 @@ scsi_probe_bus(int bus, int target, int lun)
 		else
 			minlun = lun;
 	}
-
+	
+	data = malloc(sizeof *data, M_TEMP, M_NOWAIT);
+	
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == scsi_addr)
 			continue;
-			
-		for (lun = minlun; lun <= maxlun; lun++) {
+		if (scsi_probedev(scsi, target, 0) == EINVAL)
+			continue;
+
+		sc_link = scsi->sc_link[target][0];
+		if (sc_link != NULL && data != NULL &&
+		    (sc_link->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
+		    (sc_link->inqdata.version & SID_ANSII) > 2) {
+			scsi_report_luns(sc_link, REPORT_NORMAL, data,
+			    sizeof *data, scsi_autoconf | SCSI_SILENT |
+		    	    SCSI_IGNORE_ILLEGAL_REQUEST |
+		            SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE,
+			    10000);
+			/*
+			 * XXX In theory we should check if data is full, which
+			 * would indicate it needs to be enlarged and REPORT
+			 * LUNS tried again. Solaris tries up to 3 times with
+			 * larger sizes for data.
+			 */
+			luncount = _4btol(data->length) / RPL_LUNDATA_SIZE;
+			for (i = 0; i < luncount; i++) {
+				if (data->luns[i].lundata[0] != 0)
+					continue;
+				lun = data->luns[i].lundata[RPL_LUNDATA_T0LUN];
+				if (lun == 0 || lun < minlun || lun > maxlun)
+					continue;
+				/* Probe the provided LUN. Don't check LUN 0. */
+				scsi->sc_link[target][0] = NULL;
+				scsi_probedev(scsi, target, lun);
+				scsi->sc_link[target][0] = sc_link;
+			}
+			if (luncount > 0)
+				continue; /* Next target. */
+		}
+
+		/* No LUN list available. Scan entire range. */
+		for (lun = max(minlun, 1); lun <= maxlun; lun++)
 			if (scsi_probedev(scsi, target, lun) == EINVAL)
 				break;
-		}
 	}
+
+	if (data != NULL)
+		free(data, M_TEMP);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.70 2006/07/22 18:03:07 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.71 2006/07/23 14:34:55 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -338,6 +338,8 @@ int	scsi_scsi_cmd(struct scsi_link *, struct scsi_generic *,
 int	scsi_do_ioctl(struct scsi_link *, dev_t, u_long, caddr_t,
 	    int, struct proc *);
 void	sc_print_addr(struct scsi_link *);
+int	scsi_report_luns(struct scsi_link *, int,
+	    struct scsi_report_luns_data *, u_int32_t, int, int);
 
 void	show_scsi_xs(struct scsi_xfer *);
 void	scsi_print_sense(struct scsi_xfer *);

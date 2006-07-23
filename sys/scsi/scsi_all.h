@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.35 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.36 2006/07/23 14:34:55 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -156,6 +156,19 @@ struct scsi_prevent {
 #define	PR_PREVENT 0x01
 #define PR_ALLOW   0x00
 
+struct scsi_report_luns {
+	u_int8_t opcode;
+	u_int8_t unused;
+	u_int8_t selectreport;
+#define	REPORT_NORMAL		0x00
+#define	REPORT_WELLKNOWN	0x01
+#define	REPORT_ALL		0x02
+	u_int8_t unused2[3];
+	u_int8_t length[4];
+	u_int8_t unused4;
+	u_int8_t control;
+};
+
 /*
  * Opcodes
  */
@@ -176,6 +189,7 @@ struct scsi_prevent {
 #define	CHANGE_DEFINITION	0x40
 #define	MODE_SELECT_BIG		0x55
 #define	MODE_SENSE_BIG		0x5a
+#define	REPORT_LUNS		0xa0
 
 /*
  * Sort of an extra one, for SCSI_RESET.
@@ -343,6 +357,19 @@ union scsi_mode_sense_buf {
 	struct scsi_mode_header_big hdr_big;
 	u_char buf[255];	/* 256 bytes breaks some devices. */
 } __packed;			/* Ensure sizeof() is 255! */
+
+struct scsi_report_luns_data {
+	u_int8_t length[4];	/* length of LUN inventory, in bytes */
+	u_int8_t reserved[4];	/* unused */
+	/*
+	 * LUN inventory- we only support the type zero form for now.
+	 */
+#define RPL_LUNDATA_SIZE 8	/* Bytes per lun */
+	struct {
+		u_int8_t lundata[RPL_LUNDATA_SIZE];
+	} luns[256];		/* scsi_link->luns is u_int8_t. */
+};
+#define	RPL_LUNDATA_T0LUN	1	/* Type 0 LUN is in lundata[1] */
 
 /*
  * SPI status information unit. See section 14.3.5 of SPI-3.

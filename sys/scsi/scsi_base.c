@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.109 2006/07/22 18:44:28 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.110 2006/07/23 14:34:55 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -600,6 +600,30 @@ scsi_mode_select_big(struct scsi_link *sc_link, int byte2,
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_select_big: error = %d\n",
 	    error));
+
+	return (error);
+}
+
+int
+scsi_report_luns(struct scsi_link *sc_link, int selectreport,
+    struct scsi_report_luns_data *data, u_int32_t datalen, int flags,
+    int timeout)
+{
+	struct scsi_report_luns scsi_cmd;
+	int error;
+
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero(data, datalen);
+
+	scsi_cmd.opcode = REPORT_LUNS;
+	scsi_cmd.selectreport = selectreport;
+	_lto4b(datalen, scsi_cmd.length);
+
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)data, datalen, 4, timeout, NULL,
+	    flags | SCSI_DATA_IN);
+
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_report_luns: error = %d\n", error));
 
 	return (error);
 }
