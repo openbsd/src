@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.28 2005/05/14 04:20:11 millert Exp $
+.\"	$OpenBSD: scsi.8,v 1.29 2006/07/23 07:14:45 dlg Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -55,12 +55,6 @@
 .Fl m Ar page
 .Op Fl e
 .Op Fl P Ar pc
-.Nm scsi
-.Fl f Ar device
-.Fl r
-.Op Fl b Ar bus
-.Op Fl l Ar lun
-.Op Fl t Ar targ
 .Nm scsi
 .Fl f Ar device
 .Op Fl v
@@ -167,15 +161,6 @@ The page control fields are
 2 Default Values
 3 Saved Values
 .Ed
-.It Fl r
-Reprobe a specific SCSI device at a given
-bus, target, and lun.
-This is not needed
-since opening a fixed SCSI device
-has the side effect of reprobing it.
-See
-.Xr scsi 4
-for a description of fixed SCSI devices.
 .It Fl s Ar seconds
 Sets the command timeout to
 .Ar seconds .
