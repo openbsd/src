@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.31 2005/07/22 03:23:37 jaredy Exp $
+.\"	$OpenBSD: ctime.3,v 1.32 2006/07/23 09:11:04 jmc Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -23,8 +23,6 @@
 .Fd #include <time.h>
 .Pp
 .Fd extern char *tzname[2];
-.Ft void
-.Fn tzset "void"
 .Ft "char *"
 .Fn ctime "const time_t *clock"
 .Ft "char *"
@@ -289,7 +287,7 @@ field of a returned
 points to a static array of characters, which
 will also be overwritten at the next call
 (and by calls to
-.Fn tzset ) .
+.Xr tzset 3 ) .
 .Pp
 .Fn asctime
 and
