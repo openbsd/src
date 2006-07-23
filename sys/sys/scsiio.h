@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiio.h,v 1.6 2002/05/27 23:40:31 tdeval Exp $	*/
+/*	$OpenBSD: scsiio.h,v 1.7 2006/07/23 02:50:20 dlg Exp $	*/
 /*	$NetBSD: scsiio.h,v 1.3 1994/06/29 06:45:09 cgd Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
@@ -57,20 +57,14 @@ struct	oscsi_addr {
 
 struct scsi_addr {
 	int     type;
-#define TYPE_SCSI 0
-#define TYPE_ATAPI 1
+#define TYPE_SCSI	0
+#define TYPE_ATAPI	1
 	int	scbus;		/* -1 if wildcard */
 	int	target;		/* -1 if wildcard */
 	int	lun;		/* -1 if wildcard */
 };
 
-#define OSCIOCREPROBE	_IOW('Q', 3, struct oscsi_addr) /* look for new devs */
-#define OSCIOCIDENTIFY  _IOR('Q', 4, struct oscsi_addr) 
-#define SCIOCDECONFIG	_IO('Q', 5)	/* please disappear */
-#define SCIOCRECONFIG	_IO('Q', 6)	/* please check again */
 #define SCIOCRESET	_IO('Q', 7)	/* reset the device */
-#define	SCIOCREASSIGN	_IOW('Q', 8, int)	/* reassign block */
 #define SCIOCIDENTIFY	_IOR('Q', 9, struct scsi_addr) 
-#define SCIOCREPROBE    _IOW('Q', 10, struct scsi_addr)
 
 #endif /* _SYS_SCSIIO_H_ */

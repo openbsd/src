@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.108 2006/07/13 11:46:16 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.109 2006/07/23 02:50:20 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -830,7 +830,6 @@ sdioctl(dev, cmd, addr, flag, p)
 		case DIOCLOCK:
 		case DIOCEJECT:
 		case SCIOCIDENTIFY:
-		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
 		case SCIOCDEBUG:
 			if (part == RAW_PART)
@@ -923,14 +922,6 @@ sdioctl(dev, cmd, addr, flag, p)
 			goto exit;
 		}
 		sd->sc_link->flags |= SDEV_EJECTING;
-		goto exit;
-
-	case SCIOCREASSIGN:
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			goto exit;
-		}
-		error = sd_reassign_blocks(sd, (*(int *)addr));
 		goto exit;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.20 2005/11/13 19:16:09 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.21 2006/07/23 02:50:20 dlg Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -61,17 +61,7 @@ int	fd;
 int	debuglevel;
 int	debugflag;
 int commandflag;
-int	reprobe;
-#ifdef SCIOCADDR
-int	probe_all;
-#endif
 int verbose = 0;
-int	bus = -1;	/* all busses */
-int	targ = -1;	/* all targs */
-int	lun = 0;	/* just lun 0 */
-#ifdef SCIOCFREEZE
-int	freeze = 0;	/* Freeze this many seconds */
-#endif
 
 int modeflag;
 int editflag;
@@ -83,7 +73,6 @@ void	procargs(int *argc_p, char ***argv_p);
 int	iget(void *hook, char *name);
 char	*cget(void *hook, char *name);
 void	arg_put(void *hook, int letter, void *arg, int count, char *name);
-int	arg_get (void *hook, char *field_name);
 void	mode_sense(int fd, u_char *data, int len, int pc, int page);
 void	mode_select(int fd, u_char *data, int len, int perm);
 
@@ -94,12 +83,7 @@ usage(void)
 "Usage:\n"
 "\n"
 "  scsi -f device -d debug_level                    # To set debug level\n"
-#ifdef SCIOCFREEZE
-"  scsi -f device [-v] -z seconds                   # To freeze bus\n"
-#endif
 "  scsi -f device -m page [-P pc]                   # To read mode pages\n"
-"  scsi -f device -p [-b bus] [-l lun]              # To probe all devices\n"
-"  scsi -f device -r [-b bus] [-t targ] [-l lun]    # To reprobe a device\n"
 "  scsi -f device [-v] [-s seconds] -c cmd_fmt [arg0 ... argn] # A command...\n"
 "                 -o count out_fmt [arg0 ... argn]  #   EITHER (data out)\n"
 "                 -i count in_fmt                   #   OR     (data in)\n"
@@ -124,21 +108,10 @@ procargs(int *argc_p, char ***argv_p)
 	fflag = 0;
 	commandflag = 0;
 	debugflag = 0;
-	while ((ch = getopt(argc, argv, "ceprvf:d:b:t:l:z:m:P:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "cef:d:m:P:s:v")) != -1) {
 		switch (ch) {
-#ifdef SCIOCADDR
-		case 'p':
-			probe_all = 1;
-			break;
-#endif
-		case 'r':
-			reprobe = 1;
-			break;
 		case 'c':
 			commandflag = 1;
-			break;
-		case 'v':
-			verbose = 1;
 			break;
 		case 'e':
 			editflag = 1;
@@ -152,29 +125,18 @@ procargs(int *argc_p, char ***argv_p)
 			debuglevel = strtol(optarg, 0, 0);
 			debugflag = 1;
 			break;
-		case 'b':
-			bus = strtol(optarg, 0, 0);
+		case 'm':
+			modeflag = 1;
+			modepage = strtol(optarg, 0, 0);
 			break;
-		case 't':
-			targ = strtol(optarg, 0, 0);
-			break;
-		case 'l':
-			lun = strtol(optarg, 0, 0);
-			break;
-#ifdef SCIOCFREEZE
-		case 'z':
-			freeze = strtol(optarg, 0, 0);
-			break;
-#endif
 		case 'P':
 			pagectl = strtol(optarg, 0, 0);
 			break;
 		case 's':
 			seconds = strtol(optarg, 0, 0);
 			break;
-		case 'm':
-			modeflag = 1;
-			modepage = strtol(optarg, 0, 0);
+		case 'v':
+			verbose = 1;
 			break;
 		case '?':
 		default:
@@ -279,12 +241,6 @@ void arg_put(void *hook, int letter, void *arg, int count, char *name)
 	}
 	if (verbose)
 		putchar('\n');
-}
-
-int arg_get (void *hook, char *field_name)
-{
-	printf("get \"%s\".\n", field_name);
-	return 0;
 }
 
 /* data_phase: SCSI bus data phase: DATA IN, DATA OUT, or no data transfer.
@@ -414,52 +370,6 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 		}
 	}
 }
-
-#ifdef SCIOCFREEZE
-static void
-freeze_ioctl(int fd, int op, void *data)
-{
-	if (ioctl(fd, SCIOCFREEZE, 0) == -1) {
-		if (errno == ENODEV) {
-			fprintf(stderr,
-			"Your kernel must be configured with option SCSI_FREEZE.\n");
-			exit(errno);
-		} else
-			err(errno, "SCIOCFREEZE");
-	}
-}
-
-/* do_freeze: Freeze the bus for a given number of seconds.
- */
-static void do_freeze(int seconds)
-{
-	if (seconds == -1) {
-		printf("Hit return to thaw:  ");
-		fflush(stdout);
-		sync();
-
-		freeze_ioctl(fd, SCIOCFREEZE, 0);
-
-		(void)getchar();
-
-		freeze_ioctl(fd, SCIOCTHAW, 0);
-	}
-	else {
-		sync();
-		freeze_ioctl(fd, SCIOCFREEZETHAW, &seconds);
-		if (verbose) {
-			putchar('\007');
-			fflush(stdout);
-		}
-
-		freeze_ioctl(fd, SCIOCWAITTHAW, 0);
-		if (verbose) {
-			putchar('\007');
-			fflush(stdout);
-		}
-	}
-}
-#endif
 
 void mode_sense(int fd, u_char *data, int len, int pc, int page)
 {
@@ -875,92 +785,14 @@ mode_edit(int fd, int page, int edit, int argc, char *argv[])
 	}
 }
 
-#ifdef SCIOCADDR
-/* do_probe_all: Loop over all SCSI IDs and see if something is
- * there.  This only does BUS 0 LUN 0.
- */
-void do_probe_all(void)
-{
-	scsireq_t *scsireq;
-
-	char vendor_id[8 + 1], product_id[16 + 1], revision[4 + 1];
-	int id;
-	u_char *inq_buf = malloc(96);
-	struct scsi_addr addr;
-
-	scsireq = scsireq_build(scsireq_new(),
-	96, inq_buf, SCCMD_READ,
-	"12 0 0 0 v 0", 96);
-
-	addr.scbus = (bus == -1) ? 0 : bus;
-	addr.lun = lun;
-
-	if (addr.scbus || addr.lun)
-	{
-		printf("For bus %d lun %d:\n", addr.scbus, addr.lun);
-	}
-
-	for (id = 0; id < 8; id++)
-	{
-		addr.target = id;
-
-		printf("%d: ", id);
-		if (ioctl(fd, SCIOCADDR, &addr) == -1) {
-			if (errno == ENXIO)
-			{
-				errno = 0;
-				printf("nothing.\n");
-			}
-			else
-				printf("SCIOCADDR: %s\n", strerror(errno));
-
-			continue;
-		}
-
-		if (scsireq_enter(fd, scsireq) == -1) {
-			printf("scsireq_enter: %s\n", strerror(errno));
-			continue;
-		}
-
-		vendor_id[sizeof(vendor_id) - 1] = 0;
-		product_id[sizeof(product_id) - 1] = 0;
-		revision[sizeof(revision) - 1] = 0;
-
-		scsireq_decode(scsireq, "s8 c8 c16 c4",
-		vendor_id, product_id, revision);
-
-		printf("%s %s %s\n", vendor_id, product_id, revision);
-	}
-}
-#endif
-
 int
 main(int argc, char **argv)
 {
-	struct scsi_addr scaddr;
-
 	procargs(&argc,&argv);
 
 	/* XXX This has grown to the point that it should be cleaned up.
 	 */
-#ifdef SCIOCFREEZE
-	if (freeze) {
-		do_freeze(freeze);
-	} else
-#endif
-#ifdef SCIOCADDR
-	if (probe_all)
-		do_probe_all();
-	else
-#endif
-	if(reprobe) {
-		scaddr.scbus = bus;
-		scaddr.target = targ;
-		scaddr.lun = lun;
-
-		if (ioctl(fd,SCIOCREPROBE,&scaddr) == -1)
-			warn("SCIOCREPROBE");
-	} else if(debugflag) {
+	if (debugflag) {
 		if (ioctl(fd,SCIOCDEBUG,&debuglevel) == -1)
 			err(errno, "SCIODEBUG");
 	} else if (commandflag) {

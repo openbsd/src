@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.25 2006/07/11 09:26:47 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.26 2006/07/23 02:50:20 dlg Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -341,14 +341,6 @@ scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
 	switch(cmd) {
-	case OSCIOCIDENTIFY: {
-		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
-
-		sca->scbus = sc_link->scsibus;
-		sca->target = sc_link->target;
-		sca->lun = sc_link->lun;
-		return (0);
-	}
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
@@ -359,16 +351,11 @@ scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 		sca->lun = sc_link->lun;
 		return (0);
 	}
-	case SCIOCRECONFIG:
-	case SCIOCDECONFIG:
-		return (EINVAL);
 	case SCIOCCOMMAND:
 		if (scsi_readsafe_cmd[((scsireq_t *)addr)->cmd[0]])
 			break;
 		/* FALLTHROUGH */
 	case SCIOCDEBUG:
-	case SCIOCREPROBE:
-	case OSCIOCREPROBE:
 	case SCIOCRESET:
 		if ((flag & FWRITE) == 0)
 			return (EPERM);
@@ -431,16 +418,6 @@ scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 		if (level & 8)
 			sc_link->flags |= SDEV_DB4;
 		return (0);
-	}
-	case OSCIOCREPROBE: {
-		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
-
-		return (scsi_probe_busses(sca->scbus, sca->target, sca->lun));
-	}
-	case SCIOCREPROBE: {
-		struct scsi_addr *sca = (struct scsi_addr *)addr;
-
-		return (scsi_probe_busses(sca->scbus, sca->target, sca->lun));
 	}
 	case SCIOCRESET: {
 		scsi_scsi_cmd(sc_link, 0, 0, 0, 0, GENRETRY, 2000, NULL,
