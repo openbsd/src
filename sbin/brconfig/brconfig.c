@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.35 2006/03/20 20:01:34 dhill Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.36 2006/07/24 08:02:43 djm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -109,20 +109,20 @@ main(int argc, char *argv[])
 	int error = 0, sock;
 	char *brdg;
 
-	if (argc < 2) {
-		usage();
-		return (EX_USAGE);
-	}
-
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0)
 		err(1, "socket");
 
+	if (argc < 2 || strcmp(argv[1], "-a") == 0)
+		return bridge_show_all(sock);
+
+	if (strcmp(argv[1], "-h") == 0) {
+		usage();
+		return (EX_USAGE);
+	}
+
 	argc--; argv++;
 	brdg = argv[0];
-
-	if (strcmp(brdg, "-a") == 0)
-		return bridge_show_all(sock);
 
 	if (strlen(brdg) >= IFNAMSIZ) {
 		warnx("%s is not a bridge", brdg);
