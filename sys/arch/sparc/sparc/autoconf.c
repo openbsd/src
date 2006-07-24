@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.72 2006/03/15 20:07:28 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.73 2006/07/24 18:27:36 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1376,17 +1376,20 @@ findzs(zs)
 	/* NOTREACHED */
 }
 
+#if defined(SUN4C) || defined(SUN4M)
+struct v2rmi {
+	int	zero;
+	int	addr;
+	int	len;
+} v2rmi[200];		/* version 2 rom meminfo layout */
+#endif
+
 int
 makememarr(ap, max, which)
 	register struct memarr *ap;
 	int max, which;
 {
 #if defined(SUN4C) || defined(SUN4M)
-	struct v2rmi {
-		int	zero;
-		int	addr;
-		int	len;
-	} v2rmi[200];		/* version 2 rom meminfo layout */
 #define	MAXMEMINFO (sizeof(v2rmi) / sizeof(*v2rmi))
 	register struct v0mlist *mp;
 	register int i, node, len;
