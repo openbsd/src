@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2003/11/10 21:05:06 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.31 2006/07/24 17:26:29 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -273,11 +273,11 @@ ioaccess(vaddr, paddr, npgs)
 	paddr_t paddr;
 	int npgs;
 {
-	u_int *pte = (u_int *)kvtopte(vaddr);
-	int i;
+	u_int *pte = (u_int *)kvtopte(vaddr), template;
 
-	for (i = 0; i < npgs; i++)
-		pte[i] = PG_V | PG_KW | (PG_PFNUM(paddr) + i);
+	template = PG_V | PG_KW | PG_PFNUM(paddr);
+	while (npgs-- != 0)
+		*pte++ = template++;
 	mtpr(0, PR_TBIA);
 }
 
@@ -290,10 +290,9 @@ iounaccess(vaddr, npgs)
 	int npgs;
 {
 	u_int *pte = (u_int *)kvtopte(vaddr);
-	int i;
 
-	for (i = 0; i < npgs; i++)
-		pte[i] = 0;
+	while (npgs-- != 0)
+		*pte++ = PG_NV;
 	mtpr(0, PR_TBIA);
 }
 
