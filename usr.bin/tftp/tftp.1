@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.11 2006/01/02 16:35:17 jmc Exp $
+.\"	$OpenBSD: tftp.1,v 1.12 2006/07/24 17:29:58 mglocker Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -175,7 +175,8 @@ Exit
 An end-of-file also exits.
 .Pp
 .It Ic rexmt Ar retransmission-timeout
-Set the per-packet retransmission timeout, in seconds.
+Set the per-packet retransmission timeout, in seconds.  The default value
+is 5 seconds.  Valid values are 1 second - 255 seconds.
 .Pp
 .It Ic status
 Show current status.
@@ -188,6 +189,21 @@ Toggle packet tracing.
 .Pp
 .It Ic verbose
 Toggle verbose mode.
+.Pp
+.It Ic tsize
+Toggle tsize option.  The tsize option delivers the total size of the to be
+transfered file.  With this value given, the client or server can decide
+if they are able to accept the file, or not.
+.Pp
+.It Ic tout
+Toggle tout option.  The tout option devlivers the retransmission-timeout,
+which is set by
+.Ic rexmt ,
+to the server, so the server uses the same retransmission-timeout as the client.
+.Pp
+.It Ic blksize Ar block-size
+Set the block size in bytes for one packet.  The default value is 512 bytes.
+Valid values are 8 bytes - 65464 bytes.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
@@ -206,11 +222,3 @@ protocol, the remote site will probably have some
 sort of file access restrictions in place.
 The exact methods are specific to each site and therefore
 difficult to document here.
-.Pp
-This implementation of
-.Nm
-does not support blocksize negotiation
-.Pq RFC 1783 ,
-so files larger than 33488896 octets
-.Pq 65535 blocks
-cannot be transferred.

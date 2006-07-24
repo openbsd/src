@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.18 2006/07/20 09:42:44 mglocker Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.19 2006/07/24 17:29:58 mglocker Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftp.c,v 1.18 2006/07/20 09:42:44 mglocker Exp $";
+    "$OpenBSD: tftp.c,v 1.19 2006/07/24 17:29:58 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -47,6 +47,7 @@ static const char rcsid[] =
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 #include <arpa/tftp.h>
@@ -57,13 +58,12 @@ static const char rcsid[] =
 #include <signal.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "extern.h"
 #include "tftpsubs.h"
-
-#define	PKTSIZE	SEGSIZE + 4
 
 static int	makerequest(int, const char *, struct tftphdr *, const char *);
 static void	nak(int);
@@ -72,6 +72,8 @@ static void	startclock(void);
 static void	stopclock(void);
 static void	printstats(const char *, unsigned long);
 static void	printtimeout(void);
+static void	oack(struct tftphdr *, int, int);
+static int	oack_set(const char *, const char *);
 
 extern struct sockaddr_in	 peeraddr;	/* filled in by main */
 extern int			 f;		/* the opened socket */
@@ -81,10 +83,16 @@ extern int			 rexmtval;
 extern int			 maxtimeout;
 extern FILE			*file;
 extern volatile sig_atomic_t	 intrflag;
+extern char			*ackbuf;
+extern int			 has_options;
+extern int			 opt_tsize;
+extern int			 opt_tout;
+extern int			 opt_blksize;
 
-char		ackbuf[PKTSIZE];
 struct timeval	tstart;
 struct timeval	tstop;
+unsigned int	segment_size = SEGSIZE;
+unsigned int	packet_size = SEGSIZE + 4;
 
 struct errmsg {
 	int	 e_code;
@@ -98,7 +106,23 @@ struct errmsg {
 	{ EBADID,	"Unknown transfer ID" },
 	{ EEXISTS,	"File already exists" },
 	{ ENOUSER,	"No such user" },
+	{ EOPTNEG,	"Option negotiation failed" },
 	{ -1,		NULL }
+};
+
+struct options {
+	const char      *o_type;
+} options[] = {
+	{ "tsize" },
+	{ "timeout" },
+	{ "blksize" },
+	{ NULL }
+};
+
+enum opt_enum {
+	OPT_TSIZE = 0,
+	OPT_TIMEOUT,
+	OPT_BLKSIZE
 };
 
 /*
@@ -127,7 +151,7 @@ sendfile(int fd, char *name, char *mode)
 		if (!block)
 			size = makerequest(WRQ, name, dp, mode) - 4;
 		else {
-			size = readit(file, &dp, convert, SEGSIZE);
+			size = readit(file, &dp, convert, segment_size);
 			if (size < 0) {
 				nak(errno + 100);
 				break;
@@ -152,7 +176,8 @@ sendfile(int fd, char *name, char *mode)
 					warn("sendto");
 					goto abort;
 				}
-				read_ahead(file, convert, SEGSIZE);
+				if (block > 0)
+					read_ahead(file, convert, segment_size);
 			}
 			error = 0;
 
@@ -171,7 +196,7 @@ sendfile(int fd, char *name, char *mode)
 				goto abort;
 			}
 			fromlen = sizeof(from);
-			n = recvfrom(f, ackbuf, sizeof(ackbuf), 0,
+			n = recvfrom(f, ackbuf, packet_size, 0,
 			    (struct sockaddr *)&from, &fromlen);
 			if (n == 0) {
 				warn("recvfrom");
@@ -187,7 +212,14 @@ sendfile(int fd, char *name, char *mode)
 			peeraddr.sin_port = from.sin_port;	/* added */
 			if (trace)
 				tpacket("received", ap, n);
+
 			ap->th_opcode = ntohs(ap->th_opcode);
+
+			if (ap->th_opcode == OACK) {
+				oack(ap, n, 0);
+				break;
+			}
+
 			ap->th_block = ntohs(ap->th_block);
 
 			if (ap->th_opcode == ERROR) {
@@ -212,7 +244,7 @@ sendfile(int fd, char *name, char *mode)
 		if (block > 0)
 			amount += size;
 		block++;
-	} while ((size == SEGSIZE || block == 1) && !intrflag);
+	} while ((size == segment_size || block == 1) && !intrflag);
 
 abort:
 	fclose(file);
@@ -248,6 +280,7 @@ recvfile(int fd, char *name, char *mode)
 	amount = 0;
 	firsttrip = 1;
 
+options:
 	do {
 		/* create new ACK packet */
 		if (firsttrip) {
@@ -295,7 +328,7 @@ recvfile(int fd, char *name, char *mode)
 				goto abort;
 			}
 			fromlen = sizeof(from);
-			n = recvfrom(f, dp, PKTSIZE, 0,
+			n = recvfrom(f, dp, packet_size, 0,
 			    (struct sockaddr *)&from, &fromlen);
 			if (n == 0) {
 				warn("recvfrom");
@@ -311,7 +344,15 @@ recvfile(int fd, char *name, char *mode)
 			peeraddr.sin_port = from.sin_port;	/* added */
 			if (trace)
 				tpacket("received", dp, n);
+
 			dp->th_opcode = ntohs(dp->th_opcode);
+
+			if (dp->th_opcode == OACK) {
+				oack(dp, n, 0);
+				block = 0;
+				goto options;
+			}
+
 			dp->th_block = ntohs(dp->th_block);
 
 			if (dp->th_opcode == ERROR) {
@@ -340,7 +381,7 @@ recvfile(int fd, char *name, char *mode)
 			break;
 		}
 		amount += size;
-	} while (size == SEGSIZE && !intrflag);
+	} while (size == segment_size && !intrflag);
 
 abort:
 	/* ok to ack, since user has seen err msg */
@@ -363,16 +404,33 @@ static int
 makerequest(int request, const char *name, struct tftphdr *tp,
     const char *mode)
 {
-	char	*cp;
-	int	 len, pktlen;
+	char		*cp;
+	int		 len, pktlen;
+	off_t		 fsize = 0;
+	struct stat	 st;
 
 	tp->th_opcode = htons((u_short)request);
 	cp = tp->th_stuff;
-	pktlen = PKTSIZE - offsetof(struct tftphdr, th_stuff);
+	pktlen = packet_size - offsetof(struct tftphdr, th_stuff);
 	len = strlen(name) + 1;
 	strlcpy(cp, name, pktlen);
 	strlcpy(cp + len, mode, pktlen - len);
 	len += strlen(mode) + 1;
+
+	if (opt_tsize) {
+		if (request == WRQ) {
+			stat(name, &st);
+			fsize = st.st_size;
+		}
+		len += snprintf(cp + len, pktlen - len, "%s%c%lld%c",
+		    options[OPT_TSIZE].o_type, 0, fsize, 0);
+	}
+	if (opt_tout)
+		len += snprintf(cp + len, pktlen - len, "%s%c%d%c",
+		    options[OPT_TIMEOUT].o_type, 0, rexmtval, 0);
+	if (opt_blksize)
+		len += snprintf(cp + len, pktlen - len, "%s%c%d%c",
+		    options[OPT_BLKSIZE].o_type, 0, opt_blksize, 0);
 
 	return (cp + len - (char *)tp);
 }
@@ -400,9 +458,9 @@ nak(int error)
 		pe->e_msg = strerror(error - 100);
 		tp->th_code = EUNDEF;
 	}
-	length = strlcpy(tp->th_msg, pe->e_msg, sizeof(ackbuf)) + 5;
-	if (length > sizeof(ackbuf))
-		length = sizeof(ackbuf);
+	length = strlcpy(tp->th_msg, pe->e_msg, packet_size) + 5;
+	if (length > packet_size)
+		length = packet_size;
 	if (trace)
 		tpacket("sent", tp, length);
 	if (sendto(f, ackbuf, length, 0, (struct sockaddr *)&peeraddr,
@@ -415,11 +473,11 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 {
 	char		*cp, *file;
 	static char	*opcodes[] =
-	    { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
+	    { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR", "OACK" };
 
 	u_short op = ntohs(tp->th_opcode);
 
-	if (op < RRQ || op > ERROR)
+	if (op < RRQ || op > OACK)
 		printf("%s opcode=%x ", s, op);
 	else
 		printf("%s %s ", s, opcodes[op]);
@@ -430,7 +488,10 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 		n -= 2;
 		file = cp = tp->th_stuff;
 		cp = strchr(cp, '\0');
-		printf("<file=%s, mode=%s>\n", file, cp + 1);
+		printf("<file=%s, mode=%s", file, cp + 1);
+		if (has_options)
+			oack(tp, n, 1);
+		printf(">\n");
 		break;
 	case DATA:
 		printf("<block=%d, %d bytes>\n", ntohs(tp->th_block), n - 4);
@@ -440,6 +501,11 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 		break;
 	case ERROR:
 		printf("<code=%d, msg=%s>\n", ntohs(tp->th_code), tp->th_msg);
+		break;
+	case OACK:
+		printf("<");
+		oack(tp, n, 1);
+		printf(">\n");
 		break;
 	}
 }
@@ -475,4 +541,92 @@ static void
 printtimeout(void)
 {
 	printf("Transfer timed out.\n");
+}
+
+static void
+oack(struct tftphdr *tp, int size, int trace)
+{
+	int	 i, len, off;
+	char	*opt, *val;
+
+	u_short op = ntohs(tp->th_opcode);
+
+	opt = tp->th_u.tu_stuff;
+	val = tp->th_u.tu_stuff;
+
+	if (op == RRQ || op == WRQ) {
+		len = strlen(opt) + 1;
+		opt = strchr(opt, '\0');
+		opt++;
+		len += strlen(opt) + 1;
+		opt = strchr(opt, '\0');
+		opt++;
+		val = opt;
+		off = len;
+		if (trace)
+			printf(", ");
+	} else
+		off = 2;
+
+	for (i = off, len = 0; i < size - 1; i++) {
+		if (*val != '\0') {
+			val++;
+			continue;
+		}
+		/* got option and value */
+		val++;
+		if (trace)
+			printf("%s=%s", opt, val);
+		else
+			if (oack_set(opt, val) == -1)
+				break;
+		len = strlen(val) + 1;
+		val += len;
+		opt = val;
+		i += len;
+		if (trace && i < size - 1)
+			printf(", ");
+	}
+}
+
+int
+oack_set(const char *option, const char *value)
+{
+	int		 i, n;
+	const char	*errstr;
+
+	for (i = 0; options[i].o_type != NULL; i++) {
+		if (!strcasecmp(options[i].o_type, option)) {
+			if (i == OPT_TSIZE) {
+				/* XXX verify OACK response */
+			}
+			if (i == OPT_TIMEOUT) {
+				/* verify OACK response */
+				n = strtonum(value, 1, 255, &errstr);
+				if (errstr || rexmtval != n ||
+				    opt_tout == 0) {
+					nak(EOPTNEG);
+					intrflag = 1;
+					return (-1);
+				}
+				/* OK */
+			}
+			if (i == OPT_BLKSIZE) {
+				/* verify OACK response */
+				n = strtonum(value, SEGSIZE_MIN, SEGSIZE_MAX,
+				    &errstr);
+				if (errstr || opt_blksize != n ||
+				    opt_blksize == 0) {
+					nak(EOPTNEG);	
+					intrflag = 1;
+					return (-1);
+				}
+				/* OK, set option */
+				segment_size = n;
+				packet_size = segment_size + 4;
+			}
+		}
+	}
+
+	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2006/07/12 16:58:51 mglocker Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2006/07/24 17:29:58 mglocker Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: main.c,v 1.25 2006/07/12 16:58:51 mglocker Exp $";
+    "$OpenBSD: main.c,v 1.26 2006/07/24 17:29:58 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static const char rcsid[] =
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <arpa/tftp.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -87,6 +88,9 @@ void			 setrexmt(int, char **);
 void			 settimeout(int, char **);
 void			 settrace(int, char **);
 void			 setverbose(int, char **);
+void			 settsize(int, char **);
+void			 settout(int, char **);
+void			 setblksize(int, char **);
 void			 status(int, char **);
 int			 readcmd(char *, int, FILE *);
 static void		 getusage(char *);
@@ -115,6 +119,11 @@ int	 		 maxtimeout = 5 * TIMEOUT;
 char	 		 hostname[MAXHOSTNAMELEN];
 FILE			*file = NULL;
 volatile sig_atomic_t	 intrflag = 0;
+char			*ackbuf;
+int			 has_options = 0;
+int			 opt_tsize = 0;
+int			 opt_tout = 0;
+int			 opt_blksize = 0;
 
 char	vhelp[] = "toggle verbose mode";
 char	thelp[] = "toggle packet tracing";
@@ -129,6 +138,9 @@ char	xhelp[] = "set per-packet retransmission timeout";
 char	ihelp[] = "set total retransmission timeout";
 char	ashelp[] = "set mode to netascii";
 char	bnhelp[] = "set mode to octet";
+char	oshelp[] = "toggle tsize option";
+char	othelp[] = "toggle timeout option";
+char	obhelp[] = "set alternative blksize option";
 
 struct cmd {
 	char	*name;
@@ -149,6 +161,9 @@ struct cmd cmdtab[] = {
 	{ "ascii",      ashelp,	setascii },
 	{ "rexmt",	xhelp,	setrexmt },
 	{ "timeout",	ihelp,	settimeout },
+	{ "tsize",	oshelp, settsize },
+	{ "tout",	othelp, settout },
+	{ "blksize",	obhelp,	setblksize },
 	{ "help",	hhelp,	help },
 	{ "?",		hhelp,	help },
 	{ NULL,		NULL,	NULL }
@@ -193,6 +208,10 @@ main(int argc, char *argv[])
 
 	/* catch SIGINT */
 	signal(SIGINT, intr);
+
+	/* allocate memory for packets */
+	if ((ackbuf = malloc(SEGSIZE_MAX + 4)) == NULL)
+		err(1, "malloc");
 
 	/* command prompt */
 	command();
@@ -484,7 +503,8 @@ getusage(char *s)
 void
 setrexmt(int argc, char *argv[])
 {
-	int	t;
+	int		 t;
+	const char	*errstr;
 
 	if (argc < 2) {
 		strlcpy(line, "Rexmt-timeout ", sizeof(line));
@@ -499,9 +519,9 @@ setrexmt(int argc, char *argv[])
 		printf("usage: %s value\n", argv[0]);
 		return;
 	}
-	t = atoi(argv[1]);
-	if (t < 0)
-		printf("%s: bad value\n", argv[1]);
+	t = strtonum(argv[1], 1, 255, &errstr);
+	if (errstr)
+		printf("%s: value is %s\n", argv[1], errstr);
 	else
 		rexmtval = t;
 }
@@ -707,6 +727,57 @@ setverbose(int argc, char *argv[])
 {
 	verbose = !verbose;
 	printf("Verbose mode %s.\n", verbose ? "on" : "off");
+}
+
+void
+settsize(int argc, char *argv[])
+{
+	opt_tsize = !opt_tsize;
+	printf("Tsize option %s.\n", opt_tsize ? "on" : "off");
+	if (opt_tsize)
+		has_options++;
+	else
+		has_options--;
+}
+
+void
+settout(int argc, char *argv[])
+{
+	opt_tout = !opt_tout;
+	printf("Timeout option %s.\n", opt_tout ? "on" : "off");
+	if (opt_tout)
+		has_options++;
+	else
+		has_options--;
+}
+
+void
+setblksize(int argc, char *argv[])
+{
+	int		 t;
+	const char	*errstr;
+
+	if (argc < 2) {
+		strlcpy(line, "Blocksize ", sizeof(line));
+		printf("(value) ");
+		readcmd(&line[strlen(line)], LBUFLEN - strlen(line), stdin);
+		if (makeargv())
+			return;
+		argc = margc;
+		argv = margv;
+	}
+	if (argc != 2) {
+		printf("usage: %s value\n", argv[0]);
+		return;
+	}
+	t = strtonum(argv[1], SEGSIZE_MIN, SEGSIZE_MAX, &errstr);
+	if (errstr)
+		printf("%s: value is %s\n", argv[1], errstr);
+	else {
+		if (opt_blksize == 0)
+			has_options++;
+		opt_blksize = t;
+	}
 }
 
 int
