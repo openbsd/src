@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2004/08/06 22:57:14 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2006/07/24 18:11:47 deraadt Exp $
 #	etc.sgi/Makefile.inc -- sgi-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -10,7 +10,7 @@ snap_md: bsd distrib1
 bsd:
 	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC && \
-	    make clean && make
+	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 distrib1:
 	${MAKE} distrib
