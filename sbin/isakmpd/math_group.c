@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.31 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: math_group.c,v 1.32 2006/07/24 11:45:44 ho Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -712,7 +712,7 @@ int
 modp_setraw(struct group *group, math_mp_t d, u_int8_t *s, int l)
 {
 	if (BN_bin2bn(s, l, d) == NULL)
-		return (-1);
+		return -1;
 
 	return 0;
 }
@@ -759,13 +759,13 @@ modp_validate_public(struct group *group, math_mp_t pub_exp)
 	 * Ensure that peer does not send us <0, 0, 1, p-1 or >= p
 	 */
 	if (BN_cmp(pub_exp, BN_value_one()) != 1)	/* pub_exp <= 1 */
-		return (-1);
+		return -1;
 	if ((tmp = BN_new()) == NULL)
-		return (-1);
+		return -1;
 	if (!BN_sub(tmp, grp->p, BN_value_one()) ||
 	    BN_cmp(pub_exp, tmp) != -1) {		/* pub_exp > p-2 */
 		BN_clear_free(tmp);
-		return (-1);
+		return -1;
 	}
 	BN_clear_free(tmp);
 
@@ -780,9 +780,9 @@ modp_validate_public(struct group *group, math_mp_t pub_exp)
 			bits_set++;
 	}
 	if (bits_set <= 1)
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -874,5 +874,5 @@ int
 ec2n_validate_public(struct group *grp, ec2np_ptr p)
 {
 	/* XXX: needs similar checks to modp_validate_public() */
-	return (0);
+	return 0;
 }

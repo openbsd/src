@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.61 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.62 2006/07/24 11:45:44 ho Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -293,14 +293,14 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 			}
 			default:
 				close(fd);
-				return (-1);
+				return -1;
 			}
 			rtm->rtm_addrs |= RTA_NETMASK|RTA_IFP|RTA_IFA;
 			rtm->rtm_msglen = sizeof(*rtm) + sizeof(*sa2);
 
 			if ((b = write(fd, buf, rtm->rtm_msglen)) < 0) {
 				close(fd);
-				return (-1);
+				return -1;
 			}
 
 			pid = getpid();
@@ -308,7 +308,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 			while ((len = read(fd, buf, sizeof(buf))) > 0) {
 				if (len < sizeof(*rtm)) {
 					close(fd);
-					return (-1);
+					return -1;
 				}
 
 				if (rtm->rtm_type == RTM_GET &&
@@ -316,7 +316,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 				    rtm->rtm_seq == seq) {
 					if (rtm->rtm_errno) {
 						close(fd);
-						return (-1);
+						return -1;
 					}
 					break;
 				}
@@ -327,12 +327,12 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 			    (RTA_DST|RTA_GATEWAY)) {
 				np = if_indextoname(rtm->rtm_index, ifname);
 				if (np == NULL)
-					return (-1);
+					return -1;
 			}
 		}
 
 		if (getifaddrs(&ifap) != 0)
-			return (-1);
+			return -1;
 
 		switch (af) {
 		default:

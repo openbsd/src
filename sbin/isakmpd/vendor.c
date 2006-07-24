@@ -40,7 +40,7 @@ setup_vendor_hashes(void)
 	hash = hash_get(HASH_MD5);
 	if (!hash) {
 		log_print("setup_vendor_hashes: could not find MD5 hash");
-		return (-1);
+		return -1;
 	}
 
 	for (i = 0; i < n; i++) {
@@ -64,13 +64,13 @@ setup_vendor_hashes(void)
 		LOG_DBG_BUF((LOG_EXCHANGE, 50, "setup_vendor_hashes",
 		    openbsd_vendor_cap[i].hash, hash->hashsize));
 	}
-	return (0);
+	return 0;
 
 errout:
 	for (i = 0; i < n; i++)
 		if (openbsd_vendor_cap[i].hash)
 			free(openbsd_vendor_cap[i].hash);
-	return (-1);
+	return -1;
 }
 
 void
@@ -91,7 +91,7 @@ add_vendor_openbsd(struct message *msg)
 		if ((buf = calloc(buflen, sizeof(char))) == NULL) {
 			log_error("add_vendor_payload: calloc(%lu) failed",
 			    (unsigned long)buflen);
-			return (-1);
+			return -1;
 		}
 
 		SET_ISAKMP_GEN_LENGTH(buf, buflen);
@@ -100,11 +100,11 @@ add_vendor_openbsd(struct message *msg)
 		if (message_add_payload(msg, ISAKMP_PAYLOAD_VENDOR, buf,
 		    buflen, 1)) {
 			free(buf);
-			return (-1);
+			return -1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
