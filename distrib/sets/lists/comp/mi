@@ -222,6 +222,7 @@
 ./usr/include/dev/ic/cs4231reg.h
 ./usr/include/dev/ic/cyreg.h
 ./usr/include/dev/ic/dc21040reg.h
+./usr/include/dev/ic/dc503reg.h
 ./usr/include/dev/ic/dcreg.h
 ./usr/include/dev/ic/dl10019reg.h
 ./usr/include/dev/ic/dl10019var.h

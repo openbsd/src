@@ -861,6 +861,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/cs4231reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/cyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/dc21040reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/dc503reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/dcreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/dl10019reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/dl10019var.ph
