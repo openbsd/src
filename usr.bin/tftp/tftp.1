@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.12 2006/07/24 17:29:58 mglocker Exp $
+.\"	$OpenBSD: tftp.1,v 1.13 2006/07/24 21:28:00 jmc Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -72,6 +72,11 @@ Shorthand for
 .It Ic binary
 Shorthand for
 .Ic mode Ar binary .
+.Pp
+.It Ic blksize Ar block-size
+Set the block size in bytes for one packet.
+The default value is 512 bytes.
+Valid values are 8 bytes \(en 65464 bytes.
 .Pp
 .It Ic connect Ar host Op Ar port
 Set the
@@ -175,8 +180,9 @@ Exit
 An end-of-file also exits.
 .Pp
 .It Ic rexmt Ar retransmission-timeout
-Set the per-packet retransmission timeout, in seconds.  The default value
-is 5 seconds.  Valid values are 1 second - 255 seconds.
+Set the per-packet retransmission timeout, in seconds.
+The default value is 5 seconds.
+Valid values are 1 second \(en 255 seconds.
 .Pp
 .It Ic status
 Show current status.
@@ -184,26 +190,29 @@ Show current status.
 .It Ic timeout Ar total-transmission-timeout
 Set the total transmission timeout, in seconds.
 .Pp
+.It Ic tout
+Toggle the
+.Ic tout
+option.
+This option devlivers the retransmission-timeout,
+which is set by
+.Ic rexmt ,
+to the server,
+so the server uses the same retransmission-timeout as the client.
+.Pp
+.It Ic tsize
+Toggle the
+.Ic tsize
+option.
+This option delivers the total size of the file to be transferred.
+With this value given, the client or server can decide
+whether they are able to accept the file.
+.Pp
 .It Ic trace
 Toggle packet tracing.
 .Pp
 .It Ic verbose
 Toggle verbose mode.
-.Pp
-.It Ic tsize
-Toggle tsize option.  The tsize option delivers the total size of the to be
-transfered file.  With this value given, the client or server can decide
-if they are able to accept the file, or not.
-.Pp
-.It Ic tout
-Toggle tout option.  The tout option devlivers the retransmission-timeout,
-which is set by
-.Ic rexmt ,
-to the server, so the server uses the same retransmission-timeout as the client.
-.Pp
-.It Ic blksize Ar block-size
-Set the block size in bytes for one packet.  The default value is 512 bytes.
-Valid values are 8 bytes - 65464 bytes.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
