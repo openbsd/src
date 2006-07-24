@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.15 2006/07/23 23:34:29 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.16 2006/07/24 20:32:04 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -113,6 +113,7 @@
 #define	FONT_GALLANT12x22
 #elif defined(__vax__)
 #define FONT_QVSS8x15
+#define	FONT_GALLANT12x22
 #else
 #define	FONT_BOLD8x16_ISO1
 #if !defined(SMALL_KERNEL)
