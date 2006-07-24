@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.37 2006/07/24 20:35:06 miod Exp $
+#	$OpenBSD: files.vax,v 1.38 2006/07/24 22:19:54 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -171,6 +171,11 @@ file	arch/vax/vsa/gpx.c			gpx needs-flag
 device	lcg: wsemuldisplaydev, rasops8
 attach	lcg at vsbus
 file	arch/vax/vsa/lcg.c			lcg needs-flag
+
+# LCSPX framebuffer on KA49
+device	lcspx: wsemuldisplaydev, rasops8
+attach	lcspx at vsbus
+file	arch/vax/vsa/lcspx.c			lcspx needs-flag
 
 device	lkkbd: wskbddev 
 attach	lkkbd at dz with dzkbd

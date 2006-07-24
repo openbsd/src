@@ -1,0 +1,457 @@
+/*	$OpenBSD: lcspx.c,v 1.1 2006/07/24 22:19:54 miod Exp $	*/
+/*
+ * Copyright (c) 2006 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * Copyright (c) 2004 Blaz Antonic
+ * All rights reserved.
+ *
+ * This software contains code written by Michael L. Hitch.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the abovementioned copyrights
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/conf.h>
+#include <sys/kernel.h>
+
+#include <machine/vsbus.h>
+#include <machine/scb.h>
+#include <machine/sid.h>
+#include <machine/cpu.h>
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wscons_callbacks.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+
+#include <dev/ic/bt463reg.h>	/* actually it's a 459 here... */
+
+#define	LCSPX_REG_ADDR		0x39302000	/* registers */
+#define	LCSPX_REG1_ADDR		0x39b00000	/* more registers */
+#define	LCSPX_RAMDAC_ADDR	0x39b10000	/* RAMDAC */
+#define	LCSPX_RAMDAC_INTERLEAVE	0x00004000
+#define	LCSPX_FB_ADDR		0x38000000	/* frame buffer */
+
+#define	LCSPX_WIDTH	1280
+#define	LCSPX_HEIGHT	1024
+#define	LCSPX_FBSIZE	(LCSPX_WIDTH * LCSPX_HEIGHT)
+
+int	lcspx_match(struct device *, void *, void *);
+void	lcspx_attach(struct device *, struct device *, void *);
+
+struct	lcspx_screen {
+	struct rasops_info ss_ri;
+	caddr_t		ss_addr;		/* frame buffer address */
+	volatile u_int8_t *ss_ramdac[4];
+};
+
+/* for console */
+struct lcspx_screen lcspx_consscr;
+
+struct	lcspx_softc {
+	struct device sc_dev;
+	struct lcspx_screen *sc_scr;
+	int	sc_nscreens;
+};
+
+struct cfattach lcspx_ca = {
+	sizeof(struct lcspx_softc), lcspx_match, lcspx_attach,
+};
+
+struct	cfdriver lcspx_cd = {
+	NULL, "lcspx", DV_DULL
+};
+
+struct wsscreen_descr lcspx_stdscreen = {
+	"std",
+};
+
+const struct wsscreen_descr *_lcspx_scrlist[] = {
+	&lcspx_stdscreen,
+};
+
+const struct wsscreen_list lcspx_screenlist = {
+	sizeof(_lcspx_scrlist) / sizeof(struct wsscreen_descr *),
+	_lcspx_scrlist,
+};
+
+int	lcspx_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	lcspx_mmap(void *, off_t, int);
+int	lcspx_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
+void	lcspx_free_screen(void *, void *);
+int	lcspx_show_screen(void *, void *, int,
+	    void (*) (void *, int, int), void *);
+
+const struct wsdisplay_accessops lcspx_accessops = {
+	lcspx_ioctl,
+	lcspx_mmap,
+	lcspx_alloc_screen,
+	lcspx_free_screen,
+	lcspx_show_screen,
+	NULL,	/* load_font */
+	NULL,	/* scrollback */
+	NULL,	/* getchar */
+	NULL	/* burner */
+};
+
+void	lcspx_resetcmap(struct lcspx_screen *);
+int	lcspx_setup_screen(struct lcspx_screen *);
+
+int
+lcspx_match(struct device *parent, void *vcf, void *aux)
+{
+	struct vsbus_softc *sc = (void *)parent;
+	struct vsbus_attach_args *va = aux;
+	volatile u_int8_t *ch;
+	int rc;
+
+	switch (vax_boardtype) {
+	default:
+		return (0);
+
+	case VAX_BTYP_49:
+		if (va->va_paddr != LCSPX_REG_ADDR)
+			return (0);
+
+		break;
+	}
+
+	/*
+	 * Check for video memory.
+	 * We can not use badaddr() on these models.
+	 */
+	ch = (volatile u_int8_t *)vax_map_physmem(LCSPX_FB_ADDR, 1);
+	rc = 1;
+	*ch = 0x01;
+	if ((*ch & 0x01) == 0)
+		rc = 0;
+	*ch = 0x00;
+	if ((*ch & 0x01) != 0)
+		rc = 0;
+	vax_unmap_physmem((vaddr_t)ch, 1);
+
+	sc->sc_mask = 0x04;	/* XXX - should be generated */
+	scb_fake(0x120, 0x15);
+	return (20);
+}
+
+void
+lcspx_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct lcspx_softc *sc = (struct lcspx_softc *)self;
+	struct lcspx_screen *ss;
+	struct wsemuldisplaydev_attach_args aa;
+	int i, console;
+
+	console = (vax_confdata & 8) == 0;
+	if (console) {
+		ss = &lcspx_consscr;
+		sc->sc_nscreens = 1;
+	} else {
+		ss = malloc(sizeof(struct lcspx_screen), M_DEVBUF, M_NOWAIT);
+		if (ss == NULL) {
+			printf(": can not allocate memory\n");
+			return;
+		}
+		bzero(ss, sizeof(struct lcspx_screen));
+
+		ss->ss_addr = (caddr_t)vax_map_physmem(LCSPX_FB_ADDR,
+		    LCSPX_FBSIZE / VAX_NBPG);
+		if (ss->ss_addr == NULL) {
+			printf(": can not map frame buffer\n");
+			goto fail1;
+		}
+
+		for (i = 0; i < 4; i++) {
+			ss->ss_ramdac[i] = (volatile u_int8_t *)vax_map_physmem(
+			    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
+			if (ss->ss_ramdac[i] == NULL) {
+				printf(": can not map RAMDAC registers\n");
+				goto fail2;
+			}
+		}
+
+		if (lcspx_setup_screen(ss) != 0) {
+			printf(": initialization failed\n");
+			goto fail2;
+		}
+	}
+	sc->sc_scr = ss;
+
+	printf(": 1280x1024x8 frame buffer\n");
+
+	aa.console = console;
+	aa.scrdata = &lcspx_screenlist;
+	aa.accessops = &lcspx_accessops;
+	aa.accesscookie = sc;
+
+	config_found(self, &aa, wsemuldisplaydevprint);
+	return;
+
+fail2:
+	for (i = 0; i < 4; i++)
+		if (ss->ss_ramdac[i] != NULL)
+			vax_unmap_physmem((vaddr_t)ss->ss_ramdac[i], 1);
+	vax_unmap_physmem((vaddr_t)ss->ss_addr, LCSPX_FBSIZE / VAX_NBPG);
+fail1:
+	free(ss, M_DEVBUF);
+}
+
+/*
+ * Initialize anything necessary for an emulating wsdisplay to work (i.e.
+ * pick a font, initialize a rasops structure, setup the accessops callbacks.)
+ */
+int
+lcspx_setup_screen(struct lcspx_screen *ss)
+{
+	struct rasops_info *ri = &ss->ss_ri;
+
+	bzero(ri, sizeof(*ri));
+	ri->ri_depth = 8;
+	ri->ri_width = LCSPX_WIDTH;
+	ri->ri_height = LCSPX_HEIGHT;
+	ri->ri_stride = LCSPX_WIDTH;
+	ri->ri_flg = RI_CLEAR | RI_CENTER;
+	ri->ri_bits = (void *)ss->ss_addr;
+	ri->ri_hw = ss;
+
+	/*
+	 * We can let rasops select our font here, as we do not need to
+	 * use a font with a different bit order than rasops' defaults,
+	 * unlike smg.
+	 */
+
+	/*
+	 * Ask for an unholy big display, rasops will trim this to more
+	 * reasonable values.
+	 */
+	if (rasops_init(ri, 160, 160) != 0)
+		return (-1);
+
+	lcspx_resetcmap(ss);
+
+	lcspx_stdscreen.ncols = ri->ri_cols;
+	lcspx_stdscreen.nrows = ri->ri_rows;
+	lcspx_stdscreen.textops = &ri->ri_ops;
+	lcspx_stdscreen.fontwidth = ri->ri_font->fontwidth;
+	lcspx_stdscreen.fontheight = ri->ri_font->fontheight;
+	lcspx_stdscreen.capabilities = ri->ri_caps;
+
+	return (0);
+}
+
+int
+lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct lcspx_softc *sc = v;
+	struct lcspx_screen *ss = sc->sc_scr;
+	struct wsdisplay_fbinfo *wdf;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_LCSPX;
+		break;
+
+	case WSDISPLAYIO_GINFO:
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->height = LCSPX_HEIGHT;
+		wdf->width = LCSPX_WIDTH;
+		wdf->depth = 8;
+		wdf->cmsize = 256;
+		break;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = ss->ss_ri.ri_stride;
+		break;
+
+	case WSDISPLAYIO_GETCMAP:
+	case WSDISPLAYIO_PUTCMAP:
+		break;	/* XXX TBD */
+
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_SVIDEO:
+		break;
+
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+paddr_t
+lcspx_mmap(void *v, off_t offset, int prot)
+{
+	if (offset >= LCSPX_FBSIZE || offset < 0)
+		return (-1);
+
+	return (LCSPX_FB_ADDR + offset) >> PGSHIFT;
+}
+
+int
+lcspx_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *defattrp)
+{
+	struct lcspx_softc *sc = v;
+	struct lcspx_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	if (sc->sc_nscreens > 0)
+		return (ENOMEM);
+
+	*cookiep = ri;
+	*curxp = *curyp = 0;
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, defattrp);
+	sc->sc_nscreens++;
+
+	return (0);
+}
+
+void
+lcspx_free_screen(void *v, void *cookie)
+{
+	struct lcspx_softc *sc = v;
+
+	sc->sc_nscreens--;
+}
+
+int
+lcspx_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
+{
+	return (0);
+}
+
+void
+lcspx_resetcmap(struct lcspx_screen *ss)
+{
+	const u_char *color;
+	u_int i;
+
+	color = rasops_cmap;
+	for (i = 0; i < 256; i++) {
+		/*
+		 * Reprogram the index every iteration, because the RAMDAC
+		 * may not be in autoincrement mode. XXX fix this
+		 */
+		*(ss->ss_ramdac[BT463_REG_ADDR_LOW]) = i & 0xff;
+		*(ss->ss_ramdac[BT463_REG_ADDR_HIGH]) = i >> 8;
+
+		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *color++;
+		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *color++;
+		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *color++;
+	}
+}
+
+#include <dev/cons.h>
+cons_decl(lcspx);
+
+#include "dzkbd.h"
+
+#include <vax/qbus/dzreg.h>
+#include <vax/qbus/dzvar.h>
+#include <vax/dec/dzkbdvar.h>
+
+
+/*
+ * Called very early to setup the glass tty as console.
+ * Because it's called before the VM system is initialized, virtual memory
+ * for the framebuffer can be stolen directly without disturbing anything.
+ */
+void
+lcspxcnprobe(cndev)
+	struct  consdev *cndev;
+{
+	struct lcspx_screen *ss = &lcspx_consscr;
+	extern vaddr_t virtual_avail;
+	extern int getmajor(void *);	/* conf.c */
+	int i;
+
+	switch (vax_boardtype) {
+	case VAX_BTYP_49:
+		if ((vax_confdata & 8) != 0)
+			break; /* doesn't use graphics console */
+
+		ss->ss_addr = (caddr_t)virtual_avail;
+		virtual_avail += LCSPX_FBSIZE;
+		ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR,
+		    LCSPX_FBSIZE / VAX_NBPG);
+
+		for (i = 0; i < 4; i++) {
+			ss->ss_ramdac[i] = (volatile u_int8_t *)virtual_avail;
+			virtual_avail += VAX_NBPG;
+			ioaccess((vaddr_t)ss->ss_ramdac[i],
+			    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
+		}
+
+		cndev->cn_pri = CN_INTERNAL;
+		cndev->cn_dev = makedev(getmajor(wsdisplayopen), 0);
+		break;
+
+	default:
+		break;
+	}
+}
+
+void
+lcspxcninit(struct consdev *cndev)
+{
+	struct lcspx_screen *ss = &lcspx_consscr;
+	long defattr;
+	struct rasops_info *ri;
+	extern void lkccninit(struct consdev *);
+	extern int lkccngetc(dev_t);
+	extern int dz_vsbus_lk201_cnattach(int);
+
+	/* mappings have been done in lcspxcnprobe() */
+	if (lcspx_setup_screen(ss) != 0)
+		return;
+
+	ri = &ss->ss_ri;
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&lcspx_stdscreen, ri, 0, 0, defattr);
+
+#if NDZKBD > 0
+	dzkbd_cnattach(0); /* Connect keyboard and screen together */
+#endif
+}

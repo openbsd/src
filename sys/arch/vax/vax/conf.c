@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2006/07/24 20:35:08 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.45 2006/07/24 22:19:54 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -143,11 +143,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include <dev/cons.h>
 
 #include "wskbd.h"
-#include "smg.h"
 #include "lcg.h"
-#if NLCG > 0 || NSMG > 0
+#include "lcspx.h"
+#include "smg.h"
+#if NLCG > 0 || NLCSPX > 0 || NSMG > 0
 #if NWSKBD > 0
 #define lcgcngetc wskbd_cngetc
+#define lcspxcngetc wskbd_cngetc
 #define smgcngetc wskbd_cngetc
 #else
 static int
@@ -156,19 +158,23 @@ dummycngetc(dev_t dev)
 	return 0;
 }
 #define lcgcngetc dummycngetc
+#define lcspxcngetc dummycngetc
 #define smgcngetc dummycngetc
 #endif	/* NWSKBD > 0 */
-#endif	/* NLCG > 0 || NSMG > 0 */
+#endif	/* NLCG > 0 || NLCSPX > 0 || NSMG > 0 */
 
 #define lcgcnputc wsdisplay_cnputc
+#define lcspxcnputc wsdisplay_cnputc
 #define smgcnputc wsdisplay_cnputc
 #define	lcgcnpollc nullcnpollc
+#define	lcspxcnpollc nullcnpollc
 #define	smgcnpollc nullcnpollc
 
 cons_decl(gen);
 cons_decl(dz);
 cons_decl(qd);
 cons_decl(lcg);
+cons_decl(lcspx);
 cons_decl(smg);
 #include "qv.h"
 #include "qd.h"
@@ -194,6 +200,9 @@ struct	consdev constab[]={
 #endif
 #if NLCG
 	cons_init(lcg),
+#endif
+#if NLCSPX
+	cons_init(lcspx),
 #endif
 #if NSMG
 	cons_init(smg),

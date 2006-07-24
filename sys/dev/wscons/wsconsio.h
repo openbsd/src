@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.40 2006/04/16 20:45:00 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.41 2006/07/24 22:19:54 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -290,6 +290,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SUNLEO	50	/* Sun ZX/Leo */
 #define		WSDISPLAY_TYPE_TVRX	51	/* HP TurboVRX */
 #define		WSDISPLAY_TYPE_CFXGA	52	/* CF VoyagerVGA */
+#define		WSDISPLAY_TYPE_LCSPX	53	/* DEC LCSPX (VS4000) */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
