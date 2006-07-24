@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.c,v 1.11 2006/07/20 19:08:15 miod Exp $ */
+/*	$OpenBSD: sbi.c,v 1.12 2006/07/24 17:25:11 miod Exp $ */
 /*	$NetBSD: sbi.c,v 1.20 1999/08/07 10:36:50 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -44,8 +44,13 @@
 #include <machine/nexus.h>
 
 static	int sbi_print(void *, const char *);
-static	int sbi_match(struct device *, struct cfdata *, void *);
+static	int sbi_match_abus(struct device *, struct cfdata *, void *);
+static	int sbi_match_mainbus(struct device *, struct cfdata *, void *);
 static	void sbi_attach(struct device *, struct device *, void *);
+
+struct	cfdriver sbi_cd = {
+	NULL, "sbi", DV_DULL
+};
 
 int
 sbi_print(aux, name)
@@ -70,7 +75,7 @@ sbi_print(aux, name)
 }
 
 int
-sbi_match(parent, cf, aux)
+sbi_match_mainbus(parent, cf, aux)
 	struct device	*parent;
 	struct cfdata *cf;
 	void *aux;
@@ -79,6 +84,20 @@ sbi_match(parent, cf, aux)
 
 	if (maa->maa_bustype == VAX_SBIBUS)
 		return 1;
+	return 0;
+}
+
+int
+sbi_match_abus(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct bp_conf *bp = aux;
+
+	if (strcmp(bp->type, sbi_cd.cd_name) == 0)
+		return 1;
+
 	return 0;
 }
 
@@ -114,9 +133,9 @@ sbi_attach(parent, self, aux)
 }
 
 struct	cfattach sbi_mainbus_ca = {
-	sizeof(struct device), sbi_match, sbi_attach
+	sizeof(struct device), sbi_match_mainbus, sbi_attach
 };
 
 struct	cfattach sbi_abus_ca = {
-	sizeof(struct device), sbi_match, sbi_attach
+	sizeof(struct device), sbi_match_abus, sbi_attach
 };
