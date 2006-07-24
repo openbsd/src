@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.36 2006/07/23 19:17:21 miod Exp $
+#	$OpenBSD: files.vax,v 1.37 2006/07/24 20:35:06 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -157,10 +157,20 @@ file	arch/vax/vsa/ncr.c			ncr needs-flag
 attach	le at vsbus with le_vsbus
 file	arch/vax/vsa/if_le_vsbus.c		le_vsbus
 
-# Monochrome framebuffer on VS3100.
+# Monochrome (on-board) framebuffer on VS3100
 device	smg: wsemuldisplaydev, rasops1
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c			smg needs-flag
+
+# GPX framebuffer on VS3100
+device	gpx: wsemuldisplaydev, rasops8
+attach	gpx at vsbus
+file	arch/vax/vsa/gpx.c			gpx needs-flag
+
+# LCG framebuffer on KA46/KA48
+device	lcg: wsemuldisplaydev, rasops8
+attach	lcg at vsbus
+file	arch/vax/vsa/lcg.c			lcg needs-flag
 
 device	lkkbd: wskbddev 
 attach	lkkbd at dz with dzkbd
@@ -169,10 +179,6 @@ file	arch/vax/dec/dzkbd.c			dzkbd needs-flag
 device	lkms: wsmousedev
 attach	lkms at dz with dzms
 file	arch/vax/dec/dzms.c			dzms needs-flag
-
-#device	lkc: qfont
-#attach	lkc at dz
-#file	arch/vax/vsa/lkc.c			lkc needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)

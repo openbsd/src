@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2004/02/10 01:31:21 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.44 2006/07/24 20:35:08 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -144,24 +144,31 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #include "wskbd.h"
 #include "smg.h"
-#if NSMG > 0
+#include "lcg.h"
+#if NLCG > 0 || NSMG > 0
 #if NWSKBD > 0
+#define lcgcngetc wskbd_cngetc
 #define smgcngetc wskbd_cngetc
 #else
 static int
-smgcngetc(dev_t dev)
+dummycngetc(dev_t dev)
 {
 	return 0;
 }
+#define lcgcngetc dummycngetc
+#define smgcngetc dummycngetc
 #endif	/* NWSKBD > 0 */
-#endif	/* NSMG > 0 */
+#endif	/* NLCG > 0 || NSMG > 0 */
 
+#define lcgcnputc wsdisplay_cnputc
 #define smgcnputc wsdisplay_cnputc
+#define	lcgcnpollc nullcnpollc
 #define	smgcnpollc nullcnpollc
 
 cons_decl(gen);
 cons_decl(dz);
 cons_decl(qd);
+cons_decl(lcg);
 cons_decl(smg);
 #include "qv.h"
 #include "qd.h"
@@ -184,6 +191,9 @@ struct	consdev constab[]={
 #if NQD
 	cons_init(qd),
 #endif
+#endif
+#if NLCG
+	cons_init(lcg),
 #endif
 #if NSMG
 	cons_init(smg),
@@ -566,7 +576,8 @@ getmajor(void *ptr)
 	for (i = 0; i < nchrdev; i++)
 		if (cdevsw[i].d_open == ptr)
 			return i;
-	panic("getmajor");
+	
+	return (-1);
 }
 
 dev_t
