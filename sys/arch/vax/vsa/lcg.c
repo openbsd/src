@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.1 2006/07/24 20:35:08 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.2 2006/07/24 22:18:09 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -225,7 +225,7 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 		ss->ss_depth = lcg_probe_screen(ss->ss_cfg,
 		    &ss->ss_width, &ss->ss_height);
 		ss->ss_fbsize =
-		    roundup(ss->ss_width * ss->ss_height, VAX_NBPG);
+		    roundup(ss->ss_width * ss->ss_height, PAGE_SIZE);
 
 		ss->ss_addr = (caddr_t)vax_map_physmem(LCG_FB_ADDR,
 		    ss->ss_fbsize / VAX_NBPG);
