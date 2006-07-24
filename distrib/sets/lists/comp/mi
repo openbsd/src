@@ -14,7 +14,6 @@
 ./usr/bin/gcc
 ./usr/bin/gcov
 ./usr/bin/gdb
-./usr/bin/gdbtui
 ./usr/bin/gprof
 ./usr/bin/ld
 ./usr/bin/lex
