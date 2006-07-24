@@ -1,4 +1,4 @@
-/*	$OpenBSD: qvss8x15.h,v 1.2 2003/06/02 23:28:04 millert Exp $ */
+/*	$OpenBSD: qvss8x15.h,v 1.3 2006/07/24 20:31:45 miod Exp $ */
 /* 	$NetBSD: qvss8x15.h,v 1.3 1999/05/18 21:51:58 ad Exp $ */
 
 /*-
@@ -1608,6 +1608,14 @@ static u_char qvss8x15_data[] = {
 	0x00, /* 0x00000000	  ~ */
 	0x00, /* 0x00000000	  ~ */
 /* */
+#define	NOGLYPH	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	NOGLYPH,	/* del */
+/* ascii0200 - ascii0240 */
+	NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH,
+	NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH,
+	NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH,
+	NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH, NOGLYPH,
+	NOGLYPH,
 /* ascii0241 */
 	0x00,
 	0x00,
