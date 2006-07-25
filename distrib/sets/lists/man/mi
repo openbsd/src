@@ -2382,6 +2382,8 @@
 ./usr/share/man/cat8/vax/boot_vax.0
 ./usr/share/man/cat8/vax/format.0
 ./usr/share/man/cat8/vax/kbd.0
+./usr/share/man/cat8/vax/wsconscfg.0
+./usr/share/man/cat8/vax/wsconsctl.0
 ./usr/share/man/cat8/verify_krb5_conf.0
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/visudo.0
