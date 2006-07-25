@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.350 2006/07/09 11:00:17 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.351 2006/07/25 16:59:25 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1512,6 +1512,26 @@ or
 .Ar icmp6-type
 .Pc
 must match.
+.It Xo Ar tos Aq Ar string
+.No \*(Ba Aq Ar number
+.Xc
+This rule applies to packets with the specified
+.Em TOS
+bits set.
+.Em TOS
+may be
+given as one of
+.Ar lowdelay ,
+.Ar throughput ,
+.Ar reliability ,
+or as either hex or decimal.
+.Pp
+For example, the following rules are identical:
+.Bd -literal -offset indent
+pass all tos lowdelay
+pass all tos 0x10
+pass all tos 16
+.Ed
 .It Ar allow-opts
 By default, packets which contain IP options are blocked.
 When
@@ -1575,7 +1595,7 @@ directive occurs only at configuration file parse time, not during runtime.
 .Xc
 Packets matching this rule will be assigned to the specified queue.
 If two queues are given, packets which have a
-.Em tos
+.Em TOS
 of
 .Em lowdelay
 and TCP ACKs with no data payload will be assigned to the second one.
