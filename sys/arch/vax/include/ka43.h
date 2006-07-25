@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.h,v 1.4 2000/04/26 03:08:41 bjc Exp $ */
+/*	$OpenBSD: ka43.h,v 1.5 2006/07/25 21:11:08 miod Exp $ */
 /*	$NetBSD: ka43.h,v 1.2 1997/04/18 18:53:40 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -183,20 +183,6 @@
 #define KA43_SC2_DADR	0x200C01A0
 #define KA43_SC2_DCNT	0x200C01C0
 #define KA43_SC2_DDIR	0x200C01C4
-
-#define KA43_CUR_CMD	0x200F0000	/* Cursor Command Register */
-#define KA43_CUR_XPOS	0x200F0004	/* Cursor X position */
-#define KA43_CUR_YPOS	0x200F0008	/* Cursor Y position */
-
-#define KA43_CUR_XMIN1	0x200F000C	/* Region 1 left edge */
-#define KA43_CUR_XMAX1	0x200F0010	/* Region 1 right edge */
-#define KA43_CUR_YMIN1	0x200F0014	/* Region 1 top edge */
-#define KA43_CUR_YMAX1	0x200F0018	/* Region 1 bottom edge */
-
-#define KA43_CUR_XMIN2	0x200F002C	/* Region 2 left edge */
-#define KA43_CUR_XMAX2	0x200F0030	/* Region 2 right edge */
-#define KA43_CUR_YMIN2	0x200F0034	/* Region 2 top edge */
-#define KA43_CUR_YMAX2	0x200F0038	/* Region 2 bottom edge */
 
 /*
  * Clock-Chip data in NVRAM

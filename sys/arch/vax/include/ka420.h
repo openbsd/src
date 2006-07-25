@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka420.h,v 1.3 2000/04/26 03:08:41 bjc Exp $ */
+/*	$OpenBSD: ka420.h,v 1.4 2006/07/25 21:11:08 miod Exp $ */
 /*	$NetBSD: ka420.h,v 1.2 1998/06/07 18:34:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -99,8 +99,8 @@
 #define KA420_LAN_END	0x200E0007
 #define KA420_LAN_SIZE	      0x08
 #define KA420_CUR_BASE	0x200F0000	/* Monochrome video cursor chip */
-#define KA420_CUR_END	0x200F0007
-#define KA420_CUR_SIZE	      0x08
+#define KA420_CUR_END	0x200F003F
+#define KA420_CUR_SIZE	      0x40
 #define KA420_DMA_BASE	0x202D0000	/* 128KB Data Buffer */
 #define KA420_DMA_END	0x202EFFFF
 #define KA420_DMA_SIZE     0x20000
@@ -110,20 +110,6 @@
 #define KA420_SCD_DDIR	0x200C00C4	/* Tape(SCSI) DMA transfer direction */
 
 #define KA420_STC_MODE	0x200C00E0	/* Storage Controller Mode register */
-
-#define KA420_CUR_CMD	0x200F0000	/* Cursor Command Register */
-#define KA420_CUR_XPOS	0x200F0004	/* Cursor X position */
-#define KA420_CUR_YPOS	0x200F0008	/* Cursor Y position */
-
-#define KA420_CUR_XMIN1	0x200F000C	/* Region 1 left edge */
-#define KA420_CUR_XMAX1	0x200F0010	/* Region 1 right edge */
-#define KA420_CUR_YMIN1	0x200F0014	/* Region 1 top edge */
-#define KA420_CUR_YMAX1	0x200F0018	/* Region 1 bottom edge */
-
-#define KA420_CUR_XMIN2	0x200F002C	/* Region 2 left edge */
-#define KA420_CUR_XMAX2	0x200F0030	/* Region 2 right edge */
-#define KA420_CUR_YMIN2	0x200F0034	/* Region 2 top edge */
-#define KA420_CUR_YMAX2	0x200F0038	/* Region 2 bottom edge */
 
 /*
  * Clock-Chip data in NVRAM
