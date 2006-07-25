@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.143 2006/04/14 21:52:47 weingart Exp $
+#	$OpenBSD: RAMDISK,v 1.144 2006/07/25 19:16:51 kettenis Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -9,7 +9,6 @@ option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
 option		I686_CPU
-#option		GPL_MATH_EMULATE	# floating point emulation
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.8 2004/07/20 05:37:14 kettenis Exp $	*/
+/*	$OpenBSD: npx.h,v 1.9 2006/07/25 19:16:51 kettenis Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -74,10 +74,6 @@ struct	fpacc87 {
 #endif
 };
 
-#ifdef GPL_MATH_EMULATE
-#include <gnu/arch/i386/fpemul/math_emu.h>
-#endif
-
 /* Floating point and emulator context */
 struct	save87 {
 	struct	env87 sv_env;		/* floating point control/status */
@@ -128,11 +124,6 @@ struct savexmm {
 union savefpu {
 	struct save87 sv_87;
 	struct savexmm sv_xmm;
-#ifdef GPL_MATH_EMULATE
-	union i387_union gplemu;
-#else
-	u_char emupad[176];		/* sizeof(i387_union) */
-#endif
 };
 
 /* Cyrix EMC memory - mapped coprocessor context switch information */

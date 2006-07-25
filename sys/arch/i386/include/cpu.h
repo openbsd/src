@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.79 2006/06/12 13:18:18 dim Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.80 2006/07/25 19:16:51 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -391,11 +391,6 @@ int 	k8_powernow_setperf(int);
 void	npxdrop(struct proc *);
 void	npxsave_proc(struct proc *, int);
 void	npxsave_cpu(struct cpu_info *, int);
-
-#if defined(GPL_MATH_EMULATE)
-/* math_emulate.c */
-int	math_emulate(struct trapframe *);
-#endif
 
 #ifdef USER_LDT
 /* sys_machdep.h */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.39 2006/04/19 15:48:17 mickey Exp $	*/
+/*	$OpenBSD: npx.c,v 1.40 2006/07/25 19:16:51 kettenis Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -196,7 +196,6 @@ static inline int
 npxprobe1(ia)
 	struct isa_attach_args *ia;
 {
-#ifndef ALWAYS_MATH_EMULATE
 	int control;
 	int status;
 
@@ -247,7 +246,7 @@ npxprobe1(ia)
 				npx_type = NPX_INTERRUPT;
 			} else {
 				/*
-				 * Worse, even IRQ13 is broken.  Use emulator.
+				 * Worse, even IRQ13 is broken.
 				 */
 				npx_type = NPX_BROKEN;
 				ia->ia_irq = IRQUNK;
@@ -255,9 +254,6 @@ npxprobe1(ia)
 			return 1;
 		}
 	}
-#else
-	npx_intrs_while_probing = npx_traps_while_probing = 0;
-#endif
 
 	/*
 	 * Probe failed.  There is no usable FPU.
