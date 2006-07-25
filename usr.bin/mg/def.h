@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.94 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.95 2006/07/25 08:27:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -262,6 +262,10 @@ struct buffer {
 };
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
+
+/* Some helper macros, in case they ever change to functions */
+#define bfirstlp(buf)	(lforw((buf)->b_headp))
+#define blastlp(buf)	(lback((buf)->b_headp))
 
 #define BFCHG	0x01			/* Changed.			 */
 #define BFBAK	0x02			/* Need to make a backup.	 */

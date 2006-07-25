@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.47 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.48 2006/07/25 08:27:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -621,7 +621,7 @@ evalbuffer(int f, int n)
 	int		 s;
 	static char	 excbuf[128];
 
-	for (lp = lforw(bp->b_headp); lp != bp->b_headp; lp = lforw(lp)) {
+	for (lp = bfirstlp(bp); lp != bp->b_headp; lp = lforw(lp)) {
 		if (llength(lp) >= 128)
 			return (FALSE);
 		(void)strncpy(excbuf, ltext(lp), llength(lp));

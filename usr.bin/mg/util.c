@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2006/07/25 08:27:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -31,7 +31,7 @@ showcpos(int f, int n)
 	int	 ratio;
 
 	/* collect the data */
-	clp = lforw(curbp->b_headp);
+	clp = bfirstlp(curbp);
 	cchar = 0;
 	cline = 0;
 	cbyte = 0;

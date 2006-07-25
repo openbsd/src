@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.61 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.62 2006/07/25 08:27:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -218,7 +218,7 @@ readin(char *fname)
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			wp->w_dotp = wp->w_linep = lforw(curbp->b_headp);
+			wp->w_dotp = wp->w_linep = bfirstlp(curbp);
 			wp->w_doto = 0;
 			wp->w_markp = NULL;
 			wp->w_marko = 0;

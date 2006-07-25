@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.25 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.26 2006/07/25 08:27:09 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -107,7 +107,7 @@ int
 gotobob(int f, int n)
 {
 	(void) setmark(f, n);
-	curwp->w_dotp = lforw(curbp->b_headp);
+	curwp->w_dotp = bfirstlp(curbp);
 	curwp->w_doto = 0;
 	curwp->w_flag |= WFFULL;
 	curwp->w_dotline = 1;
@@ -123,7 +123,7 @@ int
 gotoeob(int f, int n)
 {
 	(void) setmark(f, n);
-	curwp->w_dotp = lback(curbp->b_headp);
+	curwp->w_dotp = blastlp(curbp);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_dotline = curwp->w_bufp->b_lines;
 	curwp->w_flag |= WFFULL;

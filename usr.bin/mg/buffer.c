@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.62 2006/07/25 08:22:32 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.63 2006/07/25 08:27:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -299,7 +299,7 @@ makelist(void)
 
 		nbytes = 0;			/* Count bytes in buf.	 */
 		if (bp != blp) {
-			lp = lforw(bp->b_headp);
+			lp = bfirstlp(bp);
 			while (lp != bp->b_headp) {
 				nbytes += llength(lp) + 1;
 				lp = lforw(lp);
@@ -321,7 +321,7 @@ makelist(void)
 		    bp->b_fname) == FALSE)
 			return (NULL);
 	}
-	blp->b_dotp = lforw(blp->b_headp);	/* put dot at beginning of
+	blp->b_dotp = bfirstlp(blp);		/* put dot at beginning of
 						 * buffer */
 	blp->b_doto = 0;
 	return (blp);				/* All done		 */
@@ -700,7 +700,7 @@ bufferinsert(int f, int n)
 	}
 	/* insert the buffer */
 	nline = 0;
-	clp = lforw(bp->b_headp);
+	clp = bfirstlp(bp);
 	for (;;) {
 		for (clo = 0; clo < llength(clp); clo++)
 			if (linsert(1, lgetc(clp, clo)) == FALSE)
@@ -756,7 +756,7 @@ popbuftop(struct buffer *bp)
 {
 	struct mgwin *wp;
 
-	bp->b_dotp = lforw(bp->b_headp);
+	bp->b_dotp = bfirstlp(bp);
 	bp->b_doto = 0;
 	if (bp->b_nwnd != 0) {
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
