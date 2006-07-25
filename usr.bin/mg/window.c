@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.24 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.25 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -183,7 +183,7 @@ onlywind(int f, int n)
 	}
 	lp = curwp->w_linep;
 	i = curwp->w_toprow;
-	while (i != 0 && lback(lp) != curbp->b_linep) {
+	while (i != 0 && lback(lp) != curbp->b_headp) {
 		--i;
 		lp = lback(lp);
 	}
@@ -313,14 +313,14 @@ enlargewind(int f, int n)
 	/* shrink below */
 	if (curwp->w_wndp == adjwp) {
 		lp = adjwp->w_linep;
-		for (i = 0; i < n && lp != adjwp->w_bufp->b_linep; ++i)
+		for (i = 0; i < n && lp != adjwp->w_bufp->b_headp; ++i)
 			lp = lforw(lp);
 		adjwp->w_linep = lp;
 		adjwp->w_toprow += n;
 	/* shrink above */
 	} else {
 		lp = curwp->w_linep;
-		for (i = 0; i < n && lback(lp) != curbp->b_linep; ++i)
+		for (i = 0; i < n && lback(lp) != curbp->b_headp; ++i)
 			lp = lback(lp);
 		curwp->w_linep = lp;
 		curwp->w_toprow -= n;
@@ -366,14 +366,14 @@ shrinkwind(int f, int n)
 	/* grow below */
 	if (curwp->w_wndp == adjwp) {
 		lp = adjwp->w_linep;
-		for (i = 0; i < n && lback(lp) != adjwp->w_bufp->b_linep; ++i)
+		for (i = 0; i < n && lback(lp) != adjwp->w_bufp->b_headp; ++i)
 			lp = lback(lp);
 		adjwp->w_linep = lp;
 		adjwp->w_toprow -= n;
 	/* grow above */
 	} else {
 		lp = curwp->w_linep;
-		for (i = 0; i < n && lp != curbp->b_linep; ++i)
+		for (i = 0; i < n && lp != curbp->b_headp; ++i)
 			lp = lforw(lp);
 		curwp->w_linep = lp;
 		curwp->w_toprow += n;

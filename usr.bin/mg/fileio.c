@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.76 2006/06/29 21:59:08 jason Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.77 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -113,7 +113,7 @@ ffputbuf(struct buffer *bp)
 {
 	struct line   *lp, *lpend;
 
-	lpend = bp->b_linep;
+	lpend = bp->b_headp;
 	for (lp = lforw(lpend); lp != lpend; lp = lforw(lp)) {
 		if (fwrite(ltext(lp), 1, llength(lp), ffp) != llength(lp)) {
 			ewprintf("Write I/O error");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.30 2006/06/01 05:34:52 jason Exp $	*/
+/*	$OpenBSD: grep.c,v 1.31 2006/07/25 08:22:32 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -269,7 +269,7 @@ compile_mode(const char *name, const char *command)
 	else
 		addlinef(bp, "Command finished at %s", timestr);
 
-	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
+	bp->b_dotp = lforw(bp->b_headp);	/* go to first line */
 	bp->b_modes[0] = name_mode("fundamental");
 	bp->b_modes[1] = name_mode("compile");
 	bp->b_nmodes = 1;
@@ -297,7 +297,7 @@ compile_goto_error(int f, int n)
 
 	compile_win = curwp;
 	compile_buffer = curbp;
-	last = lback(compile_buffer->b_linep);
+	last = lback(compile_buffer->b_headp);
 
  retry:
 	/* last line is compilation result */
@@ -340,7 +340,7 @@ compile_goto_error(int f, int n)
 	return (TRUE);
 fail:
 	free(line);
-	if (curwp->w_dotp != lback(curbp->b_linep)) {
+	if (curwp->w_dotp != lback(curbp->b_headp)) {
 		curwp->w_dotp = lforw(curwp->w_dotp);
 		curwp->w_flag |= WFMOVE;
 		goto retry;
@@ -359,7 +359,7 @@ next_error(int f, int n)
 	}
 	curwp = compile_win;
 	curbp = compile_buffer;
-	if (curwp->w_dotp == lback(curbp->b_linep)) {
+	if (curwp->w_dotp == lback(curbp->b_headp)) {
 		ewprintf("No more hits");
 		return (FALSE);
 	}

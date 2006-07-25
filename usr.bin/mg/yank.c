@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.3 2006/05/28 23:30:16 kjell Exp $	*/
+/*	$OpenBSD: yank.c,v 1.4 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -174,7 +174,7 @@ killline(int f, int n)
 		nextp = lforw(curwp->w_dotp);
 		i = n;
 		while (--i) {
-			if (nextp == curbp->b_linep)
+			if (nextp == curbp->b_headp)
 				break;
 			chunk += llength(nextp) + 1;
 			nextp = lforw(nextp);
@@ -185,7 +185,7 @@ killline(int f, int n)
 		curwp->w_doto = 0;
 		i = n;
 		while (i++) {
-			if (lback(curwp->w_dotp) == curbp->b_linep)
+			if (lback(curwp->w_dotp) == curbp->b_headp)
 				break;
 			curwp->w_dotp = lback(curwp->w_dotp);
 			curwp->w_flag |= WFMOVE;
@@ -245,7 +245,7 @@ yank(int f, int n)
 
 	/* if offscreen insert */
 	if (curwp->w_dotp == lp) {
-		while (nline-- && lback(lp) != curbp->b_linep)
+		while (nline-- && lback(lp) != curbp->b_headp)
 			lp = lback(lp);
 		/* adjust framing */
 		curwp->w_linep = lp;

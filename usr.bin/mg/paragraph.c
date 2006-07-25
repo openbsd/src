@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.13 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.14 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -37,7 +37,7 @@ gotobop(int f, int n)
 		 * and scan back until we hit a <NL><SP> <NL><TAB> or
 		 * <NL><NL>
 		 */
-		while (lback(curwp->w_dotp) != curbp->b_linep)
+		while (lback(curwp->w_dotp) != curbp->b_headp)
 			if (llength(lback(curwp->w_dotp)) &&
 			    lgetc(curwp->w_dotp, 0) != ' ' &&
 			    lgetc(curwp->w_dotp, 0) != '.' &&
@@ -47,7 +47,7 @@ gotobop(int f, int n)
 				if (llength(lback(curwp->w_dotp)) &&
 				    lgetc(curwp->w_dotp, 0) == '.') {
 					curwp->w_dotp = lforw(curwp->w_dotp);
-					if (curwp->w_dotp == curbp->b_linep) {
+					if (curwp->w_dotp == curbp->b_headp) {
 						/*
 						 * beyond end of buffer,
 						 * cleanup time
@@ -89,7 +89,7 @@ gotoeop(int f, int n)
 		curwp->w_dotp = lforw(curwp->w_dotp);
 
 		/* and scan forword until we hit a <NL><SP> or ... */
-		while (curwp->w_dotp != curbp->b_linep) {
+		while (curwp->w_dotp != curbp->b_headp) {
 			if (llength(curwp->w_dotp) &&
 			    lgetc(curwp->w_dotp, 0) != ' ' &&
 			    lgetc(curwp->w_dotp, 0) != '.' &&
@@ -98,7 +98,7 @@ gotoeop(int f, int n)
 			else
 				break;
 		}
-		if (curwp->w_dotp == curbp->b_linep) {
+		if (curwp->w_dotp == curbp->b_headp) {
 			/* beyond end of buffer, cleanup time */
 			curwp->w_dotp = lback(curwp->w_dotp);
 			curwp->w_doto = llength(curwp->w_dotp);

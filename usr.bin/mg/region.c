@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.23 2006/07/08 17:50:30 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.24 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -200,8 +200,8 @@ getregion(struct region *rp)
 	flp = blp = curwp->w_dotp;
 	bsize = curwp->w_doto;
 	fsize = llength(flp) - curwp->w_doto + 1;
-	while (lforw(flp) != curbp->b_linep || lback(blp) != curbp->b_linep) {
-		if (lforw(flp) != curbp->b_linep) {
+	while (lforw(flp) != curbp->b_headp || lback(blp) != curbp->b_headp) {
+		if (lforw(flp) != curbp->b_headp) {
 			flp = lforw(flp);
 			if (flp == curwp->w_markp) {
 				rp->r_linep = curwp->w_dotp;
@@ -211,7 +211,7 @@ getregion(struct region *rp)
 			}
 			fsize += llength(flp) + 1;
 		}
-		if (lback(blp) != curbp->b_linep) {
+		if (lback(blp) != curbp->b_headp) {
 			blp = lback(blp);
 			bsize += llength(blp) + 1;
 			if (blp == curwp->w_markp) {
@@ -338,7 +338,7 @@ region_get_data(struct region *reg, char *buf, int len)
 	for (i = 0; i < len; i++) {
 		if (off == llength(lp)) {
 			lp = lforw(lp);
-			if (lp == curbp->b_linep)
+			if (lp == curbp->b_headp)
 				break;
 			off = 0;
 			buf[i] = '\n';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.12 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: match.c,v 1.13 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -105,7 +105,7 @@ balance(void)
 	for (;;) {
 		if (cbo == 0) {
 			clp = lback(clp);	/* beginning of line	*/
-			if (clp == curbp->b_linep)
+			if (clp == curbp->b_headp)
 				return (FALSE);
 			cbo = llength(clp) + 1;
 		}

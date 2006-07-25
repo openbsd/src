@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.30 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.31 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -230,7 +230,7 @@ isearch(int dir)
 			}
 			if (success == FALSE && dir == SRCH_FORW) {
 				/* wrap the search to beginning */
-				clp = lforw(curbp->b_linep);
+				clp = lforw(curbp->b_headp);
 				curwp->w_dotp = clp;
 				curwp->w_doto = 0;
 				curwp->w_dotline = 1;
@@ -262,7 +262,7 @@ isearch(int dir)
 			}
 			if (success == FALSE && dir == SRCH_BACK) {
 				/* wrap the search to end */
-				clp = lback(curbp->b_linep);
+				clp = lback(curbp->b_headp);
 				curwp->w_dotp = clp;
 				curwp->w_doto =
 				    llength(curwp->w_dotp);
@@ -666,7 +666,7 @@ forwsrch(void)
 			xcase = 1;
 	for (;;) {
 		if (cbo == llength(clp)) {
-			if ((clp = lforw(clp)) == curbp->b_linep)
+			if ((clp = lforw(clp)) == curbp->b_headp)
 				break;
 			nline++;
 			cbo = 0;
@@ -680,7 +680,7 @@ forwsrch(void)
 			while (*pp != 0) {
 				if (tbo == llength(tlp)) {
 					tlp = lforw(tlp);
-					if (tlp == curbp->b_linep)
+					if (tlp == curbp->b_headp)
 						goto fail;
 					tbo = 0;
 					c = CCHR('J');
@@ -728,7 +728,7 @@ backsrch(void)
 	for (;;) {
 		if (cbo == 0) {
 			clp = lback(clp);
-			if (clp == curbp->b_linep)
+			if (clp == curbp->b_headp)
 				return (FALSE);
 			nline--;
 			cbo = llength(clp) + 1;
@@ -744,7 +744,7 @@ backsrch(void)
 			while (pp != &pat[0]) {
 				if (tbo == 0) {
 					tlp = lback(tlp);
-					if (tlp == curbp->b_linep)
+					if (tlp == curbp->b_headp)
 						goto fail;
 					nline--;
 					tbo = llength(tlp) + 1;

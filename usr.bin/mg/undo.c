@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.40 2006/07/08 17:56:10 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.41 2006/07/25 08:22:32 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * Copyright (c) 2005, 2006 Kjell Wooding <kjell@openbsd.org>
@@ -69,9 +69,9 @@ find_dot(struct line *lp, int off)
 	int	 count = 0;
 	struct line	*p;
 
-	for (p = curbp->b_linep; p != lp; p = lforw(p)) {
+	for (p = curbp->b_headp; p != lp; p = lforw(p)) {
 		if (count != 0) {
-			if (p == curbp->b_linep) {
+			if (p == curbp->b_headp) {
 				ewprintf("Error: Undo stuff called with a"
 				    "nonexistent line");
 				return (FALSE);
@@ -90,11 +90,11 @@ find_lo(int pos, struct line **olp, int *offset, int *lnum)
 	struct line *p;
 	int lineno;
 
-	p = curbp->b_linep;
+	p = curbp->b_headp;
 	lineno = 0;
 	while (pos > llength(p)) {
 		pos -= llength(p) + 1;
-		if ((p = lforw(p)) == curbp->b_linep) {
+		if ((p = lforw(p)) == curbp->b_headp) {
 			*olp = NULL;
 			*offset = 0;
 			return (FALSE);
@@ -384,7 +384,7 @@ undo_dump(int f, int n)
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == bp) {
-			wp->w_dotp = bp->b_linep;
+			wp->w_dotp = bp->b_headp;
 			wp->w_doto = 0;
 		}
 	}

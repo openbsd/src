@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2006/06/01 10:10:00 kjell Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -31,7 +31,7 @@ showcpos(int f, int n)
 	int	 ratio;
 
 	/* collect the data */
-	clp = lforw(curbp->b_linep);
+	clp = lforw(curbp->b_headp);
 	cchar = 0;
 	cline = 0;
 	cbyte = 0;
@@ -52,7 +52,7 @@ showcpos(int f, int n)
 		/* now count the chars */
 		nchar += llength(clp);
 		clp = lforw(clp);
-		if (clp == curbp->b_linep)
+		if (clp == curbp->b_headp)
 			break;
 		/* count the newline */
 		nchar++;
@@ -60,7 +60,7 @@ showcpos(int f, int n)
 	/* determine row */
 	row = curwp->w_toprow + 1;
 	clp = curwp->w_linep;
-	while (clp != curbp->b_linep && clp != curwp->w_dotp) {
+	while (clp != curbp->b_headp && clp != curwp->w_dotp) {
 		++row;
 		clp = lforw(clp);
 	}
@@ -206,11 +206,11 @@ deblank(int f, int n)
 	RSIZE	 nld;
 
 	lp1 = curwp->w_dotp;
-	while (llength(lp1) == 0 && (lp2 = lback(lp1)) != curbp->b_linep)
+	while (llength(lp1) == 0 && (lp2 = lback(lp1)) != curbp->b_headp)
 		lp1 = lp2;
 	lp2 = lp1;
 	nld = (RSIZE)0;
-	while ((lp2 = lforw(lp2)) != curbp->b_linep && llength(lp2) == 0)
+	while ((lp2 = lforw(lp2)) != curbp->b_headp && llength(lp2) == 0)
 		++nld;
 	if (nld == 0)
 		return (TRUE);

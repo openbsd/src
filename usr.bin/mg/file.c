@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.60 2006/07/08 17:56:10 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.61 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -218,7 +218,7 @@ readin(char *fname)
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			wp->w_dotp = wp->w_linep = lforw(curbp->b_linep);
+			wp->w_dotp = wp->w_linep = lforw(curbp->b_headp);
 			wp->w_doto = 0;
 			wp->w_markp = NULL;
 			wp->w_marko = 0;
@@ -341,7 +341,7 @@ insertfile(char *fname, char *newname, int replacebuf)
 	oline = curwp->w_dotline;
 	(void)lnewline();
 	olp = lback(curwp->w_dotp);
-	if (olp == curbp->b_linep) {
+	if (olp == curbp->b_headp) {
 		/* if at end of buffer, create a line to insert before */
 		(void)lnewline();
 		curwp->w_dotp = lback(curwp->w_dotp);
@@ -423,7 +423,7 @@ endoffile:
 	curwp->w_dotp = olp;
 	curwp->w_doto = opos;
 	curwp->w_dotline = oline;
-	if (olp == curbp->b_linep)
+	if (olp == curbp->b_headp)
 		curwp->w_dotp = lforw(olp);
 	if (newname != NULL)
 		bp->b_flag |= BFCHG | BFBAK;	/* Need a backup.	 */
@@ -436,7 +436,7 @@ endoffile:
 	 * pointers in other windows correctly if they are also at the end of
 	 * buffer.
 	 */
-	lp1 = bp->b_linep;
+	lp1 = bp->b_headp;
 	if (curwp->w_markp == lp1) {
 		lp2 = curwp->w_dotp;
 	} else {

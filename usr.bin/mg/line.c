@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.40 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.41 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -158,7 +158,7 @@ linsert_str(const char *s, int n)
 	lp1 = curwp->w_dotp;
 
 	/* special case for the end */
-	if (lp1 == curbp->b_linep) {
+	if (lp1 == curbp->b_headp) {
 		struct line *lp2, *lp3;
 
 		/* now should only happen in empty buffer */
@@ -248,7 +248,7 @@ linsert(int n, int c)
 	lp1 = curwp->w_dotp;
 
 	/* special case for the end */
-	if (lp1 == curbp->b_linep) {
+	if (lp1 == curbp->b_headp) {
 		struct line *lp2, *lp3;
 
 		/* now should only happen in empty buffer */
@@ -417,7 +417,7 @@ ldelete(RSIZE n, int kflag)
 		dotp = curwp->w_dotp;
 		doto = curwp->w_doto;
 		/* Hit the end of the buffer */
-		if (dotp == curbp->b_linep)
+		if (dotp == curbp->b_headp)
 			return (FALSE);
 		/* Size of the chunk */
 		chunk = dotp->l_used - doto;
@@ -426,7 +426,7 @@ ldelete(RSIZE n, int kflag)
 			chunk = n;
 		/* End of line, merge */
 		if (chunk == 0) {
-			if (dotp == lback(curbp->b_linep))
+			if (dotp == lback(curbp->b_headp))
 				/* End of buffer */
 				return (FALSE);
 			lchange(WFFULL);
@@ -492,7 +492,7 @@ ldelnewline(void)
 	lp1 = curwp->w_dotp;
 	lp2 = lp1->l_fp;
 	/* at the end of the buffer */
-	if (lp2 == curbp->b_linep)
+	if (lp2 == curbp->b_headp)
 		return (TRUE);
 	curwp->w_bufp->b_lines--;
 	if (lp2->l_used <= lp1->l_size - lp1->l_used) {

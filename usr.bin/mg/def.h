@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.93 2006/07/08 17:56:10 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.94 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -236,14 +236,14 @@ struct undo_rec;
  * dot and mark in the header, but this is only valid if the buffer
  * is not being displayed (that is, if "b_nwnd" is 0). The text for
  * the buffer is kept in a circularly linked list of lines, with
- * a pointer to the header line in "b_linep".
+ * a pointer to the header line in "b_headp".
  */
 struct buffer {
 	struct list	 b_list;	/* buffer list pointer		 */
 	struct buffer	*b_altb;	/* Link to alternate buffer	 */
 	struct line	*b_dotp;	/* Link to "." line structure	 */
 	struct line	*b_markp;	/* ditto for mark		 */
-	struct line	*b_linep;	/* Link to the header line	 */
+	struct line	*b_headp;	/* Link to the header line	 */
 	struct maps_s	*b_modes[PBMODES]; /* buffer modes		 */
 	int		 b_doto;	/* Offset of "." in above line	 */
 	int		 b_marko;	/* ditto for the "mark"		 */

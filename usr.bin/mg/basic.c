@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.24 2006/06/01 09:45:05 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.25 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -42,7 +42,7 @@ backchar(int f, int n)
 		return (forwchar(f, -n));
 	while (n--) {
 		if (curwp->w_doto == 0) {
-			if ((lp = lback(curwp->w_dotp)) == curbp->b_linep) {
+			if ((lp = lback(curwp->w_dotp)) == curbp->b_headp) {
 				if (!(f & FFRAND))
 					ewprintf("Beginning of buffer");
 				return (FALSE);
@@ -83,7 +83,7 @@ forwchar(int f, int n)
 	while (n--) {
 		if (curwp->w_doto == llength(curwp->w_dotp)) {
 			curwp->w_dotp = lforw(curwp->w_dotp);
-			if (curwp->w_dotp == curbp->b_linep) {
+			if (curwp->w_dotp == curbp->b_headp) {
 				curwp->w_dotp = lback(curwp->w_dotp);
 				if (!(f & FFRAND))
 					ewprintf("End of buffer");
@@ -107,7 +107,7 @@ int
 gotobob(int f, int n)
 {
 	(void) setmark(f, n);
-	curwp->w_dotp = lforw(curbp->b_linep);
+	curwp->w_dotp = lforw(curbp->b_headp);
 	curwp->w_doto = 0;
 	curwp->w_flag |= WFFULL;
 	curwp->w_dotline = 1;
@@ -123,7 +123,7 @@ int
 gotoeob(int f, int n)
 {
 	(void) setmark(f, n);
-	curwp->w_dotp = lback(curbp->b_linep);
+	curwp->w_dotp = lback(curbp->b_headp);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_dotline = curwp->w_bufp->b_lines;
 	curwp->w_flag |= WFFULL;
@@ -145,7 +145,7 @@ forwline(int f, int n)
 
 	if (n < 0)
 		return (backline(f | FFRAND, -n));
-	if ((dlp = curwp->w_dotp) == curbp->b_linep)
+	if ((dlp = curwp->w_dotp) == curbp->b_headp)
 		return(TRUE);
 	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
@@ -154,7 +154,7 @@ forwline(int f, int n)
 		return (TRUE);
 	while (n--) {
 		dlp = lforw(dlp);
-		if (dlp == curbp->b_linep) {
+		if (dlp == curbp->b_headp) {
 			curwp->w_dotp = lback(dlp);
 			curwp->w_doto = llength(curwp->w_dotp);
 			curwp->w_flag |= WFMOVE;
@@ -188,7 +188,7 @@ backline(int f, int n)
 		setgoal();
 	thisflag |= CFCPCN;
 	dlp = curwp->w_dotp;
-	while (n-- && lback(dlp) != curbp->b_linep) {
+	while (n-- && lback(dlp) != curbp->b_headp) {
 		dlp = lback(dlp);
 		curwp->w_dotline--;
 	}
@@ -271,14 +271,14 @@ forwpage(int f, int n)
 		n *= curwp->w_ntrows;		/* to lines.		 */
 #endif
 	lp = curwp->w_linep;
-	while (n-- && lforw(lp) != curbp->b_linep) {
+	while (n-- && lforw(lp) != curbp->b_headp) {
 		lp = lforw(lp);
 		curwp->w_dotline++;
 	}
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFFULL;
 	/* if in current window, don't move dot */
-	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
+	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
 	curwp->w_dotp = curwp->w_linep;
@@ -311,14 +311,14 @@ backpage(int f, int n)
 		n *= curwp->w_ntrows;		/* to lines.		 */
 #endif
 	lp = curwp->w_linep;
-	while (n-- && lback(lp) != curbp->b_linep) {
+	while (n-- && lback(lp) != curbp->b_headp) {
 		lp = lback(lp);
 		curwp->w_dotline--;
 	}
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFFULL;
 	/* if in current window, don't move dot */
-	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
+	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
 			return (TRUE);
 	curwp->w_dotp = curwp->w_linep;
@@ -460,9 +460,9 @@ gotoline(int f, int n)
 		if (n == 0)
 			n++;
 		curwp->w_dotline = n;
-		clp = lforw(curbp->b_linep);	/* "clp" is first line */
+		clp = lforw(curbp->b_headp);	/* "clp" is first line */
 		while (--n > 0) {
-			if (lforw(clp) == curbp->b_linep) {
+			if (lforw(clp) == curbp->b_headp) {
 				curwp->w_dotline = curwp->w_bufp->b_lines;
 				break;
 			}
@@ -470,9 +470,9 @@ gotoline(int f, int n)
 		}
 	} else {
 		curwp->w_dotline = curwp->w_bufp->b_lines + n;
-		clp = lback(curbp->b_linep);	/* "clp" is last line */
+		clp = lback(curbp->b_headp);	/* "clp" is last line */
 		while (n < 0) {
-			if (lback(clp) == curbp->b_linep) {
+			if (lback(clp) == curbp->b_headp) {
 				curwp->w_dotline = 1;
 				break;
 			}

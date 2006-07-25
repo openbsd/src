@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.29 2006/06/01 09:00:50 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.30 2006/07/25 08:22:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -425,7 +425,7 @@ update(void)
 			for (i = 0; i < wp->w_ntrows; ++i) {
 				if (lp == wp->w_dotp)
 					goto out;
-				if (lp == wp->w_bufp->b_linep)
+				if (lp == wp->w_bufp->b_headp)
 					break;
 				lp = lforw(lp);
 			}
@@ -449,7 +449,7 @@ update(void)
 		 * Find the line.
 		 */
 		lp = wp->w_dotp;
-		while (i != 0 && lback(lp) != wp->w_bufp->b_linep) {
+		while (i != 0 && lback(lp) != wp->w_bufp->b_headp) {
 			--i;
 			lp = lback(lp);
 		}
@@ -475,7 +475,7 @@ update(void)
 				vscreen[i]->v_color = CTEXT;
 				vscreen[i]->v_flag |= (VFCHG | VFHBAD);
 				vtmove(i, 0);
-				if (lp != wp->w_bufp->b_linep) {
+				if (lp != wp->w_bufp->b_headp) {
 					for (j = 0; j < llength(lp); ++j)
 						vtputc(lgetc(lp, j));
 					lp = lforw(lp);
