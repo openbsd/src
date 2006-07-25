@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.107 2006/06/15 10:05:18 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.108 2006/07/25 09:38:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -79,9 +79,6 @@ int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 static const char	*get_errstr(u_int8_t, u_int8_t);
 int		 show_result(struct imsg *);
-void		 log_warnx(const char *, ...);
-void		 log_warn(const char *, ...);
-void		 fatal(const char *);
 
 struct imsgbuf	*ibuf;
 
