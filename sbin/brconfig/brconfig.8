@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.56 2006/05/28 08:06:55 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.57 2006/07/25 07:04:55 djm Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Nd manipulate bridge interfaces
 .Sh SYNOPSIS
 .Nm
-.Fl a
+.Op Fl a
 .Nm
 .Ar bridge-name
 .Op Ar parameters
@@ -59,11 +59,11 @@ segment and to provide a transparent filter for
 .Xr ip 4
 datagrams.
 .Pp
-In the first synopsis, the
-.Fl a
-flag will cause
+In the first synopsis, invoking
 .Nm
-to list the status of all bridges in the system.
+with no arguments, or with the
+.Fl a
+flag will list the status of all bridges in the system.
 In the second, its command line consists
 of the name of a bridge and a set of operations to be
 performed on that bridge.
