@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.36 2006/07/24 08:02:43 djm Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.37 2006/07/25 00:26:42 djm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -41,6 +41,7 @@
 #include <string.h>
 #include <err.h>
 #include <errno.h>
+#include <getopt.h>
 #include <sysexits.h>
 #include <limits.h>
 
@@ -106,22 +107,32 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int error = 0, sock;
+	int error = 0, ch, sock;
+	int aflag = 0;
 	char *brdg;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0)
 		err(1, "socket");
 
-	if (argc < 2 || strcmp(argv[1], "-a") == 0)
-		return bridge_show_all(sock);
-
-	if (strcmp(argv[1], "-h") == 0) {
-		usage();
-		return (EX_USAGE);
+	while ((ch = getopt(argc, argv, "ah")) != -1) {
+		switch (ch) {
+		case 'a':
+			aflag = 1;
+			break;
+		case 'h':
+		default:
+			usage();
+			return (EX_USAGE);
+		}
 	}
 
-	argc--; argv++;
+	argc -= optind;
+	argv += optind;
+
+	if (aflag || argc < 1)
+		return bridge_show_all(sock);
+
 	brdg = argv[0];
 
 	if (strlen(brdg) >= IFNAMSIZ) {
