@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.30 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.31 2006/07/25 21:23:30 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -259,14 +259,9 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
 	    self->dv_xname);
 
-	/* grab initial (current) color map */
-	bt = &sc->sc_fbc->fbc_dac;
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3 / 4; i++)
-		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
-
 	/* enable video */
 	cgthree_burner(sc, 1, 0);
+	bt = &sc->sc_fbc->fbc_dac;
 	BT_INIT(bt, 0);
 
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.41 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.42 2006/07/25 21:23:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -209,7 +209,7 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	int node, console, i;
+	int node, console;
 	const char *nam;
 
 	node = sa->sa_node;
@@ -249,11 +249,6 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 	console = cgthree_is_console(node);
 
 	cgthree_reset(sc);
-
-	BT_WRITE(sc, BT_ADDR, 0);
-	for (i = 0; i < 256 * 3 / 4; i++)
-		sc->sc_cmap.cm_chip[i] = BT_READ(sc, BT_CMAP);
-
 	cgthree_burner(sc, 1, 0);
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,

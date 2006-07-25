@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.27 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.28 2006/07/25 21:23:30 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -177,7 +177,6 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
 	int node = 0, i;
-	volatile struct bt_regs *bt;
 	int isconsole = 0;
 	char *nam = NULL;
 
@@ -193,7 +192,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	for (i = 0; i < TCX_NREG; i++)
 		sc->sc_phys[i] = ca->ca_ra.ra_reg[i];
 
-	sc->sc_bt = bt = (volatile struct bt_regs *)
+	sc->sc_bt = (volatile struct bt_regs *)
 	    mapiodev(&ca->ca_ra.ra_reg[TCX_REG_CMAP], 0, sizeof *sc->sc_bt);
 	sc->sc_thc = (volatile struct tcx_thc *)
 	    mapiodev(&ca->ca_ra.ra_reg[TCX_REG_THC],
@@ -221,11 +220,6 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	/* reset cursor & frame buffer controls */
 	sc->sc_sunfb.sf_depth = 0;	/* force action */
 	tcx_reset(sc, 8);
-
-	/* grab initial (current) color map */
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3; i++)
-		((char *)&sc->sc_cmap)[i] = bt->bt_cmap >> 24;
 
 	/* enable video */
 	tcx_burner(sc, 1, 0);

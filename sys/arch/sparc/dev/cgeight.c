@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.25 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.26 2006/07/25 21:23:30 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ cgeightattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgeight_softc *sc = (struct cgeight_softc *)self;
 	struct confargs *ca = args;
-	int node = 0, i;
+	int node = 0;
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
 
@@ -182,14 +182,9 @@ cgeightattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 
-	/* grab initial (current) color map */
-	bt = &sc->sc_fbc->fbc_dac;
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3 / 4; i++)
-		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
-
 	/* enable video */
 	fb_pfour_burner(sc, 1, 0);
+	bt = &sc->sc_fbc->fbc_dac;
 	BT_INIT(bt, 0);
 
 	fb_setsize(&sc->sc_sunfb, 24, 1152, 900, node, ca->ca_bustype);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.34 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.35 2006/07/25 21:23:30 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -209,8 +209,7 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	struct confargs *ca = args;
-	int node = 0, i;
-	volatile struct bt_regs *bt;
+	int node = 0;
 	int isconsole = 0, sbus = 1;
 	char *nam = NULL;
 	u_int fhcrev;
@@ -221,7 +220,7 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 	 * Map just BT, FHC, FBC, THC, and video RAM.
 	 */
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
-	sc->sc_bt = bt = (volatile struct bt_regs *)
+	sc->sc_bt = (volatile struct bt_regs *)
 	   mapiodev(ca->ca_ra.ra_reg, CGSIX_BT_OFFSET, CGSIX_BT_SIZE);
 	sc->sc_fhc = (volatile int *)
 	   mapiodev(ca->ca_ra.ra_reg, CGSIX_FHC_OFFSET, CGSIX_FHC_SIZE);
@@ -294,11 +293,6 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 
 	/* reset cursor & frame buffer controls */
 	cgsix_reset(sc, fhcrev);
-
-	/* grab initial (current) color map */
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3; i++)
-		((char *)&sc->sc_cmap)[i] = bt->bt_cmap >> 24;
 
 	/* enable video */
 	cgsix_burner(sc, 1, 0);
