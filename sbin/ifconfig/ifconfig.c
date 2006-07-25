@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.170 2006/06/27 21:47:10 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.171 2006/07/25 13:59:17 grunk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2415,7 +2415,7 @@ in_status(int force)
 	 */
 	memcpy(&sin2, &ifr.ifr_addr, sizeof(sin2));
 
-	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
+	printf("\tinet %s", inet_ntoa(sin->sin_addr));
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
 		if (errno != EADDRNOTAVAIL)
@@ -2434,9 +2434,9 @@ in_status(int force)
 		}
 		(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
-		printf("--> %s ", inet_ntoa(sin->sin_addr));
+		printf(" --> %s", inet_ntoa(sin->sin_addr));
 	}
-	printf("netmask 0x%x ", ntohl(netmask.sin_addr.s_addr));
+	printf(" netmask 0x%x", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
 		memcpy(&ifr.ifr_addr, &sin2, sizeof(sin2));
 		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
@@ -2448,7 +2448,7 @@ in_status(int force)
 		(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_addr;
 		if (sin->sin_addr.s_addr != 0)
-			printf("broadcast %s", inet_ntoa(sin->sin_addr));
+			printf(" broadcast %s", inet_ntoa(sin->sin_addr));
 	}
 	putchar('\n');
 }
@@ -3930,9 +3930,9 @@ getifgroups(void)
 		len -= sizeof(struct ifg_req);
 		if (strcmp(ifg->ifgrq_group, "all")) {
 			if (cnt == 0)
-				printf("\tgroups: ");
+				printf("\tgroups:");
 			cnt++;
-			printf("%s ", ifg->ifgrq_group);
+			printf(" %s", ifg->ifgrq_group);
 		}
 	}
 	if (cnt)
