@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npx.4,v 1.12 2003/07/28 20:09:13 jason Exp $
+.\"	$OpenBSD: npx.4,v 1.13 2006/07/25 19:37:05 kettenis Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,7 +35,6 @@
 .Nm npx
 .Nd Numeric Processing Extension coprocessor and emulator
 .Sh SYNOPSIS
-.Cd "option GPL_MATH_EMULATE"
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "npx0 at isa? port" \&"IO_NPX0\&" irq 13
 .Sh DESCRIPTION
@@ -55,26 +54,10 @@ The
 .Nm
 driver is required for proper system functioning regardless
 of whether or not a NPX is present.
-.Pp
-If there is no NPX present in the system
-.Ic option GPL_MATH_EMULATE
-must be defined in the kernel configuration file.
-It will provide support for the instructions normally executed by the NPX.
-If there is no NPX in the system and the kernel
-is not built with math emulation, the system will not boot.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4
-.Sh CAVEATS
-The emulator is much slower than the NPX coprocessor.
-This will result in poor floating-point math performance
-if the emulator must be used.
 .Sh BUGS
 There are lots of them, especially on cheap motherboards.
 In particular, some motherboards do not have the interrupt lines from the NPX
 to the CPU wired properly.
-If this is the case, the emulator must be used if consistent system operation
-is desired.
-.Pp
-Emulation of the transcendental functions instructions is incorrect.
-Emulation of other instructions is suspect.
