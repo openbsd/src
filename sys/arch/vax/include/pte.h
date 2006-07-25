@@ -1,5 +1,5 @@
-/*      $OpenBSD: pte.h,v 1.9 2003/11/10 21:05:06 miod Exp $      */
-/*      $NetBSD: pte.h,v 1.13 1999/08/03 19:53:23 ragge Exp $      */
+/*      $OpenBSD: pte.h,v 1.10 2006/07/25 21:05:31 miod Exp $      */
+/*	$NetBSD: pte.h,v 1.21 2005/12/24 22:45:40 perry Exp $	  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -65,14 +65,32 @@ extern pt_entry_t *Sysmap;
  */
 #endif
 
-#define	kvtopte(va) (&Sysmap[PG_PFNUM(va)])
-#define	ptetokv(pt) \
-	((((pt_entry_t *)(pt) - Sysmap) << VAX_PGSHIFT) + 0x80000000)
-#define	kvtophys(va) \
+#ifdef __ELF__
+#define VAX_SYSMAP	"Sysmap"
+#else
+#define VAX_SYSMAP	"_Sysmap"
+#endif
+
+#ifdef __GNUC__
+#define kvtopte(va) ({ \
+	pt_entry_t *r; \
+	__asm("extzv $9,$21,%1,%0;moval *" VAX_SYSMAP "[%0],%0" : "=r"(r) : "g"(va)); \
+	r; \
+})
+#define kvtophys(va) ({ \
+	paddr_t r; \
+	__asm("extzv $9,$21,%1,%0;ashl $9,*" VAX_SYSMAP "[%0],%0;insv %1,$0,$9,%0" \
+	    : "=&r"(r) : "g"(va) : "cc"); \
+	r; \
+})
+#else /* __GNUC__ */
+#define kvtopte(va) (&Sysmap[PG_PFNUM(va)])
+#define kvtophys(va) \
 	(((*kvtopte(va) & PG_FRAME) << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
-#define	uvtopte(va, pcb) \
-	(((unsigned)va < 0x40000000) ? \
-	&((pcb->P0BR)[PG_PFNUM(va)]) : \
-	&((pcb->P1BR)[PG_PFNUM(va)]))
+#endif /* __GNUC__ */
+#define uvtopte(va, pcb) \
+	(((vaddr_t)(va) < 0x40000000) ? \
+	&(((pcb)->P0BR)[PG_PFNUM(va)]) : \
+	&(((pcb)->P1BR)[PG_PFNUM(va)]))
 
 #endif
