@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.14 2005/10/02 08:12:16 jmc Exp $
+.\" $OpenBSD: blowfish.3,v 1.15 2006/07/25 12:41:06 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -47,9 +47,9 @@
 .Ft void
 .Fn blf_key "blf_ctx *state" "const u_int8_t *key" "u_int16_t keylen"
 .Ft void
-.Fn blf_enc "blf_ctx *state" "u_int32_t *data" "u_int16_t datalen"
+.Fn blf_enc "blf_ctx *state" "u_int32_t *data" "u_int16_t blocks"
 .Ft void
-.Fn blf_dec "blf_ctx *state" "u_int32_t *data" "u_int16_t datalen"
+.Fn blf_dec "blf_ctx *state" "u_int32_t *data" "u_int16_t blocks"
 .Ft void
 .Fn blf_ecb_encrypt "blf_ctx *state" "u_int8_t *data" "u_int32_t datalen"
 .Ft void
@@ -75,8 +75,8 @@ is the initialized state derived from
 .Fn blf_key .
 The stream of 32-bit words is encrypted in Electronic Codebook
 Mode (ECB) and
-.Pa datalen
-must be even.
+.Pa blocks
+is the number of 64-bit blocks in the stream.
 .Fn blf_dec
 is used for decrypting Blowfish encrypted blocks.
 .Pp
@@ -91,6 +91,10 @@ and
 .Fn blf_cbc_decrypt
 are used for encrypting and decrypting octet streams in
 Cipherblock Chaining Mode (CBC).
+For these functions
+.Pa datalen
+specifies the number of octets of data to encrypt or decrypt.
+It must be a multiple of 8 (64-bit block).
 .Pp
 The functions
 .Fn Blowfish_initstate ,
