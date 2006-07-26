@@ -1,5 +1,6 @@
 ./pcs750.bin
 ./sbin/kbd
+./sbin/wsconsctl
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.9
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.9/2.95.3
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.9/2.95.3/cc1
@@ -2149,3 +2150,4 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/sbin/wsconscfg
