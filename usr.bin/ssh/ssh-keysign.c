@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.27 2006/07/22 20:48:23 stevesk Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.28 2006/07/26 13:57:17 stevesk Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
