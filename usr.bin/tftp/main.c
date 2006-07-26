@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2006/07/26 09:10:03 mglocker Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2006/07/26 22:43:53 mglocker Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: main.c,v 1.27 2006/07/26 09:10:03 mglocker Exp $";
+    "$OpenBSD: main.c,v 1.28 2006/07/26 22:43:53 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -222,6 +222,7 @@ void
 setpeer(int argc, char *argv[])
 {
 	struct hostent	*host;
+	const char	*errstr;
 
 	if (argc < 2) {
 		strlcpy(line, "Connect ", sizeof(line));
@@ -253,9 +254,9 @@ setpeer(int argc, char *argv[])
 	}
 	port = sp->s_port;
 	if (argc == 3) {
-		port = atoi(argv[2]);
-		if (port < 0) {
-			printf("%s: bad port number\n", argv[2]);
+		port = strtonum(argv[2], 1, 65535, &errstr);
+		if (errstr) {
+			printf("%s: port number is %s\n", argv[2], errstr);
 			connected = 0;
 			return;
 		}
@@ -544,7 +545,6 @@ settimeout(int argc, char *argv[])
 		printf("usage: %s value\n", argv[0]);
 		return;
 	}
-	t = atoi(argv[1]);
 	t = strtonum(argv[1], TIMEOUT_MIN, TIMEOUT_MAX, &errstr);
 	if (errstr)
 		printf("%s: value is %s\n", argv[1], errstr);
