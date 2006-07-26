@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.16 2006/07/26 12:43:02 jmc Exp $
+.\" $OpenBSD: blowfish.3,v 1.17 2006/07/26 12:45:53 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .Ft void
 .Fn blf_cbc_decrypt "blf_ctx *state" "u_int8_t *iv" "u_int8_t *data" "u_int32_t datalen"
 .Sh DESCRIPTION
-.Pa Blowfish
+.Em Blowfish
 is a fast unpatented block cipher designed by Bruce Schneier.
 It basically consists of a 16-round Feistel network.
 The block size is 64 bits and the maximum key size is 448 bits.
@@ -75,7 +75,7 @@ is the initialized state derived from
 .Fn blf_key .
 The stream of 32-bit words is encrypted in Electronic Codebook
 Mode (ECB) and
-.Pa blocks
+.Fa blocks
 is the number of 64-bit blocks in the stream.
 .Fn blf_dec
 is used for decrypting Blowfish encrypted blocks.
@@ -92,11 +92,11 @@ and
 are used for encrypting and decrypting octet streams in
 Cipherblock Chaining Mode (CBC).
 For these functions
-.Pa datalen
+.Fa datalen
 specifies the number of octets of data to encrypt or decrypt.
 It must be a multiple of 8 (64-bit block).
 The initialisation vector
-.Pa iv
+.Fa iv
 points to an 8-byte buffer.
 .Pp
 The functions
@@ -107,7 +107,7 @@ The functions
 and
 .Fn Blowfish_decipher
 are used for customization of the
-.Pa Blowfish
+.Em Blowfish
 cipher, e.g., for the blowfish password hashing function.
 .Sh SEE ALSO
 .Xr passwd 1 ,
