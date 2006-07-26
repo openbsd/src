@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_alpha.8,v 1.13 2004/12/27 16:41:09 miod Exp $
+.\"	$OpenBSD: boot_alpha.8,v 1.14 2006/07/26 07:27:10 mk Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -72,6 +72,7 @@ The following option letters are recognized:
 .Pp
 .It Cm a
 Boot the system multi-user.
+This is the default behaviour of the kernel if no flags are specified.
 .It Cm b
 Enter the debugger,
 .Xr ddb 4 ,
@@ -92,7 +93,6 @@ required.
 Prompt for the root filesystem device after the devices have been configured.
 .It Cm s
 Boot the system single-user.
-This is the default behaviour of the kernel if no flags are specified.
 .El
 .Ss Abnormal system termination
 In case of system crashes, the kernel will usually enter the kernel
