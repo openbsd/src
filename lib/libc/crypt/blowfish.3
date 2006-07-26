@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.15 2006/07/25 12:41:06 jmc Exp $
+.\" $OpenBSD: blowfish.3,v 1.16 2006/07/26 12:43:02 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -95,6 +95,9 @@ For these functions
 .Pa datalen
 specifies the number of octets of data to encrypt or decrypt.
 It must be a multiple of 8 (64-bit block).
+The initialisation vector
+.Pa iv
+points to an 8-byte buffer.
 .Pp
 The functions
 .Fn Blowfish_initstate ,
