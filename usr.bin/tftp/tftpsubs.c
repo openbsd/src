@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.11 2006/07/20 09:42:44 mglocker Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.12 2006/07/26 12:34:41 mglocker Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftpsubs.c,v 1.11 2006/07/20 09:42:44 mglocker Exp $";
+    "$OpenBSD: tftpsubs.c,v 1.12 2006/07/26 12:34:41 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -101,7 +101,7 @@ rw_init(int x)
 {
 	newline = 0;			/* init crlf flag */
 	prevchar = -1;
-	bfs[0].counter =  BF_ALLOC;	/* pass out the first buffer */
+	bfs[0].counter = BF_ALLOC;	/* pass out the first buffer */
 	current = 0;
 	bfs[1].counter = BF_FREE;
 	nextone = x;			/* ahead or behind? */

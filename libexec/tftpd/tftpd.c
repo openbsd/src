@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.49 2006/07/26 09:10:03 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.50 2006/07/26 12:34:41 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.49 2006/07/26 09:10:03 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.50 2006/07/26 12:34:41 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -382,7 +382,7 @@ void
 tftp(struct tftphdr *tp, int size)
 {
 	char		*cp;
-	int		 i, first = 1, ecode, opcode;
+	int		 i, first = 1, ecode, opcode, to;
 	struct formats	*pf;
 	char		*filename, *mode = NULL, *option, *ccp;
 	char		 fnbuf[MAXPATHLEN], nicebuf[MAXPATHLEN];
@@ -449,7 +449,7 @@ again:
 
 option_fail:
 	if (options[OPT_TIMEOUT].o_request) {
-		int to = strtonum(options[OPT_TIMEOUT].o_request,
+		to = strtonum(options[OPT_TIMEOUT].o_request,
 		    TIMEOUT_MIN, TIMEOUT_MAX, &errstr);
 		if (errstr) {
 			nak(EBADOP);
