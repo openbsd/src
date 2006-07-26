@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.25 2006/01/16 13:11:05 mickey Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.26 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ udv_reference(uobj)
 
 	simple_lock(&uobj->vmobjlock);
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
+	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %d)", 
 		    uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
 }
@@ -306,7 +306,7 @@ again:
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
 		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d", 
+		UVMHIST_LOG(maphist," <- done, uobj=%p, ref=%d", 
 			  uobj,uobj->uo_refs,0,0);
 		return;
 	}
@@ -334,7 +334,7 @@ again:
 	simple_unlock(&udv_lock);
 	simple_unlock(&uobj->vmobjlock);
 	FREE(udv, M_TEMP);
-	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
+	UVMHIST_LOG(maphist," <- done, freed uobj=%p", uobj,0,0,0);
 }
 
 
@@ -399,7 +399,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
 		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)", 
-		entry->etype, 0,0,0);
+		    entry->etype, 0,0,0);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 		return(VM_PAGER_ERROR);
 	}
@@ -444,7 +444,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		paddr = pmap_phys_address(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%llx, at=%d",
+		    "  MAPPING: device: pm=%p, va=0x%lx, pa=0x%llx, at=%d",
 		    ufi->orig_map->pmap, curr_va, (long long)paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {

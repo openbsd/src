@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.50 2006/04/25 08:31:00 mickey Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.51 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -332,7 +332,7 @@ uvm_km_pgremove(uobj, start, end)
 		if (pp == NULL)
 			continue;
 
-		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 
 		/* now do the actual work */
@@ -363,7 +363,7 @@ loop_by_list:
 			continue;
 		}
 
-		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 
 		if (pp->flags & PG_BUSY) {
@@ -425,7 +425,7 @@ uvm_km_pgremove_intrsafe(uobj, start, end)
 			continue;
 		}
 
-		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 		KASSERT((pp->flags & PG_BUSY) == 0);
 		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
@@ -443,7 +443,7 @@ loop_by_list:
 			continue;
 		}
 
-		UVMHIST_LOG(maphist,"  page 0x%x, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 		KASSERT((pp->flags & PG_BUSY) == 0);
 		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
@@ -478,7 +478,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_kmemalloc"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
+	UVMHIST_LOG(maphist,"  (map=%p, obj=%p, size=0x%lx, flags=%d)",
 		    map, obj, size, flags);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
@@ -506,7 +506,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	 */
 
 	if (flags & UVM_KMF_VALLOC) {
-		UVMHIST_LOG(maphist,"<- done valloc (kva=0x%x)", kva,0,0,0);
+		UVMHIST_LOG(maphist,"<- done valloc (kva=0x%lx)", kva,0,0,0);
 		return(kva);
 	}
 
@@ -515,7 +515,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	 */
 
 	offset = kva - vm_map_min(kernel_map);
-	UVMHIST_LOG(maphist, "  kva=0x%x, offset=0x%x", kva, offset,0,0);
+	UVMHIST_LOG(maphist, "  kva=0x%lx, offset=0x%lx", kva, offset,0,0);
 
 	/*
 	 * now allocate and map in the memory... note that we are the only ones
@@ -570,7 +570,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	}
 	pmap_update(pmap_kernel());
 
-	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
+	UVMHIST_LOG(maphist,"<- done (kva=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -628,7 +628,7 @@ uvm_km_alloc1(map, size, zeroit)
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_alloc1"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(map=0x%x, size=0x%x)", map, size,0,0);
+	UVMHIST_LOG(maphist,"(map=%p, size=0x%lx)", map, size,0,0);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
@@ -651,7 +651,7 @@ uvm_km_alloc1(map, size, zeroit)
 	 */
 
 	offset = kva - vm_map_min(kernel_map);
-	UVMHIST_LOG(maphist,"  kva=0x%x, offset=0x%x", kva, offset,0,0);
+	UVMHIST_LOG(maphist,"  kva=0x%lx, offset=0x%lx", kva, offset,0,0);
 
 	/*
 	 * now allocate the memory.  we must be careful about released pages.
@@ -708,7 +708,7 @@ uvm_km_alloc1(map, size, zeroit)
 	if (zeroit)
 		memset((caddr_t)kva, 0, loopva - kva);
 
-	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
+	UVMHIST_LOG(maphist,"<- done (kva=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -735,7 +735,7 @@ uvm_km_valloc_align(map, size, align)
 	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
+	UVMHIST_LOG(maphist, "(map=%p, size=0x%lx)", map, size, 0,0);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
@@ -753,7 +753,7 @@ uvm_km_valloc_align(map, size, align)
 		return(0);
 	}
 
-	UVMHIST_LOG(maphist, "<- done (kva=0x%x)", kva,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (kva=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -774,7 +774,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc_prefer_wait"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
+	UVMHIST_LOG(maphist, "(map=%p, size=0x%lx)", map, size, 0,0);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);
@@ -793,7 +793,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 		    prefer, 0, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0))
 		    == KERN_SUCCESS)) {
-			UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
+			UVMHIST_LOG(maphist,"<- done (kva=0x%lx)", kva,0,0,0);
 			return(kva);
 		}
 

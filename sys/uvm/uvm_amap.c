@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.31 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.32 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ amap_alloc(sz, padsz, waitf)
 		memset(amap->am_anon, 0,
 		    amap->am_maxslot * sizeof(struct vm_anon *));
 
-	UVMHIST_LOG(maphist,"<- done, amap = 0x%x, sz=%d", amap, sz, 0, 0);
+	UVMHIST_LOG(maphist,"<- done, amap = %p, sz=%lu", amap, sz, 0, 0);
 	return(amap);
 }
 
@@ -268,7 +268,7 @@ amap_free(amap)
 	amap_unlock(amap);	/* mainly for lock debugging */
 	pool_put(&uvm_amap_pool, amap);
 
-	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
+	UVMHIST_LOG(maphist,"<- done, freed amap = %p", amap, 0, 0, 0);
 }
 
 /*
@@ -297,7 +297,7 @@ amap_extend(entry, addsize)
 	int slotadded;
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "  (entry=0x%x, addsize=0x%x)", entry,addsize,0,0);
+	UVMHIST_LOG(maphist, "  (entry=%p, addsize=%lu)", entry, addsize, 0, 0);
 
 	/*
 	 * first, determine how many slots we need in the amap.  don't
@@ -323,7 +323,7 @@ amap_extend(entry, addsize)
 		}
 #endif
 		amap_unlock(amap);
-		UVMHIST_LOG(maphist,"<- done (case 1), amap = 0x%x, sltneed=%d", 
+		UVMHIST_LOG(maphist,"<- done (case 1), amap = %p, sltneed=%d", 
 		    amap, slotneed, 0, 0);
 		return (0);
 	}
@@ -351,8 +351,8 @@ amap_extend(entry, addsize)
 		 * no need to zero am_anon since that was done at
 		 * alloc time and we never shrink an allocation.
 		 */
-		UVMHIST_LOG(maphist,"<- done (case 2), amap = 0x%x, "
-		    "slotneed=%d", amap, slotneed, 0, 0);
+		UVMHIST_LOG(maphist,"<- done (case 2), amap = %p, slotneed=%d",
+		    amap, slotneed, 0, 0);
 		return (0);
 	}
 
@@ -452,7 +452,7 @@ amap_extend(entry, addsize)
 	if (oldppref && oldppref != PPREF_NONE)
 		free(oldppref, M_UVMAMAP);
 #endif
-	UVMHIST_LOG(maphist,"<- done (case 3), amap = 0x%x, slotneed=%d", 
+	UVMHIST_LOG(maphist,"<- done (case 3), amap = %p, slotneed=%d", 
 	    amap, slotneed, 0, 0);
 	return (0);
 }
@@ -519,7 +519,7 @@ amap_wipeout(amap)
 	int lcv, slot;
 	struct vm_anon *anon;
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
+	UVMHIST_LOG(maphist,"(amap=%p)", amap, 0,0,0);
 
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 		int refs;
@@ -532,7 +532,7 @@ amap_wipeout(amap)
 
 		simple_lock(&anon->an_lock); /* lock anon */
 
-		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon, 
+		UVMHIST_LOG(maphist,"  processing anon %p, ref=%d", anon, 
 		    anon->an_ref, 0, 0);
 
 		refs = --anon->an_ref;
@@ -602,17 +602,17 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 			chunksize = UVM_AMAP_CHUNK << PAGE_SHIFT;
 			startva = (startva / chunksize) * chunksize;
 			endva = roundup(endva, chunksize);
-			UVMHIST_LOG(maphist, "  chunk amap ==> clip 0x%x->0x%x"
-			    "to 0x%x->0x%x", entry->start, entry->end, startva,
-			    endva);
+			UVMHIST_LOG(maphist, "  chunk amap ==> clip "
+			    "0x%lx->0x%lx to 0x%lx->0x%lx",
+			    entry->start, entry->end, startva, endva);
 			UVM_MAP_CLIP_START(map, entry, startva);
 			/* watch out for endva wrap-around! */
 			if (endva >= startva)
 				UVM_MAP_CLIP_END(map, entry, endva);
 		}
 
-		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%x->0x%x]", 
-		entry->start, entry->end, 0, 0);
+		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%lx->0x%lx]",
+		    entry->start, entry->end, 0, 0);
 		entry->aref.ar_pageoff = 0;
 		entry->aref.ar_amap = amap_alloc(entry->end - entry->start, 0,
 		    waitf);

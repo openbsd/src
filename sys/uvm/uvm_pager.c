@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.37 2005/07/26 07:11:55 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.38 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ uvm_pagermapin(pps, npages, flags)
 	vm_prot_t prot;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d)", pps, npages,0,0);
+	UVMHIST_LOG(maphist,"(pps=%p, npages=%d)", pps, npages,0,0);
 
 	/*
 	 * compute protection.  outgoing I/O only needs read
@@ -178,7 +178,7 @@ enter:
 	}
 	pmap_update(vm_map_pmap(pager_map));
 
-	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (KVA=0x%lx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -198,7 +198,7 @@ uvm_pagermapout(kva, npages)
 	vm_map_entry_t entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (kva=0x%x, npages=%d)", kva, npages,0,0);
+	UVMHIST_LOG(maphist, " (kva=0x%lx, npages=%d)", kva, npages,0,0);
 
 	/*
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.

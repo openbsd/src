@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap_i.h,v 1.14 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_amap_i.h,v 1.15 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_amap_i.h,v 1.15 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ amap_lookup(aref, offset)
 	if (slot >= amap->am_nslot)
 		panic("amap_lookup: offset out of range");
 
-	UVMHIST_LOG(maphist, "<- done (amap=0x%x, offset=0x%x, result=0x%x)",
+	UVMHIST_LOG(maphist, "<- done (amap=%p, offset=0x%lx, result=%p)",
 	    amap, offset, amap->am_anon[slot], 0);
 	return(amap->am_anon[slot]);
 }
@@ -153,7 +153,7 @@ amap_add(aref, offset, anon, replace)
 	}
 	amap->am_anon[slot] = anon;
 	UVMHIST_LOG(maphist,
-	    "<- done (amap=0x%x, offset=0x%x, anon=0x%x, rep=%d)",
+	    "<- done (amap=%p, offset=0x%lx, anon=%p, rep=%d)",
 	    amap, offset, anon, replace);
 }
 
@@ -188,7 +188,7 @@ amap_unadd(aref, offset)
 		amap->am_bckptr[amap->am_slots[ptr]] = ptr;	/* back link */
 	}
 	amap->am_nused--;
-	UVMHIST_LOG(maphist, "<- done (amap=0x%x, slot=0x%x)", amap, slot,0, 0);
+	UVMHIST_LOG(maphist, "<- done (amap=%p, slot=%d)", amap, slot,0, 0);
 }
 
 /*
@@ -223,7 +223,7 @@ amap_ref(amap, offset, len, flags)
 	}
 #endif
 	amap_unlock(amap);
-	UVMHIST_LOG(maphist,"<- done!  amap=0x%x", amap, 0, 0, 0);
+	UVMHIST_LOG(maphist,"<- done!  amap=%p", amap, 0, 0, 0);
 }
 
 /*
@@ -248,7 +248,7 @@ amap_unref(amap, offset, len, all)
 	 * lock it
 	 */
 	amap_lock(amap);
-	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
+	UVMHIST_LOG(maphist,"  amap=%p  refs=%d, nused=%d",
 	    amap, amap->am_ref, amap->am_nused, 0);
 
 	/*

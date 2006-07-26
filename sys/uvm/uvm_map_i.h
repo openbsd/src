@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.17 2005/05/24 21:11:47 tedu Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.18 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_map_i.h,v 1.18 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -169,7 +169,7 @@ uvm_unmap_p(map, start, end, p)
 	vm_map_entry_t dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x)",
+	UVMHIST_LOG(maphist, "  (map=%p, start=0x%lx, end=0x%lx)",
 	    map, start, end, 0);
 	/*
 	 * work now done by helper functions.   wipe the pmap's and then

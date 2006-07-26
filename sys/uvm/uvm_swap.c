@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.63 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.64 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1012,7 +1012,8 @@ swap_on(p, sdp)
 		goto bad;
 	}
 
-	UVMHIST_LOG(pdhist, "  dev=%x: size=%d addr=%ld\n", dev, size, addr, 0);
+	UVMHIST_LOG(pdhist, "  dev=%x: size=%d addr=0x%lx\n",
+	    dev, size, addr, 0);
 
 	/*
 	 * now we need to allocate an extent to manage this swap device
@@ -1236,7 +1237,7 @@ swstrategy(bp)
 	pageno -= sdp->swd_drumoffset;	/* page # on swapdev */
 	bn = btodb((u_int64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
 
-	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld",
+	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=0x%x bcount=%ld",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
 		sdp->swd_drumoffset, bn, bp->b_bcount);
 
@@ -1362,7 +1363,7 @@ sw_reg_strategy(sdp, bp, bn)
 			sz = resid;
 
 		UVMHIST_LOG(pdhist, "sw_reg_strategy: "
-			    "vp %p/%p offset 0x%x/0x%x",
+			    "vp %p/%p offset 0x%llx/0x%x",
 			    sdp->swd_vp, vp, byteoff, nbn);
 
 		/*
@@ -1478,7 +1479,7 @@ sw_reg_start(sdp)
 		sdp->swd_tab.b_active++;
 
 		UVMHIST_LOG(pdhist,
-		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
+		    "sw_reg_start:  bp %p vp %p blkno 0x%x cnt 0x%lx",
 		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
 		if ((bp->b_flags & B_READ) == 0)
 			bp->b_vp->v_numoutput++;
@@ -1504,7 +1505,7 @@ sw_reg_iodone(bp)
 	int resid;
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=%x addr=%p",
+	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=0x%x addr=%p",
 	    vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno, vbp->vb_buf.b_data);
 	UVMHIST_LOG(pdhist, "  cnt=%lx resid=%lx",
 	    vbp->vb_buf.b_bcount, vbp->vb_buf.b_resid, 0, 0);

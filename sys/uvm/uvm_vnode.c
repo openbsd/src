@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.41 2006/06/10 13:37:02 pedro Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.42 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ uvn_attach(arg, accessprot)
 	u_quad_t used_vnode_size;
 	UVMHIST_FUNC("uvn_attach"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(vn=0x%x)", arg,0,0,0);
+	UVMHIST_LOG(maphist, "(vn=%p)", arg,0,0,0);
 
 	used_vnode_size = (u_quad_t)0;	/* XXX gcc -Wuninitialized */
 
@@ -313,7 +313,7 @@ uvn_attach(arg, accessprot)
 	if (oldflags & UVM_VNODE_WANTED)
 		wakeup(uvn);
 
-	UVMHIST_LOG(maphist,"<- done/VREF, ret 0x%x", &uvn->u_obj,0,0,0);
+	UVMHIST_LOG(maphist,"<- done/VREF, ret %p", &uvn->u_obj,0,0,0);
 	return(&uvn->u_obj);
 }
 
@@ -348,8 +348,8 @@ uvn_reference(uobj)
 	}
 #endif
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)",
-	uobj, uobj->uo_refs,0,0);
+	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %d)",
+	    uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
 }
 
@@ -373,7 +373,7 @@ uvn_detach(uobj)
 
 	simple_lock(&uobj->vmobjlock);
 
-	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
+	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%d", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		simple_unlock(&uobj->vmobjlock);
@@ -529,7 +529,7 @@ uvm_vnp_terminate(vp)
 	 * lock object and check if it is valid
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
-	UVMHIST_LOG(maphist, "  vp=0x%x, ref=%d, flag=0x%x", vp,
+	UVMHIST_LOG(maphist, "  vp=%p, ref=%d, flag=0x%x", vp,
 	    uvn->u_obj.uo_refs, uvn->u_flags, 0);
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
@@ -853,7 +853,7 @@ uvn_flush(uobj, start, stop, flags)
 	}
 
 	UVMHIST_LOG(maphist,
-	    " flush start=0x%x, stop=0x%x, by_list=%d, flags=0x%x",
+	    " flush start=0x%llx, stop=0x%llx, by_list=%d, flags=0x%x",
 	    start, stop, by_list, flags);
 
 	/*

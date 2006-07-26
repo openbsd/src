@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.80 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.81 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -426,7 +426,7 @@ uvm_mapent_alloc(struct vm_map *map)
 		me->flags = 0;
 	}
 
-	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", me,
+	UVMHIST_LOG(maphist, "<- new entry=%p [kentry=%d]", me,
 	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
 	return(me);
 }
@@ -443,7 +443,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 	int s;
 	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]",
+	UVMHIST_LOG(maphist,"<- freeing map entry=%p [flags=%d]",
 		me, me->flags, 0, 0);
 	if (me->flags & UVM_MAP_STATIC) {
 		s = splvm();
@@ -736,9 +736,9 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 	UVMHIST_FUNC("uvm_map");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, *startp=0x%x, size=%d, flags=0x%x)",
+	UVMHIST_LOG(maphist, "(map=%p, *startp=0x%lx, size=%ld, flags=0x%x)",
 	    map, *startp, size, flags);
-	UVMHIST_LOG(maphist, "  uobj/offset 0x%x/%d", uobj, uoffset,0,0);
+	UVMHIST_LOG(maphist, "  uobj/offset %p/%lld", uobj, uoffset,0,0);
 
 	uvm_tree_sanity(map, "map entry");
 
@@ -748,7 +748,7 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 
 	if ((prot & maxprot) != prot) {
 		UVMHIST_LOG(maphist, "<- prot. failure:  prot=0x%x, max=0x%x", 
-		prot, maxprot,0,0);
+		    prot, maxprot,0,0);
 		return(KERN_PROTECTION_FAILURE);
 	}
 
@@ -975,7 +975,7 @@ uvm_map_lookup_entry(map, address, entry)
 	UVMHIST_FUNC("uvm_map_lookup_entry");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(map=0x%x,addr=0x%x,ent=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,addr=0x%lx,ent=%p)",
 	    map, address, entry, 0);
 
 	/*
@@ -1007,7 +1007,7 @@ uvm_map_lookup_entry(map, address, entry)
 		if ((cur != last) && (cur->end > address)) {
 			UVMCNT_INCR(uvm_mlk_hint);
 			*entry = cur;
-			UVMHIST_LOG(maphist,"<- got it via hint (0x%x)",
+			UVMHIST_LOG(maphist,"<- got it via hint (%p)",
 			    cur, 0, 0, 0);
 			return (TRUE);
 		}
@@ -1064,7 +1064,7 @@ uvm_map_lookup_entry(map, address, entry)
 
 				*entry = cur;
 				SAVE_HINT(map, map->hint, cur);
-				UVMHIST_LOG(maphist,"<- search got it (0x%x)",
+				UVMHIST_LOG(maphist,"<- search got it (%p)",
 					cur, 0, 0, 0);
 				return (TRUE);
 			}
@@ -1176,7 +1176,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, hint=0x%x, len=%d, flags=0x%x)", 
+	UVMHIST_LOG(maphist, "(map=%p, hint=0x%lx, len=%ld, flags=0x%x)", 
 		    map, hint, length, flags);
 	KASSERT((align & (align - 1)) == 0);
 	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
@@ -1198,7 +1198,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 		hint = map->min_offset;
 	}
 	if (hint > map->max_offset) {
-		UVMHIST_LOG(maphist,"<- VA 0x%x > range [0x%x->0x%x]",
+		UVMHIST_LOG(maphist,"<- VA 0x%lx > range [0x%lx->0x%lx]",
 				hint, map->min_offset, map->max_offset, 0);
 		return(NULL);
 	}
@@ -1363,7 +1363,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
  found:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
-	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
+	UVMHIST_LOG(maphist,"<- got it!  (result=0x%lx)", hint, 0,0,0);
 	return (entry);
 
  error:
@@ -1402,7 +1402,7 @@ uvm_unmap_remove(map, start, end, entry_list, p)
 	UVMHIST_FUNC("uvm_unmap_remove");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(map=0x%x, start=0x%x, end=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p, start=0x%lx, end=0x%lx)",
 	    map, start, end, 0);
 
 	VM_MAP_RANGE_CHECK(map, start, end);
@@ -1544,7 +1544,7 @@ uvm_unmap_remove(map, start, end, entry_list, p)
 		 * remove entry from map and put it on our list of entries 
 		 * that we've nuked.  then go do next entry.
 		 */
-		UVMHIST_LOG(maphist, "  removed map entry 0x%x", entry, 0, 0,0);
+		UVMHIST_LOG(maphist, "  removed map entry %p", entry, 0, 0,0);
 
 		/* critical! prevents stale hint */
 		SAVE_HINT(map, entry, entry->prev);
@@ -1588,7 +1588,7 @@ uvm_unmap_detach(first_entry, flags)
 	while (first_entry) {
 		KASSERT(!VM_MAPENT_ISWIRED(first_entry));
 		UVMHIST_LOG(maphist,
-		    "  detach 0x%x: amap=0x%x, obj=0x%x, submap?=%d", 
+		    "  detach 0x%x: amap=%p, obj=%p, submap?=%d", 
 		    first_entry, first_entry->aref.ar_amap, 
 		    first_entry->object.uvm_obj,
 		    UVM_ET_ISSUBMAP(first_entry));
@@ -1645,7 +1645,7 @@ uvm_map_reserve(map, size, offset, align, raddr)
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
 
-	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x, offset=0x%x,addr=0x%x)",
+	UVMHIST_LOG(maphist, "(map=%p, size=0x%lx, offset=0x%lx,addr=0x%lx)",
 	      map,size,offset,raddr);
 
 	size = round_page(size);
@@ -1663,7 +1663,7 @@ uvm_map_reserve(map, size, offset, align, raddr)
 		return (FALSE);
 	}     
 
-	UVMHIST_LOG(maphist, "<- done (*raddr=0x%x)", *raddr,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (*raddr=0x%lx)", *raddr,0,0,0);
 	return (TRUE);
 }
 
@@ -1828,9 +1828,9 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	int nchain, error, copy_ok;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(srcmap=0x%x,start=0x%x, len=0x%x", srcmap, start,
+	UVMHIST_LOG(maphist,"(srcmap=%p,start=0x%lx, len=0x%lx", srcmap, start,
 	    len,0);
-	UVMHIST_LOG(maphist," ...,dstmap=0x%x, flags=0x%x)", dstmap,flags,0,0);
+	UVMHIST_LOG(maphist," ...,dstmap=%p, flags=0x%x)", dstmap,flags,0,0);
 
 	uvm_tree_sanity(srcmap, "map_extract src enter");
 	uvm_tree_sanity(dstmap, "map_extract dst enter");
@@ -1853,7 +1853,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	if (uvm_map_reserve(dstmap, len, start, 0, &dstaddr) == FALSE)
 		return(ENOMEM);
 	*dstaddrp = dstaddr;	/* pass address back to caller */
-	UVMHIST_LOG(maphist, "  dstaddr=0x%x", dstaddr,0,0,0);
+	UVMHIST_LOG(maphist, "  dstaddr=0x%lx", dstaddr,0,0,0);
 
 	/*
 	 * step 2: setup for the extraction process loop by init'ing the 
@@ -2212,7 +2212,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	vm_map_entry_t current, entry;
 	int rv = KERN_SUCCESS;
 	UVMHIST_FUNC("uvm_map_protect"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_prot=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_prot=0x%x)",
 		    map, start, end, new_prot);
 
 	vm_map_lock(map);
@@ -2332,7 +2332,7 @@ uvm_map_inherit(map, start, end, new_inheritance)
 {
 	vm_map_entry_t entry, temp_entry;
 	UVMHIST_FUNC("uvm_map_inherit"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_inh=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_inh=0x%x)",
 	    map, start, end, new_inheritance);
 
 	switch (new_inheritance) {
@@ -2382,7 +2382,7 @@ uvm_map_advice(map, start, end, new_advice)
 {
 	vm_map_entry_t entry, temp_entry;
 	UVMHIST_FUNC("uvm_map_advice"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_adv=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_adv=0x%x)",
 	    map, start, end, new_advice);
 
 	vm_map_lock(map);
@@ -2449,7 +2449,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	u_int timestamp_save;
 #endif
 	UVMHIST_FUNC("uvm_map_pageable"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_pageable=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_pageable=0x%x)",
 		    map, start, end, new_pageable);
 	KASSERT(map->flags & VM_MAP_PAGEABLE);
 
@@ -2703,7 +2703,7 @@ uvm_map_pageable_all(map, flags, limit)
 	u_int timestamp_save;
 #endif
 	UVMHIST_FUNC("uvm_map_pageable_all"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=0x%x,flags=0x%x)", map, flags, 0, 0);
+	UVMHIST_LOG(maphist,"(map=%p,flags=0x%x)", map, flags, 0, 0);
 
 	KASSERT(map->flags & VM_MAP_PAGEABLE);
 
@@ -2937,7 +2937,7 @@ uvm_map_clean(map, start, end, flags)
 	int rv, error, refs;
 	UVMHIST_FUNC("uvm_map_clean"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,flags=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,flags=0x%x)",
 		    map, start, end, flags);
 	KASSERT((flags & (PGO_FREE|PGO_DEACTIVATE)) !=
 		(PGO_FREE|PGO_DEACTIVATE));
@@ -3178,7 +3178,7 @@ uvmspace_alloc(min, max, pageable)
 
 	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
 	uvmspace_init(vm, NULL, min, max, pageable);
-	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
+	UVMHIST_LOG(maphist,"<- done (vm=%p)", vm,0,0,0);
 	return (vm);
 }
 
@@ -3348,7 +3348,7 @@ uvmspace_free(vm)
 	vm_map_entry_t dead_entries;
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(vm=0x%x) ref=%d", vm, vm->vm_refcnt,0,0);
+	UVMHIST_LOG(maphist,"(vm=%p) ref=%d", vm, vm->vm_refcnt,0,0);
 	if (--vm->vm_refcnt == 0) {
 		/*
 		 * lock the map, to wait out all other references to it.  delete

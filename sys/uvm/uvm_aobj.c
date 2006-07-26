@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.29 2005/11/15 21:09:46 miod Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.30 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ uao_reference_locked(uobj)
 		return;
 
 	uobj->uo_refs++;		/* bump! */
-	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
+	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %d)", 
 		    uobj, uobj->uo_refs,0,0);
 }
 
@@ -670,7 +670,7 @@ uao_detach_locked(uobj)
 		return;
 	}
 
-	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
+	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%d", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;				/* drop ref! */
 	if (uobj->uo_refs) {				/* still more refs? */
 		simple_unlock(&uobj->vmobjlock);
@@ -812,7 +812,7 @@ uao_flush(uobj, start, stop, flags)
 	}
 
 	UVMHIST_LOG(maphist,
-	    " flush start=0x%lx, stop=0x%x, by_list=%d, flags=0x%x",
+	    " flush start=0x%llx, stop=0x%llx, by_list=%d, flags=0x%x",
 	    start, stop, by_list, flags);
 
 	/*
@@ -965,7 +965,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	boolean_t done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d",
+	UVMHIST_LOG(pdhist, "aobj=%p offset=%lld, flags=%d",
 		    aobj, offset, flags,0);
 
 	/*

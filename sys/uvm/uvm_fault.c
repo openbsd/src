@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.39 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.40 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, ft=%d, at=%d)",
+	UVMHIST_LOG(maphist, "(map=%p, vaddr=0x%lx, ft=%d, at=%d)",
 	      orig_map, vaddr, fault_type, access_type);
 
 	anon = NULL;
@@ -621,7 +621,7 @@ ReFault:
 	 */
 
 	if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
-		UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", vaddr, 0,0,0);
+		UVMHIST_LOG(maphist, "<- no mapping @ 0x%lx", vaddr, 0,0,0);
 		return (KERN_INVALID_ADDRESS);
 	}
 	/* locked: maps(read) */
@@ -746,9 +746,9 @@ ReFault:
 	}
 
 	/* locked: maps(read) */
-	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
+	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%lx",
 		    narrow, nback, nforw, startva);
-	UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi.entry,
+	UVMHIST_LOG(maphist, "  entry=%p, amap=%p, obj=%p", ufi.entry,
 		    amap, uobj, 0);
 
 	/*
@@ -844,7 +844,7 @@ ReFault:
 			uvm_pageactivate(anon->u.an_page);	/* reactivate */
 			uvm_unlock_pageq();
 			UVMHIST_LOG(maphist,
-			    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
+			    "  MAPPING: n anon: pm=%p, va=0x%lx, pg=%p",
 			    ufi.orig_map->pmap, currva, anon->u.an_page, 0);
 			uvmexp.fltnamap++;
 
@@ -958,7 +958,7 @@ ReFault:
 				if (lcv == centeridx) {
 					uobjpage = pages[lcv];
 					UVMHIST_LOG(maphist, "  got uobjpage "
-					    "(0x%x) with locked get", 
+					    "(%p) with locked get", 
 					    uobjpage, 0,0,0);
 					continue;
 				}
@@ -976,7 +976,7 @@ ReFault:
 				uvm_pageactivate(pages[lcv]);	/* reactivate */
 				uvm_unlock_pageq();
 				UVMHIST_LOG(maphist,
-				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+				  "  MAPPING: n obj: pm=%p, va=0x%lx, pg=%p",
 				  ufi.orig_map->pmap, currva, pages[lcv], 0);
 				uvmexp.fltnomap++;
 
@@ -1042,7 +1042,7 @@ ReFault:
 	 */
 
 	anon = anons[centeridx];
-	UVMHIST_LOG(maphist, "  case 1 fault: anon=0x%x", anon, 0,0,0);
+	UVMHIST_LOG(maphist, "  case 1 fault: anon=%p", anon, 0,0,0);
 	simple_lock(&anon->an_lock);
 
 	/* locked: maps(read), amap, anon */
@@ -1247,7 +1247,7 @@ ReFault:
 	 * under us between the unlock and the pmap_enter.
 	 */
 
-	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
+	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=%p, va=0x%lx, pg=%p",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
@@ -1665,7 +1665,7 @@ Case2:
 			uobj = NULL;
 
 			UVMHIST_LOG(maphist,
-			    "  promote uobjpage 0x%x to anon/page 0x%x/0x%x",
+			    "  promote uobjpage %p to anon/page %p/%p",
 			    uobjpage, anon, pg, 0);
 
 		} else {
@@ -1674,7 +1674,7 @@ Case2:
 			 * Page is zero'd and marked dirty by uvm_pagealloc()
 			 * above.
 			 */
-			UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x",
+			UVMHIST_LOG(maphist,"  zero fill anon/page %p/%p",
 			    anon, pg, 0, 0);
 		}
 
@@ -1695,7 +1695,7 @@ Case2:
 	 */
 
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
+	    "  MAPPING: case2: pm=%p, va=0x%lx, pg=%p, promote=%d",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))

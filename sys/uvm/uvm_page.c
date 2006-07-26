@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.54 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.55 2006/07/26 23:15:55 mickey Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -968,8 +968,8 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		try2 = PGFL_ZEROS;
 	}
 
-	UVMHIST_LOG(pghist, "obj=%p off=%llx anon=%x flags=%x",
-	    obj, off, flags, anon);
+	UVMHIST_LOG(pghist, "obj=%p off=%llx anon=%p flags=%x",
+	    obj, off, anon, flags);
 	UVMHIST_LOG(pghist, "strat=%d free_list=%d", strat, free_list, 0, 0);
  again:
 	switch (strat) {
