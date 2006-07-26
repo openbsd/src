@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.72 2006/03/07 09:31:01 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.73 2006/07/26 10:13:25 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1211,7 +1211,7 @@ When using
 .Ic getopts ,
 it contains the argument for a parsed option, if it requires one.
 .It Ev OPTIND
-The index of the last argument processed when using
+The index of the next argument to be processed when using
 .Ic getopts .
 Assigning 1 to this parameter causes
 .Ic getopts
@@ -2429,7 +2429,9 @@ Each time
 .Ic getopts
 is invoked, it places the next option in the shell parameter
 .Ar name
-and the index of the next argument to be processed in the shell parameter
+and the index of the argument to be processed by the next call to
+.Ic getopts
+in the shell parameter
 .Ev OPTIND .
 If the option was introduced with a
 .Ql + ,
