@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2006/07/26 16:43:31 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1994/12/08 09:51:24 jtc Exp $	*/
 
 /*
@@ -34,3 +34,7 @@
 
 void	recvfile(int, char *, char *);
 void	sendfile(int, char *, char *);
+
+#define TIMEOUT		5		/* packet rexmt timeout */
+#define TIMEOUT_MIN	1		/* minimal packet rexmt timeout */
+#define TIMEOUT_MAX	255		/* maximal packet rexmt timeout */

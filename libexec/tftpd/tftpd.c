@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.50 2006/07/26 12:34:41 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.51 2006/07/26 16:43:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.50 2006/07/26 12:34:41 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.51 2006/07/26 16:43:31 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -67,6 +67,10 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.50 2006/07/26 12:34:41 mglocker Exp
 #include <syslog.h>
 #include <unistd.h>
 #include <vis.h>
+
+#define TIMEOUT		5		/* packet rexmt timeout */
+#define TIMEOUT_MIN	1		/* minimal packet rexmt timeout */
+#define TIMEOUT_MAX	255		/* maximal packet rexmt timeout */
 
 struct formats;
 
