@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.21 2006/06/23 06:27:12 miod Exp $ */
+/*	$OpenBSD: umodem.c,v 1.22 2006/07/26 00:38:38 jsg Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -85,11 +85,11 @@ int	umodemdebug = 0;
 
 /*
  * These are the maximum number of bytes transferred per frame.
- * If some really high speed devices should use this driver they
- * may need to be increased, but this is good enough for normal modems.
+ * Buffers are this large to deal with high speed wireless devices.
+ * Capped at 1024 as ttymalloc() is limited to this amount.
  */
-#define UMODEMIBUFSIZE 64
-#define UMODEMOBUFSIZE 256
+#define UMODEMIBUFSIZE 1024
+#define UMODEMOBUFSIZE 1024
 
 struct umodem_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
