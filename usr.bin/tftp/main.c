@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2006/07/24 17:29:58 mglocker Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2006/07/26 09:10:03 mglocker Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: main.c,v 1.26 2006/07/24 17:29:58 mglocker Exp $";
+    "$OpenBSD: main.c,v 1.27 2006/07/26 09:10:03 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,6 @@ static const char rcsid[] =
 
 #include "extern.h"
 
-#define	TIMEOUT		5		/* secs between rexmt's */
 #define	LBUFLEN		200		/* size of input buffer */
 #define	MAXARGV		20
 #define HELPINDENT	(sizeof("connect"))
@@ -519,7 +518,7 @@ setrexmt(int argc, char *argv[])
 		printf("usage: %s value\n", argv[0]);
 		return;
 	}
-	t = strtonum(argv[1], 1, 255, &errstr);
+	t = strtonum(argv[1], TIMEOUT_MIN, TIMEOUT_MAX, &errstr);
 	if (errstr)
 		printf("%s: value is %s\n", argv[1], errstr);
 	else
@@ -529,7 +528,8 @@ setrexmt(int argc, char *argv[])
 void
 settimeout(int argc, char *argv[])
 {
-	int	t;
+	int		 t;
+	const char	*errstr;
 
 	if (argc < 2) {
 		strlcpy(line, "Maximum-timeout ", sizeof(line));
@@ -545,8 +545,9 @@ settimeout(int argc, char *argv[])
 		return;
 	}
 	t = atoi(argv[1]);
-	if (t < 0)
-		printf("%s: bad value\n", argv[1]);
+	t = strtonum(argv[1], TIMEOUT_MIN, TIMEOUT_MAX, &errstr);
+	if (errstr)
+		printf("%s: value is %s\n", argv[1], errstr);
 	else
 		maxtimeout = t;
 }

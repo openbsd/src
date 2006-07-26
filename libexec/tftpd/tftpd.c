@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.48 2006/07/21 21:28:47 mglocker Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.49 2006/07/26 09:10:03 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.48 2006/07/21 21:28:47 mglocker Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.49 2006/07/26 09:10:03 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -68,9 +68,6 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.48 2006/07/21 21:28:47 mglocker Exp
 #include <unistd.h>
 #include <vis.h>
 
-#define	TIMEOUT		5
-#define	MAX_TIMEOUTS	5
-
 struct formats;
 
 int		readit(FILE *, struct tftphdr **, int, int);
@@ -92,7 +89,7 @@ extern char		 *__progname;
 struct sockaddr_storage	  s_in;
 int			  peer;
 int			  rexmtval = TIMEOUT;
-int			  max_rexmtval = 2 * TIMEOUT;
+int			  maxtimeout = 5 * TIMEOUT;
 char			 *buf;
 char			 *ackbuf;
 struct sockaddr_storage	  from;
@@ -452,14 +449,13 @@ again:
 
 option_fail:
 	if (options[OPT_TIMEOUT].o_request) {
-		int to = atoi(options[OPT_TIMEOUT].o_request);
-		if (to < 1 || to > 255) {
+		int to = strtonum(options[OPT_TIMEOUT].o_request,
+		    TIMEOUT_MIN, TIMEOUT_MAX, &errstr);
+		if (errstr) {
 			nak(EBADOP);
 			exit(1);
-		} else if (to <= max_rexmtval)
-			options[OPT_TIMEOUT].o_reply = rexmtval = to;
-		else
-			options[OPT_TIMEOUT].o_request = NULL;
+		}
+		options[OPT_TIMEOUT].o_reply = rexmtval = to;
 	}
 
 	if (options[OPT_BLKSIZE].o_request) {
@@ -611,7 +607,7 @@ sendfile(struct formats *pf)
 
 		/* send data to client and wait for client ACK */
 		for (timeouts = 0, error = 0;;) {
-			if (timeouts == MAX_TIMEOUTS)
+			if (timeouts >= maxtimeout)
 				exit(1);
 
 			if (!error) {
@@ -625,9 +621,9 @@ sendfile(struct formats *pf)
 
 			pfd[0].fd = peer;
 			pfd[0].events = POLLIN;
-			nfds = poll(pfd, 1, TIMEOUT * 1000);
+			nfds = poll(pfd, 1, rexmtval * 1000);
 			if (nfds == 0) {
-				timeouts++;
+				timeouts += rexmtval;
 				continue;
 			}
 			if (nfds == -1) {
@@ -698,7 +694,7 @@ recvfile(struct formats *pf)
 
 		/* send ACK to client and wait for client data */
 		for (timeouts = 0, error = 0;;) {
-			if (timeouts == MAX_TIMEOUTS)
+			if (timeouts >= maxtimeout)
 				exit(1);
 
 			if (!error) {
@@ -712,9 +708,9 @@ recvfile(struct formats *pf)
 
 			pfd[0].fd = peer;
 			pfd[0].events = POLLIN;
-			nfds = poll(pfd, 1, TIMEOUT * 1000);
+			nfds = poll(pfd, 1, rexmtval * 1000);
 			if (nfds == 0) {
-				timeouts++;
+				timeouts += rexmtval;
 				continue;
 			}
 			if (nfds == -1) {
@@ -772,7 +768,7 @@ noack:
 	/* just quit on timeout */
 	pfd[0].fd = peer;
 	pfd[0].events = POLLIN;
-	nfds = poll(pfd, 1, TIMEOUT * 1000);
+	nfds = poll(pfd, 1, rexmtval * 1000);
 	if (nfds < 1)
 		exit(1);
 	n = recv(peer, buf, packet_size, 0);
@@ -853,7 +849,7 @@ oack(int opcode)
 
 	/* send OACK to client and wait for client ACK */
 	for (timeouts = 0, error = 0;;) {
-		if (timeouts == MAX_TIMEOUTS)
+		if (timeouts >= maxtimeout)
 			exit(1);
 
 		if (!error) {
@@ -866,9 +862,9 @@ oack(int opcode)
 
 		pfd[0].fd = peer;
 		pfd[0].events = POLLIN;
-		nfds = poll(pfd, 1, TIMEOUT * 1000);
+		nfds = poll(pfd, 1, rexmtval * 1000);
 		if (nfds == 0) {
-			timeouts++;
+			timeouts += rexmtval;
 			continue;
 		}
 		if (nfds == -1) {

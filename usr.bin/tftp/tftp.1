@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.14 2006/07/24 21:29:55 jmc Exp $
+.\"	$OpenBSD: tftp.1,v 1.15 2006/07/26 09:10:03 mglocker Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -189,6 +189,8 @@ Show current status.
 .Pp
 .It Ic timeout Ar total-transmission-timeout
 Set the total transmission timeout, in seconds.
+The default value is 25 seconds.
+Valid values are 1 second \(en 255 seconds.
 .Pp
 .It Ic tout
 Toggle the

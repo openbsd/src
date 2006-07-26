@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.19 2006/07/24 17:29:58 mglocker Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.20 2006/07/26 09:10:03 mglocker Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftp.c,v 1.19 2006/07/24 17:29:58 mglocker Exp $";
+    "$OpenBSD: tftp.c,v 1.20 2006/07/26 09:10:03 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -162,7 +162,7 @@ sendfile(int fd, char *name, char *mode)
 
 		/* send data to server and wait for server ACK */
 		for (timeouts = 0, error = 0; !intrflag;) {
-			if (timeouts == maxtimeout) {
+			if (timeouts >= maxtimeout) {
 				printtimeout();
 				goto abort;
 			}
@@ -185,7 +185,7 @@ sendfile(int fd, char *name, char *mode)
 			pfd[0].events = POLLIN;
 			nfds = poll(pfd, 1, rexmtval * 1000);
 			if (nfds == 0) {
-				timeouts++;
+				timeouts += rexmtval;
 				continue;
 			}
 			if (nfds == -1) {
@@ -295,7 +295,7 @@ options:
 
 		/* send ACK to server and wait for server data */
 		for (timeouts = 0, error = 0; !intrflag;) {
-			if (timeouts == maxtimeout) {
+			if (timeouts >= maxtimeout) {
 				printtimeout();
 				goto abort;
 			}
@@ -317,7 +317,7 @@ options:
 			pfd[0].events = POLLIN;
 			nfds = poll(pfd, 1, rexmtval * 1000);
 			if (nfds == 0) {
-				timeouts++;
+				timeouts += rexmtval;
 				continue;
 			}
 			if (nfds == -1) {
@@ -602,7 +602,8 @@ oack_set(const char *option, const char *value)
 			}
 			if (i == OPT_TIMEOUT) {
 				/* verify OACK response */
-				n = strtonum(value, 1, 255, &errstr);
+				n = strtonum(value, TIMEOUT_MIN, TIMEOUT_MAX,
+				    &errstr);
 				if (errstr || rexmtval != n ||
 				    opt_tout == 0) {
 					nak(EOPTNEG);
