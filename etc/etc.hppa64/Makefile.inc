@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2005/04/01 16:02:16 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2006/07/27 02:53:55 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: boot bsd distrib
+snap_md: bootblocks bsd distrib
 	cp ${.CURDIR}/../sys/arch/hppa64/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
@@ -10,9 +10,9 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/hppa64/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-boot:
+bootblocks:
 	cp ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/snapshot
 
-.PHONY: bsd
+.PHONY: bootblocks bsd
 
 .endif	# DESTDIR check

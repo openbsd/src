@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2006/07/24 18:11:47 deraadt Exp $
-#	etc.sgi/Makefile.inc -- sgi-specific etc Makefile targets
+#	$OpenBSD: Makefile.inc,v 1.4 2006/07/27 02:53:55 deraadt Exp $
 
 .ifdef DESTDIR
-
-snap_md: bsd distrib1
+snap_md: bsd bootblocks distrib
 	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
@@ -12,9 +10,9 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-distrib1:
-	${MAKE} distrib
+bootblocks:
+	#none needed
 
-.PHONY: bsd distrib1
+.PHONY: bsd bootblocks
 
-.endif
+.endif	# DESTDIR check

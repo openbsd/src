@@ -1,18 +1,18 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2003/08/15 13:37:56 miod Exp $
-#	etc.mvme88k/Makefile.inc -- mvme88k-specific etc Makefile targets
+#	$OpenBSD: Makefile.inc,v 1.7 2006/07/27 02:53:55 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: bsd-generic bootblocks distrib
+snap_md: bsd bootblocks distrib
 	cp ${.CURDIR}/../sys/arch/mvme88k/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
-bsd-generic:
+bsd:
 	cd ${.CURDIR}/../sys/arch/mvme88k/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/mvme88k/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/* ${DESTDIR}/snapshot/
 
-.PHONY: bsd-generic bootblocks
+.PHONY: bsd bootblocks
 
 .endif	# DESTDIR check

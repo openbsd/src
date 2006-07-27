@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2003/03/24 18:57:21 drahn Exp $
-#	etc.macppc/Makefile.inc -- macppc-specific etc Makefile targets
+#	$OpenBSD: Makefile.inc,v 1.8 2006/07/27 02:53:55 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: bsd distrib1
+snap_md: bsd bootblocks distrib gzip_bsd.rd
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
@@ -11,14 +10,14 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/macppc/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-# knows about bsd.rd
-distrib1:
+bootblocks:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/ofwboot
 	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${DESTDIR}/snapshot/bsd.tbxi
-	${MAKE} distrib
+
+gzip_bsd.rd:
 	gzip -9 ${DESTDIR}/snapshot/bsd.rd
 	mv ${DESTDIR}/snapshot/bsd.rd.gz ${DESTDIR}/snapshot/bsd.rd
 
-.PHONY: bsd distrib1
+.PHONY: bootblocks bsd gzip_bsd.rd
 
 .endif	# DESTDIR check

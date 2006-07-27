@@ -1,16 +1,18 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/04/21 18:23:44 miod Exp $
-#	etc.luna88k/Makefile.inc -- luna88k-specific etc Makefile targets
+#	$OpenBSD: Makefile.inc,v 1.2 2006/07/27 02:53:55 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: bsd-generic distrib
+snap_md: bsd bootblocks distrib
 	cp ${.CURDIR}/../sys/arch/luna88k/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
-bsd-generic:
+bsd:
 	cd ${.CURDIR}/../sys/arch/luna88k/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/luna88k/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
 
-.PHONY: bsd-generic
+bootblocks:
+	#none needed
+
+.PHONY: bsd bootblocks
 
 .endif	# DESTDIR check

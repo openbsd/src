@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2005/03/08 20:03:04 miod Exp $
-#	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
+#	$OpenBSD: Makefile.inc,v 1.19 2006/07/27 02:53:55 deraadt Exp $
 
 .ifdef DESTDIR
 snap_md: bsd bootblocks distrib
