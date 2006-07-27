@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.2 2006/06/01 21:46:28 pascoe Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.3 2006/07/27 05:58:12 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -37,7 +37,8 @@ INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dsparc -Dsolbourne
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main
+		-Wno-uninitialized -Wno-format -Wno-main \
+		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}

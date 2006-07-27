@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.26 2006/06/01 21:46:27 pascoe Exp $
+#	$OpenBSD: Makefile.hppa,v 1.27 2006/07/27 05:58:11 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -37,7 +37,8 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dhppa
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-		-Wno-format -Wno-main
+		-Wno-format -Wno-main \
+		-Wstack-larger-than-2047
 CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs \
 		-fno-stack-protector -fno-builtin-printf -fno-builtin-log
 COPTS?=		-Os

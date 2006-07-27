@@ -16,7 +16,8 @@ INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main
+		-Wno-uninitialized -Wno-format -Wno-main \
+		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-Wa,-Av9a, -mno-fpu -fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.cats,v 1.5 2006/06/01 21:46:27 pascoe Exp $
-#	$OpenBSD: Makefile.cats,v 1.5 2006/06/01 21:46:27 pascoe Exp $
+#	$OpenBSD: Makefile.cats,v 1.6 2006/07/27 05:58:11 miod Exp $
+#	$OpenBSD: Makefile.cats,v 1.6 2006/07/27 05:58:11 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -39,7 +39,8 @@ ARM=	$S/arch/arm
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__cats__
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main
+		-Wno-uninitialized -Wno-format -Wno-main \
+		-Wstack-larger-than-2047
 
 CMACHFLAGS= -ffreestanding
 #CMACHFLAGS=	-march=armv4 -mtune=strongarm -ffreestanding

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa64,v 1.2 2006/06/01 21:46:27 pascoe Exp $
+#	$OpenBSD: Makefile.hppa64,v 1.3 2006/07/27 05:58:11 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -37,7 +37,8 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dhppa64
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-		-Wno-format -Wno-main
+		-Wno-format -Wno-main \
+		-Wstack-larger-than-2047
 CMACHFLAGS=	-fno-stack-protector -fno-builtin-log -fno-builtin-printf \
 		-fno-builtin-snprintf -fno-builtin-vsnprintf
 COPTS?=		-Os -mpa-risc-2-0 -mno-space-regs -mdisable-fpregs
