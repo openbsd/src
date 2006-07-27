@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.25 2006/07/21 00:47:35 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.27 2006/07/27 02:58:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -365,10 +365,10 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
 	size_t len;
-	int fd, from_fd, to_fd;
+	int fd;
 
 	fn = NULL;
-	from_fd = to_fd = fd = -1;
+	fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return;
@@ -1209,7 +1209,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	 */
 	do {
 		found = 0;
-		
+
 		if (rcsnum_cmp(rfp->rf_head, rev, 0) == 0)
 			break;
 

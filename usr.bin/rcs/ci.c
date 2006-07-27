@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.181 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.182 2006/07/27 02:57:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -416,11 +416,9 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 static int
 checkin_update(struct checkin_params *pb)
 {
-	char *filec, numb1[64], numb2[64];
+	char numb1[64], numb2[64];
 	struct stat st;
 	BUF *bp;
-
-	filec = NULL;
 
 	/*
 	 * XXX this is wrong, we need to get the revision the user
