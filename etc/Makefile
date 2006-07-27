@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.238 2006/07/27 03:52:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.239 2006/07/27 17:59:51 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,8 +30,6 @@ BIN1+=	wsconsctl.conf
 BIN2=	motd
 
 PCS=	pcs750.bin
-WCS1=	wcs fppwcs poc poc1 poc2 fppoc
-WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 
 # Use NOGZIP on architectures where the gzip'ing would take too much time
 # (pmax or slower :-)).  This way you get only tar'ed snap files and you can
@@ -339,7 +337,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.238 2006/07/27 03:52:55 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.239 2006/07/27 17:59:51 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
