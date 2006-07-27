@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.17 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.18 2006/07/27 19:59:29 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -51,7 +51,6 @@ int		 dobindkey(KEYMAP *, const char *, const char *);
 KEYMAP		*name_map(const char *);
 struct maps_s	*name_mode(const char *);
 PF		 doscan(KEYMAP *, int, KEYMAP **);
-const		 char *map_name(KEYMAP *);
 void		 maps_init(void);
 int		 maps_add(KEYMAP *, const char *);
 
