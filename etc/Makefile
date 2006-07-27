@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.237 2006/07/24 22:24:56 miod Exp $
+#	$OpenBSD: Makefile,v 1.238 2006/07/27 03:52:55 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -49,7 +49,7 @@ GZIPEXT=
 all clean cleandir depend etc install lint:
 
 .ifndef DESTDIR
-distribution-etc-root-var distribution distrib-dirs release snapshot:
+distribution-etc-root-var distribution distrib-dirs release:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
@@ -274,57 +274,14 @@ release: distribution snap_pre snap_md
 	-cd ${RELEASEDIR}; \
 		cksum *bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* Packages *.fs \
 		*.iso *.gz *.tgz > CKSUM
-.if defined(MACHINE_HAS_TOOLS)
-	mkdir -p ${RELEASEDIR}/tools
-	cp ${DESTDIR}/snapshot/tools/* ${RELEASEDIR}/tools
-	cd ${RELEASEDIR} && md5 tools/* >>MD5
-	cd ${RELEASEDIR} && cksum tools/* >>CKSUM
-.endif
 	-cd ${RELEASEDIR} && sort -o MD5 MD5
 	-cd ${RELEASEDIR} && sort -o CKSUM -k 3 CKSUM
-.endif
-
-snapshot: distribution snap_pre snap_tar snap_md
-	cd ${DESTDIR}/snapshot && cksum * > CKSUMS
-	cd ${DESTDIR}/snapshot && md5 * > MD5
 
 snap_pre:
 	${SUDO} /bin/rm -rf ${DESTDIR}/snapshot
 	${SUDO} ${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
 
-snap_tar:
-	cd ${DESTDIR} && tar cf - bin \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/bin.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - dev \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/dev.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - .profile .cshrc altroot etc home mnt \
-	    root stand sys tmp | ${GZIP} ${GZIPFLAGS} \
-	    > snapshot/etc.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - sbin \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/sbin.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/bin \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.bin.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/games \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.games.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/include \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.include.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/lib \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.lib.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/libexec \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.libexec.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/mdec usr/libdata usr/lkm usr/local \
-	    usr/src usr/obj | ${GZIP} ${GZIPFLAGS} \
-	    > snapshot/usr.misc.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/sbin \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.sbin.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - usr/share \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.share.tar${GZIPEXT}
-	cd ${DESTDIR} && tar cf - var \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/var.tar${GZIPEXT}
-	cd ../distrib/notes; ${MAKE}; ${MAKE} install
-
-snap_md:
-# nothing here -- look in the machine-dependent Makefile.inc
+.endif
 
 .endif	# DESTDIR check
 
@@ -382,7 +339,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.237 2006/07/24 22:24:56 miod Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.238 2006/07/27 03:52:55 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
@@ -391,5 +348,5 @@ update-moduli:
 	) > moduli
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
-	release snapshot allarchs snap_pre snap_tar snap_md m4
+	release allarchs snap_md m4 snap_pre
 .include <bsd.prog.mk>
