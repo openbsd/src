@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.209 2006/06/29 22:14:41 dlg Exp $
+#	$OpenBSD: files.pci,v 1.210 2006/07/27 00:45:59 brad Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -465,9 +465,12 @@ attach	wpi at pci
 file	dev/pci/if_wpi.c		wpi
 
 # C-Media CMI8x38 Audio Chip
-device	cmpci: audio, auconv, mulaw
+device	cmpci {}: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
+
+attach	opl at cmpci with opl_cmpci
+file	dev/pci/opl_cmpci.c		opl_cmpci
 
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 attach	iha at pci with iha_pci

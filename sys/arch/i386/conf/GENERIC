@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.510 2006/07/25 19:16:51 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.511 2006/07/27 00:45:59 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -581,6 +581,7 @@ opl*	at eso?
 opl*	at sb?
 opl*	at ess?
 opl*	at yds?
+opl*	at cmpci?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker

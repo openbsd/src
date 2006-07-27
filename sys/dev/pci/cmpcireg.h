@@ -1,8 +1,15 @@
-/*	$OpenBSD: cmpcireg.h,v 1.1 2000/04/27 02:19:41 millert Exp $	*/
+/*	$OpenBSD: cmpcireg.h,v 1.2 2006/07/27 00:45:59 brad Exp $	*/
+/*	$NetBSD: cmpcireg.h,v 1.7 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
- * Copyright (c) 2000 Takuya SHIOZAKI
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Takuya SHIOZAKI <tshiozak@NetBSD.org> .
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by ITOH Yasufumi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +76,7 @@
 #  define CMPCI_REG_ADC_FS_MASK		0x00000007
 
 #define CMPCI_REG_CHANNEL_FORMAT	0x08
+#  define CMPCI_REG_SPDIN_PHASE		0x80
 #  define CMPCI_REG_CH0_FORMAT_SHIFT	0
 #  define CMPCI_REG_CH0_FORMAT_MASK	0x00000003
 #  define CMPCI_REG_CH1_FORMAT_SHIFT	2
@@ -111,8 +119,13 @@
 #  define CMPCI_REG_VMPUSEL_MASK	0x00000003
 
 #define CMPCI_REG_MISC			0x18
-#  define CMPCI_REG_SPDIF_48K		0x00008000
+#  define CMPCI_REG_2ND_SPDIFIN		0x00000100
+#  define CMPCI_REG_SPDIFOUT_48K	0x00008000
 #  define CMPCI_REG_FM_ENABLE		0x00080000
+#  define CMPCI_REG_SPDFLOOPI		0x00100000
+#  define CMPCI_REG_SPDIF48K		0x01000000
+#  define CMPCI_REG_5V			0x02000000
+#  define CMPCI_REG_N4SPK3D		0x04000000
 
 
 #define CMPCI_REG_SBDATA		0x22
@@ -129,7 +142,9 @@
 #  define CMPCI_SB16_MIXER_LINE_L	0x38
 #  define CMPCI_SB16_MIXER_LINE_R	0x39
 #  define CMPCI_SB16_MIXER_MIC		0x3A
+#    define CMPCI_SB16_MIXER_VALBITS		5
 #  define CMPCI_SB16_MIXER_SPEAKER	0x3B
+#    define CMPCI_SB16_MIXER_SPEAKER_VALBITS	2
 #  define CMPCI_SB16_MIXER_OUTMIX	0x3C
 #    define CMPCI_SB16_SW_MIC		0x01
 #    define CMPCI_SB16_SW_CD_R		0x02
@@ -147,22 +162,42 @@
 #    define CMPCI_SB16_MIXER_LINE_SRC_R	0x08
 #    define CMPCI_SB16_MIXER_CD_SRC_R	0x02
 #    define CMPCI_SB16_MIXER_MIC_SRC	0x01
-#    define CMPCI_SB16_MIXER_SRC_R_TO_L(v) ((v) << 1)
+#    define CMPCI_SB16_MIXER_SRC_R_TO_L(v)	((v) << 1)
 
-#  define CMPCI_SB16_MIXER_INGAIN_L	0x3F
-#  define CMPCI_SB16_MIXER_INGAIN_R	0x40
-#  define CMPCI_SB16_MIXER_OUTGAIN_L	0x41
-#  define CMPCI_SB16_MIXER_OUTGAIN_R	0x42
-#  define CMPCI_SB16_MIXER_AGC		0x43
-#  define CMPCI_SB16_MIXER_TREBLE_L	0x44
-#  define CMPCI_SB16_MIXER_TREBLE_R	0x45
-#  define CMPCI_SB16_MIXER_BASS_L	0x46
-#  define CMPCI_SB16_MIXER_BASS_R	0x47
 #  define CMPCI_SB16_MIXER_L_TO_R(addr) ((addr)+1)
 
-#  define CMPCI_ADJUST_MIC_GAIN(sc, x) cmpci_adjust((x), 0xf8)
-#  define CMPCI_ADJUST_GAIN(sc, x)     cmpci_adjust((x), 0xf8)
-#  define CMPCI_ADJUST_2_GAIN(sc, x)   cmpci_adjust((x), 0xc0)
+#  define CMPCI_ADJUST_MIC_GAIN(sc, x)	cmpci_adjust((x), 0xf8)
+#  define CMPCI_ADJUST_GAIN(sc, x)	cmpci_adjust((x), 0xf8)
+#  define CMPCI_ADJUST_2_GAIN(sc, x)	cmpci_adjust((x), 0xc0)
+
+#define CMPCI_REG_MIXER24		0x24
+#  define CMPCI_REG_SPDIN_MONITOR	0x01
+#  define CMPCI_REG_SURROUND		0x02
+#  define CMPCI_REG_INDIVIDUAL		0x20
+#  define CMPCI_REG_REVERSE_FR		0x10
+#  define CMPCI_REG_FMMUTE		0x80
+#  define CMPCI_REG_WSMUTE		0x40
+#  define CMPCI_REG_WAVEINL		0x08
+#  define CMPCI_REG_WAVEINR		0x04
+
+#define CMPCI_REG_MIXER25		0x25
+#  define CMPCI_REG_RAUXREN		0x80
+#  define CMPCI_REG_RAUXLEN		0x40
+#  define CMPCI_REG_VAUXRM		0x20	/* 0: mute, 1: unmute */
+#  define CMPCI_REG_VAUXLM		0x10
+#  define CMPCI_REG_VADMIC		0x0E
+#  define CMPCI_REG_MICGAINZ		0x01	/* 1: disable preamp */
+
+#  define CMPCI_ADJUST_ADMIC_GAIN(sc, x)	(cmpci_adjust((x), 0xe0) >> 5)
+#  define CMPCI_REG_ADMIC_VALBITS	3
+#  define CMPCI_REG_ADMIC_MASK		0x07
+#  define CMPCI_REG_ADMIC_SHIFT		0x01
+
+/* Note that the doc tells a lie */
+#define CMPCI_REG_MIXER_AUX		0x26
+#  define CMPCI_ADJUST_AUX_GAIN(sc, l, r)	\
+	(cmpci_adjust((l), 0xc0) >> 4 | cmpci_adjust((r), 0xc0))
+#  define CMPCI_REG_AUX_VALBITS	4
 
 #define CMPCI_REG_MPU_BASE		0x40
 #define CMPCI_REG_MPU_SIZE		0x10
@@ -189,3 +224,5 @@
 #define CMPCI_REG_NUMRATE		8
 
 #endif /* _DEV_PCI_CMPCIREG_H_ */
+
+/* end of file */
