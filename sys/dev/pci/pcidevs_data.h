@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1112 2006/07/23 01:36:26 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1114 2006/07/27 10:48:08 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -372,6 +372,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE_ASIC,
+	    "Escalade IDE RAID",
+	},
+	{
+	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE_9500,
 	    "Escalade IDE RAID",
 	},
 	{

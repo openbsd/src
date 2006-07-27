@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1112 2006/07/23 01:36:26 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1114 2006/07/27 10:48:08 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -410,6 +410,7 @@
 /* 3Ware products */
 #define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade IDE RAID */
 #define	PCI_PRODUCT_TRIWARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID */
+#define	PCI_PRODUCT_TRIWARE_ESCALADE_9500	0x1002		/* Escalade IDE RAID */
 
 /* Abocom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 */
