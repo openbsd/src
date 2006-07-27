@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.42 2006/07/27 04:06:13 ray Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.43 2006/07/27 04:53:27 ray Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -77,6 +77,8 @@ main(int argc, char *argv[])
 	char mbr_buf[DEV_BSIZE];
 
 	while ((ch = getopt(argc, argv, "ieuf:c:h:s:")) != -1) {
+		const char *errstr;
+
 		switch(ch) {
 		case 'i':
 			i_flag = 1;
@@ -91,22 +93,20 @@ main(int argc, char *argv[])
 			mbrfile = optarg;
 			break;
 		case 'c':
-			c_arg = atoi(optarg);
-			if (c_arg < 1 || c_arg > 262144)
-				errx(1, "Cylinder argument out of range "
-				    "[1..262144].");
+			c_arg = strtonum(optarg, 1, 262144, &errstr);
+			if (errstr)
+				errx(1, "Cylinder argument %s [1..262144].",
+				    errstr);
 			break;
 		case 'h':
-			h_arg = atoi(optarg);
-			if (h_arg < 1 || h_arg > 256)
-				errx(1, "Head argument out of range "
-				    "[1..256].");
+			h_arg = strtonum(optarg, 1, 256, &errstr);
+			if (errstr)
+				errx(1, "Head argument %s [1..256].", errstr);
 			break;
 		case 's':
-			s_arg = atoi(optarg);
-			if (s_arg < 1 || s_arg > 63)
-				errx(1, "Sector argument out of range "
-				    "[1..63].");
+			s_arg = strtonum(optarg, 1, 63, &errstr);
+			if (errstr)
+				errx(1, "Sector argument %s [1..63].", errstr);
 			break;
 		default:
 			usage();
