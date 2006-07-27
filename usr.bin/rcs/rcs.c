@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.27 2006/07/27 02:58:31 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.26 2006/07/27 02:57:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -365,10 +365,10 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
 	size_t len;
-	int fd;
+	int fd, from_fd, to_fd;
 
 	fn = NULL;
-	fd = -1;
+	from_fd = to_fd = fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return;

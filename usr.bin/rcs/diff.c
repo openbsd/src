@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.6 2006/05/11 08:40:34 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.7 2006/07/27 02:57:19 deraadt Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -927,7 +927,7 @@ proceed:
 			/*
 			 * Print the context/unidiff header first time through.
 			 */
-			t = localtime(&stb1.st_mtime); 
+			t = localtime(&stb1.st_mtime);
 			(void)strftime(buf, sizeof(buf),
 			    "%Y/%m/%d %H:%M:%S", t);
 
