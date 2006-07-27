@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.22 2005/01/19 15:48:20 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.23 2006/07/27 04:06:13 ray Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -26,6 +26,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <util.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -89,7 +90,12 @@ USER_init(disk_t *disk, mbr_t *tt, int preserve)
 	if (yn) {
 		fd = DISK_open(disk->name, O_RDWR);
 		MBR_make(tt, mbr_buf);
-		MBR_write(fd, (off_t)0, mbr_buf);
+		if (MBR_write(fd, 0, mbr_buf) == -1) {
+			int saved_errno = errno;
+			DISK_close(fd);
+			errno = saved_errno;
+			return (-1);
+		}
 		DISK_close(fd);
 	} else
 		printf("MBR is unchanged\n");
@@ -168,7 +174,11 @@ again:
 			printf("Writing current MBR to disk.\n");
 			fd = DISK_open(disk->name, O_RDWR);
 			MBR_make(&mbr, mbr_buf);
-			MBR_write(fd, offset, mbr_buf);
+			if (MBR_write(fd, offset, mbr_buf) == -1) {
+				warn("error writing MBR");
+				close(fd);
+				goto again;
+			}
 			close(fd);
 		} else
 			printf("Aborting changes to current MBR.\n");

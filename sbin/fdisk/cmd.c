@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.41 2006/07/18 19:05:42 mbalmer Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.42 2006/07/27 04:06:13 ray Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -314,15 +314,18 @@ int
 Xwrite(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
 	char mbr_buf[DEV_BSIZE];
-	int fd;
+	int fd, ret;
+
+	ret = CMD_CONT;
 
 	printf("Writing MBR at offset %d.\n", offset);
 
 	fd = DISK_open(disk->name, O_RDWR);
 	MBR_make(mbr, mbr_buf);
-	MBR_write(fd, offset, mbr_buf);
+	if (MBR_write(fd, offset, mbr_buf) != -1)
+		ret = CMD_CLEAN;
 	close(fd);
-	return (CMD_CLEAN);
+	return (ret);
 }
 
 /* ARGSUSED */
