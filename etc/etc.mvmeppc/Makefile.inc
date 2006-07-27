@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2002/05/13 07:22:43 espie Exp $
-#	etc.mvmeppc/Makefile.inc -- mvmeppc-specific etc Makefile targets
+#	$OpenBSD: Makefile.inc,v 1.3 2006/07/27 02:50:22 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: bsd distrib1
+snap_md: bsd bootblocks distrib1
 	cp ${.CURDIR}/../sys/arch/mvmeppc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
@@ -11,11 +10,13 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/mvmeppc/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-# knows about  bsd.rd and bsdofw.rd
-distrib1:
+bootblocks:
 	cp ${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/snapshot/bootxx
 	cp ${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/snapshot/bootsd
 	cp ${DESTDIR}/usr/mdec/installboot ${DESTDIR}/snapshot/installboot
+
+# knows about  bsd.rd and bsdofw.rd
+distrib1:
 	${MAKE} distrib
 	mkdir ${DESTDIR}/snapshot/boot
 	cp ${DESTDIR}/snapshot/bsd.rd ${DESTDIR}/snapshot/boot/bsd.rd
@@ -31,7 +32,6 @@ distrib1:
 	gzip -9 ${DESTDIR}/snapshot/bsd.rd
 	mv ${DESTDIR}/snapshot/bsd.rd.gz ${DESTDIR}/snapshot/bsd.rd
 
-
-.PHONY: bsd distrib1
+.PHONY: bsd bootblocks distrib1
 
 .endif	# DESTDIR check
