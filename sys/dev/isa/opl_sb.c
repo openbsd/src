@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_sb.c,v 1.5 2006/01/02 05:21:40 brad Exp $	*/
+/*	$OpenBSD: opl_sb.c,v 1.6 2006/07/27 05:55:03 miod Exp $	*/
 /*	$NetBSD: opl_sb.c,v 1.4 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
@@ -74,14 +74,14 @@ opl_sb_match(parent, match, aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct sbdsp_softc *ssc = (struct sbdsp_softc *)parent;
-	struct opl_softc sc;
+	struct opl_attach_arg oaa;
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
-	memset(&sc, 0, sizeof sc);
-	sc.ioh = ssc->sc_ioh;
-	sc.iot = ssc->sc_iot;
-	return (opl_find(&sc));
+	memset(&oaa, 0, sizeof oaa);
+	oaa.ioh = ssc->sc_ioh;
+	oaa.iot = ssc->sc_iot;
+	return (opl_find(&oaa));
 }
 
 void

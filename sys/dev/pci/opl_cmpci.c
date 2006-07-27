@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_cmpci.c,v 1.1 2006/07/27 00:45:59 brad Exp $	*/
+/*	$OpenBSD: opl_cmpci.c,v 1.2 2006/07/27 05:55:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,15 +77,15 @@ opl_cmpci_match(struct device *parent, void *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct cmpci_softc *ssc = (struct cmpci_softc *)parent;
-	struct opl_softc sc;
+	struct opl_attach_args oaa;
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
-	memset(&sc, 0, sizeof sc);
-	sc.iot = ssc->sc_iot;
-	sc.ioh = ssc->sc_ioh;
-	sc.offs = CMPCI_REG_FM_BASE;
-	return (opl_find(&sc));
+	memset(&oaa, 0, sizeof oaa);
+	oaa.iot = ssc->sc_iot;
+	oaa.ioh = ssc->sc_ioh;
+	oaa.offs = CMPCI_REG_FM_BASE;
+	return (opl_find(&oaa));
 }
 
 void

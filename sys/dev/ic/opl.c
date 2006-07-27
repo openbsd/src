@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.7 2005/11/21 18:16:39 millert Exp $	*/
+/*	$OpenBSD: opl.c,v 1.8 2006/07/27 05:55:00 miod Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ const struct opl_voice voicetab[] = {
 	{ 8,   OPL_R,	{0x12,	0x15,	0x00, 0x00}}
 };
 
+static void opl_probe_command(struct opl_attach_arg *, int, int);
 static void opl_command(struct opl_softc *, int, int, int);
 void opl_reset(struct opl_softc *);
 void opl_freq_to_fnum (int freq, int *block, int *fnum);
@@ -152,8 +153,14 @@ opl_attach(sc)
 	struct opl_softc *sc;
 {
 	int i;
+	struct opl_attach_arg oaa;
 
-	if (!opl_find(sc)) {
+	oaa.iot = sc->iot;
+	oaa.ioh = sc->ioh;
+	oaa.offs = sc->offs;
+	oaa.done = 0;
+
+	if ((sc->model = opl_find(&oaa)) == 0) {
 		printf("\nopl: find failed\n");
 		return;
 	}
@@ -178,6 +185,21 @@ opl_attach(sc)
 }
 
 static void
+opl_probe_command(oaa, addr, data)
+	struct opl_attach_arg *oaa;
+	int addr, data;
+{
+	DPRINTFN(4, ("opl_probe_command: addr=0x%02x data=0x%02x\n", 
+		     addr, data));
+	bus_space_write_1(oaa->iot, oaa->ioh, OPL_ADDR + OPL_L + oaa->offs,
+	    addr);
+	delay(10);
+	bus_space_write_1(oaa->iot, oaa->ioh, OPL_DATA + OPL_L + oaa->offs,
+	    data);
+	delay(30);
+}
+
+static void
 opl_command(sc, offs, addr, data)
 	struct opl_softc *sc;
 	int offs;
@@ -199,34 +221,37 @@ opl_command(sc, offs, addr, data)
 }
 
 int
-opl_find(sc)
-	struct opl_softc *sc;
+opl_find(oaa)
+	struct opl_attach_arg *oaa;
 {
 	u_int8_t status1, status2;
+	int model;
 
-	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)sc->ioh));
-	sc->model = OPL_2;	/* worst case assumption */
+	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)oaa->ioh));
+	model = OPL_2;	/* worst case assumption */
 
 	/* Reset timers 1 and 2 */
-	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, 
+	opl_probe_command(oaa, OPL_TIMER_CONTROL, 
 		    OPL_TIMER1_MASK | OPL_TIMER2_MASK);
 	/* Reset the IRQ of the FM chip */
-	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
+	opl_probe_command(oaa, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
 
 	/* get status bits */
-	status1 = bus_space_read_1(sc->iot,sc->ioh,OPL_STATUS+OPL_L+sc->offs);
+	status1 = bus_space_read_1(oaa->iot, oaa->ioh,
+	    OPL_STATUS + OPL_L + oaa->offs);
 
-	opl_command(sc, OPL_L, OPL_TIMER1, -2); /* wait 2 ticks */
-	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, /* start timer1 */
+	opl_probe_command(oaa, OPL_TIMER1, -2); /* wait 2 ticks */
+	opl_probe_command(oaa, OPL_TIMER_CONTROL, /* start timer1 */
 		    OPL_TIMER1_START | OPL_TIMER2_MASK);
 	delay(1000);		/* wait for timer to expire */
 
 	/* get status bits again */
-	status2 = bus_space_read_1(sc->iot,sc->ioh,OPL_STATUS+OPL_L+sc->offs);
+	status2 = bus_space_read_1(oaa->iot, oaa->ioh,
+	    OPL_STATUS + OPL_L + oaa->offs);
 
-	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, 
+	opl_probe_command(oaa, OPL_TIMER_CONTROL, 
 		    OPL_TIMER1_MASK | OPL_TIMER2_MASK);
-	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
+	opl_probe_command(oaa, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
 
 	DPRINTFN(2,("opl_find: %02x %02x\n", status1, status2));
 
@@ -237,18 +262,18 @@ opl_find(sc)
 	switch(status1) {
 	case 0x00:
 	case 0x0f:
-		sc->model = OPL_3;
+		model = OPL_3;
 		break;
 	case 0x06:
-		sc->model = OPL_2;
+		model = OPL_2;
 		break;
 	default:
 		return 0;
 	}
 
 	DPRINTFN(2,("opl_find: OPL%d at 0x%x detected\n", 
-		    sc->model, (int)sc->ioh));
-	return (1);
+	    model, (int)oaa->ioh));
+	return (model);
 }
 
 void 
