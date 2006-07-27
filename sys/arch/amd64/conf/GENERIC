@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.144 2006/06/26 06:31:31 brad Exp $
+#	$OpenBSD: GENERIC,v 1.145 2006/07/27 04:41:48 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -400,7 +400,7 @@ eap*	at pci?				# Ensoniq AudioPCI S5016
 #eso*	at pci?				# ESS Solo-1 PCI AudioDrive
 #sv*	at pci?				# S3 SonicVibes (S3 617)
 #neo*	at pci?				# NeoMagic 256AV/ZX
-#cmpci*	at pci?				# C-Media CMI8338/8738
+cmpci*	at pci?				# C-Media CMI8338/8738
 auich*	at pci? flags 0x0000		# i82801 ICH AC'97 audio
 auixp*	at pci?				# ATI IXP AC'97 Audio
 #autri*	at pci? flags 0x0000		# Trident 4D WAVE
@@ -418,10 +418,11 @@ mpu*	at isa? port 0x330
 # OPL[23] FM synthesizers
 #opl*	at eso?
 opl*	at yds?
+#opl*	at cmpci?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at opl?			# OPL FM synth
+midi*	at opl?			# OPL FM synth
 #midi*	at autri?
 midi*	at eap?
 midi*	at mpu?
@@ -433,7 +434,7 @@ audio*	at eap?
 #audio*	at eso?
 #audio*	at sv?
 #audio*	at neo?
-#audio*	at cmpci?
+audio*	at cmpci?
 audio*	at clcs?
 #audio*	at clct?
 audio*	at auich?
