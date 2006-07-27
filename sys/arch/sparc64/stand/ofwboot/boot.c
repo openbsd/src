@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2004/01/03 21:17:43 pvalchev Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2006/07/27 20:41:28 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -260,13 +260,6 @@ loadfile(fd, args)
 	printf(" start=0x%lx\n", (unsigned long)entry);
 
 	close(fd);
-
-	/* XXX this should be replaced w/ a mountroothook. */
-	if (floppyboot) {
-		printf("Please insert root disk and press ENTER ");
-		getchar();
-		printf("\n");
-	}
 
 	chain(entry, args, ssym, esym);
 	/* NOTREACHED */
