@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.62 2006/06/19 21:49:44 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.63 2006/07/28 20:38:57 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -649,7 +649,7 @@ mfi_attach(struct mfi_softc *sc)
 		goto noinit;
 	}
 
-	printf("%s: logical drives %d version %s RAM %dMB\n",
+	printf("%s: logical drives %d, version %s, %dMB RAM\n",
 	    DEVNAME(sc),
 	    sc->sc_info.mci_lds_present,
 	    sc->sc_info.mci_package_version,
