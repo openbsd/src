@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.44 2006/05/15 16:49:14 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.45 2006/07/28 14:07:22 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2099,7 +2099,6 @@ static ap_inline listen_rec *find_ready_listener(fd_set * main_fds)
 static void show_compile_settings(void)
 {
     printf("Server version: %s\n", ap_get_server_version());
-    printf("Server built:   %s\n", ap_get_server_built());
     printf("Server's Module Magic Number: %u:%u\n",
 	   MODULE_MAGIC_NUMBER_MAJOR, MODULE_MAGIC_NUMBER_MINOR);
     printf("Server compiled with....\n");
@@ -3023,8 +3022,6 @@ static void standalone_main(int argc, char **argv)
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
 		         "suEXEC mechanism enabled (wrapper: %s)", SUEXEC_BIN);
 	}
-	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, server_conf,
-		    "Server built: %s", ap_get_server_built());
 	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
 		    "Accept mutex: %s (Default: %s)",
 		     amutex->name, ap_default_mutex_method());
@@ -3229,7 +3226,6 @@ int REALMAIN(int argc, char *argv[])
 	case 'v':
 	    ap_set_version();
 	    printf("Server version: %s\n", ap_get_server_version());
-	    printf("Server built:   %s\n", ap_get_server_built());
 	    exit(0);
 	case 'V':
 	    ap_set_version();
