@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1115 2006/07/28 16:23:18 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1116 2006/07/28 20:29:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4263,6 +4263,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "41210 PCIE-PCIX",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP333_A,
+	    "IOP333 PCIE-PCIX",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP333_B,
+	    "IOP333 PCIE-PCIX",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    "82375EB EISA",
 	},
@@ -5379,6 +5387,54 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6300ESB SATA",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_HB,
+	    "5000X Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_1,
+	    "5000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_2,
+	    "5000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_3,
+	    "5000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_4,
+	    "5000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_ERR_REG,
+	    "5000 Error Reporting",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_1,
+	    "5000 Reserved",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_2,
+	    "5000 Reserved",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_1,
+	    "5000 FBD",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_2,
+	    "5000 FBD",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_5,
+	    "5000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_6,
+	    "5000 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E8500_HB,
 	    "E8500 Host",
 	},
@@ -5595,6 +5651,34 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801FB IDE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_LPC,
+	    "6321ESB LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_USB_1,
+	    "6321ESB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_USB_2,
+	    "6321ESB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_USB_3,
+	    "6321ESB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_USB_4,
+	    "6321ESB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_4,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_IDE,
+	    "6321ESB IDE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GP_MCH,
 	    "82945GP",
 	},
@@ -5773,6 +5857,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PE_AGP,
 	    "82855PE AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_1,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIX,
+	    "6321ESB PCIE-PCIX",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_2,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_3,
+	    "6321ESB PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
