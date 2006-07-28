@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2006/05/05 01:29:59 ray Exp $
+#	$OpenBSD: Makefile,v 1.32 2006/07/28 06:29:09 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -65,7 +65,7 @@ LTESTS= ci-initial \
 	rlog-lflag \
 	ci-nofile \
 	ci-revert \
-	#ci-keywords \
+	ci-keywords \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
