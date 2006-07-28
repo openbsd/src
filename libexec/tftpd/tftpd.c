@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.51 2006/07/26 16:43:31 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.52 2006/07/28 15:14:04 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.51 2006/07/26 16:43:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.52 2006/07/28 15:14:04 mglocker Exp $";
 #endif /* not lint */
 
 /*
@@ -120,7 +120,7 @@ struct formats {
 struct options {
 	const char	*o_type;
 	char		*o_request;
-	int		 o_reply;	/* turn into union if need be */
+	long long	 o_reply;	/* turn into union if need be */
 } options[] = {
 	{ "tsize",	NULL, 0 },	/* OPT_TSIZE */
 	{ "timeout",	NULL, 0 },	/* OPT_TIMEOUT */
@@ -513,6 +513,7 @@ validate_access(char *filename, int mode)
 	struct stat	 stbuf;
 	char		*cp, **dirp;
 	int		 fd, wmode;
+	const char	*errstr;
 
 	if (!secure) {
 		if (*filename != '/')
@@ -557,10 +558,16 @@ validate_access(char *filename, int mode)
 	if (options[OPT_TSIZE].o_request) {
 		if (mode == RRQ)
 			options[OPT_TSIZE].o_reply = stbuf.st_size;
-		else
-			/* XXX allows writes of all sizes */
+		else {
+			/* allows writes of 65535 blocks * SEGSIZE_MAX bytes */
 			options[OPT_TSIZE].o_reply =
-			    atoi(options[OPT_TSIZE].o_request);
+			    strtonum(options[OPT_TSIZE].o_request,
+			    1, 65535LL * SEGSIZE_MAX, &errstr);
+			if (errstr) {
+				nak(EOPTNEG);
+				exit(1);
+			}
+		}
 	}
 	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode), 0666);
 	if (fd < 0)
@@ -834,7 +841,7 @@ oack(int opcode)
 	tp->th_opcode = htons((u_short)OACK);
 	for (i = 0; options[i].o_type != NULL; i++) {
 		if (options[i].o_request) {
-			n = snprintf(bp, size, "%s%c%d", options[i].o_type,
+			n = snprintf(bp, size, "%s%c%lld", options[i].o_type,
 			    0, options[i].o_reply);
 			if (n == -1 || n >= size) {
 				syslog(LOG_ERR, "oack: no buffer space");
