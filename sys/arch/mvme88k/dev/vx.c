@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.37 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.38 2006/07/28 21:46:02 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -866,7 +866,7 @@ vxstart(struct tty *tp)
 	struct wring *wp;
 	int cc, port, unit, s, cnt, i;
 	u_short get, put;
-	char buffer[WRING_BUF_SIZE];
+	char buffer[256];
 
 	dev = tp->t_dev;
 	port = VX_PORT(dev);
@@ -887,7 +887,7 @@ vxstart(struct tty *tp)
 		put = wp->put;
 		cc = tp->t_outq.c_cc;
 		while (cc > 0) {
-			cnt = min(WRING_BUF_SIZE, cc);
+			cnt = min(sizeof buffer, cc);
 			cnt = q_to_b(&tp->t_outq, buffer, cnt);
 			buffer[cnt] = 0;
 			for (i = 0; i < cnt; i++) {
