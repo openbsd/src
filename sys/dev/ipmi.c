@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.43 2006/07/28 20:41:02 jordan Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.44 2006/07/28 20:46:12 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -62,7 +62,7 @@ int	ipmi_dbg = 0;
 int	ipmi_poll = 1;
 int	ipmi_enabled = 0;
 
-#define SENSOR_REFRESH_RATE (10 * hz)
+#define SENSOR_REFRESH_RATE (5 * hz)
 
 #define SMBIOS_TYPE_IPMI	0x26
 
@@ -311,13 +311,14 @@ bmc_io_wait_cold(struct ipmi_softc *sc, int offset, u_int8_t mask,
     u_int8_t value, const char *lbl)
 {
 	volatile u_int8_t	v;
-	int			count = 100000; /* == 5s XXX can be shorter */
+	int			count = 5000000; /* == 5s XXX can be shorter */
 
 	while (count--) {
 		v = bmc_read(sc, offset);
 		if ((v & mask) == value)
 			return v;
-		delay(50);
+
+		delay(1);
 	}
 
 	printf("%s: bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
@@ -870,7 +871,8 @@ void
 ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 {
 
-	dbg_printf(1, "%02x %02x %02x %02x %08llx %02x %02x\n",
+	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x %08llx %02x "
+	    "%02x\n",
 	    pipmi->smipmi_if_type,
 	    pipmi->smipmi_if_rev,
 	    pipmi->smipmi_i2c_address,
@@ -1048,6 +1050,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	if ((rc = buf[IPMI_MSG_CCODE]) != 0)
 		dbg_printf(1, "ipmi_recvmsg: nfln=%.2x cmd=%.2x err=%.2x\n",
 		    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE]);
+
 	dbg_printf(50, "ipmi_recvcmd: nfln=%.2x cmd=%.2x err=%.2x len=%.2x\n",
 	    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE],
 	    *rxlen);
@@ -1517,15 +1520,20 @@ ipmi_intr(void *arg)
 void
 ipmi_refresh_sensors(struct ipmi_softc *sc)
 {
-	struct	ipmi_sensor *psensor = NULL;
 
 	if (!ipmi_poll)
 		return;
 
-	SLIST_FOREACH(psensor, &ipmi_sensor_list, list)
-		if (read_sensor(sc, psensor))
-			printf("%s: error reading: %s\n", DEVNAME(sc), 
-			    psensor->i_sensor.desc);
+	if (SLIST_EMPTY(&ipmi_sensor_list))
+		return;
+
+	sc->current_sensor = SLIST_NEXT(sc->current_sensor, list);
+	if (sc->current_sensor == NULL)
+		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
+
+	if (read_sensor(sc, sc->current_sensor))
+		printf("%s: error reading: %s\n", DEVNAME(sc), 
+		    sc->current_sensor->i_sensor.desc);
 }
 
 int
@@ -1681,6 +1689,10 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	for (rec = 0; rec != 0xFFFF;)
 		if (get_sdr(sc, rec, &rec))
 			break;
+
+	/* initialize sensor list for thread */
+	if (!SLIST_EMPTY(&ipmi_sensor_list))
+		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
 	/* Setup threads */
 	kthread_create_deferred(ipmi_create_thread, sc);
