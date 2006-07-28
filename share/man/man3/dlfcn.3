@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dlfcn.3,v 1.18 2006/07/26 12:45:55 kurt Exp $
+.\"	$OpenBSD: dlfcn.3,v 1.19 2006/07/28 13:03:40 kurt Exp $
 .\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -163,16 +163,17 @@ is returned.
 .Fn dlsym
 may also be called with special
 .Fa handles .
-In all cases
 .Fn dlsym
 respects symbol visibility as specified by the
 .Fn dlopen
 .Fa mode
 parameter.
-The main executable and all shared objects loaded at program startup are
-globally visible.
-In addition, all shared objects that are a dependency of another object are
-always visible to the object that depends on them.
+However, the symbols of an object's dependencies are always visible to it.
+All shared objects loaded at program startup are globally visible.
+Only the symbols in the main executable that are referenced by a
+shared object at link time will be visible unless it has been linked
+with the --export-dynamic option where all of its symbols will be
+visible.
 The following special
 .Fa handles
 may be used with
