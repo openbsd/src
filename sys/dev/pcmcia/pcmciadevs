@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.129 2006/04/20 07:38:20 brad Exp $
+	$OpenBSD: pcmciadevs,v 1.130 2006/07/28 17:13:43 brad Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -62,7 +62,6 @@ vendor COMPAQ			0x0138	Compaq
 vendor GREYCELL			0x0143	Grey Cell
 vendor LINKSYS			0x0149	Linksys
 vendor NETGEAR			0x0149	Netgear
-vendor SIEMENS			0x02ac	Siemens
 vendor SIERRA			0x0192	Sierra
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
@@ -90,6 +89,7 @@ vendor LINKSYS2			0x0274	The Linksys Group
 vendor AUDIOVOX			0x0279	Audiovox Communications
 vendor IODATA2			0x028a	I-O DATA
 vendor ASUS			0x02aa	ASUS
+vendor SIEMENS			0x02ac	Siemens
 vendor MICROSOFT		0x02d2	Microsoft
 vendor NWN			0x0602	No Wires Needed
 vendor BREEZECOM		0x0a02	BreezeCOM
