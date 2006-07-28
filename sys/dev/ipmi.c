@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.44 2006/07/28 20:46:12 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.45 2006/07/28 20:50:43 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -382,7 +382,7 @@ bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 
 	bt_write(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN);
 	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN | BT_BMC_BUSY, 0,
-		"bt_sendwait") < 0)
+	    "bt_sendwait") < 0)
 		return (-1);
 
 	return (0);
@@ -1752,7 +1752,8 @@ ipmi_watchdog(void *arg, int period)
 	/* Period is 10ths/sec */
 	wdog.wdog_timeout = htole32(period * 10);
 	wdog.wdog_action &= ~IPMI_WDOG_MASK;
-	wdog.wdog_action |= (period == 0) ? IPMI_WDOG_DISABLED : IPMI_WDOG_REBOOT;
+	wdog.wdog_action |= (period == 0) ? IPMI_WDOG_DISABLED :
+	    IPMI_WDOG_REBOOT;
 
 	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
 	    APP_SET_WATCHDOG_TIMER, sizeof(wdog), &wdog);
