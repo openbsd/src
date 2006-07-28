@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.27 2006/07/28 15:43:42 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.28 2006/07/28 15:50:17 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -70,7 +70,7 @@ struct cfdriver eephy_cd = {
 	NULL, "eephy", DV_DULL
 };
 
-int	eephy_mii_phy_auto(struct mii_softc *, int);
+int	eephy_mii_phy_auto(struct mii_softc *);
 void	eephy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs eephy_funcs = {
@@ -250,14 +250,8 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (sc->mii_flags & MIIF_DOINGAUTO)
-				return (0);
-
 			PHY_RESET(sc);
-			(void) eephy_mii_phy_auto(sc, 1);
+			(void) eephy_mii_phy_auto(sc);
 			break;
 
 		case IFM_1000_SX:
@@ -269,13 +263,10 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		case IFM_1000_T:
-			if (sc->mii_flags & MIIF_DOINGAUTO)
-				return (0);
-
 			PHY_RESET(sc);
 
 			/* TODO - any other way to force 1000BT? */
-			(void) eephy_mii_phy_auto(sc, 1);
+			(void) eephy_mii_phy_auto(sc);
 			break;
 
 		case IFM_100_TX:
@@ -348,9 +339,7 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		sc->mii_ticks = 0;
 		PHY_RESET(sc);
 
-		if (eephy_mii_phy_auto(sc, 0) == EJUSTRETURN)
-			return (0);
-
+		eephy_mii_phy_auto(sc);
 		break;
 	}
 
@@ -386,8 +375,7 @@ eephy_status(struct mii_softc *sc)
 	if (bmcr & E1000_CR_LOOPBACK)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if ((sc->mii_flags & MIIF_DOINGAUTO) &&
-	    (!(bmsr & E1000_SR_AUTO_NEG_COMPLETE) || !(ssr & E1000_SSR_LINK) ||
+	if ((!(bmsr & E1000_SR_AUTO_NEG_COMPLETE) || !(ssr & E1000_SSR_LINK) ||
 	    !(ssr & E1000_SSR_SPD_DPLX_RESOLVED))) {
 		/* Erg, still trying, I guess... */
 		mii->mii_media_active |= IFM_NONE;
@@ -428,56 +416,20 @@ eephy_status(struct mii_softc *sc)
 }
 
 int
-eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
+eephy_mii_phy_auto(struct mii_softc *sc)
 {
-	int bmsr, i;
-
-	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
-		if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
-			PHY_WRITE(sc, E1000_AR,
-				  E1000_AR_10T | E1000_AR_10T_FD |
-				  E1000_AR_100TX | E1000_AR_100TX_FD |
-				  E1000_AR_PAUSE | E1000_AR_ASM_DIR);
-			PHY_WRITE(sc, E1000_1GCR, E1000_1GCR_1000T_FD);
-		} else {
-			PHY_WRITE(sc, E1000_AR, E1000_FA_1000X_FD |
-				  E1000_FA_SYM_PAUSE | E1000_FA_ASYM_PAUSE);
-		}
-		PHY_WRITE(sc, E1000_CR,
-		    E1000_CR_AUTO_NEG_ENABLE | E1000_CR_RESTART_AUTO_NEG);
+	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+		PHY_WRITE(sc, E1000_AR,
+			  E1000_AR_10T | E1000_AR_10T_FD |
+			  E1000_AR_100TX | E1000_AR_100TX_FD |
+			  E1000_AR_PAUSE | E1000_AR_ASM_DIR);
+		PHY_WRITE(sc, E1000_1GCR, E1000_1GCR_1000T_FD);
+	} else {
+		PHY_WRITE(sc, E1000_AR, E1000_FA_1000X_FD |
+			  E1000_FA_SYM_PAUSE | E1000_FA_ASYM_PAUSE);
 	}
-
-	if (waitfor) {
-		/* Wait 500ms for it to complete. */
-		for (i = 0; i < 500; i++) {
-			bmsr = PHY_READ(sc, E1000_SR) | PHY_READ(sc, E1000_SR);
-			if (bmsr & E1000_SR_AUTO_NEG_COMPLETE)
-				return (0);
-			DELAY(1000);
-		}
-
-		/*
-		 * Don't need to worry about clearing MIIF_DOINGAUTO.
-		 * If that's set, a timeout is pending, and it will
-		 * clear the flag. [do it anyway]
-		 */
-		return (EIO);
-	}
-
-	/*
-	 * Just let it finish asynchronously.  This is for the benefit of
-	 * the tick handler driving autonegotiation.  Don't want 500ms
-	 * delays all the time while the system is running!
-	 */
-	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
-		sc->mii_flags |= MIIF_DOINGAUTO;
-		tsleep(&sc->mii_flags, PZERO, "miiaut", hz >> 1);
-		mii_phy_auto_timeout(sc);
-	} else if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
-		sc->mii_flags |= MIIF_DOINGAUTO;
-		timeout_set(&sc->mii_phy_timo, mii_phy_auto_timeout, sc);
-		timeout_add(&sc->mii_phy_timo, hz / 2);
-	}
+	PHY_WRITE(sc, E1000_CR,
+	    E1000_CR_AUTO_NEG_ENABLE | E1000_CR_RESTART_AUTO_NEG);
 
 	return (EJUSTRETURN);
 }
