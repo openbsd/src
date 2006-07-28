@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 2006/07/28 19:31:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -20,11 +20,37 @@
 
 #include <lib/libsa/loadfile.h>
 
+#ifdef BOOT_ELF
+#include <sys/exec_elf.h>
+#endif
+
 typedef void (*startfuncp)(void) __attribute__ ((noreturn));
 
 void
 run_loadfile(u_long *marks, int howto)
 {
+#ifdef BOOT_ELF
+	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
+	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
+	u_long esym = marks[MARK_END];
+	int i;
+
+	/*
+	 * Tell locore.S where the symbol table ends by setting
+	 * 'esym', which should be the first word in the .data
+	 * section.
+	 */
+	for (i = 0; i < elf->e_shnum; i++) {
+		/* XXX Assume .data is the first writable segment. */
+		if (shp[i].sh_flags & SHF_WRITE) {
+			/* XXX We have to store the virtual address. */
+			esym |= shp[i].sh_addr & 0xff000000;
+			*(u_long *)(shp[i].sh_addr & 0x00ffffff) = esym;
+			break;
+		}
+	}
+#endif
+
 	(*(startfuncp)(marks[MARK_ENTRY]))();
 
 	/* NOTREACHED */
