@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.26 2006/06/17 18:00:43 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.27 2006/07/28 15:58:38 kettenis Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -710,27 +710,15 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet		*ifp;
 	int			error = 0, i;
 	bus_size_t		iosize;
-	pcireg_t		command;
 
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
-		printf(": neither i/o nor mem enabled\n");
-		return;
-	}
-
-	if (command & PCI_COMMAND_MEM_ENABLE) {
-		if (pci_mapreg_map(pa, VGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->vge_btag, &sc->vge_bhandle, NULL, &iosize, 0)) {
-			printf(": can't map mem space\n");
-			return;
-		}
-	} else {
+	if (pci_mapreg_map(pa, VGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->vge_btag, &sc->vge_bhandle, NULL, &iosize, 0)) {
 		if (pci_mapreg_map(pa, VGE_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->vge_btag, &sc->vge_bhandle, NULL, &iosize, 0)) {
-			printf(": can't map i/o space\n");
+			printf(": can't map mem or i/o space\n");
 			return;
 		}
 	}
