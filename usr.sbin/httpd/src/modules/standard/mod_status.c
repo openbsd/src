@@ -325,8 +325,6 @@ static int status_handler(request_rec *r)
 	ap_rvputs(r, ap_get_server_name(r), "</H1>\n\n", NULL);
 	ap_rvputs(r, "Server Version: ",
 	  ap_get_server_version(), "<br>\n", NULL);
-	ap_rvputs(r, "Server Built: ",
-	  ap_get_server_built(), "<br>\n<hr>\n", NULL);
 	ap_rvputs(r, "Current Time: ",
 	  ap_ht_time(r->pool, nowtime, DEFAULT_TIME_FORMAT, 0), "<br>\n", NULL);
 	ap_rvputs(r, "Restart Time: ",

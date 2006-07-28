@@ -471,9 +471,6 @@ static int display_info(request_rec *r)
             ap_rprintf(r, "<a name=\"server\"><strong>Server Version:</strong> "
                         "<font size=+1><tt>%s</tt></a></font><br>\n",
                         ap_get_server_version());
-            ap_rprintf(r, "<strong>Server Built:</strong> "
-                        "<font size=+1><tt>%s</tt></a></font><br>\n",
-                        ap_get_server_built());
             ap_rprintf(r, "<strong>API Version:</strong> "
                         "<tt>%d:%d</tt><br>\n",
                         MODULE_MAGIC_NUMBER_MAJOR, MODULE_MAGIC_NUMBER_MINOR);
