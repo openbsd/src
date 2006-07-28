@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.24 2005/02/09 12:13:10 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.25 2006/07/28 13:52:30 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2762,7 +2762,7 @@ static char *escape_absolute_uri(ap_pool *p, char *uri, unsigned scheme)
             int c = 0;
 
             token[0] = cp = ap_pstrdup(p, cp);
-            while (*cp && c < 5) {
+            while (*cp && c < 4) {
                 if (*cp == '?') {
                     token[++c] = cp + 1;
                     *cp = '\0';
