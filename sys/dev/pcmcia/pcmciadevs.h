@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.132 2006/04/20 07:38:44 brad Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.133 2006/07/28 17:14:00 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.129 2006/04/20 07:38:20 brad Exp 
+ *		OpenBSD: pcmciadevs,v 1.130 2006/07/28 17:13:43 brad Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -69,7 +69,6 @@
 #define	PCMCIA_VENDOR_GREYCELL	0x0143	/* Grey Cell */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
-#define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_SIERRA	0x0192	/* Sierra */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
@@ -97,6 +96,7 @@
 #define	PCMCIA_VENDOR_AUDIOVOX	0x0279	/* Audiovox Communications */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUS	0x02aa	/* ASUS */
+#define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft */
 #define	PCMCIA_VENDOR_NWN	0x0602	/* No Wires Needed */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
