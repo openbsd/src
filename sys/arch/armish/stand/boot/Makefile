@@ -1,3 +1,6 @@
+#	$OpenBSD: Makefile,v 1.2 2006/07/28 17:24:27 deraadt Exp $
+
+NOMAN=
 PROG=		boot
 
 S=		${.CURDIR}/../../../..
