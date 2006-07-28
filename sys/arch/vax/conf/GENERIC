@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2006/07/24 22:19:54 miod Exp $
+#	$OpenBSD: GENERIC,v 1.44 2006/07/28 21:07:03 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -69,7 +69,7 @@ ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
 smg0		at vsbus0 csr 0x200f0000 # VS3100 on-board mono frame buffer
-#gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
+gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
 lcg0		at vsbus0 csr 0x20100000 # VS4000/60 (or VLC) frame buffer
 lcspx0		at vsbus0 csr 0x39302000 # VS4000/90 frame buffer
 
@@ -144,7 +144,7 @@ ses*		at scsibus?
 uk*		at scsibus?
 
 # Workstation console
-#wsdisplay*	at gpx?
+wsdisplay*	at gpx?
 wsdisplay*	at lcg?
 wsdisplay*	at lcspx?
 wsdisplay*	at smg?
