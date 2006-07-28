@@ -2294,4 +2294,5 @@
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
+./usr/mdec/boot
 ./usr/sbin/hotplugd
