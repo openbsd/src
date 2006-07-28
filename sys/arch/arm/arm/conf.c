@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2006/05/29 17:01:42 drahn Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2006/07/28 17:35:55 kettenis Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -99,16 +99,11 @@
 bdev_decl(wd);
 bdev_decl(sw);
 
-#ifdef CONF_HAVE_PCI
-#include "iop.h"
+#ifdef USER_PCICONF
 #include "pci.h"
-#else
-#define NIOP	0
-#define NMLX	0
-#define NMLY	0
-#define NPCI	0
+cdev_decl(pci);
 #endif
-#define	NAGP	0
+
 /*
  * SCSI/ATAPI devices
  */
@@ -383,7 +378,11 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),                          /* 85: removed device */
 	cdev_notdef(),                          /* 86: removed device */
 	cdev_notdef(),                          /* 87: removed device */
-	cdev_notdef(),                          /* 88: removed device */
+#ifdef USER_PCICONF
+	cdev_pci_init(NPCI,pci),		/* 88: PCI user */
+#else
+	cdev_notdef(),
+#endif
 	cdev_notdef(),                          /* 89: removed device */
 	cdev_notdef(),                          /* 90: removed device */
 	cdev_notdef(),                          /* 91: removed device */
