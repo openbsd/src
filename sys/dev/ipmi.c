@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.42 2006/05/21 20:55:26 alek Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.43 2006/07/28 20:41:02 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -351,22 +351,37 @@ bmc_io_wait_cold(struct ipmi_softc *sc, int offset, u_int8_t mask,
 #define	 BT_IM_SMI_EN			(1L << 3)
 #define	 BT_IM_NMI2SMI			(1L << 4)
 
+int bt_read(struct ipmi_softc *, int);
+int bt_write(struct ipmi_softc *, int, uint8_t);
+
+int
+bt_read(struct ipmi_softc *sc, int reg)
+{
+	return bmc_read(sc, reg);		
+}
+
+int
+bt_write(struct ipmi_softc *sc, int reg, uint8_t data)
+{
+	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_BMC_BUSY, 0, "bt_write") < 0)
+		return (-1);
+
+	bmc_write(sc, reg, data);
+	return (0);
+}
+
 int
 bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 {
 	int i;
 
-	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_READY, 0, "btsend") < 0)
-		return -1;
-
-	bmc_write(sc, _BT_CTRL_REG, BT_CLR_WR_PTR);
+	bt_write(sc, _BT_CTRL_REG, BT_CLR_WR_PTR);
 	for (i = 0; i < len; i++)
-		bmc_write(sc, _BT_DATAOUT_REG, data[i]);
+		bt_write(sc, _BT_DATAOUT_REG, data[i]);
 
-	bmc_write(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN);
-
-	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN, BT_BMC2HOST_ATN,
-		"btswait") < 0)
+	bt_write(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN);
+	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN | BT_BMC_BUSY, 0,
+		"bt_sendwait") < 0)
 		return (-1);
 
 	return (0);
@@ -377,17 +392,20 @@ bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t *data)
 {
 	u_int8_t len, v, i;
 
-	/* BT Result data: 0: len   1:nfln   2:seq   3:cmd   4:ccode
-	 * 5:data... */
-	bmc_write(sc, _BT_CTRL_REG, BT_HOST_BUSY|BT_CLR_RD_PTR);
-	len = bmc_read(sc, _BT_DATAIN_REG);
+	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN, BT_BMC2HOST_ATN,
+	    "bt_recvwait") < 0)
+		return (-1);	
+
+	bt_write(sc, _BT_CTRL_REG, BT_HOST_BUSY);
+	bt_write(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN);
+	bt_write(sc, _BT_CTRL_REG, BT_CLR_RD_PTR);
+	len = bt_read(sc, _BT_DATAIN_REG);
 	for (i = IPMI_BTMSG_NFLN; i <= len; i++) {
-		/* Ignore sequence number */
-		v = bmc_read(sc, _BT_DATAIN_REG);
+		v = bt_read(sc, _BT_DATAIN_REG);
 		if (i != IPMI_BTMSG_SEQ)
 			*(data++) = v;
-	}
-	bmc_write(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN | BT_HOST_BUSY);
+	}	
+	bt_write(sc, _BT_CTRL_REG, BT_HOST_BUSY);
 	*rxlen = len - 1;
 
 	return (0);
@@ -1074,7 +1092,7 @@ int maxsdrlen = 0x10;
 int
 get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 {
-	u_int16_t	resid;
+	u_int16_t	resid = 0;
 	int		len, sdrlen, offset;
 	u_int8_t	*psdr;
 	struct sdrhdr	shdr;
