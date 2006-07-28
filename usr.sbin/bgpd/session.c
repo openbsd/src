@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.254 2006/06/18 13:54:34 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.255 2006/07/28 15:04:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,8 @@ int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
 int	session_capa_mp_add(struct buf *, u_int16_t, u_int8_t);
+struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
+int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
 void	session_update(u_int32_t, void *, size_t);
@@ -1208,16 +1210,73 @@ session_capa_mp_add(struct buf *buf, u_int16_t afi, u_int8_t safi)
 	return (errs);
 }
 
+struct bgp_msg *
+session_newmsg(enum msg_type msgtype, u_int16_t len)
+{
+	struct bgp_msg		*msg;
+	struct msg_header	 hdr;
+	struct buf		*buf;
+	int			 errs = 0;
+
+	memset(&hdr.marker, 0xff, sizeof(hdr.marker));
+	hdr.len = htons(len);
+	hdr.type = msgtype;
+
+	if ((buf = buf_open(len)) == NULL)
+		return (NULL);
+
+	errs += buf_add(buf, &hdr.marker, sizeof(hdr.marker));
+	errs += buf_add(buf, &hdr.len, sizeof(hdr.len));
+	errs += buf_add(buf, &hdr.type, sizeof(hdr.type));
+
+	if (errs > 0 ||
+	    (msg = calloc(1, sizeof(*msg))) == NULL) {
+		buf_free(buf);
+		return (NULL);
+	}
+
+	msg->buf = buf;
+	msg->type = msgtype;
+	msg->len = len;
+
+	return (msg);
+}
+
+int
+session_sendmsg(struct bgp_msg *msg, struct peer *p)
+{
+	struct mrt		*mrt;
+
+	LIST_FOREACH(mrt, &mrthead, entry) {
+		if (mrt->type != MRT_ALL_OUT &&
+		    msg->type == UPDATE && mrt->type != MRT_UPDATE_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == p->conf.id ||
+		    mrt->group_id == p->conf.groupid)
+			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p, conf);
+	}
+
+	if (buf_close(&p->wbuf, msg->buf) == -1) {
+		log_peer_warn(&p->conf, "session_sendmsg buf_close");
+		buf_free(msg->buf);
+		free(msg);
+		return (-1);
+	}
+
+	free(msg);
+	return (0);
+}
+
 void
 session_open(struct peer *p)
 {
+	struct bgp_msg		*buf;
 	struct msg_open		 msg;
-	struct buf		*buf;
-	struct mrt		*mrt;
 	u_int16_t		 len;
-	int			 errs = 0;
 	u_int8_t		 op_type, op_len = 0, optparamlen = 0;
 	u_int8_t		 capa_code, capa_len;
+	u_int			 errs = 0;
 
 	/* multiprotocol extensions, RFC 2858 */
 	if (p->capa.ann.mp_v4)
@@ -1233,9 +1292,11 @@ session_open(struct peer *p)
 		optparamlen = sizeof(op_type) + sizeof(op_len) + op_len;
 	len = MSGSIZE_OPEN_MIN + optparamlen;
 
-	memset(&msg.header.marker, 0xff, sizeof(msg.header.marker));
-	msg.header.len = htons(len);
-	msg.header.type = OPEN;
+	if ((buf = session_newmsg(OPEN, len)) == NULL) {
+		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
+	}	
+
 	msg.version = 4;
 	msg.myas = htons(conf->as);
 	if (p->conf.holdtime)
@@ -1245,60 +1306,42 @@ session_open(struct peer *p)
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
 	msg.optparamlen = optparamlen;
 
-	if ((buf = buf_open(len)) == NULL) {
-		bgp_fsm(p, EVNT_CON_FATAL);
-		return;
-	}
-	errs += buf_add(buf, &msg.header.marker, sizeof(msg.header.marker));
-	errs += buf_add(buf, &msg.header.len, sizeof(msg.header.len));
-	errs += buf_add(buf, &msg.header.type, sizeof(msg.header.type));
-	errs += buf_add(buf, &msg.version, sizeof(msg.version));
-	errs += buf_add(buf, &msg.myas, sizeof(msg.myas));
-	errs += buf_add(buf, &msg.holdtime, sizeof(msg.holdtime));
-	errs += buf_add(buf, &msg.bgpid, sizeof(msg.bgpid));
-	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
+	errs += buf_add(buf->buf, &msg.version, sizeof(msg.version));
+	errs += buf_add(buf->buf, &msg.myas, sizeof(msg.myas));
+	errs += buf_add(buf->buf, &msg.holdtime, sizeof(msg.holdtime));
+	errs += buf_add(buf->buf, &msg.bgpid, sizeof(msg.bgpid));
+	errs += buf_add(buf->buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (optparamlen) {
 		op_type = OPT_PARAM_CAPABILITIES;
-		errs += buf_add(buf, &op_type, sizeof(op_type));
-		errs += buf_add(buf, &op_len, sizeof(op_len));
+		errs += buf_add(buf->buf, &op_type, sizeof(op_type));
+		errs += buf_add(buf->buf, &op_len, sizeof(op_len));
 
 		/* multiprotocol extensions, RFC 2858 */
 		if (p->capa.ann.mp_v4)
-			errs += session_capa_mp_add(buf, AFI_IPv4,
+			errs += session_capa_mp_add(buf->buf, AFI_IPv4,
 			    p->capa.ann.mp_v4);
 		if (p->capa.ann.mp_v6)
-			errs += session_capa_mp_add(buf, AFI_IPv6,
+			errs += session_capa_mp_add(buf->buf, AFI_IPv6,
 			    p->capa.ann.mp_v6);
 
 		/* route refresh, RFC 2918 */
 		if (p->capa.ann.refresh) {
 			capa_code = CAPA_REFRESH;
 			capa_len = 0;
-			errs += buf_add(buf, &capa_code, sizeof(capa_code));
-			errs += buf_add(buf, &capa_len, sizeof(capa_len));
+			errs += buf_add(buf->buf, &capa_code, sizeof(capa_code));
+			errs += buf_add(buf->buf, &capa_len, sizeof(capa_len));
 		}
 	}
 
-	if (errs == 0) {
-		LIST_FOREACH(mrt, &mrthead, entry) {
-			if (mrt->type != MRT_ALL_OUT)
-				continue;
-			if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-			    mrt->peer_id == p->conf.id ||
-			    mrt->group_id == p->conf.groupid)
-				mrt_dump_bgp_msg(mrt, buf->buf, len,
-				    p, conf);
-		}
+	if (errs > 0) {
+		buf_free(buf->buf);
+		free(buf);
+		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
+	}
 
-		if (buf_close(&p->wbuf, buf) == -1) {
-			log_peer_warn(&p->conf, "session_open buf_close");
-			buf_free(buf);
-			bgp_fsm(p, EVNT_CON_FATAL);
-			return;
-		}
-	} else {
-		buf_free(buf);
+	if (session_sendmsg(buf, p) == -1) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
@@ -1307,63 +1350,25 @@ session_open(struct peer *p)
 }
 
 void
-session_keepalive(struct peer *peer)
+session_keepalive(struct peer *p)
 {
-	struct msg_header	 msg;
-	struct buf		*buf;
-	struct mrt		*mrt;
-	ssize_t			 len;
-	int			 errs = 0;
+	struct bgp_msg		*buf;
 
-	len = MSGSIZE_KEEPALIVE;
-
-	memset(&msg.marker, 0xff, sizeof(msg.marker));
-	msg.len = htons(len);
-	msg.type = KEEPALIVE;
-
-	if ((buf = buf_open(len)) == NULL) {
-		bgp_fsm(peer, EVNT_CON_FATAL);
-		return;
-	}
-	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
-	errs += buf_add(buf, &msg.len, sizeof(msg.len));
-	errs += buf_add(buf, &msg.type, sizeof(msg.type));
-
-	if (errs > 0) {
-		buf_free(buf);
-		bgp_fsm(peer, EVNT_CON_FATAL);
+	if ((buf = session_newmsg(KEEPALIVE, MSGSIZE_KEEPALIVE)) == NULL ||
+	    session_sendmsg(buf, p) == -1) {
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (mrt->type != MRT_ALL_OUT)
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == peer->conf.id ||
-		    mrt->group_id == peer->conf.groupid)
-			mrt_dump_bgp_msg(mrt, buf->buf, len, peer, conf);
-	}
-
-	if (buf_close(&peer->wbuf, buf) == -1) {
-		log_peer_warn(&peer->conf, "session_keepalive buf_close");
-		buf_free(buf);
-		bgp_fsm(peer, EVNT_CON_FATAL);
-		return;
-	}
-
-	start_timer_keepalive(peer);
-	peer->stats.msg_sent_keepalive++;
+	start_timer_keepalive(p);
+	p->stats.msg_sent_keepalive++;
 }
 
 void
 session_update(u_int32_t peerid, void *data, size_t datalen)
 {
 	struct peer		*p;
-	struct msg_header	 msg;
-	struct buf		*buf;
-	struct mrt		*mrt;
-	ssize_t			 len;
-	int			 errs = 0;
+	struct bgp_msg		*buf;
 
 	if ((p = getpeerbyid(peerid)) == NULL) {
 		log_warnx("no such peer: id=%u", peerid);
@@ -1373,39 +1378,19 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 	if (p->state != STATE_ESTABLISHED)
 		return;
 
-	len = MSGSIZE_HEADER + datalen;
-
-	memset(&msg.marker, 0xff, sizeof(msg.marker));
-	msg.len = htons(len);
-	msg.type = UPDATE;
-
-	if ((buf = buf_open(len)) == NULL) {
-		bgp_fsm(p, EVNT_CON_FATAL);
-		return;
-	}
-	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
-	errs += buf_add(buf, &msg.len, sizeof(msg.len));
-	errs += buf_add(buf, &msg.type, sizeof(msg.type));
-	errs += buf_add(buf, data, datalen);
-
-	if (errs > 0) {
-		buf_free(buf);
+	if ((buf = session_newmsg(UPDATE, MSGSIZE_HEADER + datalen)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (mrt->type != MRT_ALL_OUT && mrt->type != MRT_UPDATE_OUT)
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == p->conf.id ||
-		    mrt->group_id == p->conf.groupid)
-			mrt_dump_bgp_msg(mrt, buf->buf, len, p, conf);
+	if (buf_add(buf->buf, data, datalen)) {
+		buf_free(buf->buf);
+		free(buf);
+		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
 	}
 
-	if (buf_close(&p->wbuf, buf) == -1) {
-		log_peer_warn(&p->conf, "session_update: buf_close");
-		buf_free(buf);
+	if (session_sendmsg(buf, p) == -1) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
@@ -1415,66 +1400,46 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 }
 
 void
-session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
+session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
     void *data, ssize_t datalen)
 {
-	struct msg_header	 msg;
-	struct buf		*buf;
-	struct mrt		*mrt;
-	ssize_t			 len;
-	int			 errs = 0;
+	struct bgp_msg		*buf;
+	u_int			 errs = 0;
 	u_int8_t		 null8 = 0;
 
-	if (peer->stats.last_sent_errcode)	/* some notifctn already sent */
+	if (p->stats.last_sent_errcode)	/* some notification already sent */
 		return;
 
-	len = MSGSIZE_NOTIFICATION_MIN + datalen;
-
-	memset(&msg.marker, 0xff, sizeof(msg.marker));
-	msg.len = htons(len);
-	msg.type = NOTIFICATION;
-
-	if ((buf = buf_open(len)) == NULL) {
-		bgp_fsm(peer, EVNT_CON_FATAL);
+	if ((buf = session_newmsg(NOTIFICATION,
+	    MSGSIZE_NOTIFICATION_MIN + datalen)) == NULL) {
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
-	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
-	errs += buf_add(buf, &msg.len, sizeof(msg.len));
-	errs += buf_add(buf, &msg.type, sizeof(msg.type));
-	errs += buf_add(buf, &errcode, sizeof(errcode));
+
+	errs += buf_add(buf->buf, &errcode, sizeof(errcode));
 	if (errcode == ERR_CEASE)
-		errs += buf_add(buf, &null8, sizeof(null8));
+		errs += buf_add(buf->buf, &null8, sizeof(null8));
 	else
-		errs += buf_add(buf, &subcode, sizeof(subcode));
+		errs += buf_add(buf->buf, &subcode, sizeof(subcode));
 
 	if (datalen > 0)
-		errs += buf_add(buf, data, datalen);
+		errs += buf_add(buf->buf, data, datalen);
 
 	if (errs > 0) {
-		buf_free(buf);
-		bgp_fsm(peer, EVNT_CON_FATAL);
+		buf_free(buf->buf);
+		free(buf);
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (mrt->type != MRT_ALL_OUT)
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == peer->conf.id ||
-		    mrt->group_id == peer->conf.groupid)
-			mrt_dump_bgp_msg(mrt, buf->buf, len, peer, conf);
-	}
-
-	if (buf_close(&peer->wbuf, buf) == -1) {
-		log_peer_warn(&peer->conf, "session_notification: buf_close");
-		buf_free(buf);
-		bgp_fsm(peer, EVNT_CON_FATAL);
+	if (session_sendmsg(buf, p) == -1) {
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	peer->stats.msg_sent_notification++;
-	peer->stats.last_sent_errcode = errcode;
-	peer->stats.last_sent_suberr = subcode;
+	p->stats.msg_sent_notification++;
+	p->stats.last_sent_errcode = errcode;
+	p->stats.last_sent_suberr = subcode;
 }
 
 int
@@ -1492,55 +1457,34 @@ session_neighbor_rrefresh(struct peer *p)
 }
 
 void
-session_rrefresh(struct peer *peer, u_int16_t afi, u_int8_t safi)
+session_rrefresh(struct peer *p, u_int16_t afi, u_int8_t safi)
 {
-	struct msg_header	 msg;
-	struct buf		*buf;
-	struct mrt		*mrt;
-	ssize_t			 len;
+	struct bgp_msg		*buf;
 	int			 errs = 0;
 	u_int8_t		 null8 = 0;
 
-	len = MSGSIZE_RREFRESH;
-
-	memset(&msg.marker, 0xff, sizeof(msg.marker));
-	msg.len = htons(len);
-	msg.type = RREFRESH;
-
-	if ((buf = buf_open(len)) == NULL) {
-		bgp_fsm(peer, EVNT_CON_FATAL);
+	if ((buf = session_newmsg(RREFRESH, MSGSIZE_RREFRESH)) == NULL) {
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
-	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
-	errs += buf_add(buf, &msg.len, sizeof(msg.len));
-	errs += buf_add(buf, &msg.type, sizeof(msg.type));
-	errs += buf_add(buf, &afi, sizeof(afi));
-	errs += buf_add(buf, &null8, sizeof(null8));
-	errs += buf_add(buf, &safi, sizeof(safi));
+
+	errs += buf_add(buf->buf, &afi, sizeof(afi));
+	errs += buf_add(buf->buf, &null8, sizeof(null8));
+	errs += buf_add(buf->buf, &safi, sizeof(safi));
 
 	if (errs > 0) {
-		buf_free(buf);
-		bgp_fsm(peer, EVNT_CON_FATAL);
+		buf_free(buf->buf);
+		free(buf);
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (mrt->type != MRT_ALL_OUT)
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == peer->conf.id ||
-		    mrt->group_id == peer->conf.groupid)
-			mrt_dump_bgp_msg(mrt, buf->buf, len, peer, conf);
-	}
-
-	if (buf_close(&peer->wbuf, buf) == -1) {
-		log_peer_warn(&peer->conf, "session_rrefresh buf_close");
-		buf_free(buf);
-		bgp_fsm(peer, EVNT_CON_FATAL);
+	if (session_sendmsg(buf, p) == -1) {
+		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	peer->stats.msg_sent_rrefresh++;
+	p->stats.msg_sent_rrefresh++;
 }
 
 int

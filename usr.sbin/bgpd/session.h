@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.84 2006/06/17 14:06:09 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.85 2006/07/28 15:04:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,6 +104,12 @@ enum capa_codes {
 	CAPA_NONE,
 	CAPA_MP,
 	CAPA_REFRESH
+};
+
+struct bgp_msg {
+	struct buf	*buf;
+	enum msg_type	 type;
+	u_int16_t	 len;
 };
 
 struct msg_header {
