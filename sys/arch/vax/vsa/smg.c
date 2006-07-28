@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.10 2006/07/23 19:17:23 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.11 2006/07/28 21:06:00 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -259,7 +259,8 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_scr = scr;
 
-	printf("\n");
+	printf("\n%s: %dx%d on-board monochrome framebuffer\n",
+	    self->dv_xname, SM_XWIDTH, SM_YWIDTH);
 
 	aa.console = console;
 	aa.scrdata = &smg_screenlist;
