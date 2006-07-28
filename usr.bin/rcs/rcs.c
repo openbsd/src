@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.28 2006/07/27 04:23:37 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.29 2006/07/28 05:41:45 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2755,6 +2755,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 			    ((unsigned char *)rcs_buf_get(newbuf) + rcs_buf_len(newbuf)) - end);
 			/* Point fin to end of data. */
 			fin = rcs_buf_get(tmpbuf) + rcs_buf_len(tmpbuf) - 1;
+			/* Recalculate new length. */
+			len = rcs_buf_len(tmpbuf);
 
 			/* tmpbuf is now ready, free old newbuf if allocated here. */
 			if (newbuf != bp)
