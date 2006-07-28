@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1114 2006/07/27 10:48:08 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1115 2006/07/28 16:23:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2669,6 +2669,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4307,
 	    "BCM4307",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4311,
+	    "BCM4311",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318,
@@ -8139,6 +8143,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP51 Host",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_PMU,
+	    "MCP51 PMU",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_MEM,
 	    "MCP51 Memory",
 	},
@@ -9245,6 +9253,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C822,
 	    "5C822 SD/MMC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C832,
+	    "5C832 Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C843,
+	    "5C843",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C852,
