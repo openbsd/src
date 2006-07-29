@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.16 2006/07/29 14:17:32 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.17 2006/07/29 15:12:44 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -251,8 +251,8 @@ dzcnprobe(cndev)
 	struct	consdev *cndev;
 {
 	extern	vaddr_t iospace;
-	int diagcons, major;
-	paddr_t ioaddr = 0x200A0000;
+	int diagcons, major, nokbd = 0;
+	paddr_t ioaddr = 0x200a0000;
 
 	if ((major = getmajor(dzopen)) < 0)
 		return;
@@ -261,23 +261,20 @@ dzcnprobe(cndev)
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
-		if (vax_confdata & KA420_CFG_MULTU)
-			diagcons = (vax_confdata & KA420_CFG_L3CON ? 3 : 0);
-		else
-			diagcons = 3;	/* never on the keyboard port */
+		diagcons = (vax_confdata & KA420_CFG_L3CON ? 3 : 0);
+		if ((vax_confdata & KA420_CFG_MULTU) == 0)
+			nokbd = 1;
 		break;
 
 	case VAX_BTYP_46:
-		if ((vax_siedata & 0xff) != VAX_VTYP_46)
-			diagcons = (vax_confdata & 0x100 ? 3 : 0);
-		else
-			diagcons = 3;	/* never on the keyboard port */
+		diagcons = (vax_confdata & 0x100 ? 3 : 0);
+		if ((vax_siedata & 0xff) == VAX_VTYP_46)
+			nokbd = 1;
 		break;
 	case VAX_BTYP_48:
-		if (((vax_siedata >> 8) & 0xff) != VAX_STYP_48)
-			diagcons = (vax_confdata & 0x100 ? 3 : 0);
-		else
-			diagcons = 3;	/* never on the keyboard port */
+		diagcons = (vax_confdata & 0x100 ? 3 : 0);
+		if (((vax_siedata >> 8) & 0xff) == VAX_STYP_48)
+			nokbd = 1;
 		break;
 
 	case VAX_BTYP_49:
@@ -293,11 +290,8 @@ dzcnprobe(cndev)
 	default:
 		return;
 	}
-	if (diagcons)
-		cndev->cn_pri = CN_REMOTE;
-	else
-		cndev->cn_pri = CN_NORMAL;
-	cndev->cn_dev = makedev(major, diagcons);
+	cndev->cn_pri = diagcons != 0 ? CN_REMOTE : CN_NORMAL;
+	cndev->cn_dev = makedev(major, nokbd ? 3 : diagcons);
 	dz_regs = iospace;
 	dz = (void *)dz_regs;
 	ioaccess(iospace, ioaddr, 1);
