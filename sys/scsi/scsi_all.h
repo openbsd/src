@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.36 2006/07/23 14:34:55 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.37 2006/07/29 02:52:49 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -230,8 +230,6 @@ struct scsi_inquiry_data {
 #define	SID_REMOVABLE	0x80
 	u_int8_t version;
 #define SID_ANSII	0x07
-#define SID_ANSII_SCSI2	0x02
-#define SID_ANSII_SCSI3	0x03
 #define SID_ECMA	0x38
 #define SID_ISO		0xC0
 	u_int8_t response_format;
