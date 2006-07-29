@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2006/07/29 15:01:49 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2006/07/29 16:08:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -25,8 +25,12 @@
 
 #define ATU_OIOWTVR	0xffffe15c
 #define ATU_ATUCR	0xffffe180
+#define ATU_PCSR	0xffffe184
 
 #define ATUCR_OUT_EN	(1U << 1)
+
+#define	PCSR_RIB	(1U << 5)
+#define	PCSR_RPB	(1U << 4)
 
 void
 machdep(void)
@@ -64,6 +68,8 @@ main(void)
 void
 _rtt(void)
 {
-	printf("halted...");
+	*((volatile uint32_t *)(ATU_PCSR)) = PCSR_RIB | PCSR_RPB;
+
+	printf("RESET FAILED\n");
 	for (;;) ;
 }
