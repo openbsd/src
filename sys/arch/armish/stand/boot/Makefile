@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2006/07/28 17:24:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/07/29 00:48:52 deraadt Exp $
 
 NOMAN=
-PROG=		boot
 
+.if ${MACHINE} == "armish"
+PROG=		boot
 S=		${.CURDIR}/../../../..
 
 CPPFLAGS+= 	-nostdinc -I../.. -I. -I${S} -D_STANDALONE
@@ -37,6 +38,10 @@ ${PROG}: ${OBJS} ${LIBKERN} ${LIBSA}
 	@([ -h arm ] || ln -s ${.CURDIR}/../../../arm/include arm)
 .NOPATH: machine arm
 CLEANFILES+=	machine arm
+.endif
+
+.else
+NOPROG=
 .endif
 
 .include <bsd.prog.mk>
