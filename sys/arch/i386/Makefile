@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2005/05/06 11:16:47 pedro Exp $
+#	$OpenBSD: Makefile,v 1.16 2006/07/29 12:18:44 thib Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -18,13 +18,12 @@ SI386=	$S/arch/i386/eisa/*.[ch] $S/arch/i386/i386/*.[ch] \
 	$S/arch/i386/isa/*.[ch] $S/arch/i386/pci/*.[ch]
 AI386=	$S/arch/i386/i386/*.[sS] $S/arch/i386/isa/*.[sS] \
 	$S/lib/libkern/arch/i386/*.[sS]
-GI386=	$S/gnu/arch/i386/*/*.[ch]
 
 # Directories in which to place i386 tags links
 DI386=	conf eisa i386 include isa pci
 
 tags:
-	-ctags -wdtf ${TI386} ${COMM} ${SI386} ${GI386}
+	-ctags -wdtf ${TI386} ${COMM} ${SI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TI386}
