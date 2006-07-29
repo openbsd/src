@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.3 2006/07/29 14:18:57 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.4 2006/07/29 15:11:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -57,6 +57,8 @@
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -202,8 +204,9 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	vaddr_t tmp;
 	int console;
+	extern struct consdev wsdisplay_cons;
 
-	console = (vax_confdata & 0x100) == 0;
+	console = (vax_confdata & 0x100) == 0 && cn_tab == &wsdisplay_cons;
 	if (console) {
 		ss = &lcg_consscr;
 		sc->sc_nscreens = 1;

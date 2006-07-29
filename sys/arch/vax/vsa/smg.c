@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.12 2006/07/29 14:18:57 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.13 2006/07/29 15:11:57 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -68,6 +68,8 @@
 #include <machine/ka420.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <dev/ic/dc503reg.h>
 
@@ -218,8 +220,10 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 	struct smg_screen *scr;
 	struct wsemuldisplaydev_attach_args aa;
 	int console;
+	extern struct consdev wsdisplay_cons;
 
-	console = (vax_confdata & KA420_CFG_L3CON) == 0;
+	console = (vax_confdata & KA420_CFG_L3CON) == 0 &&
+	    cn_tab == &wsdisplay_cons;
 	if (console) {
 		scr = &smg_consscr;
 		sc->sc_nscreens = 1;

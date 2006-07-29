@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.2 2006/07/29 14:18:57 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.3 2006/07/29 15:11:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -95,6 +95,8 @@
 #include <machine/vsbus.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -273,8 +275,10 @@ gpx_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	int console;
 	vaddr_t tmp;
+	extern struct consdev wsdisplay_cons;
 
-	console = (vax_confdata & (KA420_CFG_L3CON | KA420_CFG_MULTU)) == 0;
+	console = (vax_confdata & (KA420_CFG_L3CON | KA420_CFG_MULTU)) == 0 &&
+	    cn_tab == &wsdisplay_cons;
 	if (console) {
 		scr = &gpx_consscr;
 		sc->sc_nscreens = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.2 2006/07/29 14:18:57 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.3 2006/07/29 15:11:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -59,6 +59,8 @@
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -183,8 +185,9 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	struct lcspx_screen *ss;
 	struct wsemuldisplaydev_attach_args aa;
 	int i, console;
+	extern struct consdev wsdisplay_cons;
 
-	console = (vax_confdata & 8) == 0;
+	console = (vax_confdata & 8) == 0 && cn_tab == &wsdisplay_cons;
 	if (console) {
 		ss = &lcspx_consscr;
 		sc->sc_nscreens = 1;
