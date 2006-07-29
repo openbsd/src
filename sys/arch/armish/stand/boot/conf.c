@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
@@ -34,10 +34,13 @@
 
 #include <sys/param.h>
 
-#include <lib/libsa/stand.h>
+#include <dev/cons.h>
+
+#include "libsa.h"
 #include <lib/libsa/ufs.h>
 
-#include "boot.h"
+const char version[] = "0.9";
+int	debug = 0;
 
 /*
  * Device configuration
@@ -45,8 +48,7 @@
 struct devsw devsw[] = {
 	{ "wd",	wdstrategy, wdopen, wdclose, noioctl },
 };
-
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int ndevs = NENTS(devsw);
 
 /*
  * Filesystem configuration
@@ -55,5 +57,13 @@ struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir }
 };
+int nfsys = NENTS(file_system);
 
-int nfsys = sizeof(file_system) / sizeof(file_system[0]);
+/*
+ * Console configuration
+ */
+struct consdev constab[] = {
+	{ com_probe, com_init, com_getc, com_putc },
+	{ NULL }
+};
+struct consdev *cn_tab;

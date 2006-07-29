@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
 
 /*-
@@ -38,9 +38,8 @@
  */
 
 #include <sys/types.h>
-#include <lib/libsa/stand.h>
 
-#include "boot.h"
+#include "libsa.h"
 
 #define DELAY_CALIBRATE	1000
 

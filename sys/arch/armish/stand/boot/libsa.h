@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.1 2006/07/29 15:01:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -16,12 +16,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <lib/libsa/stand.h>
+
+#define DEFAULT_KERNEL_ADDRESS	0
+
+#ifdef DEBUG
 #define DPRINTF(x)      printf x;
+#else
+#define DPRINTF(x)
+#endif
 
-#define MAXDEVNAME      16
-#define DEFBOOTDEV      "wd0a"
-#define DEFKERNELNAME   "bsd"
-
+/*
+ * com
+ */
+void com_probe(struct consdev *);
+void com_init(struct consdev *);
+int com_getc(dev_t);
+void com_putc(dev_t, int);
 
 /*
  * wd

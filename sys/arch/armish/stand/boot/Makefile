@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2006/07/29 00:48:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2006/07/29 15:01:49 kettenis Exp $
 
 NOMAN=
 
@@ -6,14 +6,20 @@ NOMAN=
 PROG=		boot
 S=		${.CURDIR}/../../../..
 
-CPPFLAGS+= 	-nostdinc -I../.. -I. -I${S} -D_STANDALONE
-CPPFLAGS+=	-DCONSPEED=115200
-CPPFLAGS+=	-DCONADDR=0xfe800000UL
+.PATH:		${S}/stand/boot
+.PATH:		${S}/lib/libsa
 
-COPTS+=		-ffreestanding -fno-stack-protector -malignment-traps
+CPPFLAGS+=	-D_STANDALONE
+CPPFLAGS+= 	-nostdinc -I../.. -I. -I${.CURDIR} -I${S}
+CPPFLAGS+=	-DCONADDR=0xfe800000UL -DCONSPEED=115200
 
-SRCS=		start.S boot.c conf.c clock.c ns16550.c wd.c wdc.c pciide.c
-SRCS+=		devopen.c exec.c
+COPTS+=		-ffreestanding -fno-stack-protector
+
+SRCS=		start.S 
+SRCS+=		boot.c cmd.c vars.c
+SRCS+=		conf.c devopen.c exec.c machdep.c dev_armish.c time.c
+SRCS+=		clock.c ns16550.c wd.c wdc.c pciide.c
+SRCS+=		ctime.c strtol.c
 
 ### find out what to use for libkern
 KERN_AS=        library

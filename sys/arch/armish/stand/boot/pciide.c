@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -35,64 +35,30 @@
  */
 
 #include <sys/types.h>
-#include <lib/libsa/stand.h>
 
-#include "boot.h"
+#include "libsa.h"
 #include "wdvar.h"
 
-/*
- * WD1003 / ATA Disk Controller register definitions.
- */
-
-/* offsets of registers in the 'regular' register region */
-#define wd_data                 0       /* data register (R/W - 16 bits) */
-#define wd_error                1       /* error register (R) */
-#define wd_precomp              1       /* write precompensation (W) */
-#define wd_seccnt               2       /* sector count (R/W) */
-#define wd_ireason              2       /* interrupt reason (R/W) (for atapi) */
-#define wd_sector               3       /* first sector number (R/W) */
-#define wd_cyl_lo               4       /* cylinder address, low byte (R/W) */
-#define wd_cyl_hi               5       /* cylinder address, high byte (R/W) */
-#define wd_sdh                  6       /* sector size/drive/head (R/W) */
-#define wd_command              7       /* command register (W) */
-#define wd_lba_lo               3       /* lba address, low byte (RW) */
-#define wd_lba_mi               4       /* lba address, middle byte (RW) */
-#define wd_lba_hi               5       /* lba address, high byte (RW) */
-
-/* "shadow" registers; these may or may not overlap regular registers */
-#define wd_status               8       /* immediate status (R) */
-#define wd_features             9       /* features (W) */
-
-/* offsets of registers in the auxiliary register region */
-#define wd_aux_altsts           0       /* alternate fixed disk status (R) */
-#define wd_aux_ctlr             0       /* fixed disk controller control (W) */
-#define  WDCTL_4BIT              0x08   /* use four head bits (wd1003) */
-#define  WDCTL_RST               0x04   /* reset the controller */
-#define  WDCTL_IDS               0x02   /* disable controller interrupts */
-
 int
-pciide_init(chp, unit)
-	struct wdc_channel *chp;
-	u_int *unit;
+pciide_init(struct wdc_channel *chp, u_int chan)
 {
 	u_int32_t cmdreg, ctlreg;
-	int i, compatchan = 0;
+	int i;
 
 	/*
-	 * two channels per chip, two drives per channel
+	 * two channels per chip, one drive per channel
 	 */
-	compatchan = *unit / PCIIDE_CHANNEL_NDEV;
-	if (compatchan >= PCIIDE_NUM_CHANNELS)
+	if (chan >= PCIIDE_NUM_CHANNELS)
 		return (ENXIO);
-	*unit %= PCIIDE_CHANNEL_NDEV;
+	chp->ndrives = 1;
 
-	DPRINTF(("[pciide] unit: %d, channel: %d\n", *unit, compatchan));
+	DPRINTF(("[pciide] channel: %d\n", chan));
 
 	/*
 	 * XXX map?
 	 */
-	cmdreg = 0x90000200 + compatchan * 0x10;
-	ctlreg = 0x90000208 + compatchan * 0x10;
+	cmdreg = 0x90000200 + chan * 0x10;
+	ctlreg = 0x90000208 + chan * 0x10;
 
 	/* set up cmd regsiters */
 	chp->c_cmdbase = (u_int8_t *)cmdreg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.6 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -34,11 +34,41 @@
 #ifndef _STAND_WDVAR_H
 #define _STAND_WDVAR_H
 
+#include <sys/disklabel.h>
+
 #include <dev/ic/wdcreg.h>
 #include <dev/ata/atareg.h>
 #include <dev/pci/pciidereg.h>
 
-#include <sys/disklabel.h>
+/*
+ * WD1003 / ATA Disk Controller register definitions.
+ */
+
+/* offsets of registers in the 'regular' register region */
+#define wd_data                 0       /* data register (R/W - 16 bits) */
+#define wd_error                1       /* error register (R) */
+#define wd_precomp              1       /* write precompensation (W) */
+#define wd_seccnt               2       /* sector count (R/W) */
+#define wd_ireason              2       /* interrupt reason (R/W) (for atapi) */
+#define wd_sector               3       /* first sector number (R/W) */
+#define wd_cyl_lo               4       /* cylinder address, low byte (R/W) */
+#define wd_cyl_hi               5       /* cylinder address, high byte (R/W) */
+#define wd_sdh                  6       /* sector size/drive/head (R/W) */
+#define wd_command              7       /* command register (W) */
+#define wd_lba_lo               3       /* lba address, low byte (RW) */
+#define wd_lba_mi               4       /* lba address, middle byte (RW) */
+#define wd_lba_hi               5       /* lba address, high byte (RW) */
+
+/* "shadow" registers; these may or may not overlap regular registers */
+#define wd_status               8       /* immediate status (R) */
+#define wd_features             9       /* features (W) */
+
+/* offsets of registers in the auxiliary register region */
+#define wd_aux_altsts           0       /* alternate fixed disk status (R) */
+#define wd_aux_ctlr             0       /* fixed disk controller control (W) */
+#define  WDCTL_4BIT              0x08   /* use four head bits (wd1003) */
+#define  WDCTL_RST               0x04   /* reset the controller */
+#define  WDCTL_IDS               0x02   /* disable controller interrupts */
 
 #define WDC_TIMEOUT		2000000
 #define PCIIDE_CHANNEL_NDEV	2
@@ -52,7 +82,7 @@ struct wdc_channel {
 	volatile u_int8_t *c_cmdreg[WDC_NPORTS + WDC_NSHADOWREG];
 	volatile u_int16_t *c_data;
 
-	u_int8_t compatchan;
+	u_int8_t ndrives;
 };
 
 #define WDC_READ_REG(chp, reg)		*(chp)->c_cmdreg[(reg)]
@@ -74,6 +104,7 @@ struct wd_softc {
 	struct ataparams sc_params;
 	struct disklabel sc_label;
 	struct wdc_channel sc_channel;
+	u_int sc_drive;
 };
 
 struct wdc_command {
@@ -92,12 +123,12 @@ struct wdc_command {
 	u_int64_t r_blkno;
 };
 
-int	wdc_init		(struct wd_softc*, u_int*);
+int	wdc_init		(struct wd_softc*, u_int);
 int	wdccommand		(struct wd_softc*, struct wdc_command*);
 int	wdccommandext		(struct wd_softc*, struct wdc_command*);
 int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr_t, void*);
 int	wdc_exec_identify	(struct wd_softc*, void*);
 
-int	pciide_init		(struct wdc_channel*, u_int*);
+int	pciide_init		(struct wdc_channel*, u_int);
 
 #endif /* _STAND_WDVAR_H */

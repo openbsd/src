@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: wd.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -40,15 +40,43 @@
 #include <sys/types.h>
 #include <sys/stdint.h>
 
-#include <lib/libsa/stand.h>
 #include <machine/param.h>
 
-#include "boot.h"
+#include "libsa.h"
 #include "wdvar.h"
 
-static int  wd_get_params(struct wd_softc *wd);
-static int  wdgetdisklabel(struct wd_softc *wd);
-static void wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp);
+void	wdprobe(void);
+int	wd_get_params(struct wd_softc *wd);
+int	wdgetdisklabel(struct wd_softc *wd);
+void	wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp);
+
+struct wd_softc wd_devs[NUNITS];
+int wd_ndevs = -1;
+
+void
+wdprobe(void)
+{
+	struct wd_softc *wd = wd_devs;
+	u_int chan, drive, unit = 0;
+
+	for (chan = 0; chan < PCIIDE_NUM_CHANNELS; chan++) {
+		if (wdc_init(wd, chan) != 0)
+			continue;
+		for (drive = 0; drive < wd->sc_channel.ndrives; drive++) {
+			wd->sc_unit = unit;
+			wd->sc_drive = drive;
+
+			if (wd_get_params(wd) != 0)
+				continue;
+
+			DPRINTF(("wd%d: channel %d drive %d\n",
+				unit, chan, drive));
+			unit++;
+		}
+	}
+
+	wd_ndevs = unit;
+}
 
 /*
  * Get drive parameters through 'device identify' command.
@@ -199,7 +227,7 @@ wdopen(struct open_file *f, ...)
 {
 	int error;
 	va_list ap;
-	u_int unit, part;
+	u_int unit, part, drive;
 	struct wd_softc *wd;
 
 	va_start(ap, f);
@@ -207,25 +235,22 @@ wdopen(struct open_file *f, ...)
 	part = va_arg(ap, u_int);
 	va_end(ap);
 
-	DPRINTF(("wdopen: %d:%d\n", unit, part));
+	DPRINTF(("wdopen: wd%d%c\n", unit, 'a' + part));
 
-	wd = alloc(sizeof(struct wd_softc));
-	if (wd == NULL)
-		return ENOMEM;
-
-	memset(wd, 0, sizeof(struct wd_softc));
-
-	if (wdc_init(wd, &unit) != 0)
+	if (unit < 0 || unit >= NUNITS)
 		return (ENXIO);
 
+	if (wd_ndevs == -1)
+		wdprobe();
+
+	if (unit >= wd_ndevs)
+		return (ENXIO);
+
+	wd = &wd_devs[unit];
 	wd->sc_part = part;
-	wd->sc_unit = unit;
 
-	if ( (error = wd_get_params(wd)) != 0)
+	if ((error = wdgetdisklabel(wd)) != 0)
 		return (error);
-
-	if ( (error = wdgetdisklabel(wd)) != 0)
-		return error;
 
 	f->f_devdata = wd;
 	return (0);
@@ -268,7 +293,7 @@ wdstrategy(f, rw, dblk, size, buf, rsize)
 	for (i = 0; i < nsect; i++, blkno++) {
 		int error;
 
-		if ( (error = wdc_exec_read(wd, WDCC_READ, blkno, buf)) != 0)
+		if ((error = wdc_exec_read(wd, WDCC_READ, blkno, buf)) != 0)
 			return (error);
 
 		buf += wd->sc_label.d_secsize;

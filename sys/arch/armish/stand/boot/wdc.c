@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: wdc.c,v 1.7 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -38,46 +38,10 @@
  */
 
 #include <sys/types.h>
-#if 0
-#include <sys/disklabel.h>
-#endif
-
-#include <lib/libsa/stand.h>
 #include <machine/param.h>
 
-#include "boot.h"
+#include "libsa.h"
 #include "wdvar.h"
-
-/*
- * WD1003 / ATA Disk Controller register definitions.
- */
-
-/* offsets of registers in the 'regular' register region */
-#define wd_data                 0       /* data register (R/W - 16 bits) */
-#define wd_error                1       /* error register (R) */
-#define wd_precomp              1       /* write precompensation (W) */
-#define wd_seccnt               2       /* sector count (R/W) */
-#define wd_ireason              2       /* interrupt reason (R/W) (for atapi) */
-#define wd_sector               3       /* first sector number (R/W) */
-#define wd_cyl_lo               4       /* cylinder address, low byte (R/W) */
-#define wd_cyl_hi               5       /* cylinder address, high byte (R/W) */
-#define wd_sdh                  6       /* sector size/drive/head (R/W) */
-#define wd_command              7       /* command register (W) */
-#define wd_lba_lo               3       /* lba address, low byte (RW) */
-#define wd_lba_mi               4       /* lba address, middle byte (RW) */
-#define wd_lba_hi               5       /* lba address, high byte (RW) */
-
-/* "shadow" registers; these may or may not overlap regular registers */
-#define wd_status               8       /* immediate status (R) */
-#define wd_features             9       /* features (W) */
-
-/* offsets of registers in the auxiliary register region */
-#define wd_aux_altsts           0       /* alternate fixed disk status (R) */
-#define wd_aux_ctlr             0       /* fixed disk controller control (W) */
-#define  WDCTL_4BIT              0x08   /* use four head bits (wd1003) */
-#define  WDCTL_RST               0x04   /* reset the controller */
-#define  WDCTL_IDS               0x02   /* disable controller interrupts */
-
 
 #define WDCDELAY	100
 #define WDCNDELAY_RST	31000 * 10
@@ -214,7 +178,7 @@ wdcprobe(chp)
 int
 wdc_init(sc, unit)
 	struct wd_softc *sc;
-	u_int *unit;
+	u_int unit;
 {
 	if (pciide_init(&sc->sc_channel, unit) != 0)
 		return (ENXIO);
@@ -264,18 +228,18 @@ wdc_read_block(sc, wd_c)
  * Send a command to the device (CHS and LBA addressing).
  */
 int
-wdccommand(sc, wd_c)
-	struct wd_softc *sc;
+wdccommand(wd, wd_c)
+	struct wd_softc *wd;
 	struct wdc_command *wd_c;
 {
 	u_int8_t err;
-	struct wdc_channel *chp = &sc->sc_channel;
+	struct wdc_channel *chp = &wd->sc_channel;
 
 #if 0
 	DPRINTF(("wdccommand(%d, %d, %d, %d, %d, %d, %d)\n",
-				wd_c->drive, wd_c->r_command, wd_c->r_cyl,
-				wd_c->r_head, wd_c->r_sector, wd_c->bcount,
-				wd_c->r_precomp));
+	    wd_c->drive, wd_c->r_command, wd_c->r_cyl,
+	    wd_c->r_head, wd_c->r_sector, wd_c->bcount,
+	    wd_c->r_precomp));
 #endif
 
 	WDC_WRITE_REG(chp, wd_precomp, wd_c->r_precomp);
@@ -291,8 +255,8 @@ wdccommand(sc, wd_c)
 		return (ENXIO);
 
 	if (WDC_READ_REG(chp, wd_status) & WDCS_ERR) {
-		printf("wd%d: error %x\n", chp->compatchan,
-				WDC_READ_REG(chp, wd_error));
+		DPRINTF(("wd%d: error %x\n", wd->sc_unit,
+		    WDC_READ_REG(chp, wd_error)));
 		return (ENXIO);
 	}
 
@@ -334,8 +298,8 @@ wdccommandext(wd, wd_c)
 		return (ENXIO);
 
 	if (WDC_READ_REG(chp, wd_status) & WDCS_ERR) {
-		printf("wd%d: error %x\n", chp->compatchan,
-				WDC_READ_REG(chp, wd_error));
+		DPRINTF(("wd%d: error %x\n", wd->sc_unit,
+		    WDC_READ_REG(chp, wd_error)));
 		return (ENXIO);
 	}
 
@@ -355,12 +319,12 @@ wdc_exec_identify(wd, data)
 
 	memset(&wd_c, 0, sizeof(wd_c));
 
-	wd_c.drive = wd->sc_unit;
+	wd_c.drive = wd->sc_drive;
 	wd_c.r_command = WDCC_IDENTIFY;
 	wd_c.bcount = DEV_BSIZE;
 	wd_c.data = data;
 
-	if ( (error = wdccommand(wd, &wd_c)) != 0)
+	if ((error = wdccommand(wd, &wd_c)) != 0)
 		return (error);
 
 	return wdc_read_block(wd, &wd_c);
@@ -403,7 +367,7 @@ wdc_exec_read(wd, cmd, blkno, data)
 
 	wd_c.data = data;
 	wd_c.r_count = 1;
-	wd_c.drive = wd->sc_unit;
+	wd_c.drive = wd->sc_drive;
 	wd_c.r_command = cmd;
 	wd_c.bcount = wd->sc_label.d_secsize;
 
@@ -413,7 +377,7 @@ wdc_exec_read(wd, cmd, blkno, data)
 		error = wdccommand(wd, &wd_c);
 
 	if (error != 0)
-		return error;
+		return (error);
 
 	return wdc_read_block(wd, &wd_c);
 }

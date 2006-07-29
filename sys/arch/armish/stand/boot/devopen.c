@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 2006/07/28 17:12:06 kettenis Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
 /*	$NetBSD: devopen.c,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
 
 /*-
@@ -37,55 +37,46 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <lib/libsa/stand.h>
+#include "libsa.h"
 
-#include "boot.h"
+#define MAXDEVNAME      16
 
 /*
  * Parse a device spec.
  *
- * Format:
- *  [device:][filename]
+ * [A-Za-z]*[0-9]*[A-Za-z]:file
+ *    dev   uint    part
  */
 int
-devparse(const char *fname, int *dev, u_int8_t *unit,
-		u_int8_t *part, const char **file)
+devparse(const char *fname, int *dev, int *unit, int *part, const char **file)
 {
-	const char *col;
+	const char *s;
 
 	*unit = 0;	/* default to wd0a */
 	*part = 0;
 	*dev  = 0;
-	*file = DEFKERNELNAME;
 
-	if (fname == NULL)
-		return (0);
-
-	if ( (col = strchr(fname, ':')) != NULL) {
+	s = strchr(fname, ':');
+	if (s != NULL) {
 		int devlen;
-		u_int8_t i, u, p;
+		int i, u, p;
 		struct devsw *dp;
 		char devname[MAXDEVNAME];
 
-		devlen = col - fname;
+		devlen = s - fname;
 		if (devlen > MAXDEVNAME)
 			return (EINVAL);
-
-#define isnum(c)	(((c) >= '0') && ((c) <= '9'))
-#if 0
-#define isalpha(c)	(((c) >= 'a') && ((c) <= 'z'))
-#endif
 
 		/* extract device name */
 		for (i = 0; isalpha(fname[i]) && (i < devlen); i++)
 			devname[i] = fname[i];
 		devname[i] = 0;
 
-		if (!isnum(fname[i]))
+		if (!isdigit(fname[i]))
 			return (EUNIT);
 
 		/* device number */
-		for (u = 0; isnum(fname[i]) && (i < devlen); i++)
+		for (u = 0; isdigit(fname[i]) && (i < devlen); i++)
 			u = u * 10 + (fname[i] - '0');
 
 		if (!isalpha(fname[i]))
@@ -110,11 +101,10 @@ devparse(const char *fname, int *dev, u_int8_t *unit,
 		*unit = u;
 		*part = p;
 		*dev  = i;
-		fname = ++col;
+		fname = ++s;
 	}
 
-	if (*fname)
-		*file = fname;
+	*file = fname;
 
 	return (0);
 }
@@ -122,25 +112,18 @@ devparse(const char *fname, int *dev, u_int8_t *unit,
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
-    struct devsw *dp;
-    u_int8_t unit, part;
-    int dev, error;
+	struct devsw *dp;
+	int dev, unit, part, error;
 
-    DPRINTF(("devopen(%s)\n", fname));
+	error = devparse(fname, &dev, &unit, &part, (const char **)file);
+	if (error)
+		return (error);
 
-    if ( (error = devparse(fname, &dev, &unit, &part,
-				    (const char **)file)) != 0)
-	    return error;
+	dp = &devsw[dev];
+	if ((void *)dp->dv_open == (void *)nodev)
+		return (ENXIO);
 
-    dp = &devsw[dev];
-    if ((void *)dp->dv_open == (void *)nodev)
-	return ENXIO;
+	f->f_dev = dp;
 
-    f->f_dev = dp;
-    
-    if ( (error = (*dp->dv_open)(f, unit, part)) != 0)
-	printf("%s%d%c: %d = %s\n", devsw[dev].dv_name,
-	       unit, 'a' + part, error, strerror(error));
-
-    return error;
+	return (*dp->dv_open)(f, unit, part);
 }
