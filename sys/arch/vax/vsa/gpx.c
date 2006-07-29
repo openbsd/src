@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.1 2006/07/28 21:07:05 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.2 2006/07/29 14:18:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -94,8 +94,9 @@
 #include <machine/scb.h>
 #include <machine/vsbus.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
@@ -1028,27 +1029,13 @@ gpx_fillrect(struct gpx_screen *ss, int x, int y, int dx, int dy, long attr,
  * Console support code
  */
 
-#include <dev/cons.h>
-cons_decl(gpx);
+int	gpxcnprobe(void);
+void	gpxcninit(void);
 
-#include "dzkbd.h"
-
-#include <vax/qbus/dzreg.h>
-#include <vax/qbus/dzvar.h>
-#include <vax/dec/dzkbdvar.h>
-
-/*
- * Called very early to setup the glass tty as console.
- * Because it's called before the VM system is initialized, virtual memory
- * for the framebuffer can be stolen directly without disturbing anything.
- */
-void
-gpxcnprobe(cndev)
-	struct  consdev *cndev;
+int
+gpxcnprobe()
 {
-	struct gpx_screen *ss = &gpx_consscr;
 	extern vaddr_t virtual_avail;
-	extern int getmajor(void *);	/* conf.c */
 	vaddr_t tmp;
 	int depth;
 
@@ -1056,58 +1043,61 @@ gpxcnprobe(cndev)
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
-		/* not present on microvaxes */
-		if ((vax_confdata & KA420_CFG_MULTU) != 0)
-			break;
+		if ((vax_confdata & (KA420_CFG_L3CON | KA420_CFG_MULTU)) != 0)
+			break; /* doesn't use graphics console */
 
 		if ((vax_confdata & KA420_CFG_VIDOPT) == 0)
-			break; /* doesn't use graphics console */
+			break; /* no color option */
 
 		/* Check for a recognized color depth */
 		tmp = virtual_avail;
 		ioaccess(tmp, GPXADDR + GPX_READBACK_OFFSET, 1);
 		depth = (*(u_int16_t *)tmp) & 0x00f0;
-		if (depth != 0x00f0 && depth != 0x0080)
-			break;
+		if (depth == 0x00f0 || depth == 0x0080)
+			return (1);
 
-		ss->ss_depth = depth == 0x00f0 ? 4 : 8;
-
-		ss->ss_adder = (struct adder *)virtual_avail;
-		virtual_avail += VAX_NBPG;
-		ioaccess((vaddr_t)ss->ss_adder, GPXADDR + GPX_ADDER_OFFSET, 1);
-
-		ss->ss_vdac = (void *)virtual_avail;
-		virtual_avail += VAX_NBPG;
-		ioaccess((vaddr_t)ss->ss_vdac, GPXADDR + GPX_VDAC_OFFSET, 1);
-
-		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(getmajor(wsdisplayopen), 0);
 		break;
 
 	default:
 		break;
 	}
+
+	return (0);
 }
 
+/*
+ * Called very early to setup the glass tty as console.
+ * Because it's called before the VM system is initialized, virtual memory
+ * for the framebuffer can be stolen directly without disturbing anything.
+ */
 void
-gpxcninit(struct consdev *cndev)
+gpxcninit()
 {
 	struct gpx_screen *ss = &gpx_consscr;
+	extern vaddr_t virtual_avail;
+	vaddr_t tmp;
 	long defattr;
 	struct rasops_info *ri;
-	extern void lkccninit(struct consdev *);
-	extern int lkccngetc(dev_t);
-	extern int dz_vsbus_lk201_cnattach(int);
 
-	/* mappings have been done in gpxcnprobe() */
+	tmp = virtual_avail;
+	ioaccess(tmp, GPXADDR + GPX_READBACK_OFFSET, 1);
+	ss->ss_depth = ((*(u_int16_t *)tmp) & 0x00f0) == 0x00f0 ? 4 : 8;
+
+	ss->ss_adder = (struct adder *)virtual_avail;
+	virtual_avail += VAX_NBPG;
+	ioaccess((vaddr_t)ss->ss_adder, GPXADDR + GPX_ADDER_OFFSET, 1);
+
+	ss->ss_vdac = (void *)virtual_avail;
+	virtual_avail += VAX_NBPG;
+	ioaccess((vaddr_t)ss->ss_vdac, GPXADDR + GPX_VDAC_OFFSET, 1);
+
+	virtual_avail = round_page(virtual_avail);
+
+	/* this had better not fail as we can't recover there */
 	if (gpx_setup_screen(ss) != 0)
-		return;
+		panic(__func__);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&gpx_stdscreen, ri, 0, 0, defattr);
-
-#if NDZKBD > 0
-	dzkbd_cnattach(0); /* Connect keyboard and screen together */
-#endif
 }

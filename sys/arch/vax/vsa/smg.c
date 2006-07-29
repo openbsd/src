@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.11 2006/07/28 21:06:00 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.12 2006/07/29 14:18:57 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -67,6 +67,8 @@
 #include <machine/cpu.h>
 #include <machine/ka420.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/ic/dc503reg.h>
 
 #include <vax/qbus/dzreg.h>
@@ -74,7 +76,6 @@
 #include <vax/dec/dzkbdvar.h>
 
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
@@ -545,22 +546,16 @@ smg_updatecursor(struct smg_screen *ss, u_int which)
 		ss->ss_cursor->cmdr = ss->ss_curcmd;
 }
 
-#include <dev/cons.h>
-cons_decl(smg);
-
 /*
- * Called very early to setup the glass tty as console.
- * Because it's called before the VM system is initialized, virtual memory
- * for the framebuffer can be stolen directly without disturbing anything.
+ * Console support code
  */
-void
-smgcnprobe(cndev)
-	struct  consdev *cndev;
-{
-	struct smg_screen *ss = &smg_consscr;
-	extern vaddr_t virtual_avail;
-	extern int getmajor(void *);	/* conf.c */
 
+int	smgcnprobe(void);
+void	smgcninit(void);
+
+int
+smgcnprobe()
+{
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
@@ -568,42 +563,43 @@ smgcnprobe(cndev)
 		if ((vax_confdata & (KA420_CFG_L3CON | KA420_CFG_MULTU)) != 0)
 			break; /* doesn't use graphics console */
 
-		ss->ss_addr = (caddr_t)virtual_avail;
-		virtual_avail += SMSIZE;
-		ioaccess((vaddr_t)ss->ss_addr, SMADDR, SMSIZE / VAX_NBPG);
-
-		ss->ss_cursor = (struct dc503reg *)virtual_avail;
-		virtual_avail += PAGE_SIZE; /* VAX_NBPG */
-		ioaccess((vaddr_t)ss->ss_cursor, KA420_CUR_BASE, 1);
-
-		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(getmajor(wsdisplayopen), 0);
-		break;
+		return (1);
 
 	default:
 		break;
 	}
+
+	return (0);
 }
 
+/*
+ * Called very early to setup the glass tty as console.
+ * Because it's called before the VM system is initialized, virtual memory
+ * for the framebuffer can be stolen directly without disturbing anything.
+ */
 void
-smgcninit(struct consdev *cndev)
+smgcninit()
 {
 	struct smg_screen *ss = &smg_consscr;
+	extern vaddr_t virtual_avail;
 	long defattr;
 	struct rasops_info *ri;
-	extern void lkccninit(struct consdev *);
-	extern int lkccngetc(dev_t);
-	extern int dz_vsbus_lk201_cnattach(int);
 
-	/* ss_addr and ss_cursor initialized in smgcnprobe() */
+	ss->ss_addr = (caddr_t)virtual_avail;
+	virtual_avail += SMSIZE;
+	ioaccess((vaddr_t)ss->ss_addr, SMADDR, SMSIZE / VAX_NBPG);
+
+	ss->ss_cursor = (struct dc503reg *)virtual_avail;
+	virtual_avail += VAX_NBPG;
+	ioaccess((vaddr_t)ss->ss_cursor, KA420_CUR_BASE, 1);
+
+	virtual_avail = round_page(virtual_avail);
+
+	/* this had better not fail as we can't recover there */
 	if (smg_setup_screen(ss) != 0)
-		return;
+		panic(__func__);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&smg_stdscreen, ri, 0, 0, defattr);
-
-#if NDZKBD > 0
-	dzkbd_cnattach(0); /* Connect keyboard and screen together */
-#endif
 }

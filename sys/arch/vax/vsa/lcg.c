@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.2 2006/07/24 22:18:09 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.3 2006/07/29 14:18:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -56,8 +56,9 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
@@ -375,11 +376,12 @@ lcg_setup_screen(struct lcg_screen *ss)
 	if (rasops_init(ri, 160, 160) != 0)
 		return (-1);
 
-	lcg_resetcmap(ss);
 	if (ss->ss_depth < 8) {
 		ri->ri_ops.alloc_attr = lcg_alloc_attr;
 		ri->ri_caps &= ~WSSCREEN_HILIT;
 	}
+
+	lcg_resetcmap(ss);
 
 	lcg_stdscreen.ncols = ri->ri_cols;
 	lcg_stdscreen.nrows = ri->ri_rows;
@@ -565,29 +567,20 @@ lcg_resetcmap(struct lcg_screen *ss)
 	lcg_write_reg(ss, LCG_REG_LUT_CONSOLE_SEL, 0);
 }
 
-#include <dev/cons.h>
-cons_decl(lcg);
-
-#include "dzkbd.h"
-
-#include <vax/qbus/dzreg.h>
-#include <vax/qbus/dzvar.h>
-#include <vax/dec/dzkbdvar.h>
-
-
 /*
- * Called very early to setup the glass tty as console.
- * Because it's called before the VM system is initialized, virtual memory
- * for the framebuffer can be stolen directly without disturbing anything.
+ * Console support code
  */
-void
-lcgcnprobe(cndev)
-	struct  consdev *cndev;
+
+int	lcgcnprobe(void);
+void	lcgcninit(void);
+
+int
+lcgcnprobe()
 {
-	struct lcg_screen *ss = &lcg_consscr;
 	extern vaddr_t virtual_avail;
-	extern int getmajor(void *);	/* conf.c */
+	u_int32_t cfg;
 	vaddr_t tmp;
+	volatile u_int8_t *ch;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_46:
@@ -596,60 +589,78 @@ lcgcnprobe(cndev)
 			break; /* doesn't use graphics console */
 
 		tmp = virtual_avail;
-		ioaccess(tmp, LCG_CONFIG_ADDR, 1);
-		ss->ss_cfg = *(volatile u_int32_t *)tmp;
+		ioaccess(tmp, vax_trunc_page(LCG_CONFIG_ADDR), 1);
+		cfg = *(volatile u_int32_t *)
+		    (tmp + (LCG_CONFIG_ADDR & VAX_PGOFSET));
 
-		ss->ss_depth = lcg_probe_screen(ss->ss_cfg,
-		    &ss->ss_width, &ss->ss_height);
-		if (ss->ss_depth == 0)
+		if (lcg_probe_screen(cfg, NULL, NULL) == 0)
 			break;	/* unsupported configuration */
 
-		ss->ss_fbsize =
-		    roundup(ss->ss_width * ss->ss_height, VAX_NBPG);
+		/*
+		 * Check for video memory.
+		 * We can not use badaddr() on these models.
+		 */
+		ioaccess(tmp, LCG_FB_ADDR, 1);
+		ch = (volatile u_int8_t *)tmp;
+		*ch = 0x01;
+		if ((*ch & 0x01) == 0)
+			break;
+		*ch = 0x00;
+		if ((*ch & 0x01) != 0)
+			break;
 
-		ss->ss_addr = (caddr_t)virtual_avail;
-		virtual_avail += ss->ss_fbsize;
-		ioaccess((vaddr_t)ss->ss_addr, LCG_FB_ADDR,
-		    ss->ss_fbsize / VAX_NBPG);
-
-		ss->ss_reg = virtual_avail;
-		virtual_avail += LCG_REG_SIZE;
-		ioaccess(ss->ss_reg, LCG_REG_ADDR,
-		    LCG_REG_SIZE / VAX_NBPG);
-
-		ss->ss_lut = (u_int8_t *)virtual_avail;
-		virtual_avail += LCG_LUT_SIZE;
-		ioaccess((vaddr_t)ss->ss_lut, LCG_LUT_ADDR,
-		    LCG_LUT_SIZE / VAX_NBPG);
-
-		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(getmajor(wsdisplayopen), 0);
-		break;
+		return (1);
 
 	default:
 		break;
 	}
+
+	return (0);
 }
 
+/*
+ * Called very early to setup the glass tty as console.
+ * Because it's called before the VM system is initialized, virtual memory
+ * for the framebuffer can be stolen directly without disturbing anything.
+ */
 void
-lcgcninit(struct consdev *cndev)
+lcgcninit()
 {
 	struct lcg_screen *ss = &lcg_consscr;
+	extern vaddr_t virtual_avail;
+	vaddr_t tmp;
 	long defattr;
 	struct rasops_info *ri;
-	extern void lkccninit(struct consdev *);
-	extern int lkccngetc(dev_t);
-	extern int dz_vsbus_lk201_cnattach(int);
 
-	/* mappings have been done in lcgcnprobe() */
+	tmp = virtual_avail;
+	ioaccess(tmp, vax_trunc_page(LCG_CONFIG_ADDR), 1);
+	ss->ss_cfg = *(volatile u_int32_t *)
+	    (tmp + (LCG_CONFIG_ADDR & VAX_PGOFSET));
+
+	ss->ss_depth = lcg_probe_screen(ss->ss_cfg,
+	    &ss->ss_width, &ss->ss_height);
+
+	ss->ss_fbsize = roundup(ss->ss_width * ss->ss_height, PAGE_SIZE);
+
+	ss->ss_addr = (caddr_t)virtual_avail;
+	virtual_avail += ss->ss_fbsize;
+	ioaccess((vaddr_t)ss->ss_addr, LCG_FB_ADDR, ss->ss_fbsize / VAX_NBPG);
+
+	ss->ss_reg = virtual_avail;
+	virtual_avail += LCG_REG_SIZE;
+	ioaccess(ss->ss_reg, LCG_REG_ADDR, LCG_REG_SIZE / VAX_NBPG);
+
+	ss->ss_lut = (u_int8_t *)virtual_avail;
+	virtual_avail += LCG_LUT_SIZE;
+	ioaccess((vaddr_t)ss->ss_lut, LCG_LUT_ADDR, LCG_LUT_SIZE / VAX_NBPG);
+
+	virtual_avail = round_page(virtual_avail);
+
+	/* this had better not fail as we can't recover there */
 	if (lcg_setup_screen(ss) != 0)
-		return;
+		panic(__func__);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&lcg_stdscreen, ri, 0, 0, defattr);
-
-#if NDZKBD > 0
-	dzkbd_cnattach(0); /* Connect keyboard and screen together */
-#endif
 }

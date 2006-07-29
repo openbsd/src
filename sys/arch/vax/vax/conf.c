@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2006/07/28 21:07:05 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.47 2006/07/29 14:18:57 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -142,48 +142,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
-#include "wskbd.h"
-#include "gpx.h"
-#include "lcg.h"
-#include "lcspx.h"
-#include "smg.h"
-#if NGPX > 0 || NLCG > 0 || NLCSPX > 0 || NSMG > 0
-#if NWSKBD > 0
-#define gpxcngetc wskbd_cngetc
-#define lcgcngetc wskbd_cngetc
-#define lcspxcngetc wskbd_cngetc
-#define smgcngetc wskbd_cngetc
-#else
-static int
-dummycngetc(dev_t dev)
-{
-	return 0;
-}
-#define gpxcngetc dummycngetc
-#define lcgcngetc dummycngetc
-#define lcspxcngetc dummycngetc
-#define smgcngetc dummycngetc
-#endif	/* NWSKBD > 0 */
-#endif	/* NGPX > 0 || NLCG > 0 || NLCSPX > 0 || NSMG > 0 */
-
-#define gpxcnputc wsdisplay_cnputc
-#define lcgcnputc wsdisplay_cnputc
-#define lcspxcnputc wsdisplay_cnputc
-#define smgcnputc wsdisplay_cnputc
-#define	gpxcnpollc nullcnpollc
-#define	lcgcnpollc nullcnpollc
-#define	lcspxcnpollc nullcnpollc
-#define	smgcnpollc nullcnpollc
-
-cons_decl(gen);
 cons_decl(dz);
+cons_decl(gen);
 cons_decl(qd);
-cons_decl(gpx);
-cons_decl(lcg);
-cons_decl(lcspx);
-cons_decl(smg);
-#include "qv.h"
+cons_decl(ws);
+
 #include "qd.h"
+#include "qv.h"
+#include "wsdisplay.h"
+#include "wskbd.h"
 
 struct	consdev constab[]={
 #if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \
@@ -204,17 +171,8 @@ struct	consdev constab[]={
 	cons_init(qd),
 #endif
 #endif
-#if NGPX
-	cons_init(gpx),
-#endif
-#if NLCG
-	cons_init(lcg),
-#endif
-#if NLCSPX
-	cons_init(lcspx),
-#endif
-#if NSMG
-	cons_init(smg),
+#if NWSDISPLAY > 0 || NWSKBD > 0
+	cons_init(ws),
 #endif
 
 #ifdef notyet
@@ -437,7 +395,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 49: system call tracing */
-	cdev_ksyms_init(NKSYMS,ksyms),  /* 50: Kernel symbols device */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_notdef(),			/* 52: was: KDB50/RA?? */
 	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */
@@ -454,15 +412,15 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
-    cdev_random_init(1,random), /* 67: random data source */
+	cdev_random_init(1,random),	/* 67: random data source */
 	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 68: workstation console */
 	cdev_notdef(),			/* 69 */
 	cdev_notdef(),			/* 70 */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
-	cdev_notdef(),		/* 72: was: SCSI bus */
+	cdev_notdef(),			/* 72: was: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
 #ifdef XFS
-	cdev_xfs_init(NXFS,xfs_dev),    /* 74: xfs communication device */
+	cdev_xfs_init(NXFS,xfs_dev),	/* 74: xfs communication device */
 #else
 	cdev_notdef(),			/* 74 */
 #endif
@@ -584,7 +542,7 @@ iszerodev(dev)
 	return (major(dev) == 3 && minor(dev) == 12);
 }
 
-int getmajor(void *);	/* XXX used by dz_ibus and smg, die die die */
+int getmajor(void *);	/* XXX used by dz_ibus and wscons, die die die */
 
 int
 getmajor(void *ptr)

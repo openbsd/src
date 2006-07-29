@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.1 2006/07/24 22:19:54 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.2 2006/07/29 14:18:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -58,8 +58,9 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
@@ -383,15 +384,47 @@ lcspx_resetcmap(struct lcspx_screen *ss)
 	}
 }
 
-#include <dev/cons.h>
-cons_decl(lcspx);
+/*
+ * Console support code
+ */
 
-#include "dzkbd.h"
+int	lcspxcnprobe(void);
+void	lcspxcninit(void);
 
-#include <vax/qbus/dzreg.h>
-#include <vax/qbus/dzvar.h>
-#include <vax/dec/dzkbdvar.h>
+int
+lcspxcnprobe()
+{
+	extern vaddr_t virtual_avail;
+	vaddr_t tmp;
+	volatile u_int8_t *ch;
 
+	switch (vax_boardtype) {
+	case VAX_BTYP_49:
+		if ((vax_confdata & 8) != 0)
+			break; /* doesn't use graphics console */
+
+		/*
+		 * Check for video memory.
+		 * We can not use badaddr() on these models.
+		 */
+		tmp = virtual_avail;
+		ch = (volatile u_int8_t *)tmp;
+		ioaccess(tmp, LCSPX_FB_ADDR, 1);
+		*ch = 0x01;
+		if ((*ch & 0x01) == 0)
+			break;
+		*ch = 0x00;
+		if ((*ch & 0x01) != 0)
+			break;
+
+		return (1);
+
+	default:
+		break;
+	}
+
+	return (0);
+}
 
 /*
  * Called very early to setup the glass tty as console.
@@ -399,59 +432,32 @@ cons_decl(lcspx);
  * for the framebuffer can be stolen directly without disturbing anything.
  */
 void
-lcspxcnprobe(cndev)
-	struct  consdev *cndev;
+lcspxcninit()
 {
 	struct lcspx_screen *ss = &lcspx_consscr;
 	extern vaddr_t virtual_avail;
-	extern int getmajor(void *);	/* conf.c */
 	int i;
-
-	switch (vax_boardtype) {
-	case VAX_BTYP_49:
-		if ((vax_confdata & 8) != 0)
-			break; /* doesn't use graphics console */
-
-		ss->ss_addr = (caddr_t)virtual_avail;
-		virtual_avail += LCSPX_FBSIZE;
-		ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR,
-		    LCSPX_FBSIZE / VAX_NBPG);
-
-		for (i = 0; i < 4; i++) {
-			ss->ss_ramdac[i] = (volatile u_int8_t *)virtual_avail;
-			virtual_avail += VAX_NBPG;
-			ioaccess((vaddr_t)ss->ss_ramdac[i],
-			    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
-		}
-
-		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(getmajor(wsdisplayopen), 0);
-		break;
-
-	default:
-		break;
-	}
-}
-
-void
-lcspxcninit(struct consdev *cndev)
-{
-	struct lcspx_screen *ss = &lcspx_consscr;
 	long defattr;
 	struct rasops_info *ri;
-	extern void lkccninit(struct consdev *);
-	extern int lkccngetc(dev_t);
-	extern int dz_vsbus_lk201_cnattach(int);
 
-	/* mappings have been done in lcspxcnprobe() */
+	ss->ss_addr = (caddr_t)virtual_avail;
+	virtual_avail += LCSPX_FBSIZE;
+	ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR, LCSPX_FBSIZE / VAX_NBPG);
+
+	for (i = 0; i < 4; i++) {
+		ss->ss_ramdac[i] = (volatile u_int8_t *)virtual_avail;
+		virtual_avail += VAX_NBPG;
+		ioaccess((vaddr_t)ss->ss_ramdac[i],
+		    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
+	}
+
+	virtual_avail = round_page(virtual_avail);
+
+	/* this had better not fail as we can't recover there */
 	if (lcspx_setup_screen(ss) != 0)
-		return;
+		panic(__func__);
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&lcspx_stdscreen, ri, 0, 0, defattr);
-
-#if NDZKBD > 0
-	dzkbd_cnattach(0); /* Connect keyboard and screen together */
-#endif
 }
