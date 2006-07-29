@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.5 2006/07/29 17:46:08 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.6 2006/07/29 19:04:37 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -1099,13 +1099,13 @@ gpxcninit()
 	ss->ss_depth = (0x00f0 & *(u_int16_t *)
 	    (tmp + (GPX_READBACK_OFFSET & VAX_PGOFSET))) == 0x00f0 ? 4 : 8;
 
+	ioaccess(virtual_avail, GPXADDR + GPX_ADDER_OFFSET, 1);
 	ss->ss_adder = (struct adder *)virtual_avail;
 	virtual_avail += VAX_NBPG;
-	ioaccess((vaddr_t)ss->ss_adder, GPXADDR + GPX_ADDER_OFFSET, 1);
 
-	ss->ss_vdac = (void *)virtual_avail;
+	ioaccess(virtual_avail, vax_trunc_page(GPXADDR + GPX_VDAC_OFFSET), 1);
+	ss->ss_vdac = (void *)(virtual_avail + (GPX_VDAC_OFFSET & VAX_PGOFSET));
 	virtual_avail += VAX_NBPG;
-	ioaccess((vaddr_t)ss->ss_vdac, GPXADDR + GPX_VDAC_OFFSET, 1);
 
 	virtual_avail = round_page(virtual_avail);
 
