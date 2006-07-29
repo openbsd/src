@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.1 2006/07/29 05:08:41 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.2 2006/07/29 15:14:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -311,6 +311,7 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
+	sc->sc_dmat = pa->pa_dmat;
 
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_PCI_BAR);
 	if (pci_mapreg_map(pa, ARC_PCI_BAR, memtype, 0, &sc->sc_iot,
@@ -612,4 +613,3 @@ arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
         bzero(ccb->ccb_cmd, sc->sc_req_size);
         TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
 }
-
