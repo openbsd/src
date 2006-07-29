@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.4 2004/10/05 13:07:44 pefo Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.5 2006/07/29 13:21:03 jasper Exp $	*/
 /*
  * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
@@ -28,7 +28,7 @@
 #ifndef _MIPS_ARCHTYPE_H_
 #define _MIPS_ARCHTYPE_H_
 /*
- * Define architectural identitys for the different Mips machines.
+ * Define architectural identities for the different Mips machines.
  */
 #define	ARC_CLASS		0x0000	/* Arch class ARC */
 #define	ACER_PICA_61		0x0001	/* Acer Labs Pica 61 */
