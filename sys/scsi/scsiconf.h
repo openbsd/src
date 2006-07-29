@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.71 2006/07/23 14:34:55 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.72 2006/07/29 02:40:45 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -540,5 +540,8 @@ _4ltol(bytes)
 	    (bytes[2] << 16) | (bytes[3] << 24);
 	return (rv);
 }
+
+extern const u_int8_t version_to_spc [];
+#define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])
 
 #endif /* SCSI_SCSICONF_H */

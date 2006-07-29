@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.110 2006/07/23 14:34:55 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.111 2006/07/29 02:40:45 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -93,6 +93,17 @@ int scsidebug_level = SCSIDEBUG_LEVEL;
 int scsi_autoconf = SCSI_AUTOCONF;
 
 int scsibusprint(void *, const char *);
+
+const u_int8_t version_to_spc [] = {
+	0, /* 0x00: The device does not claim conformance to any standard. */
+	1, /* 0x01: (Obsolete) SCSI-1 in olden times. */
+	2, /* 0x02: (Obsolete) SCSI-2 in olden times. */
+	3, /* 0x03: The device complies to ANSI INCITS 301-1997 (SPC-3). */
+	2, /* 0x04: The device complies to ANSI INCITS 351-2001 (SPC-2). */
+	3, /* 0x05: The device complies to ANSI INCITS 408-2005 (SPC-3). */
+	4, /* 0x06: The device complies to SPC-4. */
+	0, /* 0x07: RESERVED. */
+};
 
 int
 scsiprint(void *aux, const char *pnp)
@@ -266,7 +277,7 @@ scsi_probe_bus(int bus, int target, int lun)
 		sc_link = scsi->sc_link[target][0];
 		if (sc_link != NULL && data != NULL &&
 		    (sc_link->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
-		    (sc_link->inqdata.version & SID_ANSII) > 2) {
+		    SCSISPC(sc_link->inqdata.version) > 2) {
 			scsi_report_luns(sc_link, REPORT_NORMAL, data,
 			    sizeof *data, scsi_autoconf | SCSI_SILENT |
 		    	    SCSI_IGNORE_ILLEGAL_REQUEST |
@@ -550,7 +561,7 @@ scsibusprint(void *aux, const char *pnp)
 
 	printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
 	    target, lun, vendor, product, revision,
-	    inqbuf->version & SID_ANSII, type, dtype,
+	    SCSISPC(inqbuf->version), type, dtype,
 	    removable ? "removable" : "fixed", qtype);
 
 	return (UNCONF);
@@ -664,7 +675,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 * Based upon the inquiry flags we got back, and if we're
 	 * at SCSI-2 or better, remove some limiting quirks.
 	 */
-	if ((inqbuf.version & SID_ANSII) >= 2) {
+	if (SCSISPC(inqbuf.version) >= 2) {
 		if ((inqbuf.flags & SID_CmdQue) != 0)
 			sc_link->quirks &= ~SDEV_NOTAGS;
 		if ((inqbuf.flags & SID_Sync) != 0)

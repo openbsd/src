@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.109 2006/07/23 02:50:20 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.110 2006/07/29 02:40:46 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ sdattach(parent, self, aux)
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
 	if (!(sc_link->flags & SDEV_ATAPI) &&
-	    (sa->sa_inqbuf->version & SID_ANSII) == 0)
+	    SCSISPC(sa->sa_inqbuf->version) == 0)
 		sd->flags |= SDF_ANCIENT;
 
 	/*
@@ -1451,7 +1451,7 @@ sd_flush(sd, flags)
 	 *
 	 * XXX What about older devices?
 	 */
-	if ((sc_link->inqdata.version & SID_ANSII) >= 2 &&
+	if (SCSISPC(sc_link->inqdata.version) >= 2 &&
 	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
 		bzero(&sync_cmd, sizeof(sync_cmd));
 		sync_cmd.opcode = SYNCHRONIZE_CACHE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.109 2006/07/23 02:50:20 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.110 2006/07/29 02:40:45 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ cdattach(parent, self, aux)
 	 * Note if this device is ancient.  This is used in cdminphys().
 	 */
 	if (!(sc_link->flags & SDEV_ATAPI) &&
-	    (sa->sa_inqbuf->version & SID_ANSII) == 0)
+	    SCSISPC(sa->sa_inqbuf->version) == 0)
 		cd->flags |= CDF_ANCIENT;
 
 	printf("\n");
