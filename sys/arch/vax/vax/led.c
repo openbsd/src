@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.1 2006/07/20 19:15:35 miod Exp $	*/
+/*	$OpenBSD: led.c,v 1.2 2006/07/29 14:16:15 miod Exp $	*/
 /*	$NetBSD: leds.c,v 1.4 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
@@ -187,9 +187,6 @@ ledattach(struct device *parent, struct device *self, void *aux)
 	led_blink(sc);
 }
 
-/*
- * This is called by the clock interrupt.
- */
 void
 led_blink(void *v)
 {
@@ -209,7 +206,7 @@ led_blink(void *v)
 		return;
 	}
 
-	*sc->sc_reg = ~*sc->sc_patpos++;
+	*sc->sc_reg = *sc->sc_patpos++;
 	if (*sc->sc_patpos == 0)
 		sc->sc_patpos = sc->sc_pat;
 
