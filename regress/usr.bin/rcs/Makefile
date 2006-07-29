@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2006/07/28 06:29:09 ray Exp $
+#	$OpenBSD: Makefile,v 1.33 2006/07/29 05:57:02 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -66,6 +66,7 @@ LTESTS= ci-initial \
 	ci-nofile \
 	ci-revert \
 	ci-keywords \
+	ci-keywords2 \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -562,6 +563,11 @@ test-ci-keywords: clean
 	@sed -e 's,${USER},USER,' -e "s/\($$[A-Z][a-z]*: \).*file,v/\1file,v/" \
 	    -e 's,[0-9][0-9][0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9],YYYY/MM/DD HH:MI:SS,' \
 	    file | ${DIFF} newfile -
+
+# Lots of expansion.
+test-ci-keywords2: clean
+	@perl -e 'print "\$$Id\$$\n" x 10000;' > file
+	@echo . | ${CI} -l -q file
 
 clean:
 	@rm -rf ${CLEANFILES}
