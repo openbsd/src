@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.4 2006/07/29 17:29:03 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.5 2006/07/29 17:46:08 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -1065,8 +1065,9 @@ gpxcnprobe()
 
 		/* Check for a recognized color depth */
 		tmp = virtual_avail;
-		ioaccess(tmp, GPXADDR + GPX_READBACK_OFFSET, 1);
-		depth = (*(u_int16_t *)tmp) & 0x00f0;
+		ioaccess(tmp, vax_trunc_page(GPXADDR + GPX_READBACK_OFFSET), 1);
+		depth = *(u_int16_t *)
+		    (tmp + (GPX_READBACK_OFFSET & VAX_PGOFSET)) & 0x00f0;
 		if (depth == 0x00f0 || depth == 0x0080)
 			return (1);
 
@@ -1094,8 +1095,9 @@ gpxcninit()
 	struct rasops_info *ri;
 
 	tmp = virtual_avail;
-	ioaccess(tmp, GPXADDR + GPX_READBACK_OFFSET, 1);
-	ss->ss_depth = ((*(u_int16_t *)tmp) & 0x00f0) == 0x00f0 ? 4 : 8;
+	ioaccess(tmp, vax_trunc_page(GPXADDR + GPX_READBACK_OFFSET), 1);
+	ss->ss_depth = (0x00f0 & *(u_int16_t *)
+	    (tmp + (GPX_READBACK_OFFSET & VAX_PGOFSET))) == 0x00f0 ? 4 : 8;
 
 	ss->ss_adder = (struct adder *)virtual_avail;
 	virtual_avail += VAX_NBPG;
