@@ -1,0 +1,72 @@
+.\"	$OpenBSD: arc.4,v 1.1 2006/07/29 15:34:18 dlg Exp $
+.\"
+.\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" TORTIOUS ACTION, ARISING OUT OF
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd Jul 29, 2006
+.Dt ARC 4
+.Os
+.Sh NAME
+.Nm arc
+.Nd Areca Technology Corporation RAID Controller
+.Sh SYNOPSIS
+.Cd "arc* at pci?"
+.Cd "scsibus* at arc?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the PCI-X and PCI Express RAID controllers from
+Areca Technology Corporation:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+ARECA ARC-1110 PCI-X 4 Port SATA RAID Controller
+.It
+ARECA ARC-1120 PCI-X 8 Port SATA RAID Controller
+.It
+ARECA ARC-1130 PCI-X 12 Port SATA RAID Controller
+.It
+ARECA ARC-1160 PCI-X 16 Port SATA RAID Controller
+.It
+ARECA ARC-1170 PCI-X 24 Port SATA RAID Controller
+.It
+ARECA ARC-1210 PCI Express 4 Port SATA RAID Controller
+.It
+ARECA ARC-1220 PCI Express 8 Port SATA RAID Controller
+.It
+ARECA ARC-1230 PCI Express 12 Port SATA RAID Controller
+.It
+ARECA ARC-1260 PCI Express 16 Port SATA RAID Controller
+.It
+ARECA ARC-1270 PCI Express 24 Port SATA RAID Controller
+.It
+ARECA X-TYPE SATA RAID Controller
+.El
+.Pp
+These controllers can support RAID levels 0, 1, 1E, 3, 5, 6, and JBOD.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr scsi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An David Gwynne Aq dlg@openbsd.org .
