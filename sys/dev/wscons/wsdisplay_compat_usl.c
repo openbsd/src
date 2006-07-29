@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.16 2006/06/30 21:34:47 miod Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.17 2006/07/29 12:52:40 miod Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -425,21 +425,37 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 #undef d
 		return (0);
 
+#if defined(__i386__)
 	    case KDENABIO:
 		if (suser(p, 0) || securelevel > 0)
 			return (EPERM);
 		/* FALLTHRU */
 	    case KDDISABIO:
-#if defined(__i386__) && defined(COMPAT_FREEBSD)
+#if defined(COMPAT_FREEBSD)
 		{
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
-		if (cmd == KDENABIO)
-			fp->tf_eflags |= PSL_IOPL;
-		else
-			fp->tf_eflags &= ~PSL_IOPL;
+		extern struct emul emul_freebsd_aout;
+		extern struct emul emul_freebsd_elf;
+
+		if (p->p_emul == &emul_freebsd_aout ||
+		    p->p_emul == &emul_freebsd_elf) {
+			if (cmd == KDENABIO)
+				fp->tf_eflags |= PSL_IOPL;
+			else
+				fp->tf_eflags &= ~PSL_IOPL;
+			}
 		}
 #endif
 		return (0);
+#else
+	    case KDENABIO:
+	    case KDDISABIO:
+		/*
+		 * This is a lie, but non-x86 platforms are not supposed to
+		 * issue these ioctls anyway.
+		 */
+		return (0);
+#endif
 	    case KDSETRAD:
 		/* XXX ignore for now */
 		return (0);
