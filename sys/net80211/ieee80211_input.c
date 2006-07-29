@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.18 2006/06/27 20:55:51 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.19 2006/07/29 11:31:47 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -496,7 +496,6 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return NULL;
 	}
-#ifdef ALIGNED_POINTER
 	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
 		caddr_t newdata;
@@ -546,7 +545,6 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		m = n0;
 	}
-#endif /* ALIGNED_POINTER */
 	if (llc != NULL) {
 		eh = mtod(m, struct ether_header *);
 		eh->ether_type = htons(m->m_pkthdr.len - sizeof(*eh));
