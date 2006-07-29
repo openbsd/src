@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_lk201.c,v 1.2 2006/01/17 20:26:16 miod Exp $	*/
+/*	$OpenBSD: wskbdmap_lk201.c,v 1.3 2006/07/29 17:06:25 miod Exp $	*/
 /* $NetBSD: wskbdmap_lk201.c,v 1.4 2000/12/02 16:57:41 ragge Exp $ */
 
 #include <sys/types.h>
@@ -8,7 +8,7 @@
 
 #define KC(n) KS_KEYCODE((n) - MIN_LK201_KEY)
 
-static const keysym_t zskbd_keydesc_us[] = {
+static const keysym_t lkkbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
     KC(86),	KS_Cmd_Screen0,	KS_f1,
     KC(87),	KS_Cmd_Screen1,	KS_f2,
@@ -116,7 +116,7 @@ static const keysym_t zskbd_keydesc_us[] = {
     KC(251),			KS_apostrophe,	KS_quotedbl,
 };
 
-static const keysym_t zskbd_keydesc_us_lk401[] = {
+static const keysym_t lkkbd_keydesc_us_lk401[] = {
     KC(171),			KS_Shift_R,
     KC(172),	KS_Cmd2,	KS_Alt_L,
     KC(173),			KS_Multi_key, /* right compose */
@@ -127,9 +127,9 @@ static const keysym_t zskbd_keydesc_us_lk401[] = {
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
-const struct wscons_keydesc zskbd_keydesctab[] = {
-	KBD_MAP(KB_US,			0,	zskbd_keydesc_us),
-	KBD_MAP(KB_US | KB_LK401,	KB_US,	zskbd_keydesc_us_lk401),
+const struct wscons_keydesc lkkbd_keydesctab[] = {
+	KBD_MAP(KB_US,			0,	lkkbd_keydesc_us),
+	KBD_MAP(KB_US | KB_LK401,	KB_US,	lkkbd_keydesc_us_lk401),
 	{0, 0, 0, 0}
 };
 

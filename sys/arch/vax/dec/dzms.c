@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzms.c,v 1.4 2006/01/17 20:26:16 miod Exp $	*/
+/*	$OpenBSD: dzms.c,v 1.5 2006/07/29 17:06:25 miod Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -50,6 +50,9 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <machine/bus.h>
 
@@ -67,12 +70,11 @@ struct dzms_softc {		/* driver status information */
 	struct	dz_linestate *dzms_ls;
 
 	int sc_enabled;		/* input enabled? */
-	int self_test;
+	int sc_selftest;
 
 	int inputstate;
 	u_int buttons;
-	signed char dx;
-	signed char dy;
+	int dx, dy;
 
 	struct device *sc_wsmousedev;
 };
@@ -143,7 +145,7 @@ dzms_attach(parent, self, aux)
 	a.accesscookie = dzms;
 
 	dzms->sc_enabled = 0;
-	dzms->self_test = 0;
+	dzms->sc_selftest = 0;
 	dzms->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
@@ -156,21 +158,17 @@ dzms_enable(v)
 	if (sc->sc_enabled)
 		return EBUSY;
 
-	/* XXX mice presence test should be done in match/attach context XXX */
-	sc->self_test = 1;
+	sc->sc_selftest = 4;	/* wait for 4 byte reply upto 1/2 sec */
 	dzputc(sc->dzms_ls, MOUSE_SELF_TEST);
-	DELAY(100000);
-	if (sc->self_test < 0) {
-		sc->self_test = 0;
-		return EBUSY;
-	} else if (sc->self_test == 5) {  
-		sc->self_test = 0;
-		sc->sc_enabled = 1;
+	(void)tsleep(dzms_enable, TTIPRI, "dzmsopen", hz / 2);
+	if (sc->sc_selftest != 0) {
+		sc->sc_selftest = 0;
+		return ENXIO;
 	}
-	sc->inputstate = 0;
-
+	DELAY(150);
 	dzputc(sc->dzms_ls, MOUSE_INCREMENTAL);
-
+	sc->sc_enabled = 1;
+	sc->inputstate = 0;
 	return 0;
 }
 
@@ -205,23 +203,12 @@ dzms_input(vsc, data)
 {
 	struct dzms_softc *sc = vsc;
 
-	/* XXX mice presence test should be done in match/attach context XXX */
 	if (!sc->sc_enabled) {
-		if (sc->self_test > 0) {
-			if (data < 0) {
-				printf("Timeout on 1st byte of mouse self-test report\n");
-				sc->self_test = -1;
-			} else {
-				sc->self_test++;
-			}
+		if (sc->sc_selftest > 0) {
+			sc->sc_selftest--;
+			if (sc->sc_selftest == 0)
+				wakeup(dzms_enable);
 		}
-		if (sc->self_test == 3) {
-			if ((data & 0x0f) != 0x2) {
-				printf("We don't have a mouse!!!\n");
-				sc->self_test = -1;
-			}
-		}
-		/* Interrupts are not expected.  Discard the byte. */
 		return(1);
 	}
 

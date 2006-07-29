@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.2 2006/01/17 20:26:16 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.3 2006/07/29 17:06:25 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -62,6 +62,7 @@ lk201_init(lks)
 
 	send(lks, LK_CL_ENABLE);
 	send(lks, LK_PARAM_VOLUME(3));
+	lks->kcvol = (8 - 3) * 100 / 8;
 
 	lks->bellvol = -1; /* not yet set */
 
@@ -86,23 +87,23 @@ lk201_decode(lks, datain, type, dataout)
 	int i, freeslot;
 
 	switch (datain) {
-	    case LK_KEY_UP:
+	case LK_KEY_UP:
 		for (i = 0; i < LK_KLL; i++)
 			lks->down_keys_list[i] = -1;
 		*type = WSCONS_EVENT_ALL_KEYS_UP;
 		return (1);
-	    case LK_POWER_UP:
+	case LK_POWER_UP:
 		printf("lk201_decode: powerup detected\n");
 		lk201_init(lks);
 		return (0);
-	    case LK_KDOWN_ERROR:
-	    case LK_POWER_ERROR:
-	    case LK_OUTPUT_ERROR:
-	    case LK_INPUT_ERROR:
+	case LK_KDOWN_ERROR:
+	case LK_POWER_ERROR:
+	case LK_OUTPUT_ERROR:
+	case LK_INPUT_ERROR:
 		printf("lk201_decode: error %x\n", datain);
-		/* FALLTHRU */
-	    case LK_KEY_REPEAT: /* autorepeat handled by wskbd */
-	    case LK_MODE_CHANGE: /* ignore silently */
+		/* FALLTHROUGH */
+	case LK_KEY_REPEAT: /* autorepeat handled by wskbd */
+	case LK_MODE_CHANGE: /* ignore silently */
 		return (0);
 	}
 
@@ -176,4 +177,25 @@ lk201_set_leds(lks, leds)
 	send(lks, (0x80 | (newleds & 0x0f)));
 
 	lks->leds_state = leds;
+}
+
+void
+lk201_set_keyclick(lks, vol)
+	struct lk201_state *lks;
+	int vol;
+{
+	unsigned int newvol;
+
+	if (vol == 0)
+		send(lks, LK_CL_DISABLE);
+	else {
+		newvol = 8 - vol * 8 / 100;
+		if (newvol > 7)
+			newvol = 7;
+
+		send(lks, LK_CL_ENABLE);
+		send(lks, LK_PARAM_VOLUME(newvol));
+	}
+
+	lks->kcvol = vol;
 }

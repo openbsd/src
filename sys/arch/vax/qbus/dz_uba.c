@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_uba.c,v 1.5 2004/07/09 15:57:16 deraadt Exp $	*/
+/*	$OpenBSD: dz_uba.c,v 1.6 2006/07/29 17:06:27 miod Exp $	*/
 /*	$NetBSD: dz_uba.c,v 1.11 2000/06/04 06:17:02 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -71,11 +71,12 @@ dz_uba_match(parent, cf, aux)
         void *aux;
 {
 	struct uba_attach_args *ua = aux;
+#ifdef notdef
 	bus_space_tag_t	iot = ua->ua_iot;
+#endif
 	bus_space_handle_t ioh = ua->ua_ioh;
 	int n;
 
-	iot = iot; /* Silly GCC */
 	/* Reset controller to initialize, enable TX interrupts */
 	/* to catch floating vector info elsewhere when completed */
 
@@ -129,16 +130,16 @@ dz_uba_attach(parent, self, aux)
 	sc->sc_type = DZ_DZ;
 
 	/* Now register the TX & RX interrupt handlers */
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+	sc->sc_tcvec = ua->ua_cvec;
+	uba_intr_establish(ua->ua_icookie, sc->sc_tcvec,
 	    dzxint, sc, &sc->sc_tintrcnt);
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
+	sc->sc_rcvec = ua->ua_cvec - 4;
+	uba_intr_establish(ua->ua_icookie, sc->sc_rcvec,
 	    dzrint, sc, &sc->sc_rintrcnt);
 	uba_reset_establish(dzreset, self);
 
-	sc->sc_rcvec = ua->ua_cvec - 4;
 	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
 	    (void *)&sc->sc_rcvec, &evcount_intr);
-	sc->sc_tcvec = ua->ua_cvec;
 	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
 	    (void *)&sc->sc_tcvec, &evcount_intr);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.5 2006/01/17 20:26:16 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.6 2006/07/29 17:06:25 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ struct dzkbd_softc {
 	struct dzkbd_internal *sc_itl;
 
 	int sc_enabled;
-	int kbd_type;
     
 	struct device *sc_wskbddev;
 };
@@ -119,7 +118,7 @@ const struct wskbd_consops dzkbd_consops = {
 static int dzkbd_sendchar(void *, u_char);
 
 const struct wskbd_mapdata dzkbd_keymapdata = {
-	zskbd_keydesctab,
+	lkkbd_keydesctab,
 #ifdef DZKBD_LAYOUT
 	DZKBD_LAYOUT,
 #else
@@ -168,15 +167,17 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	if (isconsole) {
 		dzi = &dzkbd_console_internal;
+		dzkbd->sc_enabled = 1;
 	} else {
-		dzi = malloc(sizeof(struct dzkbd_internal),
-				       M_DEVBUF, M_NOWAIT);
-		if (dzi == NULL)
-			panic("dzkbd_attach");
+		dzi = malloc(sizeof(struct dzkbd_internal), M_DEVBUF, M_NOWAIT);
+		if (dzi == NULL) {
+			printf(": out of memory\n");
+			return;
+		}
 		dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
 		dzi->dzi_ks.attmt.cookie = ls;
-		dzi->dzi_ls = ls;
 	}
+	dzi->dzi_ls = ls;
 	dzkbd->sc_itl = dzi;
 
 	printf("\n");
@@ -186,10 +187,6 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX should identify keyboard ID here XXX */
 	/* XXX layout and the number of LED is varying XXX */
-
-	dzkbd->kbd_type = WSKBD_TYPE_LK201;
-
-	dzkbd->sc_enabled = 1;
 
 	a.console = isconsole;
 	a.keymap = &dzkbd_keymapdata;
@@ -271,7 +268,6 @@ dzkbd_set_leds(v, leds)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 
-//printf("dzkbd_set_leds\n");
 	lk201_set_leds(&sc->sc_itl->dzi_ks, leds);
 }
 
@@ -287,7 +283,7 @@ dzkbd_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = sc->kbd_type;
+		*(int *)data = WSKBD_TYPE_LK201;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		lk201_set_leds(&sc->sc_itl->dzi_ks, *(int *)data);

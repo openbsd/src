@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.12 2004/09/19 21:34:42 mickey Exp $	*/
+/*	$OpenBSD: dz.c,v 1.13 2006/07/29 17:06:27 miod Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -68,13 +68,6 @@
 #define	DZ_WRITE_WORD(adr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
 
-/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. We use 8 by default */
-
-#define	NDZLINE 	8
-
-#define DZ_C2I(c)	((c)<<3)	/* convert controller # to index */
-#define DZ_I2C(c)	((c)>>3)	/* convert minor to controller # */
-#define DZ_PORT(u)	((u)&07)	/* extract the port # */
 
 /* Flags used to monitor modem bits, make them understood outside driver */
 
@@ -125,9 +118,6 @@ int	dz_timer = 0;	/* true if timer started */
 
 struct timeout dz_timeout;
 
-#define DZ_DZ	8		/* Unibus DZ-11 board linecount */
-#define DZ_DZV	4		/* Q-bus DZV-11 or DZQ-11 */
-
 void
 dzattach(struct dz_softc *sc)
 {
@@ -143,8 +133,11 @@ dzattach(struct dz_softc *sc)
 
 	/* Initialize our softc structure. Should be done in open? */
 
-	for (n = 0; n < sc->sc_type; n++)
+	for (n = 0; n < sc->sc_type; n++) {
+		sc->sc_dz[n].dz_sc = sc;
+		sc->sc_dz[n].dz_line = n;
 		sc->sc_dz[n].dz_tty = ttymalloc();
+	}
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 
@@ -154,7 +147,6 @@ dzattach(struct dz_softc *sc)
 		timeout_add(&dz_timeout, hz);
 	}
 	printf("\n");
-	return;
 }
 
 /* Receiver Interrupt */
@@ -197,7 +189,7 @@ dzrint(void *arg)
 		if (c & DZ_RBUF_PARITY_ERR)
 			cc |= TTY_PE;
 
-#if defined(DDB) && (defined(VAX410) || defined(VAX43) || defined(VAX46) || defined(VAX53))
+#if defined(DDB) && (defined(VAX410) || defined(VAX43) || defined(VAX46) || defined(VAX48) || defined(VAX49) || defined(VAX53))
 		if (tp->t_dev == cn_tab->cn_dev) {
 			int j = kdbrint(cc);
 
@@ -263,6 +255,8 @@ dzxint(void *arg)
 		tcr &= 255;
 		tcr &= ~(1 << line);
 		DZ_WRITE_BYTE(dr_tcr, tcr);
+		if (sc->sc_dz[line].dz_catch)
+			continue;
 
 		if (tp->t_state & TS_FLUSH)
 			tp->t_state &= ~TS_FLUSH;
@@ -291,11 +285,15 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	sc = dz_cd.cd_devs[unit];
 
-	if (sc->sc_openings++ == 0)
-		dzdrain(sc);
-
 	if (line >= sc->sc_type)
 		return ENXIO;
+
+	/* if some other device is using the line, it's busy */
+	if (sc->sc_dz[line].dz_catch)
+		return EBUSY;
+
+	if (sc->sc_openings++ == 0)
+		dzdrain(sc);
 
 	tp = sc->sc_dz[line].dz_tty;
 	if (tp == NULL)
@@ -402,6 +400,7 @@ dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -478,8 +477,10 @@ dzstart(struct tty *tp)
 	sc = dz_cd.cd_devs[unit];
 
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
+		splx(s);
 		return;
+	}
 	cl = &tp->t_outq;
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -488,8 +489,10 @@ dzstart(struct tty *tp)
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (cl->c_cc == 0)
+	if (cl->c_cc == 0) {
+		splx(s);
 		return;
+	}
 
 	tp->t_state |= TS_BUSY;
 
@@ -693,7 +696,6 @@ dzscan(void *arg)
 	}
 	splx(s);
 	timeout_add(&dz_timeout, hz);
-	return;
 }
 
 /*
@@ -711,7 +713,7 @@ dzreset(struct device *dev)
 	for (i = 0; i < sc->sc_type; i++) {
 		tp = sc->sc_dz[i].dz_tty;
 
-		if (((tp->t_state & TS_ISOPEN) == 0))
+		if ((tp->t_state & TS_ISOPEN) == 0)
 			continue;
 
 		dzparam(tp, &tp->t_termios);
@@ -725,7 +727,8 @@ dzreset(struct device *dev)
  * Drain RX fifo.
  */
 static void
-dzdrain(struct dz_softc *sc) {
+dzdrain(struct dz_softc *sc)
+{
 	while (DZ_READ_WORD(dr_rbuf) & DZ_RBUF_DATA_VALID)
 		/*EMPTY*/;
 }
