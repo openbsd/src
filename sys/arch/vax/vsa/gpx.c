@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.3 2006/07/29 15:11:57 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.4 2006/07/29 17:29:03 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -226,6 +226,8 @@ gpx_match(struct device *parent, void *vcf, void *aux)
 	struct adder *adder;
 	vaddr_t tmp;
 	u_int depth;
+	extern struct consdev wsdisplay_cons;
+	extern int oldvsbus;
 
 	switch (vax_boardtype) {
 	default:
@@ -255,14 +257,22 @@ gpx_match(struct device *parent, void *vcf, void *aux)
 	if (depth != 0x00f0 && depth != 0x0080)
 		return (0);
 
-	adder = (struct adder *)vax_map_physmem(va->va_paddr +
-	    GPX_ADDER_OFFSET, 1);
-	if (adder == NULL)
-		return (0);
-	adder->interrupt_enable = VSYNC;
-	DELAY(100000);	/* enough to get a retrace interrupt */
-	adder->interrupt_enable = 0;
-	vax_unmap_physmem((vaddr_t)adder, 1);
+	if ((vax_confdata & (KA420_CFG_L3CON | KA420_CFG_MULTU)) == 0 &&
+	    cn_tab == &wsdisplay_cons) {
+		/* when already running as console, fake things */
+		struct vsbus_softc *sc = (void *)parent;
+		sc->sc_mask = 0x08;
+		scb_fake(0x44, oldvsbus ? 0x14 : 0x15);
+	} else {
+		adder = (struct adder *)vax_map_physmem(va->va_paddr +
+		    GPX_ADDER_OFFSET, 1);
+		if (adder == NULL)
+			return (0);
+		adder->interrupt_enable = VSYNC;
+		DELAY(100000);	/* enough to get a retrace interrupt */
+		adder->interrupt_enable = 0;
+		vax_unmap_physmem((vaddr_t)adder, 1);
+	}
 	return (20);
 }
 
