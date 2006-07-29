@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.6 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.7 2006/07/29 11:31:21 miod Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -655,12 +655,6 @@ ec_write_mbuf(sc, m, buf)
 				    *(u_int16_t *)savebyte);
 				buf += 2;
 				leftover = 0;
-#ifdef i386
-#define ALIGNED_POINTER(p,t)	1
-#endif
-#ifdef alpha
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-#endif
 			} else if (ALIGNED_POINTER(data, u_int16_t) == 0) {
 				/*
 				 * Unaligned data; buffer the next byte.

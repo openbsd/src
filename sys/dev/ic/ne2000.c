@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.16 2006/07/09 16:00:48 miod Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.17 2006/07/29 11:31:20 miod Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -547,12 +547,6 @@ ne2000_write_mbuf(sc, m, buf)
 					    savebyte, 2);
 #endif
 					leftover = 0;
-#ifdef i386
-#define ALIGNED_POINTER(p,t)	1
-#endif
-#ifdef alpha
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-#endif
 				} else if (ALIGNED_POINTER(data,
 					   u_int16_t) == 0) {
 					/*
