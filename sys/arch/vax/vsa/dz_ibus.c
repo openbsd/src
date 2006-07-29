@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.17 2006/07/29 15:12:44 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.18 2006/07/29 17:07:46 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -89,32 +89,25 @@ static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
 cons_decl(dz);
 cdev_decl(dz);
 
+int	dz_can_have_kbd(void);
+
 extern int getmajor(void *);	/* conf.c */
 
-#if 0
 #if NDZKBD > 0 || NDZMS > 0
 static int
 dz_print(void *aux, const char *name)
 {
-#if 0
-#if NDZKBD > 0 || NDZMS > 0
-	struct dz_attach_args *dz_args = aux;
-	if (name == NULL) {
-		printf(" line %d", dz_args->line);
-		if (dz_args->hwflags & DZ_HWFLAG_CONSOLE)
-			printf(" (console)");
-	}
-	return (QUIET);
-#else
-	if (name)
-		printf("lkc at %s", name);
-	return (UNCONF);
-#endif
-#endif
+	struct dzkm_attach_args *dz_args = aux;
+
+	if (name != NULL)
+		printf(dz_args->daa_line == 0 ? "lkkbd at %s" : "lkms at %s",
+		    name);
+	else
+		printf(" line %d", dz_args->daa_line);
+
 	return (UNCONF);
 }
 #endif
-#endif /* 0 */
 
 static int
 dz_vsbus_match(parent, cf, aux)
@@ -154,11 +147,9 @@ dz_vsbus_attach(parent, self, aux)
 {
 	struct dz_softc *sc = (void *)self;
 	struct vsbus_attach_args *va = aux;
-#if 0
 #if NDZKBD > 0 || NDZMS > 0
 	struct dzkm_attach_args daa;
 #endif
-#endif /* 0 */
 
 	/* 
 	 * XXX - This is evil and ugly, but...
@@ -182,14 +173,15 @@ dz_vsbus_attach(parent, self, aux)
 	sc->sc_type = DZ_DZV;
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
-	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK,
-	    &sc->sc_tintrcnt);
-	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK,
-	    &sc->sc_rintrcnt);
+
 	sc->sc_rcvec = va->va_cvec;
+	scb_vecalloc(sc->sc_rcvec, dzxint, sc, SCB_ISTACK,
+	    &sc->sc_tintrcnt);
+	sc->sc_tcvec = va->va_cvec - 4;
+	scb_vecalloc(sc->sc_tcvec, dzrint, sc, SCB_ISTACK,
+	    &sc->sc_rintrcnt);
 	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
 	    (void *)&sc->sc_rcvec, &evcount_intr);
-	sc->sc_tcvec = va->va_cvec - 4;
 	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
 	    (void *)&sc->sc_tcvec, &evcount_intr);
 
@@ -197,24 +189,30 @@ dz_vsbus_attach(parent, self, aux)
 
 	dzattach(sc);
 
-#if 0
+	if (dz_can_have_kbd()) {
 #if NDZKBD > 0
-	/* Don't change speed if this is the console */
-	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0))
-		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
-		    | DZ_LPR_8_BIT_CHAR;
-	daa.daa_line = 0;
-	daa.daa_flags = (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
-	config_found(self, &daa, dz_print);
+		extern struct consdev wsdisplay_cons;
+
+		/* Don't change speed if this is the console */
+		if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0)) {
+			dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
+			    | DZ_LPR_8_BIT_CHAR;
+			daa.daa_line = 0;
+			daa.daa_flags =
+			    (cn_tab == &wsdisplay_cons ? DZKBD_CONSOLE : 0);
+			config_found(self, &daa, dz_print);
+		}
 #endif
 #if NDZMS > 0
-	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_7_BIT_CHAR \
-	    | DZ_LPR_PARENB | DZ_LPR_OPAR | 1 /* line */;
-	daa.daa_line = 1;
-	daa.daa_flags = 0;
-	config_found(self, &daa, dz_print);
+		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) |
+		    DZ_LPR_8_BIT_CHAR | DZ_LPR_PARENB | DZ_LPR_OPAR |
+		    1 /* line */;
+		daa.daa_line = 1;
+		daa.daa_flags = 0;
+		config_found(self, &daa, dz_print);
 #endif
-#endif /* 0 */
+	}
+
 #if 0
 	s = spltty();
 	dzrint(sc);
@@ -227,10 +225,11 @@ int
 dzcngetc(dev) 
 	dev_t dev;
 {
-	int c = 0;
+	int c = 0, s;
 	int mino = minor(dev);
 	u_short rbuf;
 
+	s = spltty();
 	do {
 		while ((dz->csr & 0x80) == 0)
 			; /* Wait for char */
@@ -239,6 +238,7 @@ dzcngetc(dev)
 			continue;
 		c = rbuf & 0x7f;
 	} while (c == 17 || c == 19);		/* ignore XON/XOFF */
+	splx(s);
 
 	if (c == 13)
 		c = 10;
@@ -246,12 +246,39 @@ dzcngetc(dev)
 	return (c);
 }
 
+int
+dz_can_have_kbd()
+{
+	switch (vax_boardtype) {
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
+		if ((vax_confdata & KA420_CFG_MULTU) == 0)
+			return (1);
+		break;
+
+	case VAX_BTYP_46:
+		if ((vax_siedata & 0xff) == VAX_VTYP_46)
+			return (1);
+		break;
+	case VAX_BTYP_48:
+		if (((vax_siedata >> 8) & 0xff) == VAX_STYP_48)
+			return (1);
+		break;
+
+	default:
+		break;
+	}
+
+	return (0);
+}
+
 void
 dzcnprobe(cndev)
 	struct	consdev *cndev;
 {
 	extern	vaddr_t iospace;
-	int diagcons, major, nokbd = 0;
+	int diagcons, major;
 	paddr_t ioaddr = 0x200a0000;
 
 	if ((major = getmajor(dzopen)) < 0)
@@ -262,19 +289,11 @@ dzcnprobe(cndev)
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 		diagcons = (vax_confdata & KA420_CFG_L3CON ? 3 : 0);
-		if ((vax_confdata & KA420_CFG_MULTU) == 0)
-			nokbd = 1;
 		break;
 
 	case VAX_BTYP_46:
-		diagcons = (vax_confdata & 0x100 ? 3 : 0);
-		if ((vax_siedata & 0xff) == VAX_VTYP_46)
-			nokbd = 1;
-		break;
 	case VAX_BTYP_48:
 		diagcons = (vax_confdata & 0x100 ? 3 : 0);
-		if (((vax_siedata >> 8) & 0xff) == VAX_STYP_48)
-			nokbd = 1;
 		break;
 
 	case VAX_BTYP_49:
@@ -291,7 +310,7 @@ dzcnprobe(cndev)
 		return;
 	}
 	cndev->cn_pri = diagcons != 0 ? CN_REMOTE : CN_NORMAL;
-	cndev->cn_dev = makedev(major, nokbd ? 3 : diagcons);
+	cndev->cn_dev = makedev(major, dz_can_have_kbd() ? 3 : diagcons);
 	dz_regs = iospace;
 	dz = (void *)dz_regs;
 	ioaccess(iospace, ioaddr, 1);
@@ -313,8 +332,8 @@ dzcnputc(dev,ch)
 	dev_t	dev;
 	int	ch;
 {
-	register int timeout = 1<<15;       /* don't hang the machine! */
-	register int s;
+	int timeout = 1<<15;       /* don't hang the machine! */
+	int s;
 	int mino = minor(dev);
 	u_short tcr;
 
@@ -325,7 +344,7 @@ dzcnputc(dev,ch)
 	 * If we are past boot stage, dz* will interrupt,
 	 * therefore we block.
 	 */
-	s = splhigh(); 
+	s = spltty(); 
 	tcr = dz->tcr;	/* remember which lines to scan */
 	dz->tcr = (1 << mino);
 
@@ -361,14 +380,18 @@ dzgetc(ls)
 	struct  dz_linestate *ls;
 {
 	int line = ls->dz_line;
+	int s;
 	u_short rbuf;
 
+	s = spltty();
 	for (;;) {
 		for(; (dz->csr & DZ_CSR_RX_DONE) == 0;)
 			;
 		rbuf = dz->rbuf;
-		if (((rbuf >> 8) & 3) == line)
+		if (((rbuf >> 8) & 3) == line) {
+			splx(s);
 			return (rbuf & 0xff);
+		}
 	}
 }
 
@@ -377,7 +400,7 @@ dzputc(ls,ch)
 	struct	dz_linestate *ls;
 	int	ch;
 {
-	int line = 0; /* = ls->dz_line; */
+	int line;
 	u_short tcr;
 	int s;
 
@@ -385,7 +408,8 @@ dzputc(ls,ch)
 	   driver will do the transmitting: */
 	if (ls && ls->dz_sc) {
 		s = spltty();
-		putc(ch, &ls->dz_sc->sc_dz[line].dz_tty->t_outq);
+		line = ls->dz_line;
+		putc(ch, &ls->dz_tty->t_outq);
 		tcr = dz->tcr;
 		if (!(tcr & (1 << line)))
 			dz->tcr = tcr | (1 << line);
@@ -394,6 +418,6 @@ dzputc(ls,ch)
 		return;
 	}
 	/* use dzcnputc to do the transmitting: */
-	dzcnputc(makedev(getmajor(dzopen), line), ch);
+	dzcnputc(makedev(getmajor(dzopen), 0), ch);
 }
 #endif /* NDZKBD > 0 || NDZMS > 0 */
