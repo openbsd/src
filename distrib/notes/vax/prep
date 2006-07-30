@@ -1,4 +1,18 @@
-VAX machines don't generally need any specific preparation. It's worth
-noting, however, that OpenBSD/MACHINE currently requires a serial console,
-so on systems with graphics support (such as VAXstations), you may have
-to flip a switch in order to yield this behaviour.
+dnl	$OpenBSD: prep,v 1.5 2006/07/30 13:06:55 miod Exp $
+VAX machines don't generally need any specific preparation. You will need
+to properly identify the console port on your machine.
+
+Machines without frame buffers (i.e. everything but VAXstations) use serial
+port 0 as the console port. However, it is possible to select port 3 instead,
+by moving the S3 switch on the back of the machine in the up position. Not
+all models have such a switch, though.
+
+Machines with frame buffers (i.e. VAXstations) have a similar S3 switch,
+and will either use a serial console connected to port 3 (usually labeled
+as the printer port) if the S3 switch is in the up position, and will use
+the keyboard and frame buffer console, if the S3 switch is in the down
+position.
+
+Note that, if the frame buffer in your VAXstation is not supported, OpenBSD
+will use serial port 3 as the console, as if the S3 switch had been in the
+up position.

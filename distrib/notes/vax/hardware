@@ -1,3 +1,4 @@
+dnl	$OpenBSD: hardware,v 1.18 2006/07/30 13:06:55 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -14,32 +15,46 @@ The following systems have been tested:
 	- MicroVAX 3100/85
 	- MicroVAX 3100/90
 	- MicroVAX 3300
-	- VAX 4000 10{0,5}
+	- VAX 4000 100
+	- VAX 4000 105
+	- VAX 4000 106
 	- VAX 4000 200
 	- VAX 4000 300
-	- VAX 4000 {4,5,6}00
-	- VAX 4000 {5,7}00A
+	- VAX 4000 {400,500,600}
+	- VAX 4000 {500A,700A}
 
-Ethernet devices:
-	- on-board MicroVAX or VAXstation LANCE
-	- DEC SGEC
+Supported devices {:-include-:}:
+    * Ethernet devices:
+	- on-board MicroVAX or VAXstation LANCE (le)
+	- DEC SGEC (ze)
 
-SCSI:
-	- NCR 5380 or NCR 53C9x on-board SCSI is generally supported
-	- Includes most 3100's and VAXstation 4000's, as well as the
-	  VAX 4000 10X series.
-	
-QBUS:
-	- KFQSA       (MSCP DSSI controller)
-	- Emulex UC08 (MSCP SCSI controller)
-	- CXY08       (DHV-11 emulating serial)
-	- DELQA       (Ethernet)
+    * SCSI controllers:
+	- NCR 5380 (asc) or NCR 53C9x (ncr) on-board SCSI
+	  (this {:-include-:}s most 3100s and VAXstation 4000s, as well
+	   as the VAX 4000 10x series).
 
-Serial ports:
-	- DZ*11 lines (also DZ*11 compatible lines on VAXstations)
+    * QBUS devices:
+	- KFQSA       (MSCP DSSI controller) (uda)
+	- Emulex UC08 (MSCP SCSI controller) (uda)
+	- CXY08       (DHV-11 emulating serial) (dhu)
+	- DELQA       (Ethernet) (qe)
+
+    * Serial ports:
+	- DZ*11 lines (also DZ*11 compatible lines on VAXstations) (dz)
+
+    * Frame buffers:
+	- VAXstation 3100 monochrome frame buffer on-board (smg)
+	- VAXstation 3100/{30,38,40,48} color frame buffer option (gpx)
+	- VAXstation 4000/60 and 4000/VLC frame buffer (lcg)
+	- VAXstation 4000/90 color frame buffer (lcspx)
+	The VAXstation 3100/76 spx frame buffer, as well as the spx/spxg
+	option for VAXstation 4000s is not supported yet.
+
+    * Keyboard and mice:
+	- LK201 and LK401 keyboards (lkkbd)
+	- VSxxx mouse (lkms)
 
 The lowest amount of memory tested is 6MB; however, more is recommended.
-At the moment, the only supported console is a serial console.
 
 Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
 or tapes on one of the supported controllers, disks and tapes accessed
