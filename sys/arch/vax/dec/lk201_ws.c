@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.3 2006/07/29 17:06:25 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.4 2006/07/30 18:32:47 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -60,9 +60,8 @@ lk201_init(lks)
 	for (i = 1; i <= 14; i++)
 		send(lks, LK_CMD_MODE(LK_UPDOWN, i));
 
-	send(lks, LK_CL_ENABLE);
-	send(lks, LK_PARAM_VOLUME(3));
-	lks->kcvol = (8 - 3) * 100 / 8;
+	send(lks, LK_CL_DISABLE);
+	lks->kcvol = 0;
 
 	lks->bellvol = -1; /* not yet set */
 
