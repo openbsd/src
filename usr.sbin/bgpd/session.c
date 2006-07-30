@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.255 2006/07/28 15:04:34 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.256 2006/07/30 16:27:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1550,7 +1550,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			return (1);
 	}
 
-	if (pfd->revents & POLLIN) {
+	if (p->rbuf && pfd->revents & POLLIN) {
 		if ((n = read(p->fd, p->rbuf->buf + p->rbuf->wpos,
 		    sizeof(p->rbuf->buf) - p->rbuf->wpos)) == -1) {
 			if (errno != EINTR && errno != EAGAIN) {
