@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.4 2006/07/30 18:32:47 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.5 2006/07/30 18:35:10 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -77,11 +77,8 @@ lk201_init(lks)
 }
 
 int
-lk201_decode(lks, datain, type, dataout)
-	struct lk201_state *lks;
-	int datain;
-	u_int *type;
-	int *dataout;
+lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
+    int *dataout)
 {
 	int i, freeslot;
 
@@ -92,7 +89,9 @@ lk201_decode(lks, datain, type, dataout)
 		*type = WSCONS_EVENT_ALL_KEYS_UP;
 		return (1);
 	case LK_POWER_UP:
+#ifdef DEBUG
 		printf("lk201_decode: powerup detected\n");
+#endif
 		lk201_init(lks);
 		return (0);
 	case LK_KDOWN_ERROR:
@@ -106,8 +105,14 @@ lk201_decode(lks, datain, type, dataout)
 		return (0);
 	}
 
+	if (active == 0)
+		return (0);	/* no need to decode */
+
 	if (datain < MIN_LK201_KEY || datain > MAX_LK201_KEY) {
+#ifdef DEBUG
+		/* this can happen while hotplugging the keyboard */
 		printf("lk201_decode: %x\n", datain);
+#endif
 		return (0);
 	}
 

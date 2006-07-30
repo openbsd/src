@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201var.h,v 1.3 2006/07/29 17:06:25 miod Exp $	*/
+/*	$OpenBSD: lk201var.h,v 1.4 2006/07/30 18:35:10 miod Exp $	*/
 /* $NetBSD: lk201var.h,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 struct lk201_attachment {
-	int (*sendchar)(void *, u_char);
+	int (*sendchar)(void *, int);
 	void *cookie;
 };
 
@@ -48,7 +48,7 @@ struct lk201_state {
 };
 
 int lk201_init(struct lk201_state *);
-int lk201_decode(struct lk201_state *, int, u_int *, int *);
+int lk201_decode(struct lk201_state *, int, int, u_int *, int *);
 void lk201_bell(struct lk201_state *, struct wskbd_bell_data *);
 void lk201_set_leds(struct lk201_state *, int);
 void lk201_set_keyclick(struct lk201_state *, int);

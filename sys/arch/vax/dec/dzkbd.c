@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.6 2006/07/29 17:06:25 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.7 2006/07/30 18:35:10 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -78,16 +78,12 @@ struct dzkbd_softc {
 	struct device dzkbd_dev;	/* required first: base device */
 
 	struct dzkbd_internal *sc_itl;
-
 	int sc_enabled;
-    
 	struct device *sc_wskbddev;
 };
 
-static int	dzkbd_input(void *, int);
-
-static int	dzkbd_match(struct device *, struct cfdata *, void *);
-static void	dzkbd_attach(struct device *, struct device *, void *);
+int	dzkbd_match(struct device *, struct cfdata *, void *);
+void	dzkbd_attach(struct device *, struct device *, void *);
 
 struct cfattach dzkbd_ca = {
 	sizeof(struct dzkbd_softc), (cfmatch_t)dzkbd_match, dzkbd_attach,
@@ -97,9 +93,9 @@ struct	cfdriver lkkbd_cd = {
 	NULL, "lkkbd", DV_DULL
 };
 
-static int	dzkbd_enable(void *, int);
-static void	dzkbd_set_leds(void *, int);
-static int	dzkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	dzkbd_enable(void *, int);
+void	dzkbd_set_leds(void *, int);
+int	dzkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wskbd_accessops dzkbd_accessops = {
 	dzkbd_enable,
@@ -107,15 +103,13 @@ const struct wskbd_accessops dzkbd_accessops = {
 	dzkbd_ioctl,
 };
 
-static void	dzkbd_cngetc(void *, u_int *, int *);
-static void	dzkbd_cnpollc(void *, int);
+void	dzkbd_cngetc(void *, u_int *, int *);
+void	dzkbd_cnpollc(void *, int);
 
 const struct wskbd_consops dzkbd_consops = {
 	dzkbd_cngetc,
 	dzkbd_cnpollc,
 };
-
-static int dzkbd_sendchar(void *, u_char);
 
 const struct wskbd_mapdata dzkbd_keymapdata = {
 	lkkbd_keydesctab,
@@ -126,10 +120,13 @@ const struct wskbd_mapdata dzkbd_keymapdata = {
 #endif
 };
 
+int	dzkbd_input(void *, int);
+int	dzkbd_sendchar(void *, int);
+
 /*
  * kbd_match: how is this dz line configured?
  */
-static int
+int
 dzkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct dzkm_attach_args *daa = aux;
@@ -148,7 +145,7 @@ dzkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-static void
+void
 dzkbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dz_softc *dz = (void *)parent;
@@ -197,8 +194,7 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-dzkbd_cnattach(ls)
-	struct dz_linestate *ls;
+dzkbd_cnattach(struct dz_linestate *ls)
 {
 
 	dzkbd_console_internal.dzi_ks.attmt.sendchar = dzkbd_sendchar;
@@ -212,10 +208,8 @@ dzkbd_cnattach(ls)
 	return 0;
 }
 
-static int
-dzkbd_enable(v, on)
-	void *v;
-	int on;
+int
+dzkbd_enable(void *v, int on)
 {
 	struct dzkbd_softc *sc = v;
 
@@ -223,61 +217,35 @@ dzkbd_enable(v, on)
 	return 0;
 }
 
-static int
-dzkbd_sendchar(v, c)
-	void *v;
-	u_char c;
-{
-	struct dz_linestate *ls = v;
-	int s;
-
-	s = spltty();
-	dzputc(ls, c);
-	splx(s);
-	return (0);
-}
-
-static void
-dzkbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+void
+dzkbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct dzkbd_internal *dzi = v;
 	int c;
 
 	do {
 		c = dzgetc(dzi->dzi_ls);
-	} while (!lk201_decode(&dzi->dzi_ks, c, type, data));
+	} while (!lk201_decode(&dzi->dzi_ks, 1, c, type, data));
 }
 
-static void
-dzkbd_cnpollc(v, on)
-	void *v;
-        int on;
+void
+dzkbd_cnpollc(void *v, int on)
 {
 #if 0
 	struct dzkbd_internal *dzi = v;
 #endif
 }
 
-static void
-dzkbd_set_leds(v, leds)
-	void *v;
-	int leds;
+void
+dzkbd_set_leds(void *v, int leds)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 
 	lk201_set_leds(&sc->sc_itl->dzi_ks, leds);
 }
 
-static int
-dzkbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+int
+dzkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 
@@ -300,20 +268,27 @@ dzkbd_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static int
-dzkbd_input(v, data)
-	void *v;
-	int data;
+int
+dzkbd_input(void *v, int data)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 	u_int type;
 	int val;
 
-	if (sc->sc_enabled == 0)
-		return(0);
-
-	if (lk201_decode(&sc->sc_itl->dzi_ks, data, &type, &val))
+	/*
+	 * We want to run through lk201_decode always, so that a late plugged
+	 * keyboard will get configured correctly.
+	 */
+	if (lk201_decode(&sc->sc_itl->dzi_ks, sc->sc_enabled, data,
+	    &type, &val))
 		wskbd_input(sc->sc_wskbddev, type, val);
+
 	return(1);
 }
 
+int
+dzkbd_sendchar(void *v, int c)
+{
+	dzputc((struct dz_linestate *)v, c);
+	return (0);
+}
