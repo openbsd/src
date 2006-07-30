@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.3 2006/07/30 17:09:51 fgsch Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -41,6 +41,7 @@
 #define  SDHC_BLOCK_COUNT_ENABLE	(1<<1)
 #define  SDHC_DMA_ENABLE		(1<<0)
 #define SDHC_COMMAND			0x0e
+/* 14-15 reserved */
 #define  SDHC_COMMAND_INDEX_SHIFT	8
 #define  SDHC_COMMAND_INDEX_MASK	0x3f
 #define  SDHC_COMMAND_TYPE_ABORT	(3<<6)
@@ -50,10 +51,11 @@
 #define  SDHC_DATA_PRESENT_SELECT	(1<<5)
 #define  SDHC_INDEX_CHECK_ENABLE	(1<<4)
 #define  SDHC_CRC_CHECK_ENABLE		(1<<3)
-#define  SDHC_NO_RESPONSE		(0<<0)
-#define  SDHC_RESP_LEN_136		(1<<0)
-#define  SDHC_RESP_LEN_48		(2<<0)
+/* 2 reserved */
 #define  SDHC_RESP_LEN_48_CHK_BUSY	(3<<0)
+#define  SDHC_RESP_LEN_48		(2<<0)
+#define  SDHC_RESP_LEN_136		(1<<0)
+#define  SDHC_NO_RESPONSE		(0<<0)
 #define SDHC_RESPONSE			0x10	/* - 0x1f */
 #define SDHC_DATA			0x20
 #define SDHC_PRESENT_STATE		0x24
