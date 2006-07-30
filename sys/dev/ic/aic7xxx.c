@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.72 2006/02/06 17:29:10 jmc Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.73 2006/07/30 14:21:14 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.72 2006/02/06 17:29:10 jmc Exp $
+ * $Id: aic7xxx.c,v 1.73 2006/07/30 14:21:14 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -6537,44 +6537,40 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 		   u_int *cur_column, u_int wrap_point)
 {
 	u_int printed_mask;
-	char line[1024];
 	int entry, printed;
-
-	line[0] = 0;
-	printed_mask = 0;
 
 	if (cur_column != NULL && *cur_column >= wrap_point) {
 		printf("\n");
 		*cur_column = 0;
 	}
-	snprintf(line, sizeof(line), "%s[0x%x]", name, value);
-	if (table == NULL)
-		goto done;
+	printed = printf("%s[0x%x]", name, value);
+	if (table == NULL) {
+		printed += printf(" ");
+		if (cur_column != NULL)
+			*cur_column += printed;
+		return (printed);
+	}
 
+	printed_mask = 0;
 	while (printed_mask != 0xFF) {
 		for (entry = 0; entry < num_entries; entry++) {
 			if (((value & table[entry].mask) != table[entry].value)
 			    || ((printed_mask & table[entry].mask) ==
 			    table[entry].mask))
 				continue;
-			if (printed_mask == 0)
-				strlcat(line, ":(", sizeof line);
-			else
-				strlcat(line, "|", sizeof line);
-			strlcat(line, table[entry].name, sizeof line);
+
+			printed += printf("%s%s",
+					  printed_mask == 0 ? ":(" : "|",
+					  table[entry].name);
 			printed_mask |= table[entry].mask;
+
 			break;
 		}
 		if (entry >= num_entries)
 			break;
 	}
-	if (printed_mask != 0)
-		strlcat(line, ")", sizeof line);
 
-done:
-	printf("%s ", line);
-	printed = strlen(line) + 1;
-
+	printed += printf("%s", printed_mask == 0 ? " " : ") ");
 	if (cur_column != NULL)
 		*cur_column += printed;
 

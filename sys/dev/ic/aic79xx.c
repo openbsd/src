@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.33 2006/07/30 13:52:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.34 2006/07/30 14:21:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -8803,8 +8803,8 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 		   const char *name, u_int address, u_int value,
 		   u_int *cur_column, u_int wrap_point)
 {
-	int	printed;
 	u_int	printed_mask;
+	int entry, printed;
 
 	if (cur_column != NULL && *cur_column >= wrap_point) {
 		printf("\n");
@@ -8817,15 +8817,13 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 			*cur_column += printed;
 		return (printed);
 	}
+
 	printed_mask = 0;
 	while (printed_mask != 0xFF) {
-		int entry;
-
 		for (entry = 0; entry < num_entries; entry++) {
-			if (((value & table[entry].mask)
-			  != table[entry].value)
-			 || ((printed_mask & table[entry].mask)
-			  == table[entry].mask))
+			if (((value & table[entry].mask) != table[entry].value)
+			    || ((printed_mask & table[entry].mask) ==
+			    table[entry].mask))
 				continue;
 
 			printed += printf("%s%s",
@@ -8838,12 +8836,11 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 		if (entry >= num_entries)
 			break;
 	}
-	if (printed_mask != 0)
-		printed += printf(") ");
-	else
-		printed += printf(" ");
+
+	printed += printf("%s", printed_mask == 0 ? " " : ") ");
 	if (cur_column != NULL)
 		*cur_column += printed;
+
 	return (printed);
 }
 
