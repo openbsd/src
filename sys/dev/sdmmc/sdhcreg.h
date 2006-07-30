@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.2 2006/07/17 15:30:04 fgsch Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.3 2006/07/30 17:09:51 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -57,9 +57,23 @@
 #define SDHC_RESPONSE			0x10	/* - 0x1f */
 #define SDHC_DATA			0x20
 #define SDHC_PRESENT_STATE		0x24
+/* 25-31 reserved */
+#define  SDHC_CMD_LINE_SIGNAL_LEVEL	(1<<24)
+#define  SDHC_DAT3_LINE_LEVEL		(1<<23)
+#define  SDHC_DAT2_LINE_LEVEL		(1<<22)
+#define  SDHC_DAT1_LINE_LEVEL		(1<<21)
+#define  SDHC_DAT0_LINE_LEVEL		(1<<20)
+#define  SDHC_WRITE_PROTECT_SWITCH	(1<<19)
+#define  SDHC_CARD_DETECT_PIN_LEVEL	(1<<18)
+#define  SDHC_CARD_STATE_STABLE		(1<<17)
 #define  SDHC_CARD_INSERTED		(1<<16)
+/* 12-15 reserved */
 #define  SDHC_BUFFER_READ_ENABLE	(1<<11)
 #define  SDHC_BUFFER_WRITE_ENABLE	(1<<10)
+#define  SDHC_READ_TRANSFER_ACTIVE	(1<<9)
+#define  SDHC_WRITE_TRANSFER_ACTIVE	(1<<8)
+/* 3-7 reserved */
+#define  SDHC_DAT_ACTIVE		(1<<2)
 #define  SDHC_CMD_INHIBIT_DAT		(1<<1)
 #define  SDHC_CMD_INHIBIT_CMD		(1<<0)
 #define  SDHC_CMD_INHIBIT_MASK		0x0003
