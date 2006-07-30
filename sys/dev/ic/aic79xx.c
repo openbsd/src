@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.32 2005/12/28 02:43:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.33 2006/07/30 13:52:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -8813,7 +8813,8 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 	printed = printf("%s[0x%x]", name, value);
 	if (table == NULL) {
 		printed += printf(" ");
-		*cur_column += printed;
+		if (cur_column != NULL)
+			*cur_column += printed;
 		return (printed);
 	}
 	printed_mask = 0;
