@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.19 2006/07/30 09:15:03 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.20 2006/07/30 18:30:51 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -74,7 +74,7 @@ struct  cfattach dz_vsbus_ca = {
 };
 
 #define REG(name)     short name; short X##name##X;
-static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
+static volatile struct ss_dz {/* base address of DZ-controller: 0x200a0000 */
 	REG(csr);	/* 00 Csr: control/status register */
 	REG(rbuf);	/* 04 Rbuf/Lpr: receive buffer/line param reg. */
 	REG(tcr);	/* 08 Tcr: transmit console register */
@@ -231,7 +231,7 @@ dzcngetc(dev)
 
 	s = spltty();
 	do {
-		while ((dz->csr & 0x80) == 0)
+		while ((dz->csr & DZ_CSR_RX_DONE) == 0)
 			; /* Wait for char */
 		rbuf = dz->rbuf;
 		if (((rbuf >> 8) & 3) != mino)
@@ -327,7 +327,7 @@ dzcninit(cndev)
 
 	dz->csr = 0;    /* Disable scanning until initting is done */
 	dz->tcr = (1 << minor(cndev->cn_dev));    /* Turn on xmitter */
-	dz->csr = 0x20; /* Turn scanning back on */
+	dz->csr = DZ_CSR_MSE; /* Turn scanning back on */
 }
 
 void
@@ -351,12 +351,12 @@ dzcnputc(dev,ch)
 	tcr = dz->tcr;	/* remember which lines to scan */
 	dz->tcr = (1 << mino);
 
-	while ((dz->csr & 0x8000) == 0) /* Wait until ready */
+	while ((dz->csr & DZ_CSR_TX_READY) == 0) /* Wait until ready */
 		if (--timeout < 0)
 			break;
 	dz->tdr = ch;                    /* Put the character */
 	timeout = 1<<15;
-	while ((dz->csr & 0x8000) == 0) /* Wait until ready */
+	while ((dz->csr & DZ_CSR_TX_READY) == 0) /* Wait until ready */
 		if (--timeout < 0)
 			break;
 
@@ -379,8 +379,7 @@ dzcnpollc(dev, pollflag)
 
 #if NDZKBD > 0 || NDZMS > 0
 int
-dzgetc(ls)
-	struct  dz_linestate *ls;
+dzgetc(struct dz_linestate *ls)
 {
 	int line = ls->dz_line;
 	int s;
@@ -399,9 +398,7 @@ dzgetc(ls)
 }
 
 void
-dzputc(ls,ch)
-	struct	dz_linestate *ls;
-	int	ch;
+dzputc(struct dz_linestate *ls, int ch)
 {
 	int line;
 	u_short tcr;
