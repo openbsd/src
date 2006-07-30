@@ -2689,6 +2689,10 @@
 ./usr/share/tabset/xerox1730
 ./usr/share/tabset/xerox1730-lm
 ./usr/share/tabset/zenith29
+./usr/share/texinfo
+./usr/share/texinfo/texinfo.cat
+./usr/share/texinfo/texinfo.dtd
+./usr/share/texinfo/texinfo.xsl
 ./usr/share/tmac
 ./usr/share/tmac/eqnrc
 ./usr/share/tmac/hyphen.us

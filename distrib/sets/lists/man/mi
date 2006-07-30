@@ -1024,6 +1024,7 @@
 ./usr/share/man/cat4/an.0
 ./usr/share/man/cat4/aps.0
 ./usr/share/man/cat4/arandom.0
+./usr/share/man/cat4/arc.0
 ./usr/share/man/cat4/aria.0
 ./usr/share/man/cat4/armish
 ./usr/share/man/cat4/arp.0
@@ -2658,7 +2659,3 @@
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/vax
 ./usr/share/man/ps9/zaurus
-./usr/share/texinfo
-./usr/share/texinfo/texinfo.cat
-./usr/share/texinfo/texinfo.dtd
-./usr/share/texinfo/texinfo.xsl
