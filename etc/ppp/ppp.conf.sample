@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.23 2006/07/19 06:10:17 fkr Exp $
+# $OpenBSD: ppp.conf.sample,v 1.24 2006/07/30 18:02:01 david Exp $
 #
 #################################################################
 
@@ -101,16 +101,16 @@ ondemand:
  add default HISADDR
  enable dns
 
-# To connect via a GPRS or UMTS device (e.g. a mobile phone or a PC Card), 
+# To connect via a GPRS or UMTS device (e.g. a mobile phone or a PC Card),
 # it's often necessary to set the access-point name (in this case 'internet')
 # which requires quotes in the dial string. This section shows the escaping
 # required. Devices that have not already authenticated the SIM card (like a
-# PC Card) need to issue the "AT+CPIN=xxxx" (xxxx being the PIN for the SIM 
+# PC Card) need to issue the "AT+CPIN=xxxx" (xxxx being the PIN for the SIM
 # card) first.
-# For certain devices it is necessary to adjust the baud rate (speed setting) 
+# For certain devices it is necessary to adjust the baud rate (speed setting)
 # and/or change the dial string to "*99***1#".
 # UMTS devices often allow control of the connect mode (UMTS only, GPRS only
-# or default to which is available); this can be controlled with the number 
+# or default to which is available); this can be controlled with the number
 # passed to the AT+CGDCONT command and is device dependant.
 # Some ISPs do special things in their IPCP session in order to negotiate
 # the IP addresses; in this case it may be necessary to play with the ifaddr
