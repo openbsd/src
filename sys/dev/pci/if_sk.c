@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.117 2006/07/23 05:59:18 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.118 2006/07/30 18:48:52 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -141,6 +141,7 @@ int sk_intr(void *);
 void sk_intr_bcom(struct sk_if_softc *);
 void sk_intr_xmac(struct sk_if_softc *);
 void sk_intr_yukon(struct sk_if_softc *);
+__inline int sk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
 void sk_rxeof(struct sk_if_softc *);
 void sk_txeof(struct sk_if_softc *);
 int sk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
@@ -1851,9 +1852,29 @@ skc_shutdown(void *v)
 	sk_reset(sc);
 }
 
+__inline int
+sk_rxvalid(struct sk_softc *sc, u_int32_t stat, u_int32_t len)
+{
+	if (sc->sk_type == SK_GENESIS) {
+		if ((stat & XM_RXSTAT_ERRFRAME) == XM_RXSTAT_ERRFRAME ||
+		    XM_RXSTAT_BYTES(stat) != len)
+			return (0);
+	} else {
+		if ((stat & (YU_RXSTAT_CRCERR | YU_RXSTAT_LONGERR |
+		    YU_RXSTAT_MIIERR | YU_RXSTAT_BADFC | YU_RXSTAT_GOODFC |
+		    YU_RXSTAT_JABBER)) != 0 ||
+		    (stat & YU_RXSTAT_RXOK) != YU_RXSTAT_RXOK ||
+		    YU_RXSTAT_BYTES(stat) != len)
+			return (0);
+	}
+
+	return (1);
+}
+
 void
 sk_rxeof(struct sk_if_softc *sc_if)
 {
+	struct sk_softc		*sc = sc_if->sk_softc;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
 	struct mbuf		*m;
 	struct sk_chain		*cur_rx;
@@ -1875,7 +1896,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		sk_ctl = letoh32(sc_if->sk_rdata->sk_rx_ring[i].sk_ctl);
-		if (sk_ctl & SK_RXCTL_OWN) {
+		if ((sk_ctl & SK_RXCTL_OWN) != 0) {
 			/* Invalidate the descriptor -- it's not ready yet */
 			SK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_PREREAD);
 			sc_if->sk_cdata.sk_rx_prod = i;
@@ -1899,7 +1920,12 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		SK_INC(i, SK_RX_RING_CNT);
 
-		if (rxstat & XM_RXSTAT_ERRFRAME) {
+		if ((sk_ctl & (SK_RXCTL_STATUS_VALID | SK_RXCTL_FIRSTFRAG |
+		    SK_RXCTL_LASTFRAG)) != (SK_RXCTL_STATUS_VALID |
+		    SK_RXCTL_FIRSTFRAG | SK_RXCTL_LASTFRAG) ||
+		    total_len < SK_MIN_FRAMELEN ||
+		    total_len > SK_JUMBO_FRAMELEN ||
+		    sk_rxvalid(sc, rxstat, total_len) == 0) {
 			ifp->if_ierrors++;
 			sk_newbuf(sc_if, cur, m, dmamap);
 			continue;
