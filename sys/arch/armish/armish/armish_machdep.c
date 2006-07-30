@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.6 2006/07/20 02:48:03 deraadt Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.7 2006/07/30 21:38:12 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -361,7 +361,7 @@ initarm(void *arg)
 	 */
 	/* XXX should really be done after setting up the console, but we
 	 * XXX need to parse the console selection flags right now. */
-//	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
+	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
 #ifdef RAMDISK_HOOKS
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
@@ -802,8 +802,10 @@ process_kernel_args(char *args)
 
 	boot_args = cp;
 
+#if 0
 	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
+#endif
 
 	/* Setup pointer to boot flags */
 	while (*cp != '-')

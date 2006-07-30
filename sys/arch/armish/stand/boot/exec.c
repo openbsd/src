@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 2006/07/28 19:31:12 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.3 2006/07/30 21:38:12 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -24,6 +24,10 @@
 #include <sys/exec_elf.h>
 #endif
 
+#include <sys/reboot.h>
+#include <stand/boot/cmd.h>
+#include <machine/bootconfig.h>
+
 typedef void (*startfuncp)(void) __attribute__ ((noreturn));
 
 void
@@ -33,6 +37,7 @@ run_loadfile(u_long *marks, int howto)
 	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
 	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
 	u_long esym = marks[MARK_END];
+	char *cp;
 	int i;
 
 	/*
@@ -50,6 +55,27 @@ run_loadfile(u_long *marks, int howto)
 		}
 	}
 #endif
+	cp = (char *)0x00200000 - MAX_BOOT_STRING - 1;
+
+#define      BOOT_STRING_MAGIC 0x4f425344
+
+	*(int *)cp = BOOT_STRING_MAGIC;
+
+	cp += sizeof(int);
+	snprintf(cp, MAX_BOOT_STRING, "%s:%s -", cmd.bootdev, cmd.image);
+
+	while (*cp != '\0')
+		cp++;
+	if (howto & RB_ASKNAME)
+		*cp++ = 'a';
+	if (howto & RB_CONFIG)
+		*cp++ = 'c';
+	if (howto & RB_KDB)
+		*cp++ = 'd';
+	if (howto & RB_SINGLE)
+		*cp++ = 's';
+
+	*cp = '\0';
 
 	(*(startfuncp)(marks[MARK_ENTRY]))();
 

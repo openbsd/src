@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2006/05/31 05:51:20 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 2006/07/30 21:38:12 drahn Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -299,7 +299,15 @@ rootconf()
 
 	/* Lookup boot device from boot if not set by configuration */
 	if (bootdv == NULL) {
-		bootdv = parsedisk(boot_file, strlen(boot_file), 0, &temp);
+		int len;
+		char *p;
+		/* boot_file is of the form wd0a:/bsd, we want 'wd0a' */
+		if ((p = strchr(boot_file, ':')) != NULL)
+			len = p - boot_file;
+		else
+			len = strlen(boot_file);
+		
+		bootdv = parsedisk(boot_file, len, 0, &temp);
 	}
 	if (bootdv == NULL) {
 		printf("boot device: lookup '%s' failed.\n", boot_file);
