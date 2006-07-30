@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.185 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.186 2006/07/30 03:47:48 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2660,14 +2660,11 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			expbuf[0] = '\0';
 
 			if (mode & RCS_KWEXP_NAME) {
-				if (strlcat(expbuf, "$", sizeof(expbuf))
-				    >= sizeof(expbuf) ||
-				    strlcat(expbuf, kwstr, sizeof(expbuf))
-				    >= sizeof(expbuf))
+				if (strlcat(expbuf, "$", sizeof(expbuf)) >= sizeof(expbuf) ||
+				    strlcat(expbuf, kwstr, sizeof(expbuf)) >= sizeof(expbuf))
 					fatal("rcs_expand_keywords: truncated");
 				if ((mode & RCS_KWEXP_VAL) &&
-				    strlcat(expbuf, ": ", sizeof(expbuf))
-				    >= sizeof(expbuf))
+				    strlcat(expbuf, ": ", sizeof(expbuf)) >= sizeof(expbuf))
 					fatal("rcs_expand_keywords: truncated");
 			}
 
@@ -2678,79 +2675,54 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			if (mode & RCS_KWEXP_VAL) {
 				if (kwtype & RCS_KW_RCSFILE) {
 					if (!(kwtype & RCS_KW_FULLPATH))
-						(void)strlcat(expbuf,
-						    basename(rcsfile),
-						    sizeof(expbuf));
+						(void)strlcat(expbuf, basename(rcsfile), sizeof(expbuf));
 					else
-						(void)strlcat(expbuf,
-						    rcsfile, sizeof(expbuf));
-					if (strlcat(expbuf, " ",
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "truncated");
+						(void)strlcat(expbuf, rcsfile, sizeof(expbuf));
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: truncated");
 				}
 
 				if (kwtype & RCS_KW_REVISION) {
-					rcsnum_tostr(rdp->rd_num, buf,
-					    sizeof(buf));
-					if (strlcat(buf, " ", sizeof(buf))
-					    >= sizeof(buf) ||
-					    strlcat(expbuf, buf,
-					    sizeof(expbuf)) >= sizeof(buf))
-						fatal("rcs_expand_keywords: "
-						    "truncated");
+					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
+					if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf) ||
+					    strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(buf))
+						fatal("rcs_expand_keywords: truncated");
 				}
 
 				if (kwtype & RCS_KW_DATE) {
 					fmt = "%Y/%m/%d %H:%M:%S ";
 
-					strftime(buf, sizeof(buf), fmt,
-					    &rdp->rd_date);
-					if (strlcat(expbuf, buf,
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "string truncated");
+					strftime(buf, sizeof(buf), fmt, &rdp->rd_date);
+					if (strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_AUTHOR) {
-					if (strlcat(expbuf, rdp->rd_author,
-					    sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ",
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "string truncated");
+					if (strlcat(expbuf, rdp->rd_author, sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_STATE) {
-					if (strlcat(expbuf, rdp->rd_state,
-					    sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ",
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "string truncated");
+					if (strlcat(expbuf, rdp->rd_state, sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: string truncated");
 				}
 
 				/* order does not matter anymore below */
 				if (kwtype & RCS_KW_LOG)
-					if (strlcat(expbuf, " ",
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "string truncated");
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: string truncated");
 
 				if (kwtype & RCS_KW_SOURCE) {
-					if (strlcat(expbuf, rcsfile,
-					    sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ",
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "string truncated");
+					if (strlcat(expbuf, rcsfile, sizeof(expbuf)) >= sizeof(expbuf) ||
+					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: string truncated");
 				}
 
 				if (kwtype & RCS_KW_NAME)
-					if (strlcat(expbuf, " ",
-					    sizeof(expbuf)) >= sizeof(expbuf))
-						fatal("rcs_expand_keywords: "
-						    "string truncated");
+					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_expand_keywords: string truncated");
 			}
 
 			/* end the expansion */
