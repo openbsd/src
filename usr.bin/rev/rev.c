@@ -1,4 +1,4 @@
-/*	$OpenBSD: rev.c,v 1.7 2003/06/10 22:20:50 deraadt Exp $	*/
+/*	$OpenBSD: rev.c,v 1.8 2006/07/30 06:25:43 ray Exp $	*/
 /*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: rev.c,v 1.7 2003/06/10 22:20:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rev.c,v 1.8 2006/07/30 06:25:43 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,6 @@ main(int argc, char *argv[])
 		while ((p = fgetln(fp, &len)) != NULL) {
 			if (p[len - 1] == '\n')
 				--len;
-			t = p + len - 1;
 			for (t = p + len - 1; t >= p; --t)
 				putchar(*t);
 			putchar('\n');
