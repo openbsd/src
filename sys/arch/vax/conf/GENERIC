@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2006/07/28 21:07:03 miod Exp $
+#	$OpenBSD: GENERIC,v 1.45 2006/07/30 12:39:34 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -31,8 +31,6 @@ option		VAX48		# VS 4000 VLC
 option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000 10X, MicroVAX 3100m9X
 
-option		SCSIVERBOSE	# Verbose SCSI errors
-
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
@@ -42,9 +40,7 @@ option		COMPAT_VAX1K	# Must be present to run old binaries.
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
 
-# Kernel(s) to compile
 config		bsd		swap generic
-#config		nfsbsd	root on nfs swap on nfs
 
 mainbus0	at root
 
