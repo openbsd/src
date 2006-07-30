@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2006/07/30 21:38:12 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2006/07/30 23:16:52 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ int booted_partition;
 struct device *bootdv = NULL;
 
 int findblkmajor(struct device *dv);
-char * findblkname(int maj);
+char *findblkname(int maj);
 
 void rootconf(void);
 void diskconf(void);
@@ -301,6 +301,7 @@ rootconf()
 	if (bootdv == NULL) {
 		int len;
 		char *p;
+
 		/* boot_file is of the form wd0a:/bsd, we want 'wd0a' */
 		if ((p = strchr(boot_file, ':')) != NULL)
 			len = p - boot_file;
