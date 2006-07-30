@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.18 2006/07/29 17:07:46 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.19 2006/07/30 09:15:03 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -265,6 +265,9 @@ dz_can_have_kbd()
 		if (((vax_siedata >> 8) & 0xff) == VAX_STYP_48)
 			return (1);
 		break;
+
+	case VAX_BTYP_49:
+		return (1);
 
 	default:
 		break;
