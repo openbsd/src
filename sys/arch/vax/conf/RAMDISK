@@ -1,9 +1,6 @@
-#	$OpenBSD: RAMDISK,v 1.24 2005/05/01 07:54:43 david Exp $
+#	$OpenBSD: RAMDISK,v 1.25 2006/07/30 12:40:07 miod Exp $
 
 machine		vax			# machine type
-
-#makeoptions	COPTS="-Os"		# untested
-makeoptions	COPTS="-O2"
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=3072
@@ -75,8 +72,10 @@ ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
-#smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
-#clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
+smg0		at vsbus0 csr 0x200f0000 # VS3100 on-board mono frame buffer
+gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
+lcg0		at vsbus0 csr 0x20100000 # VS4000/60 (or VLC) frame buffer
+lcspx0		at vsbus0 csr 0x39302000 # VS4000/90 frame buffer
 
 #hd*		at hdc0 drive?		# RD5x disks
 #ry*		at hdc0 drive?		# RX floppies
@@ -144,16 +143,21 @@ st*		at scsibus?
 cd*		at scsibus?
 #ch*		at scsibus?
 #ss*		at scsibus?
+#safte*		at scsibus?
+#ses*		at scsibus?
 #uk*		at scsibus?
 
 # Workstation console
-#wsdisplay0	at smg?
-#wsdisplay0	at clr0
-#wsdisplay0	at qd0
-#wsdisplay0	at qv0
+wsdisplay*	at gpx?
+wsdisplay*	at lcg?
+wsdisplay*	at lcspx?
+wsdisplay*	at smg?
 
-#lkkbd0		at dz0 line 0
-#wskbd*		at lkkbd?
+#wsdisplay*	at qd0
+#wsdisplay*	at qv0
+
+lkkbd0		at dz0 line 0
+wskbd*		at lkkbd?
 #lkms0		at dz0 line 1
 #wsmouse*	at lkms?
 
