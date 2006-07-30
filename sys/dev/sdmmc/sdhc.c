@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.10 2006/07/19 23:56:03 fgsch Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.11 2006/07/30 16:40:27 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -87,7 +87,7 @@ int	sdhc_bus_clock(sdmmc_chipset_handle_t, int);
 void	sdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 int	sdhc_wait_state(struct sdhc_host *, u_int32_t, u_int32_t);
-void	sdhc_soft_reset(struct sdhc_host *);
+int	sdhc_soft_reset(struct sdhc_host *, int);
 int	sdhc_wait_intr(struct sdhc_host *, int, int);
 void	sdhc_transfer_data(struct sdhc_host *, struct sdmmc_command *);
 void	sdhc_read_data(struct sdhc_host *, u_char *, int);
@@ -302,17 +302,13 @@ sdhc_shutdown(void *arg)
 /*
  * Reset the host controller.  Called during initialization, when
  * cards are removed, upon resume, and during error recovery.
- *
- * Unfortunately, at least one vendor does not follow the simplified
- * SDHC specification: TI's PCI7621 does not clear reset bits, so we
- * have no way to tell whether the reset was successful or timed out.
  */
 int
 sdhc_host_reset(sdmmc_chipset_handle_t sch)
 {
 	struct sdhc_host *hp = sch;
 	u_int16_t imask;
-	int timo;
+	int error;
 	int s;
 
 	s = splsdmmc();
@@ -324,18 +320,8 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	 * Reset the entire host controller and wait up to 100ms for
 	 * the controller to clear the reset bit.
 	 */
-	HWRITE1(hp, SDHC_SOFTWARE_RESET, SDHC_RESET_MASK);
-	for (timo = 10; timo > 0; timo--) {
-		if (!ISSET(HREAD1(hp, SDHC_SOFTWARE_RESET), SDHC_RESET_MASK))
-			break;
-		sdmmc_delay(10000);
-	}
-	if (timo == 0) {
-		DPRINTF(("%s: timeout reg=%#x\n", HDEVNAME(hp),
-		    HREAD1(hp, SDHC_SOFTWARE_RESET)));
-		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
-		/* return ETIMEDOUT; but see above. */
-	}
+	if ((error = sdhc_soft_reset(hp, SDHC_RESET_ALL)) != 0)
+		return (error);
 
 	/* Set data timeout counter value to max for now. */
 	HWRITE1(hp, SDHC_TIMEOUT_CTL, SDHC_TIMEOUT_MAX);
@@ -787,12 +773,27 @@ sdhc_write_data(struct sdhc_host *hp, u_char *datap, int datalen)
 }
 
 /* Prepare for another command. */
-void
-sdhc_soft_reset(struct sdhc_host *hp)
+int
+sdhc_soft_reset(struct sdhc_host *hp, int mask)
 {
-	DPRINTF(("%s: software reset\n", HDEVNAME(hp)));
-	HWRITE1(hp, SDHC_SOFTWARE_RESET, SDHC_RESET_DAT|SDHC_RESET_CMD);
-	sdmmc_delay(10000);
+	int timo;
+
+	DPRINTF(("%s: software reset reg=%#x\n", HDEVNAME(hp), mask));
+
+	HWRITE1(hp, SDHC_SOFTWARE_RESET, mask);
+	for (timo = 10; timo > 0; timo--) {
+		if (!ISSET(HREAD1(hp, SDHC_SOFTWARE_RESET), mask))
+			break;
+		sdmmc_delay(10000);
+	}
+	if (timo == 0) {
+		DPRINTF(("%s: timeout reg=%#x\n", HDEVNAME(hp),
+		    HREAD1(hp, SDHC_SOFTWARE_RESET)));
+		HWRITE1(hp, SDHC_SOFTWARE_RESET, 0);
+		return (ETIMEDOUT);
+	}
+
+	return (0);
 }
 
 int
@@ -821,7 +822,7 @@ sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
 	/* Command timeout has higher priority than command complete. */
 	if (ISSET(status, SDHC_ERROR_INTERRUPT)) {
 		hp->intr_error_status = 0;
-		sdhc_soft_reset(hp);
+		(void)sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
 		status = 0;
 	}
 
