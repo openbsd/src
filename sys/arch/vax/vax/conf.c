@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 2006/07/29 14:18:57 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.48 2006/07/30 12:32:43 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -413,9 +413,9 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
 	cdev_random_init(1,random),	/* 67: random data source */
-	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 68: workstation console */
-	cdev_notdef(),			/* 69 */
-	cdev_notdef(),			/* 70 */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 68: frame buffers */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 69: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 70: mice */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
 	cdev_notdef(),			/* 72: was: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
