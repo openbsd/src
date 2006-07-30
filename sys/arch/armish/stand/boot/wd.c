@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
+/*	$OpenBSD: wd.c,v 1.3 2006/07/30 20:46:30 drahn Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ wdprobe(void)
 			DPRINTF(("wd%d: channel %d drive %d\n",
 				unit, chan, drive));
 			unit++;
+			wd++;
 		}
 	}
 

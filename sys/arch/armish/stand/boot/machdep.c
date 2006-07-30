@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2006/07/29 16:08:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2006/07/30 20:46:30 drahn Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <arm/pte.h>
+#include <dev/pci/pcireg.h>
 
 #include "libsa.h"
 
@@ -26,6 +27,8 @@
 #define ATU_OIOWTVR	0xffffe15c
 #define ATU_ATUCR	0xffffe180
 #define ATU_PCSR	0xffffe184
+#define ATU_OCCAR	0xffffe1a4
+#define ATU_OCCDR	0xffffe1ac
 
 #define ATUCR_OUT_EN	(1U << 1)
 
@@ -56,6 +59,53 @@ machdep(void)
 	__asm volatile ("mcr p6, 0, %0, c1, c1, 0" :: "r" (0x00000032));
 
 	cninit();
+
+{
+	/*
+	 * this code does a device probe on pci space, 
+	 * It looks for a wd compatible controller.
+	 * however when it reads the device register, it does
+	 * not check if a bus fault occurs on the access.
+	 * Since the bootloader doesn't handle faults, this
+	 * crashes the bootloader if it reads a non-existant
+	 * device.
+	 * The tag computation comes from arm/xscale/i80321_pci.c
+	 * i80321_pci_conf_setup()
+	 */
+	int device, bar;
+	for (device = 1; device < 4; device++) {
+		u_int32_t tag, result, size;
+		volatile u_int32_t *occar =  (u_int32_t *)ATU_OCCAR;
+		volatile u_int32_t *occdr =  (u_int32_t *)ATU_OCCDR;
+
+		tag =  1 << (device + 16) | (device << 11);
+		*occar =  tag;
+		result = *occdr;
+		if (result == ~0)
+			continue;
+		*occar =  tag | PCI_CLASS_REG;
+		result = *occdr;
+
+		if (PCI_CLASS(result) != PCI_CLASS_MASS_STORAGE)
+			continue;
+		if (PCI_SUBCLASS(result) != PCI_SUBCLASS_MASS_STORAGE_ATA &&
+		    PCI_SUBCLASS(result) != PCI_SUBCLASS_MASS_STORAGE_SATA &&
+		    PCI_SUBCLASS(result) != PCI_SUBCLASS_MASS_STORAGE_MISC)
+			continue;
+
+		*occar =  tag | PCI_MAPREG_START;
+		result = *occdr;
+
+		/* verify result is an IO BAR */
+		if (PCI_MAPREG_TYPE(result) == PCI_MAPREG_TYPE_IO) {
+			extern u_int32_t wdc_base_addr;
+			wdc_base_addr = PCI_MAPREG_MEM_ADDR(result);
+			DPRINTF(("setting wdc_base addr to %x\n",
+			    wdc_base_addr));
+		}
+	}
+}
+
 }
 
 int

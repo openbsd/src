@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.2 2006/07/29 15:01:49 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.3 2006/07/30 20:46:30 drahn Exp $	*/
 /*	$NetBSD: pciide.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -39,6 +39,8 @@
 #include "libsa.h"
 #include "wdvar.h"
 
+u_int32_t wdc_base_addr = 0;
+
 int
 pciide_init(struct wdc_channel *chp, u_int chan)
 {
@@ -48,7 +50,7 @@ pciide_init(struct wdc_channel *chp, u_int chan)
 	/*
 	 * two channels per chip, one drive per channel
 	 */
-	if (chan >= PCIIDE_NUM_CHANNELS)
+	if (chan >= PCIIDE_NUM_CHANNELS || wdc_base_addr == 0)
 		return (ENXIO);
 	chp->ndrives = 1;
 
@@ -57,8 +59,8 @@ pciide_init(struct wdc_channel *chp, u_int chan)
 	/*
 	 * XXX map?
 	 */
-	cmdreg = 0x90000200 + chan * 0x10;
-	ctlreg = 0x90000208 + chan * 0x10;
+	cmdreg = wdc_base_addr + chan * 0x10;
+	ctlreg = wdc_base_addr+0x8 + chan * 0x10;
 
 	/* set up cmd regsiters */
 	chp->c_cmdbase = (u_int8_t *)cmdreg;
