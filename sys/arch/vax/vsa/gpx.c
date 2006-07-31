@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.7 2006/07/31 18:01:18 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.8 2006/07/31 21:55:03 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -460,9 +460,9 @@ gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = v;
 	struct gpx_screen *ss = ri->ri_hw;
 	struct wsdisplay_font *font = ri->ri_font;
-	int dx, dy, sx, sy, fg, bg;
+	int dx, dy, sx, sy, fg, bg, ul;
 
-	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	rasops_unpack_attr(attr, &fg, &bg, &ul);
 
 	/* find where to output the glyph... */
 	dx = col * font->fontwidth + ri->ri_xorigin;
@@ -502,6 +502,11 @@ gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 	ss->ss_adder->source_1_dx = font->fontwidth;
 	ss->ss_adder->source_1_dy = font->fontheight;
 	ss->ss_adder->cmd = RASTEROP | OCRB | S1E | DTE | LF_R1;
+
+	if (ul != 0) {
+		gpx_fillrect(ss, dx, dy + font->fontheight - 2, font->fontwidth,
+		    1, attr, LF_R3);	/* fg fill */
+	}
 }
 
 void
@@ -760,6 +765,8 @@ gpx_reset_viper(struct gpx_screen *ss)
 	gpx_viper_write(ss, LU_FUNCTION_R1, FULL_SRC_RESOLUTION | LF_SOURCE);
 	/* erase{cols,rows} */
 	gpx_viper_write(ss, LU_FUNCTION_R2, FULL_SRC_RESOLUTION | LF_ZEROS);
+	/* underline */
+	gpx_viper_write(ss, LU_FUNCTION_R3, FULL_SRC_RESOLUTION | LF_ONES);
 	/* cursor */
 	gpx_viper_write(ss, LU_FUNCTION_R4, FULL_SRC_RESOLUTION | LF_NOT_D);
 }
@@ -843,7 +850,7 @@ gpx_setup_screen(struct gpx_screen *ss)
 	gpx_stdscreen.textops = &ri->ri_ops;
 	gpx_stdscreen.fontwidth = ri->ri_font->fontwidth;
 	gpx_stdscreen.fontheight = ri->ri_font->fontheight;
-	gpx_stdscreen.capabilities = ri->ri_caps & ~WSSCREEN_UNDERLINE;
+	gpx_stdscreen.capabilities = ri->ri_caps;
 
 	/*
 	 * Initialize RAMDAC.
