@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.16 2006/07/24 20:32:04 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.17 2006/07/31 18:41:17 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -183,6 +183,8 @@ static struct font *list, builtin_fonts[] = {
 	{ NULL, NULL, NULL, 0 },
 };
 
+#if !defined(SMALL_KERNEL) || defined(__alpha__)
+
 /* Reverse the bit order in a byte */
 static const u_char reverse[256] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0, 
@@ -219,13 +221,16 @@ static const u_char reverse[256] = {
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff, 
 };
 
+#endif
+
 static struct font *wsfont_find0(int);
-static void	wsfont_revbit(struct wsdisplay_font *);
-static void	wsfont_revbyte(struct wsdisplay_font *);
+
+#if !defined(SMALL_KERNEL) || defined(__alpha__)
 
 /*
  * Reverse the bit order of a font
  */
+static void	wsfont_revbit(struct wsdisplay_font *);
 static void
 wsfont_revbit(font)
 	struct wsdisplay_font *font;
@@ -239,9 +244,14 @@ wsfont_revbit(font)
 		*p = reverse[*p];
 }
 
+#endif
+
+#if !defined(SMALL_KERNEL)
+
 /*
  * Reverse the byte order of a font
  */
+static void	wsfont_revbyte(struct wsdisplay_font *);
 static void
 wsfont_revbyte(font)
 	struct wsdisplay_font *font;
@@ -269,6 +279,8 @@ wsfont_revbyte(font)
 		rp += font->stride;
 	}
 }
+
+#endif
 
 /*
  * Enumerate the list of fonts
@@ -567,21 +579,31 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 	
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (bitorder && bitorder != ent->font->bitorder) {
+#if !defined(SMALL_KERNEL) || defined(__alpha__)
 			if (ent->lockcount) {
 				splx(s);
 				return (-1);
 			}
 			wsfont_revbit(ent->font);
 			ent->font->bitorder = bitorder;
+#else
+			splx(s);
+			return (-1);
+#endif
 		}
 
 		if (byteorder && byteorder != ent->font->byteorder) {
+#if !defined(SMALL_KERNEL)
 			if (ent->lockcount) {
 				splx(s);
 				return (-1);
 			}
 			wsfont_revbyte(ent->font);
 			ent->font->byteorder = byteorder;
+#else
+			splx(s);
+			return (-1);
+#endif
 		}
 		
 		lc = ++ent->lockcount;
@@ -637,6 +659,7 @@ wsfont_unlock(cookie)
 	return (lc);
 }
 
+#if !defined(SMALL_KERNEL)
 
 /*
  * Unicode to font encoding mappings
@@ -866,6 +889,8 @@ static struct wsfont_level1_glyphmap encodings[] = {
 
 #define MAX_ENCODING WSDISPLAY_FONTENC_SONY
 
+#endif	/* !SMALL_KERNEL */
+
 /*
  * Remap Unicode character to glyph
  */
@@ -874,16 +899,13 @@ wsfont_map_unichar(font, c)
 	struct wsdisplay_font *font;
 	int c;
 {
-	if (font->encoding == WSDISPLAY_FONTENC_ISO) {
-
+	if (font->encoding == WSDISPLAY_FONTENC_ISO)
 		return c;
-
-	} else if (font->encoding < 0 || font->encoding > MAX_ENCODING) {
-
+	else
+#if !defined(SMALL_KERNEL)
+	if (font->encoding < 0 || font->encoding > MAX_ENCODING)
 		return (-1);
-
-	} else {
-
+	else {
 		int hi = (c >> 8), lo = c & 255;
 		struct wsfont_level1_glyphmap *map1 =
 			&encodings[font->encoding];
@@ -923,5 +945,7 @@ wsfont_map_unichar(font, c)
 		}
 
 	}
-
+#else
+	return (-1);
+#endif	/* SMALL_KERNEL */
 }
