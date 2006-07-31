@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.67 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.68 2006/07/31 06:51:55 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -101,7 +101,7 @@ rcsdiff_main(int argc, char **argv)
 			break;
 		default:
 			(usage)();
-			exit (D_ERROR);
+			exit(D_ERROR);
 		}
 	}
 
@@ -271,11 +271,10 @@ out:
 static int
 rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 {
-	int ret;
-	char *path1, *path2;
-	BUF *b1, *b2;
-	char rbuf1[64], rbuf2[64];
 	struct timeval tv[2], tv2[2];
+	BUF *b1, *b2;
+	int ret;
+	char *path1, *path2, rbuf1[64], rbuf2[64];
 
 	ret = D_ERROR;
 	b1 = b2 = NULL;
