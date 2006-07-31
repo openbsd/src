@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.3 2005/09/24 12:52:19 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.4 2006/07/31 17:09:19 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -15,10 +15,16 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Supplementary code to handle archives.
+# Supplementary code to handle archives in the package context.
+# Contrarily to GNU-tar, we do not change the archive format, but by
+# convention,  the names LongName\d+ and LongLink\d correspond to names
+# too long to fit. The actual names reside in the PLIST, but the archive
+# is still a valid archive.
+#
 
 package OpenBSD::Ustar::Object;
 
+# match archive header name against PackingElement item
 sub check_name
 {
 	my ($self, $item) = @_;
@@ -30,6 +36,7 @@ sub check_name
 	return 0;
 }
 
+# match archive header link name against actual link names
 sub check_linkname
 {
 	my ($self, $linkname) = @_;
@@ -48,6 +55,7 @@ sub check_linkname
 	return 0;
 }
 
+# copy long items, avoiding duplicate long names.
 sub copy_long
 {
 	my ($self, $wrarc) = @_;
@@ -63,6 +71,7 @@ sub copy_long
 
 package OpenBSD::Ustar;
 
+# prepare item and introduce long names where needed.
 sub prepare_long
 {
 	my ($self, $item) = @_;

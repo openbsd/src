@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.5 2004/11/27 12:07:58 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.6 2006/07/31 17:09:19 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -24,7 +24,7 @@ use OpenBSD::Error;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
 
-sub record_all
+sub find_items_in_installed_packages
 {
 	my $db = {dirs=>{}, users=>{}, groups=>{}};
 	my @list = installed_packages();
@@ -49,7 +49,7 @@ sub cleanup
 	my $u = $state->{users_to_rm};
 	my $g = $state->{groups_to_rm};
 	return unless defined $h or defined $u or defined $g;
-	my $remaining = record_all();
+	my $remaining = find_items_in_installed_packages();
 
 	OpenBSD::ProgressMeter::clear();
 	OpenBSD::ProgressMeter::set_header("Clean shared items");
