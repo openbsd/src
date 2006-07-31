@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2005/11/24 04:52:23 brad Exp $ */
+/*	$OpenBSD: pmap.c,v 1.38 2006/07/31 05:44:23 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -62,7 +62,7 @@
 #include "qd.h"
 void	qdearly(void);
 
-#define ISTACK_SIZE NBPG
+#define ISTACK_SIZE (NBPG * 2)
 vaddr_t	istack;
 
 struct pmap kernel_pmap_store;
@@ -77,6 +77,8 @@ vaddr_t ptemapstart, ptemapend;
 struct	extent *ptemap;
 #define	PTMAPSZ	EXTENT_FIXED_STORAGE_SIZE(100)
 char	ptmapstorage[PTMAPSZ];
+
+#define	IOSPACE(p)	(((u_long)(p)) & 0xe0000000)
 
 #ifdef PMAPDEBUG
 volatile int recurse;
@@ -524,6 +526,8 @@ rensa(clp, ptp)
 if (startpmapdebug)
 	printf("rensa: pv %p clp 0x%x ptp %p\n", pv, clp, ptp);
 #endif
+	if (IOSPACE((*ptp & PG_FRAME) << VAX_PGSHIFT))
+		return;	/* Nothing in pv_table */
 	s = splvm();
 	RECURSESTART;
 	if (pv->pv_pte == ptp) {
@@ -615,7 +619,7 @@ if(startpmapdebug)
 
 /*
  * pmap_enter() is the main routine that puts in mappings for pages, or
- * upgrades mappings to more "rights". Note that:
+ * upgrades mappings to more "rights".
  */
 int
 pmap_enter(pmap, v, p, prot, flags)
@@ -712,6 +716,23 @@ if (startpmapdebug)
 			pmap_update(pmap_kernel());
 		}
 	}
+	/*
+	 * Do not keep track of anything if mapping IO space.
+	 */
+	if (IOSPACE(p)) {
+		patch[i] = newpte;
+		patch[i+1] = newpte+1;
+		patch[i+2] = newpte+2;
+		patch[i+3] = newpte+3;
+		patch[i+4] = newpte+4;
+		patch[i+5] = newpte+5;
+		patch[i+6] = newpte+6;
+		patch[i+7] = newpte+7;
+		if (pmap != pmap_kernel())
+			pmap->pm_refcnt[index]++; /* New mapping */
+		RECURSEEND;
+		return (0);
+	}
 	if (flags & PMAP_WIRED)
 		newpte |= PG_W;
 
@@ -733,15 +754,16 @@ if (startpmapdebug)
 	}
 
 	/* Changing mapping? */
-	oldpte &= PG_FRAME;
-	if ((newpte & PG_FRAME) != oldpte) {
+	if ((newpte & PG_FRAME) != (oldpte & PG_FRAME)) {
 
 		/*
 		 * Mapped before? Remove it then.
 		 */
-		if (oldpte) {
+		if (oldpte & PG_FRAME) {
 			RECURSEEND;
-			rensa(oldpte >> LTOHPS, (pt_entry_t *)&patch[i]);
+			if ((oldpte & PG_SREF) == 0)
+				rensa((oldpte & PG_FRAME) >> LTOHPS,
+				    (pt_entry_t *)&patch[i]);
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
 				pmap->pm_refcnt[index]++; /* New mapping */
@@ -813,7 +835,7 @@ if(startpmapdebug)
 	pstart=(uint)pstart &0x7fffffff;
 	pend=(uint)pend &0x7fffffff;
 	virtuell=(uint)virtuell &0x7fffffff;
-	(uint)pentry= (((uint)(virtuell)>>VAX_PGSHIFT)*4)+(uint)Sysmap;
+	pentry = (int *)((((uint)(virtuell)>>VAX_PGSHIFT)*4)+(uint)Sysmap);
 	for(count=pstart;count<pend;count+=VAX_NBPG){
 		*pentry++ = (count>>VAX_PGSHIFT)|PG_V|
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
@@ -1009,10 +1031,12 @@ if (startpmapdebug)
 	pte[5] |= PG_V;
 	pte[6] |= PG_V;
 	pte[7] |= PG_V;
-	pv = pv_table + (pa >> PGSHIFT);
-	pv->pv_attr |= PG_V; /* Referenced */
-	if (bits & 4)
-		pv->pv_attr |= PG_M; /* (will be) modified. XXX page tables  */
+	if (IOSPACE(pa) == 0) {	/* No pv_table fiddling in iospace */
+		pv = pv_table + (pa >> PGSHIFT);
+		pv->pv_attr |= PG_V; /* Referenced */
+		if (bits & 4)	/* (will be) modified. XXX page tables  */
+			pv->pv_attr |= PG_M;
+	}
 	return 0;
 }
 
@@ -1026,6 +1050,10 @@ pmap_is_referenced(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_is_referenced: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
@@ -1049,6 +1077,10 @@ pmap_clear_reference(pg)
 	struct	pv_entry *pv;
 	int ref = 0;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_clear_reference: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
@@ -1097,6 +1129,10 @@ pmap_is_modified(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_is_modified: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
@@ -1156,16 +1192,28 @@ pmap_clear_modify(pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
+	boolean_t rv = FALSE;
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_clear_modify: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 
 #ifdef PMAPDEBUG
 	if (startpmapdebug)
 		printf("pmap_clear_modify: pa %lx pv_entry %p\n", pa, pv);
 #endif
+	if (pv->pv_attr & PG_M)
+		rv = TRUE;
 	pv->pv_attr &= ~PG_M;
 
 	if (pv->pv_pte) {
+		if ((pv->pv_pte[0] | pv->pv_pte[1] | pv->pv_pte[2] |
+		    pv->pv_pte[3] | pv->pv_pte[4] | pv->pv_pte[5] |
+		    pv->pv_pte[6] | pv->pv_pte[7]) & PG_M)
+			rv = TRUE;
+
 		pv->pv_pte[0] &= ~PG_M;
 		pv->pv_pte[1] &= ~PG_M;
 		pv->pv_pte[2] &= ~PG_M;
@@ -1177,6 +1225,11 @@ pmap_clear_modify(pg)
 	}
 
 	while ((pv = pv->pv_next)) {
+		if ((pv->pv_pte[0] | pv->pv_pte[1] | pv->pv_pte[2] |
+		    pv->pv_pte[3] | pv->pv_pte[4] | pv->pv_pte[5] |
+		    pv->pv_pte[6] | pv->pv_pte[7]) & PG_M)
+			rv = TRUE;
+
 		pv->pv_pte[0] &= ~PG_M;
 		pv->pv_pte[1] &= ~PG_M;
 		pv->pv_pte[2] &= ~PG_M;
@@ -1186,7 +1239,7 @@ pmap_clear_modify(pg)
 		pv->pv_pte[6] &= ~PG_M;
 		pv->pv_pte[7] &= ~PG_M;
 	}
-	return TRUE; /* XXX */
+	return rv;
 }
 
 /*
@@ -1211,6 +1264,10 @@ if(startpmapdebug) printf("pmap_page_protect: pg %p, prot %x, ",pg, prot);
 if(startpmapdebug) printf("pa %lx\n",pa);
 #endif
 
+#ifdef DEBUG
+	if (IOSPACE(pa))
+		panic("pmap_page_protect: called for iospace");
+#endif
 	pv = pv_table + (pa >> PGSHIFT);
 	if (pv->pv_pte == 0 && pv->pv_next == 0)
 		return;
