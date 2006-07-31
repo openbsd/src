@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.6 2006/07/31 06:47:25 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.7 2006/07/31 18:50:48 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -108,7 +108,7 @@ lk201_identify(void *v)
 	 */
 	for(;;) {
 		lks->waitack = 1;
-		for (i = 10; i != 0; i--) {
+		for (i = 100; i != 0; i--) {
 			DELAY(1000);
 			if (lks->waitack == 0)
 				break;
@@ -123,7 +123,7 @@ lk201_identify(void *v)
 	 */
 	lks->waitack = 1;
 	send(lks, LK_ENABLE_401);
-	for (i = 10; i != 0; i--) {
+	for (i = 100; i != 0; i--) {
 		DELAY(1000);
 		if (lks->waitack == 0)
 			break;
