@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.47 2006/05/29 20:23:13 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.48 2006/07/31 21:54:46 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1488,6 +1488,12 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	int gindex, iscommand = 0;
 
 	if (type == WSCONS_EVENT_ALL_KEYS_UP) {
+#if NWSDISPLAY > 0
+		if (sc->sc_repeating) {
+			sc->sc_repeating = 0;
+			timeout_del(&sc->sc_repeat_ch);
+		}
+#endif
 		id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R |
 		    MOD_CONTROL_L | MOD_CONTROL_R |
 		    MOD_META_L | MOD_META_R |
