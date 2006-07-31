@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.3 2006/07/31 08:15:52 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.4 2006/07/31 08:22:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -121,16 +121,16 @@ static const struct pci_matchid arc_devices[] = {
 #define  ARC_REG_IOC_RBUF_LEN	32	/* dwords */
 
 struct arc_msg_firmware_info {
-	u_int32_t	signature;
+	u_int32_t		signature;
 #define ARC_FWINFO_SIGNATURE_GET_CONFIG		(0x87974060)
-	u_int32_t	request_len;
-	u_int32_t	queue_len;
-	u_int32_t	sdram_size;
-	u_int32_t	sata_ports;
-	u_int8_t	vendor[40];
-	u_int8_t	model[8];
-	u_int8_t	fw_version[16];
-	u_int8_t	device_map[16];
+	u_int32_t		request_len;
+	u_int32_t		queue_len;
+	u_int32_t		sdram_size;
+	u_int32_t		sata_ports;
+	u_int8_t		vendor[40];
+	u_int8_t		model[8];
+	u_int8_t		fw_version[16];
+	u_int8_t		device_map[16];
 } __packed;
 
 struct arc_msg_scsicmd {
@@ -153,7 +153,8 @@ struct arc_msg_scsicmd {
 	u_int32_t		context;
 	u_int32_t		data_len;
 
-	u_int8_t		cdb[16];
+#define ARC_MSG_CDBLEN				16
+	u_int8_t		cdb[ARC_MSG_CDBLEN];
 
 	u_int8_t		dev_stat;
 	u_int8_t		sense_data[15];
@@ -163,8 +164,9 @@ struct arc_msg_scsicmd {
 
 struct arc_sge {
 	u_int32_t		sge_hdr;
+#define ARC_SGE_64BIT				(1<<24)
+	u_int32_t               sge_lo_addr;
 	u_int32_t		sge_hi_addr;
-	u_int32_t		sge_li_addr;
 } __packed;
 
 int	arc_match(struct device *, void *, void *);
