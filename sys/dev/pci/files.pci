@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.211 2006/07/29 05:08:41 dlg Exp $
+#	$OpenBSD: files.pci,v 1.212 2006/07/31 10:03:22 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -75,7 +75,7 @@ attach	twe at pci with twe_pci
 file	dev/pci/twe_pci.c		twe_pci
 
 # Areca RAID Controllers
-device	arc
+device	arc: scsi
 attach	arc at pci
 file	dev/pci/arc.c			arc
 

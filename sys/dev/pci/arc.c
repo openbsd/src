@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.4 2006/07/31 08:22:04 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.5 2006/07/31 10:03:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -169,6 +170,9 @@ struct arc_sge {
 	u_int32_t		sge_hi_addr;
 } __packed;
 
+#define ARC_MAX_TARGET		16
+#define ARC_MAX_LUN		8
+
 int	arc_match(struct device *, void *, void *);
 void	arc_attach(struct device *, struct device *, void *);
 int	arc_detach(struct device *, int);
@@ -206,6 +210,18 @@ struct cfattach arc_ca = {
 
 struct cfdriver arc_cd = {
         NULL, "arc", DV_DULL
+};
+
+/* interface for scsi midlayer to talk to */
+int			arc_scsi_cmd(struct scsi_xfer *);
+void			arc_minphys(struct buf *bp);
+
+struct scsi_adapter arc_switch = {
+	arc_scsi_cmd, arc_minphys, NULL, NULL, NULL
+};
+
+struct scsi_device arc_dev = {
+	NULL, NULL, NULL, NULL
 };
 
 /* code to deal with getting bits in and out of the bus space */
@@ -288,6 +304,15 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_link.device = &arc_dev;
+	sc->sc_link.adapter = &arc_switch;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_target = ARC_MAX_TARGET;
+	sc->sc_link.adapter_buswidth = ARC_MAX_TARGET;
+	sc->sc_link.openings = sc->sc_req_count / ARC_MAX_TARGET;
+
+	config_found(self, &sc->sc_link, scsiprint);
+
 	return;
 }
 
@@ -307,6 +332,21 @@ arc_intr(void *arg)
 	return (0);
 }
 
+int
+arc_scsi_cmd(struct scsi_xfer *xs)
+{
+	xs->error = XS_DRIVER_STUFFUP;
+	scsi_done(xs);
+	return (COMPLETE);
+}
+
+void
+arc_minphys(struct buf *bp)
+{
+	if (bp->b_bcount > MAXPHYS)
+		bp->b_bcount = MAXPHYS;
+	minphys(bp);
+}
 
 int
 arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
