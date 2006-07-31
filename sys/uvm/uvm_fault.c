@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.40 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.41 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=%p, vaddr=0x%lx, ft=%d, at=%d)",
+	UVMHIST_LOG(maphist, "(map=%p, vaddr=0x%lx, ft=%ld, at=%ld)",
 	      orig_map, vaddr, fault_type, access_type);
 
 	anon = NULL;
@@ -632,7 +632,7 @@ ReFault:
 
 	if ((ufi.entry->protection & access_type) != access_type) {
 		UVMHIST_LOG(maphist,
-		    "<- protection failure (prot=0x%x, access=0x%x)",
+		    "<- protection failure (prot=0x%lx, access=0x%lx)",
 		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
 		return (KERN_PROTECTION_FAILURE);
@@ -746,7 +746,7 @@ ReFault:
 	}
 
 	/* locked: maps(read) */
-	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%lx",
+	UVMHIST_LOG(maphist, "  narrow=%ld, back=%ld, forw=%ld, startva=0x%lx",
 		    narrow, nback, nforw, startva);
 	UVMHIST_LOG(maphist, "  entry=%p, amap=%p, obj=%p", ufi.entry,
 		    amap, uobj, 0);
@@ -867,7 +867,7 @@ ReFault:
 
 	/* locked: maps(read), amap(if there) */
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
-	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed, 
+	UVMHIST_LOG(maphist, "  shadowed=%ld, will_get=%ld", shadowed, 
 	    (uobj && shadowed == FALSE),0,0);
 
 	/*
@@ -1331,7 +1331,7 @@ Case2:
 		promote = (access_type & VM_PROT_WRITE) &&
 		     UVM_ET_ISCOPYONWRITE(ufi.entry);
 	}
-	UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
+	UVMHIST_LOG(maphist, "  case 2 fault: promote=%ld, zfill=%ld",
 	    promote, (uobj == NULL), 0,0);
 
 	/*
@@ -1377,7 +1377,7 @@ Case2:
 				goto ReFault;
 			}
 
-			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
+			UVMHIST_LOG(maphist, "<- pgo_get failed (code %ld)",
 			    result, 0,0,0);
 			return (KERN_PROTECTION_FAILURE); /* XXX i/o error */
 		}
@@ -1695,7 +1695,7 @@ Case2:
 	 */
 
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: case2: pm=%p, va=0x%lx, pg=%p, promote=%d",
+	    "  MAPPING: case2: pm=%p, va=0x%lx, pg=%p, promote=%ld",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))

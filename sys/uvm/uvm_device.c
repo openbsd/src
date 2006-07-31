@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.26 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.27 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ udv_attach(arg, accessprot, off, size)
 	paddr_t (*mapfn)(dev_t, off_t, int);
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
+	UVMHIST_LOG(maphist, "(device=0x%lx)", device,0,0,0);
 
 	/*
 	 * before we do anything, ensure this device supports mmap
@@ -278,7 +278,7 @@ udv_reference(uobj)
 
 	simple_lock(&uobj->vmobjlock);
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %d)", 
+	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %ld)", 
 		    uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
 }
@@ -306,7 +306,7 @@ again:
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
 		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist," <- done, uobj=%p, ref=%d", 
+		UVMHIST_LOG(maphist," <- done, uobj=%p, ref=%ld", 
 			  uobj,uobj->uo_refs,0,0);
 		return;
 	}
@@ -390,7 +390,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	paddr_t (*mapfn)(dev_t, off_t, int);
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
+	UVMHIST_LOG(maphist,"  flags=%ld", flags,0,0,0);
 
 	/*
 	 * we do not allow device mappings to be mapped copy-on-write
@@ -398,7 +398,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 */
 	
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)", 
+		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%lx)", 
 		    entry->etype, 0,0,0);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 		return(VM_PAGER_ERROR);
@@ -444,8 +444,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		paddr = pmap_phys_address(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=%p, va=0x%lx, pa=0x%llx, at=%d",
-		    ufi->orig_map->pmap, curr_va, (long long)paddr, mapprot);
+		    "  MAPPING: device: pm=%p, va=0x%lx, pa=0x%lx, at=%ld",
+		    ufi->orig_map->pmap, curr_va, (u_long)paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			/*

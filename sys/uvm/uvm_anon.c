@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.24 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.25 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -279,7 +279,7 @@ uvm_anon_dropswap(anon)
 	if (anon->an_swslot == 0)
 		return;
 
-	UVMHIST_LOG(maphist,"freeing swap for anon %p, paged to swslot 0x%x",
+	UVMHIST_LOG(maphist,"freeing swap for anon %p, paged to swslot 0x%lx",
 		    anon, anon->an_swslot, 0, 0);
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;

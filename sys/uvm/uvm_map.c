@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.81 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.82 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -426,7 +426,7 @@ uvm_mapent_alloc(struct vm_map *map)
 		me->flags = 0;
 	}
 
-	UVMHIST_LOG(maphist, "<- new entry=%p [kentry=%d]", me,
+	UVMHIST_LOG(maphist, "<- new entry=%p [kentry=%ld]", me,
 	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
 	return(me);
 }
@@ -443,7 +443,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 	int s;
 	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"<- freeing map entry=%p [flags=%d]",
+	UVMHIST_LOG(maphist,"<- freeing map entry=%p [flags=%ld]",
 		me, me->flags, 0, 0);
 	if (me->flags & UVM_MAP_STATIC) {
 		s = splvm();
@@ -736,9 +736,9 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 	UVMHIST_FUNC("uvm_map");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=%p, *startp=0x%lx, size=%ld, flags=0x%x)",
+	UVMHIST_LOG(maphist, "(map=%p, *startp=0x%lx, size=%ld, flags=0x%lx)",
 	    map, *startp, size, flags);
-	UVMHIST_LOG(maphist, "  uobj/offset %p/%lld", uobj, uoffset,0,0);
+	UVMHIST_LOG(maphist, "  uobj/offset %p/%ld", uobj, (u_long)uoffset,0,0);
 
 	uvm_tree_sanity(map, "map entry");
 
@@ -747,7 +747,7 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 	 */
 
 	if ((prot & maxprot) != prot) {
-		UVMHIST_LOG(maphist, "<- prot. failure:  prot=0x%x, max=0x%x", 
+		UVMHIST_LOG(maphist, "<- prot. failure: prot=0x%lx, max=0x%lx",
 		    prot, maxprot,0,0);
 		return(KERN_PROTECTION_FAILURE);
 	}
@@ -1176,7 +1176,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=%p, hint=0x%lx, len=%ld, flags=0x%x)", 
+	UVMHIST_LOG(maphist, "(map=%p, hint=0x%lx, len=%ld, flags=0x%lx)", 
 		    map, hint, length, flags);
 	KASSERT((align & (align - 1)) == 0);
 	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
@@ -1588,7 +1588,7 @@ uvm_unmap_detach(first_entry, flags)
 	while (first_entry) {
 		KASSERT(!VM_MAPENT_ISWIRED(first_entry));
 		UVMHIST_LOG(maphist,
-		    "  detach 0x%x: amap=%p, obj=%p, submap?=%d", 
+		    "  detach 0x%lx: amap=%p, obj=%p, submap?=%ld", 
 		    first_entry, first_entry->aref.ar_amap, 
 		    first_entry->object.uvm_obj,
 		    UVM_ET_ISSUBMAP(first_entry));
@@ -1830,7 +1830,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 
 	UVMHIST_LOG(maphist,"(srcmap=%p,start=0x%lx, len=0x%lx", srcmap, start,
 	    len,0);
-	UVMHIST_LOG(maphist," ...,dstmap=%p, flags=0x%x)", dstmap,flags,0,0);
+	UVMHIST_LOG(maphist," ...,dstmap=%p, flags=0x%lx)", dstmap,flags,0,0);
 
 	uvm_tree_sanity(srcmap, "map_extract src enter");
 	uvm_tree_sanity(dstmap, "map_extract dst enter");
@@ -2212,7 +2212,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	vm_map_entry_t current, entry;
 	int rv = KERN_SUCCESS;
 	UVMHIST_FUNC("uvm_map_protect"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_prot=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_prot=0x%lx)",
 		    map, start, end, new_prot);
 
 	vm_map_lock(map);
@@ -2308,7 +2308,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 
  out:
 	vm_map_unlock(map);
-	UVMHIST_LOG(maphist, "<- done, rv=%d",rv,0,0,0);
+	UVMHIST_LOG(maphist, "<- done, rv=%ld",rv,0,0,0);
 	return (rv);
 }
 
@@ -2332,7 +2332,7 @@ uvm_map_inherit(map, start, end, new_inheritance)
 {
 	vm_map_entry_t entry, temp_entry;
 	UVMHIST_FUNC("uvm_map_inherit"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_inh=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_inh=0x%lx)",
 	    map, start, end, new_inheritance);
 
 	switch (new_inheritance) {
@@ -2382,7 +2382,7 @@ uvm_map_advice(map, start, end, new_advice)
 {
 	vm_map_entry_t entry, temp_entry;
 	UVMHIST_FUNC("uvm_map_advice"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_adv=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_adv=0x%lx)",
 	    map, start, end, new_advice);
 
 	vm_map_lock(map);
@@ -2449,7 +2449,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	u_int timestamp_save;
 #endif
 	UVMHIST_FUNC("uvm_map_pageable"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_pageable=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_pageable=0x%lx)",
 		    map, start, end, new_pageable);
 	KASSERT(map->flags & VM_MAP_PAGEABLE);
 
@@ -2659,7 +2659,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 		}
 		if ((lockflags & UVM_LK_EXIT) == 0)
 			vm_map_unlock(map);
-		UVMHIST_LOG(maphist, "<- done (RV=%d)", rv,0,0,0);
+		UVMHIST_LOG(maphist, "<- done (RV=%ld)", rv,0,0,0);
 		return(rv);
 	}
 
@@ -2703,7 +2703,7 @@ uvm_map_pageable_all(map, flags, limit)
 	u_int timestamp_save;
 #endif
 	UVMHIST_FUNC("uvm_map_pageable_all"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(map=%p,flags=0x%x)", map, flags, 0, 0);
+	UVMHIST_LOG(maphist,"(map=%p,flags=0x%lx)", map, flags, 0, 0);
 
 	KASSERT(map->flags & VM_MAP_PAGEABLE);
 
@@ -2891,7 +2891,7 @@ uvm_map_pageable_all(map, flags, limit)
 				uvm_map_entry_unwire(map, entry);
 		}
 		vm_map_unlock(map);
-		UVMHIST_LOG(maphist,"<- done (RV=%d)", rv,0,0,0);
+		UVMHIST_LOG(maphist,"<- done (RV=%ld)", rv,0,0,0);
 		return (rv);
 	}
 
@@ -2937,7 +2937,7 @@ uvm_map_clean(map, start, end, flags)
 	int rv, error, refs;
 	UVMHIST_FUNC("uvm_map_clean"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,flags=0x%x)",
+	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,flags=0x%lx)",
 		    map, start, end, flags);
 	KASSERT((flags & (PGO_FREE|PGO_DEACTIVATE)) !=
 		(PGO_FREE|PGO_DEACTIVATE));
@@ -3348,7 +3348,7 @@ uvmspace_free(vm)
 	vm_map_entry_t dead_entries;
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(vm=%p) ref=%d", vm, vm->vm_refcnt,0,0);
+	UVMHIST_LOG(maphist,"(vm=%p) ref=%ld", vm, vm->vm_refcnt,0,0);
 	if (--vm->vm_refcnt == 0) {
 		/*
 		 * lock the map, to wait out all other references to it.  delete

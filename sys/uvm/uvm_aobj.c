@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.30 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.31 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ uao_set_swslot(uobj, pageidx, slot)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	int oldslot;
 	UVMHIST_FUNC("uao_set_swslot"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "aobj %p pageidx %d slot %d",
+	UVMHIST_LOG(pdhist, "aobj %p pageidx %ld slot %ld",
 	    aobj, pageidx, slot, 0);
 
 	/*
@@ -625,7 +625,7 @@ uao_reference_locked(uobj)
 		return;
 
 	uobj->uo_refs++;		/* bump! */
-	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %d)", 
+	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %ld)", 
 		    uobj, uobj->uo_refs,0,0);
 }
 
@@ -670,7 +670,7 @@ uao_detach_locked(uobj)
 		return;
 	}
 
-	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%d", uobj,uobj->uo_refs,0,0);
+	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%ld", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;				/* drop ref! */
 	if (uobj->uo_refs) {				/* still more refs? */
 		simple_unlock(&uobj->vmobjlock);
@@ -812,8 +812,8 @@ uao_flush(uobj, start, stop, flags)
 	}
 
 	UVMHIST_LOG(maphist,
-	    " flush start=0x%llx, stop=0x%llx, by_list=%d, flags=0x%x",
-	    start, stop, by_list, flags);
+	    " flush start=0x%lx, stop=0x%lx, by_list=%ld, flags=0x%lx",
+	    (u_long)start, (u_long)stop, by_list, flags);
 
 	/*
 	 * Don't need to do any work here if we're not freeing
@@ -926,7 +926,7 @@ uao_flush(uobj, start, stop, flags)
 	uvm_unlock_pageq();
 
 	UVMHIST_LOG(maphist,
-	    "<- done, rv=%d",retval,0,0,0);
+	    "<- done, rv=%ld",retval,0,0,0);
 	return (retval);
 }
 
@@ -965,8 +965,8 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	boolean_t done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "aobj=%p offset=%lld, flags=%d",
-		    aobj, offset, flags,0);
+	UVMHIST_LOG(pdhist, "aobj=%p offset=%ld, flags=%ld",
+		    aobj, (u_long)offset, flags,0);
 
 	/*
  	 * get number of pages
@@ -1040,7 +1040,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 		 * to unlock and do some waiting or I/O.
  		 */
 
-		UVMHIST_LOG(pdhist, "<- done (done=%d)", done, 0,0,0);
+		UVMHIST_LOG(pdhist, "<- done (done=%ld)", done, 0,0,0);
 
 		*npagesp = gotpages;
 		if (done)
@@ -1125,7 +1125,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if ((ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
 				ptmp->flags |= PG_WANTED;
 				UVMHIST_LOG(pdhist,
-				    "sleeping, ptmp->flags 0x%x\n",
+				    "sleeping, ptmp->flags 0x%lx\n",
 				    ptmp->flags,0,0,0);
 				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
 				    FALSE, "uao_get", 0);
@@ -1168,7 +1168,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			 */
 			uvm_pagezero(ptmp);
 		} else {
-			UVMHIST_LOG(pdhist, "pagein from swslot %d",
+			UVMHIST_LOG(pdhist, "pagein from swslot %ld",
 			     swslot, 0,0,0);
 
 			/*
@@ -1184,7 +1184,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			 */
 			if (rv != VM_PAGER_OK)
 			{
-				UVMHIST_LOG(pdhist, "<- done (error=%d)",
+				UVMHIST_LOG(pdhist, "<- done (error=%ld)",
 				    rv,0,0,0);
 				if (ptmp->flags & PG_WANTED)
 					wakeup(ptmp);

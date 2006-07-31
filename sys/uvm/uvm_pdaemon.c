@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.29 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.30 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -182,7 +182,7 @@ uvmpd_tune()
 	/* uvmexp.inactarg: computed in main daemon loop */
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
-	UVMHIST_LOG(pdhist, "<- done, freemin=%d, freetarg=%d, wiredmax=%d",
+	UVMHIST_LOG(pdhist, "<- done, freemin=%ld, freetarg=%ld, wiredmax=%ld",
 	      uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax, 0);
 }
 
@@ -237,7 +237,7 @@ uvm_pageout(void *arg)
 			uvmexp.inactarg = uvmexp.freetarg + 1;
 		}
 
-		UVMHIST_LOG(pdhist,"  free/ftarg=%d/%d, inact/itarg=%d/%d",
+		UVMHIST_LOG(pdhist,"  free/ftarg=%ld/%ld, inact/itarg=%ld/%ld",
 		    uvmexp.free, uvmexp.freetarg, uvmexp.inactive,
 		    uvmexp.inactarg);
 
@@ -976,7 +976,7 @@ uvmpd_scan()
 	 */
 	if (free < uvmexp.freetarg) {
 		uvmexp.pdswout++;
-		UVMHIST_LOG(pdhist,"  free %d < target %d: swapout", free,
+		UVMHIST_LOG(pdhist,"  free %ld < target %ld: swapout", free,
 		    uvmexp.freetarg, 0, 0);
 		uvm_unlock_pageq();
 		uvm_swapout_threads();
@@ -1029,7 +1029,7 @@ uvmpd_scan()
 		swap_shortage = uvmexp.freetarg - uvmexp.free;
 	}
 
-	UVMHIST_LOG(pdhist, "  loop 2: inactive_shortage=%d swap_shortage=%d",
+	UVMHIST_LOG(pdhist, "  loop 2: inactive_shortage=%ld swap_shortage=%ld",
 		    inactive_shortage, swap_shortage,0,0);
 	for (p = TAILQ_FIRST(&uvm.page_active);
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);

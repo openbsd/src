@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.38 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.39 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ uvm_pagermapin(pps, npages, flags)
 	vm_prot_t prot;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=%p, npages=%d)", pps, npages,0,0);
+	UVMHIST_LOG(maphist,"(pps=%p, npages=%ld)", pps, npages,0,0);
 
 	/*
 	 * compute protection.  outgoing I/O only needs read
@@ -198,7 +198,7 @@ uvm_pagermapout(kva, npages)
 	vm_map_entry_t entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (kva=0x%lx, npages=%d)", kva, npages,0,0);
+	UVMHIST_LOG(maphist, " (kva=0x%lx, npages=%ld)", kva, npages,0,0);
 
 	/*
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.
@@ -473,7 +473,7 @@ ReTry:
 	if (uobj) {
 		/* object is locked */
 		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
-		UVMHIST_LOG(pdhist, "put -> %d", result, 0,0,0);
+		UVMHIST_LOG(pdhist, "put -> %ld", result, 0,0,0);
 		/* object is now unlocked */
 	} else {
 		/* nothing locked */
@@ -802,7 +802,7 @@ uvm_aio_aiodone(bp)
 	uobj = NULL;
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
-		UVMHIST_LOG(pdhist, "pgs[%d] = %p", i, pgs[i],0,0);
+		UVMHIST_LOG(pdhist, "pgs[%ld] = %p", i, pgs[i],0,0);
 	}
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 #ifdef UVM_SWAP_ENCRYPT

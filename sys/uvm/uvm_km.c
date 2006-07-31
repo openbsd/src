@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.51 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.52 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -332,7 +332,7 @@ uvm_km_pgremove(uobj, start, end)
 		if (pp == NULL)
 			continue;
 
-		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 
 		/* now do the actual work */
@@ -363,7 +363,7 @@ loop_by_list:
 			continue;
 		}
 
-		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 
 		if (pp->flags & PG_BUSY) {
@@ -425,7 +425,7 @@ uvm_km_pgremove_intrsafe(uobj, start, end)
 			continue;
 		}
 
-		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 		KASSERT((pp->flags & PG_BUSY) == 0);
 		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);
@@ -443,7 +443,7 @@ loop_by_list:
 			continue;
 		}
 
-		UVMHIST_LOG(maphist,"  page %p, busy=%d", pp,
+		UVMHIST_LOG(maphist,"  page %p, busy=%ld", pp,
 		    pp->flags & PG_BUSY, 0, 0);
 		KASSERT((pp->flags & PG_BUSY) == 0);
 		KASSERT((pp->pqflags & PQ_ACTIVE) == 0);

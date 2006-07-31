@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.32 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.33 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ amap_extend(entry, addsize)
 		}
 #endif
 		amap_unlock(amap);
-		UVMHIST_LOG(maphist,"<- done (case 1), amap = %p, sltneed=%d", 
+		UVMHIST_LOG(maphist,"<- done (case 1), amap = %p, sltneed=%ld", 
 		    amap, slotneed, 0, 0);
 		return (0);
 	}
@@ -351,7 +351,7 @@ amap_extend(entry, addsize)
 		 * no need to zero am_anon since that was done at
 		 * alloc time and we never shrink an allocation.
 		 */
-		UVMHIST_LOG(maphist,"<- done (case 2), amap = %p, slotneed=%d",
+		UVMHIST_LOG(maphist,"<- done (case 2), amap = %p, slotneed=%ld",
 		    amap, slotneed, 0, 0);
 		return (0);
 	}
@@ -452,7 +452,7 @@ amap_extend(entry, addsize)
 	if (oldppref && oldppref != PPREF_NONE)
 		free(oldppref, M_UVMAMAP);
 #endif
-	UVMHIST_LOG(maphist,"<- done (case 3), amap = %p, slotneed=%d", 
+	UVMHIST_LOG(maphist,"<- done (case 3), amap = %p, slotneed=%ld", 
 	    amap, slotneed, 0, 0);
 	return (0);
 }
@@ -532,7 +532,7 @@ amap_wipeout(amap)
 
 		simple_lock(&anon->an_lock); /* lock anon */
 
-		UVMHIST_LOG(maphist,"  processing anon %p, ref=%d", anon, 
+		UVMHIST_LOG(maphist,"  processing anon %p, ref=%ld", anon, 
 		    anon->an_ref, 0, 0);
 
 		refs = --anon->an_ref;
@@ -581,7 +581,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	int slots, lcv;
 	vaddr_t chunksize;
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)",
+	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%ld)",
 		    map, entry, waitf, 0);
 
 	/*
@@ -642,7 +642,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	 * looks like we need to copy the map.
 	 */
 
-	UVMHIST_LOG(maphist,"  amap=%p, ref=%d, must copy it", 
+	UVMHIST_LOG(maphist,"  amap=%p, ref=%ld, must copy it", 
 	    entry->aref.ar_amap, entry->aref.ar_amap->am_ref, 0, 0);
 	AMAP_B2SLOT(slots, entry->end - entry->start);
 	amap = amap_alloc1(slots, 0, waitf);

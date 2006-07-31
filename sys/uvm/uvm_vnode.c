@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.42 2006/07/26 23:15:55 mickey Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.43 2006/07/31 11:51:29 mickey Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ uvn_attach(arg, accessprot)
 
 		/* unlock and return */
 		simple_unlock(&uvn->u_obj.vmobjlock);
-		UVMHIST_LOG(maphist,"<- done, refcnt=%d", uvn->u_obj.uo_refs,
+		UVMHIST_LOG(maphist,"<- done, refcnt=%ld", uvn->u_obj.uo_refs,
 		    0, 0, 0);
 		return (&uvn->u_obj);
 	}
@@ -348,7 +348,7 @@ uvn_reference(uobj)
 	}
 #endif
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %d)",
+	UVMHIST_LOG(maphist, "<- done (uobj=%p, ref = %ld)",
 	    uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
 }
@@ -373,7 +373,7 @@ uvn_detach(uobj)
 
 	simple_lock(&uobj->vmobjlock);
 
-	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%d", uobj,uobj->uo_refs,0,0);
+	UVMHIST_LOG(maphist,"  (uobj=%p)  ref=%ld", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		simple_unlock(&uobj->vmobjlock);
@@ -529,7 +529,7 @@ uvm_vnp_terminate(vp)
 	 * lock object and check if it is valid
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
-	UVMHIST_LOG(maphist, "  vp=%p, ref=%d, flag=0x%x", vp,
+	UVMHIST_LOG(maphist, "  vp=%p, ref=%ld, flag=0x%lx", vp,
 	    uvn->u_obj.uo_refs, uvn->u_flags, 0);
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
@@ -853,8 +853,8 @@ uvn_flush(uobj, start, stop, flags)
 	}
 
 	UVMHIST_LOG(maphist,
-	    " flush start=0x%llx, stop=0x%llx, by_list=%d, flags=0x%x",
-	    start, stop, by_list, flags);
+	    " flush start=0x%lx, stop=0x%lx, by_list=%ld, flags=0x%lx",
+	    (u_long)start, (u_long)stop, by_list, flags);
 
 	/*
 	 * PG_CLEANCHK: this bit is used by the pgo_mk_pcluster function as
@@ -1227,7 +1227,7 @@ ReTry:
 	}
 
 	/* return, with object locked! */
-	UVMHIST_LOG(maphist,"<- done (retval=0x%x)",retval,0,0,0);
+	UVMHIST_LOG(maphist,"<- done (retval=0x%lx)",retval,0,0,0);
 	return(retval);
 }
 
@@ -1315,7 +1315,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	int lcv, result, gotpages;
 	boolean_t done;
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "flags=%d", flags,0,0,0);
+	UVMHIST_LOG(maphist, "flags=%ld", flags,0,0,0);
 
 	/*
 	 * step 1: handled the case where fault data structures are locked.
@@ -1565,7 +1565,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	size_t got, wanted;
 	UVMHIST_FUNC("uvn_io"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "rw=%d", rw,0,0,0);
+	UVMHIST_LOG(maphist, "rw=%ld", rw,0,0,0);
 
 	/*
 	 * init values
@@ -1726,7 +1726,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	 * done!
 	 */
 
-	UVMHIST_LOG(maphist, "<- done (result %d)", result,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (result %ld)", result,0,0,0);
 	if (result == 0)
 		return(VM_PAGER_OK);
 	else
