@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.18 2006/05/29 20:23:10 miod Exp $
+.\" $OpenBSD: wskbd.4,v 1.19 2006/07/31 21:59:16 miod Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -32,24 +32,7 @@
 .Nm wskbd
 .Nd generic keyboard support in wscons
 .Sh SYNOPSIS
-.Cd "wskbd* at pckbd? mux 1"
-.Cd "wskbd* at gsckbd? mux 1" Pq hppa
-(PS/2 keyboard)
-.Cd "wskbd* at ukbd? mux 1"
-(USB keyboard)
-.Cd "wskbd* at akbd? mux 1"
-(Apple ADB keyboard)
-.Cd "wskbd* at comkbd? mux 1"
-.Cd "wskbd* at zskbd? mux 1"
-(Sun serial keyboard)
-.Cd "wskbd* at hilkbd? mux 1"
-(HIL keyboard)
-.Cd "wskbd* at zkbd? mux 1"
-(Zaurus keyboard)
-.Cd "wskbd* at zrc? mux 1"
-(Zaurus remote control)
-.Cd "wskbd* at dnkbd? mux 1"
-(Apollo Domain keyboard)
+.Cd "wskbd* at ..."
 .Sh DESCRIPTION
 The
 .Nm
@@ -159,6 +142,7 @@ tweak mixer settings.
 .Xr gsckbd 4 ,
 .Xr hilkbd 4 ,
 .Xr intro 4 ,
+.Xr lkkbd 4 ,
 .Xr pckbd 4 ,
 .Xr ukbd 4 ,
 .Xr wscons 4 ,
