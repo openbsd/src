@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzreg.h,v 1.2 2006/07/29 17:06:27 miod Exp $	*/
+/*	$OpenBSD: dzreg.h,v 1.3 2006/07/31 18:51:06 miod Exp $	*/
 /*	$NetBSD: dzreg.h,v 1.4 1999/05/27 16:03:13 ragge Exp $ */
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -22,34 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-union w_b
-{
-	u_short word;
-	struct {
-		u_char byte_lo;
-		u_char byte_hi;
-	} bytes;
-};
-
-struct DZregs
-{
-	volatile u_short dz_csr;	/* Control/Status Register (R/W) */
-	volatile u_short dz_rbuf;	/* Receive Buffer (R only) */
-#define dz_lpr		 dz_rbuf	/* Line Parameter Register (W only) */
-	volatile union w_b u_tcr;	/* Transmit Control Register (R/W) */
-	volatile union w_b u_msr;	/* Modem Status Register (R only) */
-#define u_tdr		 u_msr		/* Transmit Data Register (W only) */
-};
-
-#define dz_tcr		u_tcr.bytes.byte_lo	/* tx enable bits */
-#define dz_dtr		u_tcr.bytes.byte_hi	/* DTR status bits */
-#define dz_ring		u_msr.bytes.byte_lo	/* RI status bits */
-#define dz_dcd		u_msr.bytes.byte_hi	/* DCD status bits */
-#define dz_tbuf		u_tdr.bytes.byte_lo	/* transmit character */
-#define dz_break	u_tdr.bytes.byte_hi	/* BREAK set/clr bits */
-
-typedef struct DZregs dzregs;
 
 struct	dz_regs	{
 	bus_addr_t dr_csr;
