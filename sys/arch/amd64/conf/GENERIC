@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.145 2006/07/27 04:41:48 brad Exp $
+#	$OpenBSD: GENERIC,v 1.146 2006/07/31 10:31:38 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -359,7 +359,7 @@ atw*	at cardbus?			# ADMtek ADM8211 (802.11)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
-#an*	at pci?				# Aironet IEEE 802.11DS
+an*	at pci?				# Aironet IEEE 802.11DS
 an*	at pcmcia?			# Aironet IEEE 802.11DS
 cnw*	at pcmcia?			# Xircom Netwave
 ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
