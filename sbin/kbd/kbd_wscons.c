@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.23 2005/05/07 15:31:23 miod Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.24 2006/07/31 22:09:37 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -56,7 +56,7 @@ char *kbtype_tab[] = {
 enum {	SA_PCKBD,
 	SA_UKBD,
 	SA_AKBD,
-	SA_ZSKBD,
+	SA_LKKBD,
 	SA_SUNKBD,
 	SA_SUN5KBD,
 	SA_HILKBD,
@@ -71,7 +71,7 @@ struct nlist nl[] = {
 	{ "_pckbd_keydesctab" },
 	{ "_ukbd_keydesctab" },
 	{ "_akbd_keydesctab" },
-	{ "_zskbd_keydesctab" },
+	{ "_lkkbd_keydesctab" },
 	{ "_sunkbd_keydesctab" },
 	{ "_sunkbd5_keydesctab" },
 	{ "_hilkbd_keydesctab" },
@@ -206,7 +206,8 @@ kbd_list(void)
 				kbds[SA_AKBD]++;
 				break;
 			case WSKBD_TYPE_LK201:
-				kbds[SA_ZSKBD]++;
+			case WSKBD_TYPE_LK401:
+				kbds[SA_LKKBD]++;
 				break;
 			case WSKBD_TYPE_SUN:
 				kbds[SA_SUNKBD]++;
