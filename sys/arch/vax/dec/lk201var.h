@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201var.h,v 1.4 2006/07/30 18:35:10 miod Exp $	*/
+/*	$OpenBSD: lk201var.h,v 1.5 2006/07/31 06:47:25 miod Exp $	*/
 /* $NetBSD: lk201var.h,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -39,16 +39,28 @@ struct lk201_attachment {
 };
 
 struct lk201_state {
-	struct lk201_attachment attmt;
+	struct	device *device;
+	struct	lk201_attachment attmt;
+
+	struct timeout probetmo;
+	volatile int waitack;
+	int	ackdata;
+
+	int	kbdtype;
+#define	KBD_NONE	0x00
+#define	KBD_LK201	0x01
+#define	KBD_LK401	0x02
+
 #define LK_KLL 8
-	int down_keys_list[LK_KLL];
-	int bellvol;
-	int leds_state;
-	int kcvol;
+	int	down_keys_list[LK_KLL];
+
+	int	bellvol;
+	int	leds_state;
+	int	kcvol;
 };
 
-int lk201_init(struct lk201_state *);
-int lk201_decode(struct lk201_state *, int, int, u_int *, int *);
-void lk201_bell(struct lk201_state *, struct wskbd_bell_data *);
-void lk201_set_leds(struct lk201_state *, int);
-void lk201_set_keyclick(struct lk201_state *, int);
+void	lk201_bell(struct lk201_state *, struct wskbd_bell_data *);
+int	lk201_decode(struct lk201_state *, int, int, u_int *, int *);
+void	lk201_init(struct lk201_state *);
+void	lk201_set_keyclick(struct lk201_state *, int);
+void	lk201_set_leds(struct lk201_state *, int);

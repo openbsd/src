@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.7 2006/07/30 18:35:10 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.8 2006/07/31 06:47:25 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -174,6 +175,7 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 		dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
 		dzi->dzi_ks.attmt.cookie = ls;
 	}
+	dzi->dzi_ks.device = self;
 	dzi->dzi_ls = ls;
 	dzkbd->sc_itl = dzi;
 
@@ -182,10 +184,7 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 	if (!isconsole)
 		lk201_init(&dzi->dzi_ks);
 
-	/* XXX should identify keyboard ID here XXX */
-	/* XXX layout and the number of LED is varying XXX */
-
-	a.console = isconsole;
+	a.console = dzi == &dzkbd_console_internal;
 	a.keymap = &dzkbd_keymapdata;
 	a.accessops = &dzkbd_accessops;
 	a.accesscookie = dzkbd;
@@ -203,7 +202,7 @@ dzkbd_cnattach(struct dz_linestate *ls)
 	dzkbd_console_internal.dzi_ls = ls;
 
 	wskbd_cnattach(&dzkbd_consops, &dzkbd_console_internal,
-		       &dzkbd_keymapdata);
+	    &dzkbd_keymapdata);
 
 	return 0;
 }

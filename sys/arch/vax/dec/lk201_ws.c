@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.5 2006/07/30 18:35:10 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.6 2006/07/31 06:47:25 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -35,6 +35,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/timeout.h>
 
 #include <dev/wscons/wsconsio.h>
 
@@ -42,13 +46,22 @@
 #include <vax/dec/lk201var.h>
 #include <vax/dec/wskbdmap_lk201.h> /* for {MIN,MAX}_LK201_KEY */
 
-#define send(lks, c) ((*((lks)->attmt.sendchar))((lks)->attmt.cookie, c))
+void	lk201_identify(void *);
 
-int
-lk201_init(lks)
-	struct lk201_state *lks;
+static const char *lkkbd_descr[] = {
+	"no keyboard",
+	"LK-201 keyboard",
+	"LK-401 keyboard"
+};
+
+#define	send(lks, c) ((*((lks)->attmt.sendchar))((lks)->attmt.cookie, c))
+
+void
+lk201_init(struct lk201_state *lks)
 {
 	int i;
+
+	lks->waitack = 0;
 
 	send(lks, LK_LED_ENABLE);
 	send(lks, LK_LED_ALL);
@@ -73,7 +86,59 @@ lk201_init(lks)
 	send(lks, LK_LED_ALL);
 	lks->leds_state = 0;
 
-	return (0);
+	/*
+	 * Note that, when attaching lkkbd initially, this timeout will
+	 * be scheduled but will not run until interrupts are enabled.
+	 * This is not a problem, since lk201_identify() relies upon
+	 * interrupts being enabled.
+	 */
+	timeout_set(&lks->probetmo, lk201_identify, lks);
+	timeout_add(&lks->probetmo, 0);
+}
+
+void
+lk201_identify(void *v)
+{
+	struct lk201_state *lks = v;
+	int i;
+
+	/*
+	 * Swallow all the keyboard acknowledges from lk201_init().
+	 * There should be 14 of them - one per LK_CMD_MODE command.
+	 */
+	for(;;) {
+		lks->waitack = 1;
+		for (i = 10; i != 0; i--) {
+			DELAY(1000);
+			if (lks->waitack == 0)
+				break;
+		}
+		if (i == 0)
+			break;
+	}
+
+	/*
+	 * Try to set the keyboard in LK-401 mode.
+	 * If we receive an error, this is an LK-201 keyboard.
+	 */
+	lks->waitack = 1;
+	send(lks, LK_ENABLE_401);
+	for (i = 10; i != 0; i--) {
+		DELAY(1000);
+		if (lks->waitack == 0)
+			break;
+	}
+	if (lks->waitack != 0)
+		lks->kbdtype = KBD_NONE;
+	else {
+		if (lks->ackdata == LK_INPUT_ERROR)
+			lks->kbdtype = KBD_LK201;
+		else
+			lks->kbdtype = KBD_LK401;
+	}
+	lks->waitack = 0;
+
+	printf("%s: %s\n", lks->device->dv_xname, lkkbd_descr[lks->kbdtype]);
 }
 
 int
@@ -81,6 +146,12 @@ lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
     int *dataout)
 {
 	int i, freeslot;
+
+	if (lks->waitack != 0) {
+		lks->ackdata = datain;
+		lks->waitack = 0;
+		return (0);
+	}
 
 	switch (datain) {
 	case LK_KEY_UP:
