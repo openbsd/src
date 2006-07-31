@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzms.c,v 1.5 2006/07/29 17:06:25 miod Exp $	*/
+/*	$OpenBSD: dzms.c,v 1.6 2006/07/31 18:50:13 miod Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -60,10 +60,35 @@
 #include <vax/qbus/dzvar.h>
 
 #include <vax/dec/dzkbdvar.h>
-#include <vax/dec/lk201.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+
+/*
+ * Command characters for the mouse.
+ */
+#define MOUSE_SELF_TEST		'T'
+#define MOUSE_INCREMENTAL	'R'
+
+/*
+ * Mouse output bits.
+ *
+ *     	MOUSE_START_FRAME	Start of report frame bit.
+ *	MOUSE_X_SIGN		Sign bit for X.
+ *	MOUSE_Y_SIGN		Sign bit for Y.
+ *	MOUSE_X_OFFSET		X offset to start cursor at.
+ *	MOUSE_Y_OFFSET		Y offset to start cursor at.
+ */
+#define MOUSE_START_FRAME	0x80
+#define MOUSE_X_SIGN		0x10
+#define MOUSE_Y_SIGN		0x08
+
+/*
+ * Definitions for mouse buttons
+ */
+#define RIGHT_BUTTON		0x01
+#define MIDDLE_BUTTON		0x02
+#define LEFT_BUTTON		0x04
 
 struct dzms_softc {		/* driver status information */
 	struct	device dzms_dev;	/* required first: base device */
@@ -79,9 +104,8 @@ struct dzms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-static int  dzms_match(struct device *, struct cfdata *, void *);
-static void dzms_attach(struct device *, struct device *, void *);
-static int dzms_input(void *, int);
+int	dzms_match(struct device *, struct cfdata *, void *);
+void	dzms_attach(struct device *, struct device *, void *);
 
 struct cfattach dzms_ca = {
 	sizeof(struct dzms_softc), (cfmatch_t)dzms_match, dzms_attach,
@@ -91,9 +115,9 @@ struct	cfdriver lkms_cd = {
 	NULL, "lkms", DV_DULL
 };
 
-static int  dzms_enable(void *);
-static int  dzms_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static void dzms_disable(void *);
+int	dzms_enable(void *);
+int	dzms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	dzms_disable(void *);
 
 const struct wsmouse_accessops dzms_accessops = {
 	dzms_enable,
@@ -101,16 +125,15 @@ const struct wsmouse_accessops dzms_accessops = {
 	dzms_disable,
 };
 
-static int
-dzms_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int	dzms_input(void *, int);
+
+int
+dzms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct dzkm_attach_args *daa = aux;
 
 #define DZCF_LINE 0
-#define DZCF_LINE_DEFAULT 0
+#define DZCF_LINE_DEFAULT 1
 
 	/* Exact match is better than wildcard. */
 	if (cf->cf_loc[DZCF_LINE] == daa->daa_line)
@@ -123,10 +146,8 @@ dzms_match(parent, cf, aux)
 	return 0;
 }
 
-static void
-dzms_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+void
+dzms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dz_softc *dz = (void *)parent;
 	struct dzms_softc *dzms = (void *)self;
@@ -149,9 +170,8 @@ dzms_attach(parent, self, aux)
 	dzms->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
-static int
-dzms_enable(v)
-	void *v;
+int
+dzms_enable(void *v)
 {
 	struct dzms_softc *sc = v;
 
@@ -172,34 +192,32 @@ dzms_enable(v)
 	return 0;
 }
 
-static void
-dzms_disable(v)
-	void *v;
+void
+dzms_disable(void *v)
 {
 	struct dzms_softc *sc = v;
 
 	sc->sc_enabled = 0;
 }
 
-static int
-dzms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+int
+dzms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	if (cmd == WSMOUSEIO_GTYPE) {
-		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
+#if 0
+	struct dzms_softc *sc = v;
+#endif
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(int *)data = WSMOUSE_TYPE_VSXXX;
 		return 0;
 	}
+
 	return -1;
 }
 
-static int
-dzms_input(vsc, data)
-	void *vsc;
-	int data;
+int
+dzms_input(void *vsc, int data)
 {
 	struct dzms_softc *sc = vsc;
 
@@ -209,7 +227,7 @@ dzms_input(vsc, data)
 			if (sc->sc_selftest == 0)
 				wakeup(dzms_enable);
 		}
-		return(1);
+		return (1);
 	}
 
 #define WSMS_BUTTON1    0x01
@@ -247,6 +265,5 @@ dzms_input(vsc, data)
 		    sc->dx, sc->dy, 0, WSMOUSE_INPUT_DELTA);
 	}
 
-	return(1);
+	return (1);
 }
-
