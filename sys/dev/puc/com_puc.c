@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.12 2006/06/01 01:28:40 fkr Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.13 2006/07/31 11:06:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -40,13 +40,11 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
 
 #include "com.h"
@@ -67,16 +65,17 @@
 
 int com_puc_match(struct device *, void *, void *);
 void com_puc_attach(struct device *, struct device *, void *);
+int com_puc_detach(struct device *, int );
 
 #if NCOM > 0
 struct cfattach com_puc_ca = {
-	sizeof(struct com_softc), com_puc_match, com_puc_attach
+	sizeof(struct com_softc), com_puc_match, com_puc_attach, com_puc_detach
 };
 #endif
 
 #if NPCCOM > 0
 struct cfattach pccom_puc_ca = {
-	sizeof(struct com_softc), com_puc_match, com_puc_attach
+	sizeof(struct com_softc), com_puc_match, com_puc_attach, com_puc_detach
 };
 #endif
 
@@ -103,10 +102,9 @@ com_puc_attach(parent, self, aux)
 	const char *intrstr;
 
 	/* Grab a PCI interrupt. */
-	intrstr = pci_intr_string(pa->pc, pa->intrhandle);
-	sc->sc_ih = pci_intr_establish(pa->pc, pa->intrhandle,
-			IPL_TTY, comintr, sc,
-			sc->sc_dev.dv_xname);
+	intrstr = pa->intr_string(pa);
+	sc->sc_ih = pa->intr_establish(pa, IPL_TTY, comintr, sc,
+	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -123,9 +121,26 @@ com_puc_attach(parent, self, aux)
 
 	if (pa->flags)
 		sc->sc_frequency = pa->flags & PUC_COM_CLOCKMASK;
+printf(" %x ", pa->hwtype);
+	if (pa->hwtype)
+		sc->sc_uarttype = pa->hwtype;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
 	com_attach_subr(sc);
+}
+
+int
+com_puc_detach(struct device *self, int flags)
+{
+	/* struct com_softc *sc = (void *)self; */
+	int error;
+
+	if ((error = com_detach(self, flags)) != 0)
+		return (error);
+
+	/* cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih); */
+
+	return (0);
 }

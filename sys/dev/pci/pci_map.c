@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.17 2006/07/04 18:07:29 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.18 2006/07/31 11:06:33 mickey Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -251,11 +251,6 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t pcitag, int reg,
 	return (obsd_pci_mem_find(pc, pcitag, reg, -1, membasep, memsizep,
 				  cacheablep));
 }
-
-#define _PCI_MAPREG_TYPEBITS(reg) \
-	(PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_IO ? \
-	reg & PCI_MAPREG_TYPE_MASK : \
-	reg & (PCI_MAPREG_TYPE_MASK|PCI_MAPREG_MEM_TYPE_MASK))
 
 pcireg_t
 pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)

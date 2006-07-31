@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.145 2006/06/26 22:16:23 miod Exp $g
+#	$OpenBSD: GENERIC,v 1.146 2006/07/31 11:06:22 mickey Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -166,6 +166,7 @@ eap*		at pci?		# Ensoniq AudioPCI S5016
 emu*		at pci?		# SB Live!
 
 puc*		at pci?		# PCI "universal" comm device
+#puc*		at cardbus?
 com*		at puc?
 
 #scsibus*	at adv?

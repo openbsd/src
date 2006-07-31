@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.18 2005/05/26 18:57:37 nate Exp $
+#	$OpenBSD: files.cardbus,v 1.19 2006/07/31 11:06:27 mickey Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -18,6 +18,10 @@ file	dev/cardbus/rbus.c			cardbus
 # Com ports
 attach	com at cardbus with com_cardbus
 file	dev/cardbus/com_cardbus.c		com_cardbus | pccom_cardbus
+
+# PCI "universal" communication device driver, for com, lpt, etc. ports
+attach	puc at cardbus with puc_cardbus
+file	dev/cardbus/puc_cardbus.c		puc_cardbus
 
 #
 # 3Com 3C575TX, 3C575BTX, and 3C575CTX

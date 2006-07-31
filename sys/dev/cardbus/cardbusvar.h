@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.10 2006/06/21 11:27:03 fkr Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.11 2006/07/31 11:06:27 mickey Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -388,6 +388,8 @@ void   *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
 void	cardbus_intr_disestablish(cardbus_chipset_tag_t,
 	    cardbus_function_tag_t, void *handler);
 
+int	cardbus_mapreg_probe(cardbus_chipset_tag_t, cardbus_function_tag_t,
+	    cardbustag_t, int, pcireg_t *);
 int	cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
 	    int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);

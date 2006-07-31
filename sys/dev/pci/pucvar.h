@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.4 2002/02/17 19:24:38 deraadt Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.5 2006/07/31 11:06:33 mickey Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -41,8 +41,8 @@
 #define	PUC_MAX_PORTS		8
 
 struct puc_device_description {
-	pcireg_t		rval[4];
-	pcireg_t		rmask[4];
+	u_long	rval[4];
+	u_long	rmask[4];
 	struct {
 		u_char	type;
 		u_char	bar;
@@ -71,14 +71,50 @@ struct puc_device_description {
 struct puc_attach_args {
 	int			port;
 	int			type;
-
-	pci_chipset_tag_t	pc;
-	pci_intr_handle_t	intrhandle;
+	int			hwtype;
+	void			*puc;
 
 	bus_addr_t		a;
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			flags;
+
+	const char *(*intr_string)(struct puc_attach_args *);
+	void *(*intr_establish)(struct puc_attach_args *, int, int (*)(void *),
+	    void *, char *);
 };
 
 extern const struct puc_device_description puc_devices[];
+
+#define	PUC_NBARS	6
+struct puc_softc {
+	struct device		sc_dev;
+
+	/* static configuration data */
+	const struct puc_device_description *sc_desc;
+
+	/* card-global dynamic data */
+	struct {
+		int		mapped;
+		u_long		type;
+		bus_addr_t	a;
+		bus_size_t	s;
+		bus_space_tag_t	t;
+		bus_space_handle_t h;
+	} sc_bar_mappings[PUC_NBARS];
+
+	/* per-port dynamic data */
+	struct {
+		struct device   *dev;
+		/* filled in by port attachments */
+		int	(*ihand)(void *);
+		void	*ihandarg;
+	} sc_ports[PUC_MAX_PORTS];
+};
+
+const struct puc_device_description *
+    puc_find_description(u_long, u_long, u_long, u_long);
+void	puc_print_ports(const struct puc_device_description *);
+void	puc_common_attach(struct puc_softc *, struct puc_attach_args *);
+int	puc_print(void *, const char *);
+int	puc_submatch(struct device *, void *, void *);

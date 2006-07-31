@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.6 2006/06/21 11:27:03 fkr Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.7 2006/07/31 11:06:27 mickey Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -63,6 +63,28 @@ static int cardbus_io_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
 static int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
 	       cardbustag_t, int, cardbusreg_t, bus_addr_t *, bus_size_t *,
 	       int *);
+
+int
+cardbus_mapreg_probe(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag, int reg, pcireg_t *typep)
+{
+	pcireg_t address, mask;
+	int s;
+
+	s = splhigh();
+	address = cardbus_conf_read(cc, cf, tag, reg);
+	cardbus_conf_write(cc, cf, tag, reg, 0xffffffff);
+	mask = cardbus_conf_read(cc, cf, tag, reg);
+	cardbus_conf_write(cc, cf, tag, reg, address);
+	splx(s);
+
+	if (mask == 0) /* unimplemented mapping register */
+		return (0);
+
+	if (typep)
+		*typep = _PCI_MAPREG_TYPEBITS(address);
+	return (1);
+}
 
 /*
  * static int cardbus_io_find(cardbus_chipset_tag_t cc,

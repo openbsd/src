@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.14 2005/07/03 19:46:45 deraadt Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.15 2006/07/31 11:06:30 mickey Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -127,7 +127,7 @@
 #define	LCR_7BITS	0x02	/* 7 bits */
 #define	LCR_6BITS	0x01	/* 6 bits */
 #define	LCR_5BITS	0x00	/* 5 bits */
-#define LCR_EFR		0xbf	/* ST16650/XR16850 EFR access enable */
+#define LCR_EFR		0xbf	/* ST16650/XR16850/OX16C950 EFR access enable */
 
 /* modem control register */
 #define	MCR_AFE		0x20	/* auto flow control */

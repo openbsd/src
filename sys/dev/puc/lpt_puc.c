@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.3 2002/03/14 01:27:01 millert Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.4 2006/07/31 11:06:36 mickey Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -45,16 +45,16 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
 
 int	lpt_puc_probe(struct device *, void *, void *);
 void	lpt_puc_attach(struct device *, struct device *, void *);
+int	lpt_puc_detach(struct device *, int);
 
 struct cfattach lpt_puc_ca = {
-	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach
+	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach, lpt_puc_detach
 };
 
 int
@@ -85,9 +85,9 @@ lpt_puc_attach(parent, self, aux)
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
-	sc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
-	    lptintr, sc, sc->sc_dev.dv_xname);
+	intrstr = aa->intr_string(aa);
+	sc->sc_ih = aa->intr_establish(aa, IPL_TTY, lptintr, sc,
+	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -100,4 +100,13 @@ lpt_puc_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	lpt_attach_common(sc);
+}
+
+int
+lpt_puc_detach(struct device *self, int flags)
+{
+
+	/* cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih); */
+
+	return (0);
 }

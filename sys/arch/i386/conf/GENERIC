@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.513 2006/07/27 04:18:44 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.514 2006/07/31 11:06:18 mickey Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -244,6 +244,7 @@ zyd*	at uhub?		# Zydas ZD1211
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 puc*	at pci?			# PCI "universal" communication device
+#puc*	at cardbus?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
