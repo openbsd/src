@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.5 2006/07/31 10:03:22 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.6 2006/07/31 11:40:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -164,19 +164,25 @@ struct arc_msg_scsicmd {
 } __packed;
 
 struct arc_sge {
-	u_int32_t		sge_hdr;
+	u_int32_t		sg_hdr;
 #define ARC_SGE_64BIT				(1<<24)
-	u_int32_t               sge_lo_addr;
-	u_int32_t		sge_hi_addr;
+	u_int32_t               sg_lo_addr;
+	u_int32_t		sg_hi_addr;
 } __packed;
 
 #define ARC_MAX_TARGET		16
 #define ARC_MAX_LUN		8
 
-int	arc_match(struct device *, void *, void *);
-void	arc_attach(struct device *, struct device *, void *);
-int	arc_detach(struct device *, int);
-int	arc_intr(void *);
+/* the firmware deals with up to 256 or 512 byte command frames. */
+/* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 38) == 512 */
+#define ARC_SGL_MAXLEN		38
+/* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 17) == 256 */
+#define ARC_SGL_256LEN		17
+
+int			arc_match(struct device *, void *, void *);
+void			arc_attach(struct device *, struct device *, void *);
+int			arc_detach(struct device *, int);
+int			arc_intr(void *);
 
 struct arc_ccb;
 TAILQ_HEAD(arc_ccb_list, arc_ccb);
@@ -214,7 +220,7 @@ struct cfdriver arc_cd = {
 
 /* interface for scsi midlayer to talk to */
 int			arc_scsi_cmd(struct scsi_xfer *);
-void			arc_minphys(struct buf *bp);
+void			arc_minphys(struct buf *);
 
 struct scsi_adapter arc_switch = {
 	arc_scsi_cmd, arc_minphys, NULL, NULL, NULL
@@ -269,6 +275,7 @@ struct arc_ccb {
 int			arc_alloc_ccbs(struct arc_softc *);
 struct arc_ccb		*arc_get_ccb(struct arc_softc *);
 void			arc_put_ccb(struct arc_softc *, struct arc_ccb *);
+int			arc_load_xs(struct arc_ccb *);
 
 /* real stuff for dealing with the hardware */
 int			arc_map_pci_resources(struct arc_softc *,
@@ -335,9 +342,108 @@ arc_intr(void *arg)
 int
 arc_scsi_cmd(struct scsi_xfer *xs)
 {
+#if 0 /* XXX this is real code */
+	struct scsi_link		*link = xs->sc_link;
+	struct arc_softc		*sc = link->adapter_softc;
+	struct arc_ccb			*ccb;
+	struct arc_msg_scsicmd		*cmd;
+	int				s;
+
+	if (xs->cmdlen > ARC_MSG_CDBLEN) {
+		bzero(&xs->sense, sizeof(xs->sense));
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20;
+		xs->error = XS_SENSE;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	s = splbio();
+	ccb = arc_get_ccb(sc);
+	splx(s);
+	if (ccb == NULL) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	ccb->ccb_xs = xs;
+	cmd = ccb->ccb_cmd;
+
+	/* bus is always 0 */
+	cmd->target = link->target;
+	cmd->lun = link->lun;
+	cmd->function = 1; /* XXX magic number */
+
+	cmd->cdb_len = xs->cmdlen;
+	/* sgl_len is set in load_xs */
+	if (xs->flags & SCSI_DATA_OUT)
+		cmd->flags = ARC_MSG_SCSICMD_FLAG_WRITE;
+
+	cmd->context = htole32(ccb->ccb_id);
+	cmd->data_len = htole32(xs->datalen);
+
+	bcopy(xs->cmd, cmd->cdb, xs->cmdlen);
+
+	if (arc_load_xs(ccb) != 0) {
+		s = splbio();
+		arc_put_ccb(sc, ccb);
+		splx(s);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+#endif /* XXX this is real code */
+
 	xs->error = XS_DRIVER_STUFFUP;
 	scsi_done(xs);
 	return (COMPLETE);
+}
+
+int
+arc_load_xs(struct arc_ccb *ccb)
+{
+	struct arc_softc		*sc = ccb->ccb_sc;
+	struct scsi_xfer		*xs = ccb->ccb_xs;
+	bus_dmamap_t			dmap = ccb->ccb_dmamap;
+	struct {
+		struct arc_msg_scsicmd		cmd;
+		struct arc_sge			sgl[ARC_SGL_MAXLEN];
+	} __packed			*bundle = ccb->ccb_cmd;
+	struct arc_sge			*sge;
+	u_int64_t			addr;
+	int				i, error;
+
+	if (xs->datalen == 0)
+		return (0);
+
+	error = bus_dmamap_load(sc->sc_dmat, dmap,
+	    xs->data, xs->datalen, NULL,
+	    (xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error) {
+		printf("%s: error %d loading dmamap\n", DEVNAME(sc), error);
+		return (1);
+	}
+
+	for (i = 0; i < dmap->dm_nsegs; i++) {
+		sge = &bundle->sgl[i];
+
+		sge->sg_hdr = htole32(ARC_SGE_64BIT | dmap->dm_segs[i].ds_len);
+		addr = dmap->dm_segs[i].ds_addr;
+		sge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
+		sge->sg_lo_addr = htole32((u_int32_t)addr);
+	}
+
+	if (dmap->dm_nsegs > ARC_SGL_256LEN)
+		bundle->cmd.flags |= ARC_MSG_SCSICMD_FLAG_SGL_BSIZE_512;
+	bundle->cmd.sgl_len = dmap->dm_nsegs;
+
+        bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+            (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+            BUS_DMASYNC_PREWRITE);
+
+	return (0);
 }
 
 void
@@ -440,7 +546,7 @@ arc_query_firmware(struct arc_softc *sc)
 
 	/* device map? */
 
-	sc->sc_req_size = letoh32(fwinfo.request_len);
+	sc->sc_req_size = letoh32(fwinfo.request_len); /* always 512 */
 	sc->sc_req_count = letoh32(fwinfo.queue_len);
 
 	printf("%s: %d SATA Ports, %dMB SDRAM, FW Version: %s\n",
