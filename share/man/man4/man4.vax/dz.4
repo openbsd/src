@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dz.4,v 1.9 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: dz.4,v 1.10 2006/07/31 21:58:55 miod Exp $
 .\"	$NetBSD: dz.4,v 1.3 1996/03/03 17:13:29 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)dz.4	6.3 (Berkeley) 3/27/91
 .\"
-.Dd March 27, 1991
+.Dd July 31, 2006
 .Dt DZ 4 vax
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@ multiplexer device interface
 .Cd "dz0 at uba0 csr 0160100"
 .Cd "dz0 at vsbus0 csr 0x200a0000" Pq "DC-367"
 .Cd "dz0 at vsbus0 csr 0x25000000" Pq "VS4000/90 4000/10x MV3100/9x"
+.Cd "lkkbd0 at dz0 line 0"
+.Cd "lkms0  at dz0 line 1"
 .Sh DESCRIPTION
 A
 .Tn DZ-11
@@ -87,9 +89,16 @@ and switches between the use of character-at-a-time interrupts
 and input silos.
 While the silo is enabled during periods of high-speed input,
 the driver polls for input 30 times per second.
+.Pp
+On VAXstation systems, lines 0 and 1 are tied to the keyboard and mouse
+connectors, which are driven by the
+.Nm lkkbd
+and
+.Nm lkms
+drivers, respectively.
 .Sh FILES
-.Bl -tag -width /dev/tty[0-9][0-9]xx -compact
-.It Pa /dev/tty[0-9][0-9]
+.Bl -tag -width /dev/tty0[0-7] -compact
+.It Pa /dev/tty0[0-7]
 dialups
 .El
 .Sh DIAGNOSTICS
@@ -105,6 +114,8 @@ It is not serious.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr lkkbd 4 ,
+.Xr lkms 4 ,
 .Xr tty 4 ,
 .Xr uba 4 ,
 .Xr vsbus 4
