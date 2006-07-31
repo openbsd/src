@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.7 2006/07/31 18:50:48 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.8 2006/07/31 21:57:05 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -187,6 +187,19 @@ lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
 		return (0);
 	}
 
+	/*
+	 * The LK-201 keyboard has a compose key (to the left of the spacebar),
+	 * but no alt/meta key at all. The LK-401 keyboard fixes this and has
+	 * two compose keys and two alt keys.
+	 *
+	 * If the keyboard is an LK-201, translate the left compose key
+	 * scancode to a specific key code, which will map as a left alt key,
+	 * and compose key when shifted), so that the user can have both
+	 * an alt and a compose key available.
+	 */
+	if (lks->kbdtype == KBD_LK201 && datain == 177)
+		datain = 252;
+
 	*dataout = datain - MIN_LK201_KEY;
 
 	freeslot = -1;
@@ -211,9 +224,7 @@ lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
 }
 
 void
-lk201_bell(lks, bell)
-	struct lk201_state *lks;
-	struct wskbd_bell_data *bell;
+lk201_bell(struct lk201_state *lks, struct wskbd_bell_data *bell)
 {
 	unsigned int vol;
 
@@ -232,10 +243,46 @@ lk201_bell(lks, bell)
 	send(lks, LK_RING_BELL);
 }
 
+int
+lk201_get_leds(struct lk201_state *lks)
+{
+	return (lks->leds_state);
+}
+
+int
+lk201_get_type(struct lk201_state *lks)
+{
+	/*
+	 * Note that we report LK201 even if no keyboard is
+	 * plugged to avoid confusing wsconsctl.
+	 */
+	if (lks->kbdtype == KBD_LK401)
+		return (WSKBD_TYPE_LK401);
+	else
+		return (WSKBD_TYPE_LK201);
+}
+
 void
-lk201_set_leds(lks, leds)
-	struct lk201_state *lks;
-	int leds;
+lk201_set_keyclick(struct lk201_state *lks, int vol)
+{
+	unsigned int newvol;
+
+	if (vol == 0)
+		send(lks, LK_CL_DISABLE);
+	else {
+		newvol = 8 - vol * 8 / 100;
+		if (newvol > 7)
+			newvol = 7;
+
+		send(lks, LK_CL_ENABLE);
+		send(lks, LK_PARAM_VOLUME(newvol));
+	}
+
+	lks->kcvol = vol;
+}
+
+void
+lk201_set_leds(struct lk201_state *lks, int leds)
 {
 	int newleds;
 
@@ -252,25 +299,4 @@ lk201_set_leds(lks, leds)
 	send(lks, (0x80 | (newleds & 0x0f)));
 
 	lks->leds_state = leds;
-}
-
-void
-lk201_set_keyclick(lks, vol)
-	struct lk201_state *lks;
-	int vol;
-{
-	unsigned int newvol;
-
-	if (vol == 0)
-		send(lks, LK_CL_DISABLE);
-	else {
-		newvol = 8 - vol * 8 / 100;
-		if (newvol > 7)
-			newvol = 7;
-
-		send(lks, LK_CL_ENABLE);
-		send(lks, LK_PARAM_VOLUME(newvol));
-	}
-
-	lks->kcvol = vol;
 }

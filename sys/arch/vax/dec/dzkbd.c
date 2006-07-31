@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.8 2006/07/31 06:47:25 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.9 2006/07/31 21:57:05 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ const struct wskbd_mapdata dzkbd_keymapdata = {
 #ifdef DZKBD_LAYOUT
 	DZKBD_LAYOUT,
 #else
-	KB_US | KB_LK401,
+	KB_US,
 #endif
 };
 
@@ -250,14 +250,13 @@ dzkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_LK201;
+		*(int *)data = lk201_get_type(&sc->sc_itl->dzi_ks);
 		return 0;
 	case WSKBDIO_SETLEDS:
 		lk201_set_leds(&sc->sc_itl->dzi_ks, *(int *)data);
 		return 0;
 	case WSKBDIO_GETLEDS:
-		/* XXX don't dig in kbd internals */
-		*(int *)data = sc->sc_itl->dzi_ks.leds_state;
+		*(int *)data = lk201_get_leds(&sc->sc_itl->dzi_ks);
 		return 0;
 	case WSKBDIO_COMPLEXBELL:
 		lk201_bell(&sc->sc_itl->dzi_ks,

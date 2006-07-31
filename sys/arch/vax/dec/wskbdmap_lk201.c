@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_lk201.c,v 1.3 2006/07/29 17:06:25 miod Exp $	*/
+/*	$OpenBSD: wskbdmap_lk201.c,v 1.4 2006/07/31 21:57:05 miod Exp $	*/
 /* $NetBSD: wskbdmap_lk201.c,v 1.4 2000/12/02 16:57:41 ragge Exp $ */
 
 #include <sys/types.h>
@@ -58,10 +58,14 @@ static const keysym_t lkkbd_keydesc_us[] = {
     KC(168),			KS_Right,
     KC(169),			KS_Down,
     KC(170),			KS_Up,
+    KC(171),			KS_Shift_R,			   /* LK 401 */
+    KC(172),	KS_Cmd2,	KS_Alt_L,			   /* LK 401 */
+    KC(173),			KS_Multi_key, /* right compose */  /* LK 401 */
     KC(174),			KS_Shift_L,
     KC(175),	KS_Cmd1,	KS_Control_L,
     KC(176),			KS_Caps_Lock,
-    KC(177),	KS_Cmd2,	KS_Multi_key, /* (left) compose */
+    KC(177),			KS_Multi_key, /* (left) compose */ /* LK 401 */
+    KC(178),			KS_Alt_R,			   /* LK 401 */
     KC(188),			KS_Delete,
     KC(189),			KS_Return,
     KC(190),			KS_Tab,
@@ -114,14 +118,8 @@ static const keysym_t lkkbd_keydesc_us[] = {
     KC(249),			KS_minus,	KS_underscore,
     KC(250),			KS_bracketleft,	KS_braceleft,
     KC(251),			KS_apostrophe,	KS_quotedbl,
-};
-
-static const keysym_t lkkbd_keydesc_us_lk401[] = {
-    KC(171),			KS_Shift_R,
-    KC(172),	KS_Cmd2,	KS_Alt_L,
-    KC(173),			KS_Multi_key, /* right compose */
-    KC(177),			KS_Multi_key, /* left compose, not "cmd" */
-    KC(178),			KS_Alt_R,
+    /* remapped Compose key (177) for LK 201 */
+    KC(252),	KS_Cmd2,	KS_Alt_L,	KS_Multi_key
 };
 
 #define KBD_MAP(name, base, map) \
@@ -129,7 +127,6 @@ static const keysym_t lkkbd_keydesc_us_lk401[] = {
 
 const struct wscons_keydesc lkkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	lkkbd_keydesc_us),
-	KBD_MAP(KB_US | KB_LK401,	KB_US,	lkkbd_keydesc_us_lk401),
 	{0, 0, 0, 0}
 };
 
