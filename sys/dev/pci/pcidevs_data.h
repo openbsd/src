@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1117 2006/07/29 04:58:26 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1118 2006/07/31 08:05:40 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1549,6 +1549,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1280,
 	    "ARC-1280",
+	},
+	{
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1380,
+	    "ARC-1380",
+	},
+	{
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1381,
+	    "ARC-1381",
+	},
+	{
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1680,
+	    "ARC-1680",
+	},
+	{
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1681,
+	    "ARC-1681",
 	},
 	{
 	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
