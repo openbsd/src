@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.6 2006/07/29 19:04:37 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.7 2006/07/31 18:01:18 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -759,9 +759,9 @@ gpx_reset_viper(struct gpx_screen *ss)
 	/* putchar */
 	gpx_viper_write(ss, LU_FUNCTION_R1, FULL_SRC_RESOLUTION | LF_SOURCE);
 	/* erase{cols,rows} */
-	gpx_viper_write(ss, LU_FUNCTION_R2, FULL_SRC_RESOLUTION | LF_ONES);
+	gpx_viper_write(ss, LU_FUNCTION_R2, FULL_SRC_RESOLUTION | LF_ZEROS);
 	/* cursor */
-	gpx_viper_write(ss, LU_FUNCTION_R4, FULL_SRC_RESOLUTION | LF_D_XOR_S);
+	gpx_viper_write(ss, LU_FUNCTION_R4, FULL_SRC_RESOLUTION | LF_NOT_D);
 }
 
 /* Clear the whole screen. Straight from qdss. */
@@ -990,6 +990,7 @@ gpx_copyrect(struct gpx_screen *ss,
 	ss->ss_adder->error_1 = 0;
 	ss->ss_adder->error_2 = 0;
 	ss->ss_adder->rasterop_mode = DST_WRITE_ENABLE | NORMAL;
+	gpx_wait(ss, RASTEROP_COMPLETE);
 	ss->ss_adder->destination_x = dx;
 	ss->ss_adder->fast_dest_dx = w;
 	ss->ss_adder->destination_y = dy;
@@ -1015,9 +1016,8 @@ gpx_fillrect(struct gpx_screen *ss, int x, int y, int dx, int dy, long attr,
 	while (gpx_viper_write(ss, CS_UPDATE_MASK, 0x00ff));
 	gpx_viper_write(ss, MASK_1, 0xffff);
 	gpx_viper_write(ss, SOURCE, 0xffff);
-	/* the swap of bg and fg is intentional */
-	gpx_viper_write(ss, VIPER_Z_LOAD | FOREGROUND_COLOR_Z, bg);
-	gpx_viper_write(ss, VIPER_Z_LOAD | BACKGROUND_COLOR_Z, fg);
+	gpx_viper_write(ss, VIPER_Z_LOAD | FOREGROUND_COLOR_Z, fg);
+	gpx_viper_write(ss, VIPER_Z_LOAD | BACKGROUND_COLOR_Z, bg);
 	gpx_viper_write(ss, SRC1_OCR_B,
 	    EXT_NONE | INT_SOURCE | ID | BAR_SHIFT_DELAY);
 	gpx_viper_write(ss, DST_OCR_B,
@@ -1028,6 +1028,7 @@ gpx_fillrect(struct gpx_screen *ss, int x, int y, int dx, int dy, long attr,
 	ss->ss_adder->error_1 = 0;
 	ss->ss_adder->error_2 = 0;
 	ss->ss_adder->rasterop_mode = DST_WRITE_ENABLE | NORMAL;
+	gpx_wait(ss, RASTEROP_COMPLETE);
 	ss->ss_adder->destination_x = x;
 	ss->ss_adder->fast_dest_dx = dx;
 	ss->ss_adder->destination_y = y;
