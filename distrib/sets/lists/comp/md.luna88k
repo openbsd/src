@@ -133,7 +133,6 @@
 ./usr/include/luna88k/kcore.h
 ./usr/include/luna88k/limits.h
 ./usr/include/luna88k/lock.h
-./usr/include/luna88k/locore.h
 ./usr/include/luna88k/m88100.h
 ./usr/include/luna88k/m8820x.h
 ./usr/include/luna88k/mmu.h

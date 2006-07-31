@@ -22,7 +22,6 @@
 ./usr/include/aviion/kcore.h
 ./usr/include/aviion/limits.h
 ./usr/include/aviion/lock.h
-./usr/include/aviion/locore.h
 ./usr/include/aviion/m88100.h
 ./usr/include/aviion/m8820x.h
 ./usr/include/aviion/mioctl.h
