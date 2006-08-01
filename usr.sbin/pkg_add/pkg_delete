@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.93 2005/09/07 14:01:59 jmc Exp $
+# $OpenBSD: pkg_delete,v 1.94 2006/08/01 10:23:38 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -122,17 +122,35 @@ OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames,
 my @todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
 if (@todo > @realnames) {
-	my %extra_rm = map {($_,1)} @todo;
-	for my $p (@realnames) {
-		delete $extra_rm{$p};
+	my $details = $state->{very_verbose} || $forced{verbosedeps};
+	my $show    = sub {
+		my ($p, $d) = @_;
+		print "Can't remove ".join(' ', @$p)." without also removing:\n"
+		    .join(' ', @$d)."\n";
+	};
+	if ($state->{interactive} || !$details) {
+		my %deps = map {($_, 1)} @todo;
+		for my $p (@realnames) {
+			delete $deps{$p};
+		}
+		&$show([@ARGV], [keys %deps]);
+		if ((keys %deps) > 1 && OpenBSD::Interactive::confirm(
+		    "Do you want details", $state->{interactive}, 1)) {
+			$details = 1;
+		}
 	}
-	print "Can't remove ", join(' ', @ARGV), " without also removing:\n",
-	    join(' ', keys(%extra_rm)), "\n";
-	my $them = keys(%extra_rm) > 1 ? 'them' : 'it';
+	if ($details) {
+		for my $pkg (@realnames) {
+			my @deps = OpenBSD::RequiredBy->compute_closure($pkg);
+			next unless @deps > 1;
+			@deps = grep {$_ ne $pkg} @deps;
+			&$show([$pkg], [@deps]);
+		}
+	}
+	my $them = @todo > 1 ? 'them' : 'it';
 	if ($forced{dependencies} or 
 	    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
 		print "(removing $them as well)\n";
-		push(@realnames, keys(%extra_rm));
 	} else {
 		$bad = 1;
 	}
