@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.138 2006/07/10 00:16:18 drahn Exp $ */
+/* $OpenBSD: if_em.c,v 1.139 2006/08/01 23:50:14 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -146,10 +146,10 @@ void em_disable_intr(struct em_softc *);
 void em_free_transmit_structures(struct em_softc *);
 void em_free_receive_structures(struct em_softc *);
 void em_update_stats_counters(struct em_softc *);
-void em_clean_transmit_interrupts(struct em_softc *);
+void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
-void em_process_receive_interrupts(struct em_softc *, int);
+void em_rxeof(struct em_softc *, int);
 #ifdef __STRICT_ALIGNMENT
 void em_fixup_rx(struct em_softc *);
 #endif
@@ -745,8 +745,8 @@ em_intr(void *arg)
 		claimed = 1;
 
 		if (ifp->if_flags & IFF_RUNNING) {
-			em_process_receive_interrupts(sc, -1);
-			em_clean_transmit_interrupts(sc);
+			em_rxeof(sc, -1);
+			em_txeof(sc);
 		}
 
 		/* Link status change */
@@ -906,7 +906,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * available hits the threshold
 	 */
 	if (sc->num_tx_desc_avail <= EM_TX_CLEANUP_THRESHOLD) {
-		em_clean_transmit_interrupts(sc);
+		em_txeof(sc);
 		if (sc->num_tx_desc_avail <= EM_TX_CLEANUP_THRESHOLD) {
 			sc->no_tx_desc_avail1++;
 			return (ENOBUFS);
@@ -2022,7 +2022,7 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
  *
  **********************************************************************/
 void
-em_clean_transmit_interrupts(struct em_softc *sc)
+em_txeof(struct em_softc *sc)
 {
 	int i, num_avail;
 	struct em_buffer *tx_buffer;
@@ -2342,7 +2342,7 @@ em_free_receive_structures(struct em_softc *sc)
  *
  *********************************************************************/
 void
-em_process_receive_interrupts(struct em_softc *sc, int count)
+em_rxeof(struct em_softc *sc, int count)
 {
 	struct ifnet	    *ifp;
 	struct mbuf	    *mp;

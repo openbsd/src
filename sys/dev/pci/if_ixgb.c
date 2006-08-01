@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.21 2006/07/10 00:25:23 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.22 2006/08/01 23:50:14 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -87,10 +87,10 @@ void ixgb_disable_intr(struct ixgb_softc *);
 void ixgb_free_transmit_structures(struct ixgb_softc *);
 void ixgb_free_receive_structures(struct ixgb_softc *);
 void ixgb_update_stats_counters(struct ixgb_softc *);
-void ixgb_clean_transmit_interrupts(struct ixgb_softc *);
+void ixgb_txeof(struct ixgb_softc *);
 int  ixgb_allocate_receive_structures(struct ixgb_softc *);
 int  ixgb_allocate_transmit_structures(struct ixgb_softc *);
-void ixgb_process_receive_interrupts(struct ixgb_softc *, int);
+void ixgb_rxeof(struct ixgb_softc *, int);
 void
 ixgb_receive_checksum(struct ixgb_softc *,
 		      struct ixgb_rx_desc * rx_desc,
@@ -555,8 +555,8 @@ ixgb_intr(void *arg)
 			rxdmt0 = TRUE;
 
 		if (ifp->if_flags & IFF_RUNNING) {
-			ixgb_process_receive_interrupts(sc, -1);
-			ixgb_clean_transmit_interrupts(sc);
+			ixgb_rxeof(sc, -1);
+			ixgb_txeof(sc);
 		}
 
 		/* Link status change */
@@ -660,11 +660,12 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	 * Force a cleanup if number of TX descriptors available hits the
 	 * threshold
 	 */
-	if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD)
-		ixgb_clean_transmit_interrupts(sc);
 	if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD) {
-		sc->no_tx_desc_avail1++;
-		return (ENOBUFS);
+		ixgb_txeof(sc);
+		if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD) {
+			sc->no_tx_desc_avail1++;
+			return (ENOBUFS);
+		}
 	}
 	/*
 	 * Map the packet for DMA.
@@ -1347,7 +1348,7 @@ ixgb_transmit_checksum_setup(struct ixgb_softc *sc,
  *
  **********************************************************************/
 void
-ixgb_clean_transmit_interrupts(struct ixgb_softc *sc)
+ixgb_txeof(struct ixgb_softc *sc)
 {
 	int             i, num_avail;
 	struct ixgb_buffer *tx_buffer;
@@ -1683,7 +1684,7 @@ ixgb_free_receive_structures(struct ixgb_softc *sc)
  *
  *********************************************************************/
 void
-ixgb_process_receive_interrupts(struct ixgb_softc *sc, int count)
+ixgb_rxeof(struct ixgb_softc *sc, int count)
 {
 	struct ifnet   *ifp;
 	struct mbuf    *mp;
