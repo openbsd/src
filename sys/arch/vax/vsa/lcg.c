@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.4 2006/07/29 15:11:57 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.5 2006/08/01 18:49:42 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -154,8 +154,10 @@ lcg_match(struct device *parent, void *vcf, void *aux)
 {
 	struct vsbus_softc *sc = (void *)parent;
 	struct vsbus_attach_args *va = aux;
+#if 0
 	vaddr_t cfgreg;
 	int depth;
+#endif
 	volatile u_int8_t *ch;
 
 	switch (vax_boardtype) {
@@ -170,6 +172,7 @@ lcg_match(struct device *parent, void *vcf, void *aux)
 		break;
 	}
 
+#if 0	/* better match and report unrecognized models for now */
 	/*
 	 * Check for a recognized configuration.
 	 */
@@ -178,6 +181,7 @@ lcg_match(struct device *parent, void *vcf, void *aux)
 	vax_unmap_physmem(cfgreg, 1);
 	if (depth == 0)
 		return (0);
+#endif
 
 	/*
 	 * Check for video memory.
@@ -203,10 +207,33 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 	struct lcg_screen *ss;
 	struct wsemuldisplaydev_attach_args aa;
 	vaddr_t tmp;
+	u_int32_t cfg;
 	int console;
 	extern struct consdev wsdisplay_cons;
 
 	console = (vax_confdata & 0x100) == 0 && cn_tab == &wsdisplay_cons;
+
+	/*
+	 * Check for a recognized configuration register.
+	 * If we do not recognize it, print it and do not attach - so that
+	 * this gets noticed...
+	 */
+	if (!console) {
+		tmp = vax_map_physmem(LCG_CONFIG_ADDR, 1);
+		if (tmp == NULL) {
+			printf(": can not map configuration register\n");
+			return;
+		}
+		cfg = *(volatile u_int32_t *)tmp;
+		vax_unmap_physmem(tmp, 1);
+
+		if (lcg_probe_screen(cfg, NULL, NULL) == 0) {
+			printf(": unrecognized configuration register %08x\n",
+			    cfg);
+			return;
+		}
+	}
+
 	if (console) {
 		ss = &lcg_consscr;
 		sc->sc_nscreens = 1;
@@ -218,14 +245,7 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 		}
 		bzero(ss, sizeof(struct lcg_screen));
 
-		tmp = vax_map_physmem(LCG_CONFIG_ADDR, 1);
-		if (tmp == NULL) {
-			printf(": can not map configuration register\n");
-			goto fail1;
-		}
-		ss->ss_cfg = *(volatile u_int32_t *)tmp;
-		vax_unmap_physmem(tmp, 1);
-
+		ss->ss_cfg = cfg;
 		ss->ss_depth = lcg_probe_screen(ss->ss_cfg,
 		    &ss->ss_width, &ss->ss_height);
 		ss->ss_fbsize =
