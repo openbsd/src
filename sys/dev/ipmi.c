@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.45 2006/07/28 20:50:43 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.46 2006/08/01 20:02:04 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -298,8 +298,8 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask, u_int8_t value,
 		tsleep(sc, PWAIT, lbl, 0);
 
 	if (sc->sc_retries > sc->sc_max_retries) {
-		printf("%s: bmc_io_wait fails : v=%.2x m=%.2x b=%.2x %s\n",
-		    DEVNAME(sc), v, mask, value, lbl);
+		dbg_printf(1, "%s: bmc_io_wait fails : v=%.2x m=%.2x "
+		    "b=%.2x %s\n", DEVNAME(sc), v, mask, value, lbl);
 		return (-1);
 	}
 
@@ -717,7 +717,7 @@ kcs_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t * data)
 	}
 	if (sts != KCS_READ_STATE) {
 		dbg_printf(1, "kcs sendmsg = %d/%d <%.2x>\n", idx, len, sts);
-		dumpb("kcs_sendmsg", len, data);
+		dbg_dump(1, "kcs_sendmsg", len, data);
 		return (-1);
 	}
 
@@ -1532,7 +1532,7 @@ ipmi_refresh_sensors(struct ipmi_softc *sc)
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
 	if (read_sensor(sc, sc->current_sensor))
-		printf("%s: error reading: %s\n", DEVNAME(sc), 
+		dbg_printf(1, "%s: error reading: %s\n", DEVNAME(sc), 
 		    sc->current_sensor->i_sensor.desc);
 }
 
@@ -1672,17 +1672,23 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
 
+
 	/* Identify BMC device */
-	if (ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID, 0, NULL)){
-		printf(": unable to send get device id command\n");
+	if (ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
+	    0, NULL)) {
+		printf(": unable to send get device id " "command\n");
 		ipmi_unmap_regs(sc, ia);
 		return;
 	}
+
+	delay(250000);
+
 	if (ipmi_recvcmd(sc, sizeof(cmd), &len, cmd)) {
 		printf(": unable to retrieve device id\n");
 		ipmi_unmap_regs(sc, ia);
 		return;
 	}
+
 	dbg_dump(1, "bmc data", len, cmd);
 
 	/* Scan SDRs, add sensors */
@@ -1718,7 +1724,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* setup ticker */
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
-	sc->sc_max_retries = 100; /* XXX 1 second the right value? */
+	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
 	timeout_set(&sc->sc_timeout, _bmc_io_wait, sc);
 }
 
