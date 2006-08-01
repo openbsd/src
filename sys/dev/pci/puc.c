@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.9 2006/07/31 11:06:33 mickey Exp $	*/
+/*	$OpenBSD: puc.c,v 1.10 2006/08/01 20:10:29 jolan Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ puc_common_attach(struct puc_softc *sc, struct puc_attach_args *paa)
 			continue;
 		}
 
-#ifndef SMALL_KERNEL
+#if 0
 		if (autoconf_verbose)
 			printf("%s: port %d: %s @ (index %d) 0x%x "
 			    "(0x%lx, 0x%lx)\n", sc->sc_dev.dv_xname, paa->port,
