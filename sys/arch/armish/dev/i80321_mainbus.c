@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.8 2006/06/15 22:19:47 drahn Exp $ */
+/*	$OpenBSD: i80321_mainbus.c,v 1.9 2006/08/01 22:22:20 kettenis Exp $ */
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $ */
 
 /*
@@ -457,4 +457,17 @@ board_reset()
 
 	bus_space_write_1(sc->sc_st, sc_pld_sh, PLD_PWRMNG, 0x2);
 
+}
+
+void board_powerdown(void); /* XXX */
+void
+board_powerdown(void)
+{
+	void pcaled_gpio_pin_write(void *arg, int pin, int value);
+	extern struct cfdriver pcaled_cd;
+
+	if (pcaled_cd.cd_ndevs > 0 && pcaled_cd.cd_devs[0] != NULL) {
+		pcaled_gpio_pin_write(pcaled_cd.cd_devs[0], 8, 1);
+		delay(500000);
+	}
 }
