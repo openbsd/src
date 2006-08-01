@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.9 2006/06/17 19:07:19 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.10 2006/08/01 12:43:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -440,9 +440,12 @@ struct wpi_scan_hdr {
 	uint8_t		nchan;
 	uint16_t	quiet;
 	uint16_t	threshold;
-	uint32_t	reserved2[3];
+	uint16_t	band;
+#define WPI_SCAN_5GHZ	1
+
+	uint16_t	reserved2[5];
+	uint32_t	flags;
 	uint32_t	filter;
-	uint32_t	reserved3;
 	uint16_t	length;
 	uint16_t	reserved4;
 	uint32_t	magic1;
@@ -462,10 +465,12 @@ struct wpi_scan_hdr {
 
 struct wpi_scan_chan {
 	uint8_t		flags;
+#define WPI_CHAN_ACTIVE	3
+
 	uint8_t		chan;
 	uint16_t	magic;		/* XXX */
-	uint16_t	active;		/* dwell time */
-	uint16_t	passive;	/* dwell time */
+	uint16_t	active;		/* msecs */
+	uint16_t	passive;	/* msecs */
 } __packed;
 
 /* structure for WPI_CMD_BLUETOOTH */
@@ -519,6 +524,14 @@ struct wpi_start_scan {
 	uint32_t	status;
 } __packed;
 
+/* structure for WPI_STOP_SCAN notification */
+struct wpi_stop_scan {
+	uint8_t		nchan;
+	uint8_t		status;
+	uint8_t		reserved;
+	uint8_t		chan;
+	uint64_t	tsf;
+} __packed;
 
 #define WPI_EEPROM_MAC		0x015
 #define WPI_EEPROM_REVISION	0x035
