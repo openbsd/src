@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.22 2006/08/01 12:43:56 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.23 2006/08/01 13:08:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1960,7 +1960,8 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 	bcn->cck_mask = 0xf;
 	bcn->lifetime = htole32(0xffffffff);
 	bcn->len = htole16(m0->m_pkthdr.len);
-	bcn->rate = wpi_plcp_signal(2);
+	bcn->rate = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+	    wpi_plcp_signal(12) : wpi_plcp_signal(2);
 	bcn->flags = htole32(WPI_TX_AUTO_SEQ | WPI_TX_INSERT_TSTAMP);
 
 	/* save and trim IEEE802.11 header */
@@ -2004,13 +2005,16 @@ wpi_auth(struct wpi_softc *sc)
 	/* update adapter's configuration */
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
 	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-	if (ic->ic_curmode == IEEE80211_MODE_11B) {
-		sc->config.cck_mask  = 0x03;
-		sc->config.ofdm_mask = 0;
-	} else if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
+	switch (ic->ic_curmode) {
+	case IEEE80211_MODE_11A:
 		sc->config.cck_mask  = 0;
 		sc->config.ofdm_mask = 0x15;
-	} else {	/* assume 802.11b/g */
+		break;
+	case IEEE80211_MODE_11B:
+		sc->config.cck_mask  = 0x03;
+		sc->config.ofdm_mask = 0;
+		break;
+	default:	/* assume 802.11b/g */
 		sc->config.cck_mask  = 0x0f;
 		sc->config.ofdm_mask = 0x15;
 	}
@@ -2031,7 +2035,8 @@ wpi_auth(struct wpi_softc *sc)
 	bzero(&node, sizeof node);
 	IEEE80211_ADDR_COPY(node.bssid, ni->ni_bssid);
 	node.id = WPI_ID_BSS;
-	node.rate = wpi_plcp_signal(2);
+	node.rate = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+	    wpi_plcp_signal(12) : wpi_plcp_signal(2);
 	error = wpi_cmd(sc, WPI_CMD_ADD_NODE, &node, sizeof node, 1);
 	if (error != 0) {
 		printf("%s: could not add BSS node\n", sc->sc_dev.dv_xname);
