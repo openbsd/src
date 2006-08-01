@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.89 2006/07/26 13:57:17 stevesk Exp $ */
+/* $OpenBSD: sftp.c,v 1.90 2006/08/01 23:22:47 stevesk Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include <paths.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
