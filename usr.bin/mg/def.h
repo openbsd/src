@@ -1,8 +1,6 @@
-/*	$OpenBSD: def.h,v 1.95 2006/07/25 08:27:09 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.96 2006/08/01 22:16:03 jason Exp $	*/
 
 /* This file is in the public domain. */
-
-#include <sys/queue.h>
 
 /*
  * This file is the general header file for all parts
