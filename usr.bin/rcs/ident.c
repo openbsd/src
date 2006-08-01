@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.20 2006/05/09 12:33:42 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.21 2006/08/01 05:14:17 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -107,7 +107,6 @@ ident_line(FILE *fp)
 {
 	int c;
 	BUF *bp;
-	char *keyw;
 	size_t len;
 
 	bp = rcs_buf_alloc(512, BUF_AUTOEXT);
@@ -140,13 +139,13 @@ ident_line(FILE *fp)
 
 	/* append trailing KEYDELIM */
 	rcs_buf_putc(bp, c);
-	rcs_buf_putc(bp, '\0');
-	keyw = rcs_buf_release(bp);
-	bp = NULL;
+
+	/* Append newline for printing. */
+	rcs_buf_putc(bp, '\n');
+	printf("     %c", KEYDELIM);
+	rcs_buf_write_fd(bp, STDOUT_FILENO);
 
 	found++;
-	printf("     %c%s\n", KEYDELIM, keyw);
-
 out:
 	if (bp != NULL)
 		rcs_buf_free(bp);

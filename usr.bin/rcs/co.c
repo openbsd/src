@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.95 2006/06/03 03:05:10 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.96 2006/08/01 05:14:17 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -239,7 +239,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	struct stat st;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
-	char *content, msg[128], *fdate;
+	char msg[128], *fdate;
 	time_t rcsdate, givendate;
 	RCSNUM *rev;
 
@@ -454,12 +454,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if (flags & PIPEOUT) {
-		rcs_buf_putc(bp, '\0');
-		content = rcs_buf_release(bp);
-		printf("%s", content);
-		xfree(content);
-	} else {
+	if (flags & PIPEOUT)
+		rcs_buf_write_fd(bp, STDOUT_FILENO);
+	else {
 		(void)unlink(dst);
 
 		if ((fd = open(dst, O_WRONLY|O_CREAT|O_TRUNC, mode)) < 0)
@@ -475,8 +472,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (fchmod(fd, mode) == -1)
 			warn("%s", dst);
 
-		rcs_buf_free(bp);
-
 		if (flags & CO_REVDATE) {
 			struct timeval tv[2];
 			memset(&tv, 0, sizeof(tv));
@@ -488,6 +483,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 		(void)close(fd);
 	}
+
+	rcs_buf_free(bp);
 
 	return (0);
 }

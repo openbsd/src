@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.2 2006/05/15 06:58:03 xsa Exp $	*/
+/*	$OpenBSD: merge.c,v 1.3 2006/08/01 05:14:17 ray Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -33,7 +33,6 @@ int
 merge_main(int argc, char **argv)
 {
 	int ch, flags, labels, status;
-	char *fcont;
 	const char *label[3];
 	BUF *bp;
 	extern char *optarg;
@@ -91,18 +90,14 @@ merge_main(int argc, char **argv)
 	else
 		status = 0;
 
-	if (flags & PIPEOUT) {
-		rcs_buf_putc(bp, '\0');
-		fcont = rcs_buf_release(bp);
-		(void)printf("%s", fcont);
-		xfree(fcont);
-	} else {
+	if (flags & PIPEOUT)
+		rcs_buf_write_fd(bp, STDOUT_FILENO);
+	else {
 		/* XXX */
 		if (rcs_buf_write(bp, argv[0], 0644) < 0)
 			warnx("rcs_buf_write failed");
-
-		rcs_buf_free(bp);
 	}
+	rcs_buf_free(bp);
 
 	return (status);
 }

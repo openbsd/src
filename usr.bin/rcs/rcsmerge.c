@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.46 2006/05/27 05:49:14 ray Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.47 2006/08/01 05:14:17 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -33,7 +33,7 @@ int
 rcsmerge_main(int argc, char **argv)
 {
 	int fd, ch, flags, kflag, status;
-	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
+	char fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
 	RCSFILE *file;
 	RCSNUM *rev1, *rev2;
 	BUF *bp;
@@ -151,18 +151,16 @@ rcsmerge_main(int argc, char **argv)
 	else
 		status = 0;
 
-	if (flags & PIPEOUT) {
-		rcs_buf_putc(bp, '\0');
-		fcont = rcs_buf_release(bp);
-		printf("%s", fcont);
-		xfree(fcont);
-	} else {
+	if (flags & PIPEOUT)
+		rcs_buf_write_fd(bp, STDOUT_FILENO);
+	else {
 		/* XXX mode */
 		if (rcs_buf_write(bp, argv[0], 0644) < 0)
 			warnx("rcs_buf_write failed");
 
-		rcs_buf_free(bp);
 	}
+
+	rcs_buf_free(bp);
 
 out:
 	rcs_close(file);
