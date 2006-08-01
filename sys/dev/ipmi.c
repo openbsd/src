@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.46 2006/08/01 20:02:04 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.47 2006/08/01 22:49:37 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -148,6 +148,7 @@ int	get_sdr(struct ipmi_softc *, u_int16_t, u_int16_t *);
 
 int	ipmi_sendcmd(struct ipmi_softc *, int, int, int, int, int, const void*);
 int	ipmi_recvcmd(struct ipmi_softc *, int, int *, void *);
+void	ipmi_delay(struct ipmi_softc *, int);
 
 int	ipmi_watchdog(void *, int);
 
@@ -988,7 +989,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
     int txlen, const void *data)
 {
 	u_int8_t	*buf;
-	int		rc;
+	int		rc = -1;
 
 	dbg_printf(50, "ipmi_sendcmd: rssa=%.2x nfln=%.2x cmd=%.2x len=%.2x\n",
 	    rssa, NETFN_LUN(netfn, rslun), cmd, txlen);
@@ -1012,18 +1013,21 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 		/* Set message checksum */
 		imbreq->data[txlen] = cksum8(&imbreq->rqSa, txlen + 3);
 #endif
-		return (-1);
+		goto done;
 	} else
 		buf = sc->sc_if->buildmsg(sc, NETFN_LUN(netfn, rslun), cmd,
 		    txlen, data, &txlen);
 
 	if (buf == NULL) {
 		printf("%s: sendcmd malloc fails\n", DEVNAME(sc));
-		return (-1);
+		goto done;
 	}
 	rc = sc->sc_if->sendmsg(sc, txlen, buf);
 	free(buf, M_DEVBUF);
 
+	ipmi_delay(sc, 5); /* give bmc chance to digest command */
+
+done:
 	return (rc);
 }
 
@@ -1059,6 +1063,16 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	free(buf, M_DEVBUF);
 
 	return (rc);
+}
+
+void
+ipmi_delay(struct ipmi_softc *sc, int period)
+{
+	/* period is in 10 ms increments */
+	if (cold)
+		delay(period * 10000);
+	else
+		while (tsleep(sc, PWAIT, "ipmicmd", period) != EWOULDBLOCK);
 }
 
 /* Read a partial SDR entry */
@@ -1680,9 +1694,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 		ipmi_unmap_regs(sc, ia);
 		return;
 	}
-
-	delay(250000);
-
 	if (ipmi_recvcmd(sc, sizeof(cmd), &len, cmd)) {
 		printf(": unable to retrieve device id\n");
 		ipmi_unmap_regs(sc, ia);
