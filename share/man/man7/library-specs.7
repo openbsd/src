@@ -1,4 +1,4 @@
-.\" $OpenBSD: library-specs.7,v 1.4 2003/06/06 13:44:29 jmc Exp $
+.\" $OpenBSD: library-specs.7,v 1.5 2006/08/01 10:09:14 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -40,7 +40,9 @@ where
 is a comma-separated list of
 .Sq lib_spec
 of the form:
-.Sq libname[.major[.minor]] .
+.Sq libname[.=major[.minor]] 
+or
+.Sq libname[.>=major[.minor]] .
 .Pp
 All libraries that a port needs must be mentioned in that list, either
 directly or indirectly through recursive dependencies (except, of course,
@@ -58,12 +60,14 @@ Removing functions is an interface change.
 .Pp
 The major.minor components of the library specification are used only as a
 build-time check.
-Any library which is more recent than the given major.minor version will
+For
+.Sq libname.>=major[.minor] ,
+any library which is more recent than the given major.minor version will
 do.
-If the minor component is left empty, any minor will do.
-If both components are left empty, any version will do.
 If a specific major number is needed, use the form
 .Sq libname.=major[.minor] .
+If the minor component is left empty, any minor will do.
+If both components are left empty, any version will do.
 .Pp
 The
 .Sq pkgspec
@@ -93,3 +97,7 @@ lead to strange errors.
 .Sh HISTORY
 Full support for library specifications first appeared in
 .Ox 3.1 .
+The format of specifications changed slightly to include 
+.Sq >= 
+before
+.Ox 4.0 .
