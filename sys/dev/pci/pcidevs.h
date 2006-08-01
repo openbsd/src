@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1118 2006/07/31 08:05:40 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1119 2006/08/01 05:04:57 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -559,7 +559,6 @@
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
 #define	PCI_PRODUCT_ADP2_AAC3642	0x0365		/* AAC-3642 */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
-
 #define	PCI_PRODUCT_ADP2_AIC7901	0x800f		/* AIC-7901 U320 */
 #define	PCI_PRODUCT_ADP2_AHA29320A	0x8000		/* AHA-29320A U320 */
 #define	PCI_PRODUCT_ADP2_AHA29320LP	0x8017		/* AHA-29320LP U320 */
