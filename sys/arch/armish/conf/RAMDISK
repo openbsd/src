@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.7 2006/06/17 04:47:06 drahn Exp $ 
+# $OpenBSD: RAMDISK,v 1.8 2006/08/01 22:21:00 kettenis Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -56,7 +56,7 @@ iopxs0		at mainbus?
 iopiic*	at iopxs?		# I2C Controller Unit(s)
 iic0		at iopiic?
 iic1		at iopiic?
-#pcaled0		at iic? addr 0x60	# led controller
+pcaled0		at iic? addr 0x60	# led controller
 #gpio*		at pcaled0
 ricohrtc0	at iic? addr 0x32	# Ricoh RTC
 fintek0		at iic?			# temp/fan controller
