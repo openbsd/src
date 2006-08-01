@@ -61,6 +61,8 @@
 
       <li><a href="#proxypassreverse">ProxyPassReverse</a></li>
 
+      <li><a href="#proxypreservehost">ProxyPreserveHost</a></li>
+
       <li><a href="#proxyblock">ProxyBlock</a></li>
 
       <li><a href="#allowconnect">AllowCONNECT</a></li>
@@ -562,6 +564,33 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     because its doesn't depend on a corresponding
     <samp>ProxyPass</samp> directive.</p>
     <hr />
+
+    <h2><a id="proxypreservehost"
+    name="proxypreservehost">ProxyPreserveHost</a> directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> ProxyPreserveHost
+    <em>on|off</em><br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a>
+    <em><samp>ProxyPreserveHost</samp> off</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual
+    host<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>Override:</strong></a> <em>Not
+    applicable</em><br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Base<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_proxy<br />
+
+    <p>When enabled, this option will pass the Host: line from the
+    incoming request to the proxied host, instead of the hostname
+    specified in the proxypass line.<br />
+     This option should normally be turned Off. It is mostly useful
+    in special configurations like proxied mass name-based virtual
+    hosting, where the original Host header needs to be evaluated by
+    the backend server.</p>
 
     <h2><a id="allowconnect" name="allowconnect">AllowCONNECT</a>
     directive</h2>

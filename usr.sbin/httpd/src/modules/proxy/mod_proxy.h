@@ -203,6 +203,8 @@ typedef struct {
     char recv_buffer_size_set;
     size_t io_buffer_size;
     char io_buffer_size_set;
+    int preserve_host;
+    int preserve_host_set;
 } proxy_server_conf;
 
 struct hdr_entry {

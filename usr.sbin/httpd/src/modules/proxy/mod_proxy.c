@@ -493,6 +493,8 @@ static void *
     ps->recv_buffer_size_set = 0;
     ps->io_buffer_size = IOBUFSIZE;
     ps->io_buffer_size_set = 0;
+    ps->preserve_host = 0;
+    ps->preserve_host_set = 0;
 
     ps->cache.root = NULL;
     ps->cache.space = DEFAULT_CACHE_SPACE;
@@ -537,6 +539,8 @@ static void *
     ps->req = (overrides->req_set == 0) ? base->req : overrides->req;
     ps->recv_buffer_size = (overrides->recv_buffer_size_set == 0) ? base->recv_buffer_size : overrides->recv_buffer_size;
     ps->io_buffer_size = (overrides->io_buffer_size_set == 0) ? base->io_buffer_size : overrides->io_buffer_size;
+
+    ps->preserve_host = (overrides->preserve_host_set == 0) ? base->preserve_host : overrides->preserve_host;
 
     ps->cache.root = (overrides->cache.root == NULL) ? base->cache.root : overrides->cache.root;
     ps->cache.space = (overrides->cache.space_set == 0) ? base->cache.space : overrides->cache.space;
@@ -973,6 +977,25 @@ static const char *
     return NULL;
 }
 
+static const char *
+    set_preserve_host(cmd_parms *parms, void *dummy, char *arg)
+{
+    proxy_server_conf *psf =
+    ap_get_module_config(parms->server->module_config, &proxy_module);
+
+    if (strcasecmp(arg, "Off") == 0)
+        psf->preserve_host = 0;
+    else if (strcasecmp(arg, "On") == 0)
+        psf->preserve_host = 1;
+    else {
+        return "ProxyPreserveHost must be one of: "
+            "off | on";
+    }
+
+    psf->preserve_host_set = 1;
+    return NULL;
+}
+
 static const handler_rec proxy_handlers[] =
 {
     {"proxy-server", proxy_handler},
@@ -1001,6 +1024,8 @@ static const command_rec proxy_cmds[] =
     "The default intranet domain name (in absence of a domain in the URL)"},
     {"AllowCONNECT", set_allowed_ports, NULL, RSRC_CONF, ITERATE,
     "A list of ports which CONNECT may connect to"},
+    {"ProxyPreserveHost", set_preserve_host, NULL, RSRC_CONF, TAKE1,
+    "on if the host header should be preserved while proxying"},
     {"CacheRoot", set_cache_root, NULL, RSRC_CONF, TAKE1,
     "The directory to store cache files"},
     {"CacheSize", set_cache_size, NULL, RSRC_CONF, TAKE1,
