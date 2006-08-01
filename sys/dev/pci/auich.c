@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.60 2006/05/29 08:46:58 jsg Exp $	*/
+/*	$OpenBSD: auich.c,v 1.61 2006/08/01 21:36:54 brad Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -256,6 +256,7 @@ static const struct auich_devtype {
 	    0, "nForce3" },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE4_AC,	0, "nForce4" },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP04_AC97,	0, "MCP04" },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP51_ACA,	0, "MCP51" },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_ACA,	0, "AMD768" },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_8111_ACA,	0, "AMD8111" },
 };
