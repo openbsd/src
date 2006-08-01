@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1119 2006/08/01 05:04:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1120 2006/08/01 05:16:00 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1551,6 +1551,7 @@
 #define	PCI_PRODUCT_IBM_FIREGL2	0x0170		/* FireGL2 */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCIX-PCIX */
 #define	PCI_PRODUCT_IBM_SERVERAID2	0x01bd		/* ServeRAID */
+#define	PCI_PRODUCT_IBM_CALGARY_IOMMU	0x02a1		/* Calgary IOMMU */
 
 /* IC Ensemble */
 #define	PCI_PRODUCT_ICENSEMBLE_ICE1712	0x1712		/* Envy24 I/O Ctrlr */
