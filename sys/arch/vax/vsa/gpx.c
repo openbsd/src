@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.8 2006/07/31 21:55:03 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.9 2006/08/01 18:50:48 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -469,7 +469,7 @@ gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 	dy = row * font->fontheight + ri->ri_yorigin;
 	/* ... and where to pick it from */
 	uc -= font->firstchar;
-	sx = (uc % ss->ss_gpr) * font->fontwidth;
+	sx = (uc % ss->ss_gpr) * font->stride * NBBY;
 	sy = GPX_HEIGHT - (1 + uc / ss->ss_gpr) * font->fontheight;
 
 	/* setup VIPER operand control registers */
@@ -807,6 +807,7 @@ gpx_setup_screen(struct gpx_screen *ss)
 {
 	struct rasops_info *ri = &ss->ss_ri;
 	const u_char *cmap;
+	int cookie;
 	int i, color12;
 
 	bzero(ri, sizeof(*ri));
@@ -822,11 +823,17 @@ gpx_setup_screen(struct gpx_screen *ss)
 	 * a font with right-to-left bit order on this frame buffer.
 	 */
 	wsfont_init();
-	if ((ri->ri_wsfcookie = wsfont_find(NULL, 8, 15, 0)) <= 0)
+	cookie = wsfont_find(NULL, 12, 0, 0);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 8, 0, 0);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0);
+	if (cookie <= 0)
 		return (-1);
-	if (wsfont_lock(ri->ri_wsfcookie, &ri->ri_font,
+	if (wsfont_lock(cookie, &ri->ri_font,
 	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
 		return (-1);
+	ri->ri_wsfcookie = cookie;
 
 	/*
 	 * Ask for an unholy big display, rasops will trim this to more
@@ -937,24 +944,21 @@ gpx_upload_font(struct gpx_screen *ss)
 	gpx_wait(ss, RASTEROP_COMPLETE);
 
 	/*
-	 * Load font data. The 8x15 font fits on two ``lines'' at the end
-	 * of the display (this also assumes the font has an even number
-	 * of glyphs; if it doesn't, the last glyph will render as empty).
+	 * Load font data. The font is uploaded in 8 or 16 bit wide cells, on
+	 * as many ``lines'' as necessary at the end of the display.
 	 */
-	ss->ss_gpr = MIN(GPX_WIDTH / font->fontwidth, font->numchars);
+	ss->ss_gpr = MIN(GPX_WIDTH / (NBBY * font->stride), font->numchars);
 	if (ss->ss_gpr & 1)
 		ss->ss_gpr--;
 	fontbits = font->data;
-	for (row = 1, remaining = font->numchars; remaining > 1;
+	for (row = 1, remaining = font->numchars; remaining != 0;
 	    row++, remaining -= nchars) {
 		nchars = MIN(ss->ss_gpr, remaining);
-		if (nchars & 1)
-			nchars--;
 
 		ss->ss_adder->destination_x = 0;
 		ss->ss_adder->destination_y =
 		    GPX_HEIGHT - row * font->fontheight;
-		ss->ss_adder->fast_dest_dx = nchars * font->fontwidth;
+		ss->ss_adder->fast_dest_dx = nchars * 16;
 		ss->ss_adder->slow_dest_dy = font->fontheight;
 
 		/* setup for processor to bitmap xfer */
@@ -963,20 +967,35 @@ gpx_upload_font(struct gpx_screen *ss)
 
 		/* iteratively do the processor to bitmap xfer */
 		for (i = font->fontheight; i != 0; i--) {
-			fb = fontbits++;
+			fb = fontbits;
+			fontbits += font->stride;
 			/* PTOB a scan line */
-			for (j = nchars >> 1; j != 0; j--) {
+			for (j = nchars; j != 0; j--) {
 				/* PTOB one scan of a char cell */
-				data = *fb;
-				fb += font->fontheight;
-				data |= ((u_int16_t)*fb) << 8;
-				fb += font->fontheight;
+				if (font->stride == 1) {
+					data = *fb;
+					fb += font->fontheight;
+					/*
+					 * Do not access past font memory if
+					 * it has an odd number of characters
+					 * and this is the last pair.
+					 */
+					if (j != 1 || (nchars & 1) == 0 ||
+					    remaining != nchars) {
+						data |= ((u_int16_t)*fb) << 8;
+						fb += font->fontheight;
+					}
+				} else {
+					data =
+					    fb[0] | (((u_int16_t)fb[1]) << 8);
+					fb += font->fontheight * font->stride;
+				}
 
 				gpx_wait(ss, TX_READY);
 				ss->ss_adder->id_data = data;
 			}
 		}
-		fontbits += (nchars - 1) * font->fontheight;
+		fontbits += (nchars - 1) * font->stride * font->fontheight;
 	}
 }
 
