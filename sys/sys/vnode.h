@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.70 2006/07/11 21:17:58 mickey Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.71 2006/08/02 21:55:27 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -424,26 +424,30 @@ struct uio;
 struct vattr;
 struct vnode;
 
-int	bdevvp(dev_t dev, struct vnode **vpp);
-int	cdevvp(dev_t dev, struct vnode **vpp);
-int	getnewvnode(enum vtagtype tag, struct mount *mp,
-	    int (**vops)(void *), struct vnode **vpp);
-int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
-void	vattr_null(struct vattr *vap);
-int	vcount(struct vnode *vp);
+/* vfs_subr */
+int	bdevvp(dev_t, struct vnode **);
+int	cdevvp(dev_t, struct vnode **);
+struct vnode *checkalias(struct vnode *, dev_t, struct mount *);
+int	getnewvnode(enum vtagtype, struct mount *, int (**vops)(void *),
+	    struct vnode **);
+int	vaccess(mode_t, uid_t, gid_t, mode_t, struct ucred *);
+void	vattr_null(struct vattr *);
+void	vdevgone(int, int, int, enum vtype);
+int	vcount(struct vnode *);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
-void	vflushbuf(struct vnode *vp, int sync);
-int	vflush(struct mount *mp, struct vnode *vp, int flags);
+void	vflushbuf(struct vnode *, int);
+int	vflush(struct mount *, struct vnode *, int);
+int	vget(struct vnode *, int, struct proc *);
+void	vgone(struct vnode *);
+void	vgonel(struct vnode *, struct proc *);
+int	vinvalbuf(struct vnode *, int, struct ucred *, struct proc *,
+	    int, int);
 void	vntblinit(void);
-void    vn_initialize_syncerd(void);
 int	vwaitforio(struct vnode *, int, char *, int);
 void	vwakeup(struct vnode *);
-void	vdevgone(int, int, int, enum vtype);
-int	vget(struct vnode *vp, int lockflag, struct proc *p);
-void	vgone(struct vnode *vp);
-void    vgonel(struct vnode *, struct proc *);
-int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
-	    struct proc *p, int slpflag, int slptimeo);
+void	vput(struct vnode *);
+int	vrecycle(struct vnode *, struct simplelock *, struct proc *);
+void	vrele(struct vnode *);
 #ifdef DIAGNOSTIC
 void	vprint(char *, struct vnode *);
 #endif
@@ -455,43 +459,36 @@ int vfs_getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
     int, struct proc *);
 int vfs_getcwd_getcache(struct vnode **, struct vnode **, char **, char *);
 
-int	vop_generic_bwrite(void *ap);
-int	vn_access(struct vnode *, int);
-void	vn_update(void);
-int	vn_close(struct vnode *vp,
-	    int flags, struct ucred *cred, struct proc *p);
-int	vn_open(struct nameidata *ndp, int fmode, int cmode);
-int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
-	    struct proc *p);
-int	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
-	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, size_t *aresid, struct proc *p);
-int	vn_lock(struct vnode *vp, int flags, struct proc *p);
-int	vn_isunder(struct vnode *, struct vnode *, struct proc *);
-
+/* vfs_default.c */
 int	vop_generic_abortop(void *);
+int	vop_generic_bwrite(void *);
 int	vop_generic_islocked(void *);
 int	vop_generic_lock(void *);
 int	vop_generic_unlock(void *);
 int	vop_generic_revoke(void *);
 int	vop_generic_kqfilter(void *);
 
-int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
-int	vn_statfile(struct file *fp, struct stat *sb, struct proc *p);
-int	vn_writechk(struct vnode *vp);
-void	vn_marktext(struct vnode *vp);
-void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
-void    sched_sync(struct proc *);
+/* vfs_vnops.c */
+int	vn_access(struct vnode *, int);
+int	vn_isunder(struct vnode *, struct vnode *, struct proc *);
+int	vn_close(struct vnode *, int, struct ucred *, struct proc *);
+int	vn_open(struct nameidata *, int, int);
+int	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t,
+	    enum uio_seg, int, struct ucred *, size_t *, struct proc *);
+int	vn_stat(struct vnode *, struct stat *, struct proc *);
+int	vn_statfile(struct file *, struct stat *, struct proc *);
+int	vn_lock(struct vnode *, int, struct proc *);
+int	vn_writechk(struct vnode *);
+void	vn_marktext(struct vnode *);
 
-struct vnode *
-	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);
-void	vput(struct vnode *vp);
-void	vrele(struct vnode *vp);
-int	vaccess(mode_t file_mode, uid_t uid, gid_t gid,
-	    mode_t acc_mode, struct ucred *cred);
+/* vfs_sync.c */
+void	sched_sync(struct proc *);
+void	vn_initialize_syncerd(void);
+void	vn_syncer_add_to_worklist(struct vnode *, int);
 
-int	vn_isdisk(struct vnode *vp, int *errp);
-
-int	softdep_fsync(struct vnode *vp);
+/* misc */
+int	vn_isdisk(struct vnode *, int *);
+int	softdep_fsync(struct vnode *);
+int 	getvnode(struct filedesc *, int, struct file **);
 
 #endif /* _KERNEL */
