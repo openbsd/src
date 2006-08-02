@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.36 2006/07/30 12:33:10 miod Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.37 2006/08/02 19:09:12 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.vax/MAKEDEV.md,v 1.24 2006/07/30 12:32:41 miod Exp 
+.\"	OpenBSD: etc.vax/MAKEDEV.md,v 1.25 2006/08/02 19:08:42 miod Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 30, 2006
+.Dd August  2, 2006
 .Dt MAKEDEV 8 vax
 .Os
 .Sh NAME
@@ -151,27 +151,15 @@ UNIBUS TU45 emulations (e.g. 9700), see
 .Pp
 .Sy Terminal ports
 .Bl -tag -width tenletters -compact
-.It Ar dh*
-UNIBUS DH11 and emulations (e.g. Able dmax, Emulex CS-11), see
-.Xr dh 4 .
 .It Ar dhu*
 UNIBUS DHU11, see
 .Xr dhu 4 .
 .It Ar dl*
 UNIBUS DL11, see
 .Xr dl 4 .
-.It Ar dmf*
-UNIBUS DMF32, see
-.Xr dmf 4 .
-.It Ar dmz*
-UNIBUS DMZ32, see
-.Xr dmz 4 .
 .It Ar dz*
 UNIBUS DZ11 and DZ32, see
 .Xr dz 4 .
-.It Ar vt*
-console, see
-.Xr vt 4 .
 .El
 .Pp
 .Sy Pseudo terminals

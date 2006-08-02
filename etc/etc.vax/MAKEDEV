@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.24 2006/07/30 12:32:41 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.25 2006/08/02 19:08:42 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -54,13 +54,9 @@
 #	ts*	UNIBUS TS11
 #	ut*	UNIBUS TU45 emulations (e.g. 9700)
 # Terminal ports:
-#	dh*	UNIBUS DH11 and emulations (e.g. Able dmax, Emulex CS-11)
 #	dhu*	UNIBUS DHU11
 #	dl*	UNIBUS DL11
-#	dmf*	UNIBUS DMF32
-#	dmz*	UNIBUS DMZ32
 #	dz*	UNIBUS DZ11 and DZ32
-#	vt*	console
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
@@ -385,75 +381,52 @@ ptm)
 
 dz*)
 	case $U in
-       [0-7])
-	       i=0
-	       while [ $i -lt 8 ]; do
-		       no=$(($(($U*8))+$i))
-		       if [ $no -lt 10 ]; then
-			       no="0${no}"
-		       fi
-		       M tty${no} c 1 $no 600
-		       let i=i+1
-	       done
-	       ;;
-	*)
-	       echo bad unit for dz in: $i
-	       ;;
-       esac
+	[0-7])
+		i=0
+		while [ $i -lt 8 ]; do
+			no=$(($(($U*8))+$i))
+			if [ $no -lt 10 ]; then
+				no="0${no}"
+			fi
+			M tty${no} c 1 $no 600
+			i="$(( $i + 1 ))"
+		done
 	;;
-
-dhu*|dmz*|dmf*|dh*|vt*)
-	set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
-	case $i in
-	vt*)    name=vt; major=68; count=8;
-		case $U in
-		0) ch=w ;;
-		*) echo bad unit for $name in: $i ;;
-		esac;;
-	dmz*)   name=dmz; major=37; count=24;
-		case $U in
-		0) ch=a ;; 1) ch=b ;; 2) ch=c ;; 3) ch=e ;; 4) ch=f ;;
-		*) echo bad unit for $name in: $i ;;
-		esac;;
-	dmf*)   name=dmf; major=22; count=8;
-		case $U in
-		0) ch=A ;; 1) ch=B ;; 2) ch=C ;; 3) ch=E ;;
-		4) ch=F ;; 5) ch=G ;; 6) ch=H ;; 7) ch=I ;;
-		*) echo bad unit for $name in: $i ;;
-		esac;;
-	dhu*)   name=dhu; major=34; count=16;
-		case $U in
-		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
-		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
-		*) echo bad unit for $name in: $i ;;
-		esac;;
-	dh*)    name=dh; major=12; count=16;
-		case $U in
-		0) ch=h ;; 1) ch=i ;; 2) ch=j ;; 3) ch=k ;;
-		4) ch=l ;; 5) ch=m ;; 6) ch=n ;; 7) ch=o ;;
-		*) echo bad unit for $name in: $i ;;
-		esac;;
+	*)
+		echo bad unit for dz in: $i
+		;;
 	esac
-	i=0
-	while [ $i -lt $count ]; do
-		let=${cnvtbl[$i]}
-		if [ -n "$let" ] ;then
-			M tty${ch}${let} c $major $(($(($U*$count))+$i)) 600
-		else
-			echo bad count for ${name}: $U, $count, $i
-		fi
-		let i=i+1
-	done
 	;;
 
 dl*)
-	major=66
+	set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
 	let=${cnvtbl[$U]}
 	if [ -n "$let" ] ;then
-		M ttyJ${let} c $major $U 600
+		M ttyJ${let} c 66 $U 600
 	else
-		echo bad number for ${name}: $U
+		echo bad unit for dl in: $i
 	fi
+	;;
+
+dhu*)
+	set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	case $U in
+	[0-7])
+		case $U in
+		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
+		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
+		esac
+		i=0
+		while [ $i -lt 16 ]; do
+			let=${cnvtbl[$i]}
+			M tty${ch}${let} c 34 $(($(($U*16))+$i)) 600
+			i="$(( $i + 1 ))"
+		done
+	;;
+	*)
+		echo bad unit for dhu in: $i
+	;;
+	esac
 	;;
 
 st*)
@@ -516,8 +489,8 @@ local)
 	;;
 
 all)
-	R vt0 dl0 dz0 dhu0 ts0 ts1 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0
-	R sd1 sd2 sd3 cd0 tun0 tun1 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
+	R dl0 dz0 dhu0 ts0 ts1 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0 sd1
+	R sd2 sd3 cd0 tun0 tun1 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
 	R bpf7 pty0 ss0 ptm local wscons uk0 random lkm pf systrace
 	R rx0 rx1 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 raid0 raid1 raid2
 	R raid3 std st0 st1 fd
