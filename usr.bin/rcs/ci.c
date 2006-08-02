@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.183 2006/08/02 03:18:40 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.184 2006/08/02 05:16:18 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -927,7 +927,6 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
     char **author, char **state)
 {
 	char *tokens[KW_NUMTOKS_MAX], *p, *datestring;
-	size_t len = 0;
 	int i = 0;
 
 	for ((p = strtok(keystring, " ")); p; (p = strtok(NULL, " "))) {
@@ -950,14 +949,8 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
 
 		if (i < 5)
 			break;
-		len = strlen(tokens[3]) + strlen(tokens[4]) + 2;
-		datestring = xmalloc(len);
-		/* XXX - use snprintf */
-		if (strlcpy(datestring, tokens[3], len) >= len ||
-		    strlcat(datestring, " ", len) >= len ||
-		    strlcat(datestring, tokens[4], len) >= len) {
-			errx(1, "date too long");
-		} else if ((*date = rcs_date_parse(datestring)) <= 0)
+		(void)xasprintf(&datestring, "%s %s", tokens[3], tokens[4]);
+		if ((*date = rcs_date_parse(datestring)) <= 0)
 			errx(1, "could not parse date");
 		xfree(datestring);
 
@@ -983,12 +976,7 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
 	case KW_TYPE_DATE:
 		if (i < 3)
 			break;
-		len = strlen(tokens[1]) + strlen(tokens[2]) + 2;
-		datestring = xmalloc(len);
-		if (strlcpy(datestring, tokens[1], len) >= len ||
-		    strlcat(datestring, " ", len) >= len ||
-		    strlcat(datestring, tokens[2], len) >= len)
-			errx(1, "date too long");
+		(void)xasprintf(&datestring, "%s %s", tokens[1], tokens[2]);
 		if ((*date = rcs_date_parse(datestring)) <= 0)
 			errx(1, "could not parse date");
 		xfree(datestring);
