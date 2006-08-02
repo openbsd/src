@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.171 2006/07/25 13:59:17 grunk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.172 2006/08/02 07:38:33 grunk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1555,7 +1555,7 @@ ieee80211_status(void)
 	/* check if any ieee80211 option is active */
 	if (inwid == 0 || inwkey == 0 || ipwr == 0 ||
 	    ichan == 0 || ibssid == 0 || itxpower == 0)
-		fputs("\tieee80211: ", stdout);
+		fputs("\tieee80211:", stdout);
 	else
 		return;
 
@@ -1564,42 +1564,41 @@ ieee80211_status(void)
 		len = nwid.i_len;
 		if (len > IEEE80211_NWID_LEN)
 			len = IEEE80211_NWID_LEN;
-		fputs("nwid ", stdout);
+		fputs(" nwid ", stdout);
 		print_string(nwid.i_nwid, len);
-		putchar(' ');
 	}
 
 	if (ichan == 0 && channel.i_channel != 0 &&
 	    channel.i_channel != (u_int16_t)-1)
-		printf("chan %u ", channel.i_channel);
+		printf(" chan %u", channel.i_channel);
 
 	memset(&zero_bssid, 0, sizeof(zero_bssid));
 	if (ibssid == 0 &&
 	    memcmp(bssid.i_bssid, zero_bssid, IEEE80211_ADDR_LEN) != 0) {
 		memcpy(&ea.ether_addr_octet, bssid.i_bssid,
 		    sizeof(ea.ether_addr_octet));
-		printf("bssid %s ", ether_ntoa(&ea));
+		printf(" bssid %s", ether_ntoa(&ea));
 
 		bzero(&nr, sizeof(nr));
 		bcopy(bssid.i_bssid, &nr.nr_macaddr, sizeof(nr.nr_macaddr));
 		strlcpy(nr.nr_ifname, name, sizeof(nr.nr_ifname));
 		if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
 			if (nr.nr_max_rssi)
-				printf("%u%% ", IEEE80211_NODEREQ_RSSI(&nr));
+				printf(" %u%%", IEEE80211_NODEREQ_RSSI(&nr));
 			else
-				printf("%udB ", nr.nr_rssi);
+				printf(" %udB", nr.nr_rssi);
 		}
 	}
 
 	if (inwkey == 0 && nwkey.i_wepon > 0) {
-		fputs("nwkey ", stdout);
+		fputs(" nwkey ", stdout);
 		/* try to retrieve WEP keys */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			nwkey.i_key[i].i_keydat = keybuf[i];
 			nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
 		}
 		if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) == -1) {
-			fputs("<not displayed> ", stdout);
+			fputs("<not displayed>", stdout);
 		} else {
 			nwkey_verbose = 0;
 			/*
@@ -1645,21 +1644,22 @@ ieee80211_status(void)
 				if (!nwkey_verbose)
 					break;
 			}
-			putchar(' ');
 		}
 	}
 
 	if (ipwr == 0 && power.i_enabled)
-		printf("powersave on (%dms sleep) ", power.i_maxsleep);
+		printf(" powersave on (%dms sleep)", power.i_maxsleep);
 
 	if (itxpower == 0)
-		printf("%ddBm %s", txpower.i_val,
+		printf(" %ddBm%s", txpower.i_val,
 		    txpower.i_mode == IEEE80211_TXPOWER_MODE_AUTO ?
-		    "(auto) " : "");
+		    " (auto)" : "");
 
 	if (ioctl(s, SIOCG80211FLAGS, (caddr_t)&ifr) == 0 &&
-	    ifr.ifr_flags)
+	    ifr.ifr_flags) {
+		putchar(' ');
 		printb_status(ifr.ifr_flags, IEEE80211_F_USERBITS);
+	}
 
 	putchar('\n');
 	if (net80211flag)
