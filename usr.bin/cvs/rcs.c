@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.186 2006/07/30 03:47:48 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.187 2006/08/02 03:23:40 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -235,8 +235,7 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static void	rcs_growbuf(RCSFILE *);
 static void	rcs_strprint(const u_char *, size_t, FILE *);
 
-static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
-                    size_t, int);
+static BUF	*rcs_expand_keywords(char *, struct rcs_delta *, BUF *, int);
 
 RCSFILE *
 rcs_open(const char *path, int fd, int flags, ...)
@@ -2570,32 +2569,43 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
  *
  * On error, return NULL.
  */
-static char *
-rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
-    size_t len, int mode)
+static BUF *
+rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 {
-	ptrdiff_t c_offset, sizdiff, start_offset;
-	size_t i;
+	BUF *newbuf;
 	int kwtype;
 	u_int j, found;
-	char *c, *kwstr, *start, *end, *tbuf;
+	u_char *c, *kwstr, *start, *end, *fin;
 	char expbuf[256], buf[256];
+	struct tm tb;
 	char *fmt;
+	size_t len;
 
 	kwtype = 0;
 	kwstr = NULL;
-	i = 0;
+
+	len = cvs_buf_len(bp);
+
+	c = cvs_buf_get(bp);
+	found = 0;
+	/* Final character in buffer. */
+	fin = c + len - 1;
+
+	/* If no keywords are found, return original buffer. */
+	newbuf = bp;
 
 	/*
 	 * Keyword formats:
 	 * $Keyword$
 	 * $Keyword: value$
 	 */
-	for (c = data; *c != '\0' && i < len; c++) {
+	for (; c < fin; c++) {
 		if (*c == '$') {
+			BUF *tmpbuf;
+			size_t clen;
+
 			/* remember start of this possible keyword */
 			start = c;
-			start_offset = start - data;
 
 			/* first following character has to be alphanumeric */
 			c++;
@@ -2604,35 +2614,32 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				continue;
 			}
 
+			/* Number of characters between c and fin, inclusive. */
+			clen = fin - c + 1;
+
 			/* look for any matching keywords */
 			found = 0;
 			for (j = 0; j < RCS_NKWORDS; j++) {
-				if (!strncmp(c, rcs_expkw[j].kw_str,
-				    strlen(rcs_expkw[j].kw_str))) {
+				size_t kwlen;
+
+				kwlen = strlen(rcs_expkw[j].kw_str);
+				/*
+				 * kwlen must be less than clen since clen
+				 * includes either a terminating `$' or a `:'.
+				 */
+				if (kwlen < clen &&
+				    memcmp(c, rcs_expkw[j].kw_str, kwlen) == 0 &&
+				    (c[kwlen] == '$' || c[kwlen] == ':')) {
 					found = 1;
 					kwstr = rcs_expkw[j].kw_str;
 					kwtype = rcs_expkw[j].kw_type;
+					c += kwlen;
 					break;
 				}
 			}
 
-			if (cvs_tagname != NULL &&
-			    !strncmp(c, cvs_tagname, strlen(cvs_tagname)) &&
-			    found != 1) {
-				found = 1;
-				kwstr = cvs_tagname;
-				kwtype = RCS_KW_ID;
-			}
-
 			/* unknown keyword, continue looking */
 			if (found == 0) {
-				c = start;
-				continue;
-			}
-
-			/* next character has to be ':' or '$' */
-			c += strlen(kwstr);
-			if (*c != ':' && *c != '$') {
 				c = start;
 				continue;
 			}
@@ -2643,7 +2650,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			 * in fact a keyword.
 			 */
 			if (*c == ':') {
-				while (*c++) {
+				for (; c <= fin; ++c) {
 					if (*c == '$' || *c == '\n')
 						break;
 				}
@@ -2653,7 +2660,6 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 					continue;
 				}
 			}
-			c_offset = c - data;
 			end = c + 1;
 
 			/* start constructing the expansion */
@@ -2731,33 +2737,31 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				    sizeof(expbuf)) >= sizeof(expbuf))
 					fatal("rcs_expand_keywords: truncated");
 
-			sizdiff = strlen(expbuf) - (end - start);
-			tbuf = xstrdup(end);
+			/* Concatenate everything together. */
+			tmpbuf = cvs_buf_alloc(len + strlen(expbuf), BUF_AUTOEXT);
+			/* Append everything before keyword. */
+			cvs_buf_append(tmpbuf, cvs_buf_get(newbuf),
+			    start - (unsigned char *)cvs_buf_get(newbuf));
+			/* Append keyword. */
+			cvs_buf_append(tmpbuf, expbuf, strlen(expbuf));
+			/* Point c to end of keyword. */
+			c = cvs_buf_get(tmpbuf) + cvs_buf_len(tmpbuf) - 1;
+			/* Append everything after keyword. */
+			cvs_buf_append(tmpbuf, end,
+			    ((unsigned char *)cvs_buf_get(newbuf) + cvs_buf_len(newbuf)) - end);
+			/* Point fin to end of data. */
+			fin = cvs_buf_get(tmpbuf) + cvs_buf_len(tmpbuf) - 1;
+			/* Recalculate new length. */
+			len = cvs_buf_len(tmpbuf);
 
-			/* only realloc if we have to */
-			if (sizdiff > 0) {
-				char *newdata;
-
-				len += sizdiff;
-				newdata = xrealloc(data, 1, len);
-				data = newdata;
-
-				/*
-				 * ensure string pointers are not invalidated
-				 * after realloc()
-				 */
-				start = data + start_offset;
-				c = data + c_offset;
-			}
-			if (strlcpy(start, expbuf, len) >= len ||
-			    strlcat(data, tbuf, len) >= len)
-				fatal("rcs_expand_keywords: string truncated");
-			xfree(tbuf);
-			i += strlen(expbuf);
+			/* tmpbuf is now ready, free old newbuf if allocated here. */
+			if (newbuf != bp)
+				cvs_buf_free(newbuf);
+			newbuf = tmpbuf;
 		}
 	}
 
-	return (data);
+	return (newbuf);
 }
 
 /*
@@ -2905,9 +2909,7 @@ BUF *
 rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 {
 	struct rcs_delta *rdp;
-	char *expanded, *tbuf;
 	int expmode;
-	size_t len;
 
 	/*
 	 * Do keyword expansion if required.
@@ -2920,14 +2922,7 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 	if (!(expmode & RCS_KWEXP_NONE)) {
 		if ((rdp = rcs_findrev(rf, rev)) == NULL)
 			fatal("could not fetch revision");
-		cvs_buf_putc(bp, '\0');
-		len = cvs_buf_len(bp);
-		tbuf = cvs_buf_release(bp);
-		expanded = rcs_expand_keywords(rf->rf_path, rdp,
-		    tbuf, len, expmode);
-		bp = cvs_buf_alloc(len, BUF_AUTOEXT);
-		cvs_buf_set(bp, expanded, strlen(expanded), 0);
-		xfree(expanded);
+		return (rcs_expand_keywords(rf->rf_path, rdp, bp, expmode));
 	}
 	return (bp);
 }
