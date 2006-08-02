@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.6 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.7 2006/08/02 03:28:50 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -178,7 +178,7 @@ rcs_buf_empty(BUF *b)
  * bytes of data found at <src>.  If the buffer was not created with
  * BUF_AUTOEXT, as many bytes as possible will be copied in the buffer.
  */
-ssize_t
+size_t
 rcs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 {
 	size_t rlen = 0;
@@ -251,7 +251,7 @@ rcs_buf_getc(BUF *b, size_t pos)
  * will get resized to an appropriate size to accept all data.
  * Returns the number of bytes successfully appended to the buffer.
  */
-ssize_t
+size_t
 rcs_buf_append(BUF *b, const void *data, size_t len)
 {
 	size_t left, rlen;
@@ -280,21 +280,22 @@ rcs_buf_append(BUF *b, const void *data, size_t len)
  * rcs_buf_fappend()
  *
  */
-ssize_t
+size_t
 rcs_buf_fappend(BUF *b, const char *fmt, ...)
 {
-	ssize_t ret;
+	size_t ret;
+	int n;
 	char *str;
 	va_list vap;
 
 	va_start(vap, fmt);
-	ret = vasprintf(&str, fmt, vap);
+	n = vasprintf(&str, fmt, vap);
 	va_end(vap);
 
-	if (ret == -1)
+	if (n == -1)
 		errx(1, "rcs_buf_fappend: failed to format data");
 
-	ret = rcs_buf_append(b, str, (size_t)ret);
+	ret = rcs_buf_append(b, str, n);
 	xfree(str);
 	return (ret);
 }
