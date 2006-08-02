@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.27 2006/07/21 01:57:15 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.28 2006/08/02 00:23:18 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -577,7 +577,9 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xge_ioctl;
 	ifp->if_start = xge_start;
+#ifdef XGE_JUMBO
 	ifp->if_hardmtu = XGE_MAX_MTU;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESCS - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -676,7 +678,11 @@ xge_init(struct ifnet *ifp)
 	}
 
 	/* set MRU */
+#ifdef XGE_JUMBO
 	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(XGE_MAX_FRAMELEN));
+#else
+	PIF_WCSR(RMAC_MAX_PYLD_LEN, RMAC_PYLD_LEN(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN));
+#endif
 
 	/* 56, enable the transmit laser */
 	val = PIF_RCSR(ADAPTER_CONTROL);
