@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.351 2006/07/25 16:59:25 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.352 2006/08/02 11:45:56 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2777,7 +2777,7 @@ bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
 action         = "pass" | "block" [ return ] | [ "no" ] "scrub"
 return         = "drop" | "return" | "return-rst" [ "( ttl" number ")" ] |
-                 "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
+                 "return-icmp" [ "(" icmpcode [ [ "," ] icmp6code ] ")" ] |
                  "return-icmp6" [ "(" icmp6code ")" ]
 icmpcode       = ( icmp-code-name | icmp-code-number )
 icmp6code      = ( icmp6-code-name | icmp6-code-number )
