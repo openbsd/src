@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2006/07/29 05:57:02 ray Exp $
+#	$OpenBSD: Makefile,v 1.34 2006/08/02 04:30:31 niallo Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -67,6 +67,8 @@ LTESTS= ci-initial \
 	ci-revert \
 	ci-keywords \
 	ci-keywords2 \
+	ci-parse-keywords \
+	ci-parse-keywords2 \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -568,6 +570,14 @@ test-ci-keywords: clean
 test-ci-keywords2: clean
 	@perl -e 'print "\$$Id\$$\n" x 10000;' > file
 	@echo . | ${CI} -l -q file
+
+test-ci-parse-keywords: clean
+	@echo '$Id' > test
+	@echo . | ${CI} -q -k test
+
+test-ci-parse-keywords2: clean
+	@echo '$Id: blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah' > test 
+	@echo . | ${CI} -q -k test
 
 clean:
 	@rm -rf ${CLEANFILES}
