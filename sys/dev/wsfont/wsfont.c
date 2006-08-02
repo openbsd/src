@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.17 2006/07/31 18:41:17 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.18 2006/08/02 20:10:21 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -101,24 +101,16 @@
 
 /*
  * Make sure we always have at least one font.
- * Sparc, sparc64 and vax always provide a specific set of fonts.
- * Other platforms provide a 8x16 font and a larger 12x22 fonts, which is
- * omitted if option SMALL_KERNEL.
+ * Sparc, sparc64 always provide a 8x16 font and a larger 12x22 font.
+ * Other platforms also provide both, but the 12x22 font is omitted if
+ * option SMALL_KERNEL.
  */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
 
-#if defined(__sparc__) || defined(__sparc64__)
 #define	FONT_BOLD8x16_ISO1
+#if defined(__sparc__) || defined(__sparc64__) || !defined(SMALL_KERNEL)
 #define	FONT_GALLANT12x22
-#elif defined(__vax__)
-#define FONT_QVSS8x15
-#define	FONT_GALLANT12x22
-#else
-#define	FONT_BOLD8x16_ISO1
-#if !defined(SMALL_KERNEL)
-#define	FONT_GALLANT12x22
-#endif
 #endif
 
 #endif	/* HAVE_FONT */
@@ -129,10 +121,6 @@
 
 #ifdef FONT_GALLANT12x22
 #include <dev/wsfont/gallant12x22.h>
-#endif
-
-#ifdef FONT_QVSS8x15
-#include <dev/wsfont/qvss8x15.h>
 #endif
 
 /* Placeholder struct used for linked list */

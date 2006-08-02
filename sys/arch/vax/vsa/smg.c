@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.13 2006/07/29 15:11:57 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.14 2006/08/02 20:10:19 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -66,6 +66,7 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/ka420.h>
+#include <machine/scb.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -168,6 +169,8 @@ smg_match(struct device *parent, void *vcf, void *aux)
 	volatile short *curcmd;
 	volatile short *cfgtst;
 	short tmp, tmp2;
+	extern struct consdev wsdisplay_cons;
+	extern int oldvsbus;
 
 	switch (vax_boardtype) {
 	default:
@@ -193,24 +196,33 @@ smg_match(struct device *parent, void *vcf, void *aux)
 		break;
 	}
 
-	/*
-	 * Try to find the cursor chip by testing the flip-flop.
-	 * If nonexistent, no glass tty.
-	 */
-	curcmd = (short *)va->va_addr;
-	cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
-	curcmd[0] = PCCCMD_HSHI | PCCCMD_FOPB;
-	DELAY(300000);
-	tmp = cfgtst[0];
-	curcmd[0] = PCCCMD_TEST | PCCCMD_HSHI;
-	DELAY(300000);
-	tmp2 = cfgtst[0];
-	vax_unmap_physmem((vaddr_t)cfgtst, 1);
+	if ((vax_confdata & KA420_CFG_L3CON) == 0 &&
+	    cn_tab == &wsdisplay_cons) {
+		/* when already running as console, always fake things */
+		struct vsbus_softc *sc = (void *)parent;
+		sc->sc_mask = 0x08;
+		scb_fake(0x44, oldvsbus ? 0x14 : 0x15);
+		return (20);
+	} else {
+		/*
+		 * Try to find the cursor chip by testing the flip-flop.
+		 * If nonexistent, no glass tty.
+		 */
+		curcmd = (short *)va->va_addr;
+		cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
+		curcmd[0] = PCCCMD_HSHI | PCCCMD_FOPB;
+		DELAY(300000);
+		tmp = cfgtst[0];
+		curcmd[0] = PCCCMD_TEST | PCCCMD_HSHI;
+		DELAY(300000);
+		tmp2 = cfgtst[0];
+		vax_unmap_physmem((vaddr_t)cfgtst, 1);
 
-	if (tmp2 != tmp)
-		return (20); /* Using periodic interrupt */
-	else
-		return (0);
+		if (tmp2 != tmp)
+			return (20); /* Using periodic interrupt */
+		else
+			return (0);
+	}
 }
 
 void
@@ -298,7 +310,7 @@ smg_setup_screen(struct smg_screen *ss)
 	 * a font with right-to-left bit order on this frame buffer.
 	 */
 	wsfont_init();
-	if ((ri->ri_wsfcookie = wsfont_find(NULL, 8, 15, 0)) <= 0)
+	if ((ri->ri_wsfcookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
 		return (-1);
 	if (wsfont_lock(ri->ri_wsfcookie, &ri->ri_font,
 	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
