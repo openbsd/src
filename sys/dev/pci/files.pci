@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.213 2006/07/31 11:06:33 mickey Exp $
+#	$OpenBSD: files.pci,v 1.214 2006/08/03 08:45:03 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -565,6 +565,12 @@ file	dev/pci/if_rtw_pci.c		rtw_pci
 # Ralink RT2500 PCI/Mini-PCI
 attach	ral at pci with ral_pci
 file	dev/pci/if_ral_pci.c		ral_pci
+
+#
+# Texas Instruments ACX
+#
+attach	acx at pci with acx_pci
+file	dev/pci/if_acx_pci.c		acx_pci
 
 # Sangoma PCI card
 device	san: ifnet, ifmedia, sppp
