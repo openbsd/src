@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.9 2006/07/31 21:57:05 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.10 2006/08/03 20:19:29 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -114,8 +114,8 @@ const struct wskbd_consops dzkbd_consops = {
 
 const struct wskbd_mapdata dzkbd_keymapdata = {
 	lkkbd_keydesctab,
-#ifdef DZKBD_LAYOUT
-	DZKBD_LAYOUT,
+#ifdef LKKBD_LAYOUT
+	LKKBD_LAYOUT,
 #else
 	KB_US,
 #endif
