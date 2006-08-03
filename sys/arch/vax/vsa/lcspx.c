@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.3 2006/07/29 15:11:57 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.4 2006/08/03 18:46:07 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -69,6 +69,7 @@
 #include <dev/ic/bt463reg.h>	/* actually it's a 459 here... */
 
 #define	LCSPX_REG_ADDR		0x39302000	/* registers */
+#define	LCSPX_REG_SIZE		    0x2000
 #define	LCSPX_REG1_ADDR		0x39b00000	/* more registers */
 #define	LCSPX_RAMDAC_ADDR	0x39b10000	/* RAMDAC */
 #define	LCSPX_RAMDAC_INTERLEAVE	0x00004000
@@ -85,7 +86,13 @@ struct	lcspx_screen {
 	struct rasops_info ss_ri;
 	caddr_t		ss_addr;		/* frame buffer address */
 	volatile u_int8_t *ss_ramdac[4];
+	vaddr_t		ss_reg;
 };
+
+#define	lcspx_reg_read(ss, reg) \
+	*(volatile u_int32_t *)((ss)->ss_reg + (reg))
+#define	lcspx_reg_write(ss, reg, val) \
+	*(volatile u_int32_t *)((ss)->ss_reg + (reg)) = (val)
 
 /* for console */
 struct lcspx_screen lcspx_consscr;
@@ -206,18 +213,25 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 			goto fail1;
 		}
 
+		ss->ss_reg = vax_map_physmem(LCSPX_REG_ADDR,
+		    LCSPX_REG_SIZE / VAX_NBPG);
+		if (ss->ss_reg == 0L) {
+			printf(": can not map registers\n");
+			goto fail2;
+		}
+
 		for (i = 0; i < 4; i++) {
 			ss->ss_ramdac[i] = (volatile u_int8_t *)vax_map_physmem(
 			    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
 			if (ss->ss_ramdac[i] == NULL) {
 				printf(": can not map RAMDAC registers\n");
-				goto fail2;
+				goto fail3;
 			}
 		}
 
 		if (lcspx_setup_screen(ss) != 0) {
 			printf(": initialization failed\n");
-			goto fail2;
+			goto fail3;
 		}
 	}
 	sc->sc_scr = ss;
@@ -232,10 +246,12 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &aa, wsemuldisplaydevprint);
 	return;
 
-fail2:
+fail3:
 	for (i = 0; i < 4; i++)
 		if (ss->ss_ramdac[i] != NULL)
 			vax_unmap_physmem((vaddr_t)ss->ss_ramdac[i], 1);
+	vax_unmap_physmem(ss->ss_reg, LCSPX_REG_SIZE / VAX_NBPG);
+fail2:
 	vax_unmap_physmem((vaddr_t)ss->ss_addr, LCSPX_FBSIZE / VAX_NBPG);
 fail1:
 	free(ss, M_DEVBUF);
@@ -271,6 +287,12 @@ lcspx_setup_screen(struct lcspx_screen *ss)
 	 */
 	if (rasops_init(ri, 160, 160) != 0)
 		return (-1);
+
+	/*
+	 * Enable all planes for reading and writing
+	 */
+	lcspx_reg_write(ss, 0x1170, 0xffffffff);
+	lcspx_reg_write(ss, 0x1174, 0xffffffff);
 
 	lcspx_resetcmap(ss);
 
@@ -446,6 +468,10 @@ lcspxcninit()
 	ss->ss_addr = (caddr_t)virtual_avail;
 	virtual_avail += LCSPX_FBSIZE;
 	ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR, LCSPX_FBSIZE / VAX_NBPG);
+
+	ss->ss_reg = virtual_avail;
+	virtual_avail += LCSPX_REG_SIZE;
+	ioaccess(ss->ss_reg, LCSPX_REG_ADDR, LCSPX_REG_SIZE / VAX_NBPG);
 
 	for (i = 0; i < 4; i++) {
 		ss->ss_ramdac[i] = (volatile u_int8_t *)virtual_avail;
