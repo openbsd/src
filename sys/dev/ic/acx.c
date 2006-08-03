@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.5 2006/08/03 12:00:07 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.6 2006/08/03 19:31:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -420,8 +420,7 @@ acx_attach(struct acx_softc *sc)
 	}
 #undef EEINFO_RETRY_MAX
 
-	DPRINTF(("%s: radio type %02x\n", sc->sc_dev.dv_xname,
-	    sc->sc_radio_type));
+	printf(", radio %02x", sc->sc_radio_type);
 
 #ifdef DUMP_EEPROM
 	for (i = 0; i < 0x40; ++i) {
@@ -439,8 +438,8 @@ acx_attach(struct acx_softc *sc)
 	error = acx_read_eeprom(sc, ACX_EE_VERSION_OFS, &sc->sc_eeprom_ver);
 	if (error)
 		goto fail;
-	DPRINTF(("%s: EEPROM version %u\n", sc->sc_dev.dv_xname,
-	    sc->sc_eeprom_ver));
+
+	printf(", version %u", sc->sc_eeprom_ver);
 
 	ifp->if_softc = sc;
 	ifp->if_init = acx_init;
@@ -473,8 +472,7 @@ acx_attach(struct acx_softc *sc)
 					&ic->ic_myaddr[i]);
 	}
 
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
