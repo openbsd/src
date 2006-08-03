@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.23 2006/08/01 13:08:21 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.24 2006/08/03 09:45:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1545,7 +1545,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	tx->data_ntries = 15;
 
 	tx->ofdm_mask = 0xff;
-	tx->cck_mask = 0xf;
+	tx->cck_mask = 0x0f;
 	tx->lifetime = htole32(0xffffffff);
 
 	tx->len = htole16(m0->m_pkthdr.len);
@@ -1796,7 +1796,7 @@ wpi_read_eeprom(struct wpi_softc *sc)
 	for (i = 0; i < 14; i++) {
 		sc->pwr1[i] = wpi_read_prom_word(sc, WPI_EEPROM_PWR1 + i);
 		sc->pwr2[i] = wpi_read_prom_word(sc, WPI_EEPROM_PWR2 + i);
-		DPRINTF(("channel %d pwr1 0x%04x pwr2 0x%04x\n", i + 1,
+		DPRINTFN(2, ("channel %d pwr1 0x%04x pwr2 0x%04x\n", i + 1,
 		    sc->pwr1[i], sc->pwr2[i]));
 	}
 }
@@ -1840,6 +1840,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 int
 wpi_mrr_setup(struct wpi_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct wpi_mrr_setup mrr;
 	int i, error;
 
@@ -1859,7 +1860,10 @@ wpi_mrr_setup(struct wpi_softc *sc)
 		mrr.rates[i].plcp = wpi_ridx_to_plcp[i];
 		/* fallback to the immediate lower rate (if any) */
 		/* we allow fallback from OFDM/6 to CCK/2 in 11b/g mode */
-		mrr.rates[i].next = (i == WPI_OFDM6) ? WPI_CCK2 : i - 1;
+		mrr.rates[i].next = (i == WPI_OFDM6) ?
+		    ((ic->ic_curmode == IEEE80211_MODE_11A) ?
+			WPI_OFDM6 : WPI_CCK2) :
+		    i - 1;
 		/* try one time at this rate before falling back to "next" */
 		mrr.rates[i].ntries = 1;
 	}
@@ -1957,7 +1961,7 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 	bzero(bcn, sizeof (struct wpi_cmd_beacon));
 	bcn->id = WPI_ID_BROADCAST;
 	bcn->ofdm_mask = 0xff;
-	bcn->cck_mask = 0xf;
+	bcn->cck_mask = 0x0f;
 	bcn->lifetime = htole32(0xffffffff);
 	bcn->len = htole16(m0->m_pkthdr.len);
 	bcn->rate = (ic->ic_curmode == IEEE80211_MODE_11A) ?
@@ -2005,6 +2009,11 @@ wpi_auth(struct wpi_softc *sc)
 	/* update adapter's configuration */
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
 	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+	sc->config.flags = htole32(WPI_CONFIG_TSF);
+	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+		sc->config.flags |= htole32(WPI_CONFIG_AUTO |
+		    WPI_CONFIG_24GHZ);
+	}
 	switch (ic->ic_curmode) {
 	case IEEE80211_MODE_11A:
 		sc->config.cck_mask  = 0;
@@ -2214,8 +2223,6 @@ wpi_config(struct wpi_softc *sc)
 	struct wpi_node_info node;
 	int error;
 
-	/* Intel's binary only daemon is a joke.. */
-
 	/* set Tx power for 2.4GHz channels (values read from EEPROM) */
 	bzero(&txpower, sizeof txpower);
 	bcopy(sc->pwr1, txpower.pwr1, 14 * sizeof (uint16_t));
@@ -2252,9 +2259,13 @@ wpi_config(struct wpi_softc *sc)
 	bzero(&sc->config, sizeof (struct wpi_config));
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
+	/* set default channel */
 	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
-	sc->config.flags = htole32(WPI_CONFIG_TSF | WPI_CONFIG_AUTO |
-	    WPI_CONFIG_24GHZ);
+	sc->config.flags = htole32(WPI_CONFIG_TSF);
+	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan)) {
+		sc->config.flags |= htole32(WPI_CONFIG_AUTO |
+		    WPI_CONFIG_24GHZ);
+	}
 	sc->config.filter = 0;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
