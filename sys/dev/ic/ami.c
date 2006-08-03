@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.171 2006/06/28 08:26:00 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.172 2006/08/03 09:06:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -135,7 +135,8 @@ int		ami_poll(struct ami_softc *, struct ami_ccb *);
 void		ami_start(struct ami_softc *, struct ami_ccb *);
 void		ami_complete(struct ami_softc *, struct ami_ccb *, int);
 int		ami_done(struct ami_softc *, int);
-void		ami_runqueue(void *);
+void		ami_runqueue_tick(void *);
+void		ami_runqueue(struct ami_softc *);
 
 int 		ami_start_xs(struct ami_softc *sc, struct ami_ccb *,
 		    struct scsi_xfer *);
@@ -317,7 +318,7 @@ ami_alloc_ccbs(struct ami_softc *sc, int nccbs)
 	TAILQ_INIT(&sc->sc_ccb_freeq);
 	TAILQ_INIT(&sc->sc_ccb_preq);
 	TAILQ_INIT(&sc->sc_ccb_runq);
-	timeout_set(&sc->sc_run_tmo, ami_runqueue, sc);
+	timeout_set(&sc->sc_run_tmo, ami_runqueue_tick, sc);
 
 	for (i = 0; i < nccbs; i++) {
 		ccb = &sc->sc_ccbs[i];
@@ -943,19 +944,26 @@ ami_start(struct ami_softc *sc, struct ami_ccb *ccb)
 	s = splbio();
 	ccb->ccb_state = AMI_CCB_PREQUEUED;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_preq, ccb, ccb_link);
-	splx(s);
-
 	ami_runqueue(sc);
+	splx(s);
 }
 
 void
-ami_runqueue(void *arg)
+ami_runqueue_tick(void *arg)
 {
 	struct ami_softc *sc = arg;
-	struct ami_ccb *ccb;
 	int s;
 
 	s = splbio();
+	ami_runqueue(sc);
+	splx(s);
+}
+
+void
+ami_runqueue(struct ami_softc *sc)
+{
+	struct ami_ccb *ccb;
+
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_preq)) != NULL) {
 		if (sc->sc_exec(sc, &ccb->ccb_cmd) != 0) {
 			/* this is now raceable too with other incomming io */
@@ -967,7 +975,6 @@ ami_runqueue(void *arg)
 		ccb->ccb_state = AMI_CCB_QUEUED;
 		TAILQ_INSERT_TAIL(&sc->sc_ccb_runq, ccb, ccb_link);
 	}
-	splx(s);
 }
 
 int
@@ -1040,10 +1047,12 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 		TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
 		goto err;
 	}
-	splx(s);
 
 	/* start the runqueue again */
 	ami_runqueue(sc);
+
+	splx(s);
+
 	return;
 
 err:
@@ -1271,7 +1280,9 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1282,7 +1293,9 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1305,11 +1318,11 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 
 	if (ami_load_ptmem(sc, ccb, xs->data, xs->datalen,
 	    xs->flags & SCSI_DATA_IN, xs->flags & SCSI_NOSLEEP) != 0) {
+		xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
 		ami_put_ccb(ccb);
-		splx(s);
-		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1392,7 +1405,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1413,7 +1428,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		splx(s);
 		if (ccb == NULL) {
 			xs->error = XS_DRIVER_STUFFUP;
+			s = splbio();
 			scsi_done(xs);
+			splx(s);
 			return (COMPLETE);
 		}
 
@@ -1450,7 +1467,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		*(u_int32_t*)sd.info = htole32(0);
 		sd.extra_len = 0;
 		ami_copy_internal_data(xs, &sd, sizeof(sd));
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 
 	case INQUIRY:
@@ -1466,7 +1485,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		    "Host drive  #%02d", target);
 		strlcpy(inq.revision, "   ", sizeof(inq.revision));
 		ami_copy_internal_data(xs, &inq, sizeof(inq));
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 
 	case READ_CAPACITY:
@@ -1475,14 +1496,18 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(AMI_SECTOR_SIZE, rcd.length);
 		ami_copy_internal_data(xs, &rcd, sizeof(rcd));
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 
 	default:
 		AMI_DPRINTF(AMI_D_CMD, ("unsupported scsi command %#x tgt %d ",
 		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1502,7 +1527,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		printf("%s: out of bounds %u-%u >= %u\n", DEVNAME(sc),
 		    blockno, blockcnt, sc->sc_hdr[target].hd_size);
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1511,7 +1538,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1533,11 +1562,11 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		else
 			printf("error %d loading dma map\n", error);
 
+		xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
 		ami_put_ccb(ccb);
-		splx(s);
-		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
