@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.198 2006/08/01 23:22:47 stevesk Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.199 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,8 +13,6 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#include "includes.h"
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -27,14 +25,15 @@
 #include <errno.h>
 #include <netdb.h>
 #include <paths.h>
+#include <signal.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "ssh.h"
 #include "xmalloc.h"
+#include "ssh.h"
 #include "rsa.h"
 #include "buffer.h"
 #include "packet.h"

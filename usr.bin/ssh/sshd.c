@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.342 2006/08/01 23:22:48 stevesk Exp $ */
+/* $OpenBSD: sshd.c,v 1.343 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,16 +42,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
-#include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/tree.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
 #include <errno.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
@@ -66,28 +66,28 @@
 #include <openssl/md5.h>
 #include <openssl/rand.h>
 
+#include "xmalloc.h"
 #include "ssh.h"
 #include "ssh1.h"
 #include "ssh2.h"
-#include "xmalloc.h"
 #include "rsa.h"
 #include "sshpty.h"
 #include "packet.h"
 #include "log.h"
+#include "buffer.h"
 #include "servconf.h"
 #include "uidswap.h"
 #include "compat.h"
-#include "buffer.h"
-#include "bufaux.h"
 #include "cipher.h"
-#include "kex.h"
 #include "key.h"
+#include "kex.h"
 #include "dh.h"
 #include "myproposal.h"
 #include "authfile.h"
 #include "pathnames.h"
 #include "atomicio.h"
 #include "canohost.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "misc.h"
 #include "msg.h"
@@ -96,6 +96,9 @@
 #include "session.h"
 #include "monitor_mm.h"
 #include "monitor.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
 #include "monitor_wrap.h"
 #include "monitor_fdpass.h"
 #include "version.h"

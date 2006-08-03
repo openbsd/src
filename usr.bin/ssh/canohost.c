@@ -1,4 +1,4 @@
-/* $OpenBSD: canohost.c,v 1.60 2006/08/01 23:22:47 stevesk Exp $ */
+/* $OpenBSD: canohost.c,v 1.61 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,8 +12,6 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#include "includes.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -25,9 +23,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
-#include "packet.h"
 #include "xmalloc.h"
+#include "packet.h"
 #include "log.h"
 #include "canohost.h"
 

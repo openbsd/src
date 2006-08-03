@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.141 2006/08/01 23:22:47 stevesk Exp $ */
+/* $OpenBSD: packet.c,v 1.142 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,10 +37,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
-#include <sys/queue.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/param.h>
@@ -55,22 +53,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "xmalloc.h"
 #include "buffer.h"
 #include "packet.h"
-#include "bufaux.h"
 #include "crc32.h"
-
 #include "compress.h"
 #include "deattack.h"
 #include "channels.h"
-
 #include "compat.h"
 #include "ssh1.h"
 #include "ssh2.h"
-
 #include "cipher.h"
+#include "key.h"
 #include "kex.h"
 #include "mac.h"
 #include "log.h"

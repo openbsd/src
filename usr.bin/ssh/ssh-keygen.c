@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.153 2006/08/01 23:22:47 stevesk Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.154 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,10 +12,9 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#include "includes.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <sys/param.h>
 
 #include <openssl/evp.h>
@@ -35,7 +34,6 @@
 #include "authfile.h"
 #include "uuencode.h"
 #include "buffer.h"
-#include "bufaux.h"
 #include "pathnames.h"
 #include "log.h"
 #include "misc.h"

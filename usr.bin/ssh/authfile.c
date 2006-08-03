@@ -1,4 +1,4 @@
-/* $OpenBSD: authfile.c,v 1.75 2006/08/01 23:36:11 stevesk Exp $ */
+/* $OpenBSD: authfile.c,v 1.76 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,11 +36,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/uio.h>
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -53,10 +53,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "cipher.h"
 #include "xmalloc.h"
+#include "cipher.h"
 #include "buffer.h"
-#include "bufaux.h"
 #include "key.h"
 #include "ssh.h"
 #include "log.h"

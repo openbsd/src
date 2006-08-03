@@ -1,4 +1,4 @@
-/* $OpenBSD: cipher-ctr.c,v 1.9 2006/07/22 20:48:22 stevesk Exp $ */
+/* $OpenBSD: cipher-ctr.c,v 1.10 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -14,15 +14,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "includes.h"
+
+#include <sys/types.h>
 
 #include <string.h>
 
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 
-#include "log.h"
 #include "xmalloc.h"
+#include "log.h"
 
 const EVP_CIPHER *evp_aes_128_ctr(void);
 void ssh_aes_ctr_iv(EVP_CIPHER_CTX *, int, u_char *, u_int);

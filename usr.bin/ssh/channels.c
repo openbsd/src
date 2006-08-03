@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.264 2006/08/01 23:36:11 stevesk Exp $ */
+/* $OpenBSD: channels.c,v 1.265 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,10 +39,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
-#include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -57,21 +55,22 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <stdarg.h>
 
+#include "xmalloc.h"
 #include "ssh.h"
 #include "ssh1.h"
 #include "ssh2.h"
 #include "packet.h"
-#include "xmalloc.h"
 #include "log.h"
 #include "misc.h"
+#include "buffer.h"
 #include "channels.h"
 #include "compat.h"
 #include "canohost.h"
 #include "key.h"
 #include "authfd.h"
 #include "pathnames.h"
-#include "bufaux.h"
 
 /* -- channel core */
 

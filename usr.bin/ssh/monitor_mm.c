@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_mm.c,v 1.14 2006/07/26 02:35:17 stevesk Exp $ */
+/* $OpenBSD: monitor_mm.c,v 1.15 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -24,16 +24,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
+#include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/tree.h>
 #include <sys/param.h>
 
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 
-#include "ssh.h"
 #include "xmalloc.h"
+#include "ssh.h"
 #include "log.h"
 #include "monitor_mm.h"
 

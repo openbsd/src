@@ -1,4 +1,4 @@
-/* $OpenBSD: readpass.c,v 1.46 2006/08/01 23:22:47 stevesk Exp $ */
+/* $OpenBSD: readpass.c,v 1.47 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -22,8 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "includes.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>

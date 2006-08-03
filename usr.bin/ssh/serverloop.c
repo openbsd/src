@@ -1,4 +1,4 @@
-/* $OpenBSD: serverloop.c,v 1.143 2006/07/26 02:35:17 stevesk Exp $ */
+/* $OpenBSD: serverloop.c,v 1.144 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,8 +35,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -52,6 +50,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -64,13 +63,16 @@
 #include "compat.h"
 #include "ssh1.h"
 #include "ssh2.h"
+#include "key.h"
+#include "cipher.h"
+#include "kex.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "session.h"
 #include "dispatch.h"
 #include "auth-options.h"
 #include "serverloop.h"
 #include "misc.h"
-#include "kex.h"
 
 extern ServerOptions options;
 
