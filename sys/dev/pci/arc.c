@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.6 2006/07/31 11:40:13 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.7 2006/08/03 08:29:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -166,7 +166,7 @@ struct arc_msg_scsicmd {
 struct arc_sge {
 	u_int32_t		sg_hdr;
 #define ARC_SGE_64BIT				(1<<24)
-	u_int32_t               sg_lo_addr;
+	u_int32_t		sg_lo_addr;
 	u_int32_t		sg_hi_addr;
 } __packed;
 
@@ -215,7 +215,7 @@ struct cfattach arc_ca = {
 };
 
 struct cfdriver arc_cd = {
-        NULL, "arc", DV_DULL
+	NULL, "arc", DV_DULL
 };
 
 /* interface for scsi midlayer to talk to */
@@ -439,9 +439,9 @@ arc_load_xs(struct arc_ccb *ccb)
 		bundle->cmd.flags |= ARC_MSG_SCSICMD_FLAG_SGL_BSIZE_512;
 	bundle->cmd.sgl_len = dmap->dm_nsegs;
 
-        bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-            (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
-            BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+	    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -607,13 +607,13 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, u_int32_t mask,
 
 	for (i = 0; i < 10000; i++) {
 		if ((arc_read(sc, r) & mask) == target)
-			return (0);  
+			return (0);
 		delay(1000);
 	}
 
-	return (1);         
+	return (1);
 }
-        
+
 int
 arc_wait_ne(struct arc_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
@@ -637,9 +637,9 @@ arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 {
 	struct arc_dmamem		*adm;
 	int				nsegs;
-        
+
 	adm = malloc(sizeof(struct arc_dmamem), M_DEVBUF, M_NOWAIT);
-        if (adm == NULL)
+	if (adm == NULL)
 		return (NULL);
 
 	bzero(adm, sizeof(struct arc_dmamem));
@@ -684,7 +684,7 @@ arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 	bus_dmamem_unmap(sc->sc_dmat, adm->adm_kva, adm->adm_size);
 	bus_dmamem_free(sc->sc_dmat, &adm->adm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
-        free(adm, M_DEVBUF);
+	free(adm, M_DEVBUF);
 }
 
 int
@@ -761,7 +761,7 @@ arc_get_ccb(struct arc_softc *sc)
 void
 arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
-        ccb->ccb_xs = NULL;
-        bzero(ccb->ccb_cmd, sc->sc_req_size);
-        TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
+	ccb->ccb_xs = NULL;
+	bzero(ccb->ccb_cmd, sc->sc_req_size);
+	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
 }
