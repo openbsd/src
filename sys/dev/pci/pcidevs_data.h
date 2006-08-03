@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1122 2006/08/03 00:49:45 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1123 2006/08/03 02:25:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5427,8 +5427,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6300ESB USB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5300ESB_USB,
-	    "5300ESB USB",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB,
+	    "6300ESB USB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_WDT,
