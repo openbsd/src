@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.21 2006/08/01 23:36:51 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.22 2006/08/03 18:45:40 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -193,15 +193,12 @@ dz_vsbus_attach(parent, self, aux)
 #if NDZKBD > 0
 		extern struct consdev wsdisplay_cons;
 
-		/* Don't change speed if this is the console */
-		if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0)) {
-			dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
-			    | DZ_LPR_8_BIT_CHAR;
-			daa.daa_line = 0;
-			daa.daa_flags =
-			    (cn_tab == &wsdisplay_cons ? DZKBD_CONSOLE : 0);
-			config_found(self, &daa, dz_print);
-		}
+		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
+		    | DZ_LPR_8_BIT_CHAR;
+		daa.daa_line = 0;
+		daa.daa_flags =
+		    (cn_tab == &wsdisplay_cons ? DZKBD_CONSOLE : 0);
+		config_found(self, &daa, dz_print);
 #endif
 #if NDZMS > 0
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) |
