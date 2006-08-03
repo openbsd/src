@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.12 2006/06/29 21:34:09 deraadt Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.13 2006/08/03 02:29:33 brad Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -132,6 +132,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
+	pcireg_t mem_type;
 	void *hook;
 	const char *intrstr = NULL;
 
@@ -141,7 +142,13 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* 
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, ATH_BAR0, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh,
+	mem_type = pci_mapreg_type(pc, pa->pa_tag, ATH_BAR0);
+	if (mem_type != PCI_MAPREG_TYPE_MEM &&
+	    mem_type != PCI_MAPREG_MEM_TYPE_64BIT) {
+		printf(": bad PCI register type %d\n", (int)mem_type);
+		goto bad;
+	}
+	if (pci_mapreg_map(pa, ATH_BAR0, mem_type, 0, &iot, &ioh,
 	    NULL, NULL, 0)) {
 		printf(": cannot map register space\n");
 		goto bad;
