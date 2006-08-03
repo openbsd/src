@@ -976,6 +976,7 @@
 ./usr/share/man/cat4/acpi.0
 ./usr/share/man/cat4/acpihpet.0
 ./usr/share/man/cat4/acpitimer.0
+./usr/share/man/cat4/acx.0
 ./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
 ./usr/share/man/cat4/admcts.0
