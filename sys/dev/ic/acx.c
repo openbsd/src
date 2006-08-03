@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.8 2006/08/03 22:32:06 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.9 2006/08/03 22:56:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -193,8 +193,7 @@ int	acx_set_null_tmplt(struct acx_softc *);
 int	acx_set_probe_req_tmplt(struct acx_softc *, const char *, int);
 int	acx_set_probe_resp_tmplt(struct acx_softc *, const char *, int,
 					 int);
-int	acx_set_beacon_tmplt(struct acx_softc *, const char *, int,
-				     int);
+int	acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 
 int	acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
@@ -333,7 +332,7 @@ acx_attach(struct acx_softc *sc)
 	/* Get station id */
 	for (i = 0; i < IEEE80211_ADDR_LEN; ++i) {
 		error = acx_read_eeprom(sc, sc->chip_ee_eaddr_ofs - i,
-					&ic->ic_myaddr[i]);
+		    &ic->ic_myaddr[i]);
 	}
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
@@ -391,8 +390,6 @@ acx_init(struct ifnet *ifp)
 	struct acx_softc *sc = ifp->if_softc;
 	int error;
 
-	printf("A\n");
-
 	error = acx_stop(sc);
 	if (error)
 		return EIO;
@@ -401,16 +398,12 @@ acx_init(struct ifnet *ifp)
 	if (sc->sc_enable != NULL)
 		(*sc->sc_enable)(sc);
 	
-	printf("B");
-
 	error = acx_init_tx_ring(sc);
 	if (error) {
 		printf("%s: can't initialize TX ring\n",
 		    sc->sc_dev.dv_xname);
 		goto back;
 	}
-
-	printf("C");
 
 	error = acx_init_rx_ring(sc);
 	if (error) {
@@ -419,13 +412,9 @@ acx_init(struct ifnet *ifp)
 		goto back;
 	}
 
-	printf("D");
-
 	error = acx_load_base_firmware(sc);
 	if (error)
 		goto back;
-
-	printf("E\n");
 
 	/*
 	 * Initialize command and information registers
@@ -433,8 +422,6 @@ acx_init(struct ifnet *ifp)
 	 */
 	acx_init_cmd_reg(sc);
 	acx_init_info_reg(sc);
-
-	printf("F");
 
 	sc->sc_flags |= ACX_FLAG_FW_LOADED;
 
@@ -446,8 +433,6 @@ acx_init(struct ifnet *ifp)
 	}
 #endif
 
-	printf("G");
-
 	/* XXX decide whether firmware is combined */
 	error = acx_load_radio_firmware(sc);
 	if (error)
@@ -457,14 +442,10 @@ acx_init(struct ifnet *ifp)
 	if (error)
 		goto back;
 
-	printf("H");
-
 	/* Get and set device various configuration */
 	error = acx_config(sc);
 	if (error)
 		goto back;
-
-	printf("I\n");
 
 	/* Setup crypto stuffs */
 	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
@@ -473,8 +454,6 @@ acx_init(struct ifnet *ifp)
 			goto back;
 //		sc->sc_ic.ic_flags &= ~IEEE80211_F_DROPUNENC;
 	}
-
-	printf("J");
 
 	/* Turn on power led */
 	CSR_CLRB_2(sc, ACXREG_GPIO_OUT, sc->chip_gpio_pled);
@@ -486,8 +465,6 @@ acx_init(struct ifnet *ifp)
 
 	/* Begin background scanning */
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_SCAN, -1);
-
-	printf("L\n");
 
 back:
 	if (error)
@@ -681,7 +658,7 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	for (i = 0; i < IEEE80211_ADDR_LEN; ++i)
 		conf->eaddr[IEEE80211_ADDR_LEN - 1 - i] = addr.eaddr[i];
 	printf("%s: MAC address (from firmware): %s\n",
-		  sc->sc_dev.dv_xname, ether_sprintf(conf->eaddr));
+	    sc->sc_dev.dv_xname, ether_sprintf(conf->eaddr));
 
 	/* Get region domain */
 	if (acx_get_regdom_conf(sc, &reg_dom) != 0) {
