@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.6 2006/08/03 19:31:25 deraadt Exp $ */
+/*	$OpenBSD: acx.c,v 1.7 2006/08/03 20:18:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -154,9 +154,6 @@ do {									\
 	}								\
 } while (0)
 
-#if 0
-int	acx_probe(device_t);
-#endif
 int	acx_attach(struct acx_softc *);
 int	acx_detach(void *);
 void	acx_shutdown(void *);
@@ -168,9 +165,6 @@ int	acx_config(struct acx_softc *);
 int	acx_read_config(struct acx_softc *, struct acx_config *);
 int	acx_write_config(struct acx_softc *, struct acx_config *);
 int	acx_set_crypt_keys(struct acx_softc *);
-#ifdef foo
-void	acx_begin_scan(struct acx_softc *);
-#endif
 void	acx_next_scan(void *);
 
 void	acx_start(struct ifnet *);
@@ -220,15 +214,6 @@ void	acx_node_update(struct acx_softc *, struct acx_node *,
 				uint8_t, uint8_t);
 int	acx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 
-#if 0
-int	acx_sysctl_txrate_upd_intvl_min(SYSCTL_HANDLER_ARGS);
-int	acx_sysctl_txrate_upd_intvl_max(SYSCTL_HANDLER_ARGS);
-int	acx_sysctl_txrate_sample_thresh(SYSCTL_HANDLER_ARGS);
-int	acx_sysctl_long_retry_limit(SYSCTL_HANDLER_ARGS);
-int	acx_sysctl_short_retry_limit(SYSCTL_HANDLER_ARGS);
-int	acx_sysctl_msdu_lifetime(SYSCTL_HANDLER_ARGS);
-#endif
-
 void	acx_init_cmd_reg(struct acx_softc *);
 int	acx_join_bss(struct acx_softc *, uint8_t, struct ieee80211_node *);
 int	acx_enable_txchan(struct acx_softc *, uint8_t);
@@ -251,66 +236,9 @@ int		acx_beacon_intvl = 100;	/* 100 TU */
 #define ACX_MODE_STA	2
 #define ACX_MODE_AP	3
 
-#if 0
-static const struct acx_device {
-	uint16_t	vid;
-	uint16_t	did;
-	void		(*set_param)(struct acx_softc *);
-	const char	*desc;
-} acx_devices[] = {
-	{ PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A, acx100_set_param,
-	  "Texas Instruments TNETW1100A Wireless Adapter" },
-	{ PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100B, acx100_set_param,
-	  "Texas Instruments TNETW1100B Wireless Adapter" },
-	{ PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111, acx111_set_param,
-	  "Texas Instruments TNETW1130 Wireless Adapter" },
-	{ 0, 0, NULL, NULL }
-};
-
-static device_method_t acx_methods[] = {
-	DEVMETHOD(device_probe,		acx_probe),
-	DEVMETHOD(device_attach,	acx_attach),
-	DEVMETHOD(device_detach,	acx_detach),
-	DEVMETHOD(device_shutdown,	acx_shutdown),
-	DEVMETHOD(device_suspend,	acx_suspend),
-	DEVMETHOD(device_resume,	acx_resume),
-	{ 0, 0 }
-};
-#endif
-
 struct cfdriver acx_cd = {
 	NULL, "acx", DV_IFNET
 };
-
-#if 0
-static driver_t acx_driver = {
-	"acx",
-	acx_methods,
-	sizeof(struct acx_softc)
-};
-
-static devclass_t acx_devclass;
-#endif
-
-#if 0
-int
-acx_probe(device_t dev)
-{
-	const struct acx_device *a;
-	uint16_t did, vid;
-
-	vid = pci_get_vendor(dev);
-	did = pci_get_device(dev);
-	for (a = acx_devices; a->desc != NULL; ++a) {
-		if (vid == a->vid && did == a->did) {
-			a->set_param(dev);
-			device_set_desc(dev, a->desc);
-			return 0;
-		}
-	}
-	return ENXIO;
-}
-#endif
 
 int
 acx_attach(struct acx_softc *sc)
@@ -319,71 +247,8 @@ acx_attach(struct acx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i, error;
 
-	//acx111_set_param(sc);
-	//acx100_set_param(sc);
-
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-
-#if 0
-#ifndef BURN_BRIDGES
-	if (pci_get_powerstate(dev) != PCI_POWERSTATE_D0) {
-		uint32_t mem1, mem2, irq;
-
-		mem1 = pci_read_config(dev, sc->chip_mem1_rid, 4);
-		mem2 = pci_read_config(dev, sc->chip_mem2_rid, 4);
-		irq = pci_read_config(dev, PCIR_INTLINE, 4);
-
-		device_printf(dev, "chip is in D%d power mode "
-		    "-- setting to D0\n", pci_get_powerstate(dev));
-
-		pci_set_powerstate(dev, PCI_POWERSTATE_D0);
-
-		pci_write_config(dev, sc->chip_mem1_rid, mem1, 4);
-		pci_write_config(dev, sc->chip_mem2_rid, mem2, 4);
-		pci_write_config(dev, PCIR_INTLINE, irq, 4);
-	}
-#endif	/* !BURN_BRIDGE */
-#endif
-
-#if 0
-	/* Enable bus mastering */
-	pci_enable_busmaster(dev); 
-
-	/* Allocate IO memory 1 */
-	sc->sc_mem1_res = bus_alloc_resource_any(dev, SYS_RES_MEMORY,
-						 &sc->chip_mem1_rid,
-						 RF_ACTIVE);
-	if (sc->sc_mem1_res == NULL) {
-		error = ENXIO;
-		device_printf(dev, "can't allocate IO mem1\n");
-		goto fail;
-	}
-	sc->sc_mem1_bt = rman_get_bustag(sc->sc_mem1_res);
-	sc->sc_mem1_bh = rman_get_bushandle(sc->sc_mem1_res);
-
-	/* Allocate IO memory 2 */
-	sc->sc_mem2_res = bus_alloc_resource_any(dev, SYS_RES_MEMORY,
-						 &sc->chip_mem2_rid,
-						 RF_ACTIVE);
-	if (sc->sc_mem2_res == NULL) {
-		error = ENXIO;
-		device_printf(dev, "can't allocate IO mem2\n");
-		goto fail;
-	}
-	sc->sc_mem2_bt = rman_get_bustag(sc->sc_mem2_res);
-	sc->sc_mem2_bh = rman_get_bushandle(sc->sc_mem2_res);
-
-	/* Allocate irq */
-	sc->sc_irq_res = bus_alloc_resource_any(dev, SYS_RES_IRQ,
-						&sc->sc_irq_rid,
-						RF_SHAREABLE | RF_ACTIVE);
-	if (sc->sc_irq_res == NULL) {
-		error = ENXIO;
-		device_printf(dev, "can't allocate intr\n");
-		goto fail;
-	}
-#endif
 
 	/* Initilize channel scanning timer */
 	timeout_set(&sc->sc_chanscan_timer, acx_next_scan, sc);
@@ -391,12 +256,12 @@ acx_attach(struct acx_softc *sc)
 	/* Allocate busdma stuffs */
 	error = acx_dma_alloc(sc);
 	if (error)
-		goto fail;
+		return (error);
 
 	/* Reset Hardware */
 	error = acx_reset(sc);
 	if (error)
-		goto fail;
+		return (error);
 
 	/* Disable interrupts before firmware is loaded */
 	acx_disable_intr(sc);
@@ -414,10 +279,9 @@ acx_attach(struct acx_softc *sc)
 		}
 		DELAY(10000);
 	}
-	if (i == EEINFO_RETRY_MAX) {
-		error = ENXIO;
-		goto fail;
-	}
+	if (i == EEINFO_RETRY_MAX)
+		return (ENXIO);
+
 #undef EEINFO_RETRY_MAX
 
 	printf(", radio %02x", sc->sc_radio_type);
@@ -437,7 +301,7 @@ acx_attach(struct acx_softc *sc)
 	/* Get EEPROM version */
 	error = acx_read_eeprom(sc, ACX_EE_VERSION_OFS, &sc->sc_eeprom_ver);
 	if (error)
-		goto fail;
+		return (error);
 
 	printf(", version %u", sc->sc_eeprom_ver);
 
@@ -494,78 +358,7 @@ acx_attach(struct acx_softc *sc)
 	sc->sc_short_retry_limit = 7;
 	sc->sc_msdu_lifetime = 4096;
 
-#if 0
-	sysctl_ctx_init(&sc->sc_sysctl_ctx);
-	sc->sc_sysctl_tree = SYSCTL_ADD_NODE(&sc->sc_sysctl_ctx,
-					     SYSCTL_STATIC_CHILDREN(_hw),
-					     OID_AUTO,
-					     device_get_nameunit(dev),
-					     CTLFLAG_RD, 0, "");
-	if (sc->sc_sysctl_tree == NULL) {
-		device_printf(dev, "can't add sysctl node\n");
-		error = ENXIO;
-		goto fail1;
-	}
-
-	SYSCTL_ADD_PROC(&sc->sc_sysctl_ctx,
-			SYSCTL_CHILDREN(sc->sc_sysctl_tree),
-			OID_AUTO, "txrate_upd_intvl_min",
-			CTLTYPE_INT | CTLFLAG_RW,
-			sc, 0, acx_sysctl_txrate_upd_intvl_min, "I",
-			"min seconds to wait before raising TX rate");
-	SYSCTL_ADD_PROC(&sc->sc_sysctl_ctx,
-			SYSCTL_CHILDREN(sc->sc_sysctl_tree),
-			OID_AUTO, "txrate_upd_intvl_max",
-			CTLTYPE_INT | CTLFLAG_RW,
-			sc, 0, acx_sysctl_txrate_upd_intvl_max, "I",
-			"max seconds to wait before raising TX rate");
-	SYSCTL_ADD_PROC(&sc->sc_sysctl_ctx,
-			SYSCTL_CHILDREN(sc->sc_sysctl_tree),
-			OID_AUTO, "txrate_sample_threshold",
-			CTLTYPE_INT | CTLFLAG_RW,
-			sc, 0, acx_sysctl_txrate_sample_thresh, "I",
-			"number of packets to be sampled "
-			"before raising TX rate");
-
-	SYSCTL_ADD_PROC(&sc->sc_sysctl_ctx,
-			SYSCTL_CHILDREN(sc->sc_sysctl_tree),
-			OID_AUTO, "long_retry_limit",
-			CTLTYPE_INT | CTLFLAG_RW,
-			sc, 0, acx_sysctl_long_retry_limit, "I",
-			"max number of retries for RTS packets");
-	SYSCTL_ADD_PROC(&sc->sc_sysctl_ctx,
-			SYSCTL_CHILDREN(sc->sc_sysctl_tree),
-			OID_AUTO, "short_retry_limit",
-			CTLTYPE_INT | CTLFLAG_RW,
-			sc, 0, acx_sysctl_short_retry_limit, "I",
-			"max number of retries for non-RTS packets");
-
-	SYSCTL_ADD_PROC(&sc->sc_sysctl_ctx,
-			SYSCTL_CHILDREN(sc->sc_sysctl_tree),
-			OID_AUTO, "msdu_lifetime",
-			CTLTYPE_INT | CTLFLAG_RW,
-			sc, 0, acx_sysctl_msdu_lifetime, "I",
-			"MSDU life time");
-#endif
-
-
-#if 0
-	error = bus_setup_intr(dev, sc->sc_irq_res, INTR_MPSAFE, acx_intr, sc,
-			       &sc->sc_irq_handle, ifp->if_serializer);
-	if (error) {
-		device_printf(dev, "can't set up interrupt\n");
-		goto fail1;
-	}
-
-	if (bootverbose)
-		ieee80211_announce(ic);
-#endif
-
-	return 0;
-//fail1:
-	ieee80211_ifdetach(ifp);
-fail:
-	return error;
+	return (0);
 }
 
 int
@@ -581,7 +374,7 @@ acx_detach(void *xsc)
 	ieee80211_ifdetach(ifp);
 
 	acx_dma_free(sc);
-	return 0;
+	return (0);
 }
 
 void
@@ -692,11 +485,7 @@ acx_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Begin background scanning */
-#ifdef foo
-	acx_begin_scan(sc);
-#else
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_SCAN, -1);
-#endif
 
 	printf("L\n");
 
@@ -753,25 +542,6 @@ acx_set_crypt_keys(struct acx_softc *sc)
 	return ENXIO;
 }
 
-#ifdef foo
-void
-acx_begin_scan(struct acx_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t chan;
-
-	ieee80211_begin_scan(ic, 1);
-
-	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-
-	ACX_ENABLE_TXCHAN(sc, chan);
-	ACX_ENABLE_RXCHAN(sc, chan);
-
-	/* Start background scanning */
-	timeout_add(&sc->sc_chanscan_timer, hz / acx_chanscan_rate);
-}
-#endif
-
 void
 acx_next_scan(void *arg)
 {
@@ -779,23 +549,8 @@ acx_next_scan(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
-	if (ic->ic_state == IEEE80211_S_SCAN) {
-#if 0
-		uint8_t chan;
-#endif
-
+	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ifp);
-
-#if 0
-		chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-
-		ACX_ENABLE_TXCHAN(sc, chan);
-		ACX_ENABLE_RXCHAN(sc, chan);
-
-		callout_reset(&sc->sc_chanscan_timer, hz / acx_chanscan_rate,
-			      acx_next_scan, sc);
-#endif
-	}
 }
 
 int
