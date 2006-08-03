@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.1 2006/08/03 08:45:06 deraadt Exp $
+.\"	$OpenBSD: acx.4,v 1.2 2006/08/03 19:35:20 deraadt Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -35,18 +35,18 @@
 .Dt ACX 4
 .Sh NAME
 .Nm acx
-.Nd Texas Instruments ACX100/ACX111 IEEE 802.11b/g adapters
+.Nd TI ACX100/ACX111 IEEE 802.11b/g adapters
 .Sh SYNOPSIS
 .Cd "acx* at cardbus?"
 .Cd "acx* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Texas Instruments ACX100 or ACX111
+driver provides support for TI ACX100 or ACX111
 based PCI/Cardbus network adapters.
 .Pp
 The ACX100A and ACX100B are the first generation 802.11b devices
-from Texas Instruments.
+from TI.
 The ACX111 is the second generation device which supports 802.11b/g.
 .Pp
 These are the modes the
@@ -237,7 +237,7 @@ an interface is brought up:
 .It Pa /etc/firmware/tiacx111
 .El
 .Pp
-This firmware files are not free because Texas Instruments refuses
+This firmware files are not free because TI refuses
 to grant distribution rights, in fact, they have rebuffed thousands
 of attempts to start a dialogue on this issue.
 As a result, even though
