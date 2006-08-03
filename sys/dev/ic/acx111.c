@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.3 2006/08/03 10:47:42 mglocker Exp $ */
+/*	$OpenBSD: acx111.c,v 1.4 2006/08/03 12:00:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -49,8 +49,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
- * $DragonFly$
  */
 
 #include <sys/param.h>
