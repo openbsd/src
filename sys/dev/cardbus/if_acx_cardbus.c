@@ -1,6 +1,7 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.2 2006/08/03 10:12:37 mglocker Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.3 2006/08/03 10:47:42 mglocker Exp $  */
 
-/*-
+/*
+ * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2005, 2006
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
