@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1124 2006/08/03 02:43:56 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1125 2006/08/03 19:34:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -88,7 +88,7 @@
 #define	PCI_VENDOR_ELSA	0x1048		/* Elsa */
 #define	PCI_VENDOR_SGSTHOMSON	0x104a		/* SGS Thomson */
 #define	PCI_VENDOR_BUSLOGIC	0x104b		/* BusLogic */
-#define	PCI_VENDOR_TI	0x104c		/* Texas Instruments */
+#define	PCI_VENDOR_TI	0x104c		/* TI */
 #define	PCI_VENDOR_SONY	0x104d		/* Sony */
 #define	PCI_VENDOR_OAKTECH	0x104e		/* Oak Technology */
 #define	PCI_VENDOR_WINBOND	0x1050		/* Winbond */

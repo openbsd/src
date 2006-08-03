@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1124 2006/08/03 02:43:56 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1125 2006/08/03 19:34:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -12136,7 +12136,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TI,
-	    "Texas Instruments",
+	    "TI",
 	},
 	{
 	    PCI_VENDOR_SONY,
