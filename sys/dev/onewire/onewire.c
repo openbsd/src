@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.2 2006/08/03 18:48:13 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -332,7 +332,7 @@ onewire_scan(struct onewire_softc *sc)
 	int dir, rv;
 	u_int64_t mask, rom = 0, lastrom;
 	u_int8_t data[8];
-	int i, i0 = -1;
+	int i, i0, lastd = -1;
 
 	TAILQ_FOREACH(d, &sc->sc_devs, d_list)
 		d->d_present = 0;
@@ -363,15 +363,18 @@ onewire_scan(struct onewire_softc *sc)
 		lastrom = rom;
 		rom = 0;
 		onewire_write_byte(sc, ONEWIRE_CMD_SEARCH_ROM);
-		for (i = 0; i < 64; i++) {
+		for (i = 0, i0 = -1; i < 64; i++) {
 			dir = (lastrom >> i) & 0x1;
-			if (i == i0)
-				dir = !dir;
+			if (i == lastd)
+				dir = 1;
+			else if (i > lastd)
+				dir = 0;
 			rv = onewire_triplet(sc, dir);
 			switch (rv) {
 			case 0x0:
-				if (i != i0) {
-					i0 = i;
+				if (i != lastd) {
+					if (dir == 0)
+						i0 = i;
 					search = 1;
 				}
 				mask = dir;
@@ -391,6 +394,7 @@ onewire_scan(struct onewire_softc *sc)
 			}
 			rom |= (mask << i);
 		}
+		lastd = i0;
 		onewire_unlock(sc);
 
 		if (rom == 0)
