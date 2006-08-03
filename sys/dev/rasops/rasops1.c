@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops1.c,v 1.4 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops1.c,v 1.5 2006/08/03 18:42:06 miod Exp $	*/
 /*	$NetBSD: rasops1.c,v 1.11 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ void
 rasops1_init(ri)
 	struct rasops_info *ri;
 {
+	rasops_masks_init();
 
 	switch (ri->ri_font->fontwidth) {
 #ifndef RASOPS_SMALL
