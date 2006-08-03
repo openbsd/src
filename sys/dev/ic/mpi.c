@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.63 2006/07/15 04:09:57 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.64 2006/08/03 08:48:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1103,7 +1103,9 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1112,7 +1114,9 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 	DNPRINTF(MPI_D_CMD, "%s: ccb_id: %d xs->flags: 0x%x\n",
@@ -1164,11 +1168,11 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	    ((u_int8_t *)&mcb->mcb_sense - (u_int8_t *)mcb));
 
 	if (mpi_load_xs(ccb) != 0) {
+		xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
 		mpi_put_ccb(sc, ccb);
-		splx(s);
-		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1180,7 +1184,9 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		return (COMPLETE);
 	}
 
+	s = splbio();
 	mpi_start(sc, ccb);
+	splx(s);
 	return (SUCCESSFULLY_QUEUED);
 }
 
@@ -2009,7 +2015,6 @@ mpi_eventnotify(struct mpi_softc *sc)
 	enq->msg_context = htole32(ccb->ccb_id);
 
 	mpi_start(sc, ccb);
-
 	return (0);
 }
 
