@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.7 2006/08/03 20:18:02 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.8 2006/08/03 22:32:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -987,8 +987,6 @@ acx_start(struct ifnet *ifp)
 			}
 
 			rate = node->nd_rates.rs_rates[node->nd_txrate];
-
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 		} else {
 			break;
 		}
@@ -1003,11 +1001,6 @@ acx_start(struct ifnet *ifp)
 				continue;
 			}
 		}
-
-#if NBPFILTER > 0
-		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
-#endif
 
 		if (acx_encap(sc, buf, m, ni, rate) != 0) {
 			/*
@@ -2061,6 +2054,8 @@ acx_dma_alloc(struct acx_softc *sc)
 		return error;
 	}
 
+	rd->rx_ring_paddr = rd->rx_ring_dmamap->dm_segs[0].ds_addr;
+
 	/* Allocate DMA stuffs for TX descriptors */
 	error = bus_dmamap_create(sc->sc_dmat, ACX_TX_RING_SIZE, 1,
 	    ACX_TX_RING_SIZE, 0, BUS_DMA_NOWAIT, &rd->tx_ring_dmamap);
@@ -2097,6 +2092,8 @@ acx_dma_alloc(struct acx_softc *sc)
 		bus_dmamem_free(sc->sc_dmat, &rd->tx_ring_seg, 1);
 		return error;
 	}
+
+	rd->tx_ring_paddr = rd->tx_ring_dmamap->dm_segs[0].ds_addr;
 
 	/* Create a spare RX DMA map */
 	error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
@@ -2193,6 +2190,7 @@ acx_init_tx_ring(struct acx_softc *sc)
 	for (i = 0; i < (ACX_TX_DESC_CNT * 2) - 1; ++i) {
 		paddr += sizeof(struct acx_host_desc);
 
+		bzero(&rd->tx_ring[i], sizeof(struct acx_host_desc));
 		rd->tx_ring[i].h_ctrl = htole16(DESC_CTRL_HOSTOWN);
 
 		if (i == (ACX_TX_DESC_CNT * 2) - 1)
@@ -2228,6 +2226,7 @@ acx_init_rx_ring(struct acx_softc *sc)
 		int error;
 
 		paddr += sizeof(struct acx_host_desc);
+		bzero(&rd->rx_ring[i], sizeof(struct acx_host_desc));
 
 		error = acx_newbuf(sc, &bd->rx_buf[i], 1);
 		if (error)
@@ -2245,21 +2244,6 @@ acx_init_rx_ring(struct acx_softc *sc)
 	bd->rx_scan_start = 0;
 	return 0;
 }
-
-#if 0
-void
-acx_buf_dma_addr(void *arg, bus_dma_segment_t *seg, int nseg,
-		 bus_size_t mapsz, int error)
-{
-	if (error)
-		return;
-
-	/* XXX */
-	if (nseg != 1)
-		panic("too many RX DMA segments\n");
-	*((uint32_t *)arg) = seg->ds_addr;
-}
-#endif
 
 int
 acx_newbuf(struct acx_softc *sc, struct acx_rxbuf *rb, int wait)
@@ -2301,6 +2285,7 @@ acx_newbuf(struct acx_softc *sc, struct acx_rxbuf *rb, int wait)
 	map = rb->rb_mbuf_dmamap;
 	rb->rb_mbuf_dmamap = bd->mbuf_tmp_dmamap;
 	bd->mbuf_tmp_dmamap = map;
+	paddr = rb->rb_mbuf_dmamap->dm_segs[0].ds_addr;
 
 	rb->rb_mbuf = m;
 	rb->rb_desc->h_data_paddr = htole32(paddr);
@@ -2350,10 +2335,13 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 		/* too many fragments, linearize */
 		struct mbuf *mnew;
 
+		error = 0;
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
 			m_freem(m);
 			error = ENOBUFS;
+			printf("%s: can't defrag tx mbuf\n", ifp->if_xname);
+			goto back;
 		}
 		
 		M_DUP_PKTHDR(mnew, m);
@@ -2415,6 +2403,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 	 * host_desc2.h_data_len = buffer_len - mac_header_len
 	 */
 
+	paddr = txbuf->tb_mbuf_dmamap->dm_segs[0].ds_addr;
 	txbuf->tb_desc1->h_data_paddr = htole32(paddr);
 	txbuf->tb_desc2->h_data_paddr = htole32(paddr + ACX_FRAME_HDRLEN);
 
