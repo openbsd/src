@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.10 2006/06/01 20:10:28 mbalmer Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.11 2006/08/03 16:13:24 mbalmer Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -51,16 +51,6 @@
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
 
 int	nullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
-
-#include "tb.h"
-#if NTB > 0
-int	tbopen(dev_t dev, struct tty *tp);
-int	tbclose(struct tty *tp, int flags);
-int	tbread(struct tty *tp, struct uio *uio, int flags);
-int	tbtioctl(struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p);
-int	tbinput(int c, struct tty *tp);
-#endif
 
 #include "sl.h"
 #if NSL > 0
@@ -117,13 +107,9 @@ struct	linesw linesw[] =
 	  ttyerrinput, ttyerrstart, nullmodem },	/* 2- defunct */
 #endif
 
-#if NTB > 0
-	{ tbopen, tbclose, tbread, ttyerrio, tbtioctl,
-	  tbinput, ttstart, nullmodem },		/* 3- TABLDISC */
-#else
+	/* 3- TABLDISC (defunct) */
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
-#endif
 
 #if NSL > 0
 	{ slopen, slclose, ttyerrio, ttyerrio, sltioctl,
