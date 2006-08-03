@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.146 2006/04/12 14:23:46 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.147 2006/08/03 22:40:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2018,10 +2018,19 @@ fetchtable(void)
 				break;
 			}
 
-		if (sa->sa_family == AF_INET)
-			kroute_insert(kr);
-		else if (sa->sa_family == AF_INET6)
-			kroute6_insert(kr6);
+		if (sa->sa_family == AF_INET) {
+			if (rtm->rtm_flags & RTF_PROTO1)  {
+				send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
+				free(kr);
+			} else
+				kroute_insert(kr);
+		} else if (sa->sa_family == AF_INET6) {
+			if (rtm->rtm_flags & RTF_PROTO1)  {
+				send_rt6msg(kr_state.fd, RTM_DELETE, &kr6->r);
+				free(kr6);
+			} else
+				kroute6_insert(kr6);
+		}
 
 	}
 	free(buf);
