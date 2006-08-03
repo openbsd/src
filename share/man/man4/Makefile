@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.372 2006/07/31 10:04:04 jsg Exp $
+#	$OpenBSD: Makefile,v 1.373 2006/08/03 08:45:06 deraadt Exp $
 
-MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpihpet.4 acpitimer.4 \
+MAN=	aac.4 ac97.4 acx.4 acphy.4 acpi.4 acpihpet.4 acpitimer.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
 	admtm.4 admtmp.4 admtt.4 adt.4 adv.4 aha.4 ahb.4 ahc.4 ahd.4 aic.4 \
 	akbd.4 alipm.4 amdiic.4 amdpm.4 ami.4 amphy.4 ams.4 \
