@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.33 2005/08/18 15:18:19 jaredy Exp $
+.\"	$OpenBSD: intro.2,v 1.34 2006/08/03 20:49:44 beck Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -415,6 +415,8 @@ Not used in
 .Ox .
 .It Er 83 ENOATTR Em "Attribute not found" .
 A UFS Extended Attribute is not found for the specified pathname.
+.It Er 83 EILSEQ Em "Illegal byte sequence" .
+An Illegal sequence of bytes was used when using wide characters.
 .El
 .Sh DEFINITIONS
 .Bl -tag -width Ds
