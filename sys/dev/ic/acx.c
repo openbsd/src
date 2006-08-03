@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.3 2006/08/03 10:47:42 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.4 2006/08/03 11:17:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -57,7 +57,7 @@
  * Copyright (c) 2003-2004 wlan.kewl.org Project
  * All rights reserved.
  * 
- * $Id: acx.c,v 1.3 2006/08/03 10:47:42 mglocker Exp $
+ * $Id: acx.c,v 1.4 2006/08/03 11:17:28 mglocker Exp $
  *  
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1765,7 +1765,7 @@ acx_load_base_firmware(struct acx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i, error;
 	uint8_t *ucode;
-	const char name[]= "acx-100_base";
+	const char name[]= "tiacx100";
 	size_t size;
 
 	error = loadfirmware(name, &ucode, &size);
@@ -1814,7 +1814,7 @@ acx_load_radio_firmware(struct acx_softc *sc)
 	uint32_t radio_fw_ofs;
 	int error;
 	uint8_t *ucode;
-	const char name[] = "acx-100_radio_0d";
+	const char name[] = "tiacx100r0D";
 	size_t size;
 
 	error = loadfirmware(name, &ucode, &size);
