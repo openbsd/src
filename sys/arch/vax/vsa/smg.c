@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.14 2006/08/02 20:10:19 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.15 2006/08/03 18:44:32 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -304,17 +304,6 @@ smg_setup_screen(struct smg_screen *ss)
 	ri->ri_flg = RI_CLEAR | RI_CENTER;
 	ri->ri_bits = (void *)ss->ss_addr;
 	ri->ri_hw = ss;
-
-	/*
-	 * We can not let rasops select our font, because we need to use
-	 * a font with right-to-left bit order on this frame buffer.
-	 */
-	wsfont_init();
-	if ((ri->ri_wsfcookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
-		return (-1);
-	if (wsfont_lock(ri->ri_wsfcookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
-		return (-1);
 
 	/*
 	 * Ask for an unholy big display, rasops will trim this to more
