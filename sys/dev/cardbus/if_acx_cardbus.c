@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.4 2006/08/03 20:24:51 mglocker Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.5 2006/08/03 22:48:36 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -146,7 +146,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	error = Cardbus_mapreg_map(ct, b1, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_mem1_bt, &sc->sc_mem1_bh, &base, &csc->sc_mapsize1);
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		printf(": could not map memory1 space\n");
 		return;
 	}
 
@@ -156,7 +156,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	error = Cardbus_mapreg_map(ct, b2, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_mem2_bt, &sc->sc_mem2_bh, &base, &csc->sc_mapsize2);
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		printf(": could not map memory2 space\n");
 		return;
 	}
 
