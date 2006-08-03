@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.24 2006/07/18 16:40:30 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.25 2006/08/03 09:28:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1283,8 +1283,6 @@ rt2661_intr(void *arg)
 #define RAL_ACK_SIZE	14	/* 10 + 4(FCS) */
 #define RAL_CTS_SIZE	14	/* 10 + 4(FCS) */
 
-#define RAL_SIFS	10	/* us */
-
 /*
  * This function is only used by the Rx radiotap code. It returns the rate at
  * which a given frame was received.
@@ -1529,7 +1527,7 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		flags |= RT2661_TX_NEED_ACK;
 
 		dur = rt2661_txtime(RAL_ACK_SIZE, rate, ic->ic_flags) +
-		    RAL_SIFS;
+		    sc->sifs;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
 		/* tell hardware to set timestamp in probe responses */
@@ -1669,7 +1667,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		dur = rt2661_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
 		      rt2661_txtime(RAL_CTS_SIZE, rtsrate, ic->ic_flags) +
 		      rt2661_txtime(RAL_ACK_SIZE, ackrate, ic->ic_flags) +
-		      3 * RAL_SIFS;
+		      3 * sc->sifs;
 
 		m = rt2661_get_rts(sc, wh, dur);
 		if (m == NULL) {
@@ -1800,7 +1798,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		flags |= RT2661_TX_NEED_ACK;
 
 		dur = rt2661_txtime(RAL_ACK_SIZE, rt2661_ack_rate(ic, rate),
-		    ic->ic_flags) + RAL_SIFS;
+		    ic->ic_flags) + sc->sifs;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
 
@@ -2197,6 +2195,9 @@ rt2661_select_band(struct rt2661_softc *sc, struct ieee80211_channel *c)
 	else
 		tmp |= RT2661_PA_PE_5GHZ;
 	RAL_WRITE(sc, RT2661_PHY_CSR0, tmp);
+
+	/* 802.11a uses a 16 microseconds short interframe space */
+	sc->sifs = IEEE80211_IS_CHAN_5GHZ(c) ? 16 : 10;
 }
 
 void
@@ -2293,7 +2294,7 @@ rt2661_set_macaddr(struct rt2661_softc *sc, const uint8_t *addr)
 	tmp = addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24;
 	RAL_WRITE(sc, RT2661_MAC_CSR2, tmp);
 
-	tmp = addr[4] | addr[5] << 8;
+	tmp = addr[4] | addr[5] << 8 | 0xff << 16;
 	RAL_WRITE(sc, RT2661_MAC_CSR3, tmp);
 }
 

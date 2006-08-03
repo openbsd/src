@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.7 2006/06/18 18:44:04 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.8 2006/08/03 09:28:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -145,6 +145,7 @@ struct rt2661_softc {
 
 	int				ncalls;
 	int				avg_rssi;
+	int				sifs;
 
 	uint32_t			erp_csr;
 
@@ -156,24 +157,24 @@ struct rt2661_softc {
 	uint8_t				bbp64;
 
 #if NBPFILTER > 0
-	caddr_t			sc_drvbpf;
+	caddr_t				sc_drvbpf;
 
 	union {
 		struct rt2661_rx_radiotap_header th;
 		uint8_t	pad[64];
-	}			sc_rxtapu;
-#define sc_rxtap		sc_rxtapu.th
-	int			sc_rxtap_len;
+	}				sc_rxtapu;
+#define sc_rxtap			sc_rxtapu.th
+	int				sc_rxtap_len;
 
 	union {
 		struct rt2661_tx_radiotap_header th;
 		uint8_t	pad[64];
-	}			sc_txtapu;
-#define sc_txtap		sc_txtapu.th
-	int			sc_txtap_len;
+	}				sc_txtapu;
+#define sc_txtap			sc_txtapu.th
+	int				sc_txtap_len;
 #endif
-	void			*sc_sdhook;	/* shutdown hook */
-	void			*sc_powerhook;	/* power management hook */
+	void				*sc_sdhook;
+	void				*sc_powerhook;
 };
 
 int	rt2661_attach(void *, int);
