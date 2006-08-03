@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.381 2006/07/19 18:38:42 grunk Exp $
+#	$OpenBSD: files,v 1.382 2006/08/03 08:45:01 mglocker Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -367,6 +367,12 @@ file	dev/ic/rtw.c			rtw
 device	ral: ether, ifnet, ifmedia, firmload, wlan
 file	dev/ic/rt2560.c			ral
 file	dev/ic/rt2661.c			ral
+
+# Texas Instruments ACX 802.11
+device	acx: ether, ifnet, ifmedia, firmload, wlan
+file	dev/ic/acx.c			acx
+file	dev/ic/acx111.c			acx
+file	dev/ic/acx100.c			acx
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.19 2006/07/31 11:06:27 mickey Exp $
+#	$OpenBSD: files.cardbus,v 1.20 2006/08/03 08:45:01 mglocker Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -75,6 +75,12 @@ file	dev/cardbus/if_rtw_cardbus.c		rtw_cardbus
 #
 attach	ral at cardbus with ral_cardbus
 file	dev/cardbus/if_ral_cardbus.c		ral_cardbus
+
+#
+# Texas Instruments ACX
+#
+attach	acx at cardbus with acx_cardbus
+file	dev/cardbus/if_acx_cardbus.c
 
 #
 # EHCI USB controller
