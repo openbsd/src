@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1124 2006/08/03 02:43:56 brad Exp $
+$OpenBSD: pcidevs,v 1.1125 2006/08/03 19:34:39 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ vendor	OPTI		0x1045	Opti
 vendor	ELSA		0x1048	Elsa
 vendor	SGSTHOMSON	0x104a	SGS Thomson
 vendor	BUSLOGIC	0x104b	BusLogic
-vendor	TI		0x104c	Texas Instruments
+vendor	TI		0x104c	TI
 vendor	SONY		0x104d	Sony
 vendor	OAKTECH		0x104e	Oak Technology
 vendor	WINBOND		0x1050	Winbond
