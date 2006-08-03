@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1121 2006/08/02 18:38:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1122 2006/08/03 00:49:45 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2602,6 +2602,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_ISA	0x00d0		/* nForce3 ISA */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 PCI Host */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB2	0x00d2		/* nForce3 PCI-PCI */
+#define	PCI_PRODUCT_NVIDIA_CK804_MEM	0x00d3		/* CK804 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_SMB	0x00d4		/* nForce3 SMBus */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_IDE	0x00d5		/* nForce3 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_LAN1	0x00d6		/* nForce3 LAN */
