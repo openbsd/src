@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.24 2006/08/04 14:25:24 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.25 2006/08/04 14:33:02 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -515,7 +515,7 @@ ixgb_init(void *arg)
 	}
 	ixgb_initialize_receive_unit(sc);
 
-	/* Don't loose promiscuous settings */
+	/* Don't lose promiscuous settings */
 	ixgb_set_promisc(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
