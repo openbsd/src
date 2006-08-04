@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.10 2006/08/04 10:47:15 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.11 2006/08/04 11:58:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -641,28 +641,12 @@ acx_config(struct acx_softc *sc)
 int
 acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 {
-	struct acx_conf_eaddr addr;
 	struct acx_conf_regdom reg_dom;
 	struct acx_conf_antenna ant;
 	struct acx_conf_fwrev fw_rev;
 	uint32_t fw_rev_no;
 	uint8_t sen;
-	int i, error;
-
-	/* Get station id */
-	if (acx_get_eaddr_conf(sc, &addr) != 0) {
-		printf("%s: can't get station id\n", sc->sc_dev.dv_xname);
-		return ENXIO;
-	}
-
-	/*
-	 * Get and print station id in case that EEPROM station id's
-	 * offset is not correct
-	 */
-	for (i = 0; i < IEEE80211_ADDR_LEN; ++i)
-		conf->eaddr[IEEE80211_ADDR_LEN - 1 - i] = addr.eaddr[i];
-	printf("%s: MAC address (from firmware): %s\n",
-	    sc->sc_dev.dv_xname, ether_sprintf(conf->eaddr));
+	int error;
 
 	/* Get region domain */
 	if (acx_get_regdom_conf(sc, &reg_dom) != 0) {

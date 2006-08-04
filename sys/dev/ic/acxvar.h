@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.5 2006/08/04 10:47:15 jsg Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.6 2006/08/04 11:58:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -321,7 +321,6 @@ struct acx_firmware {
 };
 
 struct acx_config {
-	uint8_t	eaddr[IEEE80211_ADDR_LEN];
 	uint8_t	antenna;
 	uint8_t	regdom;
 	uint8_t	cca_mode;	/* acx100 */
