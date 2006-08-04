@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.204 2006/06/17 14:06:09 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.205 2006/08/04 12:01:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,6 +228,7 @@ struct peer_config {
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
 	enum reconf_action	 reconf_action;
+	u_int16_t		 max_prefix_restart;
 	u_int16_t		 remote_as;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.72 2006/06/19 20:51:46 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.73 2006/08/04 12:01:48 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -596,9 +596,19 @@ is given,
 .Xr bgpd 8
 binds to this address first.
 .Pp
-.It Ic max-prefix Ar number
-Limit the amount of prefixes received.
-No such limit is imposed by default.
+.It Xo
+.Ic max-prefix Ar number
+.Op Ic restart Ar number
+.Xc
+Terminate the session after
+.Ar number
+prefixes have been received
+(no such limit is imposed by default).
+If
+.Ic restart
+is specified, the session will be restarted after
+.Ar number
+minutes.
 .Pp
 .It Ic multihop Ar hops
 Neighbors not in the same AS as the local

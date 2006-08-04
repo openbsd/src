@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.256 2006/07/30 16:27:28 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.257 2006/08/04 12:01:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2413,6 +2413,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				switch (subcode) {
 				case ERR_CEASE_MAX_PREFIX:
 					bgp_fsm(p, EVNT_STOP);
+					if (p->conf.max_prefix_restart)
+						p->IdleHoldTimer =
+						    time(NULL) + 60 *
+						    p->conf.max_prefix_restart;
 					break;
 				default:
 					bgp_fsm(p, EVNT_CON_FATAL);

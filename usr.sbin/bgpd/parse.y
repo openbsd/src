@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.191 2006/06/17 14:06:09 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.192 2006/08/04 12:01:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,8 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	RDE EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
-%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE DEMOTE
+%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
+%token	ANNOUNCE DEMOTE
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
@@ -167,7 +168,7 @@ typedef struct {
 %token	QUALIFY VIA
 %token	<v.string>		STRING
 %type	<v.number>		number asnumber optnumber yesno inout espah
-%type	<v.number>		family
+%type	<v.number>		family restart
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -717,8 +718,9 @@ peeropts	: REMOTEAS asnumber	{
 			else
 				curpeer->conf.enforce_as = ENFORCE_AS_OFF;
 		}
-		| MAXPREFIX number {
+		| MAXPREFIX number restart {
 			curpeer->conf.max_prefix = $2;
+			curpeer->conf.max_prefix_restart = $3;
 		}
 		| TCP MD5SIG PASSWORD string {
 			if (curpeer->conf.auth.method) {
@@ -932,6 +934,17 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.softreconfig_in = $3;
 			else
 				curpeer->conf.softreconfig_out = $3;
+		}
+		;
+
+restart		: /* nada */		{ $$ = 0; }
+		| RESTART number	{
+			if ($2 < 1 || $2 > USHRT_MAX) {
+				yyerror("restart out of range. 1 to %u minutes",
+				    USHRT_MAX);
+				YYERROR;
+			}
+			$$ = $2;
 		}
 		;
 
@@ -1624,6 +1637,7 @@ lookup(char *s)
 		{ "rde",		RDE},
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
+		{ "restart",		RESTART},
 		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},

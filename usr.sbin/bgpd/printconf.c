@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.56 2006/05/27 15:37:29 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.57 2006/08/04 12:01:48 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -275,8 +275,12 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tpassive\n", c);
 	if (p->local_addr.af)
 		printf("%s\tlocal-address %s\n", c, log_addr(&p->local_addr));
-	if (p->max_prefix)
-		printf("%s\tmax-prefix %u\n", c, p->max_prefix);
+	if (p->max_prefix) {
+		printf("%s\tmax-prefix %u", c, p->max_prefix);
+		if (p->max_prefix_restart)
+			printf(" restart %u", p->max_prefix_restart);
+		printf("\n");
+	}
 	if (p->holdtime)
 		printf("%s\tholdtime %u\n", c, p->holdtime);
 	if (p->min_holdtime)
