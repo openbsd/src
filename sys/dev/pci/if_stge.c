@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.31 2006/07/12 20:12:15 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.32 2006/08/04 15:00:18 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -743,12 +743,8 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->stge_if_flags & IFF_PROMISC)) {
-				stge_set_filter(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->stge_if_flags & IFF_PROMISC) {
+			    ((ifp->if_flags ^ sc->stge_if_flags) &
+			     IFF_PROMISC)) {
 				stge_set_filter(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
