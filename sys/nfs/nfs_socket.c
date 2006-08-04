@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.43 2006/01/24 15:06:41 aaron Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.44 2006/08/04 12:35:57 pedro Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 
 void nfs_realign(struct mbuf **, int);
+void nfs_realign_fixup(struct mbuf *, struct mbuf *, unsigned int *);
 unsigned int nfs_realign_test = 0;
 unsigned int nfs_realign_count = 0;
 
@@ -1454,20 +1455,60 @@ nfs_rcvunlock(flagp)
 }
 
 /*
- *  NFS parsing code requires 32-bit alignment
+ * Auxiliary routine to align the length of mbuf copies made with m_copyback().
+ */
+void
+nfs_realign_fixup(struct mbuf *m, struct mbuf *n, unsigned int *off)
+{
+	size_t padding;
+
+	/*
+	 * The maximum number of bytes that m_copyback() places in a mbuf is
+	 * always an aligned quantity, so realign happens at the chain's tail.
+	 */
+	while (n->m_next != NULL)
+		n = n->m_next;
+
+	/*
+	 * Pad from the next elements in the source chain. Loop until the
+	 * destination chain is aligned, or the end of the source is reached.
+	 */
+	do {
+		m = m->m_next;
+		if (m == NULL)
+			return;
+
+		padding = min(ALIGN(n->m_len) - n->m_len, m->m_len);
+		if (padding > M_TRAILINGSPACE(n))
+			panic("nfs_realign_fixup: no memory to pad to");
+
+		bcopy(mtod(m, void *), mtod(n, char *) + n->m_len, padding);
+
+		n->m_len += padding;
+		m_adj(m, padding);
+		*off += padding;
+
+	} while (!ALIGNED_POINTER(n->m_len, void *));
+}
+
+/*
+ * The NFS RPC parsing code uses the data address and the length of mbuf
+ * structures to calculate on-memory addresses. This function makes sure these
+ * parameters are correctly aligned.
  */
 void
 nfs_realign(struct mbuf **pm, int hsiz)
 {
 	struct mbuf *m;
 	struct mbuf *n = NULL;
-	int off = 0;
+	unsigned int off = 0;
 
 	++nfs_realign_test;
 	while ((m = *pm) != NULL) {
-		if ((m->m_len & 0x3) || (mtod(m, long) & 0x3)) {
+		if (!ALIGNED_POINTER(m->m_data, void *) ||
+		    !ALIGNED_POINTER(m->m_len,  void *)) {
 			MGET(n, M_WAIT, MT_DATA);
-			if (m->m_len >= MINCLSIZE) {
+			if (ALIGN(m->m_len) >= MINCLSIZE) {
 				MCLGET(n, M_WAIT);
 			}
 			n->m_len = 0;
@@ -1483,6 +1524,14 @@ nfs_realign(struct mbuf **pm, int hsiz)
 		++nfs_realign_count;
 		while (m) {
 			m_copyback(n, off, m->m_len, mtod(m, caddr_t));
+
+			/*
+			 * If an unaligned amount of memory was copied, fix up
+			 * the last mbuf created by m_copyback().
+			 */
+			if (!ALIGNED_POINTER(m->m_len, void *))
+				nfs_realign_fixup(m, n, &off);
+
 			off += m->m_len;
 			m = m->m_next;
 		}
