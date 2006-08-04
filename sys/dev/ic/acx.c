@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.14 2006/08/04 22:24:46 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.15 2006/08/04 22:51:19 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -250,7 +250,7 @@ acx_attach(struct acx_softc *sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 
-	/* Initilize channel scanning timer */
+	/* Initialize channel scanning timer */
 	timeout_set(&sc->sc_chanscan_timer, acx_next_scan, sc);
 
 	/* Allocate busdma stuffs */
