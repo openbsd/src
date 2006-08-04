@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.12 2006/08/04 12:24:46 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.13 2006/08/04 17:49:42 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2414,14 +2414,14 @@ acx_set_null_tmplt(struct acx_softc *sc)
 {
 	struct acx_tmplt_null_data n;
 	struct ieee80211_frame *f;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	bzero(&n, sizeof(n));
 
 	f = &n.data;
 	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_NODATA | IEEE80211_FC0_TYPE_DATA;
 	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(f->i_addr3, etherbroadcastaddr);
 
 	return _acx_set_null_data_tmplt(sc, &n, sizeof(n));
@@ -2432,7 +2432,7 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 {
 	struct acx_tmplt_probe_req req;
 	struct ieee80211_frame *f;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t *v;
 	int vlen;
 
@@ -2441,13 +2441,13 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 	f = &req.data.u_data.f;
 	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_PROBE_REQ | IEEE80211_FC0_TYPE_MGT;
 	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(f->i_addr3, etherbroadcastaddr);
 
 	v = req.data.u_data.var;
 	v = ieee80211_add_ssid(v, ssid, ssid_len);
-	v = ieee80211_add_rates(v, &sc->sc_ic.ic_sup_rates[sc->chip_phymode]);
-	v = ieee80211_add_xrates(v, &sc->sc_ic.ic_sup_rates[sc->chip_phymode]);
+	v = ieee80211_add_rates(v, &ic->ic_sup_rates[sc->chip_phymode]);
+	v = ieee80211_add_xrates(v, &ic->ic_sup_rates[sc->chip_phymode]);
 	vlen = v - req.data.u_data.var;
 
 	return _acx_set_probe_req_tmplt(sc, &req,
@@ -2461,7 +2461,6 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 	struct acx_tmplt_probe_resp resp;
 	struct ieee80211_frame *f;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	uint8_t *v;
 	int vlen;
 
@@ -2470,8 +2469,8 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 	f = &resp.data.u_data.f;
 	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_PROBE_RESP | IEEE80211_FC0_TYPE_MGT;
 	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, LLADDR(ifp->if_sadl));
-	IEEE80211_ADDR_COPY(f->i_addr3, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(f->i_addr3, ic->ic_myaddr);
 
 	resp.data.u_data.beacon_intvl = htole16(acx_beacon_intvl);
 	resp.data.u_data.cap = htole16(IEEE80211_CAPINFO_IBSS);
@@ -2506,7 +2505,6 @@ acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 	struct acx_tmplt_beacon beacon;
 	struct ieee80211_frame *f;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	uint8_t *v;
 	int vlen;
 
@@ -2515,8 +2513,8 @@ acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 	f = &beacon.data.u_data.f;
 	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_BEACON | IEEE80211_FC0_TYPE_MGT;
 	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, LLADDR(ifp->if_sadl));
-	IEEE80211_ADDR_COPY(f->i_addr3, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(f->i_addr3, ic->ic_myaddr);
 
 	beacon.data.u_data.beacon_intvl = htole16(acx_beacon_intvl);
 	beacon.data.u_data.cap = htole16(IEEE80211_CAPINFO_IBSS);
