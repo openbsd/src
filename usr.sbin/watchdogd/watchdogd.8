@@ -1,4 +1,4 @@
-.\" $OpenBSD: watchdogd.8,v 1.8 2006/08/04 11:04:55 mbalmer Exp $
+.\" $OpenBSD: watchdogd.8,v 1.9 2006/08/04 11:08:43 mbalmer Exp $
 .\"
 .\" Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -71,8 +71,10 @@ seconds.
 The default is 30 seconds.
 .It Fl q
 Be quiet.
-With this option specified, watchdogd will not output a warning message if the
-underlying hardware adjusted the timeout period.
+With this option specified,
+.Nm
+will not output a warning message if the underlying hardware adjusted the
+timeout period.
 .El
 .Sh SEE ALSO
 .Xr watchdog 4 ,
