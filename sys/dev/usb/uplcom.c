@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.31 2006/07/01 04:23:31 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.32 2006/08/04 06:49:13 brad Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ALCATEL, USB_PRODUCT_ALCATEL_OT535 },
 	{ USB_VENDOR_ANCHOR, USB_PRODUCT_ANCHOR_SERIAL },
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
+	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U257 },
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
 	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
