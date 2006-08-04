@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.166 2006/07/01 06:26:51 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.167 2006/08/04 15:22:41 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -154,6 +154,7 @@ u_int8_t bge_eeprom_getbyte(struct bge_softc *, int, u_int8_t *);
 int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 
 void bge_setmulti(struct bge_softc *);
+void bge_setpromisc(struct bge_softc *);
 
 int bge_alloc_jumbo_mem(struct bge_softc *);
 void *bge_jalloc(struct bge_softc *);
@@ -1049,6 +1050,17 @@ allmulti:
 
 	for (i = 0; i < 4; i++)
 		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), hashes[i]);
+}
+
+void
+bge_setpromisc(struct bge_softc *sc)
+{
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
+
+	if (ifp->if_flags & IFF_PROMISC)
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+	else
+		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
 }
 
 /*
@@ -2782,10 +2794,7 @@ bge_init(void *xsc)
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
-	if (ifp->if_flags & IFF_PROMISC)
-		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	else
-		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+	bge_setpromisc(sc);
 
 	/* Disable hardware decapsulation of vlan frames. */
 	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
@@ -2986,16 +2995,9 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * second or two.  Similarly for ALLMULTI.
 			 */
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->bge_if_flags & IFF_PROMISC)) {
-				BGE_SETBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-				bge_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->bge_if_flags & IFF_PROMISC) {
-				BGE_CLRBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
+			    ((ifp->if_flags ^ sc->bge_if_flags) &
+			     IFF_PROMISC)) {
+				bge_setpromisc(sc);
 				bge_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI) {
