@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.23 2006/08/04 02:44:50 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.24 2006/08/04 14:25:24 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -100,7 +100,6 @@ ixgb_transmit_checksum_setup(struct ixgb_softc *,
 			     struct mbuf *,
 			     u_int8_t *);
 void ixgb_set_promisc(struct ixgb_softc *);
-void ixgb_disable_promisc(struct ixgb_softc *);
 void ixgb_set_multi(struct ixgb_softc *);
 void ixgb_print_hw_stats(struct ixgb_softc *);
 void ixgb_update_link_status(struct ixgb_softc *);
@@ -379,15 +378,24 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				ixgb_init(sc);
-
-			ixgb_disable_promisc(sc);
-			ixgb_set_promisc(sc);
+			/*
+			 * If only the PROMISC or ALLMULTI flag changes, then
+			 * don't do a full re-init of the chip, just update
+			 * the Rx filter.
+			 */
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+				ixgb_set_promisc(sc);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					ixgb_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ixgb_stop(sc);
 		}
+		sc->if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -745,26 +753,14 @@ ixgb_set_promisc(struct ixgb_softc *sc)
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		reg_rctl |= (IXGB_RCTL_UPE | IXGB_RCTL_MPE);
-		IXGB_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 	} else if (ifp->if_flags & IFF_ALLMULTI) {
 		reg_rctl |= IXGB_RCTL_MPE;
 		reg_rctl &= ~IXGB_RCTL_UPE;
-		IXGB_WRITE_REG(&sc->hw, RCTL, reg_rctl);
+	} else {
+		reg_rctl &= ~(IXGB_RCTL_UPE | IXGB_RCTL_MPE);
 	}
-}
-
-void
-ixgb_disable_promisc(struct ixgb_softc *sc)
-{
-	u_int32_t       reg_rctl;
-
-	reg_rctl = IXGB_READ_REG(&sc->hw, RCTL);
-
-	reg_rctl &= (~IXGB_RCTL_UPE);
-	reg_rctl &= (~IXGB_RCTL_MPE);
 	IXGB_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 }
-
 
 /*********************************************************************
  *  Multicast Update

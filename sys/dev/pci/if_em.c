@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.140 2006/08/04 02:44:50 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.141 2006/08/04 14:25:24 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -158,7 +158,6 @@ void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
 				u_int32_t *, u_int32_t *);
 void em_set_promisc(struct em_softc *);
-void em_disable_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
@@ -519,15 +518,24 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				em_init(sc);
-
-			em_disable_promisc(sc);
-			em_set_promisc(sc);
+			/*
+			 * If only the PROMISC or ALLMULTI flag changes, then
+			 * don't do a full re-init of the chip, just update
+			 * the Rx filter.
+			 */
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+				em_set_promisc(sc);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					em_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				em_stop(sc);
 		}
+		sc->if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1150,34 +1158,20 @@ void
 em_set_promisc(struct em_softc *sc)
 {
 	u_int32_t	reg_rctl;
-	u_int32_t	ctrl;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
 	reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
-	ctrl = E1000_READ_REG(&sc->hw, CTRL);
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		reg_rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
-		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 	} else if (ifp->if_flags & IFF_ALLMULTI) {
 		reg_rctl |= E1000_RCTL_MPE;
 		reg_rctl &= ~E1000_RCTL_UPE;
-		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
+	} else {
+		reg_rctl &= ~(E1000_RCTL_UPE | E1000_RCTL_MPE);
 	}
-}
-
-void
-em_disable_promisc(struct em_softc *sc)
-{
-	u_int32_t	reg_rctl;
-
-	reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
-
-	reg_rctl &=  (~E1000_RCTL_UPE);
-	reg_rctl &=  (~E1000_RCTL_MPE);
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 }
-
 
 /*********************************************************************
  *  Multicast Update
