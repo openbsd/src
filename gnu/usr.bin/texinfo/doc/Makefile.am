@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.5 2006/07/17 16:12:36 espie Exp $
+# $Id: Makefile.am,v 1.6 2006/08/04 10:40:02 jmc Exp $
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -64,8 +64,6 @@ if MAINTAINER_MODE
 common_mandeps = $(top_srcdir)/configure.ac
 info.1: $(top_srcdir)/info/info.c $(common_mandeps)
 	$(HELP2MAN) --name="read Info documents" `basename $@ .1` >$@
-infokey.1: $(top_srcdir)/info/infokey.c $(common_mandeps)
-	$(HELP2MAN) --name="compile customizations for Info" `basename $@ .1` >$@
 install-info.1: $(top_srcdir)/util/install-info.c $(common_mandeps)
 	$(HELP2MAN) --name="update info/dir entries" `basename $@ .1` >$@
 makeinfo.1: $(top_srcdir)/makeinfo/makeinfo.c $(common_mandeps)
