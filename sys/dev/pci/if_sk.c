@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.118 2006/07/30 18:48:52 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.119 2006/08/04 02:55:38 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -418,7 +418,7 @@ sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		if (SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY)
+		if (!(SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY))
 			break;
 	}
 
@@ -2857,7 +2857,7 @@ sk_stop(struct sk_if_softc *sc_if)
 	CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_STOP);
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		val = CSR_READ_4(sc, sc_if->sk_tx_bmu);
-		if ((val & SK_TXBMU_TX_STOP) == 0)
+		if (!(val & SK_TXBMU_TX_STOP))
 			break;
 		DELAY(1);
 	}
@@ -2868,7 +2868,7 @@ sk_stop(struct sk_if_softc *sc_if)
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_RX_STOP);
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		val = SK_IF_READ_4(sc_if, 0, SK_RXQ1_BMU_CSR);
-		if ((val & SK_RXBMU_RX_STOP) == 0)
+		if (!(val & SK_RXBMU_RX_STOP))
 			break;
 		DELAY(1);
 	}
