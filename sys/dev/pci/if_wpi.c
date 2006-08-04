@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.24 2006/08/03 09:45:20 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.25 2006/08/04 14:30:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -288,6 +288,11 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set supported .11a channels */
 	for (i = 36; i <= 64; i += 4) {
+		ic->ic_channels[i].ic_freq =
+		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_5GHZ);
+		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_A;
+	}
+	for (i = 100; i <= 140; i += 4) {
 		ic->ic_channels[i].ic_freq =
 		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_5GHZ);
 		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_A;
