@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.120 2006/08/04 04:44:37 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.121 2006/08/04 05:01:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2417,11 +2417,6 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	SK_XM_WRITE_2(sc_if, XM_PAR2,
 	    *(u_int16_t *)(&sc_if->arpcom.ac_enaddr[4]));
 	SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_USE_STATION);
-
-	if (ifp->if_flags & IFF_PROMISC)
-		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
-	else
-		SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
 
 	if (ifp->if_flags & IFF_BROADCAST)
 		SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_NOBROAD);
