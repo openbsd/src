@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_masks.h,v 1.2 2006/08/03 18:42:06 miod Exp $ */
+/*	$OpenBSD: rasops_masks.h,v 1.3 2006/08/04 06:28:10 miod Exp $ */
 /* 	$NetBSD: rasops_masks.h,v 1.5 2000/06/13 13:37:01 ad Exp $	*/
 
 /*-
@@ -52,16 +52,13 @@
  * MBR: move bits right
  * MBE: make big-endian
  */
-#if BYTE_ORDER == BIG_ENDIAN
 
 #define MBL(x,y)	((y) > 31 ? 0 : (x) >> (y))
 #define MBR(x,y)    	((y) > 31 ? 0 : (x) << (y))
+
+#if BYTE_ORDER == BIG_ENDIAN
 #define MBE(x)		(x)
-
 #else
-
-#define MBL(x,y)    	((y) > 31 ? 0 : MBE(MBE(x) << (y)))
-#define MBR(x,y)    	((y) > 31 ? 0 : MBE(MBE(x) >> (y)))
 #define MBE(x) \
 ({ \
 	u_int32_t tmp = (x); \
@@ -72,7 +69,6 @@
 	tmp = ((tmp >> 16) & 0x0000ffff) | ((tmp << 16) & 0xffff0000); \
 	tmp; \
 })
-
 #endif
 
 /*
