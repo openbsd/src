@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.6 2006/08/04 13:37:34 jmc Exp $
+.\"	$OpenBSD: acx.4,v 1.7 2006/08/04 17:11:47 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -244,6 +244,12 @@ As a result, even though
 .Ox
 includes the driver, the firmware file cannot be included and
 users have to download this file on their own.
+.Pp
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Pp
+.Pa http://www.nazgul.ch/acx/acx-firmware-1.0.tgz
 .Sh HARDWARE
 The following Cardbus ACX100 cards are known to work:
 .Bd -filled
