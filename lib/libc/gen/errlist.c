@@ -1,4 +1,4 @@
-/*	$OpenBSD: errlist.c,v 1.9 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: errlist.c,v 1.10 2006/08/04 21:35:51 beck Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -137,5 +137,7 @@ const char *const
 	"IPsec processing failure",		/* 82 - EIPSEC */
 	"Attribute not found",			/* 83 - ENOATTR */
 	"Illegal byte sequence",		/* 84 - EILSEQ */
+	"No medium found",			/* 85 - ENOMEDIUM */
+	"Wrong medium type",			/* 86 - EMEDIUMTYPE */
 };
 int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };

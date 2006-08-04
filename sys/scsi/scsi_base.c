@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.111 2006/07/29 02:40:45 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.112 2006/08/04 21:35:51 beck Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1023,9 +1023,33 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 				break;
 			case 0x3a:	/* Medium not present */
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
-				error = ENODEV;
+				error = ENOMEDIUM;
 				break;
 			}
+		}
+		break;
+	case SKEY_MEDIUM_ERROR:
+		switch (sense->add_sense_code) {
+			case 0x3a:	/* Medium not present */
+				sc_link->flags &= ~SDEV_MEDIA_LOADED;
+				error = ENOMEDIUM;
+				break;
+			case 0x30:	/* Medium issues */
+				switch (sense->add_sense_code_qual) {
+				case 0x01: /* (Read) Unknown Format */
+				case 0x02: /* (Read) Incompatible Medium */
+				case 0x04: /* (Write) Unknown Format */
+				case 0x05: /* (Write) Incompatible Medium */
+				case 0x06: /* (Format) Incompatible Medium */
+				case 0x08: /* (Write/CD) Can't Write Media */
+					error = EMEDIUMTYPE;
+				default:
+					error = EIO;
+				}
+				break;
+			default:
+				error = EIO;
+				break;
 		}
 		break;
 	case SKEY_ILLEGAL_REQUEST:
@@ -1056,6 +1080,12 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		break;
 	case SKEY_VOLUME_OVERFLOW:
 		error = ENOSPC;
+		break;
+	case SKEY_HARDWARE_ERROR:
+		if (sense->add_sense_code == 0x52 &&
+		    sense->add_sense_code_qual == 0x00)
+			return(EMEDIUMTYPE);	/* Cartridge Fault */
+		error = EIO;
 		break;
 	default:
 		error = EIO;
