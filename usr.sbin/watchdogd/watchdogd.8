@@ -1,4 +1,4 @@
-.\" $OpenBSD: watchdogd.8,v 1.7 2006/01/17 14:27:04 jmc Exp $
+.\" $OpenBSD: watchdogd.8,v 1.8 2006/08/04 11:04:55 mbalmer Exp $
 .\"
 .\" Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nd watchdog timer retrigger daemon
 .Sh SYNOPSIS
 .Nm watchdogd
-.Op Fl d
+.Op Fl dq
 .Op Fl i Ar interval
 .Op Fl p Ar period
 .Sh DESCRIPTION
@@ -69,6 +69,10 @@ Set the hardware timer to expire in
 .Ar period
 seconds.
 The default is 30 seconds.
+.It Fl q
+Be quiet.
+With this option specified, watchdogd will not output a warning message if the
+underlying hardware adjusted the timeout period.
 .El
 .Sh SEE ALSO
 .Xr watchdog 4 ,

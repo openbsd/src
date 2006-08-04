@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.7 2006/06/26 06:16:09 mbalmer Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.8 2006/08/04 11:04:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
@@ -37,7 +37,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d] [-i interval] [-p period]\n",
+	fprintf(stderr, "usage: %s [-dq] [-i interval] [-p period]\n",
 	    __progname);
 	exit(1);
 }
@@ -56,10 +56,10 @@ main(int argc, char *argv[])
 	size_t		 len;
 	u_int		 interval = 0, period = 30, nperiod;
 	int		 ch, trigauto, sauto, speriod;
-	int		 daemonize = 1, retval = 1;
+	int		 quiet = 0, daemonize = 1, retval = 1;
 	int		 mib[3];
 
-	while ((ch = getopt(argc, argv, "di:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "di:p:q")) != -1) {
 		switch (ch) {
 		case 'd':
 			daemonize = 0;
@@ -74,6 +74,9 @@ main(int argc, char *argv[])
 			period = (u_int)strtonum(optarg, 2LL, 86400LL, &errstr);
 			if (errstr)
 				errx(1, "period is %s: %s", errstr, optarg);
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		default:
 			usage();
@@ -115,7 +118,7 @@ main(int argc, char *argv[])
 		goto restore;
 	}
 
-	if (nperiod != period)
+	if (nperiod != period && !quiet)
 		warnx("period adjusted to %d by device", nperiod);
 
 	if (nperiod <= interval) {
