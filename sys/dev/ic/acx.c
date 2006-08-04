@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.9 2006/08/03 22:56:08 deraadt Exp $ */
+/*	$OpenBSD: acx.c,v 1.10 2006/08/04 10:47:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -205,7 +205,7 @@ void	acx_free_firmware(struct acx_softc *);
 int	acx_load_firmware(struct acx_softc *, uint32_t,
 				  const uint8_t *, int);
 int	acx_load_radio_firmware(struct acx_softc *);
-int	acx_load_base_firmware(struct acx_softc *);
+int	acx_load_base_firmware(struct acx_softc *, const char *);
 
 struct ieee80211_node *acx_node_alloc(struct ieee80211com *);
 void	acx_node_init(struct acx_softc *, struct acx_node *);
@@ -412,7 +412,9 @@ acx_init(struct ifnet *ifp)
 		goto back;
 	}
 
-	error = acx_load_base_firmware(sc);
+	error = acx_load_base_firmware(sc, (sc->sc_flags & ACX_FLAG_ACX111) ?
+	    "tiacx111c16" : "tiacx100");
+	
 	if (error)
 		goto back;
 
@@ -433,10 +435,12 @@ acx_init(struct ifnet *ifp)
 	}
 #endif
 
-	/* XXX decide whether firmware is combined */
-	error = acx_load_radio_firmware(sc);
-	if (error)
-		goto back;
+	/* ACX111 firmware is combined */
+	if (!(sc->sc_flags & ACX_FLAG_ACX111)) {
+		error = acx_load_radio_firmware(sc);
+		if (error)
+			goto back;
+	}
 
 	error = sc->chip_init(sc);
 	if (error)
@@ -1479,12 +1483,11 @@ acx_free_firmware(struct acx_softc *sc)
 }
 
 int
-acx_load_base_firmware(struct acx_softc *sc)
+acx_load_base_firmware(struct acx_softc *sc, const char *name)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i, error;
 	uint8_t *ucode;
-	const char name[]= "tiacx100";
 	size_t size;
 
 	error = loadfirmware(name, &ucode, &size);

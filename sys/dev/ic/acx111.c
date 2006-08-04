@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.4 2006/08/03 12:00:07 mglocker Exp $ */
+/*	$OpenBSD: acx111.c,v 1.5 2006/08/04 10:47:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -310,6 +310,7 @@ acx111_set_param(struct acx_softc *sc)
 	sc->chip_write_config = acx111_write_config;
 	sc->chip_set_fw_txdesc_rate = acx111_set_fw_txdesc_rate;
 	sc->chip_set_bss_join_param = acx111_set_bss_join_param;
+	sc->sc_flags |= ACX_FLAG_ACX111;
 }
 
 int

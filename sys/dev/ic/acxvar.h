@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.4 2006/08/03 12:00:07 mglocker Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.5 2006/08/04 10:47:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -453,7 +453,8 @@ struct acx_softc {
 				(struct acx_softc *, struct mbuf *, int *);
 };
 
-#define ACX_FLAG_FW_LOADED	0x1
+#define ACX_FLAG_FW_LOADED	0x01
+#define ACX_FLAG_ACX111		0x02
 
 #define ACX_RADIO_TYPE_MAXIM	0x0d
 #define ACX_RADIO_TYPE_RFMD	0x11
