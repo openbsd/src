@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.29 2006/07/28 05:41:45 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.30 2006/08/04 06:13:54 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -358,7 +358,7 @@ void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], *fn;
+	char numbuf[64], *fn;
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
@@ -411,11 +411,7 @@ rcs_write(RCSFILE *rfp)
 	fprintf(fp, "symbols");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
-		if (strlcpy(buf, symp->rs_name, sizeof(buf)) >= sizeof(buf) ||
-		    strlcat(buf, ":", sizeof(buf)) >= sizeof(buf) ||
-		    strlcat(buf, numbuf, sizeof(buf)) >= sizeof(buf))
-			errx(1, "rcs_write: string overflow");
-		fprintf(fp, "\n\t%s", buf);
+		fprintf(fp, "\n\t%s:%s", symp->rs_name, numbuf);
 	}
 	fprintf(fp, ";\n");
 
