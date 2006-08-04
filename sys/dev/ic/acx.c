@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.11 2006/08/04 11:58:26 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.12 2006/08/04 12:24:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -204,7 +204,7 @@ int	acx_copyin_firmware(struct acx_softc *, struct ifreq *);
 void	acx_free_firmware(struct acx_softc *);
 int	acx_load_firmware(struct acx_softc *, uint32_t,
 				  const uint8_t *, int);
-int	acx_load_radio_firmware(struct acx_softc *);
+int	acx_load_radio_firmware(struct acx_softc *, const char *);
 int	acx_load_base_firmware(struct acx_softc *, const char *);
 
 struct ieee80211_node *acx_node_alloc(struct ieee80211com *);
@@ -437,7 +437,8 @@ acx_init(struct ifnet *ifp)
 
 	/* ACX111 firmware is combined */
 	if (!(sc->sc_flags & ACX_FLAG_ACX111)) {
-		error = acx_load_radio_firmware(sc);
+		error = acx_load_radio_firmware(sc, (sc->sc_radio_type == 11) ?
+		    "tiacx100r11" : "tiacx100r0D");
 		if (error)
 			goto back;
 	}
@@ -1513,14 +1514,13 @@ acx_load_base_firmware(struct acx_softc *sc, const char *name)
 }
 
 int
-acx_load_radio_firmware(struct acx_softc *sc)
+acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct acx_conf_mmap mem_map;
 	uint32_t radio_fw_ofs;
 	int error;
 	uint8_t *ucode;
-	const char name[] = "tiacx100r0D";
 	size_t size;
 
 	error = loadfirmware(name, &ucode, &size);
