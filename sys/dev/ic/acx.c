@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.13 2006/08/04 17:49:42 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.14 2006/08/04 22:24:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -139,18 +139,19 @@
 int acxdebug = 1;
 #endif
 
-
-#define ACX_ENABLE_TXCHAN(sc, chan)					\
+#define ACX_ENABLE_TXCHAN(sc, chan, ifname)				\
 do {									\
 	if (acx_enable_txchan((sc), (chan)) != 0) {			\
-		printf("enable TX on channel %d failed\n", (chan));	\
+		printf("%s: enable TX on channel %d failed\n",		\
+		    (ifname), (chan));					\
 	}								\
 } while (0)
 
-#define ACX_ENABLE_RXCHAN(sc, chan)					\
+#define ACX_ENABLE_RXCHAN(sc, chan, ifname)				\
 do {									\
 	if (acx_enable_rxchan((sc), (chan)) != 0) {			\
-		printf("enable RX on channel %d failed\n", (chan));	\
+		printf("%s: enable RX on channel %d failed\n",		\
+		    (ifname), (chan));					\
 	}								\
 } while (0)
 
@@ -900,9 +901,9 @@ acx_start(struct ifnet *ifp)
 			struct acx_node *node;
 
 			if (ic->ic_state != IEEE80211_S_RUN) {
-				printf("%s: data packet dropped due to "
-					  "not RUN.  Current state %d\n",
-					  ifp->if_xname, ic->ic_state);
+				DPRINTF(("%s: data packet dropped due to "
+				    "not RUN.  Current state %d\n",
+				    ifp->if_xname, ic->ic_state));
 				break;
 			}
 
@@ -1833,8 +1834,8 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			uint8_t chan;
 
 			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-			ACX_ENABLE_TXCHAN(sc, chan);
-			ACX_ENABLE_RXCHAN(sc, chan);
+			ACX_ENABLE_TXCHAN(sc, chan, ifp->if_xname);
+			ACX_ENABLE_RXCHAN(sc, chan, ifp->if_xname);
 
 			timeout_add(&sc->sc_chanscan_timer,
 				      hz / acx_chanscan_rate);
