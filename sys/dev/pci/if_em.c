@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.139 2006/08/01 23:50:14 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.140 2006/08/04 02:44:50 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1381,13 +1381,13 @@ em_allocate_pci_resources(struct em_softc *sc)
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_MMBA);
 	if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
-		printf(": mmba isn't memory");
+		printf(": mmba is not mem space\n");
 		return (ENXIO);
 	}
 	if (pci_mapreg_map(pa, EM_MMBA, PCI_MAPREG_MEM_TYPE(val), 0,
 	    &sc->osdep.mem_bus_space_tag, &sc->osdep.mem_bus_space_handle,
 	    &sc->osdep.em_membase, &sc->osdep.em_memsize, 0)) {
-		printf(": can't find mem space\n");
+		printf(": cannot find mem space\n");
 		return (ENXIO);
 	}
 
@@ -1408,7 +1408,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 		if (pci_mapreg_map(pa, rid, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->osdep.io_bus_space_tag, &sc->osdep.io_bus_space_handle,
 		    &sc->osdep.em_iobase, &sc->osdep.em_iosize, 0)) {
-			printf(": can't find io space\n");
+			printf(": cannot find i/o space\n");
 			return (ENXIO);
 		}
 
@@ -1419,14 +1419,14 @@ em_allocate_pci_resources(struct em_softc *sc)
 	if (sc->hw.mac_type == em_ich8lan) {
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_FLASH);
 		if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
-			printf(": flash isn't memory");
+			printf(": flash is not mem space\n");
 			return (ENXIO);
 		}
 
 		if (pci_mapreg_map(pa, EM_FLASH, PCI_MAPREG_MEM_TYPE(val), 0,
 		    &sc->osdep.flash_bus_space_tag, &sc->osdep.flash_bus_space_handle,
 		    &sc->osdep.em_flashbase, &sc->osdep.em_flashsize, 0)) {
-			printf(": can't find mem space\n");
+			printf(": cannot find mem space\n");
 			return (ENXIO);
 		}
         }

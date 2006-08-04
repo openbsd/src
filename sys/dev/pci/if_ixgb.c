@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.22 2006/08/01 23:50:14 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.23 2006/08/04 02:44:50 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -941,13 +941,13 @@ ixgb_allocate_pci_resources(struct ixgb_softc *sc)
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, IXGB_MMBA);
 	if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
-		printf(": mmba isn't memory");
+		printf(": mmba is not mem space\n");
 		return (ENXIO);
 	}
 	if (pci_mapreg_map(pa, IXGB_MMBA, PCI_MAPREG_MEM_TYPE(val), 0,
 	    &sc->osdep.mem_bus_space_tag, &sc->osdep.mem_bus_space_handle,
 	    &sc->osdep.ixgb_membase, &sc->osdep.ixgb_memsize, 0)) {
-		printf(": can't find mem space\n");
+		printf(": cannot find mem space\n");
 		return (ENXIO);
 	}
 
@@ -970,7 +970,7 @@ ixgb_allocate_pci_resources(struct ixgb_softc *sc)
 	}
 	printf(": %s", intrstr);
 
-	return(0);
+	return (0);
 }
 
 void
