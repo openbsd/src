@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.10 2005/08/10 01:33:06 jaredy Exp $
+.\"	$OpenBSD: getfh.2,v 1.11 2006/08/04 19:52:33 jmc Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -44,6 +44,7 @@
 .Sh DESCRIPTION
 .Fn getfh
 returns a file handle for the specified file or directory
+.Fa path
 in the file handle pointed to by
 .Fa fhp .
 This system call is restricted to the superuser.
