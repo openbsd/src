@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.119 2006/08/04 02:55:38 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.120 2006/08/04 04:44:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -174,6 +174,7 @@ u_int32_t sk_xmac_hash(caddr_t);
 u_int32_t sk_yukon_hash(caddr_t);
 void sk_setfilt(struct sk_if_softc *, caddr_t, int);
 void sk_setmulti(struct sk_if_softc *);
+void sk_setpromisc(struct sk_if_softc *);
 void sk_tick(void *);
 void sk_yukon_tick(void *);
 void sk_rxcsum(struct ifnet *, struct mbuf *, const u_int16_t, const u_int16_t);
@@ -570,6 +571,37 @@ allmulti:
 	}
 }
 
+void
+sk_setpromisc(struct sk_if_softc *sc_if)
+{
+	struct sk_softc	*sc = sc_if->sk_softc;
+	struct ifnet *ifp= &sc_if->arpcom.ac_if;
+
+	switch(sc->sk_type) {
+	case SK_GENESIS:
+		if (ifp->if_flags & IFF_PROMISC)
+			SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
+		else
+			SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
+		break;
+	case SK_YUKON:
+	case SK_YUKON_LITE:
+	case SK_YUKON_LP:
+	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
+		if (ifp->if_flags & IFF_PROMISC) {
+			SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
+			    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+		} else {
+			SK_YU_SETBIT_2(sc_if, YUKON_RCR,
+			    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+		}
+		break;
+	}
+}
+
 int
 sk_init_rx_ring(struct sk_if_softc *sc_if)
 {
@@ -884,7 +916,6 @@ int
 sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
-	struct sk_softc *sc = sc_if->sk_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct mii_data *mii;
@@ -916,44 +947,9 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc_if->sk_if_flags & IFF_PROMISC)) {
-				switch(sc->sk_type) {
-				case SK_GENESIS:
-					SK_XM_SETBIT_4(sc_if, XM_MODE,
-					    XM_MODE_RX_PROMISC);
-					break;
-				case SK_YUKON:
-				case SK_YUKON_LITE:
-				case SK_YUKON_LP:
-				case SK_YUKON_XL:
-				case SK_YUKON_EC_U:
-				case SK_YUKON_EC:
-				case SK_YUKON_FE:
-					SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
-					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
-					break;
-				}
-				sk_setmulti(sc_if);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc_if->sk_if_flags & IFF_PROMISC) {
-				switch(sc->sk_type) {
-				case SK_GENESIS:
-					SK_XM_CLRBIT_4(sc_if, XM_MODE,
-					    XM_MODE_RX_PROMISC);
-					break;
-				case SK_YUKON:
-				case SK_YUKON_LITE:
-				case SK_YUKON_LP:
-				case SK_YUKON_XL:
-				case SK_YUKON_EC_U:
-				case SK_YUKON_EC:
-				case SK_YUKON_FE:
-					SK_YU_SETBIT_2(sc_if, YUKON_RCR,
-					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
-					break;
-				}
+			    ((ifp->if_flags ^ sc_if->sk_if_flags)
+			     & IFF_PROMISC)) {
+				sk_setpromisc(sc_if);
 				sk_setmulti(sc_if);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
@@ -964,7 +960,6 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				sk_stop(sc_if);
 		}
 		sc_if->sk_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -2465,6 +2460,9 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	 */
 	SK_XM_WRITE_2(sc_if, XM_TX_REQTHRESH, SK_XM_TX_FIFOTHRESH);
 
+	/* Set promiscuous mode */
+	sk_setpromisc(sc_if);
+
 	/* Set multicast filter */
 	sk_setmulti(sc_if);
 
@@ -2622,6 +2620,9 @@ void sk_init_yukon(struct sk_if_softc *sc_if)
 				    SK_MAC1_0 + i * 2 + sc_if->sk_port * 8);
 		SK_YU_WRITE_2(sc_if, YUKON_SAL2 + i * 4, reg);
 	}
+
+	/* Set promiscuous mode */
+	sk_setpromisc(sc_if);
 
 	/* Set multicast filter */
 	DPRINTFN(6, ("sk_init_yukon: 11\n"));
