@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.25 2006/07/03 02:28:39 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.26 2006/08/05 21:03:22 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -582,13 +582,13 @@ struct rl_stats {
 };
 
 #define RL_RX_DESC_CNT		64
-#define RL_TX_DESC_CNT		64
+#define RL_TX_DESC_CNT_8139	64
+#define RL_TX_DESC_CNT_8169	1024
+
+#define RL_TX_QLEN		64
 
 #define RL_RX_LIST_SZ		(RL_RX_DESC_CNT * sizeof(struct rl_desc))
-#define RL_TX_LIST_SZ		(RL_TX_DESC_CNT * sizeof(struct rl_desc))
 #define RL_RING_ALIGN		256
-#define RL_IFQ_MAXLEN		512
-#define RL_DESC_INC(x)		(x = (x + 1) % RL_TX_DESC_CNT)
 #define RL_OWN(x)		(letoh32((x)->rl_cmdstat) & RL_RDESC_STAT_OWN)
 #define RL_RXBYTES(x)		(letoh32((x)->rl_cmdstat) & sc->rl_rxlenmask)
 #define RL_PKTSZ(x)		((x)/* >> 3*/)
@@ -600,14 +600,21 @@ struct rl_stats {
 #define RE_RX_DESC_BUFLEN	MCLBYTES
 #endif
 
+#define RL_TX_DESC_CNT(sc)	\
+	((sc)->rl_ldata.rl_tx_desc_cnt)
+#define RL_TX_LIST_SZ(sc)	\
+	(RL_TX_DESC_CNT(sc) * sizeof(struct rl_desc))
+#define RL_TX_DESC_INC(sc, x)	\
+	((x) = ((x) + 1) % RL_TX_DESC_CNT(sc))
+#define RL_RX_DESC_INC(sc, x)	\
+	((x) = ((x) + 1) % RL_RX_DESC_CNT)
+
 #define RL_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
 #define RL_ADDR_HI(y)	((u_int64_t) (y) >> 32)
 
 /* see comment in dev/ic/re.c */
 #define RL_JUMBO_FRAMELEN	7440
 #define RL_JUMBO_MTU		(RL_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
-
-#define RL_NTXSEGS		32
 
 #define MAX_NUM_MULTICAST_ADDRESSES	128
 
@@ -653,22 +660,28 @@ struct rl_mii_frame {
 			 (x)->rl_type == RL_8169)
 
 struct rl_list_data {
-	struct mbuf		*rl_tx_mbuf[RL_TX_DESC_CNT];
+	struct rl_txq {
+		struct mbuf *txq_mbuf;
+		bus_dmamap_t txq_dmamap;
+		int txq_descidx;
+	} rl_txq[RL_TX_QLEN];
+	int			rl_txq_considx;
+	int			rl_txq_prodidx;
+	bus_dmamap_t		rl_tx_list_map;
+	struct rl_desc		*rl_tx_list;
+	bus_dma_segment_t 	rl_tx_listseg;
+	int			rl_tx_free;	/* # of free descriptors */
+	int			rl_tx_nextfree; /* next descriptor to use */
+	int			rl_tx_desc_cnt; /* # of descriptors */
+	int			rl_tx_listnseg;
+
 	struct mbuf		*rl_rx_mbuf[RL_RX_DESC_CNT];
-	int			rl_tx_prodidx;
-	int			rl_rx_prodidx;
-	int			rl_tx_considx;
-	int			rl_tx_free;
-	bus_dmamap_t		rl_tx_dmamap[RL_TX_DESC_CNT];
 	bus_dmamap_t		rl_rx_dmamap[RL_RX_DESC_CNT];
 	bus_dmamap_t		rl_rx_list_map;
 	struct rl_desc		*rl_rx_list;
 	bus_dma_segment_t	rl_rx_listseg;
+	int			rl_rx_prodidx;
 	int			rl_rx_listnseg;
-	bus_dmamap_t		rl_tx_list_map;
-	struct rl_desc		*rl_tx_list;
-	bus_dma_segment_t	rl_tx_listseg;
-	int			rl_tx_listnseg;
 };
 
 struct rl_softc {
