@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.18 2006/08/05 00:29:41 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.19 2006/08/05 09:07:35 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -199,10 +199,6 @@ int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
 
-#if 0
-int	acx_copyin_firmware(struct acx_softc *, struct ifreq *);
-#endif
-void	 acx_free_firmware(struct acx_softc *);
 int	 acx_load_firmware(struct acx_softc *, uint32_t,
 	     const uint8_t *, int);
 int	 acx_load_radio_firmware(struct acx_softc *, const char *);
@@ -369,8 +365,6 @@ acx_detach(void *xsc)
 	struct ifnet *ifp = &ic->ic_if;
 
 	acx_stop(sc);
-	acx_free_firmware(sc);
-
 	ieee80211_ifdetach(ifp);
 
 	acx_dma_free(sc);
@@ -1395,78 +1389,6 @@ acx_write_phyreg(struct acx_softc *sc, uint32_t reg, uint8_t val)
 	CSR_WRITE_4(sc, ACXREG_PHY_DATA, val);
 	CSR_WRITE_4(sc, ACXREG_PHY_ADDR, reg);
 	CSR_WRITE_4(sc, ACXREG_PHY_CTRL, ACXRV_PHY_WRITE);
-}
-
-#if 0
-int
-acx_copyin_firmware(struct acx_softc *sc, struct ifreq *req)
-{
-	struct acx_firmware ufw, *kfw;
-	uint8_t *base_fw, *radio_fw;
-	int error;
-
-	kfw = &sc->sc_firmware;
-	base_fw = NULL;
-	radio_fw = NULL;
-
-	error = copyin(req->ifr_data, &ufw, sizeof(ufw));
-	if (error)
-		return error;
-
-	/*
-	 * For combined base firmware, there is no radio firmware.
-	 * But base firmware must exist.
-	 */
-	if (ufw.base_fw_len <= 0 || ufw.radio_fw_len < 0)
-		return EINVAL;
-
-	base_fw = malloc(ufw.base_fw_len, M_DEVBUF, M_INTWAIT);
-	error = copyin(ufw.base_fw, base_fw, ufw.base_fw_len);
-	if (error)
-		goto fail;
-
-	if (ufw.radio_fw_len > 0) {
-		radio_fw = malloc(ufw.radio_fw_len, M_DEVBUF, M_INTWAIT);
-		error = copyin(ufw.radio_fw, radio_fw, ufw.radio_fw_len);
-		if (error)
-			goto fail;
-	}
-
-	kfw->base_fw_len = ufw.base_fw_len;
-	if (kfw->base_fw != NULL)
-		free(kfw->base_fw, M_DEVBUF);
-	kfw->base_fw = base_fw;
-
-	kfw->radio_fw_len = ufw.radio_fw_len;
-	if (kfw->radio_fw != NULL)
-		free(kfw->radio_fw, M_DEVBUF);
-	kfw->radio_fw = radio_fw;
-
-	return 0;
-fail:
-	if (base_fw != NULL)
-		free(base_fw, M_DEVBUF);
-	if (radio_fw != NULL)
-		free(radio_fw, M_DEVBUF);
-	return error;
-}
-#endif
-
-void
-acx_free_firmware(struct acx_softc *sc)
-{
-	struct acx_firmware *fw = &sc->sc_firmware;
-
-	if (fw->base_fw != NULL) {
-		free(fw->base_fw, M_DEVBUF);
-		fw->base_fw = NULL;
-		fw->base_fw_len = 0;
-	}
-	if (fw->radio_fw != NULL) {
-		free(fw->radio_fw, M_DEVBUF);
-		fw->radio_fw = NULL;
-		fw->radio_fw_len = 0;
-	}
 }
 
 int

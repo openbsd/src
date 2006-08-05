@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.6 2006/08/04 11:58:26 jsg Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.7 2006/08/05 09:07:35 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -63,10 +63,6 @@ extern int acxdebug;
 #define DPRINTFN(n,x)
 #endif
 
-#ifndef __offsetof
-#define __offsetof(type, field)	((size_t)(&((type *)0)->field))
-#endif
-
 #define ACX_FRAME_HDRLEN	sizeof(struct ieee80211_frame)
 #define ACX_MEMBLOCK_SIZE	256
 
@@ -117,11 +113,11 @@ extern int acxdebug;
 
 #define FW_TXDESC_SETFIELD(sc, mb, field, val, sz)	\
 	DESC_WRITE_##sz((sc), (mb)->tb_fwdesc_ofs +	\
-			      __offsetof(struct acx_fw_txdesc, field), (val))
+			      offsetof(struct acx_fw_txdesc, field), (val))
 
 #define FW_TXDESC_GETFIELD(sc, mb, field, sz)		\
 	DESC_READ_##sz((sc), (mb)->tb_fwdesc_ofs +	\
-			     __offsetof(struct acx_fw_txdesc, field))
+			     offsetof(struct acx_fw_txdesc, field))
 
 #define FW_TXDESC_SETFIELD_1(sc, mb, field, val)	\
 	FW_TXDESC_SETFIELD(sc, mb, field, val, 1)
@@ -133,7 +129,7 @@ extern int acxdebug;
 #define FW_TXDESC_GETFIELD_1(sc, mb, field)		\
 	FW_TXDESC_GETFIELD(sc, mb, field, 1)
 #define FW_TXDESC_GETFIELD_4(sc, mb, field)		\
-	le32toh(FW_TXDESC_GETFIELD(sc, mb, field, 4))
+	letoh32(FW_TXDESC_GETFIELD(sc, mb, field, 4))
 
 /*
  * Firmware TX descriptor
@@ -312,14 +308,6 @@ struct acx_node {
 	int	nd_txrate_sample;	/* num of samples for specific rate */
 };
 
-struct acx_firmware {
-	uint8_t	*base_fw;
-	int	base_fw_len;
-
-	uint8_t	*radio_fw;
-	int	radio_fw_len;
-};
-
 struct acx_config {
 	uint8_t	antenna;
 	uint8_t	regdom;
@@ -350,7 +338,6 @@ struct acx_softc {
 	struct timeout		sc_chanscan_timer;
 	uint32_t		sc_flags;	/* see ACX_FLAG_ */
 
-	struct acx_firmware	sc_firmware;
 	uint32_t		sc_firmware_ver;
 	uint32_t		sc_hardware_id;
 
