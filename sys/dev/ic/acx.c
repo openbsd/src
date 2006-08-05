@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.15 2006/08/04 22:51:19 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.16 2006/08/05 00:04:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -155,77 +155,78 @@ do {									\
 	}								\
 } while (0)
 
-int	acx_attach(struct acx_softc *);
-int	acx_detach(void *);
-void	acx_shutdown(void *);
+int	 acx_attach(struct acx_softc *);
+int	 acx_detach(void *);
+void	 acx_shutdown(void *);
 
-int	acx_init(struct ifnet *);
-int	acx_stop(struct acx_softc *);
-void	acx_init_info_reg(struct acx_softc *);
-int	acx_config(struct acx_softc *);
-int	acx_read_config(struct acx_softc *, struct acx_config *);
-int	acx_write_config(struct acx_softc *, struct acx_config *);
-int	acx_set_crypt_keys(struct acx_softc *);
-void	acx_next_scan(void *);
+int	 acx_init(struct ifnet *);
+int	 acx_stop(struct acx_softc *);
+void	 acx_init_info_reg(struct acx_softc *);
+int	 acx_config(struct acx_softc *);
+int	 acx_read_config(struct acx_softc *, struct acx_config *);
+int	 acx_write_config(struct acx_softc *, struct acx_config *);
+int	 acx_set_crypt_keys(struct acx_softc *);
+void	 acx_next_scan(void *);
 
-void	acx_start(struct ifnet *);
-void	acx_watchdog(struct ifnet *);
+void	 acx_start(struct ifnet *);
+void	 acx_watchdog(struct ifnet *);
 
-int	acx_ioctl(struct ifnet *, u_long, caddr_t);
+int	 acx_ioctl(struct ifnet *, u_long, caddr_t);
 
-int	acx_intr(void *);
-void	acx_disable_intr(struct acx_softc *);
-void	acx_enable_intr(struct acx_softc *);
-void	acx_txeof(struct acx_softc *);
-void	acx_txerr(struct acx_softc *, uint8_t);
-void	acx_rxeof(struct acx_softc *);
+int	 acx_intr(void *);
+void	 acx_disable_intr(struct acx_softc *);
+void	 acx_enable_intr(struct acx_softc *);
+void	 acx_txeof(struct acx_softc *);
+void	 acx_txerr(struct acx_softc *, uint8_t);
+void	 acx_rxeof(struct acx_softc *);
 
-int	acx_dma_alloc(struct acx_softc *);
-void	acx_dma_free(struct acx_softc *);
-int	acx_init_tx_ring(struct acx_softc *);
-int	acx_init_rx_ring(struct acx_softc *);
-int	acx_newbuf(struct acx_softc *, struct acx_rxbuf *, int);
-int	acx_encap(struct acx_softc *, struct acx_txbuf *,
-			  struct mbuf *, struct ieee80211_node *, int);
+int	 acx_dma_alloc(struct acx_softc *);
+void	 acx_dma_free(struct acx_softc *);
+int	 acx_init_tx_ring(struct acx_softc *);
+int	 acx_init_rx_ring(struct acx_softc *);
+int	 acx_newbuf(struct acx_softc *, struct acx_rxbuf *, int);
+int	 acx_encap(struct acx_softc *, struct acx_txbuf *,
+	     struct mbuf *, struct ieee80211_node *, int);
 
-int	acx_reset(struct acx_softc *);
+int	 acx_reset(struct acx_softc *);
 
-int	acx_set_null_tmplt(struct acx_softc *);
-int	acx_set_probe_req_tmplt(struct acx_softc *, const char *, int);
-int	acx_set_probe_resp_tmplt(struct acx_softc *, const char *, int,
-					 int);
-int	acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
+int	 acx_set_null_tmplt(struct acx_softc *);
+int	 acx_set_probe_req_tmplt(struct acx_softc *, const char *, int);
+int	 acx_set_probe_resp_tmplt(struct acx_softc *, const char *, int,
+	    int);
+int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 
-int	acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
-int	acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
+int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
+int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
 
 #if 0
 int	acx_copyin_firmware(struct acx_softc *, struct ifreq *);
 #endif
-void	acx_free_firmware(struct acx_softc *);
-int	acx_load_firmware(struct acx_softc *, uint32_t,
-				  const uint8_t *, int);
-int	acx_load_radio_firmware(struct acx_softc *, const char *);
-int	acx_load_base_firmware(struct acx_softc *, const char *);
+void	 acx_free_firmware(struct acx_softc *);
+int	 acx_load_firmware(struct acx_softc *, uint32_t,
+	     const uint8_t *, int);
+int	 acx_load_radio_firmware(struct acx_softc *, const char *);
+int	 acx_load_base_firmware(struct acx_softc *, const char *);
 
-struct ieee80211_node *acx_node_alloc(struct ieee80211com *);
-void	acx_node_init(struct acx_softc *, struct acx_node *);
-void	acx_node_update(struct acx_softc *, struct acx_node *,
-				uint8_t, uint8_t);
-int	acx_newstate(struct ieee80211com *, enum ieee80211_state, int);
+struct ieee80211_node
+	*acx_node_alloc(struct ieee80211com *);
+void	 acx_node_init(struct acx_softc *, struct acx_node *);
+void	 acx_node_update(struct acx_softc *, struct acx_node *,
+	     uint8_t, uint8_t);
+int	 acx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 
-void	acx_init_cmd_reg(struct acx_softc *);
-int	acx_join_bss(struct acx_softc *, uint8_t, struct ieee80211_node *);
-int	acx_enable_txchan(struct acx_softc *, uint8_t);
-int	acx_enable_rxchan(struct acx_softc *, uint8_t);
-int	acx_init_radio(struct acx_softc *, uint32_t, uint32_t);
+void	 acx_init_cmd_reg(struct acx_softc *);
+int	 acx_join_bss(struct acx_softc *, uint8_t, struct ieee80211_node *);
+int	 acx_enable_txchan(struct acx_softc *, uint8_t);
+int	 acx_enable_rxchan(struct acx_softc *, uint8_t);
+int	 acx_init_radio(struct acx_softc *, uint32_t, uint32_t);
 
 const struct ieee80211_rateset	acx_rates_11b =
 	{ 4, { 2, 4, 11, 22 } };
 const struct ieee80211_rateset	acx_rates_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static int	acx_chanscan_rate = 5;	/* 5/second */
+static int	acx_chanscan_rate = 5;	/* 5 seconds */
 int		acx_beacon_intvl = 100;	/* 100 TU */
 
 /*
@@ -281,7 +282,6 @@ acx_attach(struct acx_softc *sc)
 	}
 	if (i == EEINFO_RETRY_MAX)
 		return (ENXIO);
-
 #undef EEINFO_RETRY_MAX
 
 	printf(", radio %02x", sc->sc_radio_type);
@@ -316,7 +316,7 @@ acx_attach(struct acx_softc *sc)
 	/* Set channels */
 	for (i = 1; i <= 14; ++i) {
 		ic->ic_channels[i].ic_freq =
-			ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
+		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
 		ic->ic_channels[i].ic_flags = sc->chip_chan_flags;
 	}
 
@@ -327,8 +327,8 @@ acx_attach(struct acx_softc *sc)
 	 * NOTE: Don't overwrite ic_caps set by chip specific code
 	 */
 	ic->ic_caps |= IEEE80211_C_WEP |	/* WEP */
-		       IEEE80211_C_IBSS |	/* IBSS modes */
-		       IEEE80211_C_SHPREAMBLE;	/* Short preamble */
+	    IEEE80211_C_IBSS |			/* IBSS modes */
+	    IEEE80211_C_SHPREAMBLE;		/* Short preamble */
 
 	/* Get station id */
 	for (i = 0; i < IEEE80211_ADDR_LEN; ++i) {
@@ -374,6 +374,7 @@ acx_detach(void *xsc)
 	ieee80211_ifdetach(ifp);
 
 	acx_dma_free(sc);
+
 	return (0);
 }
 
@@ -393,7 +394,7 @@ acx_init(struct ifnet *ifp)
 
 	error = acx_stop(sc);
 	if (error)
-		return EIO;
+		return (EIO);
 
 	/* enable card if possible */
 	if (sc->sc_enable != NULL)
@@ -475,6 +476,7 @@ acx_init(struct ifnet *ifp)
 back:
 	if (error)
 		acx_stop(sc);
+
 	return (0);
 }
 
@@ -522,7 +524,7 @@ acx_set_crypt_keys(struct acx_softc *sc)
 	}
 	return 0;
 #endif
-	return ENXIO;
+	return (ENXIO);
 }
 
 void
@@ -551,7 +553,7 @@ acx_stop(struct acx_softc *sc)
 	/* Reset hardware */
 	error = acx_reset(sc);
 	if (error)
-		return error;
+		return (error);
 
 	/* Firmware no longer functions after hardware reset */
 	sc->sc_flags &= ~ACX_FLAG_FW_LOADED;
@@ -572,8 +574,7 @@ acx_stop(struct acx_softc *sc)
 		buf = &bd->tx_buf[i];
 
 		if (buf->tb_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-					  buf->tb_mbuf_dmamap);
+			bus_dmamap_unload(sc->sc_dmat, buf->tb_mbuf_dmamap);
 			m_freem(buf->tb_mbuf);
 			buf->tb_mbuf = NULL;
 		}
@@ -591,7 +592,7 @@ acx_stop(struct acx_softc *sc)
 	for (i = 0; i < ACX_RX_DESC_CNT; ++i) {
 		if (bd->rx_buf[i].rb_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
-					  bd->rx_buf[i].rb_mbuf_dmamap);
+			    bd->rx_buf[i].rb_mbuf_dmamap);
 			m_freem(bd->rx_buf[i].rb_mbuf);
 			bd->rx_buf[i].rb_mbuf = NULL;
 		}
@@ -608,7 +609,7 @@ acx_stop(struct acx_softc *sc)
 	if (sc->sc_disable != NULL)
 		(*sc->sc_disable)(sc);
 	
-	return 0;
+	return (0);
 }
 
 int
@@ -619,25 +620,26 @@ acx_config(struct acx_softc *sc)
 
 	error = acx_read_config(sc, &conf);
 	if (error)
-		return error;
+		return (error);
 
 	error = acx_write_config(sc, &conf);
 	if (error)
-		return error;
+		return (error);
 
 	if (acx_set_probe_req_tmplt(sc, "", 0) != 0) {
 		printf("%s: can't set probe req template "
 		    "(empty ssid)\n", sc->sc_dev.dv_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* XXX for PM?? */
 	if (acx_set_null_tmplt(sc) != 0) {
 		printf("%s: can't set null data template\n",
 		    sc->sc_dev.dv_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -653,7 +655,7 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	/* Get region domain */
 	if (acx_get_regdom_conf(sc, &reg_dom) != 0) {
 		printf("%s: can't get region domain\n", sc->sc_dev.dv_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 	conf->regdom = reg_dom.regdom;
 	DPRINTF(("%s: regdom %02x\n", sc->sc_dev.dv_xname, reg_dom.regdom));
@@ -661,7 +663,7 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	/* Get antenna */
 	if (acx_get_antenna_conf(sc, &ant) != 0) {
 		printf("%s: can't get antenna\n", sc->sc_dev.dv_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 	conf->antenna = ant.antenna;
 	DPRINTF(("%s: antenna %02x\n", sc->sc_dev.dv_xname, ant.antenna));
@@ -674,23 +676,22 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	    	if (error) {
 			printf("%s: can't get sensitivity\n",
 			    sc->sc_dev.dv_xname);
-			return error;
+			return (error);
 		}
-	} else {
+	} else
 		sen = 0;
-	}
 	DPRINTF(("%s: sensitivity %02x\n", sc->sc_dev.dv_xname, sen));
 
 	/* Get firmware revision */
 	if (acx_get_fwrev_conf(sc, &fw_rev) != 0) {
 		printf("%s: can't get firmware revision\n",
 		    sc->sc_dev.dv_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	if (strncmp(fw_rev.fw_rev, "Rev ", 4) != 0) {
 		printf("%s: strange revision string -- %s\n",
-			  sc->sc_dev.dv_xname, fw_rev.fw_rev);
+		    sc->sc_dev.dv_xname, fw_rev.fw_rev);
 		fw_rev_no = 0x01090407;
 	} else {
 		/*
@@ -706,14 +707,15 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	sc->sc_firmware_ver = fw_rev_no;
 	sc->sc_hardware_id = letoh32(fw_rev.hw_id);
 	DPRINTF(("%s: fw rev %08x, hw id %08x\n",
-		 sc->sc_dev.dv_xname, sc->sc_firmware_ver, sc->sc_hardware_id));
+	    sc->sc_dev.dv_xname, sc->sc_firmware_ver, sc->sc_hardware_id));
 
 	if (sc->chip_read_config != NULL) {
 		error = sc->chip_read_config(sc, conf);
 		if (error)
-			return error;
+			return (error);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -733,67 +735,68 @@ acx_write_config(struct acx_softc *sc, struct acx_config *conf)
 	sretry.nretry = sc->sc_short_retry_limit;
 	if (acx_set_nretry_short_conf(sc, &sretry) != 0) {
 		printf("%s: can't set short retry limit\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	lretry.nretry = sc->sc_long_retry_limit;
 	if (acx_set_nretry_long_conf(sc, &lretry) != 0) {
 		printf("%s: can't set long retry limit\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* Set MSDU lifetime */
 	msdu_lifetime.lifetime = htole32(sc->sc_msdu_lifetime);
 	if (acx_set_msdu_lifetime_conf(sc, &msdu_lifetime) != 0) {
 		printf("%s: can't set MSDU lifetime\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* Enable rate fallback */
 	rate_fb.ratefb_enable = 1;
 	if (acx_set_rate_fallback_conf(sc, &rate_fb) != 0) {
 		printf("%s: can't enable rate fallback\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* Set antenna */
 	ant.antenna = conf->antenna;
 	if (acx_set_antenna_conf(sc, &ant) != 0) {
 		printf("%s: can't set antenna\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* Set region domain */
 	reg_dom.regdom = conf->regdom;
 	if (acx_set_regdom_conf(sc, &reg_dom) != 0) {
 		printf("%s: can't set region domain\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	if (sc->chip_write_config != NULL) {
 		error = sc->chip_write_config(sc, conf);
 		if (error)
-			return error;
+			return (error);
 	}
 
 	/* What we want to receive and how to receive */
 	/* XXX may not belong here, acx_init() */
 	rx_opt.opt1 = RXOPT1_FILT_FDEST | RXOPT1_INCL_RXBUF_HDR;
 	rx_opt.opt2 = RXOPT2_RECV_ASSOC_REQ |
-		      RXOPT2_RECV_AUTH |
-		      RXOPT2_RECV_BEACON |
-		      RXOPT2_RECV_CF |
-		      RXOPT2_RECV_CTRL |
-		      RXOPT2_RECV_DATA |
-		      RXOPT2_RECV_MGMT |
-		      RXOPT2_RECV_PROBE_REQ |
-		      RXOPT2_RECV_PROBE_RESP |
-		      RXOPT2_RECV_OTHER;
+	    RXOPT2_RECV_AUTH |
+	    RXOPT2_RECV_BEACON |
+	    RXOPT2_RECV_CF |
+	    RXOPT2_RECV_CTRL |
+	    RXOPT2_RECV_DATA |
+	    RXOPT2_RECV_MGMT |
+	    RXOPT2_RECV_PROBE_REQ |
+	    RXOPT2_RECV_PROBE_RESP |
+	    RXOPT2_RECV_OTHER;
 	if (acx_set_rxopt_conf(sc, &rx_opt) != 0) {
 		printf("%s: can't set RX option\n", ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -849,7 +852,7 @@ acx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 
-	return error;
+	return (error);
 }
 
 void
@@ -954,9 +957,8 @@ acx_start(struct ifnet *ifp)
 			}
 
 			rate = node->nd_rates.rs_rates[node->nd_txrate];
-		} else {
+		} else
 			break;
-		}
 
 		f = mtod(m, struct ieee80211_frame *);
 		if ((f->i_fc[1] & IEEE80211_FC1_WEP) && !sc->chip_hw_crypt) {
@@ -987,7 +989,6 @@ acx_start(struct ifnet *ifp)
 		 *    acx_txeof(), so it is not freed here.  acx_txeof()
 		 *    will free it for us
 		 */
-
 		trans = 1;
 		bd->tx_used_count++;
 		idx = (idx + 1) % ACX_TX_DESC_CNT;
@@ -1006,6 +1007,7 @@ acx_watchdog(struct ifnet *ifp)
 {
 	printf("%s: watchdog timeout\n", ifp->if_xname);
 	acx_txeof(ifp->if_softc);
+
 	/* TODO */
 }
 
@@ -1016,18 +1018,18 @@ acx_intr(void *arg)
 	uint16_t intr_status;
 
 	if ((sc->sc_flags & ACX_FLAG_FW_LOADED) == 0)
-		return 0;
+		return (0);
 
 	intr_status = CSR_READ_2(sc, ACXREG_INTR_STATUS_CLR);
 	if (intr_status == ACXRV_INTR_ALL) {
 		/* not our interrupt */
-		return 0;
+		return (0);
 	}
 
 	intr_status &= sc->chip_intr_enable;
 	if (intr_status == 0) {
 		/* not interrupts we care about */
-		return 1;
+		return (1);
 	}
 
 	/* Acknowledge all interrupts */
@@ -1039,7 +1041,7 @@ acx_intr(void *arg)
 	if (intr_status & ACXRV_INTR_RX_FINI)
 		acx_rxeof(sc);
 
-	return 1;
+	return (1);
 }
 
 void
@@ -1086,9 +1088,8 @@ acx_txeof(struct acx_softc *sc)
 		if (error) {
 			acx_txerr(sc, error);
 			ifp->if_oerrors++;
-		} else {
+		} else
 			ifp->if_opackets++;
-		}
 
 		if (buf->tb_node != NULL) {
 			struct ieee80211com *ic;
@@ -1131,9 +1132,8 @@ acx_txerr(struct acx_softc *sc, uint8_t err)
 		 */
 		DPRINTF(("%s: TX failed -- excessive retry\n",
 		    sc->sc_dev.dv_xname));
-	} else {
+	} else
 		printf("%s: TX failed -- ", ifp->if_xname);
-	}
 
 	/*
 	 * Although `err' looks like bitmask, it never
@@ -1197,7 +1197,7 @@ acx_rxeof(struct acx_softc *sc)
 	int idx, ready;
 
 	bus_dmamap_sync(sc->sc_dmat, rd->rx_ring_dmamap, 0,
-			rd->rx_ring_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    rd->rx_ring_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	/*
 	 * Locate first "ready" rx buffer,
@@ -1224,7 +1224,6 @@ acx_rxeof(struct acx_softc *sc)
 	 * NOTE: don't mess up `idx' here, it will
 	 * be used in the following code
 	 */
-
 	do {
 		struct acx_rxbuf_hdr *head;
 		struct acx_rxbuf *buf;
@@ -1242,7 +1241,7 @@ acx_rxeof(struct acx_softc *sc)
 			break;
 
 		bus_dmamap_sync(sc->sc_dmat, buf->rb_mbuf_dmamap, 0,
-			buf->rb_mbuf_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		    buf->rb_mbuf_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		m = buf->rb_mbuf;
 
@@ -1261,7 +1260,7 @@ acx_rxeof(struct acx_softc *sc)
 			struct ieee80211_node *ni;
 
 			m_adj(m, sizeof(struct acx_rxbuf_hdr) +
-				 sc->chip_rxbuf_exhdr);
+			    sc->chip_rxbuf_exhdr);
 			f = mtod(m, struct ieee80211_frame *);
 
 			if ((f->i_fc[1] & IEEE80211_FC1_WEP) &&
@@ -1282,7 +1281,7 @@ acx_rxeof(struct acx_softc *sc)
 			ni = ieee80211_find_rxnode(ic, f);
 
 			ieee80211_input(ifp, m, ni, head->rbh_level,
-					letoh32(head->rbh_time));
+			    letoh32(head->rbh_time));
 
 			ieee80211_release_node(ic, ni);
 			ifp->if_ipackets++;
@@ -1329,9 +1328,10 @@ acx_reset(struct acx_softc *sc)
 	reg = CSR_READ_2(sc, ACXREG_ECPU_CTRL);
 	if (!(reg & ACXRV_ECPU_HALT)) {
 		printf("%s: can't halt ECPU\n", sc->sc_dev.dv_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -1380,12 +1380,13 @@ acx_read_phyreg(struct acx_softc *sc, uint32_t reg, uint8_t *val)
 	if (i == PHY_READ_RETRY_MAX) {
 		printf("%s: can't read phy reg %x (timeout)\n",
 		    ifp->if_xname, reg);
-		return ETIMEDOUT;
+		return (ETIMEDOUT);
 	}
 #undef PHY_READ_RETRY_MAX
 
 	*val = CSR_READ_1(sc, ACXREG_PHY_DATA);
-	return 0;
+
+	return (0);
 }
 
 void
@@ -1481,7 +1482,7 @@ acx_load_base_firmware(struct acx_softc *sc, const char *name)
 	if (error != 0) {
 		printf("%s: error %d, could not read microcode %s!\n",
 		    ifp->if_xname, error, name);
-		return EIO;
+		return (EIO);
 	}
 
 	/* Load base firmware */
@@ -1505,13 +1506,14 @@ acx_load_base_firmware(struct acx_softc *sc, const char *name)
 		reg = CSR_READ_2(sc, ACXREG_INTR_STATUS);
 		if (reg & ACXRV_INTR_FCS_THRESH) {
 			CSR_WRITE_2(sc, ACXREG_INTR_ACK, ACXRV_INTR_FCS_THRESH);
-			return 0;
+			return (0);
 		}
 		DELAY(10000);
 	}
 
 	printf("%s: can't initialize ECPU (timeout)\n", ifp->if_xname);
-	return ENXIO;
+
+	return (ENXIO);
 }
 
 int
@@ -1567,7 +1569,7 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 	if (letoh32(mem_map.code_end) != radio_fw_ofs + size) {
 		printf("%s: loaded radio firmware position mismatch\n",
 		    ifp->if_xname);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	DPRINTF(("%s: radio firmware initialized\n", sc->sc_dev.dv_xname));
@@ -1577,23 +1579,22 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 
 int
 acx_load_firmware(struct acx_softc *sc, uint32_t offset, const uint8_t *data,
-		  int data_len)
+    int data_len)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	const uint32_t *fw;
 	u_int32_t csum = 0;
 	int i, fw_len;
 
-	for (i = 4; i < data_len; i++) {
+	for (i = 4; i < data_len; i++)
 		csum += data[i];
-	}
 
 	fw = (const uint32_t *)data;
 
 	if (*fw != csum) {
 		printf("%s: firmware checksum 0x%x does not match 0x%x!\n",
 		    ifp->if_xname, fw, csum);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* skip csum + length */
@@ -1644,10 +1645,11 @@ acx_load_firmware(struct acx_softc *sc, uint32_t offset, const uint8_t *data,
 		if (betoh32(fw[i]) != val) {
 			printf("%s: firmware mismatch fw %08x  loaded %08x\n",
 			    ifp->if_xname, fw[i], val);
-			return ENXIO;
+			return (ENXIO);
 		}
 	}
-	return 0;
+
+	return (0);
 }
 
 struct ieee80211_node *
@@ -1657,11 +1659,12 @@ acx_node_alloc(struct ieee80211com *ic)
 
 	node = malloc(sizeof(struct acx_node), M_DEVBUF, M_NOWAIT);
 	if (node == NULL)
-		return NULL;
+		return (NULL);
 
 	bzero(node, (sizeof(struct acx_node)));
 	node->nd_txrate = -1;
-	return (struct ieee80211_node *)node;
+
+	return ((struct ieee80211_node *)node);
 }
 
 void
@@ -1710,7 +1713,7 @@ acx_node_init(struct acx_softc *sc, struct acx_node *node)
 
 void
 acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
-		uint8_t error)
+    uint8_t error)
 {
 	struct ieee80211_rateset *nd_rset, *cp_rset;
 	int i, time_diff;
@@ -1805,9 +1808,8 @@ acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
 		    sc->sc_dev.dv_xname,
 		    node->nd_node.ni_macaddr, ":",
 		    cur_rate, cp_rset->rs_rates[node->nd_txrate]));
-	} else {
+	} else
 		return;
-	}
 
 #define IEEERATE(rate)	((rate) & IEEE80211_RATE_VAL)
 	/* XXX Update ieee80211_node's TX rate index */
@@ -1838,7 +1840,7 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ACX_ENABLE_RXCHAN(sc, chan, ifp->if_xname);
 
 			timeout_add(&sc->sc_chanscan_timer,
-				      hz / acx_chanscan_rate);
+			    hz / acx_chanscan_rate);
 		}
 		break;
 	case IEEE80211_S_AUTH:
@@ -1895,15 +1897,14 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			}
 
 			if (acx_set_beacon_tmplt(sc, ni->ni_essid,
-						 ni->ni_esslen, chan) != 0) {
+			    ni->ni_esslen, chan) != 0) {
 				printf("%s: set bescon template failed\n",
 				    ifp->if_xname);
 				goto back;
 			}
 
 			if (acx_set_probe_resp_tmplt(sc, ni->ni_essid,
-						     ni->ni_esslen,
-						     chan) != 0) {
+			    ni->ni_esslen, chan) != 0) {
 				printf("%s: set probe response template "
 				    "failed\n", ifp->if_xname);
 				goto back;
@@ -1928,7 +1929,8 @@ back:
 		nstate = IEEE80211_S_INIT;
 		arg = -1;
 	}
-	return sc->sc_newstate(ic, nstate, arg);
+
+	return (sc->sc_newstate(ic, nstate, arg));
 }
 
 int
@@ -1945,23 +1947,22 @@ acx_init_tmplt_ordered(struct acx_softc *sc)
 	 * Above order is critical to get a correct memory map.
 	 */
 	if (acx_init_probe_req_tmplt(sc) != 0)
-		return 1;
+		return (1);
 
 	if (acx_init_null_data_tmplt(sc) != 0)
-		return 1;
+		return (1);
 
 	if (acx_init_beacon_tmplt(sc) != 0)
-		return 1;
+		return (1);
 
 	if (acx_init_tim_tmplt(sc) != 0)
-		return 1;
+		return (1);
 
 	if (acx_init_probe_resp_tmplt(sc) != 0)
-		return 1;
-
+		return (1);
 
 #undef CALL_SET_TMPLT
-	return 0;
+	return (0);
 }
 
 #if 0
@@ -1987,7 +1988,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	if (error) {
 		printf("%s: can't create rx ring dma tag\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, ACX_RX_RING_SIZE, PAGE_SIZE,
@@ -1996,7 +1997,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	if (error != 0) {
 		printf("%s: can't allocate rx ring dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &rd->rx_ring_seg, nsegs,
@@ -2006,17 +2007,16 @@ acx_dma_alloc(struct acx_softc *sc)
 	if (error != 0) {
 		printf("%s: could not map rx desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->rx_ring_dmamap,
-				rd->rx_ring, ACX_RX_RING_SIZE,
-				NULL, BUS_DMA_WAITOK);
+	    rd->rx_ring, ACX_RX_RING_SIZE, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: can't get rx ring dma address\n",
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &rd->rx_ring_seg, 1);
-		return error;
+		return (error);
 	}
 
 	rd->rx_ring_paddr = rd->rx_ring_dmamap->dm_segs[0].ds_addr;
@@ -2027,35 +2027,33 @@ acx_dma_alloc(struct acx_softc *sc)
 
 	if (error) {
 		printf("%s: can't create tx ring dma tag\n", ifp->if_xname);
-		return error;
+		return (error);
 	}
 
-	
 	error = bus_dmamem_alloc(sc->sc_dmat, ACX_TX_RING_SIZE, PAGE_SIZE,
 	    0, &rd->tx_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);	
 
 	if (error) {
-		printf("%s: can't allocate tx ring dma memory\n", ifp->if_xname);
-		return error;
+		printf("%s: can't allocate tx ring dma memory\n",
+		    ifp->if_xname);
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &rd->tx_ring_seg, nsegs,
-	    ACX_TX_RING_SIZE, (caddr_t *)&rd->tx_ring,
-	    BUS_DMA_NOWAIT);
+	    ACX_TX_RING_SIZE, (caddr_t *)&rd->tx_ring, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
 		printf("%s: could not map tx desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->tx_ring_dmamap,
-				rd->tx_ring, ACX_TX_RING_SIZE,
-				NULL, BUS_DMA_WAITOK);
+	    rd->tx_ring, ACX_TX_RING_SIZE, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: can't get tx ring dma address\n", ifp->if_xname);
 		bus_dmamem_free(sc->sc_dmat, &rd->tx_ring_seg, 1);
-		return error;
+		return (error);
 	}
 
 	rd->tx_ring_paddr = rd->tx_ring_dmamap->dm_segs[0].ds_addr;
@@ -2065,7 +2063,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	    0, 0, &bd->mbuf_tmp_dmamap);
 	if (error) {
 		printf("%s: can't create tmp mbuf dma map\n", ifp->if_xname);
-		return error;
+		return (error);
 	}
 
 	/* Create DMA map for RX mbufs */
@@ -2075,7 +2073,7 @@ acx_dma_alloc(struct acx_softc *sc)
 		if (error) {
 			printf("%s: can't create rx mbuf dma map (%d)\n",
 			    ifp->if_xname, i);
-			return error;
+			return (error);
 		}
 		bd->rx_buf[i].rb_desc = &rd->rx_ring[i];
 	}
@@ -2087,13 +2085,13 @@ acx_dma_alloc(struct acx_softc *sc)
 		if (error) {
 			printf("%s: can't create tx mbuf dma map (%d)\n",
 			    ifp->if_xname, i);
-			return error;
+			return (error);
 		}
 		bd->tx_buf[i].tb_desc1 = &rd->tx_ring[i * 2];
 		bd->tx_buf[i].tb_desc2 = &rd->tx_ring[(i * 2) + 1];
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -2117,11 +2115,11 @@ acx_dma_free(struct acx_softc *sc)
 		if (bd->rx_buf[i].rb_desc != NULL) {
 			if (bd->rx_buf[i].rb_mbuf != NULL) {
 				bus_dmamap_unload(sc->sc_dmat,
-						  bd->rx_buf[i].rb_mbuf_dmamap);
+				    bd->rx_buf[i].rb_mbuf_dmamap);
 				m_freem(bd->rx_buf[i].rb_mbuf);
 			}
 			bus_dmamap_destroy(sc->sc_dmat,
-					   bd->rx_buf[i].rb_mbuf_dmamap);
+			    bd->rx_buf[i].rb_mbuf_dmamap);
 		}
 	}
 
@@ -2129,17 +2127,16 @@ acx_dma_free(struct acx_softc *sc)
 		if (bd->tx_buf[i].tb_desc1 != NULL) {
 			if (bd->tx_buf[i].tb_mbuf != NULL) {
 				bus_dmamap_unload(sc->sc_dmat,
-						  bd->tx_buf[i].tb_mbuf_dmamap);
+				    bd->tx_buf[i].tb_mbuf_dmamap);
 				m_freem(bd->tx_buf[i].tb_mbuf);
 			}
 			bus_dmamap_destroy(sc->sc_dmat,
-					   bd->tx_buf[i].tb_mbuf_dmamap);
+			    bd->tx_buf[i].tb_mbuf_dmamap);
 		}
 	}
 
-	if (bd->mbuf_tmp_dmamap != NULL) {
+	if (bd->mbuf_tmp_dmamap != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, bd->mbuf_tmp_dmamap);
-	}
 }
 
 int
@@ -2165,14 +2162,14 @@ acx_init_tx_ring(struct acx_softc *sc)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, rd->tx_ring_dmamap, 0,
-			rd->tx_ring_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    rd->tx_ring_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	bd = &sc->sc_buf_data;
 	bd->tx_free_start = 0;
 	bd->tx_used_start = 0;
 	bd->tx_used_count = 0;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -2195,7 +2192,7 @@ acx_init_rx_ring(struct acx_softc *sc)
 
 		error = acx_newbuf(sc, &bd->rx_buf[i], 1);
 		if (error)
-			return error;
+			return (error);
 
 		if (i == ACX_RX_DESC_CNT - 1)
 			rd->rx_ring[i].h_next_desc = htole32(rd->rx_ring_paddr);
@@ -2204,10 +2201,11 @@ acx_init_rx_ring(struct acx_softc *sc)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, rd->rx_ring_dmamap, 0,
-			rd->rx_ring_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    rd->rx_ring_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	bd->rx_scan_start = 0;
-	return 0;
+
+	return (0);
 }
 
 int
@@ -2233,14 +2231,13 @@ acx_newbuf(struct acx_softc *sc, struct acx_rxbuf *rb, int wait)
 
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, bd->mbuf_tmp_dmamap,
-				     m,
-				     wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, bd->mbuf_tmp_dmamap, m,
+	    wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT);
 	if (error) {
 		m_freem(m);
-		printf("%s: can't map rx mbuf %d\n", sc->sc_dev.dv_xname,
-		    error);
-		return error;
+		printf("%s: can't map rx mbuf %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
 	}
 
 	/* Unload originally mapped mbuf */
@@ -2257,14 +2254,14 @@ acx_newbuf(struct acx_softc *sc, struct acx_rxbuf *rb, int wait)
 	rb->rb_desc->h_data_len = htole16(m->m_len);
 
 	bus_dmamap_sync(sc->sc_dmat, rb->rb_mbuf_dmamap, 0,
-			rb->rb_mbuf_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+	    rb->rb_mbuf_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	return 0;
+	return (0);
 }
 
 int
 acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
-	  struct ieee80211_node *ni, int rate)
+    struct ieee80211_node *ni, int rate)
 {
 	struct acx_ring_data *rd = &sc->sc_ring_data;
 	struct acx_node *node = (struct acx_node *)ni;
@@ -2275,6 +2272,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 
 	if (txbuf->tb_mbuf != NULL)
 		panic("free TX buf has mbuf installed\n");
+
 	error = 0;
 
 	if (m->m_pkthdr.len > MCLBYTES) {
@@ -2287,12 +2285,12 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 		goto back;
 	}
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, txbuf->tb_mbuf_dmamap,
-				     m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, txbuf->tb_mbuf_dmamap, m,
+	    BUS_DMA_NOWAIT);
 				     
 	if (error && error != EFBIG) {
-		printf("%s: can't map tx mbuf1 %d\n", sc->sc_dev.dv_xname,
-		    error);
+		printf("%s: can't map tx mbuf1 %d\n",
+		    sc->sc_dev.dv_xname, error);
 		goto back;
 	}
 
@@ -2301,6 +2299,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 		struct mbuf *mnew;
 
 		error = 0;
+
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
 			m_freem(m);
@@ -2330,8 +2329,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 		m = mnew;
 		
 		error = bus_dmamap_load_mbuf(sc->sc_dmat,
-					     txbuf->tb_mbuf_dmamap, m,
-					     BUS_DMA_NOWAIT);
+		    txbuf->tb_mbuf_dmamap, m, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't map tx mbuf2 %d\n",
 			    sc->sc_dev.dv_xname, error);
@@ -2367,16 +2365,15 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 	 * host_desc1.h_data_len = mac_header_len
 	 * host_desc2.h_data_len = buffer_len - mac_header_len
 	 */
-
 	paddr = txbuf->tb_mbuf_dmamap->dm_segs[0].ds_addr;
 	txbuf->tb_desc1->h_data_paddr = htole32(paddr);
 	txbuf->tb_desc2->h_data_paddr = htole32(paddr + ACX_FRAME_HDRLEN);
 
 	txbuf->tb_desc1->h_data_len =
-		htole16(sc->chip_txdesc1_len ? sc->chip_txdesc1_len
-					     : m->m_pkthdr.len);
+	    htole16(sc->chip_txdesc1_len ? sc->chip_txdesc1_len
+	    : m->m_pkthdr.len);
 	txbuf->tb_desc2->h_data_len =
-		htole16(m->m_pkthdr.len - ACX_FRAME_HDRLEN);
+	    htole16(m->m_pkthdr.len - ACX_FRAME_HDRLEN);
 
 	/*
 	 * NOTE:
@@ -2407,7 +2404,8 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 back:
 	if (error)
 		m_freem(m);
-	return error;
+
+	return (error);
 }
 
 int
@@ -2425,7 +2423,7 @@ acx_set_null_tmplt(struct acx_softc *sc)
 	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(f->i_addr3, etherbroadcastaddr);
 
-	return _acx_set_null_data_tmplt(sc, &n, sizeof(n));
+	return (_acx_set_null_data_tmplt(sc, &n, sizeof(n)));
 }
 
 int
@@ -2451,13 +2449,13 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 	v = ieee80211_add_xrates(v, &ic->ic_sup_rates[sc->chip_phymode]);
 	vlen = v - req.data.u_data.var;
 
-	return _acx_set_probe_req_tmplt(sc, &req,
-					ACX_TMPLT_PROBE_REQ_SIZ(vlen));
+	return (_acx_set_probe_req_tmplt(sc, &req,
+	    ACX_TMPLT_PROBE_REQ_SIZ(vlen)));
 }
 
 int
 acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
-			 int chan)
+    int chan)
 {
 	struct acx_tmplt_probe_resp resp;
 	struct ieee80211_frame *f;
@@ -2494,14 +2492,14 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 
 	vlen = v - resp.data.u_data.var;
 
-	return _acx_set_probe_resp_tmplt(sc, &resp,
-					 ACX_TMPLT_PROBE_RESP_SIZ(vlen));
+	return (_acx_set_probe_resp_tmplt(sc, &resp,
+	    ACX_TMPLT_PROBE_RESP_SIZ(vlen)));
 }
 
 /* XXX C&P of acx_set_probe_resp_tmplt() */
 int
 acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
-		     int chan)
+    int chan)
 {
 	struct acx_tmplt_beacon beacon;
 	struct ieee80211_frame *f;
@@ -2538,7 +2536,7 @@ acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 
 	vlen = v - beacon.data.u_data.var;
 
-	return _acx_set_beacon_tmplt(sc, &beacon, ACX_TMPLT_BEACON_SIZ(vlen));
+	return (_acx_set_beacon_tmplt(sc, &beacon, ACX_TMPLT_BEACON_SIZ(vlen)));
 }
 
 void
@@ -2579,79 +2577,79 @@ acx_join_bss(struct acx_softc *sc, uint8_t mode, struct ieee80211_node *node)
 
 	DPRINTF(("%s: join BSS/IBSS on channel %d\n", sc->sc_dev.dv_xname,
 	    bj->channel));
-	return acx_exec_command(sc, ACXCMD_JOIN_BSS,
-				bj, BSS_JOIN_PARAM_SIZE(bj), NULL, 0);
+	return (acx_exec_command(sc, ACXCMD_JOIN_BSS,
+	    bj, BSS_JOIN_PARAM_SIZE(bj), NULL, 0));
 }
 
 int
 acx_enable_txchan(struct acx_softc *sc, uint8_t chan)
 {
-	return acx_exec_command(sc, ACXCMD_ENABLE_TXCHAN, &chan, sizeof(chan),
-				NULL, 0);
+	return (acx_exec_command(sc, ACXCMD_ENABLE_TXCHAN, &chan, sizeof(chan),
+	    NULL, 0));
 }
 
 int
 acx_enable_rxchan(struct acx_softc *sc, uint8_t chan)
 {
-	return acx_exec_command(sc, ACXCMD_ENABLE_RXCHAN, &chan, sizeof(chan),
-				NULL, 0);
+	return (acx_exec_command(sc, ACXCMD_ENABLE_RXCHAN, &chan, sizeof(chan),
+	    NULL, 0));
 }
 
 int
 acx_get_conf(struct acx_softc *sc, uint16_t conf_id, void *conf,
-	     uint16_t conf_len)
-{
-	struct acx_conf *confcom;
-
-	if (conf_len < sizeof(*confcom)) {
-		printf("%s: %s configure data is too short\n",
-		sc->sc_dev.dv_xname, __func__);
-		return 1;
-	}
-
-	confcom = conf;
-	confcom->conf_id = htole16(conf_id);
-	confcom->conf_data_len = htole16(conf_len - sizeof(*confcom));
-
-	return acx_exec_command(sc, ACXCMD_GET_CONF, confcom, sizeof(*confcom),
-				conf, conf_len);
-}
-
-int
-acx_set_conf(struct acx_softc *sc, uint16_t conf_id, void *conf,
-	     uint16_t conf_len)
+    uint16_t conf_len)
 {
 	struct acx_conf *confcom;
 
 	if (conf_len < sizeof(*confcom)) {
 		printf("%s: %s configure data is too short\n",
 		    sc->sc_dev.dv_xname, __func__);
-		return 1;
+		return (1);
 	}
 
 	confcom = conf;
 	confcom->conf_id = htole16(conf_id);
 	confcom->conf_data_len = htole16(conf_len - sizeof(*confcom));
 
-	return acx_exec_command(sc, ACXCMD_SET_CONF, conf, conf_len, NULL, 0);
+	return (acx_exec_command(sc, ACXCMD_GET_CONF, confcom, sizeof(*confcom),
+	    conf, conf_len));
+}
+
+int
+acx_set_conf(struct acx_softc *sc, uint16_t conf_id, void *conf,
+    uint16_t conf_len)
+{
+	struct acx_conf *confcom;
+
+	if (conf_len < sizeof(*confcom)) {
+		printf("%s: %s configure data is too short\n",
+		    sc->sc_dev.dv_xname, __func__);
+		return (1);
+	}
+
+	confcom = conf;
+	confcom->conf_id = htole16(conf_id);
+	confcom->conf_data_len = htole16(conf_len - sizeof(*confcom));
+
+	return (acx_exec_command(sc, ACXCMD_SET_CONF, conf, conf_len, NULL, 0));
 }
 
 int
 acx_set_tmplt(struct acx_softc *sc, uint16_t cmd, void *tmplt,
-	      uint16_t tmplt_len)
+    uint16_t tmplt_len)
 {
 	uint16_t *size;
 
 	if (tmplt_len < sizeof(*size)) {
 		printf("%s: %s template is too short\n",
 		    sc->sc_dev.dv_xname, __func__);
-		return 1;
+		return (1);
 	}
 
 	size = tmplt;
 	*size = htole16(tmplt_len - sizeof(*size));
 
-	return acx_exec_command(sc, cmd, tmplt, tmplt_len, NULL, 0);
+	return (acx_exec_command(sc, cmd, tmplt, tmplt_len, NULL, 0));
 }
 
 int
@@ -2661,7 +2659,9 @@ acx_init_radio(struct acx_softc *sc, uint32_t radio_ofs, uint32_t radio_len)
 
 	r.radio_ofs = htole32(radio_ofs);
 	r.radio_len = htole32(radio_len);
-	return acx_exec_command(sc, ACXCMD_INIT_RADIO, &r, sizeof(r), NULL, 0);
+
+	return (acx_exec_command(sc, ACXCMD_INIT_RADIO, &r, sizeof(r), NULL,
+	    0));
 }
 
 int
@@ -2672,9 +2672,9 @@ acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
 	int i, ret;
 
 	if ((sc->sc_flags & ACX_FLAG_FW_LOADED) == 0) {
-		printf("%s: cmd 0x%04x failed (base firmware "
-		    "not loaded)", sc->sc_dev.dv_xname, cmd);
-		return 1;
+		printf("%s: cmd 0x%04x failed (base firmware not loaded)\n",
+		    sc->sc_dev.dv_xname, cmd);
+		return (1);
 	}
 
 	ret = 0;
@@ -2731,5 +2731,6 @@ acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
 
 back:
 	CMD_WRITE_4(sc, 0);
-	return ret;
+
+	return (ret);
 }
