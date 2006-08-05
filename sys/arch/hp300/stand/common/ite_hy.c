@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_hy.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: ite_hy.c,v 1.6 2006/08/05 09:58:57 miod Exp $	*/
 /*	$NetBSD: ite_hy.c,v 1.3 1996/03/03 04:23:37 thorpej Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ hyper_scroll(ip, sy, sx, count, dir)
 			 ip->cols  * ip->ftwidth, RR_COPY);
 }
 
-#include <hp300/dev/maskbits.h>
+#include "maskbits.h"
 
 /* NOTE:
  * the first element in starttab could be 0xffffffff.  making it 0
