@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-chall.c,v 1.30 2006/08/03 03:34:41 deraadt Exp $ */
+/* $OpenBSD: auth2-chall.c,v 1.31 2006/08/05 08:28:24 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -321,9 +321,10 @@ privsep_challenge_enable(void)
 {
 #ifdef BSD_AUTH
 	extern KbdintDevice mm_bsdauth_device;
-#endif
+#else
 #ifdef SKEY
 	extern KbdintDevice mm_skey_device;
+#endif
 #endif
 	/* As long as SSHv1 has devices[0] hard coded this is fine */
 #ifdef BSD_AUTH
