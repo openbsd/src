@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.16 2006/04/28 20:06:00 miod Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.17 2006/08/05 16:59:57 miod Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -98,7 +98,7 @@ void	wsmux_do_open(struct wsmux_softc *, struct wseventvar *);
 
 void	wsmux_do_close(struct wsmux_softc *);
 #if NWSDISPLAY > 0
-int	wsmux_evsrc_set_display(struct device *, struct wsevsrc *);
+int	wsmux_evsrc_set_display(struct device *, struct device *);
 #else
 #define wsmux_evsrc_set_display NULL
 #endif
@@ -757,11 +757,10 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
  * Set display of a mux via the parent mux.
  */
 int
-wsmux_evsrc_set_display(struct device *dv, struct wsevsrc *ame)
+wsmux_evsrc_set_display(struct device *dv, struct device *displaydv)
 {
 	struct wsmux_softc *muxsc = (struct wsmux_softc *)ame;
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
-	struct device *displaydv = muxsc ? muxsc->sc_displaydv : NULL;
 
 	DPRINTF(("wsmux_set_display: %s: displaydv=%p\n",
 		 sc->sc_base.me_dv.dv_xname, displaydv));

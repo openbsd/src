@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.68 2006/07/11 05:57:20 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.69 2006/08/05 16:59:57 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -628,8 +628,6 @@ wsdisplay_common_detach(struct wsdisplay_softc *sc, int flags)
 		 * there, but there is currently no support for this in wsmux.
 		 */
 #else
-		extern int wskbd_set_display(struct device *, struct wsevsrc *);
-
 		if ((rc = wskbd_set_display((struct device *)sc->sc_input,
 		    NULL)) != 0)
 			return (rc);
@@ -751,6 +749,23 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (hookset == 0)
 		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
 	hookset = 1;
+
+#if NWSKBD > 0 && NWSMUX == 0
+	if (console == 0) {
+		/*
+		 * In the non-wsmux world, always connect wskbd0 and wsdisplay0
+		 * together.
+		 */
+		extern struct cfdriver wskbd_cd;
+
+		if (wskbd_cd.cd_ndevs != 0 && sc->sc_dv.dv_unit == 0) {
+			if (wsdisplay_set_kbd(&sc->sc_dv,
+			    (struct wsevsrc *)wskbd_cd.cd_devs[0]) == 0)
+				wskbd_set_display(wskbd_cd.cd_devs[0],
+				    &sc->sc_dv);
+		}
+	}
+#endif
 }
 
 void
@@ -1997,6 +2012,22 @@ wsdisplay_set_console_kbd(struct wsevsrc *src)
 #endif
 	src->me_dispdv = &wsdisplay_console_device->sc_dv;
 }
+
+#if NWSMUX == 0
+int
+wsdisplay_set_kbd(struct device *disp, struct wsevsrc *kbd)
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)disp;
+
+	if (sc->sc_input != NULL)
+		return (EBUSY);
+
+	sc->sc_input = kbd;
+
+	return (0);
+}
+#endif
+
 #endif /* NWSKBD > 0 */
 
 /*

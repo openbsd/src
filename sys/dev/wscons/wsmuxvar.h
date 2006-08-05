@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmuxvar.h,v 1.6 2005/05/15 11:29:15 miod Exp $	*/
+/*	$OpenBSD: wsmuxvar.h,v 1.7 2006/08/05 16:59:57 miod Exp $	*/
 /*      $NetBSD: wsmuxvar.h,v 1.10 2005/04/30 03:47:12 augustss Exp $   */
 
 /*
@@ -65,7 +65,7 @@ struct wssrcops {
 	int (*dclose)(struct wsevsrc *);
 	int (*dioctl)(struct device *, u_long, caddr_t, int, struct proc *);
 	int (*ddispioctl)(struct device *, u_long, caddr_t, int, struct proc *);
-	int (*dsetdisplay)(struct device *, struct wsevsrc *);
+	int (*dsetdisplay)(struct device *, struct device *);
 };
 
 #define wsevsrc_open(me, evp) \

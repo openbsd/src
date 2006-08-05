@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.49 2006/08/01 23:36:52 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.50 2006/08/05 16:59:57 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -206,11 +206,6 @@ int	wskbd_detach(struct device *, int);
 int	wskbd_activate(struct device *, enum devact);
 
 int	wskbd_displayioctl(struct device *, u_long, caddr_t, int, struct proc *);
-#if NWSDISPLAY > 0
-int	wskbd_set_display(struct device *, struct wsevsrc *);
-#else
-#define	wskbd_set_display NULL
-#endif
 
 void	update_leds(struct wskbd_internal *);
 void	update_modifier(struct wskbd_internal *, u_int, int, int);
@@ -282,7 +277,12 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 struct wssrcops wskbd_srcops = {
 	WSMUX_KBD,
 	wskbd_mux_open, wskbd_mux_close, wskbd_do_ioctl,
-	wskbd_displayioctl, wskbd_set_display
+	wskbd_displayioctl,
+#if NWSDISPLAY > 0
+	wskbd_set_display
+#else
+	NULL
+#endif
 };
 #endif
 
@@ -429,6 +429,23 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		if (error)
 			printf("%s: attach error=%d\n",
 			    sc->sc_base.me_dv.dv_xname, error);
+	}
+#endif
+
+#if NWSMUX == 0
+	if (ap->console == 0) {
+		/*
+		 * In the non-wsmux world, always connect wskbd0 and wsdisplay0
+		 * together.
+		 */
+		extern struct cfdriver wsdisplay_cd;
+
+		if (wsdisplay_cd.cd_ndevs != 0 && self->dv_unit == 0) {
+			if (wskbd_set_display(self,
+			    wsdisplay_cd.cd_devs[0]) == 0)
+				wsdisplay_set_kbd(wsdisplay_cd.cd_devs[0],
+				    (struct wsevsrc *)sc);
+		}
 	}
 #endif
 
@@ -1179,15 +1196,14 @@ wskbd_set_console_display(struct device *displaydv, struct wsevsrc *me)
 }
 
 int
-wskbd_set_display(struct device *dv, struct wsevsrc *me)
+wskbd_set_display(struct device *dv, struct device *displaydv)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
-	struct device *displaydv = me != NULL ? me->me_dispdv : NULL;
 	struct device *odisplaydv;
 	int error;
 
-	DPRINTF(("wskbd_set_display: %s me=%p odisp=%p disp=%p cons=%d\n",
-		 dv->dv_xname, me, sc->sc_base.me_dispdv, displaydv, 
+	DPRINTF(("wskbd_set_display: %s odisp=%p disp=%p cons=%d\n",
+		 dv->dv_xname, sc->sc_base.me_dispdv, displaydv, 
 		 sc->sc_isconsole));
 
 	if (sc->sc_isconsole)
