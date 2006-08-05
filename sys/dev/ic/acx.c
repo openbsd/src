@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.20 2006/08/05 11:34:11 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.21 2006/08/05 12:59:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -927,9 +927,7 @@ acx_start(struct ifnet *ifp)
 
 			/* TODO power save */
 
-			m = ieee80211_encap(ifp, m, &ni);
-			if (m == NULL) {
-				ieee80211_release_node(ic, ni);
+			if ((m = ieee80211_encap(ifp, m, &ni)) == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
