@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.17 2006/08/05 16:59:57 miod Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.18 2006/08/05 19:08:41 miod Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -628,7 +628,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 		DPRINTF(("wsmux_attach_sc: %s: set display %p\n",
 			 sc->sc_base.me_dv.dv_xname, sc->sc_displaydv));
 		if (me->me_ops->dsetdisplay != NULL) {
-			error = wsevsrc_set_display(me, &sc->sc_base);
+			error = wsevsrc_set_display(me, sc->sc_displaydv);
 			/* Ignore that the console already has a display. */
 			if (error == EBUSY)
 				error = 0;
@@ -759,7 +759,6 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 int
 wsmux_evsrc_set_display(struct device *dv, struct device *displaydv)
 {
-	struct wsmux_softc *muxsc = (struct wsmux_softc *)ame;
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 
 	DPRINTF(("wsmux_set_display: %s: displaydv=%p\n",
@@ -801,7 +800,7 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 		}
 #endif
 		if (me->me_ops->dsetdisplay != NULL) {
-			error = wsevsrc_set_display(me, &nsc->sc_base);
+			error = wsevsrc_set_display(me, nsc->sc_displaydv);
 			DPRINTF(("wsmux_set_display: m=%p dev=%s error=%d\n",
 				 me, me->me_dv.dv_xname, error));
 			if (!error) {
