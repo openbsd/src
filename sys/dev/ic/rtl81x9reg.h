@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.26 2006/08/05 21:03:22 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.27 2006/08/05 21:38:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -703,6 +703,7 @@ struct rl_softc {
 	int			sc_flags;	/* misc flags */
 	struct rl_chain_data	rl_cdata;
 	struct timeout		sc_tick_tmo;
+	int			if_flags;
 
 	struct rl_list_data	rl_ldata;
 	struct mbuf		*rl_head;

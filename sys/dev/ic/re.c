@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.38 2006/08/05 21:03:22 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.39 2006/08/05 21:38:20 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -187,6 +187,7 @@ void	re_miibus_writereg(struct device *, int, int, int);
 void	re_miibus_statchg(struct device *);
 
 void	re_setmulti(struct rl_softc *);
+void	re_setpromisc(struct rl_softc *);
 void	re_reset(struct rl_softc *);
 
 #ifdef RE_DIAG
@@ -517,6 +518,22 @@ re_setmulti(struct rl_softc *sc)
 	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 	CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
+}
+
+void
+re_setpromisc(struct rl_softc *sc)
+{
+	struct ifnet	*ifp;
+	u_int32_t	rxcfg = 0;
+
+	ifp = &sc->sc_arpcom.ac_if;
+
+	rxcfg = CSR_READ_4(sc, RL_RXCFG);
+	if (ifp->if_flags & IFF_PROMISC) 
+		rxcfg |= RL_RXCFG_RX_ALLPHYS;
+        else
+		rxcfg &= ~RL_RXCFG_RX_ALLPHYS;
+	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 }
 
 void
@@ -886,11 +903,8 @@ re_attach(struct rl_softc *sc)
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
-	if (sc->rl_type == RL_8169) {
-		ifp->if_baudrate = 1000000000;
+	if (sc->rl_type == RL_8169)
 		ifp->if_hardmtu = RL_JUMBO_MTU;
-	} else
-		ifp->if_baudrate = 100000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -1754,13 +1768,6 @@ re_init(struct ifnet *ifp)
 	rxcfg = CSR_READ_4(sc, RL_RXCFG);
 	rxcfg |= RL_RXCFG_RX_INDIV;
 
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		rxcfg |= RL_RXCFG_RX_ALLPHYS;
-	else
-		rxcfg &= ~RL_RXCFG_RX_ALLPHYS;
-	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-
 	/*
 	 * Set capture broadcast bit to capture broadcast frames.
 	 */
@@ -1768,7 +1775,11 @@ re_init(struct ifnet *ifp)
 		rxcfg |= RL_RXCFG_RX_BROAD;
 	else
 		rxcfg &= ~RL_RXCFG_RX_BROAD;
+
 	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
+
+	/* Set promiscuous mode. */
+	re_setpromisc(sc);
 
 	/*
 	 * Program the multicast filter, if necessary.
@@ -1888,36 +1899,34 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			re_init(ifp);
 #ifdef INET
-		case AF_INET:
-			re_init(ifp);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif /* INET */
-		default:
-			re_init(ifp);
-			break;
-		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN ||
-		    ((sc->rl_type == RL_8169 &&
-		    ifr->ifr_mtu > RL_JUMBO_MTU) ||
-		    (sc->rl_type == RL_8139 &&
-		    ifr->ifr_mtu > ETHERMTU)))
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			re_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ((ifp->if_flags ^ sc->if_flags) &
+			     IFF_PROMISC)) {
+				re_setpromisc(sc);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					re_init(ifp);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				re_stop(ifp, 1);
 		}
-		error = 0;
+		sc->if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
