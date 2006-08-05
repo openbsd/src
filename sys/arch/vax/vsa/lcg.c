@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.6 2006/08/03 18:46:50 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.7 2006/08/05 22:04:53 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -85,6 +85,7 @@ struct	lcg_screen {
 	caddr_t		ss_addr;		/* frame buffer address */
 	vaddr_t		ss_reg;
 	volatile u_int8_t *ss_lut;
+	u_int8_t	ss_cmap[256 * 3];
 };
 
 /* for console */
@@ -139,9 +140,11 @@ const struct wsdisplay_accessops lcg_accessops = {
 };
 
 int	lcg_alloc_attr(void *, int, int, int, long *);
+int	lcg_getcmap(struct lcg_screen *, struct wsdisplay_cmap *);
+void	lcg_loadcmap(struct lcg_screen *, int, int);
 int	lcg_probe_screen(u_int32_t, u_int *, u_int *);
+int	lcg_putcmap(struct lcg_screen *, struct wsdisplay_cmap *);
 void	lcg_resetcmap(struct lcg_screen *);
-void	lcg_set_lut_entry(volatile u_int8_t *, const u_char *, u_int, u_int);
 int	lcg_setup_screen(struct lcg_screen *);
 
 #define	lcg_read_reg(ss, regno) \
@@ -397,12 +400,6 @@ lcg_setup_screen(struct lcg_screen *ss)
 	ri->ri_hw = ss;
 
 	/*
-	 * We can let rasops select our font here, as we do not need to
-	 * use a font with a different bit order than rasops' defaults,
-	 * unlike smg.
-	 */
-
-	/*
 	 * Ask for an unholy big display, rasops will trim this to more
 	 * reasonable values.
 	 */
@@ -432,6 +429,8 @@ lcg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct lcg_softc *sc = v;
 	struct lcg_screen *ss = sc->sc_scr;
 	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplay_cmap *cm;
+	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -451,8 +450,18 @@ lcg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
+		cm = (struct wsdisplay_cmap *)data;
+		error = lcg_getcmap(ss, cm);
+		if (error != 0)
+			return (error);
+		break;
 	case WSDISPLAYIO_PUTCMAP:
-		break;	/* XXX TBD */
+		cm = (struct wsdisplay_cmap *)data;
+		error = lcg_putcmap(ss, cm);
+		if (error != 0)
+			return (error);
+		lcg_loadcmap(ss, cm->index, cm->count);
+		break;
 
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
@@ -542,50 +551,105 @@ lcg_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
 }
 
 /*
- * Fill the given colormap (LUT) entry.
+ * Colormap handling routines
  */
-void
-lcg_set_lut_entry(volatile u_int8_t *lutptr, const u_char *cmap, u_int idx,
-    u_int shift)
+
+int
+lcg_getcmap(struct lcg_screen *ss, struct wsdisplay_cmap *cm)
 {
-	lutptr++;
-	*lutptr++ = idx;
-	*lutptr++ = 1;
-	*lutptr++ = (*cmap++) >> shift;
-	*lutptr++ = 1;
-	*lutptr++ = (*cmap++) >> shift;
-	*lutptr++ = 1;
-	*lutptr++ = (*cmap++) >> shift;
+	u_int index = cm->index, count = cm->count, i;
+	u_int colcount = 1 << ss->ss_depth;
+	int error;
+	u_int8_t ramp[256], *c, *r;
+
+	if (index >= colcount || count > colcount - index)
+		return (EINVAL);
+
+	/* extract reds */
+	c = ss->ss_cmap + 0 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->red, count)) != 0)
+		return (error);
+
+	/* extract greens */
+	c = ss->ss_cmap + 1 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->green, count)) != 0)
+		return (error);
+
+	/* extract blues */
+	c = ss->ss_cmap + 2 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->blue, count)) != 0)
+		return (error);
+
+	return (0);
 }
 
-void
-lcg_resetcmap(struct lcg_screen *ss)
+int
+lcg_putcmap(struct lcg_screen *ss, struct wsdisplay_cmap *cm)
 {
-	const u_char *color;
+	u_int index = cm->index, count = cm->count;
+	u_int colcount = 1 << ss->ss_depth;
+	int i, error;
+	u_int8_t r[256], g[256], b[256], *nr, *ng, *nb, *c;
+
+	if (index >= colcount || count > colcount - index)
+		return (EINVAL);
+
+	if ((error = copyin(cm->red, r, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, g, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, b, count)) != 0)
+		return (error);
+
+	nr = r, ng = g, nb = b;
+	c = ss->ss_cmap + index * 3;
+	for (i = count; i != 0; i--) {
+		*c++ = *nr++;
+		*c++ = *ng++;
+		*c++ = *nb++;
+	}
+
+	return (0);
+}
+
+/* Fill the given colormap (LUT) entry.  */
+#define lcg_set_lut_entry(lutptr, cmap, idx, shift)			\
+do {									\
+	(lutptr)++;							\
+	*(lutptr)++ = (idx);						\
+	*(lutptr)++ = 1;						\
+	*(lutptr)++ = (*(cmap)++) >> (shift);				\
+	*(lutptr)++ = 1;						\
+	*(lutptr)++ = (*(cmap)++) >> (shift);				\
+	*(lutptr)++ = 1;						\
+	*(lutptr)++ = (*(cmap)++) >> (shift);				\
+} while (0)
+
+void
+lcg_loadcmap(struct lcg_screen *ss, int from, int count)
+{
+	const u_int8_t *cmap;
 	u_int i;
 	volatile u_int8_t *lutptr;
 	u_int32_t vidcfg;
 
+	/* partial updates ignored for now */
 	vidcfg = lcg_read_reg(ss, LCG_REG_VIDEO_CONFIG);
-	color = rasops_cmap;
+	cmap = ss->ss_cmap;
 	lutptr = ss->ss_lut;
 	if (ss->ss_depth == 8) {
 		for (i = 0; i < 256; i++) {
-			lcg_set_lut_entry(lutptr, color, i, 0);
-			lutptr += 8;
-			color += 3;
+			lcg_set_lut_entry(lutptr, cmap, i, 0);
 		}
 	} else {
-		for (i = 0; i < 8; i++) {
-			lcg_set_lut_entry(lutptr, color, i, 4);
-			lutptr += 8;
-			color += 3;
-		}
-		color = rasops_cmap + 0xf8 * 3;
-		for (i = 0xf8; i < 0x100; i++) {
-			lcg_set_lut_entry(lutptr, color, i & 0x0f, 4);
-			lutptr += 8;
-			color += 3;
+		for (i = 0; i < 16; i++) {
+			lcg_set_lut_entry(lutptr, cmap, i, 4);
 		}
 	}
 	vidcfg &= ~((1 << 5) | (3 << 8) | (1 << 11));
@@ -598,6 +662,18 @@ lcg_resetcmap(struct lcg_screen *ss)
 	lcg_write_reg(ss, LCG_REG_LUT_COLOR_BASE_W, LCG_LUT_OFFSET);
 	DELAY(1000);	/* XXX should wait on a status bit */
 	lcg_write_reg(ss, LCG_REG_LUT_CONSOLE_SEL, 0);
+}
+
+void
+lcg_resetcmap(struct lcg_screen *ss)
+{
+	if (ss->ss_depth == 8)
+		bcopy(rasops_cmap, ss->ss_cmap, sizeof(ss->ss_cmap));
+	else {
+		bcopy(rasops_cmap, ss->ss_cmap, 8 * 3);
+		bcopy(rasops_cmap + 0xf8 * 3, ss->ss_cmap + 8 * 3, 8 * 3);
+	}
+	lcg_loadcmap(ss, 0, 1 << ss->ss_depth);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.4 2006/08/03 18:46:07 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.5 2006/08/05 22:04:53 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -87,6 +87,7 @@ struct	lcspx_screen {
 	caddr_t		ss_addr;		/* frame buffer address */
 	volatile u_int8_t *ss_ramdac[4];
 	vaddr_t		ss_reg;
+	u_int8_t	ss_cmap[256 * 3];
 };
 
 #define	lcspx_reg_read(ss, reg) \
@@ -144,6 +145,9 @@ const struct wsdisplay_accessops lcspx_accessops = {
 	NULL	/* burner */
 };
 
+int	lcspx_getcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
+void	lcspx_loadcmap(struct lcspx_screen *, int, int);
+int	lcspx_putcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
 void	lcspx_resetcmap(struct lcspx_screen *);
 int	lcspx_setup_screen(struct lcspx_screen *);
 
@@ -276,10 +280,10 @@ lcspx_setup_screen(struct lcspx_screen *ss)
 	ri->ri_hw = ss;
 
 	/*
-	 * We can let rasops select our font here, as we do not need to
-	 * use a font with a different bit order than rasops' defaults,
-	 * unlike smg.
+	 * Enable all planes for reading and writing
 	 */
+	lcspx_reg_write(ss, 0x1170, 0xffffffff);
+	lcspx_reg_write(ss, 0x1174, 0xffffffff);
 
 	/*
 	 * Ask for an unholy big display, rasops will trim this to more
@@ -287,12 +291,6 @@ lcspx_setup_screen(struct lcspx_screen *ss)
 	 */
 	if (rasops_init(ri, 160, 160) != 0)
 		return (-1);
-
-	/*
-	 * Enable all planes for reading and writing
-	 */
-	lcspx_reg_write(ss, 0x1170, 0xffffffff);
-	lcspx_reg_write(ss, 0x1174, 0xffffffff);
 
 	lcspx_resetcmap(ss);
 
@@ -312,6 +310,8 @@ lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct lcspx_softc *sc = v;
 	struct lcspx_screen *ss = sc->sc_scr;
 	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplay_cmap *cm;
+	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -331,8 +331,18 @@ lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
+		cm = (struct wsdisplay_cmap *)data;
+		error = lcspx_getcmap(ss, cm);
+		if (error != 0)
+			return (error);
+		break;
 	case WSDISPLAYIO_PUTCMAP:
-		break;	/* XXX TBD */
+		cm = (struct wsdisplay_cmap *)data;
+		error = lcspx_putcmap(ss, cm);
+		if (error != 0)
+			return (error);
+		lcspx_loadcmap(ss, cm->index, cm->count);
+		break;
 
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
@@ -388,14 +398,80 @@ lcspx_show_screen(void *v, void *cookie, int waitok,
 	return (0);
 }
 
-void
-lcspx_resetcmap(struct lcspx_screen *ss)
-{
-	const u_char *color;
-	u_int i;
+/*
+ * Colormap handling routines
+ */
 
-	color = rasops_cmap;
-	for (i = 0; i < 256; i++) {
+int
+lcspx_getcmap(struct lcspx_screen *ss, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count, i;
+	int error;
+	u_int8_t ramp[256], *c, *r;
+
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
+	/* extract reds */
+	c = ss->ss_cmap + 0 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->red, count)) != 0)
+		return (error);
+
+	/* extract greens */
+	c = ss->ss_cmap + 1 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->green, count)) != 0)
+		return (error);
+
+	/* extract blues */
+	c = ss->ss_cmap + 2 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->blue, count)) != 0)
+		return (error);
+
+	return (0);
+}
+
+int
+lcspx_putcmap(struct lcspx_screen *ss, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count;
+	int i, error;
+	u_int8_t r[256], g[256], b[256], *nr, *ng, *nb, *c;
+
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
+	if ((error = copyin(cm->red, r, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, g, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, b, count)) != 0)
+		return (error);
+
+	nr = r, ng = g, nb = b;
+	c = ss->ss_cmap + index * 3;
+	for (i = count; i != 0; i--) {
+		*c++ = *nr++;
+		*c++ = *ng++;
+		*c++ = *nb++;
+	}
+
+	return (0);
+}
+
+void
+lcspx_loadcmap(struct lcspx_screen *ss, int from, int count)
+{
+	u_int8_t *cmap = ss->ss_cmap;
+	int i;
+
+	cmap += from * 3;
+	for (i = from; i < from + count; i++) {
 		/*
 		 * Reprogram the index every iteration, because the RAMDAC
 		 * may not be in autoincrement mode. XXX fix this
@@ -403,10 +479,17 @@ lcspx_resetcmap(struct lcspx_screen *ss)
 		*(ss->ss_ramdac[BT463_REG_ADDR_LOW]) = i & 0xff;
 		*(ss->ss_ramdac[BT463_REG_ADDR_HIGH]) = i >> 8;
 
-		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *color++;
-		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *color++;
-		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *color++;
+		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
+		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
+		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
 	}
+}
+
+void
+lcspx_resetcmap(struct lcspx_screen *ss)
+{
+	bcopy(rasops_cmap, ss->ss_cmap, sizeof(ss->ss_cmap));
+	lcspx_loadcmap(ss, 0, 256);
 }
 
 /*
