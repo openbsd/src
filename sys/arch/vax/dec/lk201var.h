@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201var.h,v 1.6 2006/07/31 21:57:05 miod Exp $	*/
+/*	$OpenBSD: lk201var.h,v 1.7 2006/08/05 22:05:55 miod Exp $	*/
 /* $NetBSD: lk201var.h,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -60,9 +60,14 @@ struct lk201_state {
 };
 
 void	lk201_bell(struct lk201_state *, struct wskbd_bell_data *);
-int	lk201_decode(struct lk201_state *, int, int, u_int *, int *);
+int	lk201_decode(struct lk201_state *, int, int, int, u_int *, int *);
 int	lk201_get_leds(struct lk201_state *);
 int	lk201_get_type(struct lk201_state *);
 void	lk201_init(struct lk201_state *);
 void	lk201_set_keyclick(struct lk201_state *, int);
 void	lk201_set_leds(struct lk201_state *, int);
+
+/* Values returned by lk201_decode */
+#define	LKD_NODATA	0x00
+#define	LKD_COMPLETE	0x01
+#define	LKD_MORE	0x02

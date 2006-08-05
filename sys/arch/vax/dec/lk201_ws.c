@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.8 2006/07/31 21:57:05 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.9 2006/08/05 22:05:55 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -142,29 +142,24 @@ lk201_identify(void *v)
 }
 
 int
-lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
-    int *dataout)
+lk201_decode(struct lk201_state *lks, int active, int wantmulti, int datain,
+    u_int *type, int *dataout)
 {
 	int i, freeslot;
 
 	if (lks->waitack != 0) {
 		lks->ackdata = datain;
 		lks->waitack = 0;
-		return (0);
+		return (LKD_NODATA);
 	}
 
 	switch (datain) {
-	case LK_KEY_UP:
-		for (i = 0; i < LK_KLL; i++)
-			lks->down_keys_list[i] = -1;
-		*type = WSCONS_EVENT_ALL_KEYS_UP;
-		return (1);
 	case LK_POWER_UP:
 #ifdef DEBUG
 		printf("lk201_decode: powerup detected\n");
 #endif
 		lk201_init(lks);
-		return (0);
+		return (LKD_NODATA);
 	case LK_KDOWN_ERROR:
 	case LK_POWER_ERROR:
 	case LK_OUTPUT_ERROR:
@@ -173,18 +168,35 @@ lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
 		/* FALLTHROUGH */
 	case LK_KEY_REPEAT: /* autorepeat handled by wskbd */
 	case LK_MODE_CHANGE: /* ignore silently */
-		return (0);
+		return (LKD_NODATA);
 	}
 
 	if (active == 0)
-		return (0);	/* no need to decode */
+		return (LKD_NODATA);	/* no need to decode */
 
-	if (datain < MIN_LK201_KEY || datain > MAX_LK201_KEY) {
+	if (datain == LK_KEY_UP) {
+		if (wantmulti) {
+			for (i = 0; i < LK_KLL; i++)
+				if (lks->down_keys_list[i] != -1) {
+					*type = WSCONS_EVENT_KEY_UP;
+					*dataout = lks->down_keys_list[i] -
+					    MIN_LK201_KEY;
+					lks->down_keys_list[i] = -1;
+					return (LKD_MORE);
+				}
+			return (LKD_NODATA);
+		} else {
+			for (i = 0; i < LK_KLL; i++)
+				lks->down_keys_list[i] = -1;
+			*type = WSCONS_EVENT_ALL_KEYS_UP;
+			return (LKD_COMPLETE);
+		}
+	} else if (datain < MIN_LK201_KEY || datain > MAX_LK201_KEY) {
 #ifdef DEBUG
 		/* this can happen while hotplugging the keyboard */
 		printf("lk201_decode: %x\n", datain);
 #endif
-		return (0);
+		return (LKD_NODATA);
 	}
 
 	/*
@@ -207,7 +219,7 @@ lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
 		if (lks->down_keys_list[i] == datain) {
 			*type = WSCONS_EVENT_KEY_UP;
 			lks->down_keys_list[i] = -1;
-			return (1);
+			return (LKD_COMPLETE);
 		}
 		if (lks->down_keys_list[i] == -1 && freeslot == -1)
 			freeslot = i;
@@ -215,12 +227,12 @@ lk201_decode(struct lk201_state *lks, int active, int datain, u_int *type,
 
 	if (freeslot == -1) {
 		printf("lk201_decode: down(%d) no free slot\n", datain);
-		return (0);
+		return (LKD_NODATA);
 	}
 
 	*type = WSCONS_EVENT_KEY_DOWN;
 	lks->down_keys_list[freeslot] = datain;
-	return (1);
+	return (LKD_COMPLETE);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.10 2006/08/03 20:19:29 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.11 2006/08/05 22:05:55 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ dzkbd_cngetc(void *v, u_int *type, int *data)
 
 	do {
 		c = dzgetc(dzi->dzi_ls);
-	} while (!lk201_decode(&dzi->dzi_ks, 1, c, type, data));
+	} while (lk201_decode(&dzi->dzi_ks, 1, 0, c, type, data) == LKD_NODATA);
 }
 
 void
@@ -272,14 +272,18 @@ dzkbd_input(void *v, int data)
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 	u_int type;
 	int val;
+	int decode;
 
 	/*
 	 * We want to run through lk201_decode always, so that a late plugged
 	 * keyboard will get configured correctly.
 	 */
-	if (lk201_decode(&sc->sc_itl->dzi_ks, sc->sc_enabled, data,
-	    &type, &val))
-		wskbd_input(sc->sc_wskbddev, type, val);
+	do {
+		decode = lk201_decode(&sc->sc_itl->dzi_ks, sc->sc_enabled, 1,
+		    data, &type, &val);
+		if (decode != LKD_NODATA)
+			wskbd_input(sc->sc_wskbddev, type, val);
+	} while (decode == LKD_MORE);
 
 	return(1);
 }
