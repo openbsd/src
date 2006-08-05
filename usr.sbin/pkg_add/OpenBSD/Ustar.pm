@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.41 2006/03/21 18:41:34 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.42 2006/08/05 08:21:55 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -310,7 +310,7 @@ sub prepare
 sub pad
 {
 	my $fh = $_[0]->{fh};
-	print $fh "\0"x1024;
+	print $fh "\0"x1024 or die "Error writing to archive: $!";
 }
 
 sub close
@@ -371,7 +371,7 @@ sub write
 
 	$arc->{padout} = 1;
 	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
-	print $out $header;
+	print $out $header or die "Error writing to archive: $!";
 	$self->write_contents($arc);
 	my $k = $self->{key};
 	if (!defined $arc->{key}->{$k}) {
@@ -411,7 +411,7 @@ sub copy
 	$self->resolve_links($wrarc);
 	$wrarc->{padout} = 1;
 	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
-	print $out $header;
+	print $out $header or die "Error writing to archive: $!";
 
 	$self->copy_contents($wrarc);
 }
@@ -559,7 +559,10 @@ START:
 	if (defined $bs) {
 		for (my $i = 0; $i + $bs <= length($buffer); $i+= $bs) {
 			if (substr($buffer, $i, $bs) eq $zeroes) {
-				defined(syswrite($fh, $buffer, $i)) or return 0;
+				my $r = syswrite($fh, $buffer, $i);
+				unless (defined $r && $r == $i) {
+					return 0;
+				}
 				$i+=$bs;
 				my $seek_forward = $bs;
 				while (substr($buffer, $i, $bs) eq $zeroes) {
@@ -578,8 +581,12 @@ START:
 		}
 	}
 	$self->[UNFINISHED] = 0;
-	defined(syswrite($fh, $buffer)) or return 0;
-	return 1;
+	my $r = syswrite($fh, $buffer);
+	if (defined $r && $r == length $buffer) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 sub close
@@ -614,15 +621,19 @@ sub create
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
-		if (!defined read($self->{archive}->{fh}, $buffer, $maxread)) {
+		my $actual = read($self->{archive}->{fh}, $buffer, $maxread);
+		if (!defined $actual) {
 			die "Error reading from archive: $!";
 		}
-		$self->{archive}->{swallow} -= $maxread;
+		if ($actual == 0) {
+			die "Premature end of archive";
+		}
+		$self->{archive}->{swallow} -= $actual;
 		unless ($out->write($buffer)) {
 			die "Error writing to $self->{destdir}$self->{name}: $!";
 		}
 			
-		$toread -= $maxread;
+		$toread -= $actual;
 	}
 	$out->close() or die "Error closing $self->{destdir}$self->{name}: $!";
 	$self->SUPER::set_modes();
@@ -634,10 +645,14 @@ sub contents
 	my $toread = $self->{size};
 	my $buffer;
 
-	if (!defined read($self->{archive}->{fh}, $buffer, $toread)) {
+	my $actual = read($self->{archive}->{fh}, $buffer, $toread);
+	if (!defined $actual) {
 		die "Error reading from archive: $!";
 	}
-	$self->{archive}->{swallow} -= $toread;
+	if ($actual != $toread) {
+		die "Error: short read from archive";
+	}
+	$self->{archive}->{swallow} -= $actual;
 	return $buffer;
 }
 
@@ -654,17 +669,22 @@ sub write_contents
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
-		if (!defined read($fh, $buffer, $maxread)) {
+		my $actual = read($fh, $buffer, $maxread);
+		if (!defined $actual) {
 			die "Error reading from file: $!";
+		}
+		if ($actual == 0) {
+			die "Premature end of file";
 		}
 		unless (print $out $buffer) {
 			die "Error writing to archive: $!";
 		}
 			
-		$toread -= $maxread;
+		$toread -= $actual;
 	}
 	if ($size % 512) {
-		print $out "\0" x (512 - $size % 512);
+		print $out "\0" x (512 - $size % 512) or 
+		    die "Error writing to archive: $!";
 	}
 }
 
@@ -678,18 +698,23 @@ sub copy_contents
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
-		if (!defined read($self->{archive}->{fh}, $buffer, $maxread)) {
+		my $actual = read($self->{archive}->{fh}, $buffer, $maxread);
+		if (!defined $actual) {
 			die "Error reading from archive: $!";
 		}
-		$self->{archive}->{swallow} -= $maxread;
+		if ($actual == 0) {
+			die "Premature end of archive";
+		}
+		$self->{archive}->{swallow} -= $actual;
 		unless (print $out $buffer) {
 			die "Error writing to archive $!";
 		}
 			
-		$toread -= $maxread;
+		$toread -= $actual;
 	}
 	if ($size % 512) {
-		print $out "\0" x (512 - $size % 512);
+		print $out "\0" x (512 - $size % 512) or 
+		    die "Error writing to archive: $!";
 	}
 	$self->alias($arc, $self->{name});
 }
