@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.17 2006/08/05 00:22:49 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.18 2006/08/05 00:29:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1870,7 +1870,7 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			for (i = 0; i < ni->ni_rates.rs_nrates; ++i)
 				printf("%d ", ni->ni_rates.rs_rates[i]);
 			ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
-			printf(" %6D\n", ni->ni_bssid, ":");
+			printf(" %s\n", ether_sprintf(ni->ni_bssid));
 #endif
 		}
 		break;
