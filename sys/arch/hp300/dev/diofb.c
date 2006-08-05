@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.11 2006/06/30 15:15:20 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.12 2006/08/05 09:57:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -199,9 +199,11 @@ diofb_fbsetup(struct diofb *fb)
 	}
 		
 	ri->ri_ops.copycols = diofb_copycols;
-	ri->ri_ops.copyrows = diofb_copyrows;
 	ri->ri_ops.erasecols = diofb_erasecols;
-	ri->ri_ops.eraserows = diofb_eraserows;
+	if (ri->ri_depth != 1) {
+		ri->ri_ops.copyrows = diofb_copyrows;
+		ri->ri_ops.eraserows = diofb_eraserows;
+	}
 
 	/* Clear entire display, including non visible areas */
 	(*fb->bmv)(fb, 0, 0, 0, 0, fb->fbwidth, fb->fbheight, RR_CLEAR);
