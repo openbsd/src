@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2005/06/12 18:16:13 xsa Exp $ */
+/*	$OpenBSD: boot.c,v 1.14 2006/08/05 12:24:28 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -42,6 +42,7 @@
 #define V750UCODE(x)    ((x>>8)&255)
 
 #include "machine/rpb.h"
+#include "machine/sid.h"
 
 #include "vaxstand.h"
 
@@ -61,7 +62,9 @@ void	autoconf(void);
 int	getsecs(void);
 int	setjmp(int *);
 int	testkey(void);
+#if 0
 void	loadpcs(void);
+#endif
 
 const struct vals {
 	char	*namn;
@@ -75,17 +78,6 @@ const struct vals {
 	{0, 0},
 };
 
-static struct {
-	char name[12];
-	int quiet;
-} filelist[] = {
-	{ "bsd", 0 },
-	{ "bsd.old", 0 },
-	{ "bsd.vax", 1 },
-	{ "bsd.gz", 0 },
-	{ "", 0 },
-};
-
 int jbuf[10];
 int sluttid, senast, skip, askname;
 struct rpb bootrpb;
@@ -95,17 +87,31 @@ Xmain(void)
 {
 	int io;
 	int j, nu;
+	char transition = '\010';
 #ifdef noyet
 	u_long marks[MARK_MAX];
 #endif
-	extern const char bootprog_rev[], bootprog_date[];
 
 	io = 0;
 	skip = 1;
 	autoconf();
 
+	/*
+	 * Some VAXstation 4000 PROMs slowly erase the whole screen with \010
+	 * if running with glass console - at least VS4000/60 and VS4000/VLC;
+	 * this is probably the LCG PROM at fault. Use a different transition
+	 * pattern, it's not as nice but it does not take 3(!) seconds to
+	 * display...
+	 */
+	if (((vax_boardtype == VAX_BTYP_46 &&
+	      (vax_siedata & 0xff) == VAX_VTYP_46) ||
+	     (vax_boardtype == VAX_BTYP_48 &&
+	      ((vax_siedata >> 8) & 0xff) == VAX_STYP_48)) &&
+	    (vax_confdata & 0x100) == 0)
+		transition = ' ';
+
 	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
-	printf("\n\r>> OpenBSD/vax boot [%s] [%s] <<\n", "1.9", __DATE__);
+	printf("\n\r>> OpenBSD/vax boot [%s] [%s] <<\n", "1.10", __DATE__);
 	printf(">> Press enter to autoboot now, or any other key to abort:  ");
 	sluttid = getsecs() + 5;
 	senast = 0;
@@ -114,7 +120,7 @@ Xmain(void)
 	for (;;) {
 		nu = sluttid - getsecs();
 		if (senast != nu)
-			printf("%c%d", 8, nu);
+			printf("%c%d", transition, nu);
 		if (nu <= 0)
 			break;
 		senast = nu;
@@ -135,39 +141,28 @@ Xmain(void)
 
 	/* First try to autoboot */
 	if (askname == 0) {
-		int fileindex;
-		for (fileindex = 0; filelist[fileindex].name[0] != '\0';
-		    fileindex++) {
 #ifdef notyet
-			int err;
+		int err;
 #endif
-			errno = 0;
-			if (!filelist[fileindex].quiet)
-				printf("> boot %s\n", filelist[fileindex].name);
-			exec(filelist[fileindex].name, 0, 0);
+		errno = 0;
+		printf("> boot bsd\n");
+		exec("bsd", 0, 0);
 #ifdef notyet
-			marks[MARK_START] = 0;
-			err = loadfile(filelist[fileindex].name, marks,
-			    LOAD_KERNEL|COUNT_KERNEL);
-			if (err == 0) {
-				machdep_start((char *)marks[MARK_ENTRY],
-						      marks[MARK_NSYM],
-					      (void *)marks[MARK_START],
-					      (void *)marks[MARK_SYM],
-					      (void *)marks[MARK_END]);
-			}
-#endif
-			if (!filelist[fileindex].quiet)
-				printf("%s: boot failed: %s\n", 
-				    filelist[fileindex].name, strerror(errno));
-#if 0 /* Will hang VAX 4000 machines */
-			if (testkey())
-				break;
-#endif
+		marks[MARK_START] = 0;
+		err = loadfile("bsd", marks,
+		    LOAD_KERNEL|COUNT_KERNEL);
+		if (err == 0) {
+			machdep_start((char *)marks[MARK_ENTRY],
+					      marks[MARK_NSYM],
+				      (void *)marks[MARK_START],
+				      (void *)marks[MARK_SYM],
+				      (void *)marks[MARK_END]);
 		}
+#endif
+		printf("bsd: boot failed: %s\n", strerror(errno));
 	}
 
-	/* If any key pressed, go to conversational boot */
+	/* If any key pressed, or autoboot failed, go to conversational boot */
 	for (;;) {
 		const struct vals *v = &val[0];
 		char *c, *d;
@@ -261,6 +256,8 @@ load:
 #endif
 	printf("Boot failed: %s\n", strerror(errno));
 }
+
+#if 0
 
 /* 750 Patchable Control Store magic */
 
@@ -356,14 +353,20 @@ loadpcs(void)
 	pcsdone = 1;
 }
 
+#endif
+
 void
 usage(char *hej)
 {
 	const struct vals *v = &val[0];
+	int i;
 
 	printf("Commands:\n");
 	while (v->namn) {
-		printf("%s\t%s\n", v->namn, v->info);
+		printf("%s ", v->namn);
+		for (i = 1 + strlen(v->namn); (i & 7) != 0; i++)
+			printf(" ");
+		printf("%s\n", v->info);
 		v++;
 	}
 }
