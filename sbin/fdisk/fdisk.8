@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.50 2005/05/01 20:53:38 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.51 2006/08/05 14:04:00 ray Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -299,9 +299,19 @@ an existing MBR partition to
 .Ox .
 .It swap Ar # Ar #
 Swap two MBR entries.
-.It print
+.It print Op unit
 Print the currently selected in-memory copy of the boot
 block and its MBR table to the terminal.
+If
+.Ar unit
+is specified as
+.Sq b ,
+.Sq k ,
+.Sq m ,
+or
+.Sq g ,
+the MBR is printed in units of bytes, kilobytes, megabytes, or gigabytes.
+Otherwise the number of sectors is printed.
 .It write
 Write the in-memory copy of the boot block to disk.
 .It exit
