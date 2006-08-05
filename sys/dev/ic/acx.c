@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.16 2006/08/05 00:04:37 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.17 2006/08/05 00:22:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1764,9 +1764,9 @@ acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
 			else
 				break;
 		}
-		DPRINTF(("%s: rate down %6D %d -> %d\n",
+		DPRINTF(("%s: rate down %s %d -> %d\n",
 		    sc->sc_dev.dv_xname,
-		    node->nd_node.ni_macaddr, ":",
+		    ether_sprintf(node->nd_node.ni_macaddr),
 		    cp_rset->rs_rates[node->nd_txrate + 1],
 		    cp_rset->rs_rates[node->nd_txrate]));
 	} else if (node->nd_txrate + 1 < node->nd_rates.rs_nrates) {
@@ -1804,9 +1804,9 @@ acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
 			else
 				break;
 		}
-		DPRINTF(("%s: rate up %6D %d -> %d\n",
+		DPRINTF(("%s: rate up %s %d -> %d\n",
 		    sc->sc_dev.dv_xname,
-		    node->nd_node.ni_macaddr, ":",
+		    ether_sprintf(node->nd_node.ni_macaddr),
 		    cur_rate, cp_rset->rs_rates[node->nd_txrate]));
 	} else
 		return;
