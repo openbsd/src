@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.5 2006/08/05 13:06:50 mglocker Exp $ */
+/*	$OpenBSD: acx100.c,v 1.6 2006/08/05 14:33:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -99,11 +99,29 @@
 #define ACX100_FW_TXRING_SIZE	(ACX_TX_DESC_CNT * sizeof(struct acx_fw_txdesc))
 #define ACX100_FW_RXRING_SIZE	(ACX_RX_DESC_CNT * sizeof(struct acx_fw_rxdesc))
 
+int	acx100_init(struct acx_softc *);
+int	acx100_init_wep(struct acx_softc *);
+int	acx100_init_tmplt(struct acx_softc *);
+int	acx100_init_fw_ring(struct acx_softc *);
+int	acx100_init_memory(struct acx_softc *);
+void	acx100_init_fw_txring(struct acx_softc *, uint32_t);
+void	acx100_init_fw_rxring(struct acx_softc *, uint32_t);
+int	acx100_read_config(struct acx_softc *, struct acx_config *);
+int	acx100_write_config(struct acx_softc *, struct acx_config *);
+int	acx100_set_txpower(struct acx_softc *);
+void	acx100_set_fw_txdesc_rate(struct acx_softc *,
+	    struct acx_txbuf *, int);
+void	acx100_set_bss_join_param(struct acx_softc *, void *, int);
+#if 0
+int	acx100_set_wepkey(struct acx_softc *, struct ieee80211_key *,
+	    int);
+#endif
+void	acx100_proc_wep_rxbuf(struct acx_softc *, struct mbuf *, int *);
+
 /*
  * NOTE:
  * Following structs' fields are little endian
  */
-
 struct acx100_bss_join {
 	uint8_t	dtim_intvl;
 	uint8_t	basic_rates;
@@ -261,30 +279,6 @@ static const uint8_t	acx100_txpower_rfmd[21] = {
 	63
 };
 
-int	acx100_init(struct acx_softc *);
-int	acx100_init_wep(struct acx_softc *);
-int	acx100_init_tmplt(struct acx_softc *);
-int	acx100_init_fw_ring(struct acx_softc *);
-int	acx100_init_memory(struct acx_softc *);
-
-void	acx100_init_fw_txring(struct acx_softc *, uint32_t);
-void	acx100_init_fw_rxring(struct acx_softc *, uint32_t);
-int	acx100_read_config(struct acx_softc *, struct acx_config *);
-int	acx100_write_config(struct acx_softc *, struct acx_config *);
-
-int	acx100_set_txpower(struct acx_softc *);
-
-void	acx100_set_fw_txdesc_rate(struct acx_softc *,
-					  struct acx_txbuf *, int);
-void	acx100_set_bss_join_param(struct acx_softc *, void *, int);
-
-#if 0
-int	acx100_set_wepkey(struct acx_softc *, struct ieee80211_key *,
-				  int);
-#endif
-
-void	acx100_proc_wep_rxbuf(struct acx_softc *, struct mbuf *, int *);
-
 void
 acx100_set_param(struct acx_softc *sc)
 {
@@ -298,8 +292,8 @@ acx100_set_param(struct acx_softc *sc)
 	sc->chip_ee_eaddr_ofs = ACX100_EE_EADDR_OFS;
 	sc->chip_txdesc1_len = ACX_FRAME_HDRLEN;
 	sc->chip_fw_txdesc_ctrl = DESC_CTRL_AUTODMA |
-				  DESC_CTRL_RECLAIM |
-				  DESC_CTRL_FIRST_FRAG;
+	    DESC_CTRL_RECLAIM |
+	    DESC_CTRL_FIRST_FRAG;
 
 	sc->chip_phymode = IEEE80211_MODE_11B;
 	sc->chip_chan_flags = IEEE80211_CHAN_B;
@@ -331,31 +325,31 @@ acx100_init(struct acx_softc *sc)
 	 * 4) Hardware memory
 	 * Above order is critical to get a correct memory map
 	 */
-
 	if (acx100_init_wep(sc) != 0) {
 		printf("%s: %s can't initialize wep\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	if (acx100_init_tmplt(sc) != 0) {
 		printf("%s: %s can't initialize templates\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	if (acx100_init_fw_ring(sc) != 0) {
 		printf("%s: %s can't initialize fw ring\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	if (acx100_init_memory(sc) != 0) {
 		printf("%s: %s can't initialize hw memory\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -368,14 +362,14 @@ acx100_init_wep(struct acx_softc *sc)
 	/* Set WEP cache start/end address */
 	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	mem_map.wep_cache_start = htole32(letoh32(mem_map.code_end) + 4);
 	mem_map.wep_cache_end = htole32(letoh32(mem_map.code_end) + 4);
 	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Set WEP options */
@@ -383,9 +377,10 @@ acx100_init_wep(struct acx_softc *sc)
 	wep_opt.opt = WEPOPT_HDWEP;
 	if (acx_set_wepopt_conf(sc, &wep_opt) != 0) {
 		printf("%s: can't set wep opt\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -398,19 +393,19 @@ acx100_init_tmplt(struct acx_softc *sc)
 	/* Set templates start address */
 	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	mem_map.pkt_tmplt_start = mem_map.wep_cache_end;
 	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Initialize various packet templates */
 	if (acx_init_tmplt_ordered(sc) != 0) {
 		printf("%s: can't init tmplt\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Setup TIM template */
@@ -418,11 +413,12 @@ acx100_init_tmplt(struct acx_softc *sc)
 	tim.tim_eid = IEEE80211_ELEMID_TIM;
 	tim.tim_len = ACX_TIM_LEN(ACX_TIM_BITMAP_LEN);
 	if (_acx_set_tim_tmplt(sc, &tim,
-			       ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
+	    ACX_TMPLT_TIM_SIZ(ACX_TIM_BITMAP_LEN)) != 0) {
 		printf("%s: can't set tim tmplt\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -436,7 +432,7 @@ acx100_init_fw_ring(struct acx_softc *sc)
 	/* Set firmware descriptor ring start address */
 	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	txring_start = letoh32(mem_map.pkt_tmplt_end) + 4;
@@ -446,13 +442,13 @@ acx100_init_fw_ring(struct acx_softc *sc)
 	mem_map.fw_desc_start = htole32(txring_start);
 	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Set firmware descriptor ring configure */
 	bzero(&ring, sizeof(ring));
 	ring.fw_ring_size = htole32(ACX100_FW_TXRING_SIZE +
-				    ACX100_FW_RXRING_SIZE + 8);
+	    ACX100_FW_RXRING_SIZE + 8);
 
 	ring.fw_txring_num = 1;
 	ring.fw_txring_addr = htole32(txring_start);
@@ -466,18 +462,18 @@ acx100_init_fw_ring(struct acx_softc *sc)
 	ACX100_SET_RING_END(&ring, ring_end);
 	if (acx100_set_fw_ring_conf(sc, &ring) != 0) {
 		printf("%s: can't set fw ring configure\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Setup firmware TX/RX descriptor ring */
 	acx100_init_fw_txring(sc, txring_start);
 	acx100_init_fw_rxring(sc, rxring_start);
 
-	return 0;
+	return (0);
 }
 
 #define MEMBLK_ALIGN(addr)	\
-	(((addr) + (ACX100_MEMBLK_ALIGN - 1)) &	~(ACX100_MEMBLK_ALIGN - 1))
+    (((addr) + (ACX100_MEMBLK_ALIGN - 1)) & ~(ACX100_MEMBLK_ALIGN - 1))
 
 int
 acx100_init_memory(struct acx_softc *sc)
@@ -492,28 +488,28 @@ acx100_init_memory(struct acx_softc *sc)
 	/* Set memory block start address */
 	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't get mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	mem_map.memblk_start =
-		htole32(MEMBLK_ALIGN(letoh32(mem_map.fw_desc_end) + 4));
+	    htole32(MEMBLK_ALIGN(letoh32(mem_map.fw_desc_end) + 4));
 
 	if (acx_set_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't set mmap\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Set memory block size */
 	memblk_sz.memblk_size = htole16(ACX_MEMBLOCK_SIZE);
 	if (acx100_set_memblk_size_conf(sc, &memblk_sz) != 0) {
 		printf("%s: can't set mem block size\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Get memory map after setting it */
 	if (acx_get_mmap_conf(sc, &mem_map) != 0) {
 		printf("%s: can't get mmap again\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 	memblk_start = letoh32(mem_map.memblk_start);
 	memblk_end = letoh32(mem_map.memblk_end);
@@ -536,21 +532,21 @@ acx100_init_memory(struct acx_softc *sc)
 	mem.tx_memblk_num = htole16(txblk_num);
 
 	mem.rx_memblk_addr = htole32(MEMBLK_ALIGN(memblk_start));
-	mem.tx_memblk_addr =
-		htole32(MEMBLK_ALIGN(memblk_start +
-				     (ACX_MEMBLOCK_SIZE * rxblk_num)));
+	mem.tx_memblk_addr = htole32(MEMBLK_ALIGN(memblk_start +
+	    (ACX_MEMBLOCK_SIZE * rxblk_num)));
 
 	if (acx100_set_mem_conf(sc, &mem) != 0) {
 		printf("%s: can't set mem options\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Initialize memory */
 	if (acx_init_mem(sc) != 0) {
 		printf("%s: can't init mem\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
-	return 0;
+
+	return (0);
 }
 
 #undef MEMBLK_ALIGN
@@ -565,9 +561,9 @@ acx100_init_fw_txring(struct acx_softc *sc, uint32_t fw_txdesc_start)
 
 	bzero(&fw_desc, sizeof(fw_desc));
 	fw_desc.f_tx_ctrl = DESC_CTRL_HOSTOWN |
-			    DESC_CTRL_RECLAIM |
-			    DESC_CTRL_AUTODMA |
-			    DESC_CTRL_FIRST_FRAG;
+	    DESC_CTRL_RECLAIM |
+	    DESC_CTRL_AUTODMA |
+	    DESC_CTRL_FIRST_FRAG;
 
 	tx_buf = sc->sc_buf_data.tx_buf;
 	fw_desc_offset = fw_txdesc_start;
@@ -579,14 +575,13 @@ acx100_init_fw_txring(struct acx_softc *sc, uint32_t fw_txdesc_start)
 		if (i == ACX_TX_DESC_CNT - 1) {
 			fw_desc.f_tx_next_desc = htole32(fw_txdesc_start);
 		} else {
-			fw_desc.f_tx_next_desc =
-				htole32(fw_desc_offset +
-					sizeof(struct acx_fw_txdesc));
+			fw_desc.f_tx_next_desc = htole32(fw_desc_offset +
+			    sizeof(struct acx_fw_txdesc));
 		}
 
 		tx_buf[i].tb_fwdesc_ofs = fw_desc_offset;
 		DESC_WRITE_REGION_1(sc, fw_desc_offset, &fw_desc,
-				    sizeof(fw_desc));
+		    sizeof(fw_desc));
 
 		desc_paddr += (2 * sizeof(struct acx_host_desc));
 		fw_desc_offset += sizeof(fw_desc);
@@ -610,12 +605,12 @@ acx100_init_fw_rxring(struct acx_softc *sc, uint32_t fw_rxdesc_start)
 			fw_desc.f_rx_next_desc = htole32(fw_rxdesc_start);
 		} else {
 			fw_desc.f_rx_next_desc =
-				htole32(fw_desc_offset +
-					sizeof(struct acx_fw_rxdesc));
+			    htole32(fw_desc_offset +
+			    sizeof(struct acx_fw_rxdesc));
 		}
 
 		DESC_WRITE_REGION_1(sc, fw_desc_offset, &fw_desc,
-				    sizeof(fw_desc));
+		    sizeof(fw_desc));
 
 		fw_desc_offset += sizeof(fw_desc);
 	}
@@ -638,7 +633,7 @@ acx100_read_config(struct acx_softc *sc, struct acx_config *conf)
 	if (acx100_get_cca_mode_conf(sc, &cca) != 0) {
 		printf("%s: %s can't get cca mode\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 	conf->cca_mode = cca.cca_mode;
 	DPRINTF(("%s: cca mode %02x\n", ifp->if_xname, cca.cca_mode));
@@ -647,12 +642,12 @@ acx100_read_config(struct acx_softc *sc, struct acx_config *conf)
 	if (acx100_get_ed_thresh_conf(sc, &ed) != 0) {
 		printf("%s: %s can't get ed threshold\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 	conf->ed_thresh = ed.ed_thresh;
 	DPRINTF(("%s: ed threshold %02x\n", ifp->if_xname, ed.ed_thresh));
 
-	return 0;
+	return (0);
 }
 
 int
@@ -667,7 +662,7 @@ acx100_write_config(struct acx_softc *sc, struct acx_config *conf)
 	if (acx100_set_cca_mode_conf(sc, &cca) != 0) {
 		printf("%s: %s can't set cca mode\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* Set ED threshold */
@@ -675,13 +670,13 @@ acx100_write_config(struct acx_softc *sc, struct acx_config *conf)
 	if (acx100_set_ed_thresh_conf(sc, &ed) != 0) {
 		printf("%s: %s can't set ed threshold\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/* Set TX power */
 	acx100_set_txpower(sc);	/* ignore return value */
 
-	return 0;
+	return (0);
 }
 
 int
@@ -699,18 +694,19 @@ acx100_set_txpower(struct acx_softc *sc)
 		map = acx100_txpower_rfmd;
 		break;
 	default:
-		printf("%s: TX power for radio type 0x%02x "
-		    "can't be set yet\n", ifp->if_xname, sc->sc_radio_type);
-		return 1;
+		printf("%s: TX power for radio type 0x%02x can't be set yet\n",
+		    ifp->if_xname, sc->sc_radio_type);
+		return (1);
 	}
 
 	acx_write_phyreg(sc, ACXRV_PHYREG_TXPOWER, map[ACX100_TXPOWER]);
-	return 0;
+
+	return (0);
 }
 
 void
 acx100_set_fw_txdesc_rate(struct acx_softc *sc, struct acx_txbuf *tx_buf,
-			  int rate)
+    int rate)
 {
 	FW_TXDESC_SETFIELD_1(sc, tx_buf, f_tx_rate100, ACX100_RATE(rate));
 }
@@ -760,7 +756,6 @@ acx100_proc_wep_rxbuf(struct acx_softc *sc, struct mbuf *m, int *len)
 	/*
 	 * Strip leading IV and KID, and trailing CRC
 	 */
-
 	f = mtod(m, struct ieee80211_frame *);
 
 	if ((f->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
