@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $
+ *	$OpenBSD: locate.c,v 1.19 2006/08/05 23:05:13 ray Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $
+ *      $Id: locate.c,v 1.19 2006/08/05 23:05:13 ray Exp $
  */
 
 #ifndef lint
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.19 2006/08/05 23:05:13 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $";
  * Ref: Usenix ;login:, Vol 8, No 1, February/March, 1983, p. 8.
  *
  * Locate scans a file list for the full pathname of a file given only part
- * of the name.  The list has been processed with with "front-compression"
+ * of the name.  The list has been processed with "front-compression"
  * and bigram coding.  Front compression reduces space by a factor of 4-5,
  * bigram coding by a further 20-25%.
  *
