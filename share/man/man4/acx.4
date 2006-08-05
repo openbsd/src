@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.10 2006/08/05 01:59:29 ckuethe Exp $
+.\"	$OpenBSD: acx.4,v 1.11 2006/08/05 06:45:56 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -283,6 +283,42 @@ Netgear WG311v2,
 Tornado/ADT 211g,
 USR USR5416,
 Zyxel G-360 EE
+.Ed
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures acx0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+The following
+.Xr hostname.if 5
+example creates a host-based access point on boot:
+.Bd -literal -offset indent
+inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+	mediaopt hostap nwid my_net chan 11
+.Ed
+.Pp
+Configure acx0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig acx0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return acx0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig acx0 -bssid -chan media autoselect \e
+	nwid "" -nwkey
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig acx0 192.168.1.1 netmask 0xffffff00 nwid my_net
 .Ed
 .Sh SEE ALSO
 .Xr arp 4 ,
