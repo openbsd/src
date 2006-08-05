@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.13 2006/07/29 17:06:27 miod Exp $	*/
+/*	$OpenBSD: dz.c,v 1.14 2006/08/05 16:58:47 miod Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -288,9 +288,9 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (line >= sc->sc_type)
 		return ENXIO;
 
-	/* if some other device is using the line, it's busy */
+	/* if some other device is using the line, it's not available */
 	if (sc->sc_dz[line].dz_catch)
-		return EBUSY;
+		return ENXIO;
 
 	if (sc->sc_openings++ == 0)
 		dzdrain(sc);
