@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.14 2005/06/19 19:30:14 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.15 2006/08/05 16:56:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -71,7 +71,7 @@ struct cfdriver xmphy_cd = {
 int	xmphy_service(struct mii_softc *, struct mii_data *, int);
 void	xmphy_status(struct mii_softc *);
 
-int	xmphy_mii_phy_auto(struct mii_softc *, int);
+int	xmphy_mii_phy_auto(struct mii_softc *);
 
 const struct mii_phy_funcs xmphy_funcs = {
 	xmphy_service, xmphy_status, mii_phy_reset,
@@ -177,7 +177,7 @@ xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			if (PHY_READ(sc, XMPHY_MII_BMCR) & XMPHY_BMCR_AUTOEN)
 				return (0);
 #endif
-			(void) xmphy_mii_phy_auto(sc, 1);
+			(void) xmphy_mii_phy_auto(sc);
 			break;
 		case IFM_1000_SX:
 			PHY_RESET(sc);
@@ -234,9 +234,7 @@ xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		sc->mii_ticks = 0;
 		PHY_RESET(sc);
 
-		if (xmphy_mii_phy_auto(sc, 0) == EJUSTRETURN)
-			return (0);
-
+		xmphy_mii_phy_auto(sc);
 		break;
 	}
 
@@ -303,50 +301,16 @@ xmphy_status(struct mii_softc *sc)
 
 
 int
-xmphy_mii_phy_auto(struct mii_softc *sc, int waitfor)
+xmphy_mii_phy_auto(struct mii_softc *sc)
 {
-	int bmsr, anar = 0, i;
+	int anar = 0;
 
-	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
-		anar = PHY_READ(sc, XMPHY_MII_ANAR);
-		anar |= XMPHY_ANAR_FDX|XMPHY_ANAR_HDX;
-		PHY_WRITE(sc, XMPHY_MII_ANAR, anar);
-		DELAY(1000);
-		PHY_WRITE(sc, XMPHY_MII_BMCR,
-		    XMPHY_BMCR_AUTOEN | XMPHY_BMCR_STARTNEG);
-	}
+	anar = PHY_READ(sc, XMPHY_MII_ANAR);
+	anar |= XMPHY_ANAR_FDX|XMPHY_ANAR_HDX;
+	PHY_WRITE(sc, XMPHY_MII_ANAR, anar);
+	DELAY(1000);
+	PHY_WRITE(sc, XMPHY_MII_BMCR,
+	    XMPHY_BMCR_AUTOEN | XMPHY_BMCR_STARTNEG);
 
-	if (waitfor) {
-		/* Wait 500ms for it to complete. */
-		for (i = 0; i < 500; i++) {
-			if ((bmsr = PHY_READ(sc, XMPHY_MII_BMSR)) &
-			    XMPHY_BMSR_ACOMP)
-				return (0);
-			DELAY(1000);
-#if 0
-		if ((bmsr & BMSR_ACOMP) == 0)
-			printf("%s: autonegotiation failed to complete\n",
-			    mii->mii_dev.dv_xname);
-#endif
-		}
-
-		/*
-		 * Don't need to worry about clearing MIIF_DOINGAUTO.
-		 * If that's set, a timeout is pending, and it will
-		 * clear the flag.
-		 */
-		return (EIO);
-	}
-
-	/*
-	 * Just let it finish asynchronously.  This is for the benefit of
-	 * the tick handler driving autonegotiation.  Don't want 500ms
-	 * delays all the time while the system is running!
-	 */
-	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
-		sc->mii_flags |= MIIF_DOINGAUTO;
-		timeout_set(&sc->mii_phy_timo, mii_phy_auto_timeout, sc);
-		timeout_add(&sc->mii_phy_timo, hz >> 1);
-	}
 	return (EJUSTRETURN);
 }
