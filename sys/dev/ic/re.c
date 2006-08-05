@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.36 2006/07/06 00:06:51 drahn Exp $	*/
+/*	$OpenBSD: re.c,v 1.37 2006/08/05 16:53:16 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1592,7 +1592,6 @@ void
 re_start(struct ifnet *ifp)
 {
 	struct rl_softc	*sc;
-	struct mbuf	*m_head = NULL;
 	int		idx, queued = 0;
 
 	sc = ifp->if_softc;
@@ -1602,33 +1601,37 @@ re_start(struct ifnet *ifp)
 
 	idx = sc->rl_ldata.rl_tx_prodidx;
 	while (sc->rl_ldata.rl_tx_mbuf[idx] == NULL) {
+		struct mbuf *m;
 		int error;
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
-		error = re_encap(sc, m_head, &idx);
+		error = re_encap(sc, m, &idx);
 		if (error == EFBIG &&
 		    sc->rl_ldata.rl_tx_free == RL_TX_DESC_CNT) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m_freem(m);
 			ifp->if_oerrors++;
-			m_freem(m_head);
 			continue;
 		}
 		if (error) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		queued++;
+
 #if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-		queued++;
 	}
 
 	if (queued == 0)
