@@ -1,8 +1,7 @@
-/*	$OpenBSD: acx100.c,v 1.4 2006/08/03 12:00:07 mglocker Exp $ */
+/*	$OpenBSD: acx100.c,v 1.5 2006/08/05 13:06:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
- * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
