@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.16 2006/08/05 10:00:30 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.17 2006/08/05 16:57:42 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -212,7 +212,6 @@ smg_match(struct device *parent, void *vcf, void *aux)
 	volatile short *cfgtst;
 	short tmp, tmp2;
 	extern struct consdev wsdisplay_cons;
-	extern int oldvsbus;
 
 	switch (vax_boardtype) {
 	default:
@@ -238,10 +237,12 @@ smg_match(struct device *parent, void *vcf, void *aux)
 		break;
 	}
 
-	if ((vax_confdata & KA420_CFG_L3CON) == 0 &&
+	/* when already running as console, always fake things */
+	if ((vax_confdata & (KA420_CFG_L3CON | KA420_CFG_VIDOPT)) == 0 &&
 	    cn_tab == &wsdisplay_cons) {
-		/* when already running as console, always fake things */
 		struct vsbus_softc *sc = (void *)parent;
+		extern int oldvsbus;
+
 		sc->sc_mask = 0x08;
 		scb_fake(0x44, oldvsbus ? 0x14 : 0x15);
 		return (20);
@@ -276,7 +277,7 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 	int console;
 	extern struct consdev wsdisplay_cons;
 
-	console = (vax_confdata & KA420_CFG_L3CON) == 0 &&
+	console = (vax_confdata & (KA420_CFG_L3CON | KA420_CFG_VIDOPT)) == 0 &&
 	    cn_tab == &wsdisplay_cons;
 	if (console) {
 		scr = &smg_consscr;
@@ -820,6 +821,9 @@ smgcnprobe()
 	case VAX_BTYP_43:
 		if ((vax_confdata & (KA420_CFG_L3CON | KA420_CFG_MULTU)) != 0)
 			break; /* doesn't use graphics console */
+
+		if ((vax_confdata & KA420_CFG_VIDOPT) != 0)
+			break;	/* there is a color option */
 
 		return (1);
 
