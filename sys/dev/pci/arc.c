@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.8 2006/08/05 00:55:35 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.9 2006/08/06 00:18:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -186,12 +186,18 @@ struct arc_sge {
 
 #define ARC_MAX_TARGET		16
 #define ARC_MAX_LUN		8
+#define ARC_MAX_IOCMDLEN	512
 
 /* the firmware deals with up to 256 or 512 byte command frames. */
-/* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 38) == 512 */
+/* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 38) == 508 */
 #define ARC_SGL_MAXLEN		38
-/* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 17) == 256 */
+/* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 17) == 252 */
 #define ARC_SGL_256LEN		17
+
+struct arc_io_cmd {
+	struct arc_msg_scsicmd	cmd;
+	struct arc_sge		sgl[ARC_SGL_MAXLEN];
+} __packed;
 
 int			arc_match(struct device *, void *, void *);
 void			arc_attach(struct device *, struct device *, void *);
@@ -215,7 +221,6 @@ struct arc_softc {
 
 	void			*sc_ih;
 
-	int			sc_req_size;
 	int			sc_req_count;
 
 	struct arc_dmamem	*sc_requests;
@@ -283,7 +288,7 @@ struct arc_ccb {
 
 	bus_dmamap_t		ccb_dmamap;
 	bus_addr_t		ccb_offset;
-	void			*ccb_cmd;
+	struct arc_io_cmd	*ccb_cmd;
 	u_int32_t		ccb_cmd_post;
 
 	TAILQ_ENTRY(arc_ccb)	ccb_link;
@@ -405,7 +410,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		return (COMPLETE);
 	}
 
-	cmd = ccb->ccb_cmd;
+	cmd = &ccb->ccb_cmd->cmd;
 	reg = ccb->ccb_cmd_post;
 
 	/* bus is always 0 */
@@ -429,7 +434,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 
 	/* we've built the command, lets put it on the hw */
 	bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
-	    ccb->ccb_offset, sc->sc_req_size,
+	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	s = splbio();
@@ -456,11 +461,7 @@ arc_load_xs(struct arc_ccb *ccb)
 	struct arc_softc		*sc = ccb->ccb_sc;
 	struct scsi_xfer		*xs = ccb->ccb_xs;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
-	struct {
-		struct arc_msg_scsicmd		cmd;
-		struct arc_sge			sgl[ARC_SGL_MAXLEN];
-	} __packed			*bundle = ccb->ccb_cmd;
-	struct arc_sge			*sge;
+	struct arc_sge			*sgl = ccb->ccb_cmd->sgl, *sge;
 	u_int64_t			addr;
 	int				i, error;
 
@@ -476,7 +477,7 @@ arc_load_xs(struct arc_ccb *ccb)
 	}
 
 	for (i = 0; i < dmap->dm_nsegs; i++) {
-		sge = &bundle->sgl[i];
+		sge = &sgl[i];
 
 		sge->sg_hdr = htole32(ARC_SGE_64BIT | dmap->dm_segs[i].ds_len);
 		addr = dmap->dm_segs[i].ds_addr;
@@ -524,12 +525,10 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 {
 	struct arc_ccb			*ccb = NULL;
 	char				*kva = ARC_DMA_KVA(sc->sc_requests);
-	struct arc_msg_scsicmd		*cmd;
-	int				diff;
+	struct arc_io_cmd		*cmd;
 	u_int32_t			reg;
 
 	do {
-
 		reg = arc_pop(sc);
 		if (reg == 0xffffffff) {
 			if (timeout-- == 0)
@@ -539,13 +538,12 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 			continue;
 		}
 
-		diff = (reg << 5) - ARC_DMA_DVA(sc->sc_requests);
-		cmd = (struct arc_msg_scsicmd *)(kva + diff);
-
-		ccb = &sc->sc_ccbs[cmd->context];
+		cmd = (struct arc_io_cmd *)(kva + 
+		    ((reg << 5) - ARC_DMA_DVA(sc->sc_requests)));
+		ccb = &sc->sc_ccbs[cmd->cmd.context];
 
 		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
-		    ccb->ccb_offset, sc->sc_req_size,
+		    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		arc_scsi_cmd_done(sc, ccb, reg);
@@ -655,7 +653,12 @@ arc_query_firmware(struct arc_softc *sc)
 
 	/* device map? */
 
-	sc->sc_req_size = letoh32(fwinfo.request_len); /* always 512 */
+	if (letoh32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
+		printf("%s: unexpected request frame size (%d != %d)\n",
+		    DEVNAME(sc), letoh32(fwinfo.request_len), ARC_MAX_IOCMDLEN);
+		return (1);
+	}
+
 	sc->sc_req_count = letoh32(fwinfo.queue_len);
 
 	printf("%s: %d SATA Ports, %dMB SDRAM, FW Version: %s\n",
@@ -814,7 +817,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	bzero(sc->sc_ccbs, sizeof(struct arc_ccb) * sc->sc_req_count);
 
 	sc->sc_requests = arc_dmamem_alloc(sc,
-	    sc->sc_req_size * sc->sc_req_count);
+	    ARC_MAX_IOCMDLEN * sc->sc_req_count);
 	if (sc->sc_requests == NULL) {
 		printf("%s: unable to allocate ccb dmamem\n", DEVNAME(sc));
 		goto free_ccbs;
@@ -833,9 +836,9 @@ arc_alloc_ccbs(struct arc_softc *sc)
 
 		ccb->ccb_sc = sc;
 		ccb->ccb_id = i;
-		ccb->ccb_offset = sc->sc_req_size * i;
+		ccb->ccb_offset = ARC_MAX_IOCMDLEN * i;
 
-		ccb->ccb_cmd = &cmd[ccb->ccb_offset];
+		ccb->ccb_cmd = (struct arc_io_cmd *)&cmd[ccb->ccb_offset];
 		ccb->ccb_cmd_post = (ARC_DMA_DVA(sc->sc_requests) +
 		    ccb->ccb_offset) >> 5; /* XXX magic number */
 
@@ -871,6 +874,6 @@ void
 arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
 	ccb->ccb_xs = NULL;
-	bzero(ccb->ccb_cmd, sc->sc_req_size);
+	bzero(ccb->ccb_cmd, ARC_MAX_IOCMDLEN);
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
 }
