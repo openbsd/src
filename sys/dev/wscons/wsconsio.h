@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.41 2006/07/24 22:19:54 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.42 2006/08/06 16:00:45 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -367,7 +367,6 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_IBM 1
 #define WSDISPLAY_FONTENC_PCVT 2
 #define WSDISPLAY_FONTENC_ISO7 3 /* greek */
-#define WSDISPLAY_FONTENC_SONY 4
 	u_int fontwidth, fontheight, stride;
 #define WSDISPLAY_MAXFONTSZ	(512*1024)
 	int bitorder, byteorder;
