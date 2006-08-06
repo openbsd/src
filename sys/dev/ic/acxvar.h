@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.8 2006/08/05 13:06:50 mglocker Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.9 2006/08/06 13:03:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -326,6 +326,33 @@ struct acx_stats {
 	uint64_t	err_unkn;	/* XXX unknown error */
 };
 
+#define ACX_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_RSSI))
+
+struct acx_rx_radiotap_hdr {
+	struct ieee80211_radiotap_header	wr_ihdr;
+	uint8_t					wr_flags;
+	uint16_t				wr_chan_freq;
+	uint16_t				wr_chan_flags;
+	uint8_t					wr_rssi;
+	uint8_t					wr_max_rssi;
+} __packed;
+
+#define ACX_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))				\
+
+struct acx_tx_radiotap_hdr {
+	struct ieee80211_radiotap_header	wt_ihdr;
+	uint8_t					wt_flags;
+	uint8_t					wt_rate;
+	uint16_t				wt_chan_freq;
+	uint16_t				wt_chan_flags;
+} __packed;
+
 struct acx_softc {
 	/*
 	 * sc_xxx are filled in by common code
@@ -436,6 +463,24 @@ struct acx_softc {
 
 	void			(*chip_proc_wep_rxbuf)
 				(struct acx_softc *, struct mbuf *, int *);
+
+#if NBPFILTER > 0
+	caddr_t			sc_drvbpf;
+
+	union {
+		struct acx_rx_radiotap_hdr th;
+		uint8_t pad[64];
+	}			sc_rxtapu;
+#define sc_rxtap		sc_rxtapu.th
+	int			sc_rxtap_len;
+
+	union {
+		struct acx_tx_radiotap_hdr th;
+		uint8_t pad[64];
+	}			sc_txtapu;
+#define sc_txtap		sc_txtapu.th
+	int			sc_txtap_len;
+#endif
 };
 
 #define ACX_FLAG_FW_LOADED	0x01

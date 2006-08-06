@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.23 2006/08/05 17:22:46 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.24 2006/08/06 13:03:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -351,6 +351,19 @@ acx_attach(struct acx_softc *sc)
 	sc->sc_long_retry_limit = 4;
 	sc->sc_short_retry_limit = 7;
 	sc->sc_msdu_lifetime = 4096;
+
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64);
+
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(ACX_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(ACX_TX_RADIOTAP_PRESENT);
+#endif
 
 	return (0);
 }
@@ -925,10 +938,20 @@ acx_start(struct ifnet *ifp)
 
 			/* TODO power save */
 
+#if NBPFILTER > 0
+			if (ifp->if_bpf != NULL)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
 			if ((m = ieee80211_encap(ifp, m, &ni)) == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
+
+#if NBPFILTER > 0
+			if (ic->ic_rawbpf != NULL)
+				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
+#endif
 
 			node = (struct acx_node *)ni;
 			if (node->nd_txrate < 0) {
@@ -961,6 +984,27 @@ acx_start(struct ifnet *ifp)
 				continue;
 			}
 		}
+
+#if NBPFILTER > 0
+		if (sc->sc_drvbpf != NULL) {
+			struct mbuf mb;
+			struct acx_tx_radiotap_hdr *tap = &sc->sc_txtap;
+
+			tap->wt_flags = 0;
+			tap->wt_rate = rate;
+			tap->wt_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wt_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+			M_DUP_PKTHDR(&mb, m);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = sc->sc_txtap_len;
+			mb.m_next = m;
+			mb.m_pkthdr.len = mb.m_len;
+			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		}
+#endif
 
 		if (acx_encap(sc, buf, m, ni, rate) != 0) {
 			/*
@@ -1268,6 +1312,28 @@ acx_rxeof(struct acx_softc *sc)
 
 			m->m_len = m->m_pkthdr.len = len;
 			m->m_pkthdr.rcvif = &ic->ic_if;
+
+#if NBPFILTER > 0
+			if (sc->sc_drvbpf != NULL) {
+				struct mbuf mb;
+				struct acx_rx_radiotap_hdr *tap = &sc->sc_rxtap;
+
+				tap->wr_flags = 0;
+				tap->wr_chan_freq =
+				    htole16(ic->ic_bss->ni_chan->ic_freq);
+				tap->wr_chan_flags =
+				    htole16(ic->ic_bss->ni_chan->ic_flags);
+				tap->wr_rssi = head->rbh_level;
+				tap->wr_max_rssi = 0; /* XXX */
+
+				M_DUP_PKTHDR(&mb, m);
+				mb.m_data = (caddr_t)tap;
+				mb.m_len = sc->sc_rxtap_len;
+				mb.m_next = m;
+				mb.m_pkthdr.len += mb.m_len;
+				bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+			}
+#endif
 
 			ni = ieee80211_find_rxnode(ic, f);
 
