@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.27 2006/08/06 14:22:11 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.28 2006/08/06 14:23:05 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1949,14 +1949,6 @@ acx_init_tmplt_ordered(struct acx_softc *sc)
 #undef CALL_SET_TMPLT
 	return (0);
 }
-
-#if 0
-void
-acx_ring_dma_addr(void *arg, bus_dma_segment_t *seg, int nseg, int error)
-{
-	*((uint32_t *)arg) = seg->ds_addr;
-}
-#endif
 
 int
 acx_dma_alloc(struct acx_softc *sc)
