@@ -1,5 +1,5 @@
-#	$OpenBSD: files.luna88k,v 1.12 2006/06/19 15:13:35 deraadt Exp $
-#	
+#	$OpenBSD: files.luna88k,v 1.13 2006/08/06 13:04:31 miod Exp $
+#
 maxpartitions 16
 
 device 	mainbus {}
@@ -30,7 +30,7 @@ device ws: wskbddev,wsmousedev
 attach ws at sio
 file arch/luna88k/dev/lunaws.c				ws
 
-device fb: wsemuldisplaydev,wsrasteremulops
+device fb: wsemuldisplaydev, rasops1
 attach fb at mainbus
 file arch/luna88k/dev/lunafb.c				fb
 file arch/luna88k/dev/omrasops.c			fb
