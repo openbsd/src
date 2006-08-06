@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.26 2006/08/06 14:06:41 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.27 2006/08/06 14:22:11 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -221,7 +221,7 @@ const struct ieee80211_rateset	acx_rates_11b =
 const struct ieee80211_rateset	acx_rates_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static int	acx_chanscan_rate = 5;	/* 5 channels per seconds */
+static int	acx_chanscan_rate = 5;	/* 5 channels per second */
 int		acx_beacon_intvl = 100;	/* 100 TU */
 
 /*
@@ -885,7 +885,7 @@ acx_start(struct ifnet *ifp)
 	trans = 0;
 	for (buf = &bd->tx_buf[idx]; buf->tb_mbuf == NULL;
 	     buf = &bd->tx_buf[idx]) {
-		struct ieee80211_frame *f;
+		struct ieee80211_frame *wh;
 		struct ieee80211_node *ni = NULL;
 		struct mbuf *m;
 		int rate;
@@ -974,8 +974,8 @@ acx_start(struct ifnet *ifp)
 		} else
 			break;
 
-		f = mtod(m, struct ieee80211_frame *);
-		if ((f->i_fc[1] & IEEE80211_FC1_WEP) && !sc->chip_hw_crypt) {
+		wh = mtod(m, struct ieee80211_frame *);
+		if ((wh->i_fc[1] & IEEE80211_FC1_WEP) && !sc->chip_hw_crypt) {
 			m = ieee80211_wep_crypt(ifp, m, 1);
 			if (m == NULL) {
 				ieee80211_release_node(ic, ni);
@@ -1291,22 +1291,22 @@ acx_rxeof(struct acx_softc *sc)
 		len = letoh16(head->rbh_len) & ACX_RXBUF_LEN_MASK;
 		if (len >= sizeof(struct ieee80211_frame_min) &&
 		    len < MCLBYTES) {
-			struct ieee80211_frame *f;
+			struct ieee80211_frame *wh;
 			struct ieee80211_node *ni;
 
 			m_adj(m, sizeof(struct acx_rxbuf_hdr) +
 			    sc->chip_rxbuf_exhdr);
-			f = mtod(m, struct ieee80211_frame *);
+			wh = mtod(m, struct ieee80211_frame *);
 
-			if ((f->i_fc[1] & IEEE80211_FC1_WEP) &&
+			if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 			    sc->chip_hw_crypt) {
 				/* Short circuit software WEP */
-				f->i_fc[1] &= ~IEEE80211_FC1_WEP;
+				wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 
 				/* Do chip specific RX buffer processing */
 				if (sc->chip_proc_wep_rxbuf != NULL) {
 					sc->chip_proc_wep_rxbuf(sc, m, &len);
-					f = mtod(m, struct ieee80211_frame *);
+					wh = mtod(m, struct ieee80211_frame *);
 				}
 			}
 
@@ -1335,7 +1335,7 @@ acx_rxeof(struct acx_softc *sc)
 			}
 #endif
 
-			ni = ieee80211_find_rxnode(ic, f);
+			ni = ieee80211_find_rxnode(ic, wh);
 
 			ieee80211_input(ifp, m, ni, head->rbh_level,
 			    letoh32(head->rbh_time));
@@ -2335,7 +2335,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 	 * TX buffers are accessed in following way:
 	 * acx_fw_txdesc -> acx_host_desc -> buffer
 	 *
-	 * It is quite strange that acx also querys acx_host_desc next to
+	 * It is quite strange that acx also queries acx_host_desc next to
 	 * the one we have assigned to acx_fw_txdesc even if first one's
 	 * acx_host_desc.h_data_len == acx_fw_txdesc.f_tx_len
 	 *
