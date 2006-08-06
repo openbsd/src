@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.61 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: ehci.c,v 1.62 2006/08/06 12:12:44 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 
 #if defined(__OpenBSD__)
 struct cfdriver ehci_cd = {
-        NULL, "ehci", DV_DULL
+	NULL, "ehci", DV_DULL
 };
 #endif
 
@@ -207,7 +207,7 @@ Static usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 			    ehci_softc_t *, int, int, usbd_xfer_handle,
 			    ehci_soft_qtd_t **, ehci_soft_qtd_t **);
 Static void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
-					    ehci_soft_qtd_t *);
+			    ehci_soft_qtd_t *);
 
 Static usbd_status	ehci_device_request(usbd_xfer_handle xfer);
 
@@ -216,7 +216,7 @@ Static usbd_status	ehci_device_setintr(ehci_softc_t *, ehci_soft_qh_t *,
 
 Static void		ehci_add_qh(ehci_soft_qh_t *, ehci_soft_qh_t *);
 Static void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *,
-				    ehci_soft_qh_t *);
+			    ehci_soft_qh_t *);
 Static void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
 Static void		ehci_sync_hc(ehci_softc_t *);
 
@@ -226,7 +226,7 @@ Static void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 #ifdef EHCI_DEBUG
 Static void		ehci_dump_regs(ehci_softc_t *);
 Static void		ehci_dump(void);
-Static ehci_softc_t 	*theehci;
+Static ehci_softc_t	*theehci;
 Static void		ehci_dump_link(ehci_link_t, int);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
 Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
@@ -586,7 +586,7 @@ ehci_intr1(ehci_softc_t *sc)
 		 */
 		ehci_pcd_able(sc, 0);
 		/* Do not allow RHSC interrupts > 1 per second */
-                usb_callout(sc->sc_tmo_pcd, hz, ehci_pcd_enable, sc);
+		usb_callout(sc->sc_tmo_pcd, hz, ehci_pcd_enable, sc);
 		eintrs &= ~EHCI_STS_PCD;
 	}
 
@@ -1325,7 +1325,7 @@ ehci_open(usbd_pipe_handle pipe)
 
 	if (dev->myhsport) {
 		hshubaddr = dev->myhsport->parent->address;
-    		hshubport = dev->myhsport->portno;
+		hshubport = dev->myhsport->portno;
 	} else {
 		hshubaddr = 0;
 		hshubport = 0;
@@ -1545,7 +1545,7 @@ Static usb_device_descriptor_t ehci_devd = {
 	UDPROTO_HSHUBSTT,	/* protocol */
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indices */
+	1,2,0,			/* string indicies */
 	1			/* # of configurations */
 };
 
@@ -2331,9 +2331,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 				qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
 		}
 		if (len == 0) {
-			if (! forceshort) {
+			if (! forceshort)
 				break;
-			}
 			forceshort = 0;
 		}
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
@@ -2758,7 +2757,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	s = splusb();
 	ehci_set_qh_qtd(sqh, setup);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
+		usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 		    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
@@ -2841,7 +2840,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	err = ehci_alloc_sqtd_chain(epipe, sc, len, isread, xfer, &data,
 	    &dataend);
 	if (err) {
-		DPRINTFN(-1,("ehci_device_bulk_transfer: no memory\n"));
+		DPRINTFN(-1,("ehci_device_bulk_start: no memory\n"));
 		xfer->status = err;
 		usb_transfer_complete(xfer);
 		return (err);
@@ -3071,7 +3070,7 @@ ehci_device_intr_abort(usbd_xfer_handle xfer)
 {
 	DPRINTFN(1, ("ehci_device_intr_abort: xfer=%p\n", xfer));
 	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTFN(1, ("echi_device_intr_abort: remove\n"));
+		DPRINTFN(1, ("ehci_device_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = NULL;
 	}
 	ehci_abort_xfer(xfer, USBD_CANCELLED);
