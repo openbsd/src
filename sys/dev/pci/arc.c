@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.10 2006/08/06 00:38:33 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.11 2006/08/06 07:29:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -822,8 +822,8 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	for (i = 0; i < sc->sc_req_count; i++) {
 		ccb = &sc->sc_ccbs[i];
 
-		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0, 0,
-		    &ccb->ccb_dmamap) != 0) {
+		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, ARC_SGL_MAXLEN,
+		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dmamap for ccb %d\n",
 			    DEVNAME(sc), i);
 			goto free_maps;
