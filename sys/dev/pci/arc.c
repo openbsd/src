@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.9 2006/08/06 00:18:34 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.10 2006/08/06 00:38:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -114,15 +114,10 @@ static const struct pci_matchid arc_devices[] = {
 #define  ARC_REG_OUTB_INTRMASK_PCI		(1<<4)
 #define ARC_REG_POST_QUEUE	0x0040
 #define  ARC_REG_POST_QUEUE_ADDR_SHIFT		5
-#define  ARC_REG_POST_QUEUE_ADDR(r)	\
-    ((r) >> ARC_REG_REPLY_QUEUE_ADDR_SHIFT)
 #define  ARC_REG_POST_QUEUE_IAMBIOS		(1<<30)
 #define  ARC_REG_POST_QUEUE_BIGFRAME		(1<<31)
 #define ARC_REG_REPLY_QUEUE	0x0044
-#define  ARC_REG_REPLY_QUEUE_ADDR_MASK		(0x07ffffff)
 #define  ARC_REG_REPLY_QUEUE_ADDR_SHIFT		5
-#define  ARC_REG_REPLY_QUEUE_ADDR(r)	\
-    (((r) & ARC_REG_REPLY_QUEUE_ADDR_MASK) << ARC_REG_REPLY_QUEUE_ADDR_SHIFT)
 #define  ARC_REG_REPLY_QUEUE_ERR		(1<<28)
 #define  ARC_REG_REPLY_QUEUE_IAMBIOS		(1<<30)
 #define ARC_REG_MSGBUF		0x0a00
@@ -539,7 +534,8 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 		}
 
 		cmd = (struct arc_io_cmd *)(kva + 
-		    ((reg << 5) - ARC_DMA_DVA(sc->sc_requests)));
+		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
+		    ARC_DMA_DVA(sc->sc_requests)));
 		ccb = &sc->sc_ccbs[cmd->cmd.context];
 
 		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
@@ -547,7 +543,6 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		arc_scsi_cmd_done(sc, ccb, reg);
-
 	} while (nccb != ccb);
 
 	return (0);
@@ -840,7 +835,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 
 		ccb->ccb_cmd = (struct arc_io_cmd *)&cmd[ccb->ccb_offset];
 		ccb->ccb_cmd_post = (ARC_DMA_DVA(sc->sc_requests) +
-		    ccb->ccb_offset) >> 5; /* XXX magic number */
+		    ccb->ccb_offset) >> ARC_REG_POST_QUEUE_ADDR_SHIFT;
 
 		arc_put_ccb(sc, ccb);
 	}
