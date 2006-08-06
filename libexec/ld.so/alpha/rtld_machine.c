@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.35 2006/02/22 19:50:21 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.36 2006/08/06 16:38:10 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -176,11 +176,21 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
+	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
+	if (!(*addr >=  object->plt_start &&
+	    *addr < (object->plt_start + object->plt_size ))) {
+		/* something is broken, relocation has already occurred */
+#if 0
+		DL_DEB(("*addr doesn't point into plt %p obj %s\n", 
+		    *addr, object->load_name));
+#endif
+		return *addr;
+	}
+
 	sym = object->dyn.symtab;
 	sym += ELF64_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,
@@ -189,12 +199,13 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
+
 	/* if PLT is protected, allow the write */
 	if (object->plt_size != 0) {
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		_dl_mprotect(addr, sizeof(Elf_Addr),
-		    PROT_READ|PROT_WRITE|PROT_EXEC);
+		    PROT_READ|PROT_WRITE);
 	}
 
 	*addr = ooff + this->st_value + rela->r_addend;
@@ -202,7 +213,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	/* if PLT is (to be protected, change back to RO/X  */
 	if (object->plt_size != 0) {
 		_dl_mprotect(addr, sizeof(Elf_Addr),
-		    PROT_READ|PROT_EXEC);
+		    PROT_READ);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
