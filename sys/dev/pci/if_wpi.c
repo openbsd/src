@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.25 2006/08/04 14:30:03 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.26 2006/08/06 12:51:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1310,7 +1310,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 			    letoh32(uc->valid)));
 
 			if (letoh32(uc->valid) != 1) {
-				printf("%s microcontroller initialization "
+				printf("%s: microcontroller initialization "
 				    "failed\n", sc->sc_dev.dv_xname);
 			}
 			break;
@@ -1528,15 +1528,14 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 	    IEEE80211_FC0_TYPE_MGT) {
+		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
 		/* tell h/w to set timestamp in probe responses */
-		if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+		if (subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			tx->flags |= htole32(WPI_TX_INSERT_TSTAMP);
 
-		if (((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		     IEEE80211_FC0_SUBTYPE_ASSOC_REQ) ||
-		    ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		     IEEE80211_FC0_SUBTYPE_REASSOC_REQ))
+		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
+		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ)
 			tx->timeout = 3;
 		else
 			tx->timeout = 2;
