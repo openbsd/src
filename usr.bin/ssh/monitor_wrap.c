@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_wrap.c,v 1.52 2006/08/05 08:28:24 dtucker Exp $ */
+/* $OpenBSD: monitor_wrap.c,v 1.53 2006/08/06 01:13:32 stevesk Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <zlib.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -51,7 +52,6 @@
 #include "packet.h"
 #include "mac.h"
 #include "log.h"
-#include "zlib.h"
 #include "monitor.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
