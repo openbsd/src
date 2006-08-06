@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.39 2006/08/05 21:38:20 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.40 2006/08/06 05:18:22 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1370,6 +1370,16 @@ re_txeof(struct rl_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
 	}
+
+	/*
+	 * Some chips will ignore a second TX request issued while an
+	 * existing transmission is in progress. If the transmitter goes
+	 * idle but there are still packets waiting to be sent, we need
+	 * to restart the channel here to flush them out. This only seems
+	 * to be required with the PCIe devices.
+	 */
+	if (sc->rl_ldata.rl_tx_free < RL_TX_DESC_CNT(sc))
+	    CSR_WRITE_1(sc, sc->rl_txstart, RL_TXSTART_START);
 
 	/*
 	 * If not all descriptors have been released reaped yet,
