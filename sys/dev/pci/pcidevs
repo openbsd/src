@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1126 2006/08/06 01:42:19 brad Exp $
+$OpenBSD: pcidevs,v 1.1127 2006/08/06 03:48:11 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2512,6 +2512,7 @@ product SYMBIOS 63C815		0x1000	63C815
 product SYMBIOS 1030R		0x1030	53c1030R
 product SYMBIOS MEGARAID	0x1960	MegaRAID
 product SYMBIOS MSAS		0x0411	MegaRAID SAS 1064R
+product SYMBIOS MVERDE_ZCR	0x0413	MegaRAID Verde ZCR
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
