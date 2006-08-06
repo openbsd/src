@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.36 2006/08/06 16:38:10 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.37 2006/08/06 21:45:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -177,7 +177,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
-	if (!(*addr >=  object->plt_start &&
+	if (object->plt_size != 0 && !(*addr >=  object->plt_start &&
 	    *addr < (object->plt_start + object->plt_size ))) {
 		/* something is broken, relocation has already occurred */
 #if 0
