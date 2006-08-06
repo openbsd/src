@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.34 2006/07/03 13:05:02 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.35 2006/08/06 12:35:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -129,9 +129,6 @@ main(int argc, char *argv[])
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
 
-	/* start logging */
-	log_init(1);
-
 	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -155,6 +152,7 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* start logging */
 	log_init(debug);
 
 	mib[0] = CTL_NET;
