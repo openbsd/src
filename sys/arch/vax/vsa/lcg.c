@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.7 2006/08/05 22:04:53 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.8 2006/08/06 15:04:22 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -529,9 +529,12 @@ lcg_burner(void *v, u_int on, u_int flags)
 
 	vidcfg = lcg_read_reg(ss, LCG_REG_VIDEO_CONFIG);
 	if (on)
-		vidcfg |= 1 << 1;
-	else
-		vidcfg &= ~(1 << 1);
+		vidcfg |= VIDEO_ENABLE_VIDEO | VIDEO_SYNC_ENABLE;
+	else {
+		vidcfg &= ~VIDEO_ENABLE_VIDEO;
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			vidcfg &= ~VIDEO_SYNC_ENABLE;
+	}
 	lcg_write_reg(ss, LCG_REG_VIDEO_CONFIG, vidcfg);
 }
 
@@ -621,13 +624,13 @@ lcg_putcmap(struct lcg_screen *ss, struct wsdisplay_cmap *cm)
 /* Fill the given colormap (LUT) entry.  */
 #define lcg_set_lut_entry(lutptr, cmap, idx, shift)			\
 do {									\
-	(lutptr)++;							\
+	*(lutptr)++ = LUT_ADRS_REG;					\
 	*(lutptr)++ = (idx);						\
-	*(lutptr)++ = 1;						\
+	*(lutptr)++ = LUT_COLOR_AUTOINC;				\
 	*(lutptr)++ = (*(cmap)++) >> (shift);				\
-	*(lutptr)++ = 1;						\
+	*(lutptr)++ = LUT_COLOR_AUTOINC;				\
 	*(lutptr)++ = (*(cmap)++) >> (shift);				\
-	*(lutptr)++ = 1;						\
+	*(lutptr)++ = LUT_COLOR_AUTOINC;				\
 	*(lutptr)++ = (*(cmap)++) >> (shift);				\
 } while (0)
 
@@ -640,7 +643,6 @@ lcg_loadcmap(struct lcg_screen *ss, int from, int count)
 	u_int32_t vidcfg;
 
 	/* partial updates ignored for now */
-	vidcfg = lcg_read_reg(ss, LCG_REG_VIDEO_CONFIG);
 	cmap = ss->ss_cmap;
 	lutptr = ss->ss_lut;
 	if (ss->ss_depth == 8) {
@@ -652,16 +654,31 @@ lcg_loadcmap(struct lcg_screen *ss, int from, int count)
 			lcg_set_lut_entry(lutptr, cmap, i, 4);
 		}
 	}
-	vidcfg &= ~((1 << 5) | (3 << 8) | (1 << 11));
-	if (ss->ss_width == 1280)	/* XXX is this right? */
-		vidcfg |= (0 << 5) | (2 << 8) | (0 << 11);
+
+	/*
+	 * Wait for retrace
+	 */
+	while (((vidcfg = lcg_read_reg(ss, LCG_REG_VIDEO_CONFIG)) &
+	    VIDEO_VSTATE) != VIDEO_VSYNC)
+		DELAY(1);
+
+	vidcfg &= ~(VIDEO_SHIFT_SEL | VIDEO_MEM_REFRESH_SEL_MASK |
+	    VIDEO_LUT_SHIFT_SEL);
+	/* Do full loads if width is 1024 or 2048, split loads otherwise. */
+	if (ss->ss_width == 1024 || ss->ss_width == 2048)
+		vidcfg |= VIDEO_SHIFT_SEL | (1 << VIDEO_MEM_REFRESH_SEL_SHIFT) |
+		    VIDEO_LUT_SHIFT_SEL;
 	else
-		vidcfg |= (1 << 5) | (1 << 8) | (1 << 11);
+		vidcfg |= (2 << VIDEO_MEM_REFRESH_SEL_SHIFT);
+	vidcfg |= VIDEO_LUT_LOAD_SIZE;	/* 2KB lut */
 	lcg_write_reg(ss, LCG_REG_VIDEO_CONFIG, vidcfg);
-	lcg_write_reg(ss, LCG_REG_LUT_CONSOLE_SEL, 1);
+	lcg_write_reg(ss, LCG_REG_LUT_CONSOLE_SEL, LUT_SEL_COLOR);
 	lcg_write_reg(ss, LCG_REG_LUT_COLOR_BASE_W, LCG_LUT_OFFSET);
-	DELAY(1000);	/* XXX should wait on a status bit */
-	lcg_write_reg(ss, LCG_REG_LUT_CONSOLE_SEL, 0);
+	/* Wait for end of retrace */
+	while (((vidcfg = lcg_read_reg(ss, LCG_REG_VIDEO_CONFIG)) &
+	    VIDEO_VSTATE) == VIDEO_VSYNC)
+		DELAY(1);
+	lcg_write_reg(ss, LCG_REG_LUT_CONSOLE_SEL, LUT_SEL_CONSOLE);
 }
 
 void
