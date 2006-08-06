@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.11 2006/08/06 07:29:18 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.12 2006/08/06 07:58:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -341,6 +341,9 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 
 	config_found(self, &sc->sc_link, scsiprint);
 
+	/* XXX enable interrupts */
+	arc_write(sc, ARC_REG_OUTB_INTRMASK, ~ARC_REG_OUTB_INTRMASK_POSTQUEUE);
+
 	return;
 }
 
@@ -353,11 +356,31 @@ arc_detach(struct device *self, int flags)
 int
 arc_intr(void *arg)
 {
-#if 0
 	struct arc_softc		*sc = arg;
-#endif
+	struct arc_ccb			*ccb = NULL;
+	char				*kva = ARC_DMA_KVA(sc->sc_requests);
+	struct arc_io_cmd		*cmd;
+	u_int32_t			reg, intrstat;
 
-	return (0);
+	intrstat = arc_read(sc, ARC_REG_OUTB_INTRSTAT);
+	if (intrstat == 0x0)
+		return (0);
+	arc_write(sc, ARC_REG_OUTB_INTRSTAT, intrstat);
+
+	while ((reg = arc_pop(sc)) != 0xffffffff) {
+		cmd = (struct arc_io_cmd *)(kva + 
+		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
+		    (u_int32_t)ARC_DMA_DVA(sc->sc_requests)));
+		ccb = &sc->sc_ccbs[cmd->cmd.context];
+
+		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		arc_scsi_cmd_done(sc, ccb, reg);
+	}
+
+	return (1);
 }
 
 int
@@ -434,17 +457,13 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 
 	s = splbio();
 	arc_push(sc, reg);
-#if 0
 	if (xs->flags & SCSI_POLL) {
-#endif
 		rv = COMPLETE;
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 		}
-#if 0
 	}
-#endif
 	splx(s);
 
 	return (rv);
