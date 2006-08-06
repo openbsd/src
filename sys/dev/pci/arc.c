@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.12 2006/08/06 07:58:00 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.13 2006/08/06 13:17:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -371,7 +371,7 @@ arc_intr(void *arg)
 		cmd = (struct arc_io_cmd *)(kva + 
 		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
 		    (u_int32_t)ARC_DMA_DVA(sc->sc_requests)));
-		ccb = &sc->sc_ccbs[cmd->cmd.context];
+		ccb = &sc->sc_ccbs[letoh32(cmd->cmd.context)];
 
 		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
 		    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
@@ -555,7 +555,7 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 		cmd = (struct arc_io_cmd *)(kva + 
 		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
 		    ARC_DMA_DVA(sc->sc_requests)));
-		ccb = &sc->sc_ccbs[cmd->cmd.context];
+		ccb = &sc->sc_ccbs[letoh32(cmd->cmd.context)];
 
 		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
 		    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
