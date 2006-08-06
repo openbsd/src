@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.7 2006/08/06 13:03:03 mglocker Exp $ */
+/*	$OpenBSD: acx111.c,v 1.8 2006/08/06 14:23:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -121,11 +121,18 @@
 #define ACX111_TXPOWER_VAL	2
 #endif
 
+int	acx111_init(struct acx_softc *);
+int	acx111_init_memory(struct acx_softc *);
+void	acx111_init_fw_txring(struct acx_softc *, uint32_t);
+int	acx111_write_config(struct acx_softc *, struct acx_config *);
+void	acx111_set_fw_txdesc_rate(struct acx_softc *,
+	    struct acx_txbuf *, int);
+void	acx111_set_bss_join_param(struct acx_softc *, void *, int);
+
 /*
  * NOTE:
  * Following structs' fields are little endian
  */
-
 struct acx111_bss_join {
 	uint16_t	basic_rates;
 	uint8_t		dtim_intvl;
@@ -274,17 +281,6 @@ static uint16_t	acx111_rate_map[109] = {
 	ACX111_RATE(108)
 };
 
-int	acx111_init(struct acx_softc *);
-int	acx111_init_memory(struct acx_softc *);
-void	acx111_init_fw_txring(struct acx_softc *, uint32_t);
-
-int	acx111_write_config(struct acx_softc *, struct acx_config *);
-
-void	acx111_set_fw_txdesc_rate(struct acx_softc *,
-					  struct acx_txbuf *, int);
-void	acx111_set_bss_join_param(struct acx_softc *, void *, int);
-
-
 void
 acx111_set_param(struct acx_softc *sc)
 {
@@ -298,9 +294,9 @@ acx111_set_param(struct acx_softc *sc)
 
 	sc->chip_phymode = IEEE80211_MODE_11G;
 	sc->chip_chan_flags = IEEE80211_CHAN_CCK |
-			      IEEE80211_CHAN_OFDM |
-			      IEEE80211_CHAN_DYN |
-			      IEEE80211_CHAN_2GHZ;
+	    IEEE80211_CHAN_OFDM |
+	    IEEE80211_CHAN_DYN |
+	    IEEE80211_CHAN_2GHZ;
 	sc->sc_ic.ic_caps = IEEE80211_C_WEP;
 	sc->sc_ic.ic_phytype = IEEE80211_T_OFDM;
 	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
@@ -325,19 +321,19 @@ acx111_init(struct acx_softc *sc)
 	 * 2) Hardware memory
 	 * Above order is critical to get a correct memory map
 	 */
-
 	if (acx_init_tmplt_ordered(sc) != 0) {
 		printf("%s: %s can't initialize templates\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	if (acx111_init_memory(sc) != 0) {
 		printf("%s: %s can't initialize hw memory\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
-	return 0;
+
+	return (0);
 }
 
 int
@@ -368,13 +364,13 @@ acx111_init_memory(struct acx_softc *sc)
 
 	if (acx111_set_mem_conf(sc, &mem) != 0) {
 		printf("%s: can't set mem\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Get memory configuration */
 	if (acx111_get_meminfo_conf(sc, &mem_info) != 0) {
 		printf("%s: can't get meminfo\n", ifp->if_xname);
-		return 1;
+		return (1);
 	}
 
 	/* Setup firmware TX descriptor ring */
@@ -385,7 +381,7 @@ acx111_init_memory(struct acx_softc *sc)
 	 * it is automaticly setup by hardware.
 	 */
 
-	return 0;
+	return (0);
 }
 
 void
@@ -400,16 +396,16 @@ acx111_init_fw_txring(struct acx_softc *sc, uint32_t fw_txdesc_start)
 
 	for (i = 0; i < ACX_TX_DESC_CNT; ++i) {
 		tx_buf[i].tb_fwdesc_ofs = fw_txdesc_start +
-					  (i * ACX111_FW_TXDESC_SIZE);
+		    (i * ACX111_FW_TXDESC_SIZE);
 
 		/*
 		 * Except for the following fields, rest of the fields
 		 * are setup by hardware.
 		 */
 		FW_TXDESC_SETFIELD_4(sc, &tx_buf[i], f_tx_host_desc,
-				     desc_paddr);
+		    desc_paddr);
 		FW_TXDESC_SETFIELD_1(sc, &tx_buf[i], f_tx_ctrl,
-				     DESC_CTRL_HOSTOWN);
+		    DESC_CTRL_HOSTOWN);
 
 		desc_paddr += (2 * sizeof(struct acx_host_desc));
 	}
@@ -428,7 +424,7 @@ acx111_write_config(struct acx_softc *sc, struct acx_config *conf)
 	if (acx111_set_txpower_conf(sc, &tx_power) != 0) {
 		printf("%s: %s can't set TX power\n",
 		    ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/*
@@ -436,24 +432,25 @@ acx111_write_config(struct acx_softc *sc, struct acx_config *conf)
 	 */
 	if (acx111_get_option_conf(sc, &opt) != 0) {
 		printf("%s: %s can't get option\n", ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	dataflow = letoh32(opt.dataflow) |
-		   ACX111_DF_NO_TXENCRYPT |
-		   ACX111_DF_NO_RXDECRYPT;
+	    ACX111_DF_NO_TXENCRYPT |
+	    ACX111_DF_NO_RXDECRYPT;
 	opt.dataflow = htole32(dataflow);
 
 	if (acx111_set_option_conf(sc, &opt) != 0) {
 		printf("%s: %s can't set option\n", ifp->if_xname, __func__);
-		return ENXIO;
+		return (ENXIO);
 	}
-	return 0;
+
+	return (0);
 }
 
 void
 acx111_set_fw_txdesc_rate(struct acx_softc *sc, struct acx_txbuf *tx_buf,
-			  int rate0)
+    int rate0)
 {
 	uint16_t rate;
 
