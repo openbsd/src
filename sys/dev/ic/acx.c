@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.24 2006/08/06 13:03:03 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.25 2006/08/06 14:04:19 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2397,16 +2397,18 @@ int
 acx_set_null_tmplt(struct acx_softc *sc)
 {
 	struct acx_tmplt_null_data n;
-	struct ieee80211_frame *f;
+	struct ieee80211_frame *wh;
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	bzero(&n, sizeof(n));
 
-	f = &n.data;
-	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_NODATA | IEEE80211_FC0_TYPE_DATA;
-	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(f->i_addr3, etherbroadcastaddr);
+	wh = &n.data;
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA |
+	    IEEE80211_FC0_SUBTYPE_NODATA;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, etherbroadcastaddr);
 
 	return (_acx_set_null_data_tmplt(sc, &n, sizeof(n)));
 }
@@ -2415,27 +2417,30 @@ int
 acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 {
 	struct acx_tmplt_probe_req req;
-	struct ieee80211_frame *f;
+	struct ieee80211_frame *wh;
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t *v;
-	int vlen;
+	uint8_t *frm;
+	int len;
 
 	bzero(&req, sizeof(req));
 
-	f = &req.data.u_data.f;
-	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_PROBE_REQ | IEEE80211_FC0_TYPE_MGT;
-	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(f->i_addr3, etherbroadcastaddr);
+	wh = &req.data.u_data.f;
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, etherbroadcastaddr);
 
-	v = req.data.u_data.var;
-	v = ieee80211_add_ssid(v, ssid, ssid_len);
-	v = ieee80211_add_rates(v, &ic->ic_sup_rates[sc->chip_phymode]);
-	v = ieee80211_add_xrates(v, &ic->ic_sup_rates[sc->chip_phymode]);
-	vlen = v - req.data.u_data.var;
+	frm = req.data.u_data.var;
+	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
+	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
+	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
+
+	len = frm - req.data.u_data.var;
 
 	return (_acx_set_probe_req_tmplt(sc, &req,
-	    ACX_TMPLT_PROBE_REQ_SIZ(vlen)));
+	    ACX_TMPLT_PROBE_REQ_SIZ(len)));
 }
 
 int
@@ -2443,42 +2448,44 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
     int chan)
 {
 	struct acx_tmplt_probe_resp resp;
-	struct ieee80211_frame *f;
+	struct ieee80211_frame *wh;
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t *v;
-	int vlen;
+	uint8_t *frm;
+	int len;
 
 	bzero(&resp, sizeof(resp));
 
-	f = &resp.data.u_data.f;
-	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_PROBE_RESP | IEEE80211_FC0_TYPE_MGT;
-	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(f->i_addr3, ic->ic_myaddr);
+	wh = &resp.data.u_data.f;
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_PROBE_RESP;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_myaddr);
 
 	resp.data.u_data.beacon_intvl = htole16(acx_beacon_intvl);
 	resp.data.u_data.cap = htole16(IEEE80211_CAPINFO_IBSS);
 
-	v = resp.data.u_data.var;
-	v = ieee80211_add_ssid(v, ssid, ssid_len);
-	v = ieee80211_add_rates(v, &ic->ic_sup_rates[sc->chip_phymode]);
+	frm = resp.data.u_data.var;
+	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
+	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
 
-	*v++ = IEEE80211_ELEMID_DSPARMS;
-	*v++ = 1;
-	*v++ = chan;
+	*frm++ = IEEE80211_ELEMID_DSPARMS;
+	*frm++ = 1;
+	*frm++ = chan;
 
 	/* This should after IBSS or TIM, but acx always keeps them last */
-	v = ieee80211_add_xrates(v, &ic->ic_sup_rates[sc->chip_phymode]);
+	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*v++ = IEEE80211_ELEMID_IBSSPARMS;
-		*v++ = 2;
+		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
+		*frm++ = 2;
 	}
 
-	vlen = v - resp.data.u_data.var;
+	len = frm - resp.data.u_data.var;
 
 	return (_acx_set_probe_resp_tmplt(sc, &resp,
-	    ACX_TMPLT_PROBE_RESP_SIZ(vlen)));
+	    ACX_TMPLT_PROBE_RESP_SIZ(len)));
 }
 
 /* XXX C&P of acx_set_probe_resp_tmplt() */
@@ -2487,41 +2494,43 @@ acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
     int chan)
 {
 	struct acx_tmplt_beacon beacon;
-	struct ieee80211_frame *f;
+	struct ieee80211_frame *wh;
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t *v;
-	int vlen;
+	uint8_t *frm;
+	int len;
 
 	bzero(&beacon, sizeof(beacon));
 
-	f = &beacon.data.u_data.f;
-	f->i_fc[0] = IEEE80211_FC0_SUBTYPE_BEACON | IEEE80211_FC0_TYPE_MGT;
-	IEEE80211_ADDR_COPY(f->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(f->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(f->i_addr3, ic->ic_myaddr);
+	wh = &beacon.data.u_data.f;
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_BEACON;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_myaddr);
 
 	beacon.data.u_data.beacon_intvl = htole16(acx_beacon_intvl);
 	beacon.data.u_data.cap = htole16(IEEE80211_CAPINFO_IBSS);
 
-	v = beacon.data.u_data.var;
-	v = ieee80211_add_ssid(v, ssid, ssid_len);
-	v = ieee80211_add_rates(v, &ic->ic_sup_rates[sc->chip_phymode]);
+	frm = beacon.data.u_data.var;
+	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
+	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
 
-	*v++ = IEEE80211_ELEMID_DSPARMS;
-	*v++ = 1;
-	*v++ = chan;
+	*frm++ = IEEE80211_ELEMID_DSPARMS;
+	*frm++ = 1;
+	*frm++ = chan;
 
 	/* This should after IBSS or TIM, but acx always keeps them last */
-	v = ieee80211_add_xrates(v, &ic->ic_sup_rates[sc->chip_phymode]);
+	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*v++ = IEEE80211_ELEMID_IBSSPARMS;
-		*v++ = 2;
+		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
+		*frm++ = 2;
 	}
 
-	vlen = v - beacon.data.u_data.var;
+	len = frm - beacon.data.u_data.var;
 
-	return (_acx_set_beacon_tmplt(sc, &beacon, ACX_TMPLT_BEACON_SIZ(vlen)));
+	return (_acx_set_beacon_tmplt(sc, &beacon, ACX_TMPLT_BEACON_SIZ(len)));
 }
 
 void
