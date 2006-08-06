@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.26 2006/08/06 12:51:09 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.27 2006/08/06 13:12:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1536,11 +1536,11 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
 		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ)
-			tx->timeout = 3;
+			tx->timeout = htole16(3);
 		else
-			tx->timeout = 2;
+			tx->timeout = htole16(2);
 	} else
-		tx->timeout = 0;
+		tx->timeout = htole16(0);
 
 	tx->rate = wpi_plcp_signal(rate);
 
