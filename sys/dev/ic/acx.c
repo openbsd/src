@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.25 2006/08/06 14:04:19 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.26 2006/08/06 14:06:41 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -221,7 +221,7 @@ const struct ieee80211_rateset	acx_rates_11b =
 const struct ieee80211_rateset	acx_rates_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-static int	acx_chanscan_rate = 5;	/* 5 seconds */
+static int	acx_chanscan_rate = 5;	/* 5 channels per seconds */
 int		acx_beacon_intvl = 100;	/* 100 TU */
 
 /*
