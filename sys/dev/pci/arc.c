@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.13 2006/08/06 13:17:23 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.14 2006/08/07 21:35:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -83,49 +83,33 @@ static const struct pci_matchid arc_devices[] = {
 #define ARC_REG_OUTB_ADDR1		0x001c
 #define  ARC_REG_OUTB_ADDR1_FIRMWARE_OK		(1<<31)
 #define ARC_REG_INB_DOORBELL		0x0020
-#define ARC_REG_INB_INTRSTAT		0x0024
-#define  ARC_REG_INB_INTRSTAT_MSG0		(1<<0)
-#define  ARC_REG_INB_INTRSTAT_MSG1		(1<<1)
-#define  ARC_REG_INB_INTRSTAT_DOORBELL		(1<<2)
-#define  ARC_REG_INB_INTRSTAT_DOORBELL_ERR	(1<<3)
-#define  ARC_REG_INB_INTRSTAT_POSTQUEUE		(1<<4)
-#define  ARC_REG_INB_INTRSTAT_QUEUEFULL		(1<<5)
-#define  ARC_REG_INB_INTRSTAT_INDEX		(1<<6)
-#define ARC_REG_INB_INTRMASK	0x0028
-#define  ARC_REG_INB_INTRMASK_MSG0		(1<<0)
-#define  ARC_REG_INB_INTRMASK_MSG1		(1<<1)
-#define  ARC_REG_INB_INTRMASK_DOORBELL		(1<<2)
-#define  ARC_REG_INB_INTRMASK_DOORBELL_ERR	(1<<3)
-#define  ARC_REG_INB_INTRMASK_POSTQUEUE		(1<<4)
-#define  ARC_REG_INB_INTRMASK_QUEUEFULL		(1<<5)
-#define  ARC_REG_INB_INTRMASK_INDEX		(1<<6)
-#define ARC_REG_OUTB_DOORBELL	0x002c
-#define ARC_REG_OUTB_INTRSTAT	0x0030
-#define  ARC_REG_OUTB_INTRSTAT_MSG0		(1<<0)
-#define  ARC_REG_OUTB_INTRSTAT_MSG1		(1<<1)
-#define  ARC_REG_OUTB_INTRSTAT_DOORBELL		(1<<2)
-#define  ARC_REG_OUTB_INTRSTAT_POSTQUEUE	(1<<3)
-#define  ARC_REG_OUTB_INTRSTAT_PCI		(1<<4)
-#define ARC_REG_OUTB_INTRMASK	0x0034
-#define  ARC_REG_OUTB_INTRMASK_MSG0		(1<<0)
-#define  ARC_REG_OUTB_INTRMASK_MSG1		(1<<1)
-#define  ARC_REG_OUTB_INTRMASK_DOORBELL		(1<<2)
-#define  ARC_REG_OUTB_INTRMASK_POSTQUEUE	(1<<3)
-#define  ARC_REG_OUTB_INTRMASK_PCI		(1<<4)
-#define ARC_REG_POST_QUEUE	0x0040
+#define ARC_REG_OUTB_DOORBELL		0x002c
+#define ARC_REG_INTRSTAT		0x0030
+#define  ARC_REG_INTRSTAT_MSG0			(1<<0)
+#define  ARC_REG_INTRSTAT_MSG1			(1<<1)
+#define  ARC_REG_INTRSTAT_DOORBELL		(1<<2)
+#define  ARC_REG_INTRSTAT_POSTQUEUE		(1<<3)
+#define  ARC_REG_INTRSTAT_PCI			(1<<4)
+#define ARC_REG_INTRMASK		0x0034
+#define  ARC_REG_INTRMASK_MSG0			(1<<0)
+#define  ARC_REG_INTRMASK_MSG1			(1<<1)
+#define  ARC_REG_INTRMASK_DOORBELL		(1<<2)
+#define  ARC_REG_INTRMASK_POSTQUEUE		(1<<3)
+#define  ARC_REG_INTRMASK_PCI			(1<<4)
+#define ARC_REG_POST_QUEUE		0x0040
 #define  ARC_REG_POST_QUEUE_ADDR_SHIFT		5
 #define  ARC_REG_POST_QUEUE_IAMBIOS		(1<<30)
 #define  ARC_REG_POST_QUEUE_BIGFRAME		(1<<31)
-#define ARC_REG_REPLY_QUEUE	0x0044
+#define ARC_REG_REPLY_QUEUE		0x0044
 #define  ARC_REG_REPLY_QUEUE_ADDR_SHIFT		5
 #define  ARC_REG_REPLY_QUEUE_ERR		(1<<28)
 #define  ARC_REG_REPLY_QUEUE_IAMBIOS		(1<<30)
-#define ARC_REG_MSGBUF		0x0a00
-#define  ARC_REG_MSGBUF_LEN	256	/* dwords */
-#define ARC_REG_IOC_WBUF	0x0e00
-#define  ARC_REG_IOC_WBUF_LEN	32	/* dwords */
-#define ARC_REG_IOC_RBUF	0x0f00
-#define  ARC_REG_IOC_RBUF_LEN	32	/* dwords */
+#define ARC_REG_MSGBUF			0x0a00
+#define  ARC_REG_MSGBUF_LEN		256	/* dwords */
+#define ARC_REG_IOC_WBUF		0x0e00
+#define  ARC_REG_IOC_WBUF_LEN		32	/* dwords */
+#define ARC_REG_IOC_RBUF		0x0f00
+#define  ARC_REG_IOC_RBUF_LEN		32	/* dwords */
 
 struct arc_msg_firmware_info {
 	u_int32_t		signature;
@@ -342,7 +326,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &sc->sc_link, scsiprint);
 
 	/* XXX enable interrupts */
-	arc_write(sc, ARC_REG_OUTB_INTRMASK, ~ARC_REG_OUTB_INTRMASK_POSTQUEUE);
+	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 
 	return;
 }
@@ -362,10 +346,10 @@ arc_intr(void *arg)
 	struct arc_io_cmd		*cmd;
 	u_int32_t			reg, intrstat;
 
-	intrstat = arc_read(sc, ARC_REG_OUTB_INTRSTAT);
+	intrstat = arc_read(sc, ARC_REG_INTRSTAT);
 	if (intrstat == 0x0)
 		return (0);
-	arc_write(sc, ARC_REG_OUTB_INTRSTAT, intrstat);
+	arc_write(sc, ARC_REG_INTRSTAT, intrstat);
 
 	while ((reg = arc_pop(sc)) != 0xffffffff) {
 		cmd = (struct arc_io_cmd *)(kva + 
@@ -629,12 +613,12 @@ arc_query_firmware(struct arc_softc *sc)
 	}
 
 	arc_write(sc, ARC_REG_INB_MSG0, ARC_REG_INB_MSG0_GET_CONFIG);
-	if (arc_wait_eq(sc, ARC_REG_OUTB_INTRSTAT, ARC_REG_OUTB_INTRSTAT_MSG0,
-	    ARC_REG_OUTB_INTRSTAT_MSG0) != 0) {
+	if (arc_wait_eq(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0,
+	    ARC_REG_INTRSTAT_MSG0) != 0) {
 		printf("%s: timeout waiting for get config\n");
 		return (1);
 	}
-	arc_write(sc, ARC_REG_OUTB_INTRSTAT, ARC_REG_OUTB_INTRSTAT_MSG0);
+	arc_write(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0);
 
 	arc_read_region(sc, ARC_REG_MSGBUF, &fwinfo, sizeof(fwinfo));
 
