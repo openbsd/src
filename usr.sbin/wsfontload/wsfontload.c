@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.10 2005/05/27 05:03:47 millert Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.11 2006/08/07 10:43:20 kettenis Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -78,7 +78,6 @@ struct {
 	{"ibm",  WSDISPLAY_FONTENC_IBM},
 	{"pcvt", WSDISPLAY_FONTENC_PCVT},
 	{"iso7", WSDISPLAY_FONTENC_ISO7},
-	{"sony", WSDISPLAY_FONTENC_SONY},
 };
 
 int
