@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.12 2005/10/29 18:45:01 jaredy Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.13 2006/08/07 20:00:01 jmc Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -50,14 +50,14 @@ function sends a message to the message queue specified by
 .Fa msgp
 points to a structure containing the message.
 This structure should consist of the following members:
-.Bd -literal
-    long mtype;    /* message type */
-    char mtext[1]; /* body of message */
+.Bd -literal -offset indent
+long mtype;    /* message type */
+char mtext[1]; /* body of message */
 .Ed
 .Pp
 .Va mtype
 is an integer greater than 0 that can be used for selecting messages (see
-.Xr msgrcv 2 ) ,
+.Xr msgrcv 2 ) ;
 .Va mtext
 is an array of bytes, with a size up to that of the system limit
 .Pq Dv MSGMAX .
