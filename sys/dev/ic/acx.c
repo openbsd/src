@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.28 2006/08/06 14:23:05 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.29 2006/08/07 00:23:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -278,7 +278,7 @@ acx_attach(struct acx_softc *sc)
 		return (ENXIO);
 #undef EEINFO_RETRY_MAX
 
-	printf(", radio %02x", sc->sc_radio_type);
+	printf(", radio 0x%02x", sc->sc_radio_type);
 
 #ifdef DUMP_EEPROM
 	for (i = 0; i < 0x40; ++i) {
@@ -445,8 +445,8 @@ acx_init(struct ifnet *ifp)
 
 	/* ACX111 firmware is combined */
 	if (!(sc->sc_flags & ACX_FLAG_ACX111)) {
-		error = acx_load_radio_firmware(sc, (sc->sc_radio_type == 11) ?
-		    "tiacx100r11" : "tiacx100r0D");
+		error = acx_load_radio_firmware(sc,
+		    sc->sc_radio_type == 0x11 ? "tiacx100r11" : "tiacx100r0D");
 		if (error)
 			goto back;
 	}
