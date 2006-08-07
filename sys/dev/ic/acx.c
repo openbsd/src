@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.31 2006/08/07 11:06:50 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.32 2006/08/07 21:17:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2665,7 +2665,7 @@ acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
 	/* Wait for command to complete */
 	if (cmd == ACXCMD_INIT_RADIO) {
 		/* XXX radio initialization is extremely long */
-		tsleep(&cmd, 0, "rdinit", (150 * hz) / 1000);	/* 150ms */
+		tsleep(&cmd, 0, "rdinit", (300 * hz) / 1000);	/* 300ms */
 	}
 
 #define CMDWAIT_RETRY_MAX	1000
