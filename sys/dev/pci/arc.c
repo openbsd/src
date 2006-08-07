@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.14 2006/08/07 21:35:22 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.15 2006/08/07 21:44:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -352,7 +352,7 @@ arc_intr(void *arg)
 	arc_write(sc, ARC_REG_INTRSTAT, intrstat);
 
 	while ((reg = arc_pop(sc)) != 0xffffffff) {
-		cmd = (struct arc_io_cmd *)(kva + 
+		cmd = (struct arc_io_cmd *)(kva +
 		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
 		    (u_int32_t)ARC_DMA_DVA(sc->sc_requests)));
 		ccb = &sc->sc_ccbs[letoh32(cmd->cmd.context)];
@@ -536,7 +536,7 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 			continue;
 		}
 
-		cmd = (struct arc_io_cmd *)(kva + 
+		cmd = (struct arc_io_cmd *)(kva +
 		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
 		    ARC_DMA_DVA(sc->sc_requests)));
 		ccb = &sc->sc_ccbs[letoh32(cmd->cmd.context)];
