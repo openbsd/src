@@ -2903,6 +2903,7 @@ finis(drop, cleanup, exitstat)
 				dropenvelope(CurEnv, true, false);
 				sm_rpool_free(CurEnv->e_rpool);
 				CurEnv->e_rpool = NULL;
+				CurEnv->e_to = NULL;
 			}
 			else
 				poststats(StatFile);
