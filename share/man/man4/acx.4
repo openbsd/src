@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.13 2006/08/07 10:49:41 mglocker Exp $
+.\"	$OpenBSD: acx.4,v 1.14 2006/08/07 18:14:20 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -253,38 +253,30 @@ can be found at:
 http://www.nazgul.ch/acx/acx-firmware-1.0.tgz
 .Ed
 .Sh HARDWARE
-The following Cardbus ACX100 cards are known to work:
-.Bd -filled -offset indent
-D-Link DWL-650+,
-Engenic ERG WL-003
-.Ed
+The following cards are among those supported by the
+.Nm
+driver:
 .Pp
-The following Cardbus ACX111 cards are known to work:
-.Bd -filled -offset indent
-D-Link DWL-G630+,
-D-Link DWL-G650+,
-Hamlet HNWP254,
-Linksys WPC54Gv2,
-Microcom Travelcard WiFi 11g,
-Sceptre SC254W+,
-USR USR5410,
-Zyxel G-160
-.Ed
-.Pp
-The following PCI ACX100 cards are known to work:
-.Bd -filled -offset indent
-D-Link DWL-520+
-.Ed
-.Pp
-The following PCI ACX111 cards are known to work:
-.Bd -filled -offset indent
-D-Link DWL-G520+,
-Hawking HWP54G,
-Netgear WG311v2,
-Tornado/ADT 211g,
-USR USR5416,
-Zyxel G-360 EE
-.Ed
+.Bl -column -compact "Microcom Travelcard" "ACX111" "CardBus" "a/b/g" -offset 6n
+.Em "Card	Chip	Bus	Standard"
+D-Link DWL-520+	ACX100	PCI	b
+D-Link DWL-650+	ACX100	CardBus	b
+D-Link DWL-G520+	ACX111	PCI	b/g
+D-Link DWL-G630+	ACX111	CardBus	b/g
+D-Link DWL-G650+	ACX111	CardBus	b/g
+Engenic ERG WL-003	ACX100	CardBus	b
+Hamlet HNWP254	ACX111	CardBus	b/g
+Hawking HWP54G	ACX111	PCI	b/g
+Linksys WPC54Gv2	ACX111	CardBus	b/g
+Microcom Travelcard	ACX111	CardBus	b/g
+Netgear WG311v2	ACX111	PCI	b/g
+Sceptre SC254W+	ACX111	CardBus	b/g
+Tornado/ADT 211g	ACX111	PCI	b/g
+USR USR5410	ACX111	CardBus	b/g
+USR USR5416	ACX111	PCI	b/g
+Zyxel G-160	ACX111	Cardbus	b/g
+Zyxel G-360 EE	ACX111	PCI	b/g
+.El
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
