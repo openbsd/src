@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.30 2006/08/04 06:13:54 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.31 2006/08/07 20:55:28 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2664,12 +2664,13 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 			expbuf[0] = '\0';
 
 			if (mode & RCS_KWEXP_NAME) {
-				if (strlcat(expbuf, "$", sizeof(expbuf)) >= sizeof(expbuf) ||
-				    strlcat(expbuf, kwstr, sizeof(expbuf)) >= sizeof(expbuf))
+				char *tmp;
+
+				(void)xasprintf(&tmp, "$%s%s", kwstr,
+				    (mode & RCS_KWEXP_VAL) ? ": " : "");
+				if (strlcat(expbuf, tmp, sizeof(expbuf)) >= sizeof(expbuf))
 					errx(1, "rcs_expand_keywords: string truncated");
-				if ((mode & RCS_KWEXP_VAL) &&
-				    strlcat(expbuf, ": ", sizeof(expbuf)) >= sizeof(expbuf))
-					errx(1, "rcs_expand_keywords: string truncated");
+				xfree(tmp);
 			}
 
 			/*
@@ -2678,19 +2679,23 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 			 */
 			if (mode & RCS_KWEXP_VAL) {
 				if (kwtype & RCS_KW_RCSFILE) {
-					if (!(kwtype & RCS_KW_FULLPATH))
-						(void)strlcat(expbuf, basename(rcsfile), sizeof(expbuf));
-					else
-						(void)strlcat(expbuf, rcsfile, sizeof(expbuf));
-					if (strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+					char *tmp;
+
+					(void)xasprintf(&tmp, "%s ",
+					    (kwtype & RCS_KW_FULLPATH) ? rcsfile : basename(rcsfile));
+					if (strlcat(expbuf, tmp, sizeof(expbuf)) >= sizeof(expbuf))
 						errx(1, "rcs_expand_keywords: string truncated");
+					xfree(tmp);
 				}
 
 				if (kwtype & RCS_KW_REVISION) {
+					char *tmp;
+
 					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
-					if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf) ||
-					    strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(buf))
+					(void)xasprintf(&tmp, "%s ", buf);
+					if (strlcat(expbuf, tmp, sizeof(expbuf)) >= sizeof(buf))
 						errx(1, "rcs_expand_keywords: string truncated");
+					xfree(tmp);
 				}
 
 				if (kwtype & RCS_KW_DATE) {
@@ -2705,15 +2710,21 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 				}
 
 				if (kwtype & RCS_KW_AUTHOR) {
-					if (strlcat(expbuf, rdp->rd_author, sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+					char *tmp;
+
+					(void)xasprintf(&tmp, "%s ", rdp->rd_author);
+					if (strlcat(expbuf, tmp, sizeof(expbuf)) >= sizeof(expbuf))
 						errx(1, "rcs_expand_keywords: string truncated");
+					xfree(tmp);
 				}
 
 				if (kwtype & RCS_KW_STATE) {
-					if (strlcat(expbuf, rdp->rd_state, sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+					char *tmp;
+
+					(void)xasprintf(&tmp, "%s ", rdp->rd_state);
+					if (strlcat(expbuf, tmp, sizeof(expbuf)) >= sizeof(expbuf))
 						errx(1, "rcs_expand_keywords: string truncated");
+					xfree(tmp);
 				}
 
 				/* order does not matter anymore below */
@@ -2722,9 +2733,12 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, BUF *bp, int mode)
 						errx(1, "rcs_expand_keywords: string truncated");
 
 				if (kwtype & RCS_KW_SOURCE) {
-					if (strlcat(expbuf, rcsfile, sizeof(expbuf)) >= sizeof(expbuf) ||
-					    strlcat(expbuf, " ", sizeof(expbuf)) >= sizeof(expbuf))
+					char *tmp;
+
+					(void)xasprintf(&tmp, "%s ", rcsfile);
+					if (strlcat(expbuf, tmp, sizeof(expbuf)) >= sizeof(expbuf))
 						errx(1, "rcs_expand_keywords: string truncated");
+					xfree(tmp);
 				}
 
 				if (kwtype & RCS_KW_NAME)

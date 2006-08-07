@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.96 2006/08/01 05:14:17 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.97 2006/08/07 20:55:28 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -239,7 +239,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	struct stat st;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
-	char msg[128], *fdate;
+	char *fdate;
 	time_t rcsdate, givendate;
 	RCSNUM *rev;
 
@@ -320,17 +320,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (file->rf_ndelta != 0 && rdp->rd_locker != NULL) {
 		if (strcmp(lockname, rdp->rd_locker)) {
-			if (strlcpy(msg, "Revision %s is already locked by %s; ",
-			    sizeof(msg)) >= sizeof(msg))
-				errx(1, "msg too long");
-
-			if (flags & CO_UNLOCK) {
-				if (strlcat(msg, "use co -r or rcs -u",
-				    sizeof(msg)) >= sizeof(msg))
-					errx(1, "msg too long");
-			}
-
-			warnx(msg, buf, rdp->rd_locker);
+			warnx("Revision %s is already locked by %s; %s",
+			    buf, rdp->rd_locker,
+			    (flags & CO_UNLOCK) ? "use co -r or rcs -u" : "");
 			return (-1);
 		}
 	}
