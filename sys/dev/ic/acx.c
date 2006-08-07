@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.30 2006/08/07 10:46:12 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.31 2006/08/07 11:06:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -435,14 +435,6 @@ acx_init(struct ifnet *ifp)
 
 	sc->sc_flags |= ACX_FLAG_FW_LOADED;
 
-#if 0
-	if (sc->chip_post_basefw != NULL) {
-		error = sc->chip_post_basefw(sc);
-		if (error)
-			goto back;
-	}
-#endif
-
 	/* ACX111 firmware is combined */
 	if (!(sc->sc_flags & ACX_FLAG_ACX111)) {
 		error = acx_load_radio_firmware(sc,
@@ -465,7 +457,6 @@ acx_init(struct ifnet *ifp)
 		error = acx_set_crypt_keys(sc);
 		if (error)
 			goto back;
-//		sc->sc_ic.ic_flags &= ~IEEE80211_F_DROPUNENC;
 	}
 
 	/* Turn on power led */
