@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.38 2006/08/06 18:42:01 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.39 2006/08/07 15:50:42 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -593,9 +593,7 @@ error_exit:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0, p);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
@@ -641,11 +639,9 @@ msdosfs_unmount(mp, mntflags, p)
 #ifdef MSDOSFS_DEBUG
 	vprint("msdosfs_umount(): just before calling VOP_CLOSE()\n", vp);
 #endif
-	vn_lock(vp, LK_EXCLUSIVE|LK_RETRY, p);
 	error = VOP_CLOSE(vp,
 	   pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
-	vput(vp);
-
+	vrele(vp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
 	mp->mnt_data = (qaddr_t)0;
