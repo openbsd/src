@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.21 2006/08/01 05:14:17 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.22 2006/08/07 19:32:49 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -143,6 +143,7 @@ ident_line(FILE *fp)
 	/* Append newline for printing. */
 	rcs_buf_putc(bp, '\n');
 	printf("     %c", KEYDELIM);
+	fflush(stdout);
 	rcs_buf_write_fd(bp, STDOUT_FILENO);
 
 	found++;
