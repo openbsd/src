@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.29 2006/08/07 00:23:20 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.30 2006/08/07 10:46:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -496,41 +496,35 @@ acx_init_info_reg(struct acx_softc *sc)
 int
 acx_set_crypt_keys(struct acx_softc *sc)
 {
-#if 0
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct acx_conf_wep_txkey wep_txkey;
 	int i, error, got_wk = 0;
 
 	for (i = 0; i < IEEE80211_WEP_NKID; ++i) {
-		struct ieee80211_key *wk = &ic->ic_nw_keys[i];
+		struct ieee80211_wepkey *wk = &ic->ic_nw_keys[i];
 
-		if (wk->wk_keylen == 0)
+		if (wk->wk_len == 0)
 			continue;
 
 		if (sc->chip_hw_crypt) {
 			error = sc->chip_set_wepkey(sc, wk, i);
 			if (error)
-				return error;
+				return (error);
 			got_wk = 1;
-		} else if (wk->wk_flags & IEEE80211_KEY_XMIT) {
-			wk->wk_flags |= IEEE80211_KEY_SWCRYPT;
 		}
 	}
 
-	if (!got_wk || sc->chip_hw_crypt ||
-	    ic->ic_def_txkey == IEEE80211_KEYIX_NONE)
-		return 0;
+	if (!got_wk)
+		return (0);
 
 	/* Set current WEP key index */
-	wep_txkey.wep_txkey = ic->ic_def_txkey;
+	wep_txkey.wep_txkey = ic->ic_wep_txkey;
 	if (acx_set_wep_txkey_conf(sc, &wep_txkey) != 0) {
-		printf("%s: set WEP txkey failed\n",
-		    sc->sc_dev.dv_xname);
-		return ENXIO;
+		printf("%s: set WEP txkey failed\n", sc->sc_dev.dv_xname);
+		return (ENXIO);
 	}
-	return 0;
-#endif
-	return (ENXIO);
+
+	return (0);
 }
 
 void

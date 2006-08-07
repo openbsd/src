@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.7 2006/08/06 13:03:03 mglocker Exp $ */
+/*	$OpenBSD: acx100.c,v 1.8 2006/08/07 10:46:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -113,10 +113,8 @@ int	acx100_set_txpower(struct acx_softc *);
 void	acx100_set_fw_txdesc_rate(struct acx_softc *,
 	    struct acx_txbuf *, int);
 void	acx100_set_bss_join_param(struct acx_softc *, void *, int);
-#if 0
-int	acx100_set_wepkey(struct acx_softc *, struct ieee80211_key *,
+int	acx100_set_wepkey(struct acx_softc *, struct ieee80211_wepkey *,
 	    int);
-#endif
 void	acx100_proc_wep_rxbuf(struct acx_softc *, struct mbuf *, int *);
 
 /*
@@ -302,9 +300,7 @@ acx100_set_param(struct acx_softc *sc)
 	sc->sc_ic.ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
 
 	sc->chip_init = acx100_init;
-#if 0
 	sc->chip_set_wepkey = acx100_set_wepkey;
-#endif
 	sc->chip_read_config = acx100_read_config;
 	sc->chip_write_config = acx100_write_config;
 	sc->chip_set_fw_txdesc_rate = acx100_set_fw_txdesc_rate;
@@ -722,23 +718,22 @@ acx100_set_bss_join_param(struct acx_softc *sc, void *param, int dtim_intvl)
 	bj->all_rates = 31;	/* XXX */
 }
 
-#if 0
 int
-acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_key *wk, int wk_idx)
+acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_wepkey *wk, int wk_idx)
 {
 	struct acx100_conf_wepkey conf_wk;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	if (wk->wk_keylen > ACX100_WEPKEY_LEN) {
+	if (wk->wk_len > ACX100_WEPKEY_LEN) {
 		printf("%s: %dth WEP key size beyond %d\n",
 		    ifp->if_xname, wk_idx, ACX100_WEPKEY_LEN);
 		return EINVAL;
 	}
 
 	conf_wk.action = ACX100_WEPKEY_ACT_ADD;
-	conf_wk.key_len = wk->wk_keylen;
+	conf_wk.key_len = wk->wk_len;
 	conf_wk.key_idx = wk_idx;
-	bcopy(wk->wk_key, conf_wk.key, wk->wk_keylen);
+	bcopy(wk->wk_key, conf_wk.key, wk->wk_len);
 	if (acx100_set_wepkey_conf(sc, &conf_wk) != 0) {
 		printf("%s: %s set %dth WEP key failed\n",
 		    ifp->if_xname, __func__, wk_idx);
@@ -746,7 +741,6 @@ acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_key *wk, int wk_idx)
 	}
 	return 0;
 }
-#endif
 
 void
 acx100_proc_wep_rxbuf(struct acx_softc *sc, struct mbuf *m, int *len)

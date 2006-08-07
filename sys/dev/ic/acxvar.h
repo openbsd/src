@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.9 2006/08/06 13:03:03 mglocker Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.10 2006/08/07 10:46:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -443,11 +443,9 @@ struct acx_softc {
 	int			(*chip_init)		/* non-NULL */
 				(struct acx_softc *);
 
-#if 0
 	int			(*chip_set_wepkey)
 				(struct acx_softc *,
-				 struct ieee80211_key *, int);
-#endif
+				 struct ieee80211_wepkey *, int);
 
 	int			(*chip_read_config)
 				(struct acx_softc *, struct acx_config *);
