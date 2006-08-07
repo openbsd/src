@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.16 2006/08/07 16:22:44 fkr Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.17 2006/08/07 18:16:10 fkr Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -197,7 +197,7 @@ Static	int  ubsa_param(void *, int, struct termios *);
 Static	int  ubsa_open(void *, int);
 Static	void ubsa_close(void *, int);
 
-Static  void ubsa_break(struct ubsa_softc *sc, int onoff);
+Static	void ubsa_break(struct ubsa_softc *sc, int onoff);
 Static	int  ubsa_request(struct ubsa_softc *, u_int8_t, u_int16_t);
 Static	void ubsa_dtr(struct ubsa_softc *, int);
 Static	void ubsa_rts(struct ubsa_softc *, int);
@@ -271,7 +271,7 @@ USB_ATTACH(ubsa)
 	printf("%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 
 	/*
 	 * initialize rts, dtr variables to something
