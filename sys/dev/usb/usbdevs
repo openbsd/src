@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.209 2006/08/04 06:45:47 brad Exp $
+$OpenBSD: usbdevs,v 1.210 2006/08/07 16:19:38 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -428,6 +428,7 @@ vendor RAPTORGAMING	0x1267	Raptor Gaming
 vendor TWINMOS		0x126f	TwinMOS
 vendor BELKIN2		0x1293	Belkin Components
 vendor CYBERTAN		0x129b	CyberTAN Technology
+vendor HUAWEI		0x12d1	HUAWEI Technologies
 vendor ARANEUS		0x12d8	Araneus Information Systems
 vendor TAPWAVE		0x12ef	Tapwave
 vendor AINCOMM		0x12fd	Aincomm
@@ -1138,6 +1139,9 @@ product HP 568J			0x1116  Jornada 568
 
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
+
+/* HUAWEI products */
+product HUAWEI E618		0x1001	HUAWEI Mobile E618
 
 /* IBM Corporation */
 product IBM OPTTRAVELMOUSE	0x3107	Optical
