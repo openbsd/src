@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.32 2006/08/07 21:17:39 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.33 2006/08/08 05:03:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -197,6 +197,7 @@ int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
+const char * 	acx_get_rf(int rev);
 
 int	 acx_load_firmware(struct acx_softc *, uint32_t,
 	     const uint8_t *, int);
@@ -278,7 +279,8 @@ acx_attach(struct acx_softc *sc)
 		return (ENXIO);
 #undef EEINFO_RETRY_MAX
 
-	printf(", radio 0x%02x", sc->sc_radio_type);
+	printf(", radio %s (0x%02x)", acx_get_rf(sc->sc_radio_type),
+	    sc->sc_radio_type);
 
 #ifdef DUMP_EEPROM
 	for (i = 0; i < 0x40; ++i) {
@@ -2704,4 +2706,16 @@ back:
 	CMD_WRITE_4(sc, 0);
 
 	return (ret);
+}
+
+const char *
+acx_get_rf(int rev)
+{
+	switch (rev) {
+	case ACX_RADIO_TYPE_MAXIM:	return "MAX2820";
+	case ACX_RADIO_TYPE_RFMD:	return "RFMD";
+	case ACX_RADIO_TYPE_RALINK:	return "Ralink";
+	case ACX_RADIO_TYPE_RADIA:	return "Radia";
+	default:			return "unknown";
+	}
 }
