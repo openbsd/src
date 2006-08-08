@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.34 2006/08/08 05:18:53 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.35 2006/08/08 09:02:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -141,16 +141,16 @@ int acxdebug = 1;
 #define ACX_ENABLE_TXCHAN(sc, chan, ifname)				\
 do {									\
 	if (acx_enable_txchan((sc), (chan)) != 0) {			\
-		printf("%s: enable TX on channel %d failed\n",		\
-		    (ifname), (chan));					\
+		DPRINTF(("%s: enable TX on channel %d failed\n",	\
+		    (ifname), (chan)));					\
 	}								\
 } while (0)
 
 #define ACX_ENABLE_RXCHAN(sc, chan, ifname)				\
 do {									\
 	if (acx_enable_rxchan((sc), (chan)) != 0) {			\
-		printf("%s: enable RX on channel %d failed\n",		\
-		    (ifname), (chan));					\
+		DPRINTF(("%s: enable RX on channel %d failed\n",	\
+		    (ifname), (chan)));					\
 	}								\
 } while (0)
 
@@ -2693,7 +2693,7 @@ acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
 	/* Get command exec status */
 	status = (CMD_READ_4(sc) >> ACX_CMD_STATUS_SHIFT);
 	if (status != ACX_CMD_STATUS_OK) {
-		printf("%s: cmd %04x failed\n", sc->sc_dev.dv_xname, cmd);
+		DPRINTF(("%s: cmd %04x failed\n", sc->sc_dev.dv_xname, cmd));
 		ret = 1;
 		goto back;
 	}
