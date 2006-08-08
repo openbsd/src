@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.6 2006/08/08 05:18:53 jsg Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.7 2006/08/08 16:07:10 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -139,7 +139,6 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		csc->sc_iobar_val = base | CARDBUS_MAPREG_TYPE_IO;
 		b1 = CARDBUS_BASE1_REG;
 		b2 = CARDBUS_BASE2_REG;
-		
 	}
 
 	/* map control/status registers */
@@ -189,7 +188,7 @@ acx_cardbus_detach(struct device *self, int flags)
 
 	error = acx_detach(sc);
 	if (error != 0)
-		return error;
+		return (error);
 
 	/* unhook the interrupt handler */
 	if (csc->sc_ih != NULL) {
@@ -206,7 +205,7 @@ acx_cardbus_detach(struct device *self, int flags)
 		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, csc->sc_io_bt,
 		    csc->sc_io_bh, csc->sc_iomapsize);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -230,10 +229,10 @@ acx_cardbus_enable(struct acx_softc *sc)
 		printf("%s: could not establish interrupt at %d\n",
 		    sc->sc_dev.dv_xname, csc->sc_intrline);
 		Cardbus_function_disable(ct);
-		return 1;
+		return (1);
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -270,7 +269,7 @@ acx_cardbus_setup(struct acx_cardbus_softc *csc)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
-	int	b1 = CARDBUS_BASE0_REG, b2 = CARDBUS_BASE1_REG;
+	int b1 = CARDBUS_BASE0_REG, b2 = CARDBUS_BASE1_REG;
 
 	if (csc->sc_iobar_val) {
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BASE0_REG,
