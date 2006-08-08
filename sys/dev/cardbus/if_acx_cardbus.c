@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.5 2006/08/03 22:48:36 deraadt Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.6 2006/08/08 05:18:53 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -165,8 +165,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* set up the PCI configuration registers */
 	acx_cardbus_setup(csc);
 
-	printf(": irq %d", csc->sc_intrline);
-
+	printf(": irq %d\n", csc->sc_intrline);
 
 	if (CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_TI_ACX111)
 		acx111_set_param(sc);

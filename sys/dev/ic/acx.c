@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.33 2006/08/08 05:03:51 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.34 2006/08/08 05:18:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -279,8 +279,9 @@ acx_attach(struct acx_softc *sc)
 		return (ENXIO);
 #undef EEINFO_RETRY_MAX
 
-	printf(", radio %s (0x%02x)", acx_get_rf(sc->sc_radio_type),
-	    sc->sc_radio_type);
+	printf("%s: %s, radio %s (0x%02x)", sc->sc_dev.dv_xname,
+	    (sc->sc_flags & ACX_FLAG_ACX111) ? "ACX111" : "ACX100",
+	    acx_get_rf(sc->sc_radio_type), sc->sc_radio_type);
 
 #ifdef DUMP_EEPROM
 	for (i = 0; i < 0x40; ++i) {
@@ -299,7 +300,7 @@ acx_attach(struct acx_softc *sc)
 	if (error)
 		return (error);
 
-	printf(", version %u", sc->sc_eeprom_ver);
+	printf(", EEPROM ver %u", sc->sc_eeprom_ver);
 
 	ifp->if_softc = sc;
 	ifp->if_init = acx_init;
