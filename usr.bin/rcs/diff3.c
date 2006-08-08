@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.12 2006/08/07 20:55:28 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.13 2006/08/08 10:22:01 espie Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.12 2006/08/07 20:55:28 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.13 2006/08/08 10:22:01 espie Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -414,7 +414,7 @@ int
 ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 {
 	char op, *ep;
-	struct rcs_line *sort, *lp, *dlp, *ndlp;
+	struct rcs_line *sort, *lp, *dlp, *ndlp, *insert_after;
 	int start, end, i, lineno;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
@@ -465,12 +465,13 @@ ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 
 
 		if (op == 'c') {
+			insert_after = TAILQ_PREV(dlp, rcs_tqh, l_list);
 			for (i = 0; i <= (end - start); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
 				dlp = ndlp;
 			}
-			dlp = TAILQ_PREV(dlp, rcs_tqh, l_list);
+			dlp = insert_after;
 		}
 
 		if (op == 'a' || op == 'c') {
