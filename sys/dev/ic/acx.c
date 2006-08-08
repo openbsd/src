@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.35 2006/08/08 09:02:48 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.36 2006/08/08 10:49:16 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -399,7 +399,8 @@ int
 acx_init(struct ifnet *ifp)
 {
 	struct acx_softc *sc = ifp->if_softc;
-	int error;
+	char fname[] = "tiacx111c16";
+	int error, combined = 0;
 
 	error = acx_stop(sc);
 	if (error)
@@ -423,9 +424,21 @@ acx_init(struct ifnet *ifp)
 		goto back;
 	}
 
-	error = acx_load_base_firmware(sc, (sc->sc_flags & ACX_FLAG_ACX111) ?
-	    "tiacx111c16" : "tiacx100");
-	
+	if (sc->sc_flags & ACX_FLAG_ACX111) {
+		snprintf(fname, sizeof(fname), "tiacx111c%02X",
+		    sc->sc_radio_type);
+		error = acx_load_base_firmware(sc, fname);
+
+		if (!error)
+			combined = 1;
+	}
+
+	if (!combined) {
+		snprintf(fname, sizeof(fname), "tiacx%s",
+		    (sc->sc_flags & ACX_FLAG_ACX111) ? "111" : "100");
+		error = acx_load_base_firmware(sc, fname);
+	}
+
 	if (error)
 		goto back;
 
@@ -438,10 +451,12 @@ acx_init(struct ifnet *ifp)
 
 	sc->sc_flags |= ACX_FLAG_FW_LOADED;
 
-	/* ACX111 firmware is combined */
-	if (!(sc->sc_flags & ACX_FLAG_ACX111)) {
-		error = acx_load_radio_firmware(sc,
-		    sc->sc_radio_type == 0x11 ? "tiacx100r11" : "tiacx100r0D");
+	if (!combined) {
+		snprintf(fname, sizeof(fname), "tiacx%sr%02X",
+		    (sc->sc_flags & ACX_FLAG_ACX111) ? "111" : "100",
+		    sc->sc_radio_type);
+		error = acx_load_radio_firmware(sc, fname);
+
 		if (error)
 			goto back;
 	}
