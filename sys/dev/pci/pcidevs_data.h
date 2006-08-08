@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1128 2006/08/06 04:36:23 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1129 2006/08/08 02:44:41 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3285,6 +3285,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_MUSYCC8471,
 	    "MUSYCC CN8471",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388x,
+	    "CX2388x",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388x_AUDIO,
+	    "CX2388x Audio",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388x_MPEG,
+	    "CX2388x MPEG",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388x_IR,
+	    "CX2388x IR",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388x_AUDIO2,
+	    "CX2388x Audio",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
