@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.30 2006/08/05 17:59:05 brad Exp $
+.\" $OpenBSD: em.4,v 1.31 2006/08/09 05:44:37 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -122,6 +122,9 @@ Enables auto-negotiation for speed and duplex.
 Sets 10Mbps operation.
 .It 100baseTX Cm mediaopt No full-duplex
 Sets 100Mbps operation.
+.It 1000baseLX
+Sets 1000Mbps operation.
+Only full-duplex mode is supported at this speed.
 .It 1000baseSX
 Sets 1000Mbps operation.
 Only full-duplex mode is supported at this speed.
