@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.26 2006/08/09 03:48:25 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.27 2006/08/09 05:22:17 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -44,7 +44,7 @@ int             ixgb_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char ixgb_driver_version[] = "6.0.5";
+char ixgb_driver_version[] = "6.1.0";
 
 /*********************************************************************
  *  PCI Device ID Table
