@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.141 2006/08/04 14:25:24 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.142 2006/08/09 03:48:25 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1023,7 +1023,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * that this frame is available to transmit.
 	 */
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	if (sc->hw.mac_type == em_82547 &&
 	    sc->link_duplex == HALF_DUPLEX) {
 		em_82547_move_tail_locked(sc);
@@ -2033,7 +2034,7 @@ em_txeof(struct em_softc *sc)
 	tx_desc = &sc->tx_desc_base[i];
 
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_POSTREAD);
+	    sc->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	while(tx_desc->upper.fields.status & E1000_TXD_STAT_DD) {
 
 		tx_desc->upper.data = 0;
@@ -2055,7 +2056,8 @@ em_txeof(struct em_softc *sc)
 		tx_desc = &sc->tx_desc_base[i];
 	}
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->oldest_used_tx_desc = i;
 
@@ -2180,7 +2182,8 @@ em_allocate_receive_structures(struct em_softc *sc)
                 }
         }
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    sc->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
         return (0);
 
@@ -2352,7 +2355,7 @@ em_rxeof(struct em_softc *sc, int count)
 	i = sc->next_rx_desc_to_check;
 	current_desc = &sc->rx_desc_base[i];
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_size, BUS_DMASYNC_POSTREAD);
+	    sc->rxdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	if (!((current_desc->status) & E1000_RXD_STAT_DD))
 		return;
@@ -2463,7 +2466,8 @@ em_rxeof(struct em_softc *sc, int count)
 		/* Zero out the receive descriptors status. */
 		current_desc->status = 0;
 		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-		    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		    sc->rxdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance our pointers to the next descriptor. */
 		if (++i == sc->num_rx_desc)

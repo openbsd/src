@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.25 2006/08/04 14:33:02 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.26 2006/08/09 03:48:25 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -736,7 +736,8 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	 * that this frame is available to transmit.
 	 */
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	IXGB_WRITE_REG(&sc->hw, TDT, i);
 
 	return (0);
@@ -1361,7 +1362,7 @@ ixgb_txeof(struct ixgb_softc *sc)
 	tx_desc = &sc->tx_desc_base[i];
 
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_POSTREAD);
+	    sc->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	while (tx_desc->status & IXGB_TX_DESC_STATUS_DD) {
 
 		tx_desc->status = 0;
@@ -1382,7 +1383,8 @@ ixgb_txeof(struct ixgb_softc *sc)
 		tx_desc = &sc->tx_desc_base[i];
 	}
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
-	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    sc->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->oldest_used_tx_desc = i;
 
@@ -1511,7 +1513,8 @@ ixgb_allocate_receive_structures(struct ixgb_softc *sc)
 		}
 	}
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    sc->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -1700,7 +1703,7 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 	eop_desc = sc->next_rx_desc_to_check;
 	current_desc = &sc->rx_desc_base[i];
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-	    sc->rxdma.dma_size, BUS_DMASYNC_POSTREAD);
+	    sc->rxdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	if (!((current_desc->status) & IXGB_RX_DESC_STATUS_DD))
 		return;
@@ -1778,7 +1781,8 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 		/* Zero out the receive descriptors status  */
 		current_desc->status = 0;
 		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
-		    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		    sc->rxdma.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance our pointers to the next descriptor */
 		if (++i == sc->num_rx_desc) {
