@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.143 2006/08/09 04:44:06 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.144 2006/08/09 17:12:58 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1067,7 +1067,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 		tx_desc = &sc->tx_desc_base[hw_tdt];
 		length += tx_desc->lower.flags.length;
 		eop = tx_desc->lower.data & E1000_TXD_CMD_EOP;
-		if(++hw_tdt == sc->num_tx_desc)
+		if (++hw_tdt == sc->num_tx_desc)
 			hw_tdt = 0;
 
 		if (eop) {
@@ -1632,27 +1632,28 @@ em_smartspeed(struct em_softc *sc)
 {
 	uint16_t phy_tmp;
  
-	if(sc->link_active || (sc->hw.phy_type != em_phy_igp) || 
-	   !sc->hw.autoneg || !(sc->hw.autoneg_advertised & ADVERTISE_1000_FULL))
+	if (sc->link_active || (sc->hw.phy_type != em_phy_igp) || 
+	    !sc->hw.autoneg || !(sc->hw.autoneg_advertised & ADVERTISE_1000_FULL))
 		return;
 
-	if(sc->smartspeed == 0) {
+	if (sc->smartspeed == 0) {
 		/* If Master/Slave config fault is asserted twice,
 		 * we assume back-to-back */
 		em_read_phy_reg(&sc->hw, PHY_1000T_STATUS, &phy_tmp);
-		if(!(phy_tmp & SR_1000T_MS_CONFIG_FAULT)) return;
+		if (!(phy_tmp & SR_1000T_MS_CONFIG_FAULT))
+			return;
 		em_read_phy_reg(&sc->hw, PHY_1000T_STATUS, &phy_tmp);
-		if(phy_tmp & SR_1000T_MS_CONFIG_FAULT) {
+		if (phy_tmp & SR_1000T_MS_CONFIG_FAULT) {
 			em_read_phy_reg(&sc->hw, PHY_1000T_CTRL,
 					&phy_tmp);
-			if(phy_tmp & CR_1000T_MS_ENABLE) {
+			if (phy_tmp & CR_1000T_MS_ENABLE) {
 				phy_tmp &= ~CR_1000T_MS_ENABLE;
 				em_write_phy_reg(&sc->hw,
 						    PHY_1000T_CTRL, phy_tmp);
 				sc->smartspeed++;
-				if(sc->hw.autoneg &&
-				   !em_phy_setup_autoneg(&sc->hw) &&
-				   !em_read_phy_reg(&sc->hw, PHY_CTRL,
+				if (sc->hw.autoneg &&
+				    !em_phy_setup_autoneg(&sc->hw) &&
+				    !em_read_phy_reg(&sc->hw, PHY_CTRL,
 						       &phy_tmp)) {
 					phy_tmp |= (MII_CR_AUTO_NEG_EN |  
 						    MII_CR_RESTART_AUTO_NEG);
@@ -1662,21 +1663,21 @@ em_smartspeed(struct em_softc *sc)
 			}
 		}
 		return;
-	} else if(sc->smartspeed == EM_SMARTSPEED_DOWNSHIFT) {
+	} else if (sc->smartspeed == EM_SMARTSPEED_DOWNSHIFT) {
 		/* If still no link, perhaps using 2/3 pair cable */
 		em_read_phy_reg(&sc->hw, PHY_1000T_CTRL, &phy_tmp);
 		phy_tmp |= CR_1000T_MS_ENABLE;
 		em_write_phy_reg(&sc->hw, PHY_1000T_CTRL, phy_tmp);
-		if(sc->hw.autoneg &&
-		   !em_phy_setup_autoneg(&sc->hw) &&
-		   !em_read_phy_reg(&sc->hw, PHY_CTRL, &phy_tmp)) {
+		if (sc->hw.autoneg &&
+		    !em_phy_setup_autoneg(&sc->hw) &&
+		    !em_read_phy_reg(&sc->hw, PHY_CTRL, &phy_tmp)) {
 			phy_tmp |= (MII_CR_AUTO_NEG_EN |
 				    MII_CR_RESTART_AUTO_NEG);
 			em_write_phy_reg(&sc->hw, PHY_CTRL, phy_tmp);
 		}
 	}
 	/* Restart process after EM_SMARTSPEED_MAX iterations */
-	if(sc->smartspeed++ == EM_SMARTSPEED_MAX)
+	if (sc->smartspeed++ == EM_SMARTSPEED_MAX)
 		sc->smartspeed = 0;
 }
 
@@ -1866,7 +1867,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
 
 	E1000_WRITE_REG(&sc->hw, TIPG, reg_tipg);
 	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay);
-	if(sc->hw.mac_type >= em_82540)
+	if (sc->hw.mac_type >= em_82540)
 		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
 
 	/* Do adapter specific tweaks before we enable the transmitter */
@@ -2044,7 +2045,7 @@ em_txeof(struct em_softc *sc)
 
 	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
 	    sc->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-	while(tx_desc->upper.fields.status & E1000_TXD_STAT_DD) {
+	while (tx_desc->upper.fields.status & E1000_TXD_STAT_DD) {
 
 		tx_desc->upper.data = 0;
 		num_avail++;
@@ -2245,7 +2246,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 	E1000_WRITE_REG(&sc->hw, RDTR, 
 			sc->rx_int_delay | E1000_RDT_FPDB);
 
-	if(sc->hw.mac_type >= em_82540) {
+	if (sc->hw.mac_type >= em_82540) {
 		E1000_WRITE_REG(&sc->hw, RADV, sc->rx_abs_int_delay);
 
 		/* Set the interrupt throttling rate.  Value is calculated
@@ -2721,7 +2722,7 @@ em_update_stats_counters(struct em_softc *sc)
 {
 	struct ifnet   *ifp;
 
-	if(sc->hw.media_type == em_media_type_copper ||
+	if (sc->hw.media_type == em_media_type_copper ||
 	    (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU)) {
 		sc->stats.symerrs += E1000_READ_REG(&sc->hw, SYMERRS);
 		sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
