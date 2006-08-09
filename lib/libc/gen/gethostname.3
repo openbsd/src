@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostname.3,v 1.21 2005/07/22 02:51:44 jaredy Exp $
+.\"	$OpenBSD: gethostname.3,v 1.22 2006/08/09 21:33:22 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,7 @@ specifies the size of the
 array.
 If insufficient space is provided, the returned name is truncated.
 The returned name is always NUL terminated.
+If no space is provided, an error is returned.
 .Pp
 .Fn sethostname
 sets the name of the host machine to be
@@ -73,6 +74,10 @@ The following errors may be returned by these calls:
 The
 .Fa name
 parameter gave an invalid address.
+.It Bq Er ENOMEM
+The
+.Ar namelen
+parameter was zero.
 .It Bq Er EPERM
 The caller tried to set the hostname and was not the superuser.
 .El
