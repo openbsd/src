@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_rumreg.h,v 1.11 2006/07/19 20:27:30 damien Exp $  */
+/*	$OpenBSD: if_rumreg.h,v 1.12 2006/08/09 08:21:08 damien Exp $	*/
+
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -16,6 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define RT2573_TX_DESC_SIZE	(sizeof (struct rum_tx_desc))
+#define RT2573_RX_DESC_SIZE	(sizeof (struct rum_rx_desc))
+
 #define RT2573_CONFIG_NO	1
 #define RT2573_IFACE_INDEX	0
 
@@ -27,209 +31,72 @@
 #define RT2573_READ_EEPROM	0x09
 #define RT2573_WRITE_LED	0x0a
 
-#define RT2573_MCU_RUN	(1 << 3)
-
-#define RT2573_HOST_READY	(1 << 2)
-#define RT2573_RESET_ASIC	(1 << 0)
-#define RT2573_RESET_BBP	(1 << 1)
-
-#define RT2573_ENABLE_TSF		(1 << 0)
-#define RT2573_ENABLE_TSF_SYNC(x)	(((x) & 0x3) << 1)
-#define RT2573_ENABLE_TBCN		(1 << 3)
-#define RT2573_ENABLE_BEACON_GENERATOR	(1 << 4)
-
-#define RT2573_RF_AWAKE		(3 << 7)
-#define RT2573_BBP_AWAKE	(3 << 5)
-
-#define RT2573_BBP_WRITE	(1 << 15)
-
-/* single-band RF */
-#define RT2573_RF_2528	0
-/* dual-band RF */
-#define RT2573_RF_5222	16
-
-#define RT2573_BBP_VERSION	0
-
-struct rum_tx_desc {
-	uint32_t	flags;
-#define RT2573_TX_BUSY			(1 << 0)
-#define RT2573_TX_VALID			(1 << 1)
-#define RT2573_TX_RETRY(x)		((x) << 4)
-#define RT2573_TX_IFS			(1 << 6)
-#define RT2573_TX_LONG_RETRY		(1 << 7)
-#define RT2573_TX_MORE_FRAG		(1 << 8)
-#define RT2573_TX_ACK			(1 << 9)
-#define RT2573_TX_TIMESTAMP		(1 << 10)
-#define RT2573_TX_OFDM			(1 << 11)
-#define RT2573_TX_NEWSEQ		(1 << 12)
-#define RT2573_TX_IFS_MASK		0x00006000
-#define RT2573_TX_IFS_BACKOFF		(0 << 13)
-#define RT2573_TX_IFS_SIFS		(1 << 13)
-#define RT2573_TX_IFS_NEWBACKOFF	(2 << 13)
-#define RT2573_TX_IFS_NONE		(3 << 13)
-#define RT2573_TX_BURST			(1 << 28)
-
-	uint16_t	wme;
-#define RT2573_QID(v)		(v)
-#define RT2573_AIFSN(v)		((v) << 4)
-#define RT2573_LOGCWMIN(v)	((v) << 8)
-#define RT2573_LOGCWMAX(v)	((v) << 12)
-
-	uint16_t	xflags;
-
-	uint8_t		plcp_signal;
-	uint8_t		plcp_service;
-#define RT2573_PLCP_LENGEXT	0x80
-#define RT2573_TX_HWSEQ		(1 << 12)
-
-	uint8_t		plcp_length_lo;
-	uint8_t		plcp_length_hi;
-
-	uint32_t	iv;
-	uint32_t	eiv;
-
-	uint8_t		offset;
-	uint8_t		qid;
-#define RT2573_QID_MGT	13
-
-	uint8_t		txpower;
-#define RT2573_DEFAULT_TXPOWER	0
-
-	uint8_t		reserved;
-} __packed;
-
-struct rum_rx_desc {
-	uint32_t	flags;
-#define RT2573_RX_BUSY		(1 << 0)
-#define RT2573_RX_DROP		(1 << 1)
-#define RT2573_RX_CRC_ERROR	(1 << 6)
-#define RT2573_RX_OFDM		(1 << 7)
-#define RT2573_RX_PHY_ERROR	(1 << 8)
-
-	uint8_t		rate;
-	uint8_t		rssi;
-	uint8_t		reserved1;
-	uint8_t		offset;
-	uint32_t	iv;
-	uint32_t	eiv;
-	uint32_t	reserved2[2];
-} __packed;
-
-#define RT2573_RF_LOBUSY	(1 << 15)
-#define RT2573_RF_BUSY		(1 << 31)
-#define RT2573_RF_20BIT		(20 << 24)
-
-#define RT2573_RF1	0
-#define RT2573_RF2	2
-#define RT2573_RF3	1
-#define RT2573_RF4	3
-
-#define RT2573_EEPROM_MACBBP	0x0000
-#define RT2573_EEPROM_ADDRESS	0x0004
-#define RT2573_EEPROM_TXPOWER	0x003c
-#define RT2573_EEPROM_CONFIG0	0x0016
-#define RT2573_EEPROM_BBP_BASE	0x001c
-
-#define RT2573_EEPROM_VERSION		0x0002
-#define RT2573_EEPROM_ADDRESS		0x0004
-#define RT2573_EEPROM_TXPOWER_RT70	0x003c
-#define RT2573_EEPROM_TXPOWER_RT71	0x0046
-#define RT2573_EEPROM_CONFIG0_RT70	0x0016
-#define RT2573_EEPROM_CONFIG0_RT71	0x0020
-#define RT2573_EEPROM_BBP_BASE_RT70	0x001c
-#define RT2573_EEPROM_BBP_BASE_RT71	0x0026
-
-#define RT2573_MCU_CODE_BASE	0x800
-#define RT2573_TX_RING_COUNT	32
-#define RT2573_MGT_RING_COUNT	32
-#define RT2573_RX_RING_COUNT	64
-
-#define RT2573_TX_DESC_SIZE	(sizeof (struct rum_tx_desc))
-#define RT2573_RX_DESC_SIZE	(sizeof (struct rum_rx_desc))
-
-#define RT2573_MAX_SCATTER	5
-
-
 /*
  * Control and status registers.
  */
-#define RT2573_AIFSN_CSR		0x0400
-#define RT2573_CWMIN_CSR		0x0404
-#define RT2573_CWMAX_CSR		0x0408
-#define RT2573_HW_BEACON_BASE0		0x2400
-#define RT2573_MAC_CSR0			0x3000
-#define RT2573_MAC_CSR1			0x3004
-#define RT2573_MAC_CSR2			0x3008
-#define RT2573_MAC_CSR3			0x300c
-#define RT2573_MAC_CSR4			0x3010
-#define RT2573_MAC_CSR5			0x3014
-#define RT2573_MAC_CSR6			0x3018
-#define RT2573_MAC_CSR7			0x301c
-#define RT2573_MAC_CSR8			0x3020
-#define RT2573_MAC_CSR9			0x3024
-#define RT2573_MAC_CSR10		0x3028
-#define RT2573_MAC_CSR11		0x302c
-#define RT2573_MAC_CSR12		0x3030
-#define RT2573_MAC_CSR13		0x3034
-#define RT2573_MAC_CSR14		0x3038
-#define RT2573_MAC_CSR15		0x303c
-#define RT2573_TXRX_CSR0		0x3040
-#define RT2573_TXRX_CSR1		0x3044
-#define RT2573_TXRX_CSR2		0x3048
-#define RT2573_TXRX_CSR3		0x304c
-#define RT2573_TXRX_CSR4		0x3050
-#define RT2573_TXRX_CSR5		0x3054
-#define RT2573_TXRX_CSR6		0x3058
-#define RT2573_TXRX_CSR7		0x305c
-#define RT2573_TXRX_CSR8		0x3060
-#define RT2573_TXRX_CSR9		0x3064
-#define RT2573_TXRX_CSR10		0x3068
-#define RT2573_TXRX_CSR11		0x306c
-#define RT2573_TXRX_CSR12		0x3070
-#define RT2573_TXRX_CSR13		0x3074
-#define RT2573_TXRX_CSR14		0x3078
-#define RT2573_TXRX_CSR15		0x307c
-#define RT2573_PHY_CSR0			0x3080
-#define RT2573_PHY_CSR1			0x3084
-#define RT2573_PHY_CSR2			0x3088
-#define RT2573_PHY_CSR3			0x308c
-#define RT2573_PHY_CSR4			0x3090
-#define RT2573_PHY_CSR5			0x3094
-#define RT2573_PHY_CSR6			0x3098
-#define RT2573_PHY_CSR7			0x309c
-#define RT2573_SEC_CSR0			0x30a0
-#define RT2573_SEC_CSR1			0x30a4
-#define RT2573_SEC_CSR2			0x30a8
-#define RT2573_SEC_CSR3			0x30ac
-#define RT2573_SEC_CSR4			0x30b0
-#define RT2573_SEC_CSR5			0x30b4
-#define RT2573_STA_CSR0			0x30c0
-#define RT2573_STA_CSR1			0x30c4
-#define RT2573_STA_CSR2			0x30c8
-#define RT2573_STA_CSR3			0x30cc
-#define RT2573_STA_CSR4			0x30d0
-#define RT2573_STA_CSR5			0x30d4
+#define RT2573_AIFSN_CSR	0x0400
+#define RT2573_CWMIN_CSR	0x0404
+#define RT2573_CWMAX_CSR	0x0408
+#define RT2573_MCU_CODE_BASE	0x0800
+#define RT2573_HW_BEACON_BASE0	0x2400
+#define RT2573_MAC_CSR0		0x3000
+#define RT2573_MAC_CSR1		0x3004
+#define RT2573_MAC_CSR2		0x3008
+#define RT2573_MAC_CSR3		0x300c
+#define RT2573_MAC_CSR4		0x3010
+#define RT2573_MAC_CSR5		0x3014
+#define RT2573_MAC_CSR6		0x3018
+#define RT2573_MAC_CSR7		0x301c
+#define RT2573_MAC_CSR8		0x3020
+#define RT2573_MAC_CSR9		0x3024
+#define RT2573_MAC_CSR10	0x3028
+#define RT2573_MAC_CSR11	0x302c
+#define RT2573_MAC_CSR12	0x3030
+#define RT2573_MAC_CSR13	0x3034
+#define RT2573_MAC_CSR14	0x3038
+#define RT2573_MAC_CSR15	0x303c
+#define RT2573_TXRX_CSR0	0x3040
+#define RT2573_TXRX_CSR1	0x3044
+#define RT2573_TXRX_CSR2	0x3048
+#define RT2573_TXRX_CSR3	0x304c
+#define RT2573_TXRX_CSR4	0x3050
+#define RT2573_TXRX_CSR5	0x3054
+#define RT2573_TXRX_CSR6	0x3058
+#define RT2573_TXRX_CSR7	0x305c
+#define RT2573_TXRX_CSR8	0x3060
+#define RT2573_TXRX_CSR9	0x3064
+#define RT2573_TXRX_CSR10	0x3068
+#define RT2573_TXRX_CSR11	0x306c
+#define RT2573_TXRX_CSR12	0x3070
+#define RT2573_TXRX_CSR13	0x3074
+#define RT2573_TXRX_CSR14	0x3078
+#define RT2573_TXRX_CSR15	0x307c
+#define RT2573_PHY_CSR0		0x3080
+#define RT2573_PHY_CSR1		0x3084
+#define RT2573_PHY_CSR2		0x3088
+#define RT2573_PHY_CSR3		0x308c
+#define RT2573_PHY_CSR4		0x3090
+#define RT2573_PHY_CSR5		0x3094
+#define RT2573_PHY_CSR6		0x3098
+#define RT2573_PHY_CSR7		0x309c
+#define RT2573_SEC_CSR0		0x30a0
+#define RT2573_SEC_CSR1		0x30a4
+#define RT2573_SEC_CSR2		0x30a8
+#define RT2573_SEC_CSR3		0x30ac
+#define RT2573_SEC_CSR4		0x30b0
+#define RT2573_SEC_CSR5		0x30b4
+#define RT2573_STA_CSR0		0x30c0
+#define RT2573_STA_CSR1		0x30c4
+#define RT2573_STA_CSR2		0x30c8
+#define RT2573_STA_CSR3		0x30cc
+#define RT2573_STA_CSR4		0x30d0
+#define RT2573_STA_CSR5		0x30d4
 
-/* possible flags for register HOST_CMD_CSR */
-#define RT2573_KICK_CMD		(1 << 7)
-/* Host to MCU (8051) command identifiers */
-#define RT2573_MCU_CMD_SLEEP	0x30
-#define RT2573_MCU_CMD_WAKEUP	0x31
-#define RT2573_MCU_SET_LED	0x50
-#define RT2573_MCU_SET_RSSI_LED	0x52
 
-/* possible flags for register MCU_CNTL_CSR */
-#define RT2573_MCU_SEL		(1 << 0)
-#define RT2573_MCU_RESET	(1 << 1)
-#define RT2573_MCU_READY	(1 << 2)
-/* possible flags for register MCU_INT_SOURCE_CSR */
-#define RT2573_MCU_CMD_DONE		0xff
-#define RT2573_MCU_WAKEUP		(1 << 8)
-#define RT2573_MCU_BEACON_EXPIRE	(1 << 9)
-
-/* possible flags for register H2M_MAILBOX_CSR */
-#define RT2573_H2M_BUSY		(1 << 24)
-#define RT2573_TOKEN_NO_INTR	0xff
+/* possible flags for register RT2573_MAC_CSR1 */
+#define RT2573_RESET_ASIC	(1 << 0)
+#define RT2573_RESET_BBP	(1 << 1)
+#define RT2573_HOST_READY	(1 << 2)
 
 /* possible flags for register MAC_CSR5 */
 #define RT2573_ONE_BSSID	3
@@ -248,12 +115,11 @@ struct rum_rx_desc {
 #define RT2573_DROP_MULTICAST		(1 << 23)
 #define RT2573_DROP_BROADCAST		(1 << 24)
 #define RT2573_DROP_ACKCTS		(1 << 25)
-#define RT2573_DROP_VERSION_ERROR	(1 << 6)
 
 /* possible flags for register TXRX_CSR4 */
-#define RT2573_SHORT_PREAMBLE	(1 << 19)
-#define RT2573_MRR_ENABLED	(1 << 20)
-#define RT2573_MRR_CCK_FALLBACK	(1 << 23)
+#define RT2573_SHORT_PREAMBLE	(1 << 18)
+#define RT2573_MRR_ENABLED	(1 << 19)
+#define RT2573_MRR_CCK_FALLBACK	(1 << 22)
 
 /* possible flags for register TXRX_CSR9 */
 #define RT2573_TSF_TICKING	(1 << 16)
@@ -273,39 +139,98 @@ struct rum_rx_desc {
 #define RT2573_RF_20BIT	(20 << 24)
 #define RT2573_RF_BUSY	(1 << 31)
 
-/* possible values for register STA_CSR4 */
-#define RT2573_TX_STAT_VALID	(1 << 0)
-#define RT2573_TX_RESULT(v)	(((v) >> 1) & 0x7)
-#define RT2573_TX_RETRYCNT(v)	(((v) >> 4) & 0xf)
-#define RT2573_TX_QID(v)	(((v) >> 8) & 0xf)
-#define RT2573_TX_SUCCESS	0
-#define RT2573_TX_RETRY_FAIL	6
-
-/* possible flags for register TX_CNTL_CSR */
-#define RT2573_KICK_MGT	(1 << 4)
-
-/* possible flags for register INT_SOURCE_CSR */
-#define RT2573_TX_DONE		(1 << 0)
-#define RT2573_RX_DONE		(1 << 1)
-#define RT2573_TX0_DMA_DONE	(1 << 16)
-#define RT2573_TX1_DMA_DONE	(1 << 17)
-#define RT2573_TX2_DMA_DONE	(1 << 18)
-#define RT2573_TX3_DMA_DONE	(1 << 19)
-#define RT2573_MGT_DONE		(1 << 20)
-/* possible flags for register E2PROM_CSR */
-#define RT2573_C	(1 << 1)
-#define RT2573_S	(1 << 2)
-#define RT2573_D	(1 << 3)
-#define RT2573_Q	(1 << 4)
-#define RT2573_93C46	(1 << 5)
-
 /* LED values */
 #define RT2573_LED_RADIO	(1 << 8)
 #define RT2573_LED_G		(1 << 9)
 #define RT2573_LED_A		(1 << 10)
 #define RT2573_LED_ON		0x1e1e
 #define RT2573_LED_OFF		0x0
+
+#define RT2573_MCU_RUN	(1 << 3)
+
+#define RT2573_SMART_MODE	(1 << 0)
+
 #define RT2573_BBPR94_DEFAULT	6
+
+#define RT2573_BBP_WRITE	(1 << 15)
+
+/* dual-band RF */
+#define RT2573_RF_5226	1
+#define RT2573_RF_5225	3
+/* single-band RF */
+#define RT2573_RF_2528	2
+#define RT2573_RF_2527	4
+
+#define RT2573_BBP_VERSION	0
+
+struct rum_tx_desc {
+	uint32_t	flags;
+#define RT2573_TX_BURST			(1 << 0)
+#define RT2573_TX_VALID			(1 << 1)
+#define RT2573_TX_MORE_FRAG		(1 << 2)
+#define RT2573_TX_ACK			(1 << 3)
+#define RT2573_TX_TIMESTAMP		(1 << 4)
+#define RT2573_TX_OFDM			(1 << 5)
+#define RT2573_TX_IFS_SIFS		(1 << 6)
+#define RT2573_TX_LONG_RETRY		(1 << 7)
+
+	uint16_t	wme;
+#define RT2573_QID(v)		(v)
+#define RT2573_AIFSN(v)		((v) << 4)
+#define RT2573_LOGCWMIN(v)	((v) << 8)
+#define RT2573_LOGCWMAX(v)	((v) << 12)
+
+	uint16_t	xflags;
+#define RT2573_TX_HWSEQ		(1 << 12)
+
+	uint8_t		plcp_signal;
+	uint8_t		plcp_service;
+#define RT2573_PLCP_LENGEXT	0x80
+
+	uint8_t		plcp_length_lo;
+	uint8_t		plcp_length_hi;
+
+	uint32_t	iv;
+	uint32_t	eiv;
+
+	uint8_t		offset;
+	uint8_t		qid;
+	uint8_t		txpower;
+#define RT2573_DEFAULT_TXPOWER	0
+
+	uint8_t		reserved;
+} __packed;
+
+struct rum_rx_desc {
+	uint32_t	flags;
+#define RT2573_RX_BUSY		(1 << 0)
+#define RT2573_RX_DROP		(1 << 1)
+#define RT2573_RX_CRC_ERROR	(1 << 6)
+#define RT2573_RX_OFDM		(1 << 7)
+
+	uint8_t		rate;
+	uint8_t		rssi;
+	uint8_t		reserved1;
+	uint8_t		offset;
+	uint32_t	iv;
+	uint32_t	eiv;
+	uint32_t	reserved2[2];
+} __packed;
+
+#define RT2573_RF1	0
+#define RT2573_RF2	2
+#define RT2573_RF3	1
+#define RT2573_RF4	3
+
+#define RT2573_EEPROM_MACBBP		0x0000
+#define RT2573_EEPROM_ADDRESS		0x0004
+#define RT2573_EEPROM_ANTENNA		0x0020
+#define RT2573_EEPROM_CONFIG2		0x0022
+#define RT2573_EEPROM_BBP_BASE		0x0026
+#define RT2573_EEPROM_TXPOWER		0x0046
+#define RT2573_EEPROM_FREQ_OFFSET	0x005e
+#define RT2573_EEPROM_RSSI_2GHZ_OFFSET	0x009a
+#define RT2573_EEPROM_RSSI_5GHZ_OFFSET	0x009c
 
 /*
  * Default values for MAC registers; values taken from the reference driver.
@@ -366,65 +291,100 @@ struct rum_rx_desc {
 	{ 107, 0x04 }
 
 /*
- * Default values for RF register R2 indexed by channel numbers.
+ * Default settings for RF registers; values taken from the reference driver.
  */
-#define RT2573_RF2528_R2						\
-{									\
-	0x001e1, 0x001e1, 0x001e2, 0x001e2, 0x001e3, 0x001e3, 0x001e4,	\
-	0x001e4, 0x001e5, 0x001e5, 0x001e6, 0x001e6, 0x001e7, 0x001e8	\
-}
+#define RT2573_RF5226					\
+	{   1, 0x00b03, 0x001e1, 0x1a014, 0x30282 },	\
+	{   2, 0x00b03, 0x001e1, 0x1a014, 0x30287 },	\
+	{   3, 0x00b03, 0x001e2, 0x1a014, 0x30282 },	\
+	{   4, 0x00b03, 0x001e2, 0x1a014, 0x30287 },	\
+	{   5, 0x00b03, 0x001e3, 0x1a014, 0x30282 },	\
+	{   6, 0x00b03, 0x001e3, 0x1a014, 0x30287 },	\
+	{   7, 0x00b03, 0x001e4, 0x1a014, 0x30282 },	\
+	{   8, 0x00b03, 0x001e4, 0x1a014, 0x30287 },	\
+	{   9, 0x00b03, 0x001e5, 0x1a014, 0x30282 },	\
+	{  10, 0x00b03, 0x001e5, 0x1a014, 0x30287 },	\
+	{  11, 0x00b03, 0x001e6, 0x1a014, 0x30282 },	\
+	{  12, 0x00b03, 0x001e6, 0x1a014, 0x30287 },	\
+	{  13, 0x00b03, 0x001e7, 0x1a014, 0x30282 },	\
+	{  14, 0x00b03, 0x001e8, 0x1a014, 0x30284 },	\
+							\
+	{  34, 0x00b03, 0x20266, 0x36014, 0x30282 },	\
+	{  38, 0x00b03, 0x20267, 0x36014, 0x30284 },	\
+	{  42, 0x00b03, 0x20268, 0x36014, 0x30286 },	\
+	{  46, 0x00b03, 0x20269, 0x36014, 0x30288 },	\
+							\
+	{  36, 0x00b03, 0x00266, 0x26014, 0x30288 },	\
+	{  40, 0x00b03, 0x00268, 0x26014, 0x30280 },	\
+	{  44, 0x00b03, 0x00269, 0x26014, 0x30282 },	\
+	{  48, 0x00b03, 0x0026a, 0x26014, 0x30284 },	\
+	{  52, 0x00b03, 0x0026b, 0x26014, 0x30286 },	\
+	{  56, 0x00b03, 0x0026c, 0x26014, 0x30288 },	\
+	{  60, 0x00b03, 0x0026e, 0x26014, 0x30280 },	\
+	{  64, 0x00b03, 0x0026f, 0x26014, 0x30282 },	\
+							\
+	{ 100, 0x00b03, 0x0028a, 0x2e014, 0x30280 },	\
+	{ 104, 0x00b03, 0x0028b, 0x2e014, 0x30282 },	\
+	{ 108, 0x00b03, 0x0028c, 0x2e014, 0x30284 },	\
+	{ 112, 0x00b03, 0x0028d, 0x2e014, 0x30286 },	\
+	{ 116, 0x00b03, 0x0028e, 0x2e014, 0x30288 },	\
+	{ 120, 0x00b03, 0x002a0, 0x2e014, 0x30280 },	\
+	{ 124, 0x00b03, 0x002a1, 0x2e014, 0x30282 },	\
+	{ 128, 0x00b03, 0x002a2, 0x2e014, 0x30284 },	\
+	{ 132, 0x00b03, 0x002a3, 0x2e014, 0x30286 },	\
+	{ 136, 0x00b03, 0x002a4, 0x2e014, 0x30288 },	\
+	{ 140, 0x00b03, 0x002a6, 0x2e014, 0x30280 },	\
+							\
+	{ 149, 0x00b03, 0x002a8, 0x2e014, 0x30287 },	\
+	{ 153, 0x00b03, 0x002a9, 0x2e014, 0x30289 },	\
+	{ 157, 0x00b03, 0x002ab, 0x2e014, 0x30281 },	\
+	{ 161, 0x00b03, 0x002ac, 0x2e014, 0x30283 },	\
+	{ 165, 0x00b03, 0x002ad, 0x2e014, 0x30285 }
 
-/*
- * Default values for RF register R4 indexed by channel numbers.
- */
-#define RT2573_RF2528_R4						\
-{									\
-	0x30282, 0x30287, 0x30282, 0x30287, 0x30282, 0x30287, 0x30282,	\
-	0x30287, 0x30282, 0x30287, 0x30282, 0x30287, 0x30282, 0x30284	\
-}
-
-/*
- * For dual-band RF, RF registers R1 and R4 also depend on channel number;
- * values taken from the reference driver.
- */
-#define RT2573_RF5222				\
-	{   1, 0x08808, 0x0044d, 0x00282 },	\
-	{   2, 0x08808, 0x0044e, 0x00282 },	\
-	{   3, 0x08808, 0x0044f, 0x00282 },	\
-	{   4, 0x08808, 0x00460, 0x00282 },	\
-	{   5, 0x08808, 0x00461, 0x00282 },	\
-	{   6, 0x08808, 0x00462, 0x00282 },	\
-	{   7, 0x08808, 0x00463, 0x00282 },	\
-	{   8, 0x08808, 0x00464, 0x00282 },	\
-	{   9, 0x08808, 0x00465, 0x00282 },	\
-	{  10, 0x08808, 0x00466, 0x00282 },	\
-	{  11, 0x08808, 0x00467, 0x00282 },	\
-	{  12, 0x08808, 0x00468, 0x00282 },	\
-	{  13, 0x08808, 0x00469, 0x00282 },	\
-	{  14, 0x08808, 0x0046b, 0x00286 },	\
-						\
-	{  36, 0x08804, 0x06225, 0x00287 },	\
-	{  40, 0x08804, 0x06226, 0x00287 },	\
-	{  44, 0x08804, 0x06227, 0x00287 },	\
-	{  48, 0x08804, 0x06228, 0x00287 },	\
-	{  52, 0x08804, 0x06229, 0x00287 },	\
-	{  56, 0x08804, 0x0622a, 0x00287 },	\
-	{  60, 0x08804, 0x0622b, 0x00287 },	\
-	{  64, 0x08804, 0x0622c, 0x00287 },	\
-						\
-	{ 100, 0x08804, 0x02200, 0x00283 },	\
-	{ 104, 0x08804, 0x02201, 0x00283 },	\
-	{ 108, 0x08804, 0x02202, 0x00283 },	\
-	{ 112, 0x08804, 0x02203, 0x00283 },	\
-	{ 116, 0x08804, 0x02204, 0x00283 },	\
-	{ 120, 0x08804, 0x02205, 0x00283 },	\
-	{ 124, 0x08804, 0x02206, 0x00283 },	\
-	{ 128, 0x08804, 0x02207, 0x00283 },	\
-	{ 132, 0x08804, 0x02208, 0x00283 },	\
-	{ 136, 0x08804, 0x02209, 0x00283 },	\
-	{ 140, 0x08804, 0x0220a, 0x00283 },	\
-						\
-	{ 149, 0x08808, 0x02429, 0x00281 },	\
-	{ 153, 0x08808, 0x0242b, 0x00281 },	\
-	{ 157, 0x08808, 0x0242d, 0x00281 },	\
-	{ 161, 0x08808, 0x0242f, 0x00281 }
+#define RT2573_RF5225					\
+	{   1, 0x00b33, 0x011e1, 0x1a014, 0x30282 },	\
+	{   2, 0x00b33, 0x011e1, 0x1a014, 0x30287 },	\
+	{   3, 0x00b33, 0x011e2, 0x1a014, 0x30282 },	\
+	{   4, 0x00b33, 0x011e2, 0x1a014, 0x30287 },	\
+	{   5, 0x00b33, 0x011e3, 0x1a014, 0x30282 },	\
+	{   6, 0x00b33, 0x011e3, 0x1a014, 0x30287 },	\
+	{   7, 0x00b33, 0x011e4, 0x1a014, 0x30282 },	\
+	{   8, 0x00b33, 0x011e4, 0x1a014, 0x30287 },	\
+	{   9, 0x00b33, 0x011e5, 0x1a014, 0x30282 },	\
+	{  10, 0x00b33, 0x011e5, 0x1a014, 0x30287 },	\
+	{  11, 0x00b33, 0x011e6, 0x1a014, 0x30282 },	\
+	{  12, 0x00b33, 0x011e6, 0x1a014, 0x30287 },	\
+	{  13, 0x00b33, 0x011e7, 0x1a014, 0x30282 },	\
+	{  14, 0x00b33, 0x011e8, 0x1a014, 0x30284 },	\
+							\
+	{  34, 0x00b33, 0x01266, 0x26014, 0x30282 },	\
+	{  38, 0x00b33, 0x01267, 0x26014, 0x30284 },	\
+	{  42, 0x00b33, 0x01268, 0x26014, 0x30286 },	\
+	{  46, 0x00b33, 0x01269, 0x26014, 0x30288 },	\
+							\
+	{  36, 0x00b33, 0x01266, 0x26014, 0x30288 },	\
+	{  40, 0x00b33, 0x01268, 0x26014, 0x30280 },	\
+	{  44, 0x00b33, 0x01269, 0x26014, 0x30282 },	\
+	{  48, 0x00b33, 0x0126a, 0x26014, 0x30284 },	\
+	{  52, 0x00b33, 0x0126b, 0x26014, 0x30286 },	\
+	{  56, 0x00b33, 0x0126c, 0x26014, 0x30288 },	\
+	{  60, 0x00b33, 0x0126e, 0x26014, 0x30280 },	\
+	{  64, 0x00b33, 0x0126f, 0x26014, 0x30282 },	\
+							\
+	{ 100, 0x00b33, 0x0128a, 0x2e014, 0x30280 },	\
+	{ 104, 0x00b33, 0x0128b, 0x2e014, 0x30282 },	\
+	{ 108, 0x00b33, 0x0128c, 0x2e014, 0x30284 },	\
+	{ 112, 0x00b33, 0x0128d, 0x2e014, 0x30286 },	\
+	{ 116, 0x00b33, 0x0128e, 0x2e014, 0x30288 },	\
+	{ 120, 0x00b33, 0x012a0, 0x2e014, 0x30280 },	\
+	{ 124, 0x00b33, 0x012a1, 0x2e014, 0x30282 },	\
+	{ 128, 0x00b33, 0x012a2, 0x2e014, 0x30284 },	\
+	{ 132, 0x00b33, 0x012a3, 0x2e014, 0x30286 },	\
+	{ 136, 0x00b33, 0x012a4, 0x2e014, 0x30288 },	\
+	{ 140, 0x00b33, 0x012a6, 0x2e014, 0x30280 },	\
+							\
+	{ 149, 0x00b33, 0x012a8, 0x2e014, 0x30287 },	\
+	{ 153, 0x00b33, 0x012a9, 0x2e014, 0x30289 },	\
+	{ 157, 0x00b33, 0x012ab, 0x2e014, 0x30281 },	\
+	{ 161, 0x00b33, 0x012ac, 0x2e014, 0x30283 },	\
+	{ 165, 0x00b33, 0x012ad, 0x2e014, 0x30285 }

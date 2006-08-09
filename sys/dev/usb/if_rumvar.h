@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_rumvar.h,v 1.4 2006/07/19 20:00:36 damien Exp $  */
+/*	$OpenBSD: if_rumvar.h,v 1.5 2006/08/09 08:21:08 damien Exp $	*/
+
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
@@ -17,7 +18,7 @@
  */
 
 #define RT2573_RX_LIST_COUNT	1
-#define RT2573_TX_LIST_COUNT	5
+#define RT2573_TX_LIST_COUNT	1
 
 struct rum_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
@@ -82,11 +83,12 @@ struct rum_softc {
 	int				sc_rx_no;
 	int				sc_tx_no;
 
-	uint32_t			asic_rev;
 	uint16_t			macbbp_rev;
 	uint8_t				rf_rev;
 	uint32_t			rfprog;
 	uint8_t				rffreq;
+
+	usbd_xfer_handle		amrr_xfer;
 
 	usbd_pipe_handle		sc_rx_pipeh;
 	usbd_pipe_handle		sc_tx_pipeh;
@@ -94,16 +96,21 @@ struct rum_softc {
 	enum ieee80211_state		sc_state;
 	struct usb_task			sc_task;
 
+	struct ieee80211_amrr		amrr;
+	struct ieee80211_amrr_node	amn;
+
 	struct rum_rx_data		rx_data[RT2573_RX_LIST_COUNT];
 	struct rum_tx_data		tx_data[RT2573_TX_LIST_COUNT];
 	int				tx_queued;
 
 	struct timeout			scan_ch;
+	struct timeout			amrr_ch;
 
 	int				sc_tx_timer;
 
+	uint32_t			sta[6];
 	uint32_t			rf_regs[4];
-	uint8_t				txpow[14];
+	uint8_t				txpow[44];
 
 	struct {
 		uint8_t	val;
@@ -115,6 +122,12 @@ struct rum_softc {
 	int				rx_ant;
 	int				tx_ant;
 	int				nb_ant;
+	int				ext_2ghz_lna;
+	int				ext_5ghz_lna;
+	int				rssi_2ghz_corr;
+	int				rssi_5ghz_corr;
+	int				sifs;
+	uint8_t				bbp17;
 
 #if NBPFILTER > 0
 	caddr_t				sc_drvbpf;
@@ -134,4 +147,3 @@ struct rum_softc {
 	int				sc_txtap_len;
 #endif
 };
-
