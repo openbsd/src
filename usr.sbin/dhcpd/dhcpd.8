@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.12 2006/06/14 20:19:20 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.13 2006/08/09 11:05:31 stevesk Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -345,7 +345,8 @@ A reasonably complete DHCP configuration might look something like this:
 .Bd -literal -offset indent
 subnet 239.252.197.0 netmask 255.255.255.0 {
   range 239.252.197.10 239.252.197.250;
-  default-lease-time 600 max-lease-time 7200;
+  default-lease-time 600;
+  max-lease-time 7200;
   option subnet-mask 255.255.255.0;
   option broadcast-address 239.252.197.255;
   option routers 239.252.197.1;
