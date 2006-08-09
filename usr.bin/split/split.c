@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.11 2006/08/09 12:04:21 jmc Exp $	*/
+/*	$OpenBSD: split.c,v 1.12 2006/08/09 22:42:08 millert Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #else
-static char rcsid[] = "$OpenBSD: split.c,v 1.11 2006/08/09 12:04:21 jmc Exp $";
+static char rcsid[] = "$OpenBSD: split.c,v 1.12 2006/08/09 22:42:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ char	 bfr[MAXBSIZE];			/* I/O buffer. */
 char	 fname[MAXPATHLEN];		/* File name prefix. */
 regex_t	 rgx;
 int	 pflag;
+int	 sufflen = 2;			/* File name suffix length. */
 
 void newfile(void);
 void split1(void);
@@ -78,8 +79,9 @@ main(int argc, char *argv[])
 {
 	int ch;
 	char *ep, *p;
+	const char *errstr;
 
-	while ((ch = getopt(argc, argv, "0123456789b:l:p:-")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789a:b:l:p:-")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -103,6 +105,11 @@ main(int argc, char *argv[])
 			if (ifd != -1)
 				usage();
 			ifd = 0;
+			break;
+		case 'a':		/* suffix length. */
+			sufflen = strtonum(optarg, 1, NAME_MAX, &errstr);
+			if (errstr)
+				errx(EX_USAGE, "%s: %s", optarg, errstr);
 			break;
 		case 'b':		/* Byte count. */
 			if ((bytecnt = strtol(optarg, &ep, 10)) <= 0 ||
@@ -143,6 +150,8 @@ main(int argc, char *argv[])
 	if (*argv != NULL)
 		usage();
 
+	if (strlen(fname) + sufflen >= sizeof(fname))
+		errx(EX_USAGE, "suffix is too long");
 	if (pflag && (numlines != 0 || bytecnt != 0))
 		usage();
 
@@ -271,35 +280,46 @@ writeit:
 void
 newfile(void)
 {
-	static long fnum;
+	static char *suffix, *sufftail;
 	static int defname;
-	static char *fpnt;
 
 	if (ofd == -1) {
 		if (fname[0] == '\0') {
 			fname[0] = 'x';
-			fpnt = fname + 1;
+			suffix = fname + 1;
 			defname = 1;
 		} else {
-			fpnt = fname + strlen(fname);
+			suffix = fname + strlen(fname);
 			defname = 0;
 		}
+		memset(suffix, 'a', sufflen);
+		suffix[sufflen] = '\0';
+		sufftail = suffix + sufflen - 1;
+		--sufftail[0];		/* incremented later */
 		ofd = fileno(stdout);
 	}
-	/*
-	 * Hack to increase max files; original code wandered through
-	 * magic characters.  Maximum files is 3 * 26 * 26 == 2028
-	 */
-#define MAXFILES	676
-	if (fnum == MAXFILES) {
-		if (!defname || fname[0] == 'z')
-			errx(EX_DATAERR, "too many files");
-		++fname[0];
-		fnum = 0;
-	}
-	fpnt[0] = fnum / 26 + 'a';
-	fpnt[1] = fnum % 26 + 'a';
-	++fnum;
+
+	if (sufftail[0] == 'z') {
+		int i;
+
+		/* Increment the non-tail portion of the suffix. */
+		for (i = sufflen - 2; i >= 0; i--) {
+			if (suffix[i] != 'z') {
+				suffix[i]++;
+				break;
+			}
+		}
+		if (i < 0) {
+			/* Hack to support y and z prefix if no name spec'd. */
+			if (!defname || fname[0] == 'z')
+				errx(EX_DATAERR, "too many files");
+			++fname[0];
+			memset(suffix, 'a', sufflen);
+		} else
+			sufftail[0] = 'a';	/* reset tail */
+	} else
+		++sufftail[0];
+
 	if (!freopen(fname, "w", stdout))
 		err(EX_IOERR, "%s", fname);
 	file_open = 1;
@@ -310,8 +330,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr,
-"usage: %s [-b byte_count[k|m] | -l line_count | -p pattern] [file [name]]\n",
-__progname);
+	(void)fprintf(stderr, "usage: %s [-a suffix_length] "
+	    "[-b byte_count[k|m] | -l line_count | -p pattern] [file [name]]\n",
+	    __progname);
 	exit(EX_USAGE);
 }

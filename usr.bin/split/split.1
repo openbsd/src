@@ -1,4 +1,4 @@
-.\"	$OpenBSD: split.1,v 1.11 2006/08/09 12:04:21 jmc Exp $
+.\"	$OpenBSD: split.1,v 1.12 2006/08/09 22:42:08 millert Exp $
 .\"	$NetBSD: split.1,v 1.5 1994/12/21 08:20:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)split.1	8.3 (Berkeley) 4/16/94
 .\"
-.Dd April 16, 1994
+.Dd August 9, 2006
 .Dt SPLIT 1
 .Os
 .Sh NAME
@@ -38,6 +38,8 @@
 .Nd split a file into pieces
 .Sh SYNOPSIS
 .Nm split
+.Op Fl a Ar suffix_length
+.br
 .Oo
 .Fl b
 .Sm off
@@ -59,6 +61,12 @@ itself is not altered.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar suffix_length
+Use
+.Ar suffix_length
+letters to form the suffix of the file name
+(see below).
+The default suffix length is 2.
 .It Xo
 .Fl b
 .Sm off
@@ -88,6 +96,11 @@ The file is split whenever an input line matches
 .Ar pattern ,
 which is interpreted as an extended regular expression.
 The matching line will be the first line of the next output file.
+This option is incompatible with the
+.Fl b
+and
+.Fl l
+options.
 .El
 .Pp
 If
@@ -96,26 +109,43 @@ is specified,
 it is used as a prefix
 for the names of the files into which the file is split.
 In this case, each file into which the file is split is named by the
-prefix followed by a lexically ordered suffix in the range of
-.Dq aa-zz .
+prefix followed by a lexically ordered suffix using
+.Ar suffix_length
+characters in the range
+.Dq a-z .
+.Pp
 If the
 .Ar name
 argument is not specified, the file is split into lexically ordered
-files named in the range of
-.Dq xaa-zzz .
+files named with the prefixes
+.Dq x ,
+.Dq y ,
+and
+.Dq z .
 .Sh SEE ALSO
 .Xr re_format 7
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The use of
+.Dq y
+and
+.Dq z
+prefixes (in addition to the standard
+.Dq x )
+in the absence of a
+.Ar name
+parameter is an
+.Ox
+extension.
 .Sh HISTORY
 A
 .Nm
 command appeared in
 .At v3 .
 .Sh BUGS
-For historical reasons, if you specify
-.Ar name ,
-.Nm
-can only create 676 separate
-files.
-The default naming convention allows 2028 separate files.
-.Pp
 The maximum line length for matching patterns is 65536.
