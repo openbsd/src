@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.7 2006/08/08 16:07:10 mglocker Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.8 2006/08/09 09:40:08 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -184,7 +184,7 @@ acx_cardbus_detach(struct device *self, int flags)
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	int error;
+	int error, b1 = CARDBUS_BASE0_REG, b2 = CARDBUS_BASE1_REG;
 
 	error = acx_detach(sc);
 	if (error != 0)
@@ -197,11 +197,15 @@ acx_cardbus_detach(struct device *self, int flags)
 	}
 
 	/* release bus space and close window */
-	Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_mem1_bt,
+	if (csc->sc_iomapsize) {
+		b1 = CARDBUS_BASE1_REG;
+		b2 = CARDBUS_BASE2_REG;
+	}
+	Cardbus_mapreg_unmap(ct, b1, sc->sc_mem1_bt,
 	    sc->sc_mem1_bh, csc->sc_mapsize1);
-	Cardbus_mapreg_unmap(ct, CARDBUS_BASE1_REG, sc->sc_mem2_bt,
+	Cardbus_mapreg_unmap(ct, b2, sc->sc_mem2_bt,
 	    sc->sc_mem2_bh, csc->sc_mapsize2);
-	if (csc->sc_io_bt)
+	if (csc->sc_iomapsize)
 		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, csc->sc_io_bt,
 		    csc->sc_io_bh, csc->sc_iomapsize);
 
