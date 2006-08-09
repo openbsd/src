@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.15 2006/08/07 21:44:10 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.16 2006/08/09 09:21:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -105,11 +105,11 @@ static const struct pci_matchid arc_devices[] = {
 #define  ARC_REG_REPLY_QUEUE_ERR		(1<<28)
 #define  ARC_REG_REPLY_QUEUE_IAMBIOS		(1<<30)
 #define ARC_REG_MSGBUF			0x0a00
-#define  ARC_REG_MSGBUF_LEN		256	/* dwords */
+#define  ARC_REG_MSGBUF_LEN		1024
 #define ARC_REG_IOC_WBUF		0x0e00
-#define  ARC_REG_IOC_WBUF_LEN		32	/* dwords */
+#define  ARC_REG_IOC_WBUF_LEN		128
 #define ARC_REG_IOC_RBUF		0x0f00
-#define  ARC_REG_IOC_RBUF_LEN		32	/* dwords */
+#define  ARC_REG_IOC_RBUF_LEN		128
 
 struct arc_msg_firmware_info {
 	u_int32_t		signature;
