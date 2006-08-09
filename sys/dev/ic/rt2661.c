@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.25 2006/08/03 09:28:13 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.26 2006/08/09 07:46:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -261,7 +261,7 @@ rt2661_attach(void *xsc, int id)
 	ic->ic_caps =
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
-	    IEEE80211_C_HOSTAP |	/* HostAp mode supported */
+	    IEEE80211_C_HOSTAP |	/* HostAP mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
