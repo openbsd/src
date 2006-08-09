@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.1 2006/06/26 04:57:54 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.2 2006/08/09 15:49:49 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -685,14 +685,14 @@ struct flash_spec {
 #define PCI_CLRBIT(pc, tag, reg, x)	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
 
 #define BNX_STATS(x)			(u_long) stats->stat_ ## x ## _lo
-#if (BUS_SPACE_MAXADDR > 0xFFFFFFFF)
-#define BNX_ADDR_LO(y)			((u64) (y) & 0xFFFFFFFF)
-#define BNX_ADDR_HI(y)			((u64) (y) >> 32)
-#else
-#define BNX_ADDR_LO(y)			((u32)y)
-#define BNX_ADDR_HI(y)			(0)
-#endif
 
+#if __LP64__
+#define BNX_ADDR_LO(y)			((u64)(y) & 0xffffffff)
+#define BNX_ADDR_HI(y)			((u64)(y) >> 32)
+#else
+#define BNX_ADDR_LO(y)			((u32)(y))
+#define BNX_ADDR_HI(y)			((u32)0)
+#endif
 
 /*
  * The following data structures are generated from RTL code.
@@ -4580,14 +4580,6 @@ struct fw_info {
 #define BNX_MAX_SEGMENTS				8
 #define BNX_DMA_ALIGN		 			8
 #define BNX_DMA_BOUNDARY				0
-
-/* The BCM5708 has a problem with addresses greater that 40bits. */
-/* Handle the sizing issue in an architecture agnostic fashion.  */
-#if (BUS_SPACE_MAXADDR < 0xFFFFFFFFFF)
-#define BNX_BUS_SPACE_MAXADDR		BUS_SPACE_MAXADDR
-#else
-#define BNX_BUS_SPACE_MAXADDR		0xFFFFFFFFFF
-#endif
 
 #define BNX_MIN_MTU						60
 #define BNX_MIN_ETHER_MTU				64

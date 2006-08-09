@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.3 2006/06/26 05:52:04 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.4 2006/08/09 15:49:49 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -1794,46 +1794,42 @@ bnx_dma_free(struct bnx_softc *sc)
 	DBPRINT(sc,BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
 	/* Destroy the status block. */
-	if (sc->status_block != NULL) {
+	if (sc->status_block != NULL && sc->status_map != NULL) {
+		bus_dmamap_unload(sc->bnx_dmatag, sc->status_map);
 		bus_dmamem_unmap(sc->bnx_dmatag, (caddr_t)sc->status_block,
 		    BNX_STATUS_BLK_SZ);		
 		bus_dmamem_free(sc->bnx_dmatag, &sc->status_seg,
 		    sc->status_rseg);
-		sc->status_block = NULL;
-	}
-	if (sc->status_map != NULL) {
-		bus_dmamap_unload(sc->bnx_dmatag, sc->status_map);
 		bus_dmamap_destroy(sc->bnx_dmatag, sc->status_map);
+		sc->status_block = NULL;
+		sc->status_map = NULL;
 	}
 
 	/* Destroy the statistics block. */
-	if (sc->stats_block != NULL) {
+	if (sc->stats_block != NULL && sc->stats_map != NULL) {
+		bus_dmamap_unload(sc->bnx_dmatag, sc->stats_map);
 		bus_dmamem_unmap(sc->bnx_dmatag, (caddr_t)sc->stats_block,
 		    BNX_STATS_BLK_SZ);		
 		bus_dmamem_free(sc->bnx_dmatag, &sc->stats_seg,
 		    sc->stats_rseg);
-		sc->stats_block = NULL;
-	}
-	if (sc->stats_map != NULL) {
-		bus_dmamap_unload(sc->bnx_dmatag, sc->stats_map);
 		bus_dmamap_destroy(sc->bnx_dmatag, sc->stats_map);
+		sc->stats_block = NULL;
+		sc->stats_map = NULL;
 	}
 
 	/* Free, unmap and destroy all TX buffer descriptor chain pages. */
 	for (i = 0; i < TX_PAGES; i++ ) {
-		if (sc->tx_bd_chain[i] != NULL) {
+		if (sc->tx_bd_chain[i] != NULL &&
+		    sc->tx_bd_chain_map[i] != NULL) {
+			bus_dmamap_unload(sc->bnx_dmatag, sc->tx_bd_chain_map[i]);
 			bus_dmamem_unmap(sc->bnx_dmatag,
 			    (caddr_t)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
 			bus_dmamem_free(sc->bnx_dmatag, &sc->tx_bd_chain_seg[i],
 			    sc->tx_bd_chain_rseg[i]);
-			sc->tx_bd_chain[i] = NULL;
-		}
-
-		if (sc->tx_bd_chain_map[i] != NULL) {
-			bus_dmamap_unload(sc->bnx_dmatag, sc->tx_bd_chain_map[i]);
 			bus_dmamap_destroy(sc->bnx_dmatag, sc->tx_bd_chain_map[i]);
+			sc->tx_bd_chain[i] = NULL;
+			sc->tx_bd_chain_map[i] = NULL;
 		}
-
 	}
 
 	/* Unload and destroy the TX mbuf maps. */
@@ -1846,19 +1842,18 @@ bnx_dma_free(struct bnx_softc *sc)
 
 	/* Free, unmap and destroy all RX buffer descriptor chain pages. */
 	for (i = 0; i < RX_PAGES; i++ ) {
-		if (sc->rx_bd_chain[i] != NULL) {
+		if (sc->rx_bd_chain[i] != NULL &&
+		    sc->rx_bd_chain_map[i] != NULL) {
+			bus_dmamap_unload(sc->bnx_dmatag, sc->rx_bd_chain_map[i]);
 			bus_dmamem_unmap(sc->bnx_dmatag,
 			    (caddr_t)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
 			bus_dmamem_free(sc->bnx_dmatag, &sc->rx_bd_chain_seg[i],
 			    sc->rx_bd_chain_rseg[i]);
-			sc->rx_bd_chain[i] = NULL;
-		}
 
-		if (sc->rx_bd_chain_map[i] != NULL) {
-			bus_dmamap_unload(sc->bnx_dmatag, sc->rx_bd_chain_map[i]);
 			bus_dmamap_destroy(sc->bnx_dmatag, sc->rx_bd_chain_map[i]);
+			sc->rx_bd_chain[i] = NULL;
+			sc->rx_bd_chain_map[i] = NULL;
 		}
-
 	}
 
 	/* Unload and destroy the RX mbuf maps. */
@@ -1992,6 +1987,13 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * Allocate DMA memory for the status block, map the memory into DMA
 	 * space, and fetch the physical address of the block.
 	 */
+	if (bus_dmamap_create(sc->bnx_dmatag, BNX_STATUS_BLK_SZ, 1,
+	    BNX_STATUS_BLK_SZ, 0, BUS_DMA_NOWAIT, &sc->status_map)) {
+		printf(": Could not create status block DMA map!\n");
+		rc = ENOMEM;
+		goto bnx_dma_alloc_exit;
+	}
+
 	if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_STATUS_BLK_SZ,
 	    BNX_DMA_ALIGN, BNX_DMA_BOUNDARY, &sc->status_seg, 1,
 	    &sc->status_rseg, BUS_DMA_NOWAIT)) {
@@ -2003,13 +2005,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	if (bus_dmamem_map(sc->bnx_dmatag, &sc->status_seg, sc->status_rseg,
 	    BNX_STATUS_BLK_SZ, (caddr_t *)&sc->status_block, BUS_DMA_NOWAIT)) {
 		printf(": Could not map status block DMA memory!\n");
-		rc = ENOMEM;
-		goto bnx_dma_alloc_exit;
-	}
-
-	if (bus_dmamap_create(sc->bnx_dmatag, BNX_STATUS_BLK_SZ, 1,
-	    BNX_STATUS_BLK_SZ, 0, BUS_DMA_NOWAIT, &sc->status_map)) {
-		printf(": Could not create status block DMA map!\n");
 		rc = ENOMEM;
 		goto bnx_dma_alloc_exit;
 	}
@@ -2032,6 +2027,13 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * Allocate DMA memory for the statistics block, map the memory into
 	 * DMA space, and fetch the physical address of the block.
 	 */
+	if (bus_dmamap_create(sc->bnx_dmatag, BNX_STATS_BLK_SZ, 1,
+	    BNX_STATS_BLK_SZ, 0, BUS_DMA_NOWAIT, &sc->stats_map)) {
+		printf(": Could not create stats block DMA map!\n");
+		rc = ENOMEM;
+		goto bnx_dma_alloc_exit;
+	}
+
 	if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_STATS_BLK_SZ,
 	    BNX_DMA_ALIGN, BNX_DMA_BOUNDARY, &sc->stats_seg, 1,
 	    &sc->stats_rseg, BUS_DMA_NOWAIT)) {
@@ -2043,13 +2045,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	if (bus_dmamem_map(sc->bnx_dmatag, &sc->stats_seg, sc->stats_rseg,
 	    BNX_STATS_BLK_SZ, (caddr_t *)&sc->stats_block, BUS_DMA_NOWAIT)) {
 		printf(": Could not map stats block DMA memory!\n");
-		rc = ENOMEM;
-		goto bnx_dma_alloc_exit;
-	}
-
-	if (bus_dmamap_create(sc->bnx_dmatag, BNX_STATS_BLK_SZ, 1,
-	    BNX_STATS_BLK_SZ, 0, BUS_DMA_NOWAIT, &sc->stats_map)) {
-		printf(": Could not create stats block DMA map!\n");
 		rc = ENOMEM;
 		goto bnx_dma_alloc_exit;
 	}
@@ -2073,6 +2068,14 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * and fetch the physical address of the block.
 	 */
 	for (i = 0; i < TX_PAGES; i++) {
+		if (bus_dmamap_create(sc->bnx_dmatag, BNX_TX_CHAIN_PAGE_SZ, 1,
+		    BNX_TX_CHAIN_PAGE_SZ, 0, BUS_DMA_NOWAIT,
+		    &sc->tx_bd_chain_map[i])) {
+			printf(": Could not create Tx desc %d DMA map!\n", i);
+			rc = ENOMEM;
+			goto bnx_dma_alloc_exit;
+		}
+
 		if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_TX_CHAIN_PAGE_SZ,
 		    BCM_PAGE_SIZE, BNX_DMA_BOUNDARY, &sc->tx_bd_chain_seg[i], 1,
 		    &sc->tx_bd_chain_rseg[i], BUS_DMA_NOWAIT)) {
@@ -2085,14 +2088,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		    sc->tx_bd_chain_rseg[i], BNX_TX_CHAIN_PAGE_SZ,
 		    (caddr_t *)&sc->tx_bd_chain[i], BUS_DMA_NOWAIT)) {
 			printf(": Could not map TX desc %d DMA memory!\n", i);
-			rc = ENOMEM;
-			goto bnx_dma_alloc_exit;
-		}
-
-		if (bus_dmamap_create(sc->bnx_dmatag, BNX_TX_CHAIN_PAGE_SZ, 1,
-		    BNX_TX_CHAIN_PAGE_SZ, 0, BUS_DMA_NOWAIT,
-		    &sc->tx_bd_chain_map[i])) {
-			printf(": Could not create Tx desc %d DMA map!\n", i);
 			rc = ENOMEM;
 			goto bnx_dma_alloc_exit;
 		}
@@ -2130,6 +2125,14 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * and fetch the physical address of the block.
 	 */
 	for (i = 0; i < RX_PAGES; i++) {
+		if (bus_dmamap_create(sc->bnx_dmatag, BNX_RX_CHAIN_PAGE_SZ, 1,
+		    BNX_RX_CHAIN_PAGE_SZ, 0, BUS_DMA_NOWAIT,
+		    &sc->rx_bd_chain_map[i])) {
+			printf(": Could not create Rx desc %d DMA map!\n", i);
+			rc = ENOMEM;
+			goto bnx_dma_alloc_exit;
+		}
+
 		if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_RX_CHAIN_PAGE_SZ,
 		    BCM_PAGE_SIZE, BNX_DMA_BOUNDARY, &sc->rx_bd_chain_seg[i], 1,
 		    &sc->rx_bd_chain_rseg[i], BUS_DMA_NOWAIT)) {
@@ -2142,14 +2145,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		    sc->rx_bd_chain_rseg[i], BNX_RX_CHAIN_PAGE_SZ,
 		    (caddr_t *)&sc->rx_bd_chain[i], BUS_DMA_NOWAIT)) {
 			printf(": Could not map Rx desc %d DMA memory!\n", i);
-			rc = ENOMEM;
-			goto bnx_dma_alloc_exit;
-		}
-
-		if (bus_dmamap_create(sc->bnx_dmatag, BNX_RX_CHAIN_PAGE_SZ, 1,
-		    BNX_RX_CHAIN_PAGE_SZ, 0, BUS_DMA_NOWAIT,
-		    &sc->rx_bd_chain_map[i])) {
-			printf(": Could not create Rx desc %d DMA map!\n", i);
 			rc = ENOMEM;
 			goto bnx_dma_alloc_exit;
 		}
