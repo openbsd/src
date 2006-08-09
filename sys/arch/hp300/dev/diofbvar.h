@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.8 2006/04/14 21:05:43 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.9 2006/08/09 21:23:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -102,10 +102,11 @@ struct diofb {
 };
 
 /* Replacement Rules (rops) */
-#define RR_CLEAR		0x0
-#define RR_COPY			0x3
-#define RR_XOR			0x6
-#define RR_COPYINVERTED  	0xc
+#define	RR_CLEAR		0x0
+#define	RR_COPY			0x3
+#define	RR_XOR			0x6
+#define	RR_INVERT		0xa
+#define	RR_COPYINVERTED  	0xc
 
 void	diofb_cnattach(struct diofb *);
 void	diofb_end_attach(void *, struct wsdisplay_accessops *, struct diofb *,

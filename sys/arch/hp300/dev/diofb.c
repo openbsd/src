@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.12 2006/08/05 09:57:24 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.13 2006/08/09 21:23:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -86,6 +86,7 @@ void	diofb_copycols(void *, int, int, int, int);
 void	diofb_erasecols(void *, int, int, int, long);
 void	diofb_copyrows(void *, int, int, int);
 void	diofb_eraserows(void *, int, int, long);
+void	diofb_do_cursor(struct rasops_info *);
 
 /*
  * Frame buffer geometry initialization
@@ -203,6 +204,7 @@ diofb_fbsetup(struct diofb *fb)
 	if (ri->ri_depth != 1) {
 		ri->ri_ops.copyrows = diofb_copyrows;
 		ri->ri_ops.eraserows = diofb_eraserows;
+		ri->ri_do_cursor = diofb_do_cursor;
 	}
 
 	/* Clear entire display, including non visible areas */
@@ -371,9 +373,9 @@ diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct diofb *fb = ri->ri_hw;
-	int fg, bg, uline;
+	int fg, bg;
 
-	rasops_unpack_attr(attr, &fg, &bg, &uline);
+	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
 	/*
 	 * If the background color is not black, this is a bit too tricky
@@ -398,9 +400,9 @@ diofb_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct diofb *fb = ri->ri_hw;
-	int fg, bg, uline;
+	int fg, bg;
 
-	rasops_unpack_attr(attr, &fg, &bg, &uline);
+	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
 	/*
 	 * If the background color is not black, this is a bit too tricky
@@ -422,6 +424,18 @@ diofb_eraserows(void *cookie, int row, int num, long attr)
 		    ri->ri_xorigin, ri->ri_yorigin + row,
 		    ri->ri_emuwidth, num, RR_CLEAR);
 	}
+}
+
+void
+diofb_do_cursor(struct rasops_info *ri)
+{
+	struct diofb *fb = ri->ri_hw;
+	int x, y;
+
+	x = ri->ri_ccol * ri->ri_font->fontwidth + ri->ri_xorigin;
+	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
+	(*fb->bmv)(fb, x, y, x, y, ri->ri_font->fontwidth,
+	    ri->ri_font->fontheight, RR_INVERT);
 }
 
 /*
