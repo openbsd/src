@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.142 2006/08/09 03:48:25 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.143 2006/08/09 04:44:06 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -45,7 +45,7 @@ int             em_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "6.0.5";
+char em_driver_version[] = "6.1.4";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -96,6 +96,7 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_AT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_CPR },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_FIBER },
@@ -789,6 +790,7 @@ void
 em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct em_softc *sc= ifp->if_softc;
+	u_char fiber_type = IFM_1000_SX;
 
 	INIT_DEBUGOUT("em_media_status: begin");
 
@@ -805,8 +807,11 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	ifmr->ifm_status |= IFM_ACTIVE;
 
-	if (sc->hw.media_type == em_media_type_fiber) {
-		ifmr->ifm_active |= IFM_1000_SX | IFM_FDX;
+	if (sc->hw.media_type == em_media_type_fiber ||
+	    sc->hw.media_type == em_media_type_internal_serdes) {
+		if (sc->hw.mac_type == em_82545)
+			fiber_type = IFM_1000_LX;
+		ifmr->ifm_active |= fiber_type | IFM_FDX;
 	} else {
 		switch (sc->link_speed) {
 		case 10:
@@ -850,8 +855,9 @@ em_media_change(struct ifnet *ifp)
 		sc->hw.autoneg = DO_AUTO_NEG;
 		sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
 		break;
+	case IFM_1000_LX:
 	case IFM_1000_SX:
-        case IFM_1000_T:
+	case IFM_1000_T:
 		sc->hw.autoneg = DO_AUTO_NEG;
 		sc->hw.autoneg_advertised = ADVERTISE_1000_FULL;
 		break;
@@ -1563,6 +1569,7 @@ void
 em_setup_interface(struct em_softc *sc)
 {
 	struct ifnet   *ifp;
+	u_char fiber_type = IFM_1000_SX;
 	INIT_DEBUGOUT("em_setup_interface: begin");
 
 	ifp = &sc->interface_data.ac_if;
@@ -1585,10 +1592,13 @@ em_setup_interface(struct em_softc *sc)
 	 */
 	ifmedia_init(&sc->media, IFM_IMASK, em_media_change,
 		     em_media_status);
-	if (sc->hw.media_type == em_media_type_fiber) {
-		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_SX | IFM_FDX, 
+	if (sc->hw.media_type == em_media_type_fiber ||
+	    sc->hw.media_type == em_media_type_internal_serdes) {
+		if (sc->hw.mac_type == em_82545)
+			fiber_type = IFM_1000_LX;
+		ifmedia_add(&sc->media, IFM_ETHER | fiber_type | IFM_FDX, 
 			    0, NULL);
-		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_SX, 
+		ifmedia_add(&sc->media, IFM_ETHER | fiber_type, 
 			    0, NULL);
 	} else {
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_10_T, 0, NULL);
@@ -1845,7 +1855,8 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		reg_tipg |= DEFAULT_80003ES2LAN_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
 		break;
 	default:
-		if (sc->hw.media_type == em_media_type_fiber)
+		if (sc->hw.media_type == em_media_type_fiber ||
+		    sc->hw.media_type == em_media_type_internal_serdes)
 			reg_tipg = DEFAULT_82543_TIPG_IPGT_FIBER;
 		else
 			reg_tipg = DEFAULT_82543_TIPG_IPGT_COPPER;
@@ -1870,8 +1881,6 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	} else if (sc->hw.mac_type == em_80003es2lan) {
 		reg_tarc = E1000_READ_REG(&sc->hw, TARC0);
 		reg_tarc |= 1;
-		if (sc->hw.media_type == em_media_type_internal_serdes)
-			reg_tarc |= (1 << 20);
 		E1000_WRITE_REG(&sc->hw, TARC0, reg_tarc);
 		reg_tarc = E1000_READ_REG(&sc->hw, TARC1);
 		reg_tarc |= 1;
