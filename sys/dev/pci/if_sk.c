@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.122 2006/08/04 06:25:13 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.123 2006/08/09 05:03:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -419,7 +419,7 @@ sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		if (!(SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY))
+		if (SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY)
 			break;
 	}
 
