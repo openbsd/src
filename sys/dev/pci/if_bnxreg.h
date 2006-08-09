@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.3 2006/08/09 15:53:24 marco Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.4 2006/08/09 16:13:06 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -44,6 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
