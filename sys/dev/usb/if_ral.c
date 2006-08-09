@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.71 2006/07/02 00:56:14 jsg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.72 2006/08/09 07:40:52 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2225,16 +2225,16 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 
 	/* count TX retry-fail as Tx errors */
-	ifp->if_oerrors += sc->sta[9];
+	ifp->if_oerrors += letoh16(sc->sta[9]);
 
 	sc->amn.amn_retrycnt =
-	    sc->sta[7] +	/* TX one-retry ok count */
-	    sc->sta[8] +	/* TX more-retry ok count */
-	    sc->sta[9];		/* TX retry-fail count */
+	    letoh16(sc->sta[7]) +	/* TX one-retry ok count */
+	    letoh16(sc->sta[8]) +	/* TX more-retry ok count */
+	    letoh16(sc->sta[9]);	/* TX retry-fail count */
 
 	sc->amn.amn_txcnt =
 	    sc->amn.amn_retrycnt +
-	    sc->sta[6];		/* TX no-retry ok count */
+	    letoh16(sc->sta[6]);	/* TX no-retry ok count */
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
