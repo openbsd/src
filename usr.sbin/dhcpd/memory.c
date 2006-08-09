@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.13 2006/06/14 14:58:52 ckuethe Exp $ */
+/*	$OpenBSD: memory.c,v 1.14 2006/08/09 22:23:53 cloder Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -499,7 +499,7 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 		/* Copy the data files, but not the linkages. */
 		comp->starts = lease->starts;
 		if (lease->uid) {
-			if (lease->uid_len < sizeof (lease->uid_buf)) {
+			if (lease->uid_len <= sizeof (lease->uid_buf)) {
 				memcpy(comp->uid_buf, lease->uid, lease->uid_len);
 				comp->uid = &comp->uid_buf[0];
 				comp->uid_max = sizeof comp->uid_buf;
