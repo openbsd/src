@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.2 2006/08/09 15:49:49 marco Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.3 2006/08/09 15:53:24 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -686,7 +686,7 @@ struct flash_spec {
 
 #define BNX_STATS(x)			(u_long) stats->stat_ ## x ## _lo
 
-#if __LP64__
+#ifdef __LP64__
 #define BNX_ADDR_LO(y)			((u64)(y) & 0xffffffff)
 #define BNX_ADDR_HI(y)			((u64)(y) >> 32)
 #else
