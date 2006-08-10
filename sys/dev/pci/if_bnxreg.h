@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.6 2006/08/10 04:01:52 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.7 2006/08/10 04:25:15 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4619,6 +4619,7 @@ struct bnx_softc
 
 	bus_space_tag_t		bnx_btag;			/* Device bus tag */
 	bus_space_handle_t	bnx_bhandle;		/* Device bus handle */
+	bus_size_t		bnx_size;
 
 	void				*bnx_intrhand;		/* Interrupt handler */
 	void				*bnx_powerhook;

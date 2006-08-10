@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.6 2006/08/10 04:13:09 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.7 2006/08/10 04:25:15 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -354,7 +354,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	u_int32_t val;
 	pcireg_t memtype;
-	bus_size_t size;
 
 	sc->bnx_pa = *pa;
 
@@ -367,7 +366,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		if (pci_mapreg_map(pa, BNX_PCI_BAR0,
 		    memtype, 0, &sc->bnx_btag, &sc->bnx_bhandle,
-		    NULL, &size, 0) == 0)
+		    NULL, &sc->bnx_size, 0) == 0)
 			break;
 	default:
 		printf(": can't find mem space\n");
@@ -2210,6 +2209,9 @@ bnx_release_resources(struct bnx_softc *sc)
 
 	if (sc->bnx_intrhand != NULL)
 		pci_intr_disestablish(pa->pa_pc, sc->bnx_intrhand);
+
+	if (sc->bnx_size)
+		bus_space_unmap(sc->bnx_btag, sc->bnx_bhandle, sc->bnx_size);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 }
