@@ -1,19 +1,19 @@
-#	$OpenBSD: files.hil,v 1.5 2004/09/15 23:52:32 mickey Exp $
+#	$OpenBSD: files.hil,v 1.6 2006/08/10 23:41:16 miod Exp $
 #
 # Configuration file for machine-independent HIL code.
 #
 
 device	hil {[code = -1]}
-file	dev/hil/hil.c		hil	needs-flag
+file	dev/hil/hil.c		hil
 
 device	hilkbd: wskbddev
 attach	hilkbd at hil
-file	dev/hil/hilkbd.c	hilkbd	needs-flag
+file	dev/hil/hilkbd.c	hilkbd			needs-flag
 file	dev/hil/hilkbdmap.c	hilkbd
 
 device	hilms: wsmousedev
 attach	hilms at hil
-file	dev/hil/hilms.c		hilms	needs-flag
+file	dev/hil/hilms.c		hilms
 
 device	hilid
 attach	hilid at hil
