@@ -1,4 +1,4 @@
-.\"	$OpenBSD: split.1,v 1.12 2006/08/09 22:42:08 millert Exp $
+.\"	$OpenBSD: split.1,v 1.13 2006/08/10 06:05:11 jmc Exp $
 .\"	$NetBSD: split.1,v 1.5 1994/12/21 08:20:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
@@ -118,10 +118,10 @@ If the
 .Ar name
 argument is not specified, the file is split into lexically ordered
 files named with the prefixes
-.Dq x ,
-.Dq y ,
+.Sq x ,
+.Sq y ,
 and
-.Dq z .
+.Sq z .
 .Sh SEE ALSO
 .Xr re_format 7
 .Sh STANDARDS
@@ -132,11 +132,11 @@ utility is compliant with the
 specification.
 .Pp
 The use of
-.Dq y
+.Sq y
 and
-.Dq z
+.Sq z
 prefixes (in addition to the standard
-.Dq x )
+.Sq x )
 in the absence of a
 .Ar name
 parameter is an
