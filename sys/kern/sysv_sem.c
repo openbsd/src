@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.32 2004/07/15 11:24:46 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.33 2006/08/10 17:03:48 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -423,25 +423,23 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 	if (key != IPC_PRIVATE) {
 		for (semid = 0, semaptr = NULL; semid < seminfo.semmni; semid++) {
 			if ((semaptr = sema[semid]) != NULL &&
-			    semaptr->sem_perm.key == key)
-				break;
-		}
-		if (semaptr != NULL) {
-			DPRINTF(("found public key\n"));
-			if ((error = ipcperm(cred, &semaptr->sem_perm,
-			    semflg & 0700)))
-				goto error;
-			if (nsems > 0 && semaptr->sem_nsems < nsems) {
-				DPRINTF(("too small\n"));
-				error = EINVAL;
-				goto error;
+			    semaptr->sem_perm.key == key) {
+				DPRINTF(("found public key\n"));
+				if ((error = ipcperm(cred, &semaptr->sem_perm,
+				    semflg & 0700)))
+					goto error;
+				if (nsems > 0 && semaptr->sem_nsems < nsems) {
+					DPRINTF(("too small\n"));
+					error = EINVAL;
+					goto error;
+				}
+				if ((semflg & IPC_CREAT) && (semflg & IPC_EXCL)) {
+					DPRINTF(("not exclusive\n"));
+					error = EEXIST;
+					goto error;
+				}
+				goto found;
 			}
-			if ((semflg & IPC_CREAT) && (semflg & IPC_EXCL)) {
-				DPRINTF(("not exclusive\n"));
-				error = EEXIST;
-				goto error;
-			}
-			goto found;
 		}
 	}
 
