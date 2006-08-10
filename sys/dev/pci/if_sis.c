@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.72 2006/07/10 03:06:28 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.73 2006/08/10 17:45:16 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -153,6 +153,7 @@ u_int32_t sis_mchash(struct sis_softc *, const uint8_t *);
 void sis_setmulti(struct sis_softc *);
 void sis_setmulti_sis(struct sis_softc *);
 void sis_setmulti_ns(struct sis_softc *);
+void sis_setpromisc(struct sis_softc *);
 void sis_reset(struct sis_softc *);
 int sis_ring_init(struct sis_softc *);
 
@@ -828,6 +829,18 @@ allmulti:
 	}
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, ctl);
+}
+
+void
+sis_setpromisc(struct sis_softc *sc)
+{
+	struct ifnet	*ifp = ifp = &sc->arpcom.ac_if;
+
+	/* If we want promiscuous mode, set the allframes bit. */
+	if (ifp->if_flags & IFF_PROMISC)
+		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLPHYS);
+	else
+		SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLPHYS);
 }
 
 void
@@ -1722,12 +1735,6 @@ sis_init(void *xsc)
 		SIS_SETBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_PERFECT);
 	}
 
-	 /* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLPHYS);
-	else
-		SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLPHYS);
-
 	/*
 	 * Set the capture broadcast bit to capture broadcast frames.
 	 */
@@ -1735,6 +1742,9 @@ sis_init(void *xsc)
 		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_BROAD);
 	else
 		SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_BROAD);
+
+	/* Set promiscuous mode. */
+	sis_setpromisc(sc);
 
 	/*
 	 * Load the multicast filter.
@@ -1905,19 +1915,13 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->sc_if_flags & IFF_PROMISC)) {
-				SIS_SETBIT(sc, SIS_RXFILT_CTL,
-				    SIS_RXFILTCTL_ALLPHYS);
+			    (ifp->if_flags ^ sc->sc_if_flags) &
+			     IFF_PROMISC) {
+				sis_setpromisc(sc);
 				sis_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->sc_if_flags & IFF_PROMISC) {
-				SIS_CLRBIT(sc, SIS_RXFILT_CTL,
-				    SIS_RXFILTCTL_ALLPHYS);
-				sis_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI) {
+			    (ifp->if_flags ^ sc->sc_if_flags) &
+			     IFF_ALLMULTI) {
 				sis_setmulti(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
