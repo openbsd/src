@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.21 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.22 2006/08/10 20:10:19 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -123,19 +123,14 @@ const struct pci_matchid xl_pci_devices[] = {
 };
 
 int
-xl_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+xl_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, xl_pci_devices,
 	    sizeof(xl_pci_devices)/sizeof(xl_pci_devices[0])));
 }
 
 void
-xl_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xl_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -277,8 +272,7 @@ xl_pci_attach(parent, self, aux)
 
 
 void            
-xl_pci_intr_ack(sc)
-	struct xl_softc *sc;
+xl_pci_intr_ack(struct xl_softc *sc)
 {
 	bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_PCI_INTR,
 	    XL_PCI_INTRACK);
