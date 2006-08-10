@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.30 2006/06/23 06:27:11 miod Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.31 2006/08/10 20:45:26 jason Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -152,6 +152,7 @@ USB_MATCH(uftdi)
 	     uaa->product == USB_PRODUCT_FTDI_MHAM_DB9 ||
 	     uaa->product == USB_PRODUCT_FTDI_MHAM_RS232 ||
 	     uaa->product == USB_PRODUCT_FTDI_MHAM_Y9 ||
+	     uaa->product == USB_PRODUCT_FTDI_COASTAL_TNCX ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK202_24 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK204_24 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200 ||
@@ -235,6 +236,7 @@ USB_ATTACH(uftdi)
 		case USB_PRODUCT_FTDI_SEMC_DSS20:
 		case USB_PRODUCT_FTDI_SERIAL_8U232AM:
 		case USB_PRODUCT_FTDI_SERIAL_2232C:
+		case USB_PRODUCT_FTDI_COASTAL_TNCX:
 		case USB_PRODUCT_FTDI_LCD_LK202_24:
 		case USB_PRODUCT_FTDI_LCD_LK204_24:
 		case USB_PRODUCT_FTDI_LCD_MX200:
