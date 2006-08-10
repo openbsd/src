@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.15 2003/08/08 10:13:33 jmc Exp $
+.\"	$OpenBSD: route6d.8,v 1.16 2006/08/10 21:24:01 jmc Exp $
 .\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
@@ -14,6 +14,7 @@
 .\" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
+.\"
 .Dd January 31, 1997
 .Dt ROUTE6D 8
 .Os
@@ -22,86 +23,123 @@
 .Nd RIP6 routing daemon
 .Sh SYNOPSIS
 .Nm route6d
-.Op Fl adDhlnqsS
+.Op Fl aDdhlnqSs
+.Oo Fl A Ar prefix
+.Sm off
+.No / Ar preflen , if1
+.Op , Ar if2 , ... Oc
+.Sm on
 .Bk -words
+.Oo Fl L Ar prefix
+.Sm off
+.No / Ar preflen , if1
+.Op , Ar if2 , ... Oc
+.Sm on
+.Ek
+.Oo
+.Fl N Ar if1
+.Sm off
+.Op , Ar if2 , ... Oc
+.Sm on
+.Bk -words
+.Oo Fl O Ar prefix
+.Sm off
+.No / Ar preflen , if1
+.Op , Ar if2 , ... Oc
+.Sm on
+.Ek
 .Op Fl R Ar routelog
-.Ek
 .Bk -words
-.Op Fl A Ar prefix/preflen,if1[,if2...]
+.Oo
+.Fl T Ar if1
+.Sm off
+.Op , Ar if2 , ... Oc
+.Sm on
 .Ek
-.Bk -words
-.Op Fl L Ar prefix/preflen,if1[,if2...]
-.Ek
-.Bk -words
-.Op Fl N Ar if1[,if2...]
-.Ek
-.Bk -words
-.Op Fl O Ar prefix/preflen,if1[,if2...]
-.Ek
-.Bk -words
-.Op Fl T Ar if1[,if2...]
-.Ek
-.Bk -words
 .Op Fl t Ar tag
-.Ek
-.\"
 .Sh DESCRIPTION
 The
 .Nm
-is a routing daemon which supports RIP over IPv6.
+utility is a routing daemon which supports RIP over IPv6.
 .Pp
-Options are:
+The options are as follows:
 .Bl -tag -width indent
-.\"
-.It Fl a
-Enables aging of the statically defined routes.
-With this option, any
-statically defined routes will be removed unless corresponding updates
-arrive as if the routes are received at the startup of
-.Nm route6d .
-.\"
-.It Fl R Ar routelog
-This option makes
-.Nm
-log route changes (add/delete) to the file
-.Ar routelog .
-.\"
-.It Fl A Ar prefix/preflen,if1[,if2...]
+.It Xo Fl A
+.Sm off
+.Ar prefix No / Ar preflen
+.No , Ar if1
+.Op , Ar if2 , ...
+.Sm on
+.Xc
 This option is used for aggregating routes.
-.Ar prefix/preflen
+.Ar prefix Ns / Ns Ar preflen
 specifies the prefix and the prefix length of the
 aggregated route.
 When advertising routes,
 .Nm
 filters specific routes covered by the aggregate
 and advertises the aggregated route
-.Ar prefix/preflen
+.Ar prefix Ns / Ns Ar preflen
 to the interfaces specified in the comma-separated interface list
-.Ar if1[,if2...] .
+.Sm off
+.Ar if1 Op , Ar if2 , ... .
+.Sm on
 .Nm
 creates a static route to
-.Ar prefix/preflen ,
+.Ar prefix Ns / Ns Ar preflen ,
 with the
 .Dv RTF_REJECT
 flag set, into the kernel routing table.
-.\"
-.It Fl d
-Enables output of debugging messages.
-This option also instructs
-.Nm
-to run in foreground mode
-.Pq i.e., it does not become a daemon process .
-.\"
+.It Fl a
+Enables aging of the statically defined routes.
+With this option, any
+statically defined routes will be removed unless corresponding updates
+arrive as if the routes are received at the startup of
+.Nm .
 .It Fl D
 Enables extensive output of debugging messages.
 This option also instructs
 .Nm
 to run in foreground mode
-.Pq i.e., it does not become a daemon process .
-.\"
+.Pq i.e. it does not become a daemon process .
+.It Fl d
+Enables output of debugging messages.
+This option also instructs
+.Nm
+to run in foreground mode
+.Pq i.e. it does not become a daemon process .
 .It Fl h
 Disables split horizon processing.
-.\"
+.It Xo Fl L
+.Sm off
+.Ar prefix No / Ar preflen
+.No , Ar if1
+.Op , Ar if2 , ...
+.Sm on
+.Xc
+Filter incoming routes from interfaces
+.Sm off
+.Ar if1 Op , Ar if2 , ... .
+.Sm on
+.Nm
+will accept incoming routes that are in
+.Ar prefix Ns / Ns Ar preflen .
+If multiple
+.Fl L
+options are specified, all routes that match any of the options are accepted.
+.Li ::/0
+is treated specially as the default route, not
+.Do
+any route that has longer prefix length than, or equal to, 0
+.Dc .
+For example, with
+.Dq -L 3ffe::/16,if1 -L ::/0,if1 ,
+.Nm
+will accept the default route and routes in the 6bone test address range,
+but no others.
+To accept any route, simply do not specify the
+.Fl L
+option.
 .It Fl l
 By default,
 .Nm
@@ -117,56 +155,48 @@ It must not be used on site boundary routers,
 since
 .Fl l
 assumes that all interfaces are in the same site.
-.\"
-.It Fl L Ar prefix/preflen,if1[,if2...]
-Filter incoming routes from interfaces
-.Ar if1,[if2...] .
-.Nm
-will accept incoming routes that are in
-.Ar prefix/preflen .
-If multiple
-.Fl L
-options are specified, all routes that match any of the options are accepted.
-.Li ::/0
-is treated specially as default route, not
-.Do
-any route that has longer prefix length than, or equal to 0
-.Dc .
-If you would like to accept any route, specify no
-.Fl L
-option.
-For example, with
-.Do
-.Fl L
-.Li 3ffe::/16,if1
-.Fl L
-.Li ::/0,if1
-.Dc
-.Nm
-will accept the default route and routes in the 6bone test address range,
-but no others.
-.\"
+.It Xo
+.Fl N
+.Sm off
+.Ar if1
+.Op , Ar if2 , ...
+.Sm on
+.Xc
+Do not listen to, or advertise, route from/to interfaces specified by
+.Sm off
+.Ar if1 Op , Ar if2 , ... .
+.Sm on
 .It Fl n
 Do not update the kernel routing table.
-.\"
-.It Fl N Ar if1[,if2...]
-Do not listen to, or advertise, route from/to interfaces specified by
-.Ar if1,[if2...] .
-.\"
-.It Fl O Ar prefix/preflen,if1[,if2...]
+.It Xo Fl O
+.Sm off
+.Ar prefix No / Ar preflen
+.No , Ar if1
+.Op , Ar if2 , ...
+.Sm on
+.Xc
 Restrict route advertisement toward interfaces specified by
-.Ar if1,[if2...] .
+.Sm off
+.Ar if1 Op , Ar if2 , ... .
+.Sm on
 With this option
 .Nm
 will only advertise routes that match
-.Ar prefix/preflen .
-.\"
+.Ar prefix Ns / Ns Ar preflen .
 .It Fl q
 Makes
 .Nm
 use listen-only mode.
 No advertisement is sent.
-.\"
+.It Fl R Ar routelog
+This option makes
+.Nm
+log route changes (add/delete) to the file
+.Ar routelog .
+.It Fl S
+This option is the same as
+.Fl s ,
+except that the split horizon rule does apply.
 .It Fl s
 Makes
 .Nm
@@ -175,16 +205,17 @@ table when
 .Nm
 is invoked.
 Announcements obey the regular split horizon rule.
-.\"
-.It Fl S
-This option is the same as
-.Fl s ,
-except that the split horizon rule does apply.
-.\"
-.It Fl T Ar if1[,if2...]
+.It Xo
+.Fl T
+.Sm off
+.Ar if1
+.Op , Ar if2 , ...
+.Sm on
+.Xc
 Advertise only the default route toward
-.Ar if1,[if2...] .
-.\"
+.Sm off
+.Ar if1 Op , Ar if2 , ... .
+.Sm on
 .It Fl t Ar tag
 Attach the route tag
 .Ar tag
@@ -194,7 +225,6 @@ can be decimal, octal prefixed by
 .Li 0 ,
 or hexadecimal prefixed by
 .Li 0x .
-.\"
 .El
 .Pp
 Upon receipt of signal
@@ -204,20 +234,19 @@ or
 .Nm
 will dump the current internal state into
 .Pa /var/run/route6d_dump .
-.\"
 .Sh FILES
 .Bl -tag -width /var/run/route6d_dump -compact
 .It Pa /var/run/route6d_dump
-contains the internal state dumps created if
+Contains the internal state dumps created if
 .Nm
 receives a
 .Dv SIGINT
 or
 .Dv SIGUSR1
-signal
+signal.
 .El
-.\"
 .Sh SEE ALSO
+.Xr routed 8
 .Rs
 .%A G. Malkin
 .%A R. Minnear
@@ -225,7 +254,6 @@ signal
 .%R RFC 2080
 .%D January 1997
 .Re
-.\"
 .Sh NOTES
 .Nm
 uses the advanced IPv6 API,
