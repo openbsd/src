@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.3 2005/05/13 14:54:44 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.4 2006/08/10 23:44:16 miod Exp $
 #
 # Copyright (c) 2003, Miodrag Vallat.
 # All rights reserved.
@@ -52,18 +52,24 @@ $1 == "keyboard" || $1 == "mouse" || $1 == "idmodule" || $1 == "buttonbox" {
 	    $2, $3, toupper($1))
 
 	# description, with optional ``#''-prefixed comments
+	comment = 0
 	i = 4
 	f = i
 	while (f <= NF) {
 		if ($f == "#") {
-			break
+			comment = 1
+			printf ("\" },\t/*")
+		} else {
+			if (f > i)
+				printf(" ")
+			printf("%s", $f)
 		}
-		if (f > i)
-			printf(" ")
-		printf("%s", $f)
 		f++
 	}
-	printf("\" },\n")
+	if (comment)
+		printf(" */\n");
+	else
+		printf("\" },\n")
 
 	next
 }
