@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.27 2006/08/06 13:12:32 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.28 2006/08/10 09:23:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1227,17 +1227,17 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 		wn->amn.amn_retrycnt++;
 	}
 
-	bus_dmamap_unload(sc->sc_dmat, data->map);
+	if ((letoh32(stat->status) & 0xff) != 1)
+		ifp->if_oerrors++;
+	else
+		ifp->if_opackets++;
 
+	bus_dmamap_unload(sc->sc_dmat, data->map);
 	m_freem(data->m);
 	data->m = NULL;
 	ieee80211_release_node(ic, data->ni);
 	data->ni = NULL;
 
-	if ((letoh32(stat->status) & 0xff) != 1)
-		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
 	ring->queued--;
 
 	sc->sc_tx_timer = 0;
