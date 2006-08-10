@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.31 2006/08/10 18:30:26 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.32 2006/08/10 18:33:48 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,7 +39,7 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
 .\" without ipsec, or new ipsec
-.Op Fl dfHNnqRtvWw
+.Op Fl dfHNmnqRtvWw
 .\" old ipsec
 .\" .Op Fl AdEfnNqRtvwW
 .Bk -words
@@ -196,6 +196,8 @@ is specified,
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
 Only the super-user may use this option.
+.It Fl m
+Use minimal MTU size to avoid fragmentation.
 .It Fl N
 Probe node information multicast group
 .Pq Li ff02::2:xxxx:xxxx .
