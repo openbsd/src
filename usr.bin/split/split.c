@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.12 2006/08/09 22:42:08 millert Exp $	*/
+/*	$OpenBSD: split.c,v 1.13 2006/08/10 22:44:17 millert Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #else
-static char rcsid[] = "$OpenBSD: split.c,v 1.12 2006/08/09 22:42:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: split.c,v 1.13 2006/08/10 22:44:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: split.c,v 1.12 2006/08/09 22:42:08 millert Exp 
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,7 +60,7 @@ static char rcsid[] = "$OpenBSD: split.c,v 1.12 2006/08/09 22:42:08 millert Exp 
 
 #define DEFLINE	1000			/* Default num lines per file. */
 
-long	 bytecnt;			/* Byte count to split on. */
+ssize_t	 bytecnt;			/* Byte count to split on. */
 long	 numlines;			/* Line count to split on. */
 int	 file_open;			/* If a file open. */
 int	 ifd = -1, ofd = -1;		/* Input/output file descriptors. */
@@ -72,12 +73,12 @@ int	 sufflen = 2;			/* File name suffix length. */
 void newfile(void);
 void split1(void);
 void split2(void);
-void usage(void);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	int ch;
+	int ch, scale;
 	char *ep, *p;
 	const char *errstr;
 
@@ -117,9 +118,15 @@ main(int argc, char *argv[])
 				errx(EX_USAGE,
 				    "%s: illegal byte count", optarg);
 			if (*ep == 'k')
-				bytecnt *= 1024;
+				scale = 1024;
 			else if (*ep == 'm')
-				bytecnt *= 1048576;
+				scale = 1048576;
+			else
+				scale = 1;
+			if (bytecnt > SSIZE_MAX / scale)
+				errx(EX_USAGE, "%s: byte count too large",
+				    optarg);
+			bytecnt *= scale;
 			break;
 		case 'p' :      /* pattern matching. */
 			if (regcomp(&rgx, optarg, REG_EXTENDED|REG_NOSUB) != 0)
@@ -180,8 +187,7 @@ main(int argc, char *argv[])
 void
 split1(void)
 {
-	long bcnt;
-	int dist, len;
+	ssize_t bcnt, dist, len;
 	char *C;
 
 	for (bcnt = 0;;)
@@ -202,8 +208,7 @@ split1(void)
 				for (C = bfr + dist; len >= bytecnt;
 				    len -= bytecnt, C += bytecnt) {
 					newfile();
-					if (write(ofd,
-					    C, (int)bytecnt) != bytecnt)
+					if (write(ofd, C, bytecnt) != bytecnt)
 						err(EX_IOERR, "write");
 				}
 				if (len != 0) {
@@ -325,7 +330,7 @@ newfile(void)
 	file_open = 1;
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
