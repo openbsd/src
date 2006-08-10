@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.31 2006/08/09 05:44:37 brad Exp $
+.\" $OpenBSD: em.4,v 1.32 2006/08/10 01:32:46 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -47,6 +47,7 @@ based on the Intel 82540EM, 82540EP, 82541EI, 82541ER, 82541GI, 82541PI, 82542,
 The driver supports IPv4 receive IP/TCP/UDP checksum offload on all but
 82542-based adapters and Jumbo frames on all but 82562V, 82566DC/82566DM and
 82573E/82573L/82573V-based adapters.
+The 82562V Ethernet controller chip only supports 10/100 media types.
 This includes the following models:
 .Pp
 .Bl -item -offset indent -compact
