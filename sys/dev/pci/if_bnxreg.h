@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.4 2006/08/09 16:13:06 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.5 2006/08/10 01:03:00 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -83,14 +83,6 @@
 #define u32	uint32_t
 #define u16	uint16_t
 #define u8	uint8_t
-
-#if BYTE_ORDER == BIG_ENDIAN
-#define __BIG_ENDIAN 1
-#undef  __LITTLE_ENDIAN
-#else
-#undef  __BIG_ENDIAN
-#define __LITTLE_ENDIAN 1
-#endif
 
 /****************************************************************************/
 /* Debugging macros and definitions.                                        */
@@ -783,7 +775,7 @@ struct status_block {
 		#define STATUS_ATTN_BITS_PARITY_ERROR		(1L<<31)
 
 	u32 status_attn_bits_ack;
-#if defined(__BIG_ENDIAN)
+#if BYTE_ORDER == BIG_ENDIAN
 	u16 status_tx_quick_consumer_index0;
 	u16 status_tx_quick_consumer_index1;
 	u16 status_tx_quick_consumer_index2;
@@ -808,7 +800,7 @@ struct status_block {
 	u16 status_cmd_consumer_index;
 	u16 status_idx;
 	u16 status_unused;
-#elif defined(__LITTLE_ENDIAN)
+#elif BYTE_ORDER == LITTLE_ENDIAN
 	u16 status_tx_quick_consumer_index1;
 	u16 status_tx_quick_consumer_index0;
 	u16 status_tx_quick_consumer_index3;
@@ -949,12 +941,12 @@ struct l2_fhdr {
 		#define L2_FHDR_ERRORS_UDP_XSUM		(1<<31)
 
 	u32 l2_fhdr_hash;
-#if defined(__BIG_ENDIAN)
+#if BYTE_ORDER == BIG_ENDIAN
 	u16 l2_fhdr_pkt_len;
 	u16 l2_fhdr_vlan_tag;
 	u16 l2_fhdr_ip_xsum;
 	u16 l2_fhdr_tcp_udp_xsum;
-#elif defined(__LITTLE_ENDIAN)
+#elif BYTE_ORDER == LITTLE_ENDIAN
 	u16 l2_fhdr_vlan_tag;
 	u16 l2_fhdr_pkt_len;
 	u16 l2_fhdr_tcp_udp_xsum;
