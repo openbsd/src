@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.210 2006/08/07 16:19:38 fkr Exp $
+$OpenBSD: usbdevs,v 1.211 2006/08/10 20:44:14 jason Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1017,7 +1017,8 @@ product FTDI MHAM_IC		0xeeec	IC
 product FTDI MHAM_DB9		0xeeed	DB9
 product FTDI MHAM_RS232		0xeeee	RS232
 product FTDI MHAM_Y9		0xeeef	Y9
-product	FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
+product FTDI COASTAL_TNCX	0xf448	Coastal ChipWorks TNC-X
+product FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24	0xfa03	Matrix Orbital LK202-24 LCD
 product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
 product FTDI LCD_CFA_631	0xfc0c  Crystalfontz CFA-631 LCD
