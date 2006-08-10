@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.35 2006/08/10 18:46:52 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.36 2006/08/10 18:50:27 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,9 +33,7 @@
 .Os
 .Sh NAME
 .Nm ping6
-.Nd send
-.Tn ICMPv6 ECHO_REQUEST
-packets to network hosts
+.Nd send ICMPv6 ECHO_REQUEST packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
 .\" without ipsec, or new ipsec
@@ -60,16 +58,16 @@ packets to network hosts
 .Sh DESCRIPTION
 .Nm
 uses the
-.Tn ICMPv6
+ICMPv6
 protocol's mandatory
-.Tn ICMP6_ECHO_REQUEST
+.Dv ICMP6_ECHO_REQUEST
 datagram to elicit an
-.Tn ICMP6_ECHO_REPLY
+.Dv ICMP6_ECHO_REPLY
 from a host or gateway.
-.Tn ICMP6_ECHO_REQUEST
+.Dv ICMP6_ECHO_REQUEST
 datagrams (``pings'') have an IPv6 header,
 and
-.Tn ICMPv6
+ICMPv6
 header formatted as documented in RFC 2463.
 The options are as follows:
 .Bl -tag -width Ds
@@ -110,7 +108,7 @@ Set socket buffer size.
 Stop after sending
 .Pq and receiving
 .Ar count
-.Tn ECHO_RESPONSE
+.Dv ECHO_RESPONSE
 packets.
 .It Fl d
 Set the
@@ -124,11 +122,11 @@ Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
-.Tn ECHO_REQUEST
+.Dv ECHO_REQUEST
 sent a period
 .Pq Sq \&.
 is printed, while for every
-.Tn ECHO_REPLY
+.Dv ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
 Only the super-user may use this option.
@@ -224,10 +222,10 @@ and must be numeric.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
-.Tn ICMP
+ICMP
 data bytes when combined
 with the 8 bytes of
-.Tn ICMP
+ICMP
 header data.
 You may need to specify
 .Fl b
@@ -241,9 +239,9 @@ has no effect if
 is specified.
 .It Fl v
 Verbose output.
-.Tn ICMP
+ICMP
 packets other than
-.Tn ECHO_RESPONSE
+.Dv ECHO_RESPONSE
 that are received are listed.
 .It Fl W
 Same as
