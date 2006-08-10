@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.19 2006/08/10 06:43:42 jmc Exp $
+.\"	$OpenBSD: mv.1,v 1.20 2006/08/10 06:50:37 jmc Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -114,27 +114,21 @@ to accomplish the move.
 The effect is equivalent to:
 .Bd -literal -offset indent
 $ rm -f destination_path && \e
-\tcp -PRp source_file destination && \e
-\trm -rf source_file
+    cp -PRp source_file destination && \e
+    rm -rf source_file
 .Ed
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std mv
 .Sh EXAMPLES
-.Li $ mv -f foo bar
-.Pp
 Rename file
 .Pa foo
 to
 .Pa bar ,
 overwriting
 .Pa bar
-if it already exists.
+if it already exists:
 .Pp
-.Li $ mv -i -- -f bar
-.br
-.Li $ mv -i ./-f bar
+.Dl $ mv -f foo bar
 .Pp
 Either of these commands will rename the file
 .Pa -f
@@ -142,7 +136,11 @@ to
 .Pa bar ,
 prompting for confirmation if
 .Pa bar
-already exists.
+already exists:
+.Bd -literal -offset indent
+$ mv -i -- -f bar
+$ mv -i ./-f bar
+.Ed
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr symlink 7
@@ -150,7 +148,7 @@ already exists.
 The
 .Nm
 utility is expected to be
-.St -p1003.2
+.St -p1003.1-2004
 compatible.
 .Sh HISTORY
 A
