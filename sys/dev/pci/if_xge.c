@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.28 2006/08/02 00:23:18 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.29 2006/08/10 15:48:45 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/* Create transmit DMA maps */
 	for (i = 0; i < NTXDESCS; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_FRAMELEN,
-		    NTXFRAGS, MCLBYTES, 0, 0, &sc->sc_txm[i])) {
+		    NTXFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_txm[i])) {
 			printf(": cannot create TX DMA maps\n");
 			return;
 		}
@@ -475,7 +475,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	/* Create receive buffer DMA maps */
 	for (i = 0; i < NRXREAL; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_FRAMELEN,
-		    NRXFRAGS, MCLBYTES, 0, 0, &sc->sc_rxm[i])) {
+		    NRXFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_rxm[i])) {
 			printf(": cannot create RX DMA maps\n");
 			return;
 		}
@@ -1193,9 +1193,9 @@ xge_alloc_rxmem(struct xge_softc *sc)
 
 err:
 	if (state > 2)
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_txmap);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxmap);
 	if (state > 1)
-		bus_dmamem_unmap(sc->sc_dmat, kva, TXMAPSZ);
+		bus_dmamem_unmap(sc->sc_dmat, kva, RXMAPSZ);
 	if (state > 0)
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 	return (ENOBUFS);
