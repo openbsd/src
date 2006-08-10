@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.29 2006/08/10 15:48:45 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.30 2006/08/10 17:24:32 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -201,7 +201,8 @@ void xge_start(struct ifnet *);
 void xge_stop(struct ifnet *, int);
 void xge_shutdown(void *);
 int xge_add_rxbuf(struct xge_softc *, int);
-void xge_mcast_filter(struct xge_softc *);
+void xge_setmulti(struct xge_softc *);
+void xge_setpromisc(struct xge_softc *);
 int xge_setup_xgxs(struct xge_softc *);
 int xge_ioctl(struct ifnet *, u_long, caddr_t);
 int xge_init(struct ifnet *);
@@ -701,7 +702,9 @@ xge_init(struct ifnet *ifp)
 	PIF_WCSR(MAC_INT_MASK, MAC_TMAC_INT); /* only from RMAC */
 	PIF_WCSR(MAC_RMAC_ERR_MASK, ~RMAC_LINK_STATE_CHANGE_INT);
 
-	xge_mcast_filter(sc);
+	xge_setpromisc(sc);
+
+	xge_setmulti(sc);
 
 	/* Done... */
 	ifp->if_flags |= IFF_RUNNING;
@@ -875,7 +878,6 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct xge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	uint64_t val;
 	int s, error = 0;
 
 	s = splnet();
@@ -902,25 +904,11 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked up and not running, then start it.
-		 * If it is marked down and running, stop it.
-		 * XXX If it's up then re-initialize it. This is so flags
-		 * such as IFF_PROMISC are handled.
-		 */
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->xge_if_flags & IFF_PROMISC)) {
-				val = PIF_RCSR(MAC_CFG);
-				val |= RMAC_PROM_EN;
-				PIF_WCSR(MAC_CFG, val);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->xge_if_flags & IFF_PROMISC) {
-				val = PIF_RCSR(MAC_CFG);
-				val &= ~RMAC_PROM_EN;
-				PIF_WCSR(MAC_CFG, val);
+			    (ifp->if_flags ^ sc->xge_if_flags) &
+			     IFF_PROMISC) {
+				xge_setpromisc(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
 					xge_init(ifp);
@@ -939,7 +927,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
                 if (error == ENETRESET) {
                         if (ifp->if_flags & IFF_RUNNING)
-				xge_mcast_filter(sc);
+				xge_setmulti(sc);
 			error = 0;
 		}
 		break;
@@ -957,7 +945,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-xge_mcast_filter(struct xge_softc *sc)
+xge_setmulti(struct xge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct arpcom *ac = &sc->sc_arpcom;
@@ -1008,6 +996,22 @@ allmulti:
 	    RMAC_ADDR_CMD_MEM_STR|RMAC_ADDR_CMD_MEM_OFF(1));
 	while (PIF_RCSR(RMAC_ADDR_CMD_MEM) & RMAC_ADDR_CMD_MEM_STR)
 		;
+}
+
+void
+xge_setpromisc(struct xge_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	uint64_t val;
+
+	val = PIF_RCSR(MAC_CFG);
+
+	if (ifp->if_flags & IFF_PROMISC)
+		val |= RMAC_PROM_EN;
+	else
+		val &= ~RMAC_PROM_EN;
+
+	PIF_WCSR(MAC_CFG, val);
 }
 
 void 
