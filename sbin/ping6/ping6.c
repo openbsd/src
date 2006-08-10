@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.65 2006/04/13 00:49:15 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.66 2006/08/10 18:40:35 jmc Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -2699,7 +2699,7 @@ usage(void)
 #ifdef IPV6_USE_MIN_MTU
 	    "m"
 #endif
-	    "nNqtvwW"
+	    "NnqtvWw"
 #ifdef IPV6_REACHCONF
 	    "R"
 #endif
@@ -2710,9 +2710,8 @@ usage(void)
 	    "AE"
 #endif
 #endif
-	    "] [-a [aAclsg]] [-b sockbufsiz] [-c count] \n"
-            "\t[-I interface] [-i wait] [-l preload] [-p pattern] "
-	    "[-S sourceaddr]\n"
-            "\t[-s packetsize] [-h hoplimit] [-g gateway] [hops...] host\n");
+	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
+            "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
+	    "\n\t[-S sourceaddr] [-s packetsize] [hops...] host\n");
 	exit(1);
 }
