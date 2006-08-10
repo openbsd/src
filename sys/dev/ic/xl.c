@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.74 2006/05/27 20:40:34 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.75 2006/08/10 18:40:54 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -180,6 +180,7 @@ void xl_setcfg(struct xl_softc *);
 void xl_setmode(struct xl_softc *, int);
 void xl_setmulti(struct xl_softc *);
 void xl_setmulti_hash(struct xl_softc *);
+void xl_setpromisc(struct xl_softc *);
 void xl_reset(struct xl_softc *);
 int xl_list_rx_init(struct xl_softc *);
 int xl_list_tx_init(struct xl_softc *);
@@ -673,6 +674,26 @@ allmulti:
 
 	return;
 }
+
+void
+xl_setpromisc(struct xl_softc *sc)
+{
+	struct ifnet *ifp;
+	u_int8_t rxfilt;
+
+	ifp = &sc->sc_arpcom.ac_if;
+
+	XL_SEL_WIN(5);
+	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
+
+	if (ifp->if_flags & IFF_RUNNING)
+		rxfilt |= XL_RXFILTER_ALLFRAMES;
+	else
+		rxfilt &= ~XL_RXFILTER_ALLFRAMES;
+
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
+}
+
 
 #ifdef notdef
 void
@@ -2087,25 +2108,22 @@ xl_init(xsc)
 	/* Set the individual bit to receive frames for this host only. */
 	rxfilt |= XL_RXFILTER_INDIVIDUAL;
 
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
-		rxfilt |= XL_RXFILTER_ALLFRAMES;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-	} else {
-		rxfilt &= ~XL_RXFILTER_ALLFRAMES;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-	}
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
+
+	/* Set promiscuous mode. */
+	xl_setpromisc(sc);
+
+	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
 
 	/*
 	 * Set capture broadcast bit to capture broadcast frames.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		rxfilt |= XL_RXFILTER_BROADCAST;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-	} else {
+	else
 		rxfilt &= ~XL_RXFILTER_BROADCAST;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-	}
+
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
 
 	/*
 	 * Program the multicast filter, if necessary.
@@ -2346,7 +2364,6 @@ xl_ioctl(ifp, command, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 	struct mii_data *mii = NULL;
-	u_int8_t rxfilt;
 
 	s = splnet();
 
@@ -2358,17 +2375,12 @@ xl_ioctl(ifp, command, data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			xl_init(sc);
 #ifdef INET
-		case AF_INET:
-			xl_init(sc);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif /* INET */
-		default:
-			xl_init(sc);
-			break;
-		}
 		break;
 
 	case SIOCSIFMTU:
@@ -2380,30 +2392,21 @@ xl_ioctl(ifp, command, data)
 
 	case SIOCSIFFLAGS:
 		XL_SEL_WIN(5);
-		rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->xl_if_flags & IFF_PROMISC)) {
-				rxfilt |= XL_RXFILTER_ALLFRAMES;
-				CSR_WRITE_2(sc, XL_COMMAND,
-				    XL_CMD_RX_SET_FILT|rxfilt);
+			    (ifp->if_flags ^ sc->xl_if_flags) &
+			     IFF_PROMISC) {
+				xl_setpromisc(sc);
 				XL_SEL_WIN(7);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->xl_if_flags & IFF_PROMISC) {
-				rxfilt &= ~XL_RXFILTER_ALLFRAMES;
-				CSR_WRITE_2(sc, XL_COMMAND,
-				    XL_CMD_RX_SET_FILT|rxfilt);
-				XL_SEL_WIN(7);
-			} else
-				xl_init(sc);
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					xl_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				xl_stop(sc);
 		}
 		sc->xl_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
