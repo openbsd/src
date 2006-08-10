@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.11 2006/07/04 18:17:22 marco Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.12 2006/08/10 00:48:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -120,7 +120,7 @@ mpi_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* disable the expansion rom */
-	PWRITE(psc, PCI_ROM_REG, PREAD(psc, PCI_ROM_REG & ~PCI_ROM_ENABLE));
+	PWRITE(psc, PCI_ROM_REG, PREAD(psc, PCI_ROM_REG) & ~PCI_ROM_ENABLE);
 
 	/* hook up the interrupt */
 	if (pci_intr_map(pa, &ih)) {
