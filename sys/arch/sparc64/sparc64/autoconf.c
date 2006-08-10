@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.56 2006/06/01 01:17:25 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.57 2006/08/10 01:11:13 gwk Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -103,6 +103,9 @@ extern	int kgdb_debug_panic;
 
 static	int rootnode;
 char platform_type[64];
+
+/* for hw.product/vendor see sys/kern/kern_sysctl.c */
+extern char *hw_prod, *hw_vendor;
 
 static	char *str2hex(char *, long *);
 static	int mbprint(void *, const char *);
@@ -996,9 +999,9 @@ extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern bus_space_tag_t mainbus_space_tag;
 
 	struct mainbus_attach_args ma;
-	char buf[32];
+	char buf[32], *p;
 	const char *const *ssp, *sp = NULL;
-	int node0, node, rv;
+	int node0, node, rv, len;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -1016,12 +1019,20 @@ extern bus_space_tag_t mainbus_space_tag;
 		NULL
 	};
 
-	if (OF_getprop(findroot(), "banner-name", platform_type,
-	    sizeof(platform_type)) <= 0)
+	if ((len = OF_getprop(findroot(), "banner-name", platform_type,
+	    sizeof(platform_type))) <= 0)
 		OF_getprop(findroot(), "name", platform_type,
 		    sizeof(platform_type));
 	printf(": %s\n", platform_type);
-
+	if (len > 0) {
+		hw_vendor = platform_type;
+		if ((p = memchr(hw_vendor, ' ', len)) != NULL) {
+			*p = '\0';
+			hw_prod = ++p;
+			if ((p = memchr(p, '(', len - (p - hw_vendor))) != NULL)
+				*p = '\0'; 
+		}
+	}
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
