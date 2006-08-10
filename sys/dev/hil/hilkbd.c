@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.12 2005/05/13 14:54:44 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.13 2006/08/10 23:43:45 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -58,6 +58,7 @@ struct hilkbd_softc {
 	int		sc_ledstate;
 	int		sc_enabled;
 	int		sc_console;
+	int		sc_lastarrow;
 
 	struct device	*sc_wskbddev;
 
@@ -123,7 +124,7 @@ struct wskbd_mapdata hilkbd_keymapdata_ps2 = {
 
 void	hilkbd_bell(struct hil_softc *, u_int, u_int, u_int);
 void	hilkbd_callback(struct hildev_softc *, u_int, u_int8_t *);
-void	hilkbd_decode(u_int8_t, u_int8_t, u_int *, int *);
+void	hilkbd_decode(struct hilkbd_softc *, u_int8_t, u_int *, int *, int);
 int	hilkbd_is_console(int);
 void	hilkbd_rawrepeat(void *);
 
@@ -342,11 +343,11 @@ hilkbd_cngetc(void *v, u_int *type, int *data)
 		 * Disregard keyboard data packet header.
 		 * Note that no key generates it, so we're safe.
 		 */
-		if (c != HIL_KBDDATA)
+		if (c != HIL_KBDBUTTON)
 			break;
 	}
 
-	hilkbd_decode(stat, c, type, data);
+	hilkbd_decode(sc, c, type, data, HIL_KBDBUTTON);
 }
 
 void
@@ -384,7 +385,7 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 {
 	struct hilkbd_softc *sc = (struct hilkbd_softc *)dev;
 	u_int type;
-	int key;
+	int kbdtype, key;
 	int i, s;
 
 	/*
@@ -393,8 +394,15 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 	if (sc->sc_enabled == 0)
 		return;
 
-	if (buflen == 0 || *buf != HIL_KBDDATA)
+	if (buflen == 0)
 		return;
+	switch ((kbdtype = *buf & HIL_KBDDATA)) {
+	case HIL_BUTTONBOX:
+	case HIL_KBDBUTTON:
+		break;
+	default:
+		return;
+	}
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
@@ -403,7 +411,7 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 
 		npress = j = 0;
 		for (i = 1, buf++; i < buflen; i++) {
-			hilkbd_decode(0, *buf++, &type, &key);
+			hilkbd_decode(sc, *buf++, &type, &key, kbdtype);
 			c = hilkbd_raw[key];
 			if (c == RAWKEY_Null)
 				continue;
@@ -436,7 +444,7 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 	{
 		s = spltty();
 		for (i = 1, buf++; i < buflen; i++) {
-			hilkbd_decode(0, *buf++, &type, &key);
+			hilkbd_decode(sc, *buf++, &type, &key, kbdtype);
 			if (sc->sc_wskbddev != NULL)
 				wskbd_input(sc->sc_wskbddev, type, key);
 		}
@@ -445,8 +453,16 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 }
 
 void
-hilkbd_decode(u_int8_t stat, u_int8_t data, u_int *type, int *key)
+hilkbd_decode(struct hilkbd_softc *sc, u_int8_t data, u_int *type, int *key,
+    int kbdtype)
 {
+	if (kbdtype == HIL_BUTTONBOX) {
+		if (data == 0x02)	/* repeat arrow */
+			data = sc->sc_lastarrow;
+		else if (data >= 0xf8)
+			sc->sc_lastarrow = data;
+	}
+
 	*type = (data & 1) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*key = data >> 1;
 }

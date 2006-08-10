@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilreg.h,v 1.5 2005/01/11 00:11:05 miod Exp $	*/
+/*	$OpenBSD: hilreg.h,v 1.6 2006/08/10 23:43:45 miod Exp $	*/
 /*	$NetBSD: hilreg.h,v 1.6 1997/02/02 09:39:21 thorpej Exp $	*/
 
 /*
@@ -128,7 +128,7 @@
 
 /* HIL packet headers */
 #define	HIL_MOUSEDATA   0x02
-#define	HIL_KBDDATA     0x40
+#define	HIL_KBDDATA     0x70
   
 #define	HIL_MOUSEMOTION	0x02	/* mouse movement event */
 #define	HIL_TABLET      0x02	/* tablet motion event */
