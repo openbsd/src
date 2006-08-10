@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.4 2006/08/09 08:34:01 damien Exp $
+.\" $OpenBSD: rum.4,v 1.5 2006/08/10 07:34:04 damien Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -26,13 +26,20 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports USB 802.11 wireless adapters based on the Ralink RT2501USB
-chipset.
+driver supports USB 2.0 wireless adapters based on the Ralink RT2501USB,
+and RT2601USB chipsets.
 .Pp
 The RT2501USB chipset is the second generation of 802.11a/b/g adapters from
 Ralink.
-It consists of two integrated chips, an RT2571W MAC/BBP and an RT2528 radio
-transceiver.
+It consists of two integrated chips, an RT2571W MAC/BBP and an RT2528 or
+RT5226 radio transceiver.
+.Pp
+The RT2601USB chipset consists of two integrated chips, an RT2671 MAC/BBP and
+an RT2527 or RT5225 radio transceiver.
+This chipset uses the MIMO (multiple-input multiple-output) technology with
+multiple antennas to extend the operating range of the adapter and to achieve
+higher throughput.
+MIMO is the basis of the forthcoming IEEE 802.11n standard.
 .Pp
 These are the modes the
 .Nm
@@ -213,6 +220,7 @@ The following firmware file is loaded when an interface is brought up:
 The following adapters should work:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It Airlink AWLL5025
 .It Belkin F5D7050A
 .It CNet CWD-854 ver F
 .It Conceptronic C54RU ver 2
@@ -220,6 +228,7 @@ The following adapters should work:
 .It D-Link WUA-1340
 .It Gigabyte GN-WB01GS
 .It Linksys WUSB54G rev C
+.It Planex GW-USMM
 .El
 .Sh EXAMPLES
 The following
