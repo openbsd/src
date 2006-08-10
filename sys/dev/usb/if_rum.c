@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.27 2006/08/09 08:21:08 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.28 2006/08/10 07:44:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1815,9 +1815,9 @@ Static const char *
 rum_get_rf(int rev)
 {
 	switch (rev) {
-	case RT2573_RF_2527:	return "RT2527";
+	case RT2573_RF_2527:	return "RT2527 (MIMO XR)";
 	case RT2573_RF_2528:	return "RT2528";
-	case RT2573_RF_5225:	return "RT5225";
+	case RT2573_RF_5225:	return "RT5225 (MIMO XR)";
 	case RT2573_RF_5226:	return "RT5226";
 	default:		return "unknown";
 	}
@@ -1872,8 +1872,6 @@ rum_read_eeprom(struct rum_softc *sc)
 
 	rum_eeprom_read(sc, RT2573_EEPROM_FREQ_OFFSET, &val, 2);
 	val = le16toh(val);
-	if ((val >> 8) != 0xff)
-		sc->rfprog = (val >> 8) & 0x3;
 	if ((val & 0xff) != 0xff)
 		sc->rffreq = val & 0xff;
 
