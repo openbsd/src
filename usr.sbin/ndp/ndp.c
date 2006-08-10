@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.36 2005/04/04 09:03:08 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.37 2006/08/10 22:08:33 jmc Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -824,16 +824,14 @@ ndp_ether_aton(char *a, u_char *n)
 void
 usage(void)
 {
-	printf("usage: ndp [-nt] hostname\n");
-	printf("       ndp [-nt] -a | -c | -p | -r | -H | -P | -R\n");
-	printf("       ndp [-nt] -A wait\n");
-	printf("       ndp [-nt] -d hostname\n");
-	printf("       ndp [-nt] -f filename\n");
-	printf("       ndp [-nt] -i interface [flags...]\n");
+	printf("usage: ndp [-nrt] [-a | -c | -p] [-H | -P | -R] ");
+	printf("[-A wait] [-d hostname]\n");
+	printf("\t[-f filename] ");
 #ifdef SIOCSDEFIFACE_IN6
-	printf("       ndp [-nt] -I [interface|delete]\n");
+	printf("[-I [interface | delete]] ");
 #endif
-	printf("       ndp [-nt] -s nodename etheraddr [temp] [proxy]\n");
+	printf("[-i interface [flags...]]\n");
+	printf("\t[-s nodename etheraddr [temp] [proxy]] [hostname]\n");
 	exit(1);
 }
 
