@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.22 2004/10/28 08:44:22 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.23 2006/08/10 21:58:11 jmc Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,39 +38,22 @@
 .\"
 .Sh SYNOPSIS
 .Nm ndp
-.Op Fl nt
-.Ar hostname
-.Nm ndp
-.Op Fl nt
-.Fl a | c | p
-.Nm ndp
-.Op Fl nt
-.Fl r
-.Nm ndp
-.Op Fl nt
-.Fl H | P | R
-.Nm ndp
-.Op Fl nt
-.Fl A Ar wait
-.Nm ndp
-.Op Fl nt
-.Fl d Ar hostname
-.Nm ndp
-.Op Fl nt
-.Fl f Ar filename
-.Nm ndp
-.Op Fl nt
-.Fl i
-.Ar interface
-.Op Ar flags ...
-.Nm ndp
-.Op Fl nt
-.Fl I Op Ar interface | Ic delete
-.Nm ndp
-.Op Fl nt
+.Bk -words
+.Op Fl nrt
+.Op Fl a | c | p
+.Op Fl H | P | R
+.Op Fl A Ar wait
+.Op Fl d Ar hostname
+.Op Fl f Ar filename
+.Op Fl I Op Ar interface | Ic delete
+.Op Fl i Ar interface Op Ar flags ...
+.Oo
 .Fl s Ar nodename etheraddr
 .Op Ic temp
 .Op Ic proxy
+.Oc
+.Op Ar hostname
+.Ek
 .\"
 .Sh DESCRIPTION
 The
@@ -88,54 +71,57 @@ seconds.
 .It Fl a
 Dump the currently existing NDP entries.
 The following information will be printed:
-.Bl -tag -width NeighborXX
+.Bl -tag -width Ds -offset 3n
 .It Neighbor
-IPv6 address of the neighbor.
+The IPv6 address of the neighbor.
 .It Linklayer Address
-Linklayer address of the neighbor.
-It could be
-.Dq Li (incomplete)
-when the address is not available.
+The linklayer address of the neighbor.
+If the address is not available,
+it will be displayed as
+.Dq (incomplete) .
 .It Netif
-Network interface associated with the neighbor cache entry.
+The network interface associated with the neighbor cache entry.
 .It Expire
 The time until expiry of the entry.
-The entry could become
-.Dq Li permanent ,
-in which case it will never expire.
+If the entry is marked
+.Dq permanent ,
+it will never expire.
 .It S
-State of the neighbor cache entry, as a single letter:
+The state of the neighbor cache entry, as a single letter:
 .Pp
-.Bl -tag -width indent -compact
-.It N
-Nostate
-.It W
-Waitdelete
+.Bl -tag -width Ds -offset 3n -compact
+.It D
+Delay
 .It I
 Incomplete
+.It N
+Nostate
+.It P
+Probe
 .It R
 Reachable
 .It S
 Stale
-.It D
-Delay
-.It P
-Probe
+.It W
+Waitdelete
 .It \&?
 Unknown state (should never happen).
 .El
 .It Flags
 Flags on the neighbor cache entry, in a single letter.
-They are: Router, proxy neighbor advertisement
-.Pq Dq p .
-The field could be followed by a decimal number,
-which means the number of NS probes the node has sent during the current state.
+They are: Router
+.Pq Sq R
+and proxy neighbor advertisement
+.Pq Sq p .
+This field may be followed by a decimal number,
+representing the number of NS probes
+the node has sent during the current state.
 .El
 .It Fl c
 Erase all the NDP entries.
-.It Fl d
-Delete specified NDP entry.
-.It Fl f
+.It Fl d Ar hostname
+Delete the specified NDP entry.
+.It Fl f Ar filename
 Parse the file specified by
 .Ar filename .
 .It Fl H
@@ -163,9 +149,9 @@ All of the flags can begin with the
 special character
 .Ql - ,
 which means the flag should be cleared.
-Note that you need
+Note that
 .Fl -
-before
+would be needed before
 .Fl foo
 in this case.
 .\"
@@ -207,34 +193,35 @@ Do not try to resolve numeric addresses to hostnames.
 .It Fl P
 Flush all the entries in the prefix list.
 .It Fl p
-Show prefix list.
+Show the prefix list.
 .It Fl R
 Flush all the entries in the default router list.
 .It Fl r
-Show default router list.
-.It Fl s
-Register a NDP entry for a node.
+Show the default router list.
+.It Xo
+.Fl s Ar nodename etheraddr
+.Op Cm temp
+.Op Cm proxy
+.Xc
+Register an NDP entry for a node.
 The entry will be permanent unless the word
-.Ic temp
+.Cm temp
 is given in the command.
 If the word
-.Ic proxy
+.Cm proxy
 is given, this system will act as a proxy NDP server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
 .It Fl t
-Print timestamp on each entry,
+Print a timestamp on each entry,
 making it possible to merge output with
 .Xr tcpdump 8 .
 Most useful when used with
 .Fl A .
 .El
-.\"
-.Sh RETURN VALUES
-The
-.Nm
-command exits with 0 on success, and non-zero on errors.
+.Pp
+.Ex -std ndp
 .\"
 .Sh SEE ALSO
 .Xr ip6 4 ,
