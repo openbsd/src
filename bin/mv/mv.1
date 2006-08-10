@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.18 2003/06/02 23:32:08 millert Exp $
+.\"	$OpenBSD: mv.1,v 1.19 2006/08/10 06:43:42 jmc Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -61,12 +61,17 @@ In its second form,
 .Nm
 moves each file named by a
 .Ar source
-operand to a destination file in the existing directory named by the
+operand to a destination specified by the
 .Ar directory
 operand.
-The destination path for each operand is the pathname produced by the
-concatenation of the last operand, a slash, and the final pathname
-component of the named file.
+It is an error if the
+.Ar directory
+operand does not exist.
+The destination path for each
+.Ar file
+operand is the pathname produced by the concatenation of the
+.Ar directory
+operand, a slash, and the final pathname component of the named file.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -90,10 +95,6 @@ or
 options is the one which affects
 .Nm mv Ns 's
 behavior.
-.Pp
-It is an error for either the
-.Ar source
-operand or the destination path to specify a directory unless both do.
 .Pp
 If the destination path does not have a mode which permits writing,
 .Nm
@@ -156,3 +157,20 @@ A
 .Nm
 command appeared in
 .At v1 .
+.Sh CAVEATS
+In the second synopsis form
+if the destination path exists,
+the
+.Ar source
+operand and the destination path
+must both be a file or must both be a directory
+for the operation to succeed.
+For example, if
+.Pa f
+is a file and
+.Pa d
+and
+.Pa d/f
+are directories, the following command will fail:
+.Pp
+.Dl $ mv f d
