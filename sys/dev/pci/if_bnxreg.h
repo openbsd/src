@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.5 2006/08/10 01:03:00 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.6 2006/08/10 04:01:52 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -75,14 +75,6 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/brgphyreg.h>
-
-/****************************************************************************/
-/* Conversion to OpenBSD type definitions.                                  */
-/****************************************************************************/
-#define u64 uint64_t
-#define u32	uint32_t
-#define u16	uint16_t
-#define u8	uint8_t
 
 /****************************************************************************/
 /* Debugging macros and definitions.                                        */
@@ -326,17 +318,17 @@ struct bnx_type {
 #define FLASH_BACKUP_STRAP_MASK			(0xf << 26)
 
 struct flash_spec {
-	u32 strapping;
-	u32 config1;
-	u32 config2;
-	u32 config3;
-	u32 write1;
-	u32 buffered;
-	u32 page_bits;
-	u32 page_size;
-	u32 addr_mask;
-	u32 total_size;
-	u8  *name;
+	u_int32_t strapping;
+	u_int32_t config1;
+	u_int32_t config2;
+	u_int32_t config3;
+	u_int32_t write1;
+	u_int32_t buffered;
+	u_int32_t page_bits;
+	u_int32_t page_size;
+	u_int32_t addr_mask;
+	u_int32_t total_size;
+	u_int8_t  *name;
 };
 
 
@@ -680,11 +672,11 @@ struct flash_spec {
 #define BNX_STATS(x)			(u_long) stats->stat_ ## x ## _lo
 
 #ifdef __LP64__
-#define BNX_ADDR_LO(y)			((u64)(y) & 0xffffffff)
-#define BNX_ADDR_HI(y)			((u64)(y) >> 32)
+#define BNX_ADDR_LO(y)			((u_int64_t)(y) & 0xffffffff)
+#define BNX_ADDR_HI(y)			((u_int64_t)(y) >> 32)
 #else
-#define BNX_ADDR_LO(y)			((u32)(y))
-#define BNX_ADDR_HI(y)			((u32)0)
+#define BNX_ADDR_LO(y)			((u_int32_t)(y))
+#define BNX_ADDR_HI(y)			((u_int32_t)0)
 #endif
 
 /*
@@ -703,10 +695,10 @@ struct flash_spec {
  *  tx_bd definition
  */
 struct tx_bd {
-	u32 tx_bd_haddr_hi;
-	u32 tx_bd_haddr_lo;
-	u32 tx_bd_mss_nbytes;
-	u32 tx_bd_vlan_tag_flags;
+	u_int32_t tx_bd_haddr_hi;
+	u_int32_t tx_bd_haddr_lo;
+	u_int32_t tx_bd_mss_nbytes;
+	u_int32_t tx_bd_vlan_tag_flags;
 		#define TX_BD_FLAGS_CONN_FAULT		(1<<0)
 		#define TX_BD_FLAGS_TCP_UDP_CKSUM	(1<<1)
 		#define TX_BD_FLAGS_IP_CKSUM		(1<<2)
@@ -727,10 +719,10 @@ struct tx_bd {
  *  rx_bd definition
  */
 struct rx_bd {
-	u32 rx_bd_haddr_hi;
-	u32 rx_bd_haddr_lo;
-	u32 rx_bd_len;
-	u32 rx_bd_flags;
+	u_int32_t rx_bd_haddr_hi;
+	u_int32_t rx_bd_haddr_lo;
+	u_int32_t rx_bd_len;
+	u_int32_t rx_bd_flags;
 		#define RX_BD_FLAGS_NOPUSH		(1<<0)
 		#define RX_BD_FLAGS_DUMMY		(1<<1)
 		#define RX_BD_FLAGS_END			(1<<2)
@@ -743,7 +735,7 @@ struct rx_bd {
  *  status_block definition
  */
 struct status_block {
-	u32 status_attn_bits;
+	u_int32_t status_attn_bits;
 		#define STATUS_ATTN_BITS_LINK_STATE		(1L<<0)
 		#define STATUS_ATTN_BITS_TX_SCHEDULER_ABORT	(1L<<1)
 		#define STATUS_ATTN_BITS_TX_BD_READ_ABORT	(1L<<2)
@@ -774,57 +766,57 @@ struct status_block {
 		#define STATUS_ATTN_BITS_GRC_ABORT		(1L<<27)
 		#define STATUS_ATTN_BITS_PARITY_ERROR		(1L<<31)
 
-	u32 status_attn_bits_ack;
+	u_int32_t status_attn_bits_ack;
 #if BYTE_ORDER == BIG_ENDIAN
-	u16 status_tx_quick_consumer_index0;
-	u16 status_tx_quick_consumer_index1;
-	u16 status_tx_quick_consumer_index2;
-	u16 status_tx_quick_consumer_index3;
-	u16 status_rx_quick_consumer_index0;
-	u16 status_rx_quick_consumer_index1;
-	u16 status_rx_quick_consumer_index2;
-	u16 status_rx_quick_consumer_index3;
-	u16 status_rx_quick_consumer_index4;
-	u16 status_rx_quick_consumer_index5;
-	u16 status_rx_quick_consumer_index6;
-	u16 status_rx_quick_consumer_index7;
-	u16 status_rx_quick_consumer_index8;
-	u16 status_rx_quick_consumer_index9;
-	u16 status_rx_quick_consumer_index10;
-	u16 status_rx_quick_consumer_index11;
-	u16 status_rx_quick_consumer_index12;
-	u16 status_rx_quick_consumer_index13;
-	u16 status_rx_quick_consumer_index14;
-	u16 status_rx_quick_consumer_index15;
-	u16 status_completion_producer_index;
-	u16 status_cmd_consumer_index;
-	u16 status_idx;
-	u16 status_unused;
+	u_int16_t status_tx_quick_consumer_index0;
+	u_int16_t status_tx_quick_consumer_index1;
+	u_int16_t status_tx_quick_consumer_index2;
+	u_int16_t status_tx_quick_consumer_index3;
+	u_int16_t status_rx_quick_consumer_index0;
+	u_int16_t status_rx_quick_consumer_index1;
+	u_int16_t status_rx_quick_consumer_index2;
+	u_int16_t status_rx_quick_consumer_index3;
+	u_int16_t status_rx_quick_consumer_index4;
+	u_int16_t status_rx_quick_consumer_index5;
+	u_int16_t status_rx_quick_consumer_index6;
+	u_int16_t status_rx_quick_consumer_index7;
+	u_int16_t status_rx_quick_consumer_index8;
+	u_int16_t status_rx_quick_consumer_index9;
+	u_int16_t status_rx_quick_consumer_index10;
+	u_int16_t status_rx_quick_consumer_index11;
+	u_int16_t status_rx_quick_consumer_index12;
+	u_int16_t status_rx_quick_consumer_index13;
+	u_int16_t status_rx_quick_consumer_index14;
+	u_int16_t status_rx_quick_consumer_index15;
+	u_int16_t status_completion_producer_index;
+	u_int16_t status_cmd_consumer_index;
+	u_int16_t status_idx;
+	u_int16_t status_unused;
 #elif BYTE_ORDER == LITTLE_ENDIAN
-	u16 status_tx_quick_consumer_index1;
-	u16 status_tx_quick_consumer_index0;
-	u16 status_tx_quick_consumer_index3;
-	u16 status_tx_quick_consumer_index2;
-	u16 status_rx_quick_consumer_index1;
-	u16 status_rx_quick_consumer_index0;
-	u16 status_rx_quick_consumer_index3;
-	u16 status_rx_quick_consumer_index2;
-	u16 status_rx_quick_consumer_index5;
-	u16 status_rx_quick_consumer_index4;
-	u16 status_rx_quick_consumer_index7;
-	u16 status_rx_quick_consumer_index6;
-	u16 status_rx_quick_consumer_index9;
-	u16 status_rx_quick_consumer_index8;
-	u16 status_rx_quick_consumer_index11;
-	u16 status_rx_quick_consumer_index10;
-	u16 status_rx_quick_consumer_index13;
-	u16 status_rx_quick_consumer_index12;
-	u16 status_rx_quick_consumer_index15;
-	u16 status_rx_quick_consumer_index14;
-	u16 status_cmd_consumer_index;
-	u16 status_completion_producer_index;
-	u16 status_unused;
-	u16 status_idx;
+	u_int16_t status_tx_quick_consumer_index1;
+	u_int16_t status_tx_quick_consumer_index0;
+	u_int16_t status_tx_quick_consumer_index3;
+	u_int16_t status_tx_quick_consumer_index2;
+	u_int16_t status_rx_quick_consumer_index1;
+	u_int16_t status_rx_quick_consumer_index0;
+	u_int16_t status_rx_quick_consumer_index3;
+	u_int16_t status_rx_quick_consumer_index2;
+	u_int16_t status_rx_quick_consumer_index5;
+	u_int16_t status_rx_quick_consumer_index4;
+	u_int16_t status_rx_quick_consumer_index7;
+	u_int16_t status_rx_quick_consumer_index6;
+	u_int16_t status_rx_quick_consumer_index9;
+	u_int16_t status_rx_quick_consumer_index8;
+	u_int16_t status_rx_quick_consumer_index11;
+	u_int16_t status_rx_quick_consumer_index10;
+	u_int16_t status_rx_quick_consumer_index13;
+	u_int16_t status_rx_quick_consumer_index12;
+	u_int16_t status_rx_quick_consumer_index15;
+	u_int16_t status_rx_quick_consumer_index14;
+	u_int16_t status_cmd_consumer_index;
+	u_int16_t status_completion_producer_index;
+	u_int16_t status_unused;
+	u_int16_t status_idx;
 #endif
 };
 
@@ -833,86 +825,86 @@ struct status_block {
  *  statistics_block definition
  */
 struct statistics_block {
-	u32 stat_IfHCInOctets_hi;
-	u32 stat_IfHCInOctets_lo;
-	u32 stat_IfHCInBadOctets_hi;
-	u32 stat_IfHCInBadOctets_lo;
-	u32 stat_IfHCOutOctets_hi;
-	u32 stat_IfHCOutOctets_lo;
-	u32 stat_IfHCOutBadOctets_hi;
-	u32 stat_IfHCOutBadOctets_lo;
-	u32 stat_IfHCInUcastPkts_hi;
-	u32 stat_IfHCInUcastPkts_lo;
-	u32 stat_IfHCInMulticastPkts_hi;
-	u32 stat_IfHCInMulticastPkts_lo;
-	u32 stat_IfHCInBroadcastPkts_hi;
-	u32 stat_IfHCInBroadcastPkts_lo;
-	u32 stat_IfHCOutUcastPkts_hi;
-	u32 stat_IfHCOutUcastPkts_lo;
-	u32 stat_IfHCOutMulticastPkts_hi;
-	u32 stat_IfHCOutMulticastPkts_lo;
-	u32 stat_IfHCOutBroadcastPkts_hi;
-	u32 stat_IfHCOutBroadcastPkts_lo;
-	u32 stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
-	u32 stat_Dot3StatsCarrierSenseErrors;
-	u32 stat_Dot3StatsFCSErrors;
-	u32 stat_Dot3StatsAlignmentErrors;
-	u32 stat_Dot3StatsSingleCollisionFrames;
-	u32 stat_Dot3StatsMultipleCollisionFrames;
-	u32 stat_Dot3StatsDeferredTransmissions;
-	u32 stat_Dot3StatsExcessiveCollisions;
-	u32 stat_Dot3StatsLateCollisions;
-	u32 stat_EtherStatsCollisions;
-	u32 stat_EtherStatsFragments;
-	u32 stat_EtherStatsJabbers;
-	u32 stat_EtherStatsUndersizePkts;
-	u32 stat_EtherStatsOverrsizePkts;
-	u32 stat_EtherStatsPktsRx64Octets;
-	u32 stat_EtherStatsPktsRx65Octetsto127Octets;
-	u32 stat_EtherStatsPktsRx128Octetsto255Octets;
-	u32 stat_EtherStatsPktsRx256Octetsto511Octets;
-	u32 stat_EtherStatsPktsRx512Octetsto1023Octets;
-	u32 stat_EtherStatsPktsRx1024Octetsto1522Octets;
-	u32 stat_EtherStatsPktsRx1523Octetsto9022Octets;
-	u32 stat_EtherStatsPktsTx64Octets;
-	u32 stat_EtherStatsPktsTx65Octetsto127Octets;
-	u32 stat_EtherStatsPktsTx128Octetsto255Octets;
-	u32 stat_EtherStatsPktsTx256Octetsto511Octets;
-	u32 stat_EtherStatsPktsTx512Octetsto1023Octets;
-	u32 stat_EtherStatsPktsTx1024Octetsto1522Octets;
-	u32 stat_EtherStatsPktsTx1523Octetsto9022Octets;
-	u32 stat_XonPauseFramesReceived;
-	u32 stat_XoffPauseFramesReceived;
-	u32 stat_OutXonSent;
-	u32 stat_OutXoffSent;
-	u32 stat_FlowControlDone;
-	u32 stat_MacControlFramesReceived;
-	u32 stat_XoffStateEntered;
-	u32 stat_IfInFramesL2FilterDiscards;
-	u32 stat_IfInRuleCheckerDiscards;
-	u32 stat_IfInFTQDiscards;
-	u32 stat_IfInMBUFDiscards;
-	u32 stat_IfInRuleCheckerP4Hit;
-	u32 stat_CatchupInRuleCheckerDiscards;
-	u32 stat_CatchupInFTQDiscards;
-	u32 stat_CatchupInMBUFDiscards;
-	u32 stat_CatchupInRuleCheckerP4Hit;
-	u32 stat_GenStat00;
-	u32 stat_GenStat01;
-	u32 stat_GenStat02;
-	u32 stat_GenStat03;
-	u32 stat_GenStat04;
-	u32 stat_GenStat05;
-	u32 stat_GenStat06;
-	u32 stat_GenStat07;
-	u32 stat_GenStat08;
-	u32 stat_GenStat09;
-	u32 stat_GenStat10;
-	u32 stat_GenStat11;
-	u32 stat_GenStat12;
-	u32 stat_GenStat13;
-	u32 stat_GenStat14;
-	u32 stat_GenStat15;
+	u_int32_t stat_IfHCInOctets_hi;
+	u_int32_t stat_IfHCInOctets_lo;
+	u_int32_t stat_IfHCInBadOctets_hi;
+	u_int32_t stat_IfHCInBadOctets_lo;
+	u_int32_t stat_IfHCOutOctets_hi;
+	u_int32_t stat_IfHCOutOctets_lo;
+	u_int32_t stat_IfHCOutBadOctets_hi;
+	u_int32_t stat_IfHCOutBadOctets_lo;
+	u_int32_t stat_IfHCInUcastPkts_hi;
+	u_int32_t stat_IfHCInUcastPkts_lo;
+	u_int32_t stat_IfHCInMulticastPkts_hi;
+	u_int32_t stat_IfHCInMulticastPkts_lo;
+	u_int32_t stat_IfHCInBroadcastPkts_hi;
+	u_int32_t stat_IfHCInBroadcastPkts_lo;
+	u_int32_t stat_IfHCOutUcastPkts_hi;
+	u_int32_t stat_IfHCOutUcastPkts_lo;
+	u_int32_t stat_IfHCOutMulticastPkts_hi;
+	u_int32_t stat_IfHCOutMulticastPkts_lo;
+	u_int32_t stat_IfHCOutBroadcastPkts_hi;
+	u_int32_t stat_IfHCOutBroadcastPkts_lo;
+	u_int32_t stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
+	u_int32_t stat_Dot3StatsCarrierSenseErrors;
+	u_int32_t stat_Dot3StatsFCSErrors;
+	u_int32_t stat_Dot3StatsAlignmentErrors;
+	u_int32_t stat_Dot3StatsSingleCollisionFrames;
+	u_int32_t stat_Dot3StatsMultipleCollisionFrames;
+	u_int32_t stat_Dot3StatsDeferredTransmissions;
+	u_int32_t stat_Dot3StatsExcessiveCollisions;
+	u_int32_t stat_Dot3StatsLateCollisions;
+	u_int32_t stat_EtherStatsCollisions;
+	u_int32_t stat_EtherStatsFragments;
+	u_int32_t stat_EtherStatsJabbers;
+	u_int32_t stat_EtherStatsUndersizePkts;
+	u_int32_t stat_EtherStatsOverrsizePkts;
+	u_int32_t stat_EtherStatsPktsRx64Octets;
+	u_int32_t stat_EtherStatsPktsRx65Octetsto127Octets;
+	u_int32_t stat_EtherStatsPktsRx128Octetsto255Octets;
+	u_int32_t stat_EtherStatsPktsRx256Octetsto511Octets;
+	u_int32_t stat_EtherStatsPktsRx512Octetsto1023Octets;
+	u_int32_t stat_EtherStatsPktsRx1024Octetsto1522Octets;
+	u_int32_t stat_EtherStatsPktsRx1523Octetsto9022Octets;
+	u_int32_t stat_EtherStatsPktsTx64Octets;
+	u_int32_t stat_EtherStatsPktsTx65Octetsto127Octets;
+	u_int32_t stat_EtherStatsPktsTx128Octetsto255Octets;
+	u_int32_t stat_EtherStatsPktsTx256Octetsto511Octets;
+	u_int32_t stat_EtherStatsPktsTx512Octetsto1023Octets;
+	u_int32_t stat_EtherStatsPktsTx1024Octetsto1522Octets;
+	u_int32_t stat_EtherStatsPktsTx1523Octetsto9022Octets;
+	u_int32_t stat_XonPauseFramesReceived;
+	u_int32_t stat_XoffPauseFramesReceived;
+	u_int32_t stat_OutXonSent;
+	u_int32_t stat_OutXoffSent;
+	u_int32_t stat_FlowControlDone;
+	u_int32_t stat_MacControlFramesReceived;
+	u_int32_t stat_XoffStateEntered;
+	u_int32_t stat_IfInFramesL2FilterDiscards;
+	u_int32_t stat_IfInRuleCheckerDiscards;
+	u_int32_t stat_IfInFTQDiscards;
+	u_int32_t stat_IfInMBUFDiscards;
+	u_int32_t stat_IfInRuleCheckerP4Hit;
+	u_int32_t stat_CatchupInRuleCheckerDiscards;
+	u_int32_t stat_CatchupInFTQDiscards;
+	u_int32_t stat_CatchupInMBUFDiscards;
+	u_int32_t stat_CatchupInRuleCheckerP4Hit;
+	u_int32_t stat_GenStat00;
+	u_int32_t stat_GenStat01;
+	u_int32_t stat_GenStat02;
+	u_int32_t stat_GenStat03;
+	u_int32_t stat_GenStat04;
+	u_int32_t stat_GenStat05;
+	u_int32_t stat_GenStat06;
+	u_int32_t stat_GenStat07;
+	u_int32_t stat_GenStat08;
+	u_int32_t stat_GenStat09;
+	u_int32_t stat_GenStat10;
+	u_int32_t stat_GenStat11;
+	u_int32_t stat_GenStat12;
+	u_int32_t stat_GenStat13;
+	u_int32_t stat_GenStat14;
+	u_int32_t stat_GenStat15;
 };
 
 
@@ -920,7 +912,7 @@ struct statistics_block {
  *  l2_fhdr definition
  */
 struct l2_fhdr {
-	u32 l2_fhdr_status;
+	u_int32_t l2_fhdr_status;
 		#define L2_FHDR_STATUS_RULE_CLASS	(0x7<<0)
 		#define L2_FHDR_STATUS_RULE_P2		(1<<3)
 		#define L2_FHDR_STATUS_RULE_P3		(1<<4)
@@ -940,17 +932,17 @@ struct l2_fhdr {
 		#define L2_FHDR_ERRORS_TCP_XSUM		(1<<28)
 		#define L2_FHDR_ERRORS_UDP_XSUM		(1<<31)
 
-	u32 l2_fhdr_hash;
+	u_int32_t l2_fhdr_hash;
 #if BYTE_ORDER == BIG_ENDIAN
-	u16 l2_fhdr_pkt_len;
-	u16 l2_fhdr_vlan_tag;
-	u16 l2_fhdr_ip_xsum;
-	u16 l2_fhdr_tcp_udp_xsum;
+	u_int16_t l2_fhdr_pkt_len;
+	u_int16_t l2_fhdr_vlan_tag;
+	u_int16_t l2_fhdr_ip_xsum;
+	u_int16_t l2_fhdr_tcp_udp_xsum;
 #elif BYTE_ORDER == LITTLE_ENDIAN
-	u16 l2_fhdr_vlan_tag;
-	u16 l2_fhdr_pkt_len;
-	u16 l2_fhdr_tcp_udp_xsum;
-	u16 l2_fhdr_ip_xsum;
+	u_int16_t l2_fhdr_vlan_tag;
+	u_int16_t l2_fhdr_pkt_len;
+	u_int16_t l2_fhdr_tcp_udp_xsum;
+	u_int16_t l2_fhdr_ip_xsum;
 #endif
 };
 
@@ -4501,60 +4493,60 @@ struct l2_fhdr {
 /****************************************************************************/
 
 struct cpu_reg {
-	u32 mode;
-	u32 mode_value_halt;
-	u32 mode_value_sstep;
+	u_int32_t mode;
+	u_int32_t mode_value_halt;
+	u_int32_t mode_value_sstep;
 
-	u32 state;
-	u32 state_value_clear;
+	u_int32_t state;
+	u_int32_t state_value_clear;
 
-	u32 gpr0;
-	u32 evmask;
-	u32 pc;
-	u32 inst;
-	u32 bp;
+	u_int32_t gpr0;
+	u_int32_t evmask;
+	u_int32_t pc;
+	u_int32_t inst;
+	u_int32_t bp;
 
-	u32 spad_base;
+	u_int32_t spad_base;
 
-	u32 mips_view_base;
+	u_int32_t mips_view_base;
 };
 
 struct fw_info {
-	u32 ver_major;
-	u32 ver_minor;
-	u32 ver_fix;
+	u_int32_t ver_major;
+	u_int32_t ver_minor;
+	u_int32_t ver_fix;
 
-	u32 start_addr;
+	u_int32_t start_addr;
 
 	/* Text section. */
-	u32 text_addr;
-	u32 text_len;
-	u32 text_index;
-	u32 *text;
+	u_int32_t text_addr;
+	u_int32_t text_len;
+	u_int32_t text_index;
+	u_int32_t *text;
 
 	/* Data section. */
-	u32 data_addr;
-	u32 data_len;
-	u32 data_index;
-	u32 *data;
+	u_int32_t data_addr;
+	u_int32_t data_len;
+	u_int32_t data_index;
+	u_int32_t *data;
 
 	/* SBSS section. */
-	u32 sbss_addr;
-	u32 sbss_len;
-	u32 sbss_index;
-	u32 *sbss;
+	u_int32_t sbss_addr;
+	u_int32_t sbss_len;
+	u_int32_t sbss_index;
+	u_int32_t *sbss;
 
 	/* BSS section. */
-	u32 bss_addr;
-	u32 bss_len;
-	u32 bss_index;
-	u32 *bss;
+	u_int32_t bss_addr;
+	u_int32_t bss_len;
+	u_int32_t bss_index;
+	u_int32_t *bss;
 
 	/* Read-only section. */
-	u32 rodata_addr;
-	u32 rodata_len;
-	u32 rodata_index;
-	u32 *rodata;
+	u_int32_t rodata_addr;
+	u_int32_t rodata_len;
+	u_int32_t rodata_index;
+	u_int32_t *rodata;
 };
 
 #define RV2P_PROC1                              0
@@ -4608,11 +4600,11 @@ struct fw_info {
 struct bnx_dmamap_arg {
 	struct bnx_softc	*sc;				/* Pointer back to device context */
 	bus_addr_t			busaddr;		/* Physical address of mapped memory */
-	u32					tx_flags;		/* Flags for frame transmit */
-	u16					prod;
-	u16					chain_prod;
+	u_int32_t					tx_flags;		/* Flags for frame transmit */
+	u_int16_t					prod;
+	u_int16_t					chain_prod;
 	int					maxsegs;		/* Max segments supported for this mapped memory */
-	u32					prod_bseq;
+	u_int32_t					prod_bseq;
 	struct tx_bd		*tx_chain[TX_PAGES];
 };
 
@@ -4633,10 +4625,10 @@ struct bnx_softc
 	void				*bnx_shutdownhook;
 
 	/* ASIC Chip ID. */
-	u32					bnx_chipid;
+	u_int32_t					bnx_chipid;
 
 	/* General controller flags. */
-	u32					bnx_flags;
+	u_int32_t					bnx_flags;
 #define BNX_PCIX_FLAG			0x01
 #define BNX_PCI_32BIT_FLAG 		0x02
 #define BNX_ONE_TDMA_FLAG		0x04		/* Deprecated */
@@ -4646,7 +4638,7 @@ struct bnx_softc
 #define BNX_MFW_ENABLE_FLAG		0x40
 
 	/* PHY specific flags. */
-	u32					bnx_phy_flags;
+	u_int32_t					bnx_phy_flags;
 #define BNX_PHY_SERDES_FLAG					1
 #define BNX_PHY_CRC_FIX_FLAG				2
 #define BNX_PHY_PARALLEL_DETECT_FLAG		4
@@ -4658,27 +4650,27 @@ struct bnx_softc
 	int					bnx_if_flags;
 
 	bus_addr_t				max_bus_addr;
-	u16					bus_speed_mhz;		/* PCI bus speed */
+	u_int16_t					bus_speed_mhz;		/* PCI bus speed */
 	struct flash_spec	*bnx_flash_info;	/* Flash NVRAM settings */
-	u32					bnx_flash_size;		/* Flash NVRAM size */
-	u32					bnx_shmem_base;		/* Shared Memory base address */
+	u_int32_t					bnx_flash_size;		/* Flash NVRAM size */
+	u_int32_t					bnx_shmem_base;		/* Shared Memory base address */
 	char *				bnx_name;			/* Name string */
 
 	/* Tracks the version of bootcode firmware. */
-	u32					bnx_fw_ver;
+	u_int32_t					bnx_fw_ver;
 
 	/* Tracks the state of the firmware.  0 = Running while any     */
 	/* other value indicates that the firmware is not responding.   */
-	u16					bnx_fw_timed_out;
+	u_int16_t					bnx_fw_timed_out;
 
 	/* An incrementing sequence used to coordinate messages passed   */
 	/* from the driver to the firmware.                              */
-	u16					bnx_fw_wr_seq;
+	u_int16_t					bnx_fw_wr_seq;
 
 	/* An incrementing sequence used to let the firmware know that   */
 	/* the driver is still operating.  Without the pulse, management */
 	/* firmware such as IPMI or UMP will operate in OS absent state. */
-	u16					bnx_fw_drv_pulse_wr_seq;
+	u_int16_t					bnx_fw_drv_pulse_wr_seq;
 
 	/* Ethernet MAC address. */
 	u_char				eaddr[6];
@@ -4686,21 +4678,21 @@ struct bnx_softc
 	/* These setting are used by the host coalescing (HC) block to   */
 	/* to control how often the status block, statistics block and   */
 	/* interrupts are generated.                                     */
-	u16					bnx_tx_quick_cons_trip_int;
-	u16					bnx_tx_quick_cons_trip;
-	u16					bnx_rx_quick_cons_trip_int;
-	u16					bnx_rx_quick_cons_trip;
-	u16					bnx_comp_prod_trip_int;
-	u16					bnx_comp_prod_trip;
-	u16					bnx_tx_ticks_int;
-	u16					bnx_tx_ticks;
-	u16					bnx_rx_ticks_int;
-	u16					bnx_rx_ticks;
-	u16					bnx_com_ticks_int;
-	u16					bnx_com_ticks;
-	u16					bnx_cmd_ticks_int;
-	u16					bnx_cmd_ticks;
-	u32					bnx_stats_ticks;
+	u_int16_t					bnx_tx_quick_cons_trip_int;
+	u_int16_t					bnx_tx_quick_cons_trip;
+	u_int16_t					bnx_rx_quick_cons_trip_int;
+	u_int16_t					bnx_rx_quick_cons_trip;
+	u_int16_t					bnx_comp_prod_trip_int;
+	u_int16_t					bnx_comp_prod_trip;
+	u_int16_t					bnx_tx_ticks_int;
+	u_int16_t					bnx_tx_ticks;
+	u_int16_t					bnx_rx_ticks_int;
+	u_int16_t					bnx_rx_ticks;
+	u_int16_t					bnx_com_ticks_int;
+	u_int16_t					bnx_com_ticks;
+	u_int16_t					bnx_cmd_ticks_int;
+	u_int16_t					bnx_cmd_ticks;
+	u_int32_t					bnx_stats_ticks;
 
 	/* The address of the integrated PHY on the MII bus. */
 	int					bnx_phy_addr;
@@ -4709,22 +4701,22 @@ struct bnx_softc
 	struct mii_data				bnx_mii;
 
 	/* Driver maintained TX chain pointers and byte counter. */
-	u16					rx_prod;
-	u16					rx_cons;
-	u32					rx_prod_bseq;	/* Counts the bytes used.  */
-	u16					tx_prod;
-	u16					tx_cons;
-	u32					tx_prod_bseq;	/* Counts the bytes used.  */
+	u_int16_t					rx_prod;
+	u_int16_t					rx_cons;
+	u_int32_t					rx_prod_bseq;	/* Counts the bytes used.  */
+	u_int16_t					tx_prod;
+	u_int16_t					tx_cons;
+	u_int32_t					tx_prod_bseq;	/* Counts the bytes used.  */
 
 	int					bnx_link;
 	struct timeout				bnx_timeout;
 
 	/* Frame size and mbuf allocation size for RX frames. */
-	u32					max_frame_size;
+	u_int32_t					max_frame_size;
 	int					mbuf_alloc_size;
 
 	/* Receive mode settings (i.e promiscuous, multicast, etc.). */
-	u32					rx_mode;
+	u_int32_t					rx_mode;
 
 	/* Bus tag for the bnx controller. */
 	bus_dma_tag_t		bnx_dmatag;
@@ -4751,9 +4743,9 @@ struct bnx_softc
 	bus_addr_t			status_block_paddr;			/* Physical address */
 
 	/* Driver maintained status block values. */
-	u16					last_status_idx;
-	u16					hw_rx_cons;
-	u16					hw_tx_cons;
+	u_int16_t					last_status_idx;
+	u_int16_t					hw_rx_cons;
+	u_int16_t					hw_tx_cons;
 
 	/* H/W maintained statistics block. */
 	bus_dma_segment_t	stats_seg;
@@ -4777,65 +4769,65 @@ struct bnx_softc
 	struct mbuf			*rx_mbuf_ptr[TOTAL_RX_BD];
 
 	/* Track the number of rx_bd and tx_bd's in use. */
-	u16 free_rx_bd;
-	u16 used_tx_bd;
+	u_int16_t free_rx_bd;
+	u_int16_t used_tx_bd;
 
 	/* Provides access to hardware statistics through sysctl. */
-	u64 stat_IfHCInOctets;
-	u64 stat_IfHCInBadOctets;
-	u64 stat_IfHCOutOctets;
-	u64 stat_IfHCOutBadOctets;
-	u64 stat_IfHCInUcastPkts;
-	u64 stat_IfHCInMulticastPkts;
-	u64 stat_IfHCInBroadcastPkts;
-	u64 stat_IfHCOutUcastPkts;
-	u64 stat_IfHCOutMulticastPkts;
-	u64 stat_IfHCOutBroadcastPkts;
+	u_int64_t stat_IfHCInOctets;
+	u_int64_t stat_IfHCInBadOctets;
+	u_int64_t stat_IfHCOutOctets;
+	u_int64_t stat_IfHCOutBadOctets;
+	u_int64_t stat_IfHCInUcastPkts;
+	u_int64_t stat_IfHCInMulticastPkts;
+	u_int64_t stat_IfHCInBroadcastPkts;
+	u_int64_t stat_IfHCOutUcastPkts;
+	u_int64_t stat_IfHCOutMulticastPkts;
+	u_int64_t stat_IfHCOutBroadcastPkts;
 
-	u32 stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
-	u32 stat_Dot3StatsCarrierSenseErrors;
-	u32 stat_Dot3StatsFCSErrors;
-	u32 stat_Dot3StatsAlignmentErrors;
-	u32 stat_Dot3StatsSingleCollisionFrames;
-	u32 stat_Dot3StatsMultipleCollisionFrames;
-	u32 stat_Dot3StatsDeferredTransmissions;
-	u32 stat_Dot3StatsExcessiveCollisions;
-	u32 stat_Dot3StatsLateCollisions;
-	u32 stat_EtherStatsCollisions;
-	u32 stat_EtherStatsFragments;
-	u32 stat_EtherStatsJabbers;
-	u32 stat_EtherStatsUndersizePkts;
-	u32 stat_EtherStatsOverrsizePkts;
-	u32 stat_EtherStatsPktsRx64Octets;
-	u32 stat_EtherStatsPktsRx65Octetsto127Octets;
-	u32 stat_EtherStatsPktsRx128Octetsto255Octets;
-	u32 stat_EtherStatsPktsRx256Octetsto511Octets;
-	u32 stat_EtherStatsPktsRx512Octetsto1023Octets;
-	u32 stat_EtherStatsPktsRx1024Octetsto1522Octets;
-	u32 stat_EtherStatsPktsRx1523Octetsto9022Octets;
-	u32 stat_EtherStatsPktsTx64Octets;
-	u32 stat_EtherStatsPktsTx65Octetsto127Octets;
-	u32 stat_EtherStatsPktsTx128Octetsto255Octets;
-	u32 stat_EtherStatsPktsTx256Octetsto511Octets;
-	u32 stat_EtherStatsPktsTx512Octetsto1023Octets;
-	u32 stat_EtherStatsPktsTx1024Octetsto1522Octets;
-	u32 stat_EtherStatsPktsTx1523Octetsto9022Octets;
-	u32 stat_XonPauseFramesReceived;
-	u32 stat_XoffPauseFramesReceived;
-	u32 stat_OutXonSent;
-	u32 stat_OutXoffSent;
-	u32 stat_FlowControlDone;
-	u32 stat_MacControlFramesReceived;
-	u32 stat_XoffStateEntered;
-	u32 stat_IfInFramesL2FilterDiscards;
-	u32 stat_IfInRuleCheckerDiscards;
-	u32 stat_IfInFTQDiscards;
-	u32 stat_IfInMBUFDiscards;
-	u32 stat_IfInRuleCheckerP4Hit;
-	u32 stat_CatchupInRuleCheckerDiscards;
-	u32 stat_CatchupInFTQDiscards;
-	u32 stat_CatchupInMBUFDiscards;
-	u32 stat_CatchupInRuleCheckerP4Hit;
+	u_int32_t stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
+	u_int32_t stat_Dot3StatsCarrierSenseErrors;
+	u_int32_t stat_Dot3StatsFCSErrors;
+	u_int32_t stat_Dot3StatsAlignmentErrors;
+	u_int32_t stat_Dot3StatsSingleCollisionFrames;
+	u_int32_t stat_Dot3StatsMultipleCollisionFrames;
+	u_int32_t stat_Dot3StatsDeferredTransmissions;
+	u_int32_t stat_Dot3StatsExcessiveCollisions;
+	u_int32_t stat_Dot3StatsLateCollisions;
+	u_int32_t stat_EtherStatsCollisions;
+	u_int32_t stat_EtherStatsFragments;
+	u_int32_t stat_EtherStatsJabbers;
+	u_int32_t stat_EtherStatsUndersizePkts;
+	u_int32_t stat_EtherStatsOverrsizePkts;
+	u_int32_t stat_EtherStatsPktsRx64Octets;
+	u_int32_t stat_EtherStatsPktsRx65Octetsto127Octets;
+	u_int32_t stat_EtherStatsPktsRx128Octetsto255Octets;
+	u_int32_t stat_EtherStatsPktsRx256Octetsto511Octets;
+	u_int32_t stat_EtherStatsPktsRx512Octetsto1023Octets;
+	u_int32_t stat_EtherStatsPktsRx1024Octetsto1522Octets;
+	u_int32_t stat_EtherStatsPktsRx1523Octetsto9022Octets;
+	u_int32_t stat_EtherStatsPktsTx64Octets;
+	u_int32_t stat_EtherStatsPktsTx65Octetsto127Octets;
+	u_int32_t stat_EtherStatsPktsTx128Octetsto255Octets;
+	u_int32_t stat_EtherStatsPktsTx256Octetsto511Octets;
+	u_int32_t stat_EtherStatsPktsTx512Octetsto1023Octets;
+	u_int32_t stat_EtherStatsPktsTx1024Octetsto1522Octets;
+	u_int32_t stat_EtherStatsPktsTx1523Octetsto9022Octets;
+	u_int32_t stat_XonPauseFramesReceived;
+	u_int32_t stat_XoffPauseFramesReceived;
+	u_int32_t stat_OutXonSent;
+	u_int32_t stat_OutXoffSent;
+	u_int32_t stat_FlowControlDone;
+	u_int32_t stat_MacControlFramesReceived;
+	u_int32_t stat_XoffStateEntered;
+	u_int32_t stat_IfInFramesL2FilterDiscards;
+	u_int32_t stat_IfInRuleCheckerDiscards;
+	u_int32_t stat_IfInFTQDiscards;
+	u_int32_t stat_IfInMBUFDiscards;
+	u_int32_t stat_IfInRuleCheckerP4Hit;
+	u_int32_t stat_CatchupInRuleCheckerDiscards;
+	u_int32_t stat_CatchupInFTQDiscards;
+	u_int32_t stat_CatchupInMBUFDiscards;
+	u_int32_t stat_CatchupInRuleCheckerP4Hit;
 
 #ifdef BNX_DEBUG
 	/* Track the number of enqueued mbufs. */
@@ -4843,17 +4835,17 @@ struct bnx_softc
 	int rx_mbuf_alloc;
 
 	/* Track how many and what type of interrupts are generated. */
-	u32 interrupts_generated;
-	u32 interrupts_handled;
-	u32 rx_interrupts;
-	u32 tx_interrupts;
+	u_int32_t interrupts_generated;
+	u_int32_t interrupts_handled;
+	u_int32_t rx_interrupts;
+	u_int32_t tx_interrupts;
 
-	u32	rx_low_watermark;			/* Lowest number of rx_bd's free. */
-	u32 tx_hi_watermark;			/* Greatest number of tx_bd's used. */
-	u32	mbuf_alloc_failed;			/* Mbuf allocation failure counter. */
-	u32 l2fhdr_status_errors;
-	u32 unexpected_attentions;
-	u32	lost_status_block_updates;
+	u_int32_t	rx_low_watermark;			/* Lowest number of rx_bd's free. */
+	u_int32_t tx_hi_watermark;			/* Greatest number of tx_bd's used. */
+	u_int32_t	mbuf_alloc_failed;			/* Mbuf allocation failure counter. */
+	u_int32_t l2fhdr_status_errors;
+	u_int32_t unexpected_attentions;
+	u_int32_t	lost_status_block_updates;
 #endif
 };
 
