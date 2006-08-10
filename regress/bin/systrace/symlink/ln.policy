@@ -1,0 +1,15 @@
+# $OpenBSD: ln.policy,v 1.1 2006/08/10 09:00:20 espie Exp $
+
+Policy: /bin/ln, Emulation: native
+	native-__sysctl: permit
+	native-mmap: permit
+	native-mprotect: permit
+	native-fsread: permit
+	native-symlink: filename match "/*" then permit
+	native-munmap: permit
+	native-exit: permit
+	native-write: permit
+	native-issetugid: permit
+	native-fstat: permit
+	native-close: permit
+

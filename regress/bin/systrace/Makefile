@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2004/01/15 17:14:43 sturm Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/08/10 09:00:20 espie Exp $
 
 SUBDIR+= id
+SUBDIR+= symlink
 
 .include <bsd.subdir.mk>
