@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.5 2006/08/10 04:01:52 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.6 2006/08/10 04:13:09 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -196,109 +196,115 @@ static struct flash_spec flash_table[] =
 /****************************************************************************/
 /* OpenBSD device entry points.                                             */
 /****************************************************************************/
-int bnx_probe			(struct device *, void *, void *);
-void bnx_attach			(struct device *, struct device *, void *);
+int	bnx_probe(struct device *, void *, void *);
+void	bnx_attach(struct device *, struct device *, void *);
 #if 0
-void  bnx_detach		(void *);
+void	bnx_detach(void *);
 #endif
-void bnx_shutdown		(void *);
+void	bnx_shutdown(void *);
 
 /****************************************************************************/
 /* BNX Debug Data Structure Dump Routines                                   */
 /****************************************************************************/
 #ifdef BNX_DEBUG
-void bnx_dump_mbuf 		(struct bnx_softc *, struct mbuf *);
-void bnx_dump_tx_mbuf_chain	(struct bnx_softc *, int, int);
-void bnx_dump_rx_mbuf_chain	(struct bnx_softc *, int, int);
-void bnx_dump_txbd		(struct bnx_softc *, int, struct tx_bd *);
-void bnx_dump_rxbd		(struct bnx_softc *, int, struct rx_bd *);
-void bnx_dump_l2fhdr		(struct bnx_softc *, int, struct l2_fhdr *);
-void bnx_dump_tx_chain		(struct bnx_softc *, int, int);
-void bnx_dump_rx_chain		(struct bnx_softc *, int, int);
-void bnx_dump_status_block	(struct bnx_softc *);
-void bnx_dump_stats_block	(struct bnx_softc *);
-void bnx_dump_driver_state	(struct bnx_softc *);
-void bnx_dump_hw_state		(struct bnx_softc *);
-void bnx_breakpoint		(struct bnx_softc *);
+void	bnx_dump_mbuf(struct bnx_softc *, struct mbuf *);
+void	bnx_dump_tx_mbuf_chain(struct bnx_softc *, int, int);
+void	bnx_dump_rx_mbuf_chain(struct bnx_softc *, int, int);
+void	bnx_dump_txbd(struct bnx_softc *, int, struct tx_bd *);
+void	bnx_dump_rxbd(struct bnx_softc *, int, struct rx_bd *);
+void	bnx_dump_l2fhdr(struct bnx_softc *, int, struct l2_fhdr *);
+void	bnx_dump_tx_chain(struct bnx_softc *, int, int);
+void	bnx_dump_rx_chain(struct bnx_softc *, int, int);
+void	bnx_dump_status_block(struct bnx_softc *);
+void	bnx_dump_stats_block(struct bnx_softc *);
+void	bnx_dump_driver_state(struct bnx_softc *);
+void	bnx_dump_hw_state(struct bnx_softc *);
+void	bnx_breakpoint(struct bnx_softc *);
 #endif
 
 /****************************************************************************/
 /* BNX Register/Memory Access Routines                                      */
 /****************************************************************************/
-u_int32_t bnx_reg_rd_ind		(struct bnx_softc *, u_int32_t);
-void bnx_reg_wr_ind		(struct bnx_softc *, u_int32_t, u_int32_t);
-void bnx_ctx_wr			(struct bnx_softc *, u_int32_t, u_int32_t, u_int32_t);
-int bnx_miibus_read_reg		(struct device *, int, int);
-void bnx_miibus_write_reg	(struct device *, int, int, int);
-void bnx_miibus_statchg		(struct device *);
+u_int32_t	bnx_reg_rd_ind(struct bnx_softc *, u_int32_t);
+void	bnx_reg_wr_ind(struct bnx_softc *, u_int32_t, u_int32_t);
+void	bnx_ctx_wr(struct bnx_softc *, u_int32_t, u_int32_t, u_int32_t);
+int	bnx_miibus_read_reg(struct device *, int, int);
+void	bnx_miibus_write_reg(struct device *, int, int, int);
+void	bnx_miibus_statchg(struct device *);
 
 /****************************************************************************/
 /* BNX NVRAM Access Routines                                                */
 /****************************************************************************/
-int bnx_acquire_nvram_lock	(struct bnx_softc *);
-int bnx_release_nvram_lock	(struct bnx_softc *);
-void bnx_enable_nvram_access	(struct bnx_softc *);
-void bnx_disable_nvram_access	(struct bnx_softc *);
-int bnx_nvram_read_dword	(struct bnx_softc *, u_int32_t, u_int8_t *, u_int32_t);
-int bnx_init_nvram		(struct bnx_softc *);
-int bnx_nvram_read		(struct bnx_softc *, u_int32_t, u_int8_t *, int);
-int bnx_nvram_test		(struct bnx_softc *);
+int	bnx_acquire_nvram_lock(struct bnx_softc *);
+int	bnx_release_nvram_lock(struct bnx_softc *);
+void	bnx_enable_nvram_access(struct bnx_softc *);
+void	bnx_disable_nvram_access(struct bnx_softc *);
+int	bnx_nvram_read_dword(struct bnx_softc *, u_int32_t, u_int8_t *,
+	    u_int32_t);
+int	bnx_init_nvram(struct bnx_softc *);
+int	bnx_nvram_read(struct bnx_softc *, u_int32_t, u_int8_t *, int);
+int	bnx_nvram_test(struct bnx_softc *);
 #ifdef BNX_NVRAM_WRITE_SUPPORT
-int bnx_enable_nvram_write	(struct bnx_softc *);
-void bnx_disable_nvram_write	(struct bnx_softc *);
-int bnx_nvram_erase_page	(struct bnx_softc *, u_int32_t);
-int bnx_nvram_write_dword	(struct bnx_softc *, u_int32_t, u_int8_t *, u_int32_t);
-int bnx_nvram_write		(struct bnx_softc *, u_int32_t, u_int8_t *, int);
+int	bnx_enable_nvram_write(struct bnx_softc *);
+void	bnx_disable_nvram_write(struct bnx_softc *);
+int	bnx_nvram_erase_page(struct bnx_softc *, u_int32_t);
+int	bnx_nvram_write_dword(struct bnx_softc *, u_int32_t, u_int8_t *,
+	    u_int32_t);
+int	bnx_nvram_write(struct bnx_softc *, u_int32_t, u_int8_t *, int);
 #endif
 
 /****************************************************************************/
 /*                                                                          */
 /****************************************************************************/
-int bnx_dma_alloc		(struct bnx_softc *);
-void bnx_dma_free		(struct bnx_softc *);
-void bnx_release_resources	(struct bnx_softc *);
-void bnx_dma_map_tx_desc	(void *, bus_dmamap_t);
+int	bnx_dma_alloc(struct bnx_softc *);
+void	bnx_dma_free(struct bnx_softc *);
+void	bnx_release_resources(struct bnx_softc *);
+void	bnx_dma_map_tx_desc(void *, bus_dmamap_t);
 
 /****************************************************************************/
 /* BNX Firmware Synchronization and Load                                    */
 /****************************************************************************/
-int bnx_fw_sync			(struct bnx_softc *, u_int32_t);
-void bnx_load_rv2p_fw		(struct bnx_softc *, u_int32_t *, u_int32_t, u_int32_t);
-void bnx_load_cpu_fw		(struct bnx_softc *, struct cpu_reg *, struct fw_info *);
-void bnx_init_cpus		(struct bnx_softc *);
+int	bnx_fw_sync(struct bnx_softc *, u_int32_t);
+void	bnx_load_rv2p_fw(struct bnx_softc *, u_int32_t *, u_int32_t,
+	    u_int32_t);
+void	bnx_load_cpu_fw(struct bnx_softc *, struct cpu_reg *,
+	    struct fw_info *);
+void	bnx_init_cpus(struct bnx_softc *);
 
-void bnx_stop			(struct bnx_softc *);
-int bnx_reset			(struct bnx_softc *, u_int32_t);
-int bnx_chipinit 		(struct bnx_softc *);
-int bnx_blockinit 		(struct bnx_softc *);
-int bnx_get_buf			(struct bnx_softc *, struct mbuf *, u_int16_t *, u_int16_t *, u_int32_t *);
+void	bnx_stop(struct bnx_softc *);
+int	bnx_reset(struct bnx_softc *, u_int32_t);
+int	bnx_chipinit(struct bnx_softc *);
+int	bnx_blockinit(struct bnx_softc *);
+int	bnx_get_buf(struct bnx_softc *, struct mbuf *, u_int16_t *,
+	    u_int16_t *, u_int32_t *);
 
-int bnx_init_tx_chain		(struct bnx_softc *);
-int bnx_init_rx_chain		(struct bnx_softc *);
-void bnx_free_rx_chain		(struct bnx_softc *);
-void bnx_free_tx_chain		(struct bnx_softc *);
+int	bnx_init_tx_chain(struct bnx_softc *);
+int	bnx_init_rx_chain(struct bnx_softc *);
+void	bnx_free_rx_chain(struct bnx_softc *);
+void	bnx_free_tx_chain(struct bnx_softc *);
 
-int bnx_tx_encap		(struct bnx_softc *, struct mbuf *, u_int16_t *, u_int16_t *, u_int32_t *);
-void bnx_start			(struct ifnet *);
-int bnx_ioctl			(struct ifnet *, u_long, caddr_t);
-void bnx_watchdog		(struct ifnet *);
-int bnx_ifmedia_upd		(struct ifnet *);
-void bnx_ifmedia_sts		(struct ifnet *, struct ifmediareq *);
-void bnx_init			(void *);
+int	bnx_tx_encap(struct bnx_softc *, struct mbuf *, u_int16_t *,
+	    u_int16_t *, u_int32_t *);
+void	bnx_start(struct ifnet *);
+int	bnx_ioctl(struct ifnet *, u_long, caddr_t);
+void	bnx_watchdog(struct ifnet *);
+int	bnx_ifmedia_upd(struct ifnet *);
+void	bnx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+void	bnx_init(void *);
 
-void bnx_init_context		(struct bnx_softc *);
-void bnx_get_mac_addr		(struct bnx_softc *);
-void bnx_set_mac_addr		(struct bnx_softc *);
-void bnx_phy_intr		(struct bnx_softc *);
-void bnx_rx_intr		(struct bnx_softc *);
-void bnx_tx_intr		(struct bnx_softc *);
-void bnx_disable_intr		(struct bnx_softc *);
-void bnx_enable_intr		(struct bnx_softc *);
+void	bnx_init_context(struct bnx_softc *);
+void	bnx_get_mac_addr(struct bnx_softc *);
+void	bnx_set_mac_addr(struct bnx_softc *);
+void	bnx_phy_intr(struct bnx_softc *);
+void	bnx_rx_intr(struct bnx_softc *);
+void	bnx_tx_intr(struct bnx_softc *);
+void	bnx_disable_intr(struct bnx_softc *);
+void	bnx_enable_intr(struct bnx_softc *);
 
-int bnx_intr			(void *);
-void bnx_set_rx_mode		(struct bnx_softc *);
-void bnx_stats_update		(struct bnx_softc *);
-void bnx_tick			(void *);
+int	bnx_intr(void *);
+void	bnx_set_rx_mode(struct bnx_softc *);
+void	bnx_stats_update(struct bnx_softc *);
+void	bnx_tick(void *);
 
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
