@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.11 2006/04/15 23:56:48 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.12 2006/08/10 23:47:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -131,6 +131,7 @@ struct dnkbd_softc {
 	u_int		sc_identlen;
 #define	MAX_IDENTLEN	32
 	char		sc_ident[MAX_IDENTLEN];
+	kbd_t		sc_layout;
 
 	enum { STATE_KEYBOARD, STATE_MOUSE, STATE_CHANNEL, STATE_ECHO }
 			sc_state, sc_prevstate;
@@ -201,7 +202,11 @@ const struct wskbd_consops dnkbd_consops = {
 
 struct wskbd_mapdata dnkbd_keymapdata = {
 	dnkbd_keydesctab,
+#ifdef DNKBD_LAYOUT
+	DNKBD_LAYOUT
+#else
 	KB_US
+#endif
 };
 
 typedef enum { EVENT_NONE, EVENT_KEYBOARD, EVENT_MOUSE } dnevent;
@@ -303,6 +308,9 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 	ka.keymap = &dnkbd_keymapdata;
 	ka.accessops = &dnkbd_accessops;
 	ka.accesscookie = sc;
+#ifndef DKKBD_LAYOUT
+	dnkbd_keymapdata.layout = sc->sc_layout;
+#endif
 
 	if (ka.console) {
 		sc->sc_flags = SF_PLUGGED | SF_CONSOLE | SF_ENABLED;
@@ -411,6 +419,7 @@ dnkbd_probe(struct dnkbd_softc *sc)
 	 * Now display the identification strings, if it changed.
 	 */
 	if (i != sc->sc_identlen || bcmp(rspbuf, sc->sc_ident, i) != 0) {
+		sc->sc_layout = KB_US;
 		sc->sc_identlen = i;
 		bcopy(rspbuf, sc->sc_ident, i);
 
@@ -424,6 +433,39 @@ dnkbd_probe(struct dnkbd_softc *sc)
 				break;
 			*end++ = '\0';
 			printf("<%s> ", word);
+			/*
+			 * Parse the layout code if applicable
+			 */
+			if (i == 1 && *word == '3')
+				switch (*++word) {
+#if 0
+				default:
+				case ' ':
+					sc->sc_layout = KB_US;
+					break;
+#endif
+				case 'a':
+					sc->sc_layout = KB_DE;
+					break;
+				case 'b':
+					sc->sc_layout = KB_FR;
+					break;
+				case 'c':
+					sc->sc_layout = KB_DK;
+					break;
+				case 'd':
+					sc->sc_layout = KB_SV;
+					break;
+				case 'e':
+					sc->sc_layout = KB_UK;
+					break;
+				case 'f':
+					sc->sc_layout = KB_JP;
+					break;
+				case 'g':
+					sc->sc_layout = KB_SG;
+					break;
+				}
 			word = end;
 		}
 		printf("\n");
