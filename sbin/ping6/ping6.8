@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.34 2006/08/10 18:38:49 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.35 2006/08/10 18:46:52 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -42,49 +42,21 @@ packets to network hosts
 .Op Fl dfHmNnqtvWw
 .\" old ipsec
 .\" .Op Fl AdEfnNqRtvwW
-.Bk -words
 .Op Fl a Ar addrtype
-.Ek
-.Bk -words
 .Op Fl b Ar bufsiz
-.Ek
-.Bk -words
 .Op Fl c Ar count
-.Ek
-.Bk -words
 .Op Fl g Ar gateway
-.Ek
-.Bk -words
 .Op Fl h Ar hoplimit
-.Ek
-.Bk -words
 .Op Fl I Ar interface
-.Ek
-.Bk -words
 .Op Fl i Ar wait
-.Ek
-.Bk -words
 .Op Fl l Ar preload
-.Ek
-.Bk -words
 .Op Fl p Ar pattern
-.Ek
-.\".Bk -words
 .\" new ipsec
 .\".Op Fl P Ar policy
-.\".Ek
-.Bk -words
 .Op Fl S Ar sourceaddr
-.Ek
-.Bk -words
 .Op Fl s Ar packetsize
-.Ek
-.Bk -words
 .Op Ar hops ...
-.Ek
-.Bk -words
 .Ar host
-.Ek
 .Sh DESCRIPTION
 .Nm
 uses the
