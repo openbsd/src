@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.13 2005/12/31 18:13:41 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.14 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -119,8 +119,8 @@ int	rbox_reset(struct diofb *, int, struct diofbreg *);
 void	rbox_restore(struct diofb *);
 void	rbox_setcolor(struct diofb *, u_int,
 	    u_int8_t, u_int8_t, u_int8_t);
-void	rbox_windowmove(struct diofb *, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
+int	rbox_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
+	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 
 int	rbox_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	rbox_burner(void *, u_int, u_int);
@@ -357,11 +357,15 @@ rbox_burner(void *v, u_int on, u_int flags)
 	}
 }
 
-void
+int
 rbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int rop)
+    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+    int16_t planemask)
 {
 	volatile struct rboxfb *rb = (struct rboxfb *)fb->regkva;
+
+	if (planemask != 0xff)
+		return (EINVAL);
 
 	rb_waitbusy(rb);
 
@@ -375,6 +379,8 @@ rbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	rb->wmove = 1;
 
 	rb_waitbusy(rb);
+
+	return (0);
 }
 
 /*

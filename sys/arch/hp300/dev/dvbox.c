@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvbox.c,v 1.12 2005/12/31 18:13:41 miod Exp $	*/
+/*	$OpenBSD: dvbox.c,v 1.13 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -119,8 +119,8 @@ int	dvbox_reset(struct diofb *, int, struct diofbreg *);
 void	dvbox_restore(struct diofb *);
 void	dvbox_setcolor(struct diofb *, u_int,
 	    u_int8_t, u_int8_t, u_int8_t);
-void	dvbox_windowmove(struct diofb *, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
+int	dvbox_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
+	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 
 int	dvbox_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	dvbox_burner(void *, u_int, u_int);
@@ -394,11 +394,15 @@ dvbox_burner(void *v, u_int on, u_int flags)
 		db->dispen = 0x00;
 }
 
-void
+int
 dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int rop)
+    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+    int16_t planemask)
 {
 	volatile struct dvboxfb *db = (struct dvboxfb *)fb->regkva;
+
+	if (planemask != 0xff)
+		return (EINVAL);
 
 	db_waitbusy(db);
 
@@ -412,6 +416,8 @@ dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	db->wmove = 1;
 
 	db_waitbusy(db);
+
+	return (0);
 }
 
 /*

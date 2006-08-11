@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.13 2006/08/09 21:23:51 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.14 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -208,7 +208,7 @@ diofb_fbsetup(struct diofb *fb)
 	}
 
 	/* Clear entire display, including non visible areas */
-	(*fb->bmv)(fb, 0, 0, 0, 0, fb->fbwidth, fb->fbheight, RR_CLEAR);
+	(*fb->bmv)(fb, 0, 0, 0, 0, fb->fbwidth, fb->fbheight, RR_CLEAR, 0xff);
 
 	strlcpy(fb->wsd.name, "std", sizeof(fb->wsd.name));
 	fb->wsd.ncols = ri->ri_cols;
@@ -350,7 +350,7 @@ diofb_copycols(void *cookie, int row, int src, int dst, int n)
 
 	(*fb->bmv)(fb, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
-	    n, ri->ri_font->fontheight, RR_COPY);
+	    n, ri->ri_font->fontheight, RR_COPY, 0xff);
 }
 
 void
@@ -365,7 +365,7 @@ diofb_copyrows(void *cookie, int src, int dst, int n)
 
 	(*fb->bmv)(fb, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst,
-	    ri->ri_emuwidth, n, RR_COPY);
+	    ri->ri_emuwidth, n, RR_COPY, 0xff);
 }
 
 void
@@ -374,25 +374,21 @@ diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 	struct rasops_info *ri = cookie;
 	struct diofb *fb = ri->ri_hw;
 	int fg, bg;
+	int snum, scol, srow;
 
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
+	snum = num * ri->ri_font->fontwidth;
+	scol = col * ri->ri_font->fontwidth + ri->ri_xorigin;
+	srow = row * ri->ri_font->fontheight + ri->ri_yorigin;
+
 	/*
-	 * If the background color is not black, this is a bit too tricky
-	 * for the simple raster ops engine, so pass the fun to rasops.
+	 * If this is too tricky for the simple raster ops engine,
+	 * pass the fun to rasops.
 	 */
-	if (ri->ri_devcmap[bg] != 0) {
+	if ((*fb->bmv)(fb, scol, srow, scol, srow, snum,
+	    ri->ri_font->fontheight, RR_CLEAR, 0xff ^ bg) != 0)
 		rasops_erasecols(cookie, row, col, num, attr);
-		return;
-	}
-
-	num *= ri->ri_font->fontwidth;
-	col *= ri->ri_font->fontwidth;
-	row *= ri->ri_font->fontheight;
-
-	(*fb->bmv)(fb, ri->ri_xorigin + col, ri->ri_yorigin + row,
-	    ri->ri_xorigin + col, ri->ri_yorigin + row,
-	    num, ri->ri_font->fontheight, RR_CLEAR);
 }
 
 void
@@ -401,29 +397,23 @@ diofb_eraserows(void *cookie, int row, int num, long attr)
 	struct rasops_info *ri = cookie;
 	struct diofb *fb = ri->ri_hw;
 	int fg, bg;
+	int srow, snum;
+	int rc;
 
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
+	bg ^= 0xff;
 
-	/*
-	 * If the background color is not black, this is a bit too tricky
-	 * for the simple raster ops engine, so pass the fun to rasops.
-	 */
-	if (ri->ri_devcmap[bg] != 0) {
-		rasops_eraserows(cookie, row, num, attr);
-		return;
-	}
-
-	/* As an exception, hunt the mouse all over the screen if necessary */
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		(*fb->bmv)(fb, 0, 0, 0, 0,
-		    ri->ri_width, ri->ri_height, RR_CLEAR);
+		rc = (*fb->bmv)(fb, 0, 0, 0, 0, ri->ri_width, ri->ri_height,
+		    RR_CLEAR, bg);
 	} else {
-		row *= ri->ri_font->fontheight;
-		num *= ri->ri_font->fontheight;
-		(*fb->bmv)(fb, ri->ri_xorigin, ri->ri_yorigin + row,
-		    ri->ri_xorigin, ri->ri_yorigin + row,
-		    ri->ri_emuwidth, num, RR_CLEAR);
+		srow = row * ri->ri_font->fontheight + ri->ri_yorigin;
+		snum = num * ri->ri_font->fontheight;
+		rc = (*fb->bmv)(fb, ri->ri_xorigin, srow, ri->ri_xorigin,
+		    srow, ri->ri_emuwidth, snum, RR_CLEAR, bg);
 	}
+	if (rc != 0)
+		rasops_eraserows(cookie, row, num, attr);
 }
 
 void
@@ -435,7 +425,7 @@ diofb_do_cursor(struct rasops_info *ri)
 	x = ri->ri_ccol * ri->ri_font->fontwidth + ri->ri_xorigin;
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
 	(*fb->bmv)(fb, x, y, x, y, ri->ri_font->fontwidth,
-	    ri->ri_font->fontheight, RR_INVERT);
+	    ri->ri_font->fontheight, RR_INVERT, 0xff);
 }
 
 /*

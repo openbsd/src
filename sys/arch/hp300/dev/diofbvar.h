@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.9 2006/08/09 21:23:51 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.10 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -97,8 +97,8 @@ struct diofb {
 	u_int	mapmode;
 
 	/* blockmove routine */
-	void	(*bmv)(struct diofb *, u_int16_t, u_int16_t,
-		    u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
+	int	(*bmv)(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
+		    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 };
 
 /* Replacement Rules (rops) */
@@ -124,8 +124,8 @@ paddr_t	diofb_mmap(void *, off_t, int);
 int	diofb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
-void	diofb_mono_windowmove(struct diofb *, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
+int	diofb_mono_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
+	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 
 /* Console support */
 void	dvboxcninit(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb_mono.c,v 1.2 2006/08/05 09:58:56 miod Exp $	*/
+/*	$OpenBSD: diofb_mono.c,v 1.3 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -84,9 +84,10 @@
 #include <dev/rasops/rasops_masks.h>
 #include <hp300/dev/maskbits.h>
 
-void
+int
 diofb_mono_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int rop)
+    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+    int16_t planemask /* ignored */)
 {
 	int width;		/* add to get to same position in next line */
 
@@ -239,4 +240,6 @@ diofb_mono_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 			}
 		}
 	}
+
+	return (0);
 }

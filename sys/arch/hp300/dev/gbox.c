@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.13 2005/12/31 18:13:41 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.14 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -123,8 +123,8 @@ int	gbox_reset(struct diofb *, int, struct diofbreg *);
 void	gbox_restore(struct diofb *);
 int	gbox_setcmap(struct diofb *, struct wsdisplay_cmap *);
 void	gbox_setcolor(struct diofb *, u_int);
-void	gbox_windowmove(struct diofb *, u_int16_t, u_int16_t,
-	     u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
+int	gbox_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
+	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 
 int	gbox_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	gbox_burner(void *, u_int, u_int);
@@ -405,12 +405,16 @@ gbox_setcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
 	return (0);
 }
 
-void
+int
 gbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int rop)
+    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+    int16_t planemask)
 {
 	volatile struct gboxfb *gb = (struct gboxfb *)fb->regkva;
 	int src, dest;
+
+	if (planemask != 0xff)
+		return (EINVAL);
 
 	src  = (sy * 1024) + sx; /* upper left corner in pixels */
 	dest = (dy * 1024) + dx;
@@ -432,6 +436,8 @@ gbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	FBBASE(fb)[dest] = FBBASE(fb)[src];
 
 	tile_mover_waitbusy(gb);
+
+	return (0);
 }
 
 /*
