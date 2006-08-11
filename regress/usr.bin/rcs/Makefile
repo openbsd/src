@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.34 2006/08/02 04:30:31 niallo Exp $
+#	$OpenBSD: Makefile,v 1.35 2006/08/11 08:15:44 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
 
 CI?=		ci
 CO?=		co
+MERGE?=		merge
 RCS?=		rcs
 RCSCLEAN?=	rcsclean
 RCSDIFF?=	rcsdiff
@@ -13,8 +14,8 @@ RLOG?=		rlog
 
 DIFF=		diff -u
 
-CLEANFILES=	RCS blah.c blah.c,v description file file,v newfile	\
-		newfile,v test test,v
+CLEANFILES=	RCS blah.c blah.c,v description file1 file2 file3 \
+		file file,v newfile newfile,v test test,v
 
 # XXX - These may need to be done in order.
 #	(At least start with ci-initial.)
@@ -43,6 +44,7 @@ LTESTS= ci-initial \
 	rcsclean \
 	rcsdiff \
 	rcsdiff-symbols \
+	merge-eflag \
 	rcsmerge \
 	rcsmerge-symbols \
 	ci-dflag \
@@ -233,6 +235,13 @@ test-rcsclean: clean
 	@${RCSCLEAN} -q file
 	@${RCSCLEAN} -q -u file
 	@test -f file
+
+test-merge-eflag: clean
+	@echo "line1\nline2\nfile1new" > file1
+	@echo "line1\nline2" > file2
+	@echo "line1\nfile3new\nline2" > file3
+	@${MERGE} -p -q -e file1 file2 file3 | \
+	    ${DIFF} ${.CURDIR}/merge-eflag.out -
 
 test-rcsmerge:
 	@cp -f ${.CURDIR}/rev1 blah.c
