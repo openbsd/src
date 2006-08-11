@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.18 2005/04/08 20:09:37 jaredy Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.19 2006/08/11 11:47:39 pedro Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.18 2005/04/08 20:09:37 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.19 2006/08/11 11:47:39 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,10 +108,6 @@ main(int argc, char *argv[])
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";
-			break;
-		case EINVAL:
-			errcause =
-			    "specified device does not match mounted device";
 			break;
 		case EOPNOTSUPP:
 			errcause = "filesystem not supported by kernel";
