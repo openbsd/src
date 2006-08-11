@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.17 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.18 2006/08/11 18:57:35 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -41,7 +41,7 @@
  *   is much more that what the iospace can offer.
  *
  *   A best-effort solution would be to map the windows on demand. However,
- *   due to the wap mapdev() works, the va used for the mappings would be
+ *   due to the way mapdev() works, the va used for the mappings would be
  *   lost after unmapping (although using an extent to register iospace memory
  *   usage would fix this). So, instead, we will do a fixed mapping of a subset
  *   of each window upon attach - this is similar to what the stp4020 driver
