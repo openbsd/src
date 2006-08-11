@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.45 2006/05/30 19:53:31 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.46 2006/08/11 18:57:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -169,14 +169,14 @@ vgafbattach(parent, self, aux)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
 	fbwscons_init(&sc->sc_sunfb,
-	    RI_BSWAP | (sc->sc_console ? 0 : RI_CLEAR));
+	    RI_BSWAP | (sc->sc_console ? 0 : RI_FORCEMONO | RI_CLEAR));
 
 	if (sc->sc_console) {
 		sc->sc_ofhandle = OF_stdout();
 		fbwscons_setcolormap(&sc->sc_sunfb, vgafb_setcolor);
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	} else {
-		/* sc->sc_ofhandle = XXX */
+		/* sc->sc_ofhandle = PCITAG_NODE(sc->sc_pcitag); */
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &vgafb_accessops, sc->sc_console);
