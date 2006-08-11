@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.1 2006/07/12 19:05:50 brad Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.2 2006/08/11 19:50:48 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -218,7 +218,7 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		PHY_WRITE(sc, IPGPHY_MII_BMCR, speed);
 
 		/*
-		 * When settning the link manually, one side must
+		 * When setting the link manually, one side must
 		 * be the master and the other the slave. However
 		 * ifmedia doesn't give us a good way to specify
 		 * this, so we fake it by using one of the LINK
