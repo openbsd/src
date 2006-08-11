@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.11 2006/03/13 14:06:58 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.12 2006/08/11 11:01:12 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,7 @@ sub url2pkgname($)
 	return $name;
 }
 
-# see package-specs(7)
+# see packages-specs(7)
 sub splitname
 {
 	local $_ = shift;
