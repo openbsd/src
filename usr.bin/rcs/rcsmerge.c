@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.47 2006/08/01 05:14:17 ray Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.48 2006/08/11 08:18:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -46,7 +46,17 @@ rcsmerge_main(int argc, char **argv)
 
 	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r::TVx::z:")) != -1) {
 		switch (ch) {
-		case 'A': case 'E': case 'e':
+		case 'A':
+			/*
+			 * kept for compatibility
+			 */
+			break;
+		case 'E':
+			flags |= MERGE_EFLAG;
+			flags |= MERGE_OFLAG;
+			break;
+		case 'e':
+			flags |= MERGE_EFLAG;
 			break;
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -133,8 +143,7 @@ rcsmerge_main(int argc, char **argv)
 	if (rcsnum_cmp(rev1, rev2, 0) == 0)
 		goto out;
 
-	if ((bp = rcs_diff3(file, argv[0], rev1, rev2,
-	    !(flags & QUIET))) == NULL)
+	if ((bp = rcs_diff3(file, argv[0], rev1, rev2, flags)) == NULL)
 		errx(D_ERROR, "failed to merge");
 
 	if (!(flags & QUIET)) {

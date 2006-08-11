@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.58 2006/05/15 06:58:03 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.59 2006/08/11 08:18:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -57,14 +57,18 @@
 #define RCSPROG_NFLAG	(1<<14)
 #define RCSPROG_UFLAG	(1<<15)
 
+/* flags shared between merge(1) and rcsmerge(1) */
+#define MERGE_EFLAG	(1<<16)
+#define MERGE_OFLAG	(1<<17)
+
 /* shared flags  */
-#define DESCRIPTION	(1<<16)
-#define FORCE		(1<<17)
-#define INTERACTIVE	(1<<18)
-#define NEWFILE		(1<<19)
-#define PIPEOUT		(1<<20)
-#define PRESERVETIME	(1<<21)
-#define QUIET		(1<<22)
+#define DESCRIPTION	(1<<18)
+#define FORCE		(1<<19)
+#define INTERACTIVE	(1<<20)
+#define NEWFILE		(1<<21)
+#define PIPEOUT		(1<<22)
+#define PRESERVETIME	(1<<23)
+#define QUIET		(1<<24)
 
 extern char	*__progname;
 extern const char	rcs_version[];

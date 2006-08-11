@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.13 2006/08/08 10:22:01 espie Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.14 2006/08/11 08:18:19 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.13 2006/08/08 10:22:01 espie Exp $";
+    "$OpenBSD: diff3.c,v 1.14 2006/08/11 08:18:19 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -129,8 +129,8 @@ static int cline[3];		/* # of the last-read line in each file (0-2) */
  * is stored in last[1-3];
  */
 static int last[4];
-static int eflag;
-static int oflag;		/* indicates whether to mark overlaps (-E or -X)*/
+static int eflag = 3;	/* default -E for compatibility with former RCS */
+static int oflag = 1;	/* default -E for compatibility with former RCS */
 static int debug  = 0;
 static char f1mark[40], f3mark[40];	/* markers for -E and -X */
 
@@ -165,6 +165,9 @@ merge_diff3(char **av, int flags)
 
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
 	dp13 = dp23 = path1 = path2 = path3 = NULL;
+
+	if ((flags & MERGE_EFLAG) && !(flags & MERGE_OFLAG))
+		oflag = 0;
 
 	if ((b1 = rcs_buf_load(av[0], BUF_AUTOEXT)) == NULL)
 		goto out;
@@ -262,7 +265,7 @@ out:
 }
 
 BUF *
-rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
+rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 {
 	int argc;
 	char *argv[5], r1[16], r2[16];
@@ -272,18 +275,21 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
 	dp13 = dp23 = path1 = path2 = path3 = NULL;
 
+	if ((flags & MERGE_EFLAG) && !(flags & MERGE_OFLAG))
+		oflag = 0;
+
 	rcsnum_tostr(rev1, r1, sizeof(r1));
 	rcsnum_tostr(rev2, r2, sizeof(r2));
 
 	if ((b1 = rcs_buf_load(workfile, BUF_AUTOEXT)) == NULL)
 		goto out;
 
-	if (verbose == 1)
+	if (!(flags & QUIET))
 		(void)fprintf(stderr, "retrieving revision %s\n", r1);
 	if ((b2 = rcs_getrev(rf, rev1)) == NULL)
 		goto out;
 
-	if (verbose == 1)
+	if (!(flags & QUIET))
 		(void)fprintf(stderr, "retrieving revision %s\n", r2);
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
@@ -343,7 +349,7 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	if ((diffb = rcs_patchfile(b1, diffb, ed_patch_lines)) == NULL)
 		goto out;
 
-	if (verbose == 1 && diff3_conflicts != 0)
+	if (!(flags & QUIET) && diff3_conflicts != 0)
 		warnx("warning: overlaps or other problems during merge");
 
 out:
@@ -382,20 +388,18 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	size_t m, n;
 	int i;
 
-	/* XXX */
-	eflag = 3;
-	oflag = 1;
-
 	if (argc < 5)
 		return (-1);
 
-	i = snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s", fmark);
-	if (i < 0 || i >= sizeof(f1mark))
-		errx(1, "diff3_internal: string truncated");
+	if (oflag) {
+		i = snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s", fmark);
+		if (i < 0 || i >= sizeof(f1mark))
+			errx(1, "diff3_internal: string truncated");
 
-	i = snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s", rmark);
-	if (i < 0 || i >= sizeof(f3mark))
-		errx(1, "diff3_internal: string truncated");
+		i = snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s", rmark);
+		if (i < 0 || i >= sizeof(f3mark))
+			errx(1, "diff3_internal: string truncated");
+	}
 
 	increase();
 	m = readin(argv[0], &d13);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: merge.c,v 1.3 2006/08/01 05:14:17 ray Exp $	*/
+/*	$OpenBSD: merge.c,v 1.4 2006/08/11 08:18:19 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -35,8 +35,6 @@ merge_main(int argc, char **argv)
 	int ch, flags, labels, status;
 	const char *label[3];
 	BUF *bp;
-	extern char *optarg;
-	extern int optind;
 
 	flags = labels = 0;
 	status = D_ERROR;
@@ -48,7 +46,17 @@ merge_main(int argc, char **argv)
 	 */
 	while ((ch = getopt(argc, argv, "AEeL:pqV")) != -1) {
 		switch(ch) {
-		case 'A': case 'E': case 'e':
+		case 'A':
+			/*
+			 * kept for compatibility
+			 */
+			break;
+		case 'E':
+			flags |= MERGE_EFLAG;
+			flags |= MERGE_OFLAG;
+			break;
+		case 'e':
+			flags |= MERGE_EFLAG;
 			break;
 		case 'L':
 			if (3 <= labels)
