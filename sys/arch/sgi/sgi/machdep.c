@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2006/05/07 18:58:53 robert Exp $ */
+/*	$OpenBSD: machdep.c,v 1.33 2006/08/11 08:17:37 jasper Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -233,7 +233,6 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		switch ((cp0_get_prid() >> 8) & 0xff) {
 		case MIPS_R10000:
 		case MIPS_R12000:
-		case MIPS_R14000:	/* Anyone seen an O2 with R14K? */
 			bootdriveoffs = -1;
 			break;
 		}
@@ -360,7 +359,6 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 
 		case MIPS_R10000:
 		case MIPS_R12000:
-		case MIPS_R14000:
 			sys_config.cpu[0].tlbsize = 64;
 			break;
 
