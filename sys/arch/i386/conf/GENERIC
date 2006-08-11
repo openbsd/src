@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.517 2006/08/06 11:32:35 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.518 2006/08/11 08:51:35 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -237,8 +237,8 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
-ural*	at uhub?		# Ralink RT2500
-#rum*	at uhub?		# Ralink RT2501
+ural*	at uhub?		# Ralink RT2500USB
+rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 zyd*	at uhub?		# Zydas ZD1211
 #option	NATM
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
