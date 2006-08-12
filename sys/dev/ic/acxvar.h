@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.10 2006/08/07 10:46:12 mglocker Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.11 2006/08/12 10:30:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -490,6 +490,12 @@ struct acx_softc {
 #define ACX_RADIO_TYPE_RADIA	0x16
 #define ACX_RADIO_TYPE_UNKN17	0x17
 #define ACX_RADIO_TYPE_UNKN19	0x19
+
+#define ACX_RADIO_RSSI_MAXIM	120	/* 100dB */
+#define ACX_RADIO_RSSI_RFMD	215	/* 215dB */
+#define ACX_RADIO_RSSI_RALINK	0	/* XXX unknown yet */
+#define ACX_RADIO_RSSI_RADIA	78	/* 78db */
+#define ACX_RADIO_RSSI_UNKN	0	/* unknown radio */
 
 extern const struct ieee80211_rateset	acx_rates_11b;
 extern const struct ieee80211_rateset	acx_rates_11g;

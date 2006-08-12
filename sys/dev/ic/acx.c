@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.36 2006/08/08 10:49:16 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.37 2006/08/12 10:30:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -198,6 +198,7 @@ int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
 const char * 	acx_get_rf(int rev);
+int	 acx_get_maxrssi(int);
 
 int	 acx_load_firmware(struct acx_softc *, uint32_t,
 	     const uint8_t *, int);
@@ -344,6 +345,9 @@ acx_attach(struct acx_softc *sc)
 	/* Override newstate */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = acx_newstate;
+
+	/* Set maximal rssi */
+	ic->ic_max_rssi = acx_get_maxrssi(sc->sc_radio_type);
 
 	ieee80211_media_init(ifp, ieee80211_media_change,
 	    ieee80211_media_status);
@@ -1327,7 +1331,7 @@ acx_rxeof(struct acx_softc *sc)
 				tap->wr_chan_flags =
 				    htole16(ic->ic_bss->ni_chan->ic_flags);
 				tap->wr_rssi = head->rbh_level;
-				tap->wr_max_rssi = 0; /* XXX */
+				tap->wr_max_rssi = ic->ic_max_rssi;
 
 				M_DUP_PKTHDR(&mb, m);
 				mb.m_data = (caddr_t)tap;
@@ -2733,5 +2737,17 @@ acx_get_rf(int rev)
 	case ACX_RADIO_TYPE_RALINK:	return "Ralink";
 	case ACX_RADIO_TYPE_RADIA:	return "Radia";
 	default:			return "unknown";
+	}
+}
+
+int
+acx_get_maxrssi(int radio)
+{
+	switch (radio) {
+	case ACX_RADIO_TYPE_MAXIM:	return ACX_RADIO_RSSI_MAXIM;
+	case ACX_RADIO_TYPE_RFMD:	return ACX_RADIO_RSSI_RFMD;
+	case ACX_RADIO_TYPE_RALINK:	return ACX_RADIO_RSSI_RALINK;
+	case ACX_RADIO_TYPE_RADIA:	return ACX_RADIO_RSSI_RADIA;
+	default:			return ACX_RADIO_RSSI_UNKN;
 	}
 }
