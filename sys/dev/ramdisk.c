@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.26 2005/06/30 23:49:08 miod Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.27 2006/08/12 13:53:44 krw Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -498,8 +498,7 @@ rdgetdisklabel(struct rd_softc *sc)
 	lp->d_flags = D_RAMDISK;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 

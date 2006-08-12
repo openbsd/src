@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.60 2006/03/15 20:20:41 miod Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.61 2006/08/12 13:53:44 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -319,8 +319,7 @@ vndgetdisklabel(dev, sc)
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 

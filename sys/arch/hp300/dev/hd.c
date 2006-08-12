@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.40 2006/03/15 20:20:39 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.41 2006/08/12 13:53:44 krw Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -506,8 +506,7 @@ hdgetinfo(dev, rs, lp, spoofonly)
 	lp->d_sbsize = SBSIZE;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -524,8 +523,7 @@ hdgetinfo(dev, rs, lp, spoofonly)
 		/* XXX reset partition info as readdisklabel screws with it */
 		lp->d_partitions[0].p_size = 0;
 		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size =
-		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 		lp->d_npartitions = RAW_PART + 1;
 		lp->d_checksum = dkcksum(lp);
