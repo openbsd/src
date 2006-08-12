@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.87 2006/08/06 01:13:32 stevesk Exp $ */
+/* $OpenBSD: monitor.c,v 1.88 2006/08/12 20:46:46 miod Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -40,7 +40,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
 
 #ifdef SKEY
 #include <skey.h>
@@ -55,6 +54,7 @@
 #include "cipher.h"
 #include "kex.h"
 #include "dh.h"
+#include <zlib.h>
 #include "packet.h"
 #include "auth-options.h"
 #include "sshpty.h"
