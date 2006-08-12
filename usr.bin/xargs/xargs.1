@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.18 2006/07/24 14:43:59 bernd Exp $
+.\"	$OpenBSD: xargs.1,v 1.19 2006/08/12 07:10:56 jmc Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -97,7 +97,8 @@ Change
 to expect NUL
 .Pq Ql \e0
 characters as separators, instead of spaces and newlines.
-This is expected to be used in concert with the
+The quoting mechanisms described above are not performed.
+This option is expected to be used in concert with the
 .Fl print0
 function in
 .Xr find 1 .
