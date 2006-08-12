@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.211 2006/08/10 20:44:14 jason Exp $
+$OpenBSD: usbdevs,v 1.212 2006/08/12 04:18:31 jason Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -878,7 +878,8 @@ product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 product DELL BLUETOOTH350	0x8103	Bluetooth 350
 
 /* DeLorme products */
-product DELORME EARTHMATE	0x0100	Earthmate GPS
+product DELORME EMUSB		0x0100	Earthmate GPS
+product DELORME EMLT20		0x0200	Earthmate LT20
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500
