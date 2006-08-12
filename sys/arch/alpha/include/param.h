@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.30 2006/03/19 01:47:23 martin Exp $ */
+/* $OpenBSD: param.h,v 1.31 2006/08/12 17:54:38 krw Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -76,8 +76,8 @@
 
 #define	KERNBASE	0xfffffc0000230000	/* start of kernel virtual */
 
-#define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
 #ifndef	MAXPHYS
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */

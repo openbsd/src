@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2006/03/19 01:47:24 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.21 2006/08/12 17:54:38 krw Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -106,8 +106,8 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)
 
