@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.37 2006/08/12 10:30:15 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.38 2006/08/12 10:33:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -197,7 +197,7 @@ int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
-const char * 	acx_get_rf(int rev);
+const char * 	acx_get_rf(int);
 int	 acx_get_maxrssi(int);
 
 int	 acx_load_firmware(struct acx_softc *, uint32_t,
