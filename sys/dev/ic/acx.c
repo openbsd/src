@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.38 2006/08/12 10:33:18 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.39 2006/08/13 01:34:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -326,6 +326,7 @@ acx_attach(struct acx_softc *sc)
 	 */
 	ic->ic_caps |= IEEE80211_C_WEP |	/* WEP */
 	    IEEE80211_C_IBSS |			/* IBSS modes */
+	    IEEE80211_C_HOSTAP |		/* Access Point */
 	    IEEE80211_C_SHPREAMBLE;		/* Short preamble */
 
 	/* Get station id */
@@ -1867,7 +1868,8 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 		break;
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		if (ic->ic_opmode == IEEE80211_M_IBSS ||
+		    ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			struct ieee80211_node *ni;
 			uint8_t chan;
 
@@ -1902,9 +1904,18 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				goto back;
 			}
 
-			if (acx_join_bss(sc, ACX_MODE_ADHOC, ni) != 0) {
-				printf("%s: join IBSS failed\n", ifp->if_xname);
-				goto back;
+			if (ic->ic_opmode == IEEE80211_M_IBSS) {
+				if (acx_join_bss(sc, ACX_MODE_ADHOC, ni) != 0) {
+					printf("%s: join IBSS failed\n",
+					    ifp->if_xname);
+					goto back;
+				}
+			} else {
+				if (acx_join_bss(sc, ACX_MODE_AP, ni) != 0) {
+					printf("%s: join HOSTAP failed\n",
+					    ifp->if_xname);
+					goto back;
+				}
 			}
 
 			DPRINTF(("%s: join IBSS\n", sc->sc_dev.dv_xname));
