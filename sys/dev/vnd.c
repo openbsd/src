@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.61 2006/08/12 13:53:44 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.62 2006/08/13 17:55:07 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -600,12 +600,17 @@ vndstrategy(bp)
 		 *
 		 * XXX we could deal with holes here but it would be
 		 * a hassle (in the write case).
+		 * We must still however charge for the write even if there
+		 * was an error.
 		 */
 		if (error) {
 			nbp->vb_buf.b_error = error;
 			nbp->vb_buf.b_flags |= B_ERROR;
 			bp->b_resid -= (resid - sz);
 			s = splbio();
+			/* charge for the write */
+			if ((nbp->vb_buf.b_flags & B_READ) == 0)
+				nbp->vb_buf.b_vp->v_numoutput++;
 			biodone(&nbp->vb_buf);
 			splx(s);
 			return;
