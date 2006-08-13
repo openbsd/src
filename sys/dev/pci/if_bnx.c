@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.7 2006/08/10 04:25:15 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.8 2006/08/13 06:39:58 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -512,7 +512,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	 * values for the RX and TX rings.
 	 */
 
-#ifdef BNX_DRBUG
+#ifdef BNX_DEBUG
 	/* Force more frequent interrupts. */
 	sc->bnx_tx_quick_cons_trip_int = 1;
 	sc->bnx_tx_quick_cons_trip     = 1;
