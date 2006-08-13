@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.c,v 1.2 2006/05/16 22:52:09 miod Exp $	*/
+/*	$OpenBSD: tftpfs.c,v 1.3 2006/08/13 23:08:43 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -61,9 +61,6 @@ struct tftp_file {
 #define TFTP_BLOCK_OFF(x)	(x % TFTP_BLOCK_SIZE)
 
 static int	tftp_read_file(struct open_file *, char **, size_t *);
-#ifdef COMPAT_UFS
-static void	ffs_oldfscompat(struct fs *);
-#endif
 
 /*
  * Read a portion of a file into an internal buffer.  Return
