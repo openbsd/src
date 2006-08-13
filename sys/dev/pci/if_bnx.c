@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.8 2006/08/13 06:39:58 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.9 2006/08/13 19:29:46 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -1889,7 +1889,7 @@ bnx_dma_map_tx_desc(void *arg, bus_dmamap_t map)
 	struct tx_bd *txbd = NULL;
 	int i = 0, nseg;
 	u_int16_t prod, chain_prod;
-	u_int32_t	prod_bseq;
+	u_int32_t	prod_bseq, addr;
 #ifdef BNX_DEBUG
 	u_int16_t debug_prod;
 #endif
@@ -1933,8 +1933,10 @@ bnx_dma_map_tx_desc(void *arg, bus_dmamap_t map)
 	txbd = &map_arg->tx_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
 
 	/* Setup the first tx_bd for the first segment. */
-	txbd->tx_bd_haddr_lo       = htole32(BNX_ADDR_LO(map->dm_segs[i].ds_addr));
-	txbd->tx_bd_haddr_hi       = htole32(BNX_ADDR_HI(map->dm_segs[i].ds_addr));
+	addr = (u_int32_t)(map->dm_segs[i].ds_addr);
+	txbd->tx_bd_haddr_lo       = htole32(addr);
+	addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
+	txbd->tx_bd_haddr_hi       = htole32(addr);
 	txbd->tx_bd_mss_nbytes     = htole16(map->dm_segs[i].ds_len);
 	txbd->tx_bd_vlan_tag_flags = htole16(map_arg->tx_flags |
 			TX_BD_FLAGS_START);
@@ -1947,8 +1949,10 @@ bnx_dma_map_tx_desc(void *arg, bus_dmamap_t map)
 
 		txbd = &map_arg->tx_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
 
-		txbd->tx_bd_haddr_lo       = htole32(BNX_ADDR_LO(map->dm_segs[i].ds_addr));
-		txbd->tx_bd_haddr_hi       = htole32(BNX_ADDR_HI(map->dm_segs[i].ds_addr));
+		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
+		txbd->tx_bd_haddr_lo       = htole32(addr);
+		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
+		txbd->tx_bd_haddr_hi       = htole32(addr);
 		txbd->tx_bd_mss_nbytes     = htole16(map->dm_segs[i].ds_len);
 		txbd->tx_bd_vlan_tag_flags = htole16(map_arg->tx_flags);
 
@@ -2973,15 +2977,15 @@ bnx_blockinit(struct bnx_softc *sc)
 
 	/* Program the physical address of the status block. */
 	REG_WR(sc, BNX_HC_STATUS_ADDR_L,
-		BNX_ADDR_LO(sc->status_block_paddr));
+		(u_int32_t)(sc->status_block_paddr));
 	REG_WR(sc, BNX_HC_STATUS_ADDR_H,
-		BNX_ADDR_HI(sc->status_block_paddr));
+		(u_int32_t)((u_int64_t)sc->status_block_paddr >> 32));
 
 	/* Program the physical address of the statistics block. */
 	REG_WR(sc, BNX_HC_STATISTICS_ADDR_L,
-		BNX_ADDR_LO(sc->stats_block_paddr));
+		(u_int32_t)(sc->stats_block_paddr));
 	REG_WR(sc, BNX_HC_STATISTICS_ADDR_H,
-		BNX_ADDR_HI(sc->stats_block_paddr));
+		(u_int32_t)((u_int64_t)sc->stats_block_paddr >> 32));
 
 	/* Program various host coalescing parameters. */
 	REG_WR(sc, BNX_HC_TX_QUICK_CONS_TRIP,
@@ -3068,12 +3072,13 @@ int
 bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *chain_prod, 
 	u_int32_t *prod_bseq)
 {
-	bus_dmamap_t		map;
-	struct mbuf *m_new = NULL;
-	struct rx_bd		*rxbd;
-	int i, rc = 0;
+	bus_dmamap_t			map;
+	struct mbuf 			*m_new = NULL;
+	struct rx_bd			*rxbd;
+	int				i, rc = 0;
+	u_int32_t			addr;
 #ifdef BNX_DEBUG
-	u_int16_t debug_chain_prod = *chain_prod;
+	u_int16_t debug_chain_prod =	*chain_prod;
 #endif
 
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Entering %s()\n", 
@@ -3160,8 +3165,10 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 	/* Setup the rx_bd for the first segment. */
 	rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-	rxbd->rx_bd_haddr_lo  = htole32(BNX_ADDR_LO(map->dm_segs[0].ds_addr));
-	rxbd->rx_bd_haddr_hi  = htole32(BNX_ADDR_HI(map->dm_segs[0].ds_addr));
+	addr = (u_int32_t)(map->dm_segs[0].ds_addr);
+	rxbd->rx_bd_haddr_lo  = htole32(addr);
+	addr = (u_int32_t)((u_int64_t)map->dm_segs[0].ds_addr >> 32);
+	rxbd->rx_bd_haddr_hi  = htole32(addr);
 	rxbd->rx_bd_len       = htole32(map->dm_segs[0].ds_len);
 	rxbd->rx_bd_flags     = htole32(RX_BD_FLAGS_START);
 	*prod_bseq += map->dm_segs[0].ds_len;
@@ -3173,8 +3180,10 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 
 		rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-		rxbd->rx_bd_haddr_lo  = htole32(BNX_ADDR_LO(map->dm_segs[i].ds_addr));
-		rxbd->rx_bd_haddr_hi  = htole32(BNX_ADDR_HI(map->dm_segs[i].ds_addr));
+		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
+		rxbd->rx_bd_haddr_lo  = htole32(addr);
+		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
+		rxbd->rx_bd_haddr_hi  = htole32(addr);
 		rxbd->rx_bd_len       = htole32(map->dm_segs[i].ds_len);
 		rxbd->rx_bd_flags     = 0;
 		*prod_bseq += map->dm_segs[i].ds_len;
@@ -3209,7 +3218,7 @@ int
 bnx_init_tx_chain(struct bnx_softc *sc)
 {
 	struct tx_bd *txbd;
-	u_int32_t val;
+	u_int32_t val, addr;
 	int i, rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
@@ -3243,8 +3252,10 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 		else
 			j = i + 1;
 
-		txbd->tx_bd_haddr_hi = htole32(BNX_ADDR_HI(sc->tx_bd_chain_paddr[j]));
-		txbd->tx_bd_haddr_lo = htole32(BNX_ADDR_LO(sc->tx_bd_chain_paddr[j]));
+		addr = (u_int32_t)(sc->tx_bd_chain_paddr[j]);
+		txbd->tx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[j] >> 32);
+		txbd->tx_bd_haddr_hi = htole32(addr);
 	}
 
 	/*
@@ -3258,9 +3269,9 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_CMD_TYPE, val);
 
 	/* Point the hardware to the first page in the chain. */
-	val = BNX_ADDR_HI(sc->tx_bd_chain_paddr[0]);
+	val = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[0] >> 32);
 	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TBDR_BHADDR_HI, val);
-	val = BNX_ADDR_LO(sc->tx_bd_chain_paddr[0]);
+	val = (u_int32_t)(sc->tx_bd_chain_paddr[0]);
 	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TBDR_BHADDR_LO, val);
 
 	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_chain(sc, 0, TOTAL_TX_BD));
@@ -3322,7 +3333,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 	struct rx_bd *rxbd;
 	int i, rc = 0;
 	u_int16_t prod, chain_prod;
-	u_int32_t prod_bseq, val;
+	u_int32_t prod_bseq, val, addr;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -3346,8 +3357,10 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 			j = i + 1;
 
 		/* Setup the chain page pointers. */
-		rxbd->rx_bd_haddr_hi = htole32(BNX_ADDR_HI(sc->rx_bd_chain_paddr[j]));
-		rxbd->rx_bd_haddr_lo = htole32(BNX_ADDR_LO(sc->rx_bd_chain_paddr[j]));
+		addr = (u_int32_t)((u_int64_t)sc->rx_bd_chain_paddr[j] >> 32);
+		rxbd->rx_bd_haddr_hi = htole32(addr);
+		addr = (u_int32_t)(sc->rx_bd_chain_paddr[j]);
+		rxbd->rx_bd_haddr_lo = htole32(addr);
 	}
 
 	/* Initialize the context ID for an L2 RX chain. */
@@ -3357,9 +3370,9 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_CTX_TYPE, val);
 
 	/* Point the hardware to the first page in the chain. */
-	val = BNX_ADDR_HI(sc->rx_bd_chain_paddr[0]);
+	val = (u_int32_t)((u_int64_t)sc->rx_bd_chain_paddr[0] >> 32);
 	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_NX_BDHADDR_HI, val);
-	val = BNX_ADDR_LO(sc->rx_bd_chain_paddr[0]);
+	val = (u_int32_t)(sc->rx_bd_chain_paddr[0]);
 	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_NX_BDHADDR_LO, val);
 
 	/* Allocate mbuf clusters for the rx_bd chain. */
@@ -4835,7 +4848,6 @@ bnx_tick_locked_exit:
 void
 bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 {
-	u_int32_t val_hi, val_lo;
 	struct mbuf *mp = m;
 
 	if (m == NULL) {
@@ -4845,10 +4857,8 @@ bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 	}
 
 	while (mp) {
-		val_hi = BNX_ADDR_HI(mp);
-		val_lo = BNX_ADDR_LO(mp);
-		printf("mbuf: vaddr = 0x%08X:%08X, m_len = %d, m_flags = ", 
-			   val_hi, val_lo, mp->m_len);
+		printf("mbuf: vaddr = %p, m_len = %d, m_flags = ", 
+		    mp, mp->m_len);
 
 		if (mp->m_flags & M_EXT)
 			printf("M_EXT ");
@@ -4856,12 +4866,9 @@ bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 			printf("M_PKTHDR ");
 		printf("\n");
 
-		if (mp->m_flags & M_EXT) {
-			val_hi = BNX_ADDR_HI(mp->m_ext.ext_buf);
-			val_lo = BNX_ADDR_LO(mp->m_ext.ext_buf);
-			printf("- m_ext: vaddr = 0x%08X:%08X, ext_size = 0x%04X\n", 
-				val_hi, val_lo, mp->m_ext.ext_size);
-		}
+		if (mp->m_flags & M_EXT)
+			printf("- m_ext: vaddr = %p, ext_size = 0x%04X\n", 
+			    mp, mp->m_ext.ext_size);
 
 		mp = mp->m_next;
 	}
@@ -5371,110 +5378,88 @@ bnx_dump_stats_block(struct bnx_softc *sc)
 void
 bnx_dump_driver_state(struct bnx_softc *sc)
 {
-	u_int32_t val_hi, val_lo;
-
 	BNX_PRINTF(sc,
-		"-----------------------------"
-		" Driver State "
-		"-----------------------------\n");
+	    "-----------------------------"
+	    " Driver State "
+	    "-----------------------------\n");
 
-	val_hi = BNX_ADDR_HI(sc);
-	val_lo = BNX_ADDR_LO(sc);
-	BNX_PRINTF(sc, "0x%08X:%08X - (sc) driver softc structure virtual address\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc) driver softc structure virtual "
+	    "address\n", sc);
 
-	val_hi = BNX_ADDR_HI(sc->status_block);
-	val_lo = BNX_ADDR_LO(sc->status_block);
-	BNX_PRINTF(sc, "0x%08X:%08X - (sc->status_block) status block virtual address\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc->status_block) status block virtual address\n",
+	    sc->status_block);
 
-	val_hi = BNX_ADDR_HI(sc->stats_block);
-	val_lo = BNX_ADDR_LO(sc->stats_block);
-	BNX_PRINTF(sc, "0x%08X:%08X - (sc->stats_block) statistics block virtual address\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc->stats_block) statistics block virtual "
+	    "address\n", sc->stats_block);
 
-	val_hi = BNX_ADDR_HI(sc->tx_bd_chain);
-	val_lo = BNX_ADDR_LO(sc->tx_bd_chain);
-	BNX_PRINTF(sc,
-		"0x%08X:%08X - (sc->tx_bd_chain) tx_bd chain virtual adddress\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc->tx_bd_chain) tx_bd chain virtual "
+	    "adddress\n", sc->tx_bd_chain);
 
-	val_hi = BNX_ADDR_HI(sc->rx_bd_chain);
-	val_lo = BNX_ADDR_LO(sc->rx_bd_chain);
-	BNX_PRINTF(sc,
-		"0x%08X:%08X - (sc->rx_bd_chain) rx_bd chain virtual address\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc->rx_bd_chain) rx_bd chain virtual address\n",
+	    sc->rx_bd_chain);
 
-	val_hi = BNX_ADDR_HI(sc->tx_mbuf_ptr);
-	val_lo = BNX_ADDR_LO(sc->tx_mbuf_ptr);
-	BNX_PRINTF(sc,
-		"0x%08X:%08X - (sc->tx_mbuf_ptr) tx mbuf chain virtual address\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc->tx_mbuf_ptr) tx mbuf chain virtual address\n",
+	    sc->tx_mbuf_ptr);
 
-	val_hi = BNX_ADDR_HI(sc->rx_mbuf_ptr);
-	val_lo = BNX_ADDR_LO(sc->rx_mbuf_ptr);
-	BNX_PRINTF(sc, 
-		"0x%08X:%08X - (sc->rx_mbuf_ptr) rx mbuf chain virtual address\n",
-		val_hi, val_lo);
+	BNX_PRINTF(sc, "%p - (sc->rx_mbuf_ptr) rx mbuf chain virtual address\n",
+	    sc->rx_mbuf_ptr);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->interrupts_generated) h/w intrs\n",
-		sc->interrupts_generated);
+	    sc->interrupts_generated);
 	
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_interrupts) rx interrupts handled\n",
-		sc->rx_interrupts);
+	    sc->rx_interrupts);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->tx_interrupts) tx interrupts handled\n",
-		sc->tx_interrupts);
+	   sc->tx_interrupts);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->last_status_idx) status block index\n",
-		sc->last_status_idx);
+	    sc->last_status_idx);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->tx_prod) tx producer index\n",
-		sc->tx_prod);
+	    sc->tx_prod);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->tx_cons) tx consumer index\n",
-		sc->tx_cons);
+	    sc->tx_cons);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->tx_prod_bseq) tx producer bseq index\n",
-		sc->tx_prod_bseq);
+	    sc->tx_prod_bseq);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_prod) rx producer index\n",
-		sc->rx_prod);
+	    sc->rx_prod);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_cons) rx consumer index\n",
-		sc->rx_cons);
+	    sc->rx_cons);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_prod_bseq) rx producer bseq index\n",
-		sc->rx_prod_bseq);
+	    sc->rx_prod_bseq);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_mbuf_alloc) rx mbufs allocated\n",
-		sc->rx_mbuf_alloc);
+	    sc->rx_mbuf_alloc);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->free_rx_bd) free rx_bd's\n",
-		sc->free_rx_bd);
+	    sc->free_rx_bd);
 
 	BNX_PRINTF(sc, "0x%08X/%08X - (sc->rx_low_watermark) rx low watermark\n",
-		sc->rx_low_watermark, (u_int32_t) USABLE_RX_BD);
+	    sc->rx_low_watermark, (u_int32_t) USABLE_RX_BD);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->txmbuf_alloc) tx mbufs allocated\n",
-		sc->tx_mbuf_alloc);
+	    sc->tx_mbuf_alloc);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_mbuf_alloc) rx mbufs allocated\n",
-		sc->rx_mbuf_alloc);
+	    sc->rx_mbuf_alloc);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->used_tx_bd) used tx_bd's\n",
-		sc->used_tx_bd);
+	    sc->used_tx_bd);
 
 	BNX_PRINTF(sc, "0x%08X/%08X - (sc->tx_hi_watermark) tx hi watermark\n",
-		sc->tx_hi_watermark, (u_int32_t) USABLE_TX_BD);
+	    sc->tx_hi_watermark, (u_int32_t) USABLE_TX_BD);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->mbuf_alloc_failed) failed mbuf alloc\n",
-		sc->mbuf_alloc_failed);
+	    sc->mbuf_alloc_failed);
 
-	BNX_PRINTF(sc,
-		"-----------------------------"
-		"--------------"
-		"-----------------------------\n");
+	BNX_PRINTF(sc, "-------------------------------------------"
+	    "-----------------------------\n");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.7 2006/08/10 04:25:15 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.8 2006/08/13 19:29:46 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -670,14 +670,6 @@ struct flash_spec {
 #define PCI_CLRBIT(pc, tag, reg, x)	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
 
 #define BNX_STATS(x)			(u_long) stats->stat_ ## x ## _lo
-
-#ifdef __LP64__
-#define BNX_ADDR_LO(y)			((u_int64_t)(y) & 0xffffffff)
-#define BNX_ADDR_HI(y)			((u_int64_t)(y) >> 32)
-#else
-#define BNX_ADDR_LO(y)			((u_int32_t)(y))
-#define BNX_ADDR_HI(y)			((u_int32_t)0)
-#endif
 
 /*
  * The following data structures are generated from RTL code.
