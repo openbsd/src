@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.54 2006/08/13 03:36:24 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.55 2006/08/13 16:24:12 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -988,8 +988,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_flags = D_REMOVABLE;
 
 		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size =
-		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 		lp->d_npartitions = RAW_PART + 1;
 
