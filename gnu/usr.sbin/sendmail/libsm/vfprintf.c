@@ -535,11 +535,19 @@ reswitch:	switch (ch)
 				if (prec > 120)
 					prec = 120;
 				if (prec >= 0)
+#if HASSNPRINTF
 					snprintf(out, sizeof(out), fmt, width,
-					    prec, val);
+						prec, val);
+#else /* HASSNPRINTF */
+					sprintf(out, fmt, width, prec, val);
+#endif /* HASSNPRINTF */
 				else
+#if HASSNPRINTF
 					snprintf(out, sizeof(out), fmt, width,
-					    val);
+						val);
+#else /* HASSNPRINTF */
+					sprintf(out, fmt, width, val);
+#endif /* HASSNPRINTF */
 				len = strlen(out);
 				PRINT(out, len);
 				FLUSH();
