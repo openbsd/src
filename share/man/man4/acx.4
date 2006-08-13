@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acx.4,v 1.16 2006/08/08 11:02:48 mglocker Exp $
+.\"	$OpenBSD: acx.4,v 1.17 2006/08/13 20:17:20 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\" Copyright (c) 2006 The DragonFly Project.  All rights reserved.
@@ -60,18 +60,18 @@ Also known as
 mode, this is used when associating with an access point, through
 which all traffic passes.
 This mode is the default.
-.\" .It IBSS mode
-.\" Also known as
-.\" .Em IEEE ad-hoc
-.\" mode or
-.\" .Em peer-to-peer
-.\" mode.
-.\" This is the standardized method of operating without an access point.
-.\" Stations associate with a service set.
-.\" However, actual connections between stations are peer-to-peer.
-.\" .It Host AP
-.\" In this mode the driver acts as an access point (base station)
-.\" for other cards.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
 .\" .It monitor mode
 .\" In this mode the driver is able to receive packets without
 .\" associating with an access point.
@@ -165,8 +165,8 @@ driver supports the following media options:
 Select Host AP operation.
 .It Cm ibss
 Select IBSS operation.
-.It Cm monitor
-Select monitor mode.
+.\".It Cm monitor
+.\"Select monitor mode.
 .El
 .It Fl mediaopt Ar opts
 Disable the specified media options on the driver and return it to the
