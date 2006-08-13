@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.29 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.30 2006/08/13 20:44:00 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.29 2004/06/17 22:11:55 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.30 2006/08/13 20:44:00 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -416,6 +416,7 @@ child_process(entry *e, user *u) {
 				fprintf(mail, "Subject: Cron <%s@%s> %s\n",
 					usernm, first_word(hostname, "."),
 					e->cmd);
+				fprintf(mail, "Auto-Submitted: auto-generated\n");
 #ifdef MAIL_DATE
 				fprintf(mail, "Date: %s\n",
 					arpadate(&StartTime));

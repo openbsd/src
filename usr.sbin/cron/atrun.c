@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.14 2005/01/30 20:45:58 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.15 2006/08/13 20:44:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.14 2005/01/30 20:45:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.15 2006/08/13 20:44:00 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -551,6 +551,7 @@ run_job(atjob *job, char *atfile)
 		fprintf(mail, "From: %s (Atrun Service)\n", pw->pw_name);
 		fprintf(mail, "To: %s\n", mailto);
 		fprintf(mail, "Subject: Output from \"at\" job\n");
+		fprintf(mail, "Auto-Submitted: auto-generated\n");
 #ifdef MAIL_DATE
 		fprintf(mail, "Date: %s\n", arpadate(&StartTime));
 #endif /*MAIL_DATE*/
