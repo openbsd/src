@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.26 2006/07/19 13:24:32 jmc Exp $
+.\"	$OpenBSD: scsi.4,v 1.27 2006/08/13 07:56:37 steven Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -126,18 +126,9 @@ The ioctl will return a successful status even if the device rejected the
 command.
 As all status is returned to the user, it is up to the user
 process to examine this information to decide the success of the command.
-.It Dv SCIOCREPROBE
-Ask the system to probe the scsi busses for any new devices.
-If it finds any, they will be attached to the appropriate drivers.
-The search can be narrowed to a specific bus, target or lun.
-The new device may or may not be related to the device on which
-the ioctl was performed.
 .It Dv SCIOCIDENTIFY
 Ask the driver what its bus, target and lun are.
 In addition, the device type, ATAPI or SCSI, is returned.
-.It Dv SCIOCDECONFIG
-Ask the device to disappear.
-This may not happen if the device is in use.
 .El
 .Sh ADAPTERS
 The system allows common device drivers to work through many different
