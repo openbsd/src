@@ -149,6 +149,7 @@
 ./usr/include/dev/i2c/i2c_bitbang.h
 ./usr/include/dev/i2c/i2c_io.h
 ./usr/include/dev/i2c/i2cvar.h
+./usr/include/dev/i2c/rs5c372reg.h
 ./usr/include/dev/i2c/wm8750reg.h
 ./usr/include/dev/i2o
 ./usr/include/dev/i2o/i2o.h
@@ -708,8 +709,6 @@
 ./usr/include/dev/rasops/rasops.h
 ./usr/include/dev/rasops/rasops_bitops.h
 ./usr/include/dev/rasops/rasops_masks.h
-./usr/include/dev/rcons
-./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rndioctl.h
 ./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
