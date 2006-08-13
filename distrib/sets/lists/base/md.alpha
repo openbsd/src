@@ -789,6 +789,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2c/i2c_bitbang.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2c/i2c_io.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2c/i2cvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2c/rs5c372reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2c/wm8750reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2o
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2o/i2o.ph
@@ -1348,7 +1349,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rasops/rasops.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rasops/rasops_bitops.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rasops/rasops_masks.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/i2c/rs5c372reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rndioctl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus
