@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.53 2006/03/15 20:20:41 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.54 2006/08/13 03:36:24 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -346,7 +346,7 @@ fdstrategy(bp)
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
 	int sz;
  	int s;
-	int fd_bsize = 128 << fd->sc_type->secsize;
+	int fd_bsize = FD_BSIZE(fd);
 	int bf = fd_bsize / DEV_BSIZE;
 
 	/* Valid unit, controller, and request? */
@@ -618,7 +618,7 @@ fdintr(fdc)
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
 	struct fd_formb *finfo = NULL;
-	int fd_bsize, bf;
+	int fd_bsize;
 
 loop:
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
@@ -627,8 +627,7 @@ loop:
 		fdc->sc_state = DEVIDLE;
 		return 1;
 	}
-	fd_bsize = 128 << fd->sc_type->secsize;
-	bf = fd_bsize / FDC_BSIZE;
+	fd_bsize = FD_BSIZE(fd);
 
 	bp = fd->sc_q.b_actf;
 	if (bp == NULL) {
@@ -937,8 +936,7 @@ fdretry(fd)
 	default:
 	fail:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
-		    fd->sc_skip / (128 << fd->sc_type->secsize),
-		    (struct disklabel *)NULL);
+		    fd->sc_skip / FD_BSIZE(fd), (struct disklabel *)NULL);
 		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
@@ -975,7 +973,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		bzero(lp, sizeof(*lp));
 		bzero(&cdl, sizeof(struct cpu_disklabel));
 
-		lp->d_secsize = 128 << fd->sc_type->secsize;
+		lp->d_secsize = FD_BSIZE(fd);
 		lp->d_secpercyl = fd->sc_type->seccyl;
 		lp->d_ntracks = fd->sc_type->heads;
 		lp->d_nsectors = fd->sc_type->sectrac;
@@ -1065,7 +1063,7 @@ fdformat(dev, finfo, p)
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
         struct buf *bp;
-	int fd_bsize = 128 << fd->sc_type->secsize;
+	int fd_bsize = FD_BSIZE(fd);
 
         /* set up a buffer header for fdstrategy() */
         bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);

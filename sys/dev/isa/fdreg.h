@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdreg.h,v 1.11 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: fdreg.h,v 1.12 2006/08/13 03:36:24 krw Exp $	*/
 /*	$NetBSD: fdreg.h,v 1.8 1995/06/28 04:30:57 cgd Exp $	*/
 
 /*-
@@ -59,10 +59,10 @@
 #define	fdin	0	/* Digital Input Register (R) */
 #define	FDI_DCHG	0x80	/* diskette has been changed */
 
-#define	FDC_BSIZE	512
 #define	FDC_NPORT	6
 #define FDCTL_NPORT	1
 #define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+#define	FD_BSIZE(fd)	(128 << fd->sc_type->secsize)
 
 #define FDUNIT(dev)	((dev & 0x80) >> 7)	/* XXX two drives max, sorry */
 #define FDTYPE(dev)	((minor(dev) & 0x70) >> 4)
