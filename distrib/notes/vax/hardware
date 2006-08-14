@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2006/07/30 13:06:55 miod Exp $
+dnl	$OpenBSD: hardware,v 1.19 2006/08/14 13:23:19 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -8,12 +8,15 @@ The following systems have been tested:
 	- VAXstation 4000/VLC
 	- VAXstation 4000/60
 	- VAXstation 4000/90
+	- VAXstation 4000/90A
 	- VAXstation 4000/96
 	- MicroVAX 2000
 	- MicroVAX 3100/{10,20}{,e}
 	- MicroVAX 3100/80
 	- MicroVAX 3100/85
 	- MicroVAX 3100/90
+	- MicroVAX 3100/95
+	- MicroVAX 3100/96
 	- MicroVAX 3300
 	- VAX 4000 100
 	- VAX 4000 105
@@ -47,8 +50,8 @@ Supported devices {:-include-:}:
 	- VAXstation 3100/{30,38,40,48} color frame buffer option (gpx)
 	- VAXstation 4000/60 and 4000/VLC frame buffer (lcg)
 	- VAXstation 4000/90 color frame buffer (lcspx)
-	The VAXstation 3100/76 spx frame buffer, as well as the spx/spxg
-	option for VAXstation 4000s is not supported yet.
+	The VAXstation 3100 spx frame buffer, as well as the spxg/spxgt
+	option for VAXstation 4000s are not supported yet.
 
     * Keyboard and mice:
 	- LK201 and LK401 keyboards (lkkbd)

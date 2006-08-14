@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.17 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: install,v 1.18 2006/08/14 13:23:19 miod Exp $
 OpenBSDInstallPrelude
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -93,11 +93,9 @@ OpenBSDInstallPart2
 OpenBSDBootMsgs
 
 	You will next be asked for your terminal type.
-dnl uncomment once display console is available
-dnl	If you are installing from a serial console you should choose
-dnl	the terminal type from amongst those listed.
-dnl	(If your terminal type is xterm, just use vt100.)
-	Just hit return to select the default (vt100).
+	If you are installing from a serial console you should choose
+	the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt100.)
 
 OpenBSDInstallPart3
 
