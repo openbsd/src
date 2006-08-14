@@ -1,5 +1,5 @@
-/*	$OpenBSD: ehcivar.h,v 1.9 2005/04/11 08:09:32 dlg Exp $ */
-/*	$NetBSD: ehcivar.h,v 1.12 2001/12/31 12:16:57 augustss Exp $	*/
+/*	$OpenBSD: ehcivar.h,v 1.10 2006/08/14 00:41:11 pascoe Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ typedef struct ehci_soft_qtd {
 typedef struct ehci_soft_qh {
 	ehci_qh_t qh;
 	struct ehci_soft_qh *next;
+	struct ehci_soft_qh *prev;
 	struct ehci_soft_qtd *sqtd;
 	ehci_physaddr_t physaddr;
 	int islot;
@@ -64,10 +65,14 @@ struct ehci_xfer {
 	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
 	ehci_soft_qtd_t *sqtdstart;
 	ehci_soft_qtd_t *sqtdend;
+	u_int32_t ehci_xfer_flags;
 #ifdef DIAGNOSTIC
 	int isdone;
 #endif
 };
+#define EHCI_XFER_ABORTING	0x0001	/* xfer is aborting. */
+#define EHCI_XFER_ABORTWAIT	0x0002	/* abort completion is being awaited. */
+
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
 /* Information about an entry in the interrupt list. */
