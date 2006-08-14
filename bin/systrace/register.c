@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.21 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: register.c,v 1.22 2006/08/14 07:24:55 ray Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -158,7 +158,8 @@ systrace_initcb(void)
 	    &ic_translate_unlinkname);
 	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
 	intercept_register_transstring("native", "symlink", 0);
-	intercept_register_transfn("native", "symlink", 1);
+	intercept_register_translation("native", "symlink", 1,
+	    &ic_translate_unlinkname);
 	X(intercept_register_sccb("native", "link", trans_cb, NULL));
 	intercept_register_transfn("native", "link", 0);
 	intercept_register_transfn("native", "link", 1);
