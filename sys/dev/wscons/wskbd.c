@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.52 2006/08/14 15:56:02 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.53 2006/08/14 17:41:08 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -110,11 +110,12 @@
 #include "wskbd.h"
 #include "wsmux.h"
 
-#ifndef	SMALL_KERNEL
-#define	BURNER_SUPPORT
-#define	SCROLLBACK_SUPPORT
+#ifdef	SMALL_KERNEL
 #undef	NWSKBD_HOTKEY
 #define	NWSKBD_HOTKEY 0
+#else
+#define	BURNER_SUPPORT
+#define	SCROLLBACK_SUPPORT
 #endif
 
 #ifdef WSKBD_DEBUG
