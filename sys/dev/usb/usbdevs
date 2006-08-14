@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.213 2006/08/14 09:32:23 jsg Exp $
+$OpenBSD: usbdevs,v 1.214 2006/08/14 12:54:53 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -440,6 +440,7 @@ vendor SHARK		0x13d2	Shark
 vendor NOVATEL		0x1410	Novatel Wireless
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor RADIOSHACK	0x1453	Radio Shack
+vendor HUAWEI3COM	0x1472	Huawei 3Com
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
@@ -457,6 +458,7 @@ vendor GIGASET		0x1690	Gigaset
 vendor JABLOTRON	0x16d6	Jablotron
 vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
 vendor METAGEEK		0x1781	MetaGeek
+vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -519,6 +521,7 @@ product ABOCOM XX9		0x4104	XX9
 product ABOCOM WL54		0x6001	WL54
 product ABOCOM XX10		0xabc1	XX10
 product ABOCOM BWU613		0xb000	BWU613
+product ABOCOM RT2573		0xb21d	RT2573
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
@@ -888,11 +891,12 @@ product DELORME EMLT20		0x0200	Earthmate LT20
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500
 
-/* Dick Smith Electronics products */
+/* Dick Smith Electronics (really C-Net) products */
 product DICKSMITH WL200U	0x0002	WL-200U
 product DICKSMITH CHUSB611G	0x0013	CHUSB 611G
 product DICKSMITH WL240U	0x0014	WL-240U
 product DICKSMITH XH1153	0x5743	XH1153 802.11b
+product DICKSMITH RT2573	0x9022	RT2573
 product DICKSMITH CWD854F	0x9032	C-Net CWD-854 rev F
 
 /* Digi International products */
@@ -1057,12 +1061,14 @@ product GIGABYTE GNWB01GS	0x8008	GN-WB01GS
 
 /* Gigaset products */
 product GIGASET WLAN		0x0701	WLAN
+product GIGASET RT2573		0x0722	RT2573
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
 
 /* Good Way Technology products */
 product GOODWAY GWUSB2E		0x6200	GWUSB2E
+product GOODWAY RT2573		0xc019	RT2573
 
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
@@ -1147,6 +1153,7 @@ product HP 568J			0x1116  Jornada 568
 product HP2 C500		0x6002	PhotoSmart C500
 
 /* HUAWEI products */
+product HUAWEI3COM RT2573	0x0009	RT2573
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
 
 /* IBM Corporation */
@@ -1424,6 +1431,9 @@ product MSI BLUETOOTH		0x1967	Bluetooth
 product MSI RT2570		0x6861	RT2570
 product MSI RT2570_2		0x6865	RT2570
 product MSI RT2570_3		0x6869	RT2570
+product MSI RT2573		0x6877	RT2573
+product MSI RT2573_2		0xa861	RT2573
+product MSI RT2573_3		0xa874	RT2573
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1652,6 +1662,7 @@ product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
 product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
 product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
+product PLANEX2 GWUSMM		0xed02	GW-USMM
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
@@ -1702,6 +1713,10 @@ product PROLIFIC PL2303X2	0xaaa2	PL2303 Serial
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
 
+/* Qcom products */
+product QCOM RT2573		0x6196	RT2573
+product QCOM RT2573_2		0x6229	RT2573
+
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N
 
@@ -1723,6 +1738,7 @@ product RALINK RT2570		0x1706	RT2570
 product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK RT2573		0x2573	RT2573
+product RALINK RT2671		0x2671	RT2671
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
@@ -1864,6 +1880,8 @@ product SITECOM CN104		0x2068	CN104
 
 /* Sitecom Europe products */
 product SITECOMEU WL113		0x9071	WL-113
+product SITECOMEU WL172		0x90ac	WL-172
+product SITECOMEU WL113R2	0x9712	WL-113 rev 2
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink Ethernet
@@ -1947,8 +1965,9 @@ product DIAMOND2 RIO800USB	0x5002	Rio 800
 product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Surecom Technology products */
-product SURECOM RT2570		0x11f3	RT2570
 product ACERCM EP1427X2		0x0893	EP-1427X-2 Ethernet
+product SURECOM RT2570		0x11f3	RT2570
+product SURECOM RT2573		0x31f3	RT2573
 
 /* Susteen, Inc. products */
 product SUSTEEN DCU11		0x0528	Ericsson DCU-10/11
