@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.20 2005/11/19 23:02:25 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.21 2006/08/14 13:53:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -189,7 +189,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 			passwd = getpass("Password:");
 	} else
 		passwd = password;
-	if (password == NULL)
+	if (passwd == NULL)
 		passwd = "";
 
 	if ((v = login_getcapstr(lc, "radius-server", NULL, NULL)) == NULL){
