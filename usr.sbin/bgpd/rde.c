@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.208 2006/06/15 10:04:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.209 2006/08/14 17:11:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,6 +78,7 @@ struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
 void		 peer_dump(u_int32_t, u_int16_t, u_int8_t);
+void		 peer_send_eor(struct rde_peer *, u_int16_t, u_int16_t);
 
 void		 network_init(struct network_head *);
 void		 network_add(struct network_config *, int);
@@ -2297,6 +2298,40 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 			else
 				pt_dump(rde_up_dump_upcall, peer, AF_INET6);
 		}
+
+	peer_send_eor(peer, afi, safi);
+}
+
+/* End-of-RIB marker, draft-ietf-idr-restart-13.txt */
+void
+peer_send_eor(struct rde_peer *peer, u_int16_t afi, u_int16_t safi)
+{
+	if (afi == AFI_IPv4 && safi == SAFI_UNICAST) {
+		u_char null[4];
+
+		bzero(&null, 4);
+		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
+		    0, -1, &null, 4) == -1)
+			fatal("imsg_compose error in peer_send_eor");
+	} else {
+		u_int16_t	i;
+		u_char		buf[10];
+
+		i = 0;	/* v4 withdrawn len */
+		bcopy(&i, &buf[0], sizeof(i));
+		i = htons(6);	/* path attr len */
+		bcopy(&i, &buf[2], sizeof(i));
+		buf[4] = ATTR_OPTIONAL;
+		buf[5] = ATTR_MP_UNREACH_NLRI;
+		buf[6] = 3;	/* withdrawn len */
+		i = htons(afi);
+		bcopy(&i, &buf[7], sizeof(i));
+		buf[9] = safi;
+
+		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
+		    0, -1, &buf, 10) == -1)
+			fatal("imsg_compose error in peer_send_eor");
+	}
 }
 
 /*
