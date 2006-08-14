@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_radius.8,v 1.7 2003/03/11 08:11:08 jmc Exp $
+.\" $OpenBSD: login_radius.8,v 1.8 2006/08/14 16:25:56 millert Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -40,6 +40,7 @@
 .Nd contact radiusd for authentication
 .Sh SYNOPSIS
 .Nm login_radius
+.Op Fl d
 .Op Fl s Ar service
 .Op Fl v Ar name=value
 .Ar user
@@ -65,6 +66,10 @@ use the authentication specified by
 .Pp
 Available options are:
 .Bl -tag -width indent
+.It Fl d
+Debug mode.
+Output is sent to the standard output instead of the BSD
+authentication backchannel.
 .It Fl s
 Specify the service.
 Currently only
