@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.212 2006/08/12 04:18:31 jason Exp $
+$OpenBSD: usbdevs,v 1.213 2006/08/14 09:32:23 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -221,6 +221,7 @@ vendor APEX		0x0624	Apex
 vendor VIVITAR		0x0636  Vivitar
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
+vendor ARKMICRO		0x6547	Arkmicro
 vendor SGI		0x065e	Silicon Graphics
 vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
@@ -655,6 +656,9 @@ product APPLE SPEAKERS		0x1101	Speakers
 
 /* Araneus Information Systems products */
 product ARANEUS ALEA		0x0001	True Random Number Generator
+
+/* Arkmicro products */
+product ARKMICRO ARK3116	0x0232	ARK3116 Serial
 
 /* Asahi Optical products */
 product ASAHIOPTICAL OPTIO230	0x0004	PENTAX Optio230
