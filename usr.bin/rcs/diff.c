@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.7 2006/07/27 02:57:19 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.8 2006/08/14 23:52:36 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -323,8 +323,17 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out)
 		goto closem;
 	}
 
-	if (files_differ(f1, f2) != 1)
+	switch (files_differ(f1, f2)) {
+	case 1:
+		break;
+	case -1:
+		rval = D_ERROR;
+		/* FALLTHROUGH */
+	case 0:
 		goto closem;
+	default:
+		errx(D_ERROR, "files_differ: invalid case");
+	}
 
 	if (!asciifile(f1) || !asciifile(f2)) {
 		rval = D_ERROR;
@@ -408,7 +417,7 @@ files_differ(FILE *f1, FILE *f2)
 			return (1);
 		if (i == 0 && j == 0) {
 			if (ferror(f1) || ferror(f2))
-				return (1);
+				return (-1);
 			return (0);
 		}
 		if (memcmp(buf1, buf2, i) != 0)
