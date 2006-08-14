@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.10 2006/08/14 16:07:39 marco Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.11 2006/08/14 16:58:56 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -48,8 +48,6 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
  *   BCM5708C A0, B0
  *   BCM5708S A0, B0, B1
  */
-
-#define BNX_DEBUG
 
 #include <dev/pci/if_bnxreg.h>
 #include <dev/microcode/bnx/bnxfw.h>
