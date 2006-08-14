@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.13 2006/08/14 18:07:46 marco Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.14 2006/08/14 19:10:23 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2955,8 +2955,8 @@ bnx_chipinit_exit:
 int
 bnx_blockinit(struct bnx_softc *sc)
 {
-	u_int32_t reg, val;
-	int rc = 0;
+	u_int32_t		reg, val;
+	int 			rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -2964,9 +2964,8 @@ bnx_blockinit(struct bnx_softc *sc)
 	bnx_set_mac_addr(sc);
 
 	/* Set the Ethernet backoff seed value */
-	val = sc->eaddr[0]         + (sc->eaddr[1] << 8) +
-	      (sc->eaddr[2] << 16) + (sc->eaddr[3]     ) +
-	      (sc->eaddr[4] << 8)  + (sc->eaddr[5] << 16);
+	val = sc->eaddr[0] + (sc->eaddr[1] << 8) + (sc->eaddr[2] << 16) +
+	    (sc->eaddr[3]) + (sc->eaddr[4] << 8) + (sc->eaddr[5] << 16);
 	REG_WR(sc, BNX_EMAC_BACKOFF_SEED, val);
 
 	sc->last_status_idx = 0;
@@ -2976,39 +2975,36 @@ bnx_blockinit(struct bnx_softc *sc)
 	REG_WR(sc, BNX_EMAC_ATTENTION_ENA, BNX_EMAC_ATTENTION_ENA_LINK);
 
 	/* Program the physical address of the status block. */
-	REG_WR(sc, BNX_HC_STATUS_ADDR_L,
-		(u_int32_t)(sc->status_block_paddr));
+	REG_WR(sc, BNX_HC_STATUS_ADDR_L, (u_int32_t)(sc->status_block_paddr));
 	REG_WR(sc, BNX_HC_STATUS_ADDR_H,
-		(u_int32_t)((u_int64_t)sc->status_block_paddr >> 32));
+	    (u_int32_t)((u_int64_t)sc->status_block_paddr >> 32));
 
 	/* Program the physical address of the statistics block. */
 	REG_WR(sc, BNX_HC_STATISTICS_ADDR_L,
-		(u_int32_t)(sc->stats_block_paddr));
+	    (u_int32_t)(sc->stats_block_paddr));
 	REG_WR(sc, BNX_HC_STATISTICS_ADDR_H,
-		(u_int32_t)((u_int64_t)sc->stats_block_paddr >> 32));
+	    (u_int32_t)((u_int64_t)sc->stats_block_paddr >> 32));
 
 	/* Program various host coalescing parameters. */
-	REG_WR(sc, BNX_HC_TX_QUICK_CONS_TRIP,
-		(sc->bnx_tx_quick_cons_trip_int << 16) | sc->bnx_tx_quick_cons_trip);
-	REG_WR(sc, BNX_HC_RX_QUICK_CONS_TRIP,
-		(sc->bnx_rx_quick_cons_trip_int << 16) | sc->bnx_rx_quick_cons_trip);
-	REG_WR(sc, BNX_HC_COMP_PROD_TRIP,
-		(sc->bnx_comp_prod_trip_int << 16) | sc->bnx_comp_prod_trip);
-	REG_WR(sc, BNX_HC_TX_TICKS,
-		(sc->bnx_tx_ticks_int << 16) | sc->bnx_tx_ticks);
-	REG_WR(sc, BNX_HC_RX_TICKS,
-		(sc->bnx_rx_ticks_int << 16) | sc->bnx_rx_ticks);
-	REG_WR(sc, BNX_HC_COM_TICKS,
-		(sc->bnx_com_ticks_int << 16) | sc->bnx_com_ticks);
-	REG_WR(sc, BNX_HC_CMD_TICKS,
-		(sc->bnx_cmd_ticks_int << 16) | sc->bnx_cmd_ticks);
-	REG_WR(sc, BNX_HC_STATS_TICKS,
-		(sc->bnx_stats_ticks & 0xffff00));
-	REG_WR(sc, BNX_HC_STAT_COLLECT_TICKS,
-		0xbb8);  /* 3ms */
+	REG_WR(sc, BNX_HC_TX_QUICK_CONS_TRIP, (sc->bnx_tx_quick_cons_trip_int
+	    << 16) | sc->bnx_tx_quick_cons_trip);
+	REG_WR(sc, BNX_HC_RX_QUICK_CONS_TRIP, (sc->bnx_rx_quick_cons_trip_int
+	    << 16) | sc->bnx_rx_quick_cons_trip);
+	REG_WR(sc, BNX_HC_COMP_PROD_TRIP, (sc->bnx_comp_prod_trip_int << 16) |
+	    sc->bnx_comp_prod_trip);
+	REG_WR(sc, BNX_HC_TX_TICKS, (sc->bnx_tx_ticks_int << 16) |
+	    sc->bnx_tx_ticks);
+	REG_WR(sc, BNX_HC_RX_TICKS, (sc->bnx_rx_ticks_int << 16) |
+	    sc->bnx_rx_ticks);
+	REG_WR(sc, BNX_HC_COM_TICKS, (sc->bnx_com_ticks_int << 16) |
+	    sc->bnx_com_ticks);
+	REG_WR(sc, BNX_HC_CMD_TICKS, (sc->bnx_cmd_ticks_int << 16) |
+	    sc->bnx_cmd_ticks);
+	REG_WR(sc, BNX_HC_STATS_TICKS, (sc->bnx_stats_ticks & 0xffff00));
+	REG_WR(sc, BNX_HC_STAT_COLLECT_TICKS, 0xbb8);  /* 3ms */
 	REG_WR(sc, BNX_HC_CONFIG,
-		(BNX_HC_CONFIG_RX_TMR_MODE | BNX_HC_CONFIG_TX_TMR_MODE |
-		BNX_HC_CONFIG_COLLECT_STATS));
+	    (BNX_HC_CONFIG_RX_TMR_MODE | BNX_HC_CONFIG_TX_TMR_MODE |
+	    BNX_HC_CONFIG_COLLECT_STATS));
 
 	/* Clear the internal statistics counters. */
 	REG_WR(sc, BNX_HC_COMMAND, BNX_HC_COMMAND_CLR_STAT_NOW);
@@ -3017,28 +3013,30 @@ bnx_blockinit(struct bnx_softc *sc)
 	reg = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_DEV_INFO_SIGNATURE);
 
 	DBRUNIF(DB_RANDOMTRUE(bnx_debug_bootcode_running_failure),
-		BNX_PRINTF(sc, "%s(%d): Simulating bootcode failure.\n",
-			__FILE__, __LINE__);
-		reg = 0);
+	    BNX_PRINTF(sc, "%s(%d): Simulating bootcode failure.\n",
+	    __FILE__, __LINE__); reg = 0);
 
 	if ((reg & BNX_DEV_INFO_SIGNATURE_MAGIC_MASK) !=
 	    BNX_DEV_INFO_SIGNATURE_MAGIC) {
 		BNX_PRINTF(sc, "%s(%d): Bootcode not running! Found: 0x%08X, "
-			"Expected: 08%08X\n", __FILE__, __LINE__,
-			(reg & BNX_DEV_INFO_SIGNATURE_MAGIC_MASK),
-			BNX_DEV_INFO_SIGNATURE_MAGIC);
+		    "Expected: 08%08X\n", __FILE__, __LINE__,
+		    (reg & BNX_DEV_INFO_SIGNATURE_MAGIC_MASK),
+		    BNX_DEV_INFO_SIGNATURE_MAGIC);
 		rc = ENODEV;
 		goto bnx_blockinit_exit;
 	}
 
 	/* Check if any management firmware is running. */
 	reg = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_PORT_FEATURE);
-	if (reg & (BNX_PORT_FEATURE_ASF_ENABLED | BNX_PORT_FEATURE_IMD_ENABLED)) {
+	if (reg & (BNX_PORT_FEATURE_ASF_ENABLED |
+	    BNX_PORT_FEATURE_IMD_ENABLED)) {
 		DBPRINT(sc, BNX_INFO, "Management F/W Enabled.\n");
 		sc->bnx_flags |= BNX_MFW_ENABLE_FLAG;
 	}
 
-	sc->bnx_fw_ver = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_DEV_INFO_BC_REV);
+	sc->bnx_fw_ver = REG_RD_IND(sc, sc->bnx_shmem_base +
+	    BNX_DEV_INFO_BC_REV);
+
 	DBPRINT(sc, BNX_INFO, "bootcode rev = 0x%08X\n", sc->bnx_fw_ver);
 
 	/* Allow bootcode to apply any additional fixes before enabling MAC. */
@@ -3069,34 +3067,36 @@ bnx_blockinit_exit:
 /*   0 for success, positive value for failure.                             */
 /****************************************************************************/
 int
-bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *chain_prod, 
-	u_int32_t *prod_bseq)
+bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
+    u_int16_t *chain_prod, u_int32_t *prod_bseq)
 {
-	bus_dmamap_t			map;
-	struct mbuf 			*m_new = NULL;
-	struct rx_bd			*rxbd;
-	int				i, rc = 0;
-	u_int32_t			addr;
+	bus_dmamap_t		map;
+	struct mbuf 		*m_new = NULL;
+	struct rx_bd		*rxbd;
+	int			i, rc = 0;
+	u_int32_t		addr;
 #ifdef BNX_DEBUG
 	u_int16_t debug_chain_prod =	*chain_prod;
 #endif
 
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Entering %s()\n", 
-		__FUNCTION__);
+	    __FUNCTION__);
 
 	/* Make sure the inputs are valid. */
 	DBRUNIF((*chain_prod > MAX_RX_BD),
-		printf("%s: RX producer out of range: 0x%04X > 0x%04X\n",
-		*chain_prod, (u_int16_t) MAX_RX_BD));
+	    printf("%s: RX producer out of range: 0x%04X > 0x%04X\n",
+	    *chain_prod, (u_int16_t) MAX_RX_BD));
 
-	DBPRINT(sc, BNX_VERBOSE_RECV, "%s(enter): prod = 0x%04X, chain_prod = 0x%04X, "
-		"prod_bseq = 0x%08X\n", __FUNCTION__, *prod, *chain_prod, *prod_bseq);
+	DBPRINT(sc, BNX_VERBOSE_RECV, "%s(enter): prod = 0x%04X, chain_prod = "
+	    "0x%04X, prod_bseq = 0x%08X\n", __FUNCTION__, *prod, *chain_prod,
+	    *prod_bseq);
 
 	if (m == NULL) {
-
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_mbuf_allocation_failure),
-			BNX_PRINTF(sc, "%s(%d): Simulating mbuf allocation failure.\n",
-				__FILE__, __LINE__);
+		    BNX_PRINTF(sc,
+		        "%s(%d): Simulating mbuf allocation failure.\n",
+			__FILE__, __LINE__);
+
 			sc->mbuf_alloc_failed++;
 			rc = ENOBUFS;
 			goto bnx_get_buf_exit);
@@ -3104,9 +3104,9 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 		/* This is a new mbuf allocation. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-
-			DBPRINT(sc, BNX_WARN, "%s(%d): RX mbuf header allocation failed!\n", 
-				__FILE__, __LINE__);
+			DBPRINT(sc, BNX_WARN,
+			    "%s(%d): RX mbuf header allocation failed!\n", 
+			    __FILE__, __LINE__);
 
 			DBRUNIF(1, sc->mbuf_alloc_failed++);
 
@@ -3120,9 +3120,9 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 		else
 			MEXTMALLOC(m_new, sc->mbuf_alloc_size, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-
-			DBPRINT(sc, BNX_WARN, "%s(%d): RX mbuf chain allocation failed!\n", 
-				__FILE__, __LINE__);
+			DBPRINT(sc, BNX_WARN,
+			    "%s(%d): RX mbuf chain allocation failed!\n", 
+			    __FILE__, __LINE__);
 			
 			m_freem(m_new);
 
@@ -3144,7 +3144,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 	map = sc->rx_mbuf_map[*chain_prod];
 	if (bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m_new, BUS_DMA_NOWAIT)) {
 		BNX_PRINTF(sc, "%s(%d): Error mapping mbuf into RX chain!\n",
-			__FILE__, __LINE__);
+		    __FILE__, __LINE__);
 
 		m_freem(m_new);
 
@@ -3156,36 +3156,36 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 
 	/* Watch for overflow. */
 	DBRUNIF((sc->free_rx_bd > USABLE_RX_BD),
-		printf("%s: Too many free rx_bd (0x%04X > 0x%04X)!\n", 
-			sc->free_rx_bd, (u_int16_t) USABLE_RX_BD));
+	    printf("%s: Too many free rx_bd (0x%04X > 0x%04X)!\n", 
+	    sc->free_rx_bd, (u_int16_t) USABLE_RX_BD));
 
 	DBRUNIF((sc->free_rx_bd < sc->rx_low_watermark), 
-		sc->rx_low_watermark = sc->free_rx_bd);
+	    sc->rx_low_watermark = sc->free_rx_bd);
 
 	/* Setup the rx_bd for the first segment. */
 	rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
 	addr = (u_int32_t)(map->dm_segs[0].ds_addr);
-	rxbd->rx_bd_haddr_lo  = htole32(addr);
+	rxbd->rx_bd_haddr_lo = htole32(addr);
 	addr = (u_int32_t)((u_int64_t)map->dm_segs[0].ds_addr >> 32);
-	rxbd->rx_bd_haddr_hi  = htole32(addr);
-	rxbd->rx_bd_len       = htole32(map->dm_segs[0].ds_len);
-	rxbd->rx_bd_flags     = htole32(RX_BD_FLAGS_START);
+	rxbd->rx_bd_haddr_hi = htole32(addr);
+	rxbd->rx_bd_len = htole32(map->dm_segs[0].ds_len);
+	rxbd->rx_bd_flags = htole32(RX_BD_FLAGS_START);
 	*prod_bseq += map->dm_segs[0].ds_len;
 
 	for (i = 1; i < map->dm_nsegs; i++) {
-
 		*prod = NEXT_RX_BD(*prod);
 		*chain_prod = RX_CHAIN_IDX(*prod); 
 
-		rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
+		rxbd =
+		    &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
 		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
-		rxbd->rx_bd_haddr_lo  = htole32(addr);
+		rxbd->rx_bd_haddr_lo = htole32(addr);
 		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
-		rxbd->rx_bd_haddr_hi  = htole32(addr);
-		rxbd->rx_bd_len       = htole32(map->dm_segs[i].ds_len);
-		rxbd->rx_bd_flags     = 0;
+		rxbd->rx_bd_haddr_hi = htole32(addr);
+		rxbd->rx_bd_len = htole32(map->dm_segs[i].ds_len);
+		rxbd->rx_bd_flags = 0;
 		*prod_bseq += map->dm_segs[i].ds_len;
 	}
 
@@ -3196,14 +3196,15 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod, u_int16_t *ch
 	sc->free_rx_bd -= map->dm_nsegs;
 
 	DBRUN(BNX_VERBOSE_RECV, bnx_dump_rx_mbuf_chain(sc, debug_chain_prod, 
-		map->dm_nsegs));
+	    map->dm_nsegs));
 
-	DBPRINT(sc, BNX_VERBOSE_RECV, "%s(exit): prod = 0x%04X, chain_prod = 0x%04X, "
-		"prod_bseq = 0x%08X\n", __FUNCTION__, *prod, *chain_prod, *prod_bseq);
+	DBPRINT(sc, BNX_VERBOSE_RECV, "%s(exit): prod = 0x%04X, chain_prod "
+	    "= 0x%04X, prod_bseq = 0x%08X\n", __FUNCTION__, *prod,
+	    *chain_prod, *prod_bseq);
 
 bnx_get_buf_exit:
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Exiting %s()\n", 
-		__FUNCTION__);
+	    __FUNCTION__);
 
 	return(rc);
 }
@@ -3217,16 +3218,16 @@ bnx_get_buf_exit:
 int
 bnx_init_tx_chain(struct bnx_softc *sc)
 {
-	struct tx_bd *txbd;
-	u_int32_t val, addr;
-	int i, rc = 0;
+	struct tx_bd		*txbd;
+	u_int32_t		val, addr;
+	int			i, rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
 	/* Set the initial TX producer/consumer indices. */
-	sc->tx_prod        = 0;
-	sc->tx_cons        = 0;
-	sc->tx_prod_bseq   = 0;
+	sc->tx_prod = 0;
+	sc->tx_cons = 0;
+	sc->tx_prod_bseq = 0;
 	sc->used_tx_bd = 0;
 	DBRUNIF(1, sc->tx_hi_watermark = USABLE_TX_BD);
 
@@ -3290,7 +3291,7 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 void
 bnx_free_tx_chain(struct bnx_softc *sc)
 {
-	int i;
+	int			i;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -3314,9 +3315,8 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->tx_mbuf_alloc),
-		printf("%s: Memory leak! Lost %d mbufs "
-			"from tx chain!\n",
-			sc->tx_mbuf_alloc));
+	    printf("%s: Memory leak! Lost %d mbufs from tx chain!\n",
+	    sc->tx_mbuf_alloc));
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 }
@@ -3330,18 +3330,18 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 int
 bnx_init_rx_chain(struct bnx_softc *sc)
 {
-	struct rx_bd *rxbd;
-	int i, rc = 0;
-	u_int16_t prod, chain_prod;
-	u_int32_t prod_bseq, val, addr;
+	struct rx_bd		*rxbd;
+	int			i, rc = 0;
+	u_int16_t		prod, chain_prod;
+	u_int32_t		prod_bseq, val, addr;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
 	/* Initialize the RX producer and consumer indices. */
-	sc->rx_prod        = 0;
-	sc->rx_cons        = 0;
-	sc->rx_prod_bseq   = 0;
-	sc->free_rx_bd     = BNX_RX_SLACK_SPACE;
+	sc->rx_prod = 0;
+	sc->rx_cons = 0;
+	sc->rx_prod_bseq = 0;
+	sc->free_rx_bd = BNX_RX_SLACK_SPACE;
 	DBRUNIF(1, sc->rx_low_watermark = USABLE_RX_BD);
 
 	/* Initialize the RX next pointer chain entries. */
@@ -3381,7 +3381,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 		chain_prod = RX_CHAIN_IDX(prod);
 		if (bnx_get_buf(sc, NULL, &prod, &chain_prod, &prod_bseq)) {
 			printf("%s: Error filling RX chain: rx_bd[0x%04X]!\n",
-				chain_prod);
+			    chain_prod);
 			rc = ENOBUFS;
 			break;
 		}
@@ -3389,14 +3389,13 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 	}
 
 	/* Save the RX chain producer index. */
-	sc->rx_prod      = prod;
+	sc->rx_prod = prod;
 	sc->rx_prod_bseq = prod_bseq;
 
-	for (i = 0; i < RX_PAGES; i++) {
+	for (i = 0; i < RX_PAGES; i++)
 		bus_dmamap_sync(sc->bnx_dmatag, sc->rx_bd_chain_map[i], 0,
 		    sc->rx_bd_chain_map[i]->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-	}
 
 	/* Tell the chip about the waiting rx_bd's. */
 	REG_WR16(sc, MB_RX_CID_ADDR + BNX_L2CTX_HOST_BDIDX, sc->rx_prod);
@@ -3418,7 +3417,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 void
 bnx_free_rx_chain(struct bnx_softc *sc)
 {
-	int i;
+	int			i;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -3442,8 +3441,8 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->rx_mbuf_alloc),
-		printf("%s: Memory leak! Lost %d mbufs from rx chain!\n",
-			sc->rx_mbuf_alloc));
+	    printf("%s: Memory leak! Lost %d mbufs from rx chain!\n",
+	    sc->rx_mbuf_alloc));
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 }
@@ -3457,10 +3456,10 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 int
 bnx_ifmedia_upd(struct ifnet *ifp)
 {
-	struct bnx_softc *sc;
-	struct mii_data *mii;
-	struct ifmedia *ifm;
-	int rc = 0;
+	struct bnx_softc	*sc;
+	struct mii_data		*mii;
+	struct ifmedia		*ifm;
+	int			rc = 0;
 
 	sc = ifp->if_softc;
 	ifm = &sc->bnx_ifmedia;
@@ -3489,9 +3488,9 @@ bnx_ifmedia_upd(struct ifnet *ifp)
 void
 bnx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct bnx_softc *sc;
-	struct mii_data *mii;
-	int s;
+	struct bnx_softc	*sc;
+	struct mii_data		*mii;
+	int			s;
 
 	sc = ifp->if_softc;
 
@@ -3517,16 +3516,15 @@ bnx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 void
 bnx_phy_intr(struct bnx_softc *sc)
 {
-	u_int32_t new_link_state, old_link_state;
+	u_int32_t		new_link_state, old_link_state;
 
 	new_link_state = sc->status_block->status_attn_bits &
-		STATUS_ATTN_BITS_LINK_STATE;
+	    STATUS_ATTN_BITS_LINK_STATE;
 	old_link_state = sc->status_block->status_attn_bits_ack &
-		STATUS_ATTN_BITS_LINK_STATE;
+	    STATUS_ATTN_BITS_LINK_STATE;
 
 	/* Handle any changes if the link state has changed. */
 	if (new_link_state != old_link_state) {
-
 		DBRUN(BNX_VERBOSE_INTR, bnx_dump_status_block(sc));
 
 		sc->bnx_link = 0;
@@ -3536,14 +3534,13 @@ bnx_phy_intr(struct bnx_softc *sc)
 		/* Update the status_attn_bits_ack field in the status block. */
 		if (new_link_state) {
 			REG_WR(sc, BNX_PCICFG_STATUS_BIT_SET_CMD,
-				STATUS_ATTN_BITS_LINK_STATE);
+			    STATUS_ATTN_BITS_LINK_STATE);
 			DBPRINT(sc, BNX_INFO, "Link is now UP.\n");
 		} else {
 			REG_WR(sc, BNX_PCICFG_STATUS_BIT_CLEAR_CMD,
-				STATUS_ATTN_BITS_LINK_STATE);
+			    STATUS_ATTN_BITS_LINK_STATE);
 			DBPRINT(sc, BNX_INFO, "Link is now DOWN.\n");
 		}
-
 	}
 
 	/* Acknowledge the link change interrupt. */
@@ -3559,12 +3556,13 @@ bnx_phy_intr(struct bnx_softc *sc)
 void
 bnx_rx_intr(struct bnx_softc *sc)
 {
-	struct status_block *sblk = sc->status_block;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	u_int16_t hw_cons, sw_cons, sw_chain_cons, sw_prod, sw_chain_prod;
-	u_int32_t sw_prod_bseq;
-	struct l2_fhdr *l2fhdr;
-	int i;
+	struct status_block	*sblk = sc->status_block;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	u_int16_t		hw_cons, sw_cons, sw_chain_cons;
+	u_int16_t		sw_prod, sw_chain_prod;
+	u_int32_t		sw_prod_bseq;
+	struct l2_fhdr		*l2fhdr;
+	int			i;
 
 	DBRUNIF(1, sc->rx_interrupts++);
 
@@ -3586,16 +3584,15 @@ bnx_rx_intr(struct bnx_softc *sc)
 	sw_prod_bseq = sc->rx_prod_bseq;
 
 	DBPRINT(sc, BNX_INFO_RECV, "%s(enter): sw_prod = 0x%04X, "
-		"sw_cons = 0x%04X, sw_prod_bseq = 0x%08X\n",
-		__FUNCTION__, sw_prod, sw_cons, 
-		sw_prod_bseq);
+	    "sw_cons = 0x%04X, sw_prod_bseq = 0x%08X\n",
+	    __FUNCTION__, sw_prod, sw_cons, sw_prod_bseq);
 
 	/* Prevent speculative reads from getting ahead of the status block. */
-	bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0, 
-		BUS_SPACE_BARRIER_READ);
+	bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0,
+	    BUS_SPACE_BARRIER_READ);
 
 	DBRUNIF((sc->free_rx_bd < sc->rx_low_watermark),
-		sc->rx_low_watermark = sc->free_rx_bd);
+	    sc->rx_low_watermark = sc->free_rx_bd);
 
 	/* 
 	 * Scan through the receive chain as long 
@@ -3607,7 +3604,9 @@ bnx_rx_intr(struct bnx_softc *sc)
 		unsigned int len;
 		u_int32_t status;
 
-		/* Convert the producer/consumer indices to an actual rx_bd index. */
+		/* Convert the producer/consumer indices to an actual
+		 * rx_bd index.
+		 */
 		sw_chain_cons = RX_CHAIN_IDX(sw_cons);
 		sw_chain_prod = RX_CHAIN_IDX(sw_prod);
 
@@ -3615,23 +3614,22 @@ bnx_rx_intr(struct bnx_softc *sc)
 		rxbd = &sc->rx_bd_chain[RX_PAGE(sw_chain_cons)][RX_IDX(sw_chain_cons)];
 		sc->free_rx_bd++;
 	
-		DBRUN(BNX_VERBOSE_RECV, 
-			printf("%s(): ", __FUNCTION__); 
-			bnx_dump_rxbd(sc, sw_chain_cons, rxbd));
+		DBRUN(BNX_VERBOSE_RECV, printf("%s(): ", __FUNCTION__); 
+		bnx_dump_rxbd(sc, sw_chain_cons, rxbd));
 
 		/* The mbuf is stored with the last rx_bd entry of a packet. */
 		if (sc->rx_mbuf_ptr[sw_chain_cons] != NULL) {
-
 			/* Validate that this is the last rx_bd. */
 			DBRUNIF((!(rxbd->rx_bd_flags & RX_BD_FLAGS_END)),
-				printf("%s: Unexpected mbuf found in rx_bd[0x%04X]!\n",
-				sw_chain_cons);
+			    printf("%s: Unexpected mbuf found in "
+			        "rx_bd[0x%04X]!\n", sw_chain_cons);
 				bnx_breakpoint(sc));
 
-			/* DRC - ToDo: If the received packet is small, say less */
-			/*             than 128 bytes, allocate a new mbuf here, */
-			/*             copy the data to that mbuf, and recycle   */
-			/*             the mapped jumbo frame.                   */
+			/* DRC - ToDo: If the received packet is small, say less
+			 *             than 128 bytes, allocate a new mbuf here,
+			 *             copy the data to that mbuf, and recycle
+			 *             the mapped jumbo frame.
+			 */
 
 			/* Unmap the mbuf from DMA space. */
 			bus_dmamap_sync(sc->bnx_dmatag,
@@ -3660,34 +3658,36 @@ bnx_rx_intr(struct bnx_softc *sc)
 			status = l2fhdr->l2_fhdr_status;
 
 			DBRUNIF(DB_RANDOMTRUE(bnx_debug_l2fhdr_status_check),
-				printf("Simulating l2_fhdr status error.\n");
-				status = status | L2_FHDR_ERRORS_PHY_DECODE);
+			    printf("Simulating l2_fhdr status error.\n");
+			    status = status | L2_FHDR_ERRORS_PHY_DECODE);
 
 			/* Watch for unusual sized frames. */
-			DBRUNIF(((len < BNX_MIN_MTU) || (len > BNX_MAX_JUMBO_ETHER_MTU_VLAN)),
-				printf("%s: Unusual frame size found. "
-					"Min(%d), Actual(%d), Max(%d)\n", 
-					(int) BNX_MIN_MTU, 
-					len, (int) BNX_MAX_JUMBO_ETHER_MTU_VLAN);
-				bnx_dump_mbuf(sc, m);
-		 		bnx_breakpoint(sc));
+			DBRUNIF(((len < BNX_MIN_MTU) ||
+			    (len > BNX_MAX_JUMBO_ETHER_MTU_VLAN)),
+			    printf("%s: Unusual frame size found. "
+			    "Min(%d), Actual(%d), Max(%d)\n", (int)BNX_MIN_MTU,
+			    len, (int) BNX_MAX_JUMBO_ETHER_MTU_VLAN);
+
+			bnx_dump_mbuf(sc, m);
+			bnx_breakpoint(sc));
 
 			len -= ETHER_CRC_LEN;
 
 			/* Check the received frame for errors. */
 			if (status &  (L2_FHDR_ERRORS_BAD_CRC | 
-				L2_FHDR_ERRORS_PHY_DECODE | L2_FHDR_ERRORS_ALIGNMENT | 
-				L2_FHDR_ERRORS_TOO_SHORT  | L2_FHDR_ERRORS_GIANT_FRAME)) {
-
+			    L2_FHDR_ERRORS_PHY_DECODE |
+			    L2_FHDR_ERRORS_ALIGNMENT | 
+			    L2_FHDR_ERRORS_TOO_SHORT |
+			    L2_FHDR_ERRORS_GIANT_FRAME)) {
 				ifp->if_ierrors++;
 				DBRUNIF(1, sc->l2fhdr_status_errors++);
 
 				/* Reuse the mbuf for a new frame. */
-				if (bnx_get_buf(sc, m, &sw_prod, &sw_chain_prod, &sw_prod_bseq)) {
-
+				if (bnx_get_buf(sc, m, &sw_prod,
+				    &sw_chain_prod, &sw_prod_bseq)) {
 					DBRUNIF(1, bnx_breakpoint(sc));
-					panic("%s: Can't reuse RX mbuf!\n", sc->bnx_dev.dv_xname);
-
+					panic("%s: Can't reuse RX mbuf!\n",
+					    sc->bnx_dev.dv_xname);
 				}
 				goto bnx_rx_int_next_rx;
 			}
@@ -3698,72 +3698,81 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 * log an ierror on the interface, and generate
 			 * an error in the system log.
 			 */
-			if (bnx_get_buf(sc, NULL, &sw_prod, &sw_chain_prod, &sw_prod_bseq)) {
-
-				DBRUN(BNX_WARN, 
-					printf("%s: Failed to allocate "
-					"new mbuf, incoming frame dropped!\n"));
+			if (bnx_get_buf(sc, NULL, &sw_prod, &sw_chain_prod,
+			    &sw_prod_bseq)) {
+				DBRUN(BNX_WARN, printf("%s: Failed to allocate "
+				    "new mbuf, incoming frame dropped!\n"));
 
 				ifp->if_ierrors++;
 
 				/* Try and reuse the exisitng mbuf. */
-				if (bnx_get_buf(sc, m, &sw_prod, &sw_chain_prod, &sw_prod_bseq)) {
-
+				if (bnx_get_buf(sc, m, &sw_prod,
+				    &sw_chain_prod, &sw_prod_bseq)) {
 					DBRUNIF(1, bnx_breakpoint(sc));
-					panic("%s: Double mbuf allocation failure!", sc->bnx_dev.dv_xname);
-
+					panic("%s: Double mbuf allocation "
+					    "failure!", sc->bnx_dev.dv_xname);
 				}
 				goto bnx_rx_int_next_rx;
 			}
 
-			/* Skip over the l2_fhdr when passing the data up the stack. */
+			/* Skip over the l2_fhdr when passing the data up
+			 * the stack.
+			 */
 			m_adj(m, sizeof(struct l2_fhdr) + ETHER_ALIGN);
 
-			/* Adjust the packet length to match the received data. */
+			/* Adjust the pckt length to match the received data. */
 			m->m_pkthdr.len = m->m_len = len;
 
 			/* Send the packet to the appropriate interface. */
 			m->m_pkthdr.rcvif = ifp;
 
 			DBRUN(BNX_VERBOSE_RECV,
-				struct ether_header *eh;
-				eh = mtod(m, struct ether_header *);
-				printf("%s: to: %6D, from: %6D, type: 0x%04X\n",
-					__FUNCTION__, eh->ether_dhost, ":", 
-					eh->ether_shost, ":", htons(eh->ether_type)));
+			    struct ether_header *eh;
+			    eh = mtod(m, struct ether_header *);
+			    printf("%s: to: %6D, from: %6D, type: 0x%04X\n",
+			    __FUNCTION__, eh->ether_dhost, ":", 
+			    eh->ether_shost, ":", htons(eh->ether_type)));
 
 #ifdef BNX_CKSUM
 			/* Validate the checksum if offload enabled. */
 			if (ifp->if_capenable & IFCAP_RXCSUM) {
-
 				/* Check for an IP datagram. */
 				if (status & L2_FHDR_STATUS_IP_DATAGRAM) {
-					m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
+					m->m_pkthdr.csum_flags |=
+					    CSUM_IP_CHECKED;
 
 					/* Check if the IP checksum is valid. */
-					if ((l2fhdr->l2_fhdr_ip_xsum ^ 0xffff) == 0)
-						m->m_pkthdr.csum_flags |= CSUM_IP_VALID;
+					if ((l2fhdr->l2_fhdr_ip_xsum ^ 0xffff)
+					    == 0)
+						m->m_pkthdr.csum_flags |=
+						    CSUM_IP_VALID;
 					else
 						DBPRINT(sc, BNX_WARN_SEND, 
-							"%s(): Invalid IP checksum = 0x%04X!\n",
-							__FUNCTION__, l2fhdr->l2_fhdr_ip_xsum);
+						    "%s(): Invalid IP checksum "
+						        "= 0x%04X!\n",
+							__FUNCTION__,
+							l2fhdr->l2_fhdr_ip_xsum
+							);
 				}
 
 				/* Check for a valid TCP/UDP frame. */
 				if (status & (L2_FHDR_STATUS_TCP_SEGMENT |
-					L2_FHDR_STATUS_UDP_DATAGRAM)) {
-
+				    L2_FHDR_STATUS_UDP_DATAGRAM)) {
 					/* Check for a good TCP/UDP checksum. */
-					if ((status & (L2_FHDR_ERRORS_TCP_XSUM |
-						      L2_FHDR_ERRORS_UDP_XSUM)) == 0) {
-						m->m_pkthdr.csum_data =
-						    l2fhdr->l2_fhdr_tcp_udp_xsum;
-						m->m_pkthdr.csum_flags |= (CSUM_DATA_VALID 
-							| CSUM_PSEUDO_HDR);
-					} else
+					if ((status &
+					    (L2_FHDR_ERRORS_TCP_XSUM |
+					    L2_FHDR_ERRORS_UDP_XSUM)) == 0) {
+						m->m_pkthdr.csum_data = l2fhdr->l2_fhdr_tcp_udp_xsum;
+						m->m_pkthdr.csum_flags |=
+						    (CSUM_DATA_VALID |
+						    CSUM_PSEUDO_HDR);
+					} else {
 						DBPRINT(sc, BNX_WARN_SEND, 
-							"%s(): Invalid TCP/UDP checksum = 0x%04X!\n",
-							__FUNCTION__, l2fhdr->l2_fhdr_tcp_udp_xsum);
+						    "%s(): Invalid TCP/UDP "
+						    "checksum = 0x%04X!\n",
+						    __FUNCTION__,
+						    l2fhdr->l2_fhdr_tcp_udp_xsum);
+					}
 				}
 			}		
 #endif
@@ -3779,8 +3788,8 @@ bnx_rx_intr(struct bnx_softc *sc)
 
 			/* Pass the mbuf off to the upper layers. */
 			ifp->if_ipackets++;
-			DBPRINT(sc, BNX_VERBOSE_RECV, "%s(): Passing received frame up.\n",
-				__FUNCTION__);
+			DBPRINT(sc, BNX_VERBOSE_RECV,
+			    "%s(): Passing received frame up.\n", __FUNCTION__);
 			ether_input_mbuf(ifp, m);
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
 
@@ -3792,14 +3801,18 @@ bnx_rx_int_next_rx:
 
 		/* Refresh hw_cons to see if there's new work */
 		if (sw_cons == hw_cons) {
-			hw_cons = sc->hw_rx_cons = sblk->status_rx_quick_consumer_index0;
-			if ((hw_cons & USABLE_RX_BD_PER_PAGE) == USABLE_RX_BD_PER_PAGE)
+			hw_cons = sc->hw_rx_cons =
+			    sblk->status_rx_quick_consumer_index0;
+			if ((hw_cons & USABLE_RX_BD_PER_PAGE) ==
+			    USABLE_RX_BD_PER_PAGE)
 				hw_cons++;
 		}
 
-		/* Prevent speculative reads from getting ahead of the status block. */
+		/* Prevent speculative reads from getting ahead of
+		 * the status block.
+		 */
 		bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0, 
-			BUS_SPACE_BARRIER_READ);
+		    BUS_SPACE_BARRIER_READ);
 	}
 
 	for (i = 0; i < RX_PAGES; i++)
@@ -3816,8 +3829,8 @@ bnx_rx_int_next_rx:
 	REG_WR(sc, MB_RX_CID_ADDR + BNX_L2CTX_HOST_BSEQ, sc->rx_prod_bseq);
 
 	DBPRINT(sc, BNX_INFO_RECV, "%s(exit): rx_prod = 0x%04X, "
-		"rx_cons = 0x%04X, rx_prod_bseq = 0x%08X\n",
-		__FUNCTION__, sc->rx_prod, sc->rx_cons, sc->rx_prod_bseq);
+	    "rx_cons = 0x%04X, rx_prod_bseq = 0x%08X\n",
+	    __FUNCTION__, sc->rx_prod, sc->rx_cons, sc->rx_prod_bseq);
 }
 
 /****************************************************************************/
@@ -3829,9 +3842,9 @@ bnx_rx_int_next_rx:
 void
 bnx_tx_intr(struct bnx_softc *sc)
 {
-	struct status_block *sblk = sc->status_block;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	u_int16_t hw_tx_cons, sw_tx_cons, sw_tx_chain_cons;
+	struct status_block	*sblk = sc->status_block;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	u_int16_t		hw_tx_cons, sw_tx_cons, sw_tx_chain_cons;
 
 	DBRUNIF(1, sc->tx_interrupts++);
 
@@ -3846,7 +3859,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 
 	/* Prevent speculative reads from getting ahead of the status block. */
 	bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0, 
-		BUS_SPACE_BARRIER_READ);
+	    BUS_SPACE_BARRIER_READ);
 
 	/* Cycle through any completed TX chain page entries. */
 	while (sw_tx_cons != hw_tx_cons) {
@@ -3855,30 +3868,25 @@ bnx_tx_intr(struct bnx_softc *sc)
 #endif
 		sw_tx_chain_cons = TX_CHAIN_IDX(sw_tx_cons);
 
-		DBPRINT(sc, BNX_INFO_SEND,
-			"%s(): hw_tx_cons = 0x%04X, sw_tx_cons = 0x%04X, "
-			"sw_tx_chain_cons = 0x%04X\n",
-			__FUNCTION__, hw_tx_cons, sw_tx_cons, sw_tx_chain_cons);
+		DBPRINT(sc, BNX_INFO_SEND, "%s(): hw_tx_cons = 0x%04X, "
+		    "sw_tx_cons = 0x%04X, sw_tx_chain_cons = 0x%04X\n",
+		    __FUNCTION__, hw_tx_cons, sw_tx_cons, sw_tx_chain_cons);
 
 		DBRUNIF((sw_tx_chain_cons > MAX_TX_BD),
-			printf("%s: TX chain consumer out of range! "
-				" 0x%04X > 0x%04X\n",
-				sw_tx_chain_cons, 
-				(int) MAX_TX_BD);
-			bnx_breakpoint(sc));
+		    printf("%s: TX chain consumer out of range! "
+		    " 0x%04X > 0x%04X\n", sw_tx_chain_cons, (int)MAX_TX_BD);
+		    bnx_breakpoint(sc));
 
-		DBRUNIF(1,
-			txbd = &sc->tx_bd_chain[TX_PAGE(sw_tx_chain_cons)]
-				[TX_IDX(sw_tx_chain_cons)]);
+		DBRUNIF(1, txbd = &sc->tx_bd_chain
+		    [TX_PAGE(sw_tx_chain_cons)][TX_IDX(sw_tx_chain_cons)]);
 		
 		DBRUNIF((txbd == NULL),
-			printf("%s: Unexpected NULL tx_bd[0x%04X]!\n", 
-				sw_tx_chain_cons);
-			bnx_breakpoint(sc));
+		    printf("%s: Unexpected NULL tx_bd[0x%04X]!\n", 
+		    sw_tx_chain_cons);
+		    bnx_breakpoint(sc));
 
-		DBRUN(BNX_INFO_SEND, 
-			printf("%s: ", __FUNCTION__);
-			bnx_dump_txbd(sc, sw_tx_chain_cons, txbd));
+		DBRUN(BNX_INFO_SEND, printf("%s: ", __FUNCTION__);
+		    bnx_dump_txbd(sc, sw_tx_chain_cons, txbd));
 
 		/*
 		 * Free the associated mbuf. Remember
@@ -3886,16 +3894,17 @@ bnx_tx_intr(struct bnx_softc *sc)
 		 * has an mbuf pointer and DMA map.
 		 */
 		if (sc->tx_mbuf_ptr[sw_tx_chain_cons] != NULL) {
-
 			/* Validate that this is the last tx_bd. */
-			DBRUNIF((!(txbd->tx_bd_vlan_tag_flags & TX_BD_FLAGS_END)),
-				printf("%s: tx_bd END flag not set but "
-				"txmbuf == NULL!\n");
-				bnx_breakpoint(sc));
+			DBRUNIF((!(txbd->tx_bd_vlan_tag_flags &
+			    TX_BD_FLAGS_END)),
+			    printf("%s: tx_bd END flag not set but "
+			    "txmbuf == NULL!\n");
+			    bnx_breakpoint(sc));
 
-			DBRUN(BNX_INFO_SEND, 
-				printf("%s: Unloading map/freeing mbuf "
-					"from tx_bd[0x%04X]\n", __FUNCTION__, sw_tx_chain_cons));
+			DBRUN(BNX_INFO_SEND,
+			    printf("%s: Unloading map/freeing mbuf "
+			    "from tx_bd[0x%04X]\n",
+			    __FUNCTION__, sw_tx_chain_cons));
 
 			/* Unmap the mbuf. */
 			bus_dmamap_unload(sc->bnx_dmatag,
@@ -3913,13 +3922,17 @@ bnx_tx_intr(struct bnx_softc *sc)
 		sw_tx_cons = NEXT_TX_BD(sw_tx_cons);
 
 		/* Refresh hw_cons to see if there's new work. */
-		hw_tx_cons = sc->hw_tx_cons = sblk->status_tx_quick_consumer_index0;
-		if ((hw_tx_cons & USABLE_TX_BD_PER_PAGE) == USABLE_TX_BD_PER_PAGE)
+		hw_tx_cons = sc->hw_tx_cons =
+		    sblk->status_tx_quick_consumer_index0;
+		if ((hw_tx_cons & USABLE_TX_BD_PER_PAGE) ==
+		    USABLE_TX_BD_PER_PAGE)
 			hw_tx_cons++;
 
-		/* Prevent speculative reads from getting ahead of the status block. */
+		/* Prevent speculative reads from getting ahead of
+		 * the status block.
+		 */
 		bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0, 
-			BUS_SPACE_BARRIER_READ);
+		    BUS_SPACE_BARRIER_READ);
 	}
 
 	/* Clear the TX timeout timer. */
@@ -3928,8 +3941,8 @@ bnx_tx_intr(struct bnx_softc *sc)
 	/* Clear the tx hardware queue full flag. */
 	if ((sc->used_tx_bd + BNX_TX_SLACK_SPACE) < USABLE_TX_BD) {
 		DBRUNIF((ifp->if_flags & IFF_OACTIVE),
-			printf("%s: TX chain is open for business! Used tx_bd = %d\n", 
-				sc->used_tx_bd));
+		    printf("%s: TX chain is open for business! Used "
+		    "tx_bd = %d\n", sc->used_tx_bd));
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 
@@ -3945,8 +3958,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 void
 bnx_disable_intr(struct bnx_softc *sc)
 {
-	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	       BNX_PCICFG_INT_ACK_CMD_MASK_INT);
+	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD, BNX_PCICFG_INT_ACK_CMD_MASK_INT);
 	REG_RD(sc, BNX_PCICFG_INT_ACK_CMD);
 }
 
@@ -3959,14 +3971,13 @@ bnx_disable_intr(struct bnx_softc *sc)
 void
 bnx_enable_intr(struct bnx_softc *sc)
 {
-	u_int32_t val;
+	u_int32_t		val;
 
-	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	       BNX_PCICFG_INT_ACK_CMD_INDEX_VALID |
-	       BNX_PCICFG_INT_ACK_CMD_MASK_INT | sc->last_status_idx);
+	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD, BNX_PCICFG_INT_ACK_CMD_INDEX_VALID |
+	    BNX_PCICFG_INT_ACK_CMD_MASK_INT | sc->last_status_idx);
 
-	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	       BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
+	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD, BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | 
+	    sc->last_status_idx);
 
 	val = REG_RD(sc, BNX_HC_COMMAND);
 	REG_WR(sc, BNX_HC_COMMAND, val | BNX_HC_COMMAND_COAL_NOW);
@@ -3981,10 +3992,10 @@ bnx_enable_intr(struct bnx_softc *sc)
 void
 bnx_init(void *xsc)
 {
-	struct bnx_softc *sc = (struct bnx_softc *)xsc;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	u_int32_t ether_mtu;
-	int s;
+	struct bnx_softc	*sc = (struct bnx_softc *)xsc;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	u_int32_t		ether_mtu;
+	int			s;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -4018,7 +4029,8 @@ bnx_init(void *xsc)
 	ether_mtu = BNX_MAX_STD_ETHER_MTU_VLAN;
 #endif
 
-	DBPRINT(sc, BNX_INFO, "%s(): setting mtu = %d\n",__FUNCTION__, ether_mtu);
+	DBPRINT(sc, BNX_INFO, "%s(): setting mtu = %d\n",
+	    __FUNCTION__, ether_mtu);
 
 	/* 
 	 * Program the mtu and enable jumbo frame 
@@ -4037,10 +4049,9 @@ bnx_init(void *xsc)
 	/* Calculate the RX Ethernet frame size for rx_bd's. */
 	sc->max_frame_size = sizeof(struct l2_fhdr) + 2 + ether_mtu + 8;
 
-	DBPRINT(sc, BNX_INFO, 
-		"%s(): mclbytes = %d, mbuf_alloc_size = %d, "
-		"max_frame_size = %d\n",
-		__FUNCTION__, (int) MCLBYTES, sc->mbuf_alloc_size, sc->max_frame_size);
+	DBPRINT(sc, BNX_INFO, "%s(): mclbytes = %d, mbuf_alloc_size = %d, "
+	    "max_frame_size = %d\n", __FUNCTION__, (int)MCLBYTES,
+	    sc->mbuf_alloc_size, sc->max_frame_size);
 
 	/* Program appropriate promiscuous/multicast filtering. */
 	bnx_set_rx_mode(sc);
@@ -4078,15 +4089,15 @@ bnx_init_locked_exit:
 /****************************************************************************/
 int
 bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
-	u_int16_t *chain_prod, u_int32_t *prod_bseq)
+    u_int16_t *chain_prod, u_int32_t *prod_bseq)
 {
-	u_int32_t vlan_tag_flags = 0;
+	u_int32_t		vlan_tag_flags = 0;
+	struct bnx_dmamap_arg	map_arg;
+	bus_dmamap_t		map;
+	int			i, rc = 0;
 #ifdef BNX_VLAN
-	struct m_tag *mtag;
+	struct m_tag		*mtag;
 #endif
-	struct bnx_dmamap_arg map_arg;
-	bus_dmamap_t map;
-	int i, rc = 0;
 
 #ifdef BNX_CKSUM
 	/* Transfer any checksum offload flags to the bd. */
@@ -4103,18 +4114,17 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
 	mtag = VLAN_OUTPUT_TAG(&sc->arpcom.ac_if, m_head);
 	if (mtag != NULL)
 		vlan_tag_flags |= (TX_BD_FLAGS_VLAN_TAG |
-			(VLAN_TAG_VALUE(mtag) << 16));
+		    (VLAN_TAG_VALUE(mtag) << 16));
 #endif
 
 	/* Map the mbuf into DMAable memory. */
 	map = sc->tx_mbuf_map[*chain_prod];
-	map_arg.sc         = sc;
-	map_arg.prod       = *prod;
+	map_arg.sc = sc;
+	map_arg.prod = *prod;
 	map_arg.chain_prod = *chain_prod;
-	map_arg.prod_bseq  = *prod_bseq;
-	map_arg.tx_flags   = vlan_tag_flags;
-	map_arg.maxsegs    = USABLE_TX_BD - sc->used_tx_bd - 
-		BNX_TX_SLACK_SPACE;
+	map_arg.prod_bseq = *prod_bseq;
+	map_arg.tx_flags = vlan_tag_flags;
+	map_arg.maxsegs = USABLE_TX_BD - sc->used_tx_bd - BNX_TX_SLACK_SPACE;
 
 #if 0
 	KASSERT(map_arg.maxsegs > 0, ("Invalid TX maxsegs value!"));
@@ -4142,24 +4152,23 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
 	 * delete the map before all of the segments
 	 * have been freed.
 	 */
-	sc->tx_mbuf_map[*chain_prod] = 
-		sc->tx_mbuf_map[map_arg.chain_prod];
+	sc->tx_mbuf_map[*chain_prod] = sc->tx_mbuf_map[map_arg.chain_prod];
 	sc->tx_mbuf_map[map_arg.chain_prod] = map;
 	sc->tx_mbuf_ptr[map_arg.chain_prod] = m_head;
 	sc->used_tx_bd += map_arg.maxsegs;
 
-	DBRUNIF((sc->used_tx_bd > sc->tx_hi_watermark), 
-		sc->tx_hi_watermark = sc->used_tx_bd);
+	DBRUNIF((sc->used_tx_bd > sc->tx_hi_watermark),
+	    sc->tx_hi_watermark = sc->used_tx_bd);
 
 	DBRUNIF(1, sc->tx_mbuf_alloc++);
 
 	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, *chain_prod, 
-		map_arg.maxsegs));
+	    map_arg.maxsegs));
 
 	/* prod still points the last used tx_bd at this point. */
-	*prod       = map_arg.prod;
+	*prod = map_arg.prod;
 	*chain_prod = map_arg.chain_prod;
-	*prod_bseq  = map_arg.prod_bseq;
+	*prod_bseq = map_arg.prod_bseq;
 
 bnx_tx_encap_exit:
 
