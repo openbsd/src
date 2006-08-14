@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2006/03/24 12:54:32 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.11 2006/08/14 08:34:21 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -79,6 +79,10 @@ pci*	at ppb?
 #ucom*	at uplcom?
 #umct*	at uhub?		# MCT USB-RS232 serial adapter
 #ucom*	at umct?
+#uslcom*	at uhub?		# Silicon Laboratories CP210x serial
+#ucom*	at uslcom?
+#uark*	at uhub?		# Arkmicro ARK3116 serial
+#ucom*	at uark?
 #uipaq*	at uhub?		# iPAQ serial adapter
 #ucom*	at uipaq?
 #umsm*	at uhub?		# Qualcomm MSM EVDO
