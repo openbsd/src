@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.39 2006/08/13 01:34:20 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.40 2006/08/14 06:53:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -129,13 +129,11 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define ACX_DEBUG
-
 #include <dev/ic/acxvar.h>
 #include <dev/ic/acxreg.h>
 
 #ifdef ACX_DEBUG
-int acxdebug = 1;
+int acxdebug = 0;
 #endif
 
 #define ACX_ENABLE_TXCHAN(sc, chan, ifname)				\

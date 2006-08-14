@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.8 2006/08/06 14:23:28 mglocker Exp $ */
+/*	$OpenBSD: acx111.c,v 1.9 2006/08/14 06:53:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -72,8 +72,6 @@
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/pci/pcireg.h>
-
-#define ACX_DEBUG
 
 #include <dev/ic/acxvar.h>
 #include <dev/ic/acxreg.h>
