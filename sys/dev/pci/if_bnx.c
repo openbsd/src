@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.14 2006/08/14 19:10:23 marco Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.15 2006/08/14 20:45:00 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4184,16 +4184,16 @@ bnx_tx_encap_exit:
 void
 bnx_start(struct ifnet *ifp)
 {
-	struct bnx_softc *sc = ifp->if_softc;
-	struct mbuf *m_head = NULL;
-	int count = 0;
-	u_int16_t tx_prod, tx_chain_prod;
-	u_int32_t	tx_prod_bseq;
+	struct bnx_softc	*sc = ifp->if_softc;
+	struct mbuf		*m_head = NULL;
+	int			count = 0;
+	u_int16_t		tx_prod, tx_chain_prod;
+	u_int32_t		tx_prod_bseq;
 
 	/* If there's no link or the transmit queue is empty then just exit. */
 	if (!sc->bnx_link || IFQ_IS_EMPTY(&ifp->if_snd)) {
-		DBPRINT(sc, BNX_INFO_SEND, "%s(): No link or transmit queue empty.\n", 
-			__FUNCTION__);
+		DBPRINT(sc, BNX_INFO_SEND,
+		    "%s(): No link or transmit queue empty.\n", __FUNCTION__);
 		goto bnx_start_locked_exit;
 	}
 
@@ -4202,14 +4202,12 @@ bnx_start(struct ifnet *ifp)
 	tx_chain_prod = TX_CHAIN_IDX(tx_prod);
 	tx_prod_bseq = sc->tx_prod_bseq;
 
-	DBPRINT(sc, BNX_INFO_SEND,
-		"%s(): Start: tx_prod = 0x%04X, tx_chain_prod = %04X, "
-		"tx_prod_bseq = 0x%08X\n",
-		__FUNCTION__, tx_prod, tx_chain_prod, tx_prod_bseq);
+	DBPRINT(sc, BNX_INFO_SEND, "%s(): Start: tx_prod = 0x%04X, "
+	    "tx_chain_prod = %04X, tx_prod_bseq = 0x%08X\n",
+	    __FUNCTION__, tx_prod, tx_chain_prod, tx_prod_bseq);
 
 	/* Keep adding entries while there is space in the ring. */
 	while (sc->tx_mbuf_ptr[tx_chain_prod] == NULL) {
-
 		/* Check for any frames to send. */
 		IF_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
@@ -4221,12 +4219,13 @@ bnx_start(struct ifnet *ifp)
 		 * head of the queue and set the OACTIVE flag
 		 * to wait for the NIC to drain the chain.
 		 */
-		if (bnx_tx_encap(sc, m_head, &tx_prod, &tx_chain_prod, &tx_prod_bseq)) {
+		if (bnx_tx_encap(sc, m_head, &tx_prod, &tx_chain_prod,
+		    &tx_prod_bseq)) {
 			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
-			DBPRINT(sc, BNX_INFO_SEND,
-				"TX chain is closed for business! Total tx_bd used = %d\n", 
-				sc->used_tx_bd);
+			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
+			    "business! Total tx_bd used = %d\n",
+			    sc->used_tx_bd);
 			break;
 		}
 
@@ -4237,26 +4236,24 @@ bnx_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
-
 		tx_prod = NEXT_TX_BD(tx_prod);
 		tx_chain_prod = TX_CHAIN_IDX(tx_prod);
 	}
 
 	if (count == 0) {
 		/* no packets were dequeued */
-		DBPRINT(sc, BNX_VERBOSE_SEND, "%s(): No packets were dequeued\n", 
-			__FUNCTION__);
+		DBPRINT(sc, BNX_VERBOSE_SEND,
+		    "%s(): No packets were dequeued\n", __FUNCTION__);
 		goto bnx_start_locked_exit;
 	}
 
 	/* Update the driver's counters. */
-	sc->tx_prod      = tx_prod;
+	sc->tx_prod = tx_prod;
 	sc->tx_prod_bseq = tx_prod_bseq;
 
-	DBPRINT(sc, BNX_INFO_SEND,
-		"%s(): End: tx_prod = 0x%04X, tx_chain_prod = 0x%04X, "
-		"tx_prod_bseq = 0x%08X\n",
-		__FUNCTION__, tx_prod, tx_chain_prod, tx_prod_bseq);
+	DBPRINT(sc, BNX_INFO_SEND, "%s(): End: tx_prod = 0x%04X, tx_chain_prod "
+	    "= 0x%04X, tx_prod_bseq = 0x%08X\n", __FUNCTION__, tx_prod,
+	    tx_chain_prod, tx_prod_bseq);
 
 	/* Start the transmit. */
 	REG_WR16(sc, MB_TX_CID_ADDR + BNX_L2CTX_TX_HOST_BIDX, sc->tx_prod);
@@ -4278,11 +4275,11 @@ bnx_start_locked_exit:
 int
 bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	struct bnx_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct mii_data *mii;
-	int s, error = 0;
+	struct bnx_softc	*sc = ifp->if_softc;
+	struct ifreq		*ifr = (struct ifreq *) data;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
+	struct mii_data		*mii;
+	int			s, error = 0;
 
 	s = splnet();
 
@@ -4301,28 +4298,29 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			arp_ifinit(&sc->arpcom, ifa);
 #endif /* INET */
 		break;
+
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if ((ifp->if_flags & IFF_RUNNING) &&
 			    ((ifp->if_flags ^ sc->bnx_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+			    (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 				bnx_set_rx_mode(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					bnx_init(ifp);
-                        }
-                } else {
-			if (ifp->if_flags & IFF_RUNNING)
-				bnx_stop(sc);
-		}
+			} else if (!(ifp->if_flags & IFF_RUNNING))
+				bnx_init(ifp);
+
+                } else if (ifp->if_flags & IFF_RUNNING)
+			bnx_stop(sc);
+
 		sc->bnx_if_flags = ifp->if_flags;
 		break;
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI)
@@ -4335,20 +4333,22 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = 0;
 		}
 		break;
+
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		DBPRINT(sc, BNX_VERBOSE, "bnx_phy_flags = 0x%08X\n",
-			sc->bnx_phy_flags);
+		    sc->bnx_phy_flags);
 
-		if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
+		if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 			error = ifmedia_ioctl(ifp, ifr,
 			    &sc->bnx_ifmedia, command);
-		} else {
+		else {
 			mii = &sc->bnx_mii;
 			error = ifmedia_ioctl(ifp, ifr,
 			    &mii->mii_media, command);
 		}
 		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -4368,11 +4368,10 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 bnx_watchdog(struct ifnet *ifp)
 {
-	struct bnx_softc *sc = ifp->if_softc;
+	struct bnx_softc	*sc = ifp->if_softc;
 
-	DBRUN(BNX_WARN_SEND, 
-		bnx_dump_driver_state(sc);
-		bnx_dump_status_block(sc));
+	DBRUN(BNX_WARN_SEND, bnx_dump_driver_state(sc);
+	    bnx_dump_status_block(sc));
 
 	printf("%s: Watchdog timeout occurred, resetting!\n");
 
@@ -4397,9 +4396,9 @@ bnx_watchdog(struct ifnet *ifp)
 int
 bnx_intr(void *xsc)
 {
-	struct bnx_softc *sc;
-	struct ifnet *ifp;
-	u_int32_t status_attn_bits;
+	struct bnx_softc	*sc;
+	struct ifnet		*ifp;
+	u_int32_t		status_attn_bits;
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
@@ -4416,66 +4415,74 @@ bnx_intr(void *xsc)
 	 * interrupt then there's nothing to do.
 	 */
 	if ((sc->status_block->status_idx == sc->last_status_idx) && 
-		(REG_RD(sc, BNX_PCICFG_MISC_STATUS) & BNX_PCICFG_MISC_STATUS_INTA_VALUE))
+	    (REG_RD(sc, BNX_PCICFG_MISC_STATUS) &
+	    BNX_PCICFG_MISC_STATUS_INTA_VALUE))
 		return (0);
 
 	/* Ack the interrupt and stop others from occuring. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-		BNX_PCICFG_INT_ACK_CMD_USE_INT_HC_PARAM |
-		BNX_PCICFG_INT_ACK_CMD_MASK_INT);
+	    BNX_PCICFG_INT_ACK_CMD_USE_INT_HC_PARAM |
+	    BNX_PCICFG_INT_ACK_CMD_MASK_INT);
 
 	/* Keep processing data as long as there is work to do. */
 	for (;;) {
-
 		status_attn_bits = sc->status_block->status_attn_bits;
 
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_unexpected_attention),
-			printf("Simulating unexpected status attention bit set.");
-			status_attn_bits = status_attn_bits | STATUS_ATTN_BITS_PARITY_ERROR);
+		    printf("Simulating unexpected status attention bit set.");
+		    status_attn_bits = status_attn_bits |
+		    STATUS_ATTN_BITS_PARITY_ERROR);
 
 		/* Was it a link change interrupt? */
 		if ((status_attn_bits & STATUS_ATTN_BITS_LINK_STATE) !=
-			(sc->status_block->status_attn_bits_ack & STATUS_ATTN_BITS_LINK_STATE))
+		    (sc->status_block->status_attn_bits_ack &
+		    STATUS_ATTN_BITS_LINK_STATE))
 			bnx_phy_intr(sc);
 
 		/* If any other attention is asserted then the chip is toast. */
 		if (((status_attn_bits & ~STATUS_ATTN_BITS_LINK_STATE) !=
-			(sc->status_block->status_attn_bits_ack & 
-			~STATUS_ATTN_BITS_LINK_STATE))) {
-
+		    (sc->status_block->status_attn_bits_ack & 
+		    ~STATUS_ATTN_BITS_LINK_STATE))) {
 			DBRUN(1, sc->unexpected_attentions++);
 
 			printf("%s: Fatal attention detected: 0x%08X\n", 
-				sc->status_block->status_attn_bits);
+			    sc->status_block->status_attn_bits);
 
-			DBRUN(BNX_FATAL, 
-				if (bnx_debug_unexpected_attention == 0)
-					bnx_breakpoint(sc));
+			DBRUN(BNX_FATAL,
+			    if (bnx_debug_unexpected_attention == 0)
+			    bnx_breakpoint(sc));
 
 			bnx_init(sc);
 			return (1);
 		}
 
 		/* Check for any completed RX frames. */
-		if (sc->status_block->status_rx_quick_consumer_index0 != sc->hw_rx_cons)
+		if (sc->status_block->status_rx_quick_consumer_index0 !=
+		    sc->hw_rx_cons)
 			bnx_rx_intr(sc);
 
 		/* Check for any completed TX frames. */
-		if (sc->status_block->status_tx_quick_consumer_index0 != sc->hw_tx_cons)
+		if (sc->status_block->status_tx_quick_consumer_index0 !=
+		    sc->hw_tx_cons)
 			bnx_tx_intr(sc);
 
-		/* Save the status block index value for use during the next interrupt. */
+		/* Save the status block index value for use during the
+		 * next interrupt.
+		 */
 		sc->last_status_idx = sc->status_block->status_idx;
 
-		/* Prevent speculative reads from getting ahead of the status block. */
+		/* Prevent speculative reads from getting ahead of the
+		 * status block.
+		 */
 		bus_space_barrier(sc->bnx_btag, sc->bnx_bhandle, 0, 0, 
-			BUS_SPACE_BARRIER_READ);
+		    BUS_SPACE_BARRIER_READ);
 
-		/* If there's no work left then exit the interrupt service routine. */
-		if ((sc->status_block->status_rx_quick_consumer_index0 == sc->hw_rx_cons) &&
-	    	(sc->status_block->status_tx_quick_consumer_index0 == sc->hw_tx_cons))
+		/* If there's no work left then exit the isr. */
+		if ((sc->status_block->status_rx_quick_consumer_index0 ==
+		    sc->hw_rx_cons) &&
+		    (sc->status_block->status_tx_quick_consumer_index0 ==
+		    sc->hw_tx_cons))
 			break;
-	
 	}
 
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
@@ -4483,10 +4490,10 @@ bnx_intr(void *xsc)
 
 	/* Re-enable interrupts. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	       BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx |
-	       BNX_PCICFG_INT_ACK_CMD_MASK_INT);
+	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx |
+            BNX_PCICFG_INT_ACK_CMD_MASK_INT);
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
-	       BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
+	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
 
 	/* Handle any frames that arrived while handling the interrupt. */
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
@@ -4504,17 +4511,17 @@ bnx_intr(void *xsc)
 void
 bnx_set_rx_mode(struct bnx_softc *sc)
 {
-	struct arpcom *ac = &sc->arpcom;
-	struct ifnet *ifp = &ac->ac_if;
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	u_int32_t hashes[4] = { 0, 0, 0, 0 };
-	u_int32_t rx_mode, sort_mode;
-	int h, i;
+	struct arpcom		*ac = &sc->arpcom;
+	struct ifnet		*ifp = &ac->ac_if;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	u_int32_t		hashes[4] = { 0, 0, 0, 0 };
+	u_int32_t		rx_mode, sort_mode;
+	int			h, i;
 
 	/* Initialize receive mode default settings. */
-	rx_mode   = sc->rx_mode & ~(BNX_EMAC_RX_MODE_PROMISCUOUS |
-			    BNX_EMAC_RX_MODE_KEEP_VLAN_TAG);
+	rx_mode = sc->rx_mode & ~(BNX_EMAC_RX_MODE_PROMISCUOUS |
+	    BNX_EMAC_RX_MODE_KEEP_VLAN_TAG);
 	sort_mode = 1 | BNX_RPM_SORT_USER0_BC_EN;
 
 	/*
@@ -4540,7 +4547,8 @@ allmulti:
 
 		/* Enable all multicast addresses. */
 		for (i = 0; i < NUM_MC_HASH_REGISTERS; i++)
-			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4), 0xffffffff);
+			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4),
+			    0xffffffff);
 		sort_mode |= BNX_RPM_SORT_USER0_MC_EN;
 	} else {
 		/* Accept one or more multicast(s). */
@@ -4548,17 +4556,20 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;
 			}
-			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x7F;
+			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
+			    0x7F;
 			hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
 		for (i = 0; i < 4; i++)
-			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4), hashes[i]);
+			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4),
+			    hashes[i]);
 
 		sort_mode |= BNX_RPM_SORT_USER0_MC_HSH_EN;
 	}
@@ -4566,7 +4577,7 @@ allmulti:
 	/* Only make changes if the recive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n", 
-			rx_mode);
+		    rx_mode);
 
 		sc->rx_mode = rx_mode;
 		REG_WR(sc, BNX_EMAC_RX_MODE, rx_mode);
@@ -4588,28 +4599,29 @@ allmulti:
 void
 bnx_stats_update(struct bnx_softc *sc)
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	struct statistics_block *stats;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct statistics_block	*stats;
 
 	DBPRINT(sc, BNX_EXCESSIVE, "Entering %s()\n", __FUNCTION__);
 
-	stats = (struct statistics_block *) sc->stats_block;
+	stats = (struct statistics_block *)sc->stats_block;
 
 	/* 
 	 * Update the interface statistics from the
 	 * hardware statistics.
 	 */
-	ifp->if_collisions = (u_long) stats->stat_EtherStatsCollisions;
+	ifp->if_collisions = (u_long)stats->stat_EtherStatsCollisions;
 
-	ifp->if_ierrors = (u_long) stats->stat_EtherStatsUndersizePkts +
-				      (u_long) stats->stat_EtherStatsOverrsizePkts +
-					  (u_long) stats->stat_IfInMBUFDiscards +
-					  (u_long) stats->stat_Dot3StatsAlignmentErrors +
-					  (u_long) stats->stat_Dot3StatsFCSErrors;
+	ifp->if_ierrors = (u_long)stats->stat_EtherStatsUndersizePkts +
+	    (u_long)stats->stat_EtherStatsOverrsizePkts +
+	    (u_long)stats->stat_IfInMBUFDiscards +
+	    (u_long)stats->stat_Dot3StatsAlignmentErrors +
+	    (u_long)stats->stat_Dot3StatsFCSErrors;
 
-	ifp->if_oerrors = (u_long) stats->stat_emac_tx_stat_dot3statsinternalmactransmiterrors +
-					  (u_long) stats->stat_Dot3StatsExcessiveCollisions +
-					  (u_long) stats->stat_Dot3StatsLateCollisions;
+	ifp->if_oerrors = (u_long)
+	    stats->stat_emac_tx_stat_dot3statsinternalmactransmiterrors +
+	    (u_long)stats->stat_Dot3StatsExcessiveCollisions +
+	    (u_long)stats->stat_Dot3StatsLateCollisions;
 
 	/* 
 	 * Certain controllers don't report 
@@ -4624,177 +4636,157 @@ bnx_stats_update(struct bnx_softc *sc)
 	 * Update the sysctl statistics from the
 	 * hardware statistics.
 	 */
-	sc->stat_IfHCInOctets = 
-		((u_int64_t) stats->stat_IfHCInOctets_hi << 32) + 
-		 (u_int64_t) stats->stat_IfHCInOctets_lo;
+	sc->stat_IfHCInOctets = ((u_int64_t)stats->stat_IfHCInOctets_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCInOctets_lo;
 
 	sc->stat_IfHCInBadOctets =
-		((u_int64_t) stats->stat_IfHCInBadOctets_hi << 32) + 
-		 (u_int64_t) stats->stat_IfHCInBadOctets_lo;
+	    ((u_int64_t) stats->stat_IfHCInBadOctets_hi << 32) + 
+	    (u_int64_t) stats->stat_IfHCInBadOctets_lo;
 
 	sc->stat_IfHCOutOctets =
-		((u_int64_t) stats->stat_IfHCOutOctets_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCOutOctets_lo;
+	    ((u_int64_t) stats->stat_IfHCOutOctets_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCOutOctets_lo;
 
 	sc->stat_IfHCOutBadOctets =
-		((u_int64_t) stats->stat_IfHCOutBadOctets_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCOutBadOctets_lo;
+	    ((u_int64_t) stats->stat_IfHCOutBadOctets_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCOutBadOctets_lo;
 
 	sc->stat_IfHCInUcastPkts =
-		((u_int64_t) stats->stat_IfHCInUcastPkts_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCInUcastPkts_lo;
+	    ((u_int64_t) stats->stat_IfHCInUcastPkts_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCInUcastPkts_lo;
 
 	sc->stat_IfHCInMulticastPkts =
-		((u_int64_t) stats->stat_IfHCInMulticastPkts_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCInMulticastPkts_lo;
+	    ((u_int64_t) stats->stat_IfHCInMulticastPkts_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCInMulticastPkts_lo;
 
 	sc->stat_IfHCInBroadcastPkts =
-		((u_int64_t) stats->stat_IfHCInBroadcastPkts_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCInBroadcastPkts_lo;
+	    ((u_int64_t) stats->stat_IfHCInBroadcastPkts_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCInBroadcastPkts_lo;
 
 	sc->stat_IfHCOutUcastPkts =
-		((u_int64_t) stats->stat_IfHCOutUcastPkts_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCOutUcastPkts_lo;
+	   ((u_int64_t) stats->stat_IfHCOutUcastPkts_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCOutUcastPkts_lo;
 
 	sc->stat_IfHCOutMulticastPkts =
-		((u_int64_t) stats->stat_IfHCOutMulticastPkts_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCOutMulticastPkts_lo;
+	    ((u_int64_t) stats->stat_IfHCOutMulticastPkts_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCOutMulticastPkts_lo;
 
 	sc->stat_IfHCOutBroadcastPkts =
-		((u_int64_t) stats->stat_IfHCOutBroadcastPkts_hi << 32) +
-		 (u_int64_t) stats->stat_IfHCOutBroadcastPkts_lo;
+	    ((u_int64_t) stats->stat_IfHCOutBroadcastPkts_hi << 32) +
+	    (u_int64_t) stats->stat_IfHCOutBroadcastPkts_lo;
 
 	sc->stat_emac_tx_stat_dot3statsinternalmactransmiterrors =
-		stats->stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
+	    stats->stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
 
 	sc->stat_Dot3StatsCarrierSenseErrors =
-		stats->stat_Dot3StatsCarrierSenseErrors;
+	    stats->stat_Dot3StatsCarrierSenseErrors;
 
-	sc->stat_Dot3StatsFCSErrors = 
-		stats->stat_Dot3StatsFCSErrors;
+	sc->stat_Dot3StatsFCSErrors = stats->stat_Dot3StatsFCSErrors;
 
 	sc->stat_Dot3StatsAlignmentErrors =
-		stats->stat_Dot3StatsAlignmentErrors;
+	    stats->stat_Dot3StatsAlignmentErrors;
 
 	sc->stat_Dot3StatsSingleCollisionFrames =
-		stats->stat_Dot3StatsSingleCollisionFrames;
+	    stats->stat_Dot3StatsSingleCollisionFrames;
 
 	sc->stat_Dot3StatsMultipleCollisionFrames =
-		stats->stat_Dot3StatsMultipleCollisionFrames;
+	    stats->stat_Dot3StatsMultipleCollisionFrames;
 
 	sc->stat_Dot3StatsDeferredTransmissions =
-		stats->stat_Dot3StatsDeferredTransmissions;
+	    stats->stat_Dot3StatsDeferredTransmissions;
 
 	sc->stat_Dot3StatsExcessiveCollisions =
-		stats->stat_Dot3StatsExcessiveCollisions;
+	    stats->stat_Dot3StatsExcessiveCollisions;
 
-	sc->stat_Dot3StatsLateCollisions =
-		stats->stat_Dot3StatsLateCollisions;
+	sc->stat_Dot3StatsLateCollisions = stats->stat_Dot3StatsLateCollisions;
 
-	sc->stat_EtherStatsCollisions =
-		stats->stat_EtherStatsCollisions;
+	sc->stat_EtherStatsCollisions = stats->stat_EtherStatsCollisions;
 
-	sc->stat_EtherStatsFragments =
-		stats->stat_EtherStatsFragments;
+	sc->stat_EtherStatsFragments = stats->stat_EtherStatsFragments;
 
-	sc->stat_EtherStatsJabbers =
-		stats->stat_EtherStatsJabbers;
+	sc->stat_EtherStatsJabbers = stats->stat_EtherStatsJabbers;
 
-	sc->stat_EtherStatsUndersizePkts =
-		stats->stat_EtherStatsUndersizePkts;
+	sc->stat_EtherStatsUndersizePkts = stats->stat_EtherStatsUndersizePkts;
 
-	sc->stat_EtherStatsOverrsizePkts =
-		stats->stat_EtherStatsOverrsizePkts;
+	sc->stat_EtherStatsOverrsizePkts = stats->stat_EtherStatsOverrsizePkts;
 
 	sc->stat_EtherStatsPktsRx64Octets =
-		stats->stat_EtherStatsPktsRx64Octets;
+	    stats->stat_EtherStatsPktsRx64Octets;
 
 	sc->stat_EtherStatsPktsRx65Octetsto127Octets =
-		stats->stat_EtherStatsPktsRx65Octetsto127Octets;
+	    stats->stat_EtherStatsPktsRx65Octetsto127Octets;
 
 	sc->stat_EtherStatsPktsRx128Octetsto255Octets =
-		stats->stat_EtherStatsPktsRx128Octetsto255Octets;
+	    stats->stat_EtherStatsPktsRx128Octetsto255Octets;
 
 	sc->stat_EtherStatsPktsRx256Octetsto511Octets =
-		stats->stat_EtherStatsPktsRx256Octetsto511Octets;
+	    stats->stat_EtherStatsPktsRx256Octetsto511Octets;
 
 	sc->stat_EtherStatsPktsRx512Octetsto1023Octets =
-		stats->stat_EtherStatsPktsRx512Octetsto1023Octets;
+	    stats->stat_EtherStatsPktsRx512Octetsto1023Octets;
 
 	sc->stat_EtherStatsPktsRx1024Octetsto1522Octets =
-		stats->stat_EtherStatsPktsRx1024Octetsto1522Octets;
+	    stats->stat_EtherStatsPktsRx1024Octetsto1522Octets;
 
 	sc->stat_EtherStatsPktsRx1523Octetsto9022Octets =
-		stats->stat_EtherStatsPktsRx1523Octetsto9022Octets;
+	    stats->stat_EtherStatsPktsRx1523Octetsto9022Octets;
 
 	sc->stat_EtherStatsPktsTx64Octets =
-		stats->stat_EtherStatsPktsTx64Octets;
+	    stats->stat_EtherStatsPktsTx64Octets;
 
 	sc->stat_EtherStatsPktsTx65Octetsto127Octets =
-		stats->stat_EtherStatsPktsTx65Octetsto127Octets;
+	    stats->stat_EtherStatsPktsTx65Octetsto127Octets;
 
 	sc->stat_EtherStatsPktsTx128Octetsto255Octets =
-		stats->stat_EtherStatsPktsTx128Octetsto255Octets;
+	    stats->stat_EtherStatsPktsTx128Octetsto255Octets;
 
 	sc->stat_EtherStatsPktsTx256Octetsto511Octets =
-		stats->stat_EtherStatsPktsTx256Octetsto511Octets;
+	    stats->stat_EtherStatsPktsTx256Octetsto511Octets;
 
 	sc->stat_EtherStatsPktsTx512Octetsto1023Octets =
-		stats->stat_EtherStatsPktsTx512Octetsto1023Octets;
+	    stats->stat_EtherStatsPktsTx512Octetsto1023Octets;
 
 	sc->stat_EtherStatsPktsTx1024Octetsto1522Octets =
-		stats->stat_EtherStatsPktsTx1024Octetsto1522Octets;
+	    stats->stat_EtherStatsPktsTx1024Octetsto1522Octets;
 
 	sc->stat_EtherStatsPktsTx1523Octetsto9022Octets =
-		stats->stat_EtherStatsPktsTx1523Octetsto9022Octets;
+	    stats->stat_EtherStatsPktsTx1523Octetsto9022Octets;
 
-	sc->stat_XonPauseFramesReceived =
-		stats->stat_XonPauseFramesReceived;
+	sc->stat_XonPauseFramesReceived = stats->stat_XonPauseFramesReceived;
 
-	sc->stat_XoffPauseFramesReceived =
-		stats->stat_XoffPauseFramesReceived;
+	sc->stat_XoffPauseFramesReceived = stats->stat_XoffPauseFramesReceived;
 
-	sc->stat_OutXonSent =
-		stats->stat_OutXonSent;
+	sc->stat_OutXonSent = stats->stat_OutXonSent;
 
-	sc->stat_OutXoffSent =
-		stats->stat_OutXoffSent;
+	sc->stat_OutXoffSent = stats->stat_OutXoffSent;
 
-	sc->stat_FlowControlDone =
-		stats->stat_FlowControlDone;
+	sc->stat_FlowControlDone = stats->stat_FlowControlDone;
 
 	sc->stat_MacControlFramesReceived =
-		stats->stat_MacControlFramesReceived;
+	    stats->stat_MacControlFramesReceived;
 
-	sc->stat_XoffStateEntered =
-		stats->stat_XoffStateEntered;
+	sc->stat_XoffStateEntered = stats->stat_XoffStateEntered;
 
 	sc->stat_IfInFramesL2FilterDiscards =
-		stats->stat_IfInFramesL2FilterDiscards;
+	    stats->stat_IfInFramesL2FilterDiscards;
 
-	sc->stat_IfInRuleCheckerDiscards =
-		stats->stat_IfInRuleCheckerDiscards;
+	sc->stat_IfInRuleCheckerDiscards = stats->stat_IfInRuleCheckerDiscards;
 
-	sc->stat_IfInFTQDiscards =
-		stats->stat_IfInFTQDiscards;
+	sc->stat_IfInFTQDiscards = stats->stat_IfInFTQDiscards;
 
-	sc->stat_IfInMBUFDiscards =
-		stats->stat_IfInMBUFDiscards;
+	sc->stat_IfInMBUFDiscards = stats->stat_IfInMBUFDiscards;
 
-	sc->stat_IfInRuleCheckerP4Hit =
-		stats->stat_IfInRuleCheckerP4Hit;
+	sc->stat_IfInRuleCheckerP4Hit = stats->stat_IfInRuleCheckerP4Hit;
 
 	sc->stat_CatchupInRuleCheckerDiscards =
-		stats->stat_CatchupInRuleCheckerDiscards;
+	    stats->stat_CatchupInRuleCheckerDiscards;
 
-	sc->stat_CatchupInFTQDiscards =
-		stats->stat_CatchupInFTQDiscards;
+	sc->stat_CatchupInFTQDiscards = stats->stat_CatchupInFTQDiscards;
 
-	sc->stat_CatchupInMBUFDiscards =
-		stats->stat_CatchupInMBUFDiscards;
+	sc->stat_CatchupInMBUFDiscards = stats->stat_CatchupInMBUFDiscards;
 
 	sc->stat_CatchupInRuleCheckerP4Hit =
-		stats->stat_CatchupInRuleCheckerP4Hit;
+	    stats->stat_CatchupInRuleCheckerP4Hit;
 
 	DBPRINT(sc, BNX_EXCESSIVE, "Exiting %s()\n", __FUNCTION__);
 }
@@ -4802,16 +4794,16 @@ bnx_stats_update(struct bnx_softc *sc)
 void
 bnx_tick(void *xsc)
 {
-	struct bnx_softc *sc = xsc;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	struct mii_data *mii = NULL;
-	u_int32_t msg;
+	struct bnx_softc	*sc = xsc;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct mii_data		*mii = NULL;
+	u_int32_t		msg;
 
 	/* Tell the firmware that the driver is still running. */
 #ifdef BNX_DEBUG
-	msg = (u_int32_t) BNX_DRV_MSG_DATA_PULSE_CODE_ALWAYS_ALIVE;
+	msg = (u_int32_t)BNX_DRV_MSG_DATA_PULSE_CODE_ALWAYS_ALIVE;
 #else
-	msg = (u_int32_t) ++sc->bnx_fw_drv_pulse_wr_seq;
+	msg = (u_int32_t)++sc->bnx_fw_drv_pulse_wr_seq;
 #endif
 	REG_WR_IND(sc, sc->bnx_shmem_base + BNX_DRV_PULSE_MB, msg);
 
@@ -4857,7 +4849,7 @@ bnx_tick_locked_exit:
 void
 bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 {
-	struct mbuf *mp = m;
+	struct mbuf		*mp = m;
 
 	if (m == NULL) {
 		/* Index out of range. */
@@ -4881,8 +4873,6 @@ bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 
 		mp = mp->m_next;
 	}
-
-
 }
 
 /****************************************************************************/
@@ -4894,13 +4884,13 @@ bnx_dump_mbuf(struct bnx_softc *sc, struct mbuf *m)
 void
 bnx_dump_tx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 {
-	struct mbuf *m;
-	int i;
+	struct mbuf		*m;
+	int			i;
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"  tx mbuf data  "
-		"----------------------------\n");
+	    "----------------------------"
+	    "  tx mbuf data  "
+	    "----------------------------\n");
 
 	for (i = 0; i < count; i++) {
 	 	m = sc->tx_mbuf_ptr[chain_prod];
@@ -4910,9 +4900,8 @@ bnx_dump_tx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 	}
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"----------------"
-		"----------------------------\n");
+	    "--------------------------------------------"
+	    "----------------------------\n");
 }
 
 /*
@@ -4921,13 +4910,13 @@ bnx_dump_tx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 void
 bnx_dump_rx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 {
-	struct mbuf *m;
-	int i;
+	struct mbuf		*m;
+	int			i;
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"  rx mbuf data  "
-		"----------------------------\n");
+	    "----------------------------"
+	    "  rx mbuf data  "
+	    "----------------------------\n");
 
 	for (i = 0; i < count; i++) {
 	 	m = sc->rx_mbuf_ptr[chain_prod];
@@ -4938,9 +4927,8 @@ bnx_dump_rx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"----------------"
-		"----------------------------\n");
+	    "--------------------------------------------"
+	    "----------------------------\n");
 }
 
 void
@@ -4951,14 +4939,15 @@ bnx_dump_txbd(struct bnx_softc *sc, int idx, struct tx_bd *txbd)
 		BNX_PRINTF(sc, "tx_bd[0x%04X]: Invalid tx_bd index!\n", idx);
 	else if ((idx & USABLE_TX_BD_PER_PAGE) == USABLE_TX_BD_PER_PAGE)
 		/* TX Chain page pointer. */
-		BNX_PRINTF(sc, "tx_bd[0x%04X]: haddr = 0x%08X:%08X, chain page pointer\n", 
-			idx, txbd->tx_bd_haddr_hi, txbd->tx_bd_haddr_lo);
+		BNX_PRINTF(sc, "tx_bd[0x%04X]: haddr = 0x%08X:%08X, chain "
+		    "page pointer\n", idx, txbd->tx_bd_haddr_hi,
+		    txbd->tx_bd_haddr_lo);
 	else
 		/* Normal tx_bd entry. */
-		BNX_PRINTF(sc, "tx_bd[0x%04X]: haddr = 0x%08X:%08X, nbytes = 0x%08X, "
-			"flags = 0x%08X\n", idx, 
-			txbd->tx_bd_haddr_hi, txbd->tx_bd_haddr_lo,
-			txbd->tx_bd_mss_nbytes, txbd->tx_bd_vlan_tag_flags);
+		BNX_PRINTF(sc, "tx_bd[0x%04X]: haddr = 0x%08X:%08X, nbytes = "
+		    "0x%08X, flags = 0x%08X\n", idx, 
+		    txbd->tx_bd_haddr_hi, txbd->tx_bd_haddr_lo,
+		    txbd->tx_bd_mss_nbytes, txbd->tx_bd_vlan_tag_flags);
 }
 
 void
@@ -4969,12 +4958,13 @@ bnx_dump_rxbd(struct bnx_softc *sc, int idx, struct rx_bd *rxbd)
 		BNX_PRINTF(sc, "rx_bd[0x%04X]: Invalid rx_bd index!\n", idx);
 	else if ((idx & USABLE_RX_BD_PER_PAGE) == USABLE_RX_BD_PER_PAGE)
 		/* TX Chain page pointer. */
-		BNX_PRINTF(sc, "rx_bd[0x%04X]: haddr = 0x%08X:%08X, chain page pointer\n", 
-			idx, rxbd->rx_bd_haddr_hi, rxbd->rx_bd_haddr_lo);
+		BNX_PRINTF(sc, "rx_bd[0x%04X]: haddr = 0x%08X:%08X, chain page "
+		    "pointer\n", idx, rxbd->rx_bd_haddr_hi,
+		    rxbd->rx_bd_haddr_lo);
 	else
 		/* Normal tx_bd entry. */
-		BNX_PRINTF(sc, "rx_bd[0x%04X]: haddr = 0x%08X:%08X, nbytes = 0x%08X, "
-			"flags = 0x%08X\n", idx, 
+		BNX_PRINTF(sc, "rx_bd[0x%04X]: haddr = 0x%08X:%08X, nbytes = "
+		    "0x%08X, flags = 0x%08X\n", idx, 
 			rxbd->rx_bd_haddr_hi, rxbd->rx_bd_haddr_lo,
 			rxbd->rx_bd_len, rxbd->rx_bd_flags);
 }
@@ -4983,11 +4973,11 @@ void
 bnx_dump_l2fhdr(struct bnx_softc *sc, int idx, struct l2_fhdr *l2fhdr)
 {
 	BNX_PRINTF(sc, "l2_fhdr[0x%04X]: status = 0x%08X, "
-		"pkt_len = 0x%04X, vlan = 0x%04x, ip_xsum = 0x%04X, "
-		"tcp_udp_xsum = 0x%04X\n", idx,
-		l2fhdr->l2_fhdr_status, l2fhdr->l2_fhdr_pkt_len,
-		l2fhdr->l2_fhdr_vlan_tag, l2fhdr->l2_fhdr_ip_xsum,
-		l2fhdr->l2_fhdr_tcp_udp_xsum);
+	    "pkt_len = 0x%04X, vlan = 0x%04x, ip_xsum = 0x%04X, "
+	    "tcp_udp_xsum = 0x%04X\n", idx,
+	    l2fhdr->l2_fhdr_status, l2fhdr->l2_fhdr_pkt_len,
+	    l2fhdr->l2_fhdr_vlan_tag, l2fhdr->l2_fhdr_ip_xsum,
+	    l2fhdr->l2_fhdr_tcp_udp_xsum);
 }
 
 /*
@@ -4996,27 +4986,29 @@ bnx_dump_l2fhdr(struct bnx_softc *sc, int idx, struct l2_fhdr *l2fhdr)
 void
 bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 {
-	struct tx_bd *txbd;
-	int i;
+	struct tx_bd		*txbd;
+	int			i;
 
 	/* First some info about the tx_bd chain structure. */
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"  tx_bd  chain  "
-		"----------------------------\n");
+	    "----------------------------"
+	    "  tx_bd  chain  "
+	    "----------------------------\n");
 
-	BNX_PRINTF(sc, "page size      = 0x%08X, tx chain pages        = 0x%08X\n",
-		(u_int32_t) BCM_PAGE_SIZE, (u_int32_t) TX_PAGES);
+	BNX_PRINTF(sc,
+	    "page size      = 0x%08X, tx chain pages        = 0x%08X\n",
+	    (u_int32_t)BCM_PAGE_SIZE, (u_int32_t) TX_PAGES);
 
-	BNX_PRINTF(sc, "tx_bd per page = 0x%08X, usable tx_bd per page = 0x%08X\n",
-		(u_int32_t) TOTAL_TX_BD_PER_PAGE, (u_int32_t) USABLE_TX_BD_PER_PAGE);
+	BNX_PRINTF(sc,
+	    "tx_bd per page = 0x%08X, usable tx_bd per page = 0x%08X\n",
+	    (u_int32_t)TOTAL_TX_BD_PER_PAGE, (u_int32_t)USABLE_TX_BD_PER_PAGE);
 
-	BNX_PRINTF(sc, "total tx_bd    = 0x%08X\n", (u_int32_t) TOTAL_TX_BD);
+	BNX_PRINTF(sc, "total tx_bd    = 0x%08X\n", (u_int32_t)TOTAL_TX_BD);
 
 	BNX_PRINTF(sc, ""
-		"-----------------------------"
-		"   tx_bd data   "
-		"-----------------------------\n");
+	    "-----------------------------"
+	    "   tx_bd data   "
+	    "-----------------------------\n");
 
 	/* Now print out the tx_bd's themselves. */
 	for (i = 0; i < count; i++) {
@@ -5026,9 +5018,9 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 	}
 
 	BNX_PRINTF(sc,
-		"-----------------------------"
-		"--------------"
-		"-----------------------------\n");
+	    "-----------------------------"
+	    "--------------"
+	    "-----------------------------\n");
 }
 
 /*
@@ -5037,29 +5029,31 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 void
 bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 {
-	struct rx_bd *rxbd;
-	int i;
+	struct rx_bd		*rxbd;
+	int			i;
 
 	/* First some info about the tx_bd chain structure. */
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"  rx_bd  chain  "
-		"----------------------------\n");
+	    "----------------------------"
+	    "  rx_bd  chain  "
+	    "----------------------------\n");
 
 	BNX_PRINTF(sc, "----- RX_BD Chain -----\n");
 
-	BNX_PRINTF(sc, "page size      = 0x%08X, rx chain pages        = 0x%08X\n",
-		(u_int32_t) BCM_PAGE_SIZE, (u_int32_t) RX_PAGES);
-
-	BNX_PRINTF(sc, "rx_bd per page = 0x%08X, usable rx_bd per page = 0x%08X\n",
-		(u_int32_t) TOTAL_RX_BD_PER_PAGE, (u_int32_t) USABLE_RX_BD_PER_PAGE);
-
-	BNX_PRINTF(sc, "total rx_bd    = 0x%08X\n", (u_int32_t) TOTAL_RX_BD);
+	BNX_PRINTF(sc,
+	    "page size      = 0x%08X, rx chain pages        = 0x%08X\n",
+	    (u_int32_t)BCM_PAGE_SIZE, (u_int32_t)RX_PAGES);
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"   rx_bd data   "
-		"----------------------------\n");
+	    "rx_bd per page = 0x%08X, usable rx_bd per page = 0x%08X\n",
+	    (u_int32_t)TOTAL_RX_BD_PER_PAGE, (u_int32_t)USABLE_RX_BD_PER_PAGE);
+
+	BNX_PRINTF(sc, "total rx_bd    = 0x%08X\n", (u_int32_t)TOTAL_RX_BD);
+
+	BNX_PRINTF(sc,
+	    "----------------------------"
+	    "   rx_bd data   "
+	    "----------------------------\n");
 
 	/* Now print out the rx_bd's themselves. */
 	for (i = 0; i < count; i++) {
@@ -5069,9 +5063,9 @@ bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 	}
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		"--------------"
-		"----------------------------\n");
+	    "----------------------------"
+	    "--------------"
+	    "----------------------------\n");
 }
 
 /*
@@ -5080,20 +5074,21 @@ bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 void
 bnx_dump_status_block(struct bnx_softc *sc)
 {
-	struct status_block *sblk;
+	struct status_block	*sblk;
 
 	sblk = sc->status_block;
 
    	BNX_PRINTF(sc, "----------------------------- Status Block "
-		"-----------------------------\n");
+	    "-----------------------------\n");
 
-	BNX_PRINTF(sc, "attn_bits  = 0x%08X, attn_bits_ack = 0x%08X, index = 0x%04X\n",
-		sblk->status_attn_bits, sblk->status_attn_bits_ack,
-		sblk->status_idx);
+	BNX_PRINTF(sc,
+	    "attn_bits  = 0x%08X, attn_bits_ack = 0x%08X, index = 0x%04X\n",
+	    sblk->status_attn_bits, sblk->status_attn_bits_ack,
+	    sblk->status_idx);
 
 	BNX_PRINTF(sc, "rx_cons0   = 0x%08X, tx_cons0      = 0x%08X\n",
-		sblk->status_rx_quick_consumer_index0,
-		sblk->status_tx_quick_consumer_index0);
+	    sblk->status_rx_quick_consumer_index0,
+	    sblk->status_tx_quick_consumer_index0);
 
 	BNX_PRINTF(sc, "status_idx = 0x%04X\n", sblk->status_idx);
 
@@ -5101,65 +5096,65 @@ bnx_dump_status_block(struct bnx_softc *sc)
 	if (sblk->status_rx_quick_consumer_index1 || 
 		sblk->status_tx_quick_consumer_index1)
 		BNX_PRINTF(sc, "rx_cons1  = 0x%08X, tx_cons1      = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index1,
-			sblk->status_tx_quick_consumer_index1);
+		    sblk->status_rx_quick_consumer_index1,
+		    sblk->status_tx_quick_consumer_index1);
 
 	if (sblk->status_rx_quick_consumer_index2 || 
 		sblk->status_tx_quick_consumer_index2)
 		BNX_PRINTF(sc, "rx_cons2  = 0x%08X, tx_cons2      = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index2,
-			sblk->status_tx_quick_consumer_index2);
+		    sblk->status_rx_quick_consumer_index2,
+		    sblk->status_tx_quick_consumer_index2);
 
 	if (sblk->status_rx_quick_consumer_index3 || 
 		sblk->status_tx_quick_consumer_index3)
 		BNX_PRINTF(sc, "rx_cons3  = 0x%08X, tx_cons3      = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index3,
-			sblk->status_tx_quick_consumer_index3);
+		    sblk->status_rx_quick_consumer_index3,
+		    sblk->status_tx_quick_consumer_index3);
 
 	if (sblk->status_rx_quick_consumer_index4 || 
 		sblk->status_rx_quick_consumer_index5)
 		BNX_PRINTF(sc, "rx_cons4  = 0x%08X, rx_cons5      = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index4,
-			sblk->status_rx_quick_consumer_index5);
+		    sblk->status_rx_quick_consumer_index4,
+		    sblk->status_rx_quick_consumer_index5);
 
 	if (sblk->status_rx_quick_consumer_index6 || 
 		sblk->status_rx_quick_consumer_index7)
 		BNX_PRINTF(sc, "rx_cons6  = 0x%08X, rx_cons7      = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index6,
-			sblk->status_rx_quick_consumer_index7);
+		    sblk->status_rx_quick_consumer_index6,
+		    sblk->status_rx_quick_consumer_index7);
 
 	if (sblk->status_rx_quick_consumer_index8 || 
 		sblk->status_rx_quick_consumer_index9)
 		BNX_PRINTF(sc, "rx_cons8  = 0x%08X, rx_cons9      = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index8,
-			sblk->status_rx_quick_consumer_index9);
+		    sblk->status_rx_quick_consumer_index8,
+		    sblk->status_rx_quick_consumer_index9);
 
 	if (sblk->status_rx_quick_consumer_index10 || 
 		sblk->status_rx_quick_consumer_index11)
 		BNX_PRINTF(sc, "rx_cons10 = 0x%08X, rx_cons11     = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index10,
-			sblk->status_rx_quick_consumer_index11);
+		    sblk->status_rx_quick_consumer_index10,
+		    sblk->status_rx_quick_consumer_index11);
 
 	if (sblk->status_rx_quick_consumer_index12 || 
 		sblk->status_rx_quick_consumer_index13)
 		BNX_PRINTF(sc, "rx_cons12 = 0x%08X, rx_cons13     = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index12,
-			sblk->status_rx_quick_consumer_index13);
+		    sblk->status_rx_quick_consumer_index12,
+		    sblk->status_rx_quick_consumer_index13);
 
 	if (sblk->status_rx_quick_consumer_index14 || 
 		sblk->status_rx_quick_consumer_index15)
 		BNX_PRINTF(sc, "rx_cons14 = 0x%08X, rx_cons15     = 0x%08X\n",
-			sblk->status_rx_quick_consumer_index14,
-			sblk->status_rx_quick_consumer_index15);
+		    sblk->status_rx_quick_consumer_index14,
+		    sblk->status_rx_quick_consumer_index15);
 
 	if (sblk->status_completion_producer_index || 
 		sblk->status_cmd_consumer_index)
 		BNX_PRINTF(sc, "com_prod  = 0x%08X, cmd_cons      = 0x%08X\n",
-			sblk->status_completion_producer_index,
-			sblk->status_cmd_consumer_index);
+		    sblk->status_completion_producer_index,
+		    sblk->status_cmd_consumer_index);
 
 	BNX_PRINTF(sc, "-------------------------------------------"
-		"-----------------------------\n");
+	    "-----------------------------\n");
 }
 
 /*
@@ -5168,220 +5163,236 @@ bnx_dump_status_block(struct bnx_softc *sc)
 void
 bnx_dump_stats_block(struct bnx_softc *sc)
 {
-	struct statistics_block *sblk;
+	struct statistics_block	*sblk;
 
 	sblk = sc->stats_block;
 
 	BNX_PRINTF(sc, ""
-		"-----------------------------"
-		" Stats  Block "
-		"-----------------------------\n");
+	    "-----------------------------"
+	    " Stats  Block "
+	    "-----------------------------\n");
 
 	BNX_PRINTF(sc, "IfHcInOctets         = 0x%08X:%08X, "
-		"IfHcInBadOctets      = 0x%08X:%08X\n",
-		sblk->stat_IfHCInOctets_hi, sblk->stat_IfHCInOctets_lo,
-		sblk->stat_IfHCInBadOctets_hi, sblk->stat_IfHCInBadOctets_lo);
+	    "IfHcInBadOctets      = 0x%08X:%08X\n",
+	    sblk->stat_IfHCInOctets_hi, sblk->stat_IfHCInOctets_lo,
+	    sblk->stat_IfHCInBadOctets_hi, sblk->stat_IfHCInBadOctets_lo);
 
 	BNX_PRINTF(sc, "IfHcOutOctets        = 0x%08X:%08X, "
-		"IfHcOutBadOctets     = 0x%08X:%08X\n",
-		sblk->stat_IfHCOutOctets_hi, sblk->stat_IfHCOutOctets_lo,
-		sblk->stat_IfHCOutBadOctets_hi, sblk->stat_IfHCOutBadOctets_lo);
+	    "IfHcOutBadOctets     = 0x%08X:%08X\n",
+	    sblk->stat_IfHCOutOctets_hi, sblk->stat_IfHCOutOctets_lo,
+	    sblk->stat_IfHCOutBadOctets_hi, sblk->stat_IfHCOutBadOctets_lo);
 
 	BNX_PRINTF(sc, "IfHcInUcastPkts      = 0x%08X:%08X, "
-		"IfHcInMulticastPkts  = 0x%08X:%08X\n",
-		sblk->stat_IfHCInUcastPkts_hi, sblk->stat_IfHCInUcastPkts_lo,
-		sblk->stat_IfHCInMulticastPkts_hi, sblk->stat_IfHCInMulticastPkts_lo);
+	    "IfHcInMulticastPkts  = 0x%08X:%08X\n",
+	    sblk->stat_IfHCInUcastPkts_hi, sblk->stat_IfHCInUcastPkts_lo,
+	    sblk->stat_IfHCInMulticastPkts_hi,
+	    sblk->stat_IfHCInMulticastPkts_lo);
 
 	BNX_PRINTF(sc, "IfHcInBroadcastPkts  = 0x%08X:%08X, "
-		"IfHcOutUcastPkts     = 0x%08X:%08X\n",
-		sblk->stat_IfHCInBroadcastPkts_hi, sblk->stat_IfHCInBroadcastPkts_lo,
-		sblk->stat_IfHCOutUcastPkts_hi, sblk->stat_IfHCOutUcastPkts_lo);
+	    "IfHcOutUcastPkts     = 0x%08X:%08X\n",
+	    sblk->stat_IfHCInBroadcastPkts_hi,
+	    sblk->stat_IfHCInBroadcastPkts_lo,
+	    sblk->stat_IfHCOutUcastPkts_hi,
+	    sblk->stat_IfHCOutUcastPkts_lo);
 
-	BNX_PRINTF(sc, "IfHcOutMulticastPkts = 0x%08X:%08X, IfHcOutBroadcastPkts = 0x%08X:%08X\n",
-		sblk->stat_IfHCOutMulticastPkts_hi, sblk->stat_IfHCOutMulticastPkts_lo,
-		sblk->stat_IfHCOutBroadcastPkts_hi, sblk->stat_IfHCOutBroadcastPkts_lo);
+	BNX_PRINTF(sc, "IfHcOutMulticastPkts = 0x%08X:%08X, "
+	    "IfHcOutBroadcastPkts = 0x%08X:%08X\n",
+	    sblk->stat_IfHCOutMulticastPkts_hi,
+	    sblk->stat_IfHCOutMulticastPkts_lo,
+	    sblk->stat_IfHCOutBroadcastPkts_hi,
+	    sblk->stat_IfHCOutBroadcastPkts_lo);
 
 	if (sblk->stat_emac_tx_stat_dot3statsinternalmactransmiterrors)
 		BNX_PRINTF(sc, "0x%08X : "
-		"emac_tx_stat_dot3statsinternalmactransmiterrors\n", 
-		sblk->stat_emac_tx_stat_dot3statsinternalmactransmiterrors);
+		    "emac_tx_stat_dot3statsinternalmactransmiterrors\n", 
+		    sblk->stat_emac_tx_stat_dot3statsinternalmactransmiterrors);
 
 	if (sblk->stat_Dot3StatsCarrierSenseErrors)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsCarrierSenseErrors\n",
-			sblk->stat_Dot3StatsCarrierSenseErrors);
+		    sblk->stat_Dot3StatsCarrierSenseErrors);
 
 	if (sblk->stat_Dot3StatsFCSErrors)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsFCSErrors\n",
-			sblk->stat_Dot3StatsFCSErrors);
+		    sblk->stat_Dot3StatsFCSErrors);
 
 	if (sblk->stat_Dot3StatsAlignmentErrors)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsAlignmentErrors\n",
-			sblk->stat_Dot3StatsAlignmentErrors);
+		    sblk->stat_Dot3StatsAlignmentErrors);
 
 	if (sblk->stat_Dot3StatsSingleCollisionFrames)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsSingleCollisionFrames\n",
-			sblk->stat_Dot3StatsSingleCollisionFrames);
+		    sblk->stat_Dot3StatsSingleCollisionFrames);
 
 	if (sblk->stat_Dot3StatsMultipleCollisionFrames)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsMultipleCollisionFrames\n",
-			sblk->stat_Dot3StatsMultipleCollisionFrames);
+		    sblk->stat_Dot3StatsMultipleCollisionFrames);
 	
 	if (sblk->stat_Dot3StatsDeferredTransmissions)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsDeferredTransmissions\n",
-			sblk->stat_Dot3StatsDeferredTransmissions);
+		    sblk->stat_Dot3StatsDeferredTransmissions);
 
 	if (sblk->stat_Dot3StatsExcessiveCollisions)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsExcessiveCollisions\n",
-			sblk->stat_Dot3StatsExcessiveCollisions);
+		    sblk->stat_Dot3StatsExcessiveCollisions);
 
 	if (sblk->stat_Dot3StatsLateCollisions)
 		BNX_PRINTF(sc, "0x%08X : Dot3StatsLateCollisions\n",
-			sblk->stat_Dot3StatsLateCollisions);
+		    sblk->stat_Dot3StatsLateCollisions);
 
 	if (sblk->stat_EtherStatsCollisions)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsCollisions\n",
-			sblk->stat_EtherStatsCollisions);
+		    sblk->stat_EtherStatsCollisions);
 
 	if (sblk->stat_EtherStatsFragments) 
 		BNX_PRINTF(sc, "0x%08X : EtherStatsFragments\n",
-			sblk->stat_EtherStatsFragments);
+		    sblk->stat_EtherStatsFragments);
 
 	if (sblk->stat_EtherStatsJabbers)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsJabbers\n",
-			sblk->stat_EtherStatsJabbers);
+		    sblk->stat_EtherStatsJabbers);
 
 	if (sblk->stat_EtherStatsUndersizePkts)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsUndersizePkts\n",
-			sblk->stat_EtherStatsUndersizePkts);
+		    sblk->stat_EtherStatsUndersizePkts);
 
 	if (sblk->stat_EtherStatsOverrsizePkts)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsOverrsizePkts\n",
-			sblk->stat_EtherStatsOverrsizePkts);
+		    sblk->stat_EtherStatsOverrsizePkts);
 
 	if (sblk->stat_EtherStatsPktsRx64Octets)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx64Octets\n",
-			sblk->stat_EtherStatsPktsRx64Octets);
+		    sblk->stat_EtherStatsPktsRx64Octets);
 
 	if (sblk->stat_EtherStatsPktsRx65Octetsto127Octets)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx65Octetsto127Octets\n",
-			sblk->stat_EtherStatsPktsRx65Octetsto127Octets);
+		    sblk->stat_EtherStatsPktsRx65Octetsto127Octets);
 
 	if (sblk->stat_EtherStatsPktsRx128Octetsto255Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx128Octetsto255Octets\n",
-			sblk->stat_EtherStatsPktsRx128Octetsto255Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsRx128Octetsto255Octets\n",
+		    sblk->stat_EtherStatsPktsRx128Octetsto255Octets);
 
 	if (sblk->stat_EtherStatsPktsRx256Octetsto511Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx256Octetsto511Octets\n",
-			sblk->stat_EtherStatsPktsRx256Octetsto511Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsRx256Octetsto511Octets\n",
+		    sblk->stat_EtherStatsPktsRx256Octetsto511Octets);
 
 	if (sblk->stat_EtherStatsPktsRx512Octetsto1023Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx512Octetsto1023Octets\n",
-			sblk->stat_EtherStatsPktsRx512Octetsto1023Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsRx512Octetsto1023Octets\n",
+		    sblk->stat_EtherStatsPktsRx512Octetsto1023Octets);
 
 	if (sblk->stat_EtherStatsPktsRx1024Octetsto1522Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx1024Octetsto1522Octets\n",
-			sblk->stat_EtherStatsPktsRx1024Octetsto1522Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsRx1024Octetsto1522Octets\n",
+		sblk->stat_EtherStatsPktsRx1024Octetsto1522Octets);
 
 	if (sblk->stat_EtherStatsPktsRx1523Octetsto9022Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsRx1523Octetsto9022Octets\n",
-			sblk->stat_EtherStatsPktsRx1523Octetsto9022Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsRx1523Octetsto9022Octets\n",
+		    sblk->stat_EtherStatsPktsRx1523Octetsto9022Octets);
 
 	if (sblk->stat_EtherStatsPktsTx64Octets)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx64Octets\n",
-			sblk->stat_EtherStatsPktsTx64Octets);
+		    sblk->stat_EtherStatsPktsTx64Octets);
 
 	if (sblk->stat_EtherStatsPktsTx65Octetsto127Octets)
 		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx65Octetsto127Octets\n",
-			sblk->stat_EtherStatsPktsTx65Octetsto127Octets);
+		    sblk->stat_EtherStatsPktsTx65Octetsto127Octets);
 
 	if (sblk->stat_EtherStatsPktsTx128Octetsto255Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx128Octetsto255Octets\n",
-			sblk->stat_EtherStatsPktsTx128Octetsto255Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsTx128Octetsto255Octets\n",
+		    sblk->stat_EtherStatsPktsTx128Octetsto255Octets);
 
 	if (sblk->stat_EtherStatsPktsTx256Octetsto511Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx256Octetsto511Octets\n",
-			sblk->stat_EtherStatsPktsTx256Octetsto511Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsTx256Octetsto511Octets\n",
+		    sblk->stat_EtherStatsPktsTx256Octetsto511Octets);
 
 	if (sblk->stat_EtherStatsPktsTx512Octetsto1023Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx512Octetsto1023Octets\n",
-			sblk->stat_EtherStatsPktsTx512Octetsto1023Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsTx512Octetsto1023Octets\n",
+		    sblk->stat_EtherStatsPktsTx512Octetsto1023Octets);
 
 	if (sblk->stat_EtherStatsPktsTx1024Octetsto1522Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx1024Octetsto1522Octets\n",
-			sblk->stat_EtherStatsPktsTx1024Octetsto1522Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsTx1024Octetsto1522Octets\n",
+		    sblk->stat_EtherStatsPktsTx1024Octetsto1522Octets);
 
 	if (sblk->stat_EtherStatsPktsTx1523Octetsto9022Octets)
-		BNX_PRINTF(sc, "0x%08X : EtherStatsPktsTx1523Octetsto9022Octets\n",
-			sblk->stat_EtherStatsPktsTx1523Octetsto9022Octets);
+		BNX_PRINTF(sc, "0x%08X : "
+		    "EtherStatsPktsTx1523Octetsto9022Octets\n",
+		    sblk->stat_EtherStatsPktsTx1523Octetsto9022Octets);
 
 	if (sblk->stat_XonPauseFramesReceived)
 		BNX_PRINTF(sc, "0x%08X : XonPauseFramesReceived\n",
-			sblk->stat_XonPauseFramesReceived);
+		    sblk->stat_XonPauseFramesReceived);
 
 	if (sblk->stat_XoffPauseFramesReceived)
-	   BNX_PRINTF(sc, "0x%08X : XoffPauseFramesReceived\n",
-			sblk->stat_XoffPauseFramesReceived);
+		BNX_PRINTF(sc, "0x%08X : XoffPauseFramesReceived\n",
+		    sblk->stat_XoffPauseFramesReceived);
 
 	if (sblk->stat_OutXonSent)
 		BNX_PRINTF(sc, "0x%08X : OutXonSent\n",
-			sblk->stat_OutXonSent);
+		    sblk->stat_OutXonSent);
 
 	if (sblk->stat_OutXoffSent)
 		BNX_PRINTF(sc, "0x%08X : OutXoffSent\n",
-			sblk->stat_OutXoffSent);
+		    sblk->stat_OutXoffSent);
 
 	if (sblk->stat_FlowControlDone)
 		BNX_PRINTF(sc, "0x%08X : FlowControlDone\n",
-			sblk->stat_FlowControlDone);
+		    sblk->stat_FlowControlDone);
 
 	if (sblk->stat_MacControlFramesReceived)
 		BNX_PRINTF(sc, "0x%08X : MacControlFramesReceived\n",
-			sblk->stat_MacControlFramesReceived);
+		    sblk->stat_MacControlFramesReceived);
 
 	if (sblk->stat_XoffStateEntered)
 		BNX_PRINTF(sc, "0x%08X : XoffStateEntered\n",
-			sblk->stat_XoffStateEntered);
+		    sblk->stat_XoffStateEntered);
 
 	if (sblk->stat_IfInFramesL2FilterDiscards)
 		BNX_PRINTF(sc, "0x%08X : IfInFramesL2FilterDiscards\n",
-			sblk->stat_IfInFramesL2FilterDiscards);
+		    sblk->stat_IfInFramesL2FilterDiscards);
 
 	if (sblk->stat_IfInRuleCheckerDiscards)
 		BNX_PRINTF(sc, "0x%08X : IfInRuleCheckerDiscards\n",
-			sblk->stat_IfInRuleCheckerDiscards);
+		    sblk->stat_IfInRuleCheckerDiscards);
 
 	if (sblk->stat_IfInFTQDiscards)
 		BNX_PRINTF(sc, "0x%08X : IfInFTQDiscards\n",
-			sblk->stat_IfInFTQDiscards);
+		    sblk->stat_IfInFTQDiscards);
 
 	if (sblk->stat_IfInMBUFDiscards)
 		BNX_PRINTF(sc, "0x%08X : IfInMBUFDiscards\n",
-			sblk->stat_IfInMBUFDiscards);
+		    sblk->stat_IfInMBUFDiscards);
 
 	if (sblk->stat_IfInRuleCheckerP4Hit)
 		BNX_PRINTF(sc, "0x%08X : IfInRuleCheckerP4Hit\n",
-			sblk->stat_IfInRuleCheckerP4Hit);
+		    sblk->stat_IfInRuleCheckerP4Hit);
 
 	if (sblk->stat_CatchupInRuleCheckerDiscards)
 		BNX_PRINTF(sc, "0x%08X : CatchupInRuleCheckerDiscards\n",
-			sblk->stat_CatchupInRuleCheckerDiscards);
+		    sblk->stat_CatchupInRuleCheckerDiscards);
 
 	if (sblk->stat_CatchupInFTQDiscards)
 		BNX_PRINTF(sc, "0x%08X : CatchupInFTQDiscards\n",
-			sblk->stat_CatchupInFTQDiscards);
+		    sblk->stat_CatchupInFTQDiscards);
 
 	if (sblk->stat_CatchupInMBUFDiscards)
 		BNX_PRINTF(sc, "0x%08X : CatchupInMBUFDiscards\n",
-			sblk->stat_CatchupInMBUFDiscards);
+		    sblk->stat_CatchupInMBUFDiscards);
 
 	if (sblk->stat_CatchupInRuleCheckerP4Hit)
 		BNX_PRINTF(sc, "0x%08X : CatchupInRuleCheckerP4Hit\n",
-			sblk->stat_CatchupInRuleCheckerP4Hit);
+		    sblk->stat_CatchupInRuleCheckerP4Hit);
 
 	BNX_PRINTF(sc,
-		"-----------------------------"
-		"--------------"
-		"-----------------------------\n");
+	    "-----------------------------"
+	    "--------------"
+	    "-----------------------------\n");
 }
 
 void
@@ -5413,16 +5424,20 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	BNX_PRINTF(sc, "%p - (sc->rx_mbuf_ptr) rx mbuf chain virtual address\n",
 	    sc->rx_mbuf_ptr);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->interrupts_generated) h/w intrs\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->interrupts_generated) h/w intrs\n",
 	    sc->interrupts_generated);
 	
-	BNX_PRINTF(sc, "         0x%08X - (sc->rx_interrupts) rx interrupts handled\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->rx_interrupts) rx interrupts handled\n",
 	    sc->rx_interrupts);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->tx_interrupts) tx interrupts handled\n",
-	   sc->tx_interrupts);
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->tx_interrupts) tx interrupts handled\n",
+	    sc->tx_interrupts);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->last_status_idx) status block index\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->last_status_idx) status block index\n",
 	    sc->last_status_idx);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->tx_prod) tx producer index\n",
@@ -5431,7 +5446,8 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	BNX_PRINTF(sc, "         0x%08X - (sc->tx_cons) tx consumer index\n",
 	    sc->tx_cons);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->tx_prod_bseq) tx producer bseq index\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->tx_prod_bseq) tx producer bseq index\n",
 	    sc->tx_prod_bseq);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_prod) rx producer index\n",
@@ -5440,22 +5456,27 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	BNX_PRINTF(sc, "         0x%08X - (sc->rx_cons) rx consumer index\n",
 	    sc->rx_cons);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->rx_prod_bseq) rx producer bseq index\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->rx_prod_bseq) rx producer bseq index\n",
 	    sc->rx_prod_bseq);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->rx_mbuf_alloc) rx mbufs allocated\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->rx_mbuf_alloc) rx mbufs allocated\n",
 	    sc->rx_mbuf_alloc);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->free_rx_bd) free rx_bd's\n",
 	    sc->free_rx_bd);
 
-	BNX_PRINTF(sc, "0x%08X/%08X - (sc->rx_low_watermark) rx low watermark\n",
+	BNX_PRINTF(sc,
+	    "0x%08X/%08X - (sc->rx_low_watermark) rx low watermark\n",
 	    sc->rx_low_watermark, (u_int32_t) USABLE_RX_BD);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->txmbuf_alloc) tx mbufs allocated\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->txmbuf_alloc) tx mbufs allocated\n",
 	    sc->tx_mbuf_alloc);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->rx_mbuf_alloc) rx mbufs allocated\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->rx_mbuf_alloc) rx mbufs allocated\n",
 	    sc->rx_mbuf_alloc);
 
 	BNX_PRINTF(sc, "         0x%08X - (sc->used_tx_bd) used tx_bd's\n",
@@ -5464,7 +5485,8 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	BNX_PRINTF(sc, "0x%08X/%08X - (sc->tx_hi_watermark) tx hi watermark\n",
 	    sc->tx_hi_watermark, (u_int32_t) USABLE_TX_BD);
 
-	BNX_PRINTF(sc, "         0x%08X - (sc->mbuf_alloc_failed) failed mbuf alloc\n",
+	BNX_PRINTF(sc,
+	    "         0x%08X - (sc->mbuf_alloc_failed) failed mbuf alloc\n",
 	    sc->mbuf_alloc_failed);
 
 	BNX_PRINTF(sc, "-------------------------------------------"
@@ -5474,19 +5496,19 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 void
 bnx_dump_hw_state(struct bnx_softc *sc)
 {
-	u_int32_t val1;
-	int i;
+	u_int32_t		val1;
+	int			i;
 
 	BNX_PRINTF(sc,
-		"----------------------------"
-		" Hardware State "
-		"----------------------------\n");
+	    "----------------------------"
+	    " Hardware State "
+	    "----------------------------\n");
 
 	BNX_PRINTF(sc, "0x%08X : bootcode version\n", sc->bnx_fw_ver);
 
 	val1 = REG_RD(sc, BNX_MISC_ENABLE_STATUS_BITS);
 	BNX_PRINTF(sc, "0x%08X : (0x%04X) misc_enable_status_bits\n",
-		val1, BNX_MISC_ENABLE_STATUS_BITS);
+	    val1, BNX_MISC_ENABLE_STATUS_BITS);
 
 	val1 = REG_RD(sc, BNX_DMA_STATUS);
 	BNX_PRINTF(sc, "0x%08X : (0x%04X) dma_status\n", val1, BNX_DMA_STATUS);
@@ -5495,45 +5517,47 @@ bnx_dump_hw_state(struct bnx_softc *sc)
 	BNX_PRINTF(sc, "0x%08X : (0x%04X) ctx_status\n", val1, BNX_CTX_STATUS);
 
 	val1 = REG_RD(sc, BNX_EMAC_STATUS);
-	BNX_PRINTF(sc, "0x%08X : (0x%04X) emac_status\n", val1, BNX_EMAC_STATUS);
+	BNX_PRINTF(sc, "0x%08X : (0x%04X) emac_status\n", val1,
+	    BNX_EMAC_STATUS);
 
 	val1 = REG_RD(sc, BNX_RPM_STATUS);
 	BNX_PRINTF(sc, "0x%08X : (0x%04X) rpm_status\n", val1, BNX_RPM_STATUS);
 
 	val1 = REG_RD(sc, BNX_TBDR_STATUS);
-	BNX_PRINTF(sc, "0x%08X : (0x%04X) tbdr_status\n", val1, BNX_TBDR_STATUS);
+	BNX_PRINTF(sc, "0x%08X : (0x%04X) tbdr_status\n", val1,
+	    BNX_TBDR_STATUS);
 
 	val1 = REG_RD(sc, BNX_TDMA_STATUS);
-	BNX_PRINTF(sc, "0x%08X : (0x%04X) tdma_status\n", val1, BNX_TDMA_STATUS);
+	BNX_PRINTF(sc, "0x%08X : (0x%04X) tdma_status\n", val1,
+	    BNX_TDMA_STATUS);
 
 	val1 = REG_RD(sc, BNX_HC_STATUS);
 	BNX_PRINTF(sc, "0x%08X : (0x%04X) hc_status\n", val1, BNX_HC_STATUS);
 
 	BNX_PRINTF(sc, 
-		"----------------------------"
-		"----------------"
-		"----------------------------\n");
+	    "----------------------------"
+	    "----------------"
+	    "----------------------------\n");
 
 	BNX_PRINTF(sc, 
-		"----------------------------"
-		" Register  Dump "
-		"----------------------------\n");
+	    "----------------------------"
+	    " Register  Dump "
+	    "----------------------------\n");
 
 	for (i = 0x400; i < 0x8000; i += 0x10)
 		BNX_PRINTF(sc, "0x%04X: 0x%08X 0x%08X 0x%08X 0x%08X\n",
-			i, REG_RD(sc, i), REG_RD(sc, i + 0x4),
-			REG_RD(sc, i + 0x8), REG_RD(sc, i + 0xC));
+		    i, REG_RD(sc, i), REG_RD(sc, i + 0x4),
+		    REG_RD(sc, i + 0x8), REG_RD(sc, i + 0xC));
 
 	BNX_PRINTF(sc, 
-		"----------------------------"
-		"----------------"
-		"----------------------------\n");
+	    "----------------------------"
+	    "----------------"
+	    "----------------------------\n");
 }
 
 void
 bnx_breakpoint(struct bnx_softc *sc)
 {
-
 	/* Unreachable code to shut the compiler up about unused functions. */
 	if (0) {
    		bnx_dump_txbd(sc, 0, NULL);
