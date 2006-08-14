@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.11 2006/08/14 16:58:56 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.12 2006/08/14 17:26:35 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -344,14 +344,14 @@ bnx_probe(struct device *parent, void *match, void *aux)
 void
 bnx_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct bnx_softc *sc = (struct bnx_softc *)self;
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
-	struct ifnet *ifp;
-	u_int32_t val;
-	pcireg_t memtype;
+	struct bnx_softc	*sc = (struct bnx_softc *)self;
+	struct pci_attach_args	*pa = aux;
+	pci_chipset_tag_t	pc = pa->pa_pc;
+	pci_intr_handle_t	ih;
+	const char 		*intrstr = NULL;
+	struct ifnet		*ifp;
+	u_int32_t		val;
+	pcireg_t		memtype;
 
 	sc->bnx_pa = *pa;
 
@@ -385,22 +385,22 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	 * valid until this is done.
 	 */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_MISC_CONFIG,
-			       BNX_PCICFG_MISC_CONFIG_REG_WINDOW_ENA |
-			       BNX_PCICFG_MISC_CONFIG_TARGET_MB_WORD_SWAP);
+	    BNX_PCICFG_MISC_CONFIG_REG_WINDOW_ENA |
+	    BNX_PCICFG_MISC_CONFIG_TARGET_MB_WORD_SWAP);
 
 	/* Save ASIC revsion info. */
 	sc->bnx_chipid =  REG_RD(sc, BNX_MISC_ID);
 
 	/* Weed out any non-production controller revisions. */
 	switch(BNX_CHIP_ID(sc)) {
-		case BNX_CHIP_ID_5706_A0:
-		case BNX_CHIP_ID_5706_A1:
-		case BNX_CHIP_ID_5708_A0:
-		case BNX_CHIP_ID_5708_B0:
-			printf(": unsupported controller revision (%c%d)!\n",
-				(((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x08) & 0xf0) >> 4) + 'A'),
-			    (pci_conf_read(pa->pa_pc, pa->pa_tag, 0x08) & 0xf));
-			goto bnx_attach_fail;
+	case BNX_CHIP_ID_5706_A0:
+	case BNX_CHIP_ID_5706_A1:
+	case BNX_CHIP_ID_5708_A0:
+	case BNX_CHIP_ID_5708_B0:
+		printf(": unsupported controller revision (%c%d)!\n",
+		    (((pci_conf_read(pa->pa_pc, pa->pa_tag, 0x08) & 0xf0) >> 4)
+		    + 'A'), (pci_conf_read(pa->pa_pc, pa->pa_tag, 0x08) & 0xf));
+		goto bnx_attach_fail;
 	}
 
 	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
@@ -472,12 +472,10 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 			sc->bus_speed_mhz = 33;
 			break;
 		}
-	} else {
-		if (val & BNX_PCICFG_MISC_STATUS_M66EN)
+	} else if (val & BNX_PCICFG_MISC_STATUS_M66EN)
 			sc->bus_speed_mhz = 66;
 		else
 			sc->bus_speed_mhz = 33;
-	}
 
 	if (val & BNX_PCICFG_MISC_STATUS_32BIT_DET)
 		sc->bnx_flags |= BNX_PCI_32BIT_FLAG;
@@ -643,7 +641,6 @@ bnx_attach_fail:
 	bnx_release_resources(sc);
 
 bnx_attach_exit:
-
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 }
 
@@ -700,7 +697,7 @@ bnx_detach(void *xsc)
 void
 bnx_shutdown(void *xsc)
 {
-	struct bnx_softc *sc = (struct bnx_softc *)xsc;
+	struct bnx_softc	*sc = (struct bnx_softc *)xsc;
 
 	bnx_stop(sc);
 	bnx_reset(sc, BNX_DRV_MSG_CODE_RESET);
@@ -719,16 +716,18 @@ bnx_shutdown(void *xsc)
 u_int32_t
 bnx_reg_rd_ind(struct bnx_softc *sc, u_int32_t offset)
 {
-	struct pci_attach_args *pa = &(sc->bnx_pa);
+	struct pci_attach_args	*pa = &(sc->bnx_pa);
 
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW_ADDRESS, offset);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW_ADDRESS,
+	    offset);
 #ifdef BNX_DEBUG
 	{
 		u_int32_t val;
-		val = pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW);
-		DBPRINT(sc, BNX_EXCESSIVE, "%s(); offset = 0x%08X, val = 0x%08X\n",
-			__FUNCTION__, offset, val);
-		return val;
+		val = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    BNX_PCICFG_REG_WINDOW);
+		DBPRINT(sc, BNX_EXCESSIVE, "%s(); offset = 0x%08X, "
+		    "val = 0x%08X\n", __FUNCTION__, offset, val);
+		return (val);
 	}
 #else
 	return pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW);
@@ -753,7 +752,8 @@ bnx_reg_wr_ind(struct bnx_softc *sc, u_int32_t offset, u_int32_t val)
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(); offset = 0x%08X, val = 0x%08X\n",
 		__FUNCTION__, offset, val);
 
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW_ADDRESS, offset);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW_ADDRESS,
+	    offset);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW, val);
 }
 
@@ -767,7 +767,8 @@ bnx_reg_wr_ind(struct bnx_softc *sc, u_int32_t offset, u_int32_t val)
 /*   Nothing.                                                               */
 /****************************************************************************/
 void
-bnx_ctx_wr(struct bnx_softc *sc, u_int32_t cid_addr, u_int32_t offset, u_int32_t val)
+bnx_ctx_wr(struct bnx_softc *sc, u_int32_t cid_addr, u_int32_t offset,
+    u_int32_t val)
 {
 
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(); cid_addr = 0x%08X, offset = 0x%08X, "
@@ -789,13 +790,14 @@ bnx_ctx_wr(struct bnx_softc *sc, u_int32_t cid_addr, u_int32_t offset, u_int32_t
 int
 bnx_miibus_read_reg(struct device *dev, int phy, int reg)
 {
-	struct bnx_softc *sc = (struct bnx_softc *)dev;
-	u_int32_t val;
-	int i;
+	struct bnx_softc	*sc = (struct bnx_softc *)dev;
+	u_int32_t		val;
+	int			i;
 
 	/* Make sure we are accessing the correct PHY address. */
 	if (phy != sc->bnx_phy_addr) {
-		DBPRINT(sc, BNX_VERBOSE, "Invalid PHY address %d for PHY read!\n", phy);
+		DBPRINT(sc, BNX_VERBOSE,
+		    "Invalid PHY address %d for PHY read!\n", phy);
 		return(0);
 	}
 
@@ -810,8 +812,8 @@ bnx_miibus_read_reg(struct device *dev, int phy, int reg)
 	}
 
 	val = BNX_MIPHY(phy) | BNX_MIREG(reg) |
-		BNX_EMAC_MDIO_COMM_COMMAND_READ | BNX_EMAC_MDIO_COMM_DISEXT |
-		BNX_EMAC_MDIO_COMM_START_BUSY;
+	    BNX_EMAC_MDIO_COMM_COMMAND_READ | BNX_EMAC_MDIO_COMM_DISEXT |
+	    BNX_EMAC_MDIO_COMM_START_BUSY;
 	REG_WR(sc, BNX_EMAC_MDIO_COMM, val);
 
 	for (i = 0; i < BNX_PHY_TIMEOUT; i++) {
@@ -829,15 +831,15 @@ bnx_miibus_read_reg(struct device *dev, int phy, int reg)
 	}
 
 	if (val & BNX_EMAC_MDIO_COMM_START_BUSY) {
-		BNX_PRINTF(sc, "%s(%d): Error: PHY read timeout! phy = %d, reg = 0x%04X\n",
-			__FILE__, __LINE__, phy, reg);
+		BNX_PRINTF(sc, "%s(%d): Error: PHY read timeout! phy = %d, "
+		    "reg = 0x%04X\n", __FILE__, __LINE__, phy, reg);
 		val = 0x0;
-	} else {
+	} else
 		val = REG_RD(sc, BNX_EMAC_MDIO_COMM);
-	}
 
-	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, val = 0x%04X\n",
-		__FUNCTION__, phy, (u_int16_t) reg & 0xffff, (u_int16_t) val & 0xffff);
+	DBPRINT(sc, BNX_EXCESSIVE,
+	    "%s(): phy = %d, reg = 0x%04X, val = 0x%04X\n", __FUNCTION__, phy,
+	    (u_int16_t) reg & 0xffff, (u_int16_t) val & 0xffff);
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val = REG_RD(sc, BNX_EMAC_MDIO_MODE);
@@ -850,7 +852,6 @@ bnx_miibus_read_reg(struct device *dev, int phy, int reg)
 	}
 
 	return (val & 0xffff);
-
 }
 
 /****************************************************************************/
@@ -864,18 +865,20 @@ bnx_miibus_read_reg(struct device *dev, int phy, int reg)
 void
 bnx_miibus_write_reg(struct device *dev, int phy, int reg, int val)
 {
-	struct bnx_softc *sc = (struct bnx_softc *)dev;
-	u_int32_t val1;
-	int i;
+	struct bnx_softc	*sc = (struct bnx_softc *)dev;
+	u_int32_t		val1;
+	int			i;
 
 	/* Make sure we are accessing the correct PHY address. */
 	if (phy != sc->bnx_phy_addr) {
-		DBPRINT(sc, BNX_WARN, "Invalid PHY address %d for PHY write!\n", phy);
+		DBPRINT(sc, BNX_WARN, "Invalid PHY address %d for PHY write!\n",
+		    phy);
 		return;
 	}
 
-	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, val = 0x%04X\n",
-		__FUNCTION__, phy, (u_int16_t) reg & 0xffff, (u_int16_t) val & 0xffff);
+	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, "
+	    "val = 0x%04X\n", __FUNCTION__,
+	    phy, (u_int16_t) reg & 0xffff, (u_int16_t) val & 0xffff);
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val1 = REG_RD(sc, BNX_EMAC_MDIO_MODE);
@@ -888,8 +891,8 @@ bnx_miibus_write_reg(struct device *dev, int phy, int reg, int val)
 	}
 
 	val1 = BNX_MIPHY(phy) | BNX_MIREG(reg) | val |
-		BNX_EMAC_MDIO_COMM_COMMAND_WRITE |
-		BNX_EMAC_MDIO_COMM_START_BUSY | BNX_EMAC_MDIO_COMM_DISEXT;
+	    BNX_EMAC_MDIO_COMM_COMMAND_WRITE |
+	    BNX_EMAC_MDIO_COMM_START_BUSY | BNX_EMAC_MDIO_COMM_DISEXT;
 	REG_WR(sc, BNX_EMAC_MDIO_COMM, val1);
 
 	for (i = 0; i < BNX_PHY_TIMEOUT; i++) {
@@ -902,9 +905,10 @@ bnx_miibus_write_reg(struct device *dev, int phy, int reg, int val)
 		}
 	}
 
-	if (val1 & BNX_EMAC_MDIO_COMM_START_BUSY)
-		BNX_PRINTF(sc, "%s(%d): PHY write timeout!\n",
-			__FILE__, __LINE__);
+	if (val1 & BNX_EMAC_MDIO_COMM_START_BUSY) {
+		BNX_PRINTF(sc, "%s(%d): PHY write timeout!\n", __FILE__,
+		    __LINE__);
+	}
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val1 = REG_RD(sc, BNX_EMAC_MDIO_MODE);
@@ -929,8 +933,8 @@ bnx_miibus_write_reg(struct device *dev, int phy, int reg, int val)
 void
 bnx_miibus_statchg(struct device *dev)
 {
-	struct bnx_softc *sc = (struct bnx_softc *)dev;
-	struct mii_data *mii = &sc->bnx_mii;
+	struct bnx_softc	*sc = (struct bnx_softc *)dev;
+	struct mii_data		*mii = &sc->bnx_mii;
 
 	BNX_CLRBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT);
 
@@ -943,7 +947,9 @@ bnx_miibus_statchg(struct device *dev)
 		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT_MII);
 	}
 
-	/* Set half or full duplex based on the duplicity negotiated by the PHY. */
+	/* Set half or full duplex based on the duplicity
+	 * negotiated by the PHY.
+	 */
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
 		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
 		BNX_CLRBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_HALF_DUPLEX);
@@ -952,7 +958,6 @@ bnx_miibus_statchg(struct device *dev)
 		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_HALF_DUPLEX);
 	}
 }
-
 
 /****************************************************************************/
 /* Acquire NVRAM lock.                                                      */
@@ -967,8 +972,8 @@ bnx_miibus_statchg(struct device *dev)
 int
 bnx_acquire_nvram_lock(struct bnx_softc *sc)
 {
-	u_int32_t val;
-	int j;
+	u_int32_t		val;
+	int			j;
 
 	DBPRINT(sc, BNX_VERBOSE, "Acquiring NVRAM lock.\n");
 
@@ -984,10 +989,10 @@ bnx_acquire_nvram_lock(struct bnx_softc *sc)
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		DBPRINT(sc, BNX_WARN, "Timeout acquiring NVRAM lock!\n");
-		return EBUSY;
+		return (EBUSY);
 	}
 
-	return 0;
+	return (0);
 }
 
 /****************************************************************************/
@@ -1003,14 +1008,12 @@ bnx_acquire_nvram_lock(struct bnx_softc *sc)
 int
 bnx_release_nvram_lock(struct bnx_softc *sc)
 {
-	int j;
-	u_int32_t val;
+	int			j;
+	u_int32_t		val;
 
 	DBPRINT(sc, BNX_VERBOSE, "Releasing NVRAM lock.\n");
 
-	/*
-	 * Relinquish nvram interface.
-	 */
+	/* Relinquish nvram interface. */
 	REG_WR(sc, BNX_NVM_SW_ARB, BNX_NVM_SW_ARB_ARB_REQ_CLR2);
 
 	for (j = 0; j < NVRAM_TIMEOUT_COUNT; j++) {
@@ -1023,10 +1026,10 @@ bnx_release_nvram_lock(struct bnx_softc *sc)
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		DBPRINT(sc, BNX_WARN, "Timeout reeasing NVRAM lock!\n");
-		return EBUSY;
+		return (EBUSY);
 	}
 
-	return 0;
+	return (0);
 }
 
 #ifdef BNX_NVRAM_WRITE_SUPPORT
@@ -1041,7 +1044,7 @@ bnx_release_nvram_lock(struct bnx_softc *sc)
 int
 bnx_enable_nvram_write(struct bnx_softc *sc)
 {
-	u_int32_t val;
+	u_int32_t		val;
 
 	DBPRINT(sc, BNX_VERBOSE, "Enabling NVRAM write.\n");
 
@@ -1052,7 +1055,8 @@ bnx_enable_nvram_write(struct bnx_softc *sc)
 		int j;
 
 		REG_WR(sc, BNX_NVM_COMMAND, BNX_NVM_COMMAND_DONE);
-		REG_WR(sc, BNX_NVM_COMMAND,	BNX_NVM_COMMAND_WREN | BNX_NVM_COMMAND_DOIT);
+		REG_WR(sc, BNX_NVM_COMMAND,
+		    BNX_NVM_COMMAND_WREN | BNX_NVM_COMMAND_DOIT);
 
 		for (j = 0; j < NVRAM_TIMEOUT_COUNT; j++) {
 			DELAY(5);
@@ -1064,10 +1068,11 @@ bnx_enable_nvram_write(struct bnx_softc *sc)
 
 		if (j >= NVRAM_TIMEOUT_COUNT) {
 			DBPRINT(sc, BNX_WARN, "Timeout writing NVRAM!\n");
-			return EBUSY;
+			return (EBUSY);
 		}
 	}
-	return 0;
+
+	return (0);
 }
 
 /****************************************************************************/
@@ -1082,7 +1087,7 @@ bnx_enable_nvram_write(struct bnx_softc *sc)
 void
 bnx_disable_nvram_write(struct bnx_softc *sc)
 {
-	u_int32_t val;
+	u_int32_t		val;
 
 	DBPRINT(sc, BNX_VERBOSE,  "Disabling NVRAM write.\n");
 
@@ -1103,14 +1108,14 @@ bnx_disable_nvram_write(struct bnx_softc *sc)
 void
 bnx_enable_nvram_access(struct bnx_softc *sc)
 {
-	u_int32_t val;
+	u_int32_t		val;
 
 	DBPRINT(sc, BNX_VERBOSE, "Enabling NVRAM access.\n");
 
 	val = REG_RD(sc, BNX_NVM_ACCESS_ENABLE);
 	/* Enable both bits, even on read. */
 	REG_WR(sc, BNX_NVM_ACCESS_ENABLE,
-	       val | BNX_NVM_ACCESS_ENABLE_EN | BNX_NVM_ACCESS_ENABLE_WR_EN);
+	    val | BNX_NVM_ACCESS_ENABLE_EN | BNX_NVM_ACCESS_ENABLE_WR_EN);
 }
 
 /****************************************************************************/
@@ -1124,7 +1129,7 @@ bnx_enable_nvram_access(struct bnx_softc *sc)
 void
 bnx_disable_nvram_access(struct bnx_softc *sc)
 {
-	u_int32_t val;
+	u_int32_t		val;
 
 	DBPRINT(sc, BNX_VERBOSE, "Disabling NVRAM access.\n");
 
@@ -1132,8 +1137,7 @@ bnx_disable_nvram_access(struct bnx_softc *sc)
 
 	/* Disable both bits, even after read. */
 	REG_WR(sc, BNX_NVM_ACCESS_ENABLE,
-		val & ~(BNX_NVM_ACCESS_ENABLE_EN |
-			BNX_NVM_ACCESS_ENABLE_WR_EN));
+	    val & ~(BNX_NVM_ACCESS_ENABLE_EN | BNX_NVM_ACCESS_ENABLE_WR_EN));
 }
 
 #ifdef BNX_NVRAM_WRITE_SUPPORT
@@ -1149,18 +1153,18 @@ bnx_disable_nvram_access(struct bnx_softc *sc)
 int
 bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 {
-	u_int32_t cmd;
-	int j;
+	u_int32_t		cmd;
+	int			j;
 
 	/* Buffered flash doesn't require an erase. */
 	if (sc->bnx_flash_info->buffered)
-		return 0;
+		return (0);
 
 	DBPRINT(sc, BNX_VERBOSE, "Erasing NVRAM page.\n");
 
 	/* Build an erase command. */
 	cmd = BNX_NVM_COMMAND_ERASE | BNX_NVM_COMMAND_WR |
-	      BNX_NVM_COMMAND_DOIT;
+	    BNX_NVM_COMMAND_DOIT;
 
 	/*
 	 * Clear the DONE bit separately, set the NVRAM adress to erase,
@@ -1183,10 +1187,10 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		DBPRINT(sc, BNX_WARN, "Timeout erasing NVRAM.\n");
-		return EBUSY;
+		return (EBUSY);
 	}
 
-	return 0;
+	return (0);
 }
 #endif /* BNX_NVRAM_WRITE_SUPPORT */
 
@@ -1200,21 +1204,20 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 /*   0 on success and the 32 bit value read, positive value on failure.     */
 /****************************************************************************/
 int
-bnx_nvram_read_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_val,
-							u_int32_t cmd_flags)
+bnx_nvram_read_dword(struct bnx_softc *sc, u_int32_t offset,
+    u_int8_t *ret_val, u_int32_t cmd_flags)
 {
-	u_int32_t cmd;
-	int i, rc = 0;
+	u_int32_t		cmd;
+	int			i, rc = 0;
 
 	/* Build the command word. */
 	cmd = BNX_NVM_COMMAND_DOIT | cmd_flags;
 
 	/* Calculate the offset for buffered flash. */
-	if (sc->bnx_flash_info->buffered) {
+	if (sc->bnx_flash_info->buffered)
 		offset = ((offset / sc->bnx_flash_info->page_size) <<
-			   sc->bnx_flash_info->page_bits) +
-			  (offset % sc->bnx_flash_info->page_size);
-	}
+		    sc->bnx_flash_info->page_bits) +
+		    (offset % sc->bnx_flash_info->page_size);
 
 	/*
 	 * Clear the DONE bit separately, set the address to read,
@@ -1242,8 +1245,8 @@ bnx_nvram_read_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_val,
 
 	/* Check for errors. */
 	if (i >= NVRAM_TIMEOUT_COUNT) {
-		BNX_PRINTF(sc, "%s(%d): Timeout error reading NVRAM at offset 0x%08X!\n",
-			__FILE__, __LINE__, offset);
+		BNX_PRINTF(sc, "%s(%d): Timeout error reading NVRAM at "
+		    "offset 0x%08X!\n", __FILE__, __LINE__, offset);
 		rc = EBUSY;
 	}
 
@@ -1263,20 +1266,19 @@ bnx_nvram_read_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_val,
 /****************************************************************************/
 int
 bnx_nvram_write_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *val,
-	u_int32_t cmd_flags)
+    u_int32_t cmd_flags)
 {
-	u_int32_t cmd, val32;
-	int j;
+	u_int32_t		cmd, val32;
+	int			j;
 
 	/* Build the command word. */
 	cmd = BNX_NVM_COMMAND_DOIT | BNX_NVM_COMMAND_WR | cmd_flags;
 
 	/* Calculate the offset for buffered flash. */
-	if (sc->bnx_flash_info->buffered) {
+	if (sc->bnx_flash_info->buffered)
 		offset = ((offset / sc->bnx_flash_info->page_size) <<
-			  sc->bnx_flash_info->page_bits) +
-			 (offset % sc->bnx_flash_info->page_size);
-	}
+		    sc->bnx_flash_info->page_bits) +
+		    (offset % sc->bnx_flash_info->page_size);
 
 	/*
 	 * Clear the DONE bit separately, convert NVRAM data to big-endian,
@@ -1297,12 +1299,12 @@ bnx_nvram_write_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *val,
 			break;
 	}
 	if (j >= NVRAM_TIMEOUT_COUNT) {
-		BNX_PRINTF(sc, "%s(%d): Timeout error writing NVRAM at offset 0x%08X\n",
-			__FILE__, __LINE__, offset);
-		return EBUSY;
+		BNX_PRINTF(sc, "%s(%d): Timeout error writing NVRAM at "
+		    "offset 0x%08X\n", __FILE__, __LINE__, offset);
+		return (EBUSY);
 	}
 
-	return 0;
+	return (0);
 }
 #endif /* BNX_NVRAM_WRITE_SUPPORT */
 
@@ -1318,9 +1320,9 @@ bnx_nvram_write_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *val,
 int
 bnx_init_nvram(struct bnx_softc *sc)
 {
-	u_int32_t val;
-	int j, entry_count, rc;
-	struct flash_spec *flash;
+	u_int32_t		val;
+	int			j, entry_count, rc;
+	struct flash_spec	*flash;
 
 	DBPRINT(sc,BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -1365,16 +1367,16 @@ bnx_init_nvram(struct bnx_softc *sc)
 			mask = FLASH_STRAP_MASK;
 
 		/* Look for the matching NVRAM device configuration data. */
-		for (j = 0, flash = &flash_table[0]; j < entry_count; j++, flash++) {
-
-			/* Check if the device matches any of the known devices. */
+		for (j = 0, flash = &flash_table[0]; j < entry_count;
+		    j++, flash++) {
+			/* Check if the dev matches any of the known devices. */
 			if ((val & mask) == (flash->strapping & mask)) {
 				/* Found a device match. */
 				sc->bnx_flash_info = flash;
 
 				/* Request access to the flash interface. */
 				if ((rc = bnx_acquire_nvram_lock(sc)) != 0)
-					return rc;
+					return (rc);
 
 				/* Reconfigure the flash interface. */
 				bnx_enable_nvram_access(sc);
@@ -1406,12 +1408,12 @@ bnx_init_nvram(struct bnx_softc *sc)
 	else
 		sc->bnx_flash_size = sc->bnx_flash_info->total_size;
 
-	DBPRINT(sc, BNX_INFO_LOAD, "bnx_init_nvram() flash->total_size = 0x%08X\n",
-		sc->bnx_flash_info->total_size);
+	DBPRINT(sc, BNX_INFO_LOAD, "bnx_init_nvram() flash->total_size = "
+	    "0x%08X\n", sc->bnx_flash_info->total_size);
 
-	DBPRINT(sc,BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
+	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 
-	return rc;
+	return (rc);
 }
 
 /****************************************************************************/
