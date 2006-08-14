@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.28 2006/08/10 07:44:04 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.29 2006/08/14 10:33:18 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -67,12 +67,10 @@
 #include <dev/usb/if_rumreg.h>
 #include <dev/usb/if_rumvar.h>
 
-#define RUM_DEBUG
-
 #ifdef RUM_DEBUG
 #define DPRINTF(x)	do { if (rum_debug) logprintf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rum_debug >= (n)) logprintf x; } while (0)
-int rum_debug = 1;
+int rum_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
