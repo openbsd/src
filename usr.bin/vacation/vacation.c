@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.23 2004/04/05 07:18:43 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.24 2006/08/14 15:49:28 millert Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.23 2004/04/05 07:18:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.24 2006/08/14 15:49:28 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -476,6 +476,7 @@ sendmessage(char *myname)
 		return;
 	}
 	fprintf(sfp, "To: %s\n", from);
+	fputs("Auto-Submitted: auto-replied\n", sfp);
 	while (fgets(buf, sizeof buf, mfp)) {
 		char *s = strstr(buf, "$SUBJECT");
 
