@@ -1,8 +1,8 @@
-# $OpenBSD: files.pckbc,v 1.4 2005/03/08 20:00:25 tdeval Exp $
+# $OpenBSD: files.pckbc,v 1.5 2006/08/14 15:55:59 miod Exp $
 # $NetBSD: files.pckbc,v 1.6 1999/01/23 16:05:56 drochner Exp $
 # devices attached at pckbc, for use with wscons
 
-device	pckbd: wskbddev
+device	pckbd: wskbddev, wskbd_hotkey
 attach	pckbd at pckbc
 file	dev/pckbc/pckbd.c			pckbd	needs-flag
 file	dev/pckbc/wskbdmap_mfii.c		pckbd

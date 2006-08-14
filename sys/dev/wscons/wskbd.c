@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.51 2006/08/06 11:36:35 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.52 2006/08/14 15:56:02 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -79,12 +79,6 @@
  * to `wscons_events' and passes them up to the appropriate reader.
  */
 
-#ifndef	SMALL_KERNEL
-#define	BURNER_SUPPORT
-#define	SCROLLBACK_SUPPORT
-#define	HOTKEY_SUPPORT
-#endif
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -113,7 +107,15 @@
 
 #include "audio.h"		/* NAUDIO (mixer tuning) */
 #include "wsdisplay.h"
+#include "wskbd.h"
 #include "wsmux.h"
+
+#ifndef	SMALL_KERNEL
+#define	BURNER_SUPPORT
+#define	SCROLLBACK_SUPPORT
+#undef	NWSKBD_HOTKEY
+#define	NWSKBD_HOTKEY 0
+#endif
 
 #ifdef WSKBD_DEBUG
 #define DPRINTF(x)	if (wskbddebug) printf x
@@ -449,7 +451,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#ifdef HOTKEY_SUPPORT
+#if NWSKBD_HOTKEY > 0
 	wskbd_hotkey_init();
 #endif
 }
@@ -1640,7 +1642,7 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		}
 	}
 
-#ifdef HOTKEY_SUPPORT
+#if NWSKBD_HOTKEY > 0
 	/* Submit Audio keys for hotkey processing */
 	if (KS_GROUP(ksym) == KS_GROUP_Function) {
 		switch (ksym) {
