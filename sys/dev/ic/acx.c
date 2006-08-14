@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.40 2006/08/14 06:53:26 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.41 2006/08/14 23:13:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1822,8 +1822,9 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error = 0;
 
 	switch (nstate) {
-	case IEEE80211_S_SCAN:
-		if (ic->ic_state != IEEE80211_S_INIT) {
+	case IEEE80211_S_INIT:
+		break;
+	case IEEE80211_S_SCAN: {
 			uint8_t chan;
 
 			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
