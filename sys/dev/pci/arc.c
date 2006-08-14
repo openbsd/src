@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.16 2006/08/09 09:21:13 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.17 2006/08/14 14:43:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -83,7 +83,11 @@ static const struct pci_matchid arc_devices[] = {
 #define ARC_REG_OUTB_ADDR1		0x001c
 #define  ARC_REG_OUTB_ADDR1_FIRMWARE_OK		(1<<31)
 #define ARC_REG_INB_DOORBELL		0x0020
+#define  ARC_REG_INB_DOORBELL_WRITE_OK		(1<<0)
+#define  ARC_REG_INB_DOORBELL_READ_OK		(1<<1)
 #define ARC_REG_OUTB_DOORBELL		0x002c
+#define  ARC_REG_OUTB_DOORBELL_WRITE_OK		(1<<0)
+#define  ARC_REG_OUTB_DOORBELL_READ_OK		(1<<1)
 #define ARC_REG_INTRSTAT		0x0030
 #define  ARC_REG_INTRSTAT_MSG0			(1<<0)
 #define  ARC_REG_INTRSTAT_MSG1			(1<<1)
@@ -106,10 +110,12 @@ static const struct pci_matchid arc_devices[] = {
 #define  ARC_REG_REPLY_QUEUE_IAMBIOS		(1<<30)
 #define ARC_REG_MSGBUF			0x0a00
 #define  ARC_REG_MSGBUF_LEN		1024
-#define ARC_REG_IOC_WBUF		0x0e00
-#define  ARC_REG_IOC_WBUF_LEN		128
-#define ARC_REG_IOC_RBUF		0x0f00
-#define  ARC_REG_IOC_RBUF_LEN		128
+#define ARC_REG_IOC_WBUF_LEN		0x0e00
+#define ARC_REG_IOC_WBUF		0x0e04
+#define  ARC_REG_IOC_WBUF_MAXLEN	124
+#define ARC_REG_IOC_RBUF_LEN		0x0f00
+#define ARC_REG_IOC_RBUF		0x0f04
+#define  ARC_REG_IOC_RBUF_MAXLEN	124
 
 struct arc_msg_firmware_info {
 	u_int32_t		signature;
