@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_pci.c,v 1.2 2006/08/03 17:23:03 brad Exp $  */
+/*	$OpenBSD: if_acx_pci.c,v 1.3 2006/08/14 21:12:10 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -165,7 +165,7 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_ACX111)
 		acx111_set_param(sc);
