@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.9 2006/08/13 19:29:46 marco Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.10 2006/08/14 16:07:39 marco Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2120,8 +2120,10 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * Create DMA maps for the TX buffer mbufs.
 	 */
 	for (i = 0; i < TOTAL_TX_BD; i++) {
-		if (bus_dmamap_create(sc->bnx_dmatag, MCLBYTES * BNX_MAX_SEGMENTS,
-		    BNX_MAX_SEGMENTS, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		if (bus_dmamap_create(sc->bnx_dmatag,
+		    MCLBYTES * BNX_MAX_SEGMENTS,
+		    USABLE_TX_BD - BNX_TX_SLACK_SPACE,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->tx_mbuf_map[i])) {
 			printf(": Could not create Tx mbuf %d DMA map!\n", i);
 			rc = ENOMEM;
