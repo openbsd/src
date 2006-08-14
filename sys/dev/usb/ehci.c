@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.62 2006/08/06 12:12:44 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.63 2006/08/14 00:28:07 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1012,10 +1012,11 @@ ehci_power(int why, void *v)
 		hcr = 0;
 		for (i = 1; i <= sc->sc_noport; i++) {
 			cmd = EOREAD4(sc, EHCI_PORTSC(i));
-			if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) == EHCI_PS_SUSP)
+			if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) == EHCI_PS_SUSP) {
 				EOWRITE4(sc, EHCI_PORTSC(i),
 				    cmd | EHCI_PS_FPR);
-			hcr = 1;
+				hcr = 1;
+			}
 		}
 
 		if (hcr) {
