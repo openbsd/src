@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.26 2005/09/20 08:03:59 dlg Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.27 2006/08/14 00:32:10 pascoe Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -334,7 +334,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (err != USBD_IN_PROGRESS)
 		return (err);
 	s = splusb();
-	if (!xfer->done) {
+	while (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
 		tsleep(xfer, PRIBIO, "usbsyn", 0);
