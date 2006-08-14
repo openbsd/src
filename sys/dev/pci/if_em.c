@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.144 2006/08/09 17:12:58 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.145 2006/08/14 17:23:32 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1893,7 +1893,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		   (E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT);
 	if (sc->hw.mac_type >= em_82571)
 		reg_tctl |= E1000_TCTL_MULR;
-	if (sc->link_duplex == 1)
+	if (sc->link_duplex == FULL_DUPLEX)
 		reg_tctl |= E1000_FDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
 	else
 		reg_tctl |= E1000_HDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
