@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.17 2006/08/14 14:43:36 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.18 2006/08/14 15:22:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -245,6 +245,7 @@ int			arc_wait_eq(struct arc_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
 int			arc_wait_ne(struct arc_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
+int			arc_msg0(struct arc_softc *, u_int32_t);
 
 #define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
 #define arc_pop(_s)		arc_read((_s), ARC_REG_REPLY_QUEUE)
@@ -340,6 +341,14 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 int
 arc_detach(struct device *self, int flags)
 {
+	struct arc_softc		*sc = (struct arc_softc *)self;
+
+	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
+		printf("%s: timeout waiting to stop bg rebuild\n");
+
+	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
+		printf("%s: timeout waiting to flush cache\n");
+
 	return (0);
 }
 
@@ -618,13 +627,10 @@ arc_query_firmware(struct arc_softc *sc)
 		return (1);
 	}
 
-	arc_write(sc, ARC_REG_INB_MSG0, ARC_REG_INB_MSG0_GET_CONFIG);
-	if (arc_wait_eq(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0,
-	    ARC_REG_INTRSTAT_MSG0) != 0) {
+	if (arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG) != 0) {
 		printf("%s: timeout waiting for get config\n");
 		return (1);
 	}
-	arc_write(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0);
 
 	arc_read_region(sc, ARC_REG_MSGBUF, &fwinfo, sizeof(fwinfo));
 
@@ -664,6 +670,11 @@ arc_query_firmware(struct arc_softc *sc)
 	}
 
 	sc->sc_req_count = letoh32(fwinfo.queue_len);
+
+	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
+		printf("%s: timeout waiting to start bg rebuild\n");
+		return (1);
+	}
 
 	printf("%s: %d SATA Ports, %dMB SDRAM, FW Version: %s\n",
 	    DEVNAME(sc), letoh32(fwinfo.sata_ports),
@@ -746,6 +757,22 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, u_int32_t mask,
 	}
 
 	return (1);
+}
+
+int
+arc_msg0(struct arc_softc *sc, u_int32_t m)
+{
+	/* post message */
+	arc_write(sc, ARC_REG_INB_MSG0, m);
+	/* wait for the fw to do it */
+	if (arc_wait_eq(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0,
+	    ARC_REG_INTRSTAT_MSG0) != 0)
+		return (1);
+
+	/* ack it */
+	arc_write(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0);
+
+	return (0);
 }
 
 struct arc_dmamem *
