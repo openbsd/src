@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vqp.c,v 1.3 2006/05/24 16:29:31 stevesk Exp $	*/
+/*	$OpenBSD: print-vqp.c,v 1.4 2006/08/15 10:28:23 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2006 Kevin Steves <stevesk@openbsd.org>
@@ -147,7 +147,7 @@ static void
 print_hex(const u_char *p, u_int len)
 {
 	while (len--)
-		printf("%02x", *p--);
+		printf("%02x", *p++);
 }
 
 static void
