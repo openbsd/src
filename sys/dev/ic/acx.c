@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.41 2006/08/14 23:13:28 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.42 2006/08/15 12:06:13 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1040,16 +1040,34 @@ acx_start(struct ifnet *ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 
 	if (trans && ifp->if_timer == 0)
-		ifp->if_timer = 5;
+		ifp->if_timer = 1;
+	sc->sc_txtimer = 5;
 }
 
 void
 acx_watchdog(struct ifnet *ifp)
 {
-	printf("%s: watchdog timeout\n", ifp->if_xname);
-	acx_txeof(ifp->if_softc);
+	struct acx_softc *sc = ifp->if_softc;
 
-	/* TODO */
+	DPRINTF(("%s: watchdog\n", ifp->if_xname));
+
+	ifp->if_timer = 0;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	if (sc->sc_txtimer) {
+		if (--sc->sc_txtimer == 0) {
+			printf("%s: watchdog timeout\n", ifp->if_xname);
+			acx_stop(ifp->if_softc);
+			acx_init(ifp->if_softc);
+			ifp->if_oerrors++;
+			return;
+		}
+		ifp->if_timer = 1;
+	}
+
+	ieee80211_watchdog(ifp);
 }
 
 int
@@ -1152,7 +1170,8 @@ acx_txeof(struct acx_softc *sc)
 	}
 	bd->tx_used_start = idx;
 
-	ifp->if_timer = bd->tx_used_count == 0 ? 0 : 5;
+	ifp->if_timer = bd->tx_used_count == 0 ? 0 : 1;
+	sc->sc_txtimer = 0;
 
 	if (bd->tx_used_count != ACX_TX_DESC_CNT) {
 		ifp->if_flags &= ~IFF_OACTIVE;

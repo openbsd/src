@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.11 2006/08/12 10:30:15 mglocker Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.12 2006/08/15 12:06:13 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -432,6 +432,7 @@ struct acx_softc {
 	int			sc_txrate_upd_intvl_min;
 	int			sc_txrate_upd_intvl_max;
 	int			sc_txrate_sample_thresh;
+	int			sc_txtimer;
 	int			sc_long_retry_limit;
 	int			sc_short_retry_limit;
 	int			sc_msdu_lifetime;
