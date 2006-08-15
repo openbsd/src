@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.42 2006/08/15 12:06:13 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.43 2006/08/15 15:06:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1188,7 +1188,7 @@ acx_txerr(struct acx_softc *sc, uint8_t err)
 	if (err == DESC_ERR_EXCESSIVE_RETRY) {
 		/*
 		 * This a common error (see comment below),
-		 * so print it using DPRINTF()
+		 * so print it using DPRINTF().
 		 */
 		DPRINTF(("%s: TX failed -- excessive retry\n",
 		    sc->sc_dev.dv_xname));
@@ -1261,7 +1261,7 @@ acx_rxeof(struct acx_softc *sc)
 
 	/*
 	 * Locate first "ready" rx buffer,
-	 * start from last stopped position
+	 * start from last stopped position.
 	 */
 	idx = bd->rx_scan_start;
 	ready = 0;
@@ -1282,7 +1282,7 @@ acx_rxeof(struct acx_softc *sc)
 
 	/*
 	 * NOTE: don't mess up `idx' here, it will
-	 * be used in the following code
+	 * be used in the following code.
 	 */
 	do {
 		struct acx_rxbuf_hdr *head;
@@ -1383,7 +1383,7 @@ next:
 
 	/*
 	 * Record the position so that next
-	 * time we can start from it
+	 * time we can start from it.
 	 */
 	bd->rx_scan_start = idx;
 }
@@ -1742,8 +1742,8 @@ acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
 
 		if (rate > cp_rset->rs_rates[node->nd_txrate]) {
 			/*
-			 * This rate has already caused toubles,
-			 * so don't count it in here
+			 * This rate has already caused troubles,
+			 * so don't count it in here.
 			 */
 			return;
 		}
@@ -1793,14 +1793,11 @@ acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
 
 		/* Half TX rate updating interval */
 		node->nd_txrate_upd_intvl /= 2;
-		if (node->nd_txrate_upd_intvl <
-		    sc->sc_txrate_upd_intvl_min) {
-			node->nd_txrate_upd_intvl =
-				sc->sc_txrate_upd_intvl_min;
+		if (node->nd_txrate_upd_intvl < sc->sc_txrate_upd_intvl_min) {
+			node->nd_txrate_upd_intvl = sc->sc_txrate_upd_intvl_min;
 		} else if (node->nd_txrate_upd_intvl >
-			   sc->sc_txrate_upd_intvl_max) {
-			node->nd_txrate_upd_intvl =
-				sc->sc_txrate_upd_intvl_max;
+		    sc->sc_txrate_upd_intvl_max) {
+			node->nd_txrate_upd_intvl = sc->sc_txrate_upd_intvl_max;
 		}
 
 		node->nd_txrate_upd_time += time_diff;
@@ -2025,6 +2022,7 @@ acx_dma_alloc(struct acx_softc *sc)
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->rx_ring_dmamap,
 	    rd->rx_ring, ACX_RX_RING_SIZE, NULL, BUS_DMA_WAITOK);
+
 	if (error) {
 		printf("%s: can't get rx ring dma address\n",
 		    sc->sc_dev.dv_xname);
@@ -2063,6 +2061,7 @@ acx_dma_alloc(struct acx_softc *sc)
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->tx_ring_dmamap,
 	    rd->tx_ring, ACX_TX_RING_SIZE, NULL, BUS_DMA_WAITOK);
+
 	if (error) {
 		printf("%s: can't get tx ring dma address\n", ifp->if_xname);
 		bus_dmamem_free(sc->sc_dmat, &rd->tx_ring_seg, 1);
@@ -2074,6 +2073,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	/* Create a spare RX DMA map */
 	error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 	    0, 0, &bd->mbuf_tmp_dmamap);
+
 	if (error) {
 		printf("%s: can't create tmp mbuf dma map\n", ifp->if_xname);
 		return (error);
@@ -2516,7 +2516,6 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
 	    ACX_TMPLT_PROBE_RESP_SIZ(len)));
 }
 
-/* XXX C&P of acx_set_probe_resp_tmplt() */
 int
 acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
     int chan)
@@ -2688,7 +2687,7 @@ acx_init_radio(struct acx_softc *sc, uint32_t radio_ofs, uint32_t radio_len)
 
 int
 acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
-		 uint16_t param_len, void *result, uint16_t result_len)
+    uint16_t param_len, void *result, uint16_t result_len)
 {
 	uint16_t status;
 	int i, ret;
@@ -2715,7 +2714,7 @@ acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
 
 	/* Wait for command to complete */
 	if (cmd == ACXCMD_INIT_RADIO) {
-		/* XXX radio initialization is extremely long */
+		/* radio initialization is extremely long */
 		tsleep(&cmd, 0, "rdinit", (300 * hz) / 1000);	/* 300ms */
 	}
 
