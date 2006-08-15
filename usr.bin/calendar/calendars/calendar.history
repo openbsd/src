@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.53 2006/08/15 21:25:56 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.54 2006/08/15 21:31:10 jasper Exp $
  */
 
 #ifndef _calendar_history_
@@ -37,7 +37,6 @@
 02/24	Impeachment proceedings against Andrew Johnson begin, 1868
 02/27	The Lionheart crowned, 1189
 02/28	The "French Connection" drug bust occurs in Marseilles, 1972
-03/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1939
 03/13	"Striptease" introduced, Paris, 1894
 03/15	France assumes protectorate over Vietnam, 1874
 03/19	Swallows return to Capistrano
@@ -65,6 +64,7 @@
 04/29	Zipper patented by Gideon Sindback, 1913
 05/01	Beltaine; Feast of the god Bel, sun god
 05/01	Adam Weishaupt founded the Illuminati of Bavaria, 1776
+05/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1937
 05/07	Germany surrenders after WWII, 1945
 05/10	Germany invades Low Countries, 1940
 05/10	Nazi bookburning, 1933
