@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.19 2006/08/15 02:09:02 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.20 2006/08/15 04:26:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -540,6 +540,7 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, u_int32_t reg)
 			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
 			xs->status = SCSI_CHECK;
 			xs->error = XS_SENSE;
+			xs->resid = 0;
 			break;
 
 		default:
