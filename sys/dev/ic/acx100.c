@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.9 2006/08/14 06:53:26 jsg Exp $ */
+/*	$OpenBSD: acx100.c,v 1.10 2006/08/15 15:43:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -18,14 +18,14 @@
 
 /*
  * Copyright (c) 2006 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Sepherosa Ziehau <sepherosa@gmail.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -35,7 +35,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -255,7 +255,7 @@ static const uint16_t	acx100_reg[ACXREG_MAX] = {
 	ACXREG(INFO_REG_OFFSET,		0x02a8),
 
 	ACXREG(RESET_SENSE,		0x02d4),
-	ACXREG(ECPU_CTRL,		0x02d8) 
+	ACXREG(ECPU_CTRL,		0x02d8)
 };
 
 static const uint8_t	acx100_txpower_maxim[21] = {

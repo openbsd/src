@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.43 2006/08/15 15:06:14 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.44 2006/08/15 15:43:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -18,14 +18,14 @@
 
 /*
  * Copyright (c) 2006 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Sepherosa Ziehau <sepherosa@gmail.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -35,7 +35,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -53,27 +53,27 @@
 /*
  * Copyright (c) 2003-2004 wlan.kewl.org Project
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *    
+ *
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- * 
+ *
  *    This product includes software developed by the wlan.kewl.org Project.
- * 
+ *
  * 4. Neither the name of the wlan.kewl.org Project nor the names of its
  *    contributors may be used to endorse or promote products derived from
  *    this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -112,7 +112,7 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -195,7 +195,7 @@ int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
 
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
-const char * 	acx_get_rf(int);
+const char *	acx_get_rf(int);
 int	 acx_get_maxrssi(int);
 
 int	 acx_load_firmware(struct acx_softc *, uint32_t,
@@ -412,7 +412,7 @@ acx_init(struct ifnet *ifp)
 	/* enable card if possible */
 	if (sc->sc_enable != NULL)
 		(*sc->sc_enable)(sc);
-	
+
 	error = acx_init_tx_ring(sc);
 	if (error) {
 		printf("%s: can't initialize TX ring\n",
@@ -620,7 +620,7 @@ acx_stop(struct acx_softc *sc)
 	/* disable card if possible */
 	if (sc->sc_disable != NULL)
 		(*sc->sc_disable)(sc);
-	
+
 	return (0);
 }
 
@@ -684,8 +684,8 @@ acx_read_config(struct acx_softc *sc, struct acx_config *conf)
 	if (sc->sc_radio_type == ACX_RADIO_TYPE_MAXIM ||
 	    sc->sc_radio_type == ACX_RADIO_TYPE_RFMD ||
 	    sc->sc_radio_type == ACX_RADIO_TYPE_RALINK) {
-	    	error = acx_read_phyreg(sc, ACXRV_PHYREG_SENSITIVITY, &sen);
-	    	if (error) {
+		error = acx_read_phyreg(sc, ACXRV_PHYREG_SENSITIVITY, &sen);
+		if (error) {
 			printf("%s: can't get sensitivity\n",
 			    sc->sc_dev.dv_xname);
 			return (error);
@@ -1610,7 +1610,7 @@ acx_load_firmware(struct acx_softc *sc, uint32_t offset, const uint8_t *data,
 	/* skip csum + length */
 	data += 8;
 	data_len -= 8;
-	
+
 	fw = (const uint32_t *)data;
 	fw_len = data_len / sizeof(uint32_t);
 
@@ -2002,7 +2002,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, ACX_RX_RING_SIZE, PAGE_SIZE,
-	    0, &rd->rx_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);	
+	    0, &rd->rx_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
 		printf("%s: can't allocate rx ring dma memory\n",
@@ -2042,7 +2042,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, ACX_TX_RING_SIZE, PAGE_SIZE,
-	    0, &rd->tx_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);	
+	    0, &rd->tx_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 
 	if (error) {
 		printf("%s: can't allocate tx ring dma memory\n",
@@ -2300,7 +2300,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, txbuf->tb_mbuf_dmamap, m,
 	    BUS_DMA_NOWAIT);
-				     
+
 	if (error && error != EFBIG) {
 		printf("%s: can't map tx mbuf1 %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -2320,7 +2320,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 			printf("%s: can't defrag tx mbuf\n", ifp->if_xname);
 			goto back;
 		}
-		
+
 		M_DUP_PKTHDR(mnew, m);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
@@ -2340,7 +2340,7 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 		m_freem(m);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m = mnew;
-		
+
 		error = bus_dmamap_load_mbuf(sc->sc_dmat,
 		    txbuf->tb_mbuf_dmamap, m, BUS_DMA_NOWAIT);
 		if (error) {
