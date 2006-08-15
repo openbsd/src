@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.52 2006/07/04 16:02:37 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.53 2006/08/15 21:25:56 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -117,6 +117,7 @@
 07/02	Vermont abolishes slavery, as the first state, 1777
 07/03	Dog days begin
 07/04	Thoreau enters woods, 1845
+07/05	Bikini demonstrated for the first time, 1946
 07/06	Lawrence of Arabia captures Aqaba, 1917
 07/07	First radio broadcast of "Dragnet", 1949
 07/12	Minimum wages established: 40 cents/hour, 1933
