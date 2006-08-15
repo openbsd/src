@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.45 2006/08/15 16:48:07 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.46 2006/08/15 21:16:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1032,8 +1032,6 @@ void
 acx_watchdog(struct ifnet *ifp)
 {
 	struct acx_softc *sc = ifp->if_softc;
-
-	DPRINTF(("%s: watchdog\n", ifp->if_xname));
 
 	ifp->if_timer = 0;
 
