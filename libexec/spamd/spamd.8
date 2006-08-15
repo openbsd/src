@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.60 2006/05/15 16:47:48 jcs Exp $
+.\"	$OpenBSD: spamd.8,v 1.61 2006/08/15 20:52:12 kjell Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -110,7 +110,8 @@ The default port is found by looking for the named service
 using
 .Xr getservbyname 3 .
 .It Fl r Ar reply
-The SMTP error to return to the spammer, i.e. 450, 451, 550.
+For blacklisted entries, the SMTP error to return to the spammer,
+e.g. 450, 451, 550.
 This defaults to 450.
 .It Fl S Ar secs
 Stutter at greylisted connections for the specified amount
