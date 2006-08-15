@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.41 2006/07/02 06:22:03 dlg Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.42 2006/08/15 20:55:57 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ iommu_dvmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, struct strbuf_ctl *sb,
 	if (ret)
 		return (ret);
 
-	ims = iommu_iomap_create(nsegments);
+	ims = iommu_iomap_create(atop(round_page(size)));
 
 	if (ims == NULL) {
 		bus_dmamap_destroy(t0, map);
@@ -893,6 +893,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			if(err) {
 				printf("iomap insert error: %d for "
 				    "pa 0x%lx\n", err, VM_PAGE_TO_PHYS(m));
+				iommu_dvmamap_print_map(t, is, map);
 				iommu_iomap_clear_pages(ims);
 				return (E2BIG);
 			}
@@ -915,6 +916,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 				if (err) {
 					printf("iomap insert error: %d for "
 					    "pa 0x%llx\n", err, a);
+					iommu_dvmamap_print_map(t, is, map);
 					iommu_iomap_clear_pages(ims);
 					return (E2BIG);
 				}
@@ -1693,8 +1695,10 @@ iommu_iomap_create(int n)
 	struct strbuf_flush *sbf;
 	vaddr_t va;
 
-	if (n < 64)
-		n = 64;
+	/* Safety for heavily fragmented data, such as mbufs */
+	n += 4;
+	if (n < 16)
+		n = 16;
 
 	ims = malloc(sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]),
 		M_DEVBUF, M_NOWAIT);
