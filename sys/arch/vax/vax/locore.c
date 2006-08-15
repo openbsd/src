@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.30 2006/07/30 18:31:49 miod Exp $	*/
+/*	$OpenBSD: locore.c,v 1.31 2006/08/15 20:27:41 miod Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -183,7 +183,7 @@ start(struct rpb *prpb)
 #if VAX49
 	case VAX_BTYP_49:
 		dep_call = &ka49_calls;
-		strlcat(cpu_model, "4000/90", sizeof cpu_model);
+		strlcpy(cpu_model, "VAXstation 4000/90", sizeof cpu_model);
 		break;
 #endif
 #if VAX53
