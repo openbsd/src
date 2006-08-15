@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.18 2006/08/14 15:22:27 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.19 2006/08/15 02:09:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -153,11 +153,12 @@ struct arc_msg_scsicmd {
 #define ARC_MSG_CDBLEN				16
 	u_int8_t		cdb[ARC_MSG_CDBLEN];
 
-#define ARC_MSG_SENSELEN			16
+	u_int8_t		status;
+#define ARC_MSG_STATUS_SELTIMEOUT		0xf0
+#define ARC_MSG_STATUS_ABORTED			0xf1
+#define ARC_MSG_STATUS_INIT_FAIL		0xf2
+#define ARC_MSG_SENSELEN			15
 	u_int8_t		sense_data[ARC_MSG_SENSELEN];
-#define ARC_MSG_SENSE_TIMEOUT			0xf0
-#define ARC_MSG_SENSE_ABORTED			0xf1
-#define ARC_MSG_SENSE_INIT_FAIL			0xf2
 
 	/* followed by an sgl */
 } __packed;
@@ -509,6 +510,7 @@ void
 arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, u_int32_t reg)
 {
 	struct scsi_xfer		*xs = ccb->ccb_xs;
+	struct arc_msg_scsicmd		*cmd;
 
 	if (xs->datalen != 0) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
@@ -521,8 +523,31 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, u_int32_t reg)
 	xs->flags |= ITSDONE;
 
 	if (reg & ARC_REG_REPLY_QUEUE_ERR) {
-		// printf("%s: something went wrong\n", DEVNAME(sc));
-		xs->error = XS_DRIVER_STUFFUP;
+		cmd = &ccb->ccb_cmd->cmd;
+
+		switch (cmd->status) {
+		case ARC_MSG_STATUS_SELTIMEOUT:
+		case ARC_MSG_STATUS_ABORTED:
+		case ARC_MSG_STATUS_INIT_FAIL:
+			xs->status = SCSI_OK;
+			xs->error = XS_SELTIMEOUT;
+			break;
+
+		case SCSI_CHECK:
+			bzero(&xs->sense, sizeof(xs->sense));
+			bcopy(cmd->sense_data, &xs->sense,
+			    min(ARC_MSG_SENSELEN, sizeof(xs->sense)));
+			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+			xs->status = SCSI_CHECK;
+			xs->error = XS_SENSE;
+			break;
+
+		default:
+			/* unknown device status */
+			xs->error = XS_BUSY; /* try again later? */
+			xs->status = SCSI_BUSY;
+			break;
+		}
 	} else {
 		xs->status = SCSI_OK;
 		xs->error = XS_NOERROR;
