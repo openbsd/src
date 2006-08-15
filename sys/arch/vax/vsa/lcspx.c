@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.5 2006/08/05 22:04:53 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.6 2006/08/15 20:26:30 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -156,8 +156,6 @@ lcspx_match(struct device *parent, void *vcf, void *aux)
 {
 	struct vsbus_softc *sc = (void *)parent;
 	struct vsbus_attach_args *va = aux;
-	volatile u_int8_t *ch;
-	int rc;
 
 	switch (vax_boardtype) {
 	default:
@@ -167,22 +165,11 @@ lcspx_match(struct device *parent, void *vcf, void *aux)
 		if (va->va_paddr != LCSPX_REG_ADDR)
 			return (0);
 
+		if ((vax_confdata & 0x12) != 0x02)
+			return (0);
+
 		break;
 	}
-
-	/*
-	 * Check for video memory.
-	 * We can not use badaddr() on these models.
-	 */
-	ch = (volatile u_int8_t *)vax_map_physmem(LCSPX_FB_ADDR, 1);
-	rc = 1;
-	*ch = 0x01;
-	if ((*ch & 0x01) == 0)
-		rc = 0;
-	*ch = 0x00;
-	if ((*ch & 0x01) != 0)
-		rc = 0;
-	vax_unmap_physmem((vaddr_t)ch, 1);
 
 	sc->sc_mask = 0x04;	/* XXX - should be generated */
 	scb_fake(0x120, 0x15);
@@ -502,28 +489,13 @@ void	lcspxcninit(void);
 int
 lcspxcnprobe()
 {
-	extern vaddr_t virtual_avail;
-	vaddr_t tmp;
-	volatile u_int8_t *ch;
-
 	switch (vax_boardtype) {
 	case VAX_BTYP_49:
 		if ((vax_confdata & 8) != 0)
 			break; /* doesn't use graphics console */
 
-		/*
-		 * Check for video memory.
-		 * We can not use badaddr() on these models.
-		 */
-		tmp = virtual_avail;
-		ch = (volatile u_int8_t *)tmp;
-		ioaccess(tmp, LCSPX_FB_ADDR, 1);
-		*ch = 0x01;
-		if ((*ch & 0x01) == 0)
-			break;
-		*ch = 0x00;
-		if ((*ch & 0x01) != 0)
-			break;
+		if ((vax_confdata & 0x12) != 0x02)
+			return (0);
 
 		return (1);
 
