@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.44 2006/08/15 15:43:34 deraadt Exp $ */
+/*	$OpenBSD: acx.c,v 1.45 2006/08/15 16:48:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -135,22 +135,6 @@
 #ifdef ACX_DEBUG
 int acxdebug = 0;
 #endif
-
-#define ACX_ENABLE_TXCHAN(sc, chan, ifname)				\
-do {									\
-	if (acx_enable_txchan((sc), (chan)) != 0) {			\
-		DPRINTF(("%s: enable TX on channel %d failed\n",	\
-		    (ifname), (chan)));					\
-	}								\
-} while (0)
-
-#define ACX_ENABLE_RXCHAN(sc, chan, ifname)				\
-do {									\
-	if (acx_enable_rxchan((sc), (chan)) != 0) {			\
-		DPRINTF(("%s: enable RX on channel %d failed\n",	\
-		    (ifname), (chan)));					\
-	}								\
-} while (0)
 
 int	 acx_attach(struct acx_softc *);
 int	 acx_detach(void *);
@@ -1844,8 +1828,15 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			uint8_t chan;
 
 			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-			ACX_ENABLE_TXCHAN(sc, chan, ifp->if_xname);
-			ACX_ENABLE_RXCHAN(sc, chan, ifp->if_xname);
+
+			if (acx_enable_txchan(sc, chan) != 0) {
+				DPRINTF(("%s: enable TX on channel %d failed\n",
+				    ifp->if_xname, chan));
+			}
+			if (acx_enable_rxchan(sc, chan) != 0) {
+				DPRINTF(("%s: enable RX on channel %d failed\n",
+				    ifp->if_xname, chan));
+			}
 
 			timeout_add(&sc->sc_chanscan_timer,
 			    hz / acx_chanscan_rate);
