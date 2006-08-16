@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.40 2005/09/19 05:45:49 brad Exp $
+.\"	$OpenBSD: sk.4,v 1.41 2006/08/16 22:01:56 kettenis Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -37,11 +37,15 @@
 .Os
 .Sh NAME
 .Nm sk ,
-.Nm skc
+.Nm skc ,
+.Nm msk ,
+.Nm mskc
 .Nd SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet
 .Sh SYNOPSIS
 .Cd "skc* at pci?"
 .Cd "sk* at skc?"
+.Cd "mskc* at pci?"
+.Cd "msk* at mskc?"
 .Cd "brgphy* at mii?"
 .Cd "eephy* at mii?"
 .Cd "xmphy* at mii?"
@@ -84,6 +88,52 @@ SK-9821 V2.0 single port, copper adapter
 SK-9843 V2.0 single port, copper adapter
 .It
 SMC 9452TX, copper adapter
+.El
+.Pp
+The
+.Nm msk
+driver provides support for the Marvell Yukon-2 based Gigabit Ethernet
+adapters, including the following:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Marvell Yukon 88E8035, copper adapter
+.It
+Marvell Yukon 88E8036, copper adapter
+.It
+Marvell Yukon 88E8038, copper adapter
+.It
+Marvell Yukon 88E8050, copper adapter
+.It
+Marvell Yukon 88E8052, copper adapter
+.It
+Marvell Yukon 88E8053, copper adapter
+.It
+SK-9E21 1000Base-T single port, copper adapter
+.It
+SK-9E22 1000Base-T dual port, copper adapter
+.It
+SK-9E81 1000Base-SX single port, multimode fiber adapter
+.It
+SK-9E82 1000Base-SX dual port, multimode fiber adapter
+.It
+SK-9E91 1000Base-LX single port, single mode fiber adapter
+.It
+SK-9E92 1000Base-LX dual port, single mode fiber adapter
+.It
+SK-9S21 1000Base-T single port, copper adapter
+.It
+SK-9S22 1000Base-T dual port, copper adapter
+.It
+SK-9S81 1000Base-SX single port, multimode fiber adapter
+.It
+SK-9S82 1000Base-SX dual port, multimode fiber adapter
+.It
+SK-9S91 1000Base-LX single port, single mode fiber adapter
+.It
+SK-9S92 1000Base-LX dual port, single mode fiber adapter
+.It
+SK-9E21D 1000Base-T single port, copper adapter
 .El
 .Pp
 The SysKonnect based adapters consist of two main components: the
@@ -173,6 +223,10 @@ the network connection (cable).
 .%T SysKonnect GEnesis programming manual
 .%O http://www.syskonnect.com
 .Re
+.Sh BUGS
+The
+.Nm msk
+driver does not support hardware receive IP checksum offload yet.
 .Sh HISTORY
 The
 .Nm
@@ -182,8 +236,15 @@ and
 .Ox
 support was added in
 .Ox 2.6 .
+.Pp
+The
+.Nm msk
+driver first appeared in
+.Ox 4.0 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
+Support for the Marvell Yukon-2 was added by
+.An Mark Kettenis Aq kettenis@openbsd.org .
