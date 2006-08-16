@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.184 2006/08/02 05:16:18 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.185 2006/08/16 07:39:15 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -266,8 +266,9 @@ checkin_main(int argc, char **argv)
 		if (pb.file == NULL)
 			errx(1, "failed to open rcsfile `%s'", pb.fpath);
 
-		if (pb.flags & DESCRIPTION)
-			rcs_set_description(pb.file, pb.description);
+		if ((pb.flags & DESCRIPTION) &&
+		    rcs_set_description(pb.file, pb.description) == -1)
+			err(1, "%s", pb.file);
 
 		if (!(pb.flags & QUIET))
 			(void)fprintf(stderr,
@@ -611,8 +612,11 @@ checkin_init(struct checkin_params *pb)
 		goto skipdesc;
 
 	/* Get description from user */
-	if (pb->description == NULL)
-		rcs_set_description(pb->file, NULL);
+	if (pb->description == NULL &&
+	    rcs_set_description(pb->file, NULL) == -1) {
+		warn("%s", pb->file);
+		goto fail;
+	}
 
 skipdesc:
 

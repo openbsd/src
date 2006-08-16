@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.7 2006/08/02 03:28:50 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.8 2006/08/16 07:39:15 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,7 +81,8 @@ rcs_buf_alloc(size_t len, u_int flags)
  *
  * Open the file specified by <path> and load all of its contents into a
  * buffer.
- * Returns the loaded buffer on success.
+ * Returns the loaded buffer on success or NULL on failure.
+ * Sets errno on error.
  */
 BUF *
 rcs_buf_load(const char *path, u_int flags)
@@ -93,28 +94,45 @@ rcs_buf_load(const char *path, u_int flags)
 	struct stat st;
 	BUF *buf;
 
-	if ((fd = open(path, O_RDONLY, 0600)) == -1) {
-		warn("%s", path);
-		return (NULL);
-	}
+	buf = NULL;
+
+	if ((fd = open(path, O_RDONLY, 0600)) == -1)
+		goto out;
 
 	if (fstat(fd, &st) == -1)
-		err(1, "%s", path);
+		goto out;
 
-	buf = rcs_buf_alloc((size_t)st.st_size, flags);
+	if (st.st_size > SIZE_MAX) {
+		errno = EFBIG;
+		goto out;
+	}
+	buf = rcs_buf_alloc(st.st_size, flags);
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
 		if (ret == -1) {
+			int saved_errno;
+
+			saved_errno = errno;
 			rcs_buf_free(buf);
-			err(1, "rcs_buf_load");
+			buf = NULL;
+			errno = saved_errno;
+			goto out;
 		} else if (ret == 0)
 			break;
 
 		buf->cb_len += (size_t)ret;
 	}
 
-	(void)close(fd);
+out:
+	if (fd != -1) {
+		int saved_errno;
+
+		/* We may want to preserve errno here. */
+		saved_errno = errno;
+		(void)close(fd);
+		errno = saved_errno;
+	}
 
 	return (buf);
 }

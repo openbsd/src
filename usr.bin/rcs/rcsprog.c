@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.131 2006/05/29 21:17:44 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.132 2006/08/16 07:39:15 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -312,13 +312,25 @@ rcs_main(int argc, char **argv)
 		if (!(rcsflags & QUIET))
 			(void)fprintf(stderr, "RCS file: %s\n", fpath);
 
-		if ((file = rcs_open(fpath, fd, flags, fmode)) == NULL)
+		if ((file = rcs_open(fpath, fd, flags, fmode)) == NULL) {
+			close(fd);
 			continue;
+		}
 
-		if (rcsflags & DESCRIPTION)
-			rcs_set_description(file, descfile);
-		else if (flags & RCS_CREATE)
-			rcs_set_description(file, NULL);
+		if (rcsflags & DESCRIPTION) {
+			if (rcs_set_description(file, descfile) == -1) {
+				warn("%s", descfile);
+				rcs_close(file);
+				continue;
+			}
+		}
+		else if (flags & RCS_CREATE) {
+			if (rcs_set_description(file, NULL) == -1) {
+				warn("stdin");
+				rcs_close(file);
+				continue;
+			}
+		}
 
 		if (rcsflags & PRESERVETIME)
 			rcs_mtime = rcs_get_mtime(file);

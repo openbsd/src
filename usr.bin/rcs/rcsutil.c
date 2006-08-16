@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.17 2006/07/08 09:14:03 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.18 2006/08/16 07:39:15 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -437,8 +437,9 @@ rcs_rev_select(RCSFILE *file, const char *range)
  * If <in> starts with a `-', <in> is taken as the description.
  * Otherwise <in> is the name of the file containing the description.
  * If <in> is NULL, the description is read from stdin.
+ * Returns 0 on success, -1 on failure, setting errno.
  */
-void
+int
 rcs_set_description(RCSFILE *file, const char *in)
 {
 	BUF *bp;
@@ -449,7 +450,8 @@ rcs_set_description(RCSFILE *file, const char *in)
 
 	/* Description is in file <in>. */
 	if (in != NULL && *in != '-') {
-		bp = rcs_buf_load(in, BUF_AUTOEXT);
+		if ((bp = rcs_buf_load(in, BUF_AUTOEXT)) == NULL)
+			return (-1);
 		rcs_buf_putc(bp, '\0');
 		content = rcs_buf_release(bp);
 	/* Description is in <in>. */
@@ -462,6 +464,7 @@ rcs_set_description(RCSFILE *file, const char *in)
 
 	rcs_desc_set(file, content);
 	xfree(content);
+	return (0);
 }
 
 /*
