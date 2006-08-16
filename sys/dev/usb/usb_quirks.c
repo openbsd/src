@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.23 2006/08/12 04:31:51 jason Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.24 2006/08/16 19:12:05 jason Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -128,8 +128,6 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY920,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY800,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_METAGEEK, USB_PRODUCT_METAGEEK_WISPY, ANY,   { UQ_BAD_HID }},
- { USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMUSB,   ANY,   { UQ_BAD_HID }},
- { USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMLT20,  ANY,   { UQ_BAD_HID }},
  { 0, 0, 0, { 0 } }
 };
 
