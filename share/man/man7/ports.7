@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.54 2006/05/08 11:16:20 steven Exp $
+.\" $OpenBSD: ports.7,v 1.55 2006/08/16 09:54:45 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -97,6 +97,16 @@ invoked with a key, e.g.,
 .Ic make search key=foo ,
 retrieve information relevant to a given port (obsolescent).
 .El
+.Pp
+Starting in
+.Ox 4.0 ,
+there is a port,
+.Pa databases/sqlports
+that builds an sqlite database containing most information relevant to
+every port in the ports tree.
+This database can be searched using any tool able to manipulate such
+databases, for instance sqlitebrowser, or a script language with an
+sqlite interface, e.g., perl, python, ocaml, lua, php5.
 .Sh SELECTING A SET OF PORTS
 If
 .Pa /usr/ports/INDEX
@@ -149,9 +159,10 @@ is non empty, then
 .Ev REPORT_PROBLEM
 will default to:
 .Bd -literal -offset indent
-echo $$d >$${REPORT_PROBLEM_LOGFILE}
+echo $$d ($@) >$${REPORT_PROBLEM_LOGFILE}
 .Ed
-That is, any failure will append the faulty directory name to
+That is, any failure will append the faulty directory name together
+with the target that failed to
 .Pa ${REPORT_PROBLEM_LOGFILE}
 and proceed.
 .Pp
@@ -280,6 +291,10 @@ This does not recurse to dependencies.
 .It Ar reinstall
 Use this to restore a port after using
 .Xr pkg_delete 1 .
+.It Ar update
+Alternative target to
+.Ar install .
+Does not install new packages, but updates existing ones.
 .It Ar link-categories
 Populate the ports tree with symbolic links for each category the port
 belongs to.
@@ -331,6 +346,33 @@ At no moment should a given invocation of
 .Xr make 1
 acquire the same lock twice, thus recursive locking is not needed for
 .Ev LOCK_CMD .
+.Sh UPDATING PACKAGES
+Instead of deinstalling each package and rebuilding from scratch, the
+ports tree can be used to update installed packages.
+The
+.Ar update
+target will replace an installed package using
+.Xr pkg_add 7
+in replacement mode.
+If
+.Ev FORCE_UPDATE
+is set to
+.Sq Yes ,
+dependencies will also be updated first, and packages will always be updated,
+even if there is no difference between the old and the new packages.
+.Pp
+Updates use a mechanism similar to bulk cookies and deposit cookies in
+the
+.Ev UPDATE_COOKIE_DIR .
+See the next section for more details, since most of the fine points of
+bulk package building also apply to updates.
+.Pp
+There are bugs in the ports tree, most related to libtool, which make some
+updates prefer the already installed libraries instead of the newly built
+ones.
+This shows up as undefined references in libraries, in which case there
+is no choice but to proceed the old way: deinstall the offending package
+and everything built on top of it, build and install new packages.
 .Sh BULK PACKAGE BUILDING
 The ports tree contains some mechanisms to save space when building
 large collections of packages.
