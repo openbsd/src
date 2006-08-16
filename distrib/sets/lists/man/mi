@@ -1335,6 +1335,8 @@
 ./usr/share/man/cat4/mixer.0
 ./usr/share/man/cat4/mpi.0
 ./usr/share/man/cat4/mpu.0
+./usr/share/man/cat4/msk.0
+./usr/share/man/cat4/mskc.0
 ./usr/share/man/cat4/mtd.0
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
