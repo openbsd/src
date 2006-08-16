@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.1 2006/08/15 16:41:02 jason Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.2 2006/08/16 21:22:56 jason Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 
 #include <dev/usb/ucomvar.h>
 
-#define UCYCOM_DEBUG
 #ifdef UCYCOM_DEBUG
 #define DPRINTF(x)	if (ucycomdebug) logprintf x
 #define DPRINTFN(n, x)	if (ucycomdebug > (n)) logprintf x
@@ -157,9 +156,7 @@ struct ucom_methods ucycom_methods = {
 
 Static void ucycom_intr(struct uhidev *, void *, u_int);
 
-#ifdef UCYCOM_DEBUG
 Static void ucycom_get_cfg(struct ucycom_softc *);
-#endif
 
 Static const struct usb_devno ucycom_devs[] = {
 	{ USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_USBRS232 },
@@ -300,7 +297,6 @@ ucycom_close(void *addr, int portno)
 	if (sc->sc_dying)
 		return;
 
-	printf("UHIDEV_CLOSE\n");
 //	uhidev_close(&sc->sc_hdev);
 	if (sc->sc_obuf !=NULL) {
 		free(sc->sc_obuf, M_USBDEV);
@@ -477,8 +473,6 @@ ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 	struct ucycom_softc *sc = (struct ucycom_softc *)addr;
 	uint8_t *cp = ibuf;
 	int n, st, s;
-
-	printf("ucycom_intr: %p %p %d\n", addr, ibuf, len);
 
 	/* not accepting data anymore.. */
 	if (sc->sc_ibuf == NULL)
