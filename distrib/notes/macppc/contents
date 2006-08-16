@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.19 2006/02/28 20:42:35 miod Exp $
+dnl	$OpenBSD: contents,v 1.20 2006/08/16 20:49:30 aanriot Exp $
 TopPart
 
 OpenBSDdistsets
@@ -8,6 +8,8 @@ OpenBSDbsd
 OpenBSDrd
 
 OpenBSDcd
+
+	ofwboot		The OpenBSD/MACHINE secondary boot loader.
 
 DistributionDescription(eleven)
 

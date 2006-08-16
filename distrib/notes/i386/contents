@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.57 2006/02/28 20:42:35 miod Exp $
+dnl	$OpenBSD: contents,v 1.58 2006/08/16 20:49:30 aanriot Exp $
 TopPart
 
 OpenBSDfloppy
@@ -15,6 +15,9 @@ OpenBSDfloppy
 	cdrom{:--:}OSrev.fs	The MACHINE boot and installation 2.88MB
 			floppy image that contains almost all OpenBSD
 			drivers; see below.
+
+	pxeboot		i386-specific second-stage PXE bootstrap (for
+			network installs); see below.
 
 OpenBSDdistsets
 
