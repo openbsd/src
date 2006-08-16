@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.215 2006/08/15 18:10:54 niallo Exp $
+$OpenBSD: usbdevs,v 1.216 2006/08/16 16:04:52 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -745,6 +745,7 @@ product BELKIN F5U120		0x1203	F5U120-PC Hub
 product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 product BELKIN F5D7050A		0x705a	F5D705A 54g USB Network Adapter
 product BELKIN F5D7050C		0x705c	F5D705C 54g USB Network Adapter
+product BELKIN F5D9050V3	0x905b	F5D9050 ver 3
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 Ethernet

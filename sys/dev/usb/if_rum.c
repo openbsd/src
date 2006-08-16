@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.30 2006/08/14 12:57:08 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.31 2006/08/16 16:08:05 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -80,6 +80,7 @@ int rum_debug = 0;
 static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573 },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050A },
+	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D9050V3 },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GC },
 	{ USB_VENDOR_CONCEPTRONIC2,	USB_PRODUCT_CONCEPTRONIC2_C54RU2 },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
