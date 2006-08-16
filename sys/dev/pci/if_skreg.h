@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.35 2006/07/30 22:58:38 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.36 2006/08/16 02:37:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1472,11 +1472,7 @@ struct sk_tx_desc {
 #define SK_TXBYTES		SK_RXBYTES
 
 #define SK_TX_RING_CNT		512
-#ifdef __sparc64__
-#define SK_RX_RING_CNT		39
-#else
 #define SK_RX_RING_CNT		256
-#endif
 
 /*
  * Jumbo buffer stuff. Note that we must allocate more jumbo
@@ -1489,7 +1485,7 @@ struct sk_tx_desc {
 #define SK_JUMBO_FRAMELEN	9018
 #define SK_JUMBO_MTU		(SK_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define SK_MIN_FRAMELEN		(ETHER_MIN_LEN - ETHER_CRC_LEN)
-#define SK_JSLOTS		((SK_RX_RING_CNT / 2) * 3)
+#define SK_JSLOTS		384
 
 #define SK_JRAWLEN	(SK_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define SK_JLEN		SK_JRAWLEN

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.24 2006/07/18 01:24:46 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.25 2006/08/16 02:37:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -991,11 +991,7 @@ struct ti_event_desc {
 
 #define TI_SSLOTS	256
 #define TI_MSLOTS	256
-#ifdef __sparc64__
-#define TI_JSLOTS	57
-#else
 #define TI_JSLOTS	384
-#endif
 
 #define TI_JRAWLEN	(TI_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define TI_JLEN		(TI_JRAWLEN + (sizeof(u_int64_t) - \
