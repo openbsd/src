@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.127 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.128 2006/08/16 09:40:52 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -141,6 +141,7 @@ struct carp_softc {
 	struct timeout sc_ad_tmo;	/* advertisement timeout */
 	struct timeout sc_md_tmo;	/* master down timeout */
 	struct timeout sc_md6_tmo;	/* master down timeout */
+	int sc_delayed_arp;		/* delayed ARP request countdown */
 
 	LIST_HEAD(__carp_mchead, carp_mc_entry)	carp_mc_listhead;
 };
@@ -1035,6 +1036,12 @@ carp_send_ad(void *v)
 			} else
 				sc->sc_sendad_errors = 0;
 		}
+		if (sc->sc_delayed_arp > 0)
+			sc->sc_delayed_arp--;
+		if (sc->sc_delayed_arp == 0) {
+			carp_send_arp(sc);
+			sc->sc_delayed_arp = -1;
+		}
 	}
 #endif /* INET */
 #ifdef INET6
@@ -1383,6 +1390,8 @@ carp_master_down(void *v)
 		carp_set_state(sc, MASTER);
 		carp_send_ad(sc);
 		carp_send_arp(sc);
+		/* Schedule a delayed ARP request to deal w/ some L3 switches */
+		sc->sc_delayed_arp = 2;
 #ifdef INET6
 		carp_send_na(sc);
 #endif /* INET6 */
@@ -1426,6 +1435,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 		timeout_del(&sc->sc_ad_tmo);
 		tv.tv_sec = 3 * sc->sc_advbase;
 		tv.tv_usec = sc->sc_advskew * 1000000 / 256;
+		sc->sc_delayed_arp = -1;
 		switch (af) {
 #ifdef INET
 		case AF_INET:
