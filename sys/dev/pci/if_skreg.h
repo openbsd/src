@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.36 2006/08/16 02:37:00 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.37 2006/08/16 21:06:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -132,6 +132,11 @@
 #define SK_IESR		0x0010	/* interrupt hardware error source */
 #define SK_IEMR		0x0014  /* interrupt hardware error mask */
 #define SK_ISSR		0x0018	/* special interrupt source */
+#define SK_Y2_ISSR2	0x001C
+#define SK_Y2_ISSR3	0x0020
+#define SK_Y2_EISR	0x0024
+#define SK_Y2_LISR	0x0028
+#define SK_Y2_ICR	0x002C
 #define SK_XM_IMR0	0x0020
 #define SK_XM_ISR0	0x0028
 #define SK_XM_PHYADDR0	0x0030
@@ -158,6 +163,8 @@
 #define SK_CSR_SW_IRQ_SET		0x0080
 #define SK_CSR_SLOTSIZE			0x0100 /* 1 == 64 bits, 0 == 32 */
 #define SK_CSR_BUSCLOCK			0x0200 /* 1 == 33/66 MHz, = 33 */
+#define SK_CSR_ASF_OFF			0x1000
+#define SK_CSR_ASF_ON			0x2000
 
 /* SK_LED register */
 #define SK_LED_GREEN_OFF		0x01
@@ -236,6 +243,30 @@
 
 #define SK_INTRS2	\
 	(SK_IMR_RX2_EOF|SK_IMR_TX2_S_EOF|SK_IMR_MAC2)
+
+#define SK_Y2_IMR_TX1_AS_CHECK		0x00000001
+#define SK_Y2_IMR_TX1_S_CHECK		0x00000002
+#define SK_Y2_IMR_RX1_CHECK		0x00000004
+#define SK_Y2_IMR_MAC1			0x00000008
+#define SK_Y2_IMR_PHY1			0x00000010
+#define SK_Y2_IMR_TX2_AS_CHECK		0x00000100
+#define SK_Y2_IMR_TX2_S_CHECK		0x00000200
+#define SK_Y2_IMR_RX2_CHECK		0x00000400
+#define SK_Y2_IMR_MAC2			0x00000800
+#define SK_Y2_IMR_PHY2			0x00001000
+#define SK_Y2_IMR_TIMER			0x01000000
+#define SK_Y2_IMR_SW			0x02000000
+#define SK_Y2_IMR_ASF			0x20000000
+#define SK_Y2_IMR_BMU			0x40000000
+#define SK_Y2_IMR_HWERR			0x80000000
+
+#define SK_Y2_INTRS1	\
+	(SK_Y2_IMR_RX1_CHECK|SK_Y2_IMR_TX1_AS_CHECK \
+	|SK_Y2_IMR_MAC1|SK_Y2_IMR_PHY1)
+
+#define SK_Y2_INTRS2	\
+	(SK_Y2_IMR_RX2_CHECK|SK_Y2_IMR_TX2_AS_CHECK \
+	|SK_Y2_IMR_MAC2|SK_Y2_IMR_PHY2)
 
 /* SK_IESR register */
 #define SK_IESR_PAR_RX2			0x00000001
@@ -343,8 +374,9 @@
 #define SK_YUKON_EC_U_REV_A0	0x1
 #define SK_YUKON_EC_U_REV_A1	0x2
 
-#define SK_IMCTL_STOP	0x02
-#define SK_IMCTL_START	0x04
+#define SK_IMCTL_IRQ_CLEAR	0x01
+#define SK_IMCTL_STOP		0x02
+#define SK_IMCTL_START		0x04
 
 /* Number of ticks per usec for interrupt moderation */
 #define SK_IMTIMER_TICKS_GENESIS	53
@@ -1170,7 +1202,41 @@
 #define SK_DPT_TTEST_OFF	0x0002	/* Test Mode Off */
 #define SK_DPT_TTEST_ON		0x0004	/* Test Mode On */
 
-/* Block 29 -- reserved */
+#define SK_Y2_ASF_CSR		0x0e68
+
+#define SK_Y2_ASF_RESET		0x08
+
+#define SK_Y2_LEV_ITIMERINIT	0x0eb0
+#define SK_Y2_LEV_ITIMERCTL	0x0eb8
+#define SK_Y2_TX_ITIMERINIT	0x0ec0
+#define SK_Y2_TX_ITIMERCTL	0x0ec8
+#define SK_Y2_ISR_ITIMERINIT	0x0ed0
+#define SK_Y2_ISR_ITIMERCTL	0x0ed8
+
+/* Block 29 -- Status BMU (Yukon-2 only) */
+#define SK_STAT_BMU_CSR		0x0e80
+#define SK_STAT_BMU_LIDX	0x0e84
+#define SK_STAT_BMU_ADDRLO	0x0e88
+#define SK_STAT_BMU_ADDRHI	0x0e8c
+#define SK_STAT_BMU_TXA1_RIDX	0x0e90
+#define SK_STAT_BMU_TXS1_RIDX	0x0e92
+#define SK_STAT_BMU_TXA2_RIDX	0x0e94
+#define SK_STAT_BMU_TXS2_RIDX	0x0e96
+#define SK_STAT_BMU_TX_THRESH	0x0e98
+#define SK_STAT_BMU_PUTIDX	0x0e9c
+#define SK_STAT_BMU_FIFOWP	0x0ea0
+#define SK_STAT_BMU_FIFORP	0x0ea4
+#define SK_STAT_BMU_FIFORSP	0x0ea6
+#define SK_STAT_BMU_FIFOLV	0x0ea8
+#define SK_STAT_BMU_FIFOSLV	0x0eaa
+#define SK_STAT_BMU_FIFOWM	0x0eac
+#define SK_STAT_BMU_FIFOIWM	0x0ead
+
+#define SK_STAT_BMU_RESET	0x00000001
+#define SK_STAT_BMU_UNRESET	0x00000002
+#define SK_STAT_BMU_OFF		0x00000004
+#define SK_STAT_BMU_ON		0x00000008
+#define SK_STAT_BMU_IRQ_CLEAR	0x00000010
 
 /* Block 30 -- GMAC/GPHY Control Registers (Yukon Only)*/
 #define SK_GMAC_CTRL		0x0f00	/* GMAC Control Register */
@@ -1474,6 +1540,45 @@ struct sk_tx_desc {
 #define SK_TX_RING_CNT		512
 #define SK_RX_RING_CNT		256
 
+struct msk_rx_desc {
+	u_int32_t		sk_addr;
+	u_int16_t		sk_len;
+	u_int8_t		sk_ctl;
+	u_int8_t		sk_opcode;
+} __packed;
+
+#define SK_Y2_RXOPC_BUFFER	0x40
+#define SK_Y2_RXOPC_PACKET	0x41
+#define SK_Y2_RXOPC_OWN		0x80
+
+struct msk_tx_desc {
+	u_int32_t		sk_addr;
+	u_int16_t		sk_len;
+	u_int8_t		sk_ctl;
+	u_int8_t		sk_opcode;
+} __packed;
+
+#define SK_Y2_TXCTL_LASTFRAG	0x80
+
+#define SK_Y2_TXOPC_BUFFER	0x40
+#define SK_Y2_TXOPC_PACKET	0x41
+#define SK_Y2_TXOPC_OWN		0x80
+
+struct msk_status_desc {
+	u_int32_t		sk_status;
+	u_int16_t		sk_len;
+	u_int8_t		sk_link;
+	u_int8_t		sk_opcode;
+} __packed;
+
+#define SK_Y2_STOPC_RXSTAT	0x60
+#define SK_Y2_STOPC_TXSTAT	0x68
+#define SK_Y2_STOPC_OWN		0x80
+
+#define MSK_TX_RING_CNT		512
+#define MSK_RX_RING_CNT		512
+#define MSK_STATUS_RING_CNT	2048
+
 /*
  * Jumbo buffer stuff. Note that we must allocate more jumbo
  * buffers than there are descriptors in the receive ring. This
@@ -1493,6 +1598,11 @@ struct sk_tx_desc {
 #define SK_JPAGESZ	PAGE_SIZE
 #define SK_RESID	(SK_JPAGESZ - (SK_JLEN * SK_JSLOTS) % SK_JPAGESZ)
 #define SK_JMEM		((SK_JLEN * SK_JSLOTS) + SK_RESID)
+
+#define MSK_JSLOTS		((MSK_RX_RING_CNT / 2) * 3)
+
+#define MSK_RESID	(SK_JPAGESZ - (SK_JLEN * MSK_JSLOTS) % SK_JPAGESZ)
+#define MSK_JMEM	((SK_JLEN * MSK_JSLOTS) + MSK_RESID)
 
 #define SK_MAXUNIT	256
 #define SK_TIMEOUT	1000

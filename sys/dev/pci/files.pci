@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.214 2006/08/03 08:45:03 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.215 2006/08/16 21:06:23 kettenis Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -436,6 +436,13 @@ attach	skc at pci
 device	sk: ether, ifnet, mii, ifmedia
 attach	sk at skc
 file	dev/pci/if_sk.c			skc | sk
+
+# Marvell Yukon-2
+device	mskc {}
+attach	mskc at pci
+device	msk: ether, ifnet, mii, ifmedia
+attach	msk at mskc
+file	dev/pci/if_msk.c		mskc | msk
 
 # PCI "universal" communication device driver, for PCI com, lpt, etc. ports
 # (see documentation in the driver for what, exactly, should be supported)
