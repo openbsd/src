@@ -1609,6 +1609,7 @@
 ./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/ubt.0
 ./usr/share/man/cat4/ucom.0
+./usr/share/man/cat4/ucycom.0
 ./usr/share/man/cat4/udav.0
 ./usr/share/man/cat4/udcf.0
 ./usr/share/man/cat4/udp.0
