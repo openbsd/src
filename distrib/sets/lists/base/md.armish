@@ -18,8 +18,9 @@
 ./etc/firmware/ral-license
 ./etc/firmware/ral-rt2561
 ./etc/firmware/ral-rt2561s
-./etc/firmware/ral-rt2573
 ./etc/firmware/ral-rt2661
+./etc/firmware/rum-license
+./etc/firmware/rum-rt2573
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-licence
 ./sbin/fdisk

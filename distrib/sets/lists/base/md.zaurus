@@ -15,6 +15,8 @@
 ./etc/firmware/atu-rfmd2958smc-int
 ./etc/firmware/kue
 ./etc/firmware/kue-license
+./etc/firmware/rum-license
+./etc/firmware/rum-rt2573
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
