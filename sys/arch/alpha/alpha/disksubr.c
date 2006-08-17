@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.50 2006/08/17 10:34:14 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.51 2006/08/17 19:02:15 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -191,7 +191,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	if (msg)
 		*lp = fallbacklabel;
 
-done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
