@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.20 2006/08/13 13:38:17 mk Exp $ */
+/* $OpenBSD: cpu.c,v 1.21 2006/08/17 22:22:08 mk Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -183,7 +183,7 @@ struct cputable_struct {
  *
  * Right before calling uvm_scheduler(), main() calls, on proc0's
  * context, cpu_boot_secondary_processors().  This is our key to
- * actually spin up the additional processor's we've found.  We
+ * actually spin up the additional processors we've found.  We
  * run through our cpu_info[] array looking for secondary processors
  * with idle PCBs, and spin them up.
  *
