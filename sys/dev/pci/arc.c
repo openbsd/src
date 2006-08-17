@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.21 2006/08/17 12:16:35 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.22 2006/08/17 12:31:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -33,8 +33,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-#define ARC_DEBUG
 
 #ifdef ARC_DEBUG
 #define ARC_D_INIT	(1<<0)
@@ -746,8 +744,11 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wlen, void *rptr,
 {
 	u_int8_t			rwbuf[ARC_REG_IOC_RWBUF_MAXLEN];
 	u_int8_t			*wbuf = wptr, *rbuf = rptr;
-	int				wdone = 0, rdone = 0, i;
+	int				wdone = 0, rdone = 0;
 	u_int32_t			reg, rwlen;
+#ifdef ARC_DEBUG
+	int				i;
+#endif
 
 	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n", DEVNAME(sc),
 	    wlen, rlen);
