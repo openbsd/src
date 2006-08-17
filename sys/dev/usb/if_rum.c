@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.31 2006/08/16 16:08:05 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.32 2006/08/17 08:32:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -18,7 +18,7 @@
  */
 
 /*-
- * Ralink Technology RT2501USB chipset driver
+ * Ralink Technology RT2501USB/RT2601USB chipset driver
  * http://www.ralinktech.com/
  */
 
@@ -214,7 +214,7 @@ void
 rum_attachhook(void *xsc)
 {
 	struct rum_softc *sc = xsc;
-	const char *name = "ral-rt2573";
+	const char *name = "rum-rt2573";
 	u_char *ucode;
 	size_t size;
 	int error;
@@ -800,7 +800,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		 * This should not happen since we did not request to receive
 		 * those frames when we filled RT2573_TXRX_CSR0.
 		 */
-		DPRINTF(/*5,*/ ("CRC error\n"));
+		DPRINTFN(5, ("CRC error\n"));
 		ifp->if_ierrors++;
 		goto skip;
 	}
@@ -1895,7 +1895,7 @@ rum_read_eeprom(struct rum_softc *sc)
 	rum_eeprom_read(sc, RT2573_EEPROM_TXPOWER, sc->txpow, 14);
 #ifdef RUM_DEBUG
 	for (i = 0; i < 14; i++)
-		DPRINTF(("Channel=%d Tx power=%d\n", i,  sc->txpow[i]));
+		DPRINTF(("Channel=%d Tx power=%d\n", i + 1,  sc->txpow[i]));
 #endif
 
 	/* read default values for BBP registers */
@@ -2197,8 +2197,8 @@ rum_prepare_beacon(struct rum_softc *sc)
 	rum_write_multi(sc, RT2573_HW_BEACON_BASE0, (uint8_t *)&desc, 24);
 
 	/* copy beacon header and payload into NIC memory */
-	rum_write_multi(sc, RT2573_HW_BEACON_BASE0 + 24,
-	    mtod(m0, uint8_t *), m0->m_pkthdr.len);
+	rum_write_multi(sc, RT2573_HW_BEACON_BASE0 + 24, mtod(m0, uint8_t *),
+	    m0->m_pkthdr.len);
 
 	m_freem(m0);
 	return 0;
