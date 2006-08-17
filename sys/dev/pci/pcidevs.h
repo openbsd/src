@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1131 2006/08/09 03:57:51 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1132 2006/08/17 07:19:45 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -278,6 +278,7 @@
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
+#define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_NETERION	0x17d5		/* Neterion */
 #define	PCI_VENDOR_INPROCOMM	0x17fe		/* INPROCOMM */

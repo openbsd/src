@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1131 2006/08/09 03:57:51 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1132 2006/08/17 07:19:45 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -12945,6 +12945,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
+	},
+	{
+	    PCI_VENDOR_I4,
+	    "I4",
 	},
 	{
 	    PCI_VENDOR_ARECA,
