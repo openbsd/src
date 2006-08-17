@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.34 2005/11/15 14:43:07 millert Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.35 2006/08/17 23:52:06 ray Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.34 2005/11/15 14:43:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.35 2006/08/17 23:52:06 ray Exp $";
 #endif /* not lint */
 
 #include <sys/limits.h>
@@ -88,14 +88,14 @@ main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
 	struct sigaction sa;
-	int cc;
+	ssize_t cc;
 	socklen_t fromlen;
 	char msgbuf[100];
 	sigset_t sigset;
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) == -1) {
 		(void)fprintf(stderr,
 		    "comsat: getsockname: %s.\n", strerror(errno));
 		exit(1);
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
 	}
-	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) < 0) {
+	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) == -1) {
 		syslog(LOG_ERR, "open: %s: %m", _PATH_UTMP);
 		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
@@ -174,7 +174,7 @@ void
 doreadutmp(void)
 {
 	static u_int utmpsize;		/* last malloced size for utmp */
-	static u_int utmpmtime;		/* last modification time for utmp */
+	static time_t utmpmtime;	/* last modification time for utmp */
 	struct stat statbf;
 
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
@@ -200,10 +200,10 @@ doreadutmp(void)
 			utmp = u;
 			utmpsize = nutmpsize;
 		}
-		(void)lseek(uf, (off_t)0, SEEK_SET);
-		nutmp = read(uf, utmp, (size_t)statbf.st_size)/sizeof(struct utmp);
+		(void)lseek(uf, 0, SEEK_SET);
+		nutmp = read(uf, utmp, statbf.st_size)/sizeof(struct utmp);
 	}
-	(void)alarm((u_int)15);
+	(void)alarm(15);
 }
 
 void
@@ -253,7 +253,7 @@ notify(struct utmp *utp, off_t offset)
 	if (fork())
 		return;
 	(void)signal(SIGALRM, SIG_DFL);
-	(void)alarm((u_int)30);
+	(void)alarm(30);
 	if ((tp = fopen(tty, "w")) == NULL) {
 		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
 		_exit(1);
