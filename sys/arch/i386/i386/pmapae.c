@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.3 2006/05/19 20:53:31 brad Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.4 2006/08/17 17:09:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -364,7 +364,7 @@
  * is a void function.
  *
  * [B] new page tables pages (PTP)
- * 	call uvm_pagealloc()
+ * 	call pae_pagealloc()
  * 		=> success: zero page, add to pm_pdir
  * 		=> failure: we are out of free vm_pages, let pmap_enter()
  *		   tell UVM about it.
@@ -588,6 +588,13 @@ extern caddr_t pmap_csrcp, pmap_cdstp, pmap_zerop, pmap_ptpp;
 extern int pmap_pg_g;
 extern struct pmap_head pmaps;
 extern struct pmap *pmaps_hand;
+
+/*
+ * a towards larger memory prioritised version opf uvm_pagealloc()
+ */
+#define	pae_pagealloc(obj, off, anon, flags) \
+    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
+	UVM_PGA_STRAT_FALLBACK, VM_FREELIST_ABOVE4G)
 
 /*
  * local prototypes
@@ -830,7 +837,7 @@ pmap_bootstrap_pae()
 	for (va = KERNBASE, eva = va + (nkpde << 22);
 	    va < eva; va += PAGE_SIZE) {
 		if (!pmap_valid_entry(PDE(kpm, pdei(va)))) {
-			ptp = uvm_pagealloc(&kpm->pm_obj, va, NULL,
+			ptp = pae_pagealloc(&kpm->pm_obj, va, NULL,
 			    UVM_PGA_ZERO);
 			ptaddr = VM_PAGE_TO_PHYS(ptp);
 			PDE(kpm, pdei(va)) = ptaddr | PG_KW | PG_V;
@@ -861,7 +868,6 @@ pmap_bootstrap_pae()
 		nkptp_max = 2048 - PDSLOT_KERN - 4;
 		vm_max_address = (PDSLOT_PTE << PDSHIFT) +
 		    (PDSLOT_PTE << PGSHIFT);
-		avail_end = avail_end2;
 
 		pmap_pte_set_p = pmap_pte_set_pae;
 		pmap_pte_setbits_p = pmap_pte_setbits_pae;
@@ -1007,7 +1013,7 @@ pmap_alloc_ptp_pae(struct pmap *pmap, int pde_index, boolean_t just_try)
 {
 	struct vm_page *ptp;
 
-	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
+	ptp = pae_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (ptp == NULL) {
 		if (just_try)
