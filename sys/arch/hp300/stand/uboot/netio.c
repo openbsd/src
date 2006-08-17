@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.2 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: netio.c,v 1.3 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: netio.c,v 1.5 1997/01/30 10:32:56 thorpej Exp $	*/
 
 /*
@@ -82,17 +82,20 @@ static	char input_line[100];
 /* Why be any different? */
 #define SUN_BOOTPARAMS
 
+int	netclose(struct open_file *);
+int	netmountroot(struct open_file *, char *);
+int	netopen(struct open_file *, char *);
+int	netstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-netopen(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+netopen(struct open_file *f, char *devname)
 {
 	int error = 0;
-	
+
 	/* On first open, do netif open, mount, etc. */
 	if (open_count == 0) {
 		/* Find network interface. */
@@ -107,8 +110,7 @@ netopen(f, devname)
 }
 
 int
-netclose(f)
-	struct open_file *f;
+netclose(struct open_file *f)
 {
 	/* On last close, do netif close, etc. */
 	if (open_count > 0)
@@ -119,13 +121,8 @@ netclose(f)
 }
 
 int
-netstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+netstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 
 	*rsize = size;
@@ -133,9 +130,7 @@ netstrategy(devdata, func, dblk, size, v_buf, rsize)
 }
 
 int
-netmountroot(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+netmountroot(struct open_file *f, char *devname)
 {
 	int error;
 	struct iodesc *d;
@@ -157,7 +152,7 @@ netmountroot(f, devname)
 
  get_my_netmask:
 		printf("My netmask? ");
-		bzero(input_line, sizeof(input_line)); 
+		bzero(input_line, sizeof(input_line));
 		gets(input_line);
 		if ((netmask = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
@@ -167,7 +162,7 @@ netmountroot(f, devname)
 
  get_my_gateway:
 		printf("My gateway? ");
-		bzero(input_line, sizeof(input_line)); 
+		bzero(input_line, sizeof(input_line));
 		gets(input_line);
 		if ((gateip.s_addr = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
@@ -177,7 +172,7 @@ netmountroot(f, devname)
 
  get_server_ip:
 		printf("Server IP address? ");
-		bzero(input_line, sizeof(input_line)); 
+		bzero(input_line, sizeof(input_line));
 		gets(input_line);
 		if ((rootip.s_addr = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
@@ -187,7 +182,7 @@ netmountroot(f, devname)
 
  get_server_path:
 		printf("Server path? ");
-		bzero(rootpath, sizeof(rootpath)); 
+		bzero(rootpath, sizeof(rootpath));
 		gets(rootpath);
 		if (rootpath[0] == '\0' || rootpath[0] == '\n')
 			goto get_server_path;

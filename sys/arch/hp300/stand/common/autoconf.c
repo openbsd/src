@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 2005/12/31 17:59:47 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.12 1997/01/30 10:32:51 thorpej Exp $	*/
 
 /*
@@ -43,9 +43,15 @@
 #include <sys/reboot.h>
 
 #include "samachdep.h"
+#include "consdefs.h"
 #include "rominfo.h"
 #include "device.h"
 #include "grfreg.h"
+
+void	configure(void);
+void	find_devs(void);
+u_long	msustobdev(void);
+void	printrominfo(void);
 
 /*
  * Mapping of ROM MSUS types to BSD major device numbers
@@ -70,6 +76,7 @@ extern int internalhpib;
 void	find_devs(void);
 
 #ifdef PRINTROMINFO
+void
 printrominfo()
 {
 	struct rominfo *rp = (struct rominfo *)ROMADDR;
@@ -84,8 +91,6 @@ printrominfo()
 void
 configure()
 {
-	u_long msustobdev();
-
 	switch (machineid) {
 	case HP_320:
 	case HP_330:
@@ -143,7 +148,7 @@ msustobdev()
 {
 	struct rominfo *rp = (struct rominfo *) ROMADDR;
 	u_long bdev = 0;
-	register struct hp_hw *hw;
+	struct hp_hw *hw;
 	int sc, type, ctlr, slave, punit;
 
 	sc = (rp->msus >> 8) & 0xFF;
@@ -190,8 +195,8 @@ find_devs()
 {
 	short sc, sctop;
 	u_char *id_reg;
-	register caddr_t addr;
-	register struct hp_hw *hw;
+	caddr_t addr;
+	struct hp_hw *hw;
 
 	hw = sc_table;
 	sctop = machineid == HP_320 ? 32 : 256;

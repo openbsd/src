@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.7 2006/04/14 21:05:44 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.8 2006/08/17 06:31:10 miod Exp $	*/
 
 /*
  * Record major changes in the boot code here, and increment the version
@@ -24,6 +24,8 @@
  *			and use the same logic to pick the console on 425e).
  *
  * 2.8			TurboVRX frame buffer support.
+ *
+ * 2.9			SGC frame buffers supports, bug fixes and code cleanup
  */
 
-const char version[] = "2.8";
+const char version[] = "2.9";

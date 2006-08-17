@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.7 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.8 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.2 1997/10/04 17:20:15 thorpej Exp $	*/
 
 /*-
@@ -75,20 +75,18 @@
 
 #ifdef APCICONSOLE
 #include <sys/param.h>
-#include <dev/cons.h>
 
 #include <hp300/dev/frodoreg.h>		/* for APCI offsets */
 #include <hp300/dev/apcireg.h>		/* for register map */
 #include <hp300/dev/dcareg.h>		/* for register bits */
 
-#include "consdefs.h"
 #include "samachdep.h"
+#include "consdefs.h"
 
 struct apciregs *apcicnaddr = 0;
 
 void
-apciprobe(cp)
-	struct consdev *cp;
+apciprobe(struct consdev *cp)
 {
 	volatile u_int8_t *frodoregs;
 
@@ -111,13 +109,10 @@ apciprobe(cp)
 		cp->cn_pri = CN_REMOTE;
 	else
 		cp->cn_pri = CN_NORMAL;
-
-	curcons_scode = CONSCODE_INVALID;
 }
 
 void
-apciinit(cp)
-	struct consdev *cp;
+apciinit(struct consdev *cp)
 {
 	struct apciregs *apci = (struct apciregs *)apcicnaddr;
 
@@ -131,12 +126,11 @@ apciinit(cp)
 }
 
 /* ARGSUSED */
-#ifndef SMALL
 int
-apcigetchar(dev)
-	dev_t dev;
+apcigetchar(dev_t dev)
 {
-	register struct apciregs *apci = apcicnaddr;
+#ifndef SMALL
+	struct apciregs *apci = apcicnaddr;
 	short stat;
 	int c;
 
@@ -144,21 +138,14 @@ apcigetchar(dev)
 		return (0);
 	c = apci->ap_data;
 	return (c);
-}
 #else
-int
-apcigetchar(dev)
-	dev_t dev;
-{
 	return (0);
-}
 #endif
+}
 
 /* ARGSUSED */
 void
-apciputchar(dev, c)
-	dev_t dev;
-	int c;
+apciputchar(dev_t dev, int c)
 {
 	struct apciregs *apci = apcicnaddr;
 	int timo;

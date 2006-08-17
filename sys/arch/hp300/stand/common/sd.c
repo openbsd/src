@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -49,8 +49,6 @@
 #include <lib/libsa/stand.h>
 
 #include "samachdep.h"
-
-#define _IOCTL_
 #include "scsireg.h"
 
 struct	disklabel sdlabel;
@@ -72,11 +70,17 @@ struct	sd_softc {
 
 #define	SDRETRY		2
 
+int	sdclose(struct open_file *);
+int	sdgetinfo(struct sd_softc *);
+int	sdinit(int, int);
+int	sdopen(struct open_file *, int, int, int);
+void	sdreset(int, int);
+int	sdstrategy(struct sd_softc *, int, daddr_t, size_t, void *, size_t *);
+
 int
-sdinit(ctlr, unit)
-	int ctlr, unit;
+sdinit(int ctlr, int unit)
 {
-	register struct sd_softc *ss = &sd_softc[ctlr][unit];
+	struct sd_softc *ss = &sd_softc[ctlr][unit];
 	u_char stat;
 	int capbuf[2];
 
@@ -110,21 +114,19 @@ sdinit(ctlr, unit)
 }
 
 void
-sdreset(ctlr, unit)
-	int ctlr, unit;
+sdreset(int ctlr, int unit)
 {
 }
 
 char io_buf[MAXBSIZE];
 
 int
-sdgetinfo(ss)
-	register struct sd_softc *ss;
+sdgetinfo(struct sd_softc *ss)
 {
-	register struct sdminilabel *pi = &ss->sc_pinfo;
-	register struct disklabel *lp = &sdlabel;
-	char *msg, *getdisklabel();
-	int sdstrategy(), err, savepart;
+	struct sdminilabel *pi = &ss->sc_pinfo;
+	struct disklabel *lp = &sdlabel;
+	char *msg;
+	int err, savepart;
 	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
@@ -141,7 +143,7 @@ sdgetinfo(ss)
 		printf("sdgetinfo: sdstrategy error %d\n", err);
 		return(0);
 	}
-	
+
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
 		printf("sd(%d,%d,%d): WARNING: %s, ",
@@ -166,18 +168,16 @@ sdgetinfo(ss)
 }
 
 int
-sdopen(f, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+sdopen(struct open_file *f, int ctlr, int unit, int part)
 {
-	register struct sd_softc *ss;
+	struct sd_softc *ss;
 
 #ifdef SD_DEBUG
 	if (debug)
 	printf("sdopen: ctlr=%d unit=%d part=%d\n",
 	    ctlr, unit, part);
 #endif
-	
+
 	if (ctlr >= NSCSI || scsialive(ctlr) == 0)
 		return (EADAPT);
 	if (unit >= NSD)
@@ -200,8 +200,7 @@ sdopen(f, ctlr, unit, part)
 }
 
 int
-sdclose(f)
-	struct open_file *f;
+sdclose(struct open_file *f)
 {
 	struct sd_softc *ss = f->f_devdata;
 
@@ -216,17 +215,12 @@ sdclose(f)
 }
 
 int
-sdstrategy(ss, func, dblk, size, v_buf, rsize)
-	register struct sd_softc *ss;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+sdstrategy(struct sd_softc *ss, int func, daddr_t dblk, size_t size,
+    void *v_buf, size_t *rsize)
 {
 	char *buf = v_buf;
-	register int ctlr = ss->sc_ctlr;
-	register int unit = ss->sc_unit;
+	int ctlr = ss->sc_ctlr;
+	int unit = ss->sc_unit;
 	u_int nblk = size >> ss->sc_blkshift;
 	daddr_t blk;
 	char stat;
@@ -261,6 +255,6 @@ retry:
 		goto retry;
 	}
 	*rsize = size;
-	
+
 	return(0);
 }

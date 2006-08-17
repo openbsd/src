@@ -1,11 +1,11 @@
-/*	$OpenBSD: devopen.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
  *  Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -16,7 +16,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -36,6 +36,12 @@
 #include <lib/libsa/stand.h>
 
 #include "samachdep.h"
+
+int	atoi(char *);
+int	devlookup(const char *, int);
+int	devopen(struct open_file *, const char *, char **);
+int	devparse(const char *, int *, int *, int *, int *, int *, char **);
+void	usage(void);
 
 u_int opendev;
 
@@ -64,48 +70,52 @@ devlookup(const char *d, int len)
 	struct devsw *dp = devsw;
 	int i;
 
-    for (i = 0; i < ndevs; i++, dp++) {
-	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0) {
-	    /*
-	     * Set the filesystem and startup up according to the device
-	     * being opened.
-	     */
-	    switch (i) {
-	    case 0:	/* ct */
-		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
-		break;
+	for (i = 0; i < ndevs; i++, dp++) {
+		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0) {
+			/*
+			 * Set the filesystem and startup up according to
+			 * the device being opened.
+			 */
+			switch (i) {
+			case 0:	/* ct */
+				bcopy(file_system_rawfs, file_system,
+				    sizeof(struct fs_ops));
+				break;
 
-	    case 2:	/* hd */
-		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-		break;
+			case 2:	/* hd */
+				bcopy(file_system_ufs, file_system,
+				    sizeof(struct fs_ops));
+				break;
 
-	    case 4:	/* sd */
-		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-		bcopy(file_system_cd9660, &file_system[1],
-		    sizeof(struct fs_ops));
-		nfsys = 2;
-		break;
+			case 4:	/* sd */
+				bcopy(file_system_ufs, file_system,
+				    sizeof(struct fs_ops));
+				bcopy(file_system_cd9660, &file_system[1],
+				    sizeof(struct fs_ops));
+				nfsys = 2;
+				break;
 
-	    case 6:	/* le */
-		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
-		break;
+			case 6:	/* le */
+				bcopy(file_system_nfs, file_system,
+				    sizeof(struct fs_ops));
+				break;
 
-	    default:
-		/* Agh!  What happened?! */
-		goto bad;
-	    }
-	    return(i);
+			default:
+				/* Agh!  What happened?! */
+				goto bad;
+			}
+			return(i);
+		}
 	}
-    }
 
- bad:
-    printf("No such device - Configured devices are:\n");
-    for (dp = devsw, i = 0; i < ndevs; i++, dp++)
-	if (dp->dv_name)
-	    printf(" %s", dp->dv_name);
-    printf("\n");
-    errno = ENODEV;
-    return(-1);
+bad:
+	printf("No such device - Configured devices are:\n");
+	for (dp = devsw, i = 0; i < ndevs; i++, dp++)
+		if (dp->dv_name)
+			printf(" %s", dp->dv_name);
+	printf("\n");
+	errno = ENODEV;
+	return(-1);
 }
 
 /*
@@ -116,95 +126,93 @@ devlookup(const char *d, int len)
  *    dev   unit  part
  */
 int
-devparse(fname, dev, adapt, ctlr, unit, part, file)
-	const char *fname;
-	int *dev, *adapt, *ctlr, *unit, *part;
-	char **file;
+devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
+    int *part, char **file)
 {
-    int i;
-    char *s, *args[4];
+	int i;
+	char *s, *args[4];
 
-    /* get device name and make lower case */
-    for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
-	if (isupper(*s)) *s = tolower(*s);
+	/* get device name and make lower case */
+	for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
+		if (isupper(*s)) *s = tolower(*s);
 
-    /* first form */
-    if (*s == '(') {
-	/* lookup device and get index */
-	if ((*dev = devlookup(fname, s - fname)) < 0)
-	    goto baddev;
+	/* first form */
+	if (*s == '(') {
+		/* lookup device and get index */
+		if ((*dev = devlookup(fname, s - fname)) < 0)
+			goto baddev;
 
-	/* tokenize device ident */
-	args[0] = ++s;
-	for (args[0] = s, i = 1; *s && *s != ')'; s++) {
-	    if (*s == ',')
-		args[i++] = ++s;
+		/* tokenize device ident */
+		args[0] = ++s;
+		for (args[0] = s, i = 1; *s && *s != ')'; s++) {
+			if (*s == ',')
+				args[i++] = ++s;
+		}
+		switch(i) {
+		case 4:
+			*adapt = atoi(args[0]);
+			*ctlr  = atoi(args[1]);
+			*unit  = atoi(args[2]);
+			*part  = atoi(args[3]);
+			break;
+		case 3:
+			*ctlr  = atoi(args[0]);
+			*unit  = atoi(args[1]);
+			*part  = atoi(args[2]);
+			break;
+		case 2:
+			*unit  = atoi(args[0]);
+			*part  = atoi(args[1]);
+			break;
+		case 1:
+			*part  = atoi(args[0]);
+			break;
+		case 0:
+			break;
+		}
+		*file = ++s;
 	}
-	switch(i) {
-	case 4:
-	    *adapt = atoi(args[0]);
-	    *ctlr  = atoi(args[1]);
-	    *unit  = atoi(args[2]);
-	    *part  = atoi(args[3]);
-	    break;
-	case 3:
-	    *ctlr  = atoi(args[0]);
-	    *unit  = atoi(args[1]);
-	    *part  = atoi(args[2]);
-	    break;
-	case 2:
-	    *unit  = atoi(args[0]);
-	    *part  = atoi(args[1]);
-	    break;
-	case 1:
-	    *part  = atoi(args[0]);
-	    break;
-	case 0:
-	    break;
+
+	/* second form */
+	else if (*s == ':') {
+		int temp;
+
+		/* isolate device */
+		for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
+
+		/* lookup device and get index */
+		if ((*dev = devlookup(fname, s - fname)) < 0)
+			goto baddev;
+
+		/* isolate unit */
+		if ((temp = atoi(s)) > 255)
+			goto bad;
+		*adapt = temp / 8;
+		*ctlr = temp % 8;
+		for (; isdigit(*s); s++);
+
+		/* translate partition */
+		if (!ispart(*s))
+			goto bad;
+
+		*part = *s++ - 'a';
+		if (*s != ':')
+			goto bad;
+		*file = ++s;
 	}
-	*file = ++s;
-    }
 
-    /* second form */
-    else if (*s == ':') {
-	int temp;
+	/* no device present */
+	else
+		*file = (char *)fname;
 
-	/* isolate device */
-	for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
-	
-	/* lookup device and get index */
-	if ((*dev = devlookup(fname, s - fname)) < 0)
-	    goto baddev;
+	/* return the remaining unparsed part as the file to boot */
+	return(0);
 
-	/* isolate unit */
-	if ((temp = atoi(s)) > 255)
-	    goto bad;
-	*adapt = temp / 8;
-	*ctlr = temp % 8;
-	for (; isdigit(*s); s++);
-	
-	/* translate partition */
-	if (!ispart(*s))
-	    goto bad;
-	
-	*part = *s++ - 'a';
-	if (*s != ':')
-	    goto bad;
-	*file = ++s;
-    }
+bad:
+	usage();
 
-    /* no device present */
-    else
-	*file = (char *)fname;
-
-    /* return the remaining unparsed part as the file to boot */
-    return(0);
-
- bad:
-    usage();
-
- baddev:
-    return(-1);
+baddev:
+	return(-1);
 }
 
 int
@@ -233,14 +241,14 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	case 2:		/* hd */
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-		break; 
+		break;
 
 	case 4:		/* sd */
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
 		bcopy(file_system_cd9660, &file_system[1],
 		    sizeof(struct fs_ops));
 		nfsys = 2;
-		break; 
+		break;
 
 	case 6:		/* le */
 		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
@@ -253,7 +261,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	}
 
 	dp = &devsw[dev];
-	
+
 	if (!dp->dv_open)
 		return(ENODEV);
 

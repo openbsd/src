@@ -1,11 +1,13 @@
-#	$OpenBSD: Makefile,v 1.5 2003/06/01 17:00:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2006/08/17 06:31:10 miod Exp $
 
 LIB=	kern
 
 .PATH:	${.CURDIR}/../../../../lib/libkern
 .PATH:	${.CURDIR}/../../../../lib/libkern/arch/m68k
 
-CFLAGS= -O2 -msoft-float -I${.CURDIR}/../include \
+.include "${.CURDIR}/../Makefile.inc"
+
+CFLAGS+=-I${.CURDIR}/../include \
 	-I${.CURDIR}/../../../..  -I${.CURDIR}/../../../../lib/libkern
 
 AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
@@ -14,8 +16,7 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 # kern routines
 SRCS=	__main.c ashrdi3.c divdi3.c qdivrem.c strlen.S strcmp.S \
 	strncmp.S umoddi3.c
-
-${OBJS}:	${.CURDIR}/../Makefile.inc
+SRCS+=	divsi3.S udivsi3.S modsi3.S umodsi3.S
 
 NOPROFILE=
 NOPIC=

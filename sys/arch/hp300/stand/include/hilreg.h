@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilreg.h,v 1.1 2005/01/19 17:09:32 miod Exp $	*/
+/*	$OpenBSD: hilreg.h,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: hilreg.h,v 1.6 1997/02/02 09:39:21 thorpej Exp $	*/
 
 /*
@@ -41,53 +41,22 @@
 
 #include <hp300/dev/iotypes.h>		/* XXX */
 
-#ifdef hp300
 struct	hil_dev {
 	char	hil_pad0;
 	vu_char	hil_data;
 	char	hil_pad1;
 	vu_char	hil_cmd;
+#define hil_stat hil_cmd
 };
 
 #define	HILADDR			((struct hil_dev *)IIOV(0x428000))
-#endif
 
-#ifdef hp800
-#ifdef hp700
-struct hil_dev {
-	vu_char	hil_rsthold;	/* (WO) reset hold (and Serial #3) */
-	vu_char	hil_resv1[2047];
-	vu_char	hil_data;	/* send/receive data to/from 8042 */
-	vu_char	hil_cmd;	/* status/control to/from 8042 */
-	vu_char	hil_resv2[1022];
-	vu_char	hil_rstrel;	/* (WO) reset release (and Serial #3) */
-
-};
-#else
-struct	hil_dev {
-	vu_int hil_data;
-	vu_int hil_pad;
-	vu_int hil_cmd;
-};
-#endif
-#endif
-#define hil_stat hil_cmd
-
-#if defined(hp300) || defined(hp700)
 #define READHILDATA(x)		((x)->hil_data)
 #define READHILSTAT(x)		((x)->hil_stat)
 #define READHILCMD(x)		((x)->hil_cmd)
 #define WRITEHILDATA(x, y)	((x)->hil_data = (y))
 #define WRITEHILSTAT(x, y)	((x)->hil_stat = (y))
 #define WRITEHILCMD(x, y)	((x)->hil_cmd  = (y))
-#else
-#define READHILDATA(x)		((x)->hil_data >> 24)
-#define READHILSTAT(x)		((x)->hil_stat >> 24)
-#define READHILCMD(x)		((x)->hil_cmd  >> 24)
-#define WRITEHILDATA(x, y)	((x)->hil_data = ((y) << 24))
-#define WRITEHILSTAT(x, y)	((x)->hil_stat = ((y) << 24))
-#define WRITEHILCMD(x, y)	((x)->hil_cmd  = ((y) << 24))
-#endif
 
 #define	HIL_BUSY		0x02
 #define	HIL_DATA_RDY		0x01
@@ -155,7 +124,7 @@ struct	hil_dev {
 /* HIL packet headers */
 #define	HIL_MOUSEDATA   0x2
 #define	HIL_KBDDATA     0x40
-  
+
 #define	HIL_MOUSEMOTION	0x02	/* mouse movement event */
 #define	HIL_KBDBUTTON	0x40	/* keyboard button event */
 #define	HIL_MOUSEBUTTON 0x40	/* mouse button event */
@@ -168,8 +137,14 @@ struct	hil_dev {
 #define	KBD_ARD		400	/* initial delay in msec (10 - 2560) */
 #define	KBD_ARR		60	/* rate (10 - 2550 msec, 2551 == off) */
 
-#ifdef hp300
 /* Magic */
 #define	KBDNMISTAT	((volatile char *)IIOV(0x478005))
 #define	KBDNMI		0x04
-#endif
+
+/* keyboard status */
+#define	KBD_CHARMASK	0x7F
+#define	KBD_CTRLSHIFT	0x8		/* key + CTRL + SHIFT */
+#define	KBD_CTRL	0x9		/* key + CTRL */
+#define	KBD_SHIFT	0xA		/* key + SHIFT */
+#define	KBD_KEY		0xB		/* key only */
+

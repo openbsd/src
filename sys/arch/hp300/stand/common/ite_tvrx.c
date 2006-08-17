@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_tvrx.c,v 1.1 2006/04/14 21:05:44 miod Exp $	*/
+/*	$OpenBSD: ite_tvrx.c,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,46 +39,36 @@
  *	@(#)ite_hy.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
-
 #ifdef ITECONSOLE
 #include <sys/param.h>
 
+#include "samachdep.h"
 #include "itevar.h"
-#include "itereg.h"
-
-#undef charX
-#define	charX(ip,c)	\
-	(((c) % (ip)->cpl) * ((((ip)->ftwidth + 7) / 8) * 8) + (ip)->fontx)
-
-/* this reuses most of the hyperion code */
-void	hyper_ite_fontinit(struct ite_data *);
-void	hyper_windowmove(struct ite_data *, int, int, int, int,
-	    int, int, int);
 
 void
-tvrx_init(ip)
-	register struct ite_data *ip;
+tvrx_init(struct ite_data *ip)
 {
 	int width;
 
+	ip->bmv = ite_dio_windowmove1bpp;
 	ite_fontinfo(ip);
 	width = ((ip->ftwidth + 7) / 8) * 8;
-	ip->cpl      = (ip->fbwidth - ip->dwidth) / width;
+	ip->cpl = (ip->fbwidth - ip->dwidth) / width;
 	ip->cblanky  = ip->fonty + ((128 / ip->cpl) +1) * ip->ftheight;
 
 	/*
 	 * Clear the framebuffer on all planes.
 	 */
-	hyper_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
+	ite_dio_windowmove1bpp(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth,
+	    RR_CLEAR);
 
-	hyper_ite_fontinit(ip);
+	ite_fontinit1bpp(ip);
 
 	/*
 	 * Stash the inverted cursor.
 	 */
-	hyper_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
-			 ip->cblanky, ip->cblankx, ip->ftheight,
-			 ip->ftwidth, RR_COPYINVERTED);
+	ite_dio_windowmove1bpp(ip, charY(ip, ' '), charX1bpp(ip, ' '),
+	    ip->cblanky, ip->cblankx, ip->ftheight, ip->ftwidth,
+	    RR_COPYINVERTED);
 }
 #endif

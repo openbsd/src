@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_rb.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: ite_rb.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: ite_rb.c,v 1.8 1996/03/03 04:23:38 thorpej Exp $	*/
 
 /*
@@ -39,28 +39,26 @@
  *	@(#)ite_rb.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
-
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 
+#include "samachdep.h"
 #include "itevar.h"
-#include "itereg.h"
 #include "grf_rbreg.h"
 
 #define REGBASE		((struct rboxfb *)(ip->regbase))
-#define WINDOWMOVER	rbox_windowmove
 
 void	rbox_windowmove(struct ite_data *, int, int, int, int,
 	    int, int, int);
 
 void
-rbox_init(ip)
-	struct ite_data *ip;
+rbox_init(struct ite_data *ip)
 {
 	int i;
-	
+
+	ip->bmv = rbox_windowmove;
+
 	rb_waitbusy(ip->regbase);
 	DELAY(3000);
 
@@ -71,7 +69,7 @@ rbox_init(ip)
 	REGBASE->vdrive = 0x0;
 
 	ite_fontinfo(ip);
-	
+
 	REGBASE->opwen = 0xFF;
 
 	/*
@@ -79,7 +77,7 @@ rbox_init(ip)
 	 */
 	rbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	rb_waitbusy(ip->regbase);
-	
+
 	for(i = 0; i < 16; i++) {
 		*(ip->regbase + 0x63c3 + i*4) = 0x0;
 		*(ip->regbase + 0x6403 + i*4) = 0x0;
@@ -92,7 +90,7 @@ rbox_init(ip)
 	}
 
 	REGBASE->rep_rule = 0x33;
-	
+
 	/*
 	 * I cannot figure out how to make the blink planes stop. So, we
 	 * must set both colormaps so that when the planes blink, and
@@ -115,8 +113,8 @@ rbox_init(ip)
  	REGBASE->blink = 0x00;
 	REGBASE->write_enable = 0x01;
 	REGBASE->opwen = 0x00;
-	
-	ite_fontinit(ip);
+
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Stash the inverted cursor.
@@ -127,68 +125,13 @@ rbox_init(ip)
 }
 
 void
-rbox_putc(ip, c, dy, dx, mode)
-	register struct ite_data *ip;
-        register int dy, dx;
-	int c, mode;
+rbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int func)
 {
-	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
-			dy * ip->ftheight, dx * ip->ftwidth,
-			ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-rbox_cursor(ip, flag)
-	register struct ite_data *ip;
-        register int flag;
-{
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	}
-	else
-		erase_cursor(ip)
-}
-
-void
-rbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	register int sy, sx, h, w;
-{
-	rbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth, 
-			h  * ip->ftheight, w  * ip->ftwidth,
-			RR_CLEAR);
-}
-
-void
-rbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_data *ip;
-        register int sy, count;
-        int dir, sx;
-{
-	register int dy = sy - count;
-	register int height = ip->rows - sy;
-
-	rbox_cursor(ip, ERASE_CURSOR);
-
-	rbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			dy * ip->ftheight, sx * ip->ftwidth,
-			height * ip->ftheight,
-			ip->cols * ip->ftwidth, RR_COPY);
-}
-
-void
-rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
-{
-	register struct rboxfb *rp = REGBASE;
+	struct rboxfb *rp = REGBASE;
 	if (h == 0 || w == 0)
 		return;
-	
+
 	rb_waitbusy(ip->regbase);
 	rp->rep_rule = func << 4 | func;
 	rp->source_y = sy;

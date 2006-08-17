@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.3 2005/12/31 17:59:47 miod Exp $	*/
+/*	$OpenBSD: cons.c,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: cons.c,v 1.2 1997/05/12 07:44:53 thorpej Exp $ */
 
 /*
@@ -40,10 +40,9 @@
  */
 
 #include <sys/param.h>
-#include <dev/cons.h>
 
-#include "consdefs.h"
 #include "samachdep.h"
+#include "consdefs.h"
 
 struct consdev constab[] = {
 #ifdef ITECONSOLE
@@ -61,27 +60,21 @@ struct consdev constab[] = {
 	{ 0 },
 };
 
-int	curcons_scode;	/* select code of device currently being probed */
-int	cons_scode;	/* final select code of console device */
-
 struct consdev *cn_tab;
 int noconsole;
 
 void
 cninit()
 {
-	register struct consdev *cp;
+	struct consdev *cp;
 
 	cn_tab = NULL;
 	noconsole = 1;
-	cons_scode = CONSCODE_INVALID;
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
 		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri)) {
+		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
 			cn_tab = cp;
-			cons_scode = curcons_scode;
-		}
 	}
 	if (cn_tab) {
 		(*cn_tab->cn_init)(cn_tab);
@@ -99,16 +92,13 @@ cngetc()
 	return(0);
 }
 
-int
+void
 cnputc(c)
 	int c;
 {
-
 	/* Note: the dev_t arguments are not used! */
 	if (userom)
 		romputchar(c);
 	else if (cn_tab)
 		(*cn_tab->cn_putc)(0, c);
-
-	return (0);
 }

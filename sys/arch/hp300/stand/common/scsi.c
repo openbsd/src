@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
@@ -52,30 +52,31 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
-#define _IOCTL_
+#include <lib/libsa/stand.h>
+
+#include "samachdep.h"
 #include "device.h"
 #include "scsireg.h"
 #include "scsivar.h"
 
-#include <lib/libsa/stand.h>
-
-#include "samachdep.h"
-
 struct	scsi_softc scsi_softc[NSCSI];
 
-void scsireset();
 int scsi_cmd_wait = 50000;	/* use the "real" driver init_wait value */
 int scsi_data_wait = 50000;	/* use the "real" driver init_wait value */
+
+void	scsiabort(struct scsi_softc *, volatile struct scsidevice *);
+void	scsireset(int);
+int	scsi_request_sense(int, int, u_char *, u_int);
 
 void
 scsiinit()
 {
 	extern struct hp_hw sc_table[];
-	register struct hp_hw *hw;
-	register struct scsi_softc *hs;
-	register int i;
+	struct hp_hw *hw;
+	struct scsi_softc *hs;
+	int i;
 	static int waitset = 0;
-	
+
 	i = 0;
 	for (hw = sc_table; i < NSCSI && hw < &sc_table[MAXCTLRS]; hw++) {
 		if (!HW_ISSCSI(hw))
@@ -100,8 +101,7 @@ scsiinit()
 }
 
 int
-scsialive(unit)
-	register int unit;
+scsialive(int unit)
 {
 	if (unit >= NSCSI || scsi_softc[unit].sc_alive == 0)
 		return (0);
@@ -109,11 +109,10 @@ scsialive(unit)
 }
 
 void
-scsireset(unit)
-	register int unit;
+scsireset(int unit)
 {
-	volatile register struct scsidevice *hd;
-	register struct scsi_softc *hs;
+	volatile struct scsidevice *hd;
+	struct scsi_softc *hs;
 	u_int i;
 
 	hs = &scsi_softc[unit];
@@ -154,20 +153,16 @@ scsireset(unit)
 
 
 void
-scsiabort(hs, hd)
-	register struct scsi_softc *hs;
-	volatile register struct scsidevice *hd;
+scsiabort(struct scsi_softc *hs, volatile struct scsidevice *hd)
 {
-	printf("scsi%d error: scsiabort\n", hs - scsi_softc);
+	printf("scsi%d error: scsiabort\n", (int)(hs - scsi_softc));
 
 	scsireset(hs - scsi_softc);
 	DELAY(1000000);
 }
 
 static int
-issue_select(hd, target, our_addr)
-	volatile register struct scsidevice *hd;
-	u_char target, our_addr;
+issue_select(volatile struct scsidevice *hd, u_char target, u_char our_addr)
 {
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
 		return (1);
@@ -187,10 +182,9 @@ issue_select(hd, target, our_addr)
 }
 
 static int
-wait_for_select(hd)
-	volatile register struct scsidevice *hd;
+wait_for_select(volatile struct scsidevice *hd)
 {
-	register int wait;
+	int wait;
 	u_char ints;
 
 	wait = scsi_data_wait;
@@ -204,11 +198,7 @@ wait_for_select(hd)
 }
 
 static int
-ixfer_start(hd, len, phase, wait)
-	volatile register struct scsidevice *hd;
-	int len;
-	u_char phase;
-	register int wait;
+ixfer_start(volatile struct scsidevice *hd, int len, u_char phase, int wait)
 {
 
 	hd->scsi_tch = len >> 16;
@@ -228,12 +218,9 @@ ixfer_start(hd, len, phase, wait)
 }
 
 static int
-ixfer_out(hd, len, buf)
-	volatile register struct scsidevice *hd;
-	int len;
-	register u_char *buf;
+ixfer_out(volatile struct scsidevice *hd, int len, u_char *buf)
 {
-	register int wait = scsi_data_wait;
+	int wait = scsi_data_wait;
 
 	for (; len > 0; --len) {
 		while (hd->scsi_ssts & SSTS_DREG_FULL) {
@@ -247,12 +234,9 @@ ixfer_out(hd, len, buf)
 }
 
 static int
-ixfer_in(hd, len, buf)
-	volatile register struct scsidevice *hd;
-	int len;
-	register u_char *buf;
+ixfer_in(volatile struct scsidevice *hd, int len, u_char *buf)
 {
-	register int wait = scsi_data_wait;
+	int wait = scsi_data_wait;
 
 	for (; len > 0; --len) {
 		while (hd->scsi_ssts & SSTS_DREG_EMPTY) {
@@ -271,19 +255,12 @@ ixfer_in(hd, len, buf)
 }
 
 static int
-scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
-	struct scsi_softc *hs;
-	int target;
-	u_char *cbuf;
-	int clen;
-	u_char *buf;
-	int len;
-	u_char xferphase;
+scsiicmd(struct scsi_softc *hs, int target, u_char *cbuf, int clen, u_char *buf,
+    int len, u_char xferphase)
 {
-	volatile register struct scsidevice *hd =
-				(struct scsidevice *)hs->sc_addr;
+	volatile struct scsidevice *hd = (struct scsidevice *)hs->sc_addr;
 	u_char phase, ints;
-	register int wait;
+	int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
 	if (issue_select(hd, target, hs->sc_scsi_addr))
@@ -338,7 +315,8 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 		case MESG_IN_PHASE:
 			if (ixfer_start(hd, sizeof(hs->sc_msg), phase, wait) ||
 			    !(hd->scsi_ssts & SSTS_DREG_EMPTY)) {
-				ixfer_in(hd, sizeof(hs->sc_msg), &hs->sc_msg);
+				ixfer_in(hd, sizeof(hs->sc_msg),
+				    (u_char *)&hs->sc_msg);
 				hd->scsi_scmd = SCMD_RST_ACK;
 			}
 			phase = BUS_FREE_PHASE;
@@ -349,7 +327,7 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 
 		default:
 			printf("scsi%d: unexpected scsi phase %d\n",
-			       hs - scsi_softc, phase);
+			    (int)(hs - scsi_softc), phase);
 			goto abort;
 		}
 #ifdef SLOWSCSI
@@ -382,52 +360,41 @@ out:
 }
 
 int
-scsi_test_unit_rdy(ctlr, slave)
-	int ctlr, slave;
+scsi_test_unit_rdy(int ctlr, int slave)
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
 
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), (u_char *)0, 0,
-			 STATUS_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    (u_char *)0, 0, STATUS_PHASE));
 }
 
 int
-scsi_request_sense(ctlr, slave, buf, len)
-	int ctlr, slave;
-	u_char *buf;
-	unsigned len;
+scsi_request_sense(int ctlr, int slave, u_char *buf, u_int len)
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
 
 	cdb.len = len;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_IN_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_IN_PHASE));
 }
 
 int
-scsi_read_capacity(ctlr, slave, buf, len)
-	int ctlr, slave;
-	u_char *buf;
-	unsigned len;
+scsi_read_capacity(int ctlr, int slave, u_char *buf, u_int len)
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb10 cdb = { CMD_READ_CAPACITY };
 
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_IN_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_IN_PHASE));
 }
 
 int
-scsi_tt_read(ctlr, slave, buf, len, blk, nblk)
-	int ctlr, slave;
-	u_char *buf;
-	u_int len;
-	daddr_t blk;
-	u_int nblk;
+scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
+    u_int nblk)
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
 
 	bzero(&cdb, sizeof(cdb));
@@ -438,19 +405,15 @@ scsi_tt_read(ctlr, slave, buf, len, blk, nblk)
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_IN_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_IN_PHASE));
 }
 
 int
-scsi_tt_write(ctlr, slave, buf, len, blk, nblk)
-	int ctlr, slave;
-	u_char *buf;
-	u_int len;
-	daddr_t blk;
-	u_int nblk;
+scsi_tt_write(int ctlr, int slave, u_char *buf, u_int len, daddr_t blk,
+    u_int nblk)
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
 
 	bzero(&cdb, sizeof(cdb));
@@ -461,6 +424,6 @@ scsi_tt_write(ctlr, slave, buf, len, blk, nblk)
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_OUT_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_OUT_PHASE));
 }

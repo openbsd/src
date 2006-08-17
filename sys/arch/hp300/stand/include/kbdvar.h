@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbdvar.h,v 1.3 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: kbdvar.h,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: kbdvar.h,v 1.1 1997/04/14 19:00:13 thorpej Exp $	*/
 
 /*-
@@ -52,15 +52,19 @@ struct kbdsw {
 
 extern struct kbdsw kbdsw[];
 
+int	kbdgetc(void);
+void	kbdinit(void);
+void	kbdnmi(void);
+
 #ifdef HIL_KEYBOARD
 int	hilkbd_getc(void);
-void	hilkbd_nmi(void);
 int	hilkbd_init(void);
+void	hilkbd_nmi(void);
 #endif
 
 #ifdef DOMAIN_KEYBOARD
 int	dnkbd_getc(void);
-void	dnkbd_nmi(void);
 int	dnkbd_init(void);
+void	dnkbd_nmi(void);
 #endif
 #endif /* ITECONSOLE */

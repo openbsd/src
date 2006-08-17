@@ -1,4 +1,4 @@
-/*	$OpenBSD: prf.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: prf.c,v 1.1 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: prf.c,v 1.5 1994/10/26 07:27:50 cgd Exp $	*/
 
 /*
@@ -32,10 +32,16 @@
  *	@(#)prf.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/param.h>
+
+#include <lib/libsa/stand.h>
+
+#include "consdefs.h"
+
 int
 getchar()
 {
-	register int c;
+	int c;
 
 	while((c = cngetc()) == 0)
 		;
@@ -48,26 +54,8 @@ getchar()
 	return(c);
 }
 
-int
-tgetchar()
-{
-	register int c;
-
-	if ((c = cngetc()) == 0)
-        	return(0);
-        
-	if (c == '\r')
-		c = '\n';
-	else if (c == ('c'&037)) {
-		panic("^C");
-		/* NOTREACHED */
-	}
-	return(c);
-}
-
 void
-putchar(c)
-	register int c;
+putchar(int c)
 {
 	cnputc(c);
 	if (c == '\n')

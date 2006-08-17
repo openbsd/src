@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfreg.h,v 1.1 2005/01/19 17:09:32 miod Exp $	*/
+/*	$OpenBSD: grfreg.h,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: grfreg.h,v 1.2 1994/10/26 07:24:09 cgd Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #define GID_TIGER      12
 #define GID_YGENESIS   13
 #define GID_HYPERION   14
+#define	GID_STI        42/* any value which is not a dio frame buffer, really */
 
 typedef unsigned char	grftype;
 

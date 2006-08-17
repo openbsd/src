@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.4 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,9 +42,11 @@ static char copyright[] =
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.4 2005/04/22 00:42:16 miod Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.5 2006/08/17 06:31:10 miod Exp $";
 #endif /* not lint */
 
+#include <unistd.h>
+#include <string.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <a.out.h>
@@ -74,6 +76,7 @@ struct exec ex;
 char buf[10240];
 
 void	bcddate(int, char *);
+char *	lifname(char *);
 void	putfile(int, int);
 void	usage(void);
 
@@ -95,13 +98,14 @@ void	usage(void);
  */
 int
 main(argc, argv)
+	int argc;
 	char **argv;
 {
 	int ac;
 	char **av;
 	int from1, from2, from3, to;
-	register int n;
-	char *n1, *n2, *n3, *lifname();
+	int n;
+	char *n1, *n2, *n3;
 
 	ac = --argc;
 	av = ++argv;
@@ -294,10 +298,10 @@ usage()
 
 char *
 lifname(str)
- char *str;
+	char *str;
 {
 	static char lname[10] = "SYS_XXXXX";
-	register int i;
+	int i;
 
 	for (i = 4; i < 10; i++) {
 		if (islower(*str))

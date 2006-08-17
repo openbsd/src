@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsireg.h,v 1.1 2004/08/03 21:44:36 miod Exp $	*/
+/*	$OpenBSD: scsireg.h,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: scsireg.h,v 1.4 1994/10/26 07:24:59 cgd Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ struct scsi_modesel_hdr {
 	u_int	number_blocks	:24;
 	u_int	rsvd3		: 8;
 	u_int	block_length	:24;
-}; 
+};
 
 struct scsi_modesense_hdr {
 	u_char	len;
@@ -322,14 +322,14 @@ struct scsi_modesense_hdr {
 	u_int	number_blocks	:24;
 	u_int	rsvd2		: 8;
 	u_int	block_length	:24;
-}; 
+};
 
 /*
  * Mode Select / Mode sense "pages"
  */
 
 /*
- * Page One - Error Recovery Parameters 
+ * Page One - Error Recovery Parameters
  */
 struct scsi_err_recovery {
 	u_char	page_savable	: 1;	/* save parameters */
@@ -397,7 +397,7 @@ struct scsi_format {
 };
 
 /*
- * Page Four - Rigid Disk Drive Geometry Parameters 
+ * Page Four - Rigid Disk Drive Geometry Parameters
  */
 struct scsi_geometry {
 	u_char	page_savable	: 1;	/* save parameters */
@@ -475,3 +475,9 @@ struct scsi_fmt_sense {
 #define	SDIOCGFORMAT		_IOR('S', 0x2, int)
 #define	SDIOCSCSICOMMAND	_IOW('S', 0x3, struct scsi_fmt_cdb)
 #define	SDIOCSENSE		_IOR('S', 0x4, struct scsi_fmt_sense)
+
+int	scsialive(int);
+int	scsi_read_capacity(int, int, u_char *, u_int);
+int	scsi_test_unit_rdy(int, int);
+int	scsi_tt_read(int, int, u_char *, u_int, daddr_t, u_int);
+int	scsi_tt_write(int, int, u_char *, u_int, daddr_t, u_int);

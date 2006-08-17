@@ -1,10 +1,12 @@
-#	$OpenBSD: Makefile,v 1.4 2005/02/20 15:33:30 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2006/08/17 06:31:10 miod Exp $
 
 PROG=	uboot
 
 NOMAN=
 
-CFLAGS= -O2 -msoft-float -I${.CURDIR}/../include \
+.include "${.CURDIR}/../Makefile.inc"
+
+CFLAGS+=-I${.CURDIR}/../include \
 	-I${.CURDIR}/../libsa -I${.CURDIR}/../.. -I${.CURDIR}/../../.. \
 	-I${.CURDIR}/../../../..
 
@@ -12,11 +14,9 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 	-I${.CURDIR}/../libsa -I${.CURDIR}/../.. -I${.CURDIR}/../../.. \
 	-I${.CURDIR}/../../../..
 
-SRCS=	srt0.S uboot.c tgets.c netio.c clock.c conf.c
+SRCS=	srt0.S uboot.c tgets.c netio.c clock.c conf.c prf.c
 
 LIBS=	${LIBCOMMON} ${LIBSAZ} ${LIBZ} ${LIBKERN}
-
-${OBJS}:	${.CURDIR}/../Makefile.inc
 
 CLEANFILES+=	uboot.lif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.4 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
@@ -59,20 +59,21 @@
 
 extern	int cpuspeed, machineid, mmuid;
 extern	int howto;
-extern	int cons_scode;
 extern	u_int opendev;
 extern	u_int bootdev;
-extern	char *getmachineid();
-
 extern	int userom;
-extern	void romputchar(int);
 
-#define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+int	badaddr(char *);
+void	call_req_reboot(void);
+char	*getmachineid(void);
+void	hpibinit(void);
+void	romout(int, char *);
+void	romputchar(int);
+void	scsiinit(void);
+u_long	sctoaddr(int);
+int	tgets(char *);
 
-/* bogon grfinfo structure to keep grf_softc happy */
-struct grfinfo {
-	int	grf_foo;
-};
+#define DELAY(n)	{ int N = cpuspeed * (n); while (--N > 0); }
 
 /*
  * Switch we use to set punit in devopen.

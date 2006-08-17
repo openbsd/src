@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2003/12/04 21:13:37 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -106,10 +106,8 @@ int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
 int	punitzero(int, int, int *);
 
 int
-punitzero(ctlr, slave, punit)
-	int ctlr, slave, *punit;
+punitzero(int ctlr, int slave, int *punit)
 {
-
 	*punit = 0;
 	return (0);
 }
@@ -154,16 +152,3 @@ struct fs_ops file_system_cd9660[] = {
 
 struct fs_ops file_system[2];
 int	nfsys = 1;		/* default; changed per device type. */
-
-
-/*
- * Initialize controllers
- * 
- * XXX this should be a table
- */
-void ctlrinit()
-{
-	leinit();
-	hpibinit();
-	scsiinit();
-}

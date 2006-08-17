@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.1 1997/07/14 08:14:23 downsj Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: kbd.c,v 1.2 1997/05/12 07:51:32 thorpej Exp $	*/
 
 /*-
@@ -44,6 +44,8 @@
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
+
+#include <lib/libsa/stand.h>
 
 #include "samachdep.h"
 #include "kbdvar.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.6 2006/04/14 21:05:44 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.7 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -46,61 +46,67 @@
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
-#include <dev/cons.h>
 
-#include "grfreg.h"
-#include "device.h"
-#include "itevar.h"
-#include "consdefs.h"
+#include <hp300/dev/sgcreg.h>
+#include <dev/ic/stireg.h>
+
 #include "samachdep.h"
+#include "consdefs.h"
+#include "device.h"
+#include "grfreg.h"
+#include "itevar.h"
+#include "kbdvar.h"
 
 void	itecheckwrap(struct ite_data *, struct itesw *);
+void	iteconfig(void);
 void	ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
-void	ite_deinit_noop(struct ite_data *);
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_GATORBOX,
-	gbox_init,	ite_deinit_noop, gbox_clear,	gbox_putc,
-	gbox_cursor,	gbox_scroll,	ite_readbyte,	ite_writeglyph },
+	gbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	gbox_scroll },
 
 	{ GID_RENAISSANCE,
-	rbox_init,	ite_deinit_noop, rbox_clear,	rbox_putc,
-	rbox_cursor,	rbox_scroll,	ite_readbyte,	ite_writeglyph },
+	rbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_LRCATSEYE,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HRCCATSEYE,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HRMCATSEYE,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_DAVINCI,
-      	dvbox_init,	ite_deinit_noop, dvbox_clear,	dvbox_putc,
-	dvbox_cursor,	dvbox_scroll,	ite_readbyte,	ite_writeglyph },
+      	dvbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HYPERION,
-	hyper_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
-	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph },
+	hyper_init,	ite_dio_clear,	ite_dio_putc1bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_TIGER,
-	tvrx_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
-	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph },
+	tvrx_init,	ite_dio_clear,	ite_dio_putc1bpp,
+	ite_dio_cursor,	ite_dio_scroll },
+
+	{ GID_STI,
+	sti_iteinit,	sti_clear,	sti_putc,
+	sti_cursor,	sti_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
 struct  ite_data ite_data[NITE] = { { 0 } };
-int	ite_scode[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
@@ -109,7 +115,8 @@ void
 iteconfig()
 {
 	extern struct hp_hw sc_table[];
-	int dtype, fboff, i;
+	int dtype, fboff, slotno, i;
+	u_int8_t *va;
 	struct hp_hw *hw;
 	struct grfreg *gr;
 	struct ite_data *ip;
@@ -129,7 +136,6 @@ iteconfig()
 			continue;
 		if (i >= NITE)
 			break;
-		ite_scode[i] = hw->hw_sc;
 		ip = &ite_data[i];
 		ip->isw = &itesw[dtype];
 		ip->regbase = (caddr_t) gr;
@@ -153,45 +159,59 @@ iteconfig()
 			ip->dwidth = ip->fbwidth;
 		if (ip->dheight > ip->fbheight)
 			ip->dheight = ip->fbheight;
-		ip->flags = ITE_ALIVE|ITE_CONSOLE;
+		ip->alive = 1;
 		i++;
+	}
+
+	/*
+	 * Now probe for SGC frame buffers
+	 */
+	if (machineid != HP_400 && machineid != HP_425 &&
+	    machineid != HP_433)
+		return;
+
+	for (dtype = 0; dtype < nitesw; dtype++)
+		if (itesw[dtype].ite_hwid == GID_STI)
+			break;
+	if (dtype == nitesw)
+		return;
+
+	for (slotno = 0; slotno < SGC_NSLOTS; slotno++) {
+		va = (u_int8_t *)IIOV(SGC_BASE + (slotno * SGC_DEVSIZE));
+
+		/* Check to see if hardware exists. */
+		if (badaddr(va) != 0)
+			continue;
+
+		/* Check hardware. */
+		if (va[3] == STI_DEVTYPE1) {
+			if (i >= NITE)
+				break;
+			ip = &ite_data[i];
+			ip->isw = &itesw[dtype];
+			ip->regbase = (caddr_t)GRFIADDR;/* to get CN_INTERNAL */
+			ip->fbbase = (caddr_t)slotno;
+			ip->alive = 1;
+			i++;
+			/* we only support one SGC frame buffer at the moment */
+			break;
+		}
 	}
 }
 
-#ifdef CONSDEBUG
-/*
- * Allows us to cycle through all possible consoles (NITE ites and serial port)
- * by using SHIFT-RESET on the keyboard.
- */
-int	whichconsole = -1;
-#endif
-
 void
-iteprobe(cp)
-	struct consdev *cp;
+iteprobe(struct consdev *cp)
 {
-	register int ite;
-	register struct ite_data *ip;
+	int ite;
+	struct ite_data *ip;
 	int unit, pri;
-
-#ifdef CONSDEBUG
-	whichconsole = ++whichconsole % (NITE+1);
-#endif
-
-	if (itecons != -1)
-		return;
 
 	iteconfig();
 	unit = -1;
 	pri = CN_DEAD;
 	for (ite = 0; ite < NITE; ite++) {
-#ifdef CONSDEBUG
-		if (ite < whichconsole)
-			continue;
-#endif
 		ip = &ite_data[ite];
-		if ((ip->flags & (ITE_ALIVE|ITE_CONSOLE))
-		    != (ITE_ALIVE|ITE_CONSOLE))
+		if (ip->alive == 0)
 			continue;
 		if ((int)ip->regbase == GRFIADDR) {
 			pri = CN_INTERNAL;
@@ -201,20 +221,15 @@ iteprobe(cp)
 			unit = ite;
 		}
 	}
-	curcons_scode = ite_scode[unit];
 	cp->cn_dev = unit;
 	cp->cn_pri = pri;
 }
 
 void
-iteinit(cp)
-	struct consdev *cp;
+iteinit(struct consdev *cp)
 {
 	int ite = cp->cn_dev;
 	struct ite_data *ip;
-
-	if (itecons != -1)
-		return;
 
 	ip = &ite_data[ite];
 
@@ -232,12 +247,10 @@ iteinit(cp)
 
 /* ARGSUSED */
 void
-iteputchar(dev, c)
-	dev_t dev;
-	register int c;
+iteputchar(dev_t dev, int c)
 {
-	register struct ite_data *ip = &ite_data[itecons];
-	register struct itesw *sp = ip->isw;
+	struct ite_data *ip = &ite_data[itecons];
+	struct itesw *sp = ip->isw;
 
 	c &= 0x7F;
 	switch (c) {
@@ -245,7 +258,7 @@ iteputchar(dev, c)
 	case '\n':
 		if (++ip->cury == ip->rows) {
 			ip->cury--;
-			(*sp->ite_scroll)(ip, 1, 0, 1, SCROLL_UP);
+			(*sp->ite_scroll)(ip);
 			ite_clrtoeol(ip, sp, ip->cury, 0);
 		}
 		else
@@ -267,7 +280,7 @@ iteputchar(dev, c)
 	default:
 		if (c < ' ' || c == 0177)
 			break;
-		(*sp->ite_putc)(ip, c, ip->cury, ip->curx, ATTR_NOR);
+		(*sp->ite_putc)(ip, c, ip->cury, ip->curx);
 		(*sp->ite_cursor)(ip, DRAW_CURSOR);
 		itecheckwrap(ip, sp);
 		break;
@@ -281,7 +294,7 @@ itecheckwrap(struct ite_data *ip, struct itesw *sp)
 		ip->curx = 0;
 		if (++ip->cury == ip->rows) {
 			--ip->cury;
-			(*sp->ite_scroll)(ip, 1, 0, 1, SCROLL_UP);
+			(*sp->ite_scroll)(ip);
 			ite_clrtoeol(ip, sp, ip->cury, 0);
 			return;
 		}
@@ -298,8 +311,7 @@ ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
 
 /* ARGSUSED */
 int
-itegetchar(dev)
-	dev_t dev;
+itegetchar(dev_t dev)
 {
 #ifdef SMALL
 	return (0);
@@ -308,10 +320,3 @@ itegetchar(dev)
 #endif
 }
 #endif
-
-/* ARGSUSED */
-void
-ite_deinit_noop(ip)
-	struct ite_data *ip;
-{
-}

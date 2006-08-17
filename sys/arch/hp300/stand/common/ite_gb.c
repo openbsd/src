@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_gb.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: ite_gb.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: ite_gb.c,v 1.8 1996/03/03 04:23:36 thorpej Exp $	*/
 
 /*
@@ -39,26 +39,25 @@
  *	@(#)ite_gb.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
-
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 
+#include "samachdep.h"
 #include "itevar.h"
 #include "itereg.h"
 #include "grf_gbreg.h"
 
 #define REGBASE     	((struct gboxfb *)(ip->regbase))
-#define WINDOWMOVER 	gbox_windowmove
 
 void	gbox_windowmove(struct ite_data *, int, int, int, int,
 	    int, int, int);
 
 void
-gbox_init(ip)
-	register struct ite_data *ip;
+gbox_init(struct ite_data *ip)
 {
+	ip->bmv = gbox_windowmove;
+
 	REGBASE->write_protect = 0x0;
 	REGBASE->interrupt = 0x4;
 	REGBASE->rep_rule = RR_COPY;
@@ -77,7 +76,7 @@ gbox_init(ip)
 	REGBASE->cmap_blu    = 0x00;
 	REGBASE->cmap_write  = 0x00;
 	gbcm_waitbusy(ip->regbase);
-	
+
 	REGBASE->creg_select = 0x01;
 	REGBASE->cmap_red    = 0xFF;
 	REGBASE->cmap_grn    = 0xFF;
@@ -93,7 +92,7 @@ gbox_init(ip)
 	gbcm_waitbusy(ip->regbase);
 
 	ite_fontinfo(ip);
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Clear the display. This used to be before the font unpacking
@@ -111,78 +110,19 @@ gbox_init(ip)
 }
 
 void
-gbox_putc(ip, c, dy, dx, mode)
-	register struct ite_data *ip;
-        register int dy, dx;
-	int c, mode;
+gbox_scroll(struct ite_data *ip)
 {
-	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
-			dy * ip->ftheight, dx * ip->ftwidth,
-			ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-gbox_cursor(ip, flag)
-	register struct ite_data *ip;
-        register int flag;
-{
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	}
-	else
-		erase_cursor(ip)
-}
-
-void
-gbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	register int sy, sx, h, w;
-{
-	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth, 
-			h  * ip->ftheight, w  * ip->ftwidth,
-			RR_CLEAR);
-}
-
-#define	gbox_blockmove(ip, sy, sx, dy, dx, h, w) \
-	gbox_windowmove((ip), \
-			(sy) * ip->ftheight, \
-			(sx) * ip->ftwidth, \
-			(dy) * ip->ftheight, \
-			(dx) * ip->ftwidth, \
-			(h)  * ip->ftheight, \
-			(w)  * ip->ftwidth, \
-			RR_COPY)
-
-void
-gbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_data *ip;
-        register int sy;
-        int dir, sx, count;
-{
-	register int height, dy, i;
-	
 	tile_mover_waitbusy(ip->regbase);
 	REGBASE->write_protect = 0x0;
 
-	gbox_cursor(ip, ERASE_CURSOR);
-
-	dy = sy - count;
-	height = ip->rows - sy;
-	for (i = 0; i < height; i++)
-		gbox_blockmove(ip, sy + i, sx, dy + i, 0, 1, ip->cols);
+	ite_dio_scroll(ip);
 }
 
 void
-gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-     register struct ite_data *ip;
-     int sy, sx, dy, dx, mask;
-     register int h, w;
+gbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int mask)
 {
-	register int src, dest;
+	int src, dest;
 
 	src  = (sy * 1024) + sx;	/* upper left corner in pixels */
 	dest = (dy * 1024) + dx;

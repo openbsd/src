@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2005/12/31 17:59:47 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1997/06/28 07:20:25 thorpej Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
  */
 
 #include <sys/param.h>
+
+#include <lib/libsa/stand.h>
 
 #include "samachdep.h"
 
@@ -117,6 +119,8 @@ struct trapframe {
 	short frame;
 };
 
+int	trap(struct trapframe *);
+
 int
 trap(fp)
 	struct trapframe *fp;
@@ -134,17 +138,21 @@ trap(fp)
 	printf("Got unexpected trap: format=%x vector=%x ps=%x pc=%x\n",
 		  (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
-	       fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3], 
+	       fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3],
 	       fp->dregs[4], fp->dregs[5], fp->dregs[6], fp->dregs[7]);
 	printf("aregs: %x %x %x %x %x %x %x %x\n",
-	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
+	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3],
 	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
+	printf("bytes at pc: %x %x %x %x %x %x\n",
+	    ((char *)fp->pc)[0], ((char *)fp->pc)[1], ((char *)fp->pc)[2],
+	    ((char *)fp->pc)[3], ((char *)fp->pc)[4], ((char *)fp->pc)[5]);
 
 #if 0
 	userom = 0;
 #endif
 
 	intrap = 0;
+
 	return(0);
 }
 
@@ -152,8 +160,7 @@ trap(fp)
 #define COLS	80
 
 void
-romputchar(c)
-	int c;
+romputchar(int c)
 {
 	static char buf[COLS];
 	static int col = 0, row = 0;
@@ -189,11 +196,7 @@ romputchar(c)
 }
 
 void
-machdep_start(entry, howto, loadaddr, ssym, esym)
-	char *entry;
-	int howto; 
-	char *loadaddr;
-	char *ssym, *esym; 
+machdep_start(char *entry, int howto, char *loadaddr, char *ssym, char *esym)
 {
 	/* Fix what we were passed in from exec() */
 	entry = loadaddr;
@@ -203,8 +206,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 
 	__asm __volatile ("movl %0,d7" : : "m" (howto));
 	__asm __volatile ("movl %0,d6" : : "m" (opendev));
-	__asm __volatile ("movl %0,d5" : : "m" (cons_scode));
 	__asm __volatile ("movl %0,a5" : : "a" (loadaddr));
 	__asm __volatile ("movl %0,a4" : : "a" (esym));
-	(*((int (*)())entry))();
+	(*((int (*)(void))entry))();
 }

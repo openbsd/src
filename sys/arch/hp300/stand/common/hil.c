@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.5 2006/08/13 16:25:22 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: hil.c,v 1.2 1997/04/14 19:00:10 thorpej Exp $	*/
 
 /*
@@ -46,25 +46,26 @@
 
 #if defined(ITECONSOLE) && defined(HIL_KEYBOARD)
 
-#include <sys/param.h>
-#include <sys/device.h>			/* XXX */
+#include <lib/libsa/stand.h>
 
-#include "hilreg.h"
-#include "kbdmap.h"
-#include "itevar.h"
 #include "samachdep.h"
+#include "hilreg.h"
+#include "itevar.h"
 #include "kbdvar.h"
 
 #ifndef SMALL
+
+#define	ESC	'\033'
+#define	DEL	'\177'
 
 /*
  * HIL cooked keyboard keymaps.
  * Supports only unshifted, shifted and control keys.
  */
-char	hil_us_keymap[] = {
-	NULL,	'`',	'\\',	ESC,	NULL,	DEL,	NULL,	NULL,  
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
+char	hilkbd_keymap[] = {
+	NULL,	'`',	'\\',	ESC,	NULL,	DEL,	NULL,	NULL,
+	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
+	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
@@ -80,7 +81,7 @@ char	hil_us_keymap[] = {
 	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
 };
 
-char	hil_us_shiftmap[] = {
+char	hilkbd_shiftmap[] = {
 	NULL,	'~',	'|',	DEL,	NULL,	DEL,	NULL,	NULL,
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
@@ -99,7 +100,7 @@ char	hil_us_shiftmap[] = {
 	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
 };
 
-char	hil_us_ctrlmap[] = {
+char	hilkbd_ctrlmap[] = {
 	NULL,	'`',	'\034',	ESC,	NULL,	DEL,	NULL,	NULL,
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
@@ -118,86 +119,6 @@ char	hil_us_ctrlmap[] = {
 	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
 };
 
-#ifdef UK_KEYBOARD
-char	hil_uk_keymap[] = {
-	NULL,	'`',	'<',	ESC,	NULL,	DEL,	NULL,	NULL,  
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
-	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
-	'7',	'8',	'9',	'/',	'E',	'(',	')',	'^',
-	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
-	'9',	'0',	'+',	'\'',	'[',	']',	'*',	'\\',
-	',',	'.',	'-',	'\040',	'o',	'p',	'k',	'l',
-	'q',	'w',	'e',	'r',	't',	'y',	'u',	'i',
-	'a',	's',	'd',	'f',	'g',	'h',	'j',	'm',
-	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
-};
-
-char	hil_uk_shiftmap[] = {
-	NULL,	'~',	'>',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
-	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
-	'7',	'8',	'9',	'/',	'`',	'|',	'\\',	'~',
-	'!',	'\"',	'#',	'$',	'%',	'&',	'^',	'(',
-	')',	'=',	'?',	'/',	'{',	'}',	'@',	'|',
-	';',	':',	'_',	'\040',	'O',	'P',	'K',	'L',
-	'Q',	'W',	'E',	'R',	'T',	'Y',	'U',	'I',
-	'A',	'S',	'D',	'F',	'G',	'H',	'J',	'M',
-	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
-};
-
-char	hil_uk_ctrlmap[] = {
-	NULL,	'`',	'<',	ESC,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
-	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
-	'7',	'8',	'9',	'/',	'E',	'(',	')',	'\036',
-	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
-	'9',	'0',	'+',	'\'',	'\033',	'\035',	'*',	'\034',
-	',',	'.',	'/',	'\040',	'\017',	'\020',	'\013',	'\014',
-	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
-	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
-};
-#endif
-
-/*
- * The keyboard map table.
- * Lookup is by hardware returned language code.
- */
-struct kbdmap hilkbd_map[] = {
-	{ KBD_US,		NULL,
-	hil_us_keymap,	hil_us_shiftmap,	hil_us_ctrlmap,	NULL,	NULL },
-
-#ifdef UK_KEYBOARD
-	{ KBD_UK,		NULL,
-	hil_uk_keymap,	hil_uk_shiftmap,	hil_uk_ctrlmap,	NULL,	NULL },
-#endif
-
-	{ 0,		NULL,
-	NULL,		NULL,		NULL,		NULL,	NULL }
-};
-
-char	*hilkbd_keymap = hil_us_keymap;
-char	*hilkbd_shiftmap = hil_us_shiftmap;
-char	*hilkbd_ctrlmap = hil_us_ctrlmap;
-
 int
 hilkbd_getc()
 {
@@ -208,7 +129,7 @@ hilkbd_getc()
 	if ((status & HIL_DATA_RDY) == 0)
 		return(0);
 	c = hiladdr->hil_data;
-	switch ((status>>KBD_SSHIFT) & KBD_SMASK) {
+	switch ((status >> HIL_SSHIFT) & HIL_SMASK) {
 	case KBD_SHIFT:
 		c = hilkbd_shiftmap[c & KBD_CHARMASK];
 		break;
@@ -243,8 +164,6 @@ int
 hilkbd_init()
 {
 	struct hil_dev *hiladdr = HILADDR;
-	struct kbdmap *km;
-	u_char lang;
 
 	/*
 	 * Determine the existence of a HIL keyboard.
@@ -252,25 +171,13 @@ hilkbd_init()
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_READKBDSADR;
 	HILDATAWAIT(hiladdr);
-	lang = hiladdr->hil_data;
-	if (lang == 0)
+	if (hiladdr->hil_data == 0)
 		return (0);
 
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_SETARR;
 	HILWAIT(hiladdr);
 	hiladdr->hil_data = ar_format(KBD_ARR);
-	HILWAIT(hiladdr);
-	hiladdr->hil_cmd = HIL_READKBDLANG;
-	HILDATAWAIT(hiladdr);
-	lang = hiladdr->hil_data;
-	for (km = hilkbd_map; km->kbd_code; km++) {
-		if (km->kbd_code == lang) {
-			hilkbd_keymap = km->kbd_keymap;
-			hilkbd_shiftmap = km->kbd_shiftmap;
-			hilkbd_ctrlmap = km->kbd_ctrlmap;
-		}
-	}
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_INTON;
 

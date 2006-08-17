@@ -1,4 +1,4 @@
-/*	$OpenBSD: consdefs.h,v 1.4 2005/12/31 17:59:47 miod Exp $	*/
+/*	$OpenBSD: consdefs.h,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: consdefs.h,v 1.2 1997/05/12 07:45:41 thorpej Exp $	*/
 
 /*
@@ -30,17 +30,21 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Glue for determining console select code.
- */
-extern	int curcons_scode;
-extern	int cons_scode;
-#define	CONSCODE_INTERNAL	(-1)
-#define	CONSCODE_INVALID	(-2)
+#include <dev/cons.h>
 
 /*
  * Console routine prototypes.
  */
+void	cninit(void);
+int	cngetc(void);
+void	cnputc(int);
+
+#ifdef STICONSOLE
+void	stiprobe(struct consdev *);
+void	stiinit(struct consdev *);
+int	stigetchar(dev_t);
+void	stiputchar(dev_t, int);
+#endif
 #ifdef ITECONSOLE
 void	iteprobe(struct consdev *);
 void	iteinit(struct consdev *);

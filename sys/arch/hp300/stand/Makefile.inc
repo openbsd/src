@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2006/04/14 21:02:54 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2006/08/17 06:31:08 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -6,9 +6,10 @@ BINDIR=			/usr/mdec
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
 
-CFLAGS+=		-Wall -fno-stack-protector
+CFLAGS+=		-Wall -Wstrict-prototypes -Wmissing-prototypes \
+			-fno-stack-protector -msoft-float
 
-CPPFLAGS+=		-DDCACONSOLE -DAPCICONSOLE -DITECONSOLE -DDCMCONSOLE
+CPPFLAGS+=		-DAPCICONSOLE -DDCACONSOLE -DDCMCONSOLE -DITECONSOLE
 CPPFLAGS+=		-DHIL_KEYBOARD -DUK_KEYBOARD
 CPPFLAGS+=		-DDOMAIN_KEYBOARD
 CPPFLAGS+=		-DSTANDALONE -Dhp300

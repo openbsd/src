@@ -1,4 +1,4 @@
-/*	$OpenBSD: rawfs.c,v 1.3 2006/01/18 14:15:12 deraadt Exp $	*/
+/*	$OpenBSD: rawfs.c,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: rawfs.c,v 1.2 1996/10/06 19:07:53 thorpej Exp $	*/
 
 /*
@@ -63,9 +63,7 @@ static int
 rawfs_get_block(struct open_file *);
 
 int
-rawfs_open(path, f)
-	char *path;
-	struct open_file *f;
+rawfs_open(char *path, struct open_file *f)
 {
 	struct rawfs_file *fs;
 
@@ -87,8 +85,7 @@ rawfs_open(path, f)
 }
 
 int
-rawfs_close(f)
-	struct open_file *f;
+rawfs_close(struct open_file *f)
 {
 	struct rawfs_file *fs;
 
@@ -106,11 +103,7 @@ rawfs_close(f)
 }
 
 int
-rawfs_read(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;
+rawfs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct rawfs_file *fs = (struct rawfs_file *)f->f_fsdata;
 	char *addr = start;
@@ -148,11 +141,7 @@ rawfs_read(f, start, size, resid)
 }
 
 int
-rawfs_write(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;	/* out */
+rawfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 #ifdef	DEBUG_RAWFS
 	printf("rawfs_write: YOU'RE NOT SUPPOSED TO GET HERE!\n");
@@ -161,10 +150,7 @@ rawfs_write(f, start, size, resid)
 }
 
 off_t
-rawfs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+rawfs_seek(struct open_file *f, off_t offset, int where)
 {
 #ifdef	DEBUG_RAWFS
 	printf("rawfs_seek: YOU'RE NOT SUPPOSED TO GET HERE!\n");
@@ -173,9 +159,7 @@ rawfs_seek(f, offset, where)
 }
 
 int
-rawfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+rawfs_stat(struct open_file *f, struct stat *sb)
 {
 #ifdef	DEBUG_RAWFS
 	printf("rawfs_stat: I'll let you live only because of exec.c\n");
@@ -194,8 +178,7 @@ rawfs_stat(f, sb)
  * (In our case, a tape drive.)
  */
 static int
-rawfs_get_block(f)
-	struct open_file *f;
+rawfs_get_block(struct open_file *f)
 {
 	struct rawfs_file *fs;
 	size_t len;

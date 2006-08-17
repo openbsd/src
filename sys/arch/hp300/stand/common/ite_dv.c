@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_dv.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: ite_dv.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: ite_dv.c,v 1.8 1996/03/03 04:23:35 thorpej Exp $	*/
 
 /*
@@ -39,29 +39,26 @@
  *	@(#)ite_dv.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
-
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 
+#include "samachdep.h"
 #include "itevar.h"
-#include "itereg.h"
 #include "grf_dvreg.h"
 
 #define REGBASE		((struct dvboxfb *)(ip->regbase))
-#define WINDOWMOVER	dvbox_windowmove
 
 void	dvbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 void	dv_reset(struct dvboxfb *);
 
 void
-dvbox_init(ip)
-	struct ite_data *ip;
+dvbox_init(struct ite_data *ip)
 {
 	int i;
-	
-	dv_reset(ip->regbase);
+
+	ip->bmv = dvbox_windowmove;
+	dv_reset((struct dvboxfb *)ip->regbase);
 	DELAY(4000);
 
 	/*
@@ -71,7 +68,7 @@ dvbox_init(ip)
 	 * Lastly, turn on the box.
 	 */
 	REGBASE->interrupt = 0x04;
-	REGBASE->drive     = 0x10;		
+	REGBASE->drive     = 0x10;
  	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
 	REGBASE->opwen     = 0x01;
 	REGBASE->fbwen     = 0x0;
@@ -110,11 +107,11 @@ dvbox_init(ip)
 		REGBASE->rgb[1].blue  = 0xFF;
 	}
 	REGBASE->cmapbank = 0;
-	
+
 	db_waitbusy(ip->regbase);
 
 	ite_fontinfo(ip);
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Clear the (visible) framebuffer.
@@ -132,68 +129,13 @@ dvbox_init(ip)
 }
 
 void
-dvbox_putc(ip, c, dy, dx, mode)
-	register struct ite_data *ip;
-        register int dy, dx;
-	int c, mode;
+dvbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int func)
 {
-	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
-			 dy * ip->ftheight, dx * ip->ftwidth,
-			 ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-dvbox_cursor(ip, flag)
-	register struct ite_data *ip;
-        register int flag;
-{
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	}
-	else
-		erase_cursor(ip)
-}
-
-void
-dvbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	register int sy, sx, h, w;
-{
-	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 sy * ip->ftheight, sx * ip->ftwidth, 
-			 h  * ip->ftheight, w  * ip->ftwidth,
-			 RR_CLEAR);
-}
-
-void
-dvbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_data *ip;
-        register int sy, count;
-        int dir, sx;
-{
-	register int dy = sy - count;
-	register int height = ip->rows - sy;
-
-	dvbox_cursor(ip, ERASE_CURSOR);
-
-	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 dy * ip->ftheight, sx * ip->ftwidth,
-			 height * ip->ftheight,
-			 ip->cols * ip->ftwidth, RR_COPY);
-}
-
-void
-dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
-{
-	register struct dvboxfb *dp = REGBASE;
+	struct dvboxfb *dp = REGBASE;
 	if (h == 0 || w == 0)
 		return;
-	
+
 	db_waitbusy(ip->regbase);
 	dp->rep_rule = func << 4 | func;
 	dp->source_y = sy;
@@ -257,5 +199,4 @@ dv_reset(struct dvboxfb *dbp)
 	 * End of missing ROM code.
 	 */
 }
-
 #endif

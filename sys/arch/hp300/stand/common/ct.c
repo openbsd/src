@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.4 2005/11/23 07:15:57 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
@@ -38,11 +38,11 @@
 #include <sys/param.h>
 
 #include <hp300/dev/ctreg.h>
-#include "hpibvar.h"
 
 #include <lib/libsa/stand.h>
 
 #include "samachdep.h"
+#include "hpibvar.h"
 
 struct	ct_iocmd ct_ioc;
 struct	ct_rscmd ct_rsc;
@@ -62,6 +62,14 @@ struct	ct_softc {
 #define	MTFSF		10
 #define	MTREW		11
 
+int	ctclose(struct open_file *);
+int	cterror(int, int);
+int	ctident(int, int);
+int	ctinit(int, int);
+int	ctopen(struct open_file *, int, int, int);
+int	ctpunit(int, int, int *);
+int	ctstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+
 char ctio_buf[MAXBSIZE];
 
 struct	ctinfo {
@@ -77,10 +85,9 @@ struct	ctinfo {
 int	nctinfo = sizeof(ctinfo) / sizeof(ctinfo[0]);
 
 int
-ctinit(ctlr, unit)
-	register int ctlr, unit;
+ctinit(int ctlr, int unit)
 {
-	register struct ct_softc *rs = &ct_softc[ctlr][unit];
+	struct ct_softc *rs = &ct_softc[ctlr][unit];
 	u_char stat;
 
 	if (hpibrecv(ctlr, unit, C_QSTAT, &stat, 1) != 1 || stat)
@@ -102,8 +109,7 @@ ctinit(ctlr, unit)
 }
 
 int
-ctident(ctlr, unit)
-	int ctlr, unit;
+ctident(int ctlr, int unit)
 {
 	struct cs80_describe desc;
 	u_char stat, cmd[3];
@@ -134,7 +140,7 @@ ctident(ctlr, unit)
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	bzero(name, sizeof(name));
 	if (!stat) {
-		register int n = desc.d_name;
+		int n = desc.d_name;
 		for (i = 5; i >= 0; i--) {
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
@@ -152,10 +158,9 @@ ctident(ctlr, unit)
 }
 
 int
-ctpunit(ctlr, slave, punit)
-	int ctlr, slave, *punit;
+ctpunit(int ctlr, int slave, int *punit)
 {
-	register struct ct_softc *rs;
+	struct ct_softc *rs;
 
 	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
 		return(EADAPT);
@@ -171,12 +176,10 @@ ctpunit(ctlr, slave, punit)
 }
 
 int
-ctopen(f, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+ctopen(struct open_file *f, int ctlr, int unit, int part)
 {
-	register struct ct_softc *rs;
-	register int skip;
+	struct ct_softc *rs;
+	int skip;
 	size_t resid;
 
 	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
@@ -199,8 +202,7 @@ ctopen(f, ctlr, unit, part)
 }
 
 int
-ctclose(f)
-	struct open_file *f;
+ctclose(struct open_file *f)
 {
 	size_t resid;
 
@@ -209,13 +211,8 @@ ctclose(f)
 }
 
 int
-ctstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+ctstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 	struct ct_softc *rs = devdata;
 	char *buf = v_buf;
@@ -287,10 +284,9 @@ retry:
 }
 
 int
-cterror(ctlr, unit)
-	register int ctlr, unit;
+cterror(int ctlr, int unit)
 {
-	register struct ct_softc *rs = &ct_softc[ctlr][unit];
+	struct ct_softc *rs = &ct_softc[ctlr][unit];
 	char stat;
 
 	bzero(&ct_rsc, sizeof(ct_rsc));

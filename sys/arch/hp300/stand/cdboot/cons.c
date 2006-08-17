@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.3 2005/12/31 17:59:43 miod Exp $	*/
+/*	$OpenBSD: cons.c,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: cons.c,v 1.2 1997/05/12 07:44:53 thorpej Exp $ */
 
 /*
@@ -40,14 +40,11 @@
  */
 
 #include <sys/param.h>
-#include <dev/cons.h>
 
-#include "consdefs.h"
+#include <lib/libsa/stand.h>
+
 #include "samachdep.h"
-
-
-int	curcons_scode;	/* select code of device currently being probed */
-int	cons_scode;	/* final select code of console device */
+#include "consdefs.h"
 
 struct consdev *cn_tab;
 int noconsole;
@@ -59,7 +56,6 @@ cninit()
 {
 	cn_tab = NULL;
 	noconsole = 1;
-	cons_scode = CONSCODE_INVALID;
 	userom = 1;
 	donottwiddle = 1;
 }
@@ -70,20 +66,16 @@ cngetc()
 	return(0);
 }
 
-int
-cnputc(c)
-	int c;
+void
+cnputc(int c)
 {
 	romputchar(c);
-	return(0);
 }
 
-int
-putchar(c)
-	int c;
+void
+putchar(int c)
 {
 	cnputc(c);
 	if (c == '\n')
 		cnputc('\r');
-	return(0);
 }

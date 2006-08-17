@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rbreg.h,v 1.1 2005/01/19 17:09:32 miod Exp $	*/
+/*	$OpenBSD: grf_rbreg.h,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: grf_rbreg.h,v 1.4 1994/10/26 07:24:03 cgd Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct rboxfb {
     vu_int	opwen;			/* overlay plane write enable 0x40b4 */
     u_char	filler9[3];
     vu_char	tmode;			/* Tile mode size	      0x40bb */
-    u_char	filler9a[3];		
+    u_char	filler9a[3];
     vu_char	drive;			/* drive register	      0x40bf */
     u_char 	filler10[3];
     vu_char	vdrive;			/* vdrive register	      0x40c3 */

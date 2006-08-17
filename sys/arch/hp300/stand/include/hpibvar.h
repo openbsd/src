@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpibvar.h,v 1.3 2005/11/23 07:15:58 miod Exp $	*/
+/*	$OpenBSD: hpibvar.h,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: hpibvar.h,v 1.4 1994/10/26 07:27:24 cgd Exp $	*/
 
 /*
@@ -84,3 +84,19 @@ struct cs80_describe {
 		d_maxvsectl:32,	/* volume: maximum sector on volume (LSWs) */
 		d_interleave:8;	/* volume: current interleave */
 } __packed;
+
+int	hpibalive(int);
+void	hpibgo(int, int, int, void *, int, int);
+int	hpibid(int, int);
+int	hpibrecv(int, int, int, void *, int);
+int	hpibsend(int, int, int, void *, int);
+int	hpibswait(int, int);
+
+int	fhpibinit(int);
+int	fhpibppoll(int);
+int	fhpibrecv(int, int, int, char *, int);
+int	fhpibsend(int, int, int, char *, int);
+int	nhpibinit(int);
+int	nhpibppoll(int);
+int	nhpibrecv(int, int, int, char *, int);
+int	nhpibsend(int, int, int, char *, int);

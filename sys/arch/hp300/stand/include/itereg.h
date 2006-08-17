@@ -1,4 +1,4 @@
-/*	$OpenBSD: itereg.h,v 1.1 2005/01/19 17:09:32 miod Exp $	*/
+/*	$OpenBSD: itereg.h,v 1.2 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: itereg.h,v 1.5 1994/10/26 07:24:39 cgd Exp $	*/
 
 /*
@@ -49,8 +49,4 @@
 #define FONTWIDTH	0x2	/* Offset from font address to font width. */
 #define FONTDATA	0xA	/* Offset from font address to font glyphs. */
 
-#ifdef hp300
 #define FBBASE		((volatile u_char *)ip->fbbase)
-#else
-#define FBBASE		((volatile u_long *)ip->fbbase)
-#endif

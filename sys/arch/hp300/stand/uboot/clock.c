@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 2005/01/19 17:09:34 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.3 1995/02/20 00:12:09 mycroft Exp $	*/
 
 /*
@@ -41,20 +41,26 @@
 
 #include <sys/param.h>
 
+#include <lib/libsa/stand.h>
+
 #include "samachdep.h"
 #include "hilreg.h"
 #include <hp300/hp300/clockreg.h>
+
+extern void send_hil_cmd(struct hil_dev *, u_char, u_char *, u_char, u_char *);
 
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
 u_char bbc_registers[13];
-void read_bbc();
-u_char read_bbc_reg();
 struct hil_dev *bbcaddr = (struct hil_dev *)BBCADDR;
 
-u_long
+int	bbc_to_gmt(u_long *);
+void	read_bbc(void);
+u_char	read_bbc_reg(int);
+
+time_t
 getsecs()
 {
 	static int bbcinited = 0;
@@ -65,15 +71,14 @@ getsecs()
 	bbcinited = 1;
 
 	/* Battery clock does not store usec's, so forget about it. */
-	return(timbuf);
+	return((time_t)timbuf);
 }
 
 int
-bbc_to_gmt(timbuf)
-	u_long *timbuf;
+bbc_to_gmt(u_long *timbuf)
 {
-	register int i;
-	register u_long tmp;
+	int i;
+	u_long tmp;
 	int year, month, day, hour, min, sec;
 
 	read_bbc();
@@ -103,7 +108,7 @@ bbc_to_gmt(timbuf)
 
 	for (i = 1; i < month; i++)
 	  	tmp += days_in_month(i);
-	
+
 	tmp += (day - 1);
 	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
 
@@ -114,7 +119,7 @@ bbc_to_gmt(timbuf)
 void
 read_bbc()
 {
-  	register int i, read_okay;
+  	int i, read_okay;
 
 	read_okay = 0;
 	while (!read_okay) {
@@ -128,8 +133,7 @@ read_bbc()
 }
 
 u_char
-read_bbc_reg(reg)
-	int reg;
+read_bbc_reg(int reg)
 {
 	u_char data = reg;
 

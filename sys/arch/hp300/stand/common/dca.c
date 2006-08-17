@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.5 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.10 1996/10/06 01:42:48 mycroft Exp $	*/
 
 /*
@@ -39,28 +39,20 @@
 
 #ifdef DCACONSOLE
 #include <sys/param.h>
-#include <dev/cons.h>
 
 #include <hp300/dev/dcareg.h>
 
-#include "consdefs.h"
 #include "samachdep.h"
-
-/* If not using 4.4 devs */
-#ifndef dca_reset
-#define dca_id dca_irid
-#define dca_reset dca_id
-#endif
+#include "consdefs.h"
 
 struct dcadevice *dcacnaddr = 0;
 
 #define DCACONSCODE	9	/* XXX */
 
 void
-dcaprobe(cp)
-	struct consdev *cp;
+dcaprobe(struct consdev *cp)
 {
-	register struct dcadevice *dca;
+	struct dcadevice *dca;
 
 	dcacnaddr = (struct dcadevice *) sctoaddr(DCACONSCODE);
 	if (badaddr((char *)dcacnaddr))
@@ -79,15 +71,12 @@ dcaprobe(cp)
 	default:
 		break;
 	}
-
-	curcons_scode = DCACONSCODE;
 }
 
 void
-dcainit(cp)
-	struct consdev *cp;
+dcainit(struct consdev *cp)
 {
-	register struct dcadevice *dca = dcacnaddr;
+	struct dcadevice *dca = dcacnaddr;
 
 	dca->dca_reset = 0xFF;
 	DELAY(100);
@@ -102,12 +91,11 @@ dcainit(cp)
 }
 
 /* ARGSUSED */
-#ifndef SMALL
 int
-dcagetchar(dev)
-	dev_t dev;
+dcagetchar(dev_t dev)
 {
-	register struct dcadevice *dca = dcacnaddr;
+#ifndef SMALL
+	struct dcadevice *dca = dcacnaddr;
 	short stat;
 	int c;
 
@@ -115,24 +103,17 @@ dcagetchar(dev)
 		return(0);
 	c = dca->dca_data;
 	return(c);
-}
 #else
-int
-dcagetchar(dev)
-	dev_t dev;
-{
 	return(0);
-}
 #endif
+}
 
 /* ARGSUSED */
 void
-dcaputchar(dev, c)
-	dev_t dev;
-	register int c;
+dcaputchar(dev_t dev, int c)
 {
-	register struct dcadevice *dca = dcacnaddr;
-	register int timo;
+	struct dcadevice *dca = dcacnaddr;
+	int timo;
 	short stat;
 
 	/* wait a reasonable time for the transmitter to come ready */

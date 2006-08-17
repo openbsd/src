@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.5 2005/11/23 07:15:57 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.6 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -103,11 +103,19 @@ struct	hdidentinfo {
 };
 int numhdidentinfo = sizeof(hdidentinfo) / sizeof(hdidentinfo[0]);
 
+int	hdclose(struct open_file *);
+int	hderror(int, int, int);
+int	hdgetinfo(struct hd_softc *);
+int	hdident(int, int);
+int	hdinit(int, int);
+int	hdopen(struct open_file *, int, int, int);
+void	hdreset(int, int);
+int	hdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+
 int
-hdinit(ctlr, unit)
-	int ctlr, unit;
+hdinit(int ctlr, int unit)
 {
-	register struct hd_softc *rs = &hd_softc[ctlr][unit];
+	struct hd_softc *rs = &hd_softc[ctlr][unit];
 
 	rs->sc_type = hdident(ctlr, unit);
 	if (rs->sc_type < 0)
@@ -117,8 +125,7 @@ hdinit(ctlr, unit)
 }
 
 void
-hdreset(ctlr, unit)
-	register int ctlr, unit;
+hdreset(int ctlr, int unit)
 {
 	u_char stat;
 
@@ -134,13 +141,12 @@ hdreset(ctlr, unit)
 }
 
 int
-hdident(ctlr, unit)
-	register int ctlr, unit;
+hdident(int ctlr, int unit)
 {
 	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
-	register int id, i;
+	int id, i;
 
 	id = hpibid(ctlr, unit);
 	if ((id & 0x200) == 0)
@@ -160,7 +166,7 @@ hdident(ctlr, unit)
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	bzero(name, sizeof(name));
 	if (!stat) {
-		register int n = desc.d_name;
+		int n = desc.d_name;
 		for (i = 5; i >= 0; i--) {
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
@@ -200,13 +206,12 @@ hdident(ctlr, unit)
 char io_buf[MAXBSIZE];
 
 int
-hdgetinfo(rs)
-	register struct hd_softc *rs;
+hdgetinfo(struct hd_softc *rs)
 {
-	register struct hdminilabel *pi = &rs->sc_pinfo;
-	register struct disklabel *lp = &hdlabel;
-	char *msg, *getdisklabel();
-	int hdstrategy(), err, savepart;
+	struct hdminilabel *pi = &rs->sc_pinfo;
+	struct disklabel *lp = &hdlabel;
+	char *msg;
+	int err, savepart;
 	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
@@ -223,7 +228,7 @@ hdgetinfo(rs)
 		printf("hdgetinfo: hdstrategy error %d\n", err);
 		return(0);
 	}
-	
+
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
 		printf("hd(%d,%d,%d): WARNING: %s, ",
@@ -242,11 +247,9 @@ hdgetinfo(rs)
 }
 
 int
-hdopen(f, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+hdopen(struct open_file *f, int ctlr, int unit, int part)
 {
-	register struct hd_softc *rs;
+	struct hd_softc *rs;
 
 	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
 		return (EADAPT);
@@ -270,8 +273,7 @@ hdopen(f, ctlr, unit, part)
 }
 
 int
-hdclose(f)
-	struct open_file *f;
+hdclose(struct open_file *f)
 {
 	struct hd_softc *rs = f->f_devdata;
 
@@ -285,18 +287,13 @@ hdclose(f)
 }
 
 int
-hdstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+hdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 	char *buf = v_buf;
 	struct hd_softc *rs = devdata;
-	register int ctlr = rs->sc_ctlr;
-	register int unit = rs->sc_unit;
+	int ctlr = rs->sc_ctlr;
+	int unit = rs->sc_unit;
 	daddr_t blk;
 	char stat;
 
@@ -338,9 +335,7 @@ retry:
 }
 
 int
-hderror(ctlr, unit, part)
-	register int ctlr, unit;
-	int part;
+hderror(int ctlr, int unit, int part)
 {
 	char stat;
 

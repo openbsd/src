@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.4 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.2 1997/04/14 05:58:32 scottr Exp $	*/
 
 /*
@@ -39,12 +39,11 @@
 
 #ifdef DCMCONSOLE
 #include <sys/param.h>
-#include <dev/cons.h>
 
 #include <hp300/dev/dcmreg.h>
 
-#include "consdefs.h"
 #include "samachdep.h"
+#include "consdefs.h"
 #include "device.h"
 
 struct dcmdevice *dcmcnaddr = NULL;
@@ -52,12 +51,11 @@ struct dcmdevice *dcmcnaddr = NULL;
 #define	DCMCONUNIT	1	/* XXX */
 
 void
-dcmprobe(cp)
-	struct consdev *cp;
+dcmprobe(struct consdev *cp)
 {
 	extern struct hp_hw sc_table[];
-	register struct hp_hw *hw;
-	register struct dcmdevice *dcm;
+	struct hp_hw *hw;
+	struct dcmdevice *dcm;
 
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++)
 		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((caddr_t)hw->hw_kva))
@@ -77,16 +75,13 @@ dcmprobe(cp)
 	default:
 		break;
 	}
-
-	curcons_scode = hw->hw_sc;
 }
 
 void
-dcminit(cp)
-	struct consdev *cp;
+dcminit(struct consdev *cp)
 {
-	register struct dcmdevice *dcm = dcmcnaddr;
-	register int port = DCMCONUNIT;
+	struct dcmdevice *dcm = dcmcnaddr;
+	int port = DCMCONUNIT;
 
 	dcm->dcm_ic = IC_ID;
 	while (dcm->dcm_thead[port].ptr != dcm->dcm_ttail[port].ptr)
@@ -101,15 +96,14 @@ dcminit(cp)
 }
 
 /* ARGSUSED */
-#ifndef SMALL
 int
-dcmgetchar(dev)
-	dev_t dev;
+dcmgetchar(dev_t dev)
 {
-	register struct dcmdevice *dcm = dcmcnaddr;
-	register struct dcmrfifo *fifo;
-	register struct dcmpreg *pp;
-	register unsigned head;
+#ifndef SMALL
+	struct dcmdevice *dcm = dcmcnaddr;
+	struct dcmrfifo *fifo;
+	struct dcmpreg *pp;
+	unsigned head;
 	int c, stat, port;
 
 	port = DCMCONUNIT;
@@ -125,25 +119,18 @@ dcmgetchar(dev)
 	stat = dcm->dcm_iir;
 	SEM_UNLOCK(dcm);
 	return(c);
-}
 #else
-int
-dcmgetchar(dev)
-	dev_t dev;
-{
 	return(0);
-}
 #endif
+}
 
 /* ARGSUSED */
 void
-dcmputchar(dev, c)
-	dev_t dev;
-	register int c;
+dcmputchar(dev_t dev, int c)
 {
-	register struct dcmdevice *dcm = dcmcnaddr;
-	register struct dcmpreg *pp;
-	register int timo;
+	struct dcmdevice *dcm = dcmcnaddr;
+	struct dcmpreg *pp;
+	int timo;
 	unsigned tail;
 	int port, stat;
 
