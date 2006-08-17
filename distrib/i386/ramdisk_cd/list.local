@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.14 2006/06/26 03:40:57 deraadt Exp $
+# $OpenBSD: list.local,v 1.15 2006/08/17 15:35:29 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/ccdconfig
@@ -16,8 +16,8 @@ COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
 
 COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
 COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
-COPY	${DESTDIR}/etc/firmware/ral-rt2573	etc/firmware/ral-rt2573
 COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
+COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 
 # copy the atmel firmwares most likely used
 #COPY	${DESTDIR}/etc/firmware/atu-at76c503-i3863-ext etc/firmware/atu-at76c503-i3863-ext
