@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.20 2006/08/15 04:26:58 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.21 2006/08/17 12:16:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -22,6 +22,8 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -37,6 +39,7 @@
 #ifdef ARC_DEBUG
 #define ARC_D_INIT	(1<<0)
 #define ARC_D_RW	(1<<1)
+#define ARC_D_DB	(1<<2)
 
 int arcdebug = 0;
 
@@ -112,10 +115,9 @@ static const struct pci_matchid arc_devices[] = {
 #define  ARC_REG_MSGBUF_LEN		1024
 #define ARC_REG_IOC_WBUF_LEN		0x0e00
 #define ARC_REG_IOC_WBUF		0x0e04
-#define  ARC_REG_IOC_WBUF_MAXLEN	124
 #define ARC_REG_IOC_RBUF_LEN		0x0f00
 #define ARC_REG_IOC_RBUF		0x0f04
-#define  ARC_REG_IOC_RBUF_MAXLEN	124
+#define  ARC_REG_IOC_RWBUF_MAXLEN	124 /* for both RBUF and WBUF */
 
 struct arc_msg_firmware_info {
 	u_int32_t		signature;
@@ -212,6 +214,9 @@ struct arc_softc {
 	struct arc_dmamem	*sc_requests;
 	struct arc_ccb		*sc_ccbs;
 	struct arc_ccb_list	sc_ccb_free;
+
+	struct rwlock		sc_lock;
+	volatile int		sc_talking;
 };
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
 
@@ -295,6 +300,12 @@ int			arc_map_pci_resources(struct arc_softc *,
 			    struct pci_attach_args *);
 int			arc_query_firmware(struct arc_softc *);
 
+/* these lock access to the read and write regions. */
+void			arc_lock(struct arc_softc *);
+void			arc_unlock(struct arc_softc *);
+void			arc_wait(struct arc_softc *);
+int			arc_msgbuf(struct arc_softc *, void *, size_t,
+			    void *, size_t);
 
 int
 arc_match(struct device *parent, void *match, void *aux)
@@ -308,6 +319,9 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arc_softc		*sc = (struct arc_softc *)self;
 	struct pci_attach_args		*pa = aux;
+
+	sc->sc_talking = 0;
+	rw_init(&sc->sc_lock, "arcmsg");
 
 	if (arc_map_pci_resources(sc, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
@@ -334,7 +348,8 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &sc->sc_link, scsiprint);
 
 	/* XXX enable interrupts */
-	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+	arc_write(sc, ARC_REG_INTRMASK,
+	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
 
 	return;
 }
@@ -366,6 +381,22 @@ arc_intr(void *arg)
 	if (intrstat == 0x0)
 		return (0);
 	arc_write(sc, ARC_REG_INTRSTAT, intrstat);
+
+	if (intrstat & ARC_REG_INTRSTAT_DOORBELL) {
+		if (sc->sc_talking) {
+			/* if an ioctl is talking, wake it up */
+			arc_write(sc, ARC_REG_INTRMASK,
+			    ~ARC_REG_INTRMASK_POSTQUEUE);
+			wakeup(sc);
+		} else {
+			/* otherwise drop it */
+			reg = arc_read(sc, ARC_REG_OUTB_DOORBELL);
+			arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
+			if (reg & ARC_REG_OUTB_DOORBELL_WRITE_OK)
+				arc_write(sc, ARC_REG_INB_DOORBELL,
+				    ARC_REG_INB_DOORBELL_READ_OK);
+		}
+	}
 
 	while ((reg = arc_pop(sc)) != 0xffffffff) {
 		cmd = (struct arc_io_cmd *)(kva +
@@ -707,6 +738,125 @@ arc_query_firmware(struct arc_softc *sc)
 	    letoh32(fwinfo.sdram_size), string);
 
 	return (0);
+}
+
+int
+arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wlen, void *rptr,
+    size_t rlen)
+{
+	u_int8_t			rwbuf[ARC_REG_IOC_RWBUF_MAXLEN];
+	u_int8_t			*wbuf = wptr, *rbuf = rptr;
+	int				wdone = 0, rdone = 0, i;
+	u_int32_t			reg, rwlen;
+
+	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n", DEVNAME(sc),
+	    wlen, rlen);
+
+	if (arc_read(sc, ARC_REG_OUTB_DOORBELL) != 0)
+		return (EBUSY);
+
+	reg = ARC_REG_OUTB_DOORBELL_READ_OK;
+
+	do {
+		if ((reg & ARC_REG_OUTB_DOORBELL_READ_OK) && wdone < wlen) {
+			bzero(rwbuf, sizeof(rwbuf));
+			rwlen = (wlen - wdone) % sizeof(rwbuf);
+			bcopy(&wbuf[wdone], rwbuf, rwlen);
+			wdone += rwlen;
+
+#ifdef ARC_DEBUG
+			if (arcdebug & ARC_D_DB) {
+				printf("%s: write:", DEVNAME(sc));
+				for (i = 0; i < rwlen; i++)
+					printf(" 0x%02x", rwbuf[i]);
+				printf("\n");
+			}
+#endif
+
+			/* copy the chunk to the hw */
+			arc_write(sc, ARC_REG_IOC_WBUF_LEN, rwlen);
+			arc_write_region(sc, ARC_REG_IOC_WBUF, rwbuf,
+			    sizeof(rwbuf));
+
+			/* say we have a buffer for the hw */
+			arc_write(sc, ARC_REG_INB_DOORBELL,
+			    ARC_REG_INB_DOORBELL_WRITE_OK);
+		}
+
+		while ((reg = arc_read(sc, ARC_REG_OUTB_DOORBELL)) == 0)
+			arc_wait(sc);
+		arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
+
+		DNPRINTF(ARC_D_DB, "%s: reg: 0x%08x\n", DEVNAME(sc), reg);
+
+		if ((reg & ARC_REG_OUTB_DOORBELL_WRITE_OK) && rdone < rlen) {
+			rwlen = arc_read(sc, ARC_REG_IOC_RBUF_LEN);
+			arc_read_region(sc, ARC_REG_IOC_RBUF, rwbuf,
+			    sizeof(rwbuf));
+
+			arc_write(sc, ARC_REG_INB_DOORBELL,
+			    ARC_REG_INB_DOORBELL_READ_OK);
+
+#ifdef ARC_DEBUG
+			printf("%s:  len: %d+%d=%d/%d\n", DEVNAME(sc),
+			    rwlen, rdone, rwlen + rdone, rlen);
+			if (arcdebug & ARC_D_DB) {
+				printf("%s: read:", DEVNAME(sc));
+				for (i = 0; i < rwlen; i++)
+					printf(" 0x%02x", rwbuf[i]);
+				printf("\n");
+			}
+#endif
+
+			if ((rdone + rwlen) > rlen)
+				return (EIO);
+
+			bcopy(rwbuf, &rbuf[rdone], rwlen);
+			rdone += rwlen;
+
+		}
+
+	} while (rdone != rlen);
+
+	return (0);
+}
+
+void
+arc_lock(struct arc_softc *sc)
+{
+	int				s;
+
+	rw_enter_write(&sc->sc_lock);
+	s = splbio();
+	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+	sc->sc_talking = 1;
+	splx(s);
+}
+
+void
+arc_unlock(struct arc_softc *sc)
+{
+	int				s;
+
+	s = splbio();
+	sc->sc_talking = 0;
+	arc_write(sc, ARC_REG_INTRMASK,
+	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
+	splx(s);
+	rw_exit_write(&sc->sc_lock);
+}
+
+void
+arc_wait(struct arc_softc *sc)
+{
+	int				s;
+
+	s = splbio();
+	arc_write(sc, ARC_REG_INTRMASK,
+	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
+	if (tsleep(sc, PWAIT, "arcdb", hz) == EWOULDBLOCK)
+		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+	splx(s);
 }
 
 u_int32_t
