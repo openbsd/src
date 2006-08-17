@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.42 2006/08/06 06:18:28 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.43 2006/08/17 23:08:07 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1635,7 +1635,7 @@ re_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->rl_link || ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
 	idx = sc->rl_ldata.rl_txq_prodidx;
