@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.124 2006/08/17 21:31:37 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.125 2006/08/17 21:37:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -929,8 +929,8 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ((ifp->if_flags ^ sc_if->sk_if_flags)
-			     & IFF_PROMISC)) {
+			    (ifp->if_flags ^ sc_if->sk_if_flags)
+			     & IFF_PROMISC) {
 				sk_setpromisc(sc_if);
 				sk_setmulti(sc_if);
 			} else {
@@ -1294,8 +1294,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 			    0, NULL);
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	}
-	else
+	} else
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	if (SK_IS_GENESIS(sc)) {

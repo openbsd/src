@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.8 2006/08/17 21:31:37 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.9 2006/08/17 21:37:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1060,8 +1060,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 			    0, NULL);
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	}
-	else
+	} else
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	timeout_set(&sc_if->sk_tick_ch, msk_yukon_tick, sc_if);
