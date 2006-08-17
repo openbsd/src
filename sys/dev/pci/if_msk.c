@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.10 2006/08/17 21:56:42 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.11 2006/08/17 22:07:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -919,6 +919,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	caddr_t kva;
 	bus_dma_segment_t seg;
 	int i, rseg;
+	u_int32_t chunk, val;
 
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
@@ -953,19 +954,15 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	 * Just to be contrary, Yukon2 appears to have separate memory
 	 * for each MAC.
 	 */
-	{
-		u_int32_t		chunk, val;
-
-		chunk = sc->sk_ramsize  - (sc->sk_ramsize + 2) / 3;
-		val = sc->sk_rboff / sizeof(u_int64_t);
-		sc_if->sk_rx_ramstart = val;
-		val += (chunk / sizeof(u_int64_t));
-		sc_if->sk_rx_ramend = val - 1;
-		chunk = sc->sk_ramsize - chunk;
-		sc_if->sk_tx_ramstart = val;
-		val += (chunk / sizeof(u_int64_t));
-		sc_if->sk_tx_ramend = val - 1;
-	}
+	chunk = sc->sk_ramsize  - (sc->sk_ramsize + 2) / 3;
+	val = sc->sk_rboff / sizeof(u_int64_t);
+	sc_if->sk_rx_ramstart = val;
+	val += (chunk / sizeof(u_int64_t));
+	sc_if->sk_rx_ramend = val - 1;
+	chunk = sc->sk_ramsize - chunk;
+	sc_if->sk_tx_ramstart = val;
+	val += (chunk / sizeof(u_int64_t));
+	sc_if->sk_tx_ramend = val - 1;
 
 	DPRINTFN(2, ("msk_attach: rx_ramstart=%#x rx_ramend=%#x\n"
 		     "           tx_ramstart=%#x tx_ramend=%#x\n",
@@ -1114,7 +1111,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t size;
-	u_int8_t skrs;
+	u_int8_t hw, skrs;
 	char *revstr = NULL;
 	caddr_t kva;
 	bus_dma_segment_t seg;
@@ -1175,7 +1172,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);
 
 	/* bail out here if chip is not recognized */
-	if (! SK_IS_YUKON(sc)) {
+	if (!(SK_IS_YUKON(sc))) {
 		printf(": unknown chip type: %d\n", sc->sk_type);
 		goto fail_1;
 	}
@@ -1254,15 +1251,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_coppertype = 0;
 
 	switch (sc->sk_type) {
-	case SK_YUKON:
-		sc->sk_name = "Marvell Yukon";
-		break;
-	case SK_YUKON_LITE:
-		sc->sk_name = "Marvell Yukon Lite";
-		break;
-	case SK_YUKON_LP:
-		sc->sk_name = "Marvell Yukon LP";
-		break;
 	case SK_YUKON_XL:
 		sc->sk_name = "Marvell Yukon-2 XL";
 		break;
@@ -1277,42 +1265,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		sc->sk_name = "Marvell Yukon (Unknown)";
-	}
-
-	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */
-	if (sc->sk_type == SK_YUKON || sc->sk_type == SK_YUKON_LP) {
-		u_int32_t flashaddr;
-		u_int8_t testbyte;
-
-		flashaddr = sk_win_read_4(sc, SK_EP_ADDR);
-
-		/* test Flash-Address Register */
-		sk_win_write_1(sc, SK_EP_ADDR+3, 0xff);
-		testbyte = sk_win_read_1(sc, SK_EP_ADDR+3);
-
-		if (testbyte != 0) {
-			/* This is a Yukon Lite Rev A0 */
-			sc->sk_type = SK_YUKON_LITE;
-			sc->sk_rev = SK_YUKON_LITE_REV_A0;
-			/* restore Flash-Address Register */
-			sk_win_write_4(sc, SK_EP_ADDR, flashaddr);
-		}
-	}
-
-	if (sc->sk_type == SK_YUKON_LITE) {
-		switch (sc->sk_rev) {
-		case SK_YUKON_LITE_REV_A0:
-			revstr = "A0";
-			break;
-		case SK_YUKON_LITE_REV_A1:
-			revstr = "A1";
-			break;
-		case SK_YUKON_LITE_REV_A3:
-			revstr = "A3";
-			break;
-		default:
-			;
-		}
 	}
 
 	if (sc->sk_type == SK_YUKON_XL) {
@@ -1372,17 +1324,10 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sk_macs = 1;
 
-	if (SK_IS_YUKON2(sc)) {
-		u_int8_t hw;
-
-		hw = sk_win_read_1(sc, SK_Y2_HWRES);
-		if ((hw & SK_Y2_HWRES_LINK_MASK) == SK_Y2_HWRES_LINK_DUAL) {
-			if ((sk_win_read_1(sc, SK_Y2_CLKGATE) &
-			    SK_Y2_CLKGATE_LINK2_INACTIVE) == 0)
-				sc->sk_macs++;
-		}
-	} else {
-		if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC))
+	hw = sk_win_read_1(sc, SK_Y2_HWRES);
+	if ((hw & SK_Y2_HWRES_LINK_MASK) == SK_Y2_HWRES_LINK_DUAL) {
+		if ((sk_win_read_1(sc, SK_Y2_CLKGATE) &
+		    SK_Y2_CLKGATE_LINK2_INACTIVE) == 0)
 			sc->sk_macs++;
 	}
 
