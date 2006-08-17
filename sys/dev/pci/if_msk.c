@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.5 2006/08/17 20:07:52 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.6 2006/08/17 20:55:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1778,7 +1778,6 @@ msk_intr(void *xsc)
 	u_int16_t		idx;
 	struct msk_status_desc	*cur_st;
 
-#if 1
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
 	if (status == 0) {
 		CSR_WRITE_4(sc, SK_Y2_ICR, 2);
@@ -1786,11 +1785,6 @@ msk_intr(void *xsc)
 	}
 
 	status = CSR_READ_4(sc, SK_ISR);
-#else
-	status = CSR_READ_4(sc, SK_Y2_EISR);
-	if (status == 0)
-		return (0);
-#endif
 
 	if (sc_if0 != NULL)
 		ifp0 = &sc_if0->arpcom.ac_if;
@@ -1838,11 +1832,7 @@ msk_intr(void *xsc)
 		claimed = 1;
 	}
 
-#if 1
 	CSR_WRITE_4(sc, SK_Y2_ICR, 2);
-#else
-	CSR_READ_4(sc, SK_Y2_LISR);
-#endif
 
 	if (ifp0 != NULL && !IFQ_IS_EMPTY(&ifp0->if_snd))
 		msk_start(ifp0);
