@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdvar.h,v 1.7 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: fdvar.h,v 1.8 2006/08/17 01:37:41 krw Exp $	*/
 /*
  *	$NetBSD: fdvar.h,v 1.5 1996/12/08 23:40:34 pk Exp $
  *
@@ -32,7 +32,7 @@
  *
  */
 
-#define	FD_BSIZE(fd)	(128 * (1 << fd->sc_type->secsize))
+#define	FD_BSIZE(fd)	(128 << fd->sc_type->secsize)
 #define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
 
 #define FDC_NSTATUS	10
