@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.14 2006/06/21 19:57:42 jasper Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.15 2006/08/17 23:53:52 ray Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static const char rcsid[] = "$OpenBSD: getNAME.c,v 1.14 2006/06/21 19:57:42 jasper Exp $";
+static const char rcsid[] = "$OpenBSD: getNAME.c,v 1.15 2006/08/17 23:53:52 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ void dorefname(char *);
 void getfrom(char *);
 void split(char *, char *);
 void trimln(char *);
-void usage(void);
+__dead void usage(void);
 int main(int, char *[]);
 
 int
@@ -240,9 +240,12 @@ newman:
 			 */
 			if (headbuf[1] == 'N' && headbuf[2] == 'd') {
 				if ((t = strchr(name, '.')) != NULL) {
-					size_t len = strlen(linbuf);
-					snprintf(linbuf+len, sizeof(linbuf)-len,
-					    "(%s)", t+1);
+					char *str;
+
+					if (asprintf(&str, "(%s)", t+1) == -1)
+						return;
+					strlcat(linbuf, str, sizeof(linbuf));
+					free(str);
 				}
 				strlcat(linbuf, "- ", sizeof(linbuf));
 			}
@@ -344,7 +347,7 @@ again:
 		putchar(*dp++);
 }
 
-static void
+void
 usage(void)
 {
 	extern char *__progname;
