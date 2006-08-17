@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.2 2006/08/17 19:30:55 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.3 2006/08/17 19:42:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -166,6 +166,7 @@ void msk_marv_miibus_statchg(struct device *);
 u_int32_t msk_yukon_hash(caddr_t);
 void msk_setfilt(struct sk_if_softc *, caddr_t, int);
 void msk_setmulti(struct sk_if_softc *);
+void msk_setpromisc(struct sk_if_softc *);
 void msk_yukon_tick(void *);
 
 
@@ -377,6 +378,19 @@ allmulti:
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH2, (hashes[0] >> 16) & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH3, hashes[1] & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH4, (hashes[1] >> 16) & 0xffff);
+}
+
+void
+msk_setpromisc(struct sk_if_softc *sc_if)
+{
+	struct ifnet *ifp = &sc_if->arpcom.ac_if;
+
+	if (ifp->if_flags & IFF_PROMISC)
+		SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
+		    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+	else
+		SK_YU_SETBIT_2(sc_if, YUKON_RCR,
+		    YU_RCR_UFLEN | YU_RCR_MUFLEN);
 }
 
 int
@@ -721,16 +735,9 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc_if->sk_if_flags & IFF_PROMISC)) {
-				SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
-				    YU_RCR_UFLEN | YU_RCR_MUFLEN);
-				msk_setmulti(sc_if);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc_if->sk_if_flags & IFF_PROMISC) {
-				SK_YU_SETBIT_2(sc_if, YUKON_RCR,
-				    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+			    (sc_if->sk_if_flags ^ ifp->if_flags) &
+			     IFF_PROMISC) {
+				msk_setpromisc(sc_if);
 				msk_setmulti(sc_if);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
@@ -741,7 +748,6 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				msk_stop(sc_if);
 		}
 		sc_if->sk_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1971,6 +1977,9 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 				    SK_MAC1_0 + i * 2 + sc_if->sk_port * 8);
 		SK_YU_WRITE_2(sc_if, YUKON_SAL2 + i * 4, reg);
 	}
+
+	/* Set promiscuous mode */
+	msk_setpromisc(sc_if);
 
 	/* Set multicast filter */
 	DPRINTFN(6, ("msk_init_yukon: 11\n"));
