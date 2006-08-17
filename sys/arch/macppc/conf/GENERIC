@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.148 2006/08/14 08:34:21 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.149 2006/08/17 19:24:55 brad Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -82,6 +82,8 @@ re*		at pci?		# Realtek 8169/8169S/8110S
 stge*		at pci?		# Sundance TC9021 GigE
 skc*		at pci?		# SysKonnect GEnesis 984x
 sk*		at skc?		#  each port of above
+mskc*		at pci?		# Marvell Yukon-2
+msk*		at mskc?	#  each port of above
 an*		at pci?		# Cisco/Aironet
 atw*		at pci?		# ADMtek ADM8211 (802.11)
 wi*		at pci?		# WaveLAN IEEE 802.11DS

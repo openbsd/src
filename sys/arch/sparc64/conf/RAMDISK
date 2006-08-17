@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.53 2006/06/26 22:16:23 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.54 2006/08/17 19:24:55 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -53,6 +53,8 @@ gem*	at pci?
 ti*	at pci?			# Alteon Tigon 1Gb ethernet
 skc*	at pci?			# SysKonnect GEnesis 984x
 sk*	at skc?			#  each port of above
+mskc*	at pci?			# Marvell Yukon-2
+msk*	at mskc?		#  each port of above
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
 pcn*	at pci?			# AMD PCnet-PCI Ethernet

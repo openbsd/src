@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.155 2006/08/14 08:34:21 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.156 2006/08/17 19:24:55 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,6 +49,8 @@ gem*	at pci?
 ti*	at pci?			# Alteon Tigon 1Gb ethernet
 skc*	at pci?			# SysKonnect GEnesis 984x
 sk*	at skc?			#  each port of above
+mskc*	at pci?			# Marvell Yukon-2
+msk*	at mskc?		#  each port of above
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
 pcn*	at pci?			# AMD PCnet-PCI Ethernet

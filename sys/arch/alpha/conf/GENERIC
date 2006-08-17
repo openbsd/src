@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.178 2006/08/14 08:34:21 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.179 2006/08/17 19:24:54 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -225,6 +225,8 @@ mtd*	at pci?				# Myson MTD800/803/891
 epic*	at pci?				# SMC EPIC/100 ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
+mskc*	at pci?				# Marvell Yukon-2
+msk*	at mskc?			#  each port of above
 tl*	at pci?				# Compaq Thunderlan ethernet
 ste*	at pci?				# Sundance ST201 ethernet
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
