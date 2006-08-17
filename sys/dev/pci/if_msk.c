@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.9 2006/08/17 21:37:44 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.10 2006/08/17 21:56:42 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1856,18 +1856,6 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	DPRINTFN(2, ("msk_init_yukon: start: sk_csr=%#x\n",
 		     CSR_READ_4(sc_if->sk_softc, SK_CSR)));
 
-	if (sc->sk_type == SK_YUKON_LITE &&
-	    sc->sk_rev >= SK_YUKON_LITE_REV_A3) {
-		/*
-		 * Workaround code for COMA mode, set PHY reset.
-		 * Otherwise it will not correctly take chip out of
-		 * powerdown (coma)
-		 */
-		v = sk_win_read_4(sc, SK_GPIO);
-		v |= SK_GPIO_DIR9 | SK_GPIO_DAT9;
-		sk_win_write_4(sc, SK_GPIO, v);
-	}
-
 	DPRINTFN(6, ("msk_init_yukon: 1\n"));
 
 	/* GMAC and GPHY Reset */
@@ -1876,17 +1864,6 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	DELAY(1000);
 
 	DPRINTFN(6, ("msk_init_yukon: 2\n"));
-
-	if (sc->sk_type == SK_YUKON_LITE &&
-	    sc->sk_rev >= SK_YUKON_LITE_REV_A3) {
-		/*
-		 * Workaround code for COMA mode, clear PHY reset
-		 */
-		v = sk_win_read_4(sc, SK_GPIO);
-		v |= SK_GPIO_DIR9;
-		v &= ~SK_GPIO_DAT9;
-		sk_win_write_4(sc, SK_GPIO, v);
-	}
 
 #if 0
 	phy = SK_GPHY_INT_POL_HI | SK_GPHY_DIS_FC | SK_GPHY_DIS_SLEEP |
