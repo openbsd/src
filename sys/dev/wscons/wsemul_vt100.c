@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.12 2004/12/25 20:40:33 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.13 2006/08/17 06:27:04 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -26,6 +26,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef	SMALL_KERNEL
+#define	JUMP_SCROLL
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -953,6 +957,11 @@ wsemul_vt100_output(cookie, data, count, kernel)
 	int kernel;
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
+#ifdef JUMP_SCROLL
+	const u_char *eot;
+	u_char curchar;
+	u_int cnt, pos, lines;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (kernel && !edp->console)
@@ -962,11 +971,77 @@ wsemul_vt100_output(cookie, data, count, kernel)
 	if (edp->flags & VTFL_CURSORON)
 		(*edp->emulops->cursor)(edp->emulcookie, 0,
 				edp->crow, edp->ccol << edp->dw);
+
 	for (; count > 0; data++, count--) {
+#ifdef JUMP_SCROLL
+		/*
+		 * If we are at the bottom of the scrolling area, count
+		 * newlines until an escape sequence appears.
+		 */
+		if ((edp->state == VT100_EMUL_STATE_NORMAL || kernel) &&
+		    ROWS_BELOW == 0) {
+			lines = 0;
+			pos = edp->ccol;
+			for (eot = data, cnt = count; cnt != 0; eot++, cnt--) {
+				curchar = *eot;
+				/*
+				 * Only char for which
+				 * wsemul_vt100_output_c0c1() will switch
+				 * to escape mode, for now.
+				 * Revisit this when this changes...
+				 */
+				if (curchar == ASCII_ESC)
+					break;
+
+				if (ISSET(edp->flags, VTFL_DECAWM))
+				    switch (curchar) {
+				    case ASCII_BS:
+					if (pos > 0)
+						pos--;
+					break;
+				    case ASCII_CR:
+					pos = 0;
+					break;
+				    case ASCII_HT:
+					if (edp->tabs) {
+						pos++;
+						while (pos < NCOLS - 1 &&
+						    edp->tabs[pos] == 0)
+							pos++;
+					} else {
+						pos = (pos + 7) & ~7;
+						if (pos >= NCOLS)
+							pos = NCOLS - 1;
+					}
+					break;
+				    default:
+					if (++pos >= NCOLS) {
+						pos = 0;
+						curchar = ASCII_LF;
+					}
+					break;
+				    }
+
+				if (curchar == ASCII_LF ||
+				    curchar == ASCII_VT ||
+				    curchar == ASCII_FF) {
+					if (++lines >= edp->scrreg_nrows - 1)
+						break;
+				}
+			}
+
+			if (lines > 1) {
+				wsemul_vt100_scrollup(edp, lines);
+				edp->crow -= lines;
+			}
+		}
+#endif
+
 		if ((*data & 0x7f) < 0x20) {
 			wsemul_vt100_output_c0c1(edp, *data, kernel);
 			continue;
 		}
+
 		if (edp->state == VT100_EMUL_STATE_NORMAL || kernel) {
 			wsemul_vt100_output_normal(edp, *data, kernel);
 			continue;
@@ -977,6 +1052,7 @@ wsemul_vt100_output(cookie, data, count, kernel)
 #endif
 		edp->state = vt100_output[edp->state - 1](edp, *data);
 	}
+
 	if (edp->flags & VTFL_CURSORON)
 		(*edp->emulops->cursor)(edp->emulcookie, 1,
 				edp->crow, edp->ccol << edp->dw);

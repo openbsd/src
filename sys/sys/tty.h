@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.21 2006/04/27 19:30:28 deraadt Exp $	*/
+/*	$OpenBSD: tty.h,v 1.22 2006/08/17 06:27:05 miod Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ struct itty {
 #define	TTOPRI	26			/* Sleep priority for tty writes. */
 
 #define	TTMASK	15
-#define	OBUFSIZ	100
+#define	OBUFSIZ	512
 #define	TTYHOG	1024
 
 #ifdef _KERNEL
