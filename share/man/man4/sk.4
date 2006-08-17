@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.41 2006/08/16 22:01:56 kettenis Exp $
+.\"	$OpenBSD: sk.4,v 1.42 2006/08/17 11:24:09 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -223,10 +223,6 @@ the network connection (cable).
 .%T SysKonnect GEnesis programming manual
 .%O http://www.syskonnect.com
 .Re
-.Sh BUGS
-The
-.Nm msk
-driver does not support hardware receive IP checksum offload yet.
 .Sh HISTORY
 The
 .Nm
@@ -242,9 +238,14 @@ The
 driver first appeared in
 .Ox 4.0 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
 Support for the Marvell Yukon-2 was added by
 .An Mark Kettenis Aq kettenis@openbsd.org .
+.Sh BUGS
+The
+.Nm msk
+driver does not support hardware receive IP checksum offload yet.
