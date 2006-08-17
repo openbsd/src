@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.1 2006/08/16 21:06:23 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.2 2006/08/17 19:30:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -131,12 +131,12 @@
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_mskvar.h>
 
-int ykc_probe(struct device *, void *, void *);
-void ykc_attach(struct device *, struct device *self, void *aux);
-void ykc_shutdown(void *);
+int mskc_probe(struct device *, void *, void *);
+void mskc_attach(struct device *, struct device *self, void *aux);
+void mskc_shutdown(void *);
 int msk_probe(struct device *, void *, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
-int ykcprint(void *, const char *);
+int mskcprint(void *, const char *);
 int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
 __inline int msk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
@@ -184,7 +184,7 @@ void msk_dump_bytes(const char *, int);
 #endif
 
 /* supported device vendors */
-const struct pci_matchid ykc_devices[] = {
+const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
@@ -779,10 +779,10 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
  * IDs against our list and return a device name if we find a match.
  */
 int
-ykc_probe(struct device *parent, void *match, void *aux)
+mskc_probe(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, ykc_devices,
-	    sizeof(ykc_devices)/sizeof(ykc_devices[0])) ? 3 : 0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, mskc_devices,
+	    sizeof(mskc_devices)/sizeof(mskc_devices[0])) ? 3 : 0);
 }
 
 /*
@@ -1066,7 +1066,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(ykc_shutdown, sc);
+	shutdownhook_establish(mskc_shutdown, sc);
 
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
@@ -1082,7 +1082,7 @@ fail:
 }
 
 int
-ykcprint(void *aux, const char *pnp)
+mskcprint(void *aux, const char *pnp)
 {
 	struct skc_attach_args *sa = aux;
 
@@ -1099,7 +1099,7 @@ ykcprint(void *aux, const char *pnp)
  * setup and ethernet/BPF attach.
  */
 void
-ykc_attach(struct device *parent, struct device *self, void *aux)
+mskc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sk_softc *sc = (struct sk_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -1115,7 +1115,7 @@ ykc_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int rseg;
 
-	DPRINTFN(2, ("begin ykc_attach\n"));
+	DPRINTFN(2, ("begin mskc_attach\n"));
 
 	/*
 	 * Handle power management nonsense.
@@ -1174,7 +1174,7 @@ ykc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unknown chip type: %d\n", sc->sk_type);
 		goto fail_1;
 	}
-	DPRINTFN(2, ("ykc_attach: allocate interrupt\n"));
+	DPRINTFN(2, ("mskc_attach: allocate interrupt\n"));
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -1234,7 +1234,7 @@ ykc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_ramsize = skrs * (1<<12);
 	sc->sk_rboff = SK_RBOFF_0;
 
-	DPRINTFN(2, ("ykc_attach: ramsize=%d (%dk), rboff=%d\n",
+	DPRINTFN(2, ("mskc_attach: ramsize=%d (%dk), rboff=%d\n",
 		     sc->sk_ramsize, sc->sk_ramsize / 1024,
 		     sc->sk_rboff));
 
@@ -1384,13 +1384,13 @@ ykc_attach(struct device *parent, struct device *self, void *aux)
 	skca.skc_port = SK_PORT_A;
 	skca.skc_type = sc->sk_type;
 	skca.skc_rev = sc->sk_rev;
-	(void)config_found(&sc->sk_dev, &skca, ykcprint);
+	(void)config_found(&sc->sk_dev, &skca, mskcprint);
 
 	if (sc->sk_macs > 1) {
 		skca.skc_port = SK_PORT_B;
 		skca.skc_type = sc->sk_type;
 		skca.skc_rev = sc->sk_rev;
-		(void)config_found(&sc->sk_dev, &skca, ykcprint);
+		(void)config_found(&sc->sk_dev, &skca, mskcprint);
 	}
 
 	/* Turn on the 'driver is loaded' LED. */
@@ -1581,7 +1581,7 @@ msk_watchdog(struct ifnet *ifp)
 }
 
 void
-ykc_shutdown(void *v)
+mskc_shutdown(void *v)
 {
 	struct sk_softc		*sc = v;
 
@@ -2203,7 +2203,7 @@ msk_stop(struct sk_if_softc *sc_if)
 }
 
 struct cfattach mskc_ca = {
-	sizeof(struct sk_softc), ykc_probe, ykc_attach,
+	sizeof(struct sk_softc), mskc_probe, mskc_attach,
 };
 
 struct cfdriver mskc_cd = {
