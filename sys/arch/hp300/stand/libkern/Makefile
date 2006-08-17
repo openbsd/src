@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2006/08/17 06:31:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2006/08/17 17:19:44 miod Exp $
 
 LIB=	kern
 
@@ -16,7 +16,6 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 # kern routines
 SRCS=	__main.c ashrdi3.c divdi3.c qdivrem.c strlen.S strcmp.S \
 	strncmp.S umoddi3.c
-SRCS+=	divsi3.S udivsi3.S modsi3.S umodsi3.S
 
 NOPROFILE=
 NOPIC=
