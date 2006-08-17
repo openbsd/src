@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1131 2006/08/09 03:57:51 brad Exp $
+$OpenBSD: pcidevs,v 1.1132 2006/08/17 07:19:45 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -273,6 +273,7 @@ vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
 vendor	HAWKING		0x17b3	Hawking Technology
+vendor	I4		0x17cf	I4
 vendor	ARECA		0x17d3	Areca
 vendor	NETERION	0x17d5	Neterion
 vendor	INPROCOMM	0x17fe	INPROCOMM
