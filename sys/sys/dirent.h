@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.7 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.8 2006/08/17 12:40:11 jmc Exp $	*/
 /*	$NetBSD: dirent.h,v 1.12 1996/04/09 20:55:25 cgd Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ struct dirent {
 
 /*
  * The DIRENT_SIZE macro gives the minimum record length which will hold
- * the directory entry.  This requires the amount of space in struct dirent
+ * the directory entry.  This returns the amount of space in struct dirent
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
