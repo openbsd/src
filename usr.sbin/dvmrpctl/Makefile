@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2006/07/25 09:44:49 henning Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/08/17 16:48:02 claudio Exp $
 
 .PATH:		${.CURDIR}/../dvmrpd
 
@@ -7,7 +7,7 @@ SRCS=	buffer.c imsg.c log.c dvmrpctl.c parser.c
 
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS+= -Wmissing-declarations -Wredundant-decls
+CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../dvmrpd
