@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.4 2006/08/17 19:48:08 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.5 2006/08/17 20:07:52 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1943,12 +1943,7 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 
 	/* receive control reg */
 	DPRINTFN(6, ("msk_init_yukon: 7\n"));
-#if 1
 	SK_YU_WRITE_2(sc_if, YUKON_RCR, YU_RCR_CRCR);
-#else
-	SK_YU_WRITE_2(sc_if, YUKON_RCR, YU_RCR_UFLEN | YU_RCR_MUFLEN |
-		      YU_RCR_CRCR);
-#endif
 
 	/* transmit parameter register */
 	DPRINTFN(6, ("msk_init_yukon: 8\n"));
