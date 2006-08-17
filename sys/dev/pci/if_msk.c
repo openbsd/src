@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.3 2006/08/17 19:42:48 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.4 2006/08/17 19:48:08 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -169,12 +169,10 @@ void msk_setmulti(struct sk_if_softc *);
 void msk_setpromisc(struct sk_if_softc *);
 void msk_yukon_tick(void *);
 
-
-#undef SK_DEBUG
-#ifdef SK_DEBUG
-#define DPRINTF(x)	if (skdebug) printf x
-#define DPRINTFN(n,x)	if (skdebug >= (n)) printf x
-int	skdebug = 2;
+#ifdef MSK_DEBUG
+#define DPRINTF(x)	if (mskdebug) printf x
+#define DPRINTFN(n,x)	if (mskdebug >= (n)) printf x
+int	mskdebug = 0;
 
 void msk_dump_txdesc(struct msk_tx_desc *, int);
 void msk_dump_mbuf(struct mbuf *);
@@ -1438,8 +1436,8 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	cur = frag = *txidx;
 
-#ifdef SK_DEBUG
-	if (skdebug >= 2)
+#ifdef MSK_DEBUG
+	if (mskdebug >= 2)
 		sk_dump_mbuf(m_head);
 #endif
 
@@ -1496,8 +1494,8 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	sc_if->sk_cdata.sk_tx_cnt += cnt;
 
-#ifdef SK_DEBUG
-	if (skdebug >= 2) {
+#ifdef MSK_DEBUG
+	if (mskdebug >= 2) {
 		struct msk_tx_desc *le;
 		u_int32_t idx;
 		for (idx = *txidx; idx != frag; SK_INC(idx, MSK_TX_RING_CNT)) {
@@ -1707,8 +1705,8 @@ msk_txeof(struct sk_if_softc *sc_if)
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
 		sk_ctl = letoh32(cur_tx->sk_ctl);
-#ifdef SK_DEBUG
-		if (skdebug >= 2)
+#ifdef MSK_DEBUG
+		if (mskdebug >= 2)
 			msk_dump_txdesc(cur_tx, idx);
 #endif
 		if (sk_ctl & SK_TXCTL_LASTFRAG)
@@ -2227,7 +2225,7 @@ struct cfdriver msk_cd = {
 	0, "msk", DV_IFNET
 };
 
-#ifdef SK_DEBUG
+#ifdef MSK_DEBUG
 void
 msk_dump_txdesc(struct msk_tx_desc *le, int idx)
 {
