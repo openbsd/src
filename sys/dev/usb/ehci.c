@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.64 2006/08/14 00:41:11 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.65 2006/08/17 03:44:56 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2513,7 +2513,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	/* We will change them to point here */
 	snext = exfer->sqtdend->nextqtd;
-	next = snext ? snext->physaddr : htole32(EHCI_NULL);
+	next = snext ? snext->physaddr : EHCI_NULL;
 
 	/*
 	 * Now loop through any qTDs before us and keep track of the pointer
@@ -2566,8 +2566,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 				sqh->qh.qh_curqtd = 0; /* unlink qTDs */
 				sqh->qh.qh_qtd.qtd_status = 0;
 				sqh->qh.qh_qtd.qtd_next =
-				    sqh->qh.qh_qtd.qtd_altnext
-				        = htole32(EHCI_NULL);
+				    sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
 				DPRINTFN(1,("ehci_abort_xfer: no hit\n"));
 			}
 		}
