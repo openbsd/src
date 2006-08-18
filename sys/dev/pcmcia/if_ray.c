@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.33 2006/08/18 07:50:50 jsg Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.34 2006/08/18 08:17:07 jsg Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -596,15 +596,16 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	 * attach the interface
 	 */
 	/* The version isn't the most accurate way, but it's easy. */
-	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,
+	printf("%s: firmware version %d, ", sc->sc_dev.dv_xname,
 	    sc->sc_version);
+#ifdef RAY_DEBUG
 	if (sc->sc_version != SC_BUILD_4)
-		printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
-		    sc->sc_xname, ep->e_rates[0], ep->e_rates[1],
+		printf("supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x, ",
+		    ep->e_rates[0], ep->e_rates[1],
 		    ep->e_rates[2], ep->e_rates[3], ep->e_rates[4],
 		    ep->e_rates[5], ep->e_rates[6], ep->e_rates[7]);
-	printf("%s: 802.11 address %s\n", sc->sc_xname,
-	    ether_sprintf(ep->e_station_addr));
+#endif
+	printf("address %s\n",  ether_sprintf(ep->e_station_addr));
 
 	memcpy(ifp->if_xname, sc->sc_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
