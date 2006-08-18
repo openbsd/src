@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.73 2006/08/18 15:18:24 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.74 2006/08/18 15:23:13 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -297,7 +297,7 @@ USB_ATTACH(ural)
 	/* retrieve MAC address and various other things from EEPROM */
 	ural_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT%02x (rev 0x%02x), RF %s, address %s\n",
+	printf("%s: MAC/BBP RT%04x (rev 0x%02x), RF %s, address %s\n",
 	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, sc->asic_rev,
 	    ural_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 

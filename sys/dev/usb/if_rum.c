@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.33 2006/08/18 15:11:11 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.34 2006/08/18 15:23:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -323,7 +323,7 @@ USB_ATTACH(rum)
 	/* retrieve MAC address and various other things from EEPROM */
 	rum_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT%02x (rev 0x%02x), RF %s, address %s\n",
+	printf("%s: MAC/BBP RT%04x (rev 0x%05x), RF %s, address %s\n",
 	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, tmp,
 	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
