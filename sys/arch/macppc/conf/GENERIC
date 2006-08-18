@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.149 2006/08/17 19:24:55 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.150 2006/08/18 23:14:43 jason Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -246,6 +246,8 @@ ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
+ucycom*	at uhidev?			# Cypress serial
+ucom*	at ucycom?
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
