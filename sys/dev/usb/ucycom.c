@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.2 2006/08/16 21:22:56 jason Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.3 2006/08/18 23:08:45 jason Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -179,8 +179,8 @@ USB_MATCH(ucycom)
 USB_ATTACH(ucycom)
 {
 	USB_ATTACH_START(ucycom, sc, uaa);
-	usbd_device_handle dev = uaa->device;
-	struct uhidev_attach_arg *uha = aux;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	usbd_device_handle dev = uha->parent->sc_udev;
 	struct ucom_attach_args uca;
 	int size, repid, err;
 	void *desc;
