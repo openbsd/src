@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.25 2006/08/18 10:27:06 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.26 2006/08/18 10:40:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -345,6 +345,7 @@ int			arc_msgbuf(struct arc_softc *, void *, size_t,
 /* bioctl */
 #if NBIO > 0
 int			arc_bioctl(struct device *, u_long, caddr_t);
+int			arc_bio_alarm(struct arc_softc *, struct bioc_alarm *);
 #endif
 
 int
@@ -789,7 +790,76 @@ arc_query_firmware(struct arc_softc *sc)
 int
 arc_bioctl(struct device *self, u_long cmd, caddr_t addr)
 {
-	return (ENOTTY);
+	struct arc_softc		*sc = (struct arc_softc *)self;
+	int				error = 0;
+
+	switch (cmd) {
+	case BIOCALARM:
+		error = arc_bio_alarm(sc, (struct bioc_alarm *)addr);
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return (error);
+}
+
+int
+arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
+{
+	ARC_FW_MSG(2)			toggle;
+	ARC_FW_MSG(1)			silence;
+	ARC_FW_MSG(1)			reply;
+	void				*request;
+	size_t				len;
+	int				error = 0;
+
+	switch (ba->ba_opcode) {
+	case BIOC_SAENABLE:
+	case BIOC_SADISABLE:
+		toggle.hdr = arc_fw_hdr;
+		toggle.len = htole16(sizeof(toggle.msg));
+		toggle.msg[0] = ARC_FW_SET_ALARM;
+		toggle.msg[1] = (ba->ba_opcode == BIOC_SAENABLE) ?
+		    ARC_FW_SET_ALARM_ENABLE : ARC_FW_SET_ALARM_DISABLE;
+		toggle.cksum = arc_msg_cksum(&toggle, sizeof(toggle));
+
+		request = &toggle;
+		len = sizeof(toggle);
+
+		break;
+
+	case BIOC_SASILENCE:
+		silence.hdr = arc_fw_hdr;
+		silence.len = htole16(sizeof(silence.msg));
+		silence.msg[0] = ARC_FW_MUTE_ALARM;
+		silence.cksum = arc_msg_cksum(&silence, sizeof(silence));
+
+		request = &silence;
+		len = sizeof(silence);
+
+		break;
+
+	default:
+		error = EOPNOTSUPP;
+		break;
+	}
+
+	arc_lock(sc);
+	error = arc_msgbuf(sc, request, len, &reply, sizeof(reply));
+	arc_unlock(sc);
+
+	if (error != 0)
+		return (error);
+
+	if (memcmp(&reply.hdr, &arc_fw_hdr, sizeof(reply.hdr)) != 0 ||
+	    reply.cksum != arc_msg_cksum(&reply, sizeof(reply)) ||
+	    reply.msg[0] != ARC_FW_CMD_OK)
+		return (EIO);
+
+	return (0);
 }
 #endif /* NBIO > 0 */
 
