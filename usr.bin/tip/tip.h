@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.26 2006/06/06 23:24:52 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.27 2006/08/18 03:06:18 jason Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -89,7 +89,6 @@ long	CL;			/* char delay for file transfers to remote */
 long	ET;			/* echocheck timeout */
 long	LD;			/* line disc */
 short	HD;			/* this host is half duplex - do local echo */
-short	DC;			/* this host is directly connected. */
 
 /*
  * String value table
@@ -227,6 +226,7 @@ extern value_t	vtable[];	/* variable table */
 #define	PARITY		32
 #define	HARDWAREFLOW	33
 #define	LINEDISC	34
+#define	DC		35
 
 #define NOVAL	((value_t *)NULL)
 #define NOACU	((acu_t *)NULL)
