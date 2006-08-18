@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.26 2006/08/18 10:40:04 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.27 2006/08/18 13:55:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -203,6 +203,7 @@ struct arc_fw_hdr {
 /* the fw header must always equal this */
 struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
 
+#define ARC_FW_SYSINFO		0x23	/* opcode. reply is fw_sysinfo */
 #define ARC_FW_MUTE_ALARM	0x30	/* opcode only */
 #define ARC_FW_SET_ALARM	0x31	/* opcode + 1 byte for setting */
 #define  ARC_FW_SET_ALARM_DISABLE		0x00
@@ -220,6 +221,54 @@ struct {						\
 	u_int8_t		cksum;			\
 } __packed
 #define ARC_FW_MSGBUF(_msg)	((void *)(_msg)->msg)
+
+struct arc_fw_comminfo {
+	u_int8_t		baud_rate;
+	u_int8_t		data_bits;
+	u_int8_t		stop_bits;
+	u_int8_t		parity;
+	u_int8_t		flow_control;
+} __packed;
+
+struct arc_fw_sysinfo {
+	u_int8_t		vendor_name[40];
+	u_int8_t		serial_number[16];
+	u_int8_t		firmware_version[16];
+	u_int8_t		boot_version[16];
+	u_int8_t		mb_version[16];
+	u_int8_t		model_name[8];
+
+	u_int8_t		local_ip[4];
+	u_int8_t		current_ip[4];
+
+	u_int32_t		time_tick;
+	u_int32_t		cpu_speed;
+	u_int32_t		icache;
+	u_int32_t		dcache;
+	u_int32_t		scache;
+        u_int32_t		memory_size;
+        u_int32_t		memory_speed;
+        u_int32_t		events;
+
+        u_int8_t		gsiMacAddress[6];
+        u_int8_t		gsiDhcp;
+
+	u_int8_t		alarm;
+	u_int8_t		channel_usage;
+	u_int8_t		max_ata_mode;
+	u_int8_t		sdram_ecc;
+	u_int8_t		rebuild_priority;
+	struct arc_fw_comminfo	comm_a;
+	struct arc_fw_comminfo	comm_b;
+	u_int8_t		ide_channels;
+	u_int8_t		scsi_host_channels;
+	u_int8_t		ide_host_channels;
+	u_int8_t		max_volume_set;
+	u_int8_t		max_raid_set;
+	u_int8_t		ether_port;
+	u_int8_t		raid6_engine;
+	u_int8_t		reserved[75];
+} __packed;
 
 int			arc_match(struct device *, void *, void *);
 void			arc_attach(struct device *, struct device *, void *);
@@ -346,6 +395,8 @@ int			arc_msgbuf(struct arc_softc *, void *, size_t,
 #if NBIO > 0
 int			arc_bioctl(struct device *, u_long, caddr_t);
 int			arc_bio_alarm(struct arc_softc *, struct bioc_alarm *);
+int			arc_bio_alarm_state(struct arc_softc *,
+			    struct bioc_alarm *);
 #endif
 
 int
@@ -842,9 +893,12 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 
 		break;
 
+	case BIOC_GASTATUS:
+		/* system info is too big/ugly to deal with here */
+		return (arc_bio_alarm_state(sc, ba));
+
 	default:
-		error = EOPNOTSUPP;
-		break;
+		return (EOPNOTSUPP);
 	}
 
 	arc_lock(sc);
@@ -860,6 +914,49 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 		return (EIO);
 
 	return (0);
+}
+
+int
+arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
+{
+	ARC_FW_MSG(1)			request;
+	ARC_FW_MSG(sizeof(struct arc_fw_sysinfo)) *reply;
+	struct arc_fw_sysinfo		*sysinfo;
+	int				error = 0;
+
+	reply = malloc(sizeof(*reply), M_TEMP, M_WAITOK);
+	if (reply == NULL)
+		return (ENOMEM);
+
+	sysinfo = ARC_FW_MSGBUF(reply);
+
+	request.hdr = arc_fw_hdr;
+	request.len = htole16(sizeof(request.msg));
+	request.msg[0] = ARC_FW_SYSINFO;
+	request.cksum = arc_msg_cksum(&request, sizeof(request));
+
+	arc_lock(sc);
+	error = arc_msgbuf(sc, &request, sizeof(request),
+	    reply, sizeof(*reply));
+	arc_unlock(sc);
+
+	if (error != 0)
+		goto out;
+
+	if (memcmp(&reply->hdr, &arc_fw_hdr, sizeof(reply->hdr)) != 0 ||
+	    reply->cksum != arc_msg_cksum(reply, sizeof(*reply))) {
+		error = EIO;
+		goto out;
+	}
+
+	printf("%s: %s value: 0x%02x\n", DEVNAME(sc), __func__,
+	    sysinfo->alarm);
+
+	ba->ba_status = sysinfo->alarm;
+
+out:
+	free(reply, M_TEMP);
+	return (error);
 }
 #endif /* NBIO > 0 */
 
