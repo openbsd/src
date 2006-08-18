@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_bus_fixup.c,v 1.8 2001/01/27 04:59:40 mickey Exp $	*/
+/*	$OpenBSD: pci_bus_fixup.c,v 1.9 2006/08/18 22:18:18 kettenis Exp $	*/
 /*	$NetBSD: pci_bus_fixup.c,v 1.1 1999/11/17 07:32:58 thorpej Exp $  */
 
 /*
@@ -44,10 +44,118 @@
 
 #include <i386/pci/pcibiosvar.h>
 
+int	pci_bus_check(pci_chipset_tag_t, int);
+int	pci_bus_assign(pci_chipset_tag_t, int);
+void	pcibus_print_devid(pci_chipset_tag_t, pcitag_t);
+
 int
-pci_bus_fixup(pc, bus)
-	pci_chipset_tag_t pc;
-	int bus;
+pci_bus_check(pci_chipset_tag_t pc, int bus)
+{
+	int device, maxdevs, function, nfuncs, bus_max, bus_sub;
+	const struct pci_quirkdata *qd;
+	pcireg_t reg;
+	pcitag_t tag;
+
+	bus_max = bus;
+
+	maxdevs = pci_bus_maxdevs(pc, bus);
+	for (device = 0; device < maxdevs; device++) {
+		tag = pci_make_tag(pc, bus, device, 0);
+		reg = pci_conf_read(pc, tag, PCI_ID_REG);
+
+		/* can't be that many */
+		if (bus_max == 255)
+			break;
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(reg) == 0)
+			continue;
+
+		qd = pci_lookup_quirkdata(PCI_VENDOR(reg), PCI_PRODUCT(reg));
+
+		reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_MULTIFN(reg) ||
+		    (qd != NULL &&
+		     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			nfuncs = 8;
+		else
+			nfuncs = 1;
+
+		for (function = 0; function < nfuncs; function++) {
+			tag = pci_make_tag(pc, bus, device, function);
+			reg = pci_conf_read(pc, tag, PCI_ID_REG);
+
+			/* Invalid vendor ID value? */
+			if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID)
+				continue;
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(reg) == 0)
+				continue;
+
+			reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
+			if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
+			    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
+			     PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
+
+				reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+				if (PPB_BUSINFO_PRIMARY(reg) != bus) {
+					if (pcibios_flags & PCIBIOS_VERBOSE) {
+						pcibus_print_devid(pc, tag);
+						printf("Mismatched primary bus: "
+						    "primary %d, secondary %d, "
+						    "subordinate %d\n",
+						    PPB_BUSINFO_PRIMARY(reg),
+						    PPB_BUSINFO_SECONDARY(reg),
+						    PPB_BUSINFO_SUBORDINATE(reg));
+					}
+					return (-1);
+				}
+				if (PPB_BUSINFO_SECONDARY(reg) <= bus) {
+					if (pcibios_flags & PCIBIOS_VERBOSE) {
+						pcibus_print_devid(pc, tag);
+						printf("Incorrect secondary bus: "
+						    "primary %d, secondary %d, "
+						    "subordinate %d\n",
+						    PPB_BUSINFO_PRIMARY(reg),
+						    PPB_BUSINFO_SECONDARY(reg),
+						    PPB_BUSINFO_SUBORDINATE(reg));
+					}
+					return (-1);
+				}
+
+				/* Scan subordinate bus. */
+				bus_sub = pci_bus_check(pc,
+				    PPB_BUSINFO_SECONDARY(reg));
+				if (bus_sub == -1)
+					return (-1);
+
+				if (PPB_BUSINFO_SUBORDINATE(reg) < bus_sub) {
+					if (pcibios_flags & PCIBIOS_VERBOSE) {
+						pcibus_print_devid(pc, tag);
+						printf("Incorrect subordinate bus %d: "
+						    "primary %d, secondary %d, "
+						    "subordinate %d\n", bus_sub,
+						    PPB_BUSINFO_PRIMARY(reg),
+						    PPB_BUSINFO_SECONDARY(reg),
+						    PPB_BUSINFO_SUBORDINATE(reg));
+					}
+					return (-1);
+				}
+
+				bus_max = (bus_sub > bus_max) ?
+				    bus_sub : bus_max;
+			}
+		}
+	}
+
+	return (bus_max);	/* last # of subordinate bus */
+}
+
+int
+pci_bus_assign(pci_chipset_tag_t pc, int bus)
 {
 	static int bridge_cnt;
 	int bridge, device, maxdevs, function, nfuncs, bus_max, bus_sub;
@@ -56,10 +164,8 @@ pci_bus_fixup(pc, bus)
 	pcitag_t tag;
 
 	bus_max = bus;
-	bus_sub = 0;
 
 	maxdevs = pci_bus_maxdevs(pc, bus);
-
 	for (device = 0; device < maxdevs; device++) {
 		tag = pci_make_tag(pc, bus, device, 0);
 		reg = pci_conf_read(pc, tag, PCI_ID_REG);
@@ -109,7 +215,7 @@ pci_bus_fixup(pc, bus)
 				pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
 
 				/* Scan subordinate bus. */
-				bus_sub = pci_bus_fixup(pc, bus_max);
+				bus_sub = pci_bus_assign(pc, bus_max);
 
 				/* Configure the bridge. */
 				reg &= 0xff000000;
@@ -133,4 +239,30 @@ pci_bus_fixup(pc, bus)
 	}
 
 	return (bus_max);	/* last # of subordinate bus */
+}
+
+int
+pci_bus_fixup(pci_chipset_tag_t pc, int bus)
+{
+	int bus_max;
+
+	bus_max = pci_bus_check(pc, bus);
+	if (bus_max != -1)
+		return (bus_max);
+
+	if (pcibios_flags & PCIBIOS_VERBOSE)
+		printf("PCI bus renumbering needed\n");
+	return pci_bus_assign(pc, bus);
+}
+
+void
+pcibus_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	int bus, device, function;	
+	pcireg_t id;
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+	printf("%03d:%02d:%d %04x:%04x\n", bus, device, function, 
+	       PCI_VENDOR(id), PCI_PRODUCT(id));
 }
