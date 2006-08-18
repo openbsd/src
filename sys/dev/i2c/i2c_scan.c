@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.87 2006/07/15 19:39:56 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.88 2006/08/18 17:35:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -143,23 +143,34 @@ iicprobe(u_int8_t cmd)
 #define LM77TMASK	0xfff8	/* 13 bits in temperature registers */
 
 /*
- * The LM75/LM77 family are very hard to detect.  Thus, we check for
- * all other possible chips first.  These chips do not have an ID
- * register.  They do have a few quirks though:
- *    register 0x06 and 0x07 return whatever value was read before
- *    the LM75 lacks registers 0x04 and 0x05, so those act as above
- *    the chip registers loop every 8 registers
+ * The LM75/LM75A/LM77 family are very hard to detect.  Thus, we check
+ * for all other possible chips first.  These chips do not have an
+ * ID register.  They do have a few quirks though:
+ * -  on the LM75 and LM77, registers 0x06 and 0x07 return whatever
+ *    value was read before
+ * -  the LM75 lacks registers 0x04 and 0x05, so those act as above
+ * -  the LM75A returns 0xffff for registers 0x04, 0x05, 0x06 and 0x07
+ * -  the chip registers loop every 8 registers
  * The downside is that we must read almost every register to guess
- * if this is an LM75 or LM77.
+ * if this is an LM75, LM75A or LM77.
  */
 char *
 lm75probe(void)
 {
 	u_int16_t temp, thyst, tos, tlow, thigh, mask = LM75TMASK;
 	u_int8_t conf;
-	int ret = 75, i;
+	int i, echocount, ffffcount, score;
+	int echoreg67, echoreg45, ffffreg67, ffffreg45;
 
 	temp = iicprobew(LM75TEMP);
+
+	/*
+	 * Sometimes the other probes can upset the chip, if we get 0xffff
+	 * the first time, try it once more.
+	 */
+	if (temp == 0xffff)
+		temp = iicprobew(LM75TEMP);
+
 	conf = iicprobenc(LM75CONF);
 	thyst = iicprobew(LM75Thyst);
 	tos = iicprobew(LM75Tos);
@@ -185,24 +196,54 @@ lm75probe(void)
 	/*
 	 * LM77/LM75 registers 6, 7
 	 * echo whatever was read just before them from reg 0, 1, or 2
+	 *
+	 * LM75A doesn't appear to do this, but does appear to reliably
+	 * return 0xffff
 	 */
-	for (i = 6; i <= 7; i++) {
+	for (i = 6, echocount = 2, ffffcount = 0; i <= 7; i++) {
 		if ((iicprobew(LM75TEMP) & mask) != (iicprobew(i) & mask) ||
 		    (iicprobew(LM75Thyst) & mask) != (iicprobew(i) & mask) ||
 		    (iicprobew(LM75Tos) & mask) != (iicprobew(i) & mask))
-			return (NULL);
+			echocount--;
+		if (iicprobew(i) == 0xffff)
+			ffffcount++;
 	}
+
+	/* Make sure either both registers echo, or neither does */
+	if (echocount == 1 || ffffcount == 1)
+		return (NULL);
+
+	echoreg67 = (echocount == 0) ? 0 : 1;
+	ffffreg67 = (ffffcount == 0) ? 0 : 1;
 
 	/*
 	 * LM75 has no registers 4 or 5, and they will act as echos too
-	 * If we find that 4 and 5 are not echos, then we may have a LM77
+	 *
+	 * LM75A doesn't appear to do this either, but does appear to
+	 * reliably return 0xffff
 	 */
-	for (i = 4; i <= 5; i++) {
-		if ((iicprobew(LM75TEMP) & mask) == (iicprobew(i) & mask) &&
-		    (iicprobew(LM75Thyst) & mask) == (iicprobew(i) & mask) &&
-		    (iicprobew(LM75Tos) & mask) == (iicprobew(i) & mask))
-			continue;
-		ret = 77;
+	for (i = 4, echocount = 2, ffffcount = 0; i <= 5; i++) {
+		if ((iicprobew(LM75TEMP) & mask) != (iicprobew(i) & mask) ||
+		    (iicprobew(LM75Thyst) & mask) != (iicprobew(i) & mask) ||
+		    (iicprobew(LM75Tos) & mask) != (iicprobew(i) & mask))
+			echocount--;
+		if (iicprobew(i) == 0xffff)
+			ffffcount++;
+	}
+
+	/* Make sure either both registers echo, or neither does */
+	if (echocount == 1 || ffffcount == 1)
+		return (NULL);
+
+	echoreg45 = (echocount == 0) ? 0 : 1;
+	ffffreg45 = (ffffcount == 0) ? 0 : 1;
+
+	/*
+	 * If we find that 4 and 5 are not echos, and don't return 0xffff
+	 * then based on whether the echo test of registers 6 and 7
+	 * succeeded or not, we may have an LM77
+	 */
+	if (echoreg45 == 0 && ffffreg45 == 0 && echoreg67 == 1) {
 		mask = LM77TMASK;
 
 		/* mask size changed, must re-read for the next checks */
@@ -210,35 +251,79 @@ lm75probe(void)
 		tos = iicprobew(LM75Tos) & mask;
 		tlow = iicprobew(LM77Tlow) & mask;
 		thigh = iicprobew(LM77Thigh) & mask;
-		break;
 	}
 
-	/* a real LM75/LM77 repeats it's registers.... */
+	/* a real LM75/LM75A/LM77 repeats it's registers.... */
 	for (i = 0x08; i <= 0xf8; i += 8) {
 		if (conf != iicprobenc(LM75CONF + i) ||
 		    thyst != (iicprobew(LM75Thyst + i) & mask) ||
 		    tos != (iicprobew(LM75Tos + i) & mask))
 			return (NULL);
-		tos = iicprobew(LM75Tos) & mask;
-		if (tos != (iicprobew(0x06 + i) & mask) ||
-		    tos != (iicprobew(0x07 + i) & mask))
-			return (NULL);
-		if (ret == 75) {
+
+		/*
+		 * Check that the repeated registers 0x06 and 0x07 still
+		 * either echo or return 0xffff
+		 */
+		if (echoreg67 == 1) {
+			tos = iicprobew(LM75Tos) & mask;
+			if (tos != (iicprobew(0x06 + i) & mask) ||
+			    tos != (iicprobew(0x07 + i) & mask))
+				return (NULL);
+		} else if (ffffreg67 == 1)
+			if (iicprobew(0x06 + i) != 0xffff ||
+			    iicprobew(0x07 + i) != 0xffff)
+				return (NULL);
+
+		/*
+		 * Check that the repeated registers 0x04 and 0x05 still
+		 * either echo or return 0xffff. If they do neither, and
+		 * registers 0x06 and 0x07 echo, then we will be probing
+		 * for an LM77, so make sure those still repeat
+		 */
+		if (echoreg45 == 1) {
 			tos = iicprobew(LM75Tos) & mask;
 			if (tos != (iicprobew(LM77Tlow + i) & mask) ||
 			    tos != (iicprobew(LM77Thigh + i) & mask))
 				return (NULL);
-		} else {
+		} else if (ffffreg45 == 1) {
+			if (iicprobew(LM77Tlow + i) != 0xffff ||
+			    iicprobew(LM77Thigh + i) != 0xffff)
+				return (NULL);
+		} else if (echoreg67 == 1)
 			if (tlow != (iicprobew(LM77Tlow + i) & mask) ||
 			    thigh != (iicprobew(LM77Thigh + i) & mask))
 				return (NULL);
-		}
 	}
 
-	/* We hope */
-	if (ret == 75)
+	/*
+	 * Given that we now know how the first eight registers behave and
+	 * that this behaviour is consistently repeated, we can now use
+	 * the following table:
+	 *
+	 * echoreg67 | echoreg45 | ffffreg67 | ffffreg45 | chip
+	 * ----------+-----------+-----------+-----------+------
+	 *     1     |     1     |     0     |     0     | LM75
+	 *     1     |     0     |     0     |     0     | LM77
+	 *     0     |     0     |     1     |     1     | LM75A
+	 */
+
+	/* Convert the various flags into a single score */
+	score = (echoreg67 << 3) + (echoreg45 << 2) + (ffffreg67 << 1) +
+	    ffffreg45;
+
+	switch (score) {
+	case 12:
 		return ("lm75");
-	return ("lm77");
+	case 8:
+		return ("lm77");
+	case 3:
+		return ("lm75a");
+	default:
+#if defined(I2C_DEBUG) || defined(I2C_VERBOSE)
+		printf("lm75probe: unknown chip, scored %d\n", score);
+#endif /* defined(I2C_DEBUG) || defined(I2C_VERBOSE) */
+		return (NULL);
+	}
 }
 
 char *
@@ -677,7 +762,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	      iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40)) {
 		name = "adm1026";
 	} else if (name == NULL &&
-	    (addr & 0x7c) == 0x48) {		/* addr 0b1001xxx */
+	    (addr & 0x78) == 0x48) {		/* addr 0b1001xxx */
 		name = lm75probe();
 	}
 #if 0
