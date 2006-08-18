@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.19 2006/08/17 10:34:14 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.20 2006/08/18 00:39:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -198,7 +198,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	if (msg)
 		*lp = fallbacklabel;
 
-done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
