@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.24 2006/08/18 04:07:11 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.25 2006/08/18 10:27:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "bio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,6 +35,11 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#if NBIO > 0
+#include <sys/ioctl.h>
+#include <dev/biovar.h>
+#endif
 
 #ifdef ARC_DEBUG
 #define ARC_D_INIT	(1<<0)
@@ -335,6 +342,11 @@ u_int8_t		arc_msg_cksum(void *, size_t);
 int			arc_msgbuf(struct arc_softc *, void *, size_t,
 			    void *, size_t);
 
+/* bioctl */
+#if NBIO > 0
+int			arc_bioctl(struct device *, u_long, caddr_t);
+#endif
+
 int
 arc_match(struct device *parent, void *match, void *aux)
 {
@@ -378,6 +390,11 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX enable interrupts */
 	arc_write(sc, ARC_REG_INTRMASK,
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
+
+#if NBIO > 0
+	if (bio_register(self, arc_bioctl) != 0)
+		panic("%s: bioctl registration failed\n", DEVNAME(sc));
+#endif
 
 	return;
 }
@@ -767,6 +784,14 @@ arc_query_firmware(struct arc_softc *sc)
 
 	return (0);
 }
+
+#if NBIO > 0
+int
+arc_bioctl(struct device *self, u_long cmd, caddr_t addr)
+{
+	return (ENOTTY);
+}
+#endif /* NBIO > 0 */
 
 u_int8_t
 arc_msg_cksum(void *cmd, size_t len)
