@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.22 2006/08/17 12:31:16 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.23 2006/08/18 01:20:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -185,6 +185,31 @@ struct arc_io_cmd {
 	struct arc_sge		sgl[ARC_SGL_MAXLEN];
 } __packed;
 
+/* definitions of the firmware commands sent via the doorbells */
+
+struct arc_fw_hdr {
+	u_int8_t		byte1;
+	u_int8_t		byte2;
+	u_int8_t		byte3;
+} __packed;
+
+/* the fw header must always equal this */
+struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
+
+#define ARC_FW_MUTE_ALARM	0x30	/* defmsg */
+#define ARC_FW_SET_ALARM	0x31	/* 0 is dis, 1 is en */
+#define ARC_FW_NOP		0x38	/* defmsg */
+
+/* variable length msg */
+#define ARC_FW_MSG(_len)				\
+struct {						\
+	struct arc_fw_hdr	hdr;			\
+	u_int16_t		len;			\
+	u_int8_t		msg[(len)];		\
+	u_int8_t		cksum;			\
+} __packed
+#define ARC_FW_MSGBUF(_msg)	((void *)(_msg)->msg)
+
 int			arc_match(struct device *, void *, void *);
 void			arc_attach(struct device *, struct device *, void *);
 int			arc_detach(struct device *, int);
@@ -302,6 +327,7 @@ int			arc_query_firmware(struct arc_softc *);
 void			arc_lock(struct arc_softc *);
 void			arc_unlock(struct arc_softc *);
 void			arc_wait(struct arc_softc *);
+u_int8_t		arc_msg_cksum(void *, size_t);
 int			arc_msgbuf(struct arc_softc *, void *, size_t,
 			    void *, size_t);
 
@@ -736,6 +762,20 @@ arc_query_firmware(struct arc_softc *sc)
 	    letoh32(fwinfo.sdram_size), string);
 
 	return (0);
+}
+
+u_int8_t
+arc_msg_cksum(void *cmd, size_t len)
+{
+	u_int8_t			*buf = cmd;
+	u_int8_t			cksum = 0;
+	int				i;
+
+	/* starts after the header, ends before the cksum */
+	for (i = sizeof(struct arc_fw_hdr); i < (len - 1); i++)
+		cksum += buf[i];
+
+	return (cksum);
 }
 
 int
