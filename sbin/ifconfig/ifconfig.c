@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.172 2006/08/02 07:38:33 grunk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.173 2006/08/18 08:21:08 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1672,7 +1672,7 @@ ieee80211_listnodes(void)
 	struct ieee80211_nodereq_all na;
 	struct ieee80211_nodereq nr[512];
 	struct ifreq ifr;
-	int i, ret, down = 0;
+	int i, down = 0;
 
 	if ((flags & IFF_UP) == 0) {
 		down = 1;
@@ -1681,10 +1681,12 @@ ieee80211_listnodes(void)
 
 	bzero(&ifr, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ret = 1;
 
-	if (ioctl(s, SIOCS80211SCAN, (caddr_t)&ifr) != 0)
+	if (ioctl(s, SIOCS80211SCAN, (caddr_t)&ifr) != 0) {
+		if (errno == EPERM)
+			printf("\t\tno permission to scan\n");
 		goto done;
+	}
 
 	bzero(&na, sizeof(na));
 	bzero(&nr, sizeof(nr));
@@ -1706,14 +1708,9 @@ ieee80211_listnodes(void)
 		putchar('\n');
 	}
 
-	ret = 0;
-
  done:
 	if (down)
 		setifflags("restore", -IFF_UP);
-
-	if (ret != 0)
-		exit(1);
 }
 
 void
