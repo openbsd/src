@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.23 2006/08/18 01:20:14 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.24 2006/08/18 04:07:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -196,16 +196,20 @@ struct arc_fw_hdr {
 /* the fw header must always equal this */
 struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
 
-#define ARC_FW_MUTE_ALARM	0x30	/* defmsg */
-#define ARC_FW_SET_ALARM	0x31	/* 0 is dis, 1 is en */
-#define ARC_FW_NOP		0x38	/* defmsg */
+#define ARC_FW_MUTE_ALARM	0x30	/* opcode only */
+#define ARC_FW_SET_ALARM	0x31	/* opcode + 1 byte for setting */
+#define  ARC_FW_SET_ALARM_DISABLE		0x00
+#define  ARC_FW_SET_ALARM_ENABLE		0x01
+#define ARC_FW_NOP		0x38	/* opcode only */
+
+#define ARC_FW_CMD_OK		0x41
 
 /* variable length msg */
 #define ARC_FW_MSG(_len)				\
 struct {						\
 	struct arc_fw_hdr	hdr;			\
 	u_int16_t		len;			\
-	u_int8_t		msg[(len)];		\
+	u_int8_t		msg[(_len)];		\
 	u_int8_t		cksum;			\
 } __packed
 #define ARC_FW_MSGBUF(_msg)	((void *)(_msg)->msg)
@@ -323,7 +327,7 @@ int			arc_map_pci_resources(struct arc_softc *,
 			    struct pci_attach_args *);
 int			arc_query_firmware(struct arc_softc *);
 
-/* these lock access to the read and write regions. */
+/* stuff to do messaging via the doorbells */
 void			arc_lock(struct arc_softc *);
 void			arc_unlock(struct arc_softc *);
 void			arc_wait(struct arc_softc *);
