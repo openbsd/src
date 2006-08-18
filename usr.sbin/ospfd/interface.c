@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.51 2006/04/24 20:18:03 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.52 2006/08/18 11:54:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -562,6 +562,14 @@ if_act_reset(struct iface *iface)
 		if (if_leave_group(iface, &addr)) {
 			log_warnx("if_act_reset: error leaving group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
+		}
+		if (iface->state & IF_STA_DRORBDR) {
+			inet_aton(AllDRouters, &addr);
+			if (if_leave_group(iface, &addr)) {
+				log_warnx("if_act_reset: "
+				    "error leaving group %s, interface %s",
+				    inet_ntoa(addr), iface->name);
+			}
 		}
 		break;
 	case IF_TYPE_VIRTUALLINK:
