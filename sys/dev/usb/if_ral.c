@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.72 2006/08/09 07:40:52 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.73 2006/08/18 15:18:24 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -130,8 +130,6 @@ Static uint8_t		ural_plcp_signal(int);
 Static void		ural_setup_tx_desc(struct ural_softc *,
 			    struct ural_tx_desc *, uint32_t, int, int);
 Static int		ural_tx_bcn(struct ural_softc *, struct mbuf *,
-			    struct ieee80211_node *);
-Static int		ural_tx_mgt(struct ural_softc *, struct mbuf *,
 			    struct ieee80211_node *);
 Static int		ural_tx_data(struct ural_softc *, struct mbuf *,
 			    struct ieee80211_node *);
@@ -671,7 +669,7 @@ ural_task(void *arg)
 		break;
 	}
 
-	sc->sc_newstate(ic, sc->sc_state, -1);
+	sc->sc_newstate(ic, sc->sc_state, sc->sc_arg);
 }
 
 Static int
@@ -685,6 +683,7 @@ ural_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	/* do it in a process context */
 	sc->sc_state = nstate;
+	sc->sc_arg = arg;
 	usb_add_task(sc->sc_udev, &sc->sc_task);
 
 	return 0;
@@ -1077,9 +1076,10 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 }
 
 Static int
-ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
+ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct ural_tx_desc *desc;
 	struct ural_tx_data *data;
 	struct ieee80211_frame *wh;
@@ -1088,23 +1088,46 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	usbd_status error;
 	int xferlen, rate;
 
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		m0 = ieee80211_wep_crypt(ifp, m0, 1);
+		if (m0 == NULL)
+			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
+	}
+
+	/* pickup a rate */
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_MGT) {
+		/* mgmt frames are sent at the lowest available bit-rate */
+		rate = ni->ni_rates.rs_rates[0];
+	} else {
+		if (ic->ic_fixed_rate != -1) {
+			rate = ic->ic_sup_rates[ic->ic_curmode].
+			    rs_rates[ic->ic_fixed_rate];
+		} else
+			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+	}
+	rate &= IEEE80211_RATE_VAL;
+
 	data = &sc->tx_data[0];
 	desc = (struct ural_tx_desc *)data->buf;
-
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
 	data->m = m0;
 	data->ni = ni;
 
-	wh = mtod(m0, struct ieee80211_frame *);
-
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RAL_TX_ACK;
+		flags |= RAL_TX_RETRY(7);
 
-		dur = ural_txtime(RAL_ACK_SIZE, rate, ic->ic_flags) + RAL_SIFS;
+		dur = ural_txtime(RAL_ACK_SIZE, ural_ack_rate(ic, rate),
+		    ic->ic_flags) + RAL_SIFS;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
-		/* tell hardware to add timestamp for probe responses */
+		/* tell hardware to set timestamp in probe responses */
 		if ((wh->i_fc[0] &
 		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
@@ -1144,110 +1167,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 2;
 
-	DPRINTFN(10, ("sending mgt frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
-
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, ural_txeof);
-
-	error = usbd_transfer(data->xfer);
-	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
-		m_freem(m0);
-		return error;
-	}
-
-	sc->tx_queued++;
-
-	return 0;
-}
-
-Static int
-ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	struct ieee80211_rateset *rs;
-	struct ural_tx_desc *desc;
-	struct ural_tx_data *data;
-	struct ieee80211_frame *wh;
-	uint32_t flags = 0;
-	uint16_t dur;
-	usbd_status error;
-	int xferlen, rate;
-
-	if (ic->ic_fixed_rate != -1) {
-		if (ic->ic_curmode != IEEE80211_MODE_AUTO)
-			rs = &ic->ic_sup_rates[ic->ic_curmode];
-		else
-			rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
-
-		rate = rs->rs_rates[ic->ic_fixed_rate];
-	} else {
-		rs = &ni->ni_rates;
-		rate = rs->rs_rates[ni->ni_txrate];
-	}
-	rate &= IEEE80211_RATE_VAL;
-
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
-			return ENOBUFS;
-
-		/* packet header may have moved, reset our local pointer */
-		wh = mtod(m0, struct ieee80211_frame *);
-	}
-
-	data = &sc->tx_data[0];
-	desc = (struct ural_tx_desc *)data->buf;
-
-	data->m = m0;
-	data->ni = ni;
-
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RAL_TX_ACK;
-		flags |= RAL_TX_RETRY(7);
-
-		dur = ural_txtime(RAL_ACK_SIZE, ural_ack_rate(ic, rate),
-		    ic->ic_flags) + RAL_SIFS;
-		*(uint16_t *)wh->i_dur = htole16(dur);
-	}
-
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
-		struct ural_tx_radiotap_header *tap = &sc->sc_txtap;
-
-		tap->wt_flags = 0;
-		tap->wt_rate = rate;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
-		tap->wt_antenna = sc->tx_ant;
-
-		M_DUP_PKTHDR(&mb, m0);
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
-		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
-	}
-#endif
-
-	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
-	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
-
-	/* align end on a 2-bytes boundary */
-	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
-
-	/*
-	 * No space left in the last URB to store the extra 2 bytes, force
-	 * sending of another URB.
-	 */
-	if ((xferlen % 64) == 0)
-		xferlen += 2;
-
-	DPRINTFN(10, ("sending data frame len=%u rate=%u xfer len=%u\n",
+	DPRINTFN(10, ("sending frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
@@ -1294,7 +1214,7 @@ ural_start(struct ifnet *ifp)
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
-			if (ural_tx_mgt(sc, m0, ni) != 0)
+			if (ural_tx_data(sc, m0, ni) != 0)
 				break;
 
 		} else {

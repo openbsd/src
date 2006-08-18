@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralvar.h,v 1.6 2006/06/17 19:07:19 damien Exp $  */
+/*	$OpenBSD: if_ralvar.h,v 1.7 2006/08/18 15:18:24 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -91,6 +91,7 @@ struct ural_softc {
 	usbd_pipe_handle		sc_tx_pipeh;
 
 	enum ieee80211_state		sc_state;
+	int				sc_arg;
 	struct usb_task			sc_task;
 
 	struct ieee80211_amrr		amrr;
