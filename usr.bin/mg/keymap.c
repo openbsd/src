@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.38 2006/07/27 19:59:29 deraadt Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.39 2006/08/18 00:22:56 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -212,10 +212,9 @@ static PF metami[] = {
 	gotoeob			/* > */
 };
 
-static PF metalb[] = {
-	gotobop,		/* [ */
+static PF metabsl[] = {
 	delwhite,		/* \ */
-	gotoeop,		/* ] */
+	rescan,			/* ] */
 	rescan,			/* ^ */
 	rescan,			/* _ */
 	rescan,			/* ` */
@@ -240,7 +239,12 @@ static PF metal[] = {
 	upperword,		/* u */
 	backpage,		/* v */
 	copyregion,		/* w */
-	extend			/* x */
+	extend,			/* x */
+	rescan,			/* y */
+	rescan,			/* z */
+	gotobop,		/* { */
+	rescan,			/* | */
+	gotoeop			/* } */
 };
 
 static PF metatilde[] = {
@@ -269,10 +273,10 @@ struct KEYMAPE (8 + IMAPEXT) metamap = {
 			'-', '>', metami, NULL
 		},
 		{
-			'[', 'f', metalb, NULL
+			'\\', 'f', metabsl, NULL
 		},
 		{
-			'l', 'x', metal, NULL
+			'l', '}', metal, NULL
 		},
 		{
 			'~', CCHR('?'), metatilde, NULL
