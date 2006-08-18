@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.28 2006/08/10 09:23:32 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.29 2006/08/18 16:04:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -493,9 +493,8 @@ wpi_alloc_shared(struct wpi_softc *sc)
 	int error;
 
 	/* must be aligned on a 4K-page boundary */
-	error = wpi_dma_contig_alloc(sc, &sc->shared_dma,
-	    (void **)&sc->shared, sizeof (struct wpi_shared), PAGE_SIZE,
-	    BUS_DMA_NOWAIT);
+	error = wpi_dma_contig_alloc(sc, &sc->shared_dma, (void **)&sc->shared,
+	    sizeof (struct wpi_shared), PAGE_SIZE, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate shared area DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -518,8 +517,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 
 	ring->cur = 0;
 
-	error = wpi_dma_contig_alloc(sc, &ring->desc_dma,
-	    (void **)&ring->desc,
+	error = wpi_dma_contig_alloc(sc, &ring->desc_dma, (void **)&ring->desc,
 	    WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc),
 	    WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {

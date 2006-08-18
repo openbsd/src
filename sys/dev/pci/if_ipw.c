@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.58 2006/06/14 18:40:23 brad Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.59 2006/08/18 16:04:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -27,9 +27,8 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * Intel(R) PRO/Wireless 2100 MiniPCI driver
- * http://www.intel.com/network/connectivity/products/wireless/prowireless_mobile.htm
+/*
+ * Driver for Intel PRO/Wireless 2100 802.11 network adapters.
  */
 
 #include "bpfilter.h"
@@ -231,13 +230,17 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ic->ic_phytype = IEEE80211_T_DS;
-	ic->ic_opmode = IEEE80211_M_STA;
+	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_MONITOR |
-	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP |
-	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_SCANALL;
+	ic->ic_caps =
+	    IEEE80211_C_IBSS |		/* IBSS mode supported */
+	    IEEE80211_C_MONITOR |	/* monitor mode supported */
+	    IEEE80211_C_TXPMGT |	/* tx power management */
+	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_WEP |		/* s/w WEP */
+	    IEEE80211_C_SCANALL;	/* h/w scanning */
 
 	/* read MAC address from EEPROM */
 	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 0);
@@ -1158,10 +1161,15 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	struct mbuf *mnew;
 	int error, i;
 
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	wh = mtod(m, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		m = ieee80211_wep_crypt(ifp, m, 1);
 		if (m == NULL)
 			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m, struct ieee80211_frame *);
 	}
 
 #if NBPFILTER > 0
@@ -1181,8 +1189,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
-
-	wh = mtod(m, struct ieee80211_frame *);
 
 	shdr = SLIST_FIRST(&sc->free_shdr);
 	sbuf = SLIST_FIRST(&sc->free_sbuf);
@@ -2032,5 +2038,5 @@ ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, uint8_t *datap,
 }
 
 struct cfdriver ipw_cd = {
-	0, "ipw", DV_IFNET
+	NULL, "ipw", DV_IFNET
 };

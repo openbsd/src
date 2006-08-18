@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.34 2006/08/18 15:23:13 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.35 2006/08/18 16:04:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -66,6 +66,10 @@
 
 #include <dev/usb/if_rumreg.h>
 #include <dev/usb/if_rumvar.h>
+
+#ifdef USB_DEBUG
+#define RUM_DEBUG
+#endif
 
 #ifdef RUM_DEBUG
 #define DPRINTF(x)	do { if (rum_debug) logprintf x; } while (0)
@@ -2116,7 +2120,7 @@ rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 Static void
 rum_amrr_timeout(void *arg)
 {
-	struct rum_softc *sc = (struct rum_softc *)arg;
+	struct rum_softc *sc = arg;
 	usb_device_request_t req;
 	int s;
 

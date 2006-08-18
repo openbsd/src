@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.74 2006/08/18 15:23:13 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.75 2006/08/18 16:04:56 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -301,8 +301,8 @@ USB_ATTACH(ural)
 	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, sc->asic_rev,
 	    ural_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
-	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
-	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
+	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
+	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
@@ -990,7 +990,10 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 	desc->flags |= htole32(RAL_TX_NEWSEQ);
 	desc->flags |= htole32(len << 16);
 
-	desc->wme = htole16(RAL_AIFSN(2) | RAL_LOGCWMIN(3) | RAL_LOGCWMAX(5));
+	desc->wme = htole16(
+	    RAL_AIFSN(2) |
+	    RAL_LOGCWMIN(3) |
+	    RAL_LOGCWMAX(5));
 
 	/* setup PLCP fields */
 	desc->plcp_signal  = ural_plcp_signal(rate);
@@ -2108,7 +2111,7 @@ ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 Static void
 ural_amrr_timeout(void *arg)
 {
-	struct ural_softc *sc = (struct ural_softc *)arg;
+	struct ural_softc *sc = arg;
 	usb_device_request_t req;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.69 2006/06/14 18:40:23 brad Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.70 2006/08/18 16:04:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -27,9 +27,8 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
- * http://www.intel.com/network/connectivity/products/wireless/prowireless_mobile.htm
+/*
+ * Driver for Intel(R) PRO/Wireless 2200BG/2915ABG 802.11 network adapters.
  */
 
 #include "bpfilter.h"
@@ -283,9 +282,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_caps =
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
-	    IEEE80211_C_WEP |		/* h/w WEP supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_WEP |		/* h/w WEP supported */
 	    IEEE80211_C_SCANALL;	/* h/w scanning */
 
 	/* read MAC address from EEPROM */
@@ -1364,10 +1363,9 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	if (!IEEE80211_IS_MULTICAST(desc->wh.i_addr1))
 		desc->flags |= IWI_DATA_FLAG_NEED_ACK;
 
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		desc->wh.i_fc[1] |= IEEE80211_FC1_WEP;
+	if (desc->wh.i_fc[1] & IEEE80211_FC1_WEP)
 		desc->wep_txkey = ic->ic_wep_txkey;
-	} else
+	else
 		desc->flags |= IWI_DATA_FLAG_NO_WEP;
 
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
@@ -2260,5 +2258,5 @@ iwi_stop(struct ifnet *ifp, int disable)
 }
 
 struct cfdriver iwi_cd = {
-	0, "iwi", DV_IFNET
+	NULL, "iwi", DV_IFNET
 };
