@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.13 2006/03/27 08:19:39 dlg Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.14 2006/08/18 02:54:11 jason Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct ucom_attach_args {
 	int portno;
 	int bulkin;
 	int bulkout;
+	struct uhidev_softc *uhidev;
 	u_int ibufsize;
 	u_int ibufsizepad;
 	u_int obufsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.30 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: ucom.c,v 1.31 2006/08/18 02:54:11 jason Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/uhidev.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -87,6 +88,7 @@ struct ucom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 
 	usbd_device_handle	sc_udev;	/* USB device */
+	struct uhidev_softc	*sc_uhidev;	/* hid device (if deeper) */
 
 	usbd_interface_handle	sc_iface;	/* data interface */
 
@@ -104,6 +106,9 @@ struct ucom_softc {
 	u_int			sc_obufsize;	/* write buffer size */
 	u_int			sc_opkthdrlen;	/* header length of
 						 * output packet */
+
+	usbd_pipe_handle	sc_ipipe;	/* hid interrupt input pipe */
+	usbd_pipe_handle	sc_opipe;	/* hid interrupt pipe */
 
 	struct ucom_methods     *sc_methods;
 	void                    *sc_parent;
@@ -178,6 +183,7 @@ USB_ATTACH(ucom)
 	sc->sc_iface = uca->iface;
 	sc->sc_bulkout_no = uca->bulkout;
 	sc->sc_bulkin_no = uca->bulkin;
+	sc->sc_uhidev = uca->uhidev;
 	sc->sc_ibufsize = uca->ibufsize;
 	sc->sc_ibufsizepad = uca->ibufsizepad;
 	sc->sc_obufsize = uca->obufsize;
@@ -310,6 +316,70 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	if (sc->sc_open++ == 0) {
 		s = splusb();
 
+		DPRINTF(("ucomopen: open pipes in=%d out=%d\n",
+		    sc->sc_bulkin_no, sc->sc_bulkout_no));
+		DPRINTF(("ucomopen: hid %p pipes in=%p out=%p\n",
+		    sc->sc_uhidev, sc->sc_ipipe, sc->sc_opipe));
+
+		if (sc->sc_bulkin_no != -1) {
+
+			/* Open the bulk pipes */
+			err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no, 0,
+			    &sc->sc_bulkin_pipe);
+			if (err) {
+				DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
+				    USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no,
+				    usbd_errstr(err)));
+				error = EIO;
+				goto fail_0;
+			}
+			err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
+			    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+			if (err) {
+				DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
+				    USBDEVNAME(sc->sc_dev), sc->sc_bulkout_no,
+				    usbd_errstr(err)));
+				error = EIO;
+				goto fail_1;
+			}
+
+			/* Allocate a request and an input buffer and start reading. */
+			sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
+			if (sc->sc_ixfer == NULL) {
+				error = ENOMEM;
+				goto fail_2;
+			}
+
+			sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer,
+			    sc->sc_ibufsizepad);
+			if (sc->sc_ibuf == NULL) {
+				error = ENOMEM;
+				goto fail_2;
+			}
+
+			sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
+			if (sc->sc_oxfer == NULL) {
+				error = ENOMEM;
+				goto fail_3;
+			}
+		} else {
+			/*
+			 * input/output pipes and xfers already allocated
+			 * as is the input buffer.
+			 */
+			sc->sc_ipipe = sc->sc_uhidev->sc_ipipe;
+			sc->sc_ixfer = sc->sc_uhidev->sc_ixfer;
+			sc->sc_opipe = sc->sc_uhidev->sc_opipe;
+			sc->sc_oxfer = sc->sc_uhidev->sc_oxfer;
+		}
+
+		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer,
+		    sc->sc_obufsize + sc->sc_opkthdrlen);
+		if (sc->sc_obuf == NULL) {
+			error = ENOMEM;
+			goto fail_4;
+		}
+
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
 			    sc->sc_portno);
@@ -322,57 +392,6 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		}
 
 		ucom_status_change(sc);
-
-		DPRINTF(("ucomopen: open pipes in=%d out=%d\n",
-			 sc->sc_bulkin_no, sc->sc_bulkout_no));
-
-		/* Open the bulk pipes */
-		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no, 0,
-				     &sc->sc_bulkin_pipe);
-		if (err) {
-			DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
-				 USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no,
-				 usbd_errstr(err)));
-			error = EIO;
-			goto fail_0;
-		}
-		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
-				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-		if (err) {
-			DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
-				 USBDEVNAME(sc->sc_dev), sc->sc_bulkout_no,
-				 usbd_errstr(err)));
-			error = EIO;
-			goto fail_1;
-		}
-
-		/* Allocate a request and an input buffer and start reading. */
-		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_ixfer == NULL) {
-			error = ENOMEM;
-			goto fail_2;
-		}
-
-		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer,
-						sc->sc_ibufsizepad);
-		if (sc->sc_ibuf == NULL) {
-			error = ENOMEM;
-			goto fail_3;
-		}
-
-		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_oxfer == NULL) {
-			error = ENOMEM;
-			goto fail_3;
-		}
-
-		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer,
-						sc->sc_obufsize +
-						sc->sc_opkthdrlen);
-		if (sc->sc_obuf == NULL) {
-			error = ENOMEM;
-			goto fail_4;
-		}
 
 		ucomstartread(sc);
 
@@ -484,7 +503,8 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	return (0);
 
 fail_4:
-	usbd_free_xfer(sc->sc_oxfer);
+	if (sc->sc_uhidev == NULL)
+		usbd_free_xfer(sc->sc_oxfer);
 	sc->sc_oxfer = NULL;
 fail_3:
 	usbd_free_xfer(sc->sc_ixfer);
@@ -517,10 +537,10 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	struct tty *tp = sc->sc_tty;
 	int s;
 
-	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
+	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
 	ucom_lock(sc);
 
 	(*LINESW(tp, l_close))(tp, flag);
@@ -944,9 +964,21 @@ ucomstart(struct tty *tp)
 		memcpy(sc->sc_obuf, data, cnt);
 
 	DPRINTFN(4,("ucomstart: %d chars\n", cnt));
-	usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe,
-			(usbd_private_handle)sc, sc->sc_obuf, cnt,
-			USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
+#ifdef DIAGNOSTIC
+	if (sc->sc_oxfer == NULL) {
+		printf("ucomstart: null oxfer\n");
+		goto out;
+	}
+#endif
+	if (sc->sc_bulkout_pipe != NULL) {
+		usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe,
+		    (usbd_private_handle)sc, sc->sc_obuf, cnt,
+		    USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
+	} else {
+		usbd_setup_xfer(sc->sc_oxfer, sc->sc_opipe,
+		    (usbd_private_handle)sc, sc->sc_obuf, cnt,
+		    USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
+	}
 	/* What can we do on error? */
 	err = usbd_transfer(sc->sc_oxfer);
 #ifdef DIAGNOSTIC
@@ -986,19 +1018,22 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	u_int32_t cc;
 	int s;
 
-	DPRINTFN(5,("ucomwritecb: status=%d\n", status));
+	DPRINTFN(5,("ucomwritecb: %p %p status=%d\n", xfer, p, status));
 
 	if (status == USBD_CANCELLED || sc->sc_dying)
 		goto error;
 
-	if (status) {
-		DPRINTF(("ucomwritecb: status=%d\n", status));
-		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
-		/* XXX we should restart after some delay. */
-		goto error;
+	if (sc->sc_bulkin_pipe != NULL) {
+		if (status) {
+			usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
+			/* XXX we should restart after some delay. */
+			goto error;
+		}
+		usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
+	} else {
+		usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
+		// XXX above gives me wrong cc, no?
 	}
-
-	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 
 	DPRINTFN(5,("ucomwritecb: cc=%d\n", cc));
 	/* convert from USB bytes to tty bytes */
@@ -1026,16 +1061,26 @@ ucomstartread(struct ucom_softc *sc)
 	usbd_status err;
 
 	DPRINTFN(5,("ucomstartread: start\n"));
-	usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe,
+#ifdef DIAGNOSTIC
+	if (sc->sc_ixfer == NULL) {
+		DPRINTF(("ucomstartread: null ixfer\n"));
+		return (USBD_INVAL);
+	}
+#endif
+
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe,
 			(usbd_private_handle)sc,
 			sc->sc_ibuf, sc->sc_ibufsize,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, ucomreadcb);
-	err = usbd_transfer(sc->sc_ixfer);
-	if (err != USBD_IN_PROGRESS) {
-		DPRINTF(("ucomstartread: err=%s\n", usbd_errstr(err)));
-		return (err);
+		err = usbd_transfer(sc->sc_ixfer);
+		if (err != USBD_IN_PROGRESS) {
+			DPRINTF(("ucomstartread: err=%s\n", usbd_errstr(err)));
+			return (err);
+		}
 	}
+
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1064,9 +1109,11 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	}
 
 	if (status) {
-		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
-		/* XXX we should restart after some delay. */
-		return;
+		if (sc->sc_bulkin_pipe != NULL) {
+			usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
+			/* XXX we should restart after some delay. */
+			return;
+		}
 	}
 
 	usbd_get_xfer_status(xfer, NULL, (void *)&cp, &cc, NULL);
@@ -1113,11 +1160,14 @@ ucom_cleanup(struct ucom_softc *sc)
 			sc->sc_bulkout_pipe = NULL;
 		}
 		if (sc->sc_ixfer != NULL) {
-			usbd_free_xfer(sc->sc_ixfer);
+			if (sc->sc_uhidev == NULL)
+				usbd_free_xfer(sc->sc_ixfer);
 			sc->sc_ixfer = NULL;
 		}
 		if (sc->sc_oxfer != NULL) {
-			usbd_free_xfer(sc->sc_oxfer);
+			usbd_free_buffer(sc->sc_oxfer);
+			if (sc->sc_uhidev == NULL)
+				usbd_free_xfer(sc->sc_oxfer);
 			sc->sc_oxfer = NULL;
 		}
 	}
