@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumvar.h,v 1.5 2006/08/09 08:21:08 damien Exp $	*/
+/*	$OpenBSD: if_rumvar.h,v 1.6 2006/08/18 15:11:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -85,7 +85,6 @@ struct rum_softc {
 
 	uint16_t			macbbp_rev;
 	uint8_t				rf_rev;
-	uint32_t			rfprog;
 	uint8_t				rffreq;
 
 	usbd_xfer_handle		amrr_xfer;
@@ -94,6 +93,7 @@ struct rum_softc {
 	usbd_pipe_handle		sc_tx_pipeh;
 
 	enum ieee80211_state		sc_state;
+	int				sc_arg;
 	struct usb_task			sc_task;
 
 	struct ieee80211_amrr		amrr;
@@ -117,7 +117,6 @@ struct rum_softc {
 		uint8_t	reg;
 	} __packed			bbp_prom[16];
 
-	int				led_mode;
 	int				hw_radio;
 	int				rx_ant;
 	int				tx_ant;
