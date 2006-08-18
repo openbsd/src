@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.27 2006/08/18 13:55:52 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.28 2006/08/18 13:57:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -948,9 +948,6 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 		error = EIO;
 		goto out;
 	}
-
-	printf("%s: %s value: 0x%02x\n", DEVNAME(sc), __func__,
-	    sysinfo->alarm);
 
 	ba->ba_status = sysinfo->alarm;
 
