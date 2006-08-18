@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.362 2006/07/10 19:45:22 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.363 2006/08/18 16:08:44 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2071,12 +2071,13 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		default:
-			printf("%s: unknown Pentium M FSB_FREQ value %d\n",
+			printf("%s: unknown Pentium M FSB_FREQ value %d",
 			    ci->ci_dev.dv_xname, bus);
-			break;
+			goto print_msr;
 		}
 		break;
 	case 0xe: /* Core Duo/Solo */
+	case 0xf: /* Core Xeon */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
@@ -2089,12 +2090,16 @@ p3_get_bus_clock(struct cpu_info *ci)
 		case 3:
 			bus_clock = 16666;
 			break;
-		default:
-			printf("%s: unknown Core Duo/Solo FSB_FREQ value %d\n",
-			    ci->ci_dev.dv_xname, bus);
+		case 4:
+			bus_clock = 33333;
 			break;
+		default:
+			printf("%s: unknown Core FSB_FREQ value %d",
+			    ci->ci_dev.dv_xname, bus);
+			goto print_msr;
 		}
 		break;
+	case 0x1: /* Pentium Pro, model 1 */
 	case 0x3: /* Pentium II, model 3 */
 	case 0x5: /* Pentium II, II Xeon, Celeron, model 5 */
 	case 0x6: /* Celeron, model 6 */
@@ -2115,16 +2120,21 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 10000;
 			break;
 		default:
-			printf("%s: unknown i686 EBL_CR_POWERON value %d\n",
+			printf("%s: unknown i686 EBL_CR_POWERON value %d",
 			    ci->ci_dev.dv_xname, bus);
-			break;
+			goto print_msr;
 		}
 		break;
 	default: 
-		printf("%s: unknown i686 model %d, can't get bus clock\n",
+		printf("%s: unknown i686 model %d, can't get bus clock",
 		    ci->ci_dev.dv_xname, model);
+print_msr:
+		/*
+		 * Show the EBL_CR_POWERON MSR, so we'll at least have
+		 * some extra information, such as clock ratio, etc.
+		 */
+		printf(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
 		break;
-		
 	}
 }
 
