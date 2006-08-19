@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.12 2006/04/10 00:57:23 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.13 2006/08/19 15:55:47 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -32,6 +32,7 @@
 #define	LM_MODEL_LM75	1
 #define	LM_MODEL_LM77	2
 #define	LM_MODEL_DS1775	3
+#define	LM_MODEL_LM75A	4
 
 #define LM_POLLTIME	3	/* 3s */
 
@@ -89,6 +90,23 @@ struct cfdriver lmtemp_cd = {
  *	-25C	1 1100 1110	0x1ce
  *	-55C	1 1001 0010	0x192
  *
+ * Temperature on the LM75A is represented by an 11-bit two's complement
+ * integer in steps of 0.125C.  The LM75A can be treated like an LM75 if
+ * the extra precision is not required.  The following examples are
+ * taken from the LM75A data sheet:
+ *
+ *	+127.000C	011 1111 1000	0x3f8
+ *	+126.875C	011 1111 0111	0x3f7
+ *	+126.125C	011 1111 0001	0x3f1
+ *	+125.000C	011 1110 1000	0x3e8
+ *	+25.000C	000 1100 1000	0x0c8
+ *	+0.125C		000 0000 0001	0x001
+ *	0C		000 0000 0000	0x000
+ *	-0.125C		111 1111 1111	0x7ff
+ *	-25.000C	111 0011 1000	0x738
+ *	-54.875C	110 0100 1001	0x649
+ *	-55.000C	110 0100 1000	0x648
+ *
  * Temperature on the LM77 is represented by a 10-bit two's complement
  * integer in steps of 0.5C:
  *
@@ -107,6 +125,12 @@ struct cfdriver lmtemp_cd = {
  * 15  14   13   12   11   10   9    8    7    6 5 4 3 2 1 0
  *
  *
+ * LM75A temperature word:
+ *
+ * MSB Bit9 Bit8 Bit7 Bit6 Bit5 Bit4 Bit3 Bit2 Bit1 Bit0 X X X X X
+ * 15  14   13   12   11   10   9    8    7    6    5    4 3 2 1 0
+ *
+ *
  * LM77 temperature word:
  *
  * Sign Sign Sign Sign MSB Bit7 Bit6 Bit5 Bit4 Bit3 Bit2 Bit1 Bit0 Status bits
@@ -123,7 +147,8 @@ lmtemp_match(struct device *parent, void *match, void *aux)
 
 	if (strcmp(ia->ia_name, "lm75") == 0 ||
 	    strcmp(ia->ia_name, "lm77") == 0 ||
-	    strcmp(ia->ia_name, "ds1775") == 0)
+	    strcmp(ia->ia_name, "ds1775") == 0 ||
+	    strcmp(ia->ia_name, "lm75a") == 0)
 		return (1);
 	return (0);
 }
@@ -169,6 +194,10 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_model = LM_MODEL_DS1775;
 		sc->sc_bits = 9;
 		//sc->sc_bits = DS1755_CONFIG_RESOLUTION(data);
+	} else if (strcmp(ia->ia_name, "lm75a") == 0) {
+		/* For simplicity's sake, treat the LM75A as an LM75 */
+		sc->sc_model = LM_MODEL_LM75A;
+		sc->sc_bits = 9;
 	}
 
 	printf("\n");
