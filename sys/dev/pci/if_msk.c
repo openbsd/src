@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.13 2006/08/19 21:16:22 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.14 2006/08/19 21:33:57 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1905,14 +1905,10 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	    YU_RXSTAT_JABBER;
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_MASK, v);
 
-	/* Disable RX MAC FIFO Flush for YUKON-Lite Rev. A0 only */
-	if (sc->sk_type == SK_YUKON_LITE && sc->sk_rev == SK_YUKON_LITE_REV_A0)
-		v = SK_TFCTL_OPERATION_ON;
-	else
-		v = SK_TFCTL_OPERATION_ON | SK_RFCTL_FIFO_FLUSH_ON;
 	/* Configure RX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_CLEAR);
-	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, v);
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON |
+	    SK_RFCTL_FIFO_FLUSH_ON);
 
 	/* Increase flush threshould to 64 bytes */
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD,
