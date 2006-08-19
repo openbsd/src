@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_pci.c,v 1.3 2006/08/14 21:12:10 deraadt Exp $  */
+/*	$OpenBSD: if_acx_pci.c,v 1.4 2006/08/19 23:17:12 mglocker Exp $  */
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -45,6 +45,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.13 2006/08/15 15:43:34 deraadt Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.14 2006/08/19 23:17:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -297,14 +297,8 @@ struct acx_buf_data {
 };
 
 struct acx_node {
-	struct ieee80211_node nd_node;	/* MUST be first */
-
-	struct ieee80211_rateset nd_rates; /* shared rates */
-	int	nd_txrate;		/* index into nd_rates[] */
-
-	int	nd_txrate_upd_intvl;	/* tx rate upd interval */
-	int	nd_txrate_upd_time;	/* tx rate upd timestamp */
-	int	nd_txrate_sample;	/* num of samples for specific rate */
+	struct ieee80211_node		ni;	/* must be first */
+	struct ieee80211_amrr_node	amn;
 };
 
 struct acx_config {
@@ -369,6 +363,9 @@ struct acx_softc {
 
 	bus_dma_tag_t		sc_dmat;
 
+	struct ieee80211_amrr	amrr;
+	struct timeout		amrr_ch;
+
 	/*
 	 * MMIO 1
 	 */
@@ -429,9 +426,6 @@ struct acx_softc {
 	/*
 	 * Per interface sysctl variables
 	 */
-	int			sc_txrate_upd_intvl_min;
-	int			sc_txrate_upd_intvl_max;
-	int			sc_txrate_sample_thresh;
 	int			sc_txtimer;
 	int			sc_long_retry_limit;
 	int			sc_short_retry_limit;

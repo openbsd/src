@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.8 2006/08/09 09:40:08 mglocker Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.9 2006/08/19 23:17:12 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -47,6 +47,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 

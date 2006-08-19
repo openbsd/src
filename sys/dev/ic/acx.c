@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.46 2006/08/15 21:16:08 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.47 2006/08/19 23:17:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -123,6 +123,7 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/pci/pcireg.h>
@@ -189,9 +190,6 @@ int	 acx_load_base_firmware(struct acx_softc *, const char *);
 
 struct ieee80211_node
 	*acx_node_alloc(struct ieee80211com *);
-void	 acx_node_init(struct acx_softc *, struct acx_node *);
-void	 acx_node_update(struct acx_softc *, struct acx_node *,
-	     uint8_t, uint8_t);
 int	 acx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 
 void	 acx_init_cmd_reg(struct acx_softc *);
@@ -199,6 +197,10 @@ int	 acx_join_bss(struct acx_softc *, uint8_t, struct ieee80211_node *);
 int	 acx_enable_txchan(struct acx_softc *, uint8_t);
 int	 acx_enable_rxchan(struct acx_softc *, uint8_t);
 int	 acx_init_radio(struct acx_softc *, uint32_t, uint32_t);
+
+void	 acx_iter_func(void *, struct ieee80211_node *);
+void	 acx_amrr_timeout(void *);
+void	 acx_newassoc(struct ieee80211com *, struct ieee80211_node *, int);
 
 const struct ieee80211_rateset	acx_rates_11b =
 	{ 4, { 2, 4, 11, 22 } };
@@ -293,6 +295,10 @@ acx_attach(struct acx_softc *sc)
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
+	/* set supported .11b and .11g rates */
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = acx_rates_11g;
+
 	/* Set channels */
 	for (i = 1; i <= 14; ++i) {
 		ic->ic_channels[i].ic_freq =
@@ -324,6 +330,7 @@ acx_attach(struct acx_softc *sc)
 
 	/* Override node alloc */
 	ic->ic_node_alloc = acx_node_alloc;
+	ic->ic_newassoc = acx_newassoc;
 
 	/* Override newstate */
 	sc->sc_newstate = ic->ic_newstate;
@@ -335,9 +342,11 @@ acx_attach(struct acx_softc *sc)
 	ieee80211_media_init(ifp, ieee80211_media_change,
 	    ieee80211_media_status);
 
-	sc->sc_txrate_upd_intvl_min = 10;	/* 10 seconds */
-	sc->sc_txrate_upd_intvl_max = 300;	/* 5 minutes */
-	sc->sc_txrate_sample_thresh = 30;	/* 30 packets */
+	/* AMRR rate control */
+	sc->amrr.amrr_min_success_threshold = 1;
+	sc->amrr.amrr_max_success_threshold = 15;
+	timeout_set(&sc->amrr_ch, acx_amrr_timeout, sc);
+
 	sc->sc_long_retry_limit = 4;
 	sc->sc_short_retry_limit = 7;
 	sc->sc_msdu_lifetime = 4096;
@@ -882,22 +891,16 @@ acx_start(struct ifnet *ifp)
 
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-
 			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
 
-#if 0
 			/*
-			 * Since mgmt data are transmitted at fixed rate
-			 * they will not be used to do rate control.
+			 * mgmt frames are sent at the lowest available
+			 * bit-rate.
 			 */
-			if (ni != NULL)
-				ieee80211_free_node(ni);
-#endif
-			rate = 4;	/* XXX 2Mb/s for mgmt packet */
+			rate = ni->ni_rates.rs_rates[0];
 		} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 			struct ether_header *eh;
-			struct acx_node *node;
 
 			if (ic->ic_state != IEEE80211_S_RUN) {
 				DPRINTF(("%s: data packet dropped due to "
@@ -943,24 +946,12 @@ acx_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 
-			node = (struct acx_node *)ni;
-			if (node->nd_txrate < 0) {
-				acx_node_init(sc, node);
-#if 0
-				if (ic->ic_opmode == IEEE80211_M_IBSS) {
-					/* XXX
-					 * Add extra reference here,
-					 * so that some node (bss_dup)
-					 * will not be freed just after
-					 * they are allocated, which
-					 * make TX rate control impossible
-					 */
-					ieee80211_ref_node(ni);
-				}
-#endif
-			}
-
-			rate = node->nd_rates.rs_rates[node->nd_txrate];
+			if (ic->ic_fixed_rate != -1) {
+				rate = ic->ic_sup_rates[ic->ic_curmode].
+				    rs_rates[ic->ic_fixed_rate];
+			} else
+				rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+			rate &= IEEE80211_RATE_VAL;
 		} else
 			break;
 
@@ -1139,7 +1130,6 @@ acx_txeof(struct acx_softc *sc)
 			ic = &sc->sc_ic;
 			ni = (struct ieee80211_node *)buf->tb_node;
 
-			acx_node_update(sc, buf->tb_node, buf->tb_rate, error);
 			ieee80211_release_node(ic, ni);
 			buf->tb_node = NULL;
 		}
@@ -1647,169 +1637,16 @@ acx_load_firmware(struct acx_softc *sc, uint32_t offset, const uint8_t *data,
 struct ieee80211_node *
 acx_node_alloc(struct ieee80211com *ic)
 {
-	struct acx_node *node;
+	struct acx_node *wn;
 
-	node = malloc(sizeof(struct acx_node), M_DEVBUF, M_NOWAIT);
-	if (node == NULL)
+	wn = malloc(sizeof(struct acx_node), M_DEVBUF, M_NOWAIT);
+	if (wn == NULL)
 		return (NULL);
 
-	bzero(node, (sizeof(struct acx_node)));
-	node->nd_txrate = -1;
+	bzero(wn, sizeof(struct acx_node));
+	//node->nd_txrate = -1;
 
-	return ((struct ieee80211_node *)node);
-}
-
-void
-acx_node_init(struct acx_softc *sc, struct acx_node *node)
-{
-	struct ieee80211_rateset *nd_rset, *ic_rset, *cp_rset;
-	struct ieee80211com *ic;
-	int i, j, c;
-
-	ic = &sc->sc_ic;
-
-	nd_rset = &node->nd_node.ni_rates;
-	ic_rset = &ic->ic_sup_rates[sc->chip_phymode];
-	cp_rset = &node->nd_rates;
-	c = 0;
-
-#define IEEERATE(rate)	((rate) & IEEE80211_RATE_VAL)
-	for (i = 0; i < nd_rset->rs_nrates; ++i) {
-		uint8_t nd_rate = IEEERATE(nd_rset->rs_rates[i]);
-
-		for (j = 0; j < ic_rset->rs_nrates; ++j) {
-			if (nd_rate == IEEERATE(ic_rset->rs_rates[j])) {
-				cp_rset->rs_rates[c++] = nd_rate;
-				if (node->nd_txrate < 0) {
-					/* XXX slow start?? */
-					node->nd_txrate = 0;
-					node->nd_node.ni_txrate = i;
-				}
-				break;
-			}
-		}
-	}
-	if (node->nd_node.ni_txrate < 0)
-		panic("no compat rates");
-	DPRINTF(("%s: node rate %d\n",
-	    sc->sc_dev.dv_xname,
-	    IEEERATE(nd_rset->rs_rates[node->nd_node.ni_txrate])));
-#undef IEEERATE
-
-	cp_rset->rs_nrates = c;
-
-	node->nd_txrate_upd_intvl = sc->sc_txrate_upd_intvl_min;
-	node->nd_txrate_upd_time = time_second;
-	node->nd_txrate_sample = 0;
-}
-
-void
-acx_node_update(struct acx_softc *sc, struct acx_node *node, uint8_t rate,
-    uint8_t error)
-{
-	struct ieee80211_rateset *nd_rset, *cp_rset;
-	int i, time_diff;
-
-	nd_rset = &node->nd_node.ni_rates;
-	cp_rset = &node->nd_rates;
-
-	time_diff = time_second - node->nd_txrate_upd_time;
-
-	if (error == DESC_ERR_MSDU_TIMEOUT ||
-	    error == DESC_ERR_EXCESSIVE_RETRY) {
-		uint8_t cur_rate;
-
-		/* Reset packet sample counter */
-		node->nd_txrate_sample = 0;
-
-		if (rate > cp_rset->rs_rates[node->nd_txrate]) {
-			/*
-			 * This rate has already caused troubles,
-			 * so don't count it in here.
-			 */
-			return;
-		}
-
-		/* Double TX rate updating interval */
-		node->nd_txrate_upd_intvl *= 2;
-		if (node->nd_txrate_upd_intvl <=
-		    sc->sc_txrate_upd_intvl_min) {
-			node->nd_txrate_upd_intvl =
-				sc->sc_txrate_upd_intvl_min;
-		} else if (node->nd_txrate_upd_intvl >
-			   sc->sc_txrate_upd_intvl_max) {
-			node->nd_txrate_upd_intvl =
-				sc->sc_txrate_upd_intvl_max;
-		}
-
-		if (node->nd_txrate == 0)
-			return;
-
-		node->nd_txrate_upd_time += time_diff;
-
-		/* TX rate down */
-		node->nd_txrate--;
-		cur_rate = cp_rset->rs_rates[node->nd_txrate + 1];
-		while (cp_rset->rs_rates[node->nd_txrate] > cur_rate) {
-			if (node->nd_txrate - 1 > 0)
-				node->nd_txrate--;
-			else
-				break;
-		}
-		DPRINTF(("%s: rate down %s %d -> %d\n",
-		    sc->sc_dev.dv_xname,
-		    ether_sprintf(node->nd_node.ni_macaddr),
-		    cp_rset->rs_rates[node->nd_txrate + 1],
-		    cp_rset->rs_rates[node->nd_txrate]));
-	} else if (node->nd_txrate + 1 < node->nd_rates.rs_nrates) {
-		uint8_t cur_rate;
-
-		node->nd_txrate_sample++;
-
-		if (node->nd_txrate_sample <= sc->sc_txrate_sample_thresh ||
-		    time_diff <= node->nd_txrate_upd_intvl)
-			return;
-
-		/* Reset packet sample counter */
-		node->nd_txrate_sample = 0;
-
-		/* Half TX rate updating interval */
-		node->nd_txrate_upd_intvl /= 2;
-		if (node->nd_txrate_upd_intvl < sc->sc_txrate_upd_intvl_min) {
-			node->nd_txrate_upd_intvl = sc->sc_txrate_upd_intvl_min;
-		} else if (node->nd_txrate_upd_intvl >
-		    sc->sc_txrate_upd_intvl_max) {
-			node->nd_txrate_upd_intvl = sc->sc_txrate_upd_intvl_max;
-		}
-
-		node->nd_txrate_upd_time += time_diff;
-
-		/* TX Rate up */
-		node->nd_txrate++;
-		cur_rate = cp_rset->rs_rates[node->nd_txrate - 1];
-		while (cp_rset->rs_rates[node->nd_txrate] < cur_rate) {
-			if (node->nd_txrate + 1 < cp_rset->rs_nrates)
-				node->nd_txrate++;
-			else
-				break;
-		}
-		DPRINTF(("%s: rate up %s %d -> %d\n",
-		    sc->sc_dev.dv_xname,
-		    ether_sprintf(node->nd_node.ni_macaddr),
-		    cur_rate, cp_rset->rs_rates[node->nd_txrate]));
-	} else
-		return;
-
-#define IEEERATE(rate)	((rate) & IEEE80211_RATE_VAL)
-	/* XXX Update ieee80211_node's TX rate index */
-	for (i = 0; i < nd_rset->rs_nrates; ++i) {
-		if (IEEERATE(nd_rset->rs_rates[i]) ==
-		    cp_rset->rs_rates[node->nd_txrate]) {
-			node->nd_node.ni_txrate = i;
-			break;
-		}
-	}
-#undef IEEERATE
+	return ((struct ieee80211_node *)wn);
 }
 
 int
@@ -1818,6 +1655,8 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct acx_softc *sc = ic->ic_if.if_softc;
 	struct ifnet *ifp = &ic->ic_if;
 	int error = 0;
+
+	timeout_del(&sc->amrr_ch);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
@@ -1925,6 +1764,14 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			DPRINTF(("%s: join IBSS\n", sc->sc_dev.dv_xname));
 			error = 0;
 		}
+
+		/* fake a join to init the tx rate */
+		if (ic->ic_opmode == IEEE80211_M_STA)
+			acx_newassoc(ic, ic->ic_bss, 1);
+
+		/* start automatic rate control timer */
+		if (ic->ic_fixed_rate == -1)
+			timeout_add(&sc->amrr_ch, hz / 2);
 		break;
 	default:
 		break;
@@ -2767,4 +2614,42 @@ acx_get_maxrssi(int radio)
 	case ACX_RADIO_TYPE_RADIA:	return ACX_RADIO_RSSI_RADIA;
 	default:			return ACX_RADIO_RSSI_UNKN;
 	}
+}
+
+void
+acx_iter_func(void *arg, struct ieee80211_node *ni)
+{
+	struct acx_softc *sc = arg;
+	struct acx_node *wn = (struct acx_node *)ni;
+
+	ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
+}
+
+void
+acx_amrr_timeout(void *arg)
+{
+	struct acx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		acx_iter_func(sc, ic->ic_bss);
+	else
+		ieee80211_iterate_nodes(ic, acx_iter_func, sc);
+
+	timeout_add(&sc->amrr_ch, hz / 2);
+}
+
+void
+acx_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+{
+	struct acx_softc *sc = ic->ic_if.if_softc;
+	int i;
+
+	ieee80211_amrr_node_init(&sc->amrr, &((struct acx_node *)ni)->amn);
+
+	/* set rate to some reasonable initial value */
+	for (i = ni->ni_rates.rs_nrates - 1;
+	    i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
+	    i--);
+	ni->ni_txrate = i;
 }
