@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.251 2006/08/19 17:38:56 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.252 2006/08/19 17:59:00 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -462,6 +462,34 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GHM_RAID, /* Intel 82801GHM (ICH7-M DH) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801H_SATA_1_6P, /* Intel 82801H (ICH8) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801H_AHCI, /* Intel 82801H (ICH8) AHCI */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801H_RAID, /* Intel 82801H (ICH8) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801H_SATA_1_4P, /* Intel 82801H (ICH8) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801H_SATA_2, /* Intel 82801H (ICH8) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801HBM_SATA_1, /* Intel 82801HBM (ICH8M) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801HBM_SATA_2, /* Intel 82801HBM (ICH8M) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
 	}
@@ -2306,6 +2334,15 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
 	case PCI_PRODUCT_INTEL_82801GHM_RAID:
 		ich = 7;
+		break;
+	case PCI_PRODUCT_INTEL_82801H_SATA_1_6P:
+	case PCI_PRODUCT_INTEL_82801H_AHCI:
+	case PCI_PRODUCT_INTEL_82801H_RAID:
+	case PCI_PRODUCT_INTEL_82801H_SATA_1_4P:
+	case PCI_PRODUCT_INTEL_82801H_SATA_2:
+	case PCI_PRODUCT_INTEL_82801HBM_SATA_1:
+	case PCI_PRODUCT_INTEL_82801HBM_SATA_2:
+		ich = 8;
 		break;
 	}
 
