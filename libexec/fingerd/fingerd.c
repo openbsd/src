@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.32 2006/01/17 17:51:21 millert Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.33 2006/08/19 06:01:00 ray Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.32 2006/01/17 17:51:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.33 2006/08/19 06:01:00 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: fingerd.c,v 1.32 2006/01/17 17:51:21 millert Ex
 #include <arpa/inet.h>
 #include <errno.h>
 
+#include <err.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <netdb.h>
@@ -58,8 +59,8 @@ static char rcsid[] = "$OpenBSD: fingerd.c,v 1.32 2006/01/17 17:51:21 millert Ex
 #include <stdarg.h>
 #include "pathnames.h"
 
-void err(const char *, ...);
-void usage(void);
+__dead void logerr(const char *, ...);
+__dead void usage(void);
 
 void
 usage(void)
@@ -127,10 +128,8 @@ main(int argc, char *argv[])
 		socklen_t sval;
 
 		sval = sizeof(ss);
-		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0) {
-			/* err("getpeername: %s", strerror(errno)); */
-			exit(1);
-		}
+		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0)
+			err(1, "getpeername");
 		sa = (struct sockaddr *)&ss;
 		if (getnameinfo(sa, sa->sa_len, hostbuf, sizeof(hostbuf),
 		    NULL, 0, 0) != 0) {
@@ -157,6 +156,8 @@ main(int argc, char *argv[])
 	av[ac++] = "--";
 	comp = &av[1];
 	for (lp = line, ap = &av[ac]; ac < ENTRIES;) {
+		size_t len;
+
 		if ((*ap = strtok(lp, " \t\r\n")) == NULL)
 			break;
 		lp = NULL;
@@ -165,9 +166,9 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		ch = strlen(*ap);
-		while ((*ap)[ch-1] == '@')
-			(*ap)[--ch] = '\0';
+		len = strlen(*ap);
+		while ((*ap)[len - 1] == '@')
+			(*ap)[--len] = '\0';
 		if (**ap == '\0')
 			continue;
 
@@ -199,7 +200,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pipe(p) < 0)
-		err("pipe: %s", strerror(errno));
+		logerr("pipe: %s", strerror(errno));
 
 	switch (vfork()) {
 	case 0:
@@ -209,14 +210,13 @@ main(int argc, char *argv[])
 			(void) close(p[1]);
 		}
 		execv(prog, comp);
-		err("execv: %s: %s", prog, strerror(errno));
-		_exit(1);
+		logerr("execv: %s: %s", prog, strerror(errno));
 	case -1:
-		err("fork: %s", strerror(errno));
+		logerr("fork: %s", strerror(errno));
 	}
 	(void) close(p[1]);
 	if (!(fp = fdopen(p[0], "r")))
-		err("fdopen: %s", strerror(errno));
+		logerr("fdopen: %s", strerror(errno));
 	while ((ch = getc(fp)) != EOF) {
 		if (ch == '\n')
 			putchar('\r');
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 }
 
 void
-err(const char *fmt, ...)
+logerr(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -234,5 +234,4 @@ err(const char *fmt, ...)
 	(void) vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 	exit(1);
-	/* NOTREACHED */
 }
