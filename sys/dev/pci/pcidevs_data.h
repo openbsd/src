@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1135 2006/08/19 18:45:42 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1136 2006/08/19 19:19:17 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5799,11 +5799,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6321ESB PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_ACM,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_ACA,
 	    "6321ESB AC97",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_ACA,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_ACM,
 	    "6321ESB Modem",
 	},
 	{
