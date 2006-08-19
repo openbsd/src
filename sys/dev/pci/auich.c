@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.61 2006/08/01 21:36:54 brad Exp $	*/
+/*	$OpenBSD: auich.c,v 1.62 2006/08/19 19:06:51 brad Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -237,6 +237,8 @@ static const struct auich_devtype {
 	int	options;
 	char	name[8];
 } auich_devices[] = {
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6300ESB_ACA,	0, "ESB" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6321ESB_ACA,	0, "ESB2" },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AA_ACA,	0, "ICH" },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AB_ACA,	0, "ICH0" },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_ACA,	0, "ICH2" },
