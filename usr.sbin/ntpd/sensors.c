@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.20 2006/06/30 16:52:13 deraadt Exp $ */
+/*	$OpenBSD: sensors.c,v 1.21 2006/08/19 16:56:54 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -157,14 +157,16 @@ sensor_query(struct ntp_sensor *s)
 		return;
 
 	memcpy(&refid, "HARD", sizeof(refid));
-	s->update.status.refid = htonl(refid);
 	s->update.offset = 0 - (float)sensor.value / 1000000000.0;
+	s->update.rcvd = sensor.tv.tv_sec;
+	s->update.good = 1;
+
+	s->update.status.refid = htonl(refid);
 	s->update.status.stratum = 0;	/* increased when sent out */
 	s->update.status.rootdelay = 0;
 	s->update.status.rootdispersion = 0;
 	s->update.status.reftime = sensor.tv.tv_sec;
-	s->update.rcvd = sensor.tv.tv_sec;
-	s->update.good = 1;
+	s->update.status.synced = 1;
 
 	log_debug("sensor %s: offset %f", s->device, s->update.offset);
 }
