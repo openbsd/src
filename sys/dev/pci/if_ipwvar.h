@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.13 2006/02/26 19:14:40 damien Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.14 2006/08/19 12:03:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -102,8 +102,6 @@ struct ipw_softc {
 	pci_chipset_tag_t		sc_pct;
 	pcitag_t			sc_pcitag;
 	bus_size_t			sc_sz;
-
-	int				authmode;
 
 	int				sc_tx_timer;
 

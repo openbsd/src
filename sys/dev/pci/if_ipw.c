@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.60 2006/08/19 11:16:55 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.61 2006/08/19 12:03:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -262,9 +262,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_B);
 		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B;
 	}
-
-	/* default to authmode OPEN */
-	sc->authmode = IEEE80211_AUTH_OPEN;
 
 	/* IBSS channel undefined for now */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
@@ -1126,7 +1123,7 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 	sbd->bd->len = htole32(sizeof (struct ipw_cmd));
 	sbd->bd->nfrag = 1;
 	sbd->bd->flags = IPW_BD_FLAG_TX_FRAME_COMMAND |
-			 IPW_BD_FLAG_TX_LAST_FRAGMENT;
+	    IPW_BD_FLAG_TX_LAST_FRAGMENT;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->cmd_map, 0, sizeof (struct ipw_cmd),
 	    BUS_DMASYNC_PREWRITE);
@@ -1441,18 +1438,6 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		((struct ieee80211_txpower *)data)->i_val =
 		    (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED) ?
 		    IEEE80211_TXPOWER_MIN : sc->sc_ic.ic_txpower;
-		break;
-
-	case SIOCG80211AUTH:
-		((struct ieee80211_auth *)data)->i_authtype = sc->authmode;
-		break;
-
-	case SIOCS80211AUTH:
-		/* only super-user can do that! */
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-
-		sc->authmode = ((struct ieee80211_auth *)data)->i_authtype;
 		break;
 
 	default:
@@ -1852,8 +1837,7 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	bzero(&security, sizeof security);
-	security.authmode = (sc->authmode == IEEE80211_AUTH_SHARED) ?
-	    IPW_AUTH_SHARED : IPW_AUTH_OPEN;
+	security.authmode = IPW_AUTH_OPEN;	/* XXX shared mode */
 	security.ciphers = htole32(IPW_CIPHER_NONE);
 	DPRINTF(("Setting authmode to %u\n", security.authmode));
 	error = ipw_cmd(sc, IPW_CMD_SET_SECURITY_INFORMATION, &security,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwivar.h,v 1.17 2006/04/01 15:36:01 mickey Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.18 2006/08/19 12:03:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -120,8 +120,6 @@ struct iwi_softc {
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
-
-	int			authmode;
 
 	int			sc_tx_timer;
 

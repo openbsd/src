@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.71 2006/08/19 11:07:44 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.72 2006/08/19 12:03:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -329,9 +329,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
-
-	/* default to authmode OPEN */
-	sc->authmode = IEEE80211_AUTH_OPEN;
 
 	/* IBSS channel undefined for now */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
@@ -1553,18 +1550,6 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    sc->sc_ic.ic_txpower : IEEE80211_TXPOWER_MIN;
 		break;
 
-	case SIOCG80211AUTH:
-		((struct ieee80211_auth *)data)->i_authtype = sc->authmode;
-		break;
-
-	case SIOCS80211AUTH:
-		/* only super-user can do that! */
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-
-		sc->authmode = ((struct ieee80211_auth *)data)->i_authtype;
-		break;
-
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
@@ -2127,8 +2112,11 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	else	/* assume 802.11b/g */
 		assoc.mode = IWI_MODE_11G;
 	assoc.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-	if (sc->authmode == IEEE80211_AUTH_SHARED)
+
+#if 0
+	if (ni->ni_challenge != NULL)	/* XXX */
 		assoc.auth = (ic->ic_wep_txkey << 4) | IWI_AUTH_SHARED;
+#endif
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		assoc.plen = IWI_ASSOC_SHPREAMBLE;
 	bcopy(ni->ni_tstamp, assoc.tstamp, 8);
