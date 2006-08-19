@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.18 2006/03/25 08:28:45 jmc Exp $
+.\"     $OpenBSD: securelevel.7,v 1.19 2006/08/19 07:51:25 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -94,6 +94,11 @@ and
 .Va ddb.panic
 .Xr sysctl 8
 variables may not be raised
+.It
+the
+.Va machdep.allowaperture
+.Xr sysctl 8
+variable may not be raised
 .El
 .It \ 2 Em Highly secure mode
 .Bl -hyphen -compact
