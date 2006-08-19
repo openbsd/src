@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.10 2006/06/18 18:39:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.11 2006/08/19 12:38:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -363,7 +363,6 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	    ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
-	mbps = IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]);
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		switch (ostate) {
@@ -551,6 +550,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				    ether_sprintf(ni->ni_bssid));
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
+				mbps = IEEE80211_RATE2MBS(
+				    ni->ni_rates.rs_rates[ni->ni_txrate]);
 				printf(" channel %d start %uMb",
 				    ieee80211_chan2ieee(ic, ni->ni_chan), mbps);
 				printf(" %s preamble %s slot time%s\n",
