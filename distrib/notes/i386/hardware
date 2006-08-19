@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.238 2006/06/24 07:51:30 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.239 2006/08/19 10:15:21 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -142,13 +142,10 @@ Supported hardware {:-include-:}:
 		    Initio INI-9100U/UW
 		    Iwill 2935UW
 		    DTC Domex 3194U Plus
-		LSI Fusion-MPT (Symbios Logic/NCR) (mpt) [A] [C]
-		    53C1030 (Dual channel Ultra320 SCSI)
-		    53C1020 (Single channel Ultra320 SCSI)
-		    FC909 (1Gb/s Fibre Channel)
-		    FC909A (Dual 1Gb/s Fibre Channel)
-		    FC919 (2Gb/s Fibre Channel)
-		    FC929 (Dual 2Gb/s Fibre Channel)
+		LSI Fusion-MPT (Symbios Logic/NCR) [A] [C]
+		    53C1020/53C1020A/53C1030/53C1030T/53C1035
+		    FC909/FC919/919X/FC929/FC949/FC949X
+		    SAS1064/SAS1064E/SAS1068/SAS1068E
 		QLogic PCI SCSI controllers [A] [C]
 		Seagate/Future Domain ISA SCSI adapter cards, including: [B] [C]
 		    ST01/02
@@ -172,10 +169,23 @@ Supported hardware {:-include-:}:
 		    HP NetRAID-4M
 		American Megatrends Inc. MegaRAID PCI controllers in
 		  "Mass Storage" mode, including: [A] [C]
-		    AMI MegaRAID
-		    Dell PERC 4Si and 4Di
-		    HP NetRAID 438, 466 and T[567]
-		    LSI/Symbios 523 SATA
+		    ACER MegaRAID ROMB-2E
+		    Apple Xserve G5 PCI Hardware RAID Card
+		    Dell CERC-PATA, PERC 2/DC, PERC 2/SC, PERC 3/DC, PERC 3/DCL		    
+		      PERC 3/QC, PERC 3/SC, PERC 4/DC, PERC 4/Di, PERC 4/SC,
+		      PERC 4e/DC, PERC 4e/Di, PERC 4e/SC, PERC 4e/Si
+		    FSC MegaRAID PCI Express ROMB
+		    Hewlett-Packard 438, 466, T[567]
+		    Intel RAID Controller SRCS16, SRCS28X, SRCU41L, SRCU42E,
+		      SRCU42X, SROMBU42E, SRCZCRX
+		    LSI Logic/AMI/Symbios MegaRAID, 523 SATA, i4 133 RAID,
+		      ATA 133-2 Elite 1400/1600/1650,
+		      Enterprise 1200/1300/1400/1500/1600,
+		      Express 100/200/300/500, Series 418, SCSI 320-0/320-0X,
+		      SCSI 320-1/320-1E/320-1LP/320-2/320-2E/320-2X/320-4X,
+		      SATA 150-4, SATA 150-6, SATA 300-4X, SATA 300-8ELP,
+		      SATA 300-8X, SATA 300-8XLP
+		    NEC MegaRAID PCI Express ROMB
 		Compaq Smart ARRAY 2*, 3* and 4* adapters, including: [A] [C]
 		    Compaq Integrated Array
 		    Compaq IAES
@@ -195,6 +205,12 @@ Supported hardware {:-include-:}:
 		    (in I2O mode)
 		    and probably other vendors' controllers supporting
 		    I2O, including Intel and Mylex (untested)
+		LSI Logic & Dell MegaRAID SAS controllers
+		    Dell PERC 5/e, PERC 5/i
+		    Intel RAID Controller SRCSAS18E, SRCSAS144E
+		    LSI Logic MegaRAID SAS 8208ELP/8208XLP/8300XLP/8308ELP,
+		      MegaRAID SAS 8344ELP/8408E/8480E
+
 	CD-ROM and DVD-ROM Drives
 		Mitsumi CD-ROM drives [*]
 		    [Note: The Mitsumi driver device probe is known
@@ -316,26 +332,40 @@ Supported hardware {:-include-:}:
 		    Linksys LNE100TX v4.x
 		    Mototech ME316
 		ADMtek AN986-based USB adapters, including: [A] [B] [C]
+		    3Com 3c460b
 		    Abocom UFE1000
 		    Abocom DSB650TX
 		    Accton USB320-EC
 		    Accton SpeedStream Ethernet
 		    Admtek Pegasus, Pegasus II
-		    Billionton Systems USB100
-		    Corega FEther USB-TX
+		    AEI USB Fast Ethernet
+		    Allied Telesyn AT-USB100
+		    ATEN UC-110T
+		    Belkin USB to LAN
+		    Billionton Systems USB100, USB100E, USB100LP, USBE100
+		    Corega FEther USB-TX, USB-TXS
 		    D-Link DSB-650, 650TX, 650TX-PNA
-		    Elecom LD-USB
+		    ELCON Systemtechnik Goldpfeil P-LAN
+		    Elecom LD-USB/TX, LD-USBL/TX
 		    Elsa Microlink USB2Ethernet
+		    GIGABYTE GN-BR402W
+		    Hawking UF100
+		    HP HN210E
 		    I/O Data USB ETTX
 		    Kingston KNU101TX
-		    Linksys USB100TX, USB100H1 and USB10TA
-		    Melco Inc. LUA-TX
+		    Laneed LD-USBL/TX
+		    Linksys USB100TX, USB100H1, USB10T, USB10TA, USB10TX
+		    Melco Inc. LUA-TX, LUA2-TX
+		    Microsoft MN110
+		    Mobility EasiDock Ethernet
+		    Netgear FA101
+		    Omnidirectional Control Technology USB TO Ethernet
 		    Siemens SpeedStream USB
 		    SmartBridges smartNIC 2
 		    SMC 2202USB/ETH
 		    SMC 2206USB/ETH
-		    SOHOware NUB100
-		ASIX Electronics AX88172 USB Ethernet adapters,
+		    SOHOware NUB100, NUB110
+		ASIX Electronics AX88172/AX88178/AX88772 USB Ethernet adapters,
 		  including: [A] [B]
 		    ATEN UC210T
 		    BAFO BF-320
@@ -370,8 +400,9 @@ Supported hardware {:-include-:}:
 		    Alfa Inc. GFC2204
 		Broadcom BCM4401 [A] [B]
 		CATC USB-EL1210A-based USB adapters, including: [A] [B] [C]
-		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111
+		    CATC Netmate and Netmate II
+		    SmartBridges SmartLink
 		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters,
 		including:
 		    Jaton XpressNet
@@ -484,8 +515,9 @@ Supported hardware {:-include-:}:
 		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
 		    TRENDnet TU-ET100C
-		    Zt USB10/100
 		    Z-TEK ZK-R02
+		    Zt USB10/100
+		    ZyXEL Prestige
 		SiS 900 and SiS 7016-based PCI adapters, including: [B] [C]
 		    Mototech ME313
 		    NetSurf NS-KFE30D
@@ -591,10 +623,13 @@ Supported hardware {:-include-:}:
 		    SMC 2662W-AR
 		    SMC 2662W-V4
 		    Tekram U-300C
+		    TRENDnet TEW-229UB
+		    W-Buddie WN210
 		    Z-Com M4Y-750
 		Intel PRO/Wireless 2100 IEEE 802.11b adapters [G]
 		Intel PRO/Wireless 2200BG/2225BG/2915ABG
 		  IEEE 802.11a/b/g adapters [G]
+		Intel PRO/Wireless 3945ABG [G]
 		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
 		(will be detected as PCMCIA adapters) [A] [B]
 		    AmbiCom WL1100C-CF
@@ -648,6 +683,7 @@ Supported hardware {:-include-:}:
 		    Proxim Harmony
 		    Proxim RangeLAN-DS
 		    Samsung MagicLAN SWL-2000N
+		    Siemens SpeedStream SS1021
 		    SMC 2632 EZ Connect
 		    Symbol Spectrum24
 		    TDK LAK-CD011WL
@@ -656,7 +692,8 @@ Supported hardware {:-include-:}:
 		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
 		  IEEE 802.11b adapters [A] [B]
 		    3Com AirConnect 3CRWE777A
-		    Belkin F5D6000 PCI (a rebadged WL11000P)
+		    Addtron AWA-100
+		    Belkin F5D6000 PCI version 1 (a rebadged WL11000P)
 		    Corega CGWLPCIA11
 		    Eumitcom WL11000P
 		    D-Link DWL-520 revisions A and B
@@ -805,7 +842,7 @@ Supported hardware {:-include-:}:
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters [A] [B]
 		    AMIT WL532U
 		    ASUS WL-167g
-		    Belkin F5D7050
+		    Belkin F5D7050 v2000
 		    Buffalo WLI-U2-KG54
 		    Buffalo WLI-U2-KG54-AI
 		    Buffalo WLI-U2-KG54-YB
@@ -819,19 +856,36 @@ Supported hardware {:-include-:}:
 		    Gigabyte GN-WBKG
 		    Hercules HWGUSB2-54
 		    KCORP LifeStyle KLS-685
+		    Linksys HU200-TS
 		    Linksys WUSB54G v4
 		    Linksys WUSB54GP v4
 		    MSI MS-6861
 		    MSI MS-6865
 		    MSI MS-6869
+		    Nintendo Wi-Fi USB Connector
+		    OvisLink Evo-W54USB
 		    SerComm UB801R
 		    SparkLAN WL-685R
 		    Sphairon UB801R
 		    Surecom EP-9001-g
+		    Sweex LC100060
 		    Tonze UW-6200C
 		    Zaapa ZNWUSB-54
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
+		Ralink RT2501USB/RT2601USB USB 2.0 IEEE 802.11/a/b/g adapters [G]
+		    Airlink101 AWLL5025
+		    Belkin F5D7050 ver 3
+		    Belkin F5D9050 ver 3
+		    CNet CWD-854 ver F
+		    Conceptronic C54RU ver 2
+		    D-Link DWL-G122 rev C1
+		    D-Link WUA-1340
+		    Gigabyte GN-WB01GS
+		    Linksys WUSB54G rev C
+		    Planex GW-USMM
+		    Sitecom WL-113 ver 2
+		    Sitecom WL-172
 		Raytheon Raylink PCMCIA IEEE 802.11 FH adapters [A] [B] [C]
 		Realtek RTL8180L based CardBus IEEE 802.11b adapters [A] [B]
 		    Belkin F5D6020 V3
@@ -845,6 +899,28 @@ Supported hardware {:-include-:}:
 		    Planet WL-3553
 		    TRENDnet TEW-226PC
 		    VCTnet PC-11B1
+		Texas Instruments ACX100/ACX111 CardBus IEEE 802.11a/b/g
+		  adapters [G]
+		    D-Link DWL-650+
+		    D-Link DWL-G630+
+		    D-Link DWL-G650+
+		    Engenic ERG WL-003
+		    Hamlet HNWP254
+		    Linksys WPC54Gv2
+		    Microcom Travelcard
+		    Sceptre SC254W+
+		    USR USR5410
+		    Zyxel G-160
+		Texas Instruments ACX100/ACX111 PCI IEEE 802.11a/b/g
+		  adapters [G]
+		    D-Link DWL-520+
+		    D-Link DWL-G520+
+		    Hawking HWP54G
+		    Netgear WG311v2
+		    Tornado/ADT 211g
+		    USR USR5416
+		    Zyxel G-360 EE
+		
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
 		  [B] [C]
@@ -911,6 +987,16 @@ Supported hardware {:-include-:}:
 		    Netgear GA302T
 		    SysKonnect SK-9D21
 		    SysKonnect SK-9D41
+		Broadcom NetXtreme II based PCI-X/PCIe adapters,
+		  including: [A] [B] [C]
+		    Dell PowerEdge 1950 integrated BCM5708
+		    Dell PowerEdge 2950 integrated BCM5708
+		    HP NC370F PCI-X
+		    HP NC370T PCI-X
+		    HP NC373F PCI Express 
+		    HP NC380T PCI Express Dual Port
+		    IBM xSeries 3550 integrated BCM5708
+		    IBM xSeries 3650 integrated BCM5708
 		Realtek 8169/8169S/8110S based PCI adapters, including:
 		    Buffalo LGY-PCI-GT (8169S)
 		    Corega CG-LAPCIGT (8169S)
@@ -1085,6 +1171,7 @@ Supported hardware {:-include-:}:
 		ESS Maestro 3 and Allegro 1
 		Forte Media FM801 audio
 		Gravis Ultrasound and Ultrasound Max
+		HD Audio compliant devices
 		Intel i810/i820 and 440MX AC'97
 		NeoMagic 256AV/ZX
 		NVIDIA nForce and nForce AC'97
