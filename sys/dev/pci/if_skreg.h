@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.37 2006/08/16 21:06:23 kettenis Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.38 2006/08/19 21:16:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1201,6 +1201,13 @@
 #define SK_DPT_TTEST_STEP	0x0001	/* Timer Decrement */
 #define SK_DPT_TTEST_OFF	0x0002	/* Test Mode Off */
 #define SK_DPT_TTEST_ON		0x0004	/* Test Mode On */
+
+#define SK_TSTAMP_COUNT		0x0e14
+#define SK_TSTAMP_CTL 		0x0e18
+
+#define SK_TSTAMP_IRQ_CLEAR	0x01
+#define SK_TSTAMP_STOP		0x02
+#define SK_TSTAMP_START		0x04
 
 #define SK_Y2_ASF_CSR		0x0e68
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.12 2006/08/19 04:03:22 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.13 2006/08/19 21:16:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -828,6 +828,10 @@ void msk_reset(struct sk_softc *sc)
 
 	/* Disable descriptor polling */
 	CSR_WRITE_4(sc, SK_DPT_TIMER_CTRL, SK_DPT_TCTL_STOP);
+
+	/* Disable time stamps */
+	CSR_WRITE_1(sc, SK_TSTAMP_CTL, SK_TSTAMP_STOP);
+	CSR_WRITE_1(sc, SK_TSTAMP_CTL, SK_TSTAMP_IRQ_CLEAR);
 
 	/* Enable RAM interface */
 	sk_win_write_1(sc, SK_RAMCTL, SK_RAMCTL_UNRESET);
