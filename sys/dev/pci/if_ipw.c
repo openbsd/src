@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.59 2006/08/18 16:04:56 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.60 2006/08/19 11:16:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -101,8 +101,6 @@ int		ipw_tx_start(struct ifnet *, struct mbuf *,
 		    struct ieee80211_node *);
 void		ipw_start(struct ifnet *);
 void		ipw_watchdog(struct ifnet *);
-int		ipw_get_table1(struct ipw_softc *, uint32_t *);
-int		ipw_get_radio(struct ipw_softc *, int *);
 int		ipw_ioctl(struct ifnet *, u_long, caddr_t);
 uint32_t	ipw_read_table1(struct ipw_softc *, uint32_t);
 void		ipw_write_table1(struct ipw_softc *, uint32_t, uint32_t);
@@ -291,7 +289,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + 64);
+	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
@@ -1078,14 +1076,12 @@ ipw_intr(void *arg)
 	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		ifp->if_flags &= ~IFF_UP;
-		ipw_stop(&sc->sc_ic.ic_if, 1);
+		ipw_stop(ifp, 1);
 		return 1;
 	}
 
-	if (r & IPW_INTR_FW_INIT_DONE) {
-		if (!(r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)))
-			wakeup(sc);
-	}
+	if (r & IPW_INTR_FW_INIT_DONE)
+		wakeup(sc);
 
 	if (r & IPW_INTR_RX_TRANSFER)
 		ipw_rx_intr(sc);
