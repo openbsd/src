@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.72 2006/08/19 12:03:05 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.73 2006/08/19 14:57:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1411,12 +1411,11 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		desc->seg_len[i]  = htole16(data->map->dm_segs[i].ds_len);
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, txq->map,
 	    txq->cur * sizeof (struct iwi_tx_desc),
 	    sizeof (struct iwi_tx_desc), BUS_DMASYNC_PREWRITE);
-
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, MCLBYTES,
-	    BUS_DMASYNC_PREWRITE);
 
 	DPRINTFN(5, ("sending data frame idx=%u len=%u nseg=%u\n", txq->cur,
 	    letoh16(desc->len), data->map->dm_nsegs));
@@ -2112,7 +2111,6 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	else	/* assume 802.11b/g */
 		assoc.mode = IWI_MODE_11G;
 	assoc.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-
 #if 0
 	if (ni->ni_challenge != NULL)	/* XXX */
 		assoc.auth = (ic->ic_wep_txkey << 4) | IWI_AUTH_SHARED;

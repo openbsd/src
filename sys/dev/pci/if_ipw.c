@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.61 2006/08/19 12:03:05 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.62 2006/08/19 14:57:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1263,7 +1263,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	sbd->bd->len = htole32(sizeof (struct ipw_hdr));
 	sbd->bd->nfrag = 1 + sbuf->map->dm_nsegs;
 	sbd->bd->flags = IPW_BD_FLAG_TX_FRAME_802_3 |
-			 IPW_BD_FLAG_TX_NOT_LAST_FRAGMENT;
+	    IPW_BD_FLAG_TX_NOT_LAST_FRAGMENT;
 
 	DPRINTFN(5, ("TX!HDR!%u!%u!%u!%u", shdr->hdr.type, shdr->hdr.subtype,
 	    shdr->hdr.encrypted, shdr->hdr.encrypt));
@@ -1306,10 +1306,9 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		sc->txfree--;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, shdr->map, 0, sizeof (struct ipw_hdr),
+	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, sbuf->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
-
-	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, MCLBYTES,
+	bus_dmamap_sync(sc->sc_dmat, shdr->map, 0, sizeof (struct ipw_hdr),
 	    BUS_DMASYNC_PREWRITE);
 
 	/* inform firmware about this new packet */
