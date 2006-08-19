@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.11 2006/08/17 22:07:40 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.12 2006/08/19 04:03:22 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1032,9 +1032,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-#ifdef notyet
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-#endif
 
 	/*
 	 * Do miibus setup.

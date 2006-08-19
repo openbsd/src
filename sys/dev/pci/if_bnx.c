@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.15 2006/08/14 20:45:00 marco Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.16 2006/08/19 04:01:02 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -586,6 +586,8 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Assume a standard 1500 byte MTU size for mbuf allocations. */
 	sc->mbuf_alloc_size = MCLBYTES;
