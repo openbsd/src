@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.24 2006/04/02 20:30:20 dim Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.25 2006/08/19 11:07:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -106,26 +106,9 @@
 /* possible flags for IWI_CSR_READ_INT */
 #define IWI_READ_INT_INIT_HOST	0x20000000
 
-/* table2 offsets */
-#define IWI_INFO_ADAPTER_MAC	40
-
 /* constants for command blocks */
 #define IWI_CB_DEFAULT_CTL	0x8cea0000
 #define IWI_CB_MAXDATALEN	8191
-
-/* supported rates */
-#define IWI_RATE_DS1	10
-#define IWI_RATE_DS2	20
-#define IWI_RATE_DS5	55
-#define IWI_RATE_DS11	110
-#define IWI_RATE_OFDM6	13
-#define IWI_RATE_OFDM9	15
-#define IWI_RATE_OFDM12	5
-#define IWI_RATE_OFDM18	7
-#define IWI_RATE_OFDM24	9
-#define IWI_RATE_OFDM36	11
-#define IWI_RATE_OFDM48	1
-#define IWI_RATE_OFDM54	3
 
 /* firmware binary image header */
 struct iwi_firmware_hdr {
@@ -159,6 +142,7 @@ struct iwi_notif {
 #define IWI_NOTIF_TYPE_AUTHENTICATION	11
 #define IWI_NOTIF_TYPE_SCAN_CHANNEL	12
 #define IWI_NOTIF_TYPE_SCAN_COMPLETE	13
+#define IWI_NOTIF_TYPE_BAD_LINK		15
 #define IWI_NOTIF_TYPE_BEACON		17
 #define IWI_NOTIF_TYPE_CALIBRATION	20
 #define IWI_NOTIF_TYPE_NOISE		25
@@ -200,6 +184,14 @@ struct iwi_notif_scan_complete {
 	uint8_t	reserved;
 } __packed;
 
+/* structure for notification IWI_NOTIF_TYPE_BEACON */
+struct iwi_notif_beacon {
+	uint32_t	status;
+#define IWI_BEACON_MISSED	1
+
+	uint32_t	count;
+};
+
 /* received frame header */
 struct iwi_frame {
 	uint32_t	reserved1[2];
@@ -230,12 +222,17 @@ struct iwi_tx_desc {
 	uint16_t	len;
 	uint8_t		priority;
 	uint8_t		flags;
-#define IWI_DATA_FLAG_SHPREAMBLE	0x04
-#define IWI_DATA_FLAG_NO_WEP		0x20
-#define IWI_DATA_FLAG_NEED_ACK		0x80
+#define IWI_DATA_FLAG_SHPREAMBLE	(1 << 2)
+#define IWI_DATA_FLAG_NO_WEP		(1 << 5)
+#define IWI_DATA_FLAG_NEED_ACK		(1 << 7)
 
 	uint8_t		xflags;
+#define IWI_DATA_XFLAG_CCK	(1 << 0)
+
 	uint8_t		wep_txkey;
+#define IWI_DATA_KEY_WEP40	(1 << 6)
+#define IWI_DATA_KEY_WEP104	(1 << 7)
+
 	uint8_t		wepkey[IEEE80211_KEYBUF_SIZE];
 	uint8_t		rate;
 	uint8_t		antenna;
@@ -324,9 +321,16 @@ struct iwi_associate {
 #define IWI_AUTH_NONE	3
 
 	uint8_t		type;
+#define IWI_ASSOC_ASSOCIATE	0
+#define IWI_ASSOC_REASSOCIATE	1
+#define IWI_ASSOC_DISASSOCIATE	2
+#define IWI_ASSOC_SIBSS		3
+
 	uint8_t		reserved1;
 	uint16_t	reserved2;
 	uint8_t		plen;
+#define IWI_ASSOC_SHPREAMBLE	(1 << 2)
+
 	uint8_t		mode;
 	uint8_t		bssid[IEEE80211_ADDR_LEN];
 	uint8_t		tstamp[8];
@@ -376,10 +380,10 @@ struct iwi_configuration {
 	uint8_t	reserved3;
 	uint8_t	enable_multicast_filtering;
 	uint8_t	bluetooth_threshold;
-	uint8_t	reserved4;
+	uint8_t	silence_threshold;
 	uint8_t	allow_beacon_and_probe_resp;
 	uint8_t	allow_mgt;
-	uint8_t	noise_reported;
+	uint8_t	report_noise;
 	uint8_t	reserved5;
 } __packed;
 
