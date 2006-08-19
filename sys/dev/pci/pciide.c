@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.250 2006/08/06 01:24:38 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.251 2006/08/19 17:38:56 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2267,7 +2267,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
 	bus_size_t cmdsize, ctlsize;
-	u_int8_t reg, ich7 = 0;
+	u_int8_t reg, ich = 0;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
@@ -2287,17 +2287,34 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
+	switch(sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_INTEL_6300ESB_SATA:
+	case PCI_PRODUCT_INTEL_6300ESB_SATA2:
+	case PCI_PRODUCT_INTEL_82801EB_SATA:
+	case PCI_PRODUCT_INTEL_82801ER_SATA:
+		ich = 5;
+		break;
+	case PCI_PRODUCT_INTEL_82801FB_SATA:
+	case PCI_PRODUCT_INTEL_82801FR_SATA:
+	case PCI_PRODUCT_INTEL_82801FBM_SATA:
+		ich = 6;
+		break;
+	case PCI_PRODUCT_INTEL_82801GB_SATA:
+	case PCI_PRODUCT_INTEL_82801GR_SATA:
+	case PCI_PRODUCT_INTEL_82801GR_AHCI:
+	case PCI_PRODUCT_INTEL_82801GBM_SATA:
+	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
+	case PCI_PRODUCT_INTEL_82801GHM_RAID:
+		ich = 7;
+		break;
+	}
+
 	/*
 	 * Put the SATA portion of controllers that don't operate in combined
 	 * mode into native PCI modes so the maximum number of devices can be
 	 * used.  Intel calls this "enhanced mode"
 	 */
-	switch(sc->sc_pp->ide_product) {
-	/* ICH 5 */
-	case PCI_PRODUCT_INTEL_6300ESB_SATA:
-	case PCI_PRODUCT_INTEL_6300ESB_SATA2:
-	case PCI_PRODUCT_INTEL_82801EB_SATA:
-	case PCI_PRODUCT_INTEL_82801ER_SATA:
+	if (ich == 5) {
 		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP);
 		if ((reg & ICH5_SATA_MAP_COMBINED) == 0) {
 			reg = pciide_pci_read(pa->pa_pc, pa->pa_tag,
@@ -2309,19 +2326,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			interface |= PCIIDE_INTERFACE_PCI(0) |
 			    PCIIDE_INTERFACE_PCI(1);
 		}
-		break;
-	/* ICH 7 */
-	case PCI_PRODUCT_INTEL_82801GB_SATA:
-	case PCI_PRODUCT_INTEL_82801GR_SATA:
-	case PCI_PRODUCT_INTEL_82801GR_AHCI:
-	case PCI_PRODUCT_INTEL_82801GBM_SATA:
-	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
-	case PCI_PRODUCT_INTEL_82801GHM_RAID:
-		ich7 = 1;
-	/* ICH 6 */
-	case PCI_PRODUCT_INTEL_82801FB_SATA:
-	case PCI_PRODUCT_INTEL_82801FR_SATA:
-	case PCI_PRODUCT_INTEL_82801FBM_SATA:
+	} else {
 		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP) &
 		    ICH6_SATA_MAP_CMB_MASK;
 		if (reg != ICH6_SATA_MAP_CMB_PRI &&
@@ -2331,20 +2336,23 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			reg |= ICH5_SATA_PI_PRI_NATIVE |
 			    ICH5_SATA_PI_SEC_NATIVE;
 
+			pciide_pci_write(pa->pa_pc, pa->pa_tag,
+			    ICH5_SATA_PI, reg);
+			interface |= PCIIDE_INTERFACE_PCI(0) |
+			    PCIIDE_INTERFACE_PCI(1);
+
 			/*
 			 * Ask for SATA IDE Mode, we don't need to do this
 			 * for the combined mode case as combined mode is
 			 * only allowed in IDE Mode
 			 */
-			if (ich7)
-				reg &= ~ICH7_SATA_MAP_SMS_MASK;
-
-			pciide_pci_write(pa->pa_pc, pa->pa_tag,
-			    ICH5_SATA_PI, reg);
-			interface |= PCIIDE_INTERFACE_PCI(0) |
-			    PCIIDE_INTERFACE_PCI(1);
+			if (ich >= 7) {
+				reg = pciide_pci_read(sc->sc_pc, sc->sc_tag,
+				    ICH5_SATA_MAP) & ~ICH7_SATA_MAP_SMS_MASK;
+				pciide_pci_write(pa->pa_pc, pa->pa_tag,
+				    ICH5_SATA_MAP, reg);
+			}
 		}
-		break;
 	}
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
