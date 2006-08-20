@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.13 2004/06/25 04:09:03 claudio Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.14 2006/08/20 16:13:26 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <Julian.Onions@nexor.co.uk>
@@ -24,14 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * This driver takes packets off the IP i/f and hands them up to a
- * user process to have it's wicked way with. This driver has it's
- * roots in a similar driver written by Phil Cockcroft (formerly) at
- * UCL. This driver is based much more on read/write/select mode of
- * operation though.
  */
 
 #ifndef _NET_IF_TUN_H_
