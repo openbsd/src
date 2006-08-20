@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.29 2006/08/18 16:04:56 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.30 2006/08/20 14:01:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -148,8 +148,6 @@ void		wpi_iter_func(void *, struct ieee80211_node *);
 void		wpi_amrr_timeout(void *);
 void		wpi_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
-
-#define WPI_DEBUG
 
 #ifdef WPI_DEBUG
 #define DPRINTF(x)	do { if (wpi_debug > 0) printf x; } while (0)
@@ -1324,6 +1322,10 @@ wpi_notif_intr(struct wpi_softc *sc)
 				/* the radio button has to be pushed */
 				printf("%s: Radio transmitter is off\n",
 				    sc->sc_dev.dv_xname);
+				/* turn the interface down */
+				ifp->if_flags &= ~IFF_UP;
+				wpi_stop(ifp, 1);
+				return;	/* no further processing */
 			}
 			break;
 		}
@@ -1401,7 +1403,8 @@ wpi_intr(void *arg)
 		wakeup(sc);
 
 	/* re-enable interrupts */
-	WPI_WRITE(sc, WPI_MASK, WPI_INTR_MASK);
+	if (ifp->if_flags & IFF_UP)
+		WPI_WRITE(sc, WPI_MASK, WPI_INTR_MASK);
 
 	return 1;
 }
