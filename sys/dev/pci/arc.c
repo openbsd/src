@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.30 2006/08/20 02:13:49 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.31 2006/08/20 02:20:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -392,13 +392,9 @@ int			arc_query_firmware(struct arc_softc *);
 void			arc_lock(struct arc_softc *);
 void			arc_unlock(struct arc_softc *);
 void			arc_wait(struct arc_softc *);
-u_int8_t		arc_msg_cksum(void *, size_t);
+u_int8_t		arc_msg_cksum(void *, u_int16_t);
 int			arc_msgbuf(struct arc_softc *, void *, size_t,
 			    void *, size_t);
-
-u_int8_t arc_msg_cksum2(void *cmd, u_int16_t len);
-int arc_msgbuf2(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
-    size_t rbuflen);
 
 /* bioctl */
 #if NBIO > 0
@@ -899,7 +895,7 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 	}
 
 	arc_lock(sc);
-	error = arc_msgbuf2(sc, request, len, reply, sizeof(reply));
+	error = arc_msgbuf(sc, request, len, reply, sizeof(reply));
 	arc_unlock(sc);
 
 	if (error != 0)
@@ -925,7 +921,7 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 	request = ARC_FW_SYSINFO;
 
 	arc_lock(sc);
-	error = arc_msgbuf2(sc, &request, sizeof(request),
+	error = arc_msgbuf(sc, &request, sizeof(request),
 	    sysinfo, sizeof(struct arc_fw_sysinfo));
 	arc_unlock(sc);
 
@@ -941,104 +937,7 @@ out:
 #endif /* NBIO > 0 */
 
 u_int8_t
-arc_msg_cksum(void *cmd, size_t len)
-{
-	u_int8_t			*buf = cmd;
-	u_int8_t			cksum = 0;
-	int				i;
-
-	/* starts after the header, ends before the cksum */
-	for (i = sizeof(struct arc_fw_hdr); i < (len - 1); i++)
-		cksum += buf[i];
-
-	return (cksum);
-}
-
-int
-arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wlen, void *rptr,
-    size_t rlen)
-{
-	u_int8_t			rwbuf[ARC_REG_IOC_RWBUF_MAXLEN];
-	u_int8_t			*wbuf = wptr, *rbuf = rptr;
-	int				wdone = 0, rdone = 0;
-	u_int32_t			reg, rwlen;
-#ifdef ARC_DEBUG
-	int				i;
-#endif
-
-	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n", DEVNAME(sc),
-	    wlen, rlen);
-
-	if (arc_read(sc, ARC_REG_OUTB_DOORBELL) != 0)
-		return (EBUSY);
-
-	reg = ARC_REG_OUTB_DOORBELL_READ_OK;
-
-	do {
-		if ((reg & ARC_REG_OUTB_DOORBELL_READ_OK) && wdone < wlen) {
-			bzero(rwbuf, sizeof(rwbuf));
-			rwlen = (wlen - wdone) % sizeof(rwbuf);
-			bcopy(&wbuf[wdone], rwbuf, rwlen);
-			wdone += rwlen;
-
-#ifdef ARC_DEBUG
-			if (arcdebug & ARC_D_DB) {
-				printf("%s: write:", DEVNAME(sc));
-				for (i = 0; i < rwlen; i++)
-					printf(" 0x%02x", rwbuf[i]);
-				printf("\n");
-			}
-#endif
-
-			/* copy the chunk to the hw */
-			arc_write(sc, ARC_REG_IOC_WBUF_LEN, rwlen);
-			arc_write_region(sc, ARC_REG_IOC_WBUF, rwbuf,
-			    sizeof(rwbuf));
-
-			/* say we have a buffer for the hw */
-			arc_write(sc, ARC_REG_INB_DOORBELL,
-			    ARC_REG_INB_DOORBELL_WRITE_OK);
-		}
-
-		while ((reg = arc_read(sc, ARC_REG_OUTB_DOORBELL)) == 0)
-			arc_wait(sc);
-		arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
-
-		DNPRINTF(ARC_D_DB, "%s: reg: 0x%08x\n", DEVNAME(sc), reg);
-
-		if ((reg & ARC_REG_OUTB_DOORBELL_WRITE_OK) && rdone < rlen) {
-			rwlen = arc_read(sc, ARC_REG_IOC_RBUF_LEN);
-			arc_read_region(sc, ARC_REG_IOC_RBUF, rwbuf,
-			    sizeof(rwbuf));
-
-			arc_write(sc, ARC_REG_INB_DOORBELL,
-			    ARC_REG_INB_DOORBELL_READ_OK);
-
-#ifdef ARC_DEBUG
-			printf("%s:  len: %d+%d=%d/%d\n", DEVNAME(sc),
-			    rwlen, rdone, rwlen + rdone, rlen);
-			if (arcdebug & ARC_D_DB) {
-				printf("%s: read:", DEVNAME(sc));
-				for (i = 0; i < rwlen; i++)
-					printf(" 0x%02x", rwbuf[i]);
-				printf("\n");
-			}
-#endif
-
-			if ((rdone + rwlen) > rlen)
-				return (EIO);
-
-			bcopy(rwbuf, &rbuf[rdone], rwlen);
-			rdone += rwlen;
-		}
-
-	} while (rdone != rlen);
-
-	return (0);
-}
-
-u_int8_t
-arc_msg_cksum2(void *cmd, u_int16_t len)
+arc_msg_cksum(void *cmd, u_int16_t len)
 {
 	u_int8_t			*buf = cmd;
 	u_int8_t			cksum;
@@ -1053,7 +952,7 @@ arc_msg_cksum2(void *cmd, u_int16_t len)
 
 
 int
-arc_msgbuf2(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
+arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
     size_t rbuflen)
 {
 	u_int8_t			rwbuf[ARC_REG_IOC_RWBUF_MAXLEN];
@@ -1091,7 +990,7 @@ arc_msgbuf2(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	bufhdr->hdr = arc_fw_hdr;
 	bufhdr->len = htole16(wbuflen);
 	bcopy(wptr, wbuf + sizeof(struct arc_fw_bufhdr), wbuflen);
-	wbuf[wlen - 1] = arc_msg_cksum2(wptr, wbuflen);
+	wbuf[wlen - 1] = arc_msg_cksum(wptr, wbuflen);
 
 	reg = ARC_REG_OUTB_DOORBELL_READ_OK;
 
@@ -1176,7 +1075,7 @@ arc_msgbuf2(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 
 	bcopy(rbuf + sizeof(struct arc_fw_bufhdr), rptr, rbuflen);
 
-	if (rbuf[rlen - 1] != arc_msg_cksum2(rptr, rbuflen)) {
+	if (rbuf[rlen - 1] != arc_msg_cksum(rptr, rbuflen)) {
 		DNPRINTF(ARC_D_DB, "%s:  invalid cksum\n", DEVNAME(sc));
 		error = EIO;
 		goto out;
