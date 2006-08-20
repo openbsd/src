@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vqp.c,v 1.5 2006/08/15 17:32:16 stevesk Exp $	*/
+/*	$OpenBSD: print-vqp.c,v 1.6 2006/08/20 23:39:42 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2006 Kevin Steves <stevesk@openbsd.org>
@@ -46,7 +46,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
 #include <stdio.h>
@@ -156,7 +158,7 @@ vqp_print_type(u_int type, u_int len, const u_char *p)
 	switch (type) {
 	case VQP_CLIENT_ADDR:
 		printf(" client:");
-		if (len == 4) {
+		if (len == sizeof(struct in_addr)) {
 			struct in_addr in;
 			memcpy(&in, p, sizeof in);
 			printf("%s", inet_ntoa(in));
@@ -181,7 +183,7 @@ vqp_print_type(u_int type, u_int len, const u_char *p)
 		break;
 	case VQP_MAC:
 		printf(" mac:");
-		if (len == 6)
+		if (len == ETHER_ADDR_LEN)
 			printf("%s", etheraddr_string(p));
 		else
 			print_hex(p, len);
@@ -192,7 +194,7 @@ vqp_print_type(u_int type, u_int len, const u_char *p)
 		break;
 	case VQP_COOKIE:
 		printf(" cookie:");
-		if (len == 6)
+		if (len == ETHER_ADDR_LEN)
 			printf("%s", etheraddr_string(p));
 		else
 			print_hex(p, len);
