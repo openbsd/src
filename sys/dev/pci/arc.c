@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.32 2006/08/20 02:21:26 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.33 2006/08/20 13:14:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -208,6 +208,9 @@ struct arc_fw_bufhdr {
 	u_int16_t		len;
 } __packed;
 
+#define ARC_FW_RAIDINFO		0x20	/* opcode + raid# */
+#define ARC_FW_VOLINFO		0x21	/* opcode + vol# */
+#define ARC_FW_DISKINFO		0x22	/* opcode + physdisk# */
 #define ARC_FW_SYSINFO		0x23	/* opcode. reply is fw_sysinfo */
 #define ARC_FW_MUTE_ALARM	0x30	/* opcode only */
 #define ARC_FW_SET_ALARM	0x31	/* opcode + 1 byte for setting */
@@ -223,6 +226,67 @@ struct arc_fw_comminfo {
 	u_int8_t		stop_bits;
 	u_int8_t		parity;
 	u_int8_t		flow_control;
+} __packed;
+
+struct arc_fw_scsiattr {
+	u_int8_t		channel;// channel for SCSI target (0/1)
+        u_int8_t		target;
+        u_int8_t		lun;
+        u_int8_t		tagged;
+        u_int8_t		cache;
+        u_int8_t		speed;
+} __packed;
+
+struct arc_fw_raidinfo {
+	u_int8_t		set_name[16];
+	u_int32_t		capacity;
+	u_int32_t		capacity2;
+	u_int32_t		fail_mask;
+	u_int8_t		device_array[32];
+	u_int8_t		member_devices;
+	u_int8_t		new_member_devices;
+	u_int8_t		raid_state;
+	u_int8_t		volumes;
+	u_int8_t		volume_list[16];
+	u_int8_t		reserved1[3];
+	u_int8_t		free_segments;
+	u_int32_t		raw_stripes[8];
+	u_int8_t		reserved2[12];
+} __packed;
+
+struct arc_fw_volinfo {
+	u_int8_t		set_name[16];
+	u_int32_t		capacity;
+	u_int32_t		capacity2;
+	u_int32_t		fail_mask;
+	u_int32_t		stripe_size; /* in blocks */
+	u_int32_t		new_fail_mask;
+	u_int32_t		new_stripe_size;
+	u_int32_t		volume_status;
+	u_int32_t		progress;
+	struct arc_fw_scsiattr	scsi_attr;
+	u_int8_t		member_disks;
+	u_int8_t		raid_level;
+	u_int8_t		new_member_disks;
+	u_int8_t		new_raid_level;
+	u_int8_t		raid_set_number;
+	u_int8_t		reserved[5];
+} __packed;
+
+struct arc_fw_diskinfo {
+	u_int8_t		model[40];
+	u_int8_t		serial[20];
+	u_int8_t		firmware_rev[8];
+	u_int32_t		capacity;
+	u_int32_t		capacity2;
+	u_int8_t		device_state;
+	u_int8_t		pio_mode;
+	u_int8_t		current_udma_mode;
+	u_int8_t		udma_mode;
+	u_int8_t		drive_select;
+	u_int8_t		raid_number; // 0xff unowned
+	struct arc_fw_scsiattr	scsi_attr;
+	u_int8_t		reserved[40];
 } __packed;
 
 struct arc_fw_sysinfo {
