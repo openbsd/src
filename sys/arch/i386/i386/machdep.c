@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.363 2006/08/18 16:08:44 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.364 2006/08/20 01:42:51 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1860,7 +1860,7 @@ identifycpu(struct cpu_info *ci)
 
 #ifndef SMALL_KERNEL
 #if defined(I586_CPU) || defined(I686_CPU)
-	if (pentium_mhz != 0)
+	if (pentium_mhz != 0 && cpu_cpuspeed == NULL)
 		cpu_cpuspeed = pentium_cpuspeed;
 #endif
 #endif

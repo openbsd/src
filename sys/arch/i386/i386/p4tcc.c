@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.10 2006/06/17 18:22:13 dim Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.11 2006/08/20 01:42:51 gwk Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -60,6 +60,9 @@ static struct {
 #define TCC_LEVELS sizeof(tcc) / sizeof(tcc[0])
 
 extern int setperf_prio;
+int p4tcc_level;
+
+int p4tcc_cpuspeed(int *);
 
 void
 p4tcc_init(int family, int step)
@@ -90,8 +93,18 @@ p4tcc_init(int family, int step)
 		break;
 	}
 
+	p4tcc_level = tcc[0].level;
 	cpu_setperf = p4tcc_setperf;
+	cpu_cpuspeed = p4tcc_cpuspeed;
 	setperf_prio = 1;
+}
+
+int
+p4tcc_cpuspeed(int *speed)
+{
+	*speed = pentium_mhz / 100 * (p4tcc_level + 12);
+
+	return 0;
 }
 
 int
@@ -114,6 +127,8 @@ p4tcc_setperf(int level)
 
 	if ((vet & 0x1e) != (msreg & 0x1e))
 		printf("p4_tcc: cpu did not honor request\n");
+	else
+		p4tcc_level = tcc[i].level;
 
 	return (0);
 }
