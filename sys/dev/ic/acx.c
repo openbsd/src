@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.47 2006/08/19 23:17:12 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.48 2006/08/20 00:33:59 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1644,7 +1644,6 @@ acx_node_alloc(struct ieee80211com *ic)
 		return (NULL);
 
 	bzero(wn, sizeof(struct acx_node));
-	//node->nd_txrate = -1;
 
 	return ((struct ieee80211_node *)wn);
 }
@@ -2546,7 +2545,7 @@ acx_exec_command(struct acx_softc *sc, uint16_t cmd, void *param,
 
 	/* Exec command */
 	CSR_WRITE_2(sc, ACXREG_INTR_TRIG, ACXRV_TRIG_CMD_FINI);
-	DELAY(50);	/* XXX maybe 100 */
+	DELAY(50);
 
 	/* Wait for command to complete */
 	if (cmd == ACXCMD_INIT_RADIO) {
