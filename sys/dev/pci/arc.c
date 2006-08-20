@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.29 2006/08/20 02:06:54 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.30 2006/08/20 02:13:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -869,36 +869,24 @@ arc_bioctl(struct device *self, u_long cmd, caddr_t addr)
 int
 arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 {
-	ARC_FW_MSG(2)			toggle;
-	ARC_FW_MSG(1)			silence;
-	ARC_FW_MSG(1)			reply;
-	void				*request;
+	u_int8_t			request[2];
+	u_int8_t			reply[1];
 	size_t				len;
 	int				error = 0;
 
 	switch (ba->ba_opcode) {
 	case BIOC_SAENABLE:
 	case BIOC_SADISABLE:
-		toggle.hdr = arc_fw_hdr;
-		toggle.len = htole16(sizeof(toggle.msg));
-		toggle.msg[0] = ARC_FW_SET_ALARM;
-		toggle.msg[1] = (ba->ba_opcode == BIOC_SAENABLE) ?
+		request[0] = ARC_FW_SET_ALARM;
+		request[1] = (ba->ba_opcode == BIOC_SAENABLE) ?
 		    ARC_FW_SET_ALARM_ENABLE : ARC_FW_SET_ALARM_DISABLE;
-		toggle.cksum = arc_msg_cksum(&toggle, sizeof(toggle));
-
-		request = &toggle;
-		len = sizeof(toggle);
+		len = sizeof(request);
 
 		break;
 
 	case BIOC_SASILENCE:
-		silence.hdr = arc_fw_hdr;
-		silence.len = htole16(sizeof(silence.msg));
-		silence.msg[0] = ARC_FW_MUTE_ALARM;
-		silence.cksum = arc_msg_cksum(&silence, sizeof(silence));
-
-		request = &silence;
-		len = sizeof(silence);
+		request[0] = ARC_FW_MUTE_ALARM;
+		len = 1;
 
 		break;
 
@@ -911,15 +899,13 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 	}
 
 	arc_lock(sc);
-	error = arc_msgbuf(sc, request, len, &reply, sizeof(reply));
+	error = arc_msgbuf2(sc, request, len, reply, sizeof(reply));
 	arc_unlock(sc);
 
 	if (error != 0)
 		return (error);
 
-	if (memcmp(&reply.hdr, &arc_fw_hdr, sizeof(reply.hdr)) != 0 ||
-	    reply.cksum != arc_msg_cksum(&reply, sizeof(reply)) ||
-	    reply.msg[0] != ARC_FW_CMD_OK)
+	if (reply[0] != ARC_FW_CMD_OK)
 		return (EIO);
 
 	return (0);
