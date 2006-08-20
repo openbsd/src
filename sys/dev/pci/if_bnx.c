@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.18 2006/08/20 08:36:33 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.19 2006/08/20 21:47:19 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4062,7 +4062,7 @@ bnx_init(void *xsc)
 #ifdef BNX_JUMBO
 	REG_WR(sc, BNX_EMAC_RX_MTU_SIZE, ether_mtu |
 		BNX_EMAC_RX_MTU_SIZE_JUMBO_ENA);
-	sc->mbuf_alloc_size = BNX_MAX_MRU; /* MJUM9BYTES */
+	sc->mbuf_alloc_size = BNX_MAX_MRU;
 #else
 	REG_WR(sc, BNX_EMAC_RX_MTU_SIZE, ether_mtu);
 	sc->mbuf_alloc_size = MCLBYTES;
