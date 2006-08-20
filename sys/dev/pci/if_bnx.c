@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.17 2006/08/20 06:22:25 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.18 2006/08/20 08:36:33 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3094,9 +3094,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 
 	if (m == NULL) {
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_mbuf_allocation_failure),
-		    BNX_PRINTF(sc,
-		        "%s(%d): Simulating mbuf allocation failure.\n",
-			__FILE__, __LINE__);
+		    BNX_PRINTF(sc, "Simulating mbuf allocation failure.\n");
 
 			sc->mbuf_alloc_failed++;
 			rc = ENOBUFS;
@@ -3381,8 +3379,8 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 	while (prod < BNX_RX_SLACK_SPACE) {
 		chain_prod = RX_CHAIN_IDX(prod);
 		if (bnx_get_buf(sc, NULL, &prod, &chain_prod, &prod_bseq)) {
-			printf("%s: Error filling RX chain: rx_bd[0x%04X]!\n",
-			    chain_prod);
+			BNX_PRINTF(sc, "Error filling RX chain: rx_bd[0x%04X]!\n",
+				chain_prod);
 			rc = ENOBUFS;
 			break;
 		}
@@ -3701,8 +3699,8 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 */
 			if (bnx_get_buf(sc, NULL, &sw_prod, &sw_chain_prod,
 			    &sw_prod_bseq)) {
-				DBRUN(BNX_WARN, printf("%s: Failed to allocate "
-				    "new mbuf, incoming frame dropped!\n"));
+				DBRUN(BNX_WARN, BNX_PRINTF(sc, "Failed to allocate "
+					"new mbuf, incoming frame dropped!\n"));
 
 				ifp->if_ierrors++;
 
@@ -4312,7 +4310,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
 		return (error);
-        }
+	}
 
 	switch (command) {
 	case SIOCSIFADDR:
@@ -4338,20 +4336,22 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    ((ifp->if_flags ^ sc->bnx_if_flags) &
 			    (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 				bnx_set_rx_mode(sc);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
-				bnx_init(ifp);
-
-                } else if (ifp->if_flags & IFF_RUNNING)
-			bnx_stop(sc);
-
+			} else {
+				if (!(ifp->if_flags & IFF_RUNNING))
+					bnx_init(ifp);
+			}
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				bnx_stop(sc);
+		}
 		sc->bnx_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI)
-                        ? ether_addmulti(ifr, &sc->arpcom)
-                        : ether_delmulti(ifr, &sc->arpcom);
+			? ether_addmulti(ifr, &sc->arpcom)
+			: ether_delmulti(ifr, &sc->arpcom);
 
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
