@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.28 2006/08/18 13:57:11 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.29 2006/08/20 02:06:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -203,6 +203,11 @@ struct arc_fw_hdr {
 /* the fw header must always equal this */
 struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
 
+struct arc_fw_bufhdr {
+	struct arc_fw_hdr	hdr;
+	u_int16_t		len;
+} __packed;
+
 #define ARC_FW_SYSINFO		0x23	/* opcode. reply is fw_sysinfo */
 #define ARC_FW_MUTE_ALARM	0x30	/* opcode only */
 #define ARC_FW_SET_ALARM	0x31	/* opcode + 1 byte for setting */
@@ -390,6 +395,10 @@ void			arc_wait(struct arc_softc *);
 u_int8_t		arc_msg_cksum(void *, size_t);
 int			arc_msgbuf(struct arc_softc *, void *, size_t,
 			    void *, size_t);
+
+u_int8_t arc_msg_cksum2(void *cmd, u_int16_t len);
+int arc_msgbuf2(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
+    size_t rbuflen);
 
 /* bioctl */
 #if NBIO > 0
@@ -919,40 +928,28 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 int
 arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 {
-	ARC_FW_MSG(1)			request;
-	ARC_FW_MSG(sizeof(struct arc_fw_sysinfo)) *reply;
+	u_int8_t			request = ARC_FW_SYSINFO;
 	struct arc_fw_sysinfo		*sysinfo;
 	int				error = 0;
 
-	reply = malloc(sizeof(*reply), M_TEMP, M_WAITOK);
-	if (reply == NULL)
+	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_TEMP, M_WAITOK);
+	if (sysinfo == NULL)
 		return (ENOMEM);
 
-	sysinfo = ARC_FW_MSGBUF(reply);
-
-	request.hdr = arc_fw_hdr;
-	request.len = htole16(sizeof(request.msg));
-	request.msg[0] = ARC_FW_SYSINFO;
-	request.cksum = arc_msg_cksum(&request, sizeof(request));
+	request = ARC_FW_SYSINFO;
 
 	arc_lock(sc);
-	error = arc_msgbuf(sc, &request, sizeof(request),
-	    reply, sizeof(*reply));
+	error = arc_msgbuf2(sc, &request, sizeof(request),
+	    sysinfo, sizeof(struct arc_fw_sysinfo));
 	arc_unlock(sc);
 
 	if (error != 0)
 		goto out;
 
-	if (memcmp(&reply->hdr, &arc_fw_hdr, sizeof(reply->hdr)) != 0 ||
-	    reply->cksum != arc_msg_cksum(reply, sizeof(*reply))) {
-		error = EIO;
-		goto out;
-	}
-
 	ba->ba_status = sysinfo->alarm;
 
 out:
-	free(reply, M_TEMP);
+	free(sysinfo, M_TEMP);
 	return (error);
 }
 #endif /* NBIO > 0 */
@@ -1047,12 +1044,163 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wlen, void *rptr,
 
 			bcopy(rwbuf, &rbuf[rdone], rwlen);
 			rdone += rwlen;
-
 		}
 
 	} while (rdone != rlen);
 
 	return (0);
+}
+
+u_int8_t
+arc_msg_cksum2(void *cmd, u_int16_t len)
+{
+	u_int8_t			*buf = cmd;
+	u_int8_t			cksum;
+	int				i;
+
+	cksum = (u_int8_t)(len >> 8) + (u_int8_t)len;
+	for (i = 0; i < len; i++)
+		cksum += buf[i];
+
+	return (cksum);
+}
+
+
+int
+arc_msgbuf2(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
+    size_t rbuflen)
+{
+	u_int8_t			rwbuf[ARC_REG_IOC_RWBUF_MAXLEN];
+	u_int8_t			*wbuf, *rbuf;
+	int				wlen, wdone = 0, rlen, rdone = 0;
+	struct arc_fw_bufhdr		*bufhdr;
+	u_int32_t			reg, rwlen;
+	int				error = 0;
+#ifdef ARC_DEBUG
+	int				i;
+#endif
+
+	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wbuflen: %d rbuflen: %d\n",
+	    DEVNAME(sc), wbuflen, rbuflen);
+
+	if (arc_read(sc, ARC_REG_OUTB_DOORBELL) != 0)
+		return (EBUSY);
+
+	wlen = sizeof(struct arc_fw_bufhdr) + wbuflen + 1; /* 1 for cksum */
+	wbuf = malloc(wlen, M_TEMP, M_WAITOK);
+	if (wbuf == NULL)
+		return (ENOMEM);
+
+	rlen = sizeof(struct arc_fw_bufhdr) + rbuflen + 1; /* 1 for cksum */
+	rbuf = malloc(rlen, M_TEMP, M_WAITOK);
+	if (rbuf == NULL) {
+		free(wbuf, M_TEMP);
+		return (ENOMEM);
+	}
+
+	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n", DEVNAME(sc),
+	    wlen, rlen);
+
+	bufhdr = (struct arc_fw_bufhdr *)wbuf;
+	bufhdr->hdr = arc_fw_hdr;
+	bufhdr->len = htole16(wbuflen);
+	bcopy(wptr, wbuf + sizeof(struct arc_fw_bufhdr), wbuflen);
+	wbuf[wlen - 1] = arc_msg_cksum2(wptr, wbuflen);
+
+	reg = ARC_REG_OUTB_DOORBELL_READ_OK;
+
+	do {
+		if ((reg & ARC_REG_OUTB_DOORBELL_READ_OK) && wdone < wlen) {
+			bzero(rwbuf, sizeof(rwbuf));
+			rwlen = (wlen - wdone) % sizeof(rwbuf);
+			bcopy(&wbuf[wdone], rwbuf, rwlen);
+
+#ifdef ARC_DEBUG
+			if (arcdebug & ARC_D_DB) {
+				printf("%s: write %d:", DEVNAME(sc), rwlen);
+				for (i = 0; i < rwlen; i++)
+					printf(" 0x%02x", rwbuf[i]);
+				printf("\n");
+			}
+#endif
+
+			/* copy the chunk to the hw */
+			arc_write(sc, ARC_REG_IOC_WBUF_LEN, rwlen);
+			arc_write_region(sc, ARC_REG_IOC_WBUF, rwbuf,
+			    sizeof(rwbuf));
+
+			/* say we have a buffer for the hw */
+			arc_write(sc, ARC_REG_INB_DOORBELL,
+			    ARC_REG_INB_DOORBELL_WRITE_OK);
+
+			wdone += rwlen;
+		}
+
+		while ((reg = arc_read(sc, ARC_REG_OUTB_DOORBELL)) == 0)
+			arc_wait(sc);
+		arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
+
+		DNPRINTF(ARC_D_DB, "%s: reg: 0x%08x\n", DEVNAME(sc), reg);
+
+		if ((reg & ARC_REG_OUTB_DOORBELL_WRITE_OK) && rdone < rlen) {
+			rwlen = arc_read(sc, ARC_REG_IOC_RBUF_LEN);
+			if (rwlen > sizeof(rwbuf)) {
+				DNPRINTF(ARC_D_DB, "%s:  rwlen too big\n",
+				    DEVNAME(sc));
+				error = EIO;
+				goto out;
+			}
+
+			arc_read_region(sc, ARC_REG_IOC_RBUF, rwbuf,
+			    sizeof(rwbuf));
+
+			arc_write(sc, ARC_REG_INB_DOORBELL,
+			    ARC_REG_INB_DOORBELL_READ_OK);
+
+#ifdef ARC_DEBUG
+			printf("%s:  len: %d+%d=%d/%d\n", DEVNAME(sc),
+			    rwlen, rdone, rwlen + rdone, rlen);
+			if (arcdebug & ARC_D_DB) {
+				printf("%s: read:", DEVNAME(sc));
+				for (i = 0; i < rwlen; i++)
+					printf(" 0x%02x", rwbuf[i]);
+				printf("\n");
+			}
+#endif
+
+			if ((rdone + rwlen) > rlen) {
+				DNPRINTF(ARC_D_DB, "%s:  rwbuf too big\n",
+				    DEVNAME(sc));
+				error = EIO;
+				goto out;
+			}
+
+			bcopy(rwbuf, &rbuf[rdone], rwlen);
+			rdone += rwlen;
+		}
+	} while (rdone != rlen);
+
+	bufhdr = (struct arc_fw_bufhdr *)rbuf;
+	if (memcmp(&bufhdr->hdr, &arc_fw_hdr, sizeof(bufhdr->hdr)) != 0 ||
+	    bufhdr->len != htole16(rbuflen)) {
+		DNPRINTF(ARC_D_DB, "%s:  rbuf hdr is wrong\n", DEVNAME(sc));
+		error = EIO;
+		goto out;
+	}
+
+	bcopy(rbuf + sizeof(struct arc_fw_bufhdr), rptr, rbuflen);
+
+	if (rbuf[rlen - 1] != arc_msg_cksum2(rptr, rbuflen)) {
+		DNPRINTF(ARC_D_DB, "%s:  invalid cksum\n", DEVNAME(sc));
+		error = EIO;
+		goto out;
+	}
+
+out:
+	free(wbuf, M_TEMP);
+	free(rbuf, M_TEMP);
+
+	return (error);
 }
 
 void
