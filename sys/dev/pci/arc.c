@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.31 2006/08/20 02:20:04 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.32 2006/08/20 02:21:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -216,16 +216,6 @@ struct arc_fw_bufhdr {
 #define ARC_FW_NOP		0x38	/* opcode only */
 
 #define ARC_FW_CMD_OK		0x41
-
-/* variable length msg */
-#define ARC_FW_MSG(_len)				\
-struct {						\
-	struct arc_fw_hdr	hdr;			\
-	u_int16_t		len;			\
-	u_int8_t		msg[(_len)];		\
-	u_int8_t		cksum;			\
-} __packed
-#define ARC_FW_MSGBUF(_msg)	((void *)(_msg)->msg)
 
 struct arc_fw_comminfo {
 	u_int8_t		baud_rate;
