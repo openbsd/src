@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.38 2006/08/19 21:16:22 kettenis Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.39 2006/08/20 19:15:46 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1597,7 +1597,7 @@ struct msk_status_desc {
 #define SK_JUMBO_FRAMELEN	9018
 #define SK_JUMBO_MTU		(SK_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define SK_MIN_FRAMELEN		(ETHER_MIN_LEN - ETHER_CRC_LEN)
-#define SK_JSLOTS		384
+#define SK_JSLOTS		((SK_RX_RING_CNT / 2) * 3)
 
 #define SK_JRAWLEN	(SK_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define SK_JLEN		SK_JRAWLEN
