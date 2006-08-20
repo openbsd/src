@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.8 2006/08/13 19:29:46 marco Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.9 2006/08/20 06:22:25 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -35,6 +35,7 @@
 #define _BNX_H_DEFINED
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4642,7 +4643,6 @@ struct bnx_softc
 
 	int					bnx_if_flags;
 
-	bus_addr_t				max_bus_addr;
 	u_int16_t					bus_speed_mhz;		/* PCI bus speed */
 	struct flash_spec	*bnx_flash_info;	/* Flash NVRAM settings */
 	u_int32_t					bnx_flash_size;		/* Flash NVRAM size */

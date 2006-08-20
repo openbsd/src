@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.16 2006/08/19 04:01:02 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.17 2006/08/20 06:22:25 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -408,18 +408,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 		goto bnx_attach_fail;
 	}
 
-#if 0
-	/* 
-	 * The embedded PCIe to PCI-X bridge (EPB) 
-	 * in the 5708 cannot address memory above 
-	 * 40 bits (E7_5708CB1_23043 & E6_5708SB1_23043). 
-	 */
-	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5708)
-		sc->max_bus_addr = BNX_BUS_SPACE_MAXADDR;
-	else
-		sc->max_bus_addr = BUS_SPACE_MAXADDR;
-#endif
-
 	/*
 	 * Find the base address for shared memory access.
 	 * Newer versions of bootcode use a signature and offset
@@ -579,7 +567,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
                 ifp->if_baudrate = IF_Gbps(2.5);
         else
                 ifp->if_baudrate = IF_Gbps(1);
-#if 0
+#ifdef BNX_JUMBO
 	ifp->if_hardmtu = BNX_MAX_JUMBO_MTU;
 #endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD);
@@ -588,6 +576,17 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef BNX_CSUM
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+				IFCAP_CSUM_UDPv4;
+#endif
+
+#ifdef BNX_VLAN
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+#endif
 
 	/* Assume a standard 1500 byte MTU size for mbuf allocations. */
 	sc->mbuf_alloc_size = MCLBYTES;
@@ -1929,8 +1928,8 @@ bnx_dma_map_tx_desc(void *arg, bus_dmamap_t map)
 	/*
 	 * Cycle through each mbuf segment that makes up
 	 * the outgoing frame, gathering the mapping info
-	 * for that segment and creating a tx_bd to for
-	 * the mbuf.
+	 * for that segment and creating a tx_bd for the
+	 * mbuf.
 	 */
 
 	txbd = &map_arg->tx_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
@@ -3735,49 +3734,72 @@ bnx_rx_intr(struct bnx_softc *sc)
 			    __FUNCTION__, eh->ether_dhost, ":", 
 			    eh->ether_shost, ":", htons(eh->ether_type)));
 
-#ifdef BNX_CKSUM
-			/* Validate the checksum if offload enabled. */
-			if (ifp->if_capenable & IFCAP_RXCSUM) {
-				/* Check for an IP datagram. */
-				if (status & L2_FHDR_STATUS_IP_DATAGRAM) {
+			/* Validate the checksum. */
+
+			/* Check for an IP datagram. */
+			if (status & L2_FHDR_STATUS_IP_DATAGRAM) {
+				/* Check if the IP checksum is valid. */
+				if ((l2fhdr->l2_fhdr_ip_xsum ^ 0xffff)
+				    == 0)
 					m->m_pkthdr.csum_flags |=
-					    CSUM_IP_CHECKED;
+					    M_IPV4_CSUM_IN_OK;
+				else
+					DBPRINT(sc, BNX_WARN_SEND, 
+					    "%s(): Invalid IP checksum "
+					        "= 0x%04X!\n",
+						__FUNCTION__,
+						l2fhdr->l2_fhdr_ip_xsum
+						);
+			}
 
-					/* Check if the IP checksum is valid. */
-					if ((l2fhdr->l2_fhdr_ip_xsum ^ 0xffff)
-					    == 0)
-						m->m_pkthdr.csum_flags |=
-						    CSUM_IP_VALID;
-					else
-						DBPRINT(sc, BNX_WARN_SEND, 
-						    "%s(): Invalid IP checksum "
-						        "= 0x%04X!\n",
-							__FUNCTION__,
-							l2fhdr->l2_fhdr_ip_xsum
-							);
+			/* Check for a valid TCP/UDP frame. */
+			if (status & (L2_FHDR_STATUS_TCP_SEGMENT |
+			    L2_FHDR_STATUS_UDP_DATAGRAM)) {
+				/* Check for a good TCP/UDP checksum. */
+				if ((status &
+				    (L2_FHDR_ERRORS_TCP_XSUM |
+				    L2_FHDR_ERRORS_UDP_XSUM)) == 0) {
+					m->m_pkthdr.csum_flags |=
+					    M_TCP_CSUM_IN_OK |
+					    M_UDP_CSUM_IN_OK;
+				} else {
+					DBPRINT(sc, BNX_WARN_SEND, 
+					    "%s(): Invalid TCP/UDP "
+					    "checksum = 0x%04X!\n",
+					    __FUNCTION__,
+					    l2fhdr->l2_fhdr_tcp_udp_xsum);
 				}
+			}
 
-				/* Check for a valid TCP/UDP frame. */
-				if (status & (L2_FHDR_STATUS_TCP_SEGMENT |
-				    L2_FHDR_STATUS_UDP_DATAGRAM)) {
-					/* Check for a good TCP/UDP checksum. */
-					if ((status &
-					    (L2_FHDR_ERRORS_TCP_XSUM |
-					    L2_FHDR_ERRORS_UDP_XSUM)) == 0) {
-						m->m_pkthdr.csum_data = l2fhdr->l2_fhdr_tcp_udp_xsum;
-						m->m_pkthdr.csum_flags |=
-						    (CSUM_DATA_VALID |
-						    CSUM_PSEUDO_HDR);
-					} else {
-						DBPRINT(sc, BNX_WARN_SEND, 
-						    "%s(): Invalid TCP/UDP "
-						    "checksum = 0x%04X!\n",
-						    __FUNCTION__,
-						    l2fhdr->l2_fhdr_tcp_udp_xsum);
-					}
+			/*
+			 * If we received a packet with a vlan tag,
+			 * attach that information to the packet.
+			 */
+			if (status & L2_FHDR_STATUS_L2_VLAN_TAG) {
+				struct ether_vlan_header vh;
+
+				DBPRINT(sc, BNX_VERBOSE_SEND,
+				    "%s(): VLAN tag = 0x%04X\n",
+				    __FUNCTION__,
+				    l2fhdr->l2_fhdr_vlan_tag);
+
+				if (m->m_pkthdr.len < ETHER_HDR_LEN) {
+					m_freem(m);
+					goto bnx_rx_int_next_rx;
 				}
-			}		
-#endif
+				m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
+				vh.evl_proto = vh.evl_encap_proto;
+				vh.evl_tag = l2fhdr->l2_fhdr_vlan_tag >> 16;
+				vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
+				m_adj(m, ETHER_HDR_LEN);
+				if ((m = m_prepend(m, sizeof(vh), M_DONTWAIT)) == NULL)
+					goto bnx_rx_int_next_rx;
+				m->m_pkthdr.len += sizeof(vh);
+				if (m->m_len < sizeof(vh) &&
+				    (m = m_pullup(m, sizeof(vh))) == NULL)
+					goto bnx_rx_int_next_rx;
+				m_copyback(m, 0, sizeof(vh), &vh);
+			}
 
 #if NBPFILTER > 0
 			/*
@@ -4025,7 +4047,7 @@ bnx_init(void *xsc)
 	bnx_set_mac_addr(sc);
 
 	/* Calculate and program the Ethernet MTU size. */
-#if 0
+#ifdef BNX_JUMBO
 	ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
 #else
 	ether_mtu = BNX_MAX_STD_ETHER_MTU_VLAN;
@@ -4039,7 +4061,7 @@ bnx_init(void *xsc)
 	 * support.  Also set the mbuf
 	 * allocation count for RX frames.
 	 */
-#if 0
+#ifdef BNX_JUMBO
 	REG_WR(sc, BNX_EMAC_RX_MTU_SIZE, ether_mtu |
 		BNX_EMAC_RX_MTU_SIZE_JUMBO_ENA);
 	sc->mbuf_alloc_size = BNX_MAX_MRU; /* MJUM9BYTES */
@@ -4097,26 +4119,28 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
 	struct bnx_dmamap_arg	map_arg;
 	bus_dmamap_t		map;
 	int			i, rc = 0;
-#ifdef BNX_VLAN
-	struct m_tag		*mtag;
-#endif
 
-#ifdef BNX_CKSUM
+#ifdef BNX_CSUM
 	/* Transfer any checksum offload flags to the bd. */
 	if (m_head->m_pkthdr.csum_flags) {
-		if (m_head->m_pkthdr.csum_flags & CSUM_IP)
+		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			vlan_tag_flags |= TX_BD_FLAGS_IP_CKSUM;
-		if (m_head->m_pkthdr.csum_flags & (CSUM_TCP | CSUM_UDP))
+		if (m_head->m_pkthdr.csum_flags &
+		    (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
 			vlan_tag_flags |= TX_BD_FLAGS_TCP_UDP_CKSUM;
 	}
 #endif
 
 #ifdef BNX_VLAN
+#if NVLAN > 0
 	/* Transfer any VLAN tags to the bd. */
-	mtag = VLAN_OUTPUT_TAG(&sc->arpcom.ac_if, m_head);
-	if (mtag != NULL)
+	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
+	    m_head->m_pkthdr.rcvif != NULL) {
+		struct ifvlan *ifv = m_head->m_pkthdr.rcvif->if_softc;
 		vlan_tag_flags |= (TX_BD_FLAGS_VLAN_TAG |
-		    (VLAN_TAG_VALUE(mtag) << 16));
+		    (htons(ifv->ifv_tag) << 16));
+	}
+#endif
 #endif
 
 	/* Map the mbuf into DMAable memory. */
@@ -4211,7 +4235,7 @@ bnx_start(struct ifnet *ifp)
 	/* Keep adding entries while there is space in the ring. */
 	while (sc->tx_mbuf_ptr[tx_chain_prod] == NULL) {
 		/* Check for any frames to send. */
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -4223,7 +4247,6 @@ bnx_start(struct ifnet *ifp)
 		 */
 		if (bnx_tx_encap(sc, m_head, &tx_prod, &tx_chain_prod,
 		    &tx_prod_bseq)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
@@ -4231,6 +4254,7 @@ bnx_start(struct ifnet *ifp)
 			break;
 		}
 
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		count++;
 
 #if NBPFILTER > 0
