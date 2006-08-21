@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.20 2006/08/21 03:22:09 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.21 2006/08/21 03:32:11 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -586,8 +586,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif
 
-	/* Assume a standard 1500 byte MTU size for mbuf allocations. */
-	sc->mbuf_alloc_size = MCLBYTES;
+	sc->mbuf_alloc_size = BNX_MAX_MRU;
 
 	/* Hookup IRQ last. */
 	sc->bnx_intrhand = pci_intr_establish(pc, ih, IPL_NET, bnx_intr, sc,
@@ -4039,20 +4038,18 @@ bnx_init(void *xsc)
 	bcopy(sc->arpcom.ac_enaddr, sc->eaddr, ETHER_ADDR_LEN);
 	bnx_set_mac_addr(sc);
 
-	/* Calculate and program the Ethernet MTU size. */
+	/* Calculate and program the Ethernet MRU size. */
 	ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
 
-	DBPRINT(sc, BNX_INFO, "%s(): setting mtu = %d\n",
+	DBPRINT(sc, BNX_INFO, "%s(): setting MRU = %d\n",
 	    __FUNCTION__, ether_mtu);
 
-	/* 
-	 * Program the MTU and enable Jumbo frame 
-	 * support.  Also set the mbuf
-	 * allocation count for RX frames.
+	/*
+	 * Program the MRU and enable Jumbo frame
+	 * support.
 	 */
 	REG_WR(sc, BNX_EMAC_RX_MTU_SIZE, ether_mtu |
 		BNX_EMAC_RX_MTU_SIZE_JUMBO_ENA);
-	sc->mbuf_alloc_size = BNX_MAX_MRU;
 
 	/* Calculate the RX Ethernet frame size for rx_bd's. */
 	sc->max_frame_size = sizeof(struct l2_fhdr) + 2 + ether_mtu + 8;
