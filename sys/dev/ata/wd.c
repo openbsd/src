@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.48 2006/08/12 13:53:44 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.49 2006/08/21 12:09:01 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -168,11 +168,7 @@ struct wd_softc {
 #define sc_multi sc_wdc_bio.multi
 #define sc_badsect sc_wdc_bio.badsect
 
-#ifndef __OpenBSD__
-int	wdprobe(struct device *, struct cfdata *, void *);
-#else
 int	wdprobe(struct device *, void *, void *);
-#endif
 void	wdattach(struct device *, struct device *, void *);
 int	wddetach(struct device *, int);
 int	wdactivate(struct device *, enum devact);
@@ -183,13 +179,9 @@ struct cfattach wd_ca = {
 	wddetach, wdactivate
 };
 
-#ifdef __OpenBSD__
 struct cfdriver wd_cd = {
 	NULL, "wd", DV_DISK
 };
-#else
-extern struct cfdriver wd_cd;
-#endif
 
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
 void  wdgetdisklabel(dev_t dev, struct wd_softc *,
@@ -229,15 +221,6 @@ wdprobe(struct device *parent, void *match_, void *aux)
 	if (aa_link->aa_type != T_ATA)
 		return 0;
 
-#ifndef __OpenBSD__
-	if (match->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT &&
-	    match->cf_loc[ATACF_CHANNEL] != aa_link->aa_channel)
-		return 0;
-
-	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
-	    match->cf_loc[ATACF_DRIVE] != aa_link->aa_drv_data->drive)
-		return 0;
-#else
 	if (match->cf_loc[0] != -1 &&
 	    match->cf_loc[0] != aa_link->aa_channel)
 		return 0;
@@ -245,7 +228,6 @@ wdprobe(struct device *parent, void *match_, void *aux)
 	if (match->cf_loc[1] != -1 &&
 	    match->cf_loc[1] != aa_link->aa_drv_data->drive)
 		return 0;
-#endif
 
 	return 1;
 }
@@ -699,12 +681,6 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	 * If this is the first open of this device, add a reference
 	 * to the adapter.
 	 */
-#ifndef __OpenBSD__
-	if (wd->sc_dk.dk_openmask == 0 &&
-	    (error = wdc_ata_addref(wd->drvp)) != 0)
-		return (error);
-#endif
-
 	if ((error = wdlock(wd)) != 0)
 		goto bad4;
 
@@ -763,10 +739,6 @@ bad:
 bad3:
 	wdunlock(wd);
 bad4:
-#ifndef __OpenBSD__
-	if (wd->sc_dk.dk_openmask == 0)
-		wdc_ata_delref(wd->drvp);
-#endif
 	device_unref(&wd->sc_dev);
 	return error;
 }
@@ -800,9 +772,6 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	if (wd->sc_dk.dk_openmask == 0) {
 		wd_flushcache(wd, 0);
 		/* XXXX Must wait for I/O to complete! */
-#ifndef __OpenBSD__
-		wdc_ata_delref(wd->drvp);
-#endif
 	}
 
 	wdunlock(wd);
@@ -981,12 +950,6 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		else
 			wd->sc_flags &= ~WDF_WLABEL;
 		goto exit;
-
-#ifndef __OpenBSD__
-	case DIOCGDEFLABEL:
-		wdgetdefaultlabel(wd, (struct disklabel *)addr);
-		goto exit;
-#endif
 
 #ifdef notyet
 	case DIOCWFORMAT:

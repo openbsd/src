@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.27 2004/06/02 18:55:08 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.28 2006/08/21 12:09:01 krw Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -110,11 +110,9 @@ int wdcdebug_wd_mask = WDCDEBUG_WD_MASK;
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
-#ifdef __OpenBSD__
 struct cfdriver wdc_cd = {
 	NULL, "wdc", DV_DULL
 };
-#endif
 
 void  wdc_ata_bio_start(struct channel_softc *, struct wdc_xfer *);
 void  _wdc_ata_bio_start(struct channel_softc *, struct wdc_xfer *);
