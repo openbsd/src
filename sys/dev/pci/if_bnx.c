@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.19 2006/08/20 21:47:19 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.20 2006/08/21 03:22:09 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -567,9 +567,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
                 ifp->if_baudrate = IF_Gbps(2.5);
         else
                 ifp->if_baudrate = IF_Gbps(1);
-#ifdef BNX_JUMBO
 	ifp->if_hardmtu = BNX_MAX_JUMBO_MTU;
-#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -3114,10 +3112,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 		}
 
 		DBRUNIF(1, sc->rx_mbuf_alloc++);
-		if (sc->mbuf_alloc_size <= MCLBYTES)
-			MCLGET(m_new, M_DONTWAIT);
-		else
-			MEXTMALLOC(m_new, sc->mbuf_alloc_size, M_DONTWAIT);
+		MEXTMALLOC(m_new, sc->mbuf_alloc_size, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			DBPRINT(sc, BNX_WARN,
 			    "%s(%d): RX mbuf chain allocation failed!\n", 
@@ -4045,28 +4040,19 @@ bnx_init(void *xsc)
 	bnx_set_mac_addr(sc);
 
 	/* Calculate and program the Ethernet MTU size. */
-#ifdef BNX_JUMBO
 	ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
-#else
-	ether_mtu = BNX_MAX_STD_ETHER_MTU_VLAN;
-#endif
 
 	DBPRINT(sc, BNX_INFO, "%s(): setting mtu = %d\n",
 	    __FUNCTION__, ether_mtu);
 
 	/* 
-	 * Program the mtu and enable jumbo frame 
+	 * Program the MTU and enable Jumbo frame 
 	 * support.  Also set the mbuf
 	 * allocation count for RX frames.
 	 */
-#ifdef BNX_JUMBO
 	REG_WR(sc, BNX_EMAC_RX_MTU_SIZE, ether_mtu |
 		BNX_EMAC_RX_MTU_SIZE_JUMBO_ENA);
 	sc->mbuf_alloc_size = BNX_MAX_MRU;
-#else
-	REG_WR(sc, BNX_EMAC_RX_MTU_SIZE, ether_mtu);
-	sc->mbuf_alloc_size = MCLBYTES;
-#endif
 
 	/* Calculate the RX Ethernet frame size for rx_bd's. */
 	sc->max_frame_size = sizeof(struct l2_fhdr) + 2 + ether_mtu + 8;
