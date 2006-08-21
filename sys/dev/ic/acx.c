@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.48 2006/08/20 00:33:59 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.49 2006/08/21 09:39:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -899,6 +899,7 @@ acx_start(struct ifnet *ifp)
 			 * bit-rate.
 			 */
 			rate = ni->ni_rates.rs_rates[0];
+			rate &= IEEE80211_RATE_VAL;
 		} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 			struct ether_header *eh;
 
@@ -1123,12 +1124,25 @@ acx_txeof(struct acx_softc *sc)
 		} else
 			ifp->if_opackets++;
 
+		/* Update rate control statistics for the node */
 		if (buf->tb_node != NULL) {
 			struct ieee80211com *ic;
 			struct ieee80211_node *ni;
+			struct acx_node *wn;
+			int ntries;
 
 			ic = &sc->sc_ic;
 			ni = (struct ieee80211_node *)buf->tb_node;
+			wn = (struct acx_node *)ni;
+			ntries = FW_TXDESC_GETFIELD_1(sc, buf, f_tx_rts_fail) +
+			    FW_TXDESC_GETFIELD_1(sc, buf, f_tx_ack_fail);
+
+			wn->amn.amn_txcnt++;
+			if (ntries > 0) {
+				DPRINTF(("%s: tx intr ntries %d\n",
+				    sc->sc_dev.dv_xname, ntries));
+				wn->amn.amn_retrycnt++;
+			}
 
 			ieee80211_release_node(ic, ni);
 			buf->tb_node = NULL;
