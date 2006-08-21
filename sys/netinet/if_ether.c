@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.64 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.65 2006/08/21 21:36:53 mpf Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -570,9 +570,19 @@ in_arpinput(m)
 		 * layer.  Note we still prefer a perfect match,
 		 * but allow this weaker match if necessary.
 		 */
-		if (m->m_pkthdr.rcvif->if_bridge != NULL &&
-		    m->m_pkthdr.rcvif->if_bridge == ia->ia_ifp->if_bridge)
-			bridge_ia = ia;
+		if (m->m_pkthdr.rcvif->if_bridge != NULL) {
+			if (m->m_pkthdr.rcvif->if_bridge ==
+			    ia->ia_ifp->if_bridge)
+				bridge_ia = ia;
+#if NCARP > 0
+			else if (ia->ia_ifp->if_carpdev != NULL &&
+			    m->m_pkthdr.rcvif->if_bridge ==
+			    ia->ia_ifp->if_carpdev->if_bridge &&
+			    carp_iamatch(ia, ea->arp_sha,
+			    &count, index))
+				bridge_ia = ia;
+#endif
+		}
 #endif
 	}
 
