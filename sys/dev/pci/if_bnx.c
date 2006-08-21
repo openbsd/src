@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.21 2006/08/21 03:32:11 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.22 2006/08/21 17:02:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3768,6 +3768,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 * attach that information to the packet.
 			 */
 			if (status & L2_FHDR_STATUS_L2_VLAN_TAG) {
+#if NVLAN > 0
 				struct ether_vlan_header vh;
 
 				DBPRINT(sc, BNX_VERBOSE_SEND,
@@ -3791,6 +3792,10 @@ bnx_rx_intr(struct bnx_softc *sc)
 				    (m = m_pullup(m, sizeof(vh))) == NULL)
 					goto bnx_rx_int_next_rx;
 				m_copyback(m, 0, sizeof(vh), &vh);
+#else
+				m_freem(m);
+				goto bnx_rx_int_next_rx;
+#endif			
 			}
 
 #if NBPFILTER > 0
