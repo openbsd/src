@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.352 2006/08/02 11:45:56 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.353 2006/08/22 15:55:13 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1630,19 +1630,15 @@ or
 .Ar binat
 rules in addition to filter rules.
 Tags take the same macros as labels (see above).
-.It Xo Ar tagged Aq Ar string
-.No \*(Ba { Ao Ar string Ac ,
-.Ao Ar string Ac }
-.Xc
+.It Ar tagged Aq Ar string
 Used with filter or translation rules to specify that packets must already
-be tagged with any of the given tags in order to match the rule.
-If only one tag is given, inverse tag matching can also be done
+be tagged with the given tag in order to match the rule.
+Inverse tag matching can also be done
 by specifying the
 .Cm !\&
 operator before the
 .Ar tagged
 keyword.
-A list of tags cannot be negated as it would expand to a useless rule.
 .It Ar probability Aq Ar number
 A probability attribute can be attached to a rule, with a value set between
 0 and 1, bounds not included.
@@ -2719,7 +2715,6 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "max-mss" number | "random-id" | "reassemble tcp" |
                  fragmentation | "allow-opts" |
                  "label" string | "tag" string | [ ! ] "tagged" string |
-		 "tagged" "{" string [ [ "," ] string ] "}" |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "probability" number"%"
 
