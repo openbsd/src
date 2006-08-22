@@ -320,6 +320,8 @@
 ./usr/include/dev/ic/pckbcvar.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
+./usr/include/dev/ic/pgtreg.h
+./usr/include/dev/ic/pgtvar.h
 ./usr/include/dev/ic/pt2254a.h
 ./usr/include/dev/ic/ramdac.h
 ./usr/include/dev/ic/revar.h
