@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.145 2006/08/14 17:23:32 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.146 2006/08/22 15:51:18 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2121,6 +2121,9 @@ em_get_buf(int i, struct em_softc *sc, struct mbuf *nmp)
 		mp->m_next = NULL;
 	}
 
+	if (sc->hw.max_frame_size <= (MCLBYTES - ETHER_ALIGN))
+		m_adj(mp, ETHER_ALIGN);
+
 	rx_buffer = &sc->rx_buffer_area[i];
 
 	/*
@@ -2291,7 +2294,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 		break;
 	}
 
-	if (sc->hw.mac_type != em_82573)
+	if (sc->hw.max_frame_size != ETHER_MAX_LEN)
 		reg_rctl |= E1000_RCTL_LPE;
 
 	/* Enable 82543 Receive Checksum Offload for TCP and UDP */
@@ -2458,7 +2461,8 @@ em_rxeof(struct em_softc *sc, int count)
 				em_receive_checksum(sc, current_desc,
 					    sc->fmp);
 #ifdef __STRICT_ALIGNMENT
-				em_fixup_rx(sc);
+				if (sc->hw.max_frame_size > (MCLBYTES - ETHER_ALIGN))
+					em_fixup_rx(sc);
 #endif
 				m = sc->fmp;
 				sc->fmp = NULL;
