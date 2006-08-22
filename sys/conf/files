@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.384 2006/08/06 13:06:58 miod Exp $
+#	$OpenBSD: files,v 1.385 2006/08/22 18:12:13 mglocker Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -372,6 +372,10 @@ device	acx: ether, ifnet, ifmedia, firmload, wlan
 file	dev/ic/acx.c			acx
 file	dev/ic/acx111.c			acx
 file	dev/ic/acx100.c			acx
+
+# Conexant PrismGT
+device	pgt: ether, ifnet, ifmedia, firmload, wlan
+file	dev/ic/pgt.c			pgt
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
