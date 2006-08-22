@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.8 2006/08/06 15:04:22 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.9 2006/08/22 21:05:03 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -66,10 +66,10 @@
 
 #include <vax/vsa/lcgreg.h>
 
+#define	LCG_CONFIG_ADDR	0x200f0010	/* configuration register */
 #define	LCG_REG_ADDR	0x20100000	/* registers */
 #define	LCG_REG_SIZE	0x4000
-#define	LCG_CONFIG_ADDR	0x200f0010	/* configuration register */
-#define	LCG_LUT_ADDR	0x21800800	/* colormap */
+#define	LCG_LUT_ADDR	0x21800000	/* colormap */
 #define	LCG_LUT_OFFSET	0x0800
 #define	LCG_LUT_SIZE	0x0800
 #define	LCG_FB_ADDR	0x21801000	/* frame buffer */
@@ -274,8 +274,8 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 			goto fail2;
 		}
 
-		ss->ss_lut = (u_int8_t *)vax_map_physmem(LCG_LUT_ADDR,
-		    LCG_LUT_SIZE / VAX_NBPG);
+		ss->ss_lut = (volatile u_int8_t *)vax_map_physmem(LCG_LUT_ADDR +
+		    LCG_LUT_OFFSET, LCG_LUT_SIZE / VAX_NBPG);
 		if (ss->ss_lut == NULL) {
 			printf(": can not map color LUT\n");
 			goto fail3;
@@ -411,14 +411,14 @@ lcg_setup_screen(struct lcg_screen *ss)
 		ri->ri_caps &= ~WSSCREEN_HILIT;
 	}
 
-	lcg_resetcmap(ss);
-
 	lcg_stdscreen.ncols = ri->ri_cols;
 	lcg_stdscreen.nrows = ri->ri_rows;
 	lcg_stdscreen.textops = &ri->ri_ops;
 	lcg_stdscreen.fontwidth = ri->ri_font->fontwidth;
 	lcg_stdscreen.fontheight = ri->ri_font->fontheight;
 	lcg_stdscreen.capabilities = ri->ri_caps;
+
+	lcg_resetcmap(ss);
 
 	return (0);
 }
@@ -776,9 +776,10 @@ lcgcninit()
 	virtual_avail += LCG_REG_SIZE;
 	ioaccess(ss->ss_reg, LCG_REG_ADDR, LCG_REG_SIZE / VAX_NBPG);
 
-	ss->ss_lut = (u_int8_t *)virtual_avail;
+	ss->ss_lut = (volatile u_int8_t *)virtual_avail;
 	virtual_avail += LCG_LUT_SIZE;
-	ioaccess((vaddr_t)ss->ss_lut, LCG_LUT_ADDR, LCG_LUT_SIZE / VAX_NBPG);
+	ioaccess((vaddr_t)ss->ss_lut, LCG_LUT_ADDR + LCG_LUT_OFFSET,
+	    LCG_LUT_SIZE / VAX_NBPG);
 
 	virtual_avail = round_page(virtual_avail);
 
