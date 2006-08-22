@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.39 2006/08/07 15:50:42 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.40 2006/08/22 19:30:48 sturm Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -355,8 +355,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	pmp->pm_Media = b50->bpbMedia;
 
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
-		/* XXX - We should probably check more values here */
-    		if (!pmp->pm_BytesPerSec || !SecPerClust || !pmp->pm_Heads
+    		if (!pmp->pm_BytesPerSec || !SecPerClust
 	    	    || pmp->pm_SecPerTrack > 63) {
 			error = EFTYPE;
 			goto error_exit;
