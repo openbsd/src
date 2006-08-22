@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.46 2006/06/24 13:22:15 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.47 2006/08/22 21:03:56 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -338,6 +338,37 @@ pg_to_pvh(struct vm_page *pg)
 	return &pg->mdpage.pvent;
 }
 
+#ifdef PMAP_STEAL_MEMORY
+vaddr_t
+pmap_steal_memory(size, vstartp, vendp)
+	vsize_t size;
+	vaddr_t *vstartp, *vendp;
+{
+	vaddr_t va;
+	u_int npg;
+
+	size = round_page(size);
+	npg = atop(size);
+
+	/* m68k systems which define PMAP_STEAL_MEMORY only have one segment. */
+#ifdef DIAGNOSTIC
+	if (vm_physmem[0].avail_end - vm_physmem[0].avail_start < npg)
+		panic("pmap_steal_memory(%x): out of memory", size);
+#endif
+
+	va = ptoa(vm_physmem[0].avail_start);
+	vm_physmem[0].avail_start += npg;
+	vm_physmem[0].start += npg;
+
+	if (vstartp != NULL)
+		*vstartp = virtual_avail;
+	if (vendp != NULL)
+		*vendp = virtual_end;
+	
+	bzero((void *)va, size);
+	return (va);
+}
+#else
 /*
  * pmap_virtual_space:		[ INTERFACE ]
  *
@@ -357,6 +388,7 @@ pmap_virtual_space(vstartp, vendp)
 	*vstartp = virtual_avail;
 	*vendp = virtual_end;
 }
+#endif
 
 /*
  * pmap_init:			[ INTERFACE ]
