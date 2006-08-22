@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.39 2006/07/20 11:23:49 martin Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.40 2006/08/22 19:11:46 martin Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -420,8 +420,7 @@ int sf_ifmedia_upd(ifp)
 	sc->sf_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);
