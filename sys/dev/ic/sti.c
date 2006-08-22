@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.43 2006/04/16 21:03:45 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.44 2006/08/22 21:04:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -1037,6 +1037,13 @@ sti_alloc_attr(v, fg, bg, flags, pattr)
 /*
  * Console support
  */
+
+void
+sti_clear(struct sti_screen *scr)
+{
+	sti_bmove(scr, 0, 0, 0, 0,
+	    scr->scr_cfg.scr_height, scr->scr_cfg.scr_width, bmf_clear);
+}
 
 int
 sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
