@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.32 2005/05/04 10:05:01 hshoexer Exp $	 */
+/* $OpenBSD: connection.c,v 1.33 2006/08/22 17:34:31 hshoexer Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -245,7 +245,7 @@ connection_passive_lookup_by_ids(u_int8_t *id1, u_int8_t *id2)
 		if (compare_ids(id1, conn->local_id, conn->local_sz) == 0 ||
 		    compare_ids(id2, conn->local_id, conn->local_sz) == 0) {
 			LOG_DBG((LOG_MISC, 60,
-			    "connection passive_lookup_by_ids: returned \"%s\""
+			    "connection_passive_lookup_by_ids: returned \"%s\""
 			    " only matched local id", conn->name));
 			return conn->name;
 		}
