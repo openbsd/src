@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.65 2006/08/17 03:44:56 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.66 2006/08/22 01:34:08 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1512,6 +1512,7 @@ void
 ehci_sync_hc(ehci_softc_t *sc)
 {
 	int s, error;
+	int tries = 0;
 
 	if (sc->sc_dying) {
 		DPRINTFN(2,("ehci_sync_hc: dying\n"));
@@ -1521,13 +1522,17 @@ ehci_sync_hc(ehci_softc_t *sc)
 	/* get doorbell */
 	usb_lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL, curproc);
 	s = splhardusb();
-	/* ask for doorbell */
-	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
-	DPRINTFN(1,("ehci_sync_hc: cmd=0x%08x sts=0x%08x\n",
-	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS)));
-	error = tsleep(&sc->sc_async_head, PZERO, "ehcidi", hz); /* bell wait */
-	DPRINTFN(1,("ehci_sync_hc: cmd=0x%08x sts=0x%08x\n",
-	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS)));
+	do { 
+		/* ask for doorbell */
+		EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) |
+		    EHCI_CMD_IAAD);
+		DPRINTFN(1,("ehci_sync_hc: cmd=0x%08x sts=0x%08x\n",
+		    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS)));
+		/* bell wait */
+		error = tsleep(&sc->sc_async_head, PZERO, "ehcidi", hz / 2);
+		DPRINTFN(1,("ehci_sync_hc: cmd=0x%08x sts=0x%08x\n",
+		    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS)));
+	} while (error && ++tries < 10);
 	splx(s);
 	/* release doorbell */
 	usb_lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL, curproc);
