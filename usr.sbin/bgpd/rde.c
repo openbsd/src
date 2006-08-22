@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.209 2006/08/14 17:11:18 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.210 2006/08/22 15:02:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2299,7 +2299,10 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 				pt_dump(rde_up_dump_upcall, peer, AF_INET6);
 		}
 
+#if 0
+	/* do not send EOR for now, juniper apparently has a problem with it */
 	peer_send_eor(peer, afi, safi);
+#endif
 }
 
 /* End-of-RIB marker, draft-ietf-idr-restart-13.txt */
