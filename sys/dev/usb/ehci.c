@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.66 2006/08/22 01:34:08 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.67 2006/08/22 01:53:42 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2462,7 +2462,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 
 	/*
-	 * Step 1: Make interrupt routine and hardware ignore xfer.
+	 * Step 1: Make interrupt routine and timeouts ignore xfer.
 	 */
 	s = splusb();
 	exfer->ehci_xfer_flags |= EHCI_XFER_ABORTING;
@@ -2481,7 +2481,21 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	ehci_rem_qh(sc, sqh, psqh);
 
 	/*
-	 * Step 3:  make sure the soft interrupt routine
+	 * Step 3: Deactivate all of the qTDs that we will be removing,
+	 * otherwise the queue head may go active again.  The EHCI spec
+	 * suggests we should perform the deactivation before removing the
+	 * queue head from the schedule, however the VT6202 (at least) only
+	 * behaves correctly when we deactivate them afterwards.
+	 */
+	for (sqtd = exfer->sqtdstart; ; sqtd = sqtd->nextqtd) {
+		sqtd->qtd.qtd_status = htole32(EHCI_QTD_HALTED);
+		if (sqtd == exfer->sqtdend)
+			break;
+	}
+	ehci_sync_hc(sc);
+
+	/*
+	 * Step 4:  make sure the soft interrupt routine
 	 * has run. This should remove any completed items off the queue.
 	 * The hardware has no reference to completed items (TDs).
 	 * It's safe to remove them at any time.
@@ -2498,7 +2512,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 #endif /* USB_USE_SOFTINTR */
 
 	/*
-	 * Step 4: Remove any vestiges of the xfer from the hardware.
+	 * Step 5: Remove any vestiges of the xfer from the hardware.
 	 * The complication here is that the hardware may have executed
 	 * into or even beyond the xfer we're trying to abort.
 	 * So as we're scanning the TDs of this xfer we check if
@@ -2577,8 +2591,9 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		}
 	}
 	ehci_add_qh(sqh, psqh);
+
 	/*
-	 * Step 4: Execute callback.
+	 * Step 6: Execute callback.
 	 */
 #ifdef DIAGNOSTIC
 	exfer->isdone = 1;
