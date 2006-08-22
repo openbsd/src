@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.6 2006/08/15 20:26:30 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.7 2006/08/22 21:04:51 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -227,7 +227,7 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_scr = ss;
 
-	printf(": 1280x1024x8 frame buffer\n");
+	printf("\n%s: 1280x1024x8 frame buffer\n", self->dv_xname);
 
 	aa.console = console;
 	aa.scrdata = &lcspx_screenlist;
