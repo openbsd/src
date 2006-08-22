@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2006/07/25 19:16:51 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2006/08/22 20:09:25 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -349,19 +349,24 @@ trap(frame)
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
+		KERNEL_PROC_LOCK(p);
 #ifdef VM86
 		if (frame.tf_eflags & PSL_VM) {
 			vm86_gpfault(p, type & ~T_USER);
+			KERNEL_PROC_UNLOCK(p);
 			goto out;
 		}
 #endif
 		/* If pmap_exec_fixup does something, let's retry the trap. */
 		if (pmap_exec_fixup(&p->p_vmspace->vm_map, &frame,
-		    &p->p_addr->u_pcb))
+		    &p->p_addr->u_pcb)) {
+			KERNEL_PROC_UNLOCK(p);
 			goto out;
+		}
 
 		sv.sival_int = frame.tf_eip;
 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_TSSFLT|T_USER:
