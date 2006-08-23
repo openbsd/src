@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.185 2006/08/16 07:39:15 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.186 2006/08/23 20:28:47 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -268,7 +268,7 @@ checkin_main(int argc, char **argv)
 
 		if ((pb.flags & DESCRIPTION) &&
 		    rcs_set_description(pb.file, pb.description) == -1)
-			err(1, "%s", pb.file);
+			err(1, "%s", pb.filename);
 
 		if (!(pb.flags & QUIET))
 			(void)fprintf(stderr,
@@ -614,7 +614,7 @@ checkin_init(struct checkin_params *pb)
 	/* Get description from user */
 	if (pb->description == NULL &&
 	    rcs_set_description(pb->file, NULL) == -1) {
-		warn("%s", pb->file);
+		warn("%s", pb->filename);
 		goto fail;
 	}
 
