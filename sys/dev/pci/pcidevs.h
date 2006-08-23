@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1136 2006/08/19 19:19:17 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1137 2006/08/23 15:49:57 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3189,6 +3189,7 @@
 #define	PCI_PRODUCT_SIS_181	0x0181		/* 181 SATA */
 #define	PCI_PRODUCT_SIS_182	0x0182		/* 182 SATA */
 #define	PCI_PRODUCT_SIS_190	0x0190		/* 190 */
+#define	PCI_PRODUCT_SIS_191	0x0191		/* 191 */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 VGA */
 #define	PCI_PRODUCT_SIS_6215	0x0204		/* 6215 */
 #define	PCI_PRODUCT_SIS_86C205_2	0x0205		/* 86C205 */
