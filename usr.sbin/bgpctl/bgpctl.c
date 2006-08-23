@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.108 2006/07/25 09:38:05 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.109 2006/08/23 08:21:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
-	memcpy(&neighbor.addr, &res->addr, sizeof(neighbor.addr));
+	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
 	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
-		if (res->addr.af || res->peerdesc[0])
+		if (res->peeraddr.af || res->peerdesc[0])
 			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    &neighbor, sizeof(neighbor));
 		else
@@ -204,6 +204,8 @@ main(int argc, char *argv[])
 			ribreq.prefixlen = res->prefixlen;
 			type = IMSG_CTL_SHOW_RIB_PREFIX;
 		}
+		memcpy(&ribreq.neighbor, &neighbor,
+		    sizeof(ribreq.neighbor));
 		ribreq.af = res->af;
 		ribreq.flags = res->flags;
 		imsg_compose(ibuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));

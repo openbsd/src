@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.34 2006/05/26 05:07:15 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.35 2006/08/23 08:21:11 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -132,7 +132,7 @@ Show the BGP timers.
 Show the list of BGP nexthops and the result of their validity check.
 .It Xo
 .Cm show rib
-.Op Ar detail
+.Op Ar options
 .Ar filter
 .Xc
 Show routes from the
@@ -166,25 +166,41 @@ Show all entries with
 anywhere but rightmost.
 .It Cm empty-as
 Show all entries that are internal routes with no AS's in the AS path.
+.It Cm neighbor Ar peer
+Show only entries from the specified peer.
 .It Cm summary
 This is the same as the
 .Ic show summary
 command.
 .It Cm memory
 Show RIB memory statistics.
-.It Ar family
-Limit the output to the given address family.
 .El
 .Pp
-If
-.Ar detail
-is specified, a more detailed output of the routes matched by
-.Ar filter
-will be shown.
-It is silently ignored when used together with
+Additionally, the following
+.Ar options
+are defined:
+.Pp
+.Bl -tag -width "detail" -compact
+.It Cm detail
+Show more detailed output for matched routes.
+.It Ar family
+Limit the output to the given address family.
+.It Cm in
+Show routes from the unfiltered Adj-RIB-In.
+This is only possible if
+.Em softreconfig in
+is enabled for the neighbor.
+.It Cm out
+Show the filtered routes sent to a neighbor also known as Adj-RIB-Out.
+.El
+.Pp
+Options are silently ignored when used together with
 .Ar summary
 or
 .Ar memory .
+Multiple options can be used at the same time and the
+.Ar neighbor
+filter can be combined with other filters.
 .It Cm show summary
 Show a list of all neighbors, including information about the session state
 and message counters.
