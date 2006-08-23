@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1136 2006/08/19 19:19:17 brad Exp $
+$OpenBSD: pcidevs,v 1.1137 2006/08/23 15:49:57 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3184,6 +3184,7 @@ product SIS 180			0x0180	180 SATA
 product SIS 181			0x0181	181 SATA
 product SIS 182			0x0182	182 SATA
 product SIS 190			0x0190	190
+product SIS 191			0x0191	191
 product SIS 5597_VGA		0x0200	5597/5598 VGA
 product SIS 6215		0x0204	6215
 product SIS 86C205_2		0x0205	86C205
