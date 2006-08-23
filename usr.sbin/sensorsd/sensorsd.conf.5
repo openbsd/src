@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.7 2006/08/23 11:49:15 mickey Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.8 2006/08/23 14:30:27 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -55,7 +55,7 @@ unit-less number representing RPM.
 .Pp
 Sensors that provide status (such as from
 .Xr bio 4 ,
-.Xr esm 4
+.Xr esm 4 ,
 or
 .Xr ipmi 4 )
 do not require boundary values specified (that otherwise will be
@@ -88,12 +88,13 @@ will be executed,
 with the sensor number and current value passed to it.
 Alerts will be sent if hw.sensors.1 goes above 170F;
 if hw.sensors.2 goes below 4.8V or above 5.2V;
-and if the speed of the fan attached to hw.sensors.3
-goes below 1000RPM or above 8000RPM; if hw.sensors.4
-that is attached to the raid volume sd0 goes into
-other than
-.Dq OK
-state, such as drive failure, rebuild or a complete failure.
+if the speed of the fan attached to hw.sensors.3
+goes below 1000RPM or above 8000RPM;
+or if hw.sensors.4,
+attached to raid volume sd0,
+goes into a state other than
+.Dq OK ,
+such as drive failure, rebuild, or a complete failure.
 .Bd -literal -offset indent
 # Comments are allowed
 hw.sensors.0:high=80C:command=/etc/sensorsd/log_warning %1 %2
