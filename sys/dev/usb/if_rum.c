@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.35 2006/08/18 16:04:56 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.36 2006/08/23 16:16:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -784,7 +784,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (len < RT2573_RX_DESC_SIZE + IEEE80211_MIN_LEN) {
+	if (len < RT2573_RX_DESC_SIZE + sizeof (struct ieee80211_frame_min)) {
 		DPRINTF(("%s: xfer too short %d\n", USBDEVNAME(sc->sc_dev),
 		    len));
 		ifp->if_ierrors++;
@@ -2095,6 +2095,7 @@ rum_prepare_beacon(struct rum_softc *sc)
 	    m0->m_pkthdr.len);
 
 	m_freem(m0);
+
 	return 0;
 }
 
