@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.31 2006/08/07 20:55:28 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.32 2006/08/23 11:49:49 millert Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2408,7 +2408,10 @@ rcs_gettok(RCSFILE *rfp)
 		*(bp++) = ch;
 		for (;;) {
 			ch = getc(pdp->rp_file);
-			if (!isalnum(ch) && ch != '_' && ch != '-' &&
+			if (ch == EOF) {
+				type = RCS_TOK_EOF;
+				break;
+			} else if (!isalnum(ch) && ch != '_' && ch != '-' &&
 			    ch != '/') {
 				ungetc(ch, pdp->rp_file);
 				break;
@@ -2437,7 +2440,10 @@ rcs_gettok(RCSFILE *rfp)
 		type = RCS_TOK_STRING;
 		for (;;) {
 			ch = getc(pdp->rp_file);
-			if (ch == '@') {
+			if (ch == EOF) {
+				type = RCS_TOK_EOF;
+				break;
+			} else if (ch == '@') {
 				ch = getc(pdp->rp_file);
 				if (ch != '@') {
 					ungetc(ch, pdp->rp_file);
@@ -2463,6 +2469,10 @@ rcs_gettok(RCSFILE *rfp)
 
 		for (;;) {
 			ch = getc(pdp->rp_file);
+			if (ch == EOF) {
+				type = RCS_TOK_EOF;
+				break;
+			}
 			if (bp == pdp->rp_bufend)
 				break;
 			if (!isdigit(ch) && ch != '.') {
