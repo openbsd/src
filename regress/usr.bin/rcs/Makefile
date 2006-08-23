@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2006/08/11 08:15:44 xsa Exp $
+#	$OpenBSD: Makefile,v 1.36 2006/08/23 16:26:17 niallo Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -15,7 +15,7 @@ RLOG?=		rlog
 DIFF=		diff -u
 
 CLEANFILES=	RCS blah.c blah.c,v description file1 file2 file3 \
-		file file,v newfile newfile,v test test,v
+		file file,v newfile newfile,v test test,v test-truncated truncated.out
 
 # XXX - These may need to be done in order.
 #	(At least start with ci-initial.)
@@ -71,6 +71,7 @@ LTESTS= ci-initial \
 	ci-keywords2 \
 	ci-parse-keywords \
 	ci-parse-keywords2 \
+	co-parse-truncated \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -587,6 +588,12 @@ test-ci-parse-keywords: clean
 test-ci-parse-keywords2: clean
 	@echo '$Id: blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah' > test 
 	@echo . | ${CI} -q -k test
+
+# Check for correct EOF handling in rcs parser
+test-co-parse-truncated: clean
+	@sh -c 'ulimit -d 1000 && ${CO} -q test-truncated > ${.CURDIR}/truncated.out 2>&1' || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+	@grep -q 'co: problem parsing deltatexts' truncated.out
 
 clean:
 	@rm -rf ${CLEANFILES}
