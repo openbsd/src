@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.77 2006/08/23 16:25:07 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.78 2006/08/23 21:37:04 niallo Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1116,6 +1116,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 	}
 	rate &= IEEE80211_RATE_VAL;
+	if (rate == 0)
+		rate = 2;	/* fallback to 1Mbps; should not happen  */
 
 	data = &sc->tx_data[0];
 	desc = (struct ural_tx_desc *)data->buf;
