@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.210 2006/08/22 15:02:07 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.211 2006/08/23 08:13:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,12 @@ void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct bgpd_addr *,
 		     const struct bgpd_addr *, u_int8_t);
 int		 rde_reflector(struct rde_peer *, struct rde_aspath *);
-void		 rde_dump_rib_as(struct prefix *, pid_t, int);
+void		 rde_dump_rib_as(struct prefix *, struct rde_aspath *,pid_t,
+		     int);
+void		 rde_dump_filter(struct prefix *,
+		     struct ctl_show_rib_request *);
+void		 rde_dump_filterout(struct rde_peer *, struct prefix *,
+		     struct ctl_show_rib_request *);
 void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct ctl_show_rib_request *);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
@@ -1510,7 +1515,7 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
  * control specific functions
  */
 void
-rde_dump_rib_as(struct prefix *p, pid_t pid, int flags)
+rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
 	struct buf		*wbuf;
@@ -1520,19 +1525,19 @@ rde_dump_rib_as(struct prefix *p, pid_t pid, int flags)
 
 	bzero(&rib, sizeof(rib));
 	rib.lastchange = p->lastchange;
-	rib.local_pref = p->aspath->lpref;
-	rib.med = p->aspath->med;
-	rib.prefix_cnt = p->aspath->prefix_cnt;
-	rib.active_cnt = p->aspath->active_cnt;
-	rib.adjrib_cnt = p->aspath->adjrib_cnt;
-	strlcpy(rib.descr, p->aspath->peer->conf.descr, sizeof(rib.descr));
-	memcpy(&rib.remote_addr, &p->aspath->peer->remote_addr,
+	rib.local_pref = asp->lpref;
+	rib.med = asp->med;
+	rib.prefix_cnt = asp->prefix_cnt;
+	rib.active_cnt = asp->active_cnt;
+	rib.adjrib_cnt = asp->adjrib_cnt;
+	strlcpy(rib.descr, asp->peer->conf.descr, sizeof(rib.descr));
+	memcpy(&rib.remote_addr, &asp->peer->remote_addr,
 	    sizeof(rib.remote_addr));
-	rib.remote_id = p->aspath->peer->remote_bgpid;
-	if (p->aspath->nexthop != NULL) {
-		memcpy(&rib.true_nexthop, &p->aspath->nexthop->true_nexthop,
+	rib.remote_id = asp->peer->remote_bgpid;
+	if (asp->nexthop != NULL) {
+		memcpy(&rib.true_nexthop, &asp->nexthop->true_nexthop,
 		    sizeof(rib.true_nexthop));
-		memcpy(&rib.exit_nexthop, &p->aspath->nexthop->exit_nexthop,
+		memcpy(&rib.exit_nexthop, &asp->nexthop->exit_nexthop,
 		    sizeof(rib.exit_nexthop));
 	} else {
 		/* announced network may have a NULL nexthop */
@@ -1543,32 +1548,31 @@ rde_dump_rib_as(struct prefix *p, pid_t pid, int flags)
 	}
 	pt_getaddr(p->prefix, &rib.prefix);
 	rib.prefixlen = p->prefix->prefixlen;
-	rib.origin = p->aspath->origin;
+	rib.origin = asp->origin;
 	rib.flags = 0;
 	if (p->prefix->active == p)
 		rib.flags |= F_RIB_ACTIVE;
-	if (p->aspath->peer->conf.ebgp == 0)
+	if (asp->peer->conf.ebgp == 0)
 		rib.flags |= F_RIB_INTERNAL;
-	if (p->aspath->flags & F_PREFIX_ANNOUNCED)
+	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_RIB_ANNOUNCE;
-	if (p->aspath->nexthop == NULL ||
-	    p->aspath->nexthop->state == NEXTHOP_REACH)
+	if (asp->nexthop == NULL || asp->nexthop->state == NEXTHOP_REACH)
 		rib.flags |= F_RIB_ELIGIBLE;
-	rib.aspath_len = aspath_length(p->aspath->aspath);
+	rib.aspath_len = aspath_length(asp->aspath);
 
 	if ((wbuf = imsg_create(ibuf_se, IMSG_CTL_SHOW_RIB, 0, pid,
 	    sizeof(rib) + rib.aspath_len)) == NULL)
 		return;
 	if (imsg_add(wbuf, &rib, sizeof(rib)) == -1 ||
-	    imsg_add(wbuf, aspath_dump(p->aspath->aspath),
+	    imsg_add(wbuf, aspath_dump(asp->aspath),
 	    rib.aspath_len) == -1)
 		return;
 	if (imsg_close(ibuf_se, wbuf) == -1)
 		return;
 
 	if (flags & F_CTL_DETAIL)
-		for (l = 0; l < p->aspath->others_len; l++) {
-			if ((a = p->aspath->others[l]) == NULL)
+		for (l = 0; l < asp->others_len; l++) {
+			if ((a = asp->others[l]) == NULL)
 				break;
 			if ((wbuf = imsg_create(ibuf_se, IMSG_CTL_SHOW_RIB_ATTR,
 			    0, pid, attr_optlen(a))) == NULL)
@@ -1588,15 +1592,65 @@ rde_dump_rib_as(struct prefix *p, pid_t pid, int flags)
 }
 
 void
+rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
+    struct ctl_show_rib_request *req)
+{
+	struct bgpd_addr	 addr;
+	struct rde_aspath	*asp;
+	enum filter_actions	 a;
+
+	if (up_test_update(peer, p) != 1)
+		return;
+
+	pt_getaddr(p->prefix, &addr);
+	a = rde_filter(&asp, rules_l, peer, p->aspath, &addr,
+	    p->prefix->prefixlen, p->aspath->peer, DIR_OUT);
+	if (asp)
+		asp->peer = p->aspath->peer;
+	else
+		asp = p->aspath;
+
+	if (a == ACTION_ALLOW)
+		rde_dump_rib_as(p, asp, req->pid, req->flags);
+
+	if (asp != p->aspath)
+		path_put(asp);
+}
+
+void
+rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
+{
+	struct rde_peer		*peer;
+
+	if ((req->flags & F_CTL_ADJ_IN && p->flags & F_ORIGINAL) ||
+	    (!(req->flags & (F_CTL_ADJ_IN|F_CTL_ADJ_OUT)) &&
+	    p->flags & F_LOCAL)) {
+		if (req->peerid && req->peerid != p->aspath->peer->conf.id)
+			return;
+		rde_dump_rib_as(p, p->aspath, req->pid, req->flags);
+	} else if (req->flags & F_CTL_ADJ_OUT && p->flags & F_LOCAL) {
+		if (p->prefix->active != p)
+			/* only consider active prefix */
+			return;
+
+		if (req->peerid) {
+		       	if ((peer = peer_get(req->peerid)) != NULL)
+				rde_dump_filterout(peer, p, req);
+			return;
+		}
+		LIST_FOREACH(peer, &peerlist, peer_l)
+			rde_dump_filterout(peer, p, req);
+	}
+}
+
+void
 rde_dump_upcall(struct pt_entry *pt, void *ptr)
 {
 	struct prefix		*p;
 	struct ctl_show_rib_request	*req = ptr;
 
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-		/* for now dump only stuff from the local-RIB */
-		if (p->flags & F_LOCAL)
-			rde_dump_rib_as(p, req->pid, req->flags);
+		rde_dump_filter(p, req);
 }
 
 void
@@ -1614,10 +1668,7 @@ rde_dump_as(struct ctl_show_rib_request *req)
 				continue;
 			/* match found */
 			LIST_FOREACH(p, &asp->prefix_h, path_l)
-				/* for now dump only stuff from the local-RIB */
-				if (p->flags & F_LOCAL)
-					rde_dump_rib_as(p, req->pid,
-					    req->flags);
+				rde_dump_filter(p, req);
 		}
 	}
 }
@@ -1636,9 +1687,7 @@ rde_dump_prefix_upcall(struct pt_entry *pt, void *ptr)
 		return;
 	if (!prefix_compare(&req->prefix, &addr, req->prefixlen))
 		LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-			/* for now dump only stuff from the local-RIB */
-			if (p->flags & F_LOCAL)
-				rde_dump_rib_as(p, req->pid, req->flags);
+			rde_dump_filter(p, req);
 }
 
 void

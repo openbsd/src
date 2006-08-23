@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.52 2006/05/27 21:24:36 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.53 2006/08/23 08:13:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -193,6 +193,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	int			 n;
 	struct peer		*p;
 	struct ctl_neighbor	*neighbor;
+	struct ctl_show_rib_request	*ribreq;
 
 	if ((c = control_connbyfd(pfd->fd)) == NULL) {
 		log_warn("control_dispatch_msg: fd %d: not found", pfd->fd);
@@ -331,6 +332,46 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_AS:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
+			if (imsg.hdr.len == IMSG_HEADER_SIZE +
+			    sizeof(struct ctl_show_rib_request)) {
+				ribreq = imsg.data;
+				neighbor = &ribreq->neighbor;
+				neighbor->descr[PEER_DESCR_LEN - 1] = 0;
+				ribreq->peerid = 0;
+				p = NULL;
+				if (neighbor->addr.af) {
+					p = getpeerbyaddr(&neighbor->addr);
+					if (p == NULL) {
+						control_result(c,
+						    CTL_RES_NOSUCHPEER);
+						break;
+					}
+					ribreq->peerid = p->conf.id;
+				} else if (neighbor->descr[0]) {
+					p = getpeerbydesc(neighbor->descr);
+					if (p == NULL) {
+						control_result(c,
+						    CTL_RES_NOSUCHPEER);
+						break;
+					}
+					ribreq->peerid = p->conf.id;
+				}
+				if ((ribreq->flags & F_CTL_ADJ_IN) && p &&
+				    !p->conf.softreconfig_in) {
+					/*
+					 * if no neighbor was specified we
+					 * try our best.
+					 */
+					control_result(c, CTL_RES_NOCAP);
+					break;
+				}
+				c->ibuf.pid = imsg.hdr.pid;
+				imsg_compose_rde(imsg.hdr.type, imsg.hdr.pid,
+				    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			} else
+				log_warnx("got IMSG_CTL_SHOW_RIB with "
+				    "wrong length");
+			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
 		case IMSG_CTL_SHOW_NETWORK:
 			c->ibuf.pid = imsg.hdr.pid;
