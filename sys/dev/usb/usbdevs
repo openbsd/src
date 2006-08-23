@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.216 2006/08/16 16:04:52 jsg Exp $
+$OpenBSD: usbdevs,v 1.217 2006/08/23 08:00:08 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -398,6 +398,7 @@ vendor HAWKING		0x0e66	Hawking
 vendor GMATE		0x0e73	G.Mate
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
+vendor NOVATECH		0x0eb0	Nova Tech
 vendor EGALAX		0x0eef	eGalax
 vendor ITEGNO		0x0eba	iTegno
 vendor AIRPRIME		0x0f3d	Airprime
@@ -1565,6 +1566,9 @@ product NHJ CAM2		0x9120	Camera
 
 /* Nokia products */
 product NOKIA CA42		0x1234	CA-42 Serial
+
+/* Nova Tech products */
+product NOVATECH NV902W		0x9020	NV-902W
 
 /* Novatel Wireless products */
 product NOVATEL MERLINV620	0x1110	Merlin V620
