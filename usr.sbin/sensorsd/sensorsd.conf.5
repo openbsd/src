@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.5 2006/03/07 11:14:02 jmc Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.6 2006/08/23 11:18:00 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -53,6 +53,13 @@ The values for temperature sensors can be given in degrees Celsius or
 Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
 .Pp
+Sensors that provide status (such as from
+.Xr ipmi 4
+or
+.Xr bio 4 )
+do not require boundary values specified (that otherwise will be
+ignored) and simply trigger status transitions.
+.Pp
 The command is executed on transitions out of, and back into, given limits.
 Tokens in the command are substituted as follows:
 .Pp
@@ -78,19 +85,26 @@ if hw.sensors.0 goes above 80C, the command
 .Pa /etc/sensorsd/log_warning
 will be executed,
 with the sensor number and current value passed to it.
-Alerts will be sent if hw.sensor.1 goes above 170F;
+Alerts will be sent if hw.sensors.1 goes above 170F;
 if hw.sensors.2 goes below 4.8V or above 5.2V;
 and if the speed of the fan attached to hw.sensors.3
-goes below 1000RPM or above 8000RPM.
+goes below 1000RPM or above 8000RPM; if hw.sensors.4
+that is attached to the raid volume sd0 goes into
+other than
+.Dq OK
+state, such as drive failure, rebuild or a complete failure.
 .Bd -literal -offset indent
 # Comments are allowed
 hw.sensors.0:high=80C:command=/etc/sensorsd/log_warning %1 %2
 hw.sensors.1:high=170F
 hw.sensors.2:low=4.8V:high=5.2V
 hw.sensors.3:low=1000:high=8000
+hw.sensors.4:		# raid volume status changes
 .Ed
 .Sh SEE ALSO
 .Xr getcap 3 ,
+.Xr bio 4 ,
+.Xr ipmi 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY

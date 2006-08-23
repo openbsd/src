@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.22 2006/04/01 20:09:13 henning Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.23 2006/08/23 11:18:00 mickey Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -45,11 +45,6 @@ int		 parse_config(char *);
 int64_t		 get_val(char *, int, enum sensor_type);
 void		 reparse_cfg(int);
 
-enum sensorsd_status {
-	STATUS_OK,
-	STATUS_FAIL
-};
-
 struct limits_t {
 	TAILQ_ENTRY(limits_t)	entries;
 	u_int8_t		watch;
@@ -58,7 +53,7 @@ struct limits_t {
 	int64_t			lower;			/* lower limit */
 	int64_t			upper;			/* upper limit */
 	char			*command;		/* failure command */
-	enum sensorsd_status	status;			/* last status */
+	enum sensor_status	status;			/* last status */
 	time_t			status_changed;
 	int64_t			last_val;
 };
@@ -179,7 +174,7 @@ check_sensors(void)
 	struct limits_t		*limit;
 	size_t		 	 len;
 	int		 	 mib[3];
-	enum sensorsd_status 	 newstatus;
+	enum sensor_status 	 newstatus;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
@@ -192,11 +187,18 @@ check_sensors(void)
 				err(1, "sysctl");
 
 			limit->last_val = sensor.value;
-			if (sensor.value > limit->upper ||
-			    sensor.value < limit->lower)
-				newstatus = STATUS_FAIL;
-			else
-				newstatus = STATUS_OK;
+			newstatus = sensor.status;
+			/* unknown may as well mean producing valid
+			 * status had failed so warn about it */
+			if (newstatus == SENSOR_S_UNKNOWN)
+				newstatus = SENSOR_S_WARN;
+			else if (newstatus == SENSOR_S_UNSPEC) {
+				if (sensor.value > limit->upper ||
+				    sensor.value < limit->lower)
+					newstatus = SENSOR_S_CRIT;
+				else
+					newstatus = SENSOR_S_OK;
+			}
 
 			if (limit->status != newstatus) {
 				limit->status = newstatus;
@@ -234,7 +236,7 @@ report(time_t last_report)
 
 		syslog(LOG_ALERT, "hw.sensors.%d: %s limits, value: %s",
 		    limit->num,
-		    (limit->status == STATUS_FAIL) ? "exceed" : "within",
+		    (limit->status != SENSOR_S_OK) ? "exceed" : "within",
 		    print_sensor(limit->type, limit->last_val));
 		if (limit->command) {
 			int i = 0, n = 0, r;
@@ -297,6 +299,11 @@ report(time_t last_report)
 	}
 }
 
+const char *drvstat[] = {
+	NULL, "empty", "ready", "powerup", "online", "idle", "active",
+	"rebuild", "powerdown", "fail", "pfail"
+};
+
 static char *
 print_sensor(enum sensor_type type, int64_t value)
 {
@@ -323,6 +330,12 @@ print_sensor(enum sensor_type type, int64_t value)
 	case SENSOR_INTEGER:
 		snprintf(fbuf, RFBUFSIZ, "%lld", value);
 		break;
+	case SENSOR_DRIVE:
+		if (0 < value && value < sizeof(drvstat)/sizeof(drvstat[0])) {
+			snprintf(fbuf, RFBUFSIZ, "%s", drvstat[value]);
+			break;
+		}
+		/* FALLTHROUGH */
 	default:
 		snprintf(fbuf, RFBUFSIZ, "%lld ???", value);
 	}
