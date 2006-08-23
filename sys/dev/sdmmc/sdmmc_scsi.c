@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.4 2006/07/18 04:10:35 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.5 2006/08/23 16:34:56 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -304,6 +304,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	u_int32_t blockno;
 	u_int32_t blockcnt;
 	struct sdmmc_ccb *ccb;
+	int s;
 
 	if (link->target >= scbus->sc_ntargets || tgt->card == NULL ||
 	    link->lun != 0) {
@@ -312,7 +313,9 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 	}
 
@@ -341,7 +344,9 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		    "Drive #%02d", link->target);
 		strlcpy(inq.revision, "   ", sizeof(inq.revision));
 		bcopy(&inq, xs->data, MIN(xs->datalen, sizeof inq));
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 
 	case TEST_UNIT_READY:
@@ -354,14 +359,18 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		_lto4b(tgt->card->csd.capacity - 1, rcd.addr);
 		_lto4b(tgt->card->csd.sector_size, rcd.length);
 		bcopy(&rcd, xs->data, MIN(xs->datalen, sizeof rcd));
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 
 	default:
 		DPRINTF(("%s: unsupported scsi command %#x\n",
 		    DEVNAME(sc), xs->cmd->opcode));
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 	}
 
@@ -373,7 +382,9 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		DPRINTF(("%s: out of bounds %u-%u >= %u\n", DEVNAME(sc),
 		    blockno, blockcnt, tgt->card->csd.capacity));
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 	}
 
@@ -381,7 +392,9 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	if (ccb == NULL) {
 		printf("%s: out of ccbs\n", DEVNAME(sc));
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 	}
 
