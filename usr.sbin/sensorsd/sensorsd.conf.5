@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.6 2006/08/23 11:18:00 mickey Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.7 2006/08/23 11:49:15 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -54,11 +54,12 @@ Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
 .Pp
 Sensors that provide status (such as from
-.Xr ipmi 4
+.Xr bio 4 ,
+.Xr esm 4
 or
-.Xr bio 4 )
+.Xr ipmi 4 )
 do not require boundary values specified (that otherwise will be
-ignored) and simply trigger status transitions.
+ignored) and simply trigger on status transitions.
 .Pp
 The command is executed on transitions out of, and back into, given limits.
 Tokens in the command are substituted as follows:
@@ -104,6 +105,7 @@ hw.sensors.4:		# raid volume status changes
 .Sh SEE ALSO
 .Xr getcap 3 ,
 .Xr bio 4 ,
+.Xr esm 4 ,
 .Xr ipmi 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
