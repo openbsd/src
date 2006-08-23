@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.36 2006/08/23 16:16:39 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.37 2006/08/23 16:25:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -489,7 +489,7 @@ rum_alloc_tx_list(struct rum_softc *sc)
 		}
 
 		data->buf = usbd_alloc_buffer(data->xfer,
-		    RT2573_TX_DESC_SIZE + MCLBYTES);
+		    RT2573_TX_DESC_SIZE + IEEE80211_MTU_MAX);
 		if (data->buf == NULL) {
 			printf("%s: could not allocate tx buffer\n",
 			    USBDEVNAME(sc->sc_dev));

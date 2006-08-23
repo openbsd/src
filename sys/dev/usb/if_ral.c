@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.76 2006/08/23 08:06:49 jsg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.77 2006/08/23 16:25:07 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -450,7 +450,7 @@ ural_alloc_tx_list(struct ural_softc *sc)
 		}
 
 		data->buf = usbd_alloc_buffer(data->xfer,
-		    RAL_TX_DESC_SIZE + MCLBYTES);
+		    RAL_TX_DESC_SIZE + IEEE80211_MTU_MAX);
 		if (data->buf == NULL) {
 			printf("%s: could not allocate tx buffer\n",
 			    USBDEVNAME(sc->sc_dev));
