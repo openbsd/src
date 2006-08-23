@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2005/09/22 01:33:08 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2006/08/23 21:22:09 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -156,9 +156,6 @@ static int reloc_target_bitmask[] = {
 
 void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_Rel *rel);
 
-/*
-#define LD_ALLOW_WRITEABLE_TEXT
-*/
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
@@ -167,9 +164,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	long	fails = 0;
 	Elf_Addr loff;
 	Elf_Rel *rels;
-#ifdef LD_ALLOW_WRITEABLE_TEXT
 	struct load_list *llist;
-#endif
 
 	loff = object->load_offs;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf_Rel);
@@ -178,11 +173,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	if (rels == NULL)
 		return(0);
 
-#ifdef LD_ALLOW_WRITEABLE_TEXT
 	/*
 	 * unprotect some segments if we need it.
 	 */
-	if ((rel == DT_REL || rel == DT_RELA)) {
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list;
 		    llist != NULL;
 		    llist = llist->next) {
@@ -191,7 +185,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 				    llist->prot|PROT_WRITE);
 		}
 	}
-#endif
 
 	for (i = 0; i < numrel; i++, rels++) {
 		Elf_Addr *where, value, ooff, mask;
@@ -307,9 +300,8 @@ resolve_failed:
 		}
 	}
 
-#ifdef LD_ALLOW_WRITEABLE_TEXT
 	/* reprotect the unprotected segments */
-	if ((rel == DT_REL || rel == DT_RELA)) {
+	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list;
 		    llist != NULL;
 		    llist = llist->next) {
@@ -318,7 +310,6 @@ resolve_failed:
 				    llist->prot);
 		}
 	}
-#endif
 
 	return (fails);
 }
