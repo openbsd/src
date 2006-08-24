@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio.c,v 1.5 2002/08/09 20:26:45 jsyn Exp $ */
+/*	$OpenBSD: consio.c,v 1.6 2006/08/24 20:29:38 miod Exp $ */
 /*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -280,13 +280,17 @@ void ka53_consinit(void)
 static volatile int *vxtregs = (int *)0x200A0000;
 
 #define	CH_SR		1
+#define	CH_CR		2
 #define	CH_DAT		3
-#define SR_TX_RDY	0x04
+#define	CR_RX_ENA	0x01
+#define	CR_TX_ENA	0x04
 #define SR_RX_RDY	0x01
+#define SR_TX_RDY	0x04
 
 void
 vxt_putchar(int c)
 {
+	vxtregs[CH_CR] = CR_TX_ENA;
 	while ((vxtregs[CH_SR] & SR_TX_RDY) == 0)
 		;
 	vxtregs[CH_DAT] = c;
@@ -295,6 +299,7 @@ vxt_putchar(int c)
 int
 vxt_getchar(void)
 {
+	vxtregs[CH_CR] = CR_RX_ENA;
 	while ((vxtregs[CH_SR] & SR_RX_RDY) == 0)
 		;
 	return vxtregs[CH_DAT];
@@ -303,6 +308,7 @@ vxt_getchar(void)
 int
 vxt_testchar(void)
 {
+	vxtregs[CH_CR] = CR_RX_ENA;
 	if ((vxtregs[CH_SR] & SR_RX_RDY) == 0)
 		return 0;
 	return vxtregs[CH_DAT];

@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.1 2002/06/11 09:36:23 hugh Exp $
+$OpenBSD: version,v 1.2 2006/08/24 20:29:38 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -27,5 +27,8 @@ is taken as the current.
 1.8:	Switch to loadfile instead of exec.  Now we can load a.out or ELF
 	kernels.
 1.9:	Support verbose/quiet boot.
-1.10:	loadfile() update:  ELF symbols no longer need backward seeks.
-1.11:	loadfile() update to avoid backwards seeks for ELF Program Headers.
+1.10:	Remove the 11/750 pcs code and the list of kernels to try to boot
+	in order.
+	Work around some PROM bugs in graphics mode which cause \h and \t not
+	to behave as expected.
+1.11:	Better VXT2000{,+} support.
