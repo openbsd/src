@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1137 2006/08/23 15:49:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1138 2006/08/24 06:56:33 gwk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7051,6 +7051,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MN-130 10/100",
 	},
 	{
+	    PCI_VENDOR_MIRO, PCI_PRODUCT_MIRO_2IVDC,
+	    "2IVDC-PCX1",
+	},
+	{
+	    PCI_VENDOR_MIRO, PCI_PRODUCT_MIRO_DC20,
+	    "MiroVIDEO DC20",
+	},
+	{
+	    PCI_VENDOR_MIRO, PCI_PRODUCT_MIRO_MEDIA3D,
+	    "Media 3D",
+	},
+	{
+	    PCI_VENDOR_MIRO, PCI_PRODUCT_MIRO_DC10,
+	    "MiroVIDEO DC10/DC20",
+	},
+	{
 	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_4D30T,
 	    "Powerstorm 4D30T",
 	},
@@ -12293,6 +12309,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TOSHIBA,
 	    "Toshiba",
+	},
+	{
+	    PCI_VENDOR_MIRO,
+	    "Miro Computer Products AG",
 	},
 	{
 	    PCI_VENDOR_NEC,

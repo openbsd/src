@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1137 2006/08/23 15:49:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1138 2006/08/24 06:56:33 gwk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -77,6 +77,7 @@
 #define	PCI_VENDOR_MATROX	0x102b		/* Matrox */
 #define	PCI_VENDOR_CHIPS	0x102c		/* Chips and Technologies */
 #define	PCI_VENDOR_TOSHIBA	0x102f		/* Toshiba */
+#define	PCI_VENDOR_MIRO	0x1031		/* Miro Computer Products AG */
 #define	PCI_VENDOR_NEC	0x1033		/* NEC */
 #define	PCI_VENDOR_FUTUREDOMAIN	0x1036		/* Future Domain */
 #define	PCI_VENDOR_SIS	0x1039		/* SiS */
@@ -2337,6 +2338,12 @@
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 */
 #define	PCI_PRODUCT_MICROSOFT_MN130	0x0002		/* MN-130 10/100 */
+
+/* Miro Computer Products AG */
+#define	PCI_PRODUCT_MIRO_2IVDC	0x5607		/* 2IVDC-PCX1 */
+#define	PCI_PRODUCT_MIRO_DC20	0x5601		/* MiroVIDEO DC20 */
+#define	PCI_PRODUCT_MIRO_MEDIA3D	0x5631		/* Media 3D */
+#define	PCI_PRODUCT_MIRO_DC10	0x6057		/* MiroVIDEO DC10/DC20 */
 
 /* Mitsubishi Electronics */
 #define	PCI_PRODUCT_MITSUBISHIELEC_4D30T	0x0301		/* Powerstorm 4D30T */
