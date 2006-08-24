@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.36 2006/08/24 09:34:36 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.37 2006/08/24 09:39:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -267,6 +267,12 @@ struct arc_fw_volinfo {
 	struct arc_fw_scsiattr	scsi_attr;
 	u_int8_t		member_disks;
 	u_int8_t		raid_level;
+#define ARC_FW_VOL_RAIDLEVEL_0		0x00
+#define ARC_FW_VOL_RAIDLEVEL_1		0x01
+#define ARC_FW_VOL_RAIDLEVEL_3		0x02
+#define ARC_FW_VOL_RAIDLEVEL_5		0x03
+#define ARC_FW_VOL_RAIDLEVEL_6		0x04
+#define ARC_FW_VOL_RAIDLEVEL_PASSTHRU	0x05
 	u_int8_t		new_member_disks;
 	u_int8_t		new_raid_level;
 	u_int8_t		raid_set_number;
@@ -1145,7 +1151,29 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	bv->bv_status = BIOC_SVONLINE;
 	bv->bv_size = letoh32(volinfo->capacity) *
 	    letoh32(volinfo->stripe_size) * 512;
-	bv->bv_level = 0;
+
+	switch (volinfo->raid_level) {
+	case ARC_FW_VOL_RAIDLEVEL_0:
+		bv->bv_level = 0;
+		break;
+	case ARC_FW_VOL_RAIDLEVEL_1:
+		bv->bv_level = 0;
+		break;
+	case ARC_FW_VOL_RAIDLEVEL_3:
+		bv->bv_level = 3;
+		break;
+	case ARC_FW_VOL_RAIDLEVEL_5:
+		bv->bv_level = 5;
+		break;
+	case ARC_FW_VOL_RAIDLEVEL_6:
+		bv->bv_level = 6;
+		break;
+	case ARC_FW_VOL_RAIDLEVEL_PASSTHRU:
+	default:
+		bv->bv_level = -1;
+		break;
+	}
+
 	bv->bv_nodisk = volinfo->member_disks;
 	strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
 
