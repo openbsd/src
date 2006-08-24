@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.43 2006/07/11 21:17:58 mickey Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.44 2006/08/24 21:10:14 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -662,7 +662,7 @@ db_dmesg_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		off = 0;
 	for (i = 0, p = msgbufp->msg_bufc + off;
 	    i < msgbufp->msg_bufs; i++, p++) {
-		if (p > msgbufp->msg_bufc + msgbufp->msg_bufs)
+		if (p >= msgbufp->msg_bufc + msgbufp->msg_bufs)
 			p = msgbufp->msg_bufc;
 		if (*p != '\0')
 			db_putchar(*p);
