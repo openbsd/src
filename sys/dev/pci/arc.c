@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.38 2006/08/24 09:43:48 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.39 2006/08/24 09:59:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1161,7 +1161,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		bv->bv_level = 0;
 		break;
 	case ARC_FW_VOL_RAIDLEVEL_1:
-		bv->bv_level = 0;
+		bv->bv_level = 1;
 		break;
 	case ARC_FW_VOL_RAIDLEVEL_3:
 		bv->bv_level = 3;
