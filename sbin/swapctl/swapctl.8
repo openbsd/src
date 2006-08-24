@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.23 2006/08/24 07:47:16 jmc Exp $
+.\"	$OpenBSD: swapctl.8,v 1.24 2006/08/24 08:30:26 jmc Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -62,21 +62,15 @@ program adds, removes,
 lists and prioritizes swap devices and files for the system.
 The
 .Nm swapon
-program acts the same as the
-.Nm
-program, as if called with the
-.Fl a
-option, except if
+program acts the same as
+.Ic swapctl -a ,
+except if
 .Nm swapon
 itself is called with
 .Fl a ,
 in which case
-.Nm swapon
-acts as
-.Nm
-with the
-.Fl A
-option.
+it acts as
+.Ic swapctl -A .
 .Pp
 .Sy Note :
 The initial swap device (root disk, partition b) is handled automatically
