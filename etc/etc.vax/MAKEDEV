@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.25 2006/08/02 19:08:42 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.26 2006/08/24 20:21:53 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -231,7 +231,6 @@ std)
 	M tu0		b 8 0 600
 	M tu1		b 8 1 600
 	M floppy	c 8 0 600
-	M kUmem		c 3 3 600
 	;;
 
 ht*|tm*|mt*|ts*|ut*)
