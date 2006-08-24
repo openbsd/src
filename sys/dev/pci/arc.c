@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.34 2006/08/20 13:56:09 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.35 2006/08/24 09:18:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -455,9 +455,15 @@ int			arc_msgbuf(struct arc_softc *, void *, size_t,
 /* bioctl */
 #if NBIO > 0
 int			arc_bioctl(struct device *, u_long, caddr_t);
+int			arc_bio_inq(struct arc_softc *, struct bioc_inq *);
+int			arc_bio_vol(struct arc_softc *, struct bioc_vol *);
+int			arc_bio_disk(struct arc_softc *, struct bioc_disk *);
 int			arc_bio_alarm(struct arc_softc *, struct bioc_alarm *);
 int			arc_bio_alarm_state(struct arc_softc *,
 			    struct bioc_alarm *);
+
+int			arc_bio_getvol(struct arc_softc *, int,
+			    struct arc_fw_volinfo *);
 #endif
 
 int
@@ -908,6 +914,18 @@ arc_bioctl(struct device *self, u_long cmd, caddr_t addr)
 	int				error = 0;
 
 	switch (cmd) {
+	case BIOCINQ:
+		error = arc_bio_inq(sc, (struct bioc_inq *)addr);
+		break;
+
+	case BIOCVOL:
+		error = arc_bio_vol(sc, (struct bioc_vol *)addr);
+		break;
+
+	case BIOCDISK:
+		error = arc_bio_disk(sc, (struct bioc_disk *)addr);
+		break;
+
 	case BIOCALARM:
 		error = arc_bio_alarm(sc, (struct bioc_alarm *)addr);
 		break;
@@ -990,6 +1008,231 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 
 out:
 	free(sysinfo, M_TEMP);
+	return (error);
+}
+
+
+int
+arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
+{
+	u_int8_t			request[2];
+	struct arc_fw_sysinfo		*sysinfo;
+	struct arc_fw_volinfo		*volinfo;
+	int				maxvols, nvols = 0, i;
+	int				error = 0;
+
+	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_TEMP, M_WAITOK);
+	if (sysinfo == NULL)
+		return (ENOMEM);
+
+	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
+	if (volinfo == NULL) {
+		free(sysinfo, M_TEMP);
+		return (ENOMEM);
+	}
+
+	arc_lock(sc);
+
+	request[0] = ARC_FW_SYSINFO;
+	error = arc_msgbuf(sc, request, 1, sysinfo,
+	    sizeof(struct arc_fw_sysinfo));
+	if (error != 0)
+		goto out;
+
+	maxvols = sysinfo->max_volume_set;
+
+	request[0] = ARC_FW_VOLINFO;
+	for (i = 0; i < maxvols; i++) {
+		request[1] = i;
+		error = arc_msgbuf(sc, request, sizeof(request), volinfo,
+		    sizeof(struct arc_fw_volinfo));
+		if (error != 0)
+			goto out;
+
+		/*
+		 * i cant find an easy way to see if the volume exists or not
+		 * except to say that if it has no capacity then it isnt there
+		 */
+		if (volinfo->capacity != 0)
+			nvols++;
+	}
+
+	bi->bi_novol = nvols;
+out:
+	arc_unlock(sc);
+	free(volinfo, M_TEMP);
+	free(sysinfo, M_TEMP);
+	return (error);
+}
+
+int
+arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
+{
+	u_int8_t			request[2];
+	struct arc_fw_sysinfo		*sysinfo;
+	int				error = 0;
+	int				maxvols, nvols = 0, i;
+
+	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_TEMP, M_WAITOK);
+	if (sysinfo == NULL)
+		return (ENOMEM);
+
+	request[0] = ARC_FW_SYSINFO;
+	error = arc_msgbuf(sc, request, 1, sysinfo,
+	    sizeof(struct arc_fw_sysinfo));
+	if (error != 0)
+		goto out;
+
+	maxvols = sysinfo->max_volume_set;
+
+	request[0] = ARC_FW_VOLINFO;
+	for (i = 0; i < maxvols; i++) {
+		request[1] = i;
+		error = arc_msgbuf(sc, request, sizeof(request), volinfo,
+		    sizeof(struct arc_fw_volinfo));
+		if (error != 0)
+			goto out;
+
+		if (volinfo->capacity == 0)
+			continue;
+
+		if (nvols == vol)
+			break;
+
+		nvols++;
+	}
+
+	if (nvols != vol || volinfo->capacity == 0) {
+		error = ENODEV;
+		goto out;
+	}
+
+out:
+	free(sysinfo, M_TEMP);
+	return (error);
+}
+
+int
+arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
+{
+	struct arc_fw_volinfo		*volinfo;
+	struct scsi_link		*sc_link;
+	struct device			*dev;
+	int				error = 0;
+
+	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
+	if (volinfo == NULL)
+		return (ENOMEM);
+
+	arc_lock(sc);
+	error = arc_bio_getvol(sc, bv->bv_volid, volinfo);
+	arc_unlock(sc);
+
+	if (error != 0)
+		goto out;
+
+	sc_link = sc->sc_scsibus->sc_link[volinfo->scsi_attr.target]
+	    [volinfo->scsi_attr.lun];
+	if (sc_link == NULL) {
+		error = ENODEV;
+		goto out;
+	}
+	dev = sc_link->device_softc;
+	arc_unlock(sc);
+
+	bv->bv_percent = -1;
+	bv->bv_seconds = 0;
+
+	bv->bv_status = BIOC_SVONLINE;
+	bv->bv_size = letoh32(volinfo->capacity) *
+	    letoh32(volinfo->stripe_size) * 512;
+	bv->bv_level = 0;
+	bv->bv_nodisk = volinfo->member_disks;
+	strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+
+out:
+	free(volinfo, M_TEMP);
+	return (error);
+}
+
+int
+arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
+{
+	u_int8_t			request[2];
+	struct arc_fw_volinfo		*volinfo;
+	struct arc_fw_raidinfo		*raidinfo;
+	struct arc_fw_diskinfo		*diskinfo;
+	int				error = 0;
+	char				string[128];
+
+	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
+	if (volinfo == NULL)
+		return (ENOMEM);
+
+	raidinfo = malloc(sizeof(struct arc_fw_raidinfo), M_TEMP, M_WAITOK);
+	if (raidinfo == NULL) {
+		free(volinfo, M_TEMP);
+		return (ENOMEM);
+	}
+
+	diskinfo = malloc(sizeof(struct arc_fw_diskinfo), M_TEMP, M_WAITOK);
+	if (diskinfo == NULL) {
+		free(raidinfo, M_TEMP);
+		free(volinfo, M_TEMP);
+		return (ENOMEM);
+	}
+
+	arc_lock(sc);
+
+	error = arc_bio_getvol(sc, bd->bd_volid, volinfo);
+	if (error != 0)
+		goto out;
+
+	request[0] = ARC_FW_RAIDINFO;
+	request[1] = volinfo->raid_set_number;
+	error = arc_msgbuf(sc, request, sizeof(request), raidinfo,
+	    sizeof(struct arc_fw_raidinfo));
+	if (error != 0)
+		goto out;
+
+	if (bd->bd_diskid > raidinfo->member_devices) {
+		error = ENODEV;
+		goto out;
+	}
+
+	request[0] = ARC_FW_DISKINFO;
+	request[1] = raidinfo->device_array[bd->bd_diskid];
+	error = arc_msgbuf(sc, request, sizeof(request), diskinfo,
+	    sizeof(struct arc_fw_diskinfo));
+	if (error != 0)
+		goto out;
+
+#if 0
+	bd->bd_channel = diskinfo->scsi_attr.channel;
+	bd->bd_target = diskinfo->scsi_attr.target;
+	bd->bd_lun = diskinfo->scsi_attr.lun;
+#endif
+	/*
+	 * the firwmare doesnt seem to fill scsi_attr in, so fake it with
+	 * the diskid.
+	 */
+	bd->bd_channel = 0;
+	bd->bd_target = raidinfo->device_array[bd->bd_diskid];
+	bd->bd_lun = 0;
+
+	bd->bd_status = BIOC_SDONLINE;
+	bd->bd_size = letoh32(diskinfo->capacity) * 512;
+
+	scsi_strvis(string, diskinfo->model, sizeof(diskinfo->model));
+	strlcpy(bd->bd_vendor, string, sizeof(bd->bd_vendor));
+	scsi_strvis(string, diskinfo->serial, sizeof(diskinfo->serial));
+	strlcpy(bd->bd_serial, string, sizeof(bd->bd_serial));
+
+out:
+	arc_unlock(sc);
+	free(diskinfo, M_TEMP);
+	free(raidinfo, M_TEMP);
+	free(volinfo, M_TEMP);
 	return (error);
 }
 #endif /* NBIO > 0 */
