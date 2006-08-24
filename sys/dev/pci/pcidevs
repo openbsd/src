@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1137 2006/08/23 15:49:57 brad Exp $
+$OpenBSD: pcidevs,v 1.1138 2006/08/24 06:56:33 gwk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ vendor	SNI		0x1029	Siemens Nixdorf AG
 vendor	MATROX		0x102b	Matrox
 vendor	CHIPS		0x102c	Chips and Technologies
 vendor	TOSHIBA		0x102f	Toshiba
+vendor	MIRO		0x1031	Miro Computer Products AG
 vendor	NEC		0x1033	NEC
 vendor	FUTUREDOMAIN	0x1036	Future Domain
 vendor	SIS		0x1039	SiS
@@ -2332,6 +2333,12 @@ product MICREL KSZ8842		0x8842	KSZ8842 dual-port 10/100 switch
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120 10/100
 product MICROSOFT MN130		0x0002	MN-130 10/100
+
+/* Miro Computer Products AG */
+product MIRO 2IVDC		0x5607	2IVDC-PCX1
+product MIRO DC20		0x5601	MiroVIDEO DC20
+product MIRO MEDIA3D		0x5631	Media 3D
+product MIRO DC10		0x6057	MiroVIDEO DC10/DC20
 
 /* Mitsubishi Electronics */
 product MITSUBISHIELEC 4D30T	0x0301	Powerstorm 4D30T
