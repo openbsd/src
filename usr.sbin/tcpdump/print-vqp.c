@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vqp.c,v 1.6 2006/08/20 23:39:42 stevesk Exp $	*/
+/*	$OpenBSD: print-vqp.c,v 1.7 2006/08/24 05:11:43 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2006 Kevin Steves <stevesk@openbsd.org>
@@ -86,12 +86,12 @@ struct vqp_hdr {
 #define VQP_VLAN_NAME			0x00000c03
 /* string; VTP domain if set */
 #define VQP_DOMAIN_NAME			0x00000c04
-/* 2 bytes? */
-#define VQP_UNKNOWN1			0x00000c05
+/* ethernet frame */
+#define VQP_ETHERNET_FRAME		0x00000c05
 /* 6 bytes, mac address */
 #define VQP_MAC				0x00000c06
-/* unknown */
-#define VQP_UNKNOWN2			0x00000c07
+/* 2 bytes? */
+#define VQP_UNKNOWN			0x00000c07
 /* 6 bytes, mac address */
 #define VQP_COOKIE			0x00000c08
 
@@ -177,9 +177,15 @@ vqp_print_type(u_int type, u_int len, const u_char *p)
 		printf(" domain:");
 		fn_printn(p, len, NULL);
 		break;
-	case VQP_UNKNOWN1:
-		printf(" unknown1:");
-		print_hex(p, len);
+	case VQP_ETHERNET_FRAME:
+		printf(" ethernet:");
+		if (vflag > 1)
+			print_hex(p, len);
+		else if (len >= ETHER_ADDR_LEN * 2) {
+			p += ETHER_ADDR_LEN;	/* skip dst mac */
+			printf("%s", etheraddr_string(p)); /* src mac */
+		} else
+			print_hex(p, len);
 		break;
 	case VQP_MAC:
 		printf(" mac:");
@@ -188,8 +194,8 @@ vqp_print_type(u_int type, u_int len, const u_char *p)
 		else
 			print_hex(p, len);
 		break;
-	case VQP_UNKNOWN2:
-		printf(" unknown2:");
+	case VQP_UNKNOWN:
+		printf(" unknown:");
 		print_hex(p, len);
 		break;
 	case VQP_COOKIE:
