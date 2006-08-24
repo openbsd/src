@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.18 2006/07/04 16:02:37 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.19 2006/08/24 12:00:56 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -47,6 +47,7 @@
 02/05	Constitution Day in Mexico
 02/06	New Zealand Day
 02/07	Independence Day in Grenada
+02/08	Preseren Day (Cultural Holiday) in Slovenia
 02/09	St. Maron's Day in Lebanon
 02/10	Feast of St. Paul's Shipwreck, AD 60
 02/11	National Foundation Day in Japan
@@ -142,6 +143,7 @@
 04/25	National Flag Day in Swaziland
 04/26	Confederate Memorial Day in Florida & Georgia
 04/26	Union Day in Tanzania
+04/27	Day of Uprising Against Occupation in Slovena
 04/27	Independence Day in Togo
 04/MonLast	Arbor Day in Wyoming (last Monday)
 04/MonLast	Confederate Memorial Day in Alabama & Mississippi (last Monday)
@@ -150,6 +152,7 @@
 05/01	Law Day (decl. by Eisenhower)
 05/01	May Day in many places
 05/02	Constitution Day in Japan
+05/03	Constitution Day in Poland
 05/04	Rhode Island Independence Day
 05/05	Children's Day in Japan, South Korea
 05/05	Coronation Day in Thailand
@@ -159,7 +162,7 @@
 05/07	May Day in United Kingdom
 05/08	Truman Day in Missouri
 05/09	Liberation Day in Czechoslovakia
-05/09	Victory Day in Poland, U.S.S.R.
+05/09	Victory Day in U.S.S.R.
 05/10	Confederate Memorial Day in South Carolina
 05/10	Mothers Day in Guatemala
 05/11	Minnesota Day in Minnesota
@@ -223,6 +226,7 @@
 06/24	Kings Day in Spain
 06/24	Peasants Day in Peru
 06/24	St. Jean-Baptiste Day in Quebec
+06/25	National Day in Slovenia
 06/28	Mothers Day in Central African Republic
 06/29	Independence Day in Seychelles
 06/29	Last Day of Ramadan* in Algeria, Oman
@@ -239,7 +243,6 @@
 07/04	Heroes Day in Zambia
 07/04	Kadooment Day in Barbados
 07/04	Philippine-American Friendship Day in the Philippines
-07/04	Warriors Day (2 days) in Yugoslavia
 07/05	Day of Peace and Unity in Rwanda
 07/05	Independence Day in Algeria, Venezuela
 07/07	National Day in Malawi
@@ -258,7 +261,6 @@
 07/19	Martyrs Day in Burma
 07/20	Independence Day in Colombia
 07/21	National Holiday in Belgium
-07/22	National Day in Poland
 07/23	Egyptian National Day in Syrian Arab Republic
 07/23	Remembrance Day in Papua, New Guinea
 07/24	Pioneer Day in Utah
@@ -410,6 +412,7 @@
 11/07	October Revolution Day in Hungary
 11/11	Remembrance Day in Canada
 11/11	Republic Day in Maldives
+11/11	Independence Day in Poland
 11/15	Dynasty Day in Belgium
 11/17	Army Day in Zaire
 11/18	Independence Day in Morocco
@@ -420,9 +423,9 @@
 11/21	Day of Prayer and Repentance in Federal Republic of Germany
 11/22	Independence Day in Lebanon
 11/23	Labor Thanksgiving Day in Japan
+11/23	Rudolf Maister Day in Slovenia
 11/25	Independence Day in Suriname
 11/28	Independence Day in Albania, Mauritania
-11/29	Day of the Republic (2 days) in Yugoslavia
 11/29	Goodwill Day in Liberia
 11/29	Liberation Day in Albania
 11/29	National Day in Burma
@@ -459,6 +462,7 @@
 12/26	Family Day in South Africa
 12/26	St. Stephen's Day
 12/26	Bank Holiday in Canada, Rep. of Ireland, and UK
+12/26	Independence and Unity Day in Slovenia
 12/27	Bank Holiday in Cayman Islands
 12/27	Constitution Day in North Korea
 12/27	Public Holiday in Lesotho, Zimbabwe
