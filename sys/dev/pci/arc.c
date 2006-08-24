@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.35 2006/08/24 09:18:40 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.36 2006/08/24 09:34:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1138,7 +1138,6 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		goto out;
 	}
 	dev = sc_link->device_softc;
-	arc_unlock(sc);
 
 	bv->bv_percent = -1;
 	bv->bv_seconds = 0;
