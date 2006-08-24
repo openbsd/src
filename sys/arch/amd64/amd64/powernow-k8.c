@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.9 2006/08/24 20:52:21 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -193,7 +193,7 @@ k8_powernow_setperf(int level)
 	 */
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	if (PN8_STA_PENDING(status))
-		return 1;
+		return 0;
 	cfid = PN8_STA_CFID(status);
 	cvid = PN8_STA_CVID(status);
 
@@ -222,7 +222,7 @@ k8_powernow_setperf(int level)
 		val = cvid - (1 << cstate->mvs);
 		WRITE_FIDVID(cfid, (val > 0) ? val : 0, 1ULL);
 		if (k8pnow_read_pending_wait(&status))
-			return 1;
+			return 0;
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -234,7 +234,7 @@ k8_powernow_setperf(int level)
 		 * under Linux */
 		WRITE_FIDVID(cfid, cvid - 1, 1ULL);
 		if (k8pnow_read_pending_wait(&status))
-			return 1;
+			return 0;
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -257,7 +257,7 @@ k8_powernow_setperf(int level)
 			WRITE_FIDVID(val, cvid, (uint64_t)cstate->pll * 1000 / 5);
 
 			if (k8pnow_read_pending_wait(&status))
-				return 1;
+				return 0;
 			cfid = PN8_STA_CFID(status);
 			COUNT_OFF_IRT(cstate->irt);
 
@@ -266,7 +266,7 @@ k8_powernow_setperf(int level)
 
 		WRITE_FIDVID(fid, cvid, (uint64_t) cstate->pll * 1000 / 5);
 		if (k8pnow_read_pending_wait(&status))
-			return 1;
+			return 0;
 		cfid = PN8_STA_CFID(status);
 		COUNT_OFF_IRT(cstate->irt);
 	}
@@ -275,7 +275,7 @@ k8_powernow_setperf(int level)
 	if (cvid != vid) {
 		WRITE_FIDVID(cfid, vid, 1ULL);
 		if (k8pnow_read_pending_wait(&status))
-			return 1;
+			return 0;
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
