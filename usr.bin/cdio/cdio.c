@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.54 2006/06/16 17:06:04 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.55 2006/08/24 19:35:55 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -324,8 +324,8 @@ main(int argc, char **argv)
 		}
 		needblk += (ntracks - 1) * 150; /* transition area between tracks */
 		if (needblk > availblk)
-			errx(1,"Only %llu of the required %llu blocks available",
-			     availblk,needblk);
+			errx(1, "Only %llu of the required %llu blocks available",
+			    availblk,needblk);
 		if (writetao(&tracks) != 0)
 			exit(1);
 		else
