@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.22 2003/06/03 13:16:09 jmc Exp $
+.\"	$OpenBSD: swapctl.8,v 1.23 2006/08/24 07:47:16 jmc Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -134,14 +134,14 @@ The
 option removes the listed
 .Ar path
 from the kernel's list of swap devices or files.
+.It Fl k
+The
+.Fl k
+option uses 1024 byte blocks instead of the default 512 byte.
 .It Fl l
 The
 .Fl l
 option lists the current swap devices and files, and their usage statistics.
-.It Fl s
-The
-.Fl s
-option displays a single line summary of current swap statistics.
 .It Fl p Ar priority
 The
 .Fl p
@@ -155,10 +155,10 @@ This works with the
 and
 .Fl l
 options.
-.It Fl k
+.It Fl s
 The
-.Fl k
-option uses 1024 byte blocks instead of the default 512 byte.
+.Fl s
+option displays a single line summary of current swap statistics.
 .It Fl t Ar blk|noblk
 This flag modifies the function of the
 .Fl A
