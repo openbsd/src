@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.40 2006/08/24 13:43:47 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.41 2006/08/24 13:59:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1194,7 +1194,9 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	struct arc_fw_raidinfo		*raidinfo;
 	struct arc_fw_diskinfo		*diskinfo;
 	int				error = 0;
-	char				string[128];
+	char				model[81];
+	char				serial[41];
+	char				rev[17];
 
 	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
 	if (volinfo == NULL)
@@ -1254,10 +1256,14 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	bd->bd_status = BIOC_SDONLINE;
 	bd->bd_size = (u_int64_t)letoh32(diskinfo->capacity) * ARC_BLOCKSIZE;
 
-	scsi_strvis(string, diskinfo->model, sizeof(diskinfo->model));
-	strlcpy(bd->bd_vendor, string, sizeof(bd->bd_vendor));
-	scsi_strvis(string, diskinfo->serial, sizeof(diskinfo->serial));
-	strlcpy(bd->bd_serial, string, sizeof(bd->bd_serial));
+	scsi_strvis(model, diskinfo->model, sizeof(diskinfo->model));
+	scsi_strvis(serial, diskinfo->serial, sizeof(diskinfo->serial));
+	scsi_strvis(rev, diskinfo->firmware_rev,
+	    sizeof(diskinfo->firmware_rev));
+
+	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s",
+	    model, rev);
+	strlcpy(bd->bd_serial, serial, sizeof(bd->bd_serial));
 
 out:
 	arc_unlock(sc);
