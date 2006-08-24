@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.24 2006/08/15 18:10:54 niallo Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.25 2006/08/24 13:16:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -326,13 +326,9 @@ zyd_usbrequest(struct zyd_softc *sc, uint8_t type, uint8_t request,
 	USETW(req.wIndex, index);
 	USETW(req.wLength, length);
 
-#ifdef ZYD_DEBUG
-	if (zyddebug) {
-		DPRINTFN(20, ("%s: req=%02x val=%02x ind=%02x "
-		    "len=%02x\n", USBDEVNAME(sc->zyd_dev), request,
-		    value, index, length));
-	}
-#endif /* ZYD_DEBUG */
+	DPRINTFN(20, ("%s: req=%02x val=%02x ind=%02x "
+	    "len=%02x\n", USBDEVNAME(sc->zyd_dev), request,
+	    value, index, length));
 
 	/* Block network interrupts */
 	s = splnet();
@@ -558,7 +554,7 @@ zyd_usb_intr_write(struct zyd_softc *sc, void *data, uint32_t size)
 /*	uint32_t size1 = size;*/
 
 #ifdef ZYD_INTRDUMP
-	DPRINTF(("intrwrite raw dump:\n"));
+	DPRINTF(("%s: intrwrite raw dump:\n", USBDEVNAME(sc->zyd_dev)));
 	bindump(data, size);
 #endif
 
@@ -1157,7 +1153,7 @@ zyd_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp = &ic->ic_if;
 	int s;
 
-	DPRINTF(("Entering zyd_txeof()\n"));
+	DPRINTF(("%s: Entering zyd_txeof()\n", USBDEVNAME(sc->zyd_dev)));
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -1188,8 +1184,6 @@ zyd_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 /*	zyd_start(ifp);*/
 
 	splx(s);
-
-	DPRINTF(("Leaving zyd_txeof()\n"));
 }
 
 /*
@@ -1237,7 +1231,8 @@ zyd_rxframeproc(struct zyd_rx_data *data, uint8_t *buf, uint16_t len)
 
 	/* Bad frame? */
 	if (desc->errorindication) {
-		DPRINTF(("RX status indicated error\n"));
+		DPRINTF(("%s: RX status indicated error\n",
+		    USBDEVNAME(sc->zyd_dev)));
 		ifp->if_ierrors++;
 		goto skip;
 	}
@@ -1455,14 +1450,16 @@ zyd_uploadfirmware(struct zyd_softc *sc)
 
 	imgptr = imgptr0;
 
-	DPRINTF(("Firmware upload: imgsize=%d\n", imgsize));
+	DPRINTF(("%s: Firmware upload: imgsize=%d\n", USBDEVNAME(sc->zyd_dev),
+	    imgsize));
 
 	/* Issue upload command(s) */
 	while (imgsize > 0) {
 		/* Transfer 4KB max */
 		int tlen = (imgsize > 4096) ? 4096 : imgsize;
 
-		DPRINTF(("Firmware upload: tlen=%d, value=%x\n", tlen, zc.value));
+		DPRINTF(("%s: Firmware upload: tlen=%d, value=%x\n",
+		    USBDEVNAME(sc->zyd_dev), tlen, zc.value));
 
 		zc.length = tlen;
 		zc.data = imgptr;
@@ -1636,8 +1633,8 @@ zyd_get_aw_pt_bi(struct zyd_softc *sc, struct zyd_aw_pt_bi *s)
 		s->atim_wnd_period = values[0];
 		s->pre_tbtt = values[1];
 		s->beacon_interval = values[2];
-		DPRINTF(("aw %u pt %u bi %u\n", s->atim_wnd_period,
-		    s->pre_tbtt, s->beacon_interval));
+		DPRINTF(("%s: aw %u pt %u bi %u\n", USBDEVNAME(sc->zyd_dev),
+		    s->atim_wnd_period, s->pre_tbtt, s->beacon_interval));
 	}
 
 	return rv;
@@ -1737,7 +1734,8 @@ zyd_rf_rfmd_init(struct zyd_softc *sc, struct zyd_rf *rf)
 	int i;
 	usbd_status rv;
 
-	DPRINTF(("rf_init(): ir1 = %d, ir2 = %d\n",
+	DPRINTF(("%s: rf_init(): ir1 = %d, ir2 = %d\n",
+	    USBDEVNAME(sc->zyd_dev),
 	    (sizeof(zyd_rfmd_cr) / sizeof(struct zyd_adpairs16)),
 	    (sizeof(zyd_rfmd_rf) / sizeof(uint32_t))));
 
@@ -1754,7 +1752,7 @@ zyd_rf_rfmd_init(struct zyd_softc *sc, struct zyd_rf *rf)
 			break;
 	}
 
-	DPRINTF(("rf_init(). rv = %d\n", rv));
+	DPRINTF(("%s: rf_init(). rv = %d\n", USBDEVNAME(sc->zyd_dev), rv));
 
 	return rv;
 }
@@ -1946,7 +1944,8 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 	rv = zyd_read16(sc, ZYD_REG_USB(ZYD_FIRMWARE_BASE_ADDR),
 	    &sc->firmware_base);
 
-	DPRINTF(("zyd_hw_init: firmware_base = 0x%04X\n", sc->firmware_base));
+	DPRINTF(("%s: zyd_hw_init: firmware_base = 0x%04X\n",
+	    USBDEVNAME(sc->zyd_dev), sc->firmware_base));
 
 	/* Print the firmware version */
 	rv = zyd_read16(sc, ZYD_FW_FIRMWARE_VER, &sc->fw_ver);
@@ -2019,7 +2018,8 @@ zyd_hw_init(struct zyd_softc *sc, struct ieee80211com *ic)
 	stage++;
 
 leave:
-	DPRINTF(("zyd_hw_init: rv = %d, stage = %d\n", rv, stage));
+	DPRINTF(("%s: zyd_hw_init: rv = %d, stage = %d\n",
+	    USBDEVNAME(sc->zyd_dev), rv, stage));
 	return rv;
 }
 
@@ -2334,7 +2334,7 @@ zyd_reset_mode(struct zyd_softc *sc)
 		ioreqs[2].value = ENC_SNIFFER;
 	}*/
 
-	DPRINTF(("In zyd_reset_mode()\n"));
+	DPRINTF(("%s: In zyd_reset_mode()\n", USBDEVNAME(sc->zyd_dev)));
 
 	return zyd_write32_batch(sc, io, 3);
 }
@@ -2353,9 +2353,8 @@ zyd_set_bssid(struct zyd_softc *sc, uint8_t *addr)
 	addrh = (*((uint32_t *)addr) >> 16);
 	addrl = *((uint32_t *)(addr + 2));
 
-	DPRINTF(("Setting BSSID\n"));
-
-	DPRINTF(("addrh = %x, addrl = %x\n", addrh, addrl));
+	DPRINTF(("%s: Setting BSSID addrh = %x, addrl = %x\n",
+	    USBDEVNAME(sc->zyd_dev), addrh, addrl));
 
 	rv = zyd_write32(sc, ZYD_MAC_BSSADRL, addrl);
 
@@ -2389,7 +2388,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 	 * Endpoint 4 = Intr out @ high speed / bulk out @ full speed (64b)
 	 */
 	
-	DPRINTF(("A total of %d endpoints available\n", id->bNumEndpoints));
+	DPRINTFN(10, ("A total of %d endpoints available\n", id->bNumEndpoints));
 	
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->zyd_iface, i);
@@ -2398,24 +2397,6 @@ zyd_complete_attach(struct zyd_softc *sc)
 			printf("%s: no endpoint descriptor for iface %d\n",
 			    USBDEVNAME(sc->zyd_dev), i);
 			return -1;
-		}
-
-		DPRINTF(("Endpoint %d: ", i));
-
-		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
-			DPRINTF(("in "));
-
-			if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-				DPRINTF(("bulk\n"));
-			else
-				DPRINTF(("int\n"));
-		} else {
-			DPRINTF(("out "));
-
-			if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-				DPRINTF(("bulk\n"));
-			else
-				DPRINTF(("int\n"));
 		}
 
 /*		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -2464,14 +2445,13 @@ zyd_complete_attach(struct zyd_softc *sc)
 	if (rv)
 		goto leave;
 
-	DPRINTF(("Loading regdomain\n"));
+	DPRINTF(("%s: Loading regdomain\n", USBDEVNAME(sc->zyd_dev)));
 	/* Load the regdomain and see whether it is supported */
 	rv = zyd_read_regdomain(sc, &sc->default_regdomain);
 
 	if (rv)
 		goto leave;
 
-	DPRINTF(("Regdomain supported?\n"));
 	if (!zyd_regdomain_supported(sc->default_regdomain)) {
 		printf("%s: Error: Regulatory Domain %#04x is not supported.",
 		    USBDEVNAME(sc->zyd_dev), sc->default_regdomain);
@@ -2563,7 +2543,8 @@ zyd_complete_attach(struct zyd_softc *sc)
 	    USBDEV(sc->zyd_dev));
 
 leave:
-	DPRINTF(("EXITING complete_attach(): Status = %d\n", rv));
+	DPRINTF(("%s: EXITING complete_attach(): Status = %d\n",
+	    USBDEVNAME(sc->zyd_dev), rv));
 	return rv;
 }
 
@@ -2621,7 +2602,7 @@ zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct zyd_softc *sc = ic->ic_if.if_softc;
 
-	DPRINTF(("zyd_newstate(): %d\n", nstate));
+	DPRINTF(("%s: zyd_newstate(): %d\n", USBDEVNAME(sc->zyd_dev), nstate));
 
 	usb_rem_task(sc->zyd_udev, &sc->sc_task);
 
@@ -2648,7 +2629,6 @@ zyd_initial_config(struct zyd_softc *sc)
 /*	uint32_t i;*/
 	usbd_status rv;
 
-	DPRINTF(("Setting mac-addr\n"));
 	rv = zyd_set_mac_addr(sc, (const struct zyd_macaddr *)&sc->sc_ic.ic_myaddr);
 
 	if (rv)
@@ -2659,7 +2639,6 @@ zyd_initial_config(struct zyd_softc *sc)
 		return USBD_INVAL;
 	}*/
 
-	DPRINTF(("Setting encryption type\n"));
 	rv = zyd_set_encryption_type(sc, sc->zyd_encrypt);
 
 	if (rv)
@@ -2891,9 +2870,10 @@ zyd_setup_tx_desc(struct zyd_softc *sc, struct zyd_controlsetformat *desc,
 	uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 	uint16_t txlen;
 
-	DPRINTF(("Entering zyd_setup_tx_desc()\n"));
-	DPRINTF(("sizeof (zyd_controlsetformat) = %d\n",
-	    sizeof(struct zyd_controlsetformat)));
+	DPRINTF(("%s: Entering zyd_setup_tx_desc()\n",
+	    USBDEVNAME(sc->zyd_dev)));
+	DPRINTF(("%s: sizeof (zyd_controlsetformat) = %d\n",
+	    USBDEVNAME(sc->zyd_dev), sizeof(struct zyd_controlsetformat)));
 
 	memset(desc, 0, ZYD_TX_DESC_SIZE);
 
@@ -3050,7 +3030,7 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	usbd_status error;
 	int xferlen, rate;
 
-	DPRINTF(("Entering zyd_tx_mgt()\n"));
+	DPRINTF(("%s: Entering zyd_tx_mgt()\n", USBDEVNAME(sc->zyd_dev)));
 
 /*	dump_fw_registers(sc);*/
 
@@ -3113,8 +3093,8 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if (xferlen != (ZYD_TX_DESC_SIZE + m0->m_pkthdr.len))
 		*(data->buf + xferlen - 1) = 0x00;
 
-	DPRINTF(("sending mgt frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
+	DPRINTF(("%s: sending mgt frame len=%u rate=%u xfer len=%u\n",
+	    USBDEVNAME(sc->zyd_dev), m0->m_pkthdr.len, rate, xferlen));
 
 #ifdef ZYD_DEBUG
 	if (zyddebug >= 3) {
@@ -3130,7 +3110,8 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	error = usbd_transfer(data->xfer);
 
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
-		DPRINTF(("zyd_tx_mgt(): Error %d\n", error));
+		DPRINTF(("%s: zyd_tx_mgt(): Error %d\n",
+		    USBDEVNAME(sc->zyd_dev), error));
 		m_freem(m0);
 		return error;
 	}
@@ -3138,8 +3119,6 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	sc->tx_queued++;
 
 /*	zyd_stateoutput(sc);*/
-
-	DPRINTF(("Leaving zyd_tx_mgt()\n"));
 
 	return 0;
 }
@@ -3156,8 +3135,6 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 /*	uint16_t dur;*/
 	usbd_status error;
 	int xferlen, rate;
-
-	DPRINTF(("Entering zyd_tx_data()\n"));
 
 	/* XXX this should be reworked! */
 	if (ic->ic_fixed_rate != -1) {
@@ -3219,8 +3196,8 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	// xfer length needs to be a multiple of two!
 	xferlen = (ZYD_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
 
-	DPRINTF(("sending data frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
+	DPRINTF(("%s: sending data frame len=%u rate=%u xfer len=%u\n",
+	    USBDEVNAME(sc->zyd_dev), m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], data,
 	    data->buf, xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
@@ -3234,8 +3211,6 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 
 	sc->tx_queued++;
-
-	DPRINTF(("Leaving zyd_tx_data()\n"));
 
 	return 0;
 }
@@ -3253,8 +3228,6 @@ zyd_tx_bcn(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	uint8_t cmd = 0;
 	uint8_t *buf;
 	int xferlen, rate;
-
-	DPRINTF(("Entering zyd_tx_bcn()\n"));
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan) ? 12 : 4;
 
@@ -3288,16 +3261,14 @@ zyd_tx_bcn(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	m_copydata(m0, 0, m0->m_pkthdr.len, buf + ZYD_TX_DESC_SIZE);
 	zyd_setup_tx_desc(sc, desc, m0, m0->m_pkthdr.len, rate);
 
-	DPRINTF(("sending beacon frame len=%u rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len, rate, xferlen));
+	DPRINTF(("%s: sending beacon frame len=%u rate=%u xfer len=%u\n",
+	    USBDEVNAME(sc->zyd_dev), m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], NULL, buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, ZYD_TX_TIMEOUT, NULL);
 
 	error = usbd_sync_transfer(xfer);
 	usbd_free_xfer(xfer);
-
-	DPRINTF(("Leaving zyd_tx_bcn()\n"));
 
 	return error;
 }
@@ -3313,11 +3284,13 @@ zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 
 	chan = ieee80211_chan2ieee(ic, c);
 
-	DPRINTF(("zyd_set_chan: Will try %d\n", chan));
+	DPRINTF(("%s: zyd_set_chan: Will try %d\n", USBDEVNAME(sc->zyd_dev),
+	    chan));
 
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 	{
-		DPRINTF(("zyd_set_chan(): 0 or ANY, exiting\n"));
+		DPRINTF(("%s: zyd_set_chan(): 0 or ANY, exiting\n",
+		    USBDEVNAME(sc->zyd_dev)));
 		return;
 	}
 
@@ -3347,8 +3320,6 @@ zyd_init(struct ifnet *ifp)
 	uint32_t statedata;
 	int	i, s;
 
-	DPRINTF(("Entering zyd_init()\n"));
-
 	s = splnet();
 
 /*	zyd_stop(ifp, 0);*/
@@ -3373,16 +3344,13 @@ zyd_init(struct ifnet *ifp)
 	/* Set mandatory rates */
 /*	zyd_set_mandatory_rates(sc, ic->ic_curmode);	*/
 
-	DPRINTF(("@1: zyd_init()\n"));
-
 	/* set default BSS channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	DPRINTF(("Setting channel from if_init()\n"));
+	DPRINTF(("%s: Setting channel from if_init()\n",
+	    USBDEVNAME(sc->zyd_dev)));
 	zyd_set_chan(sc, ic->ic_bss->ni_chan);
 
 	zyd_enable_hwint(sc);
-
-	DPRINTF(("@2: zyd_init()\n"));
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 
@@ -3396,7 +3364,6 @@ zyd_init(struct ifnet *ifp)
 	/*
 	 * Allocate Tx and Rx xfer queues.
 	 */
-	DPRINTF(("@3: zyd_init()\n"));
 	err = zyd_alloc_tx(sc);
 
 	if (err != 0) {
@@ -3405,7 +3372,6 @@ zyd_init(struct ifnet *ifp)
 		goto fail;
 	}
 
-	DPRINTF(("@4: zyd_init()\n"));
 	err = zyd_alloc_rx(sc);
 
 	if (err != 0) {
@@ -3417,7 +3383,6 @@ zyd_init(struct ifnet *ifp)
 	/*
 	 * Start up the receive pipe.
 	 */
-	DPRINTF(("@5: zyd_init()\n"));
 	for (i = 0; i < ZYD_RX_LIST_CNT; i++) {
 		data = &sc->rx_data[i];
 
@@ -3430,7 +3395,6 @@ zyd_init(struct ifnet *ifp)
 
 	/* Load the multicast filter. */
 	/*zyd_setmulti(sc); */
-	DPRINTF(("@6: zyd_init()\n"));
 
 	DPRINTFN(10, ("%s: starting up using MAC=%s\n",
 	    USBDEVNAME(sc->zyd_dev), ether_sprintf(ic->ic_myaddr)));
@@ -3446,10 +3410,7 @@ zyd_init(struct ifnet *ifp)
 	else
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
-	DPRINTF(("@7: zyd_init()\n"));
-
 	zyd_read32(sc, ZYD_REG_CTL(0x684), &statedata);
-	DPRINTF(("State machine: %x\n", statedata));
 
 	return 0;
 
@@ -3496,13 +3457,13 @@ zyd_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	DPRINTF(("Entering zyd_start()\n"));
+	DPRINTF(("%s: Entering zyd_start()\n", USBDEVNAME(sc->zyd_dev)));
 
 	for (;;) {
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
-			DPRINTF(("zyd_start: m0 != NULL, tx_queued = %d\n",
-			    sc->tx_queued));
+			DPRINTF(("%s: zyd_start: m0 != NULL, tx_queued = %d\n",
+			    USBDEVNAME(sc->zyd_dev), sc->tx_queued));
 
 			if (sc->tx_queued >= ZYD_TX_LIST_CNT) {
 				ifp->if_flags |= IFF_OACTIVE;
@@ -3519,24 +3480,17 @@ zyd_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-			DPRINTF(("if_state: @1\n"));
-
 			if (zyd_tx_mgt(sc, m0, ni) != 0)
 				break;
 
 		} else {
-			DPRINTF(("if_state: @2\n"));
-
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			DPRINTF(("if_state: @3\n"));
 
 			if (m0 == NULL)
 				break;
-
-			DPRINTF(("if_state: @4\n"));
 
 			if (sc->tx_queued >= ZYD_TX_LIST_CNT) {
 				IF_PREPEND(&ifp->if_snd, m0);
@@ -3544,13 +3498,10 @@ zyd_start(struct ifnet *ifp)
 				break;
 			}
 
-			DPRINTF(("if_state: @5\n"));
-
 			if (m0->m_len < sizeof (struct ether_header) &&
 				!(m0 = m_pullup(m0, sizeof (struct ether_header))))
 				continue;
 
-			DPRINTF(("if_state: @6\n"));
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 
@@ -3558,8 +3509,6 @@ zyd_start(struct ifnet *ifp)
 				m_freem(m0);
 				continue;
 			}
-
-			DPRINTF(("if_state: @7\n"));
 
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
@@ -3576,8 +3525,6 @@ zyd_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-			DPRINTF(("if_state: @8\n"));
-
 			if (zyd_tx_data(sc, m0, ni) != 0) {
 				ieee80211_release_node(ic, ni);
 				ifp->if_oerrors++;
@@ -3588,8 +3535,6 @@ zyd_start(struct ifnet *ifp)
 		sc->tx_timer = 5;
 		ifp->if_timer = 1;
 	}
-
-	DPRINTF(("Finished zyd_start()\n"));
 }
 
 int
@@ -3642,7 +3587,8 @@ zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		 * (used by kismet). In IBSS mode, we must explicitly reset
 		 * the interface to generate a new beacon frame.
 		 */
-		DPRINTF(("IOCTL: SIOCS80211CHANNEL (Setting channel from ioctl\n"));
+		DPRINTF(("%s: Setting channel from ioctl\n",
+		    USBDEVNAME(sc->zyd_dev)));
 		
 		err = ieee80211_ioctl(ifp, command, data);
 
@@ -3680,7 +3626,7 @@ zyd_watchdog(struct ifnet *ifp)
 {
 	struct zyd_softc *sc = ifp->if_softc;
 
-	DPRINTF(("zyd_watchdog()\n"));
+	DPRINTF(("%s: zyd_watchdog()\n", USBDEVNAME(sc->zyd_dev)));
 
 	ifp->if_timer = 0;
 
@@ -3707,7 +3653,7 @@ zyd_next_scan(void *arg)
 	struct zyd_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	DPRINTF(("Executing next_scan\n"));
+	DPRINTF(("%s: Executing next_scan\n", USBDEVNAME(sc->zyd_dev)));
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&ic->ic_if);
@@ -3726,33 +3672,30 @@ zyd_task(void *arg)
 
 	ostate = ic->ic_state;
 
-	switch (sc->sc_state) {
-	case IEEE80211_S_INIT:
+	if (sc->sc_state == IEEE80211_S_INIT) {
 		if (ostate == IEEE80211_S_RUN) {
 		}
-		break;
+		sc->sc_newstate(ic, sc->sc_state, -1);
+
+		return;	
+	}
+
+	DPRINTF(("%s: Setting channel from task 0x%x\n",
+	    USBDEVNAME(sc->zyd_dev), sc->sc_state));
+	zyd_set_chan(sc, ic->ic_bss->ni_chan);
+
+	switch (sc->sc_state) {
+	case IEEE80211_S_INIT:
 
 	case IEEE80211_S_SCAN:
-		DPRINTF(("Setting channel from task (SCAN)\n"));
-		zyd_set_chan(sc, ic->ic_bss->ni_chan);
-
 		timeout_add(&sc->scan_ch, hz / 5);
 		break;
 
 	case IEEE80211_S_AUTH:
-		DPRINTF(("Setting channel from task (AUTH)\n"));
-		zyd_set_chan(sc, ic->ic_bss->ni_chan);
-		break;
-
 	case IEEE80211_S_ASSOC:
-		DPRINTF(("Setting channel from task (ASSOC)\n"));
-		zyd_set_chan(sc, ic->ic_bss->ni_chan);
 		break;
 
 	case IEEE80211_S_RUN:
-		DPRINTF(("Setting channel from task (RUN)\n"));
-		zyd_set_chan(sc, ic->ic_bss->ni_chan);
-
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			zyd_set_bssid(sc, ic->ic_bss->ni_bssid);
 
@@ -3785,7 +3728,9 @@ zyd_task(void *arg)
 int
 zyd_activate(device_ptr_t self, enum devact act)
 {
-	DPRINTF(("Entering zyd_activate()\n"));
+	struct zyd_softc *sc = (struct zyd_softc *)self;
+
+	DPRINTF(("%s: Entering zyd_activate()\n", USBDEVNAME(sc->zyd_dev)));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
