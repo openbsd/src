@@ -156,7 +156,6 @@ void	 pgt_async_reset(struct pgt_softc *);
 void	 pgt_async_trap(struct pgt_softc *, uint32_t, void *, size_t);
 void	 pgt_async_update(struct pgt_softc *);
 //void	 pgt_poll(struct ifnet *, enum poll_cmd, int);
-void	 pgt_intr(void *);
 void	 pgt_intr_body(struct pgt_softc *, struct mbuf **, int);
 void	 pgt_txdone(struct pgt_softc *, enum pgt_queue);
 void	 pgt_rxdone(struct pgt_softc *, enum pgt_queue);
@@ -731,6 +730,8 @@ pgt_attach(struct pgt_softc *sc)
 {
 	int error;
 
+	return (0);
+
 	sc->sc_ic.ic_if.if_softc = sc;
 	sc->sc_refcnt = 1;
 	TAILQ_INIT(&sc->sc_mgmtinprog);
@@ -816,6 +817,8 @@ failed:
 int
 pgt_detach(struct pgt_softc *sc)
 {
+	return (0);
+
 	pgt_net_detach(sc);
 	sc->sc_flags |= SC_GONE;
 	pgt_disable(sc, SC_DYING);
@@ -824,6 +827,7 @@ pgt_detach(struct pgt_softc *sc)
 	//cv_destroy(&sc->sc_kthread.sck_needed);
 	//cv_destroy(&sc->sc_critical_cv);
 	//mtx_destroy(&sc->sc_lock);
+
 	return (0);
 }
 
@@ -1484,12 +1488,14 @@ pgt_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 }
 #endif
 
-void
+int
 pgt_intr(void *argp)
 {
 	struct ifnet *ifp;
 	struct pgt_softc *sc;
 	struct mbuf *datarx = NULL;
+
+	return (0);
 
 	ifp = argp;
 	sc = ifp->if_softc;
@@ -1520,6 +1526,8 @@ pgt_intr(void *argp)
 		pgt_input_frames(sc, datarx);
 	//if (!IFQ_DRV_IS_EMPTY(&ifp->if_snd))
 //		pgt_start(ifp);
+
+	return (0);
 }
 
 void

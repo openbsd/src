@@ -1,9 +1,7 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.1 2006/08/22 18:12:12 mglocker Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.2 2006/08/24 23:55:35 mglocker Exp $  */
 
-/*-
- * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
- * Copyright (c) 2005, 2006
- *	Damien Bergamini <damien.bergamini@free.fr>
+/*
+ * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -56,17 +54,20 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+/* Base Address Register */
+#define PGT_PCI_BAR0	0x10
+
 int	pgt_pci_match(struct device *, void *, void *);
 void	pgt_pci_attach(struct device *, struct device *, void *);
 int	pgt_pci_detach(struct device *, int);
 
 struct pgt_pci_softc {
-	struct pgt_softc	sc_sc;
+	struct pgt_softc	sc_pgt;
 
 	pci_chipset_tag_t       sc_pc;
-	pcitag_t                sc_pcitag;
-
 	void 			*sc_ih;
+	bus_size_t		sc_mapsize;
+	pcireg_t		sc_bar0_val;
 };
 
 struct cfattach pgt_pci_ca = {
@@ -75,51 +76,72 @@ struct cfattach pgt_pci_ca = {
 };
 
 const struct pci_matchid pgt_pci_devices[] = {
-	/* 3COM 3CRWE154G72 Wireless LAN adapter */
-	//{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE154G72 },
-	/* D-Link Air Plus Xtreme G A1 - DWL-g650 A1" */
-	//{ PCI_VENDOR_DLINK, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* I-O Data WN-G54/CB - WN-G54/CB" */
-	//{ PCI_VENDOR_IODATA, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* NETGEAR WG511" */
+	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3877 },
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3890 }
-	//{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* PLANEX GW-DS54G" */
-	//{ PCI_VENDOR_I4, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* EZ Connect g 2.4GHz 54 Mbps Wireless PCI Card - SMC2802W" */
-	//{ PCI_VENDOR_SMC, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* EZ Connect g 2.4GHz 54 Mbps Wireless Cardbus Adapter - SMC2835W" */
-	//{ PCI_VENDOR_SMC, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* I4 Z-Com XG-600" */
-	//{ PCI_VENDOR_I4, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* I4 Z-Com XG-900/PLANEX GW-DS54G" */
-	//{ PCI_VENDOR_I4, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* SMC 2802Wv2" */
-	//{ PCI_VENDOR_ACCTON, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* SMC 2835Wv2" */
-	//{ PCI_VENDOR_SMC, PCI_PRODUCT_INTERSIL_ISL3890 },
-	/* Intersil PRISM Indigo Wireless LAN adapter" */
-	//{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3877 },
-	/* Intersil PRISM Duette/Prism GT Wireless LAN adapter" */
-	//{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3890 }
 };
 
 int
 pgt_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, pgt_pci_devices,
-	    sizeof (pgt_pci_devices) / sizeof (pgt_pci_devices[0])));
+	    sizeof(pgt_pci_devices) / sizeof(pgt_pci_devices[0])));
 }
 
 void
 pgt_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	return;
+	struct pgt_pci_softc *psc = (struct pgt_pci_softc *)self;
+	struct pgt_softc *sc = &psc->sc_pgt;
+	struct pci_attach_args *pa = aux;
+	const char *intrstr = NULL;
+	bus_addr_t base;
+	pci_intr_handle_t ih;
+	int error;
+
+	sc->sc_cbdmat = pa->pa_dmat;
+	psc->sc_pc = pa->pa_pc;
+
+	/* map control / status registers */
+	error = pci_mapreg_map(pa, PGT_PCI_BAR0,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->sc_iotag, &sc->sc_iohandle, &base, &psc->sc_mapsize, 0);
+	if (error != 0) {
+		printf(": could not map memory space\n");
+		return;
+	}
+	psc->sc_bar0_val = base | PCI_MAPREG_TYPE_MEM;
+
+	/* map interrupt */
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf(": could not map interrupt\n");
+		return;
+	}
+
+	/* establish interrupt */
+	intrstr = pci_intr_string(psc->sc_pc, ih);
+	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET, pgt_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (psc->sc_ih == NULL) {
+		printf(": could not establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf(": %s\n", intrstr);
+
+	pgt_attach(sc);
 }
 
 int
 pgt_pci_detach(struct device *self, int flags)
 {
+	struct pgt_pci_softc *psc = (struct pgt_pci_softc *)self;
+	struct pgt_softc *sc = &psc->sc_pgt;
+
+	pgt_detach(sc);
+	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+
 	return (0);
 }
 
@@ -150,7 +172,7 @@ pgt_pci_detach(struct device *self, int flags)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_pgt_pci.c,v 1.1 2006/08/22 18:12:12 mglocker Exp $
+ * $Id: if_pgt_pci.c,v 1.2 2006/08/24 23:55:35 mglocker Exp $
  */
 
 #include <sys/cdefs.h>

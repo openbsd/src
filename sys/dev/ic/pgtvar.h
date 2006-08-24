@@ -141,7 +141,7 @@ struct pgt_softc {
 	struct resource	       *sc_intres;	/* interrupt resource */
 	void		       *sc_intcookie;
 	struct resource	       *sc_iores;	/* IO memory resource */
-	bus_space_tag_t		sc_iotag; 
+	bus_space_tag_t		sc_iotag;
 	bus_space_handle_t	sc_iohandle; 
 	bus_dma_tag_t		sc_cbdmat;	/* control block DMA */
 	bus_dmamap_t		sc_cbdmam;
@@ -166,6 +166,7 @@ struct pgt_softc {
 	}			sc_kthread;
 };
 
+int	pgt_intr(void *);
 int	pgt_attach(struct pgt_softc *);
 int	pgt_detach(struct pgt_softc *sc);
 void	pgt_reboot(struct pgt_softc *);
