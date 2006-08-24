@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.217 2006/08/23 08:00:08 jsg Exp $
+$OpenBSD: usbdevs,v 1.218 2006/08/24 03:14:43 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1002,6 +1002,8 @@ product EPSON GT9700F		0x0112	GT-9700F
 product EPSON 2400		0x011b	Perfection 2400
 product EPSON 1260		0x011d	Perfection 1260
 product EPSON 1660		0x011e	Perfection 1660
+product EPSON 1670		0x011f	Perfection 1670
+product EPSON CX3650		0x080e	Stylus CX3650
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial
