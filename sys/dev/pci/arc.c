@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.39 2006/08/24 09:59:57 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.40 2006/08/24 13:43:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -180,6 +180,7 @@ struct arc_sge {
 #define ARC_MAX_TARGET		16
 #define ARC_MAX_LUN		8
 #define ARC_MAX_IOCMDLEN	512
+#define ARC_BLOCKSIZE		512
 
 /* the firmware deals with up to 256 or 512 byte command frames. */
 /* sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 38) == 508 */
@@ -1153,8 +1154,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	bv->bv_seconds = 0;
 
 	bv->bv_status = BIOC_SVONLINE;
-	bv->bv_size = letoh32(volinfo->capacity) *
-	    letoh32(volinfo->stripe_size) * 512;
+	bv->bv_size = (u_int64_t)letoh32(volinfo->capacity) * ARC_BLOCKSIZE;
 
 	switch (volinfo->raid_level) {
 	case ARC_FW_VOL_RAIDLEVEL_0:
@@ -1252,7 +1252,7 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	bd->bd_lun = 0;
 
 	bd->bd_status = BIOC_SDONLINE;
-	bd->bd_size = letoh32(diskinfo->capacity) * 512;
+	bd->bd_size = (u_int64_t)letoh32(diskinfo->capacity) * ARC_BLOCKSIZE;
 
 	scsi_strvis(string, diskinfo->model, sizeof(diskinfo->model));
 	strlcpy(bd->bd_vendor, string, sizeof(bd->bd_vendor));
