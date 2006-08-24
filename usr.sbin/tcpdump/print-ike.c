@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.28 2005/08/28 18:37:55 cloder Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.29 2006/08/24 12:13:16 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.28 2005/08/28 18:37:55 cloder Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.29 2006/08/24 12:13:16 hshoexer Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -708,7 +708,7 @@ ike_pl_vendor_print (u_int8_t *buf, int len, u_int8_t doi)
 
 	for (i = 0; i < sizeof vendor_ids / sizeof vendor_ids[0]; i ++)
 		if (memcmp(vp->vid, vendor_ids[i].vid,
-		    sizeof vendor_ids[i].vid) == 0) {
+		    vendor_ids[i].len) == 0) {
 			printf (" (supports %s)", vendor_ids[i].name);
 			return;
 		}
