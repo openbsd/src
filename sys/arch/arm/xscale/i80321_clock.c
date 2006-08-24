@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.4 2006/07/20 02:34:04 drahn Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.5 2006/08/24 21:32:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -411,7 +411,7 @@ inittodr(time_t base)
 	int badbase;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
+		printf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = (MINYEAR - 1970) * SECYR;
 		badbase = 1;
