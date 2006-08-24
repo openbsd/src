@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.3 2006/08/18 23:08:45 jason Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.4 2006/08/24 12:14:23 jason Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -293,19 +293,21 @@ void
 ucycom_close(void *addr, int portno)
 {
 	struct ucycom_softc *sc = addr;
+	int s;
 
 	if (sc->sc_dying)
 		return;
 
-//	uhidev_close(&sc->sc_hdev);
-	if (sc->sc_obuf !=NULL) {
+	s = splusb();
+	if (sc->sc_obuf != NULL) {
 		free(sc->sc_obuf, M_USBDEV);
 		sc->sc_obuf = NULL;
 	}
-	if (sc->sc_ibuf !=NULL) {
+	if (sc->sc_ibuf != NULL) {
 		free(sc->sc_ibuf, M_USBDEV);
 		sc->sc_ibuf = NULL;
 	}
+	splx(s);
 }
 
 Static void
