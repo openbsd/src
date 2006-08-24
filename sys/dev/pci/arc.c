@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.37 2006/08/24 09:39:29 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.38 2006/08/24 09:43:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1057,9 +1057,11 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 
 		/*
 		 * i cant find an easy way to see if the volume exists or not
-		 * except to say that if it has no capacity then it isnt there
+		 * except to say that if it has no capacity then it isnt there.
+		 * ignore passthru volumes, bioc_vol doesnt understand them.
 		 */
-		if (volinfo->capacity != 0)
+		if (volinfo->capacity != 0 &&
+		    volinfo->raid_level != ARC_FW_VOL_RAIDLEVEL_PASSTHRU)
 			nvols++;
 	}
 
@@ -1099,7 +1101,8 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 		if (error != 0)
 			goto out;
 
-		if (volinfo->capacity == 0)
+		if (volinfo->capacity == 0 ||
+		    volinfo->raid_level == ARC_FW_VOL_RAIDLEVEL_PASSTHRU)
 			continue;
 
 		if (nvols == vol)
@@ -1108,7 +1111,8 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 		nvols++;
 	}
 
-	if (nvols != vol || volinfo->capacity == 0) {
+	if (nvols != vol || volinfo->capacity == 0 ||
+	    volinfo->raid_level == ARC_FW_VOL_RAIDLEVEL_PASSTHRU) {
 		error = ENODEV;
 		goto out;
 	}
