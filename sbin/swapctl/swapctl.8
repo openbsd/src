@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.24 2006/08/24 08:30:26 jmc Exp $
+.\"	$OpenBSD: swapctl.8,v 1.25 2006/08/24 08:47:58 jmc Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -187,8 +187,14 @@ Additional flags include:
 .Pp
 .Bl -tag -width nfsmntpt=/path -compact
 .It priority=N
-This option sets the priority of the specified swap device to N.
-The highest priority is 0, second priority is 1, etc.
+Swap devices and files may be assigned different priorities,
+to allow faster resources to be used first.
+Swap devices at the same priority are used in a round-robin fashion until
+there is no more space available at this priority, when the next priority
+level will be used.
+The default priority is 0, the highest.
+This value can be any valid integer,
+with higher values receiving less priority.
 .It nfsmntpt=/path
 This option is useful for swapping to NFS files.
 It specifies the local mount point to mount an NFS filesystem.
@@ -200,20 +206,6 @@ For example:
 server:/export/swap/client none swap sw,nfsmntpt=/swap
 .Ed
 .El
-.Sh WARNINGS
-Local and remote swap files cannot be configured until the file
-systems they reside on are mounted read/write.
-The system startup scripts need to
-.Xr fsck 8
-all local file systems before this can happen.
-This process requires substantial amounts of memory on some systems.
-If one configures no
-local block swap devices on a machine that has local file systems to
-check and rely only on swap files, the machine will have no swap space
-at all during system
-.Xr fsck 8
-and may run out of real memory, causing fsck to abnormally exit and
-startup scripts to fail.
 .Sh SEE ALSO
 .Xr swapctl 2 ,
 .Xr fstab 5 ,
@@ -236,3 +228,17 @@ The
 .Nm
 program was written by
 .An Matthew R. Green Aq mrg@eterna.com.au .
+.Sh BUGS
+Local and remote swap files cannot be configured until the file
+systems they reside on are mounted read/write.
+The system startup scripts need to
+.Xr fsck 8
+all local file systems before this can happen.
+This process requires substantial amounts of memory on some systems.
+If one configures no
+local block swap devices on a machine that has local file systems to
+check and rely only on swap files, the machine will have no swap space
+at all during system
+.Xr fsck 8
+and may run out of real memory, causing fsck to abnormally exit and
+startup scripts to fail.
