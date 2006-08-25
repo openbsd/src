@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1138 2006/08/24 06:56:33 gwk Exp 
+ *	OpenBSD: pcidevs,v 1.1139 2006/08/25 04:26:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -226,7 +226,7 @@
 #define	PCI_VENDOR_MOXA	0x1393		/* Moxa */
 #define	PCI_VENDOR_LEVEL1	0x1394		/* Level 1 */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
-#define	PCI_VENDOR_TRIWARE	0x13c1		/* 3ware */
+#define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_ABOCOM	0x13d1		/* Abocom */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
@@ -410,10 +410,11 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA3	0x0009		/* Permedia 3 */
 #define	PCI_PRODUCT_3DLABS_OXYGEN_GVX1	0x000a		/* Oxygen GVX1 */
 
-/* 3Ware products */
-#define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade IDE RAID */
-#define	PCI_PRODUCT_TRIWARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID */
-#define	PCI_PRODUCT_TRIWARE_ESCALADE_9500	0x1002		/* Escalade IDE RAID */
+/* 3ware products */
+#define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* 5000/6000 series RAID */
+#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* 7000/8000 series RAID */
+#define	PCI_PRODUCT_3WARE_9000	0x1002		/* 9000 series RAID */
+#define	PCI_PRODUCT_3WARE_9500	0x1003		/* 9500 series RAID */
 
 /* Abocom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 */

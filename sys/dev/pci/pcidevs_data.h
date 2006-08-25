@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1138 2006/08/24 06:56:33 gwk Exp 
+ *	OpenBSD: pcidevs,v 1.1139 2006/08/25 04:26:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -367,16 +367,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Oxygen GVX1",
 	},
 	{
-	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE,
-	    "Escalade IDE RAID",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
+	    "5000/6000 series RAID",
 	},
 	{
-	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE_ASIC,
-	    "Escalade IDE RAID",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
+	    "7000/8000 series RAID",
 	},
 	{
-	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE_9500,
-	    "Escalade IDE RAID",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9000,
+	    "9000 series RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9500,
+	    "9500 series RAID",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -12907,7 +12911,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Hifn",
 	},
 	{
-	    PCI_VENDOR_TRIWARE,
+	    PCI_VENDOR_3WARE,
 	    "3ware",
 	},
 	{
