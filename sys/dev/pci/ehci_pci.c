@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.9 2006/07/10 07:54:43 dlg Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.10 2006/08/25 04:17:00 pascoe Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	usbd_status r;
+	int s;
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -122,6 +123,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
+	s = splhardusb();
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
@@ -129,8 +131,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc, devname);
@@ -139,8 +140,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	}
 	printf(": %s\n", intrstr);
 
@@ -150,8 +150,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		printf("%s: pre-2.0 USB rev\n", devname);
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
 		break;
@@ -177,15 +176,21 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	}
 
 	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_pci_shutdown, sc);
+	splx(s);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
+
+	return;
+
+unmap_ret:
+	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	splx(s);
 }
 
 int

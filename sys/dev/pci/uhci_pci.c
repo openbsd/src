@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.21 2005/12/30 03:43:04 dlg Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.22 2006/08/25 04:17:00 pascoe Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	usbd_status r;
+	int s;
 
 #if defined(__NetBSD__)
 	char devinfo[256];
@@ -113,7 +114,9 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+
 	/* Disable interrupts, so we don't get any spurious ones. */
+	s = splhardusb();
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 
 	sc->sc_pc = pc;
@@ -123,8 +126,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
@@ -134,8 +136,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	}
 	printf(": %s\n", intrstr);
 
@@ -175,13 +176,19 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
-		return;
+		goto unmap_ret;
 	}
+	splx(s);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
+
+	return;
+
+unmap_ret:
+	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	splx(s);
 }
 
 int
