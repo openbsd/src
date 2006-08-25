@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.14 2006/08/24 20:57:57 gwk Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.15 2006/08/25 20:52:59 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -167,7 +167,7 @@ int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
 int
 k8pnow_read_pending_wait(uint64_t *status)
 {
-	unsigned int i = 1000;
+	unsigned int i = 100000;
 
 	while (i--) {
 		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
