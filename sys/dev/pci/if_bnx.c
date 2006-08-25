@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.22 2006/08/21 17:02:03 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.23 2006/08/25 02:13:51 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -561,7 +561,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bnx_ioctl;
 	ifp->if_start = bnx_start;
-	ifp->if_timer = 0;
 	ifp->if_watchdog = bnx_watchdog;
         if (sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)
                 ifp->if_baudrate = IF_Gbps(2.5);
