@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.11 2006/07/31 10:00:15 mickey Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.12 2006/08/25 04:35:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -53,20 +53,19 @@ struct cfattach twe_pci_ca = {
 	sizeof(struct twe_softc), twe_pci_match, twe_pci_attach
 };
 
+const struct pci_matchid twe_pci_devices[] = {
+	{ PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE },
+	{ PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC }
+};
+
 int
 twe_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TRIWARE &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIWARE_ESCALADE ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIWARE_ESCALADE_ASIC))
-		return 1;
-
-	return 0;
+	return (pci_matchbyid((struct pci_attach_args *)aux, twe_pci_devices,
+	    sizeof(twe_pci_devices)/sizeof(twe_pci_devices[0])));
 }
 
 void
