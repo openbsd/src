@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.55 2006/08/24 19:35:55 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.56 2006/08/25 04:38:32 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 	struct stat sb;
 	struct track_info *cur_track;
 	struct track_info *tr;
-	off_t availblk,needblk = 0;
+	off_t availblk, needblk = 0;
 	u_int blklen;
 	u_int ntracks = 0;
 	char type;
@@ -325,7 +325,7 @@ main(int argc, char **argv)
 		needblk += (ntracks - 1) * 150; /* transition area between tracks */
 		if (needblk > availblk)
 			errx(1, "Only %llu of the required %llu blocks available",
-			    availblk,needblk);
+			    availblk, needblk);
 		if (writetao(&tracks) != 0)
 			exit(1);
 		else
