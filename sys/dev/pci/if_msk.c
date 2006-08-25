@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.15 2006/08/20 07:04:12 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.16 2006/08/25 00:21:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1386,7 +1386,7 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 #ifdef MSK_DEBUG
 	if (mskdebug >= 2)
-		sk_dump_mbuf(m_head);
+		msk_dump_mbuf(m_head);
 #endif
 
 	/*
