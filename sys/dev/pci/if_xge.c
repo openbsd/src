@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.30 2006/08/10 17:24:32 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.31 2006/08/25 00:55:37 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -92,6 +92,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $");
 #include <sys/proc.h>
 
 #include <dev/pci/if_xgereg.h>
+
+/* Xframe chipset revisions */
+#define XGE_TYPE_XENA		1	/* Xframe */
+#define XGE_TYPE_HERC		2	/* Xframe-II */
+
+#define XGE_PCISIZE_XENA	26
+#define XGE_PCISIZE_HERC	64
 
 /*
  * Some tunable constants, tune with care!
@@ -226,6 +233,7 @@ pif_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 
 	lval = val&0xffffffff;
 	hval = val>>32;
+
 	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval); 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
 }
@@ -234,6 +242,7 @@ static inline uint64_t
 pif_rcsr(struct xge_softc *sc, bus_size_t csr)
 {
 	uint64_t val, val2;
+
 	val = bus_space_read_4(sc->sc_st, sc->sc_sh, csr);
 	val2 = bus_space_read_4(sc->sc_st, sc->sc_sh, csr+4);
 	val |= (val2 << 32);
@@ -247,6 +256,7 @@ txp_wcsr(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 
 	lval = val&0xffffffff;
 	hval = val>>32;
+
 	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr, lval); 
 	bus_space_write_4(sc->sc_txt, sc->sc_txh, csr+4, hval);
 }
@@ -259,9 +269,15 @@ pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 
 	lval = val&0xffffffff;
 	hval = val>>32;
-	PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval); 
-	PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
+
+	if (sc->xge_type == XGE_TYPE_XENA)
+		PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh, csr, lval);
+
+	if (sc->xge_type == XGE_TYPE_XENA)
+		PIF_WCSR(RMAC_CFG_KEY, RMAC_KEY_VALUE);
+
 	bus_space_write_4(sc->sc_st, sc->sc_sh, csr+4, hval);
 }
 
@@ -288,12 +304,6 @@ struct cfdriver xge_cd = {
 #define XGE_MAX_FRAMELEN	9622
 #define XGE_MAX_MTU		(XGE_MAX_FRAMELEN - ETHER_HDR_LEN - \
 				 ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
-
-#define XGE_TYPE_XENA		1	/* Xframe-I */
-#define XGE_TYPE_HERC		2	/* Xframe-II */
-
-#define XGE_PCISIZE_XENA	26
-#define XGE_PCISIZE_HERC	64
 
 const struct pci_matchid xge_devices[] = {
 	{ PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME },
