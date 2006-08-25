@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.22 2006/05/13 21:15:11 martin Exp $
+.\"	$OpenBSD: twe.4,v 1.23 2006/08/25 05:07:31 brad Exp $
 .\"
 .\" Michael Shalayeff, 2000. Public Domain.
 .\"
@@ -7,28 +7,48 @@
 .Os
 .Sh NAME
 .Nm twe
-.Nd 3ware Escalade RAID driver
+.Nd 3ware 5000/6000/7000/8000 series PATA/SATA RAID driver
 .Sh SYNOPSIS
 .Cd "twe* at pci?"
 .Cd "scsibus* at twe?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Escalade family of RAID controllers,
-including the
-.Tn 3W-5x00 ,
-.Tn 3W-6x00 ,
-and
-.Tn 3W-7x00
-models.
+driver provides support for AMCC's 3ware 5000/6000/7000/8000 series PATA/SATA
+RAID adapters.
+These adapters were formerly known as ``3ware Escalade''.
 .Pp
-These controllers support RAID 0, RAID 1, RAID 5, RAID 10, and JBOD
-configurations.
+These controllers support 2, 4, 8, or 12 ATA disk drives and provide RAID 0,
+RAID 1, RAID 5, RAID 10, and JBOD configurations.
 All the RAID set volume management is done via the card's BIOS.
 .Pp
-Even though the card uses IDE drives, this driver makes drives
+Even though the card uses ATA drives, this driver makes drives
 and/or RAID sets appear as
 .Xr sd 4 .
+.Pp
+The
+.Nm
+driver supports the following AMCC 3ware PATA/SATA RAID adapters:
+.Pp
+.Tn 5000 series ,
+.Tn 6000 series ,
+.Tn 7000-2 ,
+.Tn 7006-2 ,
+.Tn 7500-4LP ,
+.Tn 7500-8 ,
+.Tn 7500-12 ,
+.Tn 7506-4LP ,
+.Tn 7506-8 ,
+.Tn 7506-12 ,
+.Tn 8006-2LP ,
+.Tn 8500-4LP ,
+.Tn 8500-8 ,
+.Tn 8500-12 ,
+.Tn 8506-4LP ,
+.Tn 8506-8 ,
+.Tn 8506-8MI ,
+.Tn 8506-12 , and
+.Tn 8506-12MI .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
