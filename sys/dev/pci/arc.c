@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.41 2006/08/24 13:59:36 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.42 2006/08/25 02:48:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1066,6 +1066,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 			nvols++;
 	}
 
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
 	bi->bi_novol = nvols;
 out:
 	arc_unlock(sc);
