@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1138 2006/08/24 06:56:33 gwk Exp $
+$OpenBSD: pcidevs,v 1.1139 2006/08/25 04:26:29 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ vendor	NETGEAR		0x1385	Netgear
 vendor	MOXA		0x1393	Moxa
 vendor	LEVEL1		0x1394	Level 1
 vendor	HIFN		0x13a3	Hifn
-vendor	TRIWARE		0x13c1	3ware
+vendor	3WARE		0x13c1	3ware
 vendor	ABOCOM		0x13d1	Abocom
 vendor	SUNDANCE	0x13f0	Sundance
 vendor	CMI		0x13f6	C-Media Electronics
@@ -405,10 +405,11 @@ product 3DLABS OXYGEN_GVX1_CPU	0x0008	Oxygen GVX1
 product 3DLABS PERMEDIA3	0x0009	Permedia 3
 product 3DLABS OXYGEN_GVX1	0x000a	Oxygen GVX1
 
-/* 3Ware products */
-product TRIWARE ESCALADE	0x1000	Escalade IDE RAID
-product TRIWARE ESCALADE_ASIC	0x1001	Escalade IDE RAID
-product TRIWARE ESCALADE_9500	0x1002	Escalade IDE RAID
+/* 3ware products */
+product 3WARE ESCALADE		0x1000	5000/6000 series RAID
+product 3WARE ESCALADE_ASIC	0x1001	7000/8000 series RAID
+product 3WARE 9000		0x1002	9000 series RAID
+product 3WARE 9500		0x1003	9500 series RAID
 
 /* Abocom products */
 product ABOCOM FE2500		0xab02	FE2500 10/100
