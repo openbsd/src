@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.8 2006/08/26 17:27:02 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.9 2006/08/26 17:39:53 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -148,6 +148,7 @@ const struct wsdisplay_accessops lcspx_accessops = {
 int	lcspx_getcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
 void	lcspx_loadcmap(struct lcspx_screen *, int, int);
 int	lcspx_putcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
+static __inline__
 void	lcspx_ramdac_wraddr(struct lcspx_screen *, u_int);
 void	lcspx_resetcmap(struct lcspx_screen *);
 int	lcspx_setup_screen(struct lcspx_screen *);
@@ -279,7 +280,7 @@ lcspx_setup_screen(struct lcspx_screen *ss)
 	 */
 	lcspx_reg_write(ss, 0x1170, 0xffffffff);
 	lcspx_reg_write(ss, 0x1174, 0xffffffff);
-	lcspx_ramdac_wraddr(0x0204);	/* plane mask */
+	lcspx_ramdac_wraddr(ss, 0x0204);	/* plane mask */
 	*(ss->ss_ramdac[BT463_REG_IREG_DATA]) = 0xff;
 
 	/*
@@ -473,7 +474,7 @@ lcspx_loadcmap(struct lcspx_screen *ss, int from, int count)
 		 * Reprogram the index every iteration, because the RAMDAC
 		 * may not be in autoincrement mode. XXX fix this
 		 */
-		lcspx_ramdac_wraddr(i);
+		lcspx_ramdac_wraddr(ss, i);
 		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
 		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
 		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
