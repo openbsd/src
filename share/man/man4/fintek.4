@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fintek.4,v 1.2 2006/06/27 14:13:13 jmc Exp $
+.\"	$OpenBSD: fintek.4,v 1.3 2006/08/26 10:43:31 kettenis Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -21,7 +21,7 @@
 .Nm fintek
 .Nd Fintek F75375 temperature sensor
 .Sh SYNOPSIS
-.Cd "fintek* at iic?"
+.Cd "fintek* at iic? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm
@@ -41,6 +41,12 @@ hw.sensors.5=fintek0, Temp 2, 29.00 degC
 hw.sensors.6=fintek0, FAN1, 0 RPM
 hw.sensors.7=fintek0, FAN1, 0 RPM
 .Ed
+.Pp
+On some machines the fans will not function properly with the chip in
+default mode.
+Setting
+.Cm flags
+to 0x0001 will make the fans run at full speed to prevent overheating.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
