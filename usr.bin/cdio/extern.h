@@ -50,7 +50,7 @@ extern int		close_session(void);
 extern int		get_disc_size(off_t *);
 extern int		get_nwa(int *);
 extern int		writetao(struct track_head *);
-extern int		writetrack(struct track_info *);
+extern int		writetrack(struct track_info *, int);
 extern int		mode_sense_write(unsigned char []);
 extern int		mode_select_write(unsigned char []);
 

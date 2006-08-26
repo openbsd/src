@@ -1,4 +1,4 @@
-/* $OpenBSD: mmc.c,v 1.14 2006/06/27 02:43:18 mjc Exp $ */
+/* $OpenBSD: mmc.c,v 1.15 2006/08/26 03:48:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
@@ -125,10 +125,9 @@ close_session(void)
 int
 writetao(struct track_head *thp)
 {
-	u_char modebuf[70];
+	u_char modebuf[70], bdlen;
 	struct track_info *tr;
-	u_char bdlen;
-	int r;
+	int r, track = 0;
 
 	if ((r = mode_sense_write(modebuf)) != SCCMD_OK) {
 		warnx("mode sense failed: %d", r);
@@ -139,6 +138,7 @@ writetao(struct track_head *thp)
 	modebuf[2+8+bdlen] |= 0x01; /* change write type to TAO */
 
 	SLIST_FOREACH(tr, thp, track_list) {
+		track++;
 		switch (tr->type) {
 		case 'd':
 			modebuf[3+8+bdlen] = 0x04; /* track mode = data */
@@ -157,26 +157,25 @@ writetao(struct track_head *thp)
 		while (unit_ready() != SCCMD_OK)
 			continue;
 		if ((r = mode_select_write(modebuf)) != SCCMD_OK) {
-			warnx("mode select failed: %d",r);
+			warnx("mode select failed: %d", r);
 			return (r);
 		}
-		writetrack(tr);
+		writetrack(tr, track);
 		synchronize_cache();
 	}
-	fprintf(stderr,"Closing session.\n");
+	fprintf(stderr, "Closing session.\n");
 	close_session();
 	return (0);
 }
 
 int
-writetrack(struct track_info *tr)
+writetrack(struct track_info *tr, int track)
 {
-	u_char databuf[65536];
+	struct timeval tv, otv, atv;
+	u_char databuf[65536], nblk;
+	u_int end_lba, lba, tmp;
 	scsireq_t scr;
-	u_int end_lba, lba;
-	u_int tmp;
 	int r;
-	u_char nblk;
 
 	nblk = 65535/tr->blklen;
 	bzero(&scr, sizeof(scr));
@@ -190,6 +189,10 @@ writetrack(struct track_info *tr)
 	scr.senselen = SENSEBUFLEN;
 	scr.flags = SCCMD_ESCAPE|SCCMD_WRITE;
 
+	timerclear(&otv);
+	atv.tv_sec = 1;
+	atv.tv_usec = 0;
+
 	if (get_nwa(&lba) != SCCMD_OK) {
 		warnx("cannot get next writable address");
 		return (-1);
@@ -198,7 +201,7 @@ writetrack(struct track_info *tr)
 	memcpy(&scr.cmd[2], &tmp, sizeof(tmp));
 
 	if (tr->sz / tr->blklen + 1 > UINT_MAX || tr->sz < tr->blklen) {
-		warnx("file %s has invalid size",tr->file);
+		warnx("file %s has invalid size", tr->file);
 		return (-1);
 	}
 	if (tr->sz % tr->blklen) {
@@ -220,7 +223,7 @@ writetrack(struct track_info *tr)
 again:
 			r = ioctl(fd, SCIOCCOMMAND, &scr);
 			if (r != 0) {
-				printf("\r");
+				printf("%60s\r", "");
 				warn("ioctl failed while attempting to write");
 				return (-1);
 			}
@@ -229,15 +232,22 @@ again:
 				goto again;
 			}
 			if (scr.retsts != SCCMD_OK) {
-				printf("\r");
+				printf("%60s\r", "");
 				warnx("ioctl returned bad status while "
 				    "attempting to write: %d",
 				    scr.retsts);
 				return (r);
 			}
 			lba += nblk;
-			fprintf(stderr,"\rLBA: %08u/%08u",
-			    lba, end_lba);
+
+			gettimeofday(&tv, NULL);
+			if (lba == end_lba || timercmp(&tv, &otv, >)) {
+				fprintf(stderr,
+				    "track %02d '%c' %08u/%08u %3d%%\r",
+				    track, tr->type,
+				    lba, end_lba, 100 * lba / end_lba);
+				timeradd(&tv, &atv, &otv);
+			}
 			tmp = htobe32(lba); /* update lba in cdb */
 			memcpy(&scr.cmd[2], &tmp, sizeof(tmp));
 		}
@@ -307,7 +317,7 @@ get_disc_size(off_t *availblk)
 	u_char databuf[28];
 	struct scsi_read_track_info *scb;
 	scsireq_t scr;
-	int r,tmp;
+	int r, tmp;
 
 	bzero(&scr, sizeof(scr));
 	scb = (struct scsi_read_track_info *)scr.cmd;
@@ -333,7 +343,7 @@ get_nwa(int *nwa)
 {
 	u_char databuf[28];
 	scsireq_t scr;
-	int r,tmp;
+	int r, tmp;
 
 	bzero(&scr, sizeof(scr));
 	scr.timeout = 4000;
