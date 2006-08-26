@@ -1,4 +1,4 @@
-/* $OpenBSD $*/
+/* $OpenBSD: extern.h,v 1.8 2006/08/26 14:10:21 krw Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
