@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.7 2006/08/22 21:04:51 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.8 2006/08/26 17:27:02 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -148,6 +148,7 @@ const struct wsdisplay_accessops lcspx_accessops = {
 int	lcspx_getcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
 void	lcspx_loadcmap(struct lcspx_screen *, int, int);
 int	lcspx_putcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
+void	lcspx_ramdac_wraddr(struct lcspx_screen *, u_int);
 void	lcspx_resetcmap(struct lcspx_screen *);
 int	lcspx_setup_screen(struct lcspx_screen *);
 
@@ -248,6 +249,13 @@ fail1:
 	free(ss, M_DEVBUF);
 }
 
+static __inline__ void
+lcspx_ramdac_wraddr(struct lcspx_screen *ss, u_int addr)
+{
+	*(ss->ss_ramdac[BT463_REG_ADDR_LOW]) = addr & 0xff;
+	*(ss->ss_ramdac[BT463_REG_ADDR_HIGH]) = (addr >> 8) & 0xff;
+}
+
 /*
  * Initialize anything necessary for an emulating wsdisplay to work (i.e.
  * pick a font, initialize a rasops structure, setup the accessops callbacks.)
@@ -271,6 +279,8 @@ lcspx_setup_screen(struct lcspx_screen *ss)
 	 */
 	lcspx_reg_write(ss, 0x1170, 0xffffffff);
 	lcspx_reg_write(ss, 0x1174, 0xffffffff);
+	lcspx_ramdac_wraddr(0x0204);	/* plane mask */
+	*(ss->ss_ramdac[BT463_REG_IREG_DATA]) = 0xff;
 
 	/*
 	 * Ask for an unholy big display, rasops will trim this to more
@@ -463,9 +473,7 @@ lcspx_loadcmap(struct lcspx_screen *ss, int from, int count)
 		 * Reprogram the index every iteration, because the RAMDAC
 		 * may not be in autoincrement mode. XXX fix this
 		 */
-		*(ss->ss_ramdac[BT463_REG_ADDR_LOW]) = i & 0xff;
-		*(ss->ss_ramdac[BT463_REG_ADDR_HIGH]) = i >> 8;
-
+		lcspx_ramdac_wraddr(i);
 		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
 		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
 		*(ss->ss_ramdac[BT463_REG_CMAP_DATA]) = *cmap++;
