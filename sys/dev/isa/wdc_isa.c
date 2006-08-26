@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.11 2004/01/15 17:51:42 miod Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.12 2006/08/26 14:55:35 jsg Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -52,11 +52,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-#ifdef __OpenBSD__
 #include "isadma.h"
-#else
-#define NISADMA 1
-#endif
 
 #define	WDC_ISA_REG_NPORTS	8
 #define	WDC_ISA_AUXREG_OFFSET	0x206
@@ -69,19 +65,13 @@ struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	channel_softc *wdc_chanptr;
 	struct	channel_softc wdc_channel;
-#ifdef __OpenBSD__
 	struct  device *sc_isa;
-#endif
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
 };
 
-#ifndef __OpenBSD__
-int	wdc_isa_probe(struct device *, struct cfdata *, void *);
-#else
 int	wdc_isa_probe(struct device *, void *, void *);
-#endif
 void	wdc_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach wdc_isa_ca = {
@@ -96,14 +86,7 @@ static int	wdc_isa_dma_finish(void *, int, int, int);
 #endif	/* NISADMA > 0 */
 
 int
-wdc_isa_probe(parent, match, aux)
-	struct device *parent;
-#ifndef __OpenBSD__
-	struct cfdata *match;
-#else
-	void *match;
-#endif
-	void *aux;
+wdc_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
@@ -138,9 +121,7 @@ out:
 }
 
 void
-wdc_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -151,6 +132,7 @@ wdc_isa_attach(parent, self, aux)
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_isa = parent;
+
 	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_iobase,
 	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
@@ -162,13 +144,9 @@ wdc_isa_attach(parent, self, aux)
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
 
-#ifdef __OpenBSD__
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wdcintr, &sc->wdc_channel, sc->sc_wdcdev.sc_dev.dv_xname);
-#else
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, wdcintr, &sc->wdc_channel);
-#endif
+
 	if (ia->ia_drq != DRQUNK) {
 #if NISADMA > 0
 		sc->sc_drq = ia->ia_drq;
@@ -206,16 +184,10 @@ wdc_isa_attach(parent, self, aux)
 
 #if NISADMA > 0
 static void
-wdc_isa_dma_setup(sc)
-	struct wdc_isa_softc *sc;
+wdc_isa_dma_setup(struct wdc_isa_softc *sc)
 {
-#ifndef __OpenBSD__
-	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
-	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-#else
 	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {			      
-#endif
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
 		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
@@ -223,48 +195,31 @@ wdc_isa_dma_setup(sc)
 }
 
 static int
-wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
-	void *v;
-	int channel, drive;
-	void *databuf;
-	size_t datalen;
-	int read;
+wdc_isa_dma_init(void *v, int channel, int drive, void *databuf, size_t datalen,
+    int read)
 {
 	struct wdc_isa_softc *sc = v;
 
-#ifndef __OpenBSD__
-	isa_dmastart(sc->sc_ic, sc->sc_drq, databuf, datalen, NULL,
-	    (read ? DMAMODE_READ : DMAMODE_WRITE) | DMAMODE_DEMAND,
-	    BUS_DMA_NOWAIT);
-#else
 	isa_dmastart(sc->sc_isa, sc->sc_drq, databuf, datalen, NULL,
 	    (read ? DMAMODE_READ : DMAMODE_WRITE),
 	    BUS_DMA_NOWAIT);
-#endif
+
 	return 0;
 }
 
 static void
-wdc_isa_dma_start(v, channel, drive)
-	void *v;
-	int channel, drive;
+wdc_isa_dma_start(void *v, int channel, int drive)
 {
 	/* nothing to do */
 }
 
 static int
-wdc_isa_dma_finish(v, channel, drive, force)
-	void *v;
-	int channel, drive;
-	int force;
+wdc_isa_dma_finish(void *v, int channel, int drive, int force)
 {
 	struct wdc_isa_softc *sc = v;
 
-#ifndef __OpenBSD__
-	isa_dmadone(sc->sc_ic, sc->sc_drq);
-#else
 	isa_dmadone(sc->sc_isa, sc->sc_drq);
-#endif
+
 	return 0;
 }
 #endif	/* NISADMA > 0 */
