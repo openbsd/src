@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.8 2005/11/23 22:11:48 jmc Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.9 2006/08/26 20:32:00 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -218,9 +218,12 @@ Compile in support for S/key authentication.
 .It Ev SKIPDIR
 A space separated list of directories to be skipped during "make build".
 .It Ev SUDO
-Command to run when doing "make install" portion of "make build".
+Command run by
+.Xr make 1
+when doing certain operations requiring root privileges
+(e.g. the "make install" portion of "make build").
 If set to
-.Ev sudo ,
+.Ev /usr/bin/sudo ,
 this allows one to run "make build" as a user other than root
 (assuming sudo is set up for that user).
 .It Ev SYS_INCLUDE
