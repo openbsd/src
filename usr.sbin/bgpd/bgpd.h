@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.206 2006/08/23 08:13:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.207 2006/08/27 13:40:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -689,6 +689,7 @@ int		 bgpd_filternexthop(struct kroute *, struct kroute6 *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
+struct buf	*buf_grow(struct buf *, size_t);
 int		 buf_add(struct buf *, const void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
