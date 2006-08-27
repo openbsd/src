@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.83 2006/06/26 07:49:37 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.84 2006/08/27 22:13:12 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -476,6 +476,7 @@ device driver first appeared in
 support was added in
 .Ox 2.6 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
