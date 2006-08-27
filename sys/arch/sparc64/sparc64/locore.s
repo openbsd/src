@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.60 2006/07/01 16:24:17 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.61 2006/08/27 21:19:02 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -56,11 +56,10 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#ifdef HORRID_III_HACK
-#define	NO_VCACHE		/* Map w/D$ disabled */
-#endif /* HORRID_III_HACK */
+#define HORRID_III_HACK
 
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
+#undef	NO_VCACHE		/* Map w/D$ disabled */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
 
@@ -4097,6 +4096,16 @@ dostart:
 
 #if defined(HORRID_III_HACK)
 	/*
+	 * Check for UltraSPARC III
+	 */
+	rdpr	%ver, %g1
+	srlx	%g1, 32, %g1
+	sll	%g1, 16, %g1
+	srl	%g1, 16, %g1
+	cmp	%g1, 0x0014
+	bl,pt	%icc, 1f
+	 nop
+	/*
 	 * Disable the DCACHE entirely for debug.
 	 */
 	ldxa	[%g0] ASI_MCCR, %o1
@@ -4108,6 +4117,7 @@ dostart:
 	/*
 	 * Ready to run C code; finish bootstrap.
 	 */
+1:	
 	set	CTX_SECONDARY, %o1		! Store -1 in the context register
 	set	0x2000,%o0			! fixed: 8192 contexts
 	stxa	%g0, [%o1] ASI_DMMU
