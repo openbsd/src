@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.43 2006/08/27 09:14:19 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.44 2006/08/27 09:29:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1231,6 +1231,19 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 
 	if (bd->bd_diskid > raidinfo->member_devices) {
 		error = ENODEV;
+		goto out;
+	}
+
+	if (raidinfo->device_array[bd->bd_diskid] == 0xff) {
+		/*
+		 * the disk doesn't exist anymore. bio is too dumb to be
+		 * able to display that, so put it on another bus
+		 */
+		bd->bd_channel = 1;
+		bd->bd_target = 0;
+		bd->bd_lun = 0;
+		bd->bd_status = BIOC_SDOFFLINE;
+		strlcpy(bd->bd_vendor, "disk missing", sizeof(bd->bd_vendor));
 		goto out;
 	}
 
