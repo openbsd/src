@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ciss.4,v 1.5 2006/08/27 20:57:19 mickey Exp $
+.\"	$OpenBSD: ciss.4,v 1.6 2006/08/27 22:10:42 jmc Exp $
 .\"
 .\" Michael Shalayeff, 2005. Public Domain.
 .\"
@@ -30,12 +30,13 @@ Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Pp
-Monitoring status for the volume and drives in it is done through
+Monitoring status for the volume and drives in it is done through the
 .Xr bioctl 8
-utility and also current status is provided in
-.Dq hw.sensors
-variables as given by the 
-.Xr sysctl 8 .
+utility;
+the current status is provided by the
+.Xr sysctl 8
+variable
+.Va hw.sensors .
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
@@ -56,5 +57,6 @@ The
 driver was written by
 .An Michael Shalayeff Aq mickey@openbsd.org .
 .Sh CAVEATS
-For purposes of status monitoring current code supports one logical
-volume per controller only.
+For purposes of status monitoring,
+the current code only supports one logical
+volume per controller.
