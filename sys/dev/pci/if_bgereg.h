@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.52 2006/08/16 02:37:00 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.53 2006/08/27 21:06:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2327,13 +2327,6 @@ struct txdmamap_pool_entry {
 	SLIST_ENTRY(txdmamap_pool_entry) link;
 };
 
-/*
- * Flags for bge_flags.
- */
-#define BGE_TXRING_VALID	0x0001
-#define BGE_RXRING_VALID	0x0002
-#define BGE_JUMBO_RXRING_VALID	0x0004
-
 #define ASF_ENABLE		1
 #define ASF_NEW_HANDSHAKE	2
 #define ASF_STACKUP		4
@@ -2347,15 +2340,20 @@ struct bge_softc {
 	struct pci_attach_args	bge_pa;
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
-	u_int8_t		bge_extram;	/* has external SSRAM */
-	u_int8_t		bge_tbi;
-	u_int8_t		bge_rx_alignment_bug;
+	u_int32_t		bge_flags;
+#define BGE_TXRING_VALID	0x00000001
+#define BGE_RXRING_VALID	0x00000002
+#define BGE_JUMBO_RXRING_VALID	0x00000004
+#define BGE_EXTRAM		0x00000008	/* Has external SSRAM. */
+#define BGE_TBI			0x00000010
+#define BGE_RX_ALIGNBUG		0x00000020
+#define BGE_NO3LED		0x00000040
+#define BGE_PCIX		0x00000080
+#define BGE_PCIE		0x00000100
+#define BGE_ASF_MODE		0x00000200
+
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;
-	u_int8_t		bge_no_3_led;
-	u_int8_t		bge_asf_mode;
-	u_int8_t		bge_pcie;
-	u_int8_t		bge_pcix;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
@@ -2375,7 +2373,7 @@ struct bge_softc {
 	u_int32_t		bge_tx_max_coal_bds;
 	u_int32_t		bge_tx_buf_ratio;
 	int			bge_if_flags;
-	int			bge_flags;
+	int			bge_ring_flags;
 	int			bge_txcnt;
 	int			bge_link;	/* link state */
 	int			bge_link_evt;	/* pending link event */
