@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.260 2006/08/27 16:11:05 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.261 2006/08/27 16:19:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -965,7 +965,7 @@ session_accept(int listenfd)
 	p = getpeerbyip((struct sockaddr *)&cliaddr);
 
 	if (p != NULL && p->state == STATE_IDLE && p->errcnt < 2 &&
-	    p->ConnectRetryTimer > 0) {
+	    p->IdleHoldTimer > 0) {
 		/* fast reconnect after clear */
 		p->passive = 1;
 		bgp_fsm(p, EVNT_START);
