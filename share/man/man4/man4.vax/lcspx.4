@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lcspx.4,v 1.1 2006/07/28 21:25:21 miod Exp $
+.\"	$OpenBSD: lcspx.4,v 1.2 2006/08/27 17:32:58 miod Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,20 +24,21 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 28, 2006
+.Dd August 27, 2006
 .Dt LCSPX 4 vax
 .Os
 .Sh NAME
 .Nm lcspx
-.Nd VAXstation 4000/90 color frame buffer
+.Nd Low-Cost SPX color frame buffer
 .Sh SYNOPSIS
-.Cd "lcspx0 at vsbus0 csr 0x39302000"
+.Cd "lcspx0 at vsbus0 csr 0x39302000        " Pq "VAXstation 4000/90"
+.Cd "lcspx0 at vxtbus0                      " Pq "VXT2000"
 .Cd "wsdisplay* at lcspx?"
 .Sh DESCRIPTION
 The
 .Nm
 is a 8 bit color frame buffer commonly encountered in VAXstation 4000/90
-systems.
+systems and VXT2000 terminals.
 .Pp
 The
 .Nm
@@ -54,5 +55,6 @@ interface.
 .Xr lcg 4 ,
 .Xr smg 4 ,
 .Xr vsbus 4 ,
+.Xr vxtbus 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4

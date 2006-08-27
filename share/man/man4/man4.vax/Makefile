@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2006/07/28 21:25:21 miod Exp $
+#	$OpenBSD: Makefile,v 1.22 2006/08/27 17:32:58 miod Exp $
 #	$NetBSD: Makefile,v 1.6 1996/03/03 17:13:09 thorpej Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
@@ -8,7 +8,7 @@
 # pcl.4 ps.4 tm.4 tmscp.4 tu.4 up.4 ut.4 uu.4 va.4 vp.4 vv.4
 MAN=	asc.4 autoconf.4 cons.4 de.4 dhu.4 dz.4 gpx.4 hp.4 ibus.4 intro.4 \
 	lcg.4 lcspx.4 le.4 led.4 lkkbd.4 lkms.4 mem.4 mscpbus.4 mt.4 mtc.4 \
-	ncr.4 qe.4 ra.4 rx.4 smg.4 ts.4 uba.4 uda.4 vsbus.4 ze.4
+	ncr.4 qe.4 qsc.4 ra.4 rx.4 smg.4 ts.4 uba.4 uda.4 vsbus.4 vxtbus.4 ze.4
 MLINKS=	mem.4 kmem.4
 MANSUBDIR=vax
 
