@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.45 2006/05/26 00:38:30 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.46 2006/08/27 22:25:16 mickey Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -258,7 +258,7 @@ bio_inq(char *name)
 
 		if (!volheader) {
 			volheader = 1;
-			printf("%-7s %-10s %-14s %-8s\n",
+			printf("%-7s %-10s %14s %-8s\n",
 			    "Volume", "Status", "Size", "Device");
 		}
 
