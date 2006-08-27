@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.168 2006/08/27 21:06:16 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.169 2006/08/27 21:42:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2100,8 +2100,8 @@ bge_reset(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_SERDES_CFG, serdescfg);
 	}
 
-	if (sc->bge_chipid != BGE_CHIPID_BCM5750_A0 &&
-	if (sc->bge_flags & BGE_PCIE) {
+	if (sc->bge_flags & BGE_PCIE &&
+	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
 		u_int32_t v;
 
 		/* Enable PCI Express bug fix */
