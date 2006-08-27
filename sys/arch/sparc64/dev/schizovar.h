@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizovar.h,v 1.8 2006/06/28 20:06:32 deraadt Exp $	*/
+/*	$OpenBSD: schizovar.h,v 1.9 2006/08/27 18:55:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -54,6 +54,7 @@ struct schizo_pbm {
 struct schizo_softc {
 	struct device sc_dv;
 	int sc_node;
+	int sc_ign;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bust;
 	bus_addr_t sc_ctrl;

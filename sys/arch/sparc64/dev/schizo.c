@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.34 2006/07/01 18:19:09 deraadt Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.35 2006/08/27 18:55:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -134,6 +134,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bust = ma->ma_bustag;
 	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000UL;
+	sc->sc_ign = ma->ma_upaid << 6;
 
 	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
 		busa = 1;
@@ -179,8 +180,8 @@ schizo_init(struct schizo_softc *sc, int busa)
 	    (void **)&busranges))
 		panic("schizo: can't get bus-range");
 
-	printf(": \"%s\", bus %c %d to %d\n",
-	    sc->sc_tomatillo ? "Tomatillo" : "Schizo",
+	printf(": \"%s\", ign %x, bus %c %d to %d\n",
+	    sc->sc_tomatillo ? "Tomatillo" : "Schizo", sc->sc_ign,
 	    busa ? 'A' : 'B', busranges[0], busranges[1]);
 
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
@@ -396,13 +397,9 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	struct schizo_pbm *sp = pa->pa_pc->cookie;
 	struct schizo_softc *sc = sp->sp_sc;
 	u_int dev;
-	u_int64_t agentid;
-
-	agentid = schizo_read(sc, SCZ_CONTROL_STATUS);
-	agentid = ((agentid >> 20) & 31) << 6;
 
 	if (*ihp != (pci_intr_handle_t)-1) {
-		*ihp |= agentid;
+		*ihp |= sc->sc_ign;
 		return (0);
 	}
 
@@ -424,7 +421,7 @@ schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	*ihp = (pa->pa_intrpin - 1) & INTMAP_PCIINT;
 	*ihp |= (dev << 2) & INTMAP_PCISLOT;
-	*ihp |= agentid;
+	*ihp |= sc->sc_ign;
 
 	return (0);
 }
@@ -440,7 +437,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
 	map = &pbmreg->imap[ino];
 	clr = &pbmreg->iclr[ino];
-	ino |= (*map) & INTMAP_IGN;
+	ino |= sc->sc_ign;
 
 	ih = bus_intr_allocate(pbm->sp_regt, handler, arg, ino, ipl,
 	    map, clr, what);
@@ -654,7 +651,10 @@ _schizo_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
 		intrmapptr = &pbmreg->imap[ino];
 		intrclrptr = &pbmreg->iclr[ino];
-		ino |= (*intrmapptr) & INTMAP_IGN;
+		if (INTIGN(vec) == 0)
+			ino |= (*intrmapptr) & INTMAP_IGN;
+		else
+			ino |= vec & INTMAP_IGN;
 	}
 
 	ih = bus_intr_allocate(t0, handler, arg, ino, level, intrmapptr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.12 2006/05/28 06:28:08 jason Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.13 2006/08/27 18:55:57 kettenis Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ struct iommu_strbuf {
 #define INTVEC(x)	((x)&INTMAP_INR)
 #define INTSLOT(x)	(((x)>>3)&0x7)
 #define	INTPRI(x)	((x)&0x7)
+#define INTIGN(x)	((x)&INTMAP_IGN)
 #define	INTINO(x)	((x)&INTMAP_INO)
 #define INTTID_SHIFT	26
 #define INTTID(x)	(((x) & INTMAP_TID) >> INTTID_SHIFT)
