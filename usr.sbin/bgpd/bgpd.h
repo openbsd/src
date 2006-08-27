@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.207 2006/08/27 13:40:21 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.208 2006/08/27 16:11:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,6 +213,7 @@ struct capabilities {
 	u_int8_t	mp_v4;		/* multiprotocol extensions, RFC 2858 */
 	u_int8_t	mp_v6;
 	u_int8_t	refresh;	/* route refresh, RFC 2918 */
+	u_int8_t	restart;	/* draft-ietf-idr-restart */
 };
 
 struct peer_config {

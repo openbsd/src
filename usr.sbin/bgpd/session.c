@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.259 2006/08/27 14:00:15 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.260 2006/08/27 16:11:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1192,6 +1192,7 @@ session_capa_ann_none(struct peer *peer)
 	peer->capa.ann.mp_v4 = SAFI_NONE;
 	peer->capa.ann.mp_v4 = SAFI_NONE;
 	peer->capa.ann.refresh = 0;
+	peer->capa.ann.restart = 0;
 }
 
 u_int8_t
@@ -1331,6 +1332,20 @@ session_open(struct peer *p)
 		else
 			optparamlen += op_len;
 	}
+
+	/* End-of-RIB marker, draft-ietf-idr-restart */
+	if (p->capa.ann.refresh) {	/* 4 bytes data */
+		if ((op_len = session_capa_add(p, opb, CAPA_RESTART, 4)) == 0)
+			errs++;
+		else {
+			u_char	c[4];
+
+			bzero(&c, 4);
+			c[0] = 0x01;
+			errs += buf_add(opb, &c, 4);
+			optparamlen += op_len;
+		}
+	}		
 
 	if (errs > 0) {
 		buf_free(opb);
@@ -2056,6 +2071,11 @@ parse_notification(struct peer *peer)
 				log_peer_warnx(&peer->conf,
 				    "disabling route refresh capability");
 				break;
+			case CAPA_RESTART:
+				peer->capa.ann.restart = 0;
+				log_peer_warnx(&peer->conf,
+				    "disabling restart capability");
+				break;
 			default:	/* should not happen... */
 				log_peer_warnx(&peer->conf, "received "
 				    "\"unsupported capability\" notification "
@@ -2151,6 +2171,10 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 			break;
 		case CAPA_REFRESH:
 			peer->capa.peer.refresh = 1;
+			break;
+		case CAPA_RESTART:
+			peer->capa.peer.restart = 1;
+			/* we don't care about the further restart capas yet */
 			break;
 		default:
 			break;
