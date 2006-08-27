@@ -1,4 +1,4 @@
-/*	$OpenBSD: findcpu.c,v 1.11 2006/07/20 19:07:14 miod Exp $	*/
+/*	$OpenBSD: findcpu.c,v 1.12 2006/08/27 16:55:41 miod Exp $	*/
 /*	$NetBSD: findcpu.c,v 1.5 1999/08/23 19:10:43 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -98,6 +98,10 @@ findcpu(void)
 		case VAX_BTYP_49:
 			vax_confdata = *(int *)(0x25800000);
 			vax_bustype = VAX_VSBUS;
+			break;
+		case VAX_BTYP_VXT:
+			vax_confdata = *(int *)(0x200c0000);
+			vax_bustype = VAX_VXTBUS;
 			break;
 
 		case VAX_BTYP_9CC:

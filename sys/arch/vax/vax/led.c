@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.3 2006/08/01 18:08:55 deraadt Exp $	*/
+/*	$OpenBSD: led.c,v 1.4 2006/08/27 16:55:41 miod Exp $	*/
 /*	$NetBSD: leds.c,v 1.4 2005/12/11 12:19:37 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ ledmatch(struct device *parent, void *cf, void *aux)
 		return (0);
 	
 	switch (vax_boardtype) {
-#if VAX46 || VAX48 || VAX49 || VAX53
+#if VAX46 || VAX48 || VAX49 || VAX53 || VXT
 #if VAX46
 	case VAX_BTYP_46:
 #endif
@@ -129,6 +129,9 @@ ledmatch(struct device *parent, void *cf, void *aux)
 #if VAX53
 	case VAX_BTYP_1303:
 #endif
+#if VXT
+	case VAX_BTYP_VXT:
+#endif
 		return (1);
 #endif
 	default:
@@ -140,7 +143,7 @@ void
 ledattach(struct device *parent, struct device *self, void *aux)
 {
 	struct led_softc *sc = (void *)self;
-#if VAX49 || VAX53
+#if VAX49 || VAX53 || VXT
 	vaddr_t pgva;
 #endif
 
@@ -177,6 +180,13 @@ ledattach(struct device *parent, struct device *self, void *aux)
 		pgva = vax_map_physmem(0x20140000, 1);
 		sc->sc_reg = (volatile u_short *)(pgva + 0x30);
 		sc->sc_pat = led_pattern4;
+		break;
+#endif
+#if VXT
+	case VAX_BTYP_VXT:
+		pgva = vax_map_physmem(0x200c1000, 1);
+		sc->sc_reg = (volatile u_short *)pgva;
+		sc->sc_pat = led_pattern8;
 		break;
 #endif
 	}

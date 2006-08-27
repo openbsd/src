@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 2004/07/07 23:10:46 deraadt Exp $	 */
+/*	$OpenBSD: clock.c,v 1.19 2006/08/27 16:55:41 miod Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -66,15 +66,17 @@ microtime(tvp)
 
 	switch (vax_boardtype) {
 #ifdef VAX46
-	case VAX_BTYP_46: {
+	case VAX_BTYP_46:
+	    {
 		extern struct vs_cpu *ka46_cpu;
 		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
 		i = (i >> 16) * 1024 + (i & 0x3ff);
+	    }
 		break;
-		}
 #endif
-#ifdef VAX48
-	case VAX_BTYP_48: {
+#if defined(VAX48) || defined(VXT)
+	case VAX_BTYP_48:
+	case VAX_BTYP_VXT:
 		/*
 		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
 		 * counter, saving the value on the timer interrupt and
@@ -82,7 +84,6 @@ microtime(tvp)
 		 */
 		i = 0;
 		break;
-		}
 #endif
 	default:
 		i = mfpr(PR_ICR);
@@ -176,7 +177,8 @@ delay(i)
 void
 cpu_initclocks()
 {
-	mtpr(-10000, PR_NICR); /* Load in count register */
+	if (vax_boardtype != VAX_BTYP_VXT)
+		mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
 	evcount_attach(&clock_intrcnt, "clock", NULL, &evcount_intr);
 }
@@ -210,7 +212,7 @@ numtoyear(num)
 	int num;
 {
 	int y = 70, j;
-	while(num >= (j = SECPERYEAR(y))) {
+	while (num >= (j = SECPERYEAR(y))) {
 		y++;
 		num -= j;
 	}
@@ -327,4 +329,19 @@ chip_clkwrite()
 
 	REGPOKE(CSRB_OFF, CSRB_DM|CSRB_24);
 };
+#endif
+
+#if VXT
+int
+missing_clkread(base)
+	time_t base;
+{
+	printf("WARNING: no TOY clock");
+	return CLKREAD_BAD;
+}
+
+void
+missing_clkwrite()
+{
+}
 #endif

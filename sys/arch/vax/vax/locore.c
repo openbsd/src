@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.31 2006/08/15 20:27:41 miod Exp $	*/
+/*	$OpenBSD: locore.c,v 1.32 2006/08/27 16:55:41 miod Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -78,6 +78,7 @@ extern struct cpu_dep ka650_calls;
 extern struct cpu_dep ka660_calls;
 extern struct cpu_dep ka670_calls;
 extern struct cpu_dep ka680_calls;
+extern struct cpu_dep vxt_calls;
 
 /*
  * Start is called from boot; the first routine that is called
@@ -163,6 +164,12 @@ start(struct rpb *prpb)
 		default:
 			strlcat(cpu_model, " - Unknown Mariah", sizeof cpu_model);
 		}
+		break;
+#endif
+#ifdef VXT
+	case VAX_BTYP_VXT:
+		dep_call = &vxt_calls;
+		strlcpy(cpu_model, "VXT2000", sizeof cpu_model);
 		break;
 #endif
 #if VAX48

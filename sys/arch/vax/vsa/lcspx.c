@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.9 2006/08/26 17:39:53 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.10 2006/08/27 16:55:41 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -53,6 +53,7 @@
 #include <sys/conf.h>
 #include <sys/kernel.h>
 
+#include <machine/nexus.h>
 #include <machine/vsbus.h>
 #include <machine/scb.h>
 #include <machine/sid.h>
@@ -79,8 +80,9 @@
 #define	LCSPX_HEIGHT	1024
 #define	LCSPX_FBSIZE	(LCSPX_WIDTH * LCSPX_HEIGHT)
 
-int	lcspx_match(struct device *, void *, void *);
 void	lcspx_attach(struct device *, struct device *, void *);
+int	lcspx_vsbus_match(struct device *, void *, void *);
+int	lcspx_vxtbus_match(struct device *, void *, void *);
 
 struct	lcspx_screen {
 	struct rasops_info ss_ri;
@@ -104,8 +106,12 @@ struct	lcspx_softc {
 	int	sc_nscreens;
 };
 
-struct cfattach lcspx_ca = {
-	sizeof(struct lcspx_softc), lcspx_match, lcspx_attach,
+struct cfattach lcspx_vsbus_ca = {
+	sizeof(struct lcspx_softc), lcspx_vsbus_match, lcspx_attach,
+};
+
+struct cfattach lcspx_vxtbus_ca = {
+	sizeof(struct lcspx_softc), lcspx_vxtbus_match, lcspx_attach,
 };
 
 struct	cfdriver lcspx_cd = {
@@ -154,7 +160,7 @@ void	lcspx_resetcmap(struct lcspx_screen *);
 int	lcspx_setup_screen(struct lcspx_screen *);
 
 int
-lcspx_match(struct device *parent, void *vcf, void *aux)
+lcspx_vsbus_match(struct device *parent, void *vcf, void *aux)
 {
 	struct vsbus_softc *sc = (void *)parent;
 	struct vsbus_attach_args *va = aux;
@@ -178,6 +184,34 @@ lcspx_match(struct device *parent, void *vcf, void *aux)
 	return (20);
 }
 
+int
+lcspx_vxtbus_match(struct device *parent, void *vcf, void *aux)
+{
+	struct bp_conf *bp = aux;
+	int missing;
+	volatile u_int8_t *ch;
+
+	if (strcmp(bp->type, lcspx_cd.cd_name) != 0)
+		return (0);
+
+	/*
+	 * Check for video memory at SPX address.
+	 */
+	missing = 0;
+	ch = (volatile u_int8_t *)vax_map_physmem(LCSPX_FB_ADDR, 1);
+	*ch = 0x01;
+	if ((*ch & 0x01) == 0)
+		missing = 1;
+	else {
+		*ch = 0x00;
+		if ((*ch & 0x01) != 0)
+			missing = 1;
+	}
+	vax_unmap_physmem((vaddr_t)ch, 1);
+
+	return (missing ? 0 : 1);
+}
+
 void
 lcspx_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -187,7 +221,13 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	int i, console;
 	extern struct consdev wsdisplay_cons;
 
-	console = (vax_confdata & 8) == 0 && cn_tab == &wsdisplay_cons;
+	if (cn_tab == &wsdisplay_cons) {
+		if (vax_boardtype == VAX_BTYP_49)
+			console = (vax_confdata & 8) == 0;
+		else /* VXT2000 */
+			console = (vax_confdata & 2) != 0;
+	} else
+		console = 0;
 	if (console) {
 		ss = &lcspx_consscr;
 		sc->sc_nscreens = 1;
@@ -498,6 +538,9 @@ void	lcspxcninit(void);
 int
 lcspxcnprobe()
 {
+	extern vaddr_t virtual_avail;
+	volatile u_int8_t *ch;
+
 	switch (vax_boardtype) {
 	case VAX_BTYP_49:
 		if ((vax_confdata & 8) != 0)
@@ -505,6 +548,24 @@ lcspxcnprobe()
 
 		if ((vax_confdata & 0x12) != 0x02)
 			return (0);
+
+		return (1);
+
+	case VAX_BTYP_VXT:
+		if ((vax_confdata & 2) == 0)
+			break; /* doesn't use graphics console */
+
+		/*
+		 * Check for video memory at SPX address.
+		 */
+		ioaccess(virtual_avail, LCSPX_FB_ADDR, 1);
+		ch = (volatile u_int8_t *)virtual_avail;
+		*ch = 0x01;
+		if ((*ch & 0x01) == 0)
+			break;
+		*ch = 0x00;
+		if ((*ch & 0x01) != 0)
+			break;
 
 		return (1);
 

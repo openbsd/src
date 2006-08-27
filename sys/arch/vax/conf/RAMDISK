@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2006/07/30 12:40:07 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2006/08/27 16:55:38 miod Exp $
 
 machine		vax			# machine type
 
@@ -22,6 +22,7 @@ option		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000/10{0,5,6}
+#option		VXT		# VXT2000 and VXT2000+
 
 maxusers	8		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
@@ -61,6 +62,7 @@ vsbus0		at mainbus0		# All VAXstations
 ibus0		at mainbus0		# All Microvax
 #nbi0		at mainbus0		# VAX 8800
 #xmi0		at mainbus0		# VAX 6000
+#vxtbus0		at mainbus0		# VXT2000
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
@@ -85,6 +87,11 @@ uba0		at ibus0		# Qbus adapter
 ze0		at ibus0		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet
 #shac0		at ibus0		# DSSI controller
+
+# VXT2000 devices
+#ze0		at vxtbus0		# SGEC on-board ethernet
+#qsc0		at vxtbus0		# serial ports
+#lcspx0		at vxtbus0		# color frame buffer
 
 # Devices connected at VAXBI
 #cpu*		at bi? node?		# KA820/KA825 cpu
@@ -157,8 +164,10 @@ wsdisplay*	at smg?
 #wsdisplay*	at qv0
 
 lkkbd0		at dz0 line 0
+#lkkbd0		at qsc0 line 2
 wskbd*		at lkkbd?
 #lkms0		at dz0 line 1
+#lkms0		at qsc0 line 3
 #wsmouse*	at lkms?
 
 pseudo-device	loop		1	# network loopback

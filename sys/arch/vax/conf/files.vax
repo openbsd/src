@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.39 2006/07/29 14:18:55 miod Exp $
+#	$OpenBSD: files.vax,v 1.40 2006/08/27 16:55:38 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -55,11 +55,17 @@ device	ibus {}
 attach	ibus at mainbus
 file	arch/vax/vax/ibus.c			ibus
 
+device	vxtbus {}
+attach	vxtbus at mainbus
+file	arch/vax/vxt/vxtbus.c			vxtbus
+
 device	ze: sgec, ether, ifnet
 attach	ze at ibus with ze_ibus
 file	arch/vax/if/if_ze.c			ze_ibus
 attach	ze at vsbus with ze_vsbus
 file	arch/vax/vsa/if_ze_vsbus.c		ze_vsbus
+attach	ze at vxtbus with ze_vxtbus
+file	arch/vax/vxt/if_ze_vxtbus.c		ze_vxtbus
 
 attach	le at ibus with le_ibus
 file	arch/vax/if/if_le.c			le_ibus
@@ -112,6 +118,11 @@ file	arch/vax/uba/ts.c			ts needs-flag
 
 attach	dz at vsbus with dz_vsbus
 file	arch/vax/vsa/dz_ibus.c			dz_vsbus
+
+# VXT serial
+device	qsc {line = -1}: tty
+attach	qsc at vxtbus
+file	arch/vax/vxt/qsc.c			qsc		needs-flag
 
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc {drive = -1}
@@ -174,16 +185,21 @@ file	arch/vax/vsa/lcg.c			lcg needs-flag
 
 # LCSPX framebuffer on KA49
 device	lcspx: wsemuldisplaydev, rasops8
-attach	lcspx at vsbus
+attach	lcspx at vsbus with lcspx_vsbus
+attach	lcspx at vxtbus with lcspx_vxtbus
 file	arch/vax/vsa/lcspx.c			lcspx needs-flag
 
 device	lkkbd: wskbddev 
 attach	lkkbd at dz with dzkbd
+attach	lkkbd at qsc with qsckbd
 file	arch/vax/dec/dzkbd.c			dzkbd needs-flag
+file	arch/vax/vxt/qsckbd.c			qsckbd needs-flag
 
 device	lkms: wsmousedev
 attach	lkms at dz with dzms
+attach	lkms at qsc with qscms
 file	arch/vax/dec/dzms.c			dzms needs-flag
+file	arch/vax/vxt/qscms.c			qscms needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -348,6 +364,7 @@ file	arch/vax/vax/ka650.c			vax650
 file	arch/vax/vax/ka660.c			vax660
 file	arch/vax/vax/ka670.c			vax670
 file	arch/vax/vax/ka680.c			vax680
+file	arch/vax/vax/vxt.c			vxt
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s

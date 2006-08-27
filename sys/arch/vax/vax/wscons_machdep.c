@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2006/07/29 14:18:57 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2006/08/27 16:55:41 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -23,6 +23,7 @@
 #include <sys/conf.h>
 #include <sys/kernel.h>
 
+#include <machine/nexus.h>
 #include <machine/vsbus.h>
 #include <machine/scb.h>
 #include <machine/sid.h>
@@ -40,6 +41,10 @@
 #include <vax/qbus/dzreg.h>
 #include <vax/qbus/dzvar.h>
 #include <vax/dec/dzkbdvar.h>
+
+#include "qsckbd.h"
+
+#include <vax/vxt/qscvar.h>
 
 #include "gpx.h"
 #include "lcg.h"
@@ -102,9 +107,18 @@ wscninit(struct consdev *cp)
 {
 	(*wsfbcninit)();
 
+	switch (vax_bustype) {
+	case VAX_VSBUS:
 #if NDZKBD > 0
-	dzkbd_cnattach(0); /* Connect keyboard and screen together */
+		dzkbd_cnattach(0); /* Connect keyboard and screen together */
 #endif
+		break;
+	case VAX_VXTBUS:
+#if NQSCKBD > 0
+		qsckbd_cnattach(QSC_LINE_KEYBOARD);
+#endif
+		break;
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2006/07/30 12:32:43 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.49 2006/08/27 16:55:41 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -145,9 +145,12 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 cons_decl(dz);
 cons_decl(gen);
 cons_decl(qd);
+cons_decl(qsc);
 cons_decl(ws);
 
+#include "dz.h"
 #include "qd.h"
+#include "qsc.h"
 #include "qv.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -161,7 +164,14 @@ struct	consdev constab[]={
 #define NGEN	0
 #endif
 #if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53
+#if NDZ > 0
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
+#endif
+#endif
+#ifdef VXT
+#if NQSC > 0
+	cons_init(qsc),	/* SC26C94 serial console on VXT2000 */
+#endif
 #endif
 #if VAX650 || VAX630
 #if NQV
@@ -172,7 +182,7 @@ struct	consdev constab[]={
 #endif
 #endif
 #if NWSDISPLAY > 0 || NWSKBD > 0
-	cons_init(ws),
+	cons_init(ws),	/* any other frame buffer console */
 #endif
 
 #ifdef notyet
@@ -277,7 +287,8 @@ cdev_decl(crx);
 #define cflwrite cflrw
 cdev_decl(cfl);
 
-#include "dz.h"
+cdev_decl(qsc);
+
 cdev_decl(dz);
 
 #include "vp.h"
@@ -393,7 +404,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 45  was Datakit */
 	cdev_notdef(),			/* 46  was Datakit */
 	cdev_notdef(),			/* 47 */
-	cdev_notdef(),			/* 48 */
+	cdev_tty_init(NQSC,qsc),	/* 48: SC26C94 on VXT2000 */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 49: system call tracing */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
