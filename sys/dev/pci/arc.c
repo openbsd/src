@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.44 2006/08/27 09:29:26 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.45 2006/08/27 09:56:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -264,6 +264,17 @@ struct arc_fw_volinfo {
 	u_int32_t		new_fail_mask;
 	u_int32_t		new_stripe_size;
 	u_int32_t		volume_status;
+#define ARC_FW_VOL_STATUS_NORMAL	0x00
+#define ARC_FW_VOL_STATUS_INITTING	(1<<0)
+#define ARC_FW_VOL_STATUS_FAILED	(1<<1)
+#define ARC_FW_VOL_STATUS_MIGRATING	(1<<2)
+#define ARC_FW_VOL_STATUS_REBUILDING	(1<<3)
+#define ARC_FW_VOL_STATUS_NEED_INIT	(1<<4)
+#define ARC_FW_VOL_STATUS_NEED_MIGRATE	(1<<5)
+#define ARC_FW_VOL_STATUS_INIT_FLAG	(1<<6)
+#define ARC_FW_VOL_STATUS_NEED_REGEN	(1<<7)
+#define ARC_FW_VOL_STATUS_CHECKING	(1<<8)
+#define ARC_FW_VOL_STATUS_NEED_CHECK	(1<<9)
 	u_int32_t		progress;
 	struct arc_fw_scsiattr	scsi_attr;
 	u_int8_t		member_disks;
@@ -1130,6 +1141,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	struct arc_fw_volinfo		*volinfo;
 	struct scsi_link		*sc_link;
 	struct device			*dev;
+	u_int32_t			status;
 	int				error = 0;
 
 	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_TEMP, M_WAITOK);
@@ -1139,22 +1151,25 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	arc_lock(sc);
 	error = arc_bio_getvol(sc, bv->bv_volid, volinfo);
 	arc_unlock(sc);
-
 	if (error != 0)
 		goto out;
-
-	sc_link = sc->sc_scsibus->sc_link[volinfo->scsi_attr.target]
-	    [volinfo->scsi_attr.lun];
-	if (sc_link == NULL) {
-		error = ENODEV;
-		goto out;
-	}
-	dev = sc_link->device_softc;
 
 	bv->bv_percent = -1;
 	bv->bv_seconds = 0;
 
-	bv->bv_status = BIOC_SVONLINE;
+	status = letoh32(volinfo->volume_status);
+	if (status == 0x0)
+		bv->bv_status = BIOC_SVONLINE;
+	else if (status & ARC_FW_VOL_STATUS_FAILED)
+		bv->bv_status = BIOC_SVOFFLINE;
+	else if (status & ARC_FW_VOL_STATUS_INITTING) {
+		bv->bv_status = BIOC_SVBUILDING;
+		bv->bv_percent = letoh32(volinfo->progress) / 10;
+	} else if (status & ARC_FW_VOL_STATUS_REBUILDING) {
+		bv->bv_status = BIOC_SVREBUILD;
+		bv->bv_percent = letoh32(volinfo->progress) / 10;
+	}
+
 	bv->bv_size = (u_int64_t)letoh32(volinfo->capacity) * ARC_BLOCKSIZE;
 
 	switch (volinfo->raid_level) {
@@ -1180,7 +1195,12 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	}
 
 	bv->bv_nodisk = volinfo->member_disks;
-	strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	sc_link = sc->sc_scsibus->sc_link[volinfo->scsi_attr.target]
+	    [volinfo->scsi_attr.lun];
+	if (sc_link != NULL) {
+		dev = sc_link->device_softc;
+		strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	}
 
 out:
 	free(volinfo, M_TEMP);
