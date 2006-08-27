@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze.c,v 1.5 2003/11/07 10:16:45 jmc Exp $	*/
+/*	$OpenBSD: if_ze.c,v 1.6 2006/08/27 16:50:44 miod Exp $	*/
 /*      $NetBSD: if_ze.c,v 1.3 2000/01/24 02:54:03 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -67,10 +67,6 @@ static	void	zeattach(struct device *, struct device *, void *);
 
 struct	cfattach ze_ibus_ca = {
 	sizeof(struct ze_softc), (cfmatch_t)zematch, zeattach
-};
-
-struct	cfdriver ze_cd = {
-	NULL, "ze", DV_IFNET
 };
 
 /*

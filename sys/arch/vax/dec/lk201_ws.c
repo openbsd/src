@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.9 2006/08/05 22:05:55 miod Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.10 2006/08/27 16:50:43 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -45,6 +45,10 @@
 #include <vax/dec/lk201reg.h>
 #include <vax/dec/lk201var.h>
 #include <vax/dec/wskbdmap_lk201.h> /* for {MIN,MAX}_LK201_KEY */
+
+struct	cfdriver lkkbd_cd = {
+	NULL, "lkkbd", DV_DULL
+};
 
 void	lk201_identify(void *);
 

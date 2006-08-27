@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.11 2006/08/05 22:05:55 miod Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.12 2006/08/27 16:50:43 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -88,10 +88,6 @@ void	dzkbd_attach(struct device *, struct device *, void *);
 
 struct cfattach dzkbd_ca = {
 	sizeof(struct dzkbd_softc), (cfmatch_t)dzkbd_match, dzkbd_attach,
-};
-
-struct	cfdriver lkkbd_cd = {
-	NULL, "lkkbd", DV_DULL
 };
 
 int	dzkbd_enable(void *, int);

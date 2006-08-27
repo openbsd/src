@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.12 2006/08/24 20:45:26 miod Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.13 2006/08/27 16:50:44 miod Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -77,6 +77,10 @@ static	int	ze_add_rxbuf(struct ze_softc *, int);
 static	void	ze_setup(struct ze_softc *);
 static	void	zetimeout(struct ifnet *);
 static	int	zereset(struct ze_softc *);
+
+struct	cfdriver ze_cd = {
+	NULL, "ze", DV_IFNET
+};
 
 #define	ZE_WCSR(csr, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, csr, val)
@@ -387,7 +391,7 @@ zestart(ifp)
 		 * Kick off the transmit logic, if it is stopped.
 		 */
 		if ((ZE_RCSR(ZE_CSR5) & ZE_NICSR5_TS) != ZE_NICSR5_TS_RUN)
-			ZE_WCSR(ZE_CSR1, -1);
+			ZE_WCSR(ZE_CSR1, ZE_NICSR1_TXPD);
 		sc->sc_nexttx = idx;
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
