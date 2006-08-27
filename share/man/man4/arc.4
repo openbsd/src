@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arc.4,v 1.4 2006/08/05 06:47:29 dlg Exp $
+.\"	$OpenBSD: arc.4,v 1.5 2006/08/27 12:05:31 dlg Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -67,10 +67,20 @@ ARC-1280ML PCI Express 24 Port SATA RAID Controller
 .El
 .Pp
 These controllers can support RAID levels 0, 1, 1E, 3, 5, 6, and JBOD.
+.Pp
+.Nm
+supports alarm control and monitoring of volumes configured on the
+controllers via the
+.Xr bio 4
+interface and the
+.Xr bioctl 8
+utility.
 .Sh SEE ALSO
+.Xr bio 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
-.Xr scsi 4
+.Xr scsi 4 ,
+.Xr bioctl 8
 .Sh HISTORY
 The
 .Nm
