@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.26 2006/08/24 20:21:53 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.27 2006/08/27 17:34:29 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -67,6 +67,19 @@ _mkdev(dl, dl*,
 	else
 		echo bad unit for dl in: $i
 	fi-})dnl
+__devitem(qsc, qsc*, VXT2000 serial ports)dnl
+_mkdev(qsc, qsc*,
+{-
+	case $U in
+	0)
+		for i in 0 1 2 3; do
+			M ttyb${i} c major_qsc_c ${i} 600
+		done
+	;;
+	*)
+		echo bad unit for qsc in: $i
+	;;
+	esac-})dnl
 dnl
 dnl
 _TITLE(make)
@@ -102,6 +115,7 @@ _TITLE(term)
 _DEV(dhu, 34)
 _DEV(dl, 66)
 _DEV(dz, 1)
+_DEV(qsc, 48)
 _TITLE(pty)
 _DEV(ptm, 75)
 _DEV(pty, 21)
@@ -209,4 +223,4 @@ target( all, st, 0, 1)dnl
 target( all, dhu, 0)dnl
 target( all, dz, 0)dnl
 target( all, dl, 0)dnl
-target( all, vt, 0)dnl
+dnl target( all, qsc, 0)dnl
