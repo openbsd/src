@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.258 2006/08/27 13:44:03 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.259 2006/08/27 14:00:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1499,6 +1499,7 @@ session_rrefresh(struct peer *p, u_int16_t afi, u_int8_t safi)
 		return;
 	}
 
+	afi = htons(afi);
 	errs += buf_add(buf->buf, &afi, sizeof(afi));
 	errs += buf_add(buf->buf, &null8, sizeof(null8));
 	errs += buf_add(buf->buf, &safi, sizeof(safi));
