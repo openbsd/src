@@ -1,7 +1,7 @@
-/*	$OpenBSD: cissreg.h,v 1.4 2005/12/13 15:55:59 brad Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.5 2006/08/27 20:51:09 mickey Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 2005,2006 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -39,6 +39,7 @@
 #define	CISS_CMS_CTRL_PDID	0x15
 #define	CISS_CMS_CTRL_PDBLINK	0x16
 #define	CISS_CMS_CTRL_PDBLSENS	0x17
+#define	CISS_CMS_CTRL_LDIDEXT	0x18
 #define	CISS_CMS_CTRL_FLUSH	0xc2
 #define	CISS_CMS_CTRL_ACCEPT	0xe0
 
@@ -122,6 +123,121 @@ struct ciss_flush {
 #define	CISS_FLUSH_ENABLE	0
 #define	CISS_FLUSH_DISABLE	1
 	u_int16_t	resv[255];
+} __packed;
+
+struct ciss_blink {
+	u_int32_t	duration;	/* x100ms */
+	u_int32_t	elapsed;	/* only for sense */
+	u_int8_t	pdtab[256];
+#define	CISS_BLINK_ALL	1
+#define	CISS_BLINK_TIMED 2
+	u_int8_t	res[248];
+} __packed;
+
+struct ciss_ldid {
+	u_int16_t	blksize;
+	u_int16_t	nblocks[2];	/* UNALIGNED! */
+	u_int8_t	params[16];
+	u_int8_t	type;
+#define	CISS_LD_RAID0	0
+#define	CISS_LD_RAID4	1
+#define	CISS_LD_RAID1	2
+#define	CISS_LD_RAID5	3
+#define	CISS_LD_RAID51	4
+#define	CISS_LD_RAIDADG	5
+	u_int8_t	res0;
+	u_int8_t	bios_dis;
+	u_int8_t	res1;
+	u_int32_t	id;
+	u_int8_t	label[64];
+	u_int64_t	nbigblocks;
+	u_int8_t	res2[410];
+} __packed;
+
+struct ciss_ldstat {
+	u_int8_t	stat;
+#define	CISS_LD_OK	0
+#define	CISS_LD_FAILED	1
+#define	CISS_LD_UNCONF	2
+#define	CISS_LD_DEGRAD	3
+#define	CISS_LD_RBLDRD	4	/* ready for rebuild */
+#define	CISS_LD_REBLD	5
+#define	CISS_LD_PDINV	6	/* wrong phys drive replaced */
+#define	CISS_LD_PDUNC	7	/* phys drive is not connected proper */
+#define	CISS_LD_EXPND	10	/* expanding */
+#define	CISS_LD_NORDY	11	/* volume is not ready */
+#define	CISS_LD_QEXPND	12	/* queued for expansion */
+	u_int8_t	failed[4];	/* failed map */
+	u_int8_t	res0[416];
+	u_int8_t	prog[4];	/* blocks left to rebuild/expand */
+	u_int8_t	rebuild;	/* drive that is rebuilding */
+	u_int16_t	remapcnt[32];	/* count of re3mapped blocks for pds */
+	u_int8_t	replaced[4];	/* replaced drives map */
+	u_int8_t	spare[4];	/* used spares map */
+	u_int8_t	sparestat;	/* spare status */
+#define	CISS_LD_CONF	0x01	/* spare configured */
+#define	CISS_LD_RBLD	0x02	/* spare is used and rebuilding */
+#define	CISS_LD_DONE	0x04	/* spare rebuild done */
+#define	CISS_LD_FAIL	0x08	/* at least one spare drive has failed */
+#define	CISS_LD_USED	0x10	/* at least one spare drive is used */
+#define	CISS_LD_AVAIL	0x20	/* at least one spare is available */
+	u_int8_t	sparemap[32];	/* spare->pd replacement map */
+	u_int8_t	replok[4];	/* replaced failed map */
+	u_int8_t	readyok;	/* ready to become ok */
+	u_int8_t	memfail;	/* cache mem failure */
+	u_int8_t	expfail;	/* expansion failure */
+	u_int8_t	rebldfail;	/* rebuild failure */
+#define	CISS_LD_RBLD_READ	0x01	/* read faild */
+#define	CISS_LD_RBLD_WRITE	0x02	/* write fail */
+	u_int8_t	bigfail[16];	/* bigmap vers of some of the above */
+	u_int8_t	bigremapcnt[256];
+	u_int8_t	bigreplaced[16];
+	u_int8_t	bigspare[16];
+	u_int8_t	bigsparemap[128];
+	u_int8_t	bigreplok[16];
+	u_int8_t	bigrebuild;	/* big-number rebuilding driveno */
+} __packed;
+
+struct ciss_pdid {
+	u_int8_t	bus;
+	u_int8_t	target;
+	u_int16_t	blksz;
+	u_int32_t	nblocks;
+	u_int32_t	resblks;
+	u_int8_t	model[40];
+	u_int8_t	serial[40];
+	u_int8_t	revision[8];
+	u_int8_t	bits;
+	u_int8_t	res0[2];
+	u_int8_t	present;
+#define	CISS_PD_PRESENT	0x01
+#define	CISS_PD_NONDSK	0x02
+#define	CISS_PD_WIDE	0x04
+#define	CISS_PD_SYNC	0x08
+#define	CISS_PD_NARROW	0x10
+#define	CISS_PD_W2NARR	0x20	/* wide downgrade to narrow */
+#define	CISS_PD_ULTRA	0x40
+#define	CISS_PD_ULTRA2	0x80
+	u_int8_t	config;
+#define	CISS_PD_SMART	0x01
+#define	CISS_PD_SMERRR	0x02
+#define	CISS_PD_SMERRE	0x04
+#define	CISS_PD_SMERRD	0x08
+#define	CISS_PD_EXT	0x10
+#define	CISS_PD_CONF	0x20
+#define	CISS_PD_SPARE	0x40
+#define	CISS_PD_CASAVE	0x80
+	u_int8_t	res1;
+	u_int8_t	cache;
+#define	CISS_PD_CACHE	0x01
+#define	CISS_PD_CASAFE	0x01
+	u_int8_t	res2[5];
+	u_int8_t	connector[2];
+	u_int8_t	res3;
+	u_int8_t	bay;
+	u_int16_t	rpm;
+	u_int8_t	type;
+	u_int8_t	res4[393];
 } __packed;
 
 struct ciss_cmd {
