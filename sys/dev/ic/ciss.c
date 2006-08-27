@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.15 2006/08/27 20:51:09 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.16 2006/08/27 22:12:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -419,9 +419,12 @@ ciss_attach(struct ciss_softc *sc)
 			sc->sensors[i].status = SENSOR_S_UNKNOWN;
 			strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
 			    sizeof(sc->sensors[i].device));
-			strlcpy(sc->sensors[i].desc,
-			    ((struct device *)scsibus->sc_link[i][0]->device_softc)->dv_xname,
+			strlcpy(sc->sensors[i].desc, ((struct device *)
+			    scsibus->sc_link[i][0]->device_softc)->dv_xname,
 			    sizeof(sc->sensors[i].desc));
+			strlcpy(sc->sc_lds[i]->xname, ((struct device *)
+			    scsibus->sc_link[i][0]->device_softc)->dv_xname,
+			    sizeof(sc->sc_lds[i]->xname));
 		}
 		if (sensor_task_register(sc, ciss_sensors, 10)) {
 			for (i = sc->maxunits; i--; )
@@ -1051,7 +1054,7 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		bv->bv_size = blks * (u_quad_t)letoh16(ldid->blksize);
 		bv->bv_level = ciss_level[ldid->type];
 		bv->bv_nodisk = ldp->ndrives;
-		strlcpy(bv->bv_dev, ldid->label, sizeof(bv->bv_dev));
+		strlcpy(bv->bv_dev, ldp->xname, sizeof(bv->bv_dev));
 		strlcpy(bv->bv_vendor, "CISS", sizeof(bv->bv_vendor));
 		ldstat = sc->scratch;
 		bzero(ldstat, sizeof(*ldstat));

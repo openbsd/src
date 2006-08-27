@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.3 2006/08/27 20:51:09 mickey Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.4 2006/08/27 22:12:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -21,6 +21,7 @@ struct sensor;
 
 struct ciss_ld {
 	struct ciss_blink bling;	/* a copy of blink state */
+	char	xname[16];		/* copy of the sdN name */
 	int	ndrives;
 	u_int8_t tgts[1];
 };
