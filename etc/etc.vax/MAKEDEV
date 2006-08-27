@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.26 2006/08/24 20:21:53 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.27 2006/08/27 17:34:29 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -57,6 +57,7 @@
 #	dhu*	UNIBUS DHU11
 #	dl*	UNIBUS DL11
 #	dz*	UNIBUS DZ11 and DZ32
+#	qsc*	VXT2000 serial ports
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
@@ -376,6 +377,20 @@ pty*)
 
 ptm)
 	M ptm c 75 0 666
+	;;
+
+qsc*)
+	
+	case $U in
+	0)
+		for i in 0 1 2 3; do
+			M ttyb${i} c 48 ${i} 600
+		done
+	;;
+	*)
+		echo bad unit for qsc in: $i
+	;;
+	esac
 	;;
 
 dz*)
