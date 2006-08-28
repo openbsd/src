@@ -34,6 +34,7 @@ struct pgt_desc {
 	void		       *pd_mem;
 	bus_addr_t		pd_dmaaddr;
 	bus_dmamap_t		pd_dmam;
+	bus_dma_segment_t	pd_dmas;
 	struct pgt_frag	       *pd_fragp;
 	unsigned int		pd_fragnum;
 };
@@ -143,15 +144,18 @@ struct pgt_softc {
 	struct resource	       *sc_iores;	/* IO memory resource */
 	bus_space_tag_t		sc_iotag;
 	bus_space_handle_t	sc_iohandle; 
-	bus_dma_tag_t		sc_cbdmat;	/* control block DMA */
+	bus_dma_tag_t		sc_dmat;
+	//bus_dma_tag_t		sc_cbdmat;	/* control block DMA */
 	bus_dmamap_t		sc_cbdmam;
+	bus_dma_segment_t	sc_cbdmas;
 	bus_addr_t		sc_cbdmabusaddr;
 	struct pgt_control_block *sc_cb;	/* DMA-mapped control block */
-	bus_dma_tag_t		sc_psmdmat;	/* power save buffer DMA */
+	//bus_dma_tag_t		sc_psmdmat;	/* power save buffer DMA */
 	bus_dmamap_t		sc_psmdmam;
+	bus_dma_segment_t	sc_psmdmas;
 	bus_addr_t		sc_psmdmabusaddr;
 	void		       *sc_psmbuf;	/* DMA-mapped psm frame area */
-	bus_dma_tag_t		sc_fragdmat;	/* tags for all queues */
+	//bus_dma_tag_t		sc_fragdmat;	/* tags for all queues */
 	struct pgt_mgmt_descq	sc_mgmtinprog;
 	struct pgt_descq	sc_freeq[PFF_QUEUE_COUNT];
 	size_t			sc_freeq_count[PFF_QUEUE_COUNT];

@@ -217,6 +217,10 @@ int	 pgt_media_change(struct ifnet *);
 void	 pgt_media_status(struct ifnet *, struct ifmediareq *);
 int	 pgt_new_state(struct ieee80211com *, enum ieee80211_state, int);
 int	 pgt_drain_tx_queue(struct pgt_softc *, enum pgt_queue);
+int	 pgt_dma_alloc(struct pgt_softc *);
+int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
+void	 pgt_dma_free(struct pgt_softc *);
+void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
 
 void
 pgt_write_memory_barrier(struct pgt_softc *sc)
@@ -278,7 +282,7 @@ pgt_reinit_rx_desc_frag(struct pgt_softc *sc, struct pgt_desc *pd)
 	pd->pd_fragp->pf_size = htole16(PFF_FRAG_SIZE);
 	pd->pd_fragp->pf_flags = htole16(0);
 	/* XXX */
-	bus_dmamap_sync(sc->sc_fragdmat, pd->pd_dmam, 0, 0, BUS_DMASYNC_POSTCPU2DMA);
+	bus_dmamap_sync(sc->sc_dmat, pd->pd_dmam, 0, 0, BUS_DMASYNC_POSTCPU2DMA);
 }
 
 int
@@ -288,9 +292,9 @@ pgt_load_tx_desc_frag(struct pgt_softc *sc, enum pgt_queue pq,
 	int error;
 
 	/* XXX */
-        //error = bus_dmamap_load(sc->sc_fragdmat, pd->pd_dmam, pd->pd_mem,
+        //error = bus_dmamap_load(sc->sc_dmat, pd->pd_dmam, pd->pd_mem,
         //    PFF_FRAG_SIZE, pgt_load_busaddr, &pd->pd_dmaaddr, 0);
-	error = bus_dmamap_load(sc->sc_fragdmat, pd->pd_dmam, pd->pd_mem,
+	error = bus_dmamap_load(sc->sc_dmat, pd->pd_dmam, pd->pd_mem,
 	    PFF_FRAG_SIZE, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load %s tx DMA: %d\n",
@@ -302,7 +306,7 @@ pgt_load_tx_desc_frag(struct pgt_softc *sc, enum pgt_queue pq,
 	pd->pd_fragp->pf_size = htole16(PFF_FRAG_SIZE);
 	pd->pd_fragp->pf_flags = htole16(0);
 	/* XXX */
-	bus_dmamap_sync(sc->sc_fragdmat, pd->pd_dmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, pd->pd_dmam, 0, 0,
 	    BUS_DMASYNC_POSTCPU2DMA);
 	return (0);
 }
@@ -310,7 +314,7 @@ pgt_load_tx_desc_frag(struct pgt_softc *sc, enum pgt_queue pq,
 void
 pgt_unload_tx_desc_frag(struct pgt_softc *sc, struct pgt_desc *pd)
 {
-        bus_dmamap_unload(sc->sc_fragdmat, pd->pd_dmam);
+        bus_dmamap_unload(sc->sc_dmat, pd->pd_dmam);
 	pd->pd_dmaaddr = 0;
 }
 
@@ -504,7 +508,7 @@ pgt_reset(struct pgt_softc *sc)
 	 * requests in progress.
 	 */
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU | BUS_DMASYNC_PRECPU2DMA);
 	pgt_cleanup_queue(sc, PFF_QUEUE_DATA_LOW_RX,
 	    &sc->sc_cb->pcb_data_low_rx[0]);
@@ -519,7 +523,7 @@ pgt_reset(struct pgt_softc *sc)
 	pgt_cleanup_queue(sc, PFF_QUEUE_MGMT_TX,
 	    &sc->sc_cb->pcb_mgmt_tx[0]);
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTCPU2DMA | BUS_DMASYNC_PREDMA2CPU);
 	if (sc->sc_flags & SC_NEEDS_FIRMWARE) {
 		error = pgt_upload_firmware(sc);
@@ -730,6 +734,10 @@ pgt_attach(struct pgt_softc *sc)
 {
 	int error;
 
+	error = pgt_dma_alloc(sc);
+	if (error)
+		return (error);
+
 	return (0);
 
 	sc->sc_ic.ic_if.if_softc = sc;
@@ -883,7 +891,7 @@ pgt_update_intr(struct pgt_softc *sc, struct mbuf ***last_nextpkt,
 	int i, prevwasmf;
 
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU | BUS_DMASYNC_PRECPU2DMA);
 	pgt_debug_events(sc, "intr");
 	/*
@@ -996,7 +1004,7 @@ pgt_update_intr(struct pgt_softc *sc, struct mbuf ***last_nextpkt,
 	 * Write out what we've finished with.
 	 */
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTCPU2DMA | BUS_DMASYNC_PREDMA2CPU);
 }
 
@@ -1289,7 +1297,7 @@ pgt_wakeup_intr(struct pgt_softc *sc)
 	shouldupdate = 0;
 	/* Check for any queues being empty before updating. */
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU);
 	for (i = 0; !shouldupdate && i < PFF_QUEUE_COUNT; i++) {
 		if (pgt_queue_is_tx(i))
@@ -1319,7 +1327,7 @@ pgt_sleep_intr(struct pgt_softc *sc)
 	allowed = 1;
 	/* Check for any queues not being empty before allowing. */
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU);
 	for (i = 0; allowed && i < PFF_QUEUE_COUNT; i++) {
 		if (pgt_queue_is_tx(i))
@@ -1610,7 +1618,7 @@ pgt_txdone(struct pgt_softc *sc, enum pgt_queue pq)
 	TAILQ_INSERT_TAIL(&sc->sc_freeq[pq], pd, pd_link);
 	sc->sc_freeq_count[pq]++;
 	/* XXX */
-	bus_dmamap_sync(sc->sc_fragdmat, pd->pd_dmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, pd->pd_dmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU);
 	/* Management frames want completion information. */
 	if (sc->sc_debug & SC_DEBUG_QUEUES) {
@@ -1645,7 +1653,7 @@ pgt_rxdone(struct pgt_softc *sc, enum pgt_queue pq)
 	TAILQ_INSERT_TAIL(&sc->sc_dirtyq[pq], pd, pd_link);
 	sc->sc_dirtyq_count[pq]++;
 	/* XXX */
-	bus_dmamap_sync(sc->sc_fragdmat, pd->pd_dmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, pd->pd_dmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU);
 	if (sc->sc_debug & SC_DEBUG_QUEUES)
 		printf("%s: queue: rx %u <- [%u]\n",
@@ -2076,18 +2084,18 @@ pgt_desc_transmit(struct pgt_softc *sc, enum pgt_queue pq, struct pgt_desc *pd,
 		printf("%s: queue: tx %u -> [%u]\n", sc->sc_dev.dv_xname,
 		    pd->pd_fragnum, pq);
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU | BUS_DMASYNC_PRECPU2DMA);
 	if (morecoming)
 		pd->pd_fragp->pf_flags |= htole16(PF_FLAG_MF);
 	pd->pd_fragp->pf_size = htole16(len);
 	/* XXX */
-	bus_dmamap_sync(sc->sc_fragdmat, pd->pd_dmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, pd->pd_dmam, 0, 0,
 	    BUS_DMASYNC_POSTCPU2DMA);
 	sc->sc_cb->pcb_driver_curfrag[pq] =
 	    htole32(letoh32(sc->sc_cb->pcb_driver_curfrag[pq]) + 1);
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTCPU2DMA | BUS_DMASYNC_PREDMA2CPU);
 	if (!morecoming)
 		pgt_maybe_trigger(sc, pq);
@@ -3683,12 +3691,12 @@ pgt_drain_tx_queue(struct pgt_softc *sc, enum pgt_queue pq)
 	int wokeup = 0;
 
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTDMA2CPU | BUS_DMASYNC_PRECPU2DMA);
 	sc->sc_cb->pcb_device_curfrag[pq] =
 	    sc->sc_cb->pcb_driver_curfrag[pq];
 	/* XXX */
-	bus_dmamap_sync(sc->sc_cbdmat, sc->sc_cbdmam, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0, 0,
 	    BUS_DMASYNC_POSTCPU2DMA | BUS_DMASYNC_PREDMA2CPU);
 	while (!TAILQ_EMPTY(&sc->sc_dirtyq[pq])) {
 		struct pgt_desc *pd;
@@ -3709,4 +3717,258 @@ pgt_drain_tx_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		}
 	}
 	return (wokeup);
+}
+
+int
+pgt_dma_alloc(struct pgt_softc *sc)
+{
+	size_t size;
+	int i, error, nsegs;
+
+	for (i = 0; i < PFF_QUEUE_COUNT; i++)
+		TAILQ_INIT(&sc->sc_freeq[i]);
+
+	/*
+	 * control block
+	 */
+	size = sizeof(struct pgt_control_block);
+
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_ALLOCNOW, &sc->sc_cbdmam);
+	if (error != 0) {
+		printf("%s: can not create DMA tag for control block\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE,
+	    0, &sc->sc_cbdmas, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: can not allocate DMA memory for control block\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cbdmas, nsegs,
+	    size, (caddr_t *)&sc->sc_cb, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: can not map DMA memory for control block\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cbdmam,
+	    sc->sc_cb, size, NULL, BUS_DMA_WAITOK);
+	if (error != 0) {
+		printf("%s: can not load DMA map for control block\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	/*
+	 * powersave
+	 */
+	size = PFF_FRAG_SIZE * PFF_PSM_BUFFER_FRAME_COUNT;
+
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_ALLOCNOW, &sc->sc_psmdmam);
+	if (error != 0) {
+		printf("%s: can not create DMA tag for powersave\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE,
+	   0, &sc->sc_psmdmas, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: can not allocate DMA memory for powersave\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_psmdmas, nsegs,
+	    size, (caddr_t *)&sc->sc_psmbuf, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: can not map DMA memory for powersave\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_psmdmam,
+	    sc->sc_psmbuf, size, NULL, BUS_DMA_WAITOK);
+	if (error != 0) {
+		printf("%s: can not load DMA map for powersave\n",
+		    sc->sc_dev);
+		goto out;
+	}
+
+	/*
+	 * fragments
+	 */
+	error = pgt_dma_alloc_queue(sc, PFF_QUEUE_DATA_LOW_RX);
+	if (error != 0)
+		goto out;
+
+	error = pgt_dma_alloc_queue(sc, PFF_QUEUE_DATA_LOW_TX);
+	if (error != 0)
+		goto out;
+
+	error = pgt_dma_alloc_queue(sc, PFF_QUEUE_DATA_HIGH_RX);
+	if (error != 0)
+		goto out;
+
+	error = pgt_dma_alloc_queue(sc, PFF_QUEUE_DATA_HIGH_TX);
+	if (error != 0)
+		goto out;
+
+	error = pgt_dma_alloc_queue(sc, PFF_QUEUE_MGMT_RX);
+	if (error != 0)
+		goto out;
+
+	error = pgt_dma_alloc_queue(sc, PFF_QUEUE_MGMT_TX);
+	if (error != 0)
+		goto out;
+
+out:
+	if (error) {
+		printf("%s: error in DMA allocation\n", sc->sc_dev);
+		pgt_dma_free(sc);
+	}
+
+	return (error);
+}
+
+int
+pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
+{
+	struct pgt_desc *pd;
+	struct pgt_frag *pcbqueue;
+	size_t i, qsize;
+	int error, nsegs;
+
+	switch (pq) {
+		case PFF_QUEUE_DATA_LOW_RX:
+			pcbqueue = sc->sc_cb->pcb_data_low_rx;
+			qsize = PFF_QUEUE_DATA_RX_SIZE;
+			break;
+		case PFF_QUEUE_DATA_LOW_TX:
+			pcbqueue = sc->sc_cb->pcb_data_low_tx;
+			qsize = PFF_QUEUE_DATA_TX_SIZE;
+			break;
+		case PFF_QUEUE_DATA_HIGH_RX:
+			pcbqueue = sc->sc_cb->pcb_data_high_rx;
+			qsize = PFF_QUEUE_DATA_RX_SIZE;
+			break;
+		case PFF_QUEUE_DATA_HIGH_TX:
+			pcbqueue = sc->sc_cb->pcb_data_high_tx;
+			qsize = PFF_QUEUE_DATA_TX_SIZE;
+			break;
+		case PFF_QUEUE_MGMT_RX:
+			pcbqueue = sc->sc_cb->pcb_mgmt_rx;
+			qsize = PFF_QUEUE_MGMT_SIZE;
+			break;
+		case PFF_QUEUE_MGMT_TX:
+			pcbqueue = sc->sc_cb->pcb_mgmt_tx;
+			qsize = PFF_QUEUE_MGMT_SIZE;
+			break;
+	}
+
+	for (i = 0; i < qsize; i++) {
+		pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
+
+		error = bus_dmamap_create(sc->sc_dmat, PFF_FRAG_SIZE, 1,
+		    PFF_FRAG_SIZE, 0, BUS_DMA_ALLOCNOW, &pd->pd_dmam);
+		if (error != 0) {
+			printf("%s: can not create DMA tag for fragment\n",
+			    sc->sc_dev);
+			break;
+		}
+
+		error = bus_dmamem_alloc(sc->sc_dmat, PFF_FRAG_SIZE, PAGE_SIZE,
+		    0, &pd->pd_dmas, 1, &nsegs, BUS_DMA_WAITOK);
+		if (error != 0) {
+			printf("%s: error alloc frag %u on queue %u\n",
+			    sc->sc_dev, i, pq, error);
+			free(pd, M_DEVBUF);
+			break;
+		}
+
+		error = bus_dmamem_map(sc->sc_dmat, &pd->pd_dmas, nsegs,
+		    PFF_FRAG_SIZE, (caddr_t *)&pd->pd_mem, BUS_DMA_WAITOK);
+		if (error != 0) {
+			printf("%s: error map frag %u on queue %u\n",
+			    sc->sc_dev, i, pq);
+			free(pd, M_DEVBUF);
+			break;
+		}
+
+		if (pgt_queue_is_rx(pq)) {
+			error = bus_dmamap_load(sc->sc_dmat, pd->pd_dmam,
+			    pd->pd_mem, PFF_FRAG_SIZE, NULL, BUS_DMA_WAITOK);
+			if (error != 0) {
+				printf("%s: error load frag %u on queue %u\n",
+				    sc->sc_dev, i, pq);
+				bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas,
+				    nsegs);
+				free(pd, M_DEVBUF);
+				break;
+			}
+		}
+		TAILQ_INSERT_TAIL(&sc->sc_freeq[pq], pd, pd_link);
+	}
+
+	return (error);
+}
+
+void
+pgt_dma_free(struct pgt_softc *sc)
+{
+	/*
+	 * fragments
+	 */
+	if (sc->sc_dmat != NULL) {
+		pgt_dma_free_queue(sc, PFF_QUEUE_DATA_LOW_RX);
+		pgt_dma_free_queue(sc, PFF_QUEUE_DATA_LOW_TX);
+		pgt_dma_free_queue(sc, PFF_QUEUE_DATA_HIGH_RX);
+		pgt_dma_free_queue(sc, PFF_QUEUE_DATA_HIGH_TX);
+		pgt_dma_free_queue(sc, PFF_QUEUE_MGMT_RX);
+		pgt_dma_free_queue(sc, PFF_QUEUE_MGMT_TX);
+	}
+
+	/*
+	 * powersave
+	 */
+	if (sc->sc_psmbuf != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_psmdmam);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_psmdmas, 1);
+		sc->sc_psmbuf = NULL;
+		sc->sc_psmdmam = NULL;
+	}
+
+	/*
+	 * control block
+	 */
+	if (sc->sc_cb != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_cbdmam);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_cbdmas, 1);
+		sc->sc_cb = NULL;
+		sc->sc_cbdmam = NULL;
+	}
+}
+
+void
+pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq)
+{
+	struct pgt_desc	*pd;
+
+	while (!TAILQ_EMPTY(&sc->sc_freeq[pq])) {
+		pd = TAILQ_FIRST(&sc->sc_freeq[pq]);
+		TAILQ_REMOVE(&sc->sc_freeq[pq], pd, pd_link);
+		if (pd->pd_dmam != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, pd->pd_dmam);
+			pd->pd_dmam = NULL;
+		}
+		bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas, 1);
+		free(pd, M_DEVBUF);
+	}
 }
