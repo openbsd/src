@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.127 2006/08/16 21:20:29 kettenis Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.128 2006/08/28 11:38:17 dlg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -186,6 +186,8 @@ ahc*	at pci?			# Adaptec 2940/3940/78?? SCSI controllers
 scsibus* at ahc?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
+arc*	at pci?			# Areca RAID Controllers
+scsibus* at arc?
 mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
 scsibus* at mpi?
 dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
