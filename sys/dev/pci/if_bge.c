@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.169 2006/08/27 21:42:13 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.170 2006/08/28 00:49:47 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1656,7 +1656,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	const struct bge_revision *br;
-	pcireg_t		pm_ctl, memtype;
+	pcireg_t		pm_ctl, memtype, subid;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_size_t		size;
@@ -1668,6 +1668,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	caddr_t			kva;
 
 	sc->bge_pa = *pa;
+
+	subid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	/*
 	 * Map control/status registers.
@@ -1893,9 +1895,13 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		sc->bge_flags |= BGE_TBI;
 
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
-	if ((pci_conf_read(pc, pa->pa_tag, BGE_PCI_SUBSYS) >> 16) ==
-	    SK_SUBSYSID_9D41)
+	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41)
 		sc->bge_flags |= BGE_TBI;
+
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
+	    PCI_VENDOR(subid) == DELL_VENDORID)
+		sc->bge_flags |= BGE_NO3LED;
 
 	if (sc->bge_flags & BGE_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
