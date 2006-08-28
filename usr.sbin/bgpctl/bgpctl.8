@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.35 2006/08/23 08:21:11 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.36 2006/08/28 23:16:51 stevesk Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -54,11 +54,11 @@ to communicate with
 The commands are as follows:
 .Bl -tag -width xxxxxx
 .It Cm fib couple
-Insert the learned routes into the Forward Information Base a.k.a. the kernel
-routing table.
+Insert the learned routes into the Forwarding Information Base a.k.a.
+the kernel routing table.
 .It Cm fib decouple
-Remove the learned routes from the Forward Information Base a.k.a. the kernel
-routing table.
+Remove the learned routes from the Forwarding Information Base a.k.a.
+the kernel routing table.
 .It Cm neighbor Ar peer Cm up
 Take the BGP session to the specified neighbor up.
 .Ar peer
@@ -96,7 +96,7 @@ Reload the configuration file.
 .It Cm show fib Ar filter
 Show routes from
 .Xr bgpd 8 Ns 's
-view of the Forward Information Base.
+view of the Forwarding Information Base.
 .Ar filter
 can be an IP address, in which case the route to this address is shown,
 or a flag:
