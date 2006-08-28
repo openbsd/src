@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.7 2006/08/28 02:56:33 mickey Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.8 2006/08/28 03:22:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -42,9 +42,16 @@
 #define	CISS_CMS_CTRL_PDBLINK	0x16
 #define	CISS_CMS_CTRL_PDBLSENS	0x17
 #define	CISS_CMS_CTRL_LDIDEXT	0x18
+#define	CISS_CMS_CTRL_REDSTAT	0x82
 #define	CISS_CMS_CTRL_FLUSH	0xc2
 #define	CISS_CMS_CTRL_ACCEPT	0xe0
 
+#define	CISS_CMD_READ	0xc0
+#define	CISS_CMD_READ_EVENT	0xd0
+#define	CISS_EVENT_RECENT	0x08	/* ignore previous events */
+#define	CISS_EVENT_RSTOLD	0x04	/* start w/ the oldest one */
+#define	CISS_EVENT_ORDER	0x02	/* keep the order */
+#define	CISS_EVENT_SYNC		0x01	/* sync mode: wait till new come */
 #define	CISS_CMD_LDMAP	0xc2
 #define	CISS_CMD_PDMAP	0xc3
 
@@ -242,6 +249,152 @@ struct ciss_pdid {
 	u_int16_t	rpm;
 	u_int8_t	type;
 	u_int8_t	res4[393];
+} __packed;
+
+struct ciss_event {
+	u_int32_t	reltime;	/* time since controller boot */
+	u_int16_t	event;
+#define	CISS_EVCLS_PROTO	0
+#define	CISS_EVCLS_PLUG		1
+#define	CISS_EVCLS_HW		2
+#define	CISS_EVCLS_ENV		3
+#define	CISS_EVCLS_PD		4	/* ciss_evpdchg in details */
+#define	CISS_EVCLS_LD		5
+#define	CISS_EVCLS_CTRL		6
+#define	CISS_EVCLS_CISS		8	/*  funky errors */
+#define	CISS_EVCLS_RESV		9
+	u_int16_t	subevent;
+#define	CISS_EVPROTO_STAT	0
+#define	CISS_EVPROTO_ERR	1
+#define	CISS_EVPLUG_PDCHG	0	/* ciss_evpdchg */
+#define	CISS_EVPLUG_POWER	1	/* ciss_evpschg */
+#define	CISS_EVPLUG_FAN		2	/* ciss_evfanchg */
+#define	CISS_EVPLUG_UPS		3	/* ciss_evupschg */
+#define	CISS_EVPLUG_CTRL	4	/* ciss_evctrlchg: ctrl removed? (; */
+#define	CISS_EVHW_CABLES	0
+#define	CISS_EVHW_MEMORY	1
+#define	CISS_EVHW_FAN		2	/* detail as in CISS_EVPLUG_FAN */
+#define	CISS_EVHW_VRM		3
+#define	CISS_EVENV_TEMP		0	/* ciss_evtempchg */
+#define	CISS_EVENV_PS		1
+#define	CISS_EVENV_CHASSIS	2
+#define	CISS_EVENV_AC		3
+#define	CISS_EVPD_STAT		0
+#define	CISS_EVLD_STAT		0
+#define	CISS_EVLD_ERR		1
+#define	CISS_EVLD_CHECK		2	/* surface check */
+#define	CISS_EVCTRL_STAT	0
+	u_int16_t	detail;
+#define	CISS_EVSTAT_NONE	0
+#define	CISS_EVSTAT_DISABLE	1
+#define	CISS_EVSTAT_TMO		2	/* async event poll timeout */
+#define	CISS_EVERR_OVERFLOW	0	/* event queue overflow */
+#define	CISS_EVPLUG_REMOVE	0
+#define	CISS_EVPLUG_INSERT	1
+#define	CISS_EVFAN_FAULT	0
+#define	CISS_EVFAN_DEGRADED	1
+#define	CISS_EVFAN_OK		2
+#define	CISS_EVVRM_REMOVE	0
+#define	CISS_EVVRM_INSERT	1
+#define	CISS_EVVRM_FAILED	2
+#define	CISS_EVVRM_OK		3
+#define	CISS_EVTEMP_LIMEX	0	/* limit exceeded */
+#define	CISS_EVTEMP_WARN	1
+#define	CISS_EVTEMP_OK		2
+#define	CISS_EVPS_FAIL		0
+#define	CISS_EVPS_OK		2
+#define	CISS_EVCHAS_OPEN	0
+#define	CISS_EVCHAS_CLOSE	2
+#define	CISS_EVAC_FAIL		0
+#define	CISS_EVAC_BATTLOW	1
+#define	CISS_EVPDSTAT_FAIL	0
+#define	CISS_EVLDSTAT_CHG	0	/* ciss_evldchg */
+#define	CISS_EVLDSTAT_EXMEDIA	1	/* untolerant cfg got drive replaced */
+#define	CISS_EVLDSTAT_RERDERR	2	/* ciss_evldrblderr */
+#define	CISS_EVLDSTAT_REWRERR	3	/* ciss_evldrblderr */
+#define	CISS_EVLDERR_FATAL	0	/* ciss_evlderr */
+#define	CISS_EVCHECK_DONE	0	/* details have onle 16bit ld num */
+#define	CISS_EVCTRLSTAT_CHG	0	/* ciss_evctrlstat */
+	u_int8_t	data[64];
+	u_int8_t	msg[80];
+	u_int32_t	tag;
+	u_int16_t	monday;
+	u_int16_t	year;
+	u_int32_t	time;
+	u_int16_t	presec;		/* time for events before boot */
+	u_int8_t	device[8];
+	u_int8_t	resv[336];
+} __packed;
+
+struct ciss_evpdchg {	/* details pointer */
+	u_int16_t	pd;
+	u_int8_t	flag;		/* 1 for configured */
+	u_int8_t	spare;
+	u_int8_t	bigpd;		/* big number of the pd */
+	u_int8_t	baynum;
+} __packed;
+
+struct ciss_evpschg {	/* details pointer */
+	u_int16_t	port;
+	u_int16_t	psid;
+	u_int16_t	box;
+} __packed;
+
+struct ciss_evfanchg {	/* details pointer */
+	u_int16_t	port;
+	u_int16_t	fanid;
+	u_int16_t	box;
+} __packed;
+
+struct ciss_evupschg {	/* details pointer */
+	u_int16_t	port;
+	u_int16_t	upsid;
+} __packed;
+
+struct ciss_evctrlchg {	/* details pointer */
+	u_int16_t	slot;
+} __packed;
+
+struct ciss_evtempchg {	/* details pointer */
+	u_int16_t	port;
+	u_int16_t	sensid;
+	u_int16_t	box;
+} __packed;
+
+struct ciss_evldchg {	/* details pointer */
+	u_int16_t	ld;
+	u_int8_t	prevstat;	/* same as ldstat->state */
+	u_int8_t	newstat;	/* same as ldstat->state */
+	u_int8_t	sparestat;
+} __packed;
+
+struct ciss_evldrblderr { /* details pointer */
+	u_int16_t	ld;
+	u_int8_t	replace;
+	u_int8_t	errpd;
+	u_int8_t	bigreplace;
+	u_int8_t	bigerrpd;
+} __packed;
+
+struct ciss_evlderr {	/* details pointer */
+	u_int16_t	ld;
+	u_int16_t	blkno[2];	/* unaligned; if >2tb see big later */
+	u_int16_t	count;
+	u_int8_t	ldcmd;
+	u_int8_t	bus;
+	u_int8_t	target;
+	u_int8_t	bigblkno[8];	/* unaligned */
+} __packed;
+
+struct ciss_evctrlstat { /* details pointer */
+	u_int8_t	prefctrl;
+	u_int8_t	currmode;
+	u_int8_t	redctrl;
+	u_int8_t	redfail;
+	u_int8_t	prevctrl;
+	u_int8_t	prevmode;
+	u_int8_t	prevred;
+	u_int8_t	prevfail;
 } __packed;
 
 struct ciss_cmd {
