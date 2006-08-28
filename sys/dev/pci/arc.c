@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.47 2006/08/28 00:53:34 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.48 2006/08/28 05:36:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -462,6 +462,8 @@ int			arc_map_pci_resources(struct arc_softc *,
 			    struct pci_attach_args *);
 int			arc_query_firmware(struct arc_softc *);
 
+
+#if NBIO > 0
 /* stuff to do messaging via the doorbells */
 void			arc_lock(struct arc_softc *);
 void			arc_unlock(struct arc_softc *);
@@ -471,7 +473,6 @@ int			arc_msgbuf(struct arc_softc *, void *, size_t,
 			    void *, size_t);
 
 /* bioctl */
-#if NBIO > 0
 int			arc_bioctl(struct device *, u_long, caddr_t);
 int			arc_bio_inq(struct arc_softc *, struct bioc_inq *);
 int			arc_bio_vol(struct arc_softc *, struct bioc_vol *);
@@ -1312,7 +1313,6 @@ out:
 	free(volinfo, M_TEMP);
 	return (error);
 }
-#endif /* NBIO > 0 */
 
 u_int8_t
 arc_msg_cksum(void *cmd, u_int16_t len)
@@ -1503,6 +1503,7 @@ arc_wait(struct arc_softc *sc)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	splx(s);
 }
+#endif /* NBIO > 0 */
 
 u_int32_t
 arc_read(struct arc_softc *sc, bus_size_t r)
