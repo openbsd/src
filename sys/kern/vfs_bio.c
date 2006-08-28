@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.82 2006/08/17 13:55:57 mickey Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.83 2006/08/28 12:48:53 jmc Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -216,7 +216,7 @@ bufinit(void)
 	 * but not more than 25% and if possible
 	 * not less than 2 * MAXBSIZE. locleanpages
 	 * value must be not too small, but probably
-	 * there are no reason to set it more than 1-2 MB.
+	 * there is no reason to set it more than 1-2 MB.
 	 */
 	locleanpages = bufpages / 20;
 	if (locleanpages < btoc(2 * MAXBSIZE))
@@ -239,7 +239,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 	bp = getblk(vp, blkno, size, 0, 0);
 
 	/*
-	 * If buffer does not have data valid, start a read.
+	 * If buffer does not have valid data, start a read.
 	 * Note that if buffer is B_INVAL, getblk() won't return it.
 	 * Therefore, it's valid if its I/O has completed or been delayed.
 	 */
@@ -590,7 +590,7 @@ incore(struct vnode *vp, daddr_t blkno)
  * a given vnode and block offset. If it is found in the
  * block cache, mark it as having been found, make it busy
  * and return it. Otherwise, return an empty block of the
- * correct size. It is up to the caller to insure that the
+ * correct size. It is up to the caller to ensure that the
  * cached blocks be of the correct size.
  */
 struct buf *
@@ -677,7 +677,7 @@ geteblk(int size)
  *
  * If the buffer shrinks, data is lost, so it's up to the
  * caller to have written it out *first*; this routine will not
- * start a write.  If the buffer grows, it's the callers
+ * start a write.  If the buffer grows, it's the caller's
  * responsibility to fill out the buffer's additional contents.
  */
 void
