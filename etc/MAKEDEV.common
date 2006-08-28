@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.29 2006/08/28 21:04:04 tsi Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -337,13 +337,17 @@ target(wscons, wsmouse, 0, 1, 2, 3)dnl
 _mkdev({-wscons-}, {-wscons-}, {-dnl
 show_target(wscons)dnl
 -})dnl
-__devitem(wsdisp, ttyC-F*, wscons display devices,wsdisplay)dnl
-_mkdev({-wsdisp-}, tty[C-F]*, {-U=${i##tty[C-F]}
+__devitem(wsdisp, ttyC-J*, wscons display devices,wsdisplay)dnl
+_mkdev({-wsdisp-}, tty[C-J]*, {-U=${i##tty[C-J]}
 	case $i in
 	ttyC*) n=C m=expr(0*256);;
 	ttyD*) n=D m=expr(1*256);;
 	ttyE*) n=E m=expr(2*256);;
 	ttyF*) n=F m=expr(3*256);;
+	ttyG*) n=G m=expr(4*256);;
+	ttyH*) n=H m=expr(5*256);;
+	ttyI*) n=I m=expr(6*256);;
+	ttyJ*) n=J m=expr(7*256);;
 	esac
 	case $U in
 	[0-9a-f]) M tty$n$U c major_wsdisp_c Add(16#$U, $m) 600;;
