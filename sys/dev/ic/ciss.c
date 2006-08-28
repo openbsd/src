@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.16 2006/08/27 22:12:10 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.17 2006/08/28 01:32:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1041,8 +1041,10 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	case BIOCVOL:
 		bv = (struct bioc_vol *)addr;
-		if (bv->bv_volid > sc->maxunits)
-			return EINVAL;
+		if (bv->bv_volid > sc->maxunits) {
+			error = EINVAL;
+			break;
+		}
 		ldp = sc->sc_lds[bv->bv_volid];
 		ldid = sc->scratch;
 		if ((error = ciss_ldid(sc, bv->bv_volid, ldid)))
@@ -1076,11 +1078,15 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 	case BIOCDISK:
 		bd = (struct bioc_disk *)addr;
 		pdid = sc->scratch;
-		if (bd->bd_volid > sc->maxunits)
-			return EINVAL;
+		if (bd->bd_volid > sc->maxunits) {
+			error = EINVAL;
+			break;
+		}
 		ldp = sc->sc_lds[bd->bd_volid];
-		if ((pd = bd->bd_diskid) > ldp->ndrives)
-			return EINVAL;
+		if ((pd = bd->bd_diskid) > ldp->ndrives) {
+			error = EINVAL;
+			break;
+		}
 		if ((error = ciss_pdid(sc, ldp->tgts[pd], pdid, SCSI_POLL)))
 			break;
 		if (pdid->config & CISS_PD_SPARE)
