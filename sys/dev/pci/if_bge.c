@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.172 2006/08/28 03:06:47 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.173 2006/08/28 07:58:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -104,6 +104,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -1660,7 +1664,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	const char		*intrstr = NULL;
 	bus_size_t		size;
 	bus_dma_segment_t	seg;
-	int			rseg;
+	int			rseg, gotenaddr = 0;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	struct ifnet		*ifp;
@@ -1765,19 +1769,33 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	mac_addr = bge_readmem_ind(sc, 0x0c14);
-	if ((mac_addr >> 16) == 0x484b) {
-		sc->arpcom.ac_enaddr[0] = (u_char)(mac_addr >> 8);
-		sc->arpcom.ac_enaddr[1] = (u_char)mac_addr;
-		mac_addr = bge_readmem_ind(sc, 0x0c18);
-		sc->arpcom.ac_enaddr[2] = (u_char)(mac_addr >> 24);
-		sc->arpcom.ac_enaddr[3] = (u_char)(mac_addr >> 16);
-		sc->arpcom.ac_enaddr[4] = (u_char)(mac_addr >> 8);
-		sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
-	} else if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
-	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-		printf(": failed to read station address\n");
-		goto fail_2;
+
+#ifdef __sparc64__
+	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+	    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
+		gotenaddr = 1;
+#endif
+
+	if (!gotenaddr) {
+		mac_addr = bge_readmem_ind(sc, 0x0c14);
+		if ((mac_addr >> 16) == 0x484b) {
+			sc->arpcom.ac_enaddr[0] = (u_char)(mac_addr >> 8);
+			sc->arpcom.ac_enaddr[1] = (u_char)mac_addr;
+			mac_addr = bge_readmem_ind(sc, 0x0c18);
+			sc->arpcom.ac_enaddr[2] = (u_char)(mac_addr >> 24);
+			sc->arpcom.ac_enaddr[3] = (u_char)(mac_addr >> 16);
+			sc->arpcom.ac_enaddr[4] = (u_char)(mac_addr >> 8);
+			sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
+			gotenaddr = 1;
+		}
+	}
+
+	if (!gotenaddr) {
+		if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+		    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
+			printf(": failed to read station address\n");
+			goto fail_2;
+		}
 	}
 
 	/*
