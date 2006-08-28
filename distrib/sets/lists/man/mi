@@ -1674,6 +1674,7 @@
 ./usr/share/man/cat4/vax/mtc.0
 ./usr/share/man/cat4/vax/ncr.0
 ./usr/share/man/cat4/vax/qe.0
+./usr/share/man/cat4/vax/qsc.0
 ./usr/share/man/cat4/vax/ra.0
 ./usr/share/man/cat4/vax/rx.0
 ./usr/share/man/cat4/vax/smg.0
@@ -1681,6 +1682,7 @@
 ./usr/share/man/cat4/vax/uba.0
 ./usr/share/man/cat4/vax/uda.0
 ./usr/share/man/cat4/vax/vsbus.0
+./usr/share/man/cat4/vax/vxtbus.0
 ./usr/share/man/cat4/vax/ze.0
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/vgafb.0
