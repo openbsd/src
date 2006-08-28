@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.8 2006/03/15 16:13:30 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
+#	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.9 2006/07/25 20:22:27 kettenis Exp 
+#	OpenBSD: MAKEDEV.common,v 1.29 2006/08/28 21:04:04 tsi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -48,7 +48,7 @@
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
 #	wscons	Minimal wscons devices
-#	ttyC-F*	wscons display devices
+#	ttyC-J*	wscons display devices
 #	wskbd*	wscons keyboards
 #	wsmouse*	wscons mice
 #	wsmux	wscons keyboard/mouse mux devices
@@ -69,9 +69,7 @@
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes
-#	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
-#	pci	PCI bus device
 #	pf*	Packet Filter
 #	radio*	FM tuner devices
 #	*random	In-kernel random data source
@@ -272,16 +270,8 @@ pf*)
 	M pf c 46 0 600
 	;;
 
-pci)
-	M pci c 71 0 600
-	;;
-
 lkm)
 	M lkm c 35 0 640 _lkm
-	;;
-
-iop*)
-	M iop$U c 73 $U 660
 	;;
 
 fd)
@@ -376,13 +366,17 @@ wskbd*)
 	M wskbd$U c 61 $U 600
 	;;
 
-tty[C-F]*)
-	U=${i##tty[C-F]}
+tty[C-J]*)
+	U=${i##tty[C-J]}
 	case $i in
 	ttyC*) n=C m=0;;
 	ttyD*) n=D m=256;;
 	ttyE*) n=E m=512;;
 	ttyF*) n=F m=768;;
+	ttyG*) n=G m=1024;;
+	ttyH*) n=H m=1280;;
+	ttyI*) n=I m=1536;;
+	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
 	[0-9a-f]) M tty$n$U c 60 $((16#$U+$m)) 600;;
@@ -465,9 +459,9 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
-	R local wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
-	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R local wscons uall tuner0 radio0 audio0 uk0 random lkm tty00
+	R tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2 wd3
+	R raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

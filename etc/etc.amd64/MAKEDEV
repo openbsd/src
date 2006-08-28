@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.16 2006/06/11 10:58:57 mk Exp 
-#	OpenBSD: MAKEDEV.common,v 1.28 2006/06/11 10:58:57 mk Exp 
+#	OpenBSD: MAKEDEV.common,v 1.29 2006/08/28 21:04:04 tsi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -52,7 +52,7 @@
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
 #	wscons	Minimal wscons devices
-#	ttyC-F*	wscons display devices
+#	ttyC-J*	wscons display devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
@@ -435,13 +435,17 @@ wskbd*)
 	M wskbd$U c 67 $U 600
 	;;
 
-tty[C-F]*)
-	U=${i##tty[C-F]}
+tty[C-J]*)
+	U=${i##tty[C-J]}
 	case $i in
 	ttyC*) n=C m=0;;
 	ttyD*) n=D m=256;;
 	ttyE*) n=E m=512;;
 	ttyF*) n=F m=768;;
+	ttyG*) n=G m=1024;;
+	ttyH*) n=H m=1280;;
+	ttyI*) n=I m=1536;;
+	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
 	[0-9a-f]) M tty$n$U c 12 $((16#$U+$m)) 600;;

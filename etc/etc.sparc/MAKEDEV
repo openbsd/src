@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.29 2005/08/01 22:22:13 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.31 2006/08/28 21:04:04 tsi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.29 2006/08/28 21:04:04 tsi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -59,7 +59,7 @@
 #	bpp[jkl]	"spif" parallel port
 # Console ports:
 #	wscons	Minimal wscons devices
-#	ttyC-F*	wscons display devices
+#	ttyC-J*	wscons display devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 # Pointing devices:
@@ -309,13 +309,17 @@ wskbd*)
 	M wskbd$U c 79 $U 600
 	;;
 
-tty[C-F]*)
-	U=${i##tty[C-F]}
+tty[C-J]*)
+	U=${i##tty[C-J]}
 	case $i in
 	ttyC*) n=C m=0;;
 	ttyD*) n=D m=256;;
 	ttyE*) n=E m=512;;
 	ttyF*) n=F m=768;;
+	ttyG*) n=G m=1024;;
+	ttyH*) n=H m=1280;;
+	ttyI*) n=I m=1536;;
+	ttyJ*) n=J m=1792;;
 	esac
 	case $U in
 	[0-9a-f]) M tty$n$U c 78 $((16#$U+$m)) 600;;
@@ -326,12 +330,16 @@ tty[C-F]*)
 
 wscons)
 	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyFcfg ttyF0 ttyF1 ttyF2 ttyF3 ttyF4 ttyF5
-	R ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb ttyEcfg ttyE0 ttyE1
-	R ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8 ttyE9 ttyEa ttyEb
-	R ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3 ttyD4 ttyD5 ttyD6 ttyD7
-	R ttyD8 ttyD9 ttyDa ttyDb ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3
-	R ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+	R wskbd3 wsmux ttyIcfg ttyI0 ttyI1 ttyI2 ttyI3 ttyI4 ttyI5
+	R ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb ttyHcfg ttyH0 ttyH1
+	R ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7 ttyH8 ttyH9 ttyHa ttyHb
+	R ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3 ttyG4 ttyG5 ttyG6 ttyG7
+	R ttyG8 ttyG9 ttyGa ttyGb ttyFcfg ttyF0 ttyF1 ttyF2 ttyF3
+	R ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb ttyEcfg
+	R ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8 ttyE9
+	R ttyEa ttyEb ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3 ttyD4 ttyD5
+	R ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb ttyCcfg ttyC0 ttyC1
+	R ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 bpp*)
