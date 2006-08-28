@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2006/05/19 20:53:31 brad Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2006/08/28 12:18:10 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -567,7 +567,6 @@ int pmap_pg_g = 0;
  * of this machine.
  */
 paddr_t avail_start;	/* PA of first available physical page */
-paddr_t avail_end;	/* PA of last available physical page */
 paddr_t hole_start;	/* PA of start of "hole" */
 paddr_t hole_end;	/* PA of end of "hole" */
 
@@ -1135,6 +1134,7 @@ void
 pmap_bootstrap(kva_start)
 	vaddr_t kva_start;
 {
+	extern paddr_t avail_end;
 	struct pmap *kpm;
 	vaddr_t kva;
 	pt_entry_t *pte;
