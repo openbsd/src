@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.18 2006/08/28 02:50:14 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.19 2006/08/28 02:56:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1092,10 +1092,12 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		bd->bd_status = -1;
 		if (ldstat->bigrebuild == ldp->tgts[pd])
 			bd->bd_status = BIOC_SDREBUILD;
-		if (ciss_bitset(ldp->tgts[pd] & 0x7f, ldstat->bigfailed)) {
+		if (ciss_bitset(ldp->tgts[pd] & (~CISS_BIGBIT),
+		    ldstat->bigfailed)) {
 			bd->bd_status = BIOC_SDFAILED;
 			bd->bd_size = 0;
-			bd->bd_channel = (ldp->tgts[pd] & 0x7f) / sc->ndrives;
+			bd->bd_channel = (ldp->tgts[pd] & (~CISS_BIGBIT)) /
+			    sc->ndrives;
 			bd->bd_target = ldp->tgts[pd] % sc->ndrives;
 			bd->bd_lun = 0;
 			bd->bd_vendor[0] = '\0';
@@ -1135,8 +1137,9 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		for (ld = 0; ld < sc->maxunits; ld++) {
 			ldp = sc->sc_lds[ld];
 			for (pd = 0; pd < ldp->ndrives; pd++)
-				if (ldp->tgts[pd] == (0x80 + bb->bb_channel *
-				    sc->ndrives + bb->bb_target))
+				if (ldp->tgts[pd] == (CISS_BIGBIT +
+				    bb->bb_channel * sc->ndrives +
+				    bb->bb_target))
 					error = ciss_blink(sc, ld, pd,
 					    bb->bb_status, blink);
 		}
@@ -1294,7 +1297,7 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	pdid = sc->scratch;
 	for (i = 0; i < sc->nbus; i++)
 		for (j = 0; j < sc->ndrives; j++) {
-			drv = 0x80 + i * sc->ndrives + j;
+			drv = CISS_BIGBIT + i * sc->ndrives + j;
 			if (!ciss_pdid(sc, drv, pdid, SCSI_NOSLEEP|SCSI_POLL))
 				buf[k++] = drv;
 		}

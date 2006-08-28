@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.6 2006/08/28 02:50:14 mickey Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.7 2006/08/28 02:56:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -16,6 +16,8 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define	CISS_BIGBIT	0x80	/* texas radio and the big beat! */
 
 #define	CISS_IDB	0x20
 #define	CISS_IDB_CFG	0x01
