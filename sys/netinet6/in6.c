@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.67 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: in6.c,v 1.68 2006/08/28 17:29:53 mcbride Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1596,7 +1596,7 @@ in6_ifinit(ifp, ia, sin6, newhost)
 
 	/*
 	 * Give the interface a chance to initialize
-	 * if this is its first address,
+	 * if this is its first address (or it is a CARP interface)
 	 * and to validate the address if necessary.
 	 */
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
@@ -1609,7 +1609,7 @@ in6_ifinit(ifp, ia, sin6, newhost)
 
 	ia->ia_addr = *sin6;
 
-	if (ifacount <= 1 && ifp->if_ioctl &&
+	if ((ifacount <= 1 || ifp->if_type == IFT_CARP) && ifp->if_ioctl &&
 	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
 		splx(s);
 		return (error);
