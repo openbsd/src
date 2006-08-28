@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.30 2006/08/20 14:01:07 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.31 2006/08/28 19:47:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -95,6 +95,10 @@ int		wpi_dma_contig_alloc(struct wpi_softc *, struct wpi_dma_info *,
 void		wpi_dma_contig_free(struct wpi_softc *, struct wpi_dma_info *);
 int		wpi_alloc_shared(struct wpi_softc *);
 void		wpi_free_shared(struct wpi_softc *);
+struct		wpi_rbuf *wpi_alloc_rbuf(struct wpi_softc *);
+void		wpi_free_rbuf(caddr_t, u_int, void *);
+int		wpi_alloc_rpool(struct wpi_softc *);
+void		wpi_free_rpool(struct wpi_softc *);
 int		wpi_alloc_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
 void		wpi_reset_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
 void		wpi_free_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
@@ -239,31 +243,36 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if ((error = wpi_alloc_rpool(sc)) != 0) {
+		printf(": could not allocate Rx buffers\n");
+		goto fail1;
+	}
+
 	for (ac = 0; ac < 4; ac++) {
 		error = wpi_alloc_tx_ring(sc, &sc->txq[ac], WPI_TX_RING_COUNT,
 		    ac);
 		if (error != 0) {
 			printf(": could not allocate Tx ring %d\n", ac);
-			goto fail1;
+			goto fail2;
 		}
 	}
 
 	error = wpi_alloc_tx_ring(sc, &sc->cmdq, WPI_CMD_RING_COUNT, 4);
 	if (error != 0) {
 		printf(": could not allocate command ring\n");
-		goto fail1;
+		goto fail2;
 	}
 
 	error = wpi_alloc_tx_ring(sc, &sc->svcq, WPI_SVC_RING_COUNT, 5);
 	if (error != 0) {
 		printf(": could not allocate service ring\n");
-		goto fail2;
+		goto fail3;
 	}
 
 	error = wpi_alloc_rx_ring(sc, &sc->rxq);
 	if (error != 0) {
 		printf(": could not allocate Rx ring\n");
-		goto fail3;
+		goto fail4;
 	}
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -357,11 +366,12 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail3:	wpi_free_tx_ring(sc, &sc->svcq);
-fail2:	wpi_free_tx_ring(sc, &sc->cmdq);
-fail1:	while (--ac >= 0)
+fail4:	wpi_free_tx_ring(sc, &sc->svcq);
+fail3:	wpi_free_tx_ring(sc, &sc->cmdq);
+fail2:	while (--ac >= 0)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);
-	wpi_free_shared(sc);
+	wpi_free_rpool(sc);
+fail1:	wpi_free_shared(sc);
 }
 
 int
@@ -381,6 +391,7 @@ wpi_detach(struct device *self, int flags)
 	wpi_free_tx_ring(sc, &sc->cmdq);
 	wpi_free_tx_ring(sc, &sc->svcq);
 	wpi_free_rx_ring(sc, &sc->rxq);
+	wpi_free_rpool(sc);
 	wpi_free_shared(sc);
 
 	if (sc->sc_ih != NULL) {
@@ -459,7 +470,8 @@ wpi_dma_contig_alloc(struct wpi_softc *sc, struct wpi_dma_info *dma,
 	bzero(dma->vaddr, size);
 
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
-	*kvap = dma->vaddr;
+	if (kvap != NULL)
+		*kvap = dma->vaddr;
 
 	return 0;
 
@@ -497,7 +509,6 @@ wpi_alloc_shared(struct wpi_softc *sc)
 		printf("%s: could not allocate shared area DMA memory\n",
 		    sc->sc_dev.dv_xname);
 	}
-
 	return error;
 }
 
@@ -507,10 +518,73 @@ wpi_free_shared(struct wpi_softc *sc)
 	wpi_dma_contig_free(sc, &sc->shared_dma);
 }
 
+struct wpi_rbuf *
+wpi_alloc_rbuf(struct wpi_softc *sc)
+{
+	struct wpi_rbuf *rbuf;
+
+	rbuf = SLIST_FIRST(&sc->rxq.freelist);
+	if (rbuf == NULL)
+		return NULL;
+	SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
+	return rbuf;
+}
+
+/*
+ * This is called automatically by the network stack when the mbuf to which our
+ * Rx buffer is attached is freed.
+ */
+void
+wpi_free_rbuf(caddr_t buf, u_int size, void *arg)
+{
+	struct wpi_rbuf *rbuf = arg;
+	struct wpi_softc *sc = rbuf->sc;
+
+	/* put the buffer back in the free list */
+	SLIST_INSERT_HEAD(&sc->rxq.freelist, rbuf, next);
+}
+
+int
+wpi_alloc_rpool(struct wpi_softc *sc)
+{
+	struct wpi_rx_ring *ring = &sc->rxq;
+	struct wpi_rbuf *rbuf;
+	int i, error;
+
+	/* allocate a big chunk of DMA'able memory.. */
+	error = wpi_dma_contig_alloc(sc, &ring->buf_dma, NULL,
+	    WPI_RBUF_COUNT * WPI_RBUF_SIZE, PAGE_SIZE, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not allocate Rx buffers DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		return error;
+	}
+
+	/* ..and split it into 3KB chunks */
+	SLIST_INIT(&ring->freelist);
+	for (i = 0; i < WPI_RBUF_COUNT; i++) {
+		rbuf = &ring->rbuf[i];
+
+		rbuf->sc = sc;	/* backpointer for callbacks */
+		rbuf->vaddr = ring->buf_dma.vaddr + i * WPI_RBUF_SIZE;
+		rbuf->paddr = ring->buf_dma.paddr + i * WPI_RBUF_SIZE;
+
+		SLIST_INSERT_HEAD(&ring->freelist, rbuf, next);
+	}
+	return 0;
+}
+
+void
+wpi_free_rpool(struct wpi_softc *sc)
+{
+	wpi_dma_contig_free(sc, &sc->rxq.buf_dma);
+}
+
 int
 wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
 	struct wpi_rx_data *data;
+	struct wpi_rbuf *rbuf;
 	int i, error;
 
 	ring->cur = 0;
@@ -525,18 +599,10 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 	}
 
 	/*
-	 * Allocate Rx buffers.
+	 * Setup Rx buffers.
 	 */
 	for (i = 0; i < WPI_RX_RING_COUNT; i++) {
 		data = &ring->data[i];
-
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &data->map);
-		if (error != 0) {
-			printf("%s: could not create rx buf DMA map\n",
-			    sc->sc_dev.dv_xname);
-			goto fail;
-		}
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
@@ -545,27 +611,19 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 			error = ENOMEM;
 			goto fail;
 		}
-
-		MCLGET(data->m, M_DONTWAIT);
-		if (!(data->m->m_flags & M_EXT)) {
+		if ((rbuf = wpi_alloc_rbuf(sc)) == NULL) {
 			m_freem(data->m);
 			data->m = NULL;
-			printf("%s: could not allocate rx mbuf cluster\n",
+			printf("%s: could not allocate rx buffer\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
+		/* attach Rx buffer to mbuf */
+		MEXTADD(data->m, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
+		    rbuf);
 
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT |
-		    BUS_DMA_READ);
-		if (error != 0) {
-			printf("%s: could not load rx buf DMA map\n",
-			    sc->sc_dev.dv_xname);
-			goto fail;
-		}
-
-		ring->desc[i] = htole32(data->map->dm_segs[0].ds_addr);
+		ring->desc[i] = htole32(rbuf->paddr);
 	}
 
 	return 0;
@@ -599,19 +657,13 @@ wpi_reset_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 void
 wpi_free_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 {
-	struct wpi_rx_data *data;
 	int i;
 
 	wpi_dma_contig_free(sc, &ring->desc_dma);
 
 	for (i = 0; i < WPI_RX_RING_COUNT; i++) {
-		data = &ring->data[i];
-
-		if (data->m != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(data->m);
-		}
-		bus_dmamap_destroy(sc->sc_dmat, data->map);
+		if (ring->data[i].m != NULL)
+			m_freem(ring->data[i].m);
 	}
 }
 
@@ -1066,10 +1118,10 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct wpi_rx_stat *stat;
 	struct wpi_rx_head *head;
 	struct wpi_rx_tail *tail;
+	struct wpi_rbuf *rbuf;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
-	int error;
 
 	stat = (struct wpi_rx_stat *)(desc + 1);
 
@@ -1104,38 +1156,19 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		ifp->if_ierrors++;
 		return;
 	}
-
-	MCLGET(mnew, M_DONTWAIT);
-	if (!(mnew->m_flags & M_EXT)) {
+	if ((rbuf = wpi_alloc_rbuf(sc)) == NULL) {
 		m_freem(mnew);
 		ifp->if_ierrors++;
 		return;
 	}
-
-	bus_dmamap_unload(sc->sc_dmat, data->map);
-
-	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(mnew, void *),
-	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		m_freem(mnew);
-
-		/* try to reload the old mbuf */
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
-		if (error != 0) {
-			/* very unlikely that it will fail... */
-			panic("%s: could not load old rx mbuf",
-			    sc->sc_dev.dv_xname);
-		}
-		ifp->if_ierrors++;
-		return;
-	}
+ 	/* attach Rx buffer to mbuf */
+	MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf, rbuf);
 
 	m = data->m;
 	data->m = mnew;
 
 	/* update Rx descriptor */
-	ring->desc[ring->cur] = htole32(data->map->dm_segs[0].ds_addr);
+	ring->desc[ring->cur] = htole32(rbuf->paddr);
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
@@ -1575,7 +1608,6 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			m_freem(m0);
 			return ENOMEM;
 		}
-
 		M_DUP_PKTHDR(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
@@ -2096,7 +2128,6 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 		    sc->sc_dev.dv_xname);
 		return ENOMEM;
 	}
-
 	MCLGET(data->m, M_DONTWAIT);
 	if (!(data->m->m_flags & M_EXT)) {
 		m_freem(data->m);

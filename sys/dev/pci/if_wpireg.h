@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.10 2006/08/01 12:43:56 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.11 2006/08/28 19:47:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -30,6 +30,9 @@
 
 /* maximum scatter/gather */
 #define WPI_MAX_SCATTER	4
+
+/* maximum Rx buffer size */
+#define WPI_RBUF_SIZE	(3 * 1024)	/* XXX 3000 but must be aligned! */
 
 /*
  * Control and status registers.

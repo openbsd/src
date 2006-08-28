@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.8 2006/08/01 12:43:56 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.9 2006/08/28 19:47:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -79,15 +79,28 @@ struct wpi_tx_ring {
 	int			cur;
 };
 
+#define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT + 16)
+
+struct wpi_softc;
+
+struct wpi_rbuf {
+	struct wpi_softc	*sc;
+	caddr_t			vaddr;
+	bus_addr_t		paddr;
+	SLIST_ENTRY(wpi_rbuf)	next;
+};
+
 struct wpi_rx_data {
-	bus_dmamap_t	map;
 	struct mbuf	*m;
 };
 
 struct wpi_rx_ring {
 	struct wpi_dma_info	desc_dma;
+	struct wpi_dma_info	buf_dma;
 	uint32_t		*desc;
 	struct wpi_rx_data	data[WPI_RX_RING_COUNT];
+	struct wpi_rbuf		rbuf[WPI_RBUF_COUNT];
+	SLIST_HEAD(, wpi_rbuf)	freelist;
 	int			cur;
 };
 
