@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.19 2005/04/25 23:33:40 brad Exp $
+.\"     $OpenBSD: mbuf.9,v 1.20 2006/08/28 19:02:46 damien Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -85,7 +85,7 @@
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
 .Fn MEXTMALLOC "struct mbuf *m" "int size" "int how"
 .Fn MCLGET "struct mbuf *m" "int how"
-.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" \
+.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 .Fn M_ALIGN "struct mbuf *m" "int len"
 .Fn MH_ALIGN "struct mbuf *m" "int len"
@@ -600,7 +600,7 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" \
+.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 Add pre-allocated storage to the mbuf pointed to by
 .Fa m .
