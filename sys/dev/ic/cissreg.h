@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.5 2006/08/27 20:51:09 mickey Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.6 2006/08/28 02:50:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -45,6 +45,8 @@
 
 #define	CISS_CMD_LDMAP	0xc2
 #define	CISS_CMD_PDMAP	0xc3
+
+#define	ciss_bitset(d, v)	((v)[(d) >> 3] & (1 << ((d) & 7)))
 
 struct ciss_softc;
 
@@ -189,7 +191,7 @@ struct ciss_ldstat {
 	u_int8_t	rebldfail;	/* rebuild failure */
 #define	CISS_LD_RBLD_READ	0x01	/* read faild */
 #define	CISS_LD_RBLD_WRITE	0x02	/* write fail */
-	u_int8_t	bigfail[16];	/* bigmap vers of some of the above */
+	u_int8_t	bigfailed[16];	/* bigmap vers of same of the above */
 	u_int8_t	bigremapcnt[256];
 	u_int8_t	bigreplaced[16];
 	u_int8_t	bigspare[16];

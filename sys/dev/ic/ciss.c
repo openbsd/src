@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.17 2006/08/28 01:32:06 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.18 2006/08/28 02:50:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1077,7 +1077,6 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	case BIOCDISK:
 		bd = (struct bioc_disk *)addr;
-		pdid = sc->scratch;
 		if (bd->bd_volid > sc->maxunits) {
 			error = EINVAL;
 			break;
@@ -1087,27 +1086,45 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 			error = EINVAL;
 			break;
 		}
-		if ((error = ciss_pdid(sc, ldp->tgts[pd], pdid, SCSI_POLL)))
-			break;
-		if (pdid->config & CISS_PD_SPARE)
-			bd->bd_status = BIOC_SDHOTSPARE;
-		else if (pdid->present & CISS_PD_PRESENT)
-			bd->bd_status = BIOC_SDONLINE;
-		else
-			bd->bd_status = BIOC_SDINVALID;
-		bd->bd_size = (u_int64_t)letoh32(pdid->nblocks) *
-		    letoh16(pdid->blksz);
-		bd->bd_channel = pdid->bus;  
-		bd->bd_target = pdid->target;
-		bd->bd_lun = 0;
-		strlcpy(bd->bd_vendor, pdid->model, sizeof(bd->bd_vendor));
-		strlcpy(bd->bd_serial, pdid->serial, sizeof(bd->bd_serial));
-		bd->bd_procdev[0] = '\0';
 		ldstat = sc->scratch;
 		if ((error = ciss_ldstat(sc, bd->bd_volid, ldstat)))
 			break;
+		bd->bd_status = -1;
 		if (ldstat->bigrebuild == ldp->tgts[pd])
 			bd->bd_status = BIOC_SDREBUILD;
+		if (ciss_bitset(ldp->tgts[pd] & 0x7f, ldstat->bigfailed)) {
+			bd->bd_status = BIOC_SDFAILED;
+			bd->bd_size = 0;
+			bd->bd_channel = (ldp->tgts[pd] & 0x7f) / sc->ndrives;
+			bd->bd_target = ldp->tgts[pd] % sc->ndrives;
+			bd->bd_lun = 0;
+			bd->bd_vendor[0] = '\0';
+			bd->bd_serial[0] = '\0';
+			bd->bd_procdev[0] = '\0';
+		} else {
+			pdid = sc->scratch;
+			if ((error = ciss_pdid(sc, ldp->tgts[pd], pdid,
+			    SCSI_POLL)))
+				break;
+			if (bd->bd_status < 0) {
+				if (pdid->config & CISS_PD_SPARE)
+					bd->bd_status = BIOC_SDHOTSPARE;
+				else if (pdid->present & CISS_PD_PRESENT)
+					bd->bd_status = BIOC_SDONLINE;
+				else
+					bd->bd_status = BIOC_SDINVALID;
+			}
+			bd->bd_size = (u_int64_t)letoh32(pdid->nblocks) *
+			    letoh16(pdid->blksz);
+			bd->bd_channel = pdid->bus;  
+			bd->bd_target = pdid->target;
+			bd->bd_lun = 0;
+			strlcpy(bd->bd_vendor, pdid->model,
+			    sizeof(bd->bd_vendor));
+			strlcpy(bd->bd_serial, pdid->serial,
+			    sizeof(bd->bd_serial));
+			bd->bd_procdev[0] = '\0';
+		}
 		break;
 
 	case BIOCBLINK:
