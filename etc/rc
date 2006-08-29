@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.288 2006/08/04 11:43:43 markus Exp $
+#	$OpenBSD: rc,v 1.289 2006/08/29 17:26:55 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -244,7 +244,7 @@ sysctl_conf
 
 # set hostname, turn on network
 echo 'starting network'
-ifconfig -g carp carpdemote
+ifconfig -g carp carpdemote 128
 if [ -f /etc/resolv.conf.save ]; then
 	mv /etc/resolv.conf.save /etc/resolv.conf
 	touch /etc/resolv.conf
@@ -722,7 +722,7 @@ fi
 echo -n ' cron';		cron
 
 # disable carp interlock
-ifconfig -g carp -carpdemote
+ifconfig -g carp -carpdemote 128
 
 echo '.'
 
