@@ -1,6 +1,6 @@
-.\"	$OpenBSD: watchdog.4,v 1.5 2005/09/29 19:53:56 grange Exp $
+.\"	$OpenBSD: watchdog.4,v 1.6 2006/08/29 15:04:36 mk Exp $
 .\"
-.\" Copyright (c) 2004 Michael Knudsen <mk@molioner.dk>
+.\" Copyright (c) 2004-2006 Michael Knudsen <mk@molioner.dk>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -24,14 +24,14 @@ Hardware watchdog timers are devices that reboot the machine when it
 hangs.
 The kernel continually resets the watchdog clock on a regular basis.
 Thus, if the kernel halts, the clock will time out and reset the machine.
-Some watchdog timers may be configured to be reset from userland,
-causing a reboot if process scheduling fails;
+Watchdog timers may be configured to be reset from userland
+to cause a reboot if process scheduling fails;
 see
 .Xr watchdogd 8
 for further information.
 .Pp
-A few watchdog drivers are supported, and most support timeout
-configuration via
+A number of hardware watchdogs are supported, and all are configured
+using
 .Xr sysctl 8
 under the
 .Va kern.watchdog
@@ -73,8 +73,10 @@ can be done.
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr elansc 4 ,
+.Xr esm 4 ,
 .Xr geodesc 4 ,
 .Xr ichwdt 4 ,
+.Xr ipmi 4 ,
 .Xr viasio 4 ,
 .Xr wdt 4 ,
 .Xr config 8 ,
