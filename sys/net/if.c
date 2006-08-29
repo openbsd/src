@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.148 2006/07/18 09:23:43 mickey Exp $	*/
+/*	$OpenBSD: if.c,v 1.149 2006/08/29 17:19:43 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1774,13 +1774,11 @@ if_setgroupattribs(caddr_t data)
 		return (ENOENT);
 
 	demote = ifgr->ifgr_attrib.ifg_carp_demoted;
-	if (demote > 1 || demote < -1)
-		return (E2BIG);
+	if (demote + ifg->ifg_carp_demoted > 0xff ||
+	    demote + ifg->ifg_carp_demoted < 0)
+		return (ERANGE);
 
-	if (demote + ifg->ifg_carp_demoted >= 0)
-		ifg->ifg_carp_demoted += demote;
-	else
-		ifg->ifg_carp_demoted = 0;
+	ifg->ifg_carp_demoted += demote;
 
 	return (0);
 }
