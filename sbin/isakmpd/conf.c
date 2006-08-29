@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.91 2006/06/10 21:15:45 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.92 2006/08/29 08:51:28 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -382,7 +382,7 @@ conf_load_defaults_mm(int tr, char *mme, char *mmh, char *mma, char *dhg,
 
 static void
 conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
-    char *qmh_p, char *dhg_p, int proto, int mode, int pfs)
+    char *qmh_p, char *qm_ah_id, char *dhg_p, int proto, int mode, int pfs)
 {
 	char sect[CONF_SECT_MAX], tmp[CONF_SECT_MAX];
 
@@ -392,7 +392,17 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 #define MODE(x)   ((x) ? "TRANSPORT" : "TUNNEL")
 #define MODE_p(x) ((x) ? "-TRP" : "")
 
-	if (proto == 1 && strcmp(qmh, "NONE") == 0) /* AH */
+	/* For AH a hash must be present and no encryption is allowed */
+	if (proto == 1 && (strcmp(qmh, "NONE") == 0 ||
+	    strcmp(qme, "NONE") != 0))
+		return;
+
+	/* For ESP encryption must be provided, an empty hash is ok. */
+	if (proto == 0 && strcmp(qme, "NONE") == 0)
+		return;
+
+	/* When PFS is disabled no DH group must be specified. */
+	if (pfs == 0 && strcmp(dhg_p, ""))
 		return;
 
 	snprintf(tmp, sizeof tmp, "QM-%s%s%s%s%s%s", PROTO(proto),
@@ -414,7 +424,10 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 	 * XXX For now, defaults
 	 * contain one xf per protocol.
 	 */
-	conf_set(tr, sect, "TRANSFORM_ID", qme, 0, 1);
+	if (proto == 0)
+		conf_set(tr, sect, "TRANSFORM_ID", qme, 0, 1);
+	else
+		conf_set(tr, sect, "TRANSFORM_ID", qm_ah_id, 0, 1);
 	if (strcmp(qme ,"BLOWFISH") == 0)
 		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
 			 1);
@@ -454,14 +467,16 @@ conf_load_defaults(int tr)
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", 0};
 	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
-		    "AES_128_CTR", 0};
+		    "AES_128_CTR", "NONE", 0};
 	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES",
-		    "-AESCTR", 0};
+		    "-AESCTR", "", 0};
 	char	*qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
 		    "HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512", "NONE",
 		    0};
 	char	*qm_hash_p[] = {"-MD5", "-SHA", "-RIPEMD", "-SHA2-256",
 		    "-SHA2-384", "-SHA2-512", "", 0};
+	char	*qm_ah_id[] = {"MD5", "SHA", "RIPEMD", "SHA2_256", "SHA2_384",
+		    "SHA2_512", "", 0};
 
 	/* General and X509 defaults */
 	conf_set(tr, "General", "Retransmits", CONF_DFLT_RETRANSMITS, 0, 1);
@@ -541,6 +556,7 @@ conf_load_defaults(int tr)
 							    dhgroup[group],
 							    qm_enc_p[enc],
 							    qm_hash_p[hash],
+							    qm_ah_id[hash],
 							    dhgroup_p[group],
 							    proto, mode, pfs);
 }
