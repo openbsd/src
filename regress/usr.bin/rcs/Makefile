@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2006/08/23 16:26:17 niallo Exp $
+#	$OpenBSD: Makefile,v 1.37 2006/08/29 21:28:45 david Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -591,7 +591,7 @@ test-ci-parse-keywords2: clean
 
 # Check for correct EOF handling in rcs parser
 test-co-parse-truncated: clean
-	@sh -c 'ulimit -d 1000 && ${CO} -q test-truncated > ${.CURDIR}/truncated.out 2>&1' || \
+	@sh -c 'ulimit -d 1000 && ${CO} -q test-truncated > truncated.out 2>&1' || \
 	    case "$$?" in 1) exit 0;; esac && exit 1
 	@grep -q 'co: problem parsing deltatexts' truncated.out
 
