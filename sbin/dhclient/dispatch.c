@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.32 2005/05/24 03:11:12 todd Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.33 2006/08/29 03:55:09 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -220,7 +220,6 @@ another:
 	} while (1);
 }
 
-
 void
 got_one(struct protocol *l)
 {
@@ -266,6 +265,62 @@ got_one(struct protocol *l)
 		(*bootp_packet_handler)(ip, &u.packet, result,
 		    from.sin_port, ifrom, &hfrom);
 	}
+}
+
+int
+interface_link_forceup(char *ifname)
+{
+	struct ifreq ifr;
+	int sock, ret = 0;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		error("Can't create socket");
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
+		close(sock);
+		return (-1);
+	}
+
+	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+		ifr.ifr_flags |= IFF_UP;
+		if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
+			close(sock);
+			return (-1);
+		}
+		close(sock);
+		return (0);
+	}
+	close(sock);
+	return (1);
+}
+
+void
+interface_link_forcedown(char *ifname)
+{
+	struct ifreq ifr;
+	int sock;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		error("Can't create socket");
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
+		close(sock);
+		return;
+	}
+
+	if ((ifr.ifr_flags & IFF_UP) == IFF_UP) {
+		ifr.ifr_flags &= ~IFF_UP;
+		if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
+			close(sock);
+			return;
+		}
+	}
+
+	close(sock);
 }
 
 int
