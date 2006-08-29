@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.153 2006/06/23 21:43:19 krw Exp $
+#	$OpenBSD: install.sh,v 1.154 2006/08/29 01:02:49 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -321,7 +321,6 @@ mount_fs "-o async"
 ask_until "\nSystem hostname? (short form, e.g. 'foo')" "$(hostname -s)"
 [[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
-DEFAULTSETS="$DEFAULTSETS site$VERSION-$(hostname -s).tgz"
 
 # Remove existing network configuration files in /tmp to ensure they don't leak
 # onto the installed system in the case of a restarted install. Any information

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.63 2006/06/23 21:43:19 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.64 2006/08/29 01:02:49 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -84,7 +84,6 @@ for _file in fstab hosts myname; do
 done
 hostname $(stripcom /tmp/myname)
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
-DEFAULTSETS="$DEFAULTSETS site$VERSION-$(hostname -s).tgz"
 
 ask_yn "Enable network using configuration stored on root filesystem?" yes
 [[ $resp == y ]] && enable_network

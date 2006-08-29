@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.405 2006/07/26 20:34:11 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.406 2006/08/29 01:02:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2006 Todd Miller, Theo de Raadt, Ken Westerback
@@ -932,7 +932,8 @@ install_files() {
 	for _f in $THESETS; do
 		isin $_f $_files || continue;
 		_sets=$(addel $_f $_sets)
-		isin $_f $DEFAULTSETS && _get_sets=$(addel $_f $_get_sets)
+		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" && \
+			_get_sets=$(addel $_f $_get_sets)
 	done
 
 	if [[ -z $_sets ]]; then
