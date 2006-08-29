@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.173 2006/08/18 08:21:08 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.174 2006/08/29 17:22:00 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -761,6 +761,7 @@ printgroupattribs(char *groupname)
 void
 setgroupattribs(char *groupname, int argc, char *argv[])
 {
+	const char *errstr;
 	char *p = argv[0];
 	int neg = 1;
 
@@ -769,8 +770,15 @@ setgroupattribs(char *groupname, int argc, char *argv[])
 	getsock(AF_INET);
 	bzero(&ifgr, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, groupname, sizeof(ifgr.ifgr_name));
+
+	if (argc > 1) {
+		neg = strtonum(argv[1], 0, 128, &errstr);
+		if (errstr)
+			errx(1, "invalid carp demotion: %s", errstr);
+	}
+
 	if (p[0] == '-') {
-		neg = -1;
+		neg = neg * -1;
 		p++;
 	}
 	if (!strcmp(p, "carpdemote"))
