@@ -1,6 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.20 2006/08/29 18:02:41 damien Exp $	*/
-
+/*	$OpenBSD: ieee80211_input.c,v 1.21 2006/08/29 18:10:34 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1106,12 +1105,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 * now.
 		 */
 		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    ni->ni_associd != 0 &&
-		    (!(ic->ic_flags & IEEE80211_F_ASCAN) ||
-		     IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid))) {
-			/* record tsf of last beacon */
-			ni->ni_rstamp = rstamp;
-			memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
+		    ic->ic_state == IEEE80211_S_ASSOC &&
+		    ni->ni_state == IEEE80211_STA_BSS) {
 			/*
 			 * Check if protection mode has changed since last
 			 * beacon.
@@ -1120,13 +1115,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_DPRINTF((
 				    "[%s] erp change: was 0x%x, now 0x%x\n",
 				    ether_sprintf(wh->i_addr2), ni->ni_erp,
-				    erp)); 
+				    erp));
 				if (ic->ic_curmode == IEEE80211_MODE_11G &&
 				    (erp & IEEE80211_ERP_USE_PROTECTION))
 					ic->ic_flags |= IEEE80211_F_USEPROT;
 				else
 					ic->ic_flags &= ~IEEE80211_F_USEPROT;
-				ni->ni_erp = erp;
+				ic->ic_bss->ni_erp = erp;
 			}
 
 			/*
@@ -1140,10 +1135,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				    ic->ic_curmode == IEEE80211_MODE_11A ||
 				    (letoh16(*(u_int16_t *)capinfo) &
 				     IEEE80211_CAPINFO_SHORT_SLOTTIME));
-				ni->ni_capinfo =
-				    letoh16(*(u_int16_t *)capinfo);
 			}
-			break;
 		}
 
 		if (ssid[1] != 0 && ni->ni_esslen == 0) {
