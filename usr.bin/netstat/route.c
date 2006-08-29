@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.72 2006/05/27 19:16:37 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.73 2006/08/29 21:51:13 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.72 2006/05/27 19:16:37 claudio Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.73 2006/08/29 21:51:13 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,10 @@ static char *rcsid = "$OpenBSD: route.c,v 1.72 2006/05/27 19:16:37 claudio Exp $
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-struct radix_node_head *rt_tables[AF_MAX+1];
+struct radix_node_head ***rt_head;
+struct radix_node_head ***rnt;			/* provides enough space */
+struct radix_node_head *rt_tables[AF_MAX+1];	/* provides enough space */
+u_int8_t		  af2rtafidx[AF_MAX+1];
 
 static union {
 	struct		sockaddr u_sa;
@@ -100,29 +103,53 @@ static void encap_print(struct rtentry *);
  * Print routing tables.
  */
 void
-routepr(u_long rtree)
+routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max)
 {
 	struct radix_node_head *rnh, head;
-	int i;
+	int i, idxmax = 0;
+	u_int rtidxmax;
 
 	printf("Routing tables\n");
 
-	if (rtree == 0) {
+	if (rtree == 0 || af2idx == 0) {
 		printf("rt_tables: symbol not in namelist\n");
 		return;
 	}
 
-	kget(rtree, rt_tables);
+	kget(rtree, rt_head);
+	kget(rtbl_id_max, rtidxmax);
+	kget(af2idx, af2rtafidx);
+
 	for (i = 0; i <= AF_MAX; i++) {
-		if ((rnh = rt_tables[i]) == 0)
-			continue;
-		kget(rnh, head);
+		if (af2rtafidx[i] > idxmax)
+			idxmax = af2rtafidx[i];
+	}
+
+	if ((rnt = calloc(rtidxmax + 1, sizeof(struct radix_node_head **))) ==
+	    NULL)
+		err(1, NULL);
+
+	kread((u_long)rt_head, rnt, (rtidxmax + 1) *
+	    sizeof(struct radix_node_head **));
+	kread((u_long)rnt[0], rt_tables, (idxmax + 1) * sizeof(rnh));
+
+	for (i = 0; i <= AF_MAX; i++) {
 		if (i == AF_UNSPEC) {
-			if (Aflag && (af == 0 || af == 0xff)) {
+			if (Aflag && (af == AF_UNSPEC || af == 0xff)) {
+				kget(mtree, rnh);
+				kget(rnh, head);
 				printf("Netmasks:\n");
 				p_tree(head.rnh_treetop);
 			}
-		} else if (af == AF_UNSPEC || af == i) {
+			continue;
+		}
+		if (af2rtafidx[i] == 0)
+			/* no table for this AF */
+			continue;
+		if ((rnh = rt_tables[af2rtafidx[i]]) == 0)
+			continue;
+		kget(rnh, head);
+		if (af == AF_UNSPEC || af == i) {
 			pr_family(i);
 			do_rtent = 1;
 			pr_rthdr(i, Aflag);
