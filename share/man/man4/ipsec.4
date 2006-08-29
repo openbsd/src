@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.71 2006/05/26 08:54:04 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.72 2006/08/29 17:23:41 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -36,9 +36,13 @@
 .Sh NAME
 .Nm ipsec
 .Nd IP Security Protocol
-.Sh NOTE
-.Tn IPsec
-may be enabled or disabled using the following
+.Sh DESCRIPTION
+IPsec is a pair of protocols,
+Encapsulating Security Payload (ESP)
+and Authentication Header (AH),
+which provide security services for IP datagrams.
+.Pp
+Both protocols may be enabled or disabled using the following
 .Xr sysctl 3
 variables in
 .Pa /etc/sysctl.conf .
@@ -50,11 +54,6 @@ Enable the ESP IPsec protocol
 .It net.inet.ah.enable
 Enable the AH IPsec protocol
 .El
-.Sh DESCRIPTION
-IPsec is a pair of protocols,
-Encapsulating Security Payload (ESP)
-and Authentication Header (AH),
-which provide security services for IP datagrams.
 .Pp
 The original Internet Protocol, IPv4,
 does not inherently provide any
