@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.47 2006/08/29 17:52:40 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.48 2006/08/29 18:10:31 msf Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -37,6 +37,7 @@ static void	ike_section_peer(struct ipsec_addr_wrap *,
 		    struct ipsec_addr_wrap *, FILE *, struct ike_auth *);
 static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
 		    FILE *, u_int8_t);
+static int	ike_get_id_type(char *);
 static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, FILE *);
 static int	ike_section_qm(struct ipsec_addr_wrap *, struct
@@ -62,6 +63,8 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 
 #define CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL	5
 #define CONF_DFLT_DYNAMIC_CHECK_INTERVAL	30
+
+char *ike_id_types[] = { "", "", "FQDN", "UFQDN" };
 
 static void
 ike_section_general(struct ipsec_rule *r, FILE *fd)
@@ -126,6 +129,8 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 			err(1, "ike_section_ids: strdup");
 	}
 	if (auth->srcid) {
+		int idtype = ike_get_id_type(auth->srcid);
+
 		if (peer)
 			fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n",
 			    peer->name, auth->srcid);
@@ -133,26 +138,37 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 			fprintf(fd, SET "[peer-default]:ID=%s-ID force\n",
 			    auth->srcid);
 
-		fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n", auth->srcid);
+		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", auth->srcid, ike_id_types[idtype]);
 		fprintf(fd, SET "[%s-ID]:Name=%s force\n", auth->srcid,
 		    auth->srcid);
 	}
 	if (auth->dstid) {
+		int idtype = ike_get_id_type(auth->dstid);
+
 		if (peer) {
 			fprintf(fd, SET "[peer-%s]:Remote-ID=%s-ID force\n",
 			    peer->name, peer->name);
-			fprintf(fd, SET "[%s-ID]:ID-type=FQDN force\n",
-			    peer->name);
+			fprintf(fd, SET "[%s-ID]:ID-type=%s force\n",
+			    peer->name, ike_id_types[idtype]);
 			fprintf(fd, SET "[%s-ID]:Name=%s force\n", peer->name,
 			    auth->dstid);
 		} else {
 			fprintf(fd, SET
 			    "[peer-default]:Remote-ID=default-ID force\n");
-			fprintf(fd, SET "[default-ID]:ID-type=FQDN force\n");
+			fprintf(fd, SET "[default-ID]:ID-type=%s force\n", ike_id_types[idtype]);
 			fprintf(fd, SET "[default-ID]:Name=%s force\n",
 			    auth->dstid);
 		}
 	}
+}
+
+static int
+ike_get_id_type(char *string) 
+{ 
+	if (strchr(string, '@'))
+		return ID_UFQDN;
+	else
+		return ID_FQDN;
 }
 
 static void

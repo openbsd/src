@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.61 2006/08/29 17:52:40 naddy Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.62 2006/08/29 18:10:31 msf Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -623,9 +623,11 @@ and no specific group are chosen.
 .Ic srcid
 .Aq Ar fqdn
 .Xc
-This optional parameter defines a FQDN that will be used by
+This optional parameter defines either a UFQDN or an FQDN that will be used by
 .Xr isakmpd 8
 as the identity of the local peer.
+If the argument is an email address (bob@example.com), ipsecctl will use UFQDN as the ID type.
+Anything else is considered to be an FQDN.
 .It Xo
 .Ic dstid
 .Aq Ar fqdn
