@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.19 2006/07/29 11:31:47 miod Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.20 2006/08/29 18:02:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -109,12 +109,18 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 	/*
 	 * In monitor mode, send everything directly to bpf.
-	 * Also do not process frames w/o i_addr2 any further.
 	 * XXX may want to include the CRC
 	 */
-	if (ic->ic_opmode == IEEE80211_M_MONITOR ||
-	    m->m_pkthdr.len < sizeof(struct ieee80211_frame_min))
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		goto out;
+
+	/* do not process frames w/o i_addr2 any further */
+	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame_min)) {
+		IEEE80211_DPRINTF2(("%s: frame too short (1), len %u\n",
+		    __func__, m->m_pkthdr.len));
+		ic->ic_stats.is_rx_tooshort++;
+		goto out;
+	}
 
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((wh->i_fc[0] & IEEE80211_FC0_VERSION_MASK) !=
@@ -133,8 +139,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	 *     them to go through bpf tapping at the 802.11 layer.
 	 */
 	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
-		/* XXX statistic */
-		IEEE80211_DPRINTF2(("%s: frame too short, len %u\n",
+		IEEE80211_DPRINTF2(("%s: frame too short (2), len %u\n",
 			__func__, m->m_pkthdr.len));
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
@@ -257,9 +262,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			}
 			/* check if source STA is associated */
 			if (ni == ic->ic_bss) {
-				IEEE80211_DPRINTF(("%s: data from unknown src "
-					"%s\n", __func__,
-					ether_sprintf(wh->i_addr2)));
+				IEEE80211_DPRINTF(("%s: "
+				    "data from unknown src %s\n", __func__,
+				    ether_sprintf(wh->i_addr2)));
 				/* NB: caller deals with reference */
 				ni = ieee80211_dup_bss(ic, wh->i_addr2);
 				if (ni != NULL) {
@@ -415,7 +420,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		if (m->m_flags & M_FILDROP) {
 			m_freem(m);
 			return;
-		}			
+		}
 #endif
 		(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		m_freem(m);
@@ -1233,8 +1238,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
 		rate = ieee80211_setup_rates(ic, ni, rates, xrates,
-				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE
-				| IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
+				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 		if (rate & IEEE80211_RATE_BASIC) {
 			IEEE80211_DPRINTF(("%s: rate negotiation failed: %s\n",
 			    __func__,ether_sprintf(wh->i_addr2)));
@@ -1554,6 +1559,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	}
 }
+#undef IEEE80211_VERIFY_LENGTH
+#undef IEEE80211_VERIFY_ELEMENT
+#undef IEEE80211_VERIFY_SSID
 
 static void
 ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
@@ -1723,6 +1731,3 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	return ENETRESET;
 }
-#undef IEEE80211_VERIFY_LENGTH
-#undef IEEE80211_VERIFY_ELEMENT
-#undef IEEE80211_VERIFY_SSID
