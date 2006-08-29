@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.46 2006/07/21 12:34:52 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.47 2006/08/29 17:52:40 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -189,6 +189,9 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	case IPSEC_ESP:
 		fprintf(fd, "ESP");
 		break;
+	case IPSEC_AH:
+		fprintf(fd, "AH");
+		break;
 	default:
 		warnx("illegal satype %d", satype);
 		return (-1);
@@ -207,32 +210,38 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	}
 
 	if (qmxfs && qmxfs->encxf) {
-		switch (qmxfs->encxf->id) {
-		case ENCXF_3DES_CBC:
-			fprintf(fd, "3DES");
-			break;
-		case ENCXF_DES_CBC:
-			fprintf(fd, "DES");
-			break;
-		case ENCXF_AES:
-			fprintf(fd, "AES");
-			break;
-		case ENCXF_AESCTR:
-			fprintf(fd, "AESCTR");
-			break;
-		case ENCXF_BLOWFISH:
-			fprintf(fd, "BLF");
-			break;
-		case ENCXF_CAST128:
-			fprintf(fd, "CAST");
-			break;
-		default:
+		if (satype == IPSEC_ESP) {
+			switch (qmxfs->encxf->id) {
+			case ENCXF_3DES_CBC:
+				fprintf(fd, "3DES");
+				break;
+			case ENCXF_DES_CBC:
+				fprintf(fd, "DES");
+				break;
+			case ENCXF_AES:
+				fprintf(fd, "AES");
+				break;
+			case ENCXF_AESCTR:
+				fprintf(fd, "AESCTR");
+				break;
+			case ENCXF_BLOWFISH:
+				fprintf(fd, "BLF");
+				break;
+			case ENCXF_CAST128:
+				fprintf(fd, "CAST");
+				break;
+			default:
+				warnx("illegal transform %s",
+				    qmxfs->encxf->name);
+				return (-1);
+			}
+			fprintf(fd, "-");
+		} else {
 			warnx("illegal transform %s", qmxfs->encxf->name);
 			return (-1);
 		}
-	} else
-		fprintf(fd, "AES");
-	fprintf(fd, "-");
+	} else if (satype == IPSEC_ESP)
+		fprintf(fd, "AES-");
 
 	if (qmxfs && qmxfs->authxf) {
 		switch (qmxfs->authxf->id) {

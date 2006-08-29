@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.60 2006/07/22 16:47:49 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.61 2006/08/29 17:52:40 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -378,13 +378,14 @@ and
 .Sh AUTOMATIC KEYING USING ISAKMP/IKE
 Rules can also specify IPsec flows and SAs to be established automatically by
 .Xr isakmpd 8 .
-This is accomplished by the following rule:
+This is accomplished by the following rules:
 .Bl -tag -width xxxx
 .It Ic ike esp
 Creates an IPsec tunnel using ESP.
+.It Ic ike ah
+Creates an IPsec tunnel using AH.
 .El
 .Pp
-Note that AH is not yet supported.
 See
 .Xr isakmpd 8
 for details on ISAKMP/IKE.
@@ -403,7 +404,6 @@ as symbolic host names, interface names or interface group names.
 .It Xo
 .Ic ike
 .Aq Ar mode
-.Ic esp
 .Xc
 When
 .Ar passive
@@ -429,6 +429,18 @@ warriors or dialup hosts.
 If omitted,
 .Ar active
 mode will be used.
+.It Xo
+.Aq Ar encap
+.Xc
+The encapsulation protocol to be used.
+Possible protocols are
+.Ar esp
+and
+.Ar ah .
+The default is
+.Ar esp .
+For details on ESP and AH see
+.Xr ipsec 4 .
 .It Xo
 .Aq Ar tmode
 .Xc
