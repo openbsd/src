@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.56 2006/08/28 03:06:47 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.57 2006/08/29 17:44:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2348,6 +2348,7 @@ struct bge_softc {
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
+	u_int8_t		bge_eeprom;
 	u_int8_t		bge_tbi;
 	u_int8_t		bge_rx_alignment_bug;
 	bus_dma_tag_t		bge_dmatag;

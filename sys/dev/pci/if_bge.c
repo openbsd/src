@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.173 2006/08/28 07:58:51 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.174 2006/08/29 17:44:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1084,9 +1084,11 @@ bge_chipinit(struct bge_softc *sc)
 
 	/*
 	 * Check the 'ROM failed' bit on the RX CPU to see if
-	 * self-tests passed.
+	 * self-tests passed.  Skip this check when there's no SEEPROM
+	 * fitted, since in that case it will always fail.
 	 */
-	if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL) {
+	if (sc->bge_eeprom &&
+	    CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL) {
 		printf("%s: RX CPU self-diagnostics failed!\n",
 		    sc->bge_dev.dv_xname);
 		return (ENODEV);
@@ -1757,6 +1759,14 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_PCISTATE_PCI_BUSMODE) == 0)
 		sc->bge_pcix = 1;
 
+	/*
+	 * SEEPROM check.
+	 */
+	sc->bge_eeprom = 1;
+	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_SUBSYS) & 0xffff) ==
+	    PCI_VENDOR_SUN)
+		sc->bge_eeprom = 0;
+
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
 	bge_reset(sc);
@@ -1899,7 +1909,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER)
 		hwcfg = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG);
-	else {
+	else if (sc->bge_eeprom) {
 		if (bge_read_eeprom(sc, (caddr_t)&hwcfg, BGE_EE_HWCFG_OFFSET,
 		    sizeof(hwcfg))) {
 			printf(": failed to read media type\n");
@@ -2059,7 +2069,8 @@ bge_reset(struct bge_softc *sc)
 	 * Poll the value location we just wrote until
 	 * we see the 1's complement of the magic number.
 	 * This indicates that the firmware initialization
-	 * is complete.
+	 * is complete.  We expect this to fail if no SEEPROM
+	 * is fitted.
 	 */
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		val = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM);
@@ -2068,7 +2079,7 @@ bge_reset(struct bge_softc *sc)
 		DELAY(10);
 	}
 
-	if (i >= BGE_TIMEOUT)
+	if (sc->bge_eeprom && i >= BGE_TIMEOUT)
 		printf("%s: firmware handshake timed out\n",
 		    sc->bge_dev.dv_xname);
 
