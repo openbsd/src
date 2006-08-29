@@ -1,0 +1,2 @@
+# specifying peers from different address families should cause an error
+ike from 1.1.1.1 to { 3ffe::1, 2.2.2.2 }
