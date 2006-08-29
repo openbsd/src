@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.154 2006/08/22 13:52:29 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.155 2006/08/29 20:04:54 jolan Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -246,6 +246,8 @@ ahc*	at pci?				# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 ahd*	at pci?				# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
+arc*	at pci?				# Areca RAID Controller
+scsibus* at arc?
 mpi*	at pci?				# LSI Logic Message Passing Interface
 scsibus* at mpi?
 #dpt*	at pci?				# DPT SmartCache/SmartRAID PCI
