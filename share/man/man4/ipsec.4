@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.72 2006/08/29 17:23:41 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.73 2006/08/29 17:51:02 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -112,13 +112,13 @@ AH and ESP is that AH also authenticates portions of the IP
 header of the packet
 (such as the source/destination addresses).
 ESP authenticates only the packet payload.
-.Pp
-A third protocol is available which is highly relevant to IPsec: IPComp.
-IPComp is a protocol used to reduce the size of IP datagrams
-(i.e. it provides compression).
-See
-.Xr ipcomp 4
-for further information.
+.\".Pp
+.\"A third protocol is available which is highly relevant to IPsec: IPComp.
+.\"IPComp is a protocol used to reduce the size of IP datagrams
+.\"(i.e. it provides compression).
+.\"See
+.\".Xr ipcomp 4
+.\"for further information.
 .Ss Authentication Header (AH)
 AH works by computing a value that depends on all of the payload
 data, some of the IP header data, and a certain secret value
@@ -378,7 +378,7 @@ flag (look for ``tdb'' and ``xform'' allocations).
 .Xr icmp 4 ,
 .Xr inet 4 ,
 .Xr ip 4 ,
-.Xr ipcomp 4 ,
+.\".Xr ipcomp 4 ,
 .Xr netintro 4 ,
 .Xr options 4 ,
 .Xr tcp 4 ,
