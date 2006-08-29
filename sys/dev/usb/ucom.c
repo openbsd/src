@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.31 2006/08/18 02:54:11 jason Exp $ */
+/*	$OpenBSD: ucom.c,v 1.32 2006/08/29 08:15:10 mbalmer Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -545,11 +545,11 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 	(*LINESW(tp, l_close))(tp, flag);
 	s = spltty();
-	ucom_cleanup(sc);
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;
-	splx(s);
 	ttyclose(tp);
+	ucom_cleanup(sc);
+	splx(s);
 
 	if (sc->sc_methods->ucom_close != NULL)
 		sc->sc_methods->ucom_close(sc->sc_parent, sc->sc_portno);
