@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.11 2006/08/19 12:38:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.12 2006/08/29 17:56:32 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -209,12 +209,19 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
 	int i, j, ignore, error;
-	int okrate, badrate;
+	int okrate, badrate, fixedrate;
 	struct ieee80211_rateset *srs, *nrs;
 	u_int8_t r;
 
+	/*
+	 * If the fixed rate check was requested but no fixed rate has been
+	 * defined then just remove the check.
+	 */
+	if ((flags & IEEE80211_F_DOFRATE) && ic->ic_fixed_rate == -1)
+		flags &= ~IEEE80211_F_DOFRATE;
+
 	error = 0;
-	okrate = badrate = 0;
+	okrate = badrate = fixedrate = 0;
 	srs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 	nrs = &ni->ni_rates;
 	for (i = 0; i < nrs->rs_nrates; ) {
@@ -236,17 +243,10 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 		badrate = r;
 		if (flags & IEEE80211_F_DOFRATE) {
 			/*
-			 * Apply fixed rate constraint.  Note that we do
-			 * not apply the constraint to basic rates as
-			 * otherwise we may not be able to associate if
-			 * the rate set we submit to the AP is invalid
-			 * (e.g. fix rate at 36Mb/s which is not a basic
-			 * rate for 11a operation).
+			 * Check fixed rate is included.
 			 */
-			if ((nrs->rs_rates[i] & IEEE80211_RATE_BASIC) == 0 &&
-			    ic->ic_fixed_rate >= 0 &&
-			    r != RV(srs->rs_rates[ic->ic_fixed_rate]))
-				ignore++;
+			if (r == RV(srs->rs_rates[ic->ic_fixed_rate]))
+				fixedrate = r;
 		}
 		if (flags & IEEE80211_F_DONEGO) {
 			/*
@@ -296,7 +296,8 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 			okrate = nrs->rs_rates[i];
 		i++;
 	}
-	if (okrate == 0 || error != 0)
+	if (okrate == 0 || error != 0 ||
+	    ((flags & IEEE80211_F_DOFRATE) && fixedrate == 0))
 		return badrate | IEEE80211_RATE_BASIC;
 	else
 		return RV(okrate);
