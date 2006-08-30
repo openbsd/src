@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.173 2006/08/30 10:50:36 markus Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.174 2006/08/30 18:27:17 henning Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -373,7 +373,9 @@ pf_key_v2_write(struct pf_key_v2_msg *pmsg)
 		    (u_int8_t *) iov[i].iov_base, iov[i].iov_len));
 	}
 
-	n = writev(pf_key_v2_socket, iov, cnt);
+	do {
+		n = writev(pf_key_v2_socket, iov, cnt);
+	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
 	if (n == -1) {
 		log_error("pf_key_v2_write: writev (%d, %p, %d) failed",
 		    pf_key_v2_socket, iov, cnt);
