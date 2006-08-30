@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.173 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.174 2006/08/30 23:27:32 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -187,15 +187,15 @@ controllers.
 .Ss Network interfaces
 .Bl -tag -width 10n -offset ind -compact
 .It Xr acx 4
-TI ACX100/ACX111 IEEE 802.11a/b/g wireless adapters.
+TI ACX100/ACX111 IEEE 802.11a/b/g wireless network device.
 .It Xr an 4
-Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network adapters.
+Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network device.
 .It Xr art 4
 Accoom Networks Artery T1/E1 network adapters.
 .It Xr ath 4
-Atheros IEEE 802.11a/b/g wireless network adapters.
+Atheros IEEE 802.11a/b/g wireless network device.
 .It Xr atw 4
-ADMtek ADM8211 IEEE 802.11b wireless network adapters.
+ADMtek ADM8211 IEEE 802.11b wireless network device.
 .It Xr bce 4
 Broadcom BCM4401 10/100 Ethernet device.
 .It Xr bge 4
@@ -235,10 +235,10 @@ GEM 10/100/Gigabit Ethernet device.
 Sun Happy Meal 10/100 Ethernet device.
 .It Xr ipw 4
 .Tn Intel
-PRO/Wireless 2100 IEEE 802.11b wireless network adapters.
+PRO/Wireless 2100 IEEE 802.11b wireless network device.
 .It Xr iwi 4
 .Tn Intel
-PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11a/b/g wireless network adapters.
+PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11a/b/g wireless network device.
 .It Xr ixgb 4
 Intel(R) PRO/10GbE 10Gb Ethernet device.
 .It Xr lge 4
@@ -260,15 +260,15 @@ National Semiconductor PCI 10/100/Gigabit Ethernet device.
 .It Xr pcn 4
 AMD PCnet-PCI 10/100 Ethernet device.
 .It Xr pgt 4
-Connexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g wireless adapters
+Connexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g wireless network device.
 .It Xr ral 4
-Ralink Technology IEEE 802.11a/b/g wireless network adapters.
+Ralink Technology IEEE 802.11a/b/g wireless network device.
 .It Xr re 4
 RealTek 8139C+/8169/816xS/811xS/8101E 10/100/Gigabit Ethernet device.
 .It Xr rl 4
 Realtek 8129/8139 10/100 Ethernet device.
 .It Xr rtw 4
-Realtek RTL8180L IEEE 802.11b wireless network adapters.
+Realtek RTL8180L IEEE 802.11b wireless network device.
 .It Xr san 4
 Sangoma Technologies AFT T1/E1 Network interfaces.
 .It Xr sf 4
@@ -294,11 +294,10 @@ VIA Technologies VT3043, VT86C100A, VT6105/VT6105M 10/100 Ethernet device.
 .It Xr wb 4
 Winbond W89C840F 10/100 Ethernet device.
 .It Xr wi 4
-WaveLAN/IEEE and PRISM-II IEEE 802.11b wireless network interfaces behind
-a PLX 905x-based dumb PCMCIA->PCI bridge.
+WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network
+device.
 .It Xr wpi 4
-.Tn Intel
-PRO/Wireless 3945ABG IEEE 802.11a/b/g wireless network adapters.
+Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g wireless network device.
 .It Xr xge 4
 Neterion Xframe/Xframe II 10Gb Ethernet device.
 .It Xr xl 4
