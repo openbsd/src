@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.73 2006/08/30 14:16:00 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.74 2006/08/30 16:07:29 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -59,25 +59,13 @@ flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Sh AUTOMATIC KEYING
 Rules can also specify IPsec flows and SAs to be established automatically by
 .Xr isakmpd 8 .
-Some examples to set up automatic keying:
+Some examples of setting up automatic keying:
 .Bd -literal -offset 3n
 # Set up two tunnels:
-# First between the networks 10.1.1.0/24 and 10.1.2.0/24
-# Second between the machines 192.168.3.1 and 192.168.3.2
-
-ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
+# First between the machines 192.168.3.1 and 192.168.3.2
+# Second between the networks 10.1.1.0/24 and 10.1.2.0/24
 ike esp from 192.168.3.1 to 192.168.3.2
-
-# Using interface group names and symbolic host names
-ike esp from egress to 10.1.2.0/24 peer mygate.home.net
-
-# Protect remote bridges (Ethernet frames over IP)
-ike esp proto etherip from 192.168.100.1 to 192.168.200.1
-
-# Use bypass flow to exclude local subnets from larger VPNs
-flow in from 192.168.62.0/24 to 192.168.62.0/24 type bypass
-ike dynamic esp from 192.168.62.0/24 to 192.168.48.0/20 \e
-	peer 192.168.3.12
+ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 .Ed
 .Pp
 Parameters specify the packets that will go through the tunnel and which
@@ -345,28 +333,13 @@ when starting, if one does not already exist.
 IPsec uses
 .Em flows
 to determine whether to apply security services to an IP packet or not.
-Some examples to set up flows:
+Some examples of setting up flows:
 .Bd -literal -offset 3n
-# Host-to-host
+# Set up two flows:
+# First between the machines 192.168.3.14 and 192.168.3.100
+# Second between the networks 192.168.7.0/24 and 192.168.8.0/24
 flow esp from 192.168.3.14 to 192.168.3.100
-
-# Same as above, but explicitly specifying "in" and "out" rules
-flow esp out from 192.168.3.14  to 192.168.3.100
-flow esp in  from 192.168.3.100 to 192.168.3.14
-
-# Net-to-net
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
-
-# Same as above, but explicitly specifying "in" and "out" rules
-flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
-flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
-
-# Same as above, but explicitly specifying the local gateway IP
-flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
-	local 192.168.1.1 peer 192.168.3.12
-
-# Protect remote bridges (Ethernet frames over IP)
-flow esp proto etherip from 192.168.100.1 to 192.168.200.1
 .Ed
 .Pp
 The following security services are available:
@@ -504,22 +477,12 @@ The security parameters for a
 .Ar flow
 are stored in the Security Association Database
 (SADB).
-Some examples to set up SAs:
+Some examples of setting up SAs:
 .Bd -literal -offset 3n
 # Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
 	enckey file "enc14:enc12"
-
-Some examples to set up TCP MD5 signatures:
-
-# Set up keys for TCP MD5 signatures
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
-	authkey 0xdeadbeef:0xbeefdead
-
-# Set up keys for TCP MD5 signatures; read keys from files
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
-	authkey file "/path/to/key1:/path/to/key2"
 .Ed
 .Pp
 The following rules enter SAs in the SADB:
