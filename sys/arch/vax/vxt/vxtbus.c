@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxtbus.c,v 1.1 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: vxtbus.c,v 1.2 2006/08/30 19:23:57 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -32,7 +32,6 @@
 struct vxtbus_softc {
 	struct device 		sc_dev;
 	LIST_HEAD(, vxtbus_ih)	sc_intrlist;
-	struct evcount 		sc_intrcnt;	/* unused */
 };
 
 void	vxtbus_attach(struct device *, struct device *, void *);
@@ -64,7 +63,7 @@ vxtbus_attach(struct device *parent, struct device *self, void *aux)
 	struct bp_conf bp;
 
 	LIST_INIT(&sc->sc_intrlist);
-	scb_vecalloc(VXT_INTRVEC, vxtbus_intr, sc, SCB_ISTACK, &sc->sc_intrcnt);
+	scb_vecalloc(VXT_INTRVEC, vxtbus_intr, sc, SCB_ISTACK, NULL);
 
 	printf("\n");
 
@@ -94,6 +93,8 @@ vxtbus_print(void *aux, const char *name)
  *
  * All device interrupts end up on the same vector, which is controllable
  * by the SC26C94 chip.
+ *
+ * Interrupts are handled at spl4 (ipl 0x14).
  *
  * The following routines implement shared interrupts for vxtbus subdevices.
  */
@@ -148,9 +149,10 @@ vxtbus_intr(void *arg)
 #ifdef DIAGNOSTIC
 	if (handled == 0) {
 		if (++strayintr == 10)
-			panic("too many stray interrupts");
+			panic("%s: too many stray interrupts",
+			    sc->sc_dev.dv_xname);
 		else
-			printf("stray interrupt");
+			printf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
 	}
 #endif
 }
