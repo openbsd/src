@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.54 2006/03/25 22:41:43 djm Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.55 2006/08/30 11:20:20 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2158,8 +2158,8 @@ rtw_tune(struct rtw_softc *sc)
 	KASSERT(ic->ic_bss->ni_chan != NULL);
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-	if (chan == IEEE80211_CHAN_ANY)
-		panic("%s: chan == IEEE80211_CHAN_ANY", __func__);
+	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
+		return 0;
 
 	if (chan == sc->sc_cur_chan) {
 		RTW_DPRINTF(RTW_DEBUG_TUNE,

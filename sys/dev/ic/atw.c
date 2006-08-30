@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.47 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: atw.c,v 1.48 2006/08/30 11:20:20 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -1527,8 +1527,8 @@ atw_tune(struct atw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-	if (chan == IEEE80211_CHAN_ANY)
-		panic("%s: chan == IEEE80211_CHAN_ANY", __func__);
+	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
+		return 0;
 
 	if (chan == sc->sc_cur_chan)
 		return 0;
