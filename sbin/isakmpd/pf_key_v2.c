@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.174 2006/08/30 18:27:17 henning Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.175 2006/08/30 22:54:32 henning Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -52,6 +52,7 @@
 
 #include "cert.h"
 #include "conf.h"
+#include "connection.h"
 #include "exchange.h"
 #include "ipsec.h"
 #include "ipsec_num.h"
@@ -3448,6 +3449,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	/* Let's rock 'n roll. */
 	pf_key_v2_connection_check(conn);
+	connection_record_passive(conn);
 	conn = 0;
 
 	/* Fall-through to cleanup. */
