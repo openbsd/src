@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.3 2006/01/13 11:50:31 espie Exp $
+.\"	$OpenBSD: package.5,v 1.4 2006/08/30 10:22:35 jmc Exp $
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@ and are usually manipulated using
 or
 .Xr pkg_info 1 .
 .Pp
-The basic underlying format is an archive following the UStar specification
+The basic underlying format is an archive following the ustar specification
 that can be handled with
 .Xr tar 1
 and compressed using
@@ -73,7 +73,7 @@ This table of contents is always followed by a few special files, some of
 which are optional: the package description (+DESC), an installation script
 (+INSTALL), a display message (+MESSAGE), etc.
 .Pp
-The Ustar format has some limitations with respect to file names.
+The ustar format has some limitations with respect to file names.
 Accordingly, the package tools will replace very long names with
 .Pa LongName#n
 and long link names with
@@ -84,7 +84,7 @@ will reconstitute the correct names behind the scenes.
 The
 .Xr pkg_merge 1
 command can create fat packages, which coalesce several normal packages in
-a single Ustar archive, by interleaving their contents.
+a single ustar archive, by interleaving their contents.
 .Pp
 Other tools, such as
 .Xr pkg_add 1 ,
@@ -113,7 +113,7 @@ for a file belonging to the second package.
 .Xr packages 7 ,
 .Xr packages-specs 7
 .Sh STANDARDS
-Packages are valid gzip'ed Ustar archives that can be extracted using
+Packages are valid gzip'ed ustar archives that can be extracted using
 .Xr tar 1 .
 In particular, hardlink names should be valid, and all items will
 extract to different names.
