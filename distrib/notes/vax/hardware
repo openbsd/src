@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.19 2006/08/14 13:23:19 miod Exp $
+dnl	$OpenBSD: hardware,v 1.20 2006/08/30 20:08:51 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -25,6 +25,7 @@ The following systems have been tested:
 	- VAX 4000 300
 	- VAX 4000 {400,500,600}
 	- VAX 4000 {500A,700A}
+	- VXT2000 and 2000+
 
 Supported devices {:-include-:}:
     * Ethernet devices:
@@ -44,14 +45,17 @@ Supported devices {:-include-:}:
 
     * Serial ports:
 	- DZ*11 lines (also DZ*11 compatible lines on VAXstations) (dz)
+	- SC26C94 serial port on VXT2000 (qsc)
 
     * Frame buffers:
 	- VAXstation 3100 monochrome frame buffer on-board (smg)
 	- VAXstation 3100/{30,38,40,48} color frame buffer option (gpx)
 	- VAXstation 4000/60 and 4000/VLC frame buffer (lcg)
 	- VAXstation 4000/90 color frame buffer (lcspx)
-	The VAXstation 3100 spx frame buffer, as well as the spxg/spxgt
-	option for VAXstation 4000s are not supported yet.
+	- VXT2000 color frame buffer (lcspx)
+	The VAXstation 3100 spx frame buffer, the VXT2000 monochrome frame
+	buffer, and the spxg/spxgt option for VAXstation 4000s are not
+	supported yet.
 
     * Keyboard and mice:
 	- LK201 and LK401 keyboards (lkkbd)
@@ -62,4 +66,6 @@ The lowest amount of memory tested is 6MB; however, more is recommended.
 Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
 or tapes on one of the supported controllers, disks and tapes accessed
 through an appropriate QBUS MSCP controller, or an NFS root and swap.
+The latter is the only option for the diskless VXT2000 terminals.
+
 Please see below for details.

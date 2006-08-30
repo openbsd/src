@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.6 2006/08/14 13:23:19 miod Exp $
+dnl	$OpenBSD: prep,v 1.7 2006/08/30 20:08:51 miod Exp $
 VAX machines don't generally need any specific preparation. You will need
 to properly identify the console port on your machine.
 
@@ -14,6 +14,13 @@ the keyboard and frame buffer console, if the S3 switch is in the down
 position. Be warned that early VAXstation 3100 models do not have a hole in
 the enclosure to access the switch, and will need to be opened for the
 switch to be flipped.
+
+As an exception to the above rule, VXT2000 machines have a W3 jumper on
+the motherboard, near the power supply connector. When the jumper is
+open, the VXT2000 will use the keyboard and frame buffer console (this
+is the factory configuration). Shorting the jumper will switch to
+serial console on the DB25 serial connector, and will disable the
+frame buffer.
 
 Note that, if the frame buffer in your VAXstation is not supported, OpenBSD
 will use serial port 3 as the console, as if the S3 switch had been in the
