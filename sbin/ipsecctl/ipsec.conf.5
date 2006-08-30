@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.68 2006/08/30 12:31:07 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.69 2006/08/30 12:50:40 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -644,12 +644,16 @@ and is specified as follows:
 .Bd -literal -offset -indent
 authkey file "filename"
 .Ed
+.Pp
+It is also possible to specify two values separated by a colon.
+.Xr ipsecctl 8
+will then generate the matching incoming SA using the second values specified.
 .It Xo
 .Ic enckey
 .Aq Ar keyspec
 .Xc
-The encryption key is defined similar to
-.Ar authkey .
+The encryption key is defined similarly to
+.Ic authkey .
 .It Xo
 .Ic tcpmd5
 .Ic from
@@ -683,31 +687,7 @@ and destination address
 The parameter
 .Ic spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
-.Pp
-The authentication key to be used is a hexadecimal string of arbitrary length
-or a path to a file containing the key.
-The filename may be given as either an absolute path to the file
-or a relative pathname,
-and is specified as follows:
-.Bd -literal -offset -indent
-authkey file "filename"
-.Ed
-.Pp
-It is very important that the key is not guessable.
-One practical way of generating 160-bit (20-byte) keys is as follows:
-.Bd -literal -offset indent
-$ openssl rand 20 | hexdump -e '20/1 "%02x"'
-.Ed
-.Pp
-For both
-.Ic spi
-and
-.Ic authkey
-it is possible to specify two values separated by a colon.
-.Xr ipsecctl 8
-will then generate the matching incoming SA using the second values for
-.Ic spi
-and
+The encryption key is defined similarly to
 .Ic authkey .
 .Pp
 For details on how to enable TCP MD5 signatures see
