@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.66 2006/08/30 12:27:54 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.67 2006/08/30 12:30:04 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -733,8 +733,7 @@ in its structure.
 .Pp
 Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key.
-This is because the most significant bit of each byte is ignored by both
-algorithms.
+This is because the most significant bit of each byte is used for parity.
 .Pp
 Different authentication types may also require different sized keys:
 .Pp
