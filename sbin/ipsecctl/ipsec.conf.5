@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.64 2006/08/30 11:44:23 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.65 2006/08/30 12:20:11 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -51,9 +51,9 @@ Macro names may not be reserved words (for example
 .Ic esp ) .
 Macros are not expanded inside quotes.
 .Pp
-For example,
+For example:
 .Bd -literal -offset indent
-remote_gw = \&"192.168.3.12\&"
+remote_gw = "192.168.3.12"
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Ed
 .Sh AUTOMATIC KEYING
@@ -258,17 +258,12 @@ the values
 and
 .Ar modp8192
 are allowed.
-When a group is specified perfect forward security (PFS) will be used.
-When the value
-.Ar none
-is used instead, PFS will be disabled.
 If omitted,
 .Xr ipsecctl 8
 will use the default values
-.Ar hmac-sha1
-and
-.Ar aes
-and PFS with the group
+.Ar hmac-sha1 ,
+.Ar aes ,
+and group
 .Ar modp1024 .
 .It Xo
 .Ic quick auth
@@ -312,15 +307,21 @@ the values
 .Ar modp3072 ,
 .Ar modp4096 ,
 .Ar modp6144 ,
+.Ar modp8192 ,
 and
-.Ar modp8192
+.Ar none
 are allowed.
+When a group is specified perfect forward security (PFS) will be used.
+When the value
+.Ar none
+is used, PFS will be disabled.
 If no quick mode transforms are specified,
 the default values
 .Ar hmac-sha2-256
 and
 .Ar aes
-and no specific group are chosen.
+are used;
+PFS will only be used if the remote side requests it.
 .It Xo
 .Ic srcid
 .Aq Ar fqdn
