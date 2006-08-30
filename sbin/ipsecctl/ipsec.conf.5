@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.71 2006/08/30 12:58:25 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.72 2006/08/30 14:08:11 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -594,20 +594,20 @@ If no algorithm is specified,
 will choose
 .Ar hmac-sha2-256
 by default.
-.It Xo
-.Ic comp
-.Aq Ar algorithm
-.Xc
-The compression algorithm to be used.
-Possible algorithms are
-.Ar deflate
-and
-.Ar lzs .
-Note that
-.Ar lzs
-is only available with
-.Xr hifn 4
-because of the patent held by Hifn, Inc.
+.\".It Xo
+.\".Ic comp
+.\".Aq Ar algorithm
+.\".Xc
+.\"The compression algorithm to be used.
+.\"Possible algorithms are
+.\".Ar deflate
+.\"and
+.\".Ar lzs .
+.\"Note that
+.\".Ar lzs
+.\"is only available with
+.\".Xr hifn 4
+.\"because of the patent held by Hifn, Inc.
 .It Xo
 .Ic enc
 .Aq Ar algorithm
