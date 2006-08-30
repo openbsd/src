@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze_vxtbus.c,v 1.1 2006/08/27 16:55:41 miod Exp $	*/
+/*	$OpenBSD: if_ze_vxtbus.c,v 1.2 2006/08/30 19:28:13 miod Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -91,5 +91,6 @@ ze_vxt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ac.ac_enaddr[i] = ea[i] & 0xff;
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
+	SET(sc->sc_flags, SGECF_VXTQUIRKS);
 	sgec_attach(sc);
 }

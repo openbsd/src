@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgecvar.h,v 1.4 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: sgecvar.h,v 1.5 2006/08/30 19:28:11 miod Exp $	*/
 /*      $NetBSD: sgecvar.h,v 1.2 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -62,7 +62,9 @@ struct	ze_softc {
 	int		sc_inq;
 	int		sc_lastack;
 	int		sc_nextrx;
-	int		sc_setup;	/* Setup packet in queue	*/
+	int		sc_flags;
+#define	SGECF_SETUP		0x00000001	/* need to send setup packet */
+#define	SGECF_VXTQUIRKS		0x00000002	/* need VXT2000 care */
 };
 
 void	sgec_attach(struct ze_softc *);
