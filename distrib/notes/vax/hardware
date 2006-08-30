@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.20 2006/08/30 20:08:51 miod Exp $
+dnl	$OpenBSD: hardware,v 1.21 2006/08/30 21:05:10 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -12,6 +12,7 @@ The following systems have been tested:
 	- VAXstation 4000/96
 	- MicroVAX 2000
 	- MicroVAX 3100/{10,20}{,e}
+	- MicroVAX 3100/{30,40}
 	- MicroVAX 3100/80
 	- MicroVAX 3100/85
 	- MicroVAX 3100/90
@@ -28,6 +29,12 @@ The following systems have been tested:
 	- VXT2000 and 2000+
 
 Supported devices {:-include-:}:
+    * QBUS devices:
+	- KFQSA       (MSCP DSSI controller) (uda)
+	- Emulex UC08 (MSCP SCSI controller) (uda)
+	- CXY08       (DHV-11 emulating serial) (dhu)
+	- DELQA       (Ethernet) (qe)
+
     * Ethernet devices:
 	- on-board MicroVAX or VAXstation LANCE (le)
 	- DEC SGEC (ze)
@@ -37,18 +44,12 @@ Supported devices {:-include-:}:
 	  (this {:-include-:}s most 3100s and VAXstation 4000s, as well
 	   as the VAX 4000 10x series).
 
-    * QBUS devices:
-	- KFQSA       (MSCP DSSI controller) (uda)
-	- Emulex UC08 (MSCP SCSI controller) (uda)
-	- CXY08       (DHV-11 emulating serial) (dhu)
-	- DELQA       (Ethernet) (qe)
-
     * Serial ports:
 	- DZ*11 lines (also DZ*11 compatible lines on VAXstations) (dz)
 	- SC26C94 serial port on VXT2000 (qsc)
 
     * Frame buffers:
-	- VAXstation 3100 monochrome frame buffer on-board (smg)
+	- VAXstation 3100 on-board monochrome frame buffer (smg)
 	- VAXstation 3100/{30,38,40,48} color frame buffer option (gpx)
 	- VAXstation 4000/60 and 4000/VLC frame buffer (lcg)
 	- VAXstation 4000/90 color frame buffer (lcspx)
@@ -57,7 +58,7 @@ Supported devices {:-include-:}:
 	buffer, and the spxg/spxgt option for VAXstation 4000s are not
 	supported yet.
 
-    * Keyboard and mice:
+    * Input devices:
 	- LK201 and LK401 keyboards (lkkbd)
 	- VSxxx mouse (lkms)
 
