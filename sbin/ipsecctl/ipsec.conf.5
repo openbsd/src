@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.63 2006/08/30 11:41:45 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.64 2006/08/30 11:44:23 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -549,10 +549,10 @@ as symbolic host names, interface names or interface group names.
 .Aq Ar mode
 .Xc
 For
-.Ic esp ,
-.Ic ah ,
+.Ic esp
 and
-.Ic ipcomp
+.Ic ah ,
+.\".Ic ipcomp
 the encapsulation mode to be used can be specified.
 Possible modes are
 .Ar tunnel
@@ -778,7 +778,7 @@ will then generate the matching incoming SA using the second values for
 and
 .Ic enckey .
 .Sh SEE ALSO
-.Xr ipcomp 4 ,
+.\".Xr ipcomp 4 ,
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
 .Xr isakmpd.conf 5 ,
