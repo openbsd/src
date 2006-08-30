@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.63 2006/07/28 20:38:57 brad Exp $ */
+/* $OpenBSD: mfi.c,v 1.64 2006/08/30 07:25:52 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1361,7 +1361,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	bv->bv_nodisk = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_no_drv_per_span *
 	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth;
 
-	bv->bv_size = sc->sc_ld_details.mld_size / 2; /* XXX why? / 2 */
+	bv->bv_size = sc->sc_ld_details.mld_size * 512; /* bytes per block */
 
 	rv = 0;
 done:
@@ -1465,7 +1465,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	    sizeof *pd, pd, mbox))
 		goto freeme;
 
-	bd->bd_size = pd->mpd_size / 2; /* XXX why? / 2 */
+	bd->bd_size = pd->mpd_size * 512; /* bytes per block */
 
 	/* if pd->mpd_enc_idx is 0 then it is not in an enclosure */
 	bd->bd_channel = pd->mpd_enc_idx;
