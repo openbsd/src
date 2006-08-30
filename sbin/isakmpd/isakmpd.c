@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.93 2006/06/10 21:15:45 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.94 2006/08/30 16:56:56 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -76,7 +76,7 @@ int             debug = 0;
 int		acquire_only = 0;
 
 /* Set when SAs shall be deleted on shutdown. */
-int		delete_sas = 0;
+int		delete_sas = 1;
 
 /*
  * If we receive a SIGHUP signal, this flag gets set to show we need to
@@ -214,7 +214,7 @@ parse_args(int argc, char *argv[])
 			break;
 
 		case 'S':
-			delete_sas = 1;
+			delete_sas = 0;
 			break;
 
 		case 'T':
@@ -317,8 +317,8 @@ daemon_shutdown(void)
 	if (sigtermed == 1) {
 		log_print("isakmpd: shutting down...");
 
-		if (delete_sas ||
-		    !strncmp("yes", conf_get_str("General", "Delete-SAs"), 3)) {
+		if (delete_sas &&
+		    strncmp("no", conf_get_str("General", "Delete-SAs"), 2)) {
 			/*
 			 * Delete all active SAs.  First IPsec SAs, then
 			 * ISAKMPD.  Each DELETE is another (outgoing) message.
