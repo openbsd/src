@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2006/08/27 16:55:38 miod Exp $
+#	$OpenBSD: GENERIC,v 1.47 2006/08/30 19:29:20 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,7 +30,7 @@ option		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000 10X, MicroVAX 3100m9X
-#option		VXT		# VXT2000 and VXT2000+
+option		VXT		# VXT2000 and VXT2000+
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
@@ -54,7 +54,7 @@ vsbus0		at mainbus0		# All VAXstations
 ibus0		at mainbus0		# All Microvax
 #nbi0		at mainbus0		# VAX 8800
 #xmi0		at mainbus0		# VAX 6000
-#vxtbus0		at mainbus0		# VXT2000
+vxtbus0		at mainbus0		# VXT2000
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
@@ -81,9 +81,9 @@ le0		at ibus0		# LANCE ethernet (MV3400)
 #shac0		at ibus0		# DSSI controller
 
 # VXT2000 devices
-#ze0		at vxtbus0		# SGEC on-board ethernet
-#qsc0		at vxtbus0		# serial ports
-#lcspx0		at vxtbus0		# color frame buffer
+ze0		at vxtbus0		# SGEC on-board ethernet
+qsc0		at vxtbus0		# serial ports
+lcspx0		at vxtbus0		# color frame buffer
 
 # Devices connected at VAXBI
 #cpu*		at bi? node?		# KA820/KA825 cpu
@@ -156,10 +156,10 @@ wsdisplay*	at smg?
 #wsdisplay*	at qv0
 
 lkkbd0		at dz0 line 0
-#lkkbd0		at qsc0 line 2
+lkkbd0		at qsc0 line 2
 wskbd*		at lkkbd?
 lkms0		at dz0 line 1
-#lkms0		at qsc0 line 3
+lkms0		at qsc0 line 3
 wsmouse*	at lkms?
 
 # Machine leds
