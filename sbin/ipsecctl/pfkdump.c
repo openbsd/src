@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.19 2006/06/12 19:17:51 naddy Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.20 2006/08/30 12:16:59 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -55,6 +55,7 @@ static void	print_ident(struct sadb_ext *, struct sadb_msg *);
 static void	print_auth(struct sadb_ext *, struct sadb_msg *);
 static void	print_cred(struct sadb_ext *, struct sadb_msg *);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
+static void	print_tag(struct sadb_ext *, struct sadb_msg *);
 
 static struct idname *lookup(struct idname [], u_int8_t);
 static char    *lookup_name(struct idname [], u_int8_t);
@@ -63,7 +64,7 @@ static void	print_ext(struct sadb_ext *, struct sadb_msg *);
 void		pfkey_print_sa(struct sadb_msg *, int);
 void		pfkey_print_raw(u_int8_t *, ssize_t);
 
-struct sadb_ext *extensions[SADB_EXT_MAX];
+struct sadb_ext *extensions[SADB_EXT_MAX + 1];
 
 struct idname {
 	u_int8_t id;
@@ -105,6 +106,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_REMOTE_CREDENTIALS,"remote_cred",		print_cred },
 	{ SADB_X_EXT_UDPENCAP,		"udpencap",		print_udpenc },
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
+	{ SADB_X_EXT_TAG,		"tag",			print_tag },
 	{ 0,				NULL,			NULL }
 };
 
@@ -252,6 +254,8 @@ print_ext(struct sadb_ext *ext, struct sadb_msg *msg)
 		    ext->sadb_ext_type, ext->sadb_ext_len);
 		return;
 	}
+		printf("type %u len %u",
+		    ext->sadb_ext_type, ext->sadb_ext_len);
 	printf("\t%s: ", entry->name);
 	if (entry->func != NULL)
 		(*entry->func)(ext, msg);
@@ -373,6 +377,13 @@ print_flow(struct sadb_ext *ext, struct sadb_msg *msg)
 	}
 	printf("type %s direction %s",
 	    lookup_name(flow_types, proto->sadb_protocol_proto), dir);
+}
+
+static void
+print_tag(struct sadb_ext *ext, struct sadb_msg *msg)
+{
+	struct sadb_x_tag *stag = (struct sadb_x_tag *)ext;
+	printf("%s", stag->sadb_x_tag_name);
 }
 
 static char *
@@ -710,7 +721,7 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	ipsecctl_print_rule(&r, opts);
 
 	if (opts & IPSECCTL_OPT_VERBOSE) {
-		for (i = 0; i < SADB_EXT_MAX; i++)
+		for (i = 0; i <= SADB_EXT_MAX; i++)
 			if (extensions[i])
 				print_ext(extensions[i], msg);
 	}
@@ -734,7 +745,7 @@ pfkey_monitor_sa(struct sadb_msg *msg, int opts)
 	if (msg->sadb_msg_errno)
 		printf("\terrno %u: %s\n", msg->sadb_msg_errno,
 		    strerror(msg->sadb_msg_errno));
-	for (i = 0; i < SADB_EXT_MAX; i++)
+	for (i = 0; i <= SADB_EXT_MAX; i++)
 		if (extensions[i])
 			print_ext(extensions[i], msg);
 	fflush(stdout);
