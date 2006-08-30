@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.4 2005/11/20 10:01:30 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.5 2006/08/30 06:30:00 camield Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -164,6 +164,14 @@ pass out proto tcp from $proxy to any port 21 keep state
 .Xr pf 4 ,
 .Xr pf.conf 5
 .Sh CAVEATS
+.Xr pf 4
+does not allow the ruleset to be modified if the system is running at a
+.Xr securelevel 7
+higher than 1.
+At that level
+.Nm ftp-proxy
+cannot add rules to the anchors and FTP data connections may get blocked.
+.Pp
 Negotiated data connection ports below 1024 are not allowed.
 .Pp
 The negotiated IP address for active modes is ignored for security
