@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.45 2006/06/08 22:34:30 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.46 2006/08/30 18:02:20 henning Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -369,17 +369,15 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 		iov_cnt++;
 	}
 	len = smsg.sadb_msg_len * 8;
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
+
+	do {
+		n = writev(sd, iov, iov_cnt);
+	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
+	if (n == -1) {
 		warn("writev failed");
-		ret = -1;
-		goto out;
-	}
-	if (n != len) {
-		warnx("short write");
 		ret = -1;
 	}
 
-out:
 	if (sa_srcid)
 		free(sa_srcid);
 	if (sa_dstid)
