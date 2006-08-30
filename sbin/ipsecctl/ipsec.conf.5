@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.65 2006/08/30 12:20:11 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.66 2006/08/30 12:27:54 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -80,18 +80,6 @@ ike dynamic esp from 192.168.62.0/24 to 192.168.48.0/20 \e
 	peer 192.168.3.12
 .Ed
 .Pp
-This is accomplished by the following rules:
-.Bl -tag -width xxxx
-.It Ic ike esp
-Creates an IPsec tunnel using ESP.
-.It Ic ike ah
-Creates an IPsec tunnel using AH.
-.El
-.Pp
-See
-.Xr isakmpd 8
-for details on ISAKMP/IKE.
-.Pp
 Parameters specify the packets that will go through the tunnel and which
 cryptographic transforms are used for
 .Xr isakmpd 8 .
@@ -131,6 +119,10 @@ warriors or dialup hosts.
 If omitted,
 .Ar active
 mode will be used.
+.Pp
+See
+.Xr isakmpd 8
+for details on ISAKMP/IKE.
 .It Xo
 .Aq Ar encap
 .Xc
@@ -349,10 +341,6 @@ generates a key-pair for
 .Xr isakmpd 8
 when starting, if one does not already exist.
 .El
-.Pp
-See also
-.Sx ISAKMP EXAMPLES
-below.
 .Sh MANUAL FLOWS
 IPsec uses
 .Em flows
