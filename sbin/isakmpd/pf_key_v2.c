@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.172 2006/06/10 20:10:02 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.173 2006/08/30 10:50:36 markus Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2166,14 +2166,6 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	/* If it's not an established SA, don't proceed. */
 	if (!(sa->flags & SA_FLAG_READY))
 		return 0;
-
-	/*
-	 * If the SA was not replaced and was not one acquired through the
-	 * kernel (ACQUIRE message), remove the flow associated with it.
-	 * We ignore any errors from the disabling of the flow.
-	 */
-	if (!(sa->flags & SA_FLAG_REPLACED) && !(sa->flags & SA_FLAG_ONDEMAND))
-		pf_key_v2_disable_sa(sa, incoming);
 
 	if (sa->name && !(sa->flags & SA_FLAG_REPLACED)) {
 		LOG_DBG((LOG_SYSDEP, 50,
