@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.69 2006/08/30 12:50:40 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.70 2006/08/30 12:54:57 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -647,7 +647,7 @@ authkey file "filename"
 .Pp
 It is also possible to specify two values separated by a colon.
 .Xr ipsecctl 8
-will then generate the matching incoming SA using the second values specified.
+will then generate the matching incoming SA using the second value specified.
 .It Xo
 .Ic enckey
 .Aq Ar keyspec
@@ -732,19 +732,6 @@ One practical way of generating 160-bit (20-byte) keys is a follows:
 .Bd -literal -offset indent
 $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
-.Pp
-For
-.Ic spi ,
-.Ic authkey ,
-and
-.Ic enckey ,
-it is possible to specify two colon separated values.
-.Xr ipsecctl 8
-will then generate the matching incoming SA using the second values for
-.Ic spi ,
-.Ic authkey ,
-and
-.Ic enckey .
 .Sh SEE ALSO
 .\".Xr ipcomp 4 ,
 .Xr ipsec 4 ,
