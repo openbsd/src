@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.174 2006/08/29 17:44:16 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.175 2006/08/30 21:28:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1779,33 +1779,40 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
+	mac_addr = bge_readmem_ind(sc, 0x0c14);
+	if ((mac_addr >> 16) == 0x484b) {
+		sc->arpcom.ac_enaddr[0] = (u_char)(mac_addr >> 8);
+		sc->arpcom.ac_enaddr[1] = (u_char)mac_addr;
+		mac_addr = bge_readmem_ind(sc, 0x0c18);
+		sc->arpcom.ac_enaddr[2] = (u_char)(mac_addr >> 24);
+		sc->arpcom.ac_enaddr[3] = (u_char)(mac_addr >> 16);
+		sc->arpcom.ac_enaddr[4] = (u_char)(mac_addr >> 8);
+		sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
+		gotenaddr = 1;
+	}
+	if (!gotenaddr && sc->bge_eeprom) {
+		if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+		    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN) == 0)
+			gotenaddr = 1;
+	}
 
 #ifdef __sparc64__
-	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-	    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
+	if (!gotenaddr) {
+		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+		    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
+			gotenaddr = 1;
+	}
+	if (!gotenaddr) {
+		extern void myetheraddr(u_char *);
+
+		myetheraddr(sc->arpcom.ac_enaddr);
 		gotenaddr = 1;
+	}
 #endif
 
 	if (!gotenaddr) {
-		mac_addr = bge_readmem_ind(sc, 0x0c14);
-		if ((mac_addr >> 16) == 0x484b) {
-			sc->arpcom.ac_enaddr[0] = (u_char)(mac_addr >> 8);
-			sc->arpcom.ac_enaddr[1] = (u_char)mac_addr;
-			mac_addr = bge_readmem_ind(sc, 0x0c18);
-			sc->arpcom.ac_enaddr[2] = (u_char)(mac_addr >> 24);
-			sc->arpcom.ac_enaddr[3] = (u_char)(mac_addr >> 16);
-			sc->arpcom.ac_enaddr[4] = (u_char)(mac_addr >> 8);
-			sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
-			gotenaddr = 1;
-		}
-	}
-
-	if (!gotenaddr) {
-		if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
-		    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-			printf(": failed to read station address\n");
-			goto fail_2;
-		}
+		printf(": failed to read station address\n");
+		goto fail_2;
 	}
 
 	/*
