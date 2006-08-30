@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.2 2006/08/24 20:29:38 miod Exp $
+$OpenBSD: version,v 1.3 2006/08/30 20:02:13 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -32,3 +32,4 @@ is taken as the current.
 	Work around some PROM bugs in graphics mode which cause \h and \t not
 	to behave as expected.
 1.11:	Better VXT2000{,+} support.
+1.12:	Glass console support on VXT2000{,+}.

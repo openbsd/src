@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio.c,v 1.6 2006/08/24 20:29:38 miod Exp $ */
+/*	$OpenBSD: consio.c,v 1.7 2006/08/30 20:02:13 miod Exp $ */
 /*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -151,9 +151,11 @@ consinit(void)
 		break;
 
 	case VAX_BTYP_VXT:
-		put_fp = vxt_putchar;
+		put_fp = rom_putchar;
 		get_fp = vxt_getchar;
 		test_fp = vxt_testchar;
+		rom_putc = 0x20040058;		/* 537133144 */
+		rom_getc = 0x20040044;		/* 537133124 */
 		break;
 
 	case VAX_BTYP_630:
@@ -277,39 +279,67 @@ void ka53_consinit(void)
 	test_fp = ka53_rom_testchar;
 }
 
+/*
+ * VXT2000 console routines.
+ *
+ * While we can use the rom putchar routine, the rom getchar routine
+ * will happily return the last key pressed, even if it is not pressed
+ * anymore.
+ *
+ * To guard against this, we monitor the keyboard serial port and will
+ * only invoke the rom function (which will do the keyboard layout
+ * translation for us) if there is indeed a new keyboard event (we still
+ * need to guard against dead keys, hence the while() condition in
+ * vxt_getchar). This still unfortunately causes phantom characters to
+ * appear when playing with the shift keys, but nothing backspace can't
+ * erase, so this will be a minor annoyance.
+ *
+ * If console is on the serial port, we do not use the prom routines at
+ * all.
+ */
 static volatile int *vxtregs = (int *)0x200A0000;
 
-#define	CH_SR		1
-#define	CH_CR		2
-#define	CH_DAT		3
+#define	CH_SRA		0x01
+#define	CH_CRA		0x02
+#define	CH_DATA		0x03
+#define	CH_SRC		0x11
+#define	CH_CRC		0x12
+#define	CH_DATC		0x13
+
 #define	CR_RX_ENA	0x01
 #define	CR_TX_ENA	0x04
 #define SR_RX_RDY	0x01
 #define SR_TX_RDY	0x04
 
-void
-vxt_putchar(int c)
-{
-	vxtregs[CH_CR] = CR_TX_ENA;
-	while ((vxtregs[CH_SR] & SR_TX_RDY) == 0)
-		;
-	vxtregs[CH_DAT] = c;
-}
-
 int
 vxt_getchar(void)
 {
-	vxtregs[CH_CR] = CR_RX_ENA;
-	while ((vxtregs[CH_SR] & SR_RX_RDY) == 0)
-		;
-	return vxtregs[CH_DAT];
+	if (vax_confdata & 2) {
+		vxtregs[CH_CRC] = CR_RX_ENA;
+		while ((vxtregs[CH_SRC] & SR_RX_RDY) == 0 ||
+		    rom_testchar() == 0)
+			;
+		return rom_getchar();
+	} else {
+		vxtregs[CH_CRA] = CR_RX_ENA;
+		while ((vxtregs[CH_SRA] & SR_RX_RDY) == 0)
+			;
+		return vxtregs[CH_DATA];
+	}
 }
 
 int
 vxt_testchar(void)
 {
-	vxtregs[CH_CR] = CR_RX_ENA;
-	if ((vxtregs[CH_SR] & SR_RX_RDY) == 0)
-		return 0;
-	return vxtregs[CH_DAT];
+	if (vax_confdata & 2) {
+		vxtregs[CH_CRC] = CR_RX_ENA;
+		if ((vxtregs[CH_SRC] & SR_RX_RDY) == 0)
+			return 0;
+		return rom_testchar();
+	} else {
+		vxtregs[CH_CRA] = CR_RX_ENA;
+		if ((vxtregs[CH_SRA] & SR_RX_RDY) == 0)
+			return 0;
+		return vxtregs[CH_DATA];
+	}
 }
