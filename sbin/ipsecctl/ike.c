@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.48 2006/08/29 18:10:31 msf Exp $	*/
+/*	$OpenBSD: ike.c,v 1.49 2006/08/30 12:18:10 msf Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -64,7 +64,7 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 #define CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL	5
 #define CONF_DFLT_DYNAMIC_CHECK_INTERVAL	30
 
-char *ike_id_types[] = { "", "", "FQDN", "UFQDN" };
+char *ike_id_types[] = { "", "", "FQDN", "USER_FQDN" };
 
 static void
 ike_section_general(struct ipsec_rule *r, FILE *fd)
