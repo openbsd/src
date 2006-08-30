@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.32 2006/05/29 16:50:36 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.33 2006/08/30 05:25:33 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -393,10 +393,8 @@ lsa_del(struct rde_nbr *nbr, struct lsa_hdr *lsa)
 	struct timeval	 tv;
 
 	v = lsa_find(nbr->area, lsa->type, lsa->ls_id, lsa->adv_rtr);
-	if (v == NULL) {
-		log_warnx("lsa_del: LSA no longer in table");
+	if (v == NULL)
 		return;
-	}
 
 	log_debug("lsa_del: putting %p on hold queue", v);
 
