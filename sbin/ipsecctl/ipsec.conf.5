@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.70 2006/08/30 12:54:57 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.71 2006/08/30 12:58:25 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -728,11 +728,14 @@ Different authentication types may also require different sized keys:
 .El
 .Pp
 It is very important that keys are not guessable.
-One practical way of generating 160-bit (20-byte) keys is a follows:
+One practical way of generating keys is to use
+.Xr openssl 1 .
+The following generates a 160-bit (20-byte) key:
 .Bd -literal -offset indent
 $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
 .Sh SEE ALSO
+.Xr openssl 1 ,
 .\".Xr ipcomp 4 ,
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
