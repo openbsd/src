@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.62 2006/08/29 18:10:31 msf Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.63 2006/08/30 11:41:45 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -56,328 +56,30 @@ For example,
 remote_gw = \&"192.168.3.12\&"
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Ed
-.Sh FLOWS
-IPsec uses
-.Em flows
-to determine whether to apply security services to an IP packet or not.
-The following security services are available:
-.Bl -tag -width xxxx
-.It Ic flow esp
-ESP can provide the following properties:
-authentication, integrity, replay protection, and confidentiality of the data.
-.It Ic flow ah
-AH provides authentication, integrity, and replay protection, but no
-confidentiality.
-.It Ic flow ipip
-IPIP provides neither authentication, integrity, replay protection, nor
-confidentiality.
-However, it allows you to tunnel IP traffic over IP, without setting up
-.Xr gif 4
-interfaces.
-.El
-.Pp
-For details on ESP and AH see
-.Xr ipsec 4 .
-When no service is specified,
-.Xr ipsecctl 8
-will use ESP.
-The settings for the security services have to be negotiated by
-.Xr isakmpd 8 .
-As soon as a packet matches a flow,
-.Xr isakmpd 8
-automatically starts the negotiation.
-See
-.Xr isakmpd 8
-for details.
-.Pp
-Parameters specify the packets to which a flow applies.
-Some parameters are optional.
-Certain parameters can be expressed as lists, in which case
-.Xr ipsecctl 8
-generates all needed rule combinations.
-.Pp
-Addresses can be specified in CIDR notation (matching netblocks),
-as symbolic host names, interface names or interface group names.
-.Bl -tag -width xxxx
-.It Ic in No or Ic out
-This rule applies to incoming or outgoing packets.
-If neither
-.Ic in
-nor
-.Ic out
-are specified,
-.Xr ipsecctl 8
-will assume the direction
-.Ic out
-for this rule and will construct a proper
-.Ic in
-rule.
-Thus packets in both directions will be matched.
-.It Ic proto Aq Ar protocol
-The optional
-.Ic proto
-parameter restricts the flow to a specific IP protocol.
-Common protocols are
-.Xr icmp 4 ,
-.Xr tcp 4 ,
-and
-.Xr udp 4 .
-For a list of all the protocol name to number mappings used by
-.Xr ipsecctl 8 ,
-see the file
-.Pa /etc/protocols .
-.It Xo
-.Ic from
-.Aq Ar src
-.Ic port
-.Aq Ar sport
-.Ic to
-.Aq Ar dst
-.Ic port
-.Aq Ar dport
-.Xc
-This rule applies for packets with source address
-.Aq Ar src
-and destination address
-.Aq Ar dst .
-The keyword
-.Ar any
-will match any address (i.e. 0.0.0.0/0).
-The optional
-.Ic port
-modifiers restrict the flows to the specified ports.
-They are only valid in conjunction with the
-.Xr tcp 4
-and
-.Xr udp 4
-protocols.
-Ports can be specified by number or by name.
-For a list of all port name to number mappings used by
-.Xr ipsecctl 8 ,
-see the file
-.Pa /etc/services .
-.It Ic local Aq Ar localip
-The
-.Ic local
-parameter specifies the address or FQDN of the local endpoint of this
-flow and can be usually left out.
-.It Ic peer Aq Ar remote
-The
-.Ic peer
-parameter specifies the address or FQDN of the remote endpoint of this
-flow.
-For host-to-host connections where
-.Aq Ar dst
-is identical to
-.Aq Ar remote ,
-the
-.Ic peer
-specification can be left out.
-.It Ic type Aq Ar modifier
-This optional parameter sets up special flows using the modifiers
-.Ar require ,
-.Ar use ,
-.Ar acquire ,
-.Ar dontacq ,
-.Ar bypass
-or
-.Ar deny .
-A bypass flow is used to specify a flow for which security processing
-will be bypassed: matching packets will not be processed by any other
-flows and handled in normal operation.
-A deny flow is used to drop any matching packets.
-By default,
-.Xr ipsecctl 8
-will automatically set up normal flows with the corresponding type.
-.El
-.Sh IPSEC SAs
-The security parameters for a
-.Ar flow
-are stored in the Security Association Database
-(SADB).
-The following rules enter SAs in the SADB:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Ic esp
-Enter an ESP SA.
-.It Ic ah
-Enter an AH SA.
-.It Ic ipcomp
-Enter an IPCOMP SA.
-.It Ic ipip
-Enter an IPIP pseudo SA.
-.El
-.Pp
-Parameters specify the peers, Security Parameter Index (SPI),
-cryptographic transforms, and key material to be used.
-Certain parameters can be expressed as lists, in which case
-.Xr ipsecctl 8
-generates all needed rule combinations.
-.Pp
-Addresses can be specified in CIDR notation (matching netblocks),
-as symbolic host names, interface names or interface group names.
-.Bl -tag -width xxxx
-.It Xo
-.Aq Ar mode
-.Xc
-For
-.Ic esp ,
-.Ic ah ,
-and
-.Ic ipcomp
-the encapsulation mode to be used can be specified.
-Possible modes are
-.Ar tunnel
-and
-.Ar transport .
-When left out,
-.Ar tunnel
-is chosen.
-For details on modes see
-.Xr ipsec 4 .
-.It Xo
-.Ic from
-.Aq Ar src
-.Ic to
-.Aq Ar dst
-.Xc
-This SA is for a
-.Ar flow
-between the peers
-.Aq Ar src
-and
-.Aq Ar dst .
-.It Xo
-.Ic spi
-.Aq Ar number
-.Xc
-The SPI identifies a specific SA.
-.Ar number
-is a 32-bit value and needs to be unique.
-.It Xo
-.Ic auth
-.Aq Ar algorithm
-.Xc
-For both
-.Ic esp
-and
-.Ic ah
-an authentication algorithm can be specified.
-Possible algorithms are
-.Ar hmac-md5 ,
-.Ar hmac-ripemd160 ,
-.Ar hmac-sha1 ,
-.Ar hmac-sha2-256 ,
-.Ar hmac-sha2-384 ,
-and
-.Ar hmac-sha2-512 .
-.Pp
-If no algorithm is specified,
-.Xr ipsecctl 8
-will choose
-.Ar hmac-sha2-256
-by default.
-.It Xo
-.Ic comp
-.Aq Ar algorithm
-.Xc
-The compression algorithm to be used.
-Possible algorithms are
-.Ar deflate
-and
-.Ar lzs .
-Note that
-.Ar lzs
-is only available with
-.Xr hifn 4
-because of the patent held by Hifn, Inc.
-.It Xo
-.Ic enc
-.Aq Ar algorithm
-.Xc
-For
-.Ic esp
-an encryption algorithm needs to be specified.
-Possible algorithms are
-.Ar 3des-cbc ,
-.Ar des-cbc ,
-.Ar aes ,
-.Ar aesctr ,
-.Ar blowfish ,
-.Ar cast128 ,
-.Ar null ,
-and
-.Ar skipjack .
-.Pp
-If no algorithm is specified,
-.Xr ipsecctl 8
-will choose
-.Ar aes
-by default.
-.It Xo
-.Ic authkey
-.Aq Ar keyspec
-.Xc
-.Ar keyspec
-defines the authentication key to be used.
-It is either a hexadecimal string or a path to a file containing the key.
-The filename may be given as either an absolute path to the file
-or a relative pathname,
-and is specified as follows:
-.Bd -literal -offset -indent
-authkey file "filename"
-.Ed
-.It Xo
-.Ic enckey
-.Aq Ar keyspec
-.Xc
-The encryption key is defined similar to
-.Ar authkey .
-.El
-.Pp
-Different cipher types may require different sized keys.
-.Pp
-.Bl -column "CipherXX" "Key Length" -offset indent -compact
-.It Em Cipher	Key Length
-.It Li DES Ta "56 bits"
-.It Li 3DES Ta "168 bits"
-.It Li AES Ta "variable (128 bits recommended)"
-.It Li Blowfish Ta "variable (160 bits recommended)"
-.It Li CAST Ta "variable (128 bits maximum and recommended)"
-.It Li Skipjack Ta "80 bits"
-.El
-.Pp
-Use of DES or Skipjack as an encryption algorithm is not recommended
-(except for backwards compatibility) due to their short key length.
-Furthermore, attacks on Skipjack have shown severe weaknesses
-in its structure.
-.Pp
-Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
-to form its 168-bit key.
-This is because the most significant bit of each byte is ignored by both
-algorithms.
-.Pp
-It is very important that keys are not guessable.
-One practical way of generating 160-bit (20-byte) keys is a follows:
-.Bd -literal -offset indent
-$ openssl rand 20 | hexdump -e '20/1 "%02x"'
-.Ed
-.Pp
-For
-.Ic spi ,
-.Ic authkey ,
-and
-.Ic enckey ,
-it is possible to specify two colon separated values.
-.Xr ipsecctl 8
-will then generate the matching incoming SA using the second values for
-.Ic spi ,
-.Ic authkey ,
-and
-.Ic enckey .
-.Sh AUTOMATIC KEYING USING ISAKMP/IKE
+.Sh AUTOMATIC KEYING
 Rules can also specify IPsec flows and SAs to be established automatically by
 .Xr isakmpd 8 .
+Some examples to set up automatic keying:
+.Bd -literal -offset 3n
+# Set up two tunnels:
+# First between the networks 10.1.1.0/24 and 10.1.2.0/24
+# Second between the machines 192.168.3.1 and 192.168.3.2
+
+ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
+ike esp from 192.168.3.1 to 192.168.3.2
+
+# Using interface group names and symbolic host names
+ike esp from egress to 10.1.2.0/24 peer mygate.home.net
+
+# Protect remote bridges (Ethernet frames over IP)
+ike esp proto etherip from 192.168.100.1 to 192.168.200.1
+
+# Use bypass flow to exclude local subnets from larger VPNs
+flow in from 192.168.62.0/24 to 192.168.62.0/24 type bypass
+ike dynamic esp from 192.168.62.0/24 to 192.168.48.0/20 \e
+	peer 192.168.3.12
+.Ed
+.Pp
 This is accomplished by the following rules:
 .Bl -tag -width xxxx
 .It Ic ike esp
@@ -650,13 +352,315 @@ when starting, if one does not already exist.
 See also
 .Sx ISAKMP EXAMPLES
 below.
-.Sh TCP MD5 SIGNATURES
-RFC 2385 describes a mechanism to protect
-.Xr tcp 4
-sessions using MD5.
-A Security Association (SA) for TCP MD5 signatures is set up using the
-following rule:
+.Sh MANUAL FLOWS
+IPsec uses
+.Em flows
+to determine whether to apply security services to an IP packet or not.
+Some examples to set up flows:
+.Bd -literal -offset 3n
+# Host-to-host
+flow esp from 192.168.3.14 to 192.168.3.100
+
+# Same as above, but explicitly specifying "in" and "out" rules
+flow esp out from 192.168.3.14  to 192.168.3.100
+flow esp in  from 192.168.3.100 to 192.168.3.14
+
+# Net-to-net
+flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
+
+# Same as above, but explicitly specifying "in" and "out" rules
+flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
+flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
+
+# Same as above, but explicitly specifying the local gateway IP
+flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
+	local 192.168.1.1 peer 192.168.3.12
+
+# Protect remote bridges (Ethernet frames over IP)
+flow esp proto etherip from 192.168.100.1 to 192.168.200.1
+.Ed
+.Pp
+The following security services are available:
 .Bl -tag -width xxxx
+.It Ic flow esp
+ESP can provide the following properties:
+authentication, integrity, replay protection, and confidentiality of the data.
+.It Ic flow ah
+AH provides authentication, integrity, and replay protection, but no
+confidentiality.
+.It Ic flow ipip
+IPIP provides neither authentication, integrity, replay protection, nor
+confidentiality.
+However, it allows you to tunnel IP traffic over IP, without setting up
+.Xr gif 4
+interfaces.
+.El
+.Pp
+For details on ESP and AH see
+.Xr ipsec 4 .
+When no service is specified,
+.Xr ipsecctl 8
+will use ESP.
+The settings for the security services have to be negotiated by
+.Xr isakmpd 8 .
+As soon as a packet matches a flow,
+.Xr isakmpd 8
+automatically starts the negotiation.
+See
+.Xr isakmpd 8
+for details.
+.Pp
+Parameters specify the packets to which a flow applies.
+Some parameters are optional.
+Certain parameters can be expressed as lists, in which case
+.Xr ipsecctl 8
+generates all needed rule combinations.
+.Pp
+Addresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names or interface group names.
+.Bl -tag -width xxxx
+.It Ic in No or Ic out
+This rule applies to incoming or outgoing packets.
+If neither
+.Ic in
+nor
+.Ic out
+are specified,
+.Xr ipsecctl 8
+will assume the direction
+.Ic out
+for this rule and will construct a proper
+.Ic in
+rule.
+Thus packets in both directions will be matched.
+.It Ic proto Aq Ar protocol
+The optional
+.Ic proto
+parameter restricts the flow to a specific IP protocol.
+Common protocols are
+.Xr icmp 4 ,
+.Xr tcp 4 ,
+and
+.Xr udp 4 .
+For a list of all the protocol name to number mappings used by
+.Xr ipsecctl 8 ,
+see the file
+.Pa /etc/protocols .
+.It Xo
+.Ic from
+.Aq Ar src
+.Ic port
+.Aq Ar sport
+.Ic to
+.Aq Ar dst
+.Ic port
+.Aq Ar dport
+.Xc
+This rule applies for packets with source address
+.Aq Ar src
+and destination address
+.Aq Ar dst .
+The keyword
+.Ar any
+will match any address (i.e. 0.0.0.0/0).
+The optional
+.Ic port
+modifiers restrict the flows to the specified ports.
+They are only valid in conjunction with the
+.Xr tcp 4
+and
+.Xr udp 4
+protocols.
+Ports can be specified by number or by name.
+For a list of all port name to number mappings used by
+.Xr ipsecctl 8 ,
+see the file
+.Pa /etc/services .
+.It Ic local Aq Ar localip
+The
+.Ic local
+parameter specifies the address or FQDN of the local endpoint of this
+flow and can be usually left out.
+.It Ic peer Aq Ar remote
+The
+.Ic peer
+parameter specifies the address or FQDN of the remote endpoint of this
+flow.
+For host-to-host connections where
+.Aq Ar dst
+is identical to
+.Aq Ar remote ,
+the
+.Ic peer
+specification can be left out.
+.It Ic type Aq Ar modifier
+This optional parameter sets up special flows using the modifiers
+.Ar require ,
+.Ar use ,
+.Ar acquire ,
+.Ar dontacq ,
+.Ar bypass
+or
+.Ar deny .
+A bypass flow is used to specify a flow for which security processing
+will be bypassed: matching packets will not be processed by any other
+flows and handled in normal operation.
+A deny flow is used to drop any matching packets.
+By default,
+.Xr ipsecctl 8
+will automatically set up normal flows with the corresponding type.
+.El
+.Sh SECURITY ASSOCIATIONS (SAs)
+The security parameters for a
+.Ar flow
+are stored in the Security Association Database
+(SADB).
+Some examples to set up SAs:
+.Bd -literal -offset 3n
+# Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
+esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
+	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
+	enckey file "enc14:enc12"
+.Ed
+.Pp
+The following rules enter SAs in the SADB:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Ic esp
+Enter an ESP SA.
+.It Ic ah
+Enter an AH SA.
+.\".It Ic ipcomp
+.\"Enter an IPCOMP SA.
+.It Ic ipip
+Enter an IPIP pseudo SA.
+.El
+.Pp
+Parameters specify the peers, Security Parameter Index (SPI),
+cryptographic transforms, and key material to be used.
+Certain parameters can be expressed as lists, in which case
+.Xr ipsecctl 8
+generates all needed rule combinations.
+.Pp
+Addresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names or interface group names.
+.Bl -tag -width xxxx
+.It Xo
+.Aq Ar mode
+.Xc
+For
+.Ic esp ,
+.Ic ah ,
+and
+.Ic ipcomp
+the encapsulation mode to be used can be specified.
+Possible modes are
+.Ar tunnel
+and
+.Ar transport .
+When left out,
+.Ar tunnel
+is chosen.
+For details on modes see
+.Xr ipsec 4 .
+.It Xo
+.Ic from
+.Aq Ar src
+.Ic to
+.Aq Ar dst
+.Xc
+This SA is for a
+.Ar flow
+between the peers
+.Aq Ar src
+and
+.Aq Ar dst .
+.It Xo
+.Ic spi
+.Aq Ar number
+.Xc
+The SPI identifies a specific SA.
+.Ar number
+is a 32-bit value and needs to be unique.
+.It Xo
+.Ic auth
+.Aq Ar algorithm
+.Xc
+For both
+.Ic esp
+and
+.Ic ah
+an authentication algorithm can be specified.
+Possible algorithms are
+.Ar hmac-md5 ,
+.Ar hmac-ripemd160 ,
+.Ar hmac-sha1 ,
+.Ar hmac-sha2-256 ,
+.Ar hmac-sha2-384 ,
+and
+.Ar hmac-sha2-512 .
+.Pp
+If no algorithm is specified,
+.Xr ipsecctl 8
+will choose
+.Ar hmac-sha2-256
+by default.
+.It Xo
+.Ic comp
+.Aq Ar algorithm
+.Xc
+The compression algorithm to be used.
+Possible algorithms are
+.Ar deflate
+and
+.Ar lzs .
+Note that
+.Ar lzs
+is only available with
+.Xr hifn 4
+because of the patent held by Hifn, Inc.
+.It Xo
+.Ic enc
+.Aq Ar algorithm
+.Xc
+For
+.Ic esp
+an encryption algorithm needs to be specified.
+Possible algorithms are
+.Ar 3des-cbc ,
+.Ar des-cbc ,
+.Ar aes ,
+.Ar aesctr ,
+.Ar blowfish ,
+.Ar cast128 ,
+.Ar null ,
+and
+.Ar skipjack .
+.Pp
+If no algorithm is specified,
+.Xr ipsecctl 8
+will choose
+.Ar aes
+by default.
+.It Xo
+.Ic authkey
+.Aq Ar keyspec
+.Xc
+.Ar keyspec
+defines the authentication key to be used.
+It is either a hexadecimal string or a path to a file containing the key.
+The filename may be given as either an absolute path to the file
+or a relative pathname,
+and is specified as follows:
+.Bd -literal -offset -indent
+authkey file "filename"
+.Ed
+.It Xo
+.Ic enckey
+.Aq Ar keyspec
+.Xc
+The encryption key is defined similar to
+.Ar authkey .
 .It Xo
 .Ic tcpmd5
 .Ic from
@@ -668,6 +672,21 @@ following rule:
 .Ic authkey
 .Aq Ar keyspec
 .Xc
+.Pp
+RFC 2385 describes a mechanism to protect
+.Xr tcp 4
+sessions using MD5.
+Some examples to set up TCP MD5 signatures:
+.Bd -literal -offset 3n
+# Set up keys for TCP MD5 signatures
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
+	authkey 0xdeadbeef:0xbeefdead
+
+# Set up keys for TCP MD5 signatures; read keys from files
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
+	authkey file "/path/to/key1:/path/to/key2"
+.Ed
+.Pp
 This rule applies for packets with source address
 .Aq Ar src
 and destination address
@@ -701,67 +720,63 @@ will then generate the matching incoming SA using the second values for
 .Ic spi
 and
 .Ic authkey .
-.El
 .Pp
 For details on how to enable TCP MD5 signatures see
 .Xr tcp 4 .
-.Sh EXAMPLES
-.Bd -literal
-# Host-to-host
-flow esp from 192.168.3.14 to 192.168.3.100
-
-# Same as above, but explicitly specifying "in" and "out" rules
-flow esp out from 192.168.3.14  to 192.168.3.100
-flow esp in  from 192.168.3.100 to 192.168.3.14
-
-# Net-to-net
-flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
-
-# Same as above, but explicitly specifying "in" and "out" rules
-flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
-flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
-
-# Same as above, but explicitly specifying the local gateway IP
-flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
-	local 192.168.1.1 peer 192.168.3.12
-
-# Protect remote bridges (Ethernet frames over IP)
-flow esp proto etherip from 192.168.100.1 to 192.168.200.1
-
-# Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
-esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
-	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
-	enckey file "enc14:enc12"
+.El
+.Sh CRYPTO KEY SIZE
+Different cipher types may require different sized keys:
+.Pp
+.Bl -column "CipherXX" "Key Length" -offset indent -compact
+.It Em Cipher	Key Length
+.It Li DES Ta "56 bits"
+.It Li 3DES Ta "168 bits"
+.It Li AES Ta "variable (128 bits recommended)"
+.It Li Blowfish Ta "variable (160 bits recommended)"
+.It Li CAST Ta "variable (128 bits maximum and recommended)"
+.It Li Skipjack Ta "80 bits"
+.El
+.Pp
+Use of DES or Skipjack as an encryption algorithm is not recommended
+(except for backwards compatibility) due to their short key length.
+Furthermore, attacks on Skipjack have shown severe weaknesses
+in its structure.
+.Pp
+Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
+to form its 168-bit key.
+This is because the most significant bit of each byte is ignored by both
+algorithms.
+.Pp
+Different authentication types may also require different sized keys:
+.Pp
+.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.It Em Authentication	Key Length
+.It Li HMAC-md5 Ta "128 bits"
+.It Li HMAC-RIPEMD160 Ta "160 bits"
+.It Li HMAC-SHA1 Ta "160 bits"
+.It Li HMAC-SHA2-256 Ta "256 bits"
+.It Li HMAC-SHA2-384 Ta "384 bits"
+.It Li HMAC-SHA2-512 Ta "512 bits"
+.El
+.Pp
+It is very important that keys are not guessable.
+One practical way of generating 160-bit (20-byte) keys is a follows:
+.Bd -literal -offset indent
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
-.Sh TCP MD5 EXAMPLES
-.Bd -literal
-# Set up keys for TCP MD5 signatures
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
-	authkey 0xdeadbeef:0xbeefdead
-
-# Set up keys for TCP MD5 signatures; read keys from files
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
-	authkey file "/path/to/key1:/path/to/key2"
-.Ed
-.Sh ISAKMP EXAMPLES
-.Bd -literal
-# Set up two tunnels:
-# First between the networks 10.1.1.0/24 and 10.1.2.0/24
-# Second between the machines 192.168.3.1 and 192.168.3.2
-
-ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
-ike esp from 192.168.3.1 to 192.168.3.2
-
-# Using interface group names and symbolic host names
-ike esp from egress to 10.1.2.0/24 peer mygate.home.net
-
-# Protect remote bridges (Ethernet frames over IP)
-ike esp proto etherip from 192.168.100.1 to 192.168.200.1
-
-# Use bypass flow to exclude local subnets from larger VPNs
-flow in from 192.168.62.0/24 to 192.168.62.0/24 type bypass
-ike dynamic esp from 192.168.62.0/24 to 192.168.48.0/20 peer 192.168.3.12
-.Ed
+.Pp
+For
+.Ic spi ,
+.Ic authkey ,
+and
+.Ic enckey ,
+it is possible to specify two colon separated values.
+.Xr ipsecctl 8
+will then generate the matching incoming SA using the second values for
+.Ic spi ,
+.Ic authkey ,
+and
+.Ic enckey .
 .Sh SEE ALSO
 .Xr ipcomp 4 ,
 .Xr ipsec 4 ,
