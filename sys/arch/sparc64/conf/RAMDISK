@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.54 2006/08/17 19:24:55 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.55 2006/08/30 22:19:29 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -8,6 +8,9 @@ maxusers	2
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=6144
+
+option		PCIVERBOSE
+#option		USBVERBOSE
 
 #option		DDB		# need this to see what's happening
 
@@ -149,10 +152,12 @@ ukphy*	at mii?			# Unknown PHYs
 # PCI USB Controllers
 ohci*	at pci?			# Open Host Controller
 uhci*	at pci?			# Universal Host Controller (Intel)
+ehci*	at pci?			# Enhanced Host Controller
 
 # USB bus support
 usb*	at ohci?
 usb*	at uhci?
+usb*	at ehci?
 
 # USB devices
 uhub*	at usb?			# USB Hubs
