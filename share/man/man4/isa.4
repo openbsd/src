@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.36 2006/06/29 16:47:14 deraadt Exp $
+.\"	$OpenBSD: isa.4,v 1.37 2006/08/30 22:56:05 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -159,49 +159,27 @@ IBM RT four-port serial cards.
 .Ss Network interfaces
 .Bl -tag -width 12n -offset ind -compact
 .It Xr ec 4
-3Com EtherLink II (3c503)
-.Tn Ethernet
-interfaces.
+3Com EtherLink II (3c503) Ethernet device.
 .It Xr ef 4
-3Com Fast EtherLink III (3c515)
-.Tn Ethernet
-interfaces.
+3Com Fast EtherLink ISA (3c515) 10/100 Ethernet device.
 .It Xr eg 4
-3Com EtherLink Plus (3c505)
-.Tn Ethernet
-interfaces.
+3Com EtherLink Plus Ethernet (3c505) Ethernet device.
 .It Xr el 4
-3Com EtherLink (3c501)
-.Tn Ethernet
-interfaces.
+3Com EtherLink (3C501) Ethernet device.
 .It Xr ep 4
-3Com EtherLink III (3c509)
-.Tn Ethernet
-interfaces.
+3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device.
 .It Xr ie 4
-Ethernet interfaces based on Intel 82586
-.Tn Ethernet
-chip,
-including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
+Intel i82586/i82596 Ethernet device.
 .It Xr lc 4
-DEC EtherWORKS III (DE203, DE204 & DE205)
-.Tn Ethernet
-interfaces.
+DEC EtherWORKS III 10/100 Ethernet device.
 .It Xr le 4
-Ethernet interfaces based on the AMD LANCE chip,
-including BICC Isolan, Novell NE2100, Digital DEPCA, and PCnet-ISA.
+AMD LANCE Ethernet device.
 .It Xr ne 4
-Novel NE2000 and compatible
-.Tn Ethernet
-interfaces.
+NE2000 and compatible 10/100 Ethernet device.
 .It Xr sm 4
-SMC91C9x and SMC91C1xx-based
-.Tn Ethernet
-interfaces.
+SMC91C9x and SMC91C1xx-based 10/100 Ethernet device.
 .It Xr we 4
-Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ
-.Tn Ethernet
-interfaces.
+Western Digital/SMC WD80x3, SMC Elite Ultra, and SMC EtherEZ Ethernet device.
 .El
 .Ss Sound cards
 .Bl -tag -width 12n -offset ind -compact
