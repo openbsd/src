@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.72 2006/08/30 14:08:11 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.73 2006/08/30 14:16:00 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -510,6 +510,16 @@ Some examples to set up SAs:
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
 	enckey file "enc14:enc12"
+
+Some examples to set up TCP MD5 signatures:
+
+# Set up keys for TCP MD5 signatures
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
+	authkey 0xdeadbeef:0xbeefdead
+
+# Set up keys for TCP MD5 signatures; read keys from files
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
+	authkey file "/path/to/key1:/path/to/key2"
 .Ed
 .Pp
 The following rules enter SAs in the SADB:
@@ -523,6 +533,8 @@ Enter an AH SA.
 .\"Enter an IPCOMP SA.
 .It Ic ipip
 Enter an IPIP pseudo SA.
+.It Ic tcpmd5
+Enter a TCP MD5 SA.
 .El
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),
@@ -666,20 +678,6 @@ The encryption key is defined similarly to
 .Aq Ar keyspec
 .Xc
 .Pp
-RFC 2385 describes a mechanism to protect
-.Xr tcp 4
-sessions using MD5.
-Some examples to set up TCP MD5 signatures:
-.Bd -literal -offset 3n
-# Set up keys for TCP MD5 signatures
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
-	authkey 0xdeadbeef:0xbeefdead
-
-# Set up keys for TCP MD5 signatures; read keys from files
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
-	authkey file "/path/to/key1:/path/to/key2"
-.Ed
-.Pp
 This rule applies for packets with source address
 .Aq Ar src
 and destination address
@@ -692,6 +690,9 @@ The encryption key is defined similarly to
 .Pp
 For details on how to enable TCP MD5 signatures see
 .Xr tcp 4 .
+The mechanism of protecting
+.Xr tcp 4
+sessions using MD5 is described in RFC 2385.
 .El
 .Sh CRYPTO KEY SIZE
 Different cipher types may require different sized keys:
