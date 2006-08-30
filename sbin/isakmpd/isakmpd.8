@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.88 2006/08/30 16:56:56 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.89 2006/08/30 20:27:52 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -630,8 +630,7 @@ extension field should be added to the certificate.
 This field is not mandatory, but is highly recommended since it allows
 .Nm
 to avoid
-.Dq man in the middle
-attacks.
+spoofing attacks from users with valid certificates.
 Replace 10.0.0.1 with the IP address which
 .Nm
 will use as the certificate identity.
