@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.31 2004/11/10 14:48:25 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.32 2006/08/30 17:58:40 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,9 +41,9 @@ static int		fd;
 
 int	pfkey_reply(int, u_int32_t *);
 int	pfkey_send(int, uint8_t, uint8_t, uint8_t,
-    struct bgpd_addr *, struct bgpd_addr *,
-    u_int32_t, uint8_t, int, char *, uint8_t, int, char *,
-    uint16_t, uint16_t);
+	    struct bgpd_addr *, struct bgpd_addr *,
+	    u_int32_t, uint8_t, int, char *, uint8_t, int, char *,
+	    uint16_t, uint16_t);
 int	pfkey_sa_add(struct bgpd_addr *, struct bgpd_addr *, u_int8_t, char *,
 	    u_int32_t *);
 int	pfkey_sa_remove(struct bgpd_addr *, struct bgpd_addr *, u_int32_t *);
@@ -394,13 +394,12 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	}
 
 	len = smsg.sadb_msg_len * 8;
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
-		log_warn("writev (%d/%d)", iov_cnt, len);
-		return (-1);
-	}
+	do {
+		n = writev(sd, iov, iov_cnt);
+	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
 
-	if (n != len) {
-		log_warn("writev: should=%d has=%d", len, n);
+	if (n == -1) {
+		log_warn("writev (%d/%d)", iov_cnt, len);
 		return (-1);
 	}
 
