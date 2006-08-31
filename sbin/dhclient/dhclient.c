@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.87 2006/08/29 03:55:08 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.88 2006/08/31 10:12:18 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -243,7 +243,7 @@ die:
 int
 main(int argc, char *argv[])
 {
-	int	 ch, fd, quiet = 0, i = 0, pipe_fd[2], linkstat;
+	int	 ch, fd, quiet = 0, i = 0, pipe_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
 
@@ -309,9 +309,9 @@ main(int argc, char *argv[])
 
 	read_client_conf();
 
-	linkstat = interface_link_forceup(ifi->name);
-
 	if (!interface_link_status(ifi->name)) {
+		int linkstat = interface_link_forceup(ifi->name);
+
 		fprintf(stderr, "%s: no link ...", ifi->name);
 		if (ifi->client->config->link_timeout == 0) {
 			fprintf(stderr, " giving up\n");
