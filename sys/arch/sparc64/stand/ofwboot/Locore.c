@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.5 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.6 2006/08/31 21:28:35 kettenis Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -324,8 +324,8 @@ OF_seek(handle, pos)
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.handle = HDL2CELL(handle);
-	args.poshi = HDL2CELL(pos >> 32);
-	args.poslo = HDL2CELL(pos);
+	args.poshi = HDQ2CELL_HI(pos);
+	args.poslo = HDQ2CELL_LO(pos);
 	if (openfirmware(&args) == -1) {
 		return -1;
 	}
@@ -474,7 +474,7 @@ int len;
 	args.vaddr = ADR2CELL(vaddr);
 	if(openfirmware(&args) != 0)
 		return -1LL;
-	return args.retaddr; /* Kluge till we go 64-bit */
+	return args.retaddr;
 }
 
 /* 
@@ -510,13 +510,13 @@ int align;
 	args.nargs = 4;
 	args.nreturns = 2;
 	args.method = ADR2CELL("claim");
-	args.ihandle = mmuh;
+	args.ihandle = HDL2CELL(mmuh);
 	args.align = align;
 	args.len = len;
 	args.retaddr = ADR2CELL(&retaddr);
 	if(openfirmware(&args) != 0)
 		return -1LL;
-	return (vaddr_t)args.retaddr; /* Kluge till we go 64-bit */
+	return (vaddr_t)args.retaddr;
 }
 
 /* 
@@ -633,8 +633,8 @@ int mode;
 	args.mode = mode;
 	args.size = size;
 	args.vaddr = ADR2CELL(vaddr);
-	args.paddr_hi = ADR2CELL(paddr>>32);
-	args.paddr_lo = ADR2CELL(paddr);
+	args.paddr_hi = HDQ2CELL_HI(paddr);
+	args.paddr_lo = HDQ2CELL_LO(paddr);
 
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -654,7 +654,6 @@ OF_alloc_phys(len, align)
 int len;
 int align;
 {
-	paddr_t paddr;
 	struct {
 		cell_t name;
 		cell_t nargs;
@@ -683,8 +682,7 @@ int align;
 	args.len = len;
 	if(openfirmware(&args) != 0)
 		return -1LL;
-	paddr = (paddr_t)(args.phys_hi<<32)|((unsigned int)(args.phys_lo));
-	return paddr; /* Kluge till we go 64-bit */
+	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 }
 
 /* 
@@ -697,7 +695,6 @@ OF_claim_phys(phys, len)
 paddr_t phys;
 int len;
 {
-	paddr_t paddr;
 	struct {
 		cell_t name;
 		cell_t nargs;
@@ -727,12 +724,11 @@ int len;
 	args.ihandle = HDL2CELL(memh);
 	args.align = 0;
 	args.len = len;
-	args.phys_hi = HDL2CELL(phys>>32);
-	args.phys_lo = HDL2CELL(phys);
+	args.phys_hi = HDQ2CELL_HI(phys);
+	args.phys_lo = HDQ2CELL_LO(phys);
 	if(openfirmware(&args) != 0)
 		return 0LL;
-	paddr = (paddr_t)(args.rphys_hi<<32)|((unsigned int)(args.rphys_lo));
-	return paddr;
+	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 }
 
 /* 
@@ -768,8 +764,8 @@ int len;
 	args.method = ADR2CELL("release");
 	args.ihandle = HDL2CELL(memh);
 	args.len = len;
-	args.phys_hi = HDL2CELL(phys>>32);
-	args.phys_lo = HDL2CELL(phys);
+	args.phys_hi = HDQ2CELL_HI(phys);
+	args.phys_lo = HDQ2CELL_LO(phys);
 	return openfirmware(&args);
 }
 

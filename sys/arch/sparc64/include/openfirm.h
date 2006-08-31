@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.5 2004/08/08 21:04:44 miod Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.6 2006/08/31 21:28:34 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.8 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -41,6 +41,11 @@
 typedef u_int64_t cell_t;
 #define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
 #define ADR2CELL(x)	(cell_t)(x)
+
+#define HDQ2CELL_HI(x)	(cell_t)(0)
+#define HDQ2CELL_LO(x)	(cell_t)(x)
+
+#define CELL2HDQ(hi, lo)	(lo)
 
 int OF_test (char *service);
 int OF_test_method (int handle, char *method);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.14 2005/07/01 01:12:04 brad Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.15 2006/08/31 21:28:35 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ prom_vtop(vaddr)
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo); 
+	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 }
 
 /* 
@@ -216,7 +216,6 @@ prom_alloc_virt(len, align)
 	int len;
 	int align;
 {
-	static int retaddr;
 	struct {
 		cell_t name;
 		cell_t nargs;
@@ -240,10 +239,9 @@ prom_alloc_virt(len, align)
 	args.ihandle = HDL2CELL(mmuh);
 	args.align = align;
 	args.len = len;
-	args.retaddr = ADR2CELL(&retaddr);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return retaddr; /* Kluge till we go 64-bit */
+	return (vaddr_t)args.retaddr;
 }
 
 /* 
@@ -354,14 +352,14 @@ prom_map_phys(paddr, size, vaddr, mode)
 	args.mode = mode;
 	args.size = size;
 	args.vaddr = ADR2CELL(vaddr);
-	args.phys_hi = HDL2CELL(paddr>>32); 
-	args.phys_lo = HDL2CELL(paddr);
+	args.phys_hi = HDQ2CELL_HI(paddr); 
+	args.phys_lo = HDQ2CELL_LO(paddr);
 
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.status)
 		return -1;
-	return args.retaddr;
+	return (int)args.retaddr;
 }
 
 
@@ -401,7 +399,7 @@ prom_alloc_phys(len, align)
 	args.len = len;
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo);
+	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 }
 
 /* 
@@ -440,11 +438,11 @@ prom_claim_phys(phys, len)
 	args.ihandle = HDL2CELL(memh);
 	args.align = 0;
 	args.len = len;
-	args.phys_hi = HDL2CELL(phys>>32);
-	args.phys_lo = HDL2CELL(phys);
+	args.phys_hi = HDQ2CELL_HI(phys);
+	args.phys_lo = HDQ2CELL_LO(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(u_int32_t)args.rphys_lo);
+	return (paddr_t)CELL2HDQ(args.rphys_hi, args.rphys_lo);
 }
 
 /* 
@@ -478,8 +476,8 @@ prom_free_phys(phys, len)
 	args.method = ADR2CELL(&"release");
 	args.ihandle = HDL2CELL(memh);
 	args.len = len;
-	args.phys_hi = HDL2CELL(phys>>32);
-	args.phys_lo = HDL2CELL(phys);
+	args.phys_hi = HDQ2CELL_HI(phys);
+	args.phys_lo = HDQ2CELL_LO(phys);
 	return openfirmware(&args);
 }
 
@@ -537,10 +535,9 @@ prom_get_msgbuf(len, align)
 			args.len = len;
 			args.align = align;
 			args.status = -1;
-			if (openfirmware(&args) == 0 && args.status == 0) {
-				return (((paddr_t)args.phys_hi<<32)|
-					(u_int32_t)args.phys_lo);
-			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
+			if (openfirmware(&args) == 0 && args.status == 0)
+				return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
+			prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
 	/* Allocate random memory -- page zero avail?*/
