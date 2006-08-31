@@ -74,6 +74,14 @@
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wivar.h>
 
+#define PGT_DEBUG
+
+#ifdef PGT_DEBUG
+#define DPRINTF(x)	do { printf x; } while (0)
+#else
+#define DPRINTF(x)
+#endif
+
 /*
  * This is a driver for the Intersil Prism family of 802.11g network cards,
  * based upon version 1.2 of the Linux driver and firmware found at
@@ -124,12 +132,14 @@ void	 pgt_exit_critical(struct pgt_softc *);
 #if 0
 void	 pgt_try_exit_data_critical(struct pgt_softc *);
 #endif
-int	 pgt_upload_firmware(struct pgt_softc *);
+int	 pgt_load_firmware(struct pgt_softc *);
 void	 pgt_cleanup_queue(struct pgt_softc *, enum pgt_queue,
 	     struct pgt_frag []);
 int	 pgt_reset(struct pgt_softc *);
 void	 pgt_disable(struct pgt_softc *, unsigned int);
+#if 0
 void	 pgt_kill_kthread(struct pgt_softc *);
+#endif
 void	 pgt_init_intr(struct pgt_softc *);
 void	 pgt_update_intr(struct pgt_softc *, struct mbuf ***, int);
 struct mbuf
@@ -211,6 +221,21 @@ int	 pgt_dma_alloc(struct pgt_softc *);
 int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_dma_free(struct pgt_softc *);
 void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
+
+void
+pgt_attachhook(void *xsc)
+{
+	struct pgt_softc *sc = xsc;
+	int error;
+
+	error = pgt_attach(sc);
+	if (error) {
+		printf("%s: attach error\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	DPRINTF(("%s: attach ok\n", sc->sc_dev.dv_xname));
+}
 
 void
 pgt_write_memory_barrier(struct pgt_softc *sc)
@@ -377,11 +402,11 @@ pgt_try_exit_data_critical(struct pgt_softc *sc)
 #endif
 
 int
-pgt_upload_firmware(struct pgt_softc *sc)
+pgt_load_firmware(struct pgt_softc *sc)
 {
-	uint32_t dirreg, reg, fwoff;
+	int error, reg, dirreg, fwoff, ucodeoff, fwlen;
 	uint8_t *ucode;
-	int fwlen, error;
+	const uint32_t *uc;
 	size_t size;
 	char *name;
 
@@ -389,6 +414,8 @@ pgt_upload_firmware(struct pgt_softc *sc)
 		name = "isl3877";
 	else
 		name = "isl3890";	/* includes isl3880 */
+
+	name = "pgt-isl3890";
 
 	error = loadfirmware(name, &ucode, &size);
 
@@ -407,30 +434,36 @@ pgt_upload_firmware(struct pgt_softc *sc)
 
 	pgt_reboot(sc);
 
-	reg = PFF_FIRMWARE_INTERNAL_OFFSET;
 	fwoff = 0;
+	ucodeoff = 0;
+	uc = (const uint32_t *)ucode;
+	reg = PFF_FIRMWARE_INTERNAL_OFFSET;
 	while (fwoff < size) {
-		u_int32_t *uc = (u_int32_t *)ucode;
-
 		pgt_write_4_flush(sc, PFF_REG_DIR_MEM_BASE, reg);
-		if (size - fwoff >= PFF_DIRECT_MEMORY_SIZE)
+
+		if ((size - fwoff) >= PFF_DIRECT_MEMORY_SIZE)
 			fwlen = PFF_DIRECT_MEMORY_SIZE;
 		else
 			fwlen = size - fwoff;
+
 		dirreg = PFF_DIRECT_MEMORY_OFFSET;
 		while (fwlen > 4) {
-			pgt_write_4(sc, dirreg, uc[fwoff]);
+			pgt_write_4(sc, dirreg, uc[ucodeoff]);
 			fwoff += 4;
 			dirreg += 4;
 			reg += 4;
 			fwlen -= 4;
+			ucodeoff++;
 		}
-		pgt_write_4_flush(sc, dirreg, uc[fwoff]);
+		pgt_write_4_flush(sc, dirreg, uc[ucodeoff]);
 		fwoff += 4;
 		dirreg += 4;
 		reg += 4;
 		fwlen -= 4;
+		ucodeoff++;
 	}
+	DPRINTF(("%s: %d bytes of firmware microcode loaded\n",
+	    sc->sc_dev.dv_xname, fwoff));
 
 	reg = pgt_read_4(sc, PFF_REG_CTRL_STAT);
 	reg &= ~(PFF_CTRL_STAT_RESET | PFF_CTRL_STAT_CLOCKRUN);
@@ -438,10 +471,12 @@ pgt_upload_firmware(struct pgt_softc *sc)
 	pgt_write_4_flush(sc, PFF_REG_CTRL_STAT, reg);
 	pgt_write_memory_barrier(sc);
 	DELAY(PFF_WRITEIO_DELAY);
+
 	reg |= PFF_CTRL_STAT_RESET;
 	pgt_write_4(sc, PFF_REG_CTRL_STAT, reg);
 	pgt_write_memory_barrier(sc);
 	DELAY(PFF_WRITEIO_DELAY);
+
 	reg &= ~PFF_CTRL_STAT_RESET;
 	pgt_write_4(sc, PFF_REG_CTRL_STAT, reg);
 	pgt_write_memory_barrier(sc);
@@ -481,7 +516,7 @@ pgt_cleanup_queue(struct pgt_softc *sc, enum pgt_queue pq,
 }
 
 /*
- * Turn off interrupts, reset the device (possibly uploading firmware),
+ * Turn off interrupts, reset the device (possibly loading firmware),
  * and put everything in a known state.
  */
 int
@@ -492,6 +527,7 @@ pgt_reset(struct pgt_softc *sc)
 	/* disable all interrupts */
 	pgt_write_4_flush(sc, PFF_REG_INT_EN, 0x00000000);
 	DELAY(PFF_WRITEIO_DELAY);
+
 	/*
 	 * Set up the management receive queue, assuming there are no
 	 * requests in progress.
@@ -514,22 +550,32 @@ pgt_reset(struct pgt_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cbdmam, 0,
 	    sc->sc_cbdmam->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_PREREAD);
+
+	/* load firmware */
 	if (sc->sc_flags & SC_NEEDS_FIRMWARE) {
-		error = pgt_upload_firmware(sc);
-		if (error)
+		error = pgt_load_firmware(sc);
+		if (error) {
+			printf("%s: firmware load failed\n",
+			    sc->sc_dev.dv_xname);
 			return (error);
+		}
 		sc->sc_flags &= ~SC_NEEDS_FIRMWARE;
+		DPRINTF(("%s: firmware loaded\n", sc->sc_dev.dv_xname));
 	}
+
 	/* upload the control block's DMA address */
-	pgt_write_4_flush(sc, PFF_REG_CTRL_BLK_BASE,
-	    htole32((uint32_t)sc->sc_cbdmabusaddr));
-	DELAY(PFF_WRITEIO_DELAY);
+	//pgt_write_4_flush(sc, PFF_REG_CTRL_BLK_BASE,
+	//    htole32((uint32_t)sc->sc_cbdmabusaddr));
+	//DELAY(PFF_WRITEIO_DELAY);
+
 	/* send a reset event */
 	pgt_write_4_flush(sc, PFF_REG_DEV_INT, PFF_DEV_INT_RESET);
 	DELAY(PFF_WRITEIO_DELAY);
+
 	/* await only the initialization interrupt */
 	pgt_write_4_flush(sc, PFF_REG_INT_EN, PFF_INT_STAT_INIT);	
 	DELAY(PFF_WRITEIO_DELAY);
+
 	return (0);
 }
 
@@ -706,17 +752,19 @@ out:
 #endif
 }
 
+#if 0
 void
 pgt_kill_kthread(struct pgt_softc *sc)
 {
 	if (sc->sc_flags & SC_KTHREAD) {
-		//mtx_lock(&sc->sc_lock);
+		mtx_lock(&sc->sc_lock);
 		sc->sc_kthread.sck_exit = 1;
-		//cv_signal(&sc->sc_kthread.sck_needed);
-		//msleep(sc->sc_kthread.sck_proc, &sc->sc_lock, PPAUSE | PDROP,
-		//    "pffktc", 0);
+		cv_signal(&sc->sc_kthread.sck_needed);
+		msleep(sc->sc_kthread.sck_proc, &sc->sc_lock, PPAUSE | PDROP,
+		    "pffktc", 0);
 	}
 }
+#endif
 
 int
 pgt_attach(struct pgt_softc *sc)
@@ -726,8 +774,6 @@ pgt_attach(struct pgt_softc *sc)
 	error = pgt_dma_alloc(sc);
 	if (error)
 		return (error);
-
-	return (0);
 
 	sc->sc_ic.ic_if.if_softc = sc;
 	sc->sc_refcnt = 1;
@@ -778,21 +824,25 @@ pgt_attach(struct pgt_softc *sc)
 	/* reset 802.11 state */
 	sc->sc_80211_ioc_wep = IEEE80211_WEP_OFF;
 	sc->sc_80211_ioc_auth = IEEE80211_AUTH_OPEN;
+
 	error = pgt_reset(sc);
-	if (error == 0) {
-		sc->sc_refcnt++;
-		//(void)msleep(&sc->sc_flags, &sc->sc_lock, PZERO, "pffres", hz);
-		sc->sc_refcnt--;
-		if (sc->sc_flags & SC_UNINITIALIZED) {
-			printf("%s: not responding\n", sc->sc_dev.dv_xname);
-			error = ETIMEDOUT;
-		} else {
-			/* await all interrupts */
-			pgt_write_4_flush(sc, PFF_REG_INT_EN,
-			    PFF_INT_STAT_SOURCES);	
-			DELAY(PFF_WRITEIO_DELAY);
-		}
+	if (error)
+		goto failed;
+
+	sc->sc_refcnt++;
+	//(void)msleep(&sc->sc_flags, &sc->sc_lock, PZERO, "pffres", hz);
+	sc->sc_refcnt--;
+	if (sc->sc_flags & SC_UNINITIALIZED) {
+		printf("%s: not responding\n", sc->sc_dev.dv_xname);
+		error = ETIMEDOUT;
+	} else {
+		/* await all interrupts */
+		pgt_write_4_flush(sc, PFF_REG_INT_EN, PFF_INT_STAT_SOURCES);
+		DELAY(PFF_WRITEIO_DELAY);
 	}
+
+	return (0);
+
 	//mtx_unlock(&sc->sc_lock);
 	if (error != 0)
 		goto failed;
@@ -803,11 +853,12 @@ pgt_attach(struct pgt_softc *sc)
 failed:
 		pgt_disable(sc, SC_DYING);
 		pgt_reboot(sc);
-		pgt_kill_kthread(sc);
+		//pgt_kill_kthread(sc);
 		//cv_destroy(&sc->sc_kthread.sck_needed);
 		//cv_destroy(&sc->sc_critical_cv);
 		//mtx_destroy(&sc->sc_lock);
 	}
+
 	return (error);
 }
 
@@ -820,7 +871,7 @@ pgt_detach(struct pgt_softc *sc)
 	sc->sc_flags |= SC_GONE;
 	pgt_disable(sc, SC_DYING);
 	pgt_reboot(sc);
-	pgt_kill_kthread(sc);
+	//pgt_kill_kthread(sc);
 	//cv_destroy(&sc->sc_kthread.sck_needed);
 	//cv_destroy(&sc->sc_critical_cv);
 	//mtx_destroy(&sc->sc_lock);
@@ -838,10 +889,12 @@ pgt_reboot(struct pgt_softc *sc)
 	pgt_write_4(sc, PFF_REG_CTRL_STAT, reg);
 	pgt_write_memory_barrier(sc);
 	DELAY(PFF_WRITEIO_DELAY);
+
 	reg |= PFF_CTRL_STAT_RESET;
 	pgt_write_4(sc, PFF_REG_CTRL_STAT, reg);
 	pgt_write_memory_barrier(sc);
 	DELAY(PFF_WRITEIO_DELAY);
+
 	reg &= ~PFF_CTRL_STAT_RESET;
 	pgt_write_4(sc, PFF_REG_CTRL_STAT, reg);
 	pgt_write_memory_barrier(sc);
@@ -1097,6 +1150,7 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 	uint16_t dataoff;
 	int encrypted;
 	uint8_t rate, rssi;
+
 	ic = &sc->sc_ic;
 	ifp = &ic->ic_if;
 	for (next = m; m != NULL; m = next) {
@@ -1515,6 +1569,7 @@ pgt_intr(void *argp)
 #endif
 	pgt_intr_body(sc, &datarx, -1);
 	//mtx_unlock(&sc->sc_lock);
+
 	/*
 	 * Now that we have unlocked the softc, decode and enter the
 	 * data frames we've received.
@@ -1522,7 +1577,7 @@ pgt_intr(void *argp)
 	if (datarx != NULL)
 		pgt_input_frames(sc, datarx);
 	//if (!IFQ_DRV_IS_EMPTY(&ifp->if_snd))
-//		pgt_start(ifp);
+	//	pgt_start(ifp);
 
 	return (0);
 }
@@ -1589,11 +1644,12 @@ pgt_intr_body(struct pgt_softc *sc, struct mbuf **datarx,
 		sc->sc_flags &= ~SC_INTR_RESET;
 		pgt_async_reset(sc);
 	}
-	if (reg & ~PFF_INT_STAT_SOURCES && sc->sc_debug & SC_DEBUG_UNEXPECTED)
-		printf("%s: unknown interrupt bits %#x "
-		    "(stat %#x)\n", sc->sc_dev.dv_xname,
+	if (reg & ~PFF_INT_STAT_SOURCES && sc->sc_debug & SC_DEBUG_UNEXPECTED) {
+		printf("%s: unknown interrupt bits %#x (stat %#x)\n",
+		    sc->sc_dev.dv_xname,
 		    reg & ~PFF_INT_STAT_SOURCES,
 		    pgt_read_4(sc, PFF_REG_CTRL_STAT));
+	}
 }
 
 void

@@ -170,12 +170,13 @@ struct pgt_softc {
 	}			sc_kthread;
 };
 
+void	pgt_attachhook(void *);
 int	pgt_intr(void *);
 int	pgt_attach(struct pgt_softc *);
 int	pgt_detach(struct pgt_softc *sc);
 void	pgt_reboot(struct pgt_softc *);
 /* Load one seg into the bus_addr_t * arg. */
-void pgt_load_busaddr(void *, bus_dma_segment_t *, int, int);
+//void	pgt_load_busaddr(void *, bus_dma_segment_t *, int, int);
 
 static __inline int
 pgt_queue_is_rx(enum pgt_queue pq)

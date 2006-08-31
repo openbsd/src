@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.3 2006/08/28 10:23:49 mglocker Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.4 2006/08/31 09:26:14 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -130,7 +130,10 @@ pgt_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
-	pgt_attach(sc);
+	if (rootvp == NULL)
+		mountroothook_establish(pgt_attachhook, sc);
+	else
+		pgt_attach(sc);
 }
 
 int
