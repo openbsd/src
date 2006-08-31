@@ -109,6 +109,7 @@ struct pgt_softc {
 #define	SC_NOFREE_ALLNODES	0x00000100 /* do not free assoc w/reinit */
 #define	SC_START_DESIRED	0x00000200 /* tried to start during mgmt-crit */
 #define	SC_KTHREAD		0x00000400 /* has a kthread around */
+#define	SC_ISL3877		0x00000800 /* chipset */
 	/* configuration sysctls */
 	int			sc_dot1x;
 	int			sc_wds;
@@ -134,11 +135,6 @@ struct pgt_softc {
 #define	SC_DEBUG_RXANNEX	0x00000100
 #define	SC_DEBUG_RXFRAG		0x00000200
 #define	SC_DEBUG_RXETHER	0x00000400
-	enum pgt_dev_type {
-		PFF_DEV_ISL3877,
-		PFF_DEV_ISL3890,
-		PFF_DEV_3COM6001
-	}			sc_dev_type;
 	struct resource	       *sc_intres;	/* interrupt resource */
 	void		       *sc_intcookie;
 	struct resource	       *sc_iores;	/* IO memory resource */

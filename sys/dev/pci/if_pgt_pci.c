@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.4 2006/08/31 09:26:14 mglocker Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.5 2006/08/31 17:05:50 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -100,6 +100,10 @@ pgt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
+
+	/* remember chipset */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTERSIL_ISL3877)
+		sc->sc_flags |= SC_ISL3877;
 
 	/* map control / status registers */
 	error = pci_mapreg_map(pa, PGT_PCI_BAR0,

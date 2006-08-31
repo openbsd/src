@@ -233,8 +233,6 @@ pgt_attachhook(void *xsc)
 		printf("%s: attach error\n", sc->sc_dev.dv_xname);
 		return;
 	}
-
-	DPRINTF(("%s: attach ok\n", sc->sc_dev.dv_xname));
 }
 
 void
@@ -410,12 +408,10 @@ pgt_load_firmware(struct pgt_softc *sc)
 	size_t size;
 	char *name;
 
-	if (sc->sc_dev_type == PFF_DEV_ISL3877)
-		name = "isl3877";
+	if (sc->sc_flags & SC_ISL3877)
+		name = "pgt-isl3877";
 	else
-		name = "isl3890";	/* includes isl3880 */
-
-	name = "pgt-isl3890";
+		name = "pgt-isl3890";	/* includes isl3880 */
 
 	error = loadfirmware(name, &ucode, &size);
 
@@ -462,8 +458,8 @@ pgt_load_firmware(struct pgt_softc *sc)
 		fwlen -= 4;
 		ucodeoff++;
 	}
-	DPRINTF(("%s: %d bytes of firmware microcode loaded\n",
-	    sc->sc_dev.dv_xname, fwoff));
+	DPRINTF(("%s: %d bytes microcode loaded from %s\n",
+	    sc->sc_dev.dv_xname, fwoff, name));
 
 	reg = pgt_read_4(sc, PFF_REG_CTRL_STAT);
 	reg &= ~(PFF_CTRL_STAT_RESET | PFF_CTRL_STAT_CLOCKRUN);
