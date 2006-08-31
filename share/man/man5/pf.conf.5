@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.353 2006/08/22 15:55:13 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.354 2006/08/31 18:44:48 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -80,11 +80,7 @@ enforces this order (see
 .Ar set require-order
 below).
 .Sh MACROS
-Much like
-.Xr cpp 1
-or
-.Xr m4 1 ,
-macros can be defined that will later be expanded in context.
+Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
 Macro names may not be reserved words (for example

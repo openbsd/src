@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.18 2006/08/28 23:16:50 stevesk Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.19 2006/08/31 18:44:48 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -45,11 +45,7 @@ An OSPF router must be a member of at least one area.
 Areas are used to group interfaces, simplifying configuration.
 .El
 .Sh MACROS
-Much like
-.Xr cpp 1
-or
-.Xr m4 1 ,
-macros can be defined that will later be expanded in context.
+Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits,
 and underscores.
 Macro names may not be reserved words (for example,
