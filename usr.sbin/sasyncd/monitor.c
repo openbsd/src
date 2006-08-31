@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.9 2006/06/02 20:31:48 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.10 2006/08/31 12:55:02 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -82,11 +82,6 @@ monitor_init(void)
 	signal(SIGHUP, sig_to_child);
 	signal(SIGINT, sig_to_child);
 
-	if (chroot(pw->pw_dir) != 0 || chdir("/") != 0) {
-		log_err("%s: chroot failed", __progname);
-		exit(1);
-	}
-
 	m_state.pid = fork();
 
 	if (m_state.pid == -1) {
@@ -96,6 +91,11 @@ monitor_init(void)
 		/* Child */
 		m_state.s = p[0];
 		close(p[1]);
+
+		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0) {
+			log_err("%s: chroot failed", __progname);
+			exit(1);
+		}
 
 		if (setgroups(1, &pw->pw_gid) ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
