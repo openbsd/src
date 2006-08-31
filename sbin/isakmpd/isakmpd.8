@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.90 2006/08/31 17:07:23 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.91 2006/08/31 19:06:53 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -646,6 +646,17 @@ For a FQDN certificate, do:
 	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_FQDN -out somehost.somedomain.crt
 .Ed
+.Pp
+If CERTFQDN is being used,
+make sure that the
+.Va subjectAltName
+field of the certificate is specified using
+.Ic srcid
+in
+.Xr ipsec.conf 5 .
+A similar setup will be required if
+.Xr isakmpd.conf 5
+is being used instead.
 .Pp
 Put the certificate (the file ending in .crt) in
 .Pa /etc/isakmpd/certs/
