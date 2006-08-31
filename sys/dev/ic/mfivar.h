@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.26 2006/06/19 19:05:45 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.27 2006/08/31 18:13:17 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -17,6 +17,7 @@
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
+#define MFI_DEBUG
 /* #define MFI_DEBUG */
 #ifdef MFI_DEBUG
 extern uint32_t			mfi_debug;
@@ -141,6 +142,8 @@ struct mfi_softc {
 	struct mfi_mem		*sc_sense;
 
 	struct mfi_ccb_list	sc_ccb_freeq;
+
+	struct sensor		*sc_sensors;
 };
 
 int	mfi_attach(struct mfi_softc *sc);

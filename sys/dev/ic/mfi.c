@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.64 2006/08/30 07:25:52 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.65 2006/08/31 18:13:17 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -38,6 +38,7 @@
 
 #if NBIO > 0
 #include <dev/biovar.h>
+#include <sys/sensors.h>
 #endif /* NBIO > 0 */
 
 #ifdef MFI_DEBUG
@@ -103,6 +104,8 @@ int		mfi_ioctl_alarm(struct mfi_softc *, struct bioc_alarm *);
 int		mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *);
 int		mfi_ioctl_setstate(struct mfi_softc *, struct bioc_setstate *);
 int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
+int		mfi_create_sensors(struct mfi_softc *);
+void		mfi_refresh_sensors(void *);
 #endif /* NBIO > 0 */
 
 struct mfi_ccb *
@@ -636,13 +639,6 @@ mfi_attach(struct mfi_softc *sc)
 		goto noinit;
 	}
 
-#if NBIO > 0
-	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
-		panic("%s: controller registration failed", DEVNAME(sc));
-	else
-		sc->sc_ioctl = mfi_ioctl;
-#endif /* NBIO > 0 */
-
 	if (mfi_get_info(sc)) {
 		printf("%s: could not retrieve controller information\n",
 		    DEVNAME(sc));
@@ -675,6 +671,16 @@ mfi_attach(struct mfi_softc *sc)
 
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
+
+#if NBIO > 0
+	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
+		panic("%s: controller registration failed", DEVNAME(sc));
+	else
+		sc->sc_ioctl = mfi_ioctl;
+
+	if (mfi_create_sensors(sc) != 0)
+		printf("%s: unable to create sensors\n", DEVNAME(sc));
+#endif /* NBIO > 0 */
 
 	return (0);
 noinit:
@@ -1758,4 +1764,100 @@ freeme:
 	return (rv);
 }
 
+int
+mfi_create_sensors(struct mfi_softc *sc)
+{
+	struct device		*dev;
+	struct scsibus_softc	*ssc;
+	int			i;
+
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (dev->dv_parent != &sc->sc_dev)
+			continue;
+
+		/* check if this is the scsibus for the logical disks */
+		ssc = (struct scsibus_softc *)dev;
+		if (ssc->adapter_link == &sc->sc_link)
+			break;
+	}
+
+	if (ssc == NULL)
+		return (1);
+
+	sc->sc_sensors = malloc(sizeof(struct sensor) * sc->sc_ld_cnt,
+	    M_DEVBUF, M_WAITOK);
+	if (sc->sc_sensors == NULL)
+		return (1);
+	bzero(sc->sc_sensors, sizeof(struct sensor) * sc->sc_ld_cnt);	
+
+	for (i = 0; i < sc->sc_ld_cnt; i++) {
+		if (ssc->sc_link[i][0] == NULL)
+			goto bad;
+
+		dev = ssc->sc_link[i][0]->device_softc;
+
+		sc->sc_sensors[i].type = SENSOR_DRIVE;
+		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+
+		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
+		    sizeof(sc->sc_sensors[i].device));
+		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
+		    sizeof(sc->sc_sensors[i].desc));
+
+		sensor_add(&sc->sc_sensors[i]);
+	}
+
+	if (sensor_task_register(sc, mfi_refresh_sensors, 10) != 0)
+		goto bad;
+
+	return (0);
+
+bad:
+	while (--i >= 0)
+		sensor_del(&sc->sc_sensors[i]);
+	free(sc->sc_sensors, M_DEVBUF);
+
+	return (1);
+}
+
+void
+mfi_refresh_sensors(void *arg)
+{
+	struct mfi_softc	*sc = arg;
+	int			i;
+	struct bioc_vol		bv;
+
+
+	for (i = 0; i < sc->sc_ld_cnt; i++) {
+		bzero(&bv, sizeof(bv));
+		bv.bv_volid = i;
+		if (mfi_ioctl_vol(sc, &bv))
+			return;
+
+		switch(bv.bv_status) {
+		case BIOC_SVOFFLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[i].status = SENSOR_S_CRIT;
+			break;
+
+		case BIOC_SVDEGRADED:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[i].status = SENSOR_S_WARN;
+			break;
+
+		case BIOC_SVSCRUB:
+		case BIOC_SVONLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[i].status = SENSOR_S_OK;
+			break;
+
+		case BIOC_SVINVALID:
+			/* FALLTRHOUGH */
+		default:
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		}
+
+	}
+}
 #endif /* NBIO > 0 */
