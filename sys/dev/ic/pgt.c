@@ -242,7 +242,7 @@ pgt_write_memory_barrier(struct pgt_softc *sc)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-uint32_t
+u_int32_t
 pgt_read_4(struct pgt_softc *sc, uint16_t offset)
 {
 	return (bus_space_read_4(sc->sc_iotag, sc->sc_iohandle, offset));
@@ -826,7 +826,7 @@ pgt_attach(struct pgt_softc *sc)
 		goto failed;
 
 	sc->sc_refcnt++;
-	//(void)msleep(&sc->sc_flags, &sc->sc_lock, PZERO, "pffres", hz);
+	tsleep(&sc->sc_flags, 0, "pftres", hz);
 	sc->sc_refcnt--;
 	if (sc->sc_flags & SC_UNINITIALIZED) {
 		printf("%s: not responding\n", sc->sc_dev.dv_xname);
@@ -837,11 +837,12 @@ pgt_attach(struct pgt_softc *sc)
 		DELAY(PFF_WRITEIO_DELAY);
 	}
 
-	return (0);
-
 	//mtx_unlock(&sc->sc_lock);
 	if (error != 0)
 		goto failed;
+
+	return (0);
+
 	error = pgt_net_attach(sc);
 	if (error == 0) {
 		ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
@@ -1536,16 +1537,15 @@ pgt_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 #endif
 
 int
-pgt_intr(void *argp)
+pgt_intr(void *arg)
 {
-	struct ifnet *ifp;
 	struct pgt_softc *sc;
+	struct ifnet *ifp;
 	struct mbuf *datarx = NULL;
 
-	return (0);
+	sc = arg;
+	ifp = &sc->sc_ic.ic_if;
 
-	ifp = argp;
-	sc = ifp->if_softc;
 	//mtx_lock(&sc->sc_lock);
 #ifdef DEVICE_POLLING
 	if (ifp->if_flags & IFF_POLLING) {
@@ -1582,7 +1582,7 @@ void
 pgt_intr_body(struct pgt_softc *sc, struct mbuf **datarx,
     int max_datarx_count)
 {
-	uint32_t reg;
+	u_int32_t reg;
 
 	/*
 	 * Here the Linux driver ands in the value of the INT_EN register,
