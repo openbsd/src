@@ -774,8 +774,6 @@ pgt_attach(struct pgt_softc *sc)
 	if (error)
 		goto failed;
 
-	return (0);
-
 	error = pgt_net_attach(sc);
 	if (error)
 		goto failed;
@@ -783,8 +781,10 @@ pgt_attach(struct pgt_softc *sc)
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
 
 failed:
-	pgt_disable(sc, SC_DYING);
-	pgt_reboot(sc);
+	if (error) {
+		pgt_disable(sc, SC_DYING);
+		pgt_reboot(sc);
+	}
 
 	return (error);
 }
@@ -1968,11 +1968,8 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 		pgt_update_intr(sc, NULL, 0);
 		if (pmd->pmd_error != EINPROGRESS)
 			goto usedpoll;
-		/*
-		if (msleep(pmd, &sc->sc_lock, PZERO, "pffmgp", 1) !=
-		    EWOULDBLOCK)
+		if (tsleep(pmd, 0, "pgtmgp", 1) != EWOULDBLOCK)
 			break;
-		*/
 	}
 #endif
 	/*
@@ -1985,17 +1982,13 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 	 */
 	i = 0;
 	do {
-		/*
-		if (msleep(pmd, &sc->sc_lock, PZERO, "pffmgm", hz / 10) !=
-		    EWOULDBLOCK)
+		if (tsleep(pmd, 0, "pgtmgm", hz / 10) != EWOULDBLOCK)
 			break;
-		*/
 		if (pmd->pmd_error != EINPROGRESS)
 			break;
 		if (sc->sc_flags & (SC_DYING | SC_NEEDS_RESET)) {
 			pmd->pmd_error = EIO;
-			TAILQ_REMOVE(&sc->sc_mgmtinprog, pmd,
-			    pmd_link);	
+			TAILQ_REMOVE(&sc->sc_mgmtinprog, pmd, pmd_link);
 			break;
 		}
 		if (i != 9)
@@ -2004,22 +1997,23 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 		pgt_update_intr(sc, NULL, 0);
 #endif
 	} while (i++ < 10);
+
 #ifdef DEVICE_POLLING
 usedpoll:
 #endif
 	if (pmd->pmd_error == EINPROGRESS) {
 		printf("%s: timeout waiting for management "
-		    "packet response to 0x%x\n", sc->sc_dev.dv_xname, pmd->pmd_oid);
-		TAILQ_REMOVE(&sc->sc_mgmtinprog, pmd,
-		    pmd_link);	
+		    "packet response to 0x%x\n",
+		    sc->sc_dev.dv_xname, pmd->pmd_oid);
+		TAILQ_REMOVE(&sc->sc_mgmtinprog, pmd, pmd_link);
 		if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
 			pgt_state_dump(sc);
 		pgt_async_reset(sc);
 		error = ETIMEDOUT;
-	} else {
+	} else
 		error = 0;
-	}
 	sc->sc_refcnt--;
+
 	return (error);
 }
 
@@ -2267,6 +2261,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_protmode = IEEE80211_PROT_NONE;
+	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 	/* Set up post-attach/pre-lateattach vector functions. */
 	ic->ic_newstate = pgt_new_state;
@@ -2282,6 +2277,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	/* default to the first channel we know of */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	sc->sc_if_flags = ifp->if_flags;
+
 	return (0);
 }
 
@@ -3636,8 +3632,10 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	size_t size;
 	int i, error, nsegs;
 
-	for (i = 0; i < PGT_QUEUE_COUNT; i++)
+	for (i = 0; i < PGT_QUEUE_COUNT; i++) {
 		TAILQ_INIT(&sc->sc_freeq[i]);
+		TAILQ_INIT(&sc->sc_dirtyq[i]);
+	}
 
 	/*
 	 * control block
