@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.76 2006/08/31 11:23:57 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.77 2006/08/31 17:50:43 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -343,20 +343,35 @@ are used;
 PFS will only be used if the remote side requests it.
 .It Xo
 .Ic srcid
-.Aq Ar fqdn
+.Aq Ar string
 .Xc
-This optional parameter defines either a UFQDN or an FQDN that will be used by
+This optional parameter defines an ID of type
+.Dq USER_FQDN
+or
+.Dq FQDN
+that will be used by
 .Xr isakmpd 8
 as the identity of the local peer.
-If the argument is an email address (bob@example.com), ipsecctl will use UFQDN as the ID type.
+If the argument is an email address (bob@example.com),
+.Xr ipsecctl 8
+will use USER_FQDN as the ID type.
 Anything else is considered to be an FQDN.
+If
+.Ic srcid
+is omitted,
+the default is to use the IP address of the connecting machine.
 .It Xo
 .Ic dstid
-.Aq Ar fqdn
+.Aq Ar string
 .Xc
 Similar to
 .Ic srcid ,
-this optional parameter defines a FQDN to be used by the remote peer.
+this optional parameter defines an ID of type
+.Dq USER_FQDN
+or
+.Dq FQDN
+to be used
+by the remote peer.
 .It Ic psk Aq Ar string
 Use a pre-shared key
 .Ar string
