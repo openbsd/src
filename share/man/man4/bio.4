@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.16 2006/08/31 02:14:20 deraadt Exp $
+.\"	$OpenBSD: bio.4,v 1.17 2006/08/31 03:49:19 dlg Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" Copyright (c) 2006 Marco Peereboom
@@ -57,6 +57,32 @@ is given in the specification, and is greater than 0, a maximum of one
 .Nm bio
 device is created.
 .Pp
+The following device drivers register with
+.Nm
+for volume management:
+.Pp
+.Bl -tag -width ciss(4)XX -offset indent -compact
+.It Xr ami 4
+LSI Logic MegaRAID Controllers
+.It Xr arc 4
+Areca RAID Controllers
+.It Xr ciss 4
+Compaq Smart ARRAY 5/6 RAID controllers
+.It Xr mfi 4
+LSI Logic MegaRAID SAS Controllers
+.El
+.Pp
+The following device drivers register with
+.Nm
+to provide enclosure management:
+.Pp
+.Bl -tag -width safte($)XX -offset indent -compact
+.It Xr safte 4
+SCSI Accessed Fault-Tolerant Enclosure
+.It Xr ses 4
+SCSI Enclosure Services
+.El
+.Pp
 The following ioctl calls apply to the
 .Nm bio
 device:
@@ -98,11 +124,6 @@ ioctl tunnel device
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr ami 4 ,
-.Xr ciss 4 ,
-.Xr safte 4 ,
-.Xr scsi 4 ,
-.Xr ses 4 ,
 .Xr bioctl 8
 .Sh HISTORY
 The
