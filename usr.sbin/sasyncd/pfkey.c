@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.16 2006/08/30 18:26:33 henning Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.17 2006/08/31 17:28:33 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -170,6 +170,16 @@ pfkey_msg_filter(struct sadb_msg *msg)
 	u_int8_t		*max;
 
 	switch (msg->sadb_msg_type) {
+	case SADB_X_PROMISC:
+	case SADB_DUMP:
+	case SADB_GET:
+	case SADB_GETSPI:
+	case SADB_ACQUIRE:
+	case SADB_X_ASKPOLICY:
+	case SADB_REGISTER:
+		/* Some messages should not be synced. */
+		return 1;
+
 	case SADB_ADD:
 		/* No point in syncing LARVAL SAs */
 		if (pfkey_find_ext(msg, SADB_EXT_KEY_ENCRYPT) == 0)
@@ -283,15 +293,6 @@ pfkey_handle_message(struct sadb_msg *m)
 	}
 
 	switch (msg->sadb_msg_type) {
-	case SADB_X_PROMISC:
-	case SADB_DUMP:
-	case SADB_GET:
-	case SADB_GETSPI:
-	/* case SADB_REGISTER: */
-		/* Some messages should not be synced. */
-		free(m);
-		break;
-
 	case SADB_UPDATE:
 		/*
 		 * Tweak -- the peers do not have a larval SA to update, so
