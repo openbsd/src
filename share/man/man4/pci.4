@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.174 2006/08/30 23:27:32 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.175 2006/08/31 16:18:36 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -344,42 +344,39 @@ VGA graphics cards.
 .Ss Audio devices
 .Bl -tag -width 10n -offset ind -compact
 .It Xr auich 4
-Integrated Intel 82801AA/AB/BA/CA and 440MX sound devices.
+ICH-based PCI audio device.
 .It Xr auixp 4
-ATI IXP series integrated AC'97 audio devices.
+ATI IXP series integrated AC'97 audio device.
 .It Xr autri 4
-Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 audio devices.
+Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 audio device.
 .It Xr auvia 4
-Integrated AC'97 audio controller of the
-.Tn VIA Technologies VT82C686A ,
-.Tn VT8233 ,
-VT8235, VT8237 Southbridges.
+VIA VT82C686A, VT8233, VT8235, VT8237 integrated AC'97 audio device.
 .It Xr azalia 4
-Generic High Definition Audio sound devices.
+Generic High Definition Audio device.
 .It Xr clcs 4
-Cirrus Logic CrystalClear CS4280 sound devices.
+Cirrus Logic CS4280/CS4610/CS4615 audio device.
 .It Xr clct 4
-Cirrus Logic CrystalClear CS4281 sound devices.
+Cirrus Logic CS4281 audio device.
 .It Xr cmpci 4
-C-Media CMI8x38 sound devices.
+C-Media CMI8x38 PCI audio device.
 .It Xr eap 4
-Ensoniq AudioPCI sound devices.
+Ensoniq AudioPCI audio device.
 .It Xr emu 4
-Creative Labs SBLive!, PCI 512, and Audigy audio device driver.
+Creative Labs SBLive!, PCI 512, and Audigy audio device.
 .It Xr esa 4
-ESS Alegro 1 and Maestro 3 sound devices.
+ESS Technology Allegro-1/Maestro-3 family audio device.
 .It Xr eso 4
-ESS Solo-1 PCI AudioDrive sound devices.
+ESS Technology Solo-1 PCI AudioDrive audio device.
 .It Xr fms 4
-Forte Media FM801 sound devices.
+Forte Media FM801 audio device.
 .It Xr maestro 4
-ESS Maestro 1, 2 and 2E sound devices.
+ESS Maestro 1 and 2 audio device.
 .It Xr neo 4
-NeoMagic 256AV/ZX sound devices.
+NeoMagic 256AV/ZX audio device.
 .It Xr sv 4
-S3 SonicVibes sound devices.
+S3 SonicVibes audio device.
 .It Xr yds 4
-Yamaha DS-XG sound devices.
+Yamaha DS-XG audio device.
 .El
 .Ss Radio receiver devices
 .Bl -tag -width 10n -offset ind -compact
