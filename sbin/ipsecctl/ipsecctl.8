@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.20 2006/06/09 13:48:10 jmc Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.21 2006/08/31 19:01:16 ho Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -33,7 +33,7 @@ The
 utility controls flows that determine which packets are to be processed by
 IPsec.
 It allows ruleset configuration, and retrieval of status information from the
-kernel's SPD (Security Policy Database) and SADB (Security Association
+kernel's SPD (Security Policy Database) and SAD (Security Association
 Database).
 .Pp
 It also can control
@@ -43,7 +43,7 @@ and establish tunnels using automatic keying with
 .Pp
 Additionally,
 .Nm
-can be used to configure the SADB for use with TCP MD5
+can be used to configure the SAD for use with TCP MD5
 signatures, as described in RFC 2385.
 See
 .Xr tcp 4
@@ -73,7 +73,7 @@ will add flows.
 .It Fl F
 The
 .Fl F
-option flushes the SPD and the SADB.
+option flushes the SPD and the SAD.
 .It Fl f Ar file
 Load the rules contained in
 .Ar file .
@@ -92,7 +92,7 @@ Show the kernel's databases, specified by
 .It Fl s Cm flow
 Show the ruleset loaded into the SPD.
 .It Fl s Cm sa
-Show the active SADB entries.
+Show the active SAD entries.
 .It Fl s Cm all
 Show all of the above.
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.58 2006/06/08 23:05:14 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.59 2006/08/31 19:01:16 ho Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -526,9 +526,9 @@ ipsecctl_show_sas(int opts)
 	mib[4] = SADB_SATYPE_UNSPEC;
 
 	if (opts & IPSECCTL_OPT_SHOWALL)
-		ipsecctl_print_title("SADB:");
+		ipsecctl_print_title("SAD:");
 
-	/* When the SADB is empty we get ENOENT, no need to err(). */
+	/* When the SAD is empty we get ENOENT, no need to err(). */
 	if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1 && errno != ENOENT)
 		err(1, "ipsecctl_show_sas: sysctl");
 	if (need == 0) {
