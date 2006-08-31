@@ -84,7 +84,7 @@ struct pgt_ieee80211_radiotap {
 	uint8_t					pir_db_antsignal;
 	uint8_t					pir_db_antnoise;
 };
-#define	PFF_IEEE80211_RADIOTAP_PRESENT			\
+#define	PGT_IEEE80211_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
 	    1 << IEEE80211_RADIOTAP_RATE |		\
 	    1 << IEEE80211_RADIOTAP_CHANNEL |		\
@@ -97,7 +97,6 @@ struct pgt_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
 	struct bpf_if          *sc_drvbpf;
-//	struct mtx		sc_lock;
 	unsigned int		sc_flags;
 #define	SC_NEEDS_FIRMWARE	0x00000001 /* do firmware upload on reset */
 #define	SC_UNINITIALIZED	0x00000002 /* still awaiting initial intr */
@@ -153,10 +152,10 @@ struct pgt_softc {
 	void		       *sc_psmbuf;	/* DMA-mapped psm frame area */
 	//bus_dma_tag_t		sc_fragdmat;	/* tags for all queues */
 	struct pgt_mgmt_descq	sc_mgmtinprog;
-	struct pgt_descq	sc_freeq[PFF_QUEUE_COUNT];
-	size_t			sc_freeq_count[PFF_QUEUE_COUNT];
-	struct pgt_descq	sc_dirtyq[PFF_QUEUE_COUNT];
-	size_t			sc_dirtyq_count[PFF_QUEUE_COUNT];
+	struct pgt_descq	sc_freeq[PGT_QUEUE_COUNT];
+	size_t			sc_freeq_count[PGT_QUEUE_COUNT];
+	struct pgt_descq	sc_dirtyq[PGT_QUEUE_COUNT];
+	size_t			sc_dirtyq_count[PGT_QUEUE_COUNT];
 	struct bintime		sc_data_tx_started;
 	struct pgt_softc_kthread {
 		struct proc		       *sck_proc;
@@ -177,31 +176,31 @@ void	pgt_reboot(struct pgt_softc *);
 static __inline int
 pgt_queue_is_rx(enum pgt_queue pq)
 {
-	return (pq == PFF_QUEUE_DATA_LOW_RX ||
-	    pq == PFF_QUEUE_DATA_HIGH_RX ||
-	    pq == PFF_QUEUE_MGMT_RX);
+	return (pq == PGT_QUEUE_DATA_LOW_RX ||
+	    pq == PGT_QUEUE_DATA_HIGH_RX ||
+	    pq == PGT_QUEUE_MGMT_RX);
 }
 
 static __inline int
 pgt_queue_is_tx(enum pgt_queue pq)
 {
-	return (pq == PFF_QUEUE_DATA_LOW_TX ||
-	    pq == PFF_QUEUE_DATA_HIGH_TX ||
-	    pq == PFF_QUEUE_MGMT_TX);
+	return (pq == PGT_QUEUE_DATA_LOW_TX ||
+	    pq == PGT_QUEUE_DATA_HIGH_TX ||
+	    pq == PGT_QUEUE_MGMT_TX);
 }
 
 static __inline int
 pgt_queue_is_data(enum pgt_queue pq)
 {
-	return (pq == PFF_QUEUE_DATA_LOW_RX ||
-	    pq == PFF_QUEUE_DATA_HIGH_RX ||
-	    pq == PFF_QUEUE_DATA_LOW_TX ||
-	    pq == PFF_QUEUE_DATA_HIGH_TX);
+	return (pq == PGT_QUEUE_DATA_LOW_RX ||
+	    pq == PGT_QUEUE_DATA_HIGH_RX ||
+	    pq == PGT_QUEUE_DATA_LOW_TX ||
+	    pq == PGT_QUEUE_DATA_HIGH_TX);
 }
 
 static __inline int
 pgt_queue_is_mgmt(enum pgt_queue pq)
 {
-	return (pq == PFF_QUEUE_MGMT_RX ||
-	    pq == PFF_QUEUE_MGMT_TX);
+	return (pq == PGT_QUEUE_MGMT_RX ||
+	    pq == PGT_QUEUE_MGMT_TX);
 }
