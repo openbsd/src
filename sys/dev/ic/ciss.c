@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.19 2006/08/28 02:56:33 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.20 2006/08/31 23:19:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -410,6 +410,7 @@ ciss_attach(struct ciss_softc *sc)
 		printf("%s: controller registration failed",
 		    sc->sc_dev.dv_xname);
 
+	sc->sc_flags |= CISS_BIO;
 	sc->sensors = malloc(sizeof(struct sensor) * sc->maxunits,
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sensors) {
@@ -1029,6 +1030,9 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 	ciss_lock_t lock;
 	int ld, pd, error = 0;
 	u_int blks;
+
+	if (!(sc->sc_flags & CISS_BIO))
+		return ENOTTY;
 
 	lock = CISS_LOCK(sc);
 	switch (cmd) {
