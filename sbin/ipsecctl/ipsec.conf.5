@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.75 2006/08/31 01:16:23 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.76 2006/08/31 11:23:57 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -31,12 +31,51 @@
 .Sh DESCRIPTION
 The
 .Nm
-file specifies rules and definitions for
-.Xr ipsec 4
-IP security services.
-The rulesets themselves can be loaded, viewed, and modified via the
+file specifies rules and definitions for IPsec,
+which provides security services for IP datagrams.
+IPsec itself is a pair of protocols:
+Encapsulating Security Payload (ESP),
+which provides integrity and confidentiality;
+and Authentication Header (AH),
+which provides integrity.
+.Pp
+In its most basic form, a
+.Em flow
+is established between hosts and/or networks,
+and then Security Associations
+.Pq Em SA
+are established,
+which detail how the desired protection will be achieved.
+The flows themselves are a type of route which determine
+which packets need to be protected by an SA.
+.Pp
+Generally speaking
+an automated keying daemon,
+such as
+.Xr isakmpd 8 ,
+is used to set up flows and establish SAs.
+The keying daemon can be configured using
+.Nm .
+The procedures for running the daemon and
+using passphrases, host keys, X509 certificates,
+or Keynote certificates are documented in
+.Xr isakmpd 8 .
+Note that the
+.Fl K
+option will probably be required to avoid
+.Xr keynote 4
+policy checking.
+.Pp
+An alternative method of setting up SAs is also possible using
+manual keying.
+Manual keying can be convenient for quick setups and testing.
+These procedures are documented within this page.
+.Pp
+The IPsec protocol itself is described in
+.Xr ipsec 4 .
+Rulesets can be loaded, viewed, and modified via the
 .Xr ipsecctl 8
-userland utility.
+utility.
 .Sh MACROS
 Much like
 .Xr cpp 1
