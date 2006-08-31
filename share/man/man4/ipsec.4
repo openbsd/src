@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.75 2006/08/29 18:14:26 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.76 2006/08/31 11:46:39 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -55,13 +55,6 @@ Enable the ESP IPsec protocol
 Enable the AH IPsec protocol
 .El
 .Pp
-The original Internet Protocol, IPv4,
-does not inherently provide any
-protection to transferred data.
-Furthermore, it does not even guarantee that the sender is who he
-claims to be.
-IPsec tries to remedy this by providing the required security services for
-IP datagrams.
 There are four main security properties provided by IPsec:
 .Bl -inset -offset indent
 .It Confidentiality
@@ -380,6 +373,11 @@ flag (look for ``tdb'' and ``xform'' allocations).
 .Xr isakmpd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
+IPsec was originally designed to provide security services
+for Internet Protocol IPv6.
+It has since been engineered to provide those services for
+the original Internet Protocol, IPv4.
+.Pp
 The IPsec protocol design process was started in 1992 by
 John Ioannidis, Phil Karn, and William Allen Simpson.
 In 1995, the former wrote an implementation for
