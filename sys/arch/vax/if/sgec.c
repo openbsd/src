@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.14 2006/08/30 19:28:11 miod Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.15 2006/08/31 22:10:57 miod Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -103,7 +103,7 @@ sgec_attach(sc)
 	struct	ze_tdes *tp;
 	struct	ze_rdes *rp;
 	bus_dma_segment_t seg;
-	int i, rseg, error;
+	int i, s, rseg, error;
 
         /*
          * Allocate DMA safe memory for descriptors and setup memory.
@@ -172,6 +172,7 @@ sgec_attach(sc)
 	/*
 	 * Pre-allocate the receive buffers.
 	 */
+	s = splnet();
 	for (i = 0; i < RXDESCS; i++) {
 		if ((error = ze_add_rxbuf(sc, i)) != 0) {
 			printf(": unable to allocate or map rx buffer %d\n,"
@@ -179,6 +180,7 @@ sgec_attach(sc)
 			goto fail_6;
 		}
 	}
+	splx(s);
 
 	/*
 	 * Create ring loops of the buffer chains.
@@ -556,11 +558,18 @@ int
 sgec_intr(sc)
 	struct ze_softc *sc;
 {
-	int csr;
+	int s, csr;
 
 	csr = ZE_RCSR(ZE_CSR5);
 	if ((csr & ZE_NICSR5_IS) == 0) /* Wasn't we */
 		return 0;
+
+	/*
+	 * On some systems, interrupts are handled at spl4, this can end up
+	 * in pool corruption.
+	 */
+	s = splnet();
+
 	ZE_WCSR(ZE_CSR5, csr);
 
 	if (csr & ZE_NICSR5_ME) {
@@ -574,6 +583,8 @@ sgec_intr(sc)
 
 	if (csr & ZE_NICSR5_TI)
 		sgec_txintr(sc);
+
+	splx(s);
 
 	return 1;
 }
@@ -671,6 +682,8 @@ ze_add_rxbuf(sc, i)
 	struct mbuf *m;
 	struct ze_rdes *rp;
 	int error;
+
+	splassert(IPL_NET);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
