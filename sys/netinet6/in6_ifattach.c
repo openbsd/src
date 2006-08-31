@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.42 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.43 2006/08/31 12:37:31 mcbride Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ int ip6_auto_linklocal = 1;	/* enable by default */
 static int get_rand_ifid(struct ifnet *, struct in6_addr *);
 static int get_hw_ifid(struct ifnet *, struct in6_addr *);
 static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
-static int in6_ifattach_linklocal(struct ifnet *, struct ifnet *);
 static int in6_ifattach_loopback(struct ifnet *);
 
 #define EUI64_GBIT	0x01
@@ -169,6 +168,7 @@ found:
 	switch (ifp->if_type) {
 	/* IEEE802/EUI64 cases - what others? */
 	case IFT_ETHER:
+	case IFT_CARP:
 	case IFT_FDDI:
 	case IFT_ATM:
 	case IFT_IEEE1394:
@@ -315,7 +315,7 @@ success:
 	return 0;
 }
 
-static int
+int
 in6_ifattach_linklocal(ifp, altifp)
 	struct ifnet *ifp;
 	struct ifnet *altifp;	/*secondary EUI64 source*/
@@ -372,11 +372,12 @@ in6_ifattach_linklocal(ifp, altifp)
 
 	/*
 	 * Now call in6_update_ifa() to do a bunch of procedures to configure
-	 * a link-local address. We can set NULL to the 3rd argument, because
-	 * we know there's no other link-local address on the interface
-	 * and therefore we are adding one (instead of updating one).
+	 * a link-local address. In the case of CARP, we may be called after
+	 * one has already been configured, so check if it's already there
+	 * with in6ifa_ifpforlinklocal() and clobber it if it exists.
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL)) != 0) {
+	if ((error = in6_update_ifa(ifp, &ifra,
+	     in6ifa_ifpforlinklocal(ifp, 0))) != 0) {
 		/*
 		 * XXX: When the interface does not support IPv6, this call
 		 * would fail in the SIOCSIFADDR ioctl.  I believe the
@@ -403,7 +404,8 @@ in6_ifattach_linklocal(ifp, altifp)
 		/* NOTREACHED */
 	}
 #endif
-	if (in6if_do_dad(ifp) && (ifp->if_flags & IFF_POINTOPOINT) == 0) {
+	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) ||
+	    (ifp->if_type == IFT_CARP)) == 0) {
 		ia->ia6_flags &= ~IN6_IFF_NODAD;
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 	}
@@ -597,6 +599,7 @@ in6_ifattach(ifp, altifp)
 	 * quirks based on interface type
 	 */
 	switch (ifp->if_type) {
+	/* we attach a link-local address when a vhid is assigned */
 	case IFT_CARP:
 		return;
 	default:

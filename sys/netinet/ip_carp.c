@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.129 2006/08/28 17:29:53 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.130 2006/08/31 12:37:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -83,6 +83,7 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/in6_ifattach.h>
 #endif
 
 #include "bpfilter.h"
@@ -100,6 +101,8 @@ struct carp_mc_entry {
 	struct sockaddr_storage		mc_addr;
 };
 #define	mc_enm	mc_u.mcu_enm
+
+enum { HMAC_ORIG=0, HMAC_NOV6LL=1, HMAC_MAX=2 };
 
 struct carp_softc {
 	struct arpcom sc_ac;
@@ -135,7 +138,8 @@ struct carp_softc {
 #define CARP_HMAC_PAD	64
 	unsigned char sc_key[CARP_KEY_LEN];
 	unsigned char sc_pad[CARP_HMAC_PAD];
-	SHA1_CTX sc_sha1;
+
+	SHA1_CTX sc_sha1[HMAC_MAX];
 	u_int32_t sc_hashkey[2];
 
 	struct timeout sc_ad_tmo;	/* advertisement timeout */
@@ -168,8 +172,9 @@ struct carp_if {
 	}
 
 void	carp_hmac_prepare(struct carp_softc *);
+void	carp_hmac_prepare_ctx(struct carp_softc *, u_int8_t);
 void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
-	    unsigned char *);
+	    unsigned char *, u_int8_t);
 int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
 	    unsigned char *);
 void	carp_setroute(struct carp_softc *, int);
@@ -221,6 +226,15 @@ carp_cksum(struct mbuf *m, int len)
 void
 carp_hmac_prepare(struct carp_softc *sc)
 {
+	u_int8_t i;
+
+	for (i=0; i < HMAC_MAX; i++)
+		carp_hmac_prepare_ctx(sc, i);
+}
+
+void
+carp_hmac_prepare_ctx(struct carp_softc *sc, u_int8_t ctx)
+{
 	u_int8_t version = CARP_VERSION, type = CARP_ADVERTISEMENT;
 	u_int8_t vhid = sc->sc_vhid & 0xff;
 	SHA1_CTX sha1ctx;
@@ -239,19 +253,19 @@ carp_hmac_prepare(struct carp_softc *sc)
 		sc->sc_pad[i] ^= 0x36;
 
 	/* precompute first part of inner hash */
-	SHA1Init(&sc->sc_sha1);
-	SHA1Update(&sc->sc_sha1, sc->sc_pad, sizeof(sc->sc_pad));
-	SHA1Update(&sc->sc_sha1, (void *)&version, sizeof(version));
-	SHA1Update(&sc->sc_sha1, (void *)&type, sizeof(type));
+	SHA1Init(&sc->sc_sha1[ctx]);
+	SHA1Update(&sc->sc_sha1[ctx], sc->sc_pad, sizeof(sc->sc_pad));
+	SHA1Update(&sc->sc_sha1[ctx], (void *)&version, sizeof(version));
+	SHA1Update(&sc->sc_sha1[ctx], (void *)&type, sizeof(type));
 
 	/* generate a key for the arpbalance hash, before the vhid is hashed */
-	bcopy(&sc->sc_sha1, &sha1ctx, sizeof(sha1ctx));
+	bcopy(&sc->sc_sha1[ctx], &sha1ctx, sizeof(sha1ctx));
 	SHA1Final((unsigned char *)kmd, &sha1ctx);
 	sc->sc_hashkey[0] = kmd[0] ^ kmd[1];
 	sc->sc_hashkey[1] = kmd[2] ^ kmd[3];
 
 	/* the rest of the precomputation */
-	SHA1Update(&sc->sc_sha1, (void *)&vhid, sizeof(vhid));
+	SHA1Update(&sc->sc_sha1[ctx], (void *)&vhid, sizeof(vhid));
 
 	/* Hash the addresses from smallest to largest, not interface order */
 #ifdef INET
@@ -270,7 +284,8 @@ carp_hmac_prepare(struct carp_softc *sc)
 			}
 		}
 		if (found)
-			SHA1Update(&sc->sc_sha1, (void *)&cur, sizeof(cur));
+			SHA1Update(&sc->sc_sha1[ctx],
+			    (void *)&cur, sizeof(cur));
 	} while (found);
 #endif /* INET */
 #ifdef INET6
@@ -281,8 +296,11 @@ carp_hmac_prepare(struct carp_softc *sc)
 		memset(&cur6, 0xff, sizeof(cur6));
 		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&in6))
+			if (IN6_IS_ADDR_LINKLOCAL(&in6)) {
+				if (ctx == HMAC_NOV6LL)
+					continue;
 				in6.s6_addr16[1] = 0;
+			}
 			if (ifa->ifa_addr->sa_family == AF_INET6 &&
 			    memcmp(&in6, &last6, sizeof(in6)) > 0 &&
 			    memcmp(&in6, &cur6, sizeof(in6)) < 0) {
@@ -291,7 +309,8 @@ carp_hmac_prepare(struct carp_softc *sc)
 			}
 		}
 		if (found)
-			SHA1Update(&sc->sc_sha1, (void *)&cur6, sizeof(cur6));
+			SHA1Update(&sc->sc_sha1[ctx],
+			    (void *)&cur6, sizeof(cur6));
 	} while (found);
 #endif /* INET6 */
 
@@ -302,12 +321,12 @@ carp_hmac_prepare(struct carp_softc *sc)
 
 void
 carp_hmac_generate(struct carp_softc *sc, u_int32_t counter[2],
-    unsigned char md[20])
+    unsigned char md[20], u_int8_t ctx)
 {
 	SHA1_CTX sha1ctx;
 
 	/* fetch first half of inner hash */
-	bcopy(&sc->sc_sha1, &sha1ctx, sizeof(sha1ctx));
+	bcopy(&sc->sc_sha1[ctx], &sha1ctx, sizeof(sha1ctx));
 
 	SHA1Update(&sha1ctx, (void *)counter, sizeof(sc->sc_counter));
 	SHA1Final(md, &sha1ctx);
@@ -324,10 +343,14 @@ carp_hmac_verify(struct carp_softc *sc, u_int32_t counter[2],
     unsigned char md[20])
 {
 	unsigned char md2[20];
+	u_int8_t i;
 
-	carp_hmac_generate(sc, counter, md2);
-
-	return (bcmp(md, md2, sizeof(md2)));
+	for (i=0; i < HMAC_MAX; i++) { 
+		carp_hmac_generate(sc, counter, md2, i);
+		if (!bcmp(md, md2, sizeof(md2)))
+			return (0);
+	}
+	return (1);
 }
 
 void
@@ -891,7 +914,11 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 	ch->carp_counter[0] = htonl((sc->sc_counter>>32)&0xffffffff);
 	ch->carp_counter[1] = htonl(sc->sc_counter&0xffffffff);
 
-	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md);
+	/*
+	 * For the time being, do not include the IPv6 linklayer addresses
+	 * in the HMAC.
+	 */
+	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md, HMAC_NOV6LL);
 
 	return (0);
 }
@@ -1596,8 +1623,9 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 void
 carp_set_enaddr(struct carp_softc *sc)
 {
-	if (sc->sc_vhid == -1) {
+	if (sc->sc_vhid == -1 || !sc->sc_carpdev) {
 		bzero(&sc->sc_ac.ac_enaddr, sizeof (sc->sc_ac.ac_enaddr));
+		/* XXX detach ipv6 link-local address? */
 	} else if (sc->sc_carpdev && sc->sc_carpdev->if_type == IFT_ISO88025) {
 		sc->sc_ac.ac_enaddr[0] = 3;
 		sc->sc_ac.ac_enaddr[1] = 0;
@@ -1614,8 +1642,20 @@ carp_set_enaddr(struct carp_softc *sc)
 		sc->sc_ac.ac_enaddr[5] = sc->sc_vhid;
 	}
 
-	bcopy(&sc->sc_ac.ac_enaddr,
-	    LLADDR(sc->sc_if.if_sadl), sc->sc_if.if_addrlen);
+	/* Make sure the enaddr has changed before further twiddling. */
+	if (bcmp(&sc->sc_ac.ac_enaddr, LLADDR(sc->sc_if.if_sadl),
+	    sc->sc_if.if_addrlen) != 0) {
+		bcopy(&sc->sc_ac.ac_enaddr,
+		    LLADDR(sc->sc_if.if_sadl), sc->sc_if.if_addrlen);
+
+#ifdef INET6
+		/*
+		 * (re)attach a link-local address which matches
+		 * our new MAC address.
+		 */
+		in6_ifattach_linklocal(&sc->sc_if, NULL);
+#endif
+	}
 }
 
 void
@@ -1808,8 +1848,9 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	if (sc->sc_naddrs6 == 0 && (error = carp_join_multicast6(sc)) != 0)
 		return (error);
 
-	sc->sc_naddrs6++;
-	if (sc->sc_carpdev != NULL)
+	if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+		sc->sc_naddrs6++;
+	if (sc->sc_carpdev != NULL && sc->sc_naddrs6)
 		sc->sc_if.if_flags |= IFF_UP;
 	carp_set_state(sc, INIT);
 	carp_setrun(sc, 0);
