@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.91 2006/08/31 19:06:53 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.92 2006/09/01 00:49:45 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -631,8 +631,8 @@ Replace 10.0.0.1 with the IP address which
 .Nm
 will use as the certificate identity.
 .Bd -literal -offset indent
-# setenv CERTIP 10.0.0.1
-# openssl x509 -req -days 365 -in 10.0.0.1.csr \e
+# env CERTIP=10.0.0.1 openssl x509 -req \e
+	-days 365 -in 10.0.0.1.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
 	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_IPAddr -out 10.0.0.1.crt
@@ -640,8 +640,8 @@ will use as the certificate identity.
 .Pp
 For a FQDN certificate, do:
 .Bd -literal -offset indent
-# setenv CERTFQDN somehost.somedomain
-# openssl x509 -req -days 365 -in somehost.somedomain.csr \e
+# env CERTFQDN=somehost.somedomain openssl x509 -req \e
+	-days 365 -in somehost.somedomain.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
 	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_FQDN -out somehost.somedomain.crt
