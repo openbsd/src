@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.289 2006/08/29 17:26:55 henning Exp $
+#	$OpenBSD: rc,v 1.290 2006/09/01 01:18:02 mpf Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -321,12 +321,15 @@ if [ X"${named_flags}" != X"NO" ]; then
 	echo 'starting named';		named $named_flags
 fi
 
-if [ X"${sasyncd_flags}" != X"NO" ]; then
-	echo 'starting sasyncd';	sasyncd ${sasyncd_flags}
+if [ X"${isakmpd_flags}" != X"NO" ]; then
+	if [ X"${sasyncd_flags}" != X"NO" ]; then
+		isakmpd_flags="-S ${isakmpd_flags}"
+	fi
+	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
 fi
 
-if [ X"${isakmpd_flags}" != X"NO" ]; then
-	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
+if [ X"${sasyncd_flags}" != X"NO" ]; then
+	echo 'starting sasyncd';	sasyncd ${sasyncd_flags}
 fi
 
 if [ X"${ipsec}" != X"NO" ]; then
