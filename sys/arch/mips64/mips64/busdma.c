@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.10 2006/06/19 20:26:54 miod Exp $ */
+/*	$OpenBSD: busdma.c,v 1.11 2006/09/01 20:07:56 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -253,7 +253,7 @@ _dmamap_load_mbuf(t, map, m, flags)
 		m = m->m_next;
 		if (m && i >= map->_dm_segcnt) {
 			/* Exceeded the size of our dmamap */
-			return E2BIG;
+			return EFBIG;
 		}
 	}
 	map->dm_nsegs = i;
