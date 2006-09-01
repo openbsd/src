@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.175 2006/08/31 16:18:36 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.176 2006/09/01 10:06:19 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -143,34 +143,19 @@ PCI IDE controller driver.
 .Ss RAID and cache controllers
 .Bl -tag -width 10n -offset ind -compact
 .It Xr aac 4
-Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid)
-.Tn RAID
-controllers.
-.It Xr arc 4
-Areca Technology Corporation
-.Tn RAID
-controllers.
+Adaptec SCSI RAID controller.
 .It Xr ami 4
-American Megatrends Inc.
-MegaRAID family
-.Tn RAID
-controllers.
+American Megatrends Inc. MegaRAID PATA/SATA/SCSI RAID controller.
+.It Xr arc 4
+Areca Technology Corporation SATA RAID controller.
 .It Xr cac 4
-Compaq Smart ARRAY 2/3/4
-.Tn RAID
-controllers.
+Compaq Smart ARRAY 2/3/4 SCSI RAID controller.
 .It Xr ciss 4
-Compaq Smart ARRAY 5/6
-.Tn RAID
-controllers.
+Compaq Smart ARRAY 5/6 SATA/SCSI RAID controller.
 .It Xr dpt 4
-DPT SmartCache/SmartRAID III and IV
-.Tn SCSI
-controllers.
+DPT EATA SCSI RAID controller.
 .It Xr gdt 4
-ICP-Vortex GDT
-.Tn RAID
-controllers.
+ICP-Vortex and Intel GDT SCSI RAID controller.
 .It Xr iop 4
 Generic
 .Tn I2O
@@ -178,11 +163,9 @@ specification
 .Tn RAID
 controllers.
 .It Xr mfi 4
-LSI Logic & Dell MegaRAID SAS Controllers.
+LSI Logic & Dell MegaRAID SAS RAID controller.
 .It Xr twe 4
-3ware 5000/6000/7000/8000 series PATA/SATA
-.Tn RAID
-controllers.
+3ware 5000/6000/7000/8000 series PATA/SATA RAID controller.
 .El
 .Ss Network interfaces
 .Bl -tag -width 10n -offset ind -compact
