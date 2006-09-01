@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.78 2006/08/31 18:44:48 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.79 2006/09/01 10:24:31 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -76,7 +76,7 @@ The IPsec protocol itself is described in
 Rulesets can be loaded, viewed, and modified via the
 .Xr ipsecctl 8
 utility.
-.Sh MACROS
+.Pp
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
@@ -91,8 +91,13 @@ For example:
 remote_gw = "192.168.3.12"
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Ed
+.Pp
+Addresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names, or interface group names.
 .Sh AUTOMATIC KEYING
-Rules can also specify IPsec flows and SAs to be established automatically by
+In this scenario,
+.Nm
+is used to set up flows and SAs automatically using
 .Xr isakmpd 8 .
 Some examples of setting up automatic keying:
 .Bd -literal -offset 3n
@@ -110,9 +115,6 @@ Some parameters are optional.
 Certain parameters can be expressed as lists, in which case
 .Xr ipsecctl 8
 generates all needed rule combinations.
-.Pp
-Addresses can be specified in CIDR notation (matching netblocks),
-as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
 .Ic ike
@@ -380,8 +382,10 @@ generates a key-pair for
 when starting, if one does not already exist.
 .El
 .Sh MANUAL FLOWS
-IPsec uses
-.Em flows
+In this scenario,
+.Nm
+is used to set up flows manually.
+IPsec uses flows
 to determine whether to apply security services to an IP packet or not.
 Some examples of setting up flows:
 .Bd -literal -offset 3n
@@ -427,9 +431,6 @@ Some parameters are optional.
 Certain parameters can be expressed as lists, in which case
 .Xr ipsecctl 8
 generates all needed rule combinations.
-.Pp
-Addresses can be specified in CIDR notation (matching netblocks),
-as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Ic in No or Ic out
 This rule applies to incoming or outgoing packets.
@@ -523,13 +524,14 @@ By default,
 will automatically set up normal flows with the corresponding type.
 .El
 .Sh MANUAL SECURITY ASSOCIATIONS (SAs)
-The security parameters for a
-.Ar flow
-are stored in the Security Association Database
-(SADB).
-Some examples of setting up SAs:
+In this scenario,
+.Nm
+is used to set up SAs manually.
+The security parameters for a flow
+are stored in the Security Association Database (SAD).
+An example of setting up an SA:
 .Bd -literal -offset 3n
-# Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
+# Set up an IPsec SA for flows between 192.168.3.14 and 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
 	enckey file "enc14:enc12"
@@ -555,9 +557,6 @@ cryptographic transforms, and key material to be used.
 Certain parameters can be expressed as lists, in which case
 .Xr ipsecctl 8
 generates all needed rule combinations.
-.Pp
-Addresses can be specified in CIDR notation (matching netblocks),
-as symbolic host names, interface names or interface group names.
 .Bl -tag -width xxxx
 .It Xo
 .Aq Ar mode
