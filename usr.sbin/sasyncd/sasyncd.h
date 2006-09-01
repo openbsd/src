@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.10 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.11 2006/09/01 01:13:25 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -96,13 +96,6 @@ extern int		carp_demoted;
 #define MSG_MAXTYPE	1	/* Increase when new types are added. */
 
 
-
-enum {
-	MONITOR_GETSNAP,
-	MONITOR_CARPINC,
-	MONITOR_CARPDEC
-};
-
 #define CARP_DEC	-1
 #define CARP_INC	1
 
@@ -140,8 +133,6 @@ pid_t	monitor_init(void);
 void	monitor_loop(void);
 void	monitor_carpdemote(void *);
 void	monitor_carpundemote(void *);
-int	monitor_get_pfkey_snap(u_int8_t **, u_int32_t *, u_int8_t **,
-    u_int32_t *);
 
 /* net.c */
 void	dump_buf(int, u_int8_t *, u_int32_t, char *);
@@ -170,6 +161,9 @@ void	timer_init(void);
 void	timer_next_event(struct timeval *);
 void	timer_run(void);
 int	timer_add(char *, u_int32_t, void (*)(void *), void *);
+
+/* carp.c */
+void	isakmpd_setrun(void);
 
 #if defined (GC_DEBUG)
 /* Boehms GC */

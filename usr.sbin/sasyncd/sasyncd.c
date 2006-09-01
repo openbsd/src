@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.12 2006/06/02 20:31:48 moritz Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.13 2006/09/01 01:13:25 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -74,6 +74,8 @@ sasyncd_run(pid_t ppid)
 		log_err("malloc(%lu) failed", (unsigned long)fdsetsize);
 		return -1;
 	}
+
+	isakmpd_setrun();
 
 	signal(SIGINT, sasyncd_stop);
 	signal(SIGTERM, sasyncd_stop);

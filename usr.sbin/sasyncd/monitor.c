@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.10 2006/08/31 12:55:02 mpf Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.11 2006/09/01 01:13:25 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -29,17 +29,20 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <net/pfkeyv2.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "monitor.h"
 #include "sasyncd.h"
 
 struct m_state {
@@ -52,6 +55,8 @@ volatile sig_atomic_t		sigchld = 0;
 static void	got_sigchld(int);
 static void	sig_to_child(int);
 static void	m_priv_pfkey_snap(int);
+static void	m_priv_isakmpd_activate(void);
+static void	m_priv_isakmpd_passivate(void);
 static ssize_t	m_write(int, void *, size_t);
 static ssize_t	m_read(int, void *, size_t);
 
@@ -169,13 +174,17 @@ monitor_loop(void)
 			/* Get the data. */
 			m_priv_pfkey_snap(m_state.s);
 			break;
-
 		case MONITOR_CARPINC:
 			carp_demote(CARP_INC, 1);
 			break;
-
 		case MONITOR_CARPDEC:
 			carp_demote(CARP_DEC, 1);
+			break;
+		case MONITOR_ISAKMPD_ACTIVATE:
+			m_priv_isakmpd_activate();
+			break;
+		case MONITOR_ISAKMPD_PASSIVATE:
+			m_priv_isakmpd_passivate();
 			break;
 		}
 	}
@@ -278,6 +287,16 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 	return 0;
 }
 
+int
+monitor_isakmpd_active(int active)
+{
+	u_int32_t	cmd = 
+	    active ? MONITOR_ISAKMPD_ACTIVATE : MONITOR_ISAKMPD_PASSIVATE;
+	if (write(m_state.s, &cmd, sizeof cmd) < 1)
+		return -1;
+	return 0;
+}
+
 /* Privileged */
 static void
 m_priv_pfkey_snap(int s)
@@ -365,6 +384,48 @@ m_priv_pfkey_snap(int s)
 		free(spd_buf);
 	}
 	return;
+}
+
+static void
+m_priv_isakmpd_fifocmd(const char *cmd)
+{
+	struct stat	sb;
+	int		fd = -1;
+
+	if ((fd = open(ISAKMPD_FIFO, O_WRONLY)) == -1) {
+		log_err("m_priv_isakmpd_fifocmd: open(%s)", ISAKMPD_FIFO);
+		goto out;
+	}
+	if (fstat(fd, &sb) == -1) {
+		log_err("m_priv_isakmpd_fifocmd: fstat(%s)", ISAKMPD_FIFO);
+		goto out;
+	}
+	if (!S_ISFIFO(sb.st_mode)) {
+		log_err("m_priv_isakmpd_fifocmd: %s not a fifo", ISAKMPD_FIFO);
+		goto out;
+	}
+
+	if (write(fd, cmd, strlen(cmd)) == -1) {
+		log_err("m_priv_isakmpd_fifocmd write");
+		goto out;
+	}
+ out:
+	if (fd != -1)
+		close(fd);
+	/* No values returned. */
+	return;
+}
+
+static void
+m_priv_isakmpd_activate(void)
+{
+	m_priv_isakmpd_fifocmd("M active\n");
+}
+
+static void
+m_priv_isakmpd_passivate(void)
+{
+	m_priv_isakmpd_fifocmd("M passive\n");
 }
 
 ssize_t

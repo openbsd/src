@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.17 2006/08/31 17:28:33 mpf Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.18 2006/09/01 01:13:25 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include "sasyncd.h"
+#include "monitor.h"
 #include "net.h"
 
 struct pfkey_msg

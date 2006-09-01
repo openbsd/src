@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.5 2006/06/02 20:31:48 moritz Exp $	*/
+/*	$OpenBSD: carp.c,v 1.6 2006/09/01 01:13:25 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "monitor.h"
 #include "sasyncd.h"
 
 int carp_demoted = 0;
@@ -170,6 +171,7 @@ carp_update_state(enum RUNSTATE current_state)
 		cfgstate.runstate = current_state;
 		if (current_state == MASTER)
 			pfkey_set_promisc();
+		isakmpd_setrun();
 		net_ctl_update_state();
 	}
 }
@@ -251,4 +253,17 @@ carp_init(void)
 	    carp_state_name(cfgstate.runstate));
 
 	return 0;
+}
+
+/* Enable or disable isakmpd connection checker. */
+void
+isakmpd_setrun(void)
+{
+	if (cfgstate.runstate == MASTER) {
+		if (monitor_isakmpd_active(1))
+			log_msg(0, "failed to activate isakmpd");
+	} else {
+		if (monitor_isakmpd_active(0))
+			log_msg(0, "failed to passivate isakmpd");
+	}
 }
