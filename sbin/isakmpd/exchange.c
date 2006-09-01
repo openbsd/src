@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.127 2006/06/02 19:35:55 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.128 2006/09/01 00:24:06 mpf Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -58,6 +58,7 @@
 #include "transport.h"
 #include "ipsec.h"
 #include "sa.h"
+#include "ui.h"
 #include "util.h"
 #include "key.h"
 #include "dpd.h"
@@ -1698,6 +1699,13 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 	char	*trpt, *peer;
 
 	phase = conf_get_num(name, "Phase", 0);
+
+	if (ui_daemon_passive) {
+		LOG_DBG((LOG_EXCHANGE, 40, "exchange_establish:"
+		    " returning in passive mode for exchange %s phase %d",
+		    name, phase));
+		return;
+	}
 
 	/*
 	 * First of all, never try to establish anything if another exchange

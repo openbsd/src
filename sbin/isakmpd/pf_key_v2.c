@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.175 2006/08/30 22:54:32 henning Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.176 2006/09/01 00:24:06 mpf Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -62,6 +62,7 @@
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
+#include "ui.h"
 #include "util.h"
 
 #include "policy.h"
@@ -3478,7 +3479,8 @@ pf_key_v2_notify(struct pf_key_v2_msg *msg)
 		break;
 
 	case SADB_ACQUIRE:
-		pf_key_v2_acquire(msg);
+		if (!ui_daemon_passive)
+			pf_key_v2_acquire(msg);
 		break;
 
 	default:

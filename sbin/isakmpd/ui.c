@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.47 2005/11/14 23:25:11 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.48 2006/09/01 00:24:06 mpf Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -68,6 +68,7 @@ static FILE	*ui_open_result(void);
 char		*ui_fifo = FIFO;
 int		 ui_socket;
 struct event	*ui_cr_event = NULL;
+int		 ui_daemon_passive = 0;
 
 /* Create and open the FIFO used for user control.  */
 void
@@ -420,6 +421,32 @@ ui_report_sa(char *cmd)
 	fclose(fd);
 }
 
+static void
+ui_setmode(char *cmd)
+{
+	char	arg[81];
+
+	if (sscanf(cmd, "M %80s", arg) != 1)
+		goto fail;
+	if (strncmp(arg, "active", 6) == 0) {
+		if (ui_daemon_passive) 
+			LOG_DBG((LOG_UI, 20,
+			    "ui_setmode: switching to active mode"));
+		ui_daemon_passive = 0;
+	} else if (strncmp(arg, "passive", 7) == 0) {
+		if (!ui_daemon_passive) 
+			LOG_DBG((LOG_UI, 20,
+			    "ui_setmode: switching to passive mode"));
+		ui_daemon_passive = 1;
+	} else
+		goto fail;
+	return;
+	
+  fail:
+	log_print("ui_setmode: command \"%s\" malformed", cmd);
+}
+
+
 /*
  * Call the relevant command handler based on the first character of the
  * line (the command).
@@ -443,6 +470,10 @@ ui_handle_command(char *line)
 
 	case 'D':
 		ui_debug(line);
+		break;
+
+	case 'M':
+		ui_setmode(line);
 		break;
 
 	case 'p':
