@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.27 2006/07/17 15:31:23 kjell Exp $
+.\"	$OpenBSD: mg.1,v 1.28 2006/09/02 20:06:48 jmc Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -120,9 +120,7 @@ language in which you can write extensions.
 However, you can rebind keys and change some parameters.
 There are no limits to line length or format.
 Command, buffer, and file name completion and listing can
-be done using the spacebar and
-.Ql \&? ,
-respectively.
+be done using the spacebar and tab keys.
 .Pp
 Amongst other major differences, the
 .Nm
@@ -141,8 +139,13 @@ will use
 .Pa .mg-vt100
 as a startup file.
 The terminal type startup file is used first.
-See the manual for a full list of the commands that can
-go in the files.
+The startup file format is a list of commands, one per line, as used for
+interactive evaluation, e.g.:
+.Bd -literal -offset indent
+auto-fill-mode
+set-fill-column 72
+global-set-key "\e^x\e^f" find-file
+.Ed
 .Pp
 Here's another example sequence that you may find useful.
 By default,
