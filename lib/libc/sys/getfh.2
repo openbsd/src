@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.11 2006/08/04 19:52:33 jmc Exp $
+.\"	$OpenBSD: getfh.2,v 1.12 2006/09/03 20:05:13 ian Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -92,6 +92,14 @@ points to an invalid address.
 An
 .Tn I/O
 error occurred while reading from or writing to the file system.
+.It Bq EINVAL
+A portion of
+.Fa path
+refers to a remote file system.
+.It Bq EOPNOTSUPP
+A portion of
+.Fa path
+refers to a remote file system.
 .El
 .Sh HISTORY
 The
