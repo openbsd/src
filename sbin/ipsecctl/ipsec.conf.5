@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.80 2006/09/04 15:10:37 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.81 2006/09/04 15:51:20 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -46,8 +46,8 @@ and then Security Associations
 .Pq Em SA
 are established,
 which detail how the desired protection will be achieved.
-The flows themselves are a type of route which determine
-which packets need to be protected by an SA.
+IPsec uses flows
+to determine whether to apply security services to an IP packet or not.
 .Pp
 Generally speaking
 an automated keying daemon,
@@ -412,35 +412,23 @@ flow esp from 192.168.3.14 to 192.168.3.100
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 .Ed
 .Pp
-The following security services are available:
+The following types of flow are available:
 .Bl -tag -width xxxx
 .It Ic flow esp
 ESP can provide the following properties:
 authentication, integrity, replay protection, and confidentiality of the data.
+If no flow type is specified,
+this is the default.
 .It Ic flow ah
-AH provides authentication, integrity, and replay protection, but no
+AH provides authentication, integrity, and replay protection, but not
 confidentiality.
 .It Ic flow ipip
-IPIP provides neither authentication, integrity, replay protection, nor
+IPIP does not provide authentication, integrity, replay protection, or
 confidentiality.
-However, it allows you to tunnel IP traffic over IP, without setting up
+However, it does allow tunnelling of IP traffic over IP, without setting up
 .Xr gif 4
 interfaces.
 .El
-.Pp
-For details on ESP and AH see
-.Xr ipsec 4 .
-When no service is specified,
-.Xr ipsecctl 8
-will use ESP.
-The settings for the security services have to be negotiated by
-.Xr isakmpd 8 .
-As soon as a packet matches a flow,
-.Xr isakmpd 8
-automatically starts the negotiation.
-See
-.Xr isakmpd 8
-for details.
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxx
@@ -549,9 +537,11 @@ esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	enckey file "enc14:enc12"
 .Ed
 .Pp
+Parameters specify the peers, Security Parameter Index (SPI),
+cryptographic transforms, and key material to be used.
 The following rules enter SAs in the SADB:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
+.Bl -tag -width "tcpmd5XX" -offset indent -compact
 .It Ic esp
 Enter an ESP SA.
 .It Ic ah
@@ -563,9 +553,6 @@ Enter an IPIP pseudo SA.
 .It Ic tcpmd5
 Enter a TCP MD5 SA.
 .El
-.Pp
-Parameters specify the peers, Security Parameter Index (SPI),
-cryptographic transforms, and key material to be used.
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxx
@@ -700,7 +687,6 @@ The encryption key is defined similarly to
 .Ic authkey
 .Aq Ar keyspec
 .Xc
-.Pp
 This rule applies for packets with source address
 .Aq Ar src
 and destination address
