@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.79 2006/09/01 10:24:31 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.80 2006/09/04 15:10:37 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -77,6 +77,31 @@ Rulesets can be loaded, viewed, and modified via the
 .Xr ipsecctl 8
 utility.
 .Pp
+Lines beginning with
+.Sq #
+and empty lines are regarded as comments,
+and ignored.
+.Pp
+Addresses can be specified in CIDR notation (matching netblocks),
+as symbolic host names, interface names, or interface group names.
+.Pp
+Certain parameters can be expressed as lists, in which case
+.Xr ipsecctl 8
+generates all the necessary combinations.
+For example:
+.Bd -literal -offset indent
+ike esp from {192.168.1.1, 192.168.1.2} to \e
+	{10.0.0.17, 10.0.0.18} peer 192.168.10.1
+.Ed
+.Pp
+Will expand to:
+.Bd -literal -offset indent
+ike esp from 192.168.1.1 to 10.0.0.17 peer 192.168.10.1
+ike esp from 192.168.1.1 to 10.0.0.18 peer 192.168.10.1
+ike esp from 192.168.1.2 to 10.0.0.17 peer 192.168.10.1
+ike esp from 192.168.1.2 to 10.0.0.18 peer 192.168.10.1
+.Ed
+.Pp
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
@@ -91,9 +116,6 @@ For example:
 remote_gw = "192.168.3.12"
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Ed
-.Pp
-Addresses can be specified in CIDR notation (matching netblocks),
-as symbolic host names, interface names, or interface group names.
 .Sh AUTOMATIC KEYING
 In this scenario,
 .Nm
@@ -108,13 +130,7 @@ ike esp from 192.168.3.1 to 192.168.3.2
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 .Ed
 .Pp
-Parameters specify the packets that will go through the tunnel and which
-cryptographic transforms are used for
-.Xr isakmpd 8 .
-Some parameters are optional.
-Certain parameters can be expressed as lists, in which case
-.Xr ipsecctl 8
-generates all needed rule combinations.
+The commands are as follows:
 .Bl -tag -width xxxx
 .It Xo
 .Ic ike
@@ -426,11 +442,7 @@ See
 .Xr isakmpd 8
 for details.
 .Pp
-Parameters specify the packets to which a flow applies.
-Some parameters are optional.
-Certain parameters can be expressed as lists, in which case
-.Xr ipsecctl 8
-generates all needed rule combinations.
+The commands are as follows:
 .Bl -tag -width xxxx
 .It Ic in No or Ic out
 This rule applies to incoming or outgoing packets.
@@ -554,9 +566,8 @@ Enter a TCP MD5 SA.
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),
 cryptographic transforms, and key material to be used.
-Certain parameters can be expressed as lists, in which case
-.Xr ipsecctl 8
-generates all needed rule combinations.
+.Pp
+The commands are as follows:
 .Bl -tag -width xxxx
 .It Xo
 .Aq Ar mode
