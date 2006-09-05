@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.29 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: sbus.4,v 1.30 2006/09/05 14:09:33 jmc Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,41 +67,29 @@ drivers, sorted by device type and driver name:
 .Ss Audio interfaces
 .Bl -tag -width 13n -offset ind -compact
 .It Xr audioamd 4
-.Tn AMD
-7990 codecs.
+SPARC telephone quality audio device.
 .It Xr audiocs 4
-.Tn "Crystal Semiconductor"
-CS4231A codecs.
+SPARC CS4231 audio device.
 .El
 .Ss SCSI interfaces
 .Bl -tag -width 13n -offset ind -compact
 .It Xr esp 4
-NCR53c94 and compatible
-.Tn SCSI
-interfaces.
+ESP NCR 53c94 on-board or SBus SCSI controller.
 .It Xr isp 4
-Qlogic
-.Tn SCSI
-interfaces.
+Qlogic based SCSI or FibreChannel SCSI Host Adapters.
 .El
 .Ss Network interfaces
 .Bl -tag -width 13n -offset ind -compact
 .It Xr be 4
-.Dq Big Mac
-.Tn Ethernet
-board.
+SPARC 10/100 Ethernet device.
 .It Xr hme 4
 Sun Happy Meal 10/100 Ethernet device.
 .It Xr le 4
 AMD LANCE Ethernet device.
 .It Xr lebuffer 4 , Xr ledma 4
-.Tn Lance
-7990 series
-.Tn Ethernet
-DMA interfaces.
+AMD LANCE Ethernet device.
 .It Xr qe 4
-Quad Ethernet Controller
-board.
+SPARC 10/100 Ethernet device.
 .El
 .Ss Bridges
 .Bl -tag -width 13n -offset ind -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vsbus.4,v 1.11 2006/08/27 17:32:58 miod Exp $
+.\"	$OpenBSD: vsbus.4,v 1.12 2006/09/05 14:09:33 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -41,11 +41,12 @@ class systems.
 .Sh SUPPORTED DEVICES
 The following devices are supported on
 .Nm vsbus .
+.Pp
 .Bl -tag -width 8n -compact -offset indent
 .It Xr asc 4
-NCR 53c94 SCSI controller.
+VAXstation 4000 SCSI controller.
 .It Xr dz 4
-DZ-11 terminal multiplexer.
+DZ-11 multiplexer device interface.
 .It Xr gpx 4
 GPX color frame buffer.
 .It Xr lcg 4
@@ -53,22 +54,13 @@ Low-Cost Graphics color frame buffer.
 .It Xr lcspx 4
 Low-Cost SPX color frame buffer.
 .It Xr le 4
-LANCE Ethernet interface.
+AMD LANCE Ethernet device.
 .It Xr ncr 4
-NCR 5380 SCSI controller.
+VAXstation 2000/3100 SCSI controller.
 .It Xr smg 4
-Small monochrome graphics adapter.
+Small Monochrome Graphics frame buffer.
 .It Xr ze 4
-SGEC Ethernet interface.
+SGEC Ethernet device.
 .El
 .Sh SEE ALSO
-.Xr asc 4 ,
-.Xr dz 4 ,
-.Xr gpx 4 ,
-.Xr intro 4 ,
-.Xr lcg 4 ,
-.Xr lcspx 4 ,
-.Xr le 4 ,
-.Xr ncr 4 ,
-.Xr smg 4 ,
-.Xr ze 4
+.Xr intro 4
