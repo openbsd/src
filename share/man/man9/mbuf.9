@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.20 2006/08/28 19:02:46 damien Exp $
+.\"     $OpenBSD: mbuf.9,v 1.21 2006/09/05 18:00:34 thib Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -518,7 +518,9 @@ is positive, the data will be trimmed from the head of the mbuf chain
 and if it is negative, it will be trimmed from the tail of the mbuf
 chain.
 .It Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
-Copy data from a buffer back into the mbuf chain pointed to by
+Copy data from a buffer pointed to by
+.Fa cp
+back into the mbuf chain pointed to by
 .Fa m0
 starting at
 .Fa off
