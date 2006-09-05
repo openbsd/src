@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.178 2006/09/05 09:34:57 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.179 2006/09/05 12:49:53 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -289,20 +289,19 @@ Neterion Xframe/Xframe II 10Gb Ethernet device.
 .Ss Cryptography accelerators
 .Bl -tag -width 10n -offset ind -compact
 .It Xr hifn 4
-Hifn 7751, 7811, and 7951.
-Symmetric Encryption Accelerator.
+Hifn 7751/7811/7951/7955/7956/9751 crypto accelerator.
 .It Xr ises 4
-Pijnenburg PCC-ISES hardware crypto accelerator.
+Securealink PCC-ISES hardware crypto accelerator.
 .It Xr lofn 4
 Hifn 6500 crypto accelerator.
 .It Xr noct 4
 NetOctave NSP2000 crypto accelerator.
 .It Xr nofn 4
-Hifn 7814, 7851 and 7854 crypto processor.
+Hifn 7814/7851/7854 HIPP1 crypto accelerator.
 .It Xr safe 4
-Safenet SafeXcel 1141/1741 crypto accelerator.
+SafeNet crypto accelerator.
 .It Xr ubsec 4
-Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820, and 5821.
+Broadcom and BlueSteel uBsec 5x0x crypto accelerator.
 .El
 .Ss Serial interfaces
 .Bl -tag -width 10n -offset ind -compact
