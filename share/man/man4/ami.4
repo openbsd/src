@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.37 2006/09/01 09:58:09 jmc Exp $
+.\"	$OpenBSD: ami.4,v 1.38 2006/09/05 06:50:03 dlg Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -124,8 +124,8 @@ For example:
 .Bd -literal -offset indent
 $ sysctl hw.sensors
 hw.sensors.0=ami0, sd0, drive online, OK
-hw.sensors.0=ami0, sd1, drive degraded, WARNING
-hw.sensors.0=ami0, sd2, drive failed, CRITICAL
+hw.sensors.1=ami0, sd1, drive degraded, WARNING
+hw.sensors.2=ami0, sd2, drive failed, CRITICAL
 .Ed
 .Sh SEE ALSO
 .Xr bio 4 ,
