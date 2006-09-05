@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.81 2006/09/04 15:51:20 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.82 2006/09/05 10:40:58 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -38,6 +38,8 @@ Encapsulating Security Payload (ESP),
 which provides integrity and confidentiality;
 and Authentication Header (AH),
 which provides integrity.
+The IPsec protocol itself is described in
+.Xr ipsec 4 .
 .Pp
 In its most basic form, a
 .Em flow
@@ -48,21 +50,37 @@ are established,
 which detail how the desired protection will be achieved.
 IPsec uses flows
 to determine whether to apply security services to an IP packet or not.
+Flows and SAs can be loaded, viewed, and modified using the
+.Xr ipsecctl 8
+utility.
 .Pp
 Generally speaking
 an automated keying daemon,
 such as
 .Xr isakmpd 8 ,
-is used to set up flows and establish SAs.
-The keying daemon can be configured using
-.Nm .
-The procedures for running the daemon and
-using passphrases, host keys, X509 certificates,
-or Keynote certificates are documented in
-.Xr isakmpd 8 .
-Note that the
+is used to set up flows and establish SAs,
+by specifying an
+.Sq ike
+line in
+.Nm
+(see
+.Sx AUTOMATIC KEYING ,
+below).
+An authentication method,
+such as public key authentication,
+will also have to be set up:
+see the
+.Sx PKI
+section of
+.Xr isakmpd 8
+for information on the types of authentication available,
+and the procedures for setting them up.
+After that it's simply a case of running the daemon.
+Note that
+.Xr isakmpd 8
+will probably need to be run with at least the
 .Fl K
-option will probably be required to avoid
+option, to avoid
 .Xr keynote 4
 policy checking.
 .Pp
@@ -70,12 +88,6 @@ An alternative method of setting up SAs is also possible using
 manual keying.
 Manual keying can be convenient for quick setups and testing.
 These procedures are documented within this page.
-.Pp
-The IPsec protocol itself is described in
-.Xr ipsec 4 .
-Rulesets can be loaded, viewed, and modified via the
-.Xr ipsecctl 8
-utility.
 .Pp
 Lines beginning with
 .Sq #
