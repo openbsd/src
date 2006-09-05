@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.82 2006/09/05 10:40:58 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.83 2006/09/05 10:50:02 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -93,6 +93,9 @@ Lines beginning with
 .Sq #
 and empty lines are regarded as comments,
 and ignored.
+Lines may be split using the
+.Sq \e
+character.
 .Pp
 Addresses can be specified in CIDR notation (matching netblocks),
 as symbolic host names, interface names, or interface group names.
