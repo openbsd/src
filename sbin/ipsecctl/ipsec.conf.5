@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.84 2006/09/05 11:33:22 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.85 2006/09/06 11:40:33 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -147,7 +147,19 @@ ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxx
-.It Ic ike Op Ar mode
+.It Xo
+.Ic ike
+.Op Ar mode
+.Op Ar encap
+.Op Ar tmode
+.Xc
+.Ar mode
+specifies the IKE mode to use:
+one of
+.Ar passive ,
+.Ar active ,
+or
+.Ar dynamic .
 When
 .Ar passive
 is specified,
@@ -164,7 +176,7 @@ The
 mode will additionally enable Dead Peer Detection (DPD) and use the
 local hostname as the identity of the local peer, if not specified by
 the
-.Ar srcid
+.Ic srcid
 parameter.
 .Ar dynamic
 mode should be used for hosts with dynamic IP addresses like road
@@ -173,30 +185,23 @@ If omitted,
 .Ar active
 mode will be used.
 .Pp
-See
-.Xr isakmpd 8
-for details on ISAKMP/IKE.
-.It Ar encap
-The encapsulation protocol to be used.
+.Ar encap
+specifies the encapsulation protocol to be used.
 Possible protocols are
 .Ar esp
 and
-.Ar ah .
-The default is
+.Ar ah ;
+the default is
 .Ar esp .
-For details on ESP and AH see
-.Xr ipsec 4 .
-.It Ar tmode
-The encapsulation mode to be used can be specified.
+.Pp
+.Ar tmode
+describes the encapsulation mode to be used.
 Possible modes are
 .Ar tunnel
 and
-.Ar transport .
-When left out,
-.Ar tunnel
-is chosen.
-For details on modes see
-.Xr ipsec 4 .
+.Ar transport ;
+the default is
+.Ar tunnel .
 .It Ic proto Ar protocol
 The optional
 .Ic proto
@@ -236,13 +241,13 @@ For a list of all port name to number mappings used by
 .Xr ipsecctl 8 ,
 see the file
 .Pa /etc/services .
-.It Ic local Ar localip
+.It Ic local Ar localip Ic peer Ar remote
 The
 .Ic local
 parameter specifies the local address to be used, if we are multi-homed
 or have aliases.
-Usually this parameter can be left out.
-.It Ic peer Ar remote
+It can usually be left out.
+.Pp
 The
 .Ic peer
 parameter specifies the address or FQDN of the remote endpoint of this
@@ -353,8 +358,9 @@ and
 .Ar aes
 are used;
 PFS will only be used if the remote side requests it.
-.It Ic srcid Ar string
-This optional parameter defines an ID of type
+.It Ic srcid Ar string Ic dstid Ar string
+.Ic srcid
+defines an ID of type
 .Dq USER_FQDN
 or
 .Dq FQDN
@@ -369,14 +375,11 @@ If
 .Ic srcid
 is omitted,
 the default is to use the IP address of the connecting machine.
-.It Ic dstid Ar string
-Similar to
+.Pp
+.Ic dstid
+is similar to
 .Ic srcid ,
-this optional parameter defines an ID of type
-.Dq USER_FQDN
-or
-.Dq FQDN
-to be used
+but instead specifies the ID to be used
 by the remote peer.
 .It Ic psk Ar string
 Use a pre-shared key
