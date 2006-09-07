@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.180 2006/09/05 14:26:21 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.181 2006/09/07 11:09:10 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -370,11 +370,11 @@ Gemtek PCI FM radio device.
 .Ss Miscellaneous devices
 .Bl -tag -width 10n -offset ind -compact
 .It Xr alipm 4
-Acer Labs M7101 Power Management controller.
+Acer Labs M7101 SMBus controller.
 .It Xr amdiic 4
 AMD-8111 SMBus controller.
 .It Xr amdpm 4
-AMD-756/766/768/8111 Power Management controller.
+AMD-756/766/768/8111 Power Management and SMBus controller.
 .It Xr bktr 4
 Brooktree Bt848
 .Tn PCI
@@ -391,7 +391,7 @@ Intel ICH SMBus controller.
 .It Xr ichwdt 4
 Intel 6300ESB ICH watchdog timer device.
 .It Xr nviic 4
-NVIDIA nForce and MCP SMBus controller.
+NVIDIA nForce2/3/4 SMBus controller.
 .It Xr ohci 4
 USB Open Host Controller Interface.
 .It Xr pcic 4
@@ -399,7 +399,7 @@ USB Open Host Controller Interface.
 .Tn PCMCIA
 controllers, including the Cirrus Logic GD6729.
 .It Xr piixpm 4
-Intel PIIX and compatible Power Management controller.
+Intel PIIX SMbus controller.
 .It Xr ppb 4
 Generic
 .Tn PCI Ns \- Ns Tn PCI
@@ -411,7 +411,7 @@ SD Host Controller
 .It Xr uhci 4
 USB Universal Host Controller Interface.
 .It Xr viapm 4
-VIA VT8233/8235/8237 Bus Control and Power Management controller.
+VIA VT8233/8235/8237 SMBus controller.
 .It Xr wdt 4
 ICS PCI-WDT500/501 watchdog timer device.
 .El
