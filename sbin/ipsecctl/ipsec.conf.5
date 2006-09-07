@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.87 2006/09/07 12:38:09 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.88 2006/09/07 12:58:21 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -38,6 +38,11 @@ Encapsulating Security Payload (ESP),
 which provides integrity and confidentiality;
 and Authentication Header (AH),
 which provides integrity.
+IPsec traffic can be packet filtered via
+.Xr pf 4
+on the
+.Xr enc 4
+interface.
 The IPsec protocol itself is described in
 .Xr ipsec 4 .
 .Pp
@@ -671,6 +676,7 @@ keyword:
 .El
 .Sh SEE ALSO
 .Xr openssl 1 ,
+.Xr enc 4 ,
 .\".Xr ipcomp 4 ,
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
