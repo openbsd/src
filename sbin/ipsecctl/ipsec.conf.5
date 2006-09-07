@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.85 2006/09/06 11:40:33 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.86 2006/09/07 09:57:02 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -264,99 +264,51 @@ specification can be left out.
 .Ic enc Ar algorithm
 .Ic group Ar group
 .Xc
-These parameters define the cryptographic transforms to be used for main mode.
+These parameters define the cryptographic transforms to be used for
+main mode.
 Possible values for
-.Ic auth
-are
-.Ar hmac-md5 ,
-.Ar hmac-sha1 ,
-.Ar hmac-sha2-256 ,
-.Ar hmac-sha2-384 ,
+.Ic auth ,
+.Ic enc ,
 and
-.Ar hmac-sha2-512 .
-For
-.Ic enc
-the values
-.Ar des ,
-.Ar 3des ,
-.Ar aes ,
-.Ar blowfish ,
-and
-.Ar cast
-are allowed.
-For
 .Ic group
-the values
-.Ar modp768 ,
-.Ar modp1024 ,
-.Ar modp1536 ,
-.Ar modp2048 ,
-.Ar modp3072 ,
-.Ar modp4096 ,
-.Ar modp6144 ,
-and
-.Ar modp8192
-are allowed.
+are described below in
+.Sx CRYPTO TRANSFORMS .
+.Pp
 If omitted,
 .Xr ipsecctl 8
 will use the default values
 .Ar hmac-sha1 ,
 .Ar aes ,
-and group
+and
 .Ar modp1024 .
 .It Xo
 .Ic quick auth Ar algorithm
 .Ic enc Ar algorithm
 .Ic group Ar group
 .Xc
-Similar to
-.Ic main ,
-.Ic quick
-defines the transforms to be used for quick mode.
-However, the possible values for
-.Ic auth
-are
-.Ar hmac-md5 ,
-.Ar hmac-sha1 ,
-.Ar hmac-ripemd160 ,
-.Ar hmac-sha2-256 ,
-.Ar hmac-sha2-384 ,
+These parameters define the cryptographic transforms to be used for
+quick mode.
+Possible values for
+.Ic auth ,
+.Ic enc ,
 and
-.Ar hmac-sha2-512 .
-For
-.Ic enc
-valid values are
-.Ar des ,
-.Ar 3des ,
-.Ar aes ,
-.Ar aesctr ,
-.Ar blowfish ,
-and
-.Ar cast .
-For
 .Ic group
-the values
-.Ar modp768 ,
-.Ar modp1024 ,
-.Ar modp1536 ,
-.Ar modp2048 ,
-.Ar modp3072 ,
-.Ar modp4096 ,
-.Ar modp6144 ,
-.Ar modp8192 ,
-and
+are described below in
+.Sx CRYPTO TRANSFORMS .
+If
+.Ic group
+is specified,
+Perfect Forward Security (PFS) is used.
+If the value
 .Ar none
-are allowed.
-When a group is specified perfect forward security (PFS) will be used.
-When the value
-.Ar none
-is used, PFS will be disabled.
-If no quick mode transforms are specified,
-the default values
+is used, PFS is disabled.
+.Pp
+If omitted,
+.Xr ipsecctl 8
+will use the default values
 .Ar hmac-sha2-256
 and
-.Ar aes
-are used;
+.Ar aes ;
 PFS will only be used if the remote side requests it.
 .It Ic srcid Ar string Ic dstid Ar string
 .Ic srcid
@@ -548,12 +500,9 @@ Enter a TCP MD5 SA.
 The commands are as follows:
 .Bl -tag -width xxxx
 .It Ar mode
-For
-.Ic esp
-and
-.Ic ah ,
+For ESP and AH
 .\".Ic ipcomp
-the encapsulation mode to be used can be specified.
+the encapsulation mode can be specified.
 Possible modes are
 .Ar tunnel
 and
@@ -575,19 +524,11 @@ The SPI identifies a specific SA.
 .Ar number
 is a 32-bit value and needs to be unique.
 .It Ic auth Ar algorithm
-For both
-.Ic esp
-and
-.Ic ah
+For ESP and AH
 an authentication algorithm can be specified.
-Possible algorithms are
-.Ar hmac-md5 ,
-.Ar hmac-ripemd160 ,
-.Ar hmac-sha1 ,
-.Ar hmac-sha2-256 ,
-.Ar hmac-sha2-384 ,
-and
-.Ar hmac-sha2-512 .
+Possible values
+are described below in
+.Sx CRYPTO TRANSFORMS .
 .Pp
 If no algorithm is specified,
 .Xr ipsecctl 8
@@ -609,19 +550,11 @@ by default.
 .\".Xr hifn 4
 .\"because of the patent held by Hifn, Inc.
 .It Ic enc Ar algorithm
-For
-.Ic esp
-an encryption algorithm needs to be specified.
-Possible algorithms are
-.Ar 3des-cbc ,
-.Ar des-cbc ,
-.Ar aes ,
-.Ar aesctr ,
-.Ar blowfish ,
-.Ar cast128 ,
-.Ar null ,
-and
-.Ar skipjack .
+For ESP
+an encryption algorithm can be specified.
+Possible values
+are described below in
+.Sx CRYPTO TRANSFORMS .
 .Pp
 If no algorithm is specified,
 .Xr ipsecctl 8
@@ -668,17 +601,42 @@ The mechanism of protecting
 .Xr tcp 4
 sessions using MD5 is described in RFC 2385.
 .El
-.Sh CRYPTO KEY SIZE
-Different cipher types may require different sized keys:
+.Sh CRYPTO TRANSFORMS
+It is very important that keys are not guessable.
+One practical way of generating keys is to use
+.Xr openssl 1 .
+The following generates a 160-bit (20-byte) key:
+.Bd -literal -offset indent
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Ed
 .Pp
-.Bl -column "CipherXX" "Key Length" -offset indent -compact
+The following authentication types are permitted with the
+.Ic auth
+keyword:
+.Pp
+.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.It Em Authentication	Key Length
+.It Li hmac-md5 Ta "128 bits"
+.It Li hmac-ripemd160 Ta "160 bits" Ta "[quick mode only]"
+.It Li hmac-sha1 Ta "160 bits"
+.It Li hmac-sha2-256 Ta "256 bits"
+.It Li hmac-sha2-384 Ta "384 bits"
+.It Li hmac-sha2-512 Ta "512 bits"
+.El
+.Pp
+The following cipher types are permitted with the
+.Ic enc
+keyword:
+.Pp
+.Bl -column "authenticationXX" "Key Length" -offset indent -compact
 .It Em Cipher	Key Length
-.It Li DES Ta "56 bits"
-.It Li 3DES Ta "168 bits"
-.It Li AES Ta "variable (128 bits recommended)"
-.It Li Blowfish Ta "variable (160 bits recommended)"
-.It Li CAST Ta "variable (128 bits maximum and recommended)"
-.It Li Skipjack Ta "80 bits"
+.It Li des Ta "56 bits"
+.It Li 3des Ta "168 bits"
+.It Li aes Ta "128 bits"
+.It Li aesctr Ta "160 bits" Ta "[quick mode only]"
+.It Li blowfish Ta "160 bits"
+.It Li cast Ta "128 bits"
+.It Li skipjack Ta "80 bits"
 .El
 .Pp
 Use of DES or Skipjack as an encryption algorithm is not recommended
@@ -690,25 +648,22 @@ Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key.
 This is because the most significant bit of each byte is used for parity.
 .Pp
-Different authentication types may also require different sized keys:
+The following group types are permitted with the
+.Ic group
+keyword:
 .Pp
 .Bl -column "authenticationXX" "Key Length" -offset indent -compact
-.It Em Authentication	Key Length
-.It Li HMAC-MD5 Ta "128 bits"
-.It Li HMAC-RIPEMD160 Ta "160 bits"
-.It Li HMAC-SHA1 Ta "160 bits"
-.It Li HMAC-SHA2-256 Ta "256 bits"
-.It Li HMAC-SHA2-384 Ta "384 bits"
-.It Li HMAC-SHA2-512 Ta "512 bits"
+.It Em Group	Size
+.It Li modp768  Ta 768
+.It Li modp1024 Ta 1024
+.It Li modp1536 Ta 1536
+.It Li modp2048 Ta 2048
+.It Li modp3072 Ta 3072
+.It Li modp4096 Ta 4096
+.It Li modp6144 Ta 6144
+.It Li modp8192 Ta 8192
+.It Li none Ta 0 Ta [quick mode only]
 .El
-.Pp
-It is very important that keys are not guessable.
-One practical way of generating keys is to use
-.Xr openssl 1 .
-The following generates a 160-bit (20-byte) key:
-.Bd -literal -offset indent
-$ openssl rand 20 | hexdump -e '20/1 "%02x"'
-.Ed
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .\".Xr ipcomp 4 ,
