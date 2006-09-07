@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.17 2006/02/01 19:33:25 martin Exp $
+.\"	$OpenBSD: intro.4,v 1.18 2006/09/07 14:09:50 jmc Exp $
 .\"	$NetBSD: intro.4,v 1.4 1997/03/28 00:29:35 veego Exp $
 .\"
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
@@ -100,36 +100,31 @@ Not all supported devices are listed.
 .Pp
 .Bl -tag -width ncrscsi(4) -compact -offset indent
 .It Xr adb 4
-Apple Desktop Bus event interface.
+Apple Desktop Bus driver.
 .It Xr ae 4
-DP8390-based Ethernet interface.
+DP8390-based NuBus Ethernet device.
 .It Xr akbd 4
-ADB keyboard.
+Apple Keyboard Device.
 .It Xr ams 4
-ADB mouse.
+Apple Mouse Support.
 .It Xr asc 4
-Apple Sound Chip.
+Apple Sound Chip on-board audio device.
 .It Xr esp 4
-.Tn NCR
-53C9x built-in SCSI interface.
+ESP NCR 53c96 on-board SCSI controller.
 .It Xr macfb 4
-On-board and NuBus-based video interface.
+Macintosh frame buffers.
 .It Xr mc 4
-MACE Ethernet interface.
+Am79C940 (MACE) on-board Ethernet device.
 .It Xr ncrscsi 4
-.Tn NCR
-5380 built-in SCSI interface.
+NCR 5380 on-board SCSI controller.
 .It Xr sbc 4
-Alternate driver for the
-.Tn NCR
-5380 built-in SCSI interface.
+NCR 5380 on-board SCSI controller.
 .It Xr sm 4
-SMC91C9x and SMC91C1xx-based Ethernet,
+SMC91C9x and SMC91C1xx-based 10/100 Ethernet device.
 .It Xr sn 4
-DP83932-based Ethernet interface (SONIC).
-.It Xr zsc 4
-.Tn Zilog
-Z8530 built-in serial interface.
+SONIC-based Ethernet device.
+.\".It Xr zsc 4
+.\"Zilog Z8530 built-in serial interface.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
