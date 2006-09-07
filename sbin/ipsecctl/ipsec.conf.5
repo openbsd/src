@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.86 2006/09/07 09:57:02 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.87 2006/09/07 12:38:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -585,6 +585,17 @@ The encryption key is defined similarly to
 .Ic spi Ar number
 .Ic authkey Ar keyspec
 .Xc
+TCP MD5 signatures are generally used between BGP daemons, such as
+.Xr bgpd 8 .
+Since
+.Xr bgpd 8
+itself already provides this functionality,
+this option is generally not needed.
+More information on TCP MD5 signatures can be found in
+.Xr tcp 4 ,
+.Xr bgpd.conf 5 ,
+and RFC 2385.
+.Pp
 This rule applies for packets with source address
 .Ar src
 and destination address
@@ -594,12 +605,6 @@ The parameter
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
 The encryption key is defined similarly to
 .Ic authkey .
-.Pp
-For details on how to enable TCP MD5 signatures see
-.Xr tcp 4 .
-The mechanism of protecting
-.Xr tcp 4
-sessions using MD5 is described in RFC 2385.
 .El
 .Sh CRYPTO TRANSFORMS
 It is very important that keys are not guessable.
