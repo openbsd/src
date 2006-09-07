@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.7 2005/01/14 22:39:19 miod Exp $
+.\"	$OpenBSD: hil.4,v 1.8 2006/09/07 15:05:21 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm hil
-.Nd HP-HIL driver
+.Nd introduction to HP-HIL support
 .Sh SYNOPSIS
 .Cd "hil* at intio?                  " Pq hp300
 .Cd "hil* at gsc? irq 1              " Pq hppa
@@ -64,9 +64,17 @@ such as keyboards, button boxes, mice, graphics tablet, and ID modules.
 .\"HP 46094A HP-HIL Quadrature Box
 .\"HP 46095A HP-HIL Quadrature 3-Button Mouse
 .\"HP 80409A HP-HIL 3-Button Track Ball
+.Pp
+The following devices are supported:
+.Pp
+.Bl -tag -width "hilkbd(4)XX" -offset 3n -compact
+.It Xr hilid 4
+HIL ID module device
+.It Xr hilkbd 4
+HIL keyboard device
+.It Xr hilms 4
+HIL mouse and graphics tablet device
+.El
 .Sh SEE ALSO
 .Xr gsc 4 ,
-.Xr hilid 4 ,
-.Xr hilkbd 4 ,
-.Xr hilms 4 ,
 .Xr intro 4
