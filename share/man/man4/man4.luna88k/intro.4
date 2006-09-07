@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.1 2004/04/21 15:59:57 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.2 2006/09/07 14:02:34 jmc Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -96,13 +96,13 @@ Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -compact -width "pcctwo(4)"
+.Bl -tag -compact -width "pcctwo(4)" -offset 3n
 .It Xr clock 4
 Battery-backed clock.
 .It Xr fb 4
 On-board frame buffer.
 .It Xr le 4
-On-board LANCE Ethernet Communications Controller.
+AMD LANCE Ethernet device.
 .It Xr sio 4
 On-board serial ports.
 .It Xr spc 4
