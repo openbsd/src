@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.52 2006/08/19 17:37:26 deraadt Exp $
+.\"	$OpenBSD: iic.4,v 1.53 2006/09/07 10:42:25 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -74,31 +74,31 @@ commands.
 .Sh SUPPORTED MASTERS
 .Bl -tag -width 13n -compact
 .It Xr alipm 4
-Acer Labs M7101 SMBus host controller
+Acer Labs M7101 SMBus controller
 .It Xr amdiic 4
-AMD-8111 SMBus host controller
+AMD-8111 SMBus controller
 .It Xr amdpm 4
-AMD-756/766/768/8111 Power Management controller
+AMD-756/766/768/8111 Power Management and SMBus controller
 .It Xr gpioiic 4
-I2C bus bit-banging through GPIO pins
+GPIO I2C controller
 .It Xr gscsio 4
-National Semiconductor Geode SC1100 Super I/O ACCESS.bus
+National Semiconductor Geode SC1100 I2C controller
 .It Xr ichiic 4
-Intel ICH SMBus host controller
+Intel ICH SMBus controller
 .It Xr ki2c 4
 Apple Kauai I2C controller
 .It Xr nviic 4
-NVIDIA nForce2/3/4 SMBus host controller
+NVIDIA nForce2/3/4 SMBus controller
 .It Xr pcfiic 4
 Phillips PCF8584 I2C controller
 .It Xr pi2c 4
 Apple via-pmu I2C controller
 .It Xr piixpm 4
-Intel PIIX and compatible SMBus host controller
+Intel PIIX SMBus controller
 .It Xr smu 4
-Apple System Management Unit driver
+Apple System Management Unit
 .It Xr viapm 4
-VIA VT8233/8235/8237 SMBus host controller
+VIA VT8233/8235/8237 SMBus controller
 .El
 .Sh SUPPORTED SLAVES
 .Bl -tag -width 13n -compact
@@ -117,7 +117,7 @@ Analog Devices ADM1030 temperature sensor
 .It Xr admtt 4
 Analog Devices ADM1031 temperature sensor
 .It Xr adt 4
-Analog Devices ADT7460 environmental sensor
+Analog Devices ADT7460 temperature, voltage, and fan sensor
 .It Xr asbtm 4
 Asus ASB 100 temperature sensor
 .It Xr asms 4
@@ -127,11 +127,11 @@ Apple FCU fan controller
 .It Xr fintek 4
 Fintek F75375 temperature sensor
 .It Xr glenv 4
-Genesys Logic GL518SM hardware monitor
+Genesys Logic GL518SM temperature, voltage, and fan sensor
 .It Xr lm 4
-National Semiconductor LM78/79/81 hardware monitors
+National Semiconductor LM78/79/81 temperature, voltage, and fan sensor
 .It Xr lmenv 4
-National Semiconductor LM87 temperature sensor
+National Semiconductor LM87 temperature, voltage, and fan sensor
 .It Xr lmtemp 4
 National Semiconductor LM75/LM77 temperature sensor
 .It Xr maxds 4
@@ -139,17 +139,17 @@ Maxim DS1624/DS1631/DS1721 temperature sensor
 .It Xr maxtmp 4
 Maxim MAX6642/MAX6690 temperature sensor
 .It Xr pcagpio 4
-Philips PCA955[467] GPIO
+Philips PCA955[467] GPIO controller
 .It Xr pcaled 4
 Philips PCA9532 LED dimmer
 .It Xr pcfadc 4
-Philips PCF8591 I2C Analogue to Digital Converter
+Philips PCF8591 temperature sensor
 .It Xr ricohrtc 4
 Ricoh RS5C372 Real Time Clock
 .It Xr tsl 4
 TAOS TSL2560/61 light-to-digital converter
 .It Xr wbenv 4
-Winbond W83L784R/W83L785R/W83L785TS-L hardware monitor
+Winbond W83L784R/W83L785R/W83L785TS-L temperature, voltage, and fan sensor
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
