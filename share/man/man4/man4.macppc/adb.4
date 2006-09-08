@@ -1,4 +1,4 @@
-.\" $OpenBSD: adb.4,v 1.14 2006/01/10 07:38:28 miod Exp $
+.\" $OpenBSD: adb.4,v 1.15 2006/09/08 09:45:41 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" Copyright (c) 1997 Colin Wood
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm adb
-.Nd Apple Desktop Bus driver
+.Nd introduction to Apple Desktop Bus support
 .Sh SYNOPSIS
 .Cd "adb0 at macobio?"
 .Cd "abtn* at adb?"
@@ -76,13 +76,23 @@ some energy control
 and I2C controller
 .Pq Xr pi2c 4
 were added to the PowerPC port later to complement the ADB system.
+.Pp
+The following devices are supported:
+.Pp
+.Bl -tag -width "abtn(4)XX" -offset 3n -compact
+.It Xr abtn 4
+Apple brightness/volume button control
+.It Xr akbd 4
+Apple Keyboard Device
+.It Xr ams 4
+Apple Mouse Support
+.It Xr apm 4
+advanced power management device interface
+.It Xr pi2c 4
+Apple via-pmu I2C controller
+.El
 .Sh SEE ALSO
-.Xr abtn 4 ,
-.Xr akbd 4 ,
-.Xr ams 4 ,
-.Xr apm 4 ,
-.Xr intro 4 ,
-.Xr pi2c 4
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
