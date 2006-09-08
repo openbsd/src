@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.181 2006/09/07 11:09:10 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.182 2006/09/08 13:04:57 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -72,26 +72,16 @@ several machine-independent
 .Tn PCI
 device drivers.
 .Pp
-Your system may support additional
-.Tn PCI
-devices.
-Drivers for
-.Tn PCI
-devices not listed here are machine-dependent.
-Consult your system's
-.Xr intro 4
-for additional information.
-.Ss Details specific to the i386
 Note that interrupt mappings on the i386 may require that you configure
 your BIOS to reserve sufficient interrupts as "PCI/ISAPnP" so that there
 are sufficient interrupts remaining to configure the discovered PCI
 devices.
 For more information, see
 .Xr pcibios 4 .
-.Sh SUPPORTED DEVICES
-The system includes machine-independent
-.Tn PCI
-drivers, sorted by device type and driver name:
+.Pp
+.Ox
+provides support for the following devices.
+Note that not all architectures support all devices.
 .Ss SCSI host adapters
 .Bl -tag -width 10n -offset ind -compact
 .It Xr adv 4 , Xr adw 4

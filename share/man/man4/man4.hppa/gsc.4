@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.20 2006/09/08 09:36:50 jmc Exp $
+.\"	$OpenBSD: gsc.4,v 1.21 2006/09/08 13:04:57 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -59,10 +59,9 @@ Newer systems sometimes feature the "HSC formfactor", which is a 1U-VME
 card-like expansion card with a 100-pin male pin+socket connector.
 Mixing cards with different speeds is supported but downgrades
 the performance of the whole I/O-subsystem.
-.Sh SUPPORTED DEVICES
-The system includes machine-dependent
-.Tn GSC
-drivers, sorted by driver name:
+.Pp
+.Ox
+provides support for the following devices:
 .Pp
 .Bl -tag -width 12n -offset indent -compact
 .It Xr com 4

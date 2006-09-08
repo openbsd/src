@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.32 2006/09/08 12:53:50 jmc Exp $
+.\"	$OpenBSD: sbus.4,v 1.33 2006/09/08 13:04:57 jmc Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,11 +59,10 @@ The
 .Nm
 specifications define the bus protocol as well as the electrical and
 mechanical properties of the extension slots.
-.Sh HARDWARE
+.Pp
 .Ox
-includes the following
-.Nm
-drivers, sorted by device type and driver name:
+provides support for the following devices.
+Note that not all architectures support all devices.
 .Ss Audio interfaces
 .Bl -tag -width 13n -offset ind -compact
 .It Xr audioamd 4

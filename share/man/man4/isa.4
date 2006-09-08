@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.40 2006/09/05 09:34:57 jmc Exp $
+.\"	$OpenBSD: isa.4,v 1.41 2006/09/08 13:04:57 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -66,16 +66,6 @@ bus subsystem and several machine-independent
 .Tn ISA
 device drivers.
 .Pp
-Your system may support additional
-.Tn ISA
-devices.
-Drivers for
-.Tn ISA
-devices not listed here are machine-dependent.
-Consult your system's
-.Xr intro 4
-for additional information.
-.Pp
 Note that interrupt mappings on the i386 may require that you configure
 your BIOS to reserve the interrupts for these devices as "Legacy ISA".
 If such configuration is not done, the system may use those interrupts
@@ -84,8 +74,10 @@ for
 or
 .Xr isapnp 4
 devices instead.
-.Sh SUPPORTED DEVICES
-At least the following devices are supported:
+.Pp
+.Ox
+provides support for the following devices.
+Note that not all architectures support all devices.
 .Ss SCSI controllers
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aha 4

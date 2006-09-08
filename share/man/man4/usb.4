@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.69 2006/09/05 09:34:57 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.70 2006/09/08 13:04:57 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,11 +112,10 @@ bus will be probed when the
 .Tn USB
 host device is attached instead of waiting
 until kernel processes start running.
-.Sh SUPPORTED DEVICES
+.Pp
 .Ox
-includes machine-independent
-.Tn USB
-drivers, sorted by device type and driver name:
+provides support for the following devices.
+Note that not all architectures support all devices.
 .Ss Storage devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr umass 4

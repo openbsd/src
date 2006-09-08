@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eisa.4,v 1.14 2006/09/05 14:42:02 jmc Exp $
+.\"	$OpenBSD: eisa.4,v 1.15 2006/09/08 13:04:57 jmc Exp $
 .\"	$NetBSD: eisa.4,v 1.10 2001/09/11 22:52:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -58,21 +58,9 @@ bus subsystem and several machine-independent
 .Tn EISA
 device drivers.
 .Pp
-Your system may support additional
-.Tn EISA
-devices.
-Drivers for
-.Tn EISA
-devices not listed here are machine-dependent.
-Consult your system's
-.Xr intro 4
-for additional information.
-.Sh SUPPORTED DEVICES
 .Ox
-includes machine-independent
-.Tn EISA
-drivers, sorted by device type
-and driver name:
+provides support for the following devices.
+Note that not all architectures support all devices.
 .Ss Disk and tape controllers
 .Bl -tag -width 12n -offset ind -compact
 .It Xr cac 4
