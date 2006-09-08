@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.51 2006/06/27 14:21:26 jmc Exp $
+.\"     $OpenBSD: intro.4,v 1.52 2006/09/08 09:25:53 jmc Exp $
 .\"
 .\" Copyright (c) 2001-2002 The OpenBSD Project
 .\" All Rights Reserved.
@@ -64,152 +64,23 @@ the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
-A list of the supported devices is given below.
 .Sh LIST OF DEVICES
-The devices listed below are supported in this incarnation of
-the system.
-Pseudo-devices are not listed.
-Devices are indicated by their functional interface.
-Not all supported devices are listed.
+A complete list of available devices is contained within the pages
+describing the system busses and controllers.
+For example, a PCI device would be listed in the
+.Xr pci 4
+man page.
+The following busses and controllers list these devices:
 .Pp
-.Bl -tag -width zs/zstty/zskbd(4) -compact -offset indent
-.It Xr agten 4
-Fujitsu AG-10e frame buffer.
-.It Xr ahc 4
-Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards.
-.It Xr apio 4
-Aurora SBus pio1 parallel ports.
-.It Xr asio 4
-Aurora SBus sio2 serial ports.
-.It Xr atu 4
-Atmel AT76C50x IEEE 802.11b wireless network interfaces.
-.It Xr audioce 4
-EBus CS4231 based audio.
-.It Xr audiocs 4
-SBus CS4231 based audio.
-.It Xr autri 4
-PCI Trident 4DWAVE DX/NX, SiS 7018, ALi M5451 audio.
-.It Xr be 4
-10BaseT/100BaseTX SBus Ethernet controller.
-.It Xr beeper 4
-Simple speaker beeper.
-.It Xr bwtwo 4
-SBus monochrome frame buffer.
-.It Xr central 4
-Central bus controller.
-.It Xr cgsix 4
-accelerated 8 bit SBus color frame buffer.
-.It Xr cgthree 4
-8 bit SBus color frame buffer.
-.It Xr cgtwelve 4
-accelerated 24 bit SBus color frame buffer.
-.It Xr clkbrd 4
-Main system clock for E4500.
-.It Xr clock 4
-Realtime clock.
-.It Xr com 4
-EBUS clones of the NS16550 serial UART.
-.It Xr comkbd 4
-Sun serial keyboards on
-.Xr com 4
-ports.
-.It Xr creator 4
-UPA Creator/Creator 3D/Elite 3D color frame buffer.
-.It Xr dc 4
-Clones of the DEC Tulip Ethernet controller.
-.It Xr eap 4
-Ensoniq AudioPCI based audio.
-.It Xr epic 4
-SMC 83C170 (EPIC/100) Ethernet driver.
-.It Xr eso 4
-ESS Technology Solo-1 PCI AudioDrive based audio.
-.It Xr esp 4
-ESP SCSI controller.
-.It Xr fhc 4
-FireHose controller.
-.It Xr fxp 4
-Intel EtherExpress PRO/100 Ethernet driver.
-.It Xr gem 4
-GEM Gigabit Ethernet interface.
-.It Xr hifn 4
-Hifn 7751/7811/7951 cryptography accelerators.
-.It Xr hme 4
-Sun HME Ethernet controllers (SunSwift).
-.It Xr isp 4
-Qlogic ISP SCSI controller.
-.It Xr le/lebuffer 4
-AMD 7990 LANCE Ethernet controller.
-.It Xr lofn 4
-Hifn 6500 public key cryptography engine.
-.It Xr lpt 4
-Parallel port driver.
-.It Xr magma 4
-MAGMA serial/parallel communication boards.
-.It Xr mgx 4
-.Tn Southland Media Systems
-MGX and MGXPlus frame buffers.
-.It Xr openprom 4
-Sun Open boot PROM (what became IEEE 1275) configuration driver.
-.It Xr pckbd 4
-PS/2-style keyboard driver.
-.It Xr pcons 4
-PROM console input/output device.
-.It Xr pms/pmsi 4
-PS/2 auxiliary port mouse driver.
-.It Xr qe 4
-Quad 10BaseT SBus Ethernet controller.
-.It Xr qec 4
-Supported as carrier for
-.Nm be
-or
-.Nm qe
-Ethernet controllers.
-.It Xr re 4
-RealTek 8139C+/8169/816xS/811xS/8101E Ethernet adapter driver.
-.It Xr rfx 4
-Vitec/Connectware/AP&D
-.Tn RasterFlex
-framebuffer series.
-.It Xr sab 4
-Infineon (formerly Siemens) SAB82532 serial controller.
-.It Xr siop 4
-LSI/Symbios Logic/NCR 53c8xxx SCSI driver.
-.It Xr spif 4
-Sun SUNW,spif serial/parallel communication boards.
-.It Xr stp 4
-SBus
-.Xr pcmcia 4
-bridge.
-.It Xr ti 4
-Alteon Networks Tigon I and II Gigabit Ethernet driver.
-.It Xr timer 4
-Onboard system timer.
-.It Xr tvtwo 4
-Parallax XVideo and PowerVideo 24 bit SBus color frame buffer.
-.It Xr ubsec 4
-Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 cryptography accelerators.
-.It Xr ukbd 4
-USB keyboard.
-.It Xr ums 4
-USB mouse.
-.It Xr uperf 4
-Performance counters on SBUS/PCI machines.
-.It Xr ural 4
-Ralink Technology RT2500 USB 2.0 IEEE 802.11a/b/g wireless network adapters.
-.It Xr vgafb 4
-PCI graphics frame buffer.
-.It Xr vigra 4
-8 bit SBus color framebuffer with VGA-compatible modes and connector.
-.It Xr wi 4
-WaveLAN/IEEE, PRISM 2-3 and Spectrum24 IEEE 802.11b wireless network adapters.
-.It Xr xbox 4
-SBus Expansion subsystem.
-.It Xr xl 4
-xl 3Com EtherLink XL and Fast EtherLink XL Ethernet driver.
-.It Xr zs/zstty/zskbd 4
-Zilog 8530 serial controller (and serial keyboards).
-.It Xr zx 4
-24 bit accelerated SBus color frame buffer.
+.Bl -tag -width "cardbus(4)XX" -offset 3n -compact
+.It Xr pci 4
+introduction to PCI bus support
+.It Xr pcmcia 4
+introduction to PCMCIA (PC Card) support
+.It Xr sbus 4
+introduction to sbus bus support
+.It Xr usb 4
+introduction to Universal Serial Bus support
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,

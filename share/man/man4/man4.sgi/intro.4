@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.6 2005/04/30 08:58:12 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.7 2006/09/08 09:25:53 jmc Exp $
 .\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ system.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width 10n -offset indent -compact
+.Bl -tag -width 10n -offset 3n -compact
 .It Xr ahc 4
 Adaptec PCI SCSI host adapter driver
 .It Xr com 4
@@ -149,16 +149,19 @@ O2 on-board MAC110 Ethernet
 .\" WD33C93 SCSI interface
 .El
 .Pp
-PCI devices are supported through the
+A further list of available devices is contained within the pages
+describing the system busses and controllers.
+For example, a PCI device would be listed in the
 .Xr pci 4
-bus and associated device drivers.
+man page.
+The following busses and controllers list these devices:
+.Pp
+.Bl -tag -width "cardbus(4)XX" -offset 3n -compact
+.It Xr pci 4
+introduction to PCI bus support
+.El
 .Sh SEE ALSO
-.Xr ahc 4 ,
 .Xr autoconf 4 ,
-.Xr com 4 ,
-.Xr macebus 4 ,
-.Xr mavb 4 ,
-.Xr mec 4 ,
 .\" .Xr crime 4 ,
 .\" .Xr gio 4 ,
 .\" .Xr hpc 4 ,

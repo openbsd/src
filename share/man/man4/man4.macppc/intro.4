@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.42 2006/07/06 14:43:50 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.43 2006/09/08 09:25:53 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Peter Valchev.
 .\" All rights reserved.
@@ -84,117 +84,25 @@ the system will have to be rebooted.
 .Pp
 The configuration system is described in
 .Xr autoconf 4 .
-A list of the supported devices is given below.
 .Sh LIST OF DEVICES
-The devices listed below are supported in this incarnation of
-the system.
-Pseudo-devices are not listed.
-Devices are indicated by their functional interface.
-Not all supported devices are listed.
+A complete list of available devices is contained within the pages
+describing the system busses and controllers.
+For example, a PCI device would be listed in the
+.Xr pci 4
+man page.
+The following busses and controllers list these devices:
 .Pp
-.Bl -tag -width usscanner(4) -compact -offset indent
-.It Xr abtn 4
-ADB button.
+.Bl -tag -width "cardbus(4)XX" -offset 3n -compact
 .It Xr adb 4
-Apple Desktop Bus event interface.
-.It Xr ahc 4
-Adaptec PCI SCSI host adapter driver.
-.It Xr akbd 4
-ADB keyboard.
-.It Xr ams 4
-ADB mouse.
-.It Xr an 4
-Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network adapters.
-.It Xr aoa 4
-Apple aoa audio device driver.
-.It Xr asms 4
-Apple sudden motion sensor.
-.It Xr atu 4
-Atmel AT76C50x IEEE 802.11b wireless network interfaces.
-.It Xr aue 4
-ADMtek AN986-based USB Ethernet adapters.
-.It Xr awacs 4
-Apple awacs audio device driver.
-.It Xr bge 4
-Broadcom BCM570x (Tigon3) Gigabit Ethernet boards.
-.It Xr bktr 4
-Video capture driver.
-.It Xr bm 4
-BMAC Ethernet.
-.It Xr daca 4
-Apple daca audio device driver.
-.It Xr dc 4 , Xr de 4
-DEC tulip-based Ethernet cards.
-.It Xr eap 4
-Ensoniq AudioPCI based audio.
-.It Xr em 4
-Intel PRO/1000 Ethernet driver.
-.It Xr fxp 4
-Intel EtherExpress PRO/100 Ethernet driver.
-.It Xr gem 4
-GMAC Ethernet.
-.It Xr hifn 4
-Hifn 7751 crypto accelerator.
-.It Xr hme 4
-National DP83840 Ethernet cards.
-.It Xr iop 4
-I2O adapter.
-.It Xr kauaiata 4
-ATA100 HD controller on PCI bus.
-.It Xr ki2c 4
-Kauai I2C interface stub.
-.It Xr kue 4
-Kawasaki LSI KL5KUSB101B-based USB Ethernet.
-.It Xr lofn 4
-Hifn 6500 crypto accelerator.
-.\" .It Xr macgpio 4
-.\" PMU interrupt router.
-.It Xr re 4
-RealTek 8139C+/8169/816xS/811xS/8101E Ethernet adapter driver.
-.It Xr rtw 4
-Realtek RTL8180L IEEE 802.11b wireless network interfaces.
-.It Xr safe 4
-SafeNet SafeXcel 1141/1741.
-.It Xr siop 4
-LSI/Symbios Logic/NCR 53c8xx SCSI adapter boards.
-.It Xr snapper 4
-Apple snapper audio device driver.
-.It Xr ti 4
-Alteon Networks Tigon I and II Gigabit Ethernet driver.
-.It Xr tpms 4
-Apple touchpad mouse.
-.It Xr tumbler 4
-Apple tumbler audio device driver.
-.It Xr uaudio 4
-USB audio devices.
-.It Xr ubsec 4
-Broadcom and BlueSteel uBsec 5x0x crypto accelerator.
-.It Xr udav 4
-Davicom DM9601 USB Ethernet adapters.
-.It Xr ukbd 4
-USB keyboard.
-.It Xr ulpt 4
-USB printers.
-.It Xr umass 4
-USB mass storage.
-.It Xr ums 4
-USB mouse.
-.It Xr uplcom 4
-I/O Data USB-RSAQ2 USB serial adapters.
-.It Xr uscanner 4
-USB scanners.
-.It Xr usscanner 4
-SCSI-over-USB scanners.
-.It Xr vgafb 4
-PCI VGA graphics.
-.It Xr vge 4
-VIA VT6122 Gigabit Ethernet.
-.It Xr wi 4
-WaveLAN/IEEE, PRISM 2-3 and Spectrum24 IEEE 802.11b wireless network adapters.
-.It Xr xl 4
-3Com EtherLink XL and Fast EtherLink XL Ethernet driver.
-.It Xr zs 4
-Zilog 8530 serial controller.
+Apple Desktop Bus driver
+.It Xr cardbus 4
+introduction to CardBus support
+.It Xr pci 4
+introduction to PCI bus support
+.It Xr pcmcia 4
+introduction to PCMCIA (PC Card) support
+.It Xr usb 4
+introduction to Universal Serial Bus support
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,

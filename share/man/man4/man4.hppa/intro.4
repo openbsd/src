@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4,v 1.12 2005/06/22 14:03:30 martin Exp $
+.\" $OpenBSD: intro.4,v 1.13 2006/09/08 09:25:53 jmc Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -153,81 +153,26 @@ system characteristics.
 .It "C360" Ta "360" Ta "8500" Ta "512/1024" Ta "GSC/PCI/EISA, 3 GSC/PCI"
 .El
 .Sh LIST OF DEVICES
-The devices listed below are supported in this incarnation of
-the system.
-Devices are indicated by their functional interface.
-Not all supported devices are listed.
-.Bl -tag -width phantomasXXX
-.It Xr asp 4
-The ASP I/O controller; found in most of the older machines which
-don't have LASI or WAX.
-Includes GSC-bus controller, to which most of the devices are attached.
-Most of I/O is still on external chips though.
-.It Xr an 4
-Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network adapters.
-.It Xr com 4
-The RS-232 ports.
-.It Xr cpu 4
-The Central Processor itself, makes sure the machine does something useful.
-.It Xr dc 4
-.Tn DEC/Intel 21140, 21143, 21145
-and clone 10/100 Ethernet controller.
-.It Xr dino 4
-The
+A complete list of available devices is contained within the pages
+describing the system busses and controllers.
+For example, a PCI device would be listed in the
 .Xr pci 4
-bridge on most of the newer systems.
-.It Xr harmony 4
-CS4215/AD1849 audio.
+man page.
+The following busses and controllers list these devices:
+.Pp
+.Bl -tag -width "cardbus(4)XX" -offset ind -compact
+.It Xr cardbus 4
+introduction to CardBus support
+.It Xr gsc 4
+HP 9000/700 General System Connect bus
 .It Xr hil 4
-Human Interface Loop, sporting several input devices,
-e.g. keyboards, mice, tablets and such.
-.It Xr ie 4
-.Tn i82596 CA/DX
-LAN controller.
-Found in every 700, either included in the MBA
-or on an external chip on mainboard.
-.It Xr lasi 4
-LSI?, found in almost all
-.Tn HP 9000/700
-workstations.
-Integrates most of the bus and I/O functions into one chip.
-.It Xr lpt 4
-The Centronics printer port.
-.It Xr mem 4
-Memory files and memory controller.
-.It Xr mongoose 4
-The
-.Xr eisa 4
-bus controller on most of the older 700 machines.
-.It Xr oosiop 4
-.Tn Symbios/NCR
-53C700 SCSI I/O processor.
-.It Xr osiop 4
-.Tn Symbios/NCR
-53C710 SCSI I/O processor.
-.It Xr pdc 4
-The PROM interface, allows to call the routines in the machine's
-PROM for things like initial console output and such.
-.It Xr phantomas 4
-Phantom PseudoBC GSC+ Port.
-.It Xr power 4
-The power button interface allowing graceful shutdown of the
-system should being depressed on the running system.
-.It Xr uturn 4
-U2/Uturn, Runway to GSC Bus bridge & IOA.
-.It Xr siop 4
-.Tn LSI/Symbios Logic/NCR
-53C8xx SCSI I/O processor.
-.It Xr sti 4
-The system graphics driver.
-.It Xr wax 4
-The other reincarnation of
-.Xr lasi 4
-used for cheap
-.Tn ASIC
-implementations for add-on devices.
-.It Xr wi 4
-WaveLAN/IEEE, PRISM 2-3 and Spectrum24 IEEE 802.11b wireless network adapters.
+introduction to HP-HIL support
+.It Xr pci 4
+introduction to PCI bus support
+.It Xr pcmcia 4
+introduction to PCMCIA (PC Card) support
+.It Xr usb 4
+introduction to Universal Serial Bus support
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
