@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.45 2005/07/17 12:24:08 miod Exp $
+.\"     $OpenBSD: intro.4,v 1.46 2006/09/08 08:31:11 jmc Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -100,9 +100,9 @@ not all supported devices are listed.
 .Ss Audio interfaces
 .Bl -tag -width 12n -compact -offset ind
 .It Xr audioamd 4
-AMD 79C30 obio (sun4c and SPARC Classic) audio controller.
+SPARC telephone quality audio device.
 .It Xr audiocs 4
-CS4231 based audio found in some sun4c and sun4m models.
+SPARC CS4231 audio device.
 .El
 .Ss Frame buffers
 .Bl -tag -width 12n -compact -offset ind
@@ -143,35 +143,31 @@ Parallax XVideo and PowerVideo 24 bit SBus color frame buffer.
 .Ss Network interfaces
 .Bl -tag -width 12n -compact -offset ind
 .It Xr be 4
-10BaseT/100BaseTX SBus Ethernet controller.
-.It Xr hme 4
-SBus HME Ethernet controllers (SunSwift) and SBus QuadFastEthernet controllers.
+SPARC 10/100 Ethernet device.
 .It Xr ep 4
-3Com Etherlink III PCMCIA Ethernet controllers.
+3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device.
+.It Xr hme 4
+Sun Happy Meal 10/100 Ethernet device.
 .It Xr ie 4
-Intel 82586 Ethernet controller (Sun 4/100 and 4/200).
+Intel i82586 Ethernet device.
 .It Xo Xr le 4 ,
 .Xr lebuffer 4 ,
 .Xr ledma 4
 .Xc
-AMD 7990 LANCE Ethernet controller (Sun 4/300, sun4c, sun4m, SBus).
+AMD LANCE Ethernet device.
 .It Xr ne 4
-NE2000 and compatible PCMCIA Ethernet controllers.
+NE2000 and compatible 10/100 Ethernet device.
 .It Xr qe 4
-Quad 10BaseT SBus Ethernet controller.
+SPARC 10/100 Ethernet device.
 .It Xr qec 4
-Supported as a carrier for the
-.Nm be
-or
-.Nm qe
-Ethernet controllers.
+SPARC Quad Ethernet Controller.
 .It Xr wi 4
-WaveLAN/IEEE, PRISM 2-3 and Spectrum24 IEEE 802.11b wireless network adapters.
+WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network device.
 .El
 .Ss PCMCIA bridges
 .Bl -tag -width 12n -compact -offset ind
 .It Xr stp 4
-Sun SBus/PCMCIA bridge.
+sbus PCMCIA bridge.
 .El
 .Ss SCSI adapters
 .Bl -tag -width 12n -compact -offset ind
