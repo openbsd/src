@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.19 2006/09/07 15:05:21 jmc Exp $
+.\"	$OpenBSD: gsc.4,v 1.20 2006/09/08 09:36:50 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -29,13 +29,14 @@
 .Os
 .Sh NAME
 .Nm gsc
-.Nd HP 9000/700 General System Connect bus
+.Nd introduction to HP 9000/700 GSC bus support
 .Sh SYNOPSIS
 .Cd "gsc* at lasi?"
 .Cd "gsc* at asp?"
 .Cd "gsc* at wax?"
 .Sh DESCRIPTION
-This is the core I/O bus for all HP 9000/700 workstations.
+The General System Connect (GSC) bus
+is the core I/O bus for all HP 9000/700 workstations.
 All I/O subsystems connect to this bus.
 The devices can be either on separate chips, expansion
 cards or on an integrated megacell, like the LASI MBA.
@@ -71,9 +72,9 @@ PC-style keyboard controller.
 .It Xr harmony 4
 CS4215/AD1849 audio.
 .It Xr hil 4
-Human Interface Loop, for HP-proprietary input devices like keyboard and mice.
+introduction to HP-HIL support.
 .It Xr ie 4
-Intel i82596 DX/CA 32-bit LAN coprocessor.
+Intel i82596 Ethernet device.
 .It Xr lpt 4
 Centronics printer port.
 .It Xr oosiop 4
