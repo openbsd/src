@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.13 2004/12/14 00:04:21 jmc Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.14 2006/09/11 07:24:33 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -50,12 +50,21 @@ information to help in the reconstruction of the disklabel.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b Ar begin
+Tell
+.Nm
+where to begin searching for filesystems.
+This makes it easier to skip swap
+partitions, or other large non-UFS/FFS partitions.
+.It Fl e Ar end
+Ditto for telling
+.Nm
+where to stop.
 .It Fl l
 This will make
 .Nm
 print out a string looking much like the input to disklabel.
 With a little massaging, this output can usually be used in the disklabel edit.
-.Pp
 .It Fl s
 This tells
 .Nm
@@ -66,30 +75,15 @@ However, sometimes being smart is too good for
 its own good,
 especially if your disk has had a different layout previously, or contains
 other non-UFS/FFS filesystems.
-.Pp
 .It Fl v
 Tell
 .Nm
 to be verbose about what it is doing, and what it has found.
-.Pp
-.It Fl b Ar begin
-Tell
-.Nm
-where to begin searching for filesystems.
-This makes it easier to skip swap
-partitions, or other large non-UFS/FFS partitions.
-.Pp
-.It Fl e Ar end
-Ditto for telling
-.Nm
-where to stop.
-.Pp
 .It Ar device
 This specifies which device
 .Nm
 should use to scan for filesystems.
 Usually this device should cover the whole disk in question.
-.Pp
 .El
 .Pp
 The basic operation of this program is as follows:
@@ -109,7 +103,6 @@ printouts, backups
 screendumps, and whatever other method you can think of.
 The more information you have, the better your chances are in recovering the
 disklabel of the disk.
-.Pp
 .It
 Create a disklabel on the affected disk, which covers the whole disk, and has
 at least one partition which covers the whole disk.
@@ -117,7 +110,6 @@ As the
 .Dq c
 partition
 usually covers the whole disk anyways, this sounds like a good place to start.
-.Pp
 .It
 Run
 .Nm
@@ -126,7 +118,6 @@ If you have any information about the disklabel
 which used to exist on the disk, keep that in mind while
 .Nm
 spews out its things.
-.Pp
 .It
 Use
 .Xr disklabel 8
@@ -134,7 +125,6 @@ to reconstruct the disklabel on the affected disk, using
 all the information you gathered from
 .Nm
 and other sources.
-.Pp
 .El
 .Pp
 Last but certainly not least, we wish you good luck.
