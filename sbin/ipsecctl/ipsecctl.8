@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.21 2006/08/31 19:01:16 ho Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.22 2006/09/11 09:01:43 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -35,22 +35,31 @@ IPsec.
 It allows ruleset configuration, and retrieval of status information from the
 kernel's SPD (Security Policy Database) and SAD (Security Association
 Database).
-.Pp
 It also can control
 .Xr isakmpd 8
 and establish tunnels using automatic keying with
 .Xr isakmpd 8 .
-.Pp
-Additionally,
-.Nm
-can be used to configure the SAD for use with TCP MD5
-signatures, as described in RFC 2385.
-See
-.Xr tcp 4
-for details.
-.Pp
 The ruleset grammar is described in
 .Xr ipsec.conf 5 .
+.Pp
+When the variable
+.Va ipsec
+is set to
+.Dv YES
+in
+.Xr rc.conf.local 8 ,
+the rule file specified with the variable
+.Va ipsec_rules
+(by default
+.Pa /etc/ipsec.conf )
+is loaded automatically by the
+.Xr rc 8
+scripts.
+The keying daemon,
+.Xr isakmpd 8 ,
+can also be enabled to run at boot time via the
+.Va isakmpd_flags
+variable.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
