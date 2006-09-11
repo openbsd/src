@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.88 2006/09/07 12:58:21 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.89 2006/09/11 10:34:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -249,21 +249,18 @@ see the file
 .It Ic local Ar localip Ic peer Ar remote
 The
 .Ic local
-parameter specifies the local address to be used, if we are multi-homed
-or have aliases.
-It can usually be left out.
+parameter specifies the address or FQDN of the local endpoint.
+Unless we are multi-homed or have aliases,
+this option is generally not needed.
 .Pp
 The
 .Ic peer
-parameter specifies the address or FQDN of the remote endpoint of this
-particular flow.
+parameter specifies the address or FQDN of the remote endpoint.
 For host-to-host connections where
 .Ar dst
 is identical to
 .Ar remote ,
-the
-.Ic peer
-specification can be left out.
+this option is generally not needed.
 .It Xo
 .Ic main auth Ar algorithm
 .Ic enc Ar algorithm
@@ -342,12 +339,9 @@ by the remote peer.
 Use a pre-shared key
 .Ar string
 for authentication.
-If not specified, RSA authentication will be used.
-By default, the system startup script
-.Xr rc 8
-generates a key-pair for
-.Xr isakmpd 8
-when starting, if one does not already exist.
+If this option is not specified,
+public key authentication is used (see
+.Xr isakmpd 8 ) .
 .El
 .Sh MANUAL FLOWS
 In this scenario,
