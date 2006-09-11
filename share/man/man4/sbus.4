@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.33 2006/09/08 13:04:57 jmc Exp $
+.\"	$OpenBSD: sbus.4,v 1.34 2006/09/11 07:02:35 jmc Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ AMD LANCE Ethernet device.
 AMD LANCE Ethernet device.
 .It Xr qe 4
 SPARC 10/100 Ethernet device.
+.It Xr qec 4
+SPARC Quad Ethernet Controller.
 .El
 .Ss Bridges
 .Bl -tag -width 13n -offset ind -compact
@@ -96,6 +98,8 @@ SPARC 10/100 Ethernet device.
 .Nm sbus
 .Xr pcmcia 4
 bridge.
+.It Xr tslot 4
+Tadpole PCMCIA Controller.
 .El
 .Ss Graphics devices
 .Bl -tag -width 13n -offset ind -compact
@@ -142,6 +146,8 @@ Parallel port.
 Magma LC series Serial/Parallel Interface cards.
 .It Xr spif 4
 Sun Serial/Parallel Interface card.
+.It Xr zs 4
+Zilog 8530 (ZSCC) serial communications driver.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 13n -offset ind -compact
@@ -149,6 +155,8 @@ Sun Serial/Parallel Interface card.
 Miscellaneous I/O controls.
 .It Xr clock 4
 Realtime clock.
+.It Xr fdc 4
+NEC765 compatible floppy disk driver.
 .It Xr presto 4
 Prestoserve battery-backed memory.
 .It Xr uperf 4

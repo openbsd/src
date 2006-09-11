@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.41 2006/09/08 13:04:57 jmc Exp $
+.\"	$OpenBSD: isa.4,v 1.42 2006/09/11 07:02:35 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -114,6 +114,8 @@ interfaces.
 .El
 .Ss Disk and tape controllers
 .Bl -tag -width 12n -offset ind -compact
+.It Xr fdc 4
+NEC765 compatible floppy disk driver.
 .It Xr mcd 4
 Mitsumi CD-ROM drives.
 .It Xr wdc 4
@@ -127,26 +129,20 @@ Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -offset ind -compact
-.It Xr com 4 , Xr pccom 4
-NS8250, NS16450, NS16550, ST16550, and TI16750 serial driver.
-The
-.Xr pccom 4
-driver is used on the i386; all the rest use
-.Xr com 4 .
 .It Xr addcom 4
 Addonics FlexPort 8S serial communication cards.
 .It Xr ast 4
-Multi-port serial communications card first made by AST.
+multiplexing serial communications interface.
 .It Xr boca 4
-Boca BB100[48] and BB2016 multiplexing serial communications cards.
+multiplexing serial communications interface.
+.It Xr com 4 , Xr pccom 4
+serial communications interface.
 .It Xr cy 4
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
+Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver.
 .It Xr lpt 4
-Standard
-.Tn ISA
-parallel port interface.
+parallel port driver.
 .It Xr rtfps 4
-IBM RT four-port serial cards.
+multiplexing serial communications interface.
 .El
 .Ss Network interfaces
 .Bl -tag -width 12n -offset ind -compact
@@ -205,19 +201,40 @@ SoundForte RadioLink SF16-FMR FM radio device.
 .It Xr sf2r 4
 SoundForte RadioLink SF16-FMR2 FM radio device.
 .El
+.Ss Hardware Sensors
+.Bl -tag -width 12n -offset ind -compact
+.It Xr it 4
+ITE IT8705F, IT8712F, and SiS SiS950 temperature, voltage, and fan sensor.
+.It Xr lm 4
+National Semiconductor LM78, LM79 and compatible hardware monitors.
+.It Xr nsclpcsio 4
+National Semiconductor PC87366 LPC Super I/O.
+.It Xr viasio 4
+VIA VT1211 LPC Super I/O.
+.El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aps 4
 ThinkPad Active Protection System hardware monitors.
-.It Xr it 4
-ITE IT8705F, IT8712F and SiS SiS950 hardware monitors.
-.It Xr lm 4
-National Semiconductor LM78, LM79 and compatible hardware monitors.
+.It Xr gscsio 4
+National Semiconductor Geode SC1100 I2C controller.
+.It Xr lms 4
+Logitech-style bus mouse driver.
+.It Xr mms 4
+Microsoft-style bus mouse driver.
+.It Xr npx 4
+Numeric Processing Extension coprocessor and emulator.
+.It Xr pcdisplay 4
+PC display adapter driver for wscons.
 .It Xr pcic 4
 .Tn ISA
 PCMCIA controllers.
-.It Xr viasio 4
-VIA VT1211 LPC Super I/O.
+.It Xr pckbc 4
+PC (ISA) keyboard controller driver.
+.It Xr pcppi 4
+PC (ISA) control and timer port driver.
+.It vga 4
+VGA graphics driver for wscons.
 .El
 .Pp
 Note that some
