@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.89 2006/09/11 10:34:53 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.90 2006/09/12 13:28:47 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -38,11 +38,6 @@ Encapsulating Security Payload (ESP),
 which provides integrity and confidentiality;
 and Authentication Header (AH),
 which provides integrity.
-IPsec traffic can be packet filtered via
-.Xr pf 4
-on the
-.Xr enc 4
-interface.
 The IPsec protocol itself is described in
 .Xr ipsec 4 .
 .Pp
@@ -668,6 +663,46 @@ keyword:
 .It Li modp8192 Ta 8192
 .It Li none Ta 0 Ta [quick mode only]
 .El
+.Sh PACKET FILTERING
+IPsec traffic appears on the
+.Xr enc 4
+interface
+and should be filtered accordingly using the
+.Ox
+packet filter,
+.Xr pf 4 .
+The grammar for the packet filter is described in
+.Xr pf.conf 5 .
+.Pp
+If the filtering rules specify to block everything by default,
+the following rule
+would ensure that all IPsec traffic never hits the packet filtering engine,
+and is therefore passed:
+.Bd -literal -offset indent
+set skip on enc0
+.Ed
+.Pp
+In the following example, all IPsec traffic is blocked by default,
+and only connections from hosts 192.168.3.1 and 192.168.3.2,
+and networks 10.0.1.0/24 and 10.0.2.0/24,
+are permitted.
+.Bd -literal -offset indent
+block on enc0
+pass in on enc0 from 192.168.3.2 to 192.168.3.1
+pass out on enc0 from 192.168.3.1 to 192.168.3.2
+pass in on enc0 from 10.0.2.0/24 to 10.0.1.0/24
+pass out on enc0 from 10.0.1.0/24 to 10.0.2.0/24
+.Ed
+.Pp
+Connections for which state is being kept
+should be interface bound,
+to avoid permitting unencrypted traffic should
+.Xr isakmpd 8
+exit.
+For example:
+.Bd -literal -offset indent
+pass on enc0 from 192.168.3.1 to any keep state (if-bound)
+.Ed
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr enc 4 ,
@@ -675,6 +710,7 @@ keyword:
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
 .Xr isakmpd.conf 5 ,
+.Xr pf.conf 5 ,
 .Xr ipsecctl 8 ,
 .Xr isakmpd 8
 .Sh HISTORY
