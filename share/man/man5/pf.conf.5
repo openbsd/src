@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.354 2006/08/31 18:44:48 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.355 2006/09/12 13:39:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1262,6 +1262,11 @@ is skipped.
 .It Ar on Aq Ar interface
 This rule applies only to packets coming in on, or going out through, this
 particular interface or interface group.
+For more information on interface groups,
+see the
+.Ic group
+keyword in
+.Xr ifconfig 8 .
 .It Aq Ar af
 This rule applies only to packets of this address family.
 Supported values are
