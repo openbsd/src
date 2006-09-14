@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: obio.4,v 1.14 2006/01/10 07:37:31 miod Exp $
+.\"	$OpenBSD: obio.4,v 1.15 2006/09/14 18:49:42 jmc Exp $
 .\"	$NetBSD: obio.4,v 1.1 1997/07/18 02:13:40 ender Exp $
 .\"
 .Dd July 2, 1997
@@ -48,18 +48,32 @@ system to help find and attach devices
 connected to the
 .Tn Macintosh
 onboard I/O bus.
+.Pp
+.Ox
+provides support for the following devices:
+.Pp
+.Bl -tag -width 12n -offset indent -compact
+.It Xr asc 4
+Apple Sound Chip on-board audio device
+.It Xr esp 4
+ESP NCR 53c96 on-board SCSI controller
+.It Xr macfb 4
+Macintosh frame buffers
+.It Xr mc 4
+Am79C940 (MACE) on-board Ethernet device
+.It Xr ncrscsi 4
+NCR 5380 on-board SCSI controller
+.It Xr sbc 4
+NCR 5380 on-board SCSI controller
+.It Xr sn 4
+SONIC-based Ethernet device
+.It Xr zsc 4
+Zilog 8530 (ZSCC) serial communications driver
+.El
 .Sh SEE ALSO
 .Xr adb 4 ,
-.Xr asc 4 ,
-.Xr esp 4 ,
 .Xr intro 4 ,
-.Xr macfb 4 ,
-.Xr mainbus 4 ,
-.Xr mc 4 ,
-.Xr ncrscsi 4 ,
-.Xr sbc 4 ,
-.Xr sn 4 ,
-.Xr zsc 4
+.Xr mainbus 4
 .Sh HISTORY
 The
 .Nm

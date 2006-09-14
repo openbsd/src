@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: adb.4,v 1.10 2006/01/10 07:37:31 miod Exp $
+.\"	$OpenBSD: adb.4,v 1.11 2006/09/14 18:52:46 jmc Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd January 10, 2006
@@ -48,9 +48,17 @@ is the single-master, multiple-slave, low-speed serial bus
 interface used by Macintosh computers to connect input devices
 such as keyboards, mice, trackballs, and graphics tablets
 to the machine.
+.Pp
+.Ox
+provides support for the following devices:
+.Pp
+.Bl -tag -width 12n -offset indent -compact
+.It Xr akbd 4
+Apple Keyboard Device
+.It Xr ams 4
+Apple Mouse Support
+.El
 .Sh SEE ALSO
-.Xr akbd 4 ,
-.Xr ams 4 ,
 .Xr intro 4
 .Sh HISTORY
 The
@@ -67,7 +75,7 @@ The hardware direct interface was written by
 John P. Wittkowski.
 The PowerManager interface was written by Takashi Hamada.
 .Sh BUGS
-.Bl -bullet
+.Bl -bullet -compact
 .It
 Not every class of
 .Tn ADB
