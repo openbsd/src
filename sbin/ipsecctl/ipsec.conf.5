@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.93 2006/09/13 11:40:01 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.94 2006/09/14 15:09:22 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -470,8 +470,7 @@ An example of setting up an SA:
 .Bd -literal -offset 3n
 # Set up an IPsec SA for flows between 192.168.3.14 and 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
-	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
-	enckey file "enc14:enc12"
+	authkey file "auth14:auth12" enckey file "enc14:enc12"
 .Ed
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),
