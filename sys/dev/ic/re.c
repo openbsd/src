@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.43 2006/08/17 23:08:07 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.44 2006/09/15 23:39:24 drahn Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -742,6 +742,18 @@ done:
 
 #endif
 
+#ifdef __armish__ 
+/*
+ * Thecus N2100 doesn't store the full mac address in eeprom
+ * so we read the old mac address from the device before the reset
+ * in hopes that the proper mac address is already there.
+ */
+union {
+	u_int32_t eaddr_word[2];
+	u_char eaddr[ETHER_ADDR_LEN];
+} boot_eaddr;
+int boot_eaddr_valid;
+#endif /* __armish__ */
 /*
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
@@ -770,6 +782,26 @@ re_attach(struct rl_softc *sc)
 	for (i = 0; i < ETHER_ADDR_LEN / 2; i++)
 		as[i] = letoh16(as[i]);
 	bcopy(as, eaddr, sizeof(eaddr));
+#ifdef __armish__
+	/*
+	 * On the Thecus N2100, the MAC address in the EEPROM is
+	 * always 00:14:fd:10:00:00.  The proper MAC address is stored
+	 * in flash.  Fortunately RedBoot configures the proper MAC
+	 * address (for the first onboard interface) which we can read
+	 * from the IDR.
+	 */
+	if (eaddr[0] == 0x00 && eaddr[1] == 0x14 && eaddr[2] == 0xfd &&
+	    eaddr[3] == 0x10 && eaddr[4] == 0x00 && eaddr[5] == 0x00) {
+		if (boot_eaddr_valid == 0) {
+			boot_eaddr.eaddr_word[1] = letoh32(CSR_READ_4(sc, RL_IDR4));
+			boot_eaddr.eaddr_word[0] = letoh32(CSR_READ_4(sc, RL_IDR0));
+			boot_eaddr_valid = 1;
+		}
+
+		bcopy(boot_eaddr.eaddr, eaddr, sizeof(eaddr));
+		eaddr[5] += sc->sc_dev.dv_unit;
+	}
+#endif
 
 	/*
 	 * Set RX length mask, TX poll request register
