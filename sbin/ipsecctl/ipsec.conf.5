@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.94 2006/09/14 15:09:22 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.95 2006/09/15 11:35:50 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -675,25 +675,35 @@ The grammar for the packet filter is described in
 .Pp
 If the filtering rules specify to block everything by default,
 the following rule
-would ensure that all IPsec traffic never hits the packet filtering engine,
+would ensure that IPsec traffic never hits the packet filtering engine,
 and is therefore passed:
 .Bd -literal -offset indent
 set skip on enc0
 .Ed
 .Pp
-In the following example, all IPsec traffic is blocked by default,
-and only connections from hosts 192.168.3.1 and 192.168.3.2,
-and networks 10.0.1.0/24 and 10.0.2.0/24,
-are permitted.
+In the following example, all traffic is blocked by default.
+IPsec traffic from hosts {192.168.3.1, 192.168.3.2} and
+networks {10.0.1.0/24, 10.0.2.0/24} is permitted.
+The external interface, sk0,
+has to allow the keying daemons to talk to each other.
 .Bd -literal -offset indent
+block on sk0
 block on enc0
-pass in on enc0 proto ipencap from 192.168.3.2 to 192.168.3.1
+
+pass  in on sk0 proto esp from 192.168.3.2 to 192.168.3.1
+pass out on sk0 proto esp from 192.168.3.1 to 192.168.3.2
+pass  in on sk0 proto udp from 192.168.3.2 to 192.168.3.1 \e
+	port {500, 4500}
+pass out on sk0 proto udp from 192.168.3.1 to 192.168.3.2 \e
+	port {500, 4500}
+
+pass  in on enc0 proto ipencap from 192.168.3.2 to 192.168.3.1
 pass out on enc0 proto ipencap from 192.168.3.1 to 192.168.3.2
-pass in on enc0 from 10.0.2.0/24 to 10.0.1.0/24
+pass  in on enc0 from 10.0.2.0/24 to 10.0.1.0/24
 pass out on enc0 from 10.0.1.0/24 to 10.0.2.0/24
 .Ed
 .Pp
-Connections for which state is being kept
+Connections on enc0 for which state is being kept
 should be interface bound,
 to avoid permitting unencrypted traffic should
 .Xr isakmpd 8
