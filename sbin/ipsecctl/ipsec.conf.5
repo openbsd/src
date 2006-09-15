@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.95 2006/09/15 11:35:50 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.96 2006/09/15 11:45:04 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -682,7 +682,7 @@ set skip on enc0
 .Ed
 .Pp
 In the following example, all traffic is blocked by default.
-IPsec traffic from hosts {192.168.3.1, 192.168.3.2} and
+IPsec traffic from gateways {192.168.3.1, 192.168.3.2} and
 networks {10.0.1.0/24, 10.0.2.0/24} is permitted.
 The external interface, sk0,
 has to allow the keying daemons to talk to each other.
