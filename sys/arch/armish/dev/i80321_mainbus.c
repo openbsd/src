@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mainbus.c,v 1.9 2006/08/01 22:22:20 kettenis Exp $ */
+/*	$OpenBSD: i80321_mainbus.c,v 1.10 2006/09/15 23:36:11 drahn Exp $ */
 /*	$NetBSD: i80321_mainbus.c,v 1.16 2005/12/15 01:44:00 briggs Exp $ */
 
 /*
@@ -364,6 +364,14 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		printf("dlectl %x\n", bus_space_read_1(sc->sc_st, sc_pld_sh,
 		    PLD_BTN));
 #endif
+	}
+	{
+		extern struct cfdriver pcaled_cd;
+		void pcaled_gpio_pin_write(void *arg, int pin, int value);
+		if (pcaled_cd.cd_ndevs > 0 && pcaled_cd.cd_devs[0] != NULL) {
+			pcaled_gpio_pin_write(pcaled_cd.cd_devs[0], 13, 0);
+			pcaled_gpio_pin_write(pcaled_cd.cd_devs[0], 14, 0);
+		}
 	}
 }
 
