@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.20 2006/08/31 23:19:35 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.21 2006/09/15 23:47:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -374,6 +374,11 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_link.device = &ciss_dev;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
+#if NBIO > 0
+	/* XXX Reserve some ccb's for sensor and bioctl. */
+	if (sc->maxunits < 2 && sc->sc_link.openings > 2)
+		sc->sc_link.openings -= 2;
+#endif
 	sc->sc_link.adapter = &ciss_switch;
 	sc->sc_link.adapter_target = sc->maxunits;
 	sc->sc_link.adapter_buswidth = sc->maxunits;
@@ -392,8 +397,8 @@ ciss_attach(struct ciss_softc *sc)
 #endif
 
 #if NBIO > 0
-	/* XXX for now we can only deal w/ one volume */
-	if (!scsibus || sc->maxunits > 1)
+	/* XXX for now we can only deal w/ one volume and need reserved ccbs. */
+	if (!scsibus || sc->maxunits > 1 || sc->sc_link.openings == sc->maxcmd)
 		return 0;
 
 	/* now map all the physdevs into their lds */
@@ -1218,6 +1223,8 @@ ciss_ldid(struct ciss_softc *sc, int target, struct ciss_ldid *id)
 	struct ciss_cmd *cmd;
 
 	ccb = ciss_get_ccb(sc);
+	if (ccb == NULL)
+		return ENOMEM;
 	ccb->ccb_len = sizeof(*id);
 	ccb->ccb_data = id;
 	ccb->ccb_xs = NULL;
@@ -1244,6 +1251,8 @@ ciss_ldstat(struct ciss_softc *sc, int target, struct ciss_ldstat *stat)
 	struct ciss_cmd *cmd;
 
 	ccb = ciss_get_ccb(sc);
+	if (ccb == NULL)
+		return ENOMEM;
 	ccb->ccb_len = sizeof(*stat);
 	ccb->ccb_data = stat;
 	ccb->ccb_xs = NULL;
@@ -1270,6 +1279,8 @@ ciss_pdid(struct ciss_softc *sc, u_int8_t drv, struct ciss_pdid *id, int wait)
 	struct ciss_cmd *cmd;
 
 	ccb = ciss_get_ccb(sc);
+	if (ccb == NULL)
+		return ENOMEM;
 	ccb->ccb_len = sizeof(*id);
 	ccb->ccb_data = id;
 	ccb->ccb_xs = NULL;
@@ -1339,6 +1350,8 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 	bcopy(&ldp->bling, blink, sizeof(*blink));
 
 	ccb = ciss_get_ccb(sc);
+	if (ccb == NULL)
+		return ENOMEM;
 	ccb->ccb_len = sizeof(*blink);
 	ccb->ccb_data = blink;
 	ccb->ccb_xs = NULL;
