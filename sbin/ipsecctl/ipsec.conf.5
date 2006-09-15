@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.96 2006/09/15 11:45:04 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.97 2006/09/15 14:03:35 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -338,6 +338,119 @@ If this option is not specified,
 public key authentication is used (see
 .Xr isakmpd 8 ) .
 .El
+.Sh PACKET FILTERING
+IPsec traffic appears unencrypted on the
+.Xr enc 4
+interface
+and can be filtered accordingly using the
+.Ox
+packet filter,
+.Xr pf 4 .
+The grammar for the packet filter is described in
+.Xr pf.conf 5 .
+.Pp
+If the filtering rules specify to block everything by default,
+the following rule
+would ensure that IPsec traffic never hits the packet filtering engine,
+and is therefore passed:
+.Bd -literal -offset indent
+set skip on enc0
+.Ed
+.Pp
+In the following example, all traffic is blocked by default.
+IPsec traffic from gateways {192.168.3.1, 192.168.3.2} and
+networks {10.0.1.0/24, 10.0.2.0/24} is permitted.
+The external interface, sk0,
+has to allow the keying daemons to talk to each other.
+.Bd -literal -offset indent
+block on sk0
+block on enc0
+
+pass  in on sk0 proto esp from 192.168.3.2 to 192.168.3.1
+pass out on sk0 proto esp from 192.168.3.1 to 192.168.3.2
+pass  in on sk0 proto udp from 192.168.3.2 to 192.168.3.1 \e
+	port {500, 4500}
+pass out on sk0 proto udp from 192.168.3.1 to 192.168.3.2 \e
+	port {500, 4500}
+
+pass  in on enc0 proto ipencap from 192.168.3.2 to 192.168.3.1
+pass out on enc0 proto ipencap from 192.168.3.1 to 192.168.3.2
+pass  in on enc0 from 10.0.2.0/24 to 10.0.1.0/24
+pass out on enc0 from 10.0.1.0/24 to 10.0.2.0/24
+.Ed
+.Pp
+Connections on enc0 for which state is being kept
+should be interface bound,
+to avoid permitting unencrypted traffic should
+.Xr isakmpd 8
+exit.
+For example:
+.Bd -literal -offset indent
+pass on enc0 from 192.168.3.1 to any keep state (if-bound)
+.Ed
+.Sh CRYPTO TRANSFORMS
+It is very important that keys are not guessable.
+One practical way of generating keys is to use
+.Xr openssl 1 .
+The following generates a 160-bit (20-byte) key:
+.Bd -literal -offset indent
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Ed
+.Pp
+The following authentication types are permitted with the
+.Ic auth
+keyword:
+.Pp
+.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.It Em Authentication	Key Length
+.It Li hmac-md5 Ta "128 bits"
+.It Li hmac-ripemd160 Ta "160 bits" Ta "[quick mode only]"
+.It Li hmac-sha1 Ta "160 bits"
+.It Li hmac-sha2-256 Ta "256 bits"
+.It Li hmac-sha2-384 Ta "384 bits"
+.It Li hmac-sha2-512 Ta "512 bits"
+.El
+.Pp
+The following cipher types are permitted with the
+.Ic enc
+keyword:
+.Pp
+.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.It Em Cipher	Key Length
+.It Li des Ta "56 bits"
+.It Li 3des Ta "168 bits"
+.It Li aes Ta "128 bits"
+.It Li aesctr Ta "160 bits" Ta "[quick mode only]"
+.It Li blowfish Ta "160 bits"
+.It Li cast Ta "128 bits"
+.It Li skipjack Ta "80 bits"
+.El
+.Pp
+Use of DES or Skipjack as an encryption algorithm is not recommended
+(except for backwards compatibility) due to their short key length.
+Furthermore, attacks on Skipjack have shown severe weaknesses
+in its structure.
+.Pp
+Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
+to form its 168-bit key.
+This is because the most significant bit of each byte is used for parity.
+.Pp
+The following group types are permitted with the
+.Ic group
+keyword:
+.Pp
+.Bl -column "authenticationXX" "Key Length" -offset indent -compact
+.It Em Group	Size
+.It Li modp768  Ta 768
+.It Li modp1024 Ta 1024
+.It Li modp1536 Ta 1536
+.It Li modp2048 Ta 2048
+.It Li modp3072 Ta 3072
+.It Li modp4096 Ta 4096
+.It Li modp6144 Ta 6144
+.It Li modp8192 Ta 8192
+.It Li none Ta 0 Ta [quick mode only]
+.El
 .Sh MANUAL FLOWS
 In this scenario,
 .Nm
@@ -520,7 +633,7 @@ is a 32-bit value and needs to be unique.
 For ESP and AH
 an authentication algorithm can be specified.
 Possible values
-are described below in
+are described above in
 .Sx CRYPTO TRANSFORMS .
 .Pp
 If no algorithm is specified,
@@ -546,7 +659,7 @@ by default.
 For ESP
 an encryption algorithm can be specified.
 Possible values
-are described below in
+are described above in
 .Sx CRYPTO TRANSFORMS .
 .Pp
 If no algorithm is specified,
@@ -599,119 +712,6 @@ is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
 The encryption key is defined similarly to
 .Ic authkey .
 .El
-.Sh CRYPTO TRANSFORMS
-It is very important that keys are not guessable.
-One practical way of generating keys is to use
-.Xr openssl 1 .
-The following generates a 160-bit (20-byte) key:
-.Bd -literal -offset indent
-$ openssl rand 20 | hexdump -e '20/1 "%02x"'
-.Ed
-.Pp
-The following authentication types are permitted with the
-.Ic auth
-keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
-.It Em Authentication	Key Length
-.It Li hmac-md5 Ta "128 bits"
-.It Li hmac-ripemd160 Ta "160 bits" Ta "[quick mode only]"
-.It Li hmac-sha1 Ta "160 bits"
-.It Li hmac-sha2-256 Ta "256 bits"
-.It Li hmac-sha2-384 Ta "384 bits"
-.It Li hmac-sha2-512 Ta "512 bits"
-.El
-.Pp
-The following cipher types are permitted with the
-.Ic enc
-keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
-.It Em Cipher	Key Length
-.It Li des Ta "56 bits"
-.It Li 3des Ta "168 bits"
-.It Li aes Ta "128 bits"
-.It Li aesctr Ta "160 bits" Ta "[quick mode only]"
-.It Li blowfish Ta "160 bits"
-.It Li cast Ta "128 bits"
-.It Li skipjack Ta "80 bits"
-.El
-.Pp
-Use of DES or Skipjack as an encryption algorithm is not recommended
-(except for backwards compatibility) due to their short key length.
-Furthermore, attacks on Skipjack have shown severe weaknesses
-in its structure.
-.Pp
-Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
-to form its 168-bit key.
-This is because the most significant bit of each byte is used for parity.
-.Pp
-The following group types are permitted with the
-.Ic group
-keyword:
-.Pp
-.Bl -column "authenticationXX" "Key Length" -offset indent -compact
-.It Em Group	Size
-.It Li modp768  Ta 768
-.It Li modp1024 Ta 1024
-.It Li modp1536 Ta 1536
-.It Li modp2048 Ta 2048
-.It Li modp3072 Ta 3072
-.It Li modp4096 Ta 4096
-.It Li modp6144 Ta 6144
-.It Li modp8192 Ta 8192
-.It Li none Ta 0 Ta [quick mode only]
-.El
-.Sh PACKET FILTERING
-IPsec traffic appears unencrypted on the
-.Xr enc 4
-interface
-and can be filtered accordingly using the
-.Ox
-packet filter,
-.Xr pf 4 .
-The grammar for the packet filter is described in
-.Xr pf.conf 5 .
-.Pp
-If the filtering rules specify to block everything by default,
-the following rule
-would ensure that IPsec traffic never hits the packet filtering engine,
-and is therefore passed:
-.Bd -literal -offset indent
-set skip on enc0
-.Ed
-.Pp
-In the following example, all traffic is blocked by default.
-IPsec traffic from gateways {192.168.3.1, 192.168.3.2} and
-networks {10.0.1.0/24, 10.0.2.0/24} is permitted.
-The external interface, sk0,
-has to allow the keying daemons to talk to each other.
-.Bd -literal -offset indent
-block on sk0
-block on enc0
-
-pass  in on sk0 proto esp from 192.168.3.2 to 192.168.3.1
-pass out on sk0 proto esp from 192.168.3.1 to 192.168.3.2
-pass  in on sk0 proto udp from 192.168.3.2 to 192.168.3.1 \e
-	port {500, 4500}
-pass out on sk0 proto udp from 192.168.3.1 to 192.168.3.2 \e
-	port {500, 4500}
-
-pass  in on enc0 proto ipencap from 192.168.3.2 to 192.168.3.1
-pass out on enc0 proto ipencap from 192.168.3.1 to 192.168.3.2
-pass  in on enc0 from 10.0.2.0/24 to 10.0.1.0/24
-pass out on enc0 from 10.0.1.0/24 to 10.0.2.0/24
-.Ed
-.Pp
-Connections on enc0 for which state is being kept
-should be interface bound,
-to avoid permitting unencrypted traffic should
-.Xr isakmpd 8
-exit.
-For example:
-.Bd -literal -offset indent
-pass on enc0 from 192.168.3.1 to any keep state (if-bound)
-.Ed
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr enc 4 ,
