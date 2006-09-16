@@ -1,6 +1,219 @@
-dnl	$OpenBSD: prep,v 1.1 2006/06/06 04:06:08 drahn Exp $
+dnl	$OpenBSD: prep,v 1.2 2006/09/16 20:23:33 drahn Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
-need to acquire some limited knowledge of Linux, the low-level
+need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
 dnl
 dnl XXX bootable partitions
+The enabled features between IOData HDL-G and Thecus N2100 vary so
+the same methods will not work on both machines.
+
+Thecus cannot load a file from disk, but can load an image
+from flash or network.
+IOData can load an image from disk (ext2fs), however the commands
+to load from flash are not available and network booting does not appear
+to work.
+
+Booting Thecus N2100 
+Thecus Redboot provides the 'fconfig' command to change the boot
+configuration of the device also 'fis' is provided to perform
+flash operations.
+To enter interactive Redboot, it is necessary to press ^C within one
+second of the prompt, it will typically accept it if typed early.
+
+The recommended way to install Thecus is configure networking and
+load bsd.rd from a tftp server or http server. First networking must be
+configured using fconfig,
+
+Update the IP address mask and server address with fconfig to allow
+booting from the network. TFTP and HTTP are supported.
+(BOOTP configuration _may_ not work)
+
+eg:
+---
+RedBoot> fconfig
+Run script at boot: true
+Boot script: 
+.. fis load ramdisk
+.. fis load kernel
+.. exec
+Enter script, terminate with empty line
+>> 
+Boot script timeout (1000ms resolution): 1
+Use BOOTP for network configuration: false
+Gateway IP address: 10.0.0.1
+Local IP address: 10.0.0.21
+Local IP address mask: 255.255.255.0
+Default server IP address: 10.0.0.7
+Console baud rate: 115200
+DNS server IP address: 10.0.0.1
+GDB connection port: 9000
+HW Status: 0
+Force console for special debug messages: false
+MAC address: [DO_NOT_MODIFY_MAC]
+MAC address 2: [DO_NOT_MODIFY_MAC]
+Network debug at boot time: false
+Reset default: Normal
+Serial number: N2100 V1.0.3
+Update RedBoot non-volatile configuration - continue (y/n)? n
+---
+
+Once the IP address/mask/gateway is configured it is possible to boot
+either from http
+RedBoot> load -m http -h 10.0.0.1 /bsd.rd
+or tftp (to a configured tftp server, and Default server configured)
+RedBoot> load bsd.rd
+
+after the ramdisk image is loaded, the 'go' command will start the kernel
+eg:
+---
+RedBoot> load bsd.rd
+Using default protocol (TFTP)
+Entry point: 0x00200000, address range: 0x00200000-0x00652180
+RedBoot> go
+
+OpenBSD/armish booting ...
+initarm: Configuring system ...
+physmemory: 32768 pages at 0xa0000000 -> 0xa7ffffff
+kernelsize text 1c7910 total 488728 end c0688728esym c0688728
+physical_freestart a0689000 end a8000000
+[ no symbol table formats found ]
+Copyright (c) 1982, 1986, 1989, 1991, 1993
+        The Regents of the University of California.  All rights reserved.
+Copyright (c) 1995-2006 OpenBSD. All rights reserved.  http://www.OpenBSD.org
+
+OpenBSD 4.0 (RAMDISK) #34: Thu Aug 31 00:30:56 GMT 2006
+    deraadt@armish.openbsd.org:/usr/src/sys/arch/armish/compile/RAMDISK
+...
+---
+
+It is then possible to use bsd.rd to format and install the HD on the Thecus.
+
+In addition to installation, it is useful to configure the Thecus to autoboot.
+This can be done either by overwriting part of the thecus distribution rom
+or by loading the bootloader from the network.
+
+To overwrite the thecus rom and boot from the load device, it is necessary
+to delete a 'rom file' and load the openbsd bootloader image there.  With
+networking configured (as above) remove a region and load the 'boot' program.
+
+Initially the machine will contain much like the following
+---
+RedBoot> fis list
+Name              FLASH addr  Mem addr    Length      Entry point
+RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
+RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
+FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
+ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
+kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
+user              0xF0EA0000  0xF0EA0000  0x00120000  0x00200000
+---
+
+There is no free space in the rom for the 'boot' program, so something must
+be removed. WARNING, this will likely make the machine unbootable into
+the original thecus server mode and it may not be recoverable.
+EXTREME WARNING, do not touch the RedBoot, RedBoot config, or FIS directory
+regions, doing so may brick the device.
+
+Remove (with confirmation) a region to make space, eg user
+---
+RedBoot> fis delete user
+Delete image 'user' - continue (y/n)? y
+... Erase from 0xf0ea0000-0xf0fc0000: .........
+... Unlock from 0xf0fe0000-0xf1000000: .
+... Erase from 0xf0fe0000-0xf1000000: .
+... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
+... Lock from 0xf0fe0000-0xf1000000: .
+---
+
+Load the armish openbsd bootloader 'boot' via tftp or http
+
+---
+RedBoot> load -m http -h 10.0.0.1 /boot
+Entry point: 0x00100000, address range: 0x00100000-0x001067e0
+---
+
+save that loaded file to flash
+
+---
+RedBoot> fis create boot
+... Erase from 0xf0ea0000-0xf0ec0000: .
+... Program from 0x00100000-0x001067e0 at 0xf0ea0000: .
+... Unlock from 0xf0fe0000-0xf1000000: .
+... Erase from 0xf0fe0000-0xf1000000: .
+... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
+... Lock from 0xf0fe0000-0xf1000000: .
+---
+
+confirm its addition
+
+---
+RedBoot> fis list
+Name              FLASH addr  Mem addr    Length      Entry point
+RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
+RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
+FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
+ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
+kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
+boot              0xF0EA0000  0x00100000  0x00020000  0x00100000
+---
+
+Now that the bootloader is in place, update fconfig to autoboot OpenBSD
+----
+RedBoot> fconfig
+Run script at boot: true
+Boot script:
+.. fis load ramdisk
+.. fis load kernel
+.. exec
+Enter script, terminate with empty line
+>> fis load boot
+>> go
+>>
+Boot script timeout (1000ms resolution): 1
+...
+----
+
+The important part is that 'Run script' is true and that the commands are
+"fis load boot' and 'go' (note that 'boot' is the same as the 'fis create boot'
+confirm the update and 'reset' to auto boot. The bootloader is
+command driven with timeout like many other OpenBSD architectures.
+
+
+How to boot/install IOData HDL-G:
+
+The hda1 partition is the boot partition for linux, it contains
+zImage and initrd. Since Redboot only can boot from the ext2fs partition
+it is very important that this partition be present and not be reformatted.
+If this parition is destroyed, it will be necessary to remove the HD and
+recreate the partition on another machine. Note: Redboot should be able
+to boot from the network, however that has been unsuccessful on IODATA HDL-G
+so far.
+
+To install OpenBSD, boot linux, and copy 'boot' and 'bsd.rd' into the
+partition mounted on /dev/hda1, after that has been done, it is possible
+to reboot into OpenBSD and install the device. Installation can proceede
+as on other machines, however care must be take to not remove wd0i/hda1
+partition (fdisk partition 0). DO NOT chose the 'full disk installation'
+option.
+
+Unfortunately, since IODATA did not provide the 'fconfig' command it
+is not possible to change the boot commands run when redboot launches,
+So it not possible to autoboot. Eventually 'boot' may be built such
+that it can be loaded as 'zImage', but not now. To disable autobooting
+into linux, zImage and initrd can be renamed or removed. The presence of 
+bsd.rd will allow manipulation of that parition.
+
+To load the ramdisk kernel to install use the commands
+
+---
+RedBoot> load -m disk hda1:/bsd.rd
+RedBoot> go
+---
+
+to boot normally, load the bootloader which will give options to boot other
+kernels.
+
+---
+RedBoot> load -m disk hda1:/boot
+RedBoot> go
+---
