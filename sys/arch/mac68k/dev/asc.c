@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.24 2006/04/14 09:36:49 martin Exp $	*/
+/*	$OpenBSD: asc.c,v 1.25 2006/09/16 10:42:23 miod Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -307,8 +307,7 @@ asc_ring_bell(arg, freq, length, volume)
 		return (ENODEV);
 
 	if (sc->sc_ringing == 0) {
-
-		bus_space_write_multi_1(sc->sc_tag, sc->sc_handle,
+		bus_space_set_region_1(sc->sc_tag, sc->sc_handle,
 		    0, 0, 0x800);
 		bus_space_write_region_1(sc->sc_tag, sc->sc_handle,
 		    0, asc_wave_tab, 0x800);
