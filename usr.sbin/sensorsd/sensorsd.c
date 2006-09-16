@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.23 2006/08/23 11:18:00 mickey Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.24 2006/09/16 10:46:26 mickey Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -317,18 +317,29 @@ print_sensor(enum sensor_type type, int64_t value)
 
 	switch (type) {
 	case SENSOR_TEMP:
-		snprintf(fbuf, RFBUFSIZ, "%.2fC/%.2fF",
-		    (value - 273150000) / 1000000.0,
-		    (value - 273150000) / 1000000.0 * 9 / 5 + 32);
+		snprintf(fbuf, RFBUFSIZ, "%.2f degC",
+		    (value - 273150000) / 1000000.0);
 		break;
 	case SENSOR_FANRPM:
 		snprintf(fbuf, RFBUFSIZ, "%lld RPM", value);
 		break;
 	case SENSOR_VOLTS_DC:
-		snprintf(fbuf, RFBUFSIZ, "%.2fV", value / 1000.0 / 1000.0);
+		snprintf(fbuf, RFBUFSIZ, "%.2f V DC", value / 1000000.0);
+		break;
+	case SENSOR_AMPS:
+		snprintf(fbuf, RFBUFSIZ, "%.2f A", value / 1000000.0);
+		break;
+	case SENSOR_INDICATOR:
+		snprintf(fbuf, RFBUFSIZ, "%s", value? "On" : "Off");
 		break;
 	case SENSOR_INTEGER:
-		snprintf(fbuf, RFBUFSIZ, "%lld", value);
+		snprintf(fbuf, RFBUFSIZ, "%lld raw", value);
+		break;
+	case SENSOR_PERCENT:
+		snprintf(fbuf, RFBUFSIZ, "%.2f%%", value / 1000.0);
+		break;
+	case SENSOR_LUX:
+		snprintf(fbuf, RFBUFSIZ, "%.2f lx", value / 1000000.0);
 		break;
 	case SENSOR_DRIVE:
 		if (0 < value && value < sizeof(drvstat)/sizeof(drvstat[0])) {
@@ -424,8 +435,16 @@ get_val(char *buf, int upper, enum sensor_type type)
 			errx(1, "unknown unit %s for voltage sensor", p);
 		rval = val * 1000 * 1000;
 		break;
+	case SENSOR_PERCENT:
+		rval = val * 1000.0;
+		break;
+	case SENSOR_INDICATOR:
 	case SENSOR_INTEGER:
+	case SENSOR_DRIVE:
 		rval = val;
+		break;
+	case SENSOR_LUX:
+		rval = val * 1000 * 1000;
 		break;
 	default:
 		errx(1, "unsupported sensor type");
