@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.12 2006/03/13 16:08:12 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.13 2006/09/16 15:04:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -191,7 +191,7 @@ sub parse_problems
 		next if m/^remote\:\s+/;
 		next if m/^Using binary mode to transfer files/;
 		next if m/^Retrieving\s+/;
-		next if m/^Succesfully retrieved file/;
+		next if m/^Success?fully retrieved file/;
 		next if m/^\d+\s+bytes\s+received\s+in/;
 		next if m/^ftp: connect to address.*: No route to host/;
 
