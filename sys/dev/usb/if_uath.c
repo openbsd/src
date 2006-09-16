@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.1 2006/09/16 13:21:23 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.2 2006/09/16 13:37:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1623,7 +1623,7 @@ Static int
 uath_reset(struct uath_softc *sc)
 {
 	struct uath_cmd_setup setup;
-uint32_t reg, val;
+	uint32_t reg, val;
 	int s, error;
 
 	/* init device with some voodoo incantations.. */
