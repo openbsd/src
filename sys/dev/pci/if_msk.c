@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.16 2006/08/25 00:21:10 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.17 2006/09/16 01:20:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2032,10 +2032,8 @@ msk_init(void *xsc_if)
 		sc->sk_intrmask |= SK_Y2_INTRS1;
 	else
 		sc->sk_intrmask |= SK_Y2_INTRS2;
-	sc->sk_intrmask |= SK_Y2_IMR_HWERR | SK_Y2_IMR_BMU;
+	sc->sk_intrmask |= SK_Y2_IMR_BMU;
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
-
-	CSR_WRITE_4(sc, SK_IEMR, 0x2e00003f);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
