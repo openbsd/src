@@ -1,7 +1,7 @@
-/*	$OpenBSD: ueagle.c,v 1.11 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.12 2006/09/16 13:31:04 damien Exp $	*/
 
 /*-
- * Copyright (c) 2003-2005
+ * Copyright (c) 2003-2006
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*-
- * Analog Devices Eagle chipset driver
+ * Driver for Analog Devices Eagle chipset.
  * http://www.analog.com/
  */
 
@@ -915,8 +915,8 @@ ueagle_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 		}
 #ifdef DIAGNOSTIC
 		if (count > 0) {
-			printf("%s: truncated cell (%u bytes)\n", count,
-			    USBDEVNAME(sc->sc_dev));
+			printf("%s: truncated cell (%u bytes)\n",
+			    USBDEVNAME(sc->sc_dev), count);
 		}
 #endif
 		req->frlengths[i] = sc->isize;
@@ -1078,13 +1078,12 @@ ueagle_start(struct ifnet *ifp)
 	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 	if (ueagle_encap(sc, m0) != 0) {
 		m_freem(m0);
 		return;
 	}
-
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf != NULL)
