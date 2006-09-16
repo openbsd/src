@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.62 2006/08/15 16:41:02 jason Exp $
+#	$OpenBSD: files.usb,v 1.63 2006/09/16 13:21:23 damien Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -266,3 +266,9 @@ file	dev/usb/if_zyd.c		zyd
 device	ueagle: atm, ifnet, ezload, firmload
 attach	ueagle at uhub
 file	dev/usb/ueagle.c		ueagle
+
+# Atheros AR5005UG/AR5005UX
+device	uath: ether, ifnet, ifmedia, wlan, firmload
+attach	uath at uhub
+file	dev/usb/if_uath.c		uath
+

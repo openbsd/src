@@ -1,0 +1,335 @@
+.\" $OpenBSD: uath.4,v 1.1 2006/09/16 13:21:23 damien Exp $
+.\"
+.\" Copyright (c) 2006
+.\"     Damien Bergamini <damien.bergamini@free.fr>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd September 16, 2006
+.Os
+.Dt UATH 4
+.Sh NAME
+.Nm uath
+.Nd Atheros USB IEEE 802.11a/b/g wireless network device
+.Sh SYNOPSIS
+.Cd "uath* at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports USB 2.0 wireless network devices based on Atheros
+Communications fifth generation AR5005UG and AR5005UX chipsets.
+.Pp
+The AR5005UG chipset is made of an AR5523 multiprotocol MAC/baseband processor
+and an AR2112 Radio-on-a-Chip that can operate between 2300 and 2500 MHz
+(802.11b/g).
+.Pp
+The AR5005UX chipset is made of an AR5523 multiprotocol MAC/baseband processor
+and an AR5112 dual band Radio-on-a-Chip that can operate between 2300 and
+2500 MHz (802.11b/g) or 4900 and 5850 MHz (802.11a).
+.Pp
+The AR5005UG and AR5005UX chipsets both have an integrated 32-bit MIPS
+R4000-class processor that runs a firmware and manages, among other things,
+the automatic control of the transmit rate and the calibration of the radio.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+.Nm
+supports hardware WEP.
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Sh CONFIGURATION
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
+.Pp
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set 802.11b DS 1Mbps operation.
+.It Cm DS2
+Set 802.11b DS 2Mbps operation.
+.It Cm DS5
+Set 802.11b DS 5.5Mbps operation.
+.It Cm DS11
+Set 802.11b DS 11Mbps operation.
+.It Cm OFDM6
+Set 802.11a/g OFDM 6Mbps operation.
+.It Cm OFDM9
+Set 802.11a/g OFDM 9Mbps operation.
+.It Cm OFDM12
+Set 802.11a/g OFDM 12Mbps operation.
+.It Cm OFDM18
+Set 802.11a/g OFDM 18Mbps operation.
+.It Cm OFDM24
+Set 802.11a/g OFDM 24Mbps operation.
+.It Cm OFDM36
+Set 802.11a/g OFDM 36Mbps operation.
+.It Cm OFDM48
+Set 802.11a/g OFDM 48Mbps operation.
+.It Cm OFDM54
+Set 802.11a/g OFDM 54Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
+.Pp
+.Bl -tag -width monitor -compact
+.It Cm monitor
+Select monitor mode.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and return it to the
+default mode of operation (BSS).
+.It Cm mode Ar mode
+The
+.Nm
+driver supports the following modes:
+.Pp
+.Bl -tag -width 11b -compact
+.It Cm 11a
+Force 802.11a operation.
+.It Cm 11b
+Force 802.11b operation.
+.It Cm 11g
+Force 802.11g operation.
+.El
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+Note that network ID is synonymous with Extended Service Set ID (ESSID).
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.El
+.Sh FILES
+The following firmware file is loaded when a device is plugged:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/uath-ar5523
+.El
+.Pp
+This firmware file is not freely redistributable.
+.Pp
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Pp
+.Pa http://damien.bergamini.free.fr/packages/openbsd/uath-firmware-1.0.tgz
+.Sh HARDWARE
+The following adapters should work:
+.Pp
+.Bl -column -compact "TRENDware International TEW-444UB" "AR5005UX" -offset 6n
+.It Em "Adapter	Chipset"
+.\".It Belkin F6D3050	AR5005UX
+.It Li "Compex WLU108AG" Ta AR5005UX
+.It Li "Compex WLU108G" Ta AR5005UG
+.\".It Li "D-Link DWL-AG132" Ta AR5005UX
+.It Li "D-Link DWL-G132" Ta AR5005UG
+.\".It Li "Edimax EW-7315Ug" Ta AR5005UG (AR2414???)
+.\".It Li "Lancom USB-54ag" Ta AR5005UX
+.\".It Li "NEC WL54TU" Ta AR5005UX
+.It Li "Netgear WG111T" Ta AR5005UG
+.It Li "Netgear WG111U" Ta AR5005UX
+.It Li "Netgear WPN111" Ta AR5005UG
+.\".It Li "Olitec 000544" Ta AR5005UG
+.It Li "Senao WUB-8004" Ta AR5005UX
+.\".It Li "SparkLAN WL-685GS" Ta AR5005UG
+.It Li "SparkLAN WL-785A" Ta AR5005UX
+.It Li "TP-Link TL-WN620G" Ta AR5005UG
+.It Li "TRENDware International TEW-444UB" Ta AR5005UG
+.It Li "TRENDware International TEW-504UB" Ta AR5005UX
+.It Li "Unex Technology UR054ag" Ta AR5005UX
+.\".It Li "Wistron NeWeb DCUA-81" Ta AR5005UX
+.\".It Li "Wistron NeWeb DRUA-81" Ta AR5005UG
+.\".It Li "Wistron NeWeb DRUA-82" Ta AR5005UX
+.\".It Li "ZyXEL G-200 v2" Ta AR5005UG
+.It Li "ZyXEL XtremeMIMO M-202" Ta AR5005UX
+.El
+.Pp
+An up to date list can be found at
+.Pa http://customerproducts.atheros.com/customerproducts .
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures uath0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+The following
+.Xr hostname.if 5
+example creates a host-based access point on boot:
+.Bd -literal -offset indent
+inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+        mediaopt hostap nwid my_net chan 11
+.Ed
+.Pp
+Configure uath0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig uath0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return uath0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig uath0 -bssid -chan media autoselect \e
+        nwid "" -nwkey
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig uath0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "uath%d: could not read firmware (error=%d)"
+The driver was unable to read the firmware file from the filesystem.
+The file might be missing or corrupted.
+.It "uath%d: could not load firmware (error=%s)"
+An error occurred while attempting to upload the firmware to the onboard
+MIPS R4000 processor.
+.It "uath%d: could not initialize adapter (error=%d)"
+The firmware was uploaded successfully but did not initialize properly or
+in time.
+.It "uath%d: could not send command (error=%s)"
+An attempt to send a command to the firmware failed.
+.It "uath%d: timeout waiting for command reply"
+A read command was sent to the firmware but the firmware failed to reply in
+time.
+.It "uath%d: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usb 4 ,
+.Xr hostname.if 5 ,
+.Xr hostapd 8 ,
+.Xr ifconfig 8
+.Pp
+Atheros Communications AR5005UG/AR5005UX:
+.Pa http://www.atheros.com/pt/bulletins/AR5005UGBulletin.pdf
+.Pa http://www.atheros.com/pt/bulletins/AR5005UXBulletin.pdf
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Damien Bergamini Aq damien@openbsd.org .
+.Sh CAVEATS
+Atheros Communications refuse to release any documentation on their products.
+Atheros proprietary 108 Mbps mode (aka Super AG mode) is not supported.
+.Pp
+The
+.Nm
+driver does not attempt to do any regulation of radio frequencies.
+.Pp
+The
+.Nm
+driver is under active development and only a limited subset of the device
+capabilities are currently supported.
