@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.175 2006/08/30 21:28:06 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.176 2006/09/16 12:24:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1671,6 +1671,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t		mac_addr = 0;
 	struct ifnet		*ifp;
 	caddr_t			kva;
+#ifdef __sparc64__
+	int			subvendor;
+#endif
 
 	sc->bge_pa = *pa;
 
@@ -1763,9 +1766,13 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * SEEPROM check.
 	 */
 	sc->bge_eeprom = 1;
-	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_SUBSYS) & 0xffff) ==
-	    PCI_VENDOR_SUN)
-		sc->bge_eeprom = 0;
+#ifdef __sparc64__
+	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "subsystem-vendor-id",
+	    &subvendor, sizeof(subvendor)) == sizeof(subvendor)) {
+		if (subvendor == PCI_VENDOR_SUN)
+			sc->bge_eeprom = 0;
+	}
+#endif
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
