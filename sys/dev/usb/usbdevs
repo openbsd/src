@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.219 2006/09/16 13:21:23 damien Exp $
+$OpenBSD: usbdevs,v 1.220 2006/09/16 14:23:41 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -384,6 +384,7 @@ vendor SEALEVEL		0x0c52	Sealevel System
 vendor EASYDISK		0x0c76	EasyDisk
 vendor KYOCERA2		0x0c88	Kyocera
 vendor ZCOM		0x0cde	Z-Com
+vendor ATHEROS		0x0cf3	Atheros Communications
 vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	SMC
 vendor PEN		0x0d7d	Pen Drive
@@ -697,6 +698,14 @@ product ATEN UC110T		0x2007	UC-110T Ethernet
 product ATEN UC232A		0x2008	Serial
 product ATEN UC210T		0x2009	UC210T Ethernet
 product ATEN DSB650C		0x4000	DSB-650C
+
+/* Atheros Communications products */
+product ATHEROS AR5523_1_NF	0x0001	AR5523
+product ATHEROS AR5523_1	0x0002	AR5523
+product ATHEROS AR5523_2_NF	0x0003	AR5523
+product ATHEROS AR5523_2	0x0004	AR5523
+product ATHEROS AR5523_3_NF	0x0005	AR5523
+product ATHEROS AR5523_3	0x0006	AR5523
 
 /* ATI products */
 product ATI2 205		0xa001	USB Cable 205

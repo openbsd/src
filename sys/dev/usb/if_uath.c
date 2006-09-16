@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.2 2006/09/16 13:37:41 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.3 2006/09/16 14:23:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -94,6 +94,20 @@ static const struct uath_type {
 	struct usb_devno	dev;
 	unsigned int		flags;
 } uath_devs[] = {
+	/* Atheros Communications */
+	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_1 },
+	    0 },
+	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_1_NF },
+	    UATH_FLAG_PRE_FIRMWARE },
+	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_2 },
+	    0 },
+	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_2_NF },
+	    UATH_FLAG_PRE_FIRMWARE },
+	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_3 },
+	    UATH_FLAG_DUAL_BAND_RF },
+	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_3_NF },
+	    UATH_FLAG_PRE_FIRMWARE },
+
 	/* D-Link */
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLAG122 },
 	    UATH_FLAG_DUAL_BAND_RF },
