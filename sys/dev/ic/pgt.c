@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.10 2006/09/16 10:36:12 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.11 2006/09/16 12:20:10 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -626,7 +626,7 @@ pgt_attach(struct pgt_softc *sc)
 
 	error = pgt_reset(sc);
 	if (error)
-		goto failed;
+		return (error);
 
 	tsleep(&sc->sc_flags, 0, "pftres", hz);
 	if (sc->sc_flags & SC_UNINITIALIZED) {
