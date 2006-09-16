@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.65 2006/08/24 14:08:43 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.66 2006/09/16 07:50:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1247,18 +1247,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 
 	xs->status = sie->scsi_status;
 	switch (letoh16(sie->ioc_status)) {
-	case MPI_IOCSTATUS_SCSI_DATA_OVERRUN:
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
 	case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:
-		/*
-		 * Yikes!  Tagged queue full comes through this path!
-		 *
-		 * So we'll change it to a status error and anything
-		 * that returns status should probably be a status
-		 * error as well.
-		 */
 		xs->resid = xs->datalen - letoh32(sie->transfer_count);
 		if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_NO_SCSI_STATUS) {
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1277,16 +1266,11 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 			break;
 
 		case SCSI_BUSY:
+		case SCSI_QUEUE_FULL:
 			xs->error = XS_BUSY;
 			break;
 
-		case SCSI_QUEUE_FULL:
-			xs->error = XS_TIMEOUT;
-			xs->retries++;
-			break;
 		default:
-			printf("%s: invalid status code %d\n",
-			    DEVNAME(sc), xs->status);
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
@@ -1303,42 +1287,13 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 		xs->error = XS_SELTIMEOUT;
 		break;
 
-	case MPI_IOCSTATUS_SCSI_RESIDUAL_MISMATCH:
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
-	case MPI_IOCSTATUS_SCSI_TASK_TERMINATED:
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
-	case MPI_IOCSTATUS_SCSI_TASK_MGMT_FAILED:
-		/* XXX */
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
-	case MPI_IOCSTATUS_SCSI_IOC_TERMINATED:
-		/* XXX */
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
-	case MPI_IOCSTATUS_SCSI_EXT_TERMINATED:
-		/* XXX This is a bus-reset */
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
 	default:
-		/* XXX unrecognized HBA error */
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
 
 	if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
 		bcopy(&mcb->mcb_sense, &xs->sense, sizeof(xs->sense));
-	else if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_FAILED) {
-		/* This will cause the scsi layer to issue a REQUEST SENSE */
-		if (xs->status == SCSI_CHECK)
-			xs->error = XS_BUSY;
-	}
 
 	DNPRINTF(MPI_D_CMD, "%s:  xs err: 0x%02x status: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
