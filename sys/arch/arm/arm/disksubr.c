@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2006/08/20 03:14:21 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2006/09/16 14:56:11 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -172,13 +172,10 @@ donot:
 			 */
 			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 				struct partition *pp = &lp->d_partitions[8+n];
-				u_int64_t blkno = (u_int64_t)part_blkno +
-				    (u_int64_t)letoh32(dp2->dp_start) +
-				    (u_int64_t)letoh32(dp2->dp_size);
 
 				if (dp2->dp_typ == DOSPTYP_OPENBSD)
 					continue;
-				if (blkno > lp->d_secperunit)
+				if (letoh32(dp2->dp_size) > lp->d_secperunit)
 					continue;
 				if (letoh32(dp2->dp_size))
 					pp->p_size = letoh32(dp2->dp_size);
