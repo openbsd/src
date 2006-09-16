@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.5 2006/08/31 17:05:50 mglocker Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.6 2006/09/16 10:36:12 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -120,6 +120,11 @@ pgt_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": could not map interrupt\n");
 		return;
 	}
+
+	/* disable all interrupts */
+	bus_space_write_4(sc->sc_iotag, sc->sc_iohandle, PGT_REG_INT_EN, 0);
+	(void)bus_space_read_4(sc->sc_iotag, sc->sc_iohandle, PGT_REG_INT_EN);
+	DELAY(PGT_WRITEIO_DELAY);
 
 	/* establish interrupt */
 	intrstr = pci_intr_string(psc->sc_pc, ih);

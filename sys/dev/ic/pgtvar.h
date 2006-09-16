@@ -1,4 +1,23 @@
-/*-
+/*	$OpenBSD: pgtvar.h,v 1.7 2006/09/16 10:36:12 mglocker Exp $  */
+
+/*
+ * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
  * Copyright (c) 2004 Fujitsu Laboratories of America, Inc.
  * Copyright (c) 2004 Brian Fundakowski Feldman
  * All rights reserved.
@@ -24,6 +43,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef __PGTVAR_H__
+#define __PGTVAR_H__
+
+#define PGT_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_RSSI))
+
+struct pgt_rx_radiotap_hdr {
+	struct ieee80211_radiotap_header	wr_ihdr;
+	uint8_t					wr_flags;
+	uint16_t				wr_chan_freq;
+	uint16_t				wr_chan_flags;
+	uint8_t					wr_rssi;
+	uint8_t					wr_max_rssi;
+} __packed;
+
+#define PGT_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct pgt_tx_radiotap_hdr {
+	struct ieee80211_radiotap_header	wt_ihdr;
+	uint8_t					wt_flags;
+	uint8_t					wt_rate;
+	uint16_t				wt_chan_freq;
+	uint16_t				wt_chan_flags;
+} __packed;
 
 /*
  * The struct pgt_desc is used to either enqueue or dequeue pgt_frags
@@ -75,28 +124,9 @@ struct pgt_ieee80211_node {
 	uint16_t		pin_mlme_state;
 };
 
-struct pgt_ieee80211_radiotap {
-	struct ieee80211_radiotap_header	pir_header;
-	uint8_t					pir_flags;
-	uint8_t					pir_rate;
-	uint16_t				pir_channel;
-	uint16_t				pir_channel_flags;
-	uint8_t					pir_db_antsignal;
-	uint8_t					pir_db_antnoise;
-};
-#define	PGT_IEEE80211_RADIOTAP_PRESENT			\
-	(1 << IEEE80211_RADIOTAP_FLAGS |		\
-	    1 << IEEE80211_RADIOTAP_RATE |		\
-	    1 << IEEE80211_RADIOTAP_CHANNEL |		\
-	    1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL |	\
-	    1 << IEEE80211_RADIOTAP_DB_ANTNOISE)
-
-struct bpf_if;
-
 struct pgt_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
-	struct bpf_if          *sc_drvbpf;
 	unsigned int		sc_flags;
 #define	SC_NEEDS_FIRMWARE	0x00000001 /* do firmware upload on reset */
 #define	SC_UNINITIALIZED	0x00000002 /* still awaiting initial intr */
@@ -104,11 +134,11 @@ struct pgt_softc {
 #define	SC_NEEDS_RESET		0x00000008 /* going to reset when refcnt = 1 */
 #define	SC_INTR_RESET		0x00000020 /* interrupt resets at end */
 #define	SC_POWERSAVE		0x00000040 /* device is asleep */
-#define	SC_GONE			0x00000080 /* device did not come back */
 #define	SC_NOFREE_ALLNODES	0x00000100 /* do not free assoc w/reinit */
 #define	SC_START_DESIRED	0x00000200 /* tried to start during mgmt-crit */
 #define	SC_KTHREAD		0x00000400 /* has a kthread around */
 #define	SC_ISL3877		0x00000800 /* chipset */
+	struct timeout		sc_chanscan_timer;
 	/* configuration sysctls */
 	int			sc_dot1x;
 	int			sc_wds;
@@ -117,11 +147,6 @@ struct pgt_softc {
 	int16_t			sc_80211_ioc_wep;
 	int16_t			sc_80211_ioc_auth;
 	uint32_t		sc_noise;
-	unsigned int		sc_refcnt;	/* # sleeping with sc */
-//	struct cv		sc_critical_cv;
-	struct thread	       *sc_critical_thread;  /* allow mgmt recursion */
-	int			sc_critical;	/* -1- = mgmt < 0 < 1+ data */
-	struct thread	       *sc_drainer;	/* who's doing removal/reset? */
 	unsigned int		sc_debug;
 #define	SC_DEBUG_QUEUES		0x00000001
 #define	SC_DEBUG_MGMT		0x00000002
@@ -134,35 +159,52 @@ struct pgt_softc {
 #define	SC_DEBUG_RXANNEX	0x00000100
 #define	SC_DEBUG_RXFRAG		0x00000200
 #define	SC_DEBUG_RXETHER	0x00000400
-	struct resource	       *sc_intres;	/* interrupt resource */
-	void		       *sc_intcookie;
-	struct resource	       *sc_iores;	/* IO memory resource */
 	bus_space_tag_t		sc_iotag;
 	bus_space_handle_t	sc_iohandle; 
 	bus_dma_tag_t		sc_dmat;
-	//bus_dma_tag_t		sc_cbdmat;	/* control block DMA */
+
 	bus_dmamap_t		sc_cbdmam;
 	bus_dma_segment_t	sc_cbdmas;
-	bus_addr_t		sc_cbdmabusaddr;
 	struct pgt_control_block *sc_cb;	/* DMA-mapped control block */
-	//bus_dma_tag_t		sc_psmdmat;	/* power save buffer DMA */
+
 	bus_dmamap_t		sc_psmdmam;
 	bus_dma_segment_t	sc_psmdmas;
-	bus_addr_t		sc_psmdmabusaddr;
 	void		       *sc_psmbuf;	/* DMA-mapped psm frame area */
-	//bus_dma_tag_t		sc_fragdmat;	/* tags for all queues */
+
+	int			(*sc_newstate)
+				(struct ieee80211com *,
+				 enum ieee80211_state, int);
+
 	struct pgt_mgmt_descq	sc_mgmtinprog;
 	struct pgt_descq	sc_freeq[PGT_QUEUE_COUNT];
 	size_t			sc_freeq_count[PGT_QUEUE_COUNT];
 	struct pgt_descq	sc_dirtyq[PGT_QUEUE_COUNT];
 	size_t			sc_dirtyq_count[PGT_QUEUE_COUNT];
-	struct bintime		sc_data_tx_started;
+	int			sc_txtimer;
 	struct pgt_softc_kthread {
 		struct proc		       *sck_proc;
 //		struct cv			sck_needed;
 		int				sck_exit, sck_reset, sck_update;
 		TAILQ_HEAD(, pgt_async_trap)	sck_traps;
 	}			sc_kthread;
+
+#if NBPFILTER > 0
+	caddr_t			sc_drvbpf;
+
+	union {
+		struct pgt_rx_radiotap_hdr th;
+                uint8_t pad[64];
+	}			sc_rxtapu;
+#define sc_rxtap		sc_rxtapu.th
+	int			sc_rxtap_len;
+
+	union {
+		struct pgt_tx_radiotap_hdr th;
+		uint8_t pad[64];
+	}			sc_txtapu;
+#define sc_txtap		sc_txtapu.th
+	int			sc_txtap_len;
+#endif
 };
 
 void	pgt_attachhook(void *);
@@ -170,8 +212,6 @@ int	pgt_intr(void *);
 int	pgt_attach(struct pgt_softc *);
 int	pgt_detach(struct pgt_softc *sc);
 void	pgt_reboot(struct pgt_softc *);
-/* Load one seg into the bus_addr_t * arg. */
-//void	pgt_load_busaddr(void *, bus_dma_segment_t *, int, int);
 
 static __inline int
 pgt_queue_is_rx(enum pgt_queue pq)
@@ -204,3 +244,5 @@ pgt_queue_is_mgmt(enum pgt_queue pq)
 	return (pq == PGT_QUEUE_MGMT_RX ||
 	    pq == PGT_QUEUE_MGMT_TX);
 }
+
+#endif
