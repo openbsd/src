@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.253 2006/09/16 00:39:54 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.254 2006/09/16 00:46:56 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -491,6 +491,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	},
 	{ PCI_PRODUCT_INTEL_82801HBM_SATA_2, /* Intel 82801HBM (ICH8M) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_6321ESB_SATA, /* Intel 6321ESB SATA */
+	  0,
 	  piixsata_chip_map
 	}
 };
@@ -2346,6 +2350,8 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801H_SATA_2:
 	case PCI_PRODUCT_INTEL_82801HBM_SATA_1:
 	case PCI_PRODUCT_INTEL_82801HBM_SATA_2:
+	case PCI_PRODUCT_INTEL_6321ESB_SATA:
+	default:
 		ich = 8;
 		break;
 	}
