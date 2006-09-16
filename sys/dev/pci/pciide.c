@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.252 2006/08/19 17:59:00 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.253 2006/09/16 00:39:54 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -593,6 +593,10 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_SATA, /* VIA VT6421 SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237A_SATA, /* VIA VT8237A SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	},
