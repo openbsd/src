@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.3 2006/09/16 14:23:42 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.4 2006/09/16 19:54:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -90,51 +90,48 @@ int uath_debug = 1;
 #endif
 
 /* various supported device vendors/products */
+#define UATH_DEV(v, p, f)						\
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p },			\
+	    (f) },							\
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p##_NF }, 		\
+	    (f) | UATH_FLAG_PRE_FIRMWARE }
 static const struct uath_type {
 	struct usb_devno	dev;
 	unsigned int		flags;
+#define UATH_FLAG_PRE_FIRMWARE	(1 << 0)
+#define UATH_FLAG_DUAL_BAND_RF	(1 << 1)
 } uath_devs[] = {
 	/* Atheros Communications */
-	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_1 },
-	    0 },
-	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_1_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
-	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_2 },
-	    0 },
-	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_2_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
-	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_3 },
-	    UATH_FLAG_DUAL_BAND_RF },
-	{ { USB_VENDOR_ATHEROS,		USB_PRODUCT_ATHEROS_AR5523_3_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
+	UATH_DEV(ATHEROS, AR5523, 0),
+	UATH_DEV(ATHEROS2, AR5523_1, 0),
+	UATH_DEV(ATHEROS2, AR5523_2, 0),
+	UATH_DEV(ATHEROS2, AR5523_3, UATH_FLAG_DUAL_BAND_RF),
+
+	/* Conceptronic */
+	UATH_DEV(CONCEPTRONIC, AR5523_1, 0),
+	UATH_DEV(CONCEPTRONIC, AR5523_2, 0),
 
 	/* D-Link */
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLAG122 },
-	    UATH_FLAG_DUAL_BAND_RF },
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLAG122_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLAG132 },
-	    UATH_FLAG_DUAL_BAND_RF },
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLAG132_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLG132 },
-	    0 },
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLG132_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
+	UATH_DEV(DLINK, DWLAG122, UATH_FLAG_DUAL_BAND_RF),
+	UATH_DEV(DLINK, DWLAG132, UATH_FLAG_DUAL_BAND_RF),	
+	UATH_DEV(DLINK, DWLG132, 0),
+
+	/* Global Sun Technology */
+	UATH_DEV(GLOBALSUN, AR5523_1, 0),
+	UATH_DEV(GLOBALSUN, AR5523_2, 0),
 
 	/* Netgear */
-	{ { USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_WG111U },
-	    UATH_FLAG_DUAL_BAND_RF },
-	{ { USB_VENDOR_NETGEAR, 	USB_PRODUCT_NETGEAR_WG111U_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
-	{ { USB_VENDOR_NETGEAR3,	USB_PRODUCT_NETGEAR3_WG111T },
-	    0 },
-	{ { USB_VENDOR_NETGEAR3,	USB_PRODUCT_NETGEAR3_WG111T_NF },
-	    UATH_FLAG_PRE_FIRMWARE },
-	{ { USB_VENDOR_NETGEAR3,	USB_PRODUCT_NETGEAR3_WPN111 },
-	    0 },
-	{ { USB_VENDOR_NETGEAR3,	USB_PRODUCT_NETGEAR3_WPN111_NF },
-	    UATH_FLAG_PRE_FIRMWARE }
+	UATH_DEV(NETGEAR, WG111U, UATH_FLAG_DUAL_BAND_RF),
+	UATH_DEV(NETGEAR3, WG111T, 0),
+	UATH_DEV(NETGEAR3, WPN111, 0),
+
+	/* U-MEDIA Communications */
+	UATH_DEV(UMEDIA, AR5523_1, 0),
+	UATH_DEV(UMEDIA, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
+
+	/* Wistron NeWeb */
+	UATH_DEV(WISTRONNEWEB, AR5523_1, 0),
+	UATH_DEV(WISTRONNEWEB, AR5523_2, 0)
 };
 #define uath_lookup(v, p)	\
 	((struct uath_type *)usb_lookup(uath_devs, v, p))
@@ -1865,7 +1862,7 @@ uath_init(struct ifnet *ifp)
 	struct uath_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct uath_cmd_31 cmd31;
-	uint32_t /*reg,*/ val;
+	uint32_t val;
 	int i, error;
 
 	/* reset data and command rings */

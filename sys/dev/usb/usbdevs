@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.220 2006/09/16 14:23:41 damien Exp $
+$OpenBSD: usbdevs,v 1.221 2006/09/16 19:54:13 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -384,7 +384,7 @@ vendor SEALEVEL		0x0c52	Sealevel System
 vendor EASYDISK		0x0c76	EasyDisk
 vendor KYOCERA2		0x0c88	Kyocera
 vendor ZCOM		0x0cde	Z-Com
-vendor ATHEROS		0x0cf3	Atheros Communications
+vendor ATHEROS2		0x0cf3	Atheros Communications
 vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	SMC
 vendor PEN		0x0d7d	Pen Drive
@@ -457,7 +457,9 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
+vendor ATHEROS		0x168c	Atheros Communications
 vendor GIGASET		0x1690	Gigaset
+vendor GLOBALSUN	0x16ab	Global Sun Technology
 vendor JABLOTRON	0x16d6	Jablotron
 vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
 vendor METAGEEK		0x1781	MetaGeek
@@ -700,12 +702,14 @@ product ATEN UC210T		0x2009	UC210T Ethernet
 product ATEN DSB650C		0x4000	DSB-650C
 
 /* Atheros Communications products */
-product ATHEROS AR5523_1_NF	0x0001	AR5523
-product ATHEROS AR5523_1	0x0002	AR5523
-product ATHEROS AR5523_2_NF	0x0003	AR5523
-product ATHEROS AR5523_2	0x0004	AR5523
-product ATHEROS AR5523_3_NF	0x0005	AR5523
-product ATHEROS AR5523_3	0x0006	AR5523
+product ATHEROS AR5523		0x0001	AR5523
+product ATHEROS AR5523_NF	0x0002	AR5523
+product ATHEROS2 AR5523_1	0x0001	AR5523
+product ATHEROS2 AR5523_1_NF	0x0002	AR5523
+product ATHEROS2 AR5523_2	0x0003	AR5523
+product ATHEROS2 AR5523_2_NF	0x0004	AR5523
+product ATHEROS2 AR5523_3	0x0005	AR5523
+product ATHEROS2 AR5523_3_NF	0x0006	AR5523
 
 /* ATI products */
 product ATI2 205		0xa001	USB Cable 205
@@ -833,7 +837,7 @@ product COMPAQ W100		0x0033	W100
 product COMPAQ W200		0x0076	WLAN MultiPort W200
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 
-/* Conceptronic products */
+/* Billionton products */
 product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
 
 /* CMOTECH CDMA Technologies products */
@@ -842,6 +846,10 @@ product CMOTECH CM5100P		0x5523	CM-5100P EVDO
 /* Conceptronic products */
 product CONCEPTRONIC C11U	0x7100	C11U
 product CONCEPTRONIC WL210	0x7110	WL-210
+product CONCEPTRONIC AR5523_1	0x7801	AR5523
+product CONCEPTRONIC AR5523_1_NF	0x7802	AR5523
+product CONCEPTRONIC AR5523_2	0x7811	AR5523
+product CONCEPTRONIC AR5523_2_NF	0x7812	AR5523
 product CONCEPTRONIC2 C54RU	0x3c02	C54RU WLAN
 product CONCEPTRONIC2 C54RU2	0x3c22	C54RU
 
@@ -1083,6 +1091,12 @@ product GIGABYTE GNWB01GS	0x8008	GN-WB01GS
 /* Gigaset products */
 product GIGASET WLAN		0x0701	WLAN
 product GIGASET RT2573		0x0722	RT2573
+
+/* Global Sun Technology product */
+product GLOBALSUN AR5523_1	0x7801	AR5523
+product GLOBALSUN AR5523_1_NF	0x7802	AR5523
+product GLOBALSUN AR5523_2	0x7811	AR5523
+product GLOBALSUN AR5523_2_NF	0x7812	AR5523
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
@@ -2065,7 +2079,11 @@ product TSUNAMI SM2000		0x1111	SM-2000
 product TWINMOS G240		0xa006	G240
 
 /* U-MEDIA Communications products */
+product UMEDIA AR5523_1		0x3006	AR5523
+product UMEDIA AR5523_1_NF	0x3007	AR5523
 product UMEDIA TEW429UB		0x300b	TEW-429UB
+product UMEDIA AR5523_2		0x3205	AR5523
+product UMEDIA AR5523_2_NF	0x3206	AR5523
 
 /* Ultima products */
 product ULTIMA 1200UBPLUS	0x4002	1200 UB Plus
@@ -2133,6 +2151,10 @@ product WACOM INTUOSA5		0x0021	Intuos A5
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB UR055G	0x0711	UR055G
+product WISTRONNEWEB AR5523_1	0x0826	AR5523
+product WISTRONNEWEB AR5523_1_NF	0x0827	AR5523
+product WISTRONNEWEB AR5523_2	0x0828	AR5523
+product WISTRONNEWEB AR5523_2_NF	0x0829	AR5523
 
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	Imaging Device

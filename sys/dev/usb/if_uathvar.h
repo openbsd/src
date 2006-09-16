@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uathvar.h,v 1.1 2006/09/16 13:21:24 damien Exp $	*/
+/*	$OpenBSD: if_uathvar.h,v 1.2 2006/09/16 19:56:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -109,8 +109,6 @@ struct uath_softc {
 	struct uath_rx_cmd	rx_cmd[UATH_RX_CMD_LIST_COUNT];
 
 	int			sc_flags;
-#define UATH_FLAG_PRE_FIRMWARE	(1 << 0)
-#define UATH_FLAG_DUAL_BAND_RF	(1 << 1)
 
 	int			data_idx;
 	int			cmd_idx;
