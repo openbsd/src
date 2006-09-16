@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.6 2006/09/01 01:13:25 mpf Exp $	*/
+/*	$OpenBSD: carp.c,v 1.7 2006/09/16 11:35:18 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -193,15 +193,21 @@ static void
 carp_read(void)
 {
 	char msg[2048];
-	struct if_msghdr *ifm = (struct if_msghdr *)&msg;
+	struct rt_msghdr *rtm = (struct rt_msghdr *)&msg;
+	struct if_msghdr ifm;
 	int len;
 
 	len = read(cfgstate.route_socket, msg, sizeof(msg));
 
-	if (len >= sizeof(struct if_msghdr) &&
-	    ifm->ifm_version == RTM_VERSION &&
-	    ifm->ifm_type == RTM_IFINFO)
-		carp_update_state(carp_map_state(ifm->ifm_data.ifi_link_state));
+	if (len < sizeof(struct rt_msghdr) ||
+	    rtm->rtm_version != RTM_VERSION ||
+	    rtm->rtm_type != RTM_IFINFO)
+		return;
+
+	memcpy(&ifm, rtm, sizeof(ifm));
+
+	if (ifm.ifm_index == cfgstate.carp_ifindex)
+		carp_update_state(carp_map_state(ifm.ifm_data.ifi_link_state));
 }
 
 void
