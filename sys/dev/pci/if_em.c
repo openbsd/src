@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.146 2006/08/22 15:51:18 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.147 2006/09/17 17:51:01 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -151,9 +151,6 @@ void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
 void em_rxeof(struct em_softc *, int);
-#ifdef __STRICT_ALIGNMENT
-void em_fixup_rx(struct em_softc *);
-#endif
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
 void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
@@ -2435,6 +2432,55 @@ em_rxeof(struct em_softc *sc, int count)
 			/* Assign correct length to the current fragment */
 			mp->m_len = len;
 
+#ifdef __STRICT_ALIGNMENT
+			/*
+			 * The Ethernet payload is not 32-bit aligned when
+			 * Jumbo packets are enabled, so on architectures with
+			 * strict alignment we need to shift the entire packet
+			 * ETHER_ALIGN bytes. Ugh.
+			 */
+			if (sc->hw.max_frame_size > (MCLBYTES - ETHER_ALIGN)) {
+				unsigned char tmp_align_buf[ETHER_ALIGN];
+				int tmp_align_buf_len = 0;
+
+				if (prev_len_adj > sc->align_buf_len)
+					prev_len_adj -= sc->align_buf_len;
+				else
+					prev_len_adj = 0;
+
+				if (mp->m_len > (MCLBYTES - ETHER_ALIGN)) {
+					bcopy(mp->m_data +
+					    (MCLBYTES - ETHER_ALIGN),
+					    &tmp_align_buf,
+					    ETHER_ALIGN);
+					tmp_align_buf_len = mp->m_len -
+					    (MCLBYTES - ETHER_ALIGN);
+					mp->m_len -= ETHER_ALIGN;
+				} 
+
+				if (mp->m_len) {
+					bcopy(mp->m_data,
+					    mp->m_data + ETHER_ALIGN,
+					    mp->m_len);
+					if (!sc->align_buf_len)
+						mp->m_data += ETHER_ALIGN;
+				}
+
+				if (sc->align_buf_len) {
+					mp->m_len += sc->align_buf_len;
+					bcopy(&sc->align_buf,
+					    mp->m_data,
+					    sc->align_buf_len);
+				}
+
+				if (tmp_align_buf_len) 
+					bcopy(&tmp_align_buf,
+					    &sc->align_buf,
+					    tmp_align_buf_len);
+				sc->align_buf_len = tmp_align_buf_len;
+			}
+#endif /* __STRICT_ALIGNMENT */
+
 			if (sc->fmp == NULL) {
 				mp->m_pkthdr.len = mp->m_len;
 				sc->fmp = mp;	 /* Store the first mbuf */
@@ -2460,10 +2506,6 @@ em_rxeof(struct em_softc *sc, int count)
 				ifp->if_ipackets++;
 				em_receive_checksum(sc, current_desc,
 					    sc->fmp);
-#ifdef __STRICT_ALIGNMENT
-				if (sc->hw.max_frame_size > (MCLBYTES - ETHER_ALIGN))
-					em_fixup_rx(sc);
-#endif
 				m = sc->fmp;
 				sc->fmp = NULL;
 				sc->lmp = NULL;
@@ -2511,49 +2553,6 @@ em_rxeof(struct em_softc *sc, int count)
 		i = sc->num_rx_desc - 1;
 	E1000_WRITE_REG(&sc->hw, RDT, i);
 }
-
-#ifdef __STRICT_ALIGNMENT
-/*
- * When Jumbo frames are enabled we should realign the entire payload on
- * strict alignment architecures. This is a serious design mistake of the
- * 8254x chipset as it nullifies DMA operations. 8254x allows the RX buffer
- * size to be 2048/4096/8192/16384. What we really want is 2048 - ETHER_ALIGN
- * to align its payload. On non strict alignment architectures 8254x still
- * performs unaligned memory access which will reduce the performance too. To
- * avoid copying over an entire frame to align, we allocate a new mbuf and
- * copy the Ethernet header to the new mbuf. The new mbuf is then prepended
- * into the existing mbuf chain.
- *
- * Be aware, best performance of the 8254x chipset is achived only when Jumbo
- * frames are not used at all on strict alignment architectures.
- */
-void
-em_fixup_rx(struct em_softc *sc)
-{
-	struct mbuf *m, *n;
-
-	m = sc->fmp;
-	if (m->m_len <= (MCLBYTES - ETHER_HDR_LEN)) {
-		bcopy(m->m_data, m->m_data + ETHER_HDR_LEN, m->m_len);
-		m->m_data += ETHER_HDR_LEN;
-	} else {
-		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n != NULL) {
-			bcopy(m->m_data, n->m_data, ETHER_HDR_LEN);
-			m->m_data += ETHER_HDR_LEN;
-			m->m_len -= ETHER_HDR_LEN;
-			n->m_len = ETHER_HDR_LEN;
-			M_MOVE_PKTHDR(n, m);
-			n->m_next = m;
-			sc->fmp = n;
-		} else {
-			sc->dropped_pkts++;
-			m_freem(sc->fmp);
-			sc->fmp = NULL;
-		}
-	}
-}
-#endif
 
 /*********************************************************************
  *
