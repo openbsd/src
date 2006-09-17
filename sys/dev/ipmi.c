@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.47 2006/08/01 22:49:37 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.48 2006/09/17 19:09:20 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -322,7 +322,7 @@ bmc_io_wait_cold(struct ipmi_softc *sc, int offset, u_int8_t mask,
 		delay(1);
 	}
 
-	printf("%s: bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
+	dbg_printf(1, "%s: bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
 	    DEVNAME(sc), v, mask, value, lbl);
 	return (-1);
 
@@ -1638,8 +1638,6 @@ ipmi_probe(void *aux)
 		/* we have an IPMI signature, fill in attach arg structure */
 		ia->iaa_if_type = pipmi->dmd_if_type;
 		ia->iaa_if_rev = pipmi->dmd_if_rev;
-
-		return (1);
 	}
 
 	return (1);
@@ -1651,6 +1649,9 @@ ipmi_match(struct device *parent, void *match, void *aux)
 	struct ipmi_softc	sc;
 	struct ipmi_attach_args *ia = aux;
 	struct cfdata		*cf = match;
+	u_int8_t		cmd[32];
+	int			len;
+	int			rv = 0;
 
 	if (strcmp(ia->iaa_name, cf->cf_driver->cd_name))
 		return (0);
@@ -1658,12 +1659,26 @@ ipmi_match(struct device *parent, void *match, void *aux)
 	/* Map registers */
 	if (ipmi_map_regs(&sc, ia) == 0) {
 		sc.sc_if->probe(&sc);
-		ipmi_unmap_regs(&sc, ia);
 
-		return (1);
+		/* Identify BMC device early to detect lying bios */
+		if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
+		    0, NULL)) {
+			dbg_printf(1, ": unable to send get device id "
+			    "command\n");
+			goto unmap;
+		}
+		if (ipmi_recvcmd(&sc, sizeof(cmd), &len, cmd)) {
+			dbg_printf(1, ": unable to retrieve device id\n");
+			goto unmap;
+		}
+
+		dbg_dump(1, "bmc data", len, cmd);
+unmap:
+		rv = 1; /* GETID worked, we got IPMI */
+		ipmi_unmap_regs(&sc, ia);
 	}
 
-	return (0);
+	return (rv);
 }
 
 void
@@ -1671,8 +1686,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipmi_softc	*sc = (void *) self;
 	struct ipmi_attach_args *ia = aux;
-	u_int8_t		cmd[32];
-	int			len;
 	u_int16_t		rec;
 
 	sc->sc_thread = malloc(sizeof(struct ipmi_thread), M_DEVBUF, M_NOWAIT);
@@ -1685,22 +1698,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
-
-
-	/* Identify BMC device */
-	if (ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
-	    0, NULL)) {
-		printf(": unable to send get device id " "command\n");
-		ipmi_unmap_regs(sc, ia);
-		return;
-	}
-	if (ipmi_recvcmd(sc, sizeof(cmd), &len, cmd)) {
-		printf(": unable to retrieve device id\n");
-		ipmi_unmap_regs(sc, ia);
-		return;
-	}
-
-	dbg_dump(1, "bmc data", len, cmd);
 
 	/* Scan SDRs, add sensors */
 	for (rec = 0; rec != 0xFFFF;)
