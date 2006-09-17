@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.176 2006/09/16 12:24:33 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.177 2006/09/17 16:45:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1705,17 +1705,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("pci_intr_string\n"));
 	intrstr = pci_intr_string(pc, ih);
 
-	DPRINTFN(5, ("pci_intr_establish\n"));
-	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc,
-	    sc->bge_dev.dv_xname);
-	if (sc->bge_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail_1;
-	}
-
 	/*
 	 * Kludge for 5700 Bx bug: a hardware bug (PCIX byte enable?)
 	 * can clobber the chip's PCI config-space power control registers,
@@ -1743,8 +1732,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		printf("unknown ASIC (0x%04x)", sc->bge_chipid >> 16);
 	else
 		printf("%s (0x%04x)", br->br_name, sc->bge_chipid >> 16);
-
-	printf(": %s", intrstr);
 
 	/*
 	 * PCI Express check.
@@ -1780,7 +1767,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bge_chipinit(sc)) {
 		printf(": chip initialization failed\n");
-		goto fail_2;
+		goto fail_1;
 	}
 
 	/*
@@ -1819,14 +1806,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!gotenaddr) {
 		printf(": failed to read station address\n");
-		goto fail_2;
+		goto fail_1;
 	}
-
-	/*
-	 * A Broadcom chip was detected. Inform the world.
-	 */
-	printf(", address %s\n",
-	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/* Allocate the general information block and ring buffers. */
 	sc->bge_dmatag = pa->pa_dmat;
@@ -1834,7 +1815,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf(": can't alloc rx buffers\n");
-		goto fail_2;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
@@ -1842,20 +1823,20 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 			   BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%d bytes)\n",
 		    sizeof(struct bge_ring_data));
-		goto fail_3;
+		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
 		printf(": can't create dma map\n");
-		goto fail_4;
+		goto fail_3;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_ring_map, kva,
 			    sizeof(struct bge_ring_data), NULL,
 			    BUS_DMA_NOWAIT)) {
-		goto fail_5;
+		goto fail_4;
 	}
 
 	DPRINTFN(5, ("bzero\n"));
@@ -1940,6 +1921,24 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    SK_SUBSYSID_9D41)
 		sc->bge_tbi = 1;
 
+	/* Hookup IRQ last. */
+	DPRINTFN(5, ("pci_intr_establish\n"));
+	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc,
+	    sc->bge_dev.dv_xname);
+	if (sc->bge_intrhand == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto fail_5;
+	}
+
+	/*
+	 * A Broadcom chip was detected. Inform the world.
+	 */
+	printf(": %s, address %s\n", intrstr,
+	    ether_sprintf(sc->arpcom.ac_enaddr));
+
 	if (sc->bge_tbi) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
@@ -1993,17 +1992,17 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fail_5:
-	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
+	bus_dmamap_unload(sc->bge_dmatag, sc->bge_ring_map);
 
 fail_4:
+	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
+
+fail_3:
 	bus_dmamem_unmap(sc->bge_dmatag, kva,
 	    sizeof(struct bge_ring_data));
 
-fail_3:
-	bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
-
 fail_2:
-	pci_intr_disestablish(pc, sc->bge_intrhand);
+	bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 
 fail_1:
 	bus_space_unmap(sc->bge_btag, sc->bge_bhandle, size);
