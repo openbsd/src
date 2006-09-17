@@ -1,4 +1,4 @@
-.\"     $OpenBSD: power.4,v 1.1 2006/09/09 14:04:12 jason Exp $
+.\"     $OpenBSD: power.4,v 1.2 2006/09/17 16:22:49 steven Exp $
 .\"
 .\" Copyright (c) 2006 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -45,12 +45,13 @@ is set to 1,
 .Nm power
 will signal
 .Xr init 8
-to do a clean shutdown and power the machine down.
+to do a clean shutdown.
 .Sh SEE ALSO
 .Xr ebus 4 ,
 .Xr intro 4 ,
 .Xr init 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr rc.shutdown 8
 .Sh HISTORY
 The
 .Nm
