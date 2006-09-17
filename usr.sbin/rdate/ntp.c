@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.28 2006/03/14 22:56:20 deraadt Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.29 2006/09/17 17:03:56 ckuethe Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -238,6 +238,11 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 
 		if (a > b) {
 			warnx("Inconsistent times received from NTP server");
+			return (-1);
+		}
+
+		if ((data.status & STATUS_ALARM) == STATUS_ALARM) {
+			warnx("Ignoring NTP server with alarm flag set");
 			return (-1);
 		}
 
