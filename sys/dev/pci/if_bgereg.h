@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.58 2006/09/17 17:20:42 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.59 2006/09/17 22:19:38 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1965,8 +1965,12 @@ struct bge_status_block {
 /*
  * SysKonnect Subsystem IDs
  */
-#define SK_SUBSYSID_9D21		0x4421
 #define SK_SUBSYSID_9D41		0x4441
+
+/*
+ * Dell PCI vendor ID
+ */
+#define DELL_VENDORID			0x1028
 
 /*
  * Offset of MAC address inside EEPROM.
@@ -2351,6 +2355,7 @@ struct bge_softc {
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_eeprom;
 	u_int8_t		bge_tbi;
+	u_int8_t		bge_jumbo_cap;
 	u_int8_t		bge_rx_alignment_bug;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;

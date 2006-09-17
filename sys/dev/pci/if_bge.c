@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.178 2006/09/17 17:20:42 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.179 2006/09/17 22:19:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1647,7 +1647,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	const struct bge_revision *br;
-	pcireg_t		pm_ctl, memtype;
+	pcireg_t		pm_ctl, memtype, subid;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_size_t		size;
@@ -1662,6 +1662,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->bge_pa = *pa;
+
+	subid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	/*
 	 * Map control/status registers.
@@ -1746,6 +1748,28 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 			sc->bge_eeprom = 0;
 	}
 #endif
+
+	/*
+	 * When using the BCM5701 in PCI-X mode, data corruption has
+	 * been observed in the first few bytes of some received packets.
+	 * Aligning the packet buffer in memory eliminates the corruption.
+	 * Unfortunately, this misaligns the packet payloads.  On platforms
+	 * which do not support unaligned accesses, we will realign the
+	 * payloads by copying the received packets.
+	 */
+	sc->bge_rx_alignment_bug = 0;
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 && sc->bge_pcix)
+		sc->bge_rx_alignment_bug = 1;
+
+	sc->bge_jumbo_cap = 0;
+	if (BGE_IS_JUMBO_CAPABLE(sc))
+		sc->bge_jumbo_cap = 1;
+
+	sc->bge_no_3_led = 0;
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
+	    PCI_VENDOR(subid) == DELL_VENDORID)
+		sc->bge_no_3_led = 1;
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
@@ -1895,13 +1919,13 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		}
 		hwcfg = ntohl(hwcfg);
 	}
-	
+
+	sc->bge_tbi = 0;
 	if ((hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER)	    
 		sc->bge_tbi = 1;
 
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
-	if ((pci_conf_read(pc, pa->pa_tag, BGE_PCI_SUBSYS) >> 16) ==
-	    SK_SUBSYSID_9D41)
+	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41)
 		sc->bge_tbi = 1;
 
 	/* Hookup IRQ last. */
@@ -1950,17 +1974,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 			ifmedia_set(&sc->bge_mii.mii_media,
 				    IFM_ETHER|IFM_AUTO);
 	}
-
-	/*
-	 * When using the BCM5701 in PCI-X mode, data corruption has
-	 * been observed in the first few bytes of some received packets.
-	 * Aligning the packet buffer in memory eliminates the corruption.
-	 * Unfortunately, this misaligns the packet payloads.  On platforms
-	 * which do not support unaligned accesses, we will realign the
-	 * payloads by copying the received packets.
-	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 && sc->bge_pcix)
-		sc->bge_rx_alignment_bug = 1;
 
 	/*
 	 * Call MI attach routine.
