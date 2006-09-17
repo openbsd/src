@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.44 2006/09/15 23:39:24 drahn Exp $	*/
+/*	$OpenBSD: re.c,v 1.45 2006/09/17 18:18:57 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -400,6 +400,10 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 		return (0);
 	}
 	rval = CSR_READ_2(sc, re8139_reg);
+	if (sc->rl_type == RL_8139CPLUS && re8139_reg == RL_BMCR) {
+		/* 8139C+ has different bit layout. */
+		rval &= ~(BMCR_LOOP | BMCR_ISO);
+	}
 	splx(s);
 	return (rval);
 }
@@ -427,6 +431,10 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	switch(reg) {
 	case MII_BMCR:
 		re8139_reg = RL_BMCR;
+		if (sc->rl_type == RL_8139CPLUS) {
+			/* 8139C+ has different bit layout. */
+			data &= ~(BMCR_LOOP | BMCR_ISO);
+		}
 		break;
 	case MII_BMSR:
 		re8139_reg = RL_BMSR;
@@ -1667,7 +1675,7 @@ re_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (!sc->rl_link || ifp->if_flags & IFF_OACTIVE)
 		return;
 
 	idx = sc->rl_ldata.rl_txq_prodidx;
