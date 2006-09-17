@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.16 2005/07/19 09:36:04 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.17 2006/09/17 22:26:37 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -771,9 +771,7 @@ tadpole_powerdown(void)
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return;
 	}
 
@@ -790,9 +788,7 @@ tadpole_set_brightness(int value)
 {
 	struct tctrl_softc *sc;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return;
 	}
 
@@ -806,9 +802,7 @@ tadpole_get_brightness()
 {
 	struct tctrl_softc *sc;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return 0;
 	}
 
@@ -821,9 +815,7 @@ tadpole_set_video(int enabled)
 {
 	struct tctrl_softc *sc;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return;
 	}
 
@@ -842,9 +834,7 @@ tadpole_get_video()
 	struct tctrl_softc *sc;
 	unsigned int status;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return 0;
 	}
 
@@ -859,9 +849,7 @@ tadpole_register_extvideo(void (*cb)(void *, int), void *data)
 {
 	struct tctrl_softc *sc;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return;
 	}
 
@@ -878,9 +866,7 @@ tadpole_set_pcmcia(int slot, int enabled)
 	struct tctrl_softc *sc;
 	int mask;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return;
 	}
 
@@ -900,9 +886,7 @@ tadpole_bell(u_int duration, u_int freq, u_int volume)
 	struct tctrl_softc *sc;
 	struct tctrl_req req;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return (0);
 	}
 
@@ -966,9 +950,7 @@ apmopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct tctrl_softc *sc;
 	int error = 0;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return (ENXIO);
 	}
 
@@ -1009,9 +991,7 @@ apmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tctrl_softc *sc;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return (ENXIO);
 	}
 
@@ -1041,9 +1021,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	u_int8_t c;
 	int error = 0;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return (ENXIO);
 	}
 
@@ -1183,9 +1161,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 {
 	struct tctrl_softc *sc;
 
-	if (tctrl_cd.cd_devs == NULL
-	    || tctrl_cd.cd_ndevs == 0
-	    || tctrl_cd.cd_devs[0] == NULL) {
+	if (tctrl_cd.cd_ndevs == 0 || tctrl_cd.cd_devs[0] == NULL) {
 		return (ENXIO);
 	}
 
