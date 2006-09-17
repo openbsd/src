@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.54 2004/11/29 06:20:03 jsg Exp $ */
+/*	$OpenBSD: suff.c,v 1.55 2006/09/17 19:03:15 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -159,8 +159,6 @@ typedef struct {
 } LstSrc;
 
 static Suff	    *suffNull;	/* The NULL suffix for this run */
-static Suff	    *emptySuff; /* The empty suffix required for POSIX
-				 * single-suffix transformation rules */
 
 
 static char *SuffStrIsPrefix(const char *, const char *);
@@ -191,6 +189,7 @@ static void SuffFindNormalDeps(GNode *, Lst);
 static void SuffPrintName(void *);
 static void SuffPrintSuff(void *);
 static void SuffPrintTrans(void *);
+static Suff *emptySuff(void);
 
 static LstNode suff_find_by_name(const char *);
 static LstNode transform_find_by_name(const char *);
@@ -340,9 +339,6 @@ SuffFree(void *sp)
     if (s == suffNull)
 	suffNull = NULL;
 
-    if (s == emptySuff)
-	emptySuff = NULL;
-
     Lst_Destroy(&s->ref, NOFREE);
     Lst_Destroy(&s->children, NOFREE);
     Lst_Destroy(&s->parents, NOFREE);
@@ -418,7 +414,7 @@ Suff_ClearSuffixes(void)
 #endif
     Lst_Init(&sufflist);
     sNum = 0;
-    suffNull = emptySuff;
+    suffNull = emptySuff();
 }
 
 /*-
@@ -474,7 +470,6 @@ SuffParseTransform(
 		 * find a double rule over a singleton, hence we leave this
 		 * check until the end.
 		 *
-		 * XXX: Use emptySuff over suffNull?
 		 */
 		*srcPtr = single;
 		*targPtr = suffNull;
@@ -1963,20 +1958,28 @@ Suff_Init(void)
      * actually go on the suffix list or everyone will think that's its
      * suffix.
      */
-    emptySuff = suffNull = emalloc(sizeof(Suff));
 
-    suffNull->name =	    estrdup("");
-    suffNull->nameLen =     0;
-    Lst_Init(&suffNull->searchPath);
-    Dir_Concat(&suffNull->searchPath, dirSearchPath);
-    Lst_Init(&suffNull->children);
-    Lst_Init(&suffNull->parents);
-    Lst_Init(&suffNull->ref);
-    suffNull->sNum =	    sNum++;
-    suffNull->flags =	    SUFF_NULL;
+    suffNull = emptySuff();
 
 }
 
+Suff *
+emptySuff()
+{
+    Suff *s;
+    s = emalloc(sizeof(Suff));
+
+    s->name =	    estrdup("");
+    s->nameLen =     0;
+    Lst_Init(&s->searchPath);
+    Dir_Concat(&s->searchPath, dirSearchPath);
+    Lst_Init(&s->children);
+    Lst_Init(&s->parents);
+    Lst_Init(&s->ref);
+    s->sNum =	    sNum++;
+    s->flags =	    SUFF_NULL;
+    return s;
+}
 
 /*-
  *----------------------------------------------------------------------
