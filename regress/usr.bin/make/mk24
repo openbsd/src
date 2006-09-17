@@ -1,0 +1,20 @@
+# $OpenBSD: mk24,v 1.1 2006/09/17 19:02:13 espie Exp $
+
+# .SUFFIXES should void suffixes rules
+
+.SUFFIXES: .1st .2nd .3rd
+
+# Two suffixes implicit rules
+.1st.2nd:
+	cp $*.1st $@
+
+# one suffix implicit rule
+.2nd:
+	cp $*.2nd $@
+
+.2nd.3rd:
+	cp $*.2nd $@
+
+.SUFFIXES:
+
+.SUFFIXES: .3rd

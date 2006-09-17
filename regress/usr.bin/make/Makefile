@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.23 2005/07/15 19:43:42 espie Exp $
+# $OpenBSD: Makefile,v 1.24 2006/09/17 19:02:13 espie Exp $
 
-# We don't pass t7, t13, t14, t17, t19, t20 t21
+# We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 t25 t26 t27
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -98,7 +98,22 @@ t23:
 	cd ${.CURDIR} && ulimit -t 60 && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk22 a 2>&1| diff - t23.out
 
 t24:
-	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 a 2>/dev/null; then false; fi
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk23 a 2>/dev/null; then false; fi
+
+t25:
+	touch ${.OBJDIR}/t25.1st
+	rm -f ${.OBJDIR}/t25.2nd
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t25.2nd 2>/dev/null; then false; fi
+
+t26:
+	touch ${.OBJDIR}/f26.2nd
+	rm -f ${.OBJDIR}/f26
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 f26 2>/dev/null; then false; fi
+
+t27:
+	touch ${.OBJDIR}/t27.2nd
+	rm -f ${.OBJDIR}/t27.3rd
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t27.3rd 2>/dev/null; then false; fi
 
 z.a:
 	touch $@
@@ -106,8 +121,9 @@ z.a:
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 regress
+.PHONY: ${REGRESS_TARGETS} regress
 
-CLEANFILES+=t1.out z.a a.a a.b goodfile phony t15file
+CLEANFILES+=t1.out z.a a.a a.b goodfile phony t15file \
+	t25.1st t25.2nd f26.2nd f26 t27.2nd t27.3rd
 
 .include <bsd.regress.mk>
