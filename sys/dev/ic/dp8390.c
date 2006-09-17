@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.31 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.32 2006/09/17 18:03:06 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -125,6 +125,8 @@ dp8390_config(sc)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Print additional info when attached. */
 	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
