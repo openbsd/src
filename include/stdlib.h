@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.38 2006/03/31 00:41:21 deraadt Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.39 2006/09/17 16:48:04 djm Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -194,6 +194,8 @@ long long
 	 atoll(const char *);
 long long
 	 llabs(long long);
+lldiv_t
+	 lldiv(long long, long long);
 long long
 	 strtoll(const char *, char **, int);
 unsigned long long
