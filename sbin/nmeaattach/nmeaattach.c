@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmeaattach.c,v 1.2 2006/07/09 09:03:19 jmc Exp $	*/
+/*	$OpenBSD: nmeaattach.c,v 1.3 2006/09/17 16:57:22 mbalmer Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 		    "%s%s", _PATH_DEV, dev);
 		dev = devicename;
 	}
-	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0)
+	if ((fd = open(dev, O_RDWR)) < 0)
 		err(1, "open: %s", dev);
 
 	tty.c_cflag = CREAD | CS8 | cflag;
