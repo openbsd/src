@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.179 2006/09/17 22:19:37 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.180 2006/09/17 23:31:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1655,6 +1655,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	int			rseg, gotenaddr = 0;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
+	u_int32_t		misccfg;
 	struct ifnet		*ifp;
 	caddr_t			kva;
 #ifdef __sparc64__
@@ -1770,6 +1771,22 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
 	    PCI_VENDOR(subid) == DELL_VENDORID)
 		sc->bge_no_3_led = 1;
+
+	misccfg = CSR_READ_4(sc, BGE_MISC_CFG);
+	misccfg &= BGE_MISCCFG_BOARD_ID_MASK;
+
+	sc->bge_10_100_only = 0;
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 &&
+	     (misccfg == 0x4000 || misccfg == 0x8000)) ||
+	    (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
+	     PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5901 ||
+	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5901A2 ||
+	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5705F)) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5751F ||
+	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5753F)))
+		sc->bge_10_100_only = 1;
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));

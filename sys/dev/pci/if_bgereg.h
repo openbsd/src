@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.59 2006/09/17 22:19:38 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.60 2006/09/17 23:31:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1728,6 +1728,7 @@
 #define BGE_MISCCFG_RESET_CORE_CLOCKS	0x00000001
 #define BGE_MISCCFG_TIMER_PRESCALER	0x000000FE
 #define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
+#define BGE_MISCCFG_BOARD_ID_MASK	0x0001e000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)
 
@@ -2363,6 +2364,7 @@ struct bge_softc {
 	u_int8_t		bge_asf_mode;
 	u_int8_t		bge_pcie;
 	u_int8_t		bge_pcix;
+	u_int8_t		bge_10_100_only;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
