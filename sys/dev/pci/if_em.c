@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.147 2006/09/17 17:51:01 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.148 2006/09/17 20:26:14 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -159,7 +159,7 @@ void em_set_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
-int  em_get_buf(int, struct em_softc *, struct mbuf *);
+int  em_get_buf(struct em_softc *, int);
 int  em_encap(struct em_softc *, struct mbuf *);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
@@ -2090,54 +2090,58 @@ em_txeof(struct em_softc *sc)
  *
  **********************************************************************/
 int
-em_get_buf(int i, struct em_softc *sc, struct mbuf *nmp)
+em_get_buf(struct em_softc *sc, int i)
 {
-	struct mbuf    *mp = nmp;
+	struct mbuf    *m;
+	bus_dmamap_t	map;
 	struct em_buffer *rx_buffer;
 	struct ifnet   *ifp;
 	int error;
 
 	ifp = &sc->interface_data.ac_if;
 
-	if (mp == NULL) {
-		MGETHDR(mp, M_DONTWAIT, MT_DATA);
-		if (mp == NULL) {
-			sc->mbuf_alloc_failed++;
-			return (ENOBUFS);
-		}
-		MCLGET(mp, M_DONTWAIT);
-		if ((mp->m_flags & M_EXT) == 0) {
-			m_freem(mp);
-			sc->mbuf_cluster_failed++;
-			return (ENOBUFS);
-		}
-		mp->m_len = mp->m_pkthdr.len = MCLBYTES;
-	} else {
-		mp->m_len = mp->m_pkthdr.len = MCLBYTES;
-		mp->m_data = mp->m_ext.ext_buf;
-		mp->m_next = NULL;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
+		sc->mbuf_alloc_failed++;
+		return (ENOBUFS);
 	}
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		sc->mbuf_cluster_failed++;
+		return (ENOBUFS);
+	}
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
 	if (sc->hw.max_frame_size <= (MCLBYTES - ETHER_ALIGN))
-		m_adj(mp, ETHER_ALIGN);
-
-	rx_buffer = &sc->rx_buffer_area[i];
+		m_adj(m, ETHER_ALIGN);
 
 	/*
 	 * Using memory from the mbuf cluster pool, invoke the
 	 * bus_dma machinery to arrange the memory mapping.
 	 */
-	error = bus_dmamap_load(sc->rxtag, rx_buffer->map,
-	    mtod(mp, void *), mp->m_len, NULL, 0);
+	error = bus_dmamap_load(sc->rxtag, sc->rx_sparemap,
+	    mtod(m, void *), m->m_len, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		m_free(mp);
+		m_free(m);
 		return (error);
 	}
-	rx_buffer->m_head = mp;
-	sc->rx_desc_base[i].buffer_addr = htole64(rx_buffer->map->dm_segs[0].ds_addr);
+
+	rx_buffer = &sc->rx_buffer_area[i];
+	if (rx_buffer->m_head != NULL)
+		bus_dmamap_unload(sc->rxtag, rx_buffer->map);
+
+	map = rx_buffer->map;
+	rx_buffer->map = sc->rx_sparemap;
+	sc->rx_sparemap = map;
+
 	bus_dmamap_sync(sc->rxtag, rx_buffer->map, 0,
 	    rx_buffer->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	rx_buffer->m_head = m;
+
+	sc->rx_desc_base[i].buffer_addr = htole64(rx_buffer->map->dm_segs[0].ds_addr);
 
 	return (0);
 }
@@ -2170,6 +2174,15 @@ em_allocate_receive_structures(struct em_softc *sc)
 
 	sc->rxtag = sc->osdep.em_pa.pa_dmat;
 
+	error = bus_dmamap_create(sc->rxtag, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT, &sc->rx_sparemap);
+	if (error != 0) {
+		printf("%s: em_allocate_receive_structures: "
+		    "bus_dmamap_create failed; error %u\n",
+		    sc->sc_dv.dv_xname, error);
+		goto fail;
+	}
+
 	rx_buffer = sc->rx_buffer_area;
 	for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
 		error = bus_dmamap_create(sc->rxtag, MCLBYTES, 1,
@@ -2184,7 +2197,7 @@ em_allocate_receive_structures(struct em_softc *sc)
 	}
 
 	for (i = 0; i < sc->num_rx_desc; i++) {
-		error = em_get_buf(i, sc, NULL);
+		error = em_get_buf(sc, i);
 		if (error != 0) {
 			sc->rx_buffer_area[i].m_head = NULL;
 			sc->rx_desc_base[i].buffer_addr = 0;
@@ -2318,6 +2331,10 @@ em_free_receive_structures(struct em_softc *sc)
 
 	INIT_DEBUGOUT("free_receive_structures: begin");
 
+	if (sc->rx_sparemap) {
+		bus_dmamap_destroy(sc->rxtag, sc->rx_sparemap);
+		sc->rx_sparemap = NULL;
+	}
 	if (sc->rx_buffer_area != NULL) {
 		rx_buffer = sc->rx_buffer_area;
 		for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
@@ -2360,6 +2377,7 @@ em_rxeof(struct em_softc *sc, int count)
 
 	/* Pointer to the receive descriptor being examined. */
 	struct em_rx_desc   *current_desc;
+	u_int8_t            status;
 
 	ifp = &sc->interface_data.ac_if;
 	i = sc->next_rx_desc_to_check;
@@ -2376,15 +2394,19 @@ em_rxeof(struct em_softc *sc, int count)
 		struct mbuf *m = NULL;
 
 		mp = sc->rx_buffer_area[i].m_head;
+		/*
+		 * Can't defer bus_dmamap_sync(9) because TBI_ACCEPT
+		 * needs to access the last received byte in the mbuf.
+		 */
 		bus_dmamap_sync(sc->rxtag, sc->rx_buffer_area[i].map,
 		    0, sc->rx_buffer_area[i].map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->rxtag, sc->rx_buffer_area[i].map);
 
 		accept_frame = 1;
 		prev_len_adj = 0;
 		desc_len = letoh16(current_desc->length);
-		if (current_desc->status & E1000_RXD_STAT_EOP) {
+		status = current_desc->status;
+		if (status & E1000_RXD_STAT_EOP) {
 			count--;
 			eop = 1;
 			if (desc_len < ETHER_CRC_LEN) {
@@ -2405,8 +2427,7 @@ em_rxeof(struct em_softc *sc, int count)
 				pkt_len += sc->fmp->m_pkthdr.len; 
 
 			last_byte = *(mtod(mp, caddr_t) + desc_len - 1);
-			if (TBI_ACCEPT(&sc->hw, current_desc->status,
-				       current_desc->errors,
+			if (TBI_ACCEPT(&sc->hw, status, current_desc->errors,
 				       pkt_len, last_byte)) {
 				em_tbi_adjust_stats(&sc->hw, 
 						    &sc->stats, 
@@ -2419,14 +2440,9 @@ em_rxeof(struct em_softc *sc, int count)
 		}
 
 		if (accept_frame) {
-			if (em_get_buf(i, sc, NULL) == ENOBUFS) {
+			if (em_get_buf(sc, i) != 0) {
 				sc->dropped_pkts++;
-				em_get_buf(i, sc, mp);
-				if (sc->fmp != NULL)
-					m_freem(sc->fmp);
-				sc->fmp = NULL;
-				sc->lmp = NULL;
-				break;
+				goto discard;
 			}
 
 			/* Assign correct length to the current fragment */
@@ -2512,11 +2528,20 @@ em_rxeof(struct em_softc *sc, int count)
 			}
 		} else {
 			sc->dropped_pkts++;
-			em_get_buf(i, sc, mp);
-			if (sc->fmp != NULL)
-				m_freem(sc->fmp);
-			sc->fmp = NULL;
-			sc->lmp = NULL;
+discard:
+			/* Reuse loaded DMA map and just update mbuf chain */
+			mp = sc->rx_buffer_area[i].m_head;
+			mp->m_len = mp->m_pkthdr.len = MCLBYTES;
+			mp->m_data = mp->m_ext.ext_buf;
+			mp->m_next = NULL;
+			if (sc->hw.max_frame_size <= (MCLBYTES - ETHER_ALIGN))
+				m_adj(mp, ETHER_ALIGN);
+			if (sc->fmp != NULL) {
+ 				m_freem(sc->fmp);
+				sc->fmp = NULL;
+				sc->lmp = NULL;
+			}
+			m = NULL;
 		}
 
 		/* Zero out the receive descriptors status. */

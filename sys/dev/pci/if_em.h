@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.28 2006/09/17 17:51:01 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.29 2006/09/17 20:26:14 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -347,6 +347,7 @@ struct em_softc {
 	u_int32_t		txd_cmd;
 	struct em_buffer	*tx_buffer_area;
 	bus_dma_tag_t		txtag;		/* dma tag for tx */
+	bus_dmamap_t		rx_sparemap;
 
 	/*
 	 * Receive definitions
