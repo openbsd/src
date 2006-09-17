@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.56 2006/08/16 13:18:15 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.57 2006/09/17 22:09:12 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -342,9 +342,8 @@ then release the lock.
 If dependencies are involved, they will invoke top-level targets in other
 directories, and thus acquire some other locks as well.
 .Pp
-At no moment should a given invocation of
-.Xr make 1
-acquire the same lock twice, thus recursive locking is not needed for
+The infrastructure contains some protection against acquiring the same lock
+twice, thus recursive locking is not needed for
 .Ev LOCK_CMD .
 .Sh UPDATING PACKAGES
 Instead of deinstalling each package and rebuilding from scratch, the
@@ -549,22 +548,14 @@ Where to find/put distfiles, normally
 .Pa distfiles/
 in
 .Ev PORTSDIR .
-.It Ev PKGREPOSITORYBASE
+.It Ev PACKAGE_REPOSITORY
 Used only for the
 .Ar package
 target; the base directory for the packages tree, normally
-.Pa packages/${MACHINE_ARCH}
+.Pa packages
 in
 .Ev PORTSDIR .
 If this directory exists, the package tree will be (partially) constructed.
-This directory does not have to exist; if it doesn't, packages will be
-placed into the current directory, or define one of
-.Bl -tag -width PKGREPOSITORY
-.It Ev PKGREPOSITORY
-Directory to put the package in.
-.It Ev PKGFILE
-The full path to the package.
-.El
 .It Ev BULK_COOKIES_DIR
 During bulk package building, used to store cookies for already built
 packages to avoid rebuilding them, since the actual
