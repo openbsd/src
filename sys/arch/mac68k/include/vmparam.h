@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.16 2006/09/17 22:23:40 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.8 1996/11/15 14:21:00 briggs Exp $	*/
 
 /*
@@ -94,7 +94,7 @@
  * RAM, a minimum of ~320KB will be subtracted from the amount in bank A
  * for the framebuffer (if on-board video is in use).
  */
-#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_MAX		8
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #endif	/* _MAC68K_VMPARAM_H_ */
