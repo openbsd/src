@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.177 2006/09/17 16:45:22 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.178 2006/09/17 17:20:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -172,7 +172,7 @@ void bge_free_rx_ring_jumbo(struct bge_softc *);
 void bge_free_tx_ring(struct bge_softc *);
 int bge_init_tx_ring(struct bge_softc *);
 
-int bge_chipinit(struct bge_softc *);
+void bge_chipinit(struct bge_softc *);
 int bge_blockinit(struct bge_softc *);
 
 u_int32_t bge_readmem_ind(struct bge_softc *, int);
@@ -1071,7 +1071,7 @@ bge_setpromisc(struct bge_softc *sc)
  * Do endian, PCI and DMA initialization. Also check the on-board ROM
  * self-test results.
  */
-int
+void
 bge_chipinit(struct bge_softc *sc)
 {
 	struct pci_attach_args	*pa = &(sc->bge_pa);
@@ -1081,18 +1081,6 @@ bge_chipinit(struct bge_softc *sc)
 	/* Set endianness before we access any non-PCI registers. */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_INIT);
-
-	/*
-	 * Check the 'ROM failed' bit on the RX CPU to see if
-	 * self-tests passed.  Skip this check when there's no SEEPROM
-	 * fitted, since in that case it will always fail.
-	 */
-	if (sc->bge_eeprom &&
-	    CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL) {
-		printf("%s: RX CPU self-diagnostics failed!\n",
-		    sc->bge_dev.dv_xname);
-		return (ENODEV);
-	}
 
 	/* Clear the MAC control register */
 	CSR_WRITE_4(sc, BGE_MAC_MODE, 0);
@@ -1217,8 +1205,6 @@ bge_chipinit(struct bge_softc *sc)
 
 	/* Set the timer prescaler (always 66MHz) */
 	CSR_WRITE_4(sc, BGE_MISC_CFG, 65 << 1/*BGE_32BITTIME_66MHZ*/);
-
-	return (0);
 }
 
 int
@@ -1765,10 +1751,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("bge_reset\n"));
 	bge_reset(sc);
 
-	if (bge_chipinit(sc)) {
-		printf(": chip initialization failed\n");
-		goto fail_1;
-	}
+	bge_chipinit(sc);
 
 	/*
 	 * Get station address from the EEPROM.
@@ -2037,6 +2020,15 @@ bge_reset(struct bge_softc *sc)
 		}
 	}
 
+	if (BGE_IS_5705_OR_BEYOND(sc))
+		reset |= BGE_MISCCFG_KEEP_GPHY_POWER;
+
+	/*
+	 * Write the magic number to the firmware mailbox at 0xb50
+	 * so that the driver can synchronize with the firmware.
+	 */
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
+
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG, reset);
 
@@ -2071,12 +2063,6 @@ bge_reset(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | val);
 	} else
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
-
-	/*
-	 * Prevent PXE restart: write a magic number to the
-	 * general communications memory at 0xB50.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/*
 	 * Poll the value location we just wrote until

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.57 2006/08/29 17:44:16 kettenis Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.58 2006/09/17 17:20:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1727,7 +1727,7 @@
 /* Misc. config register */
 #define BGE_MISCCFG_RESET_CORE_CLOCKS	0x00000001
 #define BGE_MISCCFG_TIMER_PRESCALER	0x000000FE
-#define BGE_MISCCFG_GPHY_POWER_RESET	0x04000000
+#define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)
 
@@ -1812,10 +1812,11 @@
 	} while(0)
 
 /*
- * This magic number is used to prevent PXE restart when we
- * issue a software reset. We write this magic number to the
- * firmware mailbox at 0xB50 in order to prevent the PXE boot
- * code from running.
+ * This magic number is written to the firmware mailbox at 0xb50
+ * before a software reset is issued.  After the internal firmware
+ * has completed its initialization it will write the opposite of 
+ * this value, ~BGE_MAGIC_NUMBER, to the same location, allowing the
+ * driver to synchronize with the firmware.
  */
 #define BGE_MAGIC_NUMBER                0x4B657654
 
