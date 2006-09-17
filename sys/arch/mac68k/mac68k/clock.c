@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2006/01/15 00:10:24 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2006/09/17 19:31:04 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1999/11/05 19:14:56 scottr Exp $	*/
 
 /*
@@ -352,8 +352,6 @@ mac68k_calibrate_delay()
 {
 	u_int sum, n;
 
-	(void)spl0();
-
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
 	via1_register_irq(VIA1_T1, delay_timer1_irq, NULL, NULL);
@@ -368,12 +366,16 @@ mac68k_calibrate_delay()
 		printf("mac68k_calibrate_delay(): entering timing loop\n");
 #endif
 
+	(void)splclock();
+
 	for (sum = 0, n = 8; n > 0; n--) {
 		delay_flag = 1;
 		via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
 		via_reg(VIA1, vT1CH) = 4;	/* (approx 1.3 msec) */
 		sum += ((delay_factor >> 7) - _delay(1));
 	}
+
+	(void)splhigh();
 
 	/* Disable timer interrupts and reset service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
@@ -404,6 +406,4 @@ mac68k_calibrate_delay()
 	if (clock_debug)
 		printf("mac68k_calibrate_delay(): delay_factor calibrated\n");
 #endif
-
-	(void)splhigh();
 }
