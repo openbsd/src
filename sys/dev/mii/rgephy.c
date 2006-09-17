@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.15 2006/08/28 01:54:24 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.16 2006/09/17 19:36:54 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -194,8 +194,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 		case IFM_1000_T:
 			speed = RGEPHY_S1000;
-			anar |= RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
-				RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10;
 			goto setit;
 		case IFM_100_TX:
 			speed = RGEPHY_S100;
