@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.92 2005/06/10 01:41:43 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.93 2006/09/17 18:28:34 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.92 2005/06/10 01:41:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.93 2006/09/17 18:28:34 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -330,13 +330,14 @@ main(int argc, char *argv[])
 	if (Debug)
 		setlinebuf(stdout);
 
-	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
+	if ((fd = nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
 		logerror("Couldn't open /dev/null");
 		die(0);
 	}
-	while (nullfd < 2) {
-		dup2(nullfd, nullfd + 1);
-		nullfd++;
+	while (fd++ <= 2) {
+		if (fcntl(fd, F_GETFL, 0) == -1)
+			if (dup2(nullfd, fd) == -1)
+				logerror("dup2");
 	}
 
 	consfile.f_type = F_CONSOLE;
