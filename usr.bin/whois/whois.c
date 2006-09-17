@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.37 2006/06/01 18:17:35 mk Exp $   */
+/*      $OpenBSD: whois.c,v 1.38 2006/09/17 17:07:16 henning Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -265,8 +265,8 @@ whois(const char *query, const char *server, const char *port, int flags)
  * If no country is specified determine the top level domain from the query.
  * If the TLD is a number, query ARIN, otherwise, use TLD.whois-server.net.
  * If the domain does not contain '.', check to see if it is an NSI handle
- * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+).
- * Fall back to NICHOST for the non-handle case.
+ * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+) or an
+ * ASN (starts with AS). Fall back to NICHOST for the non-handle case.
  */
 char *
 choose_server(const char *name, const char *country)
@@ -286,6 +286,9 @@ choose_server(const char *name, const char *country)
 		    strncasecmp(name, "COHO-", 5) == 0) &&
 		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
 			return (CNICHOST);
+		else if ((strncasecmp(name, "AS", 2) == 0) &&
+		    strtol(name + 2, &ep, 10) > 0 && *ep == '\0')
+			return (MNICHOST);
 		else
 			return (NICHOST);
 	} else if (isdigit(*(++qhead)))
