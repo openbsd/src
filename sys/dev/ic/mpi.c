@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.67 2006/09/18 03:13:25 pedro Exp $ */
+/*	$OpenBSD: mpi.c,v 1.68 2006/09/18 13:01:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1959,7 +1959,7 @@ mpi_eventnotify(struct mpi_softc *sc)
 
 	enq->function = MPI_FUNCTION_EVENT_NOTIFICATION;
 	enq->chain_offset = 0;
-	enq->ev_switch = 1;
+	enq->event_switch = MPI_EVENT_SWITCH_ON;
 	enq->msg_context = htole32(ccb->ccb_id);
 
 	mpi_start(sc, ccb);
