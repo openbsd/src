@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.8 2006/09/18 16:34:23 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.9 2006/09/18 18:08:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -95,7 +95,8 @@ int uath_debug = 1;
  */
 #define UATH_DEV(v, p, f)						\
 	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, (f) },		\
-	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p##_NF }, (f) | UATH_FLAG_ABG }
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p##_NF },		\
+	    (f) | UATH_FLAG_PRE_FIRMWARE }
 #define UATH_DEV_UG(v, p)	UATH_DEV(v, p, 0)
 #define UATH_DEV_UX(v, p)	UATH_DEV(v, p, UATH_FLAG_ABG)
 static const struct uath_type {
@@ -1642,6 +1643,8 @@ uath_reset(struct uath_softc *sc)
 	if (error == 0)
 		error = tsleep(UATH_COND_INIT(sc), PCATCH, "uathinit", 5 * hz);
 	splx(s);
+	if (error != 0)
+		return error;
 
 	/* read PHY registers */
 	for (reg = 0x09; reg <= 0x24; reg++) {
