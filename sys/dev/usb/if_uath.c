@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.6 2006/09/18 16:20:20 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.7 2006/09/18 16:30:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -94,55 +94,38 @@ int uath_debug = 1;
  * UB51: AR5005UG 802.11b/g, UB52: AR5005UX 802.11a/b/g
  */
 #define UATH_DEV(v, p, f)						\
-	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p },			\
-	    (f) },							\
-	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p##_NF }, 		\
-	    (f) | UATH_FLAG_PRE_FIRMWARE }
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, (f) },		\
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p##_NF }, (f) | UATH_FLAG_ABG }
+#define UATH_DEV_UG(v, p)	UATH_DEV(v, p, 0)
+#define UATH_DEV_UX(v, p)	UATH_DEV(v, p, UATH_FLAG_ABG)
 static const struct uath_type {
 	struct usb_devno	dev;
 	unsigned int		flags;
 #define UATH_FLAG_PRE_FIRMWARE	(1 << 0)
-#define UATH_FLAG_DUAL_BAND_RF	(1 << 1)
+#define UATH_FLAG_ABG		(1 << 1)
 } uath_devs[] = {
-	/* Atheros Communications */
-	UATH_DEV(ATHEROS, AR5523, 0),
-	UATH_DEV(ATHEROS2, AR5523_1, 0),
-	UATH_DEV(ATHEROS2, AR5523_2, 0),
-	UATH_DEV(ATHEROS2, AR5523_3, UATH_FLAG_DUAL_BAND_RF),
-
-	/* Conceptronic */
-	UATH_DEV(CONCEPTRONIC, AR5523_1, 0),
-	UATH_DEV(CONCEPTRONIC, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
-
-	/* D-Link */
-	UATH_DEV(DLINK, DWLAG122, UATH_FLAG_DUAL_BAND_RF),
-	UATH_DEV(DLINK, DWLAG132, UATH_FLAG_DUAL_BAND_RF),	
-	UATH_DEV(DLINK, DWLG132, 0),
-
-	/* Gigaset */
-	UATH_DEV(GIGASET, SMCWUSBTG, 0),
-	UATH_DEV(GIGASET, AR5523, 0),
-
-	/* Global Sun Technology */
-	UATH_DEV(GLOBALSUN, AR5523_1, 0),
-	UATH_DEV(GLOBALSUN, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
-
-	/* Netgear */
-	UATH_DEV(NETGEAR, WG111U, UATH_FLAG_DUAL_BAND_RF),
-	UATH_DEV(NETGEAR3, WG111T, 0),
-	UATH_DEV(NETGEAR3, WPN111, 0),
-
-	/* U-MEDIA Communications */
-	UATH_DEV(UMEDIA, AR5523_1, 0),
-	UATH_DEV(UMEDIA, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
-	UATH_DEV(UMEDIA, TEW444UBEU, 0),
-
-	/* Wistron NeWeb */
-	UATH_DEV(WISTRONNEWEB, AR5523_1, 0),
-	UATH_DEV(WISTRONNEWEB, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
-
-	/* Z-Com */
-	UATH_DEV(ZCOM, AR5523, 0)
+	UATH_DEV_UG(ATHEROS,		AR5523),
+	UATH_DEV_UG(ATHEROS2,		AR5523_1),
+	UATH_DEV_UG(ATHEROS2,		AR5523_2),
+	UATH_DEV_UX(ATHEROS2,		AR5523_3),
+	UATH_DEV_UG(CONCEPTRONIC,	AR5523_1),
+	UATH_DEV_UX(CONCEPTRONIC,	AR5523_2),
+	UATH_DEV_UX(DLINK,		DWLAG122),
+	UATH_DEV_UX(DLINK,		DWLAG132),	
+	UATH_DEV_UG(DLINK,		DWLG132),
+	UATH_DEV_UG(GIGASET,		SMCWUSBTG),
+	UATH_DEV_UG(GIGASET,		AR5523),
+	UATH_DEV_UG(GLOBALSUN,		AR5523_1),
+	UATH_DEV_UX(GLOBALSUN,		AR5523_2),
+	UATH_DEV_UX(NETGEAR,		WG111U),
+	UATH_DEV_UG(NETGEAR3,		WG111T),
+	UATH_DEV_UG(NETGEAR3,		WPN111),
+	UATH_DEV_UG(UMEDIA,		AR5523_1),
+	UATH_DEV_UX(UMEDIA,		AR5523_2),
+	UATH_DEV_UG(UMEDIA,		TEW444UBEU),
+	UATH_DEV_UG(WISTRONNEWEB,	AR5523_1),
+	UATH_DEV_UX(WISTRONNEWEB,	AR5523_2),
+	UATH_DEV_UG(ZCOM,		AR5523)
 };
 #define uath_lookup(v, p)	\
 	((struct uath_type *)usb_lookup(uath_devs, v, p))
@@ -355,8 +338,7 @@ USB_ATTACH(uath)
 	}
 
 	printf("%s: MAC/BBP AR5523, RF AR%c112, address %s\n",
-	    USBDEVNAME(sc->sc_dev),
-	    (sc->sc_flags & UATH_FLAG_DUAL_BAND_RF) ? '5': '2',
+	    USBDEVNAME(sc->sc_dev), (sc->sc_flags & UATH_FLAG_ABG) ? '5': '2',
 	    ether_sprintf(ic->ic_myaddr));
 
 	/*
