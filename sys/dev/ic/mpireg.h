@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.28 2006/07/09 13:29:30 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.29 2006/09/18 12:37:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -718,7 +718,6 @@ struct mpi_msg_scsi_io_error {
 #define MPI_SCSIIO_ERR_STATE_TERMINATED			(1<<4)
 #define MPI_SCSIIO_ERR_STATE_RESPONSE_INFO_VALID	(1<<5)
 #define MPI_SCSIIO_ERR_STATE_QUEUE_TAG_REJECTED		(1<<6)
-
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
