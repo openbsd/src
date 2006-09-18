@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2005/07/30 14:37:39 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2006/09/18 21:15:33 mpf Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -30,14 +30,14 @@ SRCS+=	boot.c cmd.c vars.c bootarg.c
 # stand routines
 SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
-	strerror.c strncpy.c strtol.c ctime.c strlcpy.c strlcat.c
+	strerror.c strncpy.c strtol.c strtoll.c ctime.c strlcpy.c strlcat.c
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
 	open.c read.c stat.c write.c cread.c readdir.c cons.c loadfile.c
 # boot filesystems
 SRCS+=	ufs.c
 # gcc support
-SRCS+=	moddi3.c qdivrem.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c

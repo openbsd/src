@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.28 2004/03/09 19:12:12 tom Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.29 2006/09/18 21:14:15 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -150,13 +150,13 @@ Xmemory(void)
 
 		for (i = 1; i < cmd.argc; i++) {
 			char *p;
-			long addr, size;
+			long long addr, size;
 
 			p = cmd.argv[i];
 
-			size = strtol(p + 1, &p, 0);
+			size = strtoll(p + 1, &p, 0);
 			if (*p && *p == '@')
-				addr = strtol(p + 1, NULL, 0);
+				addr = strtoll(p + 1, NULL, 0);
 			else
 				addr = 0;
 			if (addr == 0 && (*p != '@' || size == 0)) {

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2005/07/30 14:32:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/09/18 21:14:15 mpf Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -13,7 +13,7 @@ NOPROFILE=noprofile
 NOPIC=nopic
 
 # kern routines
-SRCS+=	moddi3.c qdivrem.c strlcpy.c strlcat.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c strlcpy.c strlcat.c
 
 all: ${KERNLIB}
 

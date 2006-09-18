@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.4 2005/05/28 05:47:33 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.5 2006/09/18 21:15:33 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -367,28 +367,6 @@ memprobe(void)
 }
 #endif
 
-/*
- * XXX - A hack until libgcc has the appropriate div/mod functions so
- * that we can use -DLIBSA_LONGLONG_PRINTF and simply print out the
- * 64-bit vars directly.
- */
-static const char *
-int64_str(u_int64_t num)
-{
-	static char buf[17], *p;
-	u_int32_t i;
-
-	buf[16] = '\0';
-	for(p = buf + 15, i = 0; i < 16; p--,i++) {
-		*p = "0123456789abcdef"[num & 0xF];
-		num >>= 4;
-		if(num == 0)
-			break;
-	}
-
-	return p;
-}
-
 void
 dump_biosmem(bios_memmap_t *tm)
 {
@@ -398,15 +376,9 @@ dump_biosmem(bios_memmap_t *tm)
 	if (!tm)
 		tm = bios_memmap;
 
-	/* libsa printf does not handle quad args, so we use long
-	 * instead.  Note, since we're unlikely to support more than
-	 * 4G of RAM on a x86 box, this not likely to cause a problem.
-	 * If/when we do, libsa may need to be updated some...
-	 */
 	for(p = tm; p->type != BIOS_MAP_END; p++) {
-		printf("Region %ld: type %u at 0x%s for %uKB\n", 
-		    (long)(p - tm), p->type,
-		    int64_str(p->addr),
+		printf("Region %ld: type %u at 0x%llx for %uKB\n", 
+		    (long)(p - tm), p->type, p->addr,
 		    (u_int)(p->size / 1024));
 
 		if(p->type == BIOS_MAP_FREE)
@@ -418,7 +390,7 @@ dump_biosmem(bios_memmap_t *tm)
 }
 
 int
-mem_delete(long sa, long ea)
+mem_delete(long long sa, long long ea)
 {
 	register bios_memmap_t *p;
 
@@ -455,7 +427,7 @@ mem_delete(long sa, long ea)
 }
 
 int
-mem_add(long sa, long ea)
+mem_add(long long sa, long long ea)
 {
 	register bios_memmap_t *p;
 

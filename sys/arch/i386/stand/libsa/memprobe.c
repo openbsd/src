@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.44 2005/05/03 13:18:04 tom Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.45 2006/09/18 21:14:15 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -369,14 +369,9 @@ dump_biosmem(bios_memmap_t *tm)
 	if (tm == NULL)
 		tm = bios_memmap;
 
-	/* libsa printf does not handle quad args, so we use long
-	 * instead.  Note, since we're unlikely to support more than
-	 * 4G of RAM on a x86 box, this not likely to cause a problem.
-	 * If/when we do, libsa may need to be updated some...
-	 */
 	for (p = tm; p->type != BIOS_MAP_END; p++) {
-		printf("Region %ld: type %u at 0x%x for %uKB\n",
-		    (long)(p - tm), p->type, (u_int)p->addr,
+		printf("Region %ld: type %u at 0x%llx for %uKB\n",
+		    (long)(p - tm), p->type, p->addr,
 		    (u_int)(p->size / 1024));
 
 		if (p->type == BIOS_MAP_FREE)
@@ -388,7 +383,7 @@ dump_biosmem(bios_memmap_t *tm)
 }
 
 int
-mem_delete(long sa, long ea)
+mem_delete(long long sa, long long ea)
 {
 	register bios_memmap_t *p;
 
@@ -425,7 +420,7 @@ mem_delete(long sa, long ea)
 }
 
 int
-mem_add(long sa, long ea)
+mem_add(long long sa, long long ea)
 {
 	register bios_memmap_t *p;
 
