@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.49 2006/08/30 12:18:10 msf Exp $	*/
+/*	$OpenBSD: ike.c,v 1.50 2006/09/18 13:45:45 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -138,7 +138,8 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 			fprintf(fd, SET "[peer-default]:ID=%s-ID force\n",
 			    auth->srcid);
 
-		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", auth->srcid, ike_id_types[idtype]);
+		fprintf(fd, SET "[%s-ID]:ID-type=%s force\n", auth->srcid,
+		    ike_id_types[idtype]);
 		fprintf(fd, SET "[%s-ID]:Name=%s force\n", auth->srcid,
 		    auth->srcid);
 	}
@@ -155,7 +156,8 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 		} else {
 			fprintf(fd, SET
 			    "[peer-default]:Remote-ID=default-ID force\n");
-			fprintf(fd, SET "[default-ID]:ID-type=%s force\n", ike_id_types[idtype]);
+			fprintf(fd, SET "[default-ID]:ID-type=%s force\n",
+			    ike_id_types[idtype]);
 			fprintf(fd, SET "[default-ID]:Name=%s force\n",
 			    auth->dstid);
 		}
@@ -163,8 +165,8 @@ ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
 }
 
 static int
-ike_get_id_type(char *string) 
-{ 
+ike_get_id_type(char *string)
+{
 	if (strchr(string, '@'))
 		return ID_UFQDN;
 	else
