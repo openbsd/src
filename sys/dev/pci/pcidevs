@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1140 2006/09/16 00:35:32 jsg Exp $
+$OpenBSD: pcidevs,v 1.1141 2006/09/18 01:47:48 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ vendor	RCC		0x1166	ServerWorks
 vendor	TOSHIBA2	0x1179	Toshiba
 vendor	RICOH		0x1180	Ricoh
 vendor	DLINK		0x1186	D-Link Systems
-vendor	COROLLARY	0x118c	Corrollary
+vendor	COROLLARY	0x118c	Corollary
 vendor	ACARD		0x1191	Acard
 vendor	ZEINET		0x1193	Zeinet
 vendor	OMEGA		0x119b	Omega Micro
@@ -216,6 +216,7 @@ vendor	SIIG		0x131f	SIIG
 vendor	DTCTECH		0x134a	DTC Tech
 vendor	PCTEL		0x134d	PCTEL
 vendor	CNET		0x1371	CNet
+vendor	SILICOM		0x1374	Silicom
 vendor	LMC		0x1376	LAN Media
 vendor	NETGEAR		0x1385	Netgear
 vendor	MOXA		0x1393	Moxa
@@ -1186,6 +1187,7 @@ product COGENT EM110TX		0x1400	EX110TX
 /* Compaq products */
 product COMPAQ PCI_EISA_BRIDGE	0x0001	EISA
 product COMPAQ PCI_ISA_BRIDGE	0x0002	ISA
+product COMPAQ CSA64XX		0x0046	Smart Array 64xx
 product COMPAQ TRIFLEX1		0x1000	Triflex PCI
 product COMPAQ TRIFLEX2		0x2000	Triflex PCI
 product COMPAQ QVISION_V0	0x3032	QVision
@@ -1202,7 +1204,7 @@ product COMPAQ CSA642		0x409b	Smart Array 642
 product COMPAQ CSA6400		0x409c	Smart Array 6400
 product COMPAQ CSA6400EM	0x409d	Smart Array 6400 EM
 product COMPAQ CSA6422		0x409e	Smart Array 6422
-product COMPAQ CSA64XX		0x0046	Smart Array 64xx
+product COMPAQ HOTPLUG_PCI	0x6010	Hotplug PCI
 product COMPAQ USB		0x7020	USB
 product COMPAQ FXP		0xa0f0	Netelligent ASMC
 product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	ISA
@@ -1261,10 +1263,10 @@ product COREGA CB_TXD		0xa117	FEther CB-TXD 10/100
 product COREGA 2CB_TXD		0xa11e	FEther II CB-TXD 10/100
 product COREGA CGLAPCIGT	0xc107	CG-LAPCIGT
 
-/* Corollary Products */
+/* Corollary products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
 
-/* Creative Labs */
+/* Creative Labs products */
 product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
 product CREATIVELABS AWE64D	0x0003	SoundBlaster AWE64D
 product CREATIVELABS AUDIGY	0x0004	SoundBlaster Audigy
@@ -1540,7 +1542,9 @@ product HIFN 8154		0x0018	8154
 product HIFN 7956		0x001d	7956
 product HIFN 7955		0x0020	7955/7954
 
-/* Hint */
+/* Hint products */
+product HINT HB6_1		0x0020	HB6 PCI-PCI
+product HINT HB6_2		0x0021	HB6 PCI-PCI
 product HINT VXPRO_II_HOST	0x8011	Host
 product HINT VXPRO_II_ISA	0x8012	ISA
 product HINT VXPRO_II_EIDE	0x8013	EIDE
