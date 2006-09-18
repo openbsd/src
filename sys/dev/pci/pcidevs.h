@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1142 2006/09/18 02:03:50 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1143 2006/09/18 05:48:33 gwk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1596,7 +1596,13 @@
 #define	PCI_PRODUCT_INPROCOMM_IPN2220	0x2220		/* IPN2220 */
 
 /* Integrated Micro Solutions products */
+#define	PCI_PRODUCT_IMS_5026	0x5026		/* 5026 */
+#define	PCI_PRODUCT_IMS_5027	0x5027		/* 5027 */
+#define	PCI_PRODUCT_IMS_5028	0x5028		/* 5028 */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
+#define	PCI_PRODUCT_IMS_8853	0x8853		/* 8853 */
+#define	PCI_PRODUCT_IMS_TT128	0x9128		/* Twin Turbo 128 */
+#define	PCI_PRODUCT_IMS_TT3D	0x9135		/* Twin Turbo 3D */
 
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_EESISA	0x0008		/* EES ISA */

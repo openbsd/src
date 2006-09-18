@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1142 2006/09/18 02:03:50 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1143 2006/09/18 05:48:33 gwk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4303,8 +4303,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IPN2220",
 	},
 	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_5026,
+	    "5026",
+	},
+	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_5027,
+	    "5027",
+	},
+	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_5028,
+	    "5028",
+	},
+	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
 	    "8849",
+	},
+	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8853,
+	    "8853",
+	},
+	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_TT128,
+	    "Twin Turbo 128",
+	},
+	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_TT3D,
+	    "Twin Turbo 3D",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EESISA,
