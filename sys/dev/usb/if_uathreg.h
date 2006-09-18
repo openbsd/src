@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uathreg.h,v 1.1 2006/09/16 13:21:24 damien Exp $	*/
+/*	$OpenBSD: if_uathreg.h,v 1.2 2006/09/18 16:34:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -182,9 +182,10 @@ struct uath_cmd_crypto {
 struct uath_cmd_rates {
 	uint32_t	magic1;
 	uint32_t	reserved;
-	uint32_t	magic2;
+	uint32_t	size;
 	uint8_t		nrates;
-	uint8_t		rates[IEEE80211_RATE_MAXSIZE];
+#define UATH_MAX_NRATES	30
+	uint8_t		rates[UATH_MAX_NRATES];
 } __packed;
 
 /* structure for command UATH_CMD_SET_CHAN */

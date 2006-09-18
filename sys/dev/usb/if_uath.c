@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.7 2006/09/18 16:30:17 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.8 2006/09/18 16:34:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1709,9 +1709,6 @@ uath_wme_init(struct uath_softc *sc)
 Static int
 uath_set_chan(struct uath_softc *sc, struct ieee80211_channel *c)
 {
-#ifdef UATH_DEBUG
-	struct ieee80211com *ic = &sc->sc_ic;
-#endif
 	struct uath_set_chan chan;
 
 	bzero(&chan, sizeof chan);
@@ -1721,7 +1718,8 @@ uath_set_chan(struct uath_softc *sc, struct ieee80211_channel *c)
 	chan.magic2 = htobe32(50);
 	chan.magic3 = htobe32(1);
 
-	DPRINTF(("switching to channel %d\n", ieee80211_chan2ieee(ic, c)));
+	DPRINTF(("switching to channel %d\n",
+	    ieee80211_chan2ieee(&sc->sc_ic, c)));
 	return uath_cmd_write(sc, UATH_CMD_SET_CHAN, &chan, sizeof chan, 0);
 }
 
@@ -1777,13 +1775,12 @@ uath_set_rates(struct uath_softc *sc, const struct ieee80211_rateset *rs)
 
 	bzero(&rates, sizeof rates);
 	rates.magic1 = htobe32(0x02);
-	rates.magic2 = htobe32(0x21);
+	rates.size   = htobe32(1 + UATH_MAX_NRATES);
 	rates.nrates = rs->rs_nrates;
 	bcopy(rs->rs_rates, rates.rates, rs->rs_nrates);
 
 	DPRINTF(("setting supported rates nrates=%d\n", rs->rs_nrates));
-	return uath_cmd_write(sc, UATH_CMD_SET_RATES, &rates,
-	    3 * 4 + 1 + rs->rs_nrates, 0);
+	return uath_cmd_write(sc, UATH_CMD_SET_RATES, &rates, sizeof rates, 0);
 }
 
 Static int
