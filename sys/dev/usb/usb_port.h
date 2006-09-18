@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.61 2006/04/23 04:48:07 dlg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.62 2006/09/18 10:55:51 dlg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -118,9 +118,6 @@ typedef struct proc *usb_proc_ptr;
 #endif
 
 #define sel_klist si_note
-
-#define usb_kthread_create1	kthread_create
-#define usb_kthread_create	kthread_create_deferred
 
 typedef int usb_malloc_type;
 

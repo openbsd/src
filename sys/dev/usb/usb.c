@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.33 2006/06/23 06:27:12 miod Exp $	*/
+/*	$OpenBSD: usb.c,v 1.34 2006/09/18 10:55:51 dlg Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ USB_ATTACH(usb)
 		sc->sc_bus->use_polling--;
 
 	config_pending_incr();
-	usb_kthread_create(usb_create_event_thread, sc);
+	kthread_create_deferred(usb_create_event_thread, sc);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -251,20 +251,17 @@ usb_create_event_thread(void *arg)
 	if (sc->sc_bus->usbrev == USBREV_2_0)
 		threads_pending++;
 
-	if (usb_kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
-			   "%s", sc->sc_dev.dv_xname)) {
-		printf("%s: unable to create event thread for\n",
-		       sc->sc_dev.dv_xname);
-		panic("usb_create_event_thread");
-	}
+	if (kthread_create(usb_event_thread, sc, &sc->sc_event_thread,
+	    "%s", sc->sc_dev.dv_xname))
+		panic("unable to create event thread for %s",
+		    sc->sc_dev.dv_xname);
+
 	if (!created) {
 		created = 1;
 		TAILQ_INIT(&usb_all_tasks);
-		if (usb_kthread_create1(usb_task_thread, NULL,
-					&usb_task_thread_proc, "usbtask")) {
-			printf("unable to create task thread\n");
-			panic("usb_create_event_thread task");
-		}
+		if (kthread_create(usb_task_thread, NULL,
+		    &usb_task_thread_proc, "usbtask"))
+			panic("unable to create usb task thread");
 	}
 }
 
