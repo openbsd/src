@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1140 2006/09/16 00:35:32 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1141 2006/09/18 01:47:48 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -173,7 +173,7 @@
 #define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba */
 #define	PCI_VENDOR_RICOH	0x1180		/* Ricoh */
 #define	PCI_VENDOR_DLINK	0x1186		/* D-Link Systems */
-#define	PCI_VENDOR_COROLLARY	0x118c		/* Corrollary */
+#define	PCI_VENDOR_COROLLARY	0x118c		/* Corollary */
 #define	PCI_VENDOR_ACARD	0x1191		/* Acard */
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
 #define	PCI_VENDOR_OMEGA	0x119b		/* Omega Micro */
@@ -221,6 +221,7 @@
 #define	PCI_VENDOR_DTCTECH	0x134a		/* DTC Tech */
 #define	PCI_VENDOR_PCTEL	0x134d		/* PCTEL */
 #define	PCI_VENDOR_CNET	0x1371		/* CNet */
+#define	PCI_VENDOR_SILICOM	0x1374		/* Silicom */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_MOXA	0x1393		/* Moxa */
@@ -1191,6 +1192,7 @@
 /* Compaq products */
 #define	PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE	0x0001		/* EISA */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE	0x0002		/* ISA */
+#define	PCI_PRODUCT_COMPAQ_CSA64XX	0x0046		/* Smart Array 64xx */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX1	0x1000		/* Triflex PCI */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX2	0x2000		/* Triflex PCI */
 #define	PCI_PRODUCT_COMPAQ_QVISION_V0	0x3032		/* QVision */
@@ -1207,7 +1209,7 @@
 #define	PCI_PRODUCT_COMPAQ_CSA6400	0x409c		/* Smart Array 6400 */
 #define	PCI_PRODUCT_COMPAQ_CSA6400EM	0x409d		/* Smart Array 6400 EM */
 #define	PCI_PRODUCT_COMPAQ_CSA6422	0x409e		/* Smart Array 6422 */
-#define	PCI_PRODUCT_COMPAQ_CSA64XX	0x0046		/* Smart Array 64xx */
+#define	PCI_PRODUCT_COMPAQ_HOTPLUG_PCI	0x6010		/* Hotplug PCI */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB */
 #define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent ASMC */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* ISA */
@@ -1266,10 +1268,10 @@
 #define	PCI_PRODUCT_COREGA_2CB_TXD	0xa11e		/* FEther II CB-TXD 10/100 */
 #define	PCI_PRODUCT_COREGA_CGLAPCIGT	0xc107		/* CG-LAPCIGT */
 
-/* Corollary Products */
+/* Corollary products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI */
 
-/* Creative Labs */
+/* Creative Labs products */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SoundBlaster Live */
 #define	PCI_PRODUCT_CREATIVELABS_AWE64D	0x0003		/* SoundBlaster AWE64D */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGY	0x0004		/* SoundBlaster Audigy */
@@ -1545,7 +1547,9 @@
 #define	PCI_PRODUCT_HIFN_7956	0x001d		/* 7956 */
 #define	PCI_PRODUCT_HIFN_7955	0x0020		/* 7955/7954 */
 
-/* Hint */
+/* Hint products */
+#define	PCI_PRODUCT_HINT_HB6_1	0x0020		/* HB6 PCI-PCI */
+#define	PCI_PRODUCT_HINT_HB6_2	0x0021		/* HB6 PCI-PCI */
 #define	PCI_PRODUCT_HINT_VXPRO_II_HOST	0x8011		/* Host */
 #define	PCI_PRODUCT_HINT_VXPRO_II_ISA	0x8012		/* ISA */
 #define	PCI_PRODUCT_HINT_VXPRO_II_EIDE	0x8013		/* EIDE */

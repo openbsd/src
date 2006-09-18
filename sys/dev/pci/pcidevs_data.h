@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1140 2006/09/16 00:35:32 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1141 2006/09/18 01:47:48 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3067,6 +3067,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISA",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA64XX,
+	    "Smart Array 64xx",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1,
 	    "Triflex PCI",
 	},
@@ -3131,8 +3135,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Smart Array 6422",
 	},
 	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA64XX,
-	    "Smart Array 64xx",
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_HOTPLUG_PCI,
+	    "Hotplug PCI",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
@@ -4161,6 +4165,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955,
 	    "7955/7954",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB6_1,
+	    "HB6 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB6_2,
+	    "HB6 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_HOST,
@@ -12704,7 +12716,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_COROLLARY,
-	    "Corrollary",
+	    "Corollary",
 	},
 	{
 	    PCI_VENDOR_ACARD,
@@ -12893,6 +12905,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_CNET,
 	    "CNet",
+	},
+	{
+	    PCI_VENDOR_SILICOM,
+	    "Silicom",
 	},
 	{
 	    PCI_VENDOR_LMC,
