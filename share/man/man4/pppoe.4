@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.12 2006/09/08 19:06:41 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.13 2006/09/18 18:05:04 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,8 +104,10 @@ A typical
 .Pa /etc/hostname.pppoe0
 file looks like this:
 .Bd -literal -offset indent
-inet 0.0.0.0 255.255.255.255 0.0.0.1 pppoedev ne0 \e
-	authproto pap authname testcaller authkey donttell up
+inet 0.0.0.0 255.255.255.255 NONE \e
+	pppoedev ne0 authproto pap \e
+	authname testcaller authkey donttell up
+dest 0.0.0.1
 !/sbin/route add default 0.0.0.1
 .Ed
 .Pp
