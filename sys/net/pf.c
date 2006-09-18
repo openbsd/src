@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.513 2006/07/06 13:25:40 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.514 2006/09/18 07:03:35 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2897,7 +2897,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
 			r = r->skip[PF_SKIP_DST_PORT].ptr;
-		else if (r->tos && !(r->tos & pd->tos))
+		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
@@ -3275,7 +3275,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
 			r = r->skip[PF_SKIP_DST_PORT].ptr;
-		else if (r->tos && !(r->tos & pd->tos))
+		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
@@ -3614,7 +3614,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->code && r->code != icmpcode + 1)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->tos && !(r->tos & pd->tos))
+		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
@@ -3871,7 +3871,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
 		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
-		else if (r->tos && !(r->tos & pd->tos))
+		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
@@ -4086,7 +4086,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
 		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
-		else if (r->tos && !(r->tos & pd->tos))
+		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code ||
@@ -6071,7 +6071,7 @@ done:
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
-		if (pqid || pd.tos == IPTOS_LOWDELAY)
+		if (pqid || (pd.tos & IPTOS_LOWDELAY))
 			pd.pf_mtag->qid = r->pqid;
 		else
 			pd.pf_mtag->qid = r->qid;
@@ -6417,7 +6417,7 @@ done:
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
-		if (pd.tos == IPTOS_LOWDELAY)
+		if (pd.tos & IPTOS_LOWDELAY)
 			pd.pf_mtag->qid = r->pqid;
 		else
 			pd.pf_mtag->qid = r->qid;
