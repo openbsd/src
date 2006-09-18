@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.125 2006/08/17 21:37:44 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.126 2006/09/18 04:05:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -191,24 +191,6 @@ void sk_dump_bytes(const char *, int);
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define SK_SETBIT(sc, reg, x)		\
-	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)
-
-#define SK_CLRBIT(sc, reg, x)		\
-	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) & ~x)
-
-#define SK_WIN_SETBIT_4(sc, reg, x)	\
-	sk_win_write_4(sc, reg, sk_win_read_4(sc, reg) | x)
-
-#define SK_WIN_CLRBIT_4(sc, reg, x)	\
-	sk_win_write_4(sc, reg, sk_win_read_4(sc, reg) & ~x)
-
-#define SK_WIN_SETBIT_2(sc, reg, x)	\
-	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) | x)
-
-#define SK_WIN_CLRBIT_2(sc, reg, x)	\
-	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) & ~x)
 
 /* supported device vendors */
 const struct pci_matchid skc_devices[] = {
