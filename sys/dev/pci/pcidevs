@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1142 2006/09/18 02:03:50 brad Exp $
+$OpenBSD: pcidevs,v 1.1143 2006/09/18 05:48:33 gwk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1591,7 +1591,13 @@ product INPROCOMM IPN2120	0x2120	IPN2120
 product INPROCOMM IPN2220	0x2220	IPN2220
 
 /* Integrated Micro Solutions products */
+product IMS 5026		0x5026	5026
+product IMS 5027		0x5027	5027
+product IMS 5028		0x5028	5028
 product IMS 8849		0x8849	8849
+product IMS 8853		0x8853	8853
+product IMS TT128		0x9128	Twin Turbo 128
+product IMS TT3D		0x9135	Twin Turbo 3D
 
 /* Intel products */
 product INTEL EESISA		0x0008	EES ISA
