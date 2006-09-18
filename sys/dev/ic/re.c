@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.45 2006/09/17 18:18:57 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.46 2006/09/18 21:33:32 dim Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -149,11 +149,10 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/ic/rtl81x9reg.h>
+#include <dev/ic/revar.h>
 
 int redebug = 0;
 #define DPRINTF(x)	if (redebug) printf x
-
-int	re_attach(struct rl_softc *);
 
 int	re_encap(struct rl_softc *, struct mbuf *, int *);
 
@@ -165,12 +164,9 @@ void	re_fixup_rx(struct mbuf *);
 #endif
 void	re_rxeof(struct rl_softc *);
 void	re_txeof(struct rl_softc *);
-int	re_intr(void *);
 void	re_tick(void *);
 void	re_start(struct ifnet *);
 int	re_ioctl(struct ifnet *, u_long, caddr_t);
-int	re_init(struct ifnet *);
-void	re_stop(struct ifnet *, int);
 void	re_watchdog(struct ifnet *);
 int	re_ifmedia_upd(struct ifnet *);
 void	re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
