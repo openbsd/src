@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.62 2006/08/19 14:57:37 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.63 2006/09/18 16:20:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1329,16 +1329,15 @@ ipw_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
 		if (sc->txfree < 1 + IPW_MAX_NSEG) {
-			IF_PREPEND(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);

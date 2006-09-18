@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.31 2006/08/28 19:47:42 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.32 2006/09/18 16:20:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1698,15 +1698,15 @@ wpi_start(struct ifnet *ifp)
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
 			if (sc->txq[0].queued >= sc->txq[0].count - 8) {
 				/* there is no place left in this ring */
-				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);

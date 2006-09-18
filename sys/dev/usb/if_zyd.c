@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.25 2006/08/24 13:16:02 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.26 2006/09/18 16:20:20 damien Exp $	*/
 
 /*
  * Copyright (c) 2006 by Florian Stoehr <ich@florian-stoehr.de>
@@ -3487,16 +3487,15 @@ zyd_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
-
+			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
 
 			if (sc->tx_queued >= ZYD_TX_LIST_CNT) {
-				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 			if (m0->m_len < sizeof (struct ether_header) &&
 				!(m0 = m_pullup(m0, sizeof (struct ether_header))))

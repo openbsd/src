@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.73 2006/08/19 14:57:37 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.74 2006/09/18 16:20:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -973,7 +973,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	    ic->ic_opmode != IEEE80211_M_MONITOR) {
 		/*
 		 * Hardware decrypts the frame itself but leaves the WEP bit
-		 * set in the 802.11 header and don't remove the IV and CRC
+		 * set in the 802.11 header and doesn't remove the IV and CRC
 		 * fields.
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
@@ -1439,16 +1439,15 @@ iwi_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
 		if (sc->txq[0].queued >= IWI_TX_RING_COUNT - 8) {
-			IF_PREPEND(&ifp->if_snd, m0);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
@@ -1707,7 +1706,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *data, int size)
 	uint32_t sentinel, ctl, src, dst, sum, len, mlen;
 	int ntries, nsegs, error;
 
-	/* allocate DMA memory for storing firmware image */
+	/* allocate DMA memory to store firmware image */
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &map);
 	if (error != 0) {

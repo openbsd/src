@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.26 2006/08/09 07:46:37 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.27 2006/09/18 16:20:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1857,15 +1857,15 @@ rt2661_start(struct ifnet *ifp)
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
 			if (sc->txq[0].queued >= RT2661_TX_RING_COUNT - 1) {
 				/* there is no place left in this ring */
-				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
