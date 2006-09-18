@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.66 2006/09/16 07:50:46 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.67 2006/09/18 03:13:25 pedro Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -141,7 +141,6 @@ int			mpi_cfg_page(struct mpi_softc *, u_int32_t,
 int
 mpi_attach(struct mpi_softc *sc)
 {
-	struct device			*dev;
 	struct mpi_ccb			*ccb;
 
 	printf("\n");
@@ -219,14 +218,9 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.adapter_buswidth = sc->sc_buswidth;
 	sc->sc_link.openings = sc->sc_maxcmds / sc->sc_buswidth;
 
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-
-	/* find our scsibus */
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (dev->dv_parent == &sc->sc_dev)
-			break;
-	}
-	sc->sc_scsibus = (struct scsibus_softc *)dev;
+	/* config_found() returns the scsibus we should attach to */
+	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
+	    &sc->sc_link, scsiprint);
 
 	/* get raid pages */
 	mpi_get_raid(sc);
