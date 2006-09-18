@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.4 2006/09/16 19:54:13 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.5 2006/09/18 01:42:30 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -89,7 +89,10 @@ int uath_debug = 1;
 #define DPRINTFN(n, x)
 #endif
 
-/* various supported device vendors/products */
+/* 
+ * Various supported device vendors/products
+ * UB51: AR5005UG 802.11b/g, UB52: AR5005UX 802.11a/b/g
+ */
 #define UATH_DEV(v, p, f)						\
 	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p },			\
 	    (f) },							\
@@ -109,16 +112,20 @@ static const struct uath_type {
 
 	/* Conceptronic */
 	UATH_DEV(CONCEPTRONIC, AR5523_1, 0),
-	UATH_DEV(CONCEPTRONIC, AR5523_2, 0),
+	UATH_DEV(CONCEPTRONIC, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
 
 	/* D-Link */
 	UATH_DEV(DLINK, DWLAG122, UATH_FLAG_DUAL_BAND_RF),
 	UATH_DEV(DLINK, DWLAG132, UATH_FLAG_DUAL_BAND_RF),	
 	UATH_DEV(DLINK, DWLG132, 0),
 
+	/* Gigaset */
+	UATH_DEV(GIGASET, SMCWUSBTG, 0),
+	UATH_DEV(GIGASET, AR5523, 0),
+
 	/* Global Sun Technology */
 	UATH_DEV(GLOBALSUN, AR5523_1, 0),
-	UATH_DEV(GLOBALSUN, AR5523_2, 0),
+	UATH_DEV(GLOBALSUN, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
 
 	/* Netgear */
 	UATH_DEV(NETGEAR, WG111U, UATH_FLAG_DUAL_BAND_RF),
@@ -128,10 +135,14 @@ static const struct uath_type {
 	/* U-MEDIA Communications */
 	UATH_DEV(UMEDIA, AR5523_1, 0),
 	UATH_DEV(UMEDIA, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
+	UATH_DEV(UMEDIA, TEW444UBEU, 0),
 
 	/* Wistron NeWeb */
 	UATH_DEV(WISTRONNEWEB, AR5523_1, 0),
-	UATH_DEV(WISTRONNEWEB, AR5523_2, 0)
+	UATH_DEV(WISTRONNEWEB, AR5523_2, UATH_FLAG_DUAL_BAND_RF),
+
+	/* Z-Com */
+	UATH_DEV(ZCOM, AR5523, 0)
 };
 #define uath_lookup(v, p)	\
 	((struct uath_type *)usb_lookup(uath_devs, v, p))
