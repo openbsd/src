@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.26 2006/09/19 13:14:32 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.27 2006/09/19 13:37:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -500,15 +500,10 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	AR5K_REG_MASKED_BITS(AR5K_AR5211_PHY(0x44),
 	    hal->ah_antenna[ee_mode][0], 0xfffffc06);
 
-	ant[0] = HAL_ANT_FIXED_A;
-	ant[1] = HAL_ANT_FIXED_B;
-
-	if (hal->ah_ant_diversity == AH_FALSE) {
-		if (freq == AR5K_INI_RFGAIN_2GHZ)
-			ant[0] = HAL_ANT_FIXED_B;
-		else if (freq == AR5K_INI_RFGAIN_5GHZ)
-			ant[1] = HAL_ANT_FIXED_A;
-	}
+	if (freq == AR5K_INI_RFGAIN_2GHZ)
+		ant[0] = ant[1] = HAL_ANT_FIXED_B;
+	else
+		ant[0] = ant[1] = HAL_ANT_FIXED_A;
 
 	AR5K_REG_WRITE(AR5K_AR5211_PHY_ANT_SWITCH_TABLE_0,
 	    hal->ah_antenna[ee_mode][ant[0]]);
