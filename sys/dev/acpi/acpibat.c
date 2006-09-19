@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.23 2006/06/06 22:14:30 jolan Exp $ */
+/* $OpenBSD: acpibat.c,v 1.24 2006/09/19 18:01:36 mk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -368,8 +368,8 @@ out:
 	return (rv);
 }
 
-/* XXX it has been observed that some systemts do not propagate battery
- * inserion events up to the driver.  What seems to happen is that DSDT
+/* XXX it has been observed that some systems do not propagate battery
+ * insertion events up to the driver.  What seems to happen is that DSDT
  * does receive an interrupt however the originator bit is not set.
  * This seems to happen when one inserts a 100% full battery.  Removal
  * of the power cord or insertion of a not 100% full battery breaks this
