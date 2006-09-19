@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.193 2006/08/27 16:11:05 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.194 2006/09/19 11:53:10 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,7 +53,6 @@ static struct listen_addrs	*listen_addrs;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
-static int			 pdebug = 1;
 static u_int32_t		 id;
 char				*infile;
 
@@ -1660,15 +1659,10 @@ lookup(char *s)
 	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
 
-	if (p) {
-		if (pdebug > 1)
-			fprintf(stderr, "%s: %d\n", s, p->k_val);
+	if (p)
 		return (p->k_val);
-	} else {
-		if (pdebug > 1)
-			fprintf(stderr, "string: %s\n", s);
+	else
 		return (STRING);
-	}
 }
 
 #define MAXPUSHBACK	128
