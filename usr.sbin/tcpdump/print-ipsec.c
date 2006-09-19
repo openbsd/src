@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.8 2003/07/17 08:45:37 markus Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.9 2006/09/19 14:25:04 naddy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.8 2003/07/17 08:45:37 markus Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.9 2006/09/19 14:25:04 naddy Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -48,6 +48,10 @@ static const char rcsid[] =
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #include "addrtoname.h"
 #include "interface.h"
@@ -203,11 +207,22 @@ esp_print (register const u_char *bp, register u_int len,
 	const struct ip *ip;
 	const struct esp_hdr *esp;
 	u_int plen = len;
+#ifdef INET6
+	const struct ip6_hdr *ip6;
+#endif
  
 	ip = (const struct ip *)bp2;
-
-	printf("esp %s > %s",
-	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+#ifdef INET6
+	if (ip->ip_v == 6) {
+		ip6 = (const struct ip6_hdr *)bp2;
+		printf("esp %s > %s", ip6addr_string(&ip6->ip6_src),
+		    ip6addr_string(&ip6->ip6_dst));
+	} else
+#endif
+	{
+		printf("esp %s > %s",
+	    	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+	}
 
 	if (plen < sizeof(struct esp_hdr)) {
 		printf("[|esp]");
@@ -240,11 +255,22 @@ ah_print (register const u_char *bp, register u_int len,
 	const struct ip *ip;
 	const struct ah_hdr *ah;
 	u_int pl_len = len;
+#ifdef INET6
+	const struct ip6_hdr *ip6;
+#endif
 
 	ip = (const struct ip *)bp2;
-
-	printf("ah %s > %s",
-	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+#ifdef INET6
+	if (ip->ip_v == 6) {
+		ip6 = (const struct ip6_hdr *)bp2;
+		printf("ah %s > %s", ip6addr_string(&ip6->ip6_src),
+		    ip6addr_string(&ip6->ip6_dst));
+	} else
+#endif
+	{
+		printf("ah %s > %s",
+	    	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+	}
 
 	if (pl_len < sizeof(struct ah_hdr)) {
 		printf("[|ah]");
