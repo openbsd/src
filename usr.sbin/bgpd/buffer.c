@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.35 2006/08/27 13:40:21 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.36 2006/09/19 13:04:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,8 @@ buf_grow(struct buf *buf, size_t len)
 
 	if ((p = realloc(buf->buf, buf->size + len)) == NULL) {
 		free(buf->buf);
-		free(buf);
+		buf->buf = NULL;
+		buf->size = 0;
 		return (NULL);
 	}
 
