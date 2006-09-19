@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.32 2006/09/19 16:42:29 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.33 2006/09/19 17:49:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -305,8 +305,9 @@ ar5k_ar5212_nic_wakeup(struct ath_hal *hal, u_int16_t flags)
 	 */
 
 	/* ...reset chipset and PCI device */
-	if (ar5k_ar5212_nic_reset(hal,
-		AR5K_AR5212_RC_CHIP | AR5K_AR5212_RC_PCI) == AH_FALSE) {
+	if (hal->ah_single_chip == AH_FALSE &&
+	    ar5k_ar5212_nic_reset(hal,
+	    AR5K_AR5212_RC_CHIP | AR5K_AR5212_RC_PCI) == AH_FALSE) {
 		AR5K_PRINT("failed to reset the AR5212 + PCI chipset\n");
 		return (AH_FALSE);
 	}

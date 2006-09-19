@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.55 2006/09/19 17:08:01 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.56 2006/09/19 17:49:13 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -242,6 +242,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		/*
 		 * Known single chip solutions
 		 */
+		ah->ah_single_chip = AH_TRUE;
 		printf("%s: AR%s %u.%u phy %u.%u rf %u.%u", ifp->if_xname,
 		    ar5k_printver(AR5K_VERSION_DEV, devid),
 		    ah->ah_mac_version, ah->ah_mac_revision,
@@ -253,6 +254,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		/*
 		 * Multi chip solutions
 		 */
+		ah->ah_single_chip = AH_FALSE;
 		printf("%s: AR%s %u.%u phy %u.%u", ifp->if_xname,
 		    ar5k_printver(AR5K_VERSION_VER, ah->ah_mac_srev),
 		    ah->ah_mac_version, ah->ah_mac_revision,
@@ -271,12 +273,14 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		break;
 	}
 
+#if 0
 	if (ah->ah_radio_5ghz_revision >= AR5K_SREV_RAD_UNSUPP ||
 	    ah->ah_radio_2ghz_revision >= AR5K_SREV_RAD_UNSUPP) {
 		printf(": RF radio not supported\n");
 		error = EOPNOTSUPP;
 		goto bad;
 	}
+#endif
 
 	sc->sc_ah = ah;
 	sc->sc_invalid = 0;	/* ready to go, enable interrupt handling */
