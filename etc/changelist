@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.45 2006/06/01 16:43:23 norby Exp $
+#	$OpenBSD: changelist,v 1.46 2006/09/19 19:33:04 aanriot Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -15,6 +15,7 @@
 /etc/bootparams
 /etc/ccd.conf
 /etc/changelist
+/etc/chio.conf
 /etc/crontab
 /etc/csh.cshrc
 /etc/csh.login
