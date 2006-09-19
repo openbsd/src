@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.53 2006/09/19 13:25:54 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.54 2006/09/19 16:46:39 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -670,7 +670,7 @@ ath_chan2flags(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	case IEEE80211_MODE_11B:
 		return CHANNEL_B;
 	case IEEE80211_MODE_11G:
-		return CHANNEL_PUREG;
+		return CHANNEL_G;
 	case IEEE80211_MODE_TURBO:
 		return CHANNEL_T;
 	default:
