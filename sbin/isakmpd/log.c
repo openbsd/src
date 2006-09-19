@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.58 2005/05/26 05:35:55 moritz Exp $	 */
+/* $OpenBSD: log.c,v 1.59 2006/09/19 10:48:41 otto Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -413,7 +413,7 @@ log_packet_init(char *newname)
 	/* XXX This is a fstat! */
 	if (monitor_stat(pcaplog_file, &st) == 0) {
 		/* Sanity checks.  */
-		if ((st.st_mode & S_IFMT) != S_IFREG) {
+		if (!S_ISREG(st.st_mode)) {
 			log_print("log_packet_init: existing capture file is "
 			    "not a regular file");
 			return;

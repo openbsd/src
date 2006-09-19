@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.31 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: policy.c,v 1.32 2006/09/19 10:48:41 otto Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -127,7 +127,7 @@ systrace_setupdir(char *path)
 		
 
 	if (stat(policydir, &sb) != -1) {
-		if (!(sb.st_mode & S_IFDIR))
+		if (!S_ISDIR(sb.st_mode))
 			errx(1, "Not a directory: \"%s\"", policydir);
 	} else if (mkdir(policydir, 0700) == -1)
 		err(1, "mkdir(%s)", policydir);
@@ -438,7 +438,7 @@ systrace_templatedir(void)
 			goto error;
 
 		/* Check if template directory exists */
-		if (stat(filename, &sb) != -1 && (sb.st_mode & S_IFDIR))
+		if (stat(filename, &sb) != -1 && S_ISDIR(sb.st_mode))
 			dir = opendir(filename);
 	}
 
@@ -446,7 +446,7 @@ systrace_templatedir(void)
 	if (dir == NULL) {
 		strlcpy(filename, POLICY_PATH, sizeof(filename));
 		strlcat(filename, "/templates", sizeof(filename));
-		if (stat(filename, &sb) != -1 && (sb.st_mode & S_IFDIR))
+		if (stat(filename, &sb) != -1 && S_ISDIR(sb.st_mode))
 			dir = opendir(filename);
 		if (dir == NULL)
 			return (-1);
@@ -462,7 +462,7 @@ systrace_templatedir(void)
 		    sizeof(filename))
 			goto error;
 
-		if (stat(filename, &sb) == -1 || !(sb.st_mode & S_IFREG))
+		if (stat(filename, &sb) == -1 || !S_ISREG(sb.st_mode))
 			continue;
 
 		template = systrace_readtemplate(filename, NULL, NULL);

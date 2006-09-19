@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.48 2006/09/01 00:24:06 mpf Exp $	 */
+/* $OpenBSD: ui.c,v 1.49 2006/09/19 10:48:41 otto Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -84,7 +84,7 @@ ui_init(void)
 
 	/* Don't overwrite a file, i.e '-f /etc/isakmpd/isakmpd.conf'.  */
 	if (lstat(ui_fifo, &st) == 0) {
-		if ((st.st_mode & S_IFMT) == S_IFREG) {
+		if (S_ISREG(st.st_mode)) {
 			errno = EEXIST;
 			log_fatal("ui_init: could not create FIFO \"%s\"",
 			    ui_fifo);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.52 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.53 2006/09/19 10:48:41 otto Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -704,7 +704,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 			 */
 			if (userp != ICLINK_NOLAST) {
 				if (lstat(rcwd, &st) == -1 ||
-				    !(st.st_mode & S_IFDIR))
+				    !S_ISDIR(st.st_mode))
 					failed = 1;
 			}
 		}
