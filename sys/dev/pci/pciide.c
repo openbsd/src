@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.254 2006/09/16 00:46:56 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.255 2006/09/19 03:34:49 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1623,7 +1623,7 @@ pciide_dma_init(void *v, int channel, int drive, void *databuf,
 	    dma_maps->dmamap_xfer,
 	    databuf, datalen, NULL, BUS_DMA_NOWAIT|BUS_DMA_RAW);
 	if (error) {
-		printf("%s:%d: unable to load xfer DMA map for"
+		printf("%s:%d: unable to load xfer DMA map for "
 		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
 		    channel, drive, error);
 		return (error);
