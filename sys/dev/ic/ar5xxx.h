@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.33 2006/09/19 16:42:29 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.34 2006/09/19 17:08:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -1181,7 +1181,8 @@ struct ath_hal {
 enum ar5k_srev_type {
 	AR5K_VERSION_VER,
 	AR5K_VERSION_REV,
-	AR5K_VERSION_RAD
+	AR5K_VERSION_RAD,
+	AR5K_VERSION_DEV,
 };
 
 struct ar5k_srev_name {
@@ -1206,7 +1207,11 @@ struct ar5k_srev_name {
 	{ "5112a",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5112A },	\
 	{ "2112",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2112 },	\
 	{ "2112a",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2112A },	\
-	{ "xxxx",	AR5K_VERSION_RAD,	AR5K_SREV_UNKNOWN }	\
+	{ "xxxx",	AR5K_VERSION_RAD,	AR5K_SREV_UNKNOWN },	\
+	{ "2413",	AR5K_VERSION_DEV,	AR5K_DEVID_AR2413 },	\
+	{ "5413",	AR5K_VERSION_DEV,	AR5K_DEVID_AR5413 },	\
+	{ "5424",	AR5K_VERSION_DEV,	AR5K_DEVID_AR5424 },	\
+	{ "xxxx",	AR5K_VERSION_DEV,	AR5K_SREV_UNKNOWN }	\
 }
 
 #define AR5K_SREV_UNKNOWN	0xffff
@@ -1229,6 +1234,10 @@ struct ar5k_srev_name {
 #define AR5K_SREV_RAD_2112	0x40
 #define AR5K_SREV_RAD_2112A	0x45
 #define AR5K_SREV_RAD_UNSUPP	0x50
+
+#define AR5K_DEVID_AR2413	0x001a
+#define AR5K_DEVID_AR5413	0x001b
+#define AR5K_DEVID_AR5424	0x001c
 
 /*
  * Misc defines
@@ -1928,7 +1937,7 @@ u_int			 ath_hal_ieee2mhz(u_int, u_int);
 HAL_BOOL		 ath_hal_init_channels(struct ath_hal *, HAL_CHANNEL *,
     u_int, u_int *, u_int16_t, HAL_BOOL, HAL_BOOL);
 
-const char		*ar5k_printver(enum ar5k_srev_type, u_int);
+const char		*ar5k_printver(enum ar5k_srev_type, u_int32_t);
 void			 ar5k_radar_alert(struct ath_hal *);
 ieee80211_regdomain_t	 ar5k_regdomain_to_ieee(u_int16_t);
 u_int16_t		 ar5k_regdomain_from_ieee(ieee80211_regdomain_t);

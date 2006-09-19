@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.34 2006/09/19 13:14:32 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.35 2006/09/19 17:08:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -60,6 +60,12 @@ static const struct {
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_FPGA,
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_IBM,
+	    ar5k_ar5212_attach },
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR2413,
+	    ar5k_ar5212_attach },
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5413,
+	    ar5k_ar5212_attach },
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5424,
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRDAG675,
 	    ar5k_ar5212_attach },
@@ -503,6 +509,14 @@ ar5k_printver(enum ar5k_srev_type type, u_int32_t val)
 	int i;
 
 	for (i = 0; i < AR5K_ELEMENTS(names); i++) {
+		if (type == AR5K_VERSION_DEV) {
+			if (names[i].sr_type == type &&
+			    names[i].sr_val == val) {
+				name = names[i].sr_name;
+				break;
+			}
+			continue;
+		}
 		if (names[i].sr_type != type ||
 		    names[i].sr_val == AR5K_SREV_UNKNOWN)
 			continue;

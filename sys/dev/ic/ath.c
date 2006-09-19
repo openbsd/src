@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.54 2006/09/19 16:46:39 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.55 2006/09/19 17:08:01 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -235,20 +235,40 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		goto bad;
 	}
 
-	printf("%s: AR%s %u.%u phy %u.%u", ifp->if_xname,
-	    ar5k_printver(AR5K_VERSION_VER, ah->ah_mac_srev),
-	    ah->ah_mac_version, ah->ah_mac_revision,
-	    ah->ah_phy_revision >> 4, ah->ah_phy_revision & 0xf);
-	printf(" rf%s %u.%u",
-	    ar5k_printver(AR5K_VERSION_RAD, ah->ah_radio_5ghz_revision),
-	    ah->ah_radio_5ghz_revision >> 4,
-	    ah->ah_radio_5ghz_revision & 0xf);
-	if (ah->ah_radio_2ghz_revision != 0) {
+	switch (devid) {
+	case PCI_PRODUCT_ATHEROS_AR2413:
+	case PCI_PRODUCT_ATHEROS_AR5413:
+	case PCI_PRODUCT_ATHEROS_AR5424:
+		/*
+		 * Known single chip solutions
+		 */
+		printf("%s: AR%s %u.%u phy %u.%u rf %u.%u", ifp->if_xname,
+		    ar5k_printver(AR5K_VERSION_DEV, devid),
+		    ah->ah_mac_version, ah->ah_mac_revision,
+		    ah->ah_phy_revision >> 4, ah->ah_phy_revision & 0xf,
+		    ah->ah_radio_5ghz_revision >> 4,
+		    ah->ah_radio_5ghz_revision & 0xf);
+		break;
+	default:
+		/*
+		 * Multi chip solutions
+		 */
+		printf("%s: AR%s %u.%u phy %u.%u", ifp->if_xname,
+		    ar5k_printver(AR5K_VERSION_VER, ah->ah_mac_srev),
+		    ah->ah_mac_version, ah->ah_mac_revision,
+		    ah->ah_phy_revision >> 4, ah->ah_phy_revision & 0xf);
 		printf(" rf%s %u.%u",
-		    ar5k_printver(AR5K_VERSION_RAD,
-		    ah->ah_radio_2ghz_revision),
-		    ah->ah_radio_2ghz_revision >> 4,
-		    ah->ah_radio_2ghz_revision & 0xf);
+		    ar5k_printver(AR5K_VERSION_RAD, ah->ah_radio_5ghz_revision),
+		    ah->ah_radio_5ghz_revision >> 4,
+		    ah->ah_radio_5ghz_revision & 0xf);
+		if (ah->ah_radio_2ghz_revision != 0) {
+			printf(" rf%s %u.%u",
+			    ar5k_printver(AR5K_VERSION_RAD,
+			    ah->ah_radio_2ghz_revision),
+			    ah->ah_radio_2ghz_revision >> 4,
+			    ah->ah_radio_2ghz_revision & 0xf);
+		}
+		break;
 	}
 
 	if (ah->ah_radio_5ghz_revision >= AR5K_SREV_RAD_UNSUPP ||
