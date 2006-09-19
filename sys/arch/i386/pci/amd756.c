@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd756.c,v 1.3 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: amd756.c,v 1.4 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -108,12 +108,8 @@ const struct pciintr_icu amd756_pci_icu = {
 
 
 int
-amd756_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+amd756_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct viper_handle *ph;
 
@@ -136,9 +132,7 @@ amd756_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-amd756_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+amd756_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	if (AMD756_LEGAL_LINK(link - 1) == 0)
 		return (1);
@@ -148,9 +142,7 @@ amd756_getclink(v, link, clinkp)
 }
 
 int
-amd756_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+amd756_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct viper_handle *ph = v;
 	pcireg_t reg;
@@ -168,9 +160,7 @@ amd756_get_intr(v, clink, irqp)
 }
 
 int
-amd756_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+amd756_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct viper_handle *ph = v;
 	int val;
@@ -189,9 +179,7 @@ amd756_set_intr(v, clink, irq)
 }
 
 int
-amd756_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+amd756_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct viper_handle *ph = v;
 	int i, pciirq;
@@ -216,9 +204,7 @@ amd756_get_trigger(v, irq, triggerp)
 }
 
 int
-amd756_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+amd756_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct viper_handle *ph = v;
 	int i, pciirq;
@@ -245,8 +231,7 @@ amd756_set_trigger(v, irq, trigger)
 
 #ifdef VIPER_DEBUG
 static void
-amd756_pir_dump(ph)
-	struct viper_handle *ph;
+amd756_pir_dump(struct viper_handle *ph)
 {
 	int a, b;
 

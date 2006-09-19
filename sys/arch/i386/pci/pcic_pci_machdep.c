@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcic_pci_machdep.c,v 1.3 2002/03/14 01:26:33 millert Exp $ */
+/*	$OpenBSD: pcic_pci_machdep.c,v 1.4 2006/09/19 11:06:34 jsg Exp $ */
 /*	$NetBSD: pcic_pci_machdep.c,v 1.1 1998/12/20 17:53:29 nathanw Exp $	*/
 
 /*
@@ -49,16 +49,13 @@
 #include <dev/pci/i82365_pcivar.h>
 
 void *
-pcic_pci_machdep_intr_est(pc)
-	pci_chipset_tag_t pc;
+pcic_pci_machdep_intr_est(pci_chipset_tag_t pc)
 {
 	return NULL;
 }
 
 void *
-pcic_pci_machdep_pcic_intr_establish(sc, fct)
-	struct pcic_softc *sc;
-	int (*fct)(void *);
+pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *sc, int (*fct)(void *))
 {
 	if (isa_intr_alloc(NULL, PCIC_CSC_INTR_IRQ_VALIDMASK & 0xffff,
 			   IST_EDGE, &(sc->irq)))
@@ -69,21 +66,15 @@ pcic_pci_machdep_pcic_intr_establish(sc, fct)
 }
 
 void *
-pcic_pci_machdep_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
-	char *xname;
+pcic_pci_machdep_chip_intr_establish(pcmcia_chipset_handle_t pch,
+    struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg,
+    char *xname)
 {
 	return (pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname));
 }
 
 void
-pcic_pci_machdep_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+pcic_pci_machdep_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	pcic_isa_chip_intr_disestablish(pch, ih);
 }

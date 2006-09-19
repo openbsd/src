@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.8 2006/05/27 04:08:57 gwk Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.9 2006/09/19 11:06:33 jsg Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -134,9 +134,7 @@ i686_mtrrconflict(int flag1, int flag2)
  * Look for an exactly-matching range.
  */
 struct mem_range_desc *
-mem_range_match(sc, mrd)
-	struct mem_range_softc *sc;
-	struct mem_range_desc *mrd;
+mem_range_match(struct mem_range_softc *sc, struct mem_range_desc *mrd)
 {
 	struct mem_range_desc	*cand;
 	int			 i;
@@ -154,8 +152,7 @@ mem_range_match(sc, mrd)
  * that MTRRs are enabled, and we may or may not have fixed MTRRs.
  */
 void
-i686_mrfetch(sc)
-	struct mem_range_softc *sc;
+i686_mrfetch(struct mem_range_softc *sc)
 {
 	struct mem_range_desc	*mrd;
 	u_int64_t		 msrv;
@@ -232,8 +229,7 @@ i686_mrfetch(sc)
  * Return the MTRR memory type matching a region's flags
  */
 int
-i686_mtrrtype(flags)
-	int flags;
+i686_mtrrtype(int flags)
 {
 	int		i;
 	
@@ -265,8 +261,7 @@ i686_mrt2mtrr(int flags, int oldval)
  * XXX Must be called with interrupts enabled.
  */
 void
-i686_mrstore(sc)
-	struct mem_range_softc *sc;
+i686_mrstore(struct mem_range_softc *sc)
 {
 	disable_intr();				/* disable interrupts */
 	i686_mrstoreone((void *)sc);
@@ -279,8 +274,7 @@ i686_mrstore(sc)
  * just stuffing one entry; this is simpler (but slower, of course).
  */
 void
-i686_mrstoreone(arg)
-	void *arg;
+i686_mrstoreone(void *arg)
 {
 	struct mem_range_softc 	*sc = (struct mem_range_softc *)arg;
 	struct mem_range_desc	*mrd;
@@ -368,9 +362,7 @@ i686_mrstoreone(arg)
  * Hunt for the fixed MTRR referencing (addr)
  */
 struct mem_range_desc *
-i686_mtrrfixsearch(sc, addr)
-	struct mem_range_softc 	*sc;
-	u_int64_t		 addr;
+i686_mtrrfixsearch(struct mem_range_softc *sc, u_int64_t addr)
 {
 	struct mem_range_desc *mrd;
 	int			i;
@@ -392,10 +384,7 @@ i686_mtrrfixsearch(sc, addr)
  * XXX note that this will have to be updated when we start supporting "busy" ranges.
  */
 int
-i686_mrsetlow(sc, mrd, arg)
-	struct mem_range_softc 	*sc;
-	struct mem_range_desc 	*mrd;
-	int 			*arg;
+i686_mrsetlow(struct mem_range_softc *sc, struct mem_range_desc *mrd, int *arg)
 {
 	struct mem_range_desc	*first_md, *last_md, *curr_md;
 
@@ -427,10 +416,8 @@ i686_mrsetlow(sc, mrd, arg)
  * XXX needs to be updated to properly support "busy" ranges.
  */
 int
-i686_mrsetvariable(sc, mrd, arg)
-	struct mem_range_softc 	*sc;
-	struct mem_range_desc 	*mrd;
-	int 			*arg;
+i686_mrsetvariable(struct mem_range_softc *sc, struct mem_range_desc *mrd,
+    int *arg)
 {
 	struct mem_range_desc	*curr_md, *free_md;
 	int			 i;
@@ -490,10 +477,7 @@ i686_mrsetvariable(sc, mrd, arg)
  *
  */
 int
-i686_mrset(sc, mrd, arg)
-	struct mem_range_softc 	*sc;
-	struct mem_range_desc 	*mrd;
-	int 			*arg;
+i686_mrset(struct mem_range_softc *sc, struct mem_range_desc *mrd, int *arg)
 {
 	struct mem_range_desc	*targ;
 	int			 error = 0;
@@ -545,8 +529,7 @@ i686_mrset(sc, mrd, arg)
  * fetch the initial settings.
  */
 void
-i686_mrinit(sc)
-	struct mem_range_softc 	*sc;
+i686_mrinit(struct mem_range_softc *sc)
 {
 	struct mem_range_desc	*mrd;
 	int			 nmdesc = 0;
@@ -611,8 +594,7 @@ i686_mrinit(sc)
  * Initialise MTRRs on an AP after the BSP has run the init code.
  */
 void
-i686_mrAPinit(sc)
-	struct mem_range_softc *sc;
+i686_mrAPinit(struct mem_range_softc *sc)
 {
 	i686_mrstoreone((void *)sc); /* set MTRRs to match BSP */
 	wrmsr(MSR_MTRRdefType, mtrrdef); /* set MTRR behaviour to match BSP */

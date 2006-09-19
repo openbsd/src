@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.77 2006/08/22 20:09:25 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.78 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -107,10 +107,7 @@ void syscall(struct trapframe);
  * trap and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
+userret(struct proc *p, int pc, u_quad_t oticks)
 {
 	int sig;
 
@@ -178,10 +175,9 @@ int	trapdebug = 0;
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe frame;
+trap(struct trapframe frame)
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
@@ -623,12 +619,11 @@ trapwrite(unsigned int addr)
  */
 /*ARGSUSED*/
 void
-syscall(frame)
-	struct trapframe frame;
+syscall(struct trapframe frame)
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int orig_error, error, opc, nsys;
 	size_t argsize;
 	register_t code, args[8], rval[2];
@@ -819,8 +814,7 @@ syscall(frame)
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = (struct proc *)arg;
 	struct trapframe *tf = p->p_md.md_regs;

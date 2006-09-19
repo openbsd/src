@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.13 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.14 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /*
@@ -876,11 +876,8 @@ db_addr_t db_disasm_esc(db_addr_t, int, int, int, char *);
  * Read address at location and return updated location.
  */
 db_addr_t
-db_read_address(loc, short_addr, regmodrm, addrp)
-	db_addr_t	loc;
-	int		short_addr;
-	int		regmodrm;
-	struct i_addr	*addrp;		/* out */
+db_read_address(db_addr_t loc, int short_addr, int regmodrm,
+    struct i_addr *addrp)
 {
 	int		mod, rm, sib, index, disp;
 
@@ -957,10 +954,7 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 }
 
 void
-db_print_address(seg, size, addrp)
-	char *		seg;
-	int		size;
-	struct i_addr	*addrp;
+db_print_address(char *seg, int size, struct i_addr *addrp)
 {
 	if (addrp->is_reg) {
 		db_printf("%s", db_reg[size][addrp->disp]);
@@ -986,12 +980,7 @@ db_print_address(seg, size, addrp)
  * and return updated location.
  */
 db_addr_t
-db_disasm_esc(loc, inst, short_addr, size, seg)
-	db_addr_t	loc;
-	int		inst;
-	int		short_addr;
-	int		size;
-	char *		seg;
+db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, char *seg)
 {
 	int		regmodrm;
 	struct finst	*fp;
@@ -1082,9 +1071,7 @@ db_disasm_esc(loc, inst, short_addr, size, seg)
  * next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
+db_disasm(db_addr_t loc, boolean_t altfmt)
 {
 	int	inst;
 	int	size;

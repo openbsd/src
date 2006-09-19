@@ -1,4 +1,4 @@
-/*	$OpenBSD: piix.c,v 1.7 2003/03/28 23:12:33 mickey Exp $	*/
+/*	$OpenBSD: piix.c,v 1.8 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
@@ -105,12 +105,8 @@ const struct pciintr_icu piix_pci_icu = {
 };
 
 int
-piix_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+piix_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct piix_handle *ph;
 
@@ -137,9 +133,7 @@ piix_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-piix_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+piix_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	DPRINTF(("PIIX link value 0x%x: ", link));
 
@@ -169,9 +163,7 @@ piix_getclink(v, link, clinkp)
 }
 
 int
-piix_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+piix_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct piix_handle *ph = v;
 	int shift, off;
@@ -197,9 +189,7 @@ piix_get_intr(v, clink, irqp)
 }
 
 int
-piix_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+piix_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct piix_handle *ph = v;
 	int shift, off;
@@ -224,9 +214,7 @@ piix_set_intr(v, clink, irq)
 }
 
 int
-piix_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+piix_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct piix_handle *ph = v;
 	int off, bit;
@@ -248,9 +236,7 @@ piix_get_trigger(v, irq, triggerp)
 }
 
 int
-piix_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+piix_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct piix_handle *ph = v;
 	int off, bit;
@@ -274,8 +260,7 @@ piix_set_trigger(v, irq, trigger)
 
 #ifdef PIIX_DEBUG
 void
-piix_pir_dump(ph)
-	struct piix_handle *ph;
+piix_pir_dump(struct piix_handle *ph)
 {
 	int i, irq;
 	pcireg_t irqs = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);

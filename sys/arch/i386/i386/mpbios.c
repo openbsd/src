@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.15 2006/08/18 08:30:35 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.16 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -200,9 +200,7 @@ int mp_verbose = 0;
 #endif
 
 int
-mp_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mp_print(void *aux, const char *pnp)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (pnp)
@@ -211,10 +209,7 @@ mp_print(aux, pnp)
 }
 
 int
-mp_match(parent, cfv, aux)
-	struct device *parent;
-	void *cfv;
-	void *aux;
+mp_match(struct device *parent, void *cfv, void *aux)
 {
         struct cfdata *cf = (struct cfdata *)cfv;
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
@@ -229,10 +224,7 @@ mp_match(parent, cfv, aux)
  * const'ed pointer.
  */
 const void *
-mpbios_map(pa, len, handle)
-	paddr_t pa;
-	int len;
-	struct mp_map *handle;
+mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 {
 	paddr_t pgpa = trunc_page(pa);
 	paddr_t endpa = round_page(pa + len);
@@ -260,8 +252,7 @@ mpbios_map(pa, len, handle)
 }
 
 static __inline void
-mpbios_unmap(handle)
-	struct mp_map *handle;
+mpbios_unmap(struct mp_map *handle)
 {
 #if 1
   	pmap_kremove(handle->baseva, handle->vsize);
@@ -275,8 +266,7 @@ mpbios_unmap(handle)
  * Look for an Intel MP spec table, indicating SMP capable hardware.
  */
 int
-mpbios_probe(self)
-	struct device *self;
+mpbios_probe(struct device *self)
 {
 	paddr_t  	ebda, memtop;
 
@@ -388,9 +378,7 @@ mpbios_probe(self)
  */
 
 static __inline int
-mpbios_cksum (start, len)
-	const void *start;
-	int len;
+mpbios_cksum(const void *start, int len)
 {
 	unsigned char res=0;
 	const char *p = start;
@@ -412,11 +400,7 @@ mpbios_cksum (start, len)
  */
 
 const void *
-mpbios_search (self, start, count, map)
-	struct device *self;
-	paddr_t start;
-	int count;
-	struct mp_map *map;
+mpbios_search(struct device *self, paddr_t start, int count, struct mp_map *map)
 {
 	struct mp_map t;
 
@@ -505,8 +489,7 @@ static struct mp_bus nmi_bus = {
  *	nintrs
  */
 void
-mpbios_scan(self)
-	struct device *self;
+mpbios_scan(struct device *self)
 {
 	const u_int8_t 	*position, *end;
 	int		count;
@@ -725,9 +708,7 @@ mpbios_invent(int irq, int type, int bus)
 }
 
 void
-mpbios_cpu(ent, self)
-	const u_int8_t *ent;
-	struct device *self;
+mpbios_cpu(const u_int8_t *ent, struct device *self)
 {
 	const struct mpbios_proc *entry = (const struct mpbios_proc *)ent;
 	struct cpu_attach_args caa;
@@ -777,9 +758,7 @@ mpbios_cpu(ent, self)
  * Fill in: trigger mode, polarity, and possibly delivery mode.
  */
 void
-mp_cfg_special_intr(entry, redir)
-	const struct mpbios_int *entry;
-	u_int32_t *redir;
+mp_cfg_special_intr(const struct mpbios_int *entry, u_int32_t *redir)
 {
 
 	/*
@@ -816,9 +795,7 @@ mp_cfg_special_intr(entry, redir)
 /* XXX too much duplicated code here. */
 
 void
-mp_cfg_pci_intr(entry, redir)
-	const struct mpbios_int *entry;
-	u_int32_t *redir;
+mp_cfg_pci_intr(const struct mpbios_int *entry, u_int32_t *redir)
 {
 	int mpspo = entry->int_flags & 0x03; /* XXX magic */
 	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
@@ -856,9 +833,7 @@ mp_cfg_pci_intr(entry, redir)
 }
 
 void
-mp_cfg_eisa_intr (entry, redir)
-	const struct mpbios_int *entry;
-	u_int32_t *redir;
+mp_cfg_eisa_intr (const struct mpbios_int *entry, u_int32_t *redir)
 {
 	int mpspo = entry->int_flags & 0x03; /* XXX magic */
 	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
@@ -908,9 +883,7 @@ mp_cfg_eisa_intr (entry, redir)
 
 
 void
-mp_cfg_isa_intr(entry, redir)
-	const struct mpbios_int *entry;
-	u_int32_t *redir;
+mp_cfg_isa_intr(const struct mpbios_int *entry, u_int32_t *redir)
 {
 	int mpspo = entry->int_flags & 0x03; /* XXX magic */
 	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
@@ -949,28 +922,24 @@ mp_cfg_isa_intr(entry, redir)
 
 
 void
-mp_print_special_intr(intr)
-	int intr;
+mp_print_special_intr(int intr)
 {
 }
 
 void
-mp_print_pci_intr(intr)
-	int intr;
+mp_print_pci_intr(int intr)
 {
 	printf(" device %d INT_%c", (intr >> 2) & 0x1f, 'A' + (intr & 0x3));
 }
 
 void
-mp_print_isa_intr(intr)
-	int intr;
+mp_print_isa_intr(int intr)
 {
 	printf(" irq %d", intr);
 }
 
 void
-mp_print_eisa_intr(intr)
-	int intr;
+mp_print_eisa_intr(int intr)
 {
 	printf(" EISA irq %d", intr);
 }
@@ -984,9 +953,7 @@ mp_print_eisa_intr(intr)
 #define EXTEND_TAB(a,u)	(!(_TAB_ROUND(a, u) == _TAB_ROUND((a + 1), u)))
 
 void
-mpbios_bus(ent, self)
-	const u_int8_t *ent;
-	struct device *self;
+mpbios_bus(const u_int8_t *ent, struct device *self)
 {
 	const struct mpbios_bus *entry = (const struct mpbios_bus *)ent;
 	int bus_id = entry->bus_id;
@@ -1043,9 +1010,7 @@ mpbios_bus(ent, self)
 
 
 void
-mpbios_ioapic(ent, self)
-	const u_int8_t *ent;
-	struct device *self;
+mpbios_ioapic(const u_int8_t *ent, struct device *self)
 {
 	const struct mpbios_ioapic *entry = (const struct mpbios_ioapic *)ent;
 	struct apic_attach_args aaa;
@@ -1065,9 +1030,7 @@ mpbios_ioapic(ent, self)
 }
 
 int
-mpbios_int(ent, mpi)
-	const u_int8_t *ent;
-	struct mp_intr_map *mpi;
+mpbios_int(const u_int8_t *ent, struct mp_intr_map *mpi)
 {
 	const struct mpbios_int *entry = (const struct mpbios_int *)ent;
 	struct mpbios_int rw_entry = *entry;

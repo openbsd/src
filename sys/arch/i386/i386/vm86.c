@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.c,v 1.16 2006/05/11 13:21:12 mickey Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.17 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
@@ -142,9 +142,7 @@ __res; })
 
 
 static __inline int
-is_bitset(nr, bitmap)
-	int nr;
-	caddr_t bitmap;
+is_bitset(int nr, caddr_t bitmap)
 {
 	u_int byte;		/* bt instruction doesn't do
 					   bytes--it examines ints! */
@@ -163,9 +161,7 @@ is_bitset(nr, bitmap)
 #define V86_AL(regs)	(((u_char *)&((regs)->tf_eax))[0])
 
 static void
-fast_intxx(p, intrno)
-	struct proc *p;
-	int intrno;
+fast_intxx(struct proc *p, int intrno)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	/*
@@ -234,9 +230,7 @@ bad:
 }
 
 void
-vm86_return(p, retval)
-	struct proc *p;
-	int retval;
+vm86_return(struct proc *p, int retval)
 {
 	union sigval sv;
 
@@ -274,9 +268,7 @@ vm86_return(p, retval)
  * handler code and then having it restart VM86 mode).
  */
 void
-vm86_gpfault(p, type)
-	struct proc *p;
-	int type;
+vm86_gpfault(struct proc *p, int type)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	union sigval sv;
@@ -383,10 +375,7 @@ bad:
 }
 
 int
-i386_vm86(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+i386_vm86(struct proc *p, char *args, register_t *retval)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;

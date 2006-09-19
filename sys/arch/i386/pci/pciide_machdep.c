@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.5 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.6 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -53,12 +53,8 @@
 #include <dev/isa/isavar.h>
 
 void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
+pciide_machdep_compat_intr_establish(struct device *dev,
+    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	int irq;
 	void *cookie;

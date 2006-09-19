@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.11 2006/03/15 20:03:04 miod Exp $	*/
+/*	$OpenBSD: joy.c,v 1.12 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -56,10 +56,7 @@ struct cfdriver joy_cd = {
 };
 
 int
-joyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+joyopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
@@ -81,10 +78,7 @@ joyopen(dev, flag, mode, p)
 }
 
 int
-joyclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+joyclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
@@ -95,10 +89,7 @@ joyclose(dev, flag, mode, p)
 }
 
 int
-joyread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+joyread(dev_t dev, struct uio *uio, int flag)
 {
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
@@ -136,12 +127,7 @@ joyread(dev, uio, flag)
 }
 
 int
-joyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+joyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
@@ -177,7 +163,7 @@ joyioctl(dev, cmd, data, flag, p)
 }
 
 static int
-joy_get_tick()
+joy_get_tick(void)
 {
 	int low, high;
 

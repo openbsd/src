@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.31 2006/01/12 22:39:20 weingart Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.32 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -104,12 +104,8 @@ int linux_write_ldt(struct proc *, struct linux_sys_modify_ldt_args *,
  */
 
 void
-linux_sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+linux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -201,10 +197,7 @@ linux_sendsig(catcher, sig, mask, code, type, val)
  * a machine fault.
  */
 int
-linux_sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
@@ -271,10 +264,7 @@ linux_sys_sigreturn(p, v, retval)
 }
 
 int
-linux_sys_rt_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	return(ENOSYS);
 }
@@ -282,14 +272,8 @@ linux_sys_rt_sigreturn(p, v, retval)
 #ifdef USER_LDT
 
 int
-linux_read_ldt(p, uap, retval)
-	struct proc *p;
-	struct linux_sys_modify_ldt_args /* {
-		syscallarg(int) func;
-		syscallarg(void *) ptr;
-		syscallarg(size_t) bytecount;
-	} */ *uap;
-	register_t *retval;
+linux_read_ldt(struct proc *p, struct linux_sys_modify_ldt_args *uap,
+    register_t *retval)
 {
 	struct i386_get_ldt_args gl;
 	int error;
@@ -329,14 +313,8 @@ struct linux_ldt_info {
 };
 
 int
-linux_write_ldt(p, uap, retval)
-	struct proc *p;
-	struct linux_sys_modify_ldt_args /* {
-		syscallarg(int) func;
-		syscallarg(void *) ptr;
-		syscallarg(size_t) bytecount;
-	} */ *uap;
-	register_t *retval;
+linux_write_ldt(struct proc *p, struct linux_sys_modify_ldt_args *uap,
+    register_t *retval)
 {
 	struct linux_ldt_info ldt_info;
 	struct segment_descriptor sd;
@@ -394,10 +372,7 @@ linux_write_ldt(p, uap, retval)
 #endif /* USER_LDT */
 
 int
-linux_sys_modify_ldt(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_modify_ldt(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
@@ -426,8 +401,7 @@ linux_sys_modify_ldt(p, v, retval)
  * array for all major device numbers, and map linux_mknod too.
  */
 dev_t
-linux_fakedev(dev)
-	dev_t dev;
+linux_fakedev(dev_t dev)
 {
 
 	if (major(dev) == NATIVE_CONS_MAJOR)
@@ -439,10 +413,7 @@ linux_fakedev(dev)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
@@ -622,10 +593,7 @@ linux_machdepioctl(p, v, retval)
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_iopl(struct proc *p, void *v, register_t *retval)
 {
 #if 0
 	struct linux_sys_iopl_args /* {
@@ -648,10 +616,7 @@ linux_sys_iopl(p, v, retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_ioperm(struct proc *p, void *v, register_t *retval)
 {
 	struct linux_sys_ioperm_args /* {
 		syscallarg(unsigned int) lo;

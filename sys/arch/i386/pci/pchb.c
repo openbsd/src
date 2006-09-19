@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.52 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.53 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -150,9 +150,7 @@ const struct pci_matchid via_devices[] = {
 };
 
 int
-pchbmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pchbmatch(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -177,9 +175,7 @@ pchbmatch(parent, match, aux)
 u_int32_t rcc_bus_visited = 1;
 
 void
-pchbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pchbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -410,9 +406,7 @@ pchbattach(parent, self, aux)
 }
 
 int
-pchb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+pchb_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -427,8 +421,7 @@ pchb_print(aux, pnp)
  *	http://csrc.nist.gov/publications/fips/fips140-1/fips1401.pdf
  */
 void
-pchb_rnd(v)
-	void *v;
+pchb_rnd(void *v)
 {
 	struct pchb_softc *sc = v;
 

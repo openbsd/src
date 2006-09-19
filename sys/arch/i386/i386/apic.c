@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.3 2006/05/29 20:40:58 miod Exp $	*/
+/*	$OpenBSD: apic.c,v 1.4 2006/09/19 11:06:33 jsg Exp $	*/
 /* $NetBSD: apic.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
 
 /*-
@@ -47,12 +47,8 @@
 #include <machine/apicvar.h>
 
 void
-apic_format_redir(where1, where2, idx, redirhi, redirlo)
-	char *where1;
-	char *where2;
-	int idx;
-	u_int32_t redirhi;
-	u_int32_t redirlo;
+apic_format_redir(char *where1, char *where2, int idx, u_int32_t redirhi,
+    u_int32_t redirlo)
 {
 	printf("%s: %s%d 0x%x", where1, where2, idx, redirlo);
 

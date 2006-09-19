@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.19 2006/08/14 22:48:28 deraadt Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.20 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -76,10 +76,7 @@ int	pciaddr_device_is_agp(pci_chipset_tag_t, pcitag_t);
 #define PCIADDR_ISAMEM_RESERVE	(16 * 1024 * 1024)
 
 void
-pci_addr_fixup(sc, pc, maxbus)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	int maxbus;
+pci_addr_fixup(struct pcibios_softc *sc, pci_chipset_tag_t pc, int maxbus)
 {
 	extern paddr_t avail_end;
 	const char *verbose_header = 
@@ -151,10 +148,8 @@ pci_addr_fixup(sc, pc, maxbus)
 }
 
 void
-pciaddr_resource_reserve(sc, pc, tag)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pciaddr_resource_reserve(struct pcibios_softc *sc, pci_chipset_tag_t pc,
+    pcitag_t tag)
 {
 	if (pcibios_flags & PCIBIOS_VERBOSE)
 		pciaddr_print_devid(pc, tag);
@@ -162,10 +157,8 @@ pciaddr_resource_reserve(sc, pc, tag)
 }
 
 void
-pciaddr_resource_reserve_disabled(sc, pc, tag)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pciaddr_resource_reserve_disabled(struct pcibios_softc *sc,
+    pci_chipset_tag_t pc, pcitag_t tag)
 {
 	if (pcibios_flags & PCIBIOS_VERBOSE)
 		pciaddr_print_devid(pc, tag);
@@ -174,10 +167,8 @@ pciaddr_resource_reserve_disabled(sc, pc, tag)
 }
 
 void
-pciaddr_resource_allocate(sc, pc, tag)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pciaddr_resource_allocate(struct pcibios_softc *sc, pci_chipset_tag_t pc,
+    pcitag_t tag)
 {
 	if (pcibios_flags & PCIBIOS_VERBOSE)
 		pciaddr_print_devid(pc, tag);
@@ -185,11 +176,8 @@ pciaddr_resource_allocate(sc, pc, tag)
 }
 
 void
-pciaddr_resource_manage(sc, pc, tag, func)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pciaddr_resource_manage_func_t func;
+pciaddr_resource_manage(struct pcibios_softc *sc, pci_chipset_tag_t pc,
+    pcitag_t tag, pciaddr_resource_manage_func_t func)
 {
 	struct extent *ex;
 	pcireg_t val, mask;
@@ -271,14 +259,9 @@ pciaddr_resource_manage(sc, pc, tag, func)
 }
 
 int
-pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	struct extent *ex;
-	int mapreg, type;
-	u_long *addr;
-	bus_size_t size;
+pciaddr_do_resource_allocate(struct pcibios_softc *sc, pci_chipset_tag_t pc,
+    pcitag_t tag, int mapreg, struct extent *ex, int type, u_long *addr,
+    bus_size_t size)
 {
 	bus_addr_t start;
 	int error;
@@ -322,14 +305,9 @@ pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
 }
 
 int
-pciaddr_do_resource_reserve(sc, pc, tag, mapreg, ex, type, addr, size)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	struct extent *ex;
-	int type, mapreg;
-	u_long *addr;
-	bus_size_t size;
+pciaddr_do_resource_reserve(struct pcibios_softc *sc, pci_chipset_tag_t pc,
+    pcitag_t tag, int mapreg, struct extent *ex, int type, u_long *addr,
+    bus_size_t size)
 {
 	pcireg_t val;
 	int error;
@@ -356,14 +334,9 @@ pciaddr_do_resource_reserve(sc, pc, tag, mapreg, ex, type, addr, size)
 }
 
 int
-pciaddr_do_resource_reserve_disabled(sc, pc, tag, mapreg, ex, type, addr, size)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	struct extent *ex;
-	int type, mapreg;
-	u_long *addr;
-	bus_size_t size;
+pciaddr_do_resource_reserve_disabled(struct pcibios_softc *sc,
+    pci_chipset_tag_t pc, pcitag_t tag, int mapreg, struct extent *ex, int type,
+    u_long *addr, bus_size_t size)
 {
 	pcireg_t val;
 	int error;
@@ -393,8 +366,7 @@ pciaddr_do_resource_reserve_disabled(sc, pc, tag, mapreg, ex, type, addr, size)
 }
 
 bus_addr_t
-pciaddr_ioaddr(val)
-	u_int32_t val;
+pciaddr_ioaddr(u_int32_t val)
 {
 	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
 		? PCI_MAPREG_MEM_ADDR(val)
@@ -402,9 +374,7 @@ pciaddr_ioaddr(val)
 }
 
 void
-pciaddr_print_devid(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pciaddr_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	int bus, device, function;	
 	pcireg_t id;
@@ -416,9 +386,7 @@ pciaddr_print_devid(pc, tag)
 }
 
 int
-pciaddr_device_is_agp(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pciaddr_device_is_agp(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	pcireg_t class, status, rval;
 	int off;
@@ -443,10 +411,7 @@ pciaddr_device_is_agp(pc, tag)
 
 
 struct extent *
-pciaddr_search(mem_port, startp, size)
-	int mem_port;
-	bus_addr_t *startp;
-	bus_size_t size;
+pciaddr_search(int mem_port, bus_addr_t *startp, bus_size_t size)
 {
 	extern struct cfdriver pcibios_cd;
 	struct pcibios_softc *sc;

@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.30 2006/05/27 04:08:57 gwk Exp $ */
+/*	$OpenBSD: mem.c,v 1.31 2006/09/19 11:06:33 jsg Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,10 +76,7 @@ static int mem_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	switch (minor(dev)) {
@@ -107,10 +104,7 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
@@ -214,10 +208,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -259,12 +250,7 @@ mmmmap(dev, off, prot)
 }
 
 int
-mmioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 #if NMTRR > 0
 	switch (minor(dev)) {
@@ -284,12 +270,7 @@ mmioctl(dev, cmd, data, flags, p)
  * and mem_range_attr_set.
  */
 static int
-mem_ioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mem_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	int nd, error = 0;
 	struct mem_range_op *mo = (struct mem_range_op *)data;
@@ -344,9 +325,7 @@ mem_ioctl(dev, cmd, data, flags, p)
  * memory range attributes.
  */
 int
-mem_range_attr_get(mrd, arg)
-	struct mem_range_desc *mrd;
-	int *arg;
+mem_range_attr_get(struct mem_range_desc *mrd, int *arg)
 {
 	/* can we handle this? */
 	if (mem_range_softc.mr_op == NULL)
@@ -361,9 +340,7 @@ mem_range_attr_get(mrd, arg)
 }
 
 int
-mem_range_attr_set(mrd, arg)
-	struct mem_range_desc *mrd;
-	int *arg;
+mem_range_attr_set(struct mem_range_desc *mrd, int *arg)
 {
 	/* can we handle this? */
 	if (mem_range_softc.mr_op == NULL)

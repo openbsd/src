@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.33 2006/06/25 07:44:54 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.34 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -167,9 +167,8 @@ struct i386_bus_dma_tag pci_bus_dma_tag = {
 };
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 
 #if NBIOS > 0
@@ -183,9 +182,7 @@ pci_attach_hook(parent, self, pba)
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
 	/*
@@ -201,9 +198,7 @@ pci_bus_maxdevs(pc, busno)
 }
 
 pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
@@ -231,10 +226,7 @@ pci_make_tag(pc, bus, device, function)
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	switch (pci_mode) {
@@ -260,10 +252,7 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 }
 
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 
@@ -287,11 +276,7 @@ pci_conf_read(pc, tag, reg)
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
 	switch (pci_mode) {
@@ -312,7 +297,7 @@ pci_conf_write(pc, tag, reg, data)
 }
 
 int
-pci_mode_detect()
+pci_mode_detect(void)
 {
 
 #ifdef PCI_CONF_MODE
@@ -420,9 +405,7 @@ not2:
 }
 
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #if NIOAPIC > 0
 	struct mp_intr_map *mip;
@@ -532,9 +515,7 @@ bad:
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[64];
 	int line = ih.line & APIC_INT_LINE_MASK;
@@ -555,12 +536,8 @@ pci_intr_string(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg, what)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func)(void *);
-	void *arg;
-	char *what;
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, char *what)
 {
 	void *ret;
 	int l = ih.line & APIC_INT_LINE_MASK;
@@ -582,9 +559,7 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 	/* XXX oh, unroute the pci int link? */
 	isa_intr_disestablish(NULL, cookie);

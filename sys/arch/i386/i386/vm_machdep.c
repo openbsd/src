@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.45 2006/06/23 13:46:05 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.46 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -73,12 +73,8 @@
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -138,8 +134,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(struct proc *p)
 {
 
 #if NNPX > 0
@@ -159,8 +154,7 @@ cpu_swapout(p)
  * into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(struct proc *p)
 {
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
@@ -172,8 +166,7 @@ cpu_exit(p)
 }
 
 void
-cpu_wait(p)
-	struct proc *p;
+cpu_wait(struct proc *p)
 {
 	tss_free(p->p_md.md_tss_sel);
 }
@@ -187,11 +180,8 @@ struct md_core {
 };
 
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;
@@ -237,9 +227,7 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	u_int32_t ofpte, otpte;
 #ifdef MULTIPROCESSOR

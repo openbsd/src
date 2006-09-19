@@ -1,4 +1,4 @@
-/*	$OpenBSD: sis85c503.c,v 1.6 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: sis85c503.c,v 1.7 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: sis85c503.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -95,12 +95,8 @@ const struct pciintr_icu sis85c503_pci_icu = {
 };
 
 int
-sis85c503_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+sis85c503_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 
 	if (piix_init(pc, iot, tag, ptagp, phandp) == 0) {
@@ -112,9 +108,7 @@ sis85c503_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-sis85c503_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+sis85c503_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	/* Pattern 1: simple. */
@@ -134,9 +128,7 @@ sis85c503_getclink(v, link, clinkp)
 }
 
 int
-sis85c503_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+sis85c503_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct piix_handle *ph = v;
 	pcireg_t reg;
@@ -157,9 +149,7 @@ sis85c503_get_intr(v, clink, irqp)
 }
 
 int
-sis85c503_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+sis85c503_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct piix_handle *ph = v;
 	int shift;

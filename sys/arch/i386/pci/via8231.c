@@ -1,4 +1,4 @@
-/*	$OpenBSD: via8231.c,v 1.6 2005/10/27 16:41:06 mickey Exp $	*/
+/*	$OpenBSD: via8231.c,v 1.7 2006/09/19 11:06:34 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,12 +140,8 @@ static const struct mask_shft_pair via8231_routing_cnfg[VIA8231_LINK_MAX+1] = {
 	    via8231_routing_cnfg[(pirq)].shft))
 
 int
-via8231_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+via8231_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct via8231_handle *ph;
 	pcireg_t id;
@@ -172,9 +168,7 @@ via8231_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-via8231_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+via8231_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	struct via8231_handle *ph = v;
 
@@ -189,9 +183,7 @@ via8231_getclink(v, link, clinkp)
 }
 
 int
-via8231_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+via8231_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct via8231_handle *ph = v;
 	int reg, val;
@@ -214,9 +206,7 @@ via8231_get_intr(v, clink, irqp)
 }
 
 int
-via8231_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+via8231_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct via8231_handle *ph = v;
 	int reg;
@@ -243,9 +233,7 @@ via8231_set_intr(v, clink, irq)
 }
 
 int
-via8231_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+via8231_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct via8231_handle *ph = v;
 	int reg, clink, max, pciirq;
@@ -270,9 +258,7 @@ via8231_get_trigger(v, irq, triggerp)
 }
 
 int
-via8231_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+via8231_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct via8231_handle *ph = v;
 	int reg, clink, max, pciirq;
@@ -317,9 +303,7 @@ via8231_set_trigger(v, irq, trigger)
 
 #ifdef VIA8231_DEBUG
 static void
-via8231_pir_dump(m, ph)
-	const char* m;
-	struct via8231_handle *ph;
+via8231_pir_dump(const char *m, struct via8231_handle *ph)
 {
 	int a, b;
 

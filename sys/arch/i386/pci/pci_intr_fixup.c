@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.55 2006/08/06 01:13:22 brad Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.56 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -251,8 +251,7 @@ pciintr_icu_lookup(id)
 }
 
 struct pciintr_link_map *
-pciintr_link_lookup(link)
-	int link;
+pciintr_link_lookup(int link)
 {
 	struct pciintr_link_map *l;
 
@@ -330,8 +329,7 @@ pciintr_link_alloc(pci_chipset_tag_t pc, struct pcibios_intr_routing *pir, int p
 }
 
 struct pcibios_intr_routing *
-pciintr_pir_lookup(bus, device)
-	int bus, device;
+pciintr_pir_lookup(int bus, int device)
 {
 	struct pcibios_intr_routing *pir;
 	int entry;
@@ -350,8 +348,7 @@ pciintr_pir_lookup(bus, device)
 }
 
 int
-pciintr_bitmap_count_irq(irq_bitmap, irqp)
-	int irq_bitmap, *irqp;
+pciintr_bitmap_count_irq(int irq_bitmap, int *irqp)
 {
 	int i, bit, count = 0, irq = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
 
@@ -542,9 +539,7 @@ pciintr_link_fixup(void)
 }
 
 int
-pci_intr_route_link(pc, ihp)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t *ihp;
+pci_intr_route_link(pci_chipset_tag_t pc, pci_intr_handle_t *ihp)
 {
 	struct pciintr_link_map *l;
 	pcireg_t intr;
@@ -611,7 +606,7 @@ pci_intr_route_link(pc, ihp)
 }
 
 int
-pci_intr_post_fixup()
+pci_intr_post_fixup(void)
 {
 	struct pciintr_link_map *l;
 	int i, pciirq;
@@ -651,10 +646,8 @@ pci_intr_post_fixup()
 }
 
 int
-pci_intr_header_fixup(pc, tag, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pci_intr_handle_t *ihp;
+pci_intr_header_fixup(pci_chipset_tag_t pc, pcitag_t tag,
+    pci_intr_handle_t *ihp)
 {
 	struct pcibios_intr_routing *pir;
 	struct pciintr_link_map *l;
@@ -722,7 +715,7 @@ pci_intr_header_fixup(pc, tag, ihp)
 	}
 
 	if (pcibios_flags & PCIBIOS_INTRDEBUG) {
-		register pcireg_t id = pci_conf_read(pc, tag, PCI_ID_REG);
+		pcireg_t id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 		printf("\n%d:%d:%d %04x:%04x pin %c clink 0x%02x irq %d "
 		    "stage %d %s irq %d\n", bus, device, function,
@@ -735,10 +728,8 @@ pci_intr_header_fixup(pc, tag, ihp)
 }
 
 int
-pci_intr_fixup(sc, pc, iot)
-	struct pcibios_softc *sc;
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
+pci_intr_fixup(struct pcibios_softc *sc, pci_chipset_tag_t pc,
+    bus_space_tag_t iot)
 {
 	struct pcibios_pir_header *pirh = &pcibios_pir_header;
 	const struct pciintr_icu_table *piit = NULL;

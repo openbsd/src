@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_machdep.c,v 1.19 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: freebsd_machdep.c,v 1.20 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: freebsd_machdep.c,v 1.10 1996/05/03 19:42:05 christos Exp $	*/
 
 /*-
@@ -73,15 +73,11 @@
  * specified pc, psl.
  */
 void
-freebsd_sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+freebsd_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
@@ -173,16 +169,13 @@ freebsd_sendsig(catcher, sig, mask, code, type, val)
  * a machine fault.
  */
 int
-freebsd_sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+freebsd_sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct freebsd_sys_sigreturn_args /* {
 		syscallarg(struct freebsd_sigcontext *) scp;
 	} */ *uap = v;
 	struct freebsd_sigcontext *scp, context;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 
 	tf = p->p_md.md_regs;
 
@@ -248,10 +241,8 @@ freebsd_sys_sigreturn(p, v, retval)
  */
 
 void
-netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
-	struct reg *nregs;
-	struct fpreg *nfpregs;
-	struct freebsd_ptrace_reg *fregs;
+netbsd_to_freebsd_ptrace_regs(struct reg *nregs, struct fpreg *nfpregs,
+    struct freebsd_ptrace_reg *fregs)
 {
 	struct save87 *nframe = (struct save87 *)nfpregs;
 
@@ -308,10 +299,8 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 }
 
 void
-freebsd_to_netbsd_ptrace_regs(fregs, nregs, nfpregs)
-	struct freebsd_ptrace_reg *fregs;
-	struct reg *nregs;
-	struct fpreg *nfpregs;
+freebsd_to_netbsd_ptrace_regs(struct freebsd_ptrace_reg *fregs,
+    struct reg *nregs, struct fpreg *nfpregs)
 {
 	struct save87 *nframe = (struct save87 *)nfpregs;
 
@@ -382,10 +371,7 @@ freebsd_ptrace_getregs(struct freebsd_ptrace_reg *fregs, caddr_t addr,
 }
 
 int
-freebsd_ptrace_setregs(fregs, addr, data)
-	struct freebsd_ptrace_reg *fregs;
-	caddr_t addr;
-	int data;
+freebsd_ptrace_setregs(struct freebsd_ptrace_reg *fregs, caddr_t addr, int data)
 {
 	vaddr_t offset = (vaddr_t)addr;
 

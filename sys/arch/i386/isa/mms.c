@@ -1,4 +1,4 @@
-/* $OpenBSD: mms.c,v 1.17 2004/06/13 21:49:16 niklas Exp $ */
+/* $OpenBSD: mms.c,v 1.18 2006/09/19 11:06:34 jsg Exp $ */
 /*	$NetBSD: mms.c,v 1.35 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*-
@@ -73,10 +73,7 @@ const struct wsmouse_accessops mms_accessops = {
 };
 
 int
-mmsprobe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+mmsprobe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -110,9 +107,7 @@ out:
 }
 
 void
-mmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -148,8 +143,7 @@ mmsattach(parent, self, aux)
 }
 
 int
-mms_enable(v)
-	void *v;
+mms_enable(void *v)
 {
 	struct mms_softc *sc = v;
 
@@ -166,8 +160,7 @@ mms_enable(v)
 }
 
 void
-mms_disable(v)
-	void *v;
+mms_disable(void *v)
 {
 	struct mms_softc *sc = v;
 
@@ -178,12 +171,7 @@ mms_disable(v)
 }
 
 int
-mms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if 0
 	struct mms_softc *sc = v;
@@ -198,8 +186,7 @@ mms_ioctl(v, cmd, data, flag, p)
 }
 
 int
-mmsintr(arg)
-	void *arg;
+mmsintr(void *arg)
 {
 	struct mms_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

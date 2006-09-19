@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.36 2006/06/19 15:13:35 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.37 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -129,9 +129,7 @@ int clock_broken_latch;
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 
 u_int
-mc146818_read(sc, reg)
-	void *sc;					/* XXX use it? */
-	u_int reg;
+mc146818_read(void *sc, u_int reg)
 {
 	int s;
 	u_char v;
@@ -146,9 +144,7 @@ mc146818_read(sc, reg)
 }
 
 void
-mc146818_write(sc, reg, datum)
-	void *sc;					/* XXX use it? */
-	u_int reg, datum;
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
 	int s;
 
@@ -161,7 +157,7 @@ mc146818_write(sc, reg, datum)
 }
 
 void
-startrtclock()
+startrtclock(void)
 {
 	int s;
 
@@ -192,7 +188,7 @@ rtcdrain(void *v)
 }
 
 void
-initrtclock()
+initrtclock(void)
 {
 	/* initialize 8253 clock */
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
@@ -203,8 +199,7 @@ initrtclock()
 }
 
 int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg)
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
 
@@ -213,8 +208,7 @@ clockintr(arg)
 }
 
 int
-rtcintr(arg)
-	void *arg;
+rtcintr(void *arg)
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
 	u_int stat = 0;
@@ -231,7 +225,7 @@ rtcintr(arg)
 }
 
 int
-gettick()
+gettick(void)
 {
 
 #if defined(I586_CPU) || defined(I686_CPU)
@@ -305,8 +299,7 @@ gettick()
  * wave' mode counts at 2:1).
  */
 void
-i8254_delay(n)
-	int n;
+i8254_delay(int n)
 {
 	int limit, tick, otick;
 
@@ -362,7 +355,7 @@ unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 #define FIRST_GUESS   0x2000
 
 void
-findcpuspeed()
+findcpuspeed(void)
 {
 	int i;
 	int remainder;
@@ -384,7 +377,7 @@ findcpuspeed()
 
 #if defined(I586_CPU) || defined(I686_CPU)
 void
-calibrate_cyclecounter()
+calibrate_cyclecounter(void)
 {
 	unsigned long long count, last_count;
 
@@ -396,7 +389,7 @@ calibrate_cyclecounter()
 #endif
 
 void
-i8254_initclocks()
+i8254_initclocks(void)
 {
 	static struct timeout rtcdrain_timeout;
 	stathz = 128;
@@ -428,8 +421,7 @@ i8254_initclocks()
 }
 
 int
-rtcget(regs)
-	mc_todregs *regs;
+rtcget(mc_todregs *regs)
 {
 	if ((mc146818_read(NULL, MC_REGD) & MC_REGD_VRT) == 0) /* XXX softc */
 		return (-1);
@@ -438,23 +430,20 @@ rtcget(regs)
 }	
 
 void
-rtcput(regs)
-	mc_todregs *regs;
+rtcput(mc_todregs *regs)
 {
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
 int
-hexdectodec(n)
-	int n;
+hexdectodec(int n)
 {
 
 	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 int
-dectohexdec(n)
-	int n;
+dectohexdec(int n)
 {
 
 	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
@@ -468,7 +457,7 @@ static int timeset;
  */
 int cmoscheck(void);
 int
-cmoscheck()
+cmoscheck(void)
 {
 	int i;
 	unsigned short cksum = 0;
@@ -495,8 +484,7 @@ int rtc_update_century = 0;
  */
 int clock_expandyear(int);
 int
-clock_expandyear(clockyear)
-	int clockyear;
+clock_expandyear(int clockyear)
 {
 	int s, clockcentury, cmoscentury;
 
@@ -547,8 +535,7 @@ clock_expandyear(clockyear)
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -630,7 +617,7 @@ fstime:
  * Reset the clock.
  */
 void
-resettodr()
+resettodr(void)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -672,8 +659,7 @@ resettodr()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 	if (arg == stathz)
 		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);

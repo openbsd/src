@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.64 2006/06/14 19:46:54 gwk Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.65 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ extern int	i386_has_xcrypt;
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/*
 	 * Note, on i386, configure is not running under splhigh unlike other
@@ -177,7 +177,7 @@ cpu_configure()
  * always determine the correct root disk.
  */
 void
-diskconf()
+diskconf(void)
 {
 	/*
 	 * Configure root, swap, and dump area.  This is
@@ -210,8 +210,7 @@ static struct {
 };
 
 int
-findblkmajor(dv)
-	struct device *dv;
+findblkmajor(struct device *dv)
 {
 	char *name = dv->dv_xname;
 	int i;
@@ -224,8 +223,7 @@ findblkmajor(dv)
 }
 
 char *
-findblkname(maj)
-	int maj;
+findblkname(int maj)
 {
 	int i;
 
@@ -245,7 +243,7 @@ long	dumplo;
  * change rootdev to correspond to the load device.
  */
 void
-setroot()
+setroot(void)
 {
 	int  majdev, mindev, unit, part, adaptor;
 	struct swdevt *swp;
@@ -389,9 +387,9 @@ struct	genericconf {
 };
 
 void
-rootconf()
+rootconf(void)
 {
-	register struct genericconf *gc;
+	struct genericconf *gc;
 	int unit, part = 0;
 #if defined(NFSCLIENT)
 	struct ifnet *ifp;

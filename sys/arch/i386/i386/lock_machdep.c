@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.3 2006/09/19 11:06:33 jsg Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -56,8 +56,7 @@
 #ifdef LOCKDEBUG
 
 void
-__cpu_simple_lock_init(lockp)
-	__cpu_simple_lock_t *lockp;
+__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
@@ -67,8 +66,7 @@ int spin_limit = 10000000;
 #endif
 
 void
-__cpu_simple_lock(lockp)
-	__cpu_simple_lock_t *lockp;
+__cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 #if defined (DEBUG) && defined(DDB)	
 	int spincount = 0;
@@ -92,8 +90,7 @@ __cpu_simple_lock(lockp)
 }
 
 int
-__cpu_simple_lock_try(lockp)
-	__cpu_simple_lock_t *lockp;
+__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
 
 	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
@@ -103,8 +100,7 @@ __cpu_simple_lock_try(lockp)
 }
 
 void
-__cpu_simple_unlock(lockp)
-	__cpu_simple_lock_t *lockp;
+__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }

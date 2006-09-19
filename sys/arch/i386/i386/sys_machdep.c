@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.25 2006/05/11 13:21:12 mickey Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.26 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -79,9 +79,7 @@ int i386_set_ioperm(struct proc *, void *, register_t *);
 static void i386_print_ldt(int, const struct segment_descriptor *);
 
 static void
-i386_print_ldt(i, d)
-	int  i;
-	const struct segment_descriptor *d;
+i386_print_ldt(int i, const struct segment_descriptor *d)
 {
 	printf("[%d] lolimit=0x%x, lobase=0x%x, type=%u, dpl=%u, p=%u, "
 	    "hilimit=0x%x, xx=%x, def32=%u, gran=%u, hibase=0x%x\n",
@@ -91,10 +89,7 @@ i386_print_ldt(i, d)
 #endif
 
 int
-i386_get_ldt(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+i386_get_ldt(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
@@ -159,10 +154,7 @@ i386_get_ldt(p, args, retval)
 }
 
 int
-i386_set_ldt(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+i386_set_ldt(struct proc *p, void *args, register_t *retval)
 {
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -335,10 +327,7 @@ extern int allowaperture;
 #endif
 
 int
-i386_iopl(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+i386_iopl(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -366,10 +355,7 @@ i386_iopl(p, args, retval)
 }
 
 int
-i386_get_ioperm(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+i386_get_ioperm(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -382,10 +368,7 @@ i386_get_ioperm(p, args, retval)
 }
 
 int
-i386_set_ioperm(p, args, retval)
-	struct proc *p;
-	void *args;
-	register_t *retval;
+i386_set_ioperm(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -408,10 +391,7 @@ i386_set_ioperm(p, args, retval)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;

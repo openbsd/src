@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy_isa.c,v 1.5 2002/06/02 22:49:59 deraadt Exp $	*/
+/*	$OpenBSD: joy_isa.c,v 1.6 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -57,9 +57,7 @@ struct cfattach joy_isa_ca = {
 };
 
 int
-joy_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+joy_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 #ifdef WANT_JOYSTICK_CONNECTED
@@ -76,9 +74,7 @@ joy_isa_probe(parent, match, aux)
 }
 
 void
-joy_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+joy_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct joy_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

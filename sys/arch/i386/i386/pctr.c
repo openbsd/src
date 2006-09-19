@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.20 2005/04/29 01:12:15 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.21 2006/09/19 11:06:33 jsg Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -46,8 +46,7 @@ int p6ctrsel(int fflag, u_int cmd, u_int fn);
 static __inline void p6ctrrd(struct pctrst *st);
 
 void
-pctrattach(num)
-	int num;
+pctrattach(int num)
 {
 	if (num > 1)
 		return;
@@ -79,11 +78,7 @@ pctrattach(num)
 }
 
 int
-pctropen(dev, oflags, devtype, p)
-	dev_t dev;
-	int oflags;
-	int devtype;
-	struct proc *p;
+pctropen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	if (minor(dev))
 		return ENXIO;
@@ -91,20 +86,13 @@ pctropen(dev, oflags, devtype, p)
 }
 
 int
-pctrclose(dev, oflags, devtype, p)
-	dev_t dev;
-	int oflags;
-	int devtype;
-	struct proc *p;
+pctrclose(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	return 0;
 }
 
 int
-p5ctrsel(fflag, cmd, fn)
-	int fflag;
-	u_int cmd;
-	u_int fn;
+p5ctrsel(int fflag, u_int cmd, u_int fn)
 {
 	pctrval msr11;
 	int msr;
@@ -131,8 +119,7 @@ p5ctrsel(fflag, cmd, fn)
 }
 
 static __inline void
-p5ctrrd(st)
-	struct pctrst *st;
+p5ctrrd(struct pctrst *st)
 {
 	u_int msr11;
 
@@ -147,10 +134,7 @@ p5ctrrd(st)
 }
 
 int
-p6ctrsel(fflag, cmd, fn)
-	int fflag;
-	u_int cmd;
-	u_int fn;
+p6ctrsel(int fflag, u_int cmd, u_int fn)
 {
 	int msrsel, msrval;
 
@@ -173,8 +157,7 @@ p6ctrsel(fflag, cmd, fn)
 }
 
 static __inline void
-p6ctrrd(st)
-	struct pctrst *st;
+p6ctrrd(struct pctrst *st)
 {
 	st->pctr_fn[0] = rdmsr(P6MSR_CTRSEL0);
 	st->pctr_fn[1] = rdmsr(P6MSR_CTRSEL1);
@@ -187,12 +170,7 @@ p6ctrrd(st)
 
 
 int
-pctrioctl(dev, cmd, data, fflag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int fflag;
-	struct proc *p;
+pctrioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
 	switch (cmd) {
 	case PCIOCRD:

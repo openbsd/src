@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.23 2006/05/11 13:21:12 mickey Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.24 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -59,10 +59,8 @@
 static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, int, caddr_t);
 
 void
-svr4_getcontext(p, uc, mask, oonstack)
-	struct proc *p;
-	struct svr4_ucontext *uc;
-	int mask, oonstack;
+svr4_getcontext(struct proc *p, struct svr4_ucontext *uc, int mask,
+    int oonstack)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
@@ -134,12 +132,10 @@ svr4_getcontext(p, uc, mask, oonstack)
  * a machine fault.
  */
 int
-svr4_setcontext(p, uc)
-	struct proc *p;
-	struct svr4_ucontext *uc;
+svr4_setcontext(struct proc *p, struct svr4_ucontext *uc)
 {
 	struct sigacts *psp = p->p_sigacts;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
 	struct sigaltstack *sf = &psp->ps_sigstk;
@@ -213,12 +209,8 @@ svr4_setcontext(p, uc)
 
 
 static void
-svr4_getsiginfo(si, sig, code, type, addr)
-	union svr4_siginfo	*si;
-	int			 sig;
-	u_long			 code;
-	int			 type;
-	caddr_t			 addr;
+svr4_getsiginfo(union svr4_siginfo *si, int sig, u_long code, int type,
+    caddr_t addr)
 {
 	si->svr4_si_signo = bsd_to_svr4_sig[sig];
 	si->svr4_si_errno = 0;
@@ -314,15 +306,11 @@ svr4_getsiginfo(si, sig, code, type, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(catcher, sig, mask, code, type, val)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-	int type;
-	union sigval val;
+svr4_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
@@ -390,10 +378,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
  * sysi86
  */
 int
-svr4_sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+svr4_sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct svr4_sys_sysarch_args *uap = v;
 	int error;

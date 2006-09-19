@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.14 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.15 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -145,9 +145,7 @@ static int ahc_isa_slot_initialized;
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahc_isa_irq(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ahc_isa_irq(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int irq;
 	u_char intdef;
@@ -176,10 +174,7 @@ ahc_isa_irq(iot, ioh)
 }
 
 int
-ahc_isa_idstring(iot, ioh, idstring)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	char *idstring;
+ahc_isa_idstring(bus_space_tag_t iot, bus_space_handle_t ioh, char *idstring)
 {
 	u_int8_t vid[EISA_NVIDREGS], pid[EISA_NPIDREGS];
 	int i;
@@ -229,9 +224,7 @@ ahc_isa_idstring(iot, ioh, idstring)
 }
 
 int
-ahc_isa_match(ia, iobase)
-	struct isa_attach_args *ia;
-	bus_addr_t iobase;
+ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 {
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -290,9 +283,7 @@ ahc_isa_match(ia, iobase)
  * the actual probe routine to check it out.
  */
 int
-ahc_isa_probe(parent, match, aux)
-        struct device *parent;
-        void *match, *aux; 
+ahc_isa_probe(struct device *parent, void *match, void *aux)
 {       
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;
@@ -340,9 +331,7 @@ ahc_isa_probe(parent, match, aux)
 }
 
 void
-ahc_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahc_softc *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;

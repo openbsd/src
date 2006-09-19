@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.20 2005/04/03 20:21:44 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.21 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -184,9 +184,7 @@ process_fninit_xmm(struct savexmm *sxmm)
 }
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
@@ -222,9 +220,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
 	union savefpu *frame = process_fpframe(p);
 
@@ -266,9 +262,7 @@ process_read_fpregs(p, regs)
 #ifdef PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
@@ -311,9 +305,7 @@ process_write_regs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
 	union savefpu *frame = process_fpframe(p);
 
@@ -378,9 +370,7 @@ process_write_xmmregs(struct proc *p, const struct xmmregs *regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+process_sstep(struct proc *p, int sstep)
 {
 	struct trapframe *tf = process_frame(p);
 
@@ -393,9 +383,7 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *tf = process_frame(p);
 

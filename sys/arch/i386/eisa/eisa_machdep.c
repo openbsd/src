@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.9 2006/04/15 01:44:06 weingart Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.10 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -108,19 +108,15 @@ struct i386_bus_dma_tag eisa_bus_dma_tag = {
 };
 
 void
-eisa_attach_hook(parent, self, eba)
-	struct device *parent, *self;
-	struct eisabus_attach_args *eba;
+eisa_attach_hook(struct device *parent, struct device *self,
+    struct eisabus_attach_args *eba)
 {
-
 	/* Nothing to do */
 }
 
 int
-eisa_maxslots(ec)
-	eisa_chipset_tag_t ec;
+eisa_maxslots(eisa_chipset_tag_t ec)
 {
-
 	/*
 	 * Always try 16 slots.
 	 */
@@ -128,10 +124,7 @@ eisa_maxslots(ec)
 }
 
 int
-eisa_intr_map(ec, irq, ihp)
-	eisa_chipset_tag_t ec;
-	u_int irq;
-	eisa_intr_handle_t *ihp;
+eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 {
 #if NIOAPIC > 0
 	struct mp_intr_map *mip;
@@ -172,9 +165,7 @@ eisa_intr_map(ec, irq, ihp)
 }
 
 const char *
-eisa_intr_string(ec, ih)
-	eisa_chipset_tag_t ec;
-	eisa_intr_handle_t ih;
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 {
 	static char irqstr[64];
 
@@ -195,12 +186,8 @@ eisa_intr_string(ec, ih)
 }
 
 void *
-eisa_intr_establish(ec, ih, type, level, func, arg, what)
-	eisa_chipset_tag_t ec;
-	eisa_intr_handle_t ih;
-	int type, level, (*func)(void *);
-	void *arg;
-	char *what;
+eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih, int type,
+    int level, int (*func)(void *), void *arg, char *what)
 {
 #if NIOAPIC > 0
 	if (ih != -1) {
@@ -217,9 +204,7 @@ eisa_intr_establish(ec, ih, type, level, func, arg, what)
 }
 
 void
-eisa_intr_disestablish(ec, cookie)
-	eisa_chipset_tag_t ec;
-	void *cookie;
+eisa_intr_disestablish(eisa_chipset_tag_t ec, void *cookie)
 {
 	return (isa_intr_disestablish(NULL, cookie));
 }

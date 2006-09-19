@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.11 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.12 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ void db_nextframe(struct i386_frame **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
 
 void
-db_find_trace_symbols()
+db_find_trace_symbols(void)
 {
 	db_expr_t	value;
 
@@ -106,8 +106,7 @@ db_find_trace_symbols()
  * Figure out how many arguments were passed into the frame at "fp".
  */
 int
-db_numargs(fp)
-	struct i386_frame *fp;
+db_numargs(struct i386_frame *fp)
 {
 	int	*argp;
 	int	inst;
@@ -140,12 +139,8 @@ db_numargs(fp)
  *   of the function that faulted, but that could get hairy.
  */
 void
-db_nextframe(fp, ip, argp, is_trap, pr)
-	struct i386_frame **fp;		/* in/out */
-	db_addr_t	*ip;		/* out */
-	int *argp;			/* in */
-	int is_trap;			/* in */
-	int (*pr)(const char *, ...);
+db_nextframe(struct i386_frame **fp, db_addr_t	*ip, int *argp, int is_trap,
+    int (*pr)(const char *, ...))
 {
 
 	switch (is_trap) {
@@ -180,12 +175,8 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	boolean_t	have_addr;
-	db_expr_t	count;
-	char		*modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	struct i386_frame *frame, *lastframe;
 	int		*argp;
@@ -200,8 +191,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #endif
 
 	{
-		register char *cp = modif;
-		register char c;
+		char *cp = modif;
+		char c;
 
 		while ((c = *cp++) != 0) {
 			if (c == 't')

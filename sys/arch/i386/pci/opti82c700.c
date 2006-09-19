@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti82c700.c,v 1.6 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: opti82c700.c,v 1.7 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: opti82c700.c,v 1.2 2000/07/18 11:07:20 soda Exp $	*/
 
 /*-
@@ -113,12 +113,8 @@ void	opti82c700_pir_dump(struct opti82c700_handle *);
 #endif
 
 int
-opti82c700_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+opti82c700_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct opti82c700_handle *ph;
 
@@ -137,8 +133,7 @@ opti82c700_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-opti82c700_addr(link, addrofs, ofs)
-	int link, *addrofs, *ofs;
+opti82c700_addr(int link, int *addrofs, int *ofs)
 {
 	int regofs, src;
 
@@ -173,9 +168,7 @@ opti82c700_addr(link, addrofs, ofs)
 }
 
 int
-opti82c700_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+opti82c700_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	DPRINTF(("FireStar link value 0x%x: ", link));
 
@@ -204,9 +197,7 @@ opti82c700_getclink(v, link, clinkp)
 }
 
 int
-opti82c700_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+opti82c700_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct opti82c700_handle *ph = v;
 	pcireg_t reg;
@@ -225,9 +216,7 @@ opti82c700_get_intr(v, clink, irqp)
 }
 
 int
-opti82c700_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+opti82c700_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct opti82c700_handle *ph = v;
 	int addrofs, ofs;
@@ -248,9 +237,7 @@ opti82c700_set_intr(v, clink, irq)
 }
 
 int
-opti82c700_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+opti82c700_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct opti82c700_handle *ph = v;
 	int i, val, addrofs, ofs;
@@ -296,9 +283,7 @@ opti82c700_get_trigger(v, irq, triggerp)
 }
 
 int
-opti82c700_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+opti82c700_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct opti82c700_handle *ph = v;
 	int i, val, addrofs, ofs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.364 2006/08/20 01:42:51 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.365 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -544,8 +544,7 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
  * allocsys() again with the correct base virtual address.
  */
 caddr_t
-allocsys(v)
-	register caddr_t v;
+allocsys(caddr_t v)
 {
 
 #define	valloc(name, type, num) \
@@ -2368,7 +2367,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 
 	tf = p->p_md.md_regs;
 
@@ -2547,7 +2546,7 @@ void
 dumpconf()
 {
 	int nblks;	/* size of dump area */
-	register int maj, i;
+	int maj, i;
 
 	if (dumpdev == NODEV)
 		return;
@@ -2615,12 +2614,12 @@ reserve_dumppages(vaddr_t p)
 void
 dumpsys()
 {
-	register u_int i, j, npg;
-	register int maddr;
+	u_int i, j, npg;
+	int maddr;
 	daddr_t blkno;
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
-	register char *str;
+	char *str;
 	extern int msgbufmapped;
 
 	/* Save registers. */
@@ -3070,7 +3069,7 @@ init386(paddr_t first_avail)
 #endif
 	for(i = 0, im = bios_memmap; im->type != BIOS_MAP_END; im++)
 		if (im->type == BIOS_MAP_FREE) {
-			register paddr_t a, e;
+			paddr_t a, e;
 
 			a = round_page(im->addr);
 			e = trunc_page(im->addr + im->size);

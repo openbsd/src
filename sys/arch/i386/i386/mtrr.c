@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.7 2006/05/11 13:21:11 mickey Exp $ */
+/* $OpenBSD: mtrr.c,v 1.8 2006/09/19 11:06:33 jsg Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -44,8 +44,7 @@ extern struct mem_range_ops k6_mrops;
 void mtrrattach(int);
 
 void
-mtrrattach (num)
-	int num;
+mtrrattach(int num)
 {
 	if (num > 1)
 		return;
@@ -69,5 +68,4 @@ mtrrattach (num)
 	if (mem_range_softc.mr_op != NULL)
 		mem_range_softc.mr_op->init(&mem_range_softc);
 }
-
 

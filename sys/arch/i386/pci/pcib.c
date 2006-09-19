@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.19 2005/01/07 02:24:18 brad Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.20 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -69,9 +69,7 @@ struct cfdriver pcib_cd = {
 };
 
 int
-pcibmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcibmatch(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -107,9 +105,7 @@ pcibmatch(parent, match, aux)
 }
 
 void
-pcibattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	/*
 	 * Cannot attach isa bus now; must postpone for various reasons
@@ -120,8 +116,7 @@ pcibattach(parent, self, aux)
 }
 
 void
-pcib_callback(self)
-	struct device *self;
+pcib_callback(struct device *self)
 {
 	struct isabus_attach_args iba;
 
@@ -143,9 +138,7 @@ pcib_callback(self)
 }
 
 int
-pcib_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+pcib_print(void *aux, const char *pnp)
 {
 	/* Only ISAs can attach to pcib's; easy. */
 	if (pnp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.20 2006/05/11 13:21:11 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.21 2006/09/19 11:06:33 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -83,8 +83,7 @@ int db_cpuid2apic(int);
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	db_printf("kernel: ");
 	if (type >= trap_types || type < 0)
@@ -98,9 +97,7 @@ kdbprinttrap(type, code)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s;
 
@@ -178,11 +175,7 @@ kdb_trap(type, code, regs)
 }
 
 void
-db_sysregs_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_sysregs_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int64_t idtr, gdtr;
 	uint32_t cr;
@@ -351,7 +344,7 @@ struct db_command db_machine_command_table[] = {
 };
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 #ifdef MULTIPROCESSOR
 	int i;
@@ -367,7 +360,7 @@ db_machine_init()
 }
 
 void
-Debugger()
+Debugger(void)
 {
 	__asm__("int $3");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti82c558.c,v 1.6 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: opti82c558.c,v 1.7 2006/09/19 11:06:34 jsg Exp $	*/
 /*	$NetBSD: opti82c558.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -125,12 +125,8 @@ static const int viper_pirq_encode[] = {
 };
 
 int
-opti82c558_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+opti82c558_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct opti82c558_handle *ph;
 
@@ -147,9 +143,7 @@ opti82c558_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-opti82c558_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+opti82c558_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	if (VIPER_LEGAL_LINK(link - 1)) {
@@ -161,9 +155,7 @@ opti82c558_getclink(v, link, clinkp)
 }
 
 int
-opti82c558_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+opti82c558_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct opti82c558_handle *ph = v;
 	pcireg_t reg;
@@ -180,9 +172,7 @@ opti82c558_get_intr(v, clink, irqp)
 }
 
 int
-opti82c558_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+opti82c558_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct opti82c558_handle *ph = v;
 	int shift;
@@ -201,9 +191,7 @@ opti82c558_set_intr(v, clink, irq)
 }
 
 int
-opti82c558_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+opti82c558_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct opti82c558_handle *ph = v;
 	pcireg_t reg;
@@ -224,9 +212,7 @@ opti82c558_get_trigger(v, irq, triggerp)
 }
 
 int
-opti82c558_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+opti82c558_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct opti82c558_handle *ph = v;
 	int shift;
