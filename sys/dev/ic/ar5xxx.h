@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.32 2006/06/23 21:53:01 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.33 2006/09/19 16:42:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -461,10 +461,13 @@ typedef struct {
 #define CHANNEL_T	(CHANNEL_A | IEEE80211_CHAN_TURBO)
 #define CHANNEL_TG	(CHANNEL_PUREG | IEEE80211_CHAN_TURBO)
 #define CHANNEL_XR	(CHANNEL_A | IEEE80211_CHAN_XR)
+#define CHANNEL_MODES	\
+	(CHANNEL_A | CHANNEL_B | CHANNEL_G | CHANNEL_PUREG | \
+	CHANNEL_T | CHANNEL_TG | CHANNEL_XR)
 
 typedef enum {
 	HAL_CHIP_5GHZ = IEEE80211_CHAN_5GHZ,
-	HAL_CHIP_2GHZ = IEEE80211_CHAN_2GHZ,
+	HAL_CHIP_2GHZ = IEEE80211_CHAN_2GHZ
 } HAL_CHIP;
 
 /*

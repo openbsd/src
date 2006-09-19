@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.27 2006/09/19 13:37:11 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.28 2006/09/19 16:42:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -423,23 +423,29 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	 */
 	hal->ah_op_mode = op_mode;
 
-	if (channel->c_channel_flags & IEEE80211_CHAN_A) {
+	switch (channel->c_channel_flags & CHANNEL_MODES) {
+	case CHANNEL_A:
 		mode = AR5K_INI_VAL_11A;
 		freq = AR5K_INI_RFGAIN_5GHZ;
 		ee_mode = AR5K_EEPROM_MODE_11A;
-	} else if (channel->c_channel_flags & IEEE80211_CHAN_T) {
+		break;
+	case CHANNEL_T:
 		mode = AR5K_INI_VAL_11A_TURBO;
 		freq = AR5K_INI_RFGAIN_5GHZ;
 		ee_mode = AR5K_EEPROM_MODE_11A;
-	} else if (channel->c_channel_flags & IEEE80211_CHAN_B) {
+		break;
+	case CHANNEL_B:
 		mode = AR5K_INI_VAL_11B;
 		freq = AR5K_INI_RFGAIN_2GHZ;
 		ee_mode = AR5K_EEPROM_MODE_11B;
-	} else if (channel->c_channel_flags & IEEE80211_CHAN_G) {
+		break;
+	case CHANNEL_G:
+	case CHANNEL_PUREG:
 		mode = AR5K_INI_VAL_11G;
 		freq = AR5K_INI_RFGAIN_2GHZ;
 		ee_mode = AR5K_EEPROM_MODE_11G;
-	} else {
+		break;
+	default:
 		AR5K_PRINTF("invalid channel: %d\n", channel->c_channel);
 		return (AH_FALSE);
 	}
