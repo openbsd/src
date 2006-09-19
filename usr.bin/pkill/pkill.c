@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.14 2005/07/16 11:48:46 jmc Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.15 2006/09/19 05:52:23 otto Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.14 2005/07/16 11:48:46 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.15 2006/09/19 05:52:23 otto Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -537,7 +537,7 @@ makelist(struct listhead *head, enum listtype type, char *src)
 				err(STATUS_ERROR, "stat(%s)", sp);
 			}
 
-			if ((st.st_mode & S_IFCHR) == 0)
+			if (!S_ISCHR(st.st_mode))
 				errx(STATUS_BADUSAGE, "not a tty: `%s'", sp);
 
 			li->li_number = st.st_rdev;
