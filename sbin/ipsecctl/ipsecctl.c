@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.59 2006/08/31 19:01:16 ho Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.60 2006/09/19 21:29:47 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -60,6 +60,7 @@ int		 ipsecctl_monitor(int);
 void		 usage(void);
 const char	*ipsecctl_lookup_option(char *, const char **);
 static int	 unmask(struct ipsec_addr *, sa_family_t);
+int		 sacompare(const void *, const void *);
 
 const char	*infile;	/* Used by parse.y */
 const char	*showopt;
@@ -76,6 +77,23 @@ static const char *flowtype[] = {"?", "use", "acquire", "require", "deny",
 static const char *satype[] = {"?", "esp", "ah", "ipcomp", "tcpmd5", "ipip"};
 static const char *tmode[] = {"?", "transport", "tunnel"};
 static const char *auth[] = {"?", "psk", "rsa"};
+
+struct sad {
+	struct sadb_msg	*sad_msg;
+	u_int32_t	 sad_spi;
+};
+
+int
+sacompare(const void *va, const void *vb)
+{
+	const struct sad *a = va, *b = vb;
+	
+	if (a->sad_spi < b->sad_spi)
+		return (-1);
+	if (a->sad_spi > b->sad_spi)
+		return (1);
+	return (0);
+}
 
 int
 ipsecctl_rules(char *filename, int opts)
@@ -515,7 +533,8 @@ void
 ipsecctl_show_sas(int opts)
 {
 	struct sadb_msg *msg;
-	int		 mib[5];
+	struct sad	*sad;
+	int		 mib[5], sacount, i;
 	size_t		 need = 0;
 	char		*buf, *lim, *next;
 
@@ -540,15 +559,31 @@ ipsecctl_show_sas(int opts)
 		err(1, "ipsecctl_show_sas: malloc");
 	if (sysctl(mib, 5, buf, &need, NULL, 0) == -1)
 		err(1, "ipsecctl_show_sas: sysctl");
+	sacount = 0;
 	lim = buf + need;
 	for (next = buf; next < lim;
 	    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
 		msg = (struct sadb_msg *)next;
 		if (msg->sadb_msg_len == 0)
 			break;
-		pfkey_print_sa(msg, opts);
+		sacount++;
 	}
-
+	if ((sad = calloc(sacount, sizeof(*sad))) == NULL)
+		err(1, "ipsecctl_show_sas: calloc");
+	i = 0;
+	for (next = buf; next < lim;
+	    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
+		msg = (struct sadb_msg *)next;
+		if (msg->sadb_msg_len == 0)
+			break;
+		sad[i].sad_spi = pfkey_get_spi(msg);
+		sad[i].sad_msg = msg;
+		i++;
+	}
+	qsort(sad, sacount, sizeof(*sad), sacompare);
+	for (i = 0; i < sacount; i++)
+		pfkey_print_sa(sad[i].sad_msg, opts);
+	free(sad);
 	free(buf);
 }
 

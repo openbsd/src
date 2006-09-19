@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.h,v 1.6 2006/06/01 06:50:58 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.h,v 1.7 2006/09/19 21:29:47 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -28,5 +28,6 @@ int	pfkey_ipsec_establish(int, struct ipsec_rule *);
 int	pfkey_ipsec_flush(void);
 int	pfkey_init(void);
 int	pfkey_monitor(int);
+u_int32_t pfkey_get_spi(struct sadb_msg *);
 
 #endif	/* _PFKEY_H_ */
