@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.30 2006/09/19 13:14:32 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.31 2006/09/19 13:25:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -628,15 +628,10 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	AR5K_REG_MASKED_BITS(AR5K_AR5212_PHY(0x44),
 	    hal->ah_antenna[ee_mode][0], 0xfffffc06);
 
-	ant[0] = HAL_ANT_FIXED_A;
-	ant[1] = HAL_ANT_FIXED_B;
-
-	if (hal->ah_ant_diversity == AH_FALSE) {
-		if (freq == AR5K_INI_RFGAIN_2GHZ)
-			ant[0] = HAL_ANT_FIXED_B;
-		else
-			ant[1] = HAL_ANT_FIXED_A;
-	}
+	if (freq == AR5K_INI_RFGAIN_2GHZ)
+		ant[0] = ant[1] = HAL_ANT_FIXED_B;
+	else
+		ant[0] = ant[1] = HAL_ANT_FIXED_A;
 
 	AR5K_REG_WRITE(AR5K_AR5212_PHY_ANT_SWITCH_TABLE_0,
 	    hal->ah_antenna[ee_mode][ant[0]]);
@@ -1310,11 +1305,13 @@ ar5k_ar5212_fill_tx_desc(struct ath_hal *hal, struct ath_desc *desc,
     u_int segment_length, HAL_BOOL first_segment, HAL_BOOL last_segment)
 {
 	struct ar5k_ar5212_tx_desc *tx_desc;
+	struct ar5k_ar5212_tx_status *tx_status;
 
 	tx_desc = (struct ar5k_ar5212_tx_desc*)&desc->ds_ctl0;
+	tx_status = (struct ar5k_ar5212_tx_status*)&desc->ds_hw[2];
 
 	/* Clear status descriptor */
-	bzero(desc->ds_hw, sizeof(desc->ds_hw));
+	bzero(tx_status, sizeof(struct ar5k_ar5212_tx_status));
 
 	/* Validate segment length and initialize the descriptor */
 	if ((tx_desc->tx_control_1 = (segment_length &

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.52 2006/06/23 21:53:01 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.53 2006/09/19 13:25:54 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -725,7 +725,7 @@ ath_init1(struct ath_softc *sc)
 	 */
 	hchan.channel = ic->ic_ibss_chan->ic_freq;
 	hchan.channelFlags = ath_chan2flags(ic, ic->ic_ibss_chan);
-	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_FALSE, &status)) {
+	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_TRUE, &status)) {
 		printf("%s: unable to reset hardware; hal status %u\n",
 			ifp->if_xname, status);
 		error = EIO;
