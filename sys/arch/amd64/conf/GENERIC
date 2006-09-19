@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.155 2006/08/29 20:04:54 jolan Exp $
+#	$OpenBSD: GENERIC,v 1.156 2006/09/19 22:11:19 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -380,6 +380,7 @@ ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 rtw*	at pci?				# Realtek 8180
 rtw*	at cardbus?			# Realtek 8180
+pgt*	at pci?				# Prism54 (only full-mac varients)
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
