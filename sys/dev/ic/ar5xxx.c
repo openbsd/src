@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.33 2006/06/05 15:21:43 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.34 2006/09/19 13:14:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -466,10 +466,12 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 			continue;
 
 		/* Match modes */
-		if (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_CCK)
+		if ((hal->ah_capabilities.cap_mode & HAL_MODE_11B) &&
+		    (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_CCK))
 			all_channels[c].c_channel_flags = CHANNEL_B;
 
-		if (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM) {
+		if ((hal->ah_capabilities.cap_mode & HAL_MODE_11G) &&
+		    (ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM)) {
 			all_channels[c].c_channel_flags |=
 			    hal->ah_version == AR5K_AR5211 ?
 			    CHANNEL_PUREG : CHANNEL_G;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.25 2005/12/18 17:59:58 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.26 2006/09/19 13:14:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -2346,12 +2346,13 @@ ar5k_ar5211_get_capabilities(struct ath_hal *hal)
 	if (AR5K_EEPROM_HDR_11B(ee_header) || AR5K_EEPROM_HDR_11G(ee_header)) {
 		hal->ah_capabilities.cap_range.range_2ghz_min = 2412; /* 2312 */
 		hal->ah_capabilities.cap_range.range_2ghz_max = 2732;
-		hal->ah_capabilities.cap_mode |= HAL_MODE_11B;
 
 		if (AR5K_EEPROM_HDR_11B(ee_header))
 			hal->ah_capabilities.cap_mode |= HAL_MODE_11B;
+#if 0
 		if (AR5K_EEPROM_HDR_11G(ee_header))
 			hal->ah_capabilities.cap_mode |= HAL_MODE_11G;
+#endif
 	}
 
 	/* GPIO */
