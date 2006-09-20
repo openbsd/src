@@ -2320,7 +2320,6 @@
 ./usr/sbin/acpidump
 ./usr/sbin/apm
 ./usr/sbin/apmd
-./usr/sbin/bad144
 ./usr/sbin/fdformat
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
