@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.19 2006/06/12 13:18:18 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.20 2006/09/20 14:09:15 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -705,14 +705,12 @@ static const u_int16_t pm90_n765e[] = {
 
 /* Intel Pentium M processor 770 2.13 GHz */
 static const u_int16_t pm90_n770[] = {
-	ID16(2133, 1551, BUS133),
-	ID16(1800, 1429, BUS133),
-	ID16(1600, 1356, BUS133),
-	ID16(1400, 1180, BUS133),
-	ID16(1200, 1132, BUS133),
-	ID16(1000, 1084, BUS133),
-	ID16( 800, 1036, BUS133),
-	ID16( 600,  988, BUS133),
+	ID16(2133, 1356, BUS133),
+	ID16(1867, 1292, BUS133),
+	ID16(1600, 1212, BUS133),
+	ID16(1333, 1148, BUS133),
+	ID16(1067, 1068, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 /*
