@@ -974,6 +974,7 @@
 ./usr/share/man/cat4/ac97.0
 ./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/acpi.0
+./usr/share/man/cat4/acpibat.0
 ./usr/share/man/cat4/acpihpet.0
 ./usr/share/man/cat4/acpitimer.0
 ./usr/share/man/cat4/acx.0
@@ -1554,6 +1555,7 @@
 ./usr/share/man/cat4/sparc64/mgx.0
 ./usr/share/man/cat4/sparc64/openprom.0
 ./usr/share/man/cat4/sparc64/pcons.0
+./usr/share/man/cat4/sparc64/power.0
 ./usr/share/man/cat4/sparc64/ppm.0
 ./usr/share/man/cat4/sparc64/psycho.0
 ./usr/share/man/cat4/sparc64/qe.0
