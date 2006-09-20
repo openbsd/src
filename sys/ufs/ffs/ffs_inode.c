@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.45 2006/09/20 13:43:47 pedro Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.46 2006/09/20 22:54:29 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	struct buf *bp;
 	struct fs *fs = ip->i_fs;
 	struct vnode *vp;
-	caddr_t copy = NULL;
+	void *copy = NULL;
 	daddr_t nb, nlbn, last;
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
@@ -527,7 +527,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		bap1 = (ufs1_daddr_t *) bp->b_data;
 
 	if (lastbn != -1) {
-		MALLOC(copy, caddr_t, fs->fs_bsize, M_TEMP, M_WAITOK);
+		MALLOC(copy, void *, fs->fs_bsize, M_TEMP, M_WAITOK);
 		bcopy(bp->b_data, copy, (u_int) fs->fs_bsize);
 
 		for (i = last + 1; i < NINDIR(fs); i++)
