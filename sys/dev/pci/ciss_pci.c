@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.10 2006/09/20 19:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -62,6 +62,7 @@ const struct pci_matchid ciss_pci_devices[] = {
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAE200I_1 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAE200I_2 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAE200I_3 },
+	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAE500 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP600 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP800 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAV100 },
@@ -76,8 +77,7 @@ const struct pci_matchid ciss_pci_devices[] = {
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_9 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_10 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_11 },
-	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_12 },
-	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_13 },
+	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_12 }
 };
 #define	CISS_PCI_NDEVS	sizeof(ciss_pci_devices)/sizeof(ciss_pci_devices[0])
 
