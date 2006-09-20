@@ -1,7 +1,7 @@
 /*
  * Computer
  *
- * $OpenBSD: calendar.computer,v 1.9 2006/01/16 16:28:59 mickey Exp $
+ * $OpenBSD: calendar.computer,v 1.10 2006/09/20 15:10:55 jasper Exp $
  */
 
 #ifndef _calendar_computer_
@@ -61,6 +61,7 @@
 07/08	CDC incorporated, 1957
 08/14	First Unix-based mallet created, 1954
 08/14	IBM PC announced, 1981
+08/17	MD5 collision found by Chinese researchers, 2004
 08/22	CDC 6600 introduced, 1963
 08/23	DEC founded, 1957
 09/15	ACM founded, 1947
