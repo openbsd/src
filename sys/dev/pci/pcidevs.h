@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1144 2006/09/19 14:06:07 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1145 2006/09/20 19:34:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1526,16 +1526,16 @@
 #define	PCI_PRODUCT_HP_HPSA_3	0x3230		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_4	0x3231		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_5	0x3232		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_6	0x3233		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSAE500	0x3233		/* Smart Array E500 */
 #define	PCI_PRODUCT_HP_HPSAP400	0x3234		/* Smart Array P400 */
 #define	PCI_PRODUCT_HP_HPSAP400I	0x3235		/* Smart Array P400i */
-#define	PCI_PRODUCT_HP_HPSA_7	0x3236		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_8	0x3237		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_9	0x3238		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_10	0x3239		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_11	0x323a		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_12	0x323b		/* Smart Array */
-#define	PCI_PRODUCT_HP_HPSA_13	0x323c		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_6	0x3236		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_7	0x3237		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_8	0x3238		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_9	0x3239		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_10	0x323a		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_11	0x323b		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_12	0x323c		/* Smart Array */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
