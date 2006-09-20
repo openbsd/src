@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.18 2006/07/01 07:36:27 jmc Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.19 2006/09/20 13:51:19 pedro Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -226,9 +226,9 @@ config(char *dev, char *file, int action, char *key, size_t keylen)
 	char *rdev;
 	int rv;
 
-	if (opendev(dev, O_RDWR, OPENDEV_PART, &rdev) < 0)
+	if (opendev(dev, O_RDONLY, OPENDEV_PART, &rdev) < 0)
 		err(4, "%s", rdev);
-	f = fopen(rdev, "rw");
+	f = fopen(rdev, "r");
 	if (f == NULL) {
 		warn("%s", rdev);
 		rv = -1;

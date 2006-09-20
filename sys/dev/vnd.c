@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.62 2006/08/13 17:55:07 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.63 2006/09/20 13:51:19 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -142,6 +142,9 @@ struct vnd_softc {
 #define	VNF_HAVELABEL	0x0400
 #define	VNF_BUSY	0x0800
 #define	VNF_SIMPLE	0x1000
+#define	VNF_READONLY	0x2000
+
+#define	VNDRW(v)	((v)->sc_flags & VNF_READONLY ? FREAD : FREAD|FWRITE)
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
@@ -233,6 +236,11 @@ vndopen(dev, flags, mode, p)
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
+
+	if ((flags & FWRITE) && (sc->sc_flags & VNF_READONLY)) {
+		error = EROFS;
+		goto bad;
+	}
 
 	if ((sc->sc_flags & VNF_INITED) &&
 	    (sc->sc_flags & VNF_HAVELABEL) == 0) {
@@ -817,20 +825,26 @@ vndioctl(dev, cmd, addr, flag, p)
 		}
 
 		/*
-		 * Always open for read and write.
-		 * This is probably bogus, but it lets vn_open()
-		 * weed out directories, sockets, etc. so we don't
-		 * have to worry about them.
+		 * Open for read and write first. This lets vn_open() weed out
+		 * directories, sockets, etc. so we don't have to worry about
+		 * them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+		vnd->sc_flags &= ~VNF_READONLY; 
+		error = vn_open(&nd, FREAD|FWRITE, 0);
+		if (error == EROFS) {
+			vnd->sc_flags |= VNF_READONLY;
+			error = vn_open(&nd, FREAD, 0);
+		}
+		if (error) {
 			vndunlock(vnd);
 			return (error);
 		}
+
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		if (error) {
 			VOP_UNLOCK(nd.ni_vp, 0, p);
-			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+			(void) vn_close(nd.ni_vp, VNDRW(vnd), p->p_ucred, p);
 			vndunlock(vnd);
 			return (error);
 		}
@@ -838,7 +852,7 @@ vndioctl(dev, cmd, addr, flag, p)
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
-			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+			(void) vn_close(nd.ni_vp, VNDRW(vnd), p->p_ucred, p);
 			vndunlock(vnd);
 			return (error);
 		}
@@ -851,7 +865,7 @@ vndioctl(dev, cmd, addr, flag, p)
 
 			if ((error = copyin(vio->vnd_key, key,
 			    vio->vnd_keylen)) != 0) {
-				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
+				(void) vn_close(nd.ni_vp, VNDRW(vnd),
 				    p->p_ucred, p);
 				vndunlock(vnd);
 				return (error);
@@ -1087,7 +1101,7 @@ vndclear(vnd)
 	vnd->sc_flags &= ~VNF_INITED;
 	if (vp == (struct vnode *)0)
 		panic("vndioctl: null vp");
-	(void) vn_close(vp, FREAD|FWRITE, vnd->sc_cred, p);
+	(void) vn_close(vp, VNDRW(vnd), vnd->sc_cred, p);
 	crfree(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
 	vnd->sc_cred = (struct ucred *)0;
