@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ciss.4,v 1.7 2006/09/01 09:58:09 jmc Exp $
+.\"	$OpenBSD: ciss.4,v 1.8 2006/09/20 19:58:29 brad Exp $
 .\"
 .\" Michael Shalayeff, 2005. Public Domain.
 .\"
@@ -7,7 +7,7 @@
 .Os
 .Sh NAME
 .Nm ciss
-.Nd Compaq Smart ARRAY 5/6 SATA/SCSI RAID controller
+.Nd Compaq Smart ARRAY 5/6 SAS/SATA/SCSI RAID controller
 .Sh SYNOPSIS
 .Cd "ciss* at pci?"
 .Cd "scsibus* at ciss?"
@@ -17,10 +17,13 @@ The
 driver provides support for the Compaq Smart ARRAY 5th and 6th
 family of RAID controllers, including:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Compaq 532, 5300, 5312, 5i
-.It Compaq 641, 642, 6400, 6400EM, 6422
-.It Hewlett-Packard V100, P800, P600, E400, 6i
+.Bl -bullet -width Ds -offset indent -compact
+.It
+Compaq 532, 5300, 5312, 5i
+.It
+Compaq 641, 642, 6400, 6400EM, 6422
+.It
+Hewlett-Packard 6i, E200, E200i, E500, P400, P400i, P600, P800, V100
 .El
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD,
