@@ -1,4 +1,4 @@
-.\"     $OpenBSD: acpibat.4,v 1.1 2006/09/20 07:16:50 mk Exp $
+.\"     $OpenBSD: acpibat.4,v 1.2 2006/09/20 08:07:34 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Dmitri Alenitchev <dmitri@wave.net.ru>
 .\"
@@ -27,8 +27,8 @@ The
 .Nm
 driver supports the ACPI Control Method Battery interface between the
 battery and the host.
-Information about the battery such as capacity, recharge rate, voltage,
-serial number is available through this driver.
+Information about the battery, such as capacity, recharge rate, voltage,
+and serial number, is available through this driver.
 Battery status is updated every 10 seconds and can be monitored using
 .Xr sysctl 8
 or
