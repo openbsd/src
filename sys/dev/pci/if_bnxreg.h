@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.11 2006/08/21 03:22:09 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.12 2006/09/20 22:18:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -34,6 +34,7 @@
 #ifndef	_BNX_H_DEFINED
 #define _BNX_H_DEFINED
 
+#ifdef _KERNEL
 #include "bpfilter.h"
 #include "vlan.h"
 
@@ -4836,6 +4837,30 @@ struct bnx_softc
 	u_int32_t unexpected_attentions;
 	u_int32_t	lost_status_block_updates;
 #endif
+};
+
+#endif /* _KERNEL */
+
+struct bnx_firmware_header {
+	int bnx_COM_b06FwReleaseMajor;
+	int bnx_COM_b06FwReleaseMinor;
+	int bnx_COM_b06FwReleaseFix;
+	u_int32_t bnx_COM_b06FwStartAddr;
+	u_int32_t bnx_COM_b06FwTextAddr;
+	int bnx_COM_b06FwTextLen;
+	u_int32_t bnx_COM_b06FwDataAddr;
+	int bnx_COM_b06FwDataLen;
+	u_int32_t bnx_COM_b06FwRodataAddr;
+	int bnx_COM_b06FwRodataLen;
+	u_int32_t bnx_COM_b06FwBssAddr;
+	int bnx_COM_b06FwBssLen;
+	u_int32_t bnx_COM_b06FwSbssAddr;
+	int bnx_COM_b06FwSbssLen;
+	u_int32_t bnx_TXP_b06FwData[(0x0/4) + 1];
+	u_int32_t bnx_TXP_b06FwRodata[(0x0/4) + 1];
+	u_int32_t bnx_TXP_b06FwBss[(0x1c4/4) + 1];
+	u_int32_t bnx_TXP_b06FwSbss[(0x38/4) + 1];
+	int firmlength;
 };
 
 #endif /* #ifndef _BNX_H_DEFINED */
