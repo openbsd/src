@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uathvar.h,v 1.2 2006/09/16 19:56:44 damien Exp $	*/
+/*	$OpenBSD: if_uathvar.h,v 1.3 2006/09/20 19:47:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -23,6 +23,8 @@
 /* XXX ehci will panic on abort_pipe if set to anything > 1 */
 #define UATH_RX_DATA_LIST_COUNT	1	/* 128 */
 #define UATH_RX_CMD_LIST_COUNT	1	/* 30 */
+
+#define UATH_RX_DATA_POOL_COUNT	(UATH_RX_DATA_LIST_COUNT + 24)
 
 #define UATH_DATA_TIMEOUT	10000
 #define UATH_CMD_TIMEOUT	1000
@@ -59,10 +61,10 @@ struct uath_tx_data {
 };
 
 struct uath_rx_data {
-	struct uath_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
-	struct mbuf		*m;
+	struct uath_softc		*sc;
+	usbd_xfer_handle		xfer;
+	uint8_t				*buf;
+	SLIST_ENTRY(uath_rx_data)	next;
 };
 
 struct uath_tx_cmd {
@@ -90,6 +92,7 @@ struct uath_wme_settings {
 
 /* condvars */
 #define UATH_COND_INIT(sc)	((caddr_t)sc + 1)
+#define UATH_COND_NOREF(sc)	((caddr_t)sc + 2)
 
 /* flags for sending firmware commands */
 #define UATH_CMD_FLAG_ASYNC	(1 << 0)
@@ -97,57 +100,61 @@ struct uath_wme_settings {
 #define UATH_CMD_FLAG_MAGIC	(1 << 2)
 
 struct uath_softc {
-	USBBASEDEVICE		sc_dev;
-	struct ieee80211com	sc_ic;
-	int			(*sc_newstate)(struct ieee80211com *,
-				    enum ieee80211_state, int);
+	USBBASEDEVICE			sc_dev;
+	struct ieee80211com		sc_ic;
+	int				(*sc_newstate)(struct ieee80211com *,
+					    enum ieee80211_state, int);
 
-	struct uath_tx_data	tx_data[UATH_TX_DATA_LIST_COUNT];
-	struct uath_rx_data	rx_data[UATH_RX_DATA_LIST_COUNT];
+	struct uath_tx_data		tx_data[UATH_TX_DATA_LIST_COUNT];
+	struct uath_rx_data		rx_data[UATH_RX_DATA_POOL_COUNT];
 
-	struct uath_tx_cmd	tx_cmd[UATH_TX_CMD_LIST_COUNT];
-	struct uath_rx_cmd	rx_cmd[UATH_RX_CMD_LIST_COUNT];
+	struct uath_tx_cmd		tx_cmd[UATH_TX_CMD_LIST_COUNT];
+	struct uath_rx_cmd		rx_cmd[UATH_RX_CMD_LIST_COUNT];
 
-	int			sc_flags;
+	SLIST_HEAD(, uath_rx_data)	rx_freelist;
 
-	int			data_idx;
-	int			cmd_idx;
-	int			tx_queued;
+	int				sc_flags;
+	int				sc_dying;
+	int				sc_refcnt;
 
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	int				data_idx;
+	int				cmd_idx;
+	int				tx_queued;
 
-	usbd_pipe_handle	data_tx_pipe;
-	usbd_pipe_handle	data_rx_pipe;
-	usbd_pipe_handle	cmd_tx_pipe;
-	usbd_pipe_handle	cmd_rx_pipe;
+	usbd_device_handle		sc_udev;
+	usbd_interface_handle		sc_iface;
 
-	enum ieee80211_state	sc_state;
-	int			sc_arg;
-	struct usb_task		sc_task;
+	usbd_pipe_handle		data_tx_pipe;
+	usbd_pipe_handle		data_rx_pipe;
+	usbd_pipe_handle		cmd_tx_pipe;
+	usbd_pipe_handle		cmd_rx_pipe;
 
-	struct timeout		scan_to;
-	struct timeout		stat_to;
+	enum ieee80211_state		sc_state;
+	int				sc_arg;
+	struct usb_task			sc_task;
 
-	int			sc_tx_timer;
+	struct timeout			scan_to;
+	struct timeout			stat_to;
 
-	int			rxbufsz;
+	int				sc_tx_timer;
+
+	int				rxbufsz;
 
 #if NBPFILTER > 0
-	caddr_t			sc_drvbpf;
+	caddr_t				sc_drvbpf;
 
 	union {
 		struct	uath_rx_radiotap_header th;
 		uint8_t	pad[64];
-	}			sc_rxtapu;
-#define sc_rxtap		sc_rxtapu.th
-	int			sc_rxtap_len;
+	}				sc_rxtapu;
+#define sc_rxtap			sc_rxtapu.th
+	int				sc_rxtap_len;
 
 	union {
 		struct	uath_tx_radiotap_header th;
 		uint8_t	pad[64];
-	}			sc_txtapu;
-#define sc_txtap		sc_txtapu.th
-	int			sc_txtap_len;
+	}				sc_txtapu;
+#define sc_txtap			sc_txtapu.th
+	int				sc_txtap_len;
 #endif
 };

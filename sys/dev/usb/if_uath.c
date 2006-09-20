@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.9 2006/09/18 18:08:32 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.10 2006/09/20 19:47:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -89,8 +89,8 @@ int uath_debug = 1;
 #define DPRINTFN(n, x)
 #endif
 
-/* 
- * Various supported device vendors/products
+/*-
+ * Various supported device vendors/products.
  * UB51: AR5005UG 802.11b/g, UB52: AR5005UX 802.11a/b/g
  */
 #define UATH_DEV(v, p, f)						\
@@ -138,6 +138,7 @@ Static int	uath_alloc_tx_data_list(struct uath_softc *);
 Static void	uath_free_tx_data_list(struct uath_softc *);
 Static int	uath_alloc_rx_data_list(struct uath_softc *);
 Static void	uath_free_rx_data_list(struct uath_softc *);
+Static void	uath_free_rx_data(caddr_t, u_int, void *);
 Static int	uath_alloc_tx_cmd_list(struct uath_softc *);
 Static void	uath_free_tx_cmd_list(struct uath_softc *);
 Static int	uath_alloc_rx_cmd_list(struct uath_softc *);
@@ -429,7 +430,7 @@ USB_DETACH(uath)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	s = splusb();
+	s = splnet();
 
 	if (sc->sc_flags & UATH_FLAG_PRE_FIRMWARE) {
 		uath_close_pipes(sc);
@@ -443,6 +444,15 @@ USB_DETACH(uath)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->stat_to);
 
+	ieee80211_ifdetach(ifp);	/* free all nodes */
+	if_detach(ifp);
+
+	sc->sc_dying = 1;
+	DPRINTF(("reclaiming %d references\n", sc->sc_refcnt));
+	while (sc->sc_refcnt > 0)
+		(void)tsleep(UATH_COND_NOREF(sc), 0, "uathdet", 0);
+	DPRINTF(("all references reclaimed\n"));
+
 	/* abort and free xfers */
 	uath_free_tx_data_list(sc);
 	uath_free_rx_data_list(sc);
@@ -451,9 +461,6 @@ USB_DETACH(uath)
 
 	/* close Tx/Rx pipes */
 	uath_close_pipes(sc);
-
-	ieee80211_ifdetach(ifp);	/* free all nodes */
-	if_detach(ifp);
 
 	splx(s);
 
@@ -578,7 +585,7 @@ uath_alloc_rx_data_list(struct uath_softc *sc)
 {
 	int i, error;
 
-	for (i = 0; i < UATH_RX_DATA_LIST_COUNT; i++) {
+	for (i = 0; i < UATH_RX_DATA_POOL_COUNT; i++) {
 		struct uath_rx_data *data = &sc->rx_data[i];
 
 		data->sc = sc;	/* backpointer for callbacks */
@@ -590,29 +597,14 @@ uath_alloc_rx_data_list(struct uath_softc *sc)
 			error = ENOMEM;
 			goto fail;
 		}
-		if (usbd_alloc_buffer(data->xfer, sc->rxbufsz) == NULL) {
+		data->buf = usbd_alloc_buffer(data->xfer, sc->rxbufsz);
+		if (data->buf == NULL) {
 			printf("%s: could not allocate xfer buffer\n",
 			    USBDEVNAME(sc->sc_dev));
 			error = ENOMEM;
 			goto fail;
 		}
-
-		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
-		if (data->m == NULL) {
-			printf("%s: could not allocate rx mbuf\n",
-			    USBDEVNAME(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
-		MCLGET(data->m, M_DONTWAIT);
-		if (!(data->m->m_flags & M_EXT)) {
-			printf("%s: could not allocate rx mbuf cluster\n",
-			    USBDEVNAME(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
-
-		data->buf = mtod(data->m, uint8_t *);
+		SLIST_INSERT_HEAD(&sc->rx_freelist, data, next);
 	}
 	return 0;
 
@@ -628,15 +620,23 @@ uath_free_rx_data_list(struct uath_softc *sc)
 	/* make sure no transfers are pending */
 	usbd_abort_pipe(sc->data_rx_pipe);
 
-	for (i = 0; i < UATH_RX_DATA_LIST_COUNT; i++) {
-		struct uath_rx_data *data = &sc->rx_data[i];
+	for (i = 0; i < UATH_RX_DATA_POOL_COUNT; i++)
+		if (sc->rx_data[i].xfer != NULL)
+			usbd_free_xfer(sc->rx_data[i].xfer);
+}
 
-		if (data->xfer != NULL)
-			usbd_free_xfer(data->xfer);
+Static void
+uath_free_rx_data(caddr_t buf, u_int size, void *arg)
+{
+	struct uath_rx_data *data = arg;
+	struct uath_softc *sc = data->sc;
 
-		if (data->m != NULL)
-			m_freem(data->m);
-	}
+	/* put the buffer back in the free list */
+	SLIST_INSERT_HEAD(&sc->rx_freelist, data, next);
+
+	/* release reference to softc */
+	if (--sc->sc_refcnt == 0 && sc->sc_dying)
+		wakeup(UATH_COND_NOREF(sc));
 }
 
 Static int
@@ -1001,6 +1001,7 @@ uath_cmd(struct uath_softc *sc, uint32_t code, const void *idata, int ilen,
 
 	/* wait at most two seconds for command reply */
 	error = tsleep(cmd, PCATCH, "uathcmd", 2 * hz);
+	cmd->odata = NULL;	/* in case answer is received too late */
 	splx(s);
 	if (error != 0) {
 		printf("%s: timeout waiting for command reply\n",
@@ -1174,8 +1175,9 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
+	struct uath_rx_data *ndata;
 	struct uath_rx_desc *desc;
-	struct mbuf *mnew, *m;
+	struct mbuf *m;
 	uint32_t hdr;
 	int s, len;
 
@@ -1206,24 +1208,24 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	/* there's probably a "bad CRC" flag somewhere in the descriptor.. */
 
-	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-	if (mnew == NULL) {
-		printf("%s: could not allocate rx mbuf\n",
-		    USBDEVNAME(sc->sc_dev));
-		ifp->if_ierrors++;
-		goto skip;
-	}
-	MCLGET(mnew, M_DONTWAIT);
-	if (!(mnew->m_flags & M_EXT)) {
-		printf("%s: could not allocate rx mbuf cluster\n",
-		    USBDEVNAME(sc->sc_dev));
-		m_freem(mnew);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
 		ifp->if_ierrors++;
 		goto skip;
 	}
 
-	m = data->m;
-	data->m = mnew;
+	/* grab a new Rx buffer */
+	ndata = SLIST_FIRST(&sc->rx_freelist);
+	if (ndata == NULL) {
+		printf("%s: could not allocate Rx buffer\n",
+		    USBDEVNAME(sc->sc_dev));
+		m_freem(m);
+		ifp->if_ierrors++;
+		goto skip;
+	}
+	SLIST_REMOVE_HEAD(&sc->rx_freelist, next);
+
+	MEXTADD(m, data->buf, sc->rxbufsz, 0, uath_free_rx_data, data);
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
@@ -1231,7 +1233,7 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	m->m_pkthdr.len = m->m_len =
 	    betoh32(desc->len) - sizeof (struct uath_rx_desc);
 
-	data->buf = mtod(data->m, uint8_t *);
+	data = ndata;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
@@ -1270,6 +1272,7 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 #endif
 
 	s = splnet();
+	sc->sc_refcnt++;
 	ni = ieee80211_find_rxnode(ic, wh);
 	ieee80211_input(ifp, m, ni, (int)betoh32(desc->rssi), 0);
 
@@ -1278,9 +1281,10 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	splx(s);
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->data_rx_pipe, data, data->buf, sc->rxbufsz,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, uath_data_rxeof);
-	(void)usbd_transfer(xfer);
+	usbd_setup_xfer(data->xfer, sc->data_rx_pipe, data, data->buf,
+	    sc->rxbufsz, USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+	    uath_data_rxeof);
+	(void)usbd_transfer(data->xfer);
 }
 
 Static int
@@ -1778,7 +1782,7 @@ uath_set_rates(struct uath_softc *sc, const struct ieee80211_rateset *rs)
 
 	bzero(&rates, sizeof rates);
 	rates.magic1 = htobe32(0x02);
-	rates.size   = htobe32(1 + UATH_MAX_NRATES);
+	rates.size   = htobe32(1 + sizeof rates.rates);
 	rates.nrates = rs->rs_nrates;
 	bcopy(rs->rs_rates, rates.rates, rs->rs_nrates);
 
@@ -1877,17 +1881,18 @@ uath_init(struct ifnet *ifp)
 	 * Queue Rx data xfers.
 	 */
 	for (i = 0; i < UATH_RX_DATA_LIST_COUNT; i++) {
-		struct uath_rx_data *data = &sc->rx_data[i];
+		struct uath_rx_data *data = SLIST_FIRST(&sc->rx_freelist);
 
 		usbd_setup_xfer(data->xfer, sc->data_rx_pipe, data, data->buf,
-		    sc->rxbufsz, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		    uath_data_rxeof);
+		    sc->rxbufsz, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_NO_TIMEOUT, uath_data_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {
 			printf("%s: could not queue Rx transfer\n",
 			    USBDEVNAME(sc->sc_dev));
 			goto fail;
 		}
+		SLIST_REMOVE_HEAD(&sc->rx_freelist, next);
 	}
 
 	error = uath_cmd_read(sc, UATH_CMD_07, 0, NULL, &val,
