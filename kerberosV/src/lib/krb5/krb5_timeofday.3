@@ -84,12 +84,12 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh DESCRIPTION
 .Nm krb5_set_real_time
 sets the absolute time that the caller knows the KDC has.
-With this the to the Kerberos library can calculate the relative
-diffrence beteen the KDC time and the local system time and store it
+With this the Kerberos library can calculate the relative
+difference between the KDC time and the local system time and store it
 in the
-.Fa content .
+.Fa context .
 With this information the Kerberos library can adjust all time stamps
-Kerberos packages.
+in Kerberos packages.
 .Pp
 .Fn krb5_timeofday
 returns the current time, but adjusted with the time difference
@@ -109,7 +109,7 @@ If
 is set, the time is set include_time.
 .Pp
 .Nm krb5_string_to_deltat
-Parses delta time
+parses delta time
 .Fa string
 into
 .Fa deltat .
