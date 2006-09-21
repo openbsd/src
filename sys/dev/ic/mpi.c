@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.68 2006/09/18 13:01:26 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.69 2006/09/21 09:05:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -78,6 +78,7 @@ void			mpi_push_replies(struct mpi_softc *);
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_complete(struct mpi_softc *, struct mpi_ccb *, int);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
+int			mpi_reply(struct mpi_softc *, u_int32_t);
 
 void			mpi_fc_print(struct mpi_softc *);
 void			mpi_squash_ppr(struct mpi_softc *);
@@ -721,66 +722,72 @@ int
 mpi_intr(void *arg)
 {
 	struct mpi_softc		*sc = arg;
-	struct mpi_ccb			*ccb;
-	struct mpi_msg_reply		*reply;
-	u_int32_t			reply_dva;
-	char				*reply_addr;
-	u_int32_t			reg, id;
+	u_int32_t			reg;
 	int				rv = 0;
 
 	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
-
-		DNPRINTF(MPI_D_INTR, "%s: mpi_intr reply_queue: 0x%08x\n",
-		    DEVNAME(sc), reg);
-
-		if (reg & MPI_REPLY_QUEUE_ADDRESS) {
-			bus_dmamap_sync(sc->sc_dmat,
-			    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
-			    BUS_DMASYNC_POSTREAD);
-
-			reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
-
-			reply_addr = MPI_DMA_KVA(sc->sc_replies);
-			reply_addr += reply_dva -
-			    (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
-			reply = (struct mpi_msg_reply *)reply_addr;
-
-			id = letoh32(reply->msg_context);
-
-			bus_dmamap_sync(sc->sc_dmat,
-			    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
-			    BUS_DMASYNC_PREREAD);
-		} else {
-			switch (reg & MPI_REPLY_QUEUE_TYPE_MASK) {
-			case MPI_REPLY_QUEUE_TYPE_INIT:
-				id = reg & MPI_REPLY_QUEUE_CONTEXT;
-				break;
-
-			default:
-				panic("%s: unsupported context reply\n",
-				    DEVNAME(sc));
-			}
-
-			reply = NULL;
-		}
-
-		DNPRINTF(MPI_D_INTR, "%s: mpi_intr id: %d reply: %p\n",
-		    DEVNAME(sc), id, reply);
-
-		ccb = &sc->sc_ccbs[id];
-
-		bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
-		    ccb->ccb_offset, MPI_REQUEST_SIZE,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		ccb->ccb_state = MPI_CCB_READY;
-		ccb->ccb_reply = reply;
-		ccb->ccb_reply_dva = reply_dva;
-
-		ccb->ccb_done(ccb);
+		mpi_reply(sc, reg);
 		rv = 1;
 	}
 
 	return (rv);
+}
+
+int
+mpi_reply(struct mpi_softc *sc, u_int32_t reg)
+{
+	struct mpi_ccb			*ccb;
+	struct mpi_msg_reply		*reply = NULL;
+	u_int32_t			reply_dva = 0x0;
+	char				*reply_addr;
+	int				id;
+
+	DNPRINTF(MPI_D_INTR, "%s: mpi_reply reg: 0x%08x\n", DEVNAME(sc), reg);
+
+	if (reg & MPI_REPLY_QUEUE_ADDRESS) {
+		bus_dmamap_sync(sc->sc_dmat,
+		    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
+		    BUS_DMASYNC_POSTREAD);
+
+		reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
+
+		reply_addr = MPI_DMA_KVA(sc->sc_replies);
+		reply_addr += reply_dva -
+		    (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
+		reply = (struct mpi_msg_reply *)reply_addr;
+
+		id = letoh32(reply->msg_context);
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
+		    BUS_DMASYNC_PREREAD);
+	} else {
+		switch (reg & MPI_REPLY_QUEUE_TYPE_MASK) {
+		case MPI_REPLY_QUEUE_TYPE_INIT:
+			id = reg & MPI_REPLY_QUEUE_CONTEXT;
+			break;
+
+		default:
+			panic("%s: unsupported context reply\n",
+			    DEVNAME(sc));
+		}
+	}
+
+	DNPRINTF(MPI_D_INTR, "%s: mpi_reply id: %d reply: %p\n",
+	    DEVNAME(sc), id, reply);
+
+	ccb = &sc->sc_ccbs[id];
+
+	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
+	    ccb->ccb_offset, MPI_REQUEST_SIZE,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	ccb->ccb_state = MPI_CCB_READY;
+	ccb->ccb_reply = reply;
+	ccb->ccb_reply_dva = reply_dva;
+
+	ccb->ccb_done(ccb);
+
+	return (id);
 }
 
 struct mpi_dmamem *
@@ -987,13 +994,10 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 }
 
 int
-mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
+mpi_complete(struct mpi_softc *sc, struct mpi_ccb *ccb, int timeout)
 {
-	struct mpi_ccb			*ccb;
-	struct mpi_msg_reply		*reply;
-	u_int32_t			reply_dva;
-	char				*reply_addr;
-	u_int32_t			reg, id = 0xffffffff;
+	u_int32_t			reg;
+	int				id = -1;
 
 	DNPRINTF(MPI_D_INTR, "%s: mpi_complete timeout %d\n", DEVNAME(sc),
 	    timeout);
@@ -1008,55 +1012,9 @@ mpi_complete(struct mpi_softc *sc, struct mpi_ccb *nccb, int timeout)
 			continue;
 		}
 
-		DNPRINTF(MPI_D_INTR, "%s: mpi_complete reply_queue: 0x%08x\n",
-		    DEVNAME(sc), reg);
+		id = mpi_reply(sc, reg);
 
-		if (reg & MPI_REPLY_QUEUE_ADDRESS) {
-			bus_dmamap_sync(sc->sc_dmat,
-			    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
-			    BUS_DMASYNC_POSTREAD);
-
-			reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
-
-			reply_addr = MPI_DMA_KVA(sc->sc_replies);
-			reply_addr += reply_dva -
-			    (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
-			reply = (struct mpi_msg_reply *)reply_addr;
-
-			id = letoh32(reply->msg_context);
-
-			bus_dmamap_sync(sc->sc_dmat,
-			    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
-			    BUS_DMASYNC_PREREAD);
-		} else {
-			switch (reg & MPI_REPLY_QUEUE_TYPE_MASK) {
-			case MPI_REPLY_QUEUE_TYPE_INIT:
-				id = reg & MPI_REPLY_QUEUE_CONTEXT;
-				break;
-
-			default:
-				panic("%s: unsupported context reply\n",
-				    DEVNAME(sc));
-			}
-
-			reply = NULL;
-		}
-
-		DNPRINTF(MPI_D_INTR, "%s: mpi_complete id: %d\n",
-		    DEVNAME(sc), id);
-
-		ccb = &sc->sc_ccbs[id];
-
-		bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
-		    ccb->ccb_offset, MPI_REQUEST_SIZE,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		ccb->ccb_state = MPI_CCB_READY;
-		ccb->ccb_reply = reply;
-		ccb->ccb_reply_dva = reply_dva;
-
-		ccb->ccb_done(ccb);
-
-	} while (nccb->ccb_id != id);
+	} while (ccb->ccb_id != id);
 
 	return (0);
 }
