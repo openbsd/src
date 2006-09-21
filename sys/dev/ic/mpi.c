@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.71 2006/09/21 09:44:05 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.72 2006/09/21 10:00:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1941,31 +1941,31 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc			*sc = ccb->ccb_sc;
 	struct mpi_msg_event_reply		*enp = ccb->ccb_rcb->rcb_reply;
-	u_int32_t				*data;
-	int					i;
 
-	printf("%s: %s\n", DEVNAME(sc), __func__);
+	DNPRINTF(MPI_D_EVT, "%s: mpi_eventnotify_done\n", DEVNAME(sc));
 
-	printf("%s:  function: 0x%02x msg_length: %d data_length: %d\n",
-	    DEVNAME(sc), enp->function, enp->msg_length,
+	DNPRINTF(MPI_D_EVT, "%s:  function: 0x%02x msg_length: %d "
+	    "data_length: %d\n", DEVNAME(sc), enp->function, enp->msg_length,
 	    letoh16(enp->data_length));
-
-	printf("%s:  ack_required: %d msg_flags 0x%02x\n", DEVNAME(sc),
-	    enp->msg_flags, enp->msg_flags);
-
-	printf("%s:  msg_context: 0x%08x\n", DEVNAME(sc),
+	DNPRINTF(MPI_D_EVT, "%s:  ack_required: %d msg_flags 0x%02x\n",
+	    DEVNAME(sc), enp->ack_required, enp->msg_flags);
+	DNPRINTF(MPI_D_EVT, "%s:  msg_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(enp->msg_context));
-
-	printf("%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
+	DNPRINTF(MPI_D_EVT, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
 	    letoh16(enp->ioc_status));
-
-	printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
+	DNPRINTF(MPI_D_EVT, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(enp->ioc_loginfo));
+	DNPRINTF(MPI_D_EVT, "%s:  event: 0x%08x\n", DEVNAME(sc),
+	    letoh32(enp->event));
+	DNPRINTF(MPI_D_EVT, "%s:  event_context: 0x%08x\n", DEVNAME(sc),
+	    letoh32(enp->event_context));
 
-	data = ccb->ccb_rcb->rcb_reply;
-	data += dwordsof(struct mpi_msg_event_reply);
-	for (i = 0; i < letoh16(enp->data_length); i++) {
-		printf("%s:  data[%d]: 0x%08x\n", DEVNAME(sc), i, data[i]);
+	/* XXX ack required? */
+
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	if ((enp->msg_flags & MPI_EVENT_FLAGS_REPLY_KEPT) == 0) {
+		/* XXX this shouldnt happen till shutdown */
+		mpi_put_ccb(sc, ccb);
 	}
 }
 
