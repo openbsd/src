@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.30 2006/09/18 13:01:26 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.31 2006/09/21 08:35:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -633,6 +633,63 @@ struct mpi_msg_event_reply {
 struct mpi_evt_change {
 	u_int8_t		event_state;
 	u_int8_t		reserved[3];
+} __packed;
+
+struct mpi_evt_sas_phy {
+	u_int8_t		phy_num;
+	u_int8_t		link_rates;
+#define MPI_EVT_SASPHY_LINK_CUR(x)			(((x) & 0xf0) >> 4)
+#define MPI_EVT_SASPHY_LINK_PREV(x)			((x) & 0x0f)
+#define MPI_EVT_SASPHY_LINK_ENABLED			0x0
+#define MPI_EVT_SASPHY_LINK_DISABLED			0x1
+#define MPI_EVT_SASPHY_LINK_NEGFAIL			0x2
+#define MPI_EVT_SASPHY_LINK_SATAOOB			0x3
+#define MPI_EVT_SASPHY_LINK_1_5GBPS			0x8
+#define MPI_EVT_SASPHY_LINK_3_0GBPS			0x9
+	u_int16_t		dev_handle;
+
+	u_int64_t		sas_addr;
+} __packed;
+
+struct mpi_evt_sas_change {
+	u_int8_t		target;
+	u_int8_t		bus;
+	u_int8_t		reason;
+#define MPI_EVT_SASCH_REASON_ADDED			0x03
+#define MPI_EVT_SASCH_REASON_NOT_RESPONDING		0x04
+#define MPI_EVT_SASCH_REASON_SMART_DATA			0x05
+#define MPI_EVT_SASCH_REASON_NO_PERSIST_ADDED		0x06
+#define MPI_EVT_SASCH_REASON_UNSUPPORTED		0x07
+#define MPI_EVT_SASCH_REASON_INTERNAL_RESET		0x08
+	u_int8_t		reserved1;
+
+	u_int8_t		asc;
+	u_int8_t		ascq;
+	u_int16_t		dev_handle;
+
+	u_int32_t		device_info;
+#define MPI_EVT_SASCH_INFO_ATAPI			(1<<13)
+#define MPI_EVT_SASCH_INFO_LSI				(1<<12)
+#define MPI_EVT_SASCH_INFO_DIRECT_ATTACHED		(1<<11)
+#define MPI_EVT_SASCH_INFO_SSP				(1<<10)
+#define MPI_EVT_SASCH_INFO_STP				(1<<9)
+#define MPI_EVT_SASCH_INFO_SMP				(1<<8)
+#define MPI_EVT_SASCH_INFO_SATA				(1<<7)
+#define MPI_EVT_SASCH_INFO_SSP_INITIATOR		(1<<6)
+#define MPI_EVT_SASCH_INFO_STP_INITIATOR		(1<<5)
+#define MPI_EVT_SASCH_INFO_SMP_INITIATOR		(1<<4)
+#define MPI_EVT_SASCH_INFO_SATA_HOST			(1<<3)
+#define MPI_EVT_SASCH_INFO_TYPE_MASK			0x7
+#define MPI_EVT_SASCH_INFO_TYPE_NONE			0x0
+#define MPI_EVT_SASCH_INFO_TYPE_END			0x1
+#define MPI_EVT_SASCH_INFO_TYPE_EDGE			0x2
+#define MPI_EVT_SASCH_INFO_TYPE_FANOUT			0x3
+
+	u_int16_t		parent_dev_handle;
+	u_int8_t		phy_num;
+	u_int8_t		reserved2;
+
+	u_int64_t		sas_addr;
 } __packed;
 
 struct mpi_msg_eventack_request {
