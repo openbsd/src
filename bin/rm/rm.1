@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.25 2005/06/14 19:15:35 millert Exp $
+.\"	$OpenBSD: rm.1,v 1.26 2006/09/21 15:14:07 jmc Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -196,7 +196,7 @@ command appeared in
 The
 .Fl P
 option assumes that the underlying file system is a fixed-block file
-system.
-UFS is a fixed-block file system; LFS is not.
+system,
+such as UFS.
 In addition, only regular files are overwritten, other types of files
 are not.
