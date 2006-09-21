@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.73 2006/09/21 10:52:30 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.74 2006/09/21 10:57:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -112,11 +112,15 @@ void			mpi_empty_done(struct mpi_ccb *);
 int			mpi_iocinit(struct mpi_softc *);
 int			mpi_iocfacts(struct mpi_softc *);
 int			mpi_portfacts(struct mpi_softc *);
-int			mpi_eventnotify(struct mpi_softc *);
-void			mpi_eventnotify_done(struct mpi_ccb *);
 int			mpi_portenable(struct mpi_softc *);
 void			mpi_get_raid(struct mpi_softc *);
 int			mpi_fwupload(struct mpi_softc *);
+
+int			mpi_eventnotify(struct mpi_softc *);
+void			mpi_eventnotify_done(struct mpi_ccb *);
+void			mpi_eventack(struct mpi_softc *,
+			    struct mpi_msg_event_reply *);
+void			mpi_eventack_done(struct mpi_ccb *);
 
 int			mpi_cfg_header(struct mpi_softc *, u_int8_t, u_int8_t,
 			    u_int32_t, struct mpi_cfg_hdr *);
@@ -740,7 +744,7 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 	struct mpi_ccb			*ccb;
 	struct mpi_rcb			*rcb = NULL;
 	struct mpi_msg_reply		*reply = NULL;
-	u_int32_t			reply_dva = 0x0;
+	u_int32_t			reply_dva;
 	int				id;
 	int				i;
 
@@ -1960,13 +1964,50 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_EVT, "%s:  event_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(enp->event_context));
 
-	/* XXX ack required? */
+	if (enp->ack_required)
+		mpi_eventack(sc, enp);
 
 	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	if ((enp->msg_flags & MPI_EVENT_FLAGS_REPLY_KEPT) == 0) {
 		/* XXX this shouldnt happen till shutdown */
 		mpi_put_ccb(sc, ccb);
 	}
+}
+
+void
+mpi_eventack(struct mpi_softc *sc, struct mpi_msg_event_reply *enp)
+{
+	struct mpi_ccb				*ccb;
+	struct mpi_msg_eventack_request		*eaq;
+
+	ccb = mpi_get_ccb(sc);
+	if (ccb == NULL) {
+		DNPRINTF(MPI_D_EVT, "%s: mpi_eventack ccb_get\n", DEVNAME(sc));
+		return;
+	}
+
+	ccb->ccb_done = mpi_eventack_done;
+	eaq = ccb->ccb_cmd;
+
+	eaq->function = MPI_FUNCTION_EVENT_ACK;
+	eaq->msg_context = htole32(ccb->ccb_id);
+
+	eaq->event = enp->event;
+	eaq->event_context = enp->event_context;
+
+	mpi_start(sc, ccb);
+	return;
+}
+
+void
+mpi_eventack_done(struct mpi_ccb *ccb)
+{
+	struct mpi_softc			*sc = ccb->ccb_sc;
+
+	DNPRINTF(MPI_D_EVT, "%s: event ack done\n", DEVNAME(sc));
+
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_put_ccb(sc, ccb);
 }
 
 int
