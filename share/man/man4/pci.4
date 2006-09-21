@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.185 2006/09/21 15:01:50 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.186 2006/09/21 15:10:38 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -85,45 +85,25 @@ Note that not all architectures support all devices.
 .Ss SCSI host adapters
 .Bl -tag -width 10n -offset ind -compact
 .It Xr adv 4 , Xr adw 4
-AdvanSys PCI
-.Tn SCSI
-interfaces
+AdvanSys PCI SCSI interface
 .It Xr ahc 4
-Adaptec 27xx, 29xx, 39xx, 29160, and other AIC-7xxx-based
-.Tn SCSI
-interfaces
+Adaptec VL/EISA/PCI SCSI interface
 .It Xr ahd 4
-Adaptec PCI/PCI-X Ultra320 AIC79xx-based
-.Tn SCSI
-interfaces
+Adaptec PCI/PCI-X AIC79xx-based Ultra320 SCSI interface
 .It Xr bha 4
-Buslogic BT-9xx
-.Tn SCSI
-interfaces
+Buslogic SCSI interface
 .It Xr iha 4
-Initio INIC-940 and INIC-950 based
-.Tn SCSI
-interfaces
+Initio INIC-940/950 based PCI SCSI interface
 .It Xr isp 4
-QLogic ISP-1020, ISP-1040, and ISP-2100
-.Tn SCSI
-and
-.Tn FibreChannel
-interfaces
+Qlogic based SCSI or FibreChannel SCSI interface
 .It Xr mpi 4
 LSI Logic Fusion-MPT Message Passing Interface
 .It Xr pcscp 4
-AMD Am53c974 PCscsi-PCI
-.Tn SCSI
-interfaces
+Advanced Micro Devices Am53c974 PCscsi-PCI SCSI interface
 .It Xr siop 4
-LSI/Symbios Logic/NCR 53c8xx and 53c1010-family
-.Tn SCSI
-interfaces
+LSI/Symbios Logic/NCR 53c8xx SCSI interface
 .It Xr trm 4
-Tekram DC-3x5U (TRM-S1040 based)
-.Tn SCSI
-interfaces
+TRM-S1040 based PCI SCSI interface
 .El
 .Ss IDE disk controllers
 .Bl -tag -width 10n -offset ind -compact
