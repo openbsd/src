@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.50 2006/09/21 15:37:44 jmc Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.51 2006/09/21 15:39:50 jmc Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ GemPlus GPR400 smartcard reader
 .Ss Serial interfaces and modems
 .Bl -tag -width 12n -offset ind -compact
 .It Xr com 4 , Xr pccom 4
-8250/16450/16550-compatible PCMCIA serial cards and modems
+serial communications interface
 .El
 .Ss Network interfaces
 .Bl -tag -width 12n -offset ind -compact
@@ -113,14 +113,12 @@ Xircom-based 16-bit PCMCIA 10/100 Ethernet device
 .Ss SCSI controllers
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aic 4
-Adaptec APA-14[56]0 and NewMedia BusToaster SCSI controller cards
+Adaptec AIC-6260 and AIC-6360 SCSI interface
 .El
 .Ss IDE controllers
 .Bl -tag -width 12n -offset ind -compact
 .It Xr wdc 4
-Devices which implement an ATA/IDE interface, such as mini disk drives,
-CD-ROMs.
-This includes Compact Flash cards which emulate a disk drive.
+WD100x compatible hard disk controller driver
 .El
 .Pp
 The supported PCMCIA controllers are those that are i82365 compatible.
