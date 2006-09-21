@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.23 2006/07/21 20:41:51 brad Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.24 2006/09/21 09:52:45 fgsch Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1900,7 +1900,7 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			break;
 		}
 		if (j == codec->formats[i].frequency_type) {
-			printf("didn't find Record rate\n",
+			printf("didn't find Record rate %u\n",
 			    r->sample_rate);
 			return (EINVAL);
 		}
@@ -1923,7 +1923,7 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			break;
 		}
 		if (i == codec->nformats) {
-			printf("can't find playback format\n",
+			printf("can't find playback format %u/%u/%u\n",
 			    r->encoding, r->precision, r->channels);
 			return (EINVAL);
 		}
