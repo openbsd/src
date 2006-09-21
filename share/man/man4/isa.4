@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.43 2006/09/21 12:56:39 jmc Exp $
+.\"	$OpenBSD: isa.4,v 1.44 2006/09/21 13:04:58 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -81,36 +81,19 @@ Note that not all architectures support all devices.
 .Ss SCSI controllers
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aha 4
-Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
-BusLogic BT54x
-.Tn SCSI
-interfaces
+Adaptec 154x SCSI interface
 .It Xr aic 4
-Adaptec AIC-6260 and Adaptec AIC-6360 based
-.Tn SCSI
-interfaces, including
-the Adaptec 152x, SoundBlaster
-.Tn SCSI
-interfaces, and a variety of compatibles
+Adaptec AIC-6260 and AIC-6360 SCSI interface
 .It Xr bha 4
-BusLogic BT-445
-.Tn SCSI
-interfaces
+Buslogic SCSI interface
 .It Xr dpt 4
 DPT EATA SCSI RAID controller
 .It Xr sea 4
-Seagate/Future Domain
-.Tn SCSI
-cards.
-ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
+Seagate/Future Domain ISA SCSI interface
 .It Xr uha 4
-Ultrastor 14f
-.Tn SCSI
-interfaces
+Ultrastor SCSI interface
 .It Xr wds 4
-WD-7000 family of bus-mastering
-.Tn SCSI
-interfaces
+WD7000 compatible ISA SCSI interface
 .El
 .Ss Disk and tape controllers
 .Bl -tag -width 12n -offset ind -compact
