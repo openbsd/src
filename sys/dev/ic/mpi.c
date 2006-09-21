@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.70 2006/09/21 09:42:27 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.71 2006/09/21 09:44:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -45,6 +45,7 @@ uint32_t	mpi_debug = 0
 /*		    | MPI_D_CCB */
 /*		    | MPI_D_PPR */
 /*		    | MPI_D_RAID */
+/*		    | MPI_D_EVT */
 		;
 #endif
 
