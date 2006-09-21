@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.72 2006/09/16 13:42:12 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.73 2006/09/21 15:50:49 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,120 +120,120 @@ Note that not all architectures support all devices.
 .Bl -tag -width 12n -offset ind -compact
 .It Xr umass 4
 .Tn USB
-Mass Storage Devices, e.g., external disk drives.
+Mass Storage Devices, e.g., external disk drives
 .El
 .Ss Network adapters
 .Bl -tag -width 12n -offset ind -compact
 .It Xr atu 4
-Atmel AT76C50x IEEE 802.11b wireless network device.
+Atmel AT76C50x IEEE 802.11b wireless network device
 .It Xr aue 4
-ADMtek AN986/ADM8511 Pegasus family 10/100 USB Ethernet device.
+ADMtek AN986/ADM8511 Pegasus family 10/100 USB Ethernet device
 .It Xr axe 4
-ASIX Electronics AX88172/AX88178/AX88772 10/100/Gigabit USB Ethernet device.
+ASIX Electronics AX88172/AX88178/AX88772 10/100/Gigabit USB Ethernet device
 .It Xr cdce 4
-USB Communication Device Class Ethernet device.
+USB Communication Device Class Ethernet device
 .It Xr cue 4
-CATC USB-EL1201A USB Ethernet device.
+CATC USB-EL1201A USB Ethernet device
 .It Xr kue 4
-Kawasaki LSI KL5KUSB101B USB Ethernet device.
+Kawasaki LSI KL5KUSB101B USB Ethernet device
 .It Xr rum 4
-Ralink Technology USB IEEE 802.11a/b/g wireless network device.
+Ralink Technology USB IEEE 802.11a/b/g wireless network device
 .It Xr uath 4
-Atheros USB IEEE 802.11a/b/g wireless network device.
+Atheros USB IEEE 802.11a/b/g wireless network device
 .It Xr ubt 4
-Bluetooth adapters.
+Bluetooth adapters
 .It Xr udav 4
-Davicom DM9601 USB Ethernet device.
+Davicom DM9601 USB Ethernet device
 .It Xr ueagle 4
-Analog Devices Eagle ADSL modems.
+Analog Devices Eagle ADSL modems
 .It Xr ural 4
-Ralink Technology RT2500 IEEE 802.11a/b/g wireless network device.
+Ralink Technology RT2500 IEEE 802.11a/b/g wireless network device
 .It Xr url 4
-Realtek RTL8150L USB Ethernet device.
+Realtek RTL8150L USB Ethernet device
 .It Xr wi 4
-Intersil PRISM 2-3 IEEE 802.11b wireless network device.
+Intersil PRISM 2-3 IEEE 802.11b wireless network device
 .It Xr zyd 4
-Zydas ZD1211 IEEE 802.11b/g wireless network device.
+Zydas ZD1211 IEEE 802.11b/g wireless network device
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -offset ind -compact
 .It Xr uark 4
-Arkmicro Technologies ARK3116 based serial adapters.
+Arkmicro Technologies ARK3116 based serial adapters
 .It Xr ubsa 4
-Belkin serial adapters.
+Belkin serial adapters
 .It Xr ucom 4
-Serial port-like devices.
+Serial port-like devices
 .It Xr ucycom 4
-Cypress Semiconductor serial adapters.
+Cypress Semiconductor serial adapters
 .It Xr uftdi 4
-FTDI FT8U100AX-based serial adapters.
+FTDI FT8U100AX-based serial adapters
 .It Xr uipaq 4
-iPAQ devices.
+iPAQ devices
 .It Xr ulpt 4
 .Tn USB
-Printers.
+Printers
 .It Xr umct 4
-MCT USB-RS232 serial adapters.
+MCT USB-RS232 serial adapters
 .It Xr umodem 4
 .Tn USB
-Modems.
+Modems
 .It Xr umsm 4
-Qualcomm MSM EVDO modems.
+Qualcomm MSM EVDO modems
 .It Xr uplcom 4
-Prolific PL-2303 serial adapters.
+Prolific PL-2303 serial adapters
 .It Xr uslcom 4
-Silicon Laboratories CP2101/CP2102 serial adapters.
+Silicon Laboratories CP2101/CP2102 serial adapters
 .It Xr uvscom 4
-SUNTAC Slipper U VS-10U serial adapters.
+SUNTAC Slipper U VS-10U serial adapters
 .El
 .Ss Audio devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr uaudio 4
-USB audio devices.
+USB audio devices
 .It Xr umidi 4
-USB MIDI devices.
+USB MIDI devices
 .It Xr urio 4
-Diamond Multimedia Rio MP3 players.
+Diamond Multimedia Rio MP3 players
 .El
 .Ss Radio receiver devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr udsbr 4
-D-Link DSB-R100 USB radio device.
+D-Link DSB-R100 USB radio device
 .El
 .Ss Human Interface Devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr tpms 4
-Apple touchpad mouse.
+Apple touchpad mouse
 .It Xr uhid 4
-Generic driver for Human Interface Devices.
+Generic driver for Human Interface Devices
 .It Xr uhidev 4
-Base driver for all Human Interface Devices.
+Base driver for all Human Interface Devices
 .It Xr ukbd 4
 .Tn USB
-keyboards that follow the boot protocol.
+keyboards that follow the boot protocol
 .It Xr ums 4
 .Tn USB
-mouse devices.
+mouse devices
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr udcf 4
-Gude ADS Expert mouseCLOCK DCF77 time signal receiver.
+Gude ADS Expert mouseCLOCK DCF77 time signal receiver
 .It Xr ugen 4
 Generic driver for unknown
 .Tn USB
-devices.
+devices
 .It Xr upl 4
-Prolific based host-to-host adapters.
+Prolific based host-to-host adapters
 .It Xr uscanner 4
 .Tn USB
-scanners.
+scanners
 .It Xr usscanner 4
-SCSI-over-USB scanners.
+SCSI-over-USB scanners
 .It Xr uvisor 4
-Handspring Visor.
+Handspring Visor
 .It Xr uyap 4
-YAP phone firmware loader.
+YAP phone firmware loader
 .El
 .Sh INTRODUCTION TO USB
 There are different versions of the
