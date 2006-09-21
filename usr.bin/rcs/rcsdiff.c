@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.68 2006/07/31 06:51:55 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.69 2006/09/21 15:30:07 millert Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,34 +29,80 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *);
-static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *);
+static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *, int);
+static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *, int);
+static void push_ignore_pats(char *);
 
-static int flags = 0;
+static int quiet;
 static int kflag = RCS_KWEXP_ERR;
+static char *diff_ignore_pats;
 
 int
 rcsdiff_main(int argc, char **argv)
 {
-	int fd, i, ch, status;
+	int fd, i, ch, dflags, status;
 	RCSNUM *rev1, *rev2;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], *rev_str1, *rev_str2;
+	const char *errstr;
 
 	rev1 = rev2 = NULL;
 	rev_str1 = rev_str2 = NULL;
 	status = D_SAME;
+	dflags = 0;
 
 	if (strlcpy(diffargs, "diff", sizeof(diffargs)) >= sizeof(diffargs))
 		errx(D_ERROR, "diffargs too long");
 
-	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx::z::")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "abC:cdI:ik:npqr:TtU:uVwx::z::")) != -1) {
 		switch (ch) {
+		case 'a':
+			if (strlcat(diffargs, " -a", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_FORCEASCII;
+			break;
+		case 'b':
+			if (strlcat(diffargs, " -b", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_FOLDBLANKS;
+			break;
+		case 'C':
+			(void)strlcat(diffargs, " -C", sizeof(diffargs));
+			if (strlcat(diffargs, rcs_optarg, sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			diff_context = strtonum(rcs_optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(D_ERROR, "context is %s: %s",
+				    errstr, rcs_optarg);
+			diff_format = D_CONTEXT;
+			break;
 		case 'c':
 			if (strlcat(diffargs, " -c", sizeof(diffargs)) >=
 			    sizeof(diffargs))
 				errx(D_ERROR, "diffargs too long");
 			diff_format = D_CONTEXT;
+			break;
+		case 'd':
+			if (strlcat(diffargs, " -d", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_MINIMAL;
+			break;
+		case 'i':
+			if (strlcat(diffargs, " -i", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_IGNORECASE;
+			break;
+		case 'I':
+			(void)strlcat(diffargs, " -I", sizeof(diffargs));
+			if (strlcat(diffargs, rcs_optarg, sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			push_ignore_pats(rcs_optarg);
 			break;
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -72,8 +118,14 @@ rcsdiff_main(int argc, char **argv)
 				errx(D_ERROR, "diffargs too long");
 			diff_format = D_RCSDIFF;
 			break;
+		case 'p':
+			if (strlcat(diffargs, " -p", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_PROTOTYPE;
+			break;
 		case 'q':
-			flags |= QUIET;
+			quiet = 1;
 			break;
 		case 'r':
 			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
@@ -82,6 +134,23 @@ rcsdiff_main(int argc, char **argv)
 			/*
 			 * kept for compatibility
 			 */
+			break;
+		case 't':
+			if (strlcat(diffargs, " -t", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_EXPANDTABS;
+			break;
+		case 'U':
+			(void)strlcat(diffargs, " -U", sizeof(diffargs));
+			if (strlcat(diffargs, rcs_optarg, sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			diff_context = strtonum(rcs_optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(D_ERROR, "context is %s: %s",
+				    errstr, rcs_optarg);
+			diff_format = D_UNIFIED;
 			break;
 		case 'u':
 			if (strlcat(diffargs, " -u", sizeof(diffargs)) >=
@@ -92,6 +161,12 @@ rcsdiff_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'w':
+			if (strlcat(diffargs, " -w", sizeof(diffargs)) >=
+			    sizeof(diffargs))
+				errx(D_ERROR, "diffargs too long");
+			dflags |= D_IGNOREBLANKS;
+			break;
 		case 'x':
 			/* Use blank extension if none given. */
 			rcs_suffixes = rcs_optarg ? rcs_optarg : "";
@@ -112,6 +187,21 @@ rcsdiff_main(int argc, char **argv)
 		warnx("no input file");
 		(usage)();
 		exit(D_ERROR);
+	}
+
+	if (diff_ignore_pats != NULL) {
+		char buf[BUFSIZ];
+		int error;
+
+		diff_ignore_re = xmalloc(sizeof(*diff_ignore_re));
+		if ((error = regcomp(diff_ignore_re, diff_ignore_pats,
+		    REG_NEWLINE | REG_EXTENDED)) != 0) {
+			regerror(error, diff_ignore_re, buf, sizeof(buf));
+			if (*diff_ignore_pats != '\0')
+				errx(D_ERROR, "%s: %s", diff_ignore_pats, buf);
+			else
+				errx(D_ERROR, "%s", buf);
+		}
 	}
 
 	for (i = 0; i < argc; i++) {
@@ -136,7 +226,7 @@ rcsdiff_main(int argc, char **argv)
 				errx(D_ERROR, "bad revision number");
 		}
 
-		if (!(flags & QUIET)) {
+		if (!quiet) {
 			fprintf(stderr, "%s\n", RCS_DIFF_DIV);
 			fprintf(stderr, "RCS file: %s\n", fpath);
 		}
@@ -145,13 +235,14 @@ rcsdiff_main(int argc, char **argv)
 
 		/* No revisions given. */
 		if (rev_str1 == NULL)
-			status = rcsdiff_file(file, file->rf_head, argv[i]);
+			status = rcsdiff_file(file, file->rf_head, argv[i],
+			    dflags);
 		/* One revision given. */
 		else if (rev_str2 == NULL)
-			status = rcsdiff_file(file, rev1, argv[i]);
+			status = rcsdiff_file(file, rev1, argv[i], dflags);
 		/* Two revisions given. */
 		else
-			status = rcsdiff_rev(file, rev1, rev2);
+			status = rcsdiff_rev(file, rev1, rev2, dflags);
 
 		rcs_close(file);
 
@@ -177,7 +268,7 @@ rcsdiff_usage(void)
 }
 
 static int
-rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
+rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 {
 	int ret, fd;
 	time_t t;
@@ -204,7 +295,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	}
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
-	if (!(flags & QUIET)) {
+	if (!quiet) {
 		fprintf(stderr, "retrieving revision %s\n", rbuf);
 		fprintf(stderr, "%s -r%s %s\n", diffargs, rbuf, filename);
 	}
@@ -251,7 +342,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	ret = rcs_diffreg(path1, path2, NULL);
+	ret = rcs_diffreg(path1, path2, NULL, dflags);
 
 out:
 	if (fd != -1)
@@ -269,7 +360,7 @@ out:
 }
 
 static int
-rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
+rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 {
 	struct timeval tv[2], tv2[2];
 	BUF *b1, *b2;
@@ -286,7 +377,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	path1 = path2 = NULL;
 
 	rcsnum_tostr(rev1, rbuf1, sizeof(rbuf1));
-	if (!(flags & QUIET))
+	if (!quiet)
 		fprintf(stderr, "retrieving revision %s\n", rbuf1);
 
 	if ((b1 = rcs_getrev(file, rev1)) == NULL) {
@@ -299,7 +390,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	tv[1].tv_sec = tv[0].tv_sec;
 
 	rcsnum_tostr(rev2, rbuf2, sizeof(rbuf2));
-	if (!(flags & QUIET))
+	if (!quiet)
 		fprintf(stderr, "retrieving revision %s\n", rbuf2);
 
 	if ((b2 = rcs_getrev(file, rev2)) == NULL) {
@@ -311,7 +402,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	tv2[0].tv_sec = (long)rcs_rev_getdate(file, rev2);
 	tv2[1].tv_sec = tv2[0].tv_sec;
 
-	if (!(flags & QUIET))
+	if (!quiet)
 		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
 	(void)xasprintf(&path1, "%s/diff1.XXXXXXXXXX", rcs_tmpdir);
@@ -332,7 +423,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	ret = rcs_diffreg(path1, path2, NULL);
+	ret = rcs_diffreg(path1, path2, NULL, dflags);
 
 out:
 	if (b1 != NULL)
@@ -345,4 +436,22 @@ out:
 		xfree(path2);
 
 	return (ret);
+}
+
+static void
+push_ignore_pats(char *pattern)
+{
+	size_t len;
+
+	if (diff_ignore_pats == NULL) {
+		len = strlen(pattern) + 1;
+		diff_ignore_pats = xmalloc(len);
+		strlcpy(diff_ignore_pats, pattern, len);
+	} else {
+		/* old + "|" + new + NUL */
+		len = strlen(diff_ignore_pats) + strlen(pattern) + 2;
+		diff_ignore_pats = xrealloc(diff_ignore_pats, len, 1);
+		strlcat(diff_ignore_pats, "|", len);
+		strlcat(diff_ignore_pats, pattern, len);
+	}
 }
