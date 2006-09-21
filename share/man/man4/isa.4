@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.42 2006/09/11 07:02:35 jmc Exp $
+.\"	$OpenBSD: isa.4,v 1.43 2006/09/21 12:56:39 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -84,20 +84,20 @@ Note that not all architectures support all devices.
 Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
 BusLogic BT54x
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr aic 4
 Adaptec AIC-6260 and Adaptec AIC-6360 based
 .Tn SCSI
 interfaces, including
 the Adaptec 152x, SoundBlaster
 .Tn SCSI
-interfaces, and a variety of compatibles.
+interfaces, and a variety of compatibles
 .It Xr bha 4
 BusLogic BT-445
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr dpt 4
-DPT EATA SCSI RAID controller.
+DPT EATA SCSI RAID controller
 .It Xr sea 4
 Seagate/Future Domain
 .Tn SCSI
@@ -106,18 +106,18 @@ ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
 .It Xr uha 4
 Ultrastor 14f
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr wds 4
 WD-7000 family of bus-mastering
 .Tn SCSI
-interfaces.
+interfaces
 .El
 .Ss Disk and tape controllers
 .Bl -tag -width 12n -offset ind -compact
 .It Xr fdc 4
-NEC765 compatible floppy disk driver.
+NEC765 compatible floppy disk driver
 .It Xr mcd 4
-Mitsumi CD-ROM drives.
+Mitsumi CD-ROM drives
 .It Xr wdc 4
 Standard Western Digital type hard drive controllers: MFM, RLL, ESDI,
 and IDE/ATAPI.
@@ -125,116 +125,116 @@ See also the
 .Xr pciide 4
 device driver which is used instead on machines with PCI IDE controllers.
 .It Xr wt 4
-Wangtek and compatible QIC-02 and QIC-36 tape drives.
+Wangtek and compatible QIC-02 and QIC-36 tape drives
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -offset ind -compact
 .It Xr addcom 4
-Addonics FlexPort 8S serial communication cards.
+Addonics FlexPort 8S serial communication cards
 .It Xr ast 4
-multiplexing serial communications interface.
+multiplexing serial communications interface
 .It Xr boca 4
-multiplexing serial communications interface.
+multiplexing serial communications interface
 .It Xr com 4 , Xr pccom 4
-serial communications interface.
+serial communications interface
 .It Xr cy 4
-Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver.
+Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver
 .It Xr lpt 4
-parallel port driver.
+parallel port driver
 .It Xr rtfps 4
-multiplexing serial communications interface.
+multiplexing serial communications interface
 .El
 .Ss Network interfaces
 .Bl -tag -width 12n -offset ind -compact
 .It Xr ec 4
-3Com EtherLink II (3c503) Ethernet device.
+3Com EtherLink II (3c503) Ethernet device
 .It Xr ef 4
-3Com Fast EtherLink ISA (3c515) 10/100 Ethernet device.
+3Com Fast EtherLink ISA (3c515) 10/100 Ethernet device
 .It Xr eg 4
-3Com EtherLink Plus Ethernet (3c505) Ethernet device.
+3Com EtherLink Plus Ethernet (3c505) Ethernet device
 .It Xr el 4
-3Com EtherLink (3C501) Ethernet device.
+3Com EtherLink (3C501) Ethernet device
 .It Xr ep 4
-3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device.
+3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device
 .It Xr ie 4
-Intel i82586/i82596 Ethernet device.
+Intel i82586/i82596 Ethernet device
 .It Xr lc 4
-DEC EtherWORKS III 10/100 Ethernet device.
+DEC EtherWORKS III 10/100 Ethernet device
 .It Xr le 4
-AMD LANCE Ethernet device.
+AMD LANCE Ethernet device
 .It Xr ne 4
-NE2000 and compatible 10/100 Ethernet device.
+NE2000 and compatible 10/100 Ethernet device
 .It Xr sm 4
-SMC91C9x and SMC91C1xx-based 10/100 Ethernet device.
+SMC91C9x and SMC91C1xx-based 10/100 Ethernet device
 .It Xr we 4
-Western Digital/SMC WD80x3, SMC Elite Ultra, and SMC EtherEZ Ethernet device.
+Western Digital/SMC WD80x3, SMC Elite Ultra, and SMC EtherEZ Ethernet device
 .El
 .Ss Sound cards
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aria 4
-Aria 16 audio device.
+Aria 16 audio device
 .It Xr ess 4
-ESS Technology AudioDrive family audio device.
+ESS Technology AudioDrive family audio device
 .It Xr gus 4
-Gravis UltraSound/UltraSound MAX audio device.
+Gravis UltraSound/UltraSound MAX audio device
 .It Xr pas 4
-ProAudio Spectrum audio device.
+ProAudio Spectrum audio device
 .It Xr pss 4
-Personal Sound System audio device.
+Personal Sound System audio device
 .It Xr sb 4
-SoundBlaster family (and compatibles) audio device.
+SoundBlaster family (and compatibles) audio device
 .It Xr wss 4
-Windows Sound System audio device.
+Windows Sound System audio device
 .It Xr mpu 4
-Roland/Yamaha generic MIDI UART devices.
+Roland/Yamaha generic MIDI UART devices
 .El
 .Ss Radio receiver devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr az 4
-Aztech/PackardBell FM radio device.
+Aztech/PackardBell FM radio device
 .It Xr rt 4
-AIMS Lab Radiotrack FM radio device.
+AIMS Lab Radiotrack FM radio device
 .It Xr rtii 4
-AIMS Lab Radiotrack II FM radio device.
+AIMS Lab Radiotrack II FM radio device
 .It Xr sfr 4
-SoundForte RadioLink SF16-FMR FM radio device.
+SoundForte RadioLink SF16-FMR FM radio device
 .It Xr sf2r 4
-SoundForte RadioLink SF16-FMR2 FM radio device.
+SoundForte RadioLink SF16-FMR2 FM radio device
 .El
 .Ss Hardware Sensors
 .Bl -tag -width 12n -offset ind -compact
 .It Xr it 4
-ITE IT8705F, IT8712F, and SiS SiS950 temperature, voltage, and fan sensor.
+ITE IT8705F, IT8712F, and SiS SiS950 temperature, voltage, and fan sensor
 .It Xr lm 4
-National Semiconductor LM78, LM79 and compatible hardware monitors.
+National Semiconductor LM78, LM79 and compatible hardware monitors
 .It Xr nsclpcsio 4
-National Semiconductor PC87366 LPC Super I/O.
+National Semiconductor PC87366 LPC Super I/O
 .It Xr viasio 4
-VIA VT1211 LPC Super I/O.
+VIA VT1211 LPC Super I/O
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aps 4
-ThinkPad Active Protection System hardware monitors.
+ThinkPad Active Protection System hardware monitors
 .It Xr gscsio 4
-National Semiconductor Geode SC1100 I2C controller.
+National Semiconductor Geode SC1100 I2C controller
 .It Xr lms 4
-Logitech-style bus mouse driver.
+Logitech-style bus mouse driver
 .It Xr mms 4
-Microsoft-style bus mouse driver.
+Microsoft-style bus mouse driver
 .It Xr npx 4
-Numeric Processing Extension coprocessor and emulator.
+Numeric Processing Extension coprocessor and emulator
 .It Xr pcdisplay 4
-PC display adapter driver for wscons.
+PC display adapter driver for wscons
 .It Xr pcic 4
 .Tn ISA
-PCMCIA controllers.
+PCMCIA controllers
 .It Xr pckbc 4
-PC (ISA) keyboard controller driver.
+PC (ISA) keyboard controller driver
 .It Xr pcppi 4
-PC (ISA) control and timer port driver.
+PC (ISA) control and timer port driver
 .It vga 4
-VGA graphics driver for wscons.
+VGA graphics driver for wscons
 .El
 .Pp
 Note that some
