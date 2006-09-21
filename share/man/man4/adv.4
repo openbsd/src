@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adv.4,v 1.20 2006/09/21 15:10:38 jmc Exp $
+.\"	$OpenBSD: adv.4,v 1.21 2006/09/21 15:19:19 jmc Exp $
 .\"
 .\" Copyright (c) 1998, Jason Downs.  All rights reserved.
 .\"
@@ -26,10 +26,10 @@
 .\"
 .\"
 .Dd September 28, 1998
-.Dt ADVANSYS 4
+.Dt ADV 4
 .Os
 .Sh NAME
-.Nm advansys
+.Nm adv , adw
 .Nd AdvanSys PCI SCSI interface
 .Sh SYNOPSIS
 .Cd "adv* at pci?"
@@ -38,7 +38,9 @@
 .Cd "scsibus* at adw?"
 .Sh DESCRIPTION
 The
-.Nm
+.Nm adv
+and
+.Nm adw
 drivers support most AdvanSys PCI SCSI host adapters, as shown in this
 table:
 .Bl -column "ABP940UWxxxxx" "ASB3940U2W-00" -offset indent
@@ -118,7 +120,9 @@ ConnectCom.
 .Pa http://www.connectcom.net/
 .Sh AUTHORS
 The
-.Nm
+.Nm adv
+and
+.Nm adw
 drivers were originally written by Baldassare Dante Profeta for
 .Nx ,
 based on Linux drivers written by Advanced System Products,
