@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.184 2006/09/20 22:22:37 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.185 2006/09/21 15:01:50 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -87,96 +87,96 @@ Note that not all architectures support all devices.
 .It Xr adv 4 , Xr adw 4
 AdvanSys PCI
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr ahc 4
 Adaptec 27xx, 29xx, 39xx, 29160, and other AIC-7xxx-based
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr ahd 4
 Adaptec PCI/PCI-X Ultra320 AIC79xx-based
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr bha 4
 Buslogic BT-9xx
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr iha 4
 Initio INIC-940 and INIC-950 based
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr isp 4
 QLogic ISP-1020, ISP-1040, and ISP-2100
 .Tn SCSI
 and
 .Tn FibreChannel
-interfaces.
+interfaces
 .It Xr mpi 4
-LSI Logic Fusion-MPT Message Passing Interface.
+LSI Logic Fusion-MPT Message Passing Interface
 .It Xr pcscp 4
 AMD Am53c974 PCscsi-PCI
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr siop 4
 LSI/Symbios Logic/NCR 53c8xx and 53c1010-family
 .Tn SCSI
-interfaces.
+interfaces
 .It Xr trm 4
 Tekram DC-3x5U (TRM-S1040 based)
 .Tn SCSI
-interfaces.
+interfaces
 .El
 .Ss IDE disk controllers
 .Bl -tag -width 10n -offset ind -compact
 .It Xr pciide 4
-PCI IDE controller driver.
+PCI IDE controller driver
 .El
 .Ss RAID and cache controllers
 .Bl -tag -width 10n -offset ind -compact
 .It Xr aac 4
-Adaptec SCSI RAID controller.
+Adaptec SCSI RAID controller
 .It Xr ami 4
-American Megatrends Inc. MegaRAID PATA/SATA/SCSI RAID controller.
+American Megatrends Inc. MegaRAID PATA/SATA/SCSI RAID controller
 .It Xr arc 4
-Areca Technology Corporation SATA RAID controller.
+Areca Technology Corporation SATA RAID controller
 .It Xr cac 4
-Compaq Smart ARRAY 2/3/4 SCSI RAID controller.
+Compaq Smart ARRAY 2/3/4 SCSI RAID controller
 .It Xr ciss 4
-Compaq Smart ARRAY 5/6 SAS/SATA/SCSI RAID controller.
+Compaq Smart ARRAY 5/6 SAS/SATA/SCSI RAID controller
 .It Xr dpt 4
-DPT EATA SCSI RAID controller.
+DPT EATA SCSI RAID controller
 .It Xr gdt 4
-ICP-Vortex and Intel GDT SCSI RAID controller.
+ICP-Vortex and Intel GDT SCSI RAID controller
 .It Xr iop 4
 Generic
 .Tn I2O
 specification
 .Tn RAID
-controllers.
+controllers
 .It Xr mfi 4
-LSI Logic & Dell MegaRAID SAS RAID controller.
+LSI Logic & Dell MegaRAID SAS RAID controller
 .It Xr twe 4
-3ware 5000/6000/7000/8000 series PATA/SATA RAID controller.
+3ware 5000/6000/7000/8000 series PATA/SATA RAID controller
 .El
 .Ss Network interfaces
 .Bl -tag -width 10n -offset ind -compact
 .It Xr acx 4
-TI ACX100/ACX111 IEEE 802.11a/b/g wireless network device.
+TI ACX100/ACX111 IEEE 802.11a/b/g wireless network device
 .It Xr an 4
-Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network device.
+Aironet Communications 4500/4800 IEEE 802.11FH/b wireless network device
 .It Xr art 4
-Accoom Networks Artery T1/E1 network adapters.
+Accoom Networks Artery T1/E1 network adapters
 .It Xr ath 4
-Atheros IEEE 802.11a/b/g wireless network device.
+Atheros IEEE 802.11a/b/g wireless network device
 .It Xr atw 4
-ADMtek ADM8211 IEEE 802.11b wireless network device.
+ADMtek ADM8211 IEEE 802.11b wireless network device
 .It Xr bce 4
-Broadcom BCM4401 10/100 Ethernet device.
+Broadcom BCM4401 10/100 Ethernet device
 .It Xr bge 4
-Broadcom BCM57xx/BCM590x 10/100/Gigabit Ethernet device.
+Broadcom BCM57xx/BCM590x 10/100/Gigabit Ethernet device
 .It Xr bnx 4
-Broadcom NetXtreme II 10/100/Gigabit Ethernet device.
+Broadcom NetXtreme II 10/100/Gigabit Ethernet device
 .It Xr dc 4
-DEC/Intel 21140, 21142, 21143, 21145 and clones 10/100 Ethernet device.
+DEC/Intel 21140, 21142, 21143, 21145 and clones 10/100 Ethernet device
 .It Xr de 4
 DEC DC21x4x (Tulip) 10/100 Ethernet device.
 Multi-port interfaces are typically configured as
@@ -187,228 +187,228 @@ instances on the
 .Tn PCI
 bus on the other side of the bridge.
 .It Xr em 4
-Intel PRO/1000 10/100/Gigabit Ethernet device.
+Intel PRO/1000 10/100/Gigabit Ethernet device
 .\" .It Xr en 4
 .\" Midway-based Efficient Networks Inc.\&
-.\" and Adaptec ATM interfaces.
+.\" and Adaptec ATM interfaces
 .It Xr ep 4
-3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device.
+3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device
 .It Xr epic 4
-SMC 83C170 (EPIC/100) 10/100 Ethernet device.
+SMC 83C170 (EPIC/100) 10/100 Ethernet device
 .It Xr fpa 4
 .Tn DEC
 DEFPA
 .Tn FDDI
-interfaces.
+interfaces
 .It Xr fxp 4
-Intel EtherExpress PRO/100 10/100 Ethernet device.
+Intel EtherExpress PRO/100 10/100 Ethernet device
 .It Xr gem 4
-GEM 10/100/Gigabit Ethernet device.
+GEM 10/100/Gigabit Ethernet device
 .It Xr hme 4
-Sun Happy Meal 10/100 Ethernet device.
+Sun Happy Meal 10/100 Ethernet device
 .It Xr ipw 4
 .Tn Intel
-PRO/Wireless 2100 IEEE 802.11b wireless network device.
+PRO/Wireless 2100 IEEE 802.11b wireless network device
 .It Xr iwi 4
 .Tn Intel
-PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11a/b/g wireless network device.
+PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11a/b/g wireless network device
 .It Xr ixgb 4
-Intel(R) PRO/10GbE 10Gb Ethernet device.
+Intel(R) PRO/10GbE 10Gb Ethernet device
 .It Xr lge 4
-Level 1 LXT1001 NetCellerator PCI Gigabit Ethernet device.
+Level 1 LXT1001 NetCellerator PCI Gigabit Ethernet device
 .It Xr lmc 4
 Lan Media Corporation
 .Tn SSI/DS1/HSSI/DS3
-interfaces.
+interfaces
 .It Xr msk 4
-SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet device.
+SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet device
 .It Xr mtd 4
-Myson Technology MTD800/MTD803/MTD891 10/100/Gigabit Ethernet device.
+Myson Technology MTD800/MTD803/MTD891 10/100/Gigabit Ethernet device
 .It Xr ne 4
-NE2000 and compatible 10/100 Ethernet device.
+NE2000 and compatible 10/100 Ethernet device
 .It Xr nfe 4
-NVIDIA nForce MCP 10/100/Gigabit Ethernet device.
+NVIDIA nForce MCP 10/100/Gigabit Ethernet device
 .It Xr nge 4
-National Semiconductor PCI 10/100/Gigabit Ethernet device.
+National Semiconductor PCI 10/100/Gigabit Ethernet device
 .It Xr pcn 4
-AMD PCnet-PCI 10/100 Ethernet device.
+AMD PCnet-PCI 10/100 Ethernet device
 .It Xr pgt 4
-Connexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g wireless network device.
+Connexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g wireless network device
 .It Xr ral 4
-Ralink Technology IEEE 802.11a/b/g wireless network device.
+Ralink Technology IEEE 802.11a/b/g wireless network device
 .It Xr re 4
-RealTek 8139C+/8169/816xS/811xS/8101E 10/100/Gigabit Ethernet device.
+RealTek 8139C+/8169/816xS/811xS/8101E 10/100/Gigabit Ethernet device
 .It Xr rl 4
-Realtek 8129/8139 10/100 Ethernet device.
+Realtek 8129/8139 10/100 Ethernet device
 .It Xr rtw 4
-Realtek RTL8180L IEEE 802.11b wireless network device.
+Realtek RTL8180L IEEE 802.11b wireless network device
 .It Xr san 4
-Sangoma Technologies AFT T1/E1 Network interfaces.
+Sangoma Technologies AFT T1/E1 Network interfaces
 .It Xr sf 4
-Adaptec AIC-6915 "Starfire" PCI 10/100 Ethernet device.
+Adaptec AIC-6915 "Starfire" PCI 10/100 Ethernet device
 .It Xr sis 4
-SiS 900, SiS 7016, and NS DP83815/6 10/100 Ethernet device.
+SiS 900, SiS 7016, and NS DP83815/6 10/100 Ethernet device
 .It Xr sk 4
-SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet device.
+SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet device
 .It Xr ste 4
-Sundance Technologies ST201 10/100 Ethernet device.
+Sundance Technologies ST201 10/100 Ethernet device
 .It Xr stge 4
-Sundance/Tamarack TC9021 Gigabit Ethernet device.
+Sundance/Tamarack TC9021 Gigabit Ethernet device
 .It Xr ti 4
-Alteon Networks Tigon I and II Gigabit Ethernet device.
+Alteon Networks Tigon I and II Gigabit Ethernet device
 .It Xr tl 4
-Texas Instruments ThunderLAN 10/100 Ethernet device.
+Texas Instruments ThunderLAN 10/100 Ethernet device
 .It Xr txp 4
-3Com 3XP Typhoon/Sidewinder (3CR990) 10/100 Ethernet device.
+3Com 3XP Typhoon/Sidewinder (3CR990) 10/100 Ethernet device
 .It Xr vge 4
-VIA Networking Technologies VT6122 PCI 10/100/Gigabit Ethernet device.
+VIA Networking Technologies VT6122 PCI 10/100/Gigabit Ethernet device
 .It Xr vr 4
-VIA Technologies VT3043, VT86C100A, VT6105/VT6105M 10/100 Ethernet device.
+VIA Technologies VT3043, VT86C100A, VT6105/VT6105M 10/100 Ethernet device
 .It Xr wb 4
-Winbond W89C840F 10/100 Ethernet device.
+Winbond W89C840F 10/100 Ethernet device
 .It Xr wi 4
 WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network
-device.
+device
 .It Xr wpi 4
-Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g wireless network device.
+Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g wireless network device
 .It Xr xge 4
-Neterion Xframe/Xframe II 10Gb Ethernet device.
+Neterion Xframe/Xframe II 10Gb Ethernet device
 .It Xr xl 4
-3Com EtherLink XL and Fast EtherLink XL 10/100 Ethernet device.
+3Com EtherLink XL and Fast EtherLink XL 10/100 Ethernet device
 .El
 .Ss Cryptography accelerators
 .Bl -tag -width 10n -offset ind -compact
 .It Xr hifn 4
-Hifn 7751/7811/7951/7955/7956/9751 crypto accelerator.
+Hifn 7751/7811/7951/7955/7956/9751 crypto accelerator
 .It Xr ises 4
-Securealink PCC-ISES hardware crypto accelerator.
+Securealink PCC-ISES hardware crypto accelerator
 .It Xr lofn 4
-Hifn 6500 crypto accelerator.
+Hifn 6500 crypto accelerator
 .It Xr noct 4
-NetOctave NSP2000 crypto accelerator.
+NetOctave NSP2000 crypto accelerator
 .It Xr nofn 4
-Hifn 7814/7851/7854 HIPP1 crypto accelerator.
+Hifn 7814/7851/7854 HIPP1 crypto accelerator
 .It Xr safe 4
-SafeNet crypto accelerator.
+SafeNet crypto accelerator
 .It Xr ubsec 4
-Broadcom and BlueSteel uBsec 5x0x crypto accelerator.
+Broadcom and BlueSteel uBsec 5x0x crypto accelerator
 .El
 .Ss Serial interfaces
 .Bl -tag -width 10n -offset ind -compact
 .It Xr cy 4
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications devices.
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications devices
 .It Xr cz 4
-Cyclades-Z series multi-port serial adapter device driver.
+Cyclades-Z series multi-port serial adapter device driver
 .It Xr puc 4
-PCI ``universal'' communications card driver.
+PCI ``universal'' communications card driver
 .El
 .Ss Display adapters
 .Bl -tag -width 10n -offset ind -compact
 .It Xr tga 4
-TGA graphics driver.
+TGA graphics driver
 .It Xr vga 4
-VGA graphics cards.
+VGA graphics cards
 .El
 .Ss Audio devices
 .Bl -tag -width 10n -offset ind -compact
 .It Xr auich 4
-ICH-based PCI audio device.
+ICH-based PCI audio device
 .It Xr auixp 4
-ATI IXP series integrated AC'97 audio device.
+ATI IXP series integrated AC'97 audio device
 .It Xr autri 4
-Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 audio device.
+Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 audio device
 .It Xr auvia 4
-VIA VT82C686A, VT8233, VT8235, VT8237 integrated AC'97 audio device.
+VIA VT82C686A, VT8233, VT8235, VT8237 integrated AC'97 audio device
 .It Xr azalia 4
-Generic High Definition Audio device.
+Generic High Definition Audio device
 .It Xr clcs 4
-Cirrus Logic CS4280/CS4610/CS4615 audio device.
+Cirrus Logic CS4280/CS4610/CS4615 audio device
 .It Xr clct 4
-Cirrus Logic CS4281 audio device.
+Cirrus Logic CS4281 audio device
 .It Xr cmpci 4
-C-Media CMI8x38 PCI audio device.
+C-Media CMI8x38 PCI audio device
 .It Xr eap 4
-Ensoniq AudioPCI audio device.
+Ensoniq AudioPCI audio device
 .It Xr emu 4
-Creative Labs SBLive!, PCI 512, and Audigy audio device.
+Creative Labs SBLive!, PCI 512, and Audigy audio device
 .It Xr esa 4
-ESS Technology Allegro-1/Maestro-3 family audio device.
+ESS Technology Allegro-1/Maestro-3 family audio device
 .It Xr eso 4
-ESS Technology Solo-1 PCI AudioDrive audio device.
+ESS Technology Solo-1 PCI AudioDrive audio device
 .It Xr fms 4
-Forte Media FM801 audio device.
+Forte Media FM801 audio device
 .It Xr maestro 4
-ESS Maestro 1 and 2 audio device.
+ESS Maestro 1 and 2 audio device
 .It Xr neo 4
-NeoMagic 256AV/ZX audio device.
+NeoMagic 256AV/ZX audio device
 .It Xr sv 4
-S3 SonicVibes audio device.
+S3 SonicVibes audio device
 .It Xr yds 4
-Yamaha DS-XG audio device.
+Yamaha DS-XG audio device
 .El
 .Ss Radio receiver devices
 .Bl -tag -width 10n -offset ind -compact
 .It Xr fms 4
-Forte Media FM801 audio device.
+Forte Media FM801 audio device
 .It Xr gtp 4
-Gemtek PCI FM radio device.
+Gemtek PCI FM radio device
 .El
 .Ss Hardware Sensors
 .Bl -tag -width 10n -offset ind -compact
 .It Xr elansc 4
-AMD Elan SC520 System Controller.
+AMD Elan SC520 System Controller
 .It Xr geodesc 4
-Geode SC1100/SCx200 IAOC watchdog timer device.
+Geode SC1100/SCx200 IAOC watchdog timer device
 .It Xr ichwdt 4
-Intel 6300ESB ICH watchdog timer device.
+Intel 6300ESB ICH watchdog timer device
 .It Xr viaenv 4
-VIA VT82C686A/VT8231 hardware monitor.
+VIA VT82C686A/VT8231 hardware monitor
 .It Xr wdt 4
-ICS PCI-WDT500/501 watchdog timer device.
+ICS PCI-WDT500/501 watchdog timer device
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 10n -offset ind -compact
 .It Xr alipm 4
-Acer Labs M7101 SMBus controller.
+Acer Labs M7101 SMBus controller
 .It Xr amdiic 4
-AMD-8111 SMBus controller.
+AMD-8111 SMBus controller
 .It Xr amdpm 4
-AMD-756/766/768/8111 Power Management and SMBus controller.
+AMD-756/766/768/8111 Power Management and SMBus controller
 .It Xr bktr 4
 Brooktree Bt848
 .Tn PCI
-TV tuners and video capture boards.
+TV tuners and video capture boards
 .It Xr cbb 4
 .Tn PCI
 Yenta compatible
 .Tn CardBus
-bridges.
+bridges
 .It Xr ehci 4
-USB Enhanced Host Controller Interface.
+USB Enhanced Host Controller Interface
 .It Xr ichiic 4
-Intel ICH SMBus controller.
+Intel ICH SMBus controller
 .It Xr nviic 4
-NVIDIA nForce2/3/4 SMBus controller.
+NVIDIA nForce2/3/4 SMBus controller
 .It Xr ohci 4
-USB Open Host Controller Interface.
+USB Open Host Controller Interface
 .It Xr pcic 4
 .Tn PCI
 .Tn PCMCIA
-controllers, including the Cirrus Logic GD6729.
+controllers, including the Cirrus Logic GD6729
 .It Xr piixpm 4
-Intel PIIX SMbus controller.
+Intel PIIX SMbus controller
 .It Xr ppb 4
 Generic
 .Tn PCI Ns \- Ns Tn PCI
 bridges, including
 .Tn PCI
-expansion backplanes.
+expansion backplanes
 .It Xr sdhc 4
 SD Host Controller
 .It Xr uhci 4
-USB Universal Host Controller Interface.
+USB Universal Host Controller Interface
 .It Xr viapm 4
-VIA VT8233/8235/8237 SMBus controller.
+VIA VT8233/8235/8237 SMBus controller
 .El
 .Sh IOCTLS
 If the kernel is compiled with the
