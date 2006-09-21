@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.19 2006/07/09 13:35:10 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.20 2006/09/21 09:42:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -40,6 +40,7 @@ extern uint32_t			mpi_debug;
 
 #define MPI_REQUEST_SIZE	512
 #define MPI_REPLY_SIZE		128
+#define MPI_REPLY_COUNT		(PAGE_SIZE / MPI_REPLY_SIZE)
 
 /*
  * this is the max number of sge's we can stuff in a request frame:
@@ -65,6 +66,11 @@ struct mpi_ccb_bundle {
 
 struct mpi_softc;
 
+struct mpi_rcb {
+	void			*rcb_reply;
+	u_int32_t		rcb_reply_dva;
+};
+
 struct mpi_ccb {
 	struct mpi_softc	*ccb_sc;
 	int			ccb_id;
@@ -82,8 +88,7 @@ struct mpi_ccb {
 		MPI_CCB_QUEUED
 	}			ccb_state;
 	void			(*ccb_done)(struct mpi_ccb *);
-	void			*ccb_reply;
-	u_int32_t		ccb_reply_dva;
+	struct mpi_rcb		*ccb_rcb;
 
 	TAILQ_ENTRY(mpi_ccb)	ccb_link;
 };
@@ -121,6 +126,7 @@ struct mpi_softc {
 	struct mpi_ccb_list	sc_ccb_free;
 
 	struct mpi_dmamem	*sc_replies;
+	struct mpi_rcb		*sc_rcbs;
 
 	size_t			sc_fw_len;
 	struct mpi_dmamem	*sc_fw;

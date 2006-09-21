@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.69 2006/09/21 09:05:28 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.70 2006/09/21 09:42:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -704,8 +704,8 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	if (mpi_poll(sc, ccb, 5000) != 0)
 		return (1);
 
-	if (ccb->ccb_reply != NULL)
-		mpi_push_reply(sc, ccb->ccb_reply_dva);
+	if (ccb->ccb_rcb != NULL)
+		mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 
 	mpi_put_ccb(sc, ccb);
 
@@ -737,10 +737,11 @@ int
 mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 {
 	struct mpi_ccb			*ccb;
+	struct mpi_rcb			*rcb = NULL;
 	struct mpi_msg_reply		*reply = NULL;
 	u_int32_t			reply_dva = 0x0;
-	char				*reply_addr;
 	int				id;
+	int				i;
 
 	DNPRINTF(MPI_D_INTR, "%s: mpi_reply reg: 0x%08x\n", DEVNAME(sc), reg);
 
@@ -751,10 +752,10 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 
 		reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
 
-		reply_addr = MPI_DMA_KVA(sc->sc_replies);
-		reply_addr += reply_dva -
-		    (u_int32_t)MPI_DMA_DVA(sc->sc_replies);
-		reply = (struct mpi_msg_reply *)reply_addr;
+		i = (reply_dva - (u_int32_t)MPI_DMA_DVA(sc->sc_replies)) /
+		    MPI_REPLY_SIZE;
+		rcb = &sc->sc_rcbs[1];
+		reply = rcb->rcb_reply;
 
 		id = letoh32(reply->msg_context);
 
@@ -782,8 +783,7 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 	    ccb->ccb_offset, MPI_REQUEST_SIZE,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	ccb->ccb_state = MPI_CCB_READY;
-	ccb->ccb_reply = reply;
-	ccb->ccb_reply_dva = reply_dva;
+	ccb->ccb_rcb = rcb;
 
 	ccb->ccb_done(ccb);
 
@@ -954,9 +954,16 @@ mpi_alloc_replies(struct mpi_softc *sc)
 {
 	DNPRINTF(MPI_D_MISC, "%s: mpi_alloc_replies\n", DEVNAME(sc));
 
-	sc->sc_replies = mpi_dmamem_alloc(sc, PAGE_SIZE);
-	if (sc->sc_replies == NULL)
+	sc->sc_rcbs = malloc(MPI_REPLY_COUNT * sizeof(struct mpi_rcb),
+	    M_DEVBUF, M_WAITOK);
+	if (sc->sc_rcbs == NULL)
 		return (1);
+
+	sc->sc_replies = mpi_dmamem_alloc(sc, PAGE_SIZE);
+	if (sc->sc_replies == NULL) {
+		free(sc->sc_rcbs, M_DEVBUF);
+		return (1);
+	}
 
 	return (0);
 }
@@ -964,18 +971,20 @@ mpi_alloc_replies(struct mpi_softc *sc)
 void
 mpi_push_replies(struct mpi_softc *sc)
 {
-	paddr_t				reply;
+	struct mpi_rcb			*rcb;
+	char				*kva = MPI_DMA_KVA(sc->sc_replies);
 	int				i;
 
 	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies),
 	    0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
 
-	for (i = 0; i < PAGE_SIZE / MPI_REPLY_SIZE; i++) {
-		reply = (u_int32_t)MPI_DMA_DVA(sc->sc_replies) +
+	for (i = 0; i < MPI_REPLY_COUNT; i++) {
+		rcb = &sc->sc_rcbs[i];
+
+		rcb->rcb_reply = kva + MPI_REPLY_SIZE * i;
+		rcb->rcb_reply_dva = (u_int32_t)MPI_DMA_DVA(sc->sc_replies) +
 		    MPI_REPLY_SIZE * i;
-		DNPRINTF(MPI_D_MEM, "%s: mpi_push_replies %#x\n", DEVNAME(sc),
-		    reply);
-		mpi_push_reply(sc, reply);
+		mpi_push_reply(sc, rcb->rcb_reply_dva);
 	}
 }
 
@@ -1149,7 +1158,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	struct scsi_xfer		*xs = ccb->ccb_xs;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
-	struct mpi_msg_scsi_io_error	*sie = ccb->ccb_reply;
+	struct mpi_msg_scsi_io_error	*sie;
 
 	if (xs->datalen != 0) {
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
@@ -1164,13 +1173,15 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	xs->resid = 0;
 	xs->flags |= ITSDONE;
 
-	if (sie == NULL) {
+	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
 		xs->status = SCSI_OK;
 		mpi_put_ccb(sc, ccb);
 		scsi_done(xs);
 		return;
 	}
+
+	sie = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_CMD, "%s: mpi_scsi_cmd_done xs cmd: 0x%02x len: %d "
 	    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
@@ -1250,7 +1261,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_CMD, "%s:  xs err: 0x%02x status: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
 
-	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 	scsi_done(xs);
 }
@@ -1856,12 +1867,12 @@ mpi_portfacts(struct mpi_softc *sc)
 		goto err;
 	}
 
-	pfp = ccb->ccb_reply;
-	if (pfp == NULL) {
+	if (ccb->ccb_rcb == NULL) {
 		DNPRINTF(MPI_D_MISC, "%s: empty portfacts reply\n",
 		    DEVNAME(sc));
 		goto err;
 	}
+	pfp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_MISC, "%s:  function: 0x%02x msg_length: %d\n",
 	    DEVNAME(sc), pfp->function, pfp->msg_length);
@@ -1888,7 +1899,7 @@ mpi_portfacts(struct mpi_softc *sc)
 	sc->sc_porttype = pfp->port_type;
 	sc->sc_target = letoh16(pfp->port_scsi_id);
 
-	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	rv = 0;
 err:
 	mpi_put_ccb(sc, ccb);
@@ -1928,7 +1939,7 @@ void
 mpi_eventnotify_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc			*sc = ccb->ccb_sc;
-	struct mpi_msg_event_reply		*enp = ccb->ccb_reply;
+	struct mpi_msg_event_reply		*enp = ccb->ccb_rcb->rcb_reply;
 	u_int32_t				*data;
 	int					i;
 
@@ -1950,7 +1961,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 	printf("%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
 	    letoh32(enp->ioc_loginfo));
 
-	data = ccb->ccb_reply;
+	data = ccb->ccb_rcb->rcb_reply;
 	data += dwordsof(struct mpi_msg_event_reply);
 	for (i = 0; i < letoh16(enp->data_length); i++) {
 		printf("%s:  data[%d]: 0x%08x\n", DEVNAME(sc), i, data[i]);
@@ -1988,14 +1999,14 @@ mpi_portenable(struct mpi_softc *sc)
 		return (1);
 	}
 
-	pep = ccb->ccb_reply;
-	if (pep == NULL) {
+	if (ccb->ccb_rcb == NULL) {
 		DNPRINTF(MPI_D_MISC, "%s: empty portenable reply\n",
 		    DEVNAME(sc));
 		return (1);
 	}
+	pep = ccb->ccb_rcb->rcb_reply;
 
-	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 
 	return (0);
@@ -2058,14 +2069,14 @@ mpi_fwupload(struct mpi_softc *sc)
 		goto err;
 	}
 
-	upp = ccb->ccb_reply;
-	if (upp == NULL)
+	if (ccb->ccb_rcb == NULL)
 		panic("%s: unable to do fw upload\n", DEVNAME(sc));
+	upp = ccb->ccb_rcb->rcb_reply;
 
 	if (letoh16(upp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
 		rv = 1;
 
-	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
@@ -2194,9 +2205,9 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 		return (1);
 	}
 
-	cp = ccb->ccb_reply;
-	if (cp == NULL)
+	if (ccb->ccb_rcb == NULL)
 		panic("%s: unable to fetch config header\n", DEVNAME(sc));
+	cp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "
 	    "0x%02x\n", DEVNAME(sc), cp->action, cp->msg_length, cp->function);
@@ -2222,7 +2233,7 @@ mpi_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	else
 		*hdr = cp->config_header;
 
-	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
@@ -2288,11 +2299,11 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 		return (1);
 	}
 
-	cp = ccb->ccb_reply;
-	if (cp == NULL) {
+	if (ccb->ccb_rcb == NULL) {
 		mpi_put_ccb(sc, ccb);
 		return (1);
 	}
+	cp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_MISC, "%s:  action: 0x%02x msg_length: %d function: "
 	    "0x%02x\n", DEVNAME(sc), cp->action, cp->msg_length, cp->function);
@@ -2318,7 +2329,7 @@ mpi_cfg_page(struct mpi_softc *sc, u_int32_t address, struct mpi_cfg_hdr *hdr,
 	else if (read)
 		bcopy(kva, page, len);
 
-	mpi_push_reply(sc, ccb->ccb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
