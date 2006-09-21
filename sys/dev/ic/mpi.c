@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.72 2006/09/21 10:00:40 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.73 2006/09/21 10:52:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -755,7 +755,7 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 
 		i = (reply_dva - (u_int32_t)MPI_DMA_DVA(sc->sc_replies)) /
 		    MPI_REPLY_SIZE;
-		rcb = &sc->sc_rcbs[1];
+		rcb = &sc->sc_rcbs[i];
 		reply = rcb->rcb_reply;
 
 		id = letoh32(reply->msg_context);
