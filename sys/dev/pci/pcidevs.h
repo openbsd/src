@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1145 2006/09/20 19:34:25 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1146 2006/09/22 02:16:17 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1272,6 +1272,7 @@
 
 /* Corollary products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI */
+#define	PCI_PRODUCT_COROLLARY_CCF	0x1117		/* Cache Coherency Filter */
 
 /* Creative Labs products */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SoundBlaster Live */
@@ -3022,6 +3023,7 @@
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O 1076 */
 #define	PCI_PRODUCT_PLX_1077	0x1077		/* I/O 1077 */
+#define	PCI_PRODUCT_PLX_8532_PCIE	0x8532		/* 8532 PCIE */
 #define	PCI_PRODUCT_PLX_9050	0x9050		/* I/O 9050 */
 #define	PCI_PRODUCT_PLX_9080	0x9080		/* I/O 9080 */
 

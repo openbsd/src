@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1145 2006/09/20 19:34:25 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1146 2006/09/22 02:16:17 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3345,6 +3345,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
 	    "C-Bus II-PCI",
+	},
+	{
+	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CCF,
+	    "Cache Coherency Filter",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE,
@@ -9381,6 +9385,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1077,
 	    "I/O 1077",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_8532_PCIE,
+	    "8532 PCIE",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
