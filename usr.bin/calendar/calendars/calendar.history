@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.60 2006/09/20 16:49:07 jasper Exp $
+ * $OpenBSD: calendar.history,v 1.61 2006/09/22 10:03:52 jasper Exp $
  */
 
 #ifndef _calendar_history_
@@ -330,10 +330,15 @@
 09/02	Great Britain adopts Gregorian Calendar, 1752
 09/02	Japan signs unconditional surrender on US battleship `Missouri', 1945
 09/03	Anniversary of the Founding of the Republic in San Marino
+09/04	Napoleon III is deposed and the Third Republic is declared, 1870
+09/05	St. Gotthard Tunnel opens in Switzerland, 1980
 09/06	149 Pilgrims set forth from England aboard the Mayflower, 1620
 09/06	Somhlolo in Swaziland
+09/07	Brazil declares its independence from Portugal, 1822
 09/08	Jack the Ripper kills again, Annie Chapman is second victim, 1888
+09/09	John Herschel takes the first glass plate photograph, 1839
 09/10	Mountain Meadows Massacre.  Mormons kill Gentile wagon train, 1857
+09/11	World Wide Fund (WWF) founded, 1961
 09/12	German paratroopers rescue Mussolini from captivity in Rome, 1943
 09/12	Germany annexes Sudetenland, 1938
 09/13	136.4 F at el Azizia, Libya, 1922
@@ -341,13 +346,20 @@
 09/13	Building of Hadrian's Wall begun, 122
 09/13	Chiang Kai-Shek becomes president of China, 1943
 09/14	The Selective Service Act establishes the first peacetime draft, 1940
+09/15	The Nazi's adopt a new national flag with the swastika, 1935
+09/16	General Motors is founded, 1908
 09/17	Joshua A. Norton proclaims himself 'Emperor Norton I', 1859
 09/17	Battle of Antietam, 1862
 09/18	Victory of Uprona in Burundi
+09/19	Walt Disney releases Steamboat Willie, 1928
 09/20	Magellan leaves Spain on the first Round the World passage, 1519
+09/21	J. R. R. Tolkien's The Hobbit is published, 1937
 09/22	Allied forces form the independent nation West Germany, 1953
 09/22	The first Soviet atomic bomb explodes, 1949
 09/23	Philippine President Ferdinand Marcos declares martial law, 1972
+09/24	The Netherlands surrenders New Amsterdam to England, 1664
+09/25	Battle of Stamford Bridge marks the end of the Viking era, 1066
+09/26	Concorde makes its first non-stop crossing of the Atlantic, 1973
 09/27	The first passenger was hauled in a locomotive in England, 1825
 09/28	"Pilgrim's Progress" published, 1678
 09/28	A Greek soldier runs 26+ miles after the Persian defeat at Marathon,
