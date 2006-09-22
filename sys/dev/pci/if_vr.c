@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.64 2006/06/17 18:00:43 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.65 2006/09/22 03:18:57 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -582,7 +582,7 @@ vr_reset(struct vr_softc *sc)
 			printf("%s: reset never completed!\n",
 			    sc->sc_dev.dv_xname);
 		else {
-#ifdef DEBUG
+#ifdef VR_DEBUG
 			/* Use newer force reset command */
 			printf("%s: Using force reset command.\n",
 			    sc->sc_dev.dv_xname);
@@ -1190,12 +1190,15 @@ vr_intr(void *arg)
 			vr_rxeof(sc);
 
 		if (status & VR_ISR_RX_DROPPED) {
+#ifdef VR_DEBUG
 			printf("%s: rx packet lost\n", sc->sc_dev.dv_xname);
+#endif
 			ifp->if_ierrors++;
 		}       
 
 		if ((status & VR_ISR_RX_ERR) || (status & VR_ISR_RX_NOBUF) ||
 		    (status & VR_ISR_RX_NOBUF) || (status & VR_ISR_RX_OFLOW)) {
+#ifdef VR_DEBUG
 			printf("%s: receive error (%04x)",
 			    sc->sc_dev.dv_xname, status);
 			if (status & VR_ISR_RX_NOBUF)
@@ -1205,6 +1208,7 @@ vr_intr(void *arg)
 			if (status & VR_ISR_RX_DROPPED)
 				printf(" packet lost");
 			printf("\n");
+#endif
 			vr_rxeoc(sc);
 		}
 
