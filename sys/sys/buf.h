@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.47 2006/07/11 21:17:58 mickey Exp $	*/
+/*	$OpenBSD: buf.h,v 1.48 2006/09/22 23:03:52 pedro Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ struct buf *bufq_default_get(struct bufq *);
 #define	B_DONE		0x00000200	/* I/O completed. */
 #define	B_EINTR		0x00000400	/* I/O was interrupted */
 #define	B_ERROR		0x00000800	/* I/O error occurred. */
-#define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
