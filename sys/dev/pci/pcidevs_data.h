@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1148 2006/09/22 13:00:55 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1149 2006/09/22 18:26:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5027,6 +5027,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82845 AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_DMA,
+	    "5000 DMA Engine",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX_SR,
 	    "PRO/10GbE SR (82597EX)",
 	},
@@ -5531,6 +5535,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5000X Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000Z_HB,
+	    "5000Z Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000V_HB,
+	    "5000V Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_1,
 	    "5000 PCIE",
 	},
@@ -5576,6 +5588,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_7,
+	    "5000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_8,
 	    "5000 PCIE",
 	},
 	{
@@ -5835,19 +5851,19 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6321ESB USB",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_1,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_2,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_3,
+	    "6321ESB PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_4,
-	    "6321ESB PCIE",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_5,
-	    "6321ESB PCIE",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_6,
-	    "6321ESB PCIE",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_7,
 	    "6321ESB PCIE",
 	},
 	{
@@ -6147,7 +6163,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82855PE AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_5,
 	    "6321ESB PCIE",
 	},
 	{
@@ -6155,11 +6171,27 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6321ESB PCIE-PCIX",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_6,
 	    "6321ESB PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_3,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_7,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_8,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_9,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_10,
+	    "6321ESB PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6321ESB_PCIE_11,
 	    "6321ESB PCIE",
 	},
 	{
