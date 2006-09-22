@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.24 2005/10/31 04:39:19 fgsch Exp $
+# $OpenBSD: Makefile,v 1.25 2006/09/22 18:38:58 kurt Exp $
 
-SUBDIR= cancel cancel2 close closefrom cwd execve fork group \
+SUBDIR= blocked_close blocked_dup2 cancel cancel2 close closefrom \
+	close_race cwd dup2_race execve fork group \
 	malloc_duel netdb pcap poll \
 	preemption preemption_float \
 	pthread_atfork pthread_cond_timedwait pthread_create \
