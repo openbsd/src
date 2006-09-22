@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.26 2006/03/31 17:31:59 deraadt Exp $ */
+/*	$OpenBSD: pmap_rmt.c,v 1.27 2006/09/22 18:42:04 otto Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -208,7 +208,7 @@ clnt_broadcast(u_long prog,	/* program number */
     resultproc_t eachresult)	/* call with each result obtained */
 {
 	enum clnt_stat stat;
-	AUTH *unix_auth = authunix_create_default();
+	AUTH *unix_auth;
 	XDR xdr_stream;
 	XDR *xdrs = &xdr_stream;
 	int outlen, inlen, nets;
@@ -227,6 +227,11 @@ clnt_broadcast(u_long prog,	/* program number */
 	struct rmtcallres r;
 	struct rpc_msg msg;
 	char outbuf[MAX_BROADCAST_SIZE], inbuf[UDPMSGSIZE];
+
+	if ((unix_auth = authunix_create_default()) == NULL) {
+		stat = RPC_AUTHERROR;
+		goto done_broad;
+	}
 
 	/*
 	 * initialization: create a socket, a broadcast address, and
@@ -371,6 +376,7 @@ done_broad:
 		free(addrs);
 	if (sock >= 0)
 		(void)close(sock);
-	AUTH_DESTROY(unix_auth);
+	if (unix_auth != NULL)
+		AUTH_DESTROY(unix_auth);
 	return (stat);
 }
