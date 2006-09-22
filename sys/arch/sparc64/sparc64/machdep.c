@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 2006/06/21 21:53:32 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.84 2006/09/22 19:16:07 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -938,7 +938,7 @@ dumpsys()
 	blkno += pmap_dumpsize();
 printf("starting dump, blkno %d\n", blkno);
 	for (mp = mem; mp->size; mp++) {
-		unsigned i = 0, n;
+		u_int64_t i = 0, n;
 		paddr_t maddr = mp->start;
 
 #if 0
@@ -953,7 +953,7 @@ printf("starting dump, blkno %d\n", blkno);
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
 			if (n > BYTES_PER_DUMP)
-				 n = BYTES_PER_DUMP;
+				n = BYTES_PER_DUMP;
 
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
