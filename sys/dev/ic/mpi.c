@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.74 2006/09/21 10:57:52 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.75 2006/09/22 00:43:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -121,6 +121,7 @@ void			mpi_eventnotify_done(struct mpi_ccb *);
 void			mpi_eventack(struct mpi_softc *,
 			    struct mpi_msg_event_reply *);
 void			mpi_eventack_done(struct mpi_ccb *);
+void			mpi_evt_sas(void *, void *);
 
 int			mpi_cfg_header(struct mpi_softc *, u_int8_t, u_int8_t,
 			    u_int32_t, struct mpi_cfg_hdr *);
@@ -196,7 +197,7 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
-#if notyet
+#ifdef notyet
 	if (mpi_eventnotify(sc) != 0) {
 		printf("%s: unable to get portfacts\n", DEVNAME(sc));
 		goto free_replies;
@@ -1945,6 +1946,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc			*sc = ccb->ccb_sc;
 	struct mpi_msg_event_reply		*enp = ccb->ccb_rcb->rcb_reply;
+	int					deferred = 0;
 
 	DNPRINTF(MPI_D_EVT, "%s: mpi_eventnotify_done\n", DEVNAME(sc));
 
@@ -1964,14 +1966,96 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_EVT, "%s:  event_context: 0x%08x\n", DEVNAME(sc),
 	    letoh32(enp->event_context));
 
-	if (enp->ack_required)
-		mpi_eventack(sc, enp);
+	switch (letoh32(enp->event)) {
+	/* ignore these */
+	case MPI_EVENT_EVENT_CHANGE:
+	case MPI_EVENT_SAS_PHY_LINK_STATUS:
+		break;
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	case MPI_EVENT_SAS_DEVICE_STATUS_CHANGE:
+		if (sc->sc_scsibus == NULL)
+			break;
+
+		if (scsi_task(mpi_evt_sas, sc, ccb->ccb_rcb, 1) != 0) {
+			printf("%s: unable to run SAS device status change\n",
+			    DEVNAME(sc));
+			break;
+		}
+		deferred = 1;
+		break;
+
+	default:
+		printf("%s: unhandled event 0x%02x\n", DEVNAME(sc),
+		    letoh32(enp->event));
+		break;
+	}
+
+	if (!deferred) {
+		if (enp->ack_required)
+			mpi_eventack(sc, enp);
+		mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	}
+
 	if ((enp->msg_flags & MPI_EVENT_FLAGS_REPLY_KEPT) == 0) {
 		/* XXX this shouldnt happen till shutdown */
 		mpi_put_ccb(sc, ccb);
 	}
+}
+
+void
+mpi_evt_sas(void *xsc, void *arg)
+{
+	struct mpi_softc			*sc = xsc;
+	struct mpi_rcb				*rcb = arg;
+	struct mpi_msg_event_reply		*enp = rcb->rcb_reply;
+	struct mpi_evt_sas_change		*ch;
+	struct scsi_link			*link;
+	u_int8_t				*data;
+	int					i;
+	int					s;
+
+	data = rcb->rcb_reply;
+	data += sizeof(struct mpi_msg_event_reply);
+	ch = (struct mpi_evt_sas_change *)data;
+
+	if (ch->bus != 0)
+		return;
+
+	switch (ch->reason) {
+	case MPI_EVT_SASCH_REASON_ADDED:
+	case MPI_EVT_SASCH_REASON_NO_PERSIST_ADDED:
+		/* XXX what an awful interface */
+		scsi_probe_busses(sc->sc_scsibus->sc_dev.dv_unit,
+		    ch->target, -1);
+		break;
+
+	case MPI_EVT_SASCH_REASON_NOT_RESPONDING:
+		for (i = 0; i < sc->sc_link.luns; i++) {
+			link = sc->sc_scsibus->sc_link[ch->target][i];
+			if (link == NULL)
+				continue;
+
+			config_detach(link->device_softc, 0x0);
+			free(link, M_DEVBUF); /* XXX bogus */
+			sc->sc_scsibus->sc_link[ch->target][i] = NULL;
+		}
+		break;
+
+	case MPI_EVT_SASCH_REASON_SMART_DATA:
+	case MPI_EVT_SASCH_REASON_UNSUPPORTED:
+	case MPI_EVT_SASCH_REASON_INTERNAL_RESET:
+		break;
+	default:
+		printf("%s: unknown reason for SAS device status change: "
+		    "0x%02x\n", DEVNAME(sc), ch->reason);
+		break;
+	}
+
+	s = splbio();
+	mpi_push_reply(sc, rcb->rcb_reply_dva);
+	if (enp->ack_required)
+		mpi_eventack(sc, enp);
+	splx(s);
 }
 
 void
