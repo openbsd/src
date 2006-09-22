@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.22 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.23 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -37,12 +37,131 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
 
 /* Static variables: */
 static	spinlock_t	fd_table_lock	= _SPINLOCK_INITIALIZER;
+
+/*
+ * Build a new fd entry and return it.
+ */
+static struct fs_flags *
+_thread_fs_flags_entry(void)
+{
+	struct fs_flags *entry;
+
+	entry = (struct fs_flags *) malloc(sizeof(struct fs_flags));
+	if (entry != NULL) {
+		memset(entry, 0, sizeof *entry);
+		_SPINLOCK_INIT(&entry->lock);
+	}
+	return entry;
+}
+
+/*
+ * Initialize a new status_flags entry and set system
+ * file descriptor non-blocking.
+ */
+static int
+_thread_fs_flags_init(struct fs_flags *status_flags, int fd)
+{
+	int ret = 0;
+	int saved_errno;
+
+	status_flags->flags = _thread_sys_fcntl(fd, F_GETFL, 0);
+	if (status_flags->flags == -1)
+		/* use the errno fcntl returned */
+		ret = -1;
+	else {
+		/*
+		 * Make the file descriptor non-blocking.
+		 * This might fail if the device driver does
+		 * not support non-blocking calls, or if the
+		 * driver is naturally non-blocking.
+		 */
+		if ((status_flags->flags & O_NONBLOCK) == 0) {
+			saved_errno = errno;
+			_thread_sys_fcntl(fd, F_SETFL,
+				  status_flags->flags | O_NONBLOCK);
+			errno = saved_errno;
+		}
+	}
+
+	return (ret);
+}
+
+/*
+ * If existing entry's status_flags don't match new one,
+ * then replace the current status flags with the new one.
+ * It is assumed the entry is locked with a FD_RDWR
+ * lock when this function is called.
+ */
+void
+_thread_fs_flags_replace(int fd, struct fs_flags *new_status_flags)
+{
+	struct fd_table_entry *entry = _thread_fd_table[fd];
+	struct fs_flags *old_status_flags;
+	struct stat sb;
+	int flags;
+
+	if (entry->status_flags != new_status_flags) {
+		if (entry->status_flags != NULL) {
+			old_status_flags = entry->status_flags;
+			_SPINLOCK(&old_status_flags->lock);
+			old_status_flags->refcnt -= 1;
+			if (old_status_flags->refcnt <= 0) {
+				/*
+				 * Check if the file should be left as blocking.
+				 *
+				 * This is so that the file descriptors shared with a parent
+				 * process aren't left set to non-blocking if the child
+				 * closes them prior to exit.  An example where this causes
+				 * problems with /bin/sh is when a child closes stdin.
+				 *
+				 * Setting a file as blocking causes problems if a threaded
+				 * parent accesses the file descriptor before the child exits.
+				 * Once the threaded parent receives a SIGCHLD then it resets
+				 * all of its files to non-blocking, and so it is then safe
+				 * to access them.
+				 *
+				 * Pipes are not set to blocking when they are closed, as
+				 * the parent and child will normally close the file
+				 * descriptor of the end of the pipe that they are not
+				 * using, which would then cause any reads to block
+				 * indefinitely.
+				 *
+				 * Files that we cannot fstat are probably not regular
+				 * so we don't bother with them.
+				 *
+				 * Also don't reset fd to blocking if we are replacing
+				 * the status flags with a shared version.
+				 */
+				if (new_status_flags != NULL &&
+				    (_thread_sys_fstat(fd, &sb) == 0) && 
+				    ((S_ISREG(sb.st_mode) || S_ISCHR(sb.st_mode)) &&
+				    (old_status_flags->flags & O_NONBLOCK) == 0))
+				{
+					/* Get the current flags: */
+					flags = _thread_sys_fcntl(fd, F_GETFL, NULL);
+					/* Clear the nonblocking file descriptor flag: */
+					_thread_sys_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+				}
+				free(old_status_flags);
+			} else
+				_SPINUNLOCK(&old_status_flags->lock);
+		}
+		/* replace with new status flags */
+		if (new_status_flags != NULL) {
+			_SPINLOCK(&new_status_flags->lock);
+			new_status_flags->refcnt += 1;
+			_SPINUNLOCK(&new_status_flags->lock);
+		}
+		entry->status_flags = new_status_flags;
+	}
+}
 
 /*
  * Build a new fd entry and return it.
@@ -75,13 +194,13 @@ _thread_fd_init(void)
 	int fd2;
 	int flag;
 	int *flags;
-	struct fd_table_entry *entry;
+	struct fd_table_entry *entry1, *entry2;
+	struct fs_flags *status_flags;
 
 	saved_errno = errno;
 	flags = calloc(_thread_dtablesize, sizeof *flags);
 	if (flags == NULL)
 		PANIC("Cannot allocate memory for flags table");
-
 
 	/* read the current file flags */
 	for (fd = 0; fd < _thread_dtablesize; fd += 1)
@@ -100,27 +219,38 @@ _thread_fd_init(void)
 	for (fd = 0; fd < _thread_dtablesize; fd += 1) {
 		if (flags[fd] == -1)
 			continue;
-		entry = _thread_fd_entry();
-		if (entry != NULL) {
-			entry->flags = flags[fd];
+		entry1 = _thread_fd_entry();
+		status_flags = _thread_fs_flags_entry();
+		if (entry1 != NULL && status_flags != NULL) {
 			_thread_sys_fcntl(fd, F_SETFL,
-					  entry->flags ^ O_SYNC);
+					  flags[fd] ^ O_SYNC);
 			for (fd2 = fd + 1; fd2 < _thread_dtablesize; fd2 += 1) {
 				if (flags[fd2] == -1)
 					continue;
 				flag = _thread_sys_fcntl(fd2, F_GETFL, 0);
 				if (flag != flags[fd2]) {
-					entry->refcnt += 1;
-					_thread_fd_table[fd2] = entry;
+					entry2 = _thread_fd_entry();
+					if (entry2 != NULL) {
+						status_flags->refcnt += 1;
+						entry2->status_flags = status_flags;
+						_thread_fd_table[fd2] = entry2;
+					} else
+						PANIC("Cannot allocate memory for flags table");
 					flags[fd2] = -1;
 				}
 			}
-			if (entry->refcnt) {
-				entry->refcnt += 1;
-				_thread_fd_table[fd] = entry;
+			if (status_flags->refcnt) {
+				status_flags->refcnt += 1;
+				status_flags->flags = flags[fd];
+				entry1->status_flags = status_flags;
+				_thread_fd_table[fd] = entry1;
 				flags[fd] |= O_NONBLOCK;
-			} else
-				free(entry);
+			} else {
+				free(entry1);
+				free(status_flags);
+			}
+		} else {
+			PANIC("Cannot allocate memory for flags table");
 		}
 	}
 	_SPINUNLOCK(&fd_table_lock);
@@ -146,11 +276,11 @@ _thread_fd_init(void)
  * calls.
  */
 int
-_thread_fd_table_init(int fd)
+_thread_fd_table_init(int fd, struct fs_flags *status_flags)
 {
 	int	ret = 0;
 	struct fd_table_entry *entry;
-	int	saved_errno;
+	struct fs_flags *new_status_flags = NULL;
 
 	if (fd < 0 || fd >= _thread_dtablesize) {
 		/*
@@ -158,32 +288,24 @@ _thread_fd_table_init(int fd)
 		 * descriptor error:
 		 */ 
 		errno = EBADF;
-		ret = -1;
-	} else if (_thread_fd_table[fd] == NULL) {
+		return (-1);
+	}
+	
+	if (_thread_fd_table[fd] == NULL) {
 		/* First time for this fd, build an entry */
 		entry = _thread_fd_entry();
 		if (entry == NULL) {
 			errno = ENOMEM;
 			ret = -1;
 		} else {
-			entry->flags = _thread_sys_fcntl(fd, F_GETFL, 0);
-			if (entry->flags == -1)
-				/* use the errno fcntl returned */
-				ret = -1;
-			else {
-				/*
-				 * Make the file descriptor non-blocking.
-				 * This might fail if the device driver does
-				 * not support non-blocking calls, or if the
-				 * driver is naturally non-blocking.
-				 */
-				if ((entry->flags & O_NONBLOCK) == 0) {
-					saved_errno = errno;
-					_thread_sys_fcntl(fd, F_SETFL,
-						  entry->flags | O_NONBLOCK);
-					errno = saved_errno;
-				}
-
+			if (status_flags == NULL) {
+				new_status_flags = _thread_fs_flags_entry();
+				if (new_status_flags == NULL)
+					ret = -1;
+				else
+					ret = _thread_fs_flags_init(new_status_flags, fd);
+			}
+			if (ret == 0) {
 				/* Lock the file descriptor table: */
 				_SPINLOCK(&fd_table_lock);
 
@@ -195,9 +317,19 @@ _thread_fd_table_init(int fd)
 				 * it has the potential to recurse.
 				 */
 				if (_thread_fd_table[fd] == NULL) {
+					if (status_flags != NULL) {
+						_SPINLOCK(&status_flags->lock);
+						status_flags->refcnt += 1;
+						_SPINUNLOCK(&status_flags->lock);
+						entry->status_flags = status_flags;
+					} else {
+						new_status_flags->refcnt = 1;
+						entry->status_flags = new_status_flags;
+					}
 					/* This thread wins: */
-					entry->refcnt += 1;
 					_thread_fd_table[fd] = entry;
+					entry = NULL;
+					new_status_flags = NULL;
 				}
 
 				/* Unlock the file descriptor table: */
@@ -207,11 +339,18 @@ _thread_fd_table_init(int fd)
 			/*
 			 * If there was an error in getting the flags for
 			 * the file or if another thread initialized the
-			 * table entry throw this entry away.
+			 * table entry throw this entry and new_status_flags
+			 * away.
 			 */
-			if (entry->refcnt == 0)
+			if (entry != NULL)
 				free(entry);
+
+			if (new_status_flags != NULL)
+				free(new_status_flags);
 		}
+	} else {
+		if (status_flags != NULL)
+			_thread_fs_flags_replace(fd, status_flags);
 	}
 
 	/* Return the completion status: */
@@ -219,55 +358,18 @@ _thread_fd_table_init(int fd)
 }
 
 /*
- * Dup from_fd -> to_fd.  from_fd is assumed to be locked (which
- * guarantees that _thread_fd_table[from_fd] exists).
- */
-int
-_thread_fd_table_dup(int from_fd, int to_fd)
-{
-	struct fd_table_entry	*entry;
-	int ret;
-
-	if (from_fd != to_fd) {
-		/* release any existing to_fd table entry */
-		entry = _thread_fd_table[to_fd];
-		if (entry != NULL) {
-			ret = _FD_LOCK(to_fd, FD_RDWR, NULL);
-			if (ret != -1)
-				_thread_fd_table_remove(to_fd);
-		} else
-			ret = 0;
-
-		/* to_fd is a copy of from_fd */
-		if (ret != -1) {
-			_SPINLOCK(&fd_table_lock);
-			_thread_fd_table[to_fd] = _thread_fd_table[from_fd];
-			_thread_fd_table[to_fd]->refcnt += 1;
-			_SPINUNLOCK(&fd_table_lock);
-		}
-	} else
-		ret = 0;
-
-	return (ret);
-}
-
-/*
- * Remove an fd entry from the table and free it if it's reference count
- * goes to zero.   The entry is assumed to be locked with a RDWR lock!  It
- * will be unlocked if it is not freed.
+ * Remove an fd entry from the table and replace its status flags
+ * with NULL. The entry is assummed to be locked with a RDWR lock.
  */
 void
 _thread_fd_table_remove(int fd)
 {
-	struct fd_table_entry	*entry;
-
 	_SPINLOCK(&fd_table_lock);
-	entry = _thread_fd_table[fd];
-	if (--entry->refcnt == 0)
-		free(entry);
-	else
-		_FD_UNLOCK(fd, FD_RDWR);
+
+	_thread_fs_flags_replace(fd, NULL);
+	free(_thread_fd_table[fd]);
 	_thread_fd_table[fd] = NULL;
+
 	_SPINUNLOCK(&fd_table_lock);
 }
 
@@ -284,7 +386,7 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type)
 	 * Check that the file descriptor table is initialised for this
 	 * entry: 
 	 */
-	ret = _thread_fd_table_init(fd);
+	ret = _thread_fd_table_init(fd, NULL);
 	if (ret == 0) {
 		entry = _thread_fd_table[fd];
 
@@ -443,7 +545,7 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 	 * Check that the file descriptor table is initialised for this
 	 * entry: 
 	 */
-	ret = _thread_fd_table_init(fd);
+	ret = _thread_fd_table_init(fd, NULL);
 	if (ret == 0) {
 		entry = _thread_fd_table[fd];
 
@@ -453,6 +555,7 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 		 * thread's accesses:
 		 */
 		_SPINLOCK(&entry->lock);
+
 		/* Handle read locks */
 		if (lock_type == FD_READ || lock_type == FD_RDWR) {
 			/*

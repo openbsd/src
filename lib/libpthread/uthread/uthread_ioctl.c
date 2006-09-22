@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_ioctl.c,v 1.3 1999/11/25 07:01:37 d Exp $	*/
+/*	$OpenBSD: uthread_ioctl.c,v 1.4 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -58,8 +58,8 @@ ioctl(int fd, unsigned long request,...)
 			 * twiddling the flag based on the request
 			 */
 			op = va_arg(ap, int *);
-			_thread_fd_table[fd]->flags &= ~O_NONBLOCK;
-			_thread_fd_table[fd]->flags |= ((*op) ? O_NONBLOCK : 0);
+			_thread_fd_table[fd]->status_flags->flags &= ~O_NONBLOCK;
+			_thread_fd_table[fd]->status_flags->flags |= ((*op) ? O_NONBLOCK : 0);
 			ret = 0;
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_read.c,v 1.7 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_read.c,v 1.8 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -59,7 +59,7 @@ read(int fd, void *buf, size_t nbytes)
 	/* Lock the file descriptor for read: */
 	else if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
 		/* Get the read/write mode type: */
-		type = _thread_fd_table[fd]->flags & O_ACCMODE;
+		type = _thread_fd_table[fd]->status_flags->flags & O_ACCMODE;
 
 		/* Check if the file is not open for read: */
 		if (type != O_RDONLY && type != O_RDWR) {
@@ -70,7 +70,7 @@ read(int fd, void *buf, size_t nbytes)
 
 		/* Perform a non-blocking read syscall: */
 		else while ((ret = _thread_sys_read(fd, buf, nbytes)) < 0) {
-			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 &&
+			if ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0 &&
 			    (errno == EWOULDBLOCK || errno == EAGAIN)) {
 				curthread->data.fd.fd = fd;
 				_thread_kern_set_timeout(NULL);

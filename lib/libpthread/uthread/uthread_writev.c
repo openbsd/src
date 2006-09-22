@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.10 2004/12/12 21:56:07 brad Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.11 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -79,7 +79,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 	/* Lock the file descriptor for write: */
 	if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
 		/* Get the read/write mode type: */
-		type = _thread_fd_table[fd]->flags & O_ACCMODE;
+		type = _thread_fd_table[fd]->status_flags->flags & O_ACCMODE;
 
 		/* Check if the file is not open for write: */
 		if (type != O_WRONLY && type != O_RDWR) {
@@ -93,7 +93,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 		}
 
 		/* Check if file operations are to block */
-		blocking = ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0);
+		blocking = ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0);
 
 		/*
 		 * Loop while no error occurs and until the expected number

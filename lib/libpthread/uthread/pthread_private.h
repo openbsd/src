@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.55 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.56 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -497,6 +497,15 @@ enum pthread_state {
  */
 
 /*
+ * File status flags struture - shared for dup'ed fd's
+ */
+struct fs_flags {
+	spinlock_t		lock;
+	int			flags;
+	int			refcnt;
+};
+
+/*
  * File descriptor table structure.
  */
 struct fd_table_entry {
@@ -517,8 +526,7 @@ struct fd_table_entry {
 	int			w_lineno;	/* Write lock src line no.    */
 	int			r_lockcount;	/* Count for FILE read locks. */
 	int			w_lockcount;	/* Count for FILE write locks.*/
-	int			flags;		/* Flags used in open.        */
-	int			refcnt;		/* how many fds use this entry*/
+	struct fs_flags		*status_flags;	/* Shared file status flags.  */
 };
 
 struct pthread_poll_data {
@@ -1122,8 +1130,9 @@ void	_thread_sig_init(void);
 void    _thread_start(void);
 void    _thread_start_sig_handler(void);
 void	_thread_seterrno(pthread_t,int);
+void	_thread_fs_flags_replace(int, struct fs_flags *);
 void	_thread_fd_init(void);
-int     _thread_fd_table_init(int);
+int     _thread_fd_table_init(int, struct fs_flags *);
 int     _thread_fd_table_dup(int, int);
 void	_thread_fd_table_remove(int);
 void	_thread_fd_unlock_owned(pthread_t);

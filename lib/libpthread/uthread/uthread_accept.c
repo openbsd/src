@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.8 2003/12/23 19:31:05 brad Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.9 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -55,7 +55,7 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 		/* Enter a loop to wait for a connection request: */
 		while ((ret = _thread_sys_accept(fd, name, namelen)) < 0) {
 			/* Check if the socket is to block: */
-			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 &&
+			if ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0 &&
 			    (errno == EWOULDBLOCK || errno == EAGAIN)) {
 				/* Save the socket file descriptor: */
 				curthread->data.fd.fd = fd;
@@ -93,12 +93,12 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 		 * as _thread_fd_table_init *may* have turned the flag on.
 		 */
 		if (ret != -1) {
-			if (_thread_fd_table_init(ret) != 0) {
+			if (_thread_fd_table_init(ret, NULL) != 0) {
 				/* Quietly close the socket: */
 				_thread_sys_close(ret);
 				ret = -1;
-			} else if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0)
-				_thread_fd_table[ret]->flags &= ~O_NONBLOCK;
+			} else if ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0)
+				_thread_fd_table[ret]->status_flags->flags &= ~O_NONBLOCK;
 		}
 
 		/* Unlock the file descriptor: */

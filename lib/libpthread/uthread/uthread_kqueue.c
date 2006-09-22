@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kqueue.c,v 1.1 2003/10/22 00:25:42 brad Exp $	*/
+/*	$OpenBSD: uthread_kqueue.c,v 1.2 2006/09/22 19:04:33 kurt Exp $	*/
 
 /*
  * Copyright (c) 2003 Mark Peek <mp@freebsd.org>
@@ -46,7 +46,7 @@ kqueue(void)
 		/* Error creating socket. */
 
 	/* Initialise the entry in the file descriptor table: */
-	} else if (_thread_fd_table_init(fd) != 0) {
+	} else if (_thread_fd_table_init(fd, NULL) != 0) {
 		_thread_sys_close(fd);
 		fd = -1;
 	}

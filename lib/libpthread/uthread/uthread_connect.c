@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_connect.c,v 1.5 2003/12/23 19:31:05 brad Exp $	*/
+/*	$OpenBSD: uthread_connect.c,v 1.6 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -52,7 +52,7 @@ connect(int fd, const struct sockaddr * name, socklen_t namelen)
 
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		if ((ret = _thread_sys_connect(fd, name, namelen)) < 0) {
-			if (!(_thread_fd_table[fd]->flags & O_NONBLOCK) &&
+			if (!(_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) &&
 			((errno == EWOULDBLOCK) || (errno == EINPROGRESS) ||
 			 (errno == EALREADY) || (errno == EAGAIN))) {
 				curthread->data.fd.fd = fd;

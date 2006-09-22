@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.17 2002/11/07 02:56:20 marc Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.18 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -67,7 +67,7 @@ _exit(int status)
 	for (i = 0; i < _thread_dtablesize; i++) {
 		/* Check if this file descriptor is in use: */
 		if (_thread_fd_table[i] != NULL &&
-			!(_thread_fd_table[i]->flags & O_NONBLOCK)) {
+			!(_thread_fd_table[i]->status_flags->flags & O_NONBLOCK)) {
 			/* Get the current flags: */
 			flags = _thread_sys_fcntl(i, F_GETFL, NULL);
 			/* Clear the nonblocking file descriptor flag: */

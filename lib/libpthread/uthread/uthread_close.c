@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.11 2003/12/23 20:03:54 marc Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.12 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -35,8 +35,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
@@ -44,9 +42,7 @@
 int
 close(int fd)
 {
-	int		flags;
 	int		ret;
-	struct stat	sb;
 
 	/* This is a cancelation point: */
 	_thread_enter_cancellation_point();
@@ -59,40 +55,6 @@ close(int fd)
 		/* unknown to thread kernel, let system handle the close */
 		ret = _thread_sys_close(fd);
 	else if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
-		/*
-		 * Check if the file should be left as blocking.
-		 *
-		 * This is so that the file descriptors shared with a parent
-		 * process aren't left set to non-blocking if the child
-		 * closes them prior to exit.  An example where this causes
-		 * problems with /bin/sh is when a child closes stdin.
-		 *
-		 * Setting a file as blocking causes problems if a threaded
-		 * parent accesses the file descriptor before the child exits.
-		 * Once the threaded parent receives a SIGCHLD then it resets
-		 * all of its files to non-blocking, and so it is then safe
-		 * to access them.
-		 *
-		 * Pipes are not set to blocking when they are closed, as
-		 * the parent and child will normally close the file
-		 * descriptor of the end of the pipe that they are not
-		 * using, which would then cause any reads to block
-		 * indefinitely.
-		 *
-		 * Files that we cannot fstat are probably not regular
-		 * so we don't bother with them.
-		 */
-
-		if ((_thread_sys_fstat(fd, &sb) == 0) && 
-		    ((S_ISREG(sb.st_mode) || S_ISCHR(sb.st_mode)) &&
-		    (_thread_fd_table[fd]->flags & O_NONBLOCK) == 0))
-		{
-			/* Get the current flags: */
-			flags = _thread_sys_fcntl(fd, F_GETFL, NULL);
-			/* Clear the nonblocking file descriptor flag: */
-			_thread_sys_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
-		}
-
 		/* XXX: Assumes well behaved threads. */
 		/* XXX: Defer real close to avoid race condition */
 		_thread_fd_table_remove(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fcntl.c,v 1.7 2003/02/04 22:14:27 marc Exp $	*/
+/*	$OpenBSD: uthread_fcntl.c,v 1.8 2006/09/22 19:04:33 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -70,7 +70,8 @@ fcntl(int fd, int cmd,...)
 			if ((ret = _thread_sys_fcntl(fd, cmd, oldfd)) < 0) {
 			}
 			/* Initialise the file descriptor table entry: */
-			else if (_thread_fd_table_dup(fd, ret) != 0) {
+			else if (_thread_fd_table_init(ret,
+			    _thread_fd_table[fd]->status_flags) == -1) {
 				/* Quietly close the file: */
 				_thread_sys_close(ret);
 
@@ -86,7 +87,7 @@ fcntl(int fd, int cmd,...)
 			ret = _thread_sys_fcntl(fd, cmd, 0);
 			break;
 		case F_GETFL:
-			ret = _thread_fd_table[fd]->flags;
+			ret = _thread_fd_table[fd]->status_flags->flags;
 			break;
 		case F_SETFL:
 			/*
@@ -116,10 +117,10 @@ fcntl(int fd, int cmd,...)
 			 */
 			} else if (nonblock)
 				/* A non-blocking descriptor: */
-				_thread_fd_table[fd]->flags = flags | O_NONBLOCK;
+				_thread_fd_table[fd]->status_flags->flags = flags | O_NONBLOCK;
 			else
 				/* Save the flags: */
-				_thread_fd_table[fd]->flags = flags & ~O_NONBLOCK;
+				_thread_fd_table[fd]->status_flags->flags = flags & ~O_NONBLOCK;
 			break;
 		default:
 			/* Might want to make va_arg use a union */
