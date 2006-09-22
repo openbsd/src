@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.84 2006/06/14 19:52:07 otto Exp $
+;	$OpenBSD: syscalls.master,v 1.85 2006/09/22 14:36:24 pedro Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -346,19 +346,10 @@
 181	STD		{ int sys_setgid(gid_t gid); }
 182	STD		{ int sys_setegid(gid_t egid); }
 183	STD		{ int sys_seteuid(uid_t euid); }
-#ifdef LFS
-184	STD		{ int lfs_bmapv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-185	STD		{ int lfs_markv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-186	STD		{ int lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	STD		{ int lfs_segwait(fsid_t *fsidp, struct timeval *tv); }
-#else
 184	UNIMPL
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-#endif
 188	COMPAT_35	{ int sys_stat(const char *path, struct stat35 *ub); } \
 			    stat35
 189	COMPAT_35	{ int sys_fstat(int fd, struct stat35 *sb); } \
