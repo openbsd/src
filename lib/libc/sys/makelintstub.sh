@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: makelintstub.sh,v 1.6 2006/03/13 18:59:32 moritz Exp $
+#	$OpenBSD: makelintstub.sh,v 1.7 2006/09/22 16:20:35 pedro Exp $
 #	$NetBSD: makelintstub,v 1.2 1997/11/05 05:46:18 thorpej Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -51,7 +51,6 @@ header()
 	#include <sys/stat.h>
 	#include <ufs/ufs/quota.h>
 	#include <ufs/ufs/inode.h>
-	#include <ufs/lfs/lfs.h>
 	#include <sys/resource.h>
 	#include <sys/poll.h>
 	#include <sys/uio.h>
