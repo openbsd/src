@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1146 2006/09/22 02:16:17 brad Exp $
+$OpenBSD: pcidevs,v 1.1147 2006/09/22 12:00:37 steven Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2741,6 +2741,7 @@ product NVIDIA NFORCE_PPB	0x01b8	nForce PCI-PCI
 product NVIDIA NFORCE_IDE	0x01bc	nForce IDE
 product NVIDIA NFORCE_USB	0x01c2	nForce USB
 product NVIDIA NFORCE_LAN	0x01c3	nForce LAN
+product NVIDIA GEFORCE7300LE	0x01d1  GeForce 7300 LE
 product NVIDIA NFORCE2_PCHB	0x01e0	nForce2 PCI
 product NVIDIA NFORCE2_AGP	0x01e8	nForce2 AGP
 product NVIDIA NFORCE2_MEM0	0x01ea	nForce2
