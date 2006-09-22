@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.20 2005/10/25 15:49:37 jmc Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.21 2006/09/22 17:22:05 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -457,7 +457,6 @@ start:
 		optarg = NULL;
 		if (*place)			/* no white space */
 			optarg = place;
-		/* XXX: disable test for :: if PC? (GNU doesn't) */
 		else if (oli[1] != ':') {	/* arg not optional */
 			if (++optind >= nargc) {	/* no arg */
 				place = EMSG;
@@ -467,14 +466,6 @@ start:
 				return (BADARG);
 			} else
 				optarg = nargv[optind];
-		} else if (!(flags & FLAG_PERMUTE)) {
-			/*
-			 * If permutation is disabled, we can accept an
-			 * optional arg separated by whitespace so long
-			 * as it does not start with a dash (-).
-			 */
-			if (optind + 1 < nargc && *nargv[optind + 1] != '-')
-				optarg = nargv[++optind];
 		}
 		place = EMSG;
 		++optind;
