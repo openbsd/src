@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.112 2006/09/21 08:42:11 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.113 2006/09/22 00:33:41 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -189,6 +189,9 @@ scsibusdetach(struct device *dev, int type)
 	}
 
 	free(sb->sc_link, M_DEVBUF);
+
+	/* Free shared data. */
+	scsi_deinit();
 
 	return (0);
 }

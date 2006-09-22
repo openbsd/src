@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.112 2006/08/04 21:35:51 beck Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.113 2006/09/22 00:33:41 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -46,10 +46,24 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/kthread.h>
+#include <sys/queue.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+
+struct scsi_task {
+	void			(*func)(void *, void *);
+	void			*sc;
+	void			*arg;
+
+	TAILQ_ENTRY(scsi_task)	entry;
+};
+
+void	scsi_create_task_thread(void *);
+void	scsi_create_task(void *);
+void	scsi_task_thread(void *);
 
 static __inline struct scsi_xfer *scsi_make_xs(struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
@@ -65,7 +79,10 @@ char   *scsi_decode_sense(struct scsi_sense_data *, int);
 #define	DECODE_ASC_ASCQ		2
 #define DECODE_SKSV		3
 
-struct pool scsi_xfer_pool;
+struct pool		scsi_xfer_pool;
+struct pool		scsi_task_pool;
+TAILQ_HEAD(, scsi_task)	scsi_task_list;
+volatile int		scsi_running = 0;
 
 /*
  * Called when a scsibus is attached to initialize global data.
@@ -73,11 +90,8 @@ struct pool scsi_xfer_pool;
 void
 scsi_init()
 {
-	static int			scsi_init_done;
-
-	if (scsi_init_done)
+	if (scsi_running++)
 		return;
-	scsi_init_done = 1;
 
 #if defined(SCSI_DELAY) && SCSI_DELAY > 0
 	/* Historical. Older buses may need a moment to stabilize. */
@@ -87,6 +101,79 @@ scsi_init()
 	/* Initialize the scsi_xfer pool. */
 	pool_init(&scsi_xfer_pool, sizeof(struct scsi_xfer), 0,
 	    0, 0, "scxspl", NULL);
+
+	/* Initialize the scsi_task pool. */
+	pool_init(&scsi_task_pool, sizeof(struct scsi_task), 0,
+	    0, 0, "sctkpl", NULL);
+
+	/* Get the creation of the task thread underway. */
+	TAILQ_INIT(&scsi_task_list);
+	kthread_create_deferred(scsi_create_task_thread, NULL);
+}
+
+void
+scsi_deinit()
+{
+	if (--scsi_running)
+		return;
+
+	wakeup(&scsi_task_list);
+}
+
+void
+scsi_create_task_thread(void *arg)
+{
+	if (kthread_create(scsi_task_thread, NULL, NULL, "scsi") != NULL)
+		panic("unable to create scsi task thread");
+}
+
+void
+scsi_task_thread(void *arg)
+{
+	struct scsi_task		*task;
+	int				s;
+
+	s = splbio();
+	while (scsi_running) {
+		while ((task = TAILQ_FIRST(&scsi_task_list)) != NULL) {
+			TAILQ_REMOVE(&scsi_task_list, task, entry);
+			splx(s);
+
+			task->func(task->sc, task->arg);
+
+			s = splbio();
+			pool_put(&scsi_task_pool, task);
+		}
+		tsleep(&scsi_task_list, PWAIT, "slacking", 10 * hz);
+	}
+
+	if (!TAILQ_EMPTY(&scsi_task_list))
+		panic("outstanding scsi tasks");
+	splx(s);
+
+	kthread_exit(0);
+}
+
+/*
+ * Must be called at splbio.
+ */
+int
+scsi_task(void (*func)(void *, void *), void *sc, void *arg, int nosleep)
+{
+	struct scsi_task		*task;
+
+	task = pool_get(&scsi_task_pool, nosleep ? PR_NOWAIT : PR_WAITOK);
+	if (task == NULL)
+		return (ENOMEM);
+
+	task->func = func;
+	task->sc = sc;
+	task->arg = arg;
+
+	TAILQ_INSERT_TAIL(&scsi_task_list, task, entry);
+	wakeup(&scsi_task_list);
+
+	return (0);
 }
 
 /*
