@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1145 2006/09/20 19:34:25 brad Exp $
+$OpenBSD: pcidevs,v 1.1146 2006/09/22 02:16:17 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1267,6 +1267,7 @@ product COREGA CGLAPCIGT	0xc107	CG-LAPCIGT
 
 /* Corollary products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
+product COROLLARY CCF		0x1117	Cache Coherency Filter
 
 /* Creative Labs products */
 product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
@@ -3017,6 +3018,7 @@ product PLATFORM ES1849		0x0100	ES1849
 /* PLX products */
 product PLX 1076		0x1076	I/O 1076
 product PLX 1077		0x1077	I/O 1077
+product PLX 8532_PCIE		0x8532	8532 PCIE
 product PLX 9050		0x9050	I/O 9050
 product PLX 9080		0x9080	I/O 9080
 
