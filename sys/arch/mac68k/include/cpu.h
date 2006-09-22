@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.40 2006/06/30 15:13:18 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.41 2006/09/22 22:15:17 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -191,24 +191,18 @@ extern int astpending;		/* need to trap before returning to user mode */
 /*
  * Machine classes.  These define subsets of the above machines.
  */
-#define MACH_CLASSH	0x0000	/* Hopeless cases... */
-#define MACH_CLASSII	0x0001	/* MacII class */
-#define MACH_CLASSIIci	0x0004	/* Have RBV, but no Egret */
-#define MACH_CLASSIIsi	0x0005	/* Similar to IIci -- Have Egret. */
-#define MACH_CLASSIIvx	0x0006	/* Similar to IIsi -- different via2 emul? */
-#define MACH_CLASSLC	0x0007	/* Low-Cost/Performa/Wal-Mart Macs. */
-#define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
-#define MACH_CLASSDUO	0x0009	/* Powerbooks Duos.  More integration/Docks. */
-#define MACH_CLASSIIfx	0x0080	/* The IIfx is in a class by itself. */
-#define MACH_CLASSQ	0x0100	/* non-A/V Centris/Quadras. */
-#define MACH_CLASSAV	0x0101	/* A/V Centris/Quadras. */
-#define MACH_CLASSQ2	0x0102	/* More Centris/Quadras, different sccA. */
-#define MACH_CLASSP580	0x0103	/* Similar to Quadras, but not quite.. */
-
-#define MACH_68020	0
-#define MACH_68030	1
-#define MACH_68040	2
-#define MACH_PENTIUM	3	/* 66 and 99 MHz versions *only* */
+#define MACH_CLASSH	0	/* Hopeless cases... */
+#define MACH_CLASSII	1	/* MacII class */
+#define MACH_CLASSIIci	2	/* Have RBV, but no Egret */
+#define MACH_CLASSIIsi	3	/* Similar to IIci -- Have Egret. */
+#define MACH_CLASSIIvx	4	/* Similar to IIsi -- different via2 emul? */
+#define MACH_CLASSLC	5	/* Low-Cost/Performa/Wal-Mart Macs. */
+#define MACH_CLASSPB	6	/* Powerbooks.  Power management. */
+#define MACH_CLASSDUO	7	/* Powerbooks Duos.  More integration/Docks. */
+#define MACH_CLASSIIfx	8	/* The IIfx is in a class by itself. */
+#define MACH_CLASSQ	9	/* non-A/V Centris/Quadras. */
+#define MACH_CLASSAV	10	/* A/V Centris/Quadras. */
+#define MACH_CLASSQ2	11	/* More Centris/Quadras, different sccA. */
 
 #ifdef _KERNEL
 struct mac68k_machine_S {
