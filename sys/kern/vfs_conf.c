@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.29 2005/12/06 20:18:57 pedro Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.30 2006/09/22 14:23:04 pedro Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -42,10 +42,6 @@
 #include <ufs/ffs/ffs_extern.h>
 #endif
 
-#ifdef LFS
-#include <ufs/lfs/lfs_extern.h>
-#endif
-
 #ifdef EXT2FS
 #include <ufs/ext2fs/ext2fs_extern.h>
 #endif
@@ -82,10 +78,6 @@ struct vnode *rootvnode;
 
 #ifdef FFS
 extern	const struct vfsops ffs_vfsops;
-#endif
-
-#ifdef LFS
-extern	const struct vfsops lfs_vfsops;
 #endif
 
 #ifdef MFS
@@ -140,11 +132,6 @@ static struct vfsconf vfsconflist[] = {
         /* Fast Filesystem */
 #ifdef FFS
         { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, ffs_mountroot, NULL },
-#endif
-
-        /* Log-based Filesystem */
-#ifdef LFS
-        { &lfs_vfsops, MOUNT_LFS, 5, 0, MNT_LOCAL, lfs_mountroot, NULL },
 #endif
 
         /* Memory-based Filesystem */
@@ -220,9 +207,6 @@ extern struct vnodeopv_desc sync_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_specop_opv_desc;
 extern struct vnodeopv_desc ffs_fifoop_opv_desc;
-extern struct vnodeopv_desc lfs_vnodeop_opv_desc;
-extern struct vnodeopv_desc lfs_specop_opv_desc;
-extern struct vnodeopv_desc lfs_fifoop_opv_desc;
 extern struct vnodeopv_desc mfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc dead_vnodeop_opv_desc;
 extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
@@ -258,13 +242,6 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 	&fifo_vnodeop_opv_desc,
 #endif
 	&spec_vnodeop_opv_desc,
-#ifdef LFS
-	&lfs_vnodeop_opv_desc,
-	&lfs_specop_opv_desc,
-#ifdef FIFO
-	&lfs_fifoop_opv_desc,
-#endif
-#endif
 #ifdef MFS
 	&mfs_vnodeop_opv_desc,
 #endif

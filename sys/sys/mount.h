@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.75 2006/07/11 21:17:58 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.76 2006/09/22 14:23:03 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -345,7 +345,6 @@ struct ostatfs {
 #define	MOUNT_NFS	"nfs"		/* Network Filesystem */
 #define	MOUNT_MFS	"mfs"		/* Memory Filesystem */
 #define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
-#define	MOUNT_LFS	"lfs"		/* Log-based Filesystem */
 #define	MOUNT_PORTAL	"portal"	/* Portal Filesystem */
 #define	MOUNT_PROCFS	"procfs"	/* /proc Filesystem */
 #define	MOUNT_AFS	"afs"		/* Andrew Filesystem */
