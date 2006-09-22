@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.108 2006/06/18 18:18:01 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.109 2006/09/22 10:22:49 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1459,7 +1459,7 @@ ifa_load(void)
 	struct ipsec_addr_wrap	*n = NULL, *h = NULL;
 
 	if (getifaddrs(&ifap) < 0)
-		err(1, "ifa_load: getiffaddrs");
+		err(1, "ifa_load: getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (!(ifa->ifa_addr->sa_family == AF_INET ||
