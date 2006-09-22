@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.16 2005/06/17 20:39:14 millert Exp $
+	$OpenBSD: syscalls.master,v 1.17 2006/09/22 15:29:57 pedro Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -324,19 +324,10 @@
 181	NOARGS		{ int sys_setgid(gid_t gid); }
 182	NOARGS		{ int sys_setegid(gid_t egid); }
 183	NOARGS		{ int sys_seteuid(uid_t euid); }
-#ifdef LFS
-184	NOARGS		{ int lfs_bmapv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-185	NOARGS		{ int lfs_markv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-186	NOARGS		{ int lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int lfs_segwait(fsid_t *fsidp, struct timeval *tv); }
-#else
 184	UNIMPL
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-#endif
 188	NOARGS		{ int compat_35_sys_stat(char *path, \
 			    struct stat35 *ub); } stat35
 189	NOARGS		{ int compat_35_sys_fstat(int fd, \

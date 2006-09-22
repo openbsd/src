@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.29 2006/02/07 01:34:21 brad Exp $
+	$OpenBSD: syscalls.master,v 1.30 2006/09/22 15:29:57 pedro Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -351,19 +351,10 @@
 181	NOARGS		{ int sys_setgid(gid_t gid); }
 182	NOARGS		{ int sys_setegid(gid_t egid); }
 183	NOARGS		{ int sys_seteuid(uid_t euid); }
-#ifdef LFS
-184	NOARGS		{ int lfs_bmapv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-185	NOARGS		{ int lfs_markv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-186	NOARGS		{ int lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int lfs_segwait(fsid_t *fsidp, struct timeval *tv); }
-#else
 184	UNIMPL
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-#endif
 188	STD		{ int freebsd_sys_stat(char *path, struct stat35 *ub); }
 189	NOARGS		{ int compat_35_sys_fstat(int fd, \
 			    struct stat35 *sb); }
