@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.34 2005/12/22 06:52:11 tedu Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.35 2006/09/23 04:56:43 ray Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -286,8 +286,8 @@ _res_init(int usercall)
 	    /* read the config file */
 	    buf[0] = '\0';
 	    while ((cp = fgetln(fp, &len)) != NULL) {
-		/* skip lines that are too long or zero length */
-		if (len >= sizeof(buf) || len == 0)
+		/* skip lines that are too long */
+		if (len >= sizeof(buf))
 		    continue;
 		(void)memcpy(buf, cp, len);
 		buf[len] = '\0';
