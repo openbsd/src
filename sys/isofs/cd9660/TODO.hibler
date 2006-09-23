@@ -1,7 +1,7 @@
-#	$OpenBSD: TODO.hibler,v 1.4 2003/01/05 22:41:36 deraadt Exp $
+#	$OpenBSD: TODO.hibler,v 1.5 2006/09/23 00:54:15 pedro Exp $
 #	$NetBSD: TODO.hibler,v 1.6 1994/12/13 22:33:10 mycroft Exp $
 
-1. Investiate making ISOFS another UFS shared filesystem (ala FFS/MFS/LFS).
+1. Investigate making ISOFS another UFS shared filesystem (ala FFS/MFS).
    Since it was modelled after the inode code, we might be able to merge
    them back.  It looks like a separate (but very similar) lookup routine
    will be needed due to the associated file stuff.
