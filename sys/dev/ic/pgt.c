@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.13 2006/09/23 13:29:58 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.14 2006/09/23 13:44:42 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1920,7 +1920,6 @@ pgt_ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return (EOPNOTSUPP);
 }
 
-
 int
 pgt_net_attach(struct pgt_softc *sc)
 {
@@ -2127,12 +2126,12 @@ pgt_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		if (pgt_oid_get(sc, PGT_OID_LINK_STATE, &rate, sizeof(rate)))
 			return;
 		rate = letoh32(rate);
-		if (rate == 0)
-			return;
 		if (sc->sc_debug & SC_DEBUG_LINK) {
 			DPRINTF(("%s: %s: link rate %u\n",
 			    sc->sc_dev.dv_xname, __func__, rate));
 		}
+		if (rate == 0)
+			return;
 	}
 
 	imr->ifm_status = IFM_AVALID;
