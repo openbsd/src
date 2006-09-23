@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.12 2006/09/19 17:38:39 brad Exp $  */
+/*	$OpenBSD: pgt.c,v 1.13 2006/09/23 13:29:58 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -111,22 +111,13 @@
  * http://www.prism54.org/.
  */
 
-/*
- * hack to get it compiled (from FreeBSD)
- */
-#define IEEE80211_IOC_MLME		21
-#define IEEE80211_IOC_AUTHMODE		7
-#define IEEE80211_POWERSAVE_ON		1
-#define IEEE80211_POWERSAVE_OFF		0
-#define IEEE80211_MLME_UNAUTHORIZE	5
-#define IEEE80211_MLME_AUTHORIZE	4
-
 #define SCAN_TIMEOUT			5	/* 5 seconds */
 
 struct cfdriver pgt_cd = {
         NULL, "pgt", DV_IFNET
 };
 
+void	 pgt_media_status(struct ifnet *ifp, struct ifmediareq *imr);
 int	 pgt_media_change(struct ifnet *ifp);
 void	 pgt_write_memory_barrier(struct pgt_softc *);
 uint32_t pgt_read_4(struct pgt_softc *, uint16_t);
@@ -1970,6 +1961,12 @@ pgt_net_attach(struct pgt_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, PGT_QUEUE_FULL_THRESHOLD);
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/*
+	 * Set channels
+	 *
+	 * Prism hardware likes to report supported frequencies that are
+	 * not actually available for the country of origin.
+	 */
 	j = sizeof(*freqs) + (IEEE80211_CHAN_MAX + 1) * sizeof(uint16_t);
 	freqs = malloc(j, M_DEVBUF, M_WAITOK);
 	error = pgt_oid_get(sc, PGT_OID_SUPPORTED_FREQUENCIES, freqs, j);
@@ -1977,20 +1974,18 @@ pgt_net_attach(struct pgt_softc *sc)
 		free(freqs, M_DEVBUF);
 		return (error);
 	}
-	/*
-	 * Prism hardware likes to report supported frequencies that are
-	 * not actually available for the country of origin.
-	 */
-	j = letoh16(freqs->pof_count);
-	for (i = 0; i < j; i++) {
+
+	for (i = 0, j = letoh16(freqs->pof_count); i < j; i++) {
 		chan = ieee80211_mhz2ieee(letoh16(freqs->pof_freqlist_mhz[i]),
 		    0);
+
 		if (chan > IEEE80211_CHAN_MAX) {
 			printf("%s: reported bogus channel (%uMHz)\n",
 			    sc->sc_dev.dv_xname, chan);
 			free(freqs, M_DEVBUF);
 			return (EIO);
 		}
+
 		if (letoh16(freqs->pof_freqlist_mhz[i]) < 5000) {
 			if (!(phymode & htole32(PGT_OID_PHY_2400MHZ)))
 				continue;
@@ -2007,16 +2002,26 @@ pgt_net_attach(struct pgt_softc *sc)
 				continue;
 			ic->ic_channels[chan].ic_flags |= IEEE80211_CHAN_A;
 		}
+
 		ic->ic_channels[chan].ic_freq =
 		    letoh16(freqs->pof_freqlist_mhz[i]);
+
 		if (firstchan == -1)
 			firstchan = chan;
+
+		DPRINTF(("%s: set channel %d to freq %uMHz\n",
+		    sc->sc_dev.dv_xname, chan,
+		    letoh16(freqs->pof_freqlist_mhz[i])));
 	}
 	free(freqs, M_DEVBUF);
 	if (firstchan == -1) {
 		printf("%s: no channels found\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
+
+	/*
+	 * Set rates
+	 */
 	bzero(rates, sizeof(rates));
 	error = pgt_oid_get(sc, PGT_OID_SUPPORTED_RATES, rates, sizeof(rates));
 	if (error)
@@ -2056,7 +2061,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 
-	/* Set up post-attach/pre-lateattach vector functions */
+	/* setup post-attach/pre-lateattach vector functions */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = pgt_newstate;
 	ic->ic_node_alloc = pgt_ieee80211_node_alloc;
@@ -2066,7 +2071,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	ic->ic_send_mgmt = pgt_ieee80211_send_mgmt;
 
 	/* let net80211 handle switching around the media + resetting */
-	ieee80211_media_init(ifp, pgt_media_change, ieee80211_media_status);
+	ieee80211_media_init(ifp, pgt_media_change, pgt_media_status);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
@@ -2097,6 +2102,66 @@ pgt_media_change(struct ifnet *ifp)
         }
 
         return (error);
+}
+
+void
+pgt_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct pgt_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t rate;
+	int s;
+
+	imr->ifm_status = 0;
+	imr->ifm_active = IFM_IEEE80211 | IFM_NONE;
+
+	if (!(ifp->if_flags & IFF_UP))
+		return;
+
+	s = splnet();
+
+	if (ic->ic_fixed_rate != -1) {
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
+	} else {
+		if (pgt_oid_get(sc, PGT_OID_LINK_STATE, &rate, sizeof(rate)))
+			return;
+		rate = letoh32(rate);
+		if (rate == 0)
+			return;
+		if (sc->sc_debug & SC_DEBUG_LINK) {
+			DPRINTF(("%s: %s: link rate %u\n",
+			    sc->sc_dev.dv_xname, __func__, rate));
+		}
+	}
+
+	imr->ifm_status = IFM_AVALID;
+	imr->ifm_active = IFM_IEEE80211;
+	if (ic->ic_state == IEEE80211_S_RUN)
+		imr->ifm_status |= IFM_ACTIVE;
+
+	imr->ifm_active |= ieee80211_rate2media(ic, rate, ic->ic_curmode);
+
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		break;
+	case IEEE80211_M_IBSS:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		break;
+	case IEEE80211_M_AHDEMO:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC | IFM_FLAG0;
+		break;
+	case IEEE80211_M_HOSTAP:
+		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
+		break;
+	case IEEE80211_M_MONITOR:
+		imr->ifm_active |= IFM_IEEE80211_MONITOR;
+		break;
+	default:
+		break;
+	}
+
+	splx(s);
 }
 
 void
@@ -2933,18 +2998,22 @@ badopmode:
 		bsstype = PGT_BSS_TYPE_NONE;
 	}
 
+	DPRINTF(("%s: current mode is ", sc->sc_dev.dv_xname));
 	switch (ic->ic_curmode) {
 	case IEEE80211_MODE_11A:
 		profile = PGT_PROFILE_A_ONLY;
 		preamble = PGT_OID_PREAMBLE_MODE_DYNAMIC;
+		DPRINTF(("IEEE80211_MODE_11A\n"));
 		break;
 	case IEEE80211_MODE_11B:
 		profile = PGT_PROFILE_B_ONLY;
 		preamble = PGT_OID_PREAMBLE_MODE_LONG;
+		DPRINTF(("IEEE80211_MODE_11B\n"));
 		break;
 	case IEEE80211_MODE_11G:
 		profile = PGT_PROFILE_G_ONLY;
 		preamble = PGT_OID_PREAMBLE_MODE_SHORT;
+		DPRINTF(("IEEE80211_MODE_11G\n"));
 		break;
 	case IEEE80211_MODE_FH:
 		/* FALLTHROUGH */
@@ -2953,6 +3022,7 @@ badopmode:
 	case IEEE80211_MODE_AUTO:
 		profile = PGT_PROFILE_MIXED_G_WIFI;
 		preamble = PGT_OID_PREAMBLE_MODE_DYNAMIC;
+		DPRINTF(("IEEE80211_MODE_AUTO\n"));
 		break;
 	default:
 		panic("unknown mode %d\n", ic->ic_curmode);
@@ -3006,9 +3076,14 @@ badopmode:
 	} else
 		channel = htole32(ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan));
 
-	for (i = 0; i < ic->ic_sup_rates[ic->ic_curmode].rs_nrates; i++)
+	DPRINTF(("%s: set rates", sc->sc_dev.dv_xname));
+	for (i = 0; i < ic->ic_sup_rates[ic->ic_curmode].rs_nrates; i++) {
 		availrates[i] = ic->ic_sup_rates[ic->ic_curmode].rs_rates[i];
+		DPRINTF((" %d", availrates[i]));
+	}
+	DPRINTF(("\n"));
 	availrates[i++] = 0;
+
 	essid.pos_length = min(ic->ic_des_esslen, sizeof(essid.pos_ssid));
 	memcpy(&essid.pos_ssid, ic->ic_des_essid, essid.pos_length);
 
@@ -3241,8 +3316,8 @@ pgt_update_sw_from_hw(struct pgt_softc *sc, struct pgt_async_trap *pa,
 				break;
 			ls = letoh32(*mtod(args, uint32_t *));
 			if (sc->sc_debug & (SC_DEBUG_TRAP | SC_DEBUG_LINK))
-				DPRINTF(("%s: link: %u\n",
-				    sc->sc_dev.dv_xname, ls));
+				DPRINTF(("%s: %s: link rate %u\n",
+				    sc->sc_dev.dv_xname, __func__, ls));
 			if (ls)
 				ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 			else
