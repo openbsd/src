@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.222 2006/09/18 01:37:55 jsg Exp $
+$OpenBSD: usbdevs,v 1.223 2006/09/23 22:28:43 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2097,6 +2097,7 @@ product TWINMOS G240		0xa006	G240
 /* U-MEDIA Communications products */
 product UMEDIA AR5523_1		0x3006	AR5523
 product UMEDIA AR5523_1_NF	0x3007	AR5523
+product UMEDIA TEW429UB_A	0x300a	TEW-429UB_A
 product UMEDIA TEW429UB		0x300b	TEW-429UB
 product UMEDIA TEW444UBEU	0x3006	TEW-444UB EU
 product UMEDIA TEW444UBEU_NF	0x3007	TEW-444UB EU
