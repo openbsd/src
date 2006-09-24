@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.103 2006/05/08 20:37:01 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.104 2006/09/24 21:52:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -338,6 +338,9 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 }
 
 
+#define PFLAGS(X) ((((X) & PF_R) ? PROT_READ : 0) | \
+		   (((X) & PF_W) ? PROT_WRITE : 0) | \
+		   (((X) & PF_X) ? PROT_EXEC : 0))
 
 /*
  * This is the dynamic loader entrypoint. When entering here, depending
@@ -352,6 +355,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	struct elf_object *dyn_obj;	/* Pointer to executable object */
 	struct r_debug **map_link;	/* Where to put pointer for gdb */
 	struct r_debug *debug_map;
+	struct load_list *next_load, *load_list = NULL;
 	Elf_Dyn *dynp;
 	Elf_Phdr *phdp;
 	char *us = "";
@@ -412,13 +416,27 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			_dl_add_object(exe_obj);
 		} else if (phdp->p_type == PT_INTERP) {
 			us = _dl_strdup((char *)phdp->p_vaddr);
-		} else if ((phdp->p_type == PT_LOAD) &&
-		    (phdp->p_flags & 0x08000000)) {
-//			dump_prelink(phdp->p_vaddr, phdp->p_memsz);
-			prebind_load_exe(phdp, exe_obj);
+		} else if (phdp->p_type == PT_LOAD) {
+			int align = _dl_pagesz - 1;
+			int size = (phdp->p_vaddr & align) + phdp->p_filesz;
+
+#define TRUNC_PG(x) ((x) & ~(align))
+
+			next_load = _dl_malloc(sizeof(struct load_list));
+			next_load->next = load_list;
+			load_list = next_load;
+			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr);
+			next_load->size = size;
+			next_load->prot = PFLAGS(phdp->p_flags);
+
+			if (phdp->p_flags & 0x08000000) {
+//				dump_prelink(phdp->p_vaddr, phdp->p_memsz);
+				prebind_load_exe(phdp, exe_obj);
+			}
 		}
 		phdp++;
 	}
+	exe_obj->load_list = load_list;
 	exe_obj->obj_flags |= RTLD_GLOBAL;
 
 	n = _dl_malloc(sizeof *n);
