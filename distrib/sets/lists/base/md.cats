@@ -2234,9 +2234,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ffs/ffs_extern.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ffs/fs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ffs/softdep.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/ufs/lfs
-./usr/libdata/perl5/site_perl/arm-openbsd/ufs/lfs/lfs.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/ufs/lfs/lfs_extern.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/mfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/mfs/mfs_extern.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/mfs/mfsnode.ph
