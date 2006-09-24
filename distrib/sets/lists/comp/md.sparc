@@ -158,7 +158,6 @@
 ./usr/include/sparc/ptrace.h
 ./usr/include/sparc/reg.h
 ./usr/include/sparc/reloc.h
-./usr/include/sparc/remote-sl.h
 ./usr/include/sparc/scfio.h
 ./usr/include/sparc/setjmp.h
 ./usr/include/sparc/signal.h
