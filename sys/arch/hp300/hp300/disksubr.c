@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2006/08/17 10:34:14 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2006/09/24 22:43:00 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -71,9 +71,13 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	if (lp->d_secpercyl == 0)
 		return ("invalid geometry");
 	lp->d_npartitions = RAW_PART + 1;
-	if (lp->d_partitions[RAW_PART].p_size == 0)
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_offset = 0;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = lp->d_secperunit;
+	lp->d_partitions[i].p_offset = 0;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
