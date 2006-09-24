@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.5 2006/08/14 01:04:58 krw Exp $	*/
+/*	$OpenBSD: presto.c,v 1.6 2006/09/24 20:29:52 krw Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -387,7 +387,6 @@ presto_getdisklabel(struct presto_softc *sc)
 	strncpy(lp->d_packname, sc->sc_model, 16);
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
-	lp->d_flags = D_RAMDISK;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
