@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.48 2006/08/28 05:36:00 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.49 2006/09/25 22:44:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -527,7 +527,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	child = config_found(self, &sc->sc_link, scsiprint);
 	sc->sc_scsibus = (struct scsibus_softc *)child;
 
-	/* XXX enable interrupts */
+	/* enable interrupts */
 	arc_write(sc, ARC_REG_INTRMASK,
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
 
@@ -565,6 +565,7 @@ arc_intr(void *arg)
 	intrstat = arc_read(sc, ARC_REG_INTRSTAT);
 	if (intrstat == 0x0)
 		return (0);
+	intrstat &= ARC_REG_INTRSTAT_POSTQUEUE | ARC_REG_INTRSTAT_DOORBELL;
 	arc_write(sc, ARC_REG_INTRSTAT, intrstat);
 
 	if (intrstat & ARC_REG_INTRSTAT_DOORBELL) {
@@ -1486,7 +1487,7 @@ arc_unlock(struct arc_softc *sc)
 	s = splbio();
 	sc->sc_talking = 0;
 	arc_write(sc, ARC_REG_INTRMASK,
-	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
+	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
 	splx(s);
 	rw_exit_write(&sc->sc_lock);
 }
@@ -1498,7 +1499,7 @@ arc_wait(struct arc_softc *sc)
 
 	s = splbio();
 	arc_write(sc, ARC_REG_INTRMASK,
-	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
+	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
 	if (tsleep(sc, PWAIT, "arcdb", hz) == EWOULDBLOCK)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	splx(s);
