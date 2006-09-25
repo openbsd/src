@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.20 2006/09/22 05:38:29 niallo Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.21 2006/09/25 23:58:05 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -493,7 +493,6 @@ rcs_splitlines(BUF *fcont)
 	p = c = lines->l_data;
 	for (i = 0; i < rcs_buf_len(fcont); i++) {
 		if (*p == '\n' || (i == rcs_buf_len(fcont) - 1 && *c)) {
-			printf("c: %x\n", *c);
 			len = p - c;
 			lp = xmalloc(sizeof(*lp));
 			lp->l_line = xmalloc(len + 1);
