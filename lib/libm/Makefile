@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.40 2006/07/12 07:26:08 brad Exp $
+#  $OpenBSD: Makefile,v 1.41 2006/09/25 20:25:41 kettenis Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -61,8 +61,9 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
 	    s_cos.S s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
 	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
-	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
-	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
+	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S s_rint.S s_rintf.S\
+	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S \
+	    s_sin.S s_sinf.S s_tan.S s_tanf.S
 .elif (${MACHINE_ARCH} == "amd64")
 .PATH:	${.CURDIR}/arch/amd64
 CPPFLAGS+=-I${.CURDIR}/arch/amd64
@@ -108,14 +109,14 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_standard.c k_tan.c k_tanf.c \
-	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c \
+	lround.c lroundf.c llround.c llroundf.c \
 	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_ceil.c \
 	s_ceilf.c s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_erf.c s_erff.c \
 	s_expm1.c s_expm1f.c s_fabsf.c s_finite.c s_finitef.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
-	s_log1pf.c s_logb.c s_logbf.c s_matherr.c s_modff.c \
+	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
+	s_lrintf.c s_matherr.c s_modff.c \
 	s_nextafter.c s_nextafterf.c s_rint.c s_rintf.c s_round.c s_roundf.c \
 	s_scalbn.c s_scalbnf.c s_signgam.c s_significand.c s_significandf.c \
 	s_sin.c s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c s_truncf.c \

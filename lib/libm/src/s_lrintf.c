@@ -1,4 +1,4 @@
-/*	$OpenBSD: lrintf.c,v 1.2 2005/11/17 20:51:56 otto Exp $	*/
+/*	$OpenBSD: s_lrintf.c,v 1.1 2006/09/25 20:25:41 kettenis Exp $	*/
 /* $NetBSD: lrintf.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
