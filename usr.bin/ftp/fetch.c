@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.69 2006/09/25 10:18:39 jsg Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.70 2006/09/25 18:59:59 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.69 2006/09/25 10:18:39 jsg Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.70 2006/09/25 18:59:59 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -132,10 +132,11 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	size_t len, wlen;
 #ifndef SMALL
 	char *sslpath = NULL, *sslhost = NULL;
-	int ishttpsurl = 0, status;
+	int ishttpsurl = 0;
 	SSL_CTX *ssl_ctx = NULL;
 #endif
 	SSL *ssl = NULL;
+	int status;
 
 	newline = strdup(origline);
 	if (newline == NULL)
