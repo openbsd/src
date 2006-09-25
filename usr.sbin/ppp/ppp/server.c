@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.c,v 1.17 2005/07/17 19:13:25 brad Exp $
+ *	$OpenBSD: server.c,v 1.18 2006/09/25 05:59:28 otto Exp $
  */
 
 #include <sys/param.h>
@@ -224,7 +224,7 @@ server_Reopen(struct bundle *bundle)
     mask = server.cfg.mask;
     server_Close(bundle);
     if (server.cfg.sockname[0] != '\0' && stat(server.cfg.sockname, &st) == 0)
-      if (!(st.st_mode & S_IFSOCK) || unlink(server.cfg.sockname) != 0)
+      if (!S_ISSOCK(st.st_mode) || unlink(server.cfg.sockname) != 0)
         return SERVER_FAILED;
     ret = server_LocalOpen(bundle, name, mask);
   } else if (server.cfg.port != 0) {

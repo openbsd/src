@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tcp.c,v 1.16 2002/07/18 18:52:36 brian Exp $
+ *	$OpenBSD: tcp.c,v 1.17 2006/09/25 05:59:28 otto Exp $
  */
 
 #include <sys/types.h>
@@ -169,7 +169,7 @@ tcp_Create(struct physical *p)
     /* See if we're a tcp socket */
     struct stat st;
 
-    if (fstat(p->fd, &st) != -1 && (st.st_mode & S_IFSOCK)) {
+    if (fstat(p->fd, &st) != -1 && S_ISSOCK(st.st_mode)) {
       int type, sz;
 
       sz = sizeof type;

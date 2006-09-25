@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.34 2006/04/03 05:01:24 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.35 2006/09/25 05:59:28 otto Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.34 2006/04/03 05:01:24 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.35 2006/09/25 05:59:28 otto Exp $";
 #endif
 
 #include <sys/types.h>
@@ -93,8 +93,7 @@ get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 	status = YPPUSH_SUCC;
 
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
-	if (!((stat(map_path, &finfo) == 0) &&
-	    ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
+	if (!((stat(map_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))) {
 		fprintf(stderr, "ypxfr: domain %s not found locally\n",
 		    domain);
 		status = YPPUSH_NODOM;

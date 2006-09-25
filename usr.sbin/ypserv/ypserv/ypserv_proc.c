@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.25 2006/04/03 05:01:24 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.26 2006/09/25 05:59:28 otto Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.25 2006/04/03 05:01:24 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.26 2006/09/25 05:59:28 otto Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -94,7 +94,7 @@ ypproc_domain_2_svc(domainname *argp, struct svc_req *rqstp)
 		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
-	    (finfo.st_mode & S_IFDIR));
+	    S_ISDIR(finfo.st_mode));
 
 	YPLOG("domain_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
 	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -121,7 +121,7 @@ ypproc_domain_nonack_2_svc(domainname *argp, struct svc_req *rqstp)
 		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
-	    (finfo.st_mode & S_IFDIR));
+	    S_ISDIR(finfo.st_mode));
 
 	YPLOG("domain_nonack_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
 	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
@@ -471,8 +471,7 @@ bail:
 	status = YP_TRUE;
 	res.maps = NULL;
 
-	if (!((stat(domain_path, &finfo) == 0) &&
-	    ((finfo.st_mode & S_IFMT) == S_IFDIR)))
+	if (!((stat(domain_path, &finfo) == 0) && S_ISDIR(finfo.st_mode)))
 		status = YP_NODOM;
 
 	if (status >= 0) {
@@ -550,7 +549,7 @@ ypoldproc_domain_1_svc(domainname *argp, struct svc_req *rqstp)
 		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
-				    (finfo.st_mode & S_IFDIR));
+				    S_ISDIR(finfo.st_mode));
 
 	YPLOG("domain_1: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
 	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -578,7 +577,7 @@ ypoldproc_domain_nonack_1_svc(domainname *argp, struct svc_req *rqstp)
 		goto bail;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
 	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
-				    (finfo.st_mode & S_IFDIR));
+				    S_ISDIR(finfo.st_mode));
 
 	YPLOG(
 	  "domain_nonack_1: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",

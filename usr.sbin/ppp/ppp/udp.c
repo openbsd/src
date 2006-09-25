@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: udp.c,v 1.17 2003/10/20 03:15:38 deraadt Exp $
+ *	$OpenBSD: udp.c,v 1.18 2006/09/25 05:59:28 otto Exp $
  */
 
 #include <sys/types.h>
@@ -284,7 +284,7 @@ udp_Create(struct physical *p)
     /* See if we're a connected udp socket */
     struct stat st;
 
-    if (fstat(p->fd, &st) != -1 && (st.st_mode & S_IFSOCK)) {
+    if (fstat(p->fd, &st) != -1 && S_ISSOCK(st.st_mode)) {
       int type, sz;
 
       sz = sizeof type;

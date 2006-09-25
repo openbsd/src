@@ -40,9 +40,9 @@ isc_fsaccess_set(const char *path, isc_fsaccess_t access) {
 	if (stat(path, &statb) != 0)
 		return (isc__errno2result(errno));
 
-	if ((statb.st_mode & S_IFDIR) != 0)
+	if (S_ISDIR(statb.st_mode))
 		is_dir = ISC_TRUE;
-	else if ((statb.st_mode & S_IFREG) == 0)
+	else if (!S_ISREG(statb.st_mode))
 		return (ISC_R_INVALIDFILE);
 
 	result = check_bad_bits(access, is_dir);

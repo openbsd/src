@@ -525,7 +525,7 @@ safe_open(const char *filename, isc_boolean_t append) {
 	if (stat(filename, &sb) == -1) {
 		if (errno != ENOENT)
 			return (-1);
-	} else if ((sb.st_mode & S_IFREG) == 0) {
+	} else if (!S_ISREG(sb.st_mode)) {
 		errno = EOPNOTSUPP;
 		return (-1);
 	}

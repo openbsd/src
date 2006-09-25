@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.24 2006/04/03 05:01:23 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.25 2006/09/25 05:59:28 otto Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.24 2006/04/03 05:01:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yppush.c,v 1.25 2006/09/25 05:59:28 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -262,8 +262,7 @@ main(int argc, char *argv[])
 
 	/* Check domain */
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
-	if (!((stat(map_path, &finfo) == 0) &&
-	    ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
+	if (!((stat(map_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))) {
 		fprintf(stderr, "yppush: Map does not exist.\n");
 		exit(1);
 	}

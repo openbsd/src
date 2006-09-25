@@ -52,7 +52,7 @@ safe_create(const char *filename) {
                 if (errno != ENOENT)
 			return (NULL);
 		flags = O_WRONLY | O_CREAT | O_EXCL;
-        } else if ((sb.st_mode & S_IFREG) == 0) {
+        } else if (!S_ISREG(sb.st_mode)) {
 		errno = EOPNOTSUPP;
 		return (NULL);
 	} else
