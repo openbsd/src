@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.38 2005/01/29 00:49:47 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.39 2006/09/25 23:02:43 ray Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -137,10 +137,8 @@ struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
 if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
-    sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
+    sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV))
 	errx(1, "could not get numeric hostname");
-	/*NOTREACHED*/
-}
 printf("host=%s, serv=%s\en", hbuf, sbuf);
 .Ed
 .Pp
@@ -150,10 +148,8 @@ struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST];
 
 if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
-    NI_NAMEREQD)) {
+    NI_NAMEREQD))
 	errx(1, "could not resolve hostname");
-	/*NOTREACHED*/
-}
 printf("host=%s\en", hbuf);
 .Ed
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.43 2005/11/15 19:35:31 otto Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.44 2006/09/25 23:02:43 ray Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -312,10 +312,8 @@ memset(&hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 error = getaddrinfo("www.kame.net", "www", &hints, &res0);
-if (error) {
+if (error)
 	errx(1, "%s", gai_strerror(error));
-	/*NOTREACHED*/
-}
 s = -1;
 for (res = res0; res; res = res->ai_next) {
 	s = socket(res->ai_family, res->ai_socktype,
@@ -336,10 +334,8 @@ for (res = res0; res; res = res->ai_next) {
 
 	break;	/* okay we got one */
 }
-if (s < 0) {
+if (s < 0)
 	err(1, "%s", cause);
-	/*NOTREACHED*/
-}
 freeaddrinfo(res0);
 .Ed
 .Pp
@@ -359,10 +355,8 @@ hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
 error = getaddrinfo(NULL, "www", &hints, &res0);
-if (error) {
+if (error)
 	errx(1, "%s", gai_strerror(error));
-	/*NOTREACHED*/
-}
 nsock = 0;
 for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
 	s[nsock] = socket(res->ai_family, res->ai_socktype,
@@ -383,10 +377,8 @@ for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
 
 	nsock++;
 }
-if (nsock == 0) {
+if (nsock == 0)
 	err(1, "%s", cause);
-	/*NOTREACHED*/
-}
 freeaddrinfo(res0);
 .Ed
 .Sh SEE ALSO
