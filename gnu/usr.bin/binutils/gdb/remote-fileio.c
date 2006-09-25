@@ -181,11 +181,11 @@ remote_fileio_mode_to_target (mode_t mode)
 {
   mode_t tmode = 0;
 
-  if (mode & S_IFREG)
+  if (S_ISREG(mode))
     tmode |= FILEIO_S_IFREG;
-  if (mode & S_IFDIR)
+  if (S_ISDIR(mode))
     tmode |= FILEIO_S_IFDIR;
-  if (mode & S_IFCHR)
+  if (S_ISCHR(mode))
     tmode |= FILEIO_S_IFCHR;
   if (mode & S_IRUSR)
     tmode |= FILEIO_S_IRUSR;
