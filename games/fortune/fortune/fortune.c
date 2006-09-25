@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.22 2005/09/24 18:10:02 mickey Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.23 2006/09/25 06:03:29 otto Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.22 2005/09/24 18:10:02 mickey Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.23 2006/09/25 06:03:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -712,7 +712,7 @@ is_dir(char *file)
 
 	if (stat(file, &sbuf) < 0)
 		return FALSE;
-	return (sbuf.st_mode & S_IFDIR);
+	return S_ISDIR(sbuf.st_mode);
 }
 
 /*
