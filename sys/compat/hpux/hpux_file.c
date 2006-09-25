@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.16 2005/02/15 21:12:44 aaron Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.17 2006/09/25 07:12:57 otto Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
@@ -703,7 +703,7 @@ hpux_sys_mknod(p, v, retval)
 	/*
 	 * BSD handles FIFOs separately.
 	 */
-	if (SCARG(uap, mode) & S_IFIFO) {
+	if (S_ISFIFO(SCARG(uap, mode))) {
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
 		return (sys_mkfifo(p, uap, retval));

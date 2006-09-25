@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.22 2003/08/13 04:01:37 tedu Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.23 2006/09/25 07:12:57 otto Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -645,7 +645,7 @@ linux_sys_mknod(p, v, retval)
 	/*
 	 * BSD handles FIFOs separately
 	 */
-	if (SCARG(uap, mode) & S_IFIFO) {
+	if (S_ISFIFO(SCARG(uap, mode))) {
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
 		return sys_mkfifo(p, uap, retval);
