@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_llrintf.c,v 1.1 2006/09/25 20:25:41 kettenis Exp $	*/
+/*	$OpenBSD: s_llrintf.c,v 1.2 2006/09/25 22:16:48 kettenis Exp $	*/
 /* $NetBSD: llrintf.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*
@@ -11,4 +11,4 @@
 #define RESTYPE_MIN LLONG_MIN
 #define RESTYPE_MAX LLONG_MAX
 
-#include "lrintf.c"
+#include "s_lrintf.c"
