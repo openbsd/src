@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.10 2006/04/09 02:57:41 krw Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.11 2006/09/26 14:18:28 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -185,7 +185,8 @@ _thread_dump_entry(pthread_t pthread, int fd, int verbose)
 		    pthread->data.fd.branch);
 		_thread_sys_write(fd, s, strlen(s));
 		s[0] = 0;
-		if (_thread_fd_table[pthread->data.fd.fd])
+		if (_thread_fd_table[pthread->data.fd.fd] &&
+		    _thread_fd_table[pthread->data.fd.fd]->state != FD_ENTRY_CLOSED)
 		    snprintf(s, sizeof(s), "%s owner %pr/%pw\n",
 			     info_lead,
 			     _thread_fd_table[pthread->data.fd.fd]->r_owner,
@@ -361,7 +362,8 @@ _thread_dump_info(void)
 		 */
 		char rcode[22], wcode[22];
 
-		if (_thread_fd_table[i] != NULL) {
+		if (_thread_fd_table[i] != NULL &&
+		    _thread_fd_table[i]->state != FD_ENTRY_CLOSED) {
 
 			/* Find the reader's last file:line: */
 			if (_thread_fd_table[i]->r_owner)

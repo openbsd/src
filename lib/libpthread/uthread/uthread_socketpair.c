@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_socketpair.c,v 1.5 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_socketpair.c,v 1.6 2006/09/26 14:18:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,8 +46,8 @@ socketpair(int af, int type, int protocol, int pair[2])
 {
 	int             ret;
 	if (!((ret = _thread_sys_socketpair(af, type, protocol, pair)) < 0))
-		if (_thread_fd_table_init(pair[0], NULL) != 0 ||
-		    _thread_fd_table_init(pair[1], NULL) != 0) {
+		if (_thread_fd_table_init(pair[0], FD_INIT_NEW, NULL) != 0 ||
+		    _thread_fd_table_init(pair[1], FD_INIT_NEW, NULL) != 0) {
 			_thread_sys_close(pair[0]);
 			_thread_sys_close(pair[1]);
 			ret = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.13 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.14 2006/09/26 14:18:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -187,6 +187,14 @@ fork(void)
 					_thread_fd_table[i]->w_lockcount = 0;
 					if (_thread_fd_table[i]->status_flags != NULL)
 						_SPINLOCK_INIT(&_thread_fd_table[i]->status_flags->lock);
+					/*
+					 * If a fd was in the process of closing
+					 * then finish closing it.
+					 */
+					if (_thread_fd_table[i]->state == FD_ENTRY_CLOSING) {
+						 _thread_fd_entry_close(i);
+						 _thread_sys_close(i);
+					}
 
 					/* Initialise the read/write queues: */
 					TAILQ_INIT(&_thread_fd_table[i]->r_queue);

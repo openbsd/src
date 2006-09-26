@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.9 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.10 2006/09/26 14:18:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,6 +46,8 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 {
 	struct pthread	*curthread = _get_curthread();
 	int             ret;
+	int		newfd;
+	enum fd_entry_mode init_mode;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
@@ -88,17 +90,23 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 
 		/*
 		 * If no errors initialize the file descriptor table
-		 * for the new socket.   Turn on blocking mode in the
-		 * child if it is on in the parent.   This is done
-		 * as _thread_fd_table_init *may* have turned the flag on.
+		 * for the new socket. If the client's view of the
+		 * status_flags for fd is blocking, then force newfd
+		 * to be viewed as blocking too.
 		 */
 		if (ret != -1) {
-			if (_thread_fd_table_init(ret, NULL) != 0) {
-				/* Quietly close the socket: */
+			newfd = ret;
+
+			if ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0)
+				init_mode = FD_INIT_BLOCKING;
+			else
+				init_mode = FD_INIT_NEW;
+			if((ret = _thread_fd_table_init(newfd, init_mode, NULL)) != -1)
+				ret = newfd;
+			else {
+				/* quitely close the fd */
 				_thread_sys_close(ret);
-				ret = -1;
-			} else if ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0)
-				_thread_fd_table[ret]->status_flags->flags &= ~O_NONBLOCK;
+			}
 		}
 
 		/* Unlock the file descriptor: */

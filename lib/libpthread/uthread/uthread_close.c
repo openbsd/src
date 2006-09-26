@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.12 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.13 2006/09/26 14:18:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -51,15 +51,22 @@ close(int fd)
 	    (fd == _thread_kern_pipe[0]) || (fd == _thread_kern_pipe[1])) {
 		errno = EBADF;
 		ret = -1;
-	} else if (_thread_fd_table[fd] == NULL)
-		/* unknown to thread kernel, let system handle the close */
-		ret = _thread_sys_close(fd);
-	else if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
-		/* XXX: Assumes well behaved threads. */
-		/* XXX: Defer real close to avoid race condition */
-		_thread_fd_table_remove(fd);
+	} else if ((ret = _FD_LOCK(fd, FD_RDWR_CLOSE, NULL)) != -1) {
+		/*
+		 * We need to hold the entry spinlock till after
+		 * _thread_sys_close() to stop races caused by the
+		 * fd state transition.
+		 */
+		_SPINLOCK(&_thread_fd_table[fd]->lock);
+
+		_thread_fd_entry_close(fd);
+
 		/* Close the file descriptor: */
 		ret = _thread_sys_close(fd);
+
+		_SPINUNLOCK(&_thread_fd_table[fd]->lock);
+
+		_FD_UNLOCK(fd, FD_RDWR_CLOSE);
 	}
 
 	/* No longer in a cancellation point: */

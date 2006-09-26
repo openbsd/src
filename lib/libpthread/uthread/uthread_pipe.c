@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_pipe.c,v 1.4 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_pipe.c,v 1.5 2006/09/26 14:18:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -43,8 +43,8 @@ pipe(int fds[2])
 {
 	int             ret;
 	if ((ret = _thread_sys_pipe(fds)) >= 0) {
-		if (_thread_fd_table_init(fds[0], NULL) != 0 ||
-		    _thread_fd_table_init(fds[1], NULL) != 0) {
+		if (_thread_fd_table_init(fds[0], FD_INIT_NEW, NULL) != 0 ||
+		    _thread_fd_table_init(fds[1], FD_INIT_NEW, NULL) != 0) {
 			_thread_sys_close(fds[0]);
 			_thread_sys_close(fds[1]);
 			ret = -1;

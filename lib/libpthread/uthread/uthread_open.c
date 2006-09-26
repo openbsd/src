@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_open.c,v 1.7 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_open.c,v 1.8 2006/09/26 14:18:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -63,7 +63,7 @@ open(const char *path, int flags,...)
 	if ((fd = _thread_sys_open(path, flags, mode)) < 0) {
 	}
 	/* Initialise the file descriptor table entry: */
-	else if (_thread_fd_table_init(fd, NULL) != 0) {
+	else if (_thread_fd_table_init(fd, FD_INIT_NEW, NULL) != 0) {
 		/* Quietly close the file: */
 		_thread_sys_close(fd);
 
