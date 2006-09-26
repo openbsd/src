@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.25 2006/09/26 14:18:28 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.26 2006/09/26 15:09:59 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -751,7 +751,7 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 		}
 
 		/* Handle write locks */
-		if ( ret == 0 && (lock_type & FD_WRITE)) {
+		if (ret == 0 && (lock_type & FD_WRITE)) {
 			/*
 			 * Enter a loop to wait for the file descriptor to be
 			 * locked for write for the current thread: 
