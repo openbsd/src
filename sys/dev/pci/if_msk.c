@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.19 2006/09/25 23:26:36 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.20 2006/09/26 19:37:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -598,6 +598,7 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		entry = malloc(sizeof(struct sk_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
+			sc_if->sk_cdata.sk_jumbo_buf = NULL;
 			printf(": no memory for jumbo buffer queue!");
 			error = ENOBUFS;
 			goto out;
