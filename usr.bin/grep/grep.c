@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.35 2006/03/07 20:59:56 otto Exp $	*/
+/*	$OpenBSD: grep.c,v 1.36 2006/09/26 15:55:17 jaredy Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -168,7 +168,7 @@ struct option long_options[] =
 static void
 add_pattern(char *pat, size_t len)
 {
-	if (len == 0 || matchall) {
+	if (!xflag && (len == 0 || matchall)) {
 		matchall = 1;
 		return;
 	}
@@ -183,7 +183,7 @@ add_pattern(char *pat, size_t len)
 		int bol = 0, eol = 0, extra;
 		if (pat[0] == '^')
 			bol = 1;
-		if (pat[len - 1] == '$')
+		if (len > 0 && pat[len - 1] == '$')
 			eol = 1;
 		extra = Eflag ? 2 : 4;
 		pattern[patterns] = grep_malloc(len + 15 + extra);
