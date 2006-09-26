@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.22 2006/06/17 14:14:12 henning Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.23 2006/09/26 13:11:38 pedro Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -201,9 +201,14 @@ token_output(ifp0, m0, dst, rt0)
 			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 		}
 		/* If broadcasting on a simplex interface, loopback a copy. */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
-		    m_tag_find(m, PACKET_TAG_PF_ROUTED, NULL) == NULL)
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX)) {
+#if NPF > 0
+			struct pf_mtag *t;
+
+			if ((t = pf_find_mtag(m)) == NULL || !t->routed)
+#endif
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
+		}
 		etype = htons(ETHERTYPE_IP);
 		break;
 #if 0
@@ -432,8 +437,8 @@ token_input(ifp, m)
 
 #if NCARP > 0
 		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
-		    (carp_input(m, (u_int8_t *)&th->token_shost,
-		    (u_int8_t *)&th->token_dhost, l->llc_snap.ether_type) == 0))
+		    (carp_input(m, (u_int8_t *)&trh->token_shost,
+		    (u_int8_t *)&trh->token_dhost, l->llc_snap.ether_type) == 0))
 			return;
 #endif
 
