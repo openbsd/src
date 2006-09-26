@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2002/08/21 15:40:30 art Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2006/09/26 23:14:52 martin Exp $
 
-CFLAGS += -fpic -mno-fp-regs
+CFLAGS += -fPIC -mno-fp-regs
 LIBCSRCDIR=${.CURDIR}/../../lib/libc
 .include "${LIBCSRCDIR}/arch/alpha/Makefile.inc"

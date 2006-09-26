@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.95 2006/06/26 03:12:37 brad Exp $
+#	$OpenBSD: bsd.own.mk,v 1.96 2006/09/26 23:14:52 martin Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -32,8 +32,7 @@ ELF_TOOLCHAIN?=	yes
 .endif
 
 # gcc3
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
     ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "vax"
 USE_GCC3?=no
 .else
@@ -122,7 +121,7 @@ NOPIC=
 .endif
 
 # pic relocation flags.
-.if ${MACHINE_ARCH} == "sparc64"
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")
 PICFLAG=-fPIC
 .else
 PICFLAG=-fpic
