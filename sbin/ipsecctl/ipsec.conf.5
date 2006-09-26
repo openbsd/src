@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.98 2006/09/22 13:12:13 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.99 2006/09/26 22:03:44 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -138,8 +138,8 @@ is used to set up flows and SAs automatically using
 .Xr isakmpd 8 .
 Some examples of setting up automatic keying:
 .Bd -literal -offset 3n
-# Set up two tunnels:
-# First between the machines 192.168.3.1 and 192.168.3.2
+# Set up a VPN:
+# First between the gateway machines 192.168.3.1 and 192.168.3.2
 # Second between the networks 10.1.1.0/24 and 10.1.2.0/24
 ike esp from 192.168.3.1 to 192.168.3.2
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
