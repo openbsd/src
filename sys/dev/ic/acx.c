@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.50 2006/08/29 17:26:38 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.51 2006/09/26 12:54:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -174,9 +174,8 @@ int	 acx_reset(struct acx_softc *);
 
 int	 acx_set_null_tmplt(struct acx_softc *);
 int	 acx_set_probe_req_tmplt(struct acx_softc *, const char *, int);
-int	 acx_set_probe_resp_tmplt(struct acx_softc *, const char *, int,
-	    int);
-int	 acx_set_beacon_tmplt(struct acx_softc *, const char *, int, int);
+int	 acx_set_probe_resp_tmplt(struct acx_softc *, struct ieee80211_node *);
+int	 acx_set_beacon_tmplt(struct acx_softc *, struct ieee80211_node *);
 
 int	 acx_read_eeprom(struct acx_softc *, uint32_t, uint8_t *);
 int	 acx_read_phyreg(struct acx_softc *, uint32_t, uint8_t *);
@@ -1745,15 +1744,13 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				goto back;
 			}
 
-			if (acx_set_beacon_tmplt(sc, ni->ni_essid,
-			    ni->ni_esslen, chan) != 0) {
+			if (acx_set_beacon_tmplt(sc, ni) != 0) {
 				printf("%s: set bescon template failed\n",
 				    ifp->if_xname);
 				goto back;
 			}
 
-			if (acx_set_probe_resp_tmplt(sc, ni->ni_essid,
-			    ni->ni_esslen, chan) != 0) {
+			if (acx_set_probe_resp_tmplt(sc, ni) != 0) {
 				printf("%s: set probe response template "
 				    "failed\n", ifp->if_xname);
 				goto back;
@@ -2272,9 +2269,9 @@ back:
 int
 acx_set_null_tmplt(struct acx_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct acx_tmplt_null_data n;
 	struct ieee80211_frame *wh;
-	struct ieee80211com *ic = &sc->sc_ic;
 
 	bzero(&n, sizeof(n));
 
@@ -2292,9 +2289,9 @@ acx_set_null_tmplt(struct acx_softc *sc)
 int
 acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct acx_tmplt_probe_req req;
 	struct ieee80211_frame *wh;
-	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t *frm;
 	int len;
 
@@ -2312,7 +2309,6 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
 	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
 	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
-
 	len = frm - req.data.u_data.var;
 
 	return (_acx_set_probe_req_tmplt(sc, &req,
@@ -2320,92 +2316,39 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 }
 
 int
-acx_set_probe_resp_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
-    int chan)
+acx_set_probe_resp_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 {
-	struct acx_tmplt_probe_resp resp;
-	struct ieee80211_frame *wh;
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t *frm;
+	struct acx_tmplt_probe_resp resp;
+	struct mbuf *m;
 	int len;
 
 	bzero(&resp, sizeof(resp));
 
-	wh = &resp.data.u_data.f;
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
-	    IEEE80211_FC0_SUBTYPE_PROBE_RESP;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_myaddr);
+	m = ieee80211_beacon_alloc(ic, ni);
+	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&resp.data);
+	len = m->m_pkthdr.len + sizeof(resp.size);
+	m_freem(m); 
 
-	resp.data.u_data.beacon_intvl = htole16(acx_beacon_intvl);
-	resp.data.u_data.cap = htole16(IEEE80211_CAPINFO_IBSS);
-
-	frm = resp.data.u_data.var;
-	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
-	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
-
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = chan;
-
-	/* This should after IBSS or TIM, but acx always keeps them last */
-	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
-
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-	}
-
-	len = frm - resp.data.u_data.var;
-
-	return (_acx_set_probe_resp_tmplt(sc, &resp,
-	    ACX_TMPLT_PROBE_RESP_SIZ(len)));
+	return (_acx_set_probe_resp_tmplt(sc, &resp, len));
 }
 
 int
-acx_set_beacon_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len,
-    int chan)
+acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 {
-	struct acx_tmplt_beacon beacon;
-	struct ieee80211_frame *wh;
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t *frm;
+	struct acx_tmplt_beacon beacon;
+	struct mbuf *m;
 	int len;
 
 	bzero(&beacon, sizeof(beacon));
 
-	wh = &beacon.data.u_data.f;
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
-	    IEEE80211_FC0_SUBTYPE_BEACON;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_myaddr);
+	m = ieee80211_beacon_alloc(ic, ni);
+	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&beacon.data);
+	len = m->m_pkthdr.len + sizeof(beacon.size);
+	m_freem(m);
 
-	beacon.data.u_data.beacon_intvl = htole16(acx_beacon_intvl);
-	beacon.data.u_data.cap = htole16(IEEE80211_CAPINFO_IBSS);
-
-	frm = beacon.data.u_data.var;
-	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
-	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
-
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = chan;
-
-	/* This should after IBSS or TIM, but acx always keeps them last */
-	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
-
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-	}
-
-	len = frm - beacon.data.u_data.var;
-
-	return (_acx_set_beacon_tmplt(sc, &beacon, ACX_TMPLT_BEACON_SIZ(len)));
+	return (_acx_set_beacon_tmplt(sc, &beacon, len));
 }
 
 void
