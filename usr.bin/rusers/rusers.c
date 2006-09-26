@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.26 2003/08/04 17:06:46 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.27 2006/09/26 10:30:41 otto Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -47,7 +47,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.26 2003/08/04 17:06:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.27 2006/09/26 10:30:41 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -489,7 +489,7 @@ allhosts(void)
 {
 	enum clnt_stat stat;
 	struct itimerval timeout;
-	AUTH *unix_auth = authunix_create_default();
+	AUTH *unix_auth;
 	size_t outlen[2];
 	int sock[2] = { -1, -1 };
 	int i, maxfd, rval;
@@ -504,6 +504,9 @@ allhosts(void)
 	utmpidlearr up;
 	utmp_array up3;
 	XDR xdr;
+
+	if ((unix_auth = authunix_create_default()) == NULL)
+		err(1, "can't create auth handle");
 
 	if (getifaddrs(&ifap) != 0)
 		err(1, "can't get list of interface addresses");
