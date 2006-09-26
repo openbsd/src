@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.74 2006/09/26 09:26:36 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.75 2006/09/26 09:50:31 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5684,7 +5684,7 @@ worklist_print(struct worklist *wk, int full, int (*pr)(const char *, ...))
 		break;
 	case D_INODEDEP:
 		inodedep = WK_INODEDEP(wk);
-		(*pr)("fs %p ino %u nlinkdelta %u dino %p\n%s"
+		(*pr)("fs %p ino %u nlinkdelta %u dino %p\n"
 		    "%s  bp %p savsz %lld\n", inodedep->id_fs,
 		    inodedep->id_ino, inodedep->id_nlinkdelta,
 		    inodedep->id_un.idu_savedino1,
