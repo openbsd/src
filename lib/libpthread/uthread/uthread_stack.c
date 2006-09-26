@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.8 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.9 2006/09/26 14:50:37 kurt Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * <insert BSD-style license&disclaimer>
@@ -30,7 +30,7 @@ _thread_stack_alloc(base, size)
 	size_t size;
 {
 	struct stack *stack;
-	int nbpg = getpagesize();
+	size_t nbpg = (size_t)getpagesize();
 
 	/* Maintain a stack of default-sized stacks that we can re-use. */
 	if (base == NULL && size == PTHREAD_STACK_DEFAULT) {
@@ -61,33 +61,32 @@ _thread_stack_alloc(base, size)
 		return stack;
 	}
 
-	/* Allocate some storage for the stack, with some overhead: */
-	stack->storage = malloc(size + nbpg * 2);
-	if (stack->storage == NULL) {
+	/* Round size up to closest page boundry */
+	size = ((size + (nbpg - 1)) / nbpg) * nbpg;
+
+	/* mmap storage for the stack, with one extra page for redzone */
+	stack->storage = mmap(NULL, size + nbpg, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, 0);
+	if (stack->storage == MAP_FAILED) {
 		free(stack);
 		return NULL;
 	}
 
 	/*
 	 * Compute the location of the red zone.
-	 * Use __ptrdiff_t to convert the storage base pointer
-	 * into an integer so that page alignment can be done with
-	 * integer arithmetic.
 	 */
 #if defined(MACHINE_STACK_GROWS_UP)
 	/* Red zone is the last page of the storage: */
-	stack->redzone = (void *)(((__ptrdiff_t)stack->storage +
-	    size + nbpg - 1) & ~(nbpg - 1));
-	stack->base = (caddr_t)stack->storage;
+	stack->redzone = (void *)((caddr_t)stack->storage + (__ptrdiff_t)size);
+	stack->base = stack->storage;
 	stack->size = size;
 #else
 	/* Red zone is the first page of the storage: */
-	stack->redzone = (void *)(((__ptrdiff_t)stack->storage + 
-	    nbpg - 1) & ~(nbpg - 1));
-	stack->base = (caddr_t)stack->redzone + nbpg;
+	stack->redzone = stack->storage; 
+	stack->base = (caddr_t)stack->redzone + (__ptrdiff_t)nbpg;
 	stack->size = size;
 #endif
-	if (mprotect(stack->redzone, nbpg, 0) == -1)
+	if (mprotect(stack->redzone, nbpg, PROT_NONE) == -1)
 		PANIC("Cannot protect stack red zone");
 
 	return stack;
@@ -97,20 +96,15 @@ void
 _thread_stack_free(stack)
 	struct stack *stack;
 {
-	int nbpg = getpagesize();
+	size_t nbpg = (size_t)getpagesize();
 
 	/* Cache allocated stacks of default size: */
 	if (stack->storage != NULL && stack->size == PTHREAD_STACK_DEFAULT)
 		SLIST_INSERT_HEAD(&_stackq, stack, qe);
 	else {
-		/* Restore storage protection to what malloc gave us: */
-		if (stack->redzone)
-			mprotect(stack->redzone, nbpg,
-			    PROT_READ|PROT_WRITE);
-
-		/* Free storage: */
+		/* unmap storage: */
 		if (stack->storage)
-			free(stack->storage);
+			munmap(stack->storage, stack->size + nbpg);
 
 		/* Free stack information storage: */
 		free(stack);
