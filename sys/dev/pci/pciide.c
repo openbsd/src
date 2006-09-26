@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.256 2006/09/26 06:45:13 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.257 2006/09/26 06:53:41 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2308,24 +2308,8 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801FBM_SATA:
 		ich = 6;
 		break;
-	case PCI_PRODUCT_INTEL_82801GB_SATA:
-	case PCI_PRODUCT_INTEL_82801GR_SATA:
-	case PCI_PRODUCT_INTEL_82801GR_AHCI:
-	case PCI_PRODUCT_INTEL_82801GBM_SATA:
-	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
-	case PCI_PRODUCT_INTEL_82801GHM_RAID:
-		ich = 7;
-		break;
-	case PCI_PRODUCT_INTEL_82801H_SATA_1_6P:
-	case PCI_PRODUCT_INTEL_82801H_AHCI:
-	case PCI_PRODUCT_INTEL_82801H_RAID:
-	case PCI_PRODUCT_INTEL_82801H_SATA_1_4P:
-	case PCI_PRODUCT_INTEL_82801H_SATA_2:
-	case PCI_PRODUCT_INTEL_82801HBM_SATA_1:
-	case PCI_PRODUCT_INTEL_82801HBM_SATA_2:
-	case PCI_PRODUCT_INTEL_6321ESB_SATA:
 	default:
-		ich = 8;
+		ich = 7;
 		break;
 	}
 
