@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.73 2006/07/27 11:34:13 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.74 2006/09/26 09:26:36 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -2014,8 +2014,9 @@ softdep_setup_freeblocks(ip, length)
 	vp = ITOV(ip);
 	ACQUIRE_LOCK(&lk);
 	drain_output(vp, 1);
-	while (getdirtybuf(&LIST_FIRST(&vp->v_dirtyblkhd), MNT_WAIT)) {
-		bp = LIST_FIRST(&vp->v_dirtyblkhd);
+	while ((bp = LIST_FIRST(&vp->v_dirtyblkhd))) {
+		if (!getdirtybuf(&bp, MNT_WAIT))
+			break;
 		(void) inodedep_lookup(fs, ip->i_number, 0, &inodedep);
 		deallocate_dependencies(bp, inodedep);
 		bp->b_flags |= B_INVAL | B_NOCACHE;
@@ -4485,10 +4486,10 @@ softdep_update_inodeblock(ip, bp, waitfor)
 		FREE_LOCK(&lk);
 		return;
 	}
-	gotit = getdirtybuf(&inodedep->id_buf, MNT_WAIT);
+	bp = inodedep->id_buf;
+	gotit = getdirtybuf(&bp, MNT_WAIT);
 	FREE_LOCK(&lk);
-	if (gotit &&
-	    (error = bwrite(inodedep->id_buf)) != 0)
+	if (gotit && (error = bwrite(bp)) != 0)
 		softdep_error("softdep_update_inodeblock: bwrite", error);
 	if ((inodedep->id_state & DEPCOMPLETE) == 0)
 		panic("softdep_update_inodeblock: update failed");
@@ -4777,11 +4778,11 @@ top:
 	 * all potential buffers on the dirty list will be visible.
 	 */
 	drain_output(vp, 1);
-	if (getdirtybuf(&LIST_FIRST(&vp->v_dirtyblkhd), MNT_WAIT) == 0) {
+	bp = LIST_FIRST(&vp->v_dirtyblkhd);
+	if (getdirtybuf(&bp, MNT_WAIT) == 0) {
 		FREE_LOCK(&lk);
 		return (0);
 	}
-	bp = LIST_FIRST(&vp->v_dirtyblkhd);
 loop:
 	/*
 	 * As we hold the buffer locked, none of its dependencies
@@ -4923,8 +4924,8 @@ loop:
 			/* NOTREACHED */
 		}
 	}
-	(void) getdirtybuf(&LIST_NEXT(bp, b_vnbufs), MNT_WAIT);
 	nbp = LIST_NEXT(bp, b_vnbufs);
+	getdirtybuf(&nbp, MNT_WAIT);
 	FREE_LOCK(&lk);
 	bawrite(bp);
 	ACQUIRE_LOCK(&lk);
@@ -5160,10 +5161,10 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 * push them to disk.
 		 */
 		if ((inodedep->id_state & DEPCOMPLETE) == 0) {
-			gotit = getdirtybuf(&inodedep->id_buf, MNT_WAIT);
+			bp = inodedep->id_buf;
+			gotit = getdirtybuf(&bp, MNT_WAIT);
 			FREE_LOCK(&lk);
-			if (gotit &&
-			    (error = bwrite(inodedep->id_buf)) != 0)
+			if (gotit && (error = bwrite(bp)) != 0)
 				break;
 			ACQUIRE_LOCK(&lk);
 			if (dap != LIST_FIRST(diraddhdp))
