@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.54 2006/05/30 19:26:57 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.55 2006/09/26 21:10:53 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ struct inpcbtable {
 
 /* default values for baddynamicports [see ip_init()] */
 #define	DEFBADDYNAMICPORTS_TCP	{ 587, 749, 750, 751, 760, 761, 871, 0 }
-#define	DEFBADDYNAMICPORTS_UDP	{ 623, 750, 751, 0 }
+#define	DEFBADDYNAMICPORTS_UDP	{ 623, 664, 750, 751, 0 }
 
 struct baddynamicports {
 	u_int32_t tcp[DP_MAPSIZE];
