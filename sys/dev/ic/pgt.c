@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.14 2006/09/23 13:44:42 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.15 2006/09/26 21:32:49 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -3298,9 +3298,6 @@ pgt_update_sw_from_hw(struct pgt_softc *sc, struct pgt_async_trap *pa,
 	int error, s;
 
 	if (pa != NULL) {
-#if 0
-		struct pgt_obj_mlmeex *mlmeex;
-#endif
 		struct pgt_obj_mlme *mlme;
 		uint32_t oid;
 
@@ -3412,21 +3409,17 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ic->ic_if.if_timer = 0;
 		ic->ic_mgt_timer = 0;
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-#if 0
-		IF_DRAIN(&ic->ic_mgtq);
-#endif
 		if (ic->ic_wep_ctx != NULL) {
 			free(ic->ic_wep_ctx, M_DEVBUF);  
 			ic->ic_wep_ctx = NULL;
 		}
 		ieee80211_free_allnodes(ic);
-		ic->ic_state = nstate;
 		break;
 	case IEEE80211_S_SCAN:
-#if 0
 		ic->ic_if.if_timer = 1;
 		ic->ic_mgt_timer = 0;
 		if (sc->sc_flags & SC_NOFREE_ALLNODES) {
+#if 0
 			struct ieee80211_node *ni;
 			struct pgt_ieee80211_node *pin;
 
@@ -3435,15 +3428,14 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				pin = (struct pgt_ieee80211_node *)ni;
 				pin->pin_dot1x_auth = PIN_DOT1X_UNAUTHORIZED;
 			}
+#endif
 			sc->sc_flags &= ~SC_NOFREE_ALLNODES;
-		} else {
+		} else
 			ieee80211_free_allnodes(ic);
-		}
-		ic->ic_state = nstate;
+
 		/* Just use any old channel; we override it anyway. */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			ieee80211_create_ibss(ic, ic->ic_ibss_chan);
-#endif
 		break;
 	case IEEE80211_S_RUN:
 		ic->ic_if.if_timer = 1;
