@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.181 2006/09/26 13:10:44 mickey Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.182 2006/09/26 23:57:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1073,8 +1073,7 @@ bge_setpromisc(struct bge_softc *sc)
 }
 
 /*
- * Do endian, PCI and DMA initialization. Also check the on-board ROM
- * self-test results.
+ * Do endian, PCI and DMA initialization.
  */
 void
 bge_chipinit(struct bge_softc *sc)
