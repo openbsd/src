@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.99 2006/09/24 20:29:52 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.100 2006/09/26 23:33:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.99 2006/09/24 20:29:52 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.100 2006/09/26 23:33:04 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1071,8 +1071,6 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
 	if (!edit) {
 		fprintf(f, "flags:");
-		if (lp->d_flags & D_REMOVABLE)
-			fprintf(f, " removable");
 		if (lp->d_flags & D_BADSECT)
 			fprintf(f, " badsect");
 		putc('\n', f);
@@ -1334,8 +1332,6 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		if (!strcmp(cp, "flags")) {
 			for (v = 0; (cp = tp) && *cp != '\0';) {
 				tp = word(cp);
-				if (!strcmp(cp, "removable"))
-					v |= D_REMOVABLE;
 				else if (!strcmp(cp, "badsect"))
 					v |= D_BADSECT;
 				else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.40 2006/08/13 16:24:13 krw Exp $ */
+/*	$OpenBSD: mcd.c,v 1.41 2006/09/26 23:33:04 krw Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -735,7 +735,6 @@ mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	lp->d_secperunit = sc->disksize;
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
-	lp->d_flags = D_REMOVABLE;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.110 2006/07/29 02:40:45 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.111 2006/09/26 23:33:04 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1196,7 +1196,6 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_secperunit = cd->params.disksize;
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
-	lp->d_flags = D_REMOVABLE;
 
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
 	lp->d_bbsize = BBSIZE;
