@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.290 2006/09/01 01:18:02 mpf Exp $
+#	$OpenBSD: rc,v 1.291 2006/09/27 19:54:36 mpf Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -572,6 +572,10 @@ fi
 
 if [ X"${bgpd_flags}" != X"NO" ]; then
 	echo -n ' bgpd';		/usr/sbin/bgpd $bgpd_flags
+fi
+
+if [ X"${ifstated_flags}" != X"NO" ]; then
+	echo -n ' ifstated';		ifstated $ifstated_flags
 fi
 
 if [ X"${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
