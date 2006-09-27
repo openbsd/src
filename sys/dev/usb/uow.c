@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.4 2006/09/27 15:02:45 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.5 2006/09/27 15:32:37 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -70,6 +70,7 @@ Static int	uow_ow_bit(void *, int);
 
 Static int	uow_cmd(struct uow_softc *, int, int);
 Static void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static int	uow_recv(struct uow_softc *, void *, int);
 
 USB_MATCH(uow)
 {
@@ -267,20 +268,12 @@ uow_ow_bit(void *arg, int value)
 {
 	struct uow_softc *sc = arg;
 	u_int8_t data;
-	usbd_status error;
 
 	if (uow_cmd(sc, DS2490_COMM_BIT_IO | DS2490_BIT_IM |
 	    (value ? DS2490_BIT_D : 0), 0) != 0)
 		return (1);
-
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, &data, sizeof(data),
-	    0, UOW_TIMEOUT, NULL);
-	error = usbd_sync_transfer(sc->sc_xfer);
-	if (error != 0) {
-		printf("%s: failed to do xfer: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+	if (uow_recv(sc, &data, sizeof(data)) != 0)
 		return (1);
-	}
 
 	return (data);
 }
@@ -326,4 +319,20 @@ uow_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 	wakeup(sc->sc_regs);
+}
+
+Static int
+uow_recv(struct uow_softc *sc, void *buf, int size)
+{
+	usbd_status error;
+
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, size, 0,
+	    UOW_TIMEOUT, NULL);
+	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
+		printf("%s: failed to recv xfer: %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		return (1);
+	}
+
+	return (0);
 }
