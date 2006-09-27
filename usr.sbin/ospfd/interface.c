@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.52 2006/08/18 11:54:28 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.53 2006/09/27 14:37:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -695,6 +695,17 @@ if_set_tos(int fd, int tos)
 		return (-1);
 	}
 
+	return (0);
+}
+
+int
+if_set_recvif(int fd, int enable)
+{
+	if (setsockopt(fd, IPPROTO_IP, IP_RECVIF, &enable,
+	    sizeof(enable)) < 0) {
+		log_warn("if_set_recvif: error setting IP_RECVIF");
+		return (-1);
+	}
 	return (0);
 }
 

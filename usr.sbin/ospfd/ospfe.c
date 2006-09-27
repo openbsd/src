@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.47 2006/06/02 18:49:55 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.48 2006/09/27 14:37:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -106,7 +106,8 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 
 	if (if_set_tos(xconf->ospf_socket, IPTOS_PREC_INTERNETCONTROL) == -1)
 		fatal("if_set_tos");
-
+	if (if_set_recvif(xconf->ospf_socket, 1) == -1)
+		fatal("if_set_recvif");
 	if_set_recvbuf(xconf->ospf_socket);
 
 	oeconf = xconf;

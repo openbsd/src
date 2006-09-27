@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.20 2006/03/09 13:31:57 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.21 2006/09/27 14:37:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -18,11 +18,13 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <net/if_dl.h>
 
 #include <errno.h>
 #include <event.h>
@@ -37,7 +39,7 @@
 int		 ip_hdr_sanity_check(const struct ip *, u_int16_t);
 int		 ospf_hdr_sanity_check(const struct ip *,
 		    struct ospf_hdr *, u_int16_t, const struct iface *);
-struct iface	*find_iface(struct ospfd_conf *, struct in_addr);
+struct iface	*find_iface(struct ospfd_conf *, unsigned int, struct in_addr);
 
 int
 gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
@@ -80,27 +82,50 @@ send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 void
 recv_packet(int fd, short event, void *bula)
 {
-	struct ospfd_conf	*xconf = bula;
+	char			 cbuf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
+	struct msghdr		 msg;
+	struct iovec		 iov;
 	struct ip		 ip_hdr;
+	struct in_addr		 addr;
+	struct ospfd_conf	*xconf = bula;
 	struct ospf_hdr		*ospf_hdr;
 	struct iface		*iface;
 	struct nbr		*nbr = NULL;
-	struct in_addr		 addr;
 	char			*buf;
+	struct cmsghdr		*cmsg;
 	ssize_t			 r;
 	u_int16_t		 len;
 	int			 l;
+	unsigned int		 ifindex = 0;
 
 	if (event != EV_READ)
 		return;
 
 	/* setup buffer */
-	buf = pkt_ptr;
+	bzero(&msg, sizeof(msg));
+	iov.iov_base = buf = pkt_ptr;
+	iov.iov_len = READ_BUF_SIZE;
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cbuf;
+	msg.msg_controllen = sizeof(cbuf);
 
-	if ((r = recvfrom(fd, buf, READ_BUF_SIZE, 0, NULL, NULL)) == -1) {
+	if ((r = recvmsg(fd, &msg, 0)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
-			log_debug("recv_packet: error receiving packet");
+			log_debug("recv_packet: read error: %s",
+			    strerror(errno));
 		return;
+	}
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		if (cmsg->cmsg_level == IPPROTO_IP &&
+		    cmsg->cmsg_type == IP_RECVIF) {
+			ifindex = ((struct sockaddr_dl *)
+			    CMSG_DATA(cmsg))->sdl_index;
+			break;
+		}
 	}
 
 	len = (u_int16_t)r;
@@ -117,7 +142,7 @@ recv_packet(int fd, short event, void *bula)
 	len -= l;
 
 	/* find a matching interface */
-	if ((iface = find_iface(xconf, ip_hdr.ip_src)) == NULL) {
+	if ((iface = find_iface(xconf, ifindex, ip_hdr.ip_src)) == NULL) {
 		log_debug("recv_packet: cannot find valid interface");
 		return;
 	}
@@ -142,7 +167,7 @@ recv_packet(int fd, short event, void *bula)
 
 	/* OSPF header sanity checks */
 	if (len < sizeof(*ospf_hdr)) {
-		log_warnx("recv_packet: bad packet size");
+		log_debug("recv_packet: bad packet size");
 		return;
 	}
 	ospf_hdr = (struct ospf_hdr *)buf;
@@ -262,7 +287,7 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 }
 
 struct iface *
-find_iface(struct ospfd_conf *xconf, struct in_addr src)
+find_iface(struct ospfd_conf *xconf, unsigned int ifindex, struct in_addr src)
 {
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
@@ -270,27 +295,28 @@ find_iface(struct ospfd_conf *xconf, struct in_addr src)
 	/* returned interface needs to be active */
 	LIST_FOREACH(area, &xconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if (iface->fd > 0 &&
-			    (iface->type == IF_TYPE_POINTOPOINT) &&
-			    (iface->dst.s_addr == src.s_addr) &&
-			    !iface->passive)
-				return (iface);
-
-			if (iface->fd > 0 && (iface->addr.s_addr &
-			    iface->mask.s_addr) == (src.s_addr &
-			    iface->mask.s_addr) && !iface->passive &&
-			    iface->type != IF_TYPE_VIRTUALLINK) {
-				return (iface);
+			switch (iface->type) {
+			case IF_TYPE_VIRTUALLINK:
+				if ((src.s_addr == iface->dst.s_addr) &&
+				    !iface->passive)
+					return (iface);
+				break;
+			case IF_TYPE_POINTOPOINT:
+				if (ifindex == iface->ifindex &&
+				    iface->dst.s_addr == src.s_addr &&
+				    !iface->passive)
+					return (iface);
+				break;
+			default:
+				if (ifindex == iface->ifindex &&
+				    (iface->addr.s_addr & iface->mask.s_addr) ==
+				    (src.s_addr & iface->mask.s_addr) &&
+				    !iface->passive)
+					return (iface);
+				break;
 			}
 		}
 	}
-
-	LIST_FOREACH(area, &xconf->area_list, entry)
-		LIST_FOREACH(iface, &area->iface_list, entry)
-			if ((iface->type == IF_TYPE_VIRTUALLINK) &&
-			    (src.s_addr == iface->dst.s_addr)) {
-				return (iface);
-			}
 
 	return (NULL);
 }
