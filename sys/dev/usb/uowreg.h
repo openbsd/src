@@ -1,4 +1,4 @@
-/*	$OpenBSD: uowreg.h,v 1.2 2006/09/27 16:29:56 grange Exp $	*/
+/*	$OpenBSD: uowreg.h,v 1.3 2006/09/27 19:26:54 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -49,18 +49,36 @@
 #define DS2490_COMM_1WIRE_RESET		0x0042
 #define DS2490_COMM_BIT_IO		0x0020
 #define DS2490_COMM_BYTE_IO		0x0052
+#define DS2490_COMM_BLOCK_IO		0x0074
+#define DS2490_COMM_MATCH_ACCESS	0x0064
+#define DS2490_COMM_READ_STRAIGHT	0x0080
+#define DS2490_COMM_DO_RELEASE		0x6092
+#define DS2490_COMM_SET_PATH		0x00a2
+#define DS2490_COMM_WRITE_SRAM_PAGE	0x00b2
+#define DS2490_COMM_WRITE_EPROM		0x00c4
+#define DS2490_COMM_READ_CRC_PROT_PAGE	0x00d4
+#define DS2490_COMM_READ_REDIR_PAGE_CRC	0x21e4
+#define DS2490_COMM_SEARCH_ACCESS	0x00f4
 
 /* Communication command embedded command parameter bits */
 #define DS2490_BIT_IM			(1 << 0)
 #define DS2490_BIT_D			(1 << 3)
+#define DS2490_BIT_CH			(1 << 3)
+#define DS2490_BIT_R			(1 << 3)
 #define DS2490_BIT_SE			(1 << 3)
+#define DS2490_BIT_SM			(1 << 3)
 #define DS2490_BIT_TYPE			(1 << 3)
+#define DS2490_BIT_Z			(1 << 3)
+#define DS2490_BIT_RST			(1 << 8)
 #define DS2490_BIT_ICP			(1 << 9)
 #define DS2490_BIT_NTF			(1 << 10)
 #define DS2490_BIT_F			(1 << 11)
 #define DS2490_BIT_SPU			(1 << 12)
+#define DS2490_BIT_DT			(1 << 13)
 #define DS2490_BIT_CIB			(1 << 14)
+#define DS2490_BIT_PS			(1 << 14)
 #define DS2490_BIT_PST			(1 << 14)
+#define DS2490_BIT_RTS			(1 << 14)
 
 /* Mode command codes */
 #define DS2490_MOD_PULSE_EN		0x0000
