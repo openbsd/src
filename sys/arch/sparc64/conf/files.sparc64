@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.72 2006/06/27 20:29:20 deraadt Exp $
+#	$OpenBSD: files.sparc64,v 1.73 2006/09/27 06:33:03 grange Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -283,3 +283,7 @@ file	arch/sparc64/dev/pcf8591_ofw.c		pcfadc
 #
 include "dev/gpio/files.gpio"
 
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"

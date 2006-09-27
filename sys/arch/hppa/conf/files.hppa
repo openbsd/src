@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.59 2005/05/01 21:36:55 brad Exp $
+#	$OpenBSD: files.hppa,v 1.60 2006/09/27 06:33:03 grange Exp $
 #
 # hppa-specific configuration info
 
@@ -70,6 +70,11 @@ include "dev/usb/files.usb"
 # HIL Human Interface Loop devices
 #
 include "dev/hil/files.hil"
+
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"
 
 #
 # Gonzo System Connect Bus

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.21 2005/11/17 05:26:31 uwe Exp $
+#	$OpenBSD: files.zaurus,v 1.22 2006/09/27 06:33:03 grange Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -95,3 +95,8 @@ include "dev/usb/files.usb"
 
 # Media Independent Interface (mii)
 include "dev/mii/files.mii"
+
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"

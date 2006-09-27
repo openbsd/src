@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.2 2005/05/01 21:36:56 brad Exp $
+#	$OpenBSD: files.hppa64,v 1.3 2006/09/27 06:33:03 grange Exp $
 #
 # hppa64-specific configuration info
 
@@ -54,6 +54,11 @@ include	"dev/pcmcia/files.pcmcia"
 # Machine-independent USB drivers
 #
 include "dev/usb/files.usb"
+
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"
 
 #
 # Mainbus
