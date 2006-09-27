@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.15 2006/09/26 21:32:49 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.16 2006/09/27 19:35:17 brad Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -208,13 +208,8 @@ void
 pgt_attachhook(void *xsc)
 {
 	struct pgt_softc *sc = xsc;
-	int error;
 
-	error = pgt_attach(sc);
-	if (error) {
-		printf("%s: attach error\n", sc->sc_dev.dv_xname);
-		return;
-	}
+	pgt_attach(sc);
 }
 
 void
@@ -643,11 +638,6 @@ pgt_attach(struct pgt_softc *sc)
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
 
 failed:
-	if (error) {
-		pgt_disable(sc, SC_DYING);
-		pgt_reboot(sc);
-	}
-
 	return (error);
 }
 
