@@ -801,6 +801,7 @@
 ./usr/include/dev/usb/umidi_quirks.h
 ./usr/include/dev/usb/umidireg.h
 ./usr/include/dev/usb/umidivar.h
+./usr/include/dev/usb/uowreg.h
 ./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h
 ./usr/include/dev/usb/usb_mem.h

@@ -1381,6 +1381,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidivar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uowreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb_mem.ph
