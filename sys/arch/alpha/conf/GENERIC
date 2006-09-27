@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.182 2006/09/24 18:19:28 brad Exp $
+#	$OpenBSD: GENERIC,v 1.183 2006/09/27 04:48:34 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -238,6 +238,7 @@ art*	at musycc?			# Accoom Artery E1/T1 cards
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 pgt*	at pci?				# Prism54 (only full-mac varients)
+acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
 
 #UNTESTED:  the following drivers are untested.
 en*	at pci?				# ENI PCI ATM (untested)
