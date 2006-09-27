@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.158 2006/09/27 07:18:14 brad Exp $
+#	$OpenBSD: GENERIC,v 1.159 2006/09/27 08:54:44 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -185,6 +185,8 @@ radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 udcf*	at uhub?		# Gude Expert mouseCLOCK
+uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -395,6 +397,11 @@ sbus*		at xbox?
 fdc*	at sbus?
 #fdc*	at ebus?
 fd*	at fdc?
+
+# 1-Wire devices
+option ONEWIREVERBOSE
+owid*	at onewire?			# ID
+owtemp* at onewire?			# Temperature
 
 pseudo-device	hotplug	1		# devices hot plugging
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.150 2006/08/18 23:14:43 jason Exp $g
+#	$OpenBSD: GENERIC,v 1.151 2006/09/27 08:54:44 grange Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -271,6 +271,8 @@ ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 udcf*	at uhub?		# Gude Expert mouseCLOCK
+uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
 
 # I2C bus support
 iic*		at ki2c?
@@ -332,6 +334,11 @@ ss*		at scsibus?
 safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
+
+# 1-Wire devices
+option ONEWIREVERBOSE
+owid*	at onewire?		# ID
+owtemp* at onewire?		# Temperature
 
 pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2	# mouse & keyboard multiplexor

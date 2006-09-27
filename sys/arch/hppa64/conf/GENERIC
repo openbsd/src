@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2006/08/14 08:34:21 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.12 2006/09/27 08:54:44 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -118,6 +118,8 @@ pci*	at ppb?
 #udsbr*	at uhub?		# D-Link DSB-R100 radio
 #radio*	at udsbr?		# USB radio
 #ugen*	at uhub?		# USB Generic driver
+#uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+#onewire* at uow?
 
 #sti*	at pci?			# EG-PCI, FX*
 #wsdisplay*	at sti?
@@ -189,5 +191,10 @@ ukphy*		at mii?		# generic unknown PHYs
 #uk*	at scsibus?
 #safte*	at scsibus?
 #ses*	at scsibus?
+
+# 1-Wire devices
+#option ONEWIREVERBOSE
+#owid*	at onewire?		# ID
+#owtemp* at onewire?		# Temperature
 
 #pseudo-device	wsmux	2	# mouse and keyboard multiplexor

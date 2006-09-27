@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.525 2006/09/16 13:21:24 damien Exp $
+#	$OpenBSD: GENERIC,v 1.526 2006/09/27 08:54:44 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -73,7 +73,6 @@ pci*	at mainbus0
 option		PCIVERBOSE
 option		EISAVERBOSE
 option		USBVERBOSE
-option		ONEWIREVERBOSE
 
 pchb*	at pci?			# PCI-Host bridges
 ppb*	at pci?			# PCI-PCI bridges
@@ -248,6 +247,9 @@ rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 #option	NATM
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
+uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
+
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
 
@@ -680,8 +682,9 @@ scsibus* at iopsp?
 #onewire* at gpioow?
 
 # 1-Wire devices
-#owid*	at onewire?			# ID
-#owtemp* at onewire?			# Temperature
+option ONEWIREVERBOSE
+owid*	at onewire?		# ID
+owtemp* at onewire?		# Temperature
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control

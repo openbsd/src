@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.11 2006/08/26 10:47:34 kettenis Exp $ 
+# $OpenBSD: GENERIC,v 1.12 2006/09/27 08:54:44 grange Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -144,6 +144,8 @@ ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 #udcf*	at uhub?		# Gude Expert mouseCLOCK
+uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
 
 amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs
@@ -170,6 +172,11 @@ rgephy*		at mii?		# Realtek 8169S/8110S PHY
 rlphy*		at mii?		# Realtek 8139 internal PHYs
 ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?		# generic unknown PHYs
+
+# 1-Wire devices
+option ONEWIREVERBOSE
+owid*	at onewire?		# ID
+owtemp* at onewire?		# Temperature
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux		2

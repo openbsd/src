@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.183 2006/09/27 04:48:34 brad Exp $
+#	$OpenBSD: GENERIC,v 1.184 2006/09/27 08:54:44 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -124,6 +124,8 @@ radio*	at udsbr?			# USB radio
 ugen*	at uhub?			# USB Generic driver
 ural*	at uhub?			# Ralink RT2500USB
 rum*	at uhub?			# Ralink RT2501USB/RT2601USB
+uow*	at uhub?			# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0
@@ -416,6 +418,11 @@ nofn*	at pci?				# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?				# Bluesteel Networks 5xxx crypto card
 safe*	at pci?				# SafeNet SafeXcel 1141/1741
 #ises*	at pci?				# Pijnenburg PCC-ISES
+
+# 1-Wire devices
+option ONEWIREVERBOSE
+owid*	at onewire?			# ID
+owtemp* at onewire?			# Temperature
 
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	crypto		1

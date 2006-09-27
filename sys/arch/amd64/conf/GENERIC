@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.156 2006/09/19 22:11:19 mglocker Exp $
+#	$OpenBSD: GENERIC,v 1.157 2006/09/27 08:54:44 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -195,6 +195,8 @@ radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
 
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
@@ -487,6 +489,11 @@ ioprbs*	at iop?			# I2O arrays
 scsibus* at ioprbs?
 iopsp*	at iop?			# I2O SCSI pass-through
 scsibus* at iopsp?
+
+# 1-Wire devices
+option ONEWIREVERBOSE
+owid*	at onewire?		# ID
+owtemp* at onewire?		# Temperature
 
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
