@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.19 2006/06/16 17:43:54 mickey Exp $
+# $OpenBSD: Makefile.cross,v 1.20 2006/09/27 08:38:58 mickey Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -194,8 +194,7 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	@touch ${CROSSBINUTILS}
 
 # bsd.own.mk can't do it for us
-.if ${TARGET_ARCH} == "alpha" || \
-    ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
+.if ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
     ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "vax"
 TARGET_USE_GCC3=No
 .else
