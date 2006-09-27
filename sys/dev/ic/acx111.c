@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.11 2006/08/19 23:17:12 mglocker Exp $ */
+/*	$OpenBSD: acx111.c,v 1.12 2006/09/27 04:34:36 brad Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -54,6 +54,7 @@
 #include <sys/endian.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 
