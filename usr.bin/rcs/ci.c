@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.187 2006/09/21 15:30:07 millert Exp $	*/
+/*	$OpenBSD: ci.c,v 1.188 2006/09/27 06:26:35 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -246,6 +246,7 @@ checkin_main(int argc, char **argv)
 			if (pb.openflags & RCS_CREATE)
 				pb.flags |= NEWFILE;
 			else {
+				/* XXX - Check if errno == ENOENT. */
 				warnx("No existing RCS file");
 				status = 1;
 				(void)close(workfile_fd);
@@ -621,7 +622,7 @@ checkin_init(struct checkin_params *pb)
 skipdesc:
 
 	/*
-	 * If the user had specified a zero-ending revision number e.g. 4
+	 * If the user had specified a zero-ending revision number e.g. 4.0
 	 * emulate odd GNU behaviour and fetch log message.
 	 */
 	if (fetchlog == 1) {
@@ -663,8 +664,7 @@ skipdesc:
 	}
 
 	/* Attach a symbolic name to this revision if specified. */
-	if (pb->symbol != NULL &&
-	    (checkin_attach_symbol(pb) < 0))
+	if (pb->symbol != NULL && checkin_attach_symbol(pb) < 0)
 		goto fail;
 
 	/* Set the state of this revision if specified. */
