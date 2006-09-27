@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.1 2006/09/27 08:54:44 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.2 2006/09/27 13:02:47 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
