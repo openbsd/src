@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.83 2006/08/21 03:01:34 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.84 2006/09/27 08:49:17 jsg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.80 2006/08/21 03:01:19 brad Exp 
+ *	OpenBSD: miidevs,v 1.81 2006/09/27 08:48:51 jsg Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -49,6 +49,7 @@
  * List of known MII OUIs
  */
 
+#define	MII_OUI_VITESSE	0x0001c1	/* Vitesse */
 #define	MII_OUI_3COM	0x00105a	/* 3com */
 #define	MII_OUI_LUCENT	0x00601d	/* Lucent Technologies */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
@@ -56,7 +57,7 @@
 #define	MII_OUI_ASIX	0x000ec6	/* ASIX Electronics */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_CENIX	0x000749	/* CENiX Inc. */
-#define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
+#define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
@@ -191,12 +192,16 @@
 /* Cicada Semiconductor PHYs (now owned by Vitesse) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
 #define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_VSC8211	0x000b
+#define	MII_STR_CICADA_VSC8211	"VSC8211 10/100/1000 PHY"
 #define	MII_MODEL_CICADA_CS8201A	0x0020
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
 #define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_VITESSE_VSC8601	0x0002
+#define	MII_STR_VITESSE_VSC8601	"VSC8601 10/100/1000 PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
