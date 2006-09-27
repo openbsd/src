@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.157 2006/08/18 23:14:43 jason Exp $
+#	$OpenBSD: GENERIC,v 1.158 2006/09/27 07:18:14 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -66,6 +66,9 @@ vr*	at pci?			# VIA Rhine ethernet
 re*	at pci?			# RealTek 8169/8169S/8110S
 musycc*	at pci?			# Conexant HDLC controller
 art*	at musycc?		# Accoom Artery E1/T1 cards
+
+pgt*	at pci?			# Prism54 (only full-mac varients)
+acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
 
 # PCI SCSI
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
