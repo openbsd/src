@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.2 2006/09/27 13:02:47 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.3 2006/09/27 14:40:55 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -191,17 +191,27 @@ fail:
 USB_DETACH(uow)
 {
 	USB_DETACH_START(uow, sc);
-	int rv = 0;
+	int rv = 0, s;
 
-	if (sc->sc_ph_ibulk != NULL)
+	s = splusb();
+
+	if (sc->sc_ph_ibulk != NULL) {
+		usbd_abort_pipe(sc->sc_ph_ibulk);
 		usbd_close_pipe(sc->sc_ph_ibulk);
-	if (sc->sc_ph_obulk != NULL)
+	}
+	if (sc->sc_ph_obulk != NULL) {
+		usbd_abort_pipe(sc->sc_ph_obulk);
 		usbd_close_pipe(sc->sc_ph_obulk);
-	if (sc->sc_ph_intr != NULL)
+	}
+	if (sc->sc_ph_intr != NULL) {
+		usbd_abort_pipe(sc->sc_ph_intr);
 		usbd_close_pipe(sc->sc_ph_intr);
+	}
 
 	if (sc->sc_ow_dev != NULL)
 		rv = config_detach(sc->sc_ow_dev, flags);
+
+	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
