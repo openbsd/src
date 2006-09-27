@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.80 2006/08/21 03:01:19 brad Exp $
+$OpenBSD: miidevs,v 1.81 2006/09/27 08:48:51 jsg Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -42,6 +42,7 @@ $OpenBSD: miidevs,v 1.80 2006/08/21 03:01:19 brad Exp $
  * List of known MII OUIs
  */
 
+oui VITESSE			0x0001c1	Vitesse
 oui 3COM			0x00105a	3com
 oui LUCENT			0x00601d	Lucent Technologies
 oui ALTIMA			0x0010a9	Altima Communications
@@ -49,7 +50,7 @@ oui AMD				0x00001a	Advanced Micro Devices
 oui ASIX			0x000ec6	ASIX Electronics
 oui BROADCOM			0x001018	Broadcom Corporation
 oui CENIX			0x000749	CENiX Inc.
-oui CICADA			0x0003F1	Cicada Semiconductor
+oui CICADA			0x0003f1	Cicada Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui MARVELL			0x005043	Marvell Semiconductor
@@ -150,9 +151,11 @@ model BROADCOM BCM4401		0x0036 BCM4401 10/100baseTX PHY
 
 /* Cicada Semiconductor PHYs (now owned by Vitesse) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
+model CICADA VSC8211		0x000b VSC8211 10/100/1000 PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
+model VITESSE VSC8601		0x0002 VSC8601 10/100/1000 PHY
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 PHY
