@@ -1,4 +1,4 @@
-/*	$OpenBSD: uowreg.h,v 1.1 2006/09/27 08:54:44 grange Exp $	*/
+/*	$OpenBSD: uowreg.h,v 1.2 2006/09/27 16:29:56 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -48,6 +48,7 @@
 #define DS2490_COMM_PULSE		0x0030
 #define DS2490_COMM_1WIRE_RESET		0x0042
 #define DS2490_COMM_BIT_IO		0x0020
+#define DS2490_COMM_BYTE_IO		0x0052
 
 /* Communication command embedded command parameter bits */
 #define DS2490_BIT_IM			(1 << 0)

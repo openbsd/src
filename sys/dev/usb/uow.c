@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.5 2006/09/27 15:32:37 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.6 2006/09/27 16:29:56 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -67,6 +67,8 @@ static const struct usb_devno uow_devs[] = {
 
 Static int	uow_ow_reset(void *);
 Static int	uow_ow_bit(void *, int);
+Static int	uow_ow_read_byte(void *);
+Static void	uow_ow_write_byte(void *, int);
 
 Static int	uow_cmd(struct uow_softc *, int, int);
 Static void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -180,6 +182,8 @@ USB_ATTACH(uow)
 	sc->sc_ow_bus.bus_cookie = sc;
 	sc->sc_ow_bus.bus_reset = uow_ow_reset;
 	sc->sc_ow_bus.bus_bit = uow_ow_bit;
+	sc->sc_ow_bus.bus_read_byte = uow_ow_read_byte;
+	sc->sc_ow_bus.bus_write_byte = uow_ow_write_byte;
 
 	bzero(&oba, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
@@ -276,6 +280,31 @@ uow_ow_bit(void *arg, int value)
 		return (1);
 
 	return (data);
+}
+
+Static int
+uow_ow_read_byte(void *arg)
+{
+	struct uow_softc *sc = arg;
+	u_int8_t data;
+
+	if (uow_cmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, 0xff) != 0)
+		return (-1);
+	if (uow_recv(sc, &data, sizeof(data)) != 0)
+		return (-1);
+
+	return (data);
+}
+
+Static void
+uow_ow_write_byte(void *arg, int value)
+{
+	struct uow_softc *sc = arg;
+	u_int8_t data;
+
+	if (uow_cmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, value) != 0)
+		return;
+	uow_recv(sc, &data, sizeof(data));
 }
 
 Static int
