@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.3 2006/09/27 14:40:55 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.4 2006/09/27 15:02:45 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -55,6 +55,7 @@ struct uow_softc {
 	usbd_pipe_handle	sc_ph_obulk;
 	usbd_pipe_handle	sc_ph_intr;
 	u_int8_t		sc_regs[DS2490_NREGS];
+	usbd_xfer_handle	sc_xfer;
 };
 
 USB_DECLARE_DRIVER(uow);
@@ -167,6 +168,13 @@ USB_ATTACH(uow)
 		goto fail;
 	}
 
+	/* Allocate xfer for bulk transfers */
+	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		printf("%s: failed to alloc bulk xfer\n",
+		    USBDEVNAME(sc->sc_dev));
+		goto fail;
+	}
+
 	/* Attach 1-Wire bus */
 	sc->sc_ow_bus.bus_cookie = sc;
 	sc->sc_ow_bus.bus_reset = uow_ow_reset;
@@ -185,6 +193,8 @@ fail:
 		usbd_close_pipe(sc->sc_ph_obulk);
 	if (sc->sc_ph_intr != NULL)
 		usbd_close_pipe(sc->sc_ph_intr);
+	if (sc->sc_xfer != NULL)
+		usbd_free_xfer(sc->sc_xfer);
 	USB_ATTACH_ERROR_RETURN;
 }
 
@@ -207,6 +217,9 @@ USB_DETACH(uow)
 		usbd_abort_pipe(sc->sc_ph_intr);
 		usbd_close_pipe(sc->sc_ph_intr);
 	}
+
+	if (sc->sc_xfer != NULL)
+		usbd_free_xfer(sc->sc_xfer);
 
 	if (sc->sc_ow_dev != NULL)
 		rv = config_detach(sc->sc_ow_dev, flags);
@@ -253,7 +266,6 @@ Static int
 uow_ow_bit(void *arg, int value)
 {
 	struct uow_softc *sc = arg;
-	usbd_xfer_handle xfer;
 	u_int8_t data;
 	usbd_status error;
 
@@ -261,14 +273,9 @@ uow_ow_bit(void *arg, int value)
 	    (value ? DS2490_BIT_D : 0), 0) != 0)
 		return (1);
 
-	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-		printf("%s: failed to alloc xfer\n", USBDEVNAME(sc->sc_dev));
-		return (1);
-	}
-	usbd_setup_xfer(xfer, sc->sc_ph_ibulk, sc, &data, sizeof(data), 0,
-	    UOW_TIMEOUT, NULL);
-	error = usbd_sync_transfer(xfer);
-	usbd_free_xfer(xfer);
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, &data, sizeof(data),
+	    0, UOW_TIMEOUT, NULL);
+	error = usbd_sync_transfer(sc->sc_xfer);
 	if (error != 0) {
 		printf("%s: failed to do xfer: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
