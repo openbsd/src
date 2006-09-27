@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.20 2006/09/26 19:37:28 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.21 2006/09/27 02:27:04 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -604,11 +604,7 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 			goto out;
 		}
 		entry->slot = i;
-		if (i)
-			LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
-				 entry, jpool_entries);
-		else
-			LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead,
+		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
 				 entry, jpool_entries);
 	}
 out:
@@ -668,7 +664,6 @@ msk_jfree(caddr_t buf, u_int size, void	*arg)
 		panic("sk_jfree: can't find softc pointer!");
 
 	/* calculate the slot this buffer belongs to */
-
 	i = ((vaddr_t)buf
 	     - (vaddr_t)sc->sk_cdata.sk_jumbo_buf) / SK_JLEN;
 
