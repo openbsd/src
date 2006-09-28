@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.29 2006/06/01 22:09:09 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.30 2006/09/28 17:43:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -52,6 +52,8 @@
 void	 hostapd_usage(void);
 void	 hostapd_udp_init(struct hostapd_config *);
 void	 hostapd_sig_handler(int);
+static __inline int
+	 hostapd_entry_cmp(struct hostapd_entry *, struct hostapd_entry *);
 
 struct hostapd_config hostapd_cfg;
 
@@ -612,7 +614,7 @@ hostapd_entry_update(struct hostapd_table *table, struct hostapd_entry *entry)
 	}
 }
 
-int
+static __inline int
 hostapd_entry_cmp(struct hostapd_entry *a, struct hostapd_entry *b)
 {
 	return (memcmp(a->e_lladdr, b->e_lladdr, IEEE80211_ADDR_LEN));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.18 2006/06/27 18:14:59 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.19 2006/09/28 17:43:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -382,7 +382,6 @@ struct hostapd_entry *hostapd_entry_lookup(struct hostapd_table *,
 	    u_int8_t *);
 void	 hostapd_entry_update(struct hostapd_table *,
 	    struct hostapd_entry *);
-int	 hostapd_entry_cmp(struct hostapd_entry *, struct hostapd_entry *);
 
 RB_PROTOTYPE(hostapd_tree, hostapd_entry, e_nodes, hostapd_entry_cmp);
 
