@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pchb.4,v 1.14 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: pchb.4,v 1.15 2006/09/28 23:59:58 jmc Exp $
 .\"
 .\" Michael Shalayeff, 2000. Public Domain.
 .\"
@@ -14,10 +14,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI-Host adapter-specific functions for
-the following devices:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
+driver provides support for PCI-Host adapter-specific functions.
+Support is provided for the following devices:
+.Bl -tag -width Ds -offset indent
 .It i450 PCIset (Orion)
 Supports additional PCI busses.
 .It Reliance Computer ROSB4, CNB20HE, CNB20LE
@@ -38,11 +37,13 @@ it supplies entropy to the
 driver for common usage.
 .El
 .Pp
-On amd64 and i386 systems all other PCI devices of class
+On amd64 and i386 systems, most PCI devices of class
 .Nm Bridge
 and sub-class
 .Nm Bridge Host
 are supported just as PCI attachment points.
+A few other system control devices not listed here are supported by
+.Nm .
 .Pp
 The macppc port supports several Apple and Motorola bridges.
 .Sh SEE ALSO
