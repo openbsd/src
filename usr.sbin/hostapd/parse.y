@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2006/06/27 18:14:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2006/09/28 17:06:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -113,14 +113,13 @@ struct hostapd_table *table;
 struct hostapd_entry *entry;
 struct hostapd_frame frame, *frame_ptr;
 struct hostapd_ieee80211_frame *frame_ieee80211;
-u_int negative;
 
-#define HOSTAPD_MATCH(_m)	{					\
-	frame.f_flags |= negative ?				\
+#define HOSTAPD_MATCH(_m, _not)	{					\
+	frame.f_flags |= (_not) ?					\
 	    HOSTAPD_FRAME_F_##_m##_N : HOSTAPD_FRAME_F_##_m;		\
 }
-#define HOSTAPD_MATCH_TABLE(_m)	{					\
-	frame.f_flags |= HOSTAPD_FRAME_F_##_m##_TABLE | (negative ?	\
+#define HOSTAPD_MATCH_TABLE(_m, _not)	{				\
+	frame.f_flags |= HOSTAPD_FRAME_F_##_m##_TABLE | ((_not) ?	\
 	    HOSTAPD_FRAME_F_##_m##_N : HOSTAPD_FRAME_F_##_m);		\
 }
 #define HOSTAPD_MATCH_RADIOTAP(_x) {					\
@@ -133,8 +132,8 @@ u_int negative;
 	frame.f_radiotap |= HOSTAPD_RADIOTAP_F(RSSI);			\
 	frame.f_flags |= HOSTAPD_FRAME_F_##_x;				\
 }
-#define HOSTAPD_IAPP_FLAG(_f) {						\
-	if (negative)							\
+#define HOSTAPD_IAPP_FLAG(_f, _not) {					\
+	if (_not)							\
 		hostapd_cfg.c_iapp.i_flags &= ~(HOSTAPD_IAPP_F_##_f);	\
 	else								\
 		hostapd_cfg.c_iapp.i_flags |= (HOSTAPD_IAPP_F_##_f);	\
@@ -163,6 +162,7 @@ u_int negative;
 %type	<v.val>		percent
 %type	<v.val>		txrate
 %type	<v.val>		freq
+%type	<v.val>		not
 
 %%
 
@@ -299,17 +299,17 @@ hostapiface	: STRING
 		;
 
 hostapmatch	: /* empty */
-		| ON STRING
+		| ON not STRING
 		{
 			if ((frame.f_apme =
-			    hostapd_apme_lookup(&hostapd_cfg, $2)) == NULL) {
+			    hostapd_apme_lookup(&hostapd_cfg, $3)) == NULL) {
 				yyerror("undefined hostap interface");
-				free($2);
+				free($3);
 				YYERROR;
 			}
-			free($2);
+			free($3);
 
-			HOSTAPD_MATCH(APME);
+			HOSTAPD_MATCH(APME, $2);
 		}
 		;
 
@@ -347,19 +347,19 @@ iappsubtypelist	: iappsubtype
 
 iappsubtype	: not ADD NOTIFY
 		{
-			HOSTAPD_IAPP_FLAG(ADD_NOTIFY);
+			HOSTAPD_IAPP_FLAG(ADD_NOTIFY, $1);
 		}
 		| not RADIOTAP
 		{
-			HOSTAPD_IAPP_FLAG(RADIOTAP);
+			HOSTAPD_IAPP_FLAG(RADIOTAP, $1);
 		}
 		| not ROUTE ROAMING
 		{
-			HOSTAPD_IAPP_FLAG(ROAMING_ROUTE);
+			HOSTAPD_IAPP_FLAG(ROAMING_ROUTE, $1);
 		}
 		| not ADDRESS ROAMING
 		{
-			HOSTAPD_IAPP_FLAG(ROAMING_ADDRESS);
+			HOSTAPD_IAPP_FLAG(ROAMING_ADDRESS, $1);
 		}
 		;
 
@@ -469,13 +469,13 @@ frmmatchtype	: /* any */
 		{
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_TYPE_DATA;
-			HOSTAPD_MATCH(TYPE);
+			HOSTAPD_MATCH(TYPE, $2);
 		}
 		| TYPE not MANAGEMENT frmmatchmgmt
 		{
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_TYPE_MGT;
-			HOSTAPD_MATCH(TYPE);
+			HOSTAPD_MATCH(TYPE, $2);
 		}
 		;
 
@@ -483,7 +483,7 @@ frmmatchmgmt	: /* any */
 		| SUBTYPE ANY
 		| SUBTYPE not frmsubtype
 		{
-			HOSTAPD_MATCH(SUBTYPE);
+			HOSTAPD_MATCH(SUBTYPE, $2);
 		}
 		;
 
@@ -663,9 +663,9 @@ frmreason_l	: /* empty */
 
 frmmatchdir	: /* any */
 		| DIR ANY
-		| DIR frmdir
+		| DIR not frmdir
 		{
-			HOSTAPD_MATCH(DIR);
+			HOSTAPD_MATCH(DIR, $2);
 		}
 		;
 
@@ -688,43 +688,46 @@ frmdir		: NO DS
 		;
 
 frmmatchfrom	: /* any */
-		| FROM frmmatchaddr
+		| FROM ANY
+		| FROM not frmmatchaddr
 		{
-			if (($2.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
-				bcopy($2.lladdr, &frame_ieee80211->i_from,
+			if (($3.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
+				bcopy($3.lladdr, &frame_ieee80211->i_from,
 				    IEEE80211_ADDR_LEN);
-				HOSTAPD_MATCH(FROM);
+				HOSTAPD_MATCH(FROM, $2);
 			} else {
-				frame.f_from = $2.table;
-				HOSTAPD_MATCH_TABLE(FROM);
+				frame.f_from = $3.table;
+				HOSTAPD_MATCH_TABLE(FROM, $2);
 			}
 		}
 		;
 
 frmmatchto	: /* any */
-		| TO frmmatchaddr
+		| TO ANY
+		| TO not frmmatchaddr
 		{
-			if (($2.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
-				bcopy($2.lladdr, &frame_ieee80211->i_to,
+			if (($3.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
+				bcopy($3.lladdr, &frame_ieee80211->i_to,
 				    IEEE80211_ADDR_LEN);
-				HOSTAPD_MATCH(TO);
+				HOSTAPD_MATCH(TO, $2);
 			} else {
-				frame.f_to = $2.table;
-				HOSTAPD_MATCH_TABLE(TO);
+				frame.f_to = $3.table;
+				HOSTAPD_MATCH_TABLE(TO, $2);
 			}
 		}
 		;
 
 frmmatchbssid	: /* any */
-		| BSSID frmmatchaddr
+		| BSSID ANY
+		| BSSID not frmmatchaddr
 		{
-			if (($2.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
-				bcopy($2.lladdr, &frame_ieee80211->i_bssid,
+			if (($3.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
+				bcopy($3.lladdr, &frame_ieee80211->i_bssid,
 				    IEEE80211_ADDR_LEN);
-				HOSTAPD_MATCH(BSSID);
+				HOSTAPD_MATCH(BSSID, $2);
 			} else {
-				frame.f_bssid = $2.table;
-				HOSTAPD_MATCH_TABLE(BSSID);
+				frame.f_bssid = $3.table;
+				HOSTAPD_MATCH_TABLE(BSSID, $2);
 			}
 		}
 		;
@@ -765,25 +768,21 @@ frmmatchrtapopt	: RSSI unaryop percent
 		}
 		;
 
-frmmatchaddr	: ANY
-		{
-			$$.flags = 0;
-		}
-		| not table
+frmmatchaddr	: table
 		{
 			if (($$.table =
-			    hostapd_table_lookup(&hostapd_cfg, $2)) == NULL) {
-				yyerror("undefined table <%s>", $2);
-				free($2);
+			    hostapd_table_lookup(&hostapd_cfg, $1)) == NULL) {
+				yyerror("undefined table <%s>", $1);
+				free($1);
 				YYERROR;
 			}
 			$$.flags = HOSTAPD_ACTION_F_OPT_TABLE;
-			free($2);
+			free($1);
 		}
-		| not lladdr
+		| lladdr
 		{
-			bcopy($2.lladdr, $$.lladdr, IEEE80211_ADDR_LEN);
-			$$.flags = HOSTAPD_ACTION_F_OPT_TABLE;
+			bcopy($1.lladdr, $$.lladdr, IEEE80211_ADDR_LEN);
+			$$.flags = HOSTAPD_ACTION_F_OPT_LLADDR;
 		}
 		;
 
@@ -1040,15 +1039,15 @@ optnl		: /* empty */
 
 not		: /* empty */
 		{
-			negative = 0;
+			$$ = 0;
 		}
 		| '!'
 		{
-			negative = 1;
+			$$ = 1;
 		}
 		| NOT
 		{
-			negative = 1;
+			$$ = 1;
 		}
 		;
 
