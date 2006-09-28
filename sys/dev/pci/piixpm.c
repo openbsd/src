@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.23 2006/07/07 03:23:42 brad Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.24 2006/09/28 18:19:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -117,7 +117,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF((": conf 0x%x", conf));
+	DPRINTF((": conf 0x%08x", conf));
 
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
 		printf(": SMBus disabled\n");
@@ -203,8 +203,9 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int8_t ctl, st;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
-	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
+	    len, flags));
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
@@ -295,14 +296,16 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
-	    PIIX_SMB_HS_BITS);
+	printf("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	    "flags 0x%02x: timeout, status 0x%b\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags,
+	    st, PIIX_SMB_HS_BITS);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HC,
 	    PIIX_SMB_HC_KILL);
 	DELAY(PIIXPM_DELAY);
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_FAILED) == 0)
-		printf("%s: transaction abort failed, status 0x%b\n",
+		printf("%s: abort failed, status 0x%b\n",
 		    sc->sc_dev.dv_xname, st, PIIX_SMB_HS_BITS);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS, st);
 	return (1);

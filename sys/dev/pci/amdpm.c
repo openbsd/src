@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.17 2006/03/09 00:39:04 dlg Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.18 2006/09/28 18:19:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -385,8 +385,9 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int16_t st, ctl, data;
 	int retries;
 
-	DPRINTF("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
-	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags);
+	DPRINTF("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
+	    len, flags);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
@@ -479,14 +480,16 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
-	    AMDPM_SMBSTAT_BITS);
+	printf("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	    "flags 0x%02x: timeout, status 0x%b\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags,
+	    st, AMDPM_SMBSTAT_BITS);
 	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBCTL,
 	    AMDPM_SMBCTL_ABORT);
 	DELAY(AMDPM_SMBUS_DELAY);
 	st = bus_space_read_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT);
 	if ((st & AMDPM_SMBSTAT_ABRT) == 0)
-		printf("%s: transaction abort failed, status 0x%b\n",
+		printf("%s: abort failed, status 0x%b\n",
 		    sc->sc_dev.dv_xname, st, AMDPM_SMBSTAT_BITS);
 	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT, st);
 	return (1);

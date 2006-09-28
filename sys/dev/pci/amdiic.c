@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdiic.c,v 1.4 2006/01/15 10:06:06 grange Exp $	*/
+/*	$OpenBSD: amdiic.c,v 1.5 2006/09/28 18:19:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -152,7 +152,7 @@ amdiic_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, AMD8111_SMB_MISC);
-	DPRINTF((": conf 0x%x", conf));
+	DPRINTF((": conf 0x%08x", conf));
 
 	sc->sc_poll = 1;
 	if (conf & AMD8111_SMB_MISC_SCIEN) {
@@ -275,8 +275,8 @@ amdiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int8_t proto, st;
 	int retries;
 
-	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x\n", sc->sc_dev.dv_xname, op, addr,
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr,
 	    cmdlen, len, flags));
 
 	if (cold || sc->sc_poll)
@@ -339,7 +339,9 @@ amdiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			DELAY(AMDIIC_DELAY);
 		}
 		if (st == 0) {
-			printf("%s: timeout\n", sc->sc_dev.dv_xname);
+			printf("%s: exec: op %d, addr 0x%02x, cmdlen %d, "
+			    "len %d, flags 0x%02x: timeout\n",
+			    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags);
 			return (1);
 		}
 		amdiic_intr(sc);
@@ -370,7 +372,7 @@ amdiic_intr(void *arg)
 		/* Interrupt was not for us */
 		return (0);
 
-	DPRINTF(("%s: intr: st 0x%x\n", sc->sc_dev.dv_xname, st));
+	DPRINTF(("%s: intr: st 0x%02x\n", sc->sc_dev.dv_xname, st));
 
 	/* Check for errors */
 	if ((st & AMD8111_SMB_STAT_MASK) != 0) {
