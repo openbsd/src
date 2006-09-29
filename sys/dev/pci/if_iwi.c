@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.74 2006/09/18 16:20:20 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.75 2006/09/29 05:34:25 brad Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1106,7 +1106,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 
 		if (letoh32(beacon->status) == IWI_BEACON_MISSED) {
 			/* XXX should roam when too many beacons missed */
-			DPRINTFN(2, ("%u beacon(s) missed\n",
+			DPRINTFN(2, ("%s: %u beacon(s) missed\n",
 			    sc->sc_dev.dv_xname, letoh32(beacon->count)));
 		}
 		break;
