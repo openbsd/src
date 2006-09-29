@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.4 2003/01/27 21:45:24 drahn Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.5 2006/09/29 14:35:28 otto Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain */
 
 #include <pthread.h>
@@ -33,7 +33,7 @@ _thread_machdep_init(statep, base, len, entry)
 	struct frame *f;
 
 	/* Locate the initial frame, aligned at the top of the stack */
-	f = (struct frame *)(((int)base + len - sizeof *f) & ~ALIGNBYTES);
+	f = (struct frame *)(((int)base - 16 + len - sizeof *f) & ~ALIGNBYTES);
 	
 	f->r1 = (int)&f->next_r1;
 	f->reserved = 0;
