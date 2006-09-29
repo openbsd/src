@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.46 2006/09/18 21:33:32 dim Exp $	*/
+/*	$OpenBSD: re.c,v 1.47 2006/09/29 17:35:45 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -987,12 +987,14 @@ re_attach(struct rl_softc *sc)
 	 * Some 32-bit cards were incorrectly wired and would
 	 * malfunction if plugged into a 64-bit slot.
 	 */
-	error = re_diag(sc);
-	if (error) {
-		printf("%s: attach aborted due to hardware diag failure\n",
-		    sc->sc_dev.dv_xname);
-		ether_ifdetach(ifp);
-		goto fail_8;
+	if (sc->rl_type == RL_8169) {
+		error = re_diag(sc);
+		if (error) {
+			printf("%s: attach aborted due to hardware diag failure\n",
+			    sc->sc_dev.dv_xname);
+			ether_ifdetach(ifp);
+			goto fail_8;
+		}
 	}
 #endif
 
@@ -1715,8 +1717,11 @@ re_start(struct ifnet *ifp)
 #endif
 	}
 
-	if (queued == 0)
+	if (queued == 0) {
+		if (sc->rl_ldata.rl_tx_free != RL_TX_DESC_CNT(sc))
+			CSR_WRITE_4(sc, RL_TIMERCNT, 1);
 		return;
+	}
 
 	sc->rl_ldata.rl_txq_prodidx = idx;
 
@@ -1838,6 +1843,7 @@ re_init(struct ifnet *ifp)
 		CSR_WRITE_2(sc, RL_IMR, 0);
 	else
 		CSR_WRITE_2(sc, RL_IMR, RL_INTRS_CPLUS);
+	CSR_WRITE_2(sc, RL_ISR, RL_INTRS_CPLUS);
 
 	/* Start RX/TX process. */
 	CSR_WRITE_4(sc, RL_MISSEDPKT, 0);
@@ -1891,6 +1897,8 @@ re_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
+
+	sc->rl_link = 0;
 
 	timeout_add(&sc->timer_handle, hz);
 
