@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.5 2003/11/20 17:47:02 millert Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.6 2006/09/29 19:46:02 miod Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -41,6 +41,16 @@
 #include <dev/wscons/wsdisplayvar.h>
 
 void
+pcdisplay_cursor_reset(scr)
+	struct pcdisplayscreen *scr;
+{
+#ifdef PCDISPLAY_SOFTCURSOR
+	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
+	pcdisplay_6845_write(scr->hdl, curend, 0x10);
+#endif
+}
+
+void
 pcdisplay_cursor_init(scr, existing)
 	struct pcdisplayscreen *scr;
 	int existing;
@@ -49,10 +59,11 @@ pcdisplay_cursor_init(scr, existing)
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	int off;
+#endif
 
-	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
-	pcdisplay_6845_write(scr->hdl, curend, 0x10);
-	
+	pcdisplay_cursor_reset(scr);
+
+#ifdef PCDISPLAY_SOFTCURSOR
 	if (existing) {
 		/*
 		 * This is the first screen. At this point, scr->active is

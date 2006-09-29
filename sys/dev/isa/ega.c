@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.7 2004/12/26 21:22:13 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.8 2006/09/29 19:46:04 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -768,6 +768,7 @@ ega_doswitch(vc)
 
 	vc->active = scr;
 
+	pcdisplay_cursor_reset(&scr->pcs);
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
 			 scr->pcs.vc_crow, scr->pcs.vc_ccol);
 
