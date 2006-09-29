@@ -1,4 +1,4 @@
-/*	$OpenBSD: uowreg.h,v 1.3 2006/09/27 19:26:54 grange Exp $	*/
+/*	$OpenBSD: uowreg.h,v 1.4 2006/09/29 18:35:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -123,5 +123,8 @@
 #define DS2490_RES_DETECT	0xa5	/* device detect */
 
 #define DS2490_NREGS		(DS2490_RES_END + 1)
+
+#define DS2490_CMDFIFOSIZE	16	/* command FIFO size */
+#define DS2490_DATAFIFOSIZE	128	/* data FIFO size */
 
 #endif	/* !_DEV_USB_UOWREG_H_ */
