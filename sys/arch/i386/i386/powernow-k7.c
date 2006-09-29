@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.25 2006/09/25 22:28:11 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.26 2006/09/29 21:09:25 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -133,7 +133,8 @@ extern int setperf_prio;
  * Prototypes
  */
 int k7pnow_decode_pst(struct k7pnow_cpu_state *, uint8_t *, int);
-int k7pnow_states(struct k7pnow_cpu_state *, uint32_t, unsigned int, unsigned int);
+int k7pnow_states(struct k7pnow_cpu_state *, uint32_t, unsigned int,
+    unsigned int);
 
 int
 k7_powernow_setperf(int level)
@@ -311,11 +312,14 @@ k7_powernow_init(void)
 	if (!(regs[3] & AMD_PN_FID_VID))
 		return;
 
+	/* Extended CPUID signature value */
+	cpuid(0x80000001, regs);
+
 	cstate = malloc(sizeof(struct k7pnow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate)
 		return;
 
-	cstate->flags = 0;	
+	cstate->flags = cstate->n_states = 0;	
 	if (ci->ci_signature == AMD_ERRATA_A0_CPUSIG)
 		cstate->flags |= PN7_FLAG_ERRATA_A0;
 
@@ -325,25 +329,27 @@ k7_powernow_init(void)
 	currentfid = PN7_STA_CFID(status);
 
 	cstate->fsb = pentium_mhz / (k7pnow_fid_to_mult[currentfid]/10);
-	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
-		if (cstate->n_states) {
-			if (cstate->flags & PN7_FLAG_DESKTOP_VRM)
-				techname = "Cool`n'Quiet K7";
-			else
-				techname = "Powernow! K7";
-			printf("%s: %s %d Mhz: speeds:",
-			    ci->ci_dev.dv_xname, techname, pentium_mhz);
-			for (i = cstate->n_states; i > 0; i--) {
-				state = &cstate->state_table[i-1];
-				printf(" %d", state->freq);
-			}
-			printf(" Mhz\n");	
-			
-			k7pnow_current_state = cstate;
-			cpu_setperf = k7_powernow_setperf;
-			setperf_prio = 1;
-			return;
+
+	/* if the base CPUID signature fails to match try, the extended one */
+	if (!k7pnow_states(cstate, ci->ci_signature, maxfid, startvid))
+		k7pnow_states(cstate, regs[0], maxfid, startvid); 
+	if (cstate->n_states) {
+		if (cstate->flags & PN7_FLAG_DESKTOP_VRM)
+			techname = "Cool`n'Quiet K7";
+		else
+			techname = "Powernow! K7";
+		printf("%s: %s %d Mhz: speeds:",
+		    ci->ci_dev.dv_xname, techname, pentium_mhz);
+		for (i = cstate->n_states; i > 0; i--) {
+			state = &cstate->state_table[i-1];
+			printf(" %d", state->freq);
 		}
+		printf(" Mhz\n");	
+		
+		k7pnow_current_state = cstate;
+		cpu_setperf = k7_powernow_setperf;
+		setperf_prio = 1;
+		return;
 	}
 	free(cstate, M_DEVBUF);
 }
