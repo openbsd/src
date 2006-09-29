@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.99 2006/09/26 22:03:44 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.100 2006/09/29 10:51:27 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -50,9 +50,6 @@ are established,
 which detail how the desired protection will be achieved.
 IPsec uses flows
 to determine whether to apply security services to an IP packet or not.
-Flows and SAs can be loaded, viewed, and modified using the
-.Xr ipsecctl 8
-utility.
 .Pp
 Generally speaking
 an automated keying daemon,
@@ -75,19 +72,42 @@ section of
 .Xr isakmpd 8
 for information on the types of authentication available,
 and the procedures for setting them up.
-After that it's simply a case of running the daemon.
-Note that
-.Xr isakmpd 8
-will probably need to be run with at least the
+.Pp
+The keying daemon,
+.Xr isakmpd 8 ,
+can be enabled to run at boot time via the
+.Va isakmpd_flags
+variable in
+.Xr rc.conf.local 8 .
+Note that it will probably need to be run with at least the
 .Fl K
 option, to avoid
 .Xr keynote 4
 policy checking.
+The
+.Nm
+configuration itself is loaded at boot time
+if the variable
+.Va ipsec
+is set to
+.Dv YES
+in
+.Xr rc.conf.local 8 .
+A utility called
+.Xr ipsecctl 8
+is also available to load
+.Nm
+configurations, and can additionally be used
+to view and modify IPsec flows.
 .Pp
 An alternative method of setting up SAs is also possible using
 manual keying.
-Manual keying can be convenient for quick setups and testing.
-These procedures are documented within this page.
+Manual keying is not recommended,
+but can be convenient for quick setups and testing.
+Those procedures are documented within this page.
+.Pp
+.Nm
+has the following format:
 .Pp
 Lines beginning with
 .Sq #

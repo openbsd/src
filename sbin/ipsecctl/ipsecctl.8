@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.22 2006/09/11 09:01:43 jmc Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.23 2006/09/29 10:51:27 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -41,25 +41,6 @@ and establish tunnels using automatic keying with
 .Xr isakmpd 8 .
 The ruleset grammar is described in
 .Xr ipsec.conf 5 .
-.Pp
-When the variable
-.Va ipsec
-is set to
-.Dv YES
-in
-.Xr rc.conf.local 8 ,
-the rule file specified with the variable
-.Va ipsec_rules
-(by default
-.Pa /etc/ipsec.conf )
-is loaded automatically by the
-.Xr rc 8
-scripts.
-The keying daemon,
-.Xr isakmpd 8 ,
-can also be enabled to run at boot time via the
-.Va isakmpd_flags
-variable.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
