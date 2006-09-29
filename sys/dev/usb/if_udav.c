@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.18 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.19 2006/09/29 08:43:07 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -146,13 +146,9 @@ static const struct udav_type {
 	u_int16_t udav_flags;
 #define UDAV_EXT_PHY	0x0001
 } udav_devs [] = {
-	/* Corega USB-TXC */
-	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TXC }, 0},
-#if 0
-	/* DAVICOM DM9601 Generic? */
-	/*  XXX: The following ids was obtained from the data sheet. */
-	{{ 0x0a46, 0x9601 }, 0},
-#endif
+	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TXC }, 0 },
+	{{ USB_VENDOR_DAVICOM, USB_PRODUCT_DAVICOM_DM9601 }, 0 },
+	{{ USB_VENDOR_DAVICOM, USB_PRODUCT_DAVICOM_WK668 }, 0 }
 };
 #define udav_lookup(v, p) ((struct udav_type *)usb_lookup(udav_devs, v, p))
 

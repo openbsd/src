@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.224 2006/09/26 12:23:40 jsg Exp $
+$OpenBSD: usbdevs,v 1.225 2006/09/29 08:43:07 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -106,6 +106,7 @@ vendor YAMAHA		0x0499	YAMAHA
 vendor COMPAQ		0x049f	Compaq
 vendor HITACHI		0x04a4	Hitachi
 vendor ACERP		0x04a5	Acer Peripherals
+vendor DAVICOM		0x04a6	Davicom
 vendor VISIONEER	0x04a7	Visioneer
 vendor CANON		0x04a9	Canon
 vendor NIKON		0x04b0	Nikon
@@ -905,6 +906,10 @@ product DAISY DMC		0x6901	PhotoClip
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
 product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
+
+/* Davicom products */
+product DAVICOM DM9601		0x9601	DM9601
+product DAVICOM WK668		0x0668	HenTong WK-668
 
 /* Dell products */
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
