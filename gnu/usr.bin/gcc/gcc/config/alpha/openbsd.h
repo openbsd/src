@@ -18,9 +18,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* We settle for little endian for now.  */
-#define TARGET_ENDIAN_DEFAULT 0
-
 /* Controlling the compilation driver.  */
 
 /* alpha needs __start.  */
@@ -63,23 +60,8 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-
-/* #undef PREFERRED_DEBUGGING_TYPE */
-/* #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG */
-
 /* Output and generation of labels.  */
 #define LOCAL_LABEL_PREFIX	"."
 
 /* .set on alpha is not used to output labels.  */
 #undef SET_ASM_OP
-
-/* So, provide corresponding default, without the .set.  */
-#undef ASM_OUTPUT_DEFINE_LABEL_DIFFERENCE_SYMBOL
-#define ASM_OUTPUT_DEFINE_LABEL_DIFFERENCE_SYMBOL(FILE, SY, HI, LO)     \
- do {                                                                   \
-  assemble_name (FILE, SY);                                             \
-  fputc ('=', FILE);                                                    \
-  assemble_name (FILE, HI);                                             \
-  fputc ('-', FILE);                                                    \
-  assemble_name (FILE, LO);                                             \
-  } while (0)
