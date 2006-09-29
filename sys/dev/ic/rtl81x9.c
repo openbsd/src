@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.50 2006/05/22 20:35:12 krw Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.51 2006/09/29 02:40:38 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -854,15 +854,16 @@ int rl_encap(sc, m_head)
 	 * TX buffers, plus we can only have one fragment buffer
 	 * per packet. We have to copy pretty much all the time.
 	 */
-
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL)
+	if (m_new == NULL) {
+		m_freem(m_head);
 		return(1);
+	}
 	if (m_head->m_pkthdr.len > MHLEN) {
 		MCLGET(m_new, M_DONTWAIT);
-
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
+			m_freem(m_head);
 			return(1);
 		}
 	}
@@ -887,6 +888,7 @@ int rl_encap(sc, m_head)
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, RL_CUR_TXMAP(sc),
 	    m_new, BUS_DMA_NOWAIT) != 0) {
 		m_freem(m_new);
+		m_freem(m_head);
 		return (1);
 	}
 	m_freem(m_head);
