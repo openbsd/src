@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.2 2006/08/03 18:48:13 grange Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.3 2006/09/29 19:38:52 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -240,6 +240,34 @@ onewire_write_byte(void *arg, int value)
 		bus->bus_bit(bus->bus_cookie, (value >> i) & 0x1);
 }
 
+void
+onewire_read_block(void *arg, void *buf, int len)
+{
+	struct onewire_softc *sc = arg;
+	struct onewire_bus *bus = sc->sc_bus;
+	u_int8_t *p = buf;
+
+	if (bus->bus_read_block != NULL)
+		return (bus->bus_read_block(bus->bus_cookie, buf, len));
+
+	while (len--)
+		*p++ = onewire_read_byte(arg);
+}
+
+void
+onewire_write_block(void *arg, const void *buf, int len)
+{
+	struct onewire_softc *sc = arg;
+	struct onewire_bus *bus = sc->sc_bus;
+	const u_int8_t *p = buf;
+
+	if (bus->bus_write_block != NULL)
+		return (bus->bus_write_block(bus->bus_cookie, buf, len));
+
+	while (len--)
+		onewire_write_byte(arg, *p++);
+}
+
 int
 onewire_triplet(void *arg, int dir)
 {
@@ -266,24 +294,6 @@ onewire_triplet(void *arg, int dir)
 	}
 
 	return (rv);
-}
-
-void
-onewire_read_block(void *arg, void *buf, int len)
-{
-	u_int8_t *p = buf;
-
-	while (len--)
-		*p++ = onewire_read_byte(arg);
-}
-
-void
-onewire_write_block(void *arg, const void *buf, int len)
-{
-	const u_int8_t *p = buf;
-
-	while (len--)
-		onewire_write_byte(arg, *p++);
 }
 
 void
