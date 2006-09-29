@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.149 2006/09/17 21:35:58 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.150 2006/09/29 16:59:59 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -956,10 +956,14 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		return (ENOBUFS);
 	}
 
-#if 0
-	em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
-#endif
+#ifdef EM_CSUM_OFFLOAD
+	if (sc->hw.mac_type >= em_82543)
+		em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
+	else
+		txd_upper = txd_lower = 0;
+#else
 	txd_upper = txd_lower = 0;
+#endif
 
 	i = sc->next_avail_tx_desc;
 	if (sc->pcix_82544) {
@@ -1590,6 +1594,11 @@ em_setup_interface(struct em_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef EM_CSUM_OFFLOAD
+	if (sc->hw.mac_type >= em_82543)
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
+#endif
 
 	/* 
 	 * Specify the media types supported by this adapter and register
