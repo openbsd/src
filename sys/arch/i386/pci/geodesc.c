@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.5 2006/02/01 13:08:12 mickey Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.6 2006/09/29 19:31:23 mpf Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -122,7 +122,7 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GCB_TSCNFG, TSC_ENABLE);
 	/* Hook into the kern_tc */
 	geodesc_timecounter.tc_priv = sc;
-	tc_init(&geodesc_timecounter);  
+	tc_init(&geodesc_timecounter);
 #endif /* __HAVE_TIMECOUNTER */
 }
 
