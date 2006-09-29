@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.6 2006/09/27 16:29:56 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.7 2006/09/29 19:41:22 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -56,6 +56,7 @@ struct uow_softc {
 	usbd_pipe_handle	sc_ph_intr;
 	u_int8_t		sc_regs[DS2490_NREGS];
 	usbd_xfer_handle	sc_xfer;
+	u_int8_t		sc_fifo[DS2490_DATAFIFOSIZE];
 };
 
 USB_DECLARE_DRIVER(uow);
@@ -69,10 +70,13 @@ Static int	uow_ow_reset(void *);
 Static int	uow_ow_bit(void *, int);
 Static int	uow_ow_read_byte(void *);
 Static void	uow_ow_write_byte(void *, int);
+Static void	uow_ow_read_block(void *, void *, int);
+Static void	uow_ow_write_block(void *, const void *, int);
 
 Static int	uow_cmd(struct uow_softc *, int, int);
 Static void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static int	uow_recv(struct uow_softc *, void *, int);
+Static int	uow_read(struct uow_softc *, void *, int);
+Static int	uow_write(struct uow_softc *, const void *, int);
 
 USB_MATCH(uow)
 {
@@ -178,12 +182,16 @@ USB_ATTACH(uow)
 		goto fail;
 	}
 
+	memset(sc->sc_fifo, 0xff, sizeof(sc->sc_fifo));
+
 	/* Attach 1-Wire bus */
 	sc->sc_ow_bus.bus_cookie = sc;
 	sc->sc_ow_bus.bus_reset = uow_ow_reset;
 	sc->sc_ow_bus.bus_bit = uow_ow_bit;
 	sc->sc_ow_bus.bus_read_byte = uow_ow_read_byte;
 	sc->sc_ow_bus.bus_write_byte = uow_ow_write_byte;
+	sc->sc_ow_bus.bus_read_block = uow_ow_read_block;
+	sc->sc_ow_bus.bus_write_block = uow_ow_write_block;
 
 	bzero(&oba, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
@@ -276,7 +284,7 @@ uow_ow_bit(void *arg, int value)
 	if (uow_cmd(sc, DS2490_COMM_BIT_IO | DS2490_BIT_IM |
 	    (value ? DS2490_BIT_D : 0), 0) != 0)
 		return (1);
-	if (uow_recv(sc, &data, sizeof(data)) != 0)
+	if (uow_read(sc, &data, sizeof(data)) != 0)
 		return (1);
 
 	return (data);
@@ -290,7 +298,7 @@ uow_ow_read_byte(void *arg)
 
 	if (uow_cmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, 0xff) != 0)
 		return (-1);
-	if (uow_recv(sc, &data, sizeof(data)) != 0)
+	if (uow_read(sc, &data, sizeof(data)) != 0)
 		return (-1);
 
 	return (data);
@@ -304,7 +312,30 @@ uow_ow_write_byte(void *arg, int value)
 
 	if (uow_cmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, value) != 0)
 		return;
-	uow_recv(sc, &data, sizeof(data));
+	uow_read(sc, &data, sizeof(data));
+}
+
+Static void
+uow_ow_read_block(void *arg, void *buf, int len)
+{
+	struct uow_softc *sc = arg;
+
+	if (uow_write(sc, sc->sc_fifo, len) != 0)
+		return;
+	if (uow_cmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
+		return;
+	uow_read(sc, buf, len);
+}
+
+Static void
+uow_ow_write_block(void *arg, const void *buf, int len)
+{
+	struct uow_softc *sc = arg;
+
+	if (uow_write(sc, buf, len) != 0)
+		return;
+	if (uow_cmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
+		return;
 }
 
 Static int
@@ -351,14 +382,44 @@ uow_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 Static int
-uow_recv(struct uow_softc *sc, void *buf, int size)
+uow_read(struct uow_softc *sc, void *buf, int len)
 {
 	usbd_status error;
 
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, size, 0,
+	/* XXX: implement FIFO status monitoring */
+	if (len > DS2490_DATAFIFOSIZE) {
+		printf("%s: read %d bytes, xfer too big\n",
+		    USBDEVNAME(sc->sc_dev), len);
+		return (1);
+	}
+
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, len, 0,
 	    UOW_TIMEOUT, NULL);
 	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
-		printf("%s: failed to recv xfer: %s\n",
+		printf("%s: failed to read: %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		return (1);
+	}
+
+	return (0);
+}
+
+Static int
+uow_write(struct uow_softc *sc, const void *buf, int len)
+{
+	usbd_status error;
+
+	/* XXX: implement FIFO status monitoring */
+	if (len > DS2490_DATAFIFOSIZE) {
+		printf("%s: write %d bytes, xfer too big\n",
+		    USBDEVNAME(sc->sc_dev), len);
+		return (1);
+	}
+
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_obulk, sc, (void *)buf, len, 0,
+	    UOW_TIMEOUT, NULL);
+	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
+		printf("%s: failed to write: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
 		return (1);
 	}
