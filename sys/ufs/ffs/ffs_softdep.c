@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.75 2006/09/26 09:50:31 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.76 2006/09/30 14:47:52 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -115,7 +115,7 @@ const char *softdep_typenames[] = {
  */
 STATIC	void softdep_error(char *, int);
 STATIC	void drain_output(struct vnode *, int);
-STATIC	int getdirtybuf(struct buf **, int);
+STATIC	int getdirtybuf(struct buf *, int);
 STATIC	void clear_remove(struct proc *);
 STATIC	void clear_inodedeps(struct proc *);
 STATIC	int flush_pagedep_deps(struct vnode *, struct mount *,
@@ -2015,7 +2015,7 @@ softdep_setup_freeblocks(ip, length)
 	ACQUIRE_LOCK(&lk);
 	drain_output(vp, 1);
 	while ((bp = LIST_FIRST(&vp->v_dirtyblkhd))) {
-		if (!getdirtybuf(&bp, MNT_WAIT))
+		if (!getdirtybuf(bp, MNT_WAIT))
 			break;
 		(void) inodedep_lookup(fs, ip->i_number, 0, &inodedep);
 		deallocate_dependencies(bp, inodedep);
@@ -4487,7 +4487,7 @@ softdep_update_inodeblock(ip, bp, waitfor)
 		return;
 	}
 	bp = inodedep->id_buf;
-	gotit = getdirtybuf(&bp, MNT_WAIT);
+	gotit = getdirtybuf(bp, MNT_WAIT);
 	FREE_LOCK(&lk);
 	if (gotit && (error = bwrite(bp)) != 0)
 		softdep_error("softdep_update_inodeblock: bwrite", error);
@@ -4779,7 +4779,7 @@ top:
 	 */
 	drain_output(vp, 1);
 	bp = LIST_FIRST(&vp->v_dirtyblkhd);
-	if (getdirtybuf(&bp, MNT_WAIT) == 0) {
+	if (getdirtybuf(bp, MNT_WAIT) == 0) {
 		FREE_LOCK(&lk);
 		return (0);
 	}
@@ -4796,7 +4796,7 @@ loop:
 			if (adp->ad_state & DEPCOMPLETE)
 				break;
 			nbp = adp->ad_buf;
-			if (getdirtybuf(&nbp, waitfor) == 0)
+			if (getdirtybuf(nbp, waitfor) == 0)
 				break;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
@@ -4813,7 +4813,7 @@ loop:
 			if (aip->ai_state & DEPCOMPLETE)
 				break;
 			nbp = aip->ai_buf;
-			if (getdirtybuf(&nbp, waitfor) == 0)
+			if (getdirtybuf(nbp, waitfor) == 0)
 				break;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
@@ -4832,7 +4832,7 @@ loop:
 				if (aip->ai_state & DEPCOMPLETE)
 					continue;
 				nbp = aip->ai_buf;
-				if (getdirtybuf(&nbp, MNT_WAIT) == 0)
+				if (getdirtybuf(nbp, MNT_WAIT) == 0)
 					goto restart;
 				FREE_LOCK(&lk);
 				if ((error = VOP_BWRITE(nbp)) != 0) {
@@ -4884,7 +4884,7 @@ loop:
 			 * rather than panic, just flush it.
 			 */
 			nbp = WK_MKDIR(wk)->md_buf;
-			if (getdirtybuf(&nbp, waitfor) == 0)
+			if (getdirtybuf(nbp, waitfor) == 0)
 				break;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
@@ -4905,7 +4905,7 @@ loop:
 			 * rather than panic, just flush it.
 			 */
 			nbp = WK_BMSAFEMAP(wk)->sm_buf;
-			if (getdirtybuf(&nbp, waitfor) == 0)
+			if (getdirtybuf(nbp, waitfor) == 0)
 				break;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
@@ -4925,7 +4925,7 @@ loop:
 		}
 	}
 	nbp = LIST_NEXT(bp, b_vnbufs);
-	getdirtybuf(&nbp, MNT_WAIT);
+	getdirtybuf(nbp, MNT_WAIT);
 	FREE_LOCK(&lk);
 	bawrite(bp);
 	ACQUIRE_LOCK(&lk);
@@ -5012,7 +5012,7 @@ flush_inodedep_deps(fs, ino)
 			if (adp->ad_state & DEPCOMPLETE)
 				continue;
 			bp = adp->ad_buf;
-			if (getdirtybuf(&bp, waitfor) == 0) {
+			if (getdirtybuf(bp, waitfor) == 0) {
 				if (waitfor == MNT_NOWAIT)
 					continue;
 				break;
@@ -5033,7 +5033,7 @@ flush_inodedep_deps(fs, ino)
 			if (adp->ad_state & DEPCOMPLETE)
 				continue;
 			bp = adp->ad_buf;
-			if (getdirtybuf(&bp, waitfor) == 0) {
+			if (getdirtybuf(bp, waitfor) == 0) {
 				if (waitfor == MNT_NOWAIT)
 					continue;
 				break;
@@ -5162,7 +5162,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 */
 		if ((inodedep->id_state & DEPCOMPLETE) == 0) {
 			bp = inodedep->id_buf;
-			gotit = getdirtybuf(&bp, MNT_WAIT);
+			gotit = getdirtybuf(bp, MNT_WAIT);
 			FREE_LOCK(&lk);
 			if (gotit && (error = bwrite(bp)) != 0)
 				break;
@@ -5553,18 +5553,18 @@ out:
  * Return 1 if buffer was acquired.
  */
 STATIC int
-getdirtybuf(bpp, waitfor)
-	struct buf **bpp;
+getdirtybuf(bp, waitfor)
+	struct buf *bp;
 	int waitfor;
 {
-	struct buf *bp;
 	int s;
+
+	if (bp == NULL)
+		return (0);
 
 	splassert(IPL_BIO);
 
 	for (;;) {
-		if ((bp = *bpp) == NULL)
-			return (0);
 		if ((bp->b_flags & B_BUSY) == 0)
 			break;
 		if (waitfor != MNT_WAIT)
