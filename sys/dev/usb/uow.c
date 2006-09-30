@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.10 2006/09/30 10:42:30 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.11 2006/09/30 10:54:55 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -358,17 +358,18 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 	USETW(req.wIndex, param);
 	USETW(req.wLength, 0);
 	if ((error = usbd_do_request(sc->sc_udev, &req, NULL)) != 0) {
-		printf("%s: cmd failed, type %d, cmd %d, param %d: %s\n",
-		    USBDEVNAME(sc->sc_dev), type, cmd, param,
-		    usbd_errstr(error));
+		printf("%s: cmd failed, type 0x%02x, cmd 0x%04x, "
+		    "param 0x%04x: %s\n", USBDEVNAME(sc->sc_dev), type, cmd,
+		    param, usbd_errstr(error));
 		return (1);
 	}
 
 	bzero(sc->sc_regs, sizeof(sc->sc_regs));
 	if (tsleep(sc->sc_regs, PRIBIO, "uowcmd",
 	    (UOW_TIMEOUT * hz) / 1000) != 0) {
-		printf("%s: cmd timeout, type %d, cmd %d, param %d\n",
-		    USBDEVNAME(sc->sc_dev), type, cmd, param);
+		printf("%s: cmd timeout, type 0x%02x, cmd 0x%04x, "
+		    "param 0x%04x\n", USBDEVNAME(sc->sc_dev), type, cmd,
+		    param);
 		return (1);
 	}
 
