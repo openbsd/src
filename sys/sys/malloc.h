@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.82 2005/12/14 22:03:01 pedro Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.83 2006/09/30 14:31:28 mickey Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -448,6 +448,7 @@ extern int sysctl_malloc(int *, u_int, void *, size_t *, void *, size_t,
 			      struct proc *);
 
 size_t malloc_roundup(size_t);
+void	malloc_printit(int (*)(const char *, ...));
 
 #ifdef MALLOC_DEBUG
 int	debug_malloc(unsigned long, int, int, void **);

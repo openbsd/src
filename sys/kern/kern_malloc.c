@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.62 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.63 2006/09/30 14:31:28 mickey Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -618,3 +618,33 @@ malloc_roundup(size_t sz)
 
 	return (1 << BUCKETINDX(sz));
 }
+
+#if defined(DDB)
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
+void
+malloc_printit(int (*pr)(const char *, ...))
+{
+#ifdef KMEMSTATS
+	struct kmemstats *km;
+	int i;
+
+	(*pr)("%15s %5s  %6s  %7s  %6s %9s %8s %8s\n",
+	    "Type", "InUse", "MemUse", "HighUse", "Limit", "Requests",
+	    "Type Lim", "Kern Lim");
+	for (i = 0, km = kmemstats; i < M_LAST; i++, km++) {
+		if (!km->ks_calls || !memname[i])
+			continue;
+
+		(*pr)("%15s %5ld %6ldK %7ldK %6ldK %9ld %8d %8d\n",
+		    memname[i], km->ks_inuse, km->ks_memuse / 1024,
+		    km->ks_maxused / 1024, km->ks_limit / 1024, 
+		    km->ks_calls, km->ks_limblocks, km->ks_mapblocks);
+	}
+#else
+	(*pr)("No KMEMSTATS compiled in\n");
+#endif
+}
+#endif /* DDB */

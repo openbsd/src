@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.44 2006/08/24 21:10:14 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.45 2006/09/30 14:31:28 mickey Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -37,6 +37,7 @@
 #include <sys/extent.h>
 #include <sys/pool.h>
 #include <sys/msgbuf.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 #include <machine/db_machdep.h>		/* type definitions */
@@ -316,7 +317,7 @@ db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	debug_malloc_printit(db_printf, (vaddr_t)addr);
 #else
-	db_printf("Malloc debugging not enabled.\n");
+	malloc_printit(db_printf);
 #endif
 }
 
