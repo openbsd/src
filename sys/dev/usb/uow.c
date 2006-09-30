@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.9 2006/09/30 10:35:42 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.10 2006/09/30 10:42:30 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -358,15 +358,17 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 	USETW(req.wIndex, param);
 	USETW(req.wLength, 0);
 	if ((error = usbd_do_request(sc->sc_udev, &req, NULL)) != 0) {
-		printf("%s: failed to do request: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		printf("%s: cmd failed, type %d, cmd %d, param %d: %s\n",
+		    USBDEVNAME(sc->sc_dev), type, cmd, param,
+		    usbd_errstr(error));
 		return (1);
 	}
 
 	bzero(sc->sc_regs, sizeof(sc->sc_regs));
 	if (tsleep(sc->sc_regs, PRIBIO, "uowcmd",
 	    (UOW_TIMEOUT * hz) / 1000) != 0) {
-		printf("%s: request timeout\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: cmd timeout, type %d, cmd %d, param %d\n",
+		    USBDEVNAME(sc->sc_dev), type, cmd, param);
 		return (1);
 	}
 
@@ -404,8 +406,8 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, len, 0,
 	    UOW_TIMEOUT, NULL);
 	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
-		printf("%s: failed to read: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		printf("%s: read failed, len %d: %s\n",
+		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
 		return (1);
 	}
 
@@ -427,8 +429,8 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_obulk, sc, (void *)buf, len, 0,
 	    UOW_TIMEOUT, NULL);
 	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
-		printf("%s: failed to write: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		printf("%s: write failed, len %d: %s\n",
+		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
 		return (1);
 	}
 
