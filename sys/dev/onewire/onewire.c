@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.3 2006/09/29 19:38:52 grange Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.4 2006/09/30 08:50:57 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -25,10 +25,10 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/rwlock.h>
 
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
@@ -46,7 +46,7 @@ struct onewire_softc {
 	struct device			sc_dev;
 
 	struct onewire_bus *		sc_bus;
-	struct lock			sc_lock;
+	struct rwlock			sc_lock;
 	struct proc *			sc_thread;
 	TAILQ_HEAD(, onewire_device)	sc_devs;
 
@@ -97,7 +97,7 @@ onewire_attach(struct device *parent, struct device *self, void *aux)
 	struct onewirebus_attach_args *oba = aux;
 
 	sc->sc_bus = oba->oba_bus;
-	lockinit(&sc->sc_lock, PRIBIO, "owlock", 0, 0);
+	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
 	TAILQ_INIT(&sc->sc_devs);
 
 	printf("\n");
@@ -175,12 +175,12 @@ int
 onewire_lock(void *arg, int flags)
 {
 	struct onewire_softc *sc = arg;
-	int lflags = LK_EXCLUSIVE;
+	int lflags = RW_WRITE;
 
 	if (flags & ONEWIRE_NOWAIT)
-		lflags |= LK_NOWAIT;
+		lflags |= RW_NOSLEEP;
 
-	return (lockmgr(&sc->sc_lock, lflags, NULL));
+	return (rw_enter(&sc->sc_lock, lflags));
 }
 
 void
@@ -188,7 +188,7 @@ onewire_unlock(void *arg)
 {
 	struct onewire_softc *sc = arg;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_lock);
 }
 
 int
