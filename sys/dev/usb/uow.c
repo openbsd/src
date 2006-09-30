@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.11 2006/09/30 10:54:55 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.12 2006/09/30 11:24:58 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -361,6 +361,8 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 		printf("%s: cmd failed, type 0x%02x, cmd 0x%04x, "
 		    "param 0x%04x: %s\n", USBDEVNAME(sc->sc_dev), type, cmd,
 		    param, usbd_errstr(error));
+		if (cmd != DS2490_CTL_RESET_DEVICE)
+			uow_reset(sc);
 		return (1);
 	}
 
@@ -409,6 +411,7 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
 		printf("%s: read failed, len %d: %s\n",
 		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
+		uow_reset(sc);
 		return (1);
 	}
 
@@ -432,6 +435,7 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
 		printf("%s: write failed, len %d: %s\n",
 		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
+		uow_reset(sc);
 		return (1);
 	}
 
