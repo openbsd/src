@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.13 2005/01/19 19:37:29 grange Exp $	*/
+/*	$OpenBSD: elf.c,v 1.14 2006/09/30 14:34:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: elf.c,v 1.13 2005/01/19 19:37:29 grange Exp $";
+static const char rcsid[] = "$OpenBSD: elf.c,v 1.14 2006/09/30 14:34:13 kettenis Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ static const char rcsid[] = "$OpenBSD: elf.c,v 1.13 2005/01/19 19:37:29 grange E
 #define	elf_fix_phdrs	elf32_fix_phdrs
 #define	elf_fix_sym	elf32_fix_sym
 #define	elf_size	elf32_size
+#define	elf_symloadx	elf32_symloadx
 #define	elf_symload	elf32_symload
 #define	elf2nlist	elf32_2nlist
 #define	elf_shn2type	elf32_shn2type
@@ -84,6 +85,7 @@ static const char rcsid[] = "$OpenBSD: elf.c,v 1.13 2005/01/19 19:37:29 grange E
 #define	elf_fix_phdrs	elf64_fix_phdrs
 #define	elf_fix_sym	elf64_fix_sym
 #define	elf_size	elf64_size
+#define	elf_symloadx	elf64_symloadx
 #define	elf_symload	elf64_symload
 #define	elf2nlist	elf64_2nlist
 #define	elf_shn2type	elf64_shn2type
@@ -367,7 +369,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
 			np->n_type = N_INDR;
 			np->n_other = 'W';
-		} else if (sn != NULL &&
+		} else if (sn != NULL && *sn != 0 &&
 		    strcmp(sn, ELF_INIT) &&
 		    strcmp(sn, ELF_TEXT) &&
 		    strcmp(sn, ELF_FINI))	/* XXX GNU compat */
@@ -430,38 +432,18 @@ elf_size(Elf_Ehdr *head, Elf_Shdr *shdr,
 }
 
 int
-elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
-    Elf_Shdr *shdr, struct nlist **pnames, struct nlist ***psnames,
-    size_t *pstabsize, int *pnrawnames)
+elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
+    Elf_Shdr *shdr, char *shstr, struct nlist **pnames,
+    struct nlist ***psnames, size_t *pstabsize, int *pnrawnames,
+    const char *strtab, const char *symtab)
 {
-	long symsize, shstrsize;
+	long symsize;
 	struct nlist *np;
 	Elf_Sym sbuf;
-	char *shstr;
 	int i;
 
-	shstrsize = shdr[eh->e_shstrndx].sh_size;
-	if ((shstr = malloc(shstrsize)) == NULL) {
-		warn("%s: malloc shsrt", name);
-		return (1);
-	}
-
-	if (fseeko(fp, foff + shdr[eh->e_shstrndx].sh_offset, SEEK_SET)) {
-		warn("%s: fseeko", name);
-		free(shstr);
-		return (1);
-	}
-
-	if (fread(shstr, 1, shstrsize, fp) != shstrsize) {
-		warnx("%s: premature EOF", name);
-		free(shstr);
-		return(1);
-	}
-
-	stab = NULL;
-	*pnames = NULL; *psnames = NULL;
 	for (i = 0; i < eh->e_shnum; i++) {
-		if (!strcmp(shstr + shdr[i].sh_name, ELF_STRTAB)) {
+		if (!strcmp(shstr + shdr[i].sh_name, strtab)) {
 			*pstabsize = shdr[i].sh_size;
 			if (*pstabsize > SIZE_T_MAX) {
 				warnx("%s: corrupt file", name);
@@ -478,7 +460,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 		}
 	}
 	for (i = 0; i < eh->e_shnum; i++) {
-		if (!strcmp(shstr + shdr[i].sh_name, ELF_SYMTAB)) {
+		if (!strcmp(shstr + shdr[i].sh_name, symtab)) {
 			symsize = shdr[i].sh_size;
 			if (fseeko(fp, foff + shdr[i].sh_offset, SEEK_SET)) {
 				warn("%s: fseeko", name);
@@ -531,6 +513,43 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 			}
 			*pnrawnames = np - *pnames;
 		}
+	}
+
+}
+
+int
+elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
+    Elf_Shdr *shdr, struct nlist **pnames, struct nlist ***psnames,
+    size_t *pstabsize, int *pnrawnames)
+{
+	long shstrsize;
+	char *shstr;
+
+	shstrsize = shdr[eh->e_shstrndx].sh_size;
+	if ((shstr = malloc(shstrsize)) == NULL) {
+		warn("%s: malloc shsrt", name);
+		return (1);
+	}
+
+	if (fseeko(fp, foff + shdr[eh->e_shstrndx].sh_offset, SEEK_SET)) {
+		warn("%s: fseeko", name);
+		free(shstr);
+		return (1);
+	}
+
+	if (fread(shstr, 1, shstrsize, fp) != shstrsize) {
+		warnx("%s: premature EOF", name);
+		free(shstr);
+		return(1);
+	}
+
+	stab = NULL;
+	*pnames = NULL; *psnames = NULL;
+	elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
+	    psnames, pstabsize, pnrawnames, ELF_STRTAB, ELF_SYMTAB);
+	if (stab == NULL) {
+		elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
+		    psnames, pstabsize, pnrawnames, ELF_DYNSTR, ELF_DYNSYM);
 	}
 
 	free(shstr);
