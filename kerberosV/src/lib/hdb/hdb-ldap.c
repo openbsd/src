@@ -1162,6 +1162,7 @@ LDAP_message2entry(krb5_context context, HDB * db, LDAPMessage * msg,
 
     values = ldap_get_values(HDB2LDAP(db), msg, "krb5KDCFlags");
     if (values != NULL) {
+	errno = 0;
 	tmp = strtoul(values[0], (char **) NULL, 10);
 	if (tmp == ULONG_MAX && errno == ERANGE) {
 	    krb5_set_error_string(context, "strtoul: could not convert flag");

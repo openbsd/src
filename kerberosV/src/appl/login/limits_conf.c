@@ -153,6 +153,7 @@ read_limits_conf(const char *file, const struct passwd *pwd)
 	if(strcmp(args[3], "-") == 0) {
 	    value = RLIM_INFINITY;
 	} else {
+	    errno = 0;
 	    value = strtol(args[3], &end, 10);
 	    if(*end != '\0') {
 		syslog(LOG_ERR, "%s: line %d: bad value %s", file, lineno, args[3]);

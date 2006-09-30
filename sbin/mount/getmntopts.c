@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.9 2004/07/05 18:33:38 otto Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.10 2006/09/30 17:48:22 ray Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.9 2004/07/05 18:33:38 otto Exp $";
+static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.10 2006/09/30 17:48:22 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ getmntopt(char **optionp, union mntval *valuep, const struct mntopt *m0,
 	/* Store the value for options with assignments in them. */
 	if (value != NULL) {
 		if (m->m_oflags & MFLAG_INTVAL) {
+			errno = 0;
 			l = strtol(value, &endp, 10);
 			if (endp == value || l < 0 || l > INT_MAX ||
 			    (l == LONG_MAX && errno == ERANGE))
