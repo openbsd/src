@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.8 2006/09/30 10:26:17 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.9 2006/09/30 10:35:42 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -81,6 +81,7 @@ Static int	uow_cmd(struct uow_softc *, int, int, int);
 Static void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static int	uow_read(struct uow_softc *, void *, int);
 Static int	uow_write(struct uow_softc *, const void *, int);
+Static int	uow_reset(struct uow_softc *);
 
 USB_MATCH(uow)
 {
@@ -187,6 +188,9 @@ USB_ATTACH(uow)
 	}
 
 	memset(sc->sc_fifo, 0xff, sizeof(sc->sc_fifo));
+
+	/* Reset device */
+	uow_reset(sc);
 
 	/* Attach 1-Wire bus */
 	sc->sc_ow_bus.bus_cookie = sc;
@@ -429,4 +433,10 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 	}
 
 	return (0);
+}
+
+Static int
+uow_reset(struct uow_softc *sc)
+{
+	return (uow_ctlcmd(sc, DS2490_CTL_RESET_DEVICE, 0));
 }
