@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.7 2006/09/29 19:41:22 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.8 2006/09/30 10:26:17 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -73,7 +73,11 @@ Static void	uow_ow_write_byte(void *, int);
 Static void	uow_ow_read_block(void *, void *, int);
 Static void	uow_ow_write_block(void *, const void *, int);
 
-Static int	uow_cmd(struct uow_softc *, int, int);
+Static int	uow_cmd(struct uow_softc *, int, int, int);
+#define uow_ctlcmd(s, c, p)	uow_cmd((s), DS2490_CONTROL_CMD, (c), (p))
+#define uow_commcmd(s, c, p)	uow_cmd((s), DS2490_COMM_CMD, (c), (p))
+#define uow_modecmd(s, c, p)	uow_cmd((s), DS2490_MODE_CMD, (c), (p))
+
 Static void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static int	uow_read(struct uow_softc *, void *, int);
 Static int	uow_write(struct uow_softc *, const void *, int);
@@ -268,7 +272,7 @@ uow_ow_reset(void *arg)
 {
 	struct uow_softc *sc = arg;
 
-	if (uow_cmd(sc, DS2490_COMM_1WIRE_RESET | DS2490_BIT_IM, 0) != 0)
+	if (uow_commcmd(sc, DS2490_COMM_1WIRE_RESET | DS2490_BIT_IM, 0) != 0)
 		return (1);
 
 	/* XXX: check presence pulse */
@@ -281,7 +285,7 @@ uow_ow_bit(void *arg, int value)
 	struct uow_softc *sc = arg;
 	u_int8_t data;
 
-	if (uow_cmd(sc, DS2490_COMM_BIT_IO | DS2490_BIT_IM |
+	if (uow_commcmd(sc, DS2490_COMM_BIT_IO | DS2490_BIT_IM |
 	    (value ? DS2490_BIT_D : 0), 0) != 0)
 		return (1);
 	if (uow_read(sc, &data, sizeof(data)) != 0)
@@ -296,7 +300,7 @@ uow_ow_read_byte(void *arg)
 	struct uow_softc *sc = arg;
 	u_int8_t data;
 
-	if (uow_cmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, 0xff) != 0)
+	if (uow_commcmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, 0xff) != 0)
 		return (-1);
 	if (uow_read(sc, &data, sizeof(data)) != 0)
 		return (-1);
@@ -310,7 +314,7 @@ uow_ow_write_byte(void *arg, int value)
 	struct uow_softc *sc = arg;
 	u_int8_t data;
 
-	if (uow_cmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, value) != 0)
+	if (uow_commcmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, value) != 0)
 		return;
 	uow_read(sc, &data, sizeof(data));
 }
@@ -322,7 +326,7 @@ uow_ow_read_block(void *arg, void *buf, int len)
 
 	if (uow_write(sc, sc->sc_fifo, len) != 0)
 		return;
-	if (uow_cmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
+	if (uow_commcmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
 		return;
 	uow_read(sc, buf, len);
 }
@@ -334,18 +338,18 @@ uow_ow_write_block(void *arg, const void *buf, int len)
 
 	if (uow_write(sc, buf, len) != 0)
 		return;
-	if (uow_cmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
+	if (uow_commcmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
 		return;
 }
 
 Static int
-uow_cmd(struct uow_softc *sc, int cmd, int param)
+uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 {
 	usb_device_request_t req;
 	usbd_status error;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req.bRequest = DS2490_COMM_CMD;
+	req.bRequest = type;
 	USETW(req.wValue, cmd);
 	USETW(req.wIndex, param);
 	USETW(req.wLength, 0);
