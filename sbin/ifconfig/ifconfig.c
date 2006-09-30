@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.174 2006/08/29 17:22:00 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.175 2006/09/30 23:44:17 ray Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1387,7 +1387,7 @@ setifnwkey(const char *val, int d)
 				return;
 			}
 		} else {
-			len = sizeof(keybuf[i]);
+			len = sizeof(keybuf[0]);
 			val = get_string(val, NULL, keybuf[0], &len);
 			if (val == NULL)
 				return;
