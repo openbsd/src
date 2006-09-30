@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.4 2006/09/30 08:50:57 grange Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.5 2006/09/30 15:52:21 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -299,7 +299,12 @@ onewire_triplet(void *arg, int dir)
 void
 onewire_matchrom(void *arg, u_int64_t rom)
 {
+	struct onewire_softc *sc = arg;
+	struct onewire_bus *bus = sc->sc_bus;
 	int i;
+
+	if (bus->bus_matchrom != NULL)
+		return (bus->bus_matchrom(bus->bus_cookie, rom));
 
 	onewire_write_byte(arg, ONEWIRE_CMD_MATCH_ROM);
 	for (i = 0; i < 8; i++)

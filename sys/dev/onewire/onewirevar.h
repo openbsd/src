@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewirevar.h,v 1.2 2006/09/29 19:38:52 grange Exp $	*/
+/*	$OpenBSD: onewirevar.h,v 1.3 2006/09/30 15:52:21 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -34,11 +34,13 @@ struct onewire_bus {
 	void	(*bus_read_block)(void *, void *, int);
 	void	(*bus_write_block)(void *, const void *, int);
 	int	(*bus_triplet)(void *, int);
+	void	(*bus_matchrom)(void *, u_int64_t);
 };
 
 /* Bus methods */
 int		onewire_lock(void *, int);
 void		onewire_unlock(void *);
+
 int		onewire_reset(void *);
 int		onewire_bit(void *, int);
 int		onewire_read_byte(void *);
