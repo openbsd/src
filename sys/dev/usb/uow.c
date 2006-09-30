@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.12 2006/09/30 11:24:58 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.13 2006/09/30 15:53:49 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
+#include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
 
 #include <dev/usb/usb.h>
@@ -72,6 +73,7 @@ Static int	uow_ow_read_byte(void *);
 Static void	uow_ow_write_byte(void *, int);
 Static void	uow_ow_read_block(void *, void *, int);
 Static void	uow_ow_write_block(void *, const void *, int);
+Static void	uow_ow_matchrom(void *, u_int64_t);
 
 Static int	uow_cmd(struct uow_softc *, int, int, int);
 #define uow_ctlcmd(s, c, p)	uow_cmd((s), DS2490_CONTROL_CMD, (c), (p))
@@ -200,6 +202,7 @@ USB_ATTACH(uow)
 	sc->sc_ow_bus.bus_write_byte = uow_ow_write_byte;
 	sc->sc_ow_bus.bus_read_block = uow_ow_read_block;
 	sc->sc_ow_bus.bus_write_block = uow_ow_write_block;
+	sc->sc_ow_bus.bus_matchrom = uow_ow_matchrom;
 
 	bzero(&oba, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
@@ -343,6 +346,23 @@ uow_ow_write_block(void *arg, const void *buf, int len)
 	if (uow_write(sc, buf, len) != 0)
 		return;
 	if (uow_commcmd(sc, DS2490_COMM_BLOCK_IO | DS2490_BIT_IM, len) != 0)
+		return;
+}
+
+Static void
+uow_ow_matchrom(void *arg, u_int64_t rom)
+{
+	struct uow_softc *sc = arg;
+	u_int8_t buf[8];
+	int i;
+
+	for (i = 0; i < 8; i++)
+		buf[i] = (rom >> (i * 8)) & 0xff;
+
+	if (uow_write(sc, buf, 8) != 0)
+		return;
+	if (uow_commcmd(sc, DS2490_COMM_MATCH_ACCESS | DS2490_BIT_IM,
+	    ONEWIRE_CMD_MATCH_ROM) != 0)
 		return;
 }
 
