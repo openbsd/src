@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.5 2006/09/30 15:52:21 grange Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.6 2006/09/30 17:45:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -39,7 +39,7 @@
 #define DPRINTF(x)
 #endif
 
-#define ONEWIRE_MAXDEVS		256
+#define ONEWIRE_MAXDEVS		16
 #define ONEWIRE_SCANTIME	3
 
 struct onewire_softc {
