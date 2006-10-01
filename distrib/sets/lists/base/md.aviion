@@ -1087,7 +1087,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ixgb_ids.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/lofnvar.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/neoreg.ph

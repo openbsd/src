@@ -1205,7 +1205,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/ixgb_ids.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/lofnvar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/neoreg.ph

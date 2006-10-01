@@ -564,7 +564,6 @@
 ./usr/include/dev/pci/ixgb_ids.h
 ./usr/include/dev/pci/lofnreg.h
 ./usr/include/dev/pci/lofnvar.h
-./usr/include/dev/pci/maestro_reg.h
 ./usr/include/dev/pci/musyccreg.h
 ./usr/include/dev/pci/musyccvar.h
 ./usr/include/dev/pci/neoreg.h
