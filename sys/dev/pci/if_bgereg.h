@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.60 2006/09/17 23:31:07 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.61 2006/10/01 00:34:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -276,6 +276,7 @@
 #define BGE_CHIPID_BCM5714_B3		0x80030000
 #define BGE_CHIPID_BCM5715_A0		0x90000000
 #define BGE_CHIPID_BCM5715_A1		0x90010000
+#define BGE_CHIPID_BCM5906_A1		0xc0010000
 
 /* shorthand one */
 #define BGE_ASICREV(x)			((x) >> 28)
@@ -291,6 +292,7 @@
 #define BGE_ASICREV_BCM5714		0x09	/* 5714, 5715 */
 #define BGE_ASICREV_BCM5755		0x0a
 #define BGE_ASICREV_BCM5787		0x0b
+#define BGE_ASICREV_BCM5906		0x0c
 
 /* chip revisions */
 #define BGE_CHIPREV(x)			((x) >> 24)
