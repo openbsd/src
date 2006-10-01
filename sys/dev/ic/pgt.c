@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.16 2006/09/27 19:35:17 brad Exp $  */
+/*	$OpenBSD: pgt.c,v 1.17 2006/10/01 21:13:45 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1052,7 +1052,7 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 				tap->wr_chan_freq = htole16(chan->ic_freq);
 				tap->wr_chan_flags = htole16(chan->ic_flags);
 				tap->wr_rssi = rssi;
-				//tap->wr_max_rssi = ic->ic_max_rssi;
+				tap->wr_max_rssi = ic->ic_max_rssi;
 
 				M_DUP_PKTHDR(&mb, m);
 				mb.m_data = (caddr_t)tap;
@@ -2058,6 +2058,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	ic->ic_node_free = pgt_ieee80211_node_free;
 	ic->ic_node_copy = pgt_ieee80211_node_copy;
 	ic->ic_send_mgmt = pgt_ieee80211_send_mgmt;
+	ic->ic_max_rssi = 255;	/* rssi is a u_int8_t */
 
 	/* let net80211 handle switching around the media + resetting */
 	ieee80211_media_init(ifp, pgt_media_change, pgt_media_status);
