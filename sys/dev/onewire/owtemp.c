@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.3 2006/10/01 08:09:04 grange Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.4 2006/10/01 11:43:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 #include <sys/sensors.h>
 
 #include <dev/onewire/onewiredevs.h>
@@ -41,8 +42,7 @@ struct owtemp_softc {
 	u_int64_t		sc_rom;
 
 	struct sensor		sc_sensor;
-
-	int			sc_dying;
+	struct rwlock		sc_lock;
 };
 
 int	owtemp_match(struct device *, void *, void *);
@@ -96,6 +96,7 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sensor_add(&sc->sc_sensor);
 
+	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
 	printf("\n");
 }
 
@@ -104,11 +105,10 @@ owtemp_detach(struct device *self, int flags)
 {
 	struct owtemp_softc *sc = (struct owtemp_softc *)self;
 
+	rw_enter_write(&sc->sc_lock);
 	sensor_del(&sc->sc_sensor);
-
-	onewire_lock(sc, 0);
 	sensor_task_unregister(sc);
-	onewire_unlock(sc);
+	rw_exit_write(&sc->sc_lock);
 
 	return (0);
 }
@@ -116,16 +116,6 @@ owtemp_detach(struct device *self, int flags)
 int
 owtemp_activate(struct device *self, enum devact act)
 {
-	struct owtemp_softc *sc = (struct owtemp_softc *)self;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-
 	return (0);
 }
 
@@ -135,6 +125,7 @@ owtemp_update(void *arg)
 	struct owtemp_softc *sc = arg;
 	u_int8_t data[9];
 
+	rw_enter_write(&sc->sc_lock);
 	onewire_lock(sc->sc_onewire, 0);
 	if (onewire_reset(sc->sc_onewire) != 0)
 		goto done;
@@ -167,4 +158,5 @@ owtemp_update(void *arg)
 
 done:
 	onewire_unlock(sc->sc_onewire);
+	rw_exit_write(&sc->sc_lock);
 }
