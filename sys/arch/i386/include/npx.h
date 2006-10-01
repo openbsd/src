@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.9 2006/07/25 19:16:51 kettenis Exp $	*/
+/*	$OpenBSD: npx.h,v 1.10 2006/10/01 18:07:56 kettenis Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ struct	emcsts {
 /* Intel prefers long real (53 bit) precision */
 #define	__iBCS_NPXCW__		0x262
 #define __BDE_NPXCW__		0x1272		/* FreeBSD */
-#define	__OpenBSD_NPXCW__	0x127f
+#define	__OpenBSD_NPXCW__	0x37f
 
 /*
  * The default MXCSR value at reset is 0x1f80, IA-32 Instruction
@@ -149,16 +149,6 @@ struct	emcsts {
  *	round to nearest
  *	64-bit precision
  *	all exceptions masked.
- *
- * Now we want:
- *	affine mode (if we decide to support 287's)
- *	round to nearest
- *	53-bit precision
- *	all exceptions masked.
- *
- * 64-bit precision often gives bad results with high level languages
- * because it makes the results of calculations depend on whether
- * intermediate values are stored in memory or in FPU registers.
  *
  * The iBCS control word has underflow, overflow, zero divide, and invalid
  * operation exceptions unmasked.  But that causes an unexpected exception
