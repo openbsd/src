@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.81 2006/09/27 08:48:51 jsg Exp $
+$OpenBSD: miidevs,v 1.82 2006/10/01 15:02:40 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -168,18 +168,21 @@ model ENABLESEMI 88E1000S	0x0004 Enable 88E1000S
 model ENABLESEMI 88E1000	0x0005 Enable 88E1000
 
 /* Marvell Semiconductor PHYs */
-model MARVELL E1000		0x0000 Marvell 88E1000* Gigabit PHY
+model MARVELL E1000_1		0x0000 Marvell 88E1000 1 Gigabit PHY
 model MARVELL E1011		0x0002 Marvell 88E1011 Gigabit PHY
-model MARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
-model MARVELL E1000_4		0x0004 Marvell 88E1000S Gigabit PHY
-model MARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
-model MARVELL E1000_6		0x0006 Marvell 88E1000 Gigabit PHY
+model MARVELL E1000_2		0x0003 Marvell 88E1000 2 Gigabit PHY
+model MARVELL E1000S		0x0004 Marvell 88E1000S Gigabit PHY
+model MARVELL E1000_3		0x0005 Marvell 88E1000 3 Gigabit PHY
+model MARVELL E1000_4		0x0006 Marvell 88E1000 4 Gigabit PHY
+model MARVELL E3082		0x0008 Marvell 88E3082 10/100 PHY
+model MARVELL E1112		0x0009 Marvell 88E1112 Gigabit PHY
+model MARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model MARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
-model MARVELL E1000_7		0x0021 Marvell 88E1000 Gigabit PHY
-model MARVELL E1000_8		0x0022 Marvell 88E1000 Gigabit PHY
-model xxMARVELL E1000_2		0x0002 Marvell 88E1000 Gigabit PHY
-model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
-model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
+model MARVELL E1000_5		0x0021 Marvell 88E1000 5 Gigabit PHY
+model MARVELL E1000_6		0x0022 Marvell 88E1000 6 Gigabit PHY
+model xxMARVELL E1000_7		0x0002 Marvell 88E1000 7 Gigabit PHY
+model xxMARVELL E1000_8		0x0003 Marvell 88E1000 8 Gigabit PHY
+model xxMARVELL E1000_9		0x0005 Marvell 88E1000 9 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 
 /* Contrived vendor/model for dcphy */
