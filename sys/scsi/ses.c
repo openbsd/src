@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.39 2006/07/29 02:40:46 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.40 2006/10/01 10:42:18 grange Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -227,13 +227,13 @@ ses_detach(struct device *self, int flags)
 
 	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		sensor_task_unregister(sc);
-		/*
-		 * We can't free the sensors once theyre in the systems sensor
-		 * list, so just mark them as invalid.
-		 */
-		TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
-			sensor->se_sensor.flags |= SENSOR_FINVALID;
 
+		while (!TAILQ_EMPTY(&sc->sc_sensors)) {
+			sensor = TAILQ_FIRST(&sc->sc_sensors);
+			sensor_del(&sensor->se_sensor);
+			TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
+			free(sensor, M_DEVBUF);
+		}
 	}
 
 	if (sc->sc_buf != NULL)

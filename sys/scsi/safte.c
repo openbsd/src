@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.29 2006/07/29 02:40:45 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.30 2006/10/01 10:42:18 grange Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -221,12 +221,9 @@ safte_detach(struct device *self, int flags)
 	if (sc->sc_nsensors > 0) {
 		sensor_task_unregister(sc);
 
-		/*
-		 * we can't free the sensors since there is no mechanism to
-		 * take them out of the sensor list. mark them invalid instead.
-		 */
 		for (i = 0; i < sc->sc_nsensors; i++)
-			sc->sc_sensors[i].se_sensor.flags |= SENSOR_FINVALID;
+			sensor_del(&sc->sc_sensors[i].se_sensor);
+		free(sc->sc_sensors, M_DEVBUF);
 	}
 
 	if (sc->sc_encbuf != NULL)
