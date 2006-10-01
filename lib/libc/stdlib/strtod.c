@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtod.c,v 1.22 2006/05/19 14:15:27 thib Exp $ */
+/*	$OpenBSD: strtod.c,v 1.23 2006/10/01 11:36:33 otto Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -1128,7 +1128,12 @@ strtod(CONST char *s00, char **se)
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
 	double aadj, aadj1, adj;
-	_double rv, rv0;
+	/*
+	 * volatile forces mem update for FPUs where reg size != sizeof double,
+	 * which should trigger ERANGE in the case of underflow.
+	 */
+	volatile _double rv;
+	_double rv0;
 	Long L;
 	ULong y, z;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
