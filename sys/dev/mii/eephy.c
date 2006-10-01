@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.30 2006/10/01 15:17:25 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.31 2006/10/01 15:47:03 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -100,10 +100,8 @@ static const struct mii_phydesc eephys[] = {
 	  MII_STR_MARVELL_E1112 },
 	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1149,
 	  MII_STR_MARVELL_E1149 },
-#if 0
 	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E3082,
 	  MII_STR_MARVELL_E3082 },
-#endif
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_7,
 	  MII_STR_xxMARVELL_E1000_7 },
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_8,
@@ -116,6 +114,8 @@ static const struct mii_phydesc eephys[] = {
 	{ 0,				0,
 	  NULL },
 };
+
+static int fast_ether;
 
 int
 eephymatch(struct device *parent, void *match, void *aux)
@@ -153,19 +153,29 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	    (PHY_READ(sc, E1000_ESSR) & E1000_ESSR_FIBER_LINK))
 		sc->mii_flags |= MIIF_HAVEFIBER;
 
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E3082) {
+		/* 88E3082 10/100 Fast Ethernet PHY. */
+		sc->mii_anegticks = MII_ANEGTICKS;
+		fast_ether = 1;
+	}
+
 	PHY_RESET(sc);
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
 	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX, sc->mii_inst),
-		    E1000_CR_SPEED_1000 | E1000_CR_FULL_DUPLEX);
-		/*
-		 * 1000BT-simplex not supported; driver must ignore this entry,
-		 * but it must be present in order to manually set full-duplex.
-		 */
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
-		      E1000_CR_SPEED_1000);
+		if (fast_ether == 0) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
+			    sc->mii_inst), E1000_CR_SPEED_1000 |
+			    E1000_CR_FULL_DUPLEX);
+			/*
+			 * 1000BT-simplex not supported; driver must ignore this entry,
+			 * but it must be present in order to manually set full-duplex.
+			 */
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
+			    sc->mii_inst), E1000_CR_SPEED_1000);
+		}
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
 		    E1000_CR_SPEED_100 | E1000_CR_FULL_DUPLEX);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
@@ -433,7 +443,8 @@ eephy_mii_phy_auto(struct mii_softc *sc)
 			  E1000_AR_10T | E1000_AR_10T_FD |
 			  E1000_AR_100TX | E1000_AR_100TX_FD |
 			  E1000_AR_PAUSE | E1000_AR_ASM_DIR);
-		PHY_WRITE(sc, E1000_1GCR, E1000_1GCR_1000T_FD);
+		if (fast_ether == 0)
+			PHY_WRITE(sc, E1000_1GCR, E1000_1GCR_1000T_FD);
 	} else {
 		PHY_WRITE(sc, E1000_AR, E1000_FA_1000X_FD |
 			  E1000_FA_SYM_PAUSE | E1000_FA_ASYM_PAUSE);
