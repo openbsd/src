@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.113 2006/09/22 00:33:41 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.114 2006/10/01 13:00:47 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -273,9 +273,9 @@ scsi_probe_bus(int bus, int target, int lun)
 		else
 			minlun = lun;
 	}
-	
+
 	data = malloc(sizeof *data, M_TEMP, M_NOWAIT);
-	
+
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == scsi_addr)
 			continue;
@@ -289,7 +289,7 @@ scsi_probe_bus(int bus, int target, int lun)
 			scsi_report_luns(sc_link, REPORT_NORMAL, data,
 			    sizeof *data, scsi_autoconf | SCSI_SILENT |
 		    	    SCSI_IGNORE_ILLEGAL_REQUEST |
-		            SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE,
+			    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE,
 			    10000);
 			/*
 			 * XXX In theory we should check if data is full, which
@@ -384,7 +384,7 @@ struct scsi_quirk_inquiry_pattern {
 
 const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
-	 "PLEXTOR", "CD-ROM PX-40TS", "1.01"}, SDEV_NOSYNC},
+	 "PLEXTOR", "CD-ROM PX-40TS", "1.01"},    SDEV_NOSYNC},
 
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
@@ -578,7 +578,7 @@ scsibusprint(void *aux, const char *pnp)
 /*
  * Given a target and lun, ask the device what it is, and find the correct
  * driver table entry.
- * 
+ *
  * Return 0 if further LUNs are possible, EINVAL if not.
  */
 int
