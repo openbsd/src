@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.2 2004/02/28 22:26:05 deraadt Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.3 2006/10/01 10:52:10 kettenis Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
@@ -41,28 +41,6 @@ struct savefpu {
 #define	__INITIAL_NPXCW__	0x037f
 #define __INITIAL_MXCSR__ 	0x1f80
 #define __INITIAL_MXCSR_MASK__	0xffbf
-
-/* OpenBSD uses IEEE double precision. */
-#define	__OpenBSD_NPXCW__	0x127f
-/* Linux just uses the default control word. */
-#define	__Linux_NPXCW__		0x037f
-
-/*
- * The standard control word from finit is 0x37F, giving:
- *	round to nearest
- *	64-bit precision
- *	all exceptions masked.
- *
- * Now we want:
- *	affine mode (if we decide to support 287's)
- *	round to nearest
- *	53-bit precision
- *	all exceptions masked.
- *
- * 64-bit precision often gives bad results with high level languages
- * because it makes the results of calculations depend on whether
- * intermediate values are stored in memory or in FPU registers.
- */
 
 #ifdef _KERNEL
 /*
