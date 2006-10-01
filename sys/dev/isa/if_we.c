@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.14 2006/07/29 11:31:21 miod Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.15 2006/10/01 20:51:36 brad Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -363,6 +363,8 @@ we_attach(parent, self, aux)
 	u_int8_t x;
 	int i;
 
+	printf("\n");
+
 	nict = asict = ia->ia_iot;
 	memt = ia->ia_memt;
 
@@ -370,20 +372,23 @@ we_attach(parent, self, aux)
 	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp") && ia->ia_ioh)
 		asich = ia->ia_ioh;
 	else if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich)) {
-		printf(": can't map nic i/o space\n");
+		printf("%s: can't map nic i/o space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (bus_space_subregion(asict, asich, WE_NIC_OFFSET, WE_NIC_NPORTS,
 	    &nich)) {
-		printf(": can't subregion i/o space\n");
+		printf("%s: can't subregion i/o space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	typestr = we_params(asict, asich, &wsc->sc_type, NULL,
 	    &wsc->sc_16bitp, &sc->is790);
 	if (typestr == NULL) {
-		printf(": where did the card go?\n");
+		printf("%s: where did the card go?\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -394,7 +399,8 @@ we_attach(parent, self, aux)
 	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp") && ia->ia_memh)
 		memh = ia->ia_memh;
 	else if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
-		printf(": can't map shared memory\n");
+		printf("%s: can't map shared memory\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -424,7 +430,8 @@ we_attach(parent, self, aux)
 
 	/* Now we can use the NIC_{GET,PUT}() macros. */
 
-	printf(": %s (%s-bit)\n", typestr, wsc->sc_16bitp ? "16" : "8");
+	printf("%s: %s (%s-bit)", sc->sc_dev.dv_xname, typestr,
+	    wsc->sc_16bitp ? "16" : "8");
 
 	/* Get station address from EEPROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -523,7 +530,7 @@ we_attach(parent, self, aux)
 	else
 		sc->sc_media_init = dp8390_media_init;
 	if (dp8390_config(sc)) {
-		printf("%s: configuration failed\n", sc->sc_dev.dv_xname);
+		printf(": configuration failed\n");
 		return;
 	}
 

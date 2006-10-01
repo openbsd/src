@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.7 2006/07/29 11:31:21 miod Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.8 2006/10/01 20:51:36 brad Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -385,7 +385,7 @@ ec_attach(parent, self, aux)
 	else
 		esc->sc_16bitp = 0;
 
-	printf("%s: 3Com 3c503 Ethernet (%s-bit)\n",
+	printf("%s: 3Com 3c503 Ethernet (%s-bit)",
 	    sc->sc_dev.dv_xname, esc->sc_16bitp ? "16" : "8");
 
 	/* Select page 0 registers. */
@@ -419,7 +419,7 @@ ec_attach(parent, self, aux)
 
 	/* Do generic parts of attach. */
 	if (dp8390_config(sc)) {
-		printf("%s: configuration failed\n", sc->sc_dev.dv_xname);
+		printf(": configuration failed\n");
 		return;
 	}
 
