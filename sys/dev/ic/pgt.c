@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.19 2006/10/01 21:49:08 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.20 2006/10/01 22:03:25 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -833,6 +833,12 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 	struct llc *snap;
 
 	ic = &sc->sc_ic;
+	if (ni != NULL && ic->ic_opmode == IEEE80211_M_MONITOR) {
+		*ni = ieee80211_ref_node(ic->ic_bss);
+		(*ni)->ni_inact = 0;
+		return (m);
+	}
+
 	M_PREPEND(m, sizeof(*frame) + sizeof(*snap), M_DONTWAIT);
 	if (m != NULL)
 		m = m_pullup(m, sizeof(*frame) + sizeof(*snap));
@@ -841,8 +847,7 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 	frame = mtod(m, struct ieee80211_frame *);
 	snap = (struct llc *)&frame[1];
 	if (ni != NULL) {
-		if (ic->ic_opmode == IEEE80211_M_STA ||
-		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+		if (ic->ic_opmode == IEEE80211_M_STA) {
 			*ni = ieee80211_ref_node(ic->ic_bss);
 		} else {
 			*ni = ieee80211_find_node(ic, eh->ether_shost);
@@ -900,9 +905,6 @@ pgt_ieee80211_encap(struct pgt_softc *sc, struct ether_header *eh,
 		IEEE80211_ADDR_COPY(frame->i_addr3, eh->ether_dhost);
 		break;
 	default:
-		/*
-		 * What format do monitor-mode's frames take?
-		 */
 		break;
 	}
 	return (m);
@@ -917,6 +919,7 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 	struct ieee80211_node *ni;
 	struct ieee80211com *ic;
 	struct pgt_rx_annex *pra;
+	struct pgt_rx_header *pha;
 	struct mbuf *next;
 	unsigned int n;
 	uint32_t rstamp;
@@ -927,6 +930,22 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 	for (next = m; m != NULL; m = next) {
 		next = m->m_nextpkt;
 		m->m_nextpkt = NULL;
+
+		if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if (m->m_len < sizeof(*pha)) {
+				m = m_pullup(m, sizeof(*pha));
+				if (m == NULL) {
+					if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
+						printf("%s: m_pullup failure\n",
+						    sc->sc_dev.dv_xname);
+					ifp->if_ierrors++;
+					continue;
+				}
+			}
+			pha = mtod(m, struct pgt_rx_header *);
+			pra = NULL;
+			goto input;
+		}
 
 		if (m->m_len < sizeof(*pra)) {
 			m = m_pullup(m, sizeof(*pra));
@@ -939,19 +958,19 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 			}
 		}
 		pra = mtod(m, struct pgt_rx_annex *);
+		pha = &pra->pra_header;
 		if (sc->sc_debug & SC_DEBUG_RXANNEX)
-			DPRINTF(("%s: rx annex: ? %04x ? %04x "
+			DPRINTF(("%s: rx annex: ? %04x "
 			    "len %u clock %u flags %02x ? %02x rate %u ? %02x "
 			    "freq %u ? %04x rssi %u pad %02x%02x%02x\n",
 			    sc->sc_dev.dv_xname,
-			    letoh16(pdf.pdf_unknown),
-			    letoh16(pra->pra_unknown0),
-			    letoh16(pra->pra_length),
-			    letoh32(pra->pra_clock), pra->pra_flags,
-			    pra->pra_unknown1, pra->pra_rate,
-			    pra->pra_unknown2, letoh32(pra->pra_frequency),
-			    pra->pra_unknown3, pra->pra_rssi,
-			    pra->pra_pad[0], pra->pra_pad[1], pra->pra_pad[2]));
+			    letoh16(pha->pra_unknown0),
+			    letoh16(pha->pra_length),
+			    letoh32(pha->pra_clock), pha->pra_flags,
+			    pha->pra_unknown1, pha->pra_rate,
+			    pha->pra_unknown2, letoh32(pha->pra_frequency),
+			    pha->pra_unknown3, pha->pra_rssi,
+			    pha->pra_pad[0], pha->pra_pad[1], pha->pra_pad[2]));
 		if (sc->sc_debug & SC_DEBUG_RXETHER)
 			DPRINTF(("%s: rx ether: "
 			    "%02x:%02x:%02x:%02x:%02x:%02x < "
@@ -964,32 +983,40 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 			    pra->pra_ether_shost[2], pra->pra_ether_shost[3],
 			    pra->pra_ether_shost[4], pra->pra_ether_shost[5],
 			    ntohs(pra->pra_ether_type)));
+
+		memcpy(eh.ether_dhost, pra->pra_ether_dhost, ETHER_ADDR_LEN);
+		memcpy(eh.ether_shost, pra->pra_ether_shost, ETHER_ADDR_LEN);
+		eh.ether_type = pra->pra_ether_type;
+
+input:
 		/*
 		 * This flag is set if e.g. packet could not be decrypted.
 		 */
-		if (pra->pra_flags & PRA_FLAG_BAD) {
+		if (pha->pra_flags & PRA_FLAG_BAD) {
 			ifp->if_ierrors++;
 			m_freem(m);
 			continue;
 		}
-		memcpy(eh.ether_dhost, pra->pra_ether_dhost, ETHER_ADDR_LEN);
-		memcpy(eh.ether_shost, pra->pra_ether_shost, ETHER_ADDR_LEN);
-		eh.ether_type = pra->pra_ether_type;
+
 		/*
 		 * After getting what we want, chop off the annex, then
 		 * turn into something that looks like it really was
 		 * 802.11.
 		 */
-		rssi = pra->pra_rssi;
-		rstamp = letoh32(pra->pra_clock);
-		rate = pra->pra_rate;
-		n = ieee80211_mhz2ieee(letoh32(pra->pra_frequency), 0);
+		rssi = pha->pra_rssi;
+		rstamp = letoh32(pha->pra_clock);
+		rate = pha->pra_rate;
+		n = ieee80211_mhz2ieee(letoh32(pha->pra_frequency), 0);
 		if (n <= IEEE80211_CHAN_MAX)
 			chan = &ic->ic_channels[n];
 		else
 			chan = ic->ic_bss->ni_chan;
 		/* Send to 802.3 listeners. */
-		m_adj(m, sizeof(*pra));
+		if (pra) {
+			m_adj(m, sizeof(*pra));
+		} else
+			m_adj(m, sizeof(*pha));
+
 		m = pgt_ieee80211_encap(sc, &eh, m, &ni);
 		if (m != NULL) {
 #if NBPFILTER > 0
@@ -2963,7 +2990,7 @@ badopmode:
 		else
 			channel = 0;
 	} else
-		channel = htole32(ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan));
+		channel = htole32(ieee80211_chan2ieee(ic, ic->ic_des_chan));
 
 	DPRINTF(("%s: set rates", sc->sc_dev.dv_xname));
 	for (i = 0; i < ic->ic_sup_rates[ic->ic_curmode].rs_nrates; i++) {
@@ -2991,7 +3018,7 @@ badopmode:
 		SETOID(PGT_OID_MODE, &mode, sizeof(mode));
 		SETOID(PGT_OID_BSS_TYPE, &bsstype, sizeof(bsstype));
 
-		if (channel != 0 && channel != htole32(IEEE80211_CHAN_ANY))
+		if (channel != 0)
 			SETOID(PGT_OID_CHANNEL, &channel, sizeof(channel));
 
 		if (ic->ic_flags & IEEE80211_F_DESBSSID) {

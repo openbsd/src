@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtreg.h,v 1.5 2006/10/01 21:49:08 claudio Exp $  */
+/*	$OpenBSD: pgtreg.h,v 1.6 2006/10/01 22:03:25 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -153,9 +153,7 @@ struct pgt_mgmt_frame {
 	/* 		data[];			*/
 } __attribute__((packed));
 
-struct pgt_rx_annex {
-	uint8_t 		pra_ether_dhost[ETHER_ADDR_LEN];
-	uint8_t			pra_ether_shost[ETHER_ADDR_LEN];
+struct pgt_rx_header {
 	uint16_t		pra_unknown0;	/* always 0x0000 */
 	uint16_t		pra_length;	/* always 0x1400 */
 	uint32_t		pra_clock;	/* 1MHz timestamp */
@@ -168,6 +166,12 @@ struct pgt_rx_annex {
 	uint16_t		pra_unknown3;
 	uint8_t			pra_rssi;
 	uint8_t			pra_pad[3];
+} __attribute__((packed));
+
+struct pgt_rx_annex {
+	uint8_t 		pra_ether_dhost[ETHER_ADDR_LEN];
+	uint8_t			pra_ether_shost[ETHER_ADDR_LEN];
+	struct pgt_rx_header	pra_header;
 	uint16_t		pra_ether_type;
 } __attribute__((packed));
 
