@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.52 2006/08/28 03:06:47 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.53 2006/10/01 17:29:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -484,7 +484,7 @@ brgphy_reset(struct mii_softc *sc)
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, val | (1 << 15) | (1 << 4));
 
 		/* Enable Link LED on Dell boxes */
-		if (bge_sc->bge_no_3_led) {
+		if (bge_sc->bge_flags & BGE_NO_3LED) {
 			PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 			PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 			    & ~BRGPHY_PHY_EXTCTL_3_LED);
