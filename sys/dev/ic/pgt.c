@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.18 2006/10/01 21:26:21 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.19 2006/10/01 21:49:08 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -916,13 +916,10 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 	struct ieee80211_channel *chan;
 	struct ieee80211_node *ni;
 	struct ieee80211com *ic;
-	struct pgt_data_frame pdf;
 	struct pgt_rx_annex *pra;
 	struct mbuf *next;
 	unsigned int n;
 	uint32_t rstamp;
-	uint16_t dataoff;
-	int encrypted;
 	uint8_t rate, rssi;
 
 	ic = &sc->sc_ic;
@@ -931,18 +928,6 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 		next = m->m_nextpkt;
 		m->m_nextpkt = NULL;
 
-		dataoff = *mtod(m, uint16_t *);
-		m_adj(m, 2);
-		if (dataoff < sizeof(pdf)) {
-			if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
-				printf("%s: missing pgt_data_frame header\n",
-				    sc->sc_dev.dv_xname);
-			ifp->if_ierrors++;
-			m_freem(m);
-			continue;
-		}
-		bcopy(mtod(m, struct pgt_data_frame *), &pdf, sizeof(pdf));
-		m_adj(m, dataoff);
 		if (m->m_len < sizeof(*pra)) {
 			m = m_pullup(m, sizeof(*pra));
 			if (m == NULL) {
@@ -987,25 +972,6 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 			m_freem(m);
 			continue;
 		}
-		/*
-		 * The 16-bit word preceding the received frame contains
-		 * values that seem to have a very non-random distribution
-		 * and possibly follow a periodic distribution.  The only
-		 * two values for it that seem to occur for WEP-decrypted
-		 * packets (assuming it is indeed a 16-bit word and not
-		 * something else) are 0x4008 and 0x4808.
-		 *
-		 * Those two values can be found in large runs in the
-		 * histogram that get zero hits over the course of
-		 * hundreds of thousands of samples from an 802.11b
-		 * sender source (ping -f).  Further analysis shows
-		 * that the 0x000c bits are always 0x0008 when WEP
-		 * has been used, and never otherwise.  The bottom
-		 * two bits seem to not be set in any known
-		 * circumstances.
-		 */
-		encrypted = sc->sc_ic.ic_flags == IEEE80211_F_WEPON &&
-		    (letoh16(pdf.pdf_unknown) & 0xc) == 0x8;
 		memcpy(eh.ether_dhost, pra->pra_ether_dhost, ETHER_ADDR_LEN);
 		memcpy(eh.ether_shost, pra->pra_ether_shost, ETHER_ADDR_LEN);
 		eh.ether_type = pra->pra_ether_type;
@@ -1526,43 +1492,23 @@ pgt_datarx_completion(struct pgt_softc *sc, enum pgt_queue pq)
 			goto fail;
 		}
 
-		if (m == NULL) {
-			datalen += dataoff;
+		if (m == NULL)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL)
-				goto fail;
-			if (datalen + 2 >= MINCLSIZE) {
-				MCLGET(m, M_DONTWAIT);
-				if (!(m->m_flags & M_EXT)) {
-					m_free(m);
-					goto fail;
-				}
-			}
-		
-			/*
-			 * Add a uint16_t at the beginning containing the
-			 * actual data offset.
-			 */
-			*mtod(m, uint16_t *) = dataoff;
-			bcopy(pd->pd_mem, mtod(m, char *) + 2, datalen);
-			m->m_len = datalen + 2;
-			tlen += datalen + 2;
-		} else {
+		else
 			m = m_get(M_DONTWAIT, MT_DATA);
-			if (m == NULL)
-				goto fail;
-			if (datalen >= MINCLSIZE) {
-				MCLGET(m, M_DONTWAIT);
-				if (!(m->m_flags & M_EXT)) {
-					m_free(m);
-					goto fail;
-				}
-			}
-			bcopy(pd->pd_mem + dataoff, mtod(m, char *), datalen);
-			m->m_len = datalen;
-			tlen += datalen;
-		}
 
+		if (m == NULL)
+			goto fail;
+		if (datalen >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (!(m->m_flags & M_EXT)) {
+				m_free(m);
+				goto fail;
+			}
+		}
+		bcopy(pd->pd_mem + dataoff, mtod(m, char *), datalen);
+		m->m_len = datalen;
+		tlen += datalen;
 
 		*mp = m;
 		mp = &m->m_next;

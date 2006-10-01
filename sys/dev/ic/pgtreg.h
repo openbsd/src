@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtreg.h,v 1.4 2006/09/16 10:36:12 mglocker Exp $  */
+/*	$OpenBSD: pgtreg.h,v 1.5 2006/10/01 21:49:08 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -152,11 +152,6 @@ struct pgt_mgmt_frame {
 	uint32_t	pmf_size;
 	/* 		data[];			*/
 } __attribute__((packed));
-
-struct pgt_data_frame {
-	uint16_t	pdf_unknown;	/* seems to give status incl. crypto? */
-	/*		data[];			*/
-};
 
 struct pgt_rx_annex {
 	uint8_t 		pra_ether_dhost[ETHER_ADDR_LEN];
