@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.17 2006/10/01 21:13:45 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.18 2006/10/01 21:26:21 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1028,23 +1028,6 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 		if (m != NULL) {
 #if NBPFILTER > 0
 			if (sc->sc_drvbpf != NULL) {
-#if 0
-				struct pgt_ieee80211_radiotap pir;
-
-				bzero(&pir, sizeof(pir));
-				pir.pir_header.it_len = htole16(sizeof(pir));
-				pir.pir_header.it_present =
-				    htole32(PGT_IEEE80211_RADIOTAP_PRESENT);
-				if (encrypted)
-					pir.pir_flags |=
-					    IEEE80211_RADIOTAP_F_WEP;
-				pir.pir_rate = rate;
-				pir.pir_channel = htole16(chan->ic_freq);
-				pir.pir_channel_flags = htole16(chan->ic_flags);
-				pir.pir_db_antsignal = rssi;
-				pir.pir_db_antnoise = sc->sc_noise;
-				bpf_mtap2(sc->sc_drvbpf, &pir, sizeof(pir), m);
-#endif
 				struct mbuf mb;
 				struct pgt_rx_radiotap_hdr *tap = &sc->sc_rxtap;
 
@@ -2266,36 +2249,6 @@ pgt_start_body(struct pgt_softc *sc, struct ieee80211com *ic, struct ifnet *ifp)
 			}
 #if NBPFILTER > 0
 			if (sc->sc_drvbpf != NULL) {
-#if 0
-				struct pgt_ieee80211_radiotap pir;
-				struct ether_header eh;
-
-				/*
-				 * Fill out what we can when faking
-				 * up a radiotapified outgoing frame.
-				 */
-				bzero(&pir, sizeof(pir));
-				pir.pir_header.it_len = htole16(sizeof(pir));
-				pir.pir_header.it_present =
-				    htole32(PGT_IEEE80211_RADIOTAP_PRESENT);
-				if (sc->sc_80211_ioc_wep != IEEE80211_WEP_OFF)
-					pir.pir_flags |=
-					    IEEE80211_RADIOTAP_F_WEP;
-				pir.pir_channel =
-				    htole16(ic->ic_bss->ni_chan->ic_freq);
-				pir.pir_channel_flags =
-				    htole16(ic->ic_bss->ni_chan->ic_flags);
-				pir.pir_db_antnoise = sc->sc_noise;
-				memcpy(mtod(m, struct ether_header *), &eh,
-				    sizeof(eh));
-				m_adj(m, sizeof(eh));
-				m = pgt_ieee80211_encap(sc, &eh, m, NULL);
-				if (m != NULL) {
-					bpf_mtap2(sc->sc_drvbpf, &pir,
-					    sizeof(pir), m);
-					m_freem(m);
-				}
-#endif
 				struct mbuf mb;
 				struct ether_header eh;
 				struct pgt_tx_radiotap_hdr *tap = &sc->sc_txtap;
