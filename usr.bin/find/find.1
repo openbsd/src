@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.52 2006/09/26 18:21:28 otto Exp $
+.\"	$OpenBSD: find.1,v 1.53 2006/10/01 11:30:53 otto Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -478,11 +478,10 @@ is true.
 The second expression is not evaluated if the first expression is true.
 .El
 .Pp
-All operators and primaries must be separate arguments to
-.Nm find .
-Primaries which themselves take arguments expect each argument
-to be a separate argument to
-.Nm find .
+Operators, primaries, and arguments to primaries must be separate
+arguments to
+.Nm find ,
+i.e. they should be separated by whitespace.
 .Sh EXAMPLES
 Print out a list of all the files whose names do not end in
 .Dq \&.c :
