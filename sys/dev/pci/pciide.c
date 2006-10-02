@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.257 2006/09/26 06:53:41 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.258 2006/10/02 17:56:41 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -853,11 +853,11 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  0,
 	  svwsata_chip_map,
 	},
-	{ PCI_PRODUCT_RCC_HT_1000_SATA,
+	{ PCI_PRODUCT_RCC_HT_1000_SATA_1,
 	  0,
 	  svwsata_chip_map,
 	},
-	{ PCI_PRODUCT_RCC_SATA,
+	{ PCI_PRODUCT_RCC_HT_1000_SATA_2,
 	  0,
 	  svwsata_chip_map,
 	}
