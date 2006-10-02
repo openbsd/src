@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.32 2006/10/02 03:44:18 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.33 2006/10/02 04:09:20 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -383,16 +383,14 @@ void
 eephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr, esr, ssr, isr, ar, lpar;
+	int bmsr, bmcr, ssr, ar, lpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
 	bmsr = PHY_READ(sc, E1000_SR) | PHY_READ(sc, E1000_SR);
-	esr = PHY_READ(sc, E1000_ESR);
 	bmcr = PHY_READ(sc, E1000_CR);
 	ssr = PHY_READ(sc, E1000_SSR);
-	isr = PHY_READ(sc, E1000_ISR);
 	ar = PHY_READ(sc, E1000_AR);
 	lpar = PHY_READ(sc, E1000_LPAR);
 
