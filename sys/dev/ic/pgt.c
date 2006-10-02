@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.21 2006/10/02 18:06:55 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.22 2006/10/02 21:46:43 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -179,12 +179,6 @@ int	 pgt_ioctl(struct ifnet *, u_long, caddr_t);
 void	 pgt_obj_bss2scanres(struct pgt_softc *,
 	     struct pgt_obj_bss *, struct wi_scan_res *, uint32_t);
 #if 0
-int	 pgt_node_set_authorization(struct pgt_softc *,
-	     struct pgt_ieee80211_node *,
-	     enum pin_dot1x_authorization);
-int	 pgt_do_mlme_sta(struct pgt_softc *, struct ieee80211req_mlme *);
-int	 pgt_do_mlme_hostap(struct pgt_softc *, struct ieee80211req_mlme *);
-int	 pgt_do_mlme_adhoc(struct pgt_softc *, struct ieee80211req_mlme *);
 int	 pgt_80211_set(struct pgt_softc *, struct ieee80211req *);
 #endif
 void	 node_mark_active_ap(void *, struct ieee80211_node *);
@@ -2462,147 +2456,6 @@ pgt_obj_bss2scanres(struct pgt_softc *sc, struct pgt_obj_bss *pob,
 	}
 	memcpy(scanres, &ap, WI_PRISM2_RES_SIZE);
 }
-
-#if 0
-int
-pgt_node_set_authorization(struct pgt_softc *sc,
-    struct pgt_ieee80211_node *pin, enum pin_dot1x_authorization newstate)
-{
-	int error;
-
-	if (pin->pin_dot1x_auth == newstate)
-		return (0);
-
-	DPRINTF(("%s: %02x:%02x:%02x:%02x:%02x:%02x "
-	    "changing authorization to %d\n", __func__,
-	    pin->pin_node.ni_macaddr[0], pin->pin_node.ni_macaddr[1],
-	    pin->pin_node.ni_macaddr[2], pin->pin_node.ni_macaddr[3],
-	    pin->pin_node.ni_macaddr[4], pin->pin_node.ni_macaddr[5],
-	    newstate));
-
-	error = pgt_oid_set(sc,
-	    newstate == PIN_DOT1X_AUTHORIZED ?
-	    PGT_OID_EAPAUTHSTA : PGT_OID_EAPUNAUTHSTA,
-	    pin->pin_node.ni_macaddr, sizeof(pin->pin_node.ni_macaddr));
-	if (error == 0)
-		pin->pin_dot1x_auth = pin->pin_dot1x_auth_desired = newstate;
-
-	return (error);
-}
-#endif
-
-#if 0
-int
-pgt_do_mlme_sta(struct pgt_softc *sc, struct ieee80211req_mlme *imlme)
-{
-	struct pgt_obj_mlme pffmlme;
-	struct ieee80211com *ic;
-	int error = 0;
-
-	ic = &sc->sc_ic;
-	switch (imlme->im_op) {
-	case IEEE80211_MLME_ASSOC:
-		IEEE80211_ADDR_COPY(pffmlme.pom_address, imlme->im_macaddr);
-		pffmlme.pom_id = htole16(0);
-		pffmlme.pom_state = htole16(PGT_MLME_STATE_ASSOC);
-		pffmlme.pom_code = htole16(imlme->im_reason);
-		error = pgt_oid_set(sc, PGT_OID_ASSOCIATE,
-		    &pffmlme, sizeof(pffmlme));
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
-#endif
-
-#if 0
-int
-pgt_do_mlme_hostap(struct pgt_softc *sc, struct ieee80211req_mlme *imlme)
-{
-	struct pgt_ieee80211_node *pin;
-	struct ieee80211com *ic;
-	int error = 0;
-
-	ic = &sc->sc_ic;
-	switch (imlme->im_op) {
-	/* Would IEEE80211_MLME_ASSOC/PGT_MLME_STATE_ASSOC be used for WDS? */
-	case IEEE80211_MLME_AUTHORIZE:
-		pin = (struct pgt_ieee80211_node *)ieee80211_find_node(ic,
-		    imlme->im_macaddr);
-		if (pin == NULL) {
-			error = ENOENT;
-			break;
-		}
-		error = pgt_node_set_authorization(sc, pin,
-		    PIN_DOT1X_AUTHORIZED);
-		ieee80211_release_node(ic, (struct ieee80211_node *)pin);
-		break;
-	case IEEE80211_MLME_UNAUTHORIZE:
-		pin = (struct pgt_ieee80211_node *)ieee80211_find_node(ic,
-		    imlme->im_macaddr);
-		if (pin == NULL) {
-			error = ENOENT;
-			break;
-		}
-		error = pgt_node_set_authorization(sc, pin,
-		    PIN_DOT1X_UNAUTHORIZED);
-		ieee80211_release_node(ic, (struct ieee80211_node *)pin);
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
-#endif
-
-#if 0
-int
-pgt_do_mlme_adhoc(struct pgt_softc *sc, struct ieee80211req_mlme *imlme)
-{
-	struct pgt_ieee80211_node *pin;
-	struct ieee80211com *ic;
-	int error = 0;
-
-	ic = &sc->sc_ic;
-	switch (imlme->im_op) {
-	case IEEE80211_MLME_AUTHORIZE:
-		pin = (struct pgt_ieee80211_node *)ieee80211_find_txnode(ic,
-		    imlme->im_macaddr);
-		if (pin == NULL) {
-			error = ENOMEM;
-			break;
-		} else if ((struct ieee80211_node *)pin == ic->ic_bss) {
-			error = EINVAL;
-			break;
-		}
-		error = pgt_node_set_authorization(sc, pin,
-		    PIN_DOT1X_AUTHORIZED);
-		ieee80211_release_node(ic, (struct ieee80211_node *)pin);
-		break;
-	case IEEE80211_MLME_UNAUTHORIZE:
-		pin = (struct pgt_ieee80211_node *)ieee80211_find_txnode(ic,
-		    imlme->im_macaddr);
-		if (pin == NULL) {
-			error = ENOMEM;
-			break;
-		} else if ((struct ieee80211_node *)pin == ic->ic_bss) {
-			error = EINVAL;
-			break;
-		}
-		error = pgt_node_set_authorization(sc, pin,
-		    PIN_DOT1X_UNAUTHORIZED);
-		ieee80211_release_node(ic, (struct ieee80211_node *)pin);
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
-#endif
 
 #if 0
 int
