@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1156 2006/10/02 17:06:23 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1157 2006/10/02 17:52:24 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -9387,7 +9387,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB6 RAID/IDE",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_IDE_1,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_IDE,
 	    "HT-1000 IDE",
 	},
 	{
@@ -9435,12 +9435,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Frodo8 SATA",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_SATA,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_SATA_1,
 	    "HT-1000 SATA",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_IDE_2,
-	    "HT-1000 IDE",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_SATA_2,
+	    "HT-1000 SATA",
 	},
 	{
 	    PCI_VENDOR_RENDITION, PCI_PRODUCT_RENDITION_V1000,
