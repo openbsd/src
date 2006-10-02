@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.382 2006/10/02 19:42:58 mk Exp $
+#	$OpenBSD: Makefile,v 1.383 2006/10/02 20:21:24 mk Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
@@ -52,15 +52,12 @@ MAN=	aac.4 ac97.4 acphy.4 acpi.4 acx.4 \
 	wsmouse.4 wsmux.4 xe.4 xf86.4 xge.4 xl.4 xmphy.4 yds.4 ym.4 zero.4 \
 	zyd.4
 
-MLINKS+=ral.4 ural.4
-
-MLINKS+=com.4 pccom.4
 MLINKS+=acpi.4 acpibat.4 acpi.4 acpihpet.4 acpi.4 acpitimer.4
-MLINKS+=adv.4 advansys.4
-MLINKS+=adv.4 adw.4
+MLINKS+=adv.4 advansys.4 adv.4 adw.4
 MLINKS+=art.4 musycc.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=cardbus.4 cbb.4
+MLINKS+=com.4 pccom.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=isapnp.4 pnp.4
@@ -68,11 +65,12 @@ MLINKS+=netintro.4 networking.4
 MLINKS+=pcmcia.4 pcic.4
 MLINKS+=pms.4 pmsi.4
 MLINKS+=pty.4 ptm.4
+MLINKS+=ral.4 ural.4
 MLINKS+=random.4 arandom.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
 MLINKS+=scsi.4 scsibus.4
-MLINKS+=sk.4 skc.4 sk.4 msk.4 sk.4 mskc.4
 MLINKS+=sequencer.4 music.4
+MLINKS+=sk.4 skc.4 sk.4 msk.4 sk.4 mskc.4
 MLINKS+=speaker.4 spkr.4
 MLINKS+=tty.4 cua.4
 MLINKS+=usb.4 uhub.4
