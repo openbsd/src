@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.73 2006/09/22 00:33:41 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.74 2006/10/02 09:06:26 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -49,8 +49,6 @@
 
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
-
-typedef	int			boolean;
 
 #include <sys/queue.h>
 #include <sys/timeout.h>
@@ -192,7 +190,7 @@ int	scsiprint(void *, const char *);
  */
 struct scsi_inquiry_pattern {
 	u_int8_t type;
-	boolean removable;
+	int removable;
 	char *vendor;
 	char *product;
 	char *revision;

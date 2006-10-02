@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.114 2006/10/01 13:00:47 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.115 2006/10/02 09:06:26 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -477,7 +477,7 @@ scsibusprint(void *aux, const char *pnp)
 	struct scsibus_attach_args	*sa = aux;
 	struct scsi_inquiry_data	*inqbuf;
 	u_int8_t			type;
-	boolean				removable;
+	int				removable;
 	char				*dtype, *qtype;
 	char				vendor[33], product[65], revision[17];
 	int				target, lun;
@@ -765,7 +765,7 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *base, int nmatches,
     int matchsize, int *bestpriority)
 {
 	u_int8_t			type;
-	boolean				removable;
+	int				removable;
 	const void			*bestmatch;
 
 	/* Include the qualifier to catch vendor-unique types. */

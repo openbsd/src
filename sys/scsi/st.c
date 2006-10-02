@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.63 2006/06/11 03:59:59 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.64 2006/10/02 09:06:26 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -222,8 +222,8 @@ void	stattach(struct device *, struct device *, void *);
 void	st_identify_drive(struct st_softc *, struct scsi_inquiry_data *);
 void	st_loadquirks(struct st_softc *);
 int	st_mount_tape(dev_t, int);
-void	st_unmount(struct st_softc *, boolean, boolean);
-int	st_decide_mode(struct st_softc *, boolean);
+void	st_unmount(struct st_softc *, int, int);
+int	st_decide_mode(struct st_softc *, int);
 void	ststart(void *);
 int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
@@ -231,7 +231,7 @@ int	st_mode_sense(struct st_softc *, int);
 int	st_mode_select(struct st_softc *, int);
 int	st_space(struct st_softc *, daddr_t, u_int, int);
 int	st_write_filemarks(struct st_softc *, daddr_t, int);
-int	st_check_eod(struct st_softc *, boolean, int *, int);
+int	st_check_eod(struct st_softc *, int, int *, int);
 int	st_load(struct st_softc *, u_int, int);
 int	st_rewind(struct st_softc *, u_int, int);
 int	st_interpret_sense(struct scsi_xfer *);
@@ -613,7 +613,7 @@ st_mount_tape(dev, flags)
 void
 st_unmount(st, eject, rewind)
 	struct st_softc *st;
-	boolean eject, rewind;
+	int eject, rewind;
 {
 	struct scsi_link *sc_link = st->sc_link;
 	int nmarks;
@@ -640,7 +640,7 @@ st_unmount(st, eject, rewind)
 int
 st_decide_mode(st, first_read)
 	struct st_softc *st;
-	boolean	first_read;
+	int	first_read;
 {
 	struct scsi_link *sc_link = st->sc_link;
 
@@ -1613,7 +1613,7 @@ st_write_filemarks(st, number, flags)
 int
 st_check_eod(st, position, nmarks, flags)
 	struct st_softc *st;
-	boolean position;
+	int position;
 	int *nmarks;
 	int flags;
 {
