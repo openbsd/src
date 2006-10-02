@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.29 2006/10/02 19:30:19 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.30 2006/10/02 19:38:51 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -425,32 +425,32 @@ Extracts the records about issued ATA commands from the log buffer.
 The log buffer is cleared after extraction.
 .El
 .Sh EXAMPLES
-.Li # atactl /dev/wd0c identify
+Display the vendor, product, revision strings, and capabilities (such as
+SMART support) as reported by
+.Pa /dev/wd0 :
 .Pp
-Displays the vendor, product, revision strings and capabilities (such as
-support for SMART) as reported by
-.Pa /dev/wd0 .
+.Dl # atactl /dev/wd0c identify
 .Pp
-.Li # atactl /dev/wd0c smartenable
-.Pp
-Enables the SMART support on
+Enable  SMART support on
 .Pa /dev/wd0
-for detection of early warning signs of device failure.
+for detection of early warning signs of device failure:
 .Pp
-.Li 0 * * * * /sbin/atactl /dev/wd0c smartstatus >/dev/null
+.Dl # atactl /dev/wd0c smartenable
 .Pp
-In a
+A
 .Xr crontab 5
-entry queries
+entry which queries
 .Pa /dev/wd0
 each hour for early warning signs of failure.
-If the device exceeded one of the SMART thresholds,
+If the device exceeds one of the SMART thresholds,
 .Nm
 will output
 .Sq SMART threshold exceeded!
 to stderr and
 .Xr cron 8
 will mail it.
+.Pp
+.Dl 0 * * * * /sbin/atactl /dev/wd0c smartstatus \*(Gt/dev/null
 .Sh DIAGNOSTICS
 Not all devices are created equally.
 Some may not support the feature sets
