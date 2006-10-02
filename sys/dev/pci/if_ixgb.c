@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.29 2006/08/18 06:02:45 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.30 2006/10/02 00:28:09 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -697,10 +697,11 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 		return (ENOBUFS);
 	}
 
-#if 0
+#ifdef IXGB_CSUM_OFFLOAD
 	ixgb_transmit_checksum_setup(sc, m_head, &txd_popts);
-#endif
+#else
 	txd_popts = 0;
+#endif
 
 	i = sc->next_avail_tx_desc;
 	for (j = 0; j < q.map->dm_nsegs; j++) {
@@ -1041,6 +1042,10 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef IXGB_CSUM_OFFLOAD
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
+#endif
 
 	/*
 	 * Specify the media types supported by this adapter and register
