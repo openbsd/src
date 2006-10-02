@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2006/10/02 02:30:13 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2006/10/02 06:03:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -67,15 +67,14 @@ int
 main(int argc, char *argv[])
 {
 	struct	bnx_firmware_header bfproto, *bf;
-	int len, fd, i, total;
+	int fd, i, total;
 	ssize_t rlen;
 
 	bnx_rv2p_proc1len = sizeof bnx_rv2p_proc1;
 	bnx_rv2p_proc2len = sizeof bnx_rv2p_proc2;
 
-	len = sizeof(*bf);
-	bf = (struct bnx_firmware_header *)malloc(len);
-	bzero(bf, len);
+	bf = (struct bnx_firmware_header *)malloc(sizeof *bf);
+	bzero(bf, sizeof *bf);
 
 	/* initialize the file header */
 	bf->bnx_COM_b06FwReleaseMajor = bnx_COM_b06FwReleaseMajor;
@@ -146,10 +145,10 @@ main(int argc, char *argv[])
 	if (fd == -1)
 		err(1, FILENAME);
 
-	rlen = write(fd, bf, len);
+	rlen = write(fd, bf, sizeof *bf);
 	if (rlen == -1)
 		err(1, "%s", FILENAME);
-	if (rlen != len)
+	if (rlen != sizeof *bf)
 		errx(1, "%s: short write", FILENAME);
 	total = rlen;
 	printf(" [%d", total);
