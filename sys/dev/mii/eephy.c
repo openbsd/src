@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.31 2006/10/01 15:47:03 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.32 2006/10/02 03:44:18 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -153,6 +153,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	    (PHY_READ(sc, E1000_ESSR) & E1000_ESSR_FIBER_LINK))
 		sc->mii_flags |= MIIF_HAVEFIBER;
 
+	fast_ether = 0;
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E3082) {
 		/* 88E3082 10/100 Fast Ethernet PHY. */
@@ -275,6 +276,9 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		case IFM_1000_SX:
+			if (fast_ether == 1)
+				return (EINVAL);
+
 			PHY_RESET(sc);
 
 			PHY_WRITE(sc, E1000_CR,
@@ -283,6 +287,9 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		case IFM_1000_T:
+			if (fast_ether == 1)
+				return (EINVAL);
+
 			PHY_RESET(sc);
 
 			/* TODO - any other way to force 1000BT? */
