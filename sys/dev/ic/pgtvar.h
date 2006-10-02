@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtvar.h,v 1.7 2006/09/16 10:36:12 mglocker Exp $  */
+/*	$OpenBSD: pgtvar.h,v 1.8 2006/10/02 18:06:55 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -207,9 +207,8 @@ struct pgt_softc {
 #endif
 };
 
-void	pgt_attachhook(void *);
 int	pgt_intr(void *);
-int	pgt_attach(struct pgt_softc *);
+void	pgt_attach(void *);
 int	pgt_detach(struct pgt_softc *sc);
 void	pgt_reboot(struct pgt_softc *);
 

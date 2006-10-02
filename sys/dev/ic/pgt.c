@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.20 2006/10/01 22:03:25 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.21 2006/10/02 18:06:55 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -203,14 +203,6 @@ int	 pgt_dma_alloc(struct pgt_softc *);
 int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_dma_free(struct pgt_softc *);
 void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
-
-void
-pgt_attachhook(void *xsc)
-{
-	struct pgt_softc *sc = xsc;
-
-	pgt_attach(sc);
-}
 
 void
 pgt_write_memory_barrier(struct pgt_softc *sc)
@@ -581,9 +573,10 @@ trying_again:
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
 }
 
-int
-pgt_attach(struct pgt_softc *sc)
+void
+pgt_attach(void *xsc)
 {
+	struct pgt_softc *sc = xsc;
 	int error;
 
 	/* debug flags */
@@ -602,7 +595,7 @@ pgt_attach(struct pgt_softc *sc)
 
 	error = pgt_dma_alloc(sc);
 	if (error)
-		return (error);
+		return;
 
 	sc->sc_ic.ic_if.if_softc = sc;
 	TAILQ_INIT(&sc->sc_mgmtinprog);
@@ -613,32 +606,27 @@ pgt_attach(struct pgt_softc *sc)
 
 	error = pgt_reset(sc);
 	if (error)
-		return (error);
+		return;
 
 	tsleep(&sc->sc_flags, 0, "pftres", hz);
 	if (sc->sc_flags & SC_UNINITIALIZED) {
 		printf("%s: not responding\n", sc->sc_dev.dv_xname);
-		error = ETIMEDOUT;
+		return;
 	} else {
 		/* await all interrupts */
 		pgt_write_4_flush(sc, PGT_REG_INT_EN, PGT_INT_STAT_SOURCES);
 		DELAY(PGT_WRITEIO_DELAY);
 	}
-	if (error)
-		goto failed;
 
 	error = pgt_net_attach(sc);
 	if (error)
-		goto failed;
+		return;
 
 	if (kthread_create(pgt_per_device_kthread, sc, NULL,
 	    sc->sc_dev.dv_xname) != 0)
-		goto failed;
+		return;
 
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
-
-failed:
-	return (error);
 }
 
 int

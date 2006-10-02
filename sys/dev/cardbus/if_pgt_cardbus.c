@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.1 2006/09/28 05:02:33 mglocker Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.2 2006/10/02 18:06:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -138,7 +138,7 @@ pgt_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	printf(": irq %d\n", csc->sc_intrline);
 
 	if (rootvp == NULL)
-		mountroothook_establish(pgt_attachhook, sc);
+		mountroothook_establish(pgt_attach, sc);
 	else
 		pgt_attach(sc);
 
