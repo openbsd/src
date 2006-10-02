@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.103 2006/03/31 18:19:38 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.104 2006/10/02 23:03:56 pedro Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.103 2006/03/31 18:19:38 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.104 2006/10/02 23:03:56 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 		case 'w':
 			interval = (u_int)strtonum(optarg, 0, 1000, &errstr);
 			if (errstr)
-				err(1, "-w %s: %s\n", optarg, errstr);
+				errx(1, "-w %s: %s", optarg, errstr);
 			break;
 		case 'v':
 			verbose = 1;
@@ -270,7 +270,7 @@ main(int argc, char *argv[])
 	if (*argv) {
 		interval = (u_int)strtonum(*argv, 0, 1000, &errstr);
 		if (errstr)
-			err(1, "-w %s: %s\n", optarg, errstr);
+			errx(1, "%s: %s", *argv, errstr);
 
 		if (*++argv)
 			reps = atoi(*argv);
