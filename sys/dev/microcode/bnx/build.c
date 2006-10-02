@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2006/09/20 22:16:04 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2006/10/02 02:30:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -23,16 +23,55 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+
 #include "bnxfw.h"
 
+int	bnx_rv2p_proc1len;
+int	bnx_rv2p_proc2len;
+
 #define FILENAME "bnx"
+
+struct chunks {
+	void *start;
+	int *len;
+} chunks[] = {
+	{ bnx_COM_b06FwText, &bnx_COM_b06FwTextLen },
+	{ bnx_COM_b06FwData, &bnx_COM_b06FwDataLen },
+	{ bnx_COM_b06FwRodata, &bnx_COM_b06FwRodataLen },
+	{ bnx_COM_b06FwBss, &bnx_COM_b06FwBssLen },
+	{ bnx_COM_b06FwSbss, &bnx_COM_b06FwSbssLen },
+
+	{ bnx_RXP_b06FwText, &bnx_RXP_b06FwTextLen },
+	{ bnx_RXP_b06FwData, &bnx_RXP_b06FwDataLen },
+	{ bnx_RXP_b06FwRodata, &bnx_RXP_b06FwRodataLen },
+	{ bnx_RXP_b06FwBss, &bnx_RXP_b06FwBssLen },
+	{ bnx_RXP_b06FwSbss, &bnx_RXP_b06FwSbssLen },
+
+	{ bnx_TPAT_b06FwText, &bnx_TPAT_b06FwTextLen },
+	{ bnx_TPAT_b06FwData, &bnx_TPAT_b06FwDataLen },
+	{ bnx_TPAT_b06FwRodata, &bnx_TPAT_b06FwRodataLen },
+	{ bnx_TPAT_b06FwBss, &bnx_TPAT_b06FwBssLen },
+	{ bnx_TPAT_b06FwSbss, &bnx_TPAT_b06FwSbssLen },
+
+	{ bnx_TXP_b06FwText, &bnx_TXP_b06FwTextLen },
+	{ bnx_TXP_b06FwData, &bnx_TXP_b06FwDataLen },
+	{ bnx_TXP_b06FwRodata, &bnx_TXP_b06FwRodataLen },
+	{ bnx_TXP_b06FwBss, &bnx_TXP_b06FwBssLen },
+	{ bnx_TXP_b06FwSbss, &bnx_TXP_b06FwSbssLen },
+
+	{ bnx_rv2p_proc1, &bnx_rv2p_proc1len },
+	{ bnx_rv2p_proc2, &bnx_rv2p_proc2len }
+};
 
 int
 main(int argc, char *argv[])
 {
 	struct	bnx_firmware_header bfproto, *bf;
-	int len, fd;
+	int len, fd, i, total;
 	ssize_t rlen;
+
+	bnx_rv2p_proc1len = sizeof bnx_rv2p_proc1;
+	bnx_rv2p_proc2len = sizeof bnx_rv2p_proc2;
 
 	len = sizeof(*bf);
 	bf = (struct bnx_firmware_header *)malloc(len);
@@ -54,15 +93,55 @@ main(int argc, char *argv[])
 	bf->bnx_COM_b06FwSbssAddr = bnx_COM_b06FwSbssAddr;
 	bf->bnx_COM_b06FwSbssLen = bnx_COM_b06FwSbssLen;
 
-	memcpy(bf->bnx_TXP_b06FwData, bnx_TXP_b06FwData, sizeof bnx_TXP_b06FwData);
-	memcpy(bf->bnx_TXP_b06FwRodata, bnx_TXP_b06FwRodata, sizeof bnx_TXP_b06FwRodata);
-	memcpy(bf->bnx_TXP_b06FwBss, bnx_TXP_b06FwBss, sizeof bnx_TXP_b06FwBss);
-	memcpy(bf->bnx_TXP_b06FwSbss, bnx_TXP_b06FwSbss, sizeof bnx_TXP_b06FwSbss);
+	bf->bnx_RXP_b06FwReleaseMajor = bnx_RXP_b06FwReleaseMajor;
+	bf->bnx_RXP_b06FwReleaseMinor = bnx_RXP_b06FwReleaseMinor;
+	bf->bnx_RXP_b06FwReleaseFix = bnx_RXP_b06FwReleaseFix;
+	bf->bnx_RXP_b06FwStartAddr = bnx_RXP_b06FwStartAddr;
+	bf->bnx_RXP_b06FwTextAddr = bnx_RXP_b06FwTextAddr;
+	bf->bnx_RXP_b06FwTextLen = bnx_RXP_b06FwTextLen;
+	bf->bnx_RXP_b06FwDataAddr = bnx_RXP_b06FwDataAddr;
+	bf->bnx_RXP_b06FwDataLen = bnx_RXP_b06FwDataLen;
+	bf->bnx_RXP_b06FwRodataAddr = bnx_RXP_b06FwRodataAddr;
+	bf->bnx_RXP_b06FwRodataLen = bnx_RXP_b06FwRodataLen;
+	bf->bnx_RXP_b06FwBssAddr = bnx_RXP_b06FwBssAddr;
+	bf->bnx_RXP_b06FwBssLen = bnx_RXP_b06FwBssLen;
+	bf->bnx_RXP_b06FwSbssAddr = bnx_RXP_b06FwSbssAddr;
+	bf->bnx_RXP_b06FwSbssLen = bnx_RXP_b06FwSbssLen;
 
-	bf->firmlength = sizeof bnx_COM_b06FwText;
+	bf->bnx_TPAT_b06FwReleaseMajor = bnx_TPAT_b06FwReleaseMajor;
+	bf->bnx_TPAT_b06FwReleaseMinor = bnx_TPAT_b06FwReleaseMinor;
+	bf->bnx_TPAT_b06FwReleaseFix = bnx_TPAT_b06FwReleaseFix;
+	bf->bnx_TPAT_b06FwStartAddr = bnx_TPAT_b06FwStartAddr;
+	bf->bnx_TPAT_b06FwTextAddr = bnx_TPAT_b06FwTextAddr;
+	bf->bnx_TPAT_b06FwTextLen = bnx_TPAT_b06FwTextLen;
+	bf->bnx_TPAT_b06FwDataAddr = bnx_TPAT_b06FwDataAddr;
+	bf->bnx_TPAT_b06FwDataLen = bnx_TPAT_b06FwDataLen;
+	bf->bnx_TPAT_b06FwRodataAddr = bnx_TPAT_b06FwRodataAddr;
+	bf->bnx_TPAT_b06FwRodataLen = bnx_TPAT_b06FwRodataLen;
+	bf->bnx_TPAT_b06FwBssAddr = bnx_TPAT_b06FwBssAddr;
+	bf->bnx_TPAT_b06FwBssLen = bnx_TPAT_b06FwBssLen;
+	bf->bnx_TPAT_b06FwSbssAddr = bnx_TPAT_b06FwSbssAddr;
+	bf->bnx_TPAT_b06FwSbssLen = bnx_TPAT_b06FwSbssLen;
 
-	printf("creating %s length %d [%d+%d]\n",
-	    FILENAME, len + bf->firmlength, len, bf->firmlength); 
+	bf->bnx_TXP_b06FwReleaseMajor = bnx_TXP_b06FwReleaseMajor;
+	bf->bnx_TXP_b06FwReleaseMinor = bnx_TXP_b06FwReleaseMinor;
+	bf->bnx_TXP_b06FwReleaseFix = bnx_TXP_b06FwReleaseFix;
+	bf->bnx_TXP_b06FwStartAddr = bnx_TXP_b06FwStartAddr;
+	bf->bnx_TXP_b06FwTextAddr = bnx_TXP_b06FwTextAddr;
+	bf->bnx_TXP_b06FwTextLen = bnx_TXP_b06FwTextLen;
+	bf->bnx_TXP_b06FwDataAddr = bnx_TXP_b06FwDataAddr;
+	bf->bnx_TXP_b06FwDataLen = bnx_TXP_b06FwDataLen;
+	bf->bnx_TXP_b06FwRodataAddr = bnx_TXP_b06FwRodataAddr;
+	bf->bnx_TXP_b06FwRodataLen = bnx_TXP_b06FwRodataLen;
+	bf->bnx_TXP_b06FwBssAddr = bnx_TXP_b06FwBssAddr;
+	bf->bnx_TXP_b06FwBssLen = bnx_TXP_b06FwBssLen;
+	bf->bnx_TXP_b06FwSbssAddr = bnx_TXP_b06FwSbssAddr;
+	bf->bnx_TXP_b06FwSbssLen = bnx_TXP_b06FwSbssLen;
+
+	bf->bnx_rv2p_proc1len = bnx_rv2p_proc1len;
+	bf->bnx_rv2p_proc2len = bnx_rv2p_proc2len;
+
+	printf("creating %s", FILENAME);
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (fd == -1)
 		err(1, FILENAME);
@@ -72,12 +151,26 @@ main(int argc, char *argv[])
 		err(1, "%s", FILENAME);
 	if (rlen != len)
 		errx(1, "%s: short write", FILENAME);
+	total = rlen;
+	printf(" [%d", total);
+	fflush(stdout);
 
-	rlen = write(fd, bnx_COM_b06FwText, sizeof bnx_COM_b06FwText);
-	if (rlen == -1)
-		err(1, "%s", FILENAME);
-	if (rlen != sizeof bnx_COM_b06FwText)
-		errx(1, "%s: short write", FILENAME);
+	for (i = 0; i < sizeof(chunks) / sizeof(chunks[0]); i++) {
+		rlen = write(fd, chunks[i].start, *chunks[i].len);
+		if (rlen == -1) {
+			printf("\n");
+			err(1, "%s", FILENAME);
+		}
+		if (rlen != *chunks[i].len) {
+			printf("\n");
+			errx(1, "%s: short write", FILENAME);
+		}
+		printf("+%d", rlen);
+		fflush(stdout);
+		total += rlen;
+	}
+
+	printf("] total %d\n", total);
 
 	free(bf);
 	close(fd);
