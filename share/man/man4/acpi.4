@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.7 2006/09/20 08:04:03 jmc Exp $
+.\"	$OpenBSD: acpi.4,v 1.8 2006/10/02 19:39:54 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -18,10 +18,16 @@
 .Dt ACPI 4
 .Os
 .Sh NAME
-.Nm acpi
+.Nm acpi ,
+.Nm acpibat ,
+.Nm acpihpet ,
+.Nm acpitimer
 .Nd Advanced Configuration and Power Interface
 .Sh SYNOPSIS
 .Cd "acpi0 at mainbus?"
+.Cd "acpibat* at acpi?"
+.Cd "acpihpet* at acpi?"
+.Cd "acpitimer* at acpi?"
 .Pp
 .Cd "option ACPIVERBOSE"
 .Cd "option ACPI_ENABLE"
@@ -31,6 +37,28 @@ The
 driver provides basic support for ACPI including loading ACPI tables from
 the firmware, parsing and interpreting AML code, event handling,
 suspending and powering off, and attaching device drivers.
+.Pp
+The
+.Nm acpibat
+driver supports the ACPI Control Method Battery interface between the
+battery and the host.
+Information about the battery, such as capacity, recharge rate, voltage,
+and serial number, is available through this driver.
+Battery status is updated every 10 seconds.
+.Pp
+The
+.Nm acpihpet
+driver provides support for the high precision event timer to be used
+as a timecounter for the
+.Xr tc_init 9
+framework.
+.Pp
+The
+.Nm acpitimer
+driver allows access to a power management timer through the ACPI.
+The timer is used as a timecounter for the
+.Xr tc_init 9
+framework.
 .Pp
 If the configuration option
 .Dq Dv ACPIVERBOSE
@@ -46,27 +74,41 @@ WARNING: this may cause an overheating on some machines since
 .Nm
 doesn't provide any thermal or cooling control.
 .Pp
-.Ox
-provides support for the following devices:
-.Pp
-.Bl -tag -width 12n -offset indent -compact
-.It Xr acpibat  4
-ACPI Control Method Battery
-.It Xr acpihpet 4
-ACPI High Precision Event Timer
-.It Xr acpitimer 4
-ACPI power management timer
-.El
+Some devices, such as
+.Nm acpibat ,
+provide hardware information via sensors
+that can be monitored using
+.Xr sysctl 8
+or
+.Xr sensorsd 8 .
 .Sh SEE ALSO
-.Xr intro 4
+.Xr intro 4 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8 ,
+.Xr tc_init 9
 .Sh HISTORY
 The
-.Nm
-driver first appeared in
+.Nm acpi ,
+.Nm acpibat ,
+.Nm acpihpet ,
+and
+.Nm acpitimer
+drivers first appeared in
 .Ox 3.8 .
 .Sh AUTHORS
 .An -nosplit
 The
-.Nm
-driver was written by
+.Nm acpi ,
+.Nm acpihpet ,
+and
+.Nm acpitimer
+drivers were written by
 .An Thorsten Lockert Aq tholo@sigmasoft.com .
+The
+.Nm acpibat
+driver was written by
+.An Marco Peereboom Aq marco@openbsd.org .
+.Sh BUGS
+Some systems do not propagate battery insertion up to the driver.
+.Pp
+Smart Battery Specification-based batteries are not supported.
