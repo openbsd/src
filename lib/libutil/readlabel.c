@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.9 2004/09/18 19:24:14 deraadt Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.10 2006/10/02 12:01:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -113,7 +113,7 @@ readlabelfs(char *device, int verbose)
 	}
 	close(fd);
 
-	if (dk.d_partitions[part - 'a'].p_fstype > FSMAXTYPES) {
+	if (dk.d_partitions[part - 'a'].p_fstype >= FSMAXTYPES) {
 		if (verbose)
 			warnx("%s: bad filesystem type in label", rpath);
 		return (NULL);
