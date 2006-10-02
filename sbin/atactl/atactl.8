@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.30 2006/10/02 19:38:51 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.31 2006/10/02 19:47:12 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,14 +53,12 @@ It is used by specifying
 a device to manipulate, the command to perform, and any arguments
 the command may require.
 .Pp
-If the
-.Ar device
-is specified without a
-.Ar command ,
+If
+.Ar command
+is not specified,
 the
 .Li identify
 command is implied.
-.Pp
 The following commands may be used:
 .Pp
 .Bl -tag -width xxxxxxx -compact
@@ -208,7 +206,7 @@ behaviour in implementing this, so it is
 recommended to issue this command on a disk containing any currently
 mounted filesystems.
 .Pp
-.It Li secsetpass Ar user Ar high|maximum
+.It Li secsetpass Ar user Ar high\*(Bamaximum
 .It Li secsetpass Ar master
 Sets password and security level for the specified device.
 There are two passwords, user and master, and two security levels, high and
@@ -243,7 +241,7 @@ Execution of the
 .Li secerase
 command erases all user data on the device.
 .Pp
-.It Li secunlock Ar user|master
+.It Li secunlock Ar user\*(Bamaster
 Unlocks the specified device with user or master password.
 The device will always unlock if a valid user password is received.
 If the security level was set to high during the last
@@ -253,7 +251,7 @@ If the security level was set to maximum during the last
 .Li secsetpass
 command, the device won't unlock even if the master password is received.
 .Pp
-.It Li secerase Ar user|master Op Ar enhanced
+.It Li secerase Ar user\*(Bamaster Op Ar enhanced
 Erases all user data and unlocks the specified device.
 Execution of this command with the master password is the only way to unlock a
 device locked at maximum security level with the
@@ -279,7 +277,7 @@ security system.
 After command completion any other commands that update the device lock mode
 will be aborted.
 .Pp
-.It Li secdisablepass Ar user|master
+.It Li secdisablepass Ar user\*(Bamaster
 Disables the lock mode for the specified device with user or master password.
 This command won't change the master password.
 The master password will be reactivated when a user password is set.
@@ -325,7 +323,7 @@ failure), the warning
 .Sq SMART threshold exceeded!
 is printed to stderr and a status of 2 is returned.
 .Pp
-.It Li smartautosave Ar enable|disable
+.It Li smartautosave Ar enable\*(Badisable
 Enables/disables attribute autosave feature on the specified device.
 .Pp
 .It Li smartoffline Ar subcommand
@@ -374,19 +372,16 @@ and prints it to stdout.
 The
 .Ar log
 may be one of the following:
-.Bl -tag -width indent
 .Pp
-.It Em directory
-The error log directory.
-.Pp
-.It Em summary
-The summary error log.
-.Pp
+.Bl -tag -width "directoryXX" -offset indent -compact
 .It Em comp
 The comprehensive error log.
-.Pp
+.It Em directory
+The error log directory.
 .It Em selftest
 The self-test log.
+.It Em summary
+The summary error log.
 .El
 .Pp
 .It Li readattr
@@ -471,7 +466,7 @@ The
 command first appeared in
 .Ox 2.6 .
 Support for acoustic management, advanced power management, power-up in
-standby, read look-ahead and SMART was added in
+standby, read look-ahead, and SMART was added in
 .Ox 2.9 .
 .Sh AUTHORS
 The
@@ -479,12 +474,12 @@ The
 command was written by Ken Hornstein.
 It was based heavily on the scsictl command written by Jason R. Thorpe.
 Support for acoustic management, advanced power management, power-up in
-standby, read look-ahead and SMART was added by Wouter Slegers.
+standby, read look-ahead, and SMART was added by Wouter Slegers.
 .Sh BUGS
 The output from the
 .Li identify
 command is rather ugly.
 .Pp
-Disabling read look-ahead with the
+Disabling read look-ahead with
 .Li readaheaddisable
 might cause problems with mounted filesystems on that device.
