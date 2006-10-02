@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.28 2005/03/28 18:52:38 kurt Exp $
+.\"	$OpenBSD: atactl.8,v 1.29 2006/10/02 19:30:19 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,11 +44,7 @@
 .Sh SYNOPSIS
 .Nm atactl
 .Ar device
-.Ar command
-.Oo
-.Ar arg Oo ...
-.Oc
-.Oc
+.Op Ar command Op Ar arg
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to issue commands to and otherwise
