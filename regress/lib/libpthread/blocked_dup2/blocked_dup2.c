@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocked_dup2.c,v 1.1 2006/09/22 18:31:06 kurt Exp $	*/
+/*	$OpenBSD: blocked_dup2.c,v 1.2 2006/10/03 16:06:52 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 			CHECKr(pthread_create(&waiting_threads[j], NULL,
 			    waiting_read, (void *)newfd));
 		nanosleep(&rqtp, NULL);
-		CHECKr(dup2(fd, newfd));
+		CHECKe(dup2(fd, newfd));
 		for (j = 0; j < BUSY_THREADS; j++) {
 			CHECKr(pthread_join(busy_threads[j], &value_ptr));
 			ASSERT(value_ptr == (void *)EBADF);

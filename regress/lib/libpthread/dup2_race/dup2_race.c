@@ -1,4 +1,4 @@
-/*	$OpenBSD: dup2_race.c,v 1.1 2006/09/22 18:33:18 kurt Exp $	*/
+/*	$OpenBSD: dup2_race.c,v 1.2 2006/10/03 16:06:52 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 			CHECKr(pthread_create(&busy_threads[j], NULL,
 			    busy_thread, (void *)newfd));
 		nanosleep(&rqtp, NULL);
-		CHECKr(dup2(fd, newfd));
+		CHECKe(dup2(fd, newfd));
 		for (j = 0; j < BUSY_THREADS; j++) {
 			CHECKr(pthread_join(busy_threads[j], &value_ptr));
 			ASSERT(value_ptr == (void *)EBADF);
