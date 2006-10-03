@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2006/06/01 06:06:59 otto Exp $ */
+/*	$OpenBSD: parse.y,v 1.30 2006/10/03 00:49:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -209,7 +209,7 @@ number		: STRING			{
 			u_long		 ulval;
 			const char	*errstr;
 
-			ulval = strtonum($1, 0, LONG_MAX, &errstr);
+			ulval = strtonum($1, 0, INT_MAX, &errstr);
 			if (errstr) {
 				yyerror("\"%s\" invalid: %s", $1, errstr);
 				free($1);
