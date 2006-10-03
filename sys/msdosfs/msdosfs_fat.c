@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.17 2004/05/16 19:00:51 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.18 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ int
 pcbmap(dep, findcn, bnp, cnp, sp)
 	struct denode *dep;
 	uint32_t findcn;		/* file relative cluster to get		 */
-	daddr_t *bnp;		/* returned filesys relative blk number	 */
+	daddr64_t *bnp;		/* returned filesys relative blk number	 */
 	uint32_t *cnp;		/* returned cluster number		 */
 	int *sp;		/* returned block size			 */
 {

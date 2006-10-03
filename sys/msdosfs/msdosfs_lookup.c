@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.15 2005/03/02 00:35:04 tom Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.16 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ msdosfs_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct proc *p = cnp->cn_proc;
-	daddr_t bn;
+	daddr64_t bn;
 	int error;
 	int lockparent;
 	int wantparent;
@@ -594,7 +594,7 @@ createde(dep, ddep, depp, cnp)
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
-	daddr_t bn;
+	daddr64_t bn;
 	int blsize;
 	
 #ifdef MSDOSFS_DEBUG
@@ -716,7 +716,7 @@ dosdirempty(dep)
 	int blsize;
 	int error;
 	uint32_t cn;
-	daddr_t bn;
+	daddr64_t bn;
 	struct buf *bp;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
@@ -935,7 +935,7 @@ removede(pdep, dep)
 	int error;
 	struct direntry *ep;
 	struct buf *bp;
-	daddr_t bn;
+	daddr64_t bn;
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	uint32_t offset = pdep->de_fndoffset;
@@ -1005,7 +1005,7 @@ uniqdosname(dep, cnp, cp)
 	int gen;
 	int blsize;
 	uint32_t cn;
-	daddr_t bn;
+	daddr64_t bn;
 	struct buf *bp;
 	int error;
 
@@ -1068,7 +1068,7 @@ findwin95(dep)
 	struct direntry *dentp;
 	int blsize;
 	uint32_t cn;
-	daddr_t bn;
+	daddr64_t bn;
 	struct buf *bp;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.h,v 1.7 2004/05/14 04:05:05 tedu Exp $	*/
+/*	$OpenBSD: fat.h,v 1.8 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: fat.h,v 1.11 1997/10/17 11:23:49 ws Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@
  */
 #define	DE_CLEAR	1	/* Zero out the blocks allocated */
 
-int pcbmap(struct denode *, uint32_t, daddr_t *, uint32_t *, int *);
+int pcbmap(struct denode *, uint32_t, daddr64_t *, uint32_t *, int *);
 int clusterfree(struct msdosfsmount *, uint32_t, uint32_t *);
 int clusteralloc(struct msdosfsmount *, uint32_t, uint32_t, uint32_t, uint32_t *, uint32_t *);
 int extendfile(struct denode *, uint32_t, struct buf **, uint32_t *, int);

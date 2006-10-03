@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.49 2006/09/22 23:29:45 mickey Exp $	*/
+/*	$OpenBSD: buf.h,v 1.50 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct buf {
 	} b_un;
 	void	*b_saveaddr;		/* Original b_addr for physio. */
 	daddr_t	b_lblkno;		/* Logical block number. */
-	daddr_t	b_blkno;		/* Underlying physical block number. */
+	daddr64_t	b_blkno;	/* Underlying physical block number. */
 					/* Function to call upon completion.
 					 * Will be called at splbio(). */
 	void	(*b_iodone)(struct buf *);
@@ -203,13 +203,13 @@ struct cluster_save {
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
 struct cluster_info {
-	daddr_t	ci_lastr;			/* last read (read-ahead) */
-	daddr_t	ci_lastw;			/* last write (write cluster) */
-	daddr_t	ci_cstart;			/* start block of cluster */
-	daddr_t	ci_lasta;			/* last allocation */
-	int	ci_clen;			/* length of current cluster */
-	int	ci_ralen;			/* Read-ahead length */
-	daddr_t	ci_maxra;			/* last readahead block */
+	daddr64_t	ci_lastr;	/* last read (read-ahead) */
+	daddr64_t	ci_lastw;	/* last write (write cluster) */
+	daddr64_t	ci_cstart;	/* start block of cluster */
+	daddr64_t	ci_lasta;	/* last allocation */
+	int		ci_clen; 	/* length of current cluster */
+	int		ci_ralen;	/* Read-ahead length */
+	daddr64_t	ci_maxra;	/* last readahead block */
 };
 
 #ifdef _KERNEL

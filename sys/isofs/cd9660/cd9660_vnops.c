@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.34 2006/01/25 21:15:55 mickey Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.35 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -400,13 +400,16 @@ cd9660_ioctl(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	daddr_t *block;
+	daddr32_t *blkp;
+	daddr64_t blk;
+	int error;
 
 	switch (ap->a_command) {
 	case FIBMAP:
-		block = (daddr_t *)ap->a_data;
-
-		return (VOP_BMAP(ap->a_vp, *block, NULL, block, 0));
+		blkp = (daddr32_t *) ap->a_data;
+		error = VOP_BMAP(ap->a_vp, *blkp, NULL, &blk, 0);
+		*blkp = (daddr32_t) blk;
+		return (error);
 	default:
 		return (ENOTTY);
 	}

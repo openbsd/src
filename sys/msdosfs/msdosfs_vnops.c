@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.56 2005/12/01 22:13:33 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.57 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -469,7 +469,7 @@ msdosfs_read(v)
 	int isadir;
 	uint32_t n;
 	long on;
-	daddr_t lbn;
+	daddr64_t lbn;
 	daddr_t rablock;
 	daddr_t rablkno;
 	struct buf *bp;
@@ -1472,7 +1472,8 @@ msdosfs_readdir(v)
 	uint32_t cn;
 	uint32_t fileno;
 	long bias = 0;
-	daddr_t bn, lbn;
+	daddr_t lbn;
+	daddr64_t bn;
 	struct buf *bp;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;

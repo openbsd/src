@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.25 2005/07/20 16:30:35 pedro Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.26 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ int	ufsfifo_close(void *);
 #endif
 
 /* ufs_bmap.c */
-int ufs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
+int ufs_bmaparray(struct vnode *, daddr_t, daddr64_t *, struct indir *,
 		       int *, int *);
 int ufs_getlbns(struct vnode *, daddr_t, struct indir *, int *);
 

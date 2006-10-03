@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.20 2006/04/01 02:43:05 pedro Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.21 2006/10/03 19:49:06 pedro Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ ufs_bmap(void *v)
  * next block and the disk address of the block (if it is assigned).
  */
 int
-ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
+ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
     int *nump, int *runp)
 {
 	struct inode *ip;
