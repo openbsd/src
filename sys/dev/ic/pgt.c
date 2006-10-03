@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.22 2006/10/02 21:46:43 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.23 2006/10/03 17:26:14 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1885,7 +1885,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, PGT_QUEUE_FULL_THRESHOLD);
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -2130,16 +2130,15 @@ pgt_start_body(struct pgt_softc *sc, struct ieee80211com *ic, struct ifnet *ifp)
 	for (; sc->sc_dirtyq_count[PGT_QUEUE_DATA_LOW_TX] <
 	    PGT_QUEUE_FULL_THRESHOLD && !IFQ_IS_EMPTY(&ifp->if_snd);) {
 		pd = TAILQ_FIRST(&sc->sc_freeq[PGT_QUEUE_DATA_LOW_TX]);
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 		if (m->m_pkthdr.len <= PGT_FRAG_SIZE) {
 			error = pgt_load_tx_desc_frag(sc,
 			    PGT_QUEUE_DATA_LOW_TX, pd);
-			if (error) {
-				IF_PREPEND(&ifp->if_snd, m);
+			if (error)
 				break;
-			}
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_copydata(m, 0, m->m_pkthdr.len, pd->pd_mem);
 			pgt_desc_transmit(sc, PGT_QUEUE_DATA_LOW_TX,
 			    pd, m->m_pkthdr.len, 0);
@@ -2153,10 +2152,8 @@ pgt_start_body(struct pgt_softc *sc, struct ieee80211com *ic, struct ifnet *ifp)
 			 * even support a full two.)
 			 */
 			if (sc->sc_dirtyq_count[PGT_QUEUE_DATA_LOW_TX] + 2 >
-			    PGT_QUEUE_FULL_THRESHOLD) {
-				IF_PREPEND(&ifp->if_snd, m);
+			    PGT_QUEUE_FULL_THRESHOLD)
 				break;
-			}
 			pd2 = TAILQ_NEXT(pd, pd_link);
 			error = pgt_load_tx_desc_frag(sc,
 			    PGT_QUEUE_DATA_LOW_TX, pd);
@@ -2170,10 +2167,9 @@ pgt_start_body(struct pgt_softc *sc, struct ieee80211com *ic, struct ifnet *ifp)
 					    pd_link);
 				}
 			}
-			if (error) {
-				IF_PREPEND(&ifp->if_snd, m);
+			if (error)
 				break;
-			}
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_copydata(m, 0, PGT_FRAG_SIZE, pd->pd_mem);
 			pgt_desc_transmit(sc, PGT_QUEUE_DATA_LOW_TX,
 			    pd, PGT_FRAG_SIZE, 1);
@@ -2182,6 +2178,7 @@ pgt_start_body(struct pgt_softc *sc, struct ieee80211com *ic, struct ifnet *ifp)
 			pgt_desc_transmit(sc, PGT_QUEUE_DATA_LOW_TX,
 			    pd2, m->m_pkthdr.len - PGT_FRAG_SIZE, 0);
 		} else {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			ifp->if_oerrors++;
 			m_freem(m);
 			m = NULL;
