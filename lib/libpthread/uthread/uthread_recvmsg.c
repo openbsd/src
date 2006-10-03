@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_recvmsg.c,v 1.6 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_recvmsg.c,v 1.7 2006/10/03 02:59:36 kurt Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -58,12 +58,18 @@ recvmsg(int fd, struct msghdr *msg, int flags)
 				/* Set the timeout: */
 				_thread_kern_set_timeout(NULL);
 				curthread->interrupted = 0;
+				curthread->closing_fd = 0;
 				_thread_kern_sched_state(PS_FDR_WAIT, __FILE__, __LINE__);
 
 				/* Check if the wait was interrupted: */
 				if (curthread->interrupted) {
 					/* Return an error status: */
 					errno = EINTR;
+					ret = -1;
+					break;
+				} else if (curthread->closing_fd) {
+					/* Return an error status: */
+					errno = EBADF;
 					ret = -1;
 					break;
 				}

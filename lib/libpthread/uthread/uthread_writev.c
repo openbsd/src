@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.11 2006/09/22 19:04:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.12 2006/10/03 02:59:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -174,6 +174,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 
 				/* Reset the interrupted operation flag: */
 				curthread->interrupted = 0;
+				curthread->closing_fd = 0;
 
 				_thread_kern_sched_state(PS_FDW_WAIT,
 				    __FILE__, __LINE__);
@@ -182,13 +183,16 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 				 * Check if the operation was
 				 * interrupted by a signal
 				 */
-				if (curthread->interrupted) {
+				if (curthread->interrupted || curthread->closing_fd) {
 					if (num > 0) {
 						/* Return partial success: */
 						ret = num;
 					} else {
 						/* Return an error: */
-						errno = EINTR;
+						if (curthread->closing_fd)
+							errno = EBADF;
+						else
+							errno = EINTR;
 						ret = -1;
 					}
 				}

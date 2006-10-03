@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.57 2006/09/26 14:18:28 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.58 2006/10/03 02:59:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -742,6 +742,12 @@ struct pthread {
 	 * interrupted by a signal:
 	 */
 	int		interrupted;
+
+	/*
+	 * Set to TRUE if a blocking operation was
+	 * interrupted by a closing file descriptor.
+	 */
+	int		closing_fd;
 
 	/* Signal number when in state PS_SIGWAIT: */
 	int		signo;

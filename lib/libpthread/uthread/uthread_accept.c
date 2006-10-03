@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.10 2006/09/26 14:18:28 kurt Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.11 2006/10/03 02:59:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -67,6 +67,7 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 				/* Set the timeout: */
 				_thread_kern_set_timeout(NULL);
 				curthread->interrupted = 0;
+				curthread->closing_fd = 0;
 
 				/* Schedule the next thread: */
 				_thread_kern_sched_state(PS_FDR_WAIT, __FILE__,
@@ -76,6 +77,11 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 				if (curthread->interrupted) {
 					/* Return an error status: */
 					errno = EINTR;
+					ret = -1;
+					break;
+				} else if (curthread->closing_fd) {
+					/* Return an error status: */
+					errno = EBADF;
 					ret = -1;
 					break;
 				}
