@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.33 2006/10/03 20:06:21 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.34 2006/10/03 20:36:10 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P0_RBCR1, 0);
 
 	/* Tell RCR to do nothing for now. */
-	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_MON);
+	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_MON | sc->rcr_proto);
 
 	/* Place NIC in internal loopback mode. */
 	NIC_PUT(regt, regh, ED_P0_TCR, ED_TCR_LB0);
