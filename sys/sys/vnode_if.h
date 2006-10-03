@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.29 2005/07/14 09:04:59 pedro Exp 
+ *	OpenBSD: vnode_if.src,v 1.30 2006/10/03 19:49:06 pedro Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.15 2006/01/02 05:05:11 jsg Exp 
  */
@@ -339,11 +339,11 @@ struct vop_bmap_args {
 	struct vnode *a_vp;
 	daddr_t a_bn;
 	struct vnode **a_vpp;
-	daddr_t *a_bnp;
+	daddr64_t *a_bnp;
 	int *a_runp;
 };
 extern struct vnodeop_desc vop_bmap_desc;
-int VOP_BMAP(struct vnode *, daddr_t, struct vnode **, daddr_t *, int *);
+int VOP_BMAP(struct vnode *, daddr_t, struct vnode **, daddr64_t *, int *);
 
 struct vop_print_args {
 	struct vnodeop_desc *a_desc;
