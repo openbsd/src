@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.6 2006/05/29 20:40:55 miod Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.7 2006/10/03 22:39:40 gwk Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -500,13 +500,13 @@ mpbios_scan(self)
 
 	switch (mp_fps->spec_rev) {
 	case 1:
-		printf("(Version 1.1)");
+		printf("(Version 1.1)\n");
 		break;
 	case 4:
-		printf("(Version 1.4)");
+		printf("(Version 1.4)\n");
 		break;
 	default:
-		printf("(unrecognized rev %d)", mp_fps->spec_rev);
+		printf("(unrecognized rev %d)\n", mp_fps->spec_rev);
 	}
 
 	/*
@@ -555,9 +555,6 @@ mpbios_scan(self)
 		 */
 		if (mp_cth == NULL)
 			panic ("mpbios_scan: no config (can't happen?)");
-
-		printf(" (%8.8s %12.12s)\n",
-		    mp_cth->oem_id, mp_cth->product_id);
 
 		/*
 		 * Walk the table once, counting items
