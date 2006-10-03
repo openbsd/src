@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.8 2006/10/02 19:39:54 mk Exp $
+.\"	$OpenBSD: acpi.4,v 1.9 2006/10/03 20:37:41 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -19,15 +19,21 @@
 .Os
 .Sh NAME
 .Nm acpi ,
+.Nm acpiac ,
 .Nm acpibat ,
+.Nm acpiec ,
 .Nm acpihpet ,
-.Nm acpitimer
+.Nm acpitimer ,
+.Nm acpitz
 .Nd Advanced Configuration and Power Interface
 .Sh SYNOPSIS
 .Cd "acpi0 at mainbus?"
+.Cd "acpiac* at acpi?"
 .Cd "acpibat* at acpi?"
+.Cd "acpiec* at acpi?"
 .Cd "acpihpet* at acpi?"
 .Cd "acpitimer* at acpi?"
+.Cd "acpitz* at acpi?"
 .Pp
 .Cd "option ACPIVERBOSE"
 .Cd "option ACPI_ENABLE"
@@ -39,12 +45,33 @@ the firmware, parsing and interpreting AML code, event handling,
 suspending and powering off, and attaching device drivers.
 .Pp
 The
+.Nm acpiec
+driver provides access to ACPI Embedded Controllers for other ACPI devices.
+AC power source status is updated every 10 seconds.
+.Pp
+The
 .Nm acpibat
 driver supports the ACPI Control Method Battery interface between the
 battery and the host.
 Information about the battery, such as capacity, recharge rate, voltage,
 and serial number, is available through this driver.
 Battery status is updated every 10 seconds.
+.Pp
+The
+.Nm acpiec
+driver supports ACPI Embedded Controllers.
+It provides embedded controller access for other ACPI devices.
+On many systems
+which have an
+.Nm acpiec
+device, other ACPI devices such as
+.Nm acpiac ,
+.Nm acpibat ,
+and
+.Nm acpitz
+implicitly depend on the
+.Nm acpiec
+device.
 .Pp
 The
 .Nm acpihpet
@@ -59,6 +86,15 @@ driver allows access to a power management timer through the ACPI.
 The timer is used as a timecounter for the
 .Xr tc_init 9
 framework.
+.Pp
+The
+.Nm acpitz
+driver supports ACPI Thermal Zones.
+Temperature information is available through this driver as a sensor
+which is updated every 10 seconds.
+.\" If the temperature exceeds the
+.\" .Sq critical
+.\" temperature threshold, the system will be shut down.
 .Pp
 If the configuration option
 .Dq Dv ACPIVERBOSE
@@ -75,7 +111,7 @@ WARNING: this may cause an overheating on some machines since
 doesn't provide any thermal or cooling control.
 .Pp
 Some devices, such as
-.Nm acpibat ,
+.Nm acpiac ,
 provide hardware information via sensors
 that can be monitored using
 .Xr sysctl 8
@@ -89,10 +125,13 @@ or
 .Sh HISTORY
 The
 .Nm acpi ,
+.Nm acpiac ,
 .Nm acpibat ,
+.Nm acpiec ,
 .Nm acpihpet ,
+.Nm acpitimer ,
 and
-.Nm acpitimer
+.Nm acpitz
 drivers first appeared in
 .Ox 3.8 .
 .Sh AUTHORS
@@ -105,9 +144,16 @@ and
 drivers were written by
 .An Thorsten Lockert Aq tholo@sigmasoft.com .
 The
-.Nm acpibat
-driver was written by
+.Nm acpiac ,
+.Nm acpibat ,
+and
+.Nm acpitz
+drivers were written by
 .An Marco Peereboom Aq marco@openbsd.org .
+The
+.Nm acpiec
+driver was written by
+.An Can Erkin Acar Aq canacar@openbsd.org .
 .Sh BUGS
 Some systems do not propagate battery insertion up to the driver.
 .Pp
