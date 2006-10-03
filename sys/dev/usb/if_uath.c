@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.10 2006/09/20 19:47:17 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.11 2006/10/03 19:48:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -114,8 +114,8 @@ static const struct uath_type {
 	UATH_DEV_UX(DLINK,		DWLAG122),
 	UATH_DEV_UX(DLINK,		DWLAG132),	
 	UATH_DEV_UG(DLINK,		DWLG132),
-	UATH_DEV_UG(GIGASET,		SMCWUSBTG),
 	UATH_DEV_UG(GIGASET,		AR5523),
+	UATH_DEV_UG(GIGASET,		SMCWUSBTG),
 	UATH_DEV_UG(GLOBALSUN,		AR5523_1),
 	UATH_DEV_UX(GLOBALSUN,		AR5523_2),
 	UATH_DEV_UX(NETGEAR,		WG111U),
@@ -585,6 +585,7 @@ uath_alloc_rx_data_list(struct uath_softc *sc)
 {
 	int i, error;
 
+	SLIST_INIT(&sc->rx_freelist);
 	for (i = 0; i < UATH_RX_DATA_POOL_COUNT; i++) {
 		struct uath_rx_data *data = &sc->rx_data[i];
 
@@ -1193,9 +1194,8 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (len < UATH_MIN_RXBUFSZ || len > sc->rxbufsz) {
-		DPRINTF(("wrong xfer size: !(%d <= %d <= %d)\n",
-		    UATH_MIN_RXBUFSZ, len, sc->rxbufsz));
+	if (len < UATH_MIN_RXBUFSZ) {
+		DPRINTF(("wrong xfer size (len=%d)\n", len));
 		ifp->if_ierrors++;
 		goto skip;
 	}
@@ -1205,6 +1205,12 @@ uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/* Rx descriptor is located at the end, 32-bit aligned */
 	desc = (struct uath_rx_desc *)
 	    (data->buf + len - sizeof (struct uath_rx_desc));
+
+	if (betoh32(desc->len) > sc->rxbufsz) {
+		DPRINTF(("bad descriptor (len=%d)\n", betoh32(desc->len)));
+		ifp->if_ierrors++;
+		goto skip;
+	}
 
 	/* there's probably a "bad CRC" flag somewhere in the descriptor.. */
 
