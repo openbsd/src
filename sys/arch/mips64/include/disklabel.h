@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 2006/07/07 23:47:37 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2006/10/03 01:37:22 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -147,17 +147,13 @@ struct sgilabel {
 #define SGI_PTYPE_XVM           13
 
 
-#include <sys/dkbad.h>
 struct cpu_disklabel {
 	int labelsector;
 	union {
 		struct {
 			struct dos_partition dosparts[NDOSPART];
-			struct dkbad bad;
 		} _i386;
 	} u;
 };
-
-#define DKBAD(x) ((x)->u._i386.bad)
 
 #endif /* _MACHINE_DISKLABEL_H_ */
