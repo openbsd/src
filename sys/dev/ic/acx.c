@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.51 2006/09/26 12:54:34 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.52 2006/10/03 17:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -293,6 +293,8 @@ acx_attach(struct acx_softc *sc)
 	ifp->if_watchdog = acx_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* set supported .11b and .11g rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = acx_rates_11b;
