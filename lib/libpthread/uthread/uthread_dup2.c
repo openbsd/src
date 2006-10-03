@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_dup2.c,v 1.9 2006/09/26 14:18:28 kurt Exp $ */
+/* $OpenBSD: uthread_dup2.c,v 1.10 2006/10/03 02:29:14 kurt Exp $ */
 /* PUBLIC DOMAIN <marc@snafu.org> */
 
 #include <errno.h>
@@ -25,8 +25,9 @@ dup2(int fd, int newfd)
 				_thread_fs_flags_replace(newfd, NULL);
 				ret = _thread_sys_dup2(fd, newfd);
 				if (ret != -1)
-					ret = _thread_fd_table_init(newfd, FD_INIT_DUP2,
-					    _thread_fd_table[fd]->status_flags);
+					if(_thread_fd_table_init(newfd, FD_INIT_DUP2,
+					    _thread_fd_table[fd]->status_flags) == -1)
+						ret = -1;
 
 				/*
 				 * If the dup2 or the _thread_fd_table_init
