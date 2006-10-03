@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.54 2006/07/09 22:46:38 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.55 2006/10/03 19:46:08 damien Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1164,15 +1164,15 @@ axe_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_POLL(&ifp->if_snd, m_head);
 	if (m_head == NULL)
 		return;
 
 	if (axe_encap(sc, m_head, 0)) {
-		IF_PREPEND(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
+	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame

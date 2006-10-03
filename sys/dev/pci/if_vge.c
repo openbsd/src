@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.27 2006/07/28 15:58:38 kettenis Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.28 2006/10/03 19:46:08 damien Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1417,7 +1417,7 @@ vge_start(struct ifnet *ifp)
 		pidx = VGE_TX_DESC_CNT - 1;
 
 	while (sc->vge_ldata.vge_tx_mbuf[idx] == NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1431,10 +1431,10 @@ vge_start(struct ifnet *ifp)
 #endif
 
 		if (vge_encap(sc, m_head, idx)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 		sc->vge_ldata.vge_tx_list[pidx].vge_frag[0].vge_buflen |=
 		    htole16(VGE_TXDESC_Q);
