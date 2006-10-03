@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.32 2006/10/03 14:19:34 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.33 2006/10/03 14:36:29 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,8 +50,47 @@
 allows a user or system administrator to issue commands to and otherwise
 control devices which reside on standard IDE and ATA controllers.
 It is used by specifying
-a device to manipulate, the command to perform, and any arguments
+a device to manipulate, a command to perform, and any arguments
 the command may require.
+.Pp
+.Nm
+supports the following commands:
+acousticdisable,
+acousticset,
+apmdisable,
+apmset,
+checkpower,
+dump,
+identify,
+idle,
+poddisable,
+podenable,
+puisdisable,
+puisenable,
+puisspinup,
+readaheaddisable,
+readaheadenable,
+readattr,
+secdisablepass,
+secerase,
+secfreeze,
+secsetpass,
+secsetpass,
+secunlock,
+setidle,
+setstandby,
+sleep,
+smartautosave,
+smartdisable,
+smartenable,
+smartoffline,
+smartread,
+smartreadlog,
+smartstatus,
+standby,
+writecachedisable,
+and
+writecacheenable.
 .Pp
 If
 .Ar command
@@ -59,7 +98,7 @@ is not specified,
 the
 .Li identify
 command is implied.
-The following commands may be used:
+A full description of the commands follows:
 .Pp
 .Bl -tag -width xxxxxxx -compact
 .It Li acousticdisable
