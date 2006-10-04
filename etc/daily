@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.54 2006/10/04 04:43:20 hugh Exp $
+#	$OpenBSD: daily,v 1.55 2006/10/04 17:46:34 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -21,7 +21,7 @@ OUT=`mktemp /tmp/_security.XXXXXXXXXX` || {
 	exit 1
 }
 
-trap 'rm -f $TMP $OUT ;exit 1' 0 1 15
+trap 'rm -f $TMP $OUT; exit 1' 0 1 15
 
 echo ""
 echo "Removing scratch and junk files:"
