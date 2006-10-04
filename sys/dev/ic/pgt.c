@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.24 2006/10/04 14:23:12 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.25 2006/10/04 18:13:37 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -173,8 +173,6 @@ int	 pgt_ieee80211_send_mgmt(struct ieee80211com *,
 	     struct ieee80211_node *, int, int);
 int	 pgt_net_attach(struct pgt_softc *);
 void	 pgt_start(struct ifnet *);
-void	 pgt_start_body(struct pgt_softc *, struct ieee80211com *,
-	     struct ifnet *);
 int	 pgt_ioctl(struct ifnet *, u_long, caddr_t);
 void	 pgt_obj_bss2scanres(struct pgt_softc *,
 	     struct pgt_obj_bss *, struct wi_scan_res *, uint32_t);
@@ -2089,11 +2087,19 @@ pgt_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	splx(s);
 }
 
+/*
+ * Start data frames.  Critical sections surround the boundary of
+ * management frame transmission / transmission acknowledgement / response
+ * and data frame transmission / transmission acknowledgement.
+ */
 void
 pgt_start(struct ifnet *ifp)
 {
 	struct pgt_softc *sc;
 	struct ieee80211com *ic;
+	struct pgt_desc *pd;
+	struct mbuf *m;
+	int error;
 
 	sc = ifp->if_softc;
 	ic = &sc->sc_ic;
@@ -2103,21 +2109,6 @@ pgt_start(struct ifnet *ifp)
 	    ic->ic_state != IEEE80211_S_RUN) {
 		return;
 	}
-
-	pgt_start_body(sc, ic, ifp);
-}
-
-/*
- * Start data frames.  Critical sections surround the boundary of
- * management frame transmission / transmission acknowledgement / response
- * and data frame transmission / transmission acknowledgement.
- */
-void
-pgt_start_body(struct pgt_softc *sc, struct ieee80211com *ic, struct ifnet *ifp)
-{
-	struct pgt_desc *pd;
-	struct mbuf *m;
-	int error;
 
 	/*
 	 * Management packets should probably be MLME frames
