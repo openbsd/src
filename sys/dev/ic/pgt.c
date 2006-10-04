@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.23 2006/10/03 17:26:14 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.24 2006/10/04 14:23:12 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -730,9 +730,8 @@ pgt_update_intr(struct pgt_softc *sc, int hack)
 				sc->sc_flags |= SC_INTR_RESET;
 				break;
 			}
-			while (qfree-- > npend) {
+			while (qfree-- > npend)
 				pgt_rxdone(sc, pqs[i]);
-			}
 		} else {
 			npend = pgt_queue_frags_pending(sc, pqs[i]);
 			if (npend > qdirty) {
@@ -918,8 +917,9 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 				m = m_pullup(m, sizeof(*pha));
 				if (m == NULL) {
 					if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
-						printf("%s: m_pullup failure\n",
-						    sc->sc_dev.dv_xname);
+						DPRINTF(("%s: m_pullup "
+						    "failure\n",
+						    sc->sc_dev.dv_xname));
 					ifp->if_ierrors++;
 					continue;
 				}
@@ -933,8 +933,8 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 			m = m_pullup(m, sizeof(*pra));
 			if (m == NULL) {
 				if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
-					printf("%s: m_pullup failure\n",
-					    sc->sc_dev.dv_xname);
+					DPRINTF(("%s: m_pullup failure\n",
+					    sc->sc_dev.dv_xname));
 				ifp->if_ierrors++;
 				continue;
 			}
@@ -1060,8 +1060,8 @@ pgt_wakeup_intr(struct pgt_softc *sc)
 	if (!TAILQ_EMPTY(&sc->sc_mgmtinprog))
 		shouldupdate = 1;
 	if (sc->sc_debug & SC_DEBUG_POWER)
-		printf("%s: wakeup interrupt (update = %d)\n",
-		    sc->sc_dev.dv_xname, shouldupdate);
+		DPRINTF(("%s: wakeup interrupt (update = %d)\n",
+		    sc->sc_dev.dv_xname, shouldupdate));
 	sc->sc_flags &= ~SC_POWERSAVE;
 	if (shouldupdate) {
 		pgt_write_4_flush(sc, PGT_REG_DEV_INT, PGT_DEV_INT_UPDATE);
@@ -1090,8 +1090,8 @@ pgt_sleep_intr(struct pgt_softc *sc)
 	if (!TAILQ_EMPTY(&sc->sc_mgmtinprog))
 		allowed = 0;
 	if (sc->sc_debug & SC_DEBUG_POWER)
-		printf("%s: sleep interrupt (allowed = %d)\n",
-		    sc->sc_dev.dv_xname, allowed);
+		DPRINTF(("%s: sleep interrupt (allowed = %d)\n",
+		    sc->sc_dev.dv_xname, allowed));
 	if (allowed && sc->sc_ic.ic_flags & IEEE80211_F_PMGTON) {
 		sc->sc_flags |= SC_POWERSAVE;
 		pgt_write_4_flush(sc, PGT_REG_DEV_INT, PGT_DEV_INT_SLEEP);
@@ -1147,8 +1147,6 @@ pgt_per_device_kthread(void *argp)
 			pgt_update_sw_from_hw(sc, pa, m);
 			m_freem(m);
 		} else if (sck->sck_update) {
-			//DPRINTF(("%s: [thread] update_sw_from_hw\n",
-			//    sc->sc_dev.dv_xname));
 			sck->sck_update = 0;
 			pgt_update_sw_from_hw(sc, NULL, NULL);
 		}
@@ -1220,8 +1218,7 @@ pgt_intr(void *arg)
 		 * "update" after acknowledging the interrupt
 		 * bits and writing out the new control block.
 		 */
-		pgt_write_4_flush(sc, PGT_REG_DEV_INT,
-		    PGT_DEV_INT_UPDATE);
+		pgt_write_4_flush(sc, PGT_REG_DEV_INT, PGT_DEV_INT_UPDATE);
 		DELAY(PGT_WRITEIO_DELAY);
 	}
 	if (reg & PGT_INT_STAT_SLEEP && !(reg & PGT_INT_STAT_WAKEUP))
@@ -1235,10 +1232,10 @@ pgt_intr(void *arg)
 	}
 
 	if (reg & ~PGT_INT_STAT_SOURCES && sc->sc_debug & SC_DEBUG_UNEXPECTED) {
-		printf("%s: unknown interrupt bits %#x (stat %#x)\n",
+		DPRINTF(("%s: unknown interrupt bits %#x (stat %#x)\n",
 		    sc->sc_dev.dv_xname,
 		    reg & ~PGT_INT_STAT_SOURCES,
-		    pgt_read_4(sc, PGT_REG_CTRL_STAT));
+		    pgt_read_4(sc, PGT_REG_CTRL_STAT)));
 	}
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1400,8 +1397,8 @@ pgt_mgmtrx_completion(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 	}
 	if (pmf->pmf_operation == PMF_OP_TRAP) {
 		pmd = NULL; /* ignored */
-		DPRINTF(("%s: mgmt trap received "
-		    "(op %u, oid %#x, len %u)\n", sc->sc_dev.dv_xname,
+		DPRINTF(("%s: mgmt trap received (op %u, oid %#x, len %u)\n",
+		    sc->sc_dev.dv_xname,
 		    pmf->pmf_operation, oid, size));
 		pgt_trap_received(sc, oid, (char *)pmf + sizeof(*pmf),
 		    min(size, PGT_FRAG_SIZE - sizeof(*pmf)));
@@ -1685,8 +1682,8 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 	pmd->pmd_error = EINPROGRESS;
 	TAILQ_INSERT_TAIL(&sc->sc_mgmtinprog, pmd, pmd_link);
 	if (sc->sc_debug & SC_DEBUG_MGMT)
-		DPRINTF(("%s: queue: mgmt %p -> (op %u, "
-		    "oid %#x, len %u)\n", sc->sc_dev.dv_xname,
+		DPRINTF(("%s: queue: mgmt %p -> (op %u, oid %#x, len %u)\n",
+		    sc->sc_dev.dv_xname,
 		    pmd, pmf->pmf_operation,
 		    pmd->pmd_oid, pmd->pmd_len));
 	pgt_desc_transmit(sc, PGT_QUEUE_MGMT_TX, pd,
@@ -2406,10 +2403,6 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 		}
 		/* FALLTHROUGH */
 	default:
-		/*
-		 * XXX net80211 does not prevent modification of the
-		 * ieee80211com while it fondles it.
-		 */
 		error = ieee80211_ioctl(ifp, cmd, req);
 		break;
 	}
@@ -2607,8 +2600,7 @@ pgt_watchdog(struct ifnet *ifp)
 		if (sc->sc_txtimer && --sc->sc_txtimer == 0) {
 			count = pgt_drain_tx_queue(sc, PGT_QUEUE_DATA_LOW_TX);
 			if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
-				DPRINTF(("%s: timed out %d data "
-				    "transmissions\n",
+				DPRINTF(("%s: timeout %d data transmissions\n",
 				    sc->sc_dev.dv_xname, count));
 		}
 	}
