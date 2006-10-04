@@ -974,9 +974,12 @@
 ./usr/share/man/cat4/ac97.0
 ./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/acpi.0
+./usr/share/man/cat4/acpiac.0
 ./usr/share/man/cat4/acpibat.0
+./usr/share/man/cat4/acpiec.0
 ./usr/share/man/cat4/acpihpet.0
 ./usr/share/man/cat4/acpitimer.0
+./usr/share/man/cat4/acpitz.0
 ./usr/share/man/cat4/acx.0
 ./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
