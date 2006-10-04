@@ -154,6 +154,11 @@ struct rsa_st
 	BN_BLINDING *blinding;
 	};
 
+#define OPENSSL_RSA_MAX_MODULUS_BITS	16384
+
+#define OPENSSL_RSA_SMALL_MODULUS_BITS	3072
+#define OPENSSL_RSA_MAX_PUBEXP_BITS	64 /* exponent limit enforced for "small" modulus only */
+
 #define RSA_3	0x3L
 #define RSA_F4	0x10001L
 
@@ -386,6 +391,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_LAST_OCTET_INVALID			 134
+#define RSA_R_MODULUS_TOO_LARGE				 105
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
 #define RSA_R_N_DOES_NOT_EQUAL_P_Q			 127
 #define RSA_R_OAEP_DECODING_ERROR			 121
