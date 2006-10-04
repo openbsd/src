@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.15 2006/08/17 15:35:29 deraadt Exp $
+# $OpenBSD: list.local,v 1.16 2006/10/04 00:23:31 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/ccdconfig
@@ -13,6 +13,7 @@ LINK	instbin					sbin/mount_udf
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
+COPY	${DESTDIR}/etc/firmware/bnx		etc/firmware/bnx
 
 COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
 COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
