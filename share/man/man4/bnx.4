@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bnx.4,v 1.9 2006/08/30 22:56:05 jmc Exp $
+.\"	$OpenBSD: bnx.4,v 1.10 2006/10/04 00:23:20 deraadt Exp $
 .\"
 .\"Copyright (c) 2006 Broadcom Corporation
 .\" David Christensen <davidch@broadcom.com>.  All rights reserved.
@@ -131,6 +131,13 @@ Force half duplex operation.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh FILES
+The adapter needs a firmware file, which is loaded on demand by the
+driver when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/bnx
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr brgphy 4 ,
