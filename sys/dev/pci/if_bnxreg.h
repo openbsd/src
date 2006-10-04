@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.13 2006/10/02 02:29:46 deraadt Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.14 2006/10/04 00:23:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4837,74 +4837,73 @@ struct bnx_softc
 	u_int32_t unexpected_attentions;
 	u_int32_t	lost_status_block_updates;
 #endif
-	pci_intr_handle_t	sc_ih;
 };
 
 #endif /* _KERNEL */
 
 struct bnx_firmware_header {
-	int bnx_COM_b06FwReleaseMajor;
-	int bnx_COM_b06FwReleaseMinor;
-	int bnx_COM_b06FwReleaseFix;
-	u_int32_t bnx_COM_b06FwStartAddr;
-	u_int32_t bnx_COM_b06FwTextAddr;
-	int bnx_COM_b06FwTextLen;
-	u_int32_t bnx_COM_b06FwDataAddr;
-	int bnx_COM_b06FwDataLen;
-	u_int32_t bnx_COM_b06FwRodataAddr;
-	int bnx_COM_b06FwRodataLen;
-	u_int32_t bnx_COM_b06FwBssAddr;
-	int bnx_COM_b06FwBssLen;
-	u_int32_t bnx_COM_b06FwSbssAddr;
-	int bnx_COM_b06FwSbssLen;
+	int		bnx_COM_b06FwReleaseMajor;
+	int		bnx_COM_b06FwReleaseMinor;
+	int		bnx_COM_b06FwReleaseFix;
+	u_int32_t	bnx_COM_b06FwStartAddr;
+	u_int32_t	bnx_COM_b06FwTextAddr;
+	int		bnx_COM_b06FwTextLen;
+	u_int32_t	bnx_COM_b06FwDataAddr;
+	int		bnx_COM_b06FwDataLen;
+	u_int32_t	bnx_COM_b06FwRodataAddr;
+	int		bnx_COM_b06FwRodataLen;
+	u_int32_t	bnx_COM_b06FwBssAddr;
+	int		bnx_COM_b06FwBssLen;
+	u_int32_t	bnx_COM_b06FwSbssAddr;
+	int		bnx_COM_b06FwSbssLen;
 
-	int bnx_RXP_b06FwReleaseMajor;
-	int bnx_RXP_b06FwReleaseMinor;
-	int bnx_RXP_b06FwReleaseFix;
-	u_int32_t bnx_RXP_b06FwStartAddr;
-	u_int32_t bnx_RXP_b06FwTextAddr;
-	int bnx_RXP_b06FwTextLen;
-	u_int32_t bnx_RXP_b06FwDataAddr;
-	int bnx_RXP_b06FwDataLen;
-	u_int32_t bnx_RXP_b06FwRodataAddr;
-	int bnx_RXP_b06FwRodataLen;
-	u_int32_t bnx_RXP_b06FwBssAddr;
-	int bnx_RXP_b06FwBssLen;
-	u_int32_t bnx_RXP_b06FwSbssAddr;
-	int bnx_RXP_b06FwSbssLen;
+	int		bnx_RXP_b06FwReleaseMajor;
+	int		bnx_RXP_b06FwReleaseMinor;
+	int		bnx_RXP_b06FwReleaseFix;
+	u_int32_t	bnx_RXP_b06FwStartAddr;
+	u_int32_t	bnx_RXP_b06FwTextAddr;
+	int		bnx_RXP_b06FwTextLen;
+	u_int32_t	bnx_RXP_b06FwDataAddr;
+	int		bnx_RXP_b06FwDataLen;
+	u_int32_t	bnx_RXP_b06FwRodataAddr;
+	int		bnx_RXP_b06FwRodataLen;
+	u_int32_t	bnx_RXP_b06FwBssAddr;
+	int		bnx_RXP_b06FwBssLen;
+	u_int32_t	bnx_RXP_b06FwSbssAddr;
+	int		bnx_RXP_b06FwSbssLen;
 	
-	int bnx_TPAT_b06FwReleaseMajor;
-	int bnx_TPAT_b06FwReleaseMinor;
-	int bnx_TPAT_b06FwReleaseFix;
-	u_int32_t bnx_TPAT_b06FwStartAddr;
-	u_int32_t bnx_TPAT_b06FwTextAddr;
-	int bnx_TPAT_b06FwTextLen;
-	u_int32_t bnx_TPAT_b06FwDataAddr;
-	int bnx_TPAT_b06FwDataLen;
-	u_int32_t bnx_TPAT_b06FwRodataAddr;
-	int bnx_TPAT_b06FwRodataLen;
-	u_int32_t bnx_TPAT_b06FwBssAddr;
-	int bnx_TPAT_b06FwBssLen;
-	u_int32_t bnx_TPAT_b06FwSbssAddr;
-	int bnx_TPAT_b06FwSbssLen;
+	int		bnx_TPAT_b06FwReleaseMajor;
+	int		bnx_TPAT_b06FwReleaseMinor;
+	int		bnx_TPAT_b06FwReleaseFix;
+	u_int32_t	bnx_TPAT_b06FwStartAddr;
+	u_int32_t	bnx_TPAT_b06FwTextAddr;
+	int		bnx_TPAT_b06FwTextLen;
+	u_int32_t	bnx_TPAT_b06FwDataAddr;
+	int		bnx_TPAT_b06FwDataLen;
+	u_int32_t	bnx_TPAT_b06FwRodataAddr;
+	int		bnx_TPAT_b06FwRodataLen;
+	u_int32_t	bnx_TPAT_b06FwBssAddr;
+	int		bnx_TPAT_b06FwBssLen;
+	u_int32_t	bnx_TPAT_b06FwSbssAddr;
+	int		bnx_TPAT_b06FwSbssLen;
 
-	int bnx_TXP_b06FwReleaseMajor;
-	int bnx_TXP_b06FwReleaseMinor;
-	int bnx_TXP_b06FwReleaseFix;
-	u_int32_t bnx_TXP_b06FwStartAddr;
-	u_int32_t bnx_TXP_b06FwTextAddr;
-	int bnx_TXP_b06FwTextLen;
-	u_int32_t bnx_TXP_b06FwDataAddr;
-	int bnx_TXP_b06FwDataLen;
-	u_int32_t bnx_TXP_b06FwRodataAddr;
-	int bnx_TXP_b06FwRodataLen;
-	u_int32_t bnx_TXP_b06FwBssAddr;
-	int bnx_TXP_b06FwBssLen;
-	u_int32_t bnx_TXP_b06FwSbssAddr;
-	int bnx_TXP_b06FwSbssLen;
+	int		bnx_TXP_b06FwReleaseMajor;
+	int		bnx_TXP_b06FwReleaseMinor;
+	int		bnx_TXP_b06FwReleaseFix;
+	u_int32_t	bnx_TXP_b06FwStartAddr;
+	u_int32_t	bnx_TXP_b06FwTextAddr;
+	int		bnx_TXP_b06FwTextLen;
+	u_int32_t	bnx_TXP_b06FwDataAddr;
+	int		bnx_TXP_b06FwDataLen;
+	u_int32_t	bnx_TXP_b06FwRodataAddr;
+	int		bnx_TXP_b06FwRodataLen;
+	u_int32_t	bnx_TXP_b06FwBssAddr;
+	int		bnx_TXP_b06FwBssLen;
+	u_int32_t	bnx_TXP_b06FwSbssAddr;
+	int		bnx_TXP_b06FwSbssLen;
 
-	int bnx_rv2p_proc1len;
-	int bnx_rv2p_proc2len;
+	int		bnx_rv2p_proc1len;
+	int		bnx_rv2p_proc2len;
 
 	/* Followed by blocks of data, each sized according to
 	 * the (rather obvious) block length stated above.

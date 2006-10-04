@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.23 2006/08/25 02:13:51 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.24 2006/10/04 00:23:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -50,7 +50,96 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
  */
 
 #include <dev/pci/if_bnxreg.h>
-#include <dev/microcode/bnx/bnxfw.h>
+
+int bnx_COM_b06FwReleaseMajor;
+int bnx_COM_b06FwReleaseMinor;
+int bnx_COM_b06FwReleaseFix;
+u_int32_t bnx_COM_b06FwStartAddr;
+u_int32_t bnx_COM_b06FwTextAddr;
+int bnx_COM_b06FwTextLen;
+u_int32_t bnx_COM_b06FwDataAddr;
+int bnx_COM_b06FwDataLen;
+u_int32_t bnx_COM_b06FwRodataAddr;
+int bnx_COM_b06FwRodataLen;
+u_int32_t bnx_COM_b06FwBssAddr;
+int bnx_COM_b06FwBssLen;
+u_int32_t bnx_COM_b06FwSbssAddr;
+int bnx_COM_b06FwSbssLen;
+
+int bnx_RXP_b06FwReleaseMajor;
+int bnx_RXP_b06FwReleaseMinor;
+int bnx_RXP_b06FwReleaseFix;
+u_int32_t bnx_RXP_b06FwStartAddr;
+u_int32_t bnx_RXP_b06FwTextAddr;
+int bnx_RXP_b06FwTextLen;
+u_int32_t bnx_RXP_b06FwDataAddr;
+int bnx_RXP_b06FwDataLen;
+u_int32_t bnx_RXP_b06FwRodataAddr;
+int bnx_RXP_b06FwRodataLen;
+u_int32_t bnx_RXP_b06FwBssAddr;
+int bnx_RXP_b06FwBssLen;
+u_int32_t bnx_RXP_b06FwSbssAddr;
+int bnx_RXP_b06FwSbssLen;
+
+int bnx_TPAT_b06FwReleaseMajor;
+int bnx_TPAT_b06FwReleaseMinor;
+int bnx_TPAT_b06FwReleaseFix;
+u_int32_t bnx_TPAT_b06FwStartAddr;
+u_int32_t bnx_TPAT_b06FwTextAddr;
+int bnx_TPAT_b06FwTextLen;
+u_int32_t bnx_TPAT_b06FwDataAddr;
+int bnx_TPAT_b06FwDataLen;
+u_int32_t bnx_TPAT_b06FwRodataAddr;
+int bnx_TPAT_b06FwRodataLen;
+u_int32_t bnx_TPAT_b06FwBssAddr;
+int bnx_TPAT_b06FwBssLen;
+u_int32_t bnx_TPAT_b06FwSbssAddr;
+int bnx_TPAT_b06FwSbssLen;
+
+int bnx_TXP_b06FwReleaseMajor;
+int bnx_TXP_b06FwReleaseMinor;
+int bnx_TXP_b06FwReleaseFix;
+u_int32_t bnx_TXP_b06FwStartAddr;
+u_int32_t bnx_TXP_b06FwTextAddr;
+int bnx_TXP_b06FwTextLen;
+u_int32_t bnx_TXP_b06FwDataAddr;
+int bnx_TXP_b06FwDataLen;
+u_int32_t bnx_TXP_b06FwRodataAddr;
+int bnx_TXP_b06FwRodataLen;
+u_int32_t bnx_TXP_b06FwBssAddr;
+int bnx_TXP_b06FwBssLen;
+u_int32_t bnx_TXP_b06FwSbssAddr;
+int bnx_TXP_b06FwSbssLen;
+
+int bnx_rv2p_proc1len;
+int bnx_rv2p_proc2len;
+
+u_int32_t *bnx_COM_b06FwText;
+u_int32_t *bnx_COM_b06FwData;
+u_int32_t *bnx_COM_b06FwRodata;
+u_int32_t *bnx_COM_b06FwBss;
+u_int32_t *bnx_COM_b06FwSbss;
+
+u_int32_t *bnx_RXP_b06FwText;
+u_int32_t *bnx_RXP_b06FwData;
+u_int32_t *bnx_RXP_b06FwRodata;
+u_int32_t *bnx_RXP_b06FwBss;
+u_int32_t *bnx_RXP_b06FwSbss;
+
+u_int32_t *bnx_TPAT_b06FwText;
+u_int32_t *bnx_TPAT_b06FwData;
+u_int32_t *bnx_TPAT_b06FwRodata;
+u_int32_t *bnx_TPAT_b06FwBss;
+u_int32_t *bnx_TPAT_b06FwSbss;
+
+u_int32_t *bnx_TXP_b06FwText;
+u_int32_t *bnx_TXP_b06FwData;
+u_int32_t *bnx_TXP_b06FwRodata;
+u_int32_t *bnx_TXP_b06FwBss;
+u_int32_t *bnx_TXP_b06FwSbss;
+
+u_int32_t *bnx_rv2p_proc1;
+u_int32_t *bnx_rv2p_proc2;
 
 /****************************************************************************/
 /* BNX Driver Version                                                       */
@@ -196,6 +285,8 @@ static struct flash_spec flash_table[] =
 /****************************************************************************/
 int	bnx_probe(struct device *, void *, void *);
 void	bnx_attach(struct device *, struct device *, void *);
+void	bnx_attachhook(void *);
+int	bnx_read_firmware(struct bnx_softc *sc);
 #if 0
 void	bnx_detach(void *);
 #endif
@@ -331,6 +422,151 @@ bnx_probe(struct device *parent, void *match, void *aux)
 	    sizeof(bnx_devices)/sizeof(bnx_devices[0])));
 }
 
+int
+bnx_read_firmware(struct bnx_softc *sc)
+{
+	static struct bnx_firmware_header *hdr;
+	u_char *p, *q;
+	size_t size;
+	int error;
+
+	if (hdr)
+		return (0);
+
+	if ((error = loadfirmware("bnx", &p, &size)) != 0)
+		return error;
+
+	if (size < sizeof (struct bnx_firmware_header)) {
+		free(p, M_DEVBUF);
+		return EINVAL;
+	}
+
+	hdr = (struct bnx_firmware_header *)p;
+
+	bnx_COM_b06FwReleaseMajor = hdr->bnx_COM_b06FwReleaseMajor;
+	bnx_COM_b06FwReleaseMinor = hdr->bnx_COM_b06FwReleaseMinor;
+	bnx_COM_b06FwReleaseFix = hdr->bnx_COM_b06FwReleaseFix;
+	bnx_COM_b06FwStartAddr = hdr->bnx_COM_b06FwStartAddr;
+	bnx_COM_b06FwTextAddr = hdr->bnx_COM_b06FwTextAddr;
+	bnx_COM_b06FwTextLen = hdr->bnx_COM_b06FwTextLen;
+	bnx_COM_b06FwDataAddr = hdr->bnx_COM_b06FwDataAddr;
+	bnx_COM_b06FwDataLen = hdr->bnx_COM_b06FwDataLen;
+	bnx_COM_b06FwRodataAddr = hdr->bnx_COM_b06FwRodataAddr;
+	bnx_COM_b06FwRodataLen = hdr->bnx_COM_b06FwRodataLen;
+	bnx_COM_b06FwBssAddr = hdr->bnx_COM_b06FwBssAddr;
+	bnx_COM_b06FwBssLen = hdr->bnx_COM_b06FwBssLen;
+	bnx_COM_b06FwSbssAddr = hdr->bnx_COM_b06FwSbssAddr;
+	bnx_COM_b06FwSbssLen = hdr->bnx_COM_b06FwSbssLen;
+
+	bnx_RXP_b06FwReleaseMajor = hdr->bnx_RXP_b06FwReleaseMajor;
+	bnx_RXP_b06FwReleaseMinor = hdr->bnx_RXP_b06FwReleaseMinor;
+	bnx_RXP_b06FwReleaseFix = hdr->bnx_RXP_b06FwReleaseFix;
+	bnx_RXP_b06FwStartAddr = hdr->bnx_RXP_b06FwStartAddr;
+	bnx_RXP_b06FwTextAddr = hdr->bnx_RXP_b06FwTextAddr;
+	bnx_RXP_b06FwTextLen = hdr->bnx_RXP_b06FwTextLen;
+	bnx_RXP_b06FwDataAddr = hdr->bnx_RXP_b06FwDataAddr;
+	bnx_RXP_b06FwDataLen = hdr->bnx_RXP_b06FwDataLen;
+	bnx_RXP_b06FwRodataAddr = hdr->bnx_RXP_b06FwRodataAddr;
+	bnx_RXP_b06FwRodataLen = hdr->bnx_RXP_b06FwRodataLen;
+	bnx_RXP_b06FwBssAddr = hdr->bnx_RXP_b06FwBssAddr;
+	bnx_RXP_b06FwBssLen = hdr->bnx_RXP_b06FwBssLen;
+	bnx_RXP_b06FwSbssAddr = hdr->bnx_RXP_b06FwSbssAddr;
+	bnx_RXP_b06FwSbssLen = hdr->bnx_RXP_b06FwSbssLen;
+
+	bnx_TPAT_b06FwReleaseMajor = hdr->bnx_TPAT_b06FwReleaseMajor;
+	bnx_TPAT_b06FwReleaseMinor = hdr->bnx_TPAT_b06FwReleaseMinor;
+	bnx_TPAT_b06FwReleaseFix = hdr->bnx_TPAT_b06FwReleaseFix;
+	bnx_TPAT_b06FwStartAddr = hdr->bnx_TPAT_b06FwStartAddr;
+	bnx_TPAT_b06FwTextAddr = hdr->bnx_TPAT_b06FwTextAddr;
+	bnx_TPAT_b06FwTextLen = hdr->bnx_TPAT_b06FwTextLen;
+	bnx_TPAT_b06FwDataAddr = hdr->bnx_TPAT_b06FwDataAddr;
+	bnx_TPAT_b06FwDataLen = hdr->bnx_TPAT_b06FwDataLen;
+	bnx_TPAT_b06FwRodataAddr = hdr->bnx_TPAT_b06FwRodataAddr;
+	bnx_TPAT_b06FwRodataLen = hdr->bnx_TPAT_b06FwRodataLen;
+	bnx_TPAT_b06FwBssAddr = hdr->bnx_TPAT_b06FwBssAddr;
+	bnx_TPAT_b06FwBssLen = hdr->bnx_TPAT_b06FwBssLen;
+	bnx_TPAT_b06FwSbssAddr = hdr->bnx_TPAT_b06FwSbssAddr;
+	bnx_TPAT_b06FwSbssLen = hdr->bnx_TPAT_b06FwSbssLen;
+
+	bnx_TXP_b06FwReleaseMajor = hdr->bnx_TXP_b06FwReleaseMajor;
+	bnx_TXP_b06FwReleaseMinor = hdr->bnx_TXP_b06FwReleaseMinor;
+	bnx_TXP_b06FwReleaseFix = hdr->bnx_TXP_b06FwReleaseFix;
+	bnx_TXP_b06FwStartAddr = hdr->bnx_TXP_b06FwStartAddr;
+	bnx_TXP_b06FwTextAddr = hdr->bnx_TXP_b06FwTextAddr;
+	bnx_TXP_b06FwTextLen = hdr->bnx_TXP_b06FwTextLen;
+	bnx_TXP_b06FwDataAddr = hdr->bnx_TXP_b06FwDataAddr;
+	bnx_TXP_b06FwDataLen = hdr->bnx_TXP_b06FwDataLen;
+	bnx_TXP_b06FwRodataAddr = hdr->bnx_TXP_b06FwRodataAddr;
+	bnx_TXP_b06FwRodataLen = hdr->bnx_TXP_b06FwRodataLen;
+	bnx_TXP_b06FwBssAddr = hdr->bnx_TXP_b06FwBssAddr;
+	bnx_TXP_b06FwBssLen = hdr->bnx_TXP_b06FwBssLen;
+	bnx_TXP_b06FwSbssAddr = hdr->bnx_TXP_b06FwSbssAddr;
+	bnx_TXP_b06FwSbssLen = hdr->bnx_TXP_b06FwSbssLen;
+
+	bnx_rv2p_proc1len = hdr->bnx_rv2p_proc1len;
+	bnx_rv2p_proc2len = hdr->bnx_rv2p_proc2len;
+
+	q = p + sizeof(*hdr);
+
+	bnx_COM_b06FwText = (u_int32_t *)q;
+	q += bnx_COM_b06FwTextLen;
+	bnx_COM_b06FwData = (u_int32_t *)q;
+	q += bnx_COM_b06FwDataLen;
+	bnx_COM_b06FwRodata = (u_int32_t *)q;
+	q += bnx_COM_b06FwRodataLen;
+	bnx_COM_b06FwBss = (u_int32_t *)q;
+	q += bnx_COM_b06FwBssLen;
+	bnx_COM_b06FwSbss = (u_int32_t *)q;
+	q += bnx_COM_b06FwSbssLen;
+
+	bnx_RXP_b06FwText = (u_int32_t *)q;
+	q += bnx_RXP_b06FwTextLen;
+	bnx_RXP_b06FwData = (u_int32_t *)q;
+	q += bnx_RXP_b06FwDataLen;
+	bnx_RXP_b06FwRodata = (u_int32_t *)q;
+	q += bnx_RXP_b06FwRodataLen;
+	bnx_RXP_b06FwBss = (u_int32_t *)q;
+	q += bnx_RXP_b06FwBssLen;
+	bnx_RXP_b06FwSbss = (u_int32_t *)q;
+	q += bnx_RXP_b06FwSbssLen;
+
+	bnx_TPAT_b06FwText = (u_int32_t *)q;
+	q += bnx_TPAT_b06FwTextLen;
+	bnx_TPAT_b06FwData = (u_int32_t *)q;
+	q += bnx_TPAT_b06FwDataLen;
+	bnx_TPAT_b06FwRodata = (u_int32_t *)q;
+	q += bnx_TPAT_b06FwRodataLen;
+	bnx_TPAT_b06FwBss = (u_int32_t *)q;
+	q += bnx_TPAT_b06FwBssLen;
+	bnx_TPAT_b06FwSbss = (u_int32_t *)q;
+	q += bnx_TPAT_b06FwSbssLen;
+
+	bnx_TXP_b06FwText = (u_int32_t *)q;
+	q += bnx_TXP_b06FwTextLen;
+	bnx_TXP_b06FwData = (u_int32_t *)q;
+	q += bnx_TXP_b06FwDataLen;
+	bnx_TXP_b06FwRodata = (u_int32_t *)q;
+	q += bnx_TXP_b06FwRodataLen;
+	bnx_TXP_b06FwBss = (u_int32_t *)q;
+	q += bnx_TXP_b06FwBssLen;
+	bnx_TXP_b06FwSbss = (u_int32_t *)q;
+	q += bnx_TXP_b06FwSbssLen;
+
+	bnx_rv2p_proc1 = (u_int32_t *)q;
+	q += bnx_rv2p_proc1len;
+	bnx_rv2p_proc2 = (u_int32_t *)q;
+	q += bnx_rv2p_proc2len;
+	
+	if (q - p != size) {
+		free(p, M_DEVBUF);
+		hdr = NULL;
+		return EINVAL;
+	}
+
+	return (0);
+}
+
+
 /****************************************************************************/
 /* Device attach function.                                                  */
 /*                                                                          */
@@ -347,11 +583,10 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	struct bnx_softc	*sc = (struct bnx_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
-	pci_intr_handle_t	ih;
-	const char 		*intrstr = NULL;
-	struct ifnet		*ifp;
 	u_int32_t		val;
 	pcireg_t		memtype;
+	const char 		*intrstr = NULL;
+	pci_intr_handle_t	ih;
 
 	sc->bnx_pa = *pa;
 
@@ -468,19 +703,56 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	if (val & BNX_PCICFG_MISC_STATUS_32BIT_DET)
 		sc->bnx_flags |= BNX_PCI_32BIT_FLAG;
 
+	/* Hookup IRQ last. */
+	sc->bnx_intrhand = pci_intr_establish(pc, ih, IPL_NET, bnx_intr, sc,
+	    sc->bnx_dev.dv_xname);
+	if (sc->bnx_intrhand == NULL) {
+		printf("%s: couldn't establish interrupt", sc->bnx_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto bnx_attach_fail;
+	}
+	printf(": %s\n", intrstr);
+
+	mountroothook_establish(bnx_attachhook, sc);
+	return;
+
+bnx_attach_fail:
+	bnx_release_resources(sc);
+	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
+}
+
+void
+bnx_attachhook(void *xsc)
+{
+	struct bnx_softc *sc = xsc;
+	struct pci_attach_args *pa = &sc->bnx_pa;
+	struct ifnet		*ifp;
+	u_int32_t		val;
+	int error;
+
+	if ((error = bnx_read_firmware(sc)) != 0) {
+		printf("%s: could not read firmware (error=%d)\n",
+		    sc->bnx_dev.dv_xname, error);
+		return;
+	}
+
 	/* Reset the controller. */
 	if (bnx_reset(sc, BNX_DRV_MSG_CODE_RESET))
 		goto bnx_attach_fail;
 
 	/* Initialize the controller. */
 	if (bnx_chipinit(sc)) {
-		printf(": Controller initialization failed!\n");
+		printf("%s: Controller initialization failed!\n",
+		    sc->bnx_dev.dv_xname);
 		goto bnx_attach_fail;
 	}
 
 	/* Perform NVRAM test. */
 	if (bnx_nvram_test(sc)) {
-		printf(": NVRAM test failed!\n");
+		printf("%s: NVRAM test failed!\n",
+		    sc->bnx_dev.dv_xname);
 		goto bnx_attach_fail;
 	}
 
@@ -587,18 +859,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mbuf_alloc_size = BNX_MAX_MRU;
 
-	/* Hookup IRQ last. */
-	sc->bnx_intrhand = pci_intr_establish(pc, ih, IPL_NET, bnx_intr, sc,
-	    sc->bnx_dev.dv_xname);
-	if (sc->bnx_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto bnx_attach_fail;
-	}
-
-	printf(": %s, address %s\n", intrstr,
+	printf("%s: address %s\n", sc->bnx_dev.dv_xname,
 	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->bnx_mii.mii_ifp = ifp;
@@ -2413,9 +2674,9 @@ bnx_init_cpus(struct bnx_softc *sc)
 	struct fw_info fw;
 
 	/* Initialize the RV2P processor. */
-	bnx_load_rv2p_fw(sc, bnx_rv2p_proc1, sizeof(bnx_rv2p_proc1),
+	bnx_load_rv2p_fw(sc, bnx_rv2p_proc1, bnx_rv2p_proc1len,
 	    RV2P_PROC1);
-	bnx_load_rv2p_fw(sc, bnx_rv2p_proc2, sizeof(bnx_rv2p_proc2),
+	bnx_load_rv2p_fw(sc, bnx_rv2p_proc2, bnx_rv2p_proc2len,
 	    RV2P_PROC2);
 
 	/* Initialize the RX Processor. */
@@ -4386,7 +4647,8 @@ bnx_watchdog(struct ifnet *ifp)
 	DBRUN(BNX_WARN_SEND, bnx_dump_driver_state(sc);
 	    bnx_dump_status_block(sc));
 
-	printf("%s: Watchdog timeout occurred, resetting!\n");
+	printf("%s: Watchdog timeout occurred, resetting!\n",
+	    ifp->if_xname);
 
 	/* DBRUN(BNX_FATAL, bnx_breakpoint(sc)); */
 
