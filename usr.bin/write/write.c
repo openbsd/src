@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.23 2005/07/04 01:54:11 djm Exp $	*/
+/*	$OpenBSD: write.c,v 1.24 2006/10/04 21:13:42 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.23 2005/07/04 01:54:11 djm Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.24 2006/10/04 21:13:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ utmp_chk(char *user, char *tty)
 	int ufd;
 
 	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0)
-		return(0);	/* ignore error, shouldn't happen anyway */
+		return(1);	/* no utmp, cannot talk to users */
 
 	while (read(ufd, (char *) &u, sizeof(u)) == sizeof(u))
 		if (strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0 &&
