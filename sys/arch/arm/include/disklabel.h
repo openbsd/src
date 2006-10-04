@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.7 2006/07/01 16:50:32 krw Exp $	*/
-/*	$OpenBSD: disklabel.h,v 1.7 2006/07/01 16:50:32 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 2006/10/04 03:30:48 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 2006/10/04 03:30:48 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #define MAXPARTITIONS	16		/* number of partitions */
 #define RAW_PART	2		/* raw partition: XX?c */
 
-#include <sys/dkbad.h>
 #if 0
 #include <arm/disklabel_acorn.h>
 #include <sys/disklabel_mbr.h>
@@ -107,7 +106,6 @@ struct dos_partition {
 
 struct cpu_disklabel {
 	struct dos_partition dosparts[NDOSPART];
-	struct dkbad bad;
 };
 
 #endif /* _ARM_DISKLABEL_H_ */
