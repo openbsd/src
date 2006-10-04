@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 2006/10/03 01:37:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 2006/10/04 03:23:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -200,8 +200,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 #if defined(DISKLABEL_I386)
 /*
  * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition. Also, if bad block
- * table needed, attempt to extract it as well. Return buffer
+ * find disklabel inside a DOS partition. Return buffer
  * for use in signalling errors if requested.
  *
  * We would like to check if each MBR has a valid BOOT_MAGIC, but

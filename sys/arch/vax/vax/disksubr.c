@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.30 2006/08/17 10:34:14 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.31 2006/10/04 03:23:01 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>

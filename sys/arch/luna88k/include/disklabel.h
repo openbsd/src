@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.1.1.1 2004/04/21 15:23:57 aoyama Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.2 2006/10/04 03:23:01 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2000/01/28 02:25:24 nisimura Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  * This holds a copy of the whole label block, saved in here by
  * readdisklabel() so that writedisklabel() can preserve the
  * parts of the label block outside of the actual label.
- * (i.e. Sun label info, bad block table, etc.)
+ * (i.e. Sun label info, etc.)
  */
 struct cpu_disklabel {
 	char	cd_block[512];

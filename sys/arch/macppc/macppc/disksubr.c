@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.23 2006/10/04 00:52:55 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.24 2006/10/04 03:23:01 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -53,8 +53,7 @@
  * must be filled in before calling us.
  *
  * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition. Also, if bad block
- * table needed, attempt to extract it as well. Return buffer
+ * find disklabel inside a DOS partition. Return buffer
  * for use in signalling errors if requested.
  *
  * We would like to check if each MBR has a valid BOOT_MAGIC, but
