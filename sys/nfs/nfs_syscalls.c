@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.48 2006/06/25 15:01:54 sturm Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.49 2006/10/04 12:04:40 pedro Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -1033,7 +1033,7 @@ nfs_getset_niothreads(set)
 
 /*
  * Get an authorization string for the uid by having the mount_nfs sitting
- * on this mount point porpous out of the kernel and do it.
+ * on this mount point porpoise out of the kernel and do it.
  */
 int
 nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
