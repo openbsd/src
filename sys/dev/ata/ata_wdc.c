@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.28 2006/08/21 12:09:01 krw Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.29 2006/10/04 00:52:55 krw Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -237,30 +237,6 @@ again:
 			nblks = 1;
 		else
 			nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
-		/* Check for bad sectors and adjust transfer, if necessary. */
-		if ((ata_bio->lp->d_flags & D_BADSECT) != 0) {
-			long blkdiff;
-			int i;
-			for (i = 0; (blkdiff = ata_bio->badsect[i]) != -1;
-			     i++) {
-				blkdiff -= ata_bio->blkno;
-				if (blkdiff < 0)
-					continue;
-				if (blkdiff == 0) {
-					/* Replace current block of transfer. */
-					ata_bio->blkno =
-					    ata_bio->lp->d_secperunit -
-					    ata_bio->lp->d_nsectors - i - 1;
-				}
-				if (blkdiff < nblks) {
-					/* Bad block inside transfer. */
-					ata_bio->flags |= ATA_SINGLE;
-					nblks = 1;
-				}
-				break;
-			}
-			/* Transfer is okay now. */
-		}
 		if (ata_bio->flags & ATA_LBA) {
 			sect = (ata_bio->blkno >> 0) & 0xff;
 			cyl = (ata_bio->blkno >> 8) & 0xffff;

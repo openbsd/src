@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2006/09/16 14:56:11 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2006/10/04 00:52:55 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -220,7 +220,6 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	int spoofonly;
 {
 	struct dos_partition *dp = osdep->u._i386.dosparts, *dp2;
-	struct dkbad *db, *bdp = &DKBAD(osdep);
 	char *msg = NULL, *cp;
 	int dospartoff, cyl, i, ourpart = -1;
 	dev_t dev;
@@ -389,53 +388,7 @@ donot:
 	/* next, dig out disk label */
 	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
 	    lp, spoofonly);
-	if (msg)
-		return (msg);
 
-	/* obtain bad sector table if requested and present */
-	if (bdp && (lp->d_flags & D_BADSECT)) {
-		/*
-		 * get a new buffer and initialize it as callers trust the
-		 * buffer given to us, to point at the disklabel sector.
-		 */
-		dev = bp->b_dev;
-		bp = geteblk((int)lp->d_secsize);
-		bp->b_dev = dev;
-
-		i = 0;
-		do {
-			/* read a bad sector table */
-			bp->b_flags = B_BUSY | B_READ;
-			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEV_BSIZE)
-				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
-			else
-				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_cylinder = lp->d_ncylinders - 1;
-			(*strat)(bp);
-
-			/* if successful, validate, otherwise try another */
-			if (biowait(bp))
-				msg = "bad sector table I/O error";
-			else {
-				db = (struct dkbad *)(bp->b_data);
-#define DKBAD_MAGIC 0x4321
-				if (db->bt_mbz == 0 &&
-				    db->bt_flag == DKBAD_MAGIC) {
-					msg = NULL;
-					*bdp = *db;
-					break;
-				} else
-					msg = "bad sector table corrupted";
-			}
-		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
-		    i < lp->d_nsectors);
-
-		/* Give back the bad block buffer.  */
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
-	}
 	return (msg);
 }
 #endif

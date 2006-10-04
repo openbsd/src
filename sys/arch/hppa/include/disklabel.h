@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.12 2006/07/07 23:47:37 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.13 2006/10/04 00:52:55 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -175,13 +175,11 @@ struct hpux_label {
 #define	lifstob(s)	((s) * LIF_SECTSIZE) 
 #define	lifstodb(s)	((s) * LIF_SECTSIZE / DEV_BSIZE)
 
-#include <sys/dkbad.h>
 struct cpu_disklabel {
 	int labelsector;
 	union {
 		struct {
 			struct dos_partition dosparts[NDOSPART];
-			struct dkbad bad;
 		} _i386;
 		struct {
 			struct lifvol lifvol;
@@ -190,7 +188,5 @@ struct cpu_disklabel {
 		} _hppa;
 	} u;
 };
-
-#define DKBAD(x) ((x)->u._i386.bad)
 
 #endif /* _MACHINE_DISKLABEL_H_ */

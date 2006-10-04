@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.28 2006/07/01 16:50:33 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.29 2006/10/04 00:52:55 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -84,13 +84,9 @@ struct dos_mbr {
 #define DOSMBR_SIGNATURE	(0xaa55)
 #define DOSMBR_SIGNATURE_OFF	(0x1fe)
 
-#include <sys/dkbad.h>
 struct cpu_disklabel {
 	struct dos_partition dosparts[NDOSPART];
-	struct dkbad bad;
 };
-
-#define DKBAD(x) ((x)->bad)
 
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	DPSECT(s)	((s) & 0x3f)
