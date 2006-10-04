@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.35 2006/10/04 14:15:18 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.36 2006/10/04 14:19:32 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -377,23 +377,23 @@ The
 may be one of the following:
 .Bl -tag -width indent -compact
 .Pp
+.It Em abort
+Abort off-line mode self-test routine.
+.Pp
 .It Em collect
 Start SMART off-line data collection immediately.
 .Pp
-.It Em shortoffline
-Execute SMART short self-test routine immediately in off-line mode.
+.It Em extencaptive
+Execute SMART extended self-test routine immediately in captive mode.
 .Pp
 .It Em extenoffline
 Execute SMART extended self-test routine immediately in off-line mode.
 .Pp
-.It Em abort
-Abort off-line mode self-test routine.
-.Pp
 .It Em shortcaptive
 Execute SMART short self-test routine immediately in captive mode.
 .Pp
-.It Em extencaptive
-Execute SMART extended self-test routine immediately in captive mode.
+.It Em shortoffline
+Execute SMART short self-test routine immediately in off-line mode.
 .El
 .Pp
 Note that executing self-test routines in captive mode causes the device to
