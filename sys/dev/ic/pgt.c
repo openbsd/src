@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.25 2006/10/04 18:13:37 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.26 2006/10/05 08:56:51 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -176,9 +176,6 @@ void	 pgt_start(struct ifnet *);
 int	 pgt_ioctl(struct ifnet *, u_long, caddr_t);
 void	 pgt_obj_bss2scanres(struct pgt_softc *,
 	     struct pgt_obj_bss *, struct wi_scan_res *, uint32_t);
-#if 0
-int	 pgt_80211_set(struct pgt_softc *, struct ieee80211req *);
-#endif
 void	 node_mark_active_ap(void *, struct ieee80211_node *);
 void	 node_mark_active_adhoc(void *, struct ieee80211_node *);
 void	 pgt_watchdog(struct ifnet *);
@@ -593,7 +590,6 @@ pgt_attach(void *xsc)
 	TAILQ_INIT(&sc->sc_mgmtinprog);
 	TAILQ_INIT(&sc->sc_kthread.sck_traps);
 	sc->sc_flags |= SC_NEEDS_FIRMWARE | SC_UNINITIALIZED;
-
 	sc->sc_80211_ioc_auth = IEEE80211_AUTH_OPEN;
 
 	error = pgt_reset(sc);
@@ -2437,116 +2433,6 @@ pgt_obj_bss2scanres(struct pgt_softc *sc, struct pgt_obj_bss *pob,
 	}
 	memcpy(scanres, &ap, WI_PRISM2_RES_SIZE);
 }
-
-#if 0
-int
-pgt_80211_set(struct pgt_softc *sc, struct ieee80211req *ireq)
-{
-	struct ieee80211req_mlme mlme;
-	struct ieee80211com *ic;
-	int error;
-
-	ic = &sc->sc_ic;
-	switch (ireq->i_type) {
-	/*
-	 * These are 802.11 requests we want to let fall through to
-	 * net80211 but do not need a reset afterward.
-	 */
-	case IEEE80211_POWERSAVE_OFF:
-	case IEEE80211_POWERSAVE_ON:
-		error = ieee80211_ioctl(&ic->ic_if, SIOCS80211,
-		    (caddr_t)ireq);
-		if (error == ENETRESET)
-			error = 0;
-		break;
-	/*
-	 * These are 802.11 requests we want to let fall through to
-	 * net80211 but then use their results without doing a full
-	 * reset afterward.
-	 */
-	case IEEE80211_IOC_WEPKEY:
-	case IEEE80211_IOC_WEPTXKEY:
-		error = ieee80211_ioctl(&ic->ic_if, SIOCS80211, (caddr_t)ireq);
-		if (error == ENETRESET) {
-			pgt_update_hw_from_sw(sc,
-			    ic->ic_state != IEEE80211_S_INIT,
-			    ic->ic_opmode != IEEE80211_M_MONITOR);
-			error = 0;
-		}
-		break;
-	case IEEE80211_IOC_WEP:
-		switch (ireq->i_val) {
-		case IEEE80211_WEP_OFF:
-		case IEEE80211_WEP_ON:
-		case IEEE80211_WEP_MIXED:
-			error = 0;
-			break;
-		default:
-			error = EINVAL;
-		}
-		if (error)
-			break;
-		if (sc->sc_80211_ioc_wep != ireq->i_val) {
-			sc->sc_80211_ioc_wep = ireq->i_val;
-			pgt_update_hw_from_sw(sc, 0,
-			    ic->ic_opmode != IEEE80211_M_MONITOR);
-			error = 0;
-		} else
-			error = 0;
-		break;
-	case IEEE80211_IOC_AUTHMODE:
-		switch (ireq->i_val) {
-		case IEEE80211_AUTH_NONE:
-		case IEEE80211_AUTH_OPEN:
-		case IEEE80211_AUTH_SHARED:
-			error = 0;
-			break;
-		default:
-			error = EINVAL;
-		}
-		if (error)
-			break;
-		if (sc->sc_80211_ioc_auth != ireq->i_val) {
-			sc->sc_80211_ioc_auth = ireq->i_val;
-			pgt_update_hw_from_sw(sc, 0, 0);
-			error = 0;
-		} else
-			error = 0;
-		break;
-	case IEEE80211_IOC_MLME:
-		if (ireq->i_len != sizeof(mlme)) {
-			error = EINVAL;
-			break;
-		}
-		error = copyin(ireq->i_data, &mlme, sizeof(mlme));
-		if (error)
-			break;
-		pgt_enter_critical(sc);
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_STA:
-			error = pgt_do_mlme_sta(sc, &mlme);
-			break;
-		case IEEE80211_M_HOSTAP:
-			error = pgt_do_mlme_hostap(sc, &mlme);
-			break;
-		case IEEE80211_M_IBSS:
-			error = pgt_do_mlme_adhoc(sc, &mlme);
-			break;
-		default:
-			error = EINVAL;
-			break;
-		}
-		pgt_exit_critical(sc);
-		if (error == 0)
-			error = copyout(&mlme, ireq->i_data, sizeof(mlme));
-		break;
-	default:
-		error = EOPNOTSUPP;
-		break;
-	}
-	return (error);
-}
-#endif
 
 void
 node_mark_active_ap(void *arg, struct ieee80211_node *ni)
