@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.26 2006/10/05 08:56:51 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.27 2006/10/05 11:08:30 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2223,10 +2223,6 @@ pgt_start(struct ifnet *ifp)
 int
 pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 {
-#if 0
-	struct ifprismoidreq *preq;
-	struct ieee80211req *ireq;
-#endif
 	struct pgt_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -2244,25 +2240,6 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 
 	s = splnet();
 	switch (cmd) {
-#if 0
-	case SIOCGPRISMOID:
-	case SIOCSPRISMOID:
-		error = suser(curthread);
-		if (error)
-			return (error);
-		preq = (struct ifprismoidreq *)req;
-		if (preq->ifr_oidlen > sizeof(preq->ifr_oiddata))
-			return (ENOMEM);
-		pgt_enter_critical(sc);
-		if (cmd == SIOCGPRISMOID)
-			error = pgt_oid_retrieve(sc, preq->ifr_oid,
-			    preq->ifr_oiddata, preq->ifr_oidlen);
-		else
-			error = pgt_oid_set(sc, preq->ifr_oid,
-			    preq->ifr_oiddata, preq->ifr_oidlen);
-		pgt_exit_critical(sc);
-		break;
-#endif
 	case SIOCS80211SCAN:
 		/*
 		 * This chip scans always as soon as it gets initialized.
