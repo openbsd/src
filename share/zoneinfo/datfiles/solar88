@@ -1,5 +1,5 @@
-# $OpenBSD: solar88,v 1.8 2005/07/05 02:21:55 millert Exp $
-# @(#)solar88	7.4
+# $OpenBSD: solar88,v 1.9 2006/10/05 18:09:03 millert Exp $
+# @(#)solar88	8.1
 
 # Apparent noon times below are for Riyadh; they're a bit off for other places.
 # Times were computed using formulas in the U.S. Naval Observatory's

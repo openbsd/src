@@ -1,5 +1,5 @@
-# $OpenBSD: systemv,v 1.7 2006/02/18 19:47:24 millert Exp $
-# @(#)systemv	7.5
+# $OpenBSD: systemv,v 1.8 2006/10/05 18:09:03 millert Exp $
+# @(#)systemv	8.1
 
 # Old rules, should the need arise.
 # No attempt is made to handle Newfoundland, since it cannot be expressed

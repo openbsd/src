@@ -1,5 +1,5 @@
-# $OpenBSD: factory,v 1.6 2001/03/28 13:33:44 millert Exp $
-# @(#)factory	7.3
+# $OpenBSD: factory,v 1.7 2006/10/05 18:09:03 millert Exp $
+# @(#)factory	8.1
 
 # For companies who don't want to put time zone specification in
 # their installation procedures.  When users run date, they'll get the message.

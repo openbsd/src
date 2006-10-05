@@ -1,5 +1,5 @@
-# $OpenBSD: etcetera,v 1.9 2005/07/05 02:21:55 millert Exp $
-# @(#)etcetera	7.12
+# $OpenBSD: etcetera,v 1.10 2006/10/05 18:09:03 millert Exp $
+# @(#)etcetera	8.1
 
 # These entries are mostly present for historical reasons, so that
 # people in areas not otherwise covered by the tz files could "zic -l"
