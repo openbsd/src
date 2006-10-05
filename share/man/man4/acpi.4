@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.9 2006/10/03 20:37:41 mk Exp $
+.\"	$OpenBSD: acpi.4,v 1.10 2006/10/05 17:31:14 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -45,8 +45,10 @@ the firmware, parsing and interpreting AML code, event handling,
 suspending and powering off, and attaching device drivers.
 .Pp
 The
-.Nm acpiec
-driver provides access to ACPI Embedded Controllers for other ACPI devices.
+.Nm acpiac
+driver supports ACPI AC Adapters.
+Information about AC power source status (connected or disconnected) is
+available through this driver.
 AC power source status is updated every 10 seconds.
 .Pp
 The
