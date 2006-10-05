@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.64 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.65 2006/10/05 18:29:26 thib Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -253,11 +253,11 @@ vndopen(dev, flags, mode, p)
 
 	/*
 	 * If any partition is open, all succeeding openings must be of the
-	 * same type.
+	 * same type or read-only.
 	 */
 	if (sc->sc_dk.dk_openmask) {
 		if (((sc->sc_flags & VNF_SIMPLE) != 0) !=
-		    (vndsimple(dev) != 0)) {
+		    (vndsimple(dev) != 0) && (flags & FWRITE)) {
 			error = EBUSY;
 			goto bad;
 		}
