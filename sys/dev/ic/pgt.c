@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.28 2006/10/05 12:15:43 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.29 2006/10/05 14:22:54 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2953,19 +2953,9 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		ic->ic_if.if_timer = 1;
 		ic->ic_mgt_timer = 0;
-		if (sc->sc_flags & SC_NOFREE_ALLNODES) {
-#if 0
-			struct ieee80211_node *ni;
-			struct pgt_ieee80211_node *pin;
-
-			/* Locked already by pff mutex. */
-			TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
-				pin = (struct pgt_ieee80211_node *)ni;
-				pin->pin_dot1x_auth = PIN_DOT1X_UNAUTHORIZED;
-			}
-#endif
+		if (sc->sc_flags & SC_NOFREE_ALLNODES)
 			sc->sc_flags &= ~SC_NOFREE_ALLNODES;
-		} else
+		else
 			ieee80211_free_allnodes(ic);
 
 		/* Just use any old channel; we override it anyway. */
