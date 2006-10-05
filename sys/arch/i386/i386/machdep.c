@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.365 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.366 2006/10/05 01:36:41 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -559,12 +559,12 @@ allocsys(caddr_t v)
 
 	/*
 	 * Determine how many buffers to allocate.  We use 10% of the
-	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
-	 * buffers.  We allocate 1/2 as many swap buffer headers as file
-	 * i/o buffers.
+	 * first 2MB of memory, and 5% of the rest of below 4G memory,
+	 * with a minimum of 16 buffers.  We allocate 1/2 as many swap
+	 * buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0) {
-		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+		bufpages = (btoc(2 * 1024 * 1024 + avail_end)) *
 		    bufcachepercent / 100;
 	}
 	if (nbuf == 0) {
