@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.27 2006/10/05 11:08:30 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.28 2006/10/05 12:15:43 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -181,7 +181,6 @@ void	 node_mark_active_adhoc(void *, struct ieee80211_node *);
 void	 pgt_watchdog(struct ifnet *);
 int	 pgt_init(struct ifnet *);
 void	 pgt_update_hw_from_sw(struct pgt_softc *, int, int);
-void	 pgt_update_hw_from_nodes(struct pgt_softc *);
 void	 pgt_hostap_handle_mlme(struct pgt_softc *, uint32_t,
 	     struct pgt_obj_mlme *);
 void	 pgt_update_sw_from_hw(struct pgt_softc *,
@@ -2786,71 +2785,6 @@ badopmode:
 	}
 }
 
-/*
- * After doing a soft-reinitialization, we will restore settings from
- * our pgt_ieee80211_nodes.  As we also lock the node list with our
- * softc mutex, unless we were to drop that the node list will remain
- * valid (see pgt_watchdog()).
- */
-void
-pgt_update_hw_from_nodes(struct pgt_softc *sc)
-{
-	struct pgt_ieee80211_node *pin;
-#if 0
-	struct ieee80211_node *ni;
-#endif
-	struct pgt_ieee80211_node **addresses;
-	size_t i, n;
-	int s;
-
-	n = 0;
-#if 0
-	TAILQ_FOREACH(ni, &sc->sc_ic.ic_node, ni_list) {
-		pin = (struct pgt_ieee80211_node *)ni;
-		if (pin->pin_dot1x_auth != pin->pin_dot1x_auth_desired)
-			n++;
-	}
-#endif
-	if (n == 0)
-		return;
-	addresses = malloc(sizeof(*addresses) * n, M_DEVBUF, M_NOWAIT);
-	if (addresses == NULL)
-		return;
-	n = 0;
-#if 0
-	TAILQ_FOREACH(ni, &sc->sc_ic.ic_node, ni_list) {
-		pin = (struct pgt_ieee80211_node *)ni;
-		if (pin->pin_dot1x_auth != pin->pin_dot1x_auth_desired) {
-			addresses[n++] = pin;
-			ieee80211_ref_node(&pin->pin_node);
-		}
-	}
-#endif
-	s = splnet();
-	for (i = 0; i < n; i++) {
-		pin = addresses[i];
-		if (pgt_oid_set(sc,
-		    pin->pin_dot1x_auth_desired == PIN_DOT1X_AUTHORIZED ?
-		    PGT_OID_EAPAUTHSTA : PGT_OID_EAPUNAUTHSTA,
-		    pin->pin_node.ni_macaddr, sizeof(pin->pin_node.ni_macaddr))
-		    == 0) {
-			pin->pin_dot1x_auth = pin->pin_dot1x_auth_desired;
-			DPRINTF(("%s: %02x:%02x:%02x:%02x:%02x:%02x "
-			    "reauthorized to %d\n", __func__,
-			    pin->pin_node.ni_macaddr[0],
-			    pin->pin_node.ni_macaddr[1],
-			    pin->pin_node.ni_macaddr[2],
-			    pin->pin_node.ni_macaddr[3],
-			    pin->pin_node.ni_macaddr[4],
-			    pin->pin_node.ni_macaddr[5],
-			    pin->pin_dot1x_auth));
-		}
-		ieee80211_release_node(&sc->sc_ic, &pin->pin_node);
-	}
-	splx(s);
-	free(addresses, M_DEVBUF);
-}
-
 void
 pgt_hostap_handle_mlme(struct pgt_softc *sc, uint32_t oid,
     struct pgt_obj_mlme *mlme)
@@ -3040,7 +2974,6 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	case IEEE80211_S_RUN:
 		ic->ic_if.if_timer = 1;
-		pgt_update_hw_from_nodes(sc);
 		break;
 	default:
 		break;
