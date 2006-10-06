@@ -2822,11 +2822,13 @@
 ./usr/share/zoneinfo/America/Argentina/Ushuaia
 ./usr/share/zoneinfo/America/Aruba
 ./usr/share/zoneinfo/America/Asuncion
+./usr/share/zoneinfo/America/Atikokan
 ./usr/share/zoneinfo/America/Atka
 ./usr/share/zoneinfo/America/Bahia
 ./usr/share/zoneinfo/America/Barbados
 ./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
+./usr/share/zoneinfo/America/Blanc-Sablon
 ./usr/share/zoneinfo/America/Boa_Vista
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
@@ -2912,6 +2914,7 @@
 ./usr/share/zoneinfo/America/Noronha
 ./usr/share/zoneinfo/America/North_Dakota
 ./usr/share/zoneinfo/America/North_Dakota/Center
+./usr/share/zoneinfo/America/North_Dakota/New_Salem
 ./usr/share/zoneinfo/America/Panama
 ./usr/share/zoneinfo/America/Pangnirtung
 ./usr/share/zoneinfo/America/Paramaribo
@@ -3163,8 +3166,11 @@
 ./usr/share/zoneinfo/Europe/Copenhagen
 ./usr/share/zoneinfo/Europe/Dublin
 ./usr/share/zoneinfo/Europe/Gibraltar
+./usr/share/zoneinfo/Europe/Guernsey
 ./usr/share/zoneinfo/Europe/Helsinki
+./usr/share/zoneinfo/Europe/Isle_of_Man
 ./usr/share/zoneinfo/Europe/Istanbul
+./usr/share/zoneinfo/Europe/Jersey
 ./usr/share/zoneinfo/Europe/Kaliningrad
 ./usr/share/zoneinfo/Europe/Kiev
 ./usr/share/zoneinfo/Europe/Lisbon
@@ -3198,6 +3204,7 @@
 ./usr/share/zoneinfo/Europe/Vatican
 ./usr/share/zoneinfo/Europe/Vienna
 ./usr/share/zoneinfo/Europe/Vilnius
+./usr/share/zoneinfo/Europe/Volgograd
 ./usr/share/zoneinfo/Europe/Warsaw
 ./usr/share/zoneinfo/Europe/Zagreb
 ./usr/share/zoneinfo/Europe/Zaporozhye
@@ -3388,11 +3395,13 @@
 ./usr/share/zoneinfo/posix/America/Argentina/Ushuaia
 ./usr/share/zoneinfo/posix/America/Aruba
 ./usr/share/zoneinfo/posix/America/Asuncion
+./usr/share/zoneinfo/posix/America/Atikokan
 ./usr/share/zoneinfo/posix/America/Atka
 ./usr/share/zoneinfo/posix/America/Bahia
 ./usr/share/zoneinfo/posix/America/Barbados
 ./usr/share/zoneinfo/posix/America/Belem
 ./usr/share/zoneinfo/posix/America/Belize
+./usr/share/zoneinfo/posix/America/Blanc-Sablon
 ./usr/share/zoneinfo/posix/America/Boa_Vista
 ./usr/share/zoneinfo/posix/America/Bogota
 ./usr/share/zoneinfo/posix/America/Boise
@@ -3478,6 +3487,7 @@
 ./usr/share/zoneinfo/posix/America/Noronha
 ./usr/share/zoneinfo/posix/America/North_Dakota
 ./usr/share/zoneinfo/posix/America/North_Dakota/Center
+./usr/share/zoneinfo/posix/America/North_Dakota/New_Salem
 ./usr/share/zoneinfo/posix/America/Panama
 ./usr/share/zoneinfo/posix/America/Pangnirtung
 ./usr/share/zoneinfo/posix/America/Paramaribo
@@ -3729,8 +3739,11 @@
 ./usr/share/zoneinfo/posix/Europe/Copenhagen
 ./usr/share/zoneinfo/posix/Europe/Dublin
 ./usr/share/zoneinfo/posix/Europe/Gibraltar
+./usr/share/zoneinfo/posix/Europe/Guernsey
 ./usr/share/zoneinfo/posix/Europe/Helsinki
+./usr/share/zoneinfo/posix/Europe/Isle_of_Man
 ./usr/share/zoneinfo/posix/Europe/Istanbul
+./usr/share/zoneinfo/posix/Europe/Jersey
 ./usr/share/zoneinfo/posix/Europe/Kaliningrad
 ./usr/share/zoneinfo/posix/Europe/Kiev
 ./usr/share/zoneinfo/posix/Europe/Lisbon
@@ -3764,6 +3777,7 @@
 ./usr/share/zoneinfo/posix/Europe/Vatican
 ./usr/share/zoneinfo/posix/Europe/Vienna
 ./usr/share/zoneinfo/posix/Europe/Vilnius
+./usr/share/zoneinfo/posix/Europe/Volgograd
 ./usr/share/zoneinfo/posix/Europe/Warsaw
 ./usr/share/zoneinfo/posix/Europe/Zagreb
 ./usr/share/zoneinfo/posix/Europe/Zaporozhye
@@ -3955,11 +3969,13 @@
 ./usr/share/zoneinfo/right/America/Argentina/Ushuaia
 ./usr/share/zoneinfo/right/America/Aruba
 ./usr/share/zoneinfo/right/America/Asuncion
+./usr/share/zoneinfo/right/America/Atikokan
 ./usr/share/zoneinfo/right/America/Atka
 ./usr/share/zoneinfo/right/America/Bahia
 ./usr/share/zoneinfo/right/America/Barbados
 ./usr/share/zoneinfo/right/America/Belem
 ./usr/share/zoneinfo/right/America/Belize
+./usr/share/zoneinfo/right/America/Blanc-Sablon
 ./usr/share/zoneinfo/right/America/Boa_Vista
 ./usr/share/zoneinfo/right/America/Bogota
 ./usr/share/zoneinfo/right/America/Boise
@@ -4045,6 +4061,7 @@
 ./usr/share/zoneinfo/right/America/Noronha
 ./usr/share/zoneinfo/right/America/North_Dakota
 ./usr/share/zoneinfo/right/America/North_Dakota/Center
+./usr/share/zoneinfo/right/America/North_Dakota/New_Salem
 ./usr/share/zoneinfo/right/America/Panama
 ./usr/share/zoneinfo/right/America/Pangnirtung
 ./usr/share/zoneinfo/right/America/Paramaribo
@@ -4296,8 +4313,11 @@
 ./usr/share/zoneinfo/right/Europe/Copenhagen
 ./usr/share/zoneinfo/right/Europe/Dublin
 ./usr/share/zoneinfo/right/Europe/Gibraltar
+./usr/share/zoneinfo/right/Europe/Guernsey
 ./usr/share/zoneinfo/right/Europe/Helsinki
+./usr/share/zoneinfo/right/Europe/Isle_of_Man
 ./usr/share/zoneinfo/right/Europe/Istanbul
+./usr/share/zoneinfo/right/Europe/Jersey
 ./usr/share/zoneinfo/right/Europe/Kaliningrad
 ./usr/share/zoneinfo/right/Europe/Kiev
 ./usr/share/zoneinfo/right/Europe/Lisbon
@@ -4331,6 +4351,7 @@
 ./usr/share/zoneinfo/right/Europe/Vatican
 ./usr/share/zoneinfo/right/Europe/Vienna
 ./usr/share/zoneinfo/right/Europe/Vilnius
+./usr/share/zoneinfo/right/Europe/Volgograd
 ./usr/share/zoneinfo/right/Europe/Warsaw
 ./usr/share/zoneinfo/right/Europe/Zagreb
 ./usr/share/zoneinfo/right/Europe/Zaporozhye

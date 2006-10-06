@@ -18,6 +18,7 @@
 ./usr/include/arm/disklabel.h
 ./usr/include/arm/elf_abi.h
 ./usr/include/arm/endian.h
+./usr/include/arm/exec.h
 ./usr/include/arm/fiq.h
 ./usr/include/arm/float.h
 ./usr/include/arm/fp.h

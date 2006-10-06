@@ -44,7 +44,6 @@
 ./usr/include/altq/altq_var.h
 ./usr/include/altq/if_altq.h
 ./usr/include/ar.h
-./usr/include/arm/exec.h
 ./usr/include/arpa
 ./usr/include/arpa/ftp.h
 ./usr/include/arpa/inet.h
