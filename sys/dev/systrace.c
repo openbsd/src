@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.42 2006/05/28 17:06:38 pedro Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.43 2006/10/06 05:47:27 djm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1359,9 +1359,16 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (EINVAL);
 
 	for (i = 0, len = 0; i < repl->strr_nrepl; i++) {
-		len += repl->strr_offlen[i];
+		if (repl->strr_argind[i] < 0 ||
+		    repl->strr_argind[i] >= SYSTR_MAXARGS)
+			return (EINVAL);
 		if (repl->strr_offlen[i] == 0)
 			continue;
+		len += repl->strr_offlen[i];
+		if (repl->strr_offlen[i] > SYSTR_MAXREPLEN ||
+		    repl->strr_off[i] > SYSTR_MAXREPLEN ||
+		    len > SYSTR_MAXREPLEN)
+			return (EINVAL);
 		if (repl->strr_offlen[i] + repl->strr_off[i] > len)
 			return (EINVAL);
 	}
@@ -1371,7 +1378,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (EINVAL);
 
 	/* Check against a maximum length */
-	if (repl->strr_len > 2048)
+	if (repl->strr_len > SYSTR_MAXREPLEN)
 		return (EINVAL);
 
 	strp->replace = (struct systrace_replace *)
@@ -1406,6 +1413,10 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 
 	maxarg = argsize/sizeof(register_t);
 	ubase = stackgap_alloc(&strp->sg, repl->strr_len);
+	if (ubase == NULL) {
+		ret = EINVAL;
+		goto out;
+	}
 
 	kbase = repl->strr_base;
 	for (i = 0; i < maxarg && i < repl->strr_nrepl; i++) {
