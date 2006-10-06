@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.181 2006/06/06 00:01:49 drahn Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.182 2006/10/06 22:08:42 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1476,6 +1476,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1559,6 +1561,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1611,6 +1615,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1657,6 +1663,8 @@ hppa
 hppa64
 ..
 i386
+..
+landisk
 ..
 luna88k
 ..
@@ -1715,6 +1723,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1762,6 +1772,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1808,6 +1820,8 @@ hppa
 hppa64
 ..
 i386
+..
+landisk
 ..
 luna88k
 ..
@@ -1877,6 +1891,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1929,6 +1945,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -1975,6 +1993,8 @@ hppa
 hppa64
 ..
 i386
+..
+landisk
 ..
 luna88k
 ..
@@ -2033,6 +2053,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -2080,6 +2102,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -2126,6 +2150,8 @@ hppa
 hppa64
 ..
 i386
+..
+landisk
 ..
 luna88k
 ..
@@ -2189,6 +2215,8 @@ hppa64
 ..
 i386
 ..
+landisk
+..
 luna88k
 ..
 mac68k
@@ -2250,6 +2278,8 @@ hppa
 hppa64
 ..
 i386
+..
+landisk
 ..
 luna88k
 ..
