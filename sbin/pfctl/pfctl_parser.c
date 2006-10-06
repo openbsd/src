@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.227 2006/08/08 20:05:54 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.228 2006/10/06 16:27:49 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -818,7 +818,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	}
 	if (r->tos)
 		printf(" tos 0x%2.2x", r->tos);
-	if (r->keep_state == PF_STATE_NORMAL)
+	if (!r->keep_state)
+		printf(" no state");
+	else if (r->keep_state == PF_STATE_NORMAL)
 		printf(" keep state");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf(" modulate state");
