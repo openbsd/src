@@ -955,7 +955,6 @@ mace_read(struct mc_softc *sc, caddr_t pkt, int len)
 struct mbuf *
 mace_get(struct mc_softc *sc, caddr_t pkt, int totlen)
 {
-	printf("mace_get:\n");
 	 struct mbuf *m;
 	 struct mbuf *top, **mp;
 	 int len;
