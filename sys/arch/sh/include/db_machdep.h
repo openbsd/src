@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2006/05/10 06:24:03 skrll Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
 int kdb_trap(int, int, db_regs_t *);
+void db_machine_init (void);
 boolean_t inst_call(int);
 boolean_t inst_return(int);
 boolean_t inst_trap_return(int);

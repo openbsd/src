@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -157,6 +157,11 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	va = SH3_PHYS_TO_P1SEG(pa);
 	memset((caddr_t)va, 0, size);
 
+	if (vstart)
+		*vstart = VM_MIN_KERNEL_ADDRESS;
+	if (vend)
+		*vend = VM_MAX_KERNEL_ADDRESS;
+
 	return (va);
 }
 
@@ -198,13 +203,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
  error:
 	panic("pmap_growkernel: out of memory.");
 	/* NOTREACHED */
-}
-
-void
-pmap_virtual_space(vaddr_t *start, vaddr_t *end)
-{
-	*start = VM_MIN_KERNEL_ADDRESS;
-	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
 void

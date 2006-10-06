@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ void db_frame_cmd(db_expr_t, int, db_expr_t, char *);
 void __db_print_symbol(db_expr_t);
 char *__db_procname_by_asid(int);
 
-const struct db_command db_machine_command_table[] = {
+struct db_command db_machine_command_table[] = {
 	{ "tlb",	db_tlbdump_cmd,		0,	NULL },
 	{ "cache",	db_cachedump_cmd,	0,	NULL },
 	{ "frame",	db_frame_cmd,		0,	NULL },
@@ -84,6 +84,13 @@ const struct db_command db_machine_command_table[] = {
 };
 
 int db_active;
+
+void
+db_machine_init(void)
+{
+
+	db_machine_commands_install(db_machine_command_table);
+}
 
 void
 kdb_printtrap(u_int type, int code)
@@ -139,14 +146,11 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	return 1;
 }
 
-#if 0
 void
 Debugger()
 {
-
 	__asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));
 }
-#endif
 
 #define	M_BSR	0xf000
 #define	I_BSR	0xb000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ ALTENTRY(switch_exit)
 
 	.align 2
 .L_switch_exit_proc_exit2:
-	.long	_C_LABEL(proc_exit2)
+	.long	_C_LABEL(exit2)
 .L_switch_exit_proc0_pcb:
 	.long	_C_LABEL(proc0) + P_MD_PCB
 .L_switch_exit_curpcb:

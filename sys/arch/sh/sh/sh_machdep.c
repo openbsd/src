@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*-
@@ -84,8 +84,12 @@
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
 #include <sys/user.h>
+#include <sys/sched.h>
+#include <sys/msg.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <sh/cache.h>
 #include <sh/clock.h>
@@ -93,6 +97,23 @@
 #include <sh/mmu.h>
 #include <sh/trap.h>
 #include <sh/intr.h>
+
+#ifdef  NBUF
+int	nbuf = NBUF;
+#else
+int	nbuf = 0;
+#endif
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
+#ifdef  BUFPAGES
+int	bufpages = BUFPAGES;
+#else
+int	bufpages = 0;
+#endif
+int	bufcachepercent = BUFCACHEPERCENT;
 
 /* Our exported CPU info; we can have only one. */
 int cpu_arch;
@@ -119,6 +140,8 @@ extern char sh3_vector_tlbmiss[], sh3_vector_tlbmiss_end[];
 extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
 #endif
 
+caddr_t allocsys(caddr_t);
+
 /*
  * These variables are needed by /sbin/savecore
  */
@@ -129,6 +152,8 @@ long dumplo;	 		/* blocks */
 void
 sh_cpu_init(int arch, int product)
 {
+	int i;
+
 	/* CPU type */
 	cpu_arch = arch;
 	cpu_product = product;
@@ -140,6 +165,7 @@ sh_cpu_init(int arch, int product)
 	/* Cache access ops. */
 	sh_cache_init();
 
+for(i=0xfffffff;i--;);
 	/* MMU access ops. */
 	sh_mmu_init();
 
@@ -223,7 +249,12 @@ sh_proc0_init()
 void
 sh_startup()
 {
+	u_int loop;
 	vaddr_t minaddr, maxaddr;
+	caddr_t sysbase;
+	caddr_t size;
+	vsize_t bufsize;
+	int base, residual;
 
 	printf("%s", version);
 	if (*cpu_model != '\0')
@@ -247,7 +278,62 @@ sh_startup()
 
 	printf("real mem = %u (%uK)\n", ctob(physmem), ctob(physmem) / 1024);
 
-	minaddr = 0;
+	/*
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
+	 */
+	size = allocsys(NULL);
+	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page((vaddr_t)size));
+	if (sysbase == 0)
+		panic("sh_startup: no room for system tables; %d required",
+		    (u_int)size);
+	if ((caddr_t)((allocsys(sysbase) - sysbase)) != size)
+		panic("cpu_startup: system table size inconsistency");
+
+	/*
+	 * Now allocate buffers proper.  They are different than the above
+	 * in that they usually occupy more virtual memory than physical.
+	 */
+	bufsize = MAXBSIZE * nbuf;
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(bufsize),
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	    UVM_ADV_NORMAL, 0)) != 0)
+		panic("sh_startup: cannot allocate UVM space for buffers");
+	minaddr = (vaddr_t)buffers;
+	/* don't want to alloc more physical mem than needed */
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE))
+		bufpages = btoc(MAXBSIZE) * nbuf;
+
+	base = bufpages / nbuf;
+	residual = bufpages % nbuf;
+	for (loop = 0; loop < nbuf; ++loop) {
+		vsize_t curbufsize;
+		vaddr_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vaddr_t) buffers + (loop * MAXBSIZE);
+		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			if (pg == NULL)
+				panic("sh_startup: not enough memory for buffer cache");
+
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+	}
+	pmap_update(pmap_kernel());
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -261,8 +347,72 @@ sh_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
+	/*
+	 * Set up buffers, so they can be used to read disk labels.
+	 */
+	bufinit();
+
 	printf("avail mem = %u (%uK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free) / 1024);
+	printf("using %d buffers containing %u bytes (%uK) of memory\n",
+	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
+}
+
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and then call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(caddr_t v)
+{
+#define	valloc(name, type, num)	v = (caddr_t)(((name) = (type *)v) + (num))
+
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+	/*
+	 * Determine how many buffers to allocate.  We use 10% of the
+	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
+	 * buffers.  We allocate 1/2 as many swap buffer headers as file
+	 * i/o buffers.
+	 */
+	if (bufpages == 0)
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+		    bufcachepercent / 100;
+
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+
+	/* Restrict to at most 35% filled kvm */
+	/* XXX - This needs UBC... */
+	if (nbuf >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 35 / 100)
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    MAXBSIZE * 35 / 100;
+
+	/* More buffer pages than fits into the buffers is senseless.  */ 
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
+		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
+
+	valloc(buf, struct buf, nbuf);
+	return v;
+}
+
+void
+dumpsys()
+{
+	/* TODO */
 }
 
 /*
@@ -455,6 +605,45 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_r15 = stack;
 }
 
+void
+setrunqueue(struct proc *p)
+{
+	int whichq = p->p_priority / PPQ;
+	struct prochd *q;
+	struct proc *prev;
+
+#ifdef DIAGNOSTIC
+	if (p->p_back != NULL || p->p_wchan != NULL || p->p_stat != SRUN)
+		panic("setrunqueue");
+#endif
+	q = &qs[whichq];
+	prev = q->ph_rlink;
+	p->p_forw = (struct proc *)q;
+	q->ph_rlink = p;
+	prev->p_forw = p;
+	p->p_back = prev;
+	whichqs |= 1 << whichq;
+}
+
+void
+remrunqueue(struct proc *p)
+{
+	struct proc *prev, *next;
+	int whichq = p->p_priority / PPQ;
+
+#ifdef DIAGNOSTIC
+       if (((whichqs & (1 << whichq)) == 0))
+		panic("remrunqueue: bit %d not set", whichq);
+#endif
+	prev = p->p_back;
+	p->p_back = NULL;
+	next = p->p_forw;
+	prev->p_forw = next;
+	next->p_back = prev;
+	if (prev == next)
+		whichqs &= ~(1 << whichq);
+}
+
 /*
  * Jump to reset vector.
  */
@@ -467,5 +656,31 @@ cpu_reset()
 #ifndef __lint__
 	goto *(void *)0xa0000000;
 #endif
+	/* NOTREACHED */
+}
+
+int
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
+{
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV: {
+		dev_t consdev;
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	}
+
+	default:
+		return (EOPNOTSUPP);
+	}
 	/* NOTREACHED */
 }
