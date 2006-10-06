@@ -53,17 +53,16 @@ hashtabnew(int sz,
     assert(sz > 0);
 
     htab = (Hashtab *) malloc(sizeof(Hashtab) + (sz - 1) * sizeof(Hashentry *));
+    if (htab == NULL)
+	return NULL;
+
     for (i = 0; i < sz; ++i)
 	htab->tab[i] = NULL;
 
-    if (htab == NULL) {
-	return NULL;
-    } else {
-	htab->cmp = cmp;
-	htab->hash = hash;
-	htab->sz = sz;
-	return htab;
-    }
+    htab->cmp = cmp;
+    htab->hash = hash;
+    htab->sz = sz;
+    return htab;
 }
 
 /* Intern search function */

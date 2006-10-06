@@ -420,7 +420,7 @@ krb5_ret_principal(krb5_storage *sp,
 
     if(krb5_storage_is_flags(sp, KRB5_STORAGE_PRINCIPAL_NO_NAME_TYPE))
 	type = KRB5_NT_UNKNOWN;
-    else 	if((ret = krb5_ret_int32(sp, &type))){
+    else if((ret = krb5_ret_int32(sp, &type))){
 	free(p);
 	return ret;
     }
@@ -430,18 +430,31 @@ krb5_ret_principal(krb5_storage *sp,
     }
     if(krb5_storage_is_flags(sp, KRB5_STORAGE_PRINCIPAL_WRONG_NUM_COMPONENTS))
 	ncomp--;
+    if (ncomp < 0) {
+	free(p);
+	return EINVAL;
+    }
     p->name.name_type = type;
     p->name.name_string.len = ncomp;
     ret = krb5_ret_string(sp, &p->realm);
-    if(ret) return ret;
+    if(ret) {
+	free(p);
+	return ret;
+    }
     p->name.name_string.val = calloc(ncomp, sizeof(*p->name.name_string.val));
-    if(p->name.name_string.val == NULL){
+    if(p->name.name_string.val == NULL && ncomp != 0){
 	free(p->realm);
 	return ENOMEM;
     }
     for(i = 0; i < ncomp; i++){
 	ret = krb5_ret_string(sp, &p->name.name_string.val[i]);
-	if(ret) return ret; /* XXX */
+	if(ret) {
+	    while (i >= 0)
+		free(p->name.name_string.val[i--]);
+	    free(p->realm);
+	    free(p);
+	    return ret;
+	}
     }
     *princ = p;
     return 0;

@@ -139,6 +139,11 @@ krb4_kt_start_seq_get_int (krb5_context context,
 	return ret;
     }
     c->sp = krb5_storage_from_fd(c->fd);
+    if(c->sp == NULL) {
+	close(c->fd);
+	free(ed);
+	return ENOMEM;
+    }
     krb5_storage_set_eof_code(c->sp, KRB5_KT_END);
     return 0;
 }
@@ -302,11 +307,11 @@ krb4_kt_add_entry (krb5_context context,
 	}
     }
     sp = krb5_storage_from_fd(fd);
-    krb5_storage_set_eof_code(sp, KRB5_KT_END);
     if(sp == NULL) {
 	close(fd);
 	return ENOMEM;
     }
+    krb5_storage_set_eof_code(sp, KRB5_KT_END);
     ret = krb4_store_keytab_entry(context, entry, sp);
     krb5_storage_free(sp);
     if(close (fd) < 0)

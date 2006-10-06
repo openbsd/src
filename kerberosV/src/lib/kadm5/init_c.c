@@ -270,6 +270,8 @@ _kadm5_c_get_cred_cache(krb5_context context,
 					      name, "admin", NULL);
 		    if(ret != 0) {
 			krb5_free_principal(context, default_client);
+			if (client)
+			    krb5_free_principal(context, client);
 			krb5_cc_close(context, id);
 			return ret;
 		    }
@@ -312,8 +314,13 @@ _kadm5_c_get_cred_cache(krb5_context context,
 		id = NULL;
 	    }
 	}
-    } else if(ccache != NULL)
+    } else if(ccache != NULL) {
 	id = ccache;
+	ret = krb5_cc_get_principal(context, id, &client);
+	if(ret)
+	    return ret;
+    }
+
     
     if(id && (default_client == NULL || 
 	      krb5_principal_compare(context, client, default_client))) {
@@ -330,7 +337,7 @@ _kadm5_c_get_cred_cache(krb5_context context,
 	    return -1;
     }
     /* get creds via AS request */
-    if(id)
+    if(id && (id != ccache))
 	krb5_cc_close(context, id);
     if (client != default_client)
 	krb5_free_principal(context, default_client);

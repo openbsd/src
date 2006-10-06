@@ -134,8 +134,10 @@ generate_password(char **pw, int num_classes, ...)
     }
     va_end(ap);
     *pw = malloc(len + 1);
-    if(*pw == NULL)
+    if(*pw == NULL) {
+	free(classes);
 	return;
+    }
     for(i = 0; i < len; i++) {
 	int j;
 	int x = RND(rbuf, sizeof(rbuf), &rleft) % (len - i);

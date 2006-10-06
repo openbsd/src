@@ -687,6 +687,11 @@ doit (krb5_keytab keytab, int port)
 			 buf, ret);
 	    }
     }
+
+    for (i = 0; i < n; ++i)
+	close(sockets[i]);
+    free(sockets);
+
     krb5_free_addresses (context, &addrs);
     krb5_free_host_realm (context, realms);
     krb5_free_context (context);

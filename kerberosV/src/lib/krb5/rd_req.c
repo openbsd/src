@@ -271,8 +271,10 @@ krb5_verify_authenticator_checksum(krb5_context context,
 				      &authenticator);
     if(ret)
 	return ret;
-    if(authenticator->cksum == NULL)
+    if(authenticator->cksum == NULL) {
+	krb5_free_authenticator(context, &authenticator);
 	return -17;
+    }
     ret = krb5_auth_con_getkey(context, ac, &key);
     if(ret) {
 	krb5_free_authenticator(context, &authenticator);

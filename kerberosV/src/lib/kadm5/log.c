@@ -296,33 +296,36 @@ kadm5_log_delete (kadm5_server_context *context,
     kadm5_log_context *log_context = &context->log_context;
 
     sp = krb5_storage_emem();
+    if (sp == NULL)
+	return ENOMEM;
     ret = kadm5_log_preamble (context, sp, kadm_delete);
-    if (ret) {
-	krb5_storage_free(sp);
-	return ret;
-    }
-    krb5_store_int32 (sp, 0);
+    if (ret)
+	goto out;
+    ret = krb5_store_int32 (sp, 0);
+    if (ret)
+	goto out;
     off = krb5_storage_seek (sp, 0, SEEK_CUR);
-    krb5_store_principal (sp, princ);
+    ret = krb5_store_principal (sp, princ);
+    if (ret)
+	goto out;
     len = krb5_storage_seek (sp, 0, SEEK_CUR) - off;
     krb5_storage_seek(sp, -(len + 4), SEEK_CUR);
-    krb5_store_int32 (sp, len);
-    krb5_storage_seek(sp, len, SEEK_CUR);
-    krb5_store_int32 (sp, len);
-    if (ret) {
-	krb5_storage_free (sp);
-	return ret;
-    }
-    ret = kadm5_log_postamble (log_context, sp);
-    if (ret) {
-	krb5_storage_free (sp);
-	return ret;
-    }
-    ret = kadm5_log_flush (log_context, sp);
-    krb5_storage_free (sp);
+    ret = krb5_store_int32 (sp, len);
     if (ret)
-	return ret;
+	goto out;
+    krb5_storage_seek(sp, len, SEEK_CUR);
+    ret = krb5_store_int32 (sp, len);
+    if (ret)
+	goto out;
+    ret = kadm5_log_postamble (log_context, sp);
+    if (ret)
+	goto out;
+    ret = kadm5_log_flush (log_context, sp);
+    if (ret)
+	goto out;
     ret = kadm5_log_end (context);
+out:
+    krb5_storage_free (sp);
     return ret;
 }
 
@@ -362,43 +365,53 @@ kadm5_log_rename (kadm5_server_context *context,
     krb5_data value;
     kadm5_log_context *log_context = &context->log_context;
 
+    krb5_data_zero(&value);
+
     sp = krb5_storage_emem();
     ret = hdb_entry2value (context->context, ent, &value);
-    if (ret) {
-	krb5_storage_free(sp);
-	return ret;
-    }
+    if (ret)
+	goto failed;
+
     ret = kadm5_log_preamble (context, sp, kadm_rename);
-    if (ret) {
-	krb5_storage_free(sp);
-	krb5_data_free (&value);
-	return ret;
-    }
-    krb5_store_int32 (sp, 0);
+    if (ret)
+	goto failed;
+
+    ret = krb5_store_int32 (sp, 0);
+    if (ret)
+	goto failed;
     off = krb5_storage_seek (sp, 0, SEEK_CUR);
-    krb5_store_principal (sp, source);
+    ret = krb5_store_principal (sp, source);
+    if (ret)
+	goto failed;
+
     krb5_storage_write(sp, value.data, value.length);
-    krb5_data_free (&value);
     len = krb5_storage_seek (sp, 0, SEEK_CUR) - off;
 
     krb5_storage_seek(sp, -(len + 4), SEEK_CUR);
-    krb5_store_int32 (sp, len);
-    krb5_storage_seek(sp, len, SEEK_CUR);
-    krb5_store_int32 (sp, len);
-    if (ret) {
-	krb5_storage_free (sp);
-	return ret;
-    }
-    ret = kadm5_log_postamble (log_context, sp);
-    if (ret) {
-	krb5_storage_free (sp);
-	return ret;
-    }
-    ret = kadm5_log_flush (log_context, sp);
-    krb5_storage_free (sp);
+    ret = krb5_store_int32 (sp, len);
     if (ret)
-	return ret;
-    ret = kadm5_log_end (context);
+	goto failed;
+
+    krb5_storage_seek(sp, len, SEEK_CUR);
+    ret = krb5_store_int32 (sp, len);
+    if (ret)
+	goto failed;
+
+    ret = kadm5_log_postamble (log_context, sp);
+    if (ret)
+	goto failed;
+
+    ret = kadm5_log_flush (log_context, sp);
+    if (ret)
+	goto failed;
+    krb5_storage_free (sp);
+    krb5_data_free (&value);
+
+    return kadm5_log_end (context);
+
+failed:
+    krb5_data_free(&value);
+    krb5_storage_free(sp);
     return ret;
 }
 
@@ -464,38 +477,41 @@ kadm5_log_modify (kadm5_server_context *context,
     u_int32_t len;
     kadm5_log_context *log_context = &context->log_context;
 
+    krb5_data_zero(&value);
+
     sp = krb5_storage_emem();
     ret = hdb_entry2value (context->context, ent, &value);
-    if (ret) {
-	krb5_storage_free(sp);
-	return ret;
-    }
-    ret = kadm5_log_preamble (context, sp, kadm_modify);
-    if (ret) {
-	krb5_data_free (&value);
-	krb5_storage_free(sp);
-	return ret;
-    }
-    len = value.length + 4;
-    krb5_store_int32 (sp, len);
-    krb5_store_int32 (sp, mask);
-    krb5_storage_write (sp, value.data, value.length);
-    krb5_data_free (&value);
-    krb5_store_int32 (sp, len);
-    if (ret) {
-	krb5_storage_free (sp);
-	return ret;
-    }
-    ret = kadm5_log_postamble (log_context, sp);
-    if (ret) {
-	krb5_storage_free (sp);
-	return ret;
-    }
-    ret = kadm5_log_flush (log_context, sp);
-    krb5_storage_free (sp);
     if (ret)
-	return ret;
-    ret = kadm5_log_end (context);
+	goto failed;
+
+    ret = kadm5_log_preamble (context, sp, kadm_modify);
+    if (ret)
+	goto failed;
+
+    len = value.length + 4;
+    ret = krb5_store_int32 (sp, len);
+    if (ret)
+	goto failed;
+    ret = krb5_store_int32 (sp, mask);
+    if (ret)
+	goto failed;
+    krb5_storage_write (sp, value.data, value.length);
+
+    ret = krb5_store_int32 (sp, len);
+    if (ret)
+	goto failed;
+    ret = kadm5_log_postamble (log_context, sp);
+    if (ret)
+	goto failed;
+    ret = kadm5_log_flush (log_context, sp);
+    if (ret)
+	goto failed;
+    krb5_data_free(&value);
+    krb5_storage_free (sp);
+    return kadm5_log_end (context);
+failed:
+    krb5_data_free(&value);
+    krb5_storage_free(sp);
     return ret;
 }
 

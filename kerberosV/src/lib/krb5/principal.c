@@ -98,7 +98,7 @@ krb5_parse_name(krb5_context context,
 {
     krb5_error_code ret;
     heim_general_string *comp;
-    heim_general_string realm;
+    heim_general_string realm = NULL;
     int ncomp;
 
     const char *p;
@@ -225,6 +225,7 @@ exit:
 	free(comp[--n]);
     }
     free(comp);
+    free(realm);
     free(s);
     return ret;
 }

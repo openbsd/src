@@ -928,11 +928,18 @@ krb5_parse_address(krb5_context context,
     int error;
     int save_errno;
 
+    addresses->len = 0;
+    addresses->val = NULL;
+
     for(i = 0; i < num_addrs; i++) {
 	if(at[i].parse_addr) {
 	    krb5_address addr;
 	    if((*at[i].parse_addr)(context, string, &addr) == 0) {
 		ALLOC_SEQ(addresses, 1);
+		if (addresses->val == NULL) {
+		    krb5_set_error_string(context, "malloc: out of memory");
+		    return ENOMEM;
+		}
 		addresses->val[0] = addr;
 		return 0;
 	    }
@@ -1045,6 +1052,8 @@ krb5_free_addresses(krb5_context context,
     for(i = 0; i < addresses->len; i++)
 	krb5_free_address(context, &addresses->val[i]);
     free(addresses->val);
+    addresses->len = 0;
+    addresses->val = NULL;
     return 0;
 }
 

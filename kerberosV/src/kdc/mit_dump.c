@@ -366,5 +366,6 @@ mit_prop_dump(void *arg, const char *file)
 	q = nexttoken(&p); /* extra data */
 	v5_prop(pd->context, NULL, &ent, arg);
     }
+    fclose(f);
     return 0;
 }

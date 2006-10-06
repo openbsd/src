@@ -65,7 +65,7 @@ _krb5_mk_req_internal(krb5_context context,
   if(ac->local_subkey == NULL && (ap_req_options & AP_OPTS_USE_SUBKEY)) {
       ret = krb5_auth_con_generatelocalsubkey(context, ac, &in_creds->session);
       if(ret)
-	  return ret;
+	  goto out;
   }
 
 #if 0
@@ -93,7 +93,9 @@ _krb5_mk_req_internal(krb5_context context,
 #endif
 
   krb5_free_keyblock(context, ac->keyblock);
-  krb5_copy_keyblock(context, &in_creds->session, &ac->keyblock);
+  ret = krb5_copy_keyblock(context, &in_creds->session, &ac->keyblock);
+  if (ret)
+      goto out;
   
   /* it's unclear what type of checksum we can use.  try the best one, except:
    * a) if it's configured differently for the current realm, or
@@ -125,7 +127,7 @@ _krb5_mk_req_internal(krb5_context context,
 
 	  ret = krb5_crypto_init(context, ac->keyblock, 0, &crypto);
 	  if (ret)
-	      return ret;
+	      goto out;
 	  ret = krb5_create_checksum(context, 
 				     crypto,
 				     checksum_usage,
@@ -133,13 +135,15 @@ _krb5_mk_req_internal(krb5_context context,
 				     in_data->data,
 				     in_data->length,
 				     &c);
-      
-	  krb5_crypto_destroy(context, crypto);
+      	  krb5_crypto_destroy(context, crypto);
       }
       c_opt = &c;
   } else {
       c_opt = NULL;
   }
+
+  if (ret)
+      goto out;
   
   ret = krb5_build_authenticator (context,
 				  ac,
@@ -152,10 +156,11 @@ _krb5_mk_req_internal(krb5_context context,
   if (c_opt)
       free_Checksum (c_opt);
   if (ret)
-    return ret;
+    goto out;
 
   ret = krb5_build_ap_req (context, ac->keyblock->keytype, 
 			   in_creds, ap_req_options, authenticator, outbuf);
+out:
   if(auth_context == NULL)
       krb5_auth_con_free(context, ac);
   return ret;

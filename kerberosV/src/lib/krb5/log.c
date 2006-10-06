@@ -301,6 +301,7 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 		ret = errno;
 		krb5_set_error_string (context, "open(%s): %s", fn,
 				       strerror(ret));
+		free(fn);
 		return ret;
 	    }
 	    file = fdopen(i, "a");
@@ -309,6 +310,7 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 		close(i);
 		krb5_set_error_string (context, "fdopen(%s): %s", fn,
 				       strerror(ret));
+		free(fn);
 		return ret;
 	    }
 	    keep_open = 1;

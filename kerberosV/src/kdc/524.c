@@ -348,19 +348,21 @@ out:
     /* make reply */
     memset(buf, 0, sizeof(buf));
     sp = krb5_storage_from_mem(buf, sizeof(buf));
-    krb5_store_int32(sp, ret);
-    if(ret == 0){
-	krb5_store_int32(sp, kvno);
-	krb5_store_data(sp, ticket.cipher);
-	/* Aargh! This is coded as a KTEXT_ST. */
-	krb5_storage_seek(sp, MAX_KTXT_LEN - ticket.cipher.length, SEEK_CUR);
-	krb5_store_int32(sp, 0); /* mbz */
-	free_EncryptedData(&ticket);
-    }
-    ret = krb5_storage_to_data(sp, reply);
-    reply->length = krb5_storage_seek(sp, 0, SEEK_CUR);
-    krb5_storage_free(sp);
-    
+    if (sp) {
+	krb5_store_int32(sp, ret);
+	if(ret == 0){
+	    krb5_store_int32(sp, kvno);
+	    krb5_store_data(sp, ticket.cipher);
+	    /* Aargh! This is coded as a KTEXT_ST. */
+	    krb5_storage_seek(sp, MAX_KTXT_LEN - ticket.cipher.length, SEEK_CUR);
+	    krb5_store_int32(sp, 0); /* mbz */
+	    free_EncryptedData(&ticket);
+	}
+	ret = krb5_storage_to_data(sp, reply);
+	reply->length = krb5_storage_seek(sp, 0, SEEK_CUR);
+	krb5_storage_free(sp);
+    } else
+	krb5_data_zero(reply);
     if(spn)
 	free(spn);
     if(server)
