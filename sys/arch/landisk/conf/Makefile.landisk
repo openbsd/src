@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.2 2006/10/06 21:48:50 mickey Exp $
+#	$OpenBSD: Makefile.landisk,v 1.3 2006/10/06 22:26:10 miod Exp $
 #
 # Makefile for OpenBSD/landisk
 #
@@ -44,9 +44,6 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CMACHFLAGS=	-m4-nofpu \
 		-fno-builtin-printf -fno-builtin-log -fno-builtin-main
 .if ${IDENT:M-DNO_PROPOLICE}
-CMACHFLAGS+=	-fno-stack-protector
-.else
-# to prevent the sky from falling on our heads
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 COPTS?=		-O2
