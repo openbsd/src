@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.2 2006/10/02 18:06:55 mglocker Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.3 2006/10/06 21:55:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -107,12 +107,12 @@ pgt_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
-#if 0
+
 	/* power management hooks */
 	sc->sc_enable = pgt_cardbus_enable;
 	sc->sc_disable = pgt_cardbus_disable;
 	sc->sc_power = pgt_cardbus_power;
-#endif
+
 	/* remember chipset */
 	if (CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTERSIL_ISL3877)
 		sc->sc_flags |= SC_ISL3877;
@@ -141,8 +141,6 @@ pgt_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		mountroothook_establish(pgt_attach, sc);
 	else
 		pgt_attach(sc);
-
-	Cardbus_function_disable(ct);
 }
 
 int

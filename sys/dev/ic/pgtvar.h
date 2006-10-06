@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtvar.h,v 1.8 2006/10/02 18:06:55 mglocker Exp $  */
+/*	$OpenBSD: pgtvar.h,v 1.9 2006/10/06 21:55:33 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -174,6 +174,10 @@ struct pgt_softc {
 	int			(*sc_newstate)
 				(struct ieee80211com *,
 				 enum ieee80211_state, int);
+
+	int			(*sc_enable)(struct pgt_softc *);
+	void			(*sc_disable)(struct pgt_softc *);
+	void			(*sc_power)(struct pgt_softc *, int);
 
 	struct pgt_mgmt_descq	sc_mgmtinprog;
 	struct pgt_descq	sc_freeq[PGT_QUEUE_COUNT];

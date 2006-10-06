@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.29 2006/10/05 14:22:54 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.30 2006/10/06 21:55:33 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -581,6 +581,10 @@ pgt_attach(void *xsc)
 	//sc->sc_debug |= SC_DEBUG_RXFRAG;
 	//sc->sc_debug |= SC_DEBUG_RXETHER;
 
+	/* enable card if possible */
+	if (sc->sc_enable != NULL)
+		(*sc->sc_enable)(sc);
+
 	error = pgt_dma_alloc(sc);
 	if (error)
 		return;
@@ -622,6 +626,10 @@ pgt_detach(struct pgt_softc *sc)
 	/* stop card */
 	pgt_disable(sc, SC_DYING);
 	pgt_reboot(sc);
+
+	/* disable card if possible */
+	if (sc->sc_disable != NULL)
+		(*sc->sc_disable)(sc);
 
 	ieee80211_ifdetach(&sc->sc_ic.ic_if);
 	if_detach(&sc->sc_ic.ic_if);
