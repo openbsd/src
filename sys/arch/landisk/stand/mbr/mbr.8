@@ -1,0 +1,60 @@
+.\"     $OpenBSD: mbr.8,v 1.1 2006/10/06 21:48:50 mickey Exp $
+.\"
+.\" Copyright (c) 2006 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER IN
+.\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 5, 2006
+.Dt MBR 8 landisk
+.Os
+.Sh NAME
+.Nm mbr
+.Nd
+LANDISK-specific Master Boot Record
+.Sh DESCRIPTION
+.Nm MBR
+program that is only one sector (512 bytes) and also includes
+a partition table for the disk is located in the 0th sector of the disk.
+Upon receiving control from the system firmware
+.Nm
+will scan the partition table for an active partition and continue
+loading the Primary Boot Record (PBR) from the beginnning of the
+partition, if found.
+.Pp
+.Nm
+is installed into the disk by the
+.Xr fdisk 8
+program that is also used to operate the partition table.
+.Pp
+Partition table sonsists of four entries only one of which may be
+marked as
+.Dq active
+that is where the PBR will be loaded from.
+.Sh DIAGNOSTICS
+A few messages are printed in case of errors:
+.Bl -tag -width no_active_partition
+.It "No active partition"
+Indicates that none of the partitions are marked
+.Dq active .
+.It Read error
+An error occured while fetching the primary boot loader.
+.It "No O/S"
+The partition table is empty.
+.El
+.Sh SEE ALSO
+.Xr boot 8 ,
+.Xr bootxx 8 ,
+.Xr boot_landisk 8 ,
+.Xr disklabel 8 ,
+.Xr fdisk 8

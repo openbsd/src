@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2006/10/06 21:48:50 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ char machine[] = MACHINE;		/* landisk */
 struct bootinfo _bootinfo;
 struct bootinfo *bootinfo;
 
-__dead void landisk_startup(int, void *);
+__dead void landisk_startup(int, char *, void *);
 __dead void main(void);
 
 void
@@ -126,22 +126,25 @@ cpu_startup(void)
 }
 
 vaddr_t kernend;	/* used by /dev/mem too */
+char *esym;
 
-void
-landisk_startup(int howto, void *bi)
+__dead void
+landisk_startup(int howto, char *_esym, void *bi)
 {
 	extern char edata[], end[];
 
 	/* Clear bss */
-	memset(edata, 0, end - edata);
+	bzero(edata, end - edata);
 
-/* XXX symbols */
 	/* Start to determine heap area */
-	kernend = (vaddr_t)round_page((vaddr_t)end);
+	esym = _esym;
+	kernend = (vaddr_t)round_page((vaddr_t)esym);
 
 	/* Copy bootinfo */
-	bootinfo = &_bootinfo;
-	memcpy(bootinfo, bi, sizeof(struct bootinfo));
+	if (bi) {
+		bootinfo = &_bootinfo;
+		memcpy(bootinfo, bi, sizeof(struct bootinfo));
+	}
 	boothowto = howto;
 
 	/* Initialize CPU ops. */
@@ -173,8 +176,8 @@ landisk_startup(int howto, void *bi)
 
 	/* Jump to main */
 	__asm volatile(
-		"jmp	@%0;"
-		"mov	%1, sp"
+		"jmp	@%0\n\t"
+		" mov	%1, sp"
 		:: "r" (main), "r" (proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 	/* NOTREACHED */
 	for (;;) ;

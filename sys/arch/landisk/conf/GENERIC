@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $
+# $OpenBSD: GENERIC,v 1.2 2006/10/06 21:48:50 mickey Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,52 +21,55 @@ option	 	PCLOCK=33333333		# 33.33MHz clock
 option	 	DONT_INIT_BSC
 #option	 	DONT_INIT_PCIBSC
 
+option		PCIVERBOSE
+option		USBVERBOSE
+
 # Cache options.
 option	 	SH4_CACHE_DISABLE_EMODE	# disable extended (2x larger) mode
 
-#config		bsd	swap generic
-config		bsd	root on wd0a
+config		bsd	swap generic
+#config		bsd	root on wd0a
 
 mainbus0 at root
 cpu0	at mainbus?
 
 # PCI bus support
 shpcic*	at mainbus?			# SH7751 PCIC
-pci0	at shpcic? bus ?
+pci0	at shpcic?
 
 # SH bus
 shb*	at mainbus?
 
 # ob-board I/O bus
-obio0	at mainbus?
+#obio0	at mainbus?
 
 # Serial Devices
 option	SCIFCONSOLE
 option	SCIFCN_SPEED=9600
 scif0	at shb?
 
-clock0 at shb?
+#clock0 at shb?
 
-wdc0	at obio? port 0x14000000 irq 10		# CF
-wd*	at wdc? flags 0x0000
+#wdc0	at obio? port 0x14000000 irq 10		# CF
+#wd*	at wdc? flags 0x0000
 
 # Network Interfaces
 
 # PCI network interfaces
-re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-rl*	at pci? dev ? function ?	# Realtek 8129/8139
+#re*	at pci?				# Realtek 8139C+/8169/8169S/8110S
+#rl*	at pci?				# Realtek 8129/8139
 
 # MII/PHY support
-rgephy*	at mii? phy ?
-rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
-urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
+#rgephy*	at mii? phy ?
+#rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+#urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
 
 # PCI USB controllers
-ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
-ohci*	at pci?	dev ? function ?	# Open Host Controller
+ehci*	at pci?				# Enhanced Host Controller
+ohci*	at pci?				# Open Host Controller
 
 # USB bus support
 usb*	at ehci?
@@ -82,10 +85,10 @@ uhidev*	at uhub? port ? configuration ? interface ?
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 scsibus* at umass?
-atapiscsi* at umass?
+#atapiscsi* at umass?
 
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+sd*	at scsibus?			# SCSI disk drives
+cd*	at scsibus?			# SCSI CD-ROM drives
 
 # USB Generic driver
 ugen*	at uhub? port ?
