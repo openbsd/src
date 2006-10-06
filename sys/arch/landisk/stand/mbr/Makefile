@@ -1,8 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1 2006/10/06 21:48:50 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/10/06 22:06:46 deraadt Exp $
 
+.include <bsd.own.mk>
+
+MAN=	mbr.8
+
+.if ${MACHINE} == "landisk"
 PROG=	mbr
 SRCS=	mbr.S
-MAN=	mbr.8
 AFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../.. #-Wa,a
 LDFLAGS+=-N -e start -Ttext 0x8c200200
 OBJCOPY?=objcopy
@@ -21,5 +25,9 @@ ${PROG}: $(OBJS) $(DPADD)
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
 		ls -l ${.OBJDIR}/${PROG}; \
 	fi
+
+.else
+NOPROG=
+.endif
 
 .include <bsd.prog.mk>

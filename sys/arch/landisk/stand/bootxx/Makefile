@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2006/10/06 21:48:50 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/10/06 22:06:46 deraadt Exp $
 
+MAN=	bootxx.8
+
+.if ${MACHINE} == "landisk"
 PROG=	bootxx
 SRCS=	pbr.S bootxx.S boot1.c
-MAN=	bootxx.8
 LDFLAGS=-nostdlib -Ttext 0x8c201000 -N -x -Bstatic -e start
 
 INSTALL_STRIP=
@@ -41,5 +43,8 @@ ${PROG}: ${OBJS} ${DPADD}
 		    dd if=/dev/zero bs=1 count=$$pad >>${PROG} 2>/dev/null; \
 		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
 	fi
+.else
+NOPROG=
+.endif
 
 .include <bsd.prog.mk>
