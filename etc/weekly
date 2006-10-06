@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.16 2005/11/19 15:13:34 jmc Exp $
+#	$OpenBSD: weekly,v 1.17 2006/10/06 04:50:31 hugh Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -16,7 +16,7 @@ echo ""
 if [ -f /var/db/locate.database ]; then
 	TMP=`mktemp /var/db/locate.database.XXXXXXXXXX`
 	if [ $? -eq 0 ]; then
-		trap 'rm -f $TMP' 0 1 15
+		trap 'rm -f $TMP; exit 1' 0 1 15
 		echo "Rebuilding locate database:"
 		UPDATEDB="/usr/libexec/locate.updatedb"
 		echo "${UPDATEDB} --fcodes=- --tmpdir=${TMPDIR:-/var/tmp}" | \
