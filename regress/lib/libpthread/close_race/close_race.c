@@ -1,4 +1,4 @@
-/*	$OpenBSD: close_race.c,v 1.1 2006/09/22 18:32:16 kurt Exp $	*/
+/*	$OpenBSD: close_race.c,v 1.2 2006/10/06 13:11:58 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -40,12 +40,12 @@ deadlock_detector(void *arg)
 static void *
 busy_thread(void *arg)
 {
-	int fd = (int)arg;
+	int fd = *(int *)arg;
 
 	/* loop until error */
 	while(fcntl(fd, F_GETFD, NULL) != -1);
 
-	return ((void *)errno);
+	return ((caddr_t)NULL + errno);
 }
 
 int
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 		CHECKe(fd = socket(AF_INET, SOCK_DGRAM, 0));
 		for (j = 0; j < BUSY_THREADS; j++)
 			CHECKr(pthread_create(&busy_threads[j], NULL,
-			    busy_thread, (void *)fd));
+			    busy_thread, (void *)&fd));
 		nanosleep(&rqtp, NULL);
 		CHECKr(close(fd));
 		for (j = 0; j < 5; j++) {

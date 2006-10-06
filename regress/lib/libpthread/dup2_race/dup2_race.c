@@ -1,4 +1,4 @@
-/*	$OpenBSD: dup2_race.c,v 1.2 2006/10/03 16:06:52 kurt Exp $	*/
+/*	$OpenBSD: dup2_race.c,v 1.3 2006/10/06 13:11:58 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -40,12 +40,12 @@ deadlock_detector(void *arg)
 static void *
 busy_thread(void *arg)
 {
-	int fd = (int)arg;
+	int fd = *(int *)arg;
 
 	/* loop until error */
 	while(fcntl(fd, F_GETFD, NULL) != -1);
 
-	return ((void *)errno);
+	return ((caddr_t)NULL + errno);
 }
 
 int
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 		CHECKe(newfd = socket(AF_INET, SOCK_DGRAM, 0));
 		for (j = 0; j < BUSY_THREADS; j++)
 			CHECKr(pthread_create(&busy_threads[j], NULL,
-			    busy_thread, (void *)newfd));
+			    busy_thread, (void *)&newfd));
 		nanosleep(&rqtp, NULL);
 		CHECKe(dup2(fd, newfd));
 		for (j = 0; j < BUSY_THREADS; j++) {

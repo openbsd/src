@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocked_dup2.c,v 1.2 2006/10/03 16:06:52 kurt Exp $	*/
+/*	$OpenBSD: blocked_dup2.c,v 1.3 2006/10/06 13:11:58 kurt Exp $	*/
 /*
  * Copyright (c) 2006 Kurt Miller <kurt@intricatesoftware.com>
  *
@@ -44,7 +44,7 @@ deadlock_detector(void *arg)
 static void *
 waiting_read(void *arg)
 {
-	int fd = (int)arg;
+	int fd = *(int *)arg;
 	struct sockaddr remote_addr;
 	char readBuf;
 	int n, remote_addr_len = sizeof(struct sockaddr);
@@ -52,20 +52,20 @@ waiting_read(void *arg)
 	n = recvfrom(fd, &readBuf, 1, 0, &remote_addr, &remote_addr_len);
 
 	if (n == -1)
-		return ((void *)errno);
+		return ((caddr_t)NULL + errno);
 	else
-		return (0);
+		return (NULL);
 }
 
 static void *
 busy_thread(void *arg)
 {
-	int fd = (int)arg;
+	int fd = *(int *)arg;
 
 	/* loop until error */
 	while(fcntl(fd, F_GETFD, NULL) != -1);
 
-	return ((void *)errno);
+	return ((caddr_t)NULL + errno);
 }
 
 int
@@ -99,10 +99,10 @@ main(int argc, char *argv[])
 	for (i = 0; i < ITERATIONS; i++) {
 		for (j = 0; j < BUSY_THREADS; j++)
 			CHECKr(pthread_create(&busy_threads[j], NULL,
-			    busy_thread, (void *)newfd));
+			    busy_thread, (void *)&newfd));
 		for (j = 0; j < WAITING_THREADS; j++)
 			CHECKr(pthread_create(&waiting_threads[j], NULL,
-			    waiting_read, (void *)newfd));
+			    waiting_read, (void *)&newfd));
 		nanosleep(&rqtp, NULL);
 		CHECKe(dup2(fd, newfd));
 		for (j = 0; j < BUSY_THREADS; j++) {
