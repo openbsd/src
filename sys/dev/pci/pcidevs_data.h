@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1157 2006/10/02 17:52:24 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1158 2006/10/06 00:41:08 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4221,6 +4221,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_EIDE,
 	    "EIDE",
+	},
+	{
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SWC,
+	    "MSVCC01 Video Capture",
+	},
+	{
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751,
+	    "SH7751 PCI",
+	},
+	{
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751R,
+	    "SH7751R PCI",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
@@ -12609,6 +12621,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SMSC,
 	    "SMSC",
+	},
+	{
+	    PCI_VENDOR_HITACHI,
+	    "Hitachi",
 	},
 	{
 	    PCI_VENDOR_MOT,

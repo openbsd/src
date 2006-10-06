@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1157 2006/10/02 17:52:24 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1158 2006/10/06 00:41:08 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -94,6 +94,7 @@
 #define	PCI_VENDOR_OAKTECH	0x104e		/* Oak Technology */
 #define	PCI_VENDOR_WINBOND	0x1050		/* Winbond */
 #define	PCI_VENDOR_SMSC	0x1055		/* SMSC */
+#define	PCI_VENDOR_HITACHI	0x1054		/* Hitachi */
 #define	PCI_VENDOR_MOT	0x1057		/* Motorola */
 #define	PCI_VENDOR_PROMISE	0x105a		/* Promise */
 #define	PCI_VENDOR_NUMBER9	0x105d		/* Number 9 */
@@ -1565,6 +1566,11 @@
 #define	PCI_PRODUCT_HINT_VXPRO_II_HOST	0x8011		/* Host */
 #define	PCI_PRODUCT_HINT_VXPRO_II_ISA	0x8012		/* ISA */
 #define	PCI_PRODUCT_HINT_VXPRO_II_EIDE	0x8013		/* EIDE */
+
+/* Hitachi products */
+#define	PCI_PRODUCT_HITACHI_SWC	0x0101		/* MSVCC01 Video Capture */
+#define	PCI_PRODUCT_HITACHI_SH7751	0x3505		/* SH7751 PCI */
+#define	PCI_PRODUCT_HITACHI_SH7751R	0x350e		/* SH7751R PCI */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_0x0002	0x0002		/* MCA */
