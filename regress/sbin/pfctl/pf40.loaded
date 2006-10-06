@@ -34,19 +34,19 @@
   [ Skip steps: i=12 d=4 f=end sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass all
+@3 pass all flags S/SA keep state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass in all
+@4 pass in all flags S/SA no state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass out all
+@5 pass out all flags S/SA no state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass all
+@6 pass all flags S/SA no state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -62,11 +62,11 @@
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@10 pass in all
+@10 pass in all flags S/SA keep state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@11 pass out all
+@11 pass out all flags S/SA keep state
   [ Skip steps: f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -74,7 +74,7 @@
   [ Skip steps: i=15 d=17 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 pass on lo0 all
+@13 pass on lo0 all flags S/SA keep state
   [ Skip steps: i=15 d=17 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -82,7 +82,7 @@
   [ Skip steps: d=17 f=end sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 pass proto tcp all flags S/SA
+@15 pass proto tcp all flags S/SA keep state
   [ Skip steps: i=19 d=17 f=end sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -98,7 +98,7 @@
   [ Skip steps: d=end f=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 pass out on lo0 proto tcp from any to any port = smtp keep state
+@19 pass out on lo0 proto tcp from any to any port = smtp flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

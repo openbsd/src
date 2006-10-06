@@ -1,32 +1,32 @@
-@0 pass in inet proto icmp all icmp-type echorep
+@0 pass in inet proto icmp all icmp-type echorep keep state
   [ Skip steps: i=end d=end f=4 p=4 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in inet proto icmp all icmp-type echorep code 0
+@1 pass in inet proto icmp all icmp-type echorep code 0 keep state
   [ Skip steps: i=end d=end f=4 p=4 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass in inet proto icmp all icmp-type 1
+@2 pass in inet proto icmp all icmp-type 1 keep state
   [ Skip steps: i=end d=end f=4 p=4 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass in inet proto icmp all icmp-type 1 code 1
+@3 pass in inet proto icmp all icmp-type 1 code 1 keep state
   [ Skip steps: i=end d=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass in inet6 proto ipv6-icmp all icmp6-type 0
+@4 pass in inet6 proto ipv6-icmp all icmp6-type 0 keep state
   [ Skip steps: i=end d=end f=8 p=8 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass in inet6 proto ipv6-icmp all icmp6-type 0 code 0
+@5 pass in inet6 proto ipv6-icmp all icmp6-type 0 code 0 keep state
   [ Skip steps: i=end d=end f=8 p=8 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass in inet6 proto ipv6-icmp all icmp6-type unreach
+@6 pass in inet6 proto ipv6-icmp all icmp6-type unreach keep state
   [ Skip steps: i=end d=end f=8 p=8 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@7 pass in inet6 proto ipv6-icmp all icmp6-type unreach code admin-unr
+@7 pass in inet6 proto ipv6-icmp all icmp6-type unreach code admin-unr keep state
   [ Skip steps: i=end d=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -62,11 +62,11 @@
   [ Skip steps: i=end d=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 pass in inet proto icmp all icmp-type unreach code needfrag
+@16 pass in inet proto icmp all icmp-type unreach code needfrag keep state
   [ Skip steps: i=end d=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@17 pass in inet6 proto ipv6-icmp all icmp6-type timex code reassemb
+@17 pass in inet6 proto ipv6-icmp all icmp6-type timex code reassemb keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

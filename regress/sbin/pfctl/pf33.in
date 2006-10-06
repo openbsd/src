@@ -15,4 +15,4 @@ pass in on $ext_if inet proto tcp from any to any port 80 keep state queue http
 pass out on $ext_if inet proto tcp from any to any port 22 keep state queue ssh
 pass in  on $ext_if inet proto tcp from any to any port 22 keep state queue ssh
 pass out on $ext_if inet proto tcp from any to any port 25 keep state queue mail
-pass out on $ext_if inet all keep state
+pass out on $ext_if inet all

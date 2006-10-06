@@ -10,19 +10,19 @@
   [ Skip steps: i=8 d=14 f=end da=5 dp=4 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass in on lo1000001 inet proto tcp from 10.0.0.1 port = ssh to 10.0.0.2 keep state
+@3 pass in on lo1000001 inet proto tcp from 10.0.0.1 port = ssh to 10.0.0.2 flags S/SA keep state
   [ Skip steps: i=8 d=14 f=end p=7 da=5 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass in on lo1000001 inet proto tcp from any to 10.0.0.2 port = ssh keep state
+@4 pass in on lo1000001 inet proto tcp from any to 10.0.0.2 port = ssh flags S/SA keep state
   [ Skip steps: i=8 d=14 f=end p=7 sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass in on lo1000001 inet proto tcp from 10.0.0.1 to 10.0.0.4 keep state
+@5 pass in on lo1000001 inet proto tcp from 10.0.0.1 to 10.0.0.4 flags S/SA keep state
   [ Skip steps: i=8 d=14 f=end p=7 sa=7 sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass in on lo1000001 inet proto tcp from 10.0.0.1 to 10.0.0.6 port = ssh keep state
+@6 pass in on lo1000001 inet proto tcp from 10.0.0.1 to 10.0.0.6 port = ssh flags S/SA keep state
   [ Skip steps: i=8 d=14 f=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -42,15 +42,15 @@
   [ Skip steps: i=13 d=14 f=end sa=end sp=end da=12 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@11 pass in inet proto tcp from any to 10.0.0.1 port = www keep state
+@11 pass in inet proto tcp from any to 10.0.0.1 port = www flags S/SA keep state
   [ Skip steps: i=13 d=14 f=end p=14 sa=end sp=end dp=13 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@12 pass in inet proto tcp from any to 10.0.0.3 port = www keep state
+@12 pass in inet proto tcp from any to 10.0.0.3 port = www flags S/SA keep state
   [ Skip steps: d=14 f=end p=14 sa=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 pass in on lo1000000 inet proto tcp from any to 10.0.0.2 port = ssh keep state
+@13 pass in on lo1000000 inet proto tcp from any to 10.0.0.2 port = ssh flags S/SA keep state
   [ Skip steps: f=end sa=end sp=end da=16 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -70,19 +70,19 @@
   [ Skip steps: d=end f=end sa=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 pass out on lo1000000 inet proto tcp from any to 10.0.0.2 port = ssh keep state
+@18 pass out on lo1000000 inet proto tcp from any to 10.0.0.2 port = ssh flags S/SA keep state
   [ Skip steps: d=end f=end p=end sa=end sp=end da=20 dp=20 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 pass out on lo1000001 inet proto tcp from any to 10.0.0.2 port = ssh keep state
+@19 pass out on lo1000001 inet proto tcp from any to 10.0.0.2 port = ssh flags S/SA keep state
   [ Skip steps: d=end f=end p=end sa=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@20 pass out inet proto tcp from any to 10.0.0.1 port = 81 keep state
+@20 pass out inet proto tcp from any to 10.0.0.1 port = 81 flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@21 pass out inet proto tcp from any to 10.0.0.1 port = www keep state
+@21 pass out inet proto tcp from any to 10.0.0.1 port = www flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

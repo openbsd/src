@@ -23,54 +23,54 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 block drop all
-  [ Skip steps: i=7 d=5 f=end p=2 sa=end sp=end da=end dp=12 ]
+  [ Skip steps: i=8 d=6 f=end p=2 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 block return all
-  [ Skip steps: i=7 d=5 f=end sa=end sp=end da=end dp=12 ]
+  [ Skip steps: i=8 d=6 f=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @2 block return-rst proto tcp all
-  [ Skip steps: i=7 d=5 f=end sa=end sp=end da=end dp=12 ]
+  [ Skip steps: i=8 d=6 f=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass all
-  [ Skip steps: i=7 d=5 f=end p=10 sa=end sp=end da=end dp=12 ]
+@3 pass all flags S/SA keep state
+  [ Skip steps: i=8 d=6 f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 block drop all
-  [ Skip steps: i=7 f=end p=10 sa=end sp=end da=end dp=12 ]
+@4 pass all flags S/SA no state
+  [ Skip steps: i=8 d=6 f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass in all
-  [ Skip steps: i=7 f=end p=10 sa=end sp=end da=end dp=12 ]
+@5 block drop all
+  [ Skip steps: i=8 f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass out all
-  [ Skip steps: f=end p=10 sa=end sp=end da=end dp=12 ]
+@6 pass in all flags S/SA keep state
+  [ Skip steps: i=8 f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@7 block drop on lo0 all
-  [ Skip steps: i=10 d=12 f=end p=10 sa=end sp=end da=end dp=12 ]
+@7 pass out all flags S/SA keep state
+  [ Skip steps: f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@8 pass on lo0 all
-  [ Skip steps: i=10 d=12 f=end p=10 sa=end sp=end da=end dp=12 ]
+@8 block drop on lo0 all
+  [ Skip steps: i=11 d=end f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@9 block drop on lo0 all
-  [ Skip steps: d=12 f=end sa=end sp=end da=end dp=12 ]
+@9 pass on lo0 all flags S/SA keep state
+  [ Skip steps: i=11 d=end f=end p=11 sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@10 pass proto tcp all flags S/SA
-  [ Skip steps: i=12 d=12 f=end sa=end sp=end da=end dp=12 ]
+@10 block drop on lo0 all
+  [ Skip steps: d=end f=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@11 pass proto udp all keep state
-  [ Skip steps: f=end sa=end sp=end da=end ]
+@11 pass proto tcp all flags S/SA keep state
+  [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@12 pass out on lo0 proto tcp from any to any port = smtp keep state
+@12 pass proto udp all keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

@@ -62,11 +62,11 @@
   [ Skip steps: i=end f=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 pass out on tun1000000 proto tcp all modulate state
+@16 pass out on tun1000000 proto tcp all flags S/SA modulate state
   [ Skip steps: i=end f=end p=18 sa=end sp=end da=end dp=22 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@17 pass in on tun1000000 proto tcp all modulate state
+@17 pass in on tun1000000 proto tcp all flags S/SA modulate state
   [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=22 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -86,19 +86,19 @@
   [ Skip steps: i=end d=end f=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@22 pass in on tun1000000 proto tcp from any to any port = ssh modulate state
+@22 pass in on tun1000000 proto tcp from any to any port = ssh flags S/SA modulate state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@23 pass in on tun1000000 proto tcp from any to any port = smtp modulate state
+@23 pass in on tun1000000 proto tcp from any to any port = smtp flags S/SA modulate state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@24 pass in on tun1000000 proto tcp from any to any port = domain modulate state
+@24 pass in on tun1000000 proto tcp from any to any port = domain flags S/SA modulate state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@25 pass in on tun1000000 proto tcp from any to any port = auth modulate state
+@25 pass in on tun1000000 proto tcp from any to any port = auth flags S/SA modulate state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

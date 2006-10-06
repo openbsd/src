@@ -8,9 +8,9 @@ block
 block return
 block return-rst proto tcp
 pass
-pass in
-pass out
-pass all
+pass in no state
+pass out no state
+pass all no state
 block in all
 block out all
 block from any to any

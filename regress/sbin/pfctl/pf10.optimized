@@ -1,8 +1,8 @@
-@0 pass in inet proto icmp all
+@0 pass in inet proto icmp all keep state
   [ Skip steps: i=end d=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in inet6 proto ipv6-icmp all
+@1 pass in inet6 proto ipv6-icmp all keep state
   [ Skip steps: i=end d=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

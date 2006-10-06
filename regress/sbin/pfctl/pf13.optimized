@@ -1,16 +1,16 @@
-@0 pass in quick on enc0 fastroute all
+@0 pass in quick on enc0 fastroute all flags S/SA keep state
   [ Skip steps: p=4 sa=6 sp=end da=2 dp=4 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass out quick on tun1000000 route-to tun1000001 inet all
+@1 pass out quick on tun1000000 route-to tun1000001 inet all flags S/SA keep state
   [ Skip steps: i=end d=4 f=3 p=4 sa=6 sp=end dp=4 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass out quick on tun1000000 route-to tun1000001 inet from any to 192.168.1.1
+@2 pass out quick on tun1000000 route-to tun1000001 inet from any to 192.168.1.1 flags S/SA keep state
   [ Skip steps: i=end d=4 p=4 sa=6 sp=end dp=4 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass out quick on tun1000000 route-to tun1000001 inet6 from any to fec0::1
+@3 pass out quick on tun1000000 route-to tun1000001 inet6 from any to fec0::1 flags S/SA keep state
   [ Skip steps: i=end sa=6 sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -22,11 +22,11 @@
   [ Skip steps: i=end d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass in quick on tun1000000 route-to tun1000001 inet from 192.168.1.1 to 10.1.1.1
+@6 pass in quick on tun1000000 route-to tun1000001 inet from 192.168.1.1 to 10.1.1.1 flags S/SA keep state
   [ Skip steps: i=end d=end p=8 sp=end dp=8 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@7 pass in quick on tun1000000 route-to tun1000001 inet6 from fec0::/64 to fec1::2
+@7 pass in quick on tun1000000 route-to tun1000001 inet6 from fec0::/64 to fec1::2 flags S/SA keep state
   [ Skip steps: i=end d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -38,19 +38,19 @@
   [ Skip steps: i=end d=end sp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@10 pass in quick on tun1000000 reply-to tun1000001 inet from 192.168.1.1 to 10.1.1.1
+@10 pass in quick on tun1000000 reply-to tun1000001 inet from 192.168.1.1 to 10.1.1.1 flags S/SA keep state
   [ Skip steps: i=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@11 pass in quick on tun1000000 reply-to tun1000001 inet6 from fec0::/64 to fec1::2
+@11 pass in quick on tun1000000 reply-to tun1000001 inet6 from fec0::/64 to fec1::2 flags S/SA keep state
   [ Skip steps: i=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@12 pass in quick on tun1000000 dup-to (tun1000001 192.168.1.100) inet from 192.168.1.1 to 10.1.1.1
+@12 pass in quick on tun1000000 dup-to (tun1000001 192.168.1.100) inet from 192.168.1.1 to 10.1.1.1 flags S/SA keep state
   [ Skip steps: i=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 pass in quick on tun1000000 dup-to (tun1000001 fec1::2) inet6 from fec0::/64 to fec1::2
+@13 pass in quick on tun1000000 dup-to (tun1000001 fec1::2) inet6 from fec0::/64 to fec1::2 flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
