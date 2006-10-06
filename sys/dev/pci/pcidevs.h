@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1158 2006/10/06 00:41:08 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1159 2006/10/06 02:28:54 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -93,8 +93,8 @@
 #define	PCI_VENDOR_SONY	0x104d		/* Sony */
 #define	PCI_VENDOR_OAKTECH	0x104e		/* Oak Technology */
 #define	PCI_VENDOR_WINBOND	0x1050		/* Winbond */
-#define	PCI_VENDOR_SMSC	0x1055		/* SMSC */
 #define	PCI_VENDOR_HITACHI	0x1054		/* Hitachi */
+#define	PCI_VENDOR_SMSC	0x1055		/* SMSC */
 #define	PCI_VENDOR_MOT	0x1057		/* Motorola */
 #define	PCI_VENDOR_PROMISE	0x105a		/* Promise */
 #define	PCI_VENDOR_NUMBER9	0x105d		/* Number 9 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1158 2006/10/06 00:41:08 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.1159 2006/10/06 02:28:54 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -12619,12 +12619,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Winbond",
 	},
 	{
-	    PCI_VENDOR_SMSC,
-	    "SMSC",
-	},
-	{
 	    PCI_VENDOR_HITACHI,
 	    "Hitachi",
+	},
+	{
+	    PCI_VENDOR_SMSC,
+	    "SMSC",
 	},
 	{
 	    PCI_VENDOR_MOT,
