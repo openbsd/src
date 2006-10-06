@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.356 2006/10/06 10:48:46 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.357 2006/10/06 13:51:06 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -94,7 +94,7 @@ For example,
 ext_if = \&"kue0\&"
 all_ifs = \&"{\&" $ext_if lo0 \&"}\&"
 pass out on $ext_if from any to any
-pass in  on $ext_if proto tcp from any to any port 25 
+pass in  on $ext_if proto tcp from any to any port 25
 .Ed
 .Sh TABLES
 Tables are named structures which can hold a collection of addresses and
@@ -1462,7 +1462,7 @@ The following example allows only selected users to open outgoing
 connections:
 .Bd -literal -offset indent
 block out proto { tcp, udp } all
-pass  out proto { tcp, udp } all user { \*(Lt 1000, dhartmei } 
+pass  out proto { tcp, udp } all user { \*(Lt 1000, dhartmei }
 .Ed
 .It Xo Ar flags Aq Ar a
 .Pf / Ns Aq Ar b
@@ -1478,7 +1478,7 @@ Flags not specified in
 are ignored.
 For stateful connections, the default is
 .Ar flags S/SA .
-To indicate that flags should not be checkd at all, specify 
+To indicate that flags should not be checkd at all, specify
 .Ar flags any .
 The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
 .Bl -tag -width Fl
@@ -1830,7 +1830,7 @@ and
 are enabled implicitly, they do not need to be specified.
 The following pass rules are equivalent to those in the example above:
 .Bd -literal -offset indent
-pass out proto tcp from any to any 
+pass out proto tcp from any to any
 pass in  proto tcp from any to any port 25
 .Ed
 .Pp
@@ -1845,11 +1845,11 @@ This will cause
 .Xr pf 4
 to synchronize to existing connections, for instance
 if one flushes the state table.
-However, states created from such intermediate packets may be missing 
+However, states created from such intermediate packets may be missing
 connection details such as the TCP window scaling factor.
-States created with 
+States created with
 .Ar modulate state
-or scrubbed with 
+or scrubbed with
 .Ar reassmble tcp
 will also not be recoverable from intermediate packets.
 Such connections will stall and time out.
@@ -1915,7 +1915,7 @@ When the state is lost, the connection may be left dangling until the
 respective endpoints time out the connection.
 It is possible on a fast local network for the endpoints to start an ACK
 storm while trying to resynchronize after the loss of the modulator.
-The default 
+The default
 .Ar flags
 settings (or a more strict equivalent) should be used on
 .Ar modulate state
@@ -2626,7 +2626,7 @@ block in log quick on $ext_if from { 10.0.0.0/8, 172.16.0.0/12, \e
 # so replies (like 0/0 for 8/0) will match queries
 # ICMP error messages (which always refer to a TCP/UDP packet) are
 # handled by the TCP/UDP states
-pass on $ext_if inet proto icmp all icmp-type 8 code 0 
+pass on $ext_if inet proto icmp all icmp-type 8 code 0
 
 # UDP
 
