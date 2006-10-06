@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.503 2006/08/22 15:55:13 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.504 2006/10/06 10:45:44 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1620,6 +1620,12 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			r.tos = $9.tos;
 			r.keep_state = $9.keep.action;
+
+			/* 'keep state' by default on pass rules. */
+			if (!r.keep_state && !r.action &&
+			    !($9.marker & FOM_KEEP))
+				r.keep_state = PF_STATE_NORMAL;
+		
 			o = $9.keep.options;
 			while (o) {
 				struct node_state_opt	*p = o;
@@ -1771,6 +1777,13 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				o = o->next;
 				free(p);
+			}
+
+			/* 'flags S/SA' by default on pass rules. */
+			if (!r.action && !r.flags && !r.flagset &&
+			    !($9.marker & FOM_FLAGS)) {
+				r.flags = parse_flags("S");
+				r.flagset =  parse_flags("SA");
 			}
 			if (!adaptive && r.max_states) {
 				r.timeout[PFTM_ADAPTIVE_START] =
@@ -2718,6 +2731,7 @@ flag		: STRING			{
 
 flags		: FLAGS flag '/' flag	{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
 		| FLAGS '/' flag	{ $$.b1 = 0; $$.b2 = $3.b1; }
+		| FLAGS ANY		{ $$.b1 = 0; $$.b2 = 0; }
 		;
 
 icmpspec	: ICMPTYPE icmp_item		{ $$ = $2; }
@@ -2907,7 +2921,11 @@ statelock	: IFBOUND {
 		}
 		;
 
-keep		: KEEP STATE state_opt_spec	{
+keep		: NO STATE			{
+			$$.action = 0;
+			$$.options = NULL; 
+		}
+		| KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
 			$$.options = $3;
 		}
