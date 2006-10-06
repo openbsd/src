@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.357 2006/10/06 13:51:06 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.358 2006/10/06 13:56:29 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1767,12 +1767,12 @@ for more ways to control the source tracking.
 .Sh STATEFUL INSPECTION
 .Xr pf 4
 is a stateful packet filter,
-which means it tracks the state of a connection.
-A connection 's state is tracked by default, unless
+which means it can track the state of a connection.
+A connection's state is tracked by default, unless
 .Ar no state
 is specified.
 Instead of passing all traffic to port 25, for instance, it will
-to pass only the initial packet, and then begin to keep state
+pass only the initial packet, and then begin to keep state.
 Subsequent traffic will flow because the filter is aware of the connection.
 .Pp
 Before any rules are evaluated, the filter checks whether the packet
@@ -1840,7 +1840,7 @@ One can also be less restrictive, and allow state creation from
 intermediate
 .Pq non-SYN
 packets, by specifying an empty set of flags:
-.Ar flags /
+.Ar flags / .
 This will cause
 .Xr pf 4
 to synchronize to existing connections, for instance
