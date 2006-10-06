@@ -131,7 +131,7 @@ extern bool sh_cannot_change_mode_class
 extern void sh_mark_label PARAMS ((rtx, int));
 extern int sh_register_move_cost
   PARAMS ((enum machine_mode mode, enum reg_class, enum reg_class));
-extern int check_use_sfunc_addr (rtx, rtx);
+extern int check_use_sfunc_addr PARAMS ((rtx, rtx));
 
 #ifdef HARD_CONST
 extern void fpscr_set_from_mem PARAMS ((int, HARD_REG_SET));
@@ -142,5 +142,7 @@ extern void sh_pr_interrupt PARAMS ((cpp_reader *));
 extern void sh_pr_trapa PARAMS ((cpp_reader *));
 extern void sh_pr_nosave_low_regs PARAMS ((cpp_reader *));
 #endif
+
+extern rtx sh_get_pr_initial_val PARAMS ((void));
 
 #endif /* ! GCC_SH_PROTOS_H */

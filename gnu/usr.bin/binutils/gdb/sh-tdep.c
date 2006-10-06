@@ -161,6 +161,7 @@ sh_sh2e_register_name (int reg_nr)
   return register_names[reg_nr];
 }
 
+#ifdef notyet
 static const char *
 sh_sh2a_register_name (int reg_nr)
 {
@@ -240,6 +241,7 @@ sh_sh2a_nofpu_register_name (int reg_nr)
     return NULL;
   return register_names[reg_nr];
 }
+#endif
 
 static const char *
 sh_sh_dsp_register_name (int reg_nr)
@@ -1402,6 +1404,7 @@ sh2e_show_regs (void)
   printf_filtered (("FP8-FP15 %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n"), (long) read_register (FP0_REGNUM + 8), (long) read_register (FP0_REGNUM + 9), (long) read_register (FP0_REGNUM + 10), (long) read_register (FP0_REGNUM + 11), (long) read_register (FP0_REGNUM + 12), (long) read_register (FP0_REGNUM + 13), (long) read_register (FP0_REGNUM + 14), (long) read_register (FP0_REGNUM + 15));
 }
 
+#ifdef notyet
 static void
 sh2a_show_regs (void)
 {
@@ -1536,6 +1539,7 @@ sh2a_nofpu_show_regs (void)
 		   (long) read_register (R0_BANK0_REGNUM + 18),
 		   (long) read_register (R0_BANK0_REGNUM + 19));
 }
+#endif
 
 static void
 sh3e_show_regs (void)
@@ -1758,6 +1762,7 @@ sh_show_regs_command (char *args, int from_tty)
     (*sh_show_regs) ();
 }
 
+#ifdef notyet
 static struct type *
 sh_sh2a_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
@@ -1769,6 +1774,7 @@ sh_sh2a_register_type (struct gdbarch *gdbarch, int reg_nr)
   else
     return builtin_type_int;
 }
+#endif
 
 /* Return the GDB type object for the "standard" data type
    of data in register N.  */
@@ -2210,6 +2216,7 @@ sh_dsp_register_sim_regno (int nr)
   return nr;
 }
 
+#ifdef notyet
 static int
 sh_sh2a_register_sim_regno (int nr)
 {
@@ -2238,6 +2245,7 @@ sh_sh2a_register_sim_regno (int nr)
     }
   return legacy_register_sim_regno (nr);
 }
+#endif
 
 static struct sh_frame_cache *
 sh_alloc_frame_cache (void)
@@ -2495,6 +2503,7 @@ sh_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  inst = read_memory_unsigned_integer (addr - 2, 2);
 	}
 
+#ifdef notyet
       /* On SH2a check if the previous instruction was perhaps a MOVI20.
          That's allowed for the epilogue.  */
       if ((gdbarch_bfd_arch_info (gdbarch)->mach == bfd_mach_sh2a
@@ -2502,6 +2511,7 @@ sh_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
           && addr > func_addr + 6
 	  && IS_MOVI20 (read_memory_unsigned_integer (addr - 4, 2)))
 	addr -= 4;
+#endif
 
       if (pc >= addr)
 	return 1;
@@ -2522,12 +2532,14 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     case bfd_mach_sh2e:
       sh_show_regs = sh2e_show_regs;
       break;
+#ifdef notyet
     case bfd_mach_sh2a:
       sh_show_regs = sh2a_show_regs;
       break;
     case bfd_mach_sh2a_nofpu:
       sh_show_regs = sh2a_nofpu_show_regs;
       break;
+#endif
     case bfd_mach_sh_dsp:
       sh_show_regs = sh_dsp_show_regs;
       break;
@@ -2638,6 +2650,7 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_push_dummy_call (gdbarch, sh_push_dummy_call_fpu);
       break;
 
+#ifdef notyet
     case bfd_mach_sh2a:
       set_gdbarch_register_name (gdbarch, sh_sh2a_register_name);
       set_gdbarch_register_type (gdbarch, sh_sh2a_register_type);
@@ -2659,6 +2672,7 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_pseudo_register_read (gdbarch, sh_pseudo_register_read);
       set_gdbarch_pseudo_register_write (gdbarch, sh_pseudo_register_write);
       break;
+#endif
 
     case bfd_mach_sh_dsp:
       set_gdbarch_register_name (gdbarch, sh_sh_dsp_register_name);

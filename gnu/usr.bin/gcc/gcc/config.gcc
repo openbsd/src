@@ -2412,6 +2412,13 @@ sh-*-netbsdelf* | shl*-*-netbsdelf* | sh5-*-netbsd* | sh5l*-*-netbsd* | \
 		;;
 	esac
 	;;
+sh-*-openbsd*)
+	tm_file="sh/little.h dbxelf.h sh/sh.h elfos.h sh/elf.h ${tm_file}"
+	tmake_file="${tmake_file} sh/t-sh sh/t-elf"
+	# SH3, software floating point
+	target_cpu_default="SH1_BIT|SH2_BIT|SH3_BIT"
+	tmake_file="${tmake_file} sh/t-openbsd"
+	;;
 sh-*-*)
 	tm_file="${tm_file} sh/coff.h"
 	;;

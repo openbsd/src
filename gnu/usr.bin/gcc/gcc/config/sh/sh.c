@@ -4579,6 +4579,7 @@ sh_expand_prologue ()
   int d, i;
   int d_rounding = 0;
   int save_flags = target_flags;
+  int size;
 
   current_function_interrupt = sh_cfun_interrupt_handler_p ();
 
@@ -4872,7 +4873,12 @@ sh_expand_prologue ()
 
   target_flags = save_flags;
 
-  output_stack_adjust (-rounded_frame_size (d) + d_rounding,
+  size = rounded_frame_size (d);
+
+  if (warn_stack_larger_than && size > stack_larger_than_size)
+    warning ("stack usage is %d bytes", size);
+
+  output_stack_adjust (-size + d_rounding,
 		       stack_pointer_rtx, TARGET_SH5 ? 0 : 1, frame_insn);
 
   if (frame_pointer_needed)
@@ -7929,6 +7935,13 @@ sh_register_operand (op, mode)
   if (op == CONST0_RTX (mode) && TARGET_SHMEDIA)
     return 1;
   return register_operand (op, mode);
+}
+
+rtx
+sh_get_pr_initial_val (void)
+{
+  return
+    get_hard_reg_initial_val (Pmode, TARGET_SHMEDIA ? PR_MEDIA_REG : PR_REG);
 }
 
 /* INSN is an sfunc; return the rtx that describes the address used.  */

@@ -178,7 +178,7 @@ sh-*-elf*)		gdb_target=embed ;;
 sh-*-linux*)		gdb_target=linux
 			build_gdbserver=yes
 			;;
-sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu)
+sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu | sh*-*-openbsd*)
 			gdb_target=nbsd ;;
 sh-*-nto*)		gdb_target=nto ;;
 sh*)			gdb_target=embed ;;

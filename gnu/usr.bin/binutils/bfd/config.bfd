@@ -1080,7 +1080,7 @@ case "${targ}" in
     ;;
 #endif
 
-  sh*l*-*-netbsdelf*)
+  sh*-*-openbsd* | sh*l*-*-netbsdelf*)
     targ_defvec=bfd_elf32_shlnbsd_vec
     targ_selvecs="bfd_elf32_shnbsd_vec shcoff_vec shlcoff_vec"
 #ifdef BFD64
