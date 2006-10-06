@@ -1,4 +1,4 @@
-#	$OpenBSD: crontab,v 1.12 2003/03/10 01:05:28 deraadt Exp $
+#	$OpenBSD: crontab,v 1.13 2006/10/06 23:56:18 ray Exp $
 #
 # /var/cron/tabs/root - root's crontab
 #
@@ -17,7 +17,7 @@ HOME=/var/log
 #1-59	*	*	*	*	/usr/bin/newsyslog -m
 #
 # do daily/weekly/monthly maintenance
-30	1	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "`/bin/hostname` daily output" root
-30	3	*	*	6	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "`/bin/hostname` weekly output" root
-30	5	1	*	*	/bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "`/bin/hostname` monthly output" root
+30	1	*	*	*	umask 077; /bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "`/bin/hostname` daily output" root
+30	3	*	*	6	umask 077; /bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "`/bin/hostname` weekly output" root
+30	5	1	*	*	umask 077; /bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "`/bin/hostname` monthly output" root
 #0	*	*	*	*	/usr/libexec/spamd-setup
