@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1157 2006/10/02 17:52:24 brad Exp $
+$OpenBSD: pcidevs,v 1.1158 2006/10/06 00:41:08 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ vendor	SONY		0x104d	Sony
 vendor	OAKTECH		0x104e	Oak Technology
 vendor	WINBOND		0x1050	Winbond
 vendor	SMSC		0x1055	SMSC
+vendor	HITACHI		0x1054	Hitachi
 vendor	MOT		0x1057	Motorola
 vendor	PROMISE		0x105a	Promise
 vendor	NUMBER9		0x105d	Number 9
@@ -1560,6 +1561,11 @@ product HINT HB6_2		0x0021	HB6 PCI-PCI
 product HINT VXPRO_II_HOST	0x8011	Host
 product HINT VXPRO_II_ISA	0x8012	ISA
 product HINT VXPRO_II_EIDE	0x8013	EIDE
+
+/* Hitachi products */
+product HITACHI SWC		0x0101	MSVCC01 Video Capture
+product HITACHI SH7751		0x3505	SH7751 PCI
+product HITACHI SH7751R		0x350e	SH7751R PCI
 
 /* IBM products */
 product IBM 0x0002		0x0002	MCA
