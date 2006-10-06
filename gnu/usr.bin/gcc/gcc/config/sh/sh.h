@@ -405,6 +405,9 @@ extern int assembler_dialect;
 do {									\
   int regno;								\
 									\
+  /* disable stack protection for now */				\
+  flag_propolice_protection = 0;					\
+									\
   sh_cpu = CPU_SH1;							\
   assembler_dialect = 0;						\
   if (TARGET_SH2)							\
