@@ -650,6 +650,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/elf_abi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/endian.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/exec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fiq.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/fp.ph
