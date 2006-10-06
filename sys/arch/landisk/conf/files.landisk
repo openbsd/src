@@ -1,0 +1,104 @@
+#	$OpenBSD: files.landisk,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $
+#	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
+
+# maxpartitions must be first item in files.${MACHINE}
+maxpartitions 16
+
+maxusers 2 16 64
+
+major {wd = 0}
+
+#defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+
+file	arch/landisk/landisk/autoconf.c
+file	arch/landisk/landisk/bus_dma.c
+file	arch/landisk/landisk/clock_machdep.c
+file	arch/landisk/landisk/conf.c
+file	arch/landisk/landisk/consinit.c
+file	arch/landisk/landisk/disksubr.c		disk
+file	arch/landisk/landisk/intr.c
+file	arch/landisk/landisk/machdep.c
+
+#
+# System bus types
+#
+
+define	mainbus {}
+device	mainbus: pcibus, mainbus
+attach	mainbus at root
+file	arch/landisk/landisk/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/sh/sh/cpu.c			cpu
+
+#
+# Machine-independent SCSI drivers
+#
+include "scsi/files.scsi"
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+include "dev/atapiscsi/files.atapiscsi"
+
+#
+# Machine-independent I2O drivers
+#
+include "dev/i2o/files.i2o"
+
+#include "dev/wscons/files.wscons"
+#include "dev/wsfont/files.wsfont"
+#include "dev/rasops/files.rasops"
+
+#
+# PCI bus
+#
+include "dev/mii/files.mii"
+include "dev/pci/files.pci"
+include "arch/sh/conf/files.shpcic"
+
+file	arch/landisk/landisk/shpcic_machdep.c	shpcic
+
+#
+# USB drivers
+#
+include "dev/usb/files.usb"
+
+#
+# SH bus
+#
+include	"arch/sh/conf/files.shb"
+
+# Ricoh RS5C313 Real Time Clock
+device	clock
+attach	clock at shb
+file	arch/landisk/dev/rs5c313.c		clock
+
+#
+# on-board I/O bus
+#
+define obio { [port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1] }
+
+device	obio: obio
+attach	obio at mainbus
+file	arch/landisk/dev/obio.c		obio needs-flag
+
+attach	wdc at obio with wdc_obio
+file	arch/landisk/dev/wdc_obio.c	wdc_obio needs-flag
+
+define	button
+file    arch/landisk/dev/button.c	button
+
+device	btn: button
+attach	btn at obio with btn_obio
+file	arch/landisk/dev/btn_obio.c	btn_obio needs-flag
+
+device	pwrsw
+attach	pwrsw at obio with pwrsw_obio
+file	arch/landisk/dev/pwrsw_obio.c	pwrsw_obio needs-flag
+
+#device	led
+#attach	led at obio
+#file	arch/landisk/dev/led_obio.c	led needs-flag
