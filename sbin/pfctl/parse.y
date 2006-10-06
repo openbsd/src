@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.504 2006/10/06 10:45:44 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.505 2006/10/06 11:05:30 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1781,7 +1781,7 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			/* 'flags S/SA' by default on pass rules. */
 			if (!r.action && !r.flags && !r.flagset &&
-			    !($9.marker & FOM_FLAGS)) {
+			    !$9.fragment && !($9.marker & FOM_FLAGS)) {
 				r.flags = parse_flags("S");
 				r.flagset =  parse_flags("SA");
 			}
