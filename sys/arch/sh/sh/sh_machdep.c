@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.3 2006/10/06 23:15:12 mickey Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*-
@@ -165,7 +165,6 @@ sh_cpu_init(int arch, int product)
 	/* Cache access ops. */
 	sh_cache_init();
 
-for(i=0xfffffff;i--;);
 	/* MMU access ops. */
 	sh_mmu_init();
 
