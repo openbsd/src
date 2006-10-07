@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.184 2006/10/01 17:29:48 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.185 2006/10/07 20:28:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -279,7 +279,8 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 
 #define BGE_IS_575X_PLUS(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
@@ -288,7 +289,8 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 
 #define BGE_IS_5714_FAMILY(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
@@ -1802,6 +1804,20 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5753F)) ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 		sc->bge_flags |= BGE_10_100_ONLY;
+
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5703_AX ||
+	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_AX)
+		sc->bge_flags |= BGE_PHY_ADC_BUG;
+	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
+		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
+
+	if (BGE_IS_5705_OR_BEYOND(sc)) {
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+			sc->bge_flags |= BGE_PHY_JITTER_BUG;
+		else if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)
+			sc->bge_flags |= BGE_PHY_BER_BUG;
+	}
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
