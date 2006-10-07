@@ -1,3 +1,4 @@
+/*	$OpenBSD: clock.c,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -109,6 +110,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 #define	TMU_ELAPSED(x)							\
 	(0xffffffff - _reg_read_4(SH_(TCNT ## x)))
+
 void
 sh_clock_init(int flags, struct rtc_ops *rtc)
 {
@@ -283,7 +285,8 @@ cpu_initclocks()
 	_reg_write_4(SH_(TCOR2), 0xffffffff);
 
 	/* Make sure to start RTC */
-	sh_clock.rtc.init(sh_clock.rtc._cookie);
+	if (sh_clock.rtc.init != NULL)
+		sh_clock.rtc.init(sh_clock.rtc._cookie);
 }
 
 void

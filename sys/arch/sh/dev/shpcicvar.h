@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcicvar.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: shpcicvar.h,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
 /*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -79,6 +79,16 @@ void shpcic_mem_read_multi_2(void *v, bus_space_handle_t bsh,
 void shpcic_mem_read_multi_4(void *v, bus_space_handle_t bsh,
     bus_size_t offset, uint32_t *addr, bus_size_t count);
 
+/* read raw multi */
+void shpcic_io_read_raw_multi_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+void shpcic_io_read_raw_multi_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+void shpcic_mem_read_raw_multi_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+void shpcic_mem_read_raw_multi_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+
 /* read region */
 void shpcic_io_read_region_1(void *v, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t *addr, bus_size_t count);
@@ -92,6 +102,16 @@ void shpcic_mem_read_region_2(void *v, bus_space_handle_t bsh,
     bus_size_t offset, uint16_t *addr, bus_size_t count);
 void shpcic_mem_read_region_4(void *v, bus_space_handle_t bsh,
     bus_size_t offset, uint32_t *addr, bus_size_t count);
+
+/* read raw region */
+void shpcic_io_read_raw_region_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+void shpcic_io_read_raw_region_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+void shpcic_mem_read_raw_region_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
+void shpcic_mem_read_raw_region_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, uint8_t *addr, bus_size_t count);
 
 /* write single */
 void shpcic_io_write_1(void *v, bus_space_handle_t bsh,
@@ -121,6 +141,16 @@ void shpcic_mem_write_multi_2(void *v, bus_space_handle_t bsh,
 void shpcic_mem_write_multi_4(void *v, bus_space_handle_t bsh,
     bus_size_t offset, const uint32_t *addr, bus_size_t count);
 
+/* write raw multi */
+void shpcic_io_write_raw_multi_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+void shpcic_io_write_raw_multi_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+void shpcic_mem_write_raw_multi_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+void shpcic_mem_write_raw_multi_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+
 /* write region */
 void shpcic_io_write_region_1(void *v, bus_space_handle_t bsh,
     bus_size_t offset, const uint8_t *addr, bus_size_t count);
@@ -134,6 +164,16 @@ void shpcic_mem_write_region_2(void *v, bus_space_handle_t bsh,
     bus_size_t offset, const uint16_t *addr, bus_size_t count);
 void shpcic_mem_write_region_4(void *v, bus_space_handle_t bsh,
     bus_size_t offset, const uint32_t *addr, bus_size_t count);
+
+/* write raw region */
+void shpcic_io_write_raw_region_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+void shpcic_io_write_raw_region_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+void shpcic_mem_write_raw_region_2(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
+void shpcic_mem_write_raw_region_4(void *v, bus_space_handle_t bsh,
+    bus_size_t offset, const uint8_t *addr, bus_size_t count);
 
 /* set multi */
 void shpcic_io_set_multi_1(void *v, bus_space_handle_t bsh,

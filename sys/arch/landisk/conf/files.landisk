@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $
+#	$OpenBSD: files.landisk,v 1.2 2006/10/07 20:52:38 miod Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -72,9 +72,9 @@ include "dev/usb/files.usb"
 include	"arch/sh/conf/files.shb"
 
 # Ricoh RS5C313 Real Time Clock
-device	clock
-attach	clock at shb
-file	arch/landisk/dev/rs5c313.c		clock
+device	rsclock
+attach	rsclock at shb
+file	arch/landisk/dev/rs5c313.c		rsclock
 
 #
 # on-board I/O bus

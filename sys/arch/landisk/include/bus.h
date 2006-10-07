@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ struct _bus_space {
 	void *		(*bs_vaddr)(void *, bus_space_handle_t);
 
 	/* read (single) */
-	uint8_t	(*bs_r_1)(void *, bus_space_handle_t,
+	uint8_t		(*bs_r_1)(void *, bus_space_handle_t,
 			    bus_size_t);
 	uint16_t	(*bs_r_2)(void *, bus_space_handle_t,
 			    bus_size_t);
@@ -156,11 +156,11 @@ struct _bus_space {
 			    bus_size_t, uint64_t *, bus_size_t);
 
 	void		(*bs_rrm_2)(void *, bus_space_handle_t,
-			    bus_size_t, uint16_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bs_rrm_4)(void *, bus_space_handle_t,
-			    bus_size_t, uint32_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*bs_rrm_8)(void *, bus_space_handle_t,
-			    bus_size_t, uint64_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 
 	/* read region */
 	void		(*bs_rr_1)(void *, bus_space_handle_t,

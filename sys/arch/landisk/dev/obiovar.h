@@ -1,3 +1,4 @@
+/*	$OpenBSD: obiovar.h,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
 /*	$NetBSD: obiovar.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -150,7 +151,7 @@ struct obio_softc {
 #define		cf_msize		cf_loc[3]
 #define		cf_irq			cf_loc[4]
 
-void *obio_intr_establish(int irq, int level, int (*func)(void *), void *arg);
-void obio_intr_disestablish(void *ih);
+void *obio_intr_establish(int, int, int (*)(void *), void *, const char *);
+void obio_intr_disestablish(void *);
 
 #endif /* _LANDISK_OBIOVAR_H_ */
