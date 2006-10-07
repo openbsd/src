@@ -1,4 +1,4 @@
-# $OpenBSD: faq-example1,v 1.4 2006/06/16 17:26:59 jasper Exp $
+# $OpenBSD: faq-example1,v 1.5 2006/10/07 04:48:01 mcbride Exp $
 
 #
 # Firewall for Home or Small Office
@@ -35,17 +35,16 @@ rdr on $ext_if proto tcp from any to any port 80 -> $comp3
 # filter rules
 block in
 
-pass out keep state
+pass out
 
 anchor "ftp-proxy/*"
 antispoof quick for { lo $int_if }
 
-pass in on $ext_if inet proto tcp from any to ($ext_if) \
-   port $tcp_services flags S/SA keep state
+pass in on $ext_if inet proto tcp from any to ($ext_if) port $tcp_services
 
 pass in on $ext_if inet proto tcp from any to $comp3 port 80 \
-    flags S/SA synproxy state
+    synproxy state
 
-pass in inet proto icmp all icmp-type $icmp_types keep state
+pass in inet proto icmp all icmp-type $icmp_types
 
-pass quick on $int_if
+pass quick on $int_if no state

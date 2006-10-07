@@ -1,4 +1,4 @@
-# $OpenBSD: faq-example2,v 1.3 2005/07/02 16:16:39 joel Exp $
+# $OpenBSD: faq-example2,v 1.4 2006/10/07 04:48:01 mcbride Exp $
 
 #
 # Small, Home Network
@@ -62,15 +62,15 @@ block in on fxp0 all
 
 # filter rules for fxp0 outbound
 block out on fxp0 all
-pass  out on fxp0 inet proto tcp from (fxp0) to any flags S/SA \
-        keep state queue(std_out, tcp_ack_out)
-pass  out on fxp0 inet proto { udp icmp } from (fxp0) to any keep state
+pass  out on fxp0 inet proto tcp from (fxp0) to any \
+        queue(std_out, tcp_ack_out)
+pass  out on fxp0 inet proto { udp icmp } from (fxp0) to any
 pass  out on fxp0 inet proto { tcp udp } from (fxp0) to any port domain \
-        keep state queue dns_out
+        queue dns_out
 pass  out on fxp0 inet proto tcp from (fxp0) to any port $ssh_ports \
-        flags S/SA keep state queue(std_out, ssh_im_out)
+        queue(std_out, ssh_im_out)
 pass  out on fxp0 inet proto tcp from (fxp0) to any port $im_ports \
-        flags S/SA keep state queue(ssh_im_out, tcp_ack_out)
+        queue(ssh_im_out, tcp_ack_out)
 
 # filter rules for dc0 inbound
 block in on dc0 all

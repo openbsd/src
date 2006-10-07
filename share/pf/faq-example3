@@ -1,4 +1,4 @@
-# $OpenBSD: faq-example3,v 1.3 2005/07/02 16:16:39 joel Exp $
+# $OpenBSD: faq-example3,v 1.4 2006/10/07 04:48:01 mcbride Exp $
 
 #
 # Company Network
@@ -87,32 +87,30 @@ block on { fxp0, fxp1, dc0 } all
 
 # filter rules for fxp0 inbound
 pass in on fxp0 proto tcp from any to $wwwserv port { 21, \
-        > 49151 } flags S/SA keep state queue www_ext_misc
+        > 49151 } queue www_ext_misc
 pass in on fxp0 proto tcp from any to $wwwserv port 80 \
-        flags S/SA keep state queue www_ext_http
+        queue www_ext_http
 
 # filter rules for fxp0 outbound
-pass out on fxp0 from $int_nets to any keep state
-pass out on fxp0 from $boss to any keep state queue boss_ext
+pass out on fxp0 from $int_nets to any
+pass out on fxp0 from $boss to any queue boss_ext
 
 # filter rules for dc0 inbound
-pass in on dc0 from $int_nets to any keep state
+pass in on dc0 from $int_nets to any
 pass in on dc0 from $it_net to any queue it_int
 pass in on dc0 from $boss to any queue boss_int
 pass in on dc0 proto tcp from $int_nets to $wwwserv port { 21, 80, \
-        > 49151 } flags S/SA keep state queue www_int
+        > 49151 } queue www_int
 
 # filter rules for dc0 outbound
 pass out on dc0 from dc0 to $int_nets
 
 # filter rules for fxp1 inbound
-pass in on fxp1 proto { tcp, udp } from $wwwserv to any port 53 \
-        keep state
+pass in on fxp1 proto { tcp, udp } from $wwwserv to any port 53
 
 # filter rules for fxp1 outbound
 pass out on fxp1 proto tcp from any to $wwwserv port { 21, \
-        > 49151 } flags S/SA keep state queue net_dmz_misc
-pass out on fxp1 proto tcp from any to $wwwserv port 80 \
-        flags S/SA keep state queue net_dmz_http
+        > 49151 } queue net_dmz_misc
+pass out on fxp1 proto tcp from any to $wwwserv port 80 queue net_dmz_http
 pass out on fxp1 proto tcp from $int_nets to $wwwserv port { 80, \
-        21, > 49151 } flags S/SA keep state queue internal_dmz
+        21, > 49151 } queue internal_dmz
