@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.34 2006/10/03 20:36:10 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.35 2006/10/07 22:08:19 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -1020,7 +1020,7 @@ dp8390_get(sc, src, total_len)
 	u_short len;
 
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return (0);
 	m0->m_pkthdr.rcvif = ifp;
 	m0->m_pkthdr.len = total_len;
@@ -1030,7 +1030,7 @@ dp8390_get(sc, src, total_len)
 	while (total_len > 0) {
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if (!(m->m_flags & M_EXT))
 				goto bad;
 			len = MCLBYTES;
 		}
@@ -1055,7 +1055,7 @@ dp8390_get(sc, src, total_len)
 		total_len -= len;
 		if (total_len > 0) {
 			MGET(newm, M_DONTWAIT, MT_DATA);
-			if (newm == 0)
+			if (newm == NULL)
 				goto bad;
 			len = MLEN;
 			m = m->m_next = newm;
