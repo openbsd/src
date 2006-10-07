@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.13 2006/03/10 09:53:16 jsg Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.14 2006/10/07 23:44:51 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -177,13 +177,6 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-#ifdef foo
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, CIPHY_MII_BMCR) & CIPHY_BMCR_AUTOEN)
-				return (0);
-#endif
 			if (mii_phy_auto(sc, 0) == EJUSTRETURN)
 				return (0);
 			break;

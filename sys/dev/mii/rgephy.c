@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.16 2006/09/17 19:36:54 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.17 2006/10/07 23:44:51 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -183,13 +183,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-#ifdef foo
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, RGEPHY_MII_BMCR) & RGEPHY_BMCR_AUTOEN)
-				return (0);
-#endif
 			(void) rgephy_mii_phy_auto(sc);
 			break;
 		case IFM_1000_T:
@@ -235,7 +228,7 @@ setit:
 			    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
 			PHY_WRITE(sc, RGEPHY_MII_ANAR, anar);
 			break;
-#ifdef foo
+#if 0
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO|BMCR_PDOWN);
 			break;
