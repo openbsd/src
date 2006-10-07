@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.64 2006/10/02 09:06:26 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.65 2006/10/07 23:40:08 beck Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ stopen(dev, flags, fmt, p)
 	 * Check the unit status. This clears any outstanding errors and
 	 * will ensure that media is present.
 	 */
-	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE,
+	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES,
 	    SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE |
 	    SCSI_IGNORE_ILLEGAL_REQUEST);
 
@@ -542,7 +542,7 @@ st_mount_tape(dev, flags)
 	 * (noteably some DAT drives)
 	 */
 	/* XXX */
-	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_TAPE, SCSI_SILENT);
+	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES, SCSI_SILENT);
 
 	/*
 	 * Some devices can't tell you much until they have been

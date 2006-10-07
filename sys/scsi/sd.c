@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.110 2006/07/29 02:40:46 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.111 2006/10/07 23:40:07 beck Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -214,7 +214,7 @@ sdattach(parent, self, aux)
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 	/* Check that it is still responding and ok. */
-	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES_DEFAULT,
+	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES,
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
@@ -377,7 +377,7 @@ sdopen(dev, flag, fmt, p)
 
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
-		    TEST_READY_RETRIES_DEFAULT, (rawopen ? SCSI_SILENT : 0) |
+		    TEST_READY_RETRIES, (rawopen ? SCSI_SILENT : 0) |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error) {

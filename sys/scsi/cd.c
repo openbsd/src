@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.111 2006/09/26 23:33:04 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.112 2006/10/07 23:40:07 beck Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -124,6 +124,7 @@ int	cd_read_subchannel(struct cd_softc *, int, int, int,
 int	cd_read_toc(struct cd_softc *, int, int, void *, int, int);
 int	cd_get_parms(struct cd_softc *, int);
 int	cd_load_toc(struct cd_softc *, struct cd_toc *, int);
+int	cd_interpret_sense(struct scsi_xfer *);
 
 int    dvd_auth(struct cd_softc *, union dvd_authinfo *);
 int    dvd_read_physical(struct cd_softc *, union dvd_struct *);
@@ -147,7 +148,7 @@ struct cfdriver cd_cd = {
 struct dkdriver cddkdriver = { cdstrategy };
 
 struct scsi_device cd_switch = {
-	NULL,			/* use default error handler */
+	cd_interpret_sense,
 	cdstart,		/* we have a queue, which is started by this */
 	NULL,			/* we do not have an async handler */
 	cddone,			/* deal with stats at interrupt time */
@@ -340,7 +341,11 @@ cdopen(dev, flag, fmt, p)
 		 * progress of loading media so use increased retries number
 		 * and don't ignore NOT_READY.
 		 */
-		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
+
+		/* Use cd_interpret_sense() now. */
+		sc_link->flags |= SDEV_OPEN;
+
+		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES,
 		    (rawopen ? SCSI_SILENT : 0) | SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE);
 
@@ -2016,4 +2021,48 @@ cd_powerhook(int why, void *arg)
 	if (why == PWR_RESUME && cd->sc_dk.dk_openmask != 0)
 		scsi_prevent(cd->sc_link, PR_PREVENT,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+}
+
+int
+cd_interpret_sense(xs)
+	struct scsi_xfer *xs;
+{
+	struct scsi_sense_data *sense = &xs->sense;
+	struct scsi_link *sc_link = xs->sc_link;
+	u_int8_t skey = sense->flags & SSD_KEY;
+	u_int8_t serr = sense->error_code & SSD_ERRCODE;
+
+	if (((sc_link->flags & SDEV_OPEN) == 0) ||
+	    (serr != 0x70 && serr != 0x71))
+		return (EJUSTRETURN); /* let the generic code handle it */
+
+	/*
+	 * We do custom processing in cd for the unit becoming ready case.
+	 * in this case we do not allow xs->retries to be decremented
+	 * only on the "Unit Becoming Ready" case. This is because CD
+	 * drives report "Unit Becoming Ready" when loading media, etc.
+	 * and can take a long time.  Rather than having a massive timeout 
+	 * for all operations (which would cause other problems) we allow
+	 * operations to wait (but be interruptable with Ctrl-C) forever
+	 * as long as the drive is reporting that it is becoming ready.
+	 * all other cases of not being ready are handled as per the default.
+	 */
+	switch(skey) {
+	case SKEY_NOT_READY:
+		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+			return (0);
+		if (sense->add_sense_code == 0x04 &&   /* Not ready */
+		    sense->add_sense_code_qual == 0x01) { /* Becoming ready */
+			SC_DEBUG(sc_link, SDEV_DB1, ("not ready: busy (%#x)\n",
+			    sense->add_sense_code_qual));
+			/* don't count this as a retry */
+			xs->retries++;
+			return (scsi_delay(xs, 1));
+		}
+		break;
+	/* XXX more to come here for a few other cases */
+	default:
+		break;
+	}
+	return (EJUSTRETURN); /* use generic handler in scsi_base */
 }

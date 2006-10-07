@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.74 2006/10/02 09:06:26 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.75 2006/10/07 23:40:07 beck Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -298,9 +298,7 @@ struct scsi_xfer {
 /*
  * Possible retries numbers for scsi_test_unit_ready()
  */
-#define TEST_READY_RETRIES_DEFAULT	5
-#define TEST_READY_RETRIES_CD		10
-#define TEST_READY_RETRIES_TAPE		60
+#define TEST_READY_RETRIES	5
 
 const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 	    int, int *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.28 2006/06/15 15:02:31 beck Exp $	*/
+/*	$OpenBSD: ch.c,v 1.29 2006/10/07 23:40:07 beck Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -210,8 +210,7 @@ chopen(dev, flags, fmt, p)
 	 * process of getting ready" any time it must rescan
 	 * itself to determine the state of the changer.
 	 */
-	error = scsi_test_unit_ready(sc->sc_link,
-	    TEST_READY_RETRIES_TAPE,
+	error = scsi_test_unit_ready(sc->sc_link, TEST_READY_RETRIES,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 	if (error)
 		goto bad;
