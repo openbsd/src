@@ -1047,8 +1047,10 @@ mc_dmaintr(void *arg)
 			/* continue; */
 			goto next;
 		}
-		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);	
-		
+		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
+		/* XXX: Why? */
+		__asm volatile("eieio");
+
 		offset = i * MACE_BUFLEN;
 		statoff = offset + datalen;
 		sc->sc_rxframe.rx_rcvcnt = sc->sc_rxbuf[statoff + 0];
@@ -1062,6 +1064,9 @@ mc_dmaintr(void *arg)
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,
 		    DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		/* XXX: Why? */
+		__asm volatile("eieio");
+
 		cmd->d_status = 0;
 		cmd->d_resid = 0;
 		sc->sc_tail = i + 1;
