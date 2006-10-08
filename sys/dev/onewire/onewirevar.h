@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewirevar.h,v 1.3 2006/09/30 15:52:21 grange Exp $	*/
+/*	$OpenBSD: onewirevar.h,v 1.4 2006/10/08 21:12:51 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -35,6 +35,7 @@ struct onewire_bus {
 	void	(*bus_write_block)(void *, const void *, int);
 	int	(*bus_triplet)(void *, int);
 	void	(*bus_matchrom)(void *, u_int64_t);
+	int	(*bus_search)(void *, u_int64_t *, int, u_int64_t);
 };
 
 /* Bus methods */
@@ -49,6 +50,7 @@ void		onewire_read_block(void *, void *, int);
 void		onewire_write_block(void *, const void *, int);
 int		onewire_triplet(void *, int);
 void		onewire_matchrom(void *, u_int64_t);
+int		onewire_search(void *, u_int64_t *, int, u_int64_t);
 
 #define ONEWIRE_NOWAIT		0x0001
 
