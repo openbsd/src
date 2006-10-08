@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.13 2006/09/30 15:53:49 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.14 2006/10/08 21:14:12 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -74,6 +74,7 @@ Static void	uow_ow_write_byte(void *, int);
 Static void	uow_ow_read_block(void *, void *, int);
 Static void	uow_ow_write_block(void *, const void *, int);
 Static void	uow_ow_matchrom(void *, u_int64_t);
+Static int	uow_ow_search(void *, u_int64_t *, int, u_int64_t);
 
 Static int	uow_cmd(struct uow_softc *, int, int, int);
 #define uow_ctlcmd(s, c, p)	uow_cmd((s), DS2490_CONTROL_CMD, (c), (p))
@@ -182,12 +183,14 @@ USB_ATTACH(uow)
 		goto fail;
 	}
 
+#if 0
 	/* Allocate xfer for bulk transfers */
 	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
 		printf("%s: failed to alloc bulk xfer\n",
 		    USBDEVNAME(sc->sc_dev));
 		goto fail;
 	}
+#endif
 
 	memset(sc->sc_fifo, 0xff, sizeof(sc->sc_fifo));
 
@@ -203,6 +206,7 @@ USB_ATTACH(uow)
 	sc->sc_ow_bus.bus_read_block = uow_ow_read_block;
 	sc->sc_ow_bus.bus_write_block = uow_ow_write_block;
 	sc->sc_ow_bus.bus_matchrom = uow_ow_matchrom;
+	sc->sc_ow_bus.bus_search = uow_ow_search;
 
 	bzero(&oba, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
@@ -295,7 +299,7 @@ uow_ow_bit(void *arg, int value)
 	if (uow_commcmd(sc, DS2490_COMM_BIT_IO | DS2490_BIT_IM |
 	    (value ? DS2490_BIT_D : 0), 0) != 0)
 		return (1);
-	if (uow_read(sc, &data, sizeof(data)) != 0)
+	if (uow_read(sc, &data, 1) != 1)
 		return (1);
 
 	return (data);
@@ -309,7 +313,7 @@ uow_ow_read_byte(void *arg)
 
 	if (uow_commcmd(sc, DS2490_COMM_BYTE_IO | DS2490_BIT_IM, 0xff) != 0)
 		return (-1);
-	if (uow_read(sc, &data, sizeof(data)) != 0)
+	if (uow_read(sc, &data, 1) != 1)
 		return (-1);
 
 	return (data);
@@ -353,17 +357,40 @@ Static void
 uow_ow_matchrom(void *arg, u_int64_t rom)
 {
 	struct uow_softc *sc = arg;
-	u_int8_t buf[8];
+	u_int8_t data[8];
 	int i;
 
 	for (i = 0; i < 8; i++)
-		buf[i] = (rom >> (i * 8)) & 0xff;
+		data[i] = (rom >> (i * 8)) & 0xff;
 
-	if (uow_write(sc, buf, 8) != 0)
+	if (uow_write(sc, data, 8) != 0)
 		return;
 	if (uow_commcmd(sc, DS2490_COMM_MATCH_ACCESS | DS2490_BIT_IM,
 	    ONEWIRE_CMD_MATCH_ROM) != 0)
 		return;
+}
+
+Static int
+uow_ow_search(void *arg, u_int64_t *buf, int size, u_int64_t startrom)
+{
+	struct uow_softc *sc = arg;
+	u_int8_t data[8];
+	int i, rv;
+
+	for (i = 0; i < 8; i++)
+		data[i] = (startrom >> (i * 8)) & 0xff;
+
+	if (uow_write(sc, data, 8) != 0)
+		return (-1);
+	if (uow_commcmd(sc, DS2490_COMM_SEARCH_ACCESS | DS2490_BIT_IM |
+	    DS2490_BIT_SM | DS2490_BIT_RST | DS2490_BIT_F, size << 8 |
+	    ONEWIRE_CMD_SEARCH_ROM) != 0)
+		return (-1);
+
+	if ((rv = uow_read(sc, buf, size * 8)) == -1)
+		return (-1);
+
+	return (rv / 8);
 }
 
 Static int
@@ -386,7 +413,7 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 		return (1);
 	}
 
-	bzero(sc->sc_regs, sizeof(sc->sc_regs));
+again:
 	if (tsleep(sc->sc_regs, PRIBIO, "uowcmd",
 	    (UOW_TIMEOUT * hz) / 1000) != 0) {
 		printf("%s: cmd timeout, type 0x%02x, cmd 0x%04x, "
@@ -394,6 +421,8 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 		    param);
 		return (1);
 	}
+	if ((sc->sc_regs[DS2490_ST_STFL] & DS2490_ST_STFL_IDLE) == 0)
+		goto again;
 
 	return (0);
 }
@@ -418,24 +447,32 @@ Static int
 uow_read(struct uow_softc *sc, void *buf, int len)
 {
 	usbd_status error;
+	int count;
 
 	/* XXX: implement FIFO status monitoring */
 	if (len > DS2490_DATAFIFOSIZE) {
 		printf("%s: read %d bytes, xfer too big\n",
 		    USBDEVNAME(sc->sc_dev), len);
-		return (1);
+		return (-1);
 	}
 
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, len, 0,
-	    UOW_TIMEOUT, NULL);
-	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
+	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		printf("%s: failed to alloc xfer\n", USBDEVNAME(sc->sc_dev));
+		return (-1);
+	}
+	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, len,
+	    USBD_SHORT_XFER_OK, UOW_TIMEOUT, NULL);
+	error = usbd_sync_transfer(sc->sc_xfer);
+	usbd_free_xfer(sc->sc_xfer);
+	if (error != 0) {
 		printf("%s: read failed, len %d: %s\n",
 		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
 		uow_reset(sc);
-		return (1);
+		return (-1);
 	}
 
-	return (0);
+	usbd_get_xfer_status(sc->sc_xfer, NULL, NULL, &count, &error);
+	return (count);
 }
 
 Static int
@@ -450,9 +487,15 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 		return (1);
 	}
 
+	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		printf("%s: failed to alloc xfer\n", USBDEVNAME(sc->sc_dev));
+		return (-1);
+	}
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_obulk, sc, (void *)buf, len, 0,
 	    UOW_TIMEOUT, NULL);
-	if ((error = usbd_sync_transfer(sc->sc_xfer)) != 0) {
+	error = usbd_sync_transfer(sc->sc_xfer);
+	usbd_free_xfer(sc->sc_xfer);
+	if (error != 0) {
 		printf("%s: write failed, len %d: %s\n",
 		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
 		uow_reset(sc);
