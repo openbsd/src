@@ -337,6 +337,8 @@ ALL_EMULATIONS = \
 	eshlelf_nbsd.o \
 	eshelf_nto.o \
 	eshlelf_nto.o \
+	eshelf_obsd.o \
+	eshlelf_obsd.o \
 	eshl.o \
 	eshlelf.o \
 	eshpe.o \
@@ -1394,6 +1396,17 @@ eshlelf_nbsd.c: $(srcdir)/emulparams/shlelf_nbsd.sh \
 eshlelf_nto.c: $(srcdir)/emulparams/shlelf_nto.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} shlelf_nto "$(tdir_shlelf_nto)"
+eshelf_obsd.c: $(srcdir)/emulparams/shelf_obsd.sh \
+  $(srcdir)/emulparams/shelf.sh \
+  $(srcdir)/emulparams/elf_obsd.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} shelf_obsd "$(tdir_shelf_obsd)"
+eshlelf_obsd.c: $(srcdir)/emulparams/shlelf_obsd.sh \
+  $(srcdir)/emulparams/shelf_obsd.sh \
+  $(srcdir)/emulparams/shelf.sh \
+  $(srcdir)/emulparams/elf_obsd.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} shlelf_obsd "$(tdir_shlelf_obsd)"
 eshlelf.c: $(srcdir)/emulparams/shlelf.sh \
   $(srcdir)/emulparams/shelf.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}

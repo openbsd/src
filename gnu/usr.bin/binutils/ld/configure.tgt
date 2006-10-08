@@ -334,13 +334,17 @@ sh64-*-netbsd*)
 			targ_emul=shelf64_nbsd
 			targ_extra_emuls="shlelf64_nbsd shelf32_nbsd shlelf32_nbsd shelf_nbsd shlelf_nbsd"
 			;;
-sh*l*-*-netbsdelf*|sh*-*-openbsd*)
+sh*l*-*-netbsdelf*)
 			targ_emul=shlelf_nbsd
 			targ_extra_emuls=shelf_nbsd
 			;;
 sh*-*-netbsdelf*)
 			targ_emul=shelf_nbsd
 			targ_extra_emuls=shlelf_nbsd
+			;;
+sh*-*-openbsd*)
+			targ_emul=shlelf_obsd
+			targ_extra_emuls=shelf_obsd
 			;;
 shle*-*-elf* | sh[1234]*le*-*-elf | shle*-*-kaos*)
 			targ_emul=shlelf

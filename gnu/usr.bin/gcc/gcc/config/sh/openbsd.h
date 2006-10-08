@@ -49,10 +49,17 @@ Boston, MA 02111-1307, USA.  */
 #define LINK_DEFAULT_CPU_EMUL ""
 
 #undef SUBTARGET_LINK_EMUL_SUFFIX
-#define SUBTARGET_LINK_EMUL_SUFFIX "_nbsd"
+#define SUBTARGET_LINK_EMUL_SUFFIX "_obsd"
 
 #undef SUBTARGET_LINK_SPEC
-#define SUBTARGET_LINK_SPEC LINK_SPEC
+#ifdef OBSD_NO_DYNAMIC_LIBRARIES
+#define SUBTARGET_LINK_SPEC \
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{assert*}"
+#else
+#define SUBTARGET_LINK_SPEC \
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+#endif
+
 
 #undef LINK_SPEC
 #define LINK_SPEC SH_LINK_SPEC

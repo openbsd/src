@@ -1080,7 +1080,7 @@ case "${targ}" in
     ;;
 #endif
 
-  sh*-*-openbsd* | sh*l*-*-netbsdelf*)
+  sh*l*-*-netbsdelf*)
     targ_defvec=bfd_elf32_shlnbsd_vec
     targ_selvecs="bfd_elf32_shnbsd_vec shcoff_vec shlcoff_vec"
 #ifdef BFD64
@@ -1097,6 +1097,10 @@ case "${targ}" in
   sh*-*-netbsdelf*)
     targ_defvec=bfd_elf32_shnbsd_vec
     targ_selvecs="bfd_elf32_shlnbsd_vec shcoff_vec shlcoff_vec"
+    ;;
+  sh*-*-openbsd*)
+    targ_defvec=bfd_elf32_shlobsd_vec
+    targ_selvecs="bfd_elf32_shobsd_vec"
     ;;
   shl*-*-elf* | sh[1234]l*-*-elf* | sh3el*-*-elf* | shl*-*-kaos*)
     targ_defvec=bfd_elf32_shl_vec
