@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.14 2006/05/29 20:39:41 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.15 2006/10/08 22:53:33 stevesk Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -71,7 +71,7 @@ listen on 127.0.0.1
 listen on ::1
 .Ed
 .It Xo Ic sensor Ar device
-.Op Ic weight Ar offset
+.Op Ic weight Ar weight-value
 .Xc
 Specify a timedelta sensor device
 .Xr ntpd 8
@@ -93,7 +93,7 @@ sensor *
 sensor udcf0
 .Ed
 .It Xo Ic server Ar address
-.Op Ic weight Ar offset
+.Op Ic weight Ar weight-value
 .Xc
 Specify the IP address or the hostname of an NTP
 server to synchronize to.
@@ -117,7 +117,7 @@ To provide redundancy, it is good practice to configure multiple servers.
 In general, best accuracy is obtained by using servers that have a low
 network latency.
 .It Xo Ic servers Ar address
-.Op Ic weight Ar offset
+.Op Ic weight Ar weight-value
 .Xc
 As with
 .Cm server ,
