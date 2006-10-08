@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.53 2006/10/01 17:29:48 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.54 2006/10/08 00:06:20 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -214,17 +214,9 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		PHY_RESET(sc); /* XXX hardware bug work-around */
-
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-#ifdef foo
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, BRGPHY_MII_BMCR) & BRGPHY_BMCR_AUTOEN)
-				return (0);
-#endif
+			PHY_RESET(sc); /* XXX hardware bug work-around */
 			(void) brgphy_mii_phy_auto(sc);
 			break;
 		case IFM_1000_T:
@@ -239,6 +231,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_10_T:
 			speed = BRGPHY_S10;
 setit:
+			PHY_RESET(sc); /* XXX hardware bug work-around */
 			brgphy_loop(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				speed |= BRGPHY_BMCR_FDX;
@@ -438,9 +431,8 @@ brgphy_loop(struct mii_softc *sc)
 	PHY_WRITE(sc, BRGPHY_MII_BMCR, BRGPHY_BMCR_LOOP);
 	for (i = 0; i < 15000; i++) {
 		bmsr = PHY_READ(sc, BRGPHY_MII_BMSR);
-		if (!(bmsr & BRGPHY_BMSR_LINK)) {
+		if (!(bmsr & BRGPHY_BMSR_LINK))
 			break;
-		}
 		DELAY(10);
 	}
 }
