@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.55 2006/10/08 00:28:35 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.56 2006/10/08 01:01:06 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -496,6 +496,22 @@ brgphy_reset(struct mii_softc *sc)
 			brgphy_ber_bug(sc);
 		if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG)
 			brgphy_jitter_bug(sc);
+		if (bge_sc->bge_flags & BGE_JUMBO_CAP) {
+			/* Set Jumbo frame settings in the PHY. */
+			if (sc->mii_model == MII_MODEL_BROADCOM_BCM5401) {
+				/* Cannot do read-modify-write on the BCM5401 */
+				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x4c20);
+			} else {
+				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7); 
+				val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+				PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+				    val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
+			}
+
+			val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
+			PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
+			    val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+		}
 
 		/*
 		 * Enable Ethernet@WireSpeed.
