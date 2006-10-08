@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.58 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.59 2006/10/08 19:49:57 sturm Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -114,9 +114,7 @@ bsd_to_linux_wstat(status)
 }
 
 /*
- * waitpid(2). Passed on to the OpenBSD call, surrounded by code to
- * reserve some space for a OpenBSD-style wait status, and converting
- * it to what Linux wants.
+ * waitpid(2). Just forward on to linux_sys_wait4 with a NULL rusage.
  */
 int
 linux_sys_waitpid(p, v, retval)
@@ -129,39 +127,20 @@ linux_sys_waitpid(p, v, retval)
 		syscallarg(int *) status;
 		syscallarg(int) options;
 	} */ *uap = v;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat;
-	caddr_t sg;
+	struct sys_wait4_args linux_w4a;
 
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof status);
-	} else
-		status = NULL;
+	SCARG(&linux_w4a, pid) = SCARG(uap, pid);
+	SCARG(&linux_w4a, status) = SCARG(uap, status);
+	SCARG(&linux_w4a, options) = SCARG(uap, options);
+	SCARG(&linux_w4a, rusage) = NULL;
 
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = SCARG(uap, options);
-	SCARG(&w4a, rusage) = NULL;
-
-	if ((error = sys_wait4(p, &w4a, retval)))
-		return error;
-
-	p->p_siglist &= ~sigmask(SIGCHLD);
-
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
-
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
-	}
-
-	return 0;
+	return (linux_sys_wait4(p, &linux_w4a, retval));
 }
 
 /*
- * This is very much the same as waitpid()
+ * wait4(2). Passed on to the OpenBSD call, surrounded by code to reserve
+ * some space for an OpenBSD-style wait status, and converting it to what
+ * Linux wants.
  */
 int
 linux_sys_wait4(p, v, retval)
