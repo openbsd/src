@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.112 2006/10/07 23:40:07 beck Exp $	*/
+/*	$OpenBSD: cd.c,v 1.113 2006/10/08 02:29:24 beck Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -2037,15 +2037,16 @@ cd_interpret_sense(xs)
 		return (EJUSTRETURN); /* let the generic code handle it */
 
 	/*
-	 * We do custom processing in cd for the unit becoming ready case.
-	 * in this case we do not allow xs->retries to be decremented
-	 * only on the "Unit Becoming Ready" case. This is because CD
-	 * drives report "Unit Becoming Ready" when loading media, etc.
-	 * and can take a long time.  Rather than having a massive timeout 
-	 * for all operations (which would cause other problems) we allow
-	 * operations to wait (but be interruptable with Ctrl-C) forever
-	 * as long as the drive is reporting that it is becoming ready.
-	 * all other cases of not being ready are handled as per the default.
+	 * We do custom processing in cd for the unit becoming ready
+	 * case.  We do not allow xs->retries to be decremented on the
+	 * "Unit Becoming Ready" case. This is because CD drives
+	 * report "Unit Becoming Ready" when loading media and can
+	 * take a long time.  Rather than having a massive timeout for
+	 * all operations (which would cause other problems), we allow
+	 * operations to wait (but be interruptable with Ctrl-C)
+	 * forever as long as the drive is reporting that it is
+	 * becoming ready.  All other cases of not being ready are
+	 * handled by the default handler.
 	 */
 	switch(skey) {
 	case SKEY_NOT_READY:
