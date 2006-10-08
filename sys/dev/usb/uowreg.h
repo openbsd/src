@@ -1,4 +1,4 @@
-/*	$OpenBSD: uowreg.h,v 1.4 2006/09/29 18:35:41 grange Exp $	*/
+/*	$OpenBSD: uowreg.h,v 1.5 2006/10/08 20:04:23 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -110,6 +110,8 @@
 #define DS2490_ST_STFL_HALT		(1 << 4)	/* halted */
 #define DS2490_ST_STFL_IDLE		(1 << 5)	/* idle */
 #define DS2490_ST_STFL_EP0F		(1 << 7)	/* EP0 FIFO status */
+#define DS2490_ST_STFL_BITS		"\020\001SPUA\002PRGA\00312VP\004PMOD\005HALT\006IDLE\010EP0F"
+
 #define DS2490_ST_CC1		0x09	/* communication command byte 1 */
 #define DS2490_ST_CC2		0x0a	/* communication command byte 2 */
 #define DS2490_ST_CCBUF		0x0b	/* communication command buf status */
