@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.5 2005/06/17 22:33:34 niklas Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.6 2006/10/09 00:31:11 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ void updatepri(struct proc *);
 void endtsleep(void *);
 
 void
-scheduler_start()
+scheduler_start(void)
 {
 #ifndef __HAVE_CPUINFO
 	static struct timeout roundrobin_to;
@@ -254,8 +254,7 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  */
 /* ARGSUSED */
 void
-schedcpu(arg)
-	void *arg;
+schedcpu(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
@@ -332,11 +331,10 @@ schedcpu(arg)
  * least six times the loadfactor will decay p_estcpu to zero.
  */
 void
-updatepri(p)
-	register struct proc *p;
+updatepri(struct proc *p)
 {
-	register unsigned int newcpu = p->p_estcpu;
-	register fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	unsigned int newcpu = p->p_estcpu;
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 
 	SCHED_ASSERT_LOCKED();
 
@@ -370,7 +368,7 @@ sched_lock_idle(void)
  * performs a voluntary context switch.
  */
 void
-yield()
+yield(void)
 {
 	struct proc *p = curproc;
 	int s;
@@ -391,8 +389,7 @@ yield()
  * criteria.
  */
 void
-preempt(newp)
-	struct proc *newp;
+preempt(struct proc *newp)
 {
 	struct proc *p = curproc;
 	int s;
@@ -417,7 +414,7 @@ preempt(newp)
  * Must be called at splstatclock() or higher.
  */
 void
-mi_switch()
+mi_switch(void)
 {
 	struct proc *p = curproc;	/* XXX */
 	struct rlimit *rlim;
@@ -541,9 +538,9 @@ mi_switch()
  * to be empty.
  */
 void
-rqinit()
+rqinit(void)
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < NQS; i++)
 		qs[i].ph_link = qs[i].ph_rlink = (struct proc *)&qs[i];
@@ -595,8 +592,7 @@ resched_proc(struct proc *p, u_char pri)
  * and awakening the swapper if it isn't in memory.
  */
 void
-setrunnable(p)
-	register struct proc *p;
+setrunnable(struct proc *p)
 {
 	SCHED_ASSERT_LOCKED();
 
@@ -639,10 +635,9 @@ setrunnable(p)
  * than that of the current process.
  */
 void
-resetpriority(p)
-	register struct proc *p;
+resetpriority(struct proc *p)
 {
-	register unsigned int newpriority;
+	unsigned int newpriority;
 
 	SCHED_ASSERT_LOCKED();
 
@@ -668,8 +663,7 @@ resetpriority(p)
  */
 
 void
-schedclock(p)
-	struct proc *p;
+schedclock(struct proc *p)
 {
 	int s;
 
