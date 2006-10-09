@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.31 2006/10/09 20:45:27 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.32 2006/10/09 21:01:55 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -533,7 +533,7 @@ trying_again:
 		sc->sc_flags |= SC_NEEDS_FIRMWARE;
 		error = pgt_reset(sc);
 		if (error == 0) {
-			tsleep(&sc->sc_flags, 0, "pftres", hz);
+			tsleep(&sc->sc_flags, 0, "pgtres", hz);
 			if (sc->sc_flags & SC_UNINITIALIZED) {
 				printf("%s: not responding\n",
 				    sc->sc_dev.dv_xname);
@@ -602,7 +602,7 @@ pgt_attach(void *xsc)
 	if (error)
 		return;
 
-	tsleep(&sc->sc_flags, 0, "pftres", hz);
+	tsleep(&sc->sc_flags, 0, "pgtres", hz);
 	if (sc->sc_flags & SC_UNINITIALIZED) {
 		printf("%s: not responding\n", sc->sc_dev.dv_xname);
 		return;
