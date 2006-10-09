@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.12 2006/10/06 23:44:30 ray Exp $	*/
+/*	$OpenBSD: head.c,v 1.13 2006/10/09 00:24:36 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -30,14 +30,11 @@
  */
 
 #ifndef lint
-char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1987 Regents of the University of California.\n\
  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
 /*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: head.c,v 1.12 2006/10/06 23:44:30 ray Exp $";
+static const char rcsid[] = "$OpenBSD: head.c,v 1.13 2006/10/09 00:24:36 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -67,10 +64,11 @@ main(int argc, char *argv[])
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
 		p = argv[1] + 1;
-		argc--; argv++;
+		argc--;
+		argv++;
 	}
 
-	while ((ch = getopt (argc, argv, "n:")) != -1)
+	while ((ch = getopt(argc, argv, "n:")) != -1) {
 		switch (ch) {
 		case 'n':
 			p = optarg;
@@ -78,6 +76,7 @@ main(int argc, char *argv[])
 		default:
 			usage();	
 		}
+	}
 	argc -= optind, argv += optind;
 
 	if (p) {
@@ -93,8 +92,7 @@ main(int argc, char *argv[])
 		if (!*argv) {
 			if (!firsttime)
 				exit(0);
-		}
-		else {
+		} else {
 			if (!freopen(*argv, "r", stdin)) {
 				warn("%s", *argv++);
 				continue;
@@ -121,4 +119,3 @@ usage(void)
 	fputs("usage: head [-n line_count] [file ...]\n", stderr);
 	exit(1);
 }
-
