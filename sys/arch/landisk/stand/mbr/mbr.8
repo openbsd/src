@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbr.8,v 1.1 2006/10/06 21:48:50 mickey Exp $
+.\"     $OpenBSD: mbr.8,v 1.2 2006/10/09 10:29:13 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -22,10 +22,13 @@
 .Nm mbr
 .Nd
 LANDISK-specific Master Boot Record
+.Sh SYNOPSIS
+.Nm
 .Sh DESCRIPTION
+The
 .Nm MBR
-program that is only one sector (512 bytes) and also includes
-a partition table for the disk is located in the 0th sector of the disk.
+program comprises only one sector (512 bytes) and includes
+a partition table, since the disk is located in the 0th sector of the disk.
 Upon receiving control from the system firmware
 .Nm
 will scan the partition table for an active partition and continue
@@ -33,28 +36,28 @@ loading the Primary Boot Record (PBR) from the beginnning of the
 partition, if found.
 .Pp
 .Nm
-is installed into the disk by the
-.Xr fdisk 8
-program that is also used to operate the partition table.
+is installed on the disk by
+.Xr fdisk 8 ,
+which is also used to operate the partition table.
 .Pp
-Partition table sonsists of four entries only one of which may be
+The partition table consists of four entries, only one of which may be
 marked as
-.Dq active
-that is where the PBR will be loaded from.
+.Dq active .
+The PBR is loaded from there.
 .Sh DIAGNOSTICS
 A few messages are printed in case of errors:
-.Bl -tag -width no_active_partition
+.Bl -tag -width "no_active_partitionXX"
 .It "No active partition"
 Indicates that none of the partitions are marked
 .Dq active .
 .It Read error
-An error occured while fetching the primary boot loader.
+An error occurred while fetching the primary boot loader.
 .It "No O/S"
 The partition table is empty.
 .El
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr bootxx 8 ,
 .Xr boot_landisk 8 ,
+.Xr bootxx 8 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8
