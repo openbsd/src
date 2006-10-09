@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.12 2003/11/07 02:58:23 tedu Exp $	*/
+/*	$OpenBSD: process.c,v 1.13 2006/10/09 00:23:57 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: process.c,v 1.12 2003/11/07 02:58:23 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: process.c,v 1.13 2006/10/09 00:23:57 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ static regex_t *defpreg;
 size_t maxnsub;
 regmatch_t *match;
 
-#define OUT(s) { fwrite(s, sizeof(u_char), psl, stdout); }
+#define OUT(s) do { fwrite(s, sizeof(u_char), psl, stdout); } while (0)
 
 void
 process(void)
@@ -163,7 +163,7 @@ redirect:
 				break;
 			case 'n':
 				if (!nflag && !pd)
-					OUT(ps)
+					OUT(ps);
 				flush_appends();
 				if (!mf_fgets(&PS, REPLACE))
 					exit(0);
@@ -173,14 +173,14 @@ redirect:
 				flush_appends();
 				if (!mf_fgets(&PS, 0)) {
 					if (!nflag && !pd)
-						OUT(ps)
+						OUT(ps);
 					exit(0);
 				}
 				break;
 			case 'p':
 				if (pd)
 					break;
-				OUT(ps)
+				OUT(ps);
 				break;
 			case 'P':
 				if (pd)
@@ -190,13 +190,13 @@ redirect:
 					oldpsl = psl;
 					psl = (p + 1) - ps;
 				}
-				OUT(ps)
+				OUT(ps);
 				if (p != NULL)
 					psl = oldpsl;
 				break;
 			case 'q':
 				if (!nflag && !pd)
-					OUT(ps)
+					OUT(ps);
 				flush_appends();
 				exit(0);
 			case 'r':
@@ -254,7 +254,7 @@ redirect:
 		} /* for all cp */
 
 new:		if (!nflag && !pd)
-			OUT(ps)
+			OUT(ps);
 		flush_appends();
 	} /* for all lines */
 }
@@ -303,7 +303,7 @@ applies(struct s_command *cp)
 			r = 0;
 	else
 		r = MATCH(cp->a1);
-	return (cp->nonsel ? ! r : r);
+	return (cp->nonsel ? !r : r);
 }
 
 /*
@@ -404,7 +404,7 @@ substitute(struct s_command *cp)
 
 	/* Handle the 'p' flag. */
 	if (cp->u.s->p)
-		OUT(ps)
+		OUT(ps);
 
 	/* Handle the 'w' flag. */
 	if (cp->u.s->wfile && !pd) {
@@ -463,7 +463,7 @@ lputs(char *s)
 	struct winsize win;
 	static int termwidth = -1;
 
-	if (termwidth == -1)
+	if (termwidth == -1) {
 		if ((p = getenv("COLUMNS")))
 			termwidth = atoi(p);
 		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
@@ -471,6 +471,7 @@ lputs(char *s)
 			termwidth = win.ws_col;
 		else
 			termwidth = 60;
+	}
 
 	for (count = 0; *s; ++s) { 
 		if (count >= termwidth) {
@@ -518,7 +519,7 @@ regexec_e(regex_t *preg, const char *string, int eflags,
 	
 	eval = regexec(defpreg, string,
 	    nomatch ? 0 : maxnsub + 1, match, eflags | REG_STARTEND);
-	switch(eval) {
+	switch (eval) {
 	case 0:
 		return (1);
 	case REG_NOMATCH:
@@ -606,7 +607,7 @@ cfclose(struct s_command *cp, struct s_command *end)
 {
 
 	for (; cp != end; cp = cp->next)
-		switch(cp->code) {
+		switch (cp->code) {
 		case 's':
 			if (cp->u.s->wfd != -1 && close(cp->u.s->wfd))
 				err(FATAL,

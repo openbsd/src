@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.21 2005/04/11 07:11:44 deraadt Exp $	*/
+/*	$OpenBSD: compile.c,v 1.22 2006/10/09 00:23:56 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.21 2005/04/11 07:11:44 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: compile.c,v 1.22 2006/10/09 00:23:56 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -183,10 +183,12 @@ semicolon:	EATSPACE();
 				cmd->a2 = xmalloc(sizeof(struct s_addr));
 				p = compile_addr(p, cmd->a2);
 				EATSPACE();
-			} else
+			} else {
 				cmd->a2 = 0;
-		} else
+			}
+		} else {
 			cmd->a1 = cmd->a2 = 0;
+		}
 
 nonsel:		/* Now parse the command */
 		if (!*p)
@@ -199,7 +201,8 @@ nonsel:		/* Now parse the command */
 			err(COMPILE, "invalid command code %c", *p);
 		if (naddr > fp->naddr)
 			err(COMPILE,
-"command %c expects up to %d address(es), found %d", *p, fp->naddr, naddr);
+			    "command %c expects up to %d address(es), found %d",
+			    *p, fp->naddr, naddr);
 		switch (fp->args) {
 		case NONSEL:			/* ! */
 			p++;
@@ -243,13 +246,13 @@ nonsel:		/* Now parse the command */
 			p++;
 			EATSPACE();
 			if (*p != '\\')
-				err(COMPILE,
-"command %c expects \\ followed by text", cmd->code);
+				err(COMPILE, "command %c expects \\ followed by"
+				    " text", cmd->code);
 			p++;
 			EATSPACE();
 			if (*p)
-				err(COMPILE,
-"extra characters after \\ at the end of %c command", cmd->code);
+				err(COMPILE, "extra characters after \\ at the"
+				    " end of %c command", cmd->code);
 			cmd->t = compile_text();
 			break;
 		case COMMENT:			/* \0 # */
@@ -299,8 +302,8 @@ nonsel:		/* Now parse the command */
 		case SUBST:			/* s */
 			p++;
 			if (*p == '\0' || *p == '\\')
-				err(COMPILE,
-"substitute pattern can not be delimited by newline or backslash");
+				err(COMPILE, "substitute pattern can not be"
+				    " delimited by newline or backslash");
 			cmd->u.s = xmalloc(sizeof(struct s_subst));
 			p = compile_re(p, &cmd->u.s->re);
 			if (p == NULL)
@@ -325,8 +328,8 @@ nonsel:		/* Now parse the command */
 				goto semicolon;
 			}
 			if (*p)
-				err(COMPILE,
-"extra text at the end of a transform command");
+				err(COMPILE, "extra text at the end of a"
+				    " transform command");
 			break;
 		}
 	}
@@ -360,15 +363,15 @@ compile_delimited(char *p, char *d)
 			continue;
 		} else if (*p == '\\' && p[1] == '[') {
 			*d++ = *p++;
-		} else if (*p == '\\' && p[1] == c)
+		} else if (*p == '\\' && p[1] == c) {
 			p++;
-		else if (*p == '\\' && p[1] == 'n') {
+		} else if (*p == '\\' && p[1] == 'n') {
 			*d++ = '\n';
 			p += 2;
 			continue;
-		} else if (*p == '\\' && p[1] == '\\')
+		} else if (*p == '\\' && p[1] == '\\') {
 			*d++ = *p++;
-		else if (*p == c) {
+		} else if (*p == c) {
 			*d = '\0';
 			return (p + 1);
 		}
@@ -396,9 +399,16 @@ compile_ccl(char **sp, char *t)
 			for (c = *s; (*t = *s) != ']' || c != d; s++, t++)
 				if ((c = *s) == '\0')
 					return NULL;
-		} else if (*s == '\\' && s[1] == 'n')
-			    *t = '\n', s++;
-	return (*s == ']') ? *sp = ++s, ++t : NULL;
+		} else if (*s == '\\' && s[1] == 'n') {
+			*t = '\n';
+			s++;
+		}
+	if (*s == ']') {
+		*sp = ++s;
+		return (++t);
+	} else {
+		return (NULL);
+	}
 }
 
 /*
@@ -529,8 +539,8 @@ compile_flags(char *p, struct s_subst *s)
 		switch (*p) {
 		case 'g':
 			if (gn)
-				err(COMPILE,
-"more than one number or 'g' in substitute flags");
+				err(COMPILE, "more than one number or 'g' in"
+				    " substitute flags");
 			gn = 1;
 			s->n = 0;
 			break;
@@ -545,8 +555,8 @@ compile_flags(char *p, struct s_subst *s)
 		case '4': case '5': case '6':
 		case '7': case '8': case '9':
 			if (gn)
-				err(COMPILE,
-"more than one number or 'g' in substitute flags");
+				err(COMPILE, "more than one number or 'g' in"
+				    " substitute flags");
 			gn = 1;
 			l = strtol(p, &p, 10);
 			if (l <= 0 || l >= INT_MAX)

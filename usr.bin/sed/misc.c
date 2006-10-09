@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 2004/07/20 03:50:26 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 2006/10/09 00:23:57 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: misc.c,v 1.6 2004/07/20 03:50:26 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: misc.c,v 1.7 2006/10/09 00:23:57 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,8 +69,6 @@ xmalloc(u_int size)
 void *
 xrealloc(void *p, u_int size)
 {
-	if (p == NULL)			/* Compatibility hack. */
-		return (xmalloc(size));
 
 	if ((p = realloc(p, size)) == NULL)
 		err(FATAL, "%s", strerror(errno));
@@ -88,8 +86,7 @@ strregerror(int errcode, regex_t *preg)
 	static char *oe;
 	size_t s;
 
-	if (oe != NULL)
-		free(oe);
+	free(oe);
 	s = regerror(errcode, preg, "", 0);
 	oe = xmalloc(s);
 	(void)regerror(errcode, preg, oe, s);
