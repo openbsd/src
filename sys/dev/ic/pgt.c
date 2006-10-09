@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.32 2006/10/09 21:01:55 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.33 2006/10/09 21:09:40 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -571,7 +571,6 @@ pgt_attach(void *xsc)
 	int error;
 
 	/* debug flags */
-	//ieee80211_debug = 1;
 	//sc->sc_debug |= SC_DEBUG_QUEUES;	/* super verbose */
 	//sc->sc_debug |= SC_DEBUG_MGMT;
 	sc->sc_debug |= SC_DEBUG_UNEXPECTED;
