@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.30 2006/10/06 21:55:33 mglocker Exp $  */
+/*	$OpenBSD: pgt.c,v 1.31 2006/10/09 20:45:27 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -133,7 +133,8 @@ int	 pgt_load_firmware(struct pgt_softc *);
 void	 pgt_cleanup_queue(struct pgt_softc *, enum pgt_queue,
 	     struct pgt_frag []);
 int	 pgt_reset(struct pgt_softc *);
-void	 pgt_disable(struct pgt_softc *, unsigned int);
+void	 pgt_stop(struct pgt_softc *, unsigned int);
+void	 pgt_reboot(struct pgt_softc *);
 void	 pgt_init_intr(struct pgt_softc *);
 void	 pgt_update_intr(struct pgt_softc *, int);
 struct mbuf
@@ -191,6 +192,8 @@ int	 pgt_dma_alloc(struct pgt_softc *);
 int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_dma_free(struct pgt_softc *);
 void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
+void	 pgt_shutdown(void *);
+void	 pgt_power(int, void *);
 
 void
 pgt_write_memory_barrier(struct pgt_softc *sc)
@@ -470,7 +473,7 @@ pgt_reset(struct pgt_softc *sc)
  * we'll spend a minute seeing if we can't do the reset.
  */
 void
-pgt_disable(struct pgt_softc *sc, unsigned int flag)
+pgt_stop(struct pgt_softc *sc, unsigned int flag)
 {
 	struct ieee80211com *ic;
 	unsigned int wokeup;
@@ -624,12 +627,20 @@ int
 pgt_detach(struct pgt_softc *sc)
 {
 	/* stop card */
-	pgt_disable(sc, SC_DYING);
+	pgt_stop(sc, SC_DYING);
 	pgt_reboot(sc);
 
 	/* disable card if possible */
 	if (sc->sc_disable != NULL)
 		(*sc->sc_disable)(sc);
+
+	/*
+	 * Disable shutdown and power hooks
+	 */
+        if (sc->sc_shutdown_hook != NULL)
+                shutdownhook_disestablish(sc->sc_shutdown_hook);
+        if (sc->sc_power_hook != NULL)
+                powerhook_disestablish(sc->sc_power_hook);
 
 	ieee80211_ifdetach(&sc->sc_ic.ic_if);
 	if_detach(&sc->sc_ic.ic_if);
@@ -1136,7 +1147,7 @@ pgt_per_device_kthread(void *argp)
 			sck->sck_update = 0;
 			pgt_empty_traps(sck);
 			s = splnet();
-			pgt_disable(sc, SC_NEEDS_RESET);
+			pgt_stop(sc, SC_NEEDS_RESET);
 			splx(s);
 		} else if (!TAILQ_EMPTY(&sck->sck_traps)) {
 			DPRINTF(("%s: [thread] got a trap\n",
@@ -2012,6 +2023,18 @@ pgt_net_attach(struct pgt_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(PGT_TX_RADIOTAP_PRESENT);
 #endif
 
+	/*
+         * Enable shutdown and power hooks
+         */
+        sc->sc_shutdown_hook = shutdownhook_establish(pgt_shutdown, sc);
+        if (sc->sc_shutdown_hook == NULL)
+                printf("%s: WARNING: unable to establish shutdown hook\n",
+                    sc->sc_dev.dv_xname);
+        sc->sc_power_hook = powerhook_establish(pgt_power, sc);
+        if (sc->sc_power_hook == NULL)
+                printf("%s: WARNING: unable to establish power hook\n",
+                    sc->sc_dev.dv_xname);
+
 	return (0);
 }
 
@@ -2362,7 +2385,7 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING) {
-				pgt_disable(sc, SC_NEEDS_RESET);
+				pgt_stop(sc, SC_NEEDS_RESET);
 				error = ENETRESET;
 			}
 		}
@@ -3270,4 +3293,52 @@ pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas, 1);
 		free(pd, M_DEVBUF);
 	}
+}
+
+void
+pgt_shutdown(void *arg)
+{
+	struct pgt_softc *sc = arg;
+
+	DPRINTF(("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+
+	pgt_stop(sc, SC_DYING);
+}
+
+void
+pgt_power(int why, void *arg)
+{
+	struct pgt_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
+	DPRINTF(("%s: %s(%d)\n", sc->sc_dev.dv_xname, __func__, why));
+
+	s = splnet();
+
+	switch (why) {
+	case PWR_STANDBY:
+	case PWR_SUSPEND:
+		pgt_stop(sc, SC_NEEDS_RESET);
+		pgt_update_hw_from_sw(sc, 0, 0);
+
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		break;
+	case PWR_RESUME:
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+
+		pgt_stop(sc, SC_NEEDS_RESET);
+		pgt_update_hw_from_sw(sc, 0, 0);
+
+		if ((ifp->if_flags & IFF_UP) &&
+		    !(ifp->if_flags & IFF_RUNNING)) {
+			pgt_init(ifp);
+			pgt_update_hw_from_sw(sc, 0, 0);
+		}
+		break;
+	}
+
+	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.3 2006/10/06 21:55:33 mglocker Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.4 2006/10/09 20:45:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -216,12 +216,12 @@ pgt_cardbus_disable(struct pgt_softc *sc)
 void
 pgt_cardbus_power(struct pgt_softc *sc, int why)
 {
-	struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)sc;
-
-	if (why == PWR_RESUME) {
-		/* kick the PCI configuration registers */
-		pgt_cardbus_setup(csc);
-	}
+	if (why == PWR_RESUME)
+		if (sc->sc_enable != NULL)
+			(*sc->sc_enable)(sc);
+	if (why == PWR_SUSPEND)
+		if (sc->sc_disable != NULL)
+			(*sc->sc_disable)(sc);
 }
 
 void
