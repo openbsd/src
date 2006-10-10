@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.25 2006/10/04 23:58:12 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.26 2006/10/10 03:17:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -279,16 +279,6 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 				    i++, dp2++)
 					if (letoh32(dp2->dp_size) &&
 					    dp2->dp_typ == DOSPTYP_OPENBSD)
-						ourpart = i;
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (letoh32(dp2->dp_size) &&
-					    dp2->dp_typ == DOSPTYP_FREEBSD)
-						ourpart = i;
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (letoh32(dp2->dp_size) &&
-					    dp2->dp_typ == DOSPTYP_NETBSD)
 						ourpart = i;
 				if (ourpart == -1)
 					goto donot;
