@@ -1,4 +1,4 @@
-/*	$OpenBSD: scifcons.c,v 1.1 2006/10/06 21:48:50 mickey Exp $	*/
+/*	$OpenBSD: scifcons.c,v 1.2 2006/10/10 05:26:54 miod Exp $	*/
 /*	$NetBSD: scifcons.c,v 1.1 2006/09/01 21:26:18 uwe Exp $ */
 /*	NetBSD: scif.c,v 1.38 2004/12/13 02:14:13 chs Exp */
 
@@ -100,7 +100,7 @@
 
 #include <libsa.h>
 
-#include <sh/scifreg.h>
+#include <arch/sh/dev/scifreg.h>
 
 #define scif_smr_read()		SHREG_SCSMR2
 #define scif_smr_write(v)	(SHREG_SCSMR2 = (v))

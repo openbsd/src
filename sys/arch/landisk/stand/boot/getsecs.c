@@ -10,9 +10,9 @@
 #include <lib/libsa/netif.h>
 
 #include <sh/devreg.h>
-#include <sh/scireg.h>
+#include <arch/sh/dev/scireg.h>
 
-#include <dev/ic/rs5c313reg.h>
+#include <arch/landisk/dev/rs5c313reg.h>
 
 /**
  * RICOH RS5C313
