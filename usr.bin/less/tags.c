@@ -536,6 +536,7 @@ findgtag(tag, type)
 		while (fgets(buf, sizeof(buf), fp))
 		{
 			char *name, *file, *line;
+			size_t len;
 
 			if (sigs)
 			{
@@ -545,8 +546,8 @@ findgtag(tag, type)
 #endif
 				return TAG_INTR;
 			}
-			if (buf[strlen(buf) - 1] == '\n')
-				buf[strlen(buf) - 1] = 0;
+			if ((len = strlen(buf)) && buf[len - 1] == '\n')
+				buf[len - 1] = 0;
 			else
 			{
 				int c;
