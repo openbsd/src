@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.78 2006/06/14 19:55:24 otto Exp $
+#	$OpenBSD: Makefile.inc,v 1.79 2006/10/10 14:18:17 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -270,6 +270,8 @@ MLINKS+=setresuid.2 getresgid.2 setresuid.2 getresuid.2
 MLINKS+=setresuid.2 setresgid.2
 MLINKS+=shmat.2 shmdt.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
+MLINKS+=stat.2 S_ISBLK.2 stat.2 S_ISCHR.2 stat.2 S_ISDIR.2
+MLINKS+=stat.2 S_ISFIFO.2 stat.2 S_ISLNK.2 stat.2 S_ISREG.2 stat.2 S_ISSOCK.2
 MLINKS+=statfs.2 fstatfs.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
