@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.9 2004/01/09 16:50:30 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.10 2006/10/10 20:21:10 mbalmer Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ patch_dec_intr()
 	unsigned int *decr_intr = (unsigned int *)0x900;
 	unsigned int br_instr;
 
-	/* this hack is to prevent unexected Decrementer Exceptions
+	/* this hack is to prevent unexpected Decrementer Exceptions
 	 * when Apple openfirmware enables interrupts
 	 */
 	time = 0x40000000;
