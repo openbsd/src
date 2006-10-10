@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.9 2006/01/19 00:08:46 jordan Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.10 2006/10/10 22:34:12 brad Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
@@ -455,9 +455,14 @@ struct acpi_facs {
 /*
  * ACPI Device IDs
  */
+#define ACPI_DEV_TIM	"PNP0100"	/* System timer */
 #define ACPI_DEV_ACPI	"PNP0C08"	/* ACPI device */
+#define ACPI_DEV_PCIB	"PNP0A03"	/* PCI bus */
 #define ACPI_DEV_GISAB	"PNP0A05"	/* Generic ISA Bus */
 #define ACPI_DEV_EIOB	"PNP0A06"	/* Extended I/O Bus */
+#define ACPI_DEV_MR	"PNP0C02"	/* Motherboard resources */
+#define ACPI_DEV_NPROC	"PNP0C04"	/* Numeric data processor */
+#define ACPI_DEV_CS	"PNP0C08"	/* ACPI-Complient System */
 #define ACPI_DEV_ECD	"PNP0C09"	/* Embedded Controller Device */
 #define ACPI_DEV_CMB	"PNP0C0A"	/* Control Method Battery */
 #define ACPI_DEV_FAN	"PNP0C0B"	/* Fan Device */
@@ -477,5 +482,7 @@ struct acpi_facs {
 #define ACPI_DEV_IOXA	"ACPI0009"	/* IO x APIC Device */
 #define ACPI_DEV_IOA	"ACPI000A"	/* IO APIC Device */
 #define ACPI_DEV_IOSA	"ACPI000B"	/* IO SAPIC Device */
+#define ACPI_DEV_THZ	"THERMALZONE"	/* Thermal Zone */
+#define ACPI_DEV_FFB	"FIXEDBUTTON"	/* Fixed Feature Button */
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */
