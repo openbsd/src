@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.58 2006/10/10 10:17:36 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.59 2006/10/10 10:55:05 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -168,7 +168,11 @@ The same as specifying the
 option.
 .It Ic -empty
 True if the current file or directory is empty.
-.It Ic -exec Ar utility Op argument ... ;
+.It Xo
+.Ic -exec Ar utility
+.Op argument ...
+.No ;
+.Xc
 True if the program named
 .Ar utility
 returns a zero value as its exit status.
@@ -183,7 +187,11 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm
 was executed.
-.It Ic -execdir Ar utility Op argument ... ;
+.It Xo
+.Ic -execdir Ar utility
+.Op argument ...
+.No ;
+.Xc
 Identical to the
 .Ic -exec
 primary with the exception that
