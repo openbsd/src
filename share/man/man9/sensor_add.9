@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_add.9,v 1.2 2006/05/29 10:39:29 jmc Exp $
+.\"	$OpenBSD: sensor_add.9,v 1.3 2006/10/10 14:07:56 dlg Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" All rights reserved.
@@ -114,8 +114,18 @@ removes all tasks previously registered with
 .Fn sensor_task_register
 with an argument of
 .Fa arg .
+.Pp
+All the functions in the sensor framework must be called during
+.Xr autoconf 9
+or from a process context.
+Additionally,
+.Fn sensor_task_unregister
+must not be called while a function previously registered with
+.Fn sensor_task_register
+is running.
 .Sh SEE ALSO
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr autoconf 9
 .Sh HISTORY
 The sensor framework was written by
 .An Alexander Yurchenko Aq grange@openbsd.org
