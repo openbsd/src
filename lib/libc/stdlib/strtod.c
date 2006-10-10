@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtod.c,v 1.23 2006/10/01 11:36:33 otto Exp $ */
+/*	$OpenBSD: strtod.c,v 1.24 2006/10/10 22:03:22 miod Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -92,7 +92,8 @@
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__powerpc__) || defined(__m88k__) || defined(__hppa__) || \
-    defined(__x86_64__) || (defined(__arm__) && defined(__VFP_FP__))
+    defined(__x86_64__) || (defined(__arm__) && defined(__VFP_FP__)) || \
+    defined(__sh__)
 #include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define IEEE_BIG_ENDIAN
@@ -201,8 +202,7 @@ extern "C" {
 
 #if defined(IEEE_LITTLE_ENDIAN) + defined(IEEE_BIG_ENDIAN) + defined(VAX) + \
     defined(IBM) != 1
-Exactly one of IEEE_LITTLE_ENDIAN IEEE_BIG_ENDIAN, VAX, or
-IBM should be defined.
+#error Exactly one of IEEE_LITTLE_ENDIAN IEEE_BIG_ENDIAN, VAX, or IBM should be defined.
 #endif
 
 typedef union {

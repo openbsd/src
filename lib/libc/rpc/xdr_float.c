@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_float.c,v 1.15 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: xdr_float.c,v 1.16 2006/10/10 22:03:21 miod Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -52,7 +52,7 @@
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__arm__) || defined(__powerpc__) || defined(__m88k__) || \
-    defined(__hppa__) || defined(__x86_64__)
+    defined(__hppa__) || defined(__x86_64__) || defined(__sh__)
 #include <machine/endian.h>
 #define IEEEFP
 #endif
