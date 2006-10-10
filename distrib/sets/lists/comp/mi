@@ -1797,6 +1797,13 @@
 ./usr/share/man/cat1/unprotoize.0
 ./usr/share/man/cat1/xstr.0
 ./usr/share/man/cat1/yacc.0
+./usr/share/man/cat2/S_ISBLK.0
+./usr/share/man/cat2/S_ISCHR.0
+./usr/share/man/cat2/S_ISDIR.0
+./usr/share/man/cat2/S_ISFIFO.0
+./usr/share/man/cat2/S_ISLNK.0
+./usr/share/man/cat2/S_ISREG.0
+./usr/share/man/cat2/S_ISSOCK.0
 ./usr/share/man/cat2/WCOREDUMP.0
 ./usr/share/man/cat2/WEXITSTATUS.0
 ./usr/share/man/cat2/WIFCONTINUED.0

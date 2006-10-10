@@ -59,7 +59,7 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.0/2.95.3/include
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.0/2.95.3/specs
 ./usr/lib/libasn1.so.16.0
-./usr/lib/libc.so.39.3
+./usr/lib/libc.so.40.0
 ./usr/lib/libcom_err.so.16.0
 ./usr/lib/libcrypto.so.13.0
 ./usr/lib/libcurses.so.10.0
@@ -84,7 +84,7 @@
 ./usr/lib/libpanel.so.3.0
 ./usr/lib/libpcap.so.5.0
 ./usr/lib/libperl.so.10.1
-./usr/lib/libpthread.so.6.3
+./usr/lib/libpthread.so.7.0
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.0
 ./usr/lib/libsectok.so.6.0
