@@ -1,4 +1,4 @@
-/*	$OpenBSD: make_keys.c,v 1.7 2001/01/22 18:01:54 millert Exp $	*/
+/*	$OpenBSD: make_keys.c,v 1.8 2006/10/10 21:38:16 cloder Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -75,7 +75,7 @@ make_keys(FILE * ifp, FILE * ofp)
     char to[BUFSIZ];
     int maxlen = 16;
 
-    while (fgets(buffer, sizeof(buffer), ifp) != 0) {
+    while (fgets(buffer, sizeof(buffer), ifp) != NULL) {
 	if (*buffer == '#')
 	    continue;
 	if (sscanf(buffer, "%s %s", to, from) == 2) {

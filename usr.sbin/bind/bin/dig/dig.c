@@ -1367,7 +1367,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		}
 		if (batchfp != NULL) {
 			while (fgets(batchline, sizeof(batchline),
-				     batchfp) != 0) {
+				     batchfp) != NULL) {
 				debug("config line %s", batchline);
 				bargc = 1;
 				input = batchline;
@@ -1513,7 +1513,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		}
 		/* XXX Remove code dup from shutdown code */
 	next_line:
-		if (fgets(batchline, sizeof(batchline), batchfp) != 0) {
+		if (fgets(batchline, sizeof(batchline), batchfp) != NULL) {
 			bargc = 1;
 			debug("batch line %s", batchline);
 			if (batchline[0] == '\r' || batchline[0] == '\n'
@@ -1582,7 +1582,7 @@ dighost_shutdown(void) {
 		return;
 	}
 
-	if (fgets(batchline, sizeof(batchline), batchfp) != 0) {
+	if (fgets(batchline, sizeof(batchline), batchfp) != NULL) {
 		debug("batch line %s", batchline);
 		bargc = 1;
 		input = batchline;

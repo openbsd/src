@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.28 2003/10/21 23:57:04 deraadt Exp $	*/
+/*	$OpenBSD: tic.c,v 1.29 2006/10/10 21:38:16 cloder Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000,2001 Free Software Foundation, Inc.         *
@@ -347,7 +347,7 @@ make_namelist(char *src)
 
 	for (pass = 1; pass <= 2; pass++) {
 	    nn = 0;
-	    while (fgets(buffer, sizeof(buffer), fp) != 0) {
+	    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 		if ((s = stripped(buffer)) != 0) {
 		    if (dst != 0)
 			dst[nn] = s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.13 2004/05/10 15:25:51 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.14 2006/10/10 21:38:16 cloder Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: edit.c,v 1.13 2004/05/10 15:25:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: edit.c,v 1.14 2006/10/10 21:38:16 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ edit1(int *msgvec, int type)
 			char *p;
 
 			printf("Edit message %d [ynq]? ", msgvec[i]);
-			if (fgets(buf, sizeof(buf), stdin) == 0)
+			if (fgets(buf, sizeof(buf), stdin) == NULL)
 				break;
 			for (p = buf; *p == ' ' || *p == '\t'; p++)
 				;

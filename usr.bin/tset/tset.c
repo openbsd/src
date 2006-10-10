@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.27 2003/06/12 20:58:11 deraadt Exp $	*/
+/*	$OpenBSD: tset.c,v 1.28 2006/10/10 21:38:16 cloder Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -196,7 +196,7 @@ askuser(const char *dflt)
 	    (void) fprintf(stderr, "Terminal type? ");
 	(void) fflush(stderr);
 
-	if (fgets(answer, sizeof(answer), stdin) == 0) {
+	if (fgets(answer, sizeof(answer), stdin) == NULL) {
 	    if (dflt == 0) {
 		(void) fprintf(stderr, "\n");
 		exit(EXIT_FAILURE);
@@ -530,7 +530,7 @@ get_termcap_entry(char *userarg)
 	    char buffer[BUFSIZ];
 	    char *s, *t, *d;
 
-	    while (fgets(buffer, sizeof(buffer) - 1, fp) != 0) {
+	    while (fgets(buffer, sizeof(buffer) - 1, fp) != NULL) {
 		for (s = buffer, t = d = 0; *s; s++) {
 		    if (isspace(CharOf(*s)))
 			*s = '\0';

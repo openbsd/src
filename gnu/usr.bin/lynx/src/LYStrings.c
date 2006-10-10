@@ -5612,7 +5612,7 @@ PUBLIC char *LYSafeGets ARGS2(
     if (result != 0)
 	*result = 0;
 
-    while (fgets(buffer, sizeof(buffer), fp) != 0) {
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 	if (*buffer)
 	    result = StrAllocCat(result, buffer);
 	if (strchr(buffer, '\n') != 0)

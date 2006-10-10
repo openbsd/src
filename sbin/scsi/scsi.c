@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.21 2006/07/23 02:50:20 dlg Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.22 2006/10/10 21:38:16 cloder Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -621,7 +621,7 @@ edit_get(void *hook, char *name)
 
 	if (editinfo[editind].can_edit) {
 		char line[80];
-		if (fgets(line, sizeof(line), edit_file) == 0)
+		if (fgets(line, sizeof(line), edit_file) == NULL)
 			err(errno, "fgets");
 
 		line[strlen(line) - 1] = 0;
