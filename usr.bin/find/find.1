@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.57 2006/10/05 07:52:30 otto Exp $
+.\"	$OpenBSD: find.1,v 1.58 2006/10/10 10:17:36 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -512,13 +512,9 @@ and owned by
 .Pp
 .Dl "$ find / \e! \e( -newer ttt -user wnj \e) -print"
 .Pp
-Print out a list of all the files that are either owned by
-.Dq wnj
-or
-that are newer than
-.Dq ttt :
+Find and remove all *.jpg files in the current working directory:
 .Pp
-.Dl "$ find / \e( -newer ttt -or -user wnj \e) -print"
+.Dl "$ find . -name \e*\e.jpg -exec rm {} \e;"
 .Pp
 Print out a list of all core files on local file systems:
 .Pp
