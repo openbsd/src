@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xgereg.h,v 1.1 2006/05/01 00:34:12 brad Exp $	*/
+/*	$OpenBSD: if_xgereg.h,v 1.2 2006/10/10 23:39:15 brad Exp $	*/
 /*	$NetBSD: if_xgereg.h,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #define	 RMAC_LOCAL_FAULT	(1ULL<<56)
 #define	 MC_DRAM_READY		(1ULL<<39)
 #define	 MC_QUEUES_READY	(1ULL<<38)
+#define	 RIC_RUNNING		(1ULL<<37)
 #define	 M_PLL_LOCK		(1ULL<<33)
 #define	 P_PLL_LOCK		(1ULL<<32)
 #define	ADAPTER_CONTROL		DCSRB(0x0110)
