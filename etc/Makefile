@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.240 2006/10/06 22:11:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.241 2006/10/10 12:45:58 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -291,7 +291,7 @@ MAKEDEVARCHS+= hp300
 MAKEDEVARCHS+= hppa
 MAKEDEVARCHS+= hppa64
 MAKEDEVARCHS+= i386
-MAKEDEVARCHS+= landisk
+#MAKEDEVARCHS+= landisk
 MAKEDEVARCHS+= luna88k
 MAKEDEVARCHS+= mac68k
 MAKEDEVARCHS+= macppc
@@ -337,7 +337,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.240 2006/10/06 22:11:30 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.241 2006/10/10 12:45:58 todd Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
