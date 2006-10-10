@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.187 2006/10/09 18:46:44 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.188 2006/10/10 21:04:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2082,12 +2082,6 @@ bge_reset(struct bge_softc *sc)
 	if (BGE_IS_5705_OR_BEYOND(sc))
 		reset |= BGE_MISCCFG_KEEP_GPHY_POWER;
 
-	/*
-	 * Write the magic number to the firmware mailbox at 0xb50
-	 * so that the driver can synchronize with the firmware.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
-
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG, reset);
 
@@ -2122,6 +2116,12 @@ bge_reset(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | val);
 	} else
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+
+ 	/*
+	 * Prevent PXE restart: write a magic number to the
+	 * general communications memory at 0xB50.
+	 */
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/*
 	 * Poll the value location we just wrote until
