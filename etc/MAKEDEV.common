@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.29 2006/08/28 21:04:04 tsi Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.30 2006/10/10 12:33:41 todd Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -194,7 +194,7 @@ twrget(usb, uscan, uscanner, 0)dnl
 target(usb, uhid, 0, 1, 2, 3)dnl
 target(usb, ulpt, 0, 1)dnl
 target(usb, ugen, 0, 1)dnl
-target(usb, ttyU, 0, 1)dnl
+target(usb, ttyU, 0, 1, 2, 3)dnl
 dnl
 __devitem({-uall-}, uall, All USB devices,usb)dnl
 _mkdev(uall, uall, {-dnl
