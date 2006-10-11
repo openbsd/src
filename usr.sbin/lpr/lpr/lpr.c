@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.38 2005/11/12 00:54:15 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.39 2006/10/11 20:56:59 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.38 2005/11/12 00:54:15 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.39 2006/10/11 20:56:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 			char c;
 
 			if (read(tfd, &c, 1) == 1 &&
-			    lseek(tfd, (off_t)0, 0) == 0 &&
+			    lseek(tfd, (off_t)0, SEEK_SET) == 0 &&
 			    write(tfd, &c, 1) != 1) {
 				warn("%s", tfname);
 				tfname[inchar]++;
@@ -701,7 +701,7 @@ mktemps(void)
 	} while (stat(tfname, &stb) == 0 || stat(cfname, &stb) == 0 ||
 	    stat(dfname, &stb) == 0);
 	inchar = strlen(SD) + 3;
-	(void)lseek(fd, (off_t)0, 0);
+	(void)lseek(fd, (off_t)0, SEEK_SET);
 	snprintf(buf, sizeof(buf), "%03d\n", n);
 	(void)write(fd, buf, strlen(buf));
 	(void)close(fd);	/* unlocks as well */

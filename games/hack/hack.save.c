@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.save.c,v 1.7 2003/05/19 09:00:54 pjanzen Exp $	*/
+/*	$OpenBSD: hack.save.c,v 1.8 2006/10/11 20:56:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.save.c,v 1.7 2003/05/19 09:00:54 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.save.c,v 1.8 2006/10/11 20:56:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -201,7 +201,7 @@ dorecover(int fd)
 		savelev(nfd,tmp);
 		(void) close(nfd);
 	}
-	(void) lseek(fd, (off_t)0, 0);
+	(void) lseek(fd, (off_t)0, SEEK_SET);
 	getlev(fd, 0, 0);
 	(void) close(fd);
 	(void) unlink(SAVEF);

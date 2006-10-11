@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.10 2005/01/14 22:47:06 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.11 2006/10/11 20:56:59 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize);
-	lseek(fd, eh.e_phoff, 0);
+	lseek(fd, eh.e_phoff, SEEK_SET);
 	if (read(fd, (char *)ph, phsize) != phsize) {
 		printf("%s: can't read phdr area\n", file);
 		exit(1);
