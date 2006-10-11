@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.90 2006/07/09 01:47:20 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.91 2006/10/11 22:00:22 thib Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -694,9 +694,10 @@ cvs_mkpath(const char *path)
 
 	if (cvs_cmdop == CVS_OP_UPDATE) {
 		if ((fp = fopen(CVS_PATH_REPOSITORY, "r")) != NULL) {
-			fgets(repo, sizeof(repo), fp);
-			if (repo[strlen(repo) - 1] == '\n')
-				repo[strlen(repo) - 1] = '\0';
+			if ((fgets(repo, sizeof(repo), fp)) == NULL)
+				fatal("cvs_mkpath: bad repository file");
+			if ((len = strlen(repo)) && repo[len - 1] == '\n')
+				repo[len - 1] = '\0';
 			(void)fclose(fp);
 		}
 	}
