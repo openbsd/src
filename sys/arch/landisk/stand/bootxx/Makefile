@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2006/10/06 22:06:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/10/11 17:19:06 drahn Exp $
 
 MAN=	bootxx.8
 
@@ -12,9 +12,10 @@ INSTALL_STRIP=
 BOOTXX_SECTORS?= 15
 BOOTXX_MAXSIZE?= (( ${BOOTXX_SECTORS} * 512 ))
 
-CPPFLAGS+=-D_STANDALONE -DNO_READDIR
+CPPFLAGS+=-D_STANDALONE
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../../..
 CPPFLAGS+=-DLOADADDRESS=0x8ff00000 -DBOOTXX_SECTORS=${BOOTXX_SECTORS}
+CFLAGS+=-m4-nofpu
 
 S=	${.CURDIR}/../../../..
 SAREL=
@@ -26,6 +27,9 @@ KERN_AS?=	library
 .include "${S}/lib/libkern/Makefile.inc"
 DPADD+= $(KERNLIB)
 LDADD+= $(KERNLIB)
+
+LIBGCC!=${CC} -print-libgcc-file-name
+LDADD+= $(LIBGCC)
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -o ${PROG}.sym ${LDFLAGS} \

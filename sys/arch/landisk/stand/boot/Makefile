@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2006/10/10 05:26:54 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/10/11 17:19:06 drahn Exp $
 
 PROG=	boot
 SRCS=	srt0.S conf.c devs.c getsecs.c scifcons.c delay.c
@@ -11,6 +11,7 @@ CPPFLAGS+=-D_STANDALONE
 CPPFLAGS+=-DSH4
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/.. -I${S}
 CPPFLAGS+=-DLOADADDRESS=0x8ff00000
+CFLAGS+=-m4-nofpu
 
 .PATH:  ${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c bootarg.c
@@ -33,6 +34,9 @@ Z_AS?=	library
 .include "${S}/lib/libz/Makefile.inc"
 DPADD+= $(ZLIB)
 LDADD+= $(ZLIB)
+
+LIBGCC!=${CC} -print-libgcc-file-name
+LDADD+= $(LIBGCC)
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -o ${PROG}.sym ${LDFLAGS} \
