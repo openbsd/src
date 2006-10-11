@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgtreg.h,v 1.6 2006/10/01 22:03:25 claudio Exp $  */
+/*	$OpenBSD: pgtreg.h,v 1.7 2006/10/11 12:10:19 claudio Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -151,7 +151,7 @@ struct pgt_mgmt_frame {
 #define	PMF_FLAG_VALID	(PMF_FLAG_APP | PMF_FLAG_LE)
 	uint32_t	pmf_size;
 	/* 		data[];			*/
-} __attribute__((packed));
+} __packed;
 
 struct pgt_rx_header {
 	uint16_t		pra_unknown0;	/* always 0x0000 */
@@ -166,14 +166,14 @@ struct pgt_rx_header {
 	uint16_t		pra_unknown3;
 	uint8_t			pra_rssi;
 	uint8_t			pra_pad[3];
-} __attribute__((packed));
+} __packed;
 
 struct pgt_rx_annex {
 	uint8_t 		pra_ether_dhost[ETHER_ADDR_LEN];
 	uint8_t			pra_ether_shost[ETHER_ADDR_LEN];
 	struct pgt_rx_header	pra_header;
 	uint16_t		pra_ether_type;
-} __attribute__((packed));
+} __packed;
 
 /*
  * OIDs used to communicate management information.
@@ -335,7 +335,7 @@ enum pgt_oid {
 struct pgt_obj_ssid {
 	uint8_t			pos_length;
 	char			pos_ssid[33];
-} __attribute__((packed));
+} __packed;
 
 struct pgt_obj_key {
 	uint8_t			pok_type;
@@ -343,7 +343,7 @@ struct pgt_obj_key {
 #define	PGT_OBJ_KEY_TYPE_TKIP	1
 	uint8_t			pok_length;
 	uint8_t			pok_key[32];
-} __attribute__((packed));
+} __packed;
 
 /*
  * Each mlme received includes the current 802.11 state.
@@ -362,7 +362,7 @@ struct pgt_obj_mlme {
 	uint16_t		pom_id;		/* 802.11 association number */
 	uint16_t		pom_state;
 	uint16_t		pom_code;	/* 802.11 reason code */
-} __attribute__((packed));
+} __packed;
 
 struct pgt_obj_mlmeex {
 	uint8_t			pom_address[6];
@@ -371,12 +371,12 @@ struct pgt_obj_mlmeex {
 	uint16_t		pom_code;
 	uint16_t		pom_size;
 	uint8_t			pom_data[0];
-} __attribute__((packed));
+} __packed;
 
 struct pgt_obj_buffer {
 	uint32_t		pob_size;
 	uint32_t		pob_addr;
-} __attribute__((packed));
+} __packed;
 
 struct pgt_obj_bss {
 	uint8_t			pob_address[6];
@@ -394,17 +394,17 @@ struct pgt_obj_bss {
 	uint16_t		pob_rates;
 	uint16_t		pob_basic_rates;
 	uint16_t		pob_padding1;
-} __attribute__((packed));
+} __packed;
 
 struct pgt_obj_bsslist {
 	uint32_t		pob_count;
 	struct pgt_obj_bss	pob_bsslist[0];
 #define	PGT_OBJ_BSSLIST_NBSS	24
-} __attribute__((packed));
+} __packed;
 
 struct pgt_obj_frequencies {
 	uint16_t		pof_count;
 	uint16_t		pof_freqlist_mhz[0];
-} __attribute__((packed));
+} __packed;
 
 #endif
