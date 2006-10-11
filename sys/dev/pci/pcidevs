@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1160 2006/10/10 17:30:13 brad Exp $
+$OpenBSD: pcidevs,v 1.1161 2006/10/11 03:20:30 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -293,6 +293,7 @@ vendor	HINT		0x3388	Hint
 vendor	3DLABS		0x3d3d	3D Labs
 vendor	AVANCE2		0x4005	Avance Logic
 vendor	ADDTRON		0x4033	Addtron
+vendor	NETXEN		0x4040	NetXen
 vendor	INDCOMPSRC	0x494f	Industrial Computer Source
 vendor	NETVIN		0x4a14	NetVin
 vendor	GEMTEK		0x5046	Gemtek
