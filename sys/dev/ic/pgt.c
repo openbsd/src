@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.35 2006/10/11 19:20:46 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.36 2006/10/11 19:42:28 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -965,16 +965,10 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 			    pha->pra_unknown3, pha->pra_rssi,
 			    pha->pra_pad[0], pha->pra_pad[1], pha->pra_pad[2]));
 		if (sc->sc_debug & SC_DEBUG_RXETHER)
-			DPRINTF(("%s: rx ether: "
-			    "%02x:%02x:%02x:%02x:%02x:%02x < "
-			    "%02x:%02x:%02x:%02x:%02x:%02x 0x%04x\n",
+			DPRINTF(("%s: rx ether: %s < %s 0x%04x\n",
 			    sc->sc_dev.dv_xname,
-			    pra->pra_ether_dhost[0], pra->pra_ether_dhost[1],
-			    pra->pra_ether_dhost[2], pra->pra_ether_dhost[3],
-			    pra->pra_ether_dhost[4], pra->pra_ether_dhost[5],
-			    pra->pra_ether_shost[0], pra->pra_ether_shost[1],
-			    pra->pra_ether_shost[2], pra->pra_ether_shost[3],
-			    pra->pra_ether_shost[4], pra->pra_ether_shost[5],
+			    ether_sprintf(pra->pra_ether_dhost),
+			    ether_sprintf(pra->pra_ether_shost),
 			    ntohs(pra->pra_ether_type)));
 
 		memcpy(eh.ether_dhost, pra->pra_ether_dhost, ETHER_ADDR_LEN);
@@ -2893,12 +2887,9 @@ pgt_update_sw_from_hw(struct pgt_softc *sc, struct pgt_async_trap *pa,
 			mlme = mtod(args, struct pgt_obj_mlme *);
 			if (sc->sc_debug & SC_DEBUG_TRAP)
 				DPRINTF(("%s: mlme: address "
-				    "%02x:%02x:%02x:%02x:%02x:%02x "
-				    "id 0x%02x state 0x%02x code 0x%02x\n",
+				    "%s id 0x%02x state 0x%02x code 0x%02x\n",
 				    sc->sc_dev.dv_xname,
-				    mlme->pom_address[0], mlme->pom_address[1],
-				    mlme->pom_address[2], mlme->pom_address[3],
-				    mlme->pom_address[4], mlme->pom_address[5],
+				    ether_sprintf(mlme->pom_address),
 				    letoh16(mlme->pom_id),
 				    letoh16(mlme->pom_state),
 				    letoh16(mlme->pom_code)));
