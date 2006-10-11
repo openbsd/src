@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.359 2006/10/06 16:25:24 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.360 2006/10/11 08:44:39 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2329,11 +2329,16 @@ rule,
 .Xr pf 4
 will proceed to evaluate all rules specified in that anchor.
 .Pp
-Matching filter and translation rules in anchors with the
+Matching filter and translation rules marked with the
 .Ar quick
 option are final and abort the evaluation of the rules in other
-anchors
-and the main ruleset.
+anchors and the main ruleset.
+If the
+.Ar anchor
+itself is marked with the
+.Ar quick option
+ruleset evaluation will terminate when the anchor is exited if the packet is
+matched by any rule within the anchor.
 .Pp
 .Ar anchor
 rules are evaluated relative to the anchor in which they are contained.
