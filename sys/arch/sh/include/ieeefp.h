@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.2 2006/10/10 22:02:11 miod Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.3 2006/10/11 00:56:35 drahn Exp $	*/
 /*	$NetBSD: ieeefp.h,v 1.3 2002/04/28 17:10:34 uch Exp $ */
 
 /*
@@ -19,7 +19,7 @@ typedef int fp_except;
 
 typedef enum {
 	FP_RN=0,		/* round to nearest representable number */
-	FP_RZ=1			/* round to zero (truncate) */
+	FP_RZ=1,		/* round to zero (truncate) */
 	/* the following two are not implemented on SH4{,A} */
 	FP_RP=2,		/* round toward positive infinity */
 	FP_RM=3			/* round toward negative infinity */
