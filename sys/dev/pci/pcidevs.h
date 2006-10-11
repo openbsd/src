@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1161 2006/10/11 03:20:30 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1162 2006/10/11 22:25:49 ckuethe Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -918,6 +918,8 @@
 #define	PCI_PRODUCT_ATI_RAGE128_TL	0x544c		/* Rage 128 Pro TL */
 #define	PCI_PRODUCT_ATI_RAGE128_TR	0x5452		/* Rage 128 Pro TR */
 #define	PCI_PRODUCT_ATI_RADEON_M300_M22	0x5460		/* Radeon Mobility M300 M22 */
+#define	PCI_PRODUCT_ATI_RADEON_X800_RV430	0x554d		/* Radeon X800 (RV430) */
+#define	PCI_PRODUCT_ATI_RADEON_X800_RV430_S	0x556d		/* Radeon X800 (RV430) Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X700_M26_1	0x5652		/* Radeon Mobility X700 M26 */
 #define	PCI_PRODUCT_ATI_RADEON_X700_M26_2	0x5653		/* Radeon Mobility X700 M26 */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
