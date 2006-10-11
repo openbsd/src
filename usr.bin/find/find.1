@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.61 2006/10/11 10:03:28 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.62 2006/10/11 11:46:04 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -508,39 +508,32 @@ arguments to
 .Nm find ,
 i.e. they should be separated by whitespace.
 .Sh EXAMPLES
-Print out a list of all the files whose names do not end in
+Print out a list of all the files whose names end in
 .Dq \&.c :
 .Pp
-.Dl "$ find / \e! -name '*.c' -print"
-.Pp
-Print out a list of all the files owned by user
-.Dq wnj
-that are newer than the file
-.Dq ttt :
-.Pp
-.Dl "$ find / -newer ttt -user wnj -print"
+.Dl "$ find / -name '*.c'"
 .Pp
 Print out a list of all the files which are not both newer than
 .Dq ttt
 and owned by
 .Dq wnj :
 .Pp
-.Dl "$ find / \e! \e( -newer ttt -user wnj \e) -print"
-.Pp
-Find and remove all *.jpg files in the current working directory:
-.Pp
-.Dl "$ find . -name \e*\e.jpg -exec rm {} \e;"
+.Dl "$ find / \e! \e( -newer ttt -user wnj \e)"
 .Pp
 Print out a list of all core files on local file systems:
 .Pp
-.Dl "$ find / \e! -fstype local -prune -or -name '*.core' -print"
+.Dl "$ find / \e! -fstype local -prune -or -name '*.core'"
 .Pp
 Find all files in
 .Pa /usr/src
 ending in a dot and single digit, but skip directory
 .Pa /usr/src/gnu :
 .Pp
-.Dl "$ find /usr/src -path /usr/src/gnu -prune -or -name \e*\e.[0-9]"
+.Dl "$ find /usr/src -path /usr/src/gnu -prune -or -name \e*.[0-9]"
+.Pp
+Find and remove all *.jpg files in the current working directory:
+.Pp
+.Dl "$ find . -name \e*.jpg -exec rm {} \e;"
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chmod 1 ,
