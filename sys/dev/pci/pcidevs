@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1161 2006/10/11 03:20:30 brad Exp $
+$OpenBSD: pcidevs,v 1.1162 2006/10/11 22:25:49 ckuethe Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -913,6 +913,8 @@ product ATI RAGE128_TF		0x5446	Rage 128 Pro TF
 product ATI RAGE128_TL		0x544c	Rage 128 Pro TL
 product ATI RAGE128_TR		0x5452	Rage 128 Pro TR
 product ATI RADEON_M300_M22	0x5460	Radeon Mobility M300 M22
+product ATI RADEON_X800_RV430	0x554d	Radeon X800 (RV430)
+product ATI RADEON_X800_RV430_S	0x556d	Radeon X800 (RV430) Sec
 product ATI RADEON_X700_M26_1	0x5652	Radeon Mobility X700 M26
 product ATI RADEON_X700_M26_2	0x5653	Radeon Mobility X700 M26
 product ATI MACH64_VT		0x5654	Mach64 VT
