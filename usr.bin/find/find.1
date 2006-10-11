@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.60 2006/10/10 12:20:01 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.61 2006/10/11 10:03:28 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -163,6 +163,7 @@ was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
 .It Ic -depth
+This primary always evaluates to true.
 The same as specifying the
 .Fl d
 option.
@@ -219,6 +220,7 @@ are set in the file's flags.
 If the flags are not preceded by a dash, this primary evaluates to true if the
 flags specified exactly match those of the file.
 .It Ic -follow
+This primary always evaluates to true.
 The same as specifying the
 .Fl H
 option.
@@ -446,6 +448,7 @@ is numeric and there is no such user name, then
 .Ar uname
 is treated as a user ID.
 .It Ic -xdev
+This primary always evaluates to true.
 The same as specifying the
 .Fl x
 option.
