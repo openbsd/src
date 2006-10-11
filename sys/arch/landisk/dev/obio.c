@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.1 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.2 2006/10/11 20:34:19 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ int	obio_print(void *, const char *);
 int	obio_search(struct device *, void *, void *);
 
 struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
+	sizeof(struct obio_softc), obio_match, obio_attach
 };
 
 struct cfdriver obio_cd = {
