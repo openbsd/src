@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.34 2006/10/11 10:20:31 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.35 2006/10/11 19:20:46 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1814,10 +1814,10 @@ pgt_ieee80211_node_alloc(struct ieee80211com *ic)
 	struct pgt_ieee80211_node *pin;
 
 	pin = malloc(sizeof(*pin), M_DEVBUF, M_NOWAIT);
-	bzero(pin, sizeof *pin);
-	if (pin != NULL)
+	if (pin != NULL) {
+		bzero(pin, sizeof *pin);
 		pin->pin_dot1x_auth = PIN_DOT1X_UNAUTHORIZED;
-
+	}
 	return (struct ieee80211_node *)pin;
 }
 
@@ -3201,6 +3201,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		if (error != 0) {
 			printf("%s: can not create DMA tag for fragment\n",
 			    sc->sc_dev.dv_xname);
+			free(pd, M_DEVBUF);
 			break;
 		}
 
