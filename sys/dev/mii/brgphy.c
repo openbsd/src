@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.57 2006/10/09 00:29:25 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.58 2006/10/11 23:25:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -214,9 +214,10 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
+		PHY_RESET(sc); /* XXX hardware bug work-around */
+
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-			PHY_RESET(sc); /* XXX hardware bug work-around */
 			(void) brgphy_mii_phy_auto(sc);
 			break;
 		case IFM_1000_T:
@@ -231,7 +232,6 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_10_T:
 			speed = BRGPHY_S10;
 setit:
-			PHY_RESET(sc); /* XXX hardware bug work-around */
 			brgphy_loop(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				speed |= BRGPHY_BMCR_FDX;
