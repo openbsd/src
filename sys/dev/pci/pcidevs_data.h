@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1160 2006/10/10 17:30:13 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1161 2006/10/11 03:20:30 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -13445,6 +13445,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ADDTRON,
 	    "Addtron",
+	},
+	{
+	    PCI_VENDOR_NETXEN,
+	    "NetXen",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC,

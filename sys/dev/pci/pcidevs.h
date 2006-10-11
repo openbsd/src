@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1160 2006/10/10 17:30:13 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1161 2006/10/11 03:20:30 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -298,6 +298,7 @@
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron */
+#define	PCI_VENDOR_NETXEN	0x4040		/* NetXen */
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_GEMTEK	0x5046		/* Gemtek */
