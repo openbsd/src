@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.76 2006/07/14 01:58:58 pedro Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.77 2006/10/11 22:39:46 mpf Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -239,16 +239,16 @@ m_prepend(struct mbuf *m, int len, int how)
 }
 
 /*
- * Make a copy of an mbuf chain starting "off0" bytes from the beginning,
+ * Make a copy of an mbuf chain starting "off" bytes from the beginning,
  * continuing for "len" bytes.  If len is M_COPYALL, copy to end of mbuf.
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
  */
 int MCFail;
 
 struct mbuf *
-m_copym(struct mbuf *m, int off0, int len, int wait)
+m_copym(struct mbuf *m, int off, int len, int wait)
 {
-	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
+	return m_copym0(m, off, len, wait, 0);	/* shallow copy on M_EXT */
 }
 
 /*
@@ -256,16 +256,15 @@ m_copym(struct mbuf *m, int off0, int len, int wait)
  * of merely bumping the reference count.
  */
 struct mbuf *
-m_copym2(struct mbuf *m, int off0, int len, int wait)
+m_copym2(struct mbuf *m, int off, int len, int wait)
 {
-	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
+	return m_copym0(m, off, len, wait, 1);	/* deep copy */
 }
 
 struct mbuf *
-m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
+m_copym0(struct mbuf *m, int off, int len, int wait, int deep)
 {
 	struct mbuf *n, **np;
-	int off = off0;
 	struct mbuf *top;
 	int copyhdr = 0;
 
@@ -295,9 +294,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 			goto nospace;
 		if (copyhdr) {
 			M_DUP_PKTHDR(n, m);
-			if (len == M_COPYALL)
-				n->m_pkthdr.len -= off0;
-			else
+			if (len != M_COPYALL)
 				n->m_pkthdr.len = len;
 			copyhdr = 0;
 		}
@@ -321,7 +318,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				    (unsigned)n->m_len);
 			}
 		} else
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
 			    (unsigned)n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
@@ -819,12 +816,12 @@ extpacket:
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *
-m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
+m_devget(char *buf, int totlen, int off, struct ifnet *ifp,
     void (*copy)(const void *, void *, size_t))
 {
 	struct mbuf *m;
 	struct mbuf *top = NULL, **mp = &top;
-	int off = off0, len;
+	int len;
 	char *cp;
 	char *epkt;
 

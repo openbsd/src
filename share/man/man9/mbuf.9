@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.21 2006/09/05 18:00:34 thib Exp $
+.\"     $OpenBSD: mbuf.9,v 1.22 2006/10/11 22:39:46 mpf Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -34,9 +34,9 @@
 .Sh SYNOPSIS
 .Fd #include <sys/mbuf.h>
 .Ft struct mbuf *
-.Fn m_copym2 "struct mbuf *m" "int off0" "int len" "int wait"
+.Fn m_copym2 "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
-.Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_free "struct mbuf *m"
 .Fn MFREE "struct mbuf *m" "struct mbuf *n"
@@ -76,7 +76,7 @@
 .Ft void
 .Fn m_cat "struct mbuf *m" "struct mbuf *n"
 .Ft struct mbuf *
-.Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" \
+.Fn m_devget "char *buf" "int totlen" "int off" "struct ifnet *ifp" \
 "void (*func)(const void *, void *, size_t)"
 .Ft void
 .Fn m_zero "struct mbuf *m"
@@ -325,15 +325,15 @@ The structure used is the same as the previous one except that the
 element is not empty, it contains the same information as when
 M_PKTHDR is used alone.
 .Bl -tag -width Ds
-.It Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.It Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 Copy an mbuf chain starting at
-.Fa off0
+.Fa off
 bytes from the beginning
 and continuing for
 .Fa len
 bytes.
 If
-.Fa off0
+.Fa off
 is zero and
 .Fa m
 has the M_PKTHDR flag set,
@@ -347,7 +347,7 @@ The
 parameter can be M_WAIT or
 M_DONTWAIT.
 It does not copy clusters, it just increases their reference count.
-.It Fn m_copym2 "struct mbuf *m" "int off0" "int len" "int wait"
+.It Fn m_copym2 "struct mbuf *m" "int off" "int len" "int wait"
 The same as
 .Fn m_copym
 except that it copies cluster mbufs, whereas
@@ -548,7 +548,7 @@ Concatenate the mbuf chain pointed to by
 to the mbuf chain pointed to by
 .Fa m .
 The mbuf chains must be of the same type.
-.It Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" \
+.It Fn m_devget "char *buf" "int totlen" "int off" "struct ifnet *ifp" \
 "void (*func)(const void *, void *, size_t)"
 Copy
 .Fa totlen
@@ -559,9 +559,9 @@ using the function
 The data is copied into an mbuf chain and a pointer to the head of it
 is returned.
 If
-.Fa off0
+.Fa off
 is non-zero, it means the packet is trailer-encapsulated and
-.Fa off0
+.Fa off
 bytes plus the type and length fields will be skipped before doing the
 copy.
 Returns NULL on failure.
