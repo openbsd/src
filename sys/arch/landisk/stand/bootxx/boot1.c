@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.1 2006/10/06 21:48:50 mickey Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.2 2006/10/11 17:18:10 drahn Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -52,17 +52,20 @@ const char *boot1(uint32_t *);
 void putstr(const char *str);
 int raise(int sig);
 int blkdevstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int blkdevopen(struct open_file *, ...);
+int blkdevclose(struct open_file *);
+
 
 extern struct disklabel ptn_disklabel;
 
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
-	  ufs_stat, nullsys },
+	  ufs_stat, ufs_readdir },
 };
 int nfsys = NENTS(file_system);
 
 struct devsw devsw[] = {
-	{ "dk", blkdevstrategy, nullsys, nullsys, noioctl },
+	{ "dk", blkdevstrategy, blkdevopen, blkdevclose, noioctl },
 };
 int     ndevs = NENTS(devsw);
 
@@ -107,6 +110,17 @@ boot1(uint32_t *sector)
 	if (*(uint32_t *)(LOADADDRESS + 4) != 0x20041110)
 		return "Invalid /boot file format.\r\n";
 
+	return 0;
+}
+
+int
+blkdevopen(struct open_file *f, ...)
+{
+	return 0;
+}
+int
+blkdevclose(struct open_file *f)
+{
 	return 0;
 }
 
