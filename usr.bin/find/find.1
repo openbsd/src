@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.62 2006/10/11 11:46:04 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.63 2006/10/11 12:26:00 otto Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -188,6 +188,14 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm
 was executed.
+.Pp
+Since
+.Ar utility
+is executed every time a match is made,
+it is often more efficient to pipe the output of
+.Nm
+to
+.Xr xargs 1 .
 .It Xo
 .Ic -execdir Ar utility
 .Op argument ...
@@ -534,6 +542,8 @@ ending in a dot and single digit, but skip directory
 Find and remove all *.jpg files in the current working directory:
 .Pp
 .Dl "$ find . -name \e*.jpg -exec rm {} \e;"
+or
+.Dl "$ find . -name \e*.jpg | xargs rm"
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chmod 1 ,
