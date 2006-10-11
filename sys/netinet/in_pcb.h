@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.56 2006/10/11 09:29:20 henning Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.57 2006/10/11 09:34:51 henning Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -132,6 +132,7 @@ struct inpcb {
 #define SR_FAILED         1             /* Negotiation failed permanently */
 #define SR_SUCCESS        2             /* SA successfully established */
 #define SR_WAIT           3             /* Waiting for SA */
+	u_char	inp_ip_minttl;		/* minimum TTL or drop */
 	TAILQ_ENTRY(inpcb) inp_tdb_in_next, inp_tdb_out_next;
 	struct tdb     *inp_tdb_in, *inp_tdb_out;
 	struct ipsec_policy *inp_ipo;

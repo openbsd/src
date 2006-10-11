@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.181 2006/10/11 09:29:20 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.182 2006/10/11 09:34:51 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1044,6 +1044,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 		case IP_TOS:
 		case IP_TTL:
+		case IP_MINTTL:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
@@ -1063,6 +1064,12 @@ ip_ctloutput(op, so, level, optname, mp)
 					inp->inp_ip.ip_ttl = optval;
 					break;
 
+				case IP_MINTTL:
+					if (optval > 0 && optval <= MAXTTL)
+						inp->inp_ip_minttl = optval;
+					else
+						error = EINVAL;
+					break;
 #define	OPTSET(bit) \
 	if (optval) \
 		inp->inp_flags |= bit; \
@@ -1384,6 +1391,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 		case IP_TOS:
 		case IP_TTL:
+		case IP_MINTTL:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
@@ -1399,6 +1407,10 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_TTL:
 				optval = inp->inp_ip.ip_ttl;
+				break;
+
+			case IP_MINTTL:
+				optval = inp->inp_ip_minttl;
 				break;
 
 #define	OPTBIT(bit)	(inp->inp_flags & bit ? 1 : 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.72 2006/10/11 09:29:20 henning Exp $	*/
+/*	$OpenBSD: in.h,v 1.73 2006/10/11 09:34:51 henning Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -266,6 +266,7 @@ struct ip_opts {
 #define IP_IPCOMP_LEVEL		29   /* int; compression used */
 #define IP_RECVIF		30   /* bool; receive reception if w/dgram */
 #define IP_RECVTTL		31   /* bool; receive IP TTL w/dgram */
+#define IP_MINTTL		32   /* minimum TTL for packet or drop */
 
 /*
  * Security levels - IPsec, not IPSO
