@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.32 2006/10/10 23:39:15 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.33 2006/10/11 00:08:51 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -722,6 +722,14 @@ xge_init(struct ifnet *ifp)
 {
 	struct xge_softc *sc = ifp->if_softc;
 	uint64_t val;
+	int s;
+
+	s = splnet();
+
+	/*
+	 * Cancel any pending I/O
+	 */
+	xge_stop(ifp, 0);
 
 	/* 31+32, setup MAC config */
 	PIF_WKEY(MAC_CFG, TMAC_EN|RMAC_EN|TMAC_APPEND_PAD|RMAC_STRIP_FCS|
@@ -741,6 +749,7 @@ xge_init(struct ifnet *ifp)
 		bitmask_snprintf(val, QUIESCENT_BMSK, buf, sizeof buf);
 		printf("%s: ADAPTER_STATUS missing bits %s\n", XNAME, buf);
 #endif
+		splx(s);
 		return (1);
 	}
 
@@ -777,6 +786,8 @@ xge_init(struct ifnet *ifp)
 	/* Done... */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	splx(s);
 
 	return (0);
 }
@@ -985,7 +996,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
                 } else {
 			if (ifp->if_flags & IFF_RUNNING)
-				xge_stop(ifp, 0);
+				xge_stop(ifp, 1);
 		}
 		sc->xge_if_flags = ifp->if_flags;
 		break;
