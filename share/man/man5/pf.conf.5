@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.360 2006/10/11 08:44:39 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.361 2006/10/11 13:35:17 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2336,7 +2336,8 @@ anchors and the main ruleset.
 If the
 .Ar anchor
 itself is marked with the
-.Ar quick option
+.Ar quick
+option,
 ruleset evaluation will terminate when the anchor is exited if the packet is
 matched by any rule within the anchor.
 .Pp
