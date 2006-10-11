@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.55 2006/09/26 21:10:53 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.56 2006/10/11 09:29:20 henning Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -168,9 +168,10 @@ struct inpcbtable {
 #define	INP_HIGHPORT	0x010	/* user wants "high" port binding */
 #define	INP_LOWPORT	0x020	/* user wants "low" port binding */
 #define	INP_RECVIF	0x080	/* receive incoming interface */
+#define	INP_RECVTTL	0x040	/* receive incoming IP TTL */
 
 #define	INP_CONTROLOPTS	(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR| \
-	    INP_RXSRCRT|INP_HOPLIMIT|INP_RECVIF)
+	    INP_RXSRCRT|INP_HOPLIMIT|INP_RECVIF|INP_RECVTTL)
 
 /*
  * These flags' values should be determined by either the transport

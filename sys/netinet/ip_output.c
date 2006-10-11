@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.180 2006/06/18 11:47:45 pascoe Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.181 2006/10/11 09:29:20 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1048,6 +1048,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_RECVTTL:
 			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			else {
@@ -1061,6 +1062,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				case IP_TTL:
 					inp->inp_ip.ip_ttl = optval;
 					break;
+
 #define	OPTSET(bit) \
 	if (optval) \
 		inp->inp_flags |= bit; \
@@ -1080,6 +1082,9 @@ ip_ctloutput(op, so, level, optname, mp)
 					break;
 				case IP_RECVIF:
 					OPTSET(INP_RECVIF);
+					break;
+				case IP_RECVTTL:
+					OPTSET(INP_RECVTTL);
 					break;
 				}
 			}
@@ -1383,6 +1388,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_RECVTTL:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
 			switch (optname) {
@@ -1410,6 +1416,9 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			case IP_RECVIF:
 				optval = OPTBIT(INP_RECVIF);
+				break;
+			case IP_RECVTTL:
+				optval = OPTBIT(INP_RECVTTL);
 				break;
 			}
 			*mtod(m, int *) = optval;
