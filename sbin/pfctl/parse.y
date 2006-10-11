@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.505 2006/10/06 11:05:30 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.506 2006/10/11 08:42:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -445,7 +445,7 @@ typedef struct {
 %type	<v.string>		label string tag
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
-%type	<v.logquick>		logquick
+%type	<v.logquick>		logquick quick
 %type	<v.interface>		antispoof_ifspc antispoof_iflst antispoof_if
 %type	<v.qassign>		qname
 %type	<v.queue>		qassign qassign_list qassign_item
@@ -608,7 +608,7 @@ varset		: STRING '=' string		{
 		}
 		;
 
-anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
+anchorrule	: ANCHOR string	dir quick interface af proto fromto filter_opts {
 			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_FILTER)) {
@@ -618,24 +618,25 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			memset(&r, 0, sizeof(r));
 			r.direction = $3;
-			r.af = $5;
-			r.prob = $8.prob;
-			r.rtableid = $8.rtableid;
+			r.quick = $4.quick;
+			r.af = $6;
+			r.prob = $9.prob;
+			r.rtableid = $9.rtableid;
 
-			if ($8.match_tag)
-				if (strlcpy(r.match_tagname, $8.match_tag,
+			if ($9.match_tag)
+				if (strlcpy(r.match_tagname, $9.match_tag,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
-			r.match_tag_not = $8.match_tag_not;
+			r.match_tag_not = $9.match_tag_not;
 
-			decide_address_family($7.src.host, &r.af);
-			decide_address_family($7.dst.host, &r.af);
+			decide_address_family($8.src.host, &r.af);
+			decide_address_family($8.dst.host, &r.af);
 
-			expand_rule(&r, $4, NULL, $6, $7.src_os,
-			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
+			expand_rule(&r, $5, NULL, $7, $8.src_os,
+			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
 			    0, 0, 0, $2);
 			free($2);
 		}
@@ -2099,6 +2100,10 @@ blockspec	: /* empty */		{
 dir		: /* empty */			{ $$ = 0; }
 		| IN				{ $$ = PF_IN; }
 		| OUT				{ $$ = PF_OUT; }
+		;
+
+quick		: /* empty */			{ $$.quick = 0; }
+		| QUICK				{ $$.quick = 1; }
 		;
 
 logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
