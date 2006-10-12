@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.38 2006/06/22 11:25:01 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.39 2006/10/12 20:38:03 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -225,11 +225,25 @@ turn the sound off.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width "DICSXXX"
-.It Ev DISC
-Specifies the name of the CD device
-(see also the
+.It Ev DISC , CDROM
+Specifies the name of the CD device to use.
+If both
+.Ev DISC
+and
+.Ev CDROM
+are set,
+.Ev DISC
+takes precedence.
+If neither
+.Ev DISC
+nor
+.Ev CDROM
+are set,
+the default is
+.Pa cd0 .
+See also the
 .Fl f
-option).
+option, above.
 .El
 .Sh FILES
 .Bl -tag -width /dev/rmcd0c -compact
