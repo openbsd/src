@@ -1,4 +1,4 @@
-#	$OpenBSD: elf,v 1.14 2004/10/27 18:12:44 pefo Exp $
+#	$OpenBSD: elf,v 1.15 2006/10/12 03:32:32 drahn Exp $
 
 #------------------------------------------------------------------------------
 # elf:  file(1) magic for ELF executables
@@ -66,6 +66,7 @@
 >>18	leshort		18		SPARC32PLUS,
 >>18	leshort		20		PowerPC,
 >>18	leshort		40		ARM,
+>>18	leshort		42		SH
 >>18	leshort		43		SPARC64 - invalid byte order,
 >>18	leshort		62		AMD64,
 >>18	leshort		75		VAX,
@@ -123,6 +124,7 @@
 >>18	beshort		18		SPARC32PLUS,
 >>18	beshort		20		PowerPC,
 >>18	beshort		40		ARM,
+>>18	beshort		42		SH - invalid byte order,
 >>18	beshort		43		SPARC64,
 >>18	beshort		62		AMD64 - invalid byte order,
 >>18	beshort		75		VAX - invalid byte order,
