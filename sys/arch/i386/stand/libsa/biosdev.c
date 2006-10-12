@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.69 2004/06/23 00:21:49 tom Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.70 2006/10/12 12:14:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -365,16 +365,8 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
 			if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_OPENBSD)
 				off = mbr.dmbr_parts[i].dp_start + LABELSECTOR;
-
-		/* just in case */
 		if (off == 0)
-			for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-				if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_NETBSD)
-					off = mbr.dmbr_parts[i].dp_start +
-					    LABELSECTOR;
-
-		if (off == 0)
-			return "no BSD partition\n";
+			return "no OpenBSD partition\n";
 	} else
 		off = LABELSECTOR;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.8 2003/10/16 04:30:09 drahn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.9 2006/10/12 12:14:17 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -275,8 +275,7 @@ search_label(devp, off, buf, lp, off0)
 		off0 += off;
 	for (p = (struct dos_partition *)(buf + DOSPARTOFF), i = 4;
 	    --i >= 0; p++) {
-		if (p->dp_typ == DOSPTYP_OPENBSD ||
-		    p->dp_typ == DOSPTYP_NETBSD) {
+		if (p->dp_typ == DOSPTYP_OPENBSD) {
 			poff = get_long(&p->dp_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
 			    DEV_BSIZE, buf, &read) == 0

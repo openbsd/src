@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.3 2004/01/26 18:39:20 miod Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.4 2006/10/12 12:14:17 krw Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -192,8 +192,7 @@ search_label(devp, off, buf, lp, off0)
 		off0 += off;
 	for (p = (struct dos_partition *)(buf + DOSPARTOFF), i = 4;
 	     --i >= 0; p++) {
-		if (p->dp_typ == DOSPTYP_OPENBSD ||
-		    p->dp_typ == DOSPTYP_NETBSD) {
+		if (p->dp_typ == DOSPTYP_OPENBSD) {
 			poff = get_long(&p->dp_start) + off0;
 			if (dsk_strategy(devp, F_READ, poff + LABELSECTOR,
 				     DEV_BSIZE, buf, &read) == 0
