@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.49 2006/10/12 16:54:01 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.50 2006/10/12 23:16:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1571,9 +1571,13 @@ aml_evalmethod(struct aml_node *node,
 	dnprintf(10,"calling [%s] (%d args)\n",
 		 aml_nodename(node),
 		 scope->nargs);
+	for (idx=0; idx<scope->nargs; idx++) {
+		dnprintf(10, "  arg%d: ", idx);
+		aml_showvalue(&scope->args[idx]);
+	}
 	while (scope->pos < scope->end)
 		aml_parseterm(scope, res);
-	printf("[%s] returns: ", aml_nodename(node));
+	dnprintf(10, "[%s] returns: ", aml_nodename(node));
 	aml_showvalue(res);
 #else
 	while (scope->pos < scope->end)
@@ -1792,7 +1796,6 @@ aml_parseend(struct aml_scope *scope)
  * @@@: Opcode utility functions
  */
 int  aml_match(int, int64_t, struct aml_value *);
-void aml_getpciaddr(struct aml_scope *, struct aml_value *);
 void aml_fixref(struct aml_value **);
 int64_t aml_parseint(struct aml_scope *, int);
 
@@ -1818,24 +1821,30 @@ aml_match(int op, int64_t mv1, struct aml_value *mv2)
 	return (1);
 }
 
-void
-aml_getpciaddr(struct aml_scope *scope, struct aml_value *res)
+u_int64_t
+aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 {
-	struct aml_node *node;
-	struct aml_value *tmpres;
+	struct aml_value tmpres;
+	u_int64_t pciaddr;
 
 	/* PCI */
-	tmpres = aml_alloctmp(scope, 1);
-	node = aml_searchname(scope->node, "_ADR");
-	if (node != NULL) {
-		aml_evalterm(scope, node->value, tmpres);
-		res->v_opregion.iobase += (aml_val2int(tmpres) << 16L);
+	pciaddr = 0;
+	if (!aml_evalname(dsdt_softc, root, "_ADR", 0, NULL, &tmpres)) {
+		/* Device:Function are bits 16-31,32-47 */
+		pciaddr += (aml_val2int(&tmpres) << 16L);
+		aml_freevalue(&tmpres);
+		dnprintf(20,"got _adr [%s]\n", 
+			 aml_nodename(root));
 	}
-	node = aml_searchname(scope->node, "_BBN");
-	if (node != NULL) {
-		aml_evalterm(scope, node->value, tmpres);
-		res->v_opregion.iobase += (aml_val2int(tmpres) << 48L);
+	if (!aml_evalname(dsdt_softc, root, "_BBN", 0, NULL, &tmpres)) {
+		/* PCI bus is in bits 48-63 */
+		pciaddr += (aml_val2int(&tmpres) << 48L);
+		aml_freevalue(&tmpres);
+		dnprintf(20,"got _bbn [%s]\n", 
+		       aml_nodename(root));
 	}
+	dnprintf(20,"got pciaddr: %llx\n", pciaddr);
+	return pciaddr;
 }
 
 /* Fixup references for BufferFields/FieldUnits */
@@ -1899,7 +1908,7 @@ aml_parseint(struct aml_scope *scope, int opcode)
 		aml_parseterm(scope, tmpval);
 		return aml_val2int(tmpval);
 	}
-	dnprintf(60,"%.4x: [%s] %s\n", 
+	dnprintf(15,"%.4x: [%s] %s\n", 
 		 aml_pc(scope->pos-opsize(opcode)), 
 		 aml_nodename(scope->node),
 		 aml_mnem(opcode));
@@ -2011,6 +2020,7 @@ struct aml_value *
 aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 {
 	uint8_t *name;
+	u_int64_t pci_addr;
 
 	AML_CHECKSTACK();
 	name = aml_parsename(scope);
@@ -2036,8 +2046,12 @@ aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
 		res->v_opregion.iospace = aml_parseint(scope, AMLOP_BYTEPREFIX);
 		res->v_opregion.iobase = aml_parseint(scope, AML_ANYINT);
 		res->v_opregion.iolen = aml_parseint(scope, AML_ANYINT);
-		if (res->v_opregion.iospace == GAS_PCI_CFG_SPACE)
-			aml_getpciaddr(scope, res);
+		if (res->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
+			pci_addr = aml_getpciaddr(dsdt_softc,
+						  scope->node);
+			
+			res->v_opregion.iobase += pci_addr;
+		}
 		break;
 	}
 	aml_createname(scope->node, name, res);
@@ -2156,7 +2170,7 @@ aml_parsecompare(struct aml_scope *scope, int opcode, struct aml_value *res)
 	aml_parseterm(scope, &tmparg[RHS]);
 
 	/* Compare both values */
-	rc = aml_cmpvalue(&tmparg[LHS], &tmparg[RHS], opcode);  
+	rc = aml_cmpvalue(&tmparg[LHS], &tmparg[RHS], opcode);
 	aml_setvalue(scope, res, NULL, rc);
 
 	return res;
@@ -2484,6 +2498,7 @@ aml_parsemisc2(struct aml_scope *scope, int opcode, struct aml_value *res)
 	struct aml_value *tmparg, *dev;
 	int i1, i2, i3;
 
+	AML_CHECKSTACK();
 	switch (opcode) {
 	case AMLOP_NOTIFY:
 		/* Assert: tmparg is nameref or objref */
@@ -2713,6 +2728,7 @@ aml_parsetarget(struct aml_scope *scope, struct aml_value *res, struct aml_value
 	return res;
 }
 
+/* Main Opcode Parser/Evaluator */
 struct aml_value *
 aml_parseop(struct aml_scope *scope, struct aml_value *res)
 {
@@ -2720,7 +2736,7 @@ aml_parseop(struct aml_scope *scope, struct aml_value *res)
 	struct aml_value *rval;
 
 	opcode = aml_parseopcode(scope);
-	dnprintf(60,"%.4x: [%s] %s\n", 
+	dnprintf(15,"%.4x: [%s] %s\n", 
 		 aml_pc(scope->pos-opsize(opcode)), 
 		 aml_nodename(scope->node),
 		 aml_mnem(opcode));
