@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.10 2006/10/05 17:31:14 mk Exp $
+.\"	$OpenBSD: acpi.4,v 1.11 2006/10/12 18:16:06 marco Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -145,18 +145,24 @@ and
 .Nm acpitimer
 drivers were written by
 .An Thorsten Lockert Aq tholo@sigmasoft.com .
+.An Jordan Hargrave Aq jordan@openbsd.org .
+.Pp
 The
-.Nm acpiac ,
-.Nm acpibat ,
+.Nm acpiac
+and
+.Nm acpibat
+drivers were written by
+.An Marco Peereboom Aq marco@openbsd.org .
+.Pp
+The
+.Nm acpiec,
 and
 .Nm acpitz
 drivers were written by
-.An Marco Peereboom Aq marco@openbsd.org .
-The
-.Nm acpiec
-driver was written by
 .An Can Erkin Acar Aq canacar@openbsd.org .
 .Sh BUGS
-Some systems do not propagate battery insertion up to the driver.
+Some systems do not propagate battery insertion up to the driver or
+will not report valid information unless there is a state change to the
+battery.
 .Pp
 Smart Battery Specification-based batteries are not supported.
