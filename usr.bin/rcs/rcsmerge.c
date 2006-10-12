@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.48 2006/08/11 08:18:19 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.49 2006/10/12 17:20:12 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -118,7 +118,7 @@ rcsmerge_main(int argc, char **argv)
 		warnx("warning: excess arguments ignored");
 
 	if ((fd = rcs_choosefile(argv[0], fpath, sizeof(fpath))) < 0)
-		errx(status, "%s", fpath);
+		err(status, "%s", fpath);
 
 	if (!(flags & QUIET))
 		(void)fprintf(stderr, "RCS file: %s\n", fpath);

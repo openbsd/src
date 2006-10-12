@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.21 2006/09/25 23:58:05 ray Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.22 2006/10/12 17:20:12 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -196,9 +196,9 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	 * This ensures that there is at least one suffix for strsep().
 	 */
 	if (strcmp(rcs_suffixes, "") == 0) {
-		fd = open(rcspath, O_RDONLY);
 		if (strlcpy(out, rcspath, len) >= len)
 			errx(1, "rcs_choosefile: truncation");
+		fd = open(rcspath, O_RDONLY);
 		return (fd);
 	}
 
@@ -259,9 +259,10 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 
 	xfree(suffixes);
 
-	fd = open(rcspath, O_RDONLY);
 	if (strlcpy(out, rcspath, len) >= len)
 		errx(1, "rcs_choosefile: truncation");
+
+	fd = open(rcspath, O_RDONLY);
 
 	return (fd);
 }

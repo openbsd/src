@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.97 2006/08/07 20:55:28 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.98 2006/10/12 17:20:12 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -150,7 +150,7 @@ checkout_main(int argc, char **argv)
 	for (i = 0; i < argc; i++) {
 		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
 		if (fd < 0) {
-			warnx("%s", fpath);
+			warn("%s", fpath);
 			continue;
 		}
 

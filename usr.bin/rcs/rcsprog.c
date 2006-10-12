@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.132 2006/08/16 07:39:15 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.133 2006/10/12 17:20:12 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -305,7 +305,7 @@ rcs_main(int argc, char **argv)
 	for (i = 0; i < argc; i++) {
 		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
 		if (fd < 0 && !(flags & RCS_CREATE)) {
-			warnx("%s", fpath);
+			warn("%s", fpath);
 			continue;
 		}
 
@@ -372,7 +372,7 @@ rcs_main(int argc, char **argv)
 			ofd = rcs_choosefile(oldfilename, ofpath, sizeof(ofpath));
 			if (ofd < 0) {
 				if (!(flags & RCS_CREATE))
-					warnx("%s", ofpath);
+					warn("%s", ofpath);
 				exit(1);
 			}
 			if ((oldfile = rcs_open(ofpath, ofd, RCS_READ)) == NULL)
