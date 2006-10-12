@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.22 2006/10/11 22:39:46 mpf Exp $
+.\"     $OpenBSD: mbuf.9,v 1.23 2006/10/12 07:24:31 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 #define MINCLSIZE       (MHLEN + 1)
 #define M_MAXCOMPRESS   (MHLEN / 2)
 
-#define mtod(m,t)       ((t)((m)->m_data))
+#define mtod(m,t)       ((t)((m)-\*(Gtm_data))
 
 struct m_hdr {
         struct  mbuf *mh_next;
@@ -648,7 +648,9 @@ to
 .El
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr mbuf_tags 9 ,
+.Xr mbuf_tags 9
+.Pp
+"Networking Implementation Notes",
 .Pa /usr/share/doc/smm/18.net .
 .Rs
 .%A Jun-Ichiro Hagino
