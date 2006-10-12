@@ -1,7 +1,7 @@
-/*	$OpenBSD: acpireg.h,v 1.10 2006/10/10 22:34:12 brad Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.11 2006/10/12 19:17:26 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
- * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
+ * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
