@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.4 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.5 2006/10/12 18:20:39 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -366,7 +366,6 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	uint8_t mask;
 
 	dnprintf(10, "ACPIEC: got gpe\n");
-	printf("ACPIEC: got gpe: %x\n", gpe);
 	acpiec_intr(sc);
 
 	/* Reset GPE event */
