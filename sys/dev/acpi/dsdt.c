@@ -1,4 +1,4 @@
-/* $openbsd: dsdt.c,v 1.47 2006/06/14 16:30:07 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.49 2006/10/12 16:54:01 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
