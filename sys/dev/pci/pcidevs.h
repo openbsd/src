@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1162 2006/10/11 22:25:49 ckuethe Exp 
+ *	OpenBSD: pcidevs,v 1.1163 2006/10/12 00:30:12 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3017,6 +3017,7 @@
 #define	PCI_PRODUCT_RCC_HT_2100_PCIE_1	0x0140		/* HT-2100 PCIE */
 #define	PCI_PRODUCT_RCC_HT_2100_PCIE_2	0x0141		/* HT-2100 PCIE */
 #define	PCI_PRODUCT_RCC_HT_2100_PCIE_3	0x0142		/* HT-2100 PCIE */
+#define	PCI_PRODUCT_RCC_HT_2100_PCIE_5	0x0144		/* HT-2100 PCIE */
 #define	PCI_PRODUCT_RCC_OSB4	0x0200		/* OSB4 */
 #define	PCI_PRODUCT_RCC_CSB5	0x0201		/* CSB5 */
 #define	PCI_PRODUCT_RCC_CSB6	0x0203		/* CSB6 */
