@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.21 2006/08/19 16:56:54 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.22 2006/10/12 10:40:45 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -157,7 +157,8 @@ sensor_query(struct ntp_sensor *s)
 		return;
 
 	memcpy(&refid, "HARD", sizeof(refid));
-	s->update.offset = 0 - (float)sensor.value / 1000000000.0;
+	s->update.offset = (0 - (float)sensor.value / 1000000000.0) -
+	    getoffset();
 	s->update.rcvd = sensor.tv.tv_sec;
 	s->update.good = 1;
 
