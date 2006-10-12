@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.22 2006/10/12 10:40:45 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.23 2006/10/12 10:41:51 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,8 @@ sensor_query(struct ntp_sensor *s)
 	s->update.status.rootdispersion = 0;
 	s->update.status.reftime = sensor.tv.tv_sec;
 	s->update.status.synced = 1;
+
+	priv_adjtime();
 
 	log_debug("sensor %s: offset %f", s->device, s->update.offset);
 }
