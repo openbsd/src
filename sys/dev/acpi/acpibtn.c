@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.10 2006/05/31 10:01:56 canacar Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.11 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -102,14 +102,7 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 int
 acpibtn_getsta(struct acpibtn_softc *sc)
 {
-	struct aml_value	res, env;
-	struct acpi_context	*ctx;
-
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL) != 0) {
 		dnprintf(20, "%s: no _STA\n", DEVNAME(sc));
 		/* XXX not all buttons have _STA so FALLTROUGH */
 	}

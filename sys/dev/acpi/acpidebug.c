@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.8 2006/03/21 21:11:10 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.9 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -128,10 +128,7 @@ db_aml_showvalue(struct aml_value *value)
 		return;
 
 	if (value->node)
-		db_printf("node:%.8x ", value->node);
-
-	if (value->name)
-		db_printf("name:%s ", value->name);
+		db_printf("node:%.8x name:%s ", value->node, value->node->name);
 
 	switch (value->type) {
 	case AML_OBJTYPE_OBJREF:
@@ -140,13 +137,12 @@ db_aml_showvalue(struct aml_value *value)
 		db_printf("}\n");
 		break;
 	case AML_OBJTYPE_NAMEREF:
-		db_printf("nameref: %s %.8x\n", value->name,
-			 value->v_objref.ref);
+		db_printf("nameref: %s\n", value->v_nameref);
 		break;
-	case AML_OBJTYPE_STATICINT:
+	case AML_OBJTYPE_INTEGER+AML_STATIC:
 	case AML_OBJTYPE_INTEGER:
 		db_printf("integer: %llx %s\n", value->v_integer,
-		    (value->type == AML_OBJTYPE_STATICINT) ? "(static)" : "");
+		    (value->type & AML_STATIC) ? "(static)" : "");
 		break;
 	case AML_OBJTYPE_STRING:
 		db_printf("string: %s\n", value->v_string);
@@ -188,7 +184,7 @@ db_aml_showvalue(struct aml_value *value)
 	case AML_OBJTYPE_FIELDUNIT:
 		db_printf("%s: access=%x,lock=%x,update=%x pos=%.4x "
 		    "len=%.4x\n",
-		    aml_opname(value->v_field.type),
+		    aml_mnem(value->v_field.type),
 		    AML_FIELD_ACCESS(value->v_field.flags),
 		    AML_FIELD_LOCK(value->v_field.flags),
 		    AML_FIELD_UPDATE(value->v_field.flags),
@@ -200,7 +196,7 @@ db_aml_showvalue(struct aml_value *value)
 		break;
 	case AML_OBJTYPE_BUFFERFIELD:
 		db_printf("%s: pos=%.4x len=%.4x ", 
-		    aml_opname(value->v_field.type),
+		    aml_mnem(value->v_field.type),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
 
@@ -243,7 +239,7 @@ db_aml_objtype(struct aml_value *val)
 		return "nil";
 
 	switch (val->type) {
-	case AML_OBJTYPE_STATICINT:
+	case AML_OBJTYPE_INTEGER+AML_STATIC:
 		return "staticint";
 	case AML_OBJTYPE_INTEGER:
 		return "integer";
@@ -279,7 +275,7 @@ db_aml_objtype(struct aml_value *val)
 		return "refof";
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD: 
-		return aml_opname(val->v_field.type);
+		return aml_mnem(val->v_field.type);
 	};
 
 	return ("");
@@ -463,14 +459,14 @@ void
 db_aml_shownode(struct aml_node *node)
 {
 	db_printf(" opcode:%.4x  mnem:%s %s ",
-	    node->opcode, node->mnem, node->name ? node->name : "");
+	    node->opcode, aml_mnem(node->opcode), node->name ? node->name : "");
 
 	switch(node->opcode) {
 	case AMLOP_METHOD:
 		break;
 		
 	case AMLOP_NAMECHAR:
-		db_printf("%s", node->value->name);
+		db_printf("%s", node->name);
 		break;
 
 	case AMLOP_FIELD:
@@ -590,4 +586,13 @@ void
 db_acpi_tree(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	db_aml_walktree(aml_root.child);
+}
+u_int8_t		*aml_eparselen(struct acpi_context *ctx)
+{
+	return 0;
+}
+struct acpi_context	*acpi_alloccontext(struct acpi_softc *s,
+			    struct aml_node *n, int c, struct aml_value *v)
+{
+	return NULL;
 }

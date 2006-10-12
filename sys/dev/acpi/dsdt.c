@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.47 2006/06/14 16:30:07 canacar Exp $ */
+/* $openbsd: dsdt.c,v 1.47 2006/06/14 16:30:07 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -32,6 +32,15 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
+/* XXX: endian macros */
+#define aml_letohost16(x) x
+#define aml_letohost32(x) x
+#define aml_letohost64(x) x
+
+#define opsize(opcode) (((opcode) &  0xFF00) ? 2 : 1)
+
+#define AML_CHECKSTACK()
+
 #define AML_FIELD_RESERVED  0x00
 #define AML_FIELD_ATTRIB    0x01
 
@@ -55,247 +64,247 @@
 
 #define aml_ipaddr(n) ((n)-aml_root.start)
 
-#ifdef ACPI_DEBUG
-const char		*opregion(int);
+struct aml_scope;
 
-const char *
-opregion(int id)
-{
-	switch(id) {
-	case 0:
-		return "SystemMemory";
-	case 1:
-		return "SystemIO";
-	case 2:
-		return "PCIConfig";
-	case 3:
-		return "Embedded";
-	case 4:
-		return "SMBus";
-	case 5:
-		return "CMOS";
-	case 6:
-		return "PCIBAR";
-	}
-	return "";
-}
-#endif
+/* New jordan code */
+int                     aml_cmpvalue(struct aml_value *, struct aml_value *, int);
+void                    aml_copyvalue(struct aml_value *, struct aml_value *);
 
-const char		*aml_parse_string(struct acpi_context *);
-int			_aml_freevalue(struct aml_value *);
-int			aml_isnamedop(u_int16_t);
-int			aml_logicalcmp(u_int16_t, int64_t, int64_t);
-int			aml_lsb(u_int64_t);
-int			aml_match(int64_t, int, int64_t);
+void                    aml_setvalue(struct aml_scope *, struct aml_value *, struct aml_value *, int64_t);
+void                    aml_freevalue(struct aml_value *);
+struct aml_value       *aml_allocvalue(int, int64_t, const void *);
+struct aml_value       *_aml_setvalue(struct aml_value *, int, int64_t, const void *);
+
+u_int64_t		aml_convradix(u_int64_t, int, int);
+int64_t			aml_evalexpr(int64_t, int64_t, int);
+int     		aml_lsb(u_int64_t);
 int			aml_msb(u_int64_t);
-int			aml_parse_length(struct acpi_context *);
-int			aml_strcmp(u_int16_t, const char *, const char *);
-int 			aml_tstbit(const u_int8_t *, int);
-int64_t			aml_evalmath(u_int16_t, int64_t, int64_t);
-int64_t			aml_str2int(const char *, int, int);
-int64_t			aml_val2int(struct acpi_context *, struct aml_value *);
-struct aml_opcode	*aml_getopcode(struct acpi_context *);
-struct aml_node		*_aml_searchname(struct aml_node *, const char *);
-struct aml_node		*aml_createname(struct aml_node *, const char *);
-struct aml_node		*aml_doname(struct aml_node *, const char *, int);
-struct aml_value	*aml_doconcat(struct acpi_context *);
-struct aml_value	*aml_parse_bufferfield(struct acpi_context *, int, int, int);
-struct aml_value	*aml_parse_fieldunit(struct acpi_context *, int);
-struct aml_value	*aml_doif(struct acpi_context *);
-struct aml_value	*aml_doloadtable(struct acpi_context *);
-struct aml_value	*aml_domatch(struct acpi_context *);
-struct aml_value	*aml_dowhile(struct acpi_context *);
-struct aml_value	*aml_domid(struct acpi_context *);
-struct aml_value	*aml_ederef(struct acpi_context *, struct aml_value *);
-struct aml_value	*aml_eparselist(struct acpi_context *, u_int8_t *, int);
-struct aml_value	*aml_eparseval(struct acpi_context *, int);
-struct aml_value	*aml_evalnode(struct acpi_softc *, struct aml_node *,
-				      int, struct aml_value **);
-struct aml_value	*aml_evalname(struct acpi_softc *, struct aml_node *, const char *,
-				      int, struct aml_value **);
-struct aml_value	*aml_evalmethod(struct acpi_context *, struct aml_value *);
-u_int64_t		aml_bcd2dec(u_int64_t);
-u_int64_t		aml_dec2bcd(u_int64_t);
-u_int64_t		aml_parse_int(struct acpi_context *, int);
-void			*acpi_os_allocmem(size_t);
-void			acpi_os_freemem(void *);
-void			aml_addchildnode(struct aml_node *, struct aml_node *);
-void			aml_bufcpy(u_int8_t *, int, const u_int8_t *, int, int);
-void			aml_dump(int, u_int8_t *);
-void			aml_resizevalue(struct aml_value *, int);
-void			aml_setbit(u_int8_t *, int, int);
-void			aml_shownode(struct aml_node *);
 
-struct aml_node		*aml_addvname(struct acpi_context *, const char *, int,
-			    struct aml_value *);
-int			aml_bufcmp(const u_int8_t *, int, const u_int8_t *,
-			    int);
-struct aml_node		*aml_create_node(struct aml_node *, int, const char *,
-			    u_int8_t *);
-struct aml_node		*aml_find_name(struct acpi_softc *, struct aml_node *,
-			    const char *);
-struct aml_value	*aml_domethod(struct acpi_context *, struct aml_value *,
-			    int, struct aml_value **);
-struct aml_value	*aml_efield(struct acpi_context *, struct aml_value *,
-			    struct aml_value *);
-struct aml_value	*aml_eparsenode(struct acpi_context *,
-			    struct aml_node *);
-struct aml_value	*aml_eparsescope(struct acpi_context *, const char *,
-			    u_int8_t *, struct aml_opcode *,
-			    struct aml_value *);
-struct aml_value	*aml_esetnodevalue(struct acpi_context *,
-			    struct aml_value *, struct aml_value *, int64_t);
-struct aml_value	*aml_getnodevalue(struct acpi_context *,
-			    struct aml_node *);
-struct aml_value	*aml_val2buf(struct acpi_context *, struct aml_value *,
-			    int);
-uint64_t		aml_get_pciaddr(struct acpi_context *,
-			    struct aml_node *);
-void			aml_delchildren(struct acpi_context *,
-			    struct aml_node *);
+void                    aml_dump(int, u_int8_t *);
+int                     aml_tstbit(const u_int8_t *, int);
+void                    aml_setbit(u_int8_t *, int, int);
+
+void                    aml_bufcpy(void *, int, const void *, int, int);
+
+void aml_delref(struct aml_value **);
+void aml_addref(struct aml_value *);
+int aml_pc(uint8_t *);
+
+struct aml_value *aml_parseop(struct aml_scope *, struct aml_value *);
+struct aml_value *aml_parsetarget(struct aml_scope *, struct aml_value *, struct aml_value **);
+struct aml_value *aml_parseterm(struct aml_scope *, struct aml_value *);
+
+struct aml_value *aml_evaltarget(struct aml_scope *scope, struct aml_value *res);
+int aml_evalterm(struct aml_scope *scope, struct aml_value *raw, struct aml_value *dst);
 
 
+void aml_gasio(struct acpi_softc *, int, uint64_t, uint64_t,
+	       int, int, int, void *, int);
+
+
+struct aml_opcode      *aml_findopcode(int);
+
+void *_acpi_os_malloc(size_t, const char *, int);
+void  _acpi_os_free(void *, const char *, int);
+
+struct aml_value *aml_evalmethod(struct aml_node *, int, struct aml_value *, struct aml_value *);
+
+/*
+ * @@@: Global variables 
+ */
+int                     aml_intlen=64;
 struct aml_node		aml_root;
-struct aml_value	aml_os;
-struct aml_value	*aml_global_lock;
+struct aml_value       *aml_global_lock;
+struct acpi_softc      *dsdt_softc;
+
+/* Perfect hash function for valid AML bytecodes */
+#define HASH_OFF         6904
+#define HASH_SIZE        179
+#define HASH_KEY(k)      (((k) ^ HASH_OFF) % HASH_SIZE)
+
+#define HASH_MAGIC(v)   (0xC0DE0000L + (v))
+#define HTE(v,f...)     [ HASH_KEY(v) ] { HASH_MAGIC(v), f }
 
 struct aml_opcode aml_table[] = {
 	/* Simple types */
-	{ AMLOP_ZERO,		  "Zero",	     "!"  },
-	{ AMLOP_ONE,		  "One",	     "!"  },
-	{ AMLOP_ONES,		  "Ones",	     "!"  },
-	{ AMLOP_BYTEPREFIX,	  ".Byte",	     "b"  },
-	{ AMLOP_WORDPREFIX,	  ".Word",	     "w"  },
-	{ AMLOP_DWORDPREFIX,	  ".DWord",	     "d"  },
-	{ AMLOP_QWORDPREFIX,	  ".QWord",	     "q"  },
-	{ AMLOP_REVISION,	  "Revision",	     ""	  },
-	{ AMLOP_STRINGPREFIX,	  ".String",	     "a"  },
-	{ AMLOP_DEBUG,		  "DebugOp",	     "",  },
-	{ AMLOP_BUFFER,		  "Buffer",	     "piB" },
-	{ AMLOP_PACKAGE,	  "Package",	     "pbT" },
-	{ AMLOP_VARPACKAGE,	  "VarPackage",	     "piT" },
+	HTE(AMLOP_ZERO,		  "Zero",	     "c"  ),
+	HTE(AMLOP_ONE,		  "One",	     "c"  ),
+	HTE(AMLOP_ONES,		  "Ones",	     "c"  ),
+	HTE(AMLOP_REVISION,	  "Revision",	     "R"  ),
+	HTE(AMLOP_BYTEPREFIX,	  ".Byte",	     "b"  ),
+	HTE(AMLOP_WORDPREFIX,	  ".Word",	     "w"  ),
+	HTE(AMLOP_DWORDPREFIX,	  ".DWord",	     "d"  ),
+	HTE(AMLOP_QWORDPREFIX,	  ".QWord",	     "q"  ),
+	HTE(AMLOP_STRINGPREFIX,	  ".String",	     "a"  ),
+	HTE(AMLOP_DEBUG,	  "DebugOp",	     "D", ),
+	HTE(AMLOP_BUFFER,	  "Buffer",	     "piB" ),
+	HTE(AMLOP_PACKAGE,	  "Package",	     "pbT" ),
+	HTE(AMLOP_VARPACKAGE,	  "VarPackage",	     "piT" ),
 
 	/* Simple objects */
-	{ AMLOP_LOCAL0,		  "Local0",	     "",    },
-	{ AMLOP_LOCAL1,		  "Local1",	     "",    },
-	{ AMLOP_LOCAL2,		  "Local2",	     "",    },
-	{ AMLOP_LOCAL3,		  "Local3",	     "",    },
-	{ AMLOP_LOCAL4,		  "Local4",	     "",    },
-	{ AMLOP_LOCAL5,		  "Local5",	     "",    },
-	{ AMLOP_LOCAL6,		  "Local6",	     "",    },
-	{ AMLOP_LOCAL7,		  "Local7",	     "",    },
-	{ AMLOP_ARG0,		  "Arg0",	     "",    },
-	{ AMLOP_ARG1,		  "Arg1",	     "",    },
-	{ AMLOP_ARG2,		  "Arg2",	     "",    },
-	{ AMLOP_ARG3,		  "Arg3",	     "",    },
-	{ AMLOP_ARG4,		  "Arg4",	     "",    },
-	{ AMLOP_ARG5,		  "Arg5",	     "",    },
-	{ AMLOP_ARG6,		  "Arg6",	     "",    },
+	HTE(AMLOP_LOCAL0,	  "Local0",	     "L",    ),
+	HTE(AMLOP_LOCAL1,	  "Local1",	     "L",    ),
+	HTE(AMLOP_LOCAL2,	  "Local2",	     "L",    ),
+	HTE(AMLOP_LOCAL3,	  "Local3",	     "L",    ),
+	HTE(AMLOP_LOCAL4,	  "Local4",	     "L",    ),
+	HTE(AMLOP_LOCAL5,	  "Local5",	     "L",    ),
+	HTE(AMLOP_LOCAL6,	  "Local6",	     "L",    ),
+	HTE(AMLOP_LOCAL7,	  "Local7",	     "L",    ),
+	HTE(AMLOP_ARG0,		  "Arg0",	     "A",    ),
+	HTE(AMLOP_ARG1,		  "Arg1",	     "A",    ),
+	HTE(AMLOP_ARG2,		  "Arg2",	     "A",    ),
+	HTE(AMLOP_ARG3,		  "Arg3",	     "A",    ),
+	HTE(AMLOP_ARG4,		  "Arg4",	     "A",    ),
+	HTE(AMLOP_ARG5,		  "Arg5",	     "A",    ),
+	HTE(AMLOP_ARG6,		  "Arg6",	     "A",    ),
 
 	/* Control flow */
-	{ AMLOP_IF,		  "If",		     "piT",  },
-	{ AMLOP_ELSE,		  "Else",	     "pT",   },
-	{ AMLOP_WHILE,		  "While",	     "piT",  },
-	{ AMLOP_BREAK,		  "Break",	     "",     },
-	{ AMLOP_CONTINUE,	  "Continue",	     "",     },
-	{ AMLOP_RETURN,		  "Return",	     "t",     },
-	{ AMLOP_FATAL,		  "Fatal",	     "bdi", },
-	{ AMLOP_NOP,		  "Nop",	     "",    },
-	{ AMLOP_BREAKPOINT,	  "BreakPoint",	     "",    },
+	HTE(AMLOP_IF,		  "If",		     "pI",   ),
+	HTE(AMLOP_ELSE,		  "Else",	     "pT",   ),
+	HTE(AMLOP_WHILE,	  "While",	     "piT",  ),
+	HTE(AMLOP_BREAK,	  "Break",	     "",     ),
+	HTE(AMLOP_CONTINUE,	  "Continue",	     "",     ),
+	HTE(AMLOP_RETURN,	  "Return",	     "t",     ),
+	HTE(AMLOP_FATAL,	  "Fatal",	     "bdi", ),
+	HTE(AMLOP_NOP,		  "Nop",	     "",    ),
+	HTE(AMLOP_BREAKPOINT,	  "BreakPoint",	     "",    ),
 
 	/* Arithmetic operations */
-	{ AMLOP_INCREMENT,	  "Increment",	     "t",     },
-	{ AMLOP_DECREMENT,	  "Decrement",	     "t",     },
-	{ AMLOP_ADD,		  "Add",	     "iit",   },
-	{ AMLOP_SUBTRACT,	  "Subtract",	     "iit",   },
-	{ AMLOP_MULTIPLY,	  "Multiply",	     "iit",   },
-	{ AMLOP_DIVIDE,		  "Divide",	     "iitt",  },
-	{ AMLOP_SHL,		  "ShiftLeft",	     "iit",   },
-	{ AMLOP_SHR,		  "ShiftRight",	     "iit",   },
-	{ AMLOP_AND,		  "And",	     "iit",   },
-	{ AMLOP_NAND,		  "Nand",	     "iit",   },
-	{ AMLOP_OR,		  "Or",		     "iit",   },
-	{ AMLOP_NOR,		  "Nor",	     "iit",   },
-	{ AMLOP_XOR,		  "Xor",	     "iit",   },
-	{ AMLOP_NOT,		  "Not",	     "it",    },
-	{ AMLOP_MOD,		  "Mod",	     "iit",   },
-	{ AMLOP_FINDSETLEFTBIT,	  "FindSetLeftBit",  "it",    },
-	{ AMLOP_FINDSETRIGHTBIT,  "FindSetRightBit", "it",    },
+	HTE(AMLOP_INCREMENT,	  "Increment",	     "t",     ),
+	HTE(AMLOP_DECREMENT,	  "Decrement",	     "t",     ),
+	HTE(AMLOP_ADD,		  "Add",	     "iir",   ),
+	HTE(AMLOP_SUBTRACT,	  "Subtract",	     "iir",   ),
+	HTE(AMLOP_MULTIPLY,	  "Multiply",	     "iir",   ),
+	HTE(AMLOP_DIVIDE,	  "Divide",	     "iirr",  ),
+	HTE(AMLOP_SHL,		  "ShiftLeft",	     "iir",   ),
+	HTE(AMLOP_SHR,		  "ShiftRight",	     "iir",   ),
+	HTE(AMLOP_AND,		  "And",	     "iir",   ),
+	HTE(AMLOP_NAND,		  "Nand",	     "iir",   ),
+	HTE(AMLOP_OR,		  "Or",		     "iir",   ),
+	HTE(AMLOP_NOR,		  "Nor",	     "iir",   ),
+	HTE(AMLOP_XOR,		  "Xor",	     "iir",   ),
+	HTE(AMLOP_NOT,		  "Not",	     "ir",    ),
+	HTE(AMLOP_MOD,		  "Mod",	     "iir",   ),
+	HTE(AMLOP_FINDSETLEFTBIT, "FindSetLeftBit",  "ir",    ),
+	HTE(AMLOP_FINDSETRIGHTBIT,"FindSetRightBit", "ir",    ),
 
 	/* Logical test operations */
-	{ AMLOP_LAND,		  "LAnd",	     "ii",    },
-	{ AMLOP_LOR,		  "LOr",	     "ii",    },
-	{ AMLOP_LNOT,		  "LNot",	     "i",     },
-	{ AMLOP_LNOTEQUAL,	  "LNotEqual",	     "tt",    },
-	{ AMLOP_LLESSEQUAL,	  "LLessEqual",	     "tt",    },
-	{ AMLOP_LGREATEREQUAL,	  "LGreaterEqual",   "tt",    },
-	{ AMLOP_LEQUAL,		  "LEqual",	     "tt",    },
-	{ AMLOP_LGREATER,	  "LGreater",	     "tt",    },
-	{ AMLOP_LLESS,		  "LLess",	     "tt",    },
+	HTE(AMLOP_LAND,		  "LAnd",	     "ii",    ),
+	HTE(AMLOP_LOR,		  "LOr",	     "ii",    ),
+	HTE(AMLOP_LNOT,		  "LNot",	     "i",     ),
+	HTE(AMLOP_LNOTEQUAL,	  "LNotEqual",	     "tt",    ),
+	HTE(AMLOP_LLESSEQUAL,	  "LLessEqual",	     "tt",    ),
+	HTE(AMLOP_LGREATEREQUAL,  "LGreaterEqual",   "tt",    ),
+	HTE(AMLOP_LEQUAL,	  "LEqual",	     "tt",    ),
+	HTE(AMLOP_LGREATER,	  "LGreater",	     "tt",    ),
+	HTE(AMLOP_LLESS,	  "LLess",	     "tt",    ),
 
 	/* Named objects */
-	{ AMLOP_NAMECHAR,	  ".NameRef",	     "n" },
-	{ AMLOP_ALIAS,		  "Alias",	     "nN",  },
-	{ AMLOP_NAME,		  "Name",	     "Nt",  },
-	{ AMLOP_EVENT,		  "Event",	     "N",   },
-	{ AMLOP_MUTEX,		  "Mutex",	     "Nb",  },
-	{ AMLOP_DATAREGION,	  "DataRegion",	     "Nttt" },
-	{ AMLOP_OPREGION,	  "OpRegion",	     "Nbii" },
-	{ AMLOP_SCOPE,		  "Scope",	     "pNT"  },
-	{ AMLOP_DEVICE,		  "Device",	     "pNT"  },
-	{ AMLOP_POWERRSRC,	  "Power Resource",  "pNbwT" },
-	{ AMLOP_THERMALZONE,	  "ThermalZone",     "pNT" },
-	{ AMLOP_PROCESSOR,	  "Processor",	     "pNbdbT", },
-	{ AMLOP_METHOD,		  "Method",	     "pNfM",  },
+	HTE(AMLOP_NAMECHAR,	  ".NameRef",	     "n" ),
+	HTE(AMLOP_ALIAS,	  "Alias",	     "nN",  ),
+	HTE(AMLOP_NAME,		  "Name",	     "Nt",  ),
+	HTE(AMLOP_EVENT,	  "Event",	     "N",   ),
+	HTE(AMLOP_MUTEX,	  "Mutex",	     "Nb",  ),
+	HTE(AMLOP_DATAREGION,	  "DataRegion",	     "Nttt" ),
+	HTE(AMLOP_OPREGION,	  "OpRegion",	     "Nbii" ),
+	HTE(AMLOP_SCOPE,	  "Scope",	     "pNT"  ),
+	HTE(AMLOP_DEVICE,	  "Device",	     "pNT"  ),
+	HTE(AMLOP_POWERRSRC,	  "Power Resource",  "pNbwT" ),
+	HTE(AMLOP_THERMALZONE,	  "ThermalZone",     "pNT" ),
+	HTE(AMLOP_PROCESSOR,	  "Processor",	     "pNbdbT", ),
+	HTE(AMLOP_METHOD,	  "Method",	     "pNfM",  ),
 
 	/* Field operations */
-	{ AMLOP_FIELD,		  "Field",	     "pnfF" },
-	{ AMLOP_INDEXFIELD,	  "IndexField",	     "pntfF" },
-	{ AMLOP_BANKFIELD,	  "BankField",	     "pnnifF" },
-	{ AMLOP_CREATEFIELD,	  "CreateField",     "tiiN",   },
-	{ AMLOP_CREATEQWORDFIELD, "CreateQWordField","tiN",    },
-	{ AMLOP_CREATEDWORDFIELD, "CreateDWordField","tiN",    },
-	{ AMLOP_CREATEWORDFIELD,  "CreateWordField", "tiN",    },
-	{ AMLOP_CREATEBYTEFIELD,  "CreateByteField", "tiN",    },
-	{ AMLOP_CREATEBITFIELD,	  "CreateBitField",  "tiN",    },
+	HTE(AMLOP_FIELD,	    "Field",	       "pnfF" ),
+	HTE(AMLOP_INDEXFIELD,	    "IndexField",      "pntfF" ),
+	HTE(AMLOP_BANKFIELD,	    "BankField",       "pnnifF" ),
+	HTE(AMLOP_CREATEFIELD,	    "CreateField",     "tiiN",   ),
+	HTE(AMLOP_CREATEQWORDFIELD, "CreateQWordField","tiN",    ),
+	HTE(AMLOP_CREATEDWORDFIELD, "CreateDWordField","tiN",    ),
+	HTE(AMLOP_CREATEWORDFIELD,  "CreateWordField", "tiN",    ),
+	HTE(AMLOP_CREATEBYTEFIELD,  "CreateByteField", "tiN",    ),
+	HTE(AMLOP_CREATEBITFIELD,   "CreateBitField",  "tiN",    ),
 
 	/* Conversion operations */
-	{ AMLOP_TOINTEGER,	  "ToInteger",	     "tt",     },
-	{ AMLOP_TOBUFFER,	  "ToBuffer",	     "tt",     },
-	{ AMLOP_TODECSTRING,	  "ToDecString",     "it",     },
-	{ AMLOP_TOHEXSTRING,	  "ToHexString",     "it",     }, 
-	{ AMLOP_TOSTRING,	  "ToString",	     "t",      },
-	{ AMLOP_FROMBCD,	  "FromBCD",	     "it",     },
-	{ AMLOP_TOBCD,		  "ToBCD",	     "it",     },
-	{ AMLOP_MID,		  "Mid",	     "tiit",   },
+	HTE(AMLOP_TOINTEGER,	  "ToInteger",	     "tr",     ),
+	HTE(AMLOP_TOBUFFER,	  "ToBuffer",	     "tr",     ),
+	HTE(AMLOP_TODECSTRING,	  "ToDecString",     "ir",     ),
+	HTE(AMLOP_TOHEXSTRING,	  "ToHexString",     "ir",     ), 
+	HTE(AMLOP_TOSTRING,	  "ToString",	     "t",      ),
+	HTE(AMLOP_FROMBCD,	  "FromBCD",	     "ir",     ),
+	HTE(AMLOP_TOBCD,	  "ToBCD",	     "ir",     ),
+	HTE(AMLOP_MID,		  "Mid",	     "tiir",   ),
 
 	/* Mutex/Signal operations */
-	{ AMLOP_ACQUIRE,	  "Acquire",	     "tw",     },
-	{ AMLOP_RELEASE,	  "Release",	     "t",      },
-	{ AMLOP_SIGNAL,		  "Signal",	     "t",      },
-	{ AMLOP_WAIT,		  "Wait",	     "ti",     },
-	{ AMLOP_RESET,		  "Reset",	     "t",      },
+	HTE(AMLOP_ACQUIRE,	  "Acquire",	     "tw",     ),
+	HTE(AMLOP_RELEASE,	  "Release",	     "t",      ),
+	HTE(AMLOP_SIGNAL,	  "Signal",	     "t",      ),
+	HTE(AMLOP_WAIT,		  "Wait",	     "ti",     ),
+	HTE(AMLOP_RESET,	  "Reset",	     "t",      ),
  
-	{ AMLOP_INDEX,		  "Index",	     "tit",    },
-	{ AMLOP_DEREFOF,	  "DerefOf",	     "t",      },
-	{ AMLOP_REFOF,		  "RefOf",	     "t",      },
-	{ AMLOP_CONDREFOF,	  "CondRef",	     "tt",     },
+	HTE(AMLOP_INDEX,	  "Index",	     "tir",    ),
+	HTE(AMLOP_DEREFOF,	  "DerefOf",	     "t",      ),
+	HTE(AMLOP_REFOF,	  "RefOf",	     "t",      ),
+	HTE(AMLOP_CONDREFOF,	  "CondRef",	     "nr",     ),
 
-	{ AMLOP_LOADTABLE,	  "LoadTable",	     "tttttt" },
-	{ AMLOP_STALL,		  "Stall",	     "i",      },
-	{ AMLOP_SLEEP,		  "Sleep",	     "i",      },
-	{ AMLOP_LOAD,		  "Load",	     "nt" },
-	{ AMLOP_UNLOAD,		  "Unload",	     "t" }, 
-	{ AMLOP_STORE,		  "Store",	     "tt",     },
-	{ AMLOP_CONCAT,		  "Concat",	     "ttt" },
-	{ AMLOP_CONCATRES,	  "ConcatRes",	     "ttt" },
-	{ AMLOP_NOTIFY,		  "Notify",	     "ti" },
-	{ AMLOP_SIZEOF,		  "Sizeof",	     "t",      },
-	{ AMLOP_MATCH,		  "Match",	     "tbibii", },
-	{ AMLOP_OBJECTTYPE,	  "ObjectType",	     "t", },
-	{ AMLOP_COPYOBJECT,	  "CopyObject",	     "tt" },
-	{ 0xFFFF }
+	HTE(AMLOP_LOADTABLE,	  "LoadTable",	     "tttttt" ),
+	HTE(AMLOP_STALL,	  "Stall",	     "i",      ),
+	HTE(AMLOP_SLEEP,	  "Sleep",	     "i",      ),
+	HTE(AMLOP_LOAD,		  "Load",	     "nt" ),
+	HTE(AMLOP_UNLOAD,	  "Unload",	     "t" ), 
+	HTE(AMLOP_STORE,	  "Store",	     "tr",     ),
+	HTE(AMLOP_CONCAT,	  "Concat",	     "ttr" ),
+	HTE(AMLOP_CONCATRES,	  "ConcatRes",	     "ttt" ),
+	HTE(AMLOP_NOTIFY,	  "Notify",	     "ti" ),
+	HTE(AMLOP_SIZEOF,	  "Sizeof",	     "t",      ),
+	HTE(AMLOP_MATCH,	  "Match",	     "tbibii", ),
+	HTE(AMLOP_OBJECTTYPE,	  "ObjectType",	     "t" ),
+	HTE(AMLOP_COPYOBJECT,	  "CopyObject",	     "tr" ),
 };
+
+void _aml_die(const char *fn, int line, const char *fmt, ...);
+
+int aml_pc(uint8_t *src)
+{
+	return src - aml_root.start;
+}
+
+void _aml_die(const char *fn, int line, const char *fmt, ...)
+{
+	va_list ap;
+	char tmpbuf[256];
+
+	va_start(ap, fmt);
+	snprintf(tmpbuf,sizeof(tmpbuf),"aml_die %s:%d ", fn, line);
+	vprintf(fmt, ap);
+	printf("\n");
+	va_end(ap);
+
+	/* XXX: don't panic */
+	panic(tmpbuf);
+}
+#define aml_die(x...) _aml_die(__FUNCTION__,__LINE__,x)
+
+struct aml_opcode *
+aml_findopcode(int opcode)
+{
+	struct aml_opcode *tab;
+
+	tab = &aml_table[HASH_KEY(opcode)];
+	if (tab->opcode == HASH_MAGIC(opcode))
+		return tab;
+	return NULL;
+}
+
+const char *
+aml_mnem(int opcode)
+{
+	struct aml_opcode *tab;
+
+	if ((tab = aml_findopcode(opcode)) != NULL)
+		return tab->mnem;
+	return ("xxx");
+}
 
 struct aml_notify_data
 {
@@ -309,25 +318,55 @@ struct aml_notify_data
 
 SLIST_HEAD(aml_notify_head, aml_notify_data);
 struct aml_notify_head		aml_notify_list =
-				    SLIST_HEAD_INITIALIZER(&aml_notify_list);
+SLIST_HEAD_INITIALIZER(&aml_notify_list);
 
-void *
-acpi_os_allocmem(size_t size)
+/*
+ *  @@@: Memory management functions
+ */
+
+#define acpi_os_malloc(sz) _acpi_os_malloc(sz, __FUNCTION__, __LINE__)
+#define acpi_os_free(ptr)  _acpi_os_free(ptr, __FUNCTION__, __LINE__)
+
+long acpi_nalloc;
+
+struct acpi_memblock
 {
-	void		*ptr;
+	size_t size;
+};
+	
+void *
+_acpi_os_malloc(size_t size, const char *fn, int line)
+{
+	struct acpi_memblock *sptr;
 
-	ptr =  malloc(size, M_DEVBUF, M_WAITOK);
-	if (ptr) 
-		memset(ptr, 0, size);
-
-	return (ptr);
+	sptr = malloc(size+sizeof(*sptr), M_DEVBUF, M_WAITOK);
+	dnprintf(99,"alloc: %x %s:%d\n", sptr, fn, line);
+	if (sptr) {
+		acpi_nalloc += size;
+		sptr->size = size;
+		memset(&sptr[1], 0, size);
+		return &sptr[1];
+	}
+	return NULL;
 }
 
 void
-acpi_os_freemem(void *ptr)
+_acpi_os_free(void *ptr, const char *fn, int line)
 {
-	/* free(ptr, M_DEVBUF); */
+	struct acpi_memblock *sptr;
+
+	if (ptr != NULL) {
+		sptr = &(((struct acpi_memblock *)ptr)[-1]);
+		acpi_nalloc -= sptr->size;
+
+		dnprintf(99,"free: %x %s:%d\n", sptr, fn, line);
+		free(sptr, M_DEVBUF);
+	}
 }
+
+/*
+ * @@@: Misc utility functions
+ */
 
 void
 aml_dump(int len, u_int8_t *buf)
@@ -361,16 +400,31 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 		*pb &= ~aml_bitmask(bit);
 }
 
+#if 0
+#define aml_gasio(sc,tt,bb,ll,bp,bl,sz,buf,mode) acpi_gasio(sc,mode,tt,(bb)+((bp)>>3),(sz)>>3,(bl)>>3,buf)
+#else
+void
+aml_gasio(struct acpi_softc *sc, int type, uint64_t base, uint64_t length,
+	  int bitpos, int bitlen, int size, void *buf, int mode)
+{
+	acpi_gasio(sc, mode, type, base+(bitpos>>3), (size>>3), (bitlen>>3), buf);
+}
+#endif
+
+/*
+ * @@@: Notify functions
+ */
+
 void
 aml_register_notify(struct aml_node *node, const char *pnpid,
-    int (*proc)(struct aml_node *, int, void *), void *arg)
+		    int (*proc)(struct aml_node *, int, void *), void *arg)
 {
 	struct aml_notify_data	*pdata;
 
 	dnprintf(10, "aml_register_notify: %s %s %x\n",
 		 node->name, pnpid ? pnpid : "", proc);
 
-	pdata = acpi_os_allocmem(sizeof(struct aml_notify_data));
+	pdata = acpi_os_malloc(sizeof(struct aml_notify_data));
 	pdata->node = node;
 	pdata->cbarg = arg;
 	pdata->cbproc = proc;
@@ -407,39 +461,841 @@ aml_notify_dev(const char *pnpid, int notify_value)
 			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
 }
 
-void
-aml_addchildnode(struct aml_node *parent, struct aml_node *child)
+/*
+ * @@@: Namespace functions 
+ */
+
+struct aml_node *__aml_search(struct aml_node *, uint8_t *);
+void aml_delchildren(struct aml_node *);
+const char *aml_getname(const char *);
+const char *aml_nodename(struct aml_node *);
+
+
+/* Search for a name in children nodes */
+struct aml_node *
+__aml_search(struct aml_node *root, uint8_t *nameseg)
 {
-	struct aml_node	**tmp;
-
-	for (tmp = &parent->child; *tmp; tmp = &((*tmp)->sibling))
-		;
-
-	child->sibling = NULL;
-	child->parent = parent;
-	*tmp = child;
+	if (root == NULL)
+		return NULL;
+	for (root=root->child; root; root=root->sibling) {
+		if (!memcmp(root->name, nameseg, AML_NAMESEG_LEN))
+			return root;
+	}
+	return NULL;
 }
 
-struct aml_node *
-aml_create_node(struct aml_node *parent, int opcode, const char *mnem,
-    u_int8_t *start)
+/* Get absolute pathname of AML node */
+const char *
+aml_nodename(struct aml_node *node)
 {
-	struct aml_node	*node;
+	static char namebuf[128];
 
-	node = (struct aml_node *)acpi_os_allocmem(sizeof(struct aml_node));
+	namebuf[0] = 0;
+	if (node) {
+		aml_nodename(node->parent);
+		if (node->parent != &aml_root)
+			strlcat(namebuf, ".", sizeof(namebuf));
+		strlcat(namebuf, node->name, sizeof(namebuf));
+	}
+	return namebuf+1;
+}
+
+const char *
+aml_getname(const char *name)
+{
+	static char namebuf[128], *p;
+	int count;
+
+	p = namebuf;
+	while (*name == AMLOP_ROOTCHAR || *name == AMLOP_PARENTPREFIX) {
+		*(p++) = *(name++);
+	}
+	switch (*name) {
+	case 0x00:
+		count = 0;
+		break;
+	case AMLOP_MULTINAMEPREFIX:
+		count = name[1];
+		name += 2;
+		break;
+	case AMLOP_DUALNAMEPREFIX:
+		count = 2;
+		name += 1;
+		break;
+	default:
+		count = 1;
+	}
+	while (count--) {
+		memcpy(p, name, 4);
+		p[4] = '.';
+		p += 5;
+		name += 4;
+		if (*name == '.') name++;
+	}
+	*(--p) = 0;
+	return namebuf;
+}
+
+/* Create name/value pair in namespace */
+struct aml_node *
+aml_createname(struct aml_node *root, const void *vname, struct aml_value *value)
+{
+	struct aml_node *node, **pp;
+	uint8_t *name = (uint8_t *)vname;
+	int count;
+
+	if (*name == AMLOP_ROOTCHAR) {
+		root = &aml_root;
+		name++;
+	}
+	while (*name == AMLOP_PARENTPREFIX && root) {
+		root = root->parent;
+		name++;
+	}
+	switch (*name) {
+	case 0x00:
+		return root;
+	case AMLOP_MULTINAMEPREFIX:
+		count = name[1];
+		name += 2;
+		break;
+	case AMLOP_DUALNAMEPREFIX:
+		count = 2;
+		name += 1;
+		break;
+	default:
+		count = 1;
+		break;
+	}
+	node = NULL;
+	while (count-- && root) {
+		/* Create new name if it does not exist */
+		if ((node = __aml_search(root, name)) == NULL) {
+			node = acpi_os_malloc(sizeof(struct aml_node));
+
+			memcpy((void *)node->name, name, AML_NAMESEG_LEN);
+			for (pp = &root->child; *pp; pp=&(*pp)->sibling)
+				;
+			node->parent = root;
+			node->sibling = NULL;
+			*pp = node;
+		}
+		root  = node;
+		name += AML_NAMESEG_LEN;
+	}
+	/* If node created, set value pointer */
+	if (node && value) {
+		node->value = value;
+		value->node = node;
+	}
+	return node;
+}
+
+/* Search namespace for a named node */
+struct aml_node *
+aml_searchname(struct aml_node *root, const void *vname)
+{
+	struct aml_node *node;
+	uint8_t *name = (uint8_t *)vname;
+	int count;
+
+	if (*name == AMLOP_ROOTCHAR) {
+		root = &aml_root;
+		name++;
+	}
+	while (*name == AMLOP_PARENTPREFIX && root) {
+		root = root->parent;
+		name++;
+	}
+	if (strlen(name) < AML_NAMESEG_LEN) {
+		aml_die("bad name");
+	}
+	switch (*name) {
+	case 0x00:
+		return root;
+	case AMLOP_MULTINAMEPREFIX:
+		count = name[1];
+		name += 2;
+		break;
+	case AMLOP_DUALNAMEPREFIX:
+		count = 2;
+		name += 1;
+		break;
+	default:
+		if (name[4] == '.') {
+			/* Called from user code */
+			while (*name && (root = __aml_search(root, name)) != NULL) {
+				name += AML_NAMESEG_LEN+1;
+			}
+			return root;
+		}
+		/* Special case.. search relative for name */
+		while (root && (node = __aml_search(root, name)) == NULL) {
+			root = root->parent;
+		}
+		return node;
+	}
+	/* Search absolute for name*/
+	while (count-- && (root = __aml_search(root, name)) != NULL) {
+		name += AML_NAMESEG_LEN;
+	}
+	return root;
+}
+
+/* Free all children nodes/values */
+void
+aml_delchildren(struct aml_node *node)
+{
+	struct aml_node *onode;
+
 	if (node == NULL)
+		return;
+	while ((onode = node->child) != NULL) {
+		node->child = onode->sibling;
+
+		aml_delchildren(onode);
+
+		/* Decrease reference count */
+		aml_delref(&onode->value);
+
+		/* Delete node */
+		acpi_os_free(onode);
+	}
+}
+
+/*
+ * @@@: Value functions
+ */
+struct aml_vallist
+{
+	struct aml_value *obj;
+	int nobj;
+	struct aml_vallist *next;
+};
+
+struct aml_scope
+{
+	struct acpi_softc  *sc;
+	uint8_t            *pos;
+	uint8_t            *end;
+	struct aml_node    *node;
+	struct aml_vallist *tmpvals;
+	struct aml_scope   *parent;
+	struct aml_value   *locals;
+	struct aml_value   *args;
+	int                 nargs;
+};
+
+struct aml_value *aml_alloctmp(struct aml_scope *, int);
+struct aml_scope *aml_pushscope(struct aml_scope *, uint8_t *, uint8_t *, struct aml_node *);
+struct aml_scope *aml_popscope(struct aml_scope *);
+int aml_parsenode(struct aml_node *, uint8_t *, uint8_t **, struct aml_value *);
+
+#define LHS  0
+#define RHS  1
+#define DST  2
+#define DST2 3
+
+/* Allocate temporary storage in this scope */
+struct aml_value *
+aml_alloctmp(struct aml_scope *scope, int narg)
+{
+	struct aml_vallist *tmp;
+
+	/* Allocate array of temp values */
+	tmp = (struct aml_vallist *)acpi_os_malloc(sizeof(struct aml_vallist) + 
+						   narg * sizeof(struct aml_value));
+
+	tmp->obj = (struct aml_value *)&tmp[1];
+	tmp->nobj = narg;
+
+	/* Link into scope */
+	tmp->next = scope->tmpvals;
+	scope->tmpvals = tmp;
+
+	/* Return array of values */
+	return tmp->obj;
+}
+
+/* Allocate+push parser scope */
+struct aml_scope *
+aml_pushscope(struct aml_scope *parent, uint8_t *start, uint8_t  *end, 
+	      struct aml_node *node)
+{
+	struct aml_scope *scope;
+
+	scope = acpi_os_malloc(sizeof(struct aml_scope));
+	scope->pos = start;
+	scope->end = end;
+	scope->node = node;
+	scope->parent = parent;
+	scope->sc = dsdt_softc;
+
+	return scope;
+}
+
+struct aml_scope *
+aml_popscope(struct aml_scope *scope)
+{
+	struct aml_scope *nscope;
+	struct aml_vallist *ol;
+	int idx;
+
+	if (scope == NULL)
 		return NULL;
+	nscope = scope->parent;
 
-	node->opcode = opcode;
-	node->mnem   = mnem;
-	node->depth  = parent->depth+1;
-	node->start  = start;
-	node->end    = parent->end;
-	node->child  = NULL;
-	
-	aml_addchildnode(parent, node);
+	/* Free temporary values */
+	while ((ol = scope->tmpvals) != NULL) {
+		scope->tmpvals = ol->next;
+		for (idx=0; idx<ol->nobj; idx++) {
+			aml_freevalue(&ol->obj[idx]);
+		}
+		acpi_os_free(ol);
+	}
+	acpi_os_free(scope);
 
-	return (node);
+	return nscope;
+}
+
+int
+aml_parsenode(struct aml_node *node, uint8_t *start, uint8_t **end, 
+	      struct aml_value *res)
+{
+	struct aml_scope *scope;
+
+	/* Don't parse zero-length scope */
+	if (start == *end) {
+		return 0;
+	}
+	scope = aml_pushscope(NULL, start, *end, node);
+	if (res == NULL) {
+		res = aml_alloctmp(scope, 1);
+	}
+	while (scope != NULL) {
+		while (scope->pos < scope->end)
+			aml_parseop(scope, res);
+		scope = aml_popscope(scope);
+	}
+	return 0;
+}
+
+/*
+ * Field I/O code
+ */
+void aml_setbufint(struct aml_value *, int, int, struct aml_value *);
+void aml_getbufint(struct aml_value *, int, int, struct aml_value *);
+void aml_fieldio(struct aml_scope *, struct aml_value *, struct aml_value *, int);
+
+/* Copy from a bufferfield to an integer/buffer */
+void
+aml_setbufint(struct aml_value *dst, int bitpos, int bitlen, 
+	      struct aml_value *src)
+{
+	if (src->type != AML_OBJTYPE_BUFFER) {
+		aml_die("wrong setbufint type\n");
+	}
+	if (bitlen < aml_intlen) {
+		/* XXX: Endian issues?? */
+		/* Return integer type */
+		_aml_setvalue(dst, AML_OBJTYPE_INTEGER, 0, NULL);
+		aml_bufcpy(&dst->v_integer, 0, src->v_buffer, bitpos, bitlen);
+	}
+	else {
+		/* Return buffer type */
+		_aml_setvalue(dst, AML_OBJTYPE_BUFFER, (bitlen+7)>>3, NULL);
+		aml_bufcpy(dst->v_buffer, 0, src->v_buffer, bitpos, bitlen);
+	}
+}
+
+/* Copy from a string/integer/buffer to a bufferfield */
+void
+aml_getbufint(struct aml_value *src, int bitpos, int bitlen, 
+	      struct aml_value *dst)
+{
+	if (dst->type != AML_OBJTYPE_BUFFER) {
+		aml_die("wrong getbufint type\n");
+	}
+	switch (src->type) {
+	case AML_OBJTYPE_INTEGER:
+		aml_bufcpy(dst->v_buffer, bitpos, &src->v_integer, 0, bitlen);
+		break;
+	case AML_OBJTYPE_BUFFER:
+		aml_bufcpy(dst->v_buffer, bitpos, src->v_buffer, 0, bitlen);
+		break;
+	case AML_OBJTYPE_STRING:
+		aml_bufcpy(dst->v_buffer, bitpos, src->v_string, 0, bitlen);
+		break;
+	}
+}
+
+/* 
+ * Buffer/Region: read/write to bitfields
+ */
+void
+aml_fieldio(struct aml_scope *scope, struct aml_value *field, 
+	    struct aml_value *res, int mode)
+{
+	struct aml_value opr, *pop;
+	int bpos, blen, aligned, mask;
+
+	memset(&opr, 0x0, sizeof(opr));
+	switch (field->v_field.type) {
+	case AMLOP_INDEXFIELD:
+		/* Set Index */
+		aml_setvalue(scope, field->v_field.ref1, NULL, field->v_field.bitpos>>3);
+		aml_fieldio(scope, field->v_field.ref2, res, mode);
+		break;
+	case AMLOP_BANKFIELD:
+		/* Set Bank */
+		aml_setvalue(scope, field->v_field.ref1, NULL, field->v_field.ref3);
+		aml_fieldio(scope, field->v_field.ref2, res, mode);
+		break;
+	case AMLOP_FIELD:
+		/* This is an I/O field */
+		pop = field->v_field.ref1;
+		if (pop->type != AML_OBJTYPE_OPREGION) {
+			aml_die("Not an opregion!\n");
+		}
+
+		/* Get field access size */
+		switch (AML_FIELD_ACCESS(field->v_field.flags)) {
+		case AML_FIELD_ANYACC:
+		case AML_FIELD_BYTEACC:
+			mask = 7;
+			break;
+		case AML_FIELD_WORDACC:
+			mask = 15;
+			break;
+		case AML_FIELD_DWORDACC:
+			mask = 31;
+			break;
+		case AML_FIELD_QWORDACC:
+			mask = 63;
+			break;
+		}
+
+		/* Get aligned bitpos/bitlength */
+		bpos = field->v_field.bitpos & ~mask;
+		blen = ((field->v_field.bitpos & mask) +
+			field->v_field.bitlen + mask) & ~mask;
+		aligned = (bpos == field->v_field.bitpos && 
+			   blen == field->v_field.bitlen);
+		mask++;
+
+		/* Verify that I/O is in range */
+#if 0
+		if ((bpos+blen) >= (pop->v_opregion.iolen * 8)) {
+			aml_die("Out of bounds I/O!!! region:%x:%llx:%x %x\n",
+				pop->v_opregion.iospace,
+				pop->v_opregion.iobase,
+				pop->v_opregion.iolen,
+				bpos+blen);
+		}
+#endif
+
+		_aml_setvalue(&opr, AML_OBJTYPE_BUFFER, blen>>3, NULL);
+		if (mode == ACPI_IOREAD) {
+			/* Read from GAS space */
+			aml_gasio(scope->sc, pop->v_opregion.iospace,
+				  pop->v_opregion.iobase,
+				  pop->v_opregion.iolen,
+				  bpos, blen, mask+1,
+				  opr.v_buffer,
+				  ACPI_IOREAD);
+			aml_setbufint(res, field->v_field.bitpos & mask,
+				      field->v_field.bitlen, &opr);
+		}
+		else {
+			switch (AML_FIELD_UPDATE(field->v_field.flags)) {
+			case AML_FIELD_WRITEASONES:
+				if (!aligned) {
+					dnprintf(50,"fpr:WriteOnes\n");
+					memset(opr.v_buffer, 0xff, opr.length);
+				}
+				break;
+			case AML_FIELD_PRESERVE:
+				if (!aligned) {
+					/* Non-aligned I/O: need to read current value */
+					dnprintf(50,"fpr:Preserve\n");
+					aml_gasio(scope->sc, pop->v_opregion.iospace,
+						  pop->v_opregion.iobase,
+						  pop->v_opregion.iolen,
+						  bpos, blen, mask+1,
+						  opr.v_buffer,
+						  ACPI_IOREAD);
+				}
+				break;
+			}
+			/* Copy Bits into destination buffer */
+			aml_getbufint(res, field->v_field.bitpos & mask,
+				      field->v_field.bitlen,
+				      &opr);
+			aml_gasio(scope->sc, pop->v_opregion.iospace,
+				  pop->v_opregion.iobase,
+				  pop->v_opregion.iolen,
+				  bpos, blen, mask+1,
+				  opr.v_buffer,
+				  ACPI_IOWRITE);
+		}
+		aml_freevalue(&opr);
+		break;
+	default:
+		/* This is a buffer field */
+		bpos = field->v_field.bitpos;
+		blen = field->v_field.bitlen;
+		pop = field->v_field.ref1;
+		if (mode == ACPI_IOREAD) {
+			aml_setbufint(res, bpos, blen, pop);
+		}
+		else {
+			aml_getbufint(res, bpos, blen, pop);
+		}
+		break;
+	}
+}
+
+/*
+ * @@@: Value set/compare/alloc/free routines
+ */
+int64_t aml_str2int(const char *, int);
+struct aml_value *aml_dereftarget(struct aml_scope *, struct aml_value *);
+struct aml_value *aml_derefterm(struct aml_scope *, struct aml_value *, int);
+
+void
+aml_showvalue(struct aml_value *val)
+{
+	int idx;
+
+	if (val == NULL)
+		return;
+  
+	if (val->node) {
+		dnprintf(0," [%s]", aml_nodename(val->node));
+	}
+	dnprintf(0," %p cnt:%.2x", val, val->refcnt);
+	switch (val->type) {
+	case AML_OBJTYPE_INTEGER:
+		dnprintf(0," integer: %llx\n", val->v_integer);
+		break;
+	case AML_OBJTYPE_STRING:
+		dnprintf(0," string: %s\n", val->v_string);
+		break;
+	case AML_OBJTYPE_METHOD:
+		dnprintf(0," method: %.2x\n", val->v_method.flags);
+		break;
+	case AML_OBJTYPE_PACKAGE:
+		dnprintf(0," package: %.2x\n", val->length);
+		for (idx=0; idx<val->length; idx++) {
+			aml_showvalue(val->v_package[idx]);
+		}
+		break;
+	case AML_OBJTYPE_BUFFER:
+		dnprintf(0," buffer: %.2x {", val->length);
+		for (idx=0; idx<val->length; idx++) {
+			dnprintf(0,"%s%.2x", idx ? ", " : "", val->v_buffer[idx]);
+		}
+		dnprintf(0,"}\n");
+		break;
+	case AML_OBJTYPE_FIELDUNIT:
+	case AML_OBJTYPE_BUFFERFIELD:
+		dnprintf(0," field: bitpos=%.4x bitlen=%.4x ref1:%x ref2:%x [%s]\n", 
+			 val->v_field.bitpos, val->v_field.bitlen,
+			 val->v_field.ref1, val->v_field.ref2, 
+			 aml_mnem(val->v_field.type));
+		aml_showvalue(val->v_field.ref1);
+		aml_showvalue(val->v_field.ref2);
+		break;
+	case AML_OBJTYPE_MUTEX:
+		dnprintf(0," mutex: %llx\n", val->v_integer);
+		break;
+	case AML_OBJTYPE_EVENT:
+		dnprintf(0," event:\n");
+		break;
+	case AML_OBJTYPE_OPREGION:
+		dnprintf(0," opregion: %.2x,%.8llx,%x\n",
+			 val->v_opregion.iospace,
+			 val->v_opregion.iobase,
+			 val->v_opregion.iolen);
+		break;
+	case AML_OBJTYPE_NAMEREF:
+		dnprintf(0," nameref: %s\n", aml_getname(val->v_nameref));
+		break;
+	case AML_OBJTYPE_DEVICE:
+		dnprintf(0," device:\n");
+		break;
+	case AML_OBJTYPE_PROCESSOR:
+		dnprintf(0," cpu: %.2x,%.4x,%.2x\n", 
+			 val->v_processor.proc_id, val->v_processor.proc_addr,
+			 val->v_processor.proc_len);
+		break;
+	case AML_OBJTYPE_THERMZONE:
+		dnprintf(0," thermzone:\n");
+		break;
+	case AML_OBJTYPE_POWERRSRC:
+		dnprintf(0," pwrrsrc: %.2x,%.2x\n", 
+			 val->v_powerrsrc.pwr_level, 
+			 val->v_powerrsrc.pwr_order);
+		break;
+	case AML_OBJTYPE_OBJREF:
+		dnprintf(0," objref: %p index:%x\n", val->v_objref.ref, val->v_objref.index);
+		aml_showvalue(val->v_objref.ref);
+		break;
+	default:
+		dnprintf(0," !!type: %x\n", val->type);
+	}
+}
+
+/* Returns dereferenced target value */
+struct aml_value *
+aml_dereftarget(struct aml_scope *scope, struct aml_value *ref)
+{
+	struct aml_node *node;
+	int index;
+
+	for(;;) {
+		switch (ref->type) {
+		case AML_OBJTYPE_NAMEREF:
+			node = aml_searchname(scope->node, ref->v_nameref);
+			if (node && node->value)
+				ref = node->value;
+			break;
+		case AML_OBJTYPE_OBJREF:
+			index = ref->v_objref.index;
+			ref = aml_dereftarget(scope, ref->v_objref.ref);
+			if (index != -1) {
+				switch (ref->type) {
+				case AML_OBJTYPE_PACKAGE:
+					ref = ref->v_package[index];
+					break;
+				default:
+					aml_die("Index");
+					break;
+				}
+			}
+			break;
+		default:
+			return ref;
+		}
+	}
+}
+/* Perform DeRef on terminal
+ * Returns expected type if required
+ */
+struct aml_value *
+aml_derefterm(struct aml_scope *scope, struct aml_value *ref, int expect)
+{
+	struct aml_value *tmp;
+
+	ref = aml_dereftarget(scope, ref);
+	switch (ref->type) {
+	case AML_OBJTYPE_BUFFERFIELD:
+	case AML_OBJTYPE_FIELDUNIT:
+		/* Read I/O field into temporary storage */
+		tmp = aml_alloctmp(scope, 1);
+		aml_fieldio(scope, ref, tmp, ACPI_IOREAD);
+		return tmp;
+	}
+	if (expect != ref->type) {
+		dnprintf(50,"convert in derefterm\n");
+	}
+	return ref;
+}
+
+int64_t
+aml_str2int(const char *str, int radix)
+{
+	/* XXX: fixme */
+	return 0;
+}
+
+int64_t
+aml_val2int(struct aml_value *rval)
+{
+	int64_t ival = 0;
+
+	if (rval == NULL) {
+		dnprintf(50,"null val2int\n");
+		return (0);
+	}
+	switch (rval->type & ~AML_STATIC) {
+	case AML_OBJTYPE_INTEGER:
+		ival = rval->v_integer;
+		break;
+	case AML_OBJTYPE_BUFFER:
+		aml_bufcpy(&ival, 0, rval->v_buffer, 0, 
+			   min(aml_intlen*8, rval->length*8));
+		break;
+	case AML_OBJTYPE_STRING:
+		ival = (strncmp(rval->v_string, "0x", 2) == 0) ?
+			aml_str2int(rval->v_string+2, 16) :
+			aml_str2int(rval->v_string, 10);
+		break;
+	}
+	return (ival);
+}
+
+struct aml_value *
+_aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
+{
+	memset(&lhs->_, 0x0, sizeof(lhs->_));
+
+	lhs->type = type;
+	switch (lhs->type & ~AML_STATIC) {
+	case AML_OBJTYPE_INTEGER:
+		lhs->v_integer = ival;
+		break;
+	case AML_OBJTYPE_METHOD:
+		lhs->v_integer = ival;
+		break;
+	case AML_OBJTYPE_NAMEREF:
+		lhs->v_nameref = (uint8_t *)bval;
+		break;
+	case AML_OBJTYPE_OBJREF:
+		lhs->v_objref.index = ival;
+		lhs->v_objref.ref = (struct aml_value *)bval;
+		break;
+	case AML_OBJTYPE_BUFFER:
+		lhs->length = ival;
+		lhs->v_buffer = (uint8_t *)acpi_os_malloc(ival);
+		if (bval)
+			memcpy(lhs->v_buffer, bval, ival);
+		break;
+	case AML_OBJTYPE_STRING:
+		if (ival == -1)
+			ival = strlen((const char *)bval);
+		lhs->length = ival;
+		lhs->v_string = (char *)acpi_os_malloc(ival+1);
+		if (bval)
+			strncpy(lhs->v_string, (const char *)bval, ival);
+		break;
+	case AML_OBJTYPE_PACKAGE:
+		lhs->length = ival;
+		lhs->v_package = (struct aml_value **)acpi_os_malloc(ival * sizeof(struct aml_value *));
+		for (ival=0; ival<lhs->length; ival++) {
+			lhs->v_package[ival] = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
+		}
+		break;
+	}
+	return lhs;
+}
+
+void
+aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
+{
+	int idx;
+
+	lhs->type = rhs->type & ~AML_STATIC;
+	switch (lhs->type) {
+	case AML_OBJTYPE_UNINITIALIZED:
+		break;
+	case AML_OBJTYPE_INTEGER:
+	case AML_OBJTYPE_MUTEX:
+		lhs->v_integer = rhs->v_integer;
+		break;
+	case AML_OBJTYPE_BUFFER:
+		_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_buffer);
+		break;
+	case AML_OBJTYPE_STRING:
+		_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_string);
+		break;
+	case AML_OBJTYPE_OPREGION:
+		lhs->v_opregion = rhs->v_opregion;
+		break;
+	case AML_OBJTYPE_NAMEREF:
+		lhs->v_nameref = rhs->v_nameref;
+		break;
+	case AML_OBJTYPE_PACKAGE:
+		_aml_setvalue(lhs, rhs->type, rhs->length, NULL);
+		for (idx=0; idx<rhs->length; idx++) {
+			aml_copyvalue(lhs->v_package[idx], rhs->v_package[idx]);
+		}
+		break;
+	case AML_OBJTYPE_OBJREF:
+		_aml_setvalue(lhs, rhs->type, rhs->v_objref.index, rhs->v_objref.ref);
+		break;
+	default:
+		aml_die("copyvalue: %x", rhs->type);
+		break;
+	}
+}
+
+/* Guts of the code: Assign one value to another */
+void
+aml_setvalue(struct aml_scope *scope, struct aml_value *lhs, 
+	     struct aml_value *rhs, int64_t ival)
+{
+	struct aml_value tmpint;
+	struct aml_value *olhs;
+
+	/* Use integer as result */
+	if (rhs == NULL) {
+		memset(&tmpint, 0, sizeof(tmpint));
+		rhs = _aml_setvalue(&tmpint, AML_OBJTYPE_INTEGER, ival, NULL);
+	}
+
+	olhs = lhs;
+	lhs = aml_dereftarget(scope, lhs);
+
+	switch (lhs->type) {
+	case AML_OBJTYPE_UNINITIALIZED:
+		aml_copyvalue(lhs, rhs);
+		break;
+	case AML_OBJTYPE_BUFFERFIELD:
+	case AML_OBJTYPE_FIELDUNIT:
+		aml_fieldio(scope, lhs, rhs, ACPI_IOWRITE);
+		break;
+	case AML_OBJTYPE_DEBUGOBJ:
+	case AML_OBJTYPE_INTEGER+AML_STATIC:
+		break;
+	case AML_OBJTYPE_INTEGER:
+		lhs->v_integer = aml_val2int(rhs);
+		break;
+	case AML_OBJTYPE_BUFFER:
+		if (lhs->node) {
+			dnprintf(40,"named.buffer\n");
+		}
+		aml_freevalue(lhs);
+		if (rhs->type == AML_OBJTYPE_BUFFER) {
+			_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_buffer);
+		}
+		else if (rhs->type == AML_OBJTYPE_INTEGER) {
+			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, sizeof(rhs->v_integer),
+				      &rhs->v_integer);
+		}
+		else if (rhs->type == AML_OBJTYPE_STRING) {
+			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length, rhs->v_string);
+		}
+		else {
+			//aml_showvalue(rhs);
+			aml_die("setvalue.buf");
+		}
+		break;
+	case AML_OBJTYPE_STRING:
+		if (lhs->node) {
+			dnprintf(40,"named string\n");
+		}
+		aml_freevalue(lhs);
+		if (rhs->type == AML_OBJTYPE_STRING) {
+			_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_string);
+		}
+		else if (rhs->type == AML_OBJTYPE_BUFFER) {
+			_aml_setvalue(lhs, AML_OBJTYPE_STRING, rhs->length, rhs->v_buffer);
+		}
+		else if (rhs->type == AML_OBJTYPE_INTEGER) {
+			_aml_setvalue(lhs, AML_OBJTYPE_STRING, 10, NULL);
+			snprintf(lhs->v_string, lhs->length, "%lld", rhs->v_integer);
+		}
+		else {
+			//aml_showvalue(rhs);
+			aml_die("setvalue.str");
+		}
+		break;
+	default:
+		/* XXX: */
+		dnprintf(0,"setvalue.unknown: %x", lhs->type);
+		break;
+	}
 }
 
 /* Allocate dynamic AML value
@@ -448,534 +1304,88 @@ aml_create_node(struct aml_node *parent, int opcode, const char *mnem,
  *   bval : Buffer value (action depends on type)
  */
 struct aml_value *
-aml_allocvalue(int type, int64_t ival, void *bval) 
+aml_allocvalue(int type, int64_t ival, const void *bval) 
 {
-	struct aml_value	*rv;
-	struct aml_value	**pv;
-	int64_t			idx;
+	struct aml_value *rv;
 
-	rv = (struct aml_value *)acpi_os_allocmem(sizeof(struct aml_value));
-	rv->type = type;
-
-	switch (type) {
-	case AML_OBJTYPE_UNINITIALIZED:
-		break;
-	case AML_OBJTYPE_NAMEREF:
-		rv->name = bval;
-		rv->v_objref.index = -1;
-		break;
-	case AML_OBJTYPE_OBJREF:
-		rv->v_objref.index = ival;
-		rv->v_objref.ref = (struct aml_value *)bval;
-		break;
-	case AML_OBJTYPE_STATICINT:
-	case AML_OBJTYPE_INTEGER:
-		rv->v_integer = ival;
-		break;
-	case AML_OBJTYPE_STRING:
-		/* Allocate string: if pointer valid, copy data */
-		if (ival < 0)
-			ival = strlen((const char *)bval);
-		rv->length = ival;
-		if (ival) {
-			rv->v_string = acpi_os_allocmem(ival + 1);
-			if (bval) 
-				strncpy(rv->v_string, bval, ival);
-		}
-		break;
-	case AML_OBJTYPE_BUFFER:
-		/* Allocate buffer: if pointer valid, copy data */
-		rv->length = ival;
-		if (ival) {
-			rv->v_buffer = acpi_os_allocmem(ival);
-			if (bval)
-				memcpy(rv->v_buffer, bval, ival);
-		}
-		break;
-	case AML_OBJTYPE_PACKAGE:
-		/* Allocate package pointers */
-		rv->length = ival;
-		rv->v_package = (struct aml_value **)acpi_os_allocmem(
-		    rv->length * sizeof(struct aml_value *));
-		if (bval != NULL) {
-			pv = (struct aml_value **)bval;
-			dnprintf(40, "alloc package.. %lld\n", ival);
-			for (idx = 0; idx < ival; idx++)
-				rv->v_package[idx] = aml_copyvalue(pv[idx]);
-		}
-		break;
-	case AML_OBJTYPE_METHOD:
-		rv->v_method.flags = ival;
-		break;
-	case AML_OBJTYPE_MUTEX:
-		rv->v_integer = ival;
-		break;
-	case AML_OBJTYPE_OPREGION:
-	case AML_OBJTYPE_DEVICE:
-	case AML_OBJTYPE_EVENT:
-	case AML_OBJTYPE_POWERRSRC:
-	case AML_OBJTYPE_PROCESSOR:
-	case AML_OBJTYPE_THERMZONE:
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-		break;
-	default:
-		dnprintf(40, "Unknown aml_allocvalue: %.2x\n", type);
+	rv = (struct aml_value *)acpi_os_malloc(sizeof(struct aml_value));
+	if (rv != NULL) {
+		aml_addref(rv);
+		return _aml_setvalue(rv, type, ival, bval);
 	}
-
-	return (rv);
-}
-
-struct aml_value *
-aml_allocint(u_int64_t ival)
-{
-	return aml_allocvalue(AML_OBJTYPE_INTEGER, ival, NULL);
-}
-
-struct aml_value *
-aml_allocstr(const char *str)
-{
-	return aml_allocvalue(AML_OBJTYPE_STRING, -1, (void *)str);
-}
-
-int 
-_aml_freevalue(struct aml_value *v)
-{
-	int		idx;
-
-	/* Don't free static values */
-	if (v == NULL) 
-		return (-1);
-
-	if (v->node || v->refcnt)
-		return (-1);
-
-	dnprintf(50, "freeing value : %4x %s\n", v->type,
-	    v->node ? "attached" : "freeable");
-
-	/* XXX */
-	return (-1);
-
-	switch (v->type) {
-	case AML_OBJTYPE_STRING:
-		if (v->v_string) {
-			acpi_os_freemem((void *)v->v_string);
-			v->v_string = NULL;
-		}
-		break;
-	case AML_OBJTYPE_BUFFER:
-		if (v->v_buffer) {
-			acpi_os_freemem(v->v_buffer);
-			v->v_buffer = NULL;
-		}
-		break;
-	case AML_OBJTYPE_PACKAGE:
-		for (idx = 0; idx < v->length; idx++)
-			aml_freevalue(&v->v_package[idx]);
-		acpi_os_freemem(v->v_package);
-		v->v_package = NULL;
-		break;
-	case AML_OBJTYPE_METHOD:
-		acpi_os_freemem(v->v_method.start);
-		break;
-	}
-	v->length = 0;
-	v->type = 0;
-
-	return (0);
+	return NULL;
 }
 
 void
-aml_freevalue(struct aml_value **pv)
-{
-	if (_aml_freevalue(*pv) == 0) {
-		acpi_os_freemem(*pv);
-		*pv = NULL;
-	}
-}
-
-void
-aml_showvalue(struct aml_value *value)
+aml_freevalue(struct aml_value *val)
 {
 	int idx;
-
-	if (value == NULL)
+	
+	if (val == NULL)
 		return;
-
-	if (value->node)
-		dnprintf(50, "node:%.8x ", value->node);
-
-	if (value->name)
-		dnprintf(50, "name:%s ", value->name);
-
-	switch (value->type) {
-	case AML_OBJTYPE_OBJREF:
-		dnprintf(50, "refof: %x {\n", value->v_objref.index);
-		aml_showvalue(value->v_objref.ref);
-		dnprintf(50, "}\n");
-		break;
-	case AML_OBJTYPE_NAMEREF:
-		dnprintf(50, "nameref: %s %.8x\n", value->name,
-			 value->v_objref.ref);
-		break;
-	case AML_OBJTYPE_STATICINT:
-	case AML_OBJTYPE_INTEGER:
-		dnprintf(50, "integer: %llx %s\n", value->v_integer,
-		    (value->type == AML_OBJTYPE_STATICINT) ? "(static)" : "");
-		break;
+	switch (val->type) {
 	case AML_OBJTYPE_STRING:
-		dnprintf(50, "string: %s\n", value->v_string);
-		break;
-	case AML_OBJTYPE_PACKAGE:
-		dnprintf(50, "package: %d {\n", value->length);
-		for (idx = 0; idx < value->length; idx++)
-			aml_showvalue(value->v_package[idx]);
-		dnprintf(50, "}\n");
+		acpi_os_free(val->v_string);
 		break;
 	case AML_OBJTYPE_BUFFER:
-		dnprintf(50, "buffer: %d ", value->length);
-		aml_dump(value->length, value->v_buffer);
+		acpi_os_free(val->v_buffer);
 		break;
-	case AML_OBJTYPE_DEBUGOBJ:
-		dnprintf(50, "debug");
-		break;
-	case AML_OBJTYPE_MUTEX:
-		dnprintf(50, "mutex : %llx\n", value->v_integer);
-		break;
-	case AML_OBJTYPE_DEVICE:
-		dnprintf(50, "device\n");
-		break;
-	case AML_OBJTYPE_EVENT:
-		dnprintf(50, "event\n");
-		break;
-	case AML_OBJTYPE_PROCESSOR:
-		dnprintf(50, "cpu: %x,%x,%x\n",
-		    value->v_processor.proc_id,
-		    value->v_processor.proc_addr,
-		    value->v_processor.proc_len);
-		break;
-	case AML_OBJTYPE_METHOD:
-		dnprintf(50, "method: args=%d, serialized=%d, synclevel=%d\n",
-		    AML_METHOD_ARGCOUNT(value->v_method.flags),
-		    AML_METHOD_SERIALIZED(value->v_method.flags),
-		    AML_METHOD_SYNCLEVEL(value->v_method.flags));
-		break;
-	case AML_OBJTYPE_FIELDUNIT:
-		dnprintf(50, "%s: access=%x,lock=%x,update=%x pos=%.4x "
-		    "len=%.4x\n",
-		    aml_opname(value->v_field.type),
-		    AML_FIELD_ACCESS(value->v_field.flags),
-		    AML_FIELD_LOCK(value->v_field.flags),
-		    AML_FIELD_UPDATE(value->v_field.flags),
-		    value->v_field.bitpos,
-		    value->v_field.bitlen);
-
-		aml_showvalue(value->v_field.ref1);
-		aml_showvalue(value->v_field.ref2);
-		break;
-	case AML_OBJTYPE_BUFFERFIELD:
-		dnprintf(50, "%s: pos=%.4x len=%.4x ", 
-		    aml_opname(value->v_field.type),
-		    value->v_field.bitpos,
-		    value->v_field.bitlen);
-
-		if (value->v_field.ref1)
-			aml_dump(aml_bytelen(value->v_field.bitlen), 
-			    value->v_field.ref1->v_buffer + 
-			    aml_bytepos(value->v_field.bitpos));
-
-		aml_showvalue(value->v_field.ref1);
-		break;
-	case AML_OBJTYPE_OPREGION:
-		dnprintf(50, "opregion: %s,0x%llx,0x%x\n",
-		    opregion(value->v_opregion.iospace),
-		    value->v_opregion.iobase,
-		    value->v_opregion.iolen);
-		break;
-	default:
-		dnprintf(50, "unknown: %d\n", value->type);
-		break;
-	}
-}
-
-int
-aml_comparevalue(struct acpi_context *ctx, int opcode, struct aml_value *lhs, 
-    struct aml_value *rhs)
-{
-	struct aml_value	*tmp;
-	int			rc;
-
-	if (lhs->type == AML_OBJTYPE_INTEGER)
-		return aml_logicalcmp(opcode, lhs->v_integer,
-		    aml_val2int(ctx, rhs));
-
-	if (rhs->type == AML_OBJTYPE_INTEGER)
-		return aml_logicalcmp(opcode,
-		    aml_val2int(ctx, lhs), rhs->v_integer);
-
-	if (lhs->type == AML_OBJTYPE_BUFFER) {
-		tmp = aml_val2buf(ctx, rhs, 0);
-		rc  = aml_bufcmp(lhs->v_buffer, lhs->length,
-		    tmp->v_buffer, tmp->length);
-
-		return (opcode == AMLOP_LNOTEQUAL) ?
-		    (rc != AMLOP_LEQUAL) : (rc == opcode);
-	}
-	/* XXX: fix this.. non integer comparisons */
-	dnprintf(40,"comparevalue: %.2x %.2x\n", lhs->type, rhs->type);
-
-	return (0);
-}
-
-struct aml_value *
-aml_copyvalue(const struct aml_value *rhs)
-{
-	struct aml_value	*rv;
-
-	switch (rhs->type) {
-	case AML_OBJTYPE_STATICINT:
-	case AML_OBJTYPE_INTEGER:
-		return aml_allocvalue(rhs->type, rhs->v_integer, NULL);
-	case AML_OBJTYPE_STRING:
-		return aml_allocvalue(rhs->type, rhs->length, rhs->v_string);
-	case AML_OBJTYPE_BUFFER:
-		return aml_allocvalue(rhs->type, rhs->length, rhs->v_buffer);
 	case AML_OBJTYPE_PACKAGE:
-		return aml_allocvalue(rhs->type, rhs->length, rhs->v_package);
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-		rv = aml_allocvalue(rhs->type, 0, NULL);
-		if (rv != NULL) {
-			rv->name = rhs->name;
-			rv->length = rhs->length;
-			rv->v_field = rhs->v_field;
+		for (idx=0; idx<val->length; idx++) {
+			aml_freevalue(val->v_package[idx]);
+			acpi_os_free(val->v_package[idx]);
 		}
-		return (rv);
-
-	default:
-		dnprintf(40,"copy unknown : %x\n", rhs->type);
-		rv = aml_allocvalue(rhs->type, 0, NULL);
-		*rv = *rhs;
+		acpi_os_free(val->v_package);
+		break;
+	case AML_OBJTYPE_BUFFERFIELD:
+	case AML_OBJTYPE_FIELDUNIT:
+		aml_delref(&val->v_field.ref1);
+		aml_delref(&val->v_field.ref2);
 		break;
 	}
-	return (rv);
+	val->type = 0;
+	memset(&val->_, 0, sizeof(val->_));
 }
 
-/* Resize buffer/string/package if out-of-bounds access */
+/* Increase reference count */
 void
-aml_resizevalue(struct aml_value *pv, int newlen)
+aml_addref(struct aml_value *val)
 {
-	struct aml_value	**newpkg;
-	u_int8_t		*newbuf;
-	int			i1;
+	if (val) 
+		val->refcnt++;
+}
 
-	++newlen;
-	dnprintf(40, "supersizeme\n");
-	switch (pv->type) {
-	case AML_OBJTYPE_BUFFER:
-		newbuf = (u_int8_t *)acpi_os_allocmem(newlen);
-		memcpy(newbuf, pv->v_buffer, pv->length);
-
-		/* Free old buffer */
-		acpi_os_freemem(pv->v_buffer);
-
-		pv->v_buffer = newbuf;
-		pv->length = newlen;
-		break;
-
-	case AML_OBJTYPE_PACKAGE:
-		newpkg = (struct aml_value **)acpi_os_allocmem(newlen *
-		    sizeof(struct aml_value *));
-
-		/* Assign old package values */
-		for (i1 = 0; i1 < pv->length; i1++)
-			newpkg[i1] = pv->v_package[i1];
-
-		/* Free old package */
-		acpi_os_freemem(pv->v_package);
-
-		/* Set new length */
-		pv->v_package = newpkg;
-		pv->length = newlen-1;
-
-		break;
+/* Decrease reference count + delete value */
+void
+aml_delref(struct aml_value **val)
+{
+	if (val && *val && --(*val)->refcnt == 0) {
+		aml_freevalue(*val);
+		acpi_os_free(*val);
+		*val = NULL;
 	}
 }
 
-/* * AML Parsing routines */
-const char *
-aml_parse_string(struct acpi_context *ctx)
-{
-	const char	*str = ctx->pos;
-
-	ctx->pos += strlen(str) + 1;
-
-	return (str);
-}
-
-/* Read value from AML bytestream */
-u_int64_t
-aml_parse_int(struct acpi_context *ctx, int size)
-{
-	u_int8_t	*pc = ctx->pos;
-
-	switch (size) {
-	case AML_BYTE:
-		ctx->pos += 1;
-		return *(u_int8_t *)pc;
-	case AML_WORD:
-		ctx->pos += 2;
-		return *(u_int16_t *)pc;
-	case AML_DWORD:
-		ctx->pos += 4;
-		return *(u_int32_t *)pc;
-	case AML_QWORD:
-		ctx->pos += 8;
-		return *(u_int64_t *)pc;
-	}
-
-	return (0);
-}
-
-/* Decode AML Package length
- * Upper two bits of first byte denote length
- *   0x00 = length is in lower 6 bits
- *   0x40 = length is lower 4 bits + 1 byte
- *   0x80 = length is lower 4 bits + 2 bytes
- *   0xC0 = length is lower 4 bits + 3 bytes
+/*
+ * @@@: Math eval routines 
  */
-int
-aml_parse_length(struct acpi_context *ctx)
+
+/* Convert number from one radix to another
+ * Used in BCD conversion routines */
+u_int64_t 
+aml_convradix(u_int64_t val, int iradix, int oradix)
 {
-	u_int8_t	lcode;
-	int		ival;
+	u_int64_t rv = 0, pwr;
 
-	lcode = aml_parse_int(ctx, AML_BYTE);
-	if (lcode <= 0x3f)
-		return (lcode);
-
-	ival = lcode & 0xf;
-	if (lcode >= 0x40)
-		ival |= aml_parse_int(ctx, AML_BYTE) << 4;
-	if (lcode >= 0x80)
-		ival |= aml_parse_int(ctx, AML_BYTE) << 12;
-	if (lcode >= 0xc0)
-		ival |= aml_parse_int(ctx, AML_BYTE) << 20;
-
-	return (ival);
-}
-
-/* Decode AML Namestring from stream */
-const char *
-aml_parse_name(struct acpi_context *ctx)
-{
-	int		count, pfxlen;
-	char		*name, *pn;
-	u_int8_t	*base;
-
-	pfxlen = 0;
-	if (ctx->pos[pfxlen] == AMLOP_ROOTCHAR)
-		pfxlen++;
-
-	while (ctx->pos[pfxlen] == AMLOP_PARENTPREFIX)
-		pfxlen++;
-
-	switch (ctx->pos[pfxlen]) {
-	case 0x00:
-		count = 0;
-		base  = ctx->pos + pfxlen + 1;
-		break;
-	case AMLOP_MULTINAMEPREFIX:
-		count = ctx->pos[pfxlen + 1];
-		base = ctx->pos + pfxlen + 2;
-		break;
-	case AMLOP_DUALNAMEPREFIX:
-		count = 2;
-		base  = ctx->pos + pfxlen + 1;
-		break;
-	default:
-		count = 1;
-		base  = ctx->pos + pfxlen;
-		break;
+	rv = 0;
+	pwr = 1;
+	while (val) {
+		rv += (val % iradix) * pwr;
+		val /= iradix;
+		pwr *= oradix;
 	}
-
-	name = acpi_os_allocmem(pfxlen + count * 5);
-	pn = name;
-
-	while (pfxlen--) 
-		*(pn++) = *(ctx->pos++);
-			    
-	/* Copy name segments in chunks of 4 bytes */
-	while (count--) {
-		memcpy(pn, base, 4);
-		if (count) {
-			*(pn + 4) = '.';
-			pn++;
-		}
-		pn += 4;
-		base += 4;
-	}
-	*pn = 0;
-
-	ctx->pos = base;
-
-	return (name);
+	return rv;
 }
-
-/* Is this opcode an encoded name? */
-int
-aml_isnamedop(u_int16_t opcode)
-{
-	switch (opcode) {
-	case AMLOP_ROOTCHAR:
-	case AMLOP_PARENTPREFIX:
-	case AMLOP_MULTINAMEPREFIX:
-	case AMLOP_DUALNAMEPREFIX:
-	case AMLOP_NAMECHAR:
-	case 'A'...'Z':
-		return (1);
-	}
-
-	return (0);
-}
-
-/* * Math eval routines */
-u_int64_t
-aml_bcd2dec(u_int64_t val)
-{
-	u_int64_t	rval;
-	int		n, pos;
-
-	pos = 1;
-	for (rval = 0; val; val >>= 4) {
-		n = (val & 0xf);
-		if (n > 9)
-			return (0);
-
-		rval += (n * pos);
-		pos *= 10;
-	}
-
-	return (rval);
-}
-
-u_int64_t
-aml_dec2bcd(u_int64_t val)
-{
-	u_int64_t	rval;
-	int		n, pos;
-
-	pos = 0;
-	for (rval = 0; val; val /= 10) {
-		n = (val % 10);
-
-		rval += (n << pos);
-		pos += 4;
-	}
-
-	return (rval);
-}
-
 /* Calculate LSB */
 int
 aml_lsb(u_int64_t val)
@@ -1008,11 +1418,12 @@ aml_msb(u_int64_t val)
 
 /* Evaluate Math operands */
 int64_t
-aml_evalmath(u_int16_t opcode, int64_t lhs, int64_t rhs)
+aml_evalexpr(int64_t lhs, int64_t rhs, int opcode)
 {
-	dnprintf(50, "evalmath: %s %lld %lld\n", aml_opname(opcode), lhs, rhs);
+	dnprintf(50, "evalexpr: %s %lld %lld\n", aml_mnem(opcode), lhs, rhs);
 
 	switch (opcode) {
+		/* Math operations */
 	case AMLOP_INCREMENT:
 	case AMLOP_ADD:
 		return (lhs + rhs);
@@ -1039,31 +1450,22 @@ aml_evalmath(u_int16_t opcode, int64_t lhs, int64_t rhs)
 		return ~(lhs | rhs); 
 	case AMLOP_XOR:
 		return (lhs ^ rhs);
+	case AMLOP_NOT:
+		return ~(lhs);
+
+		/* Conversion/misc */
 	case AMLOP_FINDSETLEFTBIT:
 		return aml_msb(lhs);
 	case AMLOP_FINDSETRIGHTBIT:
 		return aml_lsb(lhs);
-	case AMLOP_NOT:
-		return ~(lhs);
 	case AMLOP_TOINTEGER:
 		return (lhs);
 	case AMLOP_FROMBCD:
-		return aml_bcd2dec(lhs);
+		return aml_convradix(lhs, 16, 10);
 	case AMLOP_TOBCD:
-		return aml_dec2bcd(lhs);
-	}
+		return aml_convradix(lhs, 10, 16);
 
-	return (0);
-}
-
-/* Evaluate logical test operands */
-int
-aml_logicalcmp(u_int16_t opcode, int64_t lhs, int64_t rhs)
-{
-	dnprintf(50, "logicalcmp: %s %lld %lld\n",
-	    aml_opname(opcode), lhs, rhs);
-
-	switch(opcode) {
+		/* Logical/Comparison */
 	case AMLOP_LAND:
 		return (lhs && rhs);
 	case AMLOP_LOR:
@@ -1087,163 +1489,51 @@ aml_logicalcmp(u_int16_t opcode, int64_t lhs, int64_t rhs)
 	return (0);
 }
 
-const char *
-aml_opname(int opcode)
-{
-	struct aml_opcode	*ptab = aml_table;
-
-	while (ptab->opcode != 0xffff) {
-		if (ptab->opcode == opcode)
-			return ptab->mnem;
-		ptab++;
-	}
-	return ("");
-}
-
-/* Extract opcode from AML bytestream 
- *
- * Some opcodes are multibyte
- * Name strings can also be embedded within the stream
- */
-struct aml_opcode
-*aml_getopcode(struct acpi_context *ctx)
-{
-	struct aml_opcode	*ptab;
-	u_int16_t		twocode, opcode;
-
-	/* Check if this is a name object */
-	if (aml_isnamedop(*ctx->pos))
-		opcode = AMLOP_NAMECHAR;
-	else {
-		opcode = aml_parse_int(ctx, AML_BYTE);
-		twocode = (opcode << 8L) + *ctx->pos;
-
-		/* Check multi-byte opcodes */
-		if (twocode == AMLOP_LNOTEQUAL ||
-		    twocode == AMLOP_LLESSEQUAL ||
-		    twocode == AMLOP_LGREATEREQUAL ||
-		    opcode == AMLOP_EXTPREFIX) {
-			opcode = twocode;
-			ctx->pos++;
-		}
-	}
-
-	for (ptab = aml_table; ptab->opcode != 0xffff; ptab++)
-		if (ptab->opcode == opcode)
-			return (ptab);
-
-	dnprintf(40, "aml_getopcode: Unknown opcode %.4x\n", opcode);
-
-	return (NULL);
-}
-
-/* Test AML_MATCH operation */
 int
-aml_match(int64_t lhs, int mtype, int64_t rhs)
+aml_cmpvalue(struct aml_value *lhs, struct aml_value *rhs, int opcode)
 {
-	switch (mtype) {
-	case AML_MATCH_TR:
-		return (1);
-	case AML_MATCH_EQ:
-		return (lhs == rhs);
-	case AML_MATCH_LT:
-		return (lhs < rhs);
-	case AML_MATCH_LE:
-		return (lhs <= rhs);
-	case AML_MATCH_GE:
-		return (lhs >= rhs);
-	case AML_MATCH_GT:
-		return (lhs > rhs);
-	}
+	int rc;
 
-	return (0);
-}
-
-struct aml_node *
-aml_find_name(struct acpi_softc *sc, struct aml_node *root, const char *name)
-{
-	struct aml_node	*ret;
-	const char	*sname;
-
-	if (*name == AMLOP_ROOTCHAR) {
-		root = &aml_root;
-		name++;
-	}
-
-	while (*name == AMLOP_PARENTPREFIX) {
-		if (root)
-			root = root->parent;
-		name++;
-	}
-
-	if (root == NULL)
-		root = &aml_root;
-
-	for (ret = NULL; root && !ret; root = root->sibling) {
-		if ((sname = root->name) != NULL) {
-			if (*sname == AMLOP_ROOTCHAR)
-				sname++;
-
-			while (*sname == AMLOP_PARENTPREFIX)
-				sname++;
-
-			if (!strcmp(name, sname))
-				return (root);
-		}
-		if (root->child)
-			ret = aml_find_name(sc, root->child, name);
-	}
-
-	return (ret);
-}
-
-int
-aml_eval_name(struct acpi_softc *sc, struct aml_node *root, const char *name,
-    struct aml_value *result, struct aml_value *env)
-{
-	root = aml_find_name(sc, root, name);
-
-	if (root != NULL) {
-		dnprintf(50, "found eval object : %s, %.4x\n",
-		    root->name, root->opcode);
-
-		return aml_eval_object(sc, root, result, 0, env);
-	}
-
-	return (1);
-}
-
-int64_t
-aml_str2int(const char *str, int len, int radix)
-{
-	int64_t		rval, cb;
-
-	rval = 0;
-	while (*str && len--) {
-		cb = *(str++);
-		rval *= radix;
-		if (cb >= 'A' && cb <= 'F' && radix == 16)
-			rval += (cb - 'A');
-		else if (cb >= 'a' && cb <= 'f' && radix == 16)
-			rval += (cb - 'a');
-		else if (cb >= '0' && cb <= '9')
-			rval += (cb - '0');
-		else
+	rc = 0;
+	if (lhs->type == rhs->type) {
+		switch (lhs->type) {
+		case AML_OBJTYPE_INTEGER:
+			rc = (lhs->v_integer - rhs->v_integer);
 			break;
+		case AML_OBJTYPE_STRING:
+			rc = strncmp(lhs->v_string, rhs->v_string, min(lhs->length, rhs->length));
+			if (rc == 0)
+				rc = lhs->length - rhs->length;
+			break;
+		case AML_OBJTYPE_BUFFER:
+			rc = memcmp(lhs->v_buffer, rhs->v_buffer, min(lhs->length, rhs->length));
+			if (rc == 0)
+				rc = lhs->length - rhs->length;
+			break;
+		}
 	}
-
-	return rval;
+	else if (lhs->type == AML_OBJTYPE_INTEGER) {
+		rc = lhs->v_integer - aml_val2int(rhs);
+	}
+	else if (rhs->type == AML_OBJTYPE_INTEGER) {
+		rc = aml_val2int(lhs) - rhs->v_integer;
+	}
+	else {
+		aml_die("mismatched compare\n");
+	}
+	return aml_evalexpr(rc, 0, opcode);
 }
-
 
 /*
  * aml_bufcpy copies/shifts buffer data, special case for aligned transfers
  * dstPos/srcPos are bit positions within destination/source buffers
  */
 void
-aml_bufcpy(u_int8_t *pDst, int dstPos, const u_int8_t *pSrc, int srcPos,
-    int len)
+aml_bufcpy(void *pvDst, int dstPos, const void *pvSrc, int srcPos,
+	   int len)
 {
+	const u_int8_t *pSrc = pvSrc;
+	u_int8_t *pDst = pvDst;
 	int		idx;
 
 	if (aml_bytealigned(dstPos|srcPos|len)) {
@@ -1252,1723 +1542,116 @@ aml_bufcpy(u_int8_t *pDst, int dstPos, const u_int8_t *pSrc, int srcPos,
 		return;
 	}
 
-	/* Misaligned transfer: perform bitwise copy */
+	/* Misaligned transfer: perform bitwise copy (slow) */
 	for (idx = 0; idx < len; idx++)
 		aml_setbit(pDst, idx + dstPos, aml_tstbit(pSrc, idx + srcPos));
 }
 
-/* Compare two buffers; return comparison type */
-int
-aml_bufcmp(const u_int8_t *abuf, int alen, const u_int8_t *bbuf, int blen)
-{
-	int		rc;
-
-	while (alen && blen) {
-		rc = *(abuf++) - *(bbuf++);
-		if (rc != 0)
-			return (rc < 0) ? AMLOP_LLESS : AMLOP_LGREATER;
-		alen--;
-		blen--;
-	}
-	return (alen ? AMLOP_LGREATEREQUAL :
-	    (blen ?  AMLOP_LLESSEQUAL : AMLOP_LEQUAL));
-}
-
 /*
- * Search list of objects for a name match 
- * Special case for fields: search children only
+ * Evaluate an AML method
+ *
+ * Returns a copy of the result in res (must be freed by user)
  */
-struct aml_node *
-_aml_searchname(struct aml_node *list, const char *name)
-{
-	struct aml_node	*child;
-
-	if (list == NULL)
-		return (NULL);
-
-	while (list) {
-		if (list->opcode == AMLOP_FIELD ||
-		    list->opcode == AMLOP_BANKFIELD ||
-		    list->opcode == AMLOP_INDEXFIELD)
-			if ((child = _aml_searchname(list->child, name)) !=
-			    NULL)
-				return child;
-
-		if (list->name && !strncmp(list->name, name, AML_NAMESEG_LEN))
-			return (list);
-
-		list = list->sibling;
-	}
-
-	return (NULL);
-}
-
-/* Create name references in tree, even if not initialized */
-struct aml_node *
-aml_doname(struct aml_node *root, const char *name, int create)
-{
-	struct aml_node	*tmp;
-
-	if (*name == AMLOP_ROOTCHAR) {
-		name++;
-		root = &aml_root;
-	}
-
-	while (*name == AMLOP_PARENTPREFIX) {
-		name++;
-		if ((root = root->parent) == NULL)
-			return (NULL);
-	}
-
-	if (root == NULL)
-		root = &aml_root;
-
-	if (*name && name[AML_NAMESEG_LEN] == '\0' && !create) {
-		do {
-			tmp = _aml_searchname(root->child, name);
-			root = root->parent;
-		} while (tmp == NULL && root != NULL);
-		return tmp;
-	}
-
-	for (tmp = root; tmp && *name; name += AML_NAMESEG_LEN) {
-		if (*name == '.')
-			name++;
-
-		tmp = _aml_searchname(root->child, name);
-
-		/* Create name if queried */
-		if (tmp == NULL && create) {
-			tmp = aml_create_node(root, -1, "DUMMY", root->start);
-			if (tmp != NULL) {
-				tmp->name = acpi_os_allocmem(
-				    AML_NAMESEG_LEN + 1);
-				if (tmp->name)
-					memcpy((char *)tmp->name, name,
-					    AML_NAMESEG_LEN);
-			}
-		}
-		root = tmp;
-	}
-
-	return (tmp);
-}
-
-struct aml_node *
-aml_createname(struct aml_node *root, const char *name)
-{
-	return aml_doname(root, name, 1);
-}
-
-struct aml_node *
-aml_searchname(struct aml_node *root, const char *name)
-{
-	return aml_doname(root, name, 0);
-}
-
 struct aml_value *
-aml_ederef(struct acpi_context *ctx, struct aml_value *val)
+aml_evalmethod(struct aml_node *node,
+	       int argc, struct aml_value *argv,
+	       struct aml_value *res)
 {
-	struct aml_node		*pn;
-	struct aml_value	*ref;
-	int64_t			i1;
+	struct aml_scope *scope;
 
-	if (val == NULL)
-		return NULL;
+	scope = aml_pushscope(NULL, node->value->v_method.start, 
+			      node->value->v_method.end, node);
+	scope->args = argv;
+	scope->nargs = argc;
+	scope->locals = aml_alloctmp(scope, AML_MAX_LOCAL);
 
-	switch (val->type) {
-	case AML_OBJTYPE_NAMEREF:
-		if (val->v_objref.ref == NULL)
-			if ((pn = aml_searchname(ctx->scope, val->name)) !=
-			    NULL)
-				val->v_objref.ref = pn->value;
-
-		if (val->v_objref.ref != NULL)
-			return aml_ederef(ctx, val->v_objref.ref);
-
-		return (NULL);
-	case AML_OBJTYPE_OBJREF:
-		i1 = val->v_objref.index;
-		ref = aml_ederef(ctx, val->v_objref.ref);
-		if (ref == NULL)
-			return (NULL);
-
-		if (i1 == -1)
-			return aml_ederef(ctx, ref);
-
-		if (i1 > ref->length)
-			aml_resizevalue(ref, i1);
-
-		switch (ref->type) {
-		case AML_OBJTYPE_PACKAGE:
-			if (ref->v_package[i1] == NULL) {
-				/* Lazy allocate package */
-				dnprintf(40, "LazyPkg: %lld/%d\n", i1,
-				    ref->length);
-				ref->v_package[i1] = aml_allocvalue(
-				    AML_OBJTYPE_UNINITIALIZED, 0, NULL);
-			}
-			return (ref->v_package[i1]);
-		case AML_OBJTYPE_BUFFER:
-			return aml_allocvalue(AML_OBJTYPE_BUFFERFIELD, 8,
-			    ref->v_buffer+i1);
-		default:
-			dnprintf(50,"Unknown refof\n");
-		}
-
-		break;
-	}
-
-	return (val);
-}
-
-uint64_t
-aml_get_pciaddr(struct acpi_context *ctx, struct aml_node *node)
-{
-	struct aml_node	*pn;
-	uint8_t		bus, dev, fn;
-	uint64_t	ioaddr;
-
-	if ((pn = aml_searchname(node, "_ADR")) == NULL) 
-		return (0xffff);
-
-	/* _ADR holds <dev>:<fn> */
-	ioaddr = aml_val2int(ctx, pn->value);
-	fn  = ioaddr & 0xffff;
-	dev = ioaddr >> 16;
-	bus = 0;
-
-	if ((pn = aml_searchname(node, "_BBN")) != NULL) /* _BBN holds <bus> */
-		bus = aml_val2int(ctx, pn->value);
-
-	return ACPI_PCI_ADDR(bus, dev, fn, 0);
-}
-
-struct aml_value *
-aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
-    struct aml_value *rhs)
-{
-	struct aml_value	*e_rgn;
-	struct aml_value	*rv;
-	struct aml_value	tmp;
-	uint8_t			*pb;
-	uint64_t		ioaddr;
-	int			blen;
-
-	dnprintf(80, "efield %s: ", rhs ? "set" : "get");
-	aml_showvalue(e_fld);
-	aml_showvalue(rhs);
-
-	tmp.type = AML_OBJTYPE_INTEGER;
-	switch (e_fld->v_field.type) {
-	case AMLOP_INDEXFIELD:
-		/*
-		 * Set INDEX value to FIELD position byte,
-		 * then write RHS to DATA
-		 */
-		if (!aml_bytealigned(e_fld->v_field.bitpos)) {
-			dnprintf(40, "aml_efield: INDEXFIELD not "
-			    "byte-aligned..\n");
-		}
-		tmp.v_integer = aml_bytepos(e_fld->v_field.bitpos);
-		aml_efield(ctx, e_fld->v_field.ref1, &tmp);
-		return aml_efield(ctx, e_fld->v_field.ref2, rhs);
-
-	case AMLOP_BANKFIELD:
-		/* Set bank value */
-		tmp.v_integer = e_fld->v_field.ref3;
-		aml_efield(ctx, e_fld->v_field.ref2, &tmp);
-		return aml_efield(ctx, e_fld->v_field.ref2, rhs);
-
-	case AMLOP_FIELD:
-		/* e_rgn should be OPREGION */
-		e_rgn = aml_ederef(ctx, e_fld->v_field.ref1);
-		if (e_rgn == NULL)
-			return NULL;
-		if (e_rgn->type != AML_OBJTYPE_OPREGION) {
-			dnprintf(40, "aml_efield: Wrong FIELD type!\n");
-			return (NULL);
-		}
-
-		ioaddr = e_rgn->v_opregion.iobase +
-		    aml_bytepos(e_fld->v_field.bitpos);
-
-		blen = aml_bytelen(e_fld->v_field.bitlen);
-		pb = acpi_os_allocmem(blen+8); /* padded space */
-		if (rhs == NULL) {
-			rv = aml_allocvalue(AML_OBJTYPE_BUFFER, blen, NULL);
-
-			/* Read field XXX don't need pb if aligned */
-			if (aml_valid(rv)) {
-				if (AML_FIELD_LOCK(e_fld->v_field.flags)) {
-					acpi_mutex_acquire(ctx,
-					    aml_global_lock, -1);
-				}
-				acpi_gasio(ctx->sc, ACPI_IOREAD,
-				   e_rgn->v_opregion.iospace, ioaddr,
-				   AML_FIELD_ACCESS(e_fld->v_field.flags),
-				   blen, pb);
-
-				if (AML_FIELD_LOCK(e_fld->v_field.flags)) {
-					acpi_mutex_release(ctx,
-					    aml_global_lock);
-				}
-			}
-			if (pb != rv->v_buffer) {
-				aml_bufcpy(rv->v_buffer, 0, pb,
-				    aml_bitpos(e_fld->v_field.bitpos),
-				    e_fld->v_field.bitlen);
-
-				acpi_os_freemem(pb);
-			}
-			return (rv);
-		}
-    
-		/* Write field */
-		if (AML_FIELD_LOCK(e_fld->v_field.flags)) {
-			acpi_mutex_acquire(ctx, aml_global_lock, -1);
-		}
-
-		switch (AML_FIELD_UPDATE(e_fld->v_field.flags)) {
-		case AML_FIELD_PRESERVE:
-#if 0
-			/* XXX: fix length, don't read if whole length */
-			dnprintf(40, "old iobase = %llx,%lx\n", 
-			    e_rgn->v_opregion.iobase,
-			    aml_bytepos(e_fld->v_field.bitpos));
-			    
-			acpi_gasio(ctx->sc, ACPI_IOREAD,
-			    e_rgn->v_opregion.iospace, ioaddr,
-			    AML_FIELD_ACCESS(e_fld->v_field.flags),
-			    blen, pb);
-#if 0
-			aml_showvalue(rv);
+	if (res == NULL)
+		res = aml_alloctmp(scope, 1);
+#ifdef ACPI_DEBUG
+	dnprintf(10,"calling [%s] (%d args)\n",
+		 aml_nodename(node),
+		 scope->nargs);
+	while (scope->pos < scope->end)
+		aml_parseterm(scope, res);
+	printf("[%s] returns: ", aml_nodename(node));
+	aml_showvalue(res);
+#else
+	while (scope->pos < scope->end)
+		aml_parseterm(scope, res);
 #endif
-#endif
-			break;
-		case AML_FIELD_WRITEASONES:
-			memset(pb, 0xff, blen + 8);
-			break;
-		case AML_FIELD_WRITEASZEROES:
-			memset(pb, 0x00, blen + 8);
-			break;
-		}
+	/* Free any temporary children nodes */
+	aml_delchildren(node);
+	aml_popscope(scope);
 
-		rv = aml_val2buf(ctx, rhs, blen);
-
-		aml_bufcpy(pb, aml_bitpos(e_fld->v_field.bitpos),
-		    rv->v_buffer, 0, e_fld->v_field.bitlen);
-
-		if (rv != rhs)
-			aml_freevalue(&rv);
-
-		acpi_gasio(ctx->sc, ACPI_IOWRITE,
-		   e_rgn->v_opregion.iospace,
-		   e_rgn->v_opregion.iobase +
-		   aml_bytepos(e_fld->v_field.bitpos),
-		   AML_FIELD_ACCESS(e_fld->v_field.flags),
-		   blen, pb);
-
-		if (AML_FIELD_LOCK(e_fld->v_field.flags)) {
-			acpi_mutex_release(ctx, aml_global_lock);
-		}
-
-		acpi_os_freemem(pb);
-		break;
-	default:
-		/* This is a buffer field */
-		e_rgn = aml_ederef(ctx, e_fld->v_field.ref1);
-		if (e_rgn == NULL)
-			return (NULL);
-
-		if (e_rgn->type != AML_OBJTYPE_BUFFER) {
-			dnprintf(40, "aml_efield: Wrong type!\n");
-			return (NULL);
-		}
-
-		blen = aml_bytelen(e_fld->v_field.bitlen);
-		if (rhs == NULL) {
-			/* Read buffer */
-			rv = aml_allocvalue(AML_OBJTYPE_BUFFER, blen, NULL);
-			if (aml_valid(rv))
-				aml_bufcpy(rv->v_buffer, 0, 
-				    e_rgn->v_buffer, e_fld->v_field.bitpos, 
-				    e_fld->v_field.bitlen);
-			return (rv);
-		}
-
-		/* Write buffer */
-		rv = aml_val2buf(ctx, rhs, blen);
-		aml_bufcpy(e_rgn->v_buffer, e_fld->v_field.bitpos, 
-		    rv->v_buffer, 0, 
-		    e_fld->v_field.bitlen);
-
-		if (rv != rhs)
-			aml_freevalue(&rv);
-		break;
-	}
-
-	return (NULL);
+	return NULL;
 }
 
-struct aml_value *
-aml_val2buf(struct acpi_context *ctx, struct aml_value *oval, int mlen)
+/* 
+ * @@@: External API
+ *
+ * evaluate an AML node
+ * Returns a copy of the value in res  (must be freed by user)
+ */
+int
+aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
+	     int argc, struct aml_value *argv,
+	     struct aml_value *res)
 {
-	struct aml_value	*pb, *val;
+	static int lastck;
 
-	if (val == NULL)
-		return (NULL);
+	if (res)
+		memset(res, 0, sizeof(struct aml_value));
+	if (node == NULL || node->value == NULL)
+		return (ACPI_E_BADVALUE);
 
-	val = aml_ederef(ctx, oval);
-	if (val == NULL)
-		return (NULL);
-	switch (val->type) {
-	case AML_OBJTYPE_BUFFER:
-		if (mlen < val->length)
-			mlen = val->length;
-
-		pb = aml_allocvalue(AML_OBJTYPE_BUFFER, mlen, NULL);
-		if (val->v_buffer && val->length)
-			memcpy(pb->v_buffer, val->v_buffer, val->length);
-
-		return (pb);
-
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-		return aml_efield(ctx, val, NULL);
-
-	case AML_OBJTYPE_STATICINT:
-	case AML_OBJTYPE_INTEGER:
-		return aml_allocvalue(AML_OBJTYPE_BUFFER, 8, &val->v_integer);
-
-	case AML_OBJTYPE_STRING:
-		return aml_allocvalue(AML_OBJTYPE_BUFFER, val->length,
-		    val->v_string);
-
-	default:
-		dnprintf(40, "Unknown val2buf : %d\n", val->type);
-		return (NULL);
-	}
-}
-
-int64_t
-aml_val2int(struct acpi_context *ctx, struct aml_value *val)
-{
-	struct aml_value	*pb;
-	int64_t			rval;
-
-	pb = NULL;
-	if (val == NULL) {
-		dnprintf(40, "null val2int\n");
-		return 0;
-	}
-	rval = 0;
-	switch (val->type) {
-	case AML_OBJTYPE_BUFFER:
-		if (val->length < 8)
-			memcpy(&rval, val->v_buffer, val->length);
-		return (rval);
-
-	case AML_OBJTYPE_STATICINT:
-	case AML_OBJTYPE_INTEGER:
-		return (val->v_integer);
-
-	case AML_OBJTYPE_STRING:
-		if (val->v_string != NULL) {
-			if (!strncmp(val->v_string, "0x", 2))
-				rval = aml_str2int(val->v_string + 2,
-				    val->length, 16);
-			else
-				rval = aml_str2int(val->v_string,
-				    val->length, 10);
-		}
-		return (rval);
-
-	case AML_OBJTYPE_NAMEREF:
-	case AML_OBJTYPE_OBJREF:
-		if (ctx == NULL)
-			return (0);
-		pb = aml_ederef(ctx, val);
-		break;
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-		if (ctx == NULL)
-			return (0);
-		pb = aml_efield(ctx, val, NULL);
-		break;
+	switch (node->value->type) {
 	case AML_OBJTYPE_METHOD:
-		if (ctx == NULL)
-			return 0;
-		pb = aml_domethod(ctx, val, -1, NULL);
+		aml_evalmethod(node, argc, argv, res);
+		if (acpi_nalloc > lastck) {
+			/* Check if our memory usage has increased */
+			dnprintf(0,"Leaked: [%s] %d\n", 
+				 aml_nodename(node), acpi_nalloc);
+			lastck = acpi_nalloc;
+		}
+		break;
+	case AML_OBJTYPE_INTEGER:
+	case AML_OBJTYPE_STRING:
+	case AML_OBJTYPE_BUFFER:
+	case AML_OBJTYPE_PACKAGE:
+	case AML_OBJTYPE_EVENT:
+	case AML_OBJTYPE_DEVICE:
+	case AML_OBJTYPE_MUTEX:
+	case AML_OBJTYPE_OPREGION:
+	case AML_OBJTYPE_POWERRSRC:
+	case AML_OBJTYPE_PROCESSOR:
+	case AML_OBJTYPE_THERMZONE:
+	case AML_OBJTYPE_DEBUGOBJ:
+		if (res)
+			aml_copyvalue(res, node->value);
 		break;
 	default:
-		dnprintf(40, "Unknown val2int: %x\n", val->type);
 		break;
 	}
-
-	if (pb != NULL)
-		return aml_val2int(ctx, pb);
-
 	return (0);
 }
 
-struct aml_node *
-aml_addvname(struct acpi_context *ctx, const char *name, int opcode,
-	     struct aml_value *val)
-{
-	struct aml_node *pn;
-
-	pn = aml_createname(ctx->scope, name);
-	pn->opcode = opcode;
-	pn->mnem   = aml_opname(opcode);
-	if (val != NULL) {
-		if (val->type == AML_OBJTYPE_STATICINT)
-			val = aml_allocvalue(AML_OBJTYPE_INTEGER, val->v_integer, NULL);
-		val->name = name;
-		val->node = pn;
-	}
-	if (pn->value) {
-		dnprintf(40, "addvname: error, already set!\n");
-		aml_freevalue(&pn->value);
-	}
-	pn->value = val;
-#if 0
-	aml_showvalue(val);
-	dnprintf(40, "\n");
-#endif
-	return pn;
-}
-
-/* Parse package length & return pointer to end of package */
-u_int8_t *
-aml_eparselen(struct acpi_context *ctx)
-{
-	u_int8_t *pos = ctx->pos;
-
-	return pos + aml_parse_length(ctx);
-}
-
-/* Parse integer value */
-int64_t
-aml_eparseint(struct acpi_context *ctx, int type)
-{
-	struct aml_value *rv;
-	int64_t rval;
-
-	if (type == AML_ANYINT) {
-		/* special case: parse integers directly from bytestream
-		 * this saves an additional alloc/free 
-		 */
-		switch (*ctx->pos) {
-		case AMLOP_ZERO:
-		case AMLOP_ONE:
-		case AMLOP_ONES:
-			type = AML_BYTE;
-			break;
-		case AMLOP_BYTEPREFIX:
-			ctx->pos++;
-			type = AML_BYTE;
-			break;
-		case AMLOP_WORDPREFIX:
-			ctx->pos++;
-			type = AML_WORD;
-			break;
-		case AMLOP_DWORDPREFIX:
-			ctx->pos++;
-			type = AML_DWORD;
-			break;
-		case AMLOP_QWORDPREFIX:
-			ctx->pos++;
-			type = AML_QWORD;
-			break;
-		default:
-			rv = aml_eparseval(ctx, 1);
-			rval = aml_val2int(ctx, rv);
-			aml_freevalue(&rv);
-			break;
-		}
-	}
-	if (type != AML_ANYINT) {
-		/* Type may have changed here parse byte directly */
-		rval = aml_parse_int(ctx, type);
-	}
-	return rval;
-}
-
-/* Create field unit 
- *   AMLOP_FIELD
- *   AMLOP_INDEXFIELD
- *   AMLOP_BANKFIELD
+/*
+ * evaluate an AML name
+ * Returns a copy of the value in res  (must be freed by user)
  */
-
-struct aml_value *
-aml_parse_fieldunit(struct acpi_context *ctx, int opcode)
-{
-	u_int8_t *end;
-	int attr, access;
-	struct aml_value *rv, tmp;
-
-	/* Create field template */
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.type = AML_OBJTYPE_FIELDUNIT;
-	tmp.v_field.type = opcode;
-
-	end = aml_eparselen(ctx);
-	switch (opcode) {
-	case AMLOP_FIELD:
-		tmp.v_field.ref1 = aml_eparseval(ctx, 1);
-		break;
-	case AMLOP_INDEXFIELD:
-		tmp.v_field.ref1 = aml_eparseval(ctx, 0);
-		tmp.v_field.ref2 = aml_eparseval(ctx, 0);
-		break;
-	case AMLOP_BANKFIELD:
-		tmp.v_field.ref1 = aml_eparseval(ctx, 0);
-		tmp.v_field.ref2 = aml_eparseval(ctx, 0);
-		tmp.v_field.ref3 = aml_eparseint(ctx, AML_ANYINT);
-		break;
-	}
-	tmp.v_field.flags = aml_parse_int(ctx, AML_BYTE);
-
-	while (ctx->pos < end) {
-		switch (*ctx->pos) {
-		case AML_FIELD_RESERVED:
-			ctx->pos++;
-			tmp.v_field.bitlen = aml_parse_length(ctx);
-			break;
-		case AML_FIELD_ATTRIB:
-			ctx->pos++;
-			access = aml_parse_int(ctx, AML_BYTE);
-			attr   = aml_parse_int(ctx, AML_BYTE);
-
-			tmp.v_field.flags &= ~AML_FIELD_ACCESSMASK;
-			tmp.v_field.flags |= (access & AML_FIELD_ACCESSMASK);
-			break;
-		default:
-			tmp.name = aml_parse_name(ctx);
-			tmp.v_field.bitlen = aml_parse_length(ctx);
-			rv = aml_copyvalue(&tmp);
-			aml_addvname(ctx, tmp.name, opcode, rv);
-			break;
-		}
-		tmp.v_field.bitpos += tmp.v_field.bitlen;
-	}
-	return NULL;
-}
-
-/* Create buffer field object
- *   AMLOP_CREATEFIELD
- *   AMLOP_CREATEBITFIELD
- *   AMLOP_CREATEBYTEFIELD
- *   AMLOP_CREATEWORDFIELD
- *   AMLOP_CREATEDWORDFIELD
- *   AMLOP_CREATEQWORDFIELD
- */
-struct aml_value *
-aml_parse_bufferfield(struct acpi_context *ctx, int size, int bitlen, int opcode)
-{
-	struct aml_value *rv;
-
-	rv = aml_allocvalue(AML_OBJTYPE_BUFFERFIELD, 0, NULL);
-	if (aml_valid(rv)) {
-		rv->v_field.type = opcode;
-		rv->v_field.ref1 = aml_eparseval(ctx, 1);
-		rv->v_field.bitpos = aml_eparseint(ctx, AML_ANYINT) * size;
-		rv->v_field.bitlen = (opcode == AMLOP_CREATEFIELD) ?
-			aml_eparseint(ctx, AML_ANYINT) : bitlen;
-
-		aml_addvname(ctx, aml_parse_name(ctx), opcode, rv);
-	}
-	return rv;
-}
-
-/* Set node value */
-struct aml_value *
-aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
-		  struct aml_value *rhs, int64_t rval)
-{
-	struct aml_value *tmp;
-
-	if (rhs == NULL) {
-		rhs = aml_allocint(rval);
-	}
-
-	dnprintf(50, "------------ SET NODE VALUE -------------\n");
-	dnprintf(50, "new    : ");
-	aml_showvalue(rhs);
-	dnprintf(50, "current: ");
-	aml_showvalue(lhs);
-
-	tmp = aml_ederef(ctx, lhs);
-	if (tmp == NULL)
-		return (NULL);
-	switch (tmp->type) {
-	case AML_OBJTYPE_UNINITIALIZED:
-		/* Object is not initialized */
-		*tmp = *rhs;
-		break;
-        case AML_OBJTYPE_DEBUGOBJ:
-		dnprintf(1, "debug object: ");
-		aml_showvalue(rhs);
-		break;
-	case AML_OBJTYPE_FIELDUNIT:
-	case AML_OBJTYPE_BUFFERFIELD:
-		aml_efield(ctx, tmp, rhs);
-		break;
-	case AML_OBJTYPE_STATICINT:
-		/* Read-only */
-		break;
-	default:
-		/* Object is already initialized, free old value */
-		_aml_freevalue(tmp);
-		*tmp = *rhs;
-	}
-	aml_showvalue(tmp);
-	if (tmp != lhs) {
-		aml_freevalue(&tmp);
-	}
-	dnprintf(50, "--------- post set ----------\n");
-	return rhs;
-}
-
-/* Parse scoped object
- *   AMLOP_SCOPE
- *   AMLOP_DEVICE
- *   AMLOP_POWERRSRC
- *   AMLOP_PROCESSOR
- *   AMLOP_THERMALZONE
- */
-struct aml_value *
-aml_eparsescope(struct acpi_context *ctx, const char *name, u_int8_t *end,
-		struct aml_opcode *opc,
-		struct aml_value *val)
-{
-	struct aml_node *oldscope;
-	struct aml_value *rv;
-
-	oldscope = ctx->scope;
-	ctx->scope = aml_addvname(ctx, name, opc->opcode, val);
-
-	rv = aml_eparselist(ctx, end, 0);
-
-	ctx->scope = oldscope;
-	return rv;
-}
-
-/* Parse list of objects */
-struct aml_value *
-aml_eparselist(struct acpi_context *ctx, u_int8_t *end, int deref)
-{
-	struct aml_value *rv;
-  
-	rv = NULL;
-	while (ctx->pos && ctx->pos < end) {
-		aml_freevalue(&rv);
-		rv = aml_eparseval(ctx, deref);
-	}
-	return rv;
-}
-
-/* Parse AMLOP_CONCAT */
-struct aml_value *
-aml_doconcat(struct acpi_context *ctx)
-{
-	struct aml_value  *lhs, *rhs, *set, *tmp;
-
-	lhs = aml_eparseval(ctx, 1);
-	rhs = aml_eparseval(ctx, 1);
-	set = aml_eparseval(ctx, 1);
-	if (lhs == NULL || rhs == NULL || lhs->type != rhs->type) {
-		return NULL;
-	}
-	switch (lhs->type) {
-	case AML_OBJTYPE_STRING:
-		tmp = aml_allocvalue(AML_OBJTYPE_STRING,
-				     lhs->length+rhs->length, NULL);
-		if (tmp != NULL) {
-			strlcpy(tmp->v_string, lhs->v_string, lhs->length);
-			strlcat(tmp->v_string, rhs->v_string, rhs->length);
-			return aml_esetnodevalue(ctx, set, tmp, 0);
-		}
-		break;
-	case AML_OBJTYPE_BUFFER:
-		tmp = aml_allocvalue(AML_OBJTYPE_BUFFER,
-				     lhs->length+rhs->length, NULL);
-		if (tmp != NULL) {
-			memcpy(tmp->v_buffer, lhs->v_buffer, lhs->length);
-			memcpy(tmp->v_buffer+lhs->length, rhs->v_buffer, rhs->length);
-			return aml_esetnodevalue(ctx, set, tmp, 0);
-		}
-		break;
-	default:
-		dnprintf(50, "aml_doconcat: wrong type %.4x\n", lhs->type);
-		break;
-	}
-	return NULL;
-}
-
-/* Parse AMLOP_IF/AMLOP_ELSE block */
-struct aml_value *
-aml_doif(struct acpi_context *ctx)
-{
-	struct aml_value *rv;
-	u_int8_t *end;
-	int64_t	 i1;
-
-	rv  = NULL;
-	end = aml_eparselen(ctx);
-	i1  = aml_eparseint(ctx, AML_ANYINT);
-	dnprintf(40, "evalif: %lld\n", i1);
-
-	if (i1 != 0) {
-		/* Parse IF block */
-		rv = aml_eparselist(ctx, end, 1);
-	}
-	if (ctx->pos != NULL && *end == AMLOP_ELSE) {
-		/* Parse ELSE block */
-		ctx->pos = ++end;
-		end = aml_eparselen(ctx);
-		if (i1 == 0) {
-			rv = aml_eparselist(ctx, end, 1);
-		}
-	}
-	if (ctx->pos != NULL) {
-		ctx->pos = end;
-	}
-	return rv;
-}
-
-/* Parse AMLOP_WHILE/AMLOP_BREAK/AMLOP_CONTINUE block */
-struct aml_value *
-aml_dowhile(struct acpi_context *ctx)
-{
-	u_int8_t *start, *end;
-	struct aml_value *rv;
-	int64_t i1;
-
-	end   = aml_eparselen(ctx);
-	start = ctx->pos;
-
-	rv = NULL;
-	for(;;) {
-		if (ctx->pos == end) {
-			ctx->pos = start;
-		}
-		/* Perform test condition */
-		if (ctx->pos == start) {
-			i1 = aml_eparseint(ctx, AML_ANYINT);
-			dnprintf(40, "whiletest: %lld\n", i1);
-			if (i1 == 0) {
-				break;
-			}
-		}
-		if (ctx->pos == NULL || *ctx->pos == AMLOP_BREAK) {
-			dnprintf(40, "break\n");
-			break;
-		}
-		else if (*ctx->pos == AMLOP_CONTINUE) {
-			dnprintf(40, "continue\n");
-			ctx->pos = start;
-		}
-		else {
-			aml_freevalue(&rv);
-			rv = aml_eparseval(ctx, 1);
-		}
-	}
-	if (ctx->pos != NULL) {
-		ctx->pos = end;
-	}
-	return rv;
-}
-
-/* Call AML Method */
-struct aml_value *
-aml_domethod(struct acpi_context *ctx, struct aml_value *val,
-	     int argc, struct aml_value **argv)
-{
-	int64_t i1, i2;
-	struct aml_value **newarg, **oldarg;
-	struct aml_value **newloc, **oldloc;
-	struct aml_node *oldscope;
-	struct aml_value *rv;
-	u_int8_t *oldpos;
-
-	if (val->type != AML_OBJTYPE_METHOD) {
-		dnprintf(40, "aml_domethod: Invalid type\n");
-	}
-
-	i2 = AML_METHOD_ARGCOUNT(val->v_method.flags);
-	newarg = (struct aml_value **)acpi_os_allocmem(sizeof(struct aml_value *) * AML_MAX_ARG);
-	newloc = (struct aml_value **)acpi_os_allocmem(sizeof(struct aml_value *) * AML_MAX_LOCAL);
-
-	/* Parse arguments */
-	dnprintf(40, "Get %lld arguments for %s\n", i2, val->name);
-	for (i1 = 0; i1<i2; i1++) {
-		newarg[i1] = aml_eparseval(ctx, 0);
-	}
-
-	/* Save old parse position, call method */
-	oldscope = ctx->scope;
-	oldarg = ctx->args;
-	oldloc = ctx->locals;
-	oldpos = ctx->pos;
-
-	ctx->pos = val->v_method.start;
-	ctx->args = newarg;
-	ctx->locals = newloc;
-	ctx->scope = val->node;
-
-#if 0
-	dnprintf(40,"\nCall %s: (%lld args)\n", val->name, i2);
-	for (i1 = 0; i1<i2; i1++) {
-		dnprintf(40,"  arg%lld: ", i1);
-		aml_showvalue(newarg[i1]);
-	}
-#endif
-
-	rv = aml_eparselist(ctx, val->v_method.end, 1);
-
-	ctx->pos = oldpos;
-	ctx->args = oldarg;
-	ctx->locals = oldloc;
-	ctx->scope = oldscope;
-
-#if 0
-	dnprintf(40, "Returned from %s\n", val->name);
-	aml_showvalue(rv);
-#endif
-
-	aml_delchildren(ctx, val->node);
-
-	for (i1=0; i1<8; i1++) {
-		aml_freevalue(&newloc[i1]);
-	}
-	for (i1=0; i1<i2; i1++) {
-		aml_freevalue(&newarg[i1]);
-	}
-	return rv;
-  
-}
-
-/* Handle AMLOP_LOAD
- * XXX: Implement this
- */
-struct aml_value *
-aml_doloadtable(struct acpi_context *ctx)
-{
-	aml_eparseval(ctx, 1);
-	aml_eparseval(ctx, 1);
-	aml_eparseval(ctx, 1);
-	aml_eparseval(ctx, 1);
-	aml_eparseval(ctx, 1);
-	aml_eparseval(ctx, 1);
-	aml_eparseval(ctx, 1);
-	return NULL;
-}
-
-/* Handle AMLOP_MID */
-struct aml_value *
-aml_domid(struct acpi_context *ctx)
-{
-	struct aml_value *rhs, *lhs, *rv;
-	int64_t i1, i2;
-
-	rhs = aml_eparseval(ctx, 1);
-	i1  = aml_eparseint(ctx, AML_ANYINT);  // index
-	i2  = aml_eparseint(ctx, AML_ANYINT);  // length
-	lhs = aml_eparseval(ctx, 1);
-	if (aml_valid(rhs)) {
-		switch (rhs->type) {
-		case AML_OBJTYPE_STRING:
-			/* Validate index is within range */
-			if (i1 >= rhs->length) 
-				i1 = i2 = 0;
-			if (i1+i2 >= rhs->length) 
-				i2 = rhs->length - i1;
-			rv = aml_allocvalue(AML_OBJTYPE_STRING, i2, rhs->v_string + i1);
-			aml_esetnodevalue(ctx, lhs, rv, 0);
-			break;
-		case AML_OBJTYPE_BUFFER:
-			if (i1 >= rhs->length) 
-				i1 = i2 = 0;
-			if (i1+i2 >= rhs->length) 
-				i2 = rhs->length - i1;
-			rv = aml_allocvalue(AML_OBJTYPE_BUFFER, i2, rhs->v_buffer + i1);
-			aml_esetnodevalue(ctx, lhs, rv, 0);
-			break;
-		}
-	}
-	aml_freevalue(&lhs);
-	aml_freevalue(&rhs);
-	return rv;
-}
-
-/* Handle AMLOP_MATCH 
- *
- * AMLOP_MATCH searches a package for an integer match
- */
-struct aml_value *
-aml_domatch(struct acpi_context *ctx)
-{
-	struct aml_value *lhs, *rv;
-	int64_t op1, op2, mv1, mv2, idx, mval;
-
-	lhs = aml_eparseval(ctx, 1);
-	op1 = aml_eparseint(ctx, AML_BYTE);
-	mv1 = aml_eparseint(ctx, AML_ANYINT);
-	op2 = aml_eparseint(ctx, AML_BYTE);
-	mv2 = aml_eparseint(ctx, AML_ANYINT);
-	idx = aml_eparseint(ctx, AML_ANYINT);
-
-	/* ASSERT: lhs is package */
-	rv = aml_allocint(-1);
-	if (lhs->type == AML_OBJTYPE_PACKAGE) {
-		for (; idx < lhs->length; idx++) {
-			mval = aml_val2int(ctx, lhs->v_package[idx]);
-			if (aml_match(mval, op1, mv1) && aml_match(mval, op2, mv2)) {
-				/* Found match.. set index into result */
-				rv->v_integer = idx;
-				break;
-			}
-		}
-	}
-	aml_freevalue(&lhs);
-	return rv;
-}
-
-
-/* Parse AMLOP_XXXX
- *
- * This is the guts of the evaluator
- */
-struct aml_value *
-aml_eparseval(struct acpi_context *ctx, int deref)
-{
-	struct aml_opcode *opc;
-	struct aml_node   *node;
-	struct aml_value  *lhs, *rhs, *tmp, *rv;
-	u_int8_t *end, *start;
-	const char *name;
-	int64_t i1, i2;
-
-	rhs = NULL;
-	lhs = NULL;
-	tmp = NULL;
-	rv  = NULL;
-
-	/* Allocate a new instruction, get opcode, etc */
-	start = ctx->pos;
-	opc = aml_getopcode(ctx);
-
-	dnprintf(40, "### %2d %.4x %s\n",
-		 ctx->depth, opc->opcode, opc->mnem);
-
-	ctx->depth++;
-	end = NULL;
-	switch (opc->opcode) {
-	case AMLOP_NAMECHAR:
-		name = aml_parse_name(ctx);
-		rv = aml_allocvalue(AML_OBJTYPE_NAMEREF, 0, (char *)name);
-		if ((rhs = aml_ederef(ctx, rv)) != NULL) {
-			if (rhs->type == AML_OBJTYPE_METHOD) {
-				lhs = rhs;
-				rv = aml_domethod(ctx, rhs, -1, NULL);
-			}
-			else {
-				rv = rhs;
-				rhs = NULL;
-			}
-		}
-		break;
-	case AMLOP_NOP:
-		break;
-	case AMLOP_ZERO:
-		rv = aml_allocvalue(AML_OBJTYPE_STATICINT, 0, NULL);
-		break;
-	case AMLOP_ONE:
-		rv = aml_allocvalue(AML_OBJTYPE_STATICINT, 1, NULL);
-		break;
-	case AMLOP_ONES:
-		rv = aml_allocvalue(AML_OBJTYPE_STATICINT, -1, NULL);
-		break;
-	case AMLOP_REVISION:
-		rv = aml_allocvalue(AML_OBJTYPE_STATICINT, AML_REVISION, NULL);
-		break;
-	case AMLOP_BYTEPREFIX:
-		rv = aml_allocint(aml_eparseint(ctx, AML_BYTE));
-		break;
-	case AMLOP_WORDPREFIX:
-		rv = aml_allocint(aml_eparseint(ctx, AML_WORD));
-		break;
-	case AMLOP_DWORDPREFIX:
-		rv = aml_allocint(aml_eparseint(ctx, AML_DWORD));
-		break;
-	case AMLOP_QWORDPREFIX:
-		rv = aml_allocint(aml_eparseint(ctx, AML_QWORD));
-		break;
-	case AMLOP_STRINGPREFIX:
-		rv = aml_allocstr(aml_parse_string(ctx));
-		break;
-	case AMLOP_FIELD:
-	case AMLOP_INDEXFIELD:
-	case AMLOP_BANKFIELD:
-		rv = aml_parse_fieldunit(ctx, opc->opcode);
-		break;
-	case AMLOP_CREATEFIELD:
-		rv = aml_parse_bufferfield(ctx, 1, -1, opc->opcode);
-		break;
-	case AMLOP_CREATEBITFIELD:
-		rv = aml_parse_bufferfield(ctx, 1,  1, opc->opcode);
-		break;
-	case AMLOP_CREATEBYTEFIELD:
-		rv = aml_parse_bufferfield(ctx, 8,  8, opc->opcode);
-		break;
-	case AMLOP_CREATEWORDFIELD:
-		rv = aml_parse_bufferfield(ctx, 8, 16, opc->opcode);
-		break;
-	case AMLOP_CREATEDWORDFIELD:
-		rv = aml_parse_bufferfield(ctx, 8, 32, opc->opcode);
-		break;
-	case AMLOP_CREATEQWORDFIELD:
-		rv = aml_parse_bufferfield(ctx, 8, 64, opc->opcode);
-		break;
-	case AMLOP_DEBUG:
-		rv = aml_allocvalue(AML_OBJTYPE_DEBUGOBJ, 0, NULL);
-		break;
-	case AMLOP_BUFFER:
-		end = aml_eparselen(ctx);
-		i2  = aml_eparseint(ctx, AML_ANYINT);  // requested length
-		i1  = end - ctx->pos;		       // supplied length
-		dnprintf(40, "buffer: %lld of %lld\n", i1, i2);
-		if (i2 < i1)
-			i2 = i1;
-		rv = aml_allocvalue(AML_OBJTYPE_BUFFER, i2, NULL);
-		if (i1 > 0)
-			memcpy(rv->v_buffer, ctx->pos, i1);
-		break;
-	case AMLOP_PACKAGE:
-	case AMLOP_VARPACKAGE:
-		end = aml_eparselen(ctx);
-
-		/* AMLOP_PACKAGE has fixed length, AMLOP_VARPACKAGE is variable */
-		i2 = aml_eparseint(ctx, (opc->opcode == AMLOP_PACKAGE) ?
-				   AML_BYTE : AML_ANYINT);
-
-		rv = aml_allocvalue(AML_OBJTYPE_PACKAGE, i2, NULL);
-		for (i1=0; i1 < i2 && ctx->pos < end; i1++)
-			rv->v_package[i1] = aml_eparseval(ctx, 0);
-		dnprintf(40, "package: %lld of %lld parsed\n", i1, i2);
-		break;
-	case AMLOP_LOCAL0:
-	case AMLOP_LOCAL1:
-	case AMLOP_LOCAL2:
-	case AMLOP_LOCAL3:
-	case AMLOP_LOCAL4:
-	case AMLOP_LOCAL5:
-	case AMLOP_LOCAL6:
-	case AMLOP_LOCAL7:
-		i1 = opc->opcode - AMLOP_LOCAL0;
-		if (ctx->locals[i1] == NULL) {
-			/* Lazy allocate LocalX */
-			dnprintf(40, "LazyLocal%lld\n", i1);
-			ctx->locals[i1] = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
-		}
-		rv = ctx->locals[i1];
-		break;
-	case AMLOP_ARG0:
-	case AMLOP_ARG1:
-	case AMLOP_ARG2:
-	case AMLOP_ARG3:
-	case AMLOP_ARG4:
-	case AMLOP_ARG5:
-	case AMLOP_ARG6:
-		i1 = opc->opcode - AMLOP_ARG0;
-		if (ctx->args[i1] == NULL) {
-			/* Lazy allocate ArgX - shouldn't happen? */
-			dnprintf(40, "LazyArg%lld\n", i1);
-			ctx->args[i1] = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
-		}
-		rv = ctx->args[i1];
-		break;
-
-	case AMLOP_INCREMENT:
-	case AMLOP_DECREMENT:
-		lhs = aml_eparseval(ctx, 1);
-		i1  = aml_val2int(ctx, lhs);
-		rv  = aml_esetnodevalue(ctx, lhs, NULL, aml_evalmath(opc->opcode, i1, 1));
-		break;
-	case AMLOP_FINDSETLEFTBIT:
-	case AMLOP_FINDSETRIGHTBIT:
-	case AMLOP_TOINTEGER:
-	case AMLOP_FROMBCD:
-	case AMLOP_TOBCD:
-	case AMLOP_NOT:
-		i1  = aml_eparseint(ctx, AML_ANYINT);
-		lhs = aml_eparseval(ctx, 1);
-		rv  = aml_esetnodevalue(ctx, lhs, NULL, aml_evalmath(opc->opcode, i1, 0));
-		break;
-	case AMLOP_DIVIDE:
-		i1  = aml_eparseint(ctx, AML_ANYINT);
-		i2  = aml_eparseint(ctx, AML_ANYINT);
-
-		/* Set remainder */
-		tmp = aml_eparseval(ctx, 1);
-		rhs = aml_esetnodevalue(ctx, tmp, NULL, aml_evalmath(AMLOP_MOD, i1, i2));
-
-		/* Set quotient */
-		lhs = aml_eparseval(ctx, 1);
-		rv  = aml_esetnodevalue(ctx, lhs, NULL, aml_evalmath(AMLOP_DIVIDE, i1, i2));
-		break;
-	case AMLOP_ADD:
-	case AMLOP_SUBTRACT:
-	case AMLOP_MULTIPLY:
-	case AMLOP_SHL:
-	case AMLOP_SHR:
-	case AMLOP_AND:
-	case AMLOP_NAND:
-	case AMLOP_OR:
-	case AMLOP_XOR:
-	case AMLOP_NOR:
-	case AMLOP_MOD:
-		i1  = aml_eparseint(ctx, AML_ANYINT);
-		i2  = aml_eparseint(ctx, AML_ANYINT);
-		lhs = aml_eparseval(ctx, 1);
-		rv  = aml_esetnodevalue(ctx, lhs, NULL, aml_evalmath(opc->opcode, i1, i2));
-		break;
-	case AMLOP_LAND:
-	case AMLOP_LOR:
-		i1 = aml_eparseint(ctx, AML_ANYINT);
-		i2 = aml_eparseint(ctx, AML_ANYINT);
-		rv = aml_allocint(aml_logicalcmp(opc->opcode, i1, i2));
-		break;
-	case AMLOP_LNOT:
-		i1 = aml_eparseint(ctx, AML_ANYINT);
-		rv = aml_allocint(aml_logicalcmp(opc->opcode, i1, 0));
-		break;
-	case AMLOP_LLESS:
-	case AMLOP_LLESSEQUAL:
-	case AMLOP_LEQUAL:
-	case AMLOP_LNOTEQUAL:
-	case AMLOP_LGREATEREQUAL:
-	case AMLOP_LGREATER:
-		lhs = aml_eparseval(ctx, 1);
-		rhs = aml_eparseval(ctx, 1);
-		rv  = aml_allocint(aml_comparevalue(ctx, opc->opcode, lhs, rhs));
-		break;
-	case AMLOP_TOSTRING:
-		rhs = aml_eparseval(ctx, 1);
-		i1  = aml_eparseint(ctx, AML_ANYINT);  // maximum length
-		lhs = aml_eparseval(ctx, 1);
-
-		tmp = aml_val2buf(ctx, rhs, 0);
-		if (i1 > tmp->length)
-			i1 = tmp->length;
-		for(i2=0; i2<i1; i1++) {
-			if (tmp->v_buffer[i2] == 0)
-				break;
-		}
-		rv  = aml_allocvalue(AML_OBJTYPE_STRING, i2, tmp->v_buffer);
-		aml_esetnodevalue(ctx, lhs, rv, 0);
-		break;
-	case AMLOP_TOBUFFER:
-		rhs = aml_eparseval(ctx, 1);
-		lhs = aml_eparseval(ctx, 1);
-		rv  = aml_val2buf(ctx, lhs, 0);
-		aml_esetnodevalue(ctx, lhs, rv, 0);
-		break;
-	case AMLOP_TODECSTRING:
-	case AMLOP_TOHEXSTRING:
-		i1  = aml_eparseint(ctx, AML_ANYINT);
-		lhs = aml_eparseval(ctx, 1);
-		rv = aml_allocvalue(AML_OBJTYPE_STRING, AML_INTSTRLEN, NULL);
-		if (aml_valid(rv)) {
-			snprintf(rv->v_string, AML_INTSTRLEN, 
-				 (opc->opcode == AMLOP_TODECSTRING) ? "%lld" : "0x%llx" , i1);
-			aml_esetnodevalue(ctx, lhs, rv, 0);
-		}
-		break;
-	case AMLOP_STALL:
-		i1 = aml_eparseint(ctx, AML_ANYINT);
-		dnprintf(40, "stall %lld usecs\n", i1);
-		acpi_delay(ctx->sc, i1);
-		break;
-	case AMLOP_SLEEP:
-		i1 = aml_eparseint(ctx, AML_ANYINT);
-		dnprintf(40, "sleep %lld msecs\n", i1);
-		acpi_delay(ctx->sc, i1 * 1000);
-		break;
-	case AMLOP_MUTEX:
-		name = aml_parse_name(ctx);
-		i1 = aml_eparseint(ctx, AML_BYTE);
-		rv = aml_allocvalue(AML_OBJTYPE_MUTEX, i1, NULL);
-		aml_addvname(ctx, name, opc->opcode, rv);
-		break;
-	case AMLOP_ACQUIRE:
-		i2  = 0;
-		lhs = aml_eparseval(ctx, 1);
-		i1  = aml_eparseint(ctx, AML_WORD);  // timeout (0xffff = infinite)
-		acpi_mutex_acquire(ctx, &lhs->v_mutex, i1);
-
-		/* Returns true for timeout */
-		rv  = aml_allocint(i2);
-		break;
-	case AMLOP_RELEASE:
-		lhs = aml_eparseval(ctx, 1);
-		acpi_mutex_release(ctx, &lhs->v_mutex);
-		break;
-	case AMLOP_EVENT:
-		name = aml_parse_name(ctx);
-		rv = aml_allocvalue(AML_OBJTYPE_EVENT, 0, NULL);
-		aml_addvname(ctx, name, opc->opcode, rv);
-		break;
-	case AMLOP_SIGNAL:
-		lhs = aml_eparseval(ctx, 1);
-		dnprintf(40, "signal: %s\n", lhs->v_string);
-		break;
-	case AMLOP_WAIT:
-		lhs = aml_eparseval(ctx, 1);
-		i1  = aml_eparseint(ctx, AML_ANYINT);
-		dnprintf(40, "wait: %s %llx\n", lhs->v_string, i1);
-		break;
-	case AMLOP_RESET:
-		lhs = aml_eparseval(ctx, 1);
-		dnprintf(40, "reset: %s\n", lhs->v_string);
-		break;
-	case AMLOP_NOTIFY:
-		lhs = aml_eparseval(ctx, 1);
-		i1  = aml_eparseint(ctx, AML_ANYINT);
-		/* XXX: Fix me when we deref properly */
-		if ((node = lhs->node) == NULL)
-			node = aml_searchname(ctx->scope, lhs->name);
-		dnprintf(10, "NOTIFY: %llx %s\n", i1, lhs->name);
-		aml_notify(node, i1);
-		break;
-	case AMLOP_LOAD:
-	case AMLOP_STORE:
-		rhs = aml_eparseval(ctx, 1);
-		lhs = aml_eparseval(ctx, 0);
-		rv  = aml_esetnodevalue(ctx, lhs, rhs, 0);
-		
-		break;
-	case AMLOP_COPYOBJECT:
-		rhs = aml_eparseval(ctx, 1);
-		lhs = aml_eparseval(ctx, 1);
-		rv = aml_copyvalue(rhs);
-		aml_esetnodevalue(ctx, lhs, rv, 0);
-		break;
-	case AMLOP_OPREGION:
-		name = aml_parse_name(ctx);
-		rv = aml_allocvalue(AML_OBJTYPE_OPREGION, 0, NULL);
-		if (aml_valid(rv)) {
-			rv->v_opregion.iospace = aml_eparseint(ctx, AML_BYTE);
-			rv->v_opregion.iobase  = aml_eparseint(ctx, AML_ANYINT);
-			rv->v_opregion.iolen   = aml_eparseint(ctx, AML_ANYINT);
-
-			/* Special case: get PCI address */
-			if (rv->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
-				i1 = aml_get_pciaddr(ctx, ctx->scope);
-				if (i1 == 0xFFFF)
-					dnprintf(50, "aml_pciregion: no _ADR for %s!\n",
-						 name);
-				else {
-					rv->v_opregion.iobase += i1;
-					dnprintf(50, "aml_pciregion: %llx\n", rv->v_opregion.iobase);
-				}
-			}
-			aml_addvname(ctx, name, opc->opcode, rv);
-		}
-		break;
-	case AMLOP_ALIAS:
-		name = aml_parse_name(ctx);  // alias
-		dnprintf(50, "alias0: %s\n", name);
-		rv = aml_allocvalue(AML_OBJTYPE_NAMEREF, 0, (void *)name);
-
-		name = aml_parse_name(ctx);  // new name
-		dnprintf(50, "alias1: %s\n", name);
-		aml_addvname(ctx, name, opc->opcode, rv);
-		break;
-	case AMLOP_NAME:
-		name = aml_parse_name(ctx);
-		rv = aml_eparseval(ctx, 0);
-		aml_addvname(ctx, name, opc->opcode, rv);
-		break;
-	case AMLOP_RETURN:
-		rv = aml_eparseval(ctx, 1);
-		dnprintf(40, "RETURNING: ");
-		aml_showvalue(rv);
-		ctx->pos = NULL;
-		break;
-	case AMLOP_MID:
-		rv = aml_domid(ctx);
-		break;
-	case AMLOP_CONCAT:
-		rv = aml_doconcat(ctx);
-		break;
-
-	case AMLOP_SCOPE:
-		end = aml_eparselen(ctx);
-		name = aml_parse_name(ctx);
-
-		/* Save old scope, create new scope */
-		rv = aml_eparsescope(ctx, name, end, opc, NULL);
-		break;
-	case AMLOP_DEVICE:
-		end  = aml_eparselen(ctx);
-		name = aml_parse_name(ctx);
-
-		/* Save old scope, create new scope */
-		rv = aml_allocvalue(AML_OBJTYPE_DEVICE, 0, NULL);
-		lhs  = aml_eparsescope(ctx, name, end, opc, rv);
-		break;
-	case AMLOP_POWERRSRC:
-		end  = aml_eparselen(ctx);
-		name = aml_parse_name(ctx);
-
-		rv = aml_allocvalue(AML_OBJTYPE_POWERRSRC, 0, NULL);
-		if (aml_valid(rv)) {
-			rv->v_powerrsrc.pwr_level = aml_eparseint(ctx, AML_BYTE);
-			rv->v_powerrsrc.pwr_order = aml_eparseint(ctx, AML_WORD);
-		}
-		lhs = aml_eparsescope(ctx, name, end, opc, rv);
-		break;
-	case AMLOP_PROCESSOR:
-		end  = aml_eparselen(ctx);
-		name = aml_parse_name(ctx);
-
-		rv = aml_allocvalue(AML_OBJTYPE_PROCESSOR, 0, NULL);
-		if (aml_valid(rv)) {
-			rv->v_processor.proc_id = aml_eparseint(ctx, AML_BYTE);
-			rv->v_processor.proc_addr = aml_eparseint(ctx, AML_DWORD);
-			rv->v_processor.proc_len = aml_eparseint(ctx, AML_BYTE);
-		}
-
-		lhs = aml_eparsescope(ctx, name, end, opc, rv);
-		break;
-	case AMLOP_THERMALZONE:
-		end  = aml_eparselen(ctx);
-		name = aml_parse_name(ctx);
-
-		rv = aml_allocvalue(AML_OBJTYPE_THERMZONE, 0, NULL);
-		lhs = aml_eparsescope(ctx, name, end, opc, rv);
-		break;
-	case AMLOP_OBJECTTYPE:
-		lhs = aml_eparseval(ctx, 1);
-		i1 = (lhs->type == AML_OBJTYPE_STATICINT) ?
-			AML_OBJTYPE_INTEGER : lhs->type;
-		rv  = aml_allocint(i1);
-		break;
-	case AMLOP_SIZEOF:
-		lhs = aml_eparseval(ctx, 1);
-		if (aml_valid(lhs))
-			rv = aml_allocint(lhs->length);
-		break;
-	case AMLOP_METHOD:
-		end  = aml_eparselen(ctx);
-		name = aml_parse_name(ctx);
-		i1   = aml_eparseint(ctx, AML_BYTE);
-		rv = aml_allocvalue(AML_OBJTYPE_METHOD, i1, NULL);
-		if (aml_valid(rv)) {
-			/* Allocate method block */
-			rv->length = end - ctx->pos;
-			rv->v_method.start = acpi_os_allocmem(rv->length);
-			rv->v_method.end   = rv->v_method.start + rv->length;
-
-			memcpy(rv->v_method.start, ctx->pos, rv->length);
-			aml_addvname(ctx, name, opc->opcode, rv);
-		}
-		break;
-	case AMLOP_CONDREFOF:
-		rhs = aml_eparseval(ctx, 0);
-		lhs = aml_eparseval(ctx, 1);
-		rv  = aml_allocint(0);
-		if (aml_ederef(ctx, rhs) != NULL) {
-			tmp = aml_allocvalue(AML_OBJTYPE_OBJREF, -1, rhs);
-			aml_esetnodevalue(ctx, lhs, tmp, 0);
-			rv->v_integer = 1;
-		}
-		dnprintf(40,"condrefof: %lld\n", rv->v_integer);
-		break;
-	case AMLOP_REFOF:
-		rv  = aml_allocvalue(AML_OBJTYPE_OBJREF, 0, NULL);
-		if (aml_valid(rv)) {
-			rv->v_objref.ref = aml_eparseval(ctx, 0);
-			rv->v_objref.index = -1;
-
-			lhs = aml_eparseval(ctx, 1);
-			aml_esetnodevalue(ctx, lhs, rv, 0);
-		}
-		break;
-	case AMLOP_INDEX:
-		rv  = aml_allocvalue(AML_OBJTYPE_OBJREF, 0, NULL);
-		if (aml_valid(rv)) {
-			rv->v_objref.ref = aml_eparseval(ctx, 0);
-			rv->v_objref.index = aml_eparseint(ctx, AML_ANYINT);
-
-			lhs = aml_eparseval(ctx, 1);
-			aml_esetnodevalue(ctx, lhs, rv, 0);
-		}
-		break;
-	case AMLOP_DEREFOF:
-		rv = aml_eparseval(ctx, 1);
-		break;
-	case AMLOP_LOADTABLE:
-		rv = aml_doloadtable(ctx);
-		break;
-	case AMLOP_MATCH:
-		rv = aml_domatch(ctx);
-		break;
-	case AMLOP_WHILE:
-		rv  = aml_dowhile(ctx);
-		break;
-	case AMLOP_IF:
-		rv  = aml_doif(ctx);
-		break;
-
-	default:
-		dnprintf(40,"Unknown opcode: %.4x %s\n", opc->opcode, opc->mnem);
-		break;
-	}
-	if (deref && rv) {
-		switch (rv->type) {
-		case AML_OBJTYPE_FIELDUNIT:
-		case AML_OBJTYPE_BUFFERFIELD:
-			rhs = rv;
-			rv  = aml_efield(ctx, rhs, NULL);
-			aml_freevalue(&rhs);
-			break;
-		case AML_OBJTYPE_OBJREF:
-			break;
-		}
-	}
-
-	/* Free temp variables */
-	if (rv != lhs) aml_freevalue(&lhs);
-	if (rv != rhs) aml_freevalue(&rhs);
-	if (rv != tmp) aml_freevalue(&tmp);
-
-	if (end > ctx->pos)
-		ctx->pos = end;
-
-	--ctx->depth;
-	return rv;
-}
-
-/* Remove all children nodes */
-void
-aml_delchildren(struct acpi_context *ctx, struct aml_node *node)
-{
-	struct aml_node *pn;
-
-	if (node == NULL)
-		return;
-	while ((pn = node->child) != NULL) {
-		dnprintf(40, "deleting node..\n");
-		if (pn->value)
-			pn->value->node = NULL;
-		node->child = node->child->sibling;
-		aml_delchildren(ctx, pn);
-		acpi_os_freemem(pn);
-	}
-}
-
-/* Ok.. we have a node and hopefully its value.. call value */
-struct aml_value *
-aml_eparsenode(struct acpi_context *ctx, struct aml_node *node)
-{
-	struct aml_node *oldscope;
-	struct aml_value *rv;
-
-	if (node->value == NULL)
-		return NULL;
-	switch (node->value->type) {
-	case AML_OBJTYPE_NAMEREF:
-	case AML_OBJTYPE_INTEGER:
-	case AML_OBJTYPE_STRING:
-	case AML_OBJTYPE_BUFFER:
-	case AML_OBJTYPE_PACKAGE:
-		return node->value;
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-		return aml_efield(ctx, node->value, NULL);
-	case AML_OBJTYPE_METHOD:
-		/* Setup method call */
-		oldscope = ctx->scope;
-		ctx->scope = node->parent;
-
-		dnprintf(40, "Call function: %s\n", node->name);
-
-		ctx->pos = node->value->v_method.start;
-		rv = aml_eparselist(ctx, node->value->v_method.end, 1);
-
-		/* Delete dynamic names */
-		aml_delchildren(ctx, node);
-
-		ctx->scope = oldscope;
-		return rv;
-	default:
-		dnprintf(40, "Unknown node value: %d\n", node->value->type);
-	}
-	return NULL;
-}
-
 int
-aml_eval_object(struct acpi_softc *sc, struct aml_node *node,
-		struct aml_value *ret, int argc, struct aml_value *argv)
-{
-	struct acpi_context *ctx;
-	struct aml_value *rv;
-
-	ret->type = 0;
-	ctx = acpi_alloccontext(sc, node, argc, argv);
-	rv = aml_eparsenode(ctx, node);
-	dnprintf(40, "###### RETURNING #####\n");
-	aml_showvalue(rv);
-	if (rv != NULL)
-		*ret = *rv;
-
-	/* XXX: must free rv */
-	acpi_freecontext(ctx);
-
-	return 0;
-}
-
-struct aml_value *
-aml_evalmethod(struct acpi_context *ctx, struct aml_value *method)
-{
-	struct aml_value **argv, *rv;
-	int64_t idx, size, argc;
-
-	/* Decode method arguments from bytestream */
-	size = sizeof(struct aml_value *) * AML_MAX_ARG;
-	argv = (struct aml_value **)acpi_os_allocmem(size);
-
-	argc = AML_METHOD_ARGCOUNT(method->v_method.flags);
-	for (idx = 0; idx < argc; idx++)
-		argv[idx] = aml_eparseval(ctx, 0);
-
-	/* Evaluate method */
-	rv = aml_evalnode(ctx->sc, method->node, argc, argv);
-
-	/* Free arguments */
-	for(idx = 0; idx < AML_MAX_ARG; idx++)
-		aml_freevalue(&argv[idx]);
-
-	acpi_os_freemem(argv);
-
-	return (rv);
-}
-
-struct aml_value *
-aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
-	     int argc, struct aml_value **argv)
-{
-	struct acpi_context *ctx;
-	struct aml_value *rv, **tmparg;
-
-	/* This shouldn't happen... */
-	if (node->value == NULL)
-		return NULL;
-
-	/* Simple objects: return node value */
-	dnprintf(10, "--- eval: (%s)\n", node->name);
-	switch (node->value->type) {
-	case AML_OBJTYPE_NAMEREF:
-	case AML_OBJTYPE_INTEGER:
-	case AML_OBJTYPE_STATICINT:
-	case AML_OBJTYPE_STRING:
-	case AML_OBJTYPE_BUFFER:
-	case AML_OBJTYPE_PACKAGE:
-		return node->value;
-	}
-
-	/* Method or field context required */
-	if ((ctx = acpi_alloccontext(sc, node, 0, NULL)) == NULL)
-		return NULL;
-
-	/* XXX: ugh, fix this, set method argument pointer */
-	tmparg = ctx->args;
-	if (argv != NULL)
-		ctx->args = argv;
-
-	rv = NULL;
-	switch (node->value->type) {
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-		rv = aml_efield(ctx, node->value, NULL);
-		break;
-	case AML_OBJTYPE_METHOD:
-		ctx->pos = node->value->v_method.start;
-		rv = aml_eparselist(ctx, node->value->v_method.end, 0);
-		break;
-	default:
-		dnprintf(1, "aml_evalnode: Unknown type (%d) for %s\n",
-			 node->value->type,
-			 node->name);
-		break;
-	}
-	ctx->args = tmparg;
-	aml_delchildren(ctx, node);
-	acpi_freecontext(ctx);
-
-	return rv;
-}
-
-struct aml_value *
 aml_evalname(struct acpi_softc *sc, struct aml_node *parent, const char *name,
-	     int argc, struct aml_value **argv)
+	     int argc, struct aml_value *argv,
+	     struct aml_value *res)
 {
-	struct aml_node *node;
-
-	if ((node = aml_searchname(parent, name)) != NULL)
-		return aml_evalnode(sc, node, argc, argv);
-
-	return NULL;
-}
-
-void
-aml_shownode(struct aml_node *node)
-{
-	dnprintf(50, " opcode:%.4x  mnem:%s %s ",
-		 node->opcode, node->mnem, node->name ? node->name : "");
-	switch(node->opcode) {
-	case AMLOP_METHOD:
-		break;
-		
-	case AMLOP_NAMECHAR:
-		dnprintf(50, "%s", node->value->name);
-		break;
-
-	case AMLOP_FIELD:
-	case AMLOP_BANKFIELD:
-	case AMLOP_INDEXFIELD:
-		break;
-		
-	case AMLOP_BYTEPREFIX:
-		dnprintf(50, "byte: %.2x", node->value->v_integer);
-		break;
-	case AMLOP_WORDPREFIX:
-		dnprintf(50, "word: %.4x", node->value->v_integer);
-		break;
-	case AMLOP_DWORDPREFIX:
-		dnprintf(50, "dword: %.8x", node->value->v_integer);
-		break;
-	case AMLOP_STRINGPREFIX:
-		dnprintf(50, "string: %s", node->value->v_string);
-		break;
-	}
-	dnprintf(50, "\n");
+	return aml_evalnode(sc, aml_searchname(parent, name), argc, argv, res);
 }
 
 void
 aml_walktree(struct aml_node *node)
 {
-	int idx;
-
 	while(node) {
-		dnprintf(50, " %d ", node->depth);
-		for(idx=0; idx<node->depth; idx++)
-			dnprintf(50, "..");
-		aml_shownode(node);
+		aml_showvalue(node->value);
 		aml_walktree(node->child);
 		node = node->sibling;
 	}
@@ -3000,6 +1683,1182 @@ aml_find_node(struct aml_node *node, const char *name,
 	return (0);
 }
 
+/*
+ * @@@: Parser functions
+ */
+uint8_t *aml_parsename(struct aml_scope *);
+uint8_t *aml_parseend(struct aml_scope *scope);
+int      aml_parselength(struct aml_scope *);
+int      aml_parseopcode(struct aml_scope *);
+
+/* Get AML Opcode */
+int
+aml_parseopcode(struct aml_scope *scope)
+{
+	int opcode =  (scope->pos[0]);
+	int twocode = (scope->pos[0]<<8) + scope->pos[1];
+
+	/* Check if this is an embedded name */
+	switch (opcode) {
+	case AMLOP_ROOTCHAR:
+	case AMLOP_PARENTPREFIX:
+	case AMLOP_MULTINAMEPREFIX:
+	case AMLOP_DUALNAMEPREFIX:
+	case AMLOP_NAMECHAR:
+	case 'A' ... 'Z':
+		return AMLOP_NAMECHAR;
+	}
+	if (twocode == AMLOP_LNOTEQUAL ||
+	    twocode == AMLOP_LLESSEQUAL ||
+	    twocode == AMLOP_LGREATEREQUAL ||
+	    opcode == AMLOP_EXTPREFIX)
+	{
+		scope->pos += 2;
+		return twocode;
+	}
+	scope->pos += 1;
+	return opcode;
+}
+
+/* Decode embedded AML Namestring */
+uint8_t *
+aml_parsename(struct aml_scope *scope)
+{
+	uint8_t *name = scope->pos;
+
+	while (*scope->pos == AMLOP_ROOTCHAR || *scope->pos == AMLOP_PARENTPREFIX)
+		scope->pos++;
+
+	switch (*scope->pos) {
+	case 0x00:
+		break;
+	case AMLOP_MULTINAMEPREFIX:
+		scope->pos += 2+AML_NAMESEG_LEN*scope->pos[1];
+		break;
+	case AMLOP_DUALNAMEPREFIX:
+		scope->pos += 1+AML_NAMESEG_LEN*2;
+		break;
+	default:
+		scope->pos += AML_NAMESEG_LEN;
+		break;
+	}
+	return name;
+}
+
+/* Decode AML Length field */
+int
+aml_parselength(struct aml_scope *scope)
+{
+	int len = (*scope->pos & 0xF);
+
+	switch (*scope->pos >> 6) {
+	case 0x00:
+		len = scope->pos[0] & 0x3F;
+		scope->pos += 1;
+		break;
+	case 0x01:
+		len += (scope->pos[1]<<4L);
+		scope->pos += 2;
+		break;
+	case 0x02:
+		len += (scope->pos[1]<<4L) + (scope->pos[2]<<12L);
+		scope->pos += 3;
+		break;
+	case 0x03:
+		len += (scope->pos[1]<<4L) + (scope->pos[2]<<12L) + (scope->pos[3]<<20L);
+		scope->pos += 4;
+		break;
+	}
+	return len;
+}
+
+/* Get address of end of scope; based on current address */
+uint8_t *
+aml_parseend(struct aml_scope *scope)
+{
+	uint8_t *pos = scope->pos;
+	int len;
+
+	len = aml_parselength(scope);
+	if (pos+len > scope->end) {
+		dnprintf(0,"Bad scope... runover pos:%.4x new end:%.4x scope end:%.4x\n", 
+		       aml_pc(pos), aml_pc(pos+len), aml_pc(scope->end));
+		pos = scope->end;
+	}
+	return pos+len;
+}
+
+/*
+ * @@@: Opcode utility functions
+ */
+int  aml_match(int, int64_t, struct aml_value *);
+void aml_getpciaddr(struct aml_scope *, struct aml_value *);
+void aml_fixref(struct aml_value **);
+int64_t aml_parseint(struct aml_scope *, int);
+
+int
+aml_match(int op, int64_t mv1, struct aml_value *mv2)
+{
+	struct aml_value tmpint;
+
+	memset(&tmpint, 0, sizeof(tmpint));
+	_aml_setvalue(&tmpint, AML_OBJTYPE_INTEGER, mv1, NULL);
+	switch (op) {
+	case AML_MATCH_EQ:
+		return aml_cmpvalue(&tmpint, mv2, AMLOP_LEQUAL);
+	case AML_MATCH_LT:
+		return aml_cmpvalue(&tmpint, mv2, AMLOP_LLESS);
+	case AML_MATCH_LE:
+		return aml_cmpvalue(&tmpint, mv2, AMLOP_LLESSEQUAL);
+	case AML_MATCH_GE:
+		return aml_cmpvalue(&tmpint, mv2, AMLOP_LGREATEREQUAL);
+	case AML_MATCH_GT:
+		return aml_cmpvalue(&tmpint, mv2, AMLOP_LGREATER);
+	}
+	return (1);
+}
+
+void
+aml_getpciaddr(struct aml_scope *scope, struct aml_value *res)
+{
+	struct aml_node *node;
+	struct aml_value *tmpres;
+
+	/* PCI */
+	tmpres = aml_alloctmp(scope, 1);
+	node = aml_searchname(scope->node, "_ADR");
+	if (node != NULL) {
+		aml_evalterm(scope, node->value, tmpres);
+		res->v_opregion.iobase += (aml_val2int(tmpres) << 16L);
+	}
+	node = aml_searchname(scope->node, "_BBN");
+	if (node != NULL) {
+		aml_evalterm(scope, node->value, tmpres);
+		res->v_opregion.iobase += (aml_val2int(tmpres) << 48L);
+	}
+}
+
+/* Fixup references for BufferFields/FieldUnits */
+void
+aml_fixref(struct aml_value **res)
+{
+	struct aml_value *oldres;
+
+	while (*res && 
+	       (*res)->type == AML_OBJTYPE_OBJREF && 
+	       (*res)->v_objref.index == -1) 
+	{
+		oldres = (*res)->v_objref.ref;
+		aml_delref(res);
+		aml_addref(oldres);
+		*res = oldres;
+	}
+}
+
+int64_t
+aml_parseint(struct aml_scope *scope, int opcode)
+{
+	uint8_t *np = scope->pos;
+	struct aml_value *tmpval;
+	int64_t rval;
+	
+	if (opcode == AML_ANYINT)
+		opcode = aml_parseopcode(scope);
+	switch (opcode) {
+	case AMLOP_ZERO:
+		rval = 0;
+		break;
+	case AMLOP_ONE:
+		rval = 1;
+		break;
+	case AMLOP_ONES:
+		rval = -1;
+		break;
+	case AMLOP_REVISION:
+		rval = 0x101;
+		break;
+	case AMLOP_BYTEPREFIX:
+		rval = *(uint8_t *)scope->pos;
+		scope->pos += 1;
+		break;
+	case AMLOP_WORDPREFIX:
+		rval = aml_letohost16(*(uint16_t *)scope->pos);
+		scope->pos += 2;
+		break;
+	case AMLOP_DWORDPREFIX:
+		rval = aml_letohost32(*(uint32_t *)scope->pos);
+		scope->pos += 4;
+		break;
+	case AMLOP_QWORDPREFIX:
+		rval = aml_letohost64(*(uint64_t *)scope->pos);
+		scope->pos += 8;
+		break;
+	default:
+		scope->pos = np;
+		tmpval = aml_alloctmp(scope, 1);
+		aml_parseterm(scope, tmpval);
+		return aml_val2int(tmpval);
+	}
+	dnprintf(60,"%.4x: [%s] %s\n", 
+		 aml_pc(scope->pos-opsize(opcode)), 
+		 aml_nodename(scope->node),
+		 aml_mnem(opcode));
+
+	return rval;
+}
+
+struct aml_value *
+aml_evaltarget(struct aml_scope *scope, struct aml_value *res)
+{
+	return res;
+}
+
+int
+aml_evalterm(struct aml_scope *scope, struct aml_value *raw, 
+	     struct aml_value *dst)
+{
+	int index, argc;
+	struct aml_node *deref;
+	struct aml_value *tmparg = NULL;
+
+ loop:
+	switch (raw->type) {
+	case AML_OBJTYPE_NAMEREF:
+		deref = aml_searchname(scope->node, raw->v_nameref);
+		if (deref && deref->value) {
+			raw = deref->value;
+			goto loop;
+		}
+		aml_setvalue(scope, dst, raw, 0);
+		break;
+	case AML_OBJTYPE_OBJREF:
+		while (raw->type == AML_OBJTYPE_OBJREF && raw->v_objref.index == -1) {
+			raw = raw->v_objref.ref;
+		}
+		if (raw->type != AML_OBJTYPE_OBJREF)
+			goto loop;
+
+		index = raw->v_objref.index;
+		raw = raw->v_objref.ref;
+		switch (raw->type) {
+		case AML_OBJTYPE_PACKAGE:
+			if (index >= raw->length) {
+				aml_setvalue(scope, dst, NULL, 0);
+			}
+			else {
+				aml_setvalue(scope, dst, raw->v_package[index], 0);
+			}
+			goto loop;
+			break;
+		case AML_OBJTYPE_BUFFER:
+			aml_setvalue(scope, dst, NULL, raw->v_buffer[index]);
+			break;
+		case AML_OBJTYPE_STRING:
+			aml_setvalue(scope, dst, NULL, raw->v_string[index]);
+			break;
+		default:
+			aml_die("evalterm");
+			break;
+		}
+		break;
+
+	case AML_OBJTYPE_METHOD:
+		/* Read arguments from current scope */
+		argc = AML_METHOD_ARGCOUNT(raw->v_method.flags);
+		tmparg = aml_alloctmp(scope, argc);
+		for (index=0; index<argc; index++) {
+			aml_parseop(scope, &tmparg[index]);
+			aml_addref(&tmparg[index]);
+		}
+		aml_evalmethod(raw->node, argc, tmparg, dst);
+		break;
+	case AML_OBJTYPE_BUFFERFIELD:
+	case AML_OBJTYPE_FIELDUNIT:
+		aml_fieldio(scope, raw, dst, ACPI_IOREAD);
+		break;
+	default:
+		aml_freevalue(dst);
+		aml_setvalue(scope, dst, raw, 0);
+		break;
+	}
+	return (0);
+}
+
+
+/*
+ * @@@: Opcode functions
+ */
+struct aml_value *aml_parsenamed(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsenamedscope(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsemath(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsecompare(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parseif(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsewhile(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsebufpkg(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsemethod(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsesimple(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsefieldunit(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsebufferfield(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsemisc3(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsemuxaction(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsemisc2(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsematch(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parseref(struct aml_scope *, int, struct aml_value *);
+struct aml_value *aml_parsestring(struct aml_scope *, int, struct aml_value *);
+
+/* Parse named objects */
+struct aml_value *
+aml_parsenamed(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	uint8_t *name;
+
+	AML_CHECKSTACK();
+	name = aml_parsename(scope);
+
+	res = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
+	switch (opcode) {
+	case AMLOP_NAME:
+		aml_parseop(scope, res);
+		break;
+	case AMLOP_ALIAS:
+		_aml_setvalue(res, AML_OBJTYPE_NAMEREF, 0, name);
+		name = aml_parsename(scope);
+		break;
+	case AMLOP_EVENT:
+		_aml_setvalue(res, AML_OBJTYPE_EVENT, 0, NULL);
+		break;
+	case AMLOP_MUTEX:
+		_aml_setvalue(res, AML_OBJTYPE_MUTEX, 0, NULL);
+		res->v_integer = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		break;
+	case AMLOP_OPREGION:
+		_aml_setvalue(res, AML_OBJTYPE_OPREGION, 0, NULL);
+		res->v_opregion.iospace = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		res->v_opregion.iobase = aml_parseint(scope, AML_ANYINT);
+		res->v_opregion.iolen = aml_parseint(scope, AML_ANYINT);
+		if (res->v_opregion.iospace == GAS_PCI_CFG_SPACE)
+			aml_getpciaddr(scope, res);
+		break;
+	}
+	aml_createname(scope->node, name, res);
+
+	return res;
+}
+
+/* Parse Named objects with scope */
+struct aml_value *
+aml_parsenamedscope(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	uint8_t *end, *name;
+	struct aml_node *node;
+
+	AML_CHECKSTACK();
+	end = aml_parseend(scope);
+	name = aml_parsename(scope);
+
+	switch (opcode) {
+	case AMLOP_DEVICE:
+		res = aml_allocvalue(AML_OBJTYPE_DEVICE, 0, NULL);
+		break;
+	case AMLOP_SCOPE:
+		res = NULL;
+		break;
+	case AMLOP_PROCESSOR:
+		res = aml_allocvalue(AML_OBJTYPE_PROCESSOR, 0, NULL);
+		res->v_processor.proc_id = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		res->v_processor.proc_addr = aml_parseint(scope, AMLOP_DWORDPREFIX);
+		res->v_processor.proc_len = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		break;
+	case AMLOP_POWERRSRC:
+		res = aml_allocvalue(AML_OBJTYPE_POWERRSRC, 0, NULL);
+		res->v_powerrsrc.pwr_level = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		res->v_powerrsrc.pwr_order = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		break;
+	case AMLOP_THERMALZONE:
+		res = aml_allocvalue(AML_OBJTYPE_THERMZONE, 0, NULL);
+		break;
+	}
+	node = aml_createname(scope->node, name, res);
+	aml_parsenode(node, scope->pos, &end, NULL);
+	scope->pos = end;
+
+	return res;
+}
+
+/* Parse math opcodes */
+struct aml_value *
+aml_parsemath(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmparg;
+	int64_t i1, i2, i3;
+
+	AML_CHECKSTACK();
+	tmparg = aml_alloctmp(scope, 4);
+
+	switch (opcode) {
+	case AMLOP_LNOT:
+		i2 = 0;
+		i1 = aml_parseint(scope, AML_ANYINT);
+		break;
+	case AMLOP_LAND:
+	case AMLOP_LOR:
+		i1 = aml_parseint(scope, AML_ANYINT);
+		i2 = aml_parseint(scope, AML_ANYINT);
+		break;
+	case AMLOP_NOT:
+	case AMLOP_TOBCD:
+	case AMLOP_FROMBCD:
+	case AMLOP_TOINTEGER:
+	case AMLOP_FINDSETLEFTBIT:
+	case AMLOP_FINDSETRIGHTBIT:
+		i2 = 0;
+		i1 = aml_parseint(scope, AML_ANYINT);
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+		break;
+	case AMLOP_INCREMENT:
+	case AMLOP_DECREMENT:
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+		aml_evalterm(scope, &tmparg[DST], &tmparg[LHS]);
+		i1 = aml_val2int(&tmparg[LHS]);
+		i2 = 1;
+		break;
+	case AMLOP_DIVIDE:
+		i1 = aml_parseint(scope, AML_ANYINT);
+		i2 = aml_parseint(scope, AML_ANYINT);
+		aml_parsetarget(scope, &tmparg[DST2], NULL);  // remainder
+		aml_parsetarget(scope, &tmparg[DST], NULL);   // quotient
+
+		aml_setvalue(scope, &tmparg[DST2], NULL, (i1 % i2));
+		break;
+	default:
+		i1 = aml_parseint(scope, AML_ANYINT);
+		i2 = aml_parseint(scope, AML_ANYINT);
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+		break;
+	}
+	i3 = aml_evalexpr(i1, i2, opcode);
+	aml_setvalue(scope, res, NULL, i3);
+	aml_setvalue(scope, &tmparg[DST], NULL, i3);
+
+	return (res);
+}
+
+/* Parse logical comparison opcodes */
+struct aml_value *
+aml_parsecompare(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmparg;
+	int rc;
+
+	AML_CHECKSTACK();
+	tmparg = aml_alloctmp(scope, 2);
+	aml_parseterm(scope, &tmparg[LHS]);
+	aml_parseterm(scope, &tmparg[RHS]);
+
+	/* Compare both values */
+	rc = aml_cmpvalue(&tmparg[LHS], &tmparg[RHS], opcode);  
+	aml_setvalue(scope, res, NULL, rc);
+
+	return res;
+}
+
+/* Parse IF/ELSE opcodes */
+struct aml_value *
+aml_parseif(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	int64_t test;
+	uint8_t *end;
+
+	AML_CHECKSTACK();
+	end = aml_parseend(scope);
+	test = aml_parseint(scope, AML_ANYINT);
+
+	dnprintf(40, "@ iftest: %llx\n", test);
+	while (test && scope->pos && scope->pos < end) {
+		/* Parse if scope */
+		aml_parseterm(scope, res);
+	}
+	if (*end == AMLOP_ELSE) {
+		scope->pos = ++end;
+		end = aml_parseend(scope);
+		while (!test && scope->pos && scope->pos < end) {
+			/* Parse ELSE scope */
+			aml_parseterm(scope, res);
+		}
+	}
+	if (scope->pos < end)
+		scope->pos = end;
+	return res;
+}
+
+struct aml_value *
+aml_parsewhile(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	uint8_t *end, *start;
+	int test, cnt;
+
+	AML_CHECKSTACK();
+	end = aml_parseend(scope);
+	start = scope->pos;
+	cnt = 0;
+	do {
+		test = 1;
+		if (scope->pos == start || scope->pos == end) {
+			scope->pos = start;
+			test = aml_parseint(scope, AML_ANYINT);
+			dnprintf(40, "@whiletest = %d %x\n", test, cnt++);
+		}
+		else if (*scope->pos == AMLOP_BREAK) {
+			scope->pos++;
+			test = 0;
+		}
+		else if (*scope->pos == AMLOP_CONTINUE) {
+			scope->pos = start;
+		}
+		else {
+			aml_parseterm(scope, res);
+		}
+	} while (test && scope->pos <= end && cnt < 0x199);
+	/* XXX: shouldn't need breakout counter */
+
+	dnprintf(40,"Set While end : %x\n", cnt);
+	if (scope->pos < end)
+		scope->pos = end;
+	return res;
+}
+
+/* Parse Buffer/Package opcodes */
+struct aml_value *
+aml_parsebufpkg(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	uint8_t *end;
+	int len;
+
+	AML_CHECKSTACK();
+	end = aml_parseend(scope);
+	len = aml_parseint(scope, (opcode == AMLOP_PACKAGE) ? 
+			   AMLOP_BYTEPREFIX : AML_ANYINT);
+
+	switch (opcode) {
+	case AMLOP_BUFFER:
+		_aml_setvalue(res, AML_OBJTYPE_BUFFER, len, NULL);
+		if (scope->pos < end) {
+			memcpy(res->v_buffer, scope->pos, end-scope->pos);
+		}
+		if (len != end-scope->pos) {
+			dnprintf(99,"buffer: %.4x %.4x\n", len, end-scope->pos);
+		}
+		break;
+	case AMLOP_PACKAGE:
+	case AMLOP_VARPACKAGE:
+		_aml_setvalue(res, AML_OBJTYPE_PACKAGE, len, NULL);
+		for (len=0; len < res->length && scope->pos < end; len++) {
+			aml_parseop(scope, res->v_package[len]);
+		}
+		if (scope->pos != end) {
+			dnprintf(99,"Package not equiv!! %.4x %.4x %d of %d\n", 
+				 aml_pc(scope->pos), aml_pc(end), len, res->length);
+		}
+		break;
+	}
+	scope->pos = end;
+	return res;
+}
+
+struct aml_value *
+aml_parsemethod(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	uint8_t *end, *name;
+
+	AML_CHECKSTACK();
+	end = aml_parseend(scope);
+	name = aml_parsename(scope);
+
+	res = aml_allocvalue(AML_OBJTYPE_METHOD, 0, NULL);
+	res->v_method.flags = aml_parseint(scope, AMLOP_BYTEPREFIX);
+	res->v_method.start = scope->pos;
+	res->v_method.end = end;
+	aml_createname(scope->node, name, res);
+
+	scope->pos = end;
+
+	return res;
+}
+
+/* Parse simple type opcodes */
+struct aml_value *
+aml_parsesimple(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_node *node;
+
+	AML_CHECKSTACK();
+	switch (opcode) {
+	case AMLOP_ZERO:
+		_aml_setvalue(res, AML_OBJTYPE_INTEGER+AML_STATIC, 
+			      aml_parseint(scope, opcode), 
+			      NULL);
+		break;
+	case AMLOP_ONE:
+	case AMLOP_ONES:
+	case AMLOP_BYTEPREFIX:
+	case AMLOP_WORDPREFIX:
+	case AMLOP_DWORDPREFIX:
+	case AMLOP_QWORDPREFIX:
+	case AMLOP_REVISION:
+		_aml_setvalue(res, AML_OBJTYPE_INTEGER, 
+			      aml_parseint(scope, opcode), 
+			      NULL);
+		break;
+	case AMLOP_DEBUG:
+		_aml_setvalue(res, AML_OBJTYPE_DEBUGOBJ, 0, NULL);
+		break;
+	case AMLOP_STRINGPREFIX:
+		_aml_setvalue(res, AML_OBJTYPE_STRING, -1, scope->pos);
+		scope->pos += res->length+1;
+		break;
+	case AMLOP_NAMECHAR:
+		_aml_setvalue(res, AML_OBJTYPE_NAMEREF, 0, NULL);
+		res->v_nameref = aml_parsename(scope);
+		node = aml_searchname(scope->node, res->v_nameref);
+		if (node && node->value) {
+			_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, node->value);
+		}
+		break;
+	}  
+	return res;
+}
+
+/* Parse field unit opcodes */
+struct aml_value *
+aml_parsefieldunit(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	uint8_t *end, *name;
+	struct aml_value *fld;
+
+	AML_CHECKSTACK();
+	end = aml_parseend(scope);
+
+	switch (opcode) {
+	case AMLOP_FIELD:
+		aml_parsetarget(scope, NULL, &res->v_field.ref1);
+		break;
+	case AMLOP_INDEXFIELD:
+		aml_parsetarget(scope, NULL, &res->v_field.ref1);
+		aml_parsetarget(scope, NULL, &res->v_field.ref2);
+		break;
+	case AMLOP_BANKFIELD:
+		aml_parsetarget(scope, NULL, &res->v_field.ref1);
+		aml_parsetarget(scope, NULL, &res->v_field.ref2);
+		res->v_field.ref3 = aml_parseint(scope, AML_ANYINT);
+		break;
+	}
+	res->v_field.flags = aml_parseint(scope, AMLOP_BYTEPREFIX);
+	res->v_field.type = opcode;
+
+	aml_fixref(&res->v_field.ref1);
+	aml_fixref(&res->v_field.ref2);
+
+	while (scope->pos < end) {
+		switch (*scope->pos) {
+		case 0x00: // reserved
+			scope->pos++;
+			res->v_field.bitlen = aml_parselength(scope);
+			break;
+		case 0x01: // attrib
+			scope->pos++;
+			/* XXX: do something with this */
+			aml_parseint(scope, AMLOP_BYTEPREFIX);
+			aml_parseint(scope, AMLOP_BYTEPREFIX);
+			res->v_field.bitlen = 0;
+			break;
+		default:
+			name = aml_parsename(scope);
+			res->v_field.bitlen = aml_parselength(scope);
+
+			/* Allocate new fieldunit */
+			fld = aml_allocvalue(AML_OBJTYPE_FIELDUNIT, 0, NULL);
+
+			/* Increase reference count on field */
+			fld->v_field = res->v_field;
+			aml_addref(fld->v_field.ref1);
+			aml_addref(fld->v_field.ref2);
+
+			aml_createname(scope->node, name, fld);
+			break;
+		}
+		res->v_field.bitpos += res->v_field.bitlen;
+	}
+	/* Delete redundant reference */
+	aml_delref(&res->v_field.ref1);
+	aml_delref(&res->v_field.ref2);
+	return res;
+}
+
+/* Parse CreateXXXField opcodes */
+struct aml_value *
+aml_parsebufferfield(struct aml_scope *scope, int opcode, 
+		     struct aml_value *res)
+{
+	uint8_t *name;
+
+	AML_CHECKSTACK();
+	res = aml_allocvalue(AML_OBJTYPE_BUFFERFIELD, 0, NULL);
+	res->v_field.type = opcode;
+	aml_parsetarget(scope, NULL, &res->v_field.ref1);
+	res->v_field.bitpos = aml_parseint(scope, AML_ANYINT);
+
+	aml_fixref(&res->v_field.ref1);
+
+	switch (opcode) {
+	case AMLOP_CREATEFIELD:
+		res->v_field.bitlen = aml_parseint(scope, AML_ANYINT);
+		break;
+	case AMLOP_CREATEBITFIELD:
+		res->v_field.bitlen = 1;
+		break;
+	case AMLOP_CREATEBYTEFIELD:
+		res->v_field.bitlen = 8;
+		res->v_field.bitpos *= 8;
+		break;
+	case AMLOP_CREATEWORDFIELD:
+		res->v_field.bitlen = 16;
+		res->v_field.bitpos *= 8;
+		break;
+	case AMLOP_CREATEDWORDFIELD:
+		res->v_field.bitlen = 32;
+		res->v_field.bitpos *= 8;
+		break;
+	case AMLOP_CREATEQWORDFIELD:
+		res->v_field.bitlen = 64;
+		res->v_field.bitpos *= 8;
+		break;
+	}
+	name = aml_parsename(scope);
+	aml_createname(scope->node, name, res);
+
+	return res;
+}
+
+/* Parse Mutex/Event action */
+struct aml_value *
+aml_parsemuxaction(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmparg;
+	int64_t i1;
+
+	AML_CHECKSTACK();
+
+	tmparg = aml_alloctmp(scope, 1);
+	aml_parsetarget(scope, tmparg, NULL);
+	switch (opcode) {
+	case AMLOP_ACQUIRE:
+		/* Assert: tmparg is AML_OBJTYPE_MUTEX */
+		i1 = aml_parseint(scope, AMLOP_WORDPREFIX);
+
+		/* Return true if timed out */
+		aml_setvalue(scope, res, NULL, 0);
+		break;
+	case AMLOP_RELEASE:
+		break;
+
+	case AMLOP_WAIT:
+		/* Assert: tmparg is AML_OBJTYPE_EVENT */
+		i1 = aml_parseint(scope, AML_ANYINT);
+
+		/* Return true if timed out */
+		aml_setvalue(scope, res, NULL, 0);
+		break;
+	case AMLOP_SIGNAL:
+		break;
+	case AMLOP_RESET:
+		break;
+	}
+
+	return res;
+}
+
+/* Parse Miscellaneous opcodes */
+struct aml_value *
+aml_parsemisc2(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmparg, *dev;
+	int i1, i2, i3;
+
+	switch (opcode) {
+	case AMLOP_NOTIFY:
+		/* Assert: tmparg is nameref or objref */
+		tmparg = aml_alloctmp(scope, 1);
+		aml_parseop(scope, tmparg);
+		dev = aml_dereftarget(scope, tmparg);
+
+		i1 = aml_parseint(scope, AML_ANYINT);
+		if (dev && dev->node) {
+			dnprintf(0,"Notify: [%s] %.2x\n", 
+				 aml_nodename(dev->node), i1);
+			aml_notify(dev->node, i1);
+		}
+		break;
+	case AMLOP_SLEEP:
+		i1 = aml_parseint(scope, AML_ANYINT);
+		dnprintf(10,"SLEEP: %x\n", i1);
+		break;
+	case AMLOP_STALL:
+		i1 = aml_parseint(scope, AML_ANYINT);
+		dnprintf(10,"STALL: %x\n", i1);
+		break;
+	case AMLOP_FATAL:
+		i1 = aml_parseint(scope, AMLOP_BYTEPREFIX);
+		i2 = aml_parseint(scope, AMLOP_DWORDPREFIX);
+		i3 = aml_parseint(scope, AML_ANYINT);
+		aml_die("FATAL: %x %x %x\n", i1, i2, i3);
+		break;
+	}
+	return res;
+}
+
+/* Parse Miscellaneous opcodes */
+struct aml_value *
+aml_parsemisc3(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmparg;
+
+	AML_CHECKSTACK();
+	tmparg = aml_alloctmp(scope, 1);
+	aml_parseterm(scope, tmparg);
+	switch (opcode) {
+	case AMLOP_SIZEOF:
+		aml_setvalue(scope, res, NULL, tmparg->length);
+		break;
+	case AMLOP_OBJECTTYPE:
+		aml_setvalue(scope, res, NULL, tmparg->type);
+		break;
+	}
+
+	return res;
+}
+
+/* Parse AMLOP_MATCH */
+struct aml_value *
+aml_parsematch(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *pkg;
+	int op1, op2, idx, mv1, mv2;
+
+	AML_CHECKSTACK();
+	pkg = aml_parseterm(scope, NULL);
+	op1 = aml_parseint(scope, AMLOP_BYTEPREFIX);
+	mv1 = aml_parseint(scope, AML_ANYINT);
+	op2 = aml_parseint(scope, AMLOP_BYTEPREFIX);
+	mv2 = aml_parseint(scope, AML_ANYINT);
+	idx = aml_parseint(scope, AML_ANYINT);
+
+	aml_setvalue(scope, res, NULL, -1);
+	while (idx < pkg->length) {
+		if (aml_match(op1, mv1, pkg->v_package[idx]) || 
+		    aml_match(op2, mv2, pkg->v_package[idx])) 
+		{
+			aml_setvalue(scope, res, NULL, idx);
+			break;
+		}
+		idx++;
+	}
+	aml_delref(&pkg);
+	return res;
+}
+
+/* Parse referenced objects */
+struct aml_value *
+aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmparg;
+
+	AML_CHECKSTACK();
+
+	tmparg = aml_alloctmp(scope, 4);
+	switch (opcode) {
+	case AMLOP_INDEX:
+		aml_parsetarget(scope, res, NULL);
+		opcode = aml_parseint(scope, AML_ANYINT);
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+    
+		if (res->type == AML_OBJTYPE_OBJREF && res->v_objref.index == -1)
+		{
+			dnprintf(10,"fixup index\n");
+			res->v_objref.index = opcode;
+			aml_setvalue(scope, &tmparg[DST], res, 0);
+		}
+		break;
+	case AMLOP_DEREFOF:
+		aml_parseop(scope, res);
+		break;
+	case AMLOP_RETURN:
+		aml_parseterm(scope, &tmparg[DST]);
+		aml_setvalue(scope, res, &tmparg[DST], 0);
+		while (scope) {
+			scope->pos = scope->end;
+			scope = scope->parent;
+		}
+		break;
+	case AMLOP_ARG0 ... AMLOP_ARG6:
+		if (scope && scope->args) {
+			opcode -= AMLOP_ARG0;
+			if (opcode >= scope->nargs) {
+				aml_die("arg out of range: %x\n", opcode);
+			}
+
+			/* Create OBJREF to stack variable */
+			_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, &scope->args[opcode]);
+		}
+		break;
+	case AMLOP_LOCAL0 ... AMLOP_LOCAL7:
+		if (scope && scope->locals) {
+			/* Create OBJREF to stack variable */
+			_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, 
+				      &scope->locals[opcode - AMLOP_LOCAL0]);
+		}
+		break;
+	case AMLOP_LOAD:
+		aml_parseop(scope, &tmparg[LHS]);
+		aml_parseop(scope, &tmparg[RHS]);
+		break;
+	case AMLOP_STORE:
+		aml_parseterm(scope, res);
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+		aml_setvalue(scope, &tmparg[DST], res, 0);
+		break;
+	case AMLOP_REFOF:
+		_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, NULL);
+		aml_parsetarget(scope, NULL, &res->v_objref.ref);
+		break;
+	case AMLOP_CONDREFOF:
+		/* Returns true if object exists */
+		aml_parseterm(scope, &tmparg[LHS]);
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+		if (tmparg[LHS].type != AML_OBJTYPE_NAMEREF) {
+			/* Object exists */
+			aml_setvalue(scope, &tmparg[DST], &tmparg[LHS], 0);
+			aml_setvalue(scope, res, NULL, 1);
+		}
+		else {
+			/* Object doesn't exist */
+			aml_setvalue(scope, res, NULL, 0);
+		}
+		break;
+	}
+
+	return res;
+}
+
+struct aml_value *
+aml_parsestring(struct aml_scope *scope, int opcode, struct aml_value *res)
+{
+	struct aml_value *tmpval;
+	int i1, i2;
+
+	AML_CHECKSTACK();
+	tmpval = aml_alloctmp(scope, 4);
+	switch (opcode) {
+	case AMLOP_MID:
+		aml_parseterm(scope, &tmpval[0]);
+		i1 = aml_parseint(scope, AML_ANYINT); // start
+		i2 = aml_parseint(scope, AML_ANYINT); // length
+		aml_parsetarget(scope, &tmpval[1], NULL);
+		if (i1 > tmpval[0].length)
+			i1 = tmpval[0].length;
+		if (i1+i2 > tmpval[0].length)
+			i2 = tmpval[0].length-i1;
+		_aml_setvalue(res, AML_OBJTYPE_STRING, i2, tmpval[0].v_string+i1);
+		break;
+	case AMLOP_TODECSTRING:
+	case AMLOP_TOHEXSTRING:
+		i1 = aml_parseint(scope, AML_ANYINT);
+		_aml_setvalue(res, AML_OBJTYPE_STRING, 10, NULL);
+		snprintf(res->v_string, res->length, ((opcode == AMLOP_TODECSTRING) ? 
+						      "%d" : "%x"), i1);
+		break;
+	default:
+		aml_die("to_string");
+		break;
+	}
+
+	return res;
+}
+
+struct aml_value *
+aml_parseterm(struct aml_scope *scope, struct aml_value *res)
+{
+	struct aml_value *tmpres;
+
+	/* If no value specified, allocate dynamic */
+	if (res == NULL)
+		res = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
+	tmpres = aml_alloctmp(scope, 1);
+	aml_parseop(scope, tmpres);
+	aml_evalterm(scope, tmpres, res);
+	return res;
+}
+
+struct aml_value *
+aml_parsetarget(struct aml_scope *scope, struct aml_value *res, struct aml_value **opt)
+{
+	struct aml_value *dummy;
+
+	/* If no value specified, allocate dynamic */
+	if (res == NULL)
+		res = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
+	aml_parseop(scope, res);
+	dummy = aml_evaltarget(scope, res);
+	if (opt != NULL)
+		*opt = dummy;
+	return res;
+}
+
+struct aml_value *
+aml_parseop(struct aml_scope *scope, struct aml_value *res)
+{
+	int opcode;
+	struct aml_value *rval;
+
+	opcode = aml_parseopcode(scope);
+	dnprintf(60,"%.4x: [%s] %s\n", 
+		 aml_pc(scope->pos-opsize(opcode)), 
+		 aml_nodename(scope->node),
+		 aml_mnem(opcode));
+	aml_freevalue(res);
+
+	switch (opcode) {
+	case AMLOP_ZERO:
+	case AMLOP_ONE:
+	case AMLOP_ONES:
+	case AMLOP_REVISION:
+	case AMLOP_BYTEPREFIX:
+	case AMLOP_WORDPREFIX:
+	case AMLOP_DWORDPREFIX:
+	case AMLOP_QWORDPREFIX:
+	case AMLOP_STRINGPREFIX:
+	case AMLOP_DEBUG:
+	case AMLOP_NAMECHAR:
+	case AMLOP_NOP:
+		rval = aml_parsesimple(scope, opcode, res);
+		break;
+	case AMLOP_LNOT:
+	case AMLOP_LAND:
+	case AMLOP_LOR:
+	case AMLOP_NOT:
+	case AMLOP_TOBCD:
+	case AMLOP_FROMBCD:
+	case AMLOP_TOINTEGER:
+	case AMLOP_FINDSETLEFTBIT:
+	case AMLOP_FINDSETRIGHTBIT:
+	case AMLOP_INCREMENT:
+	case AMLOP_DECREMENT:
+	case AMLOP_DIVIDE:
+	case AMLOP_ADD: 
+	case AMLOP_SUBTRACT:
+	case AMLOP_MULTIPLY:
+	case AMLOP_SHL:
+	case AMLOP_SHR:
+	case AMLOP_AND:
+	case AMLOP_NAND:
+	case AMLOP_OR:
+	case AMLOP_NOR:
+	case AMLOP_XOR:
+	case AMLOP_MOD:
+		rval = aml_parsemath(scope, opcode, res);
+		break;
+	case AMLOP_MATCH:
+		rval = aml_parsematch(scope, opcode, res);
+		break;
+	case AMLOP_LLESS:
+	case AMLOP_LLESSEQUAL:
+	case AMLOP_LEQUAL:
+	case AMLOP_LNOTEQUAL:
+	case AMLOP_LGREATEREQUAL:
+	case AMLOP_LGREATER:
+		rval = aml_parsecompare(scope, opcode, res);
+		break;
+	case AMLOP_NAME:
+	case AMLOP_ALIAS:
+	case AMLOP_EVENT:
+	case AMLOP_MUTEX:
+	case AMLOP_OPREGION:
+		rval = aml_parsenamed(scope, opcode, res);
+		break;
+	case AMLOP_DEVICE:
+	case AMLOP_SCOPE:
+	case AMLOP_PROCESSOR:
+	case AMLOP_POWERRSRC:
+	case AMLOP_THERMALZONE:
+		rval = aml_parsenamedscope(scope, opcode, res);
+		break;
+	case AMLOP_ACQUIRE:
+	case AMLOP_RELEASE:
+	case AMLOP_WAIT:
+	case AMLOP_SIGNAL:
+	case AMLOP_RESET:
+		rval = aml_parsemuxaction(scope, opcode, res);
+		break;
+	case AMLOP_SLEEP:
+	case AMLOP_STALL:
+	case AMLOP_FATAL:
+	case AMLOP_NOTIFY:
+		rval = aml_parsemisc2(scope, opcode, res);
+		break;
+	case AMLOP_SIZEOF:
+	case AMLOP_OBJECTTYPE:
+		rval = aml_parsemisc3(scope, opcode, res);
+		break;
+	case AMLOP_CREATEFIELD:
+	case AMLOP_CREATEBITFIELD:
+	case AMLOP_CREATEBYTEFIELD:
+	case AMLOP_CREATEWORDFIELD:
+	case AMLOP_CREATEDWORDFIELD:
+	case AMLOP_CREATEQWORDFIELD:
+		rval = aml_parsebufferfield(scope, opcode, res);
+		break;
+	case AMLOP_FIELD:
+	case AMLOP_INDEXFIELD:
+	case AMLOP_BANKFIELD:
+		rval = aml_parsefieldunit(scope, opcode, res);
+		break;
+	case AMLOP_BUFFER:
+	case AMLOP_PACKAGE:
+	case AMLOP_VARPACKAGE:
+		rval = aml_parsebufpkg(scope, opcode, res);
+		break;
+	case AMLOP_IF:
+		rval = aml_parseif(scope, opcode, res);
+		break;
+	case AMLOP_WHILE:
+		rval = aml_parsewhile(scope, opcode, res);
+		break;
+	case AMLOP_MID:
+	case AMLOP_TOSTRING:
+	case AMLOP_TODECSTRING:
+	case AMLOP_TOHEXSTRING:
+		rval = aml_parsestring(scope, opcode, res);
+		break;
+	case AMLOP_INDEX:
+	case AMLOP_REFOF:
+	case AMLOP_DEREFOF:
+	case AMLOP_CONDREFOF:
+	case AMLOP_STORE:
+	case AMLOP_RETURN:
+	case AMLOP_LOAD:
+	case AMLOP_ARG0 ... AMLOP_ARG6:
+	case AMLOP_LOCAL0 ... AMLOP_LOCAL7:
+		rval = aml_parseref(scope, opcode, res);
+		break;
+	case AMLOP_METHOD:
+		rval = aml_parsemethod(scope, opcode, res);
+		break;
+	default:
+		aml_die("Unknown opcode: %.4x", opcode);
+		break;
+	}
+	return rval;
+}
+
 const char hext[] = "0123456789ABCDEF";
 
 const char *
@@ -3019,70 +2878,127 @@ aml_eisaid(u_int32_t pid)
 	return id;
 }
 
-struct acpi_context *acpi_alloccontext(struct acpi_softc *sc,
-				       struct aml_node *node,
-				       int argc,
-				       struct aml_value *argv)
+/*
+ * @@@: Fixup DSDT code
+ */
+struct aml_fixup
 {
-	struct acpi_context *ctx;
-	int idx;
+	int      offset;
+	u_int8_t oldv;
+	u_int8_t newv;
+};
 
-	if ((ctx = acpi_os_allocmem(sizeof(struct acpi_context))) != NULL) {
-		ctx->sc = sc;
-		ctx->depth = 0;
-		ctx->start = node->start;
-		ctx->pos   = node->start;
-		ctx->scope = node;
-		ctx->locals = (struct aml_value **)acpi_os_allocmem(sizeof(struct aml_value *) * 8);
-		ctx->args   = (struct aml_value **)acpi_os_allocmem(sizeof(struct aml_value *) * 8);
-		for (idx=0; idx<argc; idx++) {
-			ctx->args[idx] = aml_copyvalue(&argv[idx]);
+struct aml_blacklist
+{
+	const char       *oem;
+	const char       *oemtbl;
+	u_int8_t          cksum;
+	struct aml_fixup *fixtab;
+};
+
+struct aml_fixup __ibm300gl[] = {
+	{ 0x19, 0x3a, 0x3b },
+	{ -1 }
+};
+
+struct aml_blacklist amlfix_list[] = {
+	{ "IBM   ", "CDTPWSNH", 0x41, __ibm300gl },
+	{ NULL },
+};
+
+void
+aml_fixup_dsdt(u_int8_t *acpi_hdr, u_int8_t *base, int len)
+{
+	struct acpi_table_header *hdr = (struct acpi_table_header *)acpi_hdr;
+	struct aml_blacklist *fixlist;
+	struct aml_fixup *fixtab;
+
+	for (fixlist=amlfix_list; fixlist->oem; fixlist++) {
+		if (!memcmp(fixlist->oem, hdr->oemid, 6) &&
+		    !memcmp(fixlist->oemtbl, hdr->oemtableid, 8) &&
+		    fixlist->cksum == hdr->checksum)
+		{
+			/* Found a potential fixup entry */
+			for (fixtab = fixlist->fixtab; fixtab->offset != -1; fixtab++) {
+				if (base[fixtab->offset] == fixtab->oldv)
+					base[fixtab->offset] = fixtab->newv;
+			}
 		}
 	}
-	return ctx;
 }
 
-void acpi_freecontext(struct acpi_context *ctx)
+/*
+ * @@@: Default Object creation
+ */
+struct aml_defval
 {
-	int idx;
+	const char        *name;
+	int                type;
+	int64_t            ival;
+	const void        *bval;
+	struct aml_value **gval;
+};
 
-	if (ctx) {
-		for (idx=0; idx<8; idx++) {
-			aml_freevalue(&ctx->args[idx]);
-			aml_freevalue(&ctx->locals[idx]);
+struct aml_defval aml_defobj[] = {
+	{ "_OS_", AML_OBJTYPE_STRING, -1, "OpenBSD" },
+	{ "_REV", AML_OBJTYPE_INTEGER, 2, NULL },
+	{ "_GL",  AML_OBJTYPE_MUTEX,   1, NULL, &aml_global_lock },
+	{ NULL }
+};
+
+void
+aml_create_defaultobjects()
+{
+	struct aml_value *tmp;
+	struct aml_defval *def;
+
+	for (def = aml_defobj; def->name; def++) {
+		/* Allocate object value + add to namespace */
+		tmp = aml_allocvalue(def->type, def->ival, def->bval);
+		aml_createname(&aml_root, def->name, tmp);
+		if (def->gval) {
+			/* Set root object pointer */
+			*def->gval = tmp;
 		}
-		acpi_os_freemem(ctx->args);
-		acpi_os_freemem(ctx->locals);
-		acpi_os_freemem(ctx);
 	}
 }
 
 int
 acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 {
-	struct acpi_context *ctx;
-	struct aml_value *rv;
+	u_int8_t *end;
 
-	aml_root.depth = -1;
-	aml_root.mnem  = "ROOT";
-	aml_root.start = start;
-	aml_root.end   = start + length;
+	dsdt_softc = sc;
 
-	/* Add \_OS_ string */
-	aml_os.type = AML_OBJTYPE_STRING;
-	aml_os.v_string = "OpenBSD";
-	aml_os.length = strlen(aml_os.v_string) + 1;
-	ctx = acpi_alloccontext(sc, &aml_root, 0, NULL);
-	aml_addvname(ctx, "\\_OS_", AMLOP_NAME, &aml_os);
-
-	rv  = aml_eparselist(ctx, aml_root.end, 0);
-	aml_freevalue(&rv);
-
-	acpi_freecontext(ctx);
-
+	strlcpy(aml_root.name, "\\", sizeof(aml_root.name));
+	if (aml_root.start == NULL) {
+		aml_root.start = start;
+		aml_root.end = start+length;
+	}
+	end = start+length;
+	aml_parsenode(&aml_root, start, &end, NULL);
 	dnprintf(50, " : parsed %d AML bytes\n", length);
 
-	aml_walktree(&aml_root);
-
 	return (0);
+}
+
+/* XXX: kill me */
+int aml_parse_length(struct acpi_context *ctx)
+{
+	return (0);
+}
+int64_t			aml_eparseint(struct acpi_context * ctx, int style)
+{
+	return (0);
+}
+struct aml_opcode	*aml_getopcode(struct acpi_context *ctx)
+{
+	return NULL;
+}
+void			acpi_freecontext(struct acpi_context *ctx)
+{
+}
+const char		*aml_parse_name(struct acpi_context *ctx)
+{
+	return "";
 }

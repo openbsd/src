@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.55 2006/06/30 23:09:41 gwk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.56 2006/10/12 16:38:21 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -129,7 +129,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 	bus_addr_t ioaddr;
 	int reg, idx, ival, sval;
 
-	dnprintf(30, "gasio: %.2x 0x%.8llx %s\n",
+	dnprintf(50, "gasio: %.2x 0x%.8llx %s\n",
 		 iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
 
 	pb = (u_int8_t *)buffer;
@@ -528,9 +528,8 @@ void
 acpi_inidev(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct aml_value	res;
 
-	aml_eval_object(sc, node, &res, 0, NULL);
+	aml_evalnode(sc, node, 0, NULL, NULL);
 }
 
 void
@@ -579,18 +578,19 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
-	struct aml_value	res;
+	struct aml_value        res;
 	struct acpi_attach_args	aaa;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
-	aml_eval_object(sc, node, &res, 0, NULL);
+	if (aml_evalnode(sc, node, 0, NULL, &res) != 0) 
+		return;
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
-		dev = aml_strval(&res);
+		dev = res.v_string;
 		break;
 	case AML_OBJTYPE_INTEGER:
-		dev = aml_eisaid(aml_val2int(NULL, &res));
+		dev = aml_eisaid(aml_val2int(&res));
 		break;
 	default:
 		dev = "unknown";
@@ -615,6 +615,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
+	aml_freevalue(&res);
 }
 
 
@@ -624,18 +625,19 @@ acpi_foundec(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
-	struct aml_value	res;
-	struct acpi_attach_args	aaa;
+	struct aml_value	 res;
+	struct acpi_attach_args	 aaa;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
-	aml_eval_object(sc, node, &res, 0, NULL);
+	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
+		return;
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
-		dev = aml_strval(&res);
+		dev = res.v_string;
 		break;
 	case AML_OBJTYPE_INTEGER:
-		dev = aml_eisaid(aml_val2int(NULL, &res));
+		dev = aml_eisaid(aml_val2int(&res));
 		break;
 	default:
 		dev = "unknown";
@@ -654,6 +656,8 @@ acpi_foundec(struct aml_node *node, void *arg)
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
+
+	aml_freevalue(&res);
 }
 
 int
@@ -740,6 +744,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	acpi_enabled=1;
 
+	/* Create Default AML objects */
+	aml_create_defaultobjects();
+
 	/*
 	 * Load the DSDT from the FADT pointer -- use the
 	 * extended (64-bit) pointer if it exists
@@ -767,6 +774,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	/* Walk AML Tree */
+	//aml_walkroot();
 
 	/* Find available sleeping states */
 	acpi_init_states(sc);
@@ -1142,13 +1151,12 @@ int
 acpi_gpe_level(struct acpi_softc *sc, int gpe, void *arg)
 {
 	struct aml_node *node = arg;
-	struct aml_value res;
 	uint8_t mask;
 
 	dnprintf(10, "handling Level-sensitive GPE %.2x\n", gpe);
 	mask = (1L << (gpe & 7));
-	if (node != NULL)
-		aml_eval_object(sc, node, &res, 0, NULL);
+
+	aml_evalnode(sc, node, 0, NULL, NULL);
 	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, mask);
 
@@ -1160,13 +1168,12 @@ acpi_gpe_edge(struct acpi_softc *sc, int gpe, void *arg)
 {
 
 	struct aml_node *node = arg;
-	struct aml_value res;
 	uint8_t mask;
 
 	dnprintf(10, "handling Edge-sensitive GPE %.2x\n", gpe);
 	mask = (1L << (gpe & 7));
-	if (node != NULL)
-		aml_eval_object(sc, node, &res, 0, NULL);
+
+	aml_evalnode(sc, node, 0, NULL, NULL);
 	acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, mask);
 
@@ -1205,7 +1212,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
 			acpi_set_gpehandler(sc, idx, acpi_gpe_level, gpe,
-			    "level");
+					    "level");
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			sc->sc_gpes[ngpe].gpe_type = GPE_EDGE;
@@ -1213,7 +1220,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
 				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe,
-				    "edge");
+						    "edge");
 		}
 		if (gpe != NULL) {
 			sc->sc_gpes[ngpe].gpe_number  = idx;
@@ -1238,23 +1245,20 @@ acpi_enable_gpe(struct acpi_softc *sc, u_int32_t gpemask)
 void
 acpi_init_states(struct acpi_softc *sc)
 {
-	struct acpi_context *ctx;
-	struct aml_value res, env;
+	struct aml_value res;
 	char name[8];
 	int i;
 
-	ctx = NULL;
 	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
 		snprintf(name, sizeof(name), "_S%d_", i);
 		sc->sc_sleeptype[i].slp_typa = -1;
 		sc->sc_sleeptype[i].slp_typb = -1;
-		if (aml_eval_name(sc, aml_root.child, name, &res, &env))
-			continue;
-		if (res.type == AML_OBJTYPE_PACKAGE) {
-			sc->sc_sleeptype[i].slp_typa = aml_val2int(ctx,
-			    res.v_package[0]);
-			sc->sc_sleeptype[i].slp_typb = aml_val2int(ctx,
-			    res.v_package[1]);
+		if (aml_evalname(sc, aml_root.child, name, 0, NULL, &res) == 0) {
+			if (res.type == AML_OBJTYPE_PACKAGE) {
+				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
+				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
+			}
+			aml_freevalue(&res);
 		}
 	}
 }
@@ -1273,7 +1277,7 @@ void
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
 #ifdef ACPI_ENABLE
-	struct aml_value res, env;
+	struct aml_value env;
 	u_int16_t rega, regb;
 	int retries;
 
@@ -1290,7 +1294,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	env.v_integer = state;
 	/* _TTS(state) */
 	if (sc->sc_tts) {
-		if (aml_eval_object(sc, sc->sc_tts, &res, 1, &env)) {
+		if (aml_evalnode(sc, sc->sc_tts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _TTS failed.\n",
 			    DEVNAME(sc));
 			return;
@@ -1309,7 +1313,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	}
 	/* _PTS(state) */
 	if (sc->sc_pts) {
-		if (aml_eval_object(sc, sc->sc_pts, &res, 1, &env)) {
+		if (aml_evalnode(sc, sc->sc_pts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _PTS failed.\n",
 			    DEVNAME(sc));
 			return;
@@ -1318,7 +1322,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	sc->sc_state = state;
 	/* _GTS(state) */
 	if (sc->sc_gts) {
-		if (aml_eval_object(sc, sc->sc_gts, &res, 1, &env)) {
+		if (aml_evalnode(sc, sc->sc_gts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _GTS failed.\n",
 			    DEVNAME(sc));
 			return;
@@ -1362,13 +1366,13 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 void
 acpi_resume(struct acpi_softc *sc)
 {
-	struct aml_value res, env;
+	struct aml_value env;
 	
 	env.type = AML_OBJTYPE_INTEGER;
 	env.v_integer = sc->sc_state;
 	
 	if (sc->sc_bfs) {
-		if (aml_eval_object(sc, sc->sc_pts, &res, 1, &env)) {
+		if (aml_evalnode(sc, sc->sc_pts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _BFS failed.\n",
 			    DEVNAME(sc));
 		}
@@ -1376,7 +1380,7 @@ acpi_resume(struct acpi_softc *sc)
 	dopowerhooks(PWR_RESUME);
 	inittodr(0);
 	if (sc->sc_wak) {
-		if (aml_eval_object(sc, sc->sc_wak, &res, 1, &env)) {
+		if (aml_evalnode(sc, sc->sc_wak, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _WAK failed.\n",
 			    DEVNAME(sc));
 		}
@@ -1384,7 +1388,7 @@ acpi_resume(struct acpi_softc *sc)
 	sc->sc_state = ACPI_STATE_S0;
 	if (sc->sc_tts) {
 		env.v_integer = sc->sc_state;
-		if (aml_eval_object(sc, sc->sc_wak, &res, 1, &env)) {
+		if (aml_evalnode(sc, sc->sc_wak, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _TTS failed.\n",
 			    DEVNAME(sc));
 		}

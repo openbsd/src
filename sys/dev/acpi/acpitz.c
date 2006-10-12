@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.2 2006/07/30 05:30:45 gwk Exp $ */
+/* $OpenBSD: acpitz.c,v 1.3 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -163,22 +163,20 @@ acpitz_refresh(void *arg)
 int
 acpitz_gettmp(struct acpitz_softc *sc)
 {
-	struct aml_value	res, env;
+	struct aml_value	res;
 	int   rv = 1;
 
 	rw_enter_write(&sc->sc_lock);
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_TMP", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_TMP", 0, NULL, &res) != 0) {
 		dnprintf(10, "%s: no _TMP\n", DEVNAME(sc));
 		goto out;
 	}
 
-	sc->sc_tmp = aml_val2int(NULL, &res);
+	sc->sc_tmp = aml_val2int(&res);
 	rv = 0;
  out:
+	aml_freevalue(&res);
 	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
@@ -186,22 +184,20 @@ acpitz_gettmp(struct acpitz_softc *sc)
 int
 acpitz_getcrt(struct acpitz_softc *sc)
 {
-	struct aml_value	res, env;
+	struct aml_value	res;
 	int   rv = 1;
 
 	rw_enter_write(&sc->sc_lock);
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_CRT", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRT", 0, NULL, &res) != 0) {
 		dnprintf(10, "%s: no _CRT\n", DEVNAME(sc));
 		goto out;
 	}
 
-	sc->sc_crt = aml_val2int(NULL, &res);
+	sc->sc_crt = aml_val2int(&res);
 	rv = 0;
  out:
+	aml_freevalue(&res);
 	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }

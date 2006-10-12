@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.15 2006/03/07 23:13:28 marco Exp $ */
+/* $OpenBSD: amltypes.h,v 1.16 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -156,6 +156,8 @@
 #define AML_MATCH_GE          4
 #define AML_MATCH_GT          5
 
+#define AML_STATIC            0x8000
+
 /* Defined types for ObjectType() */
 enum aml_objecttype {
 	AML_OBJTYPE_UNINITIALIZED = 0,
@@ -178,7 +180,6 @@ enum aml_objecttype {
 
 	AML_OBJTYPE_NAMEREF = 0x100,
 	AML_OBJTYPE_OBJREF,
-	AML_OBJTYPE_STATICINT,
 };
 
 /* AML Opcode Arguments */
@@ -241,7 +242,6 @@ struct aml_value
 	int	type;
   	int	length;
 	int     refcnt;
-	const char *name;
 	struct aml_node *node;
 	union {
 		int64_t           vinteger;
@@ -283,6 +283,7 @@ struct aml_value
 	} _;
 };
 
+#define v_nameref   _.vbuffer
 #define v_objref    _.vobjref
 #define v_integer   _.vinteger
 #define v_string    _.vstring
@@ -308,15 +309,16 @@ struct aml_node
 	struct aml_node *child;
 	struct aml_node *sibling;
 
-	u_int16_t   	 opcode;
+	char             name[5];
+  	u_int16_t   	 opcode;
 	u_int8_t   	 *start;
 	u_int8_t   	 *end;
-	const char 	 *name;
-	const char 	 *mnem;
+  //	const char 	 *name;
+  //	const char 	 *mnem;
 
 	struct aml_value *value;
 
-	int               depth;
+  	int               depth;
 };
 
 #define AML_FALSE (0)

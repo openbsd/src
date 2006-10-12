@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.3 2006/06/30 04:16:15 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.4 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -379,7 +379,6 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 void
 acpiec_handle_events(struct acpiec_softc *sc)
 {
-	struct aml_value res;
 	int idx;
 
 	if (sc->sc_pending == 0)
@@ -392,8 +391,7 @@ acpiec_handle_events(struct acpiec_softc *sc)
 		    sc->sc_events[idx].event == NULL)
 			continue;
 		dnprintf(10, "%s: handling event 0x%02x\n", DEVNAME(sc), idx);
-		aml_eval_object(sc->sc_acpi, sc->sc_events[idx].event,
-		    &res, 0, NULL);
+		aml_evalnode(sc->sc_acpi, sc->sc_events[idx].event, 0, NULL, NULL);
 		sc->sc_events[idx].active = 0;
 	}
 }
@@ -442,23 +440,21 @@ acpiec_getregister(const u_int8_t *buf, int size, int *type, bus_size_t *addr)
 int
 acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 {
-	struct aml_value res, env;
+	struct aml_value res;
 	bus_size_t ec_sc, ec_data;
 	int type1, type2;
 	char *buf;
 	int size, ret;
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_GPE", &res, &env)) {
+	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_GPE", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _GPE\n", DEVNAME(sc));
 		return (1);
 	}
 
-	sc->sc_gpe = aml_val2int(NULL, &res);
+	sc->sc_gpe = aml_val2int(&res);
+	aml_freevalue(&res);
 
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_CRS", &res, &env)) {
+	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRS", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _CRS\n", DEVNAME(sc));
 		return (1);
 	}
@@ -468,6 +464,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	if (res.type != AML_OBJTYPE_BUFFER) {
 		dnprintf(10, "%s: unknown _CRS type %d\n",
 		    DEVNAME(sc), res.type);
+		aml_freevalue(&res);
 		return (1);
 	}
 
@@ -478,6 +475,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	if (ret <= 0) {
 		dnprintf(10, "%s: failed to read DATA from _CRS\n",
 		    DEVNAME(sc));
+		aml_freevalue(&res);
 		return (1);
 	}
 
@@ -488,6 +486,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	if (ret <= 0) {
 		dnprintf(10, "%s: failed to read S/C from _CRS\n",
 		    DEVNAME(sc));
+		aml_freevalue(&res);
 		return (1);
 	}
 
@@ -496,8 +495,10 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 
 	if (size != 2 || *buf != RES_TYPE_ENDTAG) {
 		dnprintf(10, "%s: no _CRS end tag\n", DEVNAME(sc));
+		aml_freevalue(&res);
 		return (1);
 	}
+	aml_freevalue(&res);
 
 	/* XXX: todo - validate _CRS checksum? */
 
@@ -531,7 +532,7 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 int
 acpiec_reg(struct acpiec_softc *sc)
 {
-	struct aml_value	res, arg[2];
+	struct aml_value	*res, arg[2];
 	struct aml_node *root;
 
 	memset(&res, 0, sizeof(res));
@@ -544,14 +545,13 @@ acpiec_reg(struct acpiec_softc *sc)
 	arg[1].type = AML_OBJTYPE_INTEGER;
 	arg[1].v_integer = 1;
 
-	root = aml_find_name(sc->sc_acpi, sc->sc_devnode, "_REG");
-
+	root = aml_searchname(sc->sc_devnode, "_REG");
 	if (root == NULL) {
 		dnprintf(10, "%s: no _REG method\n", DEVNAME(sc));
 		return (1);
 	}
 
-	if (aml_eval_object(sc->sc_acpi, root, &res, 2, arg)) {
+	if (aml_evalnode(sc->sc_acpi, root, 2, arg, NULL) != 0) {
 		dnprintf(10, "%s: evaluating method _REG failed.\n", DEVNAME(sc));
 		return (1);
 	}

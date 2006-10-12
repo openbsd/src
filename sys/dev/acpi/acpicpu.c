@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.9 2006/03/09 05:16:27 jordan Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.10 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -124,22 +124,18 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 int
 acpicpu_getpct(struct acpicpu_softc *sc)
 {
-	struct aml_value	res, env;
-	struct acpi_context	*ctx;
+	struct aml_value	res;
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PPC", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PPC", 0, NULL, &res) != 0) {
 		dnprintf(20, "%s: no _PPC\n", DEVNAME(sc));
 		printf("%s: no _PPC\n", DEVNAME(sc));
 		return (1);
 	}
 
-	dnprintf(10, "_PPC: %d\n", aml_val2int(NULL, &res));
+	dnprintf(10, "_PPC: %d\n", aml_val2int(&res));
+	aml_freevalue(&res);
 
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PCT", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PCT", 0, NULL, &res) != 0) {
 		dnprintf(20, "%s: no _PCT\n", DEVNAME(sc));
 		printf("%s: no _PCT\n", DEVNAME(sc));
 		return (1);
@@ -155,6 +151,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sizeof sc->sc_pct.pct_ctrl);
 	memcpy(&sc->sc_pct.pct_status, res.v_package[1]->v_buffer,
 	    sizeof sc->sc_pct.pct_status);
+	aml_freevalue(&res);
 
 	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016x\n",
 	    sc->sc_pct.pct_ctrl.grd_descriptor,
@@ -209,15 +206,10 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 int
 acpicpu_getpss(struct acpicpu_softc *sc)
 {
-	struct aml_value	res, env;
-	struct acpi_context	*ctx;
+	struct aml_value	res;
 	int			i;
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PSS", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSS", 0, NULL, &res) != 0) {
 		dnprintf(20, "%s: no _PSS\n", DEVNAME(sc));
 		return (1);
 	}
@@ -231,19 +223,20 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 	memset(sc->sc_pss, 0, res.length * sizeof *sc->sc_pss);
 
 	for (i = 0; i < res.length; i++) {
-		sc->sc_pss[i].pss_core_freq = aml_val2int(ctx,
+		sc->sc_pss[i].pss_core_freq = aml_val2int(
 		    res.v_package[i]->v_package[0]);
-		sc->sc_pss[i].pss_power = aml_val2int(ctx,
+		sc->sc_pss[i].pss_power = aml_val2int(
 		    res.v_package[i]->v_package[1]);
-		sc->sc_pss[i].pss_trans_latency = aml_val2int(ctx,
+		sc->sc_pss[i].pss_trans_latency = aml_val2int(
 		    res.v_package[i]->v_package[2]);
-		sc->sc_pss[i].pss_bus_latency = aml_val2int(ctx,
+		sc->sc_pss[i].pss_bus_latency = aml_val2int(
 		    res.v_package[i]->v_package[3]);
-		sc->sc_pss[i].pss_ctrl = aml_val2int(ctx,
+		sc->sc_pss[i].pss_ctrl = aml_val2int(
 		    res.v_package[i]->v_package[4]);
-		sc->sc_pss[i].pss_status = aml_val2int(ctx,
+		sc->sc_pss[i].pss_status = aml_val2int(
 		    res.v_package[i]->v_package[5]);
 	}
+	aml_freevalue(&res);
 
 	sc->sc_pss_len = res.length;
 

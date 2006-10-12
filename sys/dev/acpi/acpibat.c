@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.24 2006/09/19 18:01:36 mk Exp $ */
+/* $OpenBSD: acpibat.c,v 1.25 2006/10/12 16:38:21 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -86,23 +86,18 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpibat_softc	*sc = (struct acpibat_softc *)self;
 	struct acpi_attach_args	*aa = aux;
-	struct aml_value	res, env;
-	struct acpi_context	*ctx;
+	struct aml_value	res;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
 	rw_init(&sc->sc_lock, "acpibat");
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
 	/* XXX this trick seems to only work during boot */
-	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env))
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res) != 0)
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
-
+	
 	if (!(res.v_integer & STA_BATTERY)) {
 		sc->sc_bat_present = 0;
 		printf(": %s: not present\n", sc->sc_devnode->parent->name);
@@ -126,6 +121,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		acpibat_monitor(sc);
 
 	}
+	aml_freevalue(&res);
 
 	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
 	    acpibat_notify, sc);
@@ -250,17 +246,12 @@ acpibat_refresh(void *arg)
 int
 acpibat_getbif(struct acpibat_softc *sc)
 {
-	struct aml_value	res, env;
-	struct acpi_context	*ctx;
+	struct aml_value        res;
 	int			rv = 1;
 
 	rw_enter_write(&sc->sc_lock);
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res) != 0) {
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
 		goto out;
@@ -270,12 +261,14 @@ acpibat_getbif(struct acpibat_softc *sc)
 	/*
 	if (!(res.v_integer & STA_BATTERY)) {
 		sc->sc_bat_present = 0;
+		aml_freevalue(&res);
 		return (1);
 	} else
 		sc->sc_bat_present = 1;
 	*/
+	aml_freevalue(&res);
 
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BIF", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIF", 0, NULL, &res) != 0) {
 		dnprintf(10, "%s: no _BIF\n",
 		    DEVNAME(sc));
 		printf("bif fails\n");
@@ -289,19 +282,24 @@ acpibat_getbif(struct acpibat_softc *sc)
 	}
 
 	memset(&sc->sc_bif, 0, sizeof sc->sc_bif);
-	sc->sc_bif.bif_power_unit = aml_val2int(ctx, res.v_package[0]);
-	sc->sc_bif.bif_capacity = aml_val2int(ctx, res.v_package[1]);
-	sc->sc_bif.bif_last_capacity = aml_val2int(ctx, res.v_package[2]);
-	sc->sc_bif.bif_technology = aml_val2int(ctx, res.v_package[3]);
-	sc->sc_bif.bif_voltage = aml_val2int(ctx, res.v_package[4]);
-	sc->sc_bif.bif_warning = aml_val2int(ctx, res.v_package[5]);
-	sc->sc_bif.bif_low = aml_val2int(ctx, res.v_package[6]);
-	sc->sc_bif.bif_cap_granu1 = aml_val2int(ctx, res.v_package[7]);
-	sc->sc_bif.bif_cap_granu2 = aml_val2int(ctx, res.v_package[8]);
-	sc->sc_bif.bif_model = aml_strval(res.v_package[9]);
-	sc->sc_bif.bif_serial = aml_strval(res.v_package[10]);
-	sc->sc_bif.bif_type = aml_strval(res.v_package[11]);
-	sc->sc_bif.bif_oem = aml_strval(res.v_package[12]);
+	sc->sc_bif.bif_power_unit = aml_val2int(res.v_package[0]);
+	sc->sc_bif.bif_capacity = aml_val2int(res.v_package[1]);
+	sc->sc_bif.bif_last_capacity = aml_val2int(res.v_package[2]);
+	sc->sc_bif.bif_technology = aml_val2int(res.v_package[3]);
+	sc->sc_bif.bif_voltage = aml_val2int(res.v_package[4]);
+	sc->sc_bif.bif_warning = aml_val2int(res.v_package[5]);
+	sc->sc_bif.bif_low = aml_val2int(res.v_package[6]);
+	sc->sc_bif.bif_cap_granu1 = aml_val2int(res.v_package[7]);
+	sc->sc_bif.bif_cap_granu2 = aml_val2int(res.v_package[8]);
+
+	strlcpy(sc->sc_bif.bif_model, aml_strval(res.v_package[9]),
+		sizeof(sc->sc_bif.bif_model));
+	strlcpy(sc->sc_bif.bif_serial, aml_strval(res.v_package[10]),
+		sizeof(sc->sc_bif.bif_serial));
+	strlcpy(sc->sc_bif.bif_type, aml_strval(res.v_package[11]),
+		sizeof(sc->sc_bif.bif_type));
+	strlcpy(sc->sc_bif.bif_oem, aml_strval(res.v_package[12]),
+		sizeof(sc->sc_bif.bif_oem));
 
 	dnprintf(60, "power_unit: %u capacity: %u last_cap: %u tech: %u "
 	    "volt: %u warn: %u low: %u gran1: %u gran2: %d model: %s "
@@ -321,6 +319,7 @@ acpibat_getbif(struct acpibat_softc *sc)
 	    sc->sc_bif.bif_oem);
 
 out:
+	aml_freevalue(&res);
 	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
@@ -328,17 +327,12 @@ out:
 int
 acpibat_getbst(struct acpibat_softc *sc)
 {
-	struct aml_value	res, env;
-	struct acpi_context	*ctx;
+	struct aml_value	res;
 	int			rv = 0;
 
 	rw_enter_write(&sc->sc_lock);
 
-	memset(&res, 0, sizeof(res));
-	memset(&env, 0, sizeof(env));
-
-	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BST", &res, &env)) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BST", 0, NULL, &res) != 0) {
 		dnprintf(10, "%s: no _BST\n",
 		    DEVNAME(sc));
 		printf("_bst fails\n");
@@ -353,10 +347,11 @@ acpibat_getbst(struct acpibat_softc *sc)
 		goto out;
 	}
 
-	sc->sc_bst.bst_state = aml_val2int(ctx, res.v_package[0]);
-	sc->sc_bst.bst_rate = aml_val2int(ctx, res.v_package[1]);
-	sc->sc_bst.bst_capacity = aml_val2int(ctx, res.v_package[2]);
-	sc->sc_bst.bst_voltage = aml_val2int(ctx, res.v_package[3]);
+	sc->sc_bst.bst_state = aml_val2int(res.v_package[0]);
+	sc->sc_bst.bst_rate = aml_val2int(res.v_package[1]);
+	sc->sc_bst.bst_capacity = aml_val2int(res.v_package[2]);
+	sc->sc_bst.bst_voltage = aml_val2int(res.v_package[3]);
+	aml_freevalue(&res);
 
 	dnprintf(60, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,
