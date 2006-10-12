@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.13 2006/06/21 11:27:03 fkr Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.14 2006/10/12 16:35:52 grange Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ rl_cardbus_attach(parent, self, aux)
 	 * Map and establish the interrupt.
 	 */
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
-	    rl_intr, sc);
+	    rl_intr, sc, sc->sc_dev.dv_xname);
 	if (csc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
 		Cardbus_function_disable(csc->sc_ct);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.13 2006/06/21 11:27:03 fkr Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.14 2006/10/12 16:35:52 grange Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -287,7 +287,7 @@ atw_cardbus_enable(struct atw_softc *sc)
 	 * Map and establish the interrupt.
 	 */
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
-	    atw_intr, sc);
+	    atw_intr, sc, sc->sc_dev.dv_xname);
 	if (csc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt at %d\n",
 		    sc->sc_dev.dv_xname, csc->sc_intrline);

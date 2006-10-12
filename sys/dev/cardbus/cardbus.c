@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.33 2006/06/21 11:27:03 fkr Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.34 2006/10/12 16:35:51 grange Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 }
 
 /*
- * void *cardbus_intr_establish(cc, cf, irq, level, func, arg)
+ * void *cardbus_intr_establish(cc, cf, irq, level, func, arg, name)
  *   Interrupt handler of pccard.
  *  args:
  *   cardbus_chipset_tag_t *cc
@@ -658,11 +658,12 @@ cardbus_detach_card(struct cardbus_softc *sc)
  */
 void *
 cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbus_intr_handle_t irq, int level, int (*func)(void *), void *arg)
+    cardbus_intr_handle_t irq, int level, int (*func)(void *), void *arg,
+    const char *name)
 {
 	DPRINTF(("- cardbus_intr_establish: irq %d\n", irq));
 
-	return (*cf->cardbus_intr_establish)(cc, irq, level, func, arg);
+	return (*cf->cardbus_intr_establish)(cc, irq, level, func, arg, name);
 }
 
 /*

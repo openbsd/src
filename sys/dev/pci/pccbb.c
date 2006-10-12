@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.46 2006/06/21 11:27:03 fkr Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.47 2006/10/12 16:35:51 grange Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
+#include <sys/evcount.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
@@ -116,11 +117,11 @@ int	pccbb_ctrl(cardbus_chipset_tag_t, int);
 int	pccbb_power(cardbus_chipset_tag_t, int);
 int	pccbb_cardenable(struct pccbb_softc * sc, int function);
 void   *pccbb_intr_establish(struct pccbb_softc *, int irq, int level,
-    int (*ih) (void *), void *sc);
+    int (*ih) (void *), void *sc, const char *);
 void	pccbb_intr_disestablish(struct pccbb_softc *, void *ih);
 
 void   *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq, int level,
-    int (*ih) (void *), void *sc);
+    int (*ih) (void *), void *sc, const char *);
 void	pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
 cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int, int);
@@ -1056,6 +1057,8 @@ pccbbintr_function(sc)
 		}
 
 		val = (*pil->pil_func)(pil->pil_arg);
+		if (val != 0)
+			pil->pil_count.ec_count++;
 
 		if (splchanged != 0) {
 			splx(s);
@@ -1531,7 +1534,8 @@ pccbb_cardenable(sc, function)
  *					int irq,
  *					int level,
  *					int (* func)(void *),
- *					void *arg)
+ *					void *arg,
+ *					const char *name)
  *
  *   This function registers an interrupt handler at the bridge, in
  *   order not to call the interrupt handlers of child devices when
@@ -1540,15 +1544,16 @@ pccbb_cardenable(sc, function)
  *   The arguments irq is not used because pccbb selects intr vector.
  */
 void *
-pccbb_cb_intr_establish(ct, irq, level, func, arg)
+pccbb_cb_intr_establish(ct, irq, level, func, arg, name)
 	cardbus_chipset_tag_t ct;
 	int irq, level;
 	int (*func)(void *);
 	void *arg;
+	const char *name;
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
-	return pccbb_intr_establish(sc, irq, level, func, arg);
+	return pccbb_intr_establish(sc, irq, level, func, arg, name);
 }
 
 
@@ -1574,7 +1579,8 @@ pccbb_cb_intr_disestablish(ct, ih)
  *				     int irq,
  *				     int level,
  *				     int (* func)(void *),
- *				     void *arg)
+ *				     void *arg,
+ *				     const char *name)
  *
  *   This function registers an interrupt handler at the bridge, in
  *   order not to call the interrupt handlers of child devices when
@@ -1583,11 +1589,12 @@ pccbb_cb_intr_disestablish(ct, ih)
  *   The arguments irq and level are not used.
  */
 void *
-pccbb_intr_establish(sc, irq, level, func, arg)
+pccbb_intr_establish(sc, irq, level, func, arg, name)
 	struct pccbb_softc *sc;
 	int irq, level;
 	int (*func)(void *);
 	void *arg;
+	const char *name;
 {
 	struct pccbb_intrhand_list *pil, *newpil;
 	pcireg_t reg;
@@ -1621,6 +1628,8 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	newpil->pil_func = func;
 	newpil->pil_arg = arg;
 	newpil->pil_level = level;
+	evcount_attach(&newpil->pil_count, name, &sc->sc_intrline,
+	    &evcount_intr);
 	newpil->pil_next = NULL;
 
 	if (sc->sc_pil == NULL) {
@@ -1656,6 +1665,7 @@ pccbb_intr_disestablish(sc, ih)
 
 	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
 		if (pil == ih) {
+			evcount_detach(&pil->pil_count);
 			*pil_prev = pil->pil_next;
 			free(pil, M_DEVBUF);
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
@@ -2672,7 +2682,7 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg, xname)
 		 */
 	}
 
-	return pccbb_intr_establish(sc, -1, ipl, func, arg);
+	return pccbb_intr_establish(sc, -1, ipl, func, arg, xname);
 }
 
 /*

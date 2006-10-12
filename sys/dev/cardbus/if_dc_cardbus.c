@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.22 2006/04/23 19:33:28 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.23 2006/10/12 16:35:52 grange Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ dc_cardbus_attach(parent, self, aux)
 	}
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_NET,
-	    dc_intr, csc);
+	    dc_intr, csc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt at %d\n",
 		    ca->ca_intrline);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.9 2006/06/21 11:27:03 fkr Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.10 2006/10/12 16:35:52 grange Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -244,7 +244,7 @@ ath_cardbus_enable(struct ath_softc *sc)
 	 * Map and establish the interrupt.
 	 */
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
-	    ath_intr, sc);
+	    ath_intr, sc, sc->sc_dev.dv_xname);
 	if (csc->sc_ih == NULL) {
 		printf(": unable to establish irq %d\n",
 		       csc->sc_intrline);

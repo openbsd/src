@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.11 2006/07/31 11:06:27 mickey Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.12 2006/10/12 16:35:51 grange Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ typedef struct cardbus_functions {
 	int (*cardbus_space_free)(cardbus_chipset_tag_t, rbus_tag_t,
 	    bus_space_handle_t, bus_size_t);
 	void *(*cardbus_intr_establish)(cardbus_chipset_tag_t, int, int,
-	    int (*)(void *), void *);
+	    int (*)(void *), void *, const char *);
 	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
@@ -384,7 +384,7 @@ int	cardbus_attach_card(struct cardbus_softc *);
 void	cardbus_detach_card(struct cardbus_softc *);
 void   *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
 	    cardbus_intr_handle_t irq, int level, int (*func) (void *),
-	    void *arg);
+	    void *arg, const char *);
 void	cardbus_intr_disestablish(cardbus_chipset_tag_t,
 	    cardbus_function_tag_t, void *handler);
 

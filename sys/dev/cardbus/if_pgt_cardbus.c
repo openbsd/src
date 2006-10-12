@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.4 2006/10/09 20:45:27 mglocker Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.5 2006/10/12 16:35:52 grange Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -186,7 +186,7 @@ pgt_cardbus_enable(struct pgt_softc *sc)
 
         /* map and establish the interrupt handler */
         csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
-            pgt_intr, sc);
+            pgt_intr, sc, sc->sc_dev.dv_xname);
         if (csc->sc_ih == NULL) {
                 printf("%s: could not establish interrupt at %d\n",
                     sc->sc_dev.dv_xname, csc->sc_intrline);

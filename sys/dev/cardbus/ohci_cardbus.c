@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.7 2006/07/12 06:26:34 jolan Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.8 2006/10/12 16:35:52 grange Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 			   | CARDBUS_COMMAND_MEM_ENABLE);
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
-					   IPL_USB, ohci_intr, sc);
+					   IPL_USB, ohci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;

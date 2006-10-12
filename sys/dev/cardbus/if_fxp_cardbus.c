@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.17 2006/07/01 21:48:08 brad Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.18 2006/10/12 16:35:52 grange Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ fxp_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
-	    fxp_intr, sc);
+	    fxp_intr, sc, sc->sc_dev.dv_xname);
 	if (NULL == sc->sc_ih) {
 		printf(": couldn't establish interrupt");
 		printf("at %d\n", ca->ca_intrline);

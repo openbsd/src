@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc_cardbus.c,v 1.1 2006/07/31 11:06:27 mickey Exp $	*/
+/*	$OpenBSD: puc_cardbus.c,v 1.2 2006/10/12 16:35:52 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -161,7 +161,7 @@ puc_cardbus_intr_establish(struct puc_attach_args *paa, int type,
 	struct cardbus_devfunc *ct = sc->ct;
 
 	return (cardbus_intr_establish(ct->ct_cc, ct->ct_cf, sc->intrline,
-	    type, func, arg));
+	    type, func, arg, name));
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.25 2006/06/02 20:11:48 fkr Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.26 2006/10/12 16:35:51 grange Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -347,7 +347,7 @@ com_cardbus_enable(struct com_softc *sc)
 
 	/* establish the interrupt. */
 	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline,
-	    IPL_TTY, comintr, sc);
+	    IPL_TTY, comintr, sc, DEVNAME(csc));
 	if (csc->cc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", DEVNAME(csc));
 		return (1);
