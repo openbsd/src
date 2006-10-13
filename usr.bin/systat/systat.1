@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.45 2006/06/29 21:17:27 dlg Exp $
+.\"	$OpenBSD: systat.1,v 1.46 2006/10/13 11:07:28 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -214,12 +214,12 @@ The first row of the table reports memory usage only among
 active processes, that is, processes that have run in the previous
 twenty seconds.
 The second row reports on memory usage of all processes.
-The first column reports on the number of physical pages
+The first column reports on the number of kilobytes in physical pages
 claimed by processes.
 The second column reports the same figure for
-virtual pages, that is, the number of pages that would be
+virtual pages, that is, the number of kilobytes in pages that would be
 needed if all processes had all of their pages.
-Finally, the last column shows the number of physical pages
+Finally, the last column shows the number of kilobytes in physical pages
 on the free list.
 .Pp
 Below the memory display is a list of the average number of processes
