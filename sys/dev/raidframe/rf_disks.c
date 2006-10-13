@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_disks.c,v 1.10 2003/11/27 20:13:27 henning Exp $	*/
+/*	$OpenBSD: rf_disks.c,v 1.11 2006/10/13 00:30:08 cloder Exp $	*/
 /*	$NetBSD: rf_disks.c,v 1.31 2000/06/02 01:17:14 oster Exp $	*/
 
 /*
@@ -649,7 +649,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 
 	retcode = 0;
 	p = rf_find_non_white(buf);
-	if (p[strlen(p) - 1] == '\n') {
+	if (*buf != '\0' && p[strlen(p) - 1] == '\n') {
 		/* Strip off the newline. */
 		p[strlen(p) - 1] = '\0';
 	}
