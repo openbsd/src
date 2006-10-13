@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2006/09/28 17:06:54 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2006/10/13 15:36:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1011,7 +1011,13 @@ randaddr	: RANDOM
 
 number		: STRING
 		{
-			$$ = strtonum($1, 0, LONG_MAX, NULL);
+			const char *errstr;
+			$$ = strtonum($1, 0, LONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("invalid number: %s", $1);
+				free($1);
+				YYERROR;
+			}
 			free($1);
 		}
 		;
