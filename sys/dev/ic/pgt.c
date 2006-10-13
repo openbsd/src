@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.36 2006/10/11 19:42:28 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.37 2006/10/13 22:35:49 mglocker Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -625,13 +625,13 @@ pgt_attach(void *xsc)
 int
 pgt_detach(struct pgt_softc *sc)
 {
+	if (sc->sc_flags & SC_NEEDS_FIRMWARE || sc->sc_flags & SC_UNINITIALIZED)
+		/* device was not initialized correctly, so leave early */
+		goto out;
+
 	/* stop card */
 	pgt_stop(sc, SC_DYING);
 	pgt_reboot(sc);
-
-	/* disable card if possible */
-	if (sc->sc_disable != NULL)
-		(*sc->sc_disable)(sc);
 
 	/*
 	 * Disable shutdown and power hooks
@@ -643,6 +643,11 @@ pgt_detach(struct pgt_softc *sc)
 
 	ieee80211_ifdetach(&sc->sc_ic.ic_if);
 	if_detach(&sc->sc_ic.ic_if);
+
+out:
+	/* disable card if possible */
+	if (sc->sc_disable != NULL)
+		(*sc->sc_disable)(sc);
 
 	pgt_dma_free(sc);
 
