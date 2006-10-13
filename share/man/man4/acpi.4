@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.13 2006/10/12 18:48:58 marco Exp $
+.\"	$OpenBSD: acpi.4,v 1.14 2006/10/13 07:19:28 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -49,8 +49,9 @@ The
 driver supports ACPI AC Adapters.
 Information about AC power source status (connected or disconnected) is
 available through this driver.
-AC power source status is updated every 10 seconds or, if the implementation
-suports it, via an event.
+AC power source status is updated every 10 seconds or,
+if the implementation supports it,
+via an event.
 .Pp
 The
 .Nm acpibat
@@ -58,7 +59,8 @@ driver supports the ACPI Control Method Battery interface between the
 battery and the host.
 Information about the battery, such as capacity, recharge rate, voltage,
 and serial number, is available through this driver.
-Battery status is updated every 10 seconds or, if the implementation suports it,
+Battery status is updated every 10 seconds or,
+if the implementation supports it,
 via an event.
 .Pp
 The
@@ -95,7 +97,7 @@ The
 .Nm acpitz
 driver supports ACPI Thermal Zones.
 Temperature information is available through this driver as a sensor
-which is updated every 10 seconds or, if the implementation suports it,
+which is updated every 10 seconds or, if the implementation supports it,
 via an event.
 .\" If the temperature exceeds the
 .\" .Sq critical
@@ -159,7 +161,7 @@ drivers were written by
 .An Marco Peereboom Aq marco@openbsd.org .
 .Pp
 The
-.Nm acpiec,
+.Nm acpiec
 and
 .Nm acpitz
 drivers were written by
