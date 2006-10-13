@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtod.c,v 1.27 2006/10/12 05:58:57 deraadt Exp $ */
+/*	$OpenBSD: strtod.c,v 1.28 2006/10/13 03:50:14 deraadt Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -90,9 +90,10 @@
  */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
-    defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
-    defined(__powerpc__) || defined(__m88k__) || defined(__hppa__) || \
-    defined(__amd64__) || defined(__sh__) || defined(__sparc64__) || \
+    defined(__mips__) || defined(__mips64__) || defined(__ns32k__) || \
+    defined(__alpha__) || defined(__powerpc__) || defined(__m88k__) || \
+    defined(__hppa__) || defined(__amd64__) || defined(__sh__) || \
+    defined(__sparc64__) || \
     (defined(__arm__) && defined(__VFP_FP__))
 
 #include <sys/types.h>
