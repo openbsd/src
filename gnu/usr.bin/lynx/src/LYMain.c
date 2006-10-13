@@ -1201,6 +1201,10 @@ PUBLIC int main ARGS2(
     }
     StrAllocCat(lynx_temp_space, "/lynx-XXXXXXXXXX");
     lynx_temp_space = mkdtemp(lynx_temp_space);
+    if (lynx_temp_space == NULL) {
+	fprintf(stderr, "temporary directory: %s\n", LYStrerror(errno));
+	exit(EXIT_FAILURE);
+    }
 #ifdef VMS
     LYLowerCase(lynx_temp_space);
     if (strchr(lynx_temp_space, '/') != NULL) {
