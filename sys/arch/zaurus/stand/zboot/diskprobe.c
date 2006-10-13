@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.2 2005/05/26 23:49:18 uwe Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.3 2006/10/13 00:00:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -226,7 +226,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *bdi)
 	bdi->bios_number = dev;
 
 	if (bios_getdospart(bdi) < 0)
-		return "no BSD partition";
+		return "no OpenBSD partition";
 
 	return 0;
 }
@@ -295,7 +295,7 @@ bios_getdisklabel(bios_diskinfo_t *bdi, struct disklabel *label)
 
 	part = bios_getdospart(bdi);
 	if (part < 0)
-		return "no BSD partition";
+		return "no OpenBSD partition";
 
 	bios_devpath(bdi->bios_number, part, path);
 
