@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 2003/04/16 17:54:20 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 2006/10/14 20:20:51 drahn Exp $
 
 #
 # less config
@@ -28,6 +28,11 @@ all: config.status gnu_build
 CF=     --cache-file=${GLOBAL_AUTOCONF_CACHE}
 .else
 CF=	--cache-file=config.cache
+.endif
+
+HOST_ARCH!=arch -s
+.if    (${MACHINE_ARCH} != ${HOST_ARCH})
+CF+=   --target=openbsd-${MACHINE_ARCH} --host=${HOST_ARCH}
 .endif
 
 config: .FORCE
