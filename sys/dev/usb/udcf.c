@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.17 2006/10/11 13:06:35 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.18 2006/10/14 22:41:21 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -95,8 +95,7 @@ struct udcf_softc {
 	struct sensor		sc_sensor;
 };
 
-static int	t1, t2, t3, t4, t5, t6, t7, t8;	/* timeouts in hz */
-static int	t9;
+static int	t1, t2, t3, t4, t5, t6, t7, t8, t9;	/* timeouts in hz */
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -184,7 +183,6 @@ USB_ATTACH(udcf)
 	sensor_add(&sc->sc_sensor);
 
 	/* Prepare the USB request to probe the value */
-
 	sc->sc_req.bmRequestType = UDCF_READ_REQ;
 	sc->sc_req.bRequest = 1;
 	USETW(sc->sc_req.wValue, 0);
@@ -388,7 +386,6 @@ udcf_probe(void *xsc)
 					sc->sc_clocktype = -1;
 			} else {
 				/* provide the timedelta */
-
 				microtime(&sc->sc_sensor.tv);
 				nanotime(&now);
 				sc->sc_current = sc->sc_next;
@@ -397,7 +394,6 @@ udcf_probe(void *xsc)
 				    * 1000000000 + now.tv_nsec;
 
 				/* set the clocktype and make sensor valid */
-
 				if (sc->sc_sensor.status == SENSOR_S_UNKNOWN) {
 					strlcpy(sc->sc_sensor.desc,
 					    sc->sc_clocktype ?
@@ -487,7 +483,6 @@ udcf_mg_probe(void *xsc)
 			sc->sc_last_mg = 0;
 		} else {
 			/* Extract bits w/o parity */
-
 			m_bit = sc->sc_tbits & 1;
 			r_bit = sc->sc_tbits >> 15 & 1;
 			a1_bit = sc->sc_tbits >> 16 & 1;
@@ -528,7 +523,6 @@ udcf_mg_probe(void *xsc)
 			    (z1_bit ^ z2_bit)) {
 
 				/* Decode valid time */
-
 				ymdhm.dt_min = FROMBCD(minute_bits);
 				ymdhm.dt_hour = FROMBCD(hour_bits);
 				ymdhm.dt_day = FROMBCD(day_bits);
@@ -539,7 +533,6 @@ udcf_mg_probe(void *xsc)
 				sc->sc_next = clock_ymdhms_to_secs(&ymdhm);
 
 				/* convert to coordinated universal time */
-
 				sc->sc_next -= z1_bit ? 7200 : 3600;
 
 				DPRINTF(("\n%02d.%02d.%04d %02d:%02d:00 %s",
