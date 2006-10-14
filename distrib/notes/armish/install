@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.1 2006/06/06 04:06:08 drahn Exp $
+dnl	$OpenBSD: install,v 1.2 2006/10/14 18:40:32 krw Exp $
 OpenBSDInstallPrelude
 
 Write some good explaination here...
@@ -39,8 +39,6 @@ OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
-
-OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 
