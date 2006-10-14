@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.101 2006/09/27 00:40:43 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.102 2006/10/14 18:26:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.101 2006/09/27 00:40:43 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.102 2006/10/14 18:26:55 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -418,10 +418,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * In this case, partition 'a' had better start at 0,
 		 * otherwise we reject the request as meaningless. -wfj
 		 */
-		if (dosdp && pp->p_size &&
-		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
-		    dosdp->dp_typ == DOSPTYP_NETBSD)) {
+		if (dosdp && pp->p_size && (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
 		        sectoffset = (off_t)letoh32(dosdp->dp_start) *
 			    lp->d_secsize;
 		} else {
@@ -617,24 +614,6 @@ readmbr(int f)
 	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
 		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr, "# Inside MBR partition %d: "
-			    "type %02X start %u size %u\n",
-			    part, dp[part].dp_typ,
-			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
-			return (&dp[part]);
-		}
-	}
-	for (part = 0; part < NDOSPART; part++) {
-		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_FREEBSD) {
-			fprintf(stderr, "# Inside MBR partition %d: "
-			    "type %02X start %u size %u\n",
-			    part, dp[part].dp_typ,
-			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
-			return (&dp[part]);
-		}
-	}
-	for (part = 0; part < NDOSPART; part++) {
-		if (letoh32(dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_NETBSD) {
 			fprintf(stderr, "# Inside MBR partition %d: "
 			    "type %02X start %u size %u\n",
 			    part, dp[part].dp_typ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.104 2006/07/01 16:50:33 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.105 2006/10/14 18:26:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.104 2006/07/01 16:50:33 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.105 2006/10/14 18:26:55 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1619,12 +1619,10 @@ find_bounds(struct disklabel *lp, struct disklabel *bios_lp)
 
 #ifdef DOSLABEL
 	/*
-	 * If we have an MBR, use values from the {Open,Free,Net}BSD partition
+	 * If we have an MBR, use values from the OpenBSD partition.
 	 */
 	if (dosdp) {
-	    if (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
-		    dosdp->dp_typ == DOSPTYP_NETBSD) {
+	    if (dosdp->dp_typ == DOSPTYP_OPENBSD) {
 			u_int32_t i, new_end;
 
 			/* Set start and end based on fdisk partition bounds */
