@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.24 2006/10/04 00:23:04 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.25 2006/10/14 21:19:09 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -372,8 +372,7 @@ int	bnx_init_rx_chain(struct bnx_softc *);
 void	bnx_free_rx_chain(struct bnx_softc *);
 void	bnx_free_tx_chain(struct bnx_softc *);
 
-int	bnx_tx_encap(struct bnx_softc *, struct mbuf *, u_int16_t *,
-	    u_int16_t *, u_int32_t *);
+int	bnx_tx_encap(struct bnx_softc *, struct mbuf *, u_int16_t *);
 void	bnx_start(struct ifnet *);
 int	bnx_ioctl(struct ifnet *, u_long, caddr_t);
 void	bnx_watchdog(struct ifnet *);
@@ -2189,7 +2188,7 @@ bnx_dma_map_tx_desc(void *arg, bus_dmamap_t map)
 	 * mbuf.
 	 */
 
-	txbd = &map_arg->tx_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
+	txbd = &sc->tx_bd_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
 
 	/* Setup the first tx_bd for the first segment. */
 	addr = (u_int32_t)(map->dm_segs[i].ds_addr);
@@ -2207,7 +2206,7 @@ bnx_dma_map_tx_desc(void *arg, bus_dmamap_t map)
 		chain_prod = TX_CHAIN_IDX(prod);
 
 		txbd = 
-		    &map_arg->tx_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
+		    &sc->tx_bd_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
 
 		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
 		txbd->tx_bd_haddr_lo = htole32(addr);
@@ -4358,13 +4357,13 @@ bnx_init_locked_exit:
 /*   0 for success, positive value for failure.                             */
 /****************************************************************************/
 int
-bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
-    u_int16_t *chain_prod, u_int32_t *prod_bseq)
+bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod)
 {
 	u_int32_t		vlan_tag_flags = 0;
+	u_int16_t		chain_prod;
 	struct bnx_dmamap_arg	map_arg;
 	bus_dmamap_t		map;
-	int			i, rc = 0;
+	int			rc = 0;
 
 #ifdef BNX_CSUM
 	/* Transfer any checksum offload flags to the bd. */
@@ -4390,20 +4389,18 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
 #endif
 
 	/* Map the mbuf into DMAable memory. */
-	map = sc->tx_mbuf_map[*chain_prod];
+	chain_prod = TX_CHAIN_IDX(*prod);
+	map = sc->tx_mbuf_map[chain_prod];
 	map_arg.sc = sc;
 	map_arg.prod = *prod;
-	map_arg.chain_prod = *chain_prod;
-	map_arg.prod_bseq = *prod_bseq;
+	map_arg.chain_prod = chain_prod;
+	map_arg.prod_bseq = sc->tx_prod_bseq;
 	map_arg.tx_flags = vlan_tag_flags;
 	map_arg.maxsegs = USABLE_TX_BD - sc->used_tx_bd - BNX_TX_SLACK_SPACE;
 
 #if 0
 	KASSERT(map_arg.maxsegs > 0, ("Invalid TX maxsegs value!"));
 #endif
-
-	for (i = 0; i < TX_PAGES; i++)
-		map_arg.tx_chain[i] = sc->tx_bd_chain[i];
 
 	/* Map the mbuf into our DMA address space. */
 	if (bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m_head,
@@ -4424,7 +4421,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
 	 * delete the map before all of the segments
 	 * have been freed.
 	 */
-	sc->tx_mbuf_map[*chain_prod] = sc->tx_mbuf_map[map_arg.chain_prod];
+	sc->tx_mbuf_map[chain_prod] = sc->tx_mbuf_map[map_arg.chain_prod];
 	sc->tx_mbuf_map[map_arg.chain_prod] = map;
 	sc->tx_mbuf_ptr[map_arg.chain_prod] = m_head;
 	sc->used_tx_bd += map_arg.maxsegs;
@@ -4434,13 +4431,12 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m_head, u_int16_t *prod,
 
 	DBRUNIF(1, sc->tx_mbuf_alloc++);
 
-	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, *chain_prod, 
+	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, chain_prod, 
 	    map_arg.maxsegs));
 
 	/* prod still points the last used tx_bd at this point. */
 	*prod = map_arg.prod;
-	*chain_prod = map_arg.chain_prod;
-	*prod_bseq = map_arg.prod_bseq;
+	sc->tx_prod_bseq = map_arg.prod_bseq;
 
 bnx_tx_encap_exit:
 
@@ -4460,7 +4456,6 @@ bnx_start(struct ifnet *ifp)
 	struct mbuf		*m_head = NULL;
 	int			count = 0;
 	u_int16_t		tx_prod, tx_chain_prod;
-	u_int32_t		tx_prod_bseq;
 
 	/* If there's no link or the transmit queue is empty then just exit. */
 	if (!sc->bnx_link || IFQ_IS_EMPTY(&ifp->if_snd)) {
@@ -4472,11 +4467,10 @@ bnx_start(struct ifnet *ifp)
 	/* prod points to the next free tx_bd. */
 	tx_prod = sc->tx_prod;
 	tx_chain_prod = TX_CHAIN_IDX(tx_prod);
-	tx_prod_bseq = sc->tx_prod_bseq;
 
 	DBPRINT(sc, BNX_INFO_SEND, "%s(): Start: tx_prod = 0x%04X, "
 	    "tx_chain_prod = %04X, tx_prod_bseq = 0x%08X\n",
-	    __FUNCTION__, tx_prod, tx_chain_prod, tx_prod_bseq);
+	    __FUNCTION__, tx_prod, tx_chain_prod, sc->tx_prod_bseq);
 
 	/* Keep adding entries while there is space in the ring. */
 	while (sc->tx_mbuf_ptr[tx_chain_prod] == NULL) {
@@ -4491,8 +4485,7 @@ bnx_start(struct ifnet *ifp)
 		 * head of the queue and set the OACTIVE flag
 		 * to wait for the NIC to drain the chain.
 		 */
-		if (bnx_tx_encap(sc, m_head, &tx_prod, &tx_chain_prod,
-		    &tx_prod_bseq)) {
+		if (bnx_tx_encap(sc, m_head, &tx_prod)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
@@ -4509,7 +4502,6 @@ bnx_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 		tx_prod = NEXT_TX_BD(tx_prod);
-		tx_chain_prod = TX_CHAIN_IDX(tx_prod);
 	}
 
 	if (count == 0) {
@@ -4521,11 +4513,11 @@ bnx_start(struct ifnet *ifp)
 
 	/* Update the driver's counters. */
 	sc->tx_prod = tx_prod;
-	sc->tx_prod_bseq = tx_prod_bseq;
+	tx_chain_prod = TX_CHAIN_IDX(tx_prod);
 
 	DBPRINT(sc, BNX_INFO_SEND, "%s(): End: tx_prod = 0x%04X, tx_chain_prod "
 	    "= 0x%04X, tx_prod_bseq = 0x%08X\n", __FUNCTION__, tx_prod,
-	    tx_chain_prod, tx_prod_bseq);
+	    tx_chain_prod, sc->tx_prod_bseq);
 
 	/* Start the transmit. */
 	REG_WR16(sc, MB_TX_CID_ADDR + BNX_L2CTX_TX_HOST_BIDX, sc->tx_prod);

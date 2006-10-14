@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.14 2006/10/04 00:23:05 deraadt Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.15 2006/10/14 21:19:09 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4595,7 +4595,6 @@ struct bnx_dmamap_arg {
 	u_int16_t					chain_prod;
 	int					maxsegs;		/* Max segments supported for this mapped memory */
 	u_int32_t					prod_bseq;
-	struct tx_bd		*tx_chain[TX_PAGES];
 };
 
 
