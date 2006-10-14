@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.24 2006/02/06 16:49:31 jmc Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.25 2006/10/14 20:23:29 drahn Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -85,6 +85,7 @@ typedef struct prog {
 strlst_t       *srcdirs = NULL;
 strlst_t       *libs = NULL;
 strlst_t       *libdirs = NULL;
+char		objdir[MAXPATHLEN] = "obj";
 prog_t         *progs = NULL;
 
 char            line[MAXLINELEN];
@@ -125,7 +126,7 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		progname = argv[0];
 
-	while ((optc = getopt(argc, argv, "m:c:e:fqD:EL:")) != -1) {
+	while ((optc = getopt(argc, argv, "m:c:e:fqD:EL:O:")) != -1) {
 		switch (optc) {
 		case 'f':
 			readcache = 0;
@@ -161,6 +162,11 @@ main(int argc, char *argv[])
 			if (strlen(optarg) >= MAXPATHLEN)
 				usage();
 			add_string(&libdirs, optarg);
+			break;
+		case 'O':
+			if (strlcpy(objdir, optarg, sizeof(objdir)) >=
+			    sizeof(objdir))
+				usage();
 			break;
 		default:
 			usage();
@@ -210,7 +216,7 @@ void
 usage(void)
 {
 	fprintf(stderr, "%s [-Efq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
-	    "\t[-L lib-dir] [-m makefile-name] conf-file\n",
+	    "\t[-L lib-dir] [-m makefile-name] [-O objdir-name ] conf-file\n",
 	    progname);
 	exit(1);
 }
@@ -598,7 +604,7 @@ fillin_program(prog_t * p)
 			p->srcdir = strdup(path);
 	}
 	if (!p->objdir && p->srcdir) {
-		snprintf(path, sizeof(path), "%s/obj", p->srcdir);
+		snprintf(path, sizeof(path), "%s/%s", p->srcdir, objdir);
 		if (is_dir(path))
 			p->objdir = strdup(path);
 		else {
@@ -871,7 +877,7 @@ top_makefile_rules(FILE * outmk)
 	strlst_t       *l;
 
 
-	fprintf(outmk, "STRIP=strip\n");
+	fprintf(outmk, "STRIP?=strip\n");
 	fprintf(outmk, "LINK=$(LD) -dc -r\n");
 	fprintf(outmk, "LIBS=");
 	for (l = libdirs; l != NULL; l = l->next)
