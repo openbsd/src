@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.56 2006/09/19 17:49:13 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.57 2006/10/14 16:16:18 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -221,6 +221,23 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	sc->sc_flags &= ~ATH_ATTACHED;	/* make sure that it's not attached */
 
+	switch (devid) {
+	case PCI_PRODUCT_ATHEROS_AR2413:
+	case PCI_PRODUCT_ATHEROS_AR5413:
+	case PCI_PRODUCT_ATHEROS_AR5424:
+		/*
+		 * Known single chip solutions
+		 */
+		ah->ah_single_chip = AH_TRUE;
+		break;
+	default:
+		/*
+		 * Multi chip solutions
+		 */
+		ah->ah_single_chip = AH_FALSE;
+		break;
+	}
+
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
 		printf("%s: unable to attach hardware; HAL status %d\n",
@@ -235,26 +252,14 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		goto bad;
 	}
 
-	switch (devid) {
-	case PCI_PRODUCT_ATHEROS_AR2413:
-	case PCI_PRODUCT_ATHEROS_AR5413:
-	case PCI_PRODUCT_ATHEROS_AR5424:
-		/*
-		 * Known single chip solutions
-		 */
-		ah->ah_single_chip = AH_TRUE;
+	if (ah->ah_single_chip == AH_TRUE) {
 		printf("%s: AR%s %u.%u phy %u.%u rf %u.%u", ifp->if_xname,
 		    ar5k_printver(AR5K_VERSION_DEV, devid),
 		    ah->ah_mac_version, ah->ah_mac_revision,
 		    ah->ah_phy_revision >> 4, ah->ah_phy_revision & 0xf,
 		    ah->ah_radio_5ghz_revision >> 4,
 		    ah->ah_radio_5ghz_revision & 0xf);
-		break;
-	default:
-		/*
-		 * Multi chip solutions
-		 */
-		ah->ah_single_chip = AH_FALSE;
+	} else {
 		printf("%s: AR%s %u.%u phy %u.%u", ifp->if_xname,
 		    ar5k_printver(AR5K_VERSION_VER, ah->ah_mac_srev),
 		    ah->ah_mac_version, ah->ah_mac_revision,
@@ -270,7 +275,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 			    ah->ah_radio_2ghz_revision >> 4,
 			    ah->ah_radio_2ghz_revision & 0xf);
 		}
-		break;
 	}
 
 #if 0
