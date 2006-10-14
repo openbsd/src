@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.102 2006/10/14 18:26:55 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.103 2006/10/14 19:16:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.102 2006/10/14 18:26:55 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.103 2006/10/14 19:16:39 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -656,9 +656,7 @@ readlabel(int f)
 
 #ifdef DOSLABEL
 		if (dosdp && letoh32(dosdp->dp_size) &&
-		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
-		    dosdp->dp_typ == DOSPTYP_NETBSD))
+		    (dosdp->dp_typ == DOSPTYP_OPENBSD))
 			sectoffset = (off_t)letoh32(dosdp->dp_start) *
 			    DEV_BSIZE;
 #endif
@@ -1590,9 +1588,7 @@ checklabel(struct disklabel *lp)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 #ifdef i386__notyet
 	if (dosdp && dosdp->dp_size &&
-	    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-	    dosdp->dp_typ == DOSPTYP_FREEBSD ||
-	    dosdp->dp_typ == DOSPTYP_NETBSD)) {
+	    (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
 		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
 		warnx("exceeds DOS partition size");
 		errors++;
