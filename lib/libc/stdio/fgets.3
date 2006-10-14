@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgets.3,v 1.21 2005/07/26 03:30:25 jaredy Exp $
+.\"	$OpenBSD: fgets.3,v 1.22 2006/10/14 18:50:32 cloder Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,18 +47,20 @@
 .Sh DESCRIPTION
 The
 .Fn fgets
-function reads at most one less than the number of characters specified by
-.Ar size
-from the given
+function reads at most
+.Ar size Ns \-1
+characters from the given
 .Fa stream
 and stores them in the string
 .Fa str .
 Reading stops when a newline character is found,
 at end-of-file, or on error.
 The newline, if any, is retained.
-In any case, a
-.Ql \e0
-character is appended to end the string.
+The string will be NUL-terminated if
+.Fn fgets
+suceeds; otherwise the contents of
+.Fa str
+are undefined.
 .Pp
 The
 .Fn gets
