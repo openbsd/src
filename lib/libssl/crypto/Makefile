@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.45 2006/06/27 05:07:47 djm Exp $
+# $OpenBSD: Makefile,v 1.46 2006/10/14 19:43:57 drahn Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -10,7 +10,7 @@ FIPS_SRC=	${SSL_SRC}/fips
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "amd64" || \
-    ${MACHINE_ARCH} == "alpha"
+    ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "sh"
 CFLAGS+= -DL_ENDIAN
 .else
 CFLAGS+= -DB_ENDIAN
