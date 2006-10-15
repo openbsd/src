@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.51 2006/10/15 07:30:01 canacar Exp $ */
+/* $OpenBSD: dsdt.c,v 1.52 2006/10/15 15:28:32 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -400,16 +400,16 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 		*pb &= ~aml_bitmask(bit);
 }
 
-#if 0
-#define aml_gasio(sc,tt,bb,ll,bp,bl,sz,buf,mode) acpi_gasio(sc,mode,tt,(bb)+((bp)>>3),(sz)>>3,(bl)>>3,buf)
-#else
+/* Read/Write to hardware I/O fields */
 void
 aml_gasio(struct acpi_softc *sc, int type, uint64_t base, uint64_t length,
 	  int bitpos, int bitlen, int size, void *buf, int mode)
 {
-	acpi_gasio(sc, mode, type, base+(bitpos>>3), (size>>3), (bitlen>>3), buf);
+  	dnprintf(15,"-- aml_gasio: %.2x base:%llx len:%llx bitpos:%.4x bitlen:%.4x sz:%.2x mode=%s\n",
+		 type, base, length, bitpos, bitlen, size, mode==ACPI_IOREAD?"read":"write");
+	acpi_gasio(sc, mode, type, base+(bitpos>>3), 
+		   (size>>3), (bitlen>>3), buf);
 }
-#endif
 
 /*
  * @@@: Notify functions
@@ -765,13 +765,11 @@ aml_parsenode(struct aml_node *node, uint8_t *start, uint8_t **end,
 	struct aml_scope *scope;
 
 	/* Don't parse zero-length scope */
-	if (start == *end) {
+	if (start == *end)
 		return 0;
-	}
 	scope = aml_pushscope(NULL, start, *end, node);
-	if (res == NULL) {
+	if (res == NULL)
 		res = aml_alloctmp(scope, 1);
-	}
 	while (scope != NULL) {
 		while (scope->pos < scope->end)
 			aml_parseop(scope, res);
@@ -792,9 +790,8 @@ void
 aml_setbufint(struct aml_value *dst, int bitpos, int bitlen, 
 	      struct aml_value *src)
 {
-	if (src->type != AML_OBJTYPE_BUFFER) {
+	if (src->type != AML_OBJTYPE_BUFFER)
 		aml_die("wrong setbufint type\n");
-	}
 	if (bitlen < aml_intlen) {
 		/* XXX: Endian issues?? */
 		/* Return integer type */
@@ -813,9 +810,8 @@ void
 aml_getbufint(struct aml_value *src, int bitpos, int bitlen, 
 	      struct aml_value *dst)
 {
-	if (dst->type != AML_OBJTYPE_BUFFER) {
+	if (dst->type != AML_OBJTYPE_BUFFER)
 		aml_die("wrong getbufint type\n");
-	}
 	switch (src->type) {
 	case AML_OBJTYPE_INTEGER:
 		aml_bufcpy(dst->v_buffer, bitpos, &src->v_integer, 0, bitlen);
@@ -839,24 +835,26 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 	struct aml_value opr, *pop;
 	int bpos, blen, aligned, mask;
 
+	pop = field->v_field.ref1;
+	bpos = field->v_field.bitpos;
+	blen = field->v_field.bitlen;
+
 	memset(&opr, 0x0, sizeof(opr));
 	switch (field->v_field.type) {
 	case AMLOP_INDEXFIELD:
 		/* Set Index */
-		aml_setvalue(scope, field->v_field.ref1, NULL, field->v_field.bitpos>>3);
+		aml_setvalue(scope, pop, NULL, bpos>>3);
 		aml_fieldio(scope, field->v_field.ref2, res, mode);
 		break;
 	case AMLOP_BANKFIELD:
 		/* Set Bank */
-		aml_setvalue(scope, field->v_field.ref1, NULL, field->v_field.ref3);
+		aml_setvalue(scope, pop, NULL, field->v_field.ref3);
 		aml_fieldio(scope, field->v_field.ref2, res, mode);
 		break;
 	case AMLOP_FIELD:
 		/* This is an I/O field */
-		pop = field->v_field.ref1;
-		if (pop->type != AML_OBJTYPE_OPREGION) {
+		if (pop->type != AML_OBJTYPE_OPREGION)
 			aml_die("Not an opregion!\n");
-		}
 
 		/* Get field access size */
 		switch (AML_FIELD_ACCESS(field->v_field.flags)) {
@@ -876,14 +874,15 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 		}
 
 		/* Get aligned bitpos/bitlength */
-		bpos = field->v_field.bitpos & ~mask;
-		blen = ((field->v_field.bitpos & mask) +
-			field->v_field.bitlen + mask) & ~mask;
+		blen = ((bpos & mask) + blen + mask) & ~mask;
+		bpos = bpos & ~mask;
 		aligned = (bpos == field->v_field.bitpos && 
 			   blen == field->v_field.bitlen);
 
 		/* Verify that I/O is in range */
 #if 0
+		/* XXX: some I/O ranges are on dword boundaries, but their length is incorrect
+		 * eg. dword access, but length of opregion is 2 bytes. */
 		if ((bpos+blen) >= (pop->v_opregion.iolen * 8)) {
 			aml_die("Out of bounds I/O!!! region:%x:%llx:%x %x\n",
 				pop->v_opregion.iospace,
@@ -899,7 +898,7 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			aml_gasio(scope->sc, pop->v_opregion.iospace,
 				  pop->v_opregion.iobase,
 				  pop->v_opregion.iolen,
-				  bpos, blen, mask+1,
+				  bpos, blen, mask,
 				  opr.v_buffer,
 				  ACPI_IOREAD);
 			aml_setbufint(res, field->v_field.bitpos & mask,
@@ -920,7 +919,7 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 					aml_gasio(scope->sc, pop->v_opregion.iospace,
 						  pop->v_opregion.iobase,
 						  pop->v_opregion.iolen,
-						  bpos, blen, mask+1,
+						  bpos, blen, mask,
 						  opr.v_buffer,
 						  ACPI_IOREAD);
 				}
@@ -933,7 +932,7 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			aml_gasio(scope->sc, pop->v_opregion.iospace,
 				  pop->v_opregion.iobase,
 				  pop->v_opregion.iolen,
-				  bpos, blen, mask+1,
+				  bpos, blen, mask,
 				  opr.v_buffer,
 				  ACPI_IOWRITE);
 		}
@@ -941,15 +940,10 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 		break;
 	default:
 		/* This is a buffer field */
-		bpos = field->v_field.bitpos;
-		blen = field->v_field.bitlen;
-		pop = field->v_field.ref1;
-		if (mode == ACPI_IOREAD) {
+		if (mode == ACPI_IOREAD)
 			aml_setbufint(res, bpos, blen, pop);
-		}
-		else {
+		else
 			aml_getbufint(res, bpos, blen, pop);
-		}
 		break;
 	}
 }
@@ -985,15 +979,13 @@ aml_showvalue(struct aml_value *val)
 		break;
 	case AML_OBJTYPE_PACKAGE:
 		dnprintf(0," package: %.2x\n", val->length);
-		for (idx=0; idx<val->length; idx++) {
+		for (idx=0; idx<val->length; idx++)
 			aml_showvalue(val->v_package[idx]);
-		}
 		break;
 	case AML_OBJTYPE_BUFFER:
 		dnprintf(0," buffer: %.2x {", val->length);
-		for (idx=0; idx<val->length; idx++) {
+		for (idx=0; idx<val->length; idx++)
 			dnprintf(0,"%s%.2x", idx ? ", " : "", val->v_buffer[idx]);
-		}
 		dnprintf(0,"}\n");
 		break;
 	case AML_OBJTYPE_FIELDUNIT:
@@ -1050,6 +1042,7 @@ struct aml_value *
 aml_dereftarget(struct aml_scope *scope, struct aml_value *ref)
 {
 	struct aml_node *node;
+	struct aml_value *cbuf;
 	int index;
 
 	for(;;) {
@@ -1063,12 +1056,24 @@ aml_dereftarget(struct aml_scope *scope, struct aml_value *ref)
 			index = ref->v_objref.index;
 			ref = aml_dereftarget(scope, ref->v_objref.ref);
 			if (index != -1) {
+			  	if (index >= ref->length)
+			    		aml_die("index.buf out of bounds: %d/%d\n", index, ref->length);
 				switch (ref->type) {
 				case AML_OBJTYPE_PACKAGE:
 					ref = ref->v_package[index];
 					break;
+				case AML_OBJTYPE_BUFFER:
+				case AML_OBJTYPE_STRING:
+					/* Create a temporary BufferField into the string/buffer */
+				  	cbuf = aml_alloctmp(scope, 1);
+					_aml_setvalue(cbuf, AML_OBJTYPE_BUFFERFIELD, 0, NULL);
+					cbuf->v_field.type = AMLOP_CREATEBYTEFIELD;
+					cbuf->v_field.bitpos = index * 8;
+					cbuf->v_field.bitlen = 8;
+					cbuf->v_field.ref1 = ref;
+					return cbuf;
 				default:
-					aml_die("Index");
+					aml_die("unknown index type: %d", ref->type);
 					break;
 				}
 			}
@@ -1134,6 +1139,7 @@ aml_val2int(struct aml_value *rval)
 	return (ival);
 }
 
+/* Sets value into LHS: lhs must already be cleared */
 struct aml_value *
 _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 {
@@ -1145,7 +1151,7 @@ _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 		lhs->v_integer = ival;
 		break;
 	case AML_OBJTYPE_METHOD:
-		lhs->v_integer = ival;
+		lhs->v_method.flags = ival;
 		break;
 	case AML_OBJTYPE_NAMEREF:
 		lhs->v_nameref = (uint8_t *)bval;
@@ -1171,21 +1177,21 @@ _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 	case AML_OBJTYPE_PACKAGE:
 		lhs->length = ival;
 		lhs->v_package = (struct aml_value **)acpi_os_malloc(ival * sizeof(struct aml_value *));
-		for (ival=0; ival<lhs->length; ival++) {
+		for (ival=0; ival<lhs->length; ival++)
 			lhs->v_package[ival] = aml_allocvalue(AML_OBJTYPE_UNINITIALIZED, 0, NULL);
-		}
 		break;
 	}
 	return lhs;
 }
 
+/* Copy object to another value: lhs must already be cleared */
 void
 aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 {
 	int idx;
 
-	lhs->type = rhs->type & ~AML_STATIC;
-	switch (lhs->type) {
+	lhs->type = rhs->type;
+	switch (lhs->type & ~AML_STATIC) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		break;
 	case AML_OBJTYPE_INTEGER:
@@ -1206,9 +1212,8 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		break;
 	case AML_OBJTYPE_PACKAGE:
 		_aml_setvalue(lhs, rhs->type, rhs->length, NULL);
-		for (idx=0; idx<rhs->length; idx++) {
+		for (idx=0; idx<rhs->length; idx++)
 			aml_copyvalue(lhs->v_package[idx], rhs->v_package[idx]);
-		}
 		break;
 	case AML_OBJTYPE_OBJREF:
 		_aml_setvalue(lhs, rhs->type, rhs->v_objref.index, rhs->v_objref.ref);
@@ -1219,13 +1224,12 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 	}
 }
 
-/* Guts of the code: Assign one value to another */
+/* Guts of the code: Assign one value to another.  LHS may contain a previous value */
 void
 aml_setvalue(struct aml_scope *scope, struct aml_value *lhs, 
 	     struct aml_value *rhs, int64_t ival)
 {
 	struct aml_value tmpint;
-	struct aml_value *olhs;
 
 	/* Use integer as result */
 	if (rhs == NULL) {
@@ -1233,8 +1237,11 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		rhs = _aml_setvalue(&tmpint, AML_OBJTYPE_INTEGER, ival, NULL);
 	}
 
-	olhs = lhs;
 	lhs = aml_dereftarget(scope, lhs);
+	if (lhs->stack) {
+		/* ACPI: Overwrite writing to LocalX */
+		aml_freevalue(lhs);
+	}
 
 	switch (lhs->type) {
 	case AML_OBJTYPE_UNINITIALIZED:
@@ -1251,40 +1258,32 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 		lhs->v_integer = aml_val2int(rhs);
 		break;
 	case AML_OBJTYPE_BUFFER:
-		if (lhs->node) {
+		if (lhs->node)
 			dnprintf(40,"named.buffer\n");
-		}
 		aml_freevalue(lhs);
-		if (rhs->type == AML_OBJTYPE_BUFFER) {
-			_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_buffer);
-		}
-		else if (rhs->type == AML_OBJTYPE_INTEGER) {
+		if (rhs->type == AML_OBJTYPE_BUFFER)
+			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length, rhs->v_buffer);
+		else if (rhs->type == AML_OBJTYPE_INTEGER)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, sizeof(rhs->v_integer),
 				      &rhs->v_integer);
-		}
-		else if (rhs->type == AML_OBJTYPE_STRING) {
+		else if (rhs->type == AML_OBJTYPE_STRING)
 			_aml_setvalue(lhs, AML_OBJTYPE_BUFFER, rhs->length, rhs->v_string);
-		}
 		else {
 			//aml_showvalue(rhs);
 			aml_die("setvalue.buf");
-		}
+		}	
 		break;
 	case AML_OBJTYPE_STRING:
-		if (lhs->node) {
+		if (lhs->node)
 			dnprintf(40,"named string\n");
-		}
 		aml_freevalue(lhs);
-		if (rhs->type == AML_OBJTYPE_STRING) {
-			_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_string);
-		}
-		else if (rhs->type == AML_OBJTYPE_BUFFER) {
+		if (rhs->type == AML_OBJTYPE_STRING)
+			_aml_setvalue(lhs, AML_OBJTYPE_STRING, rhs->length, rhs->v_string);
+		else if (rhs->type == AML_OBJTYPE_BUFFER)
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, rhs->length, rhs->v_buffer);
-		}
-		else if (rhs->type == AML_OBJTYPE_INTEGER) {
+		else if (rhs->type == AML_OBJTYPE_INTEGER)
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, 10, NULL);
 			snprintf(lhs->v_string, lhs->length, "%lld", rhs->v_integer);
-		}
 		else {
 			//aml_showvalue(rhs);
 			aml_die("setvalue.str");
@@ -1557,9 +1556,7 @@ aml_evalmethod(struct aml_node *node,
 	       struct aml_value *res)
 {
 	struct aml_scope *scope;
-#ifdef ACPI_DEBUG
-	int idx;
-#endif
+
 	scope = aml_pushscope(NULL, node->value->v_method.start, 
 			      node->value->v_method.end, node);
 	scope->args = argv;
@@ -1572,9 +1569,9 @@ aml_evalmethod(struct aml_node *node,
 	dnprintf(10,"calling [%s] (%d args)\n",
 		 aml_nodename(node),
 		 scope->nargs);
-	for (idx=0; idx<scope->nargs; idx++) {
-		dnprintf(10, "  arg%d: ", idx);
-		aml_showvalue(&scope->args[idx]);
+	for (argc=0; argc<scope->nargs; argc++) {
+		dnprintf(10, "  arg%d: ", argc);
+		aml_showvalue(&scope->args[argc]);
 	}
 	while (scope->pos < scope->end)
 		aml_parseterm(scope, res);
@@ -2189,14 +2186,17 @@ aml_parseif(struct aml_scope *scope, int opcode, struct aml_value *res)
 	test = aml_parseint(scope, AML_ANYINT);
 
 	dnprintf(40, "@ iftest: %llx\n", test);
-	while (test && scope->pos && scope->pos < end) {
+	while (test && scope->pos < end) {
 		/* Parse if scope */
 		aml_parseterm(scope, res);
 	}
+	if (scope->pos >= scope->end)
+		return res;
+
 	if (*end == AMLOP_ELSE) {
 		scope->pos = ++end;
 		end = aml_parseend(scope);
-		while (!test && scope->pos && scope->pos < end) {
+		while (!test && scope->pos < end) {
 			/* Parse ELSE scope */
 			aml_parseterm(scope, res);
 		}
@@ -2593,6 +2593,15 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 	tmparg = aml_alloctmp(scope, 4);
 	switch (opcode) {
 	case AMLOP_INDEX:
+	  	_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, NULL);
+		aml_parsetarget(scope, &tmparg[LHS], NULL);
+	
+		res->v_objref.index = aml_parseint(scope, AML_ANYINT);
+		res->v_objref.ref = aml_dereftarget(scope, &tmparg[LHS]);
+
+		aml_parsetarget(scope, &tmparg[DST], NULL);
+		aml_setvalue(scope, &tmparg[DST], res, 0);
+#if 0
 		aml_parsetarget(scope, res, NULL);
 		opcode = aml_parseint(scope, AML_ANYINT);
 		aml_parsetarget(scope, &tmparg[DST], NULL);
@@ -2603,6 +2612,7 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 			res->v_objref.index = opcode;
 			aml_setvalue(scope, &tmparg[DST], res, 0);
 		}
+#endif
 		break;
 	case AMLOP_DEREFOF:
 		aml_parseop(scope, res);
@@ -2616,22 +2626,27 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		}
 		break;
 	case AMLOP_ARG0 ... AMLOP_ARG6:
-		if (scope && scope->args) {
-			opcode -= AMLOP_ARG0;
-			if (opcode >= scope->nargs) {
-				aml_die("arg out of range: %x\n", opcode);
-			}
-
-			/* Create OBJREF to stack variable */
-			_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, &scope->args[opcode]);
-		}
+		opcode -= AMLOP_ARG0;
+		if (scope->args == NULL || opcode >= scope->nargs)
+			aml_die("arg %d out of range", opcode);
+		
+		/* Create OBJREF to stack variable */
+		_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, 
+			      &scope->args[opcode]);
 		break;
 	case AMLOP_LOCAL0 ... AMLOP_LOCAL7:
-		if (scope && scope->locals) {
-			/* Create OBJREF to stack variable */
-			_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, 
-				      &scope->locals[opcode - AMLOP_LOCAL0]);
+		opcode -= AMLOP_LOCAL0;
+
+		/* No locals exist.. lazy allocate */
+		if (scope->locals == NULL) {
+			dnprintf(0, "Lazy alloc locals\n");
+			scope->locals = aml_alloctmp(scope, AML_MAX_LOCAL);
 		}
+
+		/* Create OBJREF to stack variable */
+		_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1,
+			      &scope->locals[opcode]);
+		res->v_objref.ref->stack = opcode+AMLOP_LOCAL0;
 		break;
 	case AMLOP_LOAD:
 		aml_parseop(scope, &tmparg[LHS]);

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.6 2006/10/14 19:59:51 canacar Exp $ */
+/* $OpenBSD: acpiec.c,v 1.7 2006/10/15 15:28:32 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -329,17 +329,10 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	acpiec_get_events(sc);
 
 	sc->sc_acpi->sc_ec = sc;
-	sc->sc_acpi->sc_ec_gpemask = (1L << sc->sc_gpe);
 
-	dnprintf(10, "%s: GPE: %d (%x)\n", DEVNAME(sc),
-	    sc->sc_gpe, sc->sc_acpi->sc_ec_gpemask);
+	dnprintf(10, "%s: GPE: %d\n", DEVNAME(sc), sc->sc_gpe);
 
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler, sc, "acpiec");
-
-#if 0
-	/* Enable EC interrupt */
-	acpi_enable_gpe(sc->sc_acpi, sc->sc_acpi->sc_ec_gpemask);
-#endif
 
 	printf(": %s\n", sc->sc_devnode->parent->name);
 }
@@ -531,10 +524,9 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 int
 acpiec_reg(struct acpiec_softc *sc)
 {
-	struct aml_value	*res, arg[2];
+	struct aml_value  arg[2];
 	struct aml_node *root;
 
-	memset(&res, 0, sizeof(res));
 	memset(&arg, 0, sizeof(arg));
 
 #define	REG_TYPE_EC	3
