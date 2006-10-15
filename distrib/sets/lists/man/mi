@@ -2136,6 +2136,7 @@
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/landisk
 ./usr/share/man/cat8/landisk/bootxx.0
+./usr/share/man/cat8/landisk/fdisk.0
 ./usr/share/man/cat8/landisk/hotplugd.0
 ./usr/share/man/cat8/landisk/mbr.0
 ./usr/share/man/cat8/ldconfig.0
