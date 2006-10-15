@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.3 2006/10/15 20:33:39 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.4 2006/10/15 21:56:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -378,6 +378,8 @@ malo_load_firmware(struct malo_softc *sc)
 
 		bcopy(ucode + count, data, bsize);
 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 		if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
 			printf("%s: timeout at firmware upload!\n",
 			    sc->sc_dev.dv_xname);
@@ -396,6 +398,8 @@ malo_load_firmware(struct malo_softc *sc)
 	hdr->seqnum = htole16(sn++);
 	hdr->result = 0;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0xf0f1f2f4) != 0) {
 		printf("%s: timeout at firmware load!\n", sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
@@ -444,9 +448,14 @@ malo_reset(struct malo_softc *sc)
 	hdr->seqnum = 1;
 	hdr->result = 0;
 
-	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
 	tsleep(sc, 0, "malorst", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 
 	if (hdr->cmd & MALO_CMD_RESPONSE)
 		return (0);
@@ -473,9 +482,14 @@ malo_get_spec(struct malo_softc *sc)
 	memset(spec->PermanentAddress, 0xff, ETHER_ADDR_LEN);
 	spec->CookiePtr = htole32(sc->sc_cookie_dmaaddr);
 
-	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
 	tsleep(sc, 0, "malospc", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 
 	if ((hdr->cmd & MALO_CMD_RESPONSE) == 0)
 		return (ETIMEDOUT);
