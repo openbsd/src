@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.22 2006/09/28 05:02:33 mglocker Exp $
+#	$OpenBSD: files.cardbus,v 1.23 2006/10/15 19:55:47 claudio Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -111,3 +111,9 @@ file	dev/cardbus/ohci_cardbus.c		ohci_cardbus
 #
 attach	uhci at cardbus with uhci_cardbus
 file	dev/cardbus/uhci_cardbus.c		uhci_cardbus
+
+#
+# Marvel Libertas Open
+#
+attach	malo at cardbus with malo_cardbus
+file	dev/cardbus/if_malo_cardbus.c		malo_cardbus
