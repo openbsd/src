@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.26 2006/06/30 04:16:15 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.27 2006/10/15 15:22:17 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -139,18 +139,11 @@ struct acpi_softc {
 
 	int			sc_powerbtn;
 	int			sc_sleepbtn;
-  	u_int32_t		sc_gpemask;
 
 	struct {
 		int slp_typa;
 		int slp_typb;
 	}			sc_sleeptype[6];
-
-  	struct {
-		int             gpe_type;
-	  	int		gpe_number;
-		struct aml_node *gpe_handler;
-	}			sc_gpes[256];
 	int			sc_maxgpe;
         int                     sc_lastgpe;
 
@@ -168,7 +161,6 @@ struct acpi_softc {
 	struct aml_node		*sc_wak;
 	int 			sc_state;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
-	u_int32_t		sc_ec_gpemask;
 };
 
 #define GPE_NONE  0x00

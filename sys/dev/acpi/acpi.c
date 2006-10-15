@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.56 2006/10/12 16:38:21 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.57 2006/10/15 15:22:17 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -39,7 +39,7 @@
 #include <dev/acpi/dsdt.h>
 
 #ifdef ACPI_DEBUG
-int acpi_debug = 11;
+int acpi_debug = 16;
 #endif
 int acpi_enabled = 0;
 
@@ -1198,7 +1198,6 @@ acpi_init_gpes(struct acpi_softc *sc)
 	memset(sc->gpe_table, 0, sc->sc_lastgpe * sizeof(struct gpe_block));
 
 	ngpe = 0;
-	memset(sc->sc_gpes, 0, sizeof(sc->sc_gpes));
 
 	/* Clear GPE status */
 	for (idx=0; idx<sc->sc_lastgpe; idx+=8) {
@@ -1207,7 +1206,6 @@ acpi_init_gpes(struct acpi_softc *sc)
 	}
 	for (idx=0; idx<sc->sc_lastgpe; idx++) {
 		/* Search Level-sensitive GPES */
-		sc->sc_gpes[ngpe].gpe_type = GPE_LEVEL;
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
@@ -1215,31 +1213,14 @@ acpi_init_gpes(struct acpi_softc *sc)
 					    "level");
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
-			sc->sc_gpes[ngpe].gpe_type = GPE_EDGE;
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
 				acpi_set_gpehandler(sc, idx, acpi_gpe_edge, gpe,
 						    "edge");
 		}
-		if (gpe != NULL) {
-			sc->sc_gpes[ngpe].gpe_number  = idx;
-			sc->sc_gpes[ngpe].gpe_handler = gpe;
-			dnprintf(20, "%s exists\n", name);
-			ngpe++;
-		}
 	}
 	sc->sc_maxgpe = ngpe;
-}
-
-void
-acpi_enable_gpe(struct acpi_softc *sc, u_int32_t gpemask)
-{
-	u_int32_t mask;
-	dnprintf(10, "acpi_enable_gpe: mask 0x%08x\n", gpemask);
-	mask = acpi_read_pmreg(sc, ACPIREG_GPE0_EN, 0);
-	acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0, mask | gpemask);
-	dnprintf(10, "acpi_enable_gpe: GPE 0x%08x\n", mask | gpemask);
 }
 
 void
@@ -1576,10 +1557,11 @@ acpi_isr_thread(void *arg)
 			if (sc->gpe_table[gpe].handler)
 				__acpi_enable_gpe(sc, gpe, 1);
 		}
-
+#if 0
 		/* Enable EC interrupt */
 		if (sc->sc_ec != NULL)
 			acpi_enable_gpe(sc, sc->sc_ec_gpemask);
+#endif
 	}
 
 	while (thread->running) {
