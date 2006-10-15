@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.23 2006/10/15 14:45:03 kettenis Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.24 2006/10/15 17:20:55 kettenis Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -267,7 +267,8 @@ gem_attach_pci(parent, self, aux)
 		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
 		    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
 			myetheraddr(sc->sc_enaddr);
-		gotenaddr
+		gotenaddr = 1;
+	}
 #endif
 #ifdef __powerpc__
 	if (!gotenaddr) {
