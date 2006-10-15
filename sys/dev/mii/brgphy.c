@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.59 2006/10/15 21:12:41 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.60 2006/10/15 21:17:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -66,7 +66,6 @@
 #include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bgereg.h>
-#include <dev/pci/if_bnxreg.h>
 
 int brgphy_probe(struct device *, void *, void *);
 void brgphy_attach(struct device *, struct device *, void *);
@@ -443,23 +442,18 @@ void
 brgphy_reset(struct mii_softc *sc)
 {
 	struct bge_softc *bge_sc = NULL;
-	struct bnx_softc *bnx_sc = NULL;
-	struct ifnet *ifp;
 	u_int32_t val;
+	char *devname;
+
+	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
 
 	mii_phy_reset(sc);
 
-	ifp = sc->mii_pdata->mii_ifp;
-
-	/* Find the driver associated with this PHY. */
-	if (strcmp(ifp->if_xname, "bge") == 0)
-		bge_sc = ifp->if_softc;
-	else if (strcmp(ifp->if_xname, "bnx") == 0)
-		bnx_sc = ifp->if_softc;
-
 	brgphy_load_dspcode(sc);
 
-	if (bge_sc) {
+	if (strcmp(devname, "bge") == 0) {
+		bge_sc = sc->mii_pdata->mii_ifp->if_softc;
+
 		/*
 		 * Don't enable Ethernet@WireSpeed for the 5700 or 5705
 		 * other than A0 and A1 chips. Make sure we only do this
@@ -475,15 +469,16 @@ brgphy_reset(struct mii_softc *sc)
 		/* Enable Ethernet@WireSpeed. */
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
 		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, val | (1 << 15) | (1 << 4));
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+			(val | (1 << 15) | (1 << 4)));
 
 		/* Enable Link LED on Dell boxes */
 		if (bge_sc->bge_flags & BGE_NO_3LED) {
 			PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 			PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
-			    & ~BRGPHY_PHY_EXTCTL_3_LED);
+				& ~BRGPHY_PHY_EXTCTL_3_LED);
 		}
-	} else if (bnx_sc) {
+	} else if (strcmp(devname, "bnx") == 0) {
 		/* Set Jumbo frame settings in the PHY. */
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
 		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
@@ -497,7 +492,8 @@ brgphy_reset(struct mii_softc *sc)
 		/* Enable Ethernet@Wirespeed */
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
 		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, (val | (1 << 15) | (1 << 4)));
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+			(val | (1 << 15) | (1 << 4)));
 	}
 }
 
