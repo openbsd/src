@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.10 2005/10/27 03:43:30 brad Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.11 2006/10/15 14:46:13 kettenis Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ hmeattach_pci(parent, self, aux)
 	if (!gotenaddr) {
 		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
 		    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
-		myetheraddr(sc->sc_enaddr);
+			myetheraddr(sc->sc_enaddr);
 		gotenaddr = 1;
 	}
 #endif
