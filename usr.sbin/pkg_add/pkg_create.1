@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.29 2006/01/12 11:33:59 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.30 2006/10/15 09:32:52 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pkg_create
 .Bk -words
-.Op Fl hnv
+.Op Fl hnqQv
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
@@ -171,6 +171,18 @@ as the initial directory
 .Dq base
 to start from in selecting files for
 the package, and to record as the base for installing the package.
+.It Fl q
+Print out the actual packing-list of the package being generated
+(query mode),
+Most often used in combination with
+.Fl n .
+.It Fl Q
+Print out the files in the actual packing-list of the package being 
+generated, with explicit typing 
+.Po e.g.,
+.Cm @file ,
+.Cm @lib ...
+.Pc
 .It Fl r Ar rscript
 Set
 .Ar rscript

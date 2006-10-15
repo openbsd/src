@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.45 2006/01/09 12:15:23 espie Exp $
+# $OpenBSD: pkg_create,v 1.46 2006/10/15 09:32:52 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -521,7 +521,7 @@ if ($plist->{need_modules}) {
 }
 	
 
-if (!defined $opt_q) {
+unless (defined $opt_q && defined $opt_n) {
 	if ($regen_package) {
 		$plist->checksum($base);
 	} else {
@@ -552,7 +552,7 @@ if (defined $opt_q) {
 	} else {
 		$plist->write(\*STDOUT);
 	}
-	exit(0);
+	exit 0 if defined $opt_n;
 }
 my $wname;
 if ($regen_package) {
@@ -566,7 +566,7 @@ unshift(@extra_files, CONTENTS);
 
 if ($opt_n) {
 	for my $special (@extra_files) {
-		print "Adding $special\n";
+		print "Adding $special\n" unless defined $opt_q;
 	}
 	$plist->archive(undef, $base, 1);
 } else {
