@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.52 2006/10/15 15:28:32 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.53 2006/10/15 16:47:12 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -409,6 +409,14 @@ aml_gasio(struct acpi_softc *sc, int type, uint64_t base, uint64_t length,
 		 type, base, length, bitpos, bitlen, size, mode==ACPI_IOREAD?"read":"write");
 	acpi_gasio(sc, mode, type, base+(bitpos>>3), 
 		   (size>>3), (bitlen>>3), buf);
+#ifdef ACPI_DEBUG
+	while (bitlen > 0) {
+		dnprintf(0,"%.2x ", *(uint8_t *)buf);
+		buf++;
+		bitlen -=8;
+	}
+	dnprintf(0,"\n");
+#endif
 }
 
 /*
@@ -872,6 +880,7 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			mask = 63;
 			break;
 		}
+		mask++;
 
 		/* Get aligned bitpos/bitlength */
 		blen = ((bpos & mask) + blen + mask) & ~mask;
@@ -1281,9 +1290,10 @@ aml_setvalue(struct aml_scope *scope, struct aml_value *lhs,
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, rhs->length, rhs->v_string);
 		else if (rhs->type == AML_OBJTYPE_BUFFER)
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, rhs->length, rhs->v_buffer);
-		else if (rhs->type == AML_OBJTYPE_INTEGER)
+		else if (rhs->type == AML_OBJTYPE_INTEGER) {
 			_aml_setvalue(lhs, AML_OBJTYPE_STRING, 10, NULL);
 			snprintf(lhs->v_string, lhs->length, "%lld", rhs->v_integer);
+		}
 		else {
 			//aml_showvalue(rhs);
 			aml_die("setvalue.str");
