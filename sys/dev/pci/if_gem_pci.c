@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.22 2006/04/10 07:17:57 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.23 2006/10/15 14:45:03 kettenis Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -84,6 +84,7 @@ struct gem_pci_softc {
 
 int	gem_match_pci(struct device *, void *, void *);
 void	gem_attach_pci(struct device *, struct device *, void *);
+int	gem_pci_enaddr(struct gem_softc *, struct pci_attach_args *);
 
 struct cfattach gem_pci_ca = {
 	sizeof(struct gem_pci_softc), gem_match_pci, gem_attach_pci
@@ -114,6 +115,94 @@ gem_match_pci(parent, cf, aux)
 	    sizeof(gem_pci_devices)/sizeof(gem_pci_devices[0])));
 }
 
+#define	PROMHDR_PTR_DATA	0x18
+#define	PROMDATA_PTR_VPD	0x08
+#define	PROMDATA_DATA2		0x0a
+
+static const u_int8_t gem_promhdr[] = { 0x55, 0xaa };
+static const u_int8_t gem_promdat[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
+	PCI_PRODUCT_SUN_GEMNETWORK & 0xff, PCI_PRODUCT_SUN_GEMNETWORK >> 8
+};
+
+static const u_int8_t gem_promdat2[] = {
+	0x18, 0x00,			/* structure length */
+	0x00,				/* structure revision */
+	0x00,				/* interface revision */
+	PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
+	PCI_CLASS_NETWORK		/* class code */
+};
+
+int
+gem_pci_enaddr(struct gem_softc *sc, struct pci_attach_args *pa)
+{
+	struct pci_vpd *vpd;
+	bus_space_handle_t romh;
+	bus_space_tag_t romt;
+	bus_size_t romsize;
+	u_int8_t buf[32];
+	pcireg_t address, mask;
+	int dataoff, vpdoff;
+	int rv = -1;
+
+	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, 0xfffffffe);
+	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	address |= PCI_ROM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, address);
+
+	romt = pa->pa_memt;
+	romsize = PCI_ROM_SIZE(mask);
+	if (bus_space_map(romt, PCI_ROM_ADDR(address), romsize, 0, &romh)) {
+		romsize = 0;
+		goto fail;
+	}
+
+	bus_space_read_region_1(romt, romh, 0, buf, sizeof(buf));
+	if (bcmp(buf, gem_promhdr, sizeof(gem_promhdr)))
+		goto fail;
+
+	dataoff = buf[PROMHDR_PTR_DATA] | (buf[PROMHDR_PTR_DATA + 1] << 8);
+	if (dataoff < 0x1c)
+		goto fail;
+
+	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
+	if (bcmp(buf, gem_promdat, sizeof(gem_promdat)) ||
+	    bcmp(buf + PROMDATA_DATA2, gem_promdat2, sizeof(gem_promdat2)))
+		goto fail;
+
+	vpdoff = buf[PROMDATA_PTR_VPD] | (buf[PROMDATA_PTR_VPD + 1] << 8);
+	if (vpdoff < 0x1c)
+		goto fail;
+
+	bus_space_read_region_1(romt, romh, vpdoff, buf, sizeof(buf));
+
+	/*
+	 * The VPD of gem is not in PCI 2.2 standard format.  The length
+	 * in the resource header is in big endian.
+	 */
+	vpd = (struct pci_vpd *)(buf + 3);
+	if (!PCI_VPDRES_ISLARGE(buf[0]) ||
+	    PCI_VPDRES_LARGE_NAME(buf[0]) != PCI_VPDRES_TYPE_VPD)
+		goto fail;
+	if (vpd->vpd_key0 != 'N' || vpd->vpd_key1 != 'A')
+		goto fail;
+
+	bcopy(buf + 6, sc->sc_enaddr, ETHER_ADDR_LEN);
+	rv = 0;
+
+ fail:
+	if (romsize != 0)
+		bus_space_unmap(romt, romh, romsize);
+
+	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	address &= ~PCI_ROM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, address);
+
+	return (rv);
+}
+
 void
 gem_attach_pci(parent, self, aux)
 	struct device *parent, *self;
@@ -129,7 +218,7 @@ gem_attach_pci(parent, self, aux)
 #endif
 	const char *intrstr = NULL;
 	bus_size_t size;
-	int type;
+	int type, gotenaddr = 0;
 
 	if (pa->pa_memt) {
 		type = PCI_MAPREG_TYPE_MEM;
@@ -170,13 +259,21 @@ gem_attach_pci(parent, self, aux)
 	sc->sc_bustag = gsc->gsc_memt;
 	sc->sc_h = gsc->gsc_memh;
 
+	if (gem_pci_enaddr(sc, pa) == 0)
+		gotenaddr = 1;
+
 #ifdef __sparc64__
-	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
-		myetheraddr(sc->sc_enaddr);
+	if (!gotenaddr) {
+		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+		    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
+			myetheraddr(sc->sc_enaddr);
+		gotenaddr
 #endif
-#ifdef __powerpc__ 
-        pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+#ifdef __powerpc__
+	if (!gotenaddr) {
+		pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+		gotenaddr = 1;
+	}
 #endif
 
 	sc->sc_burst = 16;	/* XXX */
