@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.2 2006/10/15 20:07:31 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.3 2006/10/15 20:33:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -327,7 +327,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	 * first bar is internaly mapped to 0xc0000000.
 	 */
 	if (malo_send_cmd(sc, 0xc000bef8, 5) != 0) {
-		printf("%s: BUMMER: timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: timeout at boot firmware load!\n",
+		    sc->sc_dev.dv_xname);
 		free(ucode, M_DEVBUF);
 		return (ETIMEDOUT);
 	} 
@@ -378,7 +379,8 @@ malo_load_firmware(struct malo_softc *sc)
 		bcopy(ucode + count, data, bsize);
 
 		if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
-			printf("%s: GRUMBLE: timeout\n", sc->sc_dev.dv_xname);
+			printf("%s: timeout at firmware upload!\n",
+			    sc->sc_dev.dv_xname);
 			free(ucode, M_DEVBUF);
 			return (ETIMEDOUT);
 		}
@@ -395,7 +397,7 @@ malo_load_firmware(struct malo_softc *sc)
 	hdr->result = 0;
 
 	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0xf0f1f2f4) != 0) {
-		printf("%s: GOPF: timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: timeout at firmware load!\n", sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
 	}
 
