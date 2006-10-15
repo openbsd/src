@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.50 2006/10/12 23:16:11 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.51 2006/10/15 07:30:01 canacar Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -881,7 +881,6 @@ aml_fieldio(struct aml_scope *scope, struct aml_value *field,
 			field->v_field.bitlen + mask) & ~mask;
 		aligned = (bpos == field->v_field.bitpos && 
 			   blen == field->v_field.bitlen);
-		mask++;
 
 		/* Verify that I/O is in range */
 #if 0
@@ -1558,7 +1557,9 @@ aml_evalmethod(struct aml_node *node,
 	       struct aml_value *res)
 {
 	struct aml_scope *scope;
-
+#ifdef ACPI_DEBUG
+	int idx;
+#endif
 	scope = aml_pushscope(NULL, node->value->v_method.start, 
 			      node->value->v_method.end, node);
 	scope->args = argv;
