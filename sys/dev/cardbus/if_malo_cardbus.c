@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_malo_cardbus.c,v 1.2 2006/10/15 20:05:46 claudio Exp $ */
+
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
  *

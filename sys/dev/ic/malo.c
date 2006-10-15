@@ -1,3 +1,5 @@
+/*	$OpenBSD: malo.c,v 1.2 2006/10/15 20:07:31 claudio Exp $ */
+
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
  *
