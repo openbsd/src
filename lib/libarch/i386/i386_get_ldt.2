@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_get_ldt.2,v 1.14 2004/03/12 17:56:06 jmc Exp $
+.\"	$OpenBSD: i386_get_ldt.2,v 1.15 2006/10/16 17:54:50 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -47,23 +47,24 @@
 .Fn i386_set_ldt "int start_sel" "union descriptor *descs" "int num_sels"
 .Sh DESCRIPTION
 .Fn i386_get_ldt
-will return the list of i386 descriptors that the process has in its
+returns a list of the i386 descriptors in the current process'
 LDT.
 .Fn i386_set_ldt
-will set a list of i386 descriptors for the current process in its
+sets a list of i386 descriptors in the current process'
 LDT.
-Both routines accept a starting selector number
-.Fa start_sel ,
-an array of memory that
-will contain the descriptors to be set or returned
-.Fa descs ,
-and the number of entries to set or return
-.Fa num_sels .
-.Pp
-The argument
+For both routines,
+.Fa start_sel
+specifies the index of the selector in the LDT at which to begin and
 .Fa descs
-can be either segment_descriptor or gate_descriptor, as defined in
-.Ao Pa i386/segments.h Ac .
+points to an array of
+.Fa num_sels
+descriptors to be set or returned.
+.Pp
+Each entry in the
+.Fa descs
+array can be either a segment_descriptor or a gate_descriptor,
+as defined in
+.Aq Pa i386/segments.h .
 These structures are defined by the architecture
 as disjoint bit-fields, so care must be taken in constructing them.
 .Pp
@@ -82,9 +83,19 @@ functions must be compiled using
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn i386_get_ldt
-returns the number of descriptors currently in the LDT.
+returns the number of i386 descriptors copied into
+.Fa descs
+from the current process' LDT.
+Otherwise, a value of \-1 is returned and the global
+variable
+.Va errno
+is set to indicate the error.
+.Pp
+Upon successful completion,
 .Fn i386_set_ldt
-returns the first selector set.
+returns the first selector set;
+if the kernel allocated a descriptor in the LDT,
+the allocated index is returned.
 Otherwise, a value of \-1 is returned and the global
 variable
 .Va errno
