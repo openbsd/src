@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.17 2006/10/04 14:04:06 pedro Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.18 2006/10/16 11:27:52 pedro Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .Ft int
 .Fo VOP_BMAP
 .Fa "struct vnode *vp"
-.Fa "daddr_t bn"
+.Fa "daddr64_t bn"
 .Fa "struct vnode **vpp"
 .Fa "daddr64_t *bnp"
 .Fa "int *runp"

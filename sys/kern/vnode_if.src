@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.30 2006/10/03 19:49:06 pedro Exp $
+#	$OpenBSD: vnode_if.src,v 1.31 2006/10/16 11:27:53 pedro Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -396,7 +396,7 @@ vop_unlock {
 
 vop_bmap {
 	IN SHOULDBELOCKED struct vnode *vp;
-	IN daddr_t bn;
+	IN daddr64_t bn;
 	OUT struct vnode **vpp;
 	IN daddr64_t *bnp;
 	OUT int *runp;

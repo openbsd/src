@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.3 2004/11/30 14:48:00 pedro Exp $
+.\"	$OpenBSD: buffercache.9,v 1.4 2006/10/16 11:27:52 pedro Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -124,11 +124,11 @@
 .Sh SYNOPSIS
 .In sys/buf.h
 .Ft int
-.Fn bread "struct vnode *vp" "daddr_t blkno" "int size" \
+.Fn bread "struct vnode *vp" "daddr64_t blkno" "int size" \
 "struct ucred *cred" "struct buf **bpp"
 .Ft int
-.Fn breadn "struct vnode *vp" "daddr_t blkno" "int size" \
-"daddr_t rablks[]" "int rasizes[]" "int nrablks" \
+.Fn breadn "struct vnode *vp" "daddr64_t blkno" "int size" \
+"daddr64_t rablks[]" "int rasizes[]" "int nrablks" \
 "struct ucred *cred" "struct buf **bpp"
 .Ft int
 .Fn bwrite "struct buf *bp"
@@ -137,12 +137,12 @@
 .Ft void
 .Fn bdwrite "struct buf *bp"
 .Ft struct buf *
-.Fn getblk "struct vnode *vp" "daddr_t blkno" "int size" \
+.Fn getblk "struct vnode *vp" "daddr64_t blkno" "int size" \
 "int slpflag" "int slptimeo"
 .Ft struct buf *
 .Fn geteblk "int size"
 .Ft struct buf *
-.Fn incore "struct vnode *vp" "daddr_t blkno"
+.Fn incore "struct vnode *vp" "daddr64_t blkno"
 .Ft void
 .Fn allocbuf "struct buf *bp" "int size"
 .Ft void

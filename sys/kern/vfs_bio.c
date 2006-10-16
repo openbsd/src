@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.84 2006/08/28 16:15:29 tom Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.85 2006/10/16 11:27:53 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ struct pool bufpool;
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
 
-static __inline struct buf *bio_doread(struct vnode *, daddr_t, int, int);
+static __inline struct buf *bio_doread(struct vnode *, daddr64_t, int, int);
 struct buf *getnewbuf(int, int, int *);
 
 /*
@@ -232,7 +232,7 @@ bufinit(void)
 }
 
 static __inline struct buf *
-bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
+bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
 {
 	struct buf *bp;
 
@@ -261,7 +261,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
  * This algorithm described in Bach (p.54).
  */
 int
-bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+bread(struct vnode *vp, daddr64_t blkno, int size, struct ucred *cred,
     struct buf **bpp)
 {
 	struct buf *bp;
@@ -278,7 +278,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
  * Trivial modification to the breada algorithm presented in Bach (p.55).
  */
 int
-breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t rablks[],
+breadn(struct vnode *vp, daddr64_t blkno, int size, daddr64_t rablks[],
     int rasizes[], int nrablks, struct ucred *cred, struct buf **bpp)
 {
 	struct buf *bp;
@@ -571,7 +571,7 @@ brelse(struct buf *bp)
  * chain. If it's there, return a pointer to it, unless it's marked invalid.
  */
 struct buf *
-incore(struct vnode *vp, daddr_t blkno)
+incore(struct vnode *vp, daddr64_t blkno)
 {
 	struct buf *bp;
 
@@ -594,7 +594,7 @@ incore(struct vnode *vp, daddr_t blkno)
  * cached blocks be of the correct size.
  */
 struct buf *
-getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
+getblk(struct vnode *vp, daddr64_t blkno, int size, int slpflag, int slptimeo)
 {
 	struct bufhashhdr *bh;
 	struct buf *bp;

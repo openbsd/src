@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.35 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.36 2006/10/16 11:27:53 pedro Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*
@@ -45,10 +45,11 @@
 
 void cluster_callback(struct buf *);
 struct buf *cluster_newbuf(struct vnode *, struct buf *, long, daddr64_t,
-    daddr_t, long, int);
-struct buf *cluster_rbuild(struct vnode *, u_quad_t, struct buf *, daddr_t,
+    daddr64_t, long, int);
+struct buf *cluster_rbuild(struct vnode *, u_quad_t, struct buf *, daddr64_t,
     daddr64_t, long, int, long);
-void cluster_wbuild(struct vnode *, struct buf *, long, daddr_t, int, daddr_t);
+void cluster_wbuild(struct vnode *, struct buf *, long, daddr64_t, int,
+    daddr64_t);
 struct cluster_save *cluster_collectbufs(struct vnode *, struct cluster_info *,
     struct buf *);
 
@@ -96,11 +97,10 @@ int	doclusterraz = 0;
  */
 int
 cluster_read(struct vnode *vp, struct cluster_info *ci, u_quad_t filesize,
-    daddr_t lblkno, long size, struct ucred *cred, struct buf **bpp)
+    daddr64_t lblkno, long size, struct ucred *cred, struct buf **bpp)
 {
 	struct buf *bp, *rbp;
-	daddr64_t blkno;
-	daddr_t ioblkno;
+	daddr64_t blkno, ioblkno;
 	long flags;
 	int error, num_ra, alreadyincore;
 
@@ -260,11 +260,11 @@ skip_readahead:
  */
 struct buf *
 cluster_rbuild(struct vnode *vp, u_quad_t filesize, struct buf *bp,
-    daddr_t lbn, daddr64_t blkno, long size, int run, long flags)
+    daddr64_t lbn, daddr64_t blkno, long size, int run, long flags)
 {
 	struct cluster_save *b_save;
 	struct buf *tbp;
-	daddr_t bn;
+	daddr64_t bn;
 	int i, inc;
 
 #ifdef DIAGNOSTIC
@@ -359,7 +359,7 @@ cluster_rbuild(struct vnode *vp, u_quad_t filesize, struct buf *bp,
  */
 struct buf *
 cluster_newbuf(struct vnode *vp, struct buf *bp, long flags, daddr64_t blkno,
-    daddr_t lblkno, long size, int run)
+    daddr64_t lblkno, long size, int run)
 {
 	if (!bp) {
 		bp = getblk(vp, lblkno, size, 0, 0);
@@ -460,7 +460,7 @@ void
 cluster_write(struct buf *bp, struct cluster_info *ci, u_quad_t filesize)
 {
 	struct vnode *vp;
-	daddr_t lbn;
+	daddr64_t lbn;
 	int maxclen, cursize;
 
 	vp = bp->b_vp;
@@ -568,7 +568,7 @@ cluster_write(struct buf *bp, struct cluster_info *ci, u_quad_t filesize)
  */
 void
 cluster_wbuild(struct vnode *vp, struct buf *last_bp, long size,
-    daddr_t start_lbn, int len, daddr_t lbn)
+    daddr64_t start_lbn, int len, daddr64_t lbn)
 {
 	struct cluster_save *b_save;
 	struct buf *bp, *tbp;
@@ -723,7 +723,7 @@ cluster_collectbufs(struct vnode *vp, struct cluster_info *ci,
     struct buf *last_bp)
 {
 	struct cluster_save *buflist;
-	daddr_t	lbn;
+	daddr64_t lbn;
 	int i, len;
 
 	len = ci->ci_lastw - ci->ci_cstart + 1;

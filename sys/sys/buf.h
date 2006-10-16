@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.50 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: buf.h,v 1.51 2006/10/16 11:27:53 pedro Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct buf {
 		caddr_t	b_addr;		/* Memory, superblocks, indirect etc. */
 	} b_un;
 	void	*b_saveaddr;		/* Original b_addr for physio. */
-	daddr_t	b_lblkno;		/* Logical block number. */
+	daddr64_t	b_lblkno;	/* Logical block number. */
 	daddr64_t	b_blkno;	/* Underlying physical block number. */
 					/* Function to call upon completion.
 					 * Will be called at splbio(). */
@@ -226,19 +226,18 @@ void	bawrite(struct buf *);
 void	bdwrite(struct buf *);
 void	biodone(struct buf *);
 int	biowait(struct buf *);
-int	bread(struct vnode *, daddr_t, int,
-		   struct ucred *, struct buf **);
-int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
-		    struct ucred *, struct buf **);
+int bread(struct vnode *, daddr64_t, int, struct ucred *, struct buf **);
+int breadn(struct vnode *, daddr64_t, int, daddr64_t *, int *, int,
+    struct ucred *, struct buf **);
 void	brelse(struct buf *);
 void	bremfree(struct buf *);
 void	bufinit(void);
 void	buf_dirty(struct buf *);
 void    buf_undirty(struct buf *);
 int	bwrite(struct buf *);
-struct buf *getblk(struct vnode *, daddr_t, int, int, int);
+struct buf *getblk(struct vnode *, daddr64_t, int, int, int);
 struct buf *geteblk(int);
-struct buf *incore(struct vnode *, daddr_t);
+struct buf *incore(struct vnode *, daddr64_t);
 
 void	minphys(struct buf *bp);
 int	physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
@@ -292,7 +291,7 @@ buf_countdeps(struct buf *bp, int i, int islocked)
 }
 
 int	cluster_read(struct vnode *, struct cluster_info *,
-	    u_quad_t, daddr_t, long, struct ucred *, struct buf **);
+	    u_quad_t, daddr64_t, long, struct ucred *, struct buf **);
 void	cluster_write(struct buf *, struct cluster_info *, u_quad_t);
 
 __END_DECLS

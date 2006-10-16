@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.17 2005/04/30 13:58:55 niallo Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.18 2006/10/16 11:27:53 pedro Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@ ext2fs_read(v)
 	struct uio *uio;
 	struct m_ext2fs *fs;
 	struct buf *bp;
-	ufs1_daddr_t lbn, nextlbn;
+	daddr64_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
