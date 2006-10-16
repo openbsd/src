@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.6 2004/01/08 18:18:35 millert Exp $	*/
+/*	$OpenBSD: ps.h,v 1.7 2006/10/16 15:00:10 millert Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -78,5 +78,11 @@ typedef struct var {
 	 * glue to link selected fields together
 	 */
 } VAR;
+
+#ifdef __LP64__
+#define	PTRWIDTH	16
+#else
+#define	PTRWIDTH	8
+#endif
 
 #include "extern.h"

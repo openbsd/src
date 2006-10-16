@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.24 2006/05/02 05:25:19 hugh Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.25 2006/10/16 15:00:10 millert Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.24 2006/05/02 05:25:19 hugh Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.25 2006/10/16 15:00:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ VAR var[] = {
 	{"rsz", "RSZ", NULL, 0, rssize, 4},
 	UID("ruid", "RUID", pvar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
-	{"sess", "SESS", NULL, 0, pvar, 6, 0, POFF(p_sess), UINT64, "llx"},
+	{"sess", "SESS", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_sess), UINT64, "llx"},
 	{"sig", "PENDING", NULL, 0, pvar, 8, 0, POFF(p_siglist), INT32, "x"},
 	{"sigcatch", "CAUGHT", NULL, 0, pvar, 8, 0, POFF(p_sigcatch), UINT32, "x"},
 	{"sigignore", "IGNORED",
@@ -163,13 +163,13 @@ VAR var[] = {
 	{"ssiz", "SSIZ", NULL, 0, ssize, 4},
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
-	{"state", "STAT", NULL, 0, state, 5},
+	{"state", "STAT", NULL, LJUST, state, 5},
 	GID("svgid", "SVGID", pvar, POFF(p_svgid)),
 	UID("svuid", "SVUID", pvar, POFF(p_svuid)),
 	{"tdev", "TDEV", NULL, 0, tdev, 4},
 	{"time", "TIME", NULL, USER, cputime, 9},
 	PID("tpgid", "TPGID", pvar, POFF(p_tpgid)),
-	{"tsess", "TSESS", NULL, 0, pvar, 6, 0, POFF(p_tsess), UINT64, "llx"},
+	{"tsess", "TSESS", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_tsess), UINT64, "llx"},
 	{"tsiz", "TSIZ", NULL, 0, tsize, 4},
 	{"tt", "TT", NULL, LJUST, tname, 3},
 	{"tty", "TTY", NULL, LJUST, longtname, 8},
