@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.16 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.17 2006/10/16 00:01:05 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -242,6 +242,7 @@ struct aml_value
 	int	type;
   	int	length;
 	int     refcnt;
+	int     stack;
 	struct aml_node *node;
 	union {
 		int64_t           vinteger;
