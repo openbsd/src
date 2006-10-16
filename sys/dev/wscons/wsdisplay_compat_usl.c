@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.17 2006/07/29 12:52:40 miod Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.18 2006/10/16 15:51:26 tom Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -181,7 +181,7 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 
 	/*
 	 * Normally, this is called from the controlling process.
-	 * Is is supposed to reply with a VT_RELDISP ioctl(), so
+	 * It is supposed to reply with a VT_RELDISP ioctl(), so
 	 * it is not useful to tsleep() here.
 	 */
 	sd->s_callback = callback;

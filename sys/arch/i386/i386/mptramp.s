@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.6 2006/04/27 15:37:51 mickey Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.7 2006/10/16 15:51:26 tom Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ _TRMP_LABEL(gdt_table)
 	 GDTE(0x93,0xcf)			# Kernel data
 _TRMP_LABEL(gdt_desc)
 	.word	0x17				# limit 3 entries
-	.long	gdt_table			# where is is gdt
+	.long	gdt_table			# where is gdt
 
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 mp_cont:

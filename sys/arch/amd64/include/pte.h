@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 2004/02/23 08:32:36 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 2006/10/16 15:51:26 tom Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  * amd64 MMU hardware structure:
  *
  * the (first generation) amd64 MMU is a 4-level MMU which maps 2^48 bytes
- * of  virtual memory. The  pagesize we use is is 4K (4096 [0x1000] bytes), 
+ * of  virtual memory. The  pagesize we use is 4K (4096 [0x1000] bytes), 
  * although 2M and 4M can be used as well. The indexes in the levels
  * are 9 bits wide (512 64bit entries per level), dividing the bits
  * 9-9-9-9-12.
