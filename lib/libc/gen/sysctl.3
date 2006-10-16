@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.160 2006/10/16 04:46:15 mcbride Exp $
+.\"	$OpenBSD: sysctl.3,v 1.161 2006/10/16 04:55:21 mcbride Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1740,7 +1740,7 @@ The flag is provided basically for avoiding possible DoS attacks.
 If set to 1, then multicast forwarding is enabled for the host.
 The default is 0.
 .Pp
-.It Li ip.multipath
+.It Li ip6.multipath
 This variable enables multipath routing for IPv6 addresses.
 If set to 0, only the first route selected will be used for a given
 destination regardless of how many routes exist in the routing table.
