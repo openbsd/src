@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.47 2006/09/29 17:35:45 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.48 2006/10/16 20:37:25 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1402,7 +1402,7 @@ re_txeof(struct rl_softc *sc)
 
 	/* No changes made to the TX ring, so no flush needed */
 
-	if (idx != sc->rl_ldata.rl_txq_considx) {
+	if (sc->rl_ldata.rl_tx_free) {
 		sc->rl_ldata.rl_txq_considx = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
