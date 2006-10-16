@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.159 2006/09/15 20:41:44 otto Exp $
+.\"	$OpenBSD: sysctl.3,v 1.160 2006/10/16 04:46:15 mcbride Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1086,6 +1086,7 @@ The currently defined protocols and names are:
 .It ip	mforwarding	integer	yes
 .It ip	mtudisc	integer	yes
 .It ip	mtudisctimeout	integer	yes
+.It ip	multipath	integer	yes
 .It ip	portfirst	integer	yes
 .It ip	porthifirst	integer	yes
 .It ip	porthilast	integer	yes
@@ -1360,6 +1361,10 @@ Returns the number of seconds in which a route added by the Path MTU
 Discovery engine will time out.
 When the route times out, the Path MTU Discovery engine will attempt
 to probe a larger path MTU.
+.It Li ip.multipath
+This variable enables multipath routing for IPv4 addresses.
+If set to 0, only the first route selected will be used for a given
+destination regardless of how many routes exist in the routing table.
 .It Li ip.portfirst
 Minimum registered port number for TCP/UDP port allocation.
 Registered ports can be used by ordinary user processes
@@ -1551,6 +1556,7 @@ The currently defined protocols and names are:
 .It ip6	maxfragpackets	integer	yes
 .It ip6	maxfrags	integer	yes
 .It ip6	mforwarding	integer	yes
+.It ip6	multipath	integer	yes
 .It ip6	redirect	integer	yes
 .It ip6	rr_prune	integer	yes
 .It ip6	use_deprecated	integer	yes
@@ -1733,6 +1739,11 @@ The flag is provided basically for avoiding possible DoS attacks.
 .It Li ip6.mforwarding
 If set to 1, then multicast forwarding is enabled for the host.
 The default is 0.
+.Pp
+.It Li ip.multipath
+This variable enables multipath routing for IPv6 addresses.
+If set to 0, only the first route selected will be used for a given
+destination regardless of how many routes exist in the routing table.
 .Pp
 .It Li ip6.redirect
 Returns 1 when ICMPv6 redirects may be sent by the node.
