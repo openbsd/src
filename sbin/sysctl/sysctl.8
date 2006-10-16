@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.132 2006/05/29 16:49:42 avsm Exp $
+.\"	$OpenBSD: sysctl.8,v 1.133 2006/10/16 04:17:18 mcbride Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -245,6 +245,7 @@ not all of the variables are relevant to all architectures.
 .It net.inet.ip.mtudisctimeout	integer	yes
 .It net.inet.ip.ipsec-comp-alg	string	yes
 .It net.inet.ip.mforwarding	integer	yes
+.It net.inet.ip.multipath	integer yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
 .It net.inet.icmp.errppslimit	integer	yes
@@ -303,6 +304,7 @@ not all of the variables are relevant to all architectures.
 .It net.inet6.ip6.v6only	integer	no
 .It net.inet6.ip6.maxfrags	integer	yes
 .It net.inet6.ip6.mforwarding	integer	yes
+.It net.inet6.ip6.multipath	integer	yes
 .It net.inet6.icmp6.rediraccept	integer	yes
 .It net.inet6.icmp6.redirtimeout	integer	yes
 .It net.inet6.icmp6.nd6_prune	integer	yes
