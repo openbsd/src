@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.44 2006/03/30 12:41:06 hshoexer Exp $
+.\"	$OpenBSD: route.8,v 1.45 2006/10/16 08:44:56 mcbride Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -302,6 +302,20 @@ modifier needs to be specified with the
 .Cm add
 command to be able to enter multiple gateways for the same destination address
 (multipath).
+When multiple routes exist for a destination, one route is selected based
+on the source address of the packet.
+The
+.Xr sysctl 8
+variables
+.Va net.inet.ip.multipath
+and
+.Va net.inet6.ip6.multipath
+are used to control multipath routing.
+If set to 1,
+multiple routes are used equally;
+if set to 0,
+the first route selected will be used for subsequent packets to that
+destination regardless of source.
 .Pp
 Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
