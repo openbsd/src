@@ -214,7 +214,7 @@ readline(char *prompt)
     fflush (stdout);
     if(fgets(buf, sizeof(buf), stdin) == NULL)
 	return NULL;
-    if (buf[strlen(buf) - 1] == '\n')
+    if (buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
 	buf[strlen(buf) - 1] = '\0';
     return strdup(buf);
 }

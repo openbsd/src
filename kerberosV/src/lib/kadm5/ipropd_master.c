@@ -127,7 +127,7 @@ check_acl (krb5_context context, const char *name)
     if (fp == NULL)
 	return 1;
     while (fgets(buf, sizeof(buf), fp) != NULL) {
-	if (buf[strlen(buf) - 1 ] == '\n')
+	if (buf[0] != '\0' && buf[strlen(buf) - 1 ] == '\n')
 	    buf[strlen(buf) - 1 ] = '\0';
 	if (strcmp (buf, name) == 0) {
 	    ret = 0;

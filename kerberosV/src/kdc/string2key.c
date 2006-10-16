@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	printf("Kerberos v5 principal: ");
 	if(fgets(buf, sizeof(buf), stdin) == NULL)
 	    return 1;
-	if(buf[strlen(buf) - 1] == '\n')
+	if(buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
 	    buf[strlen(buf) - 1] = '\0';
 	principal = estrdup(buf);
     }
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 	printf("AFS cell: ");
 	if(fgets(buf, sizeof(buf), stdin) == NULL)
 	    return 1;
-	if(buf[strlen(buf) - 1] == '\n')
+	if(buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
 	    buf[strlen(buf) - 1] = '\0';
 	cell = estrdup(buf);
     }

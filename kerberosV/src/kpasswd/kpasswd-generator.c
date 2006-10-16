@@ -48,7 +48,7 @@ read_words (const char *filename, char ***ret_w)
 	err (1, "cannot open %s", filename);
     alloc = n = 0;
     while (fgets (buf, sizeof(buf), f) != NULL) {
-	if (buf[strlen (buf) - 1] == '\n')
+	if (buf[0] != '\0' && buf[strlen (buf) - 1] == '\n')
 	    buf[strlen (buf) - 1] = '\0';
 	if (n >= alloc) {
 	    alloc += 16;
