@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1166 2006/10/15 11:18:59 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1167 2006/10/16 21:52:30 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -11659,6 +11659,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8361 PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8101_PPB,
+	    "VT8101 VPX-64 PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8375,
 	    "VT8375 PCI",
 	},
@@ -11925,6 +11929,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8361_AGP,
 	    "VT8361 AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8101_IOAPIC,
+	    "VT8101 VPX-64 IOAPIC",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PCI,
