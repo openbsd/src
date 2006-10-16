@@ -1,4 +1,4 @@
-#	$OpenBSD: files.shpcic,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $
+#	$OpenBSD: files.shpcic,v 1.2 2006/10/16 21:46:02 drahn Exp $
 #	$NetBSD: files.shpcic,v 1.2 2005/12/11 12:18:58 christos Exp $
 
 #
@@ -8,3 +8,4 @@ device  shpcic: pcibus
 attach  shpcic at mainbus
 
 file    arch/sh/dev/shpcic.c		sh4 & shpcic
+file    arch/sh/dev/pciide_machdep.c	pciide
