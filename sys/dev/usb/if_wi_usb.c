@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.30 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.31 2006/10/16 12:30:08 tom Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1785,7 +1785,7 @@ wi_watchdog_usb(struct ifnet *ifp)
 
 /*
  * ioctl will always be called from a user context, 
- * therefore is is possible to sleep in the calling context
+ * therefore it is possible to sleep in the calling context
  * acquire the lock and call the real ioctl fucntion directly 
  */
 int
@@ -1852,7 +1852,7 @@ wi_usb_thread(void *arg)
 			wi_func_io.f_start(&sc->sc_wi.sc_ic.ic_if);
 			/*
 			 * tx_unlock is explicitly missing here
-			 * is is done in txeof_frm
+			 * it is done in txeof_frm
 			 */
 		} else if (wi_thread_info->status & WI_INQUIRE) {
 			wi_thread_info->status &= ~WI_INQUIRE;

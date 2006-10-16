@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.16 2006/08/06 01:01:21 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.17 2006/10/16 12:30:08 tom Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -146,7 +146,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		irq = pci_conf_read(pc, pa->pa_tag, RL_PCI_INTLINE);
 
 		/* Reset the power state. */
-		printf(": chip is is in D%d power mode "
+		printf(": chip is in D%d power mode "
 		    "-- setting to D0", command & RL_PSTATE_MASK);
 		command &= 0xFFFFFFFC;
 

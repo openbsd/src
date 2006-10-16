@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.14 2006/10/12 16:35:52 grange Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.15 2006/10/16 12:30:08 tom Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ rl_cardbus_setup(csc)
 			    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
-			printf("%s: chip is is in D%d power mode "
+			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;

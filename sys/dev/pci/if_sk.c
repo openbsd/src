@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.128 2006/09/27 02:27:04 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.129 2006/10/16 12:30:08 tom Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2389,7 +2389,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	SK_XM_SETBIT_2(sc_if, XM_TXCMD, XM_TXCMD_AUTOPAD);
 
 	/*
-	 * Enable the reception of all error frames. This is is
+	 * Enable the reception of all error frames. This is
 	 * a necessary evil due to the design of the XMAC. The
 	 * XMAC's receive FIFO is only 8K in size, however jumbo
 	 * frames can be up to 9000 bytes in length. When bad
