@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2006/10/06 21:48:50 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2006/10/16 21:21:00 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -131,11 +131,6 @@ char *esym;
 __dead void
 landisk_startup(int howto, char *_esym, void *bi)
 {
-	extern char edata[], end[];
-
-	/* Clear bss */
-	bzero(edata, end - edata);
-
 	/* Start to determine heap area */
 	esym = _esym;
 	kernend = (vaddr_t)round_page((vaddr_t)esym);
