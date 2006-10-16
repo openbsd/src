@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expand.1,v 1.10 2006/10/16 15:45:09 jmc Exp $
+.\"	$OpenBSD: expand.1,v 1.11 2006/10/16 15:52:11 jmc Exp $
 .\"	$NetBSD: expand.1,v 1.3 1995/09/02 06:19:45 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -55,6 +55,22 @@ is useful for pre-processing character files
 (before sorting, looking at specific columns, etc.) that
 contain tabs.
 .Pp
+.Nm unexpand
+puts tabs back into the data from the standard input or the named
+files and writes the result on the standard output.
+.Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl a
+.Pq Nm unexpand No only
+By default, only leading blanks and tabs
+are reconverted to maximal strings of tabs.
+If the
+.Fl a
+option is given, tabs are inserted whenever they would compress the
+resultant file by replacing two or more characters.
+.It Fl t Ar tablist
+.Pq Nm expand No only
 If the argument to
 .Fl t ,
 .Ar tablist ,
@@ -93,22 +109,6 @@ flag, by prefixing
 .Ar tablist
 with a dash
 .Pq - .
-.Pp
-.Nm unexpand
-puts tabs back into the data from the standard input or the named
-files and writes the result on the standard output.
-.Pp
-The options (for
-.Nm unexpand
-only) are as follows:
-.Bl -tag -width flag
-.It Fl a
-By default, only leading blanks and tabs
-are reconverted to maximal strings of tabs.
-If the
-.Fl a
-option is given, tabs are inserted whenever they would compress the
-resultant file by replacing two or more characters.
 .El
 .Sh SEE ALSO
 .Xr fold 1
