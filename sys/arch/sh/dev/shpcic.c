@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.3 2006/10/16 21:28:09 drahn Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -239,6 +239,7 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 
 	/* PCI bus */
 	memset(&pba, 0, sizeof(pba));
+	pba.pba_busname = "pci";
 	pba.pba_iot = shpcic_get_bus_io_tag();
 	pba.pba_memt = shpcic_get_bus_mem_tag();
 	pba.pba_dmat = shpcic_get_bus_dma_tag();
