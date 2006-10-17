@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.50 2006/10/04 00:52:55 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.51 2006/10/17 23:20:12 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -783,10 +783,21 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
+	lp->d_secperunit = wd->sc_capacity;
 	lp->d_ntracks = wd->sc_params.atap_heads;
 	lp->d_nsectors = wd->sc_params.atap_sectors;
-	lp->d_ncylinders = wd->sc_params.atap_cylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+#ifdef CPU_BIOS
+	/*
+	 * Stick to what the controller says for BIOS compatibility. Let the
+	 * CPU_BIOS logic on i386 and friends deal with any mismatch to actual
+	 * size.
+	 */
+	lp->d_ncylinders = wd->sc_params.atap_cylinders;
+#else
+	/* We are not constrained by BIOS concerns. Calculate cylinder count. */
+	lp->d_ncylinders = lp->d_secperunit / lp->d_secpercyl;
+#endif
 	if (wd->drvp->ata_vers == -1) {
 		lp->d_type = DTYPE_ST506;
 		strncpy(lp->d_typename, "ST506/MFM/RLL", sizeof lp->d_typename);
@@ -796,7 +807,6 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	}
 	/* XXX - user viscopy() like sd.c */
 	strncpy(lp->d_packname, wd->sc_params.atap_model, sizeof lp->d_packname);
-	lp->d_secperunit = wd->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
