@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.60 2006/03/07 11:03:17 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.61 2006/10/17 21:47:22 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -213,6 +213,8 @@ architecture recorded in package may not match.
 .It Ar boguslibs
 not all shared libraries are marked with @lib.
 Inefficiently rescan package lists for non marked libraries.
+.It Ar conflicts
+force installation of package in the presence of conflicts.
 .It Ar installed
 in update mode, reinstall an existing package with the same signature.
 .It Ar kitchensink
