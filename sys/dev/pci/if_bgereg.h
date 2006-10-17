@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.65 2006/10/15 06:49:19 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.66 2006/10/17 22:28:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1687,6 +1687,8 @@
 #define BGE_EE_CTL			0x6840
 #define BGE_MDI_CTL			0x6844
 #define BGE_EE_DELAY			0x6848
+
+#define BGE_FASTBOOT_PC			0x6894
 
 /*
  * TLP Control Register

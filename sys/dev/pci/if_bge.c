@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.189 2006/10/15 06:49:19 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.190 2006/10/17 22:28:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2062,6 +2062,11 @@ bge_reset(struct bge_softc *sc)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1);
 
