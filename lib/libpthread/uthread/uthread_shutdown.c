@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_shutdown.c,v 1.4 2003/02/14 02:34:16 marc Exp $	*/
+/*	$OpenBSD: uthread_shutdown.c,v 1.5 2006/10/17 20:57:28 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -43,31 +43,22 @@ int
 shutdown(int fd, int how)
 {
 	int             ret;
+	struct fd_table_entry *entry;
 
-	switch (how) {
-	case 0:
-		if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
+	ret = _thread_fd_table_init(fd, FD_INIT_UNKNOWN, NULL);
+	if (ret == 0) {
+		entry = _thread_fd_table[fd];
+		 
+		_SPINLOCK(&entry->lock);
+		if (entry->state == FD_ENTRY_OPEN) {
 			ret = _thread_sys_shutdown(fd, how);
-			_FD_UNLOCK(fd, FD_READ);
+		} else {
+			ret = -1;
+			errno = EBADF;
 		}
-		break;
-	case 1:
-		if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
-			ret = _thread_sys_shutdown(fd, how);
-			_FD_UNLOCK(fd, FD_WRITE);
-		}
-		break;
-	case 2:
-		if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
-			ret = _thread_sys_shutdown(fd, how);
-			_FD_UNLOCK(fd, FD_RDWR);
-		}
-		break;
-	default:
-		errno =  EBADF;
-		ret = -1;
-		break;
+		_SPINUNLOCK(&entry->lock);
 	}
+
 	return (ret);
 }
 #endif
