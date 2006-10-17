@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.35 2006/10/10 20:34:23 mbalmer Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.36 2006/10/17 11:45:59 todd Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -10261,7 +10261,7 @@ void
 ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 {
 	/*
-	 * Copy the first SG into the "current" data ponter area.
+	 * Copy the first SG into the "current" data pointer area.
 	 */
 	if ((ahd->flags & AHD_64BIT_ADDRESSING) != 0) {
 		struct ahd_dma64_seg *sg;
