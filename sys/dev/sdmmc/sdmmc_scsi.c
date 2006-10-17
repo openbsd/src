@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.5 2006/08/23 16:34:56 pedro Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.6 2006/10/17 01:26:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -97,7 +97,6 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 {
 	struct sdmmc_scsi_softc *scbus;
 	struct sdmmc_function *sf;
-	struct sdmmc_attach_args saa;
 
 	MALLOC(scbus, struct sdmmc_scsi_softc *,
 	    sizeof *scbus, M_DEVBUF, M_WAITOK);
@@ -138,17 +137,8 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_link.openings = 1;
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 
-	bzero(&saa, sizeof saa);
-	bcopy(&scbus->sc_link, &saa.scsi_link, sizeof saa.scsi_link);
-
-	/*
-	 * Set saa.sf to something, so that SDIO drivers don't need a
-	 * special case to weed out memory cards.
-	 */
-	saa.sf = sc->sc_fn0 != NULL ? sc->sc_fn0 :
-	    SIMPLEQ_FIRST(&sc->sf_head);
-
-	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
+	scbus->sc_child = config_found(&sc->sc_dev, &scbus->sc_link,
+	    scsiprint);
 	if (scbus->sc_child == NULL) {
 		printf("%s: can't attach scsibus\n", sc->sc_dev.dv_xname);
 		goto free_ccbs;
