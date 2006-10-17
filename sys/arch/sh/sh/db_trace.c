@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 2006/10/17 04:20:08 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -85,6 +85,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 	frame = ddb_regs.tf_r14;
 	callpc = ddb_regs.tf_spc;
+
+	if (count == 0 || count == -1)
+		count = INT_MAX;
 
 	lastframe = 0;
 	while (count > 0 && frame != 0) {
