@@ -8,9 +8,9 @@ block drop all
 block return all
 block return-rst proto tcp all
 pass all flags S/SA keep state
-pass in all flags S/SA no state
-pass out all flags S/SA no state
-pass all flags S/SA no state
+pass in all no state
+pass out all no state
+pass all no state
 block drop in all
 block drop out all
 block drop all

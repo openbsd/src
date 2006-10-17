@@ -7,7 +7,7 @@ pass in proto udp all keep state
 pass in proto icmp all keep state
 pass in proto tcp all flags S/SA keep state
 pass in all flags S/SA no state
-pass in all flags any no state
+pass in all no state
 pass in all flags any keep state
 pass in all flags S/SA keep state
 pass in all flags S/SA keep state

@@ -2,7 +2,7 @@
   [ Skip steps: i=end d=end f=4 p=2 sa=4 sp=2 da=4 dp=3 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in all flags S/SA no state
+@1 pass in all no state
   [ Skip steps: i=end d=end f=4 sa=4 da=4 dp=3 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

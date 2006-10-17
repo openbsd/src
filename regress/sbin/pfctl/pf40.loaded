@@ -38,15 +38,15 @@
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass in all flags S/SA no state
+@4 pass in all no state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass out all flags S/SA no state
+@5 pass out all no state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 pass all flags S/SA no state
+@6 pass all no state
   [ Skip steps: i=12 f=end p=15 sa=end sp=end da=end dp=19 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
