@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.4 2006/10/15 21:56:49 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.5 2006/10/17 10:31:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -56,6 +56,31 @@
 #define DPRINTF(x)
 #endif
 
+/* internal structures and defines */
+struct malo_node {
+	struct ieee80211_node	ni;
+};
+
+struct malo_rx_data {
+	bus_dmamap_t	map;
+	struct mbuf	*m;
+};
+
+/* Rx descriptor used by HW */
+struct malo_rx_desc {
+	uint8_t		status;
+	uint8_t		rssi;
+	uint16_t	reserved1;	/* needs to be 1 */
+	uint16_t	len;
+	uint8_t		reserved2;	/* actually unkown */
+	uint8_t		reserved3;
+	uint32_t	physdata;	/* DMA address of data */
+	uint32_t	physnext;	/* DMA address of next control block */
+	uint32_t	id;		/* id for the host to id buffer ??? */
+} __packed;
+
+#define MALO_RX_RING_COUNT	48
+
 /* firmware commands as found in a document describing the Libertas FW */
 #define MALO_CMD_GET_HW_SPEC	0x0003
 #define MALO_CMD_RESPONSE	0x8000
@@ -106,7 +131,11 @@ struct cfdriver malo_cd = {
 	NULL, "malo", DV_IFNET
 };
 
-int	malo_dma_alloc_cmd(struct malo_softc *sc);
+int	malo_alloc_cmd(struct malo_softc *sc);
+void	malo_free_cmd(struct malo_softc *sc);
+int	malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring,
+	    int count);
+void	malo_free_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
 int	malo_load_bootimg(struct malo_softc *sc);
 int	malo_load_firmware(struct malo_softc *sc);
 int	malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor);
@@ -182,6 +211,11 @@ malo_attach(struct malo_softc *sc)
 	malo_ctl_write4(sc, 0x0c34, 0);
 	malo_ctl_write4(sc, 0x0c3c, 0);
 #endif
+	/* allocate DMA structures */
+	malo_alloc_cmd(sc);
+	malo_alloc_rx_ring(sc, &sc->sc_rxring0, MALO_RX_RING_COUNT);
+	malo_alloc_rx_ring(sc, &sc->sc_rxring1, MALO_RX_RING_COUNT);
+
 	/* setup interface */
 	ifp->if_softc = sc;
 	ifp->if_init = malo_init;
@@ -244,13 +278,15 @@ malo_detach(void *arg)
 	malo_stop(sc);
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
-	//malo_dma_free(sc);
+	malo_free_cmd(sc);
+	malo_free_rx_ring(sc, &sc->sc_rxring0);
+	malo_free_rx_ring(sc, &sc->sc_rxring1);
 
 	return (0);
 }
 
 int
-malo_dma_alloc_cmd(struct malo_softc *sc)
+malo_alloc_cmd(struct malo_softc *sc)
 {
 	int error, nsegs;
 
@@ -291,6 +327,164 @@ malo_dma_alloc_cmd(struct malo_softc *sc)
 	    sizeof(uint32_t);
 
 	return (0);
+}
+
+void
+malo_free_cmd(struct malo_softc *sc)
+{
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_dmam);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_cookie, PAGE_SIZE);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmd_dmas, 1);
+}
+
+int
+malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
+{
+	struct malo_rx_desc *desc;
+	struct malo_rx_data *data;
+	int i, nsegs, error;
+
+	ring->count = count;
+	ring->cur = ring->next = 0;
+
+	error = bus_dmamap_create(sc->sc_dmat,
+	    count * sizeof(struct malo_rx_desc), 1,
+	    count * sizeof(struct malo_rx_desc), 0,
+	    BUS_DMA_NOWAIT, &ring->map);
+	if (error != 0) {
+		printf("%s: could not create desc DMA map\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat,
+	    count * sizeof(struct malo_rx_desc),
+	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not allocate DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
+	    count * sizeof(struct malo_rx_desc), (caddr_t *)&ring->desc,
+	    BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map desc DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, ring->map, ring->desc,
+	    count * sizeof(struct malo_rx_desc), NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not load desc DMA map\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	bzero(ring->desc, count * sizeof(struct malo_rx_desc));
+	ring->physaddr = ring->map->dm_segs->ds_addr;
+
+	ring->data = malloc(count * sizeof (struct malo_rx_data), M_DEVBUF,
+	    M_NOWAIT);
+	if (ring->data == NULL) {
+		printf("%s: could not allocate soft data\n",
+		    sc->sc_dev.dv_xname);
+		error = ENOMEM;
+		goto fail;
+	}
+
+	/*
+	 * Pre-allocate Rx buffers and populate Rx ring.
+	 */
+	bzero(ring->data, count * sizeof (struct malo_rx_data));
+	for (i = 0; i < count; i++) {
+		desc = &ring->desc[i];
+		data = &ring->data[i];
+
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT, &data->map);
+		if (error != 0) {
+			printf("%s: could not create DMA map\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+
+		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
+		if (data->m == NULL) {
+			printf("%s: could not allocate rx mbuf\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
+		}
+
+		MCLGET(data->m, M_DONTWAIT);
+		if (!(data->m->m_flags & M_EXT)) {
+			printf("%s: could not allocate rx mbuf cluster\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
+		}
+
+		error = bus_dmamap_load(sc->sc_dmat, data->map,
+		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		if (error != 0) {
+			printf("%s: could not load rx buf DMA map",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+
+		desc->reserved1 = htole16(1);
+		desc->physdata = htole32(data->map->dm_segs->ds_addr);
+		desc->physnext = htole32(ring->physaddr +
+		    (i + 1) % count * sizeof(struct malo_rx_desc));
+		desc->id = i;	/* ignored by the card ??? */
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, ring->map, 0, ring->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	return (0);
+
+fail:	malo_free_rx_ring(sc, ring);
+	return (error);
+}
+
+void
+malo_free_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring)
+{
+	struct malo_rx_data *data;
+	int i;
+
+	if (ring->desc != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
+		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, ring->map);
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+		    ring->count * sizeof(struct malo_rx_desc));
+		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
+	}
+
+	if (ring->data != NULL) {
+		for (i = 0; i < ring->count; i++) {
+			data = &ring->data[i];
+
+			if (data->m != NULL) {
+				bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+				    data->map->dm_mapsize,
+				    BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(sc->sc_dmat, data->map);
+				m_freem(data->m);
+			}
+
+			if (data->map != NULL)
+				bus_dmamap_destroy(sc->sc_dmat, data->map);
+		}
+		free(ring->data, M_DEVBUF);
+	}
 }
 
 int
@@ -495,6 +689,17 @@ malo_get_spec(struct malo_softc *sc)
 		return (ETIMEDOUT);
 
 	/* XXX get the data form the buffer and feed it to ieee80211 */
+	DPRINTF(("%s: get_hw_spec: V%x R%x, #Mcast %d, Regcode %d, #Ant %d\n",
+	    sc->sc_dev.dv_xname, htole16(spec->HwVersion),
+	    htole32(spec->FWReleaseNumber), htole16(spec->NumOfMCastAdr),
+	    htole16(spec->RegionCode), htole16(spec->NumberOfAntenna)));
+
+	/* tell the DMA engine where our rings are */
+	malo_mem_write4(sc, letoh32(spec->RxPdRd1Ptr) & 0xffff,
+	    htole32(sc->sc_rxring0.physaddr));
+	malo_mem_write4(sc, letoh32(spec->RxPdRd2Ptr) & 0xffff,
+	    htole32(sc->sc_rxring1.physaddr));
+
 	return (0);
 }
 
@@ -517,7 +722,6 @@ malo_init(struct ifnet *ifp)
 	malo_ctl_write4(sc, 0x0c3c, 0);
 
 	/* load firmware */
-	malo_dma_alloc_cmd(sc);
 	malo_load_bootimg(sc);
 	malo_load_firmware(sc);
 

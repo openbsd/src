@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.h,v 1.2 2006/10/15 20:07:31 claudio Exp $ */
+/*	$OpenBSD: malo.h,v 1.3 2006/10/17 10:31:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -16,9 +16,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct malo_rx_desc;
+struct malo_rx_data;
+
+struct malo_rx_ring {
+	bus_dmamap_t		map;
+	bus_dma_segment_t	seg;
+	bus_addr_t		physaddr;
+	struct malo_rx_desc	*desc;
+	struct malo_rx_data	*data;
+	int			count;
+	int			cur;
+	int			next;
+};
+
 struct malo_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
+	struct malo_rx_ring	sc_rxring0;
+	struct malo_rx_ring	sc_rxring1;
 
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_mem1_bt;
@@ -39,10 +55,6 @@ struct malo_softc {
 
 	int			(*sc_enable)(struct malo_softc *);
 	void			(*sc_disable)(struct malo_softc *);
-};
-
-struct malo_node {
-	struct ieee80211_node	ni;
 };
 
 int malo_intr(void *arg);
