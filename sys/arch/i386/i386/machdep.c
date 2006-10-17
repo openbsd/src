@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.366 2006/10/05 01:36:41 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.367 2006/10/17 21:28:23 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1340,32 +1340,6 @@ cyrix6x86_cpu_setup(struct cpu_info *ci)
 #endif
 }
 
-#if defined(I586_CPU) || defined(I686_CPU)
-void	natsem6x86_cpureset(void);
-
-void
-natsem6x86_cpureset(void)
-{
-	/*
-	 * Reset AMD Geode SC1100.
-	 *
-	 * 1) Write PCI Configuration Address Register (0xcf8) to
-	 *    select Function 0, Register 0x44: Bridge Configuration,
-	 *    GPIO and LPC Configuration Register Space, Reset
-	 *    Control Register.
-	 *
-	 * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
-	 *    to reset IDE controller, IDE bus, and PCI bus, and
-	 *    to trigger a system-wide reset.
-	 *
-	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
-	 * sections 6.3.1, 6.3.2, and 6.4.1.
-	 */
-	outl(0xCF8, 0x80009044UL);
-	outb(0xCFC, 0x0F);
-}
-#endif
-
 void
 natsem6x86_cpu_setup(struct cpu_info *ci)
 {
@@ -1380,10 +1354,8 @@ natsem6x86_cpu_setup(struct cpu_info *ci)
 		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
-	cpuresetfn = natsem6x86_cpureset;
 #endif
 }
-
 
 void
 intel586_cpu_setup(struct cpu_info *ci)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.6 2006/09/29 19:31:23 mpf Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.7 2006/10/17 21:28:23 tom Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -45,6 +45,7 @@ struct geodesc_softc {
 int	geodesc_match(struct device *, void *, void *);
 void	geodesc_attach(struct device *, struct device *, void *);
 int	geodesc_wdogctl_cb(void *, int);
+void	sc1100_sysreset(void);
 
 struct cfattach geodesc_ca = {
 	sizeof(struct geodesc_softc), geodesc_match, geodesc_attach
@@ -89,6 +90,7 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t cnfg, cba;
 	uint8_t sts, rev, iid;
 	pcireg_t reg;
+	extern void (*cpuresetfn)(void);
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, SC1100_F5_SCRATCHPAD);
 	sc->sc_iot = pa->pa_iot;
@@ -124,6 +126,9 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	geodesc_timecounter.tc_priv = sc;
 	tc_init(&geodesc_timecounter);
 #endif /* __HAVE_TIMECOUNTER */
+
+	/* We have a special way to reset the CPU on the SC1100 */
+	cpuresetfn = sc1100_sysreset;
 }
 
 int
@@ -146,3 +151,25 @@ geodesc_get_timecount(struct timecounter *tc)
 	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, GCB_TSC));
 }
 #endif /* __HAVE_TIMECOUNTER */
+
+void
+sc1100_sysreset(void)
+{
+	/*
+	 * Reset AMD Geode SC1100.
+	 *
+	 * 1) Write PCI Configuration Address Register (0xcf8) to
+	 *    select Function 0, Register 0x44: Bridge Configuration,
+	 *    GPIO and LPC Configuration Register Space, Reset
+	 *    Control Register.
+	 *
+	 * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
+	 *    to reset IDE controller, IDE bus, and PCI bus, and
+	 *    to trigger a system-wide reset.
+	 *
+	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
+	 * sections 6.3.1, 6.3.2, and 6.4.1.
+	 */
+	outl(0xCF8, 0x80009044UL);
+	outb(0xCFC, 0x0F);
+}
