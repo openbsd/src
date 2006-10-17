@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.507 2006/10/11 21:04:18 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.508 2006/10/17 07:14:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1780,9 +1780,10 @@ pfrule		: action dir logquick interface route af proto fromto
 				free(p);
 			}
 
-			/* 'flags S/SA' by default on pass rules. */
+			/* 'flags S/SA' by default on stateful rules */
 			if (!r.action && !r.flags && !r.flagset &&
-			    !$9.fragment && !($9.marker & FOM_FLAGS)) {
+			    !$9.fragment && !($9.marker & FOM_FLAGS) &&
+			    r.keep_state) {
 				r.flags = parse_flags("S");
 				r.flagset =  parse_flags("SA");
 			}

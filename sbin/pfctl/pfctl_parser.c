@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.230 2006/10/06 17:04:53 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.231 2006/10/17 07:14:28 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -796,7 +796,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	} else if (r->action == PF_PASS &&
 	    (!r->proto || r->proto == IPPROTO_TCP) &&
 	    !(r->rule_flag & PFRULE_FRAGMENT) &&
-	    !anchor_call[0])
+	    !anchor_call[0] && r->keep_state)
 		printf(" flags any");
 	if (r->type) {
 		const struct icmptypeent	*it;
