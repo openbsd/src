@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.59 2006/07/11 00:52:38 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.60 2006/10/17 22:22:49 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1316,10 +1316,9 @@ gem_mediachange(ifp)
 	struct mii_data *mii = &sc->sc_mii;
 
 	if (mii->mii_instance) {
-		struct mii_softc        *miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		miisc = LIST_NEXT(miisc, mii_list))
-		mii_phy_reset(miisc);
+		struct mii_softc *miisc;
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
 	}
 
 	return (mii_mediachg(&sc->sc_mii));
