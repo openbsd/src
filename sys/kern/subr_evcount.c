@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.7 2005/12/09 09:09:52 jsg Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.8 2006/10/17 10:29:50 grange Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -33,14 +33,12 @@
 #include <sys/sysctl.h>
 
 static TAILQ_HEAD(,evcount) evcount_list;
-static struct evcount *evcount_next_sync;
 
 /*
  * Standard evcount parents.
  */
 struct evcount evcount_intr;
 
-void evcount_timeout(void *);
 void evcount_init(void);
 
 void
@@ -74,9 +72,6 @@ evcount_attach(struct evcount *ec, const char *name, void *data,
 void
 evcount_detach(struct evcount *ec)
 {
-	if (evcount_next_sync == ec)
-		evcount_next_sync = TAILQ_NEXT(ec, next);
-
 	TAILQ_REMOVE(&evcount_list, ec, next);
 }
 
