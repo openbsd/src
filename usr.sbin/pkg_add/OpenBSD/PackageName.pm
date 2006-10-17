@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.12 2006/08/11 11:01:12 bernd Exp $
+# $OpenBSD: PackageName.pm,v 1.13 2006/10/17 22:08:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -42,9 +42,35 @@ sub splitname
 	}
 }
 
+sub from_string
+{
+	my $class = shift;
+	local $_ = shift;
+	if (/\-(?=\d)/) {
+		my $stem = $`;
+		my $rest = $';
+		my @all = split /\-/, $rest;
+		my $version = OpenBSD::PackageName::version->from_string(shift @all);
+		return bless {
+			stem => $stem,
+			version => $version,
+			flavors => \@all
+		}, "OpenBSD::PackageName::Name";
+	} else {
+		return bless {
+			stem => $_,
+		}, "OpenBSD::PackageName::Stem";
+	}
+}
+
 sub splitstem
 {
-	return (splitname $_[0])[0];
+	local $_ = shift;
+	if (/\-(?=\d)/) {
+		return $`;
+	} else {
+		return $_;
+	}
 }
 
 sub is_stem
@@ -144,4 +170,144 @@ sub findstem
 	return keys %{$self->{$stem}};
 }
 	
+package OpenBSD::PackageName::version;
+
+sub make_dewey
+{
+	my $o = shift;
+	$o->{deweys} = [ split(/\./, $o->{string}) ];
+	for my $suffix (qw(rc beta pre pl)) {
+		if ($o->{deweys}->[-1] =~ m/^(\d+)$suffix(\d*)$/) {
+			$o->{deweys}->[-1] = $1;
+			$o->{$suffix} = $2;
+		}
+	}
+}
+
+sub from_string
+{
+	my ($class, $string) = @_;
+	my $vnum = -1;
+	my $pnum = -1;
+	if ($string =~ m/v(\d+)$/) {
+		$vnum = $1;
+		$string = $`;
+	}
+	if ($string =~ m/p(\d+)$/) {
+		$pnum = $1;
+		$string = $`;
+	}
+	my $o = bless {
+		pnum => $pnum,
+		vnum => $vnum,
+		string => $string,
+	}, $class;
+
+	$o->make_dewey;
+	return $o;
+}
+
+sub to_string
+{
+	my $o = shift;
+	my $string = $o->{string};
+	if ($o->{pnum} > -1) {
+		$string .= 'p'.$o->{pnum};
+	}
+	if ($o->{vnum} > -1) {
+		$string .= 'v'.$o->{vnum};
+	}
+	return $string;
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	# Simple case: epoch number
+	if ($a->{vnum} != $b->{vnum}) {
+		return $a->{vnum} <=> $b->{vnum};
+	}
+	# Simple case: only p number differs
+	if ($a->{string} eq $b->{string}) {
+		return $a->{pnum} <=> $b->{pnum}
+	} 
+	# Try a diff in dewey numbers first
+	for (my $i = 0; ; $i++) {
+		if (!defined $a->{deweys}->[$i]) {
+			if (!defined $b->{deweys}->[$i]) {
+				return 0;
+			} else {
+				return -1;
+			}
+		}
+		if (!defined $b->{deweys}->[$i]) {
+			return 1;
+		}
+		my $r = dewey_compare($a->{deweys}->[$i],
+			$b->{deweys}->[$i]);
+		return $r if $r != 0;
+	}
+	# finally try all the usual suspects
+	# release candidates and beta and pre releases.
+	for my $suffix (qw(rc beta pre pl)) {
+		my $result = $suffix eq 'pl' ? 1 : -1;
+		if (defined $a->{$suffix} && defined $b->{$suffix}) {
+			return $a->{$suffix} <=> $b->{$suffix};
+		}
+		if (defined $a->{$suffix} && !defined $b->{$suffix}) {
+			return $result;
+		}
+		if (!defined $a->{$suffix} && defined $b->{$suffix}) {
+			return -$result;
+		}
+	}
+	# give up: we don't know how to make a difference
+	return 0;
+}
+
+sub dewey_compare
+{
+	my ($a, $b) = @_;
+	# numerical comparison
+	if ($a =~ m/^\d+$/ and $b =~ m/^\d+$/) {
+		return $a <=> $b;
+	}
+	# added lowercase letter
+	if ("$a.$b" =~ m/^(\d+)([a-z]?)\.(\d+)([a-z]?)$/) {
+		my ($an, $al, $bn, $bl) = ($1, $2, $3, $4);
+		if ($an != $bn) {
+			return $an <=> $bn;
+		} else {
+			return $al cmp $bl;
+		}
+	}
+	return $a cmp $b;
+}
+
+package OpenBSD::PackageName::Stem;
+sub to_string
+{
+	my $o = shift;
+	return $o->{stem};
+}
+
+sub to_pattern
+{
+	my $o = shift;
+	return $o->{stem}.'-*';
+}
+
+package OpenBSD::PackageName::Name;
+sub to_string
+{
+	my $o = shift;
+	return join('-', $o->{stem}, $o->{version}->to_string, @{$o->{flavors}});
+}
+
+sub to_pattern
+{
+	my $o = shift;
+	return join('-', $o->{stem}, '*', @{$o->{flavors}});
+}
+
 1;
