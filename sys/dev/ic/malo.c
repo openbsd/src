@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.6 2006/10/17 19:40:39 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.7 2006/10/17 21:23:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -47,6 +47,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_rssadapt.h>
 
 #include <dev/ic/malo.h>
 
@@ -58,7 +59,8 @@
 
 /* internal structures and defines */
 struct malo_node {
-	struct ieee80211_node	ni;
+	struct ieee80211_node		ni;
+	struct ieee80211_rssadapt	rssadapt;
 };
 
 struct malo_rx_data {
@@ -183,6 +185,7 @@ void	malo_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    int isnew);
 struct ieee80211_node *
 	malo_node_alloc(struct ieee80211com *ic);
+void	malo_rx_intr(struct malo_softc *sc);
 
 /* supported rates */
 const struct ieee80211_rateset  malo_rates_11b =
@@ -221,6 +224,9 @@ malo_intr(void *arg)
 		/* wakeup caller */
 		wakeup(sc);
 	}
+
+	if (status & 0x2)
+		malo_rx_intr(sc);
 
 	/* just ack the interrupt */
 	malo_ctl_write4(sc, 0x0c30, 0);
@@ -984,4 +990,102 @@ malo_node_alloc(struct ieee80211com *ic)
 	bzero(wn, sizeof(struct malo_node));
 
 	return ((struct ieee80211_node *)wn);
+}
+
+void
+malo_rx_intr(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct malo_rx_desc *desc;
+	struct malo_rx_data *data;
+	struct malo_node *rn;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *mnew, *m;
+	int error, i;
+
+	for (i = 0; i < MALO_RX_RING_COUNT; i++) {
+		desc = &sc->sc_rxring.desc[sc->sc_rxring.cur];
+		data = &sc->sc_rxring.data[sc->sc_rxring.cur];
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
+		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
+		    sizeof(struct malo_rx_desc), BUS_DMASYNC_POSTREAD);
+
+		if (!(letoh32(desc->status) & 0x01))
+			break;
+
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		MCLGET(mnew, M_DONTWAIT);
+		if (!(mnew->m_flags & M_EXT)) {
+			m_freem(mnew);
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, data->map);
+
+		error = bus_dmamap_load(sc->sc_dmat, data->map,
+		   mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		if (error != 0) {
+			m_freem(mnew);
+
+			error = bus_dmamap_load(sc->sc_dmat, data->map,
+			    mtod(data->m, void *), MCLBYTES, NULL,
+			    BUS_DMA_NOWAIT);
+			if (error != 0) {
+				panic("%s: could not load old rx mbuf",
+				    sc->sc_dev.dv_xname);
+			}
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		/*
+		 * New mbuf mbuf successfully loaded
+		 */
+		m = data->m;
+		data->m = mnew;
+		desc->physdata = htole32(data->map->dm_segs->ds_addr);
+
+		/* finalize mbuf */
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = letoh32(desc->len);
+
+#if NBPFILER > 0
+		/* TODO bpf mtap */
+#endif
+
+		wh = mtod(m, struct ieee80211_frame *);
+		ni = ieee80211_find_rxnode(ic, wh);
+
+		/* send the frame to the 802.11 layer */
+		ieee80211_input(ifp, m, ni, desc->rssi, 0);
+
+		/* give rssi to the rate adaption algorithm */
+		rn = (struct malo_node *)ni;
+		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
+
+		/* node is no longer needed */
+		ieee80211_release_node(ic, ni);
+
+skip:
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
+		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
+		    sizeof(struct malo_rx_desc), BUS_DMASYNC_PREWRITE);
+
+		DPRINTF(("rx intr idx=%d, status=0x%02x, len=%d\n",
+		    i, desc->status, desc->len));
+
+		sc->sc_rxring.cur = (sc->sc_rxring.cur + 1) %
+		    MALO_RX_RING_COUNT;
+        }
 }
