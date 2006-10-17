@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 2006/10/17 03:33:39 drahn Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -191,9 +191,9 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
 		KDASSERT(p->p_md.md_pcb->pcb_onfault != NULL);
-		tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
-		if (tf->tf_spc == 0)
+		if (p->p_md.md_pcb->pcb_onfault == 0)
 			goto do_panic;
+		tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
 		break;
 
 	case EXPEVT_ADDR_ERR_LD | EXP_USER: /* FALLTHROUGH */
