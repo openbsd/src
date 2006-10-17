@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 2006/10/04 00:52:55 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2006/10/17 23:42:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -134,7 +134,6 @@ struct part_map_entry {
 
 
 struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
 	/* only store first entry and openbsd partition */
 	struct part_map_entry macparts[2];
 };

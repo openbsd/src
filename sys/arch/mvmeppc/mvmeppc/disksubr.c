@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.22 2006/10/12 00:25:20 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.23 2006/10/17 23:42:37 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -70,11 +70,14 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	struct cpu_disklabel *osdep;
 	int spoofonly;
 {
-	struct dos_partition *dp = osdep->dosparts, *dp2;
-	struct buf *bp;
+	struct dos_partition *dp, *dp2;
 	struct disklabel *dlp;
+	unsigned long extoff = 0;
+	struct buf *bp;
+	daddr_t part_blkno = DOSBBSECTOR;
 	char *msg = NULL, *cp;
 	int dospartoff, cyl, i, ourpart = -1;
+	int wander = 1, n = 0, loop = 0;
 
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
@@ -99,132 +102,127 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
-	        daddr_t part_blkno = DOSBBSECTOR;
-		unsigned long extoff = 0;
-		int wander = 1, n = 0, loop = 0;
 
-		/*
-		 * Read dos partition table, follow extended partitions.
-		 * Map the partitions to disklabel entries i-p
-		 */
-		while (wander && n < 8 && loop < 8) {
-		        loop++;
-			wander = 0;
-			if (part_blkno < extoff)
-				part_blkno = extoff;
+	/*
+	 * Read dos partition table, follow extended partitions.
+	 * Map the partitions to disklabel entries i-p
+	 */
+	while (wander && n < 8 && loop < 8) {
+		loop++;
+		wander = 0;
+		if (part_blkno < extoff)
+			part_blkno = extoff;
 
-			/* read boot record */
-			bp->b_blkno = part_blkno;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_flags = B_BUSY | B_READ;
-			bp->b_cylinder = part_blkno / lp->d_secpercyl;
-			(*strat)(bp);
-		     
-			/* if successful, wander through dos partition table */
-			if (biowait(bp)) {
-				msg = "dos partition I/O error";
-				goto done;
-			}
-			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
+		/* read boot record */
+		bp->b_blkno = part_blkno;
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_cylinder = part_blkno / lp->d_secpercyl;
+		(*strat)(bp);
+	     
+		/* if successful, wander through dos partition table */
+		if (biowait(bp)) {
+			msg = "dos partition I/O error";
+			goto done;
+		}
+		dp = (struct dos_partition *)(bp->b_data + DOSPARTOFF);
 
-			if (ourpart == -1) {
-				/* Search for our MBR partition */
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (letoh32(dp2->dp_size) &&
-					    dp2->dp_typ == DOSPTYP_OPENBSD)
-						ourpart = i;
-				if (ourpart == -1)
-					goto donot;
-				/*
-				 * This is our MBR partition. need sector address
-				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
-				 */
-				dp2 = &dp[ourpart];
-				dospartoff = letoh32(dp2->dp_start) + part_blkno;
-				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
-
-				/* XXX build a temporary disklabel */
-				lp->d_partitions[0].p_size = letoh32(dp2->dp_size);
-				lp->d_partitions[0].p_offset =
-					letoh32(dp2->dp_start) + part_blkno;
-				if (lp->d_ntracks == 0)
-					lp->d_ntracks = dp2->dp_ehd + 1;
-				if (lp->d_nsectors == 0)
-					lp->d_nsectors = DPSECT(dp2->dp_esect);
-				if (lp->d_secpercyl == 0)
-					lp->d_secpercyl = lp->d_ntracks *
-					    lp->d_nsectors;
-			}
-donot:
+		if (ourpart == -1) {
+			/* Search for our MBR partition */
+			for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
+			    i++, dp2++)
+				if (letoh32(dp2->dp_size) &&
+				    dp2->dp_typ == DOSPTYP_OPENBSD)
+					ourpart = i;
+			if (ourpart == -1)
+				goto donot;
 			/*
-			 * In case the disklabel read below fails, we want to
-			 * provide a fake label in i-p.
+			 * This is our MBR partition. need sector address
+			 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
 			 */
-			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
-				struct partition *pp = &lp->d_partitions[8+n];
+			dp2 = &dp[ourpart];
+			dospartoff = letoh32(dp2->dp_start) + part_blkno;
+			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
-				if (dp2->dp_typ == DOSPTYP_OPENBSD)
-					continue;
-				if (letoh32(dp2->dp_size) > lp->d_secperunit)
-					continue;
-				if (letoh32(dp2->dp_size))
-					pp->p_size = letoh32(dp2->dp_size);
-				if (letoh32(dp2->dp_start))
-					pp->p_offset =
-					    letoh32(dp2->dp_start) + part_blkno;
+			/* XXX build a temporary disklabel */
+			lp->d_partitions[0].p_size = letoh32(dp2->dp_size);
+			lp->d_partitions[0].p_offset =
+				letoh32(dp2->dp_start) + part_blkno;
+			if (lp->d_ntracks == 0)
+				lp->d_ntracks = dp2->dp_ehd + 1;
+			if (lp->d_nsectors == 0)
+				lp->d_nsectors = DPSECT(dp2->dp_esect);
+			if (lp->d_secpercyl == 0)
+				lp->d_secpercyl = lp->d_ntracks *
+				    lp->d_nsectors;
+		}
+donot:
+		/*
+		 * In case the disklabel read below fails, we want to
+		 * provide a fake label in i-p.
+		 */
+		for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
+			struct partition *pp = &lp->d_partitions[8+n];
 
-				switch (dp2->dp_typ) {
-				case DOSPTYP_UNUSED:
-					for (cp = (char *)dp2;
-					    cp < (char *)(dp2 + 1); cp++)
-						if (*cp)
-							break;
-					/*
-					 * Was it all zeroes?  If so, it is
-					 * an unused entry that we don't
-					 * want to show.
-					 */
-					if (cp == (char *)(dp2 + 1))
-					    continue;
-					lp->d_partitions[8 + n++].p_fstype =
-					    FS_UNUSED;
-					break;
+			if (dp2->dp_typ == DOSPTYP_OPENBSD)
+				continue;
+			if (letoh32(dp2->dp_size) > lp->d_secperunit)
+				continue;
+			if (letoh32(dp2->dp_size))
+				pp->p_size = letoh32(dp2->dp_size);
+			if (letoh32(dp2->dp_start))
+				pp->p_offset =
+				    letoh32(dp2->dp_start) + part_blkno;
 
-				case DOSPTYP_LINUX:
-					pp->p_fstype = FS_EXT2FS;
-					n++;
-					break;
+			switch (dp2->dp_typ) {
+			case DOSPTYP_UNUSED:
+				for (cp = (char *)dp2;
+				    cp < (char *)(dp2 + 1); cp++)
+					if (*cp)
+						break;
+				/*
+				 * Was it all zeroes?  If so, it is
+				 * an unused entry that we don't
+				 * want to show.
+				 */
+				if (cp == (char *)(dp2 + 1))
+				    continue;
+				lp->d_partitions[8 + n++].p_fstype =
+				    FS_UNUSED;
+				break;
 
-				case DOSPTYP_FAT12:
-				case DOSPTYP_FAT16S:
-				case DOSPTYP_FAT16B:
-				case DOSPTYP_FAT16L:
-				case DOSPTYP_FAT32:
-					pp->p_fstype = FS_MSDOS;
-					n++;
-					break;
-				case DOSPTYP_EXTEND:
-				case DOSPTYP_EXTENDL:
-					part_blkno = letoh32(dp2->dp_start) + extoff;
-					if (!extoff) {
-						extoff = letoh32(dp2->dp_start);
-						part_blkno = 0;
-					}
-					wander = 1;
-					break;
-				default:
-					pp->p_fstype = FS_OTHER;
-					n++;
-					break;
+			case DOSPTYP_LINUX:
+				pp->p_fstype = FS_EXT2FS;
+				n++;
+				break;
+
+			case DOSPTYP_FAT12:
+			case DOSPTYP_FAT16S:
+			case DOSPTYP_FAT16B:
+			case DOSPTYP_FAT16L:
+			case DOSPTYP_FAT32:
+				pp->p_fstype = FS_MSDOS;
+				n++;
+				break;
+			case DOSPTYP_EXTEND:
+			case DOSPTYP_EXTENDL:
+				part_blkno = letoh32(dp2->dp_start) + extoff;
+				if (!extoff) {
+					extoff = letoh32(dp2->dp_start);
+					part_blkno = 0;
 				}
+				wander = 1;
+				break;
+			default:
+				pp->p_fstype = FS_OTHER;
+				n++;
+				break;
 			}
 		}
-		lp->d_bbsize = 8192;
-		lp->d_sbsize = 64*1024;		/* XXX ? */
-		lp->d_npartitions = MAXPARTITIONS;
 	}
+	lp->d_bbsize = 8192;
+	lp->d_sbsize = 64*1024;		/* XXX ? */
+	lp->d_npartitions = MAXPARTITIONS;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -345,7 +343,7 @@ writedisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts, *dp2;
+	struct dos_partition *dp, *dp2;
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, dospartoff, cyl, i;
@@ -358,35 +356,32 @@ writedisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
-		/* read master boot record */
-		bp->b_blkno = DOSBBSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
+	/* read master boot record */
+	bp->b_blkno = DOSBBSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
 
-		if ((error = biowait(bp)) != 0)
-			goto done;
+	if ((error = biowait(bp)) != 0)
+		goto done;
 
-		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + DOSPARTOFF, dp,
-		    NDOSPART * sizeof(*dp));
+	/* XXX how do we check veracity/bounds of this? */
+	dp = (struct dos_partition *)(bp->b_data + DOSPARTOFF);
 
-		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (letoh32(dp2->dp_size) && dp2->dp_typ == DOSPTYP_OPENBSD)
-				ourpart = i;
+	for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+		if (letoh32(dp2->dp_size) && dp2->dp_typ == DOSPTYP_OPENBSD)
+			ourpart = i;
 
-		if (ourpart != -1) {
-			dp2 = &dp[ourpart];
+	if (ourpart != -1) {
+		dp2 = &dp[ourpart];
 
-			/*
-			 * need sector address for SCSI/IDE,
-			 * cylinder for ESDI/ST506/RLL
-			 */
-			dospartoff = letoh32(dp2->dp_start);
-			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
-		}
+		/*
+		 * need sector address for SCSI/IDE,
+		 * cylinder for ESDI/ST506/RLL
+		 */
+		dospartoff = letoh32(dp2->dp_start);
+		cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 	}
 
 	/* next, dig out disk label */
@@ -417,7 +412,6 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	goto done;
 
 done:
 	bp->b_flags |= B_INVAL;

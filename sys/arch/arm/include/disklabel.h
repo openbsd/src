@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.8 2006/10/04 03:30:48 krw Exp $	*/
-/*	$OpenBSD: disklabel.h,v 1.8 2006/10/04 03:30:48 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2006/10/17 23:42:37 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2006/10/17 23:42:37 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,6 @@ struct dos_partition {
 
 
 struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
 };
 
 #endif /* _ARM_DISKLABEL_H_ */
