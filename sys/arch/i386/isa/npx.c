@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.41 2006/09/19 11:06:34 jsg Exp $	*/
+/*	$OpenBSD: npx.c,v 1.42 2006/10/18 19:48:32 tom Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -123,6 +123,7 @@ enum npx_type {
 	NPX_INTERRUPT,
 	NPX_EXCEPTION,
 	NPX_BROKEN,
+	NPX_CPUID,
 };
 
 static	enum npx_type		npx_type;
@@ -278,6 +279,15 @@ npxprobe(struct device *parent, void *match, void *aux)
 	struct	gate_descriptor save_idt_npxintr;
 	struct	gate_descriptor save_idt_npxtrap;
 
+	if (cpu_feature & CPUID_FPU) {
+		npx_type = NPX_CPUID;
+		i386_fpu_exception = 1;
+		ia->ia_irq = IRQUNK;	/* Don't want the interrupt vector */
+		ia->ia_iosize = 16;
+		ia->ia_msize = 0;
+		return 1;
+	}
+
 	/*
 	 * This routine is now just a wrapper for npxprobe1(), to install
 	 * special npx interrupt and trap handlers, to enable npx interrupts
@@ -367,6 +377,10 @@ npxattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");
+		break;
+	case NPX_CPUID:
+		printf(": reported by CPUID; using exception 16\n");
+		npx_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
 		printf(": error reporting broken; not using\n");
