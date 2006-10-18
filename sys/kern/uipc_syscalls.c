@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.63 2006/03/26 17:47:10 mickey Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.64 2006/10/18 14:43:45 kurt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -165,7 +165,10 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	}
 	if ((head->so_state & SS_NBIO) && head->so_qlen == 0) {
-		error = EWOULDBLOCK;
+		if (head->so_state & SS_CANTRCVMORE)
+			error = ECONNABORTED;
+		else
+			error = EWOULDBLOCK;
 		goto bad;
 	}
 	while (head->so_qlen == 0 && head->so_error == 0) {
