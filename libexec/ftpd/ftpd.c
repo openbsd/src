@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.171 2006/04/21 17:42:50 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.172 2006/10/18 21:23:28 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.171 2006/04/21 17:42:50 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.172 2006/10/18 21:23:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -565,7 +565,7 @@ main(int argc, char *argv[])
 			lreply(530, "%s", line);
 		}
 		(void) fflush(stdout);
-		(void) fclose(fd);
+		(void) close(fd);
 		reply(530,
 			"Connection from IPv4 mapped address is not supported.");
 		exit(0);
