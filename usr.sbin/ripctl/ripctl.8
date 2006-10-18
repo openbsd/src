@@ -1,0 +1,96 @@
+.\"	$OpenBSD: ripctl.8,v 1.1 2006/10/18 16:15:25 norby Exp $
+.\"
+.\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
+.\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd June 27, 2006
+.Dt RIPCTL 8
+.Os
+.Sh NAME
+.Nm ripctl
+.Nd control the Routing Information Protocol daemon
+.Sh SYNOPSIS
+.Nm
+.Ar command
+.Op Ar arguments ...
+.Sh DESCRIPTION
+The
+.Nm
+program controls the
+.Xr ripd 8
+daemon.
+.Pp
+The following commands are available:
+.Bl -tag -width Ds
+.It Cm fib couple
+Insert the learned routes into the Forward Information Base a.k.a. the kernel
+routing table.
+.It Cm fib decouple
+Remove the learned routes from the Forward Information Base a.k.a. the kernel
+routing table.
+Decoupling the FIB from an RIP router may create routing loops and could cause
+major routing issues.
+.It Cm show fib Op Ar destination | filter
+Show the Forwarding Information Base.
+.Ar destination
+can be specified to show the route matching a destination IP address.
+.Ar filter
+can be any of the following:
+.Pp
+.Bl -tag -width "interfaceXXinterfaceXX" -compact
+.It Cm connected
+Show only connected routes.
+.It Cm interface Op Ar interface
+Show only interfaces or the specified
+.Ar interface .
+.It Cm rip
+Show only RIP routes.
+.It Cm static
+Show only static routes.
+.El
+.Pp
+.Cm connected ,
+.Cm rip ,
+and
+.Cm static
+may be specified together.
+.It Cm show interfaces Op Ar interface
+Show details for all interfaces or the specified
+.Ar interface .
+.It Cm show neighbor Op Cm detail
+Show neighbors.
+.Cm detail
+can be specified for additional detail.
+.It Cm show rib Op Cm detail
+Show the Routing Information Base.
+.Cm detail
+can be specified for additional detail.
+.It Cm show summary
+Show summary information.
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/ripd.sockXX" -compact
+.It /var/run/ripd.sock
+Unix-domain socket used for communication with
+.Xr ripd 8 .
+.El
+.Sh SEE ALSO
+.Xr ripd.conf 5 ,
+.Xr ripd 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.0 .
