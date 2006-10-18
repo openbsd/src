@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.7 2006/10/17 21:28:23 tom Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.8 2006/10/18 19:09:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -44,8 +44,11 @@ struct geodesc_softc {
 
 int	geodesc_match(struct device *, void *, void *);
 void	geodesc_attach(struct device *, struct device *, void *);
-int	geodesc_wdogctl_cb(void *, int);
 void	sc1100_sysreset(void);
+
+#ifndef SMALL_KERNEL
+int	geodesc_wdogctl_cb(void *, int);
+#endif /* SMALL_KERNEL */
 
 struct cfattach geodesc_ca = {
 	sizeof(struct geodesc_softc), geodesc_match, geodesc_attach
@@ -111,6 +114,7 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": iid %d revision %d wdstatus %b\n", iid, rev, sts, WDSTSBITS);
 
+#ifndef SMALL_KERNEL
 	/* setup and register watchdog */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDTO, 0);
 	sts |= WDOVF_CLEAR;
@@ -120,6 +124,8 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDCNFG, cnfg);
 
 	wdog_register(sc, geodesc_wdogctl_cb);
+#endif /* SMALL_KERNEL */
+
 #ifdef __HAVE_TIMECOUNTER
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GCB_TSCNFG, TSC_ENABLE);
 	/* Hook into the kern_tc */
@@ -131,6 +137,7 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	cpuresetfn = sc1100_sysreset;
 }
 
+#ifndef SMALL_KERNEL
 int
 geodesc_wdogctl_cb(void *self, int period)
 {
@@ -141,6 +148,7 @@ geodesc_wdogctl_cb(void *self, int period)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDTO, period * 64);
 	return (period);
 }
+#endif /* SMALL_KERNEL */
 
 #ifdef __HAVE_TIMECOUNTER
 u_int
