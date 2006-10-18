@@ -1,0 +1,195 @@
+.\"	$OpenBSD: ripd.conf.5,v 1.1 2006/10/18 16:11:58 norby Exp $
+.\"
+.\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
+.\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
+.\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 27, 2006
+.Dt RIPD.CONF 5
+.Os
+.Sh NAME
+.Nm ripd.conf
+.Nd Routing Information Protocol daemon configuration file
+.Sh DESCRIPTION
+The
+.Xr ripd 8
+daemon implements the Routing Information Protocol version 2 as described
+in rfc 2453.
+.Sh SECTIONS
+The
+.Nm
+config file is divided into three main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr ripd 8 .
+.It Sy Interfaces Configuration
+Interface specific parameters.
+.El
+.Sh MACROS
+Much like
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits,
+and underscores.
+Macro names may not be reserved words (for example,
+.Ic cost ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+hi="2"
+interface em0 {
+	cost $hi
+}
+.Ed
+.Sh GLOBAL CONFIGURATION
+Global settings concerns the main behaviour of the daemon.
+.Bl -tag -width Ds
+.It Xo
+.Ic fib-update
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+do not update the Forwarding Information Base, a.k.a. the kernel routing
+table.
+The default is
+.Ic yes .
+.Pp
+.It Xo
+.Ic redistribute
+.Sm off
+.Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
+.Ic default Ns \&|
+.Ic none Pc
+.Sm on
+.Xc
+If set to
+.Ic connected ,
+routes to directly attached networks will be
+announced over RIP.
+If set to
+.Ic static ,
+static routes will be announced over RIP.
+If set to
+.Ic default ,
+a default route pointing to this router will be announced over RIP.
+By default no additional routes will be announced over RIP.
+.Pp
+.It Xo
+.Ic split-horizon
+.Sm off
+.Po Ic default Ns \&| Ns Ic poisoned Ns \&| Ns
+.Ic none Pc
+.Sm on
+.Xc
+If set to
+.Ic default ,
+do not redistribute routes to the interface from which they were learned.
+If set to
+.Ic poisoned ,
+redistribute routes to the interface from which they were learned, but
+forcing the metric to infinity.
+Both these behaviours can resolve routing loops when a router goes down.
+The default is
+.Ic none .
+.Pp
+.It Xo
+.Ic triggered-updates
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+Immediately trigger responses when a route changes.
+The default is
+.Ic yes .
+.El
+.Sh INTERFACES
+Each interface can have several parameters configured individually, otherwise
+they are inherited.
+.Bd -literal -offset indent
+interface em0 {
+}
+.Ed
+.Pp
+Interface specific parameters are listed below.
+.Bl -tag -width Ds
+.It Ic auth-key Ar key
+Set the authentication key for
+.Ic simple
+authentication.
+Up to 16 characters can be specified.
+.It Ic auth-md Ar key-id key
+Set the authentication
+.Ar key-id
+and
+.Ar key
+for
+.Ic crypt
+authentication.
+The valid range for
+.Ar key-id
+is 0\-255.
+Up to 16 characters can be specified for
+.Ar key .
+Multiple keys may be specified.
+.It Ic auth-md-keyid Ar key-id
+Configure the
+.Ar key-id
+to use for
+.Ic crypt
+authentication.
+The valid range for
+.Ar key-id
+is 0\-255.
+The default key-id is 1.
+.It Xo
+.Ic auth-type
+.Po Ic none Ns \&| Ns
+.Ic simple Ns \&| Ns Ic crypt Pc
+.Xc
+Set the authentication type.
+The default is
+.Ic none .
+Simple authentication uses a plaintext password, up to 16 characters.
+Crypt authentication uses an MD5 hash.
+.It Ic cost Ar number
+Cost of the network connected through this interface.
+Values must be between 1 and 16, inclusive.
+.It Ic passive
+Prevent transmission and reception of RIP packets on this interface.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ripd.conf" -compact
+.It Pa /etc/ripd.conf
+.Xr ripd 8
+configuration file
+.El
+.Sh SEE ALSO
+.Xr rc.conf.local 8 ,
+.Xr ripctl 8 ,
+.Xr ripd 8
+.Rs
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 4.0 .
