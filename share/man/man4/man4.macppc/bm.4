@@ -1,4 +1,4 @@
-.\" $OpenBSD: bm.4,v 1.7 2006/08/30 22:56:05 jmc Exp $
+.\" $OpenBSD: bm.4,v 1.8 2006/10/18 15:48:01 martin Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
@@ -33,6 +33,7 @@
 .Nd Apple BMAC Ethernet device
 .Sh SYNOPSIS
 .Cd "bm* at macobio?"
+.Cd "lxtphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -52,6 +53,7 @@ PowerMac1,1
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
+.Xr lxtphy 4 ,
 .Xr netintro 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
