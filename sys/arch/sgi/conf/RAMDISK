@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2005/05/01 17:19:34 david Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2006/10/18 19:11:54 brad Exp $
 #
 
 machine		sgi mips64
@@ -25,7 +25,8 @@ option		FFS		# fast filesystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 
 # Networking options
-option		INET		# Internet protocols
+option		INET		# IP + ICMP + TCP + UDP
+option		INET6		# IPv6 (needs INET)
 
 # RAMDISK stuff
 option		MINIROOTSIZE=8192
