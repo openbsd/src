@@ -556,11 +556,17 @@ override_options ()
   if (!g_switch_set)
     g_switch_value = 8;
 
+#ifdef OPENBSD_NATIVE
+  /* Make -fpic behave as -fPIC unless -msmall-data is specified. */
+  if (flag_pic == 2 && TARGET_SMALL_DATA)
+    warning ("-fPIC used with -msmall-data");
+#else
   /* Infer TARGET_SMALL_DATA from -fpic/-fPIC.  */
   if (flag_pic == 1)
     target_flags |= MASK_SMALL_DATA;
   else if (flag_pic == 2)
     target_flags &= ~MASK_SMALL_DATA;
+#endif
 
   /* Align labels and loops for optimal branching.  */
   /* ??? Kludge these by not doing anything if we don't optimize and also if
