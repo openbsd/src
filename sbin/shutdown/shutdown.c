@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.33 2005/12/02 01:05:38 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.34 2006/10/18 21:58:55 cloder Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.33 2005/12/02 01:05:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.34 2006/10/18 21:58:55 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,11 +104,11 @@ static sig_atomic_t killflg;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime(void);
-void __attribute ((noreturn)) die_you_gravy_sucking_pig_dog(void);
+void __dead die_you_gravy_sucking_pig_dog(void);
 void doitfast(void);
-void __attribute ((noreturn)) finish(int);
+void __dead finish(int);
 void getoffset(char *);
-void __attribute ((noreturn)) loop(void);
+void __dead loop(void);
 void nolog(void);
 void timeout(int);
 void timewarn(int);
