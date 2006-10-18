@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.16 2005/11/15 07:02:35 miod Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.17 2006/10/18 21:18:59 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: symtab.c,v 1.16 2005/11/15 07:02:35 miod Exp $";
+static const char rcsid[] = "$OpenBSD: symtab.c,v 1.17 2006/10/18 21:18:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -442,18 +442,18 @@ dumpsymtable(char *filename, long checkpt)
 	ino_t i;
 	struct entry temp, *tentry;
 	long mynum = 1, stroff = 0;
-	FILE *fd;
+	FILE *fp;
 	struct symtableheader hdr;
 
 	Vprintf(stdout, "Check pointing the restore\n");
 	if (Nflag)
 		return;
-	if ((fd = fopen(filename, "w")) == NULL) {
+	if ((fp = fopen(filename, "w")) == NULL) {
 		warn("fopen");
 		panic("cannot create save file %s for symbol table\n",
 		    filename);
 	}
-	clearerr(fd);
+	clearerr(fp);
 	/*
 	 * Assign indices to each entry
 	 * Write out the string entries
@@ -462,7 +462,7 @@ dumpsymtable(char *filename, long checkpt)
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			ep->e_index = mynum++;
 			(void)fwrite(ep->e_name, sizeof(char),
-			       (int)allocsize(ep->e_namlen), fd);
+			       (int)allocsize(ep->e_namlen), fp);
 		}
 	}
 	/*
@@ -488,7 +488,7 @@ dumpsymtable(char *filename, long checkpt)
 			if (ep->e_next != NULL)
 				tep->e_next =
 					(struct entry *)ep->e_next->e_index;
-			(void)fwrite((char *)tep, sizeof(struct entry), 1, fd);
+			(void)fwrite((char *)tep, sizeof(struct entry), 1, fp);
 		}
 	}
 	/*
@@ -499,7 +499,7 @@ dumpsymtable(char *filename, long checkpt)
 			tentry = NULL;
 		else
 			tentry = (struct entry *)entry[i]->e_index;
-		(void)fwrite((char *)&tentry, sizeof(struct entry *), 1, fd);
+		(void)fwrite((char *)&tentry, sizeof(struct entry *), 1, fp);
 	}
 	hdr.volno = checkpt;
 	hdr.maxino = maxino;
@@ -508,13 +508,13 @@ dumpsymtable(char *filename, long checkpt)
 	hdr.dumptime = dumptime;
 	hdr.dumpdate = dumpdate;
 	hdr.ntrec = ntrec;
-	(void)fwrite((char *)&hdr, sizeof(struct symtableheader), 1, fd);
-	if (ferror(fd)) {
+	(void)fwrite((char *)&hdr, sizeof(struct symtableheader), 1, fp);
+	if (ferror(fp)) {
 		warn("fwrite");
 		panic("output error to file %s writing symbol table\n",
 		    filename);
 	}
-	(void)fclose(fd);
+	(void)fclose(fp);
 }
 
 /*

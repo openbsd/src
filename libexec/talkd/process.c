@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.17 2004/03/10 04:32:45 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.18 2006/10/18 21:23:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.17 2004/03/10 04:32:45 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.18 2006/10/18 21:23:11 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -195,21 +195,21 @@ find_user(char *name, char *tty, size_t ttyl)
 {
 	struct utmp ubuf, ubuf1;
 	int status;
-	FILE *fd;
+	FILE *fp;
 	char line[UT_LINESIZE+1];
 	char ftty[MAXPATHLEN];
 	time_t	idle, now;
 
 	time(&now);
 	idle = INT_MAX;
-	if ((fd = fopen(_PATH_UTMP, "r")) == NULL) {
+	if ((fp = fopen(_PATH_UTMP, "r")) == NULL) {
 		fprintf(stderr, "talkd: can't read %s.\n", _PATH_UTMP);
 		return (FAILED);
 	}
 #define SCMPN(a, b)	strncmp(a, b, sizeof(a))
 	status = NOT_HERE;
 	(void) strlcpy(ftty, _PATH_DEV, sizeof(ftty));
-	while (fread((char *) &ubuf, sizeof(ubuf), 1, fd) == 1)
+	while (fread((char *) &ubuf, sizeof(ubuf), 1, fp) == 1)
 		if (SCMPN(ubuf.ut_name, name) == 0) {
 			if (*tty == '\0') {
 				/* no particular tty was requested */
@@ -234,7 +234,7 @@ find_user(char *name, char *tty, size_t ttyl)
 				break;
 			}
 		}
-	fclose(fd);
+	fclose(fp);
 	if (*tty == '\0' && status == SUCCESS) {
 		memcpy(line, ubuf1.ut_line, UT_LINESIZE);
 		line[sizeof(line)-1] = '\0';

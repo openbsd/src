@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.49 2006/09/19 10:48:41 otto Exp $	 */
+/* $OpenBSD: ui.c,v 1.50 2006/10/18 21:18:59 deraadt Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -223,7 +223,7 @@ ui_config(char *cmd)
 	char	 subcmd[81], section[81], tag[81], value[81], tmp[81];
 	char	*v, *nv;
 	int	 trans = 0, items;
-	FILE	*fd;
+	FILE	*fp;
 
 	if (sscanf(cmd, "C %80s", subcmd) != 1)
 		goto fail;
@@ -232,11 +232,11 @@ ui_config(char *cmd)
 		if (sscanf(cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
 			goto fail;
 		v = conf_get_str(section, tag);
-		fd = ui_open_result();
-		if (fd) {
+		fp = ui_open_result();
+		if (fp) {
 			if (v)
-				fprintf(fd, "%s\n", v);
-			fclose(fd);
+				fprintf(fp, "%s\n", v);
+			fclose(fp);
 		}
 		LOG_DBG((LOG_UI, 30, "ui_config: \"%s\"", cmd));
 		return;
@@ -410,15 +410,15 @@ ui_report(char *cmd)
 void
 ui_report_sa(char *cmd)
 {
-	/* Skip 'cmd' as arg? */
+	FILE *fp = ui_open_result();
 
-	FILE *fd = ui_open_result();
-	if (!fd)
+	/* Skip 'cmd' as arg? */
+	if (!fp)
 		return;
 
-	sa_report_all(fd);
+	sa_report_all(fp);
 
-	fclose(fd);
+	fclose(fp);
 }
 
 static void
@@ -581,8 +581,9 @@ ui_handler(void)
 static FILE *
 ui_open_result(void)
 {
-	FILE *fd = monitor_fopen(RESULT_FILE, "w");
-	if (!fd)
+	FILE *fp = monitor_fopen(RESULT_FILE, "w");
+
+	if (!fp)
 		log_error("ui_open_result: fopen() failed");
-	return fd;
+	return fp;
 }

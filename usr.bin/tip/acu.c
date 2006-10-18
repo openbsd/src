@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.12 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: acu.c,v 1.13 2006/10/18 21:18:59 deraadt Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: acu.c,v 1.12 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: acu.c,v 1.13 2006/10/18 21:18:59 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -65,7 +65,7 @@ con(void)
 {
 	char *cp = PN;
 	char *phnum, string[256];
-	FILE *fd;
+	FILE *fp;
 	volatile int tried = 0;
 
 	if (!DU) {		/* regular connect message */
@@ -114,11 +114,11 @@ con(void)
 			tried++;
 		}
 	} else {
-		if ((fd = fopen(PH, "r")) == NOFILE) {
+		if ((fp = fopen(PH, "r")) == NOFILE) {
 			printf("%s: ", PH);
 			return ("can't open phone number file");
 		}
-		while (fgets(string, sizeof(string), fd) != NOSTR) {
+		while (fgets(string, sizeof(string), fp) != NOSTR) {
 			cp = &string[strcspn(string, " \t\n")];
 			if (*cp != '\0')
 				*cp++ = '\0';
@@ -140,7 +140,7 @@ con(void)
 			logent(value(HOST), phnum, acu->acu_name, "call failed");
 			tried++;
 		}
-		fclose(fd);
+		fclose(fp);
 	}
 	if (conflag) {
 		if (CM != NOSTR)

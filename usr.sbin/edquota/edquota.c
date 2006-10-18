@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.44 2006/04/02 00:50:40 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.45 2006/10/18 21:18:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -408,24 +408,24 @@ int
 writeprivs(struct quotause *quplist, int outfd, char *name, int quotatype)
 {
 	struct quotause *qup;
-	FILE *fd;
+	FILE *fp;
 
 	ftruncate(outfd, 0);
 	lseek(outfd, 0, SEEK_SET);
-	if ((fd = fdopen(dup(outfd), "w")) == NULL)
+	if ((fp = fdopen(dup(outfd), "w")) == NULL)
 		err(1, "%s", tmpfil);
-	(void)fprintf(fd, "Quotas for %s %s:\n", qfextension[quotatype], name);
+	(void)fprintf(fp, "Quotas for %s %s:\n", qfextension[quotatype], name);
 	for (qup = quplist; qup; qup = qup->next) {
-		(void)fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
+		(void)fprintf(fp, "%s: %s %d, limits (soft = %d, hard = %d)\n",
 		    qup->fsname, "KBytes in use:",
 		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks) / 1024),
 		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit) / 1024),
 		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit) / 1024));
-		(void)fprintf(fd, "%s %d, limits (soft = %d, hard = %d)\n",
+		(void)fprintf(fp, "%s %d, limits (soft = %d, hard = %d)\n",
 		    "\tinodes in use:", qup->dqblk.dqb_curinodes,
 		    qup->dqblk.dqb_isoftlimit, qup->dqblk.dqb_ihardlimit);
 	}
-	fclose(fd);
+	fclose(fp);
 	return(1);
 }
 
@@ -436,24 +436,24 @@ int
 readprivs(struct quotause *quplist, int infd)
 {
 	struct quotause *qup;
-	FILE *fd;
+	FILE *fp;
 	int cnt;
 	char *cp;
 	struct dqblk dqblk;
 	char *fsp, line1[BUFSIZ], line2[BUFSIZ];
 
 	lseek(infd, 0, SEEK_SET);
-	fd = fdopen(dup(infd), "r");
-	if (fd == NULL) {
+	fp = fdopen(dup(infd), "r");
+	if (fp == NULL) {
 		warnx("can't re-read temp file!!");
 		return(0);
 	}
 	/*
 	 * Discard title line, then read pairs of lines to process.
 	 */
-	(void)fgets(line1, sizeof (line1), fd);
-	while (fgets(line1, sizeof (line1), fd) != NULL &&
-	       fgets(line2, sizeof (line2), fd) != NULL) {
+	(void)fgets(line1, sizeof (line1), fp);
+	while (fgets(line1, sizeof (line1), fp) != NULL &&
+	       fgets(line2, sizeof (line2), fp) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
 			warnx("%s: bad format", line1);
 			return(0);
@@ -521,7 +521,7 @@ readprivs(struct quotause *quplist, int infd)
 			break;
 		}
 	}
-	fclose(fd);
+	fclose(fp);
 	/*
 	 * Disable quotas for any filesystems that have not been found.
 	 */
@@ -545,24 +545,24 @@ int
 writetimes(struct quotause *quplist, int outfd, int quotatype)
 {
 	struct quotause *qup;
-	FILE *fd;
+	FILE *fp;
 
 	ftruncate(outfd, 0);
 	lseek(outfd, 0, SEEK_SET);
-	if ((fd = fdopen(dup(outfd), "w")) == NULL)
+	if ((fp = fdopen(dup(outfd), "w")) == NULL)
 		err(1, "%s", tmpfil);
-	(void)fprintf(fd,
+	(void)fprintf(fp,
 	    "Time units may be: days, hours, minutes, or seconds\n");
-	(void)fprintf(fd,
+	(void)fprintf(fp,
 	    "Grace period before enforcing soft limits for %ss:\n",
 	    qfextension[quotatype]);
 	for (qup = quplist; qup; qup = qup->next) {
-		(void)fprintf(fd, "%s: block grace period: %s, ",
+		(void)fprintf(fp, "%s: block grace period: %s, ",
 		    qup->fsname, cvtstoa(qup->dqblk.dqb_btime));
-		(void)fprintf(fd, "file grace period: %s\n",
+		(void)fprintf(fp, "file grace period: %s\n",
 		    cvtstoa(qup->dqblk.dqb_itime));
 	}
-	fclose(fd);
+	fclose(fp);
 	return(1);
 }
 
@@ -573,24 +573,24 @@ int
 readtimes(struct quotause *quplist, int infd)
 {
 	struct quotause *qup;
-	FILE *fd;
+	FILE *fp;
 	int cnt;
 	char *cp;
 	time_t itime, btime, iseconds, bseconds;
 	char *fsp, bunits[10], iunits[10], line1[BUFSIZ];
 
 	lseek(infd, 0, SEEK_SET);
-	fd = fdopen(dup(infd), "r");
-	if (fd == NULL) {
+	fp = fdopen(dup(infd), "r");
+	if (fp == NULL) {
 		warnx("can't re-read temp file!!");
 		return(0);
 	}
 	/*
 	 * Discard two title lines, then read lines to process.
 	 */
-	(void)fgets(line1, sizeof (line1), fd);
-	(void)fgets(line1, sizeof (line1), fd);
-	while (fgets(line1, sizeof (line1), fd) != NULL) {
+	(void)fgets(line1, sizeof (line1), fp);
+	(void)fgets(line1, sizeof (line1), fp);
+	while (fgets(line1, sizeof (line1), fp) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
 			warnx("%s: bad format", line1);
 			return(0);
@@ -620,7 +620,7 @@ readtimes(struct quotause *quplist, int infd)
 			break;
 		}
 	}
-	fclose(fd);
+	fclose(fp);
 	/*
 	 * reset default grace periods for any filesystems
 	 * that have not been found.
