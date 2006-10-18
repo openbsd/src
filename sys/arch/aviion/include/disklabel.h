@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 2006/10/17 23:42:37 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2006/10/18 20:09:38 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct dos_partition {
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
 struct cpu_disklabel {
+	struct dos_partition dosparts[NDOSPART];
 };
 
 #endif /* _AVIION_DISKLABEL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.17 2006/10/17 23:42:37 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.18 2006/10/18 20:09:38 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -88,6 +88,13 @@ struct dos_partition {
 
 struct cpu_disklabel {
 	int labelsector;
+	union {
+		struct {
+		} _alpha;
+		struct {
+			struct dos_partition dosparts[NDOSPART];
+		} _i386;
+	} u;
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */
