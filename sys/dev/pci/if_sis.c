@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.73 2006/08/10 17:45:16 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.74 2006/10/18 20:00:21 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1182,26 +1182,19 @@ sis_ring_init(struct sis_softc *sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i, error;
-	bus_addr_t		next;
+	int			i, error, nexti;
 
 	cd = &sc->sis_cdata;
 	ld = sc->sis_ldata;
 
 	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
-		next = sc->sc_listmap->dm_segs[0].ds_addr;
-		if (i == (SIS_TX_LIST_CNT - 1)) {
-			ld->sis_tx_list[i].sis_nextdesc =
-			    &ld->sis_tx_list[0];
-			next +=
-			    offsetof(struct sis_list_data, sis_tx_list[0]);
-		} else {
-			ld->sis_tx_list[i].sis_nextdesc =
-			    &ld->sis_tx_list[i+1];
-			next +=
-			    offsetof(struct sis_list_data, sis_tx_list[i+1]);
-		}
-		ld->sis_tx_list[i].sis_next = next;
+		if (i == (SIS_TX_LIST_CNT - 1))
+			nexti = 0;
+		else
+			nexti = i + 1;
+		ld->sis_tx_list[i].sis_nextdesc = &ld->sis_tx_list[nexti];
+		ld->sis_tx_list[i].sis_next = sc->sc_listmap->dm_segs[0].ds_addr +
+			offsetof(struct sis_list_data, sis_tx_list[nexti]);
 		ld->sis_tx_list[i].sis_mbuf = NULL;
 		ld->sis_tx_list[i].sis_ptr = 0;
 		ld->sis_tx_list[i].sis_ctl = 0;
@@ -1218,17 +1211,13 @@ sis_ring_init(struct sis_softc *sc)
 		error = sis_newbuf(sc, &ld->sis_rx_list[i], NULL);
 		if (error)
 			return (error);
-		next = sc->sc_listmap->dm_segs[0].ds_addr;
-		if (i == (sc->sc_rxbufs - 1)) {
-			ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[0];
-			next +=
-			    offsetof(struct sis_list_data, sis_rx_list[0]);
-		} else {
-			ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[i+1];
-			next +=
-			    offsetof(struct sis_list_data, sis_rx_list[i+1]);
-		}
-		ld->sis_rx_list[i].sis_next = next;
+		if (i == (sc->sc_rxbufs - 1))
+			nexti = 0;
+		else
+			nexti = i + 1;
+		ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[nexti];
+		ld->sis_rx_list[i].sis_next = sc->sc_listmap->dm_segs[0].ds_addr +
+			offsetof(struct sis_list_data, sis_rx_list[nexti]);
 	}
 
 	cd->sis_rx_pdsc = &ld->sis_rx_list[0];
