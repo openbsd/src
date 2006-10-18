@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.32 2005/10/27 07:02:02 bernd Exp $
+# $OpenBSD: Delete.pm,v 1.33 2006/10/18 16:40:40 sturm Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -546,7 +546,7 @@ sub delete
 		print "deleting extra file: $realname\n";
 	}
 	return if $state->{not};
-	return unless -e $realname;
+	return unless -e $realname or -l $realname;
 	if ($state->{replacing}) {
 		$state->print("Remember to update $realname\n");
 		$self->mark_dir($state);
