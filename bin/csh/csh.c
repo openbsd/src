@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.23 2005/12/11 02:41:01 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.24 2006/10/18 21:20:39 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.23 2005/12/11 02:41:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.24 2006/10/18 21:20:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -777,7 +777,7 @@ void
 rechist(void)
 {
     Char    buf[BUFSIZ], hbuf[BUFSIZ], *hfile;
-    int     fp, ftmp, oldidfds;
+    int     fd, ftmp, oldidfds;
     struct  varent *shist;
 
     if (!fast) {
@@ -802,18 +802,18 @@ rechist(void)
 	    (void) Strlcat(buf, STRsldthist, sizeof buf/sizeof(Char));
 	}
 
-	if ((fp = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
+	if ((fd = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
 	    0600)) == -1)
 	    return;
 
 	oldidfds = didfds;
 	didfds = 0;
 	ftmp = SHOUT;
-	SHOUT = fp;
+	SHOUT = fd;
 	dumphist[2] = hbuf;
 	dohist(dumphist, NULL);
 	SHOUT = ftmp;
-	(void) close(fp);
+	(void) close(fd);
 	didfds = oldidfds;
     }
 }
