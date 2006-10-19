@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.27 2006/10/19 10:55:56 tom Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.28 2006/10/19 19:29:04 tom Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -46,7 +46,7 @@
 #define BIOS_STEP			16
 
 /*
- * MSRs and bits used by Powernow technology
+ * MSRs and bits used by PowerNow! technology
  */
 #define MSR_AMDK7_FIDVID_CTL		0xc0010041
 #define MSR_AMDK7_FIDVID_STATUS		0xc0010042
@@ -335,9 +335,9 @@ k7_powernow_init(void)
 		k7pnow_states(cstate, regs[0], maxfid, startvid); 
 	if (cstate->n_states) {
 		if (cstate->flags & PN7_FLAG_DESKTOP_VRM)
-			techname = "Cool`n'Quiet K7";
+			techname = "Cool'n'Quiet K7";
 		else
-			techname = "Powernow! K7";
+			techname = "PowerNow! K7";
 		printf("%s: %s %d MHz: speeds:",
 		    ci->ci_dev.dv_xname, techname, pentium_mhz);
 		for (i = cstate->n_states; i > 0; i--) {

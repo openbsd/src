@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.17 2006/10/19 10:55:56 tom Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.18 2006/10/19 19:29:04 tom Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -45,7 +45,7 @@
 #define BIOS_STEP			16
 
 /*
- * MSRs and bits used by Powernow technology
+ * MSRs and bits used by PowerNow! technology
  */
 #define MSR_AMDK7_FIDVID_CTL		0xc0010041
 #define MSR_AMDK7_FIDVID_STATUS		0xc0010042
@@ -383,7 +383,7 @@ k8_powernow_init(void)
 	if (PN8_STA_SFID(status) != PN8_STA_MFID(status))
 		techname = "PowerNow! K8";
 	else
-		techname = "Cool`n'Quiet K8";
+		techname = "Cool'n'Quiet K8";
 
 	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
 		if (cstate->n_states) {
