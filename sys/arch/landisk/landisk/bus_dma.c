@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.1.1.1 2006/10/06 21:16:15 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.2 2006/10/19 21:16:54 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -538,6 +538,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	/* Always round the size. */
 	size = round_page(size);
 
+	TAILQ_INIT(&mlist);
 	/*
 	 * Allocate the pages from the VM system.
 	 */
