@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcicvar.h,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: shpcicvar.h,v 1.3 2006/10/19 03:36:38 drahn Exp $	*/
 /*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -27,6 +27,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef SH_DEV_PCICVAR_H
+#define SH_DEV_PCICVAR_H
+
 #include <machine/bus.h>
 
 bus_space_tag_t shpcic_get_bus_io_tag(void);
@@ -43,6 +46,27 @@ int shpcic_set_intr_priority(int intr, int level);
 void *shpcic_intr_establish(int evtcode, int (*ih_func)(void *), void *ih_arg,
     const char *ih_name);
 void shpcic_intr_disestablish(void *ih);
+
+struct config_bus_space {
+        u_int32_t bus_base;
+        u_int32_t bus_size;
+        int bus_io;
+};
+
+struct shpcic_softc {
+        struct device s_dev;
+
+	pci_chipset_tag_t sc_pci_chipset;
+
+        /* Structures to do bus fixup */
+        int nbogus;
+        struct extent *extent_mem;
+        struct extent *extent_port;
+        struct config_bus_space sc_membus_space;
+        struct config_bus_space sc_iobus_space;
+};
+
+void pci_addr_fixup(void *v, int maxbus);
 
 /*
  * shpcic io/mem bus space
@@ -222,3 +246,4 @@ void shpcic_mem_copy_region_2(void *v, bus_space_handle_t bsh1,
 void shpcic_mem_copy_region_4(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2,
     bus_size_t count);
+#endif /* SH_DEV_PCICVAR_H */

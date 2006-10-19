@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.3 2006/10/16 21:28:09 drahn Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.4 2006/10/19 03:36:38 drahn Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ int	shpcic_match(struct device *, void *, void *);
 void	shpcic_attach(struct device *, struct device *, void *);
 
 struct cfattach shpcic_ca = {
-	sizeof(struct device), shpcic_match, shpcic_attach
+	sizeof(struct shpcic_softc), shpcic_match, shpcic_attach
 };
 
 struct cfdriver shpcic_cd = {
@@ -137,6 +137,7 @@ void
 shpcic_attach(struct device *parent, struct device *self, void *aux)
 {
 	const struct shpcic_product *spp;
+	struct shpcic_softc *sc = (struct shpcic_softc *)self;
 	struct pcibus_attach_args pba;
 
 	shpcic_found = 1;
@@ -237,6 +238,16 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	intpri_intr_priority(SH4_INTEVT_PCIERR, shpcic_intr_priority[0]);
 	intpri_intr_priority(SH4_INTEVT_PCISERR, shpcic_intr_priority[1]);
 
+	sc->sc_membus_space.bus_base = SH4_PCIC_MEM;
+	sc->sc_membus_space.bus_size = SH4_PCIC_MEM_SIZE;
+	sc->sc_membus_space.bus_io = 0;
+	sc->sc_iobus_space.bus_base = SH4_PCIC_IO; /* XXX */
+	sc->sc_iobus_space.bus_size =  SH4_PCIC_IO_SIZE;
+	sc->sc_iobus_space.bus_io = 1;;
+
+	sc->sc_pci_chipset = shpcic_get_bus_mem_tag();
+	pci_addr_fixup(sc, 1);
+	
 	/* PCI bus */
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
