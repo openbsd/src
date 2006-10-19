@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.14 2006/10/09 05:21:50 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.15 2006/10/19 17:35:09 dim Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -1015,6 +1015,8 @@ wsemul_vt100_output(cookie, data, count, kernel)
 					}
 					break;
 				    default:
+					if ((curchar & 0x7f) < 0x20)
+						break;
 					if (pos++ >= NCOLS) {
 						pos = 0;
 						curchar = ASCII_LF;
