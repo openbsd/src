@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.17 2006/10/16 00:01:05 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.18 2006/10/19 07:02:20 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -143,6 +143,7 @@
 #define AMLOP_ONES             0xFF
 
 #define AMLOP_FIELDUNIT        0xFE00
+#define AML_ANYINT             0xFF00
 
 /*
  * Comparison types for Match()
@@ -311,9 +312,9 @@ struct aml_node
 	struct aml_node *sibling;
 
 	char             name[5];
-  	u_int16_t   	 opcode;
-	u_int8_t   	 *start;
-	u_int8_t   	 *end;
+    	u_int16_t   	 opcode;
+        u_int8_t   	 *start;
+  	u_int8_t   	 *end;
   //	const char 	 *name;
   //	const char 	 *mnem;
 

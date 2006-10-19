@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.16 2006/10/19 01:06:54 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.17 2006/10/19 07:02:20 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -18,18 +18,26 @@
 #ifndef __DEV_ACPI_DSDT_H__
 #define __DEV_ACPI_DSDT_H__
 
-struct acpi_context
+struct aml_vallist
 {
-	int			depth;
-	u_int8_t		*pos;
-	u_int8_t		*start;
-	struct acpi_softc	*sc;
-	struct aml_value	**locals;
-	struct aml_value	**args;
-	struct aml_node		*scope;
+	struct aml_value *obj;
+	int nobj;
+	struct aml_vallist *next;
 };
 
-struct aml_scope;
+struct aml_scope
+{
+	struct acpi_softc  *sc;
+	uint8_t            *pos;
+	uint8_t            *end;
+	struct aml_node    *node;
+	struct aml_vallist *tmpvals;
+	struct aml_scope   *parent;
+	struct aml_value   *locals;
+	struct aml_value   *args;
+	int                 nargs;
+};
+
 
 struct aml_opcode
 {
@@ -40,37 +48,28 @@ struct aml_opcode
 };
 
 const char		*aml_eisaid(u_int32_t);
+const char              *aml_args(int);
 const char		*aml_mnem(int);
-const char		*aml_parse_name(struct acpi_context *);
-int			aml_parse_length(struct acpi_context *);
-int64_t			aml_eparseint(struct acpi_context *, int);
 int64_t			aml_val2int(struct aml_value *);
 struct aml_node		*aml_searchname(struct aml_node *, const void *);
 struct aml_node         *aml_createname(struct aml_node *, const void *, struct aml_value *);
 
-struct aml_opcode	*aml_getopcode(struct acpi_context *);
 struct aml_value	*aml_allocint(uint64_t);
 struct aml_value	*aml_allocstr(const char *);
 struct aml_value	*aml_allocvalue(int, int64_t, const void *);
-u_int8_t		*aml_eparselen(struct acpi_context *);
-void			acpi_freecontext(struct acpi_context *);
 void			aml_freevalue(struct aml_value *);
 void			aml_notify(struct aml_node *, int);
 void			aml_notify_dev(const char *, int);
-void			aml_showvalue(struct aml_value *);
+void			aml_showvalue(struct aml_value *, int);
 void			aml_walkroot(void);
 void			aml_walktree(struct aml_node *);
 
-int			aml_comparevalue(struct acpi_context *, int,
-			    struct aml_value *, struct aml_value *);
 int			aml_find_node(struct aml_node *, const char *,
 			    void (*)(struct aml_node *, void *), void *);
 int			acpi_parse_aml(struct acpi_softc *, u_int8_t *,
 			    u_int32_t);
 int			aml_eval_object(struct acpi_softc *, struct aml_node *,
 			    struct aml_value *, int, struct aml_value *);
-struct acpi_context	*acpi_alloccontext(struct acpi_softc *,
-			    struct aml_node *, int, struct aml_value *);
 void			aml_register_notify(struct aml_node *, const char *,
 			    int (*)(struct aml_node *, int, void *), void *);
 
