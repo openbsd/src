@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.144 2006/07/25 19:16:51 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.145 2006/10/19 01:16:56 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -62,6 +62,7 @@ pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
+geodesc* at pci?		# Geode SC1100/SCx200 IAOC
 
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000

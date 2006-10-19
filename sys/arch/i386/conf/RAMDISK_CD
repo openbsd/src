@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.128 2006/08/28 11:38:17 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.129 2006/10/19 01:16:56 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -64,6 +64,7 @@ pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
+geodesc* at pci?		# Geode SC1100/SCx200 IAOC
 
 # CardBus bus support
 cardbus*	at cardslot?
