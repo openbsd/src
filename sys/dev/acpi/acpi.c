@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.57 2006/10/15 15:22:17 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.58 2006/10/19 03:24:45 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -410,7 +410,7 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		    acpi_read_pmreg(sc, ACPIREG_PM1B_CNT, offset));
 	case ACPIREG_GPE_STS:
 		__size = 1;
-		dnprintf(0, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset, 
+		dnprintf(50, "read GPE_STS  offset: %.2x %.2x %.2x\n", offset, 
 		    sc->sc_fadt->gpe0_blk_len>>1, sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
 			reg = ACPIREG_GPE0_STS;
@@ -418,7 +418,7 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 		break;
 	case ACPIREG_GPE_EN:
 		__size = 1;
-		dnprintf(0, "read GPE_EN   offset: %.2x %.2x %.2x\n", 
+		dnprintf(50, "read GPE_EN   offset: %.2x %.2x %.2x\n", 
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
@@ -480,7 +480,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		break;
 	case ACPIREG_GPE_STS:
 		__size = 1;
-		dnprintf(0, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n", 
+		dnprintf(50, "write GPE_STS offset: %.2x %.2x %.2x %.2x\n", 
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1, regval);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
@@ -489,7 +489,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 		break;
 	case ACPIREG_GPE_EN:
 		__size = 1;
-		dnprintf(0, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n", 
+		dnprintf(50, "write GPE_EN  offset: %.2x %.2x %.2x %.2x\n", 
 		    offset, sc->sc_fadt->gpe0_blk_len>>1,
 		    sc->sc_fadt->gpe1_blk_len>>1, regval);
 		if (offset < (sc->sc_fadt->gpe0_blk_len >> 1)) {
@@ -1117,7 +1117,7 @@ __acpi_enable_gpe(struct acpi_softc *sc, int gpe, int enable)
 
 	/* Read enabled register */
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN, gpe>>3);
-	dnprintf(0, "%sabling GPE %.2x (current: %sabled) %.2x\n", 
+	dnprintf(50, "%sabling GPE %.2x (current: %sabled) %.2x\n", 
 	    enable ? "en" : "dis", gpe, (en & mask) ? "en" : "dis", en);
 	if (enable)
 		en |= mask;
@@ -1138,7 +1138,7 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 		return -EBUSY;
 	}
 
-	dnprintf(0, "Adding GPE handler %.2x (%s)\n", gpe, label);
+	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe, label);
 	sc->gpe_table[gpe].handler = handler;
 	sc->gpe_table[gpe].arg = arg;
 
@@ -1190,7 +1190,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 	sc->sc_lastgpe = sc->sc_fadt->gpe0_blk_len << 2;
 	if (sc->sc_fadt->gpe1_blk_len) {
 	}
-	dnprintf(0, "Last GPE: %.2x\n", sc->sc_lastgpe);
+	dnprintf(50, "Last GPE: %.2x\n", sc->sc_lastgpe);
 
 	/* Allocate GPE table */
 	sc->gpe_table = malloc(sc->sc_lastgpe * sizeof(struct gpe_block),
@@ -1576,7 +1576,7 @@ acpi_isr_thread(void *arg)
 
 			if (pgpe->active) {
 				pgpe->active = 0;
-				dnprintf(0, "softgpe: %.2x\n", gpe);
+				dnprintf(50, "softgpe: %.2x\n", gpe);
 				if (pgpe->handler) {
 					pgpe->handler(sc, gpe, pgpe->arg);
 				}

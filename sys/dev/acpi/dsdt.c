@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.54 2006/10/19 01:06:54 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.55 2006/10/19 03:24:45 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1133,6 +1133,7 @@ aml_derefvalue(struct aml_scope *scope, struct aml_value *ref, int mode)
 						tmp->v_field.bitpos = index * 8;
 						tmp->v_field.bitlen = 8;
 						tmp->v_field.ref1 = ref;
+						aml_addref(ref);
 					}
 					return tmp;
 				default:
