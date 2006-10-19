@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.27 2006/10/19 08:56:46 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.28 2006/10/19 17:57:17 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -75,8 +75,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&sc->sc_lock, "acpibat");
 
-	/* XXX this trick seems to only work during boot */
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res) != 0)
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res))
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
 	
@@ -186,10 +185,6 @@ acpibat_refresh(void *arg)
 
 	rw_enter_write(&sc->sc_lock);
 
-	/* XXX ugh but make sure */
-	if (!sc->sc_bif.bif_cap_granu1)
-		sc->sc_bif.bif_cap_granu1 = 1;
-
 	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
 	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;
 	sc->sc_sens[2].value = sc->sc_bif.bif_low * 1000;
@@ -223,14 +218,14 @@ acpibat_getbif(struct acpibat_softc *sc)
 
 	rw_enter_write(&sc->sc_lock);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
 		goto out;
 	}
 	aml_freevalue(&res);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIF", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIF", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _BIF\n",
 		    DEVNAME(sc));
 		printf("bif fails\n");
@@ -294,7 +289,7 @@ acpibat_getbst(struct acpibat_softc *sc)
 
 	rw_enter_write(&sc->sc_lock);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BST", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BST", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _BST\n",
 		    DEVNAME(sc));
 		printf("_bst fails\n");
