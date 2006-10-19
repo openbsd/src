@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2006/10/16 21:21:00 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2006/10/19 22:15:02 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -168,6 +168,13 @@ landisk_startup(int howto, char *_esym, void *bi)
 		Debugger();
 	}
 #endif
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif 
+	}
 
 	/* Jump to main */
 	__asm volatile(
