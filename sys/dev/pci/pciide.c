@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.258 2006/10/02 17:56:41 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.259 2006/10/19 09:55:47 tom Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -514,6 +514,10 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	  amd756_chip_map
 	},
 	{ PCI_PRODUCT_AMD_8111_IDE,
+	  0,
+	  amd756_chip_map
+	},
+	{ PCI_PRODUCT_AMD_CS5536_IDE,
 	  0,
 	  amd756_chip_map
 	}
