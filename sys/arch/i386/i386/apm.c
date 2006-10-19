@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.70 2006/07/07 04:06:11 gwk Exp $	*/
+/*	$OpenBSD: apm.c,v 1.71 2006/10/19 20:46:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -132,22 +132,22 @@ int cpu_apmwarn = 10;
 #define APMDEV_NORMAL	0
 #define APMDEV_CTL	8
 
-int apm_standbys;
-int apm_userstandbys;
-int apm_suspends;
-int apm_resumes;
-int apm_battlow;
-int apm_evindex;
-int apm_error;
-int apm_op_inprog;
+int	apm_standbys;
+int	apm_userstandbys;
+int	apm_suspends;
+int	apm_resumes;
+int	apm_battlow;
+int	apm_evindex;
+int	apm_error;
+int	apm_op_inprog;
 
-u_int apm_flags;
-u_char apm_majver;
-u_char apm_minver;
-int apm_dobusy = 0;
-int apm_doidle = 0;
-int apm_bebatt = 0;
-int apm_idle_called = 0;
+u_int	apm_flags;
+u_char	apm_majver;
+u_char	apm_minver;
+int	apm_dobusy = 0;
+int	apm_doidle = 0;
+int	apm_bebatt = 0;
+int	apm_idle_called = 0;
 
 struct {
 	u_int32_t entry;
@@ -186,6 +186,7 @@ static int __inline
 apm_get_event(struct apmregs *r)
 {
 	int rv;
+
 	bzero(r, sizeof(*r));
 	rv = apmcall(APM_GET_PM_EVENT, 0, r);
 	return rv;
@@ -194,7 +195,7 @@ apm_get_event(struct apmregs *r)
 const char *
 apm_err_translate(int code)
 {
-	switch(code) {
+	switch (code) {
 	case APM_ERR_PM_DISABLED:
 		return "power management disabled";
 	case APM_ERR_REALALREADY:
@@ -372,7 +373,6 @@ apm_record_event(struct apm_softc *sc, u_int type)
 
 	apm_evindex++;
 	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(type, apm_evindex));
-
 	return (0);
 }
 
@@ -501,7 +501,6 @@ apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 		DPRINTF(("apm_handle_event: %s event, code %d\n", p, regs->bx));
 	    }
 	}
-
 	return ret;
 }
 
@@ -548,6 +547,7 @@ void
 apm_powmgt_enable(int onoff)
 {
 	struct apmregs regs;
+
 	bzero(&regs, sizeof(regs));
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (apmcall(APM_PWR_MGT_ENABLE,
@@ -559,6 +559,7 @@ void
 apm_powmgt_engage(int onoff, u_int dev)
 {
 	struct apmregs regs;
+
 	if (apm_minver == 0)
 		return;
 	bzero(&regs, sizeof(regs));
@@ -574,6 +575,7 @@ void
 apm_devpowmgt_enable(int onoff, u_int dev)
 {
 	struct apmregs regs;
+
 	if (apm_minver == 0)
 		return;
 	/* enable is auto BIOS management.
@@ -592,6 +594,7 @@ int
 apm_set_powstate(u_int dev, u_int state)
 {
 	struct apmregs regs;
+
 	if (!apm_cd.cd_ndevs || (apm_minver == 0 && state > APM_SYS_OFF))
 		return EINVAL;
 	bzero(&regs, sizeof(regs));
@@ -731,6 +734,7 @@ void
 apm_disconnect(struct apm_softc *sc)
 {
 	struct apmregs regs;
+
 	bzero(&regs, sizeof(regs));
 	if (apmcall(APM_SYSTEM_DEFAULTS,
 	    (apm_minver == 1 ? APM_DEV_ALLDEVS : APM_DEFAULTS_ALL), &regs))
@@ -750,8 +754,7 @@ apmprobe(struct device *parent, void *match, void *aux)
 	bios_apminfo_t *ap = ba->bios_apmp;
 	bus_space_handle_t ch, dh;
 
-	if (apm_cd.cd_ndevs ||
-	    strcmp(ba->bios_dev, "apm") ||
+	if (apm_cd.cd_ndevs || strcmp(ba->bios_dev, "apm") ||
 	    !(ba->bios_apmp->apm_detail & APM_32BIT_SUPPORTED)) {
 		DPRINTF(("%s: %x\n", ba->bios_dev, ba->bios_apmp->apm_detail));
 		return 0;
@@ -783,7 +786,6 @@ apmprobe(struct device *parent, void *match, void *aux)
 		return 0;
 	}
 	bus_space_unmap(ba->bios_memt, dh, ap->apm_data_len);
-
 	return 1;
 }
 
@@ -862,7 +864,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		setgdt(GAPMDATA_SEL, (void *)dh, ap->apm_data_len, SDT_MEMRWA,
 		    SEL_KPL, 1, 0);
 		DPRINTF((": flags %x code 32:%x/%x[%x] 16:%x/%x[%x] "
-		       "data %x/%x/%x ep %x (%x:%x)\n%s", apm_flags,
+		    "data %x/%x/%x ep %x (%x:%x)\n%s", apm_flags,
 		    ap->apm_code32_base, ch32, ap->apm_code_len,
 		    ap->apm_code16_base, ch16, ap->apm_code16_len,
 		    ap->apm_data_base, dh, ap->apm_data_len,
@@ -880,9 +882,9 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		apm_powmgt_engage(1, APM_DEV_ALLDEVS);
 
 		bzero(&regs, sizeof(regs));
-		if (apm_get_powstat(&regs) == 0) {
+		if (apm_get_powstat(&regs) == 0)
 			apm_power_print(sc, &regs);
-		} else
+		else
 			apm_perror("get power status", &regs);
 		apm_cpu_busy();
 
@@ -908,7 +910,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 	}
 	/* XXX - To go away */
 	printf("apm0: flags %x dobusy %d doidle %d\n",
-		apm_flags, apm_dobusy, apm_doidle);
+	    apm_flags, apm_dobusy, apm_doidle);
 }
 
 void
@@ -924,8 +926,8 @@ apm_thread_create(void *v)
 	}
 #endif
 
-	if (kthread_create(apm_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname)) {
+	if (kthread_create(apm_thread, sc, &sc->sc_thread, "%s",
+	    sc->sc_dev.dv_xname)) {
 		apm_disconnect(sc);
 		printf("%s: failed to create kernel thread, disabled",
 		    sc->sc_dev.dv_xname);
@@ -1146,7 +1148,6 @@ filt_apmread(struct knote *kn, long hint)
 	/* XXX weird kqueue_scan() semantics */
 	if (hint && !kn->kn_data)
 		kn->kn_data = (int)hint;
-
 	return (1);
 }
 
@@ -1173,6 +1174,5 @@ apmkqfilter(dev_t dev, struct knote *kn)
 	APM_LOCK(sc);
 	SLIST_INSERT_HEAD(&sc->sc_note, kn, kn_selnext);
 	APM_UNLOCK(sc);
-
 	return (0);
 }
