@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.26 2006/10/19 20:36:20 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.27 2006/10/19 20:52:29 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4182,17 +4182,17 @@ bnx_init(void *xsc)
 
 	if (bnx_reset(sc, BNX_DRV_MSG_CODE_RESET)) {
 		printf("%s: Controller reset failed!\n");
-		goto bnx_init_locked_exit;
+		goto bnx_init_exit;
 	}
 
 	if (bnx_chipinit(sc)) {
 		printf("%s: Controller initialization failed!\n");
-		goto bnx_init_locked_exit;
+		goto bnx_init_exit;
 	}
 
 	if (bnx_blockinit(sc)) {
 		printf("%s: Block initialization failed!\n");
-		goto bnx_init_locked_exit;
+		goto bnx_init_exit;
 	}
 
 	/* Load our MAC address. */
@@ -4238,7 +4238,7 @@ bnx_init(void *xsc)
 
 	timeout_add(&sc->bnx_timeout, hz);
 
-bnx_init_locked_exit:
+bnx_init_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 
 	splx(s);
@@ -4401,7 +4401,7 @@ bnx_start(struct ifnet *ifp)
 	if (!sc->bnx_link || IFQ_IS_EMPTY(&ifp->if_snd)) {
 		DBPRINT(sc, BNX_INFO_SEND,
 		    "%s(): No link or transmit queue empty.\n", __FUNCTION__);
-		goto bnx_start_locked_exit;
+		goto bnx_start_exit;
 	}
 
 	/* prod points to the next free tx_bd. */
@@ -4447,7 +4447,7 @@ bnx_start(struct ifnet *ifp)
 		/* no packets were dequeued */
 		DBPRINT(sc, BNX_VERBOSE_SEND,
 		    "%s(): No packets were dequeued\n", __FUNCTION__);
-		goto bnx_start_locked_exit;
+		goto bnx_start_exit;
 	}
 
 	/* Update the driver's counters. */
@@ -4464,7 +4464,7 @@ bnx_start(struct ifnet *ifp)
 	/* Set the tx timeout. */
 	ifp->if_timer = BNX_TX_TIMEOUT;
 
-bnx_start_locked_exit:
+bnx_start_exit:
 	return;
 }
 
@@ -5020,7 +5020,7 @@ bnx_tick(void *xsc)
 
 	/* If link is up already up then we're done. */
 	if (sc->bnx_link)
-		goto bnx_tick_locked_exit;
+		goto bnx_tick_exit;
 
 	/* DRC - ToDo: Add SerDes support and check SerDes link here. */
 
@@ -5036,7 +5036,7 @@ bnx_tick(void *xsc)
 			bnx_start(ifp);
 	}
 
-bnx_tick_locked_exit:
+bnx_tick_exit:
 	return;
 }
 
