@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.26 2006/09/29 21:09:25 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.27 2006/10/19 10:55:56 tom Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -120,7 +120,7 @@ struct psb_s {
 
 struct pst_s {
 	uint32_t signature;
-	uint8_t fsb;		/* Front Side Bus frequency (Mhz) */
+	uint8_t fsb;		/* Front Side Bus frequency (MHz) */
 	uint8_t fid;		/* Max Frequency code */
 	uint8_t vid;		/* Max Voltage code */
 	uint8_t n_states;	/* Number of states */
@@ -338,13 +338,13 @@ k7_powernow_init(void)
 			techname = "Cool`n'Quiet K7";
 		else
 			techname = "Powernow! K7";
-		printf("%s: %s %d Mhz: speeds:",
+		printf("%s: %s %d MHz: speeds:",
 		    ci->ci_dev.dv_xname, techname, pentium_mhz);
 		for (i = cstate->n_states; i > 0; i--) {
 			state = &cstate->state_table[i-1];
 			printf(" %d", state->freq);
 		}
-		printf(" Mhz\n");	
+		printf(" MHz\n");	
 		
 		k7pnow_current_state = cstate;
 		cpu_setperf = k7_powernow_setperf;

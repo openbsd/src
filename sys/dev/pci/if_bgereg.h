@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.66 2006/10/17 22:28:07 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.67 2006/10/19 10:55:56 tom Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -740,7 +740,7 @@
 #define BGE_SERDESCFG_CDET		0x00010000 /* comma detect enable */
 #define BGE_SERDESCFG_TBILOOP		0x00020000 /* local loopback */
 #define BGE_SERDESCFG_REMLOOP		0x00040000 /* remote loopback */
-#define BGE_SERDESCFG_INVPHASE		0x00080000 /* Reverse 125Mhz clock */
+#define BGE_SERDESCFG_INVPHASE		0x00080000 /* Reverse 125MHz clock */
 #define BGE_SERDESCFG_12REGCTL		0x00300000 /* 1.2v regulator ctl */
 #define BGE_SERDESCFG_REGCTL		0x00C00000 /* regulator ctl (2.5v) */
 

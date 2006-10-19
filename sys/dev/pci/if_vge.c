@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.28 2006/10/03 19:46:08 damien Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.29 2006/10/19 10:55:56 tom Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -43,7 +43,7 @@
  */
 
 /*
- * The VIA Networking VT6122 is a 32bit, 33/66Mhz PCI device that
+ * The VIA Networking VT6122 is a 32bit, 33/66MHz PCI device that
  * combines a tri-speed ethernet MAC and PHY, with the following
  * features:
  *

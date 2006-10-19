@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.57 2006/10/14 16:16:18 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.58 2006/10/19 10:55:56 tom Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2753,7 +2753,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_TRUE,
 		    &status)) {
 			printf("%s: ath_chan_set: unable to reset "
-				"channel %u (%u Mhz)\n", ifp->if_xname,
+				"channel %u (%u MHz)\n", ifp->if_xname,
 				ieee80211_chan2ieee(ic, chan), chan->ic_freq);
 			return EIO;
 		}

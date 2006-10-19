@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.36 2006/10/17 11:45:59 todd Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.37 2006/10/19 10:55:56 tom Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -3324,7 +3324,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 
 			/*
 			 * Harpoon2A assumed that there would be a
-			 * fallback rate between 160MHz and 80Mhz,
+			 * fallback rate between 160MHz and 80MHz,
 			 * so 7 is used as the period factor rather
 			 * than 8 for 160MHz.
 			 */

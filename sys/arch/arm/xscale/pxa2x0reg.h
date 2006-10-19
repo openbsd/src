@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.27 2006/03/07 22:35:57 uwe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.28 2006/10/19 10:55:56 tom Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -314,10 +314,10 @@ struct pxa2x0_dma_desc {
 #define  CCCR_MEM_X40	 (4<<0)	/* x27, 99.53MHz */
 #define  CCCR_MEM_X45	 (5<<0)	/* x27, 99.53MHz */
 #define  CCCR_MEM_X9	 (0x1f<<0)	/* x9, 33.2MHz */
-/* PXA27x: L is the core run frequency to 13Mhz oscillator ratio. */
-#define  CCCR_RUN_X7	 (7<<0)	 /* 91Mhz, 91Mhz mem, 91Mhz LCD */
-#define  CCCR_RUN_X8	 (8<<0)	 /* 104Mhz, 104Mhz mem, 52Mhz LCD */
-#define  CCCR_RUN_X16	 (16<<0) /* 208Mhz, 104/208Mhz mem, 104Mhz LCD */
+/* PXA27x: L is the core run frequency to 13MHz oscillator ratio. */
+#define  CCCR_RUN_X7	 (7<<0)	 /* 91MHz, 91MHz mem, 91MHz LCD */
+#define  CCCR_RUN_X8	 (8<<0)	 /* 104MHz, 104MHz mem, 52MHz LCD */
+#define  CCCR_RUN_X16	 (16<<0) /* 208MHz, 104/208MHz mem, 104MHz LCD */
 
 #define CLKMAN_CKEN	0x04	/* Clock Enable Register */
 #define CLKMAN_OSCC	0x08	/* Oscillator Configuration Register */

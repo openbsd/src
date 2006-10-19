@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.20 2006/09/20 14:09:15 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.21 2006/10/19 10:55:56 tom Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -753,7 +753,7 @@ static const u_int16_t C7M_775_ULV[] = {
 	ID16( 400,  796, BUS100),
 };
 
-/* 1.20GHz Centaur C7-M 400 Mhz FSB */
+/* 1.20GHz Centaur C7-M 400 MHz FSB */
 static const u_int16_t C7M_771[] = {
 	ID16(1200,  860, BUS100),
 	ID16(1000,  860, BUS100),
@@ -762,7 +762,7 @@ static const u_int16_t C7M_771[] = {
 	ID16( 400,  844, BUS100),
 };
 
-/* 1.50GHz Centaur C7-M 400 Mhz FSB */
+/* 1.50GHz Centaur C7-M 400 MHz FSB */
 static const u_int16_t C7M_754[] = {
 	ID16(1500, 1004, BUS100),
 	ID16(1400,  988, BUS100),
@@ -772,7 +772,7 @@ static const u_int16_t C7M_754[] = {
 	ID16( 400,  844, BUS100),
 };
 
-/* 1.60GHz Centaur C7-M 400 Mhz FSB */
+/* 1.60GHz Centaur C7-M 400 MHz FSB */
 static const u_int16_t C7M_764[] = {
 	ID16(1600, 1084, BUS100),
 	ID16(1400, 1052, BUS100),
@@ -782,7 +782,7 @@ static const u_int16_t C7M_764[] = {
 	ID16( 400,  844, BUS100),
 };
 
-/* 1.80GHz Centaur C7-M 400 Mhz FSB */
+/* 1.80GHz Centaur C7-M 400 MHz FSB */
 static const u_int16_t C7M_784[] = {
 	ID16(1800, 1148, BUS100),
 	ID16(1600, 1100, BUS100),
@@ -793,7 +793,7 @@ static const u_int16_t C7M_784[] = {
 	ID16( 400,  844, BUS100),
 };
 
-/* 2.00GHz Centaur C7-M 400 Mhz FSB */
+/* 2.00GHz Centaur C7-M 400 MHz FSB */
 static const u_int16_t C7M_794[] = {
 	ID16(2000, 1148, BUS100),
 	ID16(1800, 1132, BUS100),
@@ -805,7 +805,7 @@ static const u_int16_t C7M_794[] = {
 	ID16( 400,  844, BUS100),
 };
 
-/* 1.60GHz Centaur C7-M 533 Mhz FSB */
+/* 1.60GHz Centaur C7-M 533 MHz FSB */
 static const u_int16_t C7M_765[] = {
 	ID16(1600, 1084, BUS133),
 	ID16(1467, 1052, BUS133),
@@ -815,7 +815,7 @@ static const u_int16_t C7M_765[] = {
 	ID16( 533,  844, BUS133),
 };
 
-/* 2.00GHz Centaur C7-M 533 Mhz FSB */
+/* 2.00GHz Centaur C7-M 533 MHz FSB */
 static const u_int16_t C7M_785[] = {
 	ID16(1867, 1148, BUS133),
 	ID16(1600, 1100, BUS133),
@@ -826,7 +826,7 @@ static const u_int16_t C7M_785[] = {
 	ID16( 533,  844, BUS133),
 };
 
-/* 2.00GHz Centaur C7-M 533 Mhz FSB */
+/* 2.00GHz Centaur C7-M 533 MHz FSB */
 static const u_int16_t C7M_795[] = {
 	ID16(2000, 1148, BUS133),
 	ID16(1867, 1132, BUS133),

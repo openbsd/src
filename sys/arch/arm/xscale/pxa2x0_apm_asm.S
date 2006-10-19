@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.1 2005/02/22 21:53:03 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.2 2006/10/19 10:55:56 tom Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -486,7 +486,7 @@ ENTRY(pxa27x_frequency_change)
 	and	r3, r0, #CCCR_L_MASK
 	ldr	r0, .Lmemctliohp
 	ldr	r0, [r0]
-	cmp	r3, #CCCR_RUN_X7		/* L=7 is 91Mhz mode */
+	cmp	r3, #CCCR_RUN_X7		/* L=7 is 91MHz mode */
 	beq	frequency_change_91
 	and	r3, r1, #CLKCFG_B
 	cmp	r3, #CLKCFG_B
@@ -520,7 +520,7 @@ frequency_change_on_cache:
 	/* Program new CLKCFG value, starting a core PLL frequency change
 	 * if CLKCFG_F is set. */
 	mcr	p14, 0, r1, c6, c0, 0
-	/* Change SDRAM clock frequency to 104Mhz, and ensure that the
+	/* Change SDRAM clock frequency to 104MHz, and ensure that the
 	 * store to MDREFR is complete before the next SDRAM access. */
 	str	r4, [r0, #MEMCTL_MDREFR]
 	ldr	r5, [r0, #MEMCTL_MDREFR]
@@ -537,7 +537,7 @@ frequency_change_on_cache:
 /*
  * void pxa27x_cpu_speed_91(void)
  *
- * Switch core run frequency to 91 Mhz.
+ * Switch core run frequency to 91 MHz.
  */
 	.align 5
 ENTRY(pxa27x_cpu_speed_91)

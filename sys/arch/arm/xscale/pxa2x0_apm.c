@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.25 2005/12/22 00:42:14 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.26 2006/10/19 10:55:56 tom Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -881,7 +881,7 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	sd.sd_osmr5 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR5);
 	sd.sd_oier = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OIER);
 
-	/* Bring the PXA27x into 416Mhz turbo mode. */
+	/* Bring the PXA27x into 416MHz turbo mode. */
         if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X &&
 	    bus_space_read_4(sc->sc_iot, pxa2x0_clkman_ioh, CLKMAN_CCCR) !=
 	    (CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16)) {
@@ -999,7 +999,7 @@ suspend_again:
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_RCSR,
 	    RCSR_GPR | RCSR_SMR | RCSR_WDR | RCSR_HWR);
 
-	/* Stop 3/13Mhz oscillator; do not float PCMCIA and chip-selects. */
+	/* Stop 3/13MHz oscillator; do not float PCMCIA and chip-selects. */
 	rv = PCFR_OPDE;
         if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
 		/* Enable nRESET_GPIO as a GPIO reset input. */
@@ -1141,13 +1141,13 @@ suspend_again:
 
 	pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh, PI2C_VOLTAGE_HIGH);
 
-	/* Change to 208Mhz run mode with fast-bus still disabled. */
+	/* Change to 208MHz run mode with fast-bus still disabled. */
 	pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
 	    CLKCFG_F, &pxa2x0_memcfg);
 	delay(1); /* XXX is the delay long enough, and necessary at all? */
 	pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
 
-	/* Change to 416Mhz turbo mode with fast-bus enabled. */
+	/* Change to 416MHz turbo mode with fast-bus enabled. */
 	pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
 	    CLKCFG_B | CLKCFG_F | CLKCFG_T, &pxa2x0_memcfg);
 

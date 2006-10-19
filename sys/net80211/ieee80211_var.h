@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.16 2006/06/27 20:55:51 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.17 2006/10/19 10:55:56 tom Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ enum ieee80211_protmode {
  * Channels are specified by frequency and attributes.
  */
 struct ieee80211_channel {
-	u_int16_t	ic_freq;	/* setting in Mhz */
+	u_int16_t	ic_freq;	/* setting in MHz */
 	u_int16_t	ic_flags;	/* see below */
 };
 
