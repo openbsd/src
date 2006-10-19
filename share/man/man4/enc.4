@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.22 2006/05/26 08:51:29 jmc Exp $
+.\"	$OpenBSD: enc.4,v 1.23 2006/10/19 08:52:25 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Angelos D. Keromytis
 .\" All rights reserved.
@@ -64,6 +64,13 @@ and all IPsec traffic could be seen by invoking
 on the
 .Dq enc0
 interface.
+Filter rules on the enc0 interface should explicitly set
+.Dq keep state (if-bound) .
+See
+.Xr pf.conf 5
+and
+.Xr ipsec.conf 5
+for more information on filtering IPsec traffic.
 .Sh EXAMPLES
 To see all outgoing packets before they have been processed via
 .Xr ipsec 4 ,
@@ -76,4 +83,6 @@ or all incoming packets after they have been similarly processed:
 .Xr ipsec 4 ,
 .Xr netintro 4 ,
 .Xr pf 4 ,
+.Xr ipsec.conf 5 ,
+.Xr pf.conf 5 ,
 .Xr tcpdump 8
