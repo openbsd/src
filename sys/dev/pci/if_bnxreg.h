@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.15 2006/10/14 21:19:09 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.16 2006/10/19 20:36:20 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4581,22 +4581,6 @@ struct fw_info {
 #define BNX_STATS_BLK_SZ		sizeof(struct statistics_block)
 #define BNX_TX_CHAIN_PAGE_SZ	BCM_PAGE_SIZE
 #define BNX_RX_CHAIN_PAGE_SZ	BCM_PAGE_SIZE
-/*
- * Mbuf pointers. We need these to keep track of the virtual addresses
- * of our mbuf chains since we can only convert from physical to virtual,
- * not the other way around.
- */
-
-struct bnx_dmamap_arg {
-	struct bnx_softc	*sc;				/* Pointer back to device context */
-	bus_addr_t			busaddr;		/* Physical address of mapped memory */
-	u_int32_t					tx_flags;		/* Flags for frame transmit */
-	u_int16_t					prod;
-	u_int16_t					chain_prod;
-	int					maxsegs;		/* Max segments supported for this mapped memory */
-	u_int32_t					prod_bseq;
-};
-
 
 struct bnx_softc
 {
