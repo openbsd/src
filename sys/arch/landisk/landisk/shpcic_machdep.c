@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic_machdep.c,v 1.2 2006/10/07 20:52:40 miod Exp $	*/
+/*	$OpenBSD: shpcic_machdep.c,v 1.3 2006/10/19 03:39:54 drahn Exp $	*/
 /*	$NetBSD: shpcic_machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -91,6 +91,15 @@ landisk_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
+
+	{
+		/* HACK */
+		int dev = pa->pa_device;
+		static const int irq[4] = { 5, 6, 7, 8 };
+
+		if ((dev >= 0 && dev <= 3) && (pin >= 1 && pin <= 4))
+			line = irq[(dev + pin - 1) & 3];
+	}
 
 	if (pin == 0) {
 		/* No IRQ used. */
