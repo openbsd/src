@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: auth.c,v 1.2 2006/10/19 12:29:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -215,7 +215,7 @@ auth_add_trailer(struct buf *buf, struct iface *iface)
 	/* insert plaintext key */
 	if ((md = md_list_find(&iface->auth_md_list,
 	    iface->auth_keyid)) == NULL) {
-		log_debug("auth_validate: keyid %d not configured, "
+		log_debug("auth_add_trailer: keyid %d not configured, "
 		    "interface %s", iface->auth_keyid, iface->name);
 			return (-1);
 	}

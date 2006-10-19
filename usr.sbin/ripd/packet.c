@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.2 2006/10/19 12:29:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -220,7 +220,7 @@ int
 rip_hdr_sanity_check(struct rip_hdr *rip_hdr)
 {
 	if (rip_hdr->version != RIP_VERSION) {
-		log_debug("recv_packet: invalid RIP version %d",
+		log_debug("rip_hdr_sanity_check: invalid RIP version %d",
 		    rip_hdr->version);
 		return (-1);
 	}

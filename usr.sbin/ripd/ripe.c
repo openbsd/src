@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: ripe.c,v 1.2 2006/10/19 12:29:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -181,7 +181,8 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 	LIST_FOREACH(iface, &xconf->iface_list, entry) {
 		if_init(xconf, iface);
 		if (if_fsm(iface, IF_EVT_UP))
-			log_debug("error starting interface: %s", iface->name);
+			log_debug("ripe: error starting interface: %s",
+			    iface->name);
 	}
 
 	evtimer_set(&oeconf->report_timer, report_timer, oeconf);
