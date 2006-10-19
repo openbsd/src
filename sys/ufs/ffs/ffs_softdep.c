@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.76 2006/09/30 14:47:52 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.77 2006/10/19 14:37:54 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4648,6 +4648,8 @@ softdep_fsync(vp)
 		    &bp);
 		if (error == 0)
 			error = bwrite(bp);
+		else
+			brelse(bp);
 		vput(pvp);
 		if (error != 0)
 			return (error);
