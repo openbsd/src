@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.28 2006/10/19 17:57:17 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.29 2006/10/19 18:02:19 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -216,8 +216,6 @@ acpibat_getbif(struct acpibat_softc *sc)
 	struct aml_value        res;
 	int			rv = 1;
 
-	rw_enter_write(&sc->sc_lock);
-
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
@@ -237,6 +235,8 @@ acpibat_getbif(struct acpibat_softc *sc)
 		    DEVNAME(sc));
 		goto out;
 	}
+
+	rw_enter_write(&sc->sc_lock);
 
 	memset(&sc->sc_bif, 0, sizeof sc->sc_bif);
 	sc->sc_bif.bif_power_unit = aml_val2int(res.v_package[0]);
@@ -258,6 +258,8 @@ acpibat_getbif(struct acpibat_softc *sc)
 	strlcpy(sc->sc_bif.bif_oem, aml_strval(res.v_package[12]),
 		sizeof(sc->sc_bif.bif_oem));
 
+	rw_exit_write(&sc->sc_lock);
+
 	dnprintf(60, "power_unit: %u capacity: %u last_cap: %u tech: %u "
 	    "volt: %u warn: %u low: %u gran1: %u gran2: %d model: %s "
 	    "serial: %s type: %s oem: %s\n",
@@ -277,7 +279,6 @@ acpibat_getbif(struct acpibat_softc *sc)
 
 out:
 	aml_freevalue(&res);
-	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
 
@@ -286,8 +287,6 @@ acpibat_getbst(struct acpibat_softc *sc)
 {
 	struct aml_value	res;
 	int			rv = 0;
-
-	rw_enter_write(&sc->sc_lock);
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BST", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _BST\n",
@@ -304,11 +303,15 @@ acpibat_getbst(struct acpibat_softc *sc)
 		goto out;
 	}
 
+	rw_enter_write(&sc->sc_lock);
+
 	sc->sc_bst.bst_state = aml_val2int(res.v_package[0]);
 	sc->sc_bst.bst_rate = aml_val2int(res.v_package[1]);
 	sc->sc_bst.bst_capacity = aml_val2int(res.v_package[2]);
 	sc->sc_bst.bst_voltage = aml_val2int(res.v_package[3]);
 	aml_freevalue(&res);
+
+	rw_exit_write(&sc->sc_lock);
 
 	dnprintf(60, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,
@@ -316,7 +319,6 @@ acpibat_getbst(struct acpibat_softc *sc)
 	    sc->sc_bst.bst_capacity,
 	    sc->sc_bst.bst_voltage);
 out:
-	rw_exit_write(&sc->sc_lock);
 	return (rv);
 }
 
