@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.25 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: acpibat.c,v 1.26 2006/10/19 04:00:53 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -131,7 +131,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 void
 acpibat_monitor(struct acpibat_softc *sc)
 {
-	int			i;
+	int			i, type;
 
 	/* assume _BIF and _BST have been called */
 
@@ -140,30 +140,25 @@ acpibat_monitor(struct acpibat_softc *sc)
 		strlcpy(sc->sc_sens[i].device, DEVNAME(sc),
 		    sizeof(sc->sc_sens[i].device));
 
-	/* XXX ugh but make sure */
-	if (!sc->sc_bif.bif_cap_granu1)
-		sc->sc_bif.bif_cap_granu1 = 1;
+	type = sc->sc_bif.bif_power_unit ? SENSOR_AMPHOUR : SENSOR_WATTHOUR;
 
 	strlcpy(sc->sc_sens[0].desc, "last full capacity",
 	    sizeof(sc->sc_sens[0].desc));
-	sc->sc_sens[0].type = SENSOR_PERCENT;
+	sc->sc_sens[0].type = type;
 	sensor_add(&sc->sc_sens[0]);
-	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
+	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
 
 	strlcpy(sc->sc_sens[1].desc, "warning capacity",
 	    sizeof(sc->sc_sens[1].desc));
-	sc->sc_sens[1].type = SENSOR_PERCENT;
+	sc->sc_sens[1].type = type;
 	sensor_add(&sc->sc_sens[1]);
-	sc->sc_sens[1].value = sc->sc_bif.bif_warning /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
+	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;
 
 	strlcpy(sc->sc_sens[2].desc, "low capacity",
 	    sizeof(sc->sc_sens[2].desc));
-	sc->sc_sens[2].type = SENSOR_PERCENT;
+	sc->sc_sens[2].type = type;
 	sensor_add(&sc->sc_sens[2]);
-	sc->sc_sens[2].value = sc->sc_bif.bif_warning /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
+	sc->sc_sens[2].value = sc->sc_bif.bif_low * 1000;
 
 	strlcpy(sc->sc_sens[3].desc, "voltage", sizeof(sc->sc_sens[3].desc));
 	sc->sc_sens[3].type = SENSOR_VOLTS_DC;
@@ -184,10 +179,9 @@ acpibat_monitor(struct acpibat_softc *sc)
 
 	strlcpy(sc->sc_sens[6].desc, "remaining capacity",
 	    sizeof(sc->sc_sens[6].desc));
-	sc->sc_sens[6].type = SENSOR_PERCENT;
+	sc->sc_sens[6].type = type;
 	sensor_add(&sc->sc_sens[6]);
-	sc->sc_sens[6].value = sc->sc_bst.bst_capacity /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
+	sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
 
 	strlcpy(sc->sc_sens[7].desc, "current voltage",
 	    sizeof(sc->sc_sens[7].desc));
@@ -214,12 +208,9 @@ acpibat_refresh(void *arg)
 	if (!sc->sc_bif.bif_cap_granu1)
 		sc->sc_bif.bif_cap_granu1 = 1;
 
-	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
-	sc->sc_sens[1].value = sc->sc_bif.bif_warning /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
-	sc->sc_sens[2].value = sc->sc_bif.bif_warning /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
+	sc->sc_sens[0].value = sc->sc_bif.bif_last_capacity * 1000;
+	sc->sc_sens[1].value = sc->sc_bif.bif_warning * 1000;
+	sc->sc_sens[2].value = sc->sc_bif.bif_low * 1000;
 	sc->sc_sens[3].value = sc->sc_bif.bif_voltage * 1000;
 
 	sc->sc_sens[4].status = SENSOR_S_OK;
@@ -236,8 +227,7 @@ acpibat_refresh(void *arg)
 	}
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 	sc->sc_sens[5].value = sc->sc_bst.bst_rate;
-	sc->sc_sens[6].value = sc->sc_bst.bst_capacity /
-	    sc->sc_bif.bif_cap_granu1 * 1000;
+	sc->sc_sens[6].value = sc->sc_bst.bst_capacity * 1000;
 	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
 
 	rw_exit_write(&sc->sc_lock);
