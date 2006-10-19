@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.15 2006/10/12 23:16:11 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.16 2006/10/19 01:06:54 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -29,11 +29,14 @@ struct acpi_context
 	struct aml_node		*scope;
 };
 
+struct aml_scope;
+
 struct aml_opcode
 {
 	u_int32_t		opcode;
 	const char		*mnem;
 	const char		*args;
+	struct aml_value      *(*handler)(struct aml_scope *,int,struct aml_value*);
 };
 
 const char		*aml_eisaid(u_int32_t);
