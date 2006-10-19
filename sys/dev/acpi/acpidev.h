@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.9 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: acpidev.h,v 1.10 2006/10/19 08:56:46 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -18,6 +18,9 @@
 
 #ifndef __DEV_ACPI_ACPIDEV_H__
 #define __DEV_ACPI_ACPIDEV_H__
+
+#include <sys/sensors.h>
+#include <sys/rwlock.h>
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
@@ -243,4 +246,35 @@ struct acpicpu_pct {
 	struct acpi_grd	pct_status;
 };
 
+/* softc for fake apm devices */
+struct acpiac_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	struct acpi_softc	*sc_acpi;
+	struct aml_node		*sc_devnode;
+
+	int			sc_ac_stat;
+
+	struct sensor sens[1];	/* XXX debug only */
+};
+
+struct acpibat_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	struct acpi_softc	*sc_acpi;
+	struct aml_node		*sc_devnode;
+
+	struct rwlock		sc_lock;
+	struct acpibat_bif	sc_bif;
+	struct acpibat_bst	sc_bst;
+	volatile int		sc_bat_present;
+
+	struct sensor		sc_sens[8]; /* XXX debug only */
+};
 #endif /* __DEV_ACPI_ACPIDEV_H__ */

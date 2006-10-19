@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.8 2006/10/12 16:38:21 jordan Exp $ */
+/* $OpenBSD: acpiac.c,v 1.9 2006/10/19 08:56:46 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -33,20 +33,6 @@
 int  acpiac_match(struct device *, void *, void *);
 void acpiac_attach(struct device *, struct device *, void *);
 int  acpiac_notify(struct aml_node *, int, void *);
-
-struct acpiac_softc {
-	struct device		sc_dev;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-
-	struct acpi_softc	*sc_acpi;
-	struct aml_node		*sc_devnode;
-
-	int			sc_ac_stat;
-
-	struct sensor sens[1];	/* XXX debug only */
-};
 
 void acpiac_refresh(void *);
 int acpiac_getsta(struct acpiac_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.27 2006/10/15 15:22:17 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.28 2006/10/19 08:56:46 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -105,6 +105,20 @@ struct gpe_block {
 	int   active;
 };
 
+struct acpi_ac {
+	struct acpiac_softc	*aac_softc;
+	SLIST_ENTRY(acpi_ac)	aac_link;
+};
+
+SLIST_HEAD(acpi_ac_head, acpi_ac);
+
+struct acpi_bat {
+	struct acpibat_softc	*aba_softc;
+	SLIST_ENTRY(acpi_bat)	aba_link;
+};
+
+SLIST_HEAD(acpi_bat_head, acpi_bat);
+
 struct acpi_softc {
 	struct device		sc_dev;
 
@@ -161,6 +175,9 @@ struct acpi_softc {
 	struct aml_node		*sc_wak;
 	int 			sc_state;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
+
+	struct acpi_ac_head	sc_ac;
+	struct acpi_bat_head	sc_bat;
 };
 
 #define GPE_NONE  0x00

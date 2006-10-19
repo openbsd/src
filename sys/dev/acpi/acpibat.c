@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.26 2006/10/19 04:00:53 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.27 2006/10/19 08:56:46 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/device.h>
 #include <sys/rwlock.h>
 #include <sys/malloc.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 
@@ -30,27 +31,8 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
-#include <sys/sensors.h>
-
 int	acpibat_match(struct device *, void *, void *);
 void	acpibat_attach(struct device *, struct device *, void *);
-
-struct acpibat_softc {
-	struct device		sc_dev;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-
-	struct acpi_softc	*sc_acpi;
-	struct aml_node		*sc_devnode;
-
-	struct rwlock		sc_lock;
-	struct acpibat_bif	sc_bif;
-	struct acpibat_bst	sc_bst;
-	volatile int		sc_bat_present;
-
-	struct sensor		sc_sens[8]; /* XXX debug only */
-};
 
 struct cfattach acpibat_ca = {
 	sizeof(struct acpibat_softc), acpibat_match, acpibat_attach
@@ -246,16 +228,6 @@ acpibat_getbif(struct acpibat_softc *sc)
 		    DEVNAME(sc));
 		goto out;
 	}
-
-	/* XXX this is broken, it seems to only work during boot */
-	/*
-	if (!(res.v_integer & STA_BATTERY)) {
-		sc->sc_bat_present = 0;
-		aml_freevalue(&res);
-		return (1);
-	} else
-		sc->sc_bat_present = 1;
-	*/
 	aml_freevalue(&res);
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BIF", 0, NULL, &res) != 0) {

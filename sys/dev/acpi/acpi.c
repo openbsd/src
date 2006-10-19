@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.58 2006/10/19 03:24:45 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.59 2006/10/19 08:56:46 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -37,6 +37,8 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
+
+#include <machine/apmvar.h>
 
 #ifdef ACPI_DEBUG
 int acpi_debug = 16;
@@ -685,6 +687,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_rsdp *rsdp;
 	struct acpi_q *entry;
 	struct acpi_dsdt *p_dsdt;
+	struct device *dev;
+	struct acpi_ac *ac;
+	struct acpi_bat *bat;
 	paddr_t facspa;
 
 	sc->sc_iot = aaa->aaa_iot;
@@ -885,6 +890,25 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_TMP", acpi_foundtmp, sc);
+
+	/* create list of devices we want to query when APM come in */
+	SLIST_INIT(&sc->sc_ac);
+	SLIST_INIT(&sc->sc_bat);
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (!strncmp(dev->dv_xname, "acpiac", strlen("acpiac"))) {
+			ac = malloc(sizeof(struct acpi_ac), M_DEVBUF, M_WAITOK);
+			memset(ac, 0, sizeof(struct acpi_ac));
+			ac->aac_softc = (struct acpiac_softc *)dev;
+			SLIST_INSERT_HEAD(&sc->sc_ac, ac, aac_link);
+		}
+		if (!strncmp(dev->dv_xname, "acpibat", strlen("acpibat"))) {
+			bat = malloc(sizeof(struct acpi_bat), M_DEVBUF,
+			    M_WAITOK);
+			memset(bat, 0, sizeof(struct acpi_bat));
+			bat->aba_softc = (struct acpibat_softc *)dev;
+			SLIST_INSERT_HEAD(&sc->sc_bat, bat, aba_link);
+		}
+	}
 
 	/* Setup threads */
 	sc->sc_thread = malloc(sizeof(struct acpi_thread), M_DEVBUF, M_WAITOK);
@@ -1392,9 +1416,6 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 	    !(sc = acpi_cd.cd_devs[minor(dev)]))
 		return (ENXIO);
 
-	if (!(flag & FREAD) || (flag & FWRITE))
-		error = EINVAL;
-
 	return (error);
 }
 
@@ -1414,57 +1435,81 @@ int
 acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct acpi_softc *sc;
-	int error = 0;
+	struct acpi_ac *ac;
+	struct acpi_bat *bat;
+	struct apm_power_info *pi = (struct apm_power_info *)data;
+	int error = 0, bats;
+	unsigned int remaining, rem, minutes, rate;
 
 	if (!acpi_cd.cd_ndevs || minor(dev) != 0 ||
 	    !(sc = acpi_cd.cd_devs[minor(dev)]))
 		return (ENXIO);
 
 	ACPI_LOCK(sc);
+	/* fake APM */
 	switch (cmd) {
-	case ACPI_IOC_SETSLEEPSTATE:
-		if (suser(p, 0) != 0)
-			error = EPERM;
-		else {
-			acpi_enter_sleep_state(sc, *(int *)data);
+	case APM_IOC_GETPOWER:
+		/* A/C */
+		pi->ac_state = APM_AC_UNKNOWN;
+		SLIST_FOREACH(ac, &sc->sc_ac, aac_link) {
+			if (ac->aac_softc->sc_ac_stat == PSR_ONLINE)
+				pi->ac_state = APM_AC_ON;
+			else if (ac->aac_softc->sc_ac_stat == PSR_OFFLINE)
+				if (pi->ac_state == APM_AC_UNKNOWN)
+					pi->ac_state = APM_AC_OFF;
 		}
-		break;
 
-	case ACPI_IOC_GETFACS:
-		if (suser(p, 0) != 0)
-			error = EPERM;
-		else {
-			struct acpi_facs *facs = (struct acpi_facs *)data;
+		/* battery */
+		pi->battery_state = APM_BATT_UNKNOWN;
+		pi->battery_life = 0;
+		pi->minutes_left = 0;
+		bats = 0;
+		remaining = rem = 0;
+		minutes = 0;
+		rate = 0;
+		SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
+			if (bat->aba_softc->sc_bat_present == 0)
+				continue;
 
-			bcopy(sc->sc_facs, facs, sc->sc_facs->length);
+			if (bat->aba_softc->sc_bif.bif_last_capacity == 0)
+				continue;
+
+			bats++;
+			rem = (bat->aba_softc->sc_bst.bst_capacity * 100) /
+			    bat->aba_softc->sc_bif.bif_last_capacity;
+			if (rem > 100)
+				rem = 100;
+			remaining += rem;
+
+			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
+				continue;
+			else if (bat->aba_softc->sc_bst.bst_rate > 1)
+				rate = bat->aba_softc->sc_bst.bst_rate;
+
+			minutes += bat->aba_softc->sc_bst.bst_capacity;
 		}
-		break;
 
-	case ACPI_IOC_GETTABLE:
-		if (suser(p, 0) != 0)
-			error = EPERM;
-		else {
-			struct acpi_table *table = (struct acpi_table *)data;
-			struct acpi_table_header *hdr;
-			struct acpi_q *entry;
-
-			error = ENOENT;
-			SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
-				if (table->offset-- == 0) {
-					hdr = (struct acpi_table_header *)
-					    entry->q_table;
-					if (table->table == NULL) {
-						table->size = hdr->length;
-						error = 0;
-					} else if (hdr->length > table->size)
-						error = ENOSPC;
-					else
-						error = copyout(hdr,
-						    table->table, hdr->length);
-					break;
-				}
-			}
+		if (bats == 0) {
+			pi->battery_state = APM_BATTERY_ABSENT;
+			pi->battery_life = 0;
+			pi->minutes_left = (unsigned int)-1;
+			break;
 		}
+
+		if (pi->ac_state == APM_AC_ON || rate == 0)
+			pi->minutes_left = (unsigned int)-1;
+		else
+			pi->minutes_left = minutes / rate * 100;
+
+		/* running on battery */
+		pi->battery_life = remaining / bats;
+		if (pi->battery_life > 50)
+			pi->battery_state = APM_BATT_HIGH;
+		else if (pi->battery_life > 25)
+			pi->battery_state = APM_BATT_LOW;
+		else
+			pi->battery_state = APM_BATT_CRITICAL;
+
 		break;
 
 	default:
