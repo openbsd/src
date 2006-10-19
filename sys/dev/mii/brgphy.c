@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.61 2006/10/19 19:35:06 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.62 2006/10/19 19:46:06 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -91,6 +91,7 @@ void	brgphy_bcm54k2_dspcode(struct mii_softc *);
 void	brgphy_adc_bug(struct mii_softc *);
 void	brgphy_5704_a0_bug(struct mii_softc *);
 void	brgphy_ber_bug(struct mii_softc *);
+void	brgphy_jitter_bug(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_funcs = {            
 	brgphy_service, brgphy_status, brgphy_reset,          
@@ -481,6 +482,8 @@ brgphy_reset(struct mii_softc *sc)
 			brgphy_5704_a0_bug(sc);
 		if (bge_sc->bge_flags & BGE_PHY_BER_BUG)
 			brgphy_ber_bug(sc);
+		if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG)
+			brgphy_jitter_bug(sc);
 
 		/*
 		 * Enable Ethernet@WireSpeed.
@@ -654,6 +657,25 @@ brgphy_ber_bug(struct mii_softc *sc)
 		{ BRGPHY_MII_DSP_RW_PORT,	0x9506 },
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x401f },
 		{ BRGPHY_MII_DSP_RW_PORT,	0x14e2 },
+		{ BRGPHY_MII_AUXCTL,		0x0400 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+void
+brgphy_jitter_bug(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ BRGPHY_MII_AUXCTL,		0x0c00 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x000a },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x010b },
 		{ BRGPHY_MII_AUXCTL,		0x0400 },
 		{ 0,				0 },
 	};
