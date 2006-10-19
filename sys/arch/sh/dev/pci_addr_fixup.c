@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.1 2006/10/19 03:36:38 drahn Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.2 2006/10/19 22:42:53 drahn Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -229,6 +229,15 @@ pciaddr_resource_manage(struct shpcic_softc *sc, pci_chipset_tag_t pc,
 			addr = PCI_MAPREG_MEM_ADDR(val);
 			size = PCI_MAPREG_MEM_SIZE(mask);
 			ex = sc->extent_mem;
+			/* XXX */
+			/*
+			 * sh-IPL allocates a low address for PCI memory
+			 * on px-eh systems, clobber it so it gets 'remapped'
+			 */
+			if (addr != 0 && addr < sc->sc_membus_space.bus_base) {
+				val = 0;
+				pci_conf_write(pc, tag, mapreg, val);
+			}
 		} else {
 			/* XXX some devices give 32bit value */
 			if (sc->sc_iobus_space.bus_base != PCIADDR_PORT_START) {
