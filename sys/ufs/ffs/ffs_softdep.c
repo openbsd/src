@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.77 2006/10/19 14:37:54 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.78 2006/10/20 13:02:55 mickey Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -3809,6 +3809,13 @@ softdep_disk_write_complete(bp)
 	struct indirdep *indirdep;
 	struct inodedep *inodedep;
 	struct bmsafemap *bmsafemap;
+
+	/*
+	 * If an error occurred while doing the write, then the data
+	 * has not hit the disk and the dependencies cannot be unrolled.
+	 */
+	if ((bp->b_flags & B_ERROR) && !(bp->b_flags & B_INVAL))
+		return;
 
 #ifdef DEBUG
 	if (lk.lkt_held != -1)
