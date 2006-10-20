@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.19 2006/10/20 16:54:01 brad Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.20 2006/10/20 17:02:24 brad Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -67,12 +67,8 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#else
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -266,13 +262,8 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 			ne2000_readmem(nict, nich, asict, asich, 0, romdata,
 			    sizeof(romdata), useword);
 			for (i = 0; i < ETHER_ADDR_LEN; i++)
-#ifdef __NetBSD__
-				dsc->sc_enaddr[i] =
-				    romdata[i * (useword ? 2 : 1)];
-#else
 				dsc->sc_arpcom.ac_enaddr[i] =
 				    romdata[i * (useword ? 2 : 1)];
-#endif
 		}
 	} else
 		bcopy(myea, dsc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -553,15 +544,9 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 					 */
 					savebyte[1] = *data++;
 					l--;
-#ifdef __NetBSD__
-					bus_space_write_stream_2(asict, asich,
-					    NE2000_ASIC_DATA,
-					    *(u_int16_t *)savebyte);
-#else
 					bus_space_write_raw_multi_2(asict,
 					    asich, NE2000_ASIC_DATA,
 					    savebyte, 2);
-#endif
 					leftover = 0;
 				} else if (ALIGNED_POINTER(data,
 					   u_int16_t) == 0) {
@@ -580,14 +565,8 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 					 */
 					leftover = l & 1;
 					l &= ~1;
-#ifdef __NetBSD__
-					bus_space_write_multi_stream_2(asict,
-					    asich, NE2000_ASIC_DATA,
-					    (u_int16_t *)data, l >> 1);
-#else
 					bus_space_write_raw_multi_2(asict,
 					    asich, NE2000_ASIC_DATA, data, l);
-#endif
 					data += l;
 					if (leftover)
 						savebyte[0] = *data++;
@@ -603,13 +582,8 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 		}
 		if (leftover) {
 			savebyte[1] = 0;
-#ifdef __NetBSD__
-			bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
-			    *(u_int16_t *)savebyte);
-#else
 			bus_space_write_raw_multi_2(asict, asich,
 			    NE2000_ASIC_DATA, savebyte, 2);
-#endif
 		}
 	}
 	NIC_BARRIER(nict, nich);
@@ -730,13 +704,8 @@ ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich,
 
 	ASIC_BARRIER(asict, asich);
 	if (useword)
-#ifdef __NetBSD__
-		bus_space_read_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
-		    (u_int16_t *)dst, amount >> 1);
-#else
 		bus_space_read_raw_multi_2(asict, asich, NE2000_ASIC_DATA,
 		    dst, amount);
-#endif
 	else
 		bus_space_read_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    dst, amount);
@@ -779,13 +748,8 @@ ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich,
 
 	ASIC_BARRIER(asict, asich);
 	if (useword)
-#ifdef __NetBSD__
-		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
-		    (u_int16_t *)src, len >> 1);
-#else
 		bus_space_write_raw_multi_2(asict, asich, NE2000_ASIC_DATA,
 		    src, len);
-#endif
 	else
 		bus_space_write_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    src, len);

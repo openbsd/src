@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.16 2006/10/20 16:54:01 brad Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.17 2006/10/20 17:02:24 brad Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -71,20 +71,12 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
-
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h> 
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h> 
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif 
 
 #if NBPFILTER > 0
@@ -137,13 +129,9 @@ struct cfattach we_isapnp_ca = {
 };
 #endif /* NWE_ISAPNP */
 
-#ifdef __NetBSD__
-extern struct cfdriver we_cd;
-#else
 struct cfdriver we_cd = {
 	NULL, "we", DV_IFNET
 };
-#endif
 
 const char *we_params(bus_space_tag_t, bus_space_handle_t, u_int8_t *,
 	    bus_size_t *, int *, int *);
@@ -431,12 +419,8 @@ we_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get station address from EEPROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-#ifdef __NetBSD__
-		sc->sc_enaddr[i] = bus_space_read_1(asict, asich, WE_PROM + i);
-#else
 		sc->sc_arpcom.ac_enaddr[i] =
 		    bus_space_read_1(asict, asich, WE_PROM + i);
-#endif
 
 	/*
 	 * Set upper address bits and 8/16 bit access to shared memory.

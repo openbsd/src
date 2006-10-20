@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.10 2006/10/20 16:54:01 brad Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.11 2006/10/20 17:02:24 brad Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -52,9 +52,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 #include <net/if_media.h>
 
 #ifdef INET
@@ -62,11 +59,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif
 
 #if NBPFILTER > 0
@@ -88,10 +81,6 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/isa/isapnpreg.h>
-#ifdef __NetBSD__
-#include <dev/isa/isapnpvar.h>
-#include <dev/isa/isapnpdevs.h>
-#endif
 
 static int ne_isapnp_match(struct device *, void *, void *);
 static void ne_isapnp_attach(struct device *, struct device *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.9 2006/10/20 16:54:01 brad Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.10 2006/10/20 17:02:24 brad Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -69,20 +69,12 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
-
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h> 
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h> 
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif 
 
 #if NBPFILTER > 0
@@ -349,11 +341,7 @@ ec_attach(struct device *parent, struct device *self, void *aux)
 	    ELINK2_CR_XSEL | ELINK2_CR_EALO);
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-#ifdef __NetBSD__
-		sc->sc_enaddr[i] = NIC_GET(nict, nich, i);
-#else
 		sc->sc_arpcom.ac_enaddr[i] = NIC_GET(nict, nich, i);
-#endif
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
