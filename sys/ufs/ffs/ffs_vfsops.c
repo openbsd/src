@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.96 2006/08/07 15:50:42 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.97 2006/10/20 13:01:10 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -483,17 +483,21 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 
 	if (vinvalbuf(vp, 0, fra->cred, fra->p, 0, 0))
 		panic("ffs_reload: dirty2");
+
 	/*
 	 * Step 6: re-read inode data for all active vnodes.
 	 */
 	ip = VTOI(vp);
+
 	error = bread(fra->devvp, 
 	    fsbtodb(fra->fs, ino_to_fsba(fra->fs, ip->i_number)),
 	    (int)fra->fs->fs_bsize, NOCRED, &bp);
 	if (error) {
+		brelse(bp);
 		vput(vp);
 		return (error);
 	}
+
 	*ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
 	    ino_to_fsbo(fra->fs, ip->i_number));
 	ip->i_effnlink = DIP(ip, nlink);
@@ -546,9 +550,13 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
+
 	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
-	if (error)
+	if (error) {
+		brelse(bp);
 		return (error);
+	}
+
 	newfs = (struct fs *)bp->b_data;
 	if (newfs->fs_magic != FS_MAGIC || (u_int)newfs->fs_bsize > MAXBSIZE ||
 	    newfs->fs_bsize < sizeof(struct fs) ||
@@ -583,8 +591,10 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 			size = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
 			      NOCRED, &bp);
-		if (error)
+		if (error) {
+			brelse(bp);
 			return (error);
+		}
 		bcopy(bp->b_data, space, (u_int)size);
 		space += size;
 		brelse(bp);
