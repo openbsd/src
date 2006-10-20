@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.37 2006/10/20 16:54:01 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.38 2006/10/20 17:28:10 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -681,7 +681,13 @@ dp8390_intr(void *arg)
 				/* Update output errors counter. */
 				++ifp->if_oerrors;
 			} else {
-				/* Throw away the non-error status bits. */
+				/*
+				 * Throw away the non-error status bits.
+				 *
+				 * XXX
+				 * It may be useful to detect loss of carrier
+				 * and late collisions here.
+				 */
 				(void)NIC_GET(regt, regh, ED_P0_TSR);
 
 				/*
@@ -990,6 +996,7 @@ dp8390_getmcaf(struct arpcom *ac, u_int8_t *af)
 				af[i] = 0xff;
 			return;
 		}
+
 		/* Just want the 6 most significant bits. */
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 
@@ -1002,12 +1009,11 @@ dp8390_getmcaf(struct arpcom *ac, u_int8_t *af)
 }
 
 /*
- * Copy data from receive buffer to end of mbuf chain allocate additional mbufs
- * as needed.  Return pointer to last mbuf in chain.
+ * Copy data from receive buffer to a new mbuf chain allocating mbufs
+ * as needed.  Return pointer to first mbuf in chain.
  * sc = dp8390 info (softc)
  * src = pointer in dp8390 ring buffer
- * dst = pointer to last mbuf in mbuf chain to copy to
- * amount = amount of data to copy
+ * total_len = amount of data to copy
  */
 struct mbuf *
 dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
