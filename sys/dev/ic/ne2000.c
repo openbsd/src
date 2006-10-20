@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.21 2006/10/20 17:11:39 brad Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.22 2006/10/20 18:27:25 brad Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -77,6 +77,8 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/ic/ax88190reg.h>
 
 int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
 int	ne2000_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
@@ -250,7 +252,7 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
 			NIC_BARRIER(nict, nich);
 			ne2000_readmem(nict, nich, asict, asich,
-			    NE2000_AX88190_NODEID_OFFSET,
+			    AX88190_NODEID_OFFSET,
 			    dsc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN, useword);
 		} else {
 			ne2000_readmem(nict, nich, asict, asich, 0, romdata,
