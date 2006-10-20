@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.62 2006/10/19 19:46:06 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.63 2006/10/20 01:08:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -92,6 +92,8 @@ void	brgphy_adc_bug(struct mii_softc *);
 void	brgphy_5704_a0_bug(struct mii_softc *);
 void	brgphy_ber_bug(struct mii_softc *);
 void	brgphy_jitter_bug(struct mii_softc *);
+void	brgphy_jumbo_settings(struct mii_softc *);
+void	brgphy_eth_wirespeed(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_funcs = {            
 	brgphy_service, brgphy_status, brgphy_reset,          
@@ -447,7 +449,6 @@ void
 brgphy_reset(struct mii_softc *sc)
 {
 	struct bge_softc *bge_sc = NULL;
-	u_int32_t val;
 	char *devname;
 
 	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
@@ -485,15 +486,9 @@ brgphy_reset(struct mii_softc *sc)
 		if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG)
 			brgphy_jitter_bug(sc);
 
-		/*
-		 * Enable Ethernet@WireSpeed.
-		 */
-		if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED)) {
-			PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
-			val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-			PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
-				(val | (1 << 15) | (1 << 4)));
-		}
+		/* Enable Ethernet@Wirespeed */
+		if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED))
+			brgphy_eth_wirespeed(sc);
 
 		/* Enable Link LED on Dell boxes */
 		if (bge_sc->bge_flags & BGE_NO_3LED) {
@@ -505,20 +500,10 @@ brgphy_reset(struct mii_softc *sc)
 		brgphy_ber_bug(sc);
 
 		/* Set Jumbo frame settings in the PHY. */
-		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
-		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 
-			val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
-
-		val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
-		PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
-			val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+		brgphy_jumbo_settings(sc);
 
 		/* Enable Ethernet@Wirespeed */
-		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
-		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
-			(val | (1 << 15) | (1 << 4)));
+		brgphy_eth_wirespeed(sc);
 	}
 }
 
@@ -683,4 +668,37 @@ brgphy_jitter_bug(struct mii_softc *sc)
 
 	for (i = 0; dspcode[i].reg != 0; i++)
 		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+void
+brgphy_jumbo_settings(struct mii_softc *sc)
+{
+	u_int32_t val;
+
+	/* Set Jumbo frame settings in the PHY. */
+	if (sc->mii_model == MII_MODEL_BROADCOM_BCM5401) {
+		/* Cannot do read-modify-write on the BCM5401 */
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x4c20);
+	} else {
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
+		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+			val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
+	}
+
+	val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
+	PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
+		val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+}
+
+void
+brgphy_eth_wirespeed(struct mii_softc *sc)
+{
+	u_int32_t val;
+
+	/* Enable Ethernet@Wirespeed */
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
+	val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+		(val | (1 << 15) | (1 << 4)));
 }
