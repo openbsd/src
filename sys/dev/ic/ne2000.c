@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.20 2006/10/20 17:02:24 brad Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.21 2006/10/20 17:11:39 brad Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -71,12 +71,6 @@
 #include <netinet/if_ether.h>
 
 #include <machine/bus.h>
-
-#ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define	bus_space_write_stream_2	bus_space_write_2
-#define	bus_space_write_multi_stream_2	bus_space_write_multi_2
-#define	bus_space_read_multi_stream_2	bus_space_read_multi_2
-#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
