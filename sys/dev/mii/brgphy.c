@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.64 2006/10/20 03:30:24 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.65 2006/10/20 03:52:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -227,9 +227,6 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 		case IFM_1000_T:
 			speed = BRGPHY_S1000;
-			goto setit;
-		case IFM_100_T4:
-			speed = BRGPHY_S100;
 			goto setit;
 		case IFM_100_TX:
 			speed = BRGPHY_S100;
