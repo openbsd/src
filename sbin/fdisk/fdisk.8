@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.51 2006/08/05 14:04:00 ray Exp $
+.\"	$OpenBSD: fdisk.8,v 1.52 2006/10/20 03:54:24 dhill Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -95,11 +95,6 @@ MBR partition type identifier.
 .Ox
 reserves the
 magic number hexadecimal A6 (166 decimal).
-If no A6 MBR partition is found,
-.Ox
-can use an older
-.Fx
-MBR partition (with a magic number of hexadecimal A5).
 .It Em "C/H/S"
 These fields provide the starting and ending address of the MBR partition
 in BIOS geometry.
