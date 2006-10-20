@@ -1,4 +1,4 @@
-/*	$OpenBSD: */
+/*	$OpenBSD: if_mc.c,v 1.4 2006/10/20 13:10:27 xsa Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
