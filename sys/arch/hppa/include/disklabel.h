@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.15 2006/10/18 20:09:38 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.16 2006/10/20 23:47:42 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -178,9 +178,6 @@ struct hpux_label {
 struct cpu_disklabel {
 	int labelsector;
 	union {
-		struct {
-			struct dos_partition dosparts[NDOSPART];
-		} _i386;
 		struct {
 			struct lifvol lifvol;
 			struct lifdir lifdir[LIF_NUMDIR];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.7 2006/10/18 20:09:38 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 2006/10/20 23:47:42 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -85,7 +85,6 @@ struct dos_mbr {
 #define DOSMBR_SIGNATURE_OFF	(0x1fe)
 
 struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
 };
 
 /* Isolate the relevant bits to get sector and cylinder. */

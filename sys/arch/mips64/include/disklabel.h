@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.11 2006/10/18 20:09:39 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.12 2006/10/20 23:47:43 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -149,11 +149,6 @@ struct sgilabel {
 
 struct cpu_disklabel {
 	int labelsector;
-	union {
-		struct {
-			struct dos_partition dosparts[NDOSPART];
-		} _i386;
-	} u;
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */
