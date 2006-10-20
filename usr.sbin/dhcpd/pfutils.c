@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.5 2006/06/14 14:58:52 ckuethe Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.6 2006/10/20 19:45:02 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -66,51 +66,51 @@ pftable_handler()
 	setproctitle("pf table handler");
 	l = sizeof(struct pf_cmd);
 
-	for(;;){
+	for (;;) {
 		pfd[0].fd = fd;
 		pfd[0].events = POLLIN;
 		if ((nfds = poll(pfd, 1, -1)) == -1)
 			if (errno != EINTR)
 				error("poll: %m");
 
-		if (nfds > 0 && (pfd[0].revents & POLLIN)){
+		if (nfds > 0 && (pfd[0].revents & POLLIN)) {
 			bzero(&cmd, l);
 			r = atomicio(read, pfpipe[0], &cmd, l);
 
 			if (r != l)
 				error("pf pipe error: %m");
 
-			switch (cmd.type){
- 			case 'A':
+			switch (cmd.type) {
+			case 'A':
 				/*
 				 * When we abandon an address, we add it to the
 				 * the table of abandoned addresses, and remove
 				 * it from the table of active leases.
 				 */
- 				pf_change_table(fd, 1, cmd.ip, abandoned_tab);
+				pf_change_table(fd, 1, cmd.ip, abandoned_tab);
 				pf_change_table(fd, 0, cmd.ip, leased_tab);
- 				pf_kill_state(fd, cmd.ip);
- 				break;
- 			case 'C':
+				pf_kill_state(fd, cmd.ip);
+				break;
+			case 'C':
 				/*
 				 * When the hardware address for an IP changes,
 				 * remove it from the table of abandoned
 				 * addresses, and from the table of overloaded
 				 * addresses.
 				 */
- 				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
- 				pf_change_table(fd, 0, cmd.ip, changedmac_tab);
- 				break;
- 			case 'L':
+				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
+				pf_change_table(fd, 0, cmd.ip, changedmac_tab);
+				break;
+			case 'L':
 				/*
 				 * When a lease is granted or renewed, remove
 				 * it from the table of abandoned addresses,
 				 * and ensure it is in the table of active
 				 * leases.
 				 */
- 				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
+				pf_change_table(fd, 0, cmd.ip, abandoned_tab);
 				pf_change_table(fd, 1, cmd.ip, leased_tab);
- 				break;
+				break;
 			case 'R':
 				/*
 				 * When we release or expire a lease, remove
@@ -175,7 +175,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	    sizeof(psk.psk_src.addr.v.a.addr));
 	memset(&psk.psk_src.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_src.addr.v.a.mask));
-	if (ioctl(fd, DIOCKILLSTATES, &psk)){
+	if (ioctl(fd, DIOCKILLSTATES, &psk)) {
 		warning("DIOCKILLSTATES failed (%s)", strerror(errno));
 	}
 
@@ -185,7 +185,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	    sizeof(psk.psk_dst.addr.v.a.addr));
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_dst.addr.v.a.mask));
-	if (ioctl(fd, DIOCKILLSTATES, &psk)){
+	if (ioctl(fd, DIOCKILLSTATES, &psk)) {
 		warning("DIOCKILLSTATES failed (%s)", strerror(errno));
 	}
 }
@@ -232,7 +232,7 @@ pfmsg(char c, struct lease *lp)
 	cmd.type = c;
 	bcopy(lp->ip_addr.iabuf, &cmd.ip.s_addr, 4);
 
-	switch(c){
+	switch (c) {
 	case 'A': /* address is being abandoned */
 		if (abandoned_tab != NULL)
 			(void)atomicio(vwrite, pfpipe[1], &cmd,
