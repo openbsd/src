@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.9 2005/11/21 18:16:40 millert Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.10 2006/10/20 16:54:01 brad Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -108,18 +108,13 @@ struct cfattach ne_isapnp_ca = {
 };
 
 static int
-ne_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ne_isapnp_match(struct device *parent, void *match, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 static void
-ne_isapnp_attach(
-	struct device *parent,
-	struct device *self,
-	void *aux)
+ne_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_isapnp_softc * const isc = (struct ne_isapnp_softc *)self;
 	struct ne2000_softc * const nsc = &isc->sc_ne2000;

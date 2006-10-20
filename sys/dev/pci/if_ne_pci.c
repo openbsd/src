@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.14 2005/10/22 23:26:08 brad Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.15 2006/10/20 16:54:01 brad Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -148,8 +148,7 @@ const struct ne_pci_product {
 const struct ne_pci_product *ne_pci_lookup(struct pci_attach_args *);
 
 const struct ne_pci_product *
-ne_pci_lookup(pa)
-	struct pci_attach_args *pa;
+ne_pci_lookup(struct pci_attach_args *pa)
 {
 	const struct ne_pci_product *npp;
 
@@ -170,9 +169,7 @@ ne_pci_lookup(pa)
 #define PCI_CBIO	0x10		/* Configuration Base IO Address */
 
 int
-ne_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ne_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -183,9 +180,7 @@ ne_pci_match(parent, match, aux)
 }
 
 void
-ne_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ne_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_pci_softc *psc = (struct ne_pci_softc *)self;
 	struct ne2000_softc *nsc = &psc->sc_ne2000;

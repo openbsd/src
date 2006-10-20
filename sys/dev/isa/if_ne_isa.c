@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isa.c,v 1.10 2005/11/21 18:16:40 millert Exp $	*/
+/*	$OpenBSD: if_ne_isa.c,v 1.11 2006/10/20 16:54:01 brad Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -102,9 +102,7 @@ struct cfattach ne_isa_ca = {
 };
 
 int
-ne_isa_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ne_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct ne_isa_softc *isc = match;
 	struct ne2000_softc *nsc = &isc->sc_ne2000;
@@ -152,9 +150,7 @@ ne_isa_match(parent, match, aux)
 }
 
 void
-ne_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ne_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_isa_softc *isc = (struct ne_isa_softc *)self;
 	struct ne2000_softc *nsc = &isc->sc_ne2000;
