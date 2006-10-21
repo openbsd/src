@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.6 2006/10/09 00:31:11 tedu Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.7 2006/10/21 02:18:00 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ roundrobin(void *arg)
 		splx(s);
 	}
 
-	need_resched(0);
+	need_resched(NULL);
 	timeout_add(to, hz / 10);
 }
 #endif
@@ -272,7 +272,7 @@ schedcpu(void *arg)
 	phz = stathz ? stathz : profhz;
 	KASSERT(phz);
 
-	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
+	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
@@ -321,7 +321,7 @@ schedcpu(void *arg)
 		SCHED_UNLOCK(s);
 	}
 	uvm_meter();
-	wakeup((caddr_t)&lbolt);
+	wakeup(&lbolt);
 	timeout_add(to, hz);
 }
 
@@ -582,7 +582,7 @@ resched_proc(struct proc *p, u_char pri)
 		need_resched(ci);
 #else
 	if (pri < curpriority)
-		need_resched(0);
+		need_resched(NULL);
 #endif
 }
 
@@ -624,7 +624,7 @@ setrunnable(struct proc *p)
 		updatepri(p);
 	p->p_slptime = 0;
 	if ((p->p_flag & P_INMEM) == 0)
-		wakeup((caddr_t)&proc0);
+		wakeup(&proc0);
 	else
 		resched_proc(p, p->p_priority);
 }

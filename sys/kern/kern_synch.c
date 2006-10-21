@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.73 2005/12/30 04:02:17 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.74 2006/10/21 02:18:00 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -342,10 +342,10 @@ restart:
 					KASSERT(p->p_cpu != NULL);
 					need_resched(p->p_cpu);
 #else
-					need_resched(0);
+					need_resched(NULL);
 #endif
 				} else {
-					wakeup((caddr_t)&proc0);
+					wakeup(&proc0);
 				}
 				/* END INLINE EXPANSION */
 
