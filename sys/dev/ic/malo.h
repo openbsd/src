@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.h,v 1.4 2006/10/17 19:40:39 claudio Exp $ */
+/*	$OpenBSD: malo.h,v 1.5 2006/10/21 23:16:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,33 @@ struct malo_tx_ring {
 	int			stat;
 };
 
+#define MALO_RX_RADIOTAP_PRESENT					\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_RSSI))
+
+struct malo_rx_radiotap_hdr {
+	struct ieee80211_radiotap_header	wr_ihdr;
+	uint8_t					wr_flags;
+	uint16_t				wr_chan_freq;
+	uint16_t				wr_chan_flags;
+	uint8_t					wr_rssi;
+	uint8_t					wr_max_rssi;
+} __packed;
+
+#define MALO_TX_RADIOTAP_PRESENT					\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct malo_tx_radiotap_hdr {
+	struct ieee80211_radiotap_header	wt_ihdr;
+	uint8_t					wt_flags;
+	uint8_t					wt_rate;
+	uint16_t				wt_chan_freq;
+	uint16_t				wt_chan_flags;
+} __packed;
+
 struct malo_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -71,6 +98,24 @@ struct malo_softc {
 
 	int			(*sc_enable)(struct malo_softc *);
 	void			(*sc_disable)(struct malo_softc *);
+
+#if NBPFILTER > 0
+	caddr_t		sc_drvbpf;
+
+	union {
+		struct malo_rx_radiotap_hdr th;
+		uint8_t pad[64];
+	}		sc_rxtapu;
+#define sc_rxtap	sc_rxtapu.th
+	int		sc_rxtap_len;
+
+	union {
+		struct malo_tx_radiotap_hdr th;
+		uint8_t pad[64];
+	}		sc_txtapu;
+#define sc_txtap	sc_txtapu.th
+	int		sc_txtap_len;
+#endif
 };
 
 int malo_intr(void *arg);

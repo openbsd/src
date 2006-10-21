@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.7 2006/10/17 21:23:32 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.8 2006/10/21 23:16:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_rssadapt.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/malo.h>
 
@@ -299,7 +300,16 @@ malo_attach(struct malo_softc *sc)
 	    ieee80211_media_status);
 
 #if NBPFILTER > 0
-	/* TODO bpf mtap */
+	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64);
+
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(MALO_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(MALO_TX_RADIOTAP_PRESENT);
 #endif
 
 	return (0);
@@ -1013,7 +1023,15 @@ malo_rx_intr(struct malo_softc *sc)
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
 		    sizeof(struct malo_rx_desc), BUS_DMASYNC_POSTREAD);
 
-		if (!(letoh32(desc->status) & 0x01))
+		DPRINTF(("rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
+		    "status=0x%02x, channel=%d, len=%d, res1=%02x, rate=%d, "
+		    "physdata=0x%04x, physnext=0x%04x, qosctrl=%02x, res2=%d\n",
+		    i, desc->rxctrl, desc->rssi, desc->status, desc->channel,
+		    letoh16(desc->len), desc->reserved1, desc->datarate,
+		    desc->physdata, desc->physnext, desc->qosctrl,
+		    desc->reserved2));
+
+		if ((letoh32(desc->rxctrl) & 0x80) == 0)
 			break;
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
@@ -1060,8 +1078,35 @@ malo_rx_intr(struct malo_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = letoh32(desc->len);
 
-#if NBPFILER > 0
-		/* TODO bpf mtap */
+		/*
+		 * cut out chip specific control blocks from the 802.11 frame:
+		 * 2 bytes ctrl, 24 bytes header, 6 byte ctrl, n bytes data
+		 */
+		bcopy(m->m_data, m->m_data + 6, 26);
+		m_adj(m, 8);
+
+#if NBPFILTER > 0
+		if (sc->sc_drvbpf != NULL) {
+			/*
+			struct mbuf mb;
+			struct malo_rx_radiotap_hdr *tap = &sc->sc_rxtap;
+
+			tap->wr_flags = 0;
+			tap->wr_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wr_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			tap->wr_rssi = desc->rssi;
+			tap->wr_max_rssi = 100;
+
+			M_DUP_PKTHDR(&mb, m);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = sc->sc_rxtap_len;
+			mb.m_next = m;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+			*/
+		}
 #endif
 
 		wh = mtod(m, struct ieee80211_frame *);
@@ -1078,12 +1123,11 @@ malo_rx_intr(struct malo_softc *sc)
 		ieee80211_release_node(ic, ni);
 
 skip:
+		desc->rxctrl = 0;
+
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
 		    sizeof(struct malo_rx_desc), BUS_DMASYNC_PREWRITE);
-
-		DPRINTF(("rx intr idx=%d, status=0x%02x, len=%d\n",
-		    i, desc->status, desc->len));
 
 		sc->sc_rxring.cur = (sc->sc_rxring.cur + 1) %
 		    MALO_RX_RING_COUNT;
