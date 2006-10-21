@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.149 2006/08/29 17:19:43 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.150 2006/10/21 14:02:11 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -660,7 +660,7 @@ if_clone_create(const char *name)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	if ((ret = (*ifc->ifc_create)(ifc, unit)) != -1 &&
+	if ((ret = (*ifc->ifc_create)(ifc, unit)) == 0 &&
 	    (ifp = ifunit(name)) != NULL)
 		if_addgroup(ifp, ifc->ifc_name);
 
@@ -696,7 +696,7 @@ if_clone_destroy(const char *name)
 
 	if_delgroup(ifp, ifc->ifc_name);
 
-	if ((ret = (*ifc->ifc_destroy)(ifp)) == -1)
+	if ((ret = (*ifc->ifc_destroy)(ifp)) != 0)
 		if_addgroup(ifp, ifc->ifc_name);
 
 	return (ret);
