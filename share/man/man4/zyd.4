@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.7 2006/10/21 18:18:50 damien Exp $
+.\" $OpenBSD: zyd.4,v 1.8 2006/10/21 18:39:25 damien Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -54,15 +54,12 @@ Also known as
 mode, this is used when associating with an access point, through
 which all traffic passes.
 This mode is the default.
-.It IBSS mode
-Also known as
-.Em IEEE ad-hoc
-mode or
-.Em peer-to-peer
-mode.
-This is the standardized method of operating without an access point.
-Stations associate with a service set.
-However, actual connections between stations are peer-to-peer.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 .Nm
