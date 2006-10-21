@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2006/10/20 23:47:42 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2006/10/21 14:18:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -328,8 +328,8 @@ donot:
 				 */
 				if (cp == (char *)(dp2 + 1))
 				    continue;
-				lp->d_partitions[8 + n++].p_fstype =
-				    FS_UNUSED;
+				pp->p_fstype = FS_UNUSED;
+				n++;
 				break;
 
 			case DOSPTYP_LINUX:
