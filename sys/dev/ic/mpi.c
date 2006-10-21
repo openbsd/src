@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.75 2006/09/22 00:43:18 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.76 2006/10/21 07:36:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -197,12 +197,10 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
-#ifdef notyet
 	if (mpi_eventnotify(sc) != 0) {
 		printf("%s: unable to get portfacts\n", DEVNAME(sc));
 		goto free_replies;
 	}
-#endif
 
 	if (mpi_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
@@ -2025,8 +2023,7 @@ mpi_evt_sas(void *xsc, void *arg)
 	case MPI_EVT_SASCH_REASON_ADDED:
 	case MPI_EVT_SASCH_REASON_NO_PERSIST_ADDED:
 		/* XXX what an awful interface */
-		scsi_probe_busses(sc->sc_scsibus->sc_dev.dv_unit,
-		    ch->target, -1);
+		scsi_probe_target(sc->sc_scsibus, ch->target);
 		break;
 
 	case MPI_EVT_SASCH_REASON_NOT_RESPONDING:

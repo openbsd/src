@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.116 2006/10/07 23:40:07 beck Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.117 2006/10/21 07:36:15 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
  * Declarations
  */
 int	scsi_probedev(struct scsibus_softc *, int, int);
-int	scsi_probe_bus(int, int, int);
 
 struct scsi_device probe_switch = {
 	NULL,
@@ -160,7 +159,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		bzero(sb->sc_link[i], nbytes);
 	}
 
-	scsi_probe_bus(sb->sc_dev.dv_unit, -1, -1);
+	scsi_probe_bus(sb);
 }
 
 int
@@ -211,118 +210,91 @@ scsibussubmatch(struct device *parent, void *match, void *aux)
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
-/*
- * Probe the requested scsi bus. It must be already set up.
- * -1 requests all set up scsi busses.
- * target and lun optionally narrow the search if not -1
- */
 int
-scsi_probe_busses(int bus, int target, int lun)
+scsi_probe_bus(struct scsibus_softc *sc)
 {
-	if (bus == -1) {
-		for (bus = 0; bus < scsibus_cd.cd_ndevs; bus++)
-			if (scsibus_cd.cd_devs[bus])
-				scsi_probe_bus(bus, target, lun);
+	struct scsi_link *alink = sc->adapter_link;
+	int i;
+
+	for (i = 0; i < alink->adapter_buswidth; i++)
+		scsi_probe_target(sc, i);
+
+	return (0);
+}
+
+int
+scsi_probe_target(struct scsibus_softc *sc, int target)
+{
+	struct scsi_link *alink = sc->adapter_link;
+	struct scsi_link *link;
+	struct scsi_report_luns_data *report;
+	int i, nluns, lun;
+
+	if (scsi_probe_lun(sc, target, 0) == EINVAL)
+		return (EINVAL);
+
+	link = sc->sc_link[target][0];
+	if (link == NULL)
+		return (ENXIO);
+
+	if ((link->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
+	    SCSISPC(link->inqdata.version) > 2) {
+		report = malloc(sizeof(*report), M_TEMP, M_WAITOK);
+		if (report == NULL)
+			goto dumbscan;
+
+		if (scsi_report_luns(link, REPORT_NORMAL, report,
+		    sizeof(*report), scsi_autoconf | SCSI_SILENT |
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
+		    SCSI_IGNORE_MEDIA_CHANGE, 10000) != 0) {
+			free(report, M_TEMP);
+			goto dumbscan;
+		}
+
+		/*
+		 * XXX In theory we should check if data is full, which
+		 * would indicate it needs to be enlarged and REPORT
+		 * LUNS tried again. Solaris tries up to 3 times with
+		 * larger sizes for data.
+		 */
+		nluns = _4btol(report->length) / RPL_LUNDATA_SIZE;
+		for (i = 0; i < nluns; i++) {
+			if (report->luns[i].lundata[0] != 0)
+				continue;
+			lun = report->luns[i].lundata[RPL_LUNDATA_T0LUN];
+			if (lun == 0)
+				continue;
+
+			/* Probe the provided LUN. Don't check LUN 0. */
+			sc->sc_link[target][0] = NULL;
+			scsi_probe_lun(sc, target, lun);
+			sc->sc_link[target][0] = link;
+		}
+
+		free(report, M_TEMP);
 		return (0);
 	}
 
-	return (scsi_probe_bus(bus, target, lun));
-}
-
-/*
- * Probe the requested scsi bus. It must be already set up.
- * target and lun optionally narrow the search if not -1
- */
-int
-scsi_probe_bus(int bus, int target, int lun)
-{
-	struct scsi_report_luns_data *data = NULL;
-	struct scsibus_softc *scsi;
-	struct scsi_link *sc_link;
-	u_int16_t scsi_addr;
-	int i, luncount, maxtarget, mintarget, maxlun, minlun;
-
-	if (bus < 0 || bus >= scsibus_cd.cd_ndevs)
-		return (ENXIO);
-
-	scsi = scsibus_cd.cd_devs[bus];
-	if (scsi == NULL)
-		return ENXIO;
-
-	scsi_addr = scsi->adapter_link->adapter_target;
-
-	if (target == -1) {
-		maxtarget = scsi->adapter_link->adapter_buswidth - 1;
-		mintarget = 0;
-	} else {
-		if (target < 0 ||
-		    target >= scsi->adapter_link->adapter_buswidth)
-			return (EINVAL);
-		maxtarget = mintarget = target;
+dumbscan:
+	for (i = 1; i < alink->luns; i++) {
+		if (scsi_probe_lun(sc, target, i) == EINVAL)
+			break;
 	}
-
-	if (lun == -1) {
-		maxlun = scsi->adapter_link->luns - 1;
-		minlun = 0;
-	} else {
-		if (lun < 0 || lun >= scsi->adapter_link->luns)
-			return (EINVAL);
-		maxlun = lun;
-		if (target == -1 || scsi->sc_link[target][0] == NULL)
-			minlun = 0;
-		else
-			minlun = lun;
-	}
-
-	data = malloc(sizeof *data, M_TEMP, M_NOWAIT);
-
-	for (target = mintarget; target <= maxtarget; target++) {
-		if (target == scsi_addr)
-			continue;
-		if (scsi_probedev(scsi, target, 0) == EINVAL)
-			continue;
-
-		sc_link = scsi->sc_link[target][0];
-		if (sc_link != NULL && data != NULL &&
-		    (sc_link->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
-		    SCSISPC(sc_link->inqdata.version) > 2) {
-			scsi_report_luns(sc_link, REPORT_NORMAL, data,
-			    sizeof *data, scsi_autoconf | SCSI_SILENT |
-		    	    SCSI_IGNORE_ILLEGAL_REQUEST |
-			    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE,
-			    10000);
-			/*
-			 * XXX In theory we should check if data is full, which
-			 * would indicate it needs to be enlarged and REPORT
-			 * LUNS tried again. Solaris tries up to 3 times with
-			 * larger sizes for data.
-			 */
-			luncount = _4btol(data->length) / RPL_LUNDATA_SIZE;
-			for (i = 0; i < luncount; i++) {
-				if (data->luns[i].lundata[0] != 0)
-					continue;
-				lun = data->luns[i].lundata[RPL_LUNDATA_T0LUN];
-				if (lun == 0 || lun < minlun || lun > maxlun)
-					continue;
-				/* Probe the provided LUN. Don't check LUN 0. */
-				scsi->sc_link[target][0] = NULL;
-				scsi_probedev(scsi, target, lun);
-				scsi->sc_link[target][0] = sc_link;
-			}
-			if (luncount > 0)
-				continue; /* Next target. */
-		}
-
-		/* No LUN list available. Scan entire range. */
-		for (lun = max(minlun, 1); lun <= maxlun; lun++)
-			if (scsi_probedev(scsi, target, lun) == EINVAL)
-				break;
-	}
-
-	if (data != NULL)
-		free(data, M_TEMP);
 
 	return (0);
+}
+
+int
+scsi_probe_lun(struct scsibus_softc *sc, int target, int lun)
+{
+	struct scsi_link *alink = sc->adapter_link;
+
+	if (target < 0 || target >= alink->adapter_buswidth ||
+	    target == alink->adapter_target ||
+	    lun < 0 || lun >= alink->luns)
+		return (ENXIO);
+
+	return (scsi_probedev(sc, target, lun));
 }
 
 void
