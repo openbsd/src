@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2006/10/04 03:23:01 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2006/10/21 16:01:54 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -117,11 +117,11 @@ char *
 readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int spoofonly;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
 	int i;
@@ -189,12 +189,12 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
  */
 int
 setdisklabel(olp, nlp, openmask, osdep)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	register int i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
@@ -245,7 +245,7 @@ int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;

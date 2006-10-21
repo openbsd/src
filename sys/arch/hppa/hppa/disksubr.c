@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.41 2006/10/21 14:18:36 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.42 2006/10/21 16:01:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -222,6 +222,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	int spoofonly;
 {
 	struct dos_partition dp[NDOSPART], *dp2;
+	struct partition *pp;
 	unsigned long extoff = 0;
 	daddr_t part_blkno = DOSBBSECTOR;
 	char *msg = NULL, *cp;
@@ -303,7 +304,7 @@ donot:
 		 * provide a fake label in i-p.
 		 */
 		for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
-			struct partition *pp = &lp->d_partitions[8+n];
+			pp = &lp->d_partitions[8+n];
 
 			if (dp2->dp_typ == DOSPTYP_OPENBSD)
 				continue;

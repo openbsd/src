@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.26 2006/10/21 14:18:37 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.27 2006/10/21 16:01:54 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -66,11 +66,12 @@ char *
 readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int spoofonly;
 {
 	struct dos_partition dp[NDOSPART], *dp2;
+	struct partition *pp;
 	struct disklabel *dlp;
 	unsigned long extoff = 0;
 	struct buf *bp;
@@ -162,7 +163,7 @@ donot:
 		 * provide a fake label in i-p.
 		 */
 		for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
-			struct partition *pp = &lp->d_partitions[8+n];
+			pp = &lp->d_partitions[8+n];
 
 			if (dp2->dp_typ == DOSPTYP_OPENBSD)
 				continue;
@@ -281,7 +282,7 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, osdep)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
@@ -340,7 +341,7 @@ int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition dp[NDOSPART], *dp2;
