@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.6 2006/08/30 23:14:30 jmc Exp $
+.\" $OpenBSD: zyd.4,v 1.7 2006/10/21 18:18:50 damien Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -35,19 +35,14 @@
 .Os
 .Sh NAME
 .Nm zyd
-.Nd Zydas ZD1211 USB IEEE 802.11b/g wireless network device
+.Nd ZyDAS ZD1211 USB IEEE 802.11b/g wireless network device
 .Sh SYNOPSIS
 .Cd "zyd* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for wireless network adapters based around
-the Zydas ZD1211 USB chip.
-.Pp
-The
-.Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames,
-though it can receive either 802.11 or 802.3 frames.
+the ZyDAS ZD1211 USB chip.
 .Pp
 These are the modes the
 .Nm
@@ -71,7 +66,7 @@ However, actual connections between stations are peer-to-peer.
 .El
 .Pp
 .Nm
-supports hardware WEP.
+supports software WEP.
 Wired Equivalent Privacy (WEP) is the de facto encryption standard
 for wireless networks.
 It can be typically configured in one of three modes:
@@ -208,7 +203,7 @@ driver:
 .El
 .Sh FILES
 The adapter needs some firmware files, which are loaded on demand by the
-driver when the device is attached:
+driver when a device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/zd1211
@@ -254,10 +249,12 @@ Join an existing BSS network,
 The
 .Nm
 driver was written by
-.An Florian Stoehr .
+.An Florian Stoehr Aq ich@florian-stoehr.de
+and
+.An Damien Bergamini Aq damien@openbsd.org .
 .Sh CAVEATS
 The
 .Nm
 driver does not support a lot of the functionality available in the hardware.
-More work is required to properly support the IBSS, power management,
-and selectable transmission rate features.
+More work is required to properly support the IBSS and power management
+features.
