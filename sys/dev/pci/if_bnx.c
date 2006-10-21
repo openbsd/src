@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.27 2006/10/19 20:52:29 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.28 2006/10/21 22:18:39 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4296,18 +4296,25 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	chain_prod = TX_CHAIN_IDX(prod);
 	map = sc->tx_mbuf_map[chain_prod];
 
-	/*
-	 * XXX This should be handled higher up.
-	 */
-	if ((USABLE_TX_BD - sc->used_tx_bd - BNX_TX_SLACK_SPACE) <= 0)
-		return (ENOBUFS);
-
 	/* Map the mbuf into our DMA address space. */
 	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m0, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: Error mapping mbuf into TX chain!\n",
 		    sc->bnx_dev.dv_xname);
+		m_freem(m0);
+		*m_head = NULL;
 		return (error);
+	}
+
+	/*
+	 * The chip seems to require that at least 16 descriptors be kept
+	 * empty at all times.  Make sure we honor that.
+	 * XXX Would it be faster to assume worst case scenario for
+	 * map->dm_nsegs and do this calculation higher up?
+	 */
+	if (map->dm_nsegs > (USABLE_TX_BD - sc->used_tx_bd - BNX_TX_SLACK_SPACE)) {
+		bus_dmamap_unload(sc->tx_mbuf_tag, map);
+		return (ENOBUFS);
 	}
 
 	/* prod points to an empty tx_bd at this point. */
@@ -4413,7 +4420,7 @@ bnx_start(struct ifnet *ifp)
 	    __FUNCTION__, tx_prod, tx_chain_prod, sc->tx_prod_bseq);
 
 	/* Keep adding entries while there is space in the ring. */
-	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+	while (sc->tx_mbuf_ptr[tx_chain_prod] == NULL) {
 		/* Check for any frames to send. */
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
@@ -4421,9 +4428,8 @@ bnx_start(struct ifnet *ifp)
 
 		/*
 		 * Pack the data into the transmit ring. If we
-		 * don't have room, place the mbuf back at the
-		 * head of the queue and set the OACTIVE flag
-		 * to wait for the NIC to drain the chain.
+		 * don't have room, set the OACTIVE flag to wait
+		 * for the NIC to drain the chain.
 		 */
 		if (bnx_tx_encap(sc, &m_head)) {
 			ifp->if_flags |= IFF_OACTIVE;
