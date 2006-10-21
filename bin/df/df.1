@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.36 2006/10/18 16:27:53 jmc Exp $
+.\"	$OpenBSD: df.1,v 1.37 2006/10/21 12:59:59 jmc Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -71,8 +71,14 @@ The options are as follows:
 Use unit suffixes: Byte, Kilobyte, Megabyte,
 Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
+This option is incompatible with the
+.Fl P
+option.
 .It Fl i
 Include statistics on the number of free inodes.
+This option is incompatible with the
+.Fl P
+option.
 .It Fl k
 By default, all sizes are reported in 512-byte block counts.
 The
