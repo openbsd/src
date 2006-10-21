@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.70 2006/06/07 06:29:03 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.71 2006/10/21 07:18:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,7 +133,7 @@ client_query(struct ntp_peer *p)
 			fatal("client_query socket");
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
-			    errno == EHOSTUNREACH) {
+			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
 				client_nextaddr(p);
 				set_next(p, error_interval());
 				return (-1);
