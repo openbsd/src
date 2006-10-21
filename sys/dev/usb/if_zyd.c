@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.28 2006/10/21 18:18:50 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.29 2006/10/21 18:32:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -151,7 +151,7 @@ int		zyd_set_bssid(struct zyd_softc *, const uint8_t *);
 int		zyd_switch_radio(struct zyd_softc *, int);
 int		zyd_set_rxfilter(struct zyd_softc *);
 void		zyd_set_chan(struct zyd_softc *,
-		    const struct ieee80211_channel *);
+		    struct ieee80211_channel *);
 int		zyd_set_beacon_interval(struct zyd_softc *, int);
 uint8_t		zyd_plcp_signal(int);
 void		zyd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -1152,7 +1152,7 @@ zyd_set_rxfilter(struct zyd_softc *sc)
 }
 
 void
-zyd_set_chan(struct zyd_softc *sc, const struct ieee80211_channel *c)
+zyd_set_chan(struct zyd_softc *sc, struct ieee80211_channel *c)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct zyd_rf *rf = &sc->sc_rf;
@@ -1230,8 +1230,8 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	cmd = (const struct zyd_cmd *)sc->ibuf;
 
 	if (letoh16(cmd->code) == ZYD_NOTIF_RETRYSTATUS) {
-		const struct zyd_notif_retry *retry =
-		    (const struct zyd_notif_retry *)cmd->data;
+		struct zyd_notif_retry *retry =
+		    (struct zyd_notif_retry *)cmd->data;
 		struct ieee80211com *ic = &sc->sc_ic;
 		struct ifnet *ifp = &ic->ic_if;
 		struct ieee80211_node *ni;
@@ -1282,7 +1282,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
-	const struct ieee80211_frame *wh;
+	struct ieee80211_frame *wh;
 	const struct zyd_plcphdr *plcp;
 	const struct zyd_rx_stat *stat;
 	struct mbuf *m;
@@ -1358,7 +1358,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 #endif
 
 	s = splnet();
-	wh = mtod(m, const struct ieee80211_frame *);
+	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 	ieee80211_input(ifp, m, ni, stat->rssi, 0);
 
