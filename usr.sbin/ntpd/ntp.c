@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.91 2006/07/01 18:52:46 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.92 2006/10/21 07:30:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,7 +243,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 				set_next(p, timeout);
 			}
 
-			if (p->state == STATE_QUERY_SENT) {
+			if (p->state == STATE_QUERY_SENT &&
+			    p->query->fd != -1) {
 				pfd[i].fd = p->query->fd;
 				pfd[i].events = POLLIN;
 				idx2peer[i - idx_peers] = p;
