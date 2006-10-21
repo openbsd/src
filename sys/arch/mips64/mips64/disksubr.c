@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2006/10/21 16:01:54 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2006/10/21 20:10:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -229,7 +229,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	struct partition *pp;
 	unsigned long extoff = 0;
 	daddr_t part_blkno = DOSBBSECTOR;
-	char *msg = NULL, *cp;
+	char *msg = NULL;
 	int dospartoff, cyl, i, ourpart = -1;
 	int wander = 1, n = 0, loop = 0;
 
@@ -314,25 +314,16 @@ donot:
 				continue;
 			if (letoh32(dp2->dp_size) > lp->d_secperunit)
 				continue;
-			if (letoh32(dp2->dp_size))
-				pp->p_size = letoh32(dp2->dp_size);
+			if (letoh32(dp2->dp_size) == 0)
+				continue;
 			if (letoh32(dp2->dp_start))
 				pp->p_offset =
 				    letoh32(dp2->dp_start) + part_blkno;
 
+			pp->p_size = letoh32(dp2->dp_size);
+
 			switch (dp2->dp_typ) {
 			case DOSPTYP_UNUSED:
-				for (cp = (char *)dp2;
-				    cp < (char *)(dp2 + 1); cp++)
-					if (*cp)
-						break;
-				/*
-				 * Was it all zeroes?  If so, it is
-				 * an unused entry that we don't
-				 * want to show.
-				 */
-				if (cp == (char *)(dp2 + 1))
-				    continue;
 				pp->p_fstype = FS_UNUSED;
 				n++;
 				break;
