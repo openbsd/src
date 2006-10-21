@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.26 2006/03/23 10:51:27 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.27 2006/10/21 12:04:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -504,10 +504,12 @@ The
 function can be used to write data to the file descriptor.
 The data is appended to the output buffer and written to the descriptor
 automatically as it becomes available for writing.
+.Fn bufferevent_write
+returns 0 on success or \-1 on failure.
 The
 .Fn bufferevent_read
-function is used to read data from the input buffer.
-Both functions return the amount of data written or read.
+function is used to read data from the input buffer,
+returning the amount of data read.
 .Pp
 If multiple bases are in use, bufferevent_base_set() must be called before
 enabling the bufferevent for the first time.
