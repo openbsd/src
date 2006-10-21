@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.52 2006/10/19 12:04:31 mickey Exp $	*/
+/*	$OpenBSD: buf.h,v 1.53 2006/10/21 18:09:52 thib Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -152,7 +152,6 @@ struct buf *bufq_default_get(struct bufq *);
 #define	B_EINTR		0x00000400	/* I/O was interrupted */
 #define	B_ERROR		0x00000800	/* I/O error occurred. */
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
-#define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
 #define	B_PAGET		0x00010000	/* Page in/out of page table space. */
 #define	B_PGIN		0x00020000	/* Pagein op, so swap() can count it. */
@@ -171,7 +170,7 @@ struct buf *bufq_default_get(struct bufq *);
 
 #define	B_BITS	"\010\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY\006CACHE" \
     "\007CALL\010DELWRI\011DIRTY\012DONE\013EINTR\014ERROR" \
-    "\016INVAL\017LOCKED\020NOCACHE\021PAGET\022PGIN\023PHYS\024RAW\025READ" \
+    "\016INVAL\020NOCACHE\021PAGET\022PGIN\023PHYS\024RAW\025READ" \
     "\026TAPE\027UAREA\030WANTED\031WRITEINPROG\032XXX\033DEFERRED" \
     "\034SCANNED\035PDAEMON"
 

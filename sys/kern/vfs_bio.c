@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.86 2006/10/19 12:04:31 mickey Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.87 2006/10/21 18:09:52 thib Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -78,12 +78,11 @@ u_long	bufhash;
 /*
  * Definitions for the buffer free lists.
  */
-#define	BQUEUES		4		/* number of free buffer queues */
+#define	BQUEUES		3		/* number of free buffer queues */
 
-#define	BQ_LOCKED	0		/* super-blocks &c */
-#define	BQ_CLEAN	1		/* LRU queue with clean buffers */
-#define	BQ_DIRTY	2		/* LRU queue with dirty buffers */
-#define	BQ_EMPTY	3		/* buffer headers with no memory */
+#define	BQ_CLEAN	0		/* LRU queue with clean buffers */
+#define	BQ_DIRTY	1		/* LRU queue with dirty buffers */
+#define	BQ_EMPTY	2		/* buffer headers with no memory */
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
@@ -152,7 +151,7 @@ bremfree(struct buf *bp)
 	}
 	if (bp->b_bufsize <= 0) {
 		numemptybufs--;
-	} else if (!ISSET(bp->b_flags, B_LOCKED)) {
+	} else {
 		numfreepages -= btoc(bp->b_bufsize);
 		if (!ISSET(bp->b_flags, B_DELWRI)) {
 			numcleanpages -= btoc(bp->b_bufsize);
@@ -494,10 +493,6 @@ brelse(struct buf *bp)
 	 * Determine which queue the buffer should be on, then put it there.
 	 */
 
-	/* If it's locked, don't report an error; try again later. */
-	if (ISSET(bp->b_flags, (B_LOCKED|B_ERROR)) == (B_LOCKED|B_ERROR))
-		CLR(bp->b_flags, B_ERROR);
-
 	/* If it's not cacheable, or an error, mark it invalid. */
 	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
 		SET(bp->b_flags, B_INVAL);
@@ -533,18 +528,14 @@ brelse(struct buf *bp)
 		 * It has valid data.  Put it on the end of the appropriate
 		 * queue, so that it'll stick around for as long as possible.
 		 */
-		if (ISSET(bp->b_flags, B_LOCKED))
-			/* locked in core */
-			bufq = &bufqueues[BQ_LOCKED];
-		else {
-			numfreepages += btoc(bp->b_bufsize);
-			if (!ISSET(bp->b_flags, B_DELWRI)) {
-				numcleanpages += btoc(bp->b_bufsize);
-				bufq = &bufqueues[BQ_CLEAN];
-			} else {
-				numdirtypages += btoc(bp->b_bufsize);
-				bufq = &bufqueues[BQ_DIRTY];
-			}
+		numfreepages += btoc(bp->b_bufsize);
+
+		if (!ISSET(bp->b_flags, B_DELWRI)) {
+			numcleanpages += btoc(bp->b_bufsize);
+			bufq = &bufqueues[BQ_CLEAN];
+		} else {
+			numdirtypages += btoc(bp->b_bufsize);
+			bufq = &bufqueues[BQ_DIRTY];
 		}
 		if (ISSET(bp->b_flags, B_AGE))
 			binsheadfree(bp, bufq);
@@ -999,7 +990,7 @@ vfs_bufstats(void)
 	int totals[BQUEUES];
 	long ptotals[BQUEUES];
 	long pages;
-	static char *bname[BQUEUES] = { "LOCKED", "CLEAN", "DIRTY", "EMPTY" };
+	static char *bname[BQUEUES] = { "CLEAN", "DIRTY", "EMPTY" };
 
 	s = splbio();
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
