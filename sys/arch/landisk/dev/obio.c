@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.2 2006/10/11 20:34:19 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.3 2006/10/21 14:43:51 kettenis Exp $	*/
 /*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -104,23 +104,27 @@ obio_search(struct device *parent, void *vcf, void *aux)
 
 	oa.oa_iot = sc->sc_iot;
 	oa.oa_memt = sc->sc_memt;
+	oa.oa_nio = oa.oa_niomem = oa.oa_nirq = 0;
 
-	res_io[0].or_addr = cf->cf_iobase;
-	res_io[0].or_size = cf->cf_iosize;
+	if (cf->cf_iobase != IOBASEUNK) {
+		res_io[0].or_addr = cf->cf_iobase;
+		res_io[0].or_size = cf->cf_iosize;
+		oa.oa_io = res_io;
+		oa.oa_nio = 1;
+	}
 
-	res_mem[0].or_addr = cf->cf_maddr;
-	res_mem[0].or_size = cf->cf_msize;
+	if (cf->cf_maddr != MADDRUNK) {
+		res_mem[0].or_addr = cf->cf_maddr;
+		res_mem[0].or_size = cf->cf_msize;
+		oa.oa_iomem = res_mem;
+		oa.oa_niomem = 1;
+	}
 
-	res_irq[0].or_irq = cf->cf_irq;
-
-	oa.oa_io = res_io;
-	oa.oa_nio = 1;
-
-	oa.oa_iomem = res_mem;
-	oa.oa_niomem = 1;
-
-	oa.oa_irq = res_irq;
-	oa.oa_nirq = 1;
+	if (cf->cf_irq != IRQUNK) {
+		res_irq[0].or_irq = cf->cf_irq;
+		oa.oa_irq = res_irq;
+		oa.oa_nirq = 1;
+	}
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) == 0)
 		return (0);
