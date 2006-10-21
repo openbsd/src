@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.161 2006/10/15 04:17:31 marco Exp $
+#	$OpenBSD: GENERIC,v 1.162 2006/10/21 18:32:31 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -196,6 +196,7 @@ ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+zyd*	at uhub?		# Zydas ZD1211
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
