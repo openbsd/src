@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1168 2006/10/21 14:51:31 damien Exp $
+$OpenBSD: pcidevs,v 1.1169 2006/10/22 21:39:09 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -287,6 +287,7 @@ vendor	SANGOMA		0x1923	Sangoma
 vendor	OPTION		0x1931	Option
 vendor	ATTANSIC	0x1969	Attansic Technology
 vendor	JMICRON		0x197b	JMicron
+vendor	ASPEED		0x1a03	ASPEED Technology
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	HINT		0x3388	Hint
@@ -972,6 +973,9 @@ product ATI RS250_AGP		0xcab3	RS250 AGP
 /* Applied Micro Circuits products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai
+
+/* ASPEED Technology products */
+product ASPEED AST2000		0x2000	AST2000
 
 /* Atheros products */
 product ATHEROS AR5210		0x0007	AR5210
@@ -2871,6 +2875,7 @@ product NVIDIA GEFORCEFXGO5700_2	0x0347	GeForce FX Go 5700
 product NVIDIA GEFORCEFXGO5700	0x0348	GeForce FX Go 5700
 product NVIDIA MCP55_ISA	0x0360	MCP55 ISA
 product NVIDIA MCP55_ISA2	0x0363	MCP55 ISA
+product NVIDIA MCP55_ISA3	0x0364	MCP55 ISA
 product NVIDIA MCP55_SMB	0x0368	MCP55 SMBus
 product NVIDIA MCP55_USB_1	0x036c	MCP55 USB
 product NVIDIA MCP55_USB_2	0x036d	MCP55 USB
