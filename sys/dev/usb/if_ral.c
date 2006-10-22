@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.80 2006/09/18 16:20:20 damien Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.81 2006/10/22 12:27:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -165,6 +165,8 @@ Static void		ural_set_txantenna(struct ural_softc *, int);
 Static void		ural_set_rxantenna(struct ural_softc *, int);
 Static int		ural_init(struct ifnet *);
 Static void		ural_stop(struct ifnet *, int);
+Static void		ural_newassoc(struct ieee80211com *,
+			    struct ieee80211_node *, int);
 Static void		ural_amrr_start(struct ural_softc *,
 			    struct ieee80211_node *);
 Static void		ural_amrr_timeout(void *);
@@ -362,6 +364,7 @@ USB_ATTACH(ural)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_newassoc = ural_newassoc;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -662,10 +665,14 @@ ural_task(void *arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			ural_enable_tsf_sync(sc);
 
-		/* enable automatic rate adaptation in STA mode */
-		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    ic->ic_fixed_rate == -1)
-			ural_amrr_start(sc, ic->ic_bss);
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			ural_newassoc(ic, ic->ic_bss, 1);
+
+			/* enable automatic rate control in STA mode */
+			if (ic->ic_fixed_rate == -1)
+				ural_amrr_start(sc, ic->ic_bss);
+		}
 
 		break;
 	}
@@ -2089,6 +2096,13 @@ ural_stop(struct ifnet *ifp, int disable)
 
 	ural_free_rx_list(sc);
 	ural_free_tx_list(sc);
+}
+
+Static void
+ural_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+{
+	/* start with lowest Tx rate */
+	ni->ni_txrate = 0;
 }
 
 Static void

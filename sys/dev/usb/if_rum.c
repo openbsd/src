@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.41 2006/10/19 16:53:48 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.42 2006/10/22 12:27:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -169,6 +169,8 @@ Static void		rum_stop(struct ifnet *, int);
 Static int		rum_load_microcode(struct rum_softc *, const u_char *,
 			    size_t);
 Static int		rum_prepare_beacon(struct rum_softc *);
+Static void		rum_newassoc(struct ieee80211com *,
+			    struct ieee80211_node *, int);
 Static void		rum_amrr_start(struct rum_softc *,
 			    struct ieee80211_node *);
 Static void		rum_amrr_timeout(void *);
@@ -402,6 +404,7 @@ USB_ATTACH(rum)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_newassoc = rum_newassoc;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -685,11 +688,14 @@ rum_task(void *arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			rum_enable_tsf_sync(sc);
 
-		/* enable automatic rate adaptation in STA mode */
-		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    ic->ic_fixed_rate == -1)
-			rum_amrr_start(sc, ni);
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			rum_newassoc(ic, ic->ic_bss, 1);
 
+			/* enable automatic rate control in STA mode */
+			if (ic->ic_fixed_rate == -1)
+				rum_amrr_start(sc, ni);
+		}
 		break;
 	}
 
@@ -2102,6 +2108,13 @@ rum_prepare_beacon(struct rum_softc *sc)
 }
 
 Static void
+rum_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+{
+	/* start with lowest Tx rate */
+	ni->ni_txrate = 0;
+}
+
+Static void
 rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 {
 	int i;
@@ -2125,9 +2138,6 @@ rum_amrr_timeout(void *arg)
 {
 	struct rum_softc *sc = arg;
 	usb_device_request_t req;
-	int s;
-
-	s = splusb();
 
 	/*
 	 * Asynchronously read statistic registers (cleared by read).
@@ -2142,8 +2152,6 @@ rum_amrr_timeout(void *arg)
 	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof sc->sta, 0,
 	    rum_amrr_update);
 	(void)usbd_transfer(sc->amrr_xfer);
-
-	splx(s);
 }
 
 Static void
