@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.10 2006/08/05 22:04:53 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.11 2006/10/22 18:36:52 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -728,7 +728,7 @@ gpx_reset_viper(struct gpx_screen *ss)
 	ss->ss_adder->source_2_y = 0;
 	ss->ss_adder->source_2_size = 0x0022;
 	/* initialize plane addresses for eight vipers */
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < 8; i++) {
 		gpx_viper_write(ss, CS_UPDATE_MASK, 1 << i);
 		gpx_viper_write(ss, PLANE_ADDRESS, i);
 	}
@@ -1154,9 +1154,9 @@ gpx_loadcmap(struct gpx_screen *ss, int from, int count)
 
 		cmap = ss->ss_cmap + from;
 		for (i = from; i < from + count; i++) {
-			color12  = *cmap++ << 8;
-			color12 |= *cmap++ << 4;
-			color12 |= *cmap++ << 0;
+			color12  = (*cmap++ >> 4) << 0;
+			color12 |= (*cmap++ >> 4) << 8;
+			color12 |= (*cmap++ >> 4) << 4;
 			rd->colormap[i] = color12;
 		}
 	}
