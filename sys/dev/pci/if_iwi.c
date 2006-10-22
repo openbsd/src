@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.75 2006/09/29 05:34:25 brad Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.76 2006/10/22 08:25:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -2086,6 +2086,16 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	    IWI_MODE_11G;
 	rs.type = IWI_RATESET_TYPE_NEGOTIATED;
 	rs.nrates = ni->ni_rates.rs_nrates;
+	if (rs.nrates > sizeof rs.rates) {
+#ifdef DIAGNOSTIC
+		/* should not happen since the rates are negotiated */
+		printf("%s: XXX too many rates (count=%d, last=%d)\n",
+		    sc->sc_dev.dv_xname, ni->ni_rates.rs_nrates,
+		    ni->ni_rates.rs_rates[ni->ni_rates.rs_nrates - 1] &
+		    IEEE80211_RATE_VAL);
+#endif
+		rs.nrates = sizeof rs.rates;
+	}
 	bcopy(ni->ni_rates.rs_rates, rs.rates, rs.nrates);
 	DPRINTF(("Setting negotiated rates (%u)\n", rs.nrates));
 	error = iwi_cmd(sc, IWI_CMD_SET_RATES, &rs, sizeof rs, 1);
