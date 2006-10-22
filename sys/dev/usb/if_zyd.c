@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.29 2006/10/21 18:32:20 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.30 2006/10/22 11:53:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -123,6 +123,7 @@ int		zyd_alloc_tx_list(struct zyd_softc *);
 void		zyd_free_tx_list(struct zyd_softc *);
 int		zyd_alloc_rx_list(struct zyd_softc *);
 void		zyd_free_rx_list(struct zyd_softc *);
+struct		ieee80211_node *zyd_node_alloc(struct ieee80211com *);
 int		zyd_media_change(struct ifnet *);
 void		zyd_next_scan(void *);
 void		zyd_task(void *);
@@ -150,8 +151,7 @@ int		zyd_set_macaddr(struct zyd_softc *, const uint8_t *);
 int		zyd_set_bssid(struct zyd_softc *, const uint8_t *);
 int		zyd_switch_radio(struct zyd_softc *, int);
 int		zyd_set_rxfilter(struct zyd_softc *);
-void		zyd_set_chan(struct zyd_softc *,
-		    struct ieee80211_channel *);
+void		zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
 int		zyd_set_beacon_interval(struct zyd_softc *, int);
 uint8_t		zyd_plcp_signal(int);
 void		zyd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -166,8 +166,10 @@ int		zyd_ioctl(struct ifnet *, u_long, caddr_t);
 int		zyd_init(struct ifnet *);
 void		zyd_stop(struct ifnet *, int);
 int		zyd_loadfirmware(struct zyd_softc *, u_char *, size_t);
-void		zyd_amrr_start(struct zyd_softc *, struct ieee80211_node *);
+void		zyd_iter_func(void *, struct ieee80211_node *);
 void		zyd_amrr_timeout(void *);
+void		zyd_newassoc(struct ieee80211com *, struct ieee80211_node *,
+		    int);
 
 /*
  * Supported rates for 802.11b/g modes (in 500Kbps unit).
@@ -342,6 +344,8 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_node_alloc = zyd_node_alloc;
+	ic->ic_newassoc = zyd_newassoc;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -584,6 +588,17 @@ zyd_free_rx_list(struct zyd_softc *sc)
 	}
 }
 
+struct ieee80211_node *
+zyd_node_alloc(struct ieee80211com *ic)
+{
+	struct zyd_node *zn;
+
+	zn = malloc(sizeof (struct zyd_node), M_DEVBUF, M_NOWAIT);
+	if (zn != NULL)
+		bzero(zn, sizeof (struct zyd_node));
+	return (struct ieee80211_node *)zn;
+}
+
 int
 zyd_media_change(struct ifnet *ifp)
 {
@@ -648,10 +663,14 @@ zyd_task(void *arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			zyd_set_bssid(sc, ni->ni_bssid);
 
-		/* enable automatic rate control in STA mode */
-		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    ic->ic_fixed_rate == -1)
-			zyd_amrr_start(sc, ni);
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			zyd_newassoc(ic, ni, 1);
+		}
+
+		/* start automatic rate control timer */
+		if (ic->ic_fixed_rate == -1)
+			timeout_add(&sc->amrr_to, hz);
 
 		break;
 	}
@@ -1237,8 +1256,7 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		struct ieee80211_node *ni;
 
 		DPRINTF(("retry intr: rate=0x%x addr=%s count=%d (0x%x)\n",
-		    letoh16(retry->rate),
-		    ether_sprintf((u_char *)retry->macaddr),
+		    letoh16(retry->rate), ether_sprintf(retry->macaddr),
 		    letoh16(retry->count) & 0xff, letoh16(retry->count)));
 
 		/*
@@ -1253,7 +1271,8 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		} else
 			ni = ic->ic_bss;
 
-		sc->amn.amn_retrycnt++;
+		((struct zyd_node *)ni)->amn.amn_retrycnt++;
+
 		if (letoh16(retry->count) & 0x100)
 			ifp->if_oerrors++;	/* too many retries */
 
@@ -1454,12 +1473,14 @@ zyd_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	s = splnet();
 
+	/* update rate control statistics */
+	((struct zyd_node *)data->ni)->amn.amn_txcnt++;
+
 	ieee80211_release_node(ic, data->ni);
 	data->ni = NULL;
 
 	sc->tx_queued--;
 	ifp->if_opackets++;
-	sc->amn.amn_txcnt++;
 
 	sc->tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1898,28 +1919,44 @@ zyd_loadfirmware(struct zyd_softc *sc, u_char *fw, size_t size)
 }
 
 void
-zyd_amrr_start(struct zyd_softc *sc, struct ieee80211_node *ni)
+zyd_iter_func(void *arg, struct ieee80211_node *ni)
 {
-	int i;
+	struct zyd_softc *sc = arg;
+	struct zyd_node *zn = (struct zyd_node *)ni;
 
-	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
-
-	/* set rate to some reasonable initial value */
-	for (i = ni->ni_rates.rs_nrates - 1;
-	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
-	     i--);
-	ni->ni_txrate = i;
-
-	timeout_add(&sc->amrr_to, hz);
+	ieee80211_amrr_choose(&sc->amrr, ni, &zn->amn);
 }
 
 void
 zyd_amrr_timeout(void *arg)
 {
 	struct zyd_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
-	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
+	s = splnet();
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		zyd_iter_func(sc, ic->ic_bss);
+	else
+		ieee80211_iterate_nodes(ic, zyd_iter_func, sc);
+	splx(s);
+
 	timeout_add(&sc->amrr_to, hz);
+}
+
+void
+zyd_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+{
+	struct zyd_softc *sc = ic->ic_softc;
+	int i;
+
+	ieee80211_amrr_node_init(&sc->amrr, &((struct zyd_node *)ni)->amn);
+
+	/* set rate to some reasonable initial value */
+	for (i = ni->ni_rates.rs_nrates - 1;
+	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
+	     i--);
+	ni->ni_txrate = i;
 }
 
 int
