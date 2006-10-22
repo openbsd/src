@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.361 2006/10/11 13:35:17 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.362 2006/10/22 22:40:40 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -62,8 +62,7 @@ Queueing provides rule-based bandwidth control.
 Translation rules specify how addresses are to be mapped or redirected to
 other addresses.
 .It Cm Packet Filtering
-Stateful and stateless packet filtering provides rule-based blocking or
-passing of packets.
+Packet filtering provides rule-based blocking or passing of packets.
 .El
 .Pp
 With the exception of
@@ -1138,6 +1137,8 @@ assigned to queues for the purpose of bandwidth control.
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
 The last matching rule decides what action is taken.
+If no rule matches the packet, the default action is to pass
+the packet.
 .Pp
 The following actions can be used in the filter:
 .Bl -tag -width xxxx
@@ -1177,24 +1178,87 @@ Options returning ICMP packets currently have no effect if
 operates on a
 .Xr bridge 4 ,
 as the code to support this feature has not yet been implemented.
-.It Ar pass
-The packet is passed.
-.El
 .Pp
-If no rule matches the packet, the default action is
-.Ar pass .
-.Pp
-To block everything by default and only pass packets
-that match explicit rules, one uses
+The simplest mechanism to block everything by default and only pass
+packets that match explicit rules is specify a first filter rule of:
 .Bd -literal -offset indent
 block all
 .Ed
+.It Ar pass
+The packet is passed;
+state is created state unless the
+.Ar no state
+option is specified.
+.El
 .Pp
-as the first filter rule.
+By default
+.Xr pf 4
+filters packets statefully; the first time a packet matches a
+.Ar pass
+rule, a state entry is created; for subsequent packets the filter checks
+whether the packet matches any state.
+If it does, the packet is passed without evaluation of any rules.
+After the connection is closed or times out, the state entry is automatically
+removed.
 .Pp
+This has several advantages.
+For TCP connections, comparing a packet to a state involves checking
+its sequence numbers, as well as TCP timestamps if a
+.Ar scrub reassemble tcp
+rule applies to the connection.
+If these values are outside the narrow windows of expected
+values, the packet is dropped.
+This prevents spoofing attacks, such as when an attacker sends packets with
+a fake source address/port but does not know the connection's sequence
+numbers.
+Similarly,
+.Xr pf 4
+knows how to match ICMP replies to states.
+For example,
+.Bd -literal -offset indent
+pass out inet proto icmp all icmp-type echoreq
+.Ed
+.Pp
+allows echo requests (such as those created by
+.Xr ping 8 )
+out statefully, and matches incoming echo replies correctly to states.
+.Pp
+Also, looking up states is usually faster than evaluating rules.
+If there are 50 rules, all of them are evaluated sequentially in O(n).
+Even with 50000 states, only 16 comparisons are needed to match a
+state, since states are stored in a binary search tree that allows
+searches in O(log2 n).
+.Pp
+Furthermore, correct handling of ICMP error messages is critical to
+many protocols, particularly TCP.
+.Xr pf 4
+matches ICMP error messages to the correct connection, checks them against
+connection parameters, and passes them if appropriate.
+For example if an ICMP source quench message referring to a stateful TCP
+connection arrives, it will be matched to the state and get passed.
+.Pp
+Finally, state tracking is required for
+.Ar nat , binat No and Ar rdr
+rules, in order to track address and port translations and reverse the
+translation on returning packets.
+.Pp
+.Xr pf 4
+will also create state for other protocols which are effectively stateles by
+nature.
+UDP packets are matched to states using only host addresses and ports,
+and other protocols are matched to states using only the host addresses.
+.Pp
+If stateless filtering of individual packets is desired,
+the
+.Ar no state
+keyword can be used to specify that state will not be created
+if this is the last matching rule.
+A number of parameters can also be set to affect how
+.Xr pf 4
+handles state tracking.
 See
-.Sx FILTER EXAMPLES
-below.
+.Sx STATEFUL TRACKING OPTIONS
+below for further details.
 .Sh PARAMETERS
 The rule parameters specify the packets to which a rule applies.
 A packet always comes in on, or goes out through, one interface.
@@ -1218,12 +1282,6 @@ Only the packet that establishes the state is logged,
 unless the
 .Ar no state
 option is specified
-(see
-.Ar keep state ,
-.Ar modulate state
-and
-.Ar synproxy state
-below).
 The logged packets are sent to the
 .Xr pflog 4
 interface.
@@ -1494,6 +1552,32 @@ This is more restrictive than the previous example.
 If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST and ACK must be unset.
 .El
+.Pp
+Because
+.Ar flags S/SA
+is applied by default (unless
+.Ar no state
+is specified), only the initial SYN packet of a TCP handshake will create
+a state for a TCP connection.
+It is possible to be less restrictive, and allow state creation from
+intermediate
+.Pq non-SYN
+packets, by specifying
+.Ar flags any .
+This will cause
+.Xr pf 4
+to synchronize to existing connections, for instance
+if one flushes the state table.
+However, states created from such intermediate packets may be missing
+connection details such as the TCP window scaling factor.
+States which modify the packet flow, such as those affected by
+.Ar nat , binat No or Ar rdr
+rules,
+.Ar modulate No or Ar synproxy state
+options, or scrubbed with
+.Ar reassemble tcp
+will also not be recoverable from intermediate packets.
+Such connections will stall and time out.
 .It Xo Ar icmp-type Aq Ar type
 .Ar code Aq Ar code
 .Xc
@@ -1764,123 +1848,6 @@ beyond the lifetime of the states, increase the global options with
 See
 .Sx STATEFUL TRACKING OPTIONS
 for more ways to control the source tracking.
-.Sh STATEFUL INSPECTION
-.Xr pf 4
-is a stateful packet filter,
-which means it can track the state of a connection.
-A connection's state is tracked by default, unless
-.Ar no state
-is specified.
-Instead of passing all traffic to port 25, for instance, it will
-pass only the initial packet, and then begin to keep state.
-Subsequent traffic will flow because the filter is aware of the connection.
-.Pp
-Before any rules are evaluated, the filter checks whether the packet
-matches any state.
-If it does, the packet is passed without evaluation of any rules.
-.Pp
-States are removed after the connection is closed or has timed out.
-.Pp
-This has several advantages.
-Comparing a packet to a state involves checking its sequence numbers.
-If the sequence numbers are outside the narrow windows of expected
-values, the packet is dropped.
-This prevents spoofing attacks, such as when an attacker sends packets with
-a fake source address/port but does not know the connection's sequence
-numbers.
-.Pp
-Also, looking up states is usually faster than evaluating rules.
-If there are 50 rules, all of them are evaluated sequentially in O(n).
-Even with 50000 states, only 16 comparisons are needed to match a
-state, since states are stored in a binary search tree that allows
-searches in O(log2 n).
-.Pp
-For instance:
-.Bd -literal -offset indent
-block all
-pass out proto tcp from any to any flags S/SA keep state
-pass in  proto tcp from any to any port 25 flags S/SA keep state
-.Ed
-.Pp
-This ruleset blocks everything by default.
-Only outgoing connections and incoming connections to port 25 are allowed.
-The initial packet of each connection has the SYN
-flag set, will be passed and creates state.
-All further packets of these connections are passed if they match a state.
-.Pp
-By default, packets coming in and out of any interface can match a state,
-but it is also possible to change that behaviour by assigning states to a
-single interface.
-.Pp
-The default policy is specified by the
-.Ar state-policy
-global option, but this can be adjusted on a per-rule basis by adding one
-of the
-.Ar if-bound
-or
-.Ar floating
-keywords to the
-.Ar keep state
-option.
-.Pp
-Because
-.Ar keep state
-and
-.Ar flags S/SA
-are enabled implicitly, they do not need to be specified.
-The following pass rules are equivalent to those in the example above:
-.Bd -literal -offset indent
-pass out proto tcp from any to any
-pass in  proto tcp from any to any port 25
-.Ed
-.Pp
-By default, only the initial SYN packet of a TCP handshake will create a
-state for a TCP connection.
-One can also be less restrictive, and allow state creation from
-intermediate
-.Pq non-SYN
-packets, by specifying an empty set of flags:
-.Ar flags / .
-This will cause
-.Xr pf 4
-to synchronize to existing connections, for instance
-if one flushes the state table.
-However, states created from such intermediate packets may be missing
-connection details such as the TCP window scaling factor.
-States created with
-.Ar modulate state
-or scrubbed with
-.Ar reassmble tcp
-will also not be recoverable from intermediate packets.
-Such connections will stall and time out.
-.Pp
-.Xr pf 4
-will also create state for UDP packets, although it is stateless by nature.
-UDP packets are matched to states using only host addresses and ports.
-.Pp
-ICMP messages fall into two categories: ICMP error messages, which always
-refer to a TCP or UDP packet, are matched against the referred to connection.
-If one keeps state on a TCP connection, and an ICMP source quench message
-referring to this TCP connection arrives, it will be matched to the right
-state and get passed.
-.Pp
-For ICMP queries,
-.Ar keep state
-creates an ICMP state, and
-.Xr pf 4
-knows how to match ICMP replies to states.
-For example,
-.Bd -literal -offset indent
-pass out inet proto icmp all icmp-type echoreq keep state
-.Ed
-.Pp
-allows echo requests (such as those created by
-.Xr ping 8 )
-out, creates state, and matches incoming echo replies correctly to states.
-.Pp
-Note:
-.Ar nat , binat No and Ar rdr
-rules implicitly create state for connections.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.
@@ -1954,12 +1921,9 @@ chooses random initial sequence numbers for both handshakes.
 Once the handshakes are completed, the sequence number modulators
 (see previous section) are used to translate further packets of the
 connection.
-Hence,
 .Ar synproxy state
 includes
-.Ar modulate state
-and
-.Ar keep state .
+.Ar modulate state .
 .Pp
 Rules with
 .Ar synproxy
@@ -1973,12 +1937,15 @@ Example:
 pass in proto tcp from any to any port www synproxy state
 .Ed
 .Sh STATEFUL TRACKING OPTIONS
-All three of
+A number of options related to stateful tracking can be applied on a
+per-rule basis. 
 .Ar keep state ,
 .Ar modulate state
 and
 .Ar synproxy state
-support the following options:
+support these options, and
+.Ar keep state
+must be specified explicitly to apply options to a rule.
 .Pp
 .Bl -tag -width xxxx -compact
 .It Ar max Aq Ar number
