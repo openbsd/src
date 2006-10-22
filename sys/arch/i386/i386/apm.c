@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.71 2006/10/19 20:46:16 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.72 2006/10/22 23:21:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -94,23 +94,25 @@ struct apm_softc {
 #define	SCFLAG_OWRITE	0x0000002
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
-int apmprobe(struct device *, void *, void *);
-void apmattach(struct device *, struct device *, void *);
+int	apmprobe(struct device *, void *, void *);
+void	apmattach(struct device *, struct device *, void *);
 
 struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmprobe, apmattach
 };
 
-void filt_apmrdetach(struct knote *kn);
-int filt_apmread(struct knote *kn, long hint);
+void	filt_apmrdetach(struct knote *kn);
+int	filt_apmread(struct knote *kn, long hint);
 
-struct filterops apmread_filtops =
-	{ 1, NULL, filt_apmrdetach, filt_apmread};
+struct filterops apmread_filtops = {
+	1, NULL, filt_apmrdetach, filt_apmread
+};
 
 /* battery percentage at where we get verbose in our warnings.  This
-   value can be changed using sysctl(8), value machdep.apmwarn.
-   Setting it to zero kills all warnings */
-int cpu_apmwarn = 10;
+ * value can be changed using sysctl(8), value machdep.apmwarn.
+ * Setting it to zero kills all warnings
+ */
+int	cpu_apmwarn = 10;
 
 #define	APM_RESUME_HOLDOFF	3
 
@@ -382,7 +384,7 @@ apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 	struct apmregs nregs;
 	int ret = 0;
 
-	switch(regs->bx) {
+	switch (regs->bx) {
 	case APM_NOEVENT:
 		ret++;
 		break;
