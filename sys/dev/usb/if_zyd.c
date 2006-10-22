@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.30 2006/10/22 11:53:21 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.31 2006/10/22 12:52:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -150,6 +150,7 @@ int		zyd_read_eeprom(struct zyd_softc *);
 int		zyd_set_macaddr(struct zyd_softc *, const uint8_t *);
 int		zyd_set_bssid(struct zyd_softc *, const uint8_t *);
 int		zyd_switch_radio(struct zyd_softc *, int);
+void		zyd_set_led(struct zyd_softc *, int, int);
 int		zyd_set_rxfilter(struct zyd_softc *);
 void		zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
 int		zyd_set_beacon_interval(struct zyd_softc *, int);
@@ -640,7 +641,13 @@ zyd_task(void *arg)
 
 	switch (sc->sc_state) {
 	case IEEE80211_S_INIT:
-		/* XXX update link LED */
+		if (ostate == IEEE80211_S_RUN) {
+			/* turn link LED off */
+			zyd_set_led(sc, ZYD_LED1, 1);
+
+			/* stop data LED from blinking */
+			zyd_write32(sc, sc->fwbase + ZYD_FW_LINK_STATUS, 0);
+		}
 		break;
 
 	case IEEE80211_S_SCAN:
@@ -657,11 +664,17 @@ zyd_task(void *arg)
 	{
 		struct ieee80211_node *ni = ic->ic_bss;
 
-		/* XXX update link LED, start Tx LED */
 		zyd_set_chan(sc, ni->ni_chan);
 
-		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			/* turn link LED on */
+			zyd_set_led(sc, ZYD_LED1, 1);
+
+			/* make data LED blink upon Tx */
+			zyd_write32(sc, sc->fwbase + ZYD_FW_LINK_STATUS, 1);
+
 			zyd_set_bssid(sc, ni->ni_bssid);
+		}
 
 		if (ic->ic_opmode == IEEE80211_M_STA) {
 			/* fake a join to init the tx rate */
@@ -1145,6 +1158,18 @@ zyd_switch_radio(struct zyd_softc *sc, int on)
 	zyd_unlock_phy(sc);
 
 	return error;
+}
+
+void
+zyd_set_led(struct zyd_softc *sc, int which, int on)
+{
+	uint32_t tmp;
+
+	(void)zyd_read32(sc, ZYD_MAC_TX_PE_CONTROL, &tmp);
+	tmp &= ~which;
+	if (on)
+		tmp |= which;
+	(void)zyd_write32(sc, ZYD_MAC_TX_PE_CONTROL, tmp);
 }
 
 int
@@ -1857,11 +1882,11 @@ zyd_stop(struct ifnet *ifp, int disable)
 	struct zyd_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
-
 	sc->tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 
 	/* switch radio transmitter OFF */
 	(void)zyd_switch_radio(sc, 0);

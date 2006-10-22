@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.12 2006/10/22 11:53:21 damien Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.13 2006/10/22 12:52:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -135,6 +135,10 @@
 #define ZYD_FW_LINK_STATUS	0x0003
 #define ZYD_FW_SOFT_RESET	0x0004
 #define ZYD_FW_FLASH_CHK	0x0005
+
+/* possible flags for register ZYD_FW_LINK_STATUS */
+#define ZYD_LED1	(1 << 8)
+#define ZYD_LED2	(1 << 9)
 
 /*
  * RF IDs.
