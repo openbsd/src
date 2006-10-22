@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.8 2006/10/21 23:16:34 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.9 2006/10/22 00:18:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1087,17 +1087,18 @@ malo_rx_intr(struct malo_softc *sc)
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf != NULL) {
-			/*
 			struct mbuf mb;
 			struct malo_rx_radiotap_hdr *tap = &sc->sc_rxtap;
 
 			tap->wr_flags = 0;
+			/*
 			tap->wr_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wr_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			*/
 			tap->wr_rssi = desc->rssi;
-			tap->wr_max_rssi = 100;
+			tap->wr_max_rssi = 100; /* XXX find out correct max */
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
@@ -1105,7 +1106,6 @@ malo_rx_intr(struct malo_softc *sc)
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
-			*/
 		}
 #endif
 
