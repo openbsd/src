@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.48 2006/10/16 20:37:25 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.49 2006/10/22 21:19:22 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -834,7 +834,7 @@ re_attach(struct rl_softc *sc)
 
 	/* Allocate DMA'able memory for the TX ring */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_TX_LIST_SZ(sc),
-		    RE_ETHER_ALIGN, 0, &sc->rl_ldata.rl_tx_listseg, 1,
+		    RL_RING_ALIGN, 0, &sc->rl_ldata.rl_tx_listseg, 1,
 		    &sc->rl_ldata.rl_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate tx listseg, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
