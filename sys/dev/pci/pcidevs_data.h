@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1168 2006/10/21 14:51:31 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1169 2006/10/22 21:39:09 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2381,6 +2381,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_LANAI,
 	    "Myrinet LANai",
+	},
+	{
+	    PCI_VENDOR_ASPEED, PCI_PRODUCT_ASPEED_AST2000,
+	    "AST2000",
 	},
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210,
@@ -8915,6 +8919,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP55 ISA",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_ISA3,
+	    "MCP55 ISA",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB,
 	    "MCP55 SMBus",
 	},
@@ -13481,6 +13489,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_JMICRON,
 	    "JMicron",
+	},
+	{
+	    PCI_VENDOR_ASPEED,
+	    "ASPEED Technology",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,

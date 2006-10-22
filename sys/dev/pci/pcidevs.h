@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1168 2006/10/21 14:51:31 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1169 2006/10/22 21:39:09 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -292,6 +292,7 @@
 #define	PCI_VENDOR_OPTION	0x1931		/* Option */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technology */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
+#define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
@@ -977,6 +978,9 @@
 /* Applied Micro Circuits products */
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */
 #define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai */
+
+/* ASPEED Technology products */
+#define	PCI_PRODUCT_ASPEED_AST2000	0x2000		/* AST2000 */
 
 /* Atheros products */
 #define	PCI_PRODUCT_ATHEROS_AR5210	0x0007		/* AR5210 */
@@ -2876,6 +2880,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFXGO5700	0x0348		/* GeForce FX Go 5700 */
 #define	PCI_PRODUCT_NVIDIA_MCP55_ISA	0x0360		/* MCP55 ISA */
 #define	PCI_PRODUCT_NVIDIA_MCP55_ISA2	0x0363		/* MCP55 ISA */
+#define	PCI_PRODUCT_NVIDIA_MCP55_ISA3	0x0364		/* MCP55 ISA */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* MCP55 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP55_USB_1	0x036c		/* MCP55 USB */
 #define	PCI_PRODUCT_NVIDIA_MCP55_USB_2	0x036d		/* MCP55 USB */
