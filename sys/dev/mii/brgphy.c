@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.65 2006/10/20 03:52:22 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.66 2006/10/22 22:33:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -484,6 +484,10 @@ brgphy_reset(struct mii_softc *sc)
 			brgphy_ber_bug(sc);
 		if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG)
 			brgphy_jitter_bug(sc);
+
+		/* Set Jumbo frame settings in the PHY. */
+		if (bge_sc->bge_flags & BGE_JUMBO_CAP)
+			brgphy_jumbo_settings(sc);
 
 		/* Enable Ethernet@Wirespeed */
 		if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED))
