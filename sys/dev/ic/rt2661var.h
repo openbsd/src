@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.8 2006/08/03 09:28:13 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.9 2006/10/22 12:14:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,7 +51,6 @@ struct rt2661_tx_data {
 	bus_dmamap_t			map;
 	struct mbuf			*m;
 	struct ieee80211_node		*ni;
-	struct ieee80211_rssdesc	id;
 };
 
 struct rt2661_tx_ring {
@@ -85,7 +84,7 @@ struct rt2661_rx_ring {
 
 struct rt2661_node {
 	struct ieee80211_node		ni;
-	struct ieee80211_rssadapt	rssadapt;
+	struct ieee80211_amrr_node	amn;
 };
 
 struct rt2661_softc {
@@ -94,6 +93,7 @@ struct rt2661_softc {
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
+	struct ieee80211_amrr		amrr;
 
 	int				(*sc_enable)(struct rt2661_softc *);
 	void				(*sc_disable)(struct rt2661_softc *);
@@ -103,8 +103,8 @@ struct rt2661_softc {
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 
-	struct timeout			scan_ch;
-	struct timeout			rssadapt_ch;
+	struct timeout			scan_to;
+	struct timeout			amrr_to;
 
 	int				sc_id;
 	int				sc_flags;

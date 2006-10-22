@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.7 2006/10/22 12:14:44 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -44,7 +44,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/rt2560var.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.28 2006/10/18 21:11:02 mglocker Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.29 2006/10/22 12:14:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -56,7 +56,7 @@
 #include <netinet/ip.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_rssadapt.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/rt2661reg.h>
@@ -88,12 +88,12 @@ void		rt2661_reset_rx_ring(struct rt2661_softc *,
 void		rt2661_free_rx_ring(struct rt2661_softc *,
 		    struct rt2661_rx_ring *);
 struct		ieee80211_node *rt2661_node_alloc(struct ieee80211com *);
-void		rt2661_node_copy(struct ieee80211com *ic,
-		    struct ieee80211_node *, const struct ieee80211_node *);
 int		rt2661_media_change(struct ifnet *);
 void		rt2661_next_scan(void *);
 void		rt2661_iter_func(void *, struct ieee80211_node *);
 void		rt2661_updatestats(void *);
+void		rt2661_newassoc(struct ieee80211com *, struct ieee80211_node *,
+		    int);
 int		rt2661_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 uint16_t	rt2661_eeprom_read(struct rt2661_softc *, uint8_t);
@@ -204,8 +204,10 @@ rt2661_attach(void *xsc, int id)
 
 	sc->sc_id = id;
 
-	timeout_set(&sc->scan_ch, rt2661_next_scan, sc);
-	timeout_set(&sc->rssadapt_ch, rt2661_updatestats, sc);
+	sc->amrr.amrr_min_success_threshold =  1;
+	sc->amrr.amrr_max_success_threshold = 15;
+	timeout_set(&sc->amrr_to, rt2661_updatestats, sc);
+	timeout_set(&sc->scan_to, rt2661_next_scan, sc);
 
 	/* wait for NIC to initialize */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -314,7 +316,7 @@ rt2661_attach(void *xsc, int id)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = rt2661_node_alloc;
-	ic->ic_node_copy = rt2661_node_copy;
+	ic->ic_newassoc = rt2661_newassoc;
 	ic->ic_updateslot = rt2661_updateslot;
 
 	/* override state transition machine */
@@ -365,8 +367,8 @@ rt2661_detach(void *xsc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int ac;
 
-	timeout_del(&sc->scan_ch);
-	timeout_del(&sc->rssadapt_ch);
+	timeout_del(&sc->scan_to);
+	timeout_del(&sc->amrr_to);
 
 	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
@@ -695,19 +697,9 @@ rt2661_node_alloc(struct ieee80211com *ic)
 	struct rt2661_node *rn;
 
 	rn = malloc(sizeof (struct rt2661_node), M_DEVBUF, M_NOWAIT);
-	if (rn == NULL)
-		return NULL;
-
-	memset(rn, 0, sizeof (struct rt2661_node));
-
-	return &rn->ni;
-}
-
-void
-rt2661_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
-    const struct ieee80211_node *src)
-{
-	*(struct rt2661_node *)dst = *(const struct rt2661_node *)src;
+	if (rn != NULL)
+		bzero(rn, sizeof (struct rt2661_node));
+	return (struct ieee80211_node *)rn;
 }
 
 int
@@ -735,9 +727,12 @@ rt2661_next_scan(void *arg)
 	struct rt2661_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	int s;
 
+	s = splnet();
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ifp);
+	splx(s);
 }
 
 /*
@@ -746,13 +741,14 @@ rt2661_next_scan(void *arg)
 void
 rt2661_iter_func(void *arg, struct ieee80211_node *ni)
 {
+	struct rt2661_softc *sc = arg;
 	struct rt2661_node *rn = (struct rt2661_node *)ni;
 
-	ieee80211_rssadapt_updatestats(&rn->rssadapt);
+	ieee80211_amrr_choose(&sc->amrr, ni, &rn->amn);
 }
 
 /*
- * This function is called periodically (every 100ms) in RUN state to update
+ * This function is called periodically (every 500ms) in RUN state to update
  * various settings like rate control statistics or Rx sensitivity.
  */
 void
@@ -760,19 +756,35 @@ rt2661_updatestats(void *arg)
 {
 	struct rt2661_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
+	s = splnet();
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		rt2661_iter_func(sc, ic->ic_bss);
 	else
 		ieee80211_iterate_nodes(ic, rt2661_iter_func, arg);
 
 	/* update rx sensitivity every 1 sec */
-	if (++sc->ncalls == 10) {
+	if (++sc->ncalls & 1)
 		rt2661_rx_tune(sc);
-		sc->ncalls = 0;
-	}
+	splx(s);
 
-	timeout_add(&sc->rssadapt_ch, hz / 10);
+	timeout_add(&sc->amrr_to, hz / 2);
+}
+
+void
+rt2661_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+{
+	struct rt2661_softc *sc = ic->ic_softc;
+	int i;
+
+	ieee80211_amrr_node_init(&sc->amrr, &((struct rt2661_node *)ni)->amn);
+
+	/* set rate to some reasonable initial value */
+	for (i = ni->ni_rates.rs_nrates - 1;
+	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
+	     i--);
+	ni->ni_txrate = i;
 }
 
 int
@@ -785,11 +797,11 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error = 0;
 
 	ostate = ic->ic_state;
-	timeout_del(&sc->scan_ch);
+	timeout_del(&sc->scan_to);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
-		timeout_del(&sc->rssadapt_ch);
+		timeout_del(&sc->amrr_to);
 
 		if (ostate == IEEE80211_S_RUN) {
 			/* abort TSF synchronization */
@@ -800,7 +812,7 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	case IEEE80211_S_SCAN:
 		rt2661_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_ch, hz / 5);
+		timeout_add(&sc->scan_to, hz / 5);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -825,10 +837,15 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    ic->ic_opmode == IEEE80211_M_IBSS)
 			rt2661_prepare_beacon(sc);
 
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			rt2661_newassoc(ic, ni, 1);
+		}
+
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			sc->ncalls = 0;
 			sc->avg_rssi = -95;	/* reset EMA */
-			timeout_add(&sc->rssadapt_ch, hz / 10);
+			timeout_add(&sc->amrr_to, hz / 2);
 			rt2661_enable_tsf_sync(sc);
 		}
 		break;
@@ -929,20 +946,17 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 
 			DPRINTFN(10, ("data frame sent successfully after "
 			    "%d retries\n", retrycnt));
-			if (retrycnt == 0 && data->id.id_node != NULL) {
-				ieee80211_rssadapt_raise_rate(ic,
-				    &rn->rssadapt, &data->id);
-			}
+			rn->amn.amn_txcnt++;
+			if (retrycnt > 0)
+				rn->amn.amn_retrycnt++;
 			ifp->if_opackets++;
 			break;
 
 		case RT2661_TX_RETRY_FAIL:
 			DPRINTFN(9, ("sending data frame failed (too much "
 			    "retries)\n"));
-			if (data->id.id_node != NULL) {
-				ieee80211_rssadapt_lower_rate(ic, data->ni,
-				    &rn->rssadapt, &data->id);
-			}
+			rn->amn.amn_txcnt++;
+			rn->amn.amn_retrycnt++;
 			ifp->if_oerrors++;
 			break;
 
@@ -1014,7 +1028,6 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct rt2661_rx_desc *desc;
 	struct rt2661_rx_data *data;
-	struct rt2661_node *rn;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
@@ -1134,12 +1147,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		/* send the frame to the 802.11 layer */
-		ieee80211_input(ifp, m, ni, desc->rssi, 0);
-
-		/* give rssi to the rate adatation algorithm */
-		rn = (struct rt2661_node *)ni;
-		rssi = rt2661_get_rssi(sc, desc->rssi);
-		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, rssi);
+		ieee80211_input(ifp, m, ni, rssi, 0);
 
 		/*-
 		 * Keep track of the average RSSI using an Exponential Moving
@@ -1599,8 +1607,6 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	struct rt2661_tx_ring *txq = &sc->txq[ac];
 	struct rt2661_tx_desc *desc;
 	struct rt2661_tx_data *data;
-	struct rt2661_node *rn;
-	struct ieee80211_rateset *rs;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
 	uint16_t dur;
@@ -1609,24 +1615,12 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	/* XXX this should be reworked! */
 	if (ic->ic_fixed_rate != -1) {
-		if (ic->ic_curmode != IEEE80211_MODE_AUTO)
-			rs = &ic->ic_sup_rates[ic->ic_curmode];
-		else
-			rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
-
-		rate = rs->rs_rates[ic->ic_fixed_rate];
-	} else {
-		rs = &ni->ni_rates;
-		rn = (struct rt2661_node *)ni;
-		ni->ni_txrate = ieee80211_rssadapt_choose(&rn->rssadapt, rs,
-		    wh, m0->m_pkthdr.len, -1, NULL, 0);
-		rate = rs->rs_rates[ni->ni_txrate];
-	}
+		rate = ic->ic_sup_rates[ic->ic_curmode].
+		    rs_rates[ic->ic_fixed_rate];
+	} else
+		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 	rate &= IEEE80211_RATE_VAL;
-	if (rate == 0)
-		rate = 2;	/* fallback to 1Mbps; should not happen */
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
@@ -1695,9 +1689,6 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 		data->m = m;
 		data->ni = ni;
-
-		/* RTS frames are not taken into account for rssadapt */
-		data->id.id_node = NULL;
 
 		rt2661_setup_tx_desc(sc, desc, RT2661_TX_NEED_ACK |
 		    RT2661_TX_MORE_FRAG, 0, m->m_pkthdr.len, rtsrate,
@@ -1784,15 +1775,6 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 	data->m = m0;
 	data->ni = ni;
-
-	/* remember link conditions for rate control algorithm */
-	if (ic->ic_fixed_rate == -1) {
-		data->id.id_len = m0->m_pkthdr.len;
-		data->id.id_rateidx = ni->ni_txrate;
-		data->id.id_node = ni;
-		data->id.id_rssi = ni->ni_rssi;
-	} else
-		data->id.id_node = NULL;
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RT2661_TX_NEED_ACK;
@@ -2889,7 +2871,7 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 	 * Store offset of ERP Information Element so that we can update it
 	 * dynamically when the slot time changes.
 	 * XXX: this is ugly since it depends on how net80211 builds beacon
-	 * frames but ieee80211_beacon_alloc() don't store offsets for us.
+	 * frames but ieee80211_beacon_alloc() doesn't store offsets for us.
 	 */
 	if (ic->ic_curmode == IEEE80211_MODE_11G) {
 		sc->erp_csr =

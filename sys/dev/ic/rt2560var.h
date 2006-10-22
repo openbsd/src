@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560var.h,v 1.4 2006/06/18 18:44:04 damien Exp $  */
+/*	$OpenBSD: rt2560var.h,v 1.5 2006/10/22 12:14:44 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -55,7 +55,6 @@ struct rt2560_tx_data {
 	bus_dmamap_t			map;
 	struct mbuf			*m;
 	struct ieee80211_node		*ni;
-	struct ieee80211_rssdesc	id;
 };
 
 struct rt2560_tx_ring {
@@ -92,7 +91,7 @@ struct rt2560_rx_ring {
 
 struct rt2560_node {
 	struct ieee80211_node		ni;
-	struct ieee80211_rssadapt	rssadapt;
+	struct ieee80211_amrr_node	amn;
 };
 
 struct rt2560_softc {
@@ -101,6 +100,7 @@ struct rt2560_softc {
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	struct ieee80211_amrr	amrr;
 
 	int			(*sc_enable)(struct rt2560_softc *);
 	void			(*sc_disable)(struct rt2560_softc *);
@@ -110,8 +110,8 @@ struct rt2560_softc {
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
 
-	struct timeout		scan_ch;
-	struct timeout		rssadapt_ch;
+	struct timeout		scan_to;
+	struct timeout		amrr_to;
 
 	int			sc_flags;
 #define RT2560_ENABLED		(1 << 0)
