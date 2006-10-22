@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.2 2006/10/18 20:18:54 jmc Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.3 2006/10/22 15:09:38 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -108,7 +108,7 @@ If set to
 do not redistribute routes to the interface from which they were learned.
 If set to
 .Ic poisoned ,
-redistribute routes to the interface from which they were learned, but
+redistribute routes to the interface from which they were learned, by
 forcing the metric to infinity.
 Both these behaviours can resolve routing loops when a router goes down.
 The default is
