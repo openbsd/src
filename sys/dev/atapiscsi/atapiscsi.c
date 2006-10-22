@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.73 2006/01/13 19:23:55 miod Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.74 2006/10/22 22:39:57 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -254,8 +254,8 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
 
-	strncpy(drvp->drive_name, as->sc_dev.dv_xname,
-	    sizeof(drvp->drive_name) - 1);
+	strlcpy(drvp->drive_name, as->sc_dev.dv_xname,
+	    sizeof(drvp->drive_name));
 	drvp->cf_flags = as->sc_dev.dv_cfdata->cf_flags;
 
 	wdc_probe_caps(drvp, id);
@@ -299,9 +299,9 @@ atapiscsi_attach(parent, self, aux)
 		struct scsi_link *link = scsi->sc_link[0][0];
 
 		if (link) {
-			strncpy(drvp->drive_name,
+			strlcpy(drvp->drive_name,
 			    ((struct device *)(link->device_softc))->dv_xname,
-			    sizeof(drvp->drive_name) - 1);
+			    sizeof(drvp->drive_name));
 
 			wdc_print_caps(drvp);
 		}
