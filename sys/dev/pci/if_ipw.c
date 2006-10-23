@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.63 2006/09/18 16:20:20 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.64 2006/10/23 18:19:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -78,7 +78,6 @@ static const struct ieee80211_rateset ipw_rateset_11b =
 
 int		ipw_match(struct device *, void *, void *);
 void		ipw_attach(struct device *, struct device *, void *);
-int		ipw_detach(struct device *, int);
 void		ipw_power(int, void *);
 int		ipw_dma_alloc(struct ipw_softc *);
 void		ipw_release(struct ipw_softc *);
@@ -143,7 +142,7 @@ int ipw_debug = 0;
 #endif
 
 struct cfattach ipw_ca = {
-	sizeof (struct ipw_softc), ipw_match, ipw_attach, ipw_detach
+	sizeof (struct ipw_softc), ipw_match, ipw_attach
 };
 
 int
@@ -296,29 +295,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IPW_TX_RADIOTAP_PRESENT);
 #endif
-}
-
-int
-ipw_detach(struct device *self, int flags)
-{
-	struct ipw_softc *sc = (struct ipw_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-
-	ipw_stop(ifp, 1);
-
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
-
-	ipw_release(sc);
-
-	if (sc->sc_ih != NULL) {
-		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
-
-	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
-
-	return 0;
 }
 
 void

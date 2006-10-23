@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.33 2006/10/23 18:16:56 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.34 2006/10/23 18:19:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -88,7 +88,6 @@ static const uint8_t wpi_ridx_to_plcp[] = {
 
 int		wpi_match(struct device *, void *, void *);
 void		wpi_attach(struct device *, struct device *, void *);
-int		wpi_detach(struct device *, int);
 void		wpi_power(int, void *);
 int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
 		    void **, bus_size_t, bus_size_t, int);
@@ -163,7 +162,7 @@ int wpi_debug = 1;
 #endif
 
 struct cfattach wpi_ca = {
-	sizeof (struct wpi_softc), wpi_match, wpi_attach, wpi_detach
+	sizeof (struct wpi_softc), wpi_match, wpi_attach
 };
 
 int
@@ -372,36 +371,6 @@ fail2:	while (--ac >= 0)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);
 	wpi_free_rpool(sc);
 fail1:	wpi_free_shared(sc);
-}
-
-int
-wpi_detach(struct device *self, int flags)
-{
-	struct wpi_softc *sc = (struct wpi_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int ac;
-
-	wpi_stop(ifp, 1);
-
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
-
-	for (ac = 0; ac < 4; ac++)
-		wpi_free_tx_ring(sc, &sc->txq[ac]);
-	wpi_free_tx_ring(sc, &sc->cmdq);
-	wpi_free_tx_ring(sc, &sc->svcq);
-	wpi_free_rx_ring(sc, &sc->rxq);
-	wpi_free_rpool(sc);
-	wpi_free_shared(sc);
-
-	if (sc->sc_ih != NULL) {
-		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
-
-	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
-
-	return 0;
 }
 
 void

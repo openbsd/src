@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.76 2006/10/22 08:25:43 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.77 2006/10/23 18:19:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -94,7 +94,6 @@ static const struct ieee80211_rateset iwi_rateset_11g =
 
 int		iwi_match(struct device *, void *, void *);
 void		iwi_attach(struct device *, struct device *, void *);
-int		iwi_detach(struct device *, int);
 void		iwi_power(int, void *);
 int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
@@ -160,7 +159,7 @@ int iwi_debug = 0;
 #endif
 
 struct cfattach iwi_ca = {
-	sizeof (struct iwi_softc), iwi_match, iwi_attach, iwi_detach
+	sizeof (struct iwi_softc), iwi_match, iwi_attach
 };
 
 int
@@ -371,33 +370,6 @@ fail4:	iwi_free_tx_ring(sc, &sc->txq[2]);
 fail3:	iwi_free_tx_ring(sc, &sc->txq[1]);
 fail2:	iwi_free_tx_ring(sc, &sc->txq[0]);
 fail1:	iwi_free_cmd_ring(sc, &sc->cmdq);
-}
-
-int
-iwi_detach(struct device *self, int flags)
-{
-	struct iwi_softc *sc = (struct iwi_softc *)self;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int i;
-
-	iwi_stop(ifp, 1);
-
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
-
-	iwi_free_cmd_ring(sc, &sc->cmdq);
-	for (i = 0; i < 4; i++)
-		iwi_free_tx_ring(sc, &sc->txq[i]);
-	iwi_free_rx_ring(sc, &sc->rxq);
-
-	if (sc->sc_ih != NULL) {
-		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
-
-	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
-
-	return 0;
 }
 
 void
