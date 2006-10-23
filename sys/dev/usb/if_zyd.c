@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.31 2006/10/22 12:52:03 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.32 2006/10/23 17:44:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -643,7 +643,7 @@ zyd_task(void *arg)
 	case IEEE80211_S_INIT:
 		if (ostate == IEEE80211_S_RUN) {
 			/* turn link LED off */
-			zyd_set_led(sc, ZYD_LED1, 1);
+			zyd_set_led(sc, ZYD_LED1, 0);
 
 			/* stop data LED from blinking */
 			zyd_write32(sc, sc->fwbase + ZYD_FW_LINK_STATUS, 0);
@@ -1723,7 +1723,7 @@ zyd_watchdog(struct ifnet *ifp)
 }
 
 int
-zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+zyd_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct zyd_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1733,7 +1733,7 @@ zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	switch (command) {
+	switch (cmd) {
 	case SIOCSIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
@@ -1755,15 +1755,29 @@ zyd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
-		error = (command == SIOCADDMULTI) ?
+		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &ic->ic_ac) :
 		    ether_delmulti(ifr, &ic->ic_ac);
 		if (error == ENETRESET)
 			error = 0;
 		break;
 
+	case SIOCS80211CHANNEL:
+		/*
+		 * This allows for fast channel switching in monitor mode
+		 * (used by kismet). In IBSS mode, we must explicitly reset
+		 * the interface to generate a new beacon frame.
+		 */
+		error = ieee80211_ioctl(ifp, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			zyd_set_chan(sc, ic->ic_ibss_chan);
+			error = 0;
+		}
+		break;
+
 	default:
-		error = ieee80211_ioctl(ifp, command, data);
+		error = ieee80211_ioctl(ifp, cmd, data);
 	}
 
 	if (error == ENETRESET) {
