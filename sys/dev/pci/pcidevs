@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1169 2006/10/22 21:39:09 brad Exp $
+$OpenBSD: pcidevs,v 1.1170 2006/10/23 02:22:32 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3398,8 +3398,10 @@ product SUN CASSINI		0xabba	Cassini
 /* Sundance products */
 product SUNDANCE ST201_1	0x0200	ST201
 product SUNDANCE ST201_2	0x0201	ST201
+product SUNDANCE TC9021		0x1021	TC9021
 product SUNDANCE ST1023		0x1023	ST1023
 product SUNDANCE ST2021		0x2021	ST2021
+product SUNDANCE TC9021_ALT	0x9021	TC9021 (alt ID)
 
 /* Sunix */
 product SUNIX 40XX		0x7168	40XX
