@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.3 2006/10/23 19:44:54 drahn Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -137,6 +137,7 @@ intc_intr_establish(int evtcode, int trigger, int level,
 	ih->ih_arg	= ih_arg;
 	ih->ih_level	= level << 4;	/* convert to SR.IMASK format. */
 	ih->ih_evtcode	= evtcode;
+	ih->ih_name = (char *)name; /* XXX strdup? */
 
 	/* Map interrupt handler */
 	EVTCODE_TO_IH_INDEX(evtcode) = ih->ih_idx;
