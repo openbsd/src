@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.32 2006/08/04 15:00:18 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.33 2006/10/23 02:29:20 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -161,8 +161,8 @@ const struct pci_matchid stge_devices[] = {
 	 * The Sundance sample boards use the Sundance vendor ID,
 	 * but the Tamarack product ID.
 	 */
-	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_TAMARACK_TC9021 },
-	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_TAMARACK_TC9021_ALT },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_TC9021 },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_TC9021_ALT },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550T },
 	{ PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021 }
 };
