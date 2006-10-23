@@ -90,17 +90,17 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_ca.ca_node = 0;
 	config_found(self, &mba, mainbus_print);
 
+	/* SH bus */
+	memset(&mba, 0, sizeof(mba));
+	mba.mba_mba.ma_name = "shb";
+	config_found(self, &mba, mainbus_print);
+
 #if NPCI > 0
 	/* SH PCIC */
 	memset(&mba, 0, sizeof(mba));
 	mba.mba_mba.ma_name = "shpcic";
 	config_found(self, &mba, mainbus_print);
 #endif
-
-	/* SH bus */
-	memset(&mba, 0, sizeof(mba));
-	mba.mba_mba.ma_name = "shb";
-	config_found(self, &mba, mainbus_print);
 
 #if NOBIO > 0
 	/* on-board I/O */
