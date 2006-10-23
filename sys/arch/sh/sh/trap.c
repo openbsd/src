@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 2006/10/17 03:33:39 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 2006/10/23 19:56:53 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -150,10 +150,9 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	uvmexp.traps++;
 
-	if (p == NULL)
- 		goto do_panic;
-
 	if (usermode) {
+		if (p == NULL)
+			goto do_panic;
 		KDASSERT(p->p_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
 	}
@@ -164,9 +163,9 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		tra = _reg_read_4(SH_(TRA));
 		if (tra == (_SH_TRA_BREAK << 2)) {
 			kdb_trap(expevt, tra, tf);
-			goto out;
 		} else
 			goto do_panic;
+		break;
 	case EXPEVT_TRAPA | EXP_USER:
 		/* Check for debugger break */
 		tra = _reg_read_4(SH_(TRA));
@@ -190,8 +189,8 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
-		KDASSERT(p->p_md.md_pcb->pcb_onfault != NULL);
-		if (p->p_md.md_pcb->pcb_onfault == 0)
+		KDASSERT(p && p->p_md.md_pcb->pcb_onfault != NULL);
+		if (p == NULL || p->p_md.md_pcb->pcb_onfault == 0)
 			goto do_panic;
 		tf->tf_spc = (int)p->p_md.md_pcb->pcb_onfault;
 		break;
