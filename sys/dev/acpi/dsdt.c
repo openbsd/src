@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.56 2006/10/19 07:02:20 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.57 2006/10/23 20:23:26 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2122,9 +2122,8 @@ aml_parsemath(struct aml_scope *scope, int opcode, struct aml_value *res)
 	struct aml_value *tmparg;
 	int64_t i1, i2, i3;
 
+	tmparg = aml_alloctmp(scope, 1);
 	AML_CHECKSTACK();
-	tmparg = aml_alloctmp(scope, 4);
-
 	switch (opcode) {
 	case AMLOP_LNOT:
 		i2 = 0;
@@ -2143,33 +2142,32 @@ aml_parsemath(struct aml_scope *scope, int opcode, struct aml_value *res)
 	case AMLOP_FINDSETRIGHTBIT:
 		i2 = 0;
 		i1 = aml_parseint(scope, AML_ANYINT);
-		aml_parsetarget(scope, &tmparg[DST], NULL);
+		aml_parsetarget(scope, tmparg, NULL);
 		break;
 	case AMLOP_INCREMENT:
 	case AMLOP_DECREMENT:
-		aml_parsetarget(scope, &tmparg[DST], NULL);
-		aml_evalterm(scope, &tmparg[DST], &tmparg[LHS]);
-		i1 = aml_val2int(&tmparg[LHS]);
+		aml_parsetarget(scope, tmparg, NULL);
+		i1 = aml_val2int(aml_derefterm(scope, tmparg, 0));
 		i2 = 1;
 		break;
 	case AMLOP_DIVIDE:
 		i1 = aml_parseint(scope, AML_ANYINT);
 		i2 = aml_parseint(scope, AML_ANYINT);
-		aml_parsetarget(scope, &tmparg[DST2], NULL);  // remainder
-		aml_parsetarget(scope, &tmparg[DST], NULL);   // quotient
 
-		aml_setvalue(scope, &tmparg[DST2], NULL, (i1 % i2));
+		aml_parsetarget(scope, tmparg, NULL);  // remainder
+		aml_setvalue(scope, tmparg, NULL, (i1 % i2));
+
+		aml_parsetarget(scope, tmparg, NULL);   // quotient
 		break;
 	default:
 		i1 = aml_parseint(scope, AML_ANYINT);
 		i2 = aml_parseint(scope, AML_ANYINT);
-		aml_parsetarget(scope, &tmparg[DST], NULL);
+		aml_parsetarget(scope, tmparg, NULL);
 		break;
 	}
 	i3 = aml_evalexpr(i1, i2, opcode);
 	aml_setvalue(scope, res, NULL, i3);
-	aml_setvalue(scope, &tmparg[DST], NULL, i3);
-
+	aml_setvalue(scope, tmparg, NULL, i3);
 	return (res);
 }
 
@@ -2608,24 +2606,25 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 
 	AML_CHECKSTACK();
 
-	tmparg = aml_alloctmp(scope, 4);
 	switch (opcode) {
 	case AMLOP_INDEX:
-	  	_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, NULL);
-		aml_parsetarget(scope, &tmparg[LHS], NULL);
+		tmparg = aml_alloctmp(scope, 1);
+		_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, NULL);
+		aml_parsetarget(scope, tmparg, NULL);
 	
 		res->v_objref.index = aml_parseint(scope, AML_ANYINT);
-		res->v_objref.ref = aml_dereftarget(scope, &tmparg[LHS]);
+		res->v_objref.ref = aml_dereftarget(scope, tmparg);
 
-		aml_parsetarget(scope, &tmparg[DST], NULL);
-		aml_setvalue(scope, &tmparg[DST], res, 0);
+		aml_parsetarget(scope, tmparg, NULL);
+		aml_setvalue(scope, tmparg, res, 0);
 		break;
 	case AMLOP_DEREFOF:
 		aml_parseop(scope, res);
 		break;
 	case AMLOP_RETURN:
-		aml_parseterm(scope, &tmparg[DST]);
-		aml_setvalue(scope, res, &tmparg[DST], 0);
+		tmparg = aml_alloctmp(scope, 1);
+		aml_parseterm(scope, tmparg);
+		aml_setvalue(scope, res, tmparg, 0);
 		while (scope) {
 			scope->pos = scope->end;
 			scope = scope->parent;
@@ -2655,13 +2654,15 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		res->v_objref.ref->stack = opcode+AMLOP_LOCAL0;
 		break;
 	case AMLOP_LOAD:
-		aml_parseop(scope, &tmparg[LHS]);
-		aml_parseop(scope, &tmparg[RHS]);
+		tmparg = aml_alloctmp(scope, 2);
+		aml_parseop(scope, &tmparg[0]);
+		aml_parseop(scope, &tmparg[1]);
 		break;
 	case AMLOP_STORE:
+		tmparg = aml_alloctmp(scope, 1);
 		aml_parseterm(scope, res);
-		aml_parsetarget(scope, &tmparg[DST], NULL);
-		aml_setvalue(scope, &tmparg[DST], res, 0);
+		aml_parsetarget(scope, tmparg, NULL);
+		aml_setvalue(scope, tmparg, res, 0);
 		break;
 	case AMLOP_REFOF:
 		_aml_setvalue(res, AML_OBJTYPE_OBJREF, -1, NULL);
@@ -2669,11 +2670,12 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		break;
 	case AMLOP_CONDREFOF:
 		/* Returns true if object exists */
-		aml_parseterm(scope, &tmparg[LHS]);
-		aml_parsetarget(scope, &tmparg[DST], NULL);
-		if (tmparg[LHS].type != AML_OBJTYPE_NAMEREF) {
+		tmparg = aml_alloctmp(scope, 2);
+		aml_parseterm(scope, &tmparg[0]);
+		aml_parsetarget(scope, &tmparg[1], NULL);
+		if (tmparg[0].type != AML_OBJTYPE_NAMEREF) {
 			/* Object exists */
-			aml_setvalue(scope, &tmparg[DST], &tmparg[LHS], 0);
+			aml_setvalue(scope, &tmparg[1], &tmparg[0], 0);
 			aml_setvalue(scope, res, NULL, 1);
 		}
 		else {
@@ -2693,9 +2695,9 @@ aml_parsestring(struct aml_scope *scope, int opcode, struct aml_value *res)
 	int i1, i2;
 
 	AML_CHECKSTACK();
-	tmpval = aml_alloctmp(scope, 4);
 	switch (opcode) {
 	case AMLOP_CONCAT:
+		tmpval = aml_alloctmp(scope, 4);
 		aml_parseterm(scope, &tmpval[LHS]);
 		aml_parseterm(scope, &tmpval[RHS]);
 		aml_parsetarget(scope, &tmpval[DST], NULL);
@@ -2706,11 +2708,19 @@ aml_parsestring(struct aml_scope *scope, int opcode, struct aml_value *res)
 			    tmpval[RHS].v_buffer, tmpval[RHS].length);
 			aml_setvalue(scope, &tmpval[DST], &tmpval[LHS], 0);
 		}
+		if (tmpval[LHS].type == AML_OBJTYPE_STRING &&
+		    tmpval[RHS].type == AML_OBJTYPE_STRING) {
+			aml_resize(&tmpval[LHS], tmpval[LHS].length+tmpval[RHS].length);
+			memcpy(&tmpval[LHS].v_string+tmpval[LHS].length,
+			       tmpval[RHS].v_buffer, tmpval[RHS].length);
+			aml_setvalue(scope, &tmpval[DST], &tmpval[LHS], 0);
+		}
 		else {
 			aml_die("concat");
 		}
 		break;
 	case AMLOP_MID:
+		tmpval = aml_alloctmp(scope, 2);
 		aml_parseterm(scope, &tmpval[0]);
 		i1 = aml_parseint(scope, AML_ANYINT); // start
 		i2 = aml_parseint(scope, AML_ANYINT); // length
