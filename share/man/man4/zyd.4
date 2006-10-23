@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.8 2006/10/21 18:39:25 damien Exp $
+.\" $OpenBSD: zyd.4,v 1.9 2006/10/23 18:07:11 damien Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -233,6 +233,28 @@ Join an existing BSS network,
 .Bd -literal -offset indent
 # ifconfig zyd0 192.168.0.2 netmask 0xffffff00 nwid my_net
 .Ed
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "zyd%d: could not read firmware file %s (error=%d)"
+For some reason, the driver was unable to read the firmware file from the
+filesystem.
+The file might be missing or corrupted.
+.It "zyd%d: could not load firmware (error=%d)"
+An error occurred while attempting to upload the firmware to the onboard
+microcontroller unit.
+.It "zyd%d: could not send command (error=%s)"
+An attempt to send a command to the firmware failed.
+.It "zyd%d: sorry, radio %s is not supported yet"
+Support for the specified radio chip is not yet implemented in the driver.
+The device will not attach.
+.It "zyd%d: device version mismatch: 0x%x (only >= 43.30 supported)"
+Early revisions of the ZD1211 chipset are not supported by this driver.
+The device will not attach.
+.It "zyd%d: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
