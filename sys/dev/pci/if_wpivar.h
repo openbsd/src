@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.9 2006/08/28 19:47:43 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.10 2006/10/23 18:16:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -54,6 +54,7 @@ struct wpi_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_HWQUEUE))
 
 struct wpi_dma_info {
+	bus_dma_tag_t		tag;
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		paddr;
