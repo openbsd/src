@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1169 2006/10/22 21:39:09 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1170 2006/10/23 02:22:32 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3403,8 +3403,10 @@
 /* Sundance products */
 #define	PCI_PRODUCT_SUNDANCE_ST201_1	0x0200		/* ST201 */
 #define	PCI_PRODUCT_SUNDANCE_ST201_2	0x0201		/* ST201 */
+#define	PCI_PRODUCT_SUNDANCE_TC9021	0x1021		/* TC9021 */
 #define	PCI_PRODUCT_SUNDANCE_ST1023	0x1023		/* ST1023 */
 #define	PCI_PRODUCT_SUNDANCE_ST2021	0x2021		/* ST2021 */
+#define	PCI_PRODUCT_SUNDANCE_TC9021_ALT	0x9021		/* TC9021 (alt ID) */
 
 /* Sunix */
 #define	PCI_PRODUCT_SUNIX_40XX	0x7168		/* 40XX */
