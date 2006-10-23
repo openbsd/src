@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.12 2005/05/27 17:22:40 dhartmei Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.13 2006/10/23 12:46:09 henning Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -27,8 +27,12 @@
 #ifndef _NET_IF_PFLOG_H_
 #define _NET_IF_PFLOG_H_
 
+#define	PFLOGIFS_MAX	1
+
 struct pflog_softc {
-	struct ifnet	sc_if;  /* the interface */
+	struct ifnet		sc_if;		/* the interface */
+	int			sc_unit;
+	LIST_ENTRY(pflog_softc)	sc_list;
 };
 
 #define PFLOG_RULESET_NAME_SIZE	16
