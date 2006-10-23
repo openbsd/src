@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.4 2006/10/19 03:36:38 drahn Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.5 2006/10/23 20:15:50 miod Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sh/trap.h>
 #include <sh/dev/pcicreg.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -109,6 +110,11 @@ shpcic_lookup(void)
 int
 shpcic_match(struct device *parent, void *vcf, void *aux)
 {
+	struct mainbus_attach_args *ma = aux;
+
+	if (strcmp(ma->ma_name, shpcic_cd.cd_name) != 0)
+		return (0);
+
 	if (!CPU_IS_SH4)
 		return (0);
 
