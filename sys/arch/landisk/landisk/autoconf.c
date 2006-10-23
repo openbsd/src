@@ -48,7 +48,7 @@
 #include <machine/bootinfo.h>
 #include <machine/intr.h>
 
-int cold;
+int cold = 1;
 struct device *booted_device;
 int booted_partition;
 
@@ -69,6 +69,8 @@ cpu_configure(void)
 
 	/* Configuration is finished, turn on interrupts. */
 	spl0();
+
+	cold = 0;
 }
 
 int
