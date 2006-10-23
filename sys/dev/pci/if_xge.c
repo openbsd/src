@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.33 2006/10/11 00:08:51 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.34 2006/10/23 21:08:22 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -36,11 +36,7 @@
  */
 
 /*
- * Device driver for the Neterion Xframe Ten Gigabit Ethernet controller.
- *
- * TODO (in no specific order):
- *	HW VLAN support.
- *	IPv6 HW cksum.
+ * Driver for the Neterion Xframe Ten Gigabit Ethernet controller.
  */
 
 #include <sys/cdefs.h>
@@ -49,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $");
 #endif
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $");
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_types.h>
+#include <net/if_vlan_var.h>
 #endif
 
 #if NBPFILTER > 0
