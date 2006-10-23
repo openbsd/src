@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.62 2006/10/22 22:46:41 mcbride Exp $
+.\"	$OpenBSD: bridge.4,v 1.63 2006/10/23 07:01:35 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -559,10 +559,10 @@ Bridged packets pass through
 .Xr pf 4
 twice.
 They can be filtered on any interface, in both directions.
-For stateful filtering, filtering on only one interface 
-and passing all traffic on the other interfaces 
+For stateful filtering, filtering on only one interface
+and passing all traffic on the other interfaces
 (using
-.Ic \&no state 
+.Ic no state
 or
 .Ic set skip )
 is recommended.
