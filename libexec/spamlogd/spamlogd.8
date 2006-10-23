@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.4 2004/07/14 21:38:09 jmc Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.5 2006/10/23 07:05:49 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -82,9 +82,9 @@ configuration for logging such connections is as follows:
 EXT_IF = "fxp0"
 MAILHOSTS = "{129.128.11.10, 129.128.11.43}"
 pass in log on $EXT_IF inet proto tcp to $MAILHOSTS \e
-	port smtp keep state
+	port smtp
 pass out log on $EXT_IF inet proto tcp from $MAILHOSTS \e
-	to any port smtp keep state
+	to any port smtp
 .Ed
 .Pp
 .Nm

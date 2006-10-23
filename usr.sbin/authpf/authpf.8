@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.41 2006/01/07 16:42:16 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.42 2006/10/23 07:05:49 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -427,8 +427,7 @@ TCP connections.
 external_if = "xl0"
 internal_if = "fxp0"
 
-pass in log quick on $internal_if proto tcp from $user_ip to any \e
-      keep state
+pass in log quick on $internal_if proto tcp from $user_ip to any
 pass in quick on $internal_if from $user_ip to any
 .Ed
 .Pp
@@ -448,11 +447,10 @@ rdr on $internal_if proto tcp from $user_ip to any port 21 \e
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
 pass in log quick on $internal_if proto tcp from $user_ip to any \e
-      port { 21, 22, 80, 443 } flags S/SA
+      port { 21, 22, 80, 443 }
 pass in quick on $internal_if proto tcp from $user_ip to any \e
       port { 21, 22, 80, 443 }
-pass in quick proto udp from $user_ip to $ipsec_gw port = isakmp \e
-      keep state
+pass in quick proto udp from $user_ip to $ipsec_gw port = isakmp
 pass in quick proto esp from $user_ip to $ipsec_gw
 .Ed
 .Pp
@@ -467,7 +465,7 @@ int_if = "fxp0"
 # nat and tag connections...
 nat on $ext_if from $user_ip to any tag $user_ip -> $ext_addr
 pass in quick on $int_if from $user_ip to any
-pass out log quick on $ext_if tagged $user_ip keep state
+pass out log quick on $ext_if tagged $user_ip
 .Ed
 .Pp
 With the above rules added by
@@ -493,7 +491,7 @@ lines will give SMTP and IMAP access to logged in users:
 .Bd -literal
 table <authpf_users> persist
 pass in on $ext_if proto tcp from <authpf_users> \e
-        to port { smtp imap } keep state
+        to port { smtp imap }
 .Ed
 .Pp
 It is also possible to use the "authpf_users"
