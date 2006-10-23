@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.32 2006/10/23 17:44:15 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.33 2006/10/23 18:08:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1095,23 +1095,19 @@ zyd_read_eeprom(struct zyd_softc *sc)
 		(void)zyd_read16(sc, ZYD_EEPROM_PWR_CAL + i, &val);
 		sc->pwr_cal[i * 2] = val >> 8;
 		sc->pwr_cal[i * 2 + 1] = val & 0xff;
-	}
-	for (i = 0; i < 7; i++) {
+
 		(void)zyd_read16(sc, ZYD_EEPROM_PWR_INT + i, &val);
 		sc->pwr_int[i * 2] = val >> 8;
 		sc->pwr_int[i * 2 + 1] = val & 0xff;
-	}
-	for (i = 0; i < 7; i++) {
+
 		(void)zyd_read16(sc, ZYD_EEPROM_36M_CAL + i, &val);
 		sc->ofdm36_cal[i * 2] = val >> 8;
 		sc->ofdm36_cal[i * 2 + 1] = val & 0xff;
-	}
-	for (i = 0; i < 7; i++) {
+
 		(void)zyd_read16(sc, ZYD_EEPROM_48M_CAL + i, &val);
 		sc->ofdm48_cal[i * 2] = val >> 8;
 		sc->ofdm48_cal[i * 2 + 1] = val & 0xff;
-	}
-	for (i = 0; i < 7; i++) {
+
 		(void)zyd_read16(sc, ZYD_EEPROM_54M_CAL + i, &val);
 		sc->ofdm54_cal[i * 2] = val >> 8;
 		sc->ofdm54_cal[i * 2 + 1] = val & 0xff;
