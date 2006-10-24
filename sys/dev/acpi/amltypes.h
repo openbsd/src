@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.18 2006/10/19 07:02:20 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.19 2006/10/24 19:45:06 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -299,7 +299,7 @@ struct aml_value
 
 #define xaml_intval(v)   ((v)->v_integer)
 #define aml_strlen(v)   ((v)->length)
-#define aml_strval(v)   ((v)->v_string)
+#define aml_strval(v)   ((v)->v_string ? (v)->v_string : "bad string")
 #define aml_buflen(v)   ((v)->length)
 #define aml_bufval(v)   ((v)->v_buffer)
 #define aml_pkglen(v)   ((v)->length)
