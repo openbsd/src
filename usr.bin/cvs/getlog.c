@@ -1,5 +1,6 @@
-/*	$OpenBSD: getlog.c,v 1.65 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.66 2006/10/24 13:15:34 xsa Exp $	*/
 /*
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,8 +29,14 @@
 #define LOG_REVEND \
  "============================================================================="
 
+#define L_HEAD		0x01
+#define L_HEAD_DESCR	0x02
+#define L_NAME		0x04
+#define L_NOTAGS	0x08
+
 void	cvs_log_local(struct cvs_file *);
 
+int	 runflags = 0;
 char 	*logrev = NULL;
 
 struct cvs_cmd cvs_cmd_log = {
@@ -55,11 +62,22 @@ cvs_getlog(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_log.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'h':
+			runflags |= L_HEAD;
+			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
 			break;
+		case 'N':
+			runflags |= L_NOTAGS;
+			break;
+		case 'R':
+			runflags |= L_NAME;
 		case 'r':
 			logrev = optarg;
+			break;
+		case 't':
+			runflags |= L_HEAD_DESCR;
 			break;
 		default:
 			fatal("%s", cvs_cmd_log.cmd_synopsis);
@@ -75,11 +93,23 @@ cvs_getlog(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cr.fileproc = cvs_client_sendfile;
 
+		if (runflags & L_HEAD)
+			cvs_client_send_request("Argument -h");
+
 		if (!(flags & CR_RECURSE_DIRS))
 			cvs_client_send_request("Argument -l");
 
+		if (runflags & L_NOTAGS)
+			cvs_client_send_request("Argument -N");
+
+		if (runflags & L_NAME)
+			cvs_client_send_request("Argument -R");
+
 		if (logrev != NULL)
 			cvs_client_send_request("Argument -r%s", logrev);
+
+		if (runflags & L_HEAD_DESCR)
+			cvs_client_send_request("Argument -t");
 	} else {
 		cr.fileproc = cvs_log_local;
 	}
@@ -133,6 +163,11 @@ cvs_log_local(struct cvs_file *cf)
 		return;
 	}
 
+	if (runflags & L_NAME) {
+		cvs_printf("%s\n", cf->file_rpath);
+		return;
+	}
+
 	cvs_printf("\nRCS file: %s", cf->file_rpath);
 	cvs_printf("\nWorking file: %s", cf->file_path);
 	cvs_printf("\nhead:");
@@ -156,10 +191,12 @@ cvs_log_local(struct cvs_file *cf)
 	TAILQ_FOREACH(acp, &(cf->file_rcs->rf_access), ra_list)
 		cvs_printf("\t%s\n", acp->ra_name);
 
-	cvs_printf("symbolic names:\n");
-	TAILQ_FOREACH(sym, &(cf->file_rcs->rf_symbols), rs_list) {
-		cvs_printf("\t%s: %s\n", sym->rs_name,
-		    rcsnum_tostr(sym->rs_num, numb, sizeof(numb)));
+	if (!(runflags & L_NOTAGS)) {
+		cvs_printf("symbolic names:\n");
+		TAILQ_FOREACH(sym, &(cf->file_rcs->rf_symbols), rs_list) {
+			cvs_printf("\t%s: %s\n", sym->rs_name,
+			    rcsnum_tostr(sym->rs_num, numb, sizeof(numb)));
+		}
 	}
 
 	cvs_printf("keyword substitution: %s\n",
@@ -172,25 +209,32 @@ cvs_log_local(struct cvs_file *cf)
 	else
 		nrev = cf->file_rcs->rf_ndelta;
 
-	cvs_printf(";\tselected revisions: %u", nrev);
+	if (cf->file_rcs->rf_head != NULL &&
+	    !(runflags & L_HEAD) && !(runflags & L_HEAD_DESCR))
+		cvs_printf(";\tselected revisions: %u", nrev);
+
 	cvs_printf("\n");
-	cvs_printf("description:\n%s", cf->file_rcs->rf_desc);
 
-	TAILQ_FOREACH(rdp, &(cf->file_rcs->rf_delta), rd_list) {
-		if (logrev != NULL &&
-		    !(rdp->rd_flags & RCS_RD_SELECT))
-			continue;
+	if (!(runflags & L_HEAD) || (runflags & L_HEAD_DESCR))
+		cvs_printf("description:\n%s", cf->file_rcs->rf_desc);
 
-		cvs_printf("%s\n", LOG_REVSEP);
+	if (!(runflags & L_HEAD) && !(runflags & L_HEAD_DESCR)) {
+		TAILQ_FOREACH(rdp, &(cf->file_rcs->rf_delta), rd_list) {
+			if (logrev != NULL &&
+			    !(rdp->rd_flags & RCS_RD_SELECT))
+				continue;
 
-		rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
-		cvs_printf("revision %s", numb);
+			cvs_printf("%s\n", LOG_REVSEP);
 
-		strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S",
-		    &rdp->rd_date);
-		cvs_printf("\ndate: %s;  author: %s;  state: %s;\n", timeb,
-		    rdp->rd_author, rdp->rd_state);
-		cvs_printf("%s", rdp->rd_log);
+			rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
+			cvs_printf("revision %s", numb);
+
+			strftime(timeb, sizeof(timeb), "%Y/%m/%d %H:%M:%S",
+			    &rdp->rd_date);
+			cvs_printf("\ndate: %s;  author: %s;  state: %s;\n",
+			    timeb, rdp->rd_author, rdp->rd_state);
+			cvs_printf("%s", rdp->rd_log);
+		}
 	}
 
 	cvs_printf("%s\n", LOG_REVEND);
