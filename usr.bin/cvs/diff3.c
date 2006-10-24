@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.26 2006/07/08 09:25:44 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.27 2006/10/24 06:22:53 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.26 2006/07/08 09:25:44 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.27 2006/10/24 06:22:53 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -315,6 +315,8 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 	end = 0;
 	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
 	    lp = TAILQ_NEXT(lp, l_list)) {
+		if (lp->l_line[0] == '\0')
+			fatal("ed_patch_lines");
 		op = lp->l_line[strlen(lp->l_line) - 1];
 		start = (int)strtol(lp->l_line, &ep, 10);
 		if (op == 'a') {
