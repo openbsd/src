@@ -847,6 +847,14 @@ dump_statistics (void)
 #endif
 }
 
+#ifndef OBJ_VMS
+static void
+close_output_file (void)
+{
+  output_file_close (out_file_name);
+}
+#endif
+
 /* The interface between the macro code and gas expression handling.  */
 
 static int
@@ -1033,6 +1041,11 @@ main (int argc, char ** argv)
   input_scrub_begin ();
   expr_begin ();
 
+#ifndef OBJ_VMS /* Does its own file handling. */
+  /* It has to be called after dump_statistics (). */
+  xatexit (close_output_file);
+#endif
+
   if (flag_print_statistics)
     xatexit (dump_statistics);
 
@@ -1130,13 +1143,6 @@ main (int argc, char ** argv)
 
 #ifndef NO_LISTING
   listing_print (listing_filename);
-#endif
-
-#ifndef OBJ_VMS /* Does its own file handling.  */
-#ifndef BFD_ASSEMBLER
-  if (keep_it)
-#endif
-    output_file_close (out_file_name);
 #endif
 
   if (flag_fatal_warnings && had_warnings () > 0 && had_errors () == 0)
