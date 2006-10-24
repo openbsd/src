@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.57 2006/10/23 20:23:26 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.58 2006/10/24 19:01:48 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -48,9 +48,6 @@
 #define AML_INTSTRLEN	 16
 #define AML_NAMESEG_LEN	 4
 
-#define AML_MAX_ARG	 8
-#define AML_MAX_LOCAL	 8
-
 #define aml_valid(pv)	 ((pv) != NULL)
 
 #define acpi_mutex_acquire(ctx,lock,iv)	 dnprintf(60,"ACQUIRE: %x" #lock "\n", (short)iv)
@@ -94,7 +91,7 @@ struct aml_value *aml_parseterm(struct aml_scope *, struct aml_value *);
 
 struct aml_value *aml_evaltarget(struct aml_scope *scope, struct aml_value *res);
 int aml_evalterm(struct aml_scope *scope, struct aml_value *raw, struct aml_value *dst);
-
+const char *aml_nodename(struct aml_node *);
 
 void aml_gasio(struct acpi_softc *, int, uint64_t, uint64_t,
 	       int, int, int, void *, int);
@@ -105,7 +102,7 @@ struct aml_opcode      *aml_findopcode(int);
 void *_acpi_os_malloc(size_t, const char *, int);
 void  _acpi_os_free(void *, const char *, int);
 
-struct aml_value *aml_evalmethod(struct aml_node *, int, struct aml_value *, struct aml_value *);
+struct aml_value *aml_evalmethod(struct aml_scope *,struct aml_node *, int, struct aml_value *, struct aml_value *);
 
 /*
  * @@@: Global variables 
@@ -285,18 +282,36 @@ int aml_pc(uint8_t *src)
 	return src - aml_root.start;
 }
 
+struct aml_scope *aml_lastscope;
+
 void _aml_die(const char *fn, int line, const char *fmt, ...)
 {
-	va_list ap;
+	struct aml_scope *root;
 	char tmpbuf[256];
+	va_list ap;
+	int idx;
 
 	va_start(ap, fmt);
-	snprintf(tmpbuf,sizeof(tmpbuf),"aml_die %s:%d ", fn, line);
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);
 
+	for (root=aml_lastscope; root && root->pos; root=root->parent) {
+		printf("%.4x Called: %s\n", aml_pc(root->pos), aml_nodename(root->node));
+		for (idx=0; idx<root->nargs; idx++) {
+			printf("  arg%d: ", idx);
+			aml_showvalue(&root->args[idx], 0);
+		}
+		for (idx=0; root->locals && idx < AML_MAX_LOCAL; idx++) {
+			if (root->locals[idx].type) {
+				printf("  local%d: ", idx);
+				aml_showvalue(&root->locals[idx], 0);
+			}
+		}
+	}
+
 	/* XXX: don't panic */
+	snprintf(tmpbuf,sizeof(tmpbuf),"aml_die %s:%d ", fn, line);
 	panic(tmpbuf);
 }
 #define aml_die(x...) _aml_die(__FUNCTION__,__LINE__,x)
@@ -502,7 +517,6 @@ aml_notify_dev(const char *pnpid, int notify_value)
 struct aml_node *__aml_search(struct aml_node *, uint8_t *);
 void aml_delchildren(struct aml_node *);
 const char *aml_getname(const char *);
-const char *aml_nodename(struct aml_node *);
 
 
 /* Search for a name in children nodes */
@@ -704,7 +718,7 @@ aml_delchildren(struct aml_node *node)
 struct aml_value *aml_alloctmp(struct aml_scope *, int);
 struct aml_scope *aml_pushscope(struct aml_scope *, uint8_t *, uint8_t *, struct aml_node *);
 struct aml_scope *aml_popscope(struct aml_scope *);
-int aml_parsenode(struct aml_node *, uint8_t *, uint8_t **, struct aml_value *);
+int aml_parsenode(struct aml_scope *,struct aml_node *, uint8_t *, uint8_t **, struct aml_value *);
 
 #define LHS  0
 #define RHS  1
@@ -746,6 +760,8 @@ aml_pushscope(struct aml_scope *parent, uint8_t *start, uint8_t  *end,
 	scope->parent = parent;
 	scope->sc = dsdt_softc;
 
+	aml_lastscope = scope;
+
 	return scope;
 }
 
@@ -770,11 +786,13 @@ aml_popscope(struct aml_scope *scope)
 	}
 	acpi_os_free(scope);
 
+	aml_lastscope = nscope;
+
 	return nscope;
 }
 
 int
-aml_parsenode(struct aml_node *node, uint8_t *start, uint8_t **end, 
+aml_parsenode(struct aml_scope *parent, struct aml_node *node, uint8_t *start, uint8_t **end, 
 	      struct aml_value *res)
 {
 	struct aml_scope *scope;
@@ -782,10 +800,10 @@ aml_parsenode(struct aml_node *node, uint8_t *start, uint8_t **end,
 	/* Don't parse zero-length scope */
 	if (start == *end)
 		return 0;
-	scope = aml_pushscope(NULL, start, *end, node);
+	scope = aml_pushscope(parent, start, *end, node);
 	if (res == NULL)
 		res = aml_alloctmp(scope, 1);
-	while (scope != NULL) {
+	while (scope != parent) {
 		while (scope->pos < scope->end)
 			aml_parseop(scope, res);
 		scope = aml_popscope(scope);
@@ -999,37 +1017,42 @@ aml_showvalue(struct aml_value *val, int lvl)
 {
 	int idx;
 
+#if ACPI_DEBUG
+	if (lvl < acpi_debug)
+		return;
+#endif
+
 	if (val == NULL)
 		return;
   
 	if (val->node) {
-		dnprintf(lvl," [%s]", aml_nodename(val->node));
+		printf(" [%s]", aml_nodename(val->node));
 	}
-	dnprintf(lvl," %p cnt:%.2x", val, val->refcnt);
+	printf(" %p cnt:%.2x", val, val->refcnt);
 	switch (val->type) {
 	case AML_OBJTYPE_INTEGER:
-		dnprintf(lvl," integer: %llx\n", val->v_integer);
+		printf(" integer: %llx\n", val->v_integer);
 		break;
 	case AML_OBJTYPE_STRING:
-		dnprintf(lvl," string: %s\n", val->v_string);
+		printf(" string: %s\n", val->v_string);
 		break;
 	case AML_OBJTYPE_METHOD:
-		dnprintf(lvl," method: %.2x\n", val->v_method.flags);
+		printf(" method: %.2x\n", val->v_method.flags);
 		break;
 	case AML_OBJTYPE_PACKAGE:
-		dnprintf(lvl," package: %.2x\n", val->length);
+		printf(" package: %.2x\n", val->length);
 		for (idx=0; idx<val->length; idx++)
 			aml_showvalue(val->v_package[idx], lvl);
 		break;
 	case AML_OBJTYPE_BUFFER:
-		dnprintf(lvl," buffer: %.2x {", val->length);
+		printf(" buffer: %.2x {", val->length);
 		for (idx=0; idx<val->length; idx++)
-			dnprintf(lvl,"%s%.2x", idx ? ", " : "", val->v_buffer[idx]);
-		dnprintf(lvl,"}\n");
+			printf("%s%.2x", idx ? ", " : "", val->v_buffer[idx]);
+		printf("}\n");
 		break;
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD:
-		dnprintf(lvl," field: bitpos=%.4x bitlen=%.4x ref1:%x ref2:%x [%s]\n", 
+		printf(" field: bitpos=%.4x bitlen=%.4x ref1:%x ref2:%x [%s]\n", 
 			 val->v_field.bitpos, val->v_field.bitlen,
 			 val->v_field.ref1, val->v_field.ref2, 
 			 aml_mnem(val->v_field.type));
@@ -1037,42 +1060,42 @@ aml_showvalue(struct aml_value *val, int lvl)
 		aml_showvalue(val->v_field.ref2, lvl);
 		break;
 	case AML_OBJTYPE_MUTEX:
-		dnprintf(lvl," mutex: %llx\n", val->v_integer);
+		printf(" mutex: %llx\n", val->v_integer);
 		break;
 	case AML_OBJTYPE_EVENT:
-		dnprintf(lvl," event:\n");
+		printf(" event:\n");
 		break;
 	case AML_OBJTYPE_OPREGION:
-		dnprintf(lvl," opregion: %.2x,%.8llx,%x\n",
+		printf(" opregion: %.2x,%.8llx,%x\n",
 			 val->v_opregion.iospace,
 			 val->v_opregion.iobase,
 			 val->v_opregion.iolen);
 		break;
 	case AML_OBJTYPE_NAMEREF:
-		dnprintf(lvl," nameref: %s\n", aml_getname(val->v_nameref));
+		printf(" nameref: %s\n", aml_getname(val->v_nameref));
 		break;
 	case AML_OBJTYPE_DEVICE:
-		dnprintf(lvl," device:\n");
+		printf(" device:\n");
 		break;
 	case AML_OBJTYPE_PROCESSOR:
-		dnprintf(lvl," cpu: %.2x,%.4x,%.2x\n", 
+		printf(" cpu: %.2x,%.4x,%.2x\n", 
 			 val->v_processor.proc_id, val->v_processor.proc_addr,
 			 val->v_processor.proc_len);
 		break;
 	case AML_OBJTYPE_THERMZONE:
-		dnprintf(lvl," thermzone:\n");
+		printf(" thermzone:\n");
 		break;
 	case AML_OBJTYPE_POWERRSRC:
-		dnprintf(lvl," pwrrsrc: %.2x,%.2x\n", 
+		printf(" pwrrsrc: %.2x,%.2x\n", 
 			 val->v_powerrsrc.pwr_level, 
 			 val->v_powerrsrc.pwr_order);
 		break;
 	case AML_OBJTYPE_OBJREF:
-		dnprintf(lvl," objref: %p index:%x\n", val->v_objref.ref, val->v_objref.index);
+		printf(" objref: %p index:%x\n", val->v_objref.ref, val->v_objref.index);
 		aml_showvalue(val->v_objref.ref, lvl);
 		break;
 	default:
-		dnprintf(lvl," !!type: %x\n", val->type);
+		printf(" !!type: %x\n", val->type);
 	}
 }
 
@@ -1135,7 +1158,7 @@ aml_derefvalue(struct aml_scope *scope, struct aml_value *ref, int mode)
 				aml_parseop(scope, &tmp[index]);
 				aml_addref(&tmp[index]);
 			}
-			ref = aml_evalmethod(ref->node, argc, tmp, &tmp[argc]);
+			ref = aml_evalmethod(scope, ref->node, argc, tmp, &tmp[argc]);
 			break;
 			
 		case AML_OBJTYPE_BUFFERFIELD:
@@ -1619,13 +1642,13 @@ aml_bufcpy(void *pvDst, int dstPos, const void *pvSrc, int srcPos,
  * Returns a copy of the result in res (must be freed by user)
  */
 struct aml_value *
-aml_evalmethod(struct aml_node *node,
+aml_evalmethod(struct aml_scope *parent, struct aml_node *node,
 	       int argc, struct aml_value *argv,
 	       struct aml_value *res)
 {
 	struct aml_scope *scope;
 
-	scope = aml_pushscope(NULL, node->value->v_method.start, 
+	scope = aml_pushscope(parent, node->value->v_method.start, 
 			      node->value->v_method.end, node);
 	scope->args = argv;
 	scope->nargs = argc;
@@ -1675,7 +1698,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 
 	switch (node->value->type) {
 	case AML_OBJTYPE_METHOD:
-		aml_evalmethod(node, argc, argv, res);
+		aml_evalmethod(NULL, node, argc, argv, res);
 		if (acpi_nalloc > lastck) {
 			/* Check if our memory usage has increased */
 			dnprintf(10,"Leaked: [%s] %d\n", 
@@ -2109,7 +2132,7 @@ aml_parsenamedscope(struct aml_scope *scope, int opcode, struct aml_value *res)
 		break;
 	}
 	node = aml_createname(scope->node, name, res);
-	aml_parsenode(node, scope->pos, &end, NULL);
+	aml_parsenode(scope, node, scope->pos, &end, NULL);
 	scope->pos = end;
 
 	return res;
@@ -2625,10 +2648,7 @@ aml_parseref(struct aml_scope *scope, int opcode, struct aml_value *res)
 		tmparg = aml_alloctmp(scope, 1);
 		aml_parseterm(scope, tmparg);
 		aml_setvalue(scope, res, tmparg, 0);
-		while (scope) {
-			scope->pos = scope->end;
-			scope = scope->parent;
-		}
+		scope->pos = scope->end;
 		break;
 	case AMLOP_ARG0 ... AMLOP_ARG6:
 		opcode -= AMLOP_ARG0;
@@ -2917,7 +2937,7 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 		aml_root.end = start+length;
 	}
 	end = start+length;
-	aml_parsenode(&aml_root, start, &end, NULL);
+	aml_parsenode(NULL, &aml_root, start, &end, NULL);
 	dnprintf(50, " : parsed %d AML bytes\n", length);
 
 	return (0);

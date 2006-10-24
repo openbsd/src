@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.10 2006/10/19 07:02:20 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.11 2006/10/24 19:01:48 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -331,7 +331,29 @@ db_acpi_tree(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	db_aml_walktree(aml_root.child);
 }
 
-/* New Disasm Code */
+void
+db_acpi_trace(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	struct aml_scope *root;
+	int idx;
+	extern struct aml_scope *aml_lastscope;
+
+	for (root=aml_lastscope; root && root->pos; root=root->parent) {
+		db_printf("%.4x Called: %s\n", aml_pc(root->pos),
+		    aml_nodename(root->node));
+		for (idx = 0; idx<root->nargs; idx++) {
+			db_printf("  arg%d: ", idx);
+			db_aml_showvalue(&root->args[idx]);
+		}
+		for (idx = 0; root->locals && idx < AML_MAX_LOCAL; idx++) {
+			if (root->locals[idx].type) {
+				db_printf("  local%d: ", idx);
+				db_aml_showvalue(&root->locals[idx]);
+			}
+		}
+	}
+}
+
 void
 db_aml_disline(uint8_t *pos, int depth, const char *fmt, ...)
 {
@@ -364,7 +386,8 @@ db_aml_disint(struct aml_scope *scope, int opcode, int depth)
 		scope->pos += 2;
 		break;
 	case AMLOP_DWORDPREFIX:
-		db_aml_disline(scope->pos, depth, "0x%.8x\n", *(uint32_t *)(scope->pos));
+		
+					    db_aml_disline(scope->pos, depth, "0x%.8x\n", *(uint32_t *)(scope->pos));
 		scope->pos += 4;
 		break;
 	case AMLOP_QWORDPREFIX:
@@ -528,3 +551,4 @@ db_aml_disasm(struct aml_node *root, uint8_t *start, uint8_t *end,
 	aml_popscope(scope);
 	return pos;
 }
+

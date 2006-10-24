@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.17 2006/10/19 07:02:20 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.18 2006/10/24 19:01:48 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -88,5 +88,8 @@ void aml_create_defaultobjects(void);
 
 #define ACPI_E_NOERROR   0x00
 #define ACPI_E_BADVALUE  0x01
+
+#define AML_MAX_ARG	 7
+#define AML_MAX_LOCAL	 8
 
 #endif /* __DEV_ACPI_DSDT_H__ */
