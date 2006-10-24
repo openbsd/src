@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.h,v 1.5 2006/10/21 23:16:34 mglocker Exp $ */
+/*	$OpenBSD: malo.h,v 1.6 2006/10/24 19:20:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -91,6 +91,9 @@ struct malo_softc {
 	bus_addr_t		sc_cmd_dmaaddr;
 	uint32_t		*sc_cookie;
 	bus_addr_t		sc_cookie_dmaaddr;
+
+	uint32_t		sc_RxPdWrPtr;
+	uint32_t		sc_RxPdRdPtr;
 
 	int			(*sc_newstate)
 				(struct ieee80211com *,

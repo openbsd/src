@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.9 2006/10/22 00:18:42 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.10 2006/10/24 19:20:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -166,6 +166,7 @@ int	malo_alloc_cmd(struct malo_softc *sc);
 void	malo_free_cmd(struct malo_softc *sc);
 int	malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring,
 	    int count);
+void	malo_reset_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
 void	malo_free_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
 int	malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 	    int count);
@@ -484,7 +485,7 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 			goto fail;
 		}
 
-		desc->reserved1 = htole16(1);
+		desc->status = htole16(1);
 		desc->physdata = htole32(data->map->dm_segs->ds_addr);
 		desc->physnext = htole32(ring->physaddr +
 		    (i + 1) % count * sizeof(struct malo_rx_desc));
@@ -497,6 +498,20 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 
 fail:	malo_free_rx_ring(sc, ring);
 	return (error);
+}
+
+void
+malo_reset_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring)
+{
+	int i;
+
+	for (i = 0; i < ring->count; i++)
+		ring->desc[i].status = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, ring->map, 0, ring->map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	ring->cur = ring->next = 0;
 }
 
 void
@@ -868,6 +883,10 @@ malo_get_spec(struct malo_softc *sc)
 	malo_mem_write4(sc, letoh32(spec->WcbBase0) & 0xffff,
 	    htole32(sc->sc_txring.physaddr));
 
+	/* save DMA RX pointers for later use */
+	sc->sc_RxPdRdPtr = letoh32(spec->RxPdRdPtr) & 0xffff;
+	sc->sc_RxPdWrPtr = letoh32(spec->RxPdWrPtr) & 0xffff;
+
 	return (0);
 }
 
@@ -963,6 +982,8 @@ malo_stop(struct malo_softc *sc)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
+	malo_reset_rx_ring(sc, &sc->sc_rxring);
+
 	DPRINTF(("%s: malo_stop\n", ifp->if_xname));
 	if (sc->sc_disable)
 		sc->sc_disable(sc);
@@ -1013,9 +1034,13 @@ malo_rx_intr(struct malo_softc *sc)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
+	uint32_t rxRdPtr, rxWrPtr;
 	int error, i;
 
-	for (i = 0; i < MALO_RX_RING_COUNT; i++) {
+	rxRdPtr = malo_mem_read4(sc, sc->sc_RxPdRdPtr);
+	rxWrPtr = malo_mem_read4(sc, sc->sc_RxPdWrPtr);
+
+	for (i = 0; i < MALO_RX_RING_COUNT && rxRdPtr != rxWrPtr; i++) {
 		desc = &sc->sc_rxring.desc[sc->sc_rxring.cur];
 		data = &sc->sc_rxring.data[sc->sc_rxring.cur];
 
@@ -1026,10 +1051,10 @@ malo_rx_intr(struct malo_softc *sc)
 		DPRINTF(("rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
 		    "status=0x%02x, channel=%d, len=%d, res1=%02x, rate=%d, "
 		    "physdata=0x%04x, physnext=0x%04x, qosctrl=%02x, res2=%d\n",
-		    i, desc->rxctrl, desc->rssi, desc->status, desc->channel,
-		    letoh16(desc->len), desc->reserved1, desc->datarate,
-		    desc->physdata, desc->physnext, desc->qosctrl,
-		    desc->reserved2));
+		    sc->sc_rxring.cur, desc->rxctrl, desc->rssi, desc->status,
+		    desc->channel, letoh16(desc->len), desc->reserved1,
+		    desc->datarate, desc->physdata, desc->physnext,
+		    desc->qosctrl, desc->reserved2));
 
 		if ((letoh32(desc->rxctrl) & 0x80) == 0)
 			break;
@@ -1124,6 +1149,7 @@ malo_rx_intr(struct malo_softc *sc)
 
 skip:
 		desc->rxctrl = 0;
+		rxRdPtr = desc->physnext;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxring.map,
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
@@ -1132,4 +1158,6 @@ skip:
 		sc->sc_rxring.cur = (sc->sc_rxring.cur + 1) %
 		    MALO_RX_RING_COUNT;
         }
+
+	malo_mem_write4(sc, sc->sc_RxPdRdPtr, rxRdPtr);
 }
