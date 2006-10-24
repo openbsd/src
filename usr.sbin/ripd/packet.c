@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2006/10/19 12:29:58 mcbride Exp $ */
+/*	$OpenBSD: packet.c,v 1.3 2006/10/24 16:37:48 david Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -169,7 +169,7 @@ recv_packet(int fd, short event, void *bula)
 			return;
 
 		/* XXX: it would be better to not create a nbr on request
-		 * becouse this could lead to DoS even on a authenticated
+		 * because this could lead to DoS even on a authenticated
 		 * environment.
 		 */
 		if (nbr == NULL) {
@@ -241,7 +241,7 @@ find_iface(struct ripd_conf *xconf, unsigned int ifindex, struct in_addr src)
 			/*
 			 * XXX may fail on P2P links because src and dst don't
 			 * have to share a common subnet on the otherhand
-			 * checking somthing like this will help to support
+			 * checking something like this will help to support
 			 * multiple networks configured on one interface.
 			 */
 			return (iface);

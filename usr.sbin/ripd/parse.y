@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2006/10/24 16:37:48 david Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -261,7 +261,7 @@ authtype	: AUTHTYPE STRING {
 
 authkey		: AUTHKEY STRING {
 			if (strlen($2) > MAX_SIMPLE_AUTH_LEN) {
-				yyerror("auth-key too long (max lenght %d)",
+				yyerror("auth-key too long (max length %d)",
 				    MAX_SIMPLE_AUTH_LEN);
 				free($2);
 				YYERROR;
