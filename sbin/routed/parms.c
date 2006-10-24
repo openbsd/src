@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.13 2005/04/12 15:26:47 cloder Exp $	*/
+/*	$OpenBSD: parms.c,v 1.14 2006/10/24 19:44:29 moritz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -145,13 +145,13 @@ gwkludge(void)
 		return;
 
 	for (;;) {
-		if (0 == fgets(lbuf, sizeof(lbuf)-1, fp))
+		if (fgets(lbuf, sizeof(lbuf)-1, fp) == NULL)
 			break;
 		lptr = lbuf;
 		while (*lptr == ' ')
 			lptr++;
-		if (*lptr == '\n'	/* ignore null and comment lines */
-		    || *lptr == '#')
+		/* ignore null and comment lines */
+		if (*lptr == '\0' || *lptr == '\n' || *lptr == '#')
 			continue;
 		p = lptr+strlen(lptr)-1;
 		while (*p == '\n'
