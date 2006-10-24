@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.14 2006/10/10 21:38:16 cloder Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.15 2006/10/24 17:25:48 moritz Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -817,11 +817,14 @@ main(int argc, char *argv[])
     curr_line = 0;
     for (;;) {
 	char buf[BUFSIZ];
+	size_t buflen;
 
 	++curr_line;
 	if (fgets(buf, sizeof(buf), stdin) == NULL)
 	    break;
-	buf[strlen(buf) - 1] = '\0';
+	buflen = strlen(buf);
+	if (buflen > 0 && buf[buflen - 1] == '\n')
+		buf[buflen - 1] = '\0';
 	_nc_set_source(buf);
 
 	if (tc) {

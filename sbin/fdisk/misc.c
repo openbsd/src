@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2005/11/21 01:59:24 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2006/10/24 17:30:45 moritz Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -67,11 +67,14 @@ int
 ask_cmd(cmd_t *cmd)
 {
 	char lbuf[100], *cp, *buf;
+	size_t lbuflen;
 
 	/* Get input */
 	if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 		errx(1, "eof");
-	lbuf[strlen(lbuf)-1] = '\0';
+	lbuflen = strlen(lbuf);
+	if (lbuflen > 0 && lbuf[lbuflen - 1] == '\n')
+		lbuf[lbuflen - 1] = '\0';
 
 	/* Parse input */
 	buf = lbuf;
@@ -90,6 +93,7 @@ ask_num(const char *str, int flags, int dflt, int low, int high,
     void (*help)(void))
 {
 	char lbuf[100], *cp;
+	size_t lbuflen;
 	int num;
 
 	do {
@@ -104,7 +108,9 @@ again:
 
 		if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 			errx(1, "eof");
-		lbuf[strlen(lbuf)-1] = '\0';
+		lbuflen = strlen(lbuf);
+		if (lbuflen > 0 && lbuf[lbuflen - 1] == '\n')
+			lbuf[lbuflen - 1] = '\0';
 
 		if (help && lbuf[0] == '?') {
 			(*help)();
