@@ -801,7 +801,8 @@ cmd_ExtraText (const char *cmd, const char *sectionname,
     len = asprintf (&section, "%%%s %s", class, name);
     
     while (fgets (buf, sizeof(buf), f) != NULL) {
-	buf[strlen(buf)-1] = '\0';
+	if (buf[0] != '\0' && buf[strlen(buf) - 1] == '\n')
+	    buf[strlen(buf) - 1] = '\0';
 	
 	if (buf[0] == '#')
 	    continue;
