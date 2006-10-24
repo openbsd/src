@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.4 2006/10/19 01:19:15 jordan Exp $ */
+/* $OpenBSD: acpitz.c,v 1.5 2006/10/24 19:58:03 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -168,7 +168,7 @@ acpitz_gettmp(struct acpitz_softc *sc)
 
 	rw_enter_write(&sc->sc_lock);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_TMP", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_TMP", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _TMP\n", DEVNAME(sc));
 		goto out;
 	}
@@ -189,7 +189,7 @@ acpitz_getcrt(struct acpitz_softc *sc)
 
 	rw_enter_write(&sc->sc_lock);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRT", 0, NULL, &res) != 0) {
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRT", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _CRT\n", DEVNAME(sc));
 		goto out;
 	}
