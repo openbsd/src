@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.34 2006/10/23 21:08:22 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.35 2006/10/24 20:14:43 brad Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -387,10 +387,6 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	val &= ~(TxF_R_SE|RxF_W_SE);
 	PIF_WCSR(SWAPPER_CTRL, val);
 	PIF_WCSR(SWAPPER_CTRL, val);
-#elif BYTE_ORDER == BIG_ENDIAN
-	/* do nothing */
-#else
-#error bad endianness!
 #endif
 
 	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
@@ -430,10 +426,6 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 		val &= ~(TxF_R_SE|RxF_W_SE);
 		PIF_WCSR(SWAPPER_CTRL, val);
 		PIF_WCSR(SWAPPER_CTRL, val);
-#elif BYTE_ORDER == BIG_ENDIAN
-		/* do nothing */
-#else
-#error bad endianness!
 #endif
 
 		if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
