@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.5 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: getword.c,v 1.6 2006/10/24 17:20:41 moritz Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getword.c,v 1.5 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: getword.c,v 1.6 2006/10/24 17:20:41 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ getword(void)
 	char		*wp, *gp;
 	long		 pos;
 	int		badwords, countwords;
+	size_t		wordlen;
 
 	inf = Dict;
 	badwords = 0;
@@ -67,8 +68,10 @@ getword(void)
 			continue;
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;
-		Word[strlen(Word) - 1] = '\0';
-		if (strlen(Word) < MINLEN || strlen(Word) > MAXLEN)
+		wordlen = strlen(Word);
+		if (wordlen > 0 && Word[wordlen - 1] == '\n')
+			Word[wordlen - 1] = '\0';
+		if (wordlen < MINLEN || wordlen > MAXLEN)
 			continue;
 		for (wp = Word; *wp; wp++)
 			if (!islower(*wp))
