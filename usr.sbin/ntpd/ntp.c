@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.92 2006/10/21 07:30:58 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.93 2006/10/24 12:23:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,6 @@ void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
 void	peer_add(struct ntp_peer *);
 void	peer_remove(struct ntp_peer *);
-int	offset_compare(const void *, const void *);
 
 void
 ntp_sighdlr(int sig)

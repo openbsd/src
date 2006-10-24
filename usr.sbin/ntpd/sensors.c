@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.23 2006/10/12 10:41:51 henning Exp $ */
+/*	$OpenBSD: sensors.c,v 1.24 2006/10/24 12:23:39 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@
 void	sensor_probe(int);
 void	sensor_add(struct sensor *);
 void	sensor_remove(struct ntp_sensor *);
+void	sensor_update(struct ntp_sensor *);
 
 struct ntpd_conf *conf;
 
@@ -157,21 +158,54 @@ sensor_query(struct ntp_sensor *s)
 		return;
 
 	memcpy(&refid, "HARD", sizeof(refid));
-	s->update.offset = (0 - (float)sensor.value / 1000000000.0) -
+	s->offsets[s->shift].offset = (0 - (float)sensor.value / 1000000000.0) -
 	    getoffset();
-	s->update.rcvd = sensor.tv.tv_sec;
-	s->update.good = 1;
+	s->offsets[s->shift].rcvd = sensor.tv.tv_sec;
+	s->offsets[s->shift].good = 1;
 
-	s->update.status.refid = htonl(refid);
-	s->update.status.stratum = 0;	/* increased when sent out */
-	s->update.status.rootdelay = 0;
-	s->update.status.rootdispersion = 0;
-	s->update.status.reftime = sensor.tv.tv_sec;
-	s->update.status.synced = 1;
+	s->offsets[s->shift].status.refid = htonl(refid);
+	s->offsets[s->shift].status.stratum = 0;	/* increased when sent out */
+	s->offsets[s->shift].status.rootdelay = 0;
+	s->offsets[s->shift].status.rootdispersion = 0;
+	s->offsets[s->shift].status.reftime = sensor.tv.tv_sec;
+	s->offsets[s->shift].status.synced = 1;
 
+	log_debug("sensor %s: offset %f", s->device,
+	    s->offsets[s->shift].offset);
+
+	if (++s->shift >= SENSOR_OFFSETS) {
+		s->shift = 0;
+		sensor_update(s);
+	}
+
+}
+
+void
+sensor_update(struct ntp_sensor *s)
+{
+	struct ntp_offset	**offsets;
+	int			  i;
+
+	if ((offsets = calloc(SENSOR_OFFSETS, sizeof(struct ntp_offset *))) ==
+	    NULL)
+		fatal("calloc sensor_update");
+
+	for (i = 0; i < SENSOR_OFFSETS; i++)
+		offsets[i] = &s->offsets[i];
+
+	qsort(offsets, SENSOR_OFFSETS, sizeof(struct ntp_offset *),
+	    offset_compare);
+
+	i = SENSOR_OFFSETS / 2;
+	memcpy(&s->update, offsets[i], sizeof(s->update));
+	if (SENSOR_OFFSETS % 2 == 0) {
+		s->update.offset =
+		    (offsets[i - 1]->offset + offsets[i]->offset) / 2;
+	}
+	free(offsets);
+
+	log_debug("sensor update %s: offset %f", s->device, s->update.offset);
 	priv_adjtime();
-
-	log_debug("sensor %s: offset %f", s->device, s->update.offset);
 }
 
 int

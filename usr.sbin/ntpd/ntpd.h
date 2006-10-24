@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.76 2006/06/30 16:52:13 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.77 2006/10/24 12:23:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,7 @@
 
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
+#define	SENSOR_OFFSETS		7
 #define	SETTIME_MIN_OFFSET	180	/* min offset for settime at start */
 #define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
 #define	LOG_NEGLIGEE		32	/* negligible drift to not log (ms) */
@@ -63,7 +64,7 @@
 
 
 #define	SENSOR_DATA_MAXAGE	(15*60)
-#define	SENSOR_QUERY_INTERVAL	30
+#define	SENSOR_QUERY_INTERVAL	5
 #define	SENSOR_SCAN_INTERVAL	(5*60)
 
 enum client_state {
@@ -134,11 +135,13 @@ struct ntp_peer {
 
 struct ntp_sensor {
 	TAILQ_ENTRY(ntp_sensor)		 entry;
+	struct ntp_offset		 offsets[SENSOR_OFFSETS];
 	struct ntp_offset		 update;
 	time_t				 next;
 	char				*device;
 	int				 sensorid;
 	u_int8_t			 weight;
+	u_int8_t			 shift;
 };
 
 struct ntp_conf_sensor {
@@ -258,6 +261,7 @@ pid_t	 ntp_main(int[2], struct ntpd_conf *);
 int	 priv_adjtime(void);
 void	 priv_settime(double);
 void	 priv_host_dns(char *, u_int32_t);
+int	 offset_compare(const void *, const void *);
 
 /* parse.y */
 int	 parse_config(const char *, struct ntpd_conf *);
