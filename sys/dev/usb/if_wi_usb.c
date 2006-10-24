@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.31 2006/10/16 12:30:08 tom Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.32 2006/10/24 18:20:46 moritz Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -313,7 +313,7 @@ USB_ATTACH(wi_usb)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		    USB_ATTACH_ERROR_RETURN;
+		USB_ATTACH_ERROR_RETURN;
 	}
 
 	/* XXX - flags? */
@@ -359,18 +359,18 @@ USB_ATTACH(wi_usb)
 	if (wi_usb_rx_list_init(sc)) {
 		printf("%s: rx list init failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		    USB_ATTACH_ERROR_RETURN;
+		USB_ATTACH_ERROR_RETURN;
 	}
 	if (wi_usb_tx_list_init(sc)) {
 		printf("%s: tx list init failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		    USB_ATTACH_ERROR_RETURN;
+		USB_ATTACH_ERROR_RETURN;
 	}
 
 	if (wi_usb_open_pipes(sc)){
 		printf("%s: open pipes failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		    USB_ATTACH_ERROR_RETURN;
+		USB_ATTACH_ERROR_RETURN;
 	}
 
 	sc->wi_usb_attached = 1;
