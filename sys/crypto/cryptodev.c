@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.65 2006/05/31 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.66 2006/10/25 15:10:25 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -537,8 +537,13 @@ cryptodev_key(struct crypt_kop *kop)
 	krp->krp_status = 0;
 	krp->krp_callback = cryptodevkey_cb;
 
-	for (i = 0; i < CRK_MAXPARAM; i++)
+	for (i = 0; i < CRK_MAXPARAM; i++) {
 		krp->krp_param[i].crp_nbits = kop->crk_param[i].crp_nbits;
+		if (kop->crk_param[i].crp_nbits > 65536) {
+			/* XXX how big do we need to support? */
+			goto fail;
+		}
+	}
 	for (i = 0; i < krp->krp_iparams + krp->krp_oparams; i++) {
 		size = (krp->krp_param[i].crp_nbits + 7) / 8;
 		if (size == 0)
