@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.2 2006/10/07 20:52:38 miod Exp $
+#	$OpenBSD: files.landisk,v 1.3 2006/10/25 01:41:42 drahn Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -6,7 +6,9 @@ maxpartitions 16
 
 maxusers 2 16 64
 
-major {wd = 0}
+major {wd = 16}
+major {rd = 18}
+major {sd = 24}
 
 #defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 
