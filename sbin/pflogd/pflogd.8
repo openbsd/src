@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.27 2005/05/27 20:27:17 dhartmei Exp $
+.\"	$OpenBSD: pflogd.8,v 1.28 2006/10/25 20:20:19 henning Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -34,6 +34,7 @@
 .Nm pflogd
 .Op Fl Dx
 .Op Fl d Ar delay
+.Op Fl i Ar interface
 .Op Fl f Ar filename
 .Op Fl s Ar snaplen
 .Op Ar expression
@@ -41,8 +42,10 @@
 .Nm
 is a background daemon which reads packets logged by
 .Xr pf 4
-to the packet logging interface
-.Pa pflog0
+to a
+.Xr pflog 4
+interface, normally
+.Pa pflog0 ,
 and writes the packets to a logfile (normally
 .Pa /var/log/pflog )
 in
@@ -101,6 +104,13 @@ If not specified, the default is 60 seconds.
 Log output filename.
 Default is
 .Pa /var/log/pflog .
+.It Fl i Ar interface
+.Xr pflog 4
+interface to use.
+By default,
+.Nm
+will use
+.Ar pflog0 .
 .It Fl s Ar snaplen
 Analyze at most the first
 .Ar snaplen
@@ -127,6 +137,13 @@ Log specific tcp packets to a different log file with a large snaplen
 (useful with a log-all rule to dump complete sessions):
 .Bd -literal -offset indent
 # pflogd -s 1600 -f suspicious.log port 80 and host evilhost
+.Ed
+.Pp
+Log from another
+.Xr pflog 4
+interface, excluding specific packets:
+.Bd -literal -offset indent
+# pflogd -i pflog3 -f network3.log "not (tcp and port 23)"
 .Ed
 .Pp
 Display binary logs:

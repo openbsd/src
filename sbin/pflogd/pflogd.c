@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.35 2006/01/15 16:38:04 canacar Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.36 2006/10/25 20:20:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -102,8 +102,9 @@ set_suspended(int s)
 		return;
 
 	suspended = s;
-	setproctitle("[%s] -s %d -f %s",
-            suspended ? "suspended" : "running", cur_snaplen, filename);
+	setproctitle("[%s] -s %d -i %s -f %s",
+	    suspended ? "suspended" : "running",
+	    cur_snaplen, interface, filename);
 }
 
 char *
@@ -149,8 +150,9 @@ logmsg(int pri, const char *message, ...)
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: pflogd [-Dx] [-d delay] [-f filename] ");
-	fprintf(stderr, "[-s snaplen] [expression]\n");
+	fprintf(stderr, "usage: pflogd [-Dx] [-d delay] [-i interface]");
+	fprintf(stderr, " [-f filename] [-s snaplen]\n");
+	fprintf(stderr, "              [expression]\n");
 	exit(1);
 }
 
@@ -532,7 +534,7 @@ main(int argc, char **argv)
 
 	closefrom(STDERR_FILENO + 1);
 
-	while ((ch = getopt(argc, argv, "Dxd:s:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dxd:f:i:s:")) != -1) {
 		switch (ch) {
 		case 'D':
 			Debug = 1;
@@ -544,6 +546,9 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			filename = optarg;
+			break;
+		case 'i':
+			interface = optarg;
 			break;
 		case 's':
 			snaplen = strtonum(optarg, 0, PFLOGD_MAXSNAPLEN,
