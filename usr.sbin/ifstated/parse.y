@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2006/10/25 18:58:42 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2006/10/25 18:57:34 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -72,6 +72,7 @@ struct sym {
 void			 link_states(struct ifsd_action *);
 int			 symset(const char *, const char *, int);
 char			*symget(const char *);
+int			 atoul(char *, u_long *);
 void			 set_expression_depth(struct ifsd_expression *, int);
 void			 init_state(struct ifsd_state *);
 struct ifsd_ifstate	*new_ifstate(u_short, int);
@@ -119,16 +120,14 @@ grammar		: /* empty */
 		;
 
 number		: STRING			{
-			u_int32_t	 uval;
-			const char	*errstr;
+			u_long	ulval;
 
-			uval = strtonum($1, 0, UINT_MAX, &errstr);
-			if (errstr) {	
-				yyerror("number %s is %s", $1, errstr);
+			if (atoul($1, &ulval) == -1) {
+				yyerror("%s is not a number", $1);
 				free($1);
 				YYERROR;
 			} else
-				$$ = uval;
+				$$ = ulval;
 			free($1);
 		}
 		;
@@ -780,6 +779,22 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
+}
+
+int
+atoul(char *s, u_long *ulvalp)
+{
+	u_long	 ulval;
+	char	*ep;
+
+	errno = 0;
+	ulval = strtoul(s, &ep, 0);
+	if (s[0] == '\0' || *ep != '\0')
+		return (-1);
+	if (errno == ERANGE && ulval == ULONG_MAX)
+		return (-1);
+	*ulvalp = ulval;
+	return (0);
 }
 
 void
