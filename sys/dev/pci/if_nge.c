@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.55 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.56 2006/10/25 02:37:50 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1907,9 +1907,8 @@ nge_ifmedia_mii_upd(ifp)
 	sc->nge_link = 0;
 
 	if (mii->mii_instance) {
-		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		     miisc = LIST_NEXT(miisc, mii_list))
+		struct mii_softc *miisc;
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.30 2006/10/22 20:27:41 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.31 2006/10/25 02:37:50 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3619,8 +3619,7 @@ bnx_ifmedia_upd(struct ifnet *ifp)
 	sc->bnx_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);

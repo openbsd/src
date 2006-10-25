@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.35 2006/05/28 00:04:24 jason Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.36 2006/10/25 02:37:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -654,8 +654,7 @@ wb_reset(sc)
 
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 }
