@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.10 2006/03/14 11:09:44 djm Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.11 2006/10/25 14:50:21 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -134,6 +134,7 @@ struct pf_rule_field {
     PF_RULE_FIELD(overload_tblname,	BREAK),
     PF_RULE_FIELD(flush,		BREAK),
     PF_RULE_FIELD(rpool,		BREAK),
+    PF_RULE_FIELD(logif,		BREAK),
 
     /*
      * Any fields not listed in this structure act as BREAK fields
