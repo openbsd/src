@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.195 2006/09/19 12:15:29 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.196 2006/10/25 18:48:29 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,6 @@ struct sym {
 
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
-int	 atoul(char *, u_long *);
 int	 getcommunity(char *);
 int	 parsecommunity(char *, int *, int *);
 
@@ -203,14 +202,16 @@ grammar		: /* empty */
 		;
 
 number		: STRING			{
-			u_long	ulval;
+			u_int32_t	 uval;
+			const char	*errstr;
 
-			if (atoul($1, &ulval) == -1) {
-				yyerror("\"%s\" is not a number", $1);
+			uval = strtonum($1, 0, UINT_MAX, &errstr);
+			if (errstr) {
+				yyerror("number %s is %s", $1, errstr);
 				free($1);
 				YYERROR;
 			} else
-				$$ = ulval;
+				$$ = uval;
 			free($1);
 		}
 		;
@@ -2127,39 +2128,21 @@ symget(const char *nam)
 }
 
 int
-atoul(char *s, u_long *ulvalp)
-{
-	u_long	 ulval;
-	char	*ep;
-
-	errno = 0;
-	ulval = strtoul(s, &ep, 0);
-	if (s[0] == '\0' || *ep != '\0')
-		return (-1);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (-1);
-	*ulvalp = ulval;
-	return (0);
-}
-
-int
 getcommunity(char *s)
 {
-	u_long	ulval;
+	int	 	 val;
+	const char	*errstr;
 
 	if (strcmp(s, "*") == 0)
 		return (COMMUNITY_ANY);
 	if (strcmp(s, "neighbor-as") == 0)
 		return (COMMUNITY_NEIGHBOR_AS);
-	if (atoul(s, &ulval) == -1) {
-		yyerror("\"%s\" is not a number", s);
+	val = strtonum(s, 0, USHRT_MAX, &errstr);
+	if (errstr) {
+		yyerror("Community %s is %s (max: %s)", s, errstr, USHRT_MAX);
 		return (COMMUNITY_ERROR);
 	}
-	if (ulval > USHRT_MAX) {
-		yyerror("Community too big: max %u", USHRT_MAX);
-		return (COMMUNITY_ERROR);
-	}
-	return (ulval);
+	return (val);
 }
 
 int
