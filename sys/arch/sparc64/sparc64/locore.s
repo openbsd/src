@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.61 2006/08/27 21:19:02 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.62 2006/10/25 20:15:59 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4759,6 +4759,24 @@ _C_LABEL(tlb_flush_ctx):
 	.text
 2:
 #endif	/* DIAGNOSTIC */
+#ifdef HORRID_III_HACK
+	rdpr	%pstate, %o5
+	andn	%o5, PSTATE_IE, %o4
+	wrpr	%o4, %pstate				! disable interrupts
+
+	rdpr	%tl, %o3
+	brnz	%o3, 1f
+	 add	%o3, 1, %g2
+	wrpr	%g0, %g2, %tl				! Switch to traplevel > 0
+1:	
+	mov	CTX_PRIMARY, %o2
+	sethi	%hi(KERNBASE), %o4
+	ldxa	[%o2] ASI_DMMU, %g1		! Save primary context
+	membar	#LoadStore
+	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
+	membar	#Sync
+	set	DEMAP_CTX_PRIMARY, %g2		! Demap context from primary context only
+#else
 	mov	CTX_SECONDARY, %o2
 	sethi	%hi(KERNBASE), %o4
 	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
@@ -4766,6 +4784,7 @@ _C_LABEL(tlb_flush_ctx):
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
 	membar	#Sync
 	set	DEMAP_CTX_SECONDARY, %g2	! Demap context from secondary context only
+#endif
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
 	membar	#Sync					! No real reason for this XXXX
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
@@ -4773,6 +4792,10 @@ _C_LABEL(tlb_flush_ctx):
 	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
 	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
+#ifdef HORRID_III_HACK
+	wrpr	%g0, %o3, %tl				! Restore traplevel
+	wrpr	%o5, %pstate				! Restore interrupts
+#endif
 	retl
 	 nop
 
