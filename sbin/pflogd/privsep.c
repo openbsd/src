@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.15 2006/03/06 10:45:56 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.16 2006/10/25 20:55:04 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -58,9 +58,6 @@ static void must_write(int, void *, size_t);
 static int  set_snaplen(int snap);
 static int  move_log(const char *name);
 
-/* bpf filter expression common to parent and child */
-extern char *filter;
-extern char *errbuf;
 extern char *filename;
 extern pcap_t *hpcap;
 
