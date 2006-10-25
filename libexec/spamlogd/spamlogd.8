@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.5 2006/10/23 07:05:49 jmc Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.6 2006/10/25 19:17:55 henning Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -22,6 +22,7 @@
 .Nd spamd whitelist updating daemon
 .Sh SYNOPSIS
 .Nm spamlogd
+.Op Fl l Ar log_interface
 .Op Fl I
 .Op Fl i Ar interface
 .Sh DESCRIPTION
@@ -58,6 +59,12 @@ in
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl l Ar log_interface
+Specify a
+.Xr pflog 4
+interface to listen for connection notifications.
+The default is to watch for connections logged on
+.Dq pflog0 .
 .It Fl I
 Specify that
 .Nm

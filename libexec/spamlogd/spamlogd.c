@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.11 2004/09/18 07:33:03 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.12 2006/10/25 19:17:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -120,7 +120,8 @@ dbupdate(char *dbname, char *ip)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-I] [-i interface]\n", __progname);
+	fprintf(stderr, "usage: %s [-I] [-i interface] [-l pflog-interface]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -140,7 +141,7 @@ main(int argc, char **argv)
 	FILE *f;
 
 
-	while ((ch = getopt(argc, argv, "i:I")) != -1) {
+	while ((ch = getopt(argc, argv, "l:i:I")) != -1) {
 		switch (ch) {
 		case 'i':
 			if (targv[17])	/* may only set once */
@@ -151,6 +152,9 @@ main(int argc, char **argv)
 			break;
 		case 'I':
 			inbound = 1;
+			break;
+		case 'l':
+			targv[5] = optarg;
 			break;
 		default:
 			usage();
