@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.511 2006/10/25 11:53:46 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.512 2006/10/25 14:50:30 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2111,11 +2111,11 @@ quick		: /* empty */			{ $$.quick = 0; }
 		| QUICK				{ $$.quick = 1; }
 		;
 
-logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
-		| log				{ $$ = $1; $$.quick = 0; }
-		| QUICK				{ $$.quick = 1; $$.log = 0; }
-		| log QUICK			{ $$ = $1; $$.quick = 1; }
-		| QUICK log			{ $$ = $2; $$.quick = 1; }
+logquick	: /* empty */	{ $$.log = 0; $$.quick = 0; $$.logif = 0; }
+		| log		{ $$ = $1; $$.quick = 0; }
+		| QUICK		{ $$.quick = 1; $$.log = 0; $$.logif = 0; }
+		| log QUICK	{ $$ = $1; $$.quick = 1; }
+		| QUICK log	{ $$ = $2; $$.quick = 1; }
 		;
 
 log		: LOG			{ $$.log = PF_LOG; $$.logif = 0; }
