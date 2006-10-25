@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.363 2006/10/23 06:58:35 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.364 2006/10/25 11:36:08 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1281,10 +1281,11 @@ In addition to the action specified, a log message is generated.
 Only the packet that establishes the state is logged,
 unless the
 .Ar no state
-option is specified
-The logged packets are sent to the
+option is specified.
+The logged packets are sent to a
 .Xr pflog 4
-interface.
+interface instance, by default,
+.Ar pflog0 .
 This interface is monitored by the
 .Xr pflogd 8
 logging daemon, which dumps the logged packets to the file
@@ -1308,6 +1309,11 @@ user ID of the user that owns the socket and the PID of the process that
 has the socket open where the packet is sourced from or destined to
 (depending on which socket is local).
 This is in addition to the normal information logged.
+.It Ar log (to Aq Ar interface )
+Send logs to the specified
+.Xr pflog 4
+interface instead of
+.Ar pflog0 .
 .It Ar quick
 If a packet matches a rule which has the
 .Ar quick
@@ -2681,7 +2687,7 @@ pf-rule        = action [ ( "in" | "out" ) ]
                  hosts [ filteropt-list ]
 
 logopts        = logopt [ "," logopts ]
-logopt         = "all" | "user"
+logopt         = "all" | "user" | "to" interface-name
 
 filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
