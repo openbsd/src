@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.32 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.33 2006/10/25 14:32:04 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -734,30 +734,16 @@ _thread_kern_poll(int wait_reqd)
 		/* File descriptor poll or select wait: */
 		case PS_POLL_WAIT:
 		case PS_SELECT_WAIT:
-			/* if fd is closing then reschedule this thread */
-			for (i = 0; i < pthread->data.poll_data->nfds; i++) {
-				if (_thread_fd_table[pthread->data.poll_data->fds[i].fd]->state == FD_ENTRY_CLOSING) {
-					pthread->closing_fd = 1;
-					PTHREAD_WAITQ_CLEARACTIVE();
-					PTHREAD_WORKQ_REMOVE(pthread);
-					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
-					PTHREAD_WAITQ_SETACTIVE();
-					break;
+			/* Limit number of polled files to table size: */
+			if (pthread->data.poll_data->nfds + nfds <
+			    _thread_dtablesize) {
+				for (i = 0; i < pthread->data.poll_data->nfds; i++) {
+					_thread_pfd_table[nfds + i].fd =
+					    pthread->data.poll_data->fds[i].fd;
+					_thread_pfd_table[nfds + i].events =
+					    pthread->data.poll_data->fds[i].events;
 				}
-			}
-			/* if the thread was not rescheduled by a closing fd then add files */
-			if (pthread->closing_fd == 0) {
-				/* Limit number of polled files to table size: */
-				if (pthread->data.poll_data->nfds + nfds <
-				    _thread_dtablesize) {
-					for (i = 0; i < pthread->data.poll_data->nfds; i++) {
-						_thread_pfd_table[nfds + i].fd =
-						    pthread->data.poll_data->fds[i].fd;
-						_thread_pfd_table[nfds + i].events =
-						    pthread->data.poll_data->fds[i].events;
-					}
-					nfds += pthread->data.poll_data->nfds;
-				}
+				nfds += pthread->data.poll_data->nfds;
 			}
 			break;
 

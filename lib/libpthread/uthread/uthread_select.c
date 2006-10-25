@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.12 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.13 2006/10/25 14:32:04 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -165,14 +165,9 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 		   (f_wait != 0)) {
 			curthread->data.poll_data = &data;
 			curthread->interrupted = 0;
-			curthread->closing_fd = 0;
 			_thread_kern_sched_state(PS_SELECT_WAIT, __FILE__, __LINE__);
 			if (curthread->interrupted) {
 				errno = EINTR;
-				data.nfds = 0;
-				ret = -1;
-			} else if (curthread->closing_fd) {
-				errno = EBADF;
 				data.nfds = 0;
 				ret = -1;
 			} else
