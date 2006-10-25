@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.162 2006/07/07 17:37:17 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.163 2006/10/25 20:52:34 moritz Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -101,11 +101,9 @@ cvs_file_init(void)
 			len = strlen(buf);
 			if (len == 0)
 				continue;
+			if (buf[len - 1] == '\n')
+				buf[len - 1] = '\0';
 
-			if (buf[len - 1] != '\n')
-				cvs_log(LP_ERR, "line too long in `%s'", path);
-
-			buf[--len] = '\0';
 			cvs_file_ignore(buf, &cvs_ign_pats);
 		}
 
@@ -396,8 +394,10 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		fatal("cvs_file_walkdir: overflow");
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
-		while (fgets(fpath, MAXPATHLEN, fp)) {
+		while (fgets(fpath, MAXPATHLEN, fp) != NULL) {
 			len = strlen(fpath);
+			if (len == 0)
+				continue;
 			if (fpath[len - 1] == '\n')
 				fpath[len - 1] = '\0';
 
