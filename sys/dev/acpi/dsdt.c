@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.59 2006/10/25 20:55:47 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.60 2006/10/25 21:23:19 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -827,6 +827,12 @@ aml_setbufint(struct aml_value *dst, int bitpos, int bitlen,
 {
 	if (src->type != AML_OBJTYPE_BUFFER)
 		aml_die("wrong setbufint type\n");
+	
+#if 1
+	/* Return buffer type */
+	_aml_setvalue(dst, AML_OBJTYPE_BUFFER, (bitlen+7)>>3, NULL);
+	aml_bufcpy(dst->v_buffer, 0, src->v_buffer, bitpos, bitlen);
+#else
 	if (bitlen < aml_intlen) {
 		/* XXX: Endian issues?? */
 		/* Return integer type */
@@ -838,6 +844,7 @@ aml_setbufint(struct aml_value *dst, int bitpos, int bitlen,
 		_aml_setvalue(dst, AML_OBJTYPE_BUFFER, (bitlen+7)>>3, NULL);
 		aml_bufcpy(dst->v_buffer, 0, src->v_buffer, bitpos, bitlen);
 	}
+#endif
 }
 
 /* Copy from a string/integer/buffer to a bufferfield */
