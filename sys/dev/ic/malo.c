@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.10 2006/10/24 19:20:01 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.11 2006/10/25 20:42:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -138,7 +138,6 @@ struct malo_hw_spec {
 	uint32_t	WcbBase3;
 } __packed;
 
-
 #define malo_mem_write4(sc, off, x) \
 	bus_space_write_4((sc)->sc_mem1_bt, (sc)->sc_mem1_bh, (off), (x))
 #define malo_mem_write2(sc, off, x) \
@@ -164,6 +163,7 @@ struct cfdriver malo_cd = {
 
 int	malo_alloc_cmd(struct malo_softc *sc);
 void	malo_free_cmd(struct malo_softc *sc);
+int	malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor);
 int	malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring,
 	    int count);
 void	malo_reset_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
@@ -171,11 +171,6 @@ void	malo_free_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring);
 int	malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 	    int count);
 void	malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring);
-int	malo_load_bootimg(struct malo_softc *sc);
-int	malo_load_firmware(struct malo_softc *sc);
-int	malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor);
-int	malo_reset(struct malo_softc *sc);
-int	malo_get_spec(struct malo_softc *sc);
 int	malo_init(struct ifnet *ifp);
 int	malo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void	malo_start(struct ifnet *ifp);
@@ -188,6 +183,10 @@ void	malo_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 struct ieee80211_node *
 	malo_node_alloc(struct ieee80211com *ic);
 void	malo_rx_intr(struct malo_softc *sc);
+int	malo_load_bootimg(struct malo_softc *sc);
+int	malo_load_firmware(struct malo_softc *sc);
+int	malo_cmd_get_spec(struct malo_softc *sc);
+int	malo_cmd_reset(struct malo_softc *sc);
 
 /* supported rates */
 const struct ieee80211_rateset  malo_rates_11b =
@@ -232,6 +231,7 @@ malo_intr(void *arg)
 
 	/* just ack the interrupt */
 	malo_ctl_write4(sc, 0x0c30, 0);
+
 	return (1);
 }
 
@@ -242,8 +242,8 @@ malo_attach(struct malo_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int i;
 #if 0
-	/* ??? */
-	//malo_ctl_write4(sc, 0x0c38, 0x1f);
+	/* ???, what is this for, seems unnecessary */
+	/* malo_ctl_write4(sc, 0x0c38, 0x1f); */
 	/* disable interrupts */
 	malo_ctl_read4(sc, 0x0c30);
 	malo_ctl_write4(sc, 0x0c30, 0);
@@ -385,6 +385,32 @@ malo_free_cmd(struct malo_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_dmam);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_cookie, PAGE_SIZE);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmd_dmas, 1);
+}
+
+int
+malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor)
+{
+	int i;
+
+	malo_ctl_write4(sc, 0x0c10, (uint32_t)addr);
+	malo_ctl_read4(sc, 0x0c14);
+	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
+	malo_ctl_read4(sc, 0x0c14);
+
+	if (waitfor == 0)
+		return (0);
+
+	/* wait for the DMA engine to finish the transfer */
+	for (i = 0; i < 100; i++) {
+		delay(50);
+		if (malo_ctl_read4(sc, 0x0c14) == waitfor);
+			break;
+	}
+
+	if (i == 100)
+		return (ETIMEDOUT);
+
+	return (0);
 }
 
 int
@@ -668,229 +694,6 @@ malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring)
 }
 
 int
-malo_load_bootimg(struct malo_softc *sc)
-{
-	char *name = "mrv8k-b.fw";
-	uint8_t	*ucode;
-	size_t size, count;
-	int error;
-
-	/* load boot firmware */
-	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
-		DPRINTF(("%s: error %d, could not read microcode %s!\n",
-		    sc->sc_dev.dv_xname, error, name));
-		return (EIO);
-	}
-
-	/*
-	 * It seems we are putting this code directly onto the stack of
-	 * the ARM cpu. I don't know why we need to instruct the DMA
-	 * engine to move the code. This is a big riddle without docu.
-	 */
-	DPRINTF(("%s: loading boot firmware\n", sc->sc_dev.dv_xname));
-	malo_mem_write2(sc, 0xbef8, 0x001);
-	malo_mem_write2(sc, 0xbefa, size);
-	malo_mem_write4(sc, 0xbefc, 0);
-
-	for (count = 0; count < size; count++)
-		malo_mem_write1(sc, 0xbf00 + count, ucode[count]);
-
-	/*
-	 * we loaded the firmware into card memory now tell the CPU
-	 * to fetch the code and execute it. The memory mapped via the
-	 * first bar is internaly mapped to 0xc0000000.
-	 */
-	if (malo_send_cmd(sc, 0xc000bef8, 5) != 0) {
-		printf("%s: timeout at boot firmware load!\n",
-		    sc->sc_dev.dv_xname);
-		free(ucode, M_DEVBUF);
-		return (ETIMEDOUT);
-	} 
-	free(ucode, M_DEVBUF);
-
-	/* tell the card we're done and... */
-	malo_mem_write2(sc, 0xbef8, 0x001);
-	malo_mem_write2(sc, 0xbefa, 0);
-	malo_mem_write4(sc, 0xbefc, 0);
-	malo_send_cmd(sc, 0xc000bef8, 0);
-
-	/* give card a bit time to init */
-	delay(50);
-	DPRINTF(("%s: boot firmware loaded\n", sc->sc_dev.dv_xname));
-
-	return (0);
-}
-
-int
-malo_load_firmware(struct malo_softc *sc)
-{
-	struct malo_cmdheader *hdr;
-	char *name = "mrv8k-f.fw";
-	void *data;
-	uint8_t *ucode;
-	size_t size, count, bsize;
-	int sn, error;
-
-	/* load real firmware now */
-	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
-		DPRINTF(("%s: error %d, could not read microcode %s!\n",
-		    sc->sc_dev.dv_xname, error, name));
-		return (EIO);
-	}
-
-	DPRINTF(("%s: loading firmware\n", sc->sc_dev.dv_xname));
-	hdr = sc->sc_cmd_mem;
-	data = hdr + 1;
-	sn = 1;
-	for (count = 0; count < size; count += bsize) {
-		bsize = MIN(256, size - count);
-
-		hdr->cmd = htole16(0x0001);
-		hdr->size = htole16(bsize);
-		hdr->seqnum = htole16(sn++);
-		hdr->result = 0;
-
-		bcopy(ucode + count, data, bsize);
-
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-		if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
-			printf("%s: timeout at firmware upload!\n",
-			    sc->sc_dev.dv_xname);
-			free(ucode, M_DEVBUF);
-			return (ETIMEDOUT);
-		}
-
-		delay(100);
-	}
-	free(ucode, M_DEVBUF);
-
-	DPRINTF(("%s: firmware upload finished\n", sc->sc_dev.dv_xname));
-	
-	hdr->cmd = htole16(0x0001);
-	hdr->size = 0;
-	hdr->seqnum = htole16(sn++);
-	hdr->result = 0;
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0xf0f1f2f4) != 0) {
-		printf("%s: timeout at firmware load!\n", sc->sc_dev.dv_xname);
-		return (ETIMEDOUT);
-	}
-
-	/* give card a bit time to load firmware */
-	delay(20000);
-	DPRINTF(("%s: firmware loaded\n", sc->sc_dev.dv_xname));
-
-	return (0);
-}
-
-int
-malo_send_cmd(struct malo_softc *sc, bus_addr_t addr, uint32_t waitfor)
-{
-	int i;
-
-	malo_ctl_write4(sc, 0x0c10, (uint32_t)addr);
-	malo_ctl_read4(sc, 0x0c14);
-	malo_ctl_write4(sc, 0x0c18, 2); /* CPU_TRANSFER_CMD */
-	malo_ctl_read4(sc, 0x0c14);
-
-	if (waitfor == 0)
-		return (0);
-
-	/* wait for the DMA engine to finish the transfer */
-	for (i = 0; i < 100; i++) {
-		delay(50);
-		if (malo_ctl_read4(sc, 0x0c14) == waitfor);
-			break;
-	}
-
-	if (i == 100)
-		return (ETIMEDOUT);
-
-	return (0);
-}
-
-int
-malo_reset(struct malo_softc *sc)
-{
-	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
-
-	hdr->cmd = htole16(5);
-	hdr->size = htole16(sizeof(*hdr));
-	hdr->seqnum = 1;
-	hdr->result = 0;
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-
-	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	tsleep(sc, 0, "malorst", hz);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
-
-	if (hdr->cmd & MALO_CMD_RESPONSE)
-		return (0);
-	else
-		return (ETIMEDOUT);
-}
-
-int
-malo_get_spec(struct malo_softc *sc)
-{
-	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
-	struct malo_hw_spec *spec;
-
-	hdr->cmd = htole16(MALO_CMD_GET_HW_SPEC);
-	hdr->size = htole16(sizeof(*hdr) + sizeof(*spec));
-	hdr->seqnum = htole16(42);	/* the one and only */
-	hdr->result = 0;
-	spec = (struct malo_hw_spec *)(hdr + 1);
-
-	DPRINTF(("%s: fw cmd %04x size %d\n", sc->sc_dev.dv_xname,
-	    hdr->cmd, hdr->size));
-
-	bzero(spec, sizeof(*spec));
-	memset(spec->PermanentAddress, 0xff, ETHER_ADDR_LEN);
-	spec->CookiePtr = htole32(sc->sc_cookie_dmaaddr);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-
-	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
-	tsleep(sc, 0, "malospc", hz);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
-	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
-
-	if ((hdr->cmd & MALO_CMD_RESPONSE) == 0)
-		return (ETIMEDOUT);
-
-	/* XXX get the data form the buffer and feed it to ieee80211 */
-	DPRINTF(("%s: get_hw_spec: V%x R%x, #WCB %d, #Mcast %d, Regcode %d, "
-	    "#Ant %d\n", sc->sc_dev.dv_xname, htole16(spec->HwVersion),
-	    htole32(spec->FWReleaseNumber), htole16(spec->NumOfWCB),
-	    htole16(spec->NumOfMCastAdr), htole16(spec->RegionCode),
-	    htole16(spec->NumberOfAntenna)));
-
-	/* tell the DMA engine where our rings are */
-	malo_mem_write4(sc, letoh32(spec->RxPdRdPtr) & 0xffff,
-	    htole32(sc->sc_rxring.physaddr));
-	malo_mem_write4(sc, letoh32(spec->RxPdWrPtr) & 0xffff,
-	    htole32(sc->sc_rxring.physaddr));
-	malo_mem_write4(sc, letoh32(spec->WcbBase0) & 0xffff,
-	    htole32(sc->sc_txring.physaddr));
-
-	/* save DMA RX pointers for later use */
-	sc->sc_RxPdRdPtr = letoh32(spec->RxPdRdPtr) & 0xffff;
-	sc->sc_RxPdWrPtr = letoh32(spec->RxPdWrPtr) & 0xffff;
-
-	return (0);
-}
-
-int
 malo_init(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
@@ -918,7 +721,7 @@ malo_init(struct ifnet *ifp)
 	malo_ctl_write4(sc, 0x0c3c, 0x1f);
 	malo_ctl_read4(sc, 0x0c14);
 
-	if ((error = malo_get_spec(sc)))
+	if ((error = malo_cmd_get_spec(sc)))
 		return (error);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -978,7 +781,7 @@ malo_stop(struct malo_softc *sc)
 
 	/* try to reset card, if the firmware is loaded */
 	if (ifp->if_flags & IFF_RUNNING)
-		malo_reset(sc);
+		malo_cmd_reset(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -1160,4 +963,201 @@ skip:
         }
 
 	malo_mem_write4(sc, sc->sc_RxPdRdPtr, rxRdPtr);
+}
+
+int
+malo_load_bootimg(struct malo_softc *sc)
+{
+	char *name = "mrv8k-b.fw";
+	uint8_t	*ucode;
+	size_t size, count;
+	int error;
+
+	/* load boot firmware */
+	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
+		DPRINTF(("%s: error %d, could not read microcode %s!\n",
+		    sc->sc_dev.dv_xname, error, name));
+		return (EIO);
+	}
+
+	/*
+	 * It seems we are putting this code directly onto the stack of
+	 * the ARM cpu. I don't know why we need to instruct the DMA
+	 * engine to move the code. This is a big riddle without docu.
+	 */
+	DPRINTF(("%s: loading boot firmware\n", sc->sc_dev.dv_xname));
+	malo_mem_write2(sc, 0xbef8, 0x001);
+	malo_mem_write2(sc, 0xbefa, size);
+	malo_mem_write4(sc, 0xbefc, 0);
+
+	for (count = 0; count < size; count++)
+		malo_mem_write1(sc, 0xbf00 + count, ucode[count]);
+
+	/*
+	 * we loaded the firmware into card memory now tell the CPU
+	 * to fetch the code and execute it. The memory mapped via the
+	 * first bar is internaly mapped to 0xc0000000.
+	 */
+	if (malo_send_cmd(sc, 0xc000bef8, 5) != 0) {
+		printf("%s: timeout at boot firmware load!\n",
+		    sc->sc_dev.dv_xname);
+		free(ucode, M_DEVBUF);
+		return (ETIMEDOUT);
+	} 
+	free(ucode, M_DEVBUF);
+
+	/* tell the card we're done and... */
+	malo_mem_write2(sc, 0xbef8, 0x001);
+	malo_mem_write2(sc, 0xbefa, 0);
+	malo_mem_write4(sc, 0xbefc, 0);
+	malo_send_cmd(sc, 0xc000bef8, 0);
+
+	/* give card a bit time to init */
+	delay(50);
+	DPRINTF(("%s: boot firmware loaded\n", sc->sc_dev.dv_xname));
+
+	return (0);
+}
+
+int
+malo_load_firmware(struct malo_softc *sc)
+{
+	struct malo_cmdheader *hdr;
+	char *name = "mrv8k-f.fw";
+	void *data;
+	uint8_t *ucode;
+	size_t size, count, bsize;
+	int sn, error;
+
+	/* load real firmware now */
+	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
+		DPRINTF(("%s: error %d, could not read microcode %s!\n",
+		    sc->sc_dev.dv_xname, error, name));
+		return (EIO);
+	}
+
+	DPRINTF(("%s: loading firmware\n", sc->sc_dev.dv_xname));
+	hdr = sc->sc_cmd_mem;
+	data = hdr + 1;
+	sn = 1;
+	for (count = 0; count < size; count += bsize) {
+		bsize = MIN(256, size - count);
+
+		hdr->cmd = htole16(0x0001);
+		hdr->size = htole16(bsize);
+		hdr->seqnum = htole16(sn++);
+		hdr->result = 0;
+
+		bcopy(ucode + count, data, bsize);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+		if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 5) != 0) {
+			printf("%s: timeout at firmware upload!\n",
+			    sc->sc_dev.dv_xname);
+			free(ucode, M_DEVBUF);
+			return (ETIMEDOUT);
+		}
+
+		delay(100);
+	}
+	free(ucode, M_DEVBUF);
+
+	DPRINTF(("%s: firmware upload finished\n", sc->sc_dev.dv_xname));
+	
+	hdr->cmd = htole16(0x0001);
+	hdr->size = 0;
+	hdr->seqnum = htole16(sn++);
+	hdr->result = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	if (malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0xf0f1f2f4) != 0) {
+		printf("%s: timeout at firmware load!\n", sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
+	/* give card a bit time to load firmware */
+	delay(20000);
+	DPRINTF(("%s: firmware loaded\n", sc->sc_dev.dv_xname));
+
+	return (0);
+}
+
+int
+malo_cmd_get_spec(struct malo_softc *sc)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+	struct malo_hw_spec *spec;
+
+	hdr->cmd = htole16(MALO_CMD_GET_HW_SPEC);
+	hdr->size = htole16(sizeof(*hdr) + sizeof(*spec));
+	hdr->seqnum = htole16(42);	/* the one and only */
+	hdr->result = 0;
+	spec = (struct malo_hw_spec *)(hdr + 1);
+
+	DPRINTF(("%s: fw cmd %04x size %d\n", sc->sc_dev.dv_xname,
+	    hdr->cmd, hdr->size));
+
+	bzero(spec, sizeof(*spec));
+	memset(spec->PermanentAddress, 0xff, ETHER_ADDR_LEN);
+	spec->CookiePtr = htole32(sc->sc_cookie_dmaaddr);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malospc", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+
+	if ((hdr->cmd & MALO_CMD_RESPONSE) == 0)
+		return (ETIMEDOUT);
+
+	/* XXX get the data form the buffer and feed it to ieee80211 */
+	DPRINTF(("%s: get_hw_spec: V%x R%x, #WCB %d, #Mcast %d, Regcode %d, "
+	    "#Ant %d\n", sc->sc_dev.dv_xname, htole16(spec->HwVersion),
+	    htole32(spec->FWReleaseNumber), htole16(spec->NumOfWCB),
+	    htole16(spec->NumOfMCastAdr), htole16(spec->RegionCode),
+	    htole16(spec->NumberOfAntenna)));
+
+	/* tell the DMA engine where our rings are */
+	malo_mem_write4(sc, letoh32(spec->RxPdRdPtr) & 0xffff,
+	    htole32(sc->sc_rxring.physaddr));
+	malo_mem_write4(sc, letoh32(spec->RxPdWrPtr) & 0xffff,
+	    htole32(sc->sc_rxring.physaddr));
+	malo_mem_write4(sc, letoh32(spec->WcbBase0) & 0xffff,
+	    htole32(sc->sc_txring.physaddr));
+
+	/* save DMA RX pointers for later use */
+	sc->sc_RxPdRdPtr = letoh32(spec->RxPdRdPtr) & 0xffff;
+	sc->sc_RxPdWrPtr = letoh32(spec->RxPdWrPtr) & 0xffff;
+
+	return (0);
+}
+
+int
+malo_cmd_reset(struct malo_softc *sc)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+
+	hdr->cmd = htole16(5);
+	hdr->size = htole16(sizeof(*hdr));
+	hdr->seqnum = 1;
+	hdr->result = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	malo_send_cmd(sc, sc->sc_cmd_dmaaddr, 0);
+	tsleep(sc, 0, "malorst", hz);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if (hdr->cmd & MALO_CMD_RESPONSE)
+		return (0);
+	else
+		return (ETIMEDOUT);
 }
