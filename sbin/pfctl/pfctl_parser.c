@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.231 2006/10/17 07:14:28 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.232 2006/10/25 11:28:36 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -733,7 +733,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf(" out");
 	if (r->log) {
 		printf(" log");
-		if (r->log & ~PF_LOG) {
+		if (r->log & ~PF_LOG || r->logif) {
 			int count = 0;
 
 			printf(" (");
@@ -741,6 +741,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 				printf("%sall", count++ ? ", " : "");
 			if (r->log & PF_LOG_SOCKET_LOOKUP)
 				printf("%suser", count++ ? ", " : "");
+			if (r->logif)
+				printf("%sto pflog%u", count++ ? ", " : "",
+				    r->logif);
 			printf(")");
 		}
 	}

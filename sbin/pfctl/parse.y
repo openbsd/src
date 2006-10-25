@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.508 2006/10/17 07:14:28 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.509 2006/10/25 11:28:36 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -372,6 +372,7 @@ typedef struct {
 		}			 keep_state;
 		struct {
 			u_int8_t	 log;
+			u_int8_t	 logif;
 			u_int8_t	 quick;
 		}			 logquick;
 		struct {
@@ -421,7 +422,7 @@ typedef struct {
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno
-%type	<v.i>			no dir log logopts logopt af fragcache
+%type	<v.i>			no dir af fragcache
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action nataction natpass scrubaction
 %type	<v.b>			flags flag blockspec
@@ -445,7 +446,7 @@ typedef struct {
 %type	<v.string>		label string tag
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
-%type	<v.logquick>		logquick quick
+%type	<v.logquick>		logquick quick log logopts logopt
 %type	<v.interface>		antispoof_ifspc antispoof_iflst antispoof_if
 %type	<v.qassign>		qname
 %type	<v.queue>		qassign qassign_list qassign_item
@@ -792,6 +793,7 @@ scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 			r.direction = $2;
 
 			r.log = $3.log;
+			r.logif = $3.logif;
 			if ($3.quick) {
 				yyerror("scrub rules do not support 'quick'");
 				YYERROR;
@@ -929,6 +931,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				r.action = PF_DROP;
 				r.direction = PF_IN;
 				r.log = $2.log;
+				r.logif = $2.logif;
 				r.quick = $2.quick;
 				r.af = $4;
 				if (rule_label(&r, $5.label))
@@ -1565,6 +1568,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			}
 			r.direction = $2;
 			r.log = $3.log;
+			r.logif = $3.logif;
 			r.quick = $3.quick;
 			r.prob = $9.prob;
 			r.rtableid = $9.rtableid;
@@ -2108,22 +2112,51 @@ quick		: /* empty */			{ $$.quick = 0; }
 		;
 
 logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
-		| log				{ $$.log = $1; $$.quick = 0; }
-		| QUICK				{ $$.log = 0; $$.quick = 1; }
-		| log QUICK			{ $$.log = $1; $$.quick = 1; }
-		| QUICK log			{ $$.log = $2; $$.quick = 1; }
+		| log				{ $$ = $1; }
+		| QUICK				{ $$.quick = 1; }
+		| log QUICK			{ $$ = $1; $$.quick = 1; }
+		| QUICK log			{ $$ = $2; $$.quick = 1; }
 		;
 
-log		: LOG				{ $$ = PF_LOG; }
-		| LOG '(' logopts ')'		{ $$ = PF_LOG | $3; }
+log		: LOG			{ $$.log = PF_LOG; $$.logif = 0; }
+		| LOG '(' logopts ')'	{
+			$$.log = PF_LOG | $3.log;
+			$$.logif = $3.logif;
+		}
 		;
 
 logopts		: logopt			{ $$ = $1; }
-		| logopts comma logopt		{ $$ = $1 | $3; }
+		| logopts comma logopt		{
+			$$.log = $1.log | $3.log;
+			$$.logif = $3.logif;
+			if ($$.logif == 0)
+				$$.logif = $1.logif;
+		}
+		;
 
-logopt		: ALL				{ $$ = PF_LOG_ALL; }
-		| USER				{ $$ = PF_LOG_SOCKET_LOOKUP; }
-		| GROUP				{ $$ = PF_LOG_SOCKET_LOOKUP; }
+logopt		: ALL		{ $$.log = PF_LOG_ALL; $$.logif = 0; }
+		| USER		{ $$.log = PF_LOG_SOCKET_LOOKUP; $$.logif = 0; }
+		| GROUP		{ $$.log = PF_LOG_SOCKET_LOOKUP; $$.logif = 0; }
+		| TO string	{
+			const char	*errstr;
+			u_int		 i;
+
+			$$.log = 0;
+			if (strncmp($2, "pflog", 5)) {
+				yyerror("%s: should be a pflog interface", $2);
+				free($2);
+				YYERROR;
+			}
+			i = strtonum($2 + 5, 0, 255, &errstr);
+			if (errstr) {
+				yyerror("%s: %s", $2, errstr);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			$$.logif = i;
+		}
+		;
 
 interface	: /* empty */			{ $$ = NULL; }
 		| ON if_item_not		{ $$ = $2; }
@@ -3292,7 +3325,7 @@ redirection	: /* empty */			{ $$ = NULL; }
 
 natpass		: /* empty */	{ $$.b1 = $$.b2 = 0; }
 		| PASS		{ $$.b1 = 1; $$.b2 = 0; }
-		| PASS log	{ $$.b1 = 1; $$.b2 = $2; }
+		| PASS log	{ $$.b1 = 1; $$.b2 = $2.log; $$.w2 = $2.logif; }
 		;
 
 nataction	: no NAT natpass {
@@ -3306,6 +3339,7 @@ nataction	: no NAT natpass {
 				$$.b1 = PF_NAT;
 			$$.b2 = $3.b1;
 			$$.w = $3.b2;
+			$$.w2 = $3.w2;
 		}
 		| no RDR natpass {
 			if ($1 && $3.b1) {
@@ -3318,6 +3352,7 @@ nataction	: no NAT natpass {
 				$$.b1 = PF_RDR;
 			$$.b2 = $3.b1;
 			$$.w = $3.b2;
+			$$.w2 = $3.w2;
 		}
 		;
 
@@ -3334,6 +3369,7 @@ natrule		: nataction interface af proto fromto tag tagged rtable
 			r.action = $1.b1;
 			r.natpass = $1.b2;
 			r.log = $1.w;
+			r.logif = $1.w2;
 			r.af = $3;
 
 			if (!r.af) {
@@ -3503,6 +3539,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 				binat.action = PF_BINAT;
 			binat.natpass = $3.b1;
 			binat.log = $3.b2;
+			binat.logif = $3.w2;
 			binat.af = $5;
 			if (!binat.af && $8 != NULL && $8->af)
 				binat.af = $8->af;
