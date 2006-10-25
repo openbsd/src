@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.58 2006/10/24 19:01:48 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.59 2006/10/25 20:55:47 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1105,6 +1105,7 @@ aml_derefvalue(struct aml_scope *scope, struct aml_value *ref, int mode)
 {
 	struct aml_node *node;
 	struct aml_value *tmp;
+	int64_t tmpint;
 	int argc, index;
 
 	for (;;) {
@@ -1126,6 +1127,13 @@ aml_derefvalue(struct aml_scope *scope, struct aml_value *ref, int mode)
 				case AML_OBJTYPE_PACKAGE:
 					ref = ref->v_package[index];
 					break;
+				case AML_OBJTYPE_INTEGER:
+					/* Convert to temporary buffer */
+					if (ref->node)
+						aml_die("named integer index\n");
+					tmpint = ref->v_integer;
+					_aml_setvalue(ref, AML_OBJTYPE_BUFFER, aml_intlen>>3, &tmpint);
+					/* FALLTHROUGH */
 				case AML_OBJTYPE_BUFFER:
 				case AML_OBJTYPE_STRING:
 					/* Return contents at this index */
@@ -1220,6 +1228,7 @@ _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 	lhs->type = type;
 	switch (lhs->type & ~AML_STATIC) {
 	case AML_OBJTYPE_INTEGER:
+		lhs->length = aml_intlen>>3;
 		lhs->v_integer = ival;
 		break;
 	case AML_OBJTYPE_METHOD:
@@ -1268,7 +1277,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		break;
 	case AML_OBJTYPE_INTEGER:
 	case AML_OBJTYPE_MUTEX:
-		lhs->v_integer = rhs->v_integer;
+		_aml_setvalue(lhs, rhs->type, rhs->v_integer, NULL);
 		break;
 	case AML_OBJTYPE_BUFFER:
 		_aml_setvalue(lhs, rhs->type, rhs->length, rhs->v_buffer);
@@ -1283,7 +1292,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		lhs->v_processor = rhs->v_processor;
 		break;
 	case AML_OBJTYPE_NAMEREF:
-		lhs->v_nameref = rhs->v_nameref;
+		_aml_setvalue(lhs, rhs->type, 0, rhs->v_nameref);
 		break;
 	case AML_OBJTYPE_PACKAGE:
 		_aml_setvalue(lhs, rhs->type, rhs->length, NULL);
