@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2006/05/31 03:59:51 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.35 2006/10/25 12:23:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -93,7 +93,6 @@ struct sym {
 
 int			 symset(const char *, const char *, int);
 char			*symget(const char *);
-int			 atoul(char *, u_long *);
 struct area		*conf_get_area(struct in_addr);
 struct iface		*conf_get_if(struct kif *);
 
@@ -130,14 +129,16 @@ grammar		: /* empty */
 		;
 
 number		: STRING {
-			u_long	ulval;
+			u_int32_t	 uval;
+			const char	*errstr;
 
-			if (atoul($1, &ulval) == -1) {
-				yyerror("%s is not a number", $1);
+			uval = strtonum($1, 0, UINT_MAX, &errstr);
+			if (errstr) {
+				yyerror("number %s is %s", $1, errstr);
 				free($1);
 				YYERROR;
 			} else
-				$$ = ulval;
+				$$ = uval;
 			free($1);
 		}
 		;
@@ -866,22 +867,6 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
-}
-
-int
-atoul(char *s, u_long *ulvalp)
-{
-	u_long	 ulval;
-	char	*ep;
-
-	errno = 0;
-	ulval = strtoul(s, &ep, 0);
-	if (s[0] == '\0' || *ep != '\0')
-		return (-1);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (-1);
-	*ulvalp = ulval;
-	return (0);
 }
 
 struct area *
