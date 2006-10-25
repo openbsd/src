@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2006/05/26 01:06:12 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2006/10/25 18:58:42 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -44,7 +44,6 @@ static struct ifsd_config	*conf;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
-static int			 pdebug = 1;
 char				*infile;
 char				*start_state;
 
@@ -73,7 +72,6 @@ struct sym {
 void			 link_states(struct ifsd_action *);
 int			 symset(const char *, const char *, int);
 char			*symget(const char *);
-int			 atoul(char *, u_long *);
 void			 set_expression_depth(struct ifsd_expression *, int);
 void			 init_state(struct ifsd_state *);
 struct ifsd_ifstate	*new_ifstate(u_short, int);
@@ -121,14 +119,16 @@ grammar		: /* empty */
 		;
 
 number		: STRING			{
-			u_long	ulval;
+			u_int32_t	 uval;
+			const char	*errstr;
 
-			if (atoul($1, &ulval) == -1) {
-				yyerror("%s is not a number", $1);
+			uval = strtonum($1, 0, UINT_MAX, &errstr);
+			if (errstr) {	
+				yyerror("number %s is %s", $1, errstr);
 				free($1);
 				YYERROR;
 			} else
-				$$ = ulval;
+				$$ = uval;
 			free($1);
 		}
 		;
@@ -413,15 +413,10 @@ lookup(char *s)
 	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
 
-	if (p) {
-		if (pdebug > 1)
-			fprintf(stderr, "%s: %d\n", s, p->k_val);
+	if (p)
 		return (p->k_val);
-	} else {
-		if (pdebug > 1)
-			fprintf(stderr, "string: %s\n", s);
+	else
 		return (STRING);
-	}
 }
 
 #define MAXPUSHBACK	128
@@ -785,22 +780,6 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
-}
-
-int
-atoul(char *s, u_long *ulvalp)
-{
-	u_long	 ulval;
-	char	*ep;
-
-	errno = 0;
-	ulval = strtoul(s, &ep, 0);
-	if (s[0] == '\0' || *ep != '\0')
-		return (-1);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (-1);
-	*ulvalp = ulval;
-	return (0);
 }
 
 void
