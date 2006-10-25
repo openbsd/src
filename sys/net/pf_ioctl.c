@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.169 2006/08/30 11:31:02 djm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.170 2006/10/25 11:26:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -71,6 +71,10 @@
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
 #endif /* NPFSYNC > 0 */
+
+#if NPFLOG > 0
+#include <net/if_pflog.h>
+#endif /* NPFLOG > 0 */
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -1419,6 +1423,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EBUSY;
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
+#if NPFLOG > 0
+		if (rule->logif >= PFLOGIFS_MAX)
+			error = EINVAL;
+#endif
 		if (pf_rtlabel_add(&rule->src.addr) ||
 		    pf_rtlabel_add(&rule->dst.addr))
 			error = EBUSY;

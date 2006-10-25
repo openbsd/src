@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.19 2006/10/23 12:46:09 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.20 2006/10/25 11:26:47 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -221,7 +221,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	if (kif == NULL || m == NULL || rm == NULL || pd == NULL)
 		return (-1);
 
-	if ((ifn = pflogifs[0]) == NULL || !ifn->if_bpf)
+	if ((ifn = pflogifs[rm->logif]) == NULL || !ifn->if_bpf)
 		return (0);
 
 	bzero(&hdr, sizeof(hdr));

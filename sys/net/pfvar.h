@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.238 2006/10/17 14:08:17 reyk Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.239 2006/10/25 11:26:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -563,6 +563,7 @@ struct pf_rule {
 	u_int8_t		 action;
 	u_int8_t		 direction;
 	u_int8_t		 log;
+	u_int8_t		 logif;
 	u_int8_t		 quick;
 	u_int8_t		 ifnot;
 	u_int8_t		 match_tag_not;
