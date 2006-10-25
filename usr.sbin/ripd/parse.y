@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2006/10/24 16:37:48 david Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2006/10/25 20:01:02 henning Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -45,7 +45,6 @@ static struct ripd_conf		*conf;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
-static int			 pdebug = 1;
 char				*infile;
 char				*start_state;
 
@@ -382,15 +381,10 @@ lookup(char *s)
 	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
 
-	if (p) {
-		if (pdebug > 1)
-			fprintf(stderr, "%s: %d\n", s, p->k_val);
+	if (p)
 		return (p->k_val);
-	} else {
-		if (pdebug > 1)
-			fprintf(stderr, "string: %s\n", s);
+	else
 		return (STRING);
-	}
 }
 
 #define MAXPUSHBACK	128
