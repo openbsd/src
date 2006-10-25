@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.13 2006/10/23 12:46:09 henning Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.14 2006/10/25 11:27:01 henning Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -27,7 +27,7 @@
 #ifndef _NET_IF_PFLOG_H_
 #define _NET_IF_PFLOG_H_
 
-#define	PFLOGIFS_MAX	1
+#define	PFLOGIFS_MAX	16
 
 struct pflog_softc {
 	struct ifnet		sc_if;		/* the interface */
