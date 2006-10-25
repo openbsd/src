@@ -1,0 +1,128 @@
+# $OpenBSD: RAMDISK,v 1.1 2006/10/25 01:42:10 drahn Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		landisk	sh
+maxusers	32			# estimated number of users
+
+option	 	SH4			# processor family; MANDATORY
+option 		SH7751R			# processor type; MANDATORY
+
+# CPU-related options.
+option	 	PCLOCK=33333333		# 33.33MHz clock
+option	 	DONT_INIT_BSC
+#option	 	DONT_INIT_PCIBSC
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+# Cache options.
+option	 	SH4_CACHE_DISABLE_EMODE	# disable extended (2x larger) mode
+
+option		DST=0			# daylight saving time used by RTC
+option		FFS			# UFS
+option		CD9660			# ISO 9660 + Rock Ridge file system
+option		MSDOSFS			# MS-DOS file system
+option		INET			# IP + ICMP + TCP + UDP
+option		INET6			# IPv6 (needs INET)
+option		DDB			# kernel debugger
+option		EXT2FS			# Second Extended Filesystem
+option		FIFO			# FIFOs; RECOMMENDED
+
+
+config		bsd	root on rd0a swap on rd0b
+
+mainbus0 at root
+cpu0	at mainbus?
+
+# PCI bus support
+shpcic*	at mainbus?			# SH7751 PCIC
+pci0	at shpcic?
+
+# SH bus
+shb*	at mainbus?
+
+# ob-board I/O bus
+obio0	at mainbus?
+
+# Serial Devices
+option	SCIFCONSOLE
+option	SCIFCN_SPEED=9600
+scif0	at shb?
+
+rsclock0 at shb?
+
+option WDCDEBUG,WDCDEBUG_MASK=0xff,WDCDEBUG_WD_MASK=0xff  
+wdc0	at obio? port 0x14000000 irq 10		# CF
+wd*	at wdc? flags 0x0000
+
+# Network Interfaces
+
+# PCI network interfaces
+re*	at pci? 			# Realtek 8139C+/8169/8169S/8110S
+rl*	at pci?				# Realtek 8129/8139
+
+# MII/PHY support
+rgephy*	at mii? phy ?
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# PCIIDE 
+pciide*		at pci?
+wd*		at pciide? flags 0x0000
+atapiscsi*	at pciide? flags 0x0000
+scsibus*	at atapiscsi?
+
+# USB Controller and Devices
+
+# PCI USB controllers
+ehci*	at pci?				# Enhanced Host Controller
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at ehci?
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+
+sd*	at scsibus?			# SCSI disk drives
+cd*	at scsibus?			# SCSI CD-ROM drives
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+# mouse & keyboard multiplexor pseudo-devices
+#pseudo-device	wsmux		2
+#pseudo-device	crypto		1
+#pseudo-device	bio		1       # ioctl multiplexing device
+#pseudo-device	hotplug		1       # devices hot plugging
+#pseudo-device	raid		4       # RAIDframe disk driver
+
+
+option          BOOT_CONFIG             # boot-time kernel config
+
+pseudo-device   loop            1       # network loopback
+pseudo-device   bpfilter                1       # packet filter
+pseudo-device   rd              1       # ram disk
+
+# RAMDISK stuff
+option          MINIROOTSIZE=5120
+option          RAMDISK_HOOKS
+
