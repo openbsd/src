@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.79 2006/07/01 21:48:08 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.80 2006/10/26 19:25:34 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1480,7 +1480,13 @@ fxp_mediachange(ifp)
 	struct ifnet *ifp;
 {
 	struct fxp_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
 
+	if (mii->mii_instance) {
+		struct mii_softc *miisc;
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
+	}
 	mii_mediachg(&sc->sc_mii);
 	return (0);
 }
