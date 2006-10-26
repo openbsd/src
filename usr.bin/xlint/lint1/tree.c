@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.43 2006/06/02 17:38:59 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.44 2006/10/26 22:36:54 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.43 2006/06/02 17:38:59 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.44 2006/10/26 22:36:54 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3226,10 +3226,9 @@ parg(farg_t *farg, tnode_t *tn)
 {
 	tnode_t	*ln;
 	type_t	*tp;
-	int	warn, n;
+	int	warn;
 
 	tp = farg->fa_sym->s_type;
-	n = farg->fa_num;
 	ln = xcalloc(1, sizeof (tnode_t));
 	ln->tn_type = tduptyp(tp);
 	ln->tn_type->t_const = 0;
