@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.192 2006/10/25 02:37:50 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.193 2006/10/26 22:41:10 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2715,6 +2715,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 #endif
 	if (!(BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX))
 		goto doit;
+
 	/*
 	 * bcm5700 Revision B silicon cannot handle DMA descriptors with
 	 * less than eight bytes.  If we encounter a teeny mbuf
@@ -2722,6 +2723,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	 */
 	if (bge_compact_dma_runt(m_head) != 0)
 		return (ENOBUFS);
+
 doit:
 	dma = SLIST_FIRST(&sc->txdma_list);
 	if (dma == NULL)
@@ -2757,20 +2759,20 @@ doit:
 		 * of the end of the ring.
 		 */
 		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16)
-			return (ENOBUFS);
+			goto fail_unload;
 		cur = frag;
 		BGE_INC(frag, BGE_TX_RING_CNT);
 		cnt++;
 	}
 
 	if (i < dmamap->dm_nsegs)
-		return (ENOBUFS);
+		goto fail_unload;
 
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	if (frag == sc->bge_tx_saved_considx)
-		return (ENOBUFS);
+		goto fail_unload;
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
@@ -2781,6 +2783,11 @@ doit:
 	*txidx = frag;
 
 	return (0);
+
+fail_unload:
+	bus_dmamap_unload(sc->bge_dmatag, dmamap);
+
+	return (ENOBUFS);
 }
 
 /*
