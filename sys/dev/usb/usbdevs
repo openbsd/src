@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.226 2006/10/19 16:53:48 jsg Exp $
+$OpenBSD: usbdevs,v 1.227 2006/10/26 03:39:09 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -491,6 +491,7 @@ vendor SITECOM		0x6189	Sitecom
 vendor 3COM2		0x6891	3Com
 vendor INTEL		0x8086	Intel
 vendor SITECOM2		0x9016	Sitecom
+vendor MOSCHIP		0x9710	MosChip
 vendor 3COM3		0xa727	3Com
 vendor HP2		0xf003	Hewlett Packard
 
@@ -1540,6 +1541,10 @@ product MOBILEACTION MA620	0x0620	MA-620 IrDA
 /* Mobility products */
 product MOBILITY EA		0x0204	Ethernet
 product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
+
+/* MosChip products */
+product MOSCHIP MCS7703		0x7703	MCS7703 Serial
+product MOSCHIP MCS7830		0x7830	MCS7830 Ethernet
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
