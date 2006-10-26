@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.365 2006/10/26 10:26:03 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.366 2006/10/26 10:29:43 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -470,11 +470,11 @@ in a pfsync failover cluster.
 By default the hostid is set to a pseudo-random value, however it may be
 desireable to manually configure it, for example to more easily identify the
 source of state table entries.
-.Pp
-.Dl set hostid 1
+.Bd -literal -offset indent
+set hostid 1
+.Ed
 .Pp
 The hostid may be specified in either decimal or hexadecimal.
-.Ed
 .It Ar set require-order
 By default
 .Xr pfctl 8
