@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.57 2006/09/21 14:13:37 jmc Exp $
+#	$OpenBSD: Makefile,v 1.58 2006/10/26 08:37:14 tom Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
 MAN=	apm.4 autoconf.4 bios.4 cpu.4 elansc.4 esm.4 \
-	geodesc.4 gscpcib.4 gscpm.4 gus.4 ie.4 \
+	geodesc.4 glxsb.4 gscpcib.4 gscpm.4 gus.4 ie.4 \
 	ichpcib.4 intro.4 \
 	joy.4 le.4 lms.4 mcd.4 mem.4 mms.4 mtrr.4 npx.4 nvram.4 pas.4 \
 	pcibios.4 pctr.4 pss.4 sb.4 \

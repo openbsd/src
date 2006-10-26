@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.529 2006/10/26 04:14:09 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.530 2006/10/26 08:37:14 tom Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -670,6 +670,7 @@ nofn*	at pci?			# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
 safe*	at pci?			# SafeNet SafeXcel 1141/1741
 #ises*	at pci?			# Pijnenburg PCC-ISES
+glxsb*	at pci?			# AMD Geode LX series processor security block
 
 # I2O
 iop*	at pci?			# I2O processor
