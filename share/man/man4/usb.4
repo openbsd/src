@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.76 2006/10/26 04:14:09 jsg Exp $
+.\"	$OpenBSD: usb.4,v 1.77 2006/10/26 19:42:36 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -158,35 +158,33 @@ ZyDAS ZD1211 USB IEEE 802.11b/g wireless network device
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -offset ind -compact
 .It Xr moscom 4
-MosChip Semiconductor MCS7703 based serial adapters
+MosChip Semiconductor MCS7703 based USB serial adapter
 .It Xr uark 4
-Arkmicro Technologies ARK3116 based serial adapters
+Arkmicro Technologies ARK3116 based USB serial adapter
 .It Xr ubsa 4
-Belkin serial adapters
+Belkin USB serial adapter
 .It Xr ucom 4
-Serial port-like devices
+USB tty support
 .It Xr ucycom 4
-Cypress Semiconductor serial adapters
+Cypress microcontroller based USB serial adapter
 .It Xr uftdi 4
-FTDI FT8U100AX-based serial adapters
+FT8U100AX USB serial adapter
 .It Xr uipaq 4
-iPAQ devices
+iPAQ USB units
 .It Xr ulpt 4
-.Tn USB
-Printers
+USB printer support
 .It Xr umct 4
-MCT USB-RS232 serial adapters
+MCT USB-RS232 USB serial adapter
 .It Xr umodem 4
-.Tn USB
-Modems
+USB modem support
 .It Xr umsm 4
-Qualcomm MSM EVDO modems
+Qualcomm MSM EVDO modem device
 .It Xr uplcom 4
-Prolific PL-2303 serial adapters
+Prolific PL-2303 USB serial adapter
 .It Xr uslcom 4
-Silicon Laboratories CP2101/CP2102 serial adapters
+Silicon Laboratories CP2101/CP2102 based USB serial adapter
 .It Xr uvscom 4
-SUNTAC Slipper U VS-10U serial adapters
+SUNTAC Slipper U VS-10U USB serial adapter
 .El
 .Ss Audio devices
 .Bl -tag -width 12n -offset ind -compact
