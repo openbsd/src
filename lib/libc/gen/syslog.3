@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
+.\"	$OpenBSD: syslog.3,v 1.26 2006/10/26 13:52:06 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,11 +125,11 @@ contains the file descriptor of the file where the message is logged
 indicates if connect has been done
 .It Dv opened
 indicates if
-.Xr openlog_r 3
+.Fn openlog_r
 has been called
 .It Dv log_stat
 status bits, set by
-.Xr openlog_r 3
+.Fn openlog_r
 .It Dv log_tag
 string to tag the entry with
 .It Dv log_fac
@@ -182,7 +182,7 @@ The
 .Fn vsyslog_r
 is used the same way as
 .Fn vsyslog
-except that it takes an additional pointer on a
+except that it takes an additional pointer to a
 .Fa syslog_data
 structure.
 It is a reentrant version of the
@@ -291,7 +291,7 @@ The
 function is the reentrant version of the
 .Fn openlog
 function.
-It takes an additional pointer on a
+It takes an additional pointer to a
 .Fa syslog_data
 structure.
 This function must be used in conjunction with the other
@@ -302,7 +302,7 @@ The
 function can be used to close the log file.
 .Fn closelog_r
 does the same thing but in a reentrant way and takes an additional
-pointer on a
+pointer to a
 .Fa syslog_data
 structure.
 .Pp
@@ -330,7 +330,7 @@ The
 .Fn setlogmask_r
 function is the reentrant version of
 .Fn setlogmask .
-It takes an additional pointer on a
+It takes an additional pointer to a
 .Fa syslog_data
 structure.
 .Sh RETURN VALUES
