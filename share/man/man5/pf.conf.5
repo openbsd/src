@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.367 2006/10/26 13:11:05 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.368 2006/10/26 13:15:16 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -463,10 +463,12 @@ For example:
 set state-policy if-bound
 .Ed
 .It Ar set hostid
-The 32 bit
+The 32-bit
 .Ar hostid
 identifies this firewall's state table entries to other firewalls
-in a pfsync failover cluster.
+in a
+.Xr pfsync 4
+failover cluster.
 By default the hostid is set to a pseudo-random value, however it may be
 desireable to manually configure it, for example to more easily identify the
 source of state table entries.
