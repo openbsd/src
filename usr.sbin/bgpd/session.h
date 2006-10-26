@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.87 2006/10/26 13:17:00 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.88 2006/10/26 14:26:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,8 +167,10 @@ struct peer {
 		struct capabilities	peer;
 	}			 capa;
 	struct {
+		struct bgpd_addr	local_addr;
 		u_int32_t		spi_in;
 		u_int32_t		spi_out;
+		enum auth_method	method;
 		u_int8_t		established;
 	} auth;
 	struct sockaddr_storage	 sa_local;
