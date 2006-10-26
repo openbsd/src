@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.79 2006/10/26 19:59:00 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.80 2006/10/26 20:13:13 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -220,22 +220,19 @@ mouse devices
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr udcf 4
-Gude ADS Expert mouseCLOCK DCF77 time signal receiver
+Gude ADS Expert mouseCLOCK DCF77/HBG time signal station receiver
 .It Xr ugen 4
-Generic driver for unknown
-.Tn USB
-devices
+USB generic device support
 .It Xr uow 4
 Maxim/Dallas DS2490 USB 1-Wire adapter
 .It Xr upl 4
 Prolific based host-to-host adapters
 .It Xr uscanner 4
-.Tn USB
-scanners
+USB scanner support
 .It Xr usscanner 4
 SCSI-over-USB scanners
 .It Xr uyap 4
-YAP phone firmware loader
+USB YAP phone firmware loader
 .El
 .Sh INTRODUCTION TO USB
 There are different versions of the
