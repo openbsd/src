@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.69 2006/04/27 02:17:21 tedu Exp $	*/
+/*	$OpenBSD: systm.h,v 1.70 2006/10/26 13:18:24 jmc Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  *
  * Security levels are as follows:
  *   -1	permanently insecure mode - always run system in level 0 mode.
- *    0	insecure mode - immutable and append-only flags make be turned off.
+ *    0	insecure mode - immutable and append-only flags may be turned off.
  *	All devices may be read or written subject to permission modes.
  *    1	secure mode - immutable and append-only flags may not be changed;
  *	raw disks of mounted filesystems, /dev/mem, and /dev/kmem are
@@ -227,7 +227,7 @@ void	wdog_register(void *, int (*)(void *, int));
 /*
  * Startup/shutdown hooks.  Startup hooks are functions running after
  * the scheduler has started but before any threads have been created
- * or root has been mounted The shutdown hooks are functions to be run
+ * or root has been mounted. The shutdown hooks are functions to be run
  * with all interrupts disabled immediately before the system is
  * halted or rebooted.
  */
