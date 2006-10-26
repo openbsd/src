@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.32 2006/08/30 17:58:40 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.33 2006/10/26 13:17:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -497,34 +497,34 @@ pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, u_int32_t *spi)
 int
 pfkey_md5sig_establish(struct peer *p)
 {
-	if (!p->conf.auth.spi_out)
+	if (!p->auth.spi_out)
 		if (pfkey_sa_add(&p->conf.local_addr, &p->conf.remote_addr,
 		    p->conf.auth.md5key_len, p->conf.auth.md5key,
-		    &p->conf.auth.spi_out) == -1)
+		    &p->auth.spi_out) == -1)
 			return (-1);
-	if (!p->conf.auth.spi_in)
+	if (!p->auth.spi_in)
 		if (pfkey_sa_add(&p->conf.remote_addr, &p->conf.local_addr,
 		    p->conf.auth.md5key_len, p->conf.auth.md5key,
-		    &p->conf.auth.spi_in) == -1)
+		    &p->auth.spi_in) == -1)
 			return (-1);
 
-	p->auth_established = 1;
+	p->auth.established = 1;
 	return (0);
 }
 
 int
 pfkey_md5sig_remove(struct peer *p)
 {
-	if (p->conf.auth.spi_out)
+	if (p->auth.spi_out)
 		if (pfkey_sa_remove(&p->conf.local_addr, &p->conf.remote_addr,
-		    &p->conf.auth.spi_out) == -1)
+		    &p->auth.spi_out) == -1)
 			return (-1);
-	if (p->conf.auth.spi_in)
+	if (p->auth.spi_in)
 		if (pfkey_sa_remove(&p->conf.remote_addr, &p->conf.local_addr,
-		    &p->conf.auth.spi_in) == -1)
+		    &p->auth.spi_in) == -1)
 			return (-1);
 
-	p->auth_established = 0;
+	p->auth.established = 0;
 	return (0);
 }
 
@@ -597,7 +597,7 @@ pfkey_ipsec_establish(struct peer *p)
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	p->auth_established = 1;
+	p->auth.established = 1;
 	return (0);
 }
 
@@ -662,7 +662,7 @@ pfkey_ipsec_remove(struct peer *p)
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	p->auth_established = 0;
+	p->auth.established = 0;
 	return (0);
 }
 
@@ -680,7 +680,7 @@ pfkey_establish(struct peer *p)
 int
 pfkey_remove(struct peer *p)
 {
-	if (!p->auth_established)
+	if (!p->auth.established)
 		return (0);
 	else if (p->conf.auth.method == AUTH_MD5SIG)
 		return (pfkey_md5sig_remove(p));

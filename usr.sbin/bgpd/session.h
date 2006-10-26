@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.86 2006/08/27 16:11:05 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.87 2006/10/26 13:17:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -166,6 +166,11 @@ struct peer {
 		struct capabilities	ann;
 		struct capabilities	peer;
 	}			 capa;
+	struct {
+		u_int32_t		spi_in;
+		u_int32_t		spi_out;
+		u_int8_t		established;
+	} auth;
 	struct sockaddr_storage	 sa_local;
 	struct sockaddr_storage	 sa_remote;
 	struct msgbuf		 wbuf;
@@ -184,7 +189,6 @@ struct peer {
 	enum session_state	 state;
 	enum session_state	 prev_state;
 	u_int16_t		 holdtime;
-	u_int8_t		 auth_established;
 	u_int8_t		 depend_ok;
 	u_int8_t		 demoted;
 	u_int8_t		 passive;
