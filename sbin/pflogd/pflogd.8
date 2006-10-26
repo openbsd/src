@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.28 2006/10/25 20:20:19 henning Exp $
+.\"	$OpenBSD: pflogd.8,v 1.29 2006/10/26 13:34:47 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -34,8 +34,8 @@
 .Nm pflogd
 .Op Fl Dx
 .Op Fl d Ar delay
-.Op Fl i Ar interface
 .Op Fl f Ar filename
+.Op Fl i Ar interface
 .Op Fl s Ar snaplen
 .Op Ar expression
 .Sh DESCRIPTION
@@ -105,6 +105,7 @@ Log output filename.
 Default is
 .Pa /var/log/pflog .
 .It Fl i Ar interface
+Specifies the
 .Xr pflog 4
 interface to use.
 By default,
