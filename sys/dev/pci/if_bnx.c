@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.31 2006/10/25 02:37:50 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.32 2006/10/26 00:05:07 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -378,6 +378,7 @@ void	bnx_watchdog(struct ifnet *);
 int	bnx_ifmedia_upd(struct ifnet *);
 void	bnx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void	bnx_init(void *);
+void	bnx_mgmt_init(struct bnx_softc *sc);
 
 void	bnx_init_context(struct bnx_softc *);
 void	bnx_get_mac_addr(struct bnx_softc *);
@@ -890,6 +891,9 @@ bnx_attachhook(void *xsc)
 
 	/* Print some important debugging info. */
 	DBRUN(BNX_INFO, bnx_dump_driver_state(sc));
+
+	/* Get the firmware running so ASF still works. */
+	bnx_mgmt_init(sc);
 
 	goto bnx_attach_exit;
 
@@ -2926,6 +2930,7 @@ bnx_stop(struct bnx_softc *sc)
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 
+	bnx_mgmt_init(sc);
 }
 
 int
@@ -4243,6 +4248,36 @@ bnx_init_exit:
 	splx(s);
 
 	return;
+}
+
+void
+bnx_mgmt_init(struct bnx_softc *sc)
+{
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	u_int32_t	val;
+
+	/* Check if the driver is still running and bail out if it is. */
+	if (ifp->if_flags & IFF_RUNNING)
+		goto bnx_mgmt_init_exit;
+
+	/* Initialize the on-boards CPUs */
+	bnx_init_cpus(sc);
+
+	val = (BCM_PAGE_BITS - 8) << 24;
+	REG_WR(sc, BNX_RV2P_CONFIG, val);
+
+	/* Enable all critical blocks in the MAC. */
+	REG_WR(sc, BNX_MISC_ENABLE_SET_BITS,
+	       BNX_MISC_ENABLE_SET_BITS_RX_V2P_ENABLE |
+	       BNX_MISC_ENABLE_SET_BITS_RX_DMA_ENABLE |
+	       BNX_MISC_ENABLE_SET_BITS_COMPLETION_ENABLE);
+	REG_RD(sc, BNX_MISC_ENABLE_SET_BITS);
+	DELAY(20);
+
+	bnx_ifmedia_upd(ifp);
+
+bnx_mgmt_init_exit:
+ 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 }
 
 /****************************************************************************/
